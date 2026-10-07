@@ -13,6 +13,8 @@ import { checkCoreMenus } from './check-inkwave-responsive-core.mjs';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : null; };
 const source = path.resolve(arg('--source') || path.join(repo, 'inkwave-public'));
+const manifestPath = path.join(source, 'inkwave-build.json');
+const touchCameraReset = fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).build?.reliability?.['navigation-adapter.mjs'];
 const evidence = path.resolve(arg('--evidence-dir') || '/mnt/workspace/.dev-state/agent-work/evidence/inkwave-responsive-ui-20261002');
 const cache = path.resolve(arg('--profile-dir') || '/mnt/workspace/.dev-state/agent-work/cache/inkwave-responsive-ui-20261002');
 const baseline = arg('--baseline');
@@ -28,16 +30,27 @@ for (const p of [evidence, cache]) {
 const require = createRequire(import.meta.url);
 const { chromium, webkit, devices } = require('playwright');
 const patchStyles = fs.existsSync(path.join(source, 'patches/splatoon3/ui.css')) ? '<link rel="stylesheet" href="/patches/splatoon3/ui.css">' : '';
+const runtimeFiles = patchStyles ? ['patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/gear.mjs', 'patches/splatoon3/runtime/conditional-gear.mjs', 'patches/splatoon3/runtime/sub-resistance.mjs', 'patches/splatoon3/profile.json'] : [];
+for (const file of runtimeFiles) assert(fs.existsSync(path.join(source, file)), `Missing installed UI input: ${file}`);
+const runtimeInstaller = patchStyles ? `
+import { install } from '/patches/splatoon3/runtime/install.mjs';
+const tuningResponse = await fetch('/patches/splatoon3/profile.json');
+if (!tuningResponse.ok) throw Error('Published gameplay profile unavailable');
+const tuning = await tuningResponse.json();
+install(tuning);
+` : '';
 const html = `<!doctype html><html lang="ja"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="/styles/ui.css"><link rel="stylesheet" href="/styles/mobile.css">
 ${patchStyles}
 <style>html,body{margin:0;overflow:hidden;background:#0d1020;touch-action:none}#ui-root{position:fixed;inset:0}</style>
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script>
 <div id="ui-root"></div><script type="module">
 import { Menus } from '/src/ui/menus.js';
 import { G } from '/src/core/ctx.js';
 import { MockNet } from '/src/net/mock.js';
 import { DEFAULT_SETTINGS } from '/src/config.js';
+${runtimeInstaller}
 let settings={...DEFAULT_SETTINGS}, profile={name:'Test Squidkid',level:5,xp:1200}, loadout={weapon:'shooter'};
 G.settings=settings; G.net=new MockNet();
 window.G=G;window.menuState=()=>({settings,profile,loadout});window.menus=new Menus(document.getElementById('ui-root'),{
@@ -66,13 +79,14 @@ const server = http.createServer((request, response) => {
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const address = `http://127.0.0.1:${server.address().port}/__menus?netmock=1&mockauto=0&mocklat=0&news=0`;
 const result = { kind: 'production-menu-dom-with-offline-session', source, section, selectedCases, realDeviceVerified: false, baseline: baseline || null, cases: [], errors: [] };
+result.runtimeInstalled = !!patchStyles;
 const hash = (b) => crypto.createHash('sha256').update(b).digest('hex');
-const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.css', 'src/ui/menus.js', 'src/ui/news.js', 'src/core/device.js', ...(patchStyles ? ['patches/splatoon3/ui.css'] : [])].map((f) => {
+const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.css', 'src/ui/menus.js', 'src/ui/news.js', 'src/core/device.js', ...(patchStyles ? ['patches/splatoon3/ui.css'] : []), ...runtimeFiles].map((f) => {
   const original = baseline && ['styles/mobile.css', 'src/ui/menus.js', 'src/ui/news.js'].includes(f);
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));
 result.sourceHashes = sourceHashes();
-const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
+const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
 result.runnerHashes = runnerHashes();
 const configurations = [
   ['phone-portrait', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } }],
@@ -138,8 +152,9 @@ try {
         await show(page, 'online');
         if (name === 'desktop') {
           if (section !== 'expansion') {
-            await checkCoreMenus({ page, entry, config, engineName, evidence, show, settle,
-              geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; }, tap, audit: true });
+            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle,
+              geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; },
+              tap: async (page, selector) => { const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.click(); }, audit: true, testContinuation: !audit });
             for (const [screen, selector] of [['main', '.iw-main__menu'], ['setup', '.iw-ss__hero'], ['settings', '.iw-settings__panel']]) {
               await show(page, screen);
               assert.equal(await page.locator(selector).evaluate((el) => getComputedStyle(el).position), 'absolute', `${screen}: desktop composition must remain unchanged`);
@@ -163,7 +178,7 @@ try {
         entry.touchMode = await page.locator('.iw-ui').evaluate((el) => el.classList.contains('is-touch'));
         assert(entry.touchMode, `${name}: touch mode not detected`);
         if (section !== 'expansion') {
-          await checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit });
+          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, geometry, tap, audit });
           if (section === 'core') { entry.status = audit ? 'audited' : 'passed'; continue; }
           await show(page, 'online');
         }

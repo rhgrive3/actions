@@ -29,7 +29,7 @@ function fromPacket(e) {
   return {
     type: e[3], pos: { x: e[5], y: e[6], z: e[7] }, vel: { x: e[8], y: e[9], z: e[10] },
     delay: e[11], life: e[12], straight: e[13], grav: e[16], drag: e[17],
-    vertical: e[27], seed: e[28], netId: e[29],
+    vertical: e[e.length===35?29:27], seed: e[e.length===35?30:28], netId: e[e.length===35?31:29],
   };
 }
 
@@ -74,7 +74,7 @@ test('horizontal roller: local physics uses final gravity/drag and the wire carr
     assert.equal(row.packets[0][17], row.local[0].drag);
   }
   // And the birth mode is explicit, never inferred from cosmetic nose/tail.
-  assert.equal(fixed.packets[0][27], 0);
+  assert.equal(fixed.packets[0][29], 0);
 });
 
 test('vertical roller: remote ink no longer flies too far on the wire', async () => {
@@ -85,7 +85,7 @@ test('vertical roller: remote ink no longer flies too far on the wire', async ()
 
   // The shooter's own drop is identical in both runs (profile physics unchanged).
   assert.equal(bLocal.grav, 144); assert.equal(fLocal.grav, 144);
-  assert.equal(fPacket[27], 1, 'vertical birth mode replicated explicitly');
+  assert.equal(fPacket[29], 1, 'vertical birth mode replicated explicitly');
 
   const localTraj = simulate(fixed.f, localState(fLocal));
   const wireBaseline = simulate(baseline.f, packetState(baseline.f, bPacket));

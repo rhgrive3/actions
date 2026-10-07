@@ -63,13 +63,14 @@ function bombSeed(b) {
   return seed >>> 0;
 }
 
-export function fidelityThrowVelocity(actor, kind, out) {
+export function fidelityThrowVelocity(actor, kind, out, forwardSpeed) {
   const p = kind === 'storm' ? SUB_SPECIAL_FIDELITY.storm : SUB_SPECIAL_FIDELITY.bomb;
+  const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;
   const pitch = clamp(actor.aimPitch || 0, -1.05, 1.15);
   const yaw = actor.aimYaw || 0;
   const cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const horizontal = p.spawnSpeedZ * cp - p.spawnSpeedY * sp;
-  let vy = p.spawnSpeedZ * sp + p.spawnSpeedY * cp;
+  const horizontal = speed * cp - p.spawnSpeedY * sp;
+  let vy = speed * sp + p.spawnSpeedY * cp;
   const av = actor.vel || { x: 0, y: 0, z: 0 };
   vy += Math.min(Math.max(0, av.y || 0) * p.inheritYPlus, p.inheritYMax);
   vy = Math.max(p.spawnSpeedYWorldMin, vy);
@@ -104,9 +105,9 @@ export function installSubSpecialFidelity(api, profile) {
   });
 
   const throwVelocity = Projectiles.prototype.throwVelocity;
-  Projectiles.prototype.throwVelocity = function (actor, _speed, out) {
+  Projectiles.prototype.throwVelocity = function (actor, speed, out) {
     const kind = this[THROW_KIND] === 'storm' ? 'storm' : 'bomb';
-    return fidelityThrowVelocity(actor, kind, out);
+    return fidelityThrowVelocity(actor, kind, out, speed);
   };
 
   const throwStorm = Projectiles.prototype.throwStorm;

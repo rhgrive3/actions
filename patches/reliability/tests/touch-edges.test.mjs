@@ -32,8 +32,14 @@ async function boot({ patched = true, weapon = 'shooter' } = {}) {
     for (const [name, value] of Object.entries(values)) this.setExport(name, value);
   }, { context, identifier });
   function load(file) {
+    // Adapted upstream modules import build-only patches through ../../patches.
+    // In this source fixture those bytes live at the repository root, not under
+    // immutable inkwave-public/, so mirror the build tree's module topology.
+    if (file !== 'three' && file.startsWith(path.join(UPSTREAM, 'patches') + path.sep))
+      file = path.join(ROOT, path.relative(UPSTREAM, file));
     if (modules.has(file)) return modules.get(file);
-    const rel = path.relative(UPSTREAM, file);
+    const rel = file === 'three' ? file : file.startsWith(UPSTREAM + path.sep)
+      ? path.relative(UPSTREAM, file) : path.relative(ROOT, file);
     let mod;
     if (rel === 'src/core/ctx.js' || rel === 'src/config.js' || rel === 'src/game/physics.js') mod = synthetic(file, f);
     else if (file === 'three') mod = synthetic(file, { ...f.THREE });
@@ -141,12 +147,14 @@ for (const hz of [20, 30, 60, 90, 120, 144]) test(`${hz}Hz rendering delivers to
   assert.equal(h.rig.yaw, -.25); assert.equal(h.rig.pitch, -.1);
 });
 
-test('actual charger charges while held and fires once on release; completed fire tap releases next tick', async () => {
+test('actual charger fires legal holds once and cancels completed sub-8F fire taps', async () => {
   const h = await boot({ weapon: 'charger' }), held = h.press('fire');
   for (let i = 0; i < 20; i++) h.frame();
   assert.equal(h.actor.weaponRunner.charging, true); assert.ok(h.actor.weaponRunner.charge > 0);
   assert.equal(h.shots.length, 0);
   h.release(held); h.frame();
+  assert.equal(h.shots.length, 0, 'legal release retains its 1F gap');
+  h.frame();
   assert.equal(h.shots.length, 1); assert.equal(h.shots[0].kind, 'charger');
   assert.equal(h.actor.weaponRunner.charging, false);
   for (let i = 0; i < 30; i++) h.frame();
@@ -155,7 +163,7 @@ test('actual charger charges while held and fires once on release; completed fir
   assert.equal(h.rows.at(-1).fire, true); assert.equal(h.actor.weaponRunner.charging, true);
   h.frame();
   assert.equal(h.rows.at(-1).fire, false); assert.equal(h.actor.weaponRunner.charging, false);
-  assert.equal(h.shots.length, 2);
+  assert.equal(h.shots.length, 1);
 });
 
 test('actual roller completes a tap flick and stops rolling after a held trigger releases', async () => {

@@ -8,10 +8,12 @@ const sample=()=>({
   far:Array.from({length:4},()=>({size:256,disposes:1,deleted:true,cleared:true,sameEnvironment:true})),
   pause:{renders:1,environment:0,paint:0,shadowMarks:0,menuTicks:120,matchUnchanged:true,resizeRenders:1,resumedRenders:1,onlineRenders:3},
   audio:{running:true,initialPlayers:0,initialScheduler:false,mutedTicks:0,mutedNodes:0,mutedPlayers:0,mutedScheduler:false,sfxPlayed:true,resumedTrack:'battle',toggleMaxPlayers:1},
+  resultsWork:{frames:120,playing:{actorUpdates:480,projectileUpdates:120,paintFlushes:120,fxUpdates:120,worldRenders:120,gpuDrawSubmissions:1200,cpuSubmissionMs:25},results:{actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:120,gpuDrawSubmissions:1200,cpuSubmissionMs:20}},
   errors:[],gpu:{webgl:'WebGL 2.0 fixture',renderer:'schema-only'}
 });
 test('acceptance schema can represent all required observations, not a GPU claim',()=>assert.equal(validateIdleResult(sample()).farTransitions,4));
 for(const [name,mutate] of [
+ ['missing RESULT evidence',r=>delete r.resultsWork],['RESULT simulation continues',r=>r.resultsWork.results.actorUpdates=1],['RESULT paint keeps flushing',r=>r.resultsWork.results.paintFlushes=120],['RESULT presentation freezes',r=>r.resultsWork.results.worldRenders=0],['missing GPU submission counts',r=>r.resultsWork.results.gpuDrawSubmissions=0],['invalid CPU comparison',r=>r.resultsWork.playing.cpuSubmissionMs=NaN],
  ['late mobile budget',r=>r.coldBoot.gamePublishedAtAllocation=true],['oversized cold cloud',r=>r.coldBoot.cloud=[2048,640]],['oversized cold cube',r=>r.coldBoot.farSize=512],['late replacement hides cold budget',r=>r.coldBoot.sameTargetsAfterBoot=false],
  ['missing cloud theme',r=>r.clouds.pop()],['NaN appearance',r=>r.clouds[0].meanByteError=NaN],['banding outlier',r=>r.clouds[1].largeErrorFraction=.2],['blank clouds',r=>r.clouds[0].nonzero=0],
  ['unallocated cube',r=>r.far[0].deleted=false],['stale sampler',r=>r.far[2].cleared=false],['duplicate dispose',r=>r.far[1].disposes=2],

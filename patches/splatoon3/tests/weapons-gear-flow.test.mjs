@@ -54,19 +54,21 @@ test('actual Flow uses hostile damage credit for an assist extension', async () 
   let paints = 0; f.G.paint.splat = () => { paints++; return 0; };
   f.emit('damage', { victim, attacker: helper, amount: 20, source: 'shooter' });
   f.emit('splatted', { victim, attacker: killer });
-  assert.equal(helper.s3.flow.remaining, 15); assert.equal(paints, 1);
+  assert.equal(helper.s3.flow.remaining, 20); assert.equal(paints, 1);
   assert.equal(helper.s3.splatsThisLife || 0, 0);
 });
 
-test('actual quick respawn requires consecutive lives without a splat and ignores assists', async () => {
+test('actual quick respawn tracks enemy deaths and ignores assists', async () => {
   const f = await fixture(), a = f.make(), ally = f.make(), victim = f.make(); victim.team = 1;
   a.s3.loadout = loadout('quickRespawn'); a.setWeapon('shooter');
-  a.splat(null); const ordinary = a.respawnTimer;
-  a.reset(); f.emit('damage', { victim, attacker: a, amount: 20, source: 'shooter' });
+  f.G.level.spawnPads = [new f.THREE.Vector3(), new f.THREE.Vector3()];
+  f.G.physics.groundProbe = (_x,_y,_z,_u,_d,_r,h) => { h.hit = false; return h; };
+  a.splat(victim); const ordinary = a.respawnTimer;
+  a.respawn(); f.emit('damage', { victim, attacker: a, amount: 20, source: 'shooter' });
   f.emit('splatted', { victim, attacker: ally });
   assert.equal(a.s3.splatsThisLife || 0, 0);
-  a.splat(null); assert.ok(a.respawnTimer < ordinary);
-  a.reset(); f.emit('splatted', { victim, attacker: a }); a.splat(null);
+  a.splat(victim); assert.ok(a.respawnTimer < ordinary);
+  a.respawn(); f.emit('splatted', { victim, attacker: a }); a.splat(victim);
   assert.equal(a.respawnTimer, ordinary);
 });
 

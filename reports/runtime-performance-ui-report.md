@@ -29,7 +29,7 @@ springはold visual positionからnew targetへ動く。input taskで進めたel
 
 external ownerはscreenがないbattle中にもnative menu `_tick` と `_updateCursor` を呼んでいた。非active・hidden document・disposed時は停止する。fallback watchdog/RAFも停止し、screen再表示・visible復帰時は既存のowner handoffで再開する。
 
-既存のoffscreen preview停止・hidden world/showcase guardは維持した。visibleなtitle/settings背景のattract/demoは表示内容に必要なsimulationを続ける。今回のtitle/settings scenarioではmatch/env/showcase更新を削減対象にしていない。full-frame showcaseがarenaを覆うケースの既存simulation/hidden-world suspensionは維持した。menu idleを理由に表示中の背景やeffectは削除しない。
+既存のoffscreen preview停止・hidden world/showcase guardは維持した。visibleなtitle/settings背景のattract/demoは表示し続ける。後続の #204 では touch または LOW 品質に限って背景 simulation と world 更新/描画を20Hzへまとめる。メニューUI、network pump、固定時計は通常 cadence のまま。今回の high-quality title/settings scenario の測定結果は、この後続変更の端末性能測定を意味しない。full-frame showcaseがarenaを覆うケースの既存simulation/hidden-world suspensionは維持した。menu idleを理由に表示中の背景やeffectは削除しない。
 
 ### lifetime
 

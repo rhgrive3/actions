@@ -6,7 +6,8 @@ export function advanceFlow(state, dt, cfg, alive = true) {
   const wasActive = state.active;
   state.remaining = Math.max(0, state.remaining - dt);
   if (state.remaining <= 0) state.active = false;
-  if (wasActive || !alive || !cfg?.progress) return;
+  // Inactive progress follows battle time, including the dead/respawn interval.
+  if (wasActive || !cfg?.progress) return;
   const p = cfg.progress, idle = Math.max(0, state.idleTime || 0);
   // Split a step crossing the five-second boundary; variable intervals and the
   // fixed gameplay clock must integrate the same piecewise decay.
@@ -36,6 +37,18 @@ export function awardFlow(state, action, value, cfg, capProgress = true) {
   // splat more likely to activate Flow. They do not activate it by themselves.
   if (action !== 'splat' || state.score < cfg.threshold) return false;
   state.active = true; state.remaining = cfg.duration; state.score = 0; return true;
+}
+// Shared across repeated installs so an authoritative Match transition is awarded once.
+const wipeoutSequences = new WeakMap();
+export function awardWipeoutFlow(flow, cfg) {
+  if (flow.active) return;
+  const gain = (cfg.progress?.wipeoutBonus || 0) * cfg.threshold / cfg.progress?.referenceThreshold;
+  if (!(Number.isFinite(gain) && gain > 0)) return;
+  // Retain the later ordinary-Turf storage cap while restoring the team award.
+  const p = cfg.progress;
+  const cap = Number.isFinite(p?.referenceCap) && p.referenceCap >= 0 && p.referenceThreshold > 0
+    ? p.referenceCap * cfg.threshold / p.referenceThreshold : Infinity;
+  flow.score = Math.min(cap, flow.score + gain); flow.idleTime = 0;
 }
 export function installFlow({ Actor, on, emit, G }, tuning) {
   const cfg = tuning.flow, credits = new WeakMap(), respawning = new WeakMap();
@@ -78,15 +91,48 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     if (was && !flow.active) emit('actor:flow', { actor: this, active: false });
     return update.call(this, dt);
   };
+  on('match:state', ({ match, state: phase }) => {
+    if (match && phase === 'intro') wipeoutSequences.delete(match);
+  });
+  on('team:wipeout', ({ match, team, sequence } = {}) => {
+    // Client roster inference is not an authoritative online team event.
+    // Delay this new bonus online until confirmed ownership/timeline transport exists.
+    if (G.netm) return;
+    if (!match || match !== G.match || match.mode !== 'turf' || match.attract ||
+        match.state !== 'playing' || match.paused || !(match.time > 0) ||
+        (team !== 0 && team !== 1) || !Number.isSafeInteger(sequence) || sequence < 1 || !Array.isArray(match.actors)) return;
+    const wiped = match.actors.filter(a => a.team === team);
+    const teammates = match.actors.filter(a => a.team === 1 - team);
+    if (wiped.length !== 4 || teammates.length !== 4 || wiped.some(a => a.alive)) return;
+    const seen = wipeoutSequences.get(match) || [0, 0];
+    if (sequence <= seen[team]) return;
+    seen[team] = sequence; wipeoutSequences.set(match, seen);
+    // The verified bonus is team-wide, including a teammate waiting to respawn.
+    // It is not a splat/assist: do not activate or extend Flow or paint a burst.
+    for (const actor of teammates) if (!(actor.isBot && cfg.bots === false)) awardWipeoutFlow(state(actor), cfg);
+  });
   on('turf', ({ actor, area }) => award(actor, 'turf', area));
   on('damage', ({ victim, attacker, amount, source }) => {
     if (!attacker || attacker === victim || source === 'ink' || victim.team === attacker.team) return;
     const map = credits.get(victim) || new Map(); map.set(attacker, G.time); credits.set(victim, map);
     award(attacker, 'damage', amount);
   });
-  on('splatted', ({ victim, attacker, cause }) => {
+  on('splatted', (event) => {
+    const { victim, attacker, cause } = event;
     if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);
-    for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow) award(helper, 'assist', 1);
-    credits.delete(victim); penalizeFlowDeath(state(victim), cause, cfg);
+    // One victim-authoritative assist list feeds stats, Flow and conditional gear
+    // while the current-main death-progress policy remains authoritative.
+    const candidates = Array.isArray(event.assists) ? event.assists :
+      [...(credits.get(victim) || [])].filter(([, time]) => G.time - time <= cfg.assistWindow).map(([helper]) => helper);
+    const helpers = attacker && attacker !== victim && attacker.team !== victim.team
+      ? [...new Set(candidates)].filter(helper => helper !== attacker && helper !== victim && helper.team === attacker.team) : [];
+    event.assists = helpers;
+    for (const helper of helpers) {
+      helper.stats.assists = (helper.stats.assists || 0) + 1;
+      award(helper, 'assist', 1);
+      emit('actor:assist', { actor: helper, victim, attacker });
+    }
+    credits.delete(victim);
+    penalizeFlowDeath(state(victim), cause, cfg);
   });
 }

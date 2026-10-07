@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
+import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
+import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -7,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 const option = name => { const i=process.argv.indexOf(name); if(i<0 || !process.argv[i+1]) throw new Error('Required '+name); return path.resolve(process.argv[i+1]); };
 const site=option('--site'), evidence=option('--evidence-dir'), profile=option('--profile-dir');
+const uiProbesOnly = process.argv.includes('--ui-probes-only');
 const ROOT = fileURLToPath(new URL('../',import.meta.url));
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
 for(const directory of [evidence,profile]) {
@@ -82,6 +86,13 @@ try {
     if (!document.baseURI.includes(build.build.revision)) throw new Error('Active asset revision mismatch');
     return { baseURI:document.baseURI, mode: G.mode, patch: G.s3, contentHash: build.contentHash, clockTicks: G.game.s3Clock?.ticks, sourceEntry: [...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src')) };
   });
+  if (uiProbesOnly) {
+    // Same native offline bootstrap, intro dismissal and frozen match as full acceptance.
+    await page.evaluate(async () => { const G=globalThis.s3ProbeG; G.game.debug.freeze(); G.game.menus.wipe.cancel(); await G.game.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'}); });
+    await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
+    await page.evaluate(() => { const g=globalThis.s3ProbeG.game; g.debug.freezeBots(); g._skipRender=true; try {for(let i=0;i<270;i++)g._frame(1/60);} finally {g._skipRender=false;} });
+    result.hudAuthority = await checkUiVisualProbes({page,evidence,sourceSha,contentHash:manifest.contentHash});
+  } else {
   // Exercise the native menu interval that previously pinned an unused LobbySet.
   await page.waitForFunction(() => !!globalThis.s3ProbeG?.game?.timer, null, { timeout:30000 });
   await page.waitForTimeout(2800);
@@ -125,6 +136,11 @@ try {
     return { built:m._built, canvas:[m.canvas.width,m.canvas.height], logical:[m.w,m.h], imageBytes:m.inkImg.data.byteLength+m.flashImg.data.byteLength };
   });
   if (!result.visibleMinimap.built || result.visibleMinimap.canvas.some((n,i)=>n!==result.visibleMinimap.logical[i]) || result.visibleMinimap.imageBytes!==8*result.visibleMinimap.logical[0]*result.visibleMinimap.logical[1]) throw new Error('Reenabled Minimap did not initialize native layers');
+  // The clock is frozen: let the real intro UI timers reveal HUD/remove lineup
+  // before fast-forwarding simulation, otherwise screenshots only show intro.
+  await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
+  // Let native intro UI reveal HUD before authority screenshots/probes.
+  await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
   result.gameplay = await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game; g.debug.freezeBots(); g._skipRender = true;
     for (let i=0;i<270;i++) g._frame(1/60);
@@ -277,8 +293,55 @@ try {
     for(let i=0;i<30;i++)tick();flow.inactiveGlow=glow();flow.inactivePresentation=flowMotionSnapshot(ch);
     if(!Number.isFinite(flow.activeGlow)||flow.activeGlow<=0||flow.specialGlow>.001||flow.inactiveGlow>=.001)throw Error('Compiled Flow material did not follow actual actor state');
     if(!flow.activePresentation.visible||flow.activePresentation.aliveParticles<1||flow.inactivePresentation.visible||flow.inactivePresentation.phase!=='off')throw Error('Compiled Flow exterior did not follow actual actor state');
-    return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow};
+    prepare('charger');
+    const cr=a.weaponRunner; a.kidT=1; a.intent.fire=true;
+    for(let i=0;i<36;i++)cr.update(1/60,{fire:true});
+    const suspendedCharge=cr.charge; a.special=a.specialCost(); const beforeSpecial=a.stats.specials;
+    a._startSpecial();
+    const specialCharge={suspendedCharge,active:!!a.specialActive,specials:a.stats.specials-beforeSpecial,
+      charging:cr.charging,charge:cr.charge,chargeT:cr.chargeT,stored:cr.s3Stored??null};
+    if(suspendedCharge<.5||!specialCharge.active||specialCharge.specials!==1||cr.charging||cr.charge!==0||cr.chargeT!==0||specialCharge.stored!==null)
+      throw Error('Compiled successful special did not cancel suspended Charger charge');
+    a.specialActive=null; a.intent.fire=false;
+    return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow,specialCharge};
   });
+  result.subHud = await page.evaluate(async () => {
+    const G=globalThis.s3ProbeG,g=G.game,a=g.match.local,hud=g.hud,mobile=g.input.mobile;
+    const {subInkSpec}=await import(new URL('patches/splatoon3/runtime/sub-ready.mjs',document.baseURI).href);
+    const {SUB,PLAYER}=await import(new URL('src/config.js',document.baseURI).href);
+    g.debug.freeze();
+    // Desktop Chromium has no touch-capability media flag. Install the actual
+    // mobile control DOM once, then drive its real public setHud via Game.
+    if(!mobile.els)mobile._install();
+    const key='inkwave.splatoon3.gear.v1',saved=localStorage.getItem(key),wid=a.weaponId,rows=[];
+    const update=hud.update,draw=hud._drawTank;let frame,mark;
+    hud.update=function(dt,f){frame=f;return update.call(this,dt,f);};
+    hud._drawTank=function(dt,sub,...rest){mark=sub;return draw.call(this,dt,sub,...rest);};
+    try {
+      for(const ap of [0,35,57]) {
+        let loadout;
+        for(let m=0;m<=3;m++){const n=(ap-10*m)/3;if(Number.isInteger(n)&&n>=0&&n<=9){loadout=Array.from({length:3},(_,i)=>({main:i<m?'inkSaverSub':'none',subs:Array.from({length:3},(_,j)=>i*3+j<n?'inkSaverSub':'none')}));break;}}
+        localStorage.setItem(key,JSON.stringify(loadout));a.setWeapon('shooter');a.alive=true;a.form='kid';a.grounded=true;a.specialActive=null;a.superJumpState=null;a.intent.sub=true;
+        a.ink=100;for(let i=0;i<6;i++)a.weaponRunner.update(1/60,{sub:true});
+        const cost=subInkSpec(a,SUB.bomb).inkCost;
+        for(const delta of [-.001,0,.001]) {
+          a.ink=cost+delta;g._updateHud(1/60);
+          const row={ap,delta,cost,mark,label:hud.subChip.querySelector('b').textContent,short:hud.subChip.classList.contains('is-short'),tank:hud.tank.classList.contains('is-nosub'),mobile:mobile.els.sub.classList.contains('is-dim'),ready:frame.subReady};
+          if(Math.abs(mark-cost/PLAYER.inkMax)>1e-9||row.label!==Math.round(cost)+'%'||row.ready!==(delta>=0)||[row.short,row.tank,row.mobile].some(x=>x!==(delta<0)))throw Error('Compiled equipped sub HUD mismatch: '+JSON.stringify(row));
+          rows.push(row);
+        }
+      }
+    } finally {
+      hud.update=update;hud._drawTank=draw;
+      if(saved==null)localStorage.removeItem(key);else localStorage.setItem(key,saved);
+      a.intent.sub=false;a.setWeapon(wid);a.ink=100;
+    }
+    return {fixture:'actual compiled Game/HUD Canvas2D and MobileInput DOM in Chromium',rows};
+  });
+  result.hudAuthority = await checkHudAuthority({ page, evidence, sourceSha, contentHash: manifest.contentHash });
+  }
+  if (!uiProbesOnly) result.runtimeQuality = await runQualityBrowserProbe(page);
+  result.paintMipmaps = await runPaintMipmapBrowserProbe(page);
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };
@@ -286,6 +349,7 @@ try {
   await page.screenshot({ path:path.join(evidence,'browser-failure.png') }).catch(() => {});
 } finally {
 
+  result.scope = uiProbesOnly ? 'ui-probes-only' : 'full-active'; result.fullAcceptance = !uiProbesOnly;
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
   result.verifiedRuntimeFiles = [...new Set(receipts)].sort();
   for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);

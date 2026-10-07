@@ -15,7 +15,7 @@ test('first canvas touch delegates the original event once; other event paths st
   assert.equal(adoptCanvasTouch(mobile, event), true);
   assert.equal(delivered[0], event); // no redispatch, preserving native capture authority
   assert.equal(adoptCanvasTouch(mobile, event), false);
-  for (const pointerType of ['mouse', 'pen']) {
+  for (const pointerType of ['mouse', '', 'unknown']) {
     assert.equal(adoptCanvasTouch(mobile, { ...event, pointerId: 8, pointerType }), false);
   }
   for (const target of [{}, { parentElement: canvas }]) {

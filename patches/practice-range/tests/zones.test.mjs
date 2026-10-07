@@ -125,10 +125,15 @@ test('special arena: a Tidal Slam at the centre hits the endurance targets, fall
   try {
     const { a, s, R, tick, put } = w;
     put(R.ZONES.SPECIAL_CENTER[0], R.ZONES.SPECIAL_CENTER[1]);
+    // This named native-Slam zone probe is independent of Shooter's current Kit default.
+    a.weapon = { ...a.weapon, special: 'slam' };
     a.special = a.specialCost();
     tick(3, () => { a.intent.special = true; }); a.intent.special = false;
+    assert.equal(a.specialActive?.id, 'slam', 'the actual activation owns a native Slam');
     tick(180);
     const end = s.targets.filter((t) => t.rangeTarget.kind === 'endurance').map((t) => [t.rangeTarget.label, t.rangeTarget.combo?.total || 0, Math.hypot(t.pos.x - R.ZONES.SPECIAL_CENTER[0], t.pos.z - R.ZONES.SPECIAL_CENTER[1])]);
+    assert.equal(a.specialActive, null, 'native Slam completes its real physics lifecycle');
+    assert.ok(end.length > 0, 'the arena has endurance targets');
     const r = R.SPECIALS.slam.radius;
     for (const [label, dmg, dist] of end) {
       if (dist < r) assert.ok(dmg > 0, `${label} inside the slam radius took damage`);

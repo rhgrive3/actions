@@ -7,11 +7,30 @@ function replaceOnce(code, before, after, label) {
 const install = (code, module, name, Class, prefix = '../../') =>
   `import { ${name} } from '${prefix}patches/local-quality/${module}.mjs';\n` + code + `\n${name}(${Class});\n`;
 const badMessage = receiver => `t(${receiver}.gyro.supported ? 'Gyro permission was denied. Allow motion access in Safari settings.' : 'Gyro is not available on this device.')`;
+export function adaptInitialGyroPreference(code) {
+  const raw = "    this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);\n    this.mobile = G.mobile = deviceProfile();";
+  const profiled = "    this.settings = G.settings = migrateAimProfiles(loadJSON('inkwave.settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS);\n    saveJSON('inkwave.settings', this.settings);\n    this.mobile = G.mobile = deviceProfile();";
+  const candidates = [raw, profiled].filter(anchor => code.includes(anchor));
+  if (candidates.length !== 1) throw new Error('INKWAVE platform anchor mismatch: first-run gyro preference variants');
+  const before = candidates[0];
+  const after = "    this.mobile = G.mobile = deviceProfile();\n" + before
+    .replace("\n    this.mobile = G.mobile = deviceProfile();", '')
+    .replace("loadJSON('inkwave.settings', DEFAULT_SETTINGS)", "loadJSON('inkwave.settings', initialGyroDefaults(DEFAULT_SETTINGS, this.mobile))");
+  return replaceOnce(code, before, after, 'first-run gyro preference');
+}
 export function adaptPlatformSource(rel, code) {
   if (rel === 'src/main.js') {
+    code = adaptInitialGyroPreference(code);
+    code = replaceOnce(code,
+      "  _prepareGyro() {\n    const mob = this.input?.mobile;\n    if (mob && !mob._destroyed && this.settings.gyro && mob.gyro.needsPermission) mob.gyro.request();\n  }",
+      "  _prepareGyro() { return prepareGyroStartup(this, G); }", 'owned startup permission');
+    code = replaceOnce(code,
+      "  _startGyro() {\n    const mob = this.input?.mobile;\n    if (!mob || mob._destroyed || !this.settings.gyro) return;\n    if (mob.gyro.needsPermission) { mob.toast(t('Tap GYRO to turn on gyro aim'), 2.4); return; }\n    mob.setGyro(true);\n  }",
+      "  _startGyro() { return startGyroStartup(this, G); }", 'join startup to pending grant');
+
     code = replaceOnce(code, badMessage('mob'), 'mob.gyro.statusMessage()', 'settings gyro status');
     code = replaceOnce(code, 'const game = new Game();', 'installPlatformGame(Game, G);\n\nconst game = new Game();', 'game lifecycle install after clock installer');
-    return "import { installPlatformGame } from '../patches/local-quality/platform-game.mjs';\n" + code;
+    return "import { initialGyroDefaults } from '../patches/local-quality/gyro-permission.mjs';\nimport { prepareGyroStartup, startGyroStartup } from '../patches/local-quality/gyro-startup.mjs';\nimport { installPlatformGame } from '../patches/local-quality/platform-game.mjs';\n" + code;
   }
   if (rel === 'src/core/mobile.js') {
     code = replaceOnce(code, badMessage('this'), 'this.gyro.statusMessage()', 'mobile gyro status');

@@ -1,3 +1,4 @@
+import {teamHudSnapshot} from '../hud-snapshots.mjs';
 // Actual composed HUD and native UI maths; display nodes and the FX clock are fixtures.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -41,7 +42,7 @@ async function fixture({baseline=false}={}) {
   const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(()=>{throw Error('config dependency');});await config.evaluate();
   const translate=s=>s,i18n=new vm.SyntheticModule(['tx','isJa'],function(){this.setExport('tx',translate);this.setExport('isJa',()=>false);},{context});
   const util=new vm.SourceTextModule(site&&!baseline?fs.readFileSync(path.join(site,'src/ui/ui-util.js'),'utf8'):read('src/ui/ui-util.js'),{context});await util.link(()=>i18n);await util.evaluate();
-  const values={G,on,t:translate,...config.namespace,...THREE,GLYPHS:{},SUB_ICONS:{},weaponIcon:x=>x,specialIcon:x=>x,keycap:x=>x,richText:x=>x};
+  const values={G,on,teamHudSnapshot,t:translate,...config.namespace,...THREE,GLYPHS:{},SUB_ICONS:{},weaponIcon:x=>x,specialIcon:x=>x,keycap:x=>x,richText:x=>x};
   async function load(rel){
     let code=baseline?adaptSource(rel,read(rel)):site?fs.readFileSync(path.join(site,rel),'utf8'):adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,read(rel)))));
     if(minify)code=transform(code,{loader:'js',format:'esm',minify:true}).code;
@@ -52,7 +53,7 @@ async function fixture({baseline=false}={}) {
     const mod=new vm.SourceTextModule(code,{context});await mod.link(spec=>spec==='./ui-util.js'?util:new vm.SyntheticModule([...imports.get(spec)],function(){for(const k of imports.get(spec))this.setExport(k,k in values?values[k]:()=>{});},{context}));await mod.evaluate();return mod.namespace;
   }
   const {HUD}=await load('src/ui/hud.js'),{Match}=await load('src/game/match.js');
-  const hud=()=>Object.assign(Object.create(HUD.prototype),{_L:{},_fxTime:0,el:new El(),splatLayer:new El(),_kills:{lastKiller:null},map:new El(),mapCursor:new El(),mapJumpLine:new El(),_mapT:1,_map:{open:false,hover:-1,cx:.5,cy:.5,pressT:0},beacons:Array.from({length:4},()=>{const e=new El();e.appendChild(new El());return e;}),legendRows:Array.from({length:4},()=>new El()),_snd(){},_restart(){},_addFx(_name,fn){this.fx=fn;}});
+  const hud=()=>Object.assign(Object.create(HUD.prototype),{_L:{},_fxTime:0,el:new El(),bannerLayer:new El(),splatLayer:new El(),_kills:{lastKiller:null},map:new El(),mapCursor:new El(),mapJumpLine:new El(),_mapT:1,_map:{open:false,hover:-1,cx:.5,cy:.5,pressT:0},beacons:Array.from({length:4},()=>{const e=new El();e.appendChild(new El());return e;}),legendRows:Array.from({length:4},()=>new El()),_snd(){},_restart(){},_addFx(_name,fn){this.fx=fn;}});
   const actor=(name,team=0)=>({name,team,alive:true,weaponId:'shooter',pos:new THREE.Vector3(),respawnTimer:0,canSuperJump:()=>true,superJump(){this.jumps=(this.jumps||0)+1;return true;}});
   G.camera=new THREE.PerspectiveCamera(60,1,.1,100);G.camera.position.set(0,8,15);G.camera.lookAt(0,0,0);G.camera.updateMatrixWorld();G.level={spawnPads:[new THREE.Vector3(-5,0,0),new THREE.Vector3(5,0,0)]};G.game={minimap:{w:100,h:100,toCanvas(x,z,out){out.x=50+x;out.y=50+z;}}};
   return {G,hud,actor,Match,emit};
@@ -63,7 +64,7 @@ async function rig(baseline=false){
  const actors=Array.from({length:8},(_,i)=>Object.assign(f.actor('P'+i,i<4?0:1),{specialReady:()=>false,isLocal:i===0}));
  const m=Object.assign(Object.create(f.Match.prototype),{actors,mode:'turf',state:'playing',attract:false,local:actors[0]});f.G.match=m;f.G.actors=actors;f.G.local=m.local;f.G.mode='match';
  const view=t=>{actors.forEach(a=>a.isLocal=false);m.local=actors[t*4];m.local.isLocal=true;f.G.local=m.local;};
- const tick=(pair,viewer=0)=>{coverage=pair;view(viewer);const teams=m.teamSummary();if(viewer===1)teams.reverse();h._updSquads(teams);return teams;};
+ const tick=(pair,viewer=0)=>{coverage=pair;view(viewer);const teams=m.teamSummary(viewer);h._updSquads(teams);return teams;};
  return {...f,h,m,actors,tick,view,reads:()=>reads};
 }
 const status=h=>h.squads.map(s=>s.classList.contains('is-turf-danger')?-1:s.classList.contains('is-turf-leading')?1:0);
@@ -80,7 +81,7 @@ test('#99/#748 10-point threshold, neutral denominator and reversal follow physi
 });
 for(const hz of [30,60,120])test(`#99/#748 ${hz}Hz lead changes bypass unchanged player-slot cache and preserve native status`,async()=>{
  const f=await rig();f.tick([.2,.2]);const before=f.h._L.sq00;for(let i=0;i<hz;i++){f.tick(i%2?[.6,.2]:[.2,.6]);assert.deepEqual(status(f.h),i%2?[1,-1]:[-1,1]);assert.equal(f.h._L.sq00,before);}
- f.actors[0].alive=false;f.actors[0].respawnTimer=3;f.actors[1].specialReady=()=>true;f.tick([.6,.2]);const slots=f.h.squads[0].children;assert(slots[0].classList.contains('is-dead'));assert.equal(slots[0].querySelector('.iw-sq__n').textContent,'3');assert(slots[1].classList.contains('is-ready'));assert.equal(slots.length,4);
+ f.actors[0].alive=false;f.actors[0].respawnTimer=3;f.actors[1].specialReady=()=>true;f.tick([.6,.2]);const slots=f.h.squads[0].children;assert(slots[0].classList.contains('is-dead'));assert.equal(slots[0].querySelector('.iw-sq__n').textContent,'','current top roster keeps dead state qualitative');assert(slots[1].classList.contains('is-ready'));assert.equal(slots.length,4);
  f.actors[0].alive=true;f.tick([.4,.4]);assert.deepEqual(status(f.h),[0,0]);assert.equal(slots[0].classList.contains('is-dead'),false);
 });
 test('Boss/attract/non-playing or invalid coverage produces no stale live Turf status',async()=>{
