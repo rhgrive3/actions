@@ -11,6 +11,16 @@ export const SUB_SPECIAL_FIDELITY = Object.freeze({
     inheritX: 1.6,
     inheritYPlus: 4.0,
     inheritYMax: 0.32 * 60,
+    // WeaponBombSplat.MoveParam: contact drag is expressed as a fraction of
+    // velocity removed per 60 Hz ground step. The source provides horizontal
+    // and 50-degree endpoints for translation and rotation separately.
+    groundPositionHorizonAirResist: 0.19,
+    groundPositionDeg50AirResist: 0.28,
+    groundRotateHorizonAirResist: 0.35,
+    groundRotateDeg50AirResist: 0.50,
+    groundReferenceDeg: 50,
+    hitVerticalWallReboundMaxRate: 0.70,
+    knockback: Object.freeze({ accel: 700, bias: 0.8, distance: 12 }),
     splashAroundCount: 15,
     splashAroundPaintRadius: 1.064,
     splashAroundOffsetY: 0.3,
@@ -61,6 +71,109 @@ function bombSeed(b) {
   let seed = 0x5b1a7b0d;
   for (const v of [b.pos?.x, b.pos?.y, b.pos?.z, b.spin?.x, b.spin?.y, b.owner?.team, b.age]) seed = mixSeed(seed, v);
   return seed >>> 0;
+}
+
+// Splat Bomb contact response. Ground translation/rotation resistance uses
+// the extracted 0-degree and 50-degree MoveParam endpoints. Splatoon parameter
+// documentation describes these AirResist fields as a velocity-proportional
+// deceleration term, so a 60 Hz contact step retains (1 - resist). The two
+// endpoint records imply a slope interpolation; clamp above the 50-degree
+// reference instead of the old binary normal.y > 0.6 threshold.
+export function splatBombGroundResistance(normalY, rotate = false, spec = SUB_SPECIAL_FIDELITY.bomb) {
+  const y = clamp(Number.isFinite(normalY) ? normalY : 1, 0, 1);
+  const deg = Math.acos(y) * 180 / Math.PI;
+  const t = clamp(deg / spec.groundReferenceDeg, 0, 1);
+  const a = rotate ? spec.groundRotateHorizonAirResist : spec.groundPositionHorizonAirResist;
+  const b = rotate ? spec.groundRotateDeg50AirResist : spec.groundPositionDeg50AirResist;
+  return a + (b - a) * t;
+}
+
+export function applySplatBombSurfaceResponse(b, normal, spec = SUB_SPECIAL_FIDELITY.bomb) {
+  if (!b?.vel || !normal) return b;
+  const vn = b.vel.x * normal.x + b.vel.y * normal.y + b.vel.z * normal.z;
+  // Ground/slope contact owns the sourced positional + rotational drag. Keep
+  // the legacy normal rebound amount for now; #557 separately owns vertical-
+  // wall rebound and must not be smuggled into this change.
+  if (normal.y > 1e-6) {
+    const tx = b.vel.x - vn * normal.x;
+    const ty = b.vel.y - vn * normal.y;
+    const tz = b.vel.z - vn * normal.z;
+    const retain = 1 - splatBombGroundResistance(normal.y, false, spec);
+    const rebound = vn < 0 ? -vn * 0.35 * 0.45 : vn;
+    b.vel.x = tx * retain + normal.x * rebound;
+    b.vel.y = ty * retain + normal.y * rebound;
+    b.vel.z = tz * retain + normal.z * rebound;
+    if (b.spin?.multiplyScalar) b.spin.multiplyScalar(1 - splatBombGroundResistance(normal.y, true, spec));
+    return b;
+  }
+  // Vertical walls own a dedicated S3 rebound *maximum*. Treat the field as
+  // a cap on the outgoing normal component relative to incoming total speed,
+  // rather than a universal 0.7 multiplier: perpendicular contact reaches the
+  // cap, while oblique contact preserves only its smaller incoming normal
+  // component. Tangential retention stays on the pre-existing 0.6 wall path.
+  if (Math.abs(normal.y) <= 1e-6 && vn < 0) {
+    const speed = Math.hypot(b.vel.x, b.vel.y, b.vel.z);
+    const rebound = Math.min(-vn, speed * spec.hitVerticalWallReboundMaxRate);
+    const tx = b.vel.x - vn * normal.x;
+    const ty = b.vel.y - vn * normal.y;
+    const tz = b.vel.z - vn * normal.z;
+    b.vel.x = tx * 0.6 + normal.x * rebound;
+    b.vel.y = ty * 0.6 + normal.y * rebound;
+    b.vel.z = tz * 0.6 + normal.z * rebound;
+    return b;
+  }
+  // Ceilings/non-vertical non-ground contacts retain the previous generic law.
+  b.vel.x -= normal.x * vn * 1.35;
+  b.vel.y -= normal.y * vn * 1.35;
+  b.vel.z -= normal.z * vn * 1.35;
+  b.vel.multiplyScalar?.(0.6);
+  return b;
+}
+
+// Issue #535 — Splat Bomb blast knockback. S3's public parameter mirrors
+// expose Accel=700, Bias=.8, Distance=12 but do not publish the engine's
+// private integrator. Keep the mapping explicit and testable instead of hiding
+// a magic velocity: S3 distance fields are metres (50 DU = 5 m), so one legacy
+// DU is .1 world metre; an instantaneous blast contributes one 60-Hz reference
+// acceleration step. Bias shapes the normalized remaining-range response as an
+// exponent (bias=0 => constant in-range strength, matching direct-contact style
+// records that carry Bias=0). This is the repository's documented calibration
+// model, not a claim that Nintendo exposes this exact internal formula.
+export const SPLAT_BOMB_KNOCKBACK_MODEL = Object.freeze({
+  referenceHz: 60,
+  duPerWorldUnit: 10,
+});
+
+export function splatBombKnockbackDelta(distance, spec = SUB_SPECIAL_FIDELITY.bomb.knockback) {
+  if (!spec || !Number.isFinite(distance) || !Number.isFinite(spec.distance) || !(spec.distance > 0)
+    || distance >= spec.distance || !Number.isFinite(spec.accel) || !(spec.accel > 0)) return 0;
+  const remaining = clamp(1 - distance / spec.distance, 0, 1);
+  const bias = Number.isFinite(spec.bias) ? Math.max(0, spec.bias) : 1;
+  const attenuation = bias === 0 ? (remaining > 0 ? 1 : 0) : Math.pow(remaining, bias);
+  const accelWorldPerSecond2 = spec.accel / SPLAT_BOMB_KNOCKBACK_MODEL.duPerWorldUnit;
+  return accelWorldPerSecond2 / SPLAT_BOMB_KNOCKBACK_MODEL.referenceHz * attenuation;
+}
+
+export function applySplatBombKnockback(bomb, victim, center, targetPoint, distance,
+  spec = SUB_SPECIAL_FIDELITY.bomb.knockback) {
+  if (!victim?.alive || victim.remote || !victim.vel || !center || !targetPoint) return false;
+  // Network bomb damage is recipient-authoritative. Reject an old ghost against
+  // a newer life here too, including the damage-free 7..12 m knockback annulus.
+  if (bomb?.ghost) {
+    const detonation = Number.isFinite(bomb._netBornLocal) && Number.isFinite(bomb.age)
+      ? bomb._netBornLocal + bomb.age : NaN;
+    if (!Number.isFinite(detonation) || !Number.isFinite(victim._netLifeStartedAt)
+      || victim._netLifeStartedAt > detonation) return false;
+  }
+  const dv = splatBombKnockbackDelta(distance, spec);
+  if (!(dv > 0) || !(distance > 1e-9)) return false; // source default DirectionZeroAccelRate = 0
+  const dx = targetPoint.x - center.x, dy = targetPoint.y - center.y, dz = targetPoint.z - center.z;
+  const len = Math.hypot(dx, dy, dz);
+  if (!(len > 1e-9)) return false;
+  victim.vel.x += dx / len * dv;
+  victim.vel.y += dy / len * dv;
+  victim.vel.z += dz / len * dv;
+  return true;
 }
 
 export function fidelityThrowVelocity(actor, kind, out, forwardSpeed) {
