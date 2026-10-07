@@ -766,6 +766,7 @@ def main():
         names += [n for n in [sl] + riders if n not in names]
     names += [n for n in p.get('nape', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('collar_lower', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('hood_lower', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('head_side_in', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('skull_back', {}).get('meshes', []) if n not in names]
     for sm in p.get('smooth_regions', []):
@@ -836,6 +837,11 @@ def main():
             nape(p['nape'])
         if p.get('collar_lower'):
             collar_lower(p['collar_lower'])
+        if p.get('hood_lower'):
+            # the hood lying on the shoulders stood 15-30 px higher than the reference behind the neck in both
+            # side views (2026-10-08, user: 横から見た首の生え方が全然違う): it hid the back of the neck and
+            # the collar, so the neck read as growing out of the hood.  Same per-direction lowering as the collar.
+            collar_lower(p['hood_lower'])
         if p.get('head_side_in'):
             head_side_in(p['head_side_in'])
         if p.get('skull_back'):
