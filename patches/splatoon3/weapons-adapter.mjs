@@ -53,6 +53,28 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('try { if (this._step(p, dt))', 'try { if (this._step(p, elapsed))', 'delayed movement duration');
   patch('      if (!dead && p.trailEvery) {','      if (!dead && !p.ghost && p.trailEvery) {','ghost trails never score paint');
   patch('p.trailRadius * (0.8 + Math.random() * 0.4)', 'fidelityFlightPaintRadius(p)', 'source-bound Shooter intermediate paint width');
+  // #1034: current-S3 Blaster ordinary projectile PaintParam is zero.
+  // Keep dedicated burst/wall/splash paint, but suppress the legacy generic impact splat.
+  patch(`    let area;
+    if (p.type === 'slosh') {
+      // the wave lands as a thick stripe along its travel: stretched along the horizontal heading
+      _dir.y = 0; if (_dir.lengthSq() < 1e-4) _dir.set(0, 0, 1); _dir.normalize();
+      area = G.paint.splat(_v, rad * 1.12, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 1.25 });
+      if (p.head) this._sloshSplash(p, hit.point, null);
+    } else area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });
+    p.owner.addTurf(area);`,
+    `    let area = null;
+    if (p.type === 'slosh') {
+      // the wave lands as a thick stripe along its travel: stretched along the horizontal heading
+      _dir.y = 0; if (_dir.lengthSq() < 1e-4) _dir.set(0, 0, 1); _dir.normalize();
+      area = G.paint.splat(_v, rad * 1.12, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 1.25 });
+      if (p.head) this._sloshSplash(p, hit.point, null);
+    } else if (!(p.type === 'blast' && p.s3Weapon?.kind === 'blaster')) {
+      area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });
+    }
+    if (area != null) p.owner.addTurf(area);`,
+    'Blaster zero ordinary impact paint');
+
   // #740: use the selected vertical unit's source rates in the actual instanced
   // projectile renderer. The rates stay render-only and are read from the already
   // reconstructed unit on both owners and ghosts; no packet fields are added.
