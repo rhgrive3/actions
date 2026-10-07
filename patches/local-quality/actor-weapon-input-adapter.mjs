@@ -8,10 +8,21 @@ export function adaptActorWeaponInput(rel, code, once) {
     '    this._prevIntent = { fire: false, sub: false, jump: false, special: false, squid: false };\n' +
     '    this._weaponInput = { fire: false, firePressed: false, sub: false, subReleased: false };   // reused every tick (no per-tick allocation)\n',
     'Actor weapon input storage');
-  return once(code,
-    '    this.weaponRunner.update(dt, { fire, firePressed: pressed, sub: intent.sub && !isSquid, subReleased: subReleased && !isSquid });',
-    '    const winp = this._weaponInput;\n' +
-    '    winp.fire = fire; winp.firePressed = pressed; winp.sub = intent.sub && !isSquid; winp.subReleased = subReleased && !isSquid;\n' +
-    '    this.weaponRunner.update(dt, winp);',
-    'Actor weapon input reuse');
+  const needle = 'this.weaponRunner.update(dt, {';
+  const at = code.indexOf(needle);
+  if (at < 0 || code.indexOf(needle, at + needle.length) !== -1) {
+    throw new Error('INKWAVE quality patch conflict (Actor weapon input reuse): expected one WeaponRunner update call');
+  }
+  const lineStart = code.lastIndexOf('\n', at) + 1;
+  const lineEnd0 = code.indexOf('\n', at);
+  const lineEnd = lineEnd0 < 0 ? code.length : lineEnd0;
+  const line = code.slice(lineStart, lineEnd);
+  const m = line.match(/^(\\s*)this\\.weaponRunner\\.update\\(dt,\\s*\\{\\s*fire(?:\\s*:\\s*([^,}]+))?,\\s*firePressed:\\s*([^,}]+),\\s*sub:\\s*([^,}]+),\\s*subReleased:\\s*([^}]+)\\s*\\}\\);\\s*$/);
+  if (!m) throw new Error('INKWAVE quality patch conflict (Actor weapon input reuse): unsupported WeaponRunner input shape');
+  const [, indent, fireExpr = 'fire', pressedExpr, subExpr, subReleasedExpr] = m;
+  const after = indent + 'const winp = this._weaponInput;\\n' +
+    indent + 'winp.fire = ' + fireExpr.trim() + '; winp.firePressed = ' + pressedExpr.trim() +
+    '; winp.sub = ' + subExpr.trim() + '; winp.subReleased = ' + subReleasedExpr.trim() + ';\\n' +
+    indent + 'this.weaponRunner.update(dt, winp);';
+  return code.slice(0, lineStart) + after + code.slice(lineEnd);
 }

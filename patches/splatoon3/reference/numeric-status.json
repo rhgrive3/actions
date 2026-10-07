@@ -1766,6 +1766,21 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.slosher.postShotLock": {
+    "value": 0.26666666666666666,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.reticleRange.ground": {
+    "value": 14.24,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.reticleRange.air": {
+    "value": 13.67,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "bomb.fuse": {
     "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1878,6 +1893,16 @@
   },
   "specials.storm.radius": {
     "value": 10,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "specials.slam.damageMax": {
+    "value": 220,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "specials.slam.damageMin": {
+    "value": 60,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -3451,31 +3476,6 @@
   },
   "clothingGear.respawnPunisher.specialSaverAPScale": {
     "value": 0.7,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.slosher.postShotLock": {
-    "value": 0.26666666666666666,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.slosher.reticleRange.ground": {
-    "value": 14.24,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.slosher.reticleRange.air": {
-    "value": 13.67,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "specials.slam.damageMax": {
-    "value": 220,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "specials.slam.damageMin": {
-    "value": 60,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   }
