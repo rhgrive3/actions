@@ -312,9 +312,10 @@ export class Actor {
       this.hp = Math.min(P.hp, this.hp + (this.submerged ? P.regenRateSwim : P.regenRate) * dt);
     }
     const wasFull = this.ink >= P.inkMax;
-    if (this.submerged || this.climbing) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillSwim * dt);
-    else if (!isSquid && this.lastFire > P.inkRefillDelay && !this.weaponRunner.busy()) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * dt);
-    else if (isSquid) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * 0.5 * dt);
+    const inkRecoveryBlocked = (this.weaponRunner?.s3InkRecoverRemaining || 0) > 1e-10;
+    if (!inkRecoveryBlocked && (this.submerged || this.climbing)) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillSwim * dt);
+    else if (!inkRecoveryBlocked && !isSquid && this.lastFire > P.inkRefillDelay && !this.weaponRunner.busy()) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * dt);
+    else if (!inkRecoveryBlocked && isSquid) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * 0.5 * dt);
     if (!wasFull && this.ink >= P.inkMax && this.isLocal) G.audio?.play('refill_full', { volume: 0.5 });
 
     // ---- weapons (a squid → kid pop-out holds the first shot for emergeDelay; a tap during it is buffered, not lost)
