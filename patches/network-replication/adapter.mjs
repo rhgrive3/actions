@@ -181,7 +181,7 @@ export function emit(name, payload) {
   }
 
   _remoteSplat(victim, attacker, cause) {`, 'host-authoritative first-splat protocol');
-    patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    victim.alive = false;", 'Flow observes only accepted remote splats');
+    patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    clearRemoteSquidroll(victim);\n    victim.alive = false;", 'Flow observes only accepted remote splats');
     patch('const FORWARD = [', "const FORWARD = ['hit', 'hit:rejected', ",
       'authoritative hit admission feedback');
     patch('    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;',
@@ -212,9 +212,11 @@ export function emit(name, payload) {
     patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
       groupedHit, 'Slosher volley identity owner admission');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
+    for (const a of this.byNid.values()) clearRemoteSquidroll(a);
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
     patch('  _remove(a) {\n    this.byNid.delete(a.nid);', `  _remove(a) {
+    clearRemoteSquidroll(a);
     retireNetworkGhosts(a);
     this.byNid.delete(a.nid);`, 'departed owner retirement');
 
@@ -237,6 +239,9 @@ export function emit(name, payload) {
     patch("const msg = { k: 't', ts: r3(now()), a",
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
       'owner simulation tick preserving existing sidecars');
+    patch('    const a = [];\n    for (const x of this.byNid.values()) if (!x.remote) a.push(packActor(x));',
+      '    const a = [], sq = Object.create(null);\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n    }',
+      'append optional Squid Roll presentation sidecar');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
       const points = p.physicsPoints || (p.physicsPoints = []);
@@ -244,7 +249,13 @@ export function emit(name, payload) {
     }
     // actors
     if (d.a)`, 'snapshot physics tick pair');
-    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema only in event packets');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional Roll sidecar');
+    patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
+      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const a = this.byNid.get(s[0]);',
+      'strict optional Squid Roll metadata validation');
+    patch('      const snap = unpackActor(s, d.ts);\n      snap.spCost = d.sc?.[a.nid];',
+      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.spCost = d.sc?.[a.nid];',
+      'attach validated presentation-only roll snapshot');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
@@ -277,9 +288,18 @@ export function emit(name, payload) {
     patch('while (i < p.events.length && p.events[i][0] <= tr) i++;',
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
+    patch('  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  o.spCost = a.spCost;\n  return o;',
+      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  o.spCost = a.spCost;\n  return o;',
+      'interpolate only matching owner Roll identity');
+    patch('    const S = n.cur;\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
+      '    const S = n.cur;\n    if (a.remote) {\n      const flags = S.f;\n      if (!a.alive || !(flags & F.alive) || !(flags & F.squid) || (flags & F.special) || !S.rollId) clearRemoteSquidroll(a);\n      else syncRemoteSquidroll(a, S, this.peers.get(a.owner));\n    }\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
+      'remote presentation follows accepted owner Roll snapshot');
+    patch('        a.character._netTrig?.(e[3], unpackTrig(e[4]));',
+      "        if (e[3] === 'movement_cancel' || e[3] === 'land' || e[3] === 'spawn') clearRemoteSquidroll(a, true);\n        a.character._netTrig?.(e[3], unpackTrig(e[4]));",
+      'remote cancellation event invalidates current visual Roll');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
-    patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'ownership transfer retirement');
+      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
+    patch('  _adopt(a) {', '  _adopt(a) {\n    clearRemoteSquidroll(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'ownership transfer retirement');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     const kitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
@@ -381,7 +401,7 @@ export function emit(name, payload) {
         break;
       }`, 'beam birth clock');
     patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
-    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
+    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    clearRemoteSquidroll(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
@@ -422,6 +442,65 @@ function retireNetworkGhosts(owner = null) {
   for (let i = P.clouds.length-1; i >= 0; i--) if (P.clouds[i].ghost && owns(P.clouds[i])) { P._releaseCloud(P.clouds[i],.3); P.clouds.splice(i,1); }
   for (let i = P.beams.length-1; i >= 0; i--) { const b = P.beams[i]; if (b._netPeer && (!owner || b._netOwner === owner)) { b.mesh.visible = false; P.beamPool.push(b.mesh); P.beams.splice(i,1); } }
   for (const [a,mesh] of P.sights) if (a.remote && (!owner || a === owner)) { P.scene.remove(mesh); mesh.material.dispose(); P.sights.delete(a); }
+}
+const SQUIDROLL_ROW_TAG = 's3roll-v1';
+const outgoingSquidrolls = new WeakMap();
+function packSquidrollSnapshot(a) {
+  const action = a.s3?.actions?.roll;
+  const previous = outgoingSquidrolls.get(a);
+  const inactive = () => {
+    if (!previous?.action) return null;
+    previous.action = null;
+    return [SQUIDROLL_ROW_TAG, 0, 0, 0, 0];
+  };
+  if (!action || !a.alive || a.form !== 'squid' || a.specialActive || a.superJumpState
+    || !Number.isFinite(action.time) || action.time <= 0 || action.time > 0.5
+    || !Number.isFinite(action.vx) || !Number.isFinite(action.vz)
+    || Math.hypot(action.vx, action.vz) <= 1e-6 || Math.hypot(action.vx, action.vz) > 40) return inactive();
+  let state = previous;
+  if (!state || state.action !== action) {
+    let id = (state?.id || 0) + 1;
+    if (id > 0x7fffffff) id = 1;
+    state = { action, id };
+    outgoingSquidrolls.set(a, state);
+  }
+  return [SQUIDROLL_ROW_TAG, state.id, action.time, action.vx, action.vz];
+}
+function readSquidrollSnapshot(meta) {
+  if (meta == null) return null; // legacy packets carry no optional presentation sidecar
+  if (!Array.isArray(meta) || meta.length !== 5 || meta[0] !== SQUIDROLL_ROW_TAG
+    || !Number.isSafeInteger(meta[1]) || meta[1] < 0 || meta[1] > 0x7fffffff
+    || !Number.isFinite(meta[2]) || meta[2] < 0 || meta[2] > 0.5
+    || !Number.isFinite(meta[3]) || !Number.isFinite(meta[4])
+    || Math.hypot(meta[3], meta[4]) > 40) return false;
+  if (meta[1] === 0) return meta[2] === 0 && meta[3] === 0 && meta[4] === 0 ? null : false;
+  if (meta[2] <= 0 || Math.hypot(meta[3], meta[4]) <= 1e-6) return false;
+  return { id: meta[1], remaining: meta[2], vx: meta[3], vz: meta[4] };
+}
+function clearRemoteSquidroll(actor, blockCurrent = false) {
+  if (!actor) return;
+  if (blockCurrent) {
+    const id = actor.remoteSquidrollVisual?.id ?? actor.net?.cur?.rollId;
+    if (id) actor._remoteSquidrollBlocked = { owner: actor.owner, id };
+  } else actor._remoteSquidrollBlocked = null;
+  actor.remoteSquidrollVisual = null;
+}
+function syncRemoteSquidroll(actor, sample, peer) {
+  const id = sample.rollId;
+  const blocked = actor._remoteSquidrollBlocked;
+  if (blocked?.owner === actor.owner && blocked.id === id) { actor.remoteSquidrollVisual = null; return; }
+  if (blocked) actor._remoteSquidrollBlocked = null;
+  const elapsed = Number.isFinite(peer?.tr) ? Math.max(0, peer.tr - sample.t) : 0;
+  const remaining = Math.max(0, sample.rollRemaining - elapsed);
+  if (!remaining || remaining > 0.5) { clearRemoteSquidroll(actor); return; }
+  let visual = actor.remoteSquidrollVisual;
+  if (!visual || visual.id !== id || visual.owner !== actor.owner) {
+    visual = actor.remoteSquidrollVisual = { remotePresentation: true, id, owner: actor.owner,
+      remaining, vx: sample.rollVx, vz: sample.rollVz };
+  } else {
+    visual.remaining = Math.min(visual.remaining, remaining);
+    visual.vx = sample.rollVx; visual.vz = sample.rollVz;
+  }
 }
 const firstSplatSessions = new WeakMap();
 function firstSplatStateFor(session,cfg) {
