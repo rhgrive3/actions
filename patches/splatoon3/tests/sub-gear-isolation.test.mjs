@@ -59,3 +59,36 @@ test('full dispatcher preserves explicit Kit power once and implicit Storm snaps
  assert.throws(()=>adaptGearSub(rel,raw+raw,replace),/expected one fidelity launch-speed owner/);
  assert.throws(()=>adaptGearSub(rel,raw.replace('Number.isFinite(forwardSpeed)','forwardSpeed !== undefined'),replace),/expected one fidelity launch-speed owner/);
 });
+
+// #968: the real loadout/kit path, not a manually supplied generic multiplier.
+import { gearCurve } from '../runtime/gear.mjs';
+function powerLoadout(ap) {
+ const out=Array.from({length:3},()=>({main:'none',subs:['none','none','none']}));
+ for(const p of out) if(ap>=10){p.main='subPower';ap-=10;}
+ for(const p of out) for(let i=0;i<3&&ap>=3;i++,ap-=3)p.subs[i]='subPower';
+ assert.equal(ap,0);return out;
+}
+test('#968 Curling and Suction use their own extracted AP curves through real gear equip',async()=>{
+ const f=await rig();
+ for(const kind of ['roller','shooter']) for(const ap of [0,3,10,30,57]){
+  const a=f.make(kind,'subPower',0);a.s3.loadout=powerLoadout(ap);a.setWeapon(kind);
+  const sub=f.SUB[a.weapon.sub], t=sub.throwSpeedTiers;
+  const expected=gearCurve(ap,t.low,t.mid,t.high);
+  assert.ok(Math.abs(resolveSubForThrow(a,0,f.SUB).throwSpeed-expected)<1e-9,`${kind}/${ap}`);
+  assert.ok(Math.abs(a.s3.modifiers.subPower-expected/t.low)<1e-9);
+ }
+ const a=f.make('roller','subPower',57);
+ assert.ok(Math.abs(resolveSubForThrow(a,0,f.SUB).throwSpeed-31.2)<1e-9);
+ const baseline=f.SUB.curling.throwSpeedMaxCharge/f.SUB.curling.throwSpeed;
+ assert.ok(Math.abs(resolveSubForThrow(a,1,f.SUB).throwSpeed/resolveSubForThrow(a,0,f.SUB).throwSpeed-baseline)<1e-9,'existing charge mapping is independent');
+});
+test('#968 kit swaps and actual authoritative Curling throws do not accumulate power or leak it',async()=>{
+ const f=await rig(),a=f.make('roller','subPower',57),b=f.make('roller','subPower',0);
+ const originals=JSON.stringify(f.SUB),packets=[];f.G.netm={recBomb(owner,bomb){packets.push([owner,bomb]);}};
+ for(const kind of ['shooter','roller','shooter','roller'])a.setWeapon(kind);
+ for(const actor of [a,b]){f.step(actor,{sub:true},8);f.step(actor,{subReleased:true});}
+ assert.equal(f.G.projectiles.bombs.length,2);assert.equal(packets.length,2);
+ const [first,second]=f.G.projectiles.bombs;
+ assert.ok(Math.abs(first.s3Resolved.throwSpeed/second.s3Resolved.throwSpeed-1.3)<1e-9);
+ assert.equal(JSON.stringify(f.SUB),originals);assert.equal(b.s3.modifiers.subPower,1);
+});
