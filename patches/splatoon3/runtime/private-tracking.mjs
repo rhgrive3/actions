@@ -15,6 +15,8 @@ export function applyMainDirectHit(system, attacker, victim, amount, weapon, gro
 }
 function directMain(attacker, victim, source) {
   const kind = weapons?.[source]?.kind;
+  // Blaster/Slosher splash and Roller contact share an ID with direct pellets;
+  // only the main projectile solver may explicitly qualify those families.
   return !!kind && (['shooter', 'dualies', 'charger', 'splatling'].includes(kind) ||
     directContext?.attacker === attacker && directContext?.victim === victim);
 }
@@ -39,12 +41,14 @@ export function thermalTrackingRecord(victim, owner, now = world?.time || 0) {
   return r;
 }
 export function trackingFade(victim, owner) {
+  // Explicit visual calibration, not a claim about S3's unverified minimum DU.
   const c = config?.trackingVisual || {}, lo = c.nearStart ?? 6, hi = c.nearFull ?? 8;
   const d = victim?.pos?.distanceTo?.(owner?.pos);
   return Number.isFinite(d) && hi > lo ? Math.max(0, Math.min(1, (d - lo) / (hi - lo))) : 0;
 }
 export function privateTrackingOpacity(victim, owner, now = world?.time || 0) {
   if (!thermalTrackingRecord(victim, owner, now) && !hauntTrackingRecord(victim, owner)) return 0;
+  // Swimming in own ink is hidden; wall climbing is explicitly eligible.
   if (victim.submerged && !victim.climbing || victim.anim?.form === 'swim' && !victim.climbing) return 0;
   return trackingFade(victim, owner);
 }
@@ -60,9 +64,18 @@ export function installThermalTracking(api, tuning) {
     return reset.apply(this, args);
   };
   Actor.prototype.update = function (...args) { ensureRenderer(); return update.apply(this, args); };
-  on('match:state', ({ state }) => { ensureRenderer(); if (state === 'intro' || state === 'finish' || state === 'results') records = new WeakMap(); });
-  for (const name of ['respawn', 'combat:respawn']) on(name, ({ actor }) => { if (actor) { records.delete(actor); generations.set(actor, (generations.get(actor) || 0) + 1); } });
-  on('damage', ({ victim, attacker, amount, source }) => { if (amount > 0 && directMain(attacker, victim, source)) stamp(attacker, victim, G.time); });
+  on('match:state', ({ state }) => {
+    ensureRenderer();
+    if (state === 'intro' || state === 'finish' || state === 'results') records = new WeakMap();
+  });
+  for (const name of ['respawn', 'combat:respawn']) on(name, ({ actor }) => {
+    if (actor) { records.delete(actor); generations.set(actor, (generations.get(actor) || 0) + 1); }
+  });
+  on('damage', ({ victim, attacker, amount, source }) => {
+    if (amount > 0 && directMain(attacker, victim, source)) stamp(attacker, victim, G.time);
+  });
+  // A predicted local hit is not accepted HP damage. Capture only local pending
+  // request metadata, then consume it inside the existing validated ACK path.
   if (NetMatch?.prototype.sendHit && NetMatch.prototype._hitAck) {
     const send = NetMatch.prototype.sendHit, ack = NetMatch.prototype._hitAck;
     NetMatch.prototype.sendHit = function (attacker, victim, damage, source, ...rest) {
