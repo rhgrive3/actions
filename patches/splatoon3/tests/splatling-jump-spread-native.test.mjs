@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { FixedClock } from '../runtime/clock.mjs';
 import { splatlingJumpRecoveryAt } from '../runtime/splatling-jump-spread.mjs';
 import { fixture, productionComposition } from './weapon-edgecases-fixture.mjs';
+import { fixture as fidelityFixture } from '../../../scripts/weapons-fixture.mjs';
+import { CASES, finish as finishFidelity, launch as launchFidelity, paintMetrics, reset as resetFidelity } from '../../../scripts/measure-weapons-fidelity.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const upstream = rel => fs.readFileSync(`${ROOT}/inkwave-public/${rel}`, 'utf8');
@@ -222,4 +224,16 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   assert.ok(ghost.vel.equals(packetVelocity));
   assert.ok(ghost.pos.equals(packetStart));
   assert.equal(nm.out.filter(event => event[1] === 'p').length, 1, 'remote reconstruction does not publish a duplicate shot');
+});
+
+test('zero-spread ground Splatling range probe preserves its native projectile and paint RNG sequence', async () => {
+  const f = await fidelityFixture({ fidelity: true });
+  const scenario = CASES.find(item => item.key === 'splatling-partial');
+  const a = resetFidelity(f, scenario);
+  launchFidelity(f, a, scenario);
+  assert.equal(f.draws(), 4, 'the zero-spread probe retains speed, both Splatling spread samples, and seed draws');
+  finishFidelity(f, a);
+  const paint = paintMetrics(f);
+  assert.deepEqual({ maxZ: paint.bounds?.maxZ, area: paint.area, cells: paint.cells },
+    { maxZ: 15.625, area: 7.8125, cells: 125 });
 });

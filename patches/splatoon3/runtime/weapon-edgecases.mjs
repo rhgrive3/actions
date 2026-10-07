@@ -32,9 +32,10 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
   if (w.kind !== 'splatling' || !Number.isFinite(w.spreadPitchGround) || (!a.grounded && recovery === null)) {
     return system._spread(dir, horizontal);
   }
-  if (!(horizontal > 0)) return system._spread(dir, horizontal);
+  // Keep both Splatling spread draws when the horizontal cone is zero. The
+  // projectile seed and later paint effects share this gameplay RNG stream.
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
-  const horizontalAngle = horizontal * DEG * radius;
+  const horizontalAngle = Math.max(0, horizontal) * DEG * radius;
   const groundPitchAngle = w.spreadPitchGround * DEG * radius;
   const airPitchAngle = Math.atan(0.55 * Math.tan(horizontalAngle));
   const pitchAngle = recovery === null ? groundPitchAngle : airPitchAngle + (groundPitchAngle - airPitchAngle) * recovery;
