@@ -10,8 +10,8 @@ const EPS = 1e-10, DEG = Math.PI / 180;
 let flushing = 0;
 
 // This retains the existing two-draw radial sampler, not a claimed S3 PDF.
-// Ground pitch has its own angular envelope; neither bloom nor the horizontal
-// scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
+// Heavy Splatling pitch has its own 1.6deg angular envelope on both ground and
+// air; the horizontal state selects 3.3deg/7deg independently.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
   // #883: Dualies expose one scalar spread envelope, so do not inherit the
@@ -40,7 +40,9 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
     return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
       .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
   }
-  if (w.kind !== 'splatling' || !a.grounded || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, horizontal);
+  // #1045: keep Heavy Splatling on its independent-axis sampler while
+  // airborne; PitchDegSwerve is not derived from the 7deg horizontal envelope.
+  if (w.kind !== 'splatling' || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, horizontal);
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
   const right = dir.clone().set(-dir.z, 0, dir.x);
   if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
