@@ -159,23 +159,25 @@ test('#684 HUD renders the 10-degree outer envelope and a separate bias cue from
   ps._muzzle = (actor, out) => out.set(0, 0, 0);
   ps._aimFrom = (actor, muzzle, out) => out.set(0, 0, 1);
   ps._new = () => ({ pos: new THREE.Vector3(), prev: new THREE.Vector3(), start: new THREE.Vector3(), vel: new THREE.Vector3() });
-  const owners = [], seen = [];
-  ps._push = p => owners.push(p.owner);
-  ps._spread = (dir, deg) => { seen.push(deg); return dir; };
+  const owners = [], fired = [];
+  ps._push = p => { owners.push(p.owner); fired.push(p); };
+  const shotAngle = p => Math.acos(Math.max(-1, Math.min(1, p.vel.z / p.vel.length()))) * 180 / Math.PI;
   a._nearCamera = () => false;
   const remote = f.make('blaster'); remote.isLocal = false; remote._nearCamera = () => false;
   jump(f, remote); airborne(f, remote, 30);
 
-  f.setRandom(() => 0.1);                  // 0.1 < bias -> outer reticle
+  let draws = [0.1, 1, 0];                 // outer choice, full-radius sample, zero azimuth
+  f.setRandom(() => draws.shift() ?? 0);
   ps.fireBlaster(a, a.weapon, 999);
-  close(seen.at(-1), s.envelope, 'outer draw uses the full airborne envelope');
+  close(shotAngle(fired.at(-1)), s.envelope, 'outer draw uses the full airborne envelope');
+  draws = [0.1, 1, 0];
   ps.fireBlaster(remote, remote.weapon, 999);
-  close(seen.at(-1), state(remote).envelope, 'remote owner also uses its own full outer envelope');
+  close(shotAngle(fired.at(-1)), state(remote).envelope, 'remote owner also uses its own full outer envelope');
   assert.equal(owners[0], a, 'native projectile keeps its local owner');
   assert.equal(owners[1], remote, 'native projectile keeps its remote owner');
   f.setRandom(() => 0.9);                  // 0.9 >= bias -> inner reticle
   ps.fireBlaster(a, a.weapon, 999);
-  close(seen.at(-1), s.ground, 'inner draw stays on the grounded endpoint');
+  close(shotAngle(fired.at(-1)), s.ground, 'inner draw stays on the grounded endpoint');
   f.restoreRandom();
   assert.notEqual(s.bias, 0.5, 'mid-recovery bias is below the initial maximum');
 
@@ -183,7 +185,7 @@ test('#684 HUD renders the 10-degree outer envelope and a separate bias cue from
   airborne(f, a, END_F - 30);
   f.setRandom(() => 0);
   ps.fireBlaster(a, a.weapon, 999);
-  close(seen.at(-1), a.weapon.spreadGround, 'recovered state always uses the grounded endpoint');
+  close(shotAngle(fired.at(-1)), a.weapon.spreadGround, 'recovered state always uses the grounded endpoint');
   f.restoreRandom();
 });
 
