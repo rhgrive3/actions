@@ -7,12 +7,15 @@ export function adaptTouchPointerLock(rel, code) {
   code=replaceOnce(code,'    this._dev = v;','    this._dev = v;\n    if (v === \'touch\') this._releaseMouseForTouch();','touch releases mouse ownership');
   code=replaceOnce(code,"    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') this.lastDevice = 'touch'; }, { capture: true, passive: true });",`    window.addEventListener('pointerdown', (e) => {
       if (isMobilePointer(e)) this.lastDevice = 'touch';
-      else if (e.pointerType === 'mouse' && this.enabled && (this._touchRelockWanted || this._dev === 'touch') && this._isTouchOverlayReacquireTarget(e.target) &&
+      else if (e.pointerType === 'mouse' && this.enabled && (this._touchRelockWanted || this._dev === 'touch') && this._isTouchOverlayReacquireTarget(e.target, true) &&
         !this.mobile?._ptr?.size && !(this.mobile?._stick?.id >= 0)) {
         const touchBoot = !this._touchRelockWanted && this._dev === 'touch';
+        // onDeviceChange may close the touch map/editor while hiding controls.
+        // The same gesture must still honor the UI state it started in.
+        const touchUiBlocked = this.mobile?.editing || this.mobile?.mapOpen || !this._isTouchOverlayReacquireTarget(e.target);
         this.lastDevice = 'kbm';
         if (touchBoot) this._dev = 'kbm';
-        if (!this._touchUnlockPending && !this.mobile?.editing && !this.mobile?.mapOpen && G.mode === 'match' && G.match?.state === 'playing' &&
+        if (!this._touchUnlockPending && !touchUiBlocked && !this.mobile?.editing && !this.mobile?.mapOpen && G.mode === 'match' && G.match?.state === 'playing' &&
           !G.match.paused && !G.match.attract && !G.game?.menus?.current) {
           if (document.pointerLockElement === this.canvas) { this.locked = true; this._touchRelockWanted = false; }
           else this.requestLock();
@@ -34,15 +37,17 @@ export function adaptTouchPointerLock(rel, code) {
       this._touchUnlockPending = false;
       this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0;
       if (!touchUnlock && wasLocked) this.onUnlock?.();`,'touch unlock is not Escape');
-  return replaceOnce(code,'  requestLock() {',`  _isTouchOverlayReacquireTarget(target) {
+  return replaceOnce(code,'  requestLock() {',`  _isTouchOverlayReacquireTarget(target, includeEditor = false) {
     const mobile = this.mobile;
-    if (!mobile || mobile.editing || mobile.mapOpen) return false;
+    // A physical mouse can acquire KBM even while map/editor prevent lock.
+    // Pointer Lock admission stays in the separate playing-context guard.
+    if (!mobile) return false;
     if (target === this.canvas) return true;
     const root = mobile.root;
     if (!root) return false;
     if (typeof target?.closest === 'function') {
       try {
-        if (target.closest('#iw-mobile-controls .iwm-edit, #iw-mobile-controls .iwm-rotate')) return false;
+        if (target.closest('#iw-mobile-controls .iwm-edit, #iw-mobile-controls .iwm-rotate')) return includeEditor;
         if (target.closest('#iw-mobile-controls .iwm-look, #iw-mobile-controls .iwm-movezone, #iw-mobile-controls .iwm-b')) return true;
       } catch { return false; }
     }
