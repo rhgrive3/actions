@@ -22,7 +22,9 @@ const { chromium, webkit, devices } = createRequire(import.meta.url)('playwright
 const fixture = `<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="/styles/ui.css"><link rel="stylesheet" href="/styles/mobile.css">
 <style>html,body{margin:0;overflow:hidden;background:#0d1020;touch-action:none}#ui-root{position:fixed;inset:0}</style>
-<div id="ui-root"></div><canvas id="game"></canvas><script type="module">
+<div id="ui-root"></div><canvas id="game"></canvas>
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script>
+<script type="module">
 import { MobileInput } from '/src/core/mobile.js'; import { Menus } from '/src/ui/menus.js'; import { DEFAULT_SETTINGS } from '/src/config.js';
 import { installUi } from '/patches/splatoon3/runtime/ui.mjs';
 installUi({ Menus });
