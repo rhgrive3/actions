@@ -37,6 +37,16 @@ export function adaptSource(rel, code) {
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',
       'const win = cov[0] >= cov[1] ? 0 : 1; // Exact tie belongs to the assigned Alpha side.',
       'deterministic Alpha turf tie');
+    // S3 Regular Battle has no one-weapon-per-team rule: standard Turf War bot slots are independent draws,
+    // so the local weapon does not ban itself from teammates. Boss squads and the attract backdrop keep the mix.
+    code = replaceOnce(code,
+      '    const pickTeam = (first) => {\n      const pool = [...WEAPON_ORDER];\n      const out = [];\n      if (first) { out.push(first); pool.splice(pool.indexOf(first), 1); }',
+      '    const independent = this.mode !== \'boss\' && !this.attract;\n    const pickTeam = (first) => {\n      const pool = [...WEAPON_ORDER];\n      const out = [];\n      if (first) { out.push(first); if (!independent) pool.splice(pool.indexOf(first), 1); }',
+      'standard Turf weapon draws keep the local weapon');
+    code = replaceOnce(code,
+      '        out.push(pool.splice((Math.random() * pool.length) | 0, 1)[0]);',
+      '        const pick = (Math.random() * pool.length) | 0;\n        out.push(independent ? pool[pick] : pool.splice(pick, 1)[0]);',
+      'standard Turf weapon draws allow duplicates');
   }
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
