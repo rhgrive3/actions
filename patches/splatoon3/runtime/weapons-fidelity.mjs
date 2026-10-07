@@ -773,7 +773,7 @@ export function installWeaponsFidelity(context,profile) {
     try{
       const drops=rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0);
       return slosh.call(this,actor,cachedWeaponOverrideConfig(slosherDropConfigs,w,'drops',drops));
-    }}
+    }
     finally{this._fidelitySloshContext=previous;}
   };
   Projectiles.prototype.s3SlosherGuide=function(actor,w){
