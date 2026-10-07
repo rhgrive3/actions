@@ -86,7 +86,7 @@ const scenarios = [
   { id: 'low ceiling early contact', pos: [0, 0, 0], boxes: [FLOOR, { kind: 'box', min: [-10, 2.2, -10], max: [10, 3.2, 10] }] },
   { id: 'wall beside the leap', pos: [0.5, 0, 0], boxes: [FLOOR, { kind: 'box', min: [2, 0, -10], max: [3, 20, 10] }], move: [1, 0] },
   { id: 'rail landing', pos: [0, 0.5, 0], boxes: [FLOOR, { kind: 'box', min: [-5, 0, -0.3], max: [5, 0.5, 0.3], rail: true }] },
-  { id: 'void with the native timeout', pos: [0, 5, 0], boxes: [] },
+  { id: 'void with the current native water hazard', pos: [0, 5, 0], boxes: [] },
 ];
 
 async function runScenario(sc) {
@@ -101,6 +101,12 @@ async function runScenario(sc) {
   let slamEvents = 0;
   const trigger = a.character.trigger.bind(a.character);
   a.character.trigger = (...args) => { if (args[0] === 'special_slam') slamEvents++; return trigger(...args); };
+  let splatAdmission = null;
+  const nativeSplat = a.splat.bind(a);
+  a.splat = (...args) => {
+    splatAdmission = { gauge: a.special, phase: a.specialActive?.phase, cause: args[1] };
+    return nativeSplat(...args);
+  };
   const cost = a.specialCost(), segment = cost / SPECIAL_GAUGE_SEGMENTS;
   a.special = cost;
   const impacts = [];
@@ -156,7 +162,7 @@ async function runScenario(sc) {
   }
   if (a.special === 0 && finishTick === null) finishTick = tick;
   const result = {
-    id: sc.id, cost, segment, impacts, impactTick, finishTick, death, slamEvents, prematureSegment, earlyGroundContactDuringRise,
+    id: sc.id, cost, segment, splatAdmission, impacts, impactTick, finishTick, death, slamEvents, prematureSegment, earlyGroundContactDuringRise,
     finishAfterImpact: finishTick !== null && impactTick !== null ? finishTick - impactTick : null,
     pendingLeft: !!a.s3TidalSlamGaugeFinish, finalGauge: a.special,
     maxDrop: Math.max(...drops, 0), drops,
@@ -177,6 +183,25 @@ for (const sc of scenarios) {
   test(`#648 native physics: ${sc.id} keeps a phase-correct gauge lifecycle`, async () => {
     const r = await runScenario(sc);
     assert.equal(r.slamEvents, 1, 'the child model sees exactly one native slam event, no duplicates');
+    if (sc.id.startsWith('void')) {
+      // Current main checks the native water hazard during special movement.
+      // Death retires the live action before its timeout; no phantom impact is legal.
+      assert.equal(r.impacts.length, 0, 'water death cannot create a phantom Slam impact');
+      assert.equal(r.splatAdmission?.cause, 'water', 'the shared native water boundary owns death');
+      assert.equal(r.splatAdmission?.phase, 'fall', 'the gauge remains action-owned up to falling water death');
+      assert.ok(r.splatAdmission.gauge > r.segment && r.splatAdmission.gauge < r.cost,
+        'death reads the actual partly depleted gauge, rather than an activation zero or forced last segment');
+      assert.ok(r.death, 'the existing death/respawn lifecycle completes');
+      assert.equal(r.phaseTrace.death?.phaseBefore, 'fall', 'water interrupts the active fall');
+      assert.equal(r.phaseTrace.death?.aliveBefore, true);
+      assert.equal(r.phaseTrace.death?.aliveAfter, false);
+      assert.ok(Math.abs(r.death.special - r.splatAdmission.gauge * 0.5) < 1e-9,
+        'native Special Saver preserves half of the real remainder at death');
+      assert.equal(r.death.pending, false, 'no stale finish survives death');
+      assert.equal(r.pendingLeft, false);
+      assert.equal(r.finalGauge, 0, 'native respawn/reset owns the final zero');
+      return;
+    }
     assert.equal(r.impacts.length, 1, 'exactly one native impact callback');
     assert.equal(r.impacts[0].phase, 'fall', 'impact happens in the native fall phase');
     assert.ok(Math.abs(r.impacts[0].gauge - r.segment) < 1e-9, 'the impact frame observes exactly one of 23 segments');
@@ -201,23 +226,12 @@ for (const sc of scenarios) {
       `no premature live-action collapse before native impact (max ${r.maxPreImpactDrop} of ${r.cost}; impact transition ${JSON.stringify(r.phaseTrace)})`);
     assert.ok(r.probes.groundPerTick <= 8, `bounded native groundProbe use (${r.probes.groundPerTick} per fixed step)`);
     assert.ok(r.probes.bodyPerTick <= 6, `bounded native collideBody use (${r.probes.bodyPerTick} per fixed step)`);
-    if (sc.id.startsWith('void')) {
-      assert.ok(r.death, 'the void fall ends in the existing water fall-death');
-      assert.equal(r.phaseTrace.death?.phaseBefore, null, 'the void splat happens after the Slam action ends');
-      assert.equal(r.phaseTrace.death?.aliveBefore, true, 'the native owner remains alive through timeout impact');
-      assert.equal(r.phaseTrace.death?.aliveAfter, false, 'the following native update owns the water death');
-      assert.ok(Math.abs(r.death.special - r.segment * 0.5) < 1e-9, 'Special Saver sees the held segment at that death');
-      assert.equal(r.death.pending, false, 'the existing death path cleared the pending finish');
-      assert.equal(r.pendingLeft, false, 'no stale finish survives the death');
-      assert.equal(r.finalGauge, 0, 'the existing respawn/reset boundary owns the final zero');
-    } else {
       assert.ok(r.finishAfterImpact !== null && r.finishAfterImpact > 1,
         `the final zero waits for the body landing completion, not a one-frame boundary (${r.finishAfterImpact} ticks)`);
       assert.ok(r.finishAfterImpact <= 60,
         `landing completion is bounded by the existing hard-landing recovery (${r.finishAfterImpact} ticks)`);
       assert.equal(r.finalGauge, 0, 'a normally completed action ends at zero');
       assert.equal(r.pendingLeft, false, 'the pending finish is consumed, not leaked');
-    }
   });
 }
 
