@@ -91,10 +91,10 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    const cov = G.paint.coverage();',
       '    const cov = this.s3FinishCoverage ? [...this.s3FinishCoverage] : G.paint.coverage();', 'Turf judge deadline coverage');
     code = replaceOnce(code, "          if (!this.follower) this.setState('finish');",
-      "          if (!this.follower) this.setState('finish'); else blockExpiredGuestInput(this);", 'guest local deadline input cancellation');
+      "          if (!this.follower) requestTurfFinish(this); else if (!this.s3DeadlineStep) blockExpiredGuestInput(this);", 'guest local deadline input cancellation');
     code = replaceOnce(code, '    if (!this.controller) return;',
       '    if (blockExpiredGuestInput(this) || !this.controller) return;', 'guest deadline controller admission');
-    code = "import { captureTurfFinish, blockExpiredGuestInput } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
+    code = "import { captureTurfFinish, blockExpiredGuestInput, requestTurfFinish } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
 
     return code;
   }
