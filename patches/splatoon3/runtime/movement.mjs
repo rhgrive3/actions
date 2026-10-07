@@ -26,9 +26,53 @@ export function absorbArmor(state, damage) {
 }
 export function movementState(a) {
   a.s3 ||= {};
-  return a.s3.actions || (a.s3.actions = { chain: 0, chainTimer: 0, chainSpeed: 0, roll: null, surge: null, armor: null, floorSpeed: null });
+  const state = a.s3.actions || (a.s3.actions = {
+    chain: 0, chainTimer: 0, chainSpeed: 0, roll: null, surge: null, armor: null, floorSpeed: null,
+    fullCancelCandidate: null, fullCancelJumpVelocity: null, fullCancelGroundAttack: null
+  });
+  state.fullCancelCandidate ??= null;
+  state.fullCancelJumpVelocity ??= null;
+  state.fullCancelGroundAttack ??= null;
+  return state;
 }
 function sync(a, state) { a.s3.roll = state.roll; a.s3.surge = state.surge; }
+function advanceChainTimer(state, dt) {
+  state.chainTimer = Math.max(0, state.chainTimer - dt);
+  if (state.chainTimer <= EPSILON) { state.chain = 0; state.chainTimer = 0; state.chainSpeed = 0; }
+}
+export function clearFullCancelCandidate(a) {
+  if (a?.s3?.actions) {
+    a.s3.actions.fullCancelCandidate = null;
+    a.s3.actions.fullCancelJumpVelocity = null;
+    a.s3.actions.fullCancelGroundAttack = null;
+  }
+}
+function fullCancelGroundAttackReady(a, state) {
+  const context = state?.fullCancelGroundAttack;
+  if (!context || !api) return false;
+  const age = api.G.time - context.pressT, window = api.PLAYER.fireBuffer;
+  const valid = a.alive && !a.specialActive && !a.superJumpState && a.form === 'kid' &&
+    a.weapon?.kind === 'roller' && a._firePressT === context.pressT &&
+    Number.isFinite(age) && Number.isFinite(window) && age >= -EPSILON && age <= window + EPSILON;
+  if (!valid) state.fullCancelGroundAttack = null;
+  return valid;
+}
+export function hasFullCancelGroundAttack(a) {
+  return fullCancelGroundAttackReady(a, a?.s3?.actions);
+}
+export function takeFullCancelGroundAttack(a) {
+  const state = a?.s3?.actions;
+  if (!fullCancelGroundAttackReady(a, state)) return false;
+  state.fullCancelGroundAttack = null;
+  return true;
+}
+export function takeFullCancelJumpVelocity(a) {
+  const state = a?.s3?.actions;
+  if (!state) return null;
+  const velocity = state.fullCancelJumpVelocity;
+  state.fullCancelJumpVelocity = null;
+  return velocity;
+}
 function launch(a, direction, speed, vertical, kind) {
   const length = Math.hypot(direction.x, direction.z) || 1;
   a._setClimb(false); a.grounded = false; a.coyote = 0; a.jumpBuffer = 0;
@@ -37,11 +81,42 @@ function launch(a, direction, speed, vertical, kind) {
   a.character.trigger(kind, { duration: config.roll.duration });
   api.emit('actor:' + kind, { actor: a });
 }
-export function beforeActions(a, dt, jumpPressed) {
+export function beforeActions(a, dt, jumpPressed, input = {}) {
   if (!api) throw new Error('INKWAVE movement patch not installed');
   const state = movementState(a), cfg = config;
-  state.chainTimer = Math.max(0, state.chainTimer - dt);
-  if (state.chainTimer <= 1e-10) { state.chain = 0; state.chainTimer = 0; state.chainSpeed = 0; }
+  state.fullCancelJumpVelocity = null;
+  advanceChainTimer(state, dt);
+
+  if (!a.alive || a.specialActive || a.superJumpState || a.form === 'squid') {
+    state.fullCancelCandidate = null; state.fullCancelGroundAttack = null;
+  } else if (input.wasSquid && input.wasSubmerged && !input.wasClimbing && input.firePressed && input.fireWins &&
+      !state.roll && !state.surge) {
+    state.fullCancelCandidate = { pressT: a._firePressT, vx: a.vel.x, vz: a.vel.z };
+  }
+  if (state.fullCancelGroundAttack) fullCancelGroundAttackReady(a, state);
+  const candidate = state.fullCancelCandidate;
+  if (candidate) {
+    const age = api.G.time - candidate.pressT, window = api.PLAYER.fireBuffer;
+    const inWindow = Number.isFinite(age) && Number.isFinite(window) && age >= -EPSILON && age <= window + EPSILON;
+    if (!inWindow || !a.alive || a.specialActive || a.superJumpState || a.form !== 'kid') {
+      state.fullCancelCandidate = null;
+    } else if (jumpPressed) {
+      state.fullCancelCandidate = null;
+      if (age > EPSILON && a.grounded && a.groundTeam === 1 && !a.climbing &&
+          rollEligible({ x: candidate.vx, z: candidate.vz }, a.intent.move, cfg.roll)) {
+        const retention = a.s3.modifiers?.rollRetention ?? cfg.roll.chainRetention;
+        const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(candidate.vx, candidate.vz)),
+          state.chain, retention, state.chainSpeed);
+        const length = Math.hypot(a.intent.move.x, a.intent.move.z);
+        a.vel.x = a.intent.move.x / length * speed;
+        a.vel.z = a.intent.move.z / length * speed;
+        state.fullCancelJumpVelocity = cfg.roll.jumpVelocity;
+        state.fullCancelGroundAttack = a.weapon?.kind === 'roller' ? { pressT: candidate.pressT } : null;
+        state.chainSpeed = speed; state.chain++; state.chainTimer = cfg.roll.chainReset;
+        sync(a, state); return false;
+      }
+    }
+  }
   for (const action of new Set([state.roll, state.surge, state.armor])) if (action) {
     const remaining = (action.armorTime || 0) - dt;
     action.armorTime = remaining <= 1e-10 ? 0 : remaining;
@@ -185,6 +260,7 @@ export function installMovement(context, tuning) {
     return value;
   };
   Actor.prototype.splat = function (...args) {
+    clearFullCancelCandidate(this);
     const result = splat.apply(this, args);
     if (!this.alive) {
       const state = movementState(this); state.roll = state.surge = state.armor = null;
@@ -194,7 +270,8 @@ export function installMovement(context, tuning) {
   };
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (...args) {
-    const roll = movementState(this).roll;
+    const state = movementState(this), roll = state.roll;
+    if (state.fullCancelJumpVelocity !== null) return;
     if (!roll || this.grounded) return horizontal.apply(this, args);
     // The admission tick keeps the exact launch speed; steer from the next tick.
     if (roll.steerReady === false) { roll.steerReady = true; return; }
@@ -214,6 +291,7 @@ export function installMovement(context, tuning) {
   };
   const superJumpUpdate = Actor.prototype._updateSuperJump;
   Actor.prototype._updateSuperJump = function (...args) {
+    advanceChainTimer(movementState(this), args[0]);
     const value = superJumpUpdate.apply(this, args);
     // Charge probes the floor. Once launched, the rendered body is airborne;
     // keeping the charge's ground flag selected the dry-squid idle animation.
@@ -249,7 +327,11 @@ export function installMovement(context, tuning) {
     Actor.prototype[method] = function (...args) {
       const result = original.apply(this, args);
       if (this.specialActive || this.superJumpState) {
-        const state = movementState(this); state.roll = state.surge = state.armor = state.floorSpeed = null; state.chainSpeed = 0; this.anim.surgeCharge = 0; sync(this, state);
+        clearFullCancelCandidate(this);
+        const state = movementState(this);
+        state.roll = state.surge = state.armor = state.floorSpeed = null;
+        if (!this.superJumpState) state.chainSpeed = 0;
+        this.anim.surgeCharge = 0; sync(this, state);
       }
       return result;
     };
