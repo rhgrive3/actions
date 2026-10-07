@@ -24,7 +24,7 @@ test('owner sends exact delay/life/straight without frame-boundary rounding', as
   assert.ok(e[13] === p.straight);
 });
 
-test('a fractional slosh delay survives the wire so later globs leave on the same beat', async () => {
+test('birth-time Slosher packets retain exact source delays and scheduled beats', async () => {
   const f = await fixture();
   const nm = f.makeNetMatch(f.makeSession('me', 'me', [['me', 'Me']]));
   const local = f.makeActor({ nid: 7, owner: 'me', remote: false, roller: false });
@@ -33,13 +33,21 @@ test('a fractional slosh delay survives the wire so later globs leave on the sam
   local.character.getMuzzle = (out) => out.copy(local.pos).add(new f.THREE.Vector3(0, 1.05, 0.3));
   nm.out.length = 0;
   f.projectiles.fireSlosh(local, local.weapon);
+  assert.equal(nm.out.filter((e) => e[1] === 'p').length, 0, 'pending globs are not published at precreation');
+  for (let tick = 1; tick <= 13; tick++) {
+    f.G.time = tick / 60; f.clock.set(1000 + f.G.time); f.projectiles.update(1 / 60);
+  }
   const events = nm.out.filter((e) => e[1] === 'p');
-  assert.ok(events.length > 1, 'slosher produced no volley');
+  assert.equal(events.length, 9, 'each scheduled Slosher glob publishes once at birth');
   // #64 uses the pinned UnitDelayFrame/AfterOffsetDelayFrame source values.
   // They are exact 60 Hz frame fractions and must round-trip without r3 ms loss.
   const delays = events.map((e) => e[11]).filter((d) => d > 0);
   assert.ok(delays.length > 0, 'no delayed globs were recorded');
-  for (const d of delays) assert.ok(Math.abs(d * 60 - Math.round(d * 60)) < 1e-9, `delay lost source-frame precision: ${d}`);
+  for (const e of events) {
+    const d=e[11],tick=e.at(-2);
+    assert.ok(Math.abs(d * 60 - Math.round(d * 60)) < 1e-9, `delay lost source-frame precision: ${d}`);
+    assert.equal(tick,Math.round(d*60)+1,`birth packet missed its source schedule: delay=${d}, tick=${tick}`);
+  }
 });
 
 test('a ghost storm cloud advances on the owner clock and retires at its duration', async () => {
