@@ -348,7 +348,8 @@ test('ordinary input-driven jump uses actual production Actor/Runner/Physics thr
 test('fresh ordinary jump after cancelled Slam is not blocked by orphaned leap/slam clocks', async () => {
   const api = await production(), r = rig(api);
   try {
-    r.a._startSpecial(); r.visual(); r.a.specialActive = null; r.visual();
+    r.a.weapon={...r.a.weapon,special:'slam'}; // Explicit native pose fixture; current public Shooter uses Trizooka.
+    r.a._startSpecial(); assert.equal(r.a.specialActive.id,'slam'); r.visual(); r.a.specialActive = null; r.visual();
     assert.ok(r.ch.tr[api.CHARACTER_TIMERS.T_LEAP] < 1.9);
     r.begin(); for (let i = 1; i <= 16; i++) r.frame(i / 60);
     const output = row(api, r, 'fresh-jump-after-cancelled-slam');

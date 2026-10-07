@@ -3,6 +3,7 @@
 // claimed to be unpublished Nintendo joint parameters. Gameplay is read only.
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { BLASTER_MECHANISM, blasterMechanismCycle } from './blaster-mechanism.mjs';
+import { slosherMotionSnapshot } from './weapon-motion.mjs';
 const INSTALLED = Symbol.for('inkwave.weapon-detail-motion.installed');
 const RESET_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.runner-reset-installed');
 const RUNNER_SHOT_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.blaster-runner-shot-installed');
@@ -302,8 +303,10 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
     }
     const a = m.slosh;
     if (a && this.weaponKind === 'slosher') {
-      const before = a.elapsed;
-      if (a.releaseAge == null && runner?.slosh >= 0) a.elapsed = runner.slosh;
+      if (runner?.aimingSub || activeSpecial(this, T)) { m.slosh = null; return result; }
+      const before = a.elapsed, accepted = slosherMotionSnapshot(this);
+      if (a.releaseAge == null && accepted?.released) { a.releaseAge = Math.max(0, accepted.elapsed - a.windup, before + dt - a.windup); a.elapsed = a.windup + a.releaseAge; }
+      else if (a.releaseAge == null && runner?.slosh >= 0) a.elapsed = runner.slosh;
       else if (a.releaseAge == null && runner && runner.slosh < 0 && before < a.windup) {
         // The actual runner already emitted its wave. Preserve any variable-dt
         // overshoot without advancing a second visual attack clock.

@@ -113,7 +113,9 @@ test('travel, resupply, weapon switch, reset targets', async () => {
     assert.equal(local.ink, R.PLAYER.inkMax); assert.equal(local.special, local.specialCost());
     s.setWeapon('charger');
     assert.equal(local.weaponId, 'charger'); assert.equal(local.weapon.kind, 'charger');
-    const t = s.targets[0]; t.damage(500, local, 'x'); assert.equal(t.alive, false);
+    const t = s.targets[0]; t.damage(500, local, 'x');
+    assert.equal(t.alive, true, 'lethal damage is pending on its admission tick');
+    tick(1); assert.equal(t.alive, false, 'Practice Range target splats on the next fixed tick');
     s.resetTargets();
     assert.ok(s.targets.every((a) => a.alive && a.hp >= R.PLAYER.hp));
   } finally { w.done(); }

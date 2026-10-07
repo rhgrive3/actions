@@ -21,6 +21,13 @@ if(process.argv.includes('--exact-source')){
 }
 const DT=1/60,distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 const scenarios=['horizontal','vertical','shooter','dualies','blaster','splatling','slosher','bomb','storm','charger','charger_half','charger_full','charger_oblique_partial','charger_oblique_full'];
+export function nativeBaselineProjectileEvent(e){
+ assert.equal(e.length,28,'known pre-timestamp native+emptyKit baseline only');
+ assert.equal(e[0],'p','only a projectile baseline event can be normalized');
+ assert.equal(e[26],0,'baseline contains no Kit volley index');
+ assert.equal(e[27],0,'baseline contains no Kit action index');
+ return e.slice(0,26);
+}
 export async function replay(network,kind,{seed=0x1badc0de,realFloor=false}={}){
  const owner=await fixture({network}),receiver=await fixture({network});
  const draws=[0,0];
@@ -46,6 +53,14 @@ export async function replay(network,kind,{seed=0x1badc0de,realFloor=false}={}){
   f.G.physics=new f.Physics(f.G.level);
  }
  owner.bind(onm,[oa]);receiver.bind(rnm,[ra]);
+ // This control is the native27 projectile envelope, before both Kit metadata
+ // and the network footer. Do not admit a mixed29 layout in production.
+ let baselineEnvelopeConversions=0;
+ if(!network){const rec=onm._rec;onm._rec=function(e){
+  if(e[0]==='p'){e=nativeBaselineProjectileEvent(e);baselineEnvelopeConversions++;}
+  return rec.call(this,e);
+ };}
+
  onm.unsubs.push(owner.on('weapon:fire',e=>onm._onLocalEvent('weapon:fire',e)));
  const paint=[[],[]],traces=[[],[]],births=[[],[]],ids=[new WeakMap(),new WeakMap()];let next=0,projectileAllocations=[0,0];
  for(const [j,f,nm]of[[0,owner,onm],[1,receiver,rnm]]){
@@ -54,7 +69,7 @@ export async function replay(network,kind,{seed=0x1badc0de,realFloor=false}={}){
   const step=f.projectiles._step.bind(f.projectiles);f.projectiles._step=(p,dt)=>{const dead=step(p,dt);traces[j].push({id:ids[j].get(p),age:p.age,pos:p.pos.toArray(),velocity:p.vel.toArray(),dead});return dead;};
  }
  const push=owner.projectiles._push.bind(owner.projectiles);owner.projectiles._push=p=>{push(p);const id=next++;ids[0].set(p,id);births[0].push({id,spawn:p.start.toArray(),velocity:p.vel.toArray(),life:p.life,straight:p.straight,delay:p.delay,grav:p.grav,drag:p.drag,vertical:p.s3Vertical});};
- let incoming=0;const ghost=receiver.projectiles.ghostProjectile.bind(receiver.projectiles);receiver.projectiles.ghostProjectile=(a,e)=>{const p=ghost(a,e)||receiver.projectiles.list.at(-1),id=incoming++;ids[1].set(p,id);births[1].push({id,spawn:p.start.toArray(),velocity:p.vel.toArray(),life:p.life,straight:p.straight,delay:p.delay,grav:p.grav,drag:p.drag,vertical:p.s3Vertical});return p;};
+ let incoming=0;const ghost=receiver.projectiles.ghostProjectile.bind(receiver.projectiles);receiver.projectiles.ghostProjectile=(a,e)=>{const before=receiver.projectiles.list.length,returned=ghost(a,e);assert.equal(receiver.projectiles.list.length,before+1,kind+': replay must allocate one accepted birth');const p=returned||receiver.projectiles.list.at(-1),id=incoming++;ids[1].set(p,id);births[1].push({id,spawn:p.start.toArray(),velocity:p.vel.toArray(),life:p.life,straight:p.straight,delay:p.delay,grav:p.grav,drag:p.drag,vertical:p.s3Vertical});return p;};
  owner.G.time=1000;receiver.G.time=1000;
  const P=owner.projectiles,w=oa.weapon;
  switch(kind){case'horizontal':case'vertical':P.fireFlick(oa,w);break;case'shooter':P.fireShooter(oa,w,0);break;case'dualies':P.fireDualies(oa,w,0,1);break;case'blaster':P.fireBlaster(oa,w,0);break;case'splatling':P.fireSplatling(oa,w,0);break;case'slosher':P.fireSlosh(oa,w);break;case'bomb':P.throwBomb(oa);break;case'storm':oa.specialActive={id:'storm',t:0,phase:'throw',armor:false};onm._rec(['ev','special:use',{actor:{n:oa.nid},id:'storm'}]);P.throwStorm(oa);break;case'charger':case'charger_half':case'charger_full':case'charger_oblique_partial':case'charger_oblique_full':P.fireCharger(oa,w,kind.endsWith('_full')?1:kind.endsWith('_partial')?.3764321:kind==='charger_half'?.5:0);break;}
@@ -70,7 +85,7 @@ export async function replay(network,kind,{seed=0x1badc0de,realFloor=false}={}){
   if(P.beams[0])sourceBeam.push(beam(owner));if(receiver.projectiles.beams[0])remoteBeam.push(beam(receiver));
   if(P.clouds[0])sourceCloud.push({age:P.clouds[0].t,pos:P.clouds[0].group.position.toArray()});if(receiver.projectiles.clouds[0])remoteCloud.push({age:receiver.projectiles.clouds[0].t,pos:receiver.projectiles.clouds[0].group.position.toArray()});
  }
- const result={kind,network,beamFrames:[sourceBeam.length,remoteBeam.length],beamEndpointError:0,beamSpawnError:0,beamChargeError:0,birthCount:births[0].length,remoteBirthCount:births[1].length,spawnError:0,velocityError:0,maxPositionError:0,comparedSteps:0,localDistance:0,remoteDistance:0,localLifetime:0,remoteLifetime:0,paintCount:paint[0].length,remotePaintCount:paint[1].length,paintLandingError:0,projectileAllocations,eventCount,randomDraws:draws,packetBytes:bytes,packetCount,packetsPerSecond:packetCount/12.5,maxLocal,maxRemote,remaining:{local:P.list.length,remote:receiver.projectiles.list.length,bombs:receiver.projectiles.bombs.length,clouds:receiver.projectiles.clouds.length,beams:receiver.projectiles.beams.length}};
+ const result={kind,network,baselineWire:network?null:'native27 before empty Kit metadata',baselineEnvelopeConversions,beamFrames:[sourceBeam.length,remoteBeam.length],beamEndpointError:0,beamSpawnError:0,beamChargeError:0,birthCount:births[0].length,remoteBirthCount:births[1].length,spawnError:0,velocityError:0,maxPositionError:0,comparedSteps:0,localDistance:0,remoteDistance:0,localLifetime:0,remoteLifetime:0,paintCount:paint[0].length,remotePaintCount:paint[1].length,paintLandingError:0,projectileAllocations,eventCount,randomDraws:draws,packetBytes:bytes,packetCount,packetsPerSecond:packetCount/12.5,maxLocal,maxRemote,remaining:{local:P.list.length,remote:receiver.projectiles.list.length,bombs:receiver.projectiles.bombs.length,clouds:receiver.projectiles.clouds.length,beams:receiver.projectiles.beams.length}};
  for(let k=0;k<births[0].length;k++){
   const a=births[0][k],b=births[1][k];assert(b,'missing birth');result.spawnError=Math.max(result.spawnError,distance(a.spawn,b.spawn));result.velocityError=Math.max(result.velocityError,distance(a.velocity,b.velocity));
   if(network)for(const f of ['life','straight','delay','grav','drag','vertical'])assert.equal(b[f],a[f],kind+': '+f);

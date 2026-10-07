@@ -9,6 +9,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { verifyWallBuild } from './check-inkwave-wall-render.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
+const BROWSER_ARGS=['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'];
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 export function validateIdleResult(r) {
   const c=r.coldBoot;
@@ -17,15 +18,58 @@ export function validateIdleResult(r) {
   if(r.far?.length!==4||r.far.some(v=>v.size!==256||v.disposes!==1||!v.deleted||!v.cleared||!v.sameEnvironment))throw Error('Far reflection disposal gate');
   if(r.pause?.renders!==1||r.pause.environment!==0||r.pause.paint!==0||r.pause.shadowMarks!==0||r.pause.menuTicks!==120||!r.pause.matchUnchanged||r.pause.resizeRenders!==1||r.pause.resumedRenders!==1||r.pause.onlineRenders!==3)throw Error('Offline pause work gate');
   if(!r.audio?.running||r.audio.initialPlayers!==0||r.audio.initialScheduler||r.audio.mutedTicks!==0||r.audio.mutedNodes!==0||r.audio.mutedPlayers!==0||r.audio.mutedScheduler||!r.audio.sfxPlayed||r.audio.resumedTrack!=='battle'||r.audio.toggleMaxPlayers!==1)throw Error('Muted music/SFX gate');
+  const work=r.resultsWork;
+  if(!work||work.frames!==120||work.playing.actorUpdates<=0||work.playing.projectileUpdates!==120||work.playing.paintFlushes!==120||work.playing.fxUpdates!==120||work.results.actorUpdates!==0||work.results.projectileUpdates!==0||work.results.paintFlushes!==0||work.results.fxUpdates!==0||work.playing.worldRenders!==120||work.results.worldRenders!==120||[work.playing,work.results].some(v=>!Number.isFinite(v.cpuSubmissionMs)||v.cpuSubmissionMs<0||!Number.isSafeInteger(v.gpuDrawSubmissions)||v.gpuDrawSubmissions<=0))throw Error('RESULT native work comparison gate');
   if(r.errors?.length||!r.gpu?.webgl?.startsWith('WebGL 2.0')||!r.gpu.renderer)throw Error('Browser/GPU errors');
   return {cloudMiB:[10,2.5],farTransitions:4,pausedWorldRenders:'1/120',mutedSchedulerTicks:0};
 }
+// Serialized into the cold page. Preserve the allocation observer contract while
+// retaining its stage for failures before the public Game/debug hook exists.
+export async function observeColdEnvironment(url) {
+ const trace=window.__coldResourceProbe={phase:'importing-context'};
+ const {G}=await import(url);
+ trace.phase='observing-environment';
+ trace.snapshot=()=>({hasEnvironment:!!G.env,hasGame:!!G.game,hasRenderer:!!G.renderer,hasMenus:!!G.menus,hasLevel:!!G.level,hasPaint:!!G.paint,hasNav:!!G.nav,sceneChildren:G.scene?.children?.length??null,programs:G.renderer?.info?.programs?.length??null,menu:G.menus?.current||null,quality:G.settings?.quality||null,touch:G.mobile?.touch===true,mode:G.mode||null});
+ const capture=env=>{if(env){trace.phase='captured';window.__coldEnvironment={quality:G.settings?.quality,touch:G.mobile?.touch===true,gamePublishedAtAllocation:!!G.game,marina:env._marina===true,cloud:[env._cloudRT?.width,env._cloudRT?.height],farSize:env._farRT?.width,cloudId:env._cloudRT?.texture.uuid,farId:env._farRT?.texture.uuid};}};
+ // Module ordering may publish Environment before the main.js response is
+ // observed. That is still a valid cold-allocation observation iff Game
+ // has not been published yet; capture it immediately instead of waiting
+ // forever for a setter that already fired.
+ if(G.env){if(G.game)throw Error('Cold observer installed after Game publication');capture(G.env);return;}
+ if(G.game)throw Error('Cold Game published before Environment observation');
+ const original=Object.getOwnPropertyDescriptor(G,'env')||{configurable:true,enumerable:true,writable:true,value:undefined};let value=G.env;
+ Object.defineProperty(G,'env',{configurable:true,enumerable:original.enumerable,get:()=>value,set:env=>{
+  value=env;capture(env);
+  Object.defineProperty(G,'env',{...original,value:env});
+ }});
+}
+export function inspectColdBoot() {
+ const p=window.__coldResourceProbe,report=window.__inkwaveStartup?.snapshot?.();
+ const startup=report?{marks:Object.fromEntries(Object.entries(report.marks||{}).slice(-64)),phases:(report.phases||[]).slice(-64),longTasks:(report.longTasks||[]).slice(-32),errors:(report.errors||[]).slice(-20),dropped:report.dropped,memory:report.memory}:null;
+ return {startup,observerPhase:p?.phase||null,context:p?.snapshot?.()||null,hasPublicContext:!!window.__G,hasPublicGame:!!window.__G?.game,hasColdEnvironment:!!window.__coldEnvironment,coldEnvironment:window.__coldEnvironment||null,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),screen:document.querySelector('.iw-ui')?.dataset.screen||null,loadingText:document.querySelector('.iw-loading')?.textContent?.slice(0,600)||null};
+}
+
+export async function retireDesktopForCold(page,browser){await page.close();await browser?.close();return null;}
+export async function closeProbeOwner(owner,primaryError=null){
+ try{await owner?.close();}catch(error){
+  if(primaryError)throw new AggregateError([primaryError,error],'Probe failed and browser cleanup failed',{cause:primaryError});
+  throw error;
+ }
+}
+export async function launchColdMobileBrowser(chromium,profile){
+ // A fresh process owns the cold compositor/RAF, as well as its storage. No
+ // completed desktop renderer or persistent-context lifetime is reused here.
+ const context=await chromium.launchPersistentContext(path.join(profile,'cold-mobile'),{headless:true,viewport:{width:844,height:390},hasTouch:true,isMobile:true,args:BROWSER_ARGS});
+ try{return {context,page:context.pages()[0]??await context.newPage()};}
+ catch(error){await closeProbeOwner(context,error);throw error;}
+}
+
 async function main(){
  const option=n=>{const i=process.argv.indexOf(n);if(i<0||!process.argv[i+1])throw Error('Required '+n);return path.resolve(process.argv[i+1]);};
  const site=fs.realpathSync(option('--site')),output=option('--evidence-dir'),profile=option('--profile-dir');
  for(const d of [output,profile]){if(['/tmp','/var/tmp','/dev/shm'].some(p=>d===p||d.startsWith(p+'/')))throw Error('Persistent evidence required');fs.mkdirSync(d,{recursive:true});}
  const publish=r=>fs.writeFileSync(path.join(output,'idle-resources-result.json'),JSON.stringify(r,null,2)+'\n');
- let browser,server,page,identity,result;const errors=[];let phase='identity';
+ let browser,server,page,identity,result,failure=null;const errors=[];let phase='identity';
  publish({status:'running',phase});
  try{
   identity=verifyWallBuild(site,process.argv.includes('--exact-source'));
@@ -38,7 +82,7 @@ async function main(){
   server=http.createServer((req,res)=>{try{const url=new URL(req.url,'http://localhost'),p=path.resolve(site,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!p.startsWith(site+path.sep)||!fs.statSync(p).isFile())throw Error('missing');res.writeHead(200,{'content-type':mime[path.extname(p)]||'application/octet-stream'});fs.createReadStream(p).pipe(res);}catch{res.writeHead(404);res.end();}});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const address='http://127.0.0.1:'+server.address().port+'/';
   const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
-  browser=await chromium.launchPersistentContext(profile,{headless:true,viewport:{width:800,height:600},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  browser=await chromium.launchPersistentContext(profile,{headless:true,viewport:{width:800,height:600},args:BROWSER_ARGS});
   page=await browser.newPage();page.setDefaultTimeout(120000);page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,1500));});
   const loaded=new Set();await page.route(address+'**',async route=>{try{const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Loaded byte mismatch '+key);loaded.add(key);await route.fulfill({response,body});}catch(e){errors.push(e.message);await route.abort();}});
@@ -106,15 +150,35 @@ async function main(){
     const net=G.netm;G.netm={};g.match.paused=true;draws=0;try{for(let i=0;i<3;i++)g._frame(1/60);}finally{G.netm=net;g.match.paused=false;}return {resizeRenders,resumedRenders,onlineRenders:draws};
    }finally{g.R.render=old;}
   });Object.assign(result.pause,extra);
+  // #53 compares actual published-frame CPU producers and WebGL draw submissions.
+  // CPU submission time includes JS/driver submission, not asynchronous GPU time.
+  // Results still need backdrop/presentation draws, so no FPS/draw-reduction target
+  // is invented. The existing browser/GL and exact-source identities remain gates.
+  phase='results-work';result.resultsWork=await page.evaluate(()=>{
+   const G=__G,g=G.game,match=g.match,gl=G.renderer.getContext(),restore=[];
+   const beforeState=match.state,beforePaused=match.paused;let counts;
+   const hook=(obj,key,label)=>{const old=obj[key];if(typeof old!=='function')throw Error('Missing native work producer '+key);obj[key]=function(...args){counts[label]++;return old.apply(this,args);};restore.push(()=>{obj[key]=old;});};
+   for(const a of G.actors)hook(a,'update','actorUpdates');
+   for(const [obj,key,label] of [[G.projectiles,'update','projectileUpdates'],[G.paint,'flush','paintFlushes'],[G.fx,'update','fxUpdates'],[g.R,'render','worldRenders']])hook(obj,key,label);
+   for(const key of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced'])hook(gl,key,'gpuDrawSubmissions');
+   const sample=state=>{counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};match.state=state;match.paused=false;const start=performance.now();for(let i=0;i<120;i++)g._frame(1/60);return {...counts,cpuSubmissionMs:performance.now()-start};};
+   try{return {frames:120,playing:sample('playing'),results:sample('results'),measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};}
+   finally{restore.forEach(f=>f());match.state=beforeState;match.paused=beforePaused;}
+  });
   result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
   phase='cold-boot-mobile';
-  const coldContext=await browser.browser().newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true});
+  // The preceding desktop measurements are complete. Retire its live renderer
+  // before measuring an isolated cold mobile allocation in a fresh context.
+  page=await retireDesktopForCold(page,browser);browser=null;
+  const {context:coldContext,page:coldPage}=await launchColdMobileBrowser(chromium,profile);const coldBrowserVersion=coldContext.browser()?.version();let hooked=false,mainReleased=false,coldError=null;const coldLoaded=new Set(),coldPending=new Map();let pendingDropped=0,pendingSerial=0;
   try {
-   const coldPage=await coldContext.newPage();let hooked=false;const coldLoaded=new Set();
    coldPage.on('pageerror',e=>errors.push('cold boot: '+e.message));
+   coldPage.on('console',m=>{if(m.type()==='error')errors.push('cold boot console: '+m.text().slice(0,1500));});
    await coldPage.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:false,bloom:false,music:0,sfx:0})));
    await coldPage.route(address+'**',async route=>{
+    const pendingKey=++pendingSerial,pendingPath=new URL(route.request().url()).pathname;
+    if(coldPending.size<256)coldPending.set(pendingKey,{path:pendingPath,started:Date.now(),type:route.request().resourceType()});else pendingDropped++;
     try {
      const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';
      if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Cold loaded byte mismatch '+key);
@@ -123,28 +187,31 @@ async function main(){
       hooked=true;
       // Observe the real G.env publication before the unmodified main module
       // executes. No constructor, target factory, budget, or served bytes change.
-      await coldPage.evaluate(async url=>{
-       const {G}=await import(url);if(G.game||G.env)throw Error('Cold observer installed too late');
-       const original=Object.getOwnPropertyDescriptor(G,'env')||{configurable:true,enumerable:true,writable:true,value:undefined};let value=G.env;
-       Object.defineProperty(G,'env',{configurable:true,enumerable:original.enumerable,get:()=>value,set:env=>{
-        value=env;
-        if(env)window.__coldEnvironment={quality:G.settings?.quality,touch:G.mobile?.touch===true,gamePublishedAtAllocation:!!G.game,marina:env._marina===true,cloud:[env._cloudRT?.width,env._cloudRT?.height],farSize:env._farRT?.width,cloudId:env._cloudRT?.texture.uuid,farId:env._farRT?.texture.uuid};
-        Object.defineProperty(G,'env',{...original,value:env});
-       }});
-      },new URL('./core/ctx.js',response.url()).href);
+      await coldPage.evaluate(observeColdEnvironment,new URL('./core/ctx.js',response.url()).href);
      }
      await route.fulfill({response,body});
+     if(key.endsWith('/src/main.js'))mainReleased=true;
     }catch(error){errors.push('cold boot route: '+error.message);await route.abort();}
+    finally{coldPending.delete(pendingKey);}
    });
-   await coldPage.goto(address+'?devstage&skipTitle&map=halyard',{waitUntil:'domcontentloaded'});
+   await coldPage.goto(address+'?devstage&skipTitle&map=halyard&startupProfile',{waitUntil:'domcontentloaded'});
+   await coldPage.bringToFront();
    await coldPage.waitForFunction(()=>!!window.__G?.game&&!!window.__coldEnvironment,null,{timeout:180000});
    result.coldBoot=await coldPage.evaluate(()=>{const G=window.__G,c=window.__coldEnvironment;G.game.debug.freeze();return {...c,sameTargetsAfterBoot:c.cloudId===G.env._cloudRT?.texture.uuid&&c.farId===G.env._farRT?.texture.uuid};});
    if(!hooked||![...coldLoaded].some(p=>p.endsWith('/src/world/environment.js')))throw Error('Cold native Environment bytes not observed');
    await coldPage.screenshot({path:path.join(output,'cold-boot-mobile-halyard.png'),animations:'disabled'});
-  } finally {await coldContext.close();}
+  } catch(error) {
+   coldError=error;
+   const diagnostic=result.coldDiagnostic={error:String(error),hooked,mainReleased,desktopRetired:page===null,loaded:[...coldLoaded].sort(),pendingDropped,pending:[...coldPending].slice(0,256).map(([,r])=>({path:r.path,type:r.type,elapsedMs:Math.max(0,Date.now()-r.started)}))};
+   let timer;
+   try {diagnostic.page=await Promise.race([coldPage.evaluate(inspectColdBoot),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Cold diagnostic evaluation timed out')),10000);})]);}
+   catch(inspectError){diagnostic.inspectionError=String(inspectError);}finally{clearTimeout(timer);}
+   try{await coldPage.screenshot({path:path.join(output,'cold-boot-failure.png'),timeout:15000});}catch(captureError){diagnostic.screenshotError=String(captureError);}
+   throw error;
+  } finally {try{await closeProbeOwner(coldContext,coldError);}catch(closeError){if(coldError)result.coldDiagnostic.closeError=String(closeError.errors?.at(-1)||closeError);throw closeError;}}
   result.errors=errors;const summary=validateIdleResult(result);
-  publish({status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:browser.browser()?.version()});
- }catch(error){publish({status:'failed',phase,error:error.stack,errors,result,sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash});if(page)await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw error;}
- finally{await browser?.close();if(server)await new Promise(r=>server.close(r));}
+  publish({status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:coldBrowserVersion});
+ }catch(error){failure=error;publish({status:'failed',phase,error:error.stack,errors,result,sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash});if(page)await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw error;}
+ finally{try{await closeProbeOwner(browser,failure);}finally{if(server)await new Promise(r=>server.close(r));}}
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(e=>{console.error(e);process.exitCode=1;});

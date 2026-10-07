@@ -15,7 +15,7 @@ async function setup(){
  h.setPads(pad());poll();h.input.endFrame();
  return {...h,env,owner,poll,signal:n=>env.dispatchEvent(new Event(n)),close(){h.game.disposePlatform();owner.dispose();}};
 }
-const active=()=>{const p=pad([0,3,5,6,7,11]);p[0].axes=[.8,-.5,.9,.6,-1];return p;};
+const active=(map=true)=>{const p=pad(map?[0,3,5,6,7,11]:[0,5,6,7,11]);p[0].axes=[.8,-.5,.9,.6,-1];return p;};
 function neutral(h){
  assert.equal(h.rig.yaw,0);assert.equal(h.rig.pitch,0);assert.equal(h.actor.intent.move.length(),0);
  for(const k of ['jump','fire','sub','squid','special'])assert.equal(h.actor.intent[k],false,k);
@@ -28,7 +28,7 @@ for(const hz of [30,60,120])test(`${hz}Hz visible blur rejects fresh pad authori
   h.setPads(active());for(let i=0;i<hz;i++){h.poll();h.frame(1/hz);neutral(h);}
   assert.equal(h.owner.focused,false);assert.equal(h.owner.state,'ACTIVE');assert.equal(h.input.lastDevice,'touch');
   h.signal('focus');for(let i=0;i<3;i++){h.poll();neutral(h);assert.equal(h.input.lastDevice,'touch');}
-  h.setPads(pad());h.poll();h.input.endFrame();h.setPads(active());h.poll();
+  h.setPads(pad());h.poll();h.input.endFrame();h.setPads(active(false));h.poll();
   assert.notEqual(h.rig.yaw,0);assert.notEqual(h.rig.pitch,0);assert.ok(h.actor.intent.move.length()>0);
   for(const k of ['jump','fire','sub','squid','special'])assert.equal(h.actor.intent[k],true,k);
   assert.equal(h.input.lastDevice,'pad');assert.ok(h.input.padMenuPressed.size>0);

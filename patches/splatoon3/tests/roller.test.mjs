@@ -48,12 +48,12 @@ test('simultaneous jump and fire go through actual Actor and retain vertical mod
   assert.equal(a.weaponRunner.s3FlickVertical, true);
   assert.equal(a.weaponRunner.s3RollerAttack.elapsed, 0);
   a.grounded = true; a.intent.jump = false;
-  f.tick(a, 25); assert.equal(f.shots.length, 0);
+  f.tick(a, 30); assert.equal(f.shots.length, 0);
   f.tick(a); assert.equal(f.shots.length, 1);
-  assert.equal(f.shots[0].windup, 26 / 60);
+  assert.equal(f.shots[0].windup, 31 / 60);
   assert.equal(a.weaponRunner.s3RollerAttack.vertical, true);
 });
-test('horizontal/vertical windups release on 21/26 elapsed ticks without an extra float tick', async () => {
+test('horizontal/vertical windups release on 21/31 elapsed ticks without an extra float tick', async () => {
   for (const vertical of [false, true]) for (const dt of [1 / 30, 1 / 60, 1 / 120]) {
     const f = await fixture(), a = f.make('roller'); start(f, a, vertical, dt);
     const windup = vertical ? a.weapon.verticalWindup : a.weapon.flickWindup;
@@ -74,7 +74,7 @@ test('jump after starting a horizontal attack keeps its selected mode; the next 
   assert.equal(r.s3FlickVertical, false); assert.equal(f.shots.length, 1);
   r.update(1 / 60, { fire: true, firePressed: true });
   assert.equal(r.s3FlickVertical, true); assert.equal(r.s3RollerAttack.vertical, true);
-  for (let i = 0; i < 26; i++) r.update(1 / 60, { fire: false });
+  for (let i = 0; i < 31; i++) r.update(1 / 60, { fire: false });
   assert.equal(f.shots.length, 2);
 });
 test('a new flick lifts the rolling drum, a held trigger resumes rolling, release stops it', async () => {
@@ -118,20 +118,20 @@ test('actual bones and weapon rotate vertically and the drum impulse waits for g
   const c = a.character, r = a.weaponRunner; c.actor = a;
   start(f, a, true);
   const frames = [], state = { form: 'kid', grounded: false, speed: 0, vy: 0, firing: true, rolling: false, localMove: { x: 0, z: 0 } };
-  for (let i = 0; i < 48; i++) {
+  for (let i = 0; i < 57; i++) {
     if (i) r.update(1 / 60, { fire: false });
     if (i === 20) { state.grounded = true; c.trigger('land', 7.5); }
     c.update(1 / 60, state); c.root.updateMatrixWorld(true);
     frames.push({ drum: c.weapon.drumW, angle: c.P[C.ANCR + 2], arm: c.bones.handR.getWorldPosition(a.pos.clone()), weapon: c.weapon.drum.getWorldPosition(a.pos.clone()), bottom: drumMinimum(c, f.THREE) });
   }
   assert.ok(frames[18].angle > 1.4, 'drum axis is rotated upright before release');
-  assert.equal(frames[25].drum, 0, 'no 0.15s visual impulse during windup');
-  assert.ok(frames[26].drum > 30, 'drum spins on the actual 26F release');
-  assert.ok(frames[18].weapon.distanceTo(frames[26].weapon) > .35, 'full weapon rig follows the downward swing');
-  assert.ok(frames[18].arm.distanceTo(frames[26].arm) > .12, 'arm bones follow the grip IK');
+  assert.equal(frames[30].drum, 0, 'no 0.15s visual impulse during windup');
+  assert.ok(frames[31].drum > 30, 'drum spins on the actual 31F release');
+  assert.ok(frames[18].weapon.distanceTo(frames[31].weapon) > .35, 'full weapon rig follows the downward swing');
+  assert.ok(frames[18].arm.distanceTo(frames[31].arm) > .12, 'arm bones follow the grip IK');
   for (const frame of frames) for (const vec of [frame.arm, frame.weapon]) assert.ok(vec.toArray().every(Number.isFinite));
-  assert.ok(frames.slice(26).every(frame => frame.bottom >= -.02), 'the upright drum clears the floor during landed recovery');
-  assert.ok(frames[47].angle > .8, 'unheld recovery returns to the tilted shoulder carry');
+  assert.ok(frames.slice(31).every(frame => frame.bottom >= -.02), 'the upright drum clears the floor during landed recovery');
+  assert.ok(frames[56].angle > .8, 'unheld recovery returns to the tilted shoulder carry');
   a.setWeapon('shooter'); assert.equal(c.s3RollerFlick, null);
   c.dispose();
 });
@@ -161,15 +161,17 @@ test('actual moving roller geometry and both grips stay synchronized through lif
       c.update(dt, s); c.root.updateMatrixWorld(true);
       rows.push({ t, bottom: drumMinimum(c, THREE), gripL: gripError(c, THREE, 'handL'), gripR: gripError(c, THREE, 'handR'), rolling: r.rolling, roll: c.wRoll, axis: c.P[C.ANCR + 2] });
       if (vertical && r.s3RollerAttack && !restart && t < .78) assert.equal(r.s3RollerAttack.vertical, true);
-      if (t < (vertical ? 26 : 21) / 60) assert.equal(c.weapon.drumW, 0, 'lift does not spin the drum before release');
+      if (t + 1e-10 < (vertical ? 31 : 21) / 60) assert.equal(c.weapon.drumW, 0, 'lift does not spin the drum before release');
     }
     const label = `${hz}Hz ${vertical ? `vertical land ${landAt}s` : 'horizontal'} ${held ? 'held/restart' : 'released'}`;
     assert.ok(rows.every(x => x.bottom >= -.006), `${label}: actual vertices clear the floor (${Math.min(...rows.map(x => x.bottom))})`);
     assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002), `${label}: arms reach the weapon grips (${Math.max(...rows.map(x => x.gripL))})`);
     if (held) {
       // Allow the late landing at 40F and the lowering spring to finish before
-      // checking sustained contact; all transition vertices are checked above.
-      const roll = rows.filter(x => x.t >= 1.1 && x.t < 1.2);
+      // checking sustained contact at the end of the held interval; the current vertical
+      // roll admission is31+22F, and all earlier transition vertices are checked above.
+      const roll = rows.filter(x => x.t >= 1.2 && x.t < 1.25);
+      assert.ok(roll.length > 0, 'the final held interval is actually sampled');
       assert.ok(roll.every(x => x.rolling && x.roll > .9 && Math.abs(x.axis) < .15));
       assert.ok(roll.every(x => x.bottom < .055), `${label}: rolling drum stays near the floor (${Math.max(...roll.map(x => x.bottom))})`);
       assert.ok(rows.some(x => x.t > 1.52 && !x.rolling), 'pressing again lifts the drum');
@@ -234,5 +236,170 @@ test('roller drum proportions follow the kid and its painted stripe; a pushed dr
   }
   assert.ok(bottom >= -.006 && top < .05, `pushed drum rests on the floor (${bottom}..${top})`);
   assert.ok(grip < .02, `both hands stay on the handle while pushing (${grip})`);
+  c.dispose();
+});
+
+test('post-release roll admission separates horizontal 7F vs vertical 22F at 60Hz (#517)', async () => {
+  const f = await fixture();
+  // 1. Horizontal flick: 21F windup -> 7F roll admission (enters rolling at tick 28)
+  const aH = f.make('roller'), rH = aH.weaponRunner;
+  start(f, aH, false, 1 / 60);
+  for (let i = 0; i < 20; i++) rH.update(1 / 60, { fire: true });
+  assert.equal(f.shots.length, 0);
+  rH.update(1 / 60, { fire: true }); // tick 21 (from start, 0-indexed after start is tick 21): release!
+  assert.equal(f.shots.length, 1);
+  assert.equal(rH.rolling, false, 'no rolling on release tick');
+  for (let i = 1; i <= 6; i++) {
+    rH.update(1 / 60, { fire: true });
+    assert.equal(rH.rolling, false, `horizontal post-release tick ${i} must not roll before 7F`);
+  }
+  rH.update(1 / 60, { fire: true }); // tick 7 post-release
+  assert.equal(rH.rolling, true, 'horizontal reaches authoritative rolling on tick 7 post-release');
+
+  // 2. Vertical flick: 31F windup -> 22F roll admission (enters rolling at tick 53)
+  const aV = f.make('roller'), rV = aV.weaponRunner;
+  start(f, aV, true, 1 / 60);
+  for (let i = 0; i < 30; i++) rV.update(1 / 60, { fire: true });
+  assert.equal(f.shots.length, 1);
+  rV.update(1 / 60, { fire: true }); // tick 31: release!
+  assert.equal(f.shots.length, 2);
+  assert.equal(rV.rolling, false, 'no rolling on vertical release tick');
+  aV.grounded = true; // landed immediately upon release
+  for (let i = 1; i <= 21; i++) {
+    rV.update(1 / 60, { fire: true });
+    assert.equal(rV.rolling, false, `vertical post-release tick ${i} must not roll before 22F (horizontal 7F was tick 7)`);
+  }
+  rV.update(1 / 60, { fire: true }); // tick 22 post-release
+  assert.equal(rV.rolling, true, 'vertical reaches authoritative rolling on tick 22 post-release');
+});
+
+test('vertical flick does not deal roll contact damage or produce roll paint during the 22F admission delay (#517)', async () => {
+  const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
+  const enemy = f.make('shooter');
+  enemy.team = 1; enemy.alive = true; enemy.pos.set(0, 0, 2.5);
+  f.G.actors = [a, enemy];
+  const splats = [], hits = [];
+  f.G.paint.splat = (...args) => { splats.push(args); return 0.5; };
+  f.G.projectiles.applyHit = (...args) => hits.push(args);
+
+  start(f, a, true, 1 / 60);
+  for (let i = 0; i < 31; i++) r.update(1 / 60, { fire: true });
+  assert.equal(f.shots.length, 1);
+  a.grounded = true;
+  a.pos.set(0, 0, 0); a.vel.set(0, 0, 6);
+
+  // During ticks 1..21 post-release: grounded with held fire and forward speed, but rolling is not admitted
+  for (let i = 1; i <= 21; i++) {
+    a.pos.z += 0.1;
+    r.update(1 / 60, { fire: true });
+    assert.equal(r.rolling, false);
+    assert.equal(hits.length, 0, `no roll contact damage on post-release tick ${i}`);
+    assert.equal(splats.filter(s => s[3]?.kind === 'roll').length, 0, `no roll paint stripe on post-release tick ${i}`);
+  }
+
+  // On tick 22 post-release: rolling is admitted and contact hit occurs
+  a.pos.z += 0.1;
+  r.update(1 / 60, { fire: true });
+  assert.equal(r.rolling, true, 'rolling admitted on tick 22 post-release');
+  assert.ok(hits.length > 0, 'roll contact damage applies once admitted');
+
+  // On tick 23 post-release: movement produces paint stripe
+  a.pos.z += 0.35;
+  r.update(1 / 60, { fire: true });
+  const rollSplats = splats.filter(s => s[3]?.kind === 'roll');
+  assert.ok(rollSplats.length > 0, 'roll paint stripe produced once admitted and moved');
+});
+
+test('release input before roll admission cancels transition, and runner reset cancels rolling (#517)', async () => {
+  const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
+  start(f, a, true, 1 / 60);
+  for (let i = 0; i < 31; i++) r.update(1 / 60, { fire: true });
+  a.grounded = true;
+  for (let i = 1; i <= 10; i++) r.update(1 / 60, { fire: true });
+  // Release fire at tick 10 post-release
+  for (let i = 11; i <= 30; i++) r.update(1 / 60, { fire: false });
+  assert.equal(r.rolling, false, 'unheld fire does not enter rolling');
+
+  // Reset clears state cleanly
+  start(f, a, true, 1 / 60);
+  for (let i = 0; i < 15; i++) r.update(1 / 60, { fire: true });
+  r.reset();
+  assert.equal(r.s3RollerAttack, null);
+  assert.equal(r.rolling, false);
+});
+
+test('post-release roll admission timing maintains parity across 30Hz, 60Hz, and 120Hz (#517)', async () => {
+  for (const hz of [30, 60, 120]) {
+    const dt = 1 / hz;
+    const f = await fixture();
+
+    // Horizontal: 0.35s windup + 7/60s roll delay
+    const aH = f.make('roller'), rH = aH.weaponRunner;
+    start(f, aH, false, dt);
+    const hReleaseTicks = Math.ceil(0.35 / dt - 1e-9);
+    for (let i = 0; i < hReleaseTicks - 1; i++) rH.update(dt, { fire: true });
+    assert.equal(rH.rolling, false);
+    rH.update(dt, { fire: true }); // release tick
+    assert.equal(rH.rolling, false);
+    const hAdmitTicks = Math.ceil((7 / 60) / dt - 1e-9);
+    for (let i = 1; i < hAdmitTicks; i++) {
+      rH.update(dt, { fire: true });
+      assert.equal(rH.rolling, false, `${hz}Hz horizontal tick ${i} should not roll before ${hAdmitTicks}`);
+    }
+    rH.update(dt, { fire: true });
+    assert.equal(rH.rolling, true, `${hz}Hz horizontal rolls at tick ${hAdmitTicks} post-release`);
+
+    // Vertical: current profile windup + 22/60s roll delay
+    const aV = f.make('roller'), rV = aV.weaponRunner;
+    start(f, aV, true, dt);
+    const vReleaseTicks = Math.ceil(aV.weapon.verticalWindup / dt - 1e-9);
+    for (let i = 0; i < vReleaseTicks - 1; i++) rV.update(dt, { fire: true });
+    assert.equal(rV.rolling, false);
+    rV.update(dt, { fire: true }); // release tick
+    assert.equal(rV.rolling, false);
+    aV.grounded = true;
+    const vAdmitTicks = Math.ceil((22 / 60) / dt - 1e-9);
+    for (let i = 1; i < vAdmitTicks; i++) {
+      rV.update(dt, { fire: true });
+      assert.equal(rV.rolling, false, `${hz}Hz vertical tick ${i} should not roll before ${vAdmitTicks}`);
+    }
+    rV.update(dt, { fire: true });
+    assert.equal(rV.rolling, true, `${hz}Hz vertical rolls at tick ${vAdmitTicks} post-release`);
+  }
+});
+
+test('procedural vertical follow-through hands off to roll push pose on the exact admission tick (#517)', async () => {
+  const f = await fixture(), { Character } = await realCharacter();
+  const a = new f.Actor({ team: 0, name: 'pose handoff rig', weapon: 'roller', CharacterClass: Character });
+  const c = a.character, r = a.weaponRunner; c.actor = a;
+  settle(a, c, 1 / 60);
+  start(f, a, true, 1 / 60);
+  const state = { form: 'kid', grounded: false, speed: 0, vy: 0, firing: true, rolling: false, localMove: { x: 0, z: 0 } };
+  for (let i = 0; i < 31; i++) {
+    r.update(1 / 60, { fire: true });
+    c.update(1 / 60, state);
+  }
+  // Land at release
+  state.grounded = true; a.grounded = true; c.trigger('land', 7.5);
+  for (let i = 1; i <= 21; i++) {
+    r.update(1 / 60, { fire: true });
+    state.rolling = r.rolling;
+    c.update(1 / 60, state);
+    assert.equal(r.rolling, false);
+    assert.ok(c.wRoll < 0.05, `wRoll must not ramp before admission (post-release tick ${i})`);
+  }
+  // Tick 22 post-release (tick 48 from start)
+  r.update(1 / 60, { fire: true });
+  assert.equal(r.rolling, true, 'rolling begins on tick 22 post-release');
+  state.rolling = r.rolling;
+  c.update(1 / 60, state);
+  assert.ok(c.wRoll > 0.1, 'wRoll begins blending immediately on the exact admission tick');
+  // Over next 15 ticks, wRoll ramps smoothly to > 0.9 without popping
+  for (let i = 0; i < 15; i++) {
+    r.update(1 / 60, { fire: true });
+    state.rolling = r.rolling;
+    c.update(1 / 60, state);
+  }
+  assert.ok(c.wRoll > 0.9, 'wRoll completes transition into rolling push pose');
   c.dispose();
 });

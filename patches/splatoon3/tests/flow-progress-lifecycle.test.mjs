@@ -21,7 +21,7 @@ test('#468: slow decay, exact boundary split, fast decay and zero clamp use the 
 test('#468: only positive gains reset idle time; zero/negative/unknown/nonfinite awards do not',()=>{
  const s=inactive(50);advanceFlow(s,6,cfg);
  for(const [action,value]of [['damage',0],['turf',-3],['unknown',100],['damage',NaN]]){awardFlow(s,action,value,cfg);near(s.idleTime,6);}
- awardFlow(s,'damage',10,cfg);near(s.idleTime,0);const before=s.score;advanceFlow(s,1,cfg);near(before-s.score,score(.2));
+ awardFlow(s,'damage',10,cfg);near(s.idleTime,6,'current damage weight is zero');awardFlow(s,'turf',10,cfg);near(s.idleTime,0);const before=s.score;advanceFlow(s,1,cfg);near(before-s.score,score(.2));
 });
 test('#468: widely separated splats cannot bank stale progress into a third activation',()=>{
  const s=createFlow();awardFlow(s,'splat',1,cfg);advanceFlow(s,6,cfg);awardFlow(s,'splat',1,cfg);advanceFlow(s,20,cfg);
@@ -48,7 +48,7 @@ test('#471: actual death and nested respawn/reset retain cause-specific progress
 test('#306: actual active death, dead-clock and respawn retain one state and the movement effect',async()=>{
  const f=await world(),a=f.a;a.s3.flow={...createFlow(),active:true,remaining:20};const activeSpeed=a.weaponRunner.moveSpeed(),state=a.s3.flow;
  a.splat(f.enemy,'weapon');assert.equal(a.s3.flow,state);assert.ok(state.active);near(state.remaining,20);
- f.tick(a,120);near(state.remaining,18);assert.ok(state.active);a.respawn();assert.equal(a.s3.flow,state);near(a.weaponRunner.moveSpeed(),activeSpeed);
+ f.tick(a,120);near(state.remaining,18);assert.ok(state.active);a.respawn();assert.equal(a.s3.flow,state);a.grounded=true;near(a.weaponRunner.moveSpeed(),activeSpeed);
 });
 test('#306: expiration while dead never resurrects Flow on respawn',async()=>{
  const f=await world(),a=f.a;a.s3.flow={...createFlow(),active:true,remaining:.5};a.splat(f.enemy,'weapon');f.tick(a,60);
@@ -73,7 +73,7 @@ test('#468/#306: 30/60/120Hz share identical inactive and dead-active authoritat
  }
  assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);
 });
-test('#471: dead inactive progress does not acquire a new decay/award policy accidentally',async()=>{
- const f=await world(),a=f.a;a.s3.flow=inactive(50);a.splat(f.enemy,'weapon');f.tick(a,60);near(fp(a.s3.flow),45);
- f.emit('turf',{actor:a,area:100});near(fp(a.s3.flow),45);
+test('#471/#882: death penalty is followed by normal inactive decay, without dead awards',async()=>{
+ const f=await world(),a=f.a;a.s3.flow=inactive(50);a.splat(f.enemy,'weapon');f.tick(a,60);near(fp(a.s3.flow),45-cfg.progress.decayPerSecond);
+ f.emit('turf',{actor:a,area:100});near(fp(a.s3.flow),45-cfg.progress.decayPerSecond);
 });

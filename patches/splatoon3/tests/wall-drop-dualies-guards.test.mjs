@@ -108,7 +108,10 @@ test('#604 floor contact and the already-routed families keep their prior behavi
 test('#770 Super Jump landing leaves no invulnerability tail; flight still rejects hits', async t => {
   const f = await boot(); t.after(f.close);
   const a = f.make(), enemy = f.make({ team: 1, pos: [30, 0, 0] });
-  a.s3.jumpChargeTime = STEP; a.superJump(new f.THREE.Vector3(10, 0, 0));
+  a.s3.jumpChargeTime = STEP;
+  // #770 owns flight/landing protection, not the independent 22F/1F startup.
+  a.s3.jumpStartupHumanoidF = 0; a.s3.jumpStartupSwimF = 0;
+  a.superJump(new f.THREE.Vector3(10, 0, 0));
   f.tick(a); assert.equal(a.superJumpState.phase, 'flight');
   f.G.projectiles.applyHit(enemy, a, 30, 'shooter'); assert.equal(a.hp, 100, 'flight is protected (#255)');
   let ticks = 0; while (a.superJumpState && ticks++ < 400) f.tick(a);
@@ -144,7 +147,7 @@ test('#638/#637 live Splat Bomb flight and its preview both integrate the profil
 
 for (const weapon of ['shooter', 'charger', 'roller']) test(`#644/#643 ${weapon}: Splat Bomb release holds refill for its own 1.0 s stop`, async t => {
   const f = await boot(); t.after(f.close);
-  const a = f.make({ weapon }); f.tick(a); a.ink = 100;
+  const a = f.make({ weapon }); f.tick(a); a.weapon={...a.weapon,sub:'bomb'}; a.ink = 100; // named Splat Bomb test, not the weapon's later verified Kit
   a.intent.sub = true; f.tick(a, 20); a.intent.sub = false; f.tick(a);
   assert.equal(f.G.projectiles.bombs.length, 1, 'bomb thrown on release');
   const after = a.ink; let first = null;

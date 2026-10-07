@@ -44,6 +44,13 @@ export function adaptInput(rel, code) {
     '    const it = a.intent;\n    // A missing pad cannot retain camera velocity for a later reconnect (#676).\n    if (!inp.pad) { this.padLook.x = this.padLook.y = 0; this.edgeT = 0; }\n    if (!this.enabled) {', 'disconnected pad camera filter');
   if (rel !== INPUT_REL) return code;
   code = replaceOnce(code,
+    "      this.lastDevice = 'kbm';\n      if (this.onKey && this.onKey(e, false)) return;",
+    "      // Keyboard state remains live while an existing touch contact owns its gesture.\n" +
+    "      const touchContact = this.lastDevice === 'touch' && this.mobile?.active && !this.mobile._destroyed &&\n" +
+    "        ((this.mobile._ptr?.size || 0) > 0 || (this.mobile._stick?.id ?? -1) >= 0);\n" +
+    "      if (!touchContact) this.lastDevice = 'kbm';\n      if (this.onKey && this.onKey(e, false)) return;",
+    'keyboard preserves live touch contact');
+  code = replaceOnce(code,
     '    const pads = navigator.getGamepads ? navigator.getGamepads() : [];',
     '    let pads = [];\n' +
     '    try { pads = navigator.getGamepads ? navigator.getGamepads() : []; }\n' +

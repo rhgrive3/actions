@@ -199,12 +199,13 @@ test('vertical release, recovery, held ground pushing and lift on a fresh attack
       for (let i = 0; i < 115; i++) {
         r.step(1 / 60, { fire: i < 80 || i >= 100, firePressed: i === 0 || i === 100,
           grounded: i < 40 ? false : i < 100, speed: i > 45 && i < 80 ? 6.48 : 0 });
-        rows.push(poseRow(api, r, i, [0, 18, 26, 33, 47, 65, 79, 85, 100, 110].includes(i)));
+        rows.push(poseRow(api, r, i, [0, 18, 31, 38, 56, 65, 79, 85, 100, 110].includes(i)));
       }
       assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002 && x.bottom >= -.006));
-      assert.equal(rows[25].gameplay.shots, 0); assert.equal(rows[26].gameplay.shots, 1);
-      assert.equal(rows[25].drumW, 0); assert.ok(rows[26].drumW > 30);
-      assert.ok(rows[65].gameplay.rolling && rows[65].bottom < .055);
+      assert.equal(rows[30].gameplay.shots, 0); assert.equal(rows[31].gameplay.shots, 1);
+      assert.equal(rows[30].drumW, 0); assert.ok(rows[31].drumW > 30);
+      assert.equal(rows[52].gameplay.rolling,false); assert.equal(rows[53].gameplay.rolling,true,'31F release plus22F roll admission');
+      assert.ok(rows[79].gameplay.rolling && rows[79].bottom < .055, 'completed held-push window settles to the unchanged drum-height bound');
       assert.equal(rows[100].gameplay.rolling, false, 'new airborne attack lifts the rolling drum');
       assert.ok(rows[110].center[1] > rows[79].center[1] + .5);
       traces.push(rows); evidence.push({ scenario: enabled ? 'after-vertical-push-lift' : 'before-vertical-push-lift', rows });

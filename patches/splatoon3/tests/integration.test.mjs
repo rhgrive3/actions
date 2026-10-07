@@ -10,8 +10,8 @@ test('actual Actor stores a full charger charge and expires it without firing un
 });
 test('stored charge survives emergence on a held ZR and fires on release; reset clears it', async () => {
   const f = await fixture(), a = f.make('charger'); a.intent.fire = true; f.tick(a, 61);
-  a.intent.squid = true; f.tick(a); a.intent.squid = false; f.tick(a, 6); assert.equal(f.shots.length, 0);
-  a.intent.fire = false; f.tick(a);
+  a.intent.squid = true; f.tick(a); a.intent.squid = false; f.tick(a, 31); assert.equal(f.shots.length, 0);
+  a.intent.fire = false; f.tick(a, 2); // release gap
   assert.equal(f.shots.length, 1); assert.equal(f.shots[0].charge, 1);
   a.reset(); assert.equal(a.weaponRunner.s3Stored, null);
 });
@@ -26,8 +26,8 @@ test('jump initiation selects vertical roller windup, retaining it after landing
   const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
   a.grounded = false; r.update(1 / 60, { fire: true, firePressed: true });
   assert.equal(r.s3FlickVertical, true); a.grounded = true;
-  for (let i = 0; i < 27; i++) r.update(1 / 60, { fire: true });
-  assert.equal(f.shots.length, 1); assert.equal(f.shots[0].windup, 26 / 60);
+  for (let i = 0; i < 31; i++) r.update(1 / 60, { fire: true });
+  assert.equal(f.shots.length, 1); assert.equal(f.shots[0].windup, 31 / 60);
 });
 test('actual roll consumes one jump edge and routes armor overflow through damage', async () => {
   const f = await fixture(), a = f.make(); a.form = 'squid'; a.intent.squid = true;
@@ -35,7 +35,8 @@ test('actual roll consumes one jump edge and routes armor overflow through damag
   f.tick(a); assert.ok(a.s3.roll); assert.ok(a.vel.z < 0); assert.equal(a.invuln, 0);
   const first = a.s3.roll; f.tick(a); assert.equal(a.s3.roll, first);
   a.damage(60, null, 'shooter'); assert.equal(a.hp, 100);
-  a.damage(60, null, 'shooter'); assert.equal(a.hp, 80);
+  // The first 60 breaks 30 HP armor while absorbing that entire hit.
+  a.damage(60, null, 'shooter'); assert.equal(a.hp, 40);
 });
 test('surge holds still, fully charges, launches on release and cancels on loss of wall', async () => {
   const f = await fixture(), a = f.make(); a.form = 'squid'; a.intent.squid = true; a.climbing = true;
@@ -114,8 +115,8 @@ test('gear uses distinct walk and firing curves, and does not speed up roller ro
 });
 test('splatling first stage yields its 80-frame stream, conserving the prepaid ink', async () => {
   const f = await fixture(), a = f.make('splatling'), r = a.weaponRunner;
-  a.ink = 11.25;
-  for(let i=0;i<73;i++)r.update(1/60,{fire:true});
+  a.ink = 11.25; a.intent.fire=true;
+  for(let i=0;i<49;i++)r.update(1/60,{fire:true});
   assert.ok(Math.abs(r.charge-2/3)<1e-9);
   r.update(1/60,{fire:false});
   assert.ok(Math.abs(r.burstDur-80/60)<1e-9); assert.ok(a.ink<1e-9);
@@ -125,20 +126,49 @@ test('splatling first stage yields its 80-frame stream, conserving the prepaid i
 test('bomb sub power normalizes the low base once and reaches the raw high value', async () => {
   const f = await fixture(), a = f.make(), r = a.weaponRunner; let thrown;
   a.s3.loadout = Array.from({length:3},()=>({main:'subPower',subs:['subPower','subPower','subPower']}));a.setWeapon('shooter');
-  f.G.projectiles.throwBomb = () => {thrown=f.SUB.bomb.throwSpeed;};
-  r.aimingSub=true;r.update(1/60,{subReleased:true});
+  const ps = new f.Projectiles(new f.THREE.Scene()); f.G.projectiles = ps;
+  const velocity = ps.throwVelocity.bind(ps);
+  ps.throwVelocity = (actor, speed, out) => { thrown = speed; return velocity(actor, speed, out); };
+  for (let i = 0; i < 6; i++) r.update(1/60,{sub:true});
+  r.update(1/60,{subReleased:true}); assert.equal(ps.bombs.length,1);
   assert.ok(Math.abs(thrown-1.68*60)<1e-9);assert.ok(Math.abs(f.SUB.bomb.throwSpeed-1.12*60)<1e-9);
 });
 test('splatling diving cancels both charging and an active stream', async () => {
   const f=await fixture(),a=f.make('splatling');a.intent.fire=true;f.tick(a,30);assert.equal(a.weaponRunner.charging,true);
-  a.intent.squid=true;f.tick(a);assert.equal(a.form,'squid');assert.equal(a.weaponRunner.charging,false);assert.equal(f.shots.length,0);
+  a.intent.squid=true;for(let i=0;i<6;i++){f.tick(a);assert.equal(a.form,'kid');assert.equal(a.weaponRunner.charging,true);assert.equal(f.shots.length,0);}
+  f.tick(a);assert.equal(a.form,'squid');assert.equal(a.weaponRunner.charging,false);assert.equal(f.shots.length,0);
   a.reset();a.intent.squid=false;a.intent.fire=true;f.tick(a,73);a.intent.fire=false;f.tick(a,2);assert.equal(a.weaponRunner.streaming,true);
   const count=f.shots.length;a.intent.squid=true;f.tick(a,45);assert.equal(a.weaponRunner.streaming,false);assert.equal(f.shots.length,count);
 });
-test('a charger tap uses the minimum ink without forcing a 12 percent charge', async () => {
-  const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=2.25;
-  r.update(1/60,{fire:true});r.update(1/60,{fire:false});
-  assert.equal(f.shots.length,1);assert.ok(f.shots[0].charge<.12);assert.ok(a.ink<1e-9);
+test('charger release before the 8F minimum cancels the shot without refunding progressive ink', async () => {
+  const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=100;a.intent.fire=true;
+  r.update(1/60,{fire:true}); // current 1F humanoid startup
+  for(let i=0;i<7;i++)r.update(1/60,{fire:true});
+  const paid=100-a.ink;
+  assert.ok(paid>0,'progressive charge committed ink before release');
+  a.intent.fire=false;r.update(1/60,{fire:false});
+  assert.equal(f.shots.length,0,'sub-8F release must not fire');
+  assert.ok(Math.abs((100-a.ink)-paid)<1e-9,'cancel does not refund already committed charge ink');
+});
+test('an 8F legal Charger charge has already spent the 2.25 percent minimum before release', async () => {
+  const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=2.25;a.intent.fire=true;
+  // C22's 1F humanoid startup precedes the eight legal charge frames.
+  r.update(1/60,{fire:true});
+  for(let i=0;i<8;i++)r.update(1/60,{fire:true});
+  assert.ok(a.ink<1e-9,'minimum charge ink is committed during charging');
+  const charge=r.charge;
+  a.intent.fire=false;r.update(1/60,{fire:false});r.update(1/60,{fire:false});
+  assert.equal(f.shots.length,1);assert.equal(f.shots[0].charge,charge);
+  assert.ok(a.ink<1e-9,'release does not debit the already-paid charge again');
+});
+test('airborne Charger charge advances at one third rate without resetting across landing', async () => {
+  const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=100;a.intent.fire=true;a.grounded=false;
+  r.update(1/60,{fire:true}); // 1F humanoid startup
+  for(let i=0;i<60;i++)r.update(1/60,{fire:true});
+  assert.ok(Math.abs(r.chargeT-1/3)<1e-9);assert.ok(r.charge<.999);
+  a.grounded=true;
+  for(let i=0;i<40;i++)r.update(1/60,{fire:true});
+  assert.ok(Math.abs(r.chargeT-1)<1e-9);assert.ok(r.charge>=.999);
 });
 test('global menu time cannot skip an actor ink recovery wait', async () => {
   const f=await fixture(),a=f.make();a.form='squid';a.intent.squid=true;a.ink=0;a.lastFire=2;a.s3.recoverStopRemaining=.5;

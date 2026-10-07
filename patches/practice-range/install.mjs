@@ -4,6 +4,7 @@
 import { G, on } from '../../src/core/ctx.js';
 import { Match } from '../../src/game/match.js';
 import { Menus } from '../../src/ui/menus.js';
+import { HUD } from '../../src/ui/hud.js';
 import { RangeSession } from './runtime/session.mjs';
 import { installRangeMenus } from './runtime/menu.mjs';
 import { RangeSignage } from './runtime/signage.mjs';
@@ -11,6 +12,10 @@ import { RANGE_ID } from './range-map.mjs';
 
 let installed = false;
 export const isRangeMatch = (m) => !!(m && !m.attract && m.opts && m.opts.range);
+// The range has no match clock. startMatch() still hands every match the Turf War length (settings.matchLength, 90 or
+// 180 s), and Match.update() counts `time` down to 'finish' → judge → results; an unbounded clock keeps the range out
+// of that state machine until the player leaves it (pause → exit). Turf War / Boss / online matches keep their own.
+export const RANGE_MATCH_TIME = Infinity;
 
 export function installPracticeRange(Game) {
   if (installed) throw new Error('INKWAVE practice range already installed');
@@ -20,7 +25,10 @@ export function installPracticeRange(Game) {
   const setup = Match.prototype.setup, start = Match.prototype.start, update = Match.prototype.update, dispose = Match.prototype.dispose;
   Match.prototype.setup = function (...args) {
     const r = setup.apply(this, args);
-    if (isRangeMatch(this)) this.range = new RangeSession(this);
+    if (isRangeMatch(this)) {
+      this.duration = this.time = RANGE_MATCH_TIME;
+      this.range = new RangeSession(this, { headless: this.opts.rangeHeadless === true });   // headless: node tests only
+    }
     return r;
   };
   // no intro flight, no countdown: the range is ready the moment it fades in
@@ -38,12 +46,19 @@ export function installPracticeRange(Game) {
     return dispose.apply(this, args);
   };
 
+  // an untimed match has no clock to draw (the range HUD hides the turf-war timer; never format Infinity into it)
+  const updTimer = HUD.prototype._updTimer;
+  HUD.prototype._updTimer = function (time) {
+    if (time === RANGE_MATCH_TIME) return;
+    return updTimer.call(this, time);
+  };
+
   // ---- world: the signage boards exist while the range stage is the loaded world
   const buildWorld = Game.prototype._buildWorld;
   Game.prototype._buildWorld = async function (map, ...rest) {
     const r = await buildWorld.call(this, map, ...rest);
     const want = this.layoutId === RANGE_ID;
-    if (want && !this.rangeSignage) this.rangeSignage = new RangeSignage(G.scene);
+    if (want && !this.rangeSignage) this.rangeSignage = new RangeSignage(G.scene, this.settings || G.settings || {}, this.mobile || G.mobile || {});
     else if (!want && this.rangeSignage) { this.rangeSignage.dispose(); this.rangeSignage = null; }
     return r;
   };

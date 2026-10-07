@@ -1,4 +1,13 @@
 // Project resource budgets, not Nintendo/Switch memory measurements.
+export const MENU_ATTRACT_HZ = 20;
+export const MENU_ATTRACT_STEP = 1 / MENU_ATTRACT_HZ;
+
+export function idleAttractMenuBudget(game, G) {
+  const mobile = game?.mobile ?? G?.mobile ?? {};
+  return !!(game?.match?.attract && G?.mode === 'menu' && !game?.showcase?.fullFrame &&
+    (mobile.touch || game?.settings?.quality === 'low'));
+}
+
 export function environmentBudget(settings = {}, mobile = {}) {
   const constrained = mobile?.touch || settings?.quality === 'low';
   return constrained ? { cloudWidth: 1024, cloudHeight: 320, farSize: 256 }

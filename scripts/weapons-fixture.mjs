@@ -4,10 +4,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { adaptSource } from '../patches/splatoon3/adapter.mjs';
+import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
+import { adaptReliability } from '../patches/reliability/adapter.mjs';
+import { adaptQualitySource } from '../patches/local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../patches/network-replication/adapter.mjs';
+import { adaptRange } from '../patches/practice-range/adapter.mjs';
 export const ROOT = fileURLToPath(new URL('../', import.meta.url));
+const SOURCE = path.join(ROOT, 'inkwave-public');
+const adaptBuildSource = (rel, code) => adaptRange(rel,
+  adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 export const BASELINE = process.env.INKWAVE_BASELINE_SITE || path.join(ROOT, '.baseline');
 export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true, cell = .25, fidelity = false, network = false} = {}) {
   site = path.resolve(site);
+  // Pre-build patch tests run before _site exists. In that phase execute the
+  // same composed source graph directly from immutable upstream + repo patches.
+  // When a real built site exists (measurement/browser stages), keep reading it.
+  const sourceMode = !fs.existsSync(path.join(site, 'vendor/three/build/three.module.js'));
   let state = seed >>> 0, draws = 0;
   const math = Object.create(Math);
   math.random = () => { draws++; state |= 0; state = state + 0x6d2b79f5 | 0; let t = Math.imul(state ^ state >>> 15, 1 | state); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -31,14 +44,45 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
     ${fidelity ? "export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';" : ''}
   `, {context, identifier: path.join(site, 'fixture.mjs')});
   function load(spec, from) {
-    const p = spec === 'three' ? path.join(site, 'vendor/three/build/three.module.js') : path.resolve(path.dirname(from.identifier), spec);
-    if (!modules.has(p)) modules.set(p, new vm.SourceTextModule(fs.readFileSync(p, 'utf8'), {context, identifier: p}));
+    let p = spec === 'three' ? path.join(sourceMode ? SOURCE : site, 'vendor/three/build/three.module.js')
+      : path.resolve(path.dirname(from.identifier), spec);
+    if (sourceMode) {
+      // Entry paths are expressed like a built site. Redirect src/vendor to
+      // upstream and patches to their repository roots, including patch imports
+      // emitted by adapted upstream modules.
+      if (p.startsWith(site + path.sep)) {
+        const rel = path.relative(site, p);
+        p = rel.startsWith('patches' + path.sep) ? path.join(ROOT, rel) : path.join(SOURCE, rel);
+      }
+      if (p.startsWith(path.join(SOURCE, 'patches') + path.sep))
+        p = path.join(ROOT, path.relative(SOURCE, p));
+      // Patch modules import ../../../src/... as they do in the emitted site.
+      // In source mode that resolves under the repository root, so route those
+      // upstream namespaces back to immutable inkwave-public as well.
+      for (const dir of ['src', 'assets', 'vendor']) {
+        const rootDir = path.join(ROOT, dir) + path.sep;
+        if (p.startsWith(rootDir)) {
+          p = path.join(SOURCE, path.relative(ROOT, p));
+          break;
+        }
+      }
+    }
+    if (!modules.has(p)) {
+      let code = fs.readFileSync(p, 'utf8');
+      if (sourceMode && p !== path.join(SOURCE, 'vendor/three/build/three.module.js')) {
+        const rel = p.startsWith(SOURCE + path.sep) ? path.relative(SOURCE, p) : path.relative(ROOT, p);
+        code = adaptBuildSource(rel.split(path.sep).join('/'), code);
+      }
+      modules.set(p, new vm.SourceTextModule(code, {context, identifier: p}));
+    }
     return modules.get(p);
   }
   await entry.link(load); await entry.evaluate();
   const api = {...entry.namespace};
   const {G, THREE, WEAPONS, PLAYER, SUB} = api;
-  const profile = JSON.parse(fs.readFileSync(path.join(site, 'patches/splatoon3/profile.json'), 'utf8'));
+  const profile = JSON.parse(fs.readFileSync(sourceMode
+    ? path.join(ROOT, 'patches/splatoon3/profile.json')
+    : path.join(site, 'patches/splatoon3/profile.json'), 'utf8'));
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, values] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], values);
   api.installWeapons(api, profile); api.installMovement(api, profile); api.installGear(api, profile); api.installResources(api, profile);
@@ -54,7 +98,12 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
     queryBlocks(_x0,_z0,_x1,_z1,out=[]) {out.length=0; for(let i=0;i<this.blocks.length;i++)out.push(i);return out;}};
   G.physics = new api.Physics(G.level);
   // The atlas renderer is omitted, not the scoring rasterizer or splat shape.
-  class CpuPaint extends api.PaintSystem { _initGPU() {this.quads=0;} }
+  class CpuPaint extends api.PaintSystem {
+    _initGPU() { this.quads = 0; }
+    // Immediate body presentation (#570) also reaches this GPU-only sink.
+    // Keep native splat/_emitGrowth/grid work, but enqueue no absent atlas draw.
+    _pushQuad() {}
+  }
   G.paint = new CpuPaint(null,G.level,{atlasSize:4096,maxDensity:8,cell});
   const paints=[]; const splat=G.paint.splat;
   G.paint.splat=function(center,radius,team,opts={}) {const area=splat.call(this,center,radius,team,opts);paints.push({time:G.time,center:center.toArray(),radius,team,seed:opts.seed,kind:opts.kind??null,stretch:opts.stretch?.toArray()??null,stretchAmt:opts.stretchAmt??null,cosmetic:!!opts.cosmetic,area});return area;};

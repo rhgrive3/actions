@@ -88,11 +88,11 @@ test('a fresh hold after cancellation charges normally and cannot resurrect the 
   f.tick(a, 6);                                // surface past the emerge delay
   assert.equal(r.s3Stored, null);
   a.intent.fire = true;                         // press ZR again
-  f.tick(a, 5);
+  f.tick(a, 9); //1F fresh startup plus the legal8F minimum
   assert.equal(r.charging, true);
   assert.ok(r.charge < .999, 'ordinary charging, not a restored full charge');
   a.intent.fire = false;
-  f.tick(a);
+  f.tick(a, 2);                                // S3 1F release gap: shot on R+1
   assert.equal(f.shots.length, 1);
   assert.ok(f.shots[0].charge < 1, 'the stale full charge is never fired');
 });
@@ -161,8 +161,11 @@ test('reset, death and weapon swap all clear a kept charge', async () => {
     const a = await kept(f);
     const r = a.weaponRunner;
     if (teardown === 'reset') a.reset();
-    else if (teardown === 'death') { a.hp = 1; a.damage(60, null, 'shooter'); }
-    else a.setWeapon('shooter');
+    else if (teardown === 'death') {
+      a.hp = 1; a.damage(60, null, 'shooter');
+      assert.ok(r.s3Stored, 'pending lethal keeps state until the next fixed tick');
+      f.tick(a);
+    } else a.setWeapon('shooter');
     assert.equal(r.s3Stored, null, `${teardown} clears the stored charge`);
     assert.equal(r.charging, false);
     assert.equal(r.charge, 0);
@@ -195,12 +198,12 @@ test('holding ZR continuously preserves charge keep and still fires the full sho
   f.tick(a, 2);
   assert.equal(a.form, 'kid');
   assert.ok(r.s3Stored, 'store survives emergeDelay while ZR stays held');
-  f.tick(a, 4);                                // past emergeDelay the store is restored
+  f.tick(a, 29);                               // complete the 31F stored-fire gate
   assert.equal(r.s3Stored, null);
   assert.equal(r.charging, true);
   assert.ok(r.charge >= .999);
   a.intent.fire = false;                       // release ZR -> fire the kept full charge
-  f.tick(a);
+  f.tick(a, 2);                                // S3 1F release gap: shot on R+1
   assert.equal(f.shots.length, 1);
   assert.equal(f.shots[0].charge, 1);
 });
