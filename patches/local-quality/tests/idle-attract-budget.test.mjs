@@ -114,7 +114,8 @@ test('composed offline pause compares fixed controls without enumerating setting
   const h = fixture({ mode: 'match', attract: false, touch: false });
   h.game.match.paused = true;
   let enumerations = 0;
-  const values = { quality: 'high', shadows: true, bloom: true, fov: 82, lang: 'ja' };
+  const values = { quality: 'high', shadows: true, bloom: true, fov: 82, lang: 'ja', gyro: false }; // native DEFAULT_SETTINGS starts with gyro disabled
+  h.G.camera.fov = values.fov; // the native settings writer starts from an already applied camera FOV
   h.game.settings = new Proxy(values, { ownKeys(target) { enumerations++; return Reflect.ownKeys(target); } });
   const width = Object.hasOwn(globalThis, 'innerWidth') ? globalThis.innerWidth : undefined;
   const height = Object.hasOwn(globalThis, 'innerHeight') ? globalThis.innerHeight : undefined;
@@ -123,7 +124,14 @@ test('composed offline pause compares fixed controls without enumerating setting
   const hadPixelRatio = Object.hasOwn(globalThis, 'devicePixelRatio');
   globalThis.innerWidth = 800; globalThis.innerHeight = 600; globalThis.devicePixelRatio = 1;
   try {
-    for (let i = 0; i < 120; i++) h.frame(1 / 60);
+    let steady;
+    for (let i = 0; i < 120; i++) {
+      h.frame(1 / 60);
+      const status = pausedWorldFrame(h.game, h.G);
+      if (steady) assert.equal(status, steady, 'unchanged paused frames reuse the same no-draw status without commit closures');
+      steady = status;
+      assert.equal(status.commit, undefined, 'unchanged path has no fresh commit closure');
+    }
     assert.equal(h.calls.worldRender, 1, 'offline paused world renders once across 120 composed frames');
     assert.equal(enumerations, 0, 'unchanged RAF frames never enumerate or serialize the settings object');
 
@@ -133,7 +141,10 @@ test('composed offline pause compares fixed controls without enumerating setting
     const SettingsWriter = new Function('notePausedWorldChange', 'applyAimSettingsChange', 'G', 'saveJSON',
       `return class SettingsWriter {\n${source.slice(setStart, setEnd)}\n}`)(notePausedWorldChange, applyAimSettingsChange, h.G, () => {});
     SettingsWriter.prototype._setSettings.call(h.game, { lang: 'en' });
-    assert.equal(h.game._pausedWorldRevision, 1, 'real API setting writes advance the paused-world revision');
+    assert.equal(h.game._pausedWorldRevision || 0, 0, 'language-only writes do not invalidate the arena');
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 1);
+    SettingsWriter.prototype._setSettings.call(h.game, { fov: 84 });
+    assert.equal(h.game._pausedWorldRevision, 1, 'changed backdrop settings advance the real API revision');
     h.frame(1 / 60); assert.equal(h.calls.worldRender, 2);
     h.frame(1 / 60); assert.equal(h.calls.worldRender, 2, 'one settings write causes one redraw');
 

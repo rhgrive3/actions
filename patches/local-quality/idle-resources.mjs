@@ -2,6 +2,9 @@
 export const MENU_ATTRACT_HZ = 20;
 export const MENU_ATTRACT_STEP = 1 / MENU_ATTRACT_HZ;
 const EMPTY_SETTINGS = Object.freeze({});
+const LIVE_WORLD = Object.freeze({ paused: false, draw: true });
+const PAUSED_UNCHANGED = Object.freeze({ paused: true, draw: false });
+const BACKDROP_SETTINGS = Object.freeze(['quality','shadows','bloom','fov','cameraShake','colorblind','timeOfDay','gyro']);
 
 export function idleAttractMenuBudget(game, G) {
   const mobile = game?.mobile ?? G?.mobile ?? {};
@@ -9,8 +12,14 @@ export function idleAttractMenuBudget(game, G) {
     (mobile.touch || game?.settings?.quality === 'low'));
 }
 
-export function notePausedWorldChange(game) {
-  if (game) game._pausedWorldRevision = (game._pausedWorldRevision || 0) + 1;
+export function notePausedWorldChange(game, partial) {
+  if (!game) return;
+  if (partial) {
+    let changed = false;
+    for (const key of BACKDROP_SETTINGS) if (Object.hasOwn(partial, key) && game.settings?.[key] !== partial[key]) { changed = true; break; }
+    if (!changed) return;
+  }
+  game._pausedWorldRevision = (game._pausedWorldRevision || 0) + 1;
 }
 
 export function environmentBudget(settings = {}, mobile = {}) {
@@ -60,9 +69,9 @@ export function pausedWorldFrame(game, G, viewport = globalThis) {
     game._pausedWorld = null;
   }
   const paused = !!(game.match?.paused && !game.match.attract && !G.netm && !game.showcase?.fullFrame);
-  if (!paused) { game._pausedWorld = null; return { paused: false, draw: true }; }
+  if (!paused) { game._pausedWorld = null; return LIVE_WORLD; }
   const gl = G.renderer?.getContext?.();
-  if (gl?.isContextLost?.()) { game._pausedWorld = null; return { paused: true, draw: false }; }
+  if (gl?.isContextLost?.()) { game._pausedWorld = null; return PAUSED_UNCHANGED; }
   const width = viewport.innerWidth, height = viewport.innerHeight, pixelRatio = viewport.devicePixelRatio;
   const settings = game.settings || EMPTY_SETTINGS, camera = G.camera, position = camera?.position;
   const quaternion = camera?.quaternion, scale = camera?.scale;
@@ -72,12 +81,10 @@ export function pausedWorldFrame(game, G, viewport = globalThis) {
   const previous = game._pausedWorld;
   const draw = !previous || previous.match !== game.match || previous.level !== G.level ||
     previous.width !== width || previous.height !== height || previous.pixelRatio !== pixelRatio ||
-    previous.settings !== settings || previous.quality !== settings.quality || previous.shadowsSetting !== settings.shadows ||
+    previous.quality !== settings.quality || previous.shadowsSetting !== settings.shadows ||
     previous.bloomSetting !== settings.bloom || previous.fovSetting !== settings.fov ||
     previous.cameraShake !== settings.cameraShake || previous.colorblind !== settings.colorblind ||
-    previous.frameRate !== settings.frameRate || previous.timeOfDay !== settings.timeOfDay ||
-    previous.aimProfile !== settings.aimProfile || previous.aimProfiles !== settings.aimProfiles ||
-    previous.gyro !== settings.gyro || previous.minimap !== settings.minimap || previous.showFps !== settings.showFps ||
+    previous.timeOfDay !== settings.timeOfDay || previous.gyro !== settings.gyro ||
     previous.revision !== revision || previous.camera !== camera ||
     previous.cameraX !== position?.x || previous.cameraY !== position?.y || previous.cameraZ !== position?.z ||
     previous.cameraQx !== quaternion?.x || previous.cameraQy !== quaternion?.y ||
@@ -100,13 +107,13 @@ export function pausedWorldFrame(game, G, viewport = globalThis) {
     previous.environment !== env || previous.theme !== env?.theme || previous.reflections !== env?.reflections ||
     previous.reflectionScale !== env?.reflScale || previous.marina !== env?._marina || previous.farTarget !== far ||
     previous.farWidth !== far?.width || previous.farHeight !== far?.height;
-  return { paused: true, draw,
+  if (!draw) return PAUSED_UNCHANGED;
+  return { paused: true, draw: true,
     commit() {
       game._pausedWorld = { match: game.match, level: G.level, width, height, pixelRatio, settings,
         quality: settings.quality, shadowsSetting: settings.shadows, bloomSetting: settings.bloom,
         fovSetting: settings.fov, cameraShake: settings.cameraShake, colorblind: settings.colorblind,
-        frameRate: settings.frameRate, timeOfDay: settings.timeOfDay, aimProfile: settings.aimProfile,
-        aimProfiles: settings.aimProfiles, gyro: settings.gyro, minimap: settings.minimap, showFps: settings.showFps,
+        timeOfDay: settings.timeOfDay, gyro: settings.gyro,
         revision, camera, cameraX: position?.x, cameraY: position?.y, cameraZ: position?.z,
         cameraQx: quaternion?.x, cameraQy: quaternion?.y, cameraQz: quaternion?.z, cameraQw: quaternion?.w,
         cameraScaleX: scale?.x, cameraScaleY: scale?.y, cameraScaleZ: scale?.z,

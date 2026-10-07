@@ -19,7 +19,7 @@ export function adaptIdleSource(rel, code, replace) {
   }
   if (rel === 'src/main.js') {
     code = "import { idleAttractMenuBudget, notePausedWorldChange, pausedWorldFrame, refreshEnvironmentBudget } from '../patches/local-quality/idle-resources.mjs';\n" + code;
-    patch('  _setSettings(partial) {', '  _setSettings(partial) {\n    notePausedWorldChange(this);', 'settings writes invalidate paused backdrop');
+    patch('  _setSettings(partial) {', '  _setSettings(partial) {\n    notePausedWorldChange(this, partial);', 'settings writes invalidate paused backdrop');
     patch('    G.audio = audioMod.audio; G.music = musicMod.music;', '    G.audio = audioMod.audio; G.music = musicMod.music;\n    this._applyAudioVolumes();', 'persisted volumes before any audio init path');
     patch('G.audio?.init?.(); this._applyAudioVolumes();', 'this._applyAudioVolumes(); G.audio?.init?.();', 'persisted mute before unlock');
     patch("    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);",
