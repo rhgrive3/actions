@@ -37,6 +37,12 @@ export function adaptSource(rel, code) {
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',
       'const win = cov[0] >= cov[1] ? 0 : 1; // Exact tie belongs to the assigned Alpha side.',
       'deterministic Alpha turf tie');
+    // Issue #928: the soft push must not write a body through solid stage geometry (online: local takes 100% of it).
+    code = replaceOnce(code,
+      '        a.pos.x -= (dx / d) * push * ka; a.pos.z -= (dz / d) * push * ka;\n        b.pos.x += (dx / d) * push * kb; b.pos.z += (dz / d) * push * kb;',
+      '        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);\n        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);',
+      'world-aware actor soft push');
+    code = "import { softPushActor } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
   }
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
@@ -163,6 +169,10 @@ export function adaptSource(rel, code) {
     // Issue #757: authoritative Storm rain paint samples the same growth/fade-scaled
     // radius as that tick's visible rain and Boss rain (RNG call order unchanged).
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
+    // Issue #905: a ghost Storm is only visual while its owner's client authors the paint. Once NetMatch adopts that
+    // Actor on this host (remote === false) nobody else can paint it, so the live cloud takes over the rest of the rain.
+    code = replaceOnce(code, 'if (g.hit && !c.ghost) c.owner.addTurf(', 'if (g.hit && (!c.ghost || !c.owner.remote)) c.owner.addTurf(', 'adopted Storm owns its remaining paint');
+    code = replaceOnce(code, '        if (!c.ghost) G.boss?.rain(', '        if (!c.ghost || !c.owner.remote) G.boss?.rain(', 'adopted Storm owns its remaining Boss rain');
     code = replaceOnce(code,
       '    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));',
       "    if (this.flick >= 0 && w.kind === 'roller') return w.moveSpeedFiring; // S3 swing target is independent of windup progress\n    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));",
@@ -218,6 +228,7 @@ export function adaptSource(rel, code) {
       '    this._updateClimb(dt, isSquid);\n    const actionHandled = beforeActions(this, dt, jumpPressed);', 'movement actions');
     code = replaceOnce(code, '    if (this.jumpBuffer > 0 && (this.grounded || this.coyote > 0) && !this.climbing) {',
       '    if (!actionHandled && this.jumpBuffer > 0 && (this.grounded || this.coyote > 0) && !this.climbing) {', 'jump action consumption');
+    code = replaceOnce(code, '      if (wantSquid && this.groundTeam === 1) G.fx?.burst(', '      if (wantSquid && this.grounded && this.groundTeam === 1) G.fx?.burst(', 'no ground-entry spray for mid-air transform');
     code = replaceOnce(code, '      if (onEnemy) jv *= 0.72;', '      if (onEnemy) jv = this.s3?.modifiers?.enemyJumpVelocity ?? P.enemyInkJumpVel;', 'enemy ink jump');
     code = replaceOnce(code, '      if (s.t > 0.75) {', '      if (supported && s.t + 1e-10 >= this.s3.jumpChargeTime) {', 'super jump charge');
     code = replaceOnce(code, '        s.dur = 1.15 + Math.min(0.6, s.from.distanceTo(s.to) / 80);', '        s.dur = this.s3.jumpFlightTime;', 'super jump flight');

@@ -54,7 +54,7 @@ async function storm(t, ghost=false) {
     runtime.installSubSpecialFidelity(f,f.profile);
   }
   const {G,THREE}=f;G.scene=new THREE.Scene();G.netm=null;G.actors=[];
-  const p=G.projectiles=new f.Projectiles(G.scene), owner=f.make();owner.team=0;
+  const p=G.projectiles=new f.Projectiles(G.scene), owner=f.make();owner.team=0;owner.remote=ghost;   // a replayed (ghost) cloud belongs to a remote owner; adopted owners paint (#905)
   const visual=[],boss=[];G.fx={rain:(_pos,r)=>visual.push(r)};G.boss={rain:(_a,_x,_z,r)=>boss.push(r)};
   const c={t,dur:8,team:0,ghost,owner,dir:new THREE.Vector3(),rainT:100,group:new THREE.Group()};c.group.position.set(0,5,0);p.clouds.push(c);
   return {f,p,c,visual,boss};

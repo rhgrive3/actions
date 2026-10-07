@@ -20,6 +20,36 @@ export function stepGroundVelocity(vel, moveX, moveZ, targetSpeed, accel, dt) {
   vel.x += dx / dist * step; vel.z += dz / dist * step;
 }
 
+/** Attack/ready state ratio for airborne acceleration and braking. The S3
+ * reference gives 2x both rates for main fire, held sub and special (0.02 vs
+ * 0.01 m/F^2) and does not exempt the air; the ratio is the already pinned
+ * ground 72/36 so the (separately owned) ordinary air baseline is untouched.
+ * Same condition as the grounded selection; also holds after entering squid.
+ */
+export function attackAirRateScale(a, P) {
+  const attacking = a.weaponRunner.firingPose?.() || a.intent.sub || a.specialActive;
+  const ratio = (P.s3AttackGroundAccel ?? 72) / (P.s3GroundAccel ?? 36);
+  return attacking && ratio > 0 ? ratio : 1;
+}
+
+/** Actor-vs-actor soft push (Match.update) written world-aware. Upstream added the whole correction to pos after the
+ * body was collision-resolved, so a local actor taking 100% of a remote overlap (up to 1.7 radii) could land past the
+ * midplane of a thin wall and be resolved out its far side on the next tick. The push now advances in sub-steps well
+ * under the wall-detection depth and stops at the last position where the same body capsule still fits the world.
+ * Plain fixed step count (no dt): the push is a position correction, not a velocity.
+ */
+export function softPushActor(physics, P, a, dx, dz) {
+  const length = Math.hypot(dx, dz);
+  if (!(length > 0) || !physics) return;
+  const squid = a.form === 'squid';
+  const lift = squid ? P.squidBodyLift : P.stepUp, height = squid ? P.squidHeight : P.height;
+  const steps = Math.ceil(length / (P.radius * 0.25)), sx = dx / steps, sz = dz / steps;
+  for (let i = 0; i < steps; i++) {
+    a.pos.x += sx; a.pos.z += sz;
+    if (!physics.bodyFits(a.pos, P.radius, lift, height, squid)) { a.pos.x -= sx; a.pos.z -= sz; return; }
+  }
+}
+
 /** True only while the roller, not its flick/recovery, owns ground movement. */
 export function rollingMovementActive(a) {
   const r = a.weaponRunner;
