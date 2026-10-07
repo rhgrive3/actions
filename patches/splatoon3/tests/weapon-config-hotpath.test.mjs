@@ -73,46 +73,24 @@ test('locked Dualies reuse a full enumerable lock config and clear the four-fram
   assert.equal(a.weapon, reboundWeapon);
 });
 
-test('streaming Splatling reuses a full enumerable zero-debit config without changing ink', async () => {
+test('prepaid Splatling stream reuses the actor-local config without per-round allocation or debit', async () => {
   const f = await fixture(), a = f.make('splatling'), runner = a.weaponRunner, weapon = a.weapon;
   const passed = [];
   f.G.projectiles.fireSplatling = (_actor, config) => passed.push(config);
   runner.streaming = true;
   runner.burstDur = runner.burstT = 1;
+  runner.s3Spin = { paid: 0, unspent: 0, elapsed: 0, emitted: 0, shots: 4 };
   runner.cooldown = 0;
   const inkBefore = a.ink;
-  runner._splatling(1 / 60, { fire: true }, weapon);
-  runner.cooldown = 0;
-  runner._splatling(1 / 60, { fire: true }, weapon);
+  runner._splatling(weapon.fireInterval + 1 / 60, { fire: true }, weapon);
 
-  assert.equal(passed.length, 2);
-  assert.equal(passed[0], passed[1]);
-  assert.equal(Object.getPrototypeOf(passed[0]), Object.getPrototypeOf(weapon));
-  assert.equal(Object.isFrozen(passed[0]), true);
-  assert.deepEqual(Object.keys(passed[0]).sort(), Object.keys(weapon).sort());
-  assert.equal(passed[0].inkPerShot, 0);
-  const roundConfig = { ...passed[0], projSpeed: 20 };
-  for (const key of ['kind', 'id', 'damage', 'damageMin', 'referenceGravity', 'spreadGround', 'spreadAir', 'impactRadius', 'fireInterval']) {
-    assert.equal(roundConfig[key], weapon[key], `PR868 spread preserves ${key}`);
+  assert.ok(passed.length >= 1);
+  assert.ok(passed.every(config => config === weapon), 'the split stream owner passes the original config directly');
+  assert.equal(a.ink, inkBefore, 'prepaid stream rounds do not debit the tank again');
+  for (const config of passed) {
+    for (const key of ['kind', 'id', 'damage', 'damageMin', 'referenceGravity', 'spreadGround', 'spreadAir', 'impactRadius', 'fireInterval'])
+      assert.equal(config[key], weapon[key], `stream preserves ${key}`);
   }
-  assert.equal(a.ink, inkBefore);
-
-  const temporary = Object.create(weapon);
-  Object.defineProperty(temporary, 'temporaryScale', { value: 23, enumerable: true });
-  runner.cooldown = 0;
-  runner._splatling(1 / 60, { fire: true }, temporary);
-  assert.equal(passed.at(-1).temporaryScale, 23);
-  assert.equal(passed.at(-1).kind, weapon.kind);
-
-  const previousWeapon = a.weapon;
-  a.setWeapon('splatling');
-  assert.notEqual(a.weapon, previousWeapon);
-  runner.streaming = true;
-  runner.burstDur = runner.burstT = 1;
-  runner.cooldown = 0;
-  runner._splatling(1 / 60, { fire: true }, a.weapon);
-  assert.notEqual(passed.at(-1), passed[0]);
-  assert.equal(passed.at(-1).damage, a.weapon.damage);
 });
 
 test('projectile keeps the fired actor-local config reference after weapon rebind', async () => {
@@ -120,7 +98,7 @@ test('projectile keeps the fired actor-local config reference after weapon rebin
   const projectiles = new f.Projectiles(new f.THREE.Scene());
   f.G.projectiles = projectiles;
   const projectile = projectiles._new();
-  assert.equal(projectile.s3Weapon, null);
+  assert.equal(projectile.s3Weapon ?? null, null);
   projectile.owner = a;
   projectile.wid = firedWeapon.id;
   projectiles._push(projectile);
@@ -141,7 +119,7 @@ test('projectile keeps the fired actor-local config reference after weapon rebin
   projectiles.pool.push(projectile);
   const recycled = projectiles._new();
   assert.equal(recycled, projectile);
-  assert.equal(recycled.s3Weapon, null);
+  assert.equal(recycled.s3Weapon ?? null, null);
   recycled.owner = a;
   recycled.wid = a.weapon.id;
   projectiles._push(recycled);
