@@ -1815,6 +1815,7 @@
     "status": "source-guided; Switch parity not certified",
     "brakeDragPerFrame": 0.36,
     "brakeGravity": 252,
+    "brakeToFreeVelocityXZ": 14.13,
     "brakeToFreeVelocityY": -9,
     "freeDragPerFrame": 0.02,
     "freeGravity": 57.599999999999994,
