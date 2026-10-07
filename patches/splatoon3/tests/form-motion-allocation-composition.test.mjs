@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
@@ -14,9 +14,11 @@ import { adaptRange } from '../../practice-range/adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
-const GIT_WORKTREE = process.env.INKWAVE_FORM_TEST_WORKTREE || ROOT;
 const FORM_RUNTIME = path.join(ROOT, 'patches/splatoon3/runtime/form-motion.mjs');
-const BASE = 'b34a8aaf606594be61cfbd4c21e9f09afd685ad7';
+// Immutable b34 subject control is tracked so shallow and archive checkouts
+// exercise the same native comparison without fetching repository history.
+const BASELINE_FORM_RUNTIME = fileURLToPath(new URL('./fixtures/form-motion.b34a8aaf.source.txt', import.meta.url));
+const BASELINE_SHA256 = 'f1ff0e192b4389a8b7e43a6b2ea98b7eb3fc1ec53e047aa47ce8ee14e868bed5';
 const adaptBuildSource = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 
@@ -47,8 +49,11 @@ async function production({ legacy = false } = {}) {
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     let source = file === FORM_RUNTIME && legacy
-      ? execFileSync('git', ['-C', GIT_WORKTREE, 'show', `${BASE}:patches/splatoon3/runtime/form-motion.mjs`], { encoding: 'utf8' })
+      ? fs.readFileSync(BASELINE_FORM_RUNTIME, 'utf8')
       : fs.readFileSync(file, 'utf8');
+    if (file === FORM_RUNTIME && legacy) {
+      assert.equal(createHash('sha256').update(source).digest('hex'), BASELINE_SHA256, 'frozen b34 control changed');
+    }
     const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file)
       : file.startsWith(ROOT + path.sep) ? path.relative(ROOT, file) : null;
     if (rel && /\.(?:m?js)$/.test(file)) source = adaptBuildSource(rel, source);
