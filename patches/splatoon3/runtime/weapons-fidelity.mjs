@@ -718,7 +718,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SplashDropFull=null;p.s3SplashDropMax=null;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -735,6 +735,15 @@ export function installWeaponsFidelity(context,profile) {
     if(w.kind==='blaster'){
       p.straight=w.ballistics.straightTime;p.life=w.ballistics.burstTime;
       p.grav=p.fidelityMove.freeGravity;p.drag=p.fidelityMove.freeDrag*60;
+      // #1049: pinned SplashPaintParam gives the validated vertical receiving
+      // surface window. Keep the unpublished lateral/drop interpolation untouched;
+      // only replace native's unrelated 4u hard cutoff with the sourced 3..10u bounds.
+      const splash=raw?.SplashPaintParam;
+      if(Number.isFinite(splash?.DepthMaxDropHeight)&&Number.isFinite(splash?.DepthMinDropHeight)&&
+          splash.DepthMaxDropHeight>=0&&splash.DepthMinDropHeight>=splash.DepthMaxDropHeight){
+        p.s3SplashDropFull=splash.DepthMaxDropHeight;
+        p.s3SplashDropMax=splash.DepthMinDropHeight;
+      }
     }else if(w.kind==='roller'){
       const vertical=p.fidelityMode==='vertical'||p.ghost&&p.fidelityMode===null&&Math.round(p.straight*60)===Math.round(w.ballistics.verticalStraightTime*60);
       p.fidelityMode=vertical?'vertical':'horizontal';p.s3Vertical=vertical;
