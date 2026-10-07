@@ -1,5 +1,20 @@
 // Per-weapon action clocks. The native runner still owns shots/ink/projectiles.
 const EPS = 1e-10;
+export const BLASTER_INTERRUPT_SUB = 3 / 60;
+export const BLASTER_INTERRUPT_SQUID = 4 / 60;
+export function blasterCancellationEdge(actor, runner) {
+  if (actor?.weapon?.kind !== 'blaster' || !runner?.s3BlasterHeldRepeat) return null;
+  const intent = actor.intent || {}, prev = actor._prevIntent || {};
+  const released = !!prev.fire && !intent.fire;
+  const subEdge = !!intent.sub && !prev.sub;
+  const squidEdge = !!intent.squid && !prev.squid;
+  if (!released && !subEdge && !squidEdge) return null;
+  return {
+    sub: BLASTER_INTERRUPT_SUB,
+    squid: BLASTER_INTERRUPT_SQUID,
+    latch: !!intent.fire && (subEdge || squidEdge),
+  };
+}
 const INSTALLED = Symbol.for('inkwave.s3.weapon-gates.v1');
 const elapsed = (value, dt) => value - dt <= EPS ? 0 : value - dt;
 // The existing actual-shot clock is16F for squid admission. Sub preparation
