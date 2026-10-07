@@ -367,7 +367,13 @@ def build_side_corner(design, tree, views, side, black):
     def front_black(p, use_ref=True):
         """Seen from the front, this pixel already shows the liner / lower line (black), or (use_ref) lies inside
         the solid liner black of the front reference (its thin lower-lash strokes are not included)."""
-        fx, fy = er.camera_pixels('front', p[None])
+        pm = p[None]
+        if side > 0 and design.get('front_ink_from_sheet'):
+            # the left eye is built as the mirror image of the right: its mask is the right eye's (mirrored)
+            q = M.to_local(pm)
+            q[:, 0] = -q[:, 0]
+            pm = M.to_world(q)
+        fx, fy = er.camera_pixels('front', pm)
         c = int(round((fx[0] - ink_o[0]) * ink_k))
         r = int(round((fy[0] - ink_o[1]) * ink_k))
         if use_ref and 0 <= r < ink.shape[0] and 0 <= c < ink.shape[1] and ink[r, c]:
@@ -500,7 +506,12 @@ def build_side_corner(design, tree, views, side, black):
         sg = design['side_trim_sigma'] * ink_k
         soft = er.smooth_rows(er.smooth_rows(ink.astype(float), sg), sg, axis=1) > 0.5
         V = np.array(verts)
-        fx, fy = er.camera_pixels('front', V)
+        Vm = V
+        if side > 0 and design.get('front_ink_from_sheet'):
+            q = M.to_local(V)
+            q[:, 0] = -q[:, 0]
+            Vm = M.to_world(q)
+        fx, fy = er.camera_pixels('front', Vm)
         cc = np.clip(np.round((fx - ink_o[0]) * ink_k).astype(int), 0, soft.shape[1] - 1)
         rr = np.clip(np.round((fy - ink_o[1]) * ink_k).astype(int), 0, soft.shape[0] - 1)
         inside_v = soft[rr, cc]
