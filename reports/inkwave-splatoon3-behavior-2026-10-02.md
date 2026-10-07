@@ -367,3 +367,13 @@ Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced 
 **再現と影響:** 完全なmain source-adapter順序（Splatoon 3、touch-layout、reliability、local-quality）と実Actor/Physics/Level、installed gameplay runtimeで、成功済みロール後の状態（`chain=1`, `chainTimer=chainReset`, `chainSpeed=profile.minimumSpeed`）からSuper Jumpを実行した。修正前は固定60Hz simulation 218 tick（3.633秒）後も `chainTimer=1.5` と `chainSpeed` が残った。修正後は時計が実simulation時間で進み、期限後に3値がresetする。以前の値が残ると、期限を超えた次の適格ロールにも設定済み保持率がかかり、速度が不意に低下し得る。
 
 **確認状態:** full-composition regressionを30/60/120Hzのrender scheduleで実行し、同じ60Hz fixed simulation経過とreset境界を確認した。通常の連続ロール窓と、offline pause中にworld/composer描画を抑える既存のcomposed pathも別のcontrolとして確認済み。これはlogic/runtime測定であり、ブラウザ描画性能や本家Switchの連続判定と一致するという証拠ではない。実機比較は未確認のまま残す。
+
+## 2026-10-07 — Charger初弾8F射程の下端アンカー (#514、部分のみ・中間曲線は未確認)
+
+**本家比較条件:** Splatoon 3 Ver. 11.3.0、Splat Charger、ギア効果なし（MainEffectiveRangeUp等の補正を比較条件に加えず）、通常フィールド上の地上射撃を対象とする。pinned primary 11.3パラメータ `WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/MoveParam` は `DistanceMinCharge=9.033`、`DistanceMaxCharge/DistanceFullCharge=24.037` の両端点のみを示し、charge-frame→distanceの中間写像フィールドを含まない。同ファイルの `WeaponParam` は `FreezeFrameMin/FullCharge=1`、`InkConsume`、`MoveSpeedFullCharge` のみで、チャージャーのChargeFrame数を持たない。Nintendo公式のVer. 11.3.0更新履歴に中間射程曲線の公開値はなく、Switch実機のフレーム計測は未実施であるため、中間進行は本家確定としない。
+
+**INKWAVEの差分:** 公開main `f31f5da4` は `weapons-charger-flight.mjs` の `reachFor` で `DistanceMinCharge+(DistanceMaxCharge-DistanceMinCharge)*charge` と汎用eased chargeを直結していた。native runner（`inkwave-public/src/game/weapons.js:152-154`、S-curve＋`chargeTime=1.0`）は8Fタップで `chargeT=8/60`、`charge=1/6` となるため、初弾の法的射程は `lerp(9.033,24.037,1/6)=11.5337` にずれていた。`patches/splatoon3/runtime/weapons-charger-flight.mjs` は `chargerRangeCharge [1/6,1]->[0,1]`（`<=1/6` は下端にclamp、`>=.999` は上端）を `reachFor`（native flight＋HUD `chargerReach`＋ghost既定len共有）に適用し、初弾8Fを `9.033`、フルを `24.037` に固定する。1–7F発射gate（#304）、chargeTime/speed/damage/paint/RNG律は変更していない。公開版 `inkwave-public/` は変更していない。
+
+**再現と影響:** 完全なmain source-adapter順序（Splatoon 3、touch-layout、reliability、local-quality、network-replication、practice-range）と実Actor＋WeaponRunner＋installed flightで、chargerに100inkを与え `fire` を8 tick保持して離す。修正前（exact-f31 built baseline）は8F到達 `11.5337` を再現し、修正後はbirth charge `1/6` かつ `chargerReach=9.033`、flight job `range=9.033`（HUDとflightが同一helper）、フルchargeは `24.037`、ghostはwire `len` 優先を維持する。部分チャージの最短弾が約2.5 unit短くなり、近距離タップのキル/塗り到達が下端に揃う。
+
+**確認状態:** `charger-min-range.test.mjs` 7/7（native 8F birth、flight job min/full、HUD共有、単調性、非charger、ghost override）を完全source compositionで確認した。これはlogic/runtime測定であり、ブラウザ描画やSwitch実機との一致証拠ではない。中間区間の線形remapはNintendo-sourcedではなく近似であり、真のS3 charge-frame意味論（acceptance条件4）はpinned一次資料に写像が存在しないため未確認として残す。7件のendpoint試験通過をもってFixedとは主張しない。
