@@ -91,7 +91,10 @@ export class Hit {
     throw new Error(`unexpected physics.js import ${spec}`);
   });
   await physics.evaluate();
-  shared = { THREE: three.namespace, G: ctx.namespace.G, mk, three, ctx, physics };
+  const framing = mk(fs.readFileSync(`${ROOT}patches/splatoon3/runtime/battle-framing.mjs`, 'utf8'), 'battle-framing.mjs');
+  await framing.link(() => { throw new Error('battle-framing.mjs must be self-contained'); });
+  await framing.evaluate();
+  shared = { THREE: three.namespace, G: ctx.namespace.G, mk, three, ctx, physics, framing };
   return shared;
 }
 
@@ -99,7 +102,7 @@ export class Hit {
 // restores only the locked shoulder block, retaining all unrelated owners,
 // including #862 probe cadence, for an exact differential of shoulder framing.
 async function loadRig({ adapted }) {
-  const { THREE, mk, three, ctx, physics } = await boot();
+  const { THREE, mk, three, ctx, physics, framing } = await boot();
   const installed = adaptUpstream();
   const start = '    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);';
   const end = '    if (this.shoulder > 1e-3) cam.position.addScaledVector(_right, this.shoulder);';
@@ -113,6 +116,7 @@ async function loadRig({ adapted }) {
     if (spec === 'three') return three;
     if (spec === '../core/ctx.js') return ctx;
     if (spec === './physics.js') return physics;
+    if (spec === '../../patches/splatoon3/runtime/battle-framing.mjs') return framing;
     throw new Error(`unexpected cameraRig import ${spec}`);
   });
   await mod.evaluate();
