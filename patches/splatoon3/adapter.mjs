@@ -1,5 +1,6 @@
 import { adaptRollerMaxPaint } from './roller-max-paint-adapter.mjs';
 import { adaptRollerMaxPaint } from './roller-max-paint-adapter.mjs';
+import { adaptLocalBatch01 } from './local-batch-01-adapter.mjs';
 import { adaptAssistPresentation } from './assist-presentation-adapter.mjs';
 import { adaptMatchHud } from './match-hud-adapter.mjs';
 import { adaptChargerSurface } from './charger-surface-adapter.mjs';
@@ -880,7 +881,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    if (!inked) {                                                        // ink ran out under us: let go',
       '    if (!inked && crossSurgeInkGap(this, h, into)) return;\n    if (!inked) {                                                        // ink ran out under us: let go', 'surge unpainted gap');
     code = replaceOnce(code, '      if (s.t > 0.75) {', '      if (supported && s.t + 1e-10 >= this.s3.jumpChargeTime + superJumpStartupTime(this)) {', 'super jump charge');
-    code = replaceOnce(code, '        s.dur = 1.15 + Math.min(0.6, s.from.distanceTo(s.to) / 80);', '        s.dur = this.s3.jumpFlightTime;', 'super jump flight');
+    code = replaceOnce(code, '        s.dur = 1.15 + Math.min(0.6, s.from.distanceTo(s.to) / 80);', '        s.dur = this.s3.jumpFlightTime + stealthJumpExtraTime(this, s.from, s.to);', 'super jump flight');
     code = replaceOnce(code, '        this.invuln = Math.max(this.invuln, s.dur + 0.2);',
       '        // Super Jump does not grant an extra landing shield.', 'super jump invulnerability');
     code = replaceOnce(code, '      const k = Math.min(1, s.t / s.dur);',
