@@ -614,7 +614,7 @@ def build_liner(rays, design, bot, join):
     if tot[2] < 0:
         faces = [fc[::-1] for fc in faces]
     v, f = er.solid_sheet(verts, faces, LINER_THICK_MM)
-    col = px[:, -1, 0] > design['corner']['c'][0] + 0.5
+    col = px[:, -1, 0] > design.get('liner_margin_from_x', design['corner']['c'][0] + 0.5)
     mv, mf = build_margin(rays, verts.reshape(n, rows, 3)[col, -1])
     return np.r_[v, mv], list(f) + [tuple(i + len(v) for i in fc) for fc in mf]
 
