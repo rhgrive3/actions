@@ -73,8 +73,8 @@ test('the volley configuration is a real non-null calibration, honestly labelled
   assert.match(VOLLEY_CONFIG.lobesStatus, /calibration-not-extracted/);
   assert.match(VOLLEY_CONFIG.spreadStatus, /calibration-not-extracted/);
   assert.ok(VOLLEY_CONFIG.spreadDeg > 0);
-  assert.equal(VOLLEY_CONFIG.damageCarriers, 1);
-  assert.match(VOLLEY_CONFIG.damageStatus, /single-authoritative/);
+  assert.equal(VOLLEY_CONFIG.damageCarriers, 3);
+  assert.match(VOLLEY_CONFIG.damageStatus, /independent-authoritative/);
 });
 
 test('the descriptor carries the numbers the native blast reads', () => {
@@ -238,6 +238,8 @@ test('activation is refused when dead, super jumping, already active or not read
 
 // ---- native lifecycle -------------------------------------------------------
 
+
+
 test('the native _startSpecial engages the Trizooka and spends the gauge exactly once', async () => {
   const api = await production();
   world(api);
@@ -275,30 +277,24 @@ test('the Trizooka does not fire without a fire press, and fires with the defaul
   releaseFire(a);
 });
 
-test('a volley has exactly one damage carrier, so three 220 HP lobes cannot stack', async () => {
+test('all three Trizooka globs are independent authoritative blast projectiles', async () => {
   const api = await production();
   const projectiles = world(api);
   const a = makeActor(api);
   const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
   assert.equal(fired.length, VOLLEY_CONFIG.lobes);
-  const carriers = fired.filter((p) => p.damageOwner);
-  assert.equal(carriers.length, 1, 'exactly one authoritative shot');
-  assert.equal(carriers[0].damage, 220);
-  assert.equal(carriers[0].type, 'blast');
-  for (const p of fired.filter((x) => !x.damageOwner)) {
-    assert.equal(p.damage, 0, 'a visual lobe never applies direct damage');
-    assert.notEqual(p.type, 'blast', 'a visual lobe never enters the native blast path');
-  }
-  // all lobes share one native vol record, so the native per-victim dedupe applies
-  const vols = new Set(fired.map((p) => p.vol));
-  assert.equal(vols.size, 1, 'one volley record groups the lobes');
+  assert.equal(fired.filter((p) => p.damageOwner).length, 3, 'all three local globs are authoritative');
   for (const p of fired) {
+    assert.equal(p.damage, 220);
+    assert.equal(p.type, 'blast');
     assert.equal(p.wid, 'trizooka', 'native cause id set for ghost restore');
     assert.equal(p.s3SpecialWeapon.kind, 'trizooka', 'descriptor preserved for the native blast');
     assert.ok(p.vel.length() > 0, 'real 3D aim velocity');
     assert.equal(p.ghost, false);
     assert.equal(projectiles.list.includes(p), true, 'it is in the ONE native list');
   }
+  const vols = new Set(fired.map((p) => p.vol));
+  assert.equal(vols.size, 3, 'each glob has its own per-projectile victim dedupe');
 });
 
 test('the second volley is spaced by ShotDelay, and Repeat governs held-fire repeats', async () => {
@@ -629,7 +625,7 @@ test('the volley uses the native camera-ray aim path, not the bomb lob', async (
   // speed is the table SpawnSpeed, not the bomb throw speed
   near(carrier.vel.length(), TRIZOOKA.spawnSpeed, 1e-6);
   // the side lobes deviate laterally, but only by the calibrated fan
-  for (const p of fired.filter((x) => !x.damageOwner)) {
+  for (const p of fired.filter((_, i) => i !== VOLLEY_CONFIG.damageLobeIndex)) {
     const d = p.vel.clone().normalize().dot(aim);
     assert.ok(d > 0.99, 'a side lobe stays within the calibrated fan');
   }
@@ -826,10 +822,10 @@ test('native volley side lobes are symmetric and stay inside the declared fan', 
   const aim = projectiles._aimFrom(a, muzzle, new api.THREE.Vector3()).clone();
   const basis = perpendicularBasis(aim).u;
   const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
-  const carrier = fired.find(p => p.damageOwner), sides = fired.filter(p => !p.damageOwner);
+  const carrier = fired[VOLLEY_CONFIG.damageLobeIndex], sides = fired.filter((_, i) => i !== VOLLEY_CONFIG.damageLobeIndex);
   assert.ok(carrier.vel.clone().normalize().distanceTo(aim) < 1e-12);
   const offsets = sides.map(p => p.vel.clone().normalize().dot(basis));
-  assert.ok(offsets[0] * offsets[1] < 0, 'visual lobes straddle the authoritative aim ray');
+  assert.ok(offsets[0] * offsets[1] < 0, 'outer globs straddle the centre aim ray');
   assert.ok(Math.abs(offsets[0] + offsets[1]) < 1e-12, 'equal opposite fan offsets');
   for (const p of sides) {
     const angle = Math.acos(Math.min(1, p.vel.clone().normalize().dot(aim)));
