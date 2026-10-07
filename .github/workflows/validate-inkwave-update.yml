@@ -221,6 +221,7 @@ jobs:
       - name: Build patched site at the checkout commit
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2
+          node --test scripts/tests/inkwave-worker-compaction.test.mjs
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
           git rev-parse HEAD > _site-source-sha.txt

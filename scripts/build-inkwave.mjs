@@ -17,6 +17,7 @@ import { adaptReliability, reliabilityIdentity, RELIABILITY_ROOT } from '../patc
 import { adaptQualitySource, qualityIdentity, QUALITY_ROOT } from '../patches/local-quality/adapter.mjs';
 import { adaptNetworkSource, networkIdentity, NETWORK_ROOT } from '../patches/network-replication/adapter.mjs';
 import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity } from '../patches/loading-cache/adapter.mjs';
+import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
 
 const adaptBuildSource = (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
@@ -291,7 +292,7 @@ for (const file of versionFiles) {
 // stylesheet URLs and runtime fetches resolve within the same revision.
 fs.writeFileSync(path.join(BUILD,'index.html'), loadingHTML.replace('<head>', `<head>\n<base href="./_versions/${revision}/">`));
 const loadingSummary = finalizeLoadingWorker(BUILD, revision, loadingPlan,
-  source => esbuild.transformSync(source, { loader: 'js', minifyWhitespace: true, minifyIdentifiers: false, minifySyntax: false, legalComments: 'inline' }).code);
+  source => compactLoadingWorkerTemplate(source, esbuild.transformSync));
 const identity = writeBuildIdentity(SRC, BUILD, PATCH_ROOT, { esbuild:esbuild.version, revision, script:sha256(fs.readFileSync(new URL(import.meta.url))), touchLayout:touchLayoutIdentity(), reliability:reliabilityIdentity(), quality:qualityIdentity(), network:networkIdentity(), range:rangeIdentity(), loadingCache:{ source:loadingIdentity(), ...loadingSummary } });
 // Include the independent editor in exact-source verification, not only artifact hashing.
 for (const [file, hash] of Object.entries(identity.build.touchLayout)) identity.files['touch-layout/' + file] = hash;
