@@ -116,6 +116,11 @@ async function setup({ remote = false, y = 0, grounded = true, vertical = false,
   paint.level = level;
   paint.growing = [];
   paint._qb = [];
+  // Match the current production constructor's native splat-pool ownership.
+  if (paint._takeSplatEntries) Object.assign(paint, {
+    _splatEntryPool: [], _splatGrowthPool: [], _splatPoolsDisposed: false,
+    _splatPoolStats: { entryArraysCreated: 0, entryArraysReused: 0, growthRecordsCreated: 0, growthRecordsReused: 0 },
+  });
   const splat = paint.splat.bind(paint);
   paint.splat = (center, radius, team, opts = {}) => {
     const area = splat(center, radius, team, opts);
