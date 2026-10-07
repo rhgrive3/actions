@@ -370,6 +370,9 @@ export function installWeapons(context, profile) {
     const storedReleaseReady = this.s3Stored && a.form !== 'squid' && !this.s3WasSquid &&
       (this.s3Stored.fireDelay || 0) <= dt + epsilon;
     if (this.s3Stored && !held && !storedReleaseReady) {
+      // #1070: cancelling a live charge keep owns S3's separate 3F ink-recovery delay.
+      a.s3 ||= {};
+      a.s3.chargerKeepRecover = 3 / 60;
       cancelStored(this); this.s3WasSquid = a.form === 'squid';
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false;
       return;
