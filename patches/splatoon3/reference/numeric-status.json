@@ -2507,7 +2507,7 @@
     "binding": null
   },
   "flow.weights.assist": {
-    "value": 0.5,
+    "value": 0.42,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -2588,6 +2588,21 @@
   },
   "flow.abilityPoints": {
     "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.assistPoints.referenceThreshold": {
+    "value": 100,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.assistPoints.damage": {
+    "value": 14,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.assistPoints.marking": {
+    "value": 4,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -3451,6 +3466,31 @@
   },
   "clothingGear.respawnPunisher.specialSaverAPScale": {
     "value": 0.7,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.thermalInk.duration": {
+    "value": 16,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.trackingVisual.nearStart": {
+    "value": 6,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.trackingVisual.nearFull": {
+    "value": 8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.haunt.targetFrames": {
+    "value": 45,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.haunt.targetSpecialLoss": {
+    "value": 0.15,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   }
