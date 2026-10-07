@@ -155,19 +155,19 @@ export const TRIZOOKA_CARTRIDGE = {
 // three-lobed burst and marked as such. They are deliberately non-null: a null
 // count produced zero projectiles, which is not the weapon.
 //
-// The damage contract is the important part. Exactly ONE lobe per volley is the
-// damage carrier (`damageOwner: true`, type 'blast'). The other lobes are
-// visual-only: type 'shot', `damage: 0`, no burst. Three 220 HP direct hits must
-// never stack, so the native blast path can only ever be entered once per
-// volley. All lobes share one native `vol` record, so the native per-victim
-// dedupe in `_step` (`p.vol.hits`) applies on top of that.
+// #1057: every one of the three fired globs is an authoritative Trizooka
+// projectile. Each owns its own direct hit, 53/35 splash and impact paint. The
+// native per-victim ledger remains useful only as a per-GLOB duplicate guard,
+// so every glob receives a distinct reused `vol` record instead of sharing one
+// volley-wide immunity token. Ghost/replay copies remain presentation-only.
 export const VOLLEY_CONFIG = {
   lobes: 3,
   lobesStatus: 'simulation-calibration-not-extracted',
   spreadDeg: 2.6,
   spreadStatus: 'simulation-calibration-not-extracted',
-  damageCarriers: 1,
-  damageStatus: 'deliberate-dedupe-single-authoritative-shot',
+  damageCarriers: 3,
+  damageStatus: 'independent-authoritative-projectiles',
+  // retained as the deterministic centre-lobe index for spread/aim calibration
   damageLobeIndex: 0,
 };
 
@@ -223,8 +223,6 @@ export function trizookaProjectileDescriptor(_p) {
 // Returns the real projectile objects that entered the one native list.
 export function throwVolley(System, actor, descriptor) {
   const count = VOLLEY_CONFIG.lobes;
-  const vol = System.vols ? System.vols[System.volI = (System.volI + 1) % System.vols.length] : null;
-  if (vol) vol.hits.length = 0;
   // The camera-ray aim path, exactly as the native shooter uses it: the muzzle
   // anchor from native `_muzzle`, the 3D direction from native `_aimFrom` (which
   // falls back to aimDir when the aim point is too close or behind). The
@@ -239,28 +237,28 @@ export function throwVolley(System, actor, descriptor) {
   for (let i = 0; i < count; i++) {
     const p = i === 0 ? seed : System._new();
     const spread = VOLLEY_CONFIG.spreadDeg * Math.PI / 180;
-    // the fan is symmetric about the DAMAGE CARRIER, so the authoritative shot
-    // travels exactly along the native aim ray and the side lobes straddle it
+    // The calibrated fan stays symmetric about lobe 0. Authority is independent
+    // of that visual/aim index: all three local globs are full Trizooka rounds.
     const k = i === VOLLEY_CONFIG.damageLobeIndex ? 0 : (i === 1 ? -1 : 1);
-    const carrier = i === VOLLEY_CONFIG.damageLobeIndex;
+    const vol = System.vols ? System.vols[System.volI = (System.volI + 1) % System.vols.length] : null;
+    if (vol) vol.hits.length = 0;
     Object.assign(p, {
-      type: carrier ? descriptor.type : 'shot',
+      type: descriptor.type,
       wid: descriptor.wid,                    // native cause id, used by ghost restore
       owner: actor,
       team: actor.team,
       age: 0,
       life: TRIZOOKA.duration,
       straight: TRIZOOKA.goStraightFrames,
-      // one authoritative damage lobe per volley; the rest are visual
-      damage: carrier ? descriptor.directDamage : 0,
-      damageOwner: carrier,
-      radius: carrier ? descriptor.impactRadius : descriptor.burstRadius * 0.55,
-      size: carrier ? 0.22 : 0.15,
+      damage: descriptor.directDamage,
+      damageOwner: true,
+      radius: descriptor.impactRadius,
+      size: 0.22,
       grav: descriptor.grav,
       drag: descriptor.drag,
       vol,
       trail: -1.5,
-      trailEvery: carrier ? 1.1 : 0,
+      trailEvery: 1.1,
       trailRadius: 0.3,
       seed: (i * 0.37 + 0.11) % 1,
     });
