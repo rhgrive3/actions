@@ -92,7 +92,7 @@ test('588/595×startup: focused sensor ownership cannot run or restart weapon cl
  s.fire('focus');s.orientation({alpha:100});assert.deepEqual(s.m.gyro.consume({yaw:0,pitch:0}),{yaw:0,pitch:0});h.down();for(let i=0;i<3;i++)h.step();assert.equal(f.ps.list.length,1,'new human admission, not old swim countdown');
 });
 test('596 owner guard is transported once; remote pose cannot relocate nine births',async()=>{
- const f=await world(true),a=actor(f,'slosher',true),n=net(f,a),V=f.THREE.Vector3;
+ const f=await world(true),a=actor(f,'slosher',true),n=net(f,a),V=f.THREE.Vector3;f.G.netm=n;
  const wall={id:0,solid:true,center:new V(0,1,.5),half:new V(10,4,.05),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};f.G.level.blocks=[wall];f.G.level.queryBlocks=(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;};
  a.intent.fire=true;for(let i=0;i<13;i++){a.weaponRunner.update(DT,{fire:true});a._finishFrame(DT);}
  const packets=n.out.filter(e=>e[1]==='p');assert.equal(packets.length,9);assert.ok(packets.every(e=>e.length===35));assert.ok(f.ps.list.every(p=>p.pos.z<.45));

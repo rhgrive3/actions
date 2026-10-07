@@ -237,6 +237,8 @@ test('owned wirepack carries only remote swim visuals; the owner fires the resto
     assert.equal(owner.form, 'kid'); assert.ok(owner.weaponRunner.charging);
     assert.ok(owner.weaponRunner.charge >= .999);
     owner.intent.fire = false; f.step(owner);
+    assert.equal(fires.length, 0, 'the composed release owner preserves its one fixed release frame');
+    f.step(owner);
     assert.equal(fires.length, 1, 'the owner produces one real Charger fire event');
     ownerNet._sendTick();
     const sentFireEvents = (ownerPackets.at(-1)?.e || []).filter(event => event[1] === 'ev' && event[2] === 'weapon:fire');
