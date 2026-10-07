@@ -10,6 +10,11 @@ export function adaptWeaponEdgecases(rel, code, replace) {
   code = replace(code,
     '    this._spread(dir, spreadDeg ?? 1.2);',
     '    spreadWeaponRound(this, dir, a, w, spreadDeg);', 'blaster scalar spread cone');
+  // The laser telegraphs the weapon's maximum reach at every charge level; only obstruction shortens it.
+  // The installed finite flight owns the calibrated full-charge reach; native fallback is the profile rangeMax.
+  code = replace(code,
+    '        const range = lerp(w.rangeMin, w.rangeMax, ch);',
+    '        const range = this.chargerReach ? this.chargerReach(1) : w.rangeMax;', 'charger sight shows maximum range');
   code = replace(code,
     '        const hit = G.physics.raycast(m, dir, range, _hit);',
     '        const hit = G.physics.raycast(m, dir, range, _hit, true);', 'charger sight shares ink grate mask');
