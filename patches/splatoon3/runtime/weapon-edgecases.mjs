@@ -104,6 +104,12 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     clear(this); clearDualiesLocks(this); this.s3DualiesEmerging = false; this.s3ChargerPostShot = 0; this.s3DualiesSwimStart = null;
     return out;
   };
+  // #874: dodge admission uses current fire intent, not the recent-fire presentation timer.
+  const tryDodge = WeaponRunner.prototype.tryDodge;
+  WeaponRunner.prototype.tryDodge = function (...args) {
+    if (this.a?.weapon?.kind === 'dualies' && !this.a.intent?.fire) return false;
+    return tryDodge.apply(this, args);
+  };
   const update = Actor.prototype.update;
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
