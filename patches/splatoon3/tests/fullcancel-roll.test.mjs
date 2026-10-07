@@ -285,9 +285,11 @@ test('pending Roller attack context clears on special, superjump, death, reset a
   {
     const { a, api, step } = await pendingFullCancelContext();
     a.weaponRunner.cooldown = 10;
-    for (let i = 0; i < Math.ceil(api.PLAYER.fireBuffer * 60) + 3; i++) {
+    const expiresAt = a.s3.actions.fullCancelGroundAttack.expiresAt;
+    for (let i = 0; i < 60 && a.s3.actions.fullCancelGroundAttack; i++) {
       step({ squid: true, fire: false, jump: false });
     }
+    assert.ok(api.G.time > expiresAt, 'the exact buffered context expiry is crossed');
     assert.equal(a.s3.actions.fullCancelGroundAttack, null);
   }
 });

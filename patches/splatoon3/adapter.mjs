@@ -46,6 +46,14 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  // Composition probes may feed the finished BUILD tree through this adapter
+  // again. Accept only the complete paint signature; raw/partial upstream drift
+  // still reaches the exact fail-closed anchors below.
+  if (rel === 'src/world/paint.js' &&
+      code.includes('installIssue570PaintPresentation(PaintSystem)') &&
+      code.includes('bool bodyOnly = vGrow.z > 1.5;') &&
+      code.includes('  _disposeSplatPools() {') &&
+      code.includes('if (this._inkMark) this._inkMark(f, i, j);')) return code;
   // Storm owns the structural cloud-loop rewrite. Gear/Sub may then refine
   // the terminal frame boundary without hiding Storm's original connection.
   if (rel === 'src/game/weapons.js') code = adaptStormEffects(rel, code);

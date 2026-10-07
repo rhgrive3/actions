@@ -247,6 +247,8 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
   const isolated = f.make('splatling');
   assert.equal(f.inRange(isolated, 0, mid), false, 'another Actor does not inherit the released charge');
   a.weaponRunner.burstT = 1 / 120;
+  assert.ok(a.weaponRunner.s3Spin, 'installed Splatling stream owner is present');
+  a.weaponRunner.s3Spin.elapsed = Math.max(0, a.weaponRunner.burstDur - 1 / 120);
   a.weaponRunner._splatling(1 / 60, { fire: false }, a.weapon);
   assert.equal(a.weaponRunner.streaming, false);
   assert.equal(f.inRange(a, 0, mid), false, 'completed stream ignores its retained snapshot');
