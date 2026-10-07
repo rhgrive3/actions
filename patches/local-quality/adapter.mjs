@@ -1,3 +1,4 @@
+import { adaptTeamSpecialSignal } from './team-special-signal-adapter.mjs';
 import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
 import { adaptClothingGear } from '../splatoon3/clothing-gear-adapter.mjs';
 import { adaptIssue465 } from '../splatoon3/issue-465-adapter.mjs';
@@ -57,6 +58,7 @@ import { adaptFinishTape } from './finish-tape-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'team-special-signal-adapter.mjs',
   'bot-paint-observation-adapter.mjs',
   'issue-418-adapter.mjs','world-quality.mjs','quality-probe.mjs','texlib-adapter.mjs','texlib.mjs',
   'boss-hit-adapter.mjs',
@@ -109,6 +111,7 @@ export function adaptQualitySource(rel, code) {
 }
 
 function adaptQualityLayer(rel, code) {
+  code = adaptTeamSpecialSignal(rel, code, replaceOnce);
   code = adaptBotPaintObservation(rel, code);
   code = adaptPropRetention(rel, code);
   code = adaptPropAtlas(rel, code);

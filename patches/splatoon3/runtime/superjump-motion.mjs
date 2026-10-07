@@ -91,6 +91,13 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
       // Only observe the existing native landing clock/pose; no parallel age.
       m.phase = 'touchdown';
     } else m.touchdown = false;
+    if (m.phase === 'charge' && sj.wallSupport) {
+      // Present validated wall support through the native climb basis without
+      // re-enabling gameplay climbing or retaining a borrowed animation frame.
+      const form = s.form, normal = s.wallNormal;
+      try { s.form = 'climb'; s.wallNormal = sj.wallSupport; return update.call(this, dt, s); }
+      finally { s.form = form; s.wallNormal = normal; }
+    }
     return update.call(this, dt, s);
   };
   C._updateSquid = function (dt, s) {
