@@ -9,6 +9,7 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 import { realCharacter } from './real-character-fixture.mjs';
 function start(f, a, vertical, dt = 1 / 60) {
   a.grounded = !vertical;
+  a.intent.move.set(0, 0, 1); // held-roll transitions require actual stick input (#847)
   a.weaponRunner.update(dt, { fire: true, firePressed: true });
 }
 
