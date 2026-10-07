@@ -256,7 +256,11 @@ export function installMovement(context, tuning) {
   const integrate = Actor.prototype._integrate, splat = Actor.prototype.splat;
   Actor.prototype._integrate = function (...args) {
     const value = integrate.apply(this, args);
-    if (this.contacts.ceiling) {
+    // #1075: ordinary stage ceilings are geometry, not Squid Returners. Only an
+    // explicitly classified anti-climb ceiling strips Roll/Surge armor.
+    const ceilingBlock = this.contacts?.ceilingBlock;
+    const block = Number.isInteger(ceilingBlock) && ceilingBlock >= 0 ? api.G.physics?.level?.blocks?.[ceilingBlock] : null;
+    if (this.contacts.ceiling && block?.squidReturner === true) {
       const state = movementState(this);
       for (const shield of new Set([state.armor, state.roll, state.surge])) if (shield) shield.armorTime = 0;
       state.armor = null;
