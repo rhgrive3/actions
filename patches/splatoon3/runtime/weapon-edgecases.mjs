@@ -110,7 +110,6 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     if (r) {
       if (r.s3ChargerPostShot > 0) r.s3ChargerPostShot = Math.max(0, r.s3ChargerPostShot - dt);
       if (r.s3DualiesPostShot > 0) r.s3DualiesPostShot = Math.max(0, r.s3DualiesPostShot - dt);
-      if (r.s3SloshPostShot > 0) r.s3SloshPostShot = Math.max(0, r.s3SloshPostShot - dt);
       const cancelAction = !this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady();
       if (cancelAction) {
         r.s3ChargerPostShot = 0;
@@ -137,6 +136,8 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   };
   const weaponUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
+    // Slosher's 16F post-shot action gate belongs to the runner: Actor-driven and direct-runner paths advance it exactly once.
+    if (this.s3SloshPostShot > 0) this.s3SloshPostShot = Math.max(0, this.s3SloshPostShot - dt);
     if (this.a.weapon.kind === 'charger' && (input?.sub || input?.subReleased)) {
       const source = input, runner = this;
       return weaponUpdate.call(this, dt, { ...source,

@@ -50,6 +50,7 @@ test('#930 a running dodge keeps its own controller (no generic air steering ove
   f.a.vel.set(2, 0, 0); f.a.intent.move.set(-1, 0, 0); f.a._horizontal(dt, false, false); near(f.a.vel.x, 2);
 });
 test('#930 the same fixed simulation gives the same braking trace at 30/60/120 render rates', async () => {
+  const expectedFirst = Math.max(0, 1 - (await airborne()).PLAYER.airAccel * 2 * dt);
   const traces = [];
   for (const hz of [30, 60, 120]) {
     const g = await airborne(), clock = new FixedClock(), trace = [];
@@ -59,5 +60,5 @@ test('#930 the same fixed simulation gives the same braking trace at 30/60/120 r
   }
   assert.equal(traces[1].length, 20);
   assert.deepEqual(traces[0], traces[1]); assert.deepEqual(traces[2], traces[1]);
-  near(traces[1][0], 1 - 2 * 4 / 60); near(traces[1][19], 0);
+  near(traces[1][0], expectedFirst); near(traces[1][19], 0);
 });

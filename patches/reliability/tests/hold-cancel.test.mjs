@@ -19,7 +19,7 @@ import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 const IDS = ['jump', 'squid', 'fire', 'sub', 'special'];
-const classList = () => ({ add() {}, remove() {}, toggle() {} });
+const classList = () => ({ add() {}, remove() {}, toggle() {}, contains() { return false; } });
 
 async function boot({ weapon = 'charger', withhold = false } = {}) {
   // Actor + WeaponRunner come from the gameplay graph with only the cancel connection applied.
