@@ -423,6 +423,40 @@ function retireNetworkGhosts(owner = null) {
     return code;
   }
   if (rel === 'src/game/weapons.js') {
+    code = replaceAllExpected(code,
+      "emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75, a.pos.y + 0.02, a.pos.z + fz * 0.75).clone(), normal: a.groundN ? a.groundN.clone() : UP.clone(), team: a.team, kind: 'roll', radius: w.rollWidth / 2 });",
+      "emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75, a.pos.y + 0.02, a.pos.z + fz * 0.75), normal: a.groundN || UP, team: a.team, kind: 'roll', radius: w.rollWidth / 2 });",
+      1, 'roller impact snapshots shared scratch');
+    code = replaceAllExpected(code,
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone() });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir });",
+      3, 'pooled shooter, splatling and blaster fire payloads');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone(), hand });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir, hand });", 'dualies fire payload');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: _dir.clone() });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir: _dir });", 'blaster fire payload');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6), dir: new THREE.Vector3(fx, Math.sin(up), fz).normalize() });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6), dir: _v3.set(fx, Math.sin(up), fz).normalize() });",
+      'roller flick fire uses existing scratch vectors');
+    patch('      const end = new THREE.Vector3().copy(m).addScaledVector(dir, len);',
+      '      const end = _v3.copy(m).addScaledVector(dir, len);', 'charger endpoint reuses existing scratch');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone(), charge, len });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir, charge, len });", 'charger fire payload');
+    patch("emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal.clone() : dir.clone().negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });",
+      "emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal : _v2.copy(dir).negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });",
+      'charger impact payload');
+    patch("if (p.type !== 'blast') emit('weapon:impact', { pos: _v.clone(), normal: _v2.clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: e });",
+      "if (p.type !== 'blast') emit('weapon:impact', { pos: _v, normal: _v2, team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: e });",
+      'victim impact payload');
+    patch("if (p.type !== 'blast') emit('weapon:impact', { pos: at.clone(), normal: _v2.copy(p.vel).normalize().negate().clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: null });",
+      "if (p.type !== 'blast') emit('weapon:impact', { pos: at, normal: _v2.copy(p.vel).normalize().negate(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: null });",
+      'boss impact payload');
+    patch("if (p.type !== 'blast') emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: rad });",
+      "if (p.type !== 'blast') emit('weapon:impact', { pos: hit.point, normal: hit.normal, team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: rad });",
+      'world impact payload');
+    patch("emit('weapon:impact', { pos: c.clone(), normal: new THREE.Vector3(0, 1, 0), team: p.team, kind: 'blast', radius: w.burstRadius });",
+      "emit('weapon:impact', { pos: c, normal: UP, team: p.team, kind: 'blast', radius: w.burstRadius });",
+      'blast impact payload');
     patch('    if (nm && !p.ghost) nm.recProj(p);',
       '    if (nm && !p.ghost && !p._s3SloshBirthPending) nm.recProj(p);',
       'defer pending Slosher projectile packet until birth');
@@ -449,7 +483,7 @@ ${bombHit}`;
     }
     patch('    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;', '    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    let projectileFirst;', 'attack-owned first projectile');
     patch("      this._push(p);\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", "      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'capture exact volley during generation');
-    patch('weapon: w.id, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
+    patch('weapon: w.id, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
 
     patch('      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);', `      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);
       // The active attack parameters own physics. Finalize before _push records
