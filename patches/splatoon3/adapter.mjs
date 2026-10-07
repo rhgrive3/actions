@@ -660,6 +660,13 @@ export function adaptSource(rel, code) {
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
+    code = "import { fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    code = replaceOnce(code, 'let vis = (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));',
+      'let vis = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));', 'slosher source draw radius');
+    code = replaceOnce(code, 'let tail = (p.tail0 ?? 1) + Math.min(p.tailK ?? 1.2, sp * 0.04) * g;',
+      'let tail = p.fidelitySloshDraw ? fidelitySlosherDrawTail(p, sp) : (p.tail0 ?? 1) + Math.min(p.tailK ?? 1.2, sp * 0.04) * g;', 'slosher source tail window');
+    code = replaceOnce(code, 'const r0 = p.vis || p.size, spk =',
+      'const r0 = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : p.vis || p.size, spk =', 'slosher satellite source radius');
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
     code = replaceOnce(code, 'if (g.hit && !c.ghost) c.owner.addTurf(', 'if (g.hit && (!c.ghost || !c.owner.remote)) c.owner.addTurf(', 'adopted Storm owns its remaining paint');
     code = replaceOnce(code, '        if (!c.ghost) G.boss?.rain(', '        if (!c.ghost || !c.owner.remote) G.boss?.rain(', 'adopted Storm owns its remaining Boss rain');
