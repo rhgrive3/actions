@@ -702,7 +702,9 @@ def build_corner_fill(rays, design, cover=None):
     if len(rows) < 3:
         return None
     R = np.array(rows)
-    R[:, 1] = er.smooth_rows(R[:, 1], 2.0)                  # smooth outer edge (it lies on the skin)
+    # smooth outer edge (it lies on the skin): past every tooth of the opening within 2 px, then smoothed
+    k = 10
+    R[:, 1] = er.smooth_rows(np.array([R[max(j - k, 0):j + k + 1, 1].min() for j in range(len(R))]), 6.0)
     ncol = design.get('corner_fill_cols', 12)
     f = np.linspace(0, 1, ncol)
     px = np.stack([R[:, 1:2] + f[None] * (R[:, 2:3] - R[:, 1:2]), np.repeat(R[:, :1], ncol, 1)], -1)
@@ -736,6 +738,9 @@ def build_corner_fill(rays, design, cover=None):
     depth = top.copy()
     for _ in range(40):
         depth = np.maximum(np.minimum(er.smooth_rows(er.smooth_rows(depth, 1.5), 1.5, axis=1), top), behind)
+    # the outer edge sinks just under the face, so the face (not the patch's edge) draws the boundary
+    w = np.clip((design.get('corner_fill_sink', 0.2) - f) / max(design.get('corner_fill_sink', 0.2), 1e-6), 0, 1)[None]
+    depth = depth * (1 - w) + np.maximum(depth, H + 0.03 / 1000) * w
     verts = M.to_local((O + D * depth[..., None]).reshape(-1, 3)) * 1000
     faces = [(j * ncol + i, j * ncol + i + 1, (j + 1) * ncol + i + 1, (j + 1) * ncol + i)
              for j in range(len(R) - 1) for i in range(ncol - 1)]
