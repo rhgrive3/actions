@@ -323,3 +323,32 @@ test('right swipe, FIRE drag and stick output keep the existing numerical respon
   }
   for (const key of ['moveX', 'moveY', 'lookDX', 'lookDY']) assert.equal(patched.input[key], raw.input[key], key);
 });
+
+// ---- #936: a platform cancel is reported separately from a finger-up
+for (const id of ['fire', 'sub']) for (const type of ['pointercancel', 'lostpointercapture']) {
+  test(`#936 held ${id} + ${type} is reported cancelled once; ordinary pointerup and trailing lostpointercapture are not`, async () => {
+    const f = await fixture({ layout: true });
+    f.button(id, 1); f.input.endFrame(); assert.equal(f.input.down(id), true);
+    f.up(1, type); f.up(1, type);
+    assert.equal(f.input.down(id), false); assert.equal(f.input.wasCancelled(id), true);
+    f.input.endFrame(); assert.equal(f.input.wasCancelled(id), false, 'consumed with the tick');
+    f.button(id, 2); f.input.endFrame(); f.up(2); f.up(2, 'lostpointercapture');
+    assert.equal(f.input.down(id), false); assert.equal(f.input.wasCancelled(id), false);
+  });
+}
+
+test('#936 cancelling one of two fingers on a button keeps the hold; a new press supersedes an earlier cancel', async () => {
+  const f = await fixture({ layout: true });
+  f.button('fire', 1); f.button('fire', 2); f.up(1, 'pointercancel');
+  assert.equal(f.input.down('fire'), true); assert.equal(f.input.wasCancelled('fire'), false);
+  f.up(2, 'pointercancel'); assert.equal(f.input.wasCancelled('fire'), true);
+  f.button('fire', 3); assert.equal(f.input.wasCancelled('fire'), false);
+});
+
+test('#936 resets that drop a hold (blur, hide, opening the map) report it cancelled; a tap-only reset does not', async () => {
+  for (const action of [f => f.window.dispatch('blur'), f => f.input.setVisible(false), f => f.input.setMap(true), f => f.input.resetPointers()]) {
+    const f = await fixture({ layout: true }); f.button('fire', 1); f.button('sub', 2); f.input.endFrame();
+    action(f); assert.equal(f.input.wasCancelled('fire'), true); assert.equal(f.input.wasCancelled('sub'), true);
+  }
+  const f = await fixture({ layout: true }); f.input.resetPointers(); assert.equal(f.input.wasCancelled('fire'), false);
+});
