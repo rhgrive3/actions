@@ -27,7 +27,8 @@
     "arcPerMeter": 0.06,
     "landingRadius": 1.4,
     "groundProbeUp": 10,
-    "groundProbeDown": 18
+    "groundProbeDown": 18,
+    "spawnerLift": 1.2
   },
   "weapons": {
     "shooter": {
