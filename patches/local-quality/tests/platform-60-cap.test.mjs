@@ -93,13 +93,13 @@ function makeGame(env, { touch = true, frameRate = 'auto' } = {}) {
   return { game, G, calls };
 }
 
-function runCase(hz, options = {}) {
+function runCase(hz, options = {}, seconds = 1) {
   const env = makeEnv(), { game, calls } = makeGame(env, options);
   game._loop();
-  for (let i = 0; i < hz; i++) env.step(i * 1000 / hz);
+  for (let i = 0; i < hz * seconds; i++) env.step(i * 1000 / hz);
   const frame = game.platform.driver.snapshot();
   const result = {
-    hz, touch: options.touch ?? true, frameRate: options.frameRate ?? 'auto', hostTicks: hz,
+    hz, touch: options.touch ?? true, frameRate: options.frameRate ?? 'auto', hostTicks: hz * seconds,
     driverFrames: frame.frames, rafSchedules: frame.schedules, timerSchedules: frame.timerSchedules,
     timerWakes: frame.timerWakes, pendingRAF: frame.pendingRAF, pendingTimer: frame.pendingTimer,
     frameCalls: calls.frame.length, dynResCalls: calls.dynRes.length, networkCalls: calls.network.length,
@@ -138,6 +138,24 @@ test('mobile 60 cap aligns production driver wakeups to an absolute 60 Hz deadli
       minGapMs: Math.round(Math.min(...gaps) * 1000) / 1000,
       maxGapMs: Math.round(Math.max(...gaps) * 1000) / 1000,
       frameDtSum: result.frameDtSum }));
+  }
+});
+
+test('capped production scheduling keeps its 30-second and three-minute cadence without deadline drift', t => {
+  for (const hz of [90, 120, 144]) {
+    const result = runCase(hz, { touch: true, frameRate: 'auto' }, 180);
+    const firstThirty = result.frameTimes.filter(time => time < 30000).length;
+    assert.ok(Math.abs(firstThirty - 1800) <= 1, `${hz} Hz: 30-second capped callback count`);
+    assert.ok(Math.abs(result.driverFrames - 10800) <= 1, `${hz} Hz: three-minute capped callback count`);
+    assert.equal(result.frameCalls, result.driverFrames, 'every admitted callback runs one composed frame');
+    assert.equal(result.networkCalls, result.frameCalls, 'network work runs once per admitted frame');
+    assert.equal(result.pollPadCalls, result.frameCalls, 'input polling runs once per admitted frame');
+    assert.ok(Math.abs(result.frameDtSum - result.frameTimes.at(-1) / 1000) < 1e-7, 'elapsed frame time remains conserved');
+    assert.ok(Math.abs(result.matchUpdateCalls - result.frameDtSum * 60) < 1.001, 'native fixed simulation retains elapsed cadence');
+    assert.equal(result.endFrameCalls, result.matchUpdateCalls, 'input edges finalize once per simulation tick');
+    t.diagnostic(JSON.stringify({ kind: 'controlled-native-queue; not a physical device trace', hostHz: hz,
+      seconds: 180, firstThirtyCallbacks: firstThirty, totalCallbacks: result.driverFrames,
+      composedFrames: result.frameCalls, fixedUpdates: result.matchUpdateCalls, elapsedSeconds: result.frameDtSum }));
   }
 });
 
