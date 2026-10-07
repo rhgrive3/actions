@@ -1246,9 +1246,10 @@ export function installWeaponsFidelity(context,profile) {
     system._aimFrom(actor,p.pos,dir);
     p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2;p.straight=0;
     p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
-    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.s3BlasterForwardApplied=false;
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
     initialize(p,w);
+    applyBlasterSpawnVelocity(p);
     let remaining=Math.max(0,frame/60);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
