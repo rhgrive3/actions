@@ -6,6 +6,7 @@ import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint } from './roller-impact-paint.mjs';
+import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
 // Main-weapon gameplay only. Values live in profile.json; provenance and retained
@@ -827,7 +828,7 @@ export function fidelityBossHit(system,p) {
   return s.boss;
 }
 
-// Use the native body dimensions with continuous first-contact capsule entry.
+// Use independent player hurtbox dimensions with continuous first-contact capsule entry.
 // The original loop selected actor-array order and tested the wall afterwards.
 // One reusable scratch record avoids per-projectile sorting/allocation and
 // also avoids a second terrain query when the segment reaches the world.
@@ -843,7 +844,7 @@ export function fidelityProjectileTargets(system,p) {
   if (p.fidelityWallDrop?.done) return s.targets;
   // Ghosts share visual collision chronology, but never damage/paint ownership.
   const r0=p.s3PlayerRadius ?? radiusAt(p.fidelityPlayerCollision,p.fidelityPrevAge??p.age,p.size);
-  const r1=fidelityPlayerCollisionRadius(p),radius=PLAYER.radius+Math.max(r0,r1);
+  const r1=fidelityPlayerCollisionRadius(p);
   let nearest=null,best=Infinity;
   for(const actor of G.actors){
     if(!actor.alive||actor===p.owner)continue;
@@ -853,11 +854,13 @@ export function fidelityProjectileTargets(system,p) {
     // FriendThroughFrameForPlayer window. A missing source record keeps the
     // native same-team skip instead of inventing one global collider rule.
     if(friendly&&!Number.isFinite(p.fidelityFriendThrough))continue;
+    const bodyRadius=hurtboxRadius(actor,PLAYER),height=hurtboxHeight(actor,PLAYER);
+    const radius=bodyRadius+Math.max(r0,r1);
     if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
        actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
     s.base.copy(actor.pos); // render easing does not move the authoritative capsule
     const kr=kitTrizookaActorRadius(system,p);
-    const t=kr==null?capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1):kitSegmentCapsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,kr);
+    const t=kr==null?capsuleEntry(p.prev,p.pos,s.base,bodyRadius,height,r0,r1):kitSegmentCapsuleEntry(p.prev,p.pos,s.base,bodyRadius,height,kr);
     if(t===null)continue;
     if(friendly){
       // The window is measured in source frames at the contact point of this
