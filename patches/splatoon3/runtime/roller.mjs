@@ -211,11 +211,22 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
       this.rollLoop?.stop(.12); this.rollLoop = null;
     }
     const state = this.s3RollerAttack;
+    if (state && !starting) state.elapsed += dt;
+    // #1056: an airborne vertical-start that lands in the first 5 reference
+    // frames becomes the faster grounded horizontal swing once. Keep elapsed
+    // startup time; do not restart the clock. Landing on frame 6 or later stays vertical.
+    if (state && state.vertical && !state.released && a.grounded &&
+        state.elapsed > EPS && state.elapsed <= 5 / 60 + EPS) {
+      const horizontal = rollerMode(w, false);
+      state.vertical = false;
+      this.s3FlickVertical = false;
+      state.windup = Math.max(EPS, horizontal.flickWindup - 1 / 60);
+      state.interval = horizontal.flickInterval;
+    }
     const vertical = state ? state.vertical : this.s3FlickVertical;
     let mode = rollerMode(w, vertical);
     if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
     const winding = this.flick >= 0;
-    if (state && !starting) state.elapsed += dt;
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
     let rollInp = inp;
