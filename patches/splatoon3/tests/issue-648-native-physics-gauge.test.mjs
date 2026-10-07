@@ -104,6 +104,7 @@ async function runScenario(sc) {
   const cost = a.specialCost(), segment = cost / SPECIAL_GAUGE_SEGMENTS;
   a.special = cost;
   const impacts = [];
+  const phaseTrace = [];
   let tick = 0;
   a._slamImpact = () => impacts.push({ tick, gauge: a.special, phase: a.specialActive ? a.specialActive.phase : null, grounded: a.grounded, y: a.pos.y });
   a._startSpecial();
@@ -111,18 +112,33 @@ async function runScenario(sc) {
   assert.equal(a.specialReady(), false, 'a live action cannot be activated again');
   const drops = [];
   const tickOnce = () => {
+    const row = {
+      tick: tick + 1, gaugeBefore: a.special, aliveBefore: a.alive,
+      phaseBefore: a.specialActive?.phase ?? null, phaseTimeBefore: a.specialActive?.t ?? null,
+      groundedBefore: a.grounded, impactsBefore: impacts.length,
+    };
     counters.curProbe = 0; counters.curBody = 0;
     G.time += STEP; a.update(STEP);
     counters.maxProbePerTick = Math.max(counters.maxProbePerTick, counters.curProbe);
     counters.maxBodyPerTick = Math.max(counters.maxBodyPerTick, counters.curBody);
     tick++;
+    Object.assign(row, {
+      gaugeAfter: a.special, aliveAfter: a.alive,
+      phaseAfter: a.specialActive?.phase ?? null, phaseTimeAfter: a.specialActive?.t ?? null,
+      groundedAfter: a.grounded, impact: impacts.length > row.impactsBefore,
+    });
+    phaseTrace.push(row);
+    return row;
   };
   let previous = cost, prematureSegment = false, earlyGroundContactDuringRise = false;
   while (a.specialActive && tick < 400) {
     if (sc.flipAt === tick && sc.flipTo) a.intent.move.set(sc.flipTo[0], 0, sc.flipTo[1]);
-    tickOnce();
+    const row = tickOnce();
+    row.actionActive = true;
+    row.actionAlive = row.aliveBefore && row.aliveAfter;
+    row.drop = previous - a.special;
     if (a.grounded && a.specialActive?.phase === 'rise') earlyGroundContactDuringRise = true;
-    drops.push(previous - a.special);
+    drops.push(row.drop);
     assert.ok(a.special <= previous + 1e-10, `the action-owned gauge never rises (tick ${tick})`);
     if (a.specialActive && a.special <= segment + 1e-9) prematureSegment = true;
     previous = a.special;
@@ -142,6 +158,12 @@ async function runScenario(sc) {
     finishAfterImpact: finishTick !== null && impactTick !== null ? finishTick - impactTick : null,
     pendingLeft: !!a.s3TidalSlamGaugeFinish, finalGauge: a.special,
     maxDrop: Math.max(...drops, 0), drops,
+    maxPreImpactDrop: Math.max(...phaseTrace.filter(row => Number.isFinite(row.drop) && row.actionAlive && !row.impact).map(row => row.drop), 0),
+    phaseTrace: {
+      maxDrop: phaseTrace.filter(row => Number.isFinite(row.drop)).reduce((best, row) => !best || row.drop > best.drop ? row : best, null),
+      impact: phaseTrace.find(row => row.impact) || null,
+      death: phaseTrace.find(row => row.aliveBefore && !row.aliveAfter) || null,
+    },
     probes: { groundPerTick: counters.maxProbePerTick, bodyPerTick: counters.maxBodyPerTick },
     specialAtEnd: a.special,
   };
@@ -156,17 +178,24 @@ for (const sc of scenarios) {
     assert.equal(r.impacts.length, 1, 'exactly one native impact callback');
     assert.equal(r.impacts[0].phase, 'fall', 'impact happens in the native fall phase');
     assert.ok(Math.abs(r.impacts[0].gauge - r.segment) < 1e-9, 'the impact frame observes exactly one of 23 segments');
+    assert.equal(r.phaseTrace.impact?.phaseBefore, 'fall', 'the actual native trace reaches impact from fall');
+    assert.equal(r.phaseTrace.impact?.actionAlive, true, 'the action owner is alive through the impact update');
+    assert.ok(Math.abs(r.phaseTrace.impact?.gaugeAfter - r.segment) < 1e-9, 'only the native impact update takes the gauge to one segment');
     if (!sc.id.startsWith('void')) assert.equal(r.impacts[0].grounded, true, 'non-void impact is an actual native landing');
     if (sc.id === 'low ceiling early contact') {
       assert.equal(r.earlyGroundContactDuringRise, true, 'native collision reproduces ground contact while the action is still rising');
       assert.equal(r.impacts[0].grounded, true, 'the gauge reaches the last segment on the real floor impact');
     }
     assert.equal(r.prematureSegment, false, 'no early contact drops the meter to one segment before the fall impact');
-    assert.ok(r.maxDrop < r.cost / 8, `no single-tick collapse (max drop ${r.maxDrop} of ${r.cost})`);
+    assert.ok(r.maxPreImpactDrop < r.cost / 8,
+      `no premature live-action collapse before native impact (max ${r.maxPreImpactDrop} of ${r.cost}; impact transition ${JSON.stringify(r.phaseTrace)})`);
     assert.ok(r.probes.groundPerTick <= 8, `bounded native groundProbe use (${r.probes.groundPerTick} per fixed step)`);
     assert.ok(r.probes.bodyPerTick <= 6, `bounded native collideBody use (${r.probes.bodyPerTick} per fixed step)`);
     if (sc.id.startsWith('void')) {
       assert.ok(r.death, 'the void fall ends in the existing water fall-death');
+      assert.equal(r.phaseTrace.death?.phaseBefore, null, 'the void splat happens after the Slam action ends');
+      assert.equal(r.phaseTrace.death?.aliveBefore, true, 'the native owner remains alive through timeout impact');
+      assert.equal(r.phaseTrace.death?.aliveAfter, false, 'the following native update owns the water death');
       assert.ok(Math.abs(r.death.special - r.segment * 0.5) < 1e-9, 'Special Saver sees the held segment at that death');
       assert.equal(r.death.pending, false, 'the existing death path cleared the pending finish');
       assert.equal(r.pendingLeft, false, 'no stale finish survives the death');
@@ -195,12 +224,21 @@ test('#648 NetMatch pack/apply keeps the owner gauge authoritative over the prox
   const owner = make([0, 0, 0]);
   owner.nid = 1; owner.owner = 'self';
   const proxy = make([2, 0, 0]);
-  proxy.remote = true; proxy.owner = 'self'; proxy.net = { buf: [] };
+  proxy.nid = 1; proxy.owner = 'self';
   const sent = [];
-  const sender = Object.create(NetMatch.prototype);
-  Object.assign(sender, { out: [], isHost: false, match: null, stats: { out: 0, in: 0 }, s: { tr: { broadcast: m => sent.push(m) } } });
-  const receiver = Object.create(NetMatch.prototype);
-  Object.assign(receiver, { byNid: new Map([[1, proxy]]), peers: new Map(), match: null, debug: 0, stats: { out: 0, in: 0 }, s: { hostId: 'self' } });
+  const session = (myId, hostId, broadcast = () => {}) => ({
+    myId, isHost: myId === hostId, hostId,
+    _members: new Map([[myId, myId], [hostId, hostId], ['self', 'owner'], ['viewer', 'proxy']]),
+    tr: { broadcast, sendTo: () => {} },
+  });
+  const sender = new NetMatch(session('self', 'host', m => sent.push(m)), { map: 'map', difficulty: 'normal' });
+  sender.byNid.set(owner.nid, owner);
+  sender._setupActor(owner);
+  const receiver = new NetMatch(session('viewer', 'self'), { map: 'map', difficulty: 'normal' });
+  receiver.byNid.set(owner.nid, proxy);
+  receiver._setupActor(proxy);
+  assert.equal(owner.remote, false, 'the sender session owns the live actor');
+  assert.equal(proxy.remote, true, 'the receiver session marks the packed actor as a proxy');
 
   owner.special = owner.specialCost();
   owner._startSpecial();
@@ -209,10 +247,21 @@ test('#648 NetMatch pack/apply keeps the owner gauge authoritative over the prox
   assert.ok(ownerGauge > 0 && ownerGauge < owner.specialCost(), 'the owner drained through its live action');
   sender._sendTick();                                   // the real pack path (packActor)
   assert.equal(sent.length, 1, 'the pack path emitted a tick');
+  assert.ok(Number.isFinite(sent[0].ts), 'the native tick carries a finite sender timestamp');
+  assert.equal(sent[0].a.length, 1, 'the real packet includes the owned actor');
+  assert.equal(sent[0].a[0][0], owner.nid, 'the packet actor id matches the native owner');
+  assert.equal(sent[0].a[0][13], Math.round(ownerGauge), 'the real packet carries the rounded owner gauge');
+  assert.equal(receiver.byNid.get(sent[0].a[0][0]), proxy, 'the receiver resolves the native proxy by packet id');
+  assert.equal(proxy.net.buf.length, 0, 'the native proxy starts without buffered samples');
   receiver._tick('self', sent[0]);                      // the real apply path (buffered snapshot)
+  assert.equal(receiver.stats.in, 1, `the receiver accepted one native tick (packet ${JSON.stringify({ ts: sent[0].ts, id: sent[0].a[0][0], remote: proxy.remote, owner: proxy.owner })})`);
+  assert.equal(proxy.net.buf.length, 1, 'the real tick path buffered one owner snapshot');
+  assert.equal(proxy.net.buf[0].sp, Math.round(ownerGauge), 'the buffered snapshot retains the owner gauge');
   const peer = receiver._peer('self');
   receiver._advance(peer, STEP);
+  assert.ok(Number.isFinite(peer.tr), 'the owner playback timeline is initialized');
   receiver._sample(proxy, STEP);
+  assert.equal(proxy.net.ready, true, 'the native remote sampler produced a proxy frame');
   receiver.applyRemote(proxy, STEP);
   assert.equal(proxy.special, Math.round(ownerGauge), 'the proxy mirrors the packed owner gauge');
   assert.equal(proxy.specialActive && proxy.specialActive.net, true, 'the replicated special flag is the proxy state');
