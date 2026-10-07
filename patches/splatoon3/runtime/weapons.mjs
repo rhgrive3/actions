@@ -1,3 +1,4 @@
+import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
 import { installFinalDamage, damageGroupId } from './final-damage.mjs';
@@ -191,11 +192,11 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
   if (['shooter', 'dualies', 'splatling'].includes(weapon.kind)) amount = ageDamage(weapon, projectile.age, amount);
   if (weapon.kind === 'roller' && point) amount = distanceDamage(projectile.s3Vertical ? weapon.verticalDamageBands : weapon.flickDamageBands, projectile.start.distanceTo(point));
   if (weapon.kind === 'slosher' && projectile.s3DamageGroup) {
-    return applySlosherVolleyHit(system, projectile.owner, victim, projectile.s3DamageGroup,
-      projectile.s3DamageGroupId, amount, projectile.wid || projectile.type || 'slosher');
+    return withMainDirectDamage(projectile.owner, victim, () => applySlosherVolleyHit(system, projectile.owner, victim, projectile.s3DamageGroup,
+      projectile.s3DamageGroupId, amount, projectile.wid || projectile.type || 'slosher'));
   }
   amount = groupDamage(projectile.s3DamageGroup, victim, amount);
-  if (amount > 0) system.applyHit(projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
+  if (amount > 0) applyMainDirectHit(system, projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
 }
 export function installWeapons(context, profile) {
   api = context;
