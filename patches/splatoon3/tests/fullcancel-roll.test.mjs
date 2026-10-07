@@ -150,7 +150,7 @@ async function composedBufferedAttack(weapon, hz, fullCancel) {
     const projectileStats = owned.map(p => [p.damage, p.dmgFar, p.radius, p.life, p.grav, p.drag, p.size, p.s3Vertical]);
     return { api, a, fireAt, afterB, pendingStart, firstPostLaunch, horizontalChecks, fireEvents, jumps, rolls, owned, scheduledOrigin,
       projectileStats, context: a.s3?.actions?.fullCancelGroundAttack ?? null,
-      fireBuffer: weapon === 'roller' ? Math.max(PLAYER.fireBuffer, a.weapon.squidFlickDelay || 0) : PLAYER.fireBuffer };
+      fireBuffer: weapon === 'roller' ? Math.max(PLAYER.fireBuffer, (a.weapon.squidFlickDelay || 0) + dt) : PLAYER.fireBuffer };
   } finally { offFire(); offJump(); offRoll(); }
 }
 
