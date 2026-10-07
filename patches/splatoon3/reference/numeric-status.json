@@ -3306,6 +3306,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weaponsFidelity.brakeToFreeVelocityXZ": {
+    "value": 14.129999999999999,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weaponsFidelity.brakeToFreeVelocityY": {
     "value": -9,
     "status": "calibration or derived value; see reference raw table and unverified list",
