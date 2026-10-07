@@ -257,7 +257,12 @@ export function installWeapons(context, profile) {
       inp = { ...inp, fire: false };
     }
 
-    if (this.s3Stored && !held) {
+    // #291: the keep pre-delay belongs to resurfacing, not time spent hidden.
+    // A release before readiness cancels (#390). At the ready boundary it may
+    // enter the ordinary one-fixed-frame release owner (#680), never bypass it.
+    const storedReleaseReady = this.s3Stored && a.form !== 'squid' && !this.s3WasSquid &&
+      (this.s3Stored.fireDelay || 0) <= dt + epsilon;
+    if (this.s3Stored && !held && !storedReleaseReady) {
       cancelStored(this); this.s3WasSquid = a.form === 'squid';
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false;
       return;
@@ -273,7 +278,8 @@ export function installWeapons(context, profile) {
       if (this.charging) {
         if (this.charge >= .999 && held) this.s3Stored = {
           charge: 1, remaining: w.keepChargeTime,
-          fireDelay: Math.max(0, (w.storedFireDelay || 0) - dt),
+          fireDelay: w.storedFireDelay || 0, laserDelay: w.storedLaserDelay || 0,
+          resurfaced: false,
           paid: Math.max(this.s3ChargerSpent || 0, w.inkFull)
         };
         this.charging = false; this.charge = 0; this.chargeT = 0; this.s3ChargerHeldTime = 0;
@@ -282,7 +288,7 @@ export function installWeapons(context, profile) {
       }
       if (this.s3Stored) {
         this.s3Stored.remaining -= dt;
-        this.s3Stored.fireDelay = Math.max(0, (this.s3Stored.fireDelay || 0) - dt);
+        this.s3Stored.resurfaced = false;
         if (this.s3Stored.remaining <= epsilon) { this.s3Stored = null; this.s3ChargerSpent = 0; }
       }
       return;
@@ -292,12 +298,19 @@ export function installWeapons(context, profile) {
     if (!this.charging && !this.s3Stored && a.kidT + 1e-10 < (w.swimChargeStartDelay || 0)) return;
 
     // #810: a held squid→humanoid edge refreshes only an existing keep record.
-    if (this.s3Stored && this.s3WasSquid) this.s3Stored.remaining = w.keepChargeTime;
+    if (this.s3Stored && this.s3WasSquid) {
+      this.s3Stored.remaining = w.keepChargeTime;
+      this.s3Stored.fireDelay = w.storedFireDelay || 0;
+      this.s3Stored.laserDelay = w.storedLaserDelay || 0;
+      this.s3Stored.resurfaced = true;
+    }
     this.s3WasSquid = false;
     if (this.s3Stored) {
       this.charge = this.s3Stored.charge;
       this.s3Stored.fireDelay = Math.max(0, (this.s3Stored.fireDelay || 0) - dt);
-      if ((this.s3Stored.fireDelay || 0) > epsilon || !held || !inp.fire) return;
+      this.s3Stored.laserDelay = Math.max(0, (this.s3Stored.laserDelay || 0) - dt);
+      if (this.s3Stored.fireDelay > epsilon || (held && !inp.fire)) return;
+      if (!held) inp = { ...inp, fire: false };
       this.chargeT = 1; this.charging = true;
       this.s3ChargerSpent = this.s3Stored.paid ?? w.inkFull;
       this.s3ChargerHeldTime = w.minReleaseTime || 0;
