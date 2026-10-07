@@ -1183,6 +1183,8 @@ export function installWeaponsFidelity(context,profile) {
     const yaw=Math.atan2(aim.x,aim.z)+radians(unit.BaseRotateYDegree||0);
     const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
     p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(unit.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+    p.s3Weapon={...w};p.s3SlosherMotionApplied=false;
+    applySlosherSpawnVelocity(p,{guide:true});
     initialize(p,w);
     let remaining=Math.max(0,guide.frame/60-p.delay);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
