@@ -8,6 +8,7 @@ import { NetMatch } from '../../../src/net/netmatch.js';
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
 import { PaintSystem } from '../../../src/world/paint.js';
+import { Minimap } from '../../../src/game/minimap.js';
 import { PlayerController } from '../../../src/game/player.js';
 import { Physics, Hit } from '../../../src/game/physics.js';
 import { Menus } from '../../../src/ui/menus.js';
@@ -16,6 +17,7 @@ import { SUB_ICONS, SPECIAL_ICONS } from '../../../src/ui/ui-icons.js';
 import { ShadowCache } from '../../../src/core/shadowcache.js';
 import { installMovement } from './movement.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
+import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
 import { installShotGuide } from './weapons-fidelity.mjs';
@@ -62,7 +64,7 @@ let installed = false;
 export function install(profile) {
   if (installed) throw new Error('INKWAVE patches already installed');
   if (profile.schema !== 1 || profile.referenceVersion !== '11.3.0') throw new Error('Unsupported gameplay profile');
-  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
+  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, Minimap, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
   Object.assign(PLAYER, profile.player);
   for (const [kind, data] of Object.entries(profile.weapons)) {
     if (!WEAPONS[kind]) throw new Error(`Missing upstream weapon ${kind}`);
@@ -118,6 +120,7 @@ export function install(profile) {
   // Main-weapon fidelity must be installed on the same canonical context before
   // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
   installWeaponsFidelity(api, profile);
+  installMinimapDirty(api);
   installChargerSurface(api);
   // The S3 ShotGuideFrame guide reads the installed projectile motion records, so
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.
