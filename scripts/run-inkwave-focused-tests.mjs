@@ -18,11 +18,14 @@ export function parseFocusedInputs(tests, baselines = '[]') {
 
 export function focusedSummary(log) {
   const result = {};
-  for (const field of ['tests', 'pass', 'fail', 'cancelled', 'skipped']) {
+  for (const field of ['tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo']) {
     const match = log.match(new RegExp(`(?:^|\\n)ℹ ${field} (\\d+)(?:\\r?\\n|$)`));
     if (match) result[field] = Number(match[1]);
   }
-  return { ...result, accepted: result.tests > 0 && result.pass > 0 && result.fail === 0 && result.cancelled === 0 };
+  const complete = ['tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo']
+    .every(field => Number.isSafeInteger(result[field]));
+  return { ...result, accepted: complete && result.tests > 0 && result.pass === result.tests
+    && result.fail === 0 && result.cancelled === 0 && result.skipped === 0 && result.todo === 0 };
 }
 
 function run() {

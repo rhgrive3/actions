@@ -10,10 +10,14 @@ test('focused runner admits INKWAVE files and immutable baseline objects', () =>
 });
 
 test('focused acceptance rejects empty, skipped-only, incomplete and failed summaries', () => {
-  assert.equal(focusedSummary('ℹ tests 2\nℹ pass 2\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\n').accepted, true);
+  assert.equal(focusedSummary('ℹ tests 2\nℹ pass 2\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\n').accepted, true);
   for (const log of ['', 'ℹ tests 0\nℹ pass 0\nℹ fail 0\nℹ cancelled 0\n',
     'ℹ tests 2\nℹ pass 0\nℹ fail 0\nℹ cancelled 0\nℹ skipped 2\n',
-    'ℹ tests 2\nℹ pass 1\nℹ fail 1\nℹ cancelled 0\n', 'ℹ tests 2\nℹ pass 2\n'])
+    'ℹ tests 2\nℹ pass 1\nℹ fail 1\nℹ cancelled 0\n', 'ℹ tests 2\nℹ pass 2\n',
+    'ℹ tests 2\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 1\nℹ todo 0\n',
+    'ℹ tests 2\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 1\n',
+    'ℹ tests 3\nℹ pass 2\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\n',
+    'ℹ tests 2\nℹ pass 2\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\n'])
     assert.equal(focusedSummary(log).accepted, false);
 });
 
