@@ -6,6 +6,58 @@ const clamp01 = value => Math.max(0, Math.min(1, value));
 const INSTALLED = Symbol.for('inkwave.s3.splatling.v1');
 const sampledSpeedViews = new WeakMap();
 
+function cancelSplatlingStream(runner, refund, inkMax) {
+  const state = runner?.s3Spin, actor = runner?.a;
+  if (refund && state && Number.isFinite(actor?.ink)) {
+    // Never refund low-ink progress that was not paid from the tank.
+    actor.ink = Math.min(inkMax, actor.ink + Math.max(0, state.unspent));
+  }
+  if (!runner) return;
+  runner.s3Spin = null;
+  runner.charging = runner.streaming = false;
+  runner.charge = runner.chargeT = runner.burstT = runner.burstFrac = 0;
+  runner.spinLoop?.stop(.12); runner.spinLoop = null;
+}
+
+export function exportSplatlingReservation(runner) {
+  const state = runner?.s3Spin, actor = runner?.a;
+  if (!state || !runner.streaming || actor?.weapon?.kind !== 'splatling') return null;
+  const row = [state.paid, state.unspent, state.elapsed, state.emitted, state.shots,
+    runner.burstDur, runner.burstT, actor.ink];
+  return row.every(Number.isFinite) ? row : null;
+}
+
+export function isValidSplatlingReservation(snapshot, inkMax = 100) {
+  if (!Array.isArray(snapshot) || snapshot.length !== 8 || !Number.isFinite(inkMax) || inkMax <= 0) return false;
+  const [paid, unspent, elapsed, emitted, shots, duration, burstT, exactInk] = snapshot;
+  return [paid, unspent, elapsed, duration, burstT, exactInk].every(Number.isFinite)
+    && paid >= 0 && paid <= inkMax && unspent >= 0 && unspent <= paid
+    && Number.isSafeInteger(emitted) && emitted >= 0
+    && Number.isSafeInteger(shots) && shots >= 1 && shots <= 200 && emitted <= shots
+    && duration > 0 && duration <= 10 && elapsed >= 0 && elapsed <= duration + 1e-6
+    && burstT >= 0 && burstT <= duration + 1e-6 && exactInk >= 0 && exactInk <= inkMax
+    && Math.abs(unspent - paid * (1 - emitted / shots)) <= 1e-6
+    && Math.abs(burstT - Math.max(0, duration - elapsed)) <= 1e-5;
+}
+
+export function refundSplatlingReservation(runner, snapshot, life, sequence, inkMax = 100) {
+  const actor = runner?.a;
+  if (!runner || !actor || actor.weapon?.kind !== 'splatling' || !Array.isArray(snapshot) || snapshot.length !== 8
+    || !Number.isSafeInteger(life) || life < 0 || !Number.isSafeInteger(sequence) || sequence < 1
+    || !isValidSplatlingReservation(snapshot, inkMax)) return false;
+  const [paid, unspent, elapsed, emitted, shots, duration, burstT, exactInk] = snapshot;
+  const previous = actor._s3SplatlingRefund;
+  if (previous && previous.life === life && previous.sequence >= sequence) return false;
+  actor._s3SplatlingRefund = { life, sequence, paid, unspent, elapsed, emitted, shots, duration, burstT, exactInk };
+  actor.ink = exactInk;
+  runner.s3Spin = { paid, unspent, elapsed, emitted, shots };
+  runner.streaming = true;
+  runner.burstDur = duration;
+  runner.burstT = burstT;
+  cancelSplatlingStream(runner, true, inkMax);
+  return unspent;
+}
+
 function withSampledProjectileSpeed(source, value, run) {
   let entry = sampledSpeedViews.get(source);
   if (!entry) {
@@ -50,17 +102,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   if (WeaponRunner.prototype[INSTALLED]) return;
   Object.defineProperty(WeaponRunner.prototype, INSTALLED, { value: true });
 
-  function cancel(runner, refund = true) {
-    const state = runner.s3Spin, a = runner.a;
-    if (refund && state && Number.isFinite(a.ink)) {
-      // Never refund low-ink progress that was not paid from the tank.
-      a.ink = Math.min(PLAYER.inkMax, a.ink + Math.max(0, state.unspent));
-    }
-    runner.s3Spin = null;
-    runner.charging = runner.streaming = false;
-    runner.charge = runner.chargeT = runner.burstT = runner.burstFrac = 0;
-    runner.spinLoop?.stop(.12); runner.spinLoop = null;
-  }
+  const cancel = (runner, refund = true) => cancelSplatlingStream(runner, refund, PLAYER.inkMax);
 
   const cancelInput = WeaponRunner.prototype.cancelPendingInput;
   WeaponRunner.prototype.cancelPendingInput = function (...args) {
