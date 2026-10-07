@@ -94,6 +94,61 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "initialSpawn.schema": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "initialSpawn.selectionSpeed": {
+    "value": 8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "initialSpawn.ownZoneRadius": {
+    "value": 12,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "initialSpawn.ownSideMargin": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "initialSpawn.flightSeconds": {
+    "value": 1.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "initialSpawn.arcBase": {
+    "value": 8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "initialSpawn.arcPerMeter": {
+    "value": 0.06,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "initialSpawn.landingRadius": {
+    "value": 1.4,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "initialSpawn.groundProbeUp": {
+    "value": 10,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "initialSpawn.groundProbeDown": {
+    "value": 18,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "initialSpawn.spawnerLift": {
+    "value": 1.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.shooter.inkPerShot": {
     "value": 0.9199999999999999,
     "status": "derived from pinned extracted data; physical scale unverified",
