@@ -136,8 +136,6 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   };
   const weaponUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
-    // Slosher's 16F post-shot action gate belongs to the runner: Actor-driven and direct-runner paths advance it exactly once.
-    if (this.s3SloshPostShot > 0) this.s3SloshPostShot = Math.max(0, this.s3SloshPostShot - dt);
     if (this.a.weapon.kind === 'charger' && (input?.sub || input?.subReleased)) {
       const source = input, runner = this;
       return weaponUpdate.call(this, dt, { ...source,
