@@ -51,16 +51,16 @@ for (const kind of ['baseline', 'patched']) for (const hz of [30, 60, 120]) test
   assert.ok(finishAt >= 0 && m.state === 'results');
   const calls = counters.updates;
   if (kind === 'baseline') assert.ok(calls > 8 * hz * 7, `negative control: the unpatched game keeps simulating (${calls} Actor.update calls)`);
-  else { assert.ok(calls <= 8, `patched: at most the TIME UP boundary tick simulates (${calls})`); assert.ok(G.projectiles.clears >= frozenTicks - 1); }
+  else { assert.ok(calls <= 8, `patched: at most the TIME UP boundary tick simulates (${calls})`); assert.equal(G.projectiles.clears, 0, 'late projectiles are not globally discarded'); }
 });
 
-test('#923 patched: actors hold pose, no soft push, bots never think, flag + shot clear are set; coverage inputs are frozen', () => {
+test('#923 patched: actors hold pose, no soft push, bots never think, and late projectiles are preserved', () => {
   const { m, G, counters } = make('patched', { time: 0.01 });
   m.update(1 / 60); assert.equal(m.state, 'finish'); assert.equal(m._timeUpFrozen, true);
   counters.updates = 0; counters.bots = 0; const pos = positions(m);
   for (let i = 0; i < 60 * 3; i++) m.update(1 / 60);       // finish -> judge (2.6 s), then judge
   assert.equal(m.state, 'judge'); assert.equal(counters.updates, 0); assert.equal(counters.bots, 0); assert.equal(positions(m), pos, 'soft push does not run');
-  assert.ok(G.projectiles.clears > 100);
+  assert.equal(G.projectiles.clears, 0, 'TIME UP does not erase already-thrown bombs/specials');
   // negative control: the playing state still runs everything, including the soft push of overlapping actors
   const live = make('patched'); live.m.time = 100; live.m.update(1 / 60);
   assert.equal(live.counters.updates, 8); assert.equal(live.counters.bots, 4); assert.notEqual(positions(live.m), pos);
@@ -87,7 +87,7 @@ test('#923 the finish -> judge transition and the clock-zero boundary are unchan
   assert.deepEqual(tb, ta);
 });
 
-test('#923 fixed clock stops stepping projectiles once the match is frozen, keeps stepping while playing / paused-gated', () => {
+test('#923 fixed clock keeps stepping projectiles after TIME UP while actor simulation is frozen', () => {
   const G = { time: 0, projectiles: { steps: 0, update() { this.steps++; } }, net: null };
   installClock({ G });
   const game = { input: { padPressed: new Set(), pollPad() {}, _padEpoch: 0, endFrame() {}, mobile: null }, _padMenus() {}, showcase: {}, rig: {}, _updateAttract() {} };
@@ -95,10 +95,8 @@ test('#923 fixed clock stops stepping projectiles once the match is frozen, keep
   game.match = m;
   runSimulation(game, STEP * 10); assert.equal(G.projectiles.steps, 10);
   m.state = 'finish'; m.update = function () { this._timeUpFrozen = true; };
-  runSimulation(game, STEP * 10); assert.equal(G.projectiles.steps, 10, 'no projectile step after TIME UP');
-  m.update = function () { this._timeUpFrozen = false; }; m.state = 'results';
-  runSimulation(game, STEP * 5); assert.equal(G.projectiles.steps, 15);
-  m.paused = true; runSimulation(game, STEP * 5); assert.equal(G.projectiles.steps, 15);
+  runSimulation(game, STEP * 10); assert.equal(G.projectiles.steps, 20, 'already-thrown projectiles still resolve after TIME UP');
+  m.paused = true; runSimulation(game, STEP * 5); assert.equal(G.projectiles.steps, 20, 'pause still owns the projectile gate');
 });
 
 test('#923 adapter connects once and fails closed', () => {
