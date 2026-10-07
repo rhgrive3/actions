@@ -232,10 +232,14 @@ test('slosher: per-drop delay and lifetime survive the wire exactly', async () =
   nm.out.length = 0;
   f.projectiles.fireSlosh(a, a.weapon);
   const local = f.projectiles.list.slice();
-  const packets = nm.out.slice();
+  assert.equal(nm.out.filter(e => e[1] === 'p').length, 0, 'pending globs are not published at precreation');
+  for (let tick = 1; tick <= 16; tick++) {
+    f.G.time = tick / 60; f.clock.set(1000 + f.G.time); f.projectiles.update(1 / 60);
+  }
+  const packets = nm.out.filter(e => e[1] === 'p');
   assert(local.length > 1 && packets.length === local.length);
   for (let i = 0; i < local.length; i++) {
-    assert.equal(packets[i][11], local[i].delay, `drop ${i} delay`);
+    assert.equal(packets[i][11], local[i]._s3SloshBirthDelay, `drop ${i} source delay`);
     assert.equal(packets[i][12], local[i].life, `drop ${i} life`);
     assert.equal(packets[i][13], local[i].straight, `drop ${i} straight`);
   }
