@@ -1,3 +1,4 @@
+import { installTurfCombatGate } from './turf-combat.mjs';
 import { installSplatGhostReturn } from '../issue-284-adapter.mjs';
 import { installIssue196SpecialChargeCancel } from '../issue-196-adapter.mjs';
 import * as THREE from 'three';
@@ -130,5 +131,6 @@ export function install(profile) {
   installed = true;
   installIssue196SpecialChargeCancel(api);
   installSplatGhostReturn(api);
+  installTurfCombatGate(api);
   return api;
 }
