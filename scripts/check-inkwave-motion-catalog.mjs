@@ -378,6 +378,11 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   // in the catalog realm as well so immutable installed-graph receipts cover it.
   const { enemyRevealedOnMap } = await import(prefix + 'patches/splatoon3/runtime/map-reveal.mjs');
   if (typeof enemyRevealedOnMap !== 'function' || enemyRevealedOnMap({ alive: true, hp: 100, maxHp: 100 }, 100) !== false || enemyRevealedOnMap({ alive: true, hp: 82, maxHp: 100 }, 100) !== true) throw Error('Installed map-reveal helper mismatch');
+  // src/main.js also imports the death-card helper; load it in this isolated
+  // production catalog realm so installed-graph receipts cover the emitted module.
+  const { splatCardText } = await import(prefix + 'patches/splatoon3/runtime/death-card.mjs');
+  const deathCardProbe = splatCardText('water', null, value => value);
+  if (deathCardProbe?.cause !== 'the sea' || deathCardProbe?.who !== null) throw Error('Installed death-card helper mismatch');
   const { FIST_OFFSET, GRIP_HOLE_L } = await import(prefix + 'src/game/character-weapons.js');
   const methods = [Character, Actor, api.WeaponRunner].flatMap(Type => Reflect.ownKeys(Type.prototype).filter(k => typeof Object.getOwnPropertyDescriptor(Type.prototype, k).value === 'function').map(key => [Type.prototype, key, Type.prototype[key]]));
   const iframe = document.createElement('iframe'); iframe.src = '/motion-catalog'; document.body.appendChild(iframe);
