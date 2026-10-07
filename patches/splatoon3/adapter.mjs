@@ -133,6 +133,12 @@ export function adaptSource(rel, code) {
       '  reset() {\n    this._s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1;',
       'cancel pending Slosher births when an actor resets');
   }
+  if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code,
+      '    const wasFull = this.ink >= P.inkMax;\n    if (this.submerged || this.climbing) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillSwim * dt);\n    else if (!isSquid && this.lastFire > P.inkRefillDelay && !this.weaponRunner.busy()) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * dt);\n    else if (isSquid) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * 0.5 * dt);',
+      '    const wasFull = this.ink >= P.inkMax;\n    const inkRecoveryBlocked = (this.weaponRunner?.s3InkRecoverRemaining || 0) > 1e-10;\n    if (!inkRecoveryBlocked && (this.submerged || this.climbing)) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillSwim * dt);\n    else if (!inkRecoveryBlocked && !isSquid && this.lastFire > P.inkRefillDelay && !this.weaponRunner.busy()) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * dt);\n    else if (!inkRecoveryBlocked && isSquid) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * 0.5 * dt);',
+      'Blaster source-backed ink recovery admission');
+  }
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
