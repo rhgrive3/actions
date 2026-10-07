@@ -232,9 +232,11 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
   assert.equal(f.inRange(a, 0, beyondBoth), false, 'a target beyond both native-flight extents remains out of range');
   assert.equal(f.inRange(a, circle, beyondBoth), false);
 
-  a.weaponRunner.charge = circle;
-  a.weaponRunner.charging = true;
   a.weaponRunner.streaming = false;
+  a.weaponRunner.charging = false;
+  a.weaponRunner._splatling(0, { fire: true }, a.weapon); // initialize the split charge owner
+  a.weaponRunner.charge = circle;
+  a.weaponRunner.chargeT = circle * a.weapon.chargeTime;
   a.weaponRunner.fidelitySplatlingCharge = null;
   a.weaponRunner._splatling(1 / 60, { fire: false }, a.weapon);
   assert.equal(a.weaponRunner.streaming, true);
