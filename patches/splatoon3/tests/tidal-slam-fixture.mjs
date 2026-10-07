@@ -27,7 +27,7 @@ export async function boot() {
   };
   const entry = new vm.SourceTextModule(`
     export { install } from './patches/splatoon3/runtime/install.mjs';
-    export { updateSpecialRecovery } from './patches/splatoon3/runtime/resources.mjs';
+    export { updateHealthRecovery } from './patches/splatoon3/runtime/resources.mjs';
     export { Level } from './src/world/level.js';
   `, { context, identifier: path.join(SRC, 'tidal-slam-test-entry.mjs') });
   await entry.link((spec, from) => load(spec === 'three' ? path.join(SRC, 'vendor/three/build/three.module.js')

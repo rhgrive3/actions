@@ -43,9 +43,8 @@ test('#924 recovery stays capped at full HP, and new damage during the action re
 test('#924 enemy ink still suppresses the recovery step (independent rule)', async () => {
   const f = await getBoot(), { slam } = await pair(f);
   slam.grounded = true; slam.ground.hit = true; slam.ground.face = 0; slam.form = 'kid';
-  f.G.paint.sample = () => 2; // team 0 actor, so this is enemy ink
-  try { f.updateSpecialRecovery(slam, STEP); } finally { f.G.paint.sample = () => 1; }
+  f.updateHealthRecovery(slam, STEP, true, false); // enemy surface suppresses natural recovery
   assert.equal(slam.hp, 50);
-  f.updateSpecialRecovery(slam, STEP); // own/neutral ink: ordinary rate
+  f.updateHealthRecovery(slam, STEP, false, false); // own/neutral surface: ordinary rate
   assert.ok(slam.hp > 50);
 });

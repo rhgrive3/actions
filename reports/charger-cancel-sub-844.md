@@ -1,0 +1,11 @@
+# Charger charge cancellation → Sub startup (Refs #844)
+
+The active charge-to-Sub transition previously canceled charging and entered aimingSub in the same fixed update. This patch gives that transition its separate5F interval before SubReady begins. It uses the existing cancelMainForSub owner; no shot is emitted or paid charge refunded. At offset5, SubReady starts at age0; its existing preparation allows a released bomb at offset10. Idle→Sub, full-charge keep, and #837's emitted-shot15F gate remain separate.
+
+Source: https://wikiwiki.jp/splatoon3mix/検証/メインウェポン/前隙・後隙 . The author describes60fps measurements, with interruption frame counted as1 and the frame before trajectory appearance as the last blocked frame. The v10.0.1 Charger FC/NC rows specify5F. This is community measured timing, not a direct11.3.0 extraction or new console measurement; continued applicability is an inference. Accordingly this patch uses Refs #844 rather than claiming fresh same-version validation.
+
+The timer advances once per Runner update and resets on reset, explicit pending-input cancellation, death, Super Jump and special transition. During that interval the action is busy, preserving the existing no-refill commitment while R is held without falsely making Bomb presentation live. The patch does not assign #416's squid clock or #737's19F recovery clock. Released blocked R is discarded instead of queued as a phantom throw.
+
+Validation on exact496cc source: new10 cases plus existing11 #837 cases passed. Partial/full charge is tested at30/60/120Hz outer cadence with fixed60Hz simulation; held and released ZR, early R release, idle, actual full-charge keep and lifecycle cancellation are covered. Restoring old sub-ready.mjs fails the two selected60Hz partial/full cases at the same-tick aimingSub assertion. The old #837 cancellation contrast was synchronized from immediate aim to the separate5F rule; its fired-shot, ghost and lifecycle assertions are retained.
+
+No new build or browser run. Head496cc's accepted/build evidence is a baseline, not evidence for this unpublished runtime delta. Browser trajectory/presentation and integration with future owner changes remain publication acceptance work.

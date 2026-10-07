@@ -4,10 +4,11 @@
 export const MOVEMENT_EPSILON = 1e-10;
 
 /** Move a horizontal velocity vector toward the requested S3 ground velocity
- * by a fixed acceleration magnitude. Splatoon 3 community frame measurements
- * report 0.01 m/F^2 normally and 0.02 m/F^2 while attacking/aiming; at 60 Hz
- * those are 36 and 72 m/s^2. Vector approach preserves inertia on 90/180 turns
- * instead of rotating a full-speed vector in place.
+ * by a fixed acceleration magnitude. Splatoon 3's published verification
+ * reports a 2x ordinary-to-attack/ready acceleration relationship. The active
+ * profile maps that relationship to the existing INKWAVE rates 36/72; no
+ * WU-to-meter/DU conversion is asserted. Vector approach preserves inertia on
+ * 90/180 turns instead of rotating a full-speed vector in place.
  */
 export function stepGroundVelocity(vel, moveX, moveZ, targetSpeed, accel, dt) {
   if (!(dt > 0) || !(accel >= 0) || !(targetSpeed >= 0)) return;

@@ -166,10 +166,40 @@ visit('patches/splatoon3/bootstrap.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
 // them in the immutable revision + Service Worker precache, but let their
-// importing modules request them instead of adding 19 new eager preload
+// importing modules request them instead of adding new eager preload
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  'patches/splatoon3/runtime/clothing-gear.mjs', // Static import and full precache are retained.
+  // Remaining PR786 helpers keep their static-import and full-precache owners.
+  'patches/local-quality/world-quality.mjs',
+  'patches/splatoon3/issue-284-adapter.mjs',
+  'patches/splatoon3/runtime/issue-465-blaster-startup.mjs',
+  'patches/local-quality/texlib.mjs',
+  // PR786 runtime helpers retain static imports and precache, without extra eager hints.
+  'patches/local-quality/issue-472-adapter.mjs',
+  'patches/splatoon3/issue-196-adapter.mjs',
+  'patches/splatoon3/runtime/hair-cache.mjs',
+  'patches/splatoon3/runtime/agent3-weapon-physics.mjs',
+  'patches/splatoon3/runtime/splatling.mjs',
+  'patches/splatoon3/runtime/splatling-startup-compat.mjs', // Same runner phase; static import and precache retained.
+  'patches/splatoon3/runtime/weapon-gates.mjs',
+  'patches/splatoon3/runtime/storm-effects.mjs',
+  'patches/local-quality/aim-profile.mjs',
+  'patches/local-quality/portrait-guard.mjs',
+  'patches/local-quality/gyro-startup.mjs',
+  'patches/local-quality/splatling-reticle.mjs',
+  'patches/splatoon3/runtime/turf-finish.mjs',
+  // PR536 additions follow the same preload-only deferral; all remain precached.
+  'patches/local-quality/team-wipeout.mjs',
+  'patches/local-quality/tenacity.mjs',
+  'patches/local-quality/hud-snapshots.mjs',
+  'patches/local-quality/result-continuation.mjs',
+  'patches/local-quality/showcase-shadow.mjs',
+  'patches/splatoon3/runtime/splatling-radius-charge.mjs',
+  'patches/splatoon3/runtime/weapon-paint-inertia.mjs',
+  'patches/local-quality/aim-profile.mjs',
+  'patches/local-quality/charger-sight.mjs',
   'patches/local-quality/first-touch-adapter.mjs',
   'patches/local-quality/gyro-permission.mjs',
   'patches/local-quality/idle-resources.mjs',
@@ -180,18 +210,51 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/platform-input.mjs',
   'patches/local-quality/platform-lifecycle.mjs',
   'patches/local-quality/platform-transport.mjs',
+  'patches/local-quality/screen-angle.mjs',
   'patches/local-quality/touch-relayout.mjs',
-  'patches/local-quality/tenacity.mjs',
+  'patches/splatoon3/runtime/death-camera.mjs', // Match/death hooks stay statically imported and precached.
   'patches/splatoon3/runtime/death-card.mjs',
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
+  'patches/splatoon3/runtime/map-reveal.mjs',
   'patches/splatoon3/runtime/movement-physics.mjs',
   'patches/splatoon3/runtime/roller-model.mjs',
+  'patches/splatoon3/runtime/roller-freefall.mjs',
   'patches/splatoon3/runtime/sub-special-fidelity.mjs',
   'patches/splatoon3/runtime/superjump.mjs',
   'patches/splatoon3/runtime/weapon-edgecases.mjs',
+  // PR587 dependencies: defer only eager hints; retain the complete precache graph.
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
-  'patches/splatoon3/runtime/weapons-charger-flight.mjs',
   'patches/splatoon3/runtime/weapons-collision.mjs',
+  'patches/splatoon3/runtime/weapons-charger-flight.mjs',
+  // PR868 combat and Actor rules; the importing runtime still requests these dependencies.
+  'patches/splatoon3/runtime/final-damage.mjs',
+  'patches/splatoon3/runtime/swim-stealth.mjs',
+  'patches/splatoon3/runtime/respawn-lifecycle.mjs',
+  'patches/splatoon3/runtime/damage-timing.mjs',
+  'patches/splatoon3/runtime/charger-surface.mjs',
+  'patches/splatoon3/runtime/contact-recovery.mjs',
+  'patches/splatoon3/runtime/projectile-collision.mjs',
+  'patches/splatoon3/runtime/sub-ready.mjs',
+  'patches/splatoon3/runtime/storm-power.mjs',
+  'patches/splatoon3/runtime/conditional-gear.mjs',
+  'patches/splatoon3/runtime/flow-effects.mjs',
+  'patches/splatoon3/runtime/sub-resistance.mjs',
+  // Kit simulation, replication and metadata retain their static imports and precache entries.
+  'patches/splatoon3/runtime/kit-trizooka.mjs',
+  'patches/splatoon3/runtime/trizooka-collision.mjs',
+  'patches/splatoon3/runtime/kit-subs.mjs',
+  'patches/splatoon3/runtime/kit-composition.mjs',
+  'patches/splatoon3/runtime/kit-ink-vac.mjs',
+  'patches/splatoon3/runtime/kit-network.mjs',
+  'patches/splatoon3/runtime/kit-defense.mjs',
+  'patches/splatoon3/runtime/kit-big-bubbler.mjs',
+  // Match/result presentation and renderer support need no additional eager HTML hints.
+  'patches/splatoon3/issue-460-marker.mjs',
+  'patches/splatoon3/issue-460-gauge.mjs',
+  'patches/splatoon3/runtime/results-scoring.mjs',
+  'patches/splatoon3/runtime/combat-info.mjs',
+  'patches/local-quality/depth-cache.mjs',
+  'patches/local-quality/resource-budget.mjs',
 ]);
 const preloadOrder = order.filter((f) => !deferredIntegrationPreloads.has(f));
 const preload = preloadOrder.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');
@@ -212,7 +275,8 @@ for (const file of versionFiles) {
 // Place base before the import map so all relative imports, preload hints,
 // stylesheet URLs and runtime fetches resolve within the same revision.
 fs.writeFileSync(path.join(BUILD,'index.html'), loadingHTML.replace('<head>', `<head>\n<base href="./_versions/${revision}/">`));
-const loadingSummary = finalizeLoadingWorker(BUILD, revision, loadingPlan);
+const loadingSummary = finalizeLoadingWorker(BUILD, revision, loadingPlan,
+  source => esbuild.transformSync(source, { loader: 'js', minifyWhitespace: true, minifyIdentifiers: false, minifySyntax: false, legalComments: 'inline' }).code);
 const identity = writeBuildIdentity(SRC, BUILD, PATCH_ROOT, { esbuild:esbuild.version, revision, script:sha256(fs.readFileSync(new URL(import.meta.url))), touchLayout:touchLayoutIdentity(), reliability:reliabilityIdentity(), quality:qualityIdentity(), network:networkIdentity(), range:rangeIdentity(), loadingCache:{ source:loadingIdentity(), ...loadingSummary } });
 // Include the independent editor in exact-source verification, not only artifact hashing.
 for (const [file, hash] of Object.entries(identity.build.touchLayout)) identity.files['touch-layout/' + file] = hash;

@@ -1,4 +1,34 @@
+import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
+import { adaptClothingGear } from '../splatoon3/clothing-gear-adapter.mjs';
+import { adaptIssue465 } from '../splatoon3/issue-465-adapter.mjs';
+import { adaptIssue479 } from '../splatoon3/issue-479-adapter.mjs';
+import { adaptIssue481 } from '../splatoon3/issue-481-adapter.mjs';
+import { adaptQualityIssue418 } from './issue-418-adapter.mjs';
+import { adaptTexlibSource } from './texlib-adapter.mjs';
+import { adaptIssue477Source } from '../splatoon3/issue-477-adapter.mjs';
+import { adaptBossHit } from './boss-hit-adapter.mjs';
+import { adaptIssue483 } from '../splatoon3/issue-483-adapter.mjs';
+import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
+import { patchLobbySetShowcase } from './issue-472-adapter.mjs';
+import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
+import { adaptPropRetention } from './prop-retention-adapter.mjs';
+import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
+import { adaptIssue482 } from '../splatoon3/issue-482-adapter.mjs';
+import { adaptIssue405 } from '../splatoon3/issue-405-adapter.mjs';
+import { adaptIssue484 } from '../splatoon3/issue-484-adapter.mjs';
+import { adaptIssue460Source } from '../splatoon3/issue-460-adapter.mjs';
+import { adaptIssue427 } from '../splatoon3/issue-427-adapter.mjs';
+import { adaptIssue461Source } from './issue-461-sfx-mute.mjs';
+import { adaptIssue480Source } from './issue-480-camera-shake-fidelity.mjs';
 import { adaptTenacity } from './tenacity-adapter.mjs';
+import { adaptFxActorLifetime } from './fx-actor-lifetime-adapter.mjs';
+import { adaptHudSnapshots } from './hud-snapshots-adapter.mjs';
+import { adaptResultContinuation } from './result-continuation-adapter.mjs';
+import { adaptShowcaseShadow } from './showcase-shadow-adapter.mjs';
+import { adaptTeamWipeout } from './team-wipeout-adapter.mjs';
+import { adaptSplatlingReticle } from './splatling-reticle-adapter.mjs';
+import { adaptPortraitGuard } from './portrait-guard-adapter.mjs';
+import { adaptHudAuthority } from './hud-authority-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
@@ -12,6 +42,9 @@ import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
 import { adaptTurfLead } from './turf-lead-adapter.mjs';
 import { adaptScoreReticle } from './score-reticle-adapter.mjs';
 import { adaptMapTeammateStatus } from './map-teammate-status-adapter.mjs';
+import { adaptResourceSource } from './resource-adapter.mjs';
+import { adaptMedalSource } from './medal-adapter.mjs';
+import { adaptAimProfiles } from './aim-profile-adapter.mjs';
 import { adaptUiActorLifetime } from './ui-actor-lifetime-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
@@ -23,22 +56,45 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
 import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
+import { adaptFrameOrder } from './frame-order-adapter.mjs';
+import { adaptReflSkip } from './refl-skip-adapter.mjs';
+import { adaptFinishTape } from './finish-tape-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'bot-paint-observation-adapter.mjs',
+  'issue-418-adapter.mjs','world-quality.mjs','quality-probe.mjs','texlib-adapter.mjs','texlib.mjs',
+  'boss-hit-adapter.mjs',
+  'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
   'screenfx-damage-reset-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'time-up-freeze-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
+  'fx-actor-lifetime-adapter.mjs',
+  'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
+  'hud-authority-adapter.mjs',
+  'result-continuation-adapter.mjs', 'result-continuation.mjs',
+  'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs',
+  'team-wipeout.mjs', 'team-wipeout-adapter.mjs',
+  'splatling-reticle.mjs', 'splatling-reticle-adapter.mjs',
+  'portrait-guard.mjs', 'portrait-guard-adapter.mjs',
   'final-minute-music-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
+  'prop-retention-adapter.mjs', 'prop-atlas-adapter.mjs',
+  'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
+  'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
+  'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
+  'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
+  'hud-authority-adapter.mjs',
+  'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'ui-actor-lifetime-adapter.mjs',
   'tenacity-adapter.mjs', 'tenacity.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
-  'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
+  'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs', 'refl-skip-adapter.mjs', 'finish-tape-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'match-retainer-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
-  'mobile-platform.mjs', 'gyro-permission.mjs',
+  'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
+  'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -49,7 +105,18 @@ export function replaceOnce(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 
+// Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  code = adaptIssue482(rel, code);
+  code = adaptIssue405(rel, code);
+  code = adaptIssue484(rel, code);
+  return adaptFrameOrder(rel, adaptQualityLayer(rel, code));
+}
+
+function adaptQualityLayer(rel, code) {
+  code = adaptBotPaintObservation(rel, code);
+  code = adaptPropRetention(rel, code);
+  code = adaptPropAtlas(rel, code);
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);
   code = adaptScreenfxLensRelease(rel, code, replaceOnce);
   code = adaptActorWeaponInput(rel, code, replaceOnce);
@@ -60,13 +127,84 @@ export function adaptQualitySource(rel, code) {
   code = adaptTurfLead(rel, code, replaceOnce);
   code = adaptScoreReticle(rel, code, replaceOnce);
   code = adaptMapTeammateStatus(rel, code, replaceOnce);
+  code = adaptIssue427(rel, code);
+  code = adaptClothingGear(rel, code, replaceOnce);
+  code = adaptBossHit(rel, code);
+  code = adaptIssue460Source(rel, code);
+  code = adaptIssue461Source(rel, code);
+  code = adaptAimProfiles(rel, code);
+  code = adaptMedalSource(rel, code);
+  code = adaptResourceSource(rel, code, replaceOnce);
+  code = adaptFxActorLifetime(rel, code, replaceOnce);
+  if (rel === 'src/main.js') {
+    code = replaceOnce(code,
+      "    // your team on the podium\n    const team = m.actors.filter((a) => a.team === myTeam);\n    this.showcase.showResults(myTeam, won, G.teamColors[myTeam], team.map((a) => ({ weapon: a.weaponId, style: a.character.style || { hair: a.slot % 4, skin: (a.slot * 3) % 4 }, name: a.name })));",
+      "    // #565: showcase authority is independent of local rewards/audio.\n    const podiumTeam = m.result.winner;\n    const team = m.actors.filter((a) => a.team === podiumTeam);\n    if (podiumTeam === 0 || podiumTeam === 1) this.showcase.showResults(podiumTeam, true, G.teamColors[podiumTeam], team.map((a) => ({ weapon: a.weaponId, style: a.character.style || { hair: a.slot % 4, skin: (a.slot * 3) % 4 }, name: a.name })));",
+      'winner-only Turf showcase');
+  }
+  if (rel === 'src/game/match.js') {
+    code = replaceOnce(code,
+      '    this.bossMode?.dispose(); this.bossMode = null; this.boss = null;',
+      "    emit('match:dispose', { match: this });\n    this.bossMode?.dispose(); this.bossMode = null; this.boss = null;",
+      'release match-owned boss audio before disposal');
+  }
+  if (rel === 'src/audio/bossAudio.js') {
+    code = replaceOnce(code,
+      'const end = () => { stopAll(0.4); st.active = false; st.boss = null; st.track = null; setRemap(false); };',
+      'const end = () => { stopAll(0.4); if (followId) { clearInterval(followId); followId = 0; } st.active = false; st.boss = null; st.track = null; setRemap(false); };',
+      'boss audio terminal interval owner');
+    code = replaceOnce(code,
+      "  on('match:state', ({ state, match }) => {",
+      "  on('match:dispose', ({ match }) => { if (st.active && match?.boss && match.boss === st.boss) end(); });\n  on('match:state', ({ state, match }) => {",
+      'boss audio follows its matching disposal');
+    code = replaceOnce(code,
+      "    if (state === 'results' || state === 'judge') { stopAll(0.3); setRemap(false); }",
+      "    if ((state === 'results' || state === 'judge') && match.mode === 'boss' && match.boss === st.boss) end();",
+      'boss audio terminal state releases retained graph');
+  }
+  if (rel === 'src/ui/hud.js') {
+    code = replaceOnce(code,
+      "      this._killCard(victim, 'kill');",
+      "      this._killCard(victim, 'kill');\n      // #593: Turf uses ordinary splat confirmation and independent team WIPEOUT.\n      if (G.match?.mode === 'turf') return;",
+      'Turf excludes arcade personal streak ribbons');
+    code = replaceOnce(code,
+      "      const kk = L.kind === 'blaster' ? 0 : this._kick * this._kick * (L.kind === 'splatling' ? 4 : 7);\n      const sp = clamp((+ch.spread || 0) + this._bloom * (L.kind === 'blaster' ? 5 : 2.5) + kk, 0, 90);",
+      "      // #560: Game already projects the authoritative weapon cone.\n      const sp = clamp(+ch.spread || 0, 0, 90);\n      if (L.bl !== 0) { L.bl = 0; this.ret.style.setProperty('--bl', '0'); }",
+      'authoritative HUD spread, no second recoil cone');
+  }
+  code = adaptHudSnapshots(rel, code, replaceOnce);
   code = adaptTenacity(rel, code, replaceOnce);
+  if (rel !== 'src/ui/menus.js') code = adaptResultContinuation(rel, code, replaceOnce);
+  code = adaptShowcaseShadow(rel, code, replaceOnce);
+  code = adaptTeamWipeout(rel, code, replaceOnce);
+  code = adaptSplatlingReticle(rel, code, replaceOnce);
+  code = adaptPortraitGuard(rel, code, replaceOnce);
+  code = adaptIssue465(rel, code);
+  code = adaptIssue481(rel, code);
+  code = adaptIssue479(rel, code);
+  code = adaptTexlibSource(rel, code);
+  code = adaptIssue477Source(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);
+  code = adaptIssue480Source(rel, code);
+  code = adaptReflSkip(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
   code = adaptUiActorLifetime(rel, code, replaceOnce);
   code = adaptLandingRigidity(rel, code);
   code = adaptMatchRetainers(rel, code, replaceOnce);
+  code = adaptQualityIssue418(rel, code);
+  if (rel === 'src/main.js') {
+    code = "import { updateSplatGhosts } from '../patches/splatoon3/issue-284-adapter.mjs';\n" + code;
+    code = replaceOnce(code, 'this.fxHooks?.update?.(worldDt);', '{ this.fxHooks?.update?.(worldDt); updateSplatGhosts(G, worldDt); }', 'ghost presentation in existing FX cadence');
+  }
+  code = adaptIssue483(rel, code);
+  code = adaptPaintMipmaps(rel, code);
+  code = patchLobbySetShowcase(rel, code);
+  code = adaptSlosherEmergeGate(rel, code);
+  // Issue #580 runs before the final HUD-authority pass so shared HUD anchors
+  // are composed once on the finished presentation layer.
+  code = adaptFinishTape(rel, code);
+  code = adaptHudAuthority(rel, code);
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
     code = adaptTouchRelayout(rel, code);
@@ -105,10 +243,11 @@ export function adaptQualitySource(rel, code) {
       '        C.w.target = r.width + pad * 2; C.h.target = r.height + pad * 2;\n' +
       '      }\n      if (C.on)',
       'hidden cursor logical target');
-    return replaceOnce(code,
+    code = replaceOnce(code,
       '    C.x.target = tx; C.y.target = ty; C.w.target = tw; C.h.target = th;',
       '    C.targetEl = f;\n    C.x.target = tx; C.y.target = ty; C.w.target = tw; C.h.target = th;',
       'cursor target owner');
+    return adaptResultContinuation(rel, code, replaceOnce);
   }
   if (rel === 'src/ui/menu-art.js') {
     code = replaceOnce(code,
@@ -242,9 +381,98 @@ export function adaptQualitySource(rel, code) {
     return "import { bindRollerDrop } from '../../patches/local-quality/roller-visual.mjs';\n" + code;
   }
 
+  // #678: the DeviceMotion/DeviceOrientation axis conversion was a *player-space* construction, not the
+  // Splatoon 3 World Orientation mapping. Three separate defects lived in one block:
+  //   1. the yaw projection dropped the screen-x gravity term gx*px, so real world yaw vanished in
+  //      every rolled/landscape pose and pure roll was reported as yaw;
+  //   2. the result was then scaled by a player-space 1.41 magnitude relax and capped against the
+  //      local hypot(py, pz), so angular velocity ORTHOGONAL to world vertical still became camera yaw;
+  //   3. pitch = px unconditionally, so pitch ignored gravity entirely and never reduced at bank.
+  // The whole block becomes one world-orientation projection. The gx*px term is retained because it
+  // falls out of the correct complete projection, not as a cherry-picked partial; the 1.41 relax and
+  // the local magnitude cap are removed because they are precisely the player-space construction the
+  // Issue rejects. Sensitivity (sens / gyroTurnDeg / _gain), inversion, every smoothing and filter
+  // coefficient, _calibrate/_rrScale and the resync/dropout lifecycle below are untouched, and
+  // inkwave-public/ is never edited.
+  if (rel === 'src/core/gyro.js') {
+    code = replaceOnce(code,
+      "import { screenAngle } from './device.js';",
+      "import { screenAngle as deviceScreenAngle } from './device.js';\n" +
+      "import { sensorScreenAngle } from '../../patches/local-quality/screen-angle.mjs';\n" +
+      'const screenAngle = () => sensorScreenAngle(globalThis, deviceScreenAngle);',
+      'gyro sensor-frame screen angle');
+    code = replaceOnce(code, `    const d = this._down;
+    const gy = d[0] * s + d[1] * c, gz = d[2];
+    const gl = Math.hypot(d[0] * c - d[1] * s, gy, gz) || 1;
+    // player-space yaw: the part of the turn around real vertical, allowed to borrow from roll (±45° relax)
+    const worldYaw = -(gy * py + gz * pz) / gl;
+    const yawAxes = Math.hypot(py, pz);
+    let yaw = Math.sign(worldYaw) * Math.min(Math.abs(worldYaw) * 1.41, yawAxes);
+    let pitch = px;`, `    const d = this._down;
+    const gx = d[0] * c - d[1] * s, gy = d[0] * s + d[1] * c, gz = d[2];
+    const gl = Math.hypot(gx, gy, gz) || 1;
+    const ux = gx / gl, uy = gy / gl, uz = gz / gl;              // unit earth-down, in screen space
+    // World Orientation: one projection of the whole screen-space omega. yaw is the turn about real
+    // vertical and nothing else - no player-space 1.41 magnitude borrow, no hypot(py, pz) cap, so
+    // angular velocity orthogonal to gravity can no longer become camera yaw.
+    let yaw = -(px * ux + py * uy + pz * uz);
+    // pitch: the device pitch axis (screen-right) with its gravity component removed, i.e. the
+    // world-horizontal direction nearest it. Exactly px while gravity is perpendicular to screen-right
+    // (flat / upright portrait); reduced and mixed as the device banks.
+    const hx = 1 - ux * ux, hy = -ux * uy, hz = -ux * uz;       // = e_x - (e_x . u) u
+    const hl = Math.hypot(hx, hy, hz);
+    let pitch;
+    if (hl > 1e-6) pitch = (px * hx + py * hy + pz * hz) / hl;
+    else {
+      // Gravity lies along screen-right: the screen plane is vertical, so the device pitch axis has no
+      // world-horizontal part and gravity alone cannot define the camera pitch axis. Deterministic
+      // documented fallback: screen-up with gravity removed. Splatoon 3 does not publish its behaviour
+      // in this band, so it stays explicitly UNQUANTIFIED and is not a Nintendo constant.
+      const ex = -uy * ux, ey = 1 - uy * uy, ez = -uy * uz;
+      pitch = (px * ex + py * ey + pz * ez) / (Math.hypot(ex, ey, ez) || 1);
+    }`, 'gyro world-orientation axis mapping');
+  }
+
   if (rel === 'src/core/gyro.js') {
     return "import { installGyroQuality } from '../../patches/local-quality/gyro.mjs';\n" + code +
       '\ninstallGyroQuality(Gyro, screenAngle);\n';
+  }
+
+  // #363/#367: Splatoon 3 holds the lens off the player's right even when the boom is
+  // clear. The shipped term only reached that while the boom was forced short, because
+  // closeK hits 0 at curDist >= 2.8, so normal follow stayed vertically centred behind the
+  // crosshair. SH0 adds a persistent baseline and keeps the obstruction-driven shift at its
+  // full current range at closeK = 1.
+  // SH0 is deliberately modest and explicitly unquantified: Splatoon 3 publishes no shoulder
+  // offset and none is pinned in this repository, so this is NOT a claimed Nintendo constant.
+  // The shift stays a parallel lens+target offset, so the aim direction is unchanged; the
+  // right-side wall probe, muzzle-to-target parallax, obstacle avoidance, input axes and the
+  // Charger zoom profile are all untouched.
+  if (rel === 'src/game/cameraRig.js') {
+    code = replaceOnce(code, `    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);
+    let shT = 0.55 * closeK * closeK * (3 - 2 * closeK);
+    if (shT > 0.01 && G.physics) {
+      const hr = G.physics.raycast(cam.position, _right, shT + 0.25, _hit, true);
+      if (hr.hit) shT = Math.max(0, hr.dist - 0.25);
+    }
+    this.shoulder = damp(this.shoulder || 0, shT, 8, dt);
+    if (this.shoulder > 1e-3) cam.position.addScaledVector(_right, this.shoulder);`, `    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);
+    const SH0 = 0.28;   // persistent right-shoulder framing; not a pinned S3 value
+    let shT = SH0 + (0.55 - SH0) * closeK * closeK * (3 - 2 * closeK);
+    // C19-CAMERA-COLLISION-TRANSITION: the wall probe used to be target-only. With SH0 the damped
+    // shoulder is normally 0.28, so when a right-side wall then becomes reachable the probe only
+    // ever looked as far as the new target and the *applied* (still-damped) value kept rendering the
+    // lens inside the 0.25 m clearance for several frames. Probe as far as the lens actually is, and
+    // clamp the applied value as well as the target, so the first frame after the transition is safe.
+    // The open case is untouched: no hit means no cap, so the damped return to SH0 is unchanged.
+    let shMax = Infinity;
+    if (shT > 0.01 && G.physics) {
+      const hr = G.physics.raycast(cam.position, _right, Math.max(shT, this.shoulder || 0) + 0.25, _hit, true);
+      if (hr.hit) { shMax = Math.max(0, hr.dist - 0.25); shT = Math.min(shT, shMax); }
+    }
+    this.shoulder = damp(this.shoulder || 0, shT, 8, dt);
+    if (this.shoulder > shMax) this.shoulder = shMax;
+    if (this.shoulder > 1e-3) cam.position.addScaledVector(_right, this.shoulder);`, 'camera persistent shoulder framing and wall-transition clearance');
   }
 
   return code;

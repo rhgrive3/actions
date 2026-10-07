@@ -1,3 +1,4 @@
+import {sampleTeamWipes} from '../team-wipeout.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -35,7 +36,7 @@ test('actual Match update awards after coherent roster updates; raw negative, pa
  for(const patched of [false,true]){
   const source=patched?adaptQualitySource('src/game/match.js',raw):raw;
   const start=source.indexOf('  update(dt) {'),end=source.indexOf('\n  updateController',start);
-  const G={},events=[];const Native=vm.runInNewContext(`class Match {${source.slice(start,end)}};Match`,{G,emit:(...x)=>events.push(x),advanceTenacity,PLAYER:{radius:.3},MATCH:{finalCountdown:10},Math});
+  const G={},events=[];const Native=vm.runInNewContext(`class Match {${source.slice(start,end)}};Match`,{G,emit:(...x)=>events.push(x),advanceTenacity,sampleTeamWipes,PLAYER:{radius:.3},MATCH:{finalCountdown:10},Math});
   const m=Object.assign(new Native(),match(),{stateT:0,setState(s){this.state=s;}});
   m.actors.forEach((a,i)=>{a.pos={x:i*3,y:0,z:0};a.update=()=>{};});
   // A teammate dies during its native update. Every owner sees this final list.
@@ -54,21 +55,20 @@ test('emitted complete Match module contains the production passive path', {skip
  for(const range of [true,false,true]){const next=Object.assign(Object.create(root.namespace.Match.prototype),match(3),{opts:{range},stateT:0,setState(s){this.state=s;}});next.actors.forEach((a,i)=>{a.pos={x:i*3,y:0,z:0};a.update=()=>{};if(a.team===1)a.rangeTarget={index:i};});for(let i=0;i<60;i++)next.update(1/60);assert.ok(Math.abs(next.actors[0].special-(range?0:7.59))<1e-10,`emitted range=${range} reentry`);}
 
 });
-test('actual gear panel exposes Tenacity once, only on head main, and persists through existing storage handler',()=>{
- const source=adaptQualitySource('patches/splatoon3/runtime/gear.mjs',fs.readFileSync('patches/splatoon3/runtime/gear.mjs','utf8'));
- const elements=[],saved=new Map();function node(tag){const n={tag,children:[],handlers:{},append(...xs){this.children.push(...xs);},appendChild(x){this.children.push(x);},setAttribute(){},addEventListener(type,fn){this.handlers[type]=fn;}};elements.push(n);return n;}
- const context=vm.createContext({document:{createElement:node},localStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},console});
- vm.runInContext(source.replaceAll('export ','')+';globalThis.gear={installGear,normalizeLoadout};',context);
+test('actual gear panel exposes Tenacity once, only on head main, and persists through existing storage handler',async()=>{
+ const f=await fixture({adaptRuntime:adaptQualitySource,extraExports:'export function setPanelGlobals(document,localStorage){globalThis.document=document;globalThis.localStorage=localStorage;}'});
+ const elements=[],saved=new Map();function node(tag){const n={tag,dataset:{},style:{},children:[],handlers:{},append(...xs){this.children.push(...xs);},appendChild(x){this.children.push(x);},setAttribute(){},querySelectorAll(selector){assert.equal(selector,'[data-slot]');const walk=x=>x.children.flatMap(c=>[c,...walk(c)]);return walk(this).filter(x=>Object.hasOwn(x.dataset||{},'slot'));},addEventListener(type,fn){this.handlers[type]=fn;}};elements.push(n);return n;}
+ f.setPanelGlobals({createElement:node},{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)});
  class A{reset(){}setWeapon(){}splat(){}_horizontal(){}}class W{moveSpeed(){}update(){}}class Menus{_scr_loadout(){return{el:node('screen')};}}
- context.gear.installGear({Actor:A,WeaponRunner:W,Menus,G:{},on(){}},{gear:{runSpeed:[1,1,1]}});
+ f.installGear({...f,Actor:A,WeaponRunner:W,Menus},f.profile);
  new Menus()._scr_loadout();const selects=elements.filter(n=>n.tag==='select');assert.equal(selects.length,12);
  for(const [i,s]of selects.entries())assert.equal(s.children.filter(n=>n.value==='tenacity').length,i===0?1:0);
- selects[0].value='tenacity';selects[0].handlers.change();const loadout=JSON.parse(saved.get('inkwave.splatoon3.gear.v1'));assert.equal(loadout[0].main,'tenacity');assert.equal(context.gear.normalizeLoadout(loadout)[0].main,'tenacity');
+ selects[0].value='tenacity';selects[0].handlers.change();const loadout=JSON.parse(saved.get('inkwave.splatoon3.gear.v1'));assert.equal(loadout[0].main,'tenacity');assert.equal(f.normalizeLoadout(loadout)[0].main,'tenacity');
 });
 
 test('Practice Range dummy population never earns Tenacity and reentry does not alter battle ownership',()=>{
  const raw=fs.readFileSync('inkwave-public/src/game/match.js','utf8'),source=adaptQualitySource('src/game/match.js',raw),start=source.indexOf('  update(dt) {'),end=source.indexOf('\n  updateController',start);
- const events=[],Native=vm.runInNewContext(`class Match {${source.slice(start,end)}};Match`,{G:{},emit:(...x)=>events.push(x),advanceTenacity,PLAYER:{radius:.3},MATCH:{finalCountdown:10},Math});
+ const events=[],Native=vm.runInNewContext(`class Match {${source.slice(start,end)}};Match`,{G:{},emit:(...x)=>events.push(x),advanceTenacity,sampleTeamWipes,PLAYER:{radius:.3},MATCH:{finalCountdown:10},Math});
  for(const range of [true,false,true]){const m=Object.assign(new Native(),match(3),{opts:{range},stateT:0,setState(s){this.state=s;}});m.actors.forEach((a,i)=>{a.pos={x:i*3,y:0,z:0};a.update=()=>{};if(a.team===1)a.rangeTarget={index:i};});for(let i=0;i<60;i++)m.update(1/60);assert.ok(Math.abs(m.actors[0].special-(range?0:7.59))<1e-10);}
  assert.equal(events.length,0);
  const remote=match(3);remote.actors[0].remote=true;advanceTenacity(remote,1,()=>{});assert.equal(remote.actors[0].special,0);

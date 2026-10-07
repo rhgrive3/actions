@@ -8,7 +8,7 @@ test('baseline reproduces publication ordering; final packet preserves native lo
   const f=await fixture({network}),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',vertical:true});f.bind(nm,[a]);
   f.projectiles.fireFlick(a,a.weapon);const p=f.projectiles.list[0],e=nm.out[0];
   assert.equal(p.grav,144);assert.equal(p.drag,6);assert.equal(e[16],p.grav);assert.equal(e[17],p.drag);
-  if(network){assert.equal(e[27],1);assert.equal(e[28],p.seed);assert.equal(e[29],p._netId);}
+  if(network){assert.equal(e.length,35);assert.equal(e[29],1);assert.equal(e[30],p.seed);assert.equal(e[31],p._netId);assert.equal(e[32],p.fidelityRollerUnitIndex);}
  }
 });
 test('projectile timeline catches up delay without exhausting lifetime budget or freezing',async()=>{
@@ -18,9 +18,12 @@ test('projectile timeline catches up delay without exhausting lifetime budget or
  peer.tr=1001;f.projectiles.update(1/60);assert.equal(f.projectiles.list.length,0);assert(f.projectiles.pool[0]._qualityDead);
 });
 test('replayed birth in a newer packet cannot resurrect an ended projectile',async()=>{
- const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});f.bind(nm,[a]);
- const e=[1000,'p',0,'shot','shooter',0,30,0,0,0,1,0,.2,0,.1,.1,1,0,0,0,.1,.8,1.3,.03,26,.3,3,0,.123,1];
- const peer={tr:1001};nm.peers.set('p2',peer);nm._play('p2',e);f.projectiles.update(1/60);assert.equal(f.projectiles.list.length,0);nm._play('p2',e);assert.equal(f.projectiles.list.length,0);
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',roller:false});f.bind(nm,[a]);
+ a.character.getMuzzle=o=>o.copy(a.pos).setY(30);f.projectiles.fireShooter(a,a.weapon,0);
+ const e=JSON.parse(JSON.stringify(nm.out.find(x=>x[1]==='p')));assert.equal(e.length,35);assert(Number.isSafeInteger(e[31]));
+ f.projectiles.clear();a.remote=true;a.owner='p2';const peer={tr:e[0]+e[11]+e[12]+1};nm.peers.set('p2',peer);
+ nm._play('p2',e);assert.equal(f.projectiles.list.length,1);f.projectiles.update(1/60);assert.equal(f.projectiles.list.length,0);nm._play('p2',e);assert.equal(f.projectiles.list.length,0);
+
 });
 test('physics timing remains exact at the shooter gravity transition',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',roller:false});f.bind(nm,[a]);
@@ -32,7 +35,7 @@ test('source drift fails closed instead of silently omitting network finalizatio
 
 test('late roller fire links exactly its immutable volley after catch-up',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',vertical:true});f.bind(nm,[a]);f.projectiles.fireFlick(a,a.weapon);const events=nm.out.slice();f.projectiles.clear();a.remote=true;a.owner='p2';const peer={tr:1000.15};nm.peers.set('p2',peer);
- for(const e of events)nm._play('p2',e);f.projectiles.update(1/60);assert(f.projectiles.list[0].age>1/60);a._netFlickFirst=events[0][29];const sources=f.rollerCurtainSources(f.G,a,{});assert.equal(sources.length,a.weapon.verticalDrops);assert(sources.every(p=>p.s3Vertical));a._netFlickFirst=undefined;assert.equal(f.rollerCurtainSources(f.G,a,{}),null);
+ for(const e of events)nm._play('p2',e);f.projectiles.update(1/60);assert(f.projectiles.list[0].age>1/60);a._netFlickFirst=events[0][31];const sources=f.rollerCurtainSources(f.G,a,{});assert.equal(sources.length,a.weapon.verticalDrops);assert(sources.every(p=>p.s3Vertical));a._netFlickFirst=undefined;assert.equal(f.rollerCurtainSources(f.G,a,{}),null);
 });
 test('native bomb and forwarded-event sequence replay is idempotent',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});f.bind(nm,[a]);nm.peers.set('p2',{tr:1000});nm._rec(['b',0,'bomb',0,3,0,0,5,10,1,2]);const b=nm.out.pop();nm._play('p2',b);nm._play('p2',b);assert.equal(f.projectiles.bombs.length,1);
@@ -73,15 +76,17 @@ test('charger birth preserves oblique unit direction, origin, partial charge and
 });
 
 
-test('Bomb event keeps the existing gameplay payload shape plus only ordered replay footer', async() => {
+test('Bomb event preserves gameplay, Storm/Kit metadata and ordered replay footer', async() => {
   const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',roller:false});
   f.bind(nm,[a]);
   f.projectiles.throwBomb(a);
   const e=nm.out.find(x=>x[1]==='b');
   assert.ok(e,'Bomb birth event missing');
-  // timestamp + existing ['b',nid,kind,px,py,pz,vx,vy,vz] + [ownerTick,eventSeq].
-  // Cosmetic spin is intentionally not added to the wire contract.
-  assert.equal(e.length,12);
+  // timestamp + native payload + Storm snapshot/Kit identity/charge + tick/sequence.
+  assert.equal(e.length,15);const b=f.projectiles.bombs[0];
+  assert.equal(e[2],a.nid);assert.equal(e[3],b.kind);assert.equal(e[10],null);
+  assert.equal(b.s3Sub.id,'bomb');assert.equal(e[11],'','native Splat Bomb uses the historical empty Kit sentinel');assert.equal(e[12],0);
+  for(let i=0;i<3;i++){assert.equal(e[4+i],Math.round(b.pos.toArray()[i]*100)/100);assert.equal(e[7+i],Math.round(b.vel.toArray()[i]*100)/100);}
   assert.ok(Number.isSafeInteger(e[e.length-2]));
   assert.ok(Number.isSafeInteger(e[e.length-1]));
 });

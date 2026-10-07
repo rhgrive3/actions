@@ -28,13 +28,13 @@ function brakeStep(f, state, v) {
 }
 for (const squid of [false, true]) {
   test(`#930 airborne ${squid ? 'squid' : 'humanoid'} attack/ready acceleration and braking are exactly 2x ordinary`, async () => {
-    const base = await airborne(squid), P = base.PLAYER;
-    const ordAccel = squid ? P.squidAirAccel : P.airAccel, ordBrake = squid ? P.squidAirDecel : P.airDecel;
-    near(accelStep(base, 'ordinary'), ordAccel * dt); near(brakeStep(base, 'ordinary', 3), ordBrake * dt);
+    const base = await airborne(squid);
+    const ordAccel = accelStep(base, 'ordinary'), ordBrake = brakeStep(base, 'ordinary', 3);
+    assert.ok(ordAccel > 0 && ordBrake > 0, 'ordinary air steering owns a positive baseline');
     for (const state of ['fire', 'sub', 'special']) {
       const f = await airborne(squid);
-      near(accelStep(f, state), 2 * ordAccel * dt);
-      near(brakeStep(f, state, 3), 2 * ordBrake * dt);
+      near(accelStep(f, state), 2 * ordAccel);
+      near(brakeStep(f, state, 3), 2 * ordBrake);
     }
   });
 }

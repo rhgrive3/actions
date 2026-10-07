@@ -132,8 +132,10 @@ test('second-realm helpers observe the installed weapon attack and reset state',
   for (const kind of ['slosher', 'charger']) {
     const r = rig(api, kind);
     try {
-      r.step(1 / 60, { fire: true });
-      if (kind === 'charger') r.step();
+      if (kind === 'charger') {
+        for (let i = 0; i < 9; i++) r.step(1 / 60, { fire: true }); // fresh 1F + legal 8F
+        r.step(1 / 60); r.step(1 / 60); // release + 1F gap
+      } else r.step(1 / 60, { fire: true });
       const active = r.snapshot();
       assert.notEqual(kind === 'slosher' ? active.sloshElapsed : active.chargerReleaseAge, null);
       assert.deepEqual(JSON.parse(JSON.stringify(snapshotFromAnotherRealm(r.ch))), JSON.parse(JSON.stringify(active)));
@@ -290,11 +292,12 @@ test('actual Charger stores full charge across form on a held ZR, then releases 
       for (let i = 0; i < 2 * hz; i++) r.step(1 / hz, { fire: true });
       assert.ok(r.ch.charge > .99); assert.equal(r.events.length, 0);
       // Charge keep belongs to the held shot, so ZR stays down across the form change.
-      r.a.form = 'squid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: true });
-      assert.equal(r.a.weaponRunner.s3Stored.charge, 1);
-      r.a.form = 'kid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: true });
+      r.a.form = 'squid'; for (let i = 0; i < Math.ceil(hz * r.a.weapon.storedFireDelay); i++) r.step(1 / hz, { fire: true });
+      assert.equal(r.a.weaponRunner.s3Stored.charge, 1); assert.equal(r.a.weaponRunner.s3Stored.fireDelay, 0);
+      r.a.form = 'kid'; for (let i = 0; i < Math.ceil(hz * .28); i++) r.step(1 / hz, { fire: true });
       assert.equal(r.events.length, 0); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .99);
-      r.step(1 / hz, { fire: true }); r.step(1 / hz);
+      r.step(1 / hz, { fire: true });
+      r.step(1 / 60); assert.equal(r.events.length, 0, 'native release waits one fixed tick'); r.step(1 / 60);
       assert.equal(r.events.length, 1); assert.equal(r.events[0].charge, 1);
       let peak = 0, reach = 0;
       for (let i = 0; i < hz / 2; i++) { r.step(1 / hz); peak = Math.max(peak, Math.abs(r.ch.rcP)); reach = Math.max(reach, ...r.ch.ikErr.slice(0, 2)); }

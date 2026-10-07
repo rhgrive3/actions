@@ -14,8 +14,8 @@ export function adaptScoreReticle(rel, code, once) {
   patch('        setBars(lerp(revealFrom.a, share, e), lerp(revealFrom.b, 1 - share, e));',
     '        setBars(lerp(revealFrom.a, shareA, e), lerp(revealFrom.b, shareB, e));',
     'animate each team to its own coverage');
-  patch('    const a = this._local();\n    const inv = !!(a && a.alive && a.invuln > 0.05);',
-    "    const a = this._local();\n    const reticleHidden = a?.form === 'squid';\n" +
+  patch('    const inv = !!(a && a.alive && a.invuln > 0.05);',
+    "    const reticleHidden = a?.form === 'squid';\n" +
     "    if (reticleHidden !== L.reticleHidden) { L.reticleHidden = reticleHidden; this.ret.style.visibility = reticleHidden ? 'hidden' : ''; }\n" +
     '    const inv = !!(a && a.alive && a.invuln > 0.05);',
     'hide only the aiming reticle during authoritative squid form');

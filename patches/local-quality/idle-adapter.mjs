@@ -20,14 +20,24 @@ export function adaptIdleSource(rel, code, replace) {
     patch("    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", "    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.music > 0);\n    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", 'live and pre-init mute');
   }
   if (rel === 'src/main.js') {
-    code = "import { pausedWorldFrame, refreshEnvironmentBudget } from '../patches/local-quality/idle-resources.mjs';\n" + code;
+    code = "import { idleAttractMenuBudget, pausedWorldFrame, refreshEnvironmentBudget } from '../patches/local-quality/idle-resources.mjs';\n" + code;
     patch('    G.audio = audioMod.audio; G.music = musicMod.music;', '    G.audio = audioMod.audio; G.music = musicMod.music;\n    this._applyAudioVolumes();', 'persisted volumes before any audio init path');
     patch('G.audio?.init?.(); this._applyAudioVolumes();', 'this._applyAudioVolumes(); G.audio?.init?.();', 'persisted mute before unlock');
     patch("    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);",
       "    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);\n    if ('quality' in partial) refreshEnvironmentBudget(G.env, this.settings, this.mobile);", 'resource quality refresh');
-    patch('    const worldHidden = setUp;', '    const pausedFrame = pausedWorldFrame(this, G);\n    const worldHidden = setUp || pausedFrame.paused;', 'offline world pause');
+    patch('    const worldHidden = setUp;', '    const pausedFrame = pausedWorldFrame(this, G);\n    const menuAttractBudget = idleAttractMenuBudget(this, G);\n    const worldHidden = setUp || pausedFrame.paused || (menuAttractBudget && !this._menuAttractFrame);\n    const worldDt = menuAttractBudget ? this._menuAttractFrameDelta : dt;', 'offline pause and idle attract budget');
+    patch('G.fx.update(dt, G.camera);', 'G.fx.update(worldDt, G.camera);', 'attract FX cadence');
+    patch('this.fxHooks?.update?.(dt);', 'this.fxHooks?.update?.(worldDt);', 'attract FX hooks cadence');
+    patch('this.screenfx?.update?.(dt, this);', 'this.screenfx?.update?.(worldDt, this);', 'attract screen FX cadence');
+    patch('G.env.update?.(dt, G.camera);', 'G.env.update?.(worldDt, G.camera);', 'attract environment cadence');
+    patch('this.decor.update(dt);', 'this.decor.update(worldDt);', 'attract decor cadence');
+    patch('this.props?.update?.(dt, G.time);', 'this.props?.update?.(worldDt, G.time);', 'attract props cadence');
+    patch('this.rig.update(dt);', 'this.rig.update(worldDt);', 'attract camera cadence');
+    patch('this.diorama?.update(dt, this.rig.mapK);', 'this.diorama?.update(worldDt, this.rig.mapK);', 'attract diorama cadence');
+    patch('G.paint.flush(dt);', 'G.paint.flush(worldDt);', 'attract paint cadence');
+    patch('this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);', 'this.swimWake.update(worldDt, this.levelMat.userData.uniforms, G.camera.position);', 'attract wake cadence');
     patch('  _dynRes(dt) {', '  _dynRes(dt) {\n    if (this.match?.paused && !this.match.attract && !G.netm) return;', 'paused frames are not GPU headroom samples');
-    patch('      if (!setUp) this.R.render();', '      if (!setUp && pausedFrame.draw) { this.R.render(); if (pausedFrame.paused) G.renderer.shadowMap.needsUpdate = false; pausedFrame.commit?.(); }', 'frozen backdrop invalidation');
+    patch('      if (!setUp) this.R.render();', '      if (!setUp && pausedFrame.draw && (!menuAttractBudget || this._menuAttractFrame)) { this.R.render(); if (pausedFrame.paused) G.renderer.shadowMap.needsUpdate = false; pausedFrame.commit?.(); }', 'frozen pause or budgeted menu backdrop');
     patch('    this.menus?.update?.(dt);', '    this.menus?.update?.(dt);\n    if (pausedFrame.paused) G.renderer.shadowMap.needsUpdate = false;', 'paused shadow flag retirement');
   }
   return code;

@@ -309,7 +309,8 @@ test('brief hiding or movement cancellation cannot replay a landing on return', 
 test('fresh landing after cancelled Slam regains its owned absorb despite orphaned special clocks', async () => {
   const api = await production(), r = rig(api);
   try {
-    r.a._startSpecial(); r.step(); r.a.specialActive = null; r.a.grounded = true; r.step();
+    r.a.weapon={...r.a.weapon,special:'slam'}; // Explicit native pose fixture, independent of the current public kit.
+    r.a._startSpecial(); assert.equal(r.a.specialActive.id,'slam'); r.step(); r.a.specialActive = null; r.a.grounded = true; r.step();
     assert.ok(r.ch.tr[api.CHARACTER_TIMERS.T_LEAP] < 1.9);
     land(r); r.step();
     const output = row(r, 'landing-after-cancelled-slam');

@@ -1,9 +1,22 @@
 import test from 'node:test';
 import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {adaptInput} from '../input-adapter.mjs';
 import assert from 'node:assert/strict';
-import {boot,pad,STEP} from './pause-fixture.mjs';
+import {boot,pad,STEP,composed,resolveFixtureModule} from './pause-fixture.mjs';
 import {installInputPlatform,resetPlatformInput} from '../../local-quality/platform-input.mjs';
+
+test('composed gamepad imports resolve production patch modules from the repository root',()=>{
+ const root=fileURLToPath(new URL('../../../',import.meta.url));
+ const upstream=path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE||path.join(root,'inkwave-public'));
+ const importer=path.join(upstream,'src/game/player.js');
+ const specifier=composed('src/game/player.js',true).match(/^import \{ updateShotGuide \} from '([^']+)';/m)?.[1];
+ assert.equal(specifier,'../../patches/splatoon3/runtime/weapons-fidelity.mjs');
+ const resolved=resolveFixtureModule(specifier,importer);
+ assert.equal(resolved,path.join(root,'patches/splatoon3/runtime/weapons-fidelity.mjs'));
+ assert.equal(fs.existsSync(resolved),true);
+});
 
 function device(axes=[0,0,0,0],mapping='standard',buttons=[]){const p=pad(buttons);p[0].mapping=mapping;p[0].axes=axes;return p;}
 const minifier=process.env.INKWAVE_GAMEPAD_ESBUILD ? await import(process.env.INKWAVE_GAMEPAD_ESBUILD) : null;

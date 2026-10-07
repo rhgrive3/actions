@@ -1,3 +1,4 @@
+import './inkwave-live-test-log.test.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -15,19 +16,22 @@ test('integration retains immutable source and independently rebuilt artifact id
 });
 
 test('parallel browser families retain every final integration acceptance surface', () => {
-  assert.ok(workflow.includes('max-parallel: 5'));
-  for (const suite of ['suite: active', 'suite: catalog', 'suite: ui', 'suite: network', 'suite: range', 'suite: startup'])
+  assert.ok(workflow.includes('max-parallel: 7'));
+  for (const suite of ['suite: active', 'suite: catalog', 'suite: ui', 'suite: responsive', 'suite: network', 'suite: range', 'suite: startup'])
     assert.ok(workflow.includes(suite), suite);
   assert.ok(workflow.includes('browsers: chromium webkit'));
   assert.ok(workflow.includes('npx playwright install --with-deps ${{ matrix.browsers }}'));
   assert.ok(!workflow.includes('needs: validate'));
   assert.ok(workflow.includes('cancel-in-progress: true'));
-  for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'responsive', 'network-browser', 'range', 'startup-browser'])
+  for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'responsive', 'network-browser', 'range', 'startup-browser', 'rematch-lifecycle'])
     assert.ok(workflow.includes(`node scripts/check-inkwave-${gate}.mjs`), gate);
   assert.ok(workflow.includes('scripts/check-inkwave-network-comparison.mjs'));
   assert.ok(workflow.includes('patches/network-replication/tests/*.test.mjs'));
   assert.ok(workflow.includes('patches/practice-range/tests/*.test.mjs'));
   assert.ok(workflow.includes('patches/loading-cache/tests/worker.test.mjs'));
+  assert.ok(workflow.includes("REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}"));
+  assert.ok(workflow.includes('--cycles "$REMATCH_CYCLES"'));
+  assert.ok(workflow.includes("'responsive':['responsive/responsive-result.json']"));
 });
 
 test('all nested final integration source families trigger validation on PR and pushed main', () => {

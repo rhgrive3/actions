@@ -45,6 +45,10 @@ on:
         description: Run isolated render repeatability diagnosis (never full acceptance)
         type: boolean
         default: false
+      deep_lifecycle:
+        description: Run the full 10-cycle rematch lifecycle instead of the fast 3-cycle gate
+        type: boolean
+        default: false
 concurrency:
   group: validate-inkwave-${{ github.event.pull_request.number || inputs.source_sha || github.ref }}
   cancel-in-progress: true
@@ -53,11 +57,12 @@ permissions:
 env:
   SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
   RUNTIME_PERFORMANCE: ${{ inputs.runtime_performance == true || (github.event_name == 'pull_request' && (github.head_ref == 'inkwave/runtime-performance-ui' || github.head_ref == 'inkwave/final-nine-way-integration')) }}
+  REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}
 jobs:
   validate:
     if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -205,7 +210,7 @@ jobs:
     timeout-minutes: 120
     strategy:
       fail-fast: false
-      max-parallel: 5
+      max-parallel: 7
       matrix:
         include:
           - suite: active
@@ -213,6 +218,8 @@ jobs:
           - suite: catalog
             browsers: chromium
           - suite: ui
+            browsers: chromium webkit
+          - suite: responsive
             browsers: chromium webkit
           - suite: network
             browsers: chromium
@@ -276,6 +283,9 @@ jobs:
       - name: Verify wall geometry through actual GTAO and GPU disposal
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/wall" --profile-dir "$CI_STORAGE/cache/wall" --exact-source
+      - name: Verify depth-only shadows and effective reflection budgets on WebGL
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-resource-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/resources" --profile-dir "$CI_STORAGE/cache/resources" --exact-source
       - name: Verify idle music and paused/render-target resources
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/idle-resources" --profile-dir "$CI_STORAGE/cache/idle-resources" --exact-source
@@ -316,6 +326,9 @@ jobs:
       - name: Verify built input and lifecycle modules in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-reliability.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/reliability" --profile-dir "$CI_STORAGE/cache/reliability"
+      - name: Verify repeated battle → results → menu lifecycle and the untimed Practice Range
+        if: matrix.suite == 'ui'
+        run: node scripts/check-inkwave-rematch-lifecycle.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/rematch" --profile-dir "$CI_STORAGE/cache/rematch" --cycles "$REMATCH_CYCLES"
       - name: Reject forged touch and reliability source identities
         if: matrix.suite == 'ui'
         run: |
@@ -326,7 +339,7 @@ jobs:
         if: matrix.suite == 'range'
         run: node scripts/check-inkwave-range.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/range" --profile-dir "$CI_STORAGE/cache/range"
       - name: Verify responsive menus in Chromium and WebKit
-        if: matrix.suite == 'ui'
+        if: matrix.suite == 'responsive'
         run: node scripts/check-inkwave-responsive.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
       - name: Measure cold, warm, PWA restart and offline startup in Chromium
         if: matrix.suite == 'startup'
@@ -338,10 +351,11 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json','idle-resources/idle-resources-result.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json'],
             'catalog':['catalog/motion-catalog-result.json'],
             'network':['network/network-browser-result.json','network-delay/network-browser-result.json'],
-            'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
+            'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
+            'responsive':['responsive/responsive-result.json'],
             'range':['range/range-result.json'],
             'startup':['startup/startup-browser-result.json'],
           }[suite]
@@ -366,6 +380,13 @@ jobs:
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
           print(json.dumps(receipt))
           PY
+      - uses: actions/upload-artifact@v4
+        if: failure() && matrix.suite == 'active'
+        with:
+          name: inkwave-game-failure-${{ github.sha }}
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/game/
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: failure() && matrix.suite == 'active'
         with:

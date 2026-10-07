@@ -1,3 +1,4 @@
+import { spawnProtectionRemaining } from './respawn-lifecycle.mjs';
 // Nintendo how-to-play move03/04: ink-burst disappearance and team-ink
 // coating on entry, then ordinary movement/shooting. Keep native air/weapon/IK
 // and immediate splat hiding. No Nintendo joint curves or shield timings are
@@ -118,11 +119,11 @@ export function installHitSpawnMotion(api, _profile) {
       const frame = input || {}, owner = this._owner() || (s.owner?.character === this ? s.owner : null);
       const enabled = this.s3HitSpawnMotionEnabled !== false;
       const alive = !owner || owner.alive !== false;
-      const protectedNow = owner ? owner.invuln > 0 : !!frame.invuln;
+      const protectedNow = owner ? spawnProtectionRemaining(owner) > 0 : !!frame.invuln;
       if (!enabled || !alive || !this.visible || this.dance || owner?.specialActive || !protectedNow) clear(this);
       if (s.spawnProtection) {
         s.age += Math.max(0, Math.min(.1, Number.isFinite(dt) ? dt : 0));
-        const remaining = owner ? owner.invuln : Infinity;
+        const remaining = owner ? spawnProtectionRemaining(owner) : Infinity;
         const entry = smooth(s.age / cfg.entryTime), exit = smooth(remaining / cfg.exitTime);
         s.level.value = cfg.coating * entry * exit;
         s.phase = remaining < cfg.exitTime ? 'expiry' : entry < 1 ? 'entry' : 'protected';

@@ -17,12 +17,58 @@ export const VERTICAL_SWING = Object.freeze({ coil: -2.45, release: -.04, follow
 // Read-only view for regressions; the arrays stay owned by this module.
 export const ROLLER_POSE = Object.freeze({ READY_ANCHOR, READY_ROTATION, ROLL_ANCHOR, ROLL_ROTATION, ROLL_LEAN });
 
+// Issue #635: gates after flick release, independent of roll-stop locks.
+const POST_SUB = { horizontal: 14 / 60, vertical: 18 / 60 };
+const POST_SQUID = { horizontal: 15 / 60, vertical: 19 / 60 };
+
+function observedLife(actor) {
+  if (Number.isSafeInteger(actor?.netLife)) return actor.netLife;
+  if (Number.isSafeInteger(actor?.net?.lastLife)) return actor.net.lastLife;
+  return null;
+}
+
+function resolveRollHitEpochs(runner) {
+  const epochs = runner.s3RollHitEpochs;
+  if (!epochs?.size) return;
+  for (const [victim, epoch] of epochs) {
+    const life = observedLife(victim);
+    if (!victim.alive || !victim.remote || victim.owner !== epoch.owner || life !== epoch.life) {
+      if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);
+      runner.s3PendingRollHits.delete(victim);
+      epochs.delete(victim);
+      runner.rollHits.delete(victim);
+    }
+  }
+}
+
+// Recovered #527 admission contract: retain native buffering and current profile timing.
+export function rollerEmergeDelay(actor, fallback) {
+  return actor.weapon.kind === 'roller' ? actor.weapon.squidFlickDelay ?? fallback : fallback;
+}
+export function rollerFireBuffer(actor, fallback, dt) {
+  if (actor.weapon.kind !== 'roller') return fallback;
+  const delay = rollerEmergeDelay(actor, fallback);
+  const remaining = actor.form === 'squid' ? delay : Math.max(0, delay - actor.kidT);
+  return Math.max(fallback, remaining + dt);
+}
+
 export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
 
-export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
+// Action-interruption windows that start when an authoritative roll ENDS.
+export const ROLL_STOP_LOCKS = Object.freeze({ main: 16 / 60, sub: 5 / 60, squid: 6 / 60 });
+export function rollStopBlocks(now, locks) {
+  if (!locks) return { main: false, sub: false, squid: false };
+  return { main: now < locks.main - EPS, sub: now < locks.sub - EPS, squid: now < locks.squid - EPS };
+}
+export function rollStopLocks(now) {
+  return { main: now + ROLL_STOP_LOCKS.main, sub: now + ROLL_STOP_LOCKS.sub, squid: now + ROLL_STOP_LOCKS.squid };
+}
+
+export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset, actorUpdate = Actor.prototype.update;
+  const runnerUpdate = WeaponRunner.prototype.update;
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
     if (r && this.weapon?.kind === 'roller') {
@@ -32,10 +78,99 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
     }
     return actorUpdate.call(this, dt);
   };
+
+  const armsInterruption = runner => {
+    const a = runner.a;
+    return a.grounded && a.ink > 0.5 && runner.flick < 0;
+  };
+  const rollWillStop = (runner, fire) => {
+    const a = runner.a;
+    return runner.rolling === true && !fire && armsInterruption(runner);
+  };
+  const armAheadOf = (runner, now, fire) => {
+    const live = rollStopBlocks(now, runner.s3RollStop);
+    if ((live.main || live.sub || live.squid) || !rollWillStop(runner, fire)) return false;
+    runner.s3RollStop = rollStopLocks(now);
+    return true;
+  };
+  const disarmIf = (runner, armed) => {
+    if (armed && (runner.rolling === true || !armsInterruption(runner))) runner.s3RollStop = null;
+  };
+  WeaponRunner.prototype.update = function (dt, inp = {}) {
+    const now = G.time;
+    const armed = armAheadOf(this, now, !!inp.fire);
+    const locks = this.s3RollStop;
+    let input = inp;
+    if (this.s3FlickPostSub > 0 && (input.sub || input.subReleased)) input = { ...input, sub: false, subReleased: false };
+    if (locks && this.a.weapon?.kind === 'roller') {
+      const blocked = rollStopBlocks(now, locks);
+      if (blocked.main || blocked.sub) {
+        input = { ...input };
+        if (blocked.main && !armed) { input.fire = false; input.firePressed = false; }
+        if (blocked.sub) { input.sub = false; input.subReleased = false; }
+      }
+    }
+    const wasRolling = this.rolling === true;
+    const result = runnerUpdate.call(this, dt, input);
+    disarmIf(this, armed);
+    if (wasRolling && this.rolling !== true && armsInterruption(this)) this.s3RollStop = rollStopLocks(now);
+    return result;
+  };
+
+  const rollStopActorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (dt, ...rest) {
+    const runner = this.weaponRunner;
+    if (!runner) return rollStopActorUpdate.call(this, dt, ...rest);
+    const now = G.time;
+    const armed = armAheadOf(runner, now, !!(this.intent?.fire || this.fireBuffer > 0));
+    const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;
+    if (blockSquid && this.intent?.squid) {
+      const held = this.intent.squid;
+      this.intent.squid = false;
+      try { return rollStopActorUpdate.call(this, dt, ...rest); }
+      finally { this.intent.squid = held; disarmIf(runner, armed); }
+    }
+    try { return rollStopActorUpdate.call(this, dt, ...rest); }
+    finally { disarmIf(runner, armed); }
+  };
+
+  const resolveRemoteContact = (event, accepted) => {
+    const attacker = event?.attacker, victim = event?.victim;
+    const runner = attacker?.weaponRunner;
+    const pending = runner?.a === attacker && runner.s3PendingRollHits?.get(victim);
+    if (!pending || runner.s3RollHitConfirmDisabled.has(victim) || !victim?.remote
+      || pending.owner !== victim.owner || pending.life !== observedLife(victim)) return;
+    const exactWeapon = event.weaponId === pending.weaponId;
+    const exactContact = exactWeapon && event.damage === pending.damage;
+    if (accepted ? (!exactWeapon || (!event.killed && !exactContact)) : !exactContact) return;
+    runner.s3PendingRollHits.delete(victim);
+    if (accepted) runner.rollHits.set(victim, G.time);
+    else runner.rollHits.delete(victim);
+  };
+  // Existing events have no hit-request ID. One outstanding request can be
+  // correlated; when native contact cadence sends another packet, retire ACK
+  // matching for this victim so a late earlier event cannot settle the newer hit.
+  on?.('hit', event => resolveRemoteContact(event, true));
+  on?.('hit:rejected', event => resolveRemoteContact(event, false));
+  const cancelInput = WeaponRunner.prototype.cancelPendingInput;
+  WeaponRunner.prototype.cancelPendingInput = function (...args) {
+    if (this.a?.weapon?.kind === 'roller' && this.flick >= 0) {
+      this.flick = -1; this.s3RollerAttack = null; this.s3RollerSquidPressT = null;
+      this.a.character?._s3CancelRollerFlick?.();
+    }
+    return cancelInput?.apply(this, args);
+  };
   WeaponRunner.prototype.reset = function (...args) {
+    const uncorrelated = this.s3RollHitConfirmDisabled || new WeakSet();
+    for (const victim of this.s3PendingRollHits?.keys() || []) uncorrelated.add(victim);
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
     this.s3RollerSquidPressT = null;
+    this.s3PendingRollHits = new Map();
+    this.s3RollHitEpochs = new Map();
+    this.s3RollHitConfirmDisabled = uncorrelated;
+    this.s3RollStop = null;
+    this.s3FlickPostSub = 0; this.s3FlickPostSquid = 0;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
       this.a.character._s3CancelRollerFlick?.();
@@ -44,6 +179,15 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
   };
   WeaponRunner.prototype._roller = function (dt, inp, w) {
     const a = this.a;
+    resolveRollHitEpochs(this);
+    if (this.s3FlickPostSub > 0) {
+      this.s3FlickPostSub -= dt;
+      if (this.s3FlickPostSub < EPS) this.s3FlickPostSub = 0;
+    }
+    if (this.s3FlickPostSquid > 0) {
+      this.s3FlickPostSquid -= dt;
+      if (this.s3FlickPostSquid < EPS) this.s3FlickPostSquid = 0;
+    }
     const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);
     if (starting) {
       this.cooldown = Math.min(0, this.cooldown);
@@ -63,21 +207,82 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
       this.rollLoop?.stop(.12); this.rollLoop = null;
     }
     const state = this.s3RollerAttack;
-    let mode = rollerMode(w, this.s3FlickVertical);
+    const vertical = state ? state.vertical : this.s3FlickVertical;
+    let mode = rollerMode(w, vertical);
     if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
     const winding = this.flick >= 0;
-    if (state && !starting) state.elapsed = Math.min(state.interval, state.elapsed + dt);
+    if (state && !starting) state.elapsed += dt;
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
-    const result = roller.call(this, dt, inp, mode);
+    let rollInp = inp;
+    if (state && state.released) {
+      const rollDelay = state.vertical ? (22 / 60) : (7 / 60);
+      const postRelease = state.elapsed - state.windup;
+      if (postRelease + EPS < rollDelay) rollInp = inp.fire ? { ...inp, fire: false } : inp;
+    }
+    const projectiles = G.projectiles, applyHit = projectiles?.applyHit;
+    let result;
+    if (typeof applyHit === 'function') {
+      const runner = this;
+      const admittedHit = function (attacker, victim, ...args) {
+        const admission = applyHit.call(this, attacker, victim, ...args);
+        if (attacker === a && args[1] === 'roller') {
+          if (admission === 'rejected') {
+            if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);
+            runner.s3PendingRollHits.delete(victim);
+            runner.rollHits.delete(victim);
+          } else if (admission === 'rejected-invulnerable') {
+            if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);
+            runner.s3PendingRollHits.delete(victim);
+            runner.rollHits.delete(victim);
+          } else if (admission === 'pending') {
+            runner.s3RollHitEpochs.set(victim, { owner: victim.owner, life: observedLife(victim) });
+            if (runner.s3RollHitConfirmDisabled.has(victim) || runner.s3PendingRollHits.has(victim)) {
+              runner.s3PendingRollHits.delete(victim);
+              runner.s3RollHitConfirmDisabled.add(victim);
+            } else {
+              runner.s3PendingRollHits.set(victim, {
+                owner: victim.owner, life: observedLife(victim), damage: args[0], weaponId: args[1],
+              });
+            }
+          }
+        }
+        return admission;
+      };
+      projectiles.applyHit = admittedHit;
+      try { result = roller.call(this, dt, rollInp, mode); }
+      finally { if (projectiles.applyHit === admittedHit) projectiles.applyHit = applyHit; }
+    } else result = roller.call(this, dt, rollInp, mode);
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;
       state.released = true;
+      // InkRecoverStop belongs to this actual release, not the paid windup.
+      if (!a.remote) {
+        a.lastFire = 0;
+        a.s3 ||= {};
+        const delay = state.vertical ? w.verticalInkRecoverStop ?? w.inkRecoverStop : w.inkRecoverStop;
+        a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay || 0);
+      }
+      const edge = this.s3FlickVertical ? 'vertical' : 'horizontal';
+      this.s3FlickPostSub = Math.max(0, POST_SUB[edge] - dt);
+      this.s3FlickPostSquid = Math.max(0, POST_SQUID[edge] - dt);
     }
-    if (state && state.elapsed + EPS >= state.interval) {
-      this.s3RollerAttack = null;
-      a.character.s3RollerFlick = null;
+    if (state && state.released) {
+      const rollDelay = state.vertical ? (22 / 60) : (7 / 60);
+      const postRelease = state.elapsed - state.windup;
+      if (state.rolling) {
+        if (a.character ? (a.character.wRoll >= 0.95 || postRelease >= rollDelay + 0.25) : postRelease >= rollDelay + 0.1) {
+          this.s3RollerAttack = null;
+          if (a.character) a.character.s3RollerFlick = null;
+        }
+      } else if (!inp.fire && state.elapsed + EPS >= state.interval) {
+        this.s3RollerAttack = null;
+        if (a.character) a.character.s3RollerFlick = null;
+      } else if (state.elapsed + EPS >= Math.max(state.interval, state.windup + rollDelay) && !a.grounded) {
+        this.s3RollerAttack = null;
+        if (a.character) a.character.s3RollerFlick = null;
+      }
     }
     return result;
   };
@@ -123,7 +328,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       // The runner owns whether the drum is rolling. A fixed 0.6s flick timer
       // otherwise delays the arms after gameplay has already resumed painting.
       const rolling = this.kidForm && this.grounded && !this.dance && !!s.rolling;
-      this.wRoll = mix(previous, rolling ? 1 : 0, 1 - Math.exp(-(rolling ? 11 : 6) * dt));
+      this.wRoll = mix(previous, rolling ? 1 : 0, 1 - Math.exp(-(rolling ? 14 : 6) * dt));
     }
     return result;
   };
