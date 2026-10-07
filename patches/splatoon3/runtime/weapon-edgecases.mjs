@@ -1,18 +1,27 @@
+import { splatlingJumpRecoveryAt } from './splatling-jump-spread.mjs';
 const EPS = 1e-10, DEG = Math.PI / 180;
 
 // This retains the existing two-draw radial sampler, not a claimed S3 PDF.
-// Ground pitch has its own angular envelope; neither bloom nor the horizontal
-// scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
+// The 0.55 air-pitch factor is the existing INKWAVE sampler. The jump blend to
+// the existing ground pitch endpoint is internal and unverified against S3.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
-  if (w.kind !== 'splatling' || !a.grounded || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, horizontal);
+  const recovery = w.kind === 'splatling' ? splatlingJumpRecoveryAt(a.s3SplatlingJumpAgeFrames) : null;
+  if (w.kind !== 'splatling' || !Number.isFinite(w.spreadPitchGround) || (!a.grounded && recovery === null)) {
+    return system._spread(dir, horizontal);
+  }
+  if (!(horizontal > 0)) return system._spread(dir, horizontal);
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
+  const horizontalAngle = horizontal * DEG * radius;
+  const groundPitchAngle = w.spreadPitchGround * DEG * radius;
+  const airPitchAngle = Math.atan(0.55 * Math.tan(horizontalAngle));
+  const pitchAngle = recovery === null ? groundPitchAngle : airPitchAngle + (groundPitchAngle - airPitchAngle) * recovery;
   const right = dir.clone().set(-dir.z, 0, dir.x);
   if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
   right.normalize();
   const up = dir.clone().cross(right);
-  return dir.addScaledVector(right, Math.cos(angle) * Math.tan(Math.max(0, horizontal) * DEG * radius))
-    .addScaledVector(up, Math.sin(angle) * Math.tan(w.spreadPitchGround * DEG * radius)).normalize();
+  return dir.addScaledVector(right, Math.cos(angle) * Math.tan(horizontalAngle))
+    .addScaledVector(up, Math.sin(angle) * Math.tan(pitchAngle)).normalize();
 }
 
 export function blasterBurstDamage(p, w, distance, distanceDamage) {

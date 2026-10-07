@@ -1,5 +1,6 @@
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
+import { installSplatlingJumpSpread } from './splatling-jump-spread.mjs';
 let api;
 export function splatlingBurst(w, charge) {
   const boundary = w.firstChargeTime / w.chargeTime, c = Math.max(0, Math.min(1, charge));
@@ -235,4 +236,5 @@ export function installWeapons(context, profile) {
     return moveSpeed.call(this);
   };
   installWeaponEdgecases(api);
+  installSplatlingJumpSpread(api);
 }
