@@ -14,7 +14,12 @@
     "enemyInkDamageCap": 40,
     "s3GroundAccel": 36,
     "s3AttackGroundAccel": 72,
-    "respawnTime": 8.5
+    "respawnTime": 8.5,
+    "s3HumanoidHurtRadius": 0.35,
+    "s3HumanoidHurtHeight": 1.65,
+    "s3TerrainDistanceScale": 1,
+    "s3HumanoidTerrainRadiusRaw": 0.35,
+    "s3SwimTerrainRadiusRaw": 0.675
   },
   "weapons": {
     "shooter": {

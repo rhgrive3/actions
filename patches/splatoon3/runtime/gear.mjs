@@ -17,10 +17,10 @@ export const ABILITIES = Object.freeze({
   actionIntensify: 'アクション強化', specialCharge: 'スペシャル増加量アップ',
   specialPower: 'スペシャル性能アップ',
   specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
-  quickSuperJump: 'スーパージャンプ時間短縮', subPower: 'サブ性能アップ',
+  quickSuperJump: 'スーパージャンプ時間短縮', stealthJump: 'ステルスジャンプ', subPower: 'cµブ性能アップ',
 });
 export function abilityAllowed(id, piece, slot, item) {
-  return Object.hasOwn(ABILITIES, id) && clothingAbilityAllowed(id, piece, slot, item) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0) && (id !== 'ninjaSquid' || piece === 1 && slot === 0);
+  return Object.hasOwn(ABILITIES, id) && clothingAbilityAllowed(id, piece, slot, item) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0) && (id !== 'ninjaSquid' || piece === 1 && slot === 0) && (id !== 'stealthJump' || piece === 2 && slot === 0);
 }
 export const emptyLoadout = () => Array.from({ length: 3 }, () => ({ main: 'none', subs: ['none', 'none', 'none'] }));
 export function normalizeLoadout(value) {
@@ -93,6 +93,10 @@ export function installGear(api, tuning) {
     a.s3.modifiers = modifiersFor(loadout, tuning.gear, points);
     const m = a.s3.modifiers;
     m.ninjaSquid = loadout[1].main === 'ninjaSquid';
+    // #272: Stealth Jump is a shoes-only primary ability in Splatoon 3.
+    // Its Ver. 11.0.0 movement penalty is consumed by the Super Jump flight
+    // state and deliberately does not alter Quick Super Jump AP curves.
+    m.stealthJump = loadout[2].main === 'stealthJump';
     const ap = points, extra = tuning.gearExtra;
     const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
     const around = Math.floor(gearCurve(ap.quickRespawn || 0, ...extra.quickRespawnAroundFrames) + 1e-10);
