@@ -57,6 +57,7 @@ import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSuperJumpTargetNotification } from './superjump-target-notification.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
+import { installSpawnPoseMotion } from './spawn-pose-motion.mjs';
 import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion } from './special-motion.mjs';
