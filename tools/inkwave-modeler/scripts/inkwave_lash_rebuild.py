@@ -664,7 +664,7 @@ def lower_edge(rays, design, corner, n_up, lid):
     return np.c_[P[:, 0], c], P[:, 1]
 
 
-def build_corner_fill(rays, design):
+def build_corner_fill(rays, design, cover=None):
     """Skin over the eyeball where the model's outer lower corner opens past the reference (corner_clip).  Rows every
     0.2 px across the clipped rows; each row runs from 0.6 px outside the opening (on the skin) to 0.3 px past the
     clip line (under the rim), in 12 even steps, so both edges are smooth lines (a cell grid made a staircase that
@@ -721,9 +721,18 @@ def build_corner_fill(rays, design):
     Hp = np.pad(H, ((r, r), (rc, rc)), mode='edge')         # onto the face (a skin ramp, no gap from the 3/4 view)
     env = np.min([Hp[r + dj:r + dj + H.shape[0], rc + di:rc + di + H.shape[1]]
                   for dj in range(-r, r + 1) for di in range(-rc, rc + 1)], axis=0)
-    depth = env - lo
+    # behind the black line and the wing (cover, world BVH): where they are in front, the patch stays behind them
+    behind = np.full(H.shape, -1e9)
+    if cover is not None:
+        for j in range(H.shape[0]):
+            for i in range(H.shape[1]):
+                h = cover.ray_cast(Vector(O[j, i]), Vector(D[j, i]), 50)
+                if h[0] is not None:
+                    behind[j, i] = h[3] + lo
+    top = np.maximum(env - lo, behind)
+    depth = top.copy()
     for _ in range(40):
-        depth = np.minimum(er.smooth_rows(er.smooth_rows(depth, 1.5), 1.5, axis=1), env - lo)
+        depth = np.maximum(np.minimum(er.smooth_rows(er.smooth_rows(depth, 1.5), 1.5, axis=1), top), behind)
     verts = M.to_local((O + D * depth[..., None]).reshape(-1, 3)) * 1000
     faces = [(j * ncol + i, j * ncol + i + 1, (j + 1) * ncol + i + 1, (j + 1) * ncol + i)
              for j in range(len(R) - 1) for i in range(ncol - 1)]
@@ -1159,6 +1168,26 @@ def lower_centres(design, curve):
             nrm = -nrm                                   # away from the eye (down in the image)
         out.append({'centre': (curve[i] + nrm * row['offset_px']).tolist()})
     return out
+
+
+class OverRays:
+    """Front rays that also hit an extra mesh (head mm verts, faces) lying over the skin."""
+
+    def __init__(self, base, mesh):
+        self.base = base
+        self.extra = BVHTree.FromPolygons([Vector(v) for v in M.to_world(np.asarray(mesh[0]) / 1000)], list(mesh[1]))
+
+    def cast(self, u, v):
+        p, d, t = self.base.cast(u, v)
+        o = p - d * t
+        h = self.extra.ray_cast(Vector(o), Vector(d), 50)
+        if h[0] is not None and h[3] < t:
+            return np.array(h[0]), d, h[3]
+        return p, d, t
+
+    def lifted(self, uv, lift_mm):
+        p, d, _ = self.cast(*uv)
+        return M.to_local(p[None] - d[None] * lift_mm / 1000)[0] * 1000
 
 
 def build_lower(rays, design, curve=None):
@@ -1635,7 +1664,10 @@ def main():
             liner = (np.r_[liner[0], tv], list(liner[1]) + [tuple(i + len(liner[0]) for i in fc) for fc in tf])
         rim, _, edge = build_rim(rays, d)
         tear = build_tearline(rays, d, *edge) if edge is not None else None
-        fill = build_corner_fill(rays, d)
+        cw = [M.to_world(np.asarray(v) / 1000) for v, _ in (liner, rim)]
+        cover = BVHTree.FromPolygons([Vector(v) for v in np.vstack(cw)],
+                                     list(liner[1]) + [tuple(i + len(cw[0]) for i in f) for f in rim[1]])
+        fill = build_corner_fill(rays, d, cover)
         shade = build_lash_shadow(rays, d, edge[0]) if edge is not None and 'lash_shadow' in d else None
         if args.shape_only:
             lashes = []
@@ -1643,7 +1675,9 @@ def main():
             lashes = [build_fan(rays, d, objs['eyeball'])]
         else:
             lashes = [build_lash(rays, d, spec) for spec in d['lashes']]
-        lower = None if args.shape_only else build_lower(rays, d, edge[0] if edge is not None else None)
+        # the lower lash dots sit on the corner fill where it is in front of the face
+        lray = OverRays(rays, fill) if fill is not None else rays
+        lower = None if args.shape_only else build_lower(lray, d, edge[0] if edge is not None else None)
         built.append([objs, liner, rim, lashes, lower, tear, shade, fill])
     verts, polys = [], []
     for _, liner, rim, _, _, _, _, _ in built:
