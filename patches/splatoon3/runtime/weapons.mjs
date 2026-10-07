@@ -227,7 +227,7 @@ export function installWeapons(context, profile) {
     this.s3ChargerSpent = 0; this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
     this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0;
     releaseSplatlingInterrupt(this, -1);
-    this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
+    this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
@@ -245,6 +245,7 @@ export function installWeapons(context, profile) {
     }
     if (kind === 'charger' && this.s3ChargerPostShot > 1e-10) return true;
     if (kind === 'dualies' && this.s3DualiesPostShot > 1e-10) return true;
+    if (kind === 'slosher' && this.s3SloshPostShot > 1e-10) return true;
     if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
@@ -485,6 +486,7 @@ export function installWeapons(context, profile) {
       // 12 * (1/60) misses .2 and the 17F recovery also gains an extra tick.
       const carry = Math.max(0, this.slosh - w.windup);
       this.slosh = -1; G.projectiles.fireSlosh(a, w);
+      this.s3SloshPostShot = w.postShotLock ?? 0;
       a.lastFire = 0;
       this.s3PostShotRemaining = w.postShotDelay;
       this.cooldown = w.fireInterval - w.windup - carry;
