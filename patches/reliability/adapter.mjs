@@ -29,6 +29,8 @@ import { adaptGyroInvert } from './gyro-invert-adapter.mjs';
 import { adaptPause } from './pause-adapter.mjs';
 import { adaptCombatLife } from './combat-life-adapter.mjs';
 import { adaptCombatCredit } from './combat-credit-adapter.mjs';
+import { adaptHoldCancel } from './hold-cancel-adapter.mjs';
+import { adaptPinTap } from './pin-tap-adapter.mjs';
 import { adaptMapLook } from './map-look.mjs';
 
 export const RELIABILITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
