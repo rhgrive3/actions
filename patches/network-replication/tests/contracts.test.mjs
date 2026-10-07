@@ -85,3 +85,44 @@ test('Bomb event keeps the existing gameplay payload shape plus only ordered rep
   assert.ok(Number.isSafeInteger(e[e.length-2]));
   assert.ok(Number.isSafeInteger(e[e.length-1]));
 });
+
+test('weapon vector snapshots stay stable through nested fire and retained payload access', async() => {
+  const f = await fixture(), { emit, on, THREE } = f;
+  const muzzle = new THREE.Vector3(1,2,3), direction = new THREE.Vector3(0,0,1);
+  let retained, nested;
+  const offOuter = on('weapon:fire', event => {
+    if (event.weapon !== 'outer-probe') return;
+    if (!retained) {
+      retained = event;
+      const copied = new THREE.Vector3();
+      assert.equal(f.copyEventVector(event, 'muzzle', copied), true);
+      assert.deepEqual([copied.x,copied.y,copied.z], [1,2,3]);
+    }
+    emit('weapon:fire', { actor: null, weapon: 'nested-probe', muzzle: new THREE.Vector3(7,8,9), dir: new THREE.Vector3(1,0,0) });
+    muzzle.set(90,91,92);
+    event.muzzle.x = 11;
+  });
+  const offNested = on('weapon:fire', event => {
+    if (event.weapon === 'nested-probe') nested = event;
+    if (event.weapon === 'outer-probe') assert.equal(f.eventVectorComponent(event, 'muzzle', 0), 11);
+  });
+  try {
+    const payload = { actor: null, weapon: 'outer-probe', muzzle, dir: direction, hand: 1 };
+    emit('weapon:fire', payload);
+    assert.deepEqual(Object.keys(payload), ['actor','weapon','muzzle','dir','hand']);
+    assert.equal(retained.muzzle, retained.muzzle);
+    assert.ok(retained.muzzle instanceof THREE.Vector3);
+    assert.deepEqual([retained.muzzle.x,retained.muzzle.y,retained.muzzle.z], [11,2,3]);
+    assert.deepEqual([nested.muzzle.x,nested.muzzle.y,nested.muzzle.z], [7,8,9]);
+    assert.equal(f.isEventVectorPayload(retained, 'muzzle'), true);
+    const stableMuzzle = retained.muzzle;
+    emit('weapon:fire', retained);
+    assert.equal(retained.muzzle, stableMuzzle);
+    const replacement = new THREE.Vector3(4,5,6);
+    retained.dir = replacement;
+    assert.equal(retained.dir, replacement);
+    assert.equal(f.eventVectorComponent(retained, 'dir', 0), 4);
+  } finally {
+    offOuter(); offNested();
+  }
+});
