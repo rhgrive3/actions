@@ -12,8 +12,15 @@ export function adaptHoldCancel(rel, code) {
     code = replaceOnce(code, '    this.mobile?.endFrame();\n    this.pressed.clear();',
       '    this.mobile?.endFrame();\n    this._holdCancelled?.clear();\n    this.pressed.clear();', 'hold cancel consumption');
   } else if (rel === 'src/game/player.js') {
-    code = replaceOnce(code, '    if (this.mapHeld) { it.fire = false; it.sub = false; }',
-      '    if (this.mapHeld) { it.fire = false; it.sub = false; }\n    this._cancelHolds(inp, it);', 'cancelled hold after intent');
+    const holdGate = 'it.fire = false; it.sub = false;';
+    const holdAt = code.indexOf(holdGate);
+    if (holdAt < 0 || code.indexOf(holdGate, holdAt + holdGate.length) !== -1)
+      throw new Error('INKWAVE reliability input conflict (cancelled hold after intent): expected exactly one map hold gate');
+    const holdLineStart = code.lastIndexOf('\n', holdAt) + 1;
+    const holdLineEnd0 = code.indexOf('\n', holdAt);
+    const holdLineEnd = holdLineEnd0 < 0 ? code.length : holdLineEnd0;
+    const holdIndent = code.slice(holdLineStart, holdAt).match(/^\s*/)?.[0] || '    ';
+    code = code.slice(0, holdLineEnd) + '\n' + holdIndent + 'this._cancelHolds(inp, it);' + code.slice(holdLineEnd);
     code = replaceOnce(code, '      this.input.mobile?.gyro?.discard();\n      return;\n    }',
       '      this.input.mobile?.gyro?.discard();\n      this._cancelHolds(inp, it);\n      return;\n    }', 'cancelled hold while disabled');
     code = replaceOnce(code, '  // Best enemy near the crosshair for aim assist',

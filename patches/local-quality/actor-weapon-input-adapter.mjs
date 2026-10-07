@@ -17,12 +17,12 @@ export function adaptActorWeaponInput(rel, code, once) {
   const lineEnd0 = code.indexOf('\n', at);
   const lineEnd = lineEnd0 < 0 ? code.length : lineEnd0;
   const line = code.slice(lineStart, lineEnd);
-  const m = line.match(/^(\\s*)this\\.weaponRunner\\.update\\(dt,\\s*\\{\\s*fire(?:\\s*:\\s*([^,}]+))?,\\s*firePressed:\\s*([^,}]+),\\s*sub:\\s*([^,}]+),\\s*subReleased:\\s*([^}]+)\\s*\\}\\);\\s*$/);
+  const m = line.match(/^(\s*)this\.weaponRunner\.update\(dt,\s*\{\s*fire(?:\s*:\s*([^,}]+))?,\s*firePressed:\s*([^,}]+),\s*sub:\s*([^,}]+),\s*subReleased:\s*([^}]+)\s*\}\);\s*$/);
   if (!m) throw new Error('INKWAVE quality patch conflict (Actor weapon input reuse): unsupported WeaponRunner input shape');
   const [, indent, fireExpr = 'fire', pressedExpr, subExpr, subReleasedExpr] = m;
-  const after = indent + 'const winp = this._weaponInput;\\n' +
+  const after = indent + 'const winp = this._weaponInput;\n' +
     indent + 'winp.fire = ' + fireExpr.trim() + '; winp.firePressed = ' + pressedExpr.trim() +
-    '; winp.sub = ' + subExpr.trim() + '; winp.subReleased = ' + subReleasedExpr.trim() + ';\\n' +
+    '; winp.sub = ' + subExpr.trim() + '; winp.subReleased = ' + subReleasedExpr.trim() + ';\n' +
     indent + 'this.weaponRunner.update(dt, winp);';
   return code.slice(0, lineStart) + after + code.slice(lineEnd);
 }
