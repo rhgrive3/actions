@@ -7,11 +7,14 @@ export function adaptTouchPointerLock(rel, code) {
   code=replaceOnce(code,'    this._dev = v;','    this._dev = v;\n    if (v === \'touch\') this._releaseMouseForTouch();','touch releases mouse ownership');
   code=replaceOnce(code,"    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') this.lastDevice = 'touch'; }, { capture: true, passive: true });",`    window.addEventListener('pointerdown', (e) => {
       if (isMobilePointer(e)) this.lastDevice = 'touch';
-      else if (e.pointerType === 'mouse' && this.enabled && this._touchRelockWanted && this._isTouchOverlayReacquireTarget(e.target) &&
+      else if (e.pointerType === 'mouse' && this.enabled && (this._touchRelockWanted || this._dev === 'touch') && this._isTouchOverlayReacquireTarget(e.target) &&
         !this.mobile?._ptr?.size && !(this.mobile?._stick?.id >= 0)) {
+        const touchBoot = !this._touchRelockWanted && this._dev === 'touch';
+        const lockBlocked = !!this.mobile?.editing || !!this.mobile?.mapOpen || G.mode !== 'match' || G.match?.state !== 'playing' ||
+          !!G.match?.paused || !!G.match?.attract || !!G.game?.menus?.current;
         this.lastDevice = 'kbm';
-        if (!this._touchUnlockPending && !this.mobile?.editing && G.mode === 'match' && G.match?.state === 'playing' &&
-          !G.match.paused && !G.match.attract && !G.game?.menus?.current) {
+        if (touchBoot) this._dev = 'kbm';
+        if (!this._touchUnlockPending && !lockBlocked) {
           if (document.pointerLockElement === this.canvas) { this.locked = true; this._touchRelockWanted = false; }
           else this.requestLock();
         }
@@ -34,14 +37,14 @@ export function adaptTouchPointerLock(rel, code) {
       if (!touchUnlock && wasLocked) this.onUnlock?.();`,'touch unlock is not Escape');
   return replaceOnce(code,'  requestLock() {',`  _isTouchOverlayReacquireTarget(target) {
     const mobile = this.mobile;
-    if (!mobile || mobile.editing) return false;
+    if (!mobile) return false;
     if (target === this.canvas) return true;
     if (mobile.mapOpen) return false;
     const root = mobile.root;
     if (!root) return false;
     if (typeof target?.closest === 'function') {
       try {
-        if (target.closest('#iw-mobile-controls .iwm-edit, #iw-mobile-controls .iwm-rotate')) return false;
+        if (target.closest('#iw-mobile-controls .iwm-edit, #iw-mobile-controls .iwm-rotate')) return true;
         if (target.closest('#iw-mobile-controls .iwm-look, #iw-mobile-controls .iwm-movezone, #iw-mobile-controls .iwm-b')) return true;
       } catch { return false; }
     }

@@ -14,6 +14,20 @@ let flushing = 0;
 // scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
+  // #883: Dualies expose one scalar spread envelope, so do not inherit the
+  // generic path's unsourced vertical compression.
+  if (w.kind === 'dualies') {
+    if (horizontal <= 0) return dir;
+    const radius = horizontal * DEG * Math.sqrt(Math.random());
+    const angle = Math.random() * Math.PI * 2;
+    const aim = dir.clone().normalize();
+    const right = aim.clone().set(-aim.z, 0, aim.x);
+    if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(aim, -aim.x);
+    right.normalize();
+    const up = aim.clone().cross(right);
+    return dir.copy(aim).addScaledVector(right, Math.cos(angle) * Math.tan(radius))
+      .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
+  }
   if (w.kind === 'shooter' || w.kind === 'blaster') {
     if (horizontal <= 0) return dir;
     // Keep the existing two-draw radial law; correct only the scalar cone
@@ -103,6 +117,12 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     const out = reset.apply(this, args);
     clear(this); clearDualiesLocks(this); this.s3DualiesEmerging = false; this.s3ChargerPostShot = 0; this.s3DualiesSwimStart = null;
     return out;
+  };
+  // #874: dodge admission uses current fire intent, not the recent-fire presentation timer.
+  const tryDodge = WeaponRunner.prototype.tryDodge;
+  WeaponRunner.prototype.tryDodge = function (...args) {
+    if (this.a?.weapon?.kind === 'dualies' && !this.a.intent?.fire) return false;
+    return tryDodge.apply(this, args);
   };
   const update = Actor.prototype.update;
   Actor.prototype.update = function (dt) {

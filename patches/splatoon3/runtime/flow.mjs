@@ -22,20 +22,23 @@ export function penalizeFlowDeath(state, cause, cfg) {
   const lossFp = cause === 'water' || cause === 'fall' ? p.environmentDeathPenalty : p.deathPenalty;
   state.score = Math.max(0, state.score - lossFp * cfg.threshold / p.referenceThreshold);
 }
-export function awardFlow(state, action, value, cfg, capProgress = true) {
+export function extendsFlow(action) { return action === 'splat' || action === 'assist'; }
+export function awardFlow(state, action, value, cfg, capProgress = true, bonusFp = 0) {
   if (state.active) {
-    if (action === 'splat' || action === 'assist') state.remaining = Math.min(cfg.maxDuration, state.remaining + cfg.extension);
+    if (extendsFlow(action)) state.remaining = Math.min(cfg.maxDuration, state.remaining + cfg.extension);
     return false;
   }
-  const gain = Number.isFinite(value) ? Math.max(0, value) * (cfg.weights[action] || 0) : 0;
   const p = cfg.progress;
+  const gain = Number.isFinite(value) ? Math.max(0, value) * (cfg.weights[action] || 0) : 0;
+  const firstSplatGain = action === 'firstSplat' || action === 'splat'
+    ? Number.isFinite(bonusFp) && bonusFp > 0 && Number.isFinite(p?.referenceThreshold) && p.referenceThreshold > 0
+      ? bonusFp * cfg.threshold / p.referenceThreshold : 0
+    : 0;
   const cap = capProgress && Number.isFinite(p?.referenceCap) && p.referenceCap >= 0 && p.referenceThreshold > 0
     ? p.referenceCap * cfg.threshold / p.referenceThreshold : Infinity;
-  state.score = Math.min(cap, state.score + gain);
-  if (gain > 0) state.idleTime = 0;
-  // Nintendo describes accumulated turf/assists making the next opponent
-  // splat more likely to activate Flow. They do not activate it by themselves.
-  if (action !== 'splat' || state.score < cfg.threshold) return false;
+  state.score = Math.min(cap, state.score + gain + firstSplatGain);
+  if (gain > 0 || firstSplatGain > 0) state.idleTime = 0;
+  if ((action !== 'splat' && action !== 'firstSplat') || state.score < cfg.threshold) return false;
   state.active = true; state.remaining = cfg.duration; state.score = 0; return true;
 }
 // Shared across repeated installs so an authoritative Match transition is awarded once.
@@ -52,21 +55,90 @@ export function awardWipeoutFlow(flow, cfg) {
 }
 export function installFlow({ Actor, on, emit, G }, tuning) {
   const cfg = tuning.flow, credits = new WeakMap(), respawning = new WeakMap();
+  const offlineFirstSplat = new WeakSet(), netFirstSplats = new WeakMap(), normalSplatBonuses = new WeakMap();
   function state(a) { a.s3 ||= {}; return a.s3.flow || (a.s3.flow = createFlow()); }
-  function award(a, action, value) {
+  function award(a, action, value, bonusFp = 0) {
+    if (action === 'splat') bonusFp = normalSplatBonuses.get(a) || 0;
+    if (action === 'splat') normalSplatBonuses.delete(a);
     if (!a?.alive || a.isBot && cfg.bots === false || G.match?.attract) return;
-    const flow = state(a), before = flow.remaining;
+    const flow = state(a), wasActive = flow.active;
     // The reference storage limit describes ordinary Turf; the custom Boss
     // economy and non-match tools retain their existing accumulation policy.
-    const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf');
+    const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf', bonusFp);
     if (activated) emit('actor:flow', { actor: a, active: true });
     // The official trigger is entering/extending Flow, rather than a passive
     // stream of paint for the entire active period. Radius remains calibration.
-    if (activated || flow.remaining > before) {
+    if (activated || wasActive && extendsFlow(action)) {
       const p = a.pos.clone(); p.y += 0.15;
       G.paint.splat(p, cfg.paintRadius, a.team, { kind: 'trail', seed: 0.5 });
     }
   }
+  const firstBonusFp = Number.isFinite(cfg.progress?.firstSplatBonus) && cfg.progress.firstSplatBonus > 0
+    ? cfg.progress.firstSplatBonus : 0;
+  function qualifies(match, attacker, victim) {
+    return !!(match && match.mode === 'turf' && !match.attract && !match.range && !match.opts?.range
+      && attacker && victim && attacker !== victim && attacker.team !== victim.team && firstBonusFp > 0);
+  }
+  function sameDecision(decision, attacker, victim) {
+    return !!decision && decision.attacker === attacker && decision.victim === victim;
+  }
+  function netState(nm) {
+    let s = netFirstSplats.get(nm);
+    if (!s) { s = { decision: null, observed: new WeakMap(), applied: false }; netFirstSplats.set(nm, s); }
+    return s;
+  }
+  function observeSplat(s, attacker, victim) {
+    if (s.applied) return;
+    let victims = s.observed.get(attacker);
+    if (!victims) { victims = new WeakSet(); s.observed.set(attacker, victims); }
+    victims.add(victim);
+  }
+  function applyConfirmedBonus(nm, s, attacker) {
+    if (s.applied) return;
+    s.applied = true;
+    award(attacker, 'firstSplat', 0, firstBonusFp);
+  }
+  on('splatted', ({ attacker, victim } = {}) => {
+    const match = G.match;
+    if (!qualifies(match, attacker, victim)) return;
+    const nm = G.netm;
+    if (nm) {
+      if (nm.match !== match) return;
+      const s = netState(nm), pair = { attacker, victim };
+      observeSplat(s, attacker, victim);
+      if (nm.isHost && !s.decision && typeof nm.claimFirstSplat === 'function'
+        && nm.claimFirstSplat(attacker, victim)) {
+        s.decision = pair; s.applied = true;
+        normalSplatBonuses.set(attacker, firstBonusFp);
+      } else if (sameDecision(s.decision, attacker, victim) && !s.applied) {
+        s.applied = true;
+        normalSplatBonuses.set(attacker, firstBonusFp);
+      }
+      return;
+    }
+    if (typeof match === 'object' && !offlineFirstSplat.has(match)) {
+      offlineFirstSplat.add(match);
+      normalSplatBonuses.set(attacker, firstBonusFp);
+    }
+  });
+  on('flow:first-splat-confirmed', ({ match, attacker, victim } = {}) => {
+    const nm = G.netm;
+    if (!nm || nm.match !== match || G.match !== match || !qualifies(match, attacker, victim)) return;
+    const s = netState(nm);
+    if (s.decision) return;
+    const pair = { attacker, victim };
+    s.decision = pair;
+    if (s.observed.get(attacker)?.has(victim)) applyConfirmedBonus(nm, s, attacker);
+  });
+  on('flow:splat-observed', ({ match, attacker, victim } = {}) => {
+    const nm = G.netm;
+    if (!nm || nm.match !== match || G.match !== match || !qualifies(match, attacker, victim)) return;
+    const s = netState(nm), pair = { attacker, victim };
+    observeSplat(s, attacker, victim);
+    if (!s.decision && nm.isHost && typeof nm.claimFirstSplat === 'function'
+      && nm.claimFirstSplat(attacker, victim)) s.decision = pair;
+    if (sameDecision(s.decision, attacker, victim)) applyConfirmedBonus(nm, s, attacker);
+  });
   const reset = Actor.prototype.reset, respawn = Actor.prototype.respawn;
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args);

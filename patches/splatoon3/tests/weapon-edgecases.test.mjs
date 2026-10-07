@@ -39,6 +39,33 @@ test('30/60/120Hz rendering produces exactly the same fixed-step initial and rep
  const all=[];for(const hz of [30,60,120]){const f=await setup('dualies'),clock=new FixedClock(),out=[];f.a.intent.fire=true;for(let i=0;i<hz;i++)clock.advance(1/hz,()=>{const n=f.shots.length;f.tick(f.a);if(n!==f.shots.length)out.push(clock.ticks+1);});all.push(out);}
  assert.deepEqual(all[0],all[1]);assert.deepEqual(all[1],all[2]);assert.deepEqual(all[0].slice(0,4),[3,8,13,18]);
 });
+test('released ZR plus directional Jump does not roll from stale firingT',async()=>{
+ const f=await setup('dualies'),a=f.a,ink=a.ink,rolls=a.weaponRunner.rollsLeft;
+ a.weaponRunner.firingT=.35;a._prevIntent.fire=true;a.intent.fire=false;
+ a.intent.move.set(1,0,0);a.intent.jump=true;
+ f.tick(a);
+ assert.equal(a.weaponRunner.dodge,null);
+ assert.equal(a.ink,ink);assert.equal(a.weaponRunner.rollsLeft,rolls);
+ assert.ok(a.character.events.some(([name])=>name==='jump'));
+ assert.equal(a.character.events.some(([name])=>name==='dodge'),false);
+});
+test('current Dualies fire intent still admits one directional Dodge Roll',async()=>{
+ const f=await setup('dualies'),a=f.a,ink=a.ink,rolls=a.weaponRunner.rollsLeft;
+ a.weaponRunner.firingT=0;a.intent.fire=true;a.intent.move.set(1,0,0);a.intent.jump=true;
+ f.tick(a);
+ assert.ok(a.weaponRunner.dodge);
+ close(a.ink,ink-a.weapon.rollInk);assert.equal(a.weaponRunner.rollsLeft,rolls-1);
+ assert.equal(a.character.events.some(([name])=>name==='jump'),false);
+});
+test('remote Dualies released-fire Jump does not manufacture a roll from stale firingT',async()=>{
+ const f=await setup('dualies'),a=f.a,ink=a.ink,rolls=a.weaponRunner.rollsLeft;
+ a.remote=true;a.weaponRunner.firingT=.35;a._prevIntent.fire=true;a.intent.fire=false;
+ a.intent.move.set(1,0,0);a.intent.jump=true;
+ f.tick(a);
+ assert.equal(a.weaponRunner.dodge,null);
+ assert.equal(a.ink,ink);assert.equal(a.weaponRunner.rollsLeft,rolls);
+ assert.ok(a.character.events.some(([name])=>name==='jump'));
+});
 test('splatling yaw and pitch have independent signed ground boundaries on arbitrary aim rays',async()=>{
  const f=await setup('splatling'),ps=projectiles(f),a=f.a;
  for(const yaw of [0,1.2])for(const pitch of [0,.7,-.6])for(const [theta,axis,limit] of [[0,'yaw',3.3],[.5,'yaw',-3.3],[.25,'pitch',1.6],[.75,'pitch',-1.6]]){

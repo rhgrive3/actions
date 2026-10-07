@@ -53,13 +53,18 @@ export function calculateFlowSplatPoints(currentScore, isConsecutive, cfg) {
 }
 
 export function adaptIssue481Flow(code) {
-  // Keep #768's independent Turf storage-cap argument when composing current Flow.
-  const capped = code.includes('export function awardFlow(state, action, value, cfg, capProgress = true) {');
-  // 1. Signature for awardFlow to accept isConsecutive
+  // Keep #768's storage-cap and C30's independent first-splat bonus argument.
+  const firstSplatComposed = code.includes('export function awardFlow(state, action, value, cfg, capProgress = true, bonusFp = 0) {');
+  const capped = firstSplatComposed || code.includes('export function awardFlow(state, action, value, cfg, capProgress = true) {');
+  // 1. Signature for awardFlow to accept isConsecutive without stealing C30's bonusFp slot.
   code = replaceOnce(
     code,
-    capped ? 'export function awardFlow(state, action, value, cfg, capProgress = true) {' : 'export function awardFlow(state, action, value, cfg) {',
-    capped ? 'export function awardFlow(state, action, value, cfg, capProgress = true, isConsecutive = false) {' : 'export function awardFlow(state, action, value, cfg, isConsecutive = false) {',
+    firstSplatComposed
+      ? 'export function awardFlow(state, action, value, cfg, capProgress = true, bonusFp = 0) {'
+      : capped ? 'export function awardFlow(state, action, value, cfg, capProgress = true) {' : 'export function awardFlow(state, action, value, cfg) {',
+    firstSplatComposed
+      ? 'export function awardFlow(state, action, value, cfg, capProgress = true, bonusFp = 0, isConsecutive = false) {'
+      : capped ? 'export function awardFlow(state, action, value, cfg, capProgress = true, isConsecutive = false) {' : 'export function awardFlow(state, action, value, cfg, isConsecutive = false) {',
     'awardFlow signature'
   );
 
@@ -82,7 +87,19 @@ export function adaptIssue481Flow(code) {
   state.score += gain;
   if (gain > 0 && typeof state.idleTime === 'number') state.idleTime = 0;`;
 
-  if (capped) {
+  if (firstSplatComposed) {
+    code = replaceOnce(code,
+      '  const gain = Number.isFinite(value) ? Math.max(0, value) * (cfg.weights[action] || 0) : 0;',
+      `  let gain = Number.isFinite(value) ? Math.max(0, value) * (cfg.weights[action] || 0) : 0;
+  if (action === 'splat') {
+    const consecutive = Boolean(isConsecutive || (value && typeof value === 'object' && value.consecutive));
+    const scale = (cfg?.threshold ?? 3) / 100;
+    const currentFp = state.score / scale;
+    const points = currentFp >= (75 - 1e-9) ? (consecutive ? 35 : 15) : (consecutive ? 45 : 23);
+    gain = points * scale;
+  }`,
+      'awardFlow gain with first-splat bonus and storage cap');
+  } else if (capped) {
     code = replaceOnce(code, '  const gain = Number.isFinite(value) ? Math.max(0, value) * (cfg.weights[action] || 0) : 0;', targetGain.slice(0, targetGain.indexOf('  state.score += gain;')), 'awardFlow gain with independent storage cap');
   } else if (code.includes(unpatchedMainGain)) {
     code = replaceOnce(code, unpatchedMainGain, targetGain, 'awardFlow gain calculation (main)');
@@ -103,15 +120,21 @@ export function adaptIssue481Flow(code) {
   // 4. award helper signature and invocation
   code = replaceOnce(
     code,
-    '  function award(a, action, value) {',
-    '  function award(a, action, value, isConsecutive = false) {',
+    firstSplatComposed ? '  function award(a, action, value, bonusFp = 0) {' : '  function award(a, action, value) {',
+    firstSplatComposed
+      ? '  function award(a, action, value, bonusFp = 0, isConsecutive = false) {'
+      : '  function award(a, action, value, isConsecutive = false) {',
     'award helper signature'
   );
 
   code = replaceOnce(
     code,
-    capped ? "    const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf');" : '    const activated = awardFlow(flow, action, value, cfg);',
-    capped ? "    const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf', isConsecutive);" : '    const activated = awardFlow(flow, action, value, cfg, isConsecutive);',
+    firstSplatComposed
+      ? "    const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf', bonusFp);"
+      : capped ? "    const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf');" : '    const activated = awardFlow(flow, action, value, cfg);',
+    firstSplatComposed
+      ? "    const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf', bonusFp, isConsecutive);"
+      : capped ? "    const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf', isConsecutive);" : '    const activated = awardFlow(flow, action, value, cfg, isConsecutive);',
     'award helper awardFlow invocation'
   );
 
@@ -140,8 +163,12 @@ export function adaptIssue481Flow(code) {
   );
 
   // 8. on('splatted') consecutive splat award and victim life-epoch deduplication
-  // Narrowly replaces only the attacker award line, preserving helper assists and victim death handling
+  // Narrowly replaces only the attacker award line, preserving helper assists and victim death handling.
+  // Choose the call shape here in the adapter; never leak this composition flag into runtime output.
   const unpatchedAttackerAward = "    if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);";
+  const splatAwardCall = firstSplatComposed
+    ? "award(attacker, 'splat', 1, 0, isConsecutive);"
+    : "award(attacker, 'splat', 1, isConsecutive);";
   let patchedAttackerAward = `    if (victim?.s3) victim.s3.flowLastSplatTime = null;
     let isDuplicate = false;
     if (victim) {
@@ -161,7 +188,7 @@ export function adaptIssue481Flow(code) {
       const isConsecutive = typeof lastTime === 'number' && Number.isFinite(lastTime) && now >= lastTime && (now - lastTime) <= 5.0;
       attacker.s3 ||= {};
       attacker.s3.flowLastSplatTime = now;
-      award(attacker, 'splat', 1, isConsecutive);
+      ${splatAwardCall}
       if (attacker.s3.flow?.active) {
         attacker.s3.flowLastSplatTime = null;
       }
