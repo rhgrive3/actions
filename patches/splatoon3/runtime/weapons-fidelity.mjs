@@ -554,7 +554,14 @@ export function fidelityDamage(p,point) {
     return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t);
   }
   if(w.kind==='slosher'&&p.fidelitySloshUnit){
-    const d=p.fidelitySloshUnit.DamageParam,fall=Math.max(0,p.start.y-point.y);
+    const d=p.fidelitySloshUnit.DamageParam,launchY=p.fidelitySloshLaunchVelY;
+    // #1065: downward travel during the 2F straight phase does not consume
+    // Bucket Slosher's fall-damage distance. Upward shots keep the spawn-height
+    // anchor, which already ignores apex -> muzzle-height return descent.
+    const fallAnchorY=Number.isFinite(launchY)&&launchY<0
+      ? p.start.y+launchY*Math.max(0,p.straight||0)
+      : p.start.y;
+    const fall=Math.max(0,fallAnchorY-point.y);
     const t=clamp01((fall-d.ReduceStartFallDistance)/(d.ReduceEndFallDistance-d.ReduceStartFallDistance));
     return (d.ValueMax+(d.ValueMin-d.ValueMax)*t)/10;
   }
@@ -718,7 +725,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshLaunchVelY=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -769,6 +776,7 @@ export function installWeaponsFidelity(context,profile) {
         }
       }
       const u=p.fidelitySloshUnit,c=u.MoveParam;
+      p.fidelitySloshLaunchVelY=p.vel.y;
       setCollision(p,u.CollisionParam,p.fidelitySloshIndex);
       p.straight=c.GoStraightToBrakeStateFrame/60;
       p.fidelityMove={hz:60,endSpeed:c.GoStraightStateEndMaxSpeed*60,brakeDrag:c.BrakeAirResist,brakeGravity:c.BrakeGravity*3600,
@@ -823,6 +831,7 @@ export function installWeaponsFidelity(context,profile) {
       p.vel.set(Math.sin(p._s3SloshYaw)*horizontal,
         Math.sin(p._s3SloshPitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),
         Math.cos(p._s3SloshYaw)*horizontal);
+      p.fidelitySloshLaunchVelY=p.vel.y;
       p.delay=p._s3SloshBirthDelay;
       try{if(!p.ghost)context.G?.netm?.recProj?.(p);}
       finally{p.delay=0;p._s3SloshBirthPending=false;}
@@ -864,6 +873,7 @@ export function installWeaponsFidelity(context,profile) {
     'unitBrakeDrag','unitBrakeGravity','unitFreeDrag','unitFreeGravity','unitFreeVelocityY','unitFreeFrame',
     'actorForm','grounded','climbing','dancing','specialActive','superJumpState','aimPitch',
     'aimDirX','aimDirY','aimDirZ','aimPointX','aimPointY','aimPointZ','actorPosX','actorPosY','actorPosZ',
+    'actorVelX','actorVelZ','blasterZRate',
     'runner','runnerCharge','runnerChargeT','runnerCharging','runnerStreaming','runnerFidelityCharge',
     'runnerBlasterJump','runnerBlasterWindup',
     'game','stage','gameLevel','physics','physicsLos','physicsRaycast','level','levelLayout','levelExtra',
@@ -913,6 +923,8 @@ export function installWeaponsFidelity(context,profile) {
     s.specialActive=actor.specialActive;s.superJumpState=actor.superJumpState;s.aimPitch=actor.aimPitch;
     s.aimDirX=dir.x;s.aimDirY=dir.y;s.aimDirZ=dir.z;s.aimPointX=target.x;s.aimPointY=target.y;s.aimPointZ=target.z;
     s.actorPosX=actor.pos.x;s.actorPosY=actor.pos.y;s.actorPosZ=actor.pos.z;
+    s.actorVelX=actor.vel?.x;s.actorVelZ=actor.vel?.z;
+    s.blasterZRate=mode==='blaster'?raw?.spl__SpawnBulletAdditionMovePlayerParam?.ZRate:null;
     s.runner=runner;s.runnerCharge=runner?.charge;s.runnerChargeT=runner?.chargeT;s.runnerCharging=runner?.charging;
     s.runnerStreaming=runner?.streaming;s.runnerFidelityCharge=runner?.fidelitySplatlingCharge;
     s.runnerBlasterJump=runner?.s3BlasterJumpT;s.runnerBlasterWindup=runner?.s3BlasterWindup;
@@ -1066,6 +1078,8 @@ export function installWeaponsFidelity(context,profile) {
     p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
     initialize(p,w);
+    p.s3BlasterForwardApplied=false;
+    applyBlasterSpawnVelocity(p);
     let remaining=Math.max(0,frame/60);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
@@ -1144,6 +1158,8 @@ export function installWeaponsFidelity(context,profile) {
     p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
     initialize(p,w);
+    p.s3BlasterForwardApplied=false;
+    applyBlasterSpawnVelocity(p);
     let remaining=Math.max(0,frame/60);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
