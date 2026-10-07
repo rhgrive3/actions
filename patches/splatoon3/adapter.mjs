@@ -1043,6 +1043,23 @@ export function adaptSource(rel, code) {
       '      if (this.swimWake && (!m || (!m.paused && !resultsQuiet))) this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);',
       '#53 swim wakes behind results');
     code = replaceOnce(code, '    dt = Math.min(dt, 1 / 24);\n', '', 'elapsed time');
+    code = replaceOnce(code,
+      `    // shadows: every frame (half-rate updates made moving shadows — your own, right under the crosshair — judder);
+    // only the low preset halves it
+    const sm = G.renderer.shadowMap;
+    sm.autoUpdate = false;
+    this._frameN = (this._frameN || 0) + 1;
+    if (!worldHidden && (this.settings.quality !== 'low' || (this._frameN & 1))) sm.needsUpdate = true;`,
+      `    // #1026: shadow cadence follows effective device quality. Touch-primary
+    // gameplay caps the 2048px sun shadow at 30 Hz; desktop HIGH/ULTRA keeps
+    // full cadence and LOW remains half-rate. ShadowCache stays enabled.
+    const sm = G.renderer.shadowMap;
+    sm.autoUpdate = false;
+    this._frameN = (this._frameN || 0) + 1;
+    const shadowQuality = effectiveQuality(this.settings, this.mobile);
+    const halfRateShadow = !!this.mobile?.touch || shadowQuality.shadowSize <= 1024;
+    if (!worldHidden && (!halfRateShadow || (this._frameN & 1))) sm.needsUpdate = true;`,
+      'effective mobile shadow cadence');
     code = replaceOnce(code, '    this.input.endFrame();\n', '', 'input consumption');
     code = replaceOnce(code,
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES });',
