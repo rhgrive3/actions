@@ -163,7 +163,15 @@ function adaptCurrentFlow427(code) {
   patch('    penalizeFlowDeath(state(victim), cause, cfg);', '    if (!victim.remote) penalizeFlowDeath(state(victim), cause, cfg);', 'keep local death progress');
   const helpers = `  function terminal427(victim, attacker, life) {
     if (!victim || life !== (victim.netLife ?? 0)) return null;
-    const epoch = Number.isFinite(victim.netLife) ? String(life) : 'offline:' + String(victim.stats?.deaths ?? 0);
+    const deaths = Number.isFinite(victim.stats?.deaths) ? victim.stats.deaths : 0;
+    // _remoteSplat increments stats.deaths before replay listeners run. A local
+    // prediction for that same death therefore observes N while owner replay
+    // observes N+1. Normalize the dead remote actor back to its pre-death epoch;
+    // after _remoteRespawn the next accepted death advances this value by one.
+    const deathEpoch = victim.remote ? Math.max(0, deaths - (victim.alive === false ? 1 : 0)) : deaths;
+    const epoch = Number.isFinite(victim.netLife)
+      ? `${life}:${deathEpoch}`
+      : (victim.remote ? 'remote:' : 'offline:') + String(deathEpoch);
     let term = terminals.get(victim);
     if (!term || term.epoch !== epoch) {
       term = { epoch, life, time: G.time, killer: attacker, assisted: new Set(), splatAwarded: false };
