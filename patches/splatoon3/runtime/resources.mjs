@@ -29,6 +29,12 @@ export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) 
     a.hp = Math.min(P.hp, a.hp + (submerged || rain.ally ? r.regenRateSwim : r.regenRate) * dt);
   }
 }
+export function updateSpecialRecovery(a, dt) {
+  if (!api) throw new Error('INKWAVE resource patch not installed');
+  const { onEnemy } = resourceSurface(a);
+  updateHealthRecovery(a, dt, onEnemy, a.submerged);
+}
+
 export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
