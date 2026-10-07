@@ -379,6 +379,14 @@ export function adaptSource(rel, code) {
       "      teamSide(0),\n" +
       "      teamSide(1));",
       'intro Splashtags presentation');
+    code = replaceOnce(code,
+      "  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5 } = {}) {",
+      "  showSplatted({ by = null, who = null, byColor = '#2f5bff', respawn = 5 } = {}) {",
+      'death card opponent identity input');
+    code = replaceOnce(code,
+      "          killer && killer.weaponId ? h('div', { class: 'iw-spl__wn' }, (WEAPONS[killer.weaponId] || {}).name || '') : null),",
+      "          who ? h('div', { class: 'iw-spl__wn iw-spl__who' }, String(who)) : null),",
+      'death card opponent identity line');
     return "import { t as tr } from '../i18n.js';\nimport { applyShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { tagArt, AWARDS, AWARD_ICONS, awardIcon } from './menu-art.js';\nimport { fnv, tagTitle, tagNum } from './menus.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -859,7 +867,11 @@ export function adaptSource(rel, code) {
         if (accepted !== 1) throw new Error('INKWAVE patch conflict (enemy map reveal): expected raw, score-HUD, or composed connection');
       }
     }
-    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\n` + code;
+    code = replaceOnce(code,
+      "        const by = attacker ? attacker.name : t(cause === 'water' ? 'the sea' : 'enemy ink');\n        this.hud?.showSplatted({ by, byColor:",
+      "        const card = splatCardText(cause, attacker, t);\n        this.hud?.showSplatted({ by: card.cause, who: card.who, byColor:",
+      'death card splat cause');
+    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\nimport { splatCardText } from '../patches/splatoon3/runtime/death-card.mjs';\n` + code;
   }
 
   if (rel === 'src/core/shadowcache.js') {
