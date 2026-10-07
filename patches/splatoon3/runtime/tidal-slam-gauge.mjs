@@ -44,7 +44,8 @@ function surfaceUnder(actor, x, y, z, up, down, G, PLAYER, hit) {
 // is what stops an early contact (resting on the floor during rise after a
 // ceiling bounce, a rail, a step) from reading as "the action already ended".
 function remainingActionSteps(actor, state, special, G, PLAYER) {
-  // Native completion only: fall contact or the existing safety timeout.
+  // A ceiling can set `grounded` during rise/hang; Actor only completes Slam
+  // from fall, so grounded alone must not end the gauge forecast.
   if (state.phase === 'fall' && (actor.grounded || state.t > NATIVE_FALL_TIMEOUT)) return 0;
   const budget = Math.ceil((special.rise + special.hang) / STEP) + Math.ceil(NATIVE_FALL_TIMEOUT / STEP) + 2;
   if (typeof G.physics?.groundProbe !== 'function' || !actor.ground?.constructor) return budget;
