@@ -142,6 +142,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
   const clearDualiesLocks = r => {
     r.s3DualiesPostShot = 0; r.s3SloshPostShot = 0; r.s3DodgeShotPending = 0;
+    r.s3DualiesInterruptSub = 0; r.s3DualiesInterruptSquid = 0; r.s3DualiesInterruptCancelMain = false;
     r.s3DualiesSubBuffered = false; r.s3DualiesSubReleaseBuffered = false;
   };
   const reset = WeaponRunner.prototype.reset;
@@ -223,23 +224,28 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       ? Math.max(0, (this.s3SloshPostShot || 0) - (this.s3GateInActor ? 0 : dt))
       : this.s3DualiesPostShot;
     if (kind !== 'dualies' && kind !== 'slosher') return weaponUpdate.call(this, dt, input);
-    const source = input || {}, locked = postShot() > EPS;
+    const source = input || {};
+    const interruptSub = () => kind === 'dualies' ? (this.s3DualiesInterruptSub || 0) : 0;
+    const locked = postShot() > EPS || interruptSub() > EPS;
     if (locked) {
       if (source.sub) this.s3DualiesSubBuffered = true;
       if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
     let prepared = locked ? { ...source, sub: false, subReleased: false } : { ...source };
+    if (kind === 'dualies' && this.s3DualiesInterruptCancelMain) {
+      prepared.fire = false; prepared.firePressed = false;
+    }
     if (!locked && this.s3DualiesSubReleaseBuffered) {
       prepared.sub = true; prepared.subReleased = true;
       this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
     }
     const runner = this;
     const gated = new Proxy(prepared, { get(target, prop) {
-      if ((prop === 'sub' || prop === 'subReleased') && postShot() > EPS) return false;
+      if ((prop === 'sub' || prop === 'subReleased') && (postShot() > EPS || interruptSub() > EPS)) return false;
       return target[prop];
     }});
     const out = weaponUpdate.call(this, dt, gated);
-    if (postShot() > EPS) {
+    if (postShot() > EPS || interruptSub() > EPS) {
       if (prepared.sub) this.s3DualiesSubBuffered = true;
       if (prepared.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
