@@ -762,6 +762,70 @@ def _ear_relief(uv, D, s):
     return h
 
 
+def _ear_tubes(ear, D, s, tip, a1, a2, nv, mat):
+    """The height-field rim read as a flat plate with a thin bright line on it ("too artificial"): the reference
+    rims are rolled, thick and round.  Each rim in s['tubes'] is a Blender curve with a round bevel along a path on
+    the ear plane (outline indices moved inward by 'inset' mm, or 'pts'), radius and lift off the mid-plane
+    (toward the front, mm) interpolated along the path; the tubes are joined to the slab and merged with it by a
+    second voxel remesh, then Smooth."""
+    O = np.array(D['outline'], float)
+    tg = np.roll(O, -1, 0) - np.roll(O, 1, 0)
+    tg /= np.linalg.norm(tg, axis=1)[:, None]
+    area = np.sum(O[:, 0] * np.roll(O[:, 1], -1) - np.roll(O[:, 0], -1) * O[:, 1])
+    inward = np.c_[-tg[:, 1], tg[:, 0]] * (1 if area > 0 else -1)
+    deps = bpy.context.evaluated_depsgraph_get()
+    inv = np.array(ear.matrix_world.inverted())
+    Lm = M.to_local(er.world(ear)) * 1000
+    tree = BVHTree.FromPolygons([Vector(v) for v in Lm], [list(p.vertices) for p in ear.data.polygons])
+    V = [np.array([v.co for v in ear.data.vertices])]
+    F = [list(p.vertices) for p in ear.data.polygons]
+    for tb in s['tubes']:
+        if 'idx' in tb:
+            idx = np.asarray(tb['idx'], int) % len(O)
+            P = O[idx] + inward[idx] * tb.get('inset', 0.0)
+        else:
+            P = np.array(tb['pts'], float)
+        P = _chaikin(P, 3)
+        u = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
+        u /= u[-1]
+        interp = lambda v: np.interp(u, np.linspace(0, 1, len(np.atleast_1d(v))), np.atleast_1d(v))
+        r, lift = interp(tb['r']), interp(tb.get('lift', 0.0))
+        # the centre sits 'lift' mm off the slab's front surface there (ray from the front along -n)
+        base = tip + P[:, :1] * a1 + P[:, 1:] * a2
+        front = np.zeros(len(P))
+        for i, b in enumerate(base):
+            hit = tree.ray_cast(Vector(b + nv * 40), Vector(-nv))
+            front[i] = (np.array(hit[0]) - b) @ nv if hit[0] is not None else 0.0
+        Wp = M.to_world((base + (front + lift)[:, None] * nv) / 1000)
+        cu = bpy.data.curves.new('ear_tube', 'CURVE')
+        cu.dimensions, cu.bevel_depth, cu.bevel_resolution, cu.use_fill_caps = '3D', 0.001, 6, True
+        sp = cu.splines.new('POLY')
+        sp.points.add(len(Wp) - 1)
+        for pt, w, rr in zip(sp.points, Wp, r):
+            pt.co, pt.radius = (*w, 1.0), float(rr)
+        ob = bpy.data.objects.new('ear_tube', cu)
+        bpy.context.scene.collection.objects.link(ob)
+        deps.update()
+        me = bpy.data.meshes.new_from_object(ob.evaluated_get(deps))
+        co = np.array([v.co for v in me.vertices])
+        co = (np.c_[co, np.ones(len(co))] @ inv.T)[:, :3]
+        off = sum(len(v) for v in V)
+        V.append(co)
+        F += [[off + i for i in p.vertices] for p in me.polygons]
+        bpy.data.objects.remove(ob)
+        bpy.data.curves.remove(cu)
+        bpy.data.meshes.remove(me)
+    name = ear.data.name
+    new = bpy.data.meshes.new(name + '_tubes')
+    new.from_pydata(np.concatenate(V).tolist(), [], F)
+    new.materials.append(mat)
+    old, ear.data = ear.data, new
+    bpy.data.meshes.remove(old)
+    new.name = name
+    _apply_modifier(ear, 'REMESH', mode='VOXEL', voxel_size=s.get('tube_voxel_mm', s['voxel_mm']) / 1000)
+    _apply_modifier(ear, 'SMOOTH', factor=0.5, iterations=int(s.get('tube_smooth', 8)))
+
+
 def _apply_modifier(obj, kind, **kw):
     md = obj.modifiers.new('ear_' + kind.lower(), kind)
     for k, v in kw.items():
@@ -863,6 +927,8 @@ def rebuild_ears(cfg):
     L = L + ((w - (w.max() + w.min()) / 2) * (f - 1) + disp * np.maximum(f, 0.25))[:, None] * nv
     set_local_mm(ear, L)
     _apply_modifier(ear, 'SMOOTH', factor=0.5, iterations=int(s['smooth_iterations']))
+    if s.get('tubes'):
+        _ear_tubes(ear, D, s, tip, a1, a2, nv, em)
     _apply_modifier(ear, 'DECIMATE', ratio=s['vertices'] / len(ear.data.vertices))
     for poly in ear.data.polygons:
         poly.use_smooth = True
