@@ -1394,6 +1394,10 @@ Partial flights now include living allied capsules except the firing Actor itsel
 
 Seven focused production-module tests cover blocked partial, off-ray control, the existing .999 full threshold, both sides of the .125 contact-radius boundary, wall / actor ordering and actor enumeration reversal, ghost non-authority, and30/60/120Hz rendering over fixed steps. They instantiate native Actor/Projectiles and Physics; the hit callback is recorded at the solver boundary. This is not a full recipient HP/network acceptance test or a Switch measurement. The behavior requirement follows Issue870's current-series teammate-bodyblock evidence and the existing partial/full distinction; the questionable .999 threshold remains explicitly unchanged. Full build/browser/CI acceptance belongs to the next integration batch.
 
+## 2026-10-07 — issue 30 件の修正バッチ
+
+#941 #934 #918 #939 #933 #922 #937 #926 #911 #924 #917 #930 #906 #905 #928 #936 #925 #920 #903 #938 #932 #908 #914 #913 を修正。#896 は対応済みの固定、#931 #910 は現行 main で再現せず (ガードテストのみ)、#927 #890 は固定データ不足で見送り。#923 はレビューで、TIME UP時の全projectile一律破棄がS3の一部終端塗りと不一致になり得るため見送り、Issueをopenのまま残した。すべて**ロジック中心の確認**で、ブラウザ実動作と Switch 実機との比較は特記がない限り**未確認**。各 issue の本家根拠・実装箇所・再現・影響・確認状態は[詳細](inkwave-issue-batch-2026-10-07.md)。
+
 ## 2026-10-07: C30-C39 composition repair — mouse owner while map/editor is open (#859)
 
 Reference: Splatoon 3 Ver. 11.3.0; the browser touch/mouse hybrid has no measured Switch counterpart. No frame, speed, weapon or network value is inferred.
