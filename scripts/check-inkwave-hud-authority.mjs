@@ -3,6 +3,20 @@
 import path from 'node:path';
 import fs from 'node:fs';
 
+// A wall-clock sleep can end before a delayed rendering timeline has completed
+// the real CSS transition. Keep the rendered progress assertions below intact.
+export function splatlingStageAnimationsSettled() {
+  const h=globalThis.__splatlingProbe.holder;
+  return [h._chargeEl,h._chargeSecond].flatMap(ring=>{
+    // Resolve the changed property before enumeration, including the first
+    // render after mounting, when the transition may not yet be registered.
+    void getComputedStyle(ring).strokeDashoffset;
+    return ring.getAnimations({subtree:true});
+  })
+    .filter(a=>a.effect?.getTiming().iterations!==Infinity)
+    .every(a=>!a.pending&&a.playState==='finished');
+}
+
 // Serialized into the browser by Playwright. SVG graphics need SVG geometry
 // checks; checkVisibility is box-based. Keep its raw result for diagnosis.
 export function inspectSplatlingStages({charge,streaming,left,first,second,settled=false,negative=null}) {
@@ -380,7 +394,7 @@ export async function checkUiVisualProbes({page,evidence,sourceSha=null,contentH
     for(const [name,charge,streaming,left,first,second]of [['first',2/3,false,0,1,0],['second',5/6,false,0,1,.5],['full',1,false,0,1,1],['partial-stream',1,true,80/60,1,0]]){
       let row=await page.evaluate(inspectSplatlingStages,{charge,streaming,left,first,second});
       if(row.errors.length)throw Error('Splatling stage geometry/progress regression: '+JSON.stringify(row));
-      await page.waitForTimeout(100);
+      await page.waitForFunction(splatlingStageAnimationsSettled,null,{timeout:30000});
       row=await page.evaluate(inspectSplatlingStages,{charge,streaming,left,first,second,settled:true});
       if(row.errors.length)throw Error('Splatling stage geometry/progress regression: '+JSON.stringify(row));
       await page.screenshot({path:path.join(evidence,`splatling-reticle-${name}.png`),timeout:90000});
