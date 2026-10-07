@@ -1,3 +1,5 @@
+import { adaptRollerMaxPaint } from './roller-max-paint-adapter.mjs';
+import { adaptRollerMaxPaint } from './roller-max-paint-adapter.mjs';
 import { adaptAssistPresentation } from './assist-presentation-adapter.mjs';
 import { adaptMatchHud } from './match-hud-adapter.mjs';
 import { adaptChargerSurface } from './charger-surface-adapter.mjs';
@@ -48,6 +50,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptRollerMaxPaint(rel,code,replaceOnce);
   // Only raw locked sources enter this build-only adapter. Re-applying a
   // completed or partial BUILD tree must reach the exact anchors and fail closed.
   // Storm owns the structural cloud-loop rewrite. Gear/Sub may then refine
@@ -337,20 +340,24 @@ export function adaptSource(rel, code) {
       this.xh.style.setProperty('--gy', \`\${guideY.toFixed(1)}px\`);
     }
     if (L.kind === 'dualies') {
-      const pair = guideMe && guideCam && G.projectiles?.s3DualiesGuides?.(guideMe, guideMe.weapon);
-      const projected = pair?.map(point => this._project(guideCam, point.x, point.y, point.z)) || [];
-      const offsets = projected.map(point => point && point.z < 1
-        ? [point.x * innerWidth * .5, -point.y * innerHeight * .5] : [0, 0]);
-      const key = offsets.map(v => v.map(n => n.toFixed(1)).join(',')).join('|');
-      if (key !== L.dualGuide && this._twin && offsets.length === 2) {
-        L.dualGuide = key;
-        const turret = !!guideMe?.weaponRunner?.s3Turret;
+      const pair = guideMe && guideCam && G.projectiles?.s3DualiesGuides?.(guideMe, guideMe.weapon, guideCam);
+      const turret = !!guideMe?.weaponRunner?.s3Turret;
+      if (pair && this._twin) {
+        const previous = L.dualGuideValues || (L.dualGuideValues = []);
         for (let i = 0; i < 2; i++) {
-          const baseX = i === 0 ? 10.5 : -10.5;
-          const lockX = turret ? (i === 0 ? 4 : -4) : 0;
-          this._twin[i]?.setAttribute('transform',
-            \`translate(\${(offsets[i][0] - baseX + lockX).toFixed(2)} \${offsets[i][1].toFixed(2)})\`);
+          const point = this._project(guideCam, pair[i].x, pair[i].y, pair[i].z);
+          const x = point && point.z < 1 ? point.x * innerWidth * .5 : 0;
+          const y = point && point.z < 1 ? -point.y * innerHeight * .5 : 0;
+          const keyX = Math.round(x * 10), keyY = Math.round(y * 10);
+          if (!L.dualGuide || previous[i * 2] !== keyX || previous[i * 2 + 1] !== keyY || L.dualGuideTurret !== turret) {
+            previous[i * 2] = keyX; previous[i * 2 + 1] = keyY;
+            const baseX = i === 0 ? 10.5 : -10.5;
+            const lockX = turret ? (i === 0 ? 4 : -4) : 0;
+            this._twin[i]?.setAttribute('transform',
+              \`translate(\${(x - baseX + lockX).toFixed(2)} \${y.toFixed(2)})\`);
+          }
         }
+        L.dualGuide = true; L.dualGuideTurret = turret;
       }
     } else if (L.dualGuide != null) {
       L.dualGuide = null;
