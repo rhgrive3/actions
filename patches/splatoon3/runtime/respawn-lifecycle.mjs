@@ -19,10 +19,10 @@ export function advanceSpawnProtection(actor, dt) {
 export function absorbSpawnDamage(actor, amount, source, tuning) {
   const s = actor.s3?.spawnArmor;
   if (!s || source === 'ink' || spawnProtectionRemaining(actor) <= EPS) return amount;
-  if (amount > tuning.maxAbsorb) { actor.s3.spawnArmor = null; return amount - tuning.maxAbsorb; }
+  const penetration = amount > tuning.maxAbsorb ? amount - tuning.maxAbsorb : 0;
   s.hp = Math.max(0, s.hp - amount);
   if (s.hp <= EPS && s.breakRemaining === null) s.breakRemaining = Math.min(s.remaining, tuning.breakDelay);
-  return 0;
+  return penetration;
 }
 export function sampleRespawnCountdown(state, fxTime) {
   if (!state.actor) return state.end - fxTime;
