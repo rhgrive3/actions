@@ -236,6 +236,7 @@ test('NetMatch replays owner paint once and remote projectile visuals never pain
       const { f, paintEvent, projectileEvents } = owner;
       const { G, net, paintCalls } = f;
       const remote = makeActor(f, { remote: true, y, grounded, vertical: mode === 'vertical' });
+      remote.owner = 'owner'; // production admission requires the actual sender owner
       net.byNid.set(remote.nid, remote);
       G.actors = [remote];
       G.projectiles = new f.Projectiles(G.scene);
