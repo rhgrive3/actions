@@ -1,3 +1,4 @@
+import { simulateMatchInterval } from './turf-finish.mjs';
 // Render cadence is independent of the 60 Hz gameplay clock.
 import { idleAttractMenuBudget, MENU_ATTRACT_STEP } from '../../local-quality/idle-resources.mjs';
 
@@ -60,10 +61,7 @@ export function runSimulation(game, dt) {
         if (results && G.netm) {
           if (!m.paused) for (const a of m.actors || []) if (a.remote && G.netm.applyRemote) G.netm.applyRemote(a, simDt);
         } else if (!results) {
-          m.updateController(simDt);
-          m.controller?.computeAim?.();
-          m.update(simDt);
-          if (!m.paused) G.projectiles.update(simDt);
+          simulateMatchInterval(m, simDt, G);
         }
         if (m.attract) game._updateAttract(simDt);
         else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);
