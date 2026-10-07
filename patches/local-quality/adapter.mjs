@@ -3,6 +3,7 @@ import { adaptTenacity } from './tenacity-adapter.mjs';
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
 import { adaptScreenfxDamageReset } from './screenfx-damage-reset-adapter.mjs';
+import { adaptScreenfxLensRelease } from './screenfx-lens-release-adapter.mjs';
 import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
 import { adaptTurfLead } from './turf-lead-adapter.mjs';
 import { adaptScoreReticle } from './score-reticle-adapter.mjs';
@@ -21,7 +22,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
-  'screenfx-damage-reset-adapter.mjs',
+  'screenfx-damage-reset-adapter.mjs', 'screenfx-lens-release-adapter.mjs',
   'final-minute-music-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
@@ -46,6 +47,7 @@ export function replaceOnce(code, before, after, label) {
 
 export function adaptQualitySource(rel, code) {
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);
+  code = adaptScreenfxLensRelease(rel, code, replaceOnce);
   code = adaptFinalMinuteMusic(rel, code, replaceOnce);
   code = adaptTurfLead(rel, code, replaceOnce);
   code = adaptScoreReticle(rel, code, replaceOnce);
