@@ -36,6 +36,7 @@ import { installWallMotion } from './wall-motion.mjs';
 import { installFormMotion } from './form-motion.mjs';
 import { installDualiesMotion } from './dualies-motion.mjs';
 import { installRollerDetailMotion } from './roller-detail-motion.mjs';
+import { installRollerFold } from './roller-fold.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
@@ -83,6 +84,9 @@ export function install(profile) {
   installWallMotion(api, profile);
   installFormMotion(api, profile);
   installRollerDetailMotion(api, profile);
+  // Presentation only: the Roller's articulated middle hinge reads the attack state
+  // installRollerMotion/roller logic already own and never writes gameplay back.
+  installRollerFold(api, profile);
   installSuperjumpMotion(api, profile);
   installSquidrollMotion(api, profile);
   installHitSpawnMotion(api, profile);
