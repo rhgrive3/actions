@@ -234,6 +234,7 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
 
   a.weaponRunner.streaming = false;
   a.weaponRunner.charging = false;
+  a.weaponRunner.cooldown = 0;
   a.weaponRunner._splatling(0, { fire: true }, a.weapon); // initialize the split charge owner
   a.weaponRunner.charge = circle;
   a.weaponRunner.chargeT = circle * a.weapon.chargeTime;
