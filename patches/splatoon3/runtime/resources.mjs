@@ -9,6 +9,18 @@ export function resourceSurface(a) {
   a.onEnemy = a.grounded && a.groundTeam === 2 && !a.submerged;
   return { isSquid, onEnemy: a.onEnemy };
 }
+// Natural HP recovery after the post-damage delay. Shared by the ordinary resource step and by actions whose
+// movement is owned elsewhere (Tidal Slam), so entering the action does not stop recovery.
+function recoverHealth(a, dt, onEnemy) {
+  const P = api.PLAYER, r = tuning;
+  if (!onEnemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
+    a.hp = Math.min(P.hp, a.hp + (a.submerged ? r.regenRateSwim : r.regenRate) * dt);
+  }
+}
+export function updateSpecialRecovery(a, dt) {
+  if (!api) throw new Error('INKWAVE resource patch not installed');
+  recoverHealth(a, dt, resourceSurface(a).onEnemy);
+}
 export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
@@ -29,9 +41,7 @@ export function updateResources(a, dt) {
     if (a.s3) a.s3.enemyInkTime = 0;
     a.damageFromInk = Math.max(0, a.damageFromInk - dt * r.enemyInkRecovery);
   }
-  if (!onEnemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
-    a.hp = Math.min(P.hp, a.hp + (a.submerged ? r.regenRateSwim : r.regenRate) * dt);
-  }
+  recoverHealth(a, dt, onEnemy);
   const wasFull = a.ink >= P.inkMax;
   const weaponDelay = a.weapon.inkRecoverStop ?? r.inkRefillDelay;
   const delay = Math.max(weaponDelay, a.s3?.inkRecoverStop || 0);
