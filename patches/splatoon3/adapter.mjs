@@ -84,10 +84,15 @@ export function adaptSource(rel, code) {
     "{ key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },",
     "{ key: 'minimap', label: 'Corner map (non-S3 aid)', type: 'toggle', help: 'Optional aid outside the S3 baseline. The full Turf Map remains available.' },",
     'optional corner map explanation');
-    return replaceOnce(code,
+    code = replaceOnce(code,
       "h('div', { class: 'iw-res__teams' }, table(0), table(1)),",
       "h('div', { class: 'iw-res__teams' }, table(winTeam), table(1 - winTeam)),",
       'winner-first Turf results order');
+    code = replaceOnce(code,
+      "h('div', { class: 'iw-res__foot' }, xpPanel, h('div', { class: 'iw-res__btns' },",
+      "h('div', { class: 'iw-res__foot' }, online ? null : xpPanel, h('div', { class: 'iw-res__btns' },",
+      'Private Battle result XP panel');
+    return code;
   }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",
@@ -233,7 +238,7 @@ export function adaptSource(rel, code) {
       'charger charge-reticle display delay helper');
     code = replaceOnce(code,
       "    if (L.kind === 'charger') {\n      const c = clamp(+f.charge || 0);\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = (this._chargeC * (1 - c)).toFixed(2);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = c > 0.001;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n    } else if",
-      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n      const delayed = view.delayed;\n      if (delayed !== L.chargeDelay) { L.chargeDelay = delayed; this.ret.classList.toggle('is-charge-delay', delayed); }\n    } else if",
+      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n      const delayed = view.delayed;\n      if (delayed !== L.chargeDelay) { L.chargeDelay = delayed; this.ret.classList.toggle('is-charge-delay', delayed); }\n      let reachOn = view.visible && !!ch.chargerCurrent && !!ch.chargerFull;\n      if (reachOn) {\n        const cam = G.rig?.gameCam || G.camera;\n        const current = cam ? this._project(cam, ch.chargerCurrent.x, ch.chargerCurrent.y, ch.chargerCurrent.z) : null;\n        const fullReach = cam ? this._project(cam, ch.chargerFull.x, ch.chargerFull.y, ch.chargerFull.z) : null;\n        reachOn = !!current && !!fullReach && current.z >= -1 && current.z <= 1 && fullReach.z >= -1 && fullReach.z <= 1;\n        if (reachOn) {\n          this.ret.style.setProperty('--crx', (current.x * innerWidth * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cry', (-current.y * innerHeight * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cfx', (fullReach.x * innerWidth * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cfy', (-fullReach.y * innerHeight * 0.5).toFixed(1) + 'px');\n        }\n      }\n      this.ret.classList.toggle('has-reach', reachOn);\n    } else if",
       'charger charge-reticle display delay');
     code = replaceOnce(code,
       '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
@@ -512,7 +517,20 @@ export function adaptSource(rel, code) {
       '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
       'pwa service worker');
   }
+  if (rel === 'src/game/physics.js') {
+    const reset = '    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1;';
+    const ceiling = '          else if (_n.y < -0.6) c.ceiling = true;';
+    if (code.split(reset).length - 1 !== 2 || code.split(ceiling).length - 1 !== 2)
+      throw new Error('INKWAVE patch conflict (Squid Returner ceiling identity): expected both capsule solvers');
+    code = code.split(reset).join('    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1; c.ceilingBlock = -1;');
+    code = code.split(ceiling).join('          else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }');
+    return code;
+  }
   if (rel === 'src/world/level.js') {
+    code = replaceOnce(code,
+      '      roof: !!d.roof,              // off-limits top (roofs, crane legs …): never inkable, anyone landing on it slides off',
+      '      roof: !!d.roof,              // off-limits top (roofs, crane legs …): never inkable, anyone landing on it slides off\n      squidReturner: !!d.squidReturner,  // explicit S3 anti-climb ceiling; ordinary ceilings do not strip Roll/Surge armor',
+      'Squid Returner surface classification');
     code = replaceOnce(code,
       '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));',
       '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));\n    this.homeSuperJumpPoints = (layout.homeSuperJumpPoints || layout.spawnPads).map((p) => new THREE.Vector3(...p));',
@@ -568,6 +586,9 @@ export function adaptSource(rel, code) {
       'held axis cannot cancel live touch');
   }
   if (rel === 'src/game/player.js') {
+    code = replaceOnce(code, '    this.inRange = false;',
+      '    this.inRange = false;\n    this.chargerCurrentReach = new THREE.Vector3(); this.chargerFullReach = new THREE.Vector3(); this.chargerReachVisible = false;',
+      'Charger dual reach HUD state');
     code = replaceOnce(code, '  update(dt) {', `  _s3ClearDisabledLook() {
     if (this.padLook) this.padLook.x = this.padLook.y = 0;
     this.edgeT = 0;
@@ -594,6 +615,17 @@ export function adaptSource(rel, code) {
       "    const chargeNow = clamp(w.kind === 'splatling' ? (a.weaponRunner?.streaming ? (a.weaponRunner?.fidelitySplatlingCharge ?? a.weaponRunner?.charge ?? 0) : (a.weaponRunner?.charge ?? 0)) : (a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0), 0, 1);\n" +
       "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'splatling' ? (G.projectiles?.splatlingReach ? G.projectiles.splatlingReach(w, chargeNow) : (w.range || 12)) : w.kind === 'roller' ? 6 : w.reticleRange ? (a.grounded ? w.reticleRange.ground : w.reticleRange.air) : (w.range || 12);",
       'Charger and Splatling HUD reach follow charge');
+    code = replaceOnce(code,
+      "    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;",
+      "    if (w.kind === 'charger') {\n" +
+      "      const fullRange = G.projectiles?.chargerReach ? G.projectiles.chargerReach(1) : w.rangeMax;\n" +
+      "      const stop = Math.min(range, this.onTarget === G.boss ? a.aimPoint.distanceTo(start) : best);\n" +
+      "      this.chargerCurrentReach.copy(start).addScaledVector(fwd, stop);\n" +
+      "      this.chargerFullReach.copy(start).addScaledVector(fwd, fullRange);\n" +
+      "      this.chargerReachVisible = !!a.weaponRunner?.charging;\n" +
+      "    } else this.chargerReachVisible = false;\n" +
+      "    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;",
+      'Charger current/full HUD endpoints');
     code = replaceOnce(code,
       '    const pick = (i) => { const o = allies[i]; if (o && o.alive && !o.superJumpState) a.superJump(o); };',
       `    const pick = (i) => {
