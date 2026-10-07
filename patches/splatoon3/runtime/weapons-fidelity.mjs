@@ -48,9 +48,25 @@ export function advanceFidelityProjectile(p, dt) {
     const brake = p.fidelityPhase === 1;
     p.vel.multiplyScalar(Math.pow(1 - (brake ? move.brakeDrag : move.freeDrag), step * move.hz));
     p.vel.y -= (brake ? move.brakeGravity : move.freeGravity) * step;
-    // The documented Y transition is used; the apparently unused frame/XZ
-    // defaults are not silently interpreted as additional transition tests.
-    if (brake && (p.vel.y < move.freeVelocityY || move.freeFrame!=null && (p.age-p.straight)*move.hz+EPSILON>=move.freeFrame)) p.fidelityPhase = 2;
+    if (brake) {
+      const frameReady=move.freeFrame!=null&&(p.age-p.straight)*move.hz+EPSILON>=move.freeFrame;
+      if (move.freeVelocityXZ!=null) {
+        // #1053: Shooter brake-state lower speeds are independent XZ/Y
+        // components. Clamp each reached component, and enter free only after
+        // both lower thresholds are satisfied (or an explicit family frame).
+        const xz=Math.hypot(p.vel.x,p.vel.z);
+        const xzReady=xz<=move.freeVelocityXZ+EPSILON;
+        const yReady=p.vel.y<=move.freeVelocityY+EPSILON;
+        if (xzReady&&xz>EPSILON) {
+          const scale=move.freeVelocityXZ/xz;
+          p.vel.x*=scale;p.vel.z*=scale;
+        }
+        if (yReady)p.vel.y=move.freeVelocityY;
+        if (xzReady&&yReady||frameReady)p.fidelityPhase=2;
+      } else if (p.vel.y<move.freeVelocityY||frameReady) {
+        p.fidelityPhase=2;
+      }
+    }
   }
   p.pos.addScaledVector(p.vel, step);
   if (isKitProjectile(p)) kitTrizookaOrbitDelta(null, p, step);
@@ -554,7 +570,14 @@ export function fidelityDamage(p,point) {
     return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t);
   }
   if(w.kind==='slosher'&&p.fidelitySloshUnit){
-    const d=p.fidelitySloshUnit.DamageParam,fall=Math.max(0,p.start.y-point.y);
+    const d=p.fidelitySloshUnit.DamageParam,launchY=p.fidelitySloshLaunchVelY;
+    // #1065: downward travel during the sourced straight phase does not
+    // consume Bucket Slosher's fall-damage distance. Upward shots retain the
+    // spawn-height anchor, which already ignores apex -> muzzle-height return.
+    const fallAnchorY=Number.isFinite(launchY)&&launchY<0
+      ? p.start.y+launchY*Math.max(0,p.straight||0)
+      : p.start.y;
+    const fall=Math.max(0,fallAnchorY-point.y);
     const t=clamp01((fall-d.ReduceStartFallDistance)/(d.ReduceEndFallDistance-d.ReduceStartFallDistance));
     return (d.ValueMax+(d.ValueMin-d.ValueMax)*t)/10;
   }
@@ -652,7 +675,9 @@ export function installWeaponsFidelity(context,profile) {
   if(!defaults || defaults.schema!==1 || profile.referenceHz!==60)throw new Error('Missing or unsupported weapons fidelity profile');
   for (const [name,value] of Object.entries({brakeDrag:defaults.brakeDragPerFrame,freeDrag:defaults.freeDragPerFrame}))
     if(!Number.isFinite(value)||value<0||value>=1)throw new RangeError('Invalid '+name);
-  if(!Number.isFinite(defaults.brakeGravity)||defaults.brakeGravity<0||!Number.isFinite(defaults.freeGravity)||defaults.freeGravity<0||!Number.isFinite(defaults.brakeToFreeVelocityY))throw new RangeError('Invalid ballistic gravity/transition');
+  if(!Number.isFinite(defaults.brakeGravity)||defaults.brakeGravity<0||!Number.isFinite(defaults.freeGravity)||defaults.freeGravity<0||
+    !Number.isFinite(defaults.brakeToFreeVelocityY)||!Number.isFinite(defaults.brakeToFreeVelocityXZ)||defaults.brakeToFreeVelocityXZ<0)
+    throw new RangeError('Invalid ballistic gravity/transition');
   const roller=WEAPONS.roller;
   if(roller?.ballistics && roller.ballistics.verticalUnits.reduce((n,u)=>n+u.count,0)!==roller.verticalDrops)throw new Error('Vertical roller unit count differs from profile');
   api=context;completion=profile.weaponsFidelityCompletion;
@@ -682,6 +707,7 @@ export function installWeaponsFidelity(context,profile) {
       brakeDrag:defaults.brakeDragPerFrame,brakeGravity:defaults.brakeGravity,
       freeDrag:b.freeDragPerFrame??defaults.freeDragPerFrame,
       freeGravity:w.kind==='roller'?w.flickGravity:w.referenceGravity??defaults.freeGravity,
+      freeVelocityXZ:w.kind==='shooter'?defaults.brakeToFreeVelocityXZ:null,
       freeVelocityY:defaults.brakeToFreeVelocityY}));
   }
   function initializeSplatlingFlight(p,w){
@@ -718,7 +744,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshLaunchVelY=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -769,6 +795,7 @@ export function installWeaponsFidelity(context,profile) {
         }
       }
       const u=p.fidelitySloshUnit,c=u.MoveParam;
+      p.fidelitySloshLaunchVelY=p.vel.y;
       setCollision(p,u.CollisionParam,p.fidelitySloshIndex);
       p.straight=c.GoStraightToBrakeStateFrame/60;
       p.fidelityMove={hz:60,endSpeed:c.GoStraightStateEndMaxSpeed*60,brakeDrag:c.BrakeAirResist,brakeGravity:c.BrakeGravity*3600,
@@ -823,6 +850,7 @@ export function installWeaponsFidelity(context,profile) {
       p.vel.set(Math.sin(p._s3SloshYaw)*horizontal,
         Math.sin(p._s3SloshPitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),
         Math.cos(p._s3SloshYaw)*horizontal);
+      p.fidelitySloshLaunchVelY=p.vel.y;
       p.delay=p._s3SloshBirthDelay;
       try{if(!p.ghost)context.G?.netm?.recProj?.(p);}
       finally{p.delay=0;p._s3SloshBirthPending=false;}
