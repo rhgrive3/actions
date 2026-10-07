@@ -151,6 +151,15 @@ export function fidelityAimConvergence(from, dir, target, weapon, speed = weapon
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
 function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
 
+// #873: keep intermediate and nearest/feet widths separate. Consume the same
+// legacy RNG draw to avoid changing unrelated spread/paint-seed ordering, but
+// never let that draw randomize the sourced Shooter gameplay radius.
+export function fidelityFlightPaintRadius(p) {
+  const legacyRandom = Math.random();
+  return p.s3Weapon?.flightPaint?.intermediate ?? p.trailRadius * (0.8 + legacyRandom * 0.4);
+}
+
+
 // The installed straight/brake/free record for a weapon, so a dry prediction can
 // reuse the same law the live projectile advances under instead of restating it.
 export function fidelityMoveFor(weapon) { return moves?.get(weapon?.id) ?? null; }
@@ -628,6 +637,28 @@ export function applyBlasterSpawnVelocity(p) {
   p.s3BlasterForwardApplied=true;
 }
 
+// Issue #297: Bucket Slosher carries an explicit player-motion addition record.
+// S3's coordinate convention names Z as player-forward and Y as vertical; this
+// weapon supplies ZRate=2 and YMinusRate=1, with no XRate/YPlusRate override.
+// Apply only those sourced axes at spawn. GuideYMinusZero means the HUD guide
+// intentionally omits the falling-player term while live projectiles retain it.
+export function applySlosherSpawnVelocity(p,{guide=false}={}) {
+  if(!p||p.ghost||p.s3SlosherMotionApplied||p.type!=='slosh')return;
+  const a=p.owner,w=p.s3Weapon||a?.weapon,raw=rawWeapon(w);
+  if(!a||a.remote||w?.kind!=='slosher'||!raw)return;
+  const spec=raw.spl__SpawnBulletAdditionMovePlayerParam;
+  if(!spec||!Number.isFinite(a.yaw))return;
+  const vx=a.vel?.x,vz=a.vel?.z,vy=a.vel?.y;
+  if(Number.isFinite(spec.ZRate)&&Number.isFinite(vx)&&Number.isFinite(vz)){
+    const x=Math.sin(a.yaw),z=Math.cos(a.yaw);
+    const amount=(vx*x+vz*z)*spec.ZRate;
+    p.vel.x+=x*amount;p.vel.z+=z*amount;
+  }
+  if(Number.isFinite(spec.YMinusRate)&&Number.isFinite(vy)&&vy<0&&!(guide&&spec.GuideYMinusZero))
+    p.vel.y+=vy*spec.YMinusRate;
+  p.s3SlosherMotionApplied=true;
+}
+
 export function installWeaponsFidelity(context,profile) {
   const {WeaponRunner,Projectiles,WEAPONS}=context;
   if(Object.hasOwn(Projectiles.prototype,INSTALLED))return;
@@ -640,6 +671,17 @@ export function installWeaponsFidelity(context,profile) {
   if(roller?.ballistics && roller.ballistics.verticalUnits.reduce((n,u)=>n+u.count,0)!==roller.verticalDrops)throw new Error('Vertical roller unit count differs from profile');
   api=context;completion=profile.weaponsFidelityCompletion;
   if(!completion||completion.schema!==1)throw new Error('Missing completion source table');
+  const shooterPaint = completion.weapons?.shooter?.SplashPaintParam;
+  const paintScale = completion.worldUnitsPerSourceUnit;
+  if (![paintScale, shooterPaint?.WidthHalf, shooterPaint?.WidthHalfNearest].every(v => Number.isFinite(v) && v > 0))
+    throw new RangeError('Invalid Shooter flight paint source/conversion');
+  // Retain the repository's explicit world calibration; this is NOT a new
+  // physical-metre or Switch-rasterization calibration. Snapshot with the shot.
+  WEAPONS.shooter.flightPaint = Object.freeze({
+    intermediate: shooterPaint.WidthHalf * paintScale,
+    nearest: shooterPaint.WidthHalfNearest * paintScale,
+    worldUnitsPerSourceUnit: paintScale,
+  });
   moves=new Map();
   for(const [id,w]of Object.entries(WEAPONS)){
     if(!w.ballistics)continue;
@@ -674,7 +716,7 @@ export function installWeaponsFidelity(context,profile) {
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
     const recycled=this.pool[this.pool.length-1];if(recycled)kitTrizookaClearPooled(recycled);
-    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
+    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -752,6 +794,7 @@ export function installWeaponsFidelity(context,profile) {
     initialize(p,w);
     applyShooterSpawnVelocity(p);
     applyBlasterSpawnVelocity(p);
+    applySlosherSpawnVelocity(p);
     const group=p.s3DamageGroup;const result=push.call(this,p);
     // The generic wrapper snapshots owner state too; retain a single per-volley owner.
     if(group)p.s3DamageGroup=group;
@@ -794,6 +837,8 @@ export function installWeaponsFidelity(context,profile) {
     const yaw=Math.atan2(aim.x,aim.z)+radians(unit.BaseRotateYDegree||0);
     const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
     p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(unit.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+    p.s3Weapon={...w};p.s3SlosherMotionApplied=false;
+    applySlosherSpawnVelocity(p,{guide:true});
     initialize(p,w);
     let remaining=Math.max(0,guide.frame/60-p.delay);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}

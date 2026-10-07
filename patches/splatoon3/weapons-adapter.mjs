@@ -43,6 +43,7 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     '      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));\n      p.delay = Math.max(0, (p.delay || 0) - dt);\n      if (elapsed <= 1e-10) continue;', 'delayed projectile active fraction');
   patch('try { if (this._step(p, dt))', 'try { if (this._step(p, elapsed))', 'delayed movement duration');
   patch('      if (!dead && p.trailEvery) {','      if (!dead && !p.ghost && p.trailEvery) {','ghost trails never score paint');
+  patch('p.trailRadius * (0.8 + Math.random() * 0.4)', 'fidelityFlightPaintRadius(p)', 'source-bound Shooter intermediate paint width');
   patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
@@ -72,5 +73,5 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     'if (G.time - last + 1e-10 >= w.rollContactInterval)', 'Roller same-target contact interval');
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
-  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityWallDrop, advanceFidelityProjectile, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityFlightPaintRadius } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }
