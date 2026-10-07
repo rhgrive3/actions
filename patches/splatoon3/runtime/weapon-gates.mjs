@@ -14,6 +14,7 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   Object.defineProperty(wr, INSTALLED, { value: true });
   const advance = (r, dt) => {
     r.s3PostShotRemaining = elapsed(r.s3PostShotRemaining || 0, dt);
+    r.s3InkRecoverRemaining = elapsed(r.s3InkRecoverRemaining || 0, dt);
     // Slosher's dedicated 16F form/sub clock must advance in the same pre-admission phase.
     r.s3SloshPostShot = elapsed(r.s3SloshPostShot || 0, dt);
     r.s3DodgeInkRemaining = elapsed(r.s3DodgeInkRemaining || 0, dt);
