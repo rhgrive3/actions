@@ -32,6 +32,24 @@ export function attackAirRateScale(a, P) {
   return attacking && ratio > 0 ? ratio : 1;
 }
 
+/** Actor-vs-actor soft push (Match.update) written world-aware. Upstream added the whole correction to pos after the
+ * body was collision-resolved, so a local actor taking 100% of a remote overlap (up to 1.7 radii) could land past the
+ * midplane of a thin wall and be resolved out its far side on the next tick. The push now advances in sub-steps well
+ * under the wall-detection depth and stops at the last position where the same body capsule still fits the world.
+ * Plain fixed step count (no dt): the push is a position correction, not a velocity.
+ */
+export function softPushActor(physics, P, a, dx, dz) {
+  const length = Math.hypot(dx, dz);
+  if (!(length > 0) || !physics) return;
+  const squid = a.form === 'squid';
+  const lift = squid ? P.squidBodyLift : P.stepUp, height = squid ? P.squidHeight : P.height;
+  const steps = Math.ceil(length / (P.radius * 0.25)), sx = dx / steps, sz = dz / steps;
+  for (let i = 0; i < steps; i++) {
+    a.pos.x += sx; a.pos.z += sz;
+    if (!physics.bodyFits(a.pos, P.radius, lift, height, squid)) { a.pos.x -= sx; a.pos.z -= sz; return; }
+  }
+}
+
 /** True only while the roller, not its flick/recovery, owns ground movement. */
 export function rollingMovementActive(a) {
   const r = a.weaponRunner;
