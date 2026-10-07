@@ -57,9 +57,12 @@ export function adaptActorWeaponInput(rel, code, once) {
       throw new Error('INKWAVE quality patch conflict (Actor weapon input reuse): unsupported field ' + part);
     return [key, expr];
   });
-  for (const required of ['fire', 'firePressed', 'sub', 'subReleased'])
-    if (!fields.some(([key]) => key === required))
-      throw new Error('INKWAVE quality patch conflict (Actor weapon input reuse): missing ' + required);
+  const requiredFields = ['fire', 'firePressed', 'sub', 'subReleased'];
+  if (fields.length !== requiredFields.length || fields.some(([key], i) => key !== requiredFields[i]))
+    throw new Error('INKWAVE quality patch conflict (Actor weapon input reuse): unexpected WeaponRunner input fields');
+  const fieldExpr = Object.fromEntries(fields);
+  if (!fieldExpr.sub.includes('!isSquid') || !fieldExpr.subReleased.includes('!isSquid'))
+    throw new Error('INKWAVE quality patch conflict (Actor weapon input reuse): squid gate drift');
   const lineStart = code.lastIndexOf('\n', at) + 1;
   const indent = code.slice(lineStart, at);
   const assigns = fields.map(([key, expr]) => `winp.${key} = ${expr};`).join(' ');
