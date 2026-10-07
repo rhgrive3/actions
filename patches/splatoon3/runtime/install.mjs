@@ -3,11 +3,13 @@ import { installSplatGhostReturn } from '../issue-284-adapter.mjs';
 import { installIssue196SpecialChargeCancel } from '../issue-196-adapter.mjs';
 import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
+import { Input } from '../../../src/core/input.js';
 import { PLAYER, WEAPONS, SUB, SPECIALS, DEFAULT_SETTINGS } from '../../../src/config.js';
 import { Actor } from '../../../src/game/actor.js';
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
 import { NetMatch } from '../../../src/net/netmatch.js';
+import { NetSession } from '../../../src/net/session.js';
 import { PaintSystem } from '../../../src/world/paint.js';
 import { Minimap } from '../../../src/game/minimap.js';
 import { PlayerController } from '../../../src/game/player.js';
@@ -69,7 +71,7 @@ let installed = false;
 export function install(profile) {
   if (installed) throw new Error('INKWAVE patches already installed');
   if (profile.schema !== 1 || profile.referenceVersion !== '11.3.0') throw new Error('Unsupported gameplay profile');
-  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, Minimap, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
+  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Input, Actor, NetMatch, NetSession, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, Minimap, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
   Object.assign(PLAYER, profile.player);
   for (const [kind, data] of Object.entries(profile.weapons)) {
     if (!WEAPONS[kind]) throw new Error(`Missing upstream weapon ${kind}`);
