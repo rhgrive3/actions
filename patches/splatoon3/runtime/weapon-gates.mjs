@@ -2,6 +2,19 @@
 const EPS = 1e-10;
 export const BLASTER_INTERRUPT_SUB = 3 / 60;
 export const BLASTER_INTERRUPT_SQUID = 4 / 60;
+export function blasterCancellationEdge(actor, runner) {
+  if (actor?.weapon?.kind !== 'blaster' || !runner?.s3BlasterHeldRepeat) return null;
+  const intent = actor.intent || {}, prev = actor._prevIntent || {};
+  const released = !!prev.fire && !intent.fire;
+  const subEdge = !!intent.sub && !prev.sub;
+  const squidEdge = !!intent.squid && !prev.squid;
+  if (!released && !subEdge && !squidEdge) return null;
+  return {
+    sub: BLASTER_INTERRUPT_SUB,
+    squid: BLASTER_INTERRUPT_SQUID,
+    latch: !!intent.fire && (subEdge || squidEdge),
+  };
+}
 const INSTALLED = Symbol.for('inkwave.s3.weapon-gates.v1');
 const elapsed = (value, dt) => value - dt <= EPS ? 0 : value - dt;
 // The existing actual-shot clock is16F for squid admission. Sub preparation
@@ -28,17 +41,12 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
     const r = this.weaponRunner, nested = r.s3GateInActor;
     if (!nested) {
       advance(r, dt);
-      const intent = this.intent || {}, prev = this._prevIntent || {};
-      if (this.weapon?.kind === 'blaster' && r.s3BlasterHeldRepeat) {
-        const released = !!prev.fire && !intent.fire;
-        const subEdge = !!intent.sub && !prev.sub;
-        const squidEdge = !!intent.squid && !prev.squid;
-        if (released || subEdge || squidEdge) {
-          r.s3BlasterInterruptSub = Math.max(r.s3BlasterInterruptSub || 0, BLASTER_INTERRUPT_SUB);
-          r.s3BlasterInterruptSquid = Math.max(r.s3BlasterInterruptSquid || 0, BLASTER_INTERRUPT_SQUID);
-          r.s3BlasterCancelLatch = !!intent.fire && (subEdge || squidEdge);
-          r.s3BlasterHeldRepeat = false;
-        }
+      const cancel = blasterCancellationEdge(this, r);
+      if (cancel) {
+        r.s3BlasterInterruptSub = Math.max(r.s3BlasterInterruptSub || 0, cancel.sub);
+        r.s3BlasterInterruptSquid = Math.max(r.s3BlasterInterruptSquid || 0, cancel.squid);
+        r.s3BlasterCancelLatch = cancel.latch;
+        r.s3BlasterHeldRepeat = false;
       }
     }
     r.s3GateInActor = true;
