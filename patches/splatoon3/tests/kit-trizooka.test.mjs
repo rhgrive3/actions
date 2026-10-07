@@ -63,7 +63,7 @@ test('spec matches the pinned UltraShot table, not the quarantined stamp values'
   near(TRIZOOKA.freeGravity, 0.0190565 * 3600);
   near(TRIZOOKA.brakeGravity, 0.09 * 3600);
   assert.deepEqual(TRIZOOKA_SPEC_UP.duration, [330 / 60, 405 / 60, 480 / 60]);
-  assert.equal(apOf({}), 0, 'no AP source in INKWAVE, so AP 0 is reported honestly');
+  assert.equal(apOf({}), 0, 'an actor without an equipped AP snapshot uses zero');
   assert.equal(durationFor(0), 330 / 60);
 });
 
@@ -101,10 +101,11 @@ test('the descriptor exposes the full native blast field names', () => {
 
 // ---- real production runtime -------------------------------------------------
 
+const gearStorage = new Map();
 let cached;
 async function production() {
   if (cached) return cached;
-  const context = vm.createContext({ console, performance, URL });
+  const context = vm.createContext({ console, performance, URL, localStorage: { getItem: key => gearStorage.get(key) ?? null, setItem: (key, value) => gearStorage.set(key, value) } });
   const modules = new Map();
   const map = (f) => (f.startsWith(path.join(SRC, 'patches') + path.sep)
     ? path.join(ROOT, path.relative(SRC, f))
@@ -579,26 +580,26 @@ test('a paused frame is a strict no-op on the whole actor, not just the token', 
 
 test('the AP rate stretches distance and never the damage', async () => {
   const ap0 = trizookaSpecialWeapon(0);
-  const ap2 = trizookaSpecialWeapon(2);
+  const ap57 = trizookaSpecialWeapon(57);
   assert.deepEqual(ap0.splashBands, [[2.5, 53], [4.0, 35]]);
   assert.equal(ap0.splashDamageMax, 53);
   assert.equal(ap0.splashDamageMin, 35);
   // DistanceDamageDistanceRate multiplies DISTANCE
-  assert.deepEqual(ap2.splashBands, [[2.5 * 1.3, 53], [4.0 * 1.3, 35]]);
-  assert.equal(ap2.splashDamageMax, 53, 'damage is unchanged at AP 2');
-  assert.equal(ap2.splashDamageMin, 35, 'damage is unchanged at AP 2');
+  assert.deepEqual(ap57.splashBands, [[2.5 * 1.3, 53], [4.0 * 1.3, 35]]);
+  assert.equal(ap57.splashDamageMax, 53, 'damage is unchanged at AP 57');
+  assert.equal(ap57.splashDamageMin, 35, 'damage is unchanged at AP 57');
   // the damaging radius is the outer band distance, not PaintRadius
   assert.equal(ap0.splashRadius, 4.0, 'outer band distance at AP 0');
-  assert.equal(ap2.splashRadius, 4.0 * 1.3);
+  assert.equal(ap57.splashRadius, 4.0 * 1.3);
   assert.notEqual(ap0.splashRadius, TRIZOOKA.paintRadius, 'PaintRadius is not the damage radius');
   assert.equal(ap0.paintRadius, 3.2, 'the ink/FX radius stays PaintRadius');
-  // a target at 3.9m: inside AP0's 4.0 band, still inside AP2's 5.2 band
+  // a target at 3.9m: inside AP0's 4.0 band, still inside AP57's 5.2 band
   const inside = (bands, d) => bands.some(([r, dmg]) => d <= r && dmg > 0);
   assert.equal(inside(ap0.splashBands, 3.9), true);
-  assert.equal(inside(ap2.splashBands, 3.9), true);
-  // at 4.5m AP0 has already dropped to its outer band edge while AP2 still catches it
+  assert.equal(inside(ap57.splashBands, 3.9), true);
+  // at 4.5m AP0 has already dropped to its outer band edge while AP57 still catches it
   assert.equal(ap0.splashRadius >= 4.5, false, 'AP 0 does not reach 4.5m');
-  assert.equal(ap2.splashRadius >= 4.5, true, 'AP 2 does reach 4.5m');
+  assert.equal(ap57.splashRadius >= 4.5, true, 'AP 57 does reach 4.5m');
 });
 
 test('the volley uses the native camera-ray aim path, not the bomb lob', async () => {
@@ -804,7 +805,7 @@ test('replay state is flat, idempotent and authors no damage, refill or counters
   trizookaReplayFire(s, { actionIndex: 2 });
   assert.deepEqual(s.seenActions, [1, 2, 3], 'no fire after the end');
   // the replay surface is state only: no damage, no refill, no countershot
-  assert.deepEqual(Object.keys(s).sort(), ['actionIndex', 'active', 'ap', 'ended', 'reason', 'seenActions', 't']);
+  assert.deepEqual(Object.keys(s).sort(), ['actionIndex', 'active', 'ap', 'duration', 'ended', 'reason', 'seenActions', 't']);
 });
 
 // ---- uninstall -------------------------------------------------------------
@@ -835,4 +836,43 @@ test('native volley side lobes are symmetric and stay inside the declared fan', 
     assert.ok(angle <= VOLLEY_CONFIG.spreadDeg * Math.PI / 180 + 1e-12);
     assert.ok(Math.abs(p.vel.length() - TRIZOOKA.spawnSpeed) < 1e-9);
   }
+});
+
+import { gearCurve } from '../runtime/gear.mjs';
+import { kitTrizookaGhost } from '../runtime/trizooka-collision.mjs';
+function specialLoadout(ap, ability='specialPower') {
+ const rows=Array.from({length:3},()=>({main:'none',subs:['none','none','none']}));
+ for(const p of rows) if(ap>=10){p.main=ability;ap-=10;}
+ for(const p of rows) for(let i=0;i<3&&ap>=3;i++,ap-=3)p.subs[i]=ability;
+ assert.equal(ap,0);return rows;
+}
+test('#977 saved Special Power Up loadout reaches real Trizooka activation and remains snapshotted',async()=>{
+ const api=await production();world(api);
+ try {
+  for(const ap of [0,3,10,30,57]){
+   gearStorage.set('inkwave.splatoon3.gear.v1',JSON.stringify(specialLoadout(ap)));
+   const a=makeActor(api);a.setWeapon('shooter');a.special=a.specialCost();a._startSpecial();
+   assert.ok(a.s3Trizooka?.active);assert.equal(a.s3Trizooka.ap,ap);
+   near(a.s3Trizooka.duration,gearCurve(ap,5.5,6.75,8));
+   const descriptor=a.s3Trizooka.descriptor;
+   near(descriptor.splashRadius,4*gearCurve(ap,1,1.15,1.3));
+   assert.equal(descriptor.directDamage,220);assert.deepEqual(Array.from(descriptor.splashBands,p=>p[1]),[53,35]);
+   assert.equal(descriptor.paintRadius,3.2);
+   gearStorage.set('inkwave.splatoon3.gear.v1',JSON.stringify(specialLoadout(0)));a.setWeapon('shooter');
+   assert.equal(a.s3Trizooka.descriptor,descriptor);assert.equal(a.s3Trizooka.ap,ap);
+  }
+  gearStorage.set('inkwave.splatoon3.gear.v1',JSON.stringify(specialLoadout(57,'specialCharge')));
+  const a=makeActor(api);a.setWeapon('shooter');a.special=a.specialCost();a._startSpecial();
+  near(a.s3Trizooka.duration,5.5);near(a.s3Trizooka.descriptor.splashRadius,4);
+ } finally {gearStorage.clear();}
+});
+test('#977 continuous AP curves and ghost descriptors preserve activation performance without authority',()=>{
+ assert.ok(durationFor(3)>durationFor(0)&&durationFor(3)<durationFor(10));
+ near(durationFor(57),8);near(splashRadiusFor(57),5.2);
+ const SPECIALS={trizooka:{projectileDescriptor:trizookaProjectileDescriptor}};
+ for(const [wire,ap] of [[{specialPowerAP:57},57],[{specialPowerAP:10},10],[{},0],[{specialPowerAP:Infinity},0]]){
+  const p={wid:'trizooka',type:'blast'};kitTrizookaGhost(p,{},SPECIALS,wire);
+  near(p.s3SpecialWeapon.splashRadius,splashRadiusFor(ap));assert.equal(p.damageOwner,false);assert.equal(p.ghost,true);
+  trizookaClearProjectile(p);assert.equal(p.s3TrizookaAP,undefined);
+ }
 });
