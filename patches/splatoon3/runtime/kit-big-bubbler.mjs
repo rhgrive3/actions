@@ -57,6 +57,8 @@
 // The 11.3.0 tables pin raw internal numbers whose engine scale is not publicly
 // documented; see reports/public-kit-big-bubbler-20261004.md.
 
+import { fidelityDamage } from './weapons-fidelity.mjs';
+
 const BUBBLER_ID = 'bubbler';
 const INSTALL = Symbol.for('inkwave.s3.kit-big-bubbler.install.v1');
 
@@ -174,7 +176,14 @@ const DROP_FALLOFF_RANGE = 7;
 //   * only `type === "drop"` is scaled, so ordinary shots and every other gun are
 //     untouched. This is a pure computation: it mutates nothing and returns a
 //     number, so the query stays inert.
-function damageAtContact(p, hitPoint) {
+function damageAtContact(p, hitPoint, impactT = 1) {
+  const weapon = p?.s3Weapon || p?.owner?.weapon;
+  // #1046: current Splat Roller flicks use the same S3 distance/angle/airtime
+  // damage law as actor hits, then the verified Big Bubbler object modifier.
+  // Rolling/body contact is a different path and intentionally remains 1.0x.
+  if (p?.type === 'drop' && weapon?.kind === 'roller' && p?.fidelityRollerUnit) {
+    return fidelityDamage(p, hitPoint, impactT) * 1.8;
+  }
   const near = p?.damage;
   if (p?.type !== 'drop' || !Number.isFinite(near)) return Number.isFinite(near) ? near : 0;
   const far = p.dmgFar;
@@ -319,8 +328,12 @@ function makeDome({ id, serial, owner, team, pos, remote }) {
   return {
     id, serial, owner, team, pos, t: 0, remote: !!remote,
     color: new api.THREE.Color(api.G.teamColors?.[team] ?? 0xffffff),
-    hp: raw.maxHp, hpMax: raw.maxHp,
-    fieldHp: raw.maxFieldHp, fieldHpMax: raw.maxFieldHp,
+    // #1051 wire compatibility keeps the historical property names, but the
+    // semantics are corrected: hp = outer barrier (MaxFieldHP), fieldHp =
+    // exposed weak/device target (MaxHP). Both feed one destruction progress.
+    hp: raw.maxFieldHp, hpMax: raw.maxFieldHp,
+    fieldHp: raw.maxHp, fieldHpMax: raw.maxHp,
+    damageProgress: 0,
     radius: raw.minRadius, emitterY: 0, ignited: false,
     burnAccum: 0, overlapAccum: 0, dead: false,
   };
@@ -372,14 +385,20 @@ function syncVisual(dome) {
 // confused with the internal TimeDamage burn or the optional overlap tick.
 function damageDome(dome, target, amount, cause = 'shot') {
   if (dome.dead || !(amount > 0)) return 0;
-  if (target === 'field') dome.fieldHp = Math.max(0, dome.fieldHp - amount);
+  const weak = target === 'field'; // historical wire name: exposed launcher/device
+  const max = weak ? raw.maxHp : raw.maxFieldHp;
+  if (weak) dome.fieldHp = Math.max(0, dome.fieldHp - amount);
   else dome.hp = Math.max(0, dome.hp - amount);
+  // #1051: shell and weak-point damage are alternate ways to advance one
+  // authoritative destruction state, not two independent full life bars.
+  dome.damageProgress = clamp((dome.damageProgress || 0) + amount / Math.max(1e-10, max), 0, 1);
   api.emit?.(cause === 'shot' ? 'kit:bubbler:hit' : `kit:bubbler:${cause}`, {
     actor: dome.owner, owner: dome.owner, domeId: dome.id, serial: dome.serial,
     eventId: dome.hitSerial = (dome.hitSerial || 0) + 1, team: dome.team, target, amount, cause,
-    hp: dome.hp, fieldHp: dome.fieldHp,
+    hp: dome.hp, fieldHp: dome.fieldHp, damageProgress: dome.damageProgress,
   });
-  if (dome.hp <= 0 || dome.fieldHp <= 0) removeDome(dome, target === 'field' ? 'emitter-destroyed' : 'canopy-destroyed');
+  if (dome.damageProgress >= 1 - 1e-10 || dome.hp <= 0 || dome.fieldHp <= 0)
+    removeDome(dome, weak ? 'emitter-destroyed' : 'canopy-destroyed');
   return amount;
 }
 
@@ -484,7 +503,10 @@ export function kitBarrierCandidate(p, start, end) {
   // A remote dome has no authoritative HP on this client, so a local round can
   // only ever PROPOSE damage. The parent adjudicates; nothing is mutated here.
   candidate.ownership = candidate.remote ? 'remote-presentation' : 'authoritative';
-  candidate.damage = damageAtContact(p, candidate.point) * tuning.rawPerDamageUnit;
+  const sourceDamage = damageAtContact(p, candidate.point, candidate.t) * tuning.rawPerDamageUnit;
+  // #1051 DamgeRatio belongs to the outer barrier only. Proposals carry the
+  // post-ratio amount so the remote authority must not apply it a second time.
+  candidate.damage = sourceDamage * (candidate.target === 'canopy' ? raw.damageRatio : 1);
   candidate.settled = false;
   candidate.proposal = null;
   // One monotonic identity per SETTLED hit on this client, independent of the
@@ -638,7 +660,9 @@ export function tickBigBubblers(dt) {
       dome.burnAccum += dt;
       while (dome.burnAccum + 1e-10 >= interval && !dome.dead) {
         dome.burnAccum -= interval;
-        damageDome(dome, 'canopy', raw.timeDamage, 'burn');
+        // MaxFieldHP is 2x the old swapped canopy budget. Scale the internal
+        // TimeDamage delta by the same ratio so passive lifetime is unchanged.
+        damageDome(dome, 'canopy', raw.timeDamage * raw.maxFieldHp / raw.maxHp, 'burn');
       }
       if (tuning.overlapFieldDamage && !dome.dead) {
         const tickSeconds = raw.overlapFieldDamageInterval / 60;
@@ -842,6 +866,7 @@ function replayDeploy(owner, payload) {
   dome.t = v.t;
   dome.hp = Math.min(v.hp, dome.hpMax);
   dome.fieldHp = Math.min(v.fieldHp, dome.fieldHpMax);
+  dome.damageProgress = clamp((1 - dome.hp / dome.hpMax) + (1 - dome.fieldHp / dome.fieldHpMax), 0, 1);
   dome.radius = radiusAt(v.t);
   const ascend = clamp(v.t / (raw.ascendFrames / 60), 0, 1);
   dome.emitterY = raw.ascendHeight * hermite2d(raw.ascendCurve, ascend);
@@ -884,9 +909,13 @@ function replayHit(owner, payload) {
   }
   // Displayed HP only. The host decides whether this damage is real; nothing
   // here becomes authoritative, and an expire packet still removes the dome.
-  if (v.target === 'field') dome.fieldHp = Math.max(0, dome.fieldHp - v.amount);
+  const weak = v.target === 'field';
+  if (weak) dome.fieldHp = Math.max(0, dome.fieldHp - v.amount);
   else dome.hp = Math.max(0, dome.hp - v.amount);
-  return ok('displayed', { domeId: v.domeId, eventId: v.eventId, hp: dome.hp, fieldHp: dome.fieldHp });
+  dome.damageProgress = clamp((dome.damageProgress || 0) +
+    v.amount / Math.max(1e-10, weak ? raw.maxHp : raw.maxFieldHp), 0, 1);
+  return ok('displayed', { domeId: v.domeId, eventId: v.eventId,
+    hp: dome.hp, fieldHp: dome.fieldHp, damageProgress: dome.damageProgress });
 }
 
 function replayExpire(owner, payload) {
