@@ -89,7 +89,7 @@ export function installWeapons(context, profile) {
         // state; dry/enemy/air squid presentation (submerged === false) must
         // never bank a charge (#359). A legitimately kept charge is kept
         // alive below and is never cleared here on resurfacing.
-        if (this.charge >= .999 && held && a.submerged) this.s3Stored = { charge: 1, remaining: w.keepChargeTime };
+        if (this.charge >= .999 && held && a.submerged === true) this.s3Stored = { charge: 1, remaining: w.keepChargeTime };
         this.charging = false; this.charge = 0; this.chargeT = 0;
         this.chargeLoop?.stop(.05); this.chargeLoop = null;
       }
