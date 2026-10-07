@@ -69,7 +69,7 @@ Special activation refills the ink tank to `PLAYER.inkMax` before native startup
 
 ### Tidal Slam
 
-Tidal Slam is INKWAVE-specific. No Triple Splashdown parameter substitution is invented.
+Tidal Slam remains an INKWAVE presentation, but the active S3 profile now maps the current Triple Splashdown community-reference player-explosion endpoints: 220/60 HP and 6.4/9.6 near/outer radii. Fist topology, exact falloff shape, armor and animation remain separate unverified fidelity scopes.
 
 ## Deterministic measurement
 
