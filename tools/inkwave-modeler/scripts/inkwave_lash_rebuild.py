@@ -666,6 +666,50 @@ def lower_edge(rays, design, corner, n_up, lid):
     return np.c_[P[:, 0], c], P[:, 1]
 
 
+def build_corner_band(rays, design):
+    """The black frame of the white at the outer corner, as one smooth band between two smooth curves measured on
+    the reference front view (design['corner_band']: 'inner' = the white's outer end per row, 'outer' = the black's
+    outer edge per row, [[y, x], ...] design px).  Rows every 0.1 px, ncol columns across; each vertex lies a little
+    in front of the nearest surface round it (eyeball or skin, along its front ray), the depth smoothed.  It
+    replaces the patchwork of pieces that drew this corner (they left a jagged, lumpy edge).
+    Returns verts, faces (head mm) or None."""
+    cfg = design.get('corner_band')
+    if not cfg:
+        return None
+    I, Ou = np.array(cfg['inner'], float), np.array(cfg['outer'], float)
+    y0, y1 = max(I[0, 0], Ou[0, 0]), min(I[-1, 0], Ou[-1, 0])
+    ys = np.arange(y0, y1 + 1e-6, 0.1)
+    xi = er.smooth_rows(np.interp(ys, I[:, 0], I[:, 1]), cfg.get('sigma', 8.0)) + cfg.get('in_px', 0.3)
+    xo = er.smooth_rows(np.interp(ys, Ou[:, 0], Ou[:, 1]), cfg.get('sigma', 8.0))
+    ncol = cfg.get('cols', 10)
+    f = np.linspace(0, 1, ncol)
+    px = np.stack([xo[:, None] + f[None] * (xi - xo)[:, None], np.repeat(ys[:, None], ncol, 1)], -1)
+    O = np.zeros(px.shape[:2] + (3,)); D = np.zeros_like(O); H = np.zeros(px.shape[:2])
+    for j in range(len(ys)):
+        for i in range(ncol):
+            o, d, t = rays.ray(tuple(px[j, i]))
+            he = rays.eye_tree.ray_cast(Vector(o), Vector(d), 50)
+            hs = rays.skin_tree.ray_cast(Vector(o), Vector(d), 50)
+            O[j, i], D[j, i] = o, d
+            H[j, i] = min([h[3] for h in (he, hs) if h[0] is not None] + [t])
+    r = cfg.get('reach', 10)
+    Hp = np.pad(H, ((r, r), (2, 2)), mode='edge')
+    env = np.min([Hp[r + dj:r + dj + H.shape[0], 2 + di:2 + di + H.shape[1]]
+                  for dj in range(-r, r + 1) for di in range(-2, 3)], axis=0)
+    lift = cfg.get('lift_mm', 0.12) / 1000
+    depth = env - lift
+    for _ in range(40):
+        depth = np.minimum(er.smooth_rows(er.smooth_rows(depth, 3.0), 1.5, axis=1), env - lift)
+    verts = M.to_local((O + D * depth[..., None]).reshape(-1, 3)) * 1000
+    faces = [(j * ncol + i, j * ncol + i + 1, (j + 1) * ncol + i + 1, (j + 1) * ncol + i)
+             for j in range(len(ys) - 1) for i in range(ncol - 1)]
+    q = verts[list(faces[len(faces) // 2])]
+    if np.cross(q[1] - q[0], q[2] - q[0])[2] < 0:
+        faces = [fc[::-1] for fc in faces]
+    print('CORNER_BAND', len(ys), 'rows')
+    return er.solid_sheet(verts, faces, LINER_THICK_MM)
+
+
 def build_corner_fill(rays, design, cover=None):
     """Skin over the eyeball where the model's outer lower corner opens past the reference (corner_clip).  Rows every
     0.2 px across the clipped rows; each row runs from 0.6 px outside the opening (on the skin) to 0.3 px past the
@@ -1729,6 +1773,9 @@ def main():
             tv, tf = build_liner_tail(rays, d)
             liner = (np.r_[liner[0], tv], list(liner[1]) + [tuple(i + len(liner[0]) for i in fc) for fc in tf])
         rim, _, edge = build_rim(rays, d)
+        band = build_corner_band(rays, d)
+        if band is not None:
+            rim = (np.r_[rim[0], band[0]], list(rim[1]) + [tuple(i + len(rim[0]) for i in fc) for fc in band[1]])
         tear = build_tearline(rays, d, *edge) if edge is not None else None
         cw = [M.to_world(np.asarray(v) / 1000) for v, _ in (liner, rim)]
         cover = BVHTree.FromPolygons([Vector(v) for v in np.vstack(cw)],
