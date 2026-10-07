@@ -16,14 +16,20 @@ ${method}
 
   _nearCamera() {`,'shared native water hazard');
  const plainMovement='this._updateSpecial(dt); this._finishFrame(dt); return;';
- const composedMovement='this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return;';
- if(code.includes(composedMovement)) code=replaceOnce(code,composedMovement,
+ const specialMovement='this._updateSpecial(dt); if (specialResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return;';
+ const legacyStormMovement='this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return;';
+ if(code.includes(specialMovement)) code=replaceOnce(code,specialMovement,
+   'this._updateSpecial(dt); if (specialResources && this.alive) updateResources(this, dt); if (this._checkWaterHazard()) return; if (this.alive) this._finishFrame(dt); return;','special movement water hazard');
+ else if(code.includes(legacyStormMovement)) code=replaceOnce(code,legacyStormMovement,
    'this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this._checkWaterHazard()) return; if (this.alive) this._finishFrame(dt); return;','special movement water hazard');
  else code=replaceOnce(code,plainMovement,
    'this._updateSpecial(dt); if (this._checkWaterHazard()) return; this._finishFrame(dt); return;','special movement water hazard');
  const plainActivation='this._startSpecial(); this._finishFrame(dt); return;';
- const composedActivation="this._startSpecial(); if (this.alive && this.specialActive?.id === 'storm') updateResources(this, dt); this._finishFrame(dt); return;";
- if(code.includes(composedActivation)) return replaceOnce(code,composedActivation,
+ const specialActivation="this._startSpecial(); if (this.alive && (this.specialActive?.id === 'storm' || this.specialActive?.id === 'trizooka')) updateResources(this, dt); this._finishFrame(dt); return;";
+ const legacyStormActivation="this._startSpecial(); if (this.alive && this.specialActive?.id === 'storm') updateResources(this, dt); this._finishFrame(dt); return;";
+ if(code.includes(specialActivation)) return replaceOnce(code,specialActivation,
+   "this._startSpecial(); if (this.alive && (this.specialActive?.id === 'storm' || this.specialActive?.id === 'trizooka')) updateResources(this, dt); if (this._checkWaterHazard()) return; this._finishFrame(dt); return;",'special activation water hazard');
+ if(code.includes(legacyStormActivation)) return replaceOnce(code,legacyStormActivation,
    "this._startSpecial(); if (this.alive && this.specialActive?.id === 'storm') updateResources(this, dt); if (this._checkWaterHazard()) return; this._finishFrame(dt); return;",'special activation water hazard');
  return replaceOnce(code,plainActivation,
    'this._startSpecial(); if (this._checkWaterHazard()) return; this._finishFrame(dt); return;','special activation water hazard');
