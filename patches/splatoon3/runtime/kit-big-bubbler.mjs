@@ -581,7 +581,7 @@ export function rollerBubblerCandidate(actor, forwardX, forwardZ, rollWidth) {
     bestMetric = metric;
     best = {
       dome, domeId: dome.id, serial: dome.serial, team: dome.team, target,
-      remote: !!dome.remote, point, normal, domeOwner: dome.owner ?? null,
+      remote: !!dome.remote, point, normal, domeOwner: dome.owner ?? null, settled: false,
       domeOwnerId: bigBubblerOwnerId(dome.owner), shooterId: bigBubblerOwnerId(actor),
     };
   };
@@ -596,10 +596,11 @@ export function rollerBubblerCandidate(actor, forwardX, forwardZ, rollWidth) {
 }
 
 export function applyRollerBubblerHit(candidate, actor, damage) {
-  if (!candidate || !actor || actor.remote || !(damage > 0) || !Number.isInteger(actor.team)) return 0;
+  if (!candidate || candidate.settled || !actor || actor.remote || !(damage > 0) || !Number.isInteger(actor.team)) return 0;
   const dome = candidate.dome;
   if (!dome || dome.dead || dome.team === actor.team || dome.id !== candidate.domeId || dome.serial !== candidate.serial) return 0;
   if (!listOf(dome).includes(dome)) return 0;
+  candidate.settled = true;
   // Splat Roller rolling object modifier is 1.0x: no gameplay multiplier here.
   const amount = damage * tuning.rawPerDamageUnit;
   if (candidate.remote) {
