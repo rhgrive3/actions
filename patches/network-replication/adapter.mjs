@@ -240,12 +240,15 @@ function sampleOwnerSimulation(peer) {
   }
   peer.sim = points[points.length-1]; // no physics beyond the latest owner state
 }
-function retireNetworkGhosts(owner = null) {
+function retireNetworkGhosts(owner = null, preserveStorm = false) {
   const P = G.projectiles; if (!P) return;
   const owns = p => !owner || p.owner === owner;
   for (const p of P.list) if (p.ghost && owns(p)) { p._netEnded = true; p._qualityDead = true; p._netEndStep = p._netSteps; }
   for (let i = P.bombs.length-1; i >= 0; i--) if (P.bombs[i].ghost && owns(P.bombs[i])) { P._releaseBomb(P.bombs[i]); P.bombs.splice(i,1); }
-  for (let i = P.clouds.length-1; i >= 0; i--) if (P.clouds[i].ghost && owns(P.clouds[i])) { P._releaseCloud(P.clouds[i],.3); P.clouds.splice(i,1); }
+  for (let i = P.clouds.length-1; i >= 0; i--) if (P.clouds[i].ghost && owns(P.clouds[i])) {
+    if (preserveStorm) { P.clouds[i]._netAdopted = true; continue; }
+    P._releaseCloud(P.clouds[i],.3); P.clouds.splice(i,1);
+  }
   for (let i = P.beams.length-1; i >= 0; i--) { const b = P.beams[i]; if (b._netPeer && (!owner || b._netOwner === owner)) { b.mesh.visible = false; P.beamPool.push(b.mesh); P.beams.splice(i,1); } }
   for (const [a,mesh] of P.sights) if (a.remote && (!owner || a === owner)) { P.scene.remove(mesh); mesh.material.dispose(); P.sights.delete(a); }
 }
