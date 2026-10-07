@@ -245,7 +245,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     // #911: a player-direct Blaster contact uses the reduced impact burst just like terrain.
     // Keep the latest fixed-tick queue owner: mark the queued snapshot, not the live pooled round.
     const reducedDirect = !!victim && victim !== 'boss';
-    if (!flushing && (p.s3TerrainBurst || reducedDirect)) {
+    if (!flushing && p.s3TerrainBurst) {
       (this.s3BlastQueue ??= []).push({
         point: point.clone(), victim,
         p: { owner: p.owner, team: p.team, ghost: !!p.ghost, wid: p.wid,

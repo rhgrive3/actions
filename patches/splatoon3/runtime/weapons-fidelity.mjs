@@ -478,6 +478,7 @@ export function fidelityProjectileTargets(system,p) {
   for(const actor of G.actors){
     if(!actor.alive||actor===p.owner)continue;
     const friendly=actor.team===p.team;
+    if(friendly&&actor.submerged)continue; // submerged teammates do not form a friendly obstruction capsule
     // S3 teammate body-block: friendly capsules follow the per-family source
     // FriendThroughFrameForPlayer window. A missing source record keeps the
     // native same-team skip instead of inventing one global collider rule.

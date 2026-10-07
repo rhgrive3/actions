@@ -28,7 +28,7 @@ test('#939 the pinned Dualies records carry a 0F friend-through window for both 
   assert.equal(raw.CollisionLapOverParam.FriendThroughFrameForPlayer, 0);
   // Projectiles are pooled, so read each record before building the next scene.
   const record = turret => ({ ...scene(f, { turret }).p.fidelityPlayerCollision }), normal = record(false), roll = record(true);
-  assert.equal(normal.friendThrough, 0); assert.equal(roll.friendThrough, 0);
+  assert.equal(normal.FriendThroughFrameForPlayer, 0); assert.equal(roll.FriendThroughFrameForPlayer, 0);
   close(normal.initRadius, raw.CollisionParam.InitRadiusForPlayer, 'normal radius');
   close(roll.initRadius, raw.CollisionLapOverParam.InitRadiusForPlayer, 'post-roll radius');
   assert.ok(roll.initRadius > normal.initRadius, 'post-roll keeps its wider player radius');
@@ -67,10 +67,10 @@ test('#939 post-roll shots use the wider LapOver radius to block, exactly at the
 
 test('#939 eligibility is judged at the contact age: a nonzero friend-through window passes early contacts only', async t => {
   const f = await boot(); t.after(f.close);
-  const early = scene(f); early.p.fidelityPlayerCollision.friendThrough = 30 / 60; fly(early);
+  const early = scene(f); early.p.fidelityFriendThrough = 30; fly(early);
   assert.ok(early.enemy.hp < 100, 'ally contacted inside the window is passed through');
   assert.equal(early.ally.hp, 100);
-  const late = scene(f); late.p.fidelityPlayerCollision.friendThrough = 1 / 60; fly(late);
+  const late = scene(f); late.p.fidelityFriendThrough = 1; fly(late);
   assert.equal(late.enemy.hp, 100, 'ally contacted after the window blocks');
 });
 
