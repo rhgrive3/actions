@@ -2,6 +2,9 @@
 // teammate Super Jump and its invulnerability keep their existing owners.
 const EPS = 1e-10, KEYS = ['fire', 'jump', 'sub', 'special', 'squid'];
 const INSTALL = Symbol.for('inkwave.s3.respawn-lifecycle.v1');
+let beginInitialImpl = null;
+export function beginInitialSquidSpawn(actor) { return beginInitialImpl?.(actor) ?? false; }
+export function squidSpawnState(actor) { return actor?.s3?.squidSpawn || null; }
 export const SPAWN_ARMOR_FLAG = 8388608;
 export function spawnProtectionRemaining(actor) {
   if (actor?.remote && actor.s3?.spawnArmorManaged) return actor.s3.spawnArmorRemote ? .1 : 0;
@@ -45,14 +48,59 @@ function physicalHolds(input = {}) {
     squid: down('ShiftLeft') || down('ShiftRight') || value(6) > .3 || !!touch?.down('squid'),
   };
 }
-export function installRespawnLifecycle({ Actor, PlayerController }, profile) {
+export function installRespawnLifecycle(api, profile) {
+  const { Actor, PlayerController, G, emit } = api;
   const A = Actor.prototype;
   if (Object.hasOwn(A, INSTALL)) return;
   Object.defineProperty(A, INSTALL, { value: true });
   const cfg = profile.spawnArmor, reset = A.reset, spawnAt = A.spawnAt, respawn = A.respawn, update = A.update, splat = A.splat;
+  const flightDuration = 60 / 60, steerSpeed = 4.5, minRange = 2.5, maxRange = 12;
+  const slotPoint = actor => {
+    const pad = G.level.spawnPads[actor.team], count = G.match?.mode === 'boss' ? (G.match?.bossCfg?.squad || 4) : 4;
+    const ang = (actor.slot / count) * Math.PI * 2 + 0.6;
+    return { pad, x: pad.x + Math.cos(ang) * 1.1, y: pad.y + 4.5, z: pad.z + Math.sin(ang) * 1.1 };
+  };
+  const targetFor = actor => {
+    const { pad } = slotPoint(actor), aim = actor.aimPoint;
+    let dx = Number.isFinite(aim?.x) ? aim.x - pad.x : 0, dz = Number.isFinite(aim?.z) ? aim.z - pad.z : 0;
+    let len = Math.hypot(dx, dz);
+    if (len < minRange) { const yaw = Number.isFinite(actor.aimYaw) ? actor.aimYaw : (actor.team === 0 ? 0 : Math.PI); dx = Math.sin(yaw) * 7.5; dz = Math.cos(yaw) * 7.5; len = 7.5; }
+    if (len > maxRange) { dx *= maxRange / len; dz *= maxRange / len; }
+    const x = pad.x + dx, z = pad.z + dz;
+    const y = Number.isFinite(G.level.groundHeight?.(x, z)) ? G.level.groundHeight(x, z) : pad.y;
+    return { x, y, z };
+  };
+  const setPos = (actor, p) => { actor.pos.set(p.x,p.y,p.z); actor.character.root.position.copy(actor.pos); };
+  function launch(actor) {
+    const s = actor.s3?.squidSpawn; if (!s || s.phase !== 'aim') return false;
+    s.phase = 'flight'; s.t = 0; s.duration = flightDuration; s.from = { x: actor.pos.x, y: actor.pos.y, z: actor.pos.z }; s.to = targetFor(actor);
+    actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
+    actor.invuln = flightDuration + 1e-6; actor.grounded = false; actor.vel.set(0,0,0); actor.character.trigger('spawn');
+    emit?.('squidspawn:launch', { actor, initial: s.initial, target: { ...s.to } });
+    return true;
+  }
+  function begin(actor, initial = false) {
+    if (!actor || G.match?.mode !== 'turf') return false;
+    const wasDead = !actor.alive, special = actor.special, p = slotPoint(actor), yaw = actor.team === 0 ? 0 : Math.PI;
+    actor._respawnLifecycle = { wasDead, special };
+    try { const point = actor.pos.clone().set(p.x,p.y,p.z); spawnAt.call(actor, point, yaw); }
+    finally { delete actor._respawnLifecycle; }
+    // Native spawnAt resets special; a post-death Squid Spawn must preserve the
+    // already-finalized death penalty just like the legacy respawn wrapper did.
+    if (wasDead) actor.special = special;
+    setPos(actor, p); actor.yaw = actor.aimYaw = yaw; actor.invuln = Infinity; actor.grounded = false; actor.vel.set(0,0,0);
+    actor.s3 ||= {}; actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = null;
+    actor.s3.squidSpawn = { phase:'aim', initial:!!initial, wait:0, fireArmed:!actor.intent.fire, target:targetFor(actor) };
+    actor.netTp = (actor.netTp || 0) + 1;
+    if (wasDead && !actor.isBot && !actor.remote) actor.s3.respawnRearm = new Set(KEYS);
+    emit?.('respawn', { actor }); emit?.('squidspawn:aim', { actor, initial:!!initial });
+    if (actor.isBot || actor.remote) launch(actor);
+    return true;
+  }
+  beginInitialImpl = actor => begin(actor, true);
   A.reset = function (...args) {
     const result = reset.apply(this, args); this.s3 ||= {};
-    delete this.s3.spawnArmor; delete this.s3.spawnArmorManaged; delete this.s3.spawnArmorRemote; delete this.s3.respawnRearm;
+    delete this.s3.spawnArmor; delete this.s3.spawnArmorManaged; delete this.s3.spawnArmorRemote; delete this.s3.respawnRearm; delete this.s3.squidSpawn;
     for (const key of KEYS) this._prevIntent[key] = false;
     this._firePressT = this._squidPressT = -1;
     return result;
@@ -63,15 +111,20 @@ export function installRespawnLifecycle({ Actor, PlayerController }, profile) {
       if (pending.wasDead) this.special = pending.special;
       this.invuln = 0;
       this.s3.spawnArmorManaged = true;
-      this.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
+      this.s3.spawnArmor = null;
       if (pending.wasDead && !this.isBot && !this.remote) this.s3.respawnRearm = new Set(KEYS);
     }
     return result;
   };
   A.respawn = function (...args) {
+    if (!this.alive && G.match?.mode === 'turf') return begin(this, false);
     this._respawnLifecycle = { wasDead: !this.alive, special: this.special };
-    try { return respawn.apply(this, args); }
-    finally { delete this._respawnLifecycle; }
+    try {
+      const result = respawn.apply(this, args);
+      // Legacy/non-Turf callers retain the pre-Squid-Spawn finite armor behavior.
+      if (this.s3?.spawnArmorManaged && !this.s3.spawnArmor) this.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
+      return result;
+    } finally { delete this._respawnLifecycle; }
   };
   A.splat = function (...args) {
     const alive = this.alive, result = splat.apply(this, args);
@@ -80,6 +133,34 @@ export function installRespawnLifecycle({ Actor, PlayerController }, profile) {
   };
   A.update = function (dt) {
     advanceSpawnProtection(this, dt);
+    const spawn = this.s3?.squidSpawn;
+    if (spawn) {
+      if (spawn.phase === 'aim') {
+        spawn.wait += Number.isFinite(dt) && dt > 0 ? dt : 0;
+        spawn.target = targetFor(this);
+        if (!this.intent.fire) spawn.fireArmed = true;
+        const pressed = spawn.fireArmed && this.intent.fire && !this._prevIntent.fire;
+        const auto = this.isBot || this.remote;
+        this._prevIntent.fire = this.intent.fire;
+        if (pressed || auto) launch(this);
+        return;
+      }
+      if (spawn.phase === 'flight') {
+        const oldX=this.pos.x,oldY=this.pos.y,oldZ=this.pos.z;
+        if (this.intent.move?.lengthSq?.() > 1e-10) {
+          spawn.to.x += this.intent.move.x * steerSpeed * dt; spawn.to.z += this.intent.move.z * steerSpeed * dt;
+          const pad=G.level.spawnPads[this.team],dx=spawn.to.x-pad.x,dz=spawn.to.z-pad.z,len=Math.hypot(dx,dz);
+          if(len>maxRange){spawn.to.x=pad.x+dx*maxRange/len;spawn.to.z=pad.z+dz*maxRange/len;}
+          spawn.to.y = Number.isFinite(G.level.groundHeight?.(spawn.to.x,spawn.to.z)) ? G.level.groundHeight(spawn.to.x,spawn.to.z) : spawn.to.y;
+        }
+        spawn.t = Math.min(spawn.duration, spawn.t + dt); const u=Math.min(1,spawn.t/spawn.duration),arc=Math.sin(Math.PI*u)*2.2;
+        this.pos.set(spawn.from.x+(spawn.to.x-spawn.from.x)*u, spawn.from.y+(spawn.to.y-spawn.from.y)*u+arc, spawn.from.z+(spawn.to.z-spawn.from.z)*u);
+        this.character.root.position.copy(this.pos); if(dt>0)this.vel.set((this.pos.x-oldX)/dt,(this.pos.y-oldY)/dt,(this.pos.z-oldZ)/dt);
+        this._prevIntent.fire = this.intent.fire;
+        if (u >= 1-1e-10) { this.pos.set(spawn.to.x,spawn.to.y,spawn.to.z); this.character.root.position.copy(this.pos); this.vel.set(0,0,0); this.grounded=true; this.invuln=0; delete this.s3.squidSpawn; emit?.('squidspawn:land',{actor:this}); }
+        return;
+      }
+    }
     const blocked = this.s3?.respawnRearm, saved = [];
     if (this.alive && blocked) {
       for (const key of blocked) {
