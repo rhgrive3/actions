@@ -374,6 +374,54 @@ function retireNetworkGhosts(owner = null) {
 }
 `;
   }
+  if (rel === 'src/fx/fxHooks.js') {
+    patch("import { on } from '../core/ctx.js';", "import { on, copyEventVector, hasEventVector } from '../core/ctx.js';", 'consume vector snapshots without materialization');
+    patch('    this._sp = new THREE.Vector3();', '    this._sp = new THREE.Vector3();\n    this._eventVectorPool = []; this._eventVectorDepth = 0;', 'owned nested event scratch pool');
+    patch('  _weaponFire(e) {\n    const a = e.actor; if (!a || !e.muzzle) return;\n    const kind = (e.weapon && (e.weapon.kind || e.weapon)) || a.weapon?.kind;\n    const dir = e.dir || a.aimDir;\n    if (kind === \'blaster\') this.fx.muzzle?.(e.muzzle, dir, a.color, \'blaster\');\n    else if (kind === \'charger\') this.fx.muzzle?.(e.muzzle, dir, a.color, \'charger\');\n    else if (kind === \'roller\') this._flick(a);\n    this._bump(FIRE_KEY[kind] || \'fire:other\');\n  }', `  _borrowEventVectors() {
+    const depth = this._eventVectorDepth++;
+    let pair = this._eventVectorPool[depth];
+    if (!pair) pair = this._eventVectorPool[depth] = [new THREE.Vector3(), new THREE.Vector3()];
+    return pair;
+  }
+  _releaseEventVectors() { this._eventVectorDepth--; }
+  _weaponFire(e) {
+    const a = e.actor; if (!a || !hasEventVector(e, 'muzzle')) return;
+    const kind = (e.weapon && (e.weapon.kind || e.weapon)) || a.weapon?.kind;
+    if (kind === 'blaster' || kind === 'charger') {
+      const pair = this._borrowEventVectors();
+      try {
+        if (!copyEventVector(e, 'muzzle', pair[0])) return;
+        const dir = copyEventVector(e, 'dir', pair[1]) ? pair[1] : a.aimDir;
+        this.fx.muzzle?.(pair[0], dir, a.color, kind);
+      } finally { this._releaseEventVectors(); }
+    } else if (kind === 'roller') this._flick(a);
+    this._bump(FIRE_KEY[kind] || 'fire:other');
+  }`, 'read fire snapshots through owned scratch');
+    patch('  _impact(e) {\n    if (!e.pos || !this._near(e.pos, 32)) return;\n    const col = this.G.teamColors[e.team] || _c.set(0xffffff);\n    const n = e.normal || UP;\n    // shots / flick drops: weapons.js already bursts the splash (fx.burst) and the paint system ripples the ink —\n    // nothing is stacked on top here (no decal blots)\n    if (e.kind === \'charger\') this.fx.beamImpact?.(e.pos, n, col, 1);\n    if (e.kind === \'drop\' && !e.victim) {\n      const H = this.dropHits;\n      if (H.length >= 24) H.shift();\n      H.push({ x: e.pos.x, y: e.pos.y, z: e.pos.z, nx: n.x, ny: n.y, nz: n.z, t: this.time });\n    }\n    this._bump(IMPACT_KEY[e.kind] || \'impact:other\');\n  }', `  _impact(e) {
+    if (!hasEventVector(e, 'pos')) return;
+    const pair = this._borrowEventVectors();
+    try {
+      const pos = pair[0];
+      if (!copyEventVector(e, 'pos', pos) || !this._near(pos, 32)) return;
+      const col = this.G.teamColors[e.team] || _c.set(0xffffff);
+      const n = copyEventVector(e, 'normal', pair[1]) ? pair[1] : UP;
+      if (e.kind === 'charger') this.fx.beamImpact?.(pos, n, col, 1);
+      if (e.kind === 'drop' && !e.victim) {
+        const H = this.dropHits;
+        if (H.length >= 24) H.shift();
+        H.push({ x: pos.x, y: pos.y, z: pos.z, nx: n.x, ny: n.y, nz: n.z, t: this.time });
+      }
+      this._bump(IMPACT_KEY[e.kind] || 'impact:other');
+    } finally { this._releaseEventVectors(); }
+  }`, 'read impact snapshots through owned scratch');
+    return code;
+  }
+  if (rel === 'src/fx/screenfx.js') {
+    patch("import { on, G as CTX, clamp, damp, lerp } from '../core/ctx.js';", "import { on, G as CTX, clamp, damp, lerp, copyEventVector } from '../core/ctx.js';", 'consume impact snapshot numerically');
+    patch('const _v = new THREE.Vector3(), _v2 = new THREE.Vector3();', 'const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _impactPos = new THREE.Vector3();', 'retain lens impact scratch vector');
+    patch("    on('weapon:impact', ({ pos, team, kind }) => {\n      if (!live() || !pos || kind === 'roll') return;", "    on('weapon:impact', (e) => {\n      const { team, kind } = e;\n      if (!live() || kind === 'roll' || !copyEventVector(e, 'pos', _impactPos)) return;\n      const pos = _impactPos;", 'project impact snapshots without event vectors');
+    return code;
+  }
   if (rel === 'src/game/weapons.js') {
     patch('    if (nm && !p.ghost) nm.recProj(p);',
       '    if (nm && !p.ghost && !p._s3SloshBirthPending) nm.recProj(p);',
