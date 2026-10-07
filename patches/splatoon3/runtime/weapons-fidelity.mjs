@@ -912,8 +912,8 @@ export function installWeaponsFidelity(context,profile) {
     s.unitFreeVelocityY=unitMove?.BrakeToFreeVelocityY;s.unitFreeFrame=unitMove?.BrakeToFreeStateFrame;
     s.actorForm=actor.form;s.grounded=actor.grounded;s.climbing=actor.climbing;s.dancing=actor.dance;
     s.specialActive=actor.specialActive;s.superJumpState=actor.superJumpState;s.aimPitch=actor.aimPitch;
-    s.actorYaw=actor.yaw;s.actorVelX=actor.vel?.x;s.actorVelZ=actor.vel?.z;
-    s.blasterZRate=raw?.spl__SpawnBulletAdditionMovePlayerParam?.ZRate;
+    s.actorYaw=mode==='blaster'?actor.yaw:null;s.actorVelX=mode==='blaster'?actor.vel?.x:null;s.actorVelZ=mode==='blaster'?actor.vel?.z:null;
+    s.blasterZRate=mode==='blaster'?raw?.spl__SpawnBulletAdditionMovePlayerParam?.ZRate:null;
     s.aimDirX=dir.x;s.aimDirY=dir.y;s.aimDirZ=dir.z;s.aimPointX=target.x;s.aimPointY=target.y;s.aimPointZ=target.z;
     s.actorPosX=actor.pos.x;s.actorPosY=actor.pos.y;s.actorPosZ=actor.pos.z;
     s.runner=runner;s.runnerCharge=runner?.charge;s.runnerChargeT=runner?.chargeT;s.runnerCharging=runner?.charging;
