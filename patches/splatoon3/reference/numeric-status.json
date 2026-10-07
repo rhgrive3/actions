@@ -483,6 +483,16 @@
       "rawValue": 7
     }
   },
+  "weapons.dualies.rollPaintWidthHalf": {
+    "value": 1.8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.dualies.rollPaintWorldScale": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.blaster.inkPerShot": {
     "value": 10,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -677,6 +687,11 @@
       "factor": 1,
       "rawValue": 0.4234
     }
+  },
+  "weapons.blaster.wallImpactPaintRadius": {
+    "value": 2.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   },
   "weapons.splatling.inkPerShot": {
     "value": 0.5625,
