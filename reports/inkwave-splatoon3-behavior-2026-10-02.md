@@ -1392,6 +1392,12 @@ Eleven focused tests pass: four staged-work tests cover reuse across three disti
 
 A same-build native-versus-pooled bust control differed in two channel values by at most 3; the alpha mask and crop matched. Exact color/shadow/pose parity for every hairstyle and gear combination was not measured. All 14 updates still occur per cold tile, and the existing menu still queues non-visible portrait tiles; this change bounds where that work runs and removes per-tile Character construction rather than reducing total pose simulation or GPU readback work. No device frame-time, mobile hardware, or Switch measurement is claimed.
 
+### Independent review correction (2026-10-07)
+
+The final review found two lifecycle gaps in the staged portrait path. `_portraitObjects` now uses weak object keys, so detached meshes from repeated style-rig refreshes cannot be held alive by the snapshot cache; live objects still restore their saved transforms. Before each idle callback and again before render submission, the work rechecks the same Results and outgoing-Results guard as native `Showcase._portraitStep`. A blocked job returns to the front of the queue without scheduling more idle work, keeps its original cache epoch, and starts again when a safe mode is rendered. The native two-read flight cap, no-waiter cancellation, callback copies, async readback, stale-epoch release, and disposal behavior remain covered.
+
+The focused regression constructs the actual public `Character` and uses the installed public `Showcase` with the `adaptSource` → `adaptTouchLayout` → `adaptReliability` → `adaptQualitySource` test composition. It alternates two styles through 39 native rig refreshes and verifies weak-key storage plus transform restoration without relying on garbage collection. It also switches locker work into Results before preparation, during pose work, and before render; it checks outgoing-Results protection, idle-queue silence while protected, safe-mode resumption, two-flight blocking, and callback delivery after cache-epoch invalidation. The focused portrait-work and resource-budget command passes 14/14. This is a source/adapter logic regression, not a new six-adapter browser reproduction or a Nintendo hardware comparison; the existing full-composition current-main baseline remains the parent-verified evidence above, and public Splatoon 3 materials still do not establish an equivalent thumbnail scheduler.
+
 
 ## 2026-10-07: Independent Dualies hand aim centers (#575)
 

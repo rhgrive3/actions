@@ -195,7 +195,7 @@ export function installPortraitCharacterReuse(Character, api) {
     this._portraitState = {};
     const seen = new Map();
     for (const key of Object.keys(this)) if (!STRUCTURAL.has(key)) this._portraitState[key] = copyState(this[key], seen);
-    this._portraitObjects = new Map();
+    this._portraitObjects = new WeakMap();
     this.root.traverse((object) => rememberObject(this, object));
     this._portraitUniformState = snapshotUniforms(this.u);
     this._portraitWeaponStates = new WeakMap();
@@ -269,11 +269,36 @@ function cancelIdle(task) {
   else globalThis.clearTimeout(task.id);
 }
 
+function portraitModeProtected(showcase, overlayModes) {
+  return showcase.mode === 'results' || (!overlayModes.has(showcase.mode) && showcase._out > 0 && showcase._lastMode === 'results');
+}
+
+function clearPortraitPointers(showcase) {
+  showcase._portraitPreparedCharacter = null;
+  showcase._portraitActiveCharacter = null;
+}
+
+function requeuePortraitJob(showcase, job) {
+  if (showcase._portraitJob !== job) return;
+  if (!job.cbs.length) {
+    showcase._portraitJob = null;
+    clearPortraitPointers(showcase);
+    return;
+  }
+  const duplicate = showcase._pq.findIndex((queued) => queued !== job && queued.key === job.key);
+  if (duplicate >= 0) job.cbs.push(...showcase._pq.splice(duplicate, 1)[0].cbs);
+  const existing = showcase._pq.indexOf(job);
+  if (existing >= 0) showcase._pq.splice(existing, 1);
+  showcase._pq.unshift(job);
+  showcase._portraitJob = null;
+  clearPortraitPointers(showcase);
+}
+
 export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
   const nativePortraitStep = Showcase.prototype._portraitStep;
   Showcase.prototype._portraitStep = function stagedPortraitStep() {
     if (!this._portraitCharacter) return nativePortraitStep.call(this);
-    if (this.mode === 'results' || (!overlayModes.has(this.mode) && this._out > 0 && this._lastMode === 'results')) return;
+    if (portraitModeProtected(this, overlayModes)) return;
     if (this._warmState !== 'done' || (this._pflight || 0) >= 2 || this._portraitTask) return;
     if (!this._portraitJob) {
       while (this._pq.length && !this._pq[0].cbs.length) this._pq.shift();
@@ -281,17 +306,28 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
     }
     const job = this._portraitJob;
     if (!job) return;
-    const cacheEpoch = this._portraitCacheEpoch || 0;
+    if (job._portraitCacheEpoch == null) job._portraitCacheEpoch = this._portraitCacheEpoch || 0;
+    const cacheEpoch = job._portraitCacheEpoch;
     const started = performance.now();
     let step = 0;
     let animation = null;
     const run = (callback) => {
       this._portraitTask = scheduleIdle(this, (deadline) => {
         this._portraitTask = null;
-        if (job.cbs.length === 0) { this._portraitJob = null; return; }
+        if (this._portraitJob !== job) return;
+        if (job.cbs.length === 0) {
+          this._portraitJob = null;
+          clearPortraitPointers(this);
+          return;
+        }
+        if (portraitModeProtected(this, overlayModes)) {
+          requeuePortraitJob(this, job);
+          return;
+        }
         try { callback(deadline); } catch (error) {
           console.error('[showcase] staged portrait', error);
-          this._portraitJob = null;
+          if (this._portraitJob === job) this._portraitJob = null;
+          clearPortraitPointers(this);
           finish(null);
         }
       });
@@ -304,12 +340,21 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
       if (this._portraitJob === job) this._portraitJob = null;
     };
     const render = () => {
+      if (portraitModeProtected(this, overlayModes)) {
+        requeuePortraitJob(this, job);
+        return;
+      }
       let read;
       try {
         this._portraitActiveCharacter = this._portraitCharacter || null;
         read = this._renderPortrait(job.req);
-      } catch (error) { console.error('[showcase] portrait', error); finish(null); return; }
-      this._portraitActiveCharacter = null;
+      } catch (error) {
+        console.error('[showcase] portrait', error);
+        clearPortraitPointers(this);
+        finish(null);
+        return;
+      }
+      clearPortraitPointers(this);
       if (!read) { finish(null); return; }
       this._pflight = (this._pflight || 0) + 1;
       if (this._portraitJob === job) this._portraitJob = null;
@@ -347,6 +392,7 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
   const dispose = Showcase.prototype.dispose;
   Showcase.prototype.dispose = function disposePortraitPool() {
     cancelIdle(this._portraitTask); this._portraitTask = null; this._portraitJob = null;
+    clearPortraitPointers(this);
     if (this._portraitCharacter) {
       this.scene.remove(this._portraitCharacter.root);
       this._portraitCharacter.dispose?.();
