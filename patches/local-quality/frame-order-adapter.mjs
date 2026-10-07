@@ -14,7 +14,7 @@ function replaceOnce(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 
-const SIGHT_START = '        const m = this._muzzle(a, _v.set(0, 0, 0));\n        const dir = this._aimFrom(a, m, _dir);\n        const w = a.weapon;\n        const ch = a.weaponRunner.charge;\n        const range = lerp(w.rangeMin, w.rangeMax, ch);\n';
+const SIGHT_START = '        const m = this._muzzle(a, _v.set(0, 0, 0));\n        const dir = this._aimFrom(a, m, _dir);\n        const w = a.weapon;\n        const ch = a.weaponRunner.charge;\n';
 const SIGHT_END = '        s.visible = true;\n';
 
 export function adaptFrameOrder(rel, code) {
