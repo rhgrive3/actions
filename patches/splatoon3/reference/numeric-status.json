@@ -1187,6 +1187,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.charger.storedLaserDelay": {
+    "value": 0.4166666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.charger.reticleDelayF": {
     "value": 5,
     "status": "calibration or derived value; see reference raw table and unverified list",

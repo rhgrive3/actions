@@ -1,4 +1,14 @@
 const EPS = 1e-10;
+// #291: warning presentation and charge-release authority have distinct clocks.
+// Unknown/incomplete keep records stay hidden; regular live/remote charges keep
+// their previous visibility rule. Rendering must not advance either clock.
+export function chargerSightVisible(a) {
+  if (!a?.alive || a.weapon?.kind !== 'charger') return false;
+  const runner = a.weaponRunner, kept = runner?.s3Stored;
+  if (kept) return a.form !== 'squid' && kept.resurfaced === true &&
+    Number.isFinite(kept.laserDelay) && kept.laserDelay <= EPS;
+  return !!runner?.charging;
+}
 export function chargerSwimLocked(a) {
   return a.weapon?.kind === 'charger' && (a.weaponRunner?.s3ChargerSwimRemaining || 0) > EPS;
 }

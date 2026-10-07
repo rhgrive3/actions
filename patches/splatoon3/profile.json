@@ -195,6 +195,7 @@
       "feetPaintRadius": 0.7,
       "minReleaseTime": 0.13333333333333333,
       "storedFireDelay": 0.5166666666666667,
+      "storedLaserDelay": 0.4166666666666667,
       "allowEmptyCharge": true,
       "reticleDelayF": 5
     },
@@ -381,6 +382,11 @@
         30
       ]
     ],
+    "knockback": {
+      "accel": 700,
+      "bias": 0.8,
+      "distance": 12
+    },
     "inkRecoverStop": 1,
     "readyTimeKid": 0.08333333333333333,
     "readyTimeSquid": 0.16666666666666666,
