@@ -192,7 +192,13 @@ export function installGear(api, tuning) {
     api.PLAYER.swimSpeed *= swimSpeedMultiplier(this);
     const runner = this.weaponRunner, kind = this.weapon.kind;
     const firing = runner.firingT > 0 || runner.s3BlasterWindup > 0;
-    const fixedShot = ['shooter', 'dualies', 'blaster'].includes(kind) && firing;
+    // Actor._horizontal runs before WeaponRunner.update. Predict only the same-tick
+    // Shooter/Dualies emission that update() will actually admit; raw held ZR, cooldown,
+    // empty ink and emerge-delay attempts must not select the shot curve early.
+    const sameTickShot = (kind === 'shooter' || kind === 'dualies') && !squid &&
+      (this.intent.fire || this.fireBuffer > 0) && this.kidT >= api.PLAYER.emergeDelay &&
+      runner.cooldown <= dt + 1e-10 && this.ink + 1e-10 >= this.weapon.inkPerShot;
+    const fixedShot = ['shooter', 'dualies', 'blaster'].includes(kind) && (firing || sameTickShot);
     const scaledAction = kind === 'charger' && runner.charging ||
       kind === 'splatling' && (runner.charging || runner.streaming || firing) ||
       kind === 'slosher' && (runner.slosh >= 0 || firing);
