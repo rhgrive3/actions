@@ -357,3 +357,7 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — issue 30 件の修正バッチ
+
+#941 #934 #918 #939 #933 #922 #937 #926 #911 #924 #917 #930 #906 #905 #928 #936 #925 #920 #903 #938 #932 #908 #923 #914 #913 を修正。#896 は対応済みの固定、#931 #910 は現行 main で再現せず (ガードテストのみ)、#927 #890 は固定データに値がないため見送り。すべて**ロジックのみ確認**で、ブラウザ実動作と Switch 実機との比較は**未確認**。#923 は性能目的の凍結が TIME UP 時の空中インクの扱いを変えるため、本家の挙動は未確認。各 issue の本家根拠・実装箇所・再現・影響・確認状態は[詳細](inkwave-issue-batch-2026-10-07.md)。
