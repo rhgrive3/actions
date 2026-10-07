@@ -1090,8 +1090,9 @@ export function installWeaponsFidelity(context,profile) {
     p.reachGravity=weapon.referenceGravity;p.reachValue=reach;
     return reach;
   };
-  const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,step=Projectiles.prototype._step,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
-  Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;this._dualiesGuideCache=null;return result;};
+  const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,step=Projectiles.prototype._step,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear,updateSystem=Projectiles.prototype.update;
+  Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;this._dualiesGuideCache=null;this._s3DetachedWallDrops?.splice(0);return result;};
+  Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);return updateSystem.call(this,dt);};
   Projectiles.prototype._new=function(...args){
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
@@ -1101,7 +1102,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -1637,14 +1638,16 @@ export function installWeaponsFidelity(context,profile) {
   const nativeImpact=Projectiles.prototype._impact;
   Projectiles.prototype._impact=function(p,hit){
     if(!p.ghost){
-      const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon;
-      if(w?.kind==='roller' && p.type==='drop' && p.fidelityRollerUnit){
-        // #411/#674/#611 share one authoritative landing-paint sample: unit +
-        // travelled distance own lateral width, incidence angle owns longitudinal
-        // interpolation, and the existing fidelity phase selects straight/free.
-        return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));
-      }
-      return nativeImpact.call(this,p,hit);
+      const before=p.s3BurstCollisionHit;
+      if(p.type==='blast')p.s3BurstCollisionHit=hit;
+      try{
+        const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon;
+        if(w?.kind==='roller' && p.type==='drop' && p.fidelityRollerUnit){
+          // #411/#674/#611 share one authoritative landing-paint sample.
+          return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));
+        }
+        return nativeImpact.call(this,p,hit);
+      }finally{p.s3BurstCollisionHit=before;}
     }
     // A disconnected ghost still cannot mutate paint even when G.netm is gone.
     if(p.type==='blast')this._blastBurst(p,hit.point,null);
