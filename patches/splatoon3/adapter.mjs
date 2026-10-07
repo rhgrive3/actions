@@ -273,7 +273,7 @@ export function adaptSource(rel, code) {
       '        L.blasterCue = cue; L.blasterCuePhase = cuePhase;\n' +
       '        this._blasterBiasEl.hidden = !cueActive;\n' +
       '        this._blasterBiasEl.textContent = cue;\n' +
-      '        this._blasterBiasEl.dataset.phase = cuePhase;\n' +
+      '        if (this._blasterBiasEl.dataset) this._blasterBiasEl.dataset.phase = cuePhase; else this._blasterBiasEl.setAttribute?.(\'data-phase\', cuePhase);\n' +
       '      }\n' +
       '    }',
       'S3 ShotGuide, muzzle contact and Blaster jump-bias presentation');
