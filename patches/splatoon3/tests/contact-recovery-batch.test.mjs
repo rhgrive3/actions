@@ -74,7 +74,7 @@ test('#221: actual terrain impact cuts player admission to0.4234 at floor/wall/s
 });
 
 test('#221: direct-hit exclusion, terrain LOS, boss splash and paint/visual sizes keep their owners',async()=>{
- const f=await fixture(),{ps,p,a,at}=blast(f),e=f.make(),other=f.make();e.team=other.team=1;e.pos.set(.5,0,0);other.pos.set(2,0,0);f.G.actors=[e,other];let hits=[],boss=[];ps.applyHit=(_a,e,d)=>hits.push([e,d]);
+ const f=await fixture(),{ps,p,a,at}=blast(f),e=f.make(),other=f.make();e.team=other.team=1;e.pos.set(.5,0,0);other.pos.set(.2,0,0);f.G.actors=[e,other];let hits=[],boss=[];ps.applyHit=(_a,e,d)=>hits.push([e,d]);
  const paint=[],visual=[];f.G.paint.splat=(_p,r)=>{paint.push(r);return 0;};f.G.fx={explosion:(_p,_c,r)=>visual.push(r),burst:()=>{}};
  f.G.physics.raycast=(from,dir,_d,out)=>{out.hit=dir.y<-.9;if(out.hit){out.point.copy(from).setY(0);out.normal.set(0,1,0);}return out;};
  f.G.boss={splash:(...args)=>boss.push(args)};ps._blastBurst(p,at,e);assert.equal(hits.length,1);assert.equal(hits[0][0],other);

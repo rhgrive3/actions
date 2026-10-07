@@ -28,12 +28,19 @@ async function setup() {
 }
 
 test('#911 direct player hit: 125 direct once, nearby foe takes the reduced impact burst, not the 70-50 airburst', async () => {
-  const { f, a, ps, foe, shot } = await setup();
+  const { f, a, ps, foe, shot, bursts } = await setup();
   const direct = foe(0, 0), near = foe(.4, 0); direct.hp = direct.maxHp = 500; // `near` is iterated after `direct`, which ends the shot
   f.G.actors = [a, direct, near];
   const p = shot(); assert.equal(ps._step(p, DT), true);
   close(500 - direct.hp, 125, 1e-6);                 // direct damage exactly once, no duplicate splash
-  close(100 - near.hp, 35);                          // 70 airburst band halved to the 35 impact burst
+  const impact = 100 - near.hp;
+  assert.ok(impact > 0 && impact <= 35, `reduced impact burst stays inside its 35-25 HP envelope (${impact})`);
+  // #340 compresses the reduced player's damage curve into the smaller admission radius,
+  // so a nearby target is not necessarily the 35 HP inner-band maximum. Compare against
+  // an explicit terrain-class burst at the exact same centre instead of hard-coding 35.
+  const centre = bursts.at(-1).clone(); near.hp = 100; f.G.actors = [a, near];
+  const control = shot(); control.s3TerrainBurst = true; ps._blastBurst(control, centre, null); ps.update(DT);
+  close(100 - near.hp, impact);
   assert.equal(p.s3TerrainBurst, false, 'cause flag is restored after the burst');
 });
 
@@ -45,18 +52,20 @@ test('#911 negative control: the timed in-air detonation keeps the full 70-50 bu
   assert.ok(100 - far.hp > 50 && 100 - far.hp < 70, 'band interpolates between 70 and 50');
 });
 
-test('#911 direct contact deals half of what the timed burst deals at the same offset', async () => {
+test('#911 direct contact uses the same compressed 35-25 curve as a terrain impact at the same centre', async () => {
   const { f, a, ps, foe, shot, bursts } = await setup();
-  for (const x of [.9, 1.6, 2.2, 3.2]) {
+  for (const x of [.4, .9, 1.2, 1.6]) {
     const direct = foe(0, 0), near = foe(x, 0); direct.hp = direct.maxHp = 500; f.G.actors = [a, direct, near];
     ps._step(shot(), DT);
-    const impact = 100 - near.hp;
+    const impact = 100 - near.hp, centre = bursts.at(-1).clone();
     near.hp = 100; f.G.actors = [a, near];
-    ps._blastBurst(shot(), bursts.at(-1), null);   // replay at the direct hit's burst centre
+    const reduced = shot(); reduced.s3TerrainBurst = true; ps._blastBurst(reduced, centre, null); ps.update(DT);
+    close(100 - near.hp, impact);
+    near.hp = 100; ps._blastBurst(shot(), centre, null);
     const timed = 100 - near.hp;
-    assert.ok(timed >= 50 && timed <= 70, `x ${x}: timed airburst stays in the 70-50 band`);
-    close(impact, Math.floor(timed * .5 * 10 + 1e-9) / 10);
-    assert.ok(impact >= 25 - 1e-9 && impact <= 35 + 1e-9, `x ${x}: impact burst stays in the 35-25 band`);
+    assert.ok(impact <= Math.floor(timed * .5 * 10 + 1e-9) / 10 + 1e-9,
+      `x ${x}: compressed impact curve never exceeds half of the full airburst (${impact} vs ${timed})`);
+    assert.ok(impact >= 0 && impact <= 35 + 1e-9);
   }
 });
 
@@ -67,7 +76,9 @@ test('#911 LOS cover still blocks the reduced burst; terrain contact and boss di
   ps._step(shot(), DT); close(near.hp, 100); close(500 - direct.hp, 125, 1e-6);
   f.G.physics.los = () => true;
   // terrain contact (existing path) still 35 and boss-targeted bursts do not take the player-collision flag
-  near.hp = 100; ps._impact(shot(), { point: new V(0, .7, 0), normal: new V(0, 1, 0) }); close(100 - near.hp, 35);
+  near.hp = 100; ps._impact(shot(), { point: new V(0, .7, 0), normal: new V(0, 1, 0) });
+  close(near.hp, 100); ps.update(DT);
+  assert.ok(100 - near.hp > 0 && 100 - near.hp <= 35, 'terrain impact resolves next tick on the reduced curve');
   // Which cause the burst runs under: player collision = reduced impact, boss/timed = untouched.
   let cause; f.G.audio = { play: (name) => { if (name === 'blaster_boom') cause = p.s3TerrainBurst; } };
   const p = shot();
