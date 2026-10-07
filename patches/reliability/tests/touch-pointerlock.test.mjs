@@ -127,3 +127,38 @@ test('#662 queued acquire and touch-exit notifications may both observe unlocked
  assert.equal(h.unlocks(),0);assert.equal(h.mobile.down('fire'),true);assert.equal(h.input.lastDevice,'touch');
  h.release(e);h.mouse();h.locked();h.unlocked();assert.equal(h.unlocks(),1,'a later observed mouse lock still reports one genuine Escape');
 });
+test('#859 first mouse press acquires kbm from touch-primary boot without prior relock',async()=>{
+ const h=await boot();
+ // Model the real touch-primary boot: no prior mouse lock, no relock flag, no pending
+ // async touch-exit, no live touch pointers, and touch owns input.
+ h.input.lastDevice='touch';h.input._touchRelockWanted=false;h.input._touchUnlockPending=false;
+ h.input.locked=false;h.doc.pointerLockElement=null;h.mobile._ptr.clear();h.mobile._stick.id=-1;
+ assert.equal(h.input.lastDevice,'touch');
+ h.mouse();
+ assert.equal(h.input.lastDevice,'kbm');
+ assert.equal(h.requests(),1);
+ h.locked();h.move();assert.equal(h.input.mouse.dx,1);
+});
+test('#859 first mouse press stays touch while a live touch pointer is held',async()=>{
+ const h=await boot();
+ h.input.lastDevice='touch';h.input._touchRelockWanted=false;h.input._touchUnlockPending=false;
+ h.input.locked=false;h.doc.pointerLockElement=null;
+ const e=h.touch('look');
+ h.mouse();
+ assert.equal(h.input.lastDevice,'touch');
+ assert.equal(h.requests(),0);
+ h.release(e);h.mouse();
+ assert.equal(h.input.lastDevice,'kbm');
+ assert.equal(h.requests(),1);
+});
+test('#859 first mouse press does not lock in menus or while map/editor own input',async()=>{
+ for(const state of ['menu','map','editing']){
+  const h=await boot();
+  h.input.lastDevice='touch';h.input._touchRelockWanted=false;h.input._touchUnlockPending=false;
+  h.input.locked=false;h.doc.pointerLockElement=null;h.mobile._ptr.clear();h.mobile._stick.id=-1;
+  if(state==='menu')h.G.mode='menu';else if(state==='map')h.mobile.mapOpen=true;else h.mobile.editing=true;
+  h.mouse();
+  assert.equal(h.requests(),0,state);
+  assert.equal(h.input.lastDevice,'kbm',state);
+ }
+});
