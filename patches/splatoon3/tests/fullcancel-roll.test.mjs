@@ -87,8 +87,8 @@ test('below-speed Fire-before-B falls through to the ordinary humanoid jump', as
   } finally { r.close(); }
 });
 
-test('shallow input and a turn below the sourced angle threshold do not full-cancel', async () => {
-  for (const move of [[0, 0, -0.2], [Math.sqrt(0.75), 0, 0.5]]) {
+test('zero input and a turn below the sourced angle threshold do not full-cancel', async () => {
+  for (const move of [[0, 0, 0], [0.8, 0, 0.6]]) {
     const r = await rig(60), { a, api, step } = r;
     try {
       step({ squid: true, jump: false, fire: false, move: [0, 0, 1] });
@@ -149,7 +149,8 @@ async function composedBufferedAttack(weapon, hz, fullCancel) {
     const scheduledOrigin = owned[0]?.start?.clone?.().sub(a.pos).toArray?.() ?? null;
     const projectileStats = owned.map(p => [p.damage, p.dmgFar, p.radius, p.life, p.grav, p.drag, p.size, p.s3Vertical]);
     return { api, a, fireAt, afterB, pendingStart, firstPostLaunch, horizontalChecks, fireEvents, jumps, rolls, owned, scheduledOrigin,
-      projectileStats, context: a.s3?.actions?.fullCancelGroundAttack ?? null, fireBuffer: PLAYER.fireBuffer };
+      projectileStats, context: a.s3?.actions?.fullCancelGroundAttack ?? null,
+      fireBuffer: weapon === 'roller' ? Math.max(PLAYER.fireBuffer, a.weapon.squidFlickDelay || 0) : PLAYER.fireBuffer };
   } finally { offFire(); offJump(); offRoll(); }
 }
 
@@ -239,7 +240,8 @@ test('ordinary airborne Roller attacks still select the airborne variant', async
   a._surface = () => { a.grounded = false; a.groundTeam = 0; a.submerged = false; };
   const fireEvents = [], off = api.on('weapon:fire', event => { if (event.actor === a) fireEvents.push(api.G.time); });
   a.intent.fire = true;
-  api.G.time += dt; a.update(dt);
+  for (let i = 0; i < 30 && a.weaponRunner.flick < 0; i++) { api.G.time += dt; a.update(dt); }
+  assert.ok(a.weaponRunner.flick >= 0, 'ordinary airborne attack reaches the current Roller admission boundary');
   assert.equal(a.weaponRunner.s3FlickVertical, true);
   a.intent.fire = false;
   for (let i = 0; i < 180 && fireEvents.length === 0; i++) { api.G.time += dt; a.update(dt); }
