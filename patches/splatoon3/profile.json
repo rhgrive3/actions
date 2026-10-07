@@ -294,6 +294,7 @@
       "inkPerShot": 7.6,
       "fireInterval": 0.48333333333333334,
       "windup": 0.2,
+      "postShotLock": 0.26666666666666666,
       "moveSpeedFiring": 2.4,
       "inkRecoverStop": 0.6666666666666666,
       "damageHead": 70,

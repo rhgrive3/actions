@@ -74,7 +74,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   };
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
   const clearDualiesLocks = r => {
-    r.s3DualiesPostShot = 0; r.s3DodgeShotPending = 0;
+    r.s3DualiesPostShot = 0; r.s3SloshPostShot = 0; r.s3DodgeShotPending = 0;
     r.s3DualiesSubBuffered = false; r.s3DualiesSubReleaseBuffered = false;
   };
   const reset = WeaponRunner.prototype.reset;
@@ -89,6 +89,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     if (r) {
       if (r.s3ChargerPostShot > 0) r.s3ChargerPostShot = Math.max(0, r.s3ChargerPostShot - dt);
       if (r.s3DualiesPostShot > 0) r.s3DualiesPostShot = Math.max(0, r.s3DualiesPostShot - dt);
+      if (r.s3SloshPostShot > 0) r.s3SloshPostShot = Math.max(0, r.s3SloshPostShot - dt);
       const cancelAction = !this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady();
       if (cancelAction) {
         r.s3ChargerPostShot = 0;
@@ -104,8 +105,11 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   };
   const weaponUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
-    if (this.a.weapon.kind !== 'dualies') return weaponUpdate.call(this, dt, input);
-    const source = input || {}, locked = this.s3DualiesPostShot > EPS;
+    // Dualies (4F after a shot) and Slosher (16F after glob release) both refuse sub use for their post-shot
+    // window; a sub pressed/released inside it is buffered and resolves once on the first legal tick.
+    const kind = this.a.weapon.kind, postShot = () => kind === 'slosher' ? this.s3SloshPostShot : this.s3DualiesPostShot;
+    if (kind !== 'dualies' && kind !== 'slosher') return weaponUpdate.call(this, dt, input);
+    const source = input || {}, locked = postShot() > EPS;
     if (locked) {
       if (source.sub) this.s3DualiesSubBuffered = true;
       if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
@@ -117,11 +121,11 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     }
     const runner = this;
     const gated = new Proxy(prepared, { get(target, prop) {
-      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
+      if ((prop === 'sub' || prop === 'subReleased') && postShot() > EPS) return false;
       return target[prop];
     }});
     const out = weaponUpdate.call(this, dt, gated);
-    if (this.s3DualiesPostShot > EPS) {
+    if (postShot() > EPS) {
       if (prepared.sub) this.s3DualiesSubBuffered = true;
       if (prepared.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
