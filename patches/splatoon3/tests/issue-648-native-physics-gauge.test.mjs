@@ -24,7 +24,10 @@ const SPECIAL_GAUGE_SEGMENTS = 23;
 const adaptProduction = (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel,
   adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 
-async function boot() {
+let nativeApiPromise;
+const boot = () => nativeApiPromise ??= bootNativeRuntime();
+
+async function bootNativeRuntime() {
   const context = vm.createContext({ console, performance, URL, innerHeight: 720 }), modules = new Map();
   const load = requested => {
     let file = requested;
@@ -78,6 +81,8 @@ const scenarios = [
   { id: 'flat with the motion input turned mid-rise', pos: [0, 0, 0], boxes: [FLOOR], move: [1, 0], flipAt: 15, flipTo: [0, 1] },
   { id: 'lower floor reached during the action', pos: [-1.5, 0, 0], boxes: [{ kind: 'box', min: [-100, -0.5, -100], max: [0, 0, 100] }, { kind: 'box', min: [0, -2.5, -100], max: [100, -2, 100] }], move: [1, 0] },
   { id: 'upper floor start', pos: [0, 2, 0], boxes: [FLOOR, { kind: 'box', min: [-5, 0, -5], max: [5, 2, 5] }] },
+  { id: 'native slope landing', pos: [0, 0.75, 0], boxes: [FLOOR, { kind: 'ramp', low: [-2, 0, 0], high: [2, 1.5, 0], width: 5, thickness: 0.6 }], move: [1, 0] },
+  { id: 'air drop to native floor', pos: [0.3, 2.5, 0], boxes: [FLOOR, { kind: 'box', min: [-0.5, 2, -2], max: [0.5, 2.5, 2] }], move: [1, 0] },
   { id: 'low ceiling early contact', pos: [0, 0, 0], boxes: [FLOOR, { kind: 'box', min: [-10, 2.2, -10], max: [10, 3.2, 10] }] },
   { id: 'wall beside the leap', pos: [0.5, 0, 0], boxes: [FLOOR, { kind: 'box', min: [2, 0, -10], max: [3, 20, 10] }], move: [1, 0] },
   { id: 'rail landing', pos: [0, 0.5, 0], boxes: [FLOOR, { kind: 'box', min: [-5, 0, -0.3], max: [5, 0.5, 0.3], rail: true }] },
@@ -100,7 +105,7 @@ async function runScenario(sc) {
   a.special = cost;
   const impacts = [];
   let tick = 0;
-  a._slamImpact = () => impacts.push({ tick, gauge: a.special, phase: a.specialActive ? a.specialActive.phase : null });
+  a._slamImpact = () => impacts.push({ tick, gauge: a.special, phase: a.specialActive ? a.specialActive.phase : null, grounded: a.grounded, y: a.pos.y });
   a._startSpecial();
   assert.equal(a.special, cost, 'activation keeps a nonzero meter');
   assert.equal(a.specialReady(), false, 'a live action cannot be activated again');
@@ -112,10 +117,11 @@ async function runScenario(sc) {
     counters.maxBodyPerTick = Math.max(counters.maxBodyPerTick, counters.curBody);
     tick++;
   };
-  let previous = cost, prematureSegment = false;
+  let previous = cost, prematureSegment = false, earlyGroundContactDuringRise = false;
   while (a.specialActive && tick < 400) {
     if (sc.flipAt === tick && sc.flipTo) a.intent.move.set(sc.flipTo[0], 0, sc.flipTo[1]);
     tickOnce();
+    if (a.grounded && a.specialActive?.phase === 'rise') earlyGroundContactDuringRise = true;
     drops.push(previous - a.special);
     assert.ok(a.special <= previous + 1e-10, `the action-owned gauge never rises (tick ${tick})`);
     if (a.specialActive && a.special <= segment + 1e-9) prematureSegment = true;
@@ -132,7 +138,7 @@ async function runScenario(sc) {
   }
   if (a.special === 0 && finishTick === null) finishTick = tick;
   const result = {
-    id: sc.id, cost, segment, impacts, impactTick, finishTick, death, slamEvents, prematureSegment,
+    id: sc.id, cost, segment, impacts, impactTick, finishTick, death, slamEvents, prematureSegment, earlyGroundContactDuringRise,
     finishAfterImpact: finishTick !== null && impactTick !== null ? finishTick - impactTick : null,
     pendingLeft: !!a.s3TidalSlamGaugeFinish, finalGauge: a.special,
     maxDrop: Math.max(...drops, 0), drops,
@@ -150,6 +156,11 @@ for (const sc of scenarios) {
     assert.equal(r.impacts.length, 1, 'exactly one native impact callback');
     assert.equal(r.impacts[0].phase, 'fall', 'impact happens in the native fall phase');
     assert.ok(Math.abs(r.impacts[0].gauge - r.segment) < 1e-9, 'the impact frame observes exactly one of 23 segments');
+    if (!sc.id.startsWith('void')) assert.equal(r.impacts[0].grounded, true, 'non-void impact is an actual native landing');
+    if (sc.id === 'low ceiling early contact') {
+      assert.equal(r.earlyGroundContactDuringRise, true, 'native collision reproduces ground contact while the action is still rising');
+      assert.equal(r.impacts[0].grounded, true, 'the gauge reaches the last segment on the real floor impact');
+    }
     assert.equal(r.prematureSegment, false, 'no early contact drops the meter to one segment before the fall impact');
     assert.ok(r.maxDrop < r.cost / 8, `no single-tick collapse (max drop ${r.maxDrop} of ${r.cost})`);
     assert.ok(r.probes.groundPerTick <= 8, `bounded native groundProbe use (${r.probes.groundPerTick} per fixed step)`);
@@ -213,5 +224,3 @@ test('#648 NetMatch pack/apply keeps the owner gauge authoritative over the prox
   assert.ok(owner.special < ownerGauge - 1e-9, 'the owner keeps draining independently of the proxy');
   assert.ok(Math.abs(owner.special - mirrored) > 1e-6, 'owner and proxy gauges stay independent state');
 });
-
-
