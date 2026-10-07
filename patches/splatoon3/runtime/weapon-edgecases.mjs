@@ -160,6 +160,17 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     try { return impact.call(this, p, ...args); }
     finally { p.s3TerrainBurst = before; }
   };
+  // In battle a Blaster shot that collides with a player makes the same reduced impact burst as a wall/floor hit;
+  // only the timed in-air detonation is the full burst. The directly-hit victim is already excluded by `direct`.
+  // Boss targets ('boss') and null (terrain/timed) keep their own cause.
+  const blastBurst = Projectiles.prototype._blastBurst;
+  Projectiles.prototype._blastBurst = function (p, at, direct) {
+    if (!direct || direct === 'boss') return blastBurst.call(this, p, at, direct);
+    const before = p.s3TerrainBurst;
+    p.s3TerrainBurst = true;
+    try { return blastBurst.call(this, p, at, direct); }
+    finally { p.s3TerrainBurst = before; }
+  };
   const fresh = Projectiles.prototype._new;
   Projectiles.prototype._new = function (...args) { const p = fresh.apply(this, args); p.s3FlickUnit = 0; p.s3TerrainBurst = false; return p; };
 }
