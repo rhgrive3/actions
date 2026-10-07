@@ -139,10 +139,14 @@ function step(env, dt) {
 }
 
 function viewState(env) {
+  // #363/#367 independently owns the lateral shoulder translation. Remove each
+  // rig's own shoulder before comparing the #862 probe-cache result.
+  const shoulder = env.rig.shoulder || 0, yaw = env.rig.yaw || 0, p = env.rig.camera.position;
+  const neutralPosition = [p.x + Math.cos(yaw) * shoulder, p.y, p.z - Math.sin(yaw) * shoulder];
   return [
-    ...env.rig.camera.position.toArray(), ...env.rig.camera.quaternion.toArray(),
+    ...neutralPosition, ...env.rig.camera.quaternion.toArray(),
     env.rig.camera.fov, env.rig.curDist, env.rig.wantDist, ...env.rig.pivot.toArray(),
-    env.rig.boom.x, env.rig.shoulder || 0,
+    env.rig.boom.x,
   ];
 }
 
