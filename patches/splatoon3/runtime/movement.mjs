@@ -83,6 +83,10 @@ function launch(a, direction, speed, vertical, kind) {
   a.character.trigger(kind, { duration: config.roll.duration });
   api.emit('actor:' + kind, { actor: a });
 }
+function tickArmorTimer(action, dt) {
+  const remaining = (action.armorTime || 0) - dt;
+  action.armorTime = remaining <= 1e-10 ? 0 : remaining;
+}
 export function beforeActions(a, dt, jumpPressed, input = {}) {
   if (!api) throw new Error('INKWAVE movement patch not installed');
   const state = movementState(a), cfg = config;
@@ -121,10 +125,12 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
       }
     }
   }
-  for (const action of new Set([state.roll, state.surge, state.armor])) if (action) {
-    const remaining = (action.armorTime || 0) - dt;
-    action.armorTime = remaining <= 1e-10 ? 0 : remaining;
-  }
+  // Three optional references, not three distinct actions: armor aliases the
+  // active roll/surge. Avoid temporary Array/Set allocation on every Actor tick.
+  const rollAction = state.roll, surgeAction = state.surge, armorAction = state.armor;
+  if (rollAction) tickArmorTimer(rollAction, dt);
+  if (surgeAction && surgeAction !== rollAction) tickArmorTimer(surgeAction, dt);
+  if (armorAction && armorAction !== rollAction && armorAction !== surgeAction) tickArmorTimer(armorAction, dt);
   if (state.roll) {
     state.roll.time -= dt;
     if (state.roll.time <= 1e-10 || a.form !== 'squid') state.roll = null;
