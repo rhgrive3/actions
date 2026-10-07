@@ -21,6 +21,12 @@ export function stepGroundVelocity(vel, moveX, moveZ, targetSpeed, accel, dt) {
   vel.x += dx / dist * step; vel.z += dz / dist * step;
 }
 
+export function attackAirRateScale(a, P) {
+  const attacking = a.weaponRunner.firingPose?.() || a.intent.sub || a.specialActive;
+  const ratio = (P.s3AttackGroundAccel ?? 72) / (P.s3GroundAccel ?? 36);
+  return attacking && ratio > 0 ? ratio : 1;
+}
+
 /** True only while the roller, not its flick/recovery, owns ground movement. */
 export function rollingMovementActive(a) {
   const r = a.weaponRunner;
@@ -64,6 +70,18 @@ export function writeDodgeVelocity(r, vel, dt = 1 / 60, offset = 0) {
  * delegates to the unchanged native controller. Fast dodges use the same real
  * controller in spatially bounded slices so a thin wall cannot be skipped.
  */
+export function softPushActor(physics, P, a, dx, dz) {
+  const length = Math.hypot(dx, dz);
+  if (!(length > 0) || !physics) return;
+  const squid = a.form === 'squid';
+  const lift = squid ? P.squidBodyLift : P.stepUp, height = squid ? P.squidHeight : P.height;
+  const steps = Math.ceil(length / (P.radius * 0.25)), sx = dx / steps, sz = dz / steps;
+  for (let i = 0; i < steps; i++) {
+    a.pos.x += sx; a.pos.z += sz;
+    if (!physics.bodyFits(a.pos, P.radius, lift, height, squid)) { a.pos.x -= sx; a.pos.z -= sz; return; }
+  }
+}
+
 export function integrateMovement(a, dt, isSquid, jumped, radius) {
   const r = a.weaponRunner, d = r.dodge;
   if (!d || a.climbing || a.specialActive || a.superJumpState || !(dt > 0)) {
