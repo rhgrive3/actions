@@ -210,12 +210,12 @@ test('#883 native source, adapter routing and shot determinism stay intact', asy
   assert.ok(native.includes('Math.sin(t) * Math.tan(r) * 0.55'), 'native _spread unchanged');
   const composed = adaptSource('src/game/weapons.js', native);
   assert.ok(composed.includes('spreadWeaponRound(this, dir, a, w, spreadDeg);'), '_fireRound still routes through spreadWeaponRound');
-  // The identical native spread call also lives in `fireShooter` (out of scope,
-  // roots #607/#677): composed output must keep exactly that one occurrence.
+  // Post-#868 composition routes both native scalar spread sites through the
+  // shared spreadWeaponRound owner; immutable upstream still keeps both calls.
   const anchor = 'this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));';
   const count = s => s.split(anchor).length - 1;
   assert.equal(count(native), 2, 'native keeps both raw spread calls');
-  assert.equal(count(composed), 1, 'only the _fireRound occurrence is rerouted');
+  assert.equal(count(composed), 0, 'both composed scalar spread sites are rerouted');
   // Same draw sequences produce identical directions regardless of call cadence.
   const run = async () => {
     const { f, ps, a } = await setup();
