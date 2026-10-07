@@ -1,0 +1,11 @@
+# Eight-root C integration
+
+Current-main baseline c2c938b9af5b6cce2a7bdbecf0415c7c3836cadb. Independent implementation sources: 3e46d012580d462e572cb8ed8a025fcfb1f7d237 (#1048/#1044), 0636fc60 (#1014), 9b7511cde1c6f545debc4e90ce0dd97e6dd9ac1e (#1018/#1029/#1059/#1063), 2c2c4993f3ec1a51fa868a78fd90c7da79bb30d5 (#1062).
+
+The combined adapter preserves latest authoritative adoption state before visual Roll retirement and ordinary runner reset, restores adopted state afterward, and keeps packet-sidecar sq independent of the tagged actor-row adoption slot. The existing 22 fields retain their indexes; legacy 21/22 rows remain accepted. The combined Roll regression checks the tagged 23rd field and exercises an actual legacy 22-field packet without the optional Roll sidecar.
+
+Focused integration initially failed only on the separate Roll test's original fixed 22-row assumption, then passed after the combined protocol regression was corrected. Individual gameplay, recovery, ownership, lethal attribution, partial reservation and range controls are retained.
+
+Current main already exceeded the unchanged 131 core / 14 Practice Range preload budget and failed its camera differential test. The build now defers only four previously introduced static runtime helpers' redundant eager HTML hints; imports and full precache remain. The camera differential now keeps the production probe-cache owner identical in both controls and reverses only the shoulder block. Its unchanged per-frame 1e-9 comparisons therefore measure shoulder scope instead of unrelated raw-vs-adapted probe cadence. These corrections reuse the independently reviewed PR988 integration repairs without importing its ten non-main feature roots. They do not alter gameplay or weaken the startup budget.
+
+Full CI and final-source independent review are recorded in the PR; no remote merge is performed.
