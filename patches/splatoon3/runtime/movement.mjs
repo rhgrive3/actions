@@ -51,7 +51,11 @@ export function beforeActions(a, dt, jumpPressed) {
     if (state.roll.time <= 1e-10 || a.form !== 'squid') state.roll = null;
   }
   if (!a.alive || a.specialActive || a.superJumpState || a.form !== 'squid') {
-    state.roll = state.surge = state.armor = state.floorSpeed = null; state.chainSpeed = 0; a.anim.surgeCharge = 0; sync(a, state); return false;
+    state.roll = state.surge = state.armor = state.floorSpeed = null;
+    // #972: ordinary humanoid/attack transitions cancel the action and shield,
+    // not the still-live consecutive-roll history. Its own clock expires it.
+    if (!a.alive || a.specialActive || a.superJumpState) state.chainSpeed = 0;
+    a.anim.surgeCharge = 0; sync(a, state); return false;
   }
   // Keep the last qualifying real velocity direction briefly; do not queue raw input.
   if (!a.submerged || !a.grounded || a.climbing || state.roll) state.floorSpeed = null;
