@@ -408,7 +408,7 @@ function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
   // Restore the pinned family-specific window consumed by the existing solver.
-  p.fidelityFriendThrough=['shooter','slosher','roller','splatling'].includes(p.s3Weapon?.kind) ? p.fidelityPlayerCollision.FriendThroughFrameForPlayer : null;
+  p.fidelityFriendThrough=['shooter','slosher','roller','splatling','dualies'].includes(p.s3Weapon?.kind) ? p.fidelityPlayerCollision.FriendThroughFrameForPlayer : null;
   // Existing size carries initial radius; Roller unit identity is transmitted separately.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
@@ -557,6 +557,7 @@ export function fidelityProjectileTargets(system,p) {
   for(const actor of G.actors){
     if(!actor.alive||actor===p.owner)continue;
     const friendly=actor.team===p.team;
+    if(friendly&&actor.submerged)continue; // submerged teammates do not form a friendly obstruction capsule
     // S3 teammate body-block: friendly capsules follow the per-family source
     // FriendThroughFrameForPlayer window. A missing source record keeps the
     // native same-team skip instead of inventing one global collider rule.
