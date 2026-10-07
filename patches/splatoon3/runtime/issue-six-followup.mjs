@@ -1,6 +1,3 @@
-import { Input as NativeInput } from '../../../src/core/input.js';
-import { NetSession as NativeNetSession } from '../../../src/net/session.js';
-
 const EPS = 1e-10;
 const TAG = Symbol.for('inkwave.s3.issue-six-followup.v1');
 const PAD_TAG = Symbol.for('inkwave.s3.issue-1024-pad-cancel.v1');
@@ -41,8 +38,8 @@ function clearShooterInterrupt(r) {
 
 export function installIssueSixFollowup(api, _profile, deps = {}) {
   const { Actor, WeaponRunner, PlayerController, NetMatch, G } = api;
-  const Input = deps.Input || NativeInput;
-  const NetSession = deps.NetSession || NativeNetSession;
+  const Input = deps.Input || api.Input;
+  const NetSession = deps.NetSession || api.NetSession;
 
   // #1024 — device loss is cancellation, not a physical release edge.
   if (Input?.prototype && !Input.prototype[PAD_TAG]) {
