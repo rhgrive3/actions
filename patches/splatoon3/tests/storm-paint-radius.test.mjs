@@ -53,7 +53,7 @@ test('#757 Turf/special credit only comes from in-radius paint; ghost clouds nev
   const s = await storm(); edgeRandom(s.f);
   const before = s.owner.stats.turf; s.p._updateClouds(1 / 60);
   assert.ok(s.owner.stats.turf > before, 'owner is credited for the in-radius paint');
-  const g = await storm({ ghost: true }); edgeRandom(g.f); g.p._updateClouds(1 / 60);
+  const g = await storm({ ghost: true }); g.owner.remote = true; edgeRandom(g.f); g.p._updateClouds(1 / 60);   // replayed cloud of a still-remote owner (adopted owners: storm-adoption-paint.test.mjs)
   assert.equal(g.paints.length, 0); assert.equal(g.boss.length, 0);
 });
 
