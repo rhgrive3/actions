@@ -70,10 +70,14 @@ export function adaptSource(rel, code) {
       'const tagNum = (name) =>',
       'export const tagNum = (name) =>',
       'export tagNum');
-    return replaceOnce(code,
+    code = replaceOnce(code,
     "{ key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },",
     "{ key: 'minimap', label: 'Corner map (non-S3 aid)', type: 'toggle', help: 'Optional aid outside the S3 baseline. The full Turf Map remains available.' },",
     'optional corner map explanation');
+    return replaceOnce(code,
+      "h('div', { class: 'iw-res__teams' }, table(0), table(1)),",
+      "h('div', { class: 'iw-res__teams' }, table(winTeam), table(1 - winTeam)),",
+      'winner-first Turf results order');
   }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",
@@ -94,8 +98,21 @@ export function adaptSource(rel, code) {
       "          if (!this.follower) this.setState('finish'); else blockExpiredGuestInput(this);", 'guest local deadline input cancellation');
     code = replaceOnce(code, '    if (!this.controller) return;',
       '    if (blockExpiredGuestInput(this) || !this.controller) return;', 'guest deadline controller admission');
-    code = "import { captureTurfFinish, blockExpiredGuestInput } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
-
+    // #928: actor soft-push must respect stage collision.
+    code = replaceOnce(code,
+      '        a.pos.x -= (dx / d) * push * ka; a.pos.z -= (dz / d) * push * ka;\n        b.pos.x += (dx / d) * push * kb; b.pos.z += (dz / d) * push * kb;',
+      '        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);\n        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);',
+      'world-aware actor soft push');
+    // #934: Regular Turf permits duplicate weapons within one team.
+    code = replaceOnce(code,
+      '    const pickTeam = (first) => {\n      const pool = [...WEAPON_ORDER];\n      const out = [];\n      if (first) { out.push(first); pool.splice(pool.indexOf(first), 1); }',
+      "    const independent = this.mode !== 'boss' && !this.attract;\n    const pickTeam = (first) => {\n      const pool = [...WEAPON_ORDER];\n      const out = [];\n      if (first) { out.push(first); if (!independent) pool.splice(pool.indexOf(first), 1); }",
+      'standard Turf weapon draws keep the local weapon');
+    code = replaceOnce(code,
+      '        out.push(pool.splice((Math.random() * pool.length) | 0, 1)[0]);',
+      '        const pick = (Math.random() * pool.length) | 0;\n        out.push(independent ? pool[pick] : pool.splice(pick, 1)[0]);',
+      'standard Turf weapon draws allow duplicates');
+    code = "import { softPushActor } from '../../patches/splatoon3/runtime/movement-physics.mjs';\nimport { captureTurfFinish, blockExpiredGuestInput } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
     return code;
   }
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
@@ -360,6 +377,14 @@ export function adaptSource(rel, code) {
       "      teamSide(0),\n" +
       "      teamSide(1));",
       'intro Splashtags presentation');
+    code = replaceOnce(code,
+      "  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
+      "  showSplatted({ by = null, who = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
+      'death card opponent identity input');
+    code = replaceOnce(code,
+      "          killer && killer.weaponId ? h('div', { class: 'iw-spl__wn' }, (WEAPONS[killer.weaponId] || {}).name || '') : null),",
+      "          who ? h('div', { class: 'iw-spl__wn iw-spl__who' }, String(who)) : null),",
+      'death card opponent identity line');
     return "import { t as tr } from '../i18n.js';\nimport { applyShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { tagArt, AWARDS, AWARD_ICONS, awardIcon } from './menu-art.js';\nimport { fnv, tagTitle, tagNum } from './menus.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -458,12 +483,14 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "it.special = inp.down('KeyF')", "it.special = inp.wasPressed('KeyF') || inp.wasPressed('KeyQ') || inp.down('KeyF')", 'latched special input');
     code = replaceOnce(code, "    const range = w.kind === 'charger' ? w.rangeMax : w.kind === 'roller' ? 6 : (w.range || 12);",
       "    const chargeNow = clamp(a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0, 0, 1);\n" +
-      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'roller' ? 6 : (w.range || 12);",
+      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'roller' ? 6 : w.reticleRange ? (a.grounded ? w.reticleRange.ground : w.reticleRange.air) : (w.range || 12);",
       'charger HUD reach follows charge');
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
+    code = replaceOnce(code, 'if (g.hit && !c.ghost) c.owner.addTurf(', 'if (g.hit && (!c.ghost || !c.owner.remote)) c.owner.addTurf(', 'adopted Storm owns its remaining paint');
+    code = replaceOnce(code, '        if (!c.ghost) G.boss?.rain(', '        if (!c.ghost || !c.owner.remote) G.boss?.rain(', 'adopted Storm owns its remaining Boss rain');
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
     code = replaceOnce(code, 'Math.max(this.cooldown, 0.22)', 'Math.max(this.cooldown, w.postStreamDelay)', 'splatling sourced post-stream delay');
@@ -610,14 +637,14 @@ export function adaptSource(rel, code) {
       ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }"
       : "    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }";
     const specialActiveTarget = specialActiveHead.includes('stormHolding')
-      ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { const stormResources = this.specialActive.id === 'storm'; this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }"
-      : "    if (this.specialActive) { const stormResources = this.specialActive.id === 'storm'; this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }";
+      ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { const stormResources = this.specialActive.id === 'storm', slamRecovery = this.specialActive.id === 'slam'; this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); else if (slamRecovery && this.alive) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); if (this.alive) this._finishFrame(dt); return; }"
+      : "    if (this.specialActive) { const stormResources = this.specialActive.id === 'storm', slamRecovery = this.specialActive.id === 'slam'; this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); else if (slamRecovery && this.alive) updateHealthRecovery(this, dt); if (this.alive) this._finishFrame(dt); return; }";
     code = replaceOnce(code, specialActiveHead, specialActiveTarget, 'special active resources');
     // Issue #624 residual: activation also returns before ordinary resources.
     // Admit only a live Storm user; other specials retain their resource gates.
     code = replaceOnce(code, "    if (specialPressed && this.specialReady()) { this._startSpecial(); this._finishFrame(dt); return; }",
-      "    if (specialPressed && this.specialReady()) { this._startSpecial(); if (this.alive && this.specialActive?.id === 'storm') updateResources(this, dt); this._finishFrame(dt); return; }",
-      'storm activation resources');
+      "    if (specialPressed && this.specialReady()) { this._startSpecial(); if (this.alive && this.specialActive?.id === 'storm') updateResources(this, dt); else if (this.alive && this.specialActive?.id === 'slam') updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); this._finishFrame(dt); return; }",
+      'storm/slam activation resources');
     code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,", 'super jump wall support and destination admission');
     code = replaceOnce(code, 'target, from: new THREE.Vector3(), to: new THREE.Vector3(), marker: 0', 'target, from: new THREE.Vector3(), to: destination, marker: 0', 'super jump committed destination');
     code = replaceOnce(code, "      this.vel.set(0, 0, 0);\n      this.form = 'squid';\n      this._probeGround();", '      const supported = prepareSuperJump(this, dt);\n      if (!this.alive) return;', 'super jump preparation physics');
@@ -671,6 +698,7 @@ export function adaptSource(rel, code) {
         '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
         '    const wantSquid = intent.squid && !fireWins && !this.weaponRunner.busy() && !enemyGrounded;\n';
     code = replaceOnce(code, swimFormHead, swimFormTarget, 'enemy ink swim-form eligibility');
+    code = replaceOnce(code, '      if (wantSquid && this.groundTeam === 1) G.fx?.burst(', '      if (wantSquid && this.grounded && this.groundTeam === 1) G.fx?.burst(', 'no ground-entry spray for mid-air transform');
     code = replaceOnce(code,
       "    // ---- surface under feet (from last frame's ground probe; position hasn't moved since)\n    this._surface();\n",
       '', 'move surface sample before form selection');
@@ -828,7 +856,11 @@ export function adaptSource(rel, code) {
         if (accepted !== 1) throw new Error('INKWAVE patch conflict (enemy map reveal): expected raw, score-HUD, or composed connection');
       }
     }
-    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\n` + code;
+    code = replaceOnce(code,
+      "        const by = attacker ? attacker.name : t(cause === 'water' ? 'the sea' : 'enemy ink');\n        this.hud?.showSplatted({ by, byColor:",
+      "        const card = splatCardText(cause, attacker, t); // SPLATTED BY names the cause; the opponent is a separate line\n        this.hud?.showSplatted({ by: card.cause, who: card.who, byColor:",
+      'death card splat cause');
+    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\nimport { splatCardText } from '../patches/splatoon3/runtime/death-card.mjs';\n` + code;
   }
 
   if (rel === 'src/core/shadowcache.js') {

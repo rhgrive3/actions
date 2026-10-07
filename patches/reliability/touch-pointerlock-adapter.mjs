@@ -50,6 +50,10 @@ export function adaptTouchPointerLock(rel, code) {
   }
 
   _releaseMouseForTouch() {
+    // A handoff ends the mouse hold without a mouse-up: do not release a charge / bomb into a shot (#903).
+    const cancelled = this._holdCancelled || (this._holdCancelled = new Set());
+    if (this.mouse.left) cancelled.add('fire');
+    if (this.mouse.right) cancelled.add('sub');
     this.mouse.left = this.mouse.right = this.mouse.leftPressed = this.mouse.rightPressed = false;
     this.mouse.dx = this.mouse.dy = 0;
     if (!this.locked && document.pointerLockElement !== this.canvas) return;
