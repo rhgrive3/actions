@@ -110,16 +110,18 @@ export function getPlatformLifecycle(env = globalThis) {
 }
 
 export class PlatformFrameDriver {
-  constructor(owner, frame, rebase = () => {}) {
+  constructor(owner, frame, rebase = () => {}, frameRate = () => 0) {
     this.owner = owner; this.env = owner.env; this.frame = frame; this.rebase = rebase;
-    this.raf = null; this.running = false; this.disposed = false;
+    this.frameRate = frameRate;
+    this.raf = null; this.timer = null; this.running = false; this.disposed = false;
+    this.generation = 0; this.frameInterval = 0; this.nextDeadline = null;
     this.last = null; this.lastWall = null;
-    this.metrics = { frames: 0, gaps: 0, maxDelta: 0, schedules: 0, cancels: 0 };
-    this._callback = now => {
+    this.metrics = { frames: 0, gaps: 0, maxDelta: 0, schedules: 0, cancels: 0, timerSchedules: 0, timerCancels: 0, timerWakes: 0 };
+    this._callback = (now, generation) => {
+      if (generation !== this.generation) return;
       this.raf = null;
       if (!this.running || !this.owner.active || this.disposed) return;
-      this.schedule();
-      const time = Number.isFinite(now) ? now : this.env.performance.now();
+      const time = Number.isFinite(now) ? now : this._now();
       const wall = this.env.Date?.now?.() ?? Date.now();
       let dt = this.last === null ? 0 : (time - this.last) / 1000;
       const wallGap = this.lastWall === null ? 0 : (wall - this.lastWall) / 1000;
@@ -137,7 +139,8 @@ export class PlatformFrameDriver {
         dt = foregroundStall ? Math.min(dt, MAX_PLATFORM_GAP) : 0;
       }
       this.metrics.frames++; this.metrics.maxDelta = Math.max(this.metrics.maxDelta, dt);
-      this.frame(dt);
+      try { this.frame(dt); }
+      finally { if (generation === this.generation) this._scheduleNext(time); }
     };
     this.unsubscribe = owner.subscribe({
       suspend: () => this.reset('suspend'),
@@ -145,17 +148,59 @@ export class PlatformFrameDriver {
       resume: () => this.schedule(),
     });
   }
+  _now() {
+    const now = this.env.performance?.now?.();
+    return Number.isFinite(now) ? now : (this.env.Date?.now?.() ?? Date.now());
+  }
+  _queueRAF() {
+    if (!this.running || !this.owner.active || this.disposed || this.raf !== null || this.timer !== null) return;
+    const generation = this.generation;
+    this.raf = this.env.requestAnimationFrame(now => this._callback(now, generation));
+    this.metrics.schedules++;
+  }
+  _queueTimer(delay) {
+    if (!this.running || !this.owner.active || this.disposed || this.raf !== null || this.timer !== null) return;
+    if (typeof this.env.setTimeout !== 'function') { this._queueRAF(); return; }
+    const generation = this.generation;
+    this.timer = this.env.setTimeout(() => {
+      if (generation !== this.generation) return;
+      this.timer = null; this.metrics.timerWakes++;
+      if (this.running && this.owner.active && !this.disposed) this._queueRAF();
+    }, Math.max(0, delay));
+    this.metrics.timerSchedules++;
+  }
+  _scheduleNext(frameTime) {
+    if (!this.running || !this.owner.active || this.disposed) return;
+    const fps = Number(this.frameRate());
+    if (!Number.isFinite(fps) || fps <= 0) {
+      this.frameInterval = 0; this.nextDeadline = null;
+      this._queueRAF();
+      return;
+    }
+    const interval = 1000 / fps, now = this._now();
+    if (this.frameInterval !== interval || this.nextDeadline === null) {
+      this.frameInterval = interval;
+      this.nextDeadline = frameTime + interval;
+    }
+    // Queue RAF just before the target so timer rounding does not miss a vsync
+    // by a fraction of a millisecond. Keep the absolute grid when work runs late.
+    const lead = 1;
+    while (this.nextDeadline <= now + lead) this.nextDeadline += interval;
+    this._queueTimer(this.nextDeadline - now - lead);
+  }
   reset(reason) {
+    this.generation++;
+    if (this.timer !== null) { this.env.clearTimeout?.(this.timer); this.timer = null; this.metrics.timerCancels++; }
     if (this.raf !== null) { this.env.cancelAnimationFrame(this.raf); this.metrics.cancels++; }
     this.raf = null; this.last = this.lastWall = null;
+    this.frameInterval = 0; this.nextDeadline = null;
     this.rebase(reason);
   }
   schedule() {
-    if (!this.running || !this.owner.active || this.disposed || this.raf !== null) return;
-    this.raf = this.env.requestAnimationFrame(this._callback); this.metrics.schedules++;
+    this._queueRAF();
   }
   start() { if (this.disposed) return; this.running = true; this.schedule(); }
   stop() { this.running = false; this.reset('stop'); }
   dispose() { if (this.disposed) return; this.stop(); this.disposed = true; this.unsubscribe(); }
-  snapshot() { return { running: this.running, pendingRAF: this.raf === null ? 0 : 1, ...this.metrics }; }
+  snapshot() { return { running: this.running, pendingRAF: this.raf === null ? 0 : 1, pendingTimer: this.timer === null ? 0 : 1, ...this.metrics }; }
 }
