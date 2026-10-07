@@ -247,7 +247,7 @@ async function runProductionOrder() {
     const fs = await import('node:fs');
     const path = await import('node:path');
     const vm = await import('node:vm');
-    const ROOT_DIR = ${JSON.stringify(ROOT)};
+    const ROOT_DIR = fs.realpathSync(${JSON.stringify(ROOT)});
     const P = path.join(ROOT_DIR, 'patches/splatoon3');
     const { adaptSource } = await import(path.join(P, 'adapter.mjs'));
     const a483 = await import(path.join(P, 'issue-483-adapter.mjs'));
@@ -312,8 +312,12 @@ async function runNative(mode) {
     const context = vm.createContext({ console, performance });
     context.__i483 = {};   // TEST-ONLY probe surface for the module-private native caches
     const modules = new Map();
-    const mapPatches = (file) => (file.startsWith(SRC + path.sep + 'patches' + path.sep)
-      ? path.join(ROOT_DIR, path.relative(SRC, file)) : file);
+    const mapPatches = (file) => {
+      if (file.startsWith(SRC + path.sep + 'patches' + path.sep)) return path.join(ROOT_DIR, path.relative(SRC, file));
+      // #915 build-only model modules import native src helpers from the project root.
+      if (file.startsWith(path.join(ROOT_DIR, 'src') + path.sep)) return path.join(SRC, path.relative(ROOT_DIR, file));
+      return file;
+    };
     const probeNativeCaches = (rel, text) => {
       if (rel !== 'src/game/character-geo.js') return text;
       const probes = [

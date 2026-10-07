@@ -1,6 +1,8 @@
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
+
+import { splatlingJumpRecoveryAt } from './splatling-jump-spread.mjs';
 const EPS = 1e-10, DEG = Math.PI / 180;
 
 // #729 — S3 Ver.11.3.0 resolves an impact-triggered blast one fixed frame after the
@@ -10,8 +12,8 @@ const EPS = 1e-10, DEG = Math.PI / 180;
 let flushing = 0;
 
 // This retains the existing two-draw radial sampler, not a claimed S3 PDF.
-// Ground pitch has its own angular envelope; neither bloom nor the horizontal
-// scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
+// The 0.55 air-pitch factor is the existing INKWAVE sampler. The jump blend to
+// the existing ground pitch endpoint is internal and unverified against S3.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
   // #883: Dualies expose one scalar spread envelope, so do not inherit the
@@ -40,14 +42,23 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
     return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
       .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
   }
-  if (w.kind !== 'splatling' || !a.grounded || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, horizontal);
+  const recovery = w.kind === 'splatling' ? splatlingJumpRecoveryAt(a.s3SplatlingJumpAgeFrames) : null;
+  if (w.kind !== 'splatling' || !Number.isFinite(w.spreadPitchGround) || (!a.grounded && recovery === null)) {
+    return system._spread(dir, horizontal);
+  }
+  // Keep both Splatling spread draws when the horizontal cone is zero. The
+  // projectile seed and later paint effects share this gameplay RNG stream.
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
+  const horizontalAngle = Math.max(0, horizontal) * DEG * radius;
+  const groundPitchAngle = w.spreadPitchGround * DEG * radius;
+  const airPitchAngle = Math.atan(0.55 * Math.tan(horizontalAngle));
+  const pitchAngle = recovery === null ? groundPitchAngle : airPitchAngle + (groundPitchAngle - airPitchAngle) * recovery;
   const right = dir.clone().set(-dir.z, 0, dir.x);
   if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
   right.normalize();
   const up = dir.clone().cross(right);
-  return dir.addScaledVector(right, Math.cos(angle) * Math.tan(Math.max(0, horizontal) * DEG * radius))
-    .addScaledVector(up, Math.sin(angle) * Math.tan(w.spreadPitchGround * DEG * radius)).normalize();
+  return dir.addScaledVector(right, Math.cos(angle) * Math.tan(horizontalAngle))
+    .addScaledVector(up, Math.sin(angle) * Math.tan(pitchAngle)).normalize();
 }
 
 export function blasterBurstDamage(p, w, distance, distanceDamage) {
@@ -82,6 +93,27 @@ export function appendRollerNearUnit(system, a, w) {
   // The existing enclosing fireFlick wrapper assigns one shared damage group
   // to all 13 bullets. _push publishes this actual velocity once to NetMatch.
   system._push(p);
+}
+
+export function paintRollerReleaseFootprint(system, a, w, { G, PLAYER, Hit, WALKABLE }) {
+  const mode = a?.weaponRunner?.s3FlickVertical ? 'vertical' : 'horizontal';
+  const shape = w?.releaseFootPaint?.[mode];
+  if (!shape || a.remote || a.alive === false || w.kind !== 'roller' || !G.paint?.splat || !G.physics?.groundProbe) return 0;
+  const forwardX = Math.sin(a.yaw), forwardZ = Math.cos(a.yaw);
+  const rightX = Math.cos(a.yaw), rightZ = -Math.sin(a.yaw);
+  const x = a.pos.x + rightX * shape.offset.x + forwardX * shape.offset.z;
+  const z = a.pos.z + rightZ * shape.offset.x + forwardZ * shape.offset.z;
+  const ground = new Hit();
+  // SplashNearest's downward offset and MaxHeight bound the real ground query;
+  // this lets an airborne vertical swing paint only when walkable ground is in range.
+  G.physics.groundProbe(x, a.pos.y, z, shape.maxHeight, Math.abs(shape.offset.y), PLAYER.footRadius, ground, false);
+  if (!ground.hit || ground.normal.y < WALKABLE || !Number.isFinite(ground.y)) return 0;
+  const p = system.list[system.list.length - 1];
+  if (!p || p.owner !== a || !Number.isFinite(p.seed)) return 0;
+  const center = a.pos.clone().set(x, ground.y, z).addScaledVector(ground.normal, 0.1);
+  const area = G.paint.splat(center, shape.paintWidthHalf, a.team, { seed: p.seed });
+  if (area > 0) a.addTurf?.(area);
+  return area;
 }
 
 export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER, G, THREE, Hit }) {

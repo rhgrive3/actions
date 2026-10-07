@@ -150,10 +150,86 @@ export function fidelityAimConvergence(from, dir, target, weapon, speed = weapon
   return true;
 }
 
+function dualiesAimScratch(projectiles) {
+  return projectiles._fidelityDualiesAimScratch || (projectiles._fidelityDualiesAimScratch = {
+    muzzles: [new api.THREE.Vector3(), new api.THREE.Vector3()],
+    midpoint: new api.THREE.Vector3(), forward: new api.THREE.Vector3(), right: new api.THREE.Vector3(),
+    targets: [new api.THREE.Vector3(), new api.THREE.Vector3()],
+  });
+}
+
+// Keep the two normal-fire rays parallel to the current center aim ray. Their
+// lateral offset comes from the live native hand muzzle origins, projected onto
+// the aim-plane right axis; it is geometry, not a Nintendo spacing calibration.
+export function fidelityDualiesAimTargets(projectiles, actor, muzzle0, muzzle1) {
+  const scratch = dualiesAimScratch(projectiles);
+  const { muzzles, midpoint, forward, right, targets } = scratch;
+  muzzles[0].copy(muzzle0); muzzles[1].copy(muzzle1);
+  if (actor.weaponRunner?.s3Turret) {
+    targets[0].copy(actor.aimPoint); targets[1].copy(actor.aimPoint);
+    return targets;
+  }
+
+  midpoint.copy(muzzles[0]).add(muzzles[1]).multiplyScalar(.5);
+  forward.copy(actor.aimPoint).sub(midpoint);
+  let horizontal = Math.hypot(forward.x, forward.z);
+  if (horizontal > EPSILON) right.set(forward.z / horizontal, 0, -forward.x / horizontal);
+  else {
+    horizontal = Math.hypot(actor.aimDir?.x || 0, actor.aimDir?.z || 0);
+    if (horizontal > EPSILON) right.set(actor.aimDir.z / horizontal, 0, -actor.aimDir.x / horizontal);
+    else right.set(1, 0, 0);
+  }
+  for (let hand = 0; hand < 2; hand++) {
+    const muzzle = muzzles[hand];
+    const lateral = (muzzle.x - midpoint.x) * right.x + (muzzle.z - midpoint.z) * right.z;
+    targets[hand].copy(actor.aimPoint).addScaledVector(right, lateral);
+  }
+  return targets;
+}
+
+// Called by the actual Dualies fire path after its native muzzle has been
+// selected. Only the other hand is queried; the target helper then uses both
+// final (including existing obstruction fallback) muzzle origins.
+export function fidelityDualiesAimTarget(projectiles, actor, muzzle, hand) {
+  const index = hand === true || hand === 1 ? 1 : 0;
+  if (actor.weaponRunner?.s3Turret) return actor.aimPoint;
+  const scratch = dualiesAimScratch(projectiles);
+  scratch.muzzles[index].copy(muzzle);
+  projectiles._muzzleHand(actor, 1 - index, scratch.muzzles[1 - index]);
+  return fidelityDualiesAimTargets(projectiles, actor, scratch.muzzles[0], scratch.muzzles[1])[index];
+}
+
 // Source records supply endpoints/counts. Added random draws are deterministic
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
 function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
 
+function deriveRollerReleaseFootPaint(profile) {
+  const source = profile.weaponsFidelityCompletion?.weapons?.roller;
+  const scale = profile.calibration?.distanceScale?.factor;
+  if (!source || !Number.isFinite(scale) || scale <= 0) throw new Error('Missing Roller foot-paint source or retained distance scale');
+  const normalized = {};
+  for (const [mode, groupName] of [['horizontal', 'WideSwingUnitGroupParam'], ['vertical', 'VerticalSwingUnitGroupParam']]) {
+    const spawn = source[groupName]?.SplashNearestParam?.SpawnParam;
+    const values = [spawn?.MaxHeight, spawn?.Offset?.X, spawn?.Offset?.Y, spawn?.Offset?.Z,
+      spawn?.PaintDepthScale, spawn?.PaintWidthHalf];
+    if (!values.every(Number.isFinite) || values[0] < 0 || values[4] <= 0 || values[5] <= 0)
+      throw new Error(`Invalid Roller ${mode} SplashNearestParam.SpawnParam`);
+    const depthScale = spawn.PaintDepthScale * scale;
+    const widthHalf = spawn.PaintWidthHalf * scale;
+    // PaintSystem.splat has a circular radius and no sourced anisotropic
+    // depth/width mapping. Fail closed instead of inventing one.
+    if (Math.abs(depthScale - widthHalf) > 1e-10)
+      throw new Error(`Unsupported Roller ${mode} foot-paint depth/width geometry`);
+    normalized[mode] = Object.freeze({
+      maxHeight: spawn.MaxHeight * scale,
+      offset: Object.freeze({ x: spawn.Offset.X * scale, y: spawn.Offset.Y * scale, z: spawn.Offset.Z * scale }),
+      paintDepthScale: depthScale,
+      paintWidthHalf: widthHalf,
+      distanceScale: scale,
+    });
+  }
+  return Object.freeze(normalized);
+}
 // The installed straight/brake/free record for a weapon, so a dry prediction can
 // reuse the same law the live projectile advances under instead of restating it.
 export function fidelityMoveFor(weapon) { return moves?.get(weapon?.id) ?? null; }
@@ -657,6 +733,7 @@ export function installWeaponsFidelity(context,profile) {
   if(roller?.ballistics && roller.ballistics.verticalUnits.reduce((n,u)=>n+u.count,0)!==roller.verticalDrops)throw new Error('Vertical roller unit count differs from profile');
   api=context;completion=profile.weaponsFidelityCompletion;
   if(!completion||completion.schema!==1)throw new Error('Missing completion source table');
+  roller.releaseFootPaint = deriveRollerReleaseFootPaint(profile);
   moves=new Map();
   for(const [id,w]of Object.entries(WEAPONS)){
     if(!w.ballistics)continue;
@@ -713,7 +790,7 @@ export function installWeaponsFidelity(context,profile) {
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
     const recycled=this.pool[this.pool.length-1];if(recycled)kitTrizookaClearPooled(recycled);
-    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);
+    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.s3Weapon=null;
     p._s3SloshBirthPending=false;p._s3SloshBirthOwner=null;p._s3SloshBirthEpoch=undefined;
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
@@ -1038,7 +1115,7 @@ export function installWeaponsFidelity(context,profile) {
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     });
     system._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
-    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2.4;p.straight=0;
+    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2.4;p.straight=0;
     p.delay=((unit.UnitDelayFrame||0)+index*(unit.AfterOffsetDelayFrame||0))/60;
     p.fidelitySloshUnit=unit;p.fidelitySloshIndex=index;p.fidelityPhase=0;p.fidelityMove=null;
     p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
@@ -1061,7 +1138,7 @@ export function installWeaponsFidelity(context,profile) {
     const dir=system._s3BlasterGuideDir||(system._s3BlasterGuideDir=new THREE.Vector3());
     system._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
     system._aimFrom(actor,p.pos,dir);
-    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2;p.straight=0;
+    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2;p.straight=0;
     p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
     p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
@@ -1108,10 +1185,14 @@ export function installWeaponsFidelity(context,profile) {
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     })));
     for(let hand=0;hand<2;hand++){
-      const p=shots[hand],out=points[hand],dir=dirs[hand];
+      const p=shots[hand];
       this._muzzleHand(actor,hand,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
-      this._aimFrom(actor,p.pos,dir);
-      fidelityAimConvergence(p.pos,dir,actor.aimPoint,w,w.projSpeed);
+    }
+    const targets=fidelityDualiesAimTargets(this,actor,shots[0].pos,shots[1].pos);
+    for(let hand=0;hand<2;hand++){
+      const p=shots[hand],out=points[hand],dir=dirs[hand];
+      this._aimFrom(actor,p.pos,dir,targets[hand]);
+      fidelityAimConvergence(p.pos,dir,targets[hand],w,w.projSpeed);
       p.owner=actor;p.type='shot';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=1.2;p.straight=w.straightTime;
       p.delay=0;p.ghost=false;p.size=w.impactRadius??.15;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
       p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;

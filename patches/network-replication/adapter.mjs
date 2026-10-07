@@ -130,7 +130,6 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
-    patch("import { G, emit, on } from '../core/ctx.js'", "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js'", 'read numeric event snapshots');
     patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
     patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
     patch("      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;", "      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;\n      case 'fs': this._acceptFirstSplat(from,d); break;\n      case 'fsq': this._answerFirstSplat(from,d); break;", 'first-splat host confirmation packets');
@@ -182,6 +181,16 @@ export function emit(name, payload) {
 
   _remoteSplat(victim, attacker, cause) {`, 'host-authoritative first-splat protocol');
     patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    victim.alive = false;", 'Flow observes only accepted remote splats');
+    patch("import { G, emit, on } from '../core/ctx.js'", "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js'", 'read numeric event snapshots');
+    patch('invuln: 262144, enemy: 524288,',
+      'invuln: 262144, enemy: 524288, rollerFoldAttack: 1048576, rollerFoldVertical: 2097152,',
+      'roller fold mode snapshot flags');
+    patch('if (wr.slosh >= 0) f |= F.slosh;',
+      'if (wr.slosh >= 0) f |= F.slosh;\n  if (wr.s3RollerAttack) f |= F.rollerFoldAttack;\n  if (wr.s3RollerAttack?.vertical) f |= F.rollerFoldVertical;',
+      'pack owner Roller fold mode');
+    patch('wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
+      'wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;\n    wr.s3RollerFoldAttack = f & F.rollerFoldAttack ? { vertical: !!(f & F.rollerFoldVertical) } : null;',
+      'apply remote Roller fold mode');
     patch('const FORWARD = [', "const FORWARD = ['hit', 'hit:rejected', ",
       'authoritative hit admission feedback');
     patch('    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;',
@@ -543,7 +552,11 @@ ${bombHit}`;
       code = code.slice(0, bombHitMatches[0].index) + guarded + code.slice(bombHitMatches[0].index + bombHit.length);
     }
     patch('    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;', '    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    let projectileFirst;', 'attack-owned first projectile');
-    patch("      this._push(p);\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", "      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'capture exact volley during generation');
+    // Preserve the preceding presentation/gameplay layer's release footprint.
+    // Capture only the volley identity; remote ghosts never replay owner paint.
+    const releaseFootprint = code.includes('    paintRollerReleaseFootprint(this, a, w, { G, PLAYER, Hit, WALKABLE });')
+      ? '    paintRollerReleaseFootprint(this, a, w, { G, PLAYER, Hit, WALKABLE });\n' : '';
+    patch(`      this._push(p);\n    }\n${releaseFootprint}    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });`, `      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n${releaseFootprint}    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });`, 'capture exact volley during generation');
     patch('weapon: w.id, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
 
     patch('      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);', `      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);

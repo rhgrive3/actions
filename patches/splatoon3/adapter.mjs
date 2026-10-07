@@ -24,6 +24,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue415 } from './runtime/issue-415-adapter.mjs';
+import { adaptTidalSlamGauge } from './tidal-slam-gauge-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -47,6 +48,8 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  // Only raw locked sources enter this build-only adapter. Re-applying a
+  // completed or partial BUILD tree must reach the exact anchors and fail closed.
   // Storm owns the structural cloud-loop rewrite. Gear/Sub may then refine
   // the terminal frame boundary without hiding Storm's original connection.
   if (rel === 'src/game/weapons.js') code = adaptStormEffects(rel, code);
@@ -175,38 +178,20 @@ export function adaptSource(rel, code) {
     for (const [anchor, label] of [['  _poseThrow(P, tt) {', 'native bomb throw pose'], ['  _applyPose(dt, s) {', 'native bomb pose application']])
       code = replaceOnce(code, anchor, anchor, label);
     code += '\nexport const CHARACTER_BOMB_POSE = Object.freeze({ throw: Character.prototype._poseThrow, apply: Character.prototype._applyPose });\n';
-    return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
+    // Roller middle hinge (#916): the native static yoke gains one articulated group
+    // that owns the roller-side parts and the drum. Dedicated connection, kept apart
+    // from the independent #915 weapon-transform ownership.
+    code = replaceOnce(code, '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle); off.add(muzzle);',
+      '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle); off.add(muzzle);\n    const fold = attachRollerFold(d, off, parts, drum);', 'roller articulated hinge group');
+    code = replaceOnce(code, 'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, near: true, pump: 0, trig: 0, left: null, hidden: 0 };',
+      'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
+    return "import { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg>`;',
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg><span class="iw-ret__bias" hidden aria-hidden="true"></span>`;',
       'Blaster outer-bias cue element');
-    code = replaceOnce(code,
-      '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
-      '    this._L.spread = null; this._L.charge = null; this._L.full = null;\n' +
-      '    this._L.blasterCue = null; this._L.blasterCuePhase = null;\n' +
-      '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;',
-      'Blaster outer-bias cue ownership');
-    code = replaceOnce(code,
-      '    const ch = f.crosshair || {};',
-      '    const ch = f.crosshair || {};\n' +
-      '    const localActor = this._local();\n' +
-      '    const jumpState = L.kind === \'blaster\' ? localActor?.weaponRunner?.s3BlasterJumpState?.(localActor.weapon) : null;\n' +
-      '    const cueActive = !!(jumpState?.supported && jumpState.active);\n' +
-      '    if (this._blasterBiasEl) {\n' +
-      '      const percent = cueActive ? Math.round(jumpState.bias * 100) : 0;\n' +
-      '      const cuePhase = cueActive ? jumpState.phase : \'idle\';\n' +
-      '      const cue = !cueActive ? \'\' : cuePhase === \'held\' ? `OUTER ${percent}%`\n' +
-      '        : cuePhase === \'recovering\' ? \'RECOVERING\' : `OUTER ${percent}%`;\n' +
-      '      if (cue !== L.blasterCue || cuePhase !== L.blasterCuePhase) {\n' +
-      '        L.blasterCue = cue; L.blasterCuePhase = cuePhase;\n' +
-      '        this._blasterBiasEl.hidden = !cueActive;\n' +
-      '        this._blasterBiasEl.textContent = cue;\n' +
-      '        this._blasterBiasEl.dataset.phase = cuePhase;\n' +
-      '      }\n' +
-      '    }',
-      'Blaster sourced bias and recovery presentation');
     code = replaceOnce(code,
       '// ------------------------------------------------------------------ HUD-only art',
       "// Splatoon 3 drives the charge reticle off the runner's fixed-tick charge clock, never the\n" +
@@ -233,8 +218,10 @@ export function adaptSource(rel, code) {
       'charger charge-reticle display delay');
     code = replaceOnce(code,
       '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
-      '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.chargeDelay = null;',
-      'reset the charge-delay reticle gate on rebuild');
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.chargeDelay = null;\n' +
+      '    this._L.blasterCue = null; this._L.blasterCuePhase = null;\n' +
+      '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;',
+      'reset charge-delay and Blaster bias presentation state');
     code = replaceOnce(code,
       "    if (L.kind === 'slosher') {",
       "    // S3 charge-reticle lifecycle (#594): a charging weapon shows no charge cluster while idle.\n" +
@@ -283,8 +270,23 @@ export function adaptSource(rel, code) {
       '        this.xh.style.setProperty(\'--muzzle-hit-y\', `${muzzleBlock.y.toFixed(1)}px`);\n' +
       '      }\n' +
       '    }\n' +
-      '    this.xh.classList.toggle(\'is-muzzle-blocked\', !!muzzleBlock);',
-      'S3 ShotGuideFrame reticle placement');
+      '    this.xh.classList.toggle(\'is-muzzle-blocked\', !!muzzleBlock);\n' +
+      '    const localActor = this._local();\n' +
+      '    const jumpState = L.kind === \'blaster\' ? localActor?.weaponRunner?.s3BlasterJumpState?.(localActor.weapon) : null;\n' +
+      '    const cueActive = !!(jumpState?.supported && jumpState.active);\n' +
+      '    if (this._blasterBiasEl) {\n' +
+      '      const percent = cueActive ? Math.round(jumpState.bias * 100) : 0;\n' +
+      '      const cuePhase = cueActive ? jumpState.phase : \'idle\';\n' +
+      '      const cue = !cueActive ? \'\' : cuePhase === \'held\' ? `OUTER ${percent}%`\n' +
+      '        : cuePhase === \'recovering\' ? \'RECOVERING\' : `OUTER ${percent}%`;\n' +
+      '      if (cue !== L.blasterCue || cuePhase !== L.blasterCuePhase) {\n' +
+      '        L.blasterCue = cue; L.blasterCuePhase = cuePhase;\n' +
+      '        this._blasterBiasEl.hidden = !cueActive;\n' +
+      '        this._blasterBiasEl.textContent = cue;\n' +
+      '        if (this._blasterBiasEl.dataset) this._blasterBiasEl.dataset.phase = cuePhase; else this._blasterBiasEl.setAttribute?.(\'data-phase\', cuePhase);\n' +
+      '      }\n' +
+      '    }',
+      'S3 ShotGuide, muzzle contact and Blaster jump-bias presentation');
     code = replaceOnce(code,
       '    } else if (kind === \'roller\') {\n' +
       '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg wide" viewBox="-80 -40 160 80" aria-hidden="true">\n' +
@@ -636,9 +638,9 @@ export function adaptSource(rel, code) {
     return `import { swimTrailVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/fx/fxHooks.js') {
+    code = adaptChargerSightCache(rel, code, replaceOnce);
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
-    code = adaptChargerSightCache(rel, code, replaceOnce);
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
@@ -798,12 +800,14 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this._spawnBarrier();',
       '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
       'S3 universal spawn barrier removal');
-    return `import { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
+    code = adaptTidalSlamGauge(rel, code, replaceOnce);
+    return `import { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
-    code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerModel(buildRoller()),', 'roller drum proportions');
-    return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\n" + code;
+    code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerFoldModel(rollerModel(buildRoller())),', 'roller drum proportions and articulated middle hinge');
+    code = replaceOnce(code, 'blaster: buildBlaster,', 'blaster: () => blasterMechanism(buildBlaster()),', 'blaster S3 lever/spring-front mechanism channels');
+    return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\nimport { rollerFoldModel } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { blasterMechanism } from '../../patches/splatoon3/runtime/blaster-mechanism-model.mjs';\n" + code;
   }
   if (rel === 'src/audio/music.js') {
     // Match-start Opening cue (issue #605): an original short sting for the pre-GO intro.

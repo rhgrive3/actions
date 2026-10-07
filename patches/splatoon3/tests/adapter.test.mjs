@@ -18,6 +18,35 @@ test('missing or duplicated upstream connections fail closed', () => {
   assert.throws(() => adaptSource('src/main.js', ''), /conflict/);
   assert.throws(() => adaptSource('index.html', '<html>'), /conflict/);
 });
+
+test('native FX composes charger sight and swim splash connections once', () => {
+  const fx = fs.readFileSync(new URL('src/fx/fxHooks.js', publicRoot), 'utf8');
+  const built = adaptSource('src/fx/fxHooks.js', fx);
+  assert.ok(built.includes('swimSplashVisible(a)'));
+  assert.ok(built.includes('const h = cachedChargerSightDot(s) ??'));
+  assert.equal(built.split('import { cachedChargerSightDot, clearChargerSightDot }').length - 1, 1);
+  assert.throws(() => adaptSource('src/fx/fxHooks.js', built), /conflict/);
+});
+
+test('completed and partial paint trees cannot bypass the raw-source build connections', () => {
+  const raw = fs.readFileSync(new URL('src/world/paint.js', publicRoot), 'utf8');
+  const built = adaptSource('src/world/paint.js', raw);
+  assert.throws(() => adaptSource('src/world/paint.js', built), /conflict/);
+  // These two actual reviewer counterexamples were accepted by the old complete
+  // signature while silently removing turf accounting or active growth rendering.
+  for (const connection of [
+    'claimed += cellA;',
+    'else { this.growing.push(g); growth = null; }',
+    '        changed = true;',
+    'if (this._inkMark) this._inkMark(f, i, j);',
+    'installIssue570PaintPresentation(PaintSystem)',
+  ]) {
+    assert.ok(built.includes(connection), connection);
+    assert.throws(() => adaptSource('src/world/paint.js', built.replace(connection, '/* owner connection removed */')), /conflict/, connection);
+    assert.throws(() => adaptSource('src/world/paint.js', built + '\n' + connection), /conflict/, connection);
+  }
+});
+
 test('an upstream change to the planted-leg reach connection stops the build', () => {
   const character = fs.readFileSync(new URL('src/game/character.js', publicRoot), 'utf8');
   const anchor = 'const d = _v5.length(), mxr = this.legReach * 0.97;';

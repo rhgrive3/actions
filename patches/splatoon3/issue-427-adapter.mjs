@@ -164,6 +164,9 @@ function adaptCurrentFlow427(code) {
   const helpers = `  function terminal427(victim, attacker, life) {
     if (!victim || life !== (victim.netLife ?? 0)) return null;
     const deaths = Number.isFinite(victim.stats?.deaths) ? victim.stats.deaths : 0;
+    // A network actor is identified by its authoritative netLife across owner
+    // adoption and replay; local death counters must not create a second award.
+    // Legacy/offline actors without netLife retain the normalized death fallback.
     // _remoteSplat increments stats.deaths before replay listeners run. A local
     // prediction for that same death therefore observes N while owner replay
     // observes N+1. Normalize the dead remote actor back to its pre-death epoch;

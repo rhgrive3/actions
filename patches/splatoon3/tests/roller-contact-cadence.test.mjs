@@ -5,7 +5,7 @@ import {FixedClock,STEP} from '../runtime/clock.mjs';
 async function setup(boss=false){
  const f=await fixture({site:process.env.INKWAVE_ROLL_CADENCE_SITE||`${ROOT}.roll-contact-source`,fidelity:true});
  const a=f.make('roller'),v=f.make('shooter',{team:1,z:.8}),ticks=[];let tick=0;
- f.G.actors=boss?[a]:[a,v];a.vel.z=2;
+ f.G.actors=boss?[a]:[a,v];a.grounded=true;a.intent.move.set(0,0,1);a.vel.z=2;
  if(boss){f.G.boss={rollHit:()=>({boss:true,target:v,point:v.pos}),hit:()=>{ticks.push(tick);return false;}};}
  else {const hit=f.projectiles.applyHit;f.projectiles.applyHit=function(...args){ticks.push(tick);return hit.apply(this,args);};}
  const step=()=>{f.G.time=tick*STEP;a.weaponRunner._roller(STEP,{fire:true,firePressed:false},a.weapon);tick++;};
