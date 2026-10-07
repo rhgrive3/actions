@@ -121,12 +121,12 @@ test('the pinned Hermit2DSmooth curves evaluate through their pinned endpoints',
 });
 
 test('#1013 Big Bubbler canopy durability follows Special Power Up AP while field HP stays independent', async () => {
+  const { f } = await composed();
   assert.equal(bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 0 } } }), BIG_BUBBLER_RAW.maxHp);
   assert.equal(bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 57 } } }), BIG_BUBBLER_RAW.maxHpHigh);
   const mid = bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 30 } } });
   assert.ok(mid > BIG_BUBBLER_RAW.maxHp && mid < BIG_BUBBLER_RAW.maxHpHigh);
 
-  const { f } = await composed();
   level(f);
   const a = roller(f); a.s3.modifiers.specialPowerAP = 57; f.G.actors = [a]; activate(f, a);
   const dome = bigBubblerDomes()[0];
