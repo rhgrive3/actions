@@ -1052,7 +1052,7 @@ export function installWeaponsFidelity(context,profile) {
   if(!defaults || defaults.schema!==1 || profile.referenceHz!==60)throw new Error('Missing or unsupported weapons fidelity profile');
   for (const [name,value] of Object.entries({brakeDrag:defaults.brakeDragPerFrame,freeDrag:defaults.freeDragPerFrame}))
     if(!Number.isFinite(value)||value<0||value>=1)throw new RangeError('Invalid '+name);
-  if(!Number.isFinite(defaults.brakeGravity)||defaults.brakeGravity<0||!Number.isFinite(defaults.freeGravity)||defaults.freeGravity<0||!Number.isFinite(defaults.brakeToFreeVelocityY))throw new RangeError('Invalid ballistic gravity/transition');
+  if(!Number.isFinite(defaults.brakeGravity)||defaults.brakeGravity<0||!Number.isFinite(defaults.freeGravity)||defaults.freeGravity<0||!Number.isFinite(defaults.brakeToFreeVelocityY)||!Number.isFinite(defaults.brakeToFreeVelocityXZ)||defaults.brakeToFreeVelocityXZ<0)throw new RangeError('Invalid ballistic gravity/transition');
   const roller=WEAPONS.roller;
   if(roller?.ballistics && roller.ballistics.verticalUnits.reduce((n,u)=>n+u.count,0)!==roller.verticalDrops)throw new Error('Vertical roller unit count differs from profile');
   api=context;completion=profile.weaponsFidelityCompletion;
@@ -1094,6 +1094,7 @@ export function installWeaponsFidelity(context,profile) {
       brakeDrag:defaults.brakeDragPerFrame,brakeGravity:defaults.brakeGravity,
       freeDrag:b.freeDragPerFrame??defaults.freeDragPerFrame,
       freeGravity:w.kind==='roller'?w.flickGravity:w.referenceGravity??defaults.freeGravity,
+      freeVelocityXZ:w.kind==='shooter'?defaults.brakeToFreeVelocityXZ:null,
       freeVelocityY:defaults.brakeToFreeVelocityY}));
   }
   function initializeSplatlingFlight(p,w){
