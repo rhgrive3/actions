@@ -9,11 +9,126 @@ function once(code, before, after, label) {
   if (i < 0 || code.indexOf(before, i + before.length) >= 0) throw Error('Network replication anchor mismatch: ' + label);
   return code.slice(0,i) + after + code.slice(i+before.length);
 }
+function replaceAllExpected(code, before, after, expected, label) {
+  const count = code.split(before).length - 1;
+  if (count !== expected) throw Error('Network replication anchor mismatch: ' + label + ' (' + count + ' != ' + expected + ')');
+  return code.split(before).join(after);
+}
 export function networkIdentity() {
   return Object.fromEntries(['adapter.mjs'].map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
+  if (rel === 'src/core/ctx.js') {
+    patch('export function emit(name, payload) {\n  const set = listeners.get(name);\n  if (!set) return;\n  for (const fn of set) fn(payload);\n}', `const EVENT_VECTOR_FIELDS = Object.freeze({
+  muzzle: eventVectorField('weapon-fire-muzzle', readMuzzle, writeMuzzle),
+  dir: eventVectorField('weapon-fire-direction', readDirection, writeDirection),
+  pos: eventVectorField('weapon-impact-position', readPosition, writePosition),
+  normal: eventVectorField('weapon-impact-normal', readNormal, writeNormal),
+});
+function eventVectorField(name, get, set) {
+  return {
+    x: Symbol(name + '.x'), y: Symbol(name + '.y'), z: Symbol(name + '.z'),
+    cached: Symbol(name + '.cached'), valid: Symbol(name + '.valid'), wrapped: Symbol(name + '.wrapped'), get, set,
+    xDescriptor: { configurable: true, writable: true, value: 0 },
+    yDescriptor: { configurable: true, writable: true, value: 0 },
+    zDescriptor: { configurable: true, writable: true, value: 0 },
+    cachedDescriptor: { configurable: true, writable: true, value: undefined },
+    validDescriptor: { configurable: true, writable: true, value: false },
+    wrappedDescriptor: { configurable: true, writable: true, value: false },
+    propertyDescriptor: { configurable: true, enumerable: true, get, set },
+  };
+}
+function writeVectorSlot(payload, field, slot, value) {
+  const descriptor = field[slot + 'Descriptor'];
+  descriptor.value = value;
+  Object.defineProperty(payload, field[slot], descriptor);
+}
+function setVectorCoordinates(payload, field, value) {
+  payload[field.valid] = !!value && !!value.isVector3;
+  if (!payload[field.valid]) return;
+  writeVectorSlot(payload, field, 'x', value.x);
+  writeVectorSlot(payload, field, 'y', value.y);
+  writeVectorSlot(payload, field, 'z', value.z);
+}
+function materializeVector(payload, field) {
+  const cached = payload[field.cached];
+  if (cached !== undefined || !payload[field.valid]) return cached;
+  const vector = new THREE.Vector3(payload[field.x], payload[field.y], payload[field.z]);
+  writeVectorSlot(payload, field, 'cached', vector);
+  return vector;
+}
+function assignVector(payload, field, value) {
+  setVectorCoordinates(payload, field, value);
+  writeVectorSlot(payload, field, 'cached', value);
+}
+function readMuzzle() { return materializeVector(this, EVENT_VECTOR_FIELDS.muzzle); }
+function writeMuzzle(value) { assignVector(this, EVENT_VECTOR_FIELDS.muzzle, value); }
+function readDirection() { return materializeVector(this, EVENT_VECTOR_FIELDS.dir); }
+function writeDirection(value) { assignVector(this, EVENT_VECTOR_FIELDS.dir, value); }
+function readPosition() { return materializeVector(this, EVENT_VECTOR_FIELDS.pos); }
+function writePosition(value) { assignVector(this, EVENT_VECTOR_FIELDS.pos, value); }
+function readNormal() { return materializeVector(this, EVENT_VECTOR_FIELDS.normal); }
+function writeNormal(value) { assignVector(this, EVENT_VECTOR_FIELDS.normal, value); }
+function snapshotEventVector(payload, key) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (!field || payload[field.wrapped]) return false;
+  const value = payload[key];
+  if (!value || !value.isVector3) return false;
+  writeVectorSlot(payload, field, 'x', value.x);
+  writeVectorSlot(payload, field, 'y', value.y);
+  writeVectorSlot(payload, field, 'z', value.z);
+  writeVectorSlot(payload, field, 'valid', true);
+  Object.defineProperty(payload, key, field.propertyDescriptor);
+  writeVectorSlot(payload, field, 'wrapped', true);
+  return true;
+}
+function snapshotWeaponEvent(name, payload) {
+  if (!payload || typeof payload !== 'object') return;
+  if (name === 'weapon:fire') { snapshotEventVector(payload, 'muzzle'); snapshotEventVector(payload, 'dir'); }
+  else if (name === 'weapon:impact') { snapshotEventVector(payload, 'pos'); snapshotEventVector(payload, 'normal'); }
+}
+export function isEventVectorPayload(payload, key) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  return !!(field && payload && payload[field.valid] && (payload[field.cached] === undefined || payload[field.cached] !== null && payload[field.cached] !== undefined && payload[field.cached].isVector3));
+}
+export function hasEventVector(payload, key) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (field && payload && payload[field.valid]) return payload[field.cached] === undefined || !!payload[field.cached];
+  return !!(payload && payload[key]);
+}
+export function eventVectorComponent(payload, key, axis) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (field && payload && payload[field.valid]) {
+    const cached = payload[field.cached];
+    if (cached !== undefined) return cached ? cached[axis === 0 ? 'x' : axis === 1 ? 'y' : 'z'] : undefined;
+    return payload[axis === 0 ? field.x : axis === 1 ? field.y : field.z];
+  }
+  const value = payload && payload[key];
+  return value && value[axis === 0 ? 'x' : axis === 1 ? 'y' : 'z'];
+}
+export function copyEventVector(payload, key, target) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (field && payload && payload[field.valid]) {
+    const cached = payload[field.cached];
+    if (cached !== undefined) { if (!cached) return false; target.copy(cached); return true; }
+    target.set(payload[field.x], payload[field.y], payload[field.z]);
+    return true;
+  }
+  const value = payload && payload[key];
+  if (!value) return false;
+  target.copy(value);
+  return true;
+}
+export function emit(name, payload) {
+  const set = listeners.get(name);
+  if (!set) return;
+  snapshotWeaponEvent(name, payload);
+  for (const fn of set) fn(payload);
+}`, 'snapshot event vectors before synchronous dispatch');
+    code = "import * as THREE from 'three';\n" + code;
+    return code;
+  }
   if (rel === 'src/net/netmatch.js') {
     patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
     patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
@@ -66,6 +181,7 @@ export function adaptNetworkSource(rel, code) {
 
   _remoteSplat(victim, attacker, cause) {`, 'host-authoritative first-splat protocol');
     patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    victim.alive = false;", 'Flow observes only accepted remote splats');
+    patch("import { G, emit, on } from '../core/ctx.js'", "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js'", 'read numeric event snapshots');
     patch('const FORWARD = [', "const FORWARD = ['hit', 'hit:rejected', ",
       'authoritative hit admission feedback');
     patch('    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;',
@@ -149,6 +265,13 @@ export function adaptNetworkSource(rel, code) {
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
     patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
     patch('function packEvent(e) {', 'function packEvent(e, precise = false) {', 'hitscan precision policy');
+    patch('  for (const k in e) {\n    const v = e[k];', `  for (const k in e) {
+    if (isEventVectorPayload(e,k)) {
+      const x = eventVectorComponent(e,k,0), y = eventVectorComponent(e,k,1), z = eventVectorComponent(e,k,2);
+      o[k] = precise ? [x,y,z] : [r2(x),r2(y),r2(z)];
+      continue;
+    }
+    const v = e[k];`, 'pack immutable event vectors without materializing');
     patch('else if (v && v.isVector3) o[k] = [r2(v.x), r2(v.y), r2(v.z)];', 'else if (v && v.isVector3) o[k] = precise ? [v.x,v.y,v.z] : [r2(v.x),r2(v.y),r2(v.z)];', 'hitscan unit direction and origin');
     patch("else if (typeof v === 'number') o[k] = r3(v);", "else if (typeof v === 'number') o[k] = precise ? v : r3(v);", 'hitscan charge and length');
     patch('while (i < p.events.length && p.events[i][0] <= tr) i++;',
@@ -312,7 +435,92 @@ function firstSplatStateFor(session,cfg) {
 }
 `;
   }
+  if (rel === 'src/fx/fxHooks.js') {
+    patch("import { on } from '../core/ctx.js';", "import { on, copyEventVector, hasEventVector } from '../core/ctx.js';", 'consume vector snapshots without materialization');
+    patch('    this._sp = new THREE.Vector3();', '    this._sp = new THREE.Vector3();\n    this._eventVectorPool = []; this._eventVectorDepth = 0;', 'owned nested event scratch pool');
+    patch('  _weaponFire(e) {\n    const a = e.actor; if (!a || !e.muzzle) return;\n    const kind = (e.weapon && (e.weapon.kind || e.weapon)) || a.weapon?.kind;\n    const dir = e.dir || a.aimDir;\n    if (kind === \'blaster\') this.fx.muzzle?.(e.muzzle, dir, a.color, \'blaster\');\n    else if (kind === \'charger\') this.fx.muzzle?.(e.muzzle, dir, a.color, \'charger\');\n    else if (kind === \'roller\') this._flick(a);\n    this._bump(FIRE_KEY[kind] || \'fire:other\');\n  }', `  _borrowEventVectors() {
+    const depth = this._eventVectorDepth++;
+    let pair = this._eventVectorPool[depth];
+    if (!pair) pair = this._eventVectorPool[depth] = [new THREE.Vector3(), new THREE.Vector3()];
+    return pair;
+  }
+  _releaseEventVectors() { this._eventVectorDepth--; }
+  _weaponFire(e) {
+    const a = e.actor; if (!a || !hasEventVector(e, 'muzzle')) return;
+    const kind = (e.weapon && (e.weapon.kind || e.weapon)) || a.weapon?.kind;
+    if (kind === 'blaster' || kind === 'charger') {
+      const pair = this._borrowEventVectors();
+      try {
+        if (!copyEventVector(e, 'muzzle', pair[0])) return;
+        const dir = copyEventVector(e, 'dir', pair[1]) ? pair[1] : a.aimDir;
+        this.fx.muzzle?.(pair[0], dir, a.color, kind);
+      } finally { this._releaseEventVectors(); }
+    } else if (kind === 'roller') this._flick(a);
+    this._bump(FIRE_KEY[kind] || 'fire:other');
+  }`, 'read fire snapshots through owned scratch');
+    patch('  _impact(e) {\n    if (!e.pos || !this._near(e.pos, 32)) return;\n    const col = this.G.teamColors[e.team] || _c.set(0xffffff);\n    const n = e.normal || UP;\n    // shots / flick drops: weapons.js already bursts the splash (fx.burst) and the paint system ripples the ink —\n    // nothing is stacked on top here (no decal blots)\n    if (e.kind === \'charger\') this.fx.beamImpact?.(e.pos, n, col, 1);\n    if (e.kind === \'drop\' && !e.victim) {\n      const H = this.dropHits;\n      if (H.length >= 24) H.shift();\n      H.push({ x: e.pos.x, y: e.pos.y, z: e.pos.z, nx: n.x, ny: n.y, nz: n.z, t: this.time });\n    }\n    this._bump(IMPACT_KEY[e.kind] || \'impact:other\');\n  }', `  _impact(e) {
+    if (!hasEventVector(e, 'pos')) return;
+    const pair = this._borrowEventVectors();
+    try {
+      const pos = pair[0];
+      if (!copyEventVector(e, 'pos', pos) || !this._near(pos, 32)) return;
+      const col = this.G.teamColors[e.team] || _c.set(0xffffff);
+      const n = copyEventVector(e, 'normal', pair[1]) ? pair[1] : UP;
+      if (e.kind === 'charger') this.fx.beamImpact?.(pos, n, col, 1);
+      if (e.kind === 'drop' && !e.victim) {
+        const H = this.dropHits;
+        if (H.length >= 24) H.shift();
+        H.push({ x: pos.x, y: pos.y, z: pos.z, nx: n.x, ny: n.y, nz: n.z, t: this.time });
+      }
+      this._bump(IMPACT_KEY[e.kind] || 'impact:other');
+    } finally { this._releaseEventVectors(); }
+  }`, 'read impact snapshots through owned scratch');
+    return code;
+  }
+  if (rel === 'src/fx/screenfx.js') {
+    patch("import { on, G as CTX, clamp, damp, lerp } from '../core/ctx.js';", "import { on, G as CTX, clamp, damp, lerp, copyEventVector } from '../core/ctx.js';", 'consume impact snapshot numerically');
+    patch('const _v = new THREE.Vector3(), _v2 = new THREE.Vector3();', 'const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _impactPos = new THREE.Vector3();', 'retain lens impact scratch vector');
+    patch("    on('weapon:impact', ({ pos, team, kind }) => {\n      if (!live() || !pos || kind === 'roll') return;", "    on('weapon:impact', (e) => {\n      const { team, kind } = e;\n      if (!live() || kind === 'roll' || !copyEventVector(e, 'pos', _impactPos)) return;\n      const pos = _impactPos;", 'project impact snapshots without event vectors');
+    return code;
+  }
   if (rel === 'src/game/weapons.js') {
+    code = replaceAllExpected(code,
+      "emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75, a.pos.y + 0.02, a.pos.z + fz * 0.75).clone(), normal: a.groundN ? a.groundN.clone() : UP.clone(), team: a.team, kind: 'roll', radius: w.rollWidth / 2 });",
+      "emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75, a.pos.y + 0.02, a.pos.z + fz * 0.75), normal: a.groundN || UP, team: a.team, kind: 'roll', radius: w.rollWidth / 2 });",
+      1, 'roller impact snapshots shared scratch');
+    code = replaceAllExpected(code,
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone() });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir });",
+      3, 'pooled shooter, splatling and blaster fire payloads');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone(), hand });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir, hand });", 'dualies fire payload');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: _dir.clone() });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir: _dir });", 'blaster fire payload');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6), dir: new THREE.Vector3(fx, Math.sin(up), fz).normalize() });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6), dir: _v3.set(fx, Math.sin(up), fz).normalize() });",
+      'roller flick fire uses existing scratch vectors');
+    patch('      const end = new THREE.Vector3().copy(m).addScaledVector(dir, len);',
+      '      const end = _v3.copy(m).addScaledVector(dir, len);', 'charger endpoint reuses existing scratch');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone(), charge, len });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir, charge, len });", 'charger fire payload');
+    patch("emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal.clone() : dir.clone().negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });",
+      "emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal : _v2.copy(dir).negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });",
+      'charger impact payload');
+    patch("if (p.type !== 'blast') emit('weapon:impact', { pos: _v.clone(), normal: _v2.clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: e });",
+      "if (p.type !== 'blast') emit('weapon:impact', { pos: _v, normal: _v2, team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: e });",
+      'victim impact payload');
+    patch("if (p.type !== 'blast') emit('weapon:impact', { pos: at.clone(), normal: _v2.copy(p.vel).normalize().negate().clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: null });",
+      "if (p.type !== 'blast') emit('weapon:impact', { pos: at, normal: _v2.copy(p.vel).normalize().negate(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: null });",
+      'boss impact payload');
+    patch("if (p.type !== 'blast') emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: rad });",
+      "if (p.type !== 'blast') emit('weapon:impact', { pos: hit.point, normal: hit.normal, team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: rad });",
+      'world impact payload');
+    patch("emit('weapon:impact', { pos: c.clone(), normal: new THREE.Vector3(0, 1, 0), team: p.team, kind: 'blast', radius: w.burstRadius });",
+      "emit('weapon:impact', { pos: c, normal: UP, team: p.team, kind: 'blast', radius: w.burstRadius });",
+      'blast impact payload');
+    patch('    if (nm && !p.ghost) nm.recProj(p);',
+      '    if (nm && !p.ghost && !p._s3SloshBirthPending) nm.recProj(p);',
+      'defer pending Slosher projectile packet until birth');
     patch('  applyHit(attacker, victim, dmg, weaponId) {',
       '  applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {', 'Slosher volley identity projectile entry');
     patch('nm.sendHit(attacker, victim, dmg, weaponId)',
@@ -336,7 +544,7 @@ ${bombHit}`;
     }
     patch('    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;', '    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    let projectileFirst;', 'attack-owned first projectile');
     patch("      this._push(p);\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", "      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'capture exact volley during generation');
-    patch('weapon: w.id, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
+    patch('weapon: w.id, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
 
     patch('      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);', `      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);
       // The active attack parameters own physics. Finalize before _push records
@@ -487,6 +695,25 @@ ${bombHit}`;
     patch('    this.netLife = (this.netLife ?? 0) + 1;',
       '    this.netLife = (this.netLife ?? 0) + 1;\n    this._netLifeStartedAt = performance.now() / 1000;',
       'record recipient life start for late bomb replay');
+  }
+  if (rel === 'patches/splatoon3/runtime/weapons-fidelity.mjs') {
+    patch('api=context;completion=profile.weaponsFidelityCompletion;', 'api=context;completion=profile.weaponsFidelityCompletion;\n  const eventImpactNormal = new context.THREE.Vector3();', 'reuse fidelity impact normal scratch');
+    patch("api.emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });",
+      "api.emit('weapon:impact', { pos: hit.point, normal: hit.normal, team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });",
+      'wall drop impact payload');
+    patch("context.emit('weapon:impact',{pos:hit.point.clone(),normal:p.vel.clone().normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});",
+      "context.emit('weapon:impact',{pos:hit.point,normal:eventImpactNormal.copy(p.vel).normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});",
+      'boss impact payload');
+    return code;
+  }
+  if (rel === 'patches/splatoon3/runtime/weapons-charger-flight.mjs') {
+    patch("emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});",
+      "emit('weapon:fire',{actor,weapon:w.id,muzzle:origin,dir:direction,charge,len:distance});",
+      'charger flight fire payload');
+    patch("emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});",
+      "emit('weapon:impact',{pos:job.pos,normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});",
+      'charger flight impact payload');
+    return code;
   }
   if (rel === 'patches/local-quality/roller-visual.mjs') {
     patch('P._push=function(p){', 'P._push=function(p){\n    if (p.type === \'drop\' && p.owner?.weapon?.kind === \'roller\') p.s3Vertical = !!p.owner.weaponRunner?.s3FlickVertical;', 'capture birth mode before visual and gameplay finalization');
