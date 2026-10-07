@@ -931,7 +931,7 @@ export function rollerHitAngle(p,point) {
   const yaw=Math.atan2(dx,dz)-p.fidelitySectorYaw;
   return Math.atan2(Math.sin(yaw),Math.cos(yaw));
 }
-export function fidelityDamage(p,point) {
+export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
   const w=p.s3Weapon||p.owner.weapon;
   if(w.kind==='roller'&&w.ballistics){
     const b=w.ballistics,d=p.start.distanceTo(point),xz=Math.hypot(point.x-p.start.x,point.z-p.start.z);
@@ -939,7 +939,7 @@ export function fidelityDamage(p,point) {
     const outside=!p.s3Vertical&&hitAngle!==null&&xz>b.horizontalInsideDistance&&Math.abs(hitAngle)>radians(b.horizontalInsideDegrees);
     const bands=p.s3Vertical?w.verticalDamageBands:outside?b.horizontalOutsideDamageBands:w.flickDamageBands;
     const source=rawWeapon(w)[p.s3Vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].DamageParam;
-    const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*(p.fidelityImpactT??1);
+    const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*impactT;
     const t=clamp01((age*60-source.DamageRejectStartFrame)/(source.DamageRejectEndFrame-source.DamageRejectStartFrame));
     return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t);
   }
@@ -948,7 +948,7 @@ export function fidelityDamage(p,point) {
     const t=clamp01((fall-d.ReduceStartFallDistance)/(d.ReduceEndFallDistance-d.ReduceStartFallDistance));
     return (d.ValueMax+(d.ValueMin-d.ValueMax)*t)/10;
   }
-  const age=(p.fidelityPrevAge??p.age)+(p.age-(p.fidelityPrevAge??p.age))*(p.fidelityImpactT??1);
+  const age=(p.fidelityPrevAge??p.age)+(p.age-(p.fidelityPrevAge??p.age))*impactT;
   if(['shooter','dualies','splatling'].includes(w.kind)){
     const t=clamp01((age-w.damageReduceStart)/(w.damageReduceEnd-w.damageReduceStart));
     return w.damage+(w.damageMin-w.damage)*t;
