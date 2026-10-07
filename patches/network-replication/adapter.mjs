@@ -221,9 +221,11 @@ export function emit(name, payload) {
     patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
       groupedHit, 'Slosher volley identity owner admission');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
+    for (const a of this.byNid.values()) clearRemoteSquidroll(a);
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
     patch('  _remove(a) {\n    this.byNid.delete(a.nid);', `  _remove(a) {
+    clearRemoteSquidroll(a);
     retireNetworkGhosts(a);
     this.byNid.delete(a.nid);`, 'departed owner retirement');
 
@@ -246,6 +248,9 @@ export function emit(name, payload) {
     patch("const msg = { k: 't', ts: r3(now()), a",
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
       'owner simulation tick preserving existing sidecars');
+    patch('    const a = [];\n    for (const x of this.byNid.values()) if (!x.remote) a.push(packActor(x));',
+      '    const a = [], sq = Object.create(null);\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n    }',
+      'append optional Squid Roll presentation sidecar');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
       const points = p.physicsPoints || (p.physicsPoints = []);
@@ -253,7 +258,13 @@ export function emit(name, payload) {
     }
     // actors
     if (d.a)`, 'snapshot physics tick pair');
-    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema only in event packets');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional Roll sidecar');
+    patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
+      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const a = this.byNid.get(s[0]);',
+      'strict optional Squid Roll metadata validation');
+    patch('      const snap = unpackActor(s, d.ts);\n      snap.spCost = d.sc?.[a.nid];',
+      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.spCost = d.sc?.[a.nid];',
+      'attach validated presentation-only roll snapshot');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
@@ -286,9 +297,52 @@ export function emit(name, payload) {
     patch('while (i < p.events.length && p.events[i][0] <= tr) i++;',
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
+    patch('  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  o.spCost = a.spCost;\n  return o;',
+      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  o.spCost = a.spCost;\n  return o;',
+      'interpolate only matching owner Roll identity');
+    patch('    const S = n.cur;\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
+      '    const S = n.cur;\n    if (a.remote) {\n      const flags = S.f;\n      if (!a.alive || !(flags & F.alive) || !(flags & F.squid) || (flags & F.special) || !S.rollId) clearRemoteSquidroll(a);\n      else syncRemoteSquidroll(a, S, this.peers.get(a.owner));\n    }\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
+      'remote presentation follows accepted owner Roll snapshot');
+    patch('        a.character._netTrig?.(e[3], unpackTrig(e[4]));',
+      "        if (e[3] === 'movement_cancel' || e[3] === 'land' || e[3] === 'spawn') clearRemoteSquidroll(a, true);\n        a.character._netTrig?.(e[3], unpackTrig(e[4]));",
+      'remote cancellation event invalidates current visual Roll');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
-    patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'ownership transfer retirement');
+      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
+    patch('    const drop = mapNoBots(this.cfg.map);',
+      "    const drop = this.cfg.map === 'range' || mapNoBots(this.cfg.map);", 'Practice Range remains humans-only on disconnect');
+    patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a);\n    clearRemoteSquidroll(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
+    patch('    a.superJumpState = null; a.specialActive = null;',
+      '    a.superJumpState = null; a.specialActive = null;\n    restoreAdoptionState(this, a, adoptionTransfer);',
+      'restore authoritative actor state after ordinary runner reset');
+    {
+      const rowWithStats = 'r2(wr.lockT || 0), a.stats.specials || 0];';
+      if (code.includes(rowWithStats)) patch(rowWithStats,
+        'r2(wr.lockT || 0), a.stats.specials || 0, packAdoptionState(a)];',
+        'append tagged adoption state after existing special counter');
+      else patch('r2(wr.lockT || 0)];',
+        'r2(wr.lockT || 0), packAdoptionState(a)];',
+        'append tagged adoption state to legacy actor row');
+    }
+    patch('wz: s[19], lock: s[20] };',
+      'wz: s[19], lock: s[20], adoption: s[22] };',
+      'unpack independent adoption row slot');
+    patch('const mode = this._pathAt(buf, tr, S);',
+      'const mode = this._pathAt(buf, tr, S);\n    S.adoption = sampleAdoptionState(buf, tr, mode, peer.sim);',
+      'sample adoption state on the sender timeline');
+    patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23) continue;
+      const adoption = s.length === 23
+        ? readAdoptionState(s[22], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq)
+        : null;
+      if (s.length === 23 && !adoption) continue;
+      if (adoption) { snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence; }
+      else delete snap.adoption;
+      a.net.lastLife = snap.life;`, 'strict life/sequence-bound adoption packet');
+    patch('    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? \'flight\' : \'charge\';',
+      '    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? \'flight\' : \'charge\';\n    applyAdoptionSample(this, a, S);',
+      'restore exact remote Super Jump destination and recovery sample');
+    patch('    a.landT += dt; a.lastDamage += dt;',
+      '    a.landT += dt; a.lastDamage += dt;\n    applyAdoptionRecoveryAge(this, a, S);',
+      'retain remote elapsed damage recovery clock');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     const kitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
@@ -394,7 +448,7 @@ export function emit(name, payload) {
         break;
       }`, 'beam birth clock');
     patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
-    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
+    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    clearRemoteSquidroll(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
@@ -411,6 +465,186 @@ export function emit(name, payload) {
         break;
       }`, 'birth and terminal events');
     code += `
+const ADOPTION_STATE_TAG = 'inkwave-adoption-v1';
+const ADOPTION_AGE_MAX = 60, ADOPTION_WORLD_MAX = 100000;
+function clampAdoptionAge(value) { return Number.isFinite(value) ? Math.min(ADOPTION_AGE_MAX, Math.max(0, value)) : 0; }
+function vectorRow(value) {
+  return value?.isVector3 && [value.x, value.y, value.z].every(Number.isFinite)
+    ? [value.x, value.y, value.z] : null;
+}
+function packSuperJumpState(state) {
+  if (!state) return null;
+  const phase = state.phase === 'flight' ? 1 : state.phase === 'charge' ? 0 : -1;
+  const from = vectorRow(state.from), to = vectorRow(state.to);
+  if (phase < 0 || !from || !to) return null;
+  let targetKind = 0, targetId = -1, target = [0, 0, 0];
+  if (phase === 0 && state.target?.pos?.isVector3) {
+    const p = vectorRow(state.target.pos);
+    if (!p || !Number.isSafeInteger(state.target.nid) || state.target.nid < 0) return null;
+    targetKind = 1; targetId = state.target.nid; target = p;
+  } else if (phase === 0 && state.target?.isVector3) {
+    const p = vectorRow(state.target); if (!p) return null;
+    targetKind = 2; target = p;
+  } else if (phase === 0) return null;
+  const elapsed = Number.isFinite(state.t) ? state.t : 0;
+  const duration = Number.isFinite(state.dur) ? state.dur : 0;
+  const marker = Number.isFinite(state.marker) ? state.marker : 0;
+  if (elapsed < 0 || elapsed > 60 || duration < 0 || duration > 60 || marker < 0 || marker > 60
+    || (phase === 1 && (duration <= 0 || elapsed > duration + 1e-6))) return null;
+  return [phase, elapsed, duration, ...from, ...to, marker, state.startForm === 'kid' ? 1 : 0,
+    targetKind, targetId, ...target];
+}
+function readSuperJumpState(row, flags) {
+  const hasJump = !!(flags & (F.sjCharge | F.sjFlight));
+  if (row === null) return hasJump ? undefined : null;
+  if (!Array.isArray(row) || row.length !== 16) return undefined;
+  const [phase, elapsed, duration] = row;
+  const marker = row[9], startForm = row[10], targetKind = row[11], targetId = row[12];
+  const values = [...row.slice(3, 9), marker, ...row.slice(13, 16)];
+  if (!Number.isSafeInteger(phase) || (phase !== 0 && phase !== 1)
+    || !Number.isFinite(elapsed) || elapsed < 0 || elapsed > 60
+    || !Number.isFinite(duration) || duration < 0 || duration > 60
+    || !Number.isFinite(marker) || marker < 0 || marker > 60
+    || !Number.isSafeInteger(startForm) || (startForm !== 0 && startForm !== 1)
+    || !Number.isSafeInteger(targetKind) || targetKind < 0 || targetKind > 2
+    || !Number.isSafeInteger(targetId) || targetId < -1
+    || !values.every(value => Number.isFinite(value) && Math.abs(value) <= ADOPTION_WORLD_MAX)) return undefined;
+  if (phase === 1 && (duration <= 0 || elapsed > duration + 1e-6 || targetKind !== 0 || targetId !== -1)) return undefined;
+  if (phase === 0 && (duration !== 0 || targetKind === 0 && targetId !== -1
+    || targetKind === 1 && targetId < 0 || targetKind === 2 && targetId !== -1)) return undefined;
+  if ((phase === 1) !== !!(flags & F.sjFlight) || (phase === 0) !== !!(flags & F.sjCharge)) return undefined;
+  return { phase: phase ? 'flight' : 'charge', elapsed, duration,
+    from: row.slice(3, 6), to: row.slice(6, 9), marker, startForm: startForm ? 'kid' : 'squid',
+    targetKind, targetId, target: row.slice(13, 16) };
+}
+function validLethalState(row, life, flags, hp) {
+  if (row === null) return (flags & F.alive) && hp <= 0 ? undefined : null;
+  if (!Array.isArray(row) || row.length !== 5) return undefined;
+  const [hitLife, sequence, attackerNid, cause, punisher] = row;
+  if (!(flags & F.alive) || hp > 0 || hitLife !== life || !Number.isSafeInteger(hitLife) || hitLife < 0
+    || !Number.isSafeInteger(sequence) || sequence < 1 || !Number.isSafeInteger(attackerNid) || attackerNid < -1
+    || typeof punisher !== 'boolean' || typeof cause !== 'string' || !cause.length || cause.length > 48 || /[\\u0000-\\u001f\\u007f]/.test(cause)) return undefined;
+  return [hitLife, sequence, attackerNid, cause, punisher];
+}
+function packAdoptionState(actor) {
+  const life = Number.isSafeInteger(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
+  const previous = Number.isSafeInteger(actor._adoptionSequence) && actor._adoptionSequence >= 0 ? actor._adoptionSequence : 0;
+  const sequence = previous >= Number.MAX_SAFE_INTEGER ? Number.MAX_SAFE_INTEGER : previous + 1;
+  actor._adoptionSequence = sequence;
+  const tick = Number.isFinite(G.time) ? Math.max(0, Math.round(G.time * 60)) : 0;
+  const lethal = exportPendingLethal(actor);
+  const spin = exportSplatlingReservation(actor.weaponRunner);
+  return [ADOPTION_STATE_TAG, life, sequence, tick, clampAdoptionAge(actor.lastDamage),
+    packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin];
+}
+function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
+  if (!Array.isArray(row) || row.length !== 8 || row[0] !== ADOPTION_STATE_TAG) return null;
+  const [tag, rowLife, sequence, tick, recoveryAge, jumpRow, lethalRow, spinRow] = row;
+  if (!Number.isSafeInteger(rowLife) || rowLife < 0 || rowLife !== life
+    || !Number.isSafeInteger(sequence) || sequence < 1 || sequence <= (previousSequence || 0)
+    || !Number.isSafeInteger(tick) || tick < 0 || !Number.isFinite(recoveryAge)
+    || recoveryAge < 0 || recoveryAge > ADOPTION_AGE_MAX) return null;
+  const jump = readSuperJumpState(jumpRow, flags);
+  if (jump === undefined) return null;
+  const lethal = validLethalState(lethalRow, rowLife, flags, hp);
+  if (lethal === undefined) return null;
+  const streaming = !!(flags & F.streaming);
+  if (spinRow === null ? streaming : (!streaming || weaponKind !== 'splatling' || !isValidSplatlingReservation(spinRow, PLAYER.inkMax))) return null;
+  return { life: rowLife, sequence, tick, recoveryAge, jump, lethal, spin: spinRow === null ? null : spinRow.slice() };
+}
+function copyAdoptionState(state) {
+  if (!state) return null;
+  return { ...state, jump: state.jump ? { ...state.jump, from: state.jump.from.slice(), to: state.jump.to.slice(), target: state.jump.target.slice() } : null,
+    lethal: state.lethal ? state.lethal.slice() : null, spin: state.spin ? state.spin.slice() : null };
+}
+function sampleAdoptionState(buf, t, mode, ownerTick) {
+  if (!buf?.length) return null;
+  let left = buf[buf.length - 1], right = null;
+  for (let index = 1; index < buf.length; index++) if (t <= buf[index].t) { left = buf[index - 1]; right = buf[index]; break; }
+  const a = left?.adoption;
+  if (!a) return null;
+  if (!right) {
+    const out = copyAdoptionState(a);
+    const dt = Number.isFinite(ownerTick) && ownerTick > a.tick ? (ownerTick - a.tick) / 60 : 0;
+    out.tick = a.tick + dt * 60; out.recoveryAge = clampAdoptionAge(a.recoveryAge + dt);
+    if (out.jump?.phase === 'flight') out.jump.elapsed = Math.min(out.jump.duration, out.jump.elapsed + dt);
+    return out;
+  }
+  const b = right.adoption;
+  if (!b || b.life !== a.life) return copyAdoptionState(a);
+  const span = Math.max(1e-9, right.t - left.t), u = Math.max(0, Math.min(1, (t - left.t) / span));
+  if (u >= 1) return copyAdoptionState(b);
+  const out = copyAdoptionState(a);
+  out.sequence = a.sequence;
+  out.tick = a.tick + (b.tick - a.tick) * u;
+  out.recoveryAge = clampAdoptionAge(a.recoveryAge + (b.recoveryAge - a.recoveryAge) * u);
+  if (a.jump && b.jump && a.jump.phase === b.jump.phase) {
+    out.jump.elapsed = a.jump.elapsed + (b.jump.elapsed - a.jump.elapsed) * u;
+    out.jump.duration = a.jump.duration + (b.jump.duration - a.jump.duration) * u;
+  }
+  return out;
+}
+function superJumpActorState(match, actor, data) {
+  if (!data) return null;
+  let target = null;
+  if (data.phase === 'charge') target = data.targetKind === 1 ? (match.byNid.get(data.targetId) || new THREE.Vector3(...data.target))
+    : data.targetKind === 2 ? new THREE.Vector3(...data.target) : null;
+  return { phase: data.phase, t: data.elapsed, dur: data.duration, from: new THREE.Vector3(...data.from),
+    to: new THREE.Vector3(...data.to), marker: data.marker, startForm: data.startForm, target, wallSupport: null };
+}
+function superJumpPosition(state) {
+  const k = Math.max(0, Math.min(1, state.t / state.dur));
+  const ease = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+  const apex = 11 + state.from.distanceTo(state.to) * .08, vertical = Math.pow(k, .86);
+  return new THREE.Vector3().lerpVectors(state.from, state.to, ease).setY(
+    state.from.y + (state.to.y - state.from.y) * ease + Math.sin(Math.PI * vertical) * apex);
+}
+function applyAdoptionSample(match, actor, sample) {
+  const state = sample.adoption;
+  if (!state || state.life !== actor.net.lastLife) return;
+  if (!state.jump) { actor.net.sjTo = null; return; }
+  actor.superJumpState = superJumpActorState(match, actor, state.jump);
+  if (state.jump.phase === 'flight') {
+    actor.net.sjTo = actor.superJumpState.to.clone();
+    actor.pos.copy(superJumpPosition(actor.superJumpState));
+  } else actor.net.sjTo = null;
+}
+function applyAdoptionRecoveryAge(match, actor, sample) {
+  const state = sample.adoption;
+  if (!state || state.life !== actor.net.lastLife) return;
+  const peer = match.peers.get(actor.owner), ahead = Number.isFinite(peer?.sim) && peer.sim > state.tick ? (peer.sim - state.tick) / 60 : 0;
+  actor.lastDamage = clampAdoptionAge(state.recoveryAge + ahead);
+}
+function latestAdoptionTransfer(actor) {
+  const latest = actor.net?.buf?.at(-1), state = latest?.adoption;
+  if (!state || state.life !== actor.net.lastLife) return null;
+  const sampled = actor.net.cur?.adoption;
+  return { latest: state, current: sampled?.life === state.life ? sampled : state, hp: latest.hp };
+}
+function restoreAdoptionState(match, actor, transfer) {
+  if (!transfer) return;
+  const latest = transfer.latest, current = transfer.current;
+  const life = actor.net?.lastLife ?? actor.netLife ?? 0;
+  if (latest.life !== life) return;
+  actor._adoptionSequence = Math.max(Number.isSafeInteger(actor._adoptionSequence) ? actor._adoptionSequence : 0, latest.sequence);
+  actor.net._adoptionSeq = Math.max(Number.isSafeInteger(actor.net._adoptionSeq) ? actor.net._adoptionSeq : 0, latest.sequence);
+  actor.lastDamage = clampAdoptionAge(current.recoveryAge);
+  if (current.jump) {
+    let jump = current.jump;
+    if (latest.jump?.phase === 'flight' && jump.phase !== 'flight') {
+      jump = { ...latest.jump, from: vectorRow(actor.pos), elapsed: 0,
+        duration: Math.max(1 / 60, latest.jump.duration - latest.jump.elapsed) };
+    }
+    actor.superJumpState = superJumpActorState(match, actor, jump);
+    if (actor.superJumpState.phase === 'flight') actor.net.sjTo = actor.superJumpState.to.clone();
+  }
+  if (latest.lethal) {
+    if (Number.isFinite(transfer.hp) && transfer.hp <= 0) actor.hp = transfer.hp;
+    const attackerNid = latest.lethal[2], attacker = attackerNid < 0 ? null : match.byNid.get(attackerNid);
+    if (attackerNid < 0 || attacker) restorePendingLethal(actor, latest.lethal, attacker);
+  }
+  if (latest.spin) refundSplatlingReservation(actor.weaponRunner, latest.spin, latest.life, latest.sequence, PLAYER.inkMax);
+}
 function stormSnapshotAllows(actor, proof, from) {
   const latest = actor?.net?.buf?.at(-1);
   return !!(proof && actor?.alive && actor.remote && actor.owner === from && proof.owner === from
@@ -435,6 +669,65 @@ function retireNetworkGhosts(owner = null) {
   for (let i = P.clouds.length-1; i >= 0; i--) if (P.clouds[i].ghost && owns(P.clouds[i])) { P._releaseCloud(P.clouds[i],.3); P.clouds.splice(i,1); }
   for (let i = P.beams.length-1; i >= 0; i--) { const b = P.beams[i]; if (b._netPeer && (!owner || b._netOwner === owner)) { b.mesh.visible = false; P.beamPool.push(b.mesh); P.beams.splice(i,1); } }
   for (const [a,mesh] of P.sights) if (a.remote && (!owner || a === owner)) { P.scene.remove(mesh); mesh.material.dispose(); P.sights.delete(a); }
+}
+const SQUIDROLL_ROW_TAG = 's3roll-v1';
+const outgoingSquidrolls = new WeakMap();
+function packSquidrollSnapshot(a) {
+  const action = a.s3?.actions?.roll;
+  const previous = outgoingSquidrolls.get(a);
+  const inactive = () => {
+    if (!previous?.action) return null;
+    previous.action = null;
+    return [SQUIDROLL_ROW_TAG, 0, 0, 0, 0];
+  };
+  if (!action || !a.alive || a.form !== 'squid' || a.specialActive || a.superJumpState
+    || !Number.isFinite(action.time) || action.time <= 0 || action.time > 0.5
+    || !Number.isFinite(action.vx) || !Number.isFinite(action.vz)
+    || Math.hypot(action.vx, action.vz) <= 1e-6 || Math.hypot(action.vx, action.vz) > 40) return inactive();
+  let state = previous;
+  if (!state || state.action !== action) {
+    let id = (state?.id || 0) + 1;
+    if (id > 0x7fffffff) id = 1;
+    state = { action, id };
+    outgoingSquidrolls.set(a, state);
+  }
+  return [SQUIDROLL_ROW_TAG, state.id, action.time, action.vx, action.vz];
+}
+function readSquidrollSnapshot(meta) {
+  if (meta == null) return null; // legacy packets carry no optional presentation sidecar
+  if (!Array.isArray(meta) || meta.length !== 5 || meta[0] !== SQUIDROLL_ROW_TAG
+    || !Number.isSafeInteger(meta[1]) || meta[1] < 0 || meta[1] > 0x7fffffff
+    || !Number.isFinite(meta[2]) || meta[2] < 0 || meta[2] > 0.5
+    || !Number.isFinite(meta[3]) || !Number.isFinite(meta[4])
+    || Math.hypot(meta[3], meta[4]) > 40) return false;
+  if (meta[1] === 0) return meta[2] === 0 && meta[3] === 0 && meta[4] === 0 ? null : false;
+  if (meta[2] <= 0 || Math.hypot(meta[3], meta[4]) <= 1e-6) return false;
+  return { id: meta[1], remaining: meta[2], vx: meta[3], vz: meta[4] };
+}
+function clearRemoteSquidroll(actor, blockCurrent = false) {
+  if (!actor) return;
+  if (blockCurrent) {
+    const id = actor.remoteSquidrollVisual?.id ?? actor.net?.cur?.rollId;
+    if (id) actor._remoteSquidrollBlocked = { owner: actor.owner, id };
+  } else actor._remoteSquidrollBlocked = null;
+  actor.remoteSquidrollVisual = null;
+}
+function syncRemoteSquidroll(actor, sample, peer) {
+  const id = sample.rollId;
+  const blocked = actor._remoteSquidrollBlocked;
+  if (blocked?.owner === actor.owner && blocked.id === id) { actor.remoteSquidrollVisual = null; return; }
+  if (blocked) actor._remoteSquidrollBlocked = null;
+  const elapsed = Number.isFinite(peer?.tr) ? Math.max(0, peer.tr - sample.t) : 0;
+  const remaining = Math.max(0, sample.rollRemaining - elapsed);
+  if (!remaining || remaining > 0.5) { clearRemoteSquidroll(actor); return; }
+  let visual = actor.remoteSquidrollVisual;
+  if (!visual || visual.id !== id || visual.owner !== actor.owner) {
+    visual = actor.remoteSquidrollVisual = { remotePresentation: true, id, owner: actor.owner,
+      remaining, vx: sample.rollVx, vz: sample.rollVz };
+  } else {
+    visual.remaining = Math.min(visual.remaining, remaining);
+    visual.vx = sample.rollVx; visual.vz = sample.rollVz;
+  }
 }
 const firstSplatSessions = new WeakMap();
 function firstSplatStateFor(session,cfg) {
