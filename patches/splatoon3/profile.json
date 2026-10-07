@@ -299,6 +299,10 @@
       "damageHead": 70,
       "damageTail": 50,
       "range": 14.5,
+      "reticleRange": {
+        "ground": 14.24,
+        "air": 13.67
+      },
       "drops": 9,
       "splashDamage": 0,
       "shotGuide": {

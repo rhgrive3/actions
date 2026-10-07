@@ -183,3 +183,42 @@ test('negative control: main\'s composition reports inRange=true at charge 0 for
   const fixed = await fixedBoot();
   assert.equal(fixed.inRange(fixed.make('charger'), 0, mid), false);
 });
+
+// #937: Slosher's crosshair in-range threshold is state-dependent (S3: ~14.24 grounded / ~13.67 airborne). HUD classifier only.
+test('#937 Slosher reticle range is shorter airborne than grounded', async () => {
+  const f = await fixedBoot();
+  const a = f.make('slosher'), r = a.weapon.reticleRange;
+  assert.deepEqual(r, { ground: 14.24, air: 13.67 });
+  assert.ok(r.air < r.ground);
+  const at = (grounded, planar) => { a.grounded = grounded; return f.inRange(a, 0, planar); };
+  // Clearly inside / outside both thresholds.
+  for (const g of [true, false]) {
+    assert.equal(at(g, 10), true, `inside both (grounded ${g})`);
+    assert.equal(at(g, 20), false, `outside both (grounded ${g})`);
+  }
+  // Exact edges keep the existing +0.5 tolerance, per state.
+  assert.equal(at(true, r.ground + .5 - 1e-6), true);
+  assert.equal(at(true, r.ground + .5 + 1e-6), false);
+  assert.equal(at(false, r.air + .5 - 1e-6), true);
+  assert.equal(at(false, r.air + .5 + 1e-6), false);
+  // A target in the separation band is in range on the ground and out of range in the air without moving.
+  const band = (r.air + r.ground) / 2 + .5;
+  assert.equal(at(true, band), true, 'band target in range while grounded');
+  assert.equal(at(false, band), false, 'same target out of range while airborne');
+  assert.equal(at(true, band), true, 'landing restores the grounded threshold');
+});
+
+test('#937 airborne reticle range is scoped to Slosher and leaves projectile/weapon range data untouched', async () => {
+  const f = await fixedBoot();
+  const s = f.make('slosher');
+  assert.equal(s.weapon.range, 14.5, 'projectile/bot/aim-assist range is unchanged');
+  for (const id of ['shooter', 'roller', 'blaster']) {
+    const a = f.make(id), r = id === 'roller' ? 6 : (a.weapon.range || 12);
+    assert.equal(a.weapon.reticleRange, undefined, id);
+    for (const grounded of [true, false]) {
+      a.grounded = grounded;
+      assert.equal(f.inRange(a, 0, r + .5 - 1e-6), true, `${id} grounded ${grounded}`);
+      assert.equal(f.inRange(a, 0, r + .5 + 1e-6), false, `${id} grounded ${grounded}`);
+    }
+  }
+});
