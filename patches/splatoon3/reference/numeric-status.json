@@ -94,6 +94,31 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "player.s3HumanoidHurtRadius": {
+    "value": 0.35,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "player.s3HumanoidHurtHeight": {
+    "value": 1.65,
+    "status": "calibration or derived value; see reference raw table and unverifified list",
+    "binding": null
+  },
+  "player.s3TerrainDistanceScale": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "player.s3HumanoidTerrainRadiusRaw": {
+    "value": 0.35,
+    "status": "calibration or derived value; see reference raw table and unverifified list",
+    "binding": null
+  },
+  "player.s3SwimTerrainRadiusRaw": {
+    "value": 0.675,
+    "status": "calibration or derived value; see reference raw table and unverifified list",
+    "binding": null
+  },
   "weapons.shooter.inkPerShot": {
     "value": 0.9199999999999999,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -2582,6 +2607,11 @@
     "binding": null
   },
   "flow.progress.environmentDeathPenalty": {
+    "value": 10,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.progress.firstSplatBonus": {
     "value": 10,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
