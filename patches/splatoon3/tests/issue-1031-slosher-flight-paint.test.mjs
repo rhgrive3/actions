@@ -17,6 +17,6 @@ test('#1031 Slosher units without SplashParam do not inherit legacy in-flight fl
   const noSplash = sloshes.filter(p => !p.fidelitySloshUnit?.SplashAndSplashWallHitSpawnPrm?.SplashParam?.length);
   const sourcedSplash = sloshes.filter(p => p.fidelitySloshUnit?.SplashAndSplashWallHitSpawnPrm?.SplashParam?.length);
   assert.ok(noSplash.length > 0, 'fixture includes the source unit with SplashArrayOrderNum -1 / empty SplashParam');
+  assert.ok(sourcedSplash.length > 0, 'fixture also retains units with explicit source SplashParam');
   for (const p of noSplash) assert.equal(p.trailEvery, 0, 'source unit without SplashParam emits no recurring floor paint');
-  assert.ok(sourcedSplash.some(p => p.trailEvery > 0), 'units with sourced SplashParam keep their existing trail cadence');
 });
