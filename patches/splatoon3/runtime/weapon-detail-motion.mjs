@@ -142,7 +142,7 @@ export function weaponDetailMotionSnapshot(ch) {
     chargerReleaseAge: m?.release ?? null, gripCorrection: m?.gripCorrection ?? 0, pump: w?.pump || 0,
     blasterMechAge: m?.mech ?? null });
 }
-export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles, NetMatch, THREE, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }) {
+export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles, NetMatch, G, THREE, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }) {
   if (!Character || !WeaponRunner || !Projectiles || !NetMatch || !THREE || !C || !Number.isInteger(T?.T_SLOSH)) throw Error('Weapon detail motion requires actual Character, WeaponRunner, Projectiles, NetMatch, Three, channels and slosh timer');
   if (!Object.hasOwn(Projectiles.prototype, PROJECTILE_SHOT_INSTALLED)) {
     Object.defineProperty(Projectiles.prototype, PROJECTILE_SHOT_INSTALLED, { value: true });
@@ -178,13 +178,21 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
       const state = remoteNetState(this), actorKey = `${String(from)}\u001f${String(e[2])}`;
       const time = Number(e[0]);
       if (e[1] === 'p' && e[3] === 'blast') {
+        const projectiles = G.projectiles;
+        const before = projectiles?.list?.length || 0;
+        const result = play.call(this, from, e, ...args);
+        // Only a ghost actually admitted by the production owner/sequence/ID
+        // gates is evidence. Rejected packets must not authorize a later trigger.
+        const admitted = projectiles?.list?.slice(before).some(p =>
+          p.ghost && p.owner === actor && p.type === 'blast');
+        if (!admitted) return result;
         const key = `${actorKey}\u001f${String(e[0])}\u001f${JSON.stringify(e.slice(3))}`;
-        if (!boundedRemember(state.projectiles, state.projectileOrder, key)) return;
+        if (!boundedRemember(state.projectiles, state.projectileOrder, key)) return result;
         const queue = state.pending.get(actorKey) || [];
         queue.push({ time, key });
         if (queue.length > 16) queue.shift();
         state.pending.set(actorKey, queue);
-        return play.call(this, from, e, ...args);
+        return result;
       }
       if (e[1] === 'tr' && e[3] === 'shoot') {
         const key = `${actorKey}\u001f${String(e[0])}\u001f${JSON.stringify(e[4] ?? null)}`;

@@ -5,6 +5,13 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
+const adaptProduction = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
+  adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 import { splatlingMotorStep, bucketDrain, installWeaponDetailMotion as installFromAnotherRealm,
   weaponDetailMotionSnapshot as snapshotFromAnotherRealm } from '../runtime/weapon-detail-motion.mjs';
 import { BLASTER_MECHANISM } from '../runtime/blaster-mechanism.mjs';
@@ -16,7 +23,7 @@ let cached;
 // installers below may verify guards, but cannot repair a missing installation.
 async function production() {
   if (cached) return cached;
-  const context = vm.createContext({ console, performance, URL }), modules = new Map();
+  const context = vm.createContext({ console, performance, URL, innerWidth: 1280, innerHeight: 720 }), modules = new Map();
   const load = requested => {
     let file = requested.startsWith(path.join(SRC, 'patches') + path.sep)
       ? path.join(ROOT, path.relative(SRC, requested)) : requested;
@@ -28,7 +35,7 @@ async function production() {
     const prior = baseline && file.startsWith(path.join(ROOT, 'patches/splatoon3/runtime') + path.sep)
       ? path.join(fs.realpathSync(baseline), path.basename(file)) : null;
     const source = fs.readFileSync(prior && fs.existsSync(prior) ? prior : file, 'utf8');
-    const m = new vm.SourceTextModule(file.startsWith(SRC + path.sep) ? adaptSource(path.relative(SRC, file), source) : source,
+    const m = new vm.SourceTextModule(adaptProduction(file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file), source),
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, m); return m;
   };
@@ -743,7 +750,7 @@ test('actual emitted Blaster shot replays the identical mechanism cycle on a rem
 
     remote = rig(api, 'blaster', true, { nativeProjectiles: true });
     const remoteProj = G.projectiles;
-    remote.a.owner = 'peer'; remote.a.nid = 0; // the same shooter seen by another client
+    remote.a.owner = 'me'; remote.a.nid = 0; // the same shooter seen by another client
     const nmRemote = new api.NetMatch(session('them', 'them'), { map: 'map', difficulty: 'normal' });
     nmRemote.byNid.set(0, remote.a); nmRemote._setupActor(remote.a); // installs _netTrig
     nmRemote._play('me', [performance.now() / 1000, 'tr', 0, 'shoot', null]);
@@ -763,6 +770,7 @@ test('actual emitted Blaster shot replays the identical mechanism cycle on a rem
         assert.equal(JSON.stringify(emitted.map(ev => ev[1])), JSON.stringify(['p', 'tr']),
           'projectile birth precedes its matching trigger in NetMatch');
       }
+      G.projectiles = remoteProj;
       for (const ev of emitted) nmRemote._play('me', ev); // production remote replay path for the same frame
       G.actors = [remote.a]; G.projectiles = remoteProj;
       remote.step(1 / 60);
