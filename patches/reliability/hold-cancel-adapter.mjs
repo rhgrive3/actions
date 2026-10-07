@@ -21,7 +21,7 @@ export function adaptHoldCancel(rel, code) {
       `  // A cancelled hold drops its charge / bomb aim; a hold that is held again this tick is not cancelled.
   _cancelHolds(inp, it) {
     const fire = !it.fire && !!inp.holdCancelled?.('fire'), sub = !it.sub && !!inp.holdCancelled?.('sub');
-    if (fire || sub) this.a.weaponRunner.cancelHold(fire, sub);
+    if (fire || sub) this.a.weaponRunner?.cancelHold?.(fire, sub);
   }
 
   // Best enemy near the crosshair for aim assist`, 'cancelled hold owner');
