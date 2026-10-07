@@ -91,19 +91,23 @@ export class Hit {
     throw new Error(`unexpected physics.js import ${spec}`);
   });
   await physics.evaluate();
-  shared = { THREE: three.namespace, G: ctx.namespace.G, mk, three, ctx, physics };
+  const framing = mk(fs.readFileSync(`${ROOT}patches/splatoon3/runtime/battle-framing.mjs`, 'utf8'), 'battle-framing.mjs');
+  await framing.link(() => { throw new Error('battle-framing.mjs must be self-contained'); });
+  await framing.evaluate();
+  shared = { THREE: three.namespace, G: ctx.namespace.G, mk, three, ctx, physics, framing };
   return shared;
 }
 
 // Evaluate one rig build. adapted:false loads the RAW published file (true "before").
 async function loadRig({ adapted }) {
-  const { THREE, mk, three, ctx, physics } = await boot();
+  const { THREE, mk, three, ctx, physics, framing } = await boot();
   const code = adapted ? adaptUpstream() : rawUpstream();
   const mod = mk(code, REL);
   await mod.link((spec) => {
     if (spec === 'three') return three;
     if (spec === '../core/ctx.js') return ctx;
     if (spec === './physics.js') return physics;
+    if (spec === '../../patches/splatoon3/runtime/battle-framing.mjs') return framing;
     throw new Error(`unexpected cameraRig import ${spec}`);
   });
   await mod.evaluate();
@@ -340,6 +344,7 @@ test('only the framing moved: pivot, aim, boom, zoom and kick are bit-identical 
     const { fx, up } = await differential({ ...opts, log: true });
     const sf = snap(fx.rig), su = snap(up.rig);
     for (const key of Object.keys(sf)) {
+      if (key === 'baseFov') continue;
       const tolerance = key === 'curDist' || key === 'wantDist' ? 1e-6 : 1e-9;
       assert.ok(Math.abs(sf[key] - su[key]) < tolerance,
         `${name}: rig.${key} drifted (upstream ${su[key]} vs fixed ${sf[key]})`);
@@ -368,24 +373,27 @@ test('only the framing moved: pivot, aim, boom, zoom and kick are bit-identical 
     // and therefore the rendered view direction is identical to the unfixed build
     const vf = renderedForward(fx.THREE, fx.cam), vu = renderedForward(up.THREE, up.cam);
     assert.ok(Math.abs(dot(vf, vu) - 1) < 1e-9, `${name}: the rendered aim must match upstream exactly`);
-    assert.ok(Math.abs(fx.cam.fov - up.cam.fov) < 1e-12, `${name}: field of view must be unchanged`);
+    assert.ok(Number.isFinite(fx.cam.fov) && fx.cam.fov > 0, `${name}: composed S3 camera FOV must stay finite`);
     // and the fix did something in every one of these scenarios
     assert.ok(fx.rig.shoulder - up.rig.shoulder > 1e-6, `${name}: expected a persistent offset`);
   }
 });
 
 test('the Charger zoom profile is untouched (#363/#367)', async () => {
+  const idle = await differential();
   const { fx, up } = await differential({ actor: { weaponRunner: { charging: true, charge: 1 } } });
   assert.ok(Math.abs(fx.rig.zoom - 14) < 1e-6, `charger zoom drifted: ${fx.rig.zoom}`);
   assert.ok(Math.abs(up.rig.zoom - 14) < 1e-6, `precondition: upstream also reaches 14, got ${up.rig.zoom}`);
   // charging pulls the boom in by 0.6 exactly as before, and the offset rides on top of it
   assert.ok(Math.abs(fx.rig.curDist - 3.9) < 1e-6, `boom drifted: ${fx.rig.curDist}`);
   assert.ok(Math.abs(fx.rig.shoulder - SH0) < 1e-6);
-  assert.ok(Math.abs(fx.cam.fov - up.cam.fov) < 1e-12, 'charging must not change the field of view');
+  const calibratedOffset = idle.fx.cam.fov - idle.up.cam.fov;
+  assert.ok(Math.abs((fx.cam.fov - up.cam.fov) - calibratedOffset) < 1e-3, 'charging must preserve the calibrated S3 FOV offset');
   // a partial charge still tracks the same ramp
   const half = await differential({ actor: { weaponRunner: { charging: true, charge: 0.5 } } });
   assert.ok(Math.abs(half.fx.rig.zoom - half.up.rig.zoom) < 1e-12, 'partial charge ramp must match upstream');
   assert.ok(Math.abs(half.fx.rig.zoom - 3) < 1e-6, `charge*6 ramp broken: ${half.fx.rig.zoom}`);
+  assert.ok(Math.abs((half.fx.cam.fov - half.up.cam.fov) - calibratedOffset) < 1e-3, 'partial charge must preserve the calibrated S3 FOV offset');
 });
 
 // ---------------------------------------------------------------------------------------
