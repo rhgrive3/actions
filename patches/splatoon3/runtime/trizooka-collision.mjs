@@ -42,18 +42,18 @@ export function isKitProjectile(p) {
   return !!p && p.wid === TRIZOOKA_WID;
 }
 
-// A ghost keeps the kit identity for presentation but is never authoritative,
-// and neither is a side lobe: only the one damage carrier of a volley is.
+// #1057: all three locally-fired Trizooka globs are authoritative. A ghost
+// keeps kit identity for presentation but is never allowed to damage or paint.
 export function hasAuthority(p) {
   return isKitProjectile(p) && !p.ghost && p.damageOwner === true;
 }
 
-// Only the damage carrier may damage, paint or turf. Side lobes are visual only.
+// Every local glob is a damage carrier; replay ghosts are not.
 export function isDamageCarrier(p) {
   return hasAuthority(p);
 }
 
-// Only the carrier may lay ink or credit turf, and never a ghost.
+// Every authoritative local glob may lay ink/credit turf; never a ghost.
 export function hasPaintAuthority(p) {
   return hasAuthority(p);
 }
@@ -379,8 +379,8 @@ export function kitTrizookaWorldSweep(system, p, out, physics) {
 // A shared PURE helper for the three native projectile paint-credit sites.
 //
 // The gauge policy after a special ends is UNKNOWN, so the ordinary native
-// `addTurf` semantics are preserved exactly. What this refuses is authority: a
-// ghost or a side lobe lays no ink and credits no turf.
+// `addTurf` semantics are preserved exactly. What this refuses is authority:
+// replay ghosts lay no ink; all three local #1057 globs do.
 //
 // It is PURE. It used to call `owner.addTurf(area)` itself, and the native line
 // still called `owner.addTurf(kitPaintCredit(...))` around it, so every
@@ -412,13 +412,10 @@ export function kitPaintCredit(p, area) {
   return area;
 }
 
-// The shared volley ledger (`p.vol.hits`) is the native one-hit-per-victim
-// dedupe. Native appends the victim even when the projectile deals no damage, so
-// a visual side lobe that is stepped BEFORE the carrier marks the victim as
-// already hit and silently suppresses the carrier's real hit; the order of the
-// lobes in the one native list then decides whether the volley damages anything.
-// Only the carrier may write this ledger, for any projectile.
-// Ordinary drop / slosh rounds keep the native shared-vol semantics untouched.
+// #1057 gives each Trizooka glob its own native `p.vol.hits` record. This
+// authority gate therefore prevents replay ghosts from writing hit state while
+// allowing every local glob to independently hit the same victim. Ordinary
+// drop/slosh rounds keep their native shared-vol semantics untouched.
 export function kitVolleyHitAuthority(p) {
   if (!isKitProjectile(p)) return true;
   return hasAuthority(p);
