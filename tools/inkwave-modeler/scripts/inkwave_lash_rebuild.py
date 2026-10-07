@@ -332,6 +332,24 @@ def small_parts(m, min_count):
     return out
 
 
+def sheet_ink(shape, origin, k, cfg):
+    """The front reference's black, sampled straight from the sheet with bilinear filtering at k samples per
+    design px (its anti-aliased edge gives a smooth outline), instead of the old dilated, bumpy ink mask:
+    dark = max channel under cfg['dark'] (0..1)."""
+    img = bpy.data.images.load(str(er.ROOT / 'docs/face-multiview-fit/refs/sheet_5view.png'), check_existing=True)
+    W, H = img.size
+    px = np.empty(W * H * 4, np.float32)
+    img.pixels.foreach_get(px)
+    a = px.reshape(H, W, 4)[::-1, :, :3].max(-1)            # rows top -> bottom
+    ys = origin[1] + (np.arange(shape[0]) + 0.5) / k + 230.0
+    xs = origin[0] + (np.arange(shape[1]) + 0.5) / k + 60.0
+    x0 = np.clip(np.floor(xs - 0.5).astype(int), 0, W - 2); fx = np.clip(xs - 0.5 - x0, 0, 1)
+    y0 = np.clip(np.floor(ys - 0.5).astype(int), 0, H - 2); fy = np.clip(ys - 0.5 - y0, 0, 1)
+    v = (a[y0][:, x0] * (1 - fx) + a[y0][:, x0 + 1] * fx) * (1 - fy)[:, None] + \
+        (a[y0 + 1][:, x0] * (1 - fx) + a[y0 + 1][:, x0 + 1] * fx) * fy[:, None]
+    return v < cfg['dark']
+
+
 def build_side_corner(design, tree, views, side, black):
     """The outer eye corner seen from the side: the reference fills the triangle from the wing down to the
     white's outer corner with black.  That skin (the outer corner fold) faces sideways, so it hardly shows from
@@ -343,6 +361,8 @@ def build_side_corner(design, tree, views, side, black):
     front_pos = np.array(cam.matrix_world.translation)
     fi = np.load(er.ROOT / 'analysis/lash_rebuild/fit/front_ink.npz')
     ink, ink_o, ink_k = fi['mask'], fi['origin'], float(fi['scale'])
+    if design.get('front_ink_from_sheet'):
+        ink = sheet_ink(ink.shape, ink_o, ink_k, design['front_ink_from_sheet'])
 
     def front_black(p, use_ref=True):
         """Seen from the front, this pixel already shows the liner / lower line (black), or (use_ref) lies inside
