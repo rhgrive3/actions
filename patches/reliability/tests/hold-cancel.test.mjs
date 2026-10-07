@@ -1,4 +1,5 @@
-// #936: a platform cancel (touch pointercancel / premature lostpointercapture) ends a hold without a deliberate release, so Charger / Splatling charges and SUB aim must be dropped, not released.
+// #936 / #903: a platform cancel (touch pointercancel / premature lostpointercapture) or a mouse -> touch handoff
+// ends a hold without a deliberate release, so Charger / Splatling charges and SUB aim must be dropped, not released.
 // Executes the composed MobileInput + Input + PlayerController and the real Actor / WeaponRunner on the 60 Hz clock.
 // The DOM, pointer lock and collisions are fixtures; this is logic evidence, not a browser or device capture.
 import { test } from 'node:test';
@@ -151,4 +152,50 @@ test('#936 keyboard SUB, mouse FIRE and mouse SUB keep their normal release sema
   assert.deepEqual(kinds(m), ['charger'], 'physical mouseup without a touch takeover still releases');
   const r = await boot({ weapon: 'shooter' }); r.mouseDown(2); r.frame(10); r.mouseUp(2); r.frame(2);
   assert.deepEqual(kinds(r), ['bomb']);
+});
+
+// ---- #903: mouse -> touch handoff
+test('#903 Charger: a touch look takeover while the mouse holds FIRE fires nothing; the later mouseup is not a release either', async () => {
+  const h = await boot(); h.lock(); h.mouseDown(0); h.frame(30); assert.equal(h.runner.charging, true);
+  h.touchTakeover(null); h.frame(3);
+  assert.deepEqual(kinds(h), [], 'handoff is not a release'); assert.equal(h.runner.charging, false); assert.equal(h.runner.charge, 0);
+  h.mouseUp(0); h.frame(60); assert.deepEqual(kinds(h), []);
+});
+
+test('#903 negative control: without the cancel report the takeover releases the Charger and throws the SUB', async () => {
+  const c = await boot({ withhold: true }); c.lock(); c.mouseDown(0); c.frame(30); c.touchTakeover(null); c.frame(2);
+  assert.deepEqual(kinds(c), ['charger']);
+  const s = await boot({ weapon: 'shooter', withhold: true }); s.lock(); s.mouseDown(2); s.frame(10); s.touchTakeover(null); s.frame(2);
+  assert.deepEqual(kinds(s), ['bomb']);
+});
+
+test('#903 Splatling and SUB: the takeover starts no stream and throws no bomb; physical releases without a takeover still act', async () => {
+  const sp = await boot({ weapon: 'splatling' }); sp.lock(); sp.mouseDown(0); sp.frame(30); assert.equal(sp.runner.charging, true);
+  sp.touchTakeover(null); sp.frame(3); assert.equal(sp.runner.streaming, false); assert.equal(sp.runner.charging, false);
+  const sub = await boot({ weapon: 'shooter' }); sub.lock(); sub.mouseDown(2); sub.frame(10); assert.equal(sub.runner.aimingSub, true); const ink = sub.actor.ink;
+  sub.touchTakeover(null); sub.frame(3); assert.deepEqual(kinds(sub), []); assert.equal(sub.runner.aimingSub, false); assert.equal(sub.actor.ink, ink);
+  sub.mouseUp(2); sub.frame(5); assert.deepEqual(kinds(sub), []);
+  const ok = await boot({ weapon: 'splatling' }); ok.lock(); ok.mouseDown(0); ok.frame(30); ok.mouseUp(0); ok.frame(2); assert.equal(ok.runner.streaming, true);
+});
+
+test('#903 any real touch takeover cancels the mouse hold; one with no mouse hold changes nothing', async () => {
+  const h = await boot(); h.lock(); h.mouseDown(0); h.frame(30);
+  h.touchTakeover(null); h.frame(3); assert.deepEqual(kinds(h), []); assert.equal(h.runner.charging, false);
+  const idle = await boot(); idle.touchTakeover(null); idle.frame(3); assert.equal(idle.mobile.wasCancelled('fire'), false); assert.equal(idle.input.holdCancelled('fire'), false);
+});
+
+test('#903 when the takeover touch is itself FIRE or SUB there is no false gap and no early release', async () => {
+  const f = await boot(); f.lock(); f.mouseDown(0); f.frame(30); const charge = f.runner.charge;
+  const t = f.touchTakeover('fire'); f.frame(5);
+  assert.deepEqual(kinds(f), []); assert.equal(f.runner.charging, true); assert.ok(f.runner.charge > charge, 'the charge keeps building across the owner change');
+  f.end(t); f.frame(2); assert.deepEqual(kinds(f), ['charger'], 'exactly one release, from the touch lift');
+  const s = await boot({ weapon: 'shooter' }); s.lock(); s.mouseDown(2); s.frame(10);
+  const u = s.touchTakeover('sub'); s.frame(5); assert.deepEqual(kinds(s), []); assert.equal(s.runner.aimingSub, true);
+  s.end(u); s.frame(2); assert.deepEqual(kinds(s), ['bomb']);
+});
+
+test('#903 shooter hold stays neutral after takeover and the cancel marker is consumed by the tick', async () => {
+  const h = await boot({ weapon: 'shooter' }); h.lock(); h.mouseDown(0); h.frame(5); h.touchTakeover(null);
+  assert.equal(h.input.holdCancelled('fire'), true); h.frame(1); assert.equal(h.input.holdCancelled('fire'), false);
+  assert.deepEqual(kinds(h).filter(k => k !== 'shooter'), []);
 });
