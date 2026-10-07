@@ -185,7 +185,11 @@ function retireNetworkGhosts(owner = null) {
   }
   if (rel === 'src/game/weapons.js') {
     patch('    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;', '    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    let projectileFirst;', 'attack-owned first projectile');
-    patch("      this._push(p);\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", "      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'capture exact volley during generation');
+    // Preserve the preceding presentation/gameplay layer's release footprint.
+    // Capture only the volley identity; remote ghosts never replay owner paint.
+    const releaseFootprint = code.includes('    paintRollerReleaseFootprint(this, a, w);')
+      ? '    paintRollerReleaseFootprint(this, a, w);\n' : '';
+    patch(`      this._push(p);\n    }\n${releaseFootprint}    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });`, `      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n${releaseFootprint}    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });`, 'capture exact volley during generation');
     patch('weapon: w.id, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
 
     patch('      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);', `      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);
