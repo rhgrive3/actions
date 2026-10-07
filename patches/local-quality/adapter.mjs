@@ -75,7 +75,7 @@ const IDENTITY_FILES = [
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
   'prop-retention-adapter.mjs', 'prop-atlas-adapter.mjs',
   'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
-  'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
+  'resource-adapter.mjs', 'resource-budget.mjs', 'portrait-work.mjs', 'depth-cache.mjs',
   'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
   'hud-authority-adapter.mjs',

@@ -1371,3 +1371,23 @@ age は actor に保持する。再ジャンプは age を再開し、death/rese
 確認は complete production adapter composition (`adaptSource` → `adaptTouchLayout` → `adaptReliability` → `adaptQualitySource` → `adaptNetworkSource` → `adaptRange`) と native runtime で行った。新規 `splatling-jump-spread-native.test.mjs` は 3/3、30/60/120Hz 描画で同一の60Hz trace、25F hold、70F endpoint、両 landing の非 snap、pitch の landing 境界、repeat jump/death/reset/weapon/form/pause を確認する。owner shot と remote reconstruction では HUD runner scalar、damage、flight endpoints、ballistics、4回の既存 RNG draw、wire velocity、ghost の zero-damage / 非再送を確認した。既存 Splatling charge/ink/stream/cancel、pitch と network timing の focused checks は 6/6。
 
 未確認: Switch 実機の同条件 spread・pitch と gear 条件、非公開の25–70F中間曲線、`Jump_DegBiasMax` の実際の shot-selection 挙動。これらを本変更で解決済みにしない。全体 build / batch / CI は親側の検証に委ねる。
+
+## 2026-10-07: Locker portrait queue staging and character reuse (#834)
+
+### Splatoon 3 reference conditions
+
+Reference version: Splatoon 3 Ver. 9.3.0, the latest version listed in [Nintendo's official update history](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/). The compared states are changing player appearance through Player Settings and previewing gear in the shop. Nintendo's [appearance FAQ](https://www.nintendo.com/jp/games/feature/splatoonqa/other/character_creation/index.html) documents changing Inkling/Octoling appearance and hair; its [developer interview](https://www.nintendo.com/en-ca/whatsnew/ask-the-developer-vol-7-splatoon-3-part-4/) describes hair and eyebrow customization. Nintendo's update history also documents a gear shop trying-on animation fix.
+
+Those sources do not describe thumbnail generation, character pooling, or a per-frame portrait work budget. This is an INKWAVE menu scheduling change; it makes no claim that its portrait pipeline matches Splatoon 3's internal implementation. No battle inputs, movement, weapon behavior, actor state, or game RNG changed.
+
+### INKWAVE production behavior and fix
+
+On current main `b34a8aaf606594be61cfbd4c21e9f09afd685ad7`, the complete production adapter build's cold three-style probe observed three per-tile Character constructions, 42 Character updates all inside RAF callbacks, three studio renders, three tone-map resolves, and three async readbacks. The browser trace is retained at `history/codex2/c834-r212/current-main-cold-probe.json`.
+
+The quality adapter now retains the existing Showcase warm-up Character as the portrait pool, resets its native style, tone, weapon, uniforms, rig, and seeded animation state for each request, and performs the same 14 native pose updates one at a time through idle callbacks. The existing framing, studio render, resolve, async readback, and synchronous fallback remain in the native render path. The active idle job is released after render submission, retaining the existing limit of two reads in flight. Canceled no-waiter jobs are skipped; callbacks and epoch-aware cache insertion keep their prior ownership rules.
+
+The final three-style Chromium trace observed zero per-tile Character constructions, 42 updates outside RAF and zero inside RAF, three studio renders, three resolves, three async readbacks, and zero synchronous readbacks. All three requests reached the renderer with their expected style, color, weapon, skin material, size, and kind. Their alpha-pixel counts matched the current-main trace exactly (bust 7,737; face 21,021; body 6,990), with the same image dimensions. Output PNGs and the operation trace are retained at `history/codex2/c834-r212/post-fix-*.png` and `history/codex2/c834-r212/post-fix-cold-probe.json`.
+
+Eleven focused tests pass: four staged-work tests cover reuse across three distinct style/color/weapon requests, one animation-state object for the 14 steps, queued and active cancellation, pool disposal, callback copies, and late readback after epoch change; seven existing resource tests cover the native cache/readback path and production adapter composition.
+
+A same-build native-versus-pooled bust control differed in two channel values by at most 3; the alpha mask and crop matched. Exact color/shadow/pose parity for every hairstyle and gear combination was not measured. All 14 updates still occur per cold tile, and the existing menu still queues non-visible portrait tiles; this change bounds where that work runs and removes per-tile Character construction rather than reducing total pose simulation or GPU readback work. No device frame-time, mobile hardware, or Switch measurement is claimed.
