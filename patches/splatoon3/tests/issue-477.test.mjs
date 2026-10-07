@@ -1108,7 +1108,8 @@ test('Negative real Actor/WeaponRunner state: special activation preserves non-d
 
     assert.equal(a.weaponRunner.cooldown, 0.18, 'Shooter cooldown preserved on special activation');
     assert.equal(a.weaponRunner.firingT, 0.3, 'Shooter firingT preserved on special activation');
-    assert.equal(a.special, 0, 'Special spent');
+    assert.equal(a.special, 200, '#648 keeps Slam\'s action-owned gauge live');
+    assert.equal(a.specialActive?.id, 'slam', 'successful activation starts the gauge-owning action');
   } finally {
     shooterRig.close();
   }

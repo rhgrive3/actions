@@ -18,7 +18,7 @@ G.renderer=new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true})
 G.camera=new THREE.PerspectiveCamera(55,1000/700,.1,150);G.camera.position.set(19,17,-17);G.camera.lookAt(0,2,10);G.time=0;
 const floor=new THREE.Mesh(new THREE.BoxGeometry(100,1,100),new THREE.MeshBasicMaterial({color:'#253e4f'}));floor.position.y=-.5;G.scene.add(floor);G.scene.add(new THREE.HemisphereLight(0xffffff,0x335566,3));
 G.teamColors=[new THREE.Color('#ff852a'),new THREE.Color('#315cff')];
-const block={id:0,solid:true,grate:false,center:new THREE.Vector3(0,-.5,0),half:new THREE.Vector3(50,.5,50),axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
+const block={id:0,solid:true,grate:false,center:new THREE.Vector3(0,-.5,0),half:new THREE.Vector3(50,.5,50),aabbMin:new THREE.Vector3(-50,-1,-50),aabbMax:new THREE.Vector3(50,0,50),axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
 G.level={blocks:[block],faces:[],bounds:{minX:-50,maxX:50,minZ:-50,maxZ:50},queryBlocks(_x,_z,_xx,_zz,out){out.length=0;out.push(0);return out;},groundHeight:()=>0,spawnPads:[{y:0},{y:0}]};G.physics=new Physics(G.level);
 G.fx=new FX(G.scene,{quality:.25});G.fx.paintEffects=false;G.fx.onSpeck=null;G.projectiles=new Projectiles(G.scene);G.boss=null;G.actors=[];
 G.paint={splat(c,r,t,o={}){const nm=G.netm;if(nm?.mute)return 0;if(nm&&!nm.applying)nm.recSplat(c,r,t,o);return Math.PI*r*r;},sample:()=>1,clear(){}};

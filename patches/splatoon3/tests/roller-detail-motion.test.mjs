@@ -59,6 +59,7 @@ function rig(api, { enabled = true, weapon = 'roller', interval } = {}) {
   ch._solveLimb = function (...args) { solves++; return solve.apply(this, args); };
   function step(dt = 1 / 60, input = {}) {
     a.intent.fire = !!input.fire; a.intent.sub = !!input.sub;
+    if (input.move) a.intent.move.set(input.move.x, 0, input.move.z);
     if (input.grounded !== undefined) a.grounded = input.grounded;
     if (input.speed !== undefined) a.vel.set(0, 0, input.speed);
     a.pos.addScaledVector(a.vel, dt); G.time += dt;
@@ -197,7 +198,7 @@ test('vertical release, recovery, held ground pushing and lift on a fresh attack
     const r = rig(api, { enabled }), rows = [];
     try {
       for (let i = 0; i < 115; i++) {
-        r.step(1 / 60, { fire: i < 80 || i >= 100, firePressed: i === 0 || i === 100,
+        r.step(1 / 60, { fire: i < 80 || i >= 100, firePressed: i === 0 || i === 100, move: { x: 0, z: 1 },
           grounded: i < 40 ? false : i < 100, speed: i > 45 && i < 80 ? 6.48 : 0 });
         rows.push(poseRow(api, r, i, [0, 18, 31, 38, 56, 65, 79, 85, 100, 110].includes(i)));
       }

@@ -203,6 +203,33 @@ export function fidelityDualiesAimTarget(projectiles, actor, muzzle, hand) {
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
 function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
 
+function deriveRollerReleaseFootPaint(profile) {
+  const source = profile.weaponsFidelityCompletion?.weapons?.roller;
+  const scale = profile.calibration?.distanceScale?.factor;
+  if (!source || !Number.isFinite(scale) || scale <= 0) throw new Error('Missing Roller foot-paint source or retained distance scale');
+  const normalized = {};
+  for (const [mode, groupName] of [['horizontal', 'WideSwingUnitGroupParam'], ['vertical', 'VerticalSwingUnitGroupParam']]) {
+    const spawn = source[groupName]?.SplashNearestParam?.SpawnParam;
+    const values = [spawn?.MaxHeight, spawn?.Offset?.X, spawn?.Offset?.Y, spawn?.Offset?.Z,
+      spawn?.PaintDepthScale, spawn?.PaintWidthHalf];
+    if (!values.every(Number.isFinite) || values[0] < 0 || values[4] <= 0 || values[5] <= 0)
+      throw new Error(`Invalid Roller ${mode} SplashNearestParam.SpawnParam`);
+    const depthScale = spawn.PaintDepthScale * scale;
+    const widthHalf = spawn.PaintWidthHalf * scale;
+    // PaintSystem.splat has a circular radius and no sourced anisotropic
+    // depth/width mapping. Fail closed instead of inventing one.
+    if (Math.abs(depthScale - widthHalf) > 1e-10)
+      throw new Error(`Unsupported Roller ${mode} foot-paint depth/width geometry`);
+    normalized[mode] = Object.freeze({
+      maxHeight: spawn.MaxHeight * scale,
+      offset: Object.freeze({ x: spawn.Offset.X * scale, y: spawn.Offset.Y * scale, z: spawn.Offset.Z * scale }),
+      paintDepthScale: depthScale,
+      paintWidthHalf: widthHalf,
+      distanceScale: scale,
+    });
+  }
+  return Object.freeze(normalized);
+}
 // The installed straight/brake/free record for a weapon, so a dry prediction can
 // reuse the same law the live projectile advances under instead of restating it.
 export function fidelityMoveFor(weapon) { return moves?.get(weapon?.id) ?? null; }
@@ -706,6 +733,7 @@ export function installWeaponsFidelity(context,profile) {
   if(roller?.ballistics && roller.ballistics.verticalUnits.reduce((n,u)=>n+u.count,0)!==roller.verticalDrops)throw new Error('Vertical roller unit count differs from profile');
   api=context;completion=profile.weaponsFidelityCompletion;
   if(!completion||completion.schema!==1)throw new Error('Missing completion source table');
+  roller.releaseFootPaint = deriveRollerReleaseFootPaint(profile);
   moves=new Map();
   for(const [id,w]of Object.entries(WEAPONS)){
     if(!w.ballistics)continue;
