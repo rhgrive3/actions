@@ -635,6 +635,25 @@ ${bombHit}`;
       '    this.netLife = (this.netLife ?? 0) + 1;\n    this._netLifeStartedAt = performance.now() / 1000;',
       'record recipient life start for late bomb replay');
   }
+  if (rel === 'patches/splatoon3/runtime/weapons-fidelity.mjs') {
+    patch('api=context;completion=profile.weaponsFidelityCompletion;', 'api=context;completion=profile.weaponsFidelityCompletion;\n  const eventImpactNormal = new context.THREE.Vector3();', 'reuse fidelity impact normal scratch');
+    patch("api.emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });",
+      "api.emit('weapon:impact', { pos: hit.point, normal: hit.normal, team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });",
+      'wall drop impact payload');
+    patch("context.emit('weapon:impact',{pos:hit.point.clone(),normal:p.vel.clone().normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});",
+      "context.emit('weapon:impact',{pos:hit.point,normal:eventImpactNormal.copy(p.vel).normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});",
+      'boss impact payload');
+    return code;
+  }
+  if (rel === 'patches/splatoon3/runtime/weapons-charger-flight.mjs') {
+    patch("emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});",
+      "emit('weapon:fire',{actor,weapon:w.id,muzzle:origin,dir:direction,charge,len:distance});",
+      'charger flight fire payload');
+    patch("emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'?null:target});",
+      "emit('weapon:impact',{pos:job.pos,normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'?null:target});",
+      'charger flight impact payload');
+    return code;
+  }
   if (rel === 'patches/local-quality/roller-visual.mjs') {
     patch('P._push=function(p){', 'P._push=function(p){\n    if (p.type === \'drop\' && p.owner?.weapon?.kind === \'roller\') p.s3Vertical = !!p.owner.weaponRunner?.s3FlickVertical;', 'capture birth mode before visual and gameplay finalization');
     patch("p.owner.weaponRunner?.s3FlickVertical){", "p.s3Vertical){", 'birth mode owns ligament');
