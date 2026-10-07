@@ -14,6 +14,7 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   Object.defineProperty(wr, INSTALLED, { value: true });
   const advance = (r, dt) => {
     r.s3PostShotRemaining = elapsed(r.s3PostShotRemaining || 0, dt);
+    r.s3InkRecoverRemaining = elapsed(r.s3InkRecoverRemaining || 0, dt);
     r.s3DodgeInkRemaining = elapsed(r.s3DodgeInkRemaining || 0, dt);
     r.s3DodgeShotRemaining = elapsed(r.s3DodgeShotRemaining || 0, dt);
   };
@@ -29,7 +30,7 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   };
   const reset = wr.reset, busy = wr.busy, update = wr.update;
   wr.reset = function (...args) {
-    this.s3PostShotRemaining = this.s3DodgeInkRemaining = this.s3DodgeShotRemaining = 0;
+    this.s3PostShotRemaining = this.s3InkRecoverRemaining = this.s3DodgeInkRemaining = this.s3DodgeShotRemaining = 0;
     this.s3GateInActor = false; this.s3GateDodgeShotPending = false;
     return reset.apply(this, args);
   };
