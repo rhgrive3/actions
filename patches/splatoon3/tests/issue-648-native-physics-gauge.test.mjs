@@ -153,7 +153,14 @@ async function runScenario(sc) {
     previous = a.special;
   }
   const impactTick = impacts.length ? impacts[impacts.length - 1].tick : null;
-  let finishTick = null, death = null;
+  let finishTick = null, death = null, respawnGauge = null;
+  if (sc.id.startsWith('void') && !a.alive) {
+    death = { tick, special: a.special, pending: !!a.s3TidalSlamGaugeFinish };
+    // Current main's #330 respawn owner preserves Special Saver's remainder.
+    // A separate explicit reset must still clear both the gauge and finish token.
+    a.respawn(); respawnGauge = a.special;
+    a.reset(); finishTick = tick;
+  }
   while ((a.s3TidalSlamGaugeFinish || a.special > 0) && tick < 700) {
     const before = a.special;
     tickOnce();
@@ -163,7 +170,7 @@ async function runScenario(sc) {
   }
   if (a.special === 0 && finishTick === null) finishTick = tick;
   const result = {
-    id: sc.id, cost, segment, splatAdmission, impacts, impactTick, finishTick, death, slamEvents, prematureSegment, earlyGroundContactDuringRise,
+    id: sc.id, cost, segment, splatAdmission, respawnGauge, impacts, impactTick, finishTick, death, slamEvents, prematureSegment, earlyGroundContactDuringRise,
     finishAfterImpact: finishTick !== null && impactTick !== null ? finishTick - impactTick : null,
     pendingLeft: !!a.s3TidalSlamGaugeFinish, finalGauge: a.special,
     maxDrop: Math.max(...drops, 0), drops,
@@ -200,7 +207,8 @@ for (const sc of scenarios) {
         'native Special Saver preserves half of the real remainder at death');
       assert.equal(r.death.pending, false, 'no stale finish survives death');
       assert.equal(r.pendingLeft, false);
-      assert.equal(r.finalGauge, 0, 'native respawn/reset owns the final zero');
+      assert.equal(r.respawnGauge, r.death.special, 'native respawn preserves Special Saver remainder');
+      assert.equal(r.finalGauge, 0, 'explicit native reset clears the gauge');
       return;
     }
     assert.equal(r.impacts.length, 1, 'exactly one native impact callback');
