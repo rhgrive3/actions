@@ -633,11 +633,6 @@ export function adaptSource(rel, code) {
     if (targetStart < 0 || targetEnd < targetStart) throw new Error('INKWAVE patch conflict: super jump destination');
     code = replaceOnce(code, code.slice(targetStart, targetEnd), '        // Destination was committed at admission; target motion/death cannot retarget it.\n        s.from.copy(this.pos);\n', 'super jump last grounded destination');
     code = replaceOnce(code, "this.form = k > 0.82 ? 'kid' : 'squid';", "this.form = k > SUPERJUMP_MAIN_PROGRESS ? 'kid' : 'squid';", 'super jump human main boundary');
-    code = replaceOnce(code, "this.form = k > SUPERJUMP_MAIN_PROGRESS ? 'kid' : 'squid';",
-      "this.form = s.initialSpawn ? 'squid' : k > SUPERJUMP_MAIN_PROGRESS ? 'kid' : 'squid';", 'initial deployment stays squid through flight');
-    code = replaceOnce(code, 'const apex = 11 + s.from.distanceTo(s.to) * 0.08;',
-      'const apex = s.initialSpawn ? s.initialSpawn.arcBase + s.from.distanceTo(s.to) * s.initialSpawn.arcPerMeter : 11 + s.from.distanceTo(s.to) * 0.08;',
-      'profile-declared internal initial deployment arc');
     const fallStart = code.indexOf('    // ---- fall into the sea\n'), fallEnd = code.indexOf('    this._finishFrame(dt);', fallStart);
     if (fallStart < 0 || fallEnd < fallStart) throw new Error('INKWAVE patch conflict: super jump environmental death');
     const fallBody = code.slice(fallStart, fallEnd).replace('      return;', '      return true;');
@@ -665,8 +660,7 @@ export function adaptSource(rel, code) {
       "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
     code = replaceOnce(code,
       '        this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));\n',
-      '        // Ordinary Super Jump remains unpainted; only initial deployment owns its deterministic landing paint.\n' +
-      '        if (s.initialSpawn) this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), s.initialSpawn.paintRadius, this.team, { seed: s.initialSpawn.paintSeed }));\n',
+      '        // Splatoon 3: Ordinary Super Jump does not leave ink, grant turf points, or charge special at landing.\n',
       'super jump landing paint');
     const swimFormHead = code.includes('    const wantSquid = intent.squid && !intent.sub && !fireWins && !this.weaponRunner.busy() && !chargerSwimLocked(this);')
       ? '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
