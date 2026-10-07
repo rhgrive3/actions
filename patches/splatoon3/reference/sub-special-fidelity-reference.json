@@ -21,42 +21,222 @@
     }
   ],
   "explicitFields": [
-    {"sourceId":"bomb","pointer":"/GameParameters/MoveParam/BurstFrame","value":60,"unit":"frames","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/MoveParam/FlyGravity","value":0.016,"unit":"raw distance/frame^2","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/MoveParam/SpawnSpeedY","value":0.24,"unit":"raw distance/frame","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/MoveParam/SpawnSpeedYWorldMin","value":-0.4,"unit":"raw distance/frame","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low","value":1.12,"unit":"raw distance/frame","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/BlastParam/PaintOffsetY","value":0.1,"unit":"raw distance","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/BlastParam/SplashAroundParam/Num","value":15,"unit":"count","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/BlastParam/SplashAroundParam/OffsetY","value":0.3,"unit":"raw distance","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/BlastParam/SplashAroundParam/PaintRadius","value":1.064,"unit":"raw distance","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate","value":1.6,"unit":"multiplier","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate","value":4.0,"unit":"multiplier","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YMax","value":0.32,"unit":"raw distance/frame","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/BlastParam/DistanceDamage/0/Damage","value":1800,"unit":"raw damage x10","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/BlastParam/DistanceDamage/0/Distance","value":3.6,"unit":"raw distance","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/BlastParam/DistanceDamage/1/Damage","value":300,"unit":"raw damage x10","official":false},
-    {"sourceId":"bomb","pointer":"/GameParameters/BlastParam/DistanceDamage/1/Distance","value":7.0,"unit":"raw distance","official":false},
-    {"sourceId":"storm","pointer":"/GameParameters/CloudParam/DamageRadius","value":10.0,"unit":"raw distance","official":false},
-    {"sourceId":"storm","pointer":"/GameParameters/CloudParam/RainNum","value":72,"unit":"count/reference metadata","official":false},
-    {"sourceId":"storm","pointer":"/GameParameters/CloudParam/RainyFrame/Low","value":480.0,"unit":"frames","official":false},
-    {"sourceId":"storm","pointer":"/GameParameters/MoveParam/SpawnSpeedY","value":0.24,"unit":"raw distance/frame","official":false},
-    {"sourceId":"storm","pointer":"/GameParameters/MoveParam/SpawnSpeedYWorldMin","value":-0.4,"unit":"raw distance/frame","official":false},
-    {"sourceId":"storm","pointer":"/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low","value":1.12,"unit":"raw distance/frame","official":false},
-    {"sourceId":"storm","pointer":"/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate","value":1.6,"unit":"multiplier","official":false},
-    {"sourceId":"storm","pointer":"/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate","value":4.0,"unit":"multiplier","official":false},
-    {"sourceId":"storm","pointer":"/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YMax","value":0.16,"unit":"raw distance/frame","official":false}
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/MoveParam/BurstFrame",
+      "value": 60,
+      "unit": "frames",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/MoveParam/FlyGravity",
+      "value": 0.016,
+      "unit": "raw distance/frame^2",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedY",
+      "value": 0.24,
+      "unit": "raw distance/frame",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedYWorldMin",
+      "value": -0.4,
+      "unit": "raw distance/frame",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
+      "value": 1.12,
+      "unit": "raw distance/frame",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/BlastParam/PaintOffsetY",
+      "value": 0.1,
+      "unit": "raw distance",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/BlastParam/SplashAroundParam/Num",
+      "value": 15,
+      "unit": "count",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/BlastParam/SplashAroundParam/OffsetY",
+      "value": 0.3,
+      "unit": "raw distance",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/BlastParam/SplashAroundParam/PaintRadius",
+      "value": 1.064,
+      "unit": "raw distance",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate",
+      "value": 1.6,
+      "unit": "multiplier",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate",
+      "value": 4,
+      "unit": "multiplier",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YMax",
+      "value": 0.32,
+      "unit": "raw distance/frame",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/0/Damage",
+      "value": 1800,
+      "unit": "raw damage x10",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/0/Distance",
+      "value": 3.6,
+      "unit": "raw distance",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/1/Damage",
+      "value": 300,
+      "unit": "raw damage x10",
+      "official": false
+    },
+    {
+      "sourceId": "bomb",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/1/Distance",
+      "value": 7,
+      "unit": "raw distance",
+      "official": false
+    },
+    {
+      "sourceId": "storm",
+      "pointer": "/GameParameters/CloudParam/DamageRadius",
+      "value": 10,
+      "unit": "raw distance",
+      "official": false
+    },
+    {
+      "sourceId": "storm",
+      "pointer": "/GameParameters/CloudParam/RainNum",
+      "value": 72,
+      "unit": "count/reference metadata",
+      "official": false
+    },
+    {
+      "sourceId": "storm",
+      "pointer": "/GameParameters/CloudParam/RainyFrame/Low",
+      "value": 480,
+      "unit": "frames",
+      "official": false
+    },
+    {
+      "sourceId": "storm",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedY",
+      "value": 0.24,
+      "unit": "raw distance/frame",
+      "official": false
+    },
+    {
+      "sourceId": "storm",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedYWorldMin",
+      "value": -0.4,
+      "unit": "raw distance/frame",
+      "official": false
+    },
+    {
+      "sourceId": "storm",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
+      "value": 1.12,
+      "unit": "raw distance/frame",
+      "official": false
+    },
+    {
+      "sourceId": "storm",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate",
+      "value": 1.6,
+      "unit": "multiplier",
+      "official": false
+    },
+    {
+      "sourceId": "storm",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate",
+      "value": 4,
+      "unit": "multiplier",
+      "official": false
+    },
+    {
+      "sourceId": "storm",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YMax",
+      "value": 0.16,
+      "unit": "raw distance/frame",
+      "official": false
+    }
   ],
   "communityCrossChecks": [
-    {"url":"https://splatoonwiki.org/wiki/Splat_Bomb","claims":["70% ink cost","180/30 damage","1 second fuse after surface contact"],"official":false},
-    {"url":"https://splatoonwiki.org/wiki/Ink_Storm","claims":["24 damage/second","8 second duration"],"official":false},
-    {"url":"https://splatoonwiki.org/wiki/Ink_tank","claims":["special activation immediately refills the ink tank"],"official":false}
+    {
+      "url": "https://splatoonwiki.org/wiki/Splat_Bomb",
+      "claims": [
+        "70% ink cost",
+        "180/30 damage",
+        "1 second fuse after surface contact"
+      ],
+      "official": false
+    },
+    {
+      "url": "https://splatoonwiki.org/wiki/Ink_Storm",
+      "claims": [
+        "24 damage/second",
+        "8 second duration"
+      ],
+      "official": false
+    },
+    {
+      "url": "https://splatoonwiki.org/wiki/Ink_tank",
+      "claims": [
+        "special activation immediately refills the ink tank"
+      ],
+      "official": false
+    },
+    {
+      "url": "https://splatoonwiki.org/wiki/Competitive%3ATriple_Splashdown",
+      "claims": [
+        "220 near/direct damage",
+        "60 minimum splash damage"
+      ],
+      "official": false,
+      "status": "community cross-check for #917 only; not present in the pinned Leanny extraction used by this reference"
+    }
   ],
   "explicitUnknowns": [
     "Exact INKWAVE mapping for GroundPositionDeg50AirResist/GroundPositionHorizonAirResist and bounce/friction equations",
     "Whether CloudParam.RainNum maps one-to-one to INKWAVE gameplay paint splat calls; it is retained as reference metadata only",
     "Exact Splatoon 3 cloud drift speed in INKWAVE world units",
-    "Tidal Slam has no one-to-one Splatoon 3 special; Triple Splashdown numeric substitution is intentionally not performed",
+    "Tidal Slam has no one-to-one Splatoon 3 special; #917 maps only the community-sourced Triple Splashdown HP endpoints 220/60. Radii, fists, falloff shape, armor and other topology remain INKWAVE-original/unverified.",
     "Exact original-game bomb visual particle count/lifetime and detailed wall/slope paint silhouette"
   ]
 }

@@ -69,7 +69,7 @@ Special activation refills the ink tank to `PLAYER.inkMax` before native startup
 
 ### Tidal Slam
 
-Tidal Slam is INKWAVE-specific. No Triple Splashdown parameter substitution is invented.
+Tidal Slam remains INKWAVE-specific in geometry and topology. Issue #917 adopts only the current Splatoon 3 Triple Splashdown **220 near/direct / 60 minimum** HP endpoints as a community cross-check (Inkipedia), because those values are not present in this workstream's pinned Leanny extraction. Radius, fists, falloff shape, armor and the rest of the special model are unchanged and remain unverified rather than being presented as extracted Nintendo parameters.
 
 ## Deterministic measurement
 
