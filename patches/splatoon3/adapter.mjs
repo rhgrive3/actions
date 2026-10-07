@@ -43,6 +43,17 @@ export function adaptSource(rel, code) {
       '        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);\n        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);',
       'world-aware actor soft push');
     code = "import { softPushActor } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
+
+    // S3 Regular Battle has no one-weapon-per-team rule: standard Turf War bot slots are independent draws,
+    // so the local weapon does not ban itself from teammates. Boss squads and the attract backdrop keep the mix.
+    code = replaceOnce(code,
+      '    const pickTeam = (first) => {\n      const pool = [...WEAPON_ORDER];\n      const out = [];\n      if (first) { out.push(first); pool.splice(pool.indexOf(first), 1); }',
+      '    const independent = this.mode !== \'boss\' && !this.attract;\n    const pickTeam = (first) => {\n      const pool = [...WEAPON_ORDER];\n      const out = [];\n      if (first) { out.push(first); if (!independent) pool.splice(pool.indexOf(first), 1); }',
+      'standard Turf weapon draws keep the local weapon');
+    code = replaceOnce(code,
+      '        out.push(pool.splice((Math.random() * pool.length) | 0, 1)[0]);',
+      '        const pick = (Math.random() * pool.length) | 0;\n        out.push(independent ? pool[pick] : pool.splice(pick, 1)[0]);',
+      'standard Turf weapon draws allow duplicates');
   }
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
@@ -72,6 +83,13 @@ export function adaptSource(rel, code) {
       code = replaceOnce(code, anchor, anchor, label);
     code += '\nexport const CHARACTER_BOMB_POSE = Object.freeze({ throw: Character.prototype._poseThrow, apply: Character.prototype._applyPose });\n';
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
+  }
+  if (rel === 'src/ui/menus.js') {
+    // S3 results list the WIN! squad above LOSE...; the internal team ids stay untouched (presentation order only).
+    return replaceOnce(code,
+      "h('div', { class: 'iw-res__teams' }, table(0), table(1)),",
+      "h('div', { class: 'iw-res__teams' }, table(winTeam), table(1 - winTeam)),",
+      'winner-first Turf results order');
   }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
@@ -103,6 +121,15 @@ export function adaptSource(rel, code) {
     }
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
       'Bucket Slosher ShotGuide HUD projection');
+    // S3 death card: "Splatted by <weapon/cause>"; the opponent's name is a separate secondary line.
+    code = replaceOnce(code,
+      "  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5 } = {}) {",
+      "  showSplatted({ by = null, who = null, byColor = '#2f5bff', respawn = 5 } = {}) {",
+      'death card opponent identity input');
+    code = replaceOnce(code,
+      "          killer && killer.weaponId ? h('div', { class: 'iw-spl__wn' }, (WEAPONS[killer.weaponId] || {}).name || '') : null),",
+      "          who ? h('div', { class: 'iw-spl__wn iw-spl__who' }, String(who)) : null),",
+      'death card opponent identity line');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -271,7 +298,11 @@ export function adaptSource(rel, code) {
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
       'authoritative Turf winner Game to HUD');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
-    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
+    code = replaceOnce(code,
+      "        const by = attacker ? attacker.name : t(cause === 'water' ? 'the sea' : 'enemy ink');\n        this.hud?.showSplatted({ by, byColor:",
+      "        const card = splatCardText(cause, attacker, t); // SPLATTED BY names the cause; the opponent is a separate line\n        this.hud?.showSplatted({ by: card.cause, who: card.who, byColor:",
+      'death card splat cause');
+    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { splatCardText } from '../patches/splatoon3/runtime/death-card.mjs';\n` + code;
   }
   return code;
 }
