@@ -942,6 +942,8 @@ export function installWeaponsFidelity(context,profile) {
       }
       const u=p.fidelitySloshUnit,c=u.MoveParam;
       setCollision(p,u.CollisionParam,p.fidelitySloshIndex);
+      // #1031: only source units with SplashParam own recurring in-flight floor paint.
+      if (!u.SplashAndSplashWallHitSpawnPrm?.SplashParam?.length) p.trailEvery=0;
       p.straight=c.GoStraightToBrakeStateFrame/60;
       p.fidelityMove={hz:60,endSpeed:c.GoStraightStateEndMaxSpeed*60,brakeDrag:c.BrakeAirResist,brakeGravity:c.BrakeGravity*3600,
         freeDrag:c.FreeAirResist,freeGravity:c.FreeGravity*3600,freeVelocityY:c.BrakeToFreeVelocityY*60,freeVelocityXZ:c.BrakeToFreeVelocityXZ*60};
