@@ -314,8 +314,51 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   if (!Character || !C || !T) throw new Error('Roller motion requires exact upstream Character channels and timers');
   const flick = Character.prototype._poseFlick, animate = Character.prototype._animWeapon, setWeapon = Character.prototype.setWeapon;
   const updateStates = Character.prototype._updateStates, weaponPose = Character.prototype._poseWeapon;
+  // The native torso/foot solver moves the admitted contact anchor with its
+  // gait spring. Ground-align the right-hand
+  // target BEFORE the native arm IK; its left-hand solver then follows the same
+  // unchanged grips. The support cylinder is derived from this rig's actual
+  // geometry, not a new height constant or a gameplay collision volume.
+  const solve = Character.prototype._solveLimb, bounds = new WeakMap();
+  let center, axisX, axisY, axisZ, lift, weaponQ, inverseHandQ;
+  Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
+    if (this._s3RollerContactPose && limb === this.limbs.armR && orientation && weight > .999 && !this.P[C.SPIN]) {
+      const d = this.weapon.def;
+      let bound = bounds.get(d);
+      if (!bound) {
+        let minX = Infinity, maxX = -Infinity, radius = 0;
+        for (const geo of [d.drum, d.drumCaps]) {
+          const p = geo?.attributes.position;
+          for (let i = 0; p && i < p.count; i++) {
+            minX = Math.min(minX, p.getX(i)); maxX = Math.max(maxX, p.getX(i));
+            radius = Math.max(radius, Math.hypot(p.getY(i), p.getZ(i)));
+          }
+        }
+        bound = { centerX: (minX + maxX) / 2, halfWidth: (maxX - minX) / 2, radius };
+        bounds.set(d, bound);
+      }
+      if (!center) {
+        center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone(); lift = target.clone();
+        weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
+      }
+      const kid = this.kid;
+      weaponQ.copy(orientation).multiply(inverseHandQ.copy(d.handR.quat).invert());
+      center.copy(d.drumAt); center.x += bound.centerX;
+      center.sub(d.handR.pos).applyQuaternion(weaponQ).add(target).multiply(kid.scale).applyQuaternion(kid.quaternion).add(kid.position);
+      axisX.set(1, 0, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      axisY.set(0, 1, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      axisZ.set(0, 0, 1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      const bottom = center.y - bound.halfWidth * Math.abs(axisX.y) - bound.radius * Math.hypot(axisY.y, axisZ.y);
+      if (Number.isFinite(bottom) && bottom !== 0) {
+        lift.set(0, -bottom, 0).applyQuaternion(inverseHandQ.copy(kid.quaternion).invert()).divide(kid.scale);
+        target.add(lift);
+      }
+    }
+    return solve.call(this, limb, target, pole, orientation, weight, index);
+  };
   Character.prototype._s3CancelRollerFlick = function () {
     this.s3RollerFlick = null;
+    this._s3RollerContactPose = false;
     // A cancelled runner must not fall back to the legacy 0.7s pose or its
     // 0.15s drum impulse on the next Character frame.
     if (this.tr) this.tr[T.T_FLICK] = 99;
@@ -333,12 +376,24 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     return result;
   };
   Character.prototype._poseWeapon = function (dt, s) {
-    const result = weaponPose.call(this, dt, s);
-    if (this.weaponKind !== 'roller' || !this.kidForm || this.dance || this.wSub > .01) return result;
-    if (T && (!specialMotionAllowsAction(this,this.tr[T.T_LEAP] >= 1.9 && this.tr[T.T_SLAM] >= 1.4) || this.tr[T.T_DODGE] < this.dodgeDur || this.tr[T.T_SPAWN] < 1.4)) return result;
+    const available = this.weaponKind === 'roller' && this.kidForm && !this.dance && this.wSub <= .01 &&
+      (!T || (specialMotionAllowsAction(this,this.tr[T.T_LEAP] >= 1.9 && this.tr[T.T_SLAM] >= 1.4) &&
+        this.tr[T.T_DODGE] >= this.dodgeDur && this.tr[T.T_SPAWN] >= 1.4));
+    // #263: once native contact/stripe authority is admitted, use the existing
+    // settled ground-contact target, not another raised-carry blend. Keep wRoll
+    // itself unchanged: gameplay cleanup and drum-spin blending read that clock.
+    // #263 is the grounded horizontal handoff; keep the separately audited
+    // vertical landing/recovery pose and its admission clock unchanged.
+    const vertical = this.s3RollerFlick?.vertical ?? this._runner?.(s)?.s3FlickVertical ?? false;
+    const contact = available && !vertical && this.grounded && !!s.rolling, previous = this.wRoll;
+    this._s3RollerContactPose = contact;
+    let result;
+    try { if (contact) this.wRoll = 1; result = weaponPose.call(this, dt, s); }
+    finally { this.wRoll = previous; }
+    if (!available) return result;
     // Official footage carries the raised drum behind the shoulder, then lowers
     // it only to roll. These targets are rig calibration, not Nintendo joints.
-    const P = this.P, roll = this.wRoll;
+    const P = this.P, roll = contact ? 1 : this.wRoll;
     for (let i = 0; i < 3; i++) {
       P[C.ANC + i] = mix(READY_ANCHOR[i], ROLL_ANCHOR[i], roll);
       P[C.ANCR + i] = mix(READY_ROTATION[i], ROLL_ROTATION[i], roll);
@@ -356,6 +411,9 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   Character.prototype._poseFlick = function (P, ft) {
     const state = this.s3RollerFlick;
     if (!state) return flick.call(this, P, ft);
+    // The released flick must not lift the same drum after its authoritative
+    // roll begins. Input release/cancel before admission still uses recovery.
+    if (!state.vertical && state.released && state.rolling && this.kidForm && this.grounded && !this.dance) return;
     if (!state.vertical) {
       // Preserve the upstream horizontal joints, retiming coil/whip/recovery to
       // the actual attack, including the existing calibrated cooldown.
