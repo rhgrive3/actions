@@ -607,7 +607,9 @@ def corner_clip(design):
     if not cc:
         return None
     cc = np.array(cc, float)
-    return lambda v: float(np.interp(v, cc[:, 0], cc[:, 1], left=-1e9, right=-1e9))
+    ys = np.arange(cc[0, 0], cc[-1, 0] + 1e-6, 0.1)
+    xs = er.smooth_rows(np.interp(ys, cc[:, 0], cc[:, 1]), 6.0)          # one smooth curve through the points
+    return lambda v: float(np.interp(v, ys, xs, left=-1e9, right=-1e9))
 
 
 def corner_contour(rays, design=None):
@@ -742,9 +744,10 @@ def build_corner_fill(rays, design, cover=None):
     sk = max(design.get('corner_fill_sink', 0.2), 1e-6)
     w = np.clip((sk - f) / sk, 0, 1)[None] * np.ones((len(R), 1))
     # the first and last rows too, where they lie on the skin (not over the eyeball): no straight top / bottom edge
-    nr = max(int(design.get('corner_fill_sink_rows', 5)), 1)
-    e = np.minimum(np.arange(len(R)), np.arange(len(R))[::-1])
-    w = np.maximum(w, np.clip((nr - e) / nr, 0, 1)[:, None] * ~ball)
+    nr = int(design.get('corner_fill_sink_rows', 5))
+    if nr > 0:
+        e = np.minimum(np.arange(len(R)), np.arange(len(R))[::-1])
+        w = np.maximum(w, np.clip((nr - e) / nr, 0, 1)[:, None] * ~ball)
     depth = depth * (1 - w) + np.maximum(depth, H + 0.03 / 1000) * w
     verts = M.to_local((O + D * depth[..., None]).reshape(-1, 3)) * 1000
     faces = [(j * ncol + i, j * ncol + i + 1, (j + 1) * ncol + i + 1, (j + 1) * ncol + i)
@@ -1764,6 +1767,10 @@ def main():
         fill_mat = tearline_material([a * b for a, b in zip(t0, t1)], 'INKWAVE_corner_fill_skin')
         FILL_SKIN['solid_mm'] = design.get('corner_fill_solid_mm', 0.0)
         FILL_SKIN['face_normals'] = design.get('corner_fill_face_normals', False)
+        if design.get('corner_fill_black'):
+            # the reference frames the outer corner of the white in black: the patch is part of the black line,
+            # so the white ends on the smooth clip curve and no skin patch shows
+            fill_mat = mat
         if design.get('corner_fill_face_material'):
             fill_mat = bpy.data.materials['skin_b27050']        # the face's own skin (subsurface needs the solid)
     for objs, liner, rim, lashes, lower, tear, shade, fill in built:
