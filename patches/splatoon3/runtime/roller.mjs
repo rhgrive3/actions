@@ -21,14 +21,13 @@ export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
 
-// 847: Roller-body terrain contact. All extents reuse the public runner's own
-// geometry (0.75 forward paint offset, rollWidth lateral extent, 1.35 damage
-// reach, 0.35 paint height) and the shared physics slope/wall laws (WALKABLE,
-// |normal.y| < 0.55 wall band). No new S3 body numbers, no render-pose input:
-// the probe is actor transform + stage collision only, so owner/remote agree.
-const DRUM_FORWARD = 0.75, DRUM_REACH = 1.35, DRUM_HEIGHT = 0.35;
+// 847: the Splat Roller body dimensions in the pinned 11.3.0 parameter table
+// (Radius 0.4, WidthHalf 1.4). Retain the runner's existing 0.75 forward
+// offset; do not substitute paint width, damage reach, or the tuned render mesh.
+const DRUM_FORWARD = 0.75, ROLLER_BODY_RADIUS = 0.4, ROLLER_BODY_HALF_WIDTH = 1.4;
 const STICK_EPS = 0.01; // same deadzone as Actor._horizontal steering (mh > 0.01)
-const WALL_BAND = 0.55; // same wall band as Physics collideBody/collideCapsule
+const CONTACT_EPS = 1e-6;
+const WALL_BAND = 0.6; // same surface classification used by Physics.collideBody
 
 export function rollerStickActive(a) {
   // Remote proxies carry no authoritative stick state; the owner admits the hit
@@ -38,34 +37,80 @@ export function rollerStickActive(a) {
   return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;
 }
 
-export function rollerDrumSupport(a, w, G, PLAYER, scratch) {
-  const phys = G?.physics;
-  if (!phys || typeof phys.groundProbe !== 'function' || typeof phys.raycast !== 'function')
-    return { floor: a.grounded, wall: false, supported: a.grounded };
-  const fx = Math.sin(a.yaw), fz = Math.cos(a.yaw);
-  const half = (w.rollWidth || 1.9) / 2;
-  const up = PLAYER.stepUp ?? 0.35, down = PLAYER.stepDown ?? 0.45;
-  const cx = a.pos.x + fx * DRUM_FORWARD, cz = a.pos.z + fz * DRUM_FORWARD;
-  let floor = false;
-  for (let i = -1; i <= 1; i++) {
-    const x = cx + fz * (half * i), z = cz - fx * (half * i);
-    phys.groundProbe(x, a.pos.y, z, up, down, 0.05, scratch.ground, false);
-    if (scratch.ground.hit) { floor = true; break; }
+function rollerCapsuleTouchesBlock(start, delta, block, scratch) {
+  const axes = block.axes, center = block.center, half = block.half;
+  const p0x = (start.x - center.x) * axes[0].x + (start.y - center.y) * axes[0].y + (start.z - center.z) * axes[0].z;
+  const p0y = (start.x - center.x) * axes[1].x + (start.y - center.y) * axes[1].y + (start.z - center.z) * axes[1].z;
+  const p0z = (start.x - center.x) * axes[2].x + (start.y - center.y) * axes[2].y + (start.z - center.z) * axes[2].z;
+  const dx = delta.x * axes[0].x + delta.y * axes[0].y + delta.z * axes[0].z;
+  const dy = delta.x * axes[1].x + delta.y * axes[1].y + delta.z * axes[1].z;
+  const dz = delta.x * axes[2].x + delta.y * axes[2].y + delta.z * axes[2].z;
+  const hx = half.x, hy = half.y, hz = half.z;
+  const derivative = t => {
+    const x = p0x + dx * t, y = p0y + dy * t, z = p0z + dz * t;
+    let d = 0;
+    if (x < -hx) d += (x + hx) * dx; else if (x > hx) d += (x - hx) * dx;
+    if (y < -hy) d += (y + hy) * dy; else if (y > hy) d += (y - hy) * dy;
+    if (z < -hz) d += (z + hz) * dz; else if (z > hz) d += (z - hz) * dz;
+    return d;
+  };
+  const d0 = derivative(0), d1 = derivative(1);
+  let t = d0 >= 0 ? 0 : d1 <= 0 ? 1 : 0.5;
+  if (d0 < 0 && d1 > 0) {
+    let lo = 0, hi = 1;
+    for (let i = 0; i < 24; i++) {
+      t = (lo + hi) * 0.5;
+      if (derivative(t) < 0) lo = t; else hi = t;
+    }
+    t = (lo + hi) * 0.5;
   }
-  let wall = false;
-  scratch.origin.set(a.pos.x, a.pos.y + DRUM_HEIGHT, a.pos.z);
-  scratch.dir.set(fx, 0, fz);
-  phys.raycast(scratch.origin, scratch.dir, DRUM_REACH, scratch.hit, true);
-  if (scratch.hit.hit && Math.abs(scratch.hit.normal.y) < WALL_BAND) wall = true;
+  const x = p0x + dx * t, y = p0y + dy * t, z = p0z + dz * t;
+  let nx = x - Math.max(-hx, Math.min(hx, x));
+  let ny = y - Math.max(-hy, Math.min(hy, y));
+  let nz = z - Math.max(-hz, Math.min(hz, z));
+  const d2 = nx * nx + ny * ny + nz * nz;
+  if (d2 > ROLLER_BODY_RADIUS * ROLLER_BODY_RADIUS + CONTACT_EPS) return false;
+  if (d2 > CONTACT_EPS) {
+    const inv = 1 / Math.sqrt(d2); nx *= inv; ny *= inv; nz *= inv;
+  } else {
+    const px = hx - Math.abs(x), py = hy - Math.abs(y), pz = hz - Math.abs(z);
+    if (px <= py && px <= pz) { nx = x < 0 ? -1 : 1; ny = nz = 0; }
+    else if (py <= pz) { ny = y < 0 ? -1 : 1; nx = nz = 0; }
+    else { nz = z < 0 ? -1 : 1; nx = ny = 0; }
+  }
+  scratch.normalY = nx * axes[0].y + ny * axes[1].y + nz * axes[2].y;
+  return true;
+}
+
+export function rollerDrumSupport(a, G, scratch) {
+  const level = G?.physics?.level;
+  if (!level?.blocks || typeof level.queryBlocks !== 'function')
+    return { floor: a.grounded, wall: false, supported: a.grounded };
+  const fx = Math.sin(a.yaw), fz = Math.cos(a.yaw), rx = fz, rz = -fx;
+  const cx = a.pos.x + fx * DRUM_FORWARD, cy = a.pos.y + ROLLER_BODY_RADIUS, cz = a.pos.z + fz * DRUM_FORWARD;
+  const half = ROLLER_BODY_HALF_WIDTH;
+  const start = scratch.start, delta = scratch.delta;
+  start.x = cx - rx * half; start.y = cy; start.z = cz - rz * half;
+  delta.x = rx * half * 2; delta.y = 0; delta.z = rz * half * 2;
+  const endX = start.x + delta.x, endZ = start.z + delta.z, radius = ROLLER_BODY_RADIUS;
+  const ids = level.queryBlocks(Math.min(start.x, endX) - radius, Math.min(start.z, endZ) - radius,
+    Math.max(start.x, endX) + radius, Math.max(start.z, endZ) + radius, scratch.ids);
+  let floor = false, wall = false;
+  for (let i = 0; i < ids.length; i++) {
+    const block = level.blocks[ids[i]];
+    if (!block.solid || cy + radius < block.aabbMin.y || cy - radius > block.aabbMax.y) continue;
+    if (!rollerCapsuleTouchesBlock(start, delta, block, scratch)) continue;
+    const ny = scratch.normalY;
+    if (ny >= WALL_BAND) floor = true;
+    else if (Math.abs(ny) < WALL_BAND) wall = true;
+    if (floor && wall) break;
+  }
   return { floor, wall, supported: floor || wall };
 }
 
-export function installRollerLogic({ WeaponRunner, Actor, G, THREE, PLAYER, Hit }, _profile) {
+export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset, actorUpdate = Actor.prototype.update;
-  const scratch = {
-    ground: { hit: false, y: 0, normal: new THREE.Vector3(), block: -1, face: -1, u: 0, v: 0, center: false, grate: false },
-    hit: new Hit(), origin: new THREE.Vector3(), dir: new THREE.Vector3(),
-  };
+  const scratch = { ids: [], start: { x: 0, y: 0, z: 0 }, delta: { x: 0, y: 0, z: 0 }, normalY: 0 };
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
     if (r && this.weapon?.kind === 'roller') {
@@ -95,12 +140,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G, THREE, PLAYER, Hit 
     const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);
     const winding = this.flick >= 0;
     const onFlickPath = starting || winding;
-    const sup = onFlickPath ? null : rollerDrumSupport(a, w, G, PLAYER, scratch);
+    const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);
     const stick = onFlickPath || rollerStickActive(a);
-    const fireIn = (onFlickPath || (sup && sup.supported)) ? inp : { ...inp, fire: false, firePressed: false };
-    const savedGrounded = a.grounded, savedVX = a.vel.x, savedVZ = a.vel.z;
-    if (sup && sup.wall && !sup.floor && !a.grounded) a.grounded = true;
-    if (!stick) { a.vel.x = 0; a.vel.z = 0; }
+    const fireIn = (onFlickPath || (sup?.supported && stick)) ? inp : { ...inp, fire: false, firePressed: false };
+    const restoreAirborne = !!(sup?.wall && !sup.floor && !a.grounded);
+    if (restoreAirborne) a.grounded = true;
     try {
     if (starting) {
       this.cooldown = Math.min(0, this.cooldown);
@@ -137,7 +181,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, THREE, PLAYER, Hit 
     }
     return result;
     } finally {
-      a.grounded = savedGrounded; a.vel.x = savedVX; a.vel.z = savedVZ;
+      if (restoreAirborne && a.grounded) a.grounded = false;
     }
   };
 }
