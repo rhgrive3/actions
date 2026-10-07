@@ -34,6 +34,7 @@ import { adaptHudAuthority } from './hud-authority-adapter.mjs';
 import fs from 'node:fs';
 import { adaptScreenfxDamageReset } from './screenfx-damage-reset-adapter.mjs';
 import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
+import { adaptFinalCount } from './final-count-adapter.mjs';
 import { adaptTurfLead } from './turf-lead-adapter.mjs';
 import { adaptScoreReticle } from './score-reticle-adapter.mjs';
 import { adaptMapTeammateStatus } from './map-teammate-status-adapter.mjs';
@@ -71,6 +72,7 @@ const IDENTITY_FILES = [
   'splatling-reticle.mjs', 'splatling-reticle-adapter.mjs',
   'portrait-guard.mjs', 'portrait-guard-adapter.mjs',
   'final-minute-music-adapter.mjs',
+  'final-count-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
   'prop-retention-adapter.mjs', 'prop-atlas-adapter.mjs',
@@ -114,6 +116,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptPropAtlas(rel, code);
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);
   code = adaptFinalMinuteMusic(rel, code, replaceOnce);
+  code = adaptFinalCount(rel, code, replaceOnce);
   code = adaptTurfLead(rel, code, replaceOnce);
   code = adaptScoreReticle(rel, code, replaceOnce);
   code = adaptMapTeammateStatus(rel, code, replaceOnce);
