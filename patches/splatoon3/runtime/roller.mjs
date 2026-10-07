@@ -21,8 +21,51 @@ export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
 
-export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
+// 847: Roller-body terrain contact. All extents reuse the public runner's own
+// geometry (0.75 forward paint offset, rollWidth lateral extent, 1.35 damage
+// reach, 0.35 paint height) and the shared physics slope/wall laws (WALKABLE,
+// |normal.y| < 0.55 wall band). No new S3 body numbers, no render-pose input:
+// the probe is actor transform + stage collision only, so owner/remote agree.
+const DRUM_FORWARD = 0.75, DRUM_REACH = 1.35, DRUM_HEIGHT = 0.35;
+const STICK_EPS = 0.01; // same deadzone as Actor._horizontal steering (mh > 0.01)
+const WALL_BAND = 0.55; // same wall band as Physics collideBody/collideCapsule
+
+export function rollerStickActive(a) {
+  // Remote proxies carry no authoritative stick state; the owner admits the hit
+  // and replicates it, so remotes never suppress here (no new wire fields).
+  if (a.remote) return true;
+  const mv = a.intent?.move;
+  return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;
+}
+
+export function rollerDrumSupport(a, w, G, PLAYER, scratch) {
+  const phys = G?.physics;
+  if (!phys || typeof phys.groundProbe !== 'function' || typeof phys.raycast !== 'function')
+    return { floor: a.grounded, wall: false, supported: a.grounded };
+  const fx = Math.sin(a.yaw), fz = Math.cos(a.yaw);
+  const half = (w.rollWidth || 1.9) / 2;
+  const up = PLAYER.stepUp ?? 0.35, down = PLAYER.stepDown ?? 0.45;
+  const cx = a.pos.x + fx * DRUM_FORWARD, cz = a.pos.z + fz * DRUM_FORWARD;
+  let floor = false;
+  for (let i = -1; i <= 1; i++) {
+    const x = cx + fz * (half * i), z = cz - fx * (half * i);
+    phys.groundProbe(x, a.pos.y, z, up, down, 0.05, scratch.ground, false);
+    if (scratch.ground.hit) { floor = true; break; }
+  }
+  let wall = false;
+  scratch.origin.set(a.pos.x, a.pos.y + DRUM_HEIGHT, a.pos.z);
+  scratch.dir.set(fx, 0, fz);
+  phys.raycast(scratch.origin, scratch.dir, DRUM_REACH, scratch.hit, true);
+  if (scratch.hit.hit && Math.abs(scratch.hit.normal.y) < WALL_BAND) wall = true;
+  return { floor, wall, supported: floor || wall };
+}
+
+export function installRollerLogic({ WeaponRunner, Actor, G, THREE, PLAYER, Hit }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset, actorUpdate = Actor.prototype.update;
+  const scratch = {
+    ground: { hit: false, y: 0, normal: new THREE.Vector3(), block: -1, face: -1, u: 0, v: 0, center: false, grate: false },
+    hit: new Hit(), origin: new THREE.Vector3(), dir: new THREE.Vector3(),
+  };
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
     if (r && this.weapon?.kind === 'roller') {
@@ -44,7 +87,21 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
   };
   WeaponRunner.prototype._roller = function (dt, inp, w) {
     const a = this.a;
+    // Flick windup/release is an airborne-valid attack and never gated here.
+    // 847 conditions only the rolling path below (feet-grounded admission and
+    // the contact-speed check), scoped to the public call (try/finally
+    // restore): movement already integrated, anim reads the restored state,
+    // and roll speed/ink/damage/group/packet law is untouched.
     const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);
+    const winding = this.flick >= 0;
+    const onFlickPath = starting || winding;
+    const sup = onFlickPath ? null : rollerDrumSupport(a, w, G, PLAYER, scratch);
+    const stick = onFlickPath || rollerStickActive(a);
+    const fireIn = (onFlickPath || (sup && sup.supported)) ? inp : { ...inp, fire: false, firePressed: false };
+    const savedGrounded = a.grounded, savedVX = a.vel.x, savedVZ = a.vel.z;
+    if (sup && sup.wall && !sup.floor && !a.grounded) a.grounded = true;
+    if (!stick) { a.vel.x = 0; a.vel.z = 0; }
+    try {
     if (starting) {
       this.cooldown = Math.min(0, this.cooldown);
       this.s3FlickVertical = !a.grounded;
@@ -65,11 +122,10 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
     const state = this.s3RollerAttack;
     let mode = rollerMode(w, this.s3FlickVertical);
     if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
-    const winding = this.flick >= 0;
     if (state && !starting) state.elapsed = Math.min(state.interval, state.elapsed + dt);
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
-    const result = roller.call(this, dt, inp, mode);
+    const result = roller.call(this, dt, fireIn, mode);
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;
@@ -80,6 +136,9 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
       a.character.s3RollerFlick = null;
     }
     return result;
+    } finally {
+      a.grounded = savedGrounded; a.vel.x = savedVX; a.vel.z = savedVZ;
+    }
   };
 }
 
