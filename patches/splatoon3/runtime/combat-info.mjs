@@ -1,3 +1,4 @@
+import { privateTrackingOpacity } from './private-tracking.mjs';
 // Separate public information rules: the map damage threshold is NOT the
 // temporary, line-of-sight-gated world health indicator (Nintendo Ver.11).
 export const MAP_REVEAL_DAMAGE = 18;
@@ -15,7 +16,7 @@ export function healthActorVisible(actor, viewer, { hpMax = 100, now = 0, visibl
   if (actor.team === viewer.team) return true;
   if (!(actor.lastDamage >= 0 && actor.lastDamage < ENEMY_HEALTH_SECONDS)) return false;
   const hidden = actor.submerged || actor.climbing || actor.anim?.form === 'swim' || actor.anim?.form === 'climb';
-  return revealedTo(actor, viewer, now) || (!hidden && visible);
+  return revealedTo(actor, viewer, now) || privateTrackingOpacity(actor, viewer, now) > 0 || (!hidden && visible);
 }
 export function buildHealthMarkers(game, G, PLAYER, THREE) {
   const out = game._hudHealth || (game._hudHealth = []), viewer = game.match.local;
