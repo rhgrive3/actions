@@ -739,7 +739,12 @@ def build_corner_fill(rays, design, cover=None):
     for _ in range(40):
         depth = np.maximum(np.minimum(er.smooth_rows(er.smooth_rows(depth, 1.5), 1.5, axis=1), top), behind)
     # the outer edge sinks just under the face, so the face (not the patch's edge) draws the boundary
-    w = np.clip((design.get('corner_fill_sink', 0.2) - f) / max(design.get('corner_fill_sink', 0.2), 1e-6), 0, 1)[None]
+    sk = max(design.get('corner_fill_sink', 0.2), 1e-6)
+    w = np.clip((sk - f) / sk, 0, 1)[None] * np.ones((len(R), 1))
+    # the first and last rows too, where they lie on the skin (not over the eyeball): no straight top / bottom edge
+    nr = max(int(design.get('corner_fill_sink_rows', 5)), 1)
+    e = np.minimum(np.arange(len(R)), np.arange(len(R))[::-1])
+    w = np.maximum(w, np.clip((nr - e) / nr, 0, 1)[:, None] * ~ball)
     depth = depth * (1 - w) + np.maximum(depth, H + 0.03 / 1000) * w
     verts = M.to_local((O + D * depth[..., None]).reshape(-1, 3)) * 1000
     faces = [(j * ncol + i, j * ncol + i + 1, (j + 1) * ncol + i + 1, (j + 1) * ncol + i)
