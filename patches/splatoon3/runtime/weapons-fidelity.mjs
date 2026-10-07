@@ -864,6 +864,7 @@ export function installWeaponsFidelity(context,profile) {
     'unitBrakeDrag','unitBrakeGravity','unitFreeDrag','unitFreeGravity','unitFreeVelocityY','unitFreeFrame',
     'actorForm','grounded','climbing','dancing','specialActive','superJumpState','aimPitch',
     'aimDirX','aimDirY','aimDirZ','aimPointX','aimPointY','aimPointZ','actorPosX','actorPosY','actorPosZ',
+    'actorYaw','actorVelX','actorVelZ','blasterMoveZRate',
     'runner','runnerCharge','runnerChargeT','runnerCharging','runnerStreaming','runnerFidelityCharge',
     'runnerBlasterJump','runnerBlasterWindup',
     'game','stage','gameLevel','physics','physicsLos','physicsRaycast','level','levelLayout','levelExtra',
@@ -913,6 +914,8 @@ export function installWeaponsFidelity(context,profile) {
     s.specialActive=actor.specialActive;s.superJumpState=actor.superJumpState;s.aimPitch=actor.aimPitch;
     s.aimDirX=dir.x;s.aimDirY=dir.y;s.aimDirZ=dir.z;s.aimPointX=target.x;s.aimPointY=target.y;s.aimPointZ=target.z;
     s.actorPosX=actor.pos.x;s.actorPosY=actor.pos.y;s.actorPosZ=actor.pos.z;
+    s.actorYaw=actor.yaw;s.actorVelX=actor.vel?.x;s.actorVelZ=actor.vel?.z;
+    s.blasterMoveZRate=raw?.spl__SpawnBulletAdditionMovePlayerParam?.ZRate;
     s.runner=runner;s.runnerCharge=runner?.charge;s.runnerChargeT=runner?.chargeT;s.runnerCharging=runner?.charging;
     s.runnerStreaming=runner?.streaming;s.runnerFidelityCharge=runner?.fidelitySplatlingCharge;
     s.runnerBlasterJump=runner?.s3BlasterJumpT;s.runnerBlasterWindup=runner?.s3BlasterWindup;
@@ -1063,8 +1066,9 @@ export function installWeaponsFidelity(context,profile) {
     system._aimFrom(actor,p.pos,dir);
     p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2;p.straight=0;
     p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
-    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.s3BlasterForwardApplied=false;
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    applyBlasterSpawnVelocity(p);
     initialize(p,w);
     let remaining=Math.max(0,frame/60);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
@@ -1141,8 +1145,9 @@ export function installWeaponsFidelity(context,profile) {
     this._aimFrom(actor,p.pos,dir);
     p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2;p.straight=0;
     p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
-    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.s3BlasterForwardApplied=false;
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    applyBlasterSpawnVelocity(p);
     initialize(p,w);
     let remaining=Math.max(0,frame/60);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
