@@ -20,7 +20,7 @@ import {
   bigBubblerOwnerId, kitBarrierCandidate, kitBarrierHitRecord, clearBigBubblers,
   tickBigBubblers, tickRemoteBigBubblers, replayBigBubbler, resetBigBubblerReplay,
   adjudicateBigBubblerDamage,
-  BIG_BUBBLER_RAW, BIG_BUBBLER_CALIBRATION, hermite2d, kitBarrierShelter,
+  BIG_BUBBLER_RAW, BIG_BUBBLER_CALIBRATION, hermite2d, kitBarrierShelter, bigBubblerCanopyHp,
   BIG_BUBBLER_OWNERSHIP,
 } from '../runtime/kit-big-bubbler.mjs';
 
@@ -118,6 +118,21 @@ test('the pinned Hermit2DSmooth curves evaluate through their pinned endpoints',
     assert.ok(v >= previous - 1e-9, 'the pinned radius curve is monotonic');
     previous = v;
   }
+});
+
+test('#1013 Big Bubbler canopy durability follows Special Power Up AP while field HP stays independent', async () => {
+  assert.equal(bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 0 } } }), BIG_BUBBLER_RAW.maxHp);
+  assert.equal(bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 57 } } }), BIG_BUBBLER_RAW.maxHpHigh);
+  const mid = bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 30 } } });
+  assert.ok(mid > BIG_BUBBLER_RAW.maxHp && mid < BIG_BUBBLER_RAW.maxHpHigh);
+
+  const { f } = await composed();
+  level(f);
+  const a = roller(f); a.s3.modifiers.specialPowerAP = 57; f.G.actors = [a]; activate(f, a);
+  const dome = bigBubblerDomes()[0];
+  assert.equal(dome.hp, BIG_BUBBLER_RAW.maxHpHigh);
+  assert.equal(dome.hpMax, BIG_BUBBLER_RAW.maxHpHigh);
+  assert.equal(dome.fieldHp, BIG_BUBBLER_RAW.maxFieldHp, 'emitter HP is not scaled by Special Power Up');
 });
 
 test('activating the special deploys a stationary dome with the pinned durability', async () => {
