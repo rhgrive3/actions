@@ -463,6 +463,8 @@ export function kitVolleyPacketIndex(v) {
 
 export function kitTrizookaGhost(p, actor, SPECIALS, wire) {
   if (!isKitProjectile(p)) return p;
+  const ap = wire?.specialPowerAP;
+  p.s3TrizookaAP = Number.isFinite(ap) ? Math.max(0, Math.min(57, ap)) : 0;
   const entry = (SPECIALS || SPECIALS_CONFIG)?.[TRIZOOKA_WID];
   const descriptor = typeof entry?.projectileDescriptor === 'function'
     ? entry.projectileDescriptor(p)
