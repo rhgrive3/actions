@@ -125,7 +125,7 @@ test('enemy ink changes grounded speed targets without clamping 1x/2x accelerati
   } finally { f.G.actors.length = 0; }
 });
 
-test('ordinary airborne acceleration and release/reverse braking are equal across forms and weapons', async () => {
+test('airborne acceleration is form-independent and attack/ready states keep the sourced 2x rate', async () => {
   const f = await world(), a = actor(f);
   try {
     const expected = f.PLAYER.airAccel * DT; // Existing INKWAVE calibration; no Nintendo unit conversion.
@@ -135,8 +135,9 @@ test('ordinary airborne acceleration and release/reverse braking are equal acros
         for (const speed of [0, 0.5, 1]) {
           const kid = tick(f, a, { air: true, mode, velocity: [0, 0, speed] });
           const squid = tick(f, a, { air: true, squid: true, mode, velocity: [0, 0, speed] });
-          near(kid.delta, expected, `${weapon} ${mode} humanoid air acceleration from ${speed}`);
-          near(squid.delta, expected, `${weapon} ${mode} squid air acceleration from ${speed}`);
+          const modeStep = mode === 'normal' ? expected : expected * 2;
+          near(kid.delta, modeStep, `${weapon} ${mode} humanoid air acceleration from ${speed}`);
+          near(squid.delta, modeStep, `${weapon} ${mode} squid air acceleration from ${speed}`);
           near(squid.delta / kid.delta, 1, `${weapon} ${mode} form ratio from ${speed}`);
         }
       }
