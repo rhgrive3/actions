@@ -316,8 +316,8 @@ test('actual Charger stores full charge across form on a held ZR, then releases 
       assert.ok(r.ch.charge > .99); assert.equal(r.events.length, 0);
       // Charge keep belongs to the held shot, so ZR stays down across the form change.
       r.a.form = 'squid'; r.a.submerged = true; for (let i = 0; i < Math.ceil(hz * r.a.weapon.storedFireDelay); i++) r.step(1 / hz, { fire: true });
-      assert.equal(r.a.weaponRunner.s3Stored.charge, 1); assert.equal(r.a.weaponRunner.s3Stored.fireDelay, 0);
-      r.a.form = 'kid'; r.a.submerged = false; for (let i = 0; i < Math.ceil(hz * .28); i++) r.step(1 / hz, { fire: true });
+      assert.equal(r.a.weaponRunner.s3Stored.charge, 1); assert.equal(r.a.weaponRunner.s3Stored.fireDelay, r.a.weapon.storedFireDelay, 'underwater time cannot spend the resurfacing clock');
+      r.a.form = 'kid'; r.a.submerged = false; for (let i = 0; i < Math.ceil(hz * r.a.weapon.storedFireDelay); i++) r.step(1 / hz, { fire: true });
       assert.equal(r.events.length, 0); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .99);
       r.step(1 / hz, { fire: true });
       r.step(1 / 60); assert.equal(r.events.length, 0, 'native release waits one fixed tick'); r.step(1 / 60);
