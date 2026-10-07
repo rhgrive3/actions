@@ -172,7 +172,10 @@ test('accepted lethal hit transfers once with life, sequence, cause, splat and f
   const sender = owner.makeNetMatch(owner.makeSession('p2', 'p2', [['p2', 'Owner'], ['host', 'Host']]));
   bindActors(owner, sender, [victim, attacker]);
   victim.hp = 10;
+  attacker.s3.clothingRemote = { owner: attacker.owner, punisher: true };
   assert.equal(victim.damage(30, attacker, 'shooter'), true);
+  // A later equipment snapshot must not rewrite the accepted hit identity.
+  attacker.s3.clothingRemote.punisher = false;
   assert.equal(victim.alive, true, 'accepted lethal decision is still pending for the native next tick');
   const packet = sendTick(sender);
   const row = packet.a.find(value => value[0] === victim.nid);
@@ -221,6 +224,7 @@ test('accepted lethal hit transfers once with life, sequence, cause, splat and f
   assert.equal(remoteVictim.stats.deaths, 1);
   assert.equal(hostAttacker.stats.splats, 1);
   assert.equal(splatEvents, 1, 'the transferred hit splatted once');
+  assert.equal(remoteVictim.s3.lastDeathGear.incoming, true, 'handoff retains accepted-hit Respawn Punisher after later equipment changes');
   assert.deepEqual(splatCauses, ['shooter'], 'accepted-hit cause was preserved');
   assert.equal(claims, 1, 'first-splat authority was claimed once');
   assert.equal(receiver._firstSplatState.claimed, true);
@@ -281,4 +285,25 @@ test('Practice Range and native noBots stages remove leavers instead of adopting
     assert.equal(match.actors.includes(actor), false);
     assert.equal(actor.isBot, false);
   }
+});
+
+
+test('adoption sampling after newest packet retains its new-hit recovery age', async () => {
+  const owner = await runtimeFixture(), host = await runtimeFixture();
+  const source = makeActor(owner, { nid: 61, owner: 'p2', team: 0 });
+  const remote = makeActor(host, { nid: 61, owner: 'p2', remote: true, team: 0 });
+  const sender = owner.makeNetMatch(owner.makeSession('p2', 'p2'));
+  const receiver = host.makeNetMatch(host.makeSession('host', 'host'));
+  bindActors(owner, sender, [source]); bindActors(host, receiver, [remote]);
+  source.hp = 80; source.lastDamage = 2; owner.G.time = 2;
+  receiveTick(host, receiver, [remote], sendTick(sender));
+  owner.clock.advance(.1); owner.G.time += .1; source.damage(5, null, 'shooter');
+  receiveTick(host, receiver, [remote], sendTick(sender));
+  owner.clock.advance(.1); owner.G.time += .1; source.lastDamage = .1;
+  const latest = sendTick(sender); receiveTick(host, receiver, [remote], latest);
+  const peer = receiver.peers.get('p2'); peer.tr = latest.ts + .01;
+  // The owner's simulation stays pinned to the newest accepted packet.
+  peer.sim = latest.u; receiver._sample(remote, peer.tr, DT); receiver.applyRemote(remote, DT);
+  close(remote.lastDamage, .1);
+  receiver.onLeave('p2', false); close(remote.lastDamage, .1);
 });

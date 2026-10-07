@@ -35,21 +35,21 @@ export function exportPendingLethal(actor) {
   if (!state || !actor.alive || state.life !== actorLife(actor) || !validCause(state.cause)
     || !Number.isSafeInteger(state.sequence) || state.sequence < 1) return null;
   const attackerNid = Number.isSafeInteger(state.attacker?.nid) && state.attacker.nid >= 0 ? state.attacker.nid : -1;
-  return [state.life, state.sequence, attackerNid, state.cause];
+  return [state.life, state.sequence, attackerNid, state.cause, state.punisher];
 }
 
 export function restorePendingLethal(actor, snapshot, attacker = null) {
-  if (!actor || !actor.alive || !(actor.hp <= 0) || !Array.isArray(snapshot) || snapshot.length !== 4) return false;
-  const [life, sequence, attackerNid, cause] = snapshot;
+  if (!actor || !actor.alive || !(actor.hp <= 0) || !Array.isArray(snapshot) || snapshot.length !== 5) return false;
+  const [life, sequence, attackerNid, cause, punisher] = snapshot;
   if (!Number.isSafeInteger(life) || life < 0 || life !== actorLife(actor)
     || !Number.isSafeInteger(sequence) || sequence < 1
-    || !Number.isSafeInteger(attackerNid) || attackerNid < -1 || !validCause(cause)
+    || !Number.isSafeInteger(attackerNid) || attackerNid < -1 || !validCause(cause) || typeof punisher !== 'boolean'
     || (attackerNid >= 0 && attacker?.nid !== attackerNid)) return false;
   const accepted = actor._s3AcceptedLethal;
   if (accepted && accepted.life === life && accepted.sequence >= sequence) return false;
   const existing = pending.get(actor);
   if (existing) return false;
-  pending.set(actor, { attacker: attacker || null, cause, punisher: respawnPunisherEquipped(attacker), life, sequence });
+  pending.set(actor, { attacker: attacker || null, cause, punisher, life, sequence });
   actor._s3LethalSequence = Math.max(Number.isSafeInteger(actor._s3LethalSequence) ? actor._s3LethalSequence : 0, sequence);
   actor._s3AcceptedLethal = { life, sequence };
   return true;

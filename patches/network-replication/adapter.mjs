@@ -508,12 +508,12 @@ function readSuperJumpState(row, flags) {
 }
 function validLethalState(row, life, flags, hp) {
   if (row === null) return (flags & F.alive) && hp <= 0 ? undefined : null;
-  if (!Array.isArray(row) || row.length !== 4) return undefined;
-  const [hitLife, sequence, attackerNid, cause] = row;
+  if (!Array.isArray(row) || row.length !== 5) return undefined;
+  const [hitLife, sequence, attackerNid, cause, punisher] = row;
   if (!(flags & F.alive) || hp > 0 || hitLife !== life || !Number.isSafeInteger(hitLife) || hitLife < 0
     || !Number.isSafeInteger(sequence) || sequence < 1 || !Number.isSafeInteger(attackerNid) || attackerNid < -1
-    || typeof cause !== 'string' || !cause.length || cause.length > 48 || /[\\u0000-\\u001f\\u007f]/.test(cause)) return undefined;
-  return [hitLife, sequence, attackerNid, cause];
+    || typeof punisher !== 'boolean' || typeof cause !== 'string' || !cause.length || cause.length > 48 || /[\\u0000-\\u001f\\u007f]/.test(cause)) return undefined;
+  return [hitLife, sequence, attackerNid, cause, punisher];
 }
 function packAdoptionState(actor) {
   const life = Number.isSafeInteger(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
@@ -548,7 +548,7 @@ function copyAdoptionState(state) {
 }
 function sampleAdoptionState(buf, t, mode, ownerTick) {
   if (!buf?.length) return null;
-  let left = buf[0], right = null;
+  let left = buf[buf.length - 1], right = null;
   for (let index = 1; index < buf.length; index++) if (t <= buf[index].t) { left = buf[index - 1]; right = buf[index]; break; }
   const a = left?.adoption;
   if (!a) return null;
