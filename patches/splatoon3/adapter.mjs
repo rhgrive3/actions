@@ -378,8 +378,8 @@ export function adaptSource(rel, code) {
       "      teamSide(1));",
       'intro Splashtags presentation');
     code = replaceOnce(code,
-      "  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5 } = {}) {",
-      "  showSplatted({ by = null, who = null, byColor = '#2f5bff', respawn = 5 } = {}) {",
+      "  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
+      "  showSplatted({ by = null, who = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
       'death card opponent identity input');
     code = replaceOnce(code,
       "          killer && killer.weaponId ? h('div', { class: 'iw-spl__wn' }, (WEAPONS[killer.weaponId] || {}).name || '') : null),",
