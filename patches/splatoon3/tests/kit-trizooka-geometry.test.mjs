@@ -379,25 +379,19 @@ test('a ghost world impact lays no ink and credits no turf after the transport i
   assert.equal(ghostOwner.special, specialBefore, 'and gained no special gauge');
 });
 
-test('side lobes lay no ink and credit no turf, while the carrier does', async () => {
+test('each local Trizooka glob independently lays impact ink and credits turf', async () => {
   const api = await production();
   const { projectiles, paintCalls } = world(api, []);
   const a = shooter(api);
   const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
   const hit = { point: new api.THREE.Vector3(0, 1, 3), normal: new api.THREE.Vector3(0, 0, -1) };
-  for (const p of fired.filter((x) => !isDamageCarrier(x))) {
+  for (const p of fired) {
     paintCalls.length = 0;
     const turf = a.stats.turf;
     projectiles._impact(p, hit);
-    assert.equal(paintCalls.length, 0, 'a side lobe laid no ink');
-    assert.equal(a.stats.turf, turf, 'and credited no turf');
+    assert.ok(paintCalls.length > 0, 'each authoritative glob lays ink');
+    assert.ok(a.stats.turf > turf, 'each authoritative glob credits turf');
   }
-  const carrier = fired[VOLLEY_CONFIG.damageLobeIndex];
-  paintCalls.length = 0;
-  const turf = a.stats.turf;
-  projectiles._impact(carrier, hit);
-  assert.ok(paintCalls.length > 0, 'the carrier does lay ink');
-  assert.ok(a.stats.turf > turf, 'and does credit turf');
 });
 
 test('an ordinary main round still paints and still charges the gauge', async () => {
@@ -627,13 +621,13 @@ test('kitPaintCredit is pure: it returns the amount and never credits by itself'
   const calls = spyTurf(a);
   const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
   const carrier = fired[VOLLEY_CONFIG.damageLobeIndex];
-  const side = fired.find((x) => !isDamageCarrier(x));
+  const outer = fired[1];
 
-  assert.equal(kitPaintCredit(carrier, 10), 10, 'the carrier is credited its area');
+  assert.equal(kitPaintCredit(carrier, 10), 10, 'the centre glob is credited its area');
   assert.equal(calls.length, 0, 'but the helper itself never calls addTurf');
 
-  assert.equal(kitPaintCredit(side, 10), 0, 'a side lobe is credited nothing');
-  assert.equal(kitPaintCredit({ ...carrier, ghost: true }, 10), 0, 'nor is a ghost');
+  assert.equal(kitPaintCredit(outer, 10), 10, 'an outer local glob is independently credited too');
+  assert.equal(kitPaintCredit({ ...carrier, ghost: true }, 10), 0, 'a ghost is credited nothing');
   assert.equal(kitPaintCredit({ ...carrier, owner: null }, 10), 0, 'nor a projectile with no owner');
   assert.equal(calls.length, 0, 'still a pure function throughout');
 });
@@ -672,43 +666,34 @@ test('the authority rule is intrinsic: a kit ghost is refused with no transport 
 
 // ---- the authoritative volley ledger ----------------------------------------
 
-test('a side lobe never poisons the volley ledger, in either list order', async () => {
+test('two Trizooka globs can independently hit the same victim without sharing a dedupe token', async () => {
   const api = await production();
-  for (const order of ['side-first', 'carrier-first']) {
-    const { projectiles } = world(api, []);
-    const a = shooter(api);
-    const enemy = new api.Actor({ team: 1, name: 'victim', weapon: 'shooter', isLocal: false, CharacterClass: api.Character });
-    enemy.hp = 1000;
-    enemy._spawnBarrier = () => {}; enemy._finishFrame = () => {}; enemy._integrate = () => {};
-    enemy.pos.set(0, 0, 3);
-    api.G.actors = [a, enemy];
+  const { projectiles } = world(api, []);
+  const a = shooter(api);
+  const enemy = new api.Actor({ team: 1, name: 'victim', weapon: 'shooter', isLocal: false, CharacterClass: api.Character });
+  enemy.hp = 1000;
+  enemy._spawnBarrier = () => {}; enemy._finishFrame = () => {}; enemy._integrate = () => {};
+  enemy.pos.set(0, 0, 3);
+  api.G.actors = [a, enemy];
 
-    const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
-    const carrier = fired[VOLLEY_CONFIG.damageLobeIndex];
-    const side = fired.find((x) => !isDamageCarrier(x));
-    const vol = carrier.vol;
-    vol.hits.length = 0;
+  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const first = fired[0], second = fired[1];
+  assert.notEqual(first.vol, second.vol, 'each glob owns a distinct native hit ledger');
+  first.pos.set(0, 0.7, 3); first.prev.copy(first.pos);
+  second.pos.set(0, 0.7, 3); second.prev.copy(second.pos);
+  projectiles._step(first, F);
+  projectiles._step(second, F);
 
-    // both lobes sit on the enemy this frame; only the carrier may damage
-    carrier.pos.set(0, 0.7, 3); carrier.prev.copy(carrier.pos);
-    side.pos.set(0, 0.7, 3); side.prev.copy(side.pos);
-
-    const order2 = order === 'side-first' ? [side, carrier] : [carrier, side];
-    for (const p of order2) projectiles._step(p, F);
-
-    assert.equal(vol.hits.length, 1, `${order}: the victim is recorded once, not by the side lobe`);
-    assert.equal(vol.hits[0], enemy, `${order}: and it is the real victim`);
-    const dealt = 1000 - enemy.hp;
-    assert.ok(dealt > 0, `${order}: the carrier's real hit lands (dealt ${dealt})`);
-    assert.equal(dealt, 220, `${order}: exactly one carrier hit, never two and never zero`);
-    assert.equal(kitVolleyHitAuthority(side), false, 'a side lobe has no ledger authority');
-    assert.equal(kitVolleyHitAuthority(carrier), true, 'the carrier does');
-    assert.equal(kitVolleyHitAuthority({ wid: 'shooter', vol: {} }), true,
-      'an ordinary drop/slosh round keeps the native shared-vol semantics');
-  }
+  assert.equal(first.vol.hits[0], enemy);
+  assert.equal(second.vol.hits[0], enemy);
+  assert.equal(1000 - enemy.hp, 440, 'both independent 220 direct hits land');
+  assert.equal(kitVolleyHitAuthority(first), true);
+  assert.equal(kitVolleyHitAuthority(second), true);
+  assert.equal(kitVolleyHitAuthority({ wid: 'shooter', vol: {} }), true,
+    'an ordinary drop/slosh round keeps the native shared-vol semantics');
 });
 
-test('a side lobe never writes the boss volley ledger either', async () => {
+test('each Trizooka glob independently reaches the boss damage path', async () => {
   const api = await production();
   const { projectiles } = world(api, []);
   const a = shooter(api);
@@ -720,19 +705,13 @@ test('a side lobe never writes the boss volley ledger either', async () => {
   };
   api.G.boss = boss;
   const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
-  const carrier = fired[VOLLEY_CONFIG.damageLobeIndex];
-  const side = fired.find((x) => !isDamageCarrier(x));
-  const vol = carrier.vol;
-  vol.hits.length = 0;
+  const first = fired[0], second = fired[1];
   const bh = { point: new api.THREE.Vector3(0, 1, 3), target: boss, dist: 3 };
-
-  projectiles._bossImpact(side, bh);
-  assert.equal(vol.hits.length, 0, 'a visual side lobe leaves the boss ledger alone');
-  assert.equal(bossHits.length, 0, 'and never hits the boss');
-
-  projectiles._bossImpact(carrier, bh);
-  assert.equal(vol.hits.length, 1, 'the carrier records the boss once');
-  assert.equal(bossHits.length, 1, 'and lands its one real boss hit');
+  projectiles._bossImpact(first, bh);
+  projectiles._bossImpact(second, bh);
+  assert.equal(first.vol.hits.length, 1);
+  assert.equal(second.vol.hits.length, 1);
+  assert.equal(bossHits.length, 2, 'two different globs may both damage the boss');
 });
 
 // ---- packet: per-lobe identity survives the wire ----------------------------
