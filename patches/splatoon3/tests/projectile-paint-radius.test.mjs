@@ -18,15 +18,16 @@ async function roller(vertical = false) {
   p.fireFlick(a,a.weapon); return {f,p,a};
 }
 
-test('#682 horizontal flight has no recurring trail, while impacts and vertical trails remain', async () => {
+test('#682 horizontal flight has no recurring trail; #423 owns vertical group paint', async () => {
   for (const vertical of [false,true]) {
     const {f,p,a}=await roller(vertical), {G,THREE}=f;
     assert.equal(p.list.length, vertical ? 5 : 13);
     const paints=[];G.paint.splat=(...args)=>{paints.push(args);return 0;};
     G.physics.raycast=(origin,dir,len,hit)=>{hit.hit=dir.y===-1;hit.point.copy(origin).setY(0);hit.normal.set(0,1,0);hit.dist=origin.y;return hit;};
-    for(const q of p.list){q.trail=10;assert.equal(q.trailEvery,vertical?1.8:0);}
+    for(const q of p.list){q.trail=10;assert.equal(q.trailEvery,0);}
+    assert.equal(p.list.filter(q=>q.s3RollerFlightPaint).length,vertical?1:0,'#423 only the central vertical group carrier owns flight paint');
     for(const q of p.list) p._step(q,1/60);
-    assert.equal(paints.length>0,vertical,'only the existing vertical path may generate generic flight drips');
+    assert.equal(paints.length>0,vertical,'only the bounded #423 vertical group path may generate flight drips');
     if(!vertical){
       const q=p.list[0];
       // Restore only the old cadence to demonstrate the extra mid-flight paint.
@@ -103,7 +104,8 @@ test('#682 remote Roller packets cannot restore horizontal recurring trail; vert
     const e=[0,0,0,q.type,q.wid,...q.pos.toArray(),...q.vel.toArray(),q.delay,q.life,q.straight,q.radius,q.size,q.grav,q.drag,1.8,q.head,q.vis,q.tail0,q.tailK,q.wob,q.wobF,q.nose,q.sats];
     p.ghostProjectile(a,e);const ghost=p.list.at(-1);
     assert.equal(ghost.ghost,true);assert.equal(ghost.fidelityMode,vertical?'vertical':'horizontal');
-    assert.equal(ghost.trailEvery,vertical?1.8:0);
+    assert.equal(ghost.trailEvery,0,'#423 also removes generic trails from vertical replay');
+    assert.equal(ghost.s3RollerFlightPaint,null,'remote paint is replayed from owner splats, not resimulated');
     let painted=0;f.G.paint.splat=()=>{painted++;return 0;};
     p._step(ghost,1/60);assert.equal(painted,0,'ghost remains cosmetic');
   }
