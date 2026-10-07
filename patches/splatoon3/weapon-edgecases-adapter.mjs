@@ -9,9 +9,9 @@ export function adaptWeaponEdgecases(rel, code, replace) {
     '        const hit = G.physics.raycast(m, dir, range, _hit, true);', 'charger sight shares ink grate mask');
   code = replace(code,
     "    if (a.isLocal) emit('recoil', { amount: 0.007 });",
-    "    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'roller secondary horizontal unit');
+    "    paintRollerReleaseFootprint(this, a, w);\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'roller release foot paint and secondary horizontal unit');
   code = replace(code,
     "this.applyHit(p.owner, e, distanceDamage(w.damageBands, d), 'blaster');",
     "this.applyHit(p.owner, e, blasterBurstDamage(p, w, d, distanceDamage), 'blaster');", 'blaster terrain player damage');
-  return "import { spreadWeaponRound, appendRollerNearUnit, blasterBurstDamage } from '../../patches/splatoon3/runtime/weapon-edgecases.mjs';\n" + code;
+  return "import { spreadWeaponRound, appendRollerNearUnit, paintRollerReleaseFootprint, blasterBurstDamage } from '../../patches/splatoon3/runtime/weapon-edgecases.mjs';\n" + code;
 }
