@@ -1363,6 +1363,19 @@ The 1F release gap latches already-paid charge without reinstating old release-o
 Validation: collision3, actual finite-flight launch3, actual Actor release/cancel/clock9 and motion-detail semantic gate1 pass. Related source fixture edits preserve current short-tap cancellation and progressive payment; complete production install/CI remains a separate acceptance step. No new coefficient, GPU capture or hardware claim. Other PR761 roots remain a separate handoff.
 
 
+## 2026-10-08 — Remote Squid Roll presentation (#1062)
+
+| 比較項目 | 記録 |
+| --- | --- |
+| 本家参照 | Splatoon 3 Ver.11.3.0（任天堂の更新履歴で2026-08-19公開）。[任天堂の更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/)、[公式ゲームプレイ案内](https://splatoon.nintendo.com/en/gameplay/)、[公式の基礎指南](https://splatoon.nintendo.com/en/news/beginner-basics-for-splatoon-3-tips-for-improving-in-battle/) を参照。ゲームプレイ案内はインク内を泳ぎながら反対方向へ素早く跳ぶ動作を説明し、基礎指南は泳ぎ中に左スティックを逆方向へはじき、インクが跳ねた時にBを押す入力と、実行直後のダメージ軽減を説明する。継続時間、関節角度、通信方式のフレーム値は公開されていない。ブキ・ギア条件を伴う実機比較は未実施で、公開資料から数値を推定していない。 |
+| INKWAVE 基準・実装 | main `c2c938b9af5b6cce2a7bdbecf0415c7c3836cadb` の公開ソースに変更なし。フル production adapter composition では所有側 `movement.mjs` が実際のRoll行動を判定し、Network adapter が既存22要素actor rowとは別の任意 `sq` sidecar に action identity・残り時間・launch vector を載せる。受信側はその値を `remoteSquidrollVisual` に保持し、`movement-motion.mjs` がCharacter frameのremote-only actionとして読み、`squidroll-motion.mjs` が既存pose経路で描く。sidecarは `s3.actions.roll` に書き戻さず、Roll入場、armor、damage、速度、衝突には使用しない。 |
+| 再現条件 | `patches/network-replication/tests/issue-1062-remote-squidroll.test.mjs` は公開 `Actor`、`Character`、`NetMatch` とS3 runtimeを、Splatoon 3・Touch Layout・Reliability・Local Quality・Network Replication・Practice Range の6 adapter合成で実行する。平坦な自インク上でOwnerがイカ状態になり、INKWAVE harness内の水平速度11.52、逆方向+B、60Hzの実更新でRollを起動。20Hz snapshotをRemoteに渡し、30Hz/120Hzの更新刻み、遅れて参加したobserver、連続Rollを確認。Shooter harness・追加gear modifierなし。本家の速度値を表す条件ではない。 |
+| 差分とプレイへの影響 | 修正前は一度だけ届く `squidroll` trigger event の後、次のCharacter frameに持続actionがないため、RemoteのRoll poseが消えた。修正後は同じidentityをもつowner snapshotをRoll中に補間し、受信済み残り時間からposeを開始するので、遅延参加でも毎回最大時間から始めない。新しいRollは別identityになり、stale tick・重複eventは既存のpacket timestamp/event sequence gateにより年齢を巻き戻さない。legacy row / metadataなしも受理し、旧peerに新しいaction authorityを要求しない。 |
+| 確認状態 | フル合成VM regressionでowner admission、remote `_receive`→sample→`applyRemote`→`_finishFrame`、launch direction、持続、late join、chain、invalid/legacy metadata、cancel/form/death/respawn/ownership/disconnect、ordinary jumpを確認。armor flag と既存 ownership handoff のfocused controlも実行対象。ブラウザ実動作、遅延を含む二台通信、Nintendo実機・captureは未確認。公開映像から厳密なjoint curveやdurationが分かるとは判定していない。 |
+
+この結果は、INKWAVEのネットワークpresentationが同じowner Rollを継続表示することの確認であり、ローカルRoll admissionや任天堂実機との時間・pose一致を証明するものではない。
+
+
 ## 2026-10-06: Restore fidelity centerline convergence (#608)
 
 PR #761's missing convergence delta is restored against `2e81e2197faf0995ec2f55f2ba36ffd562f3fb41`. The target already disabled the legacy `_ballistic()` lift, so its zero-spread, stationary grounded Shooter fired along the camera-derived ray and crossed a level target 10.5 INKWAVE units from the muzzle 0.160198 units low. The two Shooter/Dualies/Splatling launch call sites now call `fidelityAimConvergence()` before spread. It predicts through the existing `advanceFidelityProjectile()` law, uses the existing `fidelityMoveFor()` record owner, and retains the production 1.2-second lifetime and bounded pitch search from #761. Collision and teammate pass-through ownership are untouched.
@@ -1393,6 +1406,21 @@ Targeted against PR868 `aa094850fdd60b3b70adfdaad54b3e3837cb1402`, whose Charger
 Partial flights now include living allied capsules except the firing Actor itself. They use the existing continuous capsule query, existing pinned player radius0.125 and earliest-contact / actor-ID tie ordering. An allied contact consumes the non-piercing flight without calling friendly damage or publishing that ally as an enemy-hit victim. Full shots retain teammate pass-through and enemy piercing; ghost flight remains visual-only. No radius, charge threshold, damage, payment, cadence, flight distance, network packet or source-authority rule is changed.
 
 Seven focused production-module tests cover blocked partial, off-ray control, the existing .999 full threshold, both sides of the .125 contact-radius boundary, wall / actor ordering and actor enumeration reversal, ghost non-authority, and30/60/120Hz rendering over fixed steps. They instantiate native Actor/Projectiles and Physics; the hit callback is recorded at the solver boundary. This is not a full recipient HP/network acceptance test or a Switch measurement. The behavior requirement follows Issue870's current-series teammate-bodyblock evidence and the existing partial/full distinction; the questionable .999 threshold remains explicitly unchanged. Full build/browser/CI acceptance belongs to the next integration batch.
+
+## 2026-10-08: online actor-state adoption (#1018/#1029/#1059/#1063)
+
+**本家参照と条件。** 比較対象は Splatoon 3 Ver.11.3.0。[任天堂の更新履歴](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)と[公式ゲームガイド](https://splatoon.nintendo.com/en/gameplay/)を参照し、スーパージャンプの初期フォーム・チャージ・飛行の数値は既存 #708 記録の通り公開コミュニティ検証値として扱う。今回の状態確認条件は、ギア追加なしのヒト状態からのスーパージャンプ、シューター被弾後のHP回復、受理済み致死被弾、フルチャージ Heavy Splatling の連射中。プレイヤー離脱後にホストが操作を引き継ぐ通信規則は INKWAVE 固有で、Ver.11.3.0 の公開資料に同等の bot 所有移行規則は見当たらない。したがってこの修正や VM 結果を本家の通信挙動一致とは判定しない。
+
+| Issue | 公開版 INKWAVE の差分と実装 | 再現操作とプレイへの影響 |
+|---|---|---|
+| #1018 | `src/net/netmatch.js` の離脱時 adoption は位置を表示状態に合わせる一方、`weaponRunner.reset()` と `superJumpState = null` で受理済み飛行状態を消す。`patches/network-replication/adapter.mjs` は飛行相・経過時間・飛行時間・始点・終点を追加送信し、ホストの `_adopt` 後にネイティブ軌道を復元する。S3 の既存飛行中ダメージガードは維持。 | ヒト状態で固定地点へ発進し、相手側が飛行中の snapshot を受信してからその peer を離脱させる。ホスト bot は受け取った終点へ残り軌道を継続し、通常のネイティブ着地を行う。イベントの行先ヒントを除いた packet でも終点を維持する。 |
+| #1029 | HP 値は既存行で送るが、`Actor.lastDamage` の経過時間は送られず、adoption 後に古い回復時計が残る。追加状態は送信時刻に対する回復年齢を持ち、受信・サンプル・引継ぎで同じ年齢を保つ。非有限値は送信時に60秒へ上限化し、受信側も有限範囲を検証する。既存のHP減少後の回復判定は変更しない。 | シューターでHPを減らした直後、回復待ち中、待ち時間経過後、非常に大きい有限年齢の各行を受信させる。早い hit は引継ぎ直後に回復せず、既に待ち時間を過ぎた hit は既存レートで回復を続ける。回復定数は変更しない。 |
+| #1059 | 致死判定は通常 `damage-timing.mjs` の内部 pending map に1固定 tick保持され、Actor行に含まれないため、その間に所有権が変わると受理済みhitの原因・攻撃者・sequenceが失われる。`[life, sequence, attackerNid, cause]` を転送し、同じlifeとhit identityの pending splat として一度だけ復元する。 | HPが0以下になったがまだ alive な victim を含む snapshot を受信して離脱させる。ホストの次固定tickで原因を保って1回だけ splat し、deaths/splats と first-splat authority を一度だけ更新する。古いowner、新life不一致、古いsequence、重複時刻、NaN行は拒否する。 |
+| #1063 | Splatling runner は全連射分を先に引き落とし、未消費額と連射進行を `s3Spin` が持つ。通常の遠隔 Actor 行にはその予約がなく、adoption reset 後に未消費インクを復元できない。追加状態で予約額・残額・経過・発射数・総数・残り時間・実インクを運び、今回の移行では未消費分を正確に返金してstreamを終了する。 | フルチャージ後に連射を開始し複数弾を発射してから所有者を離脱させる。ホストは発射済み分の料金を維持し、未発射分のみ返金する。追加の弾・hit・paint・二重返金を起こさない。 |
+
+**Wire schema と統合境界。** 既存 actor field `0–20` は保持し、現在の special-use count `row[21]` も保持する。新しい独立slot `row[22]` は `['inkwave-adoption-v1', life, sequence, tick, recoveryAge, jump, lethal, splatling]`。`jump` は16値で phase/elapsed/duration/from/to/marker/startForm/target kind・ID・座標、`lethal` は4値、`splatling` は8値。owner life sidecar、outer timestamp replay gate、既存 event sequence / event・projectile・actor field は変更しない。旧21/22値行を受け入れ、新23値行は tag・life・sequence・値域が不正なら採用せず、他の長さも拒否する。#1062 の visual Roll 拡張は別所有のslot/helperを前提にしており、このlaneではその表示状態・`movement-motion.mjs` を編集していない。統合時に二つの任意拡張を別tagのまま再配置・検証する必要がある。
+
+**確認。** `patches/network-replication/tests/adoption-state.test.mjs` は六段の本番source adapter compositionを通し、native `Actor` / `WeaponRunner` / `Projectiles` / `NetMatch` と実際の movement、gear、resources、Flow runtime owner を使って5つの新しい手渡しケースを通した。Super Jump の残り軌道は30/60/120Hz描画グループでも同じ60Hz固定ロジックで元所有者と一致し、合法着地まで到達。選択した ownership、Super Jump/recovery、damage、Splatling対照を含む1回の実行は42/42 passing。実機 Switch、実 relay、ブラウザ生成物、物理描画時間の比較は未実施。固定床fixture上のnativeロジック検証であり、未確認の本家フレーム値や通信一致を主張しない。issue-94 baselineは再実行していない。
 
 
 ## 2026-10-08: Shooter-family main projectile / paint-drop separation
