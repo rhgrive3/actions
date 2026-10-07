@@ -1,6 +1,7 @@
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { ROLLER_DRUM } from './roller-model.mjs';
 import { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';
+import { rollerBubblerCandidate, applyRollerBubblerHit } from './kit-big-bubbler.mjs';
 // Roller-specific refinements. Timing comes from the existing gameplay profile;
 // joint curves are visual calibration against Nintendo's public roller videos.
 const EPS = 1e-10;
@@ -268,6 +269,16 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
       try { result = roller.call(this, dt, rollInp, mode); }
       finally { if (projectiles.applyHit === admittedHit) projectiles.applyHit = applyHit; }
     } else result = roller.call(this, dt, rollInp, mode);
+    // #1036: native Roller already owns player/boss contact. Add only the
+    // damageable Bubbler hardware, reusing the same rollHits 0.5s cadence.
+    const rollSpeed = Math.hypot(a.vel.x, a.vel.z);
+    if (this.rolling && rollSpeed > 1.0) {
+      const bubbler = rollerBubblerCandidate(a, Math.sin(a.yaw), Math.cos(a.yaw), w.rollWidth);
+      if (bubbler && G.time - (this.rollHits.get(bubbler.dome) || -9) > 0.5) {
+        this.rollHits.set(bubbler.dome, G.time);
+        applyRollerBubblerHit(bubbler, a, w.rollDamage);
+      }
+    }
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;
