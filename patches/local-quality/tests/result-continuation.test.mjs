@@ -14,7 +14,7 @@ function rig(h=helper){
  const Native=vm.runInNewContext(`class Menus {${method(code,'  show(name = null','\n  setLoading(')}${method(code,'  showResults(data)','\n  update(dt)')}${method(code,'  _go(name','\n  _titleGo()')}};Menus`,context);
  const m=new Native();Object.assign(m,{current:'results',_results:{win:true,players:[{weapon:'shooter'}]},_stack:['results'],_focusMem:{},_swapToken:0,_shownAt:0,_sfx(){},api:{},calls:[],wipe:{busy:false}});
  m.api.rematch=()=>m.calls.push('rematch');m.api.prepareMatch=()=>m.calls.push('prepare');m.api.onScreenChange=()=>{};m._btn=opts=>({opts,disabled:false});
- m._swap=name=>{const box={classList:{add(){}},children:[],appendChild(x){this.children.push(x);}};const scr={name,el:{querySelector:()=>box},box};if(name==='loadout')h.augmentContinuationLoadout(m,scr);m._scr=scr;};m._swap('results');
+ m._swap=name=>{const box={classList:{add(){}},children:[],appendChild(x){this.children.push(x);}};const scr={name,el:{querySelector:s=>s==='.iw-loadout__look'?box:null},box};if(name==='loadout')h.augmentContinuationLoadout(m,scr);m._scr=scr;};m._swap('results');
  const begin=()=>h.resultChangeButton(m,m._results).opts.accept();const button=()=>m._scr.box.children[0];
  return{m,begin,button};
 }

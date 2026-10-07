@@ -8,6 +8,8 @@ export function captureTurfFinish(match, nextState, paint) {
     const coverage = paint.coverage();
     match.s3FinishCoverage = Object.freeze([coverage[0], coverage[1]]);
   }
+  // Retire held/pending offensive state before neutral levels can become releases.
+  match.local?.weaponRunner?.cancelPendingInput?.();
   neutralizeTurfInput(match);
 }
 

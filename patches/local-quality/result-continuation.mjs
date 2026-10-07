@@ -38,6 +38,10 @@ export function augmentContinuationLoadout(menus, screen) {
     catch {failed();}
   }});
   box.appendChild(button);
+  // The gear owner's absolute sibling otherwise covers this second action on
+  // desktop. Keep its live controls/listeners in the same scrollable flow.
+  const gear = screen.el.querySelector('.s3-gear');
+  if (gear) box.appendChild(gear);
 }
 export function restoreOfflineResultShowcase(game, G, screen) {
   const m=game.match;
