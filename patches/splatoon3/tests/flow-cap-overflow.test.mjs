@@ -26,7 +26,7 @@ async function world(mode) {
   f.G.match.canRespawn = () => false;
   if (mode) f.G.match.mode = mode;
   const a = f.make(), enemy = f.make(), other = f.make();
-  enemy.team = 1; other.team = 1;
+  enemy.team = 1; other.team = 0;
   const paints = [];
   f.G.paint.splat = (...args) => { paints.push(args); return 0; };
   return { ...f, a, enemy, other, paints };
