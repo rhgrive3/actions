@@ -20,6 +20,18 @@ export function stepGroundVelocity(vel, moveX, moveZ, targetSpeed, accel, dt) {
   vel.x += dx / dist * step; vel.z += dz / dist * step;
 }
 
+/** Attack/ready state ratio for airborne acceleration and braking. The S3
+ * reference gives 2x both rates for main fire, held sub and special (0.02 vs
+ * 0.01 m/F^2) and does not exempt the air; the ratio is the already pinned
+ * ground 72/36 so the (separately owned) ordinary air baseline is untouched.
+ * Same condition as the grounded selection; also holds after entering squid.
+ */
+export function attackAirRateScale(a, P) {
+  const attacking = a.weaponRunner.firingPose?.() || a.intent.sub || a.specialActive;
+  const ratio = (P.s3AttackGroundAccel ?? 72) / (P.s3GroundAccel ?? 36);
+  return attacking && ratio > 0 ? ratio : 1;
+}
+
 /** True only while the roller, not its flick/recovery, owns ground movement. */
 export function rollingMovementActive(a) {
   const r = a.weaponRunner;
