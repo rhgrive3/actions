@@ -4,6 +4,37 @@
 const EPS = 1e-10;
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const INSTALLED = Symbol.for('inkwave.s3.splatling.v1');
+const sampledSpeedViews = new WeakMap();
+
+function withSampledProjectileSpeed(source, value, run) {
+  let entry = sampledSpeedViews.get(source);
+  if (!entry) {
+    const values = [], view = {};
+    const seen = new Set();
+    for (let current = source; current && current !== Object.prototype; current = Object.getPrototypeOf(current)) {
+      for (const key of Reflect.ownKeys(current)) {
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (!Object.getOwnPropertyDescriptor(current, key)?.enumerable) continue;
+        Object.defineProperty(view, key, {
+          enumerable: true,
+          get() { return key === 'projSpeed' && values.length ? values[values.length - 1] : source[key]; },
+        });
+      }
+    }
+    if (!Object.prototype.hasOwnProperty.call(view, 'projSpeed')) {
+      Object.defineProperty(view, 'projSpeed', {
+        enumerable: true,
+        get() { return values.length ? values[values.length - 1] : source.projSpeed; },
+      });
+    }
+    entry = { view: Object.freeze(view), values };
+    sampledSpeedViews.set(source, entry);
+  }
+  entry.values.push(value);
+  try { return run(entry.view); }
+  finally { entry.values.pop(); }
+}
 
 // The wiki's full-charge 19.8..22.2 DU/F brackets 21 DU/F by 1.2 DU/F,
 // matching raw 2.1 +/- .12. This is an absolute speed half-width, NOT +/-12%.
@@ -150,6 +181,6 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   Projectiles.prototype._fireRound = function (a, w, ...args) {
     if (w.kind !== 'splatling') return fireRound.call(this, a, w, ...args);
     const sampled = sampleSplatlingSpeed(w.projSpeed, w.speedRandomHalfWidth, w.speedRandomBias, Math.random());
-    return fireRound.call(this, a, { ...w, projSpeed: sampled }, ...args);
+    return withSampledProjectileSpeed(w, sampled, config => fireRound.call(this, a, config, ...args));
   };
 }
