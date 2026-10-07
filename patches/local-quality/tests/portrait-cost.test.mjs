@@ -222,6 +222,7 @@ test('portrait owner rebuilds on style, weapon and pose identity changes and ret
       return Promise.resolve();
     }
     hide() {}
+    _clear() {}
   }
   installPortraitCost(FakeShowcase);
   const show = new FakeShowcase();
@@ -243,6 +244,12 @@ test('portrait owner rebuilds on style, weapon and pose identity changes and ret
   show.hide();
   assert.equal(live, 0);
 
+  const clearedShow = new FakeShowcase();
+  await clearedShow._renderPortraitRun({ style: { hair: 3 }, weapon: 'shooter', color: '#123456' }, 32, 'head', null);
+  assert.equal(live, 1);
+  clearedShow._clear();
+  assert.equal(live, 0, 'clear retires the private owner just like hide does');
+
   class FailureShowcase {
     constructor() { this.CharacterClass = FakeCharacter; this._c2 = { set(value) { this.value = value; return this; } }; }
     _renderPortraitRun(req, _size, kind) {
@@ -260,3 +267,104 @@ test('portrait owner rebuilds on style, weapon and pose identity changes and ret
   await Promise.resolve();
   assert.equal(live, 0);
 });
+
+test('native owner refreshes wardrobe colour in place, equals a fresh settle, and stays display-only between crops', async (t) => {
+  const metrics = { constructors: 0, updates: 0, disposals: 0, setWeapons: 0, renderCalls: 0, readbacks: 0,
+    readBuffers: [], canvases: 0, imageData: 0, imageRows: [], callbacks: 0, consoleErrors: 0 };
+  const { api, context, modules } = await loadProductionComposition(metrics);
+  class MeasuredCharacter extends api.Character {
+    constructor(opts) { super(opts); metrics.constructors++; metrics.last = this; }
+    update(dt, state) { metrics.updates++; return super.update(dt, state); }
+    setWeapon(kind) { metrics.setWeapons++; return super.setWeapon(kind); }
+    dispose() { metrics.disposals++; return super.dispose(); }
+  }
+  const THREE = api.THREE;
+  const scene = new THREE.Scene();
+  const renderer = { autoClear: true, toneMappingExposure: 1, shadowMap: { needsUpdate: false }, getRenderTarget: () => null,
+    getClearColor: (color) => color.set(0x202020), getClearAlpha: () => 1, setRenderTarget() {}, setClearColor() {}, clear() {},
+    render() { metrics.renderCalls++; },
+    readRenderTargetPixelsAsync(_target, _x, _y, width, height, buffer) {
+      metrics.readbacks++; metrics.readBuffers.push(buffer);
+      for (let y = 0; y < height; y++) buffer.fill(y & 255, y * width * 4, (y + 1) * width * 4);
+      return Promise.resolve();
+    } };
+  const show = Object.create(api.Showcase.prototype);
+  Object.assign(show, { r: renderer, CharacterClass: MeasuredCharacter, scene, chars: [], decks: [],
+    color: new THREE.Color('#b044cc'), mode: 'locker', _out: 0, _warmState: 'done', _pq: [], _pcache: new Map(), _pflight: 0,
+    _clr: new THREE.Color(), _c: new THREE.Color(), _c2: new THREE.Color(), _tgt: new THREE.Vector3(), _pv: new THREE.Vector3(),
+    compQuad: { geometry: new THREE.BufferGeometry() }, compCam: new THREE.OrthographicCamera(),
+    fx: { clear() {} }, confetti: { clear() {} }, sparks: { clear() {} },
+    contact: { setMatrixAt() {}, count: 0, instanceMatrix: { needsUpdate: false } } });
+  // Production-like world: the settle runs inside G.scene over live physics, which is exactly
+  // the world participation a frozen owner would otherwise latch after the scene removal.
+  api.G.scene = scene;
+  api.G.physics = { raycast: () => ({ hit: false }) };
+  vm.runInContext('globalThis.__rngDraws = 0; globalThis.__origRandom = Math.random; globalThis.__rngStacks = []; ' +
+    'Math.random = function () { globalThis.__rngDraws++; ' +
+    'if (globalThis.__rngDraws <= 5) globalThis.__rngStacks.push(new Error().stack.split("\\n").slice(1, 6).join(" <- ")); ' +
+    'return globalThis.__origRandom(); };', context);
+  const rngDraws = () => vm.runInContext('globalThis.__rngDraws', context);
+  const base = { color: new THREE.Color('#4269b2'), weapon: 'shooter', style: { hair: 2, skin: 1, outfit: 3, eyes: 0 },
+    size: 128, kind: 'head' };
+  const enqueue = (request) => show.portrait(request, (canvas) => { if (canvas) metrics.callbacks++; });
+  const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
+
+  const coldDraws = rngDraws();
+  enqueue({ ...base });
+  show._portraitStep(); await flush();
+  assert.equal(metrics.constructors, 1);
+  assert.equal(metrics.updates, 14);
+  assert.equal(metrics.callbacks, 1);
+  const owner = metrics.last;
+  const ownerHead = owner.getHeadPosition(new THREE.Vector3()).toArray();
+  assert.equal(owner.inWorld, false, 'settled owner returns to display-only after the run');
+  assert.equal(owner.phys, null, 'settled owner drops the live physics reference');
+  assert.strictEqual(show.CharacterClass, MeasuredCharacter, 'spawn paths get the native class back outside a run');
+  assert.equal(rngDraws(), coldDraws, 'cold native portrait generation draws no shared Math.random values; ' +
+    'draws=' + rngDraws() + ' stacks=' + vm.runInContext('JSON.stringify(globalThis.__rngStacks)', context));
+  // Wardrobe colour change: the native tile cache misses, but the private owner identity hits.
+  const reuseDraws = rngDraws();
+  const updatesBeforeReuse = metrics.updates;
+  enqueue({ ...base, color: new THREE.Color('#ff5511') });
+  show._portraitStep(); await flush();
+  assert.equal(metrics.constructors, 1, 'colour-only change reuses the private owner');
+  assert.equal(metrics.updates, updatesBeforeReuse, 'frozen owner runs no settle updates on reuse');
+  assert.strictEqual(metrics.last, owner);
+  assert.equal(owner.color.getHexString(), 'ff5511', 'colour refreshes despite the frozen update no-op');
+  assert.equal(owner.weaponKind, 'shooter');
+  assert.equal(owner.dance, 'menu_idle');
+  assert.deepEqual(show._pv.toArray(), ownerHead, 'frozen pose is unchanged by the colour refresh');
+  assert.equal(owner.inWorld, false);
+  assert.equal(owner.phys, null);
+  assert.equal(rngDraws(), reuseDraws, 'reuse draws no shared RNG values');
+  assert.strictEqual(metrics.readBuffers[0], metrics.readBuffers[1], 'one pooled readback buffer serves both crops');
+  assert.equal(metrics.imageData, 1, 'one pooled ImageData serves both crops');
+  assert.equal(metrics.callbacks, 2);
+  assert.equal(show._pcache.size, 2, 'the colour variant keeps its own native tile cache entry');
+  assert.deepEqual(metrics.imageRows[0], [127, 0]);
+  // Equivalence: a fresh native settle of the same identity matches the frozen owner.
+  const twin = new MeasuredCharacter({ color: new THREE.Color('#ff5511'), weapon: 'shooter',
+    style: { ...base.style }, name: 'portrait', isLocal: false });
+  twin.setDance('menu_idle');
+  scene.add(twin.root);
+  const twinAnim = api.Showcase.prototype._anim();
+  for (let i = 0; i < 14; i++) { twinAnim.time = i / 30; twin.update(1 / 30, twinAnim); }
+  scene.remove(twin.root);
+  assert.equal(metrics.constructors, 2);
+  assert.deepEqual(twin.getHeadPosition(new THREE.Vector3()).toArray(), ownerHead,
+    'reused owner pose equals a fresh native settle of the same identity');
+  assert.equal(twin.color.getHexString(), owner.color.getHexString());
+  assert.equal(twin.weaponKind, owner.weaponKind);
+  assert.equal(twin.dance, owner.dance);
+  assert.equal(rngDraws(), reuseDraws, 'the equivalence settle also draws no shared RNG values');
+
+  // Clear retires the private owner (hide/dispose share the same wrapper).
+  show._clear();
+  assert.equal(metrics.disposals, 1, 'clear retires the private owner');
+  t.diagnostic(JSON.stringify({ production_modules: modules.size, three_revision: api.THREE.REVISION,
+    colour_refresh_without_rebuild: { extra_constructors: metrics.constructors - 2, nativeUpdates: metrics.updates,
+      shared_rng_draws_total: rngDraws() - coldDraws, pooled_readback_buffers: new Set(metrics.readBuffers).size,
+      imageDataAllocations: metrics.imageData },
+    fresh_settle_equivalence_head: ownerHead, owner_retired_on_clear: metrics.disposals === 1 }));
+});
+

@@ -138,6 +138,14 @@ export function installPortraitCost(Showcase) {
           owner.character.update = () => {};
           state.owner = owner;
         }
+        // The native settle runs with the kid inside G.scene over live physics, and the
+        // frozen owner can no longer observe the scene removal that follows (update is a
+        // no-op). Return the world-participation flags to their constructor state so
+        // between crops the private owner stays display-only: battle-bus LIVE sweeps and
+        // physics raycasts see exactly what a disposed native portrait character would
+        // be, while the settled rig and refreshed colour/style stay intact.
+        owner.character.inWorld = false;
+        owner.character.phys = null;
         const settledOwner = owner;
         if (result && typeof result.catch === 'function') {
           result.catch(() => {
