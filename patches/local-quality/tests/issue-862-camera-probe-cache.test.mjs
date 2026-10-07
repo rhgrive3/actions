@@ -1,5 +1,6 @@
 // #862: exercise the native CameraRig after the exact source-adapter chain used by the build.
-// The locked inkwave-public source is read only; the raw module is the baseline control.
+// The locked source is read only; the differential control disables only cache reuse
+// in the fully composed module, retaining the independently owned shoulder framing.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
@@ -8,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptQualitySource } from '../adapter.mjs';
+import { adaptQualitySource, replaceOnce } from '../adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
 
@@ -56,7 +57,9 @@ async function boot() {
 
 async function loadRig(adapted) {
   const { mk, three, ctx, physics } = await boot();
-  const source = adapted ? installedSource() : rawSource();
+  const installed = installedSource();
+  const source = adapted ? installed : replaceOnce(installed,
+    'if (_qcChanged || _qcAge >= 0.25) {', 'if (true) {', 'test-only uncached production control');
   const mod = mk(source, adapted ? 'cameraRig-installed.js' : 'cameraRig-baseline.js');
   await mod.link((spec) => {
     if (spec === 'three') return three;

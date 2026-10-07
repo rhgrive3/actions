@@ -139,3 +139,20 @@ test('late confirmation is additive after the ordinary splat and does not double
   f.emit('flow:first-splat-confirmed', { match, attacker: active, victim: victim2 });
   assert.equal(active.s3.flow.remaining, 10 + f.profile.flow.extension, 'the first-splat FP does not extend twice');
 });
+
+
+test('#529 same network life survives owner adoption without a second terminal award', async () => {
+  const f = await composedFixture(), attacker = f.make(), victim = f.make();
+  attacker.team = 0; victim.team = 1; attacker.netLife = 2; victim.netLife = 3; victim.remote = true;
+  f.G.match.mode = 'turf';
+  const confirm = () => f.emit('combat:confirmed', { attacker, victim, damage: 0, killed: true, victimLife: 3, helperLife: 2 });
+  confirm();
+  const score = attacker.s3.flow.score;
+  assert.ok(score > 0);
+  victim.alive = false; victim.stats.deaths++; victim.remote = false;
+  confirm();
+  near(attacker.s3.flow.score, score, 'same authoritative life cannot acquire a new terminal from owner-local death bookkeeping');
+  victim.netLife = 4; f.emit('combat:respawn', { actor: victim });
+  f.emit('combat:confirmed', { attacker, victim, damage: 0, killed: true, victimLife: 4, helperLife: 2 });
+  assert.ok(attacker.s3.flow.score > score, 'a genuinely new life still admits progression');
+});

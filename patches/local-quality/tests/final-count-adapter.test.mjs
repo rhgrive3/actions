@@ -34,7 +34,7 @@ function rig(source, { time = 8.4, attract = false, follower = true } = {}) {
   const counts = [], minutes = [];
   const emit = (type, e) => { if (type === 'match:count') counts.push(e.n); if (type === 'match:oneminute') minutes.push(1); };
   const Native = vm.runInNewContext(`class Match {${updateSlice(source)}};Match`,
-    { G: { netm: null }, emit, advanceTenacity, PLAYER: { radius: .3 }, MATCH: { finalCountdown: 10 }, Math });
+    { G: { netm: null }, emit, advanceTenacity, sampleTeamWipes: () => {}, PLAYER: { radius: .3 }, MATCH: { finalCountdown: 10 }, Math });
   const m = Object.assign(new Native(), {
     mode: 'turf', state: 'playing', stateT: 0, time, duration: 180, attract, follower,
     paused: false, actors: [], bossMode: null, result: null, lastMinuteFired: false, lastCount: 99,

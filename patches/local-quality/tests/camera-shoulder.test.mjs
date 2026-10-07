@@ -17,8 +17,8 @@
 // the real build adapters) against a REAL THREE.PerspectiveCamera, and reads the rendered
 // forward off the camera quaternion. Nothing here re-derives the shoulder formula locally,
 // so these assertions genuinely fail on unfixed code. The primary proof is the differential
-// harness: the same scenario is run on the raw upstream file and on the adapted file, and the
-// two are compared. That makes "only the framing moved" a measured fact, not a claim.
+// harness: the same scenario runs on the complete adapted module and a negative control
+// that restores only its locked upstream shoulder block. Unrelated owners remain equal.
 //
 // Scope note: SH0's MAGNITUDE IS DELIBERATELY UNQUANTIFIED. Splatoon 3 publishes no shoulder
 // offset and this repository pins none (patches/splatoon3/reference/curated-numbers.json
@@ -34,7 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptQualitySource } from '../adapter.mjs';
+import { adaptQualitySource, replaceOnce } from '../adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
 
@@ -95,10 +95,19 @@ export class Hit {
   return shared;
 }
 
-// Evaluate one rig build. adapted:false loads the RAW published file (true "before").
+// The positive rig is the complete production composition. Its negative control
+// restores only the locked shoulder block, retaining all unrelated owners,
+// including #862 probe cadence, for an exact differential of shoulder framing.
 async function loadRig({ adapted }) {
   const { THREE, mk, three, ctx, physics } = await boot();
-  const code = adapted ? adaptUpstream() : rawUpstream();
+  const installed = adaptUpstream();
+  const start = '    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);';
+  const end = '    if (this.shoulder > 1e-3) cam.position.addScaledVector(_right, this.shoulder);';
+  const block = source => {
+    assert.equal(source.split(start).length, 2); assert.equal(source.split(end).length, 2);
+    return source.slice(source.indexOf(start), source.indexOf(end) + end.length);
+  };
+  const code = adapted ? installed : replaceOnce(installed, block(installed), block(rawUpstream()), 'test-only upstream shoulder control');
   const mod = mk(code, REL);
   await mod.link((spec) => {
     if (spec === 'three') return three;
@@ -323,7 +332,7 @@ test('a large forced shoulder still does not rotate the aim (#363/#367)', async 
 // 3. the change is a pure parallel translation - nothing else moved
 // ---------------------------------------------------------------------------------------
 
-test('only the framing moved: pivot, aim, boom, zoom and kick are bit-identical to upstream (#363/#367)', async () => {
+test('shoulder framing preserves aim and settled rig state with probe-cache cadence (#363/#367/#862)', async () => {
   const scenarios = [
     ['idle clear boom', {}],
     ['steep look up', { yaw: 0.7, pitch: 0.4 }],
@@ -357,7 +366,7 @@ test('only the framing moved: pivot, aim, boom, zoom and kick are bit-identical 
       const qf = new fx.THREE.Vector3(0, 0, -1).applyQuaternion(fx.trace[i].q).normalize();
       const qu = new up.THREE.Vector3(0, 0, -1).applyQuaternion(up.trace[i].q).normalize();
       assert.ok(Math.abs(dot(qf, qu) - 1) < 1e-9, `${name}: frame ${i} rendered aim differs from upstream`);
-      // pivot and boom are identical on every frame too
+      // Both controls retain the same cache owner, so pivot and boom remain identical per frame.
       assert.ok(Math.abs(fx.trace[i].pivot.x - up.trace[i].pivot.x) < 1e-9
         && Math.abs(fx.trace[i].pivot.y - up.trace[i].pivot.y) < 1e-9
         && Math.abs(fx.trace[i].pivot.z - up.trace[i].pivot.z) < 1e-9, `${name}: frame ${i} pivot drifted`);
@@ -627,7 +636,7 @@ test('the transition changes only the rendered offset - aim and rig state are un
   // weapon/ink authoritative values are not produced by CameraRig at all; assert the rig exposes
   // nothing that could carry them, so the correction is provably rendering-only
   assert.deepEqual(
-    Object.keys(b.rig).filter((k) => /weapon|ink|damage|dmg|ammo/i.test(k)), [],
+    Object.keys(b.rig).filter((k) => /weapon|damage|dmg|ammo/i.test(k) || /(^|_)ink(?!wave)/i.test(k)), [],
     'CameraRig must not carry weapon or ink state that this correction could touch');
 });
 
