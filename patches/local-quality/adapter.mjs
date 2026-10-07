@@ -6,6 +6,7 @@ import { adaptScreenfxDamageReset } from './screenfx-damage-reset-adapter.mjs';
 import { adaptScreenfxLensRelease } from './screenfx-lens-release-adapter.mjs';
 import { adaptActorWeaponInput } from './actor-weapon-input-adapter.mjs';
 import { adaptTimeUpFreeze } from './time-up-freeze-adapter.mjs';
+import { adaptBotRefillRelease } from './bot-refill-release-adapter.mjs';
 import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
 import { adaptTurfLead } from './turf-lead-adapter.mjs';
 import { adaptScoreReticle } from './score-reticle-adapter.mjs';
@@ -24,7 +25,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
-  'screenfx-damage-reset-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'time-up-freeze-adapter.mjs',
+  'screenfx-damage-reset-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'time-up-freeze-adapter.mjs', 'bot-refill-release-adapter.mjs',
   'final-minute-music-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
@@ -52,6 +53,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptScreenfxLensRelease(rel, code, replaceOnce);
   code = adaptActorWeaponInput(rel, code, replaceOnce);
   code = adaptTimeUpFreeze(rel, code, replaceOnce);
+  code = adaptBotRefillRelease(rel, code, replaceOnce);
   code = adaptFinalMinuteMusic(rel, code, replaceOnce);
   code = adaptTurfLead(rel, code, replaceOnce);
   code = adaptScoreReticle(rel, code, replaceOnce);
