@@ -16,6 +16,15 @@ export function parseFocusedInputs(tests, baselines = '[]') {
   return { files, refs: [...new Set(refs)] };
 }
 
+export function focusedSummary(log) {
+  const result = {};
+  for (const field of ['tests', 'pass', 'fail', 'cancelled', 'skipped']) {
+    const match = log.match(new RegExp(`(?:^|\\n)ℹ ${field} (\\d+)(?:\\r?\\n|$)`));
+    if (match) result[field] = Number(match[1]);
+  }
+  return { ...result, accepted: result.tests > 0 && result.pass > 0 && result.fail === 0 && result.cancelled === 0 };
+}
+
 function run() {
   const { files, refs } = parseFocusedInputs(process.env.FOCUSED_TESTS, process.env.FOCUSED_BASELINES || '[]');
   const source = process.env.SOURCE_SHA;
@@ -53,17 +62,21 @@ function run() {
   fs.renameSync(pending, path.join(evidence, 'focused-tests.log'));
   assert.equal(git('rev-parse', 'HEAD'), source);
   assert.equal(git('status', '--porcelain'), '', 'Tests must preserve clean source');
+  const text = fs.readFileSync(path.join(evidence, 'focused-tests.log'), 'utf8');
+  const summary = focusedSummary(text);
+  const accepted = result.status === 0 && summary.accepted;
   const receipt = { source, sourceTree: git('rev-parse', 'HEAD^{tree}'), baselines: refs, tests: files,
     command: [process.execPath, ...command], started, finished: new Date().toISOString(),
     exitCode: result.status, signal: result.signal, error: result.error?.message ?? null,
-    cleanBeforeAfter: true, accepted: result.status === 0 };
+    logPath: path.join(evidence, 'focused-tests.log'), summary,
+    cleanBeforeAfter: true, accepted };
   const receiptPending = path.join(evidence, 'receipt.json.writing');
   fs.writeFileSync(receiptPending, JSON.stringify(receipt, null, 2), { flag: 'wx' });
   fs.renameSync(receiptPending, path.join(evidence, 'receipt.json'));
-  const lines = fs.readFileSync(path.join(evidence, 'focused-tests.log'), 'utf8').trim().split('\n');
+  const lines = text.trim().split('\n');
   console.log(`Focused INKWAVE tests: ${files.length} files, source ${source}, exit ${result.status}`);
   console.log(lines.slice(result.status === 0 ? -8 : -50).join('\n'));
-  process.exitCode = result.status === 0 ? 0 : 1;
+  process.exitCode = accepted ? 0 : 1;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) run();
