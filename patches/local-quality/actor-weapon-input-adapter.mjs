@@ -63,11 +63,7 @@ export function adaptActorWeaponInput(rel, code, once) {
   const fieldExpr = Object.fromEntries(fields);
   if (!fieldExpr.sub.includes('!isSquid') || !fieldExpr.subReleased.includes('!isSquid'))
     throw new Error('INKWAVE quality patch conflict (Actor weapon input reuse): squid gate drift');
-  const lineStart = code.lastIndexOf('\n', at) + 1;
-  const indent = code.slice(lineStart, at);
-  const assigns = fields.map(([key, expr]) => `winp.${key} = ${expr};`).join(' ');
-  const after = indent + 'const winp = this._weaponInput;\n' +
-    indent + assigns + '\n' +
-    indent + 'this.weaponRunner.update(dt, winp);';
-  return code.slice(0, lineStart) + after + code.slice(objEnd + 3);
+  const assigns = fields.map(([key, expr]) => `this._weaponInput.${key} = (${expr})`).join(', ');
+  const after = '(' + assigns + ', this.weaponRunner.update(dt, this._weaponInput))';
+  return code.slice(0, at) + after + code.slice(objEnd + 3);
 }
