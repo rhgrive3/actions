@@ -170,6 +170,11 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  // C30-C39 helpers keep static imports and full precache without four new eager hints.
+  'patches/splatoon3/runtime/charger-sight-cache.mjs',
+  'patches/splatoon3/runtime/minimap-dirty.mjs',
+  'patches/splatoon3/runtime/muzzle-feedback.mjs',
+  'patches/splatoon3/runtime/superjump-target-notification.mjs',
   'patches/splatoon3/runtime/clothing-gear.mjs', // Static import and full precache are retained.
   // Remaining PR786 helpers keep their static-import and full-precache owners.
   'patches/local-quality/world-quality.mjs',
