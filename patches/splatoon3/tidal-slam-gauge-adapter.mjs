@@ -17,8 +17,8 @@ export function adaptTidalSlamGauge(rel, code, replaceOnce) {
     '    this.specialActive = null;   // { id, t, phase }\n    clearTidalSlamGaugeFinish(this);',
     'Tidal Slam reset clears pending finish');
   code = replaceOnce(code,
-    '    this.specialActive = null;\n    this.climbing = false;',
-    '    this.specialActive = null;\n    clearTidalSlamGaugeFinish(this);\n    this.climbing = false;',
+    '    this.special *= 0.5;\n    this.specialActive = null;\n    this.climbing = false;',
+    '    clearTidalSlamGaugeFinish(this);\n    this.special *= 0.5;\n    this.specialActive = null;\n    this.climbing = false;',
     'Tidal Slam interruption clears pending finish');
   code = replaceOnce(code,
     "    this._resolve(false, py, false);\n    if (s.phase === 'fall' && (this.grounded || s.t > 1.2)) {\n      this._slamImpact(sp);\n      this.specialActive = null;",
