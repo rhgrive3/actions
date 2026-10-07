@@ -74,7 +74,9 @@
       "rollShotDelay": 0.06666666666666667,
       "swimFirstShotDelay": 0.2,
       "spawnPlayerForwardRate": 2,
-      "shotGuideFrame": 7
+      "shotGuideFrame": 7,
+      "rollPaintWidthHalf": 1.8,
+      "rollPaintWorldScale": 1
     },
     "blaster": {
       "inkPerShot": 10,
@@ -114,7 +116,8 @@
       },
       "fieldCollisionRadius": 0.2,
       "postShotDelay": 0.36666666666666664,
-      "terrainSplashRadiusRate": 0.4234
+      "terrainSplashRadiusRate": 0.4234,
+      "wallImpactPaintRadius": 2.2
     },
     "splatling": {
       "inkPerShot": 0.5625,
