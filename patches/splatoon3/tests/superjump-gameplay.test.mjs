@@ -200,15 +200,17 @@ test('#362 fixed spawn points snapshot immediately; own death still cancels comm
 test('#362 30/60/120Hz preserve one committed destination and flight announcement', async t => {
   let expected;
   for(const hz of [30,60,120]) {
-    const f=await boot();t.after(f.close);const a=f.make(),target=f.make({pos:[10,0,7]}),clock=new f.FixedClock(),trace=[],events=[];
-    f.on('superjump',({actor,phase,to})=>{if(actor===a)events.push([phase,to?plain(to.toArray()):null]);});
+    const f=await boot();t.after(f.close);const a=f.make(),target=f.make({pos:[10,0,7]}),clock=new f.FixedClock(),trace=[],events=[],selectedTargets=[];
+    f.on('superjump',({actor,phase,to,target:selected})=>{if(actor===a){events.push([phase,to?plain(to.toArray()):null]);if(phase==='target')selectedTargets.push(selected);}});
     a.superJump(target);const committed=plain(a.superJumpState.to.toArray());
     for(let i=0;i<hz*2;i++)clock.advance(1/hz,dt=>{
       target.pos.x+=.1;if(clock.ticks===20)target.splat(null,'water');
       a.update(dt);trace.push([a.superJumpState?.phase,plain(a.superJumpState?.to.toArray() ?? null),plain(a.pos.toArray())]);
     });
     const result=plain({trace,events});if(expected)assert.deepEqual(result,expected);else expected=result;
-    assert.deepEqual(events,[['charge',null],['flight',committed]]);
+    assert.deepEqual(events,[['target',null],['charge',null],['flight',committed]]);
+    assert.equal(selectedTargets.length,1,'one selection announcement precedes the committed jump');
+    assert.equal(selectedTargets[0],target,'the selection announcement retains the exact chosen teammate');
     assert.ok(new f.THREE.Vector3(...committed).distanceTo(new f.THREE.Vector3(10,0,7)) < 1e-9);
   }
 });
