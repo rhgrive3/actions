@@ -162,7 +162,7 @@ test('actual moving roller geometry and both grips stay synchronized through lif
       if (t + 1e-10 < (vertical ? 31 : 21) / 60) assert.equal(c.weapon.drumW, 0, 'lift does not spin the drum before release');
     }
     const label = `${hz}Hz ${vertical ? `vertical land ${landAt}s` : 'horizontal'} ${held ? 'held/restart' : 'released'}`;
-    assert.ok(rows.every(x => x.bottom >= -.006), `${label}: actual vertices clear the floor (${Math.min(...rows.map(x => x.bottom))})`);
+    assert.ok(rows.every(x => x.bottom >= -.006), `${label}: actual vertices clear the floor (${JSON.stringify(rows.reduce((a,b)=>a.bottom<b.bottom?a:b))})`);
     assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002), `${label}: arms reach the weapon grips (${Math.max(...rows.map(x => x.gripL))})`);
     if (held) {
       // Allow the late landing at 40F and the lowering spring to finish before

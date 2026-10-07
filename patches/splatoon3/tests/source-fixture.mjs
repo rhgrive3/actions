@@ -14,7 +14,7 @@ export async function fixture(options = {}) {
   const context = vm.createContext({ console, performance, URL, innerWidth:1280, innerHeight:720 });
   const modules = new Map();
   function resolve(spec, from) {
-    if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
+    if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');\n    if (spec.startsWith('three/addons/')) return path.join(UPSTREAM, 'vendor/three/jsm', spec.slice('three/addons/'.length));
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(ROOT, 'inkwave-public/'))) file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
     if (file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
