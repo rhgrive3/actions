@@ -95,7 +95,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   };
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
   const clearDualiesLocks = r => {
-    r.s3DualiesPostShot = 0; r.s3DodgeShotPending = 0;
+    r.s3DualiesPostShot = 0; r.s3SloshPostShot = 0; r.s3DodgeShotPending = 0;
     r.s3DualiesSubBuffered = false; r.s3DualiesSubReleaseBuffered = false;
   };
   const reset = WeaponRunner.prototype.reset;
@@ -110,6 +110,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     if (r) {
       if (r.s3ChargerPostShot > 0) r.s3ChargerPostShot = Math.max(0, r.s3ChargerPostShot - dt);
       if (r.s3DualiesPostShot > 0) r.s3DualiesPostShot = Math.max(0, r.s3DualiesPostShot - dt);
+      if (r.s3SloshPostShot > 0) r.s3SloshPostShot = Math.max(0, r.s3SloshPostShot - dt);
       const cancelAction = !this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady();
       if (cancelAction) {
         r.s3ChargerPostShot = 0;
@@ -143,8 +144,9 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
         get subReleased() { return chargerPostShotBlocksSub(runner) ? false : source.subReleased; },
       });
     }
-    if (this.a.weapon.kind !== 'dualies') return weaponUpdate.call(this, dt, input);
-    const source = input || {}, locked = this.s3DualiesPostShot > EPS;
+    const kind = this.a.weapon.kind, postShot = () => kind === 'slosher' ? this.s3SloshPostShot : this.s3DualiesPostShot;
+    if (kind !== 'dualies' && kind !== 'slosher') return weaponUpdate.call(this, dt, input);
+    const source = input || {}, locked = postShot() > EPS;
     if (locked) {
       if (source.sub) this.s3DualiesSubBuffered = true;
       if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
@@ -156,11 +158,11 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     }
     const runner = this;
     const gated = new Proxy(prepared, { get(target, prop) {
-      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
+      if ((prop === 'sub' || prop === 'subReleased') && postShot() > EPS) return false;
       return target[prop];
     }});
     const out = weaponUpdate.call(this, dt, gated);
-    if (this.s3DualiesPostShot > EPS) {
+    if (postShot() > EPS) {
       if (prepared.sub) this.s3DualiesSubBuffered = true;
       if (prepared.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
@@ -239,7 +241,10 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     return queue.length;
   };
   Projectiles.prototype._blastBurst = function (p, point, victim) {
-    if (!flushing && p.s3TerrainBurst) {
+    // #911: a player-direct Blaster contact uses the reduced impact burst just like terrain.
+    // Keep the latest fixed-tick queue owner: mark the queued snapshot, not the live pooled round.
+    const reducedDirect = !!victim && victim !== 'boss';
+    if (!flushing && (p.s3TerrainBurst || reducedDirect)) {
       (this.s3BlastQueue ??= []).push({
         point: point.clone(), victim,
         p: { owner: p.owner, team: p.team, ghost: !!p.ghost, wid: p.wid,
@@ -247,7 +252,10 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       });
       return;
     }
-    return terrainBurst.call(this, p, point, victim);
+    const before = p.s3TerrainBurst;
+    if (reducedDirect) p.s3TerrainBurst = true;
+    try { return terrainBurst.call(this, p, point, victim); }
+    finally { p.s3TerrainBurst = before; }
   };
   // Fixed-tick entry: the queued terrain burst of tick N resolves before anything moves
   // in tick N+1, so render cadence cannot change the ordering.
