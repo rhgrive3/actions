@@ -666,6 +666,52 @@ def lower_edge(rays, design, corner, n_up, lid):
     return np.c_[P[:, 0], c], P[:, 1]
 
 
+def build_lower_band(rays, design, curve):
+    """The black lower line as one flat band along the smooth lower white edge (curve, design px): its top edge
+    lap_px over the white, its width a smooth profile of design x (design['lower_band']['width'] = [[x, px], ...]),
+    both edges smooth curves in the front view.  Each vertex lies lift_mm in front of the nearest surface round it
+    (envelope over eyeball and skin, smoothed), so it never dips in and out of the skin (that made the jagged
+    lumps of the round tube).  Returns verts, faces (head mm)."""
+    cfg = design['lower_band']
+    c = curve[curve[:, 0] <= cfg['x_end']]
+    n = len(c)
+    tan = np.gradient(c, axis=0)
+    tan /= np.linalg.norm(tan, axis=1, keepdims=True)
+    nrm = np.c_[-tan[:, 1], tan[:, 0]]
+    nrm[nrm[:, 1] < 0] *= -1                                  # down in the image (away from the white)
+    nrm = er.smooth_rows(nrm, 4.0)
+    nrm /= np.linalg.norm(nrm, axis=1, keepdims=True)
+    W = np.array(cfg['width'], float)
+    wid = er.smooth_rows(np.interp(c[:, 0], W[:, 0], W[:, 1]), 4.0)
+    rows = cfg.get('rows', 6)
+    f = np.linspace(0, 1, rows)
+    off = -cfg.get('lap_px', 0.3) + f[None] * (wid[:, None] + cfg.get('lap_px', 0.3))
+    px = c[:, None, :] + off[..., None] * nrm[:, None, :]
+    O = np.zeros((n, rows, 3)); D = np.zeros_like(O); H = np.zeros((n, rows))
+    for j in range(n):
+        for i in range(rows):
+            o, d, t = rays.ray(tuple(px[j, i]))
+            hs = [h[3] for h in (rays.eye_tree.ray_cast(Vector(o), Vector(d), 50),
+                                 rays.skin_tree.ray_cast(Vector(o), Vector(d), 50)) if h[0] is not None]
+            O[j, i], D[j, i], H[j, i] = o, d, min(hs + [t])
+    r = cfg.get('reach', 8)
+    Hp = np.pad(H, ((r, r), (0, 0)), mode='edge')
+    env = np.min([Hp[r + dj:r + dj + n] for dj in range(-r, r + 1)], axis=0)
+    env = np.minimum(env, env.min(axis=1, keepdims=True))      # one depth across the band (flat ribbon)
+    lift = cfg.get('lift_mm', 0.15) / 1000
+    depth = env - lift
+    for _ in range(30):
+        depth = np.minimum(er.smooth_rows(depth, 3.0), env - lift)
+    verts = M.to_local((O + D * depth[..., None]).reshape(-1, 3)) * 1000
+    faces = [(j * rows + i, j * rows + i + 1, (j + 1) * rows + i + 1, (j + 1) * rows + i)
+             for j in range(n - 1) for i in range(rows - 1)]
+    q = verts[list(faces[len(faces) // 2])]
+    if np.cross(q[1] - q[0], q[2] - q[0])[2] < 0:
+        faces = [fc[::-1] for fc in faces]
+    print('LOWER_BAND', n, 'columns')
+    return er.solid_sheet(verts, faces, LINER_THICK_MM)
+
+
 def build_corner_band(rays, design):
     """The black frame of the white at the outer corner, as one smooth band between two smooth curves measured on
     the reference front view (design['corner_band']: 'inner' = the white's outer end per row, 'outer' = the black's
@@ -970,6 +1016,8 @@ def build_rim(rays, design):
         edge = (curve, found)
         line = curve[curve[:, 0] <= min(lid[-1, 0], design['lid_edge'].get('line_end_x', 1e9))].copy()
         line[:, 1] += RIM_BELOW_PX
+        if 'lower_band' in design:
+            line = line[:1]                                   # the lower line is the smooth band (build_lower_band)
         px = np.vstack([corner[:n_up], line])
     else:
         px = np.vstack([corner, lid])
@@ -1811,6 +1859,9 @@ def main():
             liner = (np.r_[liner[0], tv], list(liner[1]) + [tuple(i + len(liner[0]) for i in fc) for fc in tf])
         rim, _, edge = build_rim(rays, d)
         band = build_corner_band(rays, d)
+        if 'lower_band' in d and edge is not None:
+            lb = build_lower_band(rays, d, edge[0])
+            band = lb if band is None else (np.r_[band[0], lb[0]], list(band[1]) + [tuple(i + len(band[0]) for i in fc) for fc in lb[1]])
         if band is not None:
             rim = (np.r_[rim[0], band[0]], list(rim[1]) + [tuple(i + len(rim[0]) for i in fc) for fc in band[1]])
         tear = build_tearline(rays, d, *edge) if edge is not None else None
