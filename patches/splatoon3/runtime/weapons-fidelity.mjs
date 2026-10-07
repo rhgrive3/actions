@@ -405,10 +405,10 @@ export function installWeaponsFidelity(context,profile) {
       freeVelocityY:defaults.brakeToFreeVelocityY}));
   }
   Object.defineProperty(Projectiles.prototype,INSTALLED,{value:true});
-  const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
+  const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,step=Projectiles.prototype._step,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
+    const p=fresh.apply(this,args);p._s3SloshBirthPending=false;p._s3SloshBirthOwner=null;p._s3SloshBirthEpoch=undefined;p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
@@ -475,6 +475,10 @@ export function installWeaponsFidelity(context,profile) {
         (u.RandomRotateYOffOrderNum?.includes(index)?0:(Math.random()*2-1)*radians(u.RandomRotateYDegree||0));
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+      p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
+      p._s3SloshBirthWeaponId=p.wid;p._s3SloshBirthRemote=p.owner?.remote;p._s3SloshBirthNid=p.owner?.nid;
+      p._s3SloshBirthPeer=p.owner?.owner;p._s3SloshBirthWasInMatch=Array.isArray(context.G?.actors)&&context.G.actors.includes(p.owner);
+      p._s3SloshBirthDelay=p.delay;p._s3SloshYaw=yaw;p._s3SloshPitch=pitch;
       p.damage=u.DamageParam.ValueMax/10;p.head=!!u.HitEffectBigOrderNum?.includes(index);
       p.s3DamageGroup=active.group;
     }
@@ -484,9 +488,33 @@ export function installWeaponsFidelity(context,profile) {
     if(group)p.s3DamageGroup=group;
     return result;
   };
+  Projectiles.prototype._step=function(p,dt){
+    if(p._s3SloshBirthPending){
+      const owner=p._s3SloshBirthOwner,actors=context.G?.actors;
+      const current=owner&&p.owner===owner&&owner.alive!==false&&!(Number.isFinite(owner.hp)&&owner.hp<=0)&&
+        owner._s3SlosherBirthEpoch===p._s3SloshBirthEpoch&&!owner.specialActive&&owner.weapon?.id===p._s3SloshBirthWeaponId&&
+        owner.remote===p._s3SloshBirthRemote&&owner.nid===p._s3SloshBirthNid&&owner.owner===p._s3SloshBirthPeer&&
+        (!p._s3SloshBirthWasInMatch||actors?.includes(owner));
+      if(!current){p._s3SloshBirthPending=false;return true;}
+      const u=p.fidelitySloshUnit,index=p.fidelitySloshIndex;
+      if(!u){p._s3SloshBirthPending=false;return true;}
+      this._muzzle(owner,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+      const speed=((owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
+      const horizontal=Math.cos(p._s3SloshPitch)*speed;
+      p.vel.set(Math.sin(p._s3SloshYaw)*horizontal,
+        Math.sin(p._s3SloshPitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),
+        Math.cos(p._s3SloshYaw)*horizontal);
+      // Preserve the source delay on the wire so the receiver recovers this unit,
+      // then clear it locally: this projectile has reached its scheduled birth.
+      p.delay=p._s3SloshBirthDelay;
+      try{if(!p.ghost)context.G?.netm?.recProj?.(p);}
+      finally{p.delay=0;p._s3SloshBirthPending=false;}
+    }
+    return step.call(this,p,dt);
+  };
   Projectiles.prototype.ghostProjectile=function(actor,event){
     const before=this.list.length;const result=ghost.call(this,actor,event);
-    if(this.list.length>before){const p=this.list.at(-1);initialize(p,WEAPONS[p.wid]||actor.weapon);}
+    if(this.list.length>before){const p=this.list.at(-1);initialize(p,WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;}}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;

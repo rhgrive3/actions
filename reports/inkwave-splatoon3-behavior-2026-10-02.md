@@ -71,6 +71,16 @@
 | P10 | スーパージャンプと復活 | ジャンプ準備は約0.75秒で、飛行開始時に飛行時間+0.2秒の無敵を付ける。着地時は1.4m半径を塗る。復活タイマー5.5秒後、高さ4.5mから落ちる（`src/game/actor.js:712`、`:727`、`:754`、`:143`）。 | 準備・飛行・着地の被弾、着地塗り、移動可能になるまでの時間。ギア条件も固定する。 |
 | P11 | サブとスペシャル | ボムは面の法線yが0.6を超える接触時に0.95秒の導火線を開始する。その条件を満たす接触がなければ開始しない（`src/game/weapons.js:1302`）。飛び上がって落下爆発するスペシャルには被ダメージを25%にする装甲があり、着地後にも0.3秒の無敵がある（`src/game/actor.js:162`、`:774`、`:819`）。 | 斜面・壁でのボム、発動前後の被弾、爆発の遮蔽・範囲・段差。見た目の似た本家スペシャルを、対応確認なしに同一仕様と扱わない。 |
 | P12 | 金網と細い足場 | ヒトは金網に接地するが、イカ状態の接地・身体衝突では金網を除外する（`src/game/physics.js:207`、`src/game/actor.js:536`、`:548`、`:561`）。細い手すりにはヒト用の足位置補正もある。 | 金網上で変身する、ジャンプ中に変身する、手すりを歩く。各状態の通過・接地・塗りを実機と照合する。 |
+| P13 | Slosher 遅延グロブの生成位置・初速 | `src/game/weapons.js` は発射時の一つの muzzle を全弾に設定する。S3 runtime はソースの生成遅延を保ち、実際の初回ステップで現在の muzzle と接地状態に応じた初速を確定する。ネット上の projectile birth もその時点で一度だけ送る。 | S3 Ver.11.3.0 の通常 Slosher、ギア能力なし、平地と段差を用意する。振り始め後に前進し、3F後に落下させ、各弾の生成位置・接地/空中の初速・着弾位置を記録する。実機の確認は未実施。 |
+
+### P13: Slosher の遅延グロブ生成（Issue #833）
+
+- 参照は Splatoon 3 Ver.11.3.0、通常 Slosher (`WeaponSlosherStrong`)。任天堂は Ver.11.3.0 を2026-08-19の更新として掲載している（[任天堂の更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/)）。生成群・接地/空中初速のパラメーター確認には commit `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の [Slosher パラメータ表](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json)を使う。この表は解析データであり、任天堂が公表したフレーム値ではない。
+- 同表の生成列は4発の `0/1/2/3F` 群と、4F後から2F間隔で出る5発の `4/6/8/10/12F` 群。各群は `SpawnSpeedGround` と `SpawnSpeedAir` を別に持つ。ここでは装備ギア効果なし、平地開始、60Hzシミュレーションを基準にした。再現入力は準備後に毎シミュレーション tick `0.04` units 前進、3 tick目に ground→air または air→ground、同 tick に照準変更である。この移動量はロジック試験の制御値であり、Switch の実機計測ではない。
+- INKWAVE の main `f31f5da` を全 production adapter composition で変更前に再現すると、発射 tick に9 projectile packet が送られ、全弾の開始位置が同じ（spread 0）で、途中の ground→air でも全弾が ground 初速のままだった。Projectile の birth tick は `1/2/3/4/5/7/9/11/13`。最初の tick は次の固定更新で処理されるため、相対 tick の差は元パラメーター間隔を保つ。
+- 修正後は `patches/splatoon3/runtime/weapons-fidelity.mjs` が実際の初回 projectile step で muzzle と ground/air speed を確定し、発射時に決まった Slosher の yaw/sweep と RNG 呼出順を保持する。`patches/network-replication/adapter.mjs` は準備時の送信を抑え、birth 時に元のソース delay を含む packet を一度だけ記録する。受信側はその wire state から unit を解決して delay を0にするため、二重待ちしない。reset、死亡、special 中、weapon 交換、owner 移管または場からの除去では未生成弾を破棄する。既存の速度・遅延・damage group・paint・volley budget は変更しない。Aim sweep の履歴は別 Issue #258 の範囲として、準備時の投射 yaw を維持する。
+- `patches/network-replication/tests/slosher-birth-sampling.test.mjs` は build と gameplay/network adapter を通した native module fixture で、移動・aim/muzzle・両方向の接地遷移、30/60/120Hz render grouping、packet 数/状態、remote の二重適用防止、plain battle、各 cancellation を検証する。production build は成功した。Practice Range browser runner はステージ・10m target hit・塗り・reset pad を確認したが、weapon pad の切替で失敗し、pause/travel と通常 battle への isolation 確認に進めなかった。失敗時の計測は task evidence の `range-evidence/range-result.json` に保存した。
+- 状態: main の根本差はロジックレベルで再現でき、修正後の composition tests は通過。Nintendo Switch での実入力・地形を使った比較と Practice Range の weapon pad、pause/travel、通常 battle isolation は未確認のまま残す。Issue: [#833](https://github.com/rhgrive3/actions/issues/833)。
 
 ## 継続比較の手順
 
