@@ -499,7 +499,22 @@ export function adaptSource(rel, code) {
       '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
       'pwa service worker');
   }
+  if (rel === 'src/game/physics.js') {
+    code = replaceOnce(code,
+      '    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1;',
+      '    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1; c.ceilingBlock = -1;',
+      'ceiling contact block identity');
+    code = replaceOnce(code,
+      '          else if (_n.y < -0.6) c.ceiling = true;',
+      '          else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }',
+      'ceiling contact classification');
+    return code;
+  }
   if (rel === 'src/world/level.js') {
+    code = replaceOnce(code,
+      '      roof: !!d.roof,              // off-limits top (roofs, crane legs …): never inkable, anyone landing on it slides off',
+      '      roof: !!d.roof,              // off-limits top (roofs, crane legs …): never inkable, anyone landing on it slides off\n      squidReturner: !!d.squidReturner,  // explicit anti-climb ceiling; ordinary ceilings do not strip Roll/Surge armor',
+      'Squid Returner surface classification');
     code = replaceOnce(code,
       '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));',
       '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));\n    this.homeSuperJumpPoints = (layout.homeSuperJumpPoints || layout.spawnPads).map((p) => new THREE.Vector3(...p));',
@@ -604,10 +619,6 @@ export function adaptSource(rel, code) {
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
-    code = replaceOnce(code,
-      "    // paint under the burst\n    const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n",
-      "",
-      'Blaster timed burst generic floor paint');
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
@@ -665,8 +676,27 @@ export function adaptSource(rel, code) {
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
+    // #1060: remove only the generic burst-floor stamp after the kit authority
+    // adapter has attached its owner/ghost gate to this exact burst location.
+    code = replaceOnce(code,
+      "    // paint under the burst\n    const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n",
+      "",
+      'Blaster timed burst generic floor paint');
+    // #1049: the pinned Blaster SplashPaintParam owns the vertical receiving
+    // surface search window. Other projectile families retain the native 4u probe.
+    code = replaceOnce(code,
+      '        const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);',
+      '        const dropProbe = p.type === \'blast\' && Number.isFinite(p.s3SplashDropMax) ? p.s3SplashDropMax : 4;\n        const g = G.physics.raycast(p.pos, DOWN, dropProbe, _hit2, true);',
+      'Blaster flight splash drop-height window');
+    // #1043: normal Blaster splash visibility samples the target capsule instead
+    // of hard-blocking on one arbitrary centre ray. Kit special blasts keep their
+    // separately-owned occlusion contract.
+    code = replaceOnce(code,
+      '      if (!G.physics.los(c, _v)) continue;',
+      '      if (!(p.s3SpecialWeapon ? G.physics.los(c, _v) : blasterSplashExposed(G.physics, c, e, PLAYER))) continue;',
+      'Blaster splash capsule exposure');
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
-    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
+    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap, blasterSplashExposed } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
