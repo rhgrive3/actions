@@ -753,6 +753,7 @@ test('actual emitted Blaster shot replays the identical mechanism cycle on a rem
     remote.a.owner = 'me'; remote.a.nid = 0; // the same shooter seen by another client
     const nmRemote = new api.NetMatch(session('them', 'them'), { map: 'map', difficulty: 'normal' });
     nmRemote.byNid.set(0, remote.a); nmRemote._setupActor(remote.a); // installs _netTrig
+    nmRemote._peer('me'); // real receive sessions establish the sequence/ID replay owner
     nmRemote._play('me', [performance.now() / 1000, 'tr', 0, 'shoot', null]);
     remote.step(1 / 60); mechRest(remote);
     assert.equal(remote.snapshot().blasterMechAge, null, 'a trigger-only remote packet is not accepted shot evidence');
@@ -791,6 +792,28 @@ test('actual emitted Blaster shot replays the identical mechanism cycle on a rem
     nmRemote._play('me', firstProjectile); nmRemote._play('me', firstTrigger);
     assert.equal(remoteProj.list.length, remoteCount, 'duplicate stale projectile packets do not spawn twice');
     assert.equal(remote.snapshot().blasterMechAge, null, 'duplicate stale trigger packets do not restart a settled cycle');
+    // R1: a rejected birth may never become evidence for a fresh valid trigger.
+    // All packets pass the actual six-layer NetMatch; this is not a toy gate.
+    let sequence = nmRemote.peers.get('me')._lastEventSeq || 0;
+    const fresh = event => {
+      const copy = Array.from(event); copy[0] = performance.now() / 1000;
+      copy[copy.length - 1] = copy._netSeq = ++sequence;
+      return copy;
+    };
+    for (const rejection of ['malformed', 'duplicate-id', 'wrong-owner', 'stale']) {
+      remote.a.weaponRunner.reset(); remote.step(1 / 60); mechRest(remote);
+      const before = remoteProj.list.length;
+      const birth = fresh(firstProjectile);
+      if (rejection === 'malformed') birth[5] = NaN;
+      if (rejection === 'wrong-owner') birth[29] = 100000 + sequence;
+      if (rejection === 'stale') birth._netSeq = 1;
+      nmRemote._play(rejection === 'wrong-owner' ? 'intruder' : 'me', birth);
+      assert.equal(remoteProj.list.length, before, `${rejection} birth is rejected by production`);
+      const trigger = fresh(firstTrigger); trigger[0] = birth[0];
+      nmRemote._play('me', trigger);
+      assert.equal(remote.snapshot().blasterMechAge, null,
+        `${rejection} birth cannot authorize a fresh shoot trigger`);
+    }
     const beforeSquid = nmLocal.out.length, shotsBeforeSquid = blasterShots(local);
     let waitSquidShot = 0;
     while (blasterShots(local) === shotsBeforeSquid && waitSquidShot++ < 60) {

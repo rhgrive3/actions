@@ -93,7 +93,7 @@ async function runScenario(sc) {
   const api = await boot();
   const { G, THREE } = api;
   const counters = makeWorld(api, sc.boxes);
-  const a = new api.Actor({ team: 0, name: '648 native regression', weapon: 'blaster', CharacterClass: api.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+  const a = new api.Actor({ team: 0, name: '648 native regression', weapon: 'slosher', CharacterClass: api.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
   a.spawnAt(new THREE.Vector3(...sc.pos), 0); a.invuln = 0;
   if (sc.move) a.intent.move.set(sc.move[0], 0, sc.move[1]);
@@ -226,7 +226,7 @@ test('#648 NetMatch pack/apply keeps the owner gauge authoritative over the prox
   const { G, THREE, NetMatch } = api;
   makeWorld(api, [FLOOR]);
   const make = pos => {
-    const a = new api.Actor({ team: 0, name: '648 net authority', weapon: 'blaster', CharacterClass: api.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+    const a = new api.Actor({ team: 0, name: '648 net authority', weapon: 'slosher', CharacterClass: api.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
     a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
     a.spawnAt(new THREE.Vector3(...pos), 0); a.invuln = 0;
     return a;
