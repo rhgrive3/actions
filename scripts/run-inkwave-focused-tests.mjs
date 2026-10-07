@@ -41,7 +41,7 @@ function run() {
   assert.ok(requested && path.isAbsolute(requested));
   const evidence = fs.realpathSync(requested);
   assert.equal(evidence, path.resolve(requested), 'Evidence storage must not redirect');
-  assert.ok(evidence.startsWith('/mnt/workspace/'), 'Evidence requires persistent workspace storage');
+  assert.ok(evidence.startsWith('/mnt/workspace/.dev-state/agent-work/evidence/'), 'Evidence requires persistent workspace storage');
   assert.ok(!evidence.startsWith(root + path.sep), 'Evidence must stay outside the product checkout');
   const command = ['--experimental-vm-modules', '--test', '--test-concurrency=2', '--test-reporter=spec', ...files];
   const pending = path.join(evidence, 'focused-tests.log.writing');

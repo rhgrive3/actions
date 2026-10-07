@@ -106,5 +106,5 @@ test('optional focused regressions preserve the canonical gate and publish only 
   assert.ok(workflow.includes("steps.focused_native.outcome == 'success'"));
   assert.ok(workflow.includes('FOCUSED_TESTS: ${{ inputs.focused_tests }}'));
   assert.ok(workflow.includes('FOCUSED_BASELINES: ${{ inputs.focused_baselines }}'));
-  assert.ok(workflow.includes('FOCUSED_EVIDENCE_DIR: /mnt/workspace/inkwave-focused-'));
+  assert.ok(workflow.includes('FOCUSED_EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/evidence/inkwave-focused-'));
 });
