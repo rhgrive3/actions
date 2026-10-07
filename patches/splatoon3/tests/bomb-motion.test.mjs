@@ -106,6 +106,8 @@ function rig(api, kind = 'shooter', enabled = true) {
   function step(dt = 1 / 60, input = {}) {
     G.projectiles = projectiles;
     a.intent.fire = !!input.fire; a.intent.sub = !!input.sub;
+    // This rig calls the runner directly; Actor.update owns the Slosher 16F post-shot countdown (#926).
+    const runner = a.weaponRunner; if (runner.s3SloshPostShot > 0) runner.s3SloshPostShot = Math.max(0, runner.s3SloshPostShot - dt);
     G.time += dt; a.lastFire += dt; a.weaponRunner.update(dt, input); a._finishFrame(dt); ch.root.updateMatrixWorld(true);
     assert.ok(Array.from(ch.P).every(Number.isFinite));
     assert.ok(ch.getMuzzle(new THREE.Vector3()).toArray().every(Number.isFinite));
@@ -343,7 +345,7 @@ test('held and release overlays reserve the left hand during main attacks, movem
     const r = rig(api, kind);
     try {
       r.a.vel.set(1.5, 0, 1); r.a.grounded = false;
-      for (let i = 0; i < 40; i++) { r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.step(1 / 60, { sub: true, fire: true }); r.a.ink = 100; }
+      for (let i = 0; i < (kind === 'slosher' ? 80 : 40); i++) { r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.step(1 / 60, { sub: true, fire: kind !== 'slosher' || i === 0 }); r.a.ink = 100; }
       // Splattershot's verified post-shot sub lock can interrupt a simultaneous
       // sub hold. Releasing main fire must admit the still-held sub after 4F.
       if (kind === 'shooter' && !r.ch.bombHeld) {
@@ -412,7 +414,7 @@ test('release and per-frame preview sample native rig without changing any live 
       r.a.vel.set(1.8, 0, 2.9);
       for (let i = 0; i < 30; i++) {
         r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.a.yaw = .4 + i * .004;
-        r.step(1 / 60, { sub: true, fire: kind === 'slosher' && i === 4 });
+        r.step(1 / 60, { sub: true, fire: kind === 'slosher' && i === 0 });
         r.a.ink = 100;
         const before = preservedRig(r, api, true), beforeCalls = { ...calls }, beforeEvents = flowEvents;
         const preview = new api.THREE.Vector3(0, 1.35, 0);
@@ -420,7 +422,8 @@ test('release and per-frame preview sample native rig without changing any live 
         assert.deepEqual(preservedRig(r, api, true), before, kind + ' preview preserves the complete live native rig and physics scratch');
         assert.deepEqual(calls, beforeCalls, 'preview performs no update, animation or secondary simulation');
         assert.equal(flowEvents, beforeEvents);
-        assert.ok(preview.distanceTo(r.a.pos) < 1.25, `sample is reachable by this native model ${kind} frame${i}: physical=${preview.distanceTo(r.a.pos)} rendered=${preview.distanceTo(r.ch.root.position)}`);
+        // Slosher drops the held bomb for the 16F post-shot gate (#926); preview only exists while the bomb is held.
+        if (kind !== 'slosher' || r.ch.bombHeld) assert.ok(preview.distanceTo(r.a.pos) < 1.25, `sample is reachable by this native model ${kind} frame${i}: physical=${preview.distanceTo(r.a.pos)} rendered=${preview.distanceTo(r.ch.root.position)}`);
       }
       const before = preservedRig(r, api), beforeCalls = { ...calls }, preview = api.bombPreviewPosition(r.a, new api.THREE.Vector3());
       r.projectiles.updateArc(r.a, true);
