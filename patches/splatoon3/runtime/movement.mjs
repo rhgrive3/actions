@@ -218,6 +218,12 @@ export function normalJumpVelocity(a, velocity) {
       r.charging && r.charge >= 1 && Number.isFinite(cap)) return Math.min(velocity, cap);
   return velocity;
 }
+export function isSquidReturnerCeiling(actor, physics) {
+  const id = actor?.contacts?.ceilingBlock;
+  return actor?.contacts?.ceiling === true && Number.isInteger(id) && id >= 0 &&
+    physics?.level?.blocks?.[id]?.squidReturner === true;
+}
+
 export function installMovement(context, tuning) {
   api = context; config = tuning.movement;
   const { Actor } = api;
@@ -258,9 +264,7 @@ export function installMovement(context, tuning) {
     const value = integrate.apply(this, args);
     // #1075: ordinary stage ceilings are geometry, not Squid Returners. Only an
     // explicitly classified anti-climb ceiling strips Roll/Surge armor.
-    const ceilingBlock = this.contacts?.ceilingBlock;
-    const block = Number.isInteger(ceilingBlock) && ceilingBlock >= 0 ? api.G.physics?.level?.blocks?.[ceilingBlock] : null;
-    if (this.contacts.ceiling && block?.squidReturner === true) {
+    if (isSquidReturnerCeiling(this, api.G.physics)) {
       const state = movementState(this);
       for (const shield of new Set([state.armor, state.roll, state.surge])) if (shield) shield.armorTime = 0;
       state.armor = null;
