@@ -213,20 +213,20 @@ test('#684 Blaster update/reset owns only Blaster jump fields and cannot clear S
   const a = jump(f, f.make('blaster'));
   const r = a.weaponRunner;
   r.s3WasGrounded = true;        // Shooter #98 state owner
-  r.s3JumpSpreadAge = 0.4;       // Shooter #98 recovery clock
+  r.s3JumpSpreadAge = null;      // Shooter #98 recovery clock
   r.s3BlasterJumpT = 12 / HZ;
-  a.weapon = f.WEAPONS.shooter;  // exercise the non-Blaster wrapper branch without setWeapon/reset
+  a.weapon = f.WEAPONS.shooter;  // exercise the composed Shooter owner after the Blaster wrapper
   f.tick(a);
-  assert.equal(r.s3WasGrounded, true, 'non-Blaster update leaves Shooter grounded marker intact');
-  assert.equal(r.s3JumpSpreadAge, 0.4, 'non-Blaster update leaves Shooter recovery clock intact');
+  assert.equal(r.s3WasGrounded, false, 'Shooter owner records the actual airborne state');
+  close(r.s3JumpSpreadAge, 1 / HZ, 'Shooter owner starts its own jump-spread clock on the edge');
   assert.equal(r.s3BlasterJumpT, null, 'leaving Blaster clears only Blaster elapsed state');
   assert.equal(r.s3BlasterWasGrounded, false, 'Blaster edge marker has its own namespace');
 
   r.s3WasGrounded = true;
   r.s3JumpSpreadAge = 0.4;
   r.reset();
-  assert.equal(r.s3WasGrounded, true, 'Blaster reset does not own the Shooter edge marker');
-  assert.equal(r.s3JumpSpreadAge, 0.4, 'Blaster reset does not own the Shooter recovery clock');
+  assert.equal(r.s3WasGrounded, !!a.grounded, 'shared reset lets Shooter reinitialize its own edge marker');
+  assert.equal(r.s3JumpSpreadAge, null, 'shared reset lets Shooter clear its own recovery clock');
   assert.equal(r.s3BlasterWasGrounded, false, 'Blaster reset clears its own edge marker');
 });
 
