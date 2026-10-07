@@ -1,3 +1,6 @@
+import { installThermalTracking } from './private-tracking.mjs';
+import { installHaunt } from './haunt.mjs';
+import { installDryInk } from './dry-ink.mjs';
 import { CLOTHING_ABILITIES, SPLATFEST_TEE, clothingAbilityAllowed, deathGearPenalty } from './clothing-gear.mjs';
 import { selectedSub } from './kit-composition.mjs';
 import { installSubReady } from './sub-ready.mjs';
@@ -8,7 +11,7 @@ import { HEAD_ABILITIES, conditionalPoints, conditionalKey, installConditionalGe
 import { installSubResistance } from './sub-resistance.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
-  respawnPunisher: '復活ペナルティアップ', abilityDoubler: 'フェスT：追加ギアパワー倍化',
+  haunt: 'リベンジ', thermalInk: 'サーマルインク', respawnPunisher: '復活ペナルティアップ', abilityDoubler: 'フェスT：追加ギアパワー倍化',
   ninjaSquid: 'イカニンジャ',
   lastDitchEffort: 'ラストスパート', comeback: 'カムバック', openingGambit: 'スタートダッシュ', subResistance: 'サブ影響軽減',
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
@@ -90,6 +93,7 @@ export function installGear(api, tuning) {
     const beforeCost = a.weapon?.specialCost, beforeSpecial = a.special;
     a.s3.loadout = loadout;
     const points = conditionalPoints(a, abilityPoints(loadout), G.match, tuning.conditionalGear);
+    a.s3.abilityPoints = Object.freeze({ ...points }); // actor-local canonical effective AP
     a.s3.modifiers = modifiersFor(loadout, tuning.gear, points);
     const m = a.s3.modifiers;
     m.ninjaSquid = loadout[1].main === 'ninjaSquid';
@@ -128,6 +132,9 @@ export function installGear(api, tuning) {
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
     for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
     const sub = api.SUB[a.weapon.sub || 'bomb'];
+    const tiers = sub?.throwSpeedTiers;
+    if (tiers && [tiers.low, tiers.mid, tiers.high].every(Number.isFinite) && tiers.low > 0)
+      m.subPower = gearCurve(ap.subPower || 0, tiers.low, tiers.mid, tiers.high) / tiers.low;
     m.inkSaverSub = sub?.inkSaverCurve ? gearCurve(ap.inkSaverSub || 0, ...sub.inkSaverCurve) : 1;
     m.stormDuration = Math.floor(gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormDurationFrames) + 1e-10) / 60;
     m.stormThrowScale = gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormThrowScale);
@@ -265,6 +272,9 @@ export function installGear(api, tuning) {
   installStormPower(api);
   installConditionalGear(api, tuning, refresh);
   installSubResistance(api);
+  installThermalTracking(api, tuning);
+  installHaunt(api, tuning, { gearCurve });
+  installDryInk(api);
   if (api.Menus) {
     const render = api.Menus.prototype._scr_loadout;
     api.Menus.prototype._scr_loadout = function (...args) {
