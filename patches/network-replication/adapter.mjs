@@ -9,12 +9,128 @@ function once(code, before, after, label) {
   if (i < 0 || code.indexOf(before, i + before.length) >= 0) throw Error('Network replication anchor mismatch: ' + label);
   return code.slice(0,i) + after + code.slice(i+before.length);
 }
+function replaceAllExpected(code, before, after, expected, label) {
+  const count = code.split(before).length - 1;
+  if (count !== expected) throw Error('Network replication anchor mismatch: ' + label + ' (' + count + ' != ' + expected + ')');
+  return code.split(before).join(after);
+}
 export function networkIdentity() {
   return Object.fromEntries(['adapter.mjs'].map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
+  if (rel === 'src/core/ctx.js') {
+    patch('export function emit(name, payload) {\n  const set = listeners.get(name);\n  if (!set) return;\n  for (const fn of set) fn(payload);\n}', `const EVENT_VECTOR_FIELDS = Object.freeze({
+  muzzle: eventVectorField('weapon-fire-muzzle', readMuzzle, writeMuzzle),
+  dir: eventVectorField('weapon-fire-direction', readDirection, writeDirection),
+  pos: eventVectorField('weapon-impact-position', readPosition, writePosition),
+  normal: eventVectorField('weapon-impact-normal', readNormal, writeNormal),
+});
+function eventVectorField(name, get, set) {
+  return {
+    x: Symbol(name + '.x'), y: Symbol(name + '.y'), z: Symbol(name + '.z'),
+    cached: Symbol(name + '.cached'), valid: Symbol(name + '.valid'), wrapped: Symbol(name + '.wrapped'), get, set,
+    xDescriptor: { configurable: true, writable: true, value: 0 },
+    yDescriptor: { configurable: true, writable: true, value: 0 },
+    zDescriptor: { configurable: true, writable: true, value: 0 },
+    cachedDescriptor: { configurable: true, writable: true, value: undefined },
+    validDescriptor: { configurable: true, writable: true, value: false },
+    wrappedDescriptor: { configurable: true, writable: true, value: false },
+    propertyDescriptor: { configurable: true, enumerable: true, get, set },
+  };
+}
+function writeVectorSlot(payload, field, slot, value) {
+  const descriptor = field[slot + 'Descriptor'];
+  descriptor.value = value;
+  Object.defineProperty(payload, field[slot], descriptor);
+}
+function setVectorCoordinates(payload, field, value) {
+  payload[field.valid] = !!value && !!value.isVector3;
+  if (!payload[field.valid]) return;
+  writeVectorSlot(payload, field, 'x', value.x);
+  writeVectorSlot(payload, field, 'y', value.y);
+  writeVectorSlot(payload, field, 'z', value.z);
+}
+function materializeVector(payload, field) {
+  const cached = payload[field.cached];
+  if (cached !== undefined || !payload[field.valid]) return cached;
+  const vector = new THREE.Vector3(payload[field.x], payload[field.y], payload[field.z]);
+  writeVectorSlot(payload, field, 'cached', vector);
+  return vector;
+}
+function assignVector(payload, field, value) {
+  setVectorCoordinates(payload, field, value);
+  writeVectorSlot(payload, field, 'cached', value);
+}
+function readMuzzle() { return materializeVector(this, EVENT_VECTOR_FIELDS.muzzle); }
+function writeMuzzle(value) { assignVector(this, EVENT_VECTOR_FIELDS.muzzle, value); }
+function readDirection() { return materializeVector(this, EVENT_VECTOR_FIELDS.dir); }
+function writeDirection(value) { assignVector(this, EVENT_VECTOR_FIELDS.dir, value); }
+function readPosition() { return materializeVector(this, EVENT_VECTOR_FIELDS.pos); }
+function writePosition(value) { assignVector(this, EVENT_VECTOR_FIELDS.pos, value); }
+function readNormal() { return materializeVector(this, EVENT_VECTOR_FIELDS.normal); }
+function writeNormal(value) { assignVector(this, EVENT_VECTOR_FIELDS.normal, value); }
+function snapshotEventVector(payload, key) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (!field || payload[field.wrapped]) return false;
+  const value = payload[key];
+  if (!value || !value.isVector3) return false;
+  writeVectorSlot(payload, field, 'x', value.x);
+  writeVectorSlot(payload, field, 'y', value.y);
+  writeVectorSlot(payload, field, 'z', value.z);
+  writeVectorSlot(payload, field, 'valid', true);
+  Object.defineProperty(payload, key, field.propertyDescriptor);
+  writeVectorSlot(payload, field, 'wrapped', true);
+  return true;
+}
+function snapshotWeaponEvent(name, payload) {
+  if (!payload || typeof payload !== 'object') return;
+  if (name === 'weapon:fire') { snapshotEventVector(payload, 'muzzle'); snapshotEventVector(payload, 'dir'); }
+  else if (name === 'weapon:impact') { snapshotEventVector(payload, 'pos'); snapshotEventVector(payload, 'normal'); }
+}
+export function isEventVectorPayload(payload, key) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  return !!(field && payload && payload[field.valid] && (payload[field.cached] === undefined || payload[field.cached] !== null && payload[field.cached] !== undefined && payload[field.cached].isVector3));
+}
+export function hasEventVector(payload, key) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (field && payload && payload[field.valid]) return payload[field.cached] === undefined || !!payload[field.cached];
+  return !!(payload && payload[key]);
+}
+export function eventVectorComponent(payload, key, axis) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (field && payload && payload[field.valid]) {
+    const cached = payload[field.cached];
+    if (cached !== undefined) return cached ? cached[axis === 0 ? 'x' : axis === 1 ? 'y' : 'z'] : undefined;
+    return payload[axis === 0 ? field.x : axis === 1 ? field.y : field.z];
+  }
+  const value = payload && payload[key];
+  return value && value[axis === 0 ? 'x' : axis === 1 ? 'y' : 'z'];
+}
+export function copyEventVector(payload, key, target) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (field && payload && payload[field.valid]) {
+    const cached = payload[field.cached];
+    if (cached !== undefined) { if (!cached) return false; target.copy(cached); return true; }
+    target.set(payload[field.x], payload[field.y], payload[field.z]);
+    return true;
+  }
+  const value = payload && payload[key];
+  if (!value) return false;
+  target.copy(value);
+  return true;
+}
+export function emit(name, payload) {
+  const set = listeners.get(name);
+  if (!set) return;
+  snapshotWeaponEvent(name, payload);
+  for (const fn of set) fn(payload);
+}`, 'snapshot event vectors before synchronous dispatch');
+    code = "import * as THREE from 'three';\n" + code;
+    return code;
+  }
   if (rel === 'src/net/netmatch.js') {
+    patch("import { G, emit, on } from '../core/ctx.js'", "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js'", 'read numeric event snapshots');
     patch('const FORWARD = [', "const FORWARD = ['hit', 'hit:rejected', ",
       'authoritative hit admission feedback');
     patch('    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;',
@@ -98,6 +214,13 @@ export function adaptNetworkSource(rel, code) {
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
     patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
     patch('function packEvent(e) {', 'function packEvent(e, precise = false) {', 'hitscan precision policy');
+    patch('  for (const k in e) {\n    const v = e[k];', `  for (const k in e) {
+    if (isEventVectorPayload(e,k)) {
+      const x = eventVectorComponent(e,k,0), y = eventVectorComponent(e,k,1), z = eventVectorComponent(e,k,2);
+      o[k] = precise ? [x,y,z] : [r2(x),r2(y),r2(z)];
+      continue;
+    }
+    const v = e[k];`, 'pack immutable event vectors without materializing');
     patch('else if (v && v.isVector3) o[k] = [r2(v.x), r2(v.y), r2(v.z)];', 'else if (v && v.isVector3) o[k] = precise ? [v.x,v.y,v.z] : [r2(v.x),r2(v.y),r2(v.z)];', 'hitscan unit direction and origin');
     patch("else if (typeof v === 'number') o[k] = r3(v);", "else if (typeof v === 'number') o[k] = precise ? v : r3(v);", 'hitscan charge and length');
     patch('while (i < p.events.length && p.events[i][0] <= tr) i++;',
