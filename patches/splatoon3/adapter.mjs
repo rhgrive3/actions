@@ -14,6 +14,7 @@ import { adaptKitRescue } from './kit-rescue-adapter.mjs';
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
+import { adaptChargerSightCache } from './charger-sight-cache-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
 import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
 import fs from 'node:fs';
@@ -516,6 +517,7 @@ export function adaptSource(rel, code) {
       '{ list[i] = list[list.length - 1]; list.pop(); this._recycle(p); } }',
       'normal completion recycles without owners');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
+    code = adaptChargerSightCache(rel, code, replaceOnce);
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
@@ -532,6 +534,7 @@ export function adaptSource(rel, code) {
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
+  if (rel === 'src/fx/fxHooks.js') return adaptChargerSightCache(rel, code, replaceOnce);
   if (rel === 'src/net/netmatch.js') {
     code = replaceOnce(code,
       'const F = {',
