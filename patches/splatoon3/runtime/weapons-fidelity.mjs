@@ -1,3 +1,4 @@
+import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
 // Main-weapon gameplay only. Values live in profile.json; provenance and retained
@@ -338,9 +339,16 @@ function setCollision(p,c,offset=0) {
 export function validFidelityRollerUnitPacket(event) {
   if (!Array.isArray(event)) return false;
   if ([27, 30, 32].includes(event.length)) return true;
-  if (event.length !== 33 && event.length !== 35) return false;
+  if (event.length !== 33 && event.length !== 35 && event.length !== 36) return false;
+  // #977: optional, tagged immutable special power precedes the tick/sequence.
+  // Ordinary weapons retain the existing packet; arbitrary trailing data is rejected.
+  if (event.length === 36) {
+    const power = event[33]?.s3SpecialPowerAP;
+    const entry = api?.SPECIALS && Object.hasOwn(api.SPECIALS, event[4]) ? api.SPECIALS[event[4]] : null;
+    if (typeof entry?.projectileDescriptor !== 'function' || !Number.isFinite(power) || power < 0 || power > 57) return false;
+  }
   // The composed Kit recorder inserts volley/action slots before network metadata.
-  const kitOffset = event.length === 35 ? 2 : 0;
+  const kitOffset = event.length >= 35 ? 2 : 0;
   const weapons = api?.WEAPONS;
   const weapon = weapons && Object.hasOwn(weapons, event[4]) ? weapons[event[4]] : null, unit = event[30 + kitOffset];
   if (!weapon) {
@@ -570,9 +578,9 @@ export function applyFidelityProjectileHit(system,p,victim,amount,point) {
   amount=fidelityDamage(p,point);
   const weapon=p.s3Weapon||p.owner.weapon;
   if(weapon.kind==='slosher'&&p.s3DamageGroup)
-    return applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||p.type||'slosher');
+    return withMainDirectDamage(p.owner,victim,()=>applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||p.type||'slosher'));
   amount=groupDamage(p.s3DamageGroup,victim,amount);
-  if(amount>0)system.applyHit(p.owner,victim,amount,p.wid||p.type,damageGroupId(p.s3DamageGroup));
+  if(amount>0)applyMainDirectHit(system,p.owner,victim,amount,p.wid||p.type,damageGroupId(p.s3DamageGroup));
 }
 
 export function splatlingLaunchSpeed(weapon,charge) {
