@@ -1,3 +1,5 @@
+import { gearCurve } from './gear.mjs';
+
 // Big Bubbler (Splat Roller special; internal id SpGreatBarrier) for the
 // composed public INKWAVE runtime.
 //
@@ -315,11 +317,16 @@ function removeDome(dome, reason) {
   return true;
 }
 
-function makeDome({ id, serial, owner, team, pos, remote }) {
+export function bigBubblerCanopyHp(owner) {
+  const ap = owner?.s3?.modifiers?.specialPowerAP || 0;
+  return gearCurve(ap, raw.maxHp, raw.maxHpMid, raw.maxHpHigh);
+}
+
+function makeDome({ id, serial, owner, team, pos, remote, hpMax = raw.maxHp }) {
   return {
     id, serial, owner, team, pos, t: 0, remote: !!remote,
     color: new api.THREE.Color(api.G.teamColors?.[team] ?? 0xffffff),
-    hp: raw.maxHp, hpMax: raw.maxHp,
+    hp: hpMax, hpMax,
     fieldHp: raw.maxFieldHp, fieldHpMax: raw.maxFieldHp,
     radius: raw.minRadius, emitterY: 0, ignited: false,
     burnAccum: 0, overlapAccum: 0, dead: false,
@@ -337,7 +344,7 @@ function deploy(owner) {
   const serial = ++deploySerial;
   const dome = makeDome({
     id: `${owner.team}:${bigBubblerOwnerId(owner) ?? 'unknown'}:${serial}`,
-    serial, owner, team: owner.team, pos, remote: false,
+    serial, owner, team: owner.team, pos, remote: false, hpMax: bigBubblerCanopyHp(owner),
   });
   buildVisual(dome);
   domes.push(dome);
@@ -836,7 +843,7 @@ function replayDeploy(owner, payload) {
   if (!remember(key)) return ok('duplicate', { domeId: v.domeId });
   const dome = makeDome({
     id: v.domeId, serial: v.serial, owner: owner ?? null, team: v.team,
-    pos: new api.THREE.Vector3(v.pos[0], v.pos[1], v.pos[2]), remote: true,
+    pos: new api.THREE.Vector3(v.pos[0], v.pos[1], v.pos[2]), remote: true, hpMax: Math.max(raw.maxHp, v.hp),
   });
   // The transmitted state is authoritative for the IMAGE only.
   dome.t = v.t;
