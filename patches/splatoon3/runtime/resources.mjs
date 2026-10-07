@@ -1,3 +1,4 @@
+import { turfCombatAllowed } from './turf-combat.mjs';
 import { stormRecoveryState } from './storm-effects.mjs';
 let api, tuning, profile;
 export function installResources(context, values) { api = context; tuning = values.resources; profile = values; }
@@ -24,6 +25,7 @@ export function enemyInkDamageRate(rate, referenceHz = 60, quantum = 0.1) {
 // State-owned airborne actions share HP recovery without running ground contact
 // damage, surface sampling, ink refill, or resource recovery clocks.
 export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) {
+  if (!turfCombatAllowed(api.G)) return;
   const P = api.PLAYER, r = tuning, rain = stormRecoveryState(a, api);
   if (!onEnemy && !rain.enemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
     a.hp = Math.min(P.hp, a.hp + (submerged || rain.ally ? r.regenRateSwim : r.regenRate) * dt);
@@ -31,6 +33,7 @@ export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) 
 }
 export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
+  if (!turfCombatAllowed(api.G)) return;
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
   const { onEnemy, isSquid } = resourceSurface(a);
   if (onEnemy) {
