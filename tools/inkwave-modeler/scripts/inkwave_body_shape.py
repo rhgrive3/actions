@@ -256,6 +256,20 @@ def smooth_regions(steps):
         w = np.where(d < 1, np.cos(np.clip(d, 0, 1) * np.pi / 2) ** 2, 0.0)
         if cfg.get('y_min') is not None:
             w *= smoothstep((L[:, 1] - cfg['y_min'][0]) / (cfg['y_min'][1] - cfg['y_min'][0]))
+        if cfg.get('keep_near'):
+            # the head's lower edge lies on the neck: smoothing it lifts the edge off the neck and its teeth show,
+            # so nothing moves within keep_near['mm'][0] of keep_near['mesh'], full beyond mm[1]
+            from mathutils.bvhtree import BVHTree
+            kn = cfg['keep_near']
+            other = bpy.data.objects[kn['mesh']]
+            tree = BVHTree.FromObject(other, bpy.context.evaluated_depsgraph_get())
+            inv = other.matrix_world.inverted()
+            idx = np.flatnonzero(w > 1e-4)
+            dist = np.full(len(w), 1e9)
+            Wd = er.world(obj)
+            dist[idx] = [tree.find_nearest(inv @ Vector(Wd[i]))[3] * 1000 for i in idx]
+            d0, d1 = kn['mm']
+            w *= smoothstep((dist - d0) / (d1 - d0))
         before = er.world(obj)
         chunks = int(cfg.get('chunks', 1))
         for _ in range(chunks):
@@ -266,6 +280,30 @@ def smooth_regions(steps):
             er.apply_modifier(f, mod)
         print('BODY_SHAPE smooth', cfg['name'], 'vertices', int((w > 1e-3).sum()), 'midline pairs', len(pairs),
               'max move mm', round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def nape_fillet(cfg):
+    """The head's lower edge rode over the back of the neck as a thin lip (seen from behind and the back 3/4).
+    Near the neck the head is laid onto it: Blender's Shrinkwrap (nearest surface point, outside, cfg['offset_mm'])
+    on the head, full where it is within cfg['mm'][0] of the neck, none beyond cfg['mm'][1]; back only
+    (head z < cfg['z'][0], full behind cfg['z'][1]) and below head y cfg['y_max']."""
+    from mathutils.bvhtree import BVHTree
+    face, neck = bpy.data.objects[cfg['mesh']], bpy.data.objects[cfg['target']]
+    tree = BVHTree.FromObject(neck, bpy.context.evaluated_depsgraph_get())
+    inv = neck.matrix_world.inverted()
+    W = er.world(face)
+    L = er.M.to_local(W) * 1000
+    w = smoothstep((cfg['z'][0] - L[:, 2]) / (cfg['z'][0] - cfg['z'][1])) * (L[:, 1] < cfg['y_max'])
+    idx = np.flatnonzero(w > 1e-4)
+    dist = np.full(len(w), 1e9)
+    dist[idx] = [tree.find_nearest(inv @ Vector(W[i]))[3] * 1000 for i in idx]
+    d0, d1 = cfg['mm']
+    w *= 1 - smoothstep((dist - d0) / (d1 - d0))
+    before = er.world(face)
+    er.apply_weighted_modifier(face, w, 'SHRINKWRAP', target=neck, wrap_method='NEAREST_SURFACEPOINT',
+                               wrap_mode='OUTSIDE_SURFACE', offset=cfg['offset_mm'] / 1000)
+    print('BODY_SHAPE nape_fillet vertices', int((w > 1e-3).sum()), 'max move mm',
+          round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 2))
 
 
 def seam_normals(cfg):
@@ -769,6 +807,8 @@ def main():
     names += [n for n in p.get('hood_lower', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('head_side_in', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('skull_back', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('occiput_in', {}).get('meshes', []) if n not in names]
+    names += [n for n in [p.get('nape_fillet', {}).get('mesh')] if n and n not in names]
     for sm in p.get('smooth_regions', []):
         names += [n for n in [sm['mesh']] + sm.get('follow', []) if n not in names]
     names += [n for n in [p.get('seam_normals', {}).get('face')] if n and n not in names]
@@ -846,6 +886,14 @@ def main():
             head_side_in(p['head_side_in'])
         if p.get('skull_back'):
             skull_back(p['skull_back'])
+        if p.get('occiput_in'):
+            # the lower back of the skull stood out behind the neck like a shelf (head y -70..-50: z -56 -> -90 mm
+            # in 20 mm of height) and the whole back of the head sat far behind the neck (2026-10-08, user:
+            # 首に対して後頭部が滑らかに繋がってなくて、後ろに出すぎ): the same forward move as skull_back,
+            # with its own height profile (most at y -50, nothing at the neck and the crown)
+            skull_back(p['occiput_in'])
+        if p.get('nape_fillet'):
+            nape_fillet(p['nape_fillet'])
         if p.get('smooth_regions'):
             smooth_regions(p['smooth_regions'])
         if p.get('nails'):
