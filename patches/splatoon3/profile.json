@@ -15,6 +15,19 @@
     "s3GroundAccel": 36,
     "s3AttackGroundAccel": 72
   },
+  "initialSpawn": {
+    "schema": 1,
+    "calibrationStatus": "internal-unverified",
+    "selectionSpeed": 8,
+    "ownZoneRadius": 12,
+    "ownSideMargin": 1,
+    "flightSeconds": 1.5,
+    "arcBase": 8,
+    "arcPerMeter": 0.06,
+    "landingRadius": 1.4,
+    "groundProbeUp": 10,
+    "groundProbeDown": 18
+  },
   "weapons": {
     "shooter": {
       "inkPerShot": 0.9199999999999999,
