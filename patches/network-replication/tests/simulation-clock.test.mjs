@@ -22,9 +22,12 @@ test('invalid timestamp cannot poison timeline or hide a later legitimate event'
 test('owner actor hit retires ghost at hit tick and keeps remote damage zero',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true,roller:false});f.bind(nm,[a]);
  const peer={tr:1000.2,sim:6};nm.peers.set('p2',peer);let bursts=0;f.G.fx={burst(){bursts++;}};
- const birth=[1000,'p',0,'shot','shooter',0,3,0,0,0,60,0,1,99,.1,.1,0,0,0,0,.1,.8,1.3,.03,26,.3,3,0,.123,1];birth._netTick=0;nm._play('p2',birth);
- const p=f.projectiles.list[0];assert.equal(p.damage,0);const end=[1000.05,'pe',0,1,1,0,3,4];end._netTick=3;nm._play('p2',end);f.projectiles.update(1/60);
+ a.remote=false;a.owner='me';a.character.getMuzzle=o=>o.set(0,3,0);f.projectiles.fireShooter(a,a.weapon,0);const ownerShot=f.projectiles.list[0];
+ ownerShot.vel.set(0,0,60);ownerShot.delay=0;ownerShot.life=1;ownerShot.straight=99;ownerShot.grav=ownerShot.drag=0;nm.recProj(ownerShot);
+ const birth=nm.out.at(-1);assert.equal(birth.length,35);assert.equal(birth.at(-2),0);f.projectiles.clear();a.remote=true;a.owner='p2';nm._play('p2',birth);
+ const p=f.projectiles.list[0];assert.equal(p.damage,0);f.G.time=3/60;nm._rec(['pe',a.nid,birth[31],1,0,3,4]);const end=nm.out.at(-1);assert.equal(end.at(-2),3);nm._play('p2',end);f.projectiles.update(1/60);
  assert.equal(p._netSteps,4);assert.equal(bursts,1);assert.equal(f.projectiles.list.length,0);
+ nm._play('p2',end);nm._play('p2',birth);f.projectiles.update(1/60);assert.equal(bursts,1,'terminal replay cannot duplicate hit effects');assert.equal(f.projectiles.list.length,0,'recorded birth cannot revive the retired identity');
 });
 
 test('slam visual event retains owner position/radius and duplicate playback is harmless',async()=>{

@@ -1,0 +1,5 @@
+# PR751 #439: gyro setting scope
+
+Source PR751 `e5640caa09d84560d1fdf792a74511b806384081`; source gyro-invert adapter is reused byte for byte. Remove the two motion-inversion rows and stop forwarding saved gyroInvertX/Y to native Gyro.configure. Gyro toggle/sensitivity, mouse/pad inversion, existing profile reset and input/focus/permission ownership remain unchanged. This adopts the source PR strict Splatoon3 setting scope; it introduces no sensor math or physical-device claim.
+
+Five focused source tests pass: original four adapter/settings/sensor sign/lifetime controls plus the current complete Mobile/profile transform and both profile switches, retaining profile-epoch/discard/resync. The original fixture is copied into a dedicated gyro-invert fixture with the source PR's invert:false negative-control option, avoiding changes to the shared fixture. Actual sensor/control methods are used; DOM/permission/time are deterministic fixtures. Full build and browser/device validation are not run.

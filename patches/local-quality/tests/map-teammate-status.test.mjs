@@ -1,3 +1,4 @@
+import {sampleRespawnCountdown} from '../../splatoon3/runtime/respawn-lifecycle.mjs';
 // Actual composed HUD and native UI maths; display nodes and the FX clock are fixtures.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,7 +39,7 @@ async function fixture({baseline=false}={}) {
   const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(()=>{throw Error('config dependency');});await config.evaluate();
   const translate=s=>s,i18n=new vm.SyntheticModule(['tx','isJa'],function(){this.setExport('tx',translate);this.setExport('isJa',()=>false);},{context});
   const util=new vm.SourceTextModule(site&&!baseline?fs.readFileSync(path.join(site,'src/ui/ui-util.js'),'utf8'):read('src/ui/ui-util.js'),{context});await util.link(()=>i18n);await util.evaluate();
-  const values={G,on:()=>()=>{},t:translate,...config.namespace,...THREE,GLYPHS:{},SUB_ICONS:{},weaponIcon:x=>x,specialIcon:x=>x,keycap:x=>x,richText:x=>x};
+  const values={G,sampleRespawnCountdown,on:()=>()=>{},t:translate,...config.namespace,...THREE,GLYPHS:{},SUB_ICONS:{},weaponIcon:x=>x,specialIcon:x=>x,keycap:x=>x,richText:x=>x};
   async function load(rel){
     let code=baseline?adaptSource(rel,read(rel)):site?fs.readFileSync(path.join(site,rel),'utf8'):adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,read(rel)))));
     if(minify)code=transform(code,{loader:'js',format:'esm',minify:true}).code;
@@ -49,7 +50,7 @@ async function fixture({baseline=false}={}) {
     const mod=new vm.SourceTextModule(code,{context});await mod.link(spec=>spec==='./ui-util.js'?util:new vm.SyntheticModule([...imports.get(spec)],function(){for(const k of imports.get(spec))this.setExport(k,k in values?values[k]:()=>{});},{context}));await mod.evaluate();return mod.namespace;
   }
   const {HUD}=await load('src/ui/hud.js'),{DioramaOverlay}=await load('src/ui/diorama.js');
-  const hud=()=>Object.assign(Object.create(HUD.prototype),{_L:{},_fxTime:0,el:new El(),splatLayer:new El(),_kills:{lastKiller:null},map:new El(),mapCursor:new El(),mapJumpLine:new El(),_mapT:1,_map:{open:false,hover:-1,cx:.5,cy:.5,pressT:0},beacons:Array.from({length:4},()=>{const e=new El();e.appendChild(new El());return e;}),legendRows:Array.from({length:4},()=>new El()),_snd(){},_restart(){},_addFx(_name,fn){this.fx=fn;}});
+  const hud=()=>Object.assign(Object.create(HUD.prototype),{_L:{},_fxTime:0,el:new El(),splatLayer:new El(),_kills:{lastKiller:null},map:new El(),mapLegend:new El(),mapCursor:new El(),mapJumpLine:new El(),_mapT:1,_map:{open:false,hover:-1,cx:.5,cy:.5,pressT:0},beacons:Array.from({length:4},()=>{const e=new El();e.appendChild(new El());return e;}),legendRows:Array.from({length:4},()=>new El()),_snd(){},_restart(){},_addFx(_name,fn){this.fx=fn;}});
   const actor=(name,team=0)=>({name,team,alive:true,weaponId:'shooter',pos:new THREE.Vector3(),respawnTimer:0,canSuperJump:()=>true,superJump(){this.jumps=(this.jumps||0)+1;return true;}});
   G.camera=new THREE.PerspectiveCamera(60,1,.1,100);G.camera.position.set(0,8,15);G.camera.lookAt(0,0,0);G.camera.updateMatrixWorld();G.level={spawnPads:[new THREE.Vector3(-5,0,0),new THREE.Vector3(5,0,0)]};G.game={minimap:{w:100,h:100,toCanvas(x,z,out){out.x=50+x;out.y=50+z;}}};
   return {G,hud,actor,DioramaOverlay};

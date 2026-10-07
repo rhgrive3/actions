@@ -63,9 +63,9 @@ test('stationary post-dodge fire retains actual low turret stance after movement
 
 test('Slosher heave follows real windup and completes recovery before the next actual throw', async () => {
   for (const hz of [30, 60, 120]) for (const airborne of [false, true]) {
-    const old = await rig('slosher', false), r = await rig('slosher');
+    const r = await rig('slosher');
     try {
-      for (const x of [old, r]) { x.a.grounded = !airborne; x.step(1 / hz, { fire: true }); }
+      r.a.grounded = !airborne; r.step(1 / hz, { fire: true });
       let heaveKicks = 0;
       const hairKick = r.ch._hairKick;
       r.ch._hairKick = function (...args) {
@@ -73,12 +73,13 @@ test('Slosher heave follows real windup and completes recovery before the next a
         return hairKick.apply(this, args);
       };
       const C = r.api.CHARACTER_CHANNELS;
-      for (let i = 0; i < Math.round(.1 * hz); i++) { old.step(1 / hz); r.step(1 / hz); }
+      for (let i = 0; i < Math.round(.1 * hz); i++) { r.step(1 / hz); }
       assert.equal(r.launches.length, 0);
-      assert.ok(Math.abs(r.ch.P[C.ANCR] - old.ch.P[C.ANCR]) > .08, 'old curve heaves early; retimed actual bucket remains in windup');
+      const windupPitch = r.ch.P[C.ANCR];
       let guard = hz;
       while (!r.launches.length && guard-- > 0) r.step(1 / hz);
       assert.equal(r.launches.length, 1);
+      assert.ok(r.ch.P[C.ANCR] > windupPitch + .5, 'actual bucket reaches the forward heave at projectile release');
       assert.equal(heaveKicks, 1, 'float release boundary must not apply heave hair/tank impulse twice');
       assert.ok(r.ch.weapon.off.getWorldPosition(new r.api.THREE.Vector3()).toArray().every(Number.isFinite));
       assert.equal(r.a.weaponRunner.slosh, -1);
@@ -93,7 +94,7 @@ test('Slosher heave follows real windup and completes recovery before the next a
       const n = r.launches.length; r.step(1 / hz, { fire: true });
       for (let i = 0; i < hz / 3; i++) r.step(1 / hz);
       assert.equal(r.launches.length, n + 1, 'fresh throw works after reset and form return');
-    } finally { old.ch.dispose(); r.ch.dispose(); }
+    } finally { r.ch.dispose(); }
   }
 });
 
@@ -104,11 +105,12 @@ test('Charger holds its real charge through form return on a held ZR and release
       for (let i = 0; i < 2 * hz; i++) r.step(1 / hz, { fire: true });
       assert.equal(r.a.weaponRunner.charge, 1); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .999);
       // Charge keep belongs to the held shot, so ZR stays down across the form change.
-      r.a.form = 'squid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: true });
-      assert.equal(r.a.weaponRunner.s3Stored.charge, 1); assert.equal(r.f.shots.length, 0);
+      r.a.form = 'squid'; for (let i = 0; i < Math.ceil(hz * r.a.weapon.storedFireDelay); i++) r.step(1 / hz, { fire: true });
+      assert.equal(r.a.weaponRunner.s3Stored.charge, 1); assert.equal(r.a.weaponRunner.s3Stored.fireDelay, 0); assert.equal(r.f.shots.length, 0);
       r.a.form = 'kid'; for (let i = 0; i < hz / 3; i++) r.step(1 / hz, { fire: true });
       assert.equal(r.f.shots.length, 0); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .999);
-      r.step(1 / hz, { fire: true }); r.step(1 / hz, { fire: false });
+      r.step(1 / hz, { fire: true });
+      r.step(1 / 60, { fire: false }); assert.equal(r.f.shots.length, 0, 'native release waits one fixed tick'); r.step(1 / 60, { fire: false }); // S3 1F release gap
       assert.equal(r.f.shots.length, 1); assert.equal(r.f.shots[0].charge, 1);
       assert.ok(r.ch.chargeFlash > .7 && r.ch.lastRelease < .05, 'actual release event drives Character');
       r.a.weaponRunner.reset(); assert.equal(r.ch.chargeFlash, 0);

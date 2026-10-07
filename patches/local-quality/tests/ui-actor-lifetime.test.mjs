@@ -47,7 +47,7 @@ async function fixture({baseline=false}={}) {
   const {HUD}=await load('src/ui/hud.js'),{DioramaOverlay}=await load('src/ui/diorama.js'),{Match}=await load('src/game/match.js'),{Minimap,testFx}=await load('src/game/minimap.js');
   const actor=name=>({name,team:0,alive:true,pos:new THREE.Vector3(),weaponId:'shooter',character:{root:{},dispose(){}},weaponRunner:{reset(){}},specialReady:()=>false,canSuperJump:()=>true});
   function hud(){return Object.assign(Object.create(HUD.prototype),{_L:{},markers:[],_kills:{dealt:new Map(),perActor:new Map(),lastKiller:null,times:[],streak:0},_actors:()=>G.actors});}
-  function match(actors){return Object.assign(Object.create(Match.prototype),{actors,bossMode:null,unsubs:[]});}
+  function match(actors){return Object.assign(Object.create(Match.prototype),{actors,bossMode:null,events:[],unsubs:[]});}
   G.scene={remove(){}};G.game={};G.rig={dioLook:{x:0,y:0}};G.level={bounds:{minX:-1,maxX:1,minZ:-1,maxZ:1},spawnPads:[new THREE.Vector3(),new THREE.Vector3()]};
   G.camera=new THREE.PerspectiveCamera(60,1,.1,100);G.camera.position.set(0,8,15);G.camera.lookAt(0,0,0);G.camera.updateMatrixWorld();
   return {G,emit,HUD,DioramaOverlay,Match,Minimap,fx:testFx,actor,hud,match};

@@ -1,0 +1,19 @@
+# PR751 clothing and PR790 Roller snapshot composition
+
+Fixed base: PR868 `7f34ca234ae2440afbf0a136cc21423bcd4b8620`. Sources: PR751 `e5640caa09d84560d1fdf792a74511b806384081` (#352 and the documented #116 subset) and PR790 `a71da170ca4dc5a0c55e5633907c9ed9edced300` (#206 remote mode subset). Original clothing report remains historical evidence below its original filename; the record here supersedes its old bit24 assignment and current-composition claims.
+
+## Narrow changes
+
+- Gear normalization keeps current head-only/Ninja restrictions while adding the source clothing rules. Only explicit Splatfest Tee clothing subs supply6AP and its main supplies0AP. Current conditional/Flow modifiers, per-actor gear identity, Quick Respawn enemy-death history, separate phase flooring, variable costs, saved slots and labels remain owned by their existing code. Fixed RP values are copied from the source profile, not new pinned-data claims.
+- The current confirmed hit pipeline retains source precision, group identity, sequence/life checks, ACK listeners and finally cleanup. RP adds only an accepted equipment flag and hit boolean; a deferred lethal record carries that boolean until the existing next Actor tick so it cannot expire with the synchronous incoming-hit scope. Reset/death disposal still clears the same pending WeakMap.
+- Source790's three remote Roller mode hunks retain the owner-selected vertical mode through windup, landing and recovery, then clear only remote-owned mode state. Current death/respawn cleanup already present in PR868 is not reapplied.
+- Actor tuple22, Special-use slot21, named spCost/life sidecars and all preexisting flag assignments stay unchanged. Roller vertical keeps bit24 (16777216); RP uses the previously unused bit25 (33554432). All four combinations round-trip independently. Legacy standalone PR751 bit24 is ambiguous with Roller and is not guessed or automatically decoded. Mixed-old-client parity is unverified.
+- Numeric metadata adds only the six original clothing profile values;503 prior entries are unchanged, total509. The clothing helper receives the existing preload-only deferral, retaining static imports/full precache and current budget limits.
+
+## Evidence and limits
+
+Sixteen focused clothing cases pass: legal slots/AP, actual modifiers and resets,45/68/113F and15/22.5/37.5% branches, environment/self/ally/assist exclusions, QR AP rounding, Special Saver fractional AP, actual packet owner/life/timestamp receipt, old deferred-hit loss negative versus fixed next-tick penalty, thrown callback cleanup,30/60/120Hz traces, four independent wire combinations with old-alias negative, current Last Ditch/Comeback subtotal composition, and accepted true/false metadata surviving a remote-to-local owner change before flush. The last two cases failed before moving the scoped override ahead of the remote/local branch and pass after it. Two source790 actual Actor/Character/NetMatch cases pass for windup/landing/recovery/stale/death mode handling. Dedicated fixtures preserve shared fixture owners. New integration full build, emitted code, browser and physical devices have not been tested.
+
+Fresh base flag audit also identifies a preexisting collision: SPAWN_ARMOR_FLAG and F.specialReady both use bit23 (8388608). This candidate neither introduces nor resolves that separate collision; it must not be described as an all-protocol collision-free result.
+
+#116 remains a documented subset: original community-formula evidence, the source's Tacticooler exception and physical timing limitations remain. No drink state is invented and #348/#351 are excluded. #206 is the missing remote presentation portion of an existing local vertical implementation. No old wholefile is restored, no unrelated source PR content is included, and no main merge is performed.

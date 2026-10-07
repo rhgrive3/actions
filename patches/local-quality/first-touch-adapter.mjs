@@ -1,3 +1,6 @@
+// Native MobileInput accepts pen and finger contacts through the same router.
+export function isMobilePointer(event) { return event?.pointerType === 'touch' || event?.pointerType === 'pen'; }
+
 // The window capture listener may reveal a sibling overlay after hit-testing.
 // Its original canvas-targeted event still needs the existing mobile router.
 export function adaptFirstTouch(rel, code) {
@@ -15,7 +18,7 @@ export function adaptFirstTouch(rel, code) {
 }
 
 export function adoptCanvasTouch(mobile, event) {
-  if (event.pointerType !== 'touch' || event.target !== mobile.canvas ||
+  if (!isMobilePointer(event) || event.target !== mobile.canvas ||
       !mobile.visible || mobile.editing || mobile.mapOpen || mobile._destroyed ||
       mobile._abort.signal.aborted || mobile.owner.enabled === false ||
       mobile.canvas.ownerDocument?.hidden || mobile._ptr.has(event.pointerId) ||
@@ -28,7 +31,7 @@ export function adoptCanvasTouch(mobile, event) {
 // Only an already-owned canvas pointer is forwarded; root-targeted events keep
 // their original listener, so no router or press edge executes twice.
 export function continueCanvasTouch(mobile, event, ended) {
-  if (event.pointerType !== 'touch' || event.target !== mobile.canvas ||
+  if (!isMobilePointer(event) || event.target !== mobile.canvas ||
       mobile._abort.signal.aborted || mobile._destroyed ||
       (!mobile._ptr.has(event.pointerId) && mobile._stick.id !== event.pointerId)) return false;
   if (ended) mobile._up(event);

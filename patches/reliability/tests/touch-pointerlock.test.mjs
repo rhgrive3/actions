@@ -24,7 +24,7 @@ const UPSTREAM=SITE||RAW;
 const {adoptCanvasTouch,continueCanvasTouch}=SITE?await import(path.join(SITE,'patches/local-quality/first-touch-adapter.mjs')):{adoptCanvasTouch:sourceAdopt,continueCanvasTouch:sourceContinue};
 const IDS = ['jump', 'squid', 'fire', 'sub', 'special'];
 const read = rel => fs.readFileSync(path.join(RAW, rel), 'utf8');
-const classList = () => ({ add() {}, remove() {}, toggle() {} });
+const classList = () => ({ add() {}, remove() {}, toggle() {}, contains() { return false; } });
 
 async function boot({exit='async'}={}) {
  const f=await fixture(),listeners=new Map(),docListeners=new Map(),modules=new Map();let exits=0,requests=0,unlocks=0;
@@ -32,6 +32,7 @@ async function boot({exit='async'}={}) {
  const doc={hidden:false,documentElement:{classList:classList()},addEventListener:(n,fn)=>add(docListeners,n,fn),querySelector:()=>null,pointerLockElement:null};
  const fireDoc=()=>{for(const fn of docListeners.get('pointerlockchange')||[])fn();};
  const canvas={ownerDocument:doc,closest:()=>null,requestPointerLock(){requests++;}};
+ const overlayTarget=(kind)=>({closest:(sel)=>{if(kind==='editor')return sel.includes('.iwm-edit')?{}:null;return (sel.includes('.iwm-look')||sel.includes('.iwm-movezone')||sel.includes('.iwm-b'))?{}:null;}});
  doc.exitPointerLock=()=>{exits++;if(exit==='throw')throw Error('fixture exit unavailable');if(exit==='sync'){doc.pointerLockElement=null;fireDoc();}};
  const context=vm.createContext({console,performance,AbortController,setTimeout,clearTimeout,
   screen:{width:1000,height:700,orientation:{angle:0}},innerWidth:1000,innerHeight:700,
@@ -53,7 +54,8 @@ async function boot({exit='async'}={}) {
  const touch=(kind,id=1)=>{mobile._hitButton=()=>kind==='fire'?'fire':null;const e={pointerType:'touch',pointerId:id,target:canvas,clientX:kind==='stick'?100:700,clientY:kind==='stick'?500:250,type:'pointerdown',preventDefault(){},stopPropagation(){}};event('pointerdown',e);const once=adoptCanvasTouch(mobile,e);assert.equal(once,true);assert.equal(adoptCanvasTouch(mobile,e),false);return e;};
  return {G:f.G,input,mobile,doc,canvas,event,touch,exits:()=>exits,requests:()=>requests,unlocks:()=>unlocks,
   release(e){continueCanvasTouch(mobile,{...e,type:'pointerup'},true);},
-  mouse(){event('pointerdown',{pointerType:'mouse',target:canvas});},move(){event('mousemove',{movementX:1,movementY:2});},
+  mouse(target=canvas){event('pointerdown',{pointerType:'mouse',target});},move(){event('mousemove',{movementX:1,movementY:2});},
+  overlay:(kind='look')=>overlayTarget(kind),
   unlocked(){doc.pointerLockElement=null;fireDoc();},locked(){doc.pointerLockElement=canvas;fireDoc();},listenerCount:()=>[...listeners.values(),...docListeners.values()].reduce((n,a)=>n+a.length,0)};
 }
 for(const kind of ['fire','stick','look'])for(const exit of ['sync','async'])test(`#662 ${kind} touch survives ${exit} mouse unlock and delayed motion`,async()=>{
@@ -83,6 +85,41 @@ test('#662 adapter fails closed on duplicate and missing input connections',()=>
 
 test('#662 returning mouse does not lock in menus, paused play, finish or attract',async()=>{
  for(const state of ['menu','paused','finish','attract','submenu']){const h=await boot(),e=h.touch('look');h.unlocked();h.release(e);if(state==='menu')h.G.mode='menu';else if(state==='paused')h.G.match.paused=true;else if(state==='finish')h.G.match.state='finish';else if(state==='attract')h.G.match.attract=true;else h.G.game.menus.current='settings';h.mouse();assert.equal(h.requests(),0,state);assert.equal(h.input.lastDevice,'kbm');}
+});
+test('#800 overlay-targeted mouse press reacquires Pointer Lock after touch handoff',async()=>{
+  for(const kind of ['look','movezone','button']){
+    const h=await boot(),e=h.touch('look');
+    h.unlocked();h.release(e);
+    const target=kind==='button'?h.overlay('button'):h.overlay(kind);
+    h.mouse(target);
+    assert.equal(h.input.lastDevice,'kbm',kind);
+    assert.equal(h.requests(),1,kind);
+    h.locked();h.move();assert.equal(h.input.mouse.dx,1,kind);
+  }
+  // Existing canvas-targeted recovery still works.
+  {
+    const h=await boot(),e=h.touch('look');h.unlocked();h.release(e);
+    h.mouse();assert.equal(h.input.lastDevice,'kbm');assert.equal(h.requests(),1);
+  }
+  // Held touch still blocks overlay-targeted mouse press and queued motion.
+  {
+    const h=await boot(),e=h.touch('look');
+    h.mouse(h.overlay());h.move();
+    assert.equal(h.input.lastDevice,'touch');assert.equal(h.requests(),0);assert.equal(h.input.mouse.dx,0);
+    h.unlocked();h.release(e);h.mouse(h.overlay());assert.equal(h.requests(),1);
+  }
+  // Menus, pause, finish, attract and layout editor still block overlay reacquisition.
+  for(const state of ['menu','paused','finish','attract','submenu','editor']){
+    const h=await boot(),e=h.touch('look');h.unlocked();h.release(e);
+    if(state==='menu')h.G.mode='menu';else if(state==='paused')h.G.match.paused=true;else if(state==='finish')h.G.match.state='finish';else if(state==='attract')h.G.match.attract=true;else if(state==='submenu')h.G.game.menus.current='settings';else h.mobile.editing=true;
+    const target=state==='editor'?h.overlay('editor'):h.overlay();
+    h.mouse(target);assert.equal(h.requests(),0,state);assert.equal(h.input.lastDevice,state==='editor'?'touch':'kbm',state);
+  }
+  // An unrelated outside surface never reacquires.
+  {
+    const h=await boot(),e=h.touch('look');h.unlocked();h.release(e);
+    h.mouse({closest:()=>null});assert.equal(h.input.lastDevice,'touch');assert.equal(h.requests(),0);
+  }
 });
 test('#662 queued acquire and touch-exit notifications may both observe unlocked state without pausing',async()=>{
  const h=await boot();h.input.locked=false; // Browser acquired the canvas; its notification has not run yet.

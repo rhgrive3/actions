@@ -16,6 +16,21 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
       '    const side = _v2.set(mv.x, 0, mv.z);\n    if (mh > 1) side.multiplyScalar(1 / mh);', 'wall lateral magnitude');
     replace('    } else if (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub) {',
       '    } else if (rollingMovementActive(this) && !this.intent.sub) {\n      if (hs > 0.1) target = Math.atan2(this.vel.x, this.vel.z);\n    } else if (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub) {', 'roller authoritative heading');
+    const airStart = code.indexOf('    // ---- airborne: vector steering with light air control (momentum is kept)');
+    const airEnd = code.indexOf('\n    // ---- grounded: speed + heading model', airStart);
+    if (airStart < 0 || airEnd < airStart) throw new Error('Movement physics: missing airborne movement block');
+    replace(code.slice(airStart, airEnd),
+`    // ---- airborne: vector steering with form-independent ordinary acceleration/braking
+    if (!this.grounded) {
+      // Retain each form's target speed. The shared humanoid air calibration
+      // owns ordinary acceleration and neutral/reverse braking in both forms.
+      const target = isSquid ? Math.max(P.squidDrySpeed, sp) : Math.max(this.weaponRunner.moveSpeed(), P.airMinSpeed);
+      const tvx = mh > 0.01 ? (mv.x / mh) * target * mag : 0, tvz = mh > 0.01 ? (mv.z / mh) * target * mag : 0;
+      const dvx = tvx - vx, dvz = tvz - vz, dl = Math.hypot(dvx, dvz);
+      const rate = P.airAccel * dt;
+      if (dl <= rate) { this.vel.x = tvx; this.vel.z = tvz; } else { this.vel.x += (dvx / dl) * rate; this.vel.z += (dvz / dl) * rate; }
+      return;
+    }`, 'S3 ordinary airborne acceleration/braking');
     const groundStart = code.indexOf('    // ---- grounded: speed + heading model');
     const groundEnd = code.indexOf('\n  }\n\n  // ------------------------------------------------------------------ character controller', groundStart);
     if (groundStart < 0 || groundEnd < groundStart) throw new Error('Movement physics: missing grounded movement block');
@@ -28,7 +43,7 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     if (!isSquid && this.hardLand > 0) vt *= 1 - (1 - P.hardLandSlow) * this.hardLand;
     let accel = (this.weaponRunner.firingPose?.() || this.intent.sub || this.specialActive)
       ? (P.s3AttackGroundAccel ?? 72) : (P.s3GroundAccel ?? 36);
-    if (onEnemy) { vt = Math.min(vt, P.enemyInkSpeed); accel = Math.min(accel, P.enemyInkAccel); }
+    if (onEnemy) vt = Math.min(vt, P.enemyInkSpeed); // enemy ink limits target speed, not the selected S3 acceleration
     stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);`, 'S3 grounded vector acceleration');
     return "import { integrateMovement, rollingMovementActive, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
   }

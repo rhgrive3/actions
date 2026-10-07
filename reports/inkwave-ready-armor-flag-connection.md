@@ -1,0 +1,9 @@
+# Existing Armor / Special-ready flag collision
+
+Fresh PR868 `c1b9cf4e270c34d6afe0a5a8964ad49a22f9f739` still defines both SPAWN_ARMOR_FLAG and F.specialReady as8388608(bit23). Actual packet reproduction shows Armor-only and Ready-only owners emit the same flags; the receiving actor incorrectly reports both states. This is an existing protocol connection defect, not an additional newly counted Issue.
+
+Keep spawn armor at bit23, the adopted Roller mode at24 and clothing at25. Move Special-ready to unused bit26(67108864). Both packActor and applyRemote already consume the same F.specialReady member, so only its single declaration changes; snapshot tuple22, count slot21, named cost/life sidecars, owner/time/epoch gates and all gameplay readiness/armor formulas remain unchanged. No reader guesses both meanings from the old ambiguous bit. Normal old packets without the cost sidecar retain the existing native fallback. Mixed clients using the formerly collided bit are not claimed equivalent; they need the same corrected protocol to represent both states independently.
+
+Five focused real-Actor/NetMatch tests pass, including the old collision negative and the four Armor/Ready combinations through JSON writer/admission/sampling/reader. The three browser-arena cost tests pass with the actual exported flag instead of a stale hard-coded mask. All12 existing #484 cases pass after updating their expected flag and correcting three preexisting fixture assumptions: the direct adapter test now supplies the current S3 predecessor, the #482 control attaches at the existing unique tail, and writer tuples retain the already-adopted special-use count22nd element. Handcrafted legacy21 fixtures remain unchanged.
+
+No new build/browser run is claimed. Production change is one flag declaration plus explanatory comments. Base original blobs and the earlier clothing/vertical allocation are recorded in the manifest.
