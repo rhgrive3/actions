@@ -70,10 +70,15 @@ export function adaptSource(rel, code) {
       'const tagNum = (name) =>',
       'export const tagNum = (name) =>',
       'export tagNum');
-    return replaceOnce(code,
+    code = replaceOnce(code,
     "{ key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },",
     "{ key: 'minimap', label: 'Corner map (non-S3 aid)', type: 'toggle', help: 'Optional aid outside the S3 baseline. The full Turf Map remains available.' },",
     'optional corner map explanation');
+    code = replaceOnce(code,
+      "h('div', { class: 'iw-res__teams' }, table(0), table(1)),",
+      "h('div', { class: 'iw-res__teams' }, table(winTeam), table(1 - winTeam)),",
+      'winner-first Turf results order');
+    return code;
   }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",
@@ -86,6 +91,20 @@ export function adaptSource(rel, code) {
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',
       'const win = cov[0] >= cov[1] ? 0 : 1; // Exact tie belongs to the assigned Alpha side.',
       'deterministic Alpha turf tie');
+    // #928: actor overlap correction may not tunnel a local body through thin stage geometry.
+    code = replaceOnce(code,
+      '        a.pos.x -= (dx / d) * push * ka; a.pos.z -= (dz / d) * push * ka;\n        b.pos.x += (dx / d) * push * kb; b.pos.z += (dz / d) * push * kb;',
+      '        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);\n        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);',
+      'world-aware actor soft push');
+    // #934: regular Turf War permits duplicate weapons within one team; Boss/attract keep curated diversity.
+    code = replaceOnce(code,
+      '    const pickTeam = (first) => {\n      const pool = [...WEAPON_ORDER];\n      const out = [];\n      if (first) { out.push(first); pool.splice(pool.indexOf(first), 1); }',
+      '    const independent = this.mode !== \'boss\' && !this.attract;\n    const pickTeam = (first) => {\n      const pool = [...WEAPON_ORDER];\n      const out = [];\n      if (first) { out.push(first); if (!independent) pool.splice(pool.indexOf(first), 1); }',
+      'standard Turf weapon draws keep local weapon');
+    code = replaceOnce(code,
+      '        out.push(pool.splice((Math.random() * pool.length) | 0, 1)[0]);',
+      '        const pick = (Math.random() * pool.length) | 0;\n        out.push(independent ? pool[pick] : pool.splice(pick, 1)[0]);',
+      'standard Turf weapon draws allow duplicates');
     code = replaceOnce(code, '  setState(s) {',
       '  setState(s) {\n    captureTurfFinish(this, s, G.paint);', 'Turf deadline snapshot before state listeners');
     code = replaceOnce(code, '    const cov = G.paint.coverage();',
@@ -94,7 +113,7 @@ export function adaptSource(rel, code) {
       "          if (!this.follower) this.setState('finish'); else blockExpiredGuestInput(this);", 'guest local deadline input cancellation');
     code = replaceOnce(code, '    if (!this.controller) return;',
       '    if (blockExpiredGuestInput(this) || !this.controller) return;', 'guest deadline controller admission');
-    code = "import { captureTurfFinish, blockExpiredGuestInput } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
+    code = "import { softPushActor } from '../../patches/splatoon3/runtime/movement-physics.mjs';\nimport { captureTurfFinish, blockExpiredGuestInput } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
 
     return code;
   }
@@ -458,12 +477,20 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "it.special = inp.down('KeyF')", "it.special = inp.wasPressed('KeyF') || inp.wasPressed('KeyQ') || inp.down('KeyF')", 'latched special input');
     code = replaceOnce(code, "    const range = w.kind === 'charger' ? w.rangeMax : w.kind === 'roller' ? 6 : (w.range || 12);",
       "    const chargeNow = clamp(a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0, 0, 1);\n" +
-      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'roller' ? 6 : (w.range || 12);",
+      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'roller' ? 6 : w.reticleRange ? (a.grounded ? w.reticleRange.ground : w.reticleRange.air) : (w.range || 12);",
       'charger HUD reach follows charge');
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
+    code = replaceOnce(code,
+      'if (g.hit && !c.ghost) c.owner.addTurf(',
+      'if (g.hit && (!c.ghost || !c.owner.remote)) c.owner.addTurf(',
+      'adopted Storm owns its remaining paint');
+    code = replaceOnce(code,
+      '        if (!c.ghost) G.boss?.rain(',
+      '        if (!c.ghost || !c.owner.remote) G.boss?.rain(',
+      'adopted Storm owns remaining Boss rain');
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
     code = replaceOnce(code, 'Math.max(this.cooldown, 0.22)', 'Math.max(this.cooldown, w.postStreamDelay)', 'splatling sourced post-stream delay');
