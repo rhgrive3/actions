@@ -358,16 +358,17 @@ test('#94 composed projection and HUD style update run for the real contact', as
   const { hud, code } = await hudHarness();
   const h = hud();
   h._updCrosshair({ weapon: 'shooter', crosshair: { spread: 3.5, onTarget: 'enemy', inRange: false, muzzleBlock: block } }, 1 / 60);
-  console.log('#94 HUD target debug', JSON.stringify({ kind: h._L.kind, tgt: h._L.tgt, far: h._L.far,
-    className: h.xh.className, sourceOwnsTarget: code.includes("const tgt = ch.onTarget === 'enemy';") }));
   assert.ok(h.xh.classList.contains('is-muzzle-blocked'), 'HUD shows the weapon-side contact ring');
   assert.equal(h.xh.style['--muzzle-hit-x'], `${block.x.toFixed(1)}px`, 'native style var carries the projected x');
   assert.equal(h.xh.style['--muzzle-hit-y'], `${block.y.toFixed(1)}px`, 'native style var carries the projected y');
   assert.equal(h.ret.style['--sp'], '3.5', 'spread feedback unchanged');
-  assert.ok(h.xh.classList.contains('is-target'), 'on-target feedback unchanged');
-  assert.ok(!h.xh.classList.contains('is-far'), 'in-range suppression while on target unchanged');
+  assert.ok(code.includes('is-far-target'), 'the current HUD keeps its range-qualified target owner');
+  assert.ok(h.xh.classList.contains('is-far-target'), 'out-of-range target feedback is unchanged');
+  assert.ok(h.xh.classList.contains('is-far'), 'out-of-range state is unchanged');
+  assert.ok(!h.xh.classList.contains('is-target'), 'out-of-range targets do not claim the in-range target class');
   h._updCrosshair({ weapon: 'shooter', crosshair: { spread: 3.5, onTarget: null, inRange: false, muzzleBlock: block } }, 1 / 60);
-  assert.ok(h.xh.classList.contains('is-far'), 'in-range feedback unchanged when not on target');
+  assert.ok(h.xh.classList.contains('is-far'), 'out-of-range feedback is unchanged when not on target');
+  assert.ok(!h.xh.classList.contains('is-far-target'), 'target-specific far feedback clears with the target');
   assert.ok(h.xh.classList.contains('is-muzzle-blocked'), 'ring persists while the contact input persists');
   h._updCrosshair({ weapon: 'shooter', crosshair: { spread: 3.7, onTarget: null, inRange: true, muzzleBlock: null } }, 1 / 60);
   assert.ok(!h.xh.classList.contains('is-muzzle-blocked'), 'ring clears when the marker input clears');
