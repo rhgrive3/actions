@@ -27,7 +27,7 @@ const headlessPaintRenderer = () => ({
   getClearColor(out) { return out.setRGB(0, 0, 0); },
   getClearAlpha() { return 0; },
   setRenderTarget(target) { this.target = target; },
-  setClearColor() {}, clear() {},
+  setClearColor() {}, clear() {}, render() {}, // GPU surface stub; native CPU paint/contact still run
 });
 const apis = new Map();
 function mainBaselineRollerSource() {
