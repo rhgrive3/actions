@@ -360,6 +360,10 @@ export function installWeapons(context, profile) {
     }
 
     if (this.s3Stored && !held) {
+      // #1070: charge-keep cancellation has its own verified 3F refill lock.
+      // Keep it separate from #737's 19F fresh/partial-charge interruption.
+      a.s3 ||= {};
+      a.s3.chargerInterruptRecover = Math.max(a.s3.chargerInterruptRecover || 0, 3 / 60);
       cancelStored(this); this.s3WasSquid = a.form === 'squid';
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false;
       return;
