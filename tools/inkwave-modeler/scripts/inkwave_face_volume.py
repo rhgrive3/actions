@@ -891,6 +891,9 @@ def rebuild_ears(cfg):
     print('FACE_VOLUME ears rebuilt', len(ear.data.vertices), 'vertices each')
 
 
+BAR_MATERIAL = 'headgear_2cc6c8'
+
+
 def place_piercings(ear, nv, PI):
     tree = BVHTree.FromPolygons([Vector(v) for v in er.world(ear)], [list(p.vertices) for p in ear.data.polygons])
 
@@ -925,10 +928,17 @@ def place_piercings(ear, nv, PI):
         dist = lambda order: sum(np.linalg.norm(Lb[lb == j].mean(0) - tops[i]) for i, j in zip(hoops, order))
         beads = min((beads, beads[::-1]), key=dist)
         for hi, bi, hole in zip(hoops, beads, holes * [-side, 1, 1]):
+            # the reference hoops are larger (sideR about 24 px tall, the model's 17): scaled about their top
+            Lh[lh == hi] = tops[hi] + (Lh[lh == hi] - tops[hi]) * PI.get('hoop_scale', 1.0)
             Lh[lh == hi] += hole + [0, PI['hoop_up'], 0] - tops[hi]
             Lb[lb == bi] += hole + nv * [-side, 1, 1] * PI['bead_out'] - Lb[lb == bi].mean(0)
     set_local_mm(hg, Lh)
     set_local_mm(bar, Lb)
+    if PI.get('bar_colour'):
+        # the reference bar is a pale blue-grey metal, not teal
+        mat = bpy.data.materials[BAR_MATERIAL]
+        keep_material(mat)
+        next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value = list(PI['bar_colour']) + [1.0]
     # the reference has the bar on the left ear too: a mirrored copy
     inv = np.array(bar.matrix_world.inverted())
     Wm = M.to_world(Lb[on_bar] * [-1, 1, 1] / 1000)
@@ -1150,7 +1160,7 @@ def keep_material(mat):
 def restore_materials():
     if bpy.data.materials.get(EAR_MATERIAL) is not None and not bpy.data.materials[EAR_MATERIAL].users:
         bpy.data.materials.remove(bpy.data.materials[EAR_MATERIAL])
-    for name in DECAL_MATERIALS.values():
+    for name in list(DECAL_MATERIALS.values()) + [BAR_MATERIAL]:
         mat = bpy.data.materials.get(name)
         if mat is None or SUFFIX not in mat:
             continue
@@ -2353,6 +2363,15 @@ def main():
             elif step['kind'] == 'displace':
                 er.apply_weighted_modifier(face, w, 'DISPLACE', direction='NORMAL', strength=step['mm'] / 1000,
                                            mid_level=0.0)
+            elif step['kind'] == 'eye_wrap':
+                # the lid margin rests on the eyeball (the usual eyelid build): weighted Shrinkwrap of the lid skin
+                # onto this side's eyeball, Above Surface at offset_mm, so skin moved over the eye stays in front
+                for side, ball in ((-1, 'HEAD_eyes_18'), (1, 'HEAD_eyes')):
+                    ws = w * (np.sign(loc[:, 0]) == side)
+                    if ws.any():
+                        er.apply_weighted_modifier(face, ws, 'SHRINKWRAP', target=bpy.data.objects[ball],
+                                                   wrap_method='NEAREST_SURFACEPOINT', wrap_mode='ABOVE_SURFACE',
+                                                   offset=step['offset_mm'] / 1000)
             else:
                 # seam_chunks > 1: smooth across the open midline too.  Each half is smoothed on its own for a few
                 # iterations, then the midline pairs are joined again, so the joint never drifts far and no fold
