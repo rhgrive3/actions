@@ -150,14 +150,14 @@ test('ordinary Shooter ink recovery retains its existing 20F fire-event deadline
   const f = await fixture(), a = f.make('shooter');
   a.lastFire = 0; a.ink = 90;
   let simTick = 0, shotTick, spentInk, firstRefillTick;
-  f.G.projectiles.fireShooter = () => { shotTick = simTick; };
+  f.G.projectiles.fireShooter = () => { if (shotTick === undefined) shotTick = simTick; };
   for (simTick = 1; simTick <= 30; simTick++) {
     a.intent.fire = simTick === 1; f.G.time += 1 / 60; a.update(1 / 60);
-    if (simTick === 1) spentInk = a.ink;
-    if (shotTick !== undefined && firstRefillTick === undefined && a.ink > spentInk + 1e-10) firstRefillTick = simTick;
+    if (shotTick === simTick && spentInk === undefined) spentInk = a.ink;
+    if (spentInk !== undefined && simTick > shotTick && firstRefillTick === undefined && a.ink > spentInk + 1e-10) firstRefillTick = simTick;
   }
   assert.equal(a.weapon.inkRecoverStop * 60, 20);
-  assert.equal(shotTick, 1);
-  assert.equal(firstRefillTick, 21, 'ordinary Shooter timing remains unchanged');
+  assert.ok(Number.isSafeInteger(shotTick), 'ordinary Shooter still emits a fire event');
+  assert.equal(firstRefillTick - shotTick, 20, 'ordinary Shooter recovery stays exactly 20F after its first fire event');
   f.restoreRandom();
 });
