@@ -65,7 +65,7 @@ async function production() {
   G.actors = []; G.time = 0;
   cached = { ...api, ...entry.namespace, profile }; return cached;
 }
-function rig(api, kind, enabled = true) {
+function rig(api, kind, enabled = true, { nativeProjectiles = false } = {}) {
   const { Actor, Character, G, THREE } = api;
   const a = new Actor({ team: 0, name: 'weapon detail regression', weapon: kind, CharacterClass: Character,
     style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
@@ -73,7 +73,8 @@ function rig(api, kind, enabled = true) {
   G.actors = [a]; G.scene.add(ch.root); a.grounded = true; a.ground.hit = true;
   let ticks = 0, kicks = 0;
   const events = [];
-  G.projectiles = Object.fromEntries(['fireShooter', 'fireDualies', 'fireCharger', 'fireSplatling', 'fireBlaster', 'fireSlosh', 'throwBomb', 'fireFlick']
+  const projectiles = nativeProjectiles ? new api.Projectiles(G.scene) : null;
+  G.projectiles = projectiles || Object.fromEntries(['fireShooter', 'fireDualies', 'fireCharger', 'fireSplatling', 'fireBlaster', 'fireSlosh', 'throwBomb', 'fireFlick']
     .map(name => [name, (...args) => events.push({ name, tick: ticks, charge: name === 'fireCharger' ? args[2] : null })]));
   const nativeKick = ch._hairKick;
   ch._hairKick = function (...args) { if (args[0] === 0 && args[1] === 2.4 && args[2] === 1.6) kicks++; return nativeKick.apply(this, args); };
@@ -91,8 +92,13 @@ function rig(api, kind, enabled = true) {
     const bone = side === 'L' ? ch.bones.handL : ch.bones.handR;
     return ch.weapon.off.localToWorld(hand.pos.clone()).distanceTo(bone.getWorldPosition(new THREE.Vector3()));
   }
-  return { a, ch, step, events, snapshot, grip, get kicks() { return kicks; },
-    close() { G.scene.remove(ch.root); ch.dispose(); } };
+  return { a, ch, step, events, projectiles, snapshot, grip, get ticks() { return ticks; }, get kicks() { return kicks; },
+    close() {
+      G.scene.remove(ch.root); ch.dispose();
+      if (projectiles) {
+        projectiles.clear(); G.scene.remove(projectiles.blobs, projectiles.arcLine, projectiles.arcRing);
+      }
+    } };
 }
 function drawnVertices(api, mesh, space) {
   const g = mesh.geometry, p = g.getAttribute('position'), ix = g.index;
@@ -105,6 +111,14 @@ function drawnVertices(api, mesh, space) {
     vertices.push(v);
   }
   assert.ok(vertices.length > 0, 'actual indexed draw has vertices'); return vertices;
+}
+function partCentroid(api, part, space) {
+  const points = [];
+  part.traverse(mesh => { if (mesh.isMesh && mesh.visible) points.push(...drawnVertices(api, mesh, space)); });
+  assert.ok(points.length > 0, 'moving part contains visible indexed geometry');
+  const center = new api.THREE.Vector3();
+  for (const point of points) center.add(point);
+  return center.multiplyScalar(1 / points.length);
 }
 function height(api, mesh, space) {
   const ys = drawnVertices(api, mesh, space).map(v => v.y);
@@ -551,22 +565,43 @@ const mechCycles = rows => {
   for (const on of rows) { if (on && !moving) cycles++; moving = on; }
   return cycles;
 };
-const blasterShots = r => r.events.filter(e => e.name === 'fireBlaster').length;
+const blasterShots = r => r.projectiles
+  ? r.projectiles.list.filter(p => p.owner === r.a && p.type === 'blast' && !p.ghost).length
+  : r.events.filter(e => e.name === 'fireBlaster').length;
+
+test('unaccepted Blaster shoot triggers do not start the S3 mechanism', async () => {
+  const api = await production(), r = rig(api, 'blaster');
+  try {
+    assert.equal(blasterShots(r), 0);
+    r.ch.trigger('shoot'); // a generic/stale animation trigger has no native projectile birth
+    for (let i = 0; i < 12; i++) r.step();
+    assert.equal(r.snapshot().blasterMechAge, null, 'no accepted shot owns a mechanism cycle');
+    mechRest(r);
+  } finally { r.close(); }
+});
 
 test('Blaster S3 lever and spring-front run exactly one cycle per actual emission and rest everywhere else at 30/60/120Hz', async t => {
   const api = await production(), summary = [];
   for (const hz of [30, 60, 120]) {
-    const r = rig(api, 'blaster');
+    const r = rig(api, 'blaster', true, { nativeProjectiles: true });
     try {
-      assert.ok(r.ch.weapon.parts.lever && r.ch.weapon.parts.front, 'S3 mechanism part channels exist');
+      const weapon = r.ch.weapon;
+      assert.ok(weapon.parts.lever && weapon.parts.front, 'S3 mechanism part channels exist');
+      assert.ok(weapon.parts.lever.userData.mesh.geometry.index.count > 0, 'lever has actual drawn geometry');
+      assert.ok(weapon.parts.front.userData.mesh.geometry.index.count > 0, 'telescoping collar has actual drawn geometry');
+      assert.ok(weapon.bodyFar.geometry.attributes.position.count > weapon.body.geometry.attributes.position.count,
+        'far LOD retains the at-rest lever and spring collar in the complete body shell');
       // idle: no emission, no movement, no owned age
       for (let i = 0; i < Math.round(hz * 0.5); i++) r.step(1 / hz);
       mechRest(r); assert.equal(blasterShots(r), 0); assert.equal(r.snapshot().blasterMechAge, null);
+      const leverRestPoint = partCentroid(api, weapon.parts.lever, weapon.off);
+      const frontRestPoint = partCentroid(api, weapon.parts.front, weapon.off);
 
       // one accepted shot: production #308 winds up for preDelay (.1667s)
       // before the actual emission; the mechanism must stay at rest through the
       // entire windup and then run exactly one lever-down + spring-front-forward
       // cycle for the emission itself, with ZR held through the cooldown
+      const firstPressTick = r.ticks;
       r.step(1 / hz, { fire: true });
       assert.equal(blasterShots(r), 0, 'pressing ZR only starts the windup; nothing is emitted yet');
       let wind = 0;
@@ -576,14 +611,30 @@ test('Blaster S3 lever and spring-front run exactly one cycle per actual emissio
         if (blasterShots(r) === 0) mechRest(r); // holding ZR before the shot moves nothing
       }
       assert.equal(blasterShots(r), 1, 'exactly one actual emission after the windup');
+      const firstShot = r.projectiles.list.find(p => p.owner === r.a && p.type === 'blast' && !p.ghost);
+      assert.ok(firstShot, 'native Blaster creates its gameplay projectile');
+      assert.equal(firstShot.team, r.a.team);
+      assert.equal(firstShot.damage, r.a.weapon.directDamage, 'presentation leaves native damage intact');
+      assert.equal(firstShot.radius, r.a.weapon.impactRadius, 'presentation leaves native collision radius intact');
+      assert.equal(firstShot.life, r.a.weapon.ballistics.burstTime, 'presentation leaves the composed native burst lifetime intact');
+      assert.equal(firstShot.straight, r.a.weapon.ballistics.straightTime, 'presentation leaves the composed straight phase intact');
+      assert.ok(Math.abs(firstShot.vel.length() - r.a.weapon.projSpeed) < 1e-9, 'native projectile speed is unchanged');
+      assert.equal(r.a.ink, 100 - r.a.weapon.inkPerShot, 'ink is spent on the accepted native emission only');
+      assert.ok(Math.abs((r.ticks - firstPressTick) / hz - r.a.weapon.preDelay) <= 2 / hz,
+        'actual projectile birth retains the native windup timing');
       let cycles = 0, moving = false, leverPeak = 0, frontPeak = 0, recoilPeak = 0, ageSeen = false, pumpMoved = false;
       const window = Math.round(hz * 0.72); // fireInterval .8333s: still one shot
+      let leverDownPoint = null, frontForwardPoint = null;
       for (let i = 0; i < window; i++) {
         r.step(1 / hz, { fire: true });
         const on = mechLever(r) !== 0 || mechFront(r) !== 0;
         if (on && !moving) cycles++;
         moving = on;
         if (r.snapshot().blasterMechAge != null) ageSeen = true;
+        if (!leverDownPoint && mechLever(r) <= -BLASTER_MECHANISM.leverPeak * 0.99)
+          leverDownPoint = partCentroid(api, weapon.parts.lever, weapon.off);
+        if (!frontForwardPoint && mechFront(r) >= BLASTER_MECHANISM.frontPeak * 0.99)
+          frontForwardPoint = partCentroid(api, weapon.parts.front, weapon.off);
         leverPeak = Math.min(leverPeak, mechLever(r));
         frontPeak = Math.max(frontPeak, mechFront(r));
         recoilPeak = Math.max(recoilPeak, Math.abs(r.ch.rcP));
@@ -594,6 +645,9 @@ test('Blaster S3 lever and spring-front run exactly one cycle per actual emissio
       assert.ok(ageSeen, 'the emission-owned mechanism age was observable');
       assert.ok(leverPeak <= -BLASTER_MECHANISM.leverPeak * 0.99, `lever pulled down: ${leverPeak}`);
       assert.ok(frontPeak >= BLASTER_MECHANISM.frontPeak * 0.99, `spring front thrown forward: ${frontPeak}`);
+      assert.ok(leverDownPoint && leverDownPoint.y < leverRestPoint.y - .001, 'the left-side lever geometry moves down at the shot peak');
+      assert.ok(frontForwardPoint && frontForwardPoint.z > frontRestPoint.z + .01,
+        'the spring-front collar geometry translates forward along the barrel without losing its resting shell');
       assert.ok(recoilPeak > 0.02, `generic whole-weapon recoil stays additive: ${recoilPeak}`);
       assert.equal(pumpMoved, false, 'suppressed pump stroke never substitutes for the S3 mechanism');
       mechRest(r); assert.equal(r.snapshot().blasterMechAge, null, 'recovered before the next shot window');
@@ -637,13 +691,21 @@ test('Blaster S3 lever and spring-front run exactly one cycle per actual emissio
       mechRest(r); assert.equal(r.snapshot().blasterMechAge, null);
 
       // continuous fire: one complete restart-safe cycle per accepted shot
-      const before = blasterShots(r), rows = [];
+      const before = blasterShots(r), rows = [], shotTicks = [];
+      let observedShots = before;
       for (let i = 0; i < Math.round(hz * 2.4); i++) {
         r.step(1 / hz, { fire: true });
+        const nowShots = blasterShots(r);
+        if (nowShots > observedShots) { assert.equal(nowShots, observedShots + 1); observedShots = nowShots; shotTicks.push(r.ticks); }
         rows.push(mechLever(r) !== 0 || mechFront(r) !== 0);
       }
       const fired = blasterShots(r) - before;
       assert.ok(fired >= 2, `continuous fire emitted ${fired} shots`);
+      assert.equal(shotTicks.length, fired);
+      for (let i = 1; i < shotTicks.length; i++) {
+        assert.ok(Math.abs((shotTicks[i] - shotTicks[i - 1]) / hz - r.a.weapon.fireInterval) <= 1 / hz,
+          'native Blaster shot cadence stays at its configured interval');
+      }
       const continuousCycles = mechCycles(rows);
       assert.equal(continuousCycles, fired, 'one cycle per accepted shot, no accumulation');
       mechRest(r); assert.equal(r.snapshot().blasterMechAge, null);
@@ -651,7 +713,7 @@ test('Blaster S3 lever and spring-front run exactly one cycle per actual emissio
     } finally { r.close(); }
   }
   // detail layer off: the mechanism channels never move for a real shot
-  const off = rig(api, 'blaster', false);
+  const off = rig(api, 'blaster', false, { nativeProjectiles: true });
   try {
     let fired = 0;
     for (let i = 0; i < 60; i++) { off.step(1 / 60, { fire: true }); fired = blasterShots(off); }
@@ -665,7 +727,7 @@ test('actual emitted Blaster shot replays the identical mechanism cycle on a rem
   const api = await production();
   const { G } = api;
   const prevNetm = G.netm, prevActors = G.actors;
-  const local = rig(api, 'blaster');
+  const local = rig(api, 'blaster', true, { nativeProjectiles: true });
   const localProj = G.projectiles;
   let nmLocal = null, remote = null;
   try {
@@ -676,25 +738,29 @@ test('actual emitted Blaster shot replays the identical mechanism cycle on a rem
     local.a.owner = 'me'; local.a.nid = 0;
     nmLocal.byNid.set(0, local.a); nmLocal._setupActor(local.a); // production trigger recording wrapper
 
-    remote = rig(api, 'blaster');
+    remote = rig(api, 'blaster', true, { nativeProjectiles: true });
     const remoteProj = G.projectiles;
     remote.a.owner = 'peer'; remote.a.nid = 0; // the same shooter seen by another client
     const nmRemote = new api.NetMatch(session('them', 'them'), { map: 'map', difficulty: 'normal' });
     nmRemote.byNid.set(0, remote.a); nmRemote._setupActor(remote.a); // installs _netTrig
+    nmRemote._play('me', [performance.now() / 1000, 'tr', 0, 'shoot', null]);
+    remote.step(1 / 60); mechRest(remote);
+    assert.equal(remote.snapshot().blasterMechAge, null, 'a trigger-only remote packet is not accepted shot evidence');
 
     const localTrace = [], remoteTrace = [];
     const frames = Math.round(1.8 * 60), firing = Math.round(1.5 * 60);
     for (let f = 0; f < frames; f++) {
       G.actors = [local.a]; G.projectiles = localProj;
-      const recorded = nmLocal.out.length;
+      const recorded = nmLocal.out.length, shotsBefore = blasterShots(local);
       local.step(1 / 60, { fire: f < firing });
       localTrace.push([mechLever(local), mechFront(local)]);
-      if (nmLocal.out.length > recorded) {
-        assert.equal(nmLocal.out.length, recorded + 1, 'one recorded trigger per frame');
-        const ev = nmLocal.out[recorded];
-        assert.equal(ev[1], 'tr'); assert.equal(ev[3], 'shoot');
-        nmRemote._play('me', ev); // production remote replay path for the same frame
+      const emitted = nmLocal.out.slice(recorded), newShots = blasterShots(local) - shotsBefore;
+      if (newShots) {
+        assert.equal(newShots, 1, 'one actual native Blaster projectile per accepted emission');
+        assert.equal(JSON.stringify(emitted.map(ev => ev[1])), JSON.stringify(['p', 'tr']),
+          'projectile birth precedes its matching trigger in NetMatch');
       }
+      for (const ev of emitted) nmRemote._play('me', ev); // production remote replay path for the same frame
       G.actors = [remote.a]; G.projectiles = remoteProj;
       remote.step(1 / 60);
       remoteTrace.push([mechLever(remote), mechFront(remote)]);
@@ -705,7 +771,30 @@ test('actual emitted Blaster shot replays the identical mechanism cycle on a rem
     assert.equal(blasterShots(remote), 0, 'the proxy only replays; it emits nothing locally');
     assert.equal(mechCycles(localTrace.map(([l, fr]) => l !== 0 || fr !== 0)), shots, 'local: one cycle per shot');
     assert.equal(mechCycles(remoteTrace.map(([l, fr]) => l !== 0 || fr !== 0)), shots, 'remote: one cycle per shot');
-    mechRest(local); mechRest(remote);
+    const firstPair = nmLocal.out.filter(ev => ev[1] === 'p' && ev[3] === 'blast').slice(0, 1);
+    const firstProjectile = firstPair[0], firstTrigger = nmLocal.out.find(ev => ev[1] === 'tr' && ev[3] === 'shoot'
+      && Math.abs(ev[0] - firstProjectile[0]) <= .1);
+    assert.ok(firstProjectile && firstTrigger, 'the accepted shot has its native projectile and trigger records');
+    remote.a.setWeapon('shooter'); remote.a.setWeapon('blaster');
+    const remoteCount = remoteProj.list.length;
+    nmRemote._play('me', firstProjectile); nmRemote._play('me', firstTrigger);
+    assert.equal(remoteProj.list.length, remoteCount, 'duplicate stale projectile packets do not spawn twice');
+    assert.equal(remote.snapshot().blasterMechAge, null, 'duplicate stale trigger packets do not restart a settled cycle');
+    const beforeSquid = nmLocal.out.length, shotsBeforeSquid = blasterShots(local);
+    let waitSquidShot = 0;
+    while (blasterShots(local) === shotsBeforeSquid && waitSquidShot++ < 60) {
+      G.actors = [local.a]; G.projectiles = localProj;
+      local.step(1 / 60, { fire: true });
+    }
+    assert.equal(blasterShots(local), shotsBeforeSquid + 1, 'the sender has a fresh native accepted shot');
+    const squidPair = nmLocal.out.slice(beforeSquid);
+    assert.equal(JSON.stringify(squidPair.map(ev => ev[1])), JSON.stringify(['p', 'tr']));
+    remote.a.form = 'squid'; remote.ch.kidForm = false;
+    G.projectiles = remoteProj;
+    for (const ev of squidPair) nmRemote._play('me', ev);
+    remote.step(1 / 60); mechRest(remote);
+    assert.equal(remote.snapshot().blasterMechAge, null, 'even a valid old shot pair cannot actuate a submerged proxy');
+    mechRest(remote);
   } finally {
     nmLocal?.dispose?.();
     G.netm = prevNetm; G.actors = prevActors;
@@ -716,14 +805,14 @@ test('actual emitted Blaster shot replays the identical mechanism cycle on a rem
 test('Blaster mechanism cycle is identical across 30/60/120Hz render clocks on the fixed sim step', async () => {
   const api = await production(), traces = [];
   for (const hz of [30, 60, 120]) {
-    const r = rig(api, 'blaster'), clock = new api.FixedClock(), rows = [];
+    const r = rig(api, 'blaster', true, { nativeProjectiles: true }), clock = new api.FixedClock(), rows = [];
     try {
       for (let frame = 0; frame < Math.round(2.5 * hz); frame++) clock.advance(1 / hz, dt => {
         r.step(dt, { fire: true });
-        rows.push([mechLever(r), mechFront(r), r.events.length, r.snapshot().blasterMechAge]);
+        rows.push([mechLever(r), mechFront(r), blasterShots(r), r.snapshot().blasterMechAge]);
       });
-      assert.ok(r.events.length >= 3, `${hz}Hz render clock emitted repeated actual shots`);
-      assert.equal(mechCycles(rows.map(([l, fr]) => l !== 0 || fr !== 0)), r.events.length,
+      assert.ok(blasterShots(r) >= 3, `${hz}Hz render clock emitted repeated actual shots`);
+      assert.equal(mechCycles(rows.map(([l, fr]) => l !== 0 || fr !== 0)), blasterShots(r),
         `${hz}Hz exactly one cycle per shot`);
       const last = rows[rows.length - 1];
       assert.equal(last[0], 0, `${hz}Hz lever recovered`);

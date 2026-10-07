@@ -5,7 +5,12 @@ import { specialMotionAllowsAction } from './action-admission.mjs';
 import { BLASTER_MECHANISM, blasterMechanismCycle } from './blaster-mechanism.mjs';
 const INSTALLED = Symbol.for('inkwave.weapon-detail-motion.installed');
 const RESET_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.runner-reset-installed');
+const RUNNER_SHOT_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.blaster-runner-shot-installed');
+const PROJECTILE_SHOT_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.blaster-projectile-shot-installed');
+const NETPLAY_SHOT_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.blaster-netplay-shot-installed');
 const tracks = new WeakMap(), fills = new WeakMap(), reaches = new WeakMap(), disposed = new WeakSet();
+const activeBlasterEmissions = new WeakMap(), acceptedRemoteBlasterEmission = new WeakMap();
+const remoteBlasterNetState = new WeakMap();
 const TAU = Math.PI * 2;
 const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
@@ -43,6 +48,20 @@ function withRecoil(ch, fn) {
   if (!enabled(ch) || !tune || !original) return fn();
   ch.hold = { ...original, rc: { ...original.rc, ...tune } };
   try { return fn(); } finally { ch.hold = original; }
+}
+function boundedRemember(set, order, key, limit = 1024) {
+  if (set.has(key)) return false;
+  set.add(key); order.push(key);
+  if (order.length > limit) set.delete(order.shift());
+  return true;
+}
+function remoteNetState(net) {
+  let state = remoteBlasterNetState.get(net);
+  if (!state) {
+    state = { projectiles: new Set(), projectileOrder: [], triggers: new Set(), triggerOrder: [], pending: new Map() };
+    remoteBlasterNetState.set(net, state);
+  }
+  return state;
 }
 // Integrate the exponential motor's angle as well as velocity. Updating angle
 // with the end-of-step velocity produces different coast at 30 and 120 Hz.
@@ -122,8 +141,75 @@ export function weaponDetailMotionSnapshot(ch) {
     chargerReleaseAge: m?.release ?? null, gripCorrection: m?.gripCorrection ?? 0, pump: w?.pump || 0,
     blasterMechAge: m?.mech ?? null });
 }
-export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }) {
-  if (!Character || !THREE || !C || !Number.isInteger(T?.T_SLOSH)) throw Error('Weapon detail motion requires actual Character, Three, channels and slosh timer');
+export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles, NetMatch, THREE, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }) {
+  if (!Character || !WeaponRunner || !Projectiles || !NetMatch || !THREE || !C || !Number.isInteger(T?.T_SLOSH)) throw Error('Weapon detail motion requires actual Character, WeaponRunner, Projectiles, NetMatch, Three, channels and slosh timer');
+  if (!Object.hasOwn(Projectiles.prototype, PROJECTILE_SHOT_INSTALLED)) {
+    Object.defineProperty(Projectiles.prototype, PROJECTILE_SHOT_INSTALLED, { value: true });
+    const push = Projectiles.prototype._push;
+    Projectiles.prototype._push = function (p, ...args) {
+      const result = push.call(this, p, ...args);
+      const ch = p?.owner?.character, emission = ch && activeBlasterEmissions.get(ch);
+      if (emission?.actor === p.owner && p?.type === 'blast' && !p.ghost) emission.pending++;
+      return result;
+    };
+  }
+  if (!Object.hasOwn(WeaponRunner.prototype, RUNNER_SHOT_INSTALLED)) {
+    Object.defineProperty(WeaponRunner.prototype, RUNNER_SHOT_INSTALLED, { value: true });
+    const auto = WeaponRunner.prototype._auto;
+    WeaponRunner.prototype._auto = function (dt, input, w) {
+      if (w?.kind !== 'blaster' || !this.a?.character) return auto.call(this, dt, input, w);
+      const ch = this.a.character, previous = activeBlasterEmissions.get(ch);
+      const emission = { actor: this.a, pending: 0 };
+      activeBlasterEmissions.set(ch, emission);
+      try { return auto.call(this, dt, input, w); }
+      finally {
+        if (previous) activeBlasterEmissions.set(ch, previous);
+        else activeBlasterEmissions.delete(ch);
+      }
+    };
+  }
+  if (!Object.hasOwn(NetMatch.prototype, NETPLAY_SHOT_INSTALLED)) {
+    Object.defineProperty(NetMatch.prototype, NETPLAY_SHOT_INSTALLED, { value: true });
+    const play = NetMatch.prototype._play;
+    NetMatch.prototype._play = function (from, e, ...args) {
+      const actor = e && this.byNid?.get(e[2]);
+      if (!actor?.remote || actor.character?.weaponKind !== 'blaster') return play.call(this, from, e, ...args);
+      const state = remoteNetState(this), actorKey = `${String(from)}\u001f${String(e[2])}`;
+      const time = Number(e[0]);
+      if (e[1] === 'p' && e[3] === 'blast') {
+        const key = `${actorKey}\u001f${String(e[0])}\u001f${JSON.stringify(e.slice(3))}`;
+        if (!boundedRemember(state.projectiles, state.projectileOrder, key)) return;
+        const queue = state.pending.get(actorKey) || [];
+        queue.push({ time, key });
+        if (queue.length > 16) queue.shift();
+        state.pending.set(actorKey, queue);
+        return play.call(this, from, e, ...args);
+      }
+      if (e[1] === 'tr' && e[3] === 'shoot') {
+        const key = `${actorKey}\u001f${String(e[0])}\u001f${JSON.stringify(e[4] ?? null)}`;
+        if (!boundedRemember(state.triggers, state.triggerOrder, key)) return;
+        const queue = state.pending.get(actorKey) || [];
+        let match = -1, distance = Infinity;
+        for (let i = 0; i < queue.length; i++) {
+          const d = Math.abs(queue[i].time - time);
+          if (d <= .1 && d < distance) { match = i; distance = d; }
+        }
+        const authorized = match >= 0;
+        if (authorized) queue.splice(match, 1);
+        else if (Number.isFinite(time)) {
+          for (let i = queue.length - 1; i >= 0; i--) if (time - queue[i].time > .1) queue.splice(i, 1);
+        }
+        if (!queue.length) state.pending.delete(actorKey);
+        else state.pending.set(actorKey, queue);
+        if (!authorized) return play.call(this, from, e, ...args);
+        const ch = actor.character;
+        acceptedRemoteBlasterEmission.set(ch, key);
+        try { return play.call(this, from, e, ...args); }
+        finally { acceptedRemoteBlasterEmission.delete(ch); }
+      }
+      return play.call(this, from, e, ...args);
+    };
+  }
   if (WeaponRunner && !Object.hasOwn(WeaponRunner.prototype, RESET_INSTALLED)) {
     Object.defineProperty(WeaponRunner.prototype, RESET_INSTALLED, { value: true });
     const reset = WeaponRunner.prototype.reset;
@@ -180,6 +266,13 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
   };
   P._recoil = function (...args) { return withRecoil(this, () => nativeRecoil.apply(this, args)); };
   P.trigger = function (name, ...args) {
+    const owner = name === 'shoot' && this.weaponKind === 'blaster' ? this._owner() : null;
+    const canAnimateBlaster = name === 'shoot' && this.weaponKind === 'blaster' && this.kidForm && !this.dance
+      && this.visible && owner && owner.form === 'kid' && owner.alive !== false;
+    const emission = canAnimateBlaster ? activeBlasterEmissions.get(this) : null;
+    const acceptedLocalEmission = emission?.actor === owner && emission.pending > 0;
+    const acceptedRemoteEmission = canAnimateBlaster && acceptedRemoteBlasterEmission.has(this);
+    if (acceptedLocalEmission) emission.pending--;
     const result = trigger.call(this, name, ...args);
     if (!enabled(this)) return result;
     const m = track(this);
@@ -194,7 +287,7 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
     // projectile (never on held ZR, dry fire or windup), and remote proxies
     // replay the identical trigger through NetMatch, so every accepted shot
     // starts exactly one lever + spring-front cycle locally and remotely.
-    if (name === 'shoot' && this.weaponKind === 'blaster') m.mech = 0;
+    if (name === 'shoot' && this.weaponKind === 'blaster' && (acceptedLocalEmission || acceptedRemoteEmission)) m.mech = 0;
     return result;
   };
   P._updateStates = function (dt, s) {
