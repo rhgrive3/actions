@@ -84,6 +84,10 @@ export function adaptSource(rel, code) {
     "{ key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },",
     "{ key: 'minimap', label: 'Corner map (non-S3 aid)', type: 'toggle', help: 'Optional aid outside the S3 baseline. The full Turf Map remains available.' },",
     'optional corner map explanation');
+    code = replaceOnce(code,
+      "h('div', { class: 'iw-res__foot' }, xpPanel, h('div', { class: 'iw-res__btns' },",
+      "h('div', { class: 'iw-res__foot' }, online ? null : xpPanel, h('div', { class: 'iw-res__btns' },",
+      'Private Battle result XP panel');
     return replaceOnce(code,
       "h('div', { class: 'iw-res__teams' }, table(0), table(1)),",
       "h('div', { class: 'iw-res__teams' }, table(winTeam), table(1 - winTeam)),",
@@ -483,6 +487,21 @@ export function adaptSource(rel, code) {
       'exact recipient Super Jump target event');
     code = adaptJuddResult(rel, code, replaceOnce);
     code = replaceOnce(code,
+      "    const gained = Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);\n" +
+      "    const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };\n" +
+      "    p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n" +
+      "    while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n" +
+      "    saveJSON('inkwave.profile', p);",
+      "    const privateBattle = !!G.netm;\n" +
+      "    const gained = privateBattle ? 0 : Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);\n" +
+      "    const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };\n" +
+      "    if (!privateBattle) {\n" +
+      "      p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n" +
+      "      while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n" +
+      "      saveJSON('inkwave.profile', p);\n" +
+      "    }",
+      'Private Battle persistent progression');
+    code = replaceOnce(code,
       "  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
       "  showSplatted({ by = null, who = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
       'death card opponent identity input');
@@ -602,7 +621,17 @@ export function adaptSource(rel, code) {
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: camera aim connection');
     code = code.slice(0, start) + code.slice(end);
     code = replaceOnce(code, '    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;\n  }',
-      '    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;\n    updateShotGuide(this);\n  }', 'S3 ShotGuideFrame guide point');
+      "    if (w.kind === 'charger') {\n" +
+      "      const fullRange = G.projectiles?.chargerReach ? G.projectiles.chargerReach(1) : w.rangeMax;\n" +
+      "      const stop = Math.min(range, this.onTarget === G.boss ? a.aimPoint.distanceTo(start) : best);\n" +
+      "      this.chargerCurrentReach.copy(start).addScaledVector(fwd, stop);\n" +
+      "      this.chargerFullReach.copy(start).addScaledVector(fwd, fullRange);\n" +
+      "      this.chargerReachVisible = !!a.weaponRunner?.charging;\n" +
+      "    } else this.chargerReachVisible = false;\n" +
+      "    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;\n" +
+      "    updateShotGuide(this);\n" +
+      "  }",
+      'Charger current/full HUD endpoints');
     code = replaceOnce(code, "it.jump = inp.down('Space')", "it.jump = inp.wasPressed('Space') || inp.padPressed.has(0) || inp.down('Space')", 'latched jump input');
     code = replaceOnce(code, "it.squid = inp.down('ShiftLeft')", "it.squid = inp.wasPressed('ShiftLeft') || inp.wasPressed('ShiftRight') || inp.down('ShiftLeft')", 'latched squid input');
     code = replaceOnce(code, 'it.fire = inp.mouse.left ||', 'it.fire = inp.mouse.leftPressed || inp.mouse.left ||', 'latched fire input');
@@ -684,6 +713,22 @@ export function adaptSource(rel, code) {
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
+    // #1060: remove only the generic burst-floor stamp after the kit authority
+    // adapter has attached its owner/ghost gate to this exact burst location.
+    code = replaceOnce(code,
+      "    // paint under the burst\n    const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n",
+      "",
+      'Blaster timed burst generic floor paint');
+    // #1049: sourced Blaster SplashPaintParam owns the vertical receiving-surface window.
+    code = replaceOnce(code,
+      '        const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);',
+      '        const dropProbe = p.type === \'blast\' && Number.isFinite(p.s3SplashDropMax) ? p.s3SplashDropMax : 4;\n        const g = G.physics.raycast(p.pos, DOWN, dropProbe, _hit2, true);',
+      'Blaster flight splash drop-height window');
+    // #1043: sample the target capsule rather than one arbitrary centre LOS ray.
+    code = replaceOnce(code,
+      '      if (!G.physics.los(c, _v)) continue;',
+      '      if (!(p.s3SpecialWeapon ? G.physics.los(c, _v) : blasterSplashExposed(G.physics, c, e, PLAYER))) continue;',
+      'Blaster splash capsule exposure');
     code = replaceOnce(code,
       '      if (d > kitBombRadius(SUB, b, s.radius)) continue;',
       '      if (d > Math.max(kitBombRadius(SUB, b, s.radius), b.s3Sub ? 0 : (s.knockback?.distance ?? 0))) continue;',
@@ -696,7 +741,7 @@ export function adaptSource(rel, code) {
       '        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);',
       '        applySplatBombSurfaceResponse(b, hit.normal);', 'Splat Bomb sourced ground resistance');
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
-    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\n` + code;
+    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap, blasterSplashExposed } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
