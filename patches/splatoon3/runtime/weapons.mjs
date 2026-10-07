@@ -677,6 +677,7 @@ export function installWeapons(context, profile) {
         this.s3PostShotRemaining = w.postShotDelay;
         this.s3BlasterMoveRemaining = w.postShotDelay;
         this.s3InkRecoverRemaining = w.inkRecoverStop;
+        this.s3BlasterHeldRepeat = !!input.fire;
       }
       return result;
     }
