@@ -198,7 +198,7 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
 }
 export function installWeapons(context, profile) {
   api = context;
-  const { WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
   Projectiles.prototype._new = function (...args) {
     const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3DamageGroupId = null; p.s3Weapon = null; p.s3SpecialWeapon = null; p.s3Vertical = false; return p;
@@ -228,15 +228,42 @@ export function installWeapons(context, profile) {
     releaseSplatlingInterrupt(this, -1);
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
+    this.s3ShooterStreamActive = false; this.s3ShooterInterruptSub = 0; this.s3ShooterInterruptSquid = 0;
+    this.s3ShooterInterruptJustArmed = false; this.s3ShooterCancelMain = false;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
     return result;
+  };
+  const shooterActorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (dt, ...args) {
+    const r = this.weaponRunner;
+    if (r && this.weapon?.kind === 'shooter') {
+      if (r.s3ShooterInterruptSub > 0) r.s3ShooterInterruptSub = Math.max(0, r.s3ShooterInterruptSub - dt);
+      if (r.s3ShooterInterruptSquid > 0) r.s3ShooterInterruptSquid = Math.max(0, r.s3ShooterInterruptSquid - dt);
+      const hardCancel = !this.alive || this.specialActive || this.superJumpState ||
+        (this.intent?.special && this.specialReady?.());
+      if (hardCancel) {
+        r.s3ShooterInterruptSub = r.s3ShooterInterruptSquid = 0;
+        r.s3ShooterInterruptJustArmed = false; r.s3ShooterCancelMain = false;
+        r.s3ShooterStreamActive = false; r.s3ShooterHeld = false;
+      } else {
+        const cancelEdge = r.s3ShooterHeld && r.s3ShooterStreamActive &&
+          (!this.intent?.fire || !!this.intent?.sub || !!this.intent?.squid);
+        if (cancelEdge && !r.s3ShooterInterruptJustArmed && !r.s3ShooterCancelMain) {
+          r.s3ShooterInterruptSub = 3 / 60;
+          r.s3ShooterInterruptSquid = 4 / 60;
+          r.s3ShooterInterruptJustArmed = true;
+        }
+        if (r.s3ShooterCancelMain && !this.intent?.fire) r.s3ShooterCancelMain = false;
+      }
+    }
+    return shooterActorUpdate.call(this, dt, ...args);
   };
   WeaponRunner.prototype.busy = function () {
     const kind = this.a.weapon.kind;
     if (kind === 'roller' && this.s3FlickPostSquid > 0) return true;
     if (kind === 'shooter') {
-      if (this.s3ShooterPendingFirst) return true;
+      if (this.s3ShooterPendingFirst || this.s3ShooterInterruptSquid > 1e-10) return true;
       if (this.s3PostFireLockActive) {
         if (this.a.lastFire + 1e-10 < (this.a.weapon.postFireSwimLock || 0)) return true;
         this.s3PostFireLockActive = false;
@@ -300,10 +327,24 @@ export function installWeapons(context, profile) {
       }
       const locked = this.s3PostFireLockActive && this.a.lastFire + 1e-10 < (weapon.postFireSwimLock || 0);
       if (!locked && this.s3PostFireLockActive) this.s3PostFireLockActive = false;
-      if (locked || this.s3ShooterPendingFirst) next = { ...next, sub: false, subReleased: false };
+      if (locked || this.s3ShooterPendingFirst || this.s3ShooterInterruptSub > 1e-10)
+        next = { ...next, sub: false, subReleased: false };
+      if (this.s3ShooterCancelMain && !this.s3ShooterInterruptJustArmed)
+        next = { ...next, fire: false, firePressed: false };
       input = next;
     }
-    return runnerUpdate.call(this, dt, input);
+    const result = runnerUpdate.call(this, dt, input);
+    if (weapon.kind === 'shooter' && this.s3ShooterInterruptJustArmed) {
+      // R/ZL cancellation may coincide with a due repeat; the native owner above
+      // gets that cancellation-frame shot once, then the stream is retired.
+      this.s3ShooterInterruptJustArmed = false;
+      this.s3ShooterCancelMain = true;
+      this.s3ShooterHeld = false;
+      this.s3ShooterPendingFirst = false;
+      this.s3ShooterFirstRemaining = 0;
+      this.s3ShooterStreamActive = false;
+    }
+    return result;
   };
   const busyBeforeSplatlingInterrupt = WeaponRunner.prototype.busy;
   WeaponRunner.prototype.busy = function () {
@@ -337,6 +378,8 @@ export function installWeapons(context, profile) {
       this.s3ReleaseHold = false; this.s3HeldCharge = this.s3HeldChargeT = this.s3ReleaseAt = 0;
     }
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
+    this.s3ShooterStreamActive = false; this.s3ShooterInterruptSub = 0; this.s3ShooterInterruptSquid = 0;
+    this.s3ShooterInterruptJustArmed = false; this.s3ShooterCancelMain = false;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0;
     this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0; this.s3SplatlingHeld = false;
@@ -589,7 +632,10 @@ export function installWeapons(context, profile) {
   const fireShooter = Projectiles.prototype.fireShooter;
   Projectiles.prototype.fireShooter = function (a, weapon, spreadDeg) {
     const result = fireShooter.call(this, a, weapon, spreadDeg);
-    if (a.weaponRunner && weapon.kind === 'shooter') a.weaponRunner.s3PostFireLockActive = true;
+    if (a.weaponRunner && weapon.kind === 'shooter') {
+      a.weaponRunner.s3PostFireLockActive = true;
+      a.weaponRunner.s3ShooterStreamActive = true;
+    }
     return result;
   };
   const fireCharger = Projectiles.prototype.fireCharger;
@@ -615,7 +661,9 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype._auto = function (dt, input, w) {
     if (w.kind === 'shooter') {
       if (this.cooldown <= 1e-10) this.cooldown = 0;
-      const pressed = !!input.fire && !this.s3ShooterHeld;
+      if (input.fire && this.cooldown <= 1e-10 && this.a.ink + 1e-10 < w.inkPerShot)
+        this.s3ShooterStreamActive = false;
+      const pressed = !!input.fire && !this.s3ShooterHeld && !this.s3ShooterCancelMain;
       if (!input.fire) this.s3ShooterHeld = false;
       else if (pressed && !this.s3ShooterPendingFirst) {
         this.s3ShooterHeld = true;
