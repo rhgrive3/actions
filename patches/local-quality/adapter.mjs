@@ -54,6 +54,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptFrameOrder } from './frame-order-adapter.mjs';
 import { adaptReflSkip } from './refl-skip-adapter.mjs';
 import { adaptFinishTape } from './finish-tape-adapter.mjs';
+import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
@@ -75,6 +76,7 @@ const IDENTITY_FILES = [
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
   'prop-retention-adapter.mjs', 'prop-atlas-adapter.mjs',
   'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
+  'audio-listener-adapter.mjs', 'runtime/audio-listener.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'portrait-work.mjs', 'depth-cache.mjs',
   'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
@@ -122,6 +124,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptBossHit(rel, code);
   code = adaptIssue460Source(rel, code);
   code = adaptIssue461Source(rel, code);
+  code = adaptAudioListener(rel, code);
   code = adaptAimProfiles(rel, code);
   code = adaptMedalSource(rel, code);
   code = adaptResourceSource(rel, code, replaceOnce);
