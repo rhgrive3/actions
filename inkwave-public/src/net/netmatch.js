@@ -107,7 +107,7 @@ export class NetMatch {
     if (this.applying || this.mute > 0 || o.cosmetic) return;
     const st = o.stretch;
     this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team, r3(o.seed ?? Math.random()), o.kind ?? 0,
-      st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0]);
+      st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1]);
   }
 
   recProj(p) {
@@ -115,7 +115,7 @@ export class NetMatch {
     if (!o || o.remote || o.nid === undefined) return;
     this._rec(['p', o.nid, p.type, p.wid || 0, r2(p.pos.x), r2(p.pos.y), r2(p.pos.z), r2(p.vel.x), r2(p.vel.y), r2(p.vel.z),
       r3(p.delay || 0), r3(p.life), r3(p.straight), r2(p.radius), r2(p.size), p.grav, p.drag, p.trailEvery || 0, p.head ? 1 : 0,
-      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3]);
+      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null]);
   }
 
   recBomb(b) {
@@ -440,6 +440,7 @@ export class NetMatch {
         const opts = { seed: e[7] };
         if (e[8]) opts.kind = e[8];
         if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+        if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
         G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
         this.applying = false;
         break;

@@ -78,6 +78,8 @@ jobs:
         run: node --experimental-vm-modules --test patches/splatoon3/tests/walk-special-contact.test.mjs
       - name: Verify gameplay patch contracts and regressions
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
+      - name: Verify source-guided ink flight model
+        run: node --test tests/ink-flight/model.test.mjs
       - name: Verify deterministic network replication
         run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs
       - name: Compare authoritative and reconstructed attacks
