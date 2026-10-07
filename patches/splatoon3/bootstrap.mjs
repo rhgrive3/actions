@@ -4,6 +4,7 @@ import { installQuality } from '../local-quality/install.mjs';
 import { installIssueFiveHotfixA } from './runtime/issue-five-hotfix-a.mjs';
 import { installIssueFiveHotfixB } from './runtime/issue-five-hotfix-b.mjs';
 import { installIssueFiveHotfixC } from './runtime/issue-five-hotfix-c.mjs';
+import { installIssueSixFollowup } from './runtime/issue-six-followup.mjs';
 try {
   const response = await fetch(new URL('./profile.json', import.meta.url));
   if (!response.ok) throw new Error(`パッチ設定の読み込みに失敗しました (${response.status})`);
@@ -12,6 +13,7 @@ try {
   installIssueFiveHotfixA(context, profile);
   installIssueFiveHotfixB(context, profile);
   installIssueFiveHotfixC(context, profile);
+  installIssueSixFollowup(context, profile);
   installQuality(profile);
   installWeaponsFidelity(context, profile);
   await import('../../src/main.js');
