@@ -1131,7 +1131,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -1183,6 +1183,7 @@ export function installWeaponsFidelity(context,profile) {
       }
       const u=p.fidelitySloshUnit,c=u.MoveParam;
       setCollision(p,u.CollisionParam,p.fidelitySloshIndex);
+      setSlosherDraw(p,u,p.fidelitySloshIndex);
       // #1031: only source units with SplashParam own recurring in-flight floor paint.
       if (!u.SplashAndSplashWallHitSpawnPrm?.SplashParam?.length) p.trailEvery=0;
       p.straight=c.GoStraightToBrakeStateFrame/60;
