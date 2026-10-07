@@ -13,6 +13,8 @@ test('#917 the composed Tidal Slam carries S3 Triple Splashdown 220/60, not the 
   assert.equal(f.profile.specials.slam.damageMin, 60);
   assert.equal(f.SPECIALS.slam.damageMax, 220);
   assert.equal(f.SPECIALS.slam.damageMin, 60);
+  assert.equal(f.SPECIALS.slam.killRadius, 6.4, 'current 11.3.0 near radius');
+  assert.equal(f.SPECIALS.slam.radius, 9.6, 'current 11.3.0 outer radius');
   // Only the HP endpoints change: INKWAVE-original radii stay as they are.
   assert.equal(f.SPECIALS.slam.radius, 5.2);
   assert.equal(f.SPECIALS.slam.killRadius, 3.2);
