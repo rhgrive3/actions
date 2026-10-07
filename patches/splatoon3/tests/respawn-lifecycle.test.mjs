@@ -34,10 +34,14 @@ test('armor durability, delayed break and uncapped per-hit overflow replace bina
   a.damage(90, attacker, 'shooter'); assert.equal(a.hp, 100, 'armor persists during verified break delay');
   advanceSpawnProtection(a,1/60); a.damage(40,attacker,'shooter'); assert.equal(a.hp,60);
   for(const [amount,hp] of [[100,100],[160,40],[180,20],[220,-20]]) {
-    a.respawn(); a.damage(amount,attacker,'bomb'); assert.equal(a.hp,hp);if(hp<=0){assert.equal(a.alive,true);f.tick(a);assert.equal(a.alive,false);assert.equal(a.hp,0);}
-    if(amount>100)assert.equal(a.s3.spawnArmor,null);
+    a.respawn(); a.damage(amount,attacker,'bomb'); assert.equal(a.hp,hp);
+    if(amount>100)assert.ok(a.s3.spawnArmor?.breakRemaining>0,'penetrating hit keeps armor through the break window');
+    if(hp<=0){assert.equal(a.alive,true);f.tick(a);assert.equal(a.alive,false);assert.equal(a.hp,0);}
   }
-  a.respawn(); a.damage(30,attacker,'shooter'); a.damage(180,attacker,'bomb'); assert.equal(a.hp,20,'over-100 breaks immediately during delayed break');
+  a.respawn(); a.damage(30,attacker,'shooter'); const remaining=a.s3.spawnArmor.breakRemaining;
+  a.damage(180,attacker,'bomb'); assert.equal(a.hp,20,'over-100 applies only penetration during delayed break');
+  assert.equal(a.s3.spawnArmor.breakRemaining,remaining,'penetration preserves the running break timer');
+  a.damage(1,attacker,'shooter'); assert.equal(a.hp,20,'small follow-up remains blocked until the break timer expires');
 });
 test('armor clock expires at 235F, ink bypasses it, reset/death clear and generic invulnerability remains separate', async () => {
   const f=await setup(), a=f.make();a.respawn();
