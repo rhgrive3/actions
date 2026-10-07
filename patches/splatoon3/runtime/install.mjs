@@ -113,6 +113,7 @@ export function install(profile) {
   installSuperjumpMotion(api, profile);
   installSquidrollMotion(api, profile);
   installHitSpawnMotion(api, profile);
+  installSpawnPoseMotion(api);
   installDeathCamera(api);
   installIdleMotion(api, profile);
   installEmotesMotion(api, profile);
