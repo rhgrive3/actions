@@ -82,6 +82,7 @@ test('#913 invalidation: displacement/teleport, heading change, speed-up, respaw
   const V = (x, z) => new w.f.THREE.Vector3(x, 0, z);
   prime(); assert.equal(probes(() => guard(V(0, 1))), 0, 'same place, heading and speed: reused');
   w.a.pos.set(0, 0, 0.1); assert.equal(probes(() => guard(V(0, 1))), 0, 'small displacement: reused');
+  w.brain.path = [1]; w.brain.pi = 0; assert.equal(probes(() => guard(V(0, 1))), 2, 'waypoint/path change invalidates the cached all-clear');
   w.a.pos.set(0, 0, 0.5); assert.equal(probes(() => guard(V(0, 1))), 2, 'displacement beyond the window: probed');
   prime(); w.a.pos.set(18, 0, 0); assert.equal(probes(() => guard(V(0, 1))), 2, 'teleport / respawn displacement: probed');
   prime(); assert.equal(probes(() => guard(V(Math.sin(0.3), Math.cos(0.3)))), 2, 'abrupt heading change (waypoint switch): probed');

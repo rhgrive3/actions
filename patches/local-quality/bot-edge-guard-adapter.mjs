@@ -10,8 +10,8 @@ export function adaptBotEdgeGuard(rel, code, once) {
     'const _stats = { own: 0, enemy: 0, empty: 0, n: 0 };\n' +
     '// _edgeGuard all-clear reuse: seconds, metres moved, heading cosine (~5.7 deg), metres of ground height change, lookahead growth.\n' +
     'const EDGE_REUSE = { age: 0.1, dist: 0.3, cos: 0.995, dy: 0.25, look: 0.12 };\n' +
-    'const edgeClearReusable = (c, now, px, py, pz, dx, dz, look) => {\n' +
-    '  if (!c.ok) return false;\n' +
+    'const edgeClearReusable = (c, now, px, py, pz, dx, dz, look, path, pi) => {\n' +
+    '  if (!c.ok || c.path !== path || c.pi !== pi) return false;\n' +
     '  const age = now - c.t;\n' +
     '  if (!(age >= 0 && age < EDGE_REUSE.age)) return false;\n' +
     '  const ex = px - c.x, ez = pz - c.z;\n' +
@@ -22,13 +22,13 @@ export function adaptBotEdgeGuard(rel, code, once) {
   code = once(code,
     '    const px = a.pos.x, py = a.pos.y, pz = a.pos.z;\n    const bad = (ux, uz) =>',
     '    const px = a.pos.x, py = a.pos.y, pz = a.pos.z;\n' +
-    '    const clear = this._edgeClear || (this._edgeClear = { ok: false, t: 0, x: 0, y: 0, z: 0, dx: 0, dz: 0, look: 0 });   // one per bot\n' +
-    '    if (edgeClearReusable(clear, this.t, px, py, pz, dx, dz, look)) return;\n' +
+    '    const clear = this._edgeClear || (this._edgeClear = { ok: false, t: 0, x: 0, y: 0, z: 0, dx: 0, dz: 0, look: 0, path: null, pi: -1 });   // one per bot\n' +
+    '    if (edgeClearReusable(clear, this.t, px, py, pz, dx, dz, look, this.path, this.pi)) return;\n' +
     '    const bad = (ux, uz) =>',
     'bot edge guard reuse');
   code = once(code,
     '    if (!bad(dx, dz)) return;\n',
-    '    if (!bad(dx, dz)) { clear.ok = true; clear.t = this.t; clear.x = px; clear.y = py; clear.z = pz; clear.dx = dx; clear.dz = dz; clear.look = look; return; }\n' +
+    '    if (!bad(dx, dz)) { clear.ok = true; clear.t = this.t; clear.x = px; clear.y = py; clear.z = pz; clear.dx = dx; clear.dz = dz; clear.look = look; clear.path = this.path; clear.pi = this.pi; return; }\n' +
     '    clear.ok = false;\n',
     'bot edge guard remember');
   code = once(code,
