@@ -56,6 +56,9 @@ export function awardWipeoutFlow(flow, cfg) {
 export function installFlow({ Actor, on, emit, G }, tuning) {
   const cfg = tuning.flow, credits = new WeakMap(), respawning = new WeakMap();
   const offlineFirstSplat = new WeakSet(), netFirstSplats = new WeakMap(), normalSplatBonuses = new WeakMap();
+  // post-#868 can expose the same death first locally and later through the
+  // victim-authoritative replay. Keep Flow/stat side effects once per victim life.
+  const splatLives = new WeakMap();
   function state(a) { a.s3 ||= {}; return a.s3.flow || (a.s3.flow = createFlow()); }
   function award(a, action, value, bonusFp = 0) {
     if (action === 'splat') bonusFp = normalSplatBonuses.get(a) || 0;
@@ -98,7 +101,7 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     s.applied = true;
     award(attacker, 'firstSplat', 0, firstBonusFp);
   }
-  on('splatted', ({ attacker, victim } = {}) => {
+  function observeFirstSplatEvent(attacker, victim) {
     const match = G.match;
     if (!qualifies(match, attacker, victim)) return;
     const nm = G.netm;
@@ -120,7 +123,17 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
       offlineFirstSplat.add(match);
       normalSplatBonuses.set(attacker, firstBonusFp);
     }
-  });
+  }
+  function splatLife(victim) {
+    if (!victim || (typeof victim !== 'object' && typeof victim !== 'function')) return null;
+    const epoch = Number.isSafeInteger(victim.netLife) ? victim.netLife : null;
+    let life = splatLives.get(victim);
+    if (!life || life.epoch !== epoch) {
+      life = { epoch, attacker: null, helpers: new WeakSet(), death: false };
+      splatLives.set(victim, life);
+    }
+    return life;
+  }
   on('flow:first-splat-confirmed', ({ match, attacker, victim } = {}) => {
     const nm = G.netm;
     if (!nm || nm.match !== match || G.match !== match || !qualifies(match, attacker, victim)) return;
@@ -145,6 +158,7 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     this.s3 ||= {};
     this.s3.flow = respawning.get(this) || createFlow();
     credits.delete(this);
+    splatLives.delete(this);
     // Consumers (including the independently installed AP/effect layer) see
     // the restored state before native respawn emits its completion event.
     emit('actor:flow', { actor: this, active: this.s3.flow.active });
@@ -191,20 +205,35 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
   });
   on('splatted', (event) => {
     const { victim, attacker, cause } = event;
-    if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);
-    // One victim-authoritative assist list feeds stats, Flow and conditional gear
-    // while the current-main death-progress policy remains authoritative.
+    // Keep first-splat authority and the ordinary splat award in one listener so
+    // the host bonus is staged before the ordinary award, as in C30, while C33's
+    // capped extension still executes exactly once for this victim life.
+    observeFirstSplatEvent(attacker, victim);
+    const life = splatLife(victim);
+    const hostile = !!(attacker && attacker !== victim && attacker.team !== victim.team);
+    if (hostile && (!life || !life.attacker)) {
+      if (life) life.attacker = attacker;
+      award(attacker, 'splat', 1);
+    }
+    // One victim-authoritative assist list feeds stats, Flow and conditional gear.
+    // A later authoritative replay may add an assist that the first local view
+    // lacked, but no helper is credited twice for the same victim life.
     const candidates = Array.isArray(event.assists) ? event.assists :
       [...(credits.get(victim) || [])].filter(([, time]) => G.time - time <= cfg.assistWindow).map(([helper]) => helper);
-    const helpers = attacker && attacker !== victim && attacker.team !== victim.team
+    const helpers = hostile
       ? [...new Set(candidates)].filter(helper => helper !== attacker && helper !== victim && helper.team === attacker.team) : [];
     event.assists = helpers;
     for (const helper of helpers) {
+      if (life?.helpers.has(helper)) continue;
+      life?.helpers.add(helper);
       helper.stats.assists = (helper.stats.assists || 0) + 1;
       award(helper, 'assist', 1);
       emit('actor:assist', { actor: helper, victim, attacker });
     }
     credits.delete(victim);
-    penalizeFlowDeath(state(victim), cause, cfg);
+    if (!life || !life.death) {
+      if (life) life.death = true;
+      penalizeFlowDeath(state(victim), cause, cfg);
+    }
   });
 }
