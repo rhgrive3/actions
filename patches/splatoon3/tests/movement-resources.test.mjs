@@ -3,8 +3,22 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 import { rollLaunchSpeed } from '../runtime/movement.mjs';
+import { resourceSurface } from '../runtime/resources.mjs';
 
 const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-8, `${actual} != ${expected}`);
+
+test('#1069 resource surface sampling returns a scalar and performs one post-movement sample', async () => {
+  const f = await fixture(), a = f.make();
+  let samples = 0;
+  a.form = 'squid';
+  a._surface = () => { samples++; a.grounded = true; a.groundTeam = 1; };
+  const isSquid = resourceSurface(a);
+  assert.equal(typeof isSquid, 'boolean');
+  assert.equal(isSquid, true);
+  assert.equal(samples, 1);
+  assert.equal(a.submerged, true);
+  assert.equal(a.onEnemy, false);
+});
 
 test('contact resources use the newly resolved paint surface on both sides of a boundary', async () => {
   const f = await fixture(), a = f.make();
