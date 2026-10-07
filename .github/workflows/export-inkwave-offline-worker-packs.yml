@@ -29,36 +29,15 @@ jobs:
           SOURCE="$ROOT/source"
           rm -rf "$ROOT"
           mkdir -p "$SOURCE" "$ROOT/out" "$ROOT/issue-export"
-
-          tar \
-            --exclude='.git' \
-            --exclude='./tools/inkwave-modeler' \
-            --exclude='./tools/inkwave-modeler/**' \
-            --exclude='*.blend' \
-            --exclude='*.blend1' \
-            --exclude='*.blend2' \
-            -cf - . | tar -xf - -C "$SOURCE"
-
+          tar --exclude='.git' --exclude='./tools/inkwave-modeler' --exclude='./tools/inkwave-modeler/**' --exclude='*.blend' --exclude='*.blend1' --exclude='*.blend2' -cf - . | tar -xf - -C "$SOURCE"
           while IFS= read -r -d '' f; do
             if grep -IqE '(^|[^A-Za-z0-9_])(import[[:space:]]+bpy|from[[:space:]]+bpy)' "$f"; then
               rm -f "$f"
             fi
           done < <(find "$SOURCE" -type f -print0)
-
           printf '%s\n' "$BASE" > "$SOURCE/BASE_MAIN_SHA.txt"
-          cat > "$SOURCE/OFFLINE_SOURCE_README.txt" <<'EOF'
-This directory is an editable snapshot of rhgrive3/actions at:
-b34a8aaf606594be61cfbd4c21e9f09afd685ad7
-
-Blender/modeler content is intentionally excluded.
-The .git directory is intentionally not included.
-The file contents come from the exact BASE commit above.
-EOF
-
-          (
-            cd "$SOURCE"
-            find . -type f -print0 | sort -z | xargs -0 sha256sum > "$ROOT/SOURCE_SHA256SUMS.txt"
-          )
+          printf '%s\n' "Editable snapshot of rhgrive3/actions at exact BASE $BASE." "Blender/modeler content and .git are intentionally excluded." > "$SOURCE/OFFLINE_SOURCE_README.txt"
+          (cd "$SOURCE" && find . -type f -print0 | sort -z | xargs -0 sha256sum > "$ROOT/SOURCE_SHA256SUMS.txt")
           test ! -d "$SOURCE/tools/inkwave-modeler"
           test -z "$(find "$SOURCE" -type f \( -iname '*.blend' -o -iname '*.blend1' -o -iname '*.blend2' \) -print -quit)"
 
@@ -69,7 +48,6 @@ EOF
         run: |
           set -euo pipefail
           ROOT="$RUNNER_TEMP/inkwave-offline"
-
           batches=(
             "01:981 973 972 921 719 714 538 525 437 430 422 417 413 380 372 292 287 275 272 271"
             "02:982 971 961 956 952 940 854 836 675 539 429 378 374 289 280 270 252 207 198 191"
@@ -77,56 +55,31 @@ EOF
             "04:980 977 976 974 968 957 544 383 351 348 343 308 282 277 273 241 240 216 195 139"
             "05:983 879 873 869 653 613 557 535 424 402 371 310 297 294 291 285 281 278 269 263"
           )
-
           for entry in "${batches[@]}"; do
             batch="${entry%%:*}"
             nums="${entry#*:}"
             dir="$ROOT/issue-export/batch-${batch}"
             mkdir -p "$dir/issues"
             printf '%s\n' $nums > "$dir/ISSUE_NUMBERS.txt"
-
+            {
+              echo "# INKWAVE Issue Export — batch-$batch"
+              echo
+              echo "Repository: rhgrive3/actions"
+              echo "Base: b34a8aaf606594be61cfbd4c21e9f09afd685ad7"
+              echo
+            } > "$dir/ISSUES.md"
             for n in $nums; do
               gh api "repos/$GITHUB_REPOSITORY/issues/$n" > "$dir/issues/issue-$n.json"
               gh api "repos/$GITHUB_REPOSITORY/issues/$n/comments?per_page=100" > "$dir/issues/issue-$n-comments.json"
+              {
+                jq -r '"## #\(.number) — \(.title)\n\nState: \(.state)\nURL: \(.html_url)\n\n### Body / acceptance criteria\n\n\(.body // "(no body)")\n"' "$dir/issues/issue-$n.json"
+                echo "### Comments"
+                echo
+                jq -r '.[] | "#### \(.user.login) @ \(.created_at)\n\n\(.body // "")\n"' "$dir/issues/issue-$n-comments.json"
+                echo "---"
+                echo
+              } >> "$dir/ISSUES.md"
             done
-
-            python3 - "$dir" <<'PY'
-import json, pathlib, sys
-d = pathlib.Path(sys.argv[1])
-nums = [int(x) for x in (d/'ISSUE_NUMBERS.txt').read_text().split()]
-out = [
-    f"# INKWAVE Issue Export — {d.name}",
-    "",
-    "Repository: rhgrive3/actions",
-    "Base: b34a8aaf606594be61cfbd4c21e9f09afd685ad7",
-    "",
-]
-for n in nums:
-    issue = json.loads((d/'issues'/f'issue-{n}.json').read_text())
-    comments = json.loads((d/'issues'/f'issue-{n}-comments.json').read_text())
-    out += [
-        f"## #{n} — {issue.get('title','')}",
-        "",
-        f"State: {issue.get('state','')}",
-        f"URL: {issue.get('html_url','')}",
-        "",
-        "### Body / acceptance criteria",
-        "",
-        issue.get('body') or "(no body)",
-        "",
-    ]
-    if comments:
-        out += ["### Comments", ""]
-        for c in comments:
-            out += [
-                f"- {c.get('user',{}).get('login','unknown')} @ {c.get('created_at','')}",
-                "",
-                c.get('body') or "",
-                "",
-            ]
-    out += ["---", ""]
-(d/'ISSUES.md').write_text("\n".join(out), encoding='utf-8')
-PY
           done
 
       - name: Assemble five worker ZIPs
@@ -140,34 +93,26 @@ PY
             cp -al "$ROOT/source" "$stage/source"
             cp "$ROOT/SOURCE_SHA256SUMS.txt" "$stage/SOURCE_SHA256SUMS.txt"
             cp -a "$ROOT/issue-export/batch-$batch" "$stage/issues"
-
-            cat > "$stage/README.md" <<EOF
-# INKWAVE Local Issue Fix Worker ${batch}/5 — offline pack
-
-BASE_MAIN_SHA:
-b34a8aaf606594be61cfbd4c21e9f09afd685ad7
-
-Contents:
-- source/ — editable repository snapshot from the exact BASE, Blender/modeler excluded
-- issues/ISSUES.md — assigned 20 Issue bodies plus comments
-- issues/issues/*.json — raw Issue/comment exports
-- SOURCE_SHA256SUMS.txt — source integrity manifest
-
-Initialize locally:
-  cd source
-  git init
-  git add -A
-  git -c user.name=OfflineWorker -c user.email=offline@example.invalid commit -m "snapshot b34a8aaf"
-  git branch -M local/issue-batch-${batch}
-
-The synthetic local commit SHA differs from BASE_MAIN_SHA because .git history is not included.
-The source file contents are from the exact BASE commit.
-EOF
-
-            (
-              cd "$ROOT"
-              zip -qr "out/INKWAVE-issue-batch-${batch}-b34a8aaf.zip" "pack-$batch"
-            )
+            {
+              echo "# INKWAVE Local Issue Fix Worker $batch/5 — offline pack"
+              echo
+              echo "BASE_MAIN_SHA: b34a8aaf606594be61cfbd4c21e9f09afd685ad7"
+              echo
+              echo "source/ contains the editable exact-BASE file snapshot with Blender/modeler excluded."
+              echo "issues/ISSUES.md contains all 20 assigned Issue bodies and comments."
+              echo "SOURCE_SHA256SUMS.txt verifies the source snapshot."
+              echo
+              echo "Initialize locally:"
+              echo "  cd source"
+              echo "  git init"
+              echo "  git add -A"
+              echo "  git -c user.name=OfflineWorker -c user.email=offline@example.invalid commit -m 'snapshot b34a8aaf'"
+              echo "  git branch -M local/issue-batch-$batch"
+              echo
+              echo "The synthetic local commit SHA differs from BASE_MAIN_SHA because .git history is not included."
+              echo "The source file contents are from the exact BASE commit."
+            } > "$stage/README.md"
+            (cd "$ROOT" && zip -qr "out/INKWAVE-issue-batch-$batch-b34a8aaf.zip" "pack-$batch")
             rm -rf "$stage"
           done
           (cd "$ROOT/out" && sha256sum *.zip > SHA256SUMS.txt)
