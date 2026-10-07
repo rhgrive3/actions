@@ -1186,10 +1186,29 @@ def build_lower(rays, design, curve=None):
         toward_cam = M.to_local(np.array([p0 - d0 * 0.01]))[0] - M.to_local(np.array([p0]))[0]
         toward_cam /= np.linalg.norm(toward_cam)
         s = design.get('lower_standoff_mm', 0.0) * t ** 1.2
-        pts = r3[None] + t[:, None] * way[None] + s[:, None] * toward_cam[None]
-        v, f = er.tube(pts, radius, sides=6)
-        faces += [tuple(i + len(verts) for i in fc) for fc in f]
-        verts += list(v)
+        ls = design.get('lower_strands')
+        if ls is None:
+            pts = r3[None] + t[:, None] * way[None] + s[:, None] * toward_cam[None]
+            v, f = er.tube(pts, radius, sides=6)
+            faces += [tuple(i + len(verts) for i in fc) for fc in f]
+            verts += list(v)
+            continue
+        # a small clump of thin hairs (the usual lash build: roots on the lid, tips fanned out, tapered strands),
+        # instead of one thick cone: seen soft like the reference's short dark strokes
+        w0 = way / np.linalg.norm(way)
+        side = np.cross(w0, toward_cam)
+        side /= np.linalg.norm(side)
+        tt = np.linspace(0, 1, 7)
+        rad = np.maximum(ls['root_r'] * (1 - tt) ** 0.7, 0.025)
+        for k in range(ls['n']):
+            a = np.radians(ls['spread_deg']) * (k - (ls['n'] - 1) / 2) / max((ls['n'] - 1) / 2, 1)
+            dk = w0 * np.cos(a) + side * np.sin(a)
+            L = ls['len_mm'] * (1 - ls.get('len_jitter', 0.2) * abs(k - (ls['n'] - 1) / 2) / max(ls['n'], 1))
+            rk = r3 + side * ls.get('root_spread_mm', 0.15) * (k - (ls['n'] - 1) / 2)
+            pts = rk[None] + (tt * L)[:, None] * dk[None] + (ls.get('lift_mm', 0.5) * tt ** 1.5)[:, None] * toward_cam[None]
+            v, f = er.tube(pts, rad, sides=6)
+            faces += [tuple(i + len(verts) for i in fc) for fc in f]
+            verts += list(v)
     return np.array(verts), faces
 
 
