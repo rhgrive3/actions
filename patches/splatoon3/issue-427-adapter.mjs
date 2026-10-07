@@ -158,8 +158,8 @@ function adaptCurrentFlow427(code) {
       'local terminal splat');
   }
   patch('const candidates = Array.isArray(event.assists) ? event.assists :', 'const candidates = Array.isArray(event.assists) ? event.assists.filter(helper => validAssist427(helper, victim, event)) :', 'authoritative assist still requires current local credit life');
-  patch('[...(credits.get(victim) || [])].filter(([, time]) => G.time - time <= cfg.assistWindow).map(([helper]) => helper);', '[...(credits.get(victim) || [])].filter(([helper, credit]) => validCredit427(helper, victim, credit)).map(([helper]) => helper);', 'typed credit filtering');
-  patch("      helper.stats.assists = (helper.stats.assists || 0) + 1;\n      award(helper, 'assist', 1);\n      emit('actor:assist', { actor: helper, victim, attacker });", '      assist427(helper, victim, attacker, term);', 'one assist owner');
+  patch("[...(credits.get(victim) || [])].filter(([, credit]) => G.time - (typeof credit === 'number' ? credit : credit.time) <= cfg.assistWindow).map(([helper]) => helper);", '[...(credits.get(victim) || [])].filter(([helper, credit]) => validCredit427(helper, victim, credit)).map(([helper]) => helper);', 'typed credit filtering');
+  patch("      helper.stats.assists = (helper.stats.assists || 0) + 1;\n      award(helper, 'assist', assistValue(helper, victim));\n      emit('actor:assist', { actor: helper, victim, attacker });", '      assist427(helper, victim, attacker, term);', 'one assist owner');
   patch('    penalizeFlowDeath(state(victim), cause, cfg);', '    if (!victim.remote) penalizeFlowDeath(state(victim), cause, cfg);', 'keep local death progress');
   const helpers = `  function terminal427(victim, attacker, life) {
     if (!victim || life !== (victim.netLife ?? 0)) return null;
@@ -204,7 +204,7 @@ function adaptCurrentFlow427(code) {
     if (!term || !helper || helper.remote || helper === attacker || helper === victim || helper.team !== attacker?.team || term.assisted.has(helper)) return;
     term.assisted.add(helper);
     helper.stats.assists = (helper.stats.assists || 0) + 1;
-    award(helper, 'assist', 1);
+    award(helper, 'assist', assistValue(helper, victim));
     emit('actor:assist', { actor: helper, victim, attacker });
   }
   function splat427(attacker, victim, term) {
