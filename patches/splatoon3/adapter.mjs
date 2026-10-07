@@ -67,6 +67,13 @@ export function adaptSource(rel, code) {
     code += '\nexport const CHARACTER_BOMB_POSE = Object.freeze({ throw: Character.prototype._poseThrow, apply: Character.prototype._applyPose });\n';
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
+  if (rel === 'src/ui/menus.js') {
+    // S3 results list the WIN! squad above LOSE...; the internal team ids stay untouched (presentation order only).
+    return replaceOnce(code,
+      "h('div', { class: 'iw-res__teams' }, table(0), table(1)),",
+      "h('div', { class: 'iw-res__teams' }, table(winTeam), table(1 - winTeam)),",
+      'winner-first Turf results order');
+  }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
       "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES } = {}) {",
