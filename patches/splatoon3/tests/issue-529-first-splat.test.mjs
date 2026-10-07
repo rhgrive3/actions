@@ -1,8 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 
-const near = (actual, expected, eps = 1e-9) => assert.ok(Math.abs(actual - expected) <= eps, `${actual} != ${expected}`);
+const near = (actual, expected, message) => assert.ok(Math.abs(actual - expected) <= 1e-9, message || `${actual} != ${expected}`);
+const composedFixture = () => fixture({ productionComposition: true, fullRuntime: true, adaptRuntime: adaptQualitySource });
 
 test('first-splat +10 FP is additive through the configured reference normalization', async () => {
   const f = await fixture(), cfg = f.profile.flow;
@@ -16,6 +18,43 @@ test('first-splat +10 FP is additive through the configured reference normalizat
   const scaled = f.createFlow();
   f.awardFlow(scaled, 'firstSplat', 0, doubleThreshold, true, cfg.progress.firstSplatBonus);
   near(scaled.score, 10 * doubleThreshold.threshold / doubleThreshold.progress.referenceThreshold);
+});
+
+test('#529 first-splat adds to #481 ordinary and consecutive awards, and the victim event dedupes', async () => {
+  const f = await composedFixture(), cfg = f.profile.flow, scale = cfg.threshold / 100;
+  const match = f.G.match = { playing: () => true, mode: 'turf' };
+  const attacker = f.make(), firstVictim = f.make(), nextVictim = f.make();
+  attacker.team = 0; firstVictim.team = nextVictim.team = 1;
+  f.G.time = 10;
+  f.emit('splatted', { victim: firstVictim, attacker, cause: 'weapon' });
+  near(attacker.s3.flow.score, 33 * scale, 'first 23 fp + 10 fp award');
+  f.emit('splatted', { victim: firstVictim, attacker, cause: 'weapon' });
+  near(attacker.s3.flow.score, 33 * scale, 'same victim life does not award either component twice');
+  f.G.time = 12;
+  f.emit('splatted', { victim: nextVictim, attacker, cause: 'weapon' });
+  near(attacker.s3.flow.score, 78 * scale, 'later consecutive splat adds 45 fp without reusing first bonus');
+  assert.equal(f.G.match, match);
+
+  const high = f.createFlow(), highControl = f.createFlow();
+  high.score = highControl.score = 75 * scale;
+  assert.equal(f.awardFlow(highControl, 'splat', 1, cfg), false);
+  assert.equal(f.awardFlow(high, 'splat', 1, cfg, true, cfg.progress.firstSplatBonus), true);
+  near(highControl.score, 90 * scale, '75 fp plus the 15 fp high-tier ordinary award');
+  assert.equal(high.active, true, '75 + 15 + 10 fp reaches the 100 fp activation threshold');
+});
+
+test('#529 Range splats do not consume the first bonus before the composed #481 award', async () => {
+  const f = await composedFixture(), scale = f.profile.flow.threshold / 100;
+  const match = f.G.match = { playing: () => true, mode: 'turf', range: {} };
+  const attacker = f.make(), rangeVictim = f.make(), turfVictim = f.make();
+  attacker.team = 0; rangeVictim.team = turfVictim.team = 1;
+  f.G.time = 0;
+  f.emit('splatted', { victim: rangeVictim, attacker, cause: 'weapon' });
+  near(attacker.s3.flow.score, 23 * scale, 'Range keeps the ordinary #481 award but grants no #529 bonus');
+  match.range = null;
+  f.G.time = 6;
+  f.emit('splatted', { victim: turfVictim, attacker, cause: 'weapon' });
+  near(attacker.s3.flow.score, 56 * scale, 'first eligible Turf event gets 23 + 10 fp after the Range event');
 });
 
 test('offline first qualifying enemy splat is match-global, bot-safe, and survives respawn', async () => {

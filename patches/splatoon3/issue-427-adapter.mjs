@@ -170,7 +170,7 @@ function adaptCurrentFlow427(code) {
     // after _remoteRespawn the next accepted death advances this value by one.
     const deathEpoch = victim.remote ? Math.max(0, deaths - (victim.alive === false ? 1 : 0)) : deaths;
     const epoch = Number.isFinite(victim.netLife)
-      ? `${life}:${deathEpoch}`
+      ? String(life) + ':' + String(deathEpoch)
       : (victim.remote ? 'remote:' : 'offline:') + String(deathEpoch);
     let term = terminals.get(victim);
     if (!term || term.epoch !== epoch) {

@@ -5,15 +5,20 @@ import { fixture } from './source-fixture.mjs';
 import { adaptIssue481, adaptIssue481Flow, calculateFlowSplatPoints } from '../issue-481-adapter.mjs';
 import { adaptPR489Flow, pr489FlowProgress } from './pr-489-fixture.mjs';
 
-import { adaptSource } from '../adapter.mjs';
-import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
-import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
-const productionFixture = (extra = {}) => fixture({
-  ...extra,
-  adaptNative: (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))),
-  adaptRuntime: adaptQualitySource,
-});
+function claimMatchFirstSplat(f) {
+  const match = f.G.match || (f.G.match = {});
+  match.mode = 'turf'; match.attract = false; match.range = null;
+  if (match.opts?.range) match.opts = { ...match.opts, range: null };
+  const attacker = f.make(), victim = f.make(); attacker.team = 0; victim.team = 1;
+  f.emit('splatted', { victim, attacker, cause: 'weapon' });
+}
+const productionFixture = async (extra = {}) => {
+  const f = await fixture({ ...extra, productionComposition: true, adaptRuntime: adaptQualitySource });
+  // The setup event claims #529's match bonus through the live event path.
+  claimMatchFirstSplat(f);
+  return f;
+};
 
 // Helper to calculate score in 100-fp domain from normalized score
 function scoreToFp(score, threshold = 3) {
@@ -66,6 +71,7 @@ test('unit calculation: calculateFlowSplatPoints accurately implements S3 100-fp
 test('negative control: unpatched INKWAVE awards flat +1.0 regardless of previous splat timing', async () => {
   // Baseline without adaptIssue481
   const f = await fixture();
+  claimMatchFirstSplat(f);
   const a = f.make(), b = f.make(), c = f.make();
   b.team = 1; c.team = 1;
 
