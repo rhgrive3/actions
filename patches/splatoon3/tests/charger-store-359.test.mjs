@@ -232,7 +232,8 @@ test('owned wirepack carries only remote swim visuals; the owner fires the resto
 
     f.G.netm = ownerNet;
     owner.intent.squid = false;
-    for (let i = 0; i < 20 && !owner.weaponRunner.charging; i++) f.step(owner);
+    const restoreGuard = Math.ceil((owner.weapon.storedFireDelay || 0) * 60) + 4;
+    for (let i = 0; i < restoreGuard && !owner.weaponRunner.charging; i++) f.step(owner);
     assert.equal(owner.form, 'kid'); assert.ok(owner.weaponRunner.charging);
     assert.ok(owner.weaponRunner.charge >= .999);
     owner.intent.fire = false; f.step(owner);
