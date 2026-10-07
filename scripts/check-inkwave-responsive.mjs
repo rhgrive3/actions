@@ -33,7 +33,9 @@ const html = `<!doctype html><html lang="ja"><meta charset="utf-8">
 <link rel="stylesheet" href="/styles/ui.css"><link rel="stylesheet" href="/styles/mobile.css">
 ${patchStyles}
 <style>html,body{margin:0;overflow:hidden;background:#0d1020;touch-action:none}#ui-root{position:fixed;inset:0}</style>
-<div id="ui-root"></div><script type="module">
+<div id="ui-root"></div>
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script>
+<script type="module">
 import { Menus } from '/src/ui/menus.js';
 import { G } from '/src/core/ctx.js';
 import { MockNet } from '/src/net/mock.js';
