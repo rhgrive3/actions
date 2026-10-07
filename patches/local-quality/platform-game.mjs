@@ -43,6 +43,10 @@ export function installPlatformGame(Game, G, env = globalThis) {
     game.timer?.disconnect?.();
     game.menus?.setPlatformDriven?.(true);
     if (game.input?.mobile) game.input.mobile._platformCanRun = () => G.mode === 'match' && !!game.match && !game.match.paused && !game.menus?.current;
+    const frameRate = () => {
+      const setting = game.settings.frameRate ?? 'auto';
+      return setting === 'display' ? 0 : setting === 60 || game.mobile?.touch ? 60 : 0;
+    };
     const clear = (reason) => {
       // A long foreground frame is a timing discontinuity, not a lifecycle
       // transition. Drop queued simulation time without discarding held/edge
@@ -93,8 +97,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
     }
     r.driver = new PlatformFrameDriver(owner, dt => {
       if (game.frozen) return;
-      const setting = game.settings.frameRate ?? 'auto';
-      const cap = setting === 'display' ? 0 : setting === 60 || game.mobile?.touch ? 60 : 0;
+      const cap = frameRate();
       let frameDt = dt;
       if (cap > 0 && dt > 0) {
         const step = 1 / cap;
@@ -107,7 +110,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
       game.fpsAcc += frameDt; game.fpsN++;
       if (game.fpsAcc > .5) { game.fps = Math.round(game.fpsN / game.fpsAcc); game.fpsAcc = game.fpsN = 0; }
       game._dynRes(frameDt); game._frame(frameDt);
-    }, clear);
+    }, clear, frameRate);
     r.snapshot = () => ({ ...owner.snapshot(), frame: r.driver.snapshot(), rendererLost: r.rendererLost,
       gyro: game.input?.mobile?.gyro?.platformStatus,
       audio: { state: G.audio?.ctx?.state ?? 'uninitialized', needsGesture: !!G.audio?._platformAudio?.needsGesture,
