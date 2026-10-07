@@ -96,7 +96,7 @@ test('late confirmation is additive after the ordinary splat and does not double
   const active = f.make(), victim2 = f.make(); victim2.team = 1;
   active.s3.flow.active = true; active.s3.flow.remaining = 10;
   f.emit('splatted', { victim: victim2, attacker: active });
-  assert.equal(active.s3.flow.remaining, 15);
+  assert.equal(active.s3.flow.remaining, 10 + f.profile.flow.extension);
   f.emit('flow:first-splat-confirmed', { match, attacker: active, victim: victim2 });
-  assert.equal(active.s3.flow.remaining, 15, 'the first-splat FP does not extend twice');
+  assert.equal(active.s3.flow.remaining, 10 + f.profile.flow.extension, 'the first-splat FP does not extend twice');
 });
