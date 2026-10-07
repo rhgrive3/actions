@@ -200,6 +200,49 @@ function adaptQualityLayer(rel, code) {
     code = adaptTouchRelayout(rel, code);
   }
   code = adaptPlatformSource(rel, code);
+  if (rel === 'src/game/cameraRig.js') {
+    code = replaceOnce(code,
+      "    if (this.mode !== this._prevMode || (this.mode === 'follow' && this.target !== this._prevTarget)) {\n",
+      "    if (this.mode !== this._prevMode || (this.mode === 'follow' && this.target !== this._prevTarget)) {\n" +
+      "      this._inkwaveCameraProbeCache = null;\n",
+      'camera probe mode/target invalidation');
+    code = replaceOnce(code,
+      '    G.physics.cameraProbe(this.pivot, _back, this.wantDist, 0.62, _probe);',
+      '    // #862: Physics.cameraProbe only queries the current level broadphase. Reuse its exact\n' +
+      '    // result while the follow probe is effectively stationary (1 mm pivot/want-distance\n' +
+      '    // tolerance and 0.001 unit-vector delta); keep a short bound for\n' +
+      '    // geometry edits that preserve the Level/collection objects.\n' +
+      '    const _qcPhysics = G.physics, _qcLevel = _qcPhysics.level;\n' +
+      '    const _qcOld = this._inkwaveCameraProbeCache;\n' +
+      '    const _qcAge = _qcOld ? _qcOld.age + (Number.isFinite(dt) ? Math.max(0, dt) : 0) : 0;\n' +
+      '    const _qcPX = _qcOld ? this.pivot.x - _qcOld.px : Infinity;\n' +
+      '    const _qcPY = _qcOld ? this.pivot.y - _qcOld.py : Infinity;\n' +
+      '    const _qcPZ = _qcOld ? this.pivot.z - _qcOld.pz : Infinity;\n' +
+      '    const _qcBX = _qcOld ? _back.x - _qcOld.bx : Infinity;\n' +
+      '    const _qcBY = _qcOld ? _back.y - _qcOld.by : Infinity;\n' +
+      '    const _qcBZ = _qcOld ? _back.z - _qcOld.bz : Infinity;\n' +
+      '    const _qcChanged = !_qcOld || _qcOld.target !== a || _qcOld.mode !== this.mode ||\n' +
+      '      _qcOld.level !== G.level || _qcOld.physics !== _qcPhysics ||\n' +
+      '      _qcOld.probe !== _qcPhysics.cameraProbe || _qcOld.raycast !== _qcPhysics.raycast ||\n' +
+      '      _qcOld.collisionLevel !== _qcLevel || _qcOld.blocks !== _qcLevel?.blocks ||\n' +
+      '      _qcOld.hash !== _qcLevel?.hash || _qcOld.blockStamp !== _qcLevel?.blockStamp ||\n' +
+      '      _qcPX * _qcPX + _qcPY * _qcPY + _qcPZ * _qcPZ > 0.000001 ||\n' +
+      '      _qcBX * _qcBX + _qcBY * _qcBY + _qcBZ * _qcBZ > 0.000001 ||\n' +
+      '      Math.abs(this.wantDist - _qcOld.want) > 0.001;\n' +
+      '    if (_qcChanged || _qcAge >= 0.25) {\n' +
+      '      _qcPhysics.cameraProbe(this.pivot, _back, this.wantDist, 0.62, _probe);\n' +
+      '      this._inkwaveCameraProbeCache = { target: a, mode: this.mode, level: G.level,\n' +
+      '        physics: _qcPhysics, probe: _qcPhysics.cameraProbe, raycast: _qcPhysics.raycast,\n' +
+      '        collisionLevel: _qcLevel, blocks: _qcLevel?.blocks, hash: _qcLevel?.hash,\n' +
+      '        blockStamp: _qcLevel?.blockStamp, px: this.pivot.x, py: this.pivot.y, pz: this.pivot.z,\n' +
+      '        bx: _back.x, by: _back.y, bz: _back.z, want: this.wantDist,\n' +
+      '        hard: _probe.hard, soft: _probe.soft, floor: _probe.floor, age: 0 };\n' +
+      '    } else {\n' +
+      '      _qcOld.age = _qcAge;\n' +
+      '      _probe.hard = _qcOld.hard; _probe.soft = _qcOld.soft; _probe.floor = _qcOld.floor;\n' +
+      '    }',
+      'stationary follow-camera collision probe cache');
+  }
   if (rel === 'src/core/mobile.js') return code;
   if (rel === 'src/ui/menus.js') {
     code = replaceOnce(code,
