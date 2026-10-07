@@ -95,10 +95,10 @@ test('#740 actual renderer draws sourced rates for vertical unit 0/1 and clears 
     assert.deepEqual(ghosts[i].fidelityRollerUnit, local[i].fidelityRollerUnit, `ghost ${i} unit parity`);
   }
   // Presentation-only state: this adapter adds no packet fields. The current base
-  // uses 32 fields; the live #868 unit-index change uses 33 independently of #740.
+  // uses 32 fields; composed #868 variants use 33/35 independently of #740.
   const packetLengths = packets.map(e => e.length);
   assert.ok(packetLengths.every(length => length === packetLengths[0]), 'existing packet layout is consistent');
-  assert.ok([32, 33].includes(packetLengths[0]), 'only the current 32-field or #868 33-field layout is accepted');
+  assert.ok([32, 33, 35].includes(packetLengths[0]), 'only the current 32-field or composed #868 layouts are accepted');
   assert.deepEqual(packets, packetSnapshot, 'rendering does not alter packet content');
   for (const p of local) {
     assert.ok(Number.isFinite(p.size) && p.size > 0, 'hit size untouched');
@@ -115,7 +115,7 @@ test('#740 horizontal globs render with the default shape', async () => {
   const expected = Array.from({ length: local.length }, () => [0, 0]);
   assert.deepEqual(renderFourPetalRates(f, local), expected, 'horizontal owner globs stay on the default path');
   assert.deepEqual(renderFourPetalRates(f, ghosts), expected, 'horizontal ghosts stay on the default path');
-  assert.ok(packets.every(e => [32, 33].includes(e.length)));
+  assert.ok(packets.every(e => [32, 33, 35].includes(e.length)));
   nm.dispose();
 });
 
