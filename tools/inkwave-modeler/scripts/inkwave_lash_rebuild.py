@@ -727,7 +727,10 @@ def build_corner_fill(rays, design, cover=None):
         for j in range(H.shape[0]):
             for i in range(H.shape[1]):
                 h = cover.ray_cast(Vector(O[j, i]), Vector(D[j, i]), 50)
-                if h[0] is not None:
+                he = rays.eye_tree.ray_cast(Vector(O[j, i]), Vector(D[j, i]), 50)
+                # only the black parts in front of the eyeball (the wing over the skin); the tightline strips
+                # lie behind the eyeball's rim and are hidden by it anyway
+                if h[0] is not None and (he[0] is None or h[3] < he[3]):
                     behind[j, i] = h[3] + lo
     top = np.maximum(env - lo, behind)
     depth = top.copy()
