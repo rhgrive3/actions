@@ -1,6 +1,7 @@
 // Issue #895: the live minimap must not rescan/copy the whole W*H raster for a
 // localized paint change. Adapter patches/splatoon3/minimap-dirty-adapter.mjs +
 // owned helper runtime/minimap-dirty.mjs; inkwave-public is immutable.
+// The source under test runs through the full six-adapter production stack.
 //
 // The strongest claim here is equivalence: the partial path and a forced
 // whole-map refresh are compared byte-for-byte on the real Minimap class for all
@@ -15,12 +16,14 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptMinimapDirty } from '../minimap-dirty-adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 import { installMinimapDirty } from '../runtime/minimap-dirty.mjs';
 
 const ROOT = new URL('../../../', import.meta.url);
 const read = rel => fs.readFileSync(new URL(rel, ROOT), 'utf8');
 const compose = (rel, code = read('inkwave-public/' + rel)) =>
-  adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+  adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 
 // Real stage layouts from the Issue (metres), mapped at the default 7 px/m.
 const STAGES = {
