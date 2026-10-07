@@ -22,9 +22,10 @@ export function penalizeFlowDeath(state, cause, cfg) {
   const lossFp = cause === 'water' || cause === 'fall' ? p.environmentDeathPenalty : p.deathPenalty;
   state.score = Math.max(0, state.score - lossFp * cfg.threshold / p.referenceThreshold);
 }
+export function extendsFlow(action) { return action === 'splat' || action === 'assist'; }
 export function awardFlow(state, action, value, cfg, capProgress = true, bonusFp = 0) {
   if (state.active) {
-    if (action === 'splat' || action === 'assist') state.remaining = Math.min(cfg.maxDuration, state.remaining + cfg.extension);
+    if (extendsFlow(action)) state.remaining = Math.min(cfg.maxDuration, state.remaining + cfg.extension);
     return false;
   }
   const p = cfg.progress;
@@ -60,14 +61,14 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     if (action === 'splat') bonusFp = normalSplatBonuses.get(a) || 0;
     if (action === 'splat') normalSplatBonuses.delete(a);
     if (!a?.alive || a.isBot && cfg.bots === false || G.match?.attract) return;
-    const flow = state(a), before = flow.remaining;
+    const flow = state(a), wasActive = flow.active;
     // The reference storage limit describes ordinary Turf; the custom Boss
     // economy and non-match tools retain their existing accumulation policy.
     const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf', bonusFp);
     if (activated) emit('actor:flow', { actor: a, active: true });
     // The official trigger is entering/extending Flow, rather than a passive
     // stream of paint for the entire active period. Radius remains calibration.
-    if (activated || flow.remaining > before) {
+    if (activated || wasActive && extendsFlow(action)) {
       const p = a.pos.clone(); p.y += 0.15;
       G.paint.splat(p, cfg.paintRadius, a.team, { kind: 'trail', seed: 0.5 });
     }
