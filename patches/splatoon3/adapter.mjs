@@ -793,6 +793,22 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
     code = replaceOnce(code, 'if (g.hit && !c.ghost) c.owner.addTurf(', 'if (g.hit && (!c.ghost || !c.owner.remote)) c.owner.addTurf(', 'adopted Storm owns its remaining paint');
     code = replaceOnce(code, '        if (!c.ghost) G.boss?.rain(', '        if (!c.ghost || !c.owner.remote) G.boss?.rain(', 'adopted Storm owns its remaining Boss rain');
+    // #537: use the pinned rolling-ink endpoints from SpeedInkConsumeMin upward,
+    // independently of the 0.28-unit paint batch. Below the minimum threshold,
+    // source semantics are unconfirmed, so retain INKWAVE's distance-based rule.
+    code = replaceOnce(code,
+      '    if (moved < 0.28) return;\n    this.lastRollPos.copy(a.pos);\n    a.ink = Math.max(0, a.ink - w.rollInkPerMeter * moved);',
+      '    const minS = w.rollInkMinSpeed, maxS = w.rollInkMaxSpeed;\n' +
+      '    const hasRollInkRate = Number.isFinite(w.rollInkMinPerFrame) && Number.isFinite(w.rollInkMaxPerFrame) && Number.isFinite(minS) && Number.isFinite(maxS);\n' +
+      '    if (hasRollInkRate && hs >= minS) {\n' +
+      '      const inkT = maxS > minS ? clamp((hs - minS) / (maxS - minS), 0, 1) : 1;\n' +
+      // Source values are tank fractions per 60 Hz frame; a.ink is percent.
+      '      a.ink = Math.max(0, a.ink - (w.rollInkMinPerFrame + (w.rollInkMaxPerFrame - w.rollInkMinPerFrame) * inkT) * 100 * 60 * dt);\n' +
+      '    }\n' +
+      '    if (moved < 0.28) return;\n' +
+      '    this.lastRollPos.copy(a.pos);\n' +
+      '    if (!hasRollInkRate || hs < minS) a.ink = Math.max(0, a.ink - w.rollInkPerMeter * moved);',
+      'roller rolling ink rate and paint batch');
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
     code = replaceOnce(code, 'Math.max(this.cooldown, 0.22)', 'Math.max(this.cooldown, w.postStreamDelay)', 'splatling sourced post-stream delay');
