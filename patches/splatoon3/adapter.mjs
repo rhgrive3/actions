@@ -282,6 +282,30 @@ export function adaptSource(rel, code) {
       'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
     return "import { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
+  if (rel === 'styles/hud.css') {
+    // #871: keep the Shooter dot/ring/spread signal and existing tick DOM,
+    // but render four axis-aligned rectangular corner brackets, not cardinal
+    // bars. Only Shooter CSS changes: the Slosher markup is deliberately shared
+    // with Shooter for #652, but its presentation remains independent.
+    code = replaceOnce(code,
+      '/* Four outward-facing spread brackets, separate from the eight charge segments. */',
+      `/* #871: four corner markers whose two axes use the same live spread signal.
+   12px ~= 17px / sqrt(2), preserving the upstream spread envelope radius;
+   the 8px bracket already exists in this HUD (Splatling). Neither value is
+   asserted to be Nintendo's exact pixel geometry. */
+.iw-ret--shooter .iw-ret__tick {
+  --iw-corner: calc(12px + var(--sp, 0) * .707px);
+  left: -4px; top: -4px; width: 8px; height: 8px;
+  background: none; border: 0; border-radius: 0;
+  transform: translate(var(--iw-cx), var(--iw-cy));
+}
+.iw-ret--shooter .iw-ret__tick:nth-child(3) { --iw-cx: calc(0px - var(--iw-corner)); --iw-cy: calc(0px - var(--iw-corner)); border-top: 2px solid currentColor; border-left: 2px solid currentColor; }
+.iw-ret--shooter .iw-ret__tick:nth-child(4) { --iw-cx: var(--iw-corner); --iw-cy: calc(0px - var(--iw-corner)); border-top: 2px solid currentColor; border-right: 2px solid currentColor; }
+.iw-ret--shooter .iw-ret__tick:nth-child(5) { --iw-cx: calc(0px - var(--iw-corner)); --iw-cy: var(--iw-corner); border-bottom: 2px solid currentColor; border-left: 2px solid currentColor; }
+.iw-ret--shooter .iw-ret__tick:nth-child(6) { --iw-cx: var(--iw-corner); --iw-cy: var(--iw-corner); border-bottom: 2px solid currentColor; border-right: 2px solid currentColor; }
+/* Four outward-facing spread brackets, separate from the eight charge segments. */`,
+      'Shooter four-corner spread brackets');
+  }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg>`;',
