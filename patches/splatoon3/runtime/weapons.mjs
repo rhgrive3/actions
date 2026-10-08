@@ -515,7 +515,9 @@ export function installWeapons(context, profile) {
     Projectiles.prototype[method] = function (a, weapon) {
       let w = weapon;
       if (method === 'fireFlick' && a.weaponRunner.s3FlickVertical) w = { ...weapon,
-        flickDrops: weapon.verticalDrops, flickSpreadDeg: weapon.verticalSpreadDeg, flickSpeed: weapon.verticalSpeed,
+        // #305: a depleted vertical swing keeps its sourced per-unit count from
+        // the depletion plan; a full swing keeps the pinned vertical total.
+        flickDrops: weapon.s3DepletionDrops ?? weapon.verticalDrops, flickSpreadDeg: weapon.verticalSpreadDeg, flickSpeed: weapon.verticalSpeed,
         flickDamageNear: weapon.verticalDamageNear, flickDamageFar: weapon.verticalDamageFar,
       };
       const before = new Set(this.list); const result = original.call(this, a, w); const group = new Map();

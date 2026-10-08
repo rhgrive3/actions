@@ -11,6 +11,7 @@ import { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';
 import { adaptStormEffects } from './storm-effects-adapter.mjs';
 import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
 import { adaptKitRescue } from './kit-rescue-adapter.mjs';
+import { adaptRollerDepletion } from './roller-depletion-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
@@ -570,6 +571,7 @@ export function adaptSource(rel, code) {
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
+    code = adaptRollerDepletion(rel, code, replaceOnce);
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');

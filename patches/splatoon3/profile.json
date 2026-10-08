@@ -211,6 +211,10 @@
       "flickSpreadDeg": 36,
       "flickDamageNear": 150,
       "flickDamageFar": 35,
+      "depletionInkRate": 0.5,
+      "flickDepletionDrops": 3,
+      "verticalDepletionDrops": 3,
+      "depletionDamageRate": 0.25,
       "flickDamageBands": [
         [
           4.2,
@@ -267,7 +271,8 @@
         "mainSpeedBase": 1.05,
         "halfAngleDegrees": 4,
         "mainWidthReference": 0.8,
-        "widthRatio": 0.5
+        "widthRatio": 0.5,
+        "depletionSpeedRate": 0.5
       },
       "ballistics": {
         "endSpeed": null,
