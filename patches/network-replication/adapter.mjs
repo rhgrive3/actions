@@ -230,10 +230,14 @@ export function emit(name, payload) {
     if (weaponId === 'bomb' || weaponId === 'splat-bomb-far') return victim.remote ? 'drop' : 'local';`, 'bomb recipient authority');
 
     patch('  _rec(e) { this.out.push([r3(now()), ...e]); }', `  _rec(e) {
-    const seq = this._eventSeq = (this._eventSeq || 0) + 1;
+    const seq = this._eventSeq = Math.max(this._eventSeq || 0, this.s._inkwaveEventSeq || 0) + 1;
+    if (!Number.isSafeInteger(seq)) throw new Error('Network event sequence exhausted');
+    this.s._inkwaveEventSeq = seq;
     const tick = Math.round((G.time || 0)*60);
-    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event);
+    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event); return event;
   }`, 'ordered event identity');
+    patch("this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team,", "const event = this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team,", 'return local paint order identity');
+    patch("st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0]);", "st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0]);\n    return { tick: event._netTick, peer: this.s.myId, seq: event._netSeq };", 'return local paint order identity');
     patch("const msg = { k: 't', ts: r3(now()), a",
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
       'owner simulation tick preserving existing sidecars');
@@ -247,7 +251,19 @@ export function emit(name, payload) {
     patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema only in event packets');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
-      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
+      if (d.r === 2) {
+        const seq = e[e.length-1], tick = e[e.length-2];
+        if (!Number.isSafeInteger(seq) || seq < 1 || !Number.isSafeInteger(tick) || tick < 0) continue;
+        e._netSeq = seq; e._netTick = tick;
+        if (e[1] === 's') {
+          if (e.length < 15 || !Number.isFinite(d.ts) || e[0] > d.ts) continue;
+          if (d.u === undefined) e._netLegacyPaint = true;
+          else {
+            if (!Number.isSafeInteger(d.u) || tick > d.u) continue;
+            e._netLegacyPaint = false;
+          }
+        }
+      }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
@@ -263,6 +279,7 @@ export function emit(name, payload) {
       p.events.push(e);
     }`, 'receive event identity');
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
+    patch('const opts = { seed: e[7] };', 'const opts = { seed: e[7], __netOrder: e._netPaintOrder || null };', 'paint replay carries the receiver-validated order');
     patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
     patch('function packEvent(e) {', 'function packEvent(e, precise = false) {', 'hitscan precision policy');
     patch('  for (const k in e) {\n    const v = e[k];', `  for (const k in e) {
@@ -309,7 +326,39 @@ export function emit(name, payload) {
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
     const eventPeer = this.peers.get(from);
-    if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
+    if (e[1] === 's') {
+      if (e.length < 8 || !Number.isFinite(e[0]) || !Number.isFinite(e[2]) || !Number.isFinite(e[3])
+        || !Number.isFinite(e[4]) || !Number.isFinite(e[5]) || e[5] <= 0 || !Number.isInteger(e[6])
+        || (e[6] !== 0 && e[6] !== 1) || !Number.isFinite(e[7])) return;
+      for (let i = 9; i <= 12 && i < e.length; i++) if (!Number.isFinite(e[i])) return;
+      if (e.length > 8 && !(Number.isInteger(e[8]) && e[8] >= 0 && e[8] <= 7)
+        && !['shot','line','blast','bomb','trail','drop','roll','speck'].includes(e[8])) return;
+      const owners = this.match?.actors || [];
+      if (!owners.some(a => a?.owner === from && (a.team === e[6] || (from === this.s.hostId && a.isBot)))) return;
+      const hasNetworkOrder = e._netTick !== undefined || e._netSeq !== undefined;
+      if (hasNetworkOrder && (!Number.isSafeInteger(e._netTick) || e._netTick < 0
+        || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)) return;
+      if (e._netSeq !== undefined && eventPeer) {
+        if (!Number.isSafeInteger(e._netSeq) || e._netSeq <= (eventPeer._lastEventSeq || 0)) return;
+        eventPeer._lastEventSeq = e._netSeq;
+      }
+      if (hasNetworkOrder) {
+        e._netPaintOrder = {
+          tick: e._netLegacyPaint ? 0 : e._netTick, peer: from, seq: e._netSeq,
+          legacy: e._netLegacyPaint === true,
+        };
+      } else {
+        const peer = eventPeer || this._peer(from), seenKey = JSON.stringify(e);
+        const seen = peer._legacyPaintEvents || (peer._legacyPaintEvents = new Set());
+        if (seen.has(seenKey)) return;
+        seen.add(seenKey);
+        const seq = peer._legacyPaintSeq = (peer._legacyPaintSeq || 0) + 1;
+        e._netPaintOrder = { tick: 0, peer: from, seq, tie: seenKey, legacy: true };
+      }
+    } else if (e._netSeq !== undefined && eventPeer) {
+      if (!Number.isSafeInteger(e._netSeq) || e._netSeq <= (eventPeer._lastEventSeq || 0)) return;
+      eventPeer._lastEventSeq = e._netSeq;
+    }
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
       const actor = this.byNid.get(e[2]);
       if (!actor?.remote || actor.owner !== from) return;
@@ -434,6 +483,99 @@ function firstSplatStateFor(session,cfg) {
   return state;
 }
 `;
+  }
+  if (rel === 'src/world/paint.js') {
+    patch('    this.grid = new Uint8Array(total);', `    this.grid = new Uint8Array(total);
+    this._netOrderGrid = new Uint32Array(total);
+    this._netOrders = [null];
+    this._netOrderIds = new Map();`, 'paint cells retain canonical network order');
+    patch('    this.grid.fill(0);', `    this.grid.fill(0);
+    this._netOrderGrid?.fill(0);
+    this._netOrders = [null]; this._netOrderIds?.clear();`, 'paint order state resets with the gameplay grid');
+    patch('    const nm = G.netm;', '    const nm = G.netm;\n    let paintOrder = opts.__netOrder || null;', 'paint order enters the native paint path');
+    patch('if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }',
+      'if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); paintOrder = nm.recSplat(center, radius, team, opts); }',
+      'owner prediction receives its wire event identity');
+    patch('    const cosmetic = !!opts.cosmetic;', '    const cosmetic = !!opts.cosmetic;\n    const netOrderId = cosmetic ? 0 : this._netOrderId(paintOrder);', 'intern paint order once per splat');
+    patch('          if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n          entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      `        const orderState = netOrderId && !cosmetic ? { accepted: false } : null;
+        if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, netOrderId, orderState);
+        if (!orderState || orderState.accepted) entries.push(f, lu, lv, dn, sdu, sdv, sa);`,
+      'only create growth for cells won by this event');
+    patch('      g.R = radius; g.team = team; g.seed = seed; g.kind = kind; g.age = 0;',
+      '      g.R = radius; g.team = team; g.seed = seed; g.kind = kind; g.age = 0; g.netOrderId = netOrderId;',
+      'growth retains canonical paint order');
+    patch('    g.R = g.team = g.seed = g.kind = g.age = g.dur = g.dripDur = g.cx = g.cy = g.cz = 0;',
+      '    g.R = g.team = g.seed = g.kind = g.age = g.dur = g.dripDur = g.cx = g.cy = g.cz = 0; g.netOrderId = 0;',
+      'released growth drops its order reference');
+    patch('  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind) {', `  _netOrderId(order) {
+    if (!order || !Number.isSafeInteger(order.tick) || order.tick < 0 || typeof order.peer !== 'string'
+      || !order.peer || !Number.isSafeInteger(order.seq) || order.seq < 1) return 0;
+    const tie = typeof order.tie === 'string' ? order.tie : '';
+    const legacy = order.legacy === true;
+    const key = JSON.stringify([legacy, order.tick, order.peer, order.seq, tie]);
+    let id = this._netOrderIds.get(key);
+    if (id) return id;
+    id = this._netOrders.length;
+    this._netOrderIds.set(key, id);
+    this._netOrders.push({ tick: order.tick, peer: order.peer, seq: order.seq, tie, legacy });
+    return id;
+  }
+
+  _netOrderComesAfter(nextId, previousId) {
+    const a = this._netOrders[nextId], b = this._netOrders[previousId];
+    if (a.legacy !== b.legacy) return !a.legacy;
+    if (a.tick !== b.tick) return a.tick > b.tick;
+    if (a.peer !== b.peer) return a.peer > b.peer;
+    if (a.seq !== b.seq) return a.seq > b.seq;
+    return a.tie > b.tie;
+  }
+
+  _netOrderRuns(f, orderId, u0, u1, v0, v1) {
+    const padM = (f.atlas.pad - 0.5) / f.atlas.ppm;
+    const i0 = Math.max(0, Math.floor(Math.max(0, u0) / f.cu));
+    const i1 = Math.min(f.nu - 1, Math.floor(Math.min(f.su, u1) / f.cu));
+    const j0 = Math.max(0, Math.floor(Math.max(0, v0) / f.cv));
+    const j1 = Math.min(f.nv - 1, Math.floor(Math.min(f.sv, v1) / f.cv));
+    const runs = [];
+    for (let j = j0; j <= j1; j++) {
+      let start = -1;
+      for (let i = i0; i <= i1 + 1; i++) {
+        const owns = i <= i1 && this._netOrderGrid[f.grid + j * f.nu + i] === orderId;
+        if (owns && start < 0) start = i;
+        if ((!owns || i === i1 + 1) && start >= 0) {
+          const end = owns ? i : i - 1;
+          let x0 = Math.max(u0, start * f.cu), x1 = Math.min(u1, (end + 1) * f.cu);
+          let y0 = Math.max(v0, j * f.cv), y1 = Math.min(v1, (j + 1) * f.cv);
+          if (start === 0) x0 = Math.max(u0, -padM);
+          if (end === f.nu - 1) x1 = Math.min(u1, f.su + padM);
+          if (j === 0) y0 = Math.max(v0, -padM);
+          if (j === f.nv - 1) y1 = Math.min(v1, f.sv + padM);
+          if (x1 > x0 && y1 > y0) runs.push([x0, x1, y0, y1]);
+          start = -1;
+        }
+      }
+    }
+    return runs;
+  }
+
+  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind, orderId = 0, orderState = null) {`, 'per-cell canonical paint arbitration');
+    patch('  _emitGrowth(g, tn, dT, dripOnly) {', '  _emitGrowth(g, tn, dT, dripOnly) {\n    const draw = (f, bounds, args) => {\n      const runs = g.netOrderId ? this._netOrderRuns(f, g.netOrderId, ...bounds) : [bounds];\n      for (const run of runs) this._pushQuad(f, ...run, ...args);\n    };', 'GPU growth follows current per-cell ownership');
+    patch(`        this._pushQuad(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);`,
+      `        draw(f, [lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3], [lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1]);`,
+      'drips respect canonical cell ownership');
+    patch(`        this._pushQuad(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);`,
+      `        draw(f, [lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext], [lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0]);`,
+      'paint body respects canonical cell ownership');
+    patch('    if (r <= 0.02) return 0;', '    if (r <= 0.02) { if (orderState) orderState.accepted = true; return 0; }', 'retain fine paint presentation');
+    patch('        const prev = this.grid[k];\n        if (prev === val) continue;', `        const prev = this.grid[k];
+        if (orderId) {
+          const previousOrder = this._netOrderGrid[k];
+          if (previousOrder && !this._netOrderComesAfter(orderId, previousOrder)) continue;
+          this._netOrderGrid[k] = orderId;
+          if (orderState) orderState.accepted = true;
+        }
+        if (prev === val) continue;`, 'newer canonical ownership wins each cell');
   }
   if (rel === 'src/fx/fxHooks.js') {
     patch("import { on } from '../core/ctx.js';", "import { on, copyEventVector, hasEventVector } from '../core/ctx.js';", 'consume vector snapshots without materialization');

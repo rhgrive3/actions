@@ -225,6 +225,14 @@ INKWAVE の `patches/reliability/combat-credit-adapter.mjs` は owner と event 
 
 再現回帰は native `Actor` の hit → splat event → `NetMatch._sendTick` → remote `_tick` / `_advance` / sample / `_playEvents` を使う。20Hz の固定 clock で life 4 の terminal event を保留中に、owner が life 5 の生存 snapshot と respawn event を送る。再生中 sample は life 4、最新 owner snapshot は alive/life 5 であることを確かめ、古い terminal は撃破表示と死亡状態を変えず、元の塗りと attacker reward を一度だけ反映し、その後の respawn event は通常どおり再生する。重複 terminal と forged owner も拒否する。これは source VM のロジック検証であり、ブラウザ実動作・実ネットワーク・本家実機との比較は未確認。
 
+## 対向 splat の塗り所有権順序（#365 / #369、2026-10-08）
+
+比較条件は Splatoon 3 Ver.11.3.0、オンライン Regular Battle / Turf War、標準ギアのシューター同士が同じ地面へ同時に塗る状況。任天堂は Turf War を、各チームがインクでより広い地面を覆う対戦として説明しているが、公開資料には同時 splat のネットワーク競合順序、フレーム単位の優先規則、再接続時の順序保証はない。[Ver.11.3.0 の更新日](https://www.nintendo.com/en-gb/Support/Nintendo-Switch/Game-Updates/How-to-Update-Splatoon-3-2266003.html) と [Turf War の説明](https://splatoon.nintendo.com/ca/gameplay/) を参照。本家の実機での対向 splat 結果は未確認であり、非公開の曲線値や同期方式を推定していない。
+
+INKWAVE の `patches/network-replication/adapter.mjs` は上流 `inkwave-public/src/net/netmatch.js` と `src/world/paint.js` の経路に、既存の tick / sender / event sequence から作る共通順序キーを接続する。owner の即時予測と remote replay は同じ per-cell CPU ownership を使い、遅れて届いた古いイベントは新しい cell owner を上書きしない。GPU growth の quad は現在そのイベントが所有する cell run に切り、cell order が更新された後も CPU grid の所有権に追従する。`r2` の旧 packet（owner tick なし）と旧幅 row も受け入れ、owner tick がない `r2` の paint は legacy precedence で順序付ける。更新前のクライアント自身はこの規則を実装しないため、混在 session 全体の収束保証は未確認。通常の移動係数・塗り半径・武器値・泳ぎや敵インク判定式は変更していない。実プレイでは確定した turf、`sample()`、`coverage()` の食い違いを減らすが、本家との数値・タイミング一致を示すものではない。
+
+再現テスト `patches/network-replication/tests/paint-canonical-order.test.mjs` は production と同じ splatoon3、touch-layout、reliability、local-quality、network-replication、practice-range の6 adapter 合成後の `NetMatch` と `PaintSystem` を使う。逆順の対向予測、late / duplicate、legacy-width row、owner tick なしの旧 `r2` row、paint と non-paint の連番、10 owner slot、NetMatch 再生成後の sender sequence、host handoff を確認する。CPU grid / counts / coverage と mock renderer に渡す cell-clipped quad の一致は確認範囲に含む。ブラウザ WebGL の最終 pixel readback、実 WebSocket、Splatoon 3 Switch 実機は未確認。Nintendo の公開資料はこのネットワーク順序を明かしていないため、原作の同時着弾優先規則の一致は未確認のまま残す。
+
 ## 練習場（2026-10-03）
 
 ブランチ `inkwave/practice-range` に、既存システムを測るためのソロ練習場を独立パッチ `patches/practice-range/` として追加した（[練習場レポート](practice-range-report.md)）。歩行・泳ぎ・射撃・塗り・ボム・スペシャル・被弾の数値とロジックは変更していない。練習場の目盛りはワールド座標（1 m = 1 ワールド単位）で、本家の距離単位との対応は引き続き未確認（`distanceScale` は推定）。この記録の既存の差分・未確認項目は、練習場の追加によって解消済みとしない。

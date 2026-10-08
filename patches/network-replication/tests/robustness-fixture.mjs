@@ -3,7 +3,7 @@
 // supplies the socket-free platform, the scene, and physics/paint/audio stubs.
 //
 // Composition order matches scripts/build-inkwave.mjs exactly:
-//   adaptNetworkSource(adaptQualitySource(adaptReliability(adaptTouchLayout(adaptSource(...)))))
+//   adaptRange(adaptNetworkSource(adaptQualitySource(adaptReliability(adaptTouchLayout(adaptSource(...))))))
 // Passing { network: false } omits ONLY the newest adapter so a test can reproduce
 // the pre-fix baseline on the same sources.
 import fs from 'node:fs';
@@ -15,6 +15,7 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 
 export const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -31,14 +32,14 @@ function relFor(file) {
 }
 
 // One module environment. `network` selects whether the newest adapter participates.
-export async function fixture({ network = true, flow = false } = {}) {
+export async function fixture({ network = true, flow = false, networkAdapter = adaptNetworkSource } = {}) {
   let seconds = 1000;
   const context = vm.createContext({ console, performance: { now: () => seconds * 1000 } });
   const modules = new Map();
 
-  const compose = network
-    ? (rel, code) => adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))))
-    : (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+  const compose = (rel, code) => adaptRange(rel, network
+    ? networkAdapter(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))))
+    : adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))));
 
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
@@ -68,6 +69,7 @@ export async function fixture({ network = true, flow = false } = {}) {
     export * from './inkwave-public/src/game/actor.js';
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/net/netmatch.js';
+    export * from './inkwave-public/src/world/paint.js';
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
