@@ -493,21 +493,8 @@ export function adaptSource(rel, code) {
     }),`,
       'exact recipient Super Jump target event');
     code = adaptJuddResult(rel, code, replaceOnce);
-    code = replaceOnce(code,
-      "    const gained = Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);\n" +
-      "    const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };\n" +
-      "    p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n" +
-      "    while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n" +
-      "    saveJSON('inkwave.profile', p);",
-      "    const privateBattle = !!G.netm;\n" +
-      "    const gained = privateBattle ? 0 : Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);\n" +
-      "    const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };\n" +
-      "    if (!privateBattle) {\n" +
-      "      p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n" +
-      "      while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n" +
-      "      saveJSON('inkwave.profile', p);\n" +
-      "    }",
-      'Private Battle persistent progression');
+    // #1066 progression mutation is owned by src/main.js after the UI split.
+
     code = replaceOnce(code,
       "  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
       "  showSplatted({ by = null, who = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
@@ -1120,6 +1107,21 @@ export function adaptSource(rel, code) {
     if (!worldHidden && (!halfRateShadow || (this._frameN & 1))) sm.needsUpdate = true;`,
       'effective mobile shadow cadence');
     code = replaceOnce(code, '    this.input.endFrame();\n', '', 'input consumption');
+    code = replaceOnce(code,
+      "    const gained = Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);\n" +
+      "    const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };\n" +
+      "    p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n" +
+      "    while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n" +
+      "    saveJSON('inkwave.profile', p);",
+      "    const privateBattle = !!G.netm;\n" +
+      "    const gained = privateBattle ? 0 : Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);\n" +
+      "    const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };\n" +
+      "    if (!privateBattle) {\n" +
+      "      p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n" +
+      "      while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n" +
+      "      saveJSON('inkwave.profile', p);\n" +
+      "    }",
+      'Private Battle persistent progression');
     code = replaceOnce(code,
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES });',
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
