@@ -1,7 +1,9 @@
-import * as THREE from 'three';
-
+// Retain seven reusable coordinate probes without importing browser-only 'three'.
+// The native Physics.los() reads x/y/z through Vector3.copy, so probe records
+// can stay realm-independent in Node regression tests and in the browser.
 const EPS = 1e-9;
-const probes = Array.from({ length: 7 }, () => new THREE.Vector3());
+const probes = Array.from({ length: 7 }, () => ({ x: 0, y: 0, z: 0,
+  set(x, y, z) { this.x = x; this.y = y; this.z = z; return this; } }));
 
 // #1043: A Blaster burst reaches the player volume when any canonical point on
 // the same vertical capsule used by main-weapon hit tests is visible. This is
