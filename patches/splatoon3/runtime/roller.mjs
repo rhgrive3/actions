@@ -203,10 +203,33 @@ export function rollStopLocks(now) {
   return { main: now + ROLL_STOP_LOCKS.main, sub: now + ROLL_STOP_LOCKS.sub, squid: now + ROLL_STOP_LOCKS.squid };
 }
 
-export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
+export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset, actorUpdate = Actor.prototype.update;
   const runnerUpdate = WeaponRunner.prototype.update;
   const scratch = { ids: [], start: { x: 0, y: 0, z: 0 }, delta: { x: 0, y: 0, z: 0 }, normalY: 0 };
+  const wallOrigin = new THREE.Vector3(), wallDirection = new THREE.Vector3(), wallContact = new THREE.Vector3(), wallHit = new Hit();
+  const paintStillWall = (runner, a, w, dt) => {
+    // #1108: direct drum-wall paint is contact-owned, not movement/side splash.
+    // No-stick must not authorize native roll-contact damage or floor paint.
+    if (a.remote || !a.alive || !(a.ink > 0.5) || !(dt > 0) || !G.paint?.splat || !G.physics?.raycast) return;
+    runner.s3WallPaintElapsed = Math.min(0.3, (runner.s3WallPaintElapsed || 0) + dt);
+    if (runner.s3WallPaintElapsed + 1e-10 < 1 / 12) return;
+    runner.s3WallPaintElapsed %= 1 / 12;
+    const fx = Math.sin(a.yaw), fz = Math.cos(a.yaw), rx = fz, rz = -fx;
+    wallDirection.set(fx, 0, fz);
+    let area = 0;
+    for (let i = -1; i <= 1; i++) {
+      const side = i * ROLLER_BODY_HALF_WIDTH * .7;
+      wallOrigin.set(a.pos.x + rx * side, a.pos.y + ROLLER_BODY_RADIUS, a.pos.z + rz * side);
+      const h = G.physics.raycast(wallOrigin, wallDirection, DRUM_FORWARD + ROLLER_BODY_RADIUS + .05, wallHit, true);
+      if (!h?.hit || Math.abs(h.normal.y) >= WALL_BAND) continue;
+      wallContact.copy(h.point).addScaledVector(h.normal, .025);
+      const painted = G.paint.splat(wallContact, ROLLER_BODY_RADIUS, a.team,
+        { kind: 'roll', seed: ((Math.imul((Math.round(G.time * 60) || 0) + i + 7, 2654435761) >>> 0) / 4294967296) });
+      if (Number.isFinite(painted)) area += painted;
+    }
+    if (area) a.addTurf(area);
+  };
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
     if (r && this.weapon?.kind === 'roller') {
@@ -342,8 +365,13 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     const onFlickPath = starting || winding;
     const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);
     const stick = onFlickPath || rollerStickActive(a);
-    const fireIn = (onFlickPath || (sup?.supported && stick)) ? inp : { ...inp, fire: false, firePressed: false };
+    const stillWall = !!(inp.fire && !onFlickPath && sup?.wall && !stick && !a.remote);
+    const fireIn = (onFlickPath || (sup?.supported && stick) || stillWall) ? inp : { ...inp, fire: false, firePressed: false };
     const restoreAirborne = !!(sup?.wall && !sup.floor && !a.grounded);
+    // Native contact damage reads horizontal speed; prevent no-stick damage
+    // without mutating authoritative actor movement outside the native call.
+    const savedVelX = a.vel.x, savedVelZ = a.vel.z;
+    if (stillWall) { a.vel.x = 0; a.vel.z = 0; }
     if (restoreAirborne) a.grounded = true;
     try {
     if (starting) {
@@ -462,8 +490,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
         if (a.character) a.character.s3RollerFlick = null;
       }
     }
+    if (stillWall && this.rolling) paintStillWall(this, a, w, dt);
+    else this.s3WallPaintElapsed = 0;
     return result;
     } finally {
+      if (stillWall) { a.vel.x = savedVelX; a.vel.z = savedVelZ; }
       if (restoreAirborne && a.grounded) a.grounded = false;
     }
   };
