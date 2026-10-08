@@ -13,13 +13,13 @@ export function adaptPadSensitivity(rel, code, replaceOnce) {
   }
   if (rel === 'src/main.js') {
     code = replaceOnce(code,
-      "    this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);",
-      "    this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);\n" +
+      "    this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);",
+      "" +
       "    if (this.settings.padSensitivityScale !== 's3') {\n" +
       "      this.settings.padSensitivity = legacyPadToS3(this.settings.padSensitivity);\n" +
       "      this.settings.padSensitivityScale = 's3';\n" +
       "      saveJSON('inkwave.settings', this.settings);\n" +
-      "    }",
+      "    }\n    this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);",
       'migrate persisted legacy pad gain once');
     return "import { legacyPadToS3 } from '../patches/splatoon3/runtime/pad-sensitivity.mjs';\n" + code;
   }
