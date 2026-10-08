@@ -2,6 +2,7 @@ const EPS = 1e-10;
 const NO_CONTEST_WINDOW = 60;
 const NO_CONTEST_DELAY = 6;
 const INSTALLED = Symbol.for('inkwave.s3.disconnect-fidelity.v1');
+let world = null;
 
 export function matchElapsed(match) {
   return Math.max(0, (match?.duration || 0) - (match?.time || 0));
@@ -55,19 +56,17 @@ function finishNoContest(nm, announce = false) {
   nm.match.s3NoContestFinished = true;
   nm.match.paused = true; // never fall through to the normal turf judge / XP path
   if (announce && nm.isHost) nm._sendNow?.({ k: 'ncend' });
-  const game = nm.__s3G?.game || null;
+  const game = world?.game || null;
   game?.hud?.banner?.('NO CONTEST');
   game?.netMatchEnd?.();
 }
 
 export function installDisconnectFidelity(api) {
   const { NetMatch, G } = api || {};
+  world = G || world;
   if (!NetMatch?.prototype || NetMatch.prototype[INSTALLED]) return;
   const nm = NetMatch.prototype;
   Object.defineProperty(nm, INSTALLED, { value: true });
-  // Keep the current G reachable without adding a new global import.
-  Object.defineProperty(nm, '__s3G', { get() { return G; }, configurable: true });
-
   const bind = nm.bind;
   nm.bind = function (match, ...args) {
     const result = bind.call(this, match, ...args);
@@ -118,7 +117,7 @@ export function installDisconnectFidelity(api) {
     } else {
       for (const a of affected) {
         deactivateDisconnectedActor(this, a);
-        G?.game?.hud?.banner?.(`${a.name} DISCONNECTED`);
+        world?.game?.hud?.banner?.(`${a.name} DISCONNECTED`);
       }
       // #201: first-minute communication errors become a six-second no-contest
       // countdown. Only the host emits the authoritative countdown/end packet.
