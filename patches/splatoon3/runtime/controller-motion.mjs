@@ -9,12 +9,12 @@ const gainAt=s=> {
   // Linear interim interpolation is NOT a Nintendo internal curve.
   return x<=0?1+(x+5)*.16:1.8+x*.24;
 };
-export function controllerMotionDelta(sample,dt,sensitivity=0,invertY=false) {
+export function controllerMotionDelta(sample,dt,sensitivity=0,invertY=false,invertX=false) {
   if (!sample || !(dt>0) || dt>0.25 || !Number.isFinite(sample.yawRate)
       || !Number.isFinite(sample.pitchRate)) return zero();
   if (Math.abs(sample.yawRate)>25 || Math.abs(sample.pitchRate)>25) return zero();
   const gain=gainAt(sensitivity);
-  return {yaw:sample.yawRate*dt*gain,
+  return {yaw:sample.yawRate*dt*gain*(invertX?-1:1),
     pitch:sample.pitchRate*dt*gain*(invertY?-1:1),available:true};
 }
 export function installControllerMotion({Input,PlayerController,G}) {
@@ -40,7 +40,8 @@ export function installControllerMotion({Input,PlayerController,G}) {
         let sample=null;
         try { sample=reader(pad,dt); } catch { sample=null; }
         if (sample && (sample.padIndex===undefined || sample.padIndex===pad.index)) {
-          const d=controllerMotionDelta(sample,dt,G.settings?.gyroSensitivity??0,G.settings?.invertY);
+          const d=controllerMotionDelta(sample,dt,G.settings?.gyroSens??0,
+            G.settings?.gyroInvertY,G.settings?.gyroInvertX);
           if (d.available) {
             this.rig.yaw+=d.yaw;
             this.rig.pitch=Math.max(-1.05,Math.min(1.15,this.rig.pitch+d.pitch));
