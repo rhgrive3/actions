@@ -658,8 +658,57 @@ function radiusAt(c, age, fallback) {
   const t=c.changeTime>0?clamp01(age/c.changeTime):1;
   return c.initRadius+(c.endRadius-c.initRadius)*t;
 }
-export function fidelityPlayerCollisionRadius(p) { return p.s3PlayerRadius ?? radiusAt(p.fidelityPlayerCollision,p.age,p.size); }
-function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.fieldRadius||0); }
+function slosherPaintRecord(p) {
+  const u=p?.fidelitySloshUnit;
+  return u ? ((p.fidelitySloshIndex || 0) > 0 ? u.AfterPaintParam : u.PaintParam) : null;
+}
+// #1140: age growth and high-drop shrink are distinct. The documented
+// PaintParam fall-distance anchors guide a *provisional* collision/visual
+// scale, not an asserted Nintendo collision-radius equation.
+export function slosherDropScale(p, atY=p?.pos?.y) {
+  const src=slosherPaintRecord(p), origin=p?.start?.y;
+  if (!src || !Number.isFinite(origin) || !Number.isFinite(atY)) return 1;
+  const from=src.ScaleStartFallDistance, to=src.ScaleEndFallDistance, rate=src.WidthDepthScaleFall;
+  if (![from,to,rate].every(Number.isFinite) || !(to>from) || !(rate>0&&rate<=1)) return 1;
+  const drop=Math.max(0,origin-atY);
+  if (drop<=from) return 1;
+  const scale=1-(1-rate)*clamp01((drop-from)/(to-from));
+  // Continue narrowing beyond the sourced paint interpolation end rather than
+  // leaving an immortal full-size hit volume from extreme height.
+  return Math.max(0,scale*Math.exp(-Math.max(0,drop-to)/(to-from)));
+}
+function slosherCollisionRadius(p, age, field, y) {
+  const record=field?p.fidelityFieldCollision:p.fidelityPlayerCollision;
+  const fallback=field?(p.fieldRadius||0):(p.s3PlayerRadius??p.size);
+  const grown=field?radiusAt(record,age,fallback):(p.s3PlayerRadius??radiusAt(record,age,fallback));
+  return grown*slosherDropScale(p,y);
+}
+export function fidelityPlayerCollisionRadius(p) { return slosherCollisionRadius(p,p.age,false,p.pos?.y); }
+function fieldRadiusAt(p,age,y=p.pos?.y) { return slosherCollisionRadius(p,age,true,y); }
+// #1011: footprint uses the source unit and first/after bullet distinctions.
+export function fidelitySlosherImpactPaint(p, point) {
+  const src=slosherPaintRecord(p), start=p?.start, scale=completion?.worldUnitsPerSourceUnit;
+  if (!src || !start || !point || !(scale>0)) return null;
+  const n=src.DistanceXZNear,f=src.DistanceXZFar,w0=src.WidthHalfNear,w1=src.WidthHalfFar;
+  const d0=src.DepthScaleNear,d1=src.DepthScaleFar;
+  if (![n,f,w0,w1,d0,d1].every(Number.isFinite) || !(f>n) || !(w0>0&&w1>0)) return null;
+  const distance=Math.hypot(point.x-start.x,point.z-start.z)/scale;
+  const t=clamp01((distance-n)/(f-n)), shrink=slosherDropScale(p,point.y);
+  const radius=(w0+(w1-w0)*t)*scale*shrink;
+  return radius>0?{radius,stretchAmt:Math.max(.05,(d0+(d1-d0)*t)*shrink)}:null;
+}
+// #1022: explicit source bias input, keeping one RNG draw and exclusions.
+// The exponent is a deliberately labelled symmetric calibration, NOT a
+// verified Nintendo distribution; replace it when sampling semantics are known.
+export function slosherYawOffset(u,index,rng=Math.random) {
+  if (!u || u.RandomRotateYOffOrderNum?.includes(index)) return 0;
+  const angle=u.RandomRotateYDegree || 0;
+  if (!Number.isFinite(angle)) return 0;
+  const bias=Number.isFinite(u.RandomRotateYBias)?clamp01(u.RandomRotateYBias):0;
+  const sample=Math.max(-1,Math.min(1,2*rng()-1));
+  const centered=Math.sign(sample)*Math.pow(Math.abs(sample),1+bias);
+  return radians(angle*centered);
+}
 function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
@@ -735,7 +784,7 @@ function setSlosherDraw(p,unit,index) {
   p.tail0=fidelitySlosherDrawTail(p,p.vel.length());p.tailK=0;
 }
 export function fidelitySlosherDrawRadius(p) {
-  return radiusAt(p.fidelitySloshDraw,Math.max(0,p.age||0),p.vis??p.size);
+  return radiusAt(p.fidelitySloshDraw,Math.max(0,p.age||0),p.vis??p.size)*slosherDropScale(p,p.pos?.y);
 }
 export function fidelitySlosherDrawTail(p,speed) {
   const d=p.fidelitySloshDraw,r=fidelitySlosherDrawRadius(p);
@@ -817,7 +866,7 @@ export function fidelityWorldHit(system,p) {
   if(!s.worldReady){
     s.world.kitDefense=null;
     if(isKitProjectile(p)) kitTrizookaWorldSweep(system,p,s.world,api.G.physics);
-    else sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge??p.age),fieldRadiusAt(p,p.age),s.world,true);
+    else sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge??p.age,p.prev?.y),fieldRadiusAt(p,p.age,p.pos?.y),s.world,true);
     const defense=system.kitDefenseCandidate?.(p);
     if(defense&&Number.isFinite(defense.distance)&&defense.distance>=0&&(!s.world.hit||defense.distance<s.world.dist-EPSILON)){
       s.world.hit=true;s.world.dist=defense.distance;s.world.kitDefense=defense;
@@ -852,7 +901,7 @@ export function fidelityProjectileTargets(system,p) {
   // give it no targets on the terminal wall-drop frame.
   if (p.fidelityWallDrop?.done) return s.targets;
   // Ghosts share visual collision chronology, but never damage/paint ownership.
-  const r0=p.s3PlayerRadius ?? radiusAt(p.fidelityPlayerCollision,p.fidelityPrevAge??p.age,p.size);
+  const r0=slosherCollisionRadius(p,p.fidelityPrevAge??p.age,false,p.prev?.y);
   const r1=fidelityPlayerCollisionRadius(p);
   let nearest=null,best=Infinity;
   for(const actor of G.actors){
@@ -1231,8 +1280,7 @@ export function installWeaponsFidelity(context,profile) {
       p.delay=((u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0))/60;
       const speed=((p.owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
       const aim=p.owner.aimDir.clone().normalize();
-      const yaw=Math.atan2(aim.x,aim.z)+radians(u.BaseRotateYDegree||0)+
-        (u.RandomRotateYOffOrderNum?.includes(index)?0:(Math.random()*2-1)*radians(u.RandomRotateYDegree||0));
+      const yaw=Math.atan2(aim.x,aim.z)+radians(u.BaseRotateYDegree||0)+slosherYawOffset(u,index);
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
       p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
@@ -1309,7 +1357,7 @@ export function installWeaponsFidelity(context,profile) {
     'projectileSpeed','weaponStraight','weaponGravity','weaponDrag','moveFreeGravity','moveFreeDrag',
     'moveEndSpeed','moveBrakeDrag','moveBrakeGravity','moveFreeVelocityY','moveFreeFrame','moveHz',
     'unitDelay','unitOffsetDelay','unitBulletNum','unitGroundSpeed','unitAirSpeed','unitOffsetSpeed','unitBaseYaw',
-    'unitRandomYaw','unitRandomOffOrder','unitAddYRate','unitMove','unitGoStraightFrame','unitEndSpeed',
+    'unitRandomYaw','unitRandomBias','unitRandomOffOrder','unitAddYRate','unitMove','unitGoStraightFrame','unitEndSpeed',
     'unitBrakeDrag','unitBrakeGravity','unitFreeDrag','unitFreeGravity','unitFreeVelocityY','unitFreeFrame',
     'actorForm','grounded','climbing','dancing','specialActive','superJumpState','aimPitch',
     'actorYaw','actorVelX','actorVelZ','blasterZRate',
@@ -1353,7 +1401,7 @@ export function installWeaponsFidelity(context,profile) {
     s.moveFreeFrame=move?.freeFrame;s.moveHz=move?.hz;
     s.unitDelay=unit?.UnitDelayFrame;s.unitOffsetDelay=unit?.AfterOffsetDelayFrame;s.unitBulletNum=unit?.BulletNum;
     s.unitGroundSpeed=unit?.SpawnSpeedGround;s.unitAirSpeed=unit?.SpawnSpeedAir;s.unitOffsetSpeed=unit?.AfterOffsetSpawnSpeed;
-    s.unitBaseYaw=unit?.BaseRotateYDegree;s.unitRandomYaw=unit?.RandomRotateYDegree;
+    s.unitBaseYaw=unit?.BaseRotateYDegree;s.unitRandomYaw=unit?.RandomRotateYDegree;s.unitRandomBias=unit?.RandomRotateYBias;
     s.unitRandomOffOrder=unit?.RandomRotateYOffOrderNum;s.unitAddYRate=unit?.AddSpawnSpeedYRateByXZ;s.unitMove=unitMove;
     s.unitGoStraightFrame=unitMove?.GoStraightToBrakeStateFrame;s.unitEndSpeed=unitMove?.GoStraightStateEndMaxSpeed;
     s.unitBrakeDrag=unitMove?.BrakeAirResist;s.unitBrakeGravity=unitMove?.BrakeGravity;
