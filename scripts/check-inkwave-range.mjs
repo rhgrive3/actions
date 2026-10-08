@@ -139,8 +139,10 @@ for (const run of RUNS) {
       await new Promise((r) => setTimeout(r, 2500));
       const target = s.targets.find((x) => x.rangeTarget?.dist === 10);
       if (!target) throw new Error('10 m gallery target is missing');
-      a.pos.set(target.pos.x, 0.05, target.pos.z - target.rangeTarget.dist);
-      a.vel.set(0, 0, 0); a.yaw = a.aimYaw = 0; a.aimPitch = -0.02;
+      // Use native spawn/reset so fixed-clock and Character interpolation cannot
+      // restore the pre-travel actor/root position on the first firing tick.
+      a.spawnAt(a.pos.clone().set(target.pos.x, 0.05, target.pos.z - target.rangeTarget.dist), 0);
+      a.intent.move.set(0, 0, 0); a.aimPitch = -0.02;
       g.rig.yaw = 0; g.rig.pitch = -0.02; g.rig.follow(a, true);
       const births = [];
       const push = G.projectiles?._push;
