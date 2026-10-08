@@ -1795,7 +1795,7 @@ to mask budget evidence. This compatibility repair does not claim a new Issue.
 Reference: Splatoon 3 Ver. 11.3.0 Splat Roller, using the pinned `WeaponRollerNormal` table linked in the issue context. Its horizontal and vertical per-unit `PaintParam.DepletionDepthWidthRate` values are 0.5. The field describes the depleted projectile paint footprint; it does not replace collision radius, damage reach, or the sourced damage/speed parameters. The reduced fan's angular distribution is not specified by the available fields and remains unknown.
 
 INKWAVE's production adapter composition now carries the paid depletion state at projectile birth and applies the mapped 0.5 scale only to depleted Roller paint footprints along flight and at impact. Missing per-unit paint data keeps the native default; normal swings use scale 1. This comparison is limited to deterministic installed-runtime tests, not Switch hardware or browser rendering.
- 
+
 ## 2026-10-08 — Paint-mask ownership and canonical ordering integration (#264)
 
 **Reference and operating condition.** Comparison target: Splatoon 3 Ver. 11.3.0, ordinary match turf painting, with the ancillary splat and wall-paint ownership context from duty #264; no gear modifier or weapon-stat value is changed by this integration. Nintendo’s [official update notes](https://support.nintendo.com/jp/switch/software_support/av5ja/index.html) identify Ver. 11.3.0 (2026-08-20), but do not publish the GPU mask, per-cell ownership, or exact wall-paint pixel rules. The reference version is recorded; native frame timing, mask values, and hardware pixel output remain unmeasured.
