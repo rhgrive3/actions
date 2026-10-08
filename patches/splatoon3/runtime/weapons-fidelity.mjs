@@ -381,6 +381,9 @@ function wallDropFallPaint(p, state, from, to) {
 // members are omitted, not disabled. Do not infer zero from their absence.
 export const BLASTER_BURST_PARAM_DEFAULTS = Object.freeze({
   SplashDropOn: true,
+  SplashDropCollisionRadius: 0.4,
+  SplashDropDrawRadius: 0.6,
+  SplashDropInitSpeed: 0,
   SplashDropPaintRadius: 3.2,
   SplashPaintRadius: 2.0,
 });
