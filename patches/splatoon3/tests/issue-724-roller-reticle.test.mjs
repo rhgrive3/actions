@@ -114,10 +114,15 @@ test('#724 the other weapon reticles keep their own dedicated structures', () =>
   assert.match(html('dualies'), /iw-ret__lock/);
   assert.match(html('splatling'), /iw-ret__segs/);
   assert.match(html('splatling'), /iw-ret__charge/);
-  assert.equal(html('slosher'), html('shooter'), '#652 compact Slosher marker remains installed');
-  // The shared compact fallback (shooter) is untouched by this fix.
+  // #652 compact Slosher marker remains installed: Slosher stays on the
+  // shared four-tick fallback while #871 moves Shooter to corner markers.
+  assert.equal(count(html('slosher'), 'iw-ret__tick'), 4);
+  assert.equal(html('slosher').includes('iw-ret__corner'), false);
+  // The shared center/inner structure (shooter) is untouched by this fix;
+  // only its outer markers became four corners (#871).
   assert.match(html('shooter'), /<circle r="15" class="iw-ret__ring thin"\/>/);
-  assert.equal(count(html('shooter'), 'iw-ret__tick'), 4);
+  assert.equal(count(html('shooter'), 'iw-ret__tick'), 0);
+  assert.equal(count(html('shooter'), 'iw-ret__corner '), 4);
 });
 
 test('#724 the obsolete geometry cannot come back through the installed source or the upstream CSS hook', () => {

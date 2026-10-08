@@ -57,12 +57,17 @@ test('Slosher reticle is the compact circular/tick target marker, not a trajecto
   assert.equal(slosher.includes('M-10 13'), false, 'landing bracket must not render');
   assert.equal(slosher.includes('M-24 6'), false, 'arch shoulder endpoints must not render');
   // Compact circular target marker with surrounding ticks: the standard
-  // structure the shooter reticle already ships (dot + ring + four ticks).
+  // structure Slosher shares with the four-tick fallback.
   assert.match(slosher, /<i class="iw-ret__dot"><\/i>/);
   assert.match(slosher, /<circle r="15" class="iw-ret__ring thin"\/>/);
   assert.equal(count(slosher, 'iw-ret__tick'), 4, 'four surrounding tick marks');
-  // Structurally identical to the standard target reticle (no slosher-only geometry).
-  assert.equal(slosher, html('shooter'));
+  // #871 moves Shooter's outer markers to four rectangle corners; Slosher
+  // keeps the compact four-tick structure (no slosher-only geometry, and the
+  // Shooter-specific change does not leak into this branch).
+  assert.equal(slosher.includes('iw-ret__corner'), false, 'Slosher untouched by #871');
+  assert.equal(count(html('shooter'), 'iw-ret__corner '), 4, 'Shooter renders four corner markers (#871)');
+  assert.equal(count(html('shooter'), 'iw-ret__tick'), 0, 'Shooter no longer renders cardinal ticks (#871)');
+  assert.match(html('shooter'), /<circle r="15" class="iw-ret__ring thin"\/>/);
 });
 
 test('the other weapon reticles keep their dedicated structures', () => {

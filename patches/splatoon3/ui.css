@@ -263,3 +263,28 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+
+/* #871 Shooter-only outer reticle: four rectangle corners instead of cardinal
+   ticks. The box reuses the former ticks' screen-space envelope (45px =
+   2 x (17px offset + 11px pill / 2) at rest; each arm keeps the pill's 11x3
+   draw), so no new constant is invented. Only horizontal width follows the
+   same authoritative --sp spread state, symmetrically, because the Ver.11.3.0
+   system reference describes the horizontal width as the spread signal and a
+   0-spread weapon as square; no Nintendo pixel size is claimed. Cadence keeps
+   the ticks' .06s linear transition. */
+.iw-ret--shooter .iw-ret__corners {
+  position: absolute; left: 0; top: 0;
+  width: calc(45px + var(--sp, 0) * 2px);
+  height: 45px;
+  translate: -50% -50%; pointer-events: none;
+  transition: width .06s linear, height .06s linear;
+}
+.iw-ret--shooter .iw-ret__corner { position: absolute; width: 11px; height: 11px; }
+.iw-ret--shooter .iw-ret__corner::before,
+.iw-ret--shooter .iw-ret__corner::after { content: ''; position: absolute; left: 0; top: 0; background: currentColor; }
+.iw-ret--shooter .iw-ret__corner::before { width: 11px; height: 3px; }
+.iw-ret--shooter .iw-ret__corner::after { width: 3px; height: 11px; }
+.iw-ret--shooter .iw-ret__corner.nw { left: 0; top: 0; }
+.iw-ret--shooter .iw-ret__corner.ne { right: 0; top: 0; transform: scaleX(-1); }
+.iw-ret--shooter .iw-ret__corner.sw { left: 0; bottom: 0; transform: scaleY(-1); }
+.iw-ret--shooter .iw-ret__corner.se { right: 0; bottom: 0; transform: scale(-1); }

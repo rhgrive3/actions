@@ -178,6 +178,28 @@ export function adaptSource(rel, code) {
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'src/ui/hud.js') {
+    // #871: Splatoon 3's outer spread guide for the standard Shooter is the four
+    // corners of a rectangle (horizontal width communicates spread; a 0-spread
+    // weapon reads as a square). The upstream default branch draws four cardinal
+    // tick pills instead, so the S3 build selects a Shooter-only corner branch
+    // ahead of that fallback. The branch reuses the ticks' existing screen-space
+    // bounds and the same authoritative `--sp` writer; no Nintendo pixel size is
+    // claimed or introduced, and every other weapon keeps its own branch.
+    code = replaceOnce(code,
+      '    } else {\n' +
+      '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__ring thin"/></svg>\n' +
+      '        <i class="iw-ret__tick" style="--a:0deg"></i><i class="iw-ret__tick" style="--a:90deg"></i><i class="iw-ret__tick" style="--a:180deg"></i><i class="iw-ret__tick" style="--a:270deg"></i>`;\n' +
+      '    }\n' +
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
+      '    } else if (kind === \'shooter\') {\n' +
+      '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__ring thin"/></svg>\n' +
+      '        <div class="iw-ret__corners" aria-hidden="true"><i class="iw-ret__corner nw"></i><i class="iw-ret__corner ne"></i><i class="iw-ret__corner sw"></i><i class="iw-ret__corner se"></i></div>`;\n' +
+      '    } else {\n' +
+      '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__ring thin"/></svg>\n' +
+      '        <i class="iw-ret__tick" style="--a:0deg"></i><i class="iw-ret__tick" style="--a:90deg"></i><i class="iw-ret__tick" style="--a:180deg"></i><i class="iw-ret__tick" style="--a:270deg"></i>`;\n' +
+      '    }\n' +
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
+      'S3 shooter corner spread reticle (#871)');
     code = replaceOnce(code,
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg>`;',
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg><span class="iw-ret__bias" hidden aria-hidden="true"></span>`;',
