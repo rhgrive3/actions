@@ -1231,7 +1231,11 @@ export function installWeaponsFidelity(context,profile) {
       p.delay=((u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0))/60;
       const speed=((p.owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
       const aim=p.owner.aimDir.clone().normalize();
-      const yaw=Math.atan2(aim.x,aim.z)+radians(u.BaseRotateYDegree||0)+
+      // #258: preserve the frame-spaced 4+5 launch contract while sweeping
+      // each source unit from the last two fixed-tick aim headings. A source
+      // UnitDelayFrame (not array position) determines the angular offset.
+      const launchFrame=(u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0);
+      const yaw=Math.atan2(aim.x,aim.z)+active.turnDelta*launchFrame+radians(u.BaseRotateYDegree||0)+
         (u.RandomRotateYOffOrderNum?.includes(index)?0:(Math.random()*2-1)*radians(u.RandomRotateYDegree||0));
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
@@ -1287,7 +1291,10 @@ export function installWeaponsFidelity(context,profile) {
   const slosh=Projectiles.prototype.fireSlosh;
   Projectiles.prototype.fireSlosh=function(actor,w){
     const previous=this._fidelitySloshContext,sequence=++slosherVolleySequence;
-    this._fidelitySloshContext={index:0,group:new Map(),groupId:`${actor.nid??'local'}:${sequence}`};
+    const sampled=actor.weaponRunner?.s3SloshTurnDelta;
+    const turnDelta=Number.isFinite(sampled) && !actor.remote
+      ? Math.max(-Math.PI/18,Math.min(Math.PI/18,sampled)) : 0;
+    this._fidelitySloshContext={index:0,group:new Map(),groupId:`${actor.nid??'local'}:${sequence}`,turnDelta};
     paintSlosherNearest(api.G,actor,rawWeapon(w),completion.worldUnitsPerSourceUnit,sequence);
     try{
       const drops=rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0);
