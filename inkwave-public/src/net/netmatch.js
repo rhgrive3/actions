@@ -614,11 +614,11 @@ export class NetMatch {
   // ---- hits (victim's owner) ------------------------------------------------------------------------------------------
   _hit(d, from) {
     const v = this.byNid.get(d.v), atk = this.byNid.get(d.a);
-    if (!v || v.remote || !v.alive || !atk || atk.team === v.team ||
-        atk.owner !== from || !Number.isFinite(d.d) || d.d <= 0 || d.d > 10000) return;
+    if (!v || v.remote || !v.alive || !atk || atk.team === v.team) return;
+    if (atk.owner !== from || !Number.isFinite(d.d) || d.d <= 0 || d.d > 10000) return;
     this._applyingHit = true;
-    try { G.projectiles?.applyHit(atk, v, d.d, d.w); }
-    finally { this._applyingHit = false; }
+    G.projectiles?.applyHit(atk, v, d.d, d.w);
+    this._applyingHit = false;
   }
 
   // ---- host clock / state / result --------------------------------------------------------------------------------------
