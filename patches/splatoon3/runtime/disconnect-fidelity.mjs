@@ -56,13 +56,14 @@ function finishNoContest(nm, announce = false) {
   nm.match.s3NoContestFinished = true;
   nm.match.paused = true; // never fall through to the normal turf judge / XP path
   if (announce && nm.isHost) nm._sendNow?.({ k: 'ncend' });
-  const game = world?.game || null;
+  const game = nm.__s3G?.game || world?.game || null;
   game?.hud?.banner?.('NO CONTEST');
   game?.netMatchEnd?.();
 }
 
 export function installDisconnectFidelity(api) {
   const { NetMatch, G } = api || {};
+  world = G || world;
   if (!NetMatch?.prototype) return;
   const nm = NetMatch.prototype;
   // Refresh the runtime context even when the same prototype is installed again
