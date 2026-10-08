@@ -352,8 +352,14 @@ export class NetMatch {
     a.invuln = f & F.invuln ? 0.1 : 0;
     a.stats.turf = Math.max(a.stats.turf, S.turf);
     a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;
-    a.superJumpState = f & (F.sjCharge | F.sjFlight) ? (a.superJumpState || { phase: 'charge', net: true }) : null;
-    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? 'flight' : 'charge';
+    // Only presentation state is reconstructed here: gameplay stays owner-authoritative.
+    const jumpPhase = f & F.sjFlight ? 'flight' : 'charge';
+    if (f & (F.sjCharge | F.sjFlight)) {
+      const age = Number.isFinite(S.sjT) ? Math.max(0, S.sjT) : 0;
+      if (!a.superJumpState || !a.superJumpState.net || a.superJumpState.phase !== jumpPhase)
+        a.superJumpState = { phase: jumpPhase, net: true, t: age };
+      else a.superJumpState.t = Math.max(Number.isFinite(a.superJumpState.t) ? a.superJumpState.t : 0, age);
+    } else a.superJumpState = null;
     // weapon pose state (charge glow, roller drum, splatling spin, dualies lock …)
     const wr = a.weaponRunner;
     wr.charging = !!(f & F.charging); wr.charge = S.ch;
@@ -706,14 +712,15 @@ function packActor(a) {
   const n = a.climbing ? a.wallN : null;
   return [a.nid, r2(a.pos.x), r2(y), r2(a.pos.z), r2(a.vel.x), r2(a.vel.y), r2(a.vel.z), r3(a.yaw), r3(a.aimYaw), r3(a.aimPitch), f,
     Math.round(a.hp), Math.round(a.ink), Math.round(a.special), r2(wr.streaming ? wr.burstFrac : wr.charge), Math.round(a.stats.turf), a.netTp || 0,
-    n ? r2(n.x) : 0, n ? r2(n.y) : 0, n ? r2(n.z) : 0, r2(wr.lockT || 0)];
+    n ? r2(n.x) : 0, n ? r2(n.y) : 0, n ? r2(n.z) : 0, r2(wr.lockT || 0),
+    r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0)];
 }
 
 function unpackActor(s, ts) {
-  return { t: ts, x: s[1], y: s[2], z: s[3], vx: s[4], vy: s[5], vz: s[6], yaw: s[7], aimYaw: s[8], aimPitch: s[9], f: s[10], hp: s[11], ink: s[12], sp: s[13], ch: s[14], turf: s[15], tp: s[16], wx: s[17], wy: s[18], wz: s[19], lock: s[20] };
+  return { t: ts, x: s[1], y: s[2], z: s[3], vx: s[4], vy: s[5], vz: s[6], yaw: s[7], aimYaw: s[8], aimPitch: s[9], f: s[10], hp: s[11], ink: s[12], sp: s[13], ch: s[14], turf: s[15], tp: s[16], wx: s[17], wy: s[18], wz: s[19], lock: s[20], sjT: Number.isFinite(s[21]) ? s[21] : 0 };
 }
 
-function blankSample() { return { t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, aimYaw: 0, aimPitch: 0, f: 0, hp: 100, ink: 100, sp: 0, ch: 0, turf: 0, tp: 0, wx: 0, wy: 0, wz: 1, lock: 0 }; }
+function blankSample() { return { t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, aimYaw: 0, aimPitch: 0, f: 0, hp: 100, ink: 100, sp: 0, ch: 0, turf: 0, tp: 0, wx: 0, wy: 0, wz: 1, lock: 0, sjT: 0 }; }
 function copySample(s, o) { for (const k in s) o[k] = s[k]; return o; }
 
 // cubic Hermite on position (owner velocities as tangents), linear on velocity/angles, discrete state from the earlier
@@ -744,6 +751,8 @@ function hermite(a, b, t, o) {
   o.aimPitch = a.aimPitch + (b.aimPitch - a.aimPitch) * u;
   o.ch = a.ch + (b.ch - a.ch) * u;
   o.lock = a.lock + (b.lock - a.lock) * u;
+  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));
+  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);
   o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;
   return o;
 }
