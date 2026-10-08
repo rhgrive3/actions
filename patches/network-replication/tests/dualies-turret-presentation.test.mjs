@@ -44,5 +44,15 @@ test('#1156 full production composition reserves an independent turret pose flag
     receiver.onMessage('owner', clear); peer.tr = clear.ts;
     receiver._sample(remote, peer.tr, 1 / 60); receiver.applyRemote(remote, 1 / 60);
     assert.equal(remote.character.s3RemoteTurretPose, false);
+    // A contradictory stale turret bit cannot override an accepted action interrupt.
+    // Native movement/form and gameplay remain driven by the existing sample flags.
+    for (const interrupt of [2, 2048, 8192, 16384, 32768]) {
+      const next = JSON.parse(JSON.stringify(clear)); next.ts += .05 + interrupt / 1e6;
+      next.a[0][10] |= DUALIES_TURRET_FLAG | interrupt;
+      receiver.onMessage('owner', next); peer.tr = next.ts;
+      receiver._sample(remote, peer.tr, 1 / 60); receiver.applyRemote(remote, 1 / 60);
+      assert.equal(remote.character.s3RemoteTurretPose, false, `interrupt ${interrupt} wins over stale pose bit`);
+      assert.equal(remote.weaponRunner.s3Turret, false);
+    }
   } finally { receiver.dispose(); sender.dispose(); owner.character.dispose(); remote.character.dispose(); }
 });

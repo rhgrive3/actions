@@ -4,6 +4,7 @@
 // Bits 20–26 are already owned by swim, Roller, armor, gear and special readiness.
 export const DUALIES_TURRET_FLAG = 1 << 27;
 const TURRET = DUALIES_TURRET_FLAG;
+const INTERRUPT = 2 | 2048 | 8192 | 16384 | 32768; // squid, sub aim, special, Super Jump phases
 const INSTALL = Symbol.for('inkwave.splatoon3.dualies-network.v1');
 
 export function installDualiesNetwork({ NetMatch, Actor } = {}) {
@@ -83,7 +84,7 @@ export function installDualiesNetwork({ NetMatch, Actor } = {}) {
       const freshSample = Number.isFinite(sample?.t) && sample.t > invalidAt;
       const flags = actor.alive && !waitingForSpawnSample && acceptedOwner && freshSample ? sample?.f : 0;
       actor.character.s3RemoteTurretPose = actor.weapon?.kind === 'dualies'
-        && Number.isInteger(flags) && !!(flags & TURRET);
+        && Number.isInteger(flags) && !!(flags & 1) && !(flags & INTERRUPT) && !!(flags & TURRET);
     }
     return applyRemote.call(this, actor, dt, ...args);
   };
