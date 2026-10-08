@@ -12,21 +12,21 @@ const close=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-8,actual+'
 test('#498 pinned 11.3.0 Roller width endpoints compose with the #411 near/far unit radius',async()=>{
   const f=await batchFixture(),V=f.THREE.Vector3;
   const units=f.profile.weaponsFidelityCompletion.weapons.roller;
-  for(const [unit,from,near,far] of [
-    [units.WideSwingUnitGroupParam.Unit[0],20,1.89,1.6275],
-    [units.VerticalSwingUnitGroupParam.Unit[0],30,2.454,3.068]
+  for(const [unit,from,near,far,farDistance] of [
+    [units.WideSwingUnitGroupParam.Unit[0],20,1.89,1.6275,12],
+    [units.VerticalSwingUnitGroupParam.Unit[0],30,2.454,3.068,16]
   ]){
     const p={fidelityRollerUnit:unit,age:0,s3Weapon:{kind:'roller'},type:'drop',ghost:false,start:new V()};
     close(rollerImpactRadius(p,new V(1.1,0,0),1),near);
     for(const frame of [0,from]){
       p.age=frame/60;
       close(rollerPaintAgeMultiplier(p),1);
-      close(rollerImpactRadius(p,new V(12,0,0),1),far);
+      close(rollerImpactRadius(p,new V(farDistance,0,0),1),far);
     }
     p.age=50/60;
     close(rollerPaintAgeMultiplier(p),.6);
     close(rollerImpactRadius(p,new V(1.1,0,0),1),near*.6);
-    close(rollerImpactRadius(p,new V(12,0,0),1),far*.6);
+    close(rollerImpactRadius(p,new V(farDistance,0,0),1),far*.6);
     close(rollerTrailAgeWidth(p,.45),.45*.6);
     // Provisional transition model only: the S3 source pins the endpoints,
     // not Nintendo's exact intermediate frame-by-frame interpolation.
