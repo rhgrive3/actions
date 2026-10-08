@@ -177,6 +177,12 @@ test('remote Slosher budget ledger is bounded and evicted volley IDs cannot be r
     for (let i = 1; i <= SLOSHER_OWNER_GROUP_LIMIT + 3; i++) {
       victim.hp = 100; victim.alive = true; victim.invuln = 0;
       G.projectiles.applyHit(attacker, victim, 1, 'slosher', `${prefix}:${i}`);
+      if (i === SLOSHER_OWNER_GROUP_LIMIT) {
+        const before = G.projectiles._s3SlosherOwnerGroups.size;
+        assert.equal(G.projectiles.applyHit(attacker, victim, 70, 'slosher', 'alias:1'), 'rejected',
+          'a stale alias cannot force eviction of the first active group');
+        assert.equal(G.projectiles._s3SlosherOwnerGroups.size, before);
+      }
     }
     const ledger = G.projectiles._s3SlosherOwnerGroups;
     assert.equal(ledger.size, SLOSHER_OWNER_GROUP_LIMIT, 'per-match memory stays bounded');
