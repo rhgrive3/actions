@@ -42,6 +42,14 @@ export function chargerLaunchSpeed(raw, charge) {
   return 60 * (raw.SpawnSpeedMinCharge + (raw.SpawnSpeedMaxCharge - raw.SpawnSpeedMinCharge) * q);
 }
 const INSTALLED=Symbol.for('inkwave.charger-flight.v1'),EPS=1e-10,SIM_DT=1/60;
+// #1134: an actor may only enter the authoritative candidate set when its
+// swept-capsule entry lies strictly before the nearest world/kit-defense stop.
+// Keeping this as one predicate prevents a later refactor from reintroducing
+// "damage every capsule on the full segment, then stop at the shield" ordering.
+export function chargerActorBeforeStop(entryFraction, stepLength, stopDistance) {
+  return entryFraction !== null && Number.isFinite(entryFraction) &&
+    entryFraction * stepLength < stopDistance - EPS;
+}
 // Finite straight flight. Source supplies endpoints and radii, not recovered engine
 // interpolation code. Uses the existing weapon:fire packet; no new network fields.
 export function installChargerFlight(api,completion) {
@@ -137,7 +145,7 @@ export function installChargerFlight(api,completion) {
       job.base.copy(actor.pos); // same authoritative basis as ordinary projectiles
       const t=capsuleEntry(job.prev,job.pos,job.base,hurtboxRadius(actor,PLAYER),hurtboxHeight(actor,PLAYER),
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
-      if(t!==null&&t*length<distance-EPS)actors.push({actor,d:t*length});
+      if(chargerActorBeforeStop(t,length,distance))actors.push({actor,d:t*length});
     }
     actors.sort((a,b)=>a.d-b.d||String(a.actor.nid??a.actor.name).localeCompare(String(b.actor.nid??b.actor.name)));
     const amount=job.damage;
