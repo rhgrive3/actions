@@ -79,7 +79,7 @@ export function installChargerFlight(api,completion) {
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;
     const job={owner:actor,team:actor.team,weapon:w,charge,chargeT,damage,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
-      pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
+      pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,nearestPending:true,paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
     system._ghostBeam(actor,origin,direction,.0001,charge,false);
     job.beam=system.beams.at(-1);
     (system._fidelityChargerFlights||(system._fidelityChargerFlights=[])).push(job);
@@ -108,9 +108,14 @@ export function installChargerFlight(api,completion) {
     if(!(interval>EPS))return;
     let area=0;
     for(;job.nextPaint<end-.3;job.nextPaint+=interval){
+      // The first checkpoint owns the sourced RadiusSpawnNearest (1.2),
+      // not the ordinary charge-dependent SplashPaintParam.WidthHalf.
+      // Consume this first slot even if the surface probe misses.
+      const radius=job.nearestPending?paint.nearest:paint.width;
+      job.nearestPending=false;
       const p=job.origin.clone().addScaledVector(job.dir,job.nextPaint);
       const h=G.physics.raycast(p,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
-      if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),paint.width,job.team,
+      if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),radius,job.team,
         {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1)});
     }
     job.owner.addTurf(area);
