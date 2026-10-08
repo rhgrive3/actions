@@ -167,10 +167,59 @@ export function adaptNet(rel, code) {
         if (this.state === 'starting' && this._roomAttempt === attempt && this._startCfg === cfg && this.tr === tr) this._go();
       }, 12000);
     }`, rel);
+    // #1154: GO may beat lobby launch, world build or shader warmup.
+    // Readiness belongs to this exact cfg; a packet never skips local setup.
+    code = replaceOnce(code, `    this._startCfg = cfg;`, `    this._startCfg = cfg;
+    this._setupReady = false; this._goPending = null;`, rel);
+    code = replaceOnce(code, `    if (!current()) return;
+    if (this.isHost) this._markReady(this.myId);`, `    if (!current() || !this.match || this.match._disposed) return;
+    this._setupReady = true;
+    if (this.isHost) this._markReady(this.myId);`, rel);
+    code = replaceOnce(code, `    else this.tr?.sendTo(this.hostId, { k: 'ready', id: cfg.id });`, `    else this.tr?.sendTo(this.hostId, { k: 'ready', id: cfg.id });
+    if (current() && this._goPending === cfg.id) this._launch(cfg.id);`, rel);
+    code = replaceOnce(code, `      case 'go': if (from === this.hostId && this.state === 'starting') this._launch(); break;`,
+      `      case 'go': if (from === this.hostId && this.state === 'starting' && d.id === this._startCfg?.id) this._launch(d.id); break;`, rel);
+    code = replaceOnce(code, `  _launch() {
+    this._setState('match');
+    this.match?.go();
+    G.game.netMatchGo?.();
+  }`, `  _launch(id = this._startCfg?.id) {
+    if (this.state !== 'starting' || !this._startCfg || id !== this._startCfg.id) return false;
+    if (!this._setupReady || !this.match) { this._goPending = id; return false; }
+    const match = this.match, cfg = this._startCfg, tr = this.tr;
+    const current = () => this.state === 'match' && this.match === match && this._startCfg === cfg && this.tr === tr && !match._disposed;
+    this._goPending = null;
+    this._setState('match');
+    if (!current()) return false;
+    match.go();
+    if (!current()) return false;
+    G.game.netMatchGo?.();
+    return true;
+  }`, rel);
+    // Both leave() and endMatch() invalidate queued GO, including same-room rematches.
+    code = code.replaceAll('    this._startCfg = null;', '    this._startCfg = null;\n    this._setupReady = false; this._goPending = null;');
     code = replaceOnce(code, `  endMatch() {
 `, `  endMatch() {
     clearTimeout(this._goT); this._goT = null;
 `, rel);
+  }
+  if (rel === 'src/net/netmatch.js') {
+    if (code.includes('const reliabilityBind =')) throw new Error(`Reliability network anchor mismatch: ${rel}`);
+    // #1157: wrap the final native methods without competing for bind/dispose
+    // entry anchors owned by inventory/replication adapters later in the build.
+    code = replaceOnce(code, 'export class NetMatch {', 'export class NetMatch {', rel);
+    code += `
+const reliabilityBind = NetMatch.prototype.bind, reliabilityDispose = NetMatch.prototype.dispose;
+NetMatch.prototype.bind = function(match) {
+  if (this._disposed || this.match) return false;
+  return reliabilityBind.call(this, match);
+};
+NetMatch.prototype.dispose = function(...args) {
+  if (this._disposed) return;
+  this._disposed = true;
+  return reliabilityDispose.apply(this, args);
+};
+`;
   }
   if (rel === 'src/net/transport.js') {
     code = replaceOnce(code, `    this.ws = null;

@@ -1793,3 +1793,60 @@ PR head SHA, otherwise push SHA. Every checkout and artifact name uses the same
 remain active, and the workflow regression itself joins the focused CI step.
 No inherited acceptance gate is removed or marked allowed-to-fail. The base
 failures remain owned by #1083; neither #1083 nor #401 is changed or merged.
+
+## 2026-10-08 — next seven claims; room startup and gyro recovery PR
+
+Ownership was checked against open issue assignees/comments and open/closed PR
+coverage immediately before posting claims on #1167, #1157, #1154, #1152, #1151,
+#1150 and #1149. This first new PR finishes the room/gyro implementation below;
+claiming the seven does not mean all seven are resolved. It is stacked on
+#1171 at `04e4547c053f99ed9db0019c4bc98003d19b108e`, preserving the integration
+composition and its existing fixes. #1083 and #401 are untouched; no merge.
+
+| Issue | Change / status | Executed evidence or remaining work |
+| --- | --- | --- |
+| #1167 | Reuse existing connection-generation cancellation and timer cleanup; add acceptance coverage, no duplicate runtime fix. | Four create/join cancellation/retry combinations, a queued obsolete deadline, repeated cancellation, and browser retry after withheld welcome and the original 8-second deadline. |
+| #1157 | Permanently reject binding a disposed NetMatch; make duplicate bind/dispose inert. Preserve existing Game startup cancellation guards. | Native composed NetMatch subscription ownership; 77 selected real startup-method deferred-boundary/reentry tests; browser socket closure during controlled warmup followed by reconnect and late completion. |
+| #1154 | Queue authenticated GO for the exact cfg.id until local setup completes; consume once and invalidate on room termination/rematch. | Deferred lobby/world/warmup, obsolete/duplicate GO, canceled queued GO; native browser NetSession/Transport/NetMatch and production relay, one READY packet per successful round. |
+| #1151 | Separate stale sensor health from permission and saved preference; revalidate focus/visibility/screen transitions and explicit retry. | 30/60/120 Hz streams, repeated silence/recovery, zero first-sample aim spike, single listener/permission ownership, existing initial no-data behavior. Synthetic orientation events in built Chromium modules also pass. |
+| #1152 | Claimed follow-up; existing allocation suppression is retained. | Remaining true-birth packet delay and complete multi-peer emission acceptance are not implemented in this PR. |
+| #1150 | Claimed follow-up; existing explicit string volley-ID transport is retained. | Complete native emitter-to-victim-owner acceptance and fractional cumulative-damage quantization audit remain; no new damage fix is claimed here. |
+| #1149 | Claimed follow-up; no speculative drain/slow constants added. | Pinned 11.3.0 InhaleParam has ReceiveDamageForPlayer=15 and PoisonMistForPlayer, but sparse parameter tables omit the inherited drain/speed defaults. Actor suppression implementation and measured drain/slow calibration remain. |
+
+The #1151 watchdog uses a conservative **15-second engineering threshold** on
+monotonic receipt time. A silent stream becomes `supported-stale`, shows a retry
+message, and retains permission, saved ON preference and its listener. Silence
+alone cannot distinguish a stationary change-only provider from sensor failure.
+A resumed sample recovers the health state and rebases the existing quaternion
+path before motion is integrated. Focus, visibility and actual screen-angle
+changes rearm the existing 2-second probe; after prior successful data this is
+also a soft warning. Initial activation with no valid data still takes the
+existing unavailable/OFF path. No Android drift calibration constants change.
+
+Reproduction: delay guest lobby launch or setup; send host GO while the promise
+is pending, then resolve it. Session remains starting until setup is complete
+and begins once. Close the guest socket during warmup, reconnect, and resolve
+the old promise: the new lobby/menu and disposed network object remain intact.
+For gyro, enable, send valid orientation, stop events beyond 15 seconds, then
+resume from a different pose: warning clears, first sample produces no turn,
+and the next sample produces normal movement.
+
+Comparison scope remains the issue-reported Splatoon 3 11.3.0 interaction
+baseline: communication recovery must not revive abandoned play, and motion
+input should resume without an old-pose jump. Browser GO sequencing, 12-second
+host wait, 2-second initial probe and 15-second stale warning are INKWAVE
+engineering behavior, not Nintendo engine measurements. No gear/weapon damage
+or movement values change in this PR. No console/Android/iOS hardware or full
+three-minute round comparison is claimed; device-specific sensor delivery and
+retail timing remain unverified.
+
+Validation commands: the focused workflow room/gyro set plus workflow contracts
+passes 77/77; the selected startup ownership set passes 77/77. Production build
+content hash is `7672846b9918ec84c604cc8f251d43e464fad2db0f054cbcbc9fbedc9e321a69`.
+`node scripts/check-inkwave-room-gyro.mjs <built-site>` passes in Chromium using
+real WebSocket transport and `RoomDurableObject.handleSession`; scene setup is
+controlled, sensors are synthetic. CI runs this same probe with Chromium and
+WebKit before the existing UI gates, at the immutable PR head. All inherited
+full gates remain enabled. The broader gyro matrix has the same 11 failures on
+base and candidate (base 83/94; candidate plus room/new tests 131/142), including
+#524/#615/#678; those inherited failures are not repaired or hidden here.

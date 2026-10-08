@@ -105,6 +105,10 @@ jobs:
           if-no-files-found: error
           path: ${{ env.FOCUSED_EVIDENCE_DIR }}/
           retention-days: 14
+      - name: Verify claimed room startup and gyro health regressions
+        run: |
+          node --experimental-vm-modules --test patches/reliability/tests/net.test.mjs patches/reliability/tests/next-seven-room.test.mjs patches/local-quality/tests/gyro-stale.test.mjs patches/local-quality/tests/gyro-viability.test.mjs patches/local-quality/tests/gyro-focus.test.mjs
+          node --experimental-vm-modules --test --test-name-pattern='^(online |offline |ordinary online|ordinary offline|synchronous |a stale NetMatch|direct attract)' patches/reliability/tests/start.test.mjs
       - name: Verify PR1171 seven-issue and composition regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-1098-stored-muzzle.test.mjs patches/splatoon3/tests/issue-982-charger-rumble.test.mjs patches/splatoon3/tests/issue-batch-1171.test.mjs patches/splatoon3/tests/issue-979-slide-paint.test.mjs patches/splatoon3/tests/issue-570-paint-ownership-visibility.test.mjs patches/splatoon3/tests/results-presentation.test.mjs patches/local-quality/tests/idle-attract-budget.test.mjs patches/local-quality/tests/idle-resources.test.mjs patches/reliability/tests/net.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs
       - name: Verify six follow-up INKWAVE regressions
@@ -369,6 +373,9 @@ jobs:
       - name: Verify the complete installed motion catalog
         if: matrix.suite == 'catalog'
         run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/catalog" --profile-dir "$CI_STORAGE/cache/catalog"
+      - name: Verify room startup and gyro health in Chromium and WebKit
+        if: matrix.suite == 'ui'
+        run: node scripts/check-inkwave-room-gyro.mjs .built-site/_site --webkit
       - name: Verify touch layout in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-touch-layout.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/layout" --profile-dir "$CI_STORAGE/cache/layout"

@@ -24,14 +24,14 @@ function state(net) {
 
 // Self-test the build boundary as well as the runtime correction.
 test('network transforms require unique source anchors and leave other paths unchanged', () => {
-  for (const rel of ['src/net/session.js', 'src/net/transport.js']) {
+  for (const rel of ['src/net/session.js', 'src/net/transport.js', 'src/net/netmatch.js']) {
     const source = readSource(rel);
     assert.notEqual(adaptNet(rel, source), source);
     assert.throws(() => adaptNet(rel, ''), /anchor mismatch/);
     assert.throws(() => adaptNet(rel, source + source), /anchor mismatch/);
     assert.throws(() => adaptNet(rel, adaptNet(rel, source)), /anchor mismatch/);
   }
-  assert.equal(adaptNet('src/net/netmatch.js', 'untouched'), 'untouched');
+  assert.equal(adaptNet('src/core/ctx.js', 'untouched'), 'untouched');
 });
 
 test('pending Transport.close rejects promptly and removes every owned callback/timer', async () => {
