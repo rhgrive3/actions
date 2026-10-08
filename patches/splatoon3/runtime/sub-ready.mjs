@@ -13,7 +13,7 @@ const CHARGER_CANCEL_SUB = 5 / 60;
 export function installSubReady({Actor,WeaponRunner,SUB},profile){
  const tag=Symbol.for('inkwave.s3.sub-ready.v1'),wr=WeaponRunner.prototype;
  if(wr[tag])return;Object.defineProperty(wr,tag,{value:true});
- const cancel=r=>{r.s3SubReady=null;r.s3SubFromSquid=false;r.aimingSub=false;};
+ const cancel=r=>{r.s3ClearSplatlingSubInterrupt?.();r.s3SubReady=null;r.s3SubFromSquid=false;r.aimingSub=false;};
  const cancelInput=wr.cancelPendingInput;
  wr.cancelPendingInput=function(...args){this.s3ChargerCancelSubRemaining=0;cancel(this);return cancelInput?.apply(this,args);};
  const reset=wr.reset,busy=wr.busy,update=wr.update;
@@ -37,6 +37,15 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
   const a=this.a;
   if(!a.alive||a.specialActive||a.superJumpState){this.s3ChargerCancelSubRemaining=0;cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});}
   this.s3ChargerCancelSubRemaining=Math.max(0,(this.s3ChargerCancelSubRemaining||0)-Math.max(0,dt));
+  const splatlingSub=this.s3StepSplatlingSubInterrupt?.(dt,input);
+  if(splatlingSub==='wait'){
+   const next={...input,sub:false,subReleased:false};
+   // Releasing ZR alongside R must not turn the still-cancelable charge into
+   // a paid stream during the five-frame sub interruption window.
+   if(this.charging)next.fire=true;
+   return update.call(this,dt,next);
+  }
+  if(splatlingSub==='cancelled')return update.call(this,dt,{...input,sub:false,subReleased:false});
   if(a.weapon.kind==='charger'&&input.sub&&this.charging&&!this.s3Stored&&dt>0){
    // Use the existing main cancellation owner; paid ink is not refunded.
    this.cancelMainForSub();cancel(this);

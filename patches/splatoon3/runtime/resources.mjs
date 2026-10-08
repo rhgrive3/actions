@@ -1,5 +1,6 @@
 import { turfCombatAllowed } from './turf-combat.mjs';
 import { stormRecoveryState } from './storm-effects.mjs';
+import { isChargerFullCharge } from './weapons.mjs';
 let api, tuning, profile;
 export function installResources(context, values) { api = context; tuning = values.resources; profile = values; }
 export const RESPAWN_CAUSES = Object.freeze({ normal: 8.5, water: 7.0, outOfBounds: 5.5 });
@@ -89,14 +90,14 @@ export function updateResources(a, dt) {
   // `charging`, so detection here locks the cancellation update itself; after
   // this tick's decrement the lock is rewritten to exactly 19F, which blocks
   // 19 fixed ticks (cancel tick .. cancel+18F) and reopens eligibility at
-  // cancel+19F. Full-charge keeps (charge >= .999 → s3Stored) never take this
+  // cancel+19F. Full-charge keeps (isChargerFullCharge → s3Stored) never take this
   // path. Community-verified S3 table, no Switch re-measurement is claimed.
   if (a.s3) {
     a.s3.chargerInterruptRecover = Math.max(0, (a.s3.chargerInterruptRecover || 0) - dt);
     a.s3.chargerKeepRecover = Math.max(0, (a.s3.chargerKeepRecover || 0) - dt);
   }
   const runner = a.weaponRunner;
-  if (runner?.charging && isSquid && a.weapon.kind === 'charger' && runner.charge < .999) {
+  if (runner?.charging && isSquid && a.weapon.kind === 'charger' && !isChargerFullCharge(runner.charge)) {
     a.s3 ||= {};
     a.s3.chargerInterruptRecover = 19 / 60;
   }

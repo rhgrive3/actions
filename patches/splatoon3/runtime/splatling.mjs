@@ -138,6 +138,12 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       // Retire/refund through the dedicated owner once, preserving its paid state.
       cancel(this); return;
     }
+    if (this.s3SplatlingSubInterruptReady) {
+      this.s3SplatlingSubInterruptReady = false;
+      // The 5F R edge is consumed here so prepaid stream ink still uses this
+      // owner's exact unspent-round refund at the boundary.
+      cancel(this); return;
+    }
     if (a.form === 'squid') releaseSplatlingInterrupt?.(this, a._squidPressT);
     // R starts the native sub-ready workflow. It must end the old stream
     // before native update() admits/charges the sub later in this tick.
