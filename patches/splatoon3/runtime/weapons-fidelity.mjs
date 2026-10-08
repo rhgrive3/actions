@@ -774,7 +774,10 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const picked=flickUnitFor(weapon,vertical,index);
   if(!picked)throw new RangeError('Roller index exceeds pinned units + labelled defaults');
   const {unit,offset}=picked;
-  let pitch=Math.max(-.2,Math.min(.5,actor.aimPitch));
+  // #1128: camera aim already owns the legal gameplay pitch envelope. Do not
+  // collapse Roller flicks onto the legacy [-0.2,+0.5] plateaus before applying
+  // the extracted per-unit launch offsets.
+  let pitch=Number.isFinite(actor.aimPitch)?actor.aimPitch:0;
   if(vertical){
     speed=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0));
     pitch+=radians((unit.SpawnRotateXDegreeBase||0)+offset*(unit.AfterOffsetSpawnRotateXDegree||0));
