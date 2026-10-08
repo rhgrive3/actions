@@ -28,22 +28,25 @@ async function paint(charge,{ground=false,ghost=false,dt=1/60}={}) {
  assert.equal(f.ps._fidelityChargerFlights.length,0,'finite flight reaches its obstacle');
  const feet=paint.filter(p=>p.opts?.kind==='trail');const flightPaint=paint.filter(p=>p.opts?.kind!=='trail');f.ps.clear();return {...f,paint:flightPaint,feet,impacts,frames};
 }
+// #840: the FullCharge paint step applies only at the authoritative full state
+// (charge 1, ding-aligned). Near-full partials interpolate toward the pinned
+// MaxCharge endpoint, never the FullCharge endpoint.
 test('#407 finite Charger ground/wall impacts and events retain raw endpoint ratios and full-charge step',async()=>{
  for(const ground of [false,true]){
   const cases=[];
-  for(const [charge,want] of [[1/6,.906],[7/12,1.8125],[1/6+5/6*.998,2.715374],[.999,3.263],[1,3.263]]){
+  for(const [charge,want] of [[1/6,.906],[7/12,1.8125],[1/6+5/6*.998,2.715374],[.999,2.7168244],[1,3.263]]){
    const f=await paint(charge,{ground}),impact=f.paint.at(-1);
    assert.equal(f.impacts.length,1);assert.equal(impact.opts.stretchAmt,.6);
    near(impact.r,want);near(f.impacts[0].radius,impact.r);
    assert.ok(f.frames>0);cases.push(f);
   }
   near(cases[0].paint.at(-1).r/cases[4].paint.at(-1).r,.906/3.263);
-  assert.ok(cases[3].paint.at(-1).r/cases[2].paint.at(-1).r>1.2);
+  assert.ok(cases[4].paint.at(-1).r/cases[3].paint.at(-1).r>1.2);
  }
 });
 test('#420 finite Charger line centers follow raw spacing and keep nearest footprint separate',async()=>{
  const spacings=[];
- for(const [charge,spacing,width,depth] of [[1/6,4.7775,.78,2.73],[7/12,3.485625,1.17,2.145],[1/6+5/6*.998,2.34429117,1.55844,1.56234],[.999,2.0592,1.56,1.56],[1,2.0592,1.56,1.56]]){
+ for(const [charge,spacing,width,depth] of [[1/6,4.7775,.78,2.73],[7/12,3.485625,1.17,2.145],[1/6+5/6*.998,2.34429117,1.55844,1.56234],[.999,2.3425744212,1.559064,1.561404],[1,2.0592,1.56,1.56]]){
   const f=await paint(charge),line=f.paint.slice(0,-1);
   assert.ok(line.length>=2);near(line[0].pos.z,.3+1.2);near(line[0].r,1.2);
   for(let i=1;i<line.length;i++){near(line[i].pos.z-line[i-1].pos.z,spacing);near(line[i].r,width);}

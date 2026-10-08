@@ -129,9 +129,9 @@ test('full-charge storage and the normal fired-shot path never take the partial-
     assert.equal(f.shots.length, 1);
     assert.ok(lock(a) <= 1e-10, 'a normal shot does not arm the interruption lock');
     a.ink = 50;
-    for (let i = 0; i < 19; i++) { f.tick(a); assert.equal(a.ink, 50, `post-shot delay holds at +${i}F`); }
-    f.tick(a);                          // lastFire reaches the ordinary 20F delay
-    assert.ok(a.ink > 50, 'ordinary post-shot recovery still opens at its own boundary');
+    for (let i = 1; i <= 18; i++) { f.tick(a); assert.equal(a.ink, 50, `post-shot delay holds at +${i}F`); }
+    f.tick(a);                          // +19F: S3 measured refill boundary
+    assert.ok(a.ink > 50, 'ordinary post-shot recovery opens at the 19F boundary');
   }
 });
 

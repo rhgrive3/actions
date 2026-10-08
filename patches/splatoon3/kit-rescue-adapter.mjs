@@ -53,8 +53,13 @@ export function adaptKitRescue(rel, code, replaceOnce) {
       "      case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12]); break; }",'bomb replay identity');
     else patch(plainBombReplay,
       "      case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11]); break; }",'bomb replay identity');
-    patch('      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3]);',
-      '      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);','trizooka packet identity');
+    const inkMetaProjectileTail = '      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null]);';
+    if (code.includes(inkMetaProjectileTail)) patch(inkMetaProjectileTail,
+      '      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'trizooka packet identity');
+    else patch('      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3]);',
+      '      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'trizooka packet identity');
     code="import { KIT_FORWARD } from '../../patches/splatoon3/runtime/kit-network.mjs';\nimport { kitVolleyPacketIndex } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { kitBombPacket } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\n"+code;
   } else if(rel==='src/game/weapons.js'){
     patch('this.throwVelocity(a, subThrowSpec(a, SUB.bomb).throwSpeed, vel);',
@@ -108,8 +113,14 @@ export function adaptKitRescue(rel, code, replaceOnce) {
       '          if (hit.kitDefense) hit.kitDefense.onHit(); else this._impact(p, hit);'
     );
     patch(impactAnchor, impactTarget, 'kit defense world contact');
-    patch('nose, sats] = e;','nose, sats, s3Volley, s3Action] = e;','trizooka ghost identity');
-    patch("    this.list.push(p);\n  }","    kitTrizookaGhost(p, a, SPECIALS, { volleyIndex: s3Volley, actionIndex: s3Action });\n    this.list.push(p);\n  }",'trizooka ghost reconstruction');
+    if (code.includes('this.inkFlight.restore(p, e[27]);')) {
+      patch('nose, sats] = e;', 'nose, sats] = e;\n    const s3Volley = e[28], s3Action = e[29];', 'trizooka ghost identity');
+    } else {
+      patch('nose, sats] = e;', 'nose, sats, s3Volley, s3Action] = e;', 'trizooka ghost identity');
+    }
+    patch("    this.list.push(p);\n  }",
+      "    kitTrizookaGhost(p, a, SPECIALS, { volleyIndex: s3Volley, actionIndex: s3Action, specialPowerAP: e[34]?.s3SpecialPowerAP ?? e[33]?.s3SpecialPowerAP ?? e[30]?.s3SpecialPowerAP ?? e[29]?.s3SpecialPowerAP });\n    this.list.push(p);\n  }",
+      'trizooka ghost reconstruction');
     code="import { kitPaintAuthority, kitTrizookaGhost, kitTrizookaSteppedBands } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { kitSubRelease, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombKeepsFuse, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n"+code;
   }
   return code;

@@ -148,3 +148,31 @@ test('the existing event owner and sequence gates reject spoofed and duplicate s
   nm._play('p2', event); assert.equal(played, 1);
   nm._play('p2', event); assert.equal(played, 1);
 });
+
+
+test('first-splat reconnect history stays bounded across 24/7 same-session rematches', async () => {
+  const f = await fixture();
+  const session = f.makeSession('host', 'host', [['host','Host'], ['guest','Guest']]);
+  const actors = [
+    f.makeActor({ nid: 0, owner: 'host', team: 0, roller: false }),
+    f.makeActor({ nid: 1, owner: 'guest', team: 1, roller: false }),
+  ];
+  const make = id => {
+    const nm = f.makeNetMatch(session, { id });
+    f.G.match = f.bind(nm, actors);
+    return nm;
+  };
+  const first = make('cycle-0');
+  assert.equal(first.claimFirstSplat(actors[0], actors[1]), true);
+  for (let i = 1; i <= 80; i++) {
+    const nm = make(`cycle-${i}`);
+    assert.equal(nm.claimFirstSplat(actors[0], actors[1]), true);
+  }
+  // A live reconnect inside the bounded recent-match window must preserve
+  // authority, while an evicted old match cannot pin unlimited session memory.
+  const recent = make('cycle-80');
+  assert.equal(recent.claimFirstSplat(actors[0], actors[1]), false);
+  const old = make('cycle-0');
+  assert.equal(old.claimFirstSplat(actors[0], actors[1]), true,
+    'old entry was evicted rather than retained for the entire session lifetime');
+});

@@ -81,10 +81,10 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
     else if (sj?.phase === 'charge' && (s.form || 'kid') !== 'kid') {
       m.token = sj;
       m.touchdown = false; m.phase = 'charge';
-      m.progress = clamp(sj.t / Math.max(1e-10, f.chargeTime ?? profile.superJump.chargeTime));
+      m.progress = clamp((Number.isFinite(sj.t) ? sj.t : 0) / Math.max(1e-10, f.chargeTime ?? profile.superJump.chargeTime));
     } else if (sj?.phase === 'flight') {
       m.token = sj;
-      m.touchdown = false; m.progress = clamp(sj.t / Math.max(1e-10, sj.dur ?? profile.superJump.flightTime));
+      m.touchdown = false; m.progress = clamp((Number.isFinite(sj.t) ? sj.t : 0) / Math.max(1e-10, sj.dur ?? profile.superJump.flightTime));
       m.phase = (s.form || 'kid') === 'kid' ? 'descent' : sj.t === 0 ? 'takeoff' : 'flight';
     } else if (m.touchdown && !sj && s.grounded && (s.form || 'kid') === 'kid'
       && this.tr[CHARACTER_TIMERS.T_LAND] + Math.max(0, Math.min(.1, dt || 0)) < SUPERJUMP_MOTION_CALIBRATION.touchdownWindow) {

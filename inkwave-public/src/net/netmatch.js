@@ -49,6 +49,8 @@ export class NetMatch {
     this.cfg = cfg;
     this.myId = session.myId;
     this.byNid = new Map();
+    this.hitNextSeq = 0;
+    this.hitPending = new Map(); // capped, for relay-confirmed undeliverable hits
     this.peers = new Map();        // sender id → playback clock { off, delay, want, tr, rate, lastTs, events }
     this.out = [];                 // events recorded since the last tick
     this.tickT = 0;
@@ -96,6 +98,7 @@ export class NetMatch {
   dispose() {
     for (const u of this.unsubs) u();
     this.unsubs.length = 0;
+    this.hitPending.clear();
     for (const a of this.byNid.values()) this._stopLoops(a);
     if (G.netm === this) G.netm = null;
   }
@@ -107,7 +110,7 @@ export class NetMatch {
     if (this.applying || this.mute > 0 || o.cosmetic) return;
     const st = o.stretch;
     this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team, r3(o.seed ?? Math.random()), o.kind ?? 0,
-      st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0]);
+      st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1]);
   }
 
   recProj(p) {
@@ -115,7 +118,7 @@ export class NetMatch {
     if (!o || o.remote || o.nid === undefined) return;
     this._rec(['p', o.nid, p.type, p.wid || 0, r2(p.pos.x), r2(p.pos.y), r2(p.pos.z), r2(p.vel.x), r2(p.vel.y), r2(p.vel.z),
       r3(p.delay || 0), r3(p.life), r3(p.straight), r2(p.radius), r2(p.size), p.grav, p.drag, p.trailEvery || 0, p.head ? 1 : 0,
-      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3]);
+      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null]);
   }
 
   recBomb(b) {
@@ -142,8 +145,26 @@ export class NetMatch {
   // hits land on the victim's owner right away (not on the playback timeline: health must be current)
   sendHit(attacker, victim, dmg, wid) {
     if (victim.owner === this.myId) return false;
-    this.s.tr?.sendTo(victim.owner, { k: 'hit', v: victim.nid, a: attacker.nid, d: r2(dmg), w: wid });
+    const message = { k: 'hit', v: victim.nid, a: attacker.nid, d: r2(dmg), w: wid,
+      seq: ++this.hitNextSeq };
+    this.hitPending.set(message.seq, { message, oldOwner: victim.owner });
+    while (this.hitPending.size > 64) this.hitPending.delete(this.hitPending.keys().next().value);
+    this.s.tr?.sendTo(victim.owner, message);
     return true;
+  }
+  // A relay-owned negative delivery acknowledgement is sent only if the
+  // addressed peer no longer exists. Process it after the ordered leave notice
+  // has transferred this exact victim to the new authoritative owner.
+  _hitNack(d) {
+    const pending = this.hitPending.get(d.seq);
+    if (!pending || pending.oldOwner !== d.to) return;
+    this.hitPending.delete(d.seq);
+    const victim = this.byNid.get(pending.message.v);
+    const attacker = this.byNid.get(pending.message.a);
+    if (!victim?.alive || !attacker || attacker.owner !== this.myId ||
+        victim.owner === pending.oldOwner) return;
+    if (victim.owner === this.myId) this._hit(pending.message, this.myId);
+    else this.s.tr?.sendTo(victim.owner, pending.message);
   }
 
   _sendNow(d) { this.s.tr?.broadcast(d); }
@@ -186,7 +207,8 @@ export class NetMatch {
   onMessage(from, d) {
     switch (d.k) {
       case 't': this._tick(from, d); break;
-      case 'hit': this._hit(d); break;
+      case 'hit': this._hit(d, from); break;
+      case 'hit_nack': if (from === '__relay__') this._hitNack(d); break;
       case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d); break;
       case 'st': if (from === this.s.hostId) this._hostState(d); break;
       case 'res': if (from === this.s.hostId) this._result(d); break;
@@ -352,8 +374,14 @@ export class NetMatch {
     a.invuln = f & F.invuln ? 0.1 : 0;
     a.stats.turf = Math.max(a.stats.turf, S.turf);
     a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;
-    a.superJumpState = f & (F.sjCharge | F.sjFlight) ? (a.superJumpState || { phase: 'charge', net: true }) : null;
-    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? 'flight' : 'charge';
+    // Only presentation state is reconstructed here: gameplay stays owner-authoritative.
+    const jumpPhase = f & F.sjFlight ? 'flight' : 'charge';
+    if (f & (F.sjCharge | F.sjFlight)) {
+      const age = Number.isFinite(S.sjT) ? Math.max(0, S.sjT) : 0;
+      if (!a.superJumpState || !a.superJumpState.net || a.superJumpState.phase !== jumpPhase)
+        a.superJumpState = { phase: jumpPhase, net: true, t: age };
+      else a.superJumpState.t = Math.max(Number.isFinite(a.superJumpState.t) ? a.superJumpState.t : 0, age);
+    } else a.superJumpState = null;
     // weapon pose state (charge glow, roller drum, splatling spin, dualies lock …)
     const wr = a.weaponRunner;
     wr.charging = !!(f & F.charging); wr.charge = S.ch;
@@ -440,6 +468,7 @@ export class NetMatch {
         const opts = { seed: e[7] };
         if (e[8]) opts.kind = e[8];
         if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+        if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
         G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
         this.applying = false;
         break;
@@ -589,9 +618,10 @@ export class NetMatch {
   }
 
   // ---- hits (victim's owner) ------------------------------------------------------------------------------------------
-  _hit(d) {
+  _hit(d, from) {
     const v = this.byNid.get(d.v), atk = this.byNid.get(d.a);
     if (!v || v.remote || !v.alive || !atk || atk.team === v.team) return;
+    if (atk.owner !== from || !Number.isFinite(d.d) || d.d <= 0 || d.d > 10000) return;
     this._applyingHit = true;
     G.projectiles?.applyHit(atk, v, d.d, d.w);
     this._applyingHit = false;
@@ -705,14 +735,15 @@ function packActor(a) {
   const n = a.climbing ? a.wallN : null;
   return [a.nid, r2(a.pos.x), r2(y), r2(a.pos.z), r2(a.vel.x), r2(a.vel.y), r2(a.vel.z), r3(a.yaw), r3(a.aimYaw), r3(a.aimPitch), f,
     Math.round(a.hp), Math.round(a.ink), Math.round(a.special), r2(wr.streaming ? wr.burstFrac : wr.charge), Math.round(a.stats.turf), a.netTp || 0,
-    n ? r2(n.x) : 0, n ? r2(n.y) : 0, n ? r2(n.z) : 0, r2(wr.lockT || 0)];
+    n ? r2(n.x) : 0, n ? r2(n.y) : 0, n ? r2(n.z) : 0, r2(wr.lockT || 0),
+    r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0)];
 }
 
 function unpackActor(s, ts) {
-  return { t: ts, x: s[1], y: s[2], z: s[3], vx: s[4], vy: s[5], vz: s[6], yaw: s[7], aimYaw: s[8], aimPitch: s[9], f: s[10], hp: s[11], ink: s[12], sp: s[13], ch: s[14], turf: s[15], tp: s[16], wx: s[17], wy: s[18], wz: s[19], lock: s[20] };
+  return { t: ts, x: s[1], y: s[2], z: s[3], vx: s[4], vy: s[5], vz: s[6], yaw: s[7], aimYaw: s[8], aimPitch: s[9], f: s[10], hp: s[11], ink: s[12], sp: s[13], ch: s[14], turf: s[15], tp: s[16], wx: s[17], wy: s[18], wz: s[19], lock: s[20], sjT: Number.isFinite(s[21]) ? s[21] : 0 };
 }
 
-function blankSample() { return { t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, aimYaw: 0, aimPitch: 0, f: 0, hp: 100, ink: 100, sp: 0, ch: 0, turf: 0, tp: 0, wx: 0, wy: 0, wz: 1, lock: 0 }; }
+function blankSample() { return { t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, aimYaw: 0, aimPitch: 0, f: 0, hp: 100, ink: 100, sp: 0, ch: 0, turf: 0, tp: 0, wx: 0, wy: 0, wz: 1, lock: 0, sjT: 0 }; }
 function copySample(s, o) { for (const k in s) o[k] = s[k]; return o; }
 
 // cubic Hermite on position (owner velocities as tangents), linear on velocity/angles, discrete state from the earlier
@@ -743,6 +774,8 @@ function hermite(a, b, t, o) {
   o.aimPitch = a.aimPitch + (b.aimPitch - a.aimPitch) * u;
   o.ch = a.ch + (b.ch - a.ch) * u;
   o.lock = a.lock + (b.lock - a.lock) * u;
+  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));
+  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);
   o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;
   return o;
 }

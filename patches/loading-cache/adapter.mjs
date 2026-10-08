@@ -106,14 +106,14 @@ export function prepareLoading(build, preloads) {
     const rel=path.relative(build,file).split(path.sep).join('/');
     if(['index.html','sw.js','.nojekyll','inkwave-build.json'].includes(rel)||rel.startsWith('_versions/')||rel.includes('/dev/')||rel.endsWith('/sw.js'))continue;
     if(!/\.(?:m?js|css|json|png|jpg|jpeg|webp|svg|woff2|webmanifest|glb|gltf|ogg|mp3|wav)$/.test(rel))continue;
-    const bytes=fs.readFileSync(file);assets[rel]={bytes:bytes.length,sha256:hash(bytes)};
+    const bytes=fs.readFileSync(file);assets[rel]=[bytes.length,hash(bytes)];
   }
   const css=Object.keys(assets).filter(rel=>rel.endsWith('.css')); // Includes @import HUD CSS and non-./ HTML hrefs.
   const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||rel.startsWith('assets/lightmaps/')||rel==='assets/stages/manifest.json'||rel.startsWith('patches/splatoon3/pwa/'))]);
   for(const rel of core)if(!assets[rel])throw new Error(`loading-cache: missing precache dependency ${rel}`);
   const precache=[...core].sort();
-  const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel].bytes,0);
-  const assetBytes=Object.values(assets).reduce((sum,a)=>sum+a.bytes,0);
+  const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
+  const assetBytes=Object.values(assets).reduce((sum,a)=>sum+a[0],0);
   if(precacheBytes>5*1024*1024||assetBytes+512*1024>12*1024*1024)throw new Error('loading-cache: payload budget exceeded');
   return {assets,precache,assetBytes,precacheBytes,phases:adapted.phases};
 }

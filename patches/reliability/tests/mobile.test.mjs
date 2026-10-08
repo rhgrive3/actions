@@ -105,7 +105,7 @@ async function fixture({ raw = false, layout = false } = {}) {
     input, owner, context, document, window, storage, timers, frames, controls: mobile.namespace.CONTROLS,
     down: (id, x, y, extra) => route('pointerdown', id, x, y, extra),
     move: (id, x, y) => route('pointermove', id, x, y),
-    up: (id, type = 'pointerup') => route(type, id),
+    up: (id, type = 'pointerup', x, y) => input.root.dispatch(type, event(id, x, y)),
     button(id, pointer = 1) { const b = input._box(id); route('pointerdown', pointer, b.x, b.y); return b; },
     resetState() { input.resetPointers(); },
     resize() { window.dispatch('resize'); for (const fn of frames.splice(0)) fn(); },
@@ -285,9 +285,10 @@ test('opening map cancels gameplay gestures but redundant map-open does not eras
 
 test('map toggle edge, pause and gyro buttons keep their explicit action priority', async () => {
   const f = await fixture({ layout: true });
-  f.button('fire'); f.button('map', 2); assert.equal(f.input.mapOpen, true); assert.equal(f.input.wasPressed('map'), true); assert.equal(f.input.wasPressed('fire'), false);
-  f.input.endFrame(); f.button('map', 3); assert.equal(f.input.mapOpen, false); assert.equal(f.input.wasPressed('map'), true);
-  let paused = 0; f.input.onPause = () => paused++; f.button('pause', 4); assert.equal(paused, 1); assert.equal(f.input.wasPressed('pause'), true);
+  // MAP / PAUSE commit on the completed tap (#925), so the pointerup is part of the gesture.
+  f.button('fire'); f.button('map', 2); f.up(2); assert.equal(f.input.mapOpen, true); assert.equal(f.input.wasPressed('map'), true); assert.equal(f.input.wasPressed('fire'), false);
+  f.input.endFrame(); f.button('map', 3); f.up(3); assert.equal(f.input.mapOpen, false); assert.equal(f.input.wasPressed('map'), true);
+  let paused = 0; f.input.onPause = () => paused++; f.button('pause', 4); assert.equal(paused, 0); f.up(4); assert.equal(paused, 1); assert.equal(f.input.wasPressed('pause'), true);
   f.button('gyro', 5); await Promise.resolve(); assert.equal(f.input.gyro.enabled, true); assert.equal(f.input.lookDX, 0);
 });
 
@@ -322,4 +323,90 @@ test('right swipe, FIRE drag and stick output keep the existing numerical respon
     f.down(3, 120, 400); f.move(3, 155, 420);
   }
   for (const key of ['moveX', 'moveY', 'lookDX', 'lookDY']) assert.equal(patched.input[key], raw.input[key], key);
+});
+
+// ---- #925: PAUSE / MAP commit on a completed tap, never on pointerdown
+test('#925 negative control: native PAUSE and MAP commit on pointerdown and cannot be cancelled', async () => {
+  const f = await fixture({ raw: true }); let paused = 0; f.input.onPause = () => paused++;
+  f.button('pause', 7); assert.equal(paused, 1); assert.equal(f.input._ptr.has(7), false);
+  f.up(7, 'pointercancel'); assert.equal(paused, 1);
+  f.button('map', 8); f.up(8, 'pointercancel'); assert.equal(f.input.mapOpen, true);
+});
+
+for (const type of ['pointercancel', 'lostpointercapture']) {
+  test(`#925 PAUSE pointerdown + ${type} never pauses, repeated notifications are idempotent`, async () => {
+    const f = await fixture({ layout: true }); let paused = 0; f.input.onPause = () => paused++;
+    f.button('pause', 7); assert.equal(paused, 0); assert.equal(f.input._ptr.get(7).kind, 'tap');
+    f.up(7, type); f.up(7, type); f.up(7); f.up(7, 'lostpointercapture');
+    assert.equal(paused, 0); assert.equal(f.input.wasPressed('pause'), false); assert.equal(f.input._ptr.size, 0);
+  });
+  test(`#925 MAP pointerdown + ${type} leaves the map closed; a minimap tap cancels the same way`, async () => {
+    const f = await fixture({ layout: true });
+    f.button('map', 7); assert.equal(f.input.mapOpen, false); f.up(7, type); f.up(7, type);
+    assert.equal(f.input.mapOpen, false); assert.equal(f.input.wasPressed('map'), false);
+    f.document.querySelector = () => ({ style: {}, getBoundingClientRect: () => ({ left: 480, right: 520, top: 200, bottom: 240, width: 40 }) });
+    f.down(8, 500, 220); assert.equal(f.input.mapOpen, false); f.up(8, type); assert.equal(f.input.mapOpen, false);
+  });
+}
+
+test('#925 a completed tap commits exactly once and the lostpointercapture that follows adds nothing', async () => {
+  const f = await fixture({ layout: true }); let paused = 0; f.input.onPause = () => paused++;
+  const p = f.button('pause', 7); f.up(7, 'pointerup', p.x, p.y); f.up(7, 'lostpointercapture');
+  assert.equal(paused, 1); assert.equal(f.input.wasPressed('pause'), true);
+  const m = f.button('map', 8); f.up(8, 'pointerup', m.x + 3, m.y - 4); f.up(8, 'lostpointercapture');
+  assert.equal(f.input.mapOpen, true); assert.equal(f.input.wasPressed('map'), true);
+  f.input.endFrame(); const m2 = f.button('map', 9); f.up(9, 'pointerup', m2.x, m2.y); assert.equal(f.input.mapOpen, false);
+  f.document.querySelector = () => ({ style: {}, getBoundingClientRect: () => ({ left: 480, right: 520, top: 200, bottom: 240, width: 40 }) });
+  f.down(10, 500, 220); assert.equal(f.input.mapOpen, false); f.up(10, 'pointerup', 500, 220); assert.equal(f.input.mapOpen, true);
+});
+
+test('#925 cancelling or lifting pointer B never cancels or commits pointer A\'s tap; drift past the slop is not a tap', async () => {
+  const f = await fixture({ layout: true }); let paused = 0; f.input.onPause = () => paused++;
+  const p = f.button('pause', 1); f.down(2, 700, 200); f.up(2, 'pointercancel'); f.up(3, 'pointercancel');
+  assert.equal(paused, 0); assert.equal(f.input._ptr.get(1).kind, 'tap');
+  f.up(1, 'pointerup', p.x, p.y); assert.equal(paused, 1);
+  const q = f.button('pause', 4); f.up(4, 'pointerup', q.x + 60, q.y); assert.equal(paused, 1, 'dragged off the control');
+});
+
+test('#925 a reset between down and up (blur, rotation, device change) drops the pending tap', async () => {
+  const f = await fixture({ layout: true }); let paused = 0; f.input.onPause = () => paused++;
+  const p = f.button('pause', 1); f.input.resetPointers(); f.up(1, 'pointerup', p.x, p.y);
+  assert.equal(paused, 0); assert.equal(f.input._ptr.size, 0);
+  const m = f.button('map', 2); f.window.dispatch('blur'); f.up(2, 'pointerup', m.x, m.y); assert.equal(f.input.mapOpen, false);
+});
+
+test('#925 the held controls and GYRO are unchanged: FIRE/JUMP still latch on pointerdown, GYRO still toggles on its tap', async () => {
+  const f = await fixture({ layout: true });
+  f.button('fire', 1); assert.equal(f.input.down('fire'), true); assert.equal(f.input.wasPressed('fire'), true);
+  f.button('jump', 2); assert.equal(f.input.down('jump'), true);
+  f.button('gyro', 3); await Promise.resolve(); assert.equal(f.input.gyro.enabled, true);
+});
+
+// ---- #936: a platform cancel is reported separately from a finger-up
+for (const id of ['fire', 'sub']) for (const type of ['pointercancel', 'lostpointercapture']) {
+  test(`#936 held ${id} + ${type} is reported cancelled once; ordinary pointerup and trailing lostpointercapture are not`, async () => {
+    const f = await fixture({ layout: true });
+    f.button(id, 1); f.input.endFrame(); assert.equal(f.input.down(id), true);
+    f.up(1, type); f.up(1, type);
+    assert.equal(f.input.down(id), false); assert.equal(f.input.wasCancelled(id), true);
+    f.input.endFrame(); assert.equal(f.input.wasCancelled(id), false, 'consumed with the tick');
+    f.button(id, 2); f.input.endFrame(); f.up(2); f.up(2, 'lostpointercapture');
+    assert.equal(f.input.down(id), false); assert.equal(f.input.wasCancelled(id), false);
+  });
+}
+
+test('#936 cancelling one of two fingers on a button keeps the hold; a new press supersedes an earlier cancel', async () => {
+  const f = await fixture({ layout: true });
+  f.button('fire', 1); f.button('fire', 2); f.up(1, 'pointercancel');
+  assert.equal(f.input.down('fire'), true); assert.equal(f.input.wasCancelled('fire'), false);
+  f.up(2, 'pointercancel'); assert.equal(f.input.wasCancelled('fire'), true);
+  f.button('fire', 3); assert.equal(f.input.wasCancelled('fire'), false);
+});
+
+test('#936 resets that drop a hold (blur, hide, opening the map) report it cancelled; a tap-only reset does not', async () => {
+  for (const action of [f => f.window.dispatch('blur'), f => f.input.setVisible(false), f => f.input.setMap(true), f => f.input.resetPointers()]) {
+    const f = await fixture({ layout: true }); f.button('fire', 1); f.button('sub', 2); f.input.endFrame();
+    action(f); assert.equal(f.input.wasCancelled('fire'), true); assert.equal(f.input.wasCancelled('sub'), true);
+  }
+  const f = await fixture({ layout: true }); f.input.resetPointers(); assert.equal(f.input.wasCancelled('fire'), false);
 });

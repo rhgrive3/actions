@@ -8,7 +8,7 @@ test('baseline reproduces publication ordering; final packet preserves native lo
   const f=await fixture({network}),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',vertical:true});f.bind(nm,[a]);
   f.projectiles.fireFlick(a,a.weapon);const p=f.projectiles.list[0],e=nm.out[0];
   assert.equal(p.grav,144);assert.equal(p.drag,6);assert.equal(e[16],p.grav);assert.equal(e[17],p.drag);
-  if(network){assert.equal(e.length,35);assert.equal(e[29],1);assert.equal(e[30],p.seed);assert.equal(e[31],p._netId);assert.equal(e[32],p.fidelityRollerUnitIndex);}
+  if(network){assert.equal(e.length,36);assert.equal(e[27],p.inkMeta||null);assert.equal(e[30],1);assert.equal(e[31],p.seed);assert.equal(e[32],p._netId);assert.equal(e[33],p.fidelityRollerUnitIndex);}
  }
 });
 test('projectile timeline catches up delay without exhausting lifetime budget or freezing',async()=>{
@@ -20,7 +20,7 @@ test('projectile timeline catches up delay without exhausting lifetime budget or
 test('replayed birth in a newer packet cannot resurrect an ended projectile',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',roller:false});f.bind(nm,[a]);
  a.character.getMuzzle=o=>o.copy(a.pos).setY(30);f.projectiles.fireShooter(a,a.weapon,0);
- const e=JSON.parse(JSON.stringify(nm.out.find(x=>x[1]==='p')));assert.equal(e.length,35);assert(Number.isSafeInteger(e[31]));
+ const e=JSON.parse(JSON.stringify(nm.out.find(x=>x[1]==='p')));assert.equal(e.length,36);assert(Number.isSafeInteger(e[32]));
  f.projectiles.clear();a.remote=true;a.owner='p2';const peer={tr:e[0]+e[11]+e[12]+1};nm.peers.set('p2',peer);
  nm._play('p2',e);assert.equal(f.projectiles.list.length,1);f.projectiles.update(1/60);assert.equal(f.projectiles.list.length,0);nm._play('p2',e);assert.equal(f.projectiles.list.length,0);
 

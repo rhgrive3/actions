@@ -66,3 +66,15 @@ test('#582 native owner packet and remote pose carry the bounded special positio
   assert.equal(g.a.pos.x,packet.a[0][1]);assert.equal(g.a.pos.z,packet.a[0][3]);assert.ok(g.distance()>=g.R-1e-12);
  }finally{owner.dispose();remote.dispose();}
 });
+
+// #648 must preserve #582's native boundary owner through the full build order.
+test('Slam boundary composes with the action-owned gauge exactly once before forecast and impact', async () => {
+ const { adaptSource } = await import('../../splatoon3/adapter.mjs');
+ const { adaptSpecialBarrier } = await import('../special-barrier-adapter.mjs');
+ const fs = await import('node:fs');
+ const source = fs.readFileSync(new URL('../../../inkwave-public/src/game/actor.js', import.meta.url), 'utf8');
+ const composed = adaptSpecialBarrier('src/game/actor.js', adaptSource('src/game/actor.js', source));
+ const boundary = "    this._resolve(false, py, false);\n    this._spawnBarrier();\n    updateTidalSlamGauge(this, s, sp, dt, G, PLAYER);\n    if (s.phase === 'fall'";
+ assert.equal(composed.split(boundary).length - 1, 1);
+ assert.throws(() => adaptSpecialBarrier('src/game/actor.js', composed), /expected exactly one connection/);
+});

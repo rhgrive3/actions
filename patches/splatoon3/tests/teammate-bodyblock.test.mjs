@@ -141,15 +141,12 @@ test('#656 30/60/120 Hz rendering around the same fixed simulation blocks identi
   assert.equal(outcomes[0].allyHp, 100);
 });
 
-// Heavy now has its own pinned0F body-block regression (#929).
-for (const kind of ['dualies']) {
-  test(`#656 unrelated ${kind} rounds preserve teammate pass-through`, async () => {
-    const { ps, shooter, ally, enemy } = await setup(kind);
-    ally.pos.set(0, 0, 2); enemy.pos.set(0, 0, 6);
-    if (kind === 'dualies') ps.fireDualies(shooter, shooter.weapon, 0, 0);
-    else ps.fireSplatling(shooter, shooter.weapon, 0);
-    step(ps);
-    assert.equal(ally.hp, 100, 'friendly actor remains unharmed');
-    assert.ok(enemy.hp < 100, 'unrelated family still passes the ally and hits the enemy');
-  });
-}
+// Heavy has its own pinned 0F body-block regression (#929); Dualies are owned by #939.
+test('#656/#939 Dualies compose with their sourced 0F teammate body-block', async () => {
+  const { ps, shooter, ally, enemy } = await setup('dualies');
+  ally.pos.set(0, 0, 2); enemy.pos.set(0, 0, 6);
+  ps.fireDualies(shooter, shooter.weapon, 0, 0);
+  step(ps);
+  assert.equal(ally.hp, 100, 'friendly actor remains unharmed');
+  assert.equal(enemy.hp, 100, 'Dualies round is consumed by the ally under #939');
+});

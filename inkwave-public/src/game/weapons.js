@@ -9,6 +9,8 @@ import * as THREE from 'three';
 import { G, emit, clamp, lerp, smoothstep } from '../core/ctx.js';
 import { WEAPONS, SUB, SPECIALS, PLAYER } from '../config.js';
 import { Physics, Hit } from './physics.js';
+import { InkFlightRuntime } from './inkFlightRuntime.js';
+import { profileFor, launchSpeed, correctInkAim, referenceReach } from './inkFlight.js';
 
 // local-player gamepad rumble (subtle; no-op without a pad or with settings.rumble = 0)
 function rumble(a, strong, weak, ms) { if (a && a.isLocal && !a.isBot) G.input?.rumble?.(strong, weak, ms); }
@@ -38,6 +40,7 @@ export class WeaponRunner {
     this.rollDist = 0; this.rollHits = new Map(); this.chargeLoop?.stop(0.05); this.chargeLoop = null; this.chargeDinged = false;
     this.rollLoop?.stop(0.1); this.rollLoop = null;
     this.lastRollPos = null;
+    this.inkShotSequences = Object.create(null);
     // dualies: alternating hand, per-hand shot clocks, dodge roll + locked turret afterwards
     this.hand = 0; this.sinceHand = this.sinceHand || [99, 99]; this.sinceHand[0] = this.sinceHand[1] = 99;
     this.dodge = null; this.lockT = 0; this.rollsLeft = 2; this.rollPaint = 0;
@@ -529,6 +532,7 @@ function ribbonGate(renderer, scene, camera, geometry) { geometry.drawRange.coun
 export class Projectiles {
   constructor(scene) {
     this.scene = scene;
+    this.inkFlight = new InkFlightRuntime(this);
     this.list = [];
     this.pool = [];
     this.bombs = [];
@@ -578,6 +582,7 @@ export class Projectiles {
   }
 
   clear() {
+    this.inkFlight.clear();
     for (const p of this.list) this.pool.push(p);
     this.list.length = 0;
     for (const b of this.bombs) this._releaseBomb(b);
@@ -625,6 +630,7 @@ export class Projectiles {
   _new() {
     const p = this.pool.pop() || { pos: new THREE.Vector3(), prev: new THREE.Vector3(), vel: new THREE.Vector3(), start: new THREE.Vector3() };
     p.delay = 0; p.head = false; p.wid = null; p.dmgFar = undefined; p.vol = null; p.ghost = false;   // optional fields never leak between recycled rounds
+    p.inkProfile = null; p.inkMeta = null; p.inkKey = null; p.inkPlan = null;
     return p;
   }
 
@@ -644,6 +650,7 @@ export class Projectiles {
       grav, drag, seed: Math.random(), delay, head: !!head, vis, tail0, tailK, wob, wobF, nose, sats, ghost: true });
     p.pos.set(px, py, pz); p.prev.copy(p.pos); p.start.copy(p.pos);
     p.vel.set(vx, vy, vz);
+    this.inkFlight.restore(p, e[27]);
     this.list.push(p);
   }
 
@@ -766,14 +773,19 @@ export class Projectiles {
   fireShooter(a, w, spreadDeg) {
     const m = this._muzzle(a, _v.set(0, 0, 0));
     const dir = this._aimFrom(a, m, _dir);
-    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
+    const inkProfile = profileFor(w);
+    const inkSpeed = inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;
+    if (inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));
+    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
     this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));
     const p = this._new();
-    // trail starts ~2.5 m out so shots never drip on the shooter's own feet
+    // Legacy fallback values; the source-guided profile below replaces the
+    // infinite floor trail with finite physical drops, including feet slots.
     Object.assign(p, { type: 'shot', owner: a, team: a.team, age: 0, life: 1.2, straight: w.straightTime, radius: w.impactRadius, damage: w.damage, size: 0.15, trail: -(2.5 - w.trailEvery), trailEvery: w.trailEvery, trailRadius: w.trailRadius, grav: 28, drag: 0.8, seed: Math.random(),
       vis: 0.1 + Math.random() * 0.012, tail0: 0.8, tailK: 1.3, wob: 0.035, wobF: 26, nose: 0.3, sats: 3 });
     p.pos.copy(m); p.prev.copy(m); p.start.copy(m);
-    p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    p.vel.copy(dir).multiplyScalar(inkSpeed);
+    if (inkProfile) this._configureInkRound(p, a, w);
     this._push(p);
     if (a.isLocal || a._nearCamera()) {
       G.audio?.play('shoot_shooter', { pos: a.isLocal ? undefined : m, volume: a.isLocal ? 0.55 : 0.4 });
@@ -782,6 +794,16 @@ export class Projectiles {
     emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone() });
     const wr = a.weaponRunner;
     if (wr.rumbleT <= 0) { wr.rumbleT = 0.09; rumble(a, 0.02, 0.1, 40); }
+  }
+
+  _configureInkRound(p, actor, weapon) {
+    const runner = actor.weaponRunner;
+    const counters = runner.inkShotSequences || (runner.inkShotSequences = Object.create(null));
+    const key = weapon.inkFlightProfile;
+    const sequence = counters[key] || 0;
+    this.inkFlight.configure(p, key, sequence, p.seed, runner.lockT > 0);
+    counters[key] = sequence + 1;
+    p.wid = weapon.id;
   }
 
   // Left-hand muzzle for dual wield: the rig's own left pistol when it exposes one, else the right muzzle mirrored
@@ -806,12 +828,16 @@ export class Projectiles {
   // one stream round (shooter-family): ballistic correction onto the crosshair, spread cone, teardrop look
   _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {
     const dir = this._aimFrom(a, m, _dir);
-    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
+    const inkProfile = profileFor(w);
+    const inkSpeed = inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;
+    if (inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));
+    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
     this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));
     const p = this._new();
     Object.assign(p, { type: 'shot', wid: w.id, owner: a, team: a.team, age: 0, life: 1.2, straight: w.straightTime, radius: w.impactRadius, damage: w.damage, size: 0.15, trail: -(2.5 - w.trailEvery), trailEvery: w.trailEvery, trailRadius: w.trailRadius, grav: 28, drag: 0.8, seed: Math.random() }, look);
     p.pos.copy(m); p.prev.copy(m); p.start.copy(m);
-    p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    p.vel.copy(dir).multiplyScalar(inkSpeed);
+    if (inkProfile) this._configureInkRound(p, a, w);
     this._push(p);
     if (a.isLocal || a._nearCamera()) {
       G.audio?.play(snd, { pos: a.isLocal ? undefined : m, volume: a.isLocal ? sndVol : sndVol * 0.72, pitch });
@@ -1146,6 +1172,8 @@ export class Projectiles {
 
   // ---- per-frame
   update(dt) {
+    if (!Number.isFinite(dt) || dt <= 0) return;
+    this.inkFlight.beginFrame(dt);
     const list = this.list;
     const nm = G.netm;
     for (let i = list.length - 1; i >= 0; i--) {
@@ -1155,6 +1183,7 @@ export class Projectiles {
       try { if (this._step(p, dt)) { list[i] = list[list.length - 1]; list.pop(); this.pool.push(p); } }
       finally { if (p.ghost && nm) nm.mute--; }
     }
+    this.inkFlight.updateDrops();
     this._updateBombs(dt);
     this._updateClouds(dt);
     this._updateBeams(dt);
@@ -1163,6 +1192,7 @@ export class Projectiles {
 
   // one round, one frame; true = it's done
   _step(p, dt) {
+    if (p.inkProfile) return this.inkFlight.stepHead(p, dt);
     {
       p.age += dt;
       p.prev.copy(p.pos);
@@ -1516,6 +1546,7 @@ export class Projectiles {
         n++;
       }
     }
+    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);
     B.count = n;
     // count=0 already suppresses the draw; do not upload unchanged backing buffers.
     if (!n) return;

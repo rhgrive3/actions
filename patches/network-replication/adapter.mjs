@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { adaptIssue1088SurgePresentation } from './issue-1088-surge-adapter.mjs';
 export const NETWORK_ROOT = fileURLToPath(new URL('./', import.meta.url));
 function once(code, before, after, label) {
   const i = code.indexOf(before);
@@ -15,7 +16,8 @@ function replaceAllExpected(code, before, after, expected, label) {
   return code.split(before).join(after);
 }
 export function networkIdentity() {
-  return Object.fromEntries(['adapter.mjs'].map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
+  return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs']
+    .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
@@ -130,10 +132,27 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
-    patch("import { G, emit, on } from '../core/ctx.js'", "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js'", 'read numeric event snapshots');
     patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
     patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
+    patch("    this.unsubs.push(on('match:state', ({ state, match: m }) => { if (m === this.match && this.isHost) this._sendNow({ k: 'st', s: state, t: r2(m.time) }); }));",
+      "    this.unsubs.push(on('match:state', ({ state, match: m }) => { if (m === this.match && this.isHost) { const d={ k:'st', s:state, t:r2(m.time) }; if (state==='finish' && validFinishCoverage(m.s3FinishCoverage)) d.fc=[...m.s3FinishCoverage]; if (state==='finish' && validFinishMapDataUrl(m.s3FinishMapDataUrl)) d.fm=m.s3FinishMapDataUrl; this._sendNow(d); } }));",
+      'propagate immutable Turf finish snapshot');
     patch("      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;", "      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;\n      case 'fs': this._acceptFirstSplat(from,d); break;\n      case 'fsq': this._answerFirstSplat(from,d); break;", 'first-splat host confirmation packets');
+    patch(`  _hostState(d) {
+    const m = this.match;
+    if (!m || this.isHost) return;
+    if (typeof d.t === 'number') m.time = d.t;
+    if (d.s !== m.state && d.s !== 'judge') m.setState(d.s);
+  }`, `  _hostState(d) {
+    const m = this.match;
+    if (!m || this.isHost) return;
+    if (typeof d.t === 'number') m.time = d.t;
+    if (d.s === 'finish') {
+      if (validFinishCoverage(d.fc)) m.s3FinishCoverage = Object.freeze([d.fc[0], d.fc[1]]);
+      if (validFinishMapDataUrl(d.fm)) m.s3FinishMapDataUrl = d.fm;
+    }
+    if (d.s !== m.state && d.s !== 'judge') m.setState(d.s);
+  }`, 'receive immutable Turf finish snapshot');
     patch('  _remoteSplat(victim, attacker, cause) {', `  _requestFirstSplat() {
     const id = this.cfg?.id;
     if (!this.isHost && typeof id === 'string' && id && this.s.hostId) this.s.tr?.sendTo(this.s.hostId,{k:'fsq',m:id});
@@ -181,7 +200,19 @@ export function emit(name, payload) {
   }
 
   _remoteSplat(victim, attacker, cause) {`, 'host-authoritative first-splat protocol');
-    patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    victim.alive = false;", 'Flow observes only accepted remote splats');
+    patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    clearRemoteSquidroll(victim);\n    victim.alive = false;", 'Flow observes only accepted remote splats');
+    patch("import { G, emit, on } from '../core/ctx.js'",
+      "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js';\nimport { exportPendingLethal, restorePendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\nimport { exportSplatlingReservation, isValidSplatlingReservation, refundSplatlingReservation } from '../../patches/splatoon3/runtime/splatling.mjs';\nimport { validFinishCoverage, validFinishMapDataUrl } from '../../patches/splatoon3/runtime/turf-finish.mjs'",
+      'read numeric event and adoption snapshots');
+    patch('invuln: 262144, enemy: 524288,',
+      'invuln: 262144, enemy: 524288, rollerFoldAttack: 1048576, rollerFoldVertical: 2097152,',
+      'roller fold mode snapshot flags');
+    patch('if (wr.slosh >= 0) f |= F.slosh;',
+      'if (wr.slosh >= 0) f |= F.slosh;\n  if (wr.s3RollerAttack) f |= F.rollerFoldAttack;\n  if (wr.s3RollerAttack?.vertical) f |= F.rollerFoldVertical;',
+      'pack owner Roller fold mode');
+    patch('wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
+      'wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;\n    wr.s3RollerFoldAttack = f & F.rollerFoldAttack ? { vertical: !!(f & F.rollerFoldVertical) } : null;',
+      'apply remote Roller fold mode');
     patch('const FORWARD = [', "const FORWARD = ['hit', 'hit:rejected', ",
       'authoritative hit admission feedback');
     patch('    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;',
@@ -203,18 +234,30 @@ export function emit(name, payload) {
       '  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {', 'Slosher volley identity send');
     {
       const matches = [...code.matchAll(/    this\.s\.tr\?\.sendTo\(victim\.owner, \{ k: 'hit',[^\n]+\}\);/g)];
-      if (matches.length !== 1) throw Error('Network replication anchor mismatch: ' + rel + ': Slosher volley identity wire field');
-      const match = matches[0], payload = match[0].slice(match[0].indexOf('{'), -2);
-      const replacement = `    const hit = ${payload};\n    if (slosherVolleyId != null) hit.g = slosherVolleyId;\n    this.s.tr?.sendTo(victim.owner, hit);`;
-      code = code.slice(0, match.index) + replacement + code.slice(match.index + match[0].length);
+      if (matches.length === 1) {
+        const match = matches[0], payload = match[0].slice(match[0].indexOf('{'), -2);
+        const replacement = `    const hit = ${payload};\n    if (slosherVolleyId != null) hit.g = slosherVolleyId;\n    this.s.tr?.sendTo(victim.owner, hit);`;
+        code = code.slice(0, match.index) + replacement + code.slice(match.index + match[0].length);
+      } else if (matches.length === 0 && code.includes("const message = { k: 'hit', v: victim.nid, a: attacker.nid,")) {
+        // #1033 stores a bounded retransmission record before attempting
+        // delivery. Carry the Slosher group on THAT stored object so a later
+        // negative-ACK retry retains the same group identity.
+        patch('    this.s.tr?.sendTo(victim.owner, message);',
+          '    if (slosherVolleyId != null) message.g = slosherVolleyId;\n    this.s.tr?.sendTo(victim.owner, message);',
+          'Slosher volley identity on retryable hit');
+      } else {
+        throw Error('Network replication anchor mismatch: ' + rel + ': Slosher volley identity wire field');
+      }
     }
     const groupedHit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
     patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
       groupedHit, 'Slosher volley identity owner admission');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
+    for (const a of this.byNid.values()) clearRemoteSquidroll(a);
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
     patch('  _remove(a) {\n    this.byNid.delete(a.nid);', `  _remove(a) {
+    clearRemoteSquidroll(a);
     retireNetworkGhosts(a);
     this.byNid.delete(a.nid);`, 'departed owner retirement');
 
@@ -237,6 +280,9 @@ export function emit(name, payload) {
     patch("const msg = { k: 't', ts: r3(now()), a",
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
       'owner simulation tick preserving existing sidecars');
+    patch('    const a = [];\n    for (const x of this.byNid.values()) if (!x.remote) a.push(packActor(x));',
+      '    const a = [], sq = Object.create(null), wp = Object.create(null), bw = Object.create(null);\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const wr = x.weaponRunner, slosh = x.weapon?.kind === \'slosher\' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n      const sp = x.specialActive, phase = sp?.id === \'slam\' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n      const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n      if (slosh >= 0 || phase) wp[x.nid] = [slosh, phase, slamT];\n      const windup = x.weapon?.kind === \'blaster\' ? x.weaponRunner?.s3BlasterWindup : 0;\n      if (Number.isFinite(windup) && windup > 0) bw[x.nid] = Math.min(1, windup);\n    }',
+      'append optional Squid Roll and weapon/special motion sidecars');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
       const points = p.physicsPoints || (p.physicsPoints = []);
@@ -244,12 +290,22 @@ export function emit(name, payload) {
     }
     // actors
     if (d.a)`, 'snapshot physics tick pair');
-    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema only in event packets');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
+    patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
+      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const a = this.byNid.get(s[0]);',
+      'strict optional Squid Roll and motion metadata validation');
+    patch('      const snap = unpackActor(s, d.ts);\n      snap.spCost = d.sc?.[a.nid];',
+      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.sloshElapsed = pose ? pose[0] : -1; snap.slamPhase = pose ? pose[1] : 0; snap.slamT = pose ? pose[2] : 0;\n      snap.blasterWindup = windup;\n      snap.spCost = d.sc?.[a.nid];',
+      'attach validated presentation-only action clocks');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
+      e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
+        && d.r === 2 && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(d.u)
+        && e._netTick >= 0 && e._netTick <= d.u;
+      e._finishPaintApplied = false;
       const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
         : e[1] === 'ev' && e[2] === 'special:use' && e[3]?.id === 'storm' ? e[3]?.actor?.n : null;
       const stormActor = this.byNid.get(stormNid), snap = stormActor?.net?.buf?.at(-1);
@@ -277,15 +333,93 @@ export function emit(name, payload) {
     patch('while (i < p.events.length && p.events[i][0] <= tr) i++;',
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
+    patch('  o.lock = a.lock + (b.lock - a.lock) * u;\n  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  o.spCost = a.spCost;\n  return o;',
+      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.sloshElapsed >= 0 && b.sloshElapsed >= 0) o.sloshElapsed = a.sloshElapsed + (b.sloshElapsed - a.sloshElapsed) * u;\n  if (a.slamPhase && a.slamPhase === b.slamPhase) o.slamT = a.slamT + (b.slamT - a.slamT) * u;\n  o.blasterWindup = (a.blasterWindup || 0) + ((b.blasterWindup || 0) - (a.blasterWindup || 0)) * u;\n  o.spCost = a.spCost;\n  return o;',
+      'interpolate matching presentation action clocks');
+    patch('    const S = n.cur;\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
+      '    const S = n.cur;\n    if (a.remote) {\n      const flags = S.f;\n      if (!a.alive || !(flags & F.alive) || !(flags & F.squid) || (flags & F.special) || !S.rollId) clearRemoteSquidroll(a);\n      else syncRemoteSquidroll(a, S, this.peers.get(a.owner));\n    }\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
+      'remote presentation follows accepted owner Roll snapshot');
+    patch('    wr.aimingSub = !!(f & F.subAim); wr.firingT = f & F.firing ? 0.3 : 0;',
+      '    wr.aimingSub = !!(f & F.subAim); wr.firingT = f & F.firing ? 0.3 : 0;\n    wr.s3BlasterWindup = a.weapon.kind === \'blaster\' ? Math.max(0, Number(S.blasterWindup) || 0) : 0;',
+      'remote Blaster startup windup presentation');
+    patch('        a.character._netTrig?.(e[3], unpackTrig(e[4]));',
+      "        if (e[3] === 'movement_cancel' || e[3] === 'land' || e[3] === 'spawn') clearRemoteSquidroll(a, true);\n        a.character._netTrig?.(e[3], unpackTrig(e[4]));",
+      'remote cancellation event invalidates current visual Roll');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
-    patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'ownership transfer retirement');
+      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
+    patch('    const drop = mapNoBots(this.cfg.map);',
+      "    const drop = this.cfg.map === 'range' || mapNoBots(this.cfg.map);", 'Practice Range remains humans-only on disconnect');
+    patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a);\n    clearRemoteSquidroll(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
+    patch('    a.superJumpState = null; a.specialActive = null;',
+      '    a.superJumpState = null; a.specialActive = null;\n    restoreAdoptionState(this, a, adoptionTransfer);',
+      'restore authoritative actor state after ordinary runner reset');
+    {
+      const rowWithStats = 'r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0), a.stats.specials || 0];';
+      if (code.includes(rowWithStats)) patch(rowWithStats,
+        'r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0), a.stats.specials || 0, packAdoptionState(a)];',
+        'append tagged adoption state after existing special counter');
+      else patch('r2(wr.lockT || 0)];',
+        'r2(wr.lockT || 0), packAdoptionState(a)];',
+        'append tagged adoption state to legacy actor row');
+    }
+    patch('wz: s[19], lock: s[20], sjT: Number.isFinite(s[21]) ? s[21] : 0 };',
+      'wz: s[19], lock: s[20], sjT: Number.isFinite(s[21]) ? s[21] : 0, adoption: s[23] };',
+      'unpack independent adoption row slot');
+    patch('const mode = this._pathAt(buf, tr, S);',
+      'const mode = this._pathAt(buf, tr, S);\n    S.adoption = sampleAdoptionState(buf, tr, mode, peer.sim);',
+      'sample adoption state on the sender timeline');
+    patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23 && s.length !== 24 && s.length !== 25) continue;
+      const adoption = s.length >= 24
+        ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq)
+        : null;
+      if (s.length >= 24 && !adoption) continue;
+      if (adoption) { snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence; }
+      else delete snap.adoption;
+      a.net.lastLife = snap.life;`, 'strict life/sequence-bound adoption packet');
+    patch('    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
+      '    applyAdoptionSample(this, a, S);\n    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
+      'restore adoption sample after authoritative age-based Super Jump phase');
+    patch('    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;',
+      "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;\n    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }",
+      'remote Tidal Slam phase clock');
+    patch('    wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
+      '    wr.slosh = f & F.slosh ? (Number.isFinite(S.sloshElapsed) && S.sloshElapsed >= 0 ? S.sloshElapsed : Math.max(0, wr.slosh)) : -1;',
+      'remote Slosher elapsed windup clock');
+    patch('    a.landT += dt; a.lastDamage += dt;',
+      '    a.landT += dt; a.lastDamage += dt;\n    applyAdoptionRecoveryAge(this, a, S);',
+      'retain remote elapsed damage recovery clock');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
+    // #1112: CPU turf ownership must consume the exact same canonical stamp on
+    // sender and receiver. Paint event transport therefore keeps gameplay
+    // position/radius/stretch scalars unrounded; render-only compression belongs elsewhere.
+    patch("this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team, o.seed ?? Math.random(), o.kind ?? 0,",
+      "this._rec(['s', c.x, c.y, c.z, radius, team, o.seed ?? Math.random(), o.kind ?? 0,",
+      'full-precision paint position/radius');
+    patch('st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0',
+      'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0',
+      'full-precision paint stretch');
+
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
+    const inkMetaBase = 'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null]);';
+    const inkMetaKitBirth = 'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
+    const poweredInkMetaKitBirth = 'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);';
     const kitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
-    if (code.includes(kitBirth)) patch(kitBirth,
+    const poweredKitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);';
+    if (code.includes(poweredInkMetaKitBirth)) patch(poweredInkMetaKitBirth,
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'append immutable special power after ink metadata and stable birth fields');
+    else if (code.includes(inkMetaKitBirth)) patch(inkMetaKitBirth,
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'append birth fields after ink metadata and kit fields');
+    else if (code.includes(poweredKitBirth)) patch(poweredKitBirth,
+      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'append immutable special power after stable birth fields');
+    else if (code.includes(kitBirth)) patch(kitBirth,
       'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
       'append birth mode, appearance seed, identity, roller unit after kit fields');
+    else if (code.includes(inkMetaBase)) patch(inkMetaBase,
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'append birth fields after ink metadata');
     else patch('p.nose ?? 0.3, p.sats ?? 3]);',
       'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
       'append birth mode, appearance seed, identity, roller unit');
@@ -306,6 +440,45 @@ export function emit(name, payload) {
     if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
     this.stats.in++;`, 'ordered tick replay guard');
     }
+    patch('  _playEvents() {', `  _applyRemoteSplatEvent(e) {
+    this.applying = true;
+    try {
+      const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
+      const opts = { seed: e[7] };
+      if (e[8]) opts.kind = e[8];
+      if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+      if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
+      G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
+    } finally { this.applying = false; }
+  }
+
+  commitDeadlinePaint() {
+    if (!this.isHost || !this.match || this.match.state !== 'playing') return 0;
+    let committed = 0;
+    for (const p of this.peers.values()) for (const e of p.events) {
+      if (e[1] !== 's' || !e._deadlineEligible || e._finishPaintApplied) continue;
+      this._applyRemoteSplatEvent(e);
+      e._finishPaintApplied = true;
+      committed++;
+    }
+    return committed;
+  }
+
+  _playEvents() {`, 'authoritative pre-deadline paint commit');
+    patch(`      case 's': {
+        this.applying = true;
+        const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
+        const opts = { seed: e[7] };
+        if (e[8]) opts.kind = e[8];
+        if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+        if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
+        G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
+        this.applying = false;
+        break;
+      }`, `      case 's': {
+        if (!e._finishPaintApplied) this._applyRemoteSplatEvent(e);
+        break;
+      }`, 'deadline paint is never double-applied');
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
     const eventPeer = this.peers.get(from);
@@ -381,12 +554,14 @@ export function emit(name, payload) {
         break;
       }`, 'beam birth clock');
     patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
-    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
+    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    clearRemoteSquidroll(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
         const peer = this.peers.get(from);
-        const birthId = e[e.length === 35 ? 31 : 29];
+        const inkMetaOffset = e[27] === null || typeof e[27] === 'object' ? 1 : 0;
+        const kitOffset = e.length === 35 || e.length === 36 || e.length === 37 ? 2 : 0;
+        const birthId = e[29 + inkMetaOffset + kitOffset];
         if (Number.isFinite(birthId) && peer) { if (birthId <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = birthId; }
         const a = this.byNid.get(e[2]), p = a && G.projectiles?.ghostProjectile(a, e);
         if (p) { p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0; p._netMaxSteps = Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2; }
@@ -398,6 +573,193 @@ export function emit(name, payload) {
         break;
       }`, 'birth and terminal events');
     code += `
+const ADOPTION_STATE_TAG = 'inkwave-adoption-v1';
+const ADOPTION_AGE_MAX = 60, ADOPTION_COOLDOWN_MAX = 10, ADOPTION_WORLD_MAX = 100000;
+function clampAdoptionAge(value) { return Number.isFinite(value) ? Math.min(ADOPTION_AGE_MAX, Math.max(0, value)) : 0; }
+function vectorRow(value) {
+  return value?.isVector3 && [value.x, value.y, value.z].every(Number.isFinite)
+    ? [value.x, value.y, value.z] : null;
+}
+function packSuperJumpState(state) {
+  if (!state) return null;
+  const phase = state.phase === 'flight' ? 1 : state.phase === 'charge' ? 0 : -1;
+  const from = vectorRow(state.from), to = vectorRow(state.to);
+  if (phase < 0 || !from || !to) return null;
+  let targetKind = 0, targetId = -1, target = [0, 0, 0];
+  if (phase === 0 && state.target?.pos?.isVector3) {
+    const p = vectorRow(state.target.pos);
+    if (!p || !Number.isSafeInteger(state.target.nid) || state.target.nid < 0) return null;
+    targetKind = 1; targetId = state.target.nid; target = p;
+  } else if (phase === 0 && state.target?.isVector3) {
+    const p = vectorRow(state.target); if (!p) return null;
+    targetKind = 2; target = p;
+  } else if (phase === 0) return null;
+  const elapsed = Number.isFinite(state.t) ? state.t : 0;
+  const duration = Number.isFinite(state.dur) ? state.dur : 0;
+  const marker = Number.isFinite(state.marker) ? state.marker : 0;
+  if (elapsed < 0 || elapsed > 60 || duration < 0 || duration > 60 || marker < 0 || marker > 60
+    || (phase === 1 && (duration <= 0 || elapsed > duration + 1e-6))) return null;
+  return [phase, elapsed, duration, ...from, ...to, marker, state.startForm === 'kid' ? 1 : 0,
+    targetKind, targetId, ...target];
+}
+function readSuperJumpState(row, flags) {
+  const hasJump = !!(flags & (F.sjCharge | F.sjFlight));
+  if (row === null) return hasJump ? undefined : null;
+  if (!Array.isArray(row) || row.length !== 16) return undefined;
+  const [phase, elapsed, duration] = row;
+  const marker = row[9], startForm = row[10], targetKind = row[11], targetId = row[12];
+  const values = [...row.slice(3, 9), marker, ...row.slice(13, 16)];
+  if (!Number.isSafeInteger(phase) || (phase !== 0 && phase !== 1)
+    || !Number.isFinite(elapsed) || elapsed < 0 || elapsed > 60
+    || !Number.isFinite(duration) || duration < 0 || duration > 60
+    || !Number.isFinite(marker) || marker < 0 || marker > 60
+    || !Number.isSafeInteger(startForm) || (startForm !== 0 && startForm !== 1)
+    || !Number.isSafeInteger(targetKind) || targetKind < 0 || targetKind > 2
+    || !Number.isSafeInteger(targetId) || targetId < -1
+    || !values.every(value => Number.isFinite(value) && Math.abs(value) <= ADOPTION_WORLD_MAX)) return undefined;
+  if (phase === 1 && (duration <= 0 || elapsed > duration + 1e-6 || targetKind !== 0 || targetId !== -1)) return undefined;
+  if (phase === 0 && (duration !== 0 || targetKind === 0 && targetId !== -1
+    || targetKind === 1 && targetId < 0 || targetKind === 2 && targetId !== -1)) return undefined;
+  if ((phase === 1) !== !!(flags & F.sjFlight) || (phase === 0) !== !!(flags & F.sjCharge)) return undefined;
+  return { phase: phase ? 'flight' : 'charge', elapsed, duration,
+    from: row.slice(3, 6), to: row.slice(6, 9), marker, startForm: startForm ? 'kid' : 'squid',
+    targetKind, targetId, target: row.slice(13, 16) };
+}
+function validLethalState(row, life, flags, hp) {
+  if (row === null) return (flags & F.alive) && hp <= 0 ? undefined : null;
+  if (!Array.isArray(row) || row.length !== 5) return undefined;
+  const [hitLife, sequence, attackerNid, cause, punisher] = row;
+  if (!(flags & F.alive) || hp > 0 || hitLife !== life || !Number.isSafeInteger(hitLife) || hitLife < 0
+    || !Number.isSafeInteger(sequence) || sequence < 1 || !Number.isSafeInteger(attackerNid) || attackerNid < -1
+    || typeof punisher !== 'boolean' || typeof cause !== 'string' || !cause.length || cause.length > 48 || /[\\u0000-\\u001f\\u007f]/.test(cause)) return undefined;
+  return [hitLife, sequence, attackerNid, cause, punisher];
+}
+function packAdoptionState(actor) {
+  const life = Number.isSafeInteger(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
+  const previous = Number.isSafeInteger(actor._adoptionSequence) && actor._adoptionSequence >= 0 ? actor._adoptionSequence : 0;
+  const sequence = previous >= Number.MAX_SAFE_INTEGER ? Number.MAX_SAFE_INTEGER : previous + 1;
+  actor._adoptionSequence = sequence;
+  const tick = Number.isFinite(G.time) ? Math.max(0, Math.round(G.time * 60)) : 0;
+  const lethal = exportPendingLethal(actor);
+  const spin = exportSplatlingReservation(actor.weaponRunner);
+  const cooldown = Number.isFinite(actor.weaponRunner?.cooldown)
+    ? Math.min(ADOPTION_COOLDOWN_MAX, Math.max(0, actor.weaponRunner.cooldown)) : 0;
+  return [ADOPTION_STATE_TAG, life, sequence, tick, clampAdoptionAge(actor.lastDamage),
+    packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin, cooldown];
+}
+function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
+  if (!Array.isArray(row) || (row.length !== 8 && row.length !== 9) || row[0] !== ADOPTION_STATE_TAG) return null;
+  const [tag, rowLife, sequence, tick, recoveryAge, jumpRow, lethalRow, spinRow] = row;
+  const cooldown = row.length === 9 ? row[8] : 0;
+  if (!Number.isSafeInteger(rowLife) || rowLife < 0 || rowLife !== life
+    || !Number.isSafeInteger(sequence) || sequence < 1 || sequence <= (previousSequence || 0)
+    || !Number.isSafeInteger(tick) || tick < 0 || !Number.isFinite(recoveryAge)
+    || recoveryAge < 0 || recoveryAge > ADOPTION_AGE_MAX
+    || !Number.isFinite(cooldown) || cooldown < 0 || cooldown > ADOPTION_COOLDOWN_MAX) return null;
+  const jump = readSuperJumpState(jumpRow, flags);
+  if (jump === undefined) return null;
+  const lethal = validLethalState(lethalRow, rowLife, flags, hp);
+  if (lethal === undefined) return null;
+  const streaming = !!(flags & F.streaming);
+  if (spinRow === null ? streaming : (!streaming || weaponKind !== 'splatling' || !isValidSplatlingReservation(spinRow, PLAYER.inkMax))) return null;
+  return { life: rowLife, sequence, tick, recoveryAge, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown };
+}
+function copyAdoptionState(state) {
+  if (!state) return null;
+  return { ...state, jump: state.jump ? { ...state.jump, from: state.jump.from.slice(), to: state.jump.to.slice(), target: state.jump.target.slice() } : null,
+    lethal: state.lethal ? state.lethal.slice() : null, spin: state.spin ? state.spin.slice() : null };
+}
+function sampleAdoptionState(buf, t, mode, ownerTick) {
+  if (!buf?.length) return null;
+  let left = buf[buf.length - 1], right = null;
+  for (let index = 1; index < buf.length; index++) if (t <= buf[index].t) { left = buf[index - 1]; right = buf[index]; break; }
+  const a = left?.adoption;
+  if (!a) return null;
+  if (!right) {
+    const out = copyAdoptionState(a);
+    const dt = Number.isFinite(ownerTick) && ownerTick > a.tick ? (ownerTick - a.tick) / 60 : 0;
+    out.tick = a.tick + dt * 60; out.recoveryAge = clampAdoptionAge(a.recoveryAge + dt);
+    out.cooldown = Math.max(0, (a.cooldown || 0) - dt);
+    if (out.jump?.phase === 'flight') out.jump.elapsed = Math.min(out.jump.duration, out.jump.elapsed + dt);
+    return out;
+  }
+  const b = right.adoption;
+  if (!b || b.life !== a.life) return copyAdoptionState(a);
+  const span = Math.max(1e-9, right.t - left.t), u = Math.max(0, Math.min(1, (t - left.t) / span));
+  if (u >= 1) return copyAdoptionState(b);
+  const out = copyAdoptionState(a);
+  out.sequence = a.sequence;
+  out.tick = a.tick + (b.tick - a.tick) * u;
+  out.recoveryAge = clampAdoptionAge(a.recoveryAge + (b.recoveryAge - a.recoveryAge) * u);
+  out.cooldown = Math.max(0, (a.cooldown || 0) + ((b.cooldown || 0) - (a.cooldown || 0)) * u);
+  if (a.jump && b.jump && a.jump.phase === b.jump.phase) {
+    out.jump.elapsed = a.jump.elapsed + (b.jump.elapsed - a.jump.elapsed) * u;
+    out.jump.duration = a.jump.duration + (b.jump.duration - a.jump.duration) * u;
+  }
+  return out;
+}
+function superJumpActorState(match, actor, data) {
+  if (!data) return null;
+  let target = null;
+  if (data.phase === 'charge') target = data.targetKind === 1 ? (match.byNid.get(data.targetId) || new THREE.Vector3(...data.target))
+    : data.targetKind === 2 ? new THREE.Vector3(...data.target) : null;
+  return { phase: data.phase, t: data.elapsed, dur: data.duration, from: new THREE.Vector3(...data.from),
+    to: new THREE.Vector3(...data.to), marker: data.marker, startForm: data.startForm, target, wallSupport: null };
+}
+function superJumpPosition(state) {
+  const k = Math.max(0, Math.min(1, state.t / state.dur));
+  const ease = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+  const apex = 11 + state.from.distanceTo(state.to) * .08, vertical = Math.pow(k, .86);
+  return new THREE.Vector3().lerpVectors(state.from, state.to, ease).setY(
+    state.from.y + (state.to.y - state.from.y) * ease + Math.sin(Math.PI * vertical) * apex);
+}
+function applyAdoptionSample(match, actor, sample) {
+  const state = sample.adoption;
+  if (!state || state.life !== actor.net.lastLife) return;
+  if (!state.jump) { actor.net.sjTo = null; return; }
+  actor.superJumpState = superJumpActorState(match, actor, state.jump);
+  if (state.jump.phase === 'flight') {
+    actor.net.sjTo = actor.superJumpState.to.clone();
+    actor.pos.copy(superJumpPosition(actor.superJumpState));
+  } else actor.net.sjTo = null;
+}
+function applyAdoptionRecoveryAge(match, actor, sample) {
+  const state = sample.adoption;
+  if (!state || state.life !== actor.net.lastLife) return;
+  const peer = match.peers.get(actor.owner), ahead = Number.isFinite(peer?.sim) && peer.sim > state.tick ? (peer.sim - state.tick) / 60 : 0;
+  actor.lastDamage = clampAdoptionAge(state.recoveryAge + ahead);
+}
+function latestAdoptionTransfer(actor) {
+  const latest = actor.net?.buf?.at(-1), state = latest?.adoption;
+  if (!state || state.life !== actor.net.lastLife) return null;
+  const sampled = actor.net.cur?.adoption;
+  return { latest: state, current: sampled?.life === state.life ? sampled : state, hp: latest.hp };
+}
+function restoreAdoptionState(match, actor, transfer) {
+  if (!transfer) return;
+  const latest = transfer.latest, current = transfer.current;
+  const life = actor.net?.lastLife ?? actor.netLife ?? 0;
+  if (latest.life !== life) return;
+  actor._adoptionSequence = Math.max(Number.isSafeInteger(actor._adoptionSequence) ? actor._adoptionSequence : 0, latest.sequence);
+  actor.net._adoptionSeq = Math.max(Number.isSafeInteger(actor.net._adoptionSeq) ? actor.net._adoptionSeq : 0, latest.sequence);
+  actor.lastDamage = clampAdoptionAge(current.recoveryAge);
+  actor.weaponRunner.cooldown = Math.max(actor.weaponRunner.cooldown || 0, current.cooldown || 0);
+  if (current.jump) {
+    let jump = current.jump;
+    if (latest.jump?.phase === 'flight' && jump.phase !== 'flight') {
+      jump = { ...latest.jump, from: vectorRow(actor.pos), elapsed: 0,
+        duration: Math.max(1 / 60, latest.jump.duration - latest.jump.elapsed) };
+    }
+    actor.superJumpState = superJumpActorState(match, actor, jump);
+    if (actor.superJumpState.phase === 'flight') actor.net.sjTo = actor.superJumpState.to.clone();
+  }
+  if (latest.lethal) {
+    if (Number.isFinite(transfer.hp) && transfer.hp <= 0) actor.hp = transfer.hp;
+    const attackerNid = latest.lethal[2], attacker = attackerNid < 0 ? null : match.byNid.get(attackerNid);
+    if (attackerNid < 0 || attacker) restorePendingLethal(actor, latest.lethal, attacker);
+  }
+  if (latest.spin) refundSplatlingReservation(actor.weaponRunner, latest.spin, latest.life, latest.sequence, PLAYER.inkMax);
+}
 function stormSnapshotAllows(actor, proof, from) {
   const latest = actor?.net?.buf?.at(-1);
   return !!(proof && actor?.alive && actor.remote && actor.owner === from && proof.owner === from
@@ -423,14 +785,78 @@ function retireNetworkGhosts(owner = null) {
   for (let i = P.beams.length-1; i >= 0; i--) { const b = P.beams[i]; if (b._netPeer && (!owner || b._netOwner === owner)) { b.mesh.visible = false; P.beamPool.push(b.mesh); P.beams.splice(i,1); } }
   for (const [a,mesh] of P.sights) if (a.remote && (!owner || a === owner)) { P.scene.remove(mesh); mesh.material.dispose(); P.sights.delete(a); }
 }
+const SQUIDROLL_ROW_TAG = 's3roll-v1';
+const outgoingSquidrolls = new WeakMap();
+function packSquidrollSnapshot(a) {
+  const action = a.s3?.actions?.roll;
+  const previous = outgoingSquidrolls.get(a);
+  const inactive = () => {
+    if (!previous?.action) return null;
+    previous.action = null;
+    return [SQUIDROLL_ROW_TAG, 0, 0, 0, 0];
+  };
+  if (!action || !a.alive || a.form !== 'squid' || a.specialActive || a.superJumpState
+    || !Number.isFinite(action.time) || action.time <= 0 || action.time > 0.5
+    || !Number.isFinite(action.vx) || !Number.isFinite(action.vz)
+    || Math.hypot(action.vx, action.vz) <= 1e-6 || Math.hypot(action.vx, action.vz) > 40) return inactive();
+  let state = previous;
+  if (!state || state.action !== action) {
+    let id = (state?.id || 0) + 1;
+    if (id > 0x7fffffff) id = 1;
+    state = { action, id };
+    outgoingSquidrolls.set(a, state);
+  }
+  return [SQUIDROLL_ROW_TAG, state.id, action.time, action.vx, action.vz];
+}
+function readSquidrollSnapshot(meta) {
+  if (meta == null) return null; // legacy packets carry no optional presentation sidecar
+  if (!Array.isArray(meta) || meta.length !== 5 || meta[0] !== SQUIDROLL_ROW_TAG
+    || !Number.isSafeInteger(meta[1]) || meta[1] < 0 || meta[1] > 0x7fffffff
+    || !Number.isFinite(meta[2]) || meta[2] < 0 || meta[2] > 0.5
+    || !Number.isFinite(meta[3]) || !Number.isFinite(meta[4])
+    || Math.hypot(meta[3], meta[4]) > 40) return false;
+  if (meta[1] === 0) return meta[2] === 0 && meta[3] === 0 && meta[4] === 0 ? null : false;
+  if (meta[2] <= 0 || Math.hypot(meta[3], meta[4]) <= 1e-6) return false;
+  return { id: meta[1], remaining: meta[2], vx: meta[3], vz: meta[4] };
+}
+function clearRemoteSquidroll(actor, blockCurrent = false) {
+  if (!actor) return;
+  if (blockCurrent) {
+    const id = actor.remoteSquidrollVisual?.id ?? actor.net?.cur?.rollId;
+    if (id) actor._remoteSquidrollBlocked = { owner: actor.owner, id };
+  } else actor._remoteSquidrollBlocked = null;
+  actor.remoteSquidrollVisual = null;
+}
+function syncRemoteSquidroll(actor, sample, peer) {
+  const id = sample.rollId;
+  const blocked = actor._remoteSquidrollBlocked;
+  if (blocked?.owner === actor.owner && blocked.id === id) { actor.remoteSquidrollVisual = null; return; }
+  if (blocked) actor._remoteSquidrollBlocked = null;
+  const elapsed = Number.isFinite(peer?.tr) ? Math.max(0, peer.tr - sample.t) : 0;
+  const remaining = Math.max(0, sample.rollRemaining - elapsed);
+  if (!remaining || remaining > 0.5) { clearRemoteSquidroll(actor); return; }
+  let visual = actor.remoteSquidrollVisual;
+  if (!visual || visual.id !== id || visual.owner !== actor.owner) {
+    visual = actor.remoteSquidrollVisual = { remotePresentation: true, id, owner: actor.owner,
+      remaining, vx: sample.rollVx, vz: sample.rollVz };
+  } else {
+    visual.remaining = Math.min(visual.remaining, remaining);
+    visual.vx = sample.rollVx; visual.vz = sample.rollVz;
+  }
+}
 const firstSplatSessions = new WeakMap();
+// #529: retain reconnect decisions for the eight most recent match IDs.
+const FIRST_SPLAT_RECENT_MATCHES = 8;
 function firstSplatStateFor(session,cfg) {
   const id = typeof cfg?.id === 'string' && cfg.id ? cfg.id : null;
   if (!id) return { matchId:null, claimed:false, attackerNid:null, victimNid:null };
   let matches = firstSplatSessions.get(session);
   if (!matches) { matches = new Map(); firstSplatSessions.set(session,matches); }
   let state = matches.get(id);
-  if (!state) { state = { matchId:id, claimed:false, attackerNid:null, victimNid:null }; matches.set(id,state); }
+  if (state) matches.delete(id);
+  else state = { matchId:id, claimed:false, attackerNid:null, victimNid:null };
+  matches.set(id,state);
+  if (matches.size > FIRST_SPLAT_RECENT_MATCHES) matches.delete(matches.keys().next().value);
   return state;
 }
 `;
@@ -527,8 +953,11 @@ function firstSplatStateFor(session,cfg) {
       'nm.sendHit(attacker, victim, dmg, weaponId, slosherVolleyId)', 'Slosher volley identity projectile forwarding');
     patch("    const route = nm ? nm.shouldApplyHit(attacker, victim) : 'local';",
       "    const route = nm ? nm.shouldApplyHit(attacker, victim, weaponId) : 'local';", 'pass weapon to damage authority');
-    patch('    const c = b.pos;\n    let area = G.paint.splat',
-      '    const c = b.pos;\n    const detonationLocalTime = b.ghost ? b._netBornLocal + b.age : null;\n    let area = G.paint.splat',
+// Kit explosion paint may have replaced the legacy body splat already.
+    // This stable, single-location anchor is the bomb explosion's event clock
+    // and must precede both ordinary and kit-specific paint paths.
+    patch('    const c = b.pos;',
+      '    const c = b.pos;\n    const detonationLocalTime = b.ghost ? b._netBornLocal + b.age : null;',
       'bomb detonation playback time');
     {
       // Gameplay fidelity may classify the far Splat Bomb band as
@@ -543,7 +972,11 @@ ${bombHit}`;
       code = code.slice(0, bombHitMatches[0].index) + guarded + code.slice(bombHitMatches[0].index + bombHit.length);
     }
     patch('    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;', '    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    let projectileFirst;', 'attack-owned first projectile');
-    patch("      this._push(p);\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", "      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'capture exact volley during generation');
+    // Preserve the preceding presentation/gameplay layer's release footprint.
+    // Capture only the volley identity; remote ghosts never replay owner paint.
+    const releaseFootprint = code.includes('    paintRollerReleaseFootprint(this, a, w, { G, PLAYER, Hit, WALKABLE });')
+      ? '    paintRollerReleaseFootprint(this, a, w, { G, PLAYER, Hit, WALKABLE });\n' : '';
+    patch(`      this._push(p);\n    }\n${releaseFootprint}    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });`, `      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n${releaseFootprint}    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });`, 'capture exact volley during generation');
     patch('weapon: w.id, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
 
     patch('      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);', `      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);
@@ -554,7 +987,9 @@ ${bombHit}`;
       p.drag = w.flickDrag ?? p.drag;`, 'final flick physics before publication');
 
     patch('    p.delay = 0; p.head = false;', '    p._netId = undefined; p._netEnded = false; p._netPeer = null; p._netBorn = undefined; p._netBornTick = undefined; p._netSteps = 0; p._netMaxSteps = 0; p._netEndStep = undefined; p._netEndReason = 0; p._netHitActor = false;\n    p.delay = 0; p.head = false;', 'recycled identity reset');
-    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    const birthOffset = e.length === 35 ? 2 : 0;
+    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    const inkMetaOffset = e[27] === null || typeof e[27] === 'object' ? 1 : 0;
+    const kitOffset = e.length === 35 || e.length === 36 || e.length === 37 ? 2 : 0;
+    const birthOffset = inkMetaOffset + kitOffset;
     p.s3Vertical = e[27 + birthOffset] === 1;
     if (Number.isFinite(e[28 + birthOffset])) p.seed = e[28 + birthOffset]; // retain the native random draw above
     p._netId = e[29 + birthOffset];
@@ -754,5 +1189,6 @@ ${bombHit}`;
       aC[i4] = C[i3]; aC[i4 + 1] = C[i3 + 1]; aC[i4 + 2] = C[i3 + 2]; aC[i4 + 3] = a;`, 'puff presentation belongs to source');
 
   }
+  if (rel === 'src/net/netmatch.js') code = adaptIssue1088SurgePresentation(code);
   return code;
 }

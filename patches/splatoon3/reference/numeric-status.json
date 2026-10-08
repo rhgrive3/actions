@@ -94,6 +94,31 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "player.s3HumanoidHurtRadius": {
+    "value": 0.35,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "player.s3HumanoidHurtHeight": {
+    "value": 1.65,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "player.s3TerrainDistanceScale": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "player.s3HumanoidTerrainRadiusRaw": {
+    "value": 0.35,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "player.s3SwimTerrainRadiusRaw": {
+    "value": 0.675,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.shooter.inkPerShot": {
     "value": 0.9199999999999999,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -483,6 +508,16 @@
       "rawValue": 7
     }
   },
+  "weapons.dualies.rollPaintWidthHalf": {
+    "value": 1.8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.dualies.rollPaintWorldScale": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.blaster.inkPerShot": {
     "value": 10,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -677,6 +712,11 @@
       "factor": 1,
       "rawValue": 0.4234
     }
+  },
+  "weapons.blaster.wallImpactPaintRadius": {
+    "value": 2.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   },
   "weapons.splatling.inkPerShot": {
     "value": 0.5625,
@@ -1023,7 +1063,7 @@
     "binding": null
   },
   "weapons.charger.inkRecoverStop": {
-    "value": 0.3333333333333333,
+    "value": 0.31666666666666665,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1153,7 +1193,7 @@
     "binding": null
   },
   "weapons.charger.partialDamagePerSecond": {
-    "value": 138.46,
+    "value": 46.15384615384615,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1173,7 +1213,7 @@
     "binding": null
   },
   "weapons.charger.feetPaintRadius": {
-    "value": 0.7,
+    "value": 1.2,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1184,6 +1224,11 @@
   },
   "weapons.charger.storedFireDelay": {
     "value": 0.5166666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.storedLaserDelay": {
+    "value": 0.4166666666666667,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1766,6 +1811,21 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.slosher.postShotLock": {
+    "value": 0.26666666666666666,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.reticleRange.ground": {
+    "value": 14.24,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.reticleRange.air": {
+    "value": 13.67,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "bomb.fuse": {
     "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1818,6 +1878,21 @@
   },
   "bomb.damageBands.1.1": {
     "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "bomb.knockback.accel": {
+    "value": 700,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "bomb.knockback.bias": {
+    "value": 0.8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "bomb.knockback.distance": {
+    "value": 12,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1878,6 +1953,16 @@
   },
   "specials.storm.radius": {
     "value": 10,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "specials.slam.damageMax": {
+    "value": 220,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "specials.slam.damageMin": {
+    "value": 60,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -2507,7 +2592,7 @@
     "binding": null
   },
   "flow.weights.assist": {
-    "value": 0.5,
+    "value": 0.42,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -2593,6 +2678,21 @@
   },
   "flow.abilityPoints": {
     "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.assistPoints.referenceThreshold": {
+    "value": 100,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.assistPoints.damage": {
+    "value": 14,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.assistPoints.marking": {
+    "value": 4,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -3306,6 +3406,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weaponsFidelity.brakeToFreeVelocityXZ": {
+    "value": 14.129999999999999,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weaponsFidelity.brakeToFreeVelocityY": {
     "value": -9,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -3456,6 +3561,31 @@
   },
   "clothingGear.respawnPunisher.specialSaverAPScale": {
     "value": 0.7,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.thermalInk.duration": {
+    "value": 16,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.trackingVisual.nearStart": {
+    "value": 6,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.trackingVisual.nearFull": {
+    "value": 8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.haunt.targetFrames": {
+    "value": 45,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.haunt.targetSpecialLoss": {
+    "value": 0.15,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   }

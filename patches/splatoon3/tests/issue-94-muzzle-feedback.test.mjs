@@ -172,3 +172,52 @@ test('#94 presentation query is read-only and clears when the field line is clea
   api.G.level.blocks.length = 0;
   assert.equal(projectiles.muzzleBlockFeedback(actor), null, 'cleared field removes the marker input');
 });
+
+
+test('#94 stationary Shooter HUD reuses first-hit sweep, invalidating on aim, stage and time', async () => {
+  const { api, actor, projectiles } = await nearCoverScene();
+  const original = projectiles._ballistic;
+  let solved = 0;
+  projectiles._ballistic = function (...args) { solved++; return original.apply(this, args); };
+  try {
+    assert.ok(projectiles.muzzleBlockFeedback(actor)?.hit);
+    const initial = solved;
+    assert.equal(initial, 1);
+    for (let frame = 0; frame < 120; frame++) assert.ok(projectiles.muzzleBlockFeedback(actor)?.hit);
+    assert.equal(solved, initial, 'same pose and immutable field do not repeat trajectory sweeps each HUD frame');
+    actor.aimPoint.x += 0.025;
+    projectiles.muzzleBlockFeedback(actor);
+    assert.equal(solved, initial + 1, 'changed aim invalidates immediately');
+    api.G.level.geometryGeneration = 2;
+    projectiles.muzzleBlockFeedback(actor);
+    assert.equal(solved, initial + 2, 'stage geometry generation invalidates immediately');
+    api.G.time += 0.21;
+    projectiles.muzzleBlockFeedback(actor);
+    assert.equal(solved, initial + 3, 'refresh is bounded even for in-place unversioned geometry edits');
+    api.G.level.blocks.length = 0;
+    assert.equal(projectiles.muzzleBlockFeedback(actor), null, 'a removed obstacle removes the contact marker');
+    assert.equal(solved, initial + 4, 'block collection mutation invalidates immediately');
+  } finally { projectiles._ballistic = original; }
+});
+
+
+test('#94 open-field fixed aim bounds swept broadphase cost at 60 Hz', async () => {
+  const { api, actor, projectiles } = await nearCoverScene();
+  api.G.level.blocks.length = 0;
+  const level = api.G.level, nativeQuery = level.queryBlocks;
+  let broadphaseQueries = 0;
+  level.queryBlocks = function (...args) {
+    broadphaseQueries++;
+    return nativeQuery.apply(this, args);
+  };
+  try {
+    for (let frame = 0; frame < 120; frame++) {
+      api.G.time = frame / 60;
+      assert.equal(projectiles.muzzleBlockFeedback(actor), null);
+    }
+    assert.ok(broadphaseQueries < 1600,
+      `idle Shooter preview must not run up to 72 field sweeps on every frame: ${broadphaseQueries} queries / 120 frames`);
+  } finally {
+    level.queryBlocks = nativeQuery;
+  }
+});

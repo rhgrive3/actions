@@ -9,6 +9,7 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 import { realCharacter } from './real-character-fixture.mjs';
 function start(f, a, vertical, dt = 1 / 60) {
   a.grounded = !vertical;
+  a.intent.move.set(0, 0, 1); // held-roll transitions require actual stick input (#847)
   a.weaponRunner.update(dt, { fire: true, firePressed: true });
 }
 
@@ -79,6 +80,7 @@ test('jump after starting a horizontal attack keeps its selected mode; the next 
 });
 test('a new flick lifts the rolling drum, a held trigger resumes rolling, release stops it', async () => {
   const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
+  a.intent.move.set(0, 0, 1);
   r.rolling = true; r.rollT = 2; start(f, a, false);
   assert.equal(r.rolling, false); assert.equal(r.rollT, 0);
   for (let i = 0; i < 21; i++) r.update(1 / 60, { fire: true });
@@ -139,6 +141,7 @@ test('actual moving roller geometry and both grips stay synchronized through lif
   const f = await fixture(), { Character, THREE, CHARACTER_CHANNELS: C } = await realCharacter();
   const a = new f.Actor({ team: 0, name: 'moving roller rig', weapon: 'roller', CharacterClass: Character });
   const c = a.character, r = a.weaponRunner; c.actor = a;
+  a.intent.move.set(0, 0, 1);
   for (const hz of [30, 60, 120]) for (const vertical of [false, true]) for (const held of [false, true]) for (const landAt of vertical ? [20 / 60, 40 / 60] : [Infinity]) {
     const dt = 1 / hz, s = settle(a, c, dt), rows = [];
     c.root.updateMatrixWorld(true);
@@ -162,7 +165,7 @@ test('actual moving roller geometry and both grips stay synchronized through lif
       if (t + 1e-10 < (vertical ? 31 : 21) / 60) assert.equal(c.weapon.drumW, 0, 'lift does not spin the drum before release');
     }
     const label = `${hz}Hz ${vertical ? `vertical land ${landAt}s` : 'horizontal'} ${held ? 'held/restart' : 'released'}`;
-    assert.ok(rows.every(x => x.bottom >= -.006), `${label}: actual vertices clear the floor (${Math.min(...rows.map(x => x.bottom))})`);
+    assert.ok(rows.every(x => x.bottom >= -.006), `${label}: actual vertices clear the floor (${JSON.stringify(rows.reduce((a,b)=>a.bottom<b.bottom?a:b))})`);
     assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002), `${label}: arms reach the weapon grips (${Math.max(...rows.map(x => x.gripL))})`);
     if (held) {
       // Allow the late landing at 40F and the lowering spring to finish before

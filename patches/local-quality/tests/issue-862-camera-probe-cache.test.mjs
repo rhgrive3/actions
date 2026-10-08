@@ -1,5 +1,6 @@
 // #862: exercise the native CameraRig after the exact source-adapter chain used by the build.
-// The locked inkwave-public source is read only; the raw module is the baseline control.
+// The locked source is read only; the differential control disables only cache reuse
+// in the fully composed module, retaining the independently owned shoulder framing.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
@@ -8,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptQualitySource } from '../adapter.mjs';
+import { adaptQualitySource, replaceOnce } from '../adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
 
@@ -56,7 +57,9 @@ async function boot() {
 
 async function loadRig(adapted) {
   const { mk, three, ctx, physics } = await boot();
-  const source = adapted ? installedSource() : rawSource();
+  const installed = installedSource();
+  const source = adapted ? installed : replaceOnce(installed,
+    'if (_qcChanged || _qcAge >= 0.25) {', 'if (true) {', 'test-only uncached production control');
   const mod = mk(source, adapted ? 'cameraRig-installed.js' : 'cameraRig-baseline.js');
   await mod.link((spec) => {
     if (spec === 'three') return three;
@@ -135,19 +138,14 @@ function activate(env) {
 
 function step(env, dt) {
   activate(env);
-  if (env.disableProbeCache) env.rig._inkwaveCameraProbeCache = null;
   env.rig.update(dt);
 }
 
 function viewState(env) {
-  // #363/#367 independently owns the lateral shoulder translation. Remove each
-  // rig's own shoulder before comparing the #862 probe-cache result.
-  const shoulder = env.rig.shoulder || 0, yaw = env.rig.yaw || 0, p = env.rig.camera.position;
-  const neutralPosition = [p.x + Math.cos(yaw) * shoulder, p.y, p.z - Math.sin(yaw) * shoulder];
   return [
-    ...neutralPosition, ...env.rig.camera.quaternion.toArray(),
+    ...env.rig.camera.position.toArray(), ...env.rig.camera.quaternion.toArray(),
     env.rig.camera.fov, env.rig.curDist, env.rig.wantDist, ...env.rig.pivot.toArray(),
-    env.rig.boom.x,
+    env.rig.boom.x, env.rig.shoulder || 0,
   ];
 }
 
@@ -169,14 +167,14 @@ function actorState(actor) {
 
 test('Issue #862: settled native follow camera reuses identical probes with frame-rate parity', async () => {
   const { THREE } = await boot();
-  const InstalledRig = await loadRig(true);
+  const RawRig = await loadRig(false), InstalledRig = await loadRig(true);
   const rawText = rawSource(), installedText = installedSource();
   assert.ok(rawText.includes('G.physics.cameraProbe(this.pivot, _back, this.wantDist, 0.62, _probe);'),
     'baseline control must contain the uncached native probe call');
   assert.notEqual(installedText, rawText, 'the installed CameraRig must receive the adapter');
 
   for (const hz of [30, 60, 120]) {
-    const raw = makeRuntime(InstalledRig, THREE), installed = makeRuntime(InstalledRig, THREE); raw.disableProbeCache = true;
+    const raw = makeRuntime(RawRig, THREE), installed = makeRuntime(InstalledRig, THREE);
     const dt = 1 / hz;
     for (let i = 0; i < 5; i++) {
       step(raw, dt); step(installed, dt);
@@ -205,10 +203,10 @@ test('Issue #862: settled native follow camera reuses identical probes with fram
 
 test('Issue #862: movement, collision output, level rebuild, target and mode invalidate the cache', async () => {
   const { THREE } = await boot();
-  const InstalledRig = await loadRig(true);
+  const RawRig = await loadRig(false), InstalledRig = await loadRig(true);
   for (const hz of [30, 60, 120]) {
     const wallProbe = (actor) => actor.pos.x > 0 ? 0.8 : null;
-    const raw = makeRuntime(InstalledRig, THREE, { probeLimit: wallProbe }); raw.disableProbeCache = true;
+    const raw = makeRuntime(RawRig, THREE, { probeLimit: wallProbe });
     const installed = makeRuntime(InstalledRig, THREE, { probeLimit: wallProbe });
     const dt = 1 / hz;
     for (let i = 0; i < 8; i++) { step(raw, dt); step(installed, dt); }
@@ -222,7 +220,7 @@ test('Issue #862: movement, collision output, level rebuild, target and mode inv
     assert.ok(installed.rig.curDist < before, `${hz}Hz camera must still retract toward the newly detected wall`);
   }
 
-  const raw = makeRuntime(InstalledRig, THREE), installed = makeRuntime(InstalledRig, THREE); raw.disableProbeCache = true;
+  const raw = makeRuntime(RawRig, THREE), installed = makeRuntime(InstalledRig, THREE);
   for (let i = 0; i < 3; i++) { step(raw, 1 / 60); step(installed, 1 / 60); }
   raw.counts.probeCalls = installed.counts.probeCalls = 0;
   raw.level.blocks = installed.level.blocks = [{}];
@@ -278,9 +276,9 @@ test('Issue #862: movement, collision output, level rebuild, target and mode inv
 
 test('Issue #862: caching does not replace the separate shoulder-clearance raycast', async () => {
   const { THREE } = await boot();
-  const InstalledRig = await loadRig(true);
+  const RawRig = await loadRig(false), InstalledRig = await loadRig(true);
   const closeProbe = () => 0.8;
-  const raw = makeRuntime(InstalledRig, THREE, { probeLimit: closeProbe }); raw.disableProbeCache = true;
+  const raw = makeRuntime(RawRig, THREE, { probeLimit: closeProbe });
   const installed = makeRuntime(InstalledRig, THREE, { probeLimit: closeProbe });
   for (let i = 0; i < 90; i++) {
     step(raw, 1 / 60); step(installed, 1 / 60);
@@ -312,4 +310,59 @@ test('Issue #862: a same-context collision result change is observed by the boun
   assert.equal(env.counts.probeCalls, 1, 'in-place collision change must reach a full native probe');
   assert.ok(waited <= 0.25 + dt, `in-place change waited ${waited}s, beyond the 250ms refresh bound`);
   assert.ok(env.rig.curDist < before, 'the refreshed wall result must still retract the camera');
+});
+
+test('Issue #862: sub-millimetre Super Jump zoom changes keep cached free-camera endpoints exact', async () => {
+  const { THREE } = await boot();
+  const InstalledRig = await loadRig(true);
+  for (const hz of [30, 60, 120]) {
+    const uncached = makeRuntime(InstalledRig, THREE);
+    const cached = makeRuntime(InstalledRig, THREE);
+    const flight = {
+      phase: 'flight', t: 0.4, dur: 1,
+      from: { x: 0, y: 0, z: 0 }, to: { x: 3, y: 0, z: 4 },
+    };
+    uncached.actor.superJumpState = { ...flight };
+    cached.actor.superJumpState = { ...flight };
+    const dt = 1 / hz;
+    let reusedWhileChanging = 0;
+    for (let i = 0; i < hz * 3; i++) {
+      // Keep all production adapters, only turn cache reuse off in the control.
+      uncached.rig._inkwaveCameraProbeCache = null;
+      const previousCalls = cached.counts.probeCalls;
+      const previousWant = cached.rig.wantDist;
+      step(uncached, dt);
+      step(cached, dt);
+      if (cached.counts.probeCalls === previousCalls && cached.rig.wantDist !== previousWant) {
+        reusedWhileChanging++;
+      }
+      assertSameView(uncached, cached, `${hz}Hz Super Jump zoom frame ${i}`);
+    }
+    assert.ok(reusedWhileChanging > 0,
+      `${hz}Hz must exercise cached probe reuse during small zoom changes`);
+    assert.ok(cached.counts.probeCalls < uncached.counts.probeCalls,
+      `${hz}Hz caching must still save collision queries`);
+  }
+});
+
+test('Issue #862: obstructed probes refresh when the requested zoom distance changes', async () => {
+  const { THREE } = await boot();
+  const InstalledRig = await loadRig(true);
+  for (const hz of [30, 60, 120]) {
+    const raw = makeRuntime(InstalledRig, THREE, { probeLimit: () => 0.8 });
+    const cached = makeRuntime(InstalledRig, THREE, { probeLimit: () => 0.8 });
+    const flight = {
+      phase: 'flight', t: 0.4, dur: 1,
+      from: { x: 0, y: 0, z: 0 }, to: { x: 3, y: 0, z: 4 },
+    };
+    raw.actor.superJumpState = { ...flight };
+    cached.actor.superJumpState = { ...flight };
+    const dt = 1 / hz;
+    for (let i = 0; i < hz * 3; i++) {
+      raw.rig._inkwaveCameraProbeCache = null;
+      step(raw, dt);
+      step(cached, dt);
+      assertSameView(raw, cached, `${hz}Hz blocked zoom frame ${i}`);
+    }
+  }
 });

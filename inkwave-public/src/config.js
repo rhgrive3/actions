@@ -1,3 +1,4 @@
+import { INK_PROFILES, launchSpeed, referenceReach } from './game/inkFlight.js';
 // Shared tuning + content definitions. Every module reads from here; nothing here imports anything.
 
 export const GAME_TITLE = 'INKWAVE';
@@ -93,7 +94,8 @@ export const WEAPONS = {
     blurb: 'Rapid-fire all-rounder. Sprays a steady stream of ink blobs.',
     stats: { range: 0.5, damage: 0.45, rate: 0.85, mobility: 0.7, paint: 0.6 },
     fireInterval: 0.1, damage: 36, inkPerShot: 0.95,
-    projSpeed: 34, straightTime: 0.13, range: 12.5,
+    inkFlightProfile: 'shooter',
+    projSpeed: launchSpeed(INK_PROFILES.shooter), straightTime: 4 / 60, range: referenceReach(INK_PROFILES.shooter),
     spreadGround: 5.5, spreadAir: 11,   // degrees
     impactRadius: 0.85, trailRadius: 0.44, trailEvery: 1.05,
     moveSpeedFiring: 4.6,
@@ -134,7 +136,8 @@ export const WEAPONS = {
     blurb: 'Twin pistols, alternating fire. Jump while firing to dodge-roll, then plant and unload.',
     stats: { range: 0.42, damage: 0.4, rate: 0.95, mobility: 0.95, paint: 0.55 },
     fireInterval: 0.083, damage: 30, inkPerShot: 0.85,        // hands alternate: 12 shots/s, 4 hits to splat
-    projSpeed: 32, straightTime: 0.11, range: 11,
+    inkFlightProfile: 'dualies',
+    projSpeed: launchSpeed(INK_PROFILES.dualies), straightTime: 3 / 60, range: referenceReach(INK_PROFILES.dualies),
     spreadGround: 6.5, spreadAir: 12, spreadFirst: 0.5, bloomPerShot: 0.25, spreadLock: 2.2,
     impactRadius: 0.75, trailRadius: 0.38, trailEvery: 1.15,
     moveSpeedFiring: 5.0,
@@ -156,8 +159,9 @@ export const WEAPONS = {
     id: 'splatling', name: 'Gyre Splatling', kind: 'splatling', class: 'Splatling', sub: 'bomb',
     blurb: 'Hold to spin up, release for a long high-speed stream. The more charge, the longer it lasts.',
     stats: { range: 0.78, damage: 0.55, rate: 1.0, mobility: 0.38, paint: 0.7 },
-    chargeTime: 0.85, burstMin: 0.3, burstMax: 1.7, fireInterval: 0.066, damage: 28, inkPerShot: 0.6,
-    projSpeed: 40, straightTime: 0.16, range: 15,
+    chargeTime: 0.85, burstMin: 0.3, burstMax: 1.7, fireInterval: 0.066, damage: INK_PROFILES.splatling.damage.max, inkPerShot: 0.6,
+    inkFlightProfile: 'splatling',
+    projSpeed: launchSpeed(INK_PROFILES.splatling, 10), straightTime: 8 / 60, range: referenceReach(INK_PROFILES.splatling),
     spreadGround: 3.2, spreadAir: 7, spreadFirst: 0.6, bloomPerShot: 0.05,
     impactRadius: 0.8, trailRadius: 0.42, trailEvery: 1.2,
     moveSpeedCharging: 2.4, moveSpeedFiring: 3.4,

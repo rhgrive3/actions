@@ -44,13 +44,21 @@ export function adaptResults(rel, code) {
     '    await new Promise((r) => setTimeout(r, 400));\n    if (this.match !== m) return;',
     '    await new Promise((r) => setTimeout(r, 400));\n    if (!resultsCurrent()) return;',
     'boss continuation');
+  // S3 #1131 contributes a separate judge-generation fence before reliability
+  // attaches room/match/transport ownership. Both checks must survive.
+  const judgeEpoch = '    const judgeEpoch = this._s3JudgeEpoch = (this._s3JudgeEpoch || 0) + 1;\n';
+  const judgePrefix = '  async _judge() {\n    const m = this.match;\n' +
+    (code.includes(judgeEpoch) ? judgeEpoch : '');
   code = replaceOnce(code,
-    '  async _judge() {\n    const m = this.match;\n    if (m.result?.mode',
-    '  async _judge() {\n    const m = this.match;\n' + OWNERS + '\n    if (m.result?.mode',
+    judgePrefix + '    if (m.result?.mode',
+    judgePrefix + OWNERS + '\n    if (m.result?.mode',
     'turf result owners');
+  const judgeWait = '    await (judgeP || new Promise((r) => setTimeout(r, 4000)));\n';
+  const judgeEpochFence = "    if (this._s3JudgeEpoch !== judgeEpoch || this.match !== m || m.state !== 'judge') return;\n";
+  const judgeMid = code.includes(judgeEpochFence) ? judgeEpochFence : '';
   code = replaceOnce(code,
-    '    await (judgeP || new Promise((r) => setTimeout(r, 4000)));\n    const myTeam',
-    '    await (judgeP || new Promise((r) => setTimeout(r, 4000)));\n    if (!resultsCurrent()) return;\n    const myTeam',
+    judgeWait + judgeMid + '    const myTeam',
+    judgeWait + judgeMid + '    if (!resultsCurrent()) return;\n    const myTeam',
     'turf continuation');
   code = replaceOnce(code,
     "    setTimeout(() => this._playMusic(won ? 'results_win' : 'results_lose'), 2600);",

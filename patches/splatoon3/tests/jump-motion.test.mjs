@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installJumpMotion as duplicateInstall } from '../runtime/jump-motion.mjs';
+import { installJumpMotion as duplicateInstall, jumpReferenceCandidate, JUMP_REFERENCE_CANDIDATES } from '../runtime/jump-motion.mjs';
 
 // Actual production installer + native Character/Actor/Runner/THREE in one
 // realm. World collision is outside this pose test; no rig or IK test double.
@@ -358,4 +358,14 @@ test('fresh ordinary jump after cancelled Slam is not blocked by orphaned leap/s
     assert.ok(output.bones.footL[2] < output.bones.hips[2] - .08);
     saveTrace([output]);
   } finally { r.close(); }
+});
+
+
+test('#1116 class jump clip names are reference candidates, not unverified installed pose curves', () => {
+  assert.equal(jumpReferenceCandidate('shooter'),'Jump_Shtr00');
+  assert.equal(jumpReferenceCandidate('roller'),'Jump_Rllr00');
+  assert.equal(jumpReferenceCandidate('dualies'),'Jump_Mnvr00');
+  assert.equal(jumpReferenceCandidate('slosher'),'Jump_Slsh00');
+  assert.equal(jumpReferenceCandidate('splatling'),'Jump_Spnr00');
+  assert.equal(jumpReferenceCandidate('missing-class'),JUMP_REFERENCE_CANDIDATES.fallback);
 });

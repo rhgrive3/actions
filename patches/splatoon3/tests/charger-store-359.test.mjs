@@ -96,8 +96,16 @@ async function fixture({ paint = 1 } = {}) {
   }
   function chargeFully(a, hz = 60) {
     a.intent.fire = true;
-    for (let i = 0; i < hz * 8 && a.weaponRunner.charge < .999; i++) step(a, hz);
-    assert.ok(a.weaponRunner.charge >= .999, `native runner reached full charge at ${hz} Hz`);
+    for (let i = 0; i < hz * 8 && a.weaponRunner.chargeT < 1; i++) step(a, hz);
+    assert.equal(a.weaponRunner.chargeT, 1, `native runner elapsed a full charge at ${hz} Hz`);
+    assert.equal(a.weaponRunner.charge, 1, `native runner emitted canonical full charge at ${hz} Hz`);
+  }
+  function chargeAtExactClock(a, hz = 60) {
+    a.intent.fire = true;
+    const startupFrames = Math.ceil(hz / 60); // #726's 1/60 s startup spans render frames at 120 Hz
+    const frames = startupFrames + Math.ceil(a.weapon.chargeTime * hz);
+    for (let i = 0; i < frames; i++) step(a, hz);
+    return frames;
   }
   function enterSquid(a, hz = 60) {
     a.intent.squid = true;
@@ -110,7 +118,7 @@ async function fixture({ paint = 1 } = {}) {
     for (const a of actors) { G.scene.remove(a.character.root); a.character.dispose(); }
     G.projectiles.clear(); G.netm = null; G.actors.length = 0;
   }
-  return { ...f, G, make, step, chargeFully, enterSquid, bindNet, close };
+  return { ...f, G, make, step, chargeFully, chargeAtExactClock, enterSquid, bindNet, close };
 }
 
 test('dry, enemy-ink and airborne squid form cannot create a new stored charge', async () => {
@@ -189,6 +197,22 @@ test('store eligibility and same-tick ZR cancellation hold at 30, 60 and 120 Hz'
       a.intent.fire = false; ownInk.step(a, hz);
       assert.equal(a.weaponRunner.s3Stored, null, `release cancels on the next ${hz} Hz tick`);
     } finally { ownInk.close(); }
+  }
+});
+
+test('#840 the completed native charge clock emits exact full charge before storing at 30, 60 and 120 Hz', async () => {
+  for (const hz of [30, 60, 120]) {
+    const f = await fixture({ paint: 1 });
+    try {
+      const a = f.make({ name: `#840 exact full clock ${hz} Hz` });
+      const frames = f.chargeAtExactClock(a, hz);
+      assert.equal(frames, Math.ceil(hz / 60) + Math.ceil(a.weapon.chargeTime * hz), 'the existing 1/60 s startup precedes the full charge clock');
+      assert.equal(a.weaponRunner.chargeT, 1, `authoritative charge clock completes at ${hz} Hz`);
+      assert.equal(a.weaponRunner.charge, 1, `only completed clock emits q=1 at ${hz} Hz`);
+      f.enterSquid(a, hz);
+      assert.equal(a.submerged, true, `own-ink squid state at ${hz} Hz`);
+      assert.equal(a.weaponRunner.s3Stored?.charge, 1, `completed full charge stores at ${hz} Hz`);
+    } finally { f.close(); }
   }
 });
 

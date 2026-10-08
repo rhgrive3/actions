@@ -1,5 +1,20 @@
 export function adaptRespawnLifecycle(rel, code, replaceOnce) {
   const replace = (before, after, name) => { code = replaceOnce(code, before, after, 'respawn lifecycle: ' + name); };
+  if (rel === 'src/game/match.js') {
+    // Test fixtures deliberately pass empty, duplicated, or already-composed Match
+    // sources through the full adapter to verify another structural owner. Only
+    // claim the single native Match module here; upstream-lock compatibility
+    // remains the fail-closed guard for production source drift.
+    const matchOwners = code.split('export class Match').length - 1;
+    if (matchOwners === 1 && !code.includes('beginInitialSquidSpawn')) {
+      const before = "      a.spawnAt(_v, a.team === 0 ? 0 : Math.PI);\n      a.invuln = 0;";
+      const after = "      if (!beginInitialSquidSpawn(a)) { a.spawnAt(_v, a.team === 0 ? 0 : Math.PI); a.invuln = 0; }";
+      const count = code.split(before).length - 1;
+      if (count !== 2) throw Error(`INKWAVE respawn lifecycle: expected 2 initial placement sites, found ${count}`);
+      code = "import { beginInitialSquidSpawn } from '../../patches/splatoon3/runtime/respawn-lifecycle.mjs';\n" + code;
+      code = code.split(before).join(after);
+    }
+  }
   if (rel === 'src/main.js') {
     replace("this.hud?.showSplatted({ by, byColor: attacker ? G.teamHex[attacker.team] : '#6fd0ff', respawn: PLAYER.respawnTime });",
       "this.hud?.showSplatted({ by, byColor: attacker ? G.teamHex[attacker.team] : '#6fd0ff', respawn: PLAYER.respawnTime, actor: victim });", 'authoritative HUD owner');
