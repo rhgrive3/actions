@@ -1,5 +1,6 @@
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
+import { shooterMovementRemaining, shooterMovementSpeed } from './shooter-movement.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
 import { installFinalDamage, damageGroupId } from './final-damage.mjs';
@@ -319,6 +320,12 @@ export function installWeapons(context, profile) {
   // camera target. Use the launch ray as aimed; gravity acts on the bullet.
   Projectiles.prototype._ballistic = function (_from, direction) { return direction; };
   const reset = WeaponRunner.prototype.reset, busy = WeaponRunner.prototype.busy;
+  const nativeMoveSpeed = WeaponRunner.prototype.moveSpeed;
+  WeaponRunner.prototype.moveSpeed = function () {
+    if (this.a?.weapon?.kind === 'shooter')
+      return shooterMovementSpeed(this.s3ShooterMoveRemaining, PLAYER.runSpeed, this.a.weapon.moveSpeedFiring);
+    return nativeMoveSpeed.call(this);
+  };
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     clearSplatlingSubInterrupt(this);
@@ -339,6 +346,7 @@ export function installWeapons(context, profile) {
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
+    this.s3ShooterMoveRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
     return result;
@@ -406,6 +414,7 @@ export function installWeapons(context, profile) {
   const runnerUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const weapon = this.a.weapon;
+    if (weapon.kind === 'shooter') this.s3ShooterMoveRemaining = shooterMovementRemaining(this.s3ShooterMoveRemaining, dt);
     if (weapon?.kind === 'blaster') this.s3BlasterMoveRemaining = Math.max(0, (this.s3BlasterMoveRemaining || 0) - dt);
     else this.s3BlasterMoveRemaining = 0;
     if (blasterJumpSupported() && weapon?.kind === 'blaster') {
@@ -842,6 +851,8 @@ export function installWeapons(context, profile) {
     if (a.weaponRunner && weapon.kind === 'shooter') {
       a.weaponRunner.s3PostFireLockActive = true;
       a.weaponRunner.s3ShooterStreamActive = true;
+      // An emitted round, not cosmetic firing pose, opens the sourced 4F movement window.
+      a.weaponRunner.s3ShooterMoveRemaining = weapon.postFireSwimLock ?? 4 / 60;
     }
     return result;
   };
