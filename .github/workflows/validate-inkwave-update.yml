@@ -107,6 +107,8 @@ jobs:
           retention-days: 14
       - name: Verify six follow-up INKWAVE regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-six-followup-network-paint.test.mjs patches/splatoon3/tests/issue-1032-background-guest.test.mjs
+      - name: Verify eight additional INKWAVE regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-eight-followup.test.mjs
       - name: Verify PR1077 additional seven regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/kit-ink-vac.test.mjs patches/splatoon3/tests/kit-subs.test.mjs patches/splatoon3/tests/issue-1008-1020-1037-1053.test.mjs
       - name: Diagnose nine-way walk contact regression
