@@ -16,6 +16,16 @@ import { fileURLToPath } from 'node:url';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
+// The same six-layer chain the build composes (range ∘ network ∘ quality ∘
+// reliability ∘ touch-layout ∘ splatoon3); source-fixture uses it for
+// productionComposition: true.
+const productionCompose = (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel,
+  adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 const THREE_PATH = path.join(UPSTREAM, 'vendor/three/build/three.module.js');
@@ -49,9 +59,19 @@ const reach = calls => Math.max(...calls.map(c => Math.abs(c.x))) + calls[0].rad
 const body = calls => calls.filter(c => !c.floorOnly);
 const splash = calls => calls.filter(c => c.floorOnly);
 
-// Minimal real PaintSystem with one horizontal floor face and one vertical wall
-// face, adapted through the production build adapter. No fake game model.
-async function loadPaint() {
+// Minimal real PaintSystem with one native-classified face (floor, wall or
+// ceiling), adapted through the production build adapter. No fake game model:
+// the face flags are derived with the SAME expressions Level uses when it builds
+// faces (wall: |n.y| < 0.3, turf: n.y > 0.7, ceiling: n.y < -0.5), so "floor" in
+// these tests means the native upward-normal classification, not a test constant.
+const FACE_KINDS = {
+  // origin is the face corner; the splat point is inside the face and within the
+  // native dn window, so every face is geometrically claimable (control below).
+  floor:   { n: [0, 1, 0],  u: [1, 0, 0], v: [0, 0, 1], origin: [0, 0, 0],   splat: [2, 0.1, 3] },
+  wall:    { n: [0, 0, -1], u: [1, 0, 0], v: [0, 1, 0], origin: [0, 0, 0],   splat: [0, 0, -0.1] },
+  ceiling: { n: [0, -1, 0], u: [1, 0, 0], v: [0, 0, 1], origin: [0, 0.6, 0], splat: [2, 0.35, 3] },
+};
+async function loadPaint(adapter = adaptSource) {
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   const resolve = (spec, from) => {
@@ -64,7 +84,7 @@ async function loadPaint() {
   const load = file => {
     if (modules.has(file)) return modules.get(file);
     const raw = fs.readFileSync(file, 'utf8');
-    const source = file === path.join(UPSTREAM, 'src/world/paint.js') ? adaptSource('src/world/paint.js', raw) : raw;
+    const source = file === path.join(UPSTREAM, 'src/world/paint.js') ? adapter('src/world/paint.js', raw) : raw;
     const module = new vm.SourceTextModule(source, { context, identifier: file });
     modules.set(file, module);
     return module;
@@ -78,13 +98,18 @@ async function loadPaint() {
   return { PaintSystem: paintModule.namespace.PaintSystem, G: ctx.namespace.G, THREE: three.namespace };
 }
 
-function makePaint({ PaintSystem, THREE }, { wall }) {
-  const n = wall ? new THREE.Vector3(0, 0, -1) : new THREE.Vector3(0, 1, 0);
+function makePaint({ PaintSystem, THREE }, { kind = 'floor' } = {}) {
+  const spec = FACE_KINDS[kind];
+  if (!spec) throw new Error('unknown face kind ' + kind);
+  const v3 = ([x, y, z]) => new THREE.Vector3(x, y, z);
+  const n = v3(spec.n);
+  // Native Level classification (level.js builds its faces with exactly these
+  // expressions); nothing here is tuned for this test.
   const face = {
-    origin: new THREE.Vector3(), n,
-    u: new THREE.Vector3(1, 0, 0), v: wall ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1),
+    origin: v3(spec.origin), n, u: v3(spec.u), v: v3(spec.v),
     su: 20, sv: 20, cu: 0.25, cv: 0.25, nu: 80, nv: 80,
-    grid: 0, turf: true, wall, atlas: { pad: 8, ppm: 4, x: 0, y: 0 },
+    grid: 0, wall: Math.abs(n.y) < 0.3, turf: n.y > 0.7, ceiling: n.y < -0.5,
+    paintable: n.y > -0.5, atlas: { pad: 8, ppm: 4, x: 0, y: 0 },
   };
   const block = { aabbMin: { x: -2, y: -2, z: -2 }, aabbMax: { x: 22, y: 22, z: 22 }, faces: [0, -1, -1, -1, -1, -1] };
   const paint = Object.create(PaintSystem.prototype);
@@ -200,20 +225,123 @@ test('#649 the roller body keeps its upstream geometry and only the side splash 
   assert.ok(seen[0] < seen[1] && seen[1] < seen[2], `side splash walks out with speed (${seen.join(' < ')})`);
 });
 
-test('#649 a floor-only splat marks no wall face, an ordinary splat still does', async () => {
+test('#649 a floor-only splat marks floor faces only: walls and ceilings stay for the body', async () => {
   const runtime = await loadPaint();
-  const floor = makePaint(runtime, { wall: false });
-  const wall = makePaint(runtime, { wall: true });
   const opts = { seed: 0.5, kind: 'roll' };
-  // A floor face is claimed by the roller band.
-  assert.ok(floor.splat(new runtime.THREE.Vector3(2, 0.1, 3), 0.62, 0, { ...opts }) > 0, 'the roller band claims floor');
-  // A wall face 0.1 inside the splat is claimed when the splat may mark walls...
-  const marked = wall.splat(new runtime.THREE.Vector3(0, 0, -0.1), 0.62, 0, { ...opts });
-  assert.ok(marked > 0, 'an unrestricted roller splat still marks a wall face');
-  // ...and is skipped when it is a floor-only side splash.
-  const skipped = wall.splat(new runtime.THREE.Vector3(0, 0, -0.1), 0.62, 1, { ...opts, floorOnly: true });
-  assert.equal(skipped, 0, 'a floor-only roller splat never marks a wall');
-  assert.equal(wall.counts[1], 0, 'and credits no wall turf to the roller team');
+  const point = kind => new runtime.THREE.Vector3(...FACE_KINDS[kind].splat);
+  // `_cpuSplat` returns turf AREA, which is 0 on any face Level does not call
+  // turf — so "was this face painted" is read from the gameplay grid itself.
+  const painted = paint => { let n = 0; for (const v of paint.grid) if (v) n++; return n; };
+  const probe = (kind, floorOnly) => {
+    const paint = makePaint(runtime, { kind });
+    const claimed = paint.splat(point(kind), 0.62, 0, floorOnly ? { ...opts, floorOnly: true } : { ...opts });
+    return { paint, claimed, cells: painted(paint) };
+  };
+  // Control: without the option every one of these faces is painted, so the
+  // rejections below come from the floor-only predicate, never from geometry.
+  for (const kind of ['floor', 'wall', 'ceiling'])
+    assert.ok(probe(kind, false).cells > 0, `an ordinary roller splat still paints the ${kind}`);
+  assert.ok(probe('floor', true).cells > 0, 'a floor-only side splash paints the floor');
+  assert.equal(probe('wall', true).cells, 0, 'a floor-only side splash never paints a wall');
+  assert.equal(probe('ceiling', true).cells, 0, 'a floor-only side splash never paints a ceiling');
+  // A ceiling is exactly what `!f.wall` would have admitted: Level tags it
+  // wall=false and turf=false, and only the native upward-normal floor flag
+  // (`turf: n.y > 0.7`, also what PaintSystem counts as turf) rejects it.
+  const ceiling = makePaint(runtime, { kind: 'ceiling' });
+  assert.equal(ceiling.level.faces[0].wall, false, 'a ceiling is not a wall');
+  assert.equal(ceiling.level.faces[0].turf, false, 'and Level does not classify it as floor');
+  assert.equal(ceiling.level.faces[0].ceiling, true, 'native ceiling classification is present');
+  // The admitted face is the native floor, and it is credited as turf.
+  const floor = probe('floor', true);
+  assert.equal(floor.paint.level.faces[0].turf, true, 'the floor face is natively classified as floor');
+  assert.ok(floor.paint.counts[0] > 0, 'and the admitted floor face credits turf');
+  assert.equal(probe('wall', true).paint.counts[0], 0, 'while a rejected wall credits nothing');
+});
+
+test('#649 a full six-layer replay marks exactly the faces the owner marked', async () => {
+  // productionComposition runs the real build chain: range ∘ network ∘ quality
+  // ∘ reliability ∘ touch-layout ∘ splatoon3. paint.js is only patched by the
+  // splatoon3 layer, so the owner side uses the same six-layer composition too.
+  const f = await fixture({ productionComposition: true });
+  const runtime = await loadPaint(productionCompose);
+  const FACES = ['floor', 'wall', 'ceiling'];
+  const events = [
+    { label: 'body band on the wall', centre: FACE_KINDS.wall.splat, floorOnly: false },
+    { label: 'side splash on the floor', centre: FACE_KINDS.floor.splat, floorOnly: true },
+    { label: 'side splash under a ceiling', centre: FACE_KINDS.ceiling.splat, floorOnly: true },
+    { label: 'unrestricted ceiling control', centre: FACE_KINDS.ceiling.splat, floorOnly: false },
+  ];
+  const opts = (runtime, floorOnly) => ({ seed: 0.5, kind: 'roll',
+    stretch: new runtime.THREE.Vector3(0, 0, 1), stretchAmt: 1, ...(floorOnly ? { floorOnly: true } : {}) });
+  // What a face looks like after a splat: cells painted on that face (read from
+  // the gameplay grid, because the returned AREA is turf-only and is therefore
+  // 0 on walls and ceilings by design) plus the credited turf counts.
+  const state = paint => {
+    let cells = 0;
+    for (const v of paint.grid) if (v) cells++;
+    return { cells, team0: paint.counts[0], team1: paint.counts[1] };
+  };
+  // Owner: the same splat applied straight to a real PaintSystem per face.
+  const owner = {};
+  for (const e of events) {
+    owner[e.label] = {};
+    for (const kind of FACES) {
+      const paint = makePaint(runtime, { kind });
+      paint.splat(new runtime.THREE.Vector3(...e.centre), 0.62, 1, opts(runtime, e.floorOnly));
+      owner[e.label][kind] = state(paint);
+    }
+  }
+  // Wire: one persistent recorder, exactly like the live NetMatch.
+  const nm = { applying: false, mute: 0, out: [], _rec: f.NetMatch.prototype._rec };
+  for (const e of events)
+    f.NetMatch.prototype.recSplat.call(nm, { x: e.centre[0], y: e.centre[1], z: e.centre[2] }, 0.62, 1, opts(runtime, e.floorOnly));
+  assert.equal(nm.out.length, events.length);
+  // Remote: replay each recorded event into a fresh real PaintSystem per face.
+  // Each face is its own receiver, so each replay gets a fresh peer record:
+  // otherwise the production event-sequence gate would drop the repeat of an
+  // event already consumed by the previous face (that gate is exercised by the
+  // dedicated late-duplicate assertion below).
+  const remote = {};
+  for (let i = 0; i < events.length; i++) {
+    const e = events[i];
+    remote[e.label] = {};
+    for (const kind of FACES) {
+      const paint = makePaint(runtime, { kind });
+      const native = f.G.paint.splat;
+      f.G.paint.splat = (c, r, t, o) => paint.splat(c, r, t, o);
+      const player = { applying: false, mute: 0, byNid: new Map(), peers: new Map([[0, {}]]),
+        _play: f.NetMatch.prototype._play, _trigSideEffects() {} };
+      try { f.NetMatch.prototype._play.call(player, 0, nm.out[i]); }
+      finally { f.G.paint.splat = native; }
+      remote[e.label][kind] = state(paint);
+    }
+  }
+  assert.deepEqual(remote, owner, 'the remote marks exactly the faces the owner marked');
+  // The production event-sequence gate is still live: the same recorded event
+  // replayed a second time on one receiver paints nothing new.
+  const gate = { applying: false, mute: 0, byNid: new Map(), peers: new Map([[0, {}]]),
+    _play: f.NetMatch.prototype._play, _trigSideEffects() {} };
+  const dup = makePaint(runtime, { kind: 'floor' });
+  const dupAgain = makePaint(runtime, { kind: 'floor' });
+  const dupNative = f.G.paint.splat;
+  let target = dup;
+  f.G.paint.splat = (c, r, t, o) => target.splat(c, r, t, o);
+  try {
+    f.NetMatch.prototype._play.call(gate, 0, nm.out[1]);
+    const first = state(dup);
+    assert.ok(first.cells > 0, 'the first delivery paints the floor');
+    target = dupAgain;                       // a fresh face for the repeated event
+    f.NetMatch.prototype._play.call(gate, 0, nm.out[1]);
+    assert.equal(state(dupAgain).cells, 0, 'a late duplicate of the same event paints nothing');
+  } finally { f.G.paint.splat = dupNative; }
+  const floorSplash = owner['side splash on the floor'];
+  assert.ok(floorSplash.floor.cells > 0, 'a side splash paints the floor');
+  assert.equal(floorSplash.wall.cells, 0, 'a side splash never paints a wall');
+  assert.equal(floorSplash.ceiling.cells, 0, 'a side splash never paints a ceiling');
+  assert.ok(floorSplash.floor.team1 > 0, 'and the floor face credits the turf to the painting team (team 1)');
+  assert.equal(owner['side splash under a ceiling'].ceiling.cells, 0, 'a side splash never paints a ceiling');
+  assert.ok(owner['body band on the wall'].wall.cells > 0, 'the roller body band still paints the wall');
+  assert.ok(owner['unrestricted ceiling control'].ceiling.cells > 0, 'control: without floorOnly the ceiling is painted');
 });
 
 test('#649 the floor-only flag survives the recorded network replay', async () => {
@@ -335,9 +463,10 @@ test('#649 30/60/120 Hz render schedules produce the same painted footprint trac
 test('#649 the installed paint system carries exactly the guarded floor-only connection', async () => {
   const installed = adaptSource('src/world/paint.js', fs.readFileSync(path.join(UPSTREAM, 'src/world/paint.js'), 'utf8'));
   assert.match(installed, /const floorOnly = !!opts\.floorOnly;/);
-  assert.match(installed, /if \(floorOnly && f\.wall\) continue;/);
+  assert.match(installed, /if \(floorOnly && !f\.turf\) continue;/);
   assert.equal((installed.match(/floorOnly/g) || []).length, 3, 'the floor-only option stays one guarded connection');
-  assert.equal(installed.split('floorOnly && f.wall').length - 1, 1, 'wall faces are skipped only when the option is set');
+  assert.equal(installed.split('floorOnly && !f.turf').length - 1, 1, 'only faces Level classifies as floor are marked');
+  assert.doesNotMatch(installed, /floorOnly && f\.wall/, 'a wall-only test would admit a ceiling face');
   const net = adaptSource('src/net/netmatch.js', fs.readFileSync(path.join(UPSTREAM, 'src/net/netmatch.js'), 'utf8'));
   assert.match(net, /o\.stretchAmt \?\? 1\) : 0, o\.floorOnly \? 1 : 0\]\);/, 'the wire records the floor-only flag');
   assert.match(net, /if \(e\[13\]\) opts\.floorOnly = true;/, 'the replay restores the floor-only flag');

@@ -19,7 +19,11 @@
 // the roller body is still the only paint that can reach a wall. The
 // speed-dependent lateral reach is a side splash, emitted floor-only, because
 // Splatoon 3 paints walls with the roller body and the floor with the side
-// splashes that grow with movement speed.
+// splashes that grow with movement speed. "Floor-only" is the POSITIVE native
+// classification: paint.js only claims a face Level already tags as floor
+// (`turf: n.y > 0.7`, the flag PaintSystem itself uses for turf counts), so wall
+// AND ceiling faces are rejected. Testing only `!f.wall` would let a ceiling
+// (wall false, turf false) through; no new slope threshold is introduced.
 //
 // Scale shape: SpeedMax and WidthHalfMax are pinned endpoints, not a recovered
 // curve. The straight line between "no side splash" and "side splash at the

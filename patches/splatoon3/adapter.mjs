@@ -153,14 +153,19 @@ export function adaptSource(rel, code) {
     // #649: Splatoon 3 paints walls with the roller body and floor with the side
     // splashes that grow with roll speed. `floorOnly` is opt-in per splat call and
     // is carried on the network record, so a remote replay marks the same faces.
+    // "Floor" is the POSITIVE native classification, not "not a wall": Level
+    // already tags every face with `turf: n.y > 0.7` (alongside `wall` and
+    // `ceiling`), and PaintSystem uses that same flag for its turf counts, so a
+    // ceiling — wall false, turf false — is rejected by the same native rule
+    // instead of slipping through `!f.wall`.
     code = replaceOnce(code,
       '    const seed = opts.seed ?? Math.random();\n    const cosmetic = !!opts.cosmetic;',
-      '    const seed = opts.seed ?? Math.random();\n    const cosmetic = !!opts.cosmetic;\n    const floorOnly = !!opts.floorOnly;   // #649 roller side splashes never mark a wall face',
+      '    const seed = opts.seed ?? Math.random();\n    const cosmetic = !!opts.cosmetic;\n    const floorOnly = !!opts.floorOnly;   // #649 roller side splashes mark floor faces only',
       'floor-only splat option');
     code = replaceOnce(code,
       '          _rel.copy(center).sub(f.origin);\n          const dn = _rel.dot(f.n);',
-      '          if (floorOnly && f.wall) continue;\n          _rel.copy(center).sub(f.origin);\n          const dn = _rel.dot(f.n);',
-      'floor-only splat skips wall faces');
+      '          if (floorOnly && !f.turf) continue;\n          _rel.copy(center).sub(f.origin);\n          const dn = _rel.dot(f.n);',
+      'floor-only splat requires the native floor face');
   }
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
