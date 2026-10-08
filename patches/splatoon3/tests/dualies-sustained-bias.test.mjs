@@ -81,17 +81,36 @@ test('#891 seeded distribution chooses inner vs outer at the existing endpoint',
   f.restoreRandom();
 });
 
-test('#891 empty clicks do not advance; squid-held intent does not recover', async () => {
-  const { a, r } = await rig();
+test('#891 dry and squid-held time recovers from the last admitted emission; refill resumes from recovered bias', async () => {
+  const { a, r, G } = await rig();
+  r.s3DualiesBiasState(a.weapon);
+  r.s3DualiesBias = 0.2; r.s3DualiesBiasSimulationFrame = 0;
+  r.s3DualiesBiasLastEmissionFrame = 0; r.s3DualiesBiasRecoveredFrames = 0;
   a.ink = 0; a.intent.fire = true; r.s3DualiesHeld = true; r.s3DualiesStart = 0; r.cooldown = 0;
-  r.update(1 / 60, { fire: true, sub: false, firePressed: true });
+  for (let i = 0; i < 60; i++) {
+    G.time += 1 / 60;
+    r.update(1 / 60, { fire: true, sub: false, firePressed: false });
+  }
   assert.equal(r.s3DualiesNormalEmissionCount, 0);
+  assert.equal(r.s3DualiesBiasLastEmissionFrame, 0);
   assert.equal(r.s3DualiesBias, 0.01);
-  a.ink = 1; r.s3DualiesBias = 0.2; r.s3DualiesBiasHold = 0; r.s3DualiesBiasFrameAccumulator = 0;
+
+  a.ink = 1; a.form = 'human'; r.cooldown = 0;
+  G.time += 1 / 60;
+  r.update(1 / 60, { fire: true, sub: false, firePressed: true });
+  assert.equal(r.s3DualiesNormalEmissionCount, 1);
+  assert.equal(r.s3DualiesBias, 0.02);
+  assert.equal(r.s3DualiesBiasHold, 5);
+
+  r.s3DualiesBias = 0.2; r.s3DualiesBiasSimulationFrame = 120;
+  r.s3DualiesBiasLastEmissionFrame = 120; r.s3DualiesBiasRecoveredFrames = 0;
   a.form = 'squid'; a.intent.fire = true;
-  r.update(1 / 60, { fire: false, sub: false, firePressed: false });
-  assert.equal(r.s3DualiesBias, 0.2);
-  assert.equal(r.s3DualiesNormalEmissionCount, 0);
+  for (let i = 0; i < 60; i++) {
+    G.time += 1 / 60;
+    r.update(1 / 60, { fire: false, sub: false, firePressed: false });
+  }
+  assert.equal(r.s3DualiesNormalEmissionCount, 1);
+  assert.equal(r.s3DualiesBias, 0.01);
 });
 
 
@@ -99,13 +118,17 @@ test('#891 5F hold and 0.005 per-frame recovery agree at 30/60/120Hz', async () 
   const results = [];
   for (const hz of [30, 60, 120]) {
     const { a, r, step } = await rig();
+    r.s3DualiesBiasState(a.weapon);
     a.intent.fire = false; r.s3DualiesBias = 0.2; r.s3DualiesBiasHold = 5;
-    r.s3DualiesBiasFrameAccumulator = 0;
+    r.s3DualiesBiasSimulationFrame = 0; r.s3DualiesBiasLastEmissionFrame = 0;
+    r.s3DualiesBiasRecoveredFrames = 0; r.s3DualiesBiasFrameAccumulator = 0;
     for (let i = 0; i < hz / 10; i++) step(1 / hz, false);
     results.push([Number(r.s3DualiesBias.toFixed(12)), r.s3DualiesBiasHold]);
     r.onDeath();
     assert.equal(r.s3DualiesBias, 0.01);
     assert.equal(r.s3DualiesBiasFrameAccumulator, 0);
+    assert.equal(r.s3DualiesBiasSimulationFrame, 0);
+    assert.equal(r.s3DualiesBiasLastEmissionFrame, null);
     assert.equal(r.s3DualiesNormalEmissionCount, 0);
   }
   assert.deepEqual(results, [[0.195, 0], [0.195, 0], [0.195, 0]]);
@@ -127,6 +150,74 @@ test('#891 jump bias uses pinned 0.40 and turret stays independent', async () =>
   r.update(1 / 60, { fire: true, sub: false, firePressed: true });
   assert.equal(G.projectiles.list.length >= shots, true);
   assert.equal(r.s3DualiesNormalEmissionCount, before);
-  assert.equal(r.s3DualiesBias, bias);
+  assert.ok(r.s3DualiesBias <= bias);
 });
 
+test('#891 landing clamps airborne bias to grounded cap; turret time recovers and switching resets the session', async () => {
+  const { f, a, r, G } = await rig();
+  a.grounded = false; a.ground.hit = false; a.ink = 1; a.intent.fire = true;
+  r.s3DualiesHeld = true; r.s3DualiesStart = 0; r.cooldown = 0;
+  G.time += 1 / 60;
+  r.update(1 / 60, { fire: true, sub: false, firePressed: true });
+  assert.equal(r.s3DualiesBias, 0.4);
+
+  a.grounded = true; a.ground.hit = true; a.form = 'human';
+  for (let i = 0; i < 120; i++) {
+    G.time += 1 / 60;
+    r.update(1 / 60, { fire: true, sub: false, firePressed: false });
+    assert.ok(r.s3DualiesBias <= 0.25 + 1e-12, `grounded bias exceeded cap at frame ${i + 1}`);
+  }
+
+  r.s3DualiesBias = 0.2;
+  r.s3DualiesBiasLastEmissionFrame = r.s3DualiesBiasSimulationFrame;
+  r.s3DualiesBiasRecoveredFrames = 0;
+  r.s3Turret = true; r.lockT = 1; r.cooldown = 0;
+  const normalEmissions = r.s3DualiesNormalEmissionCount;
+  for (let i = 0; i < 60; i++) {
+    G.time += 1 / 60;
+    r.update(1 / 60, { fire: true, sub: false, firePressed: false });
+  }
+  assert.equal(r.s3DualiesNormalEmissionCount, normalEmissions);
+  assert.equal(r.s3DualiesBias, 0.01);
+
+  const dualiesWeapon = a.weapon;
+  const shooter = Object.values(f.WEAPONS).find(weapon => weapon.kind === 'shooter');
+  assert.ok(shooter, 'fixture provides a shooter for the weapon-switch boundary');
+  a.weapon = shooter;
+  r.update(1 / 60, { fire: false, sub: false, firePressed: false });
+  assert.equal(r.s3DualiesBias, 0.01);
+  assert.equal(r.s3DualiesBiasLastEmissionFrame, null);
+  a.weapon = dualiesWeapon;
+  r.update(1 / 60, { fire: false, sub: false, firePressed: false });
+  assert.equal(r.s3DualiesBias, 0.01);
+  assert.equal(r.s3DualiesNormalEmissionCount, 0);
+});
+
+test('#891 runner context excludes unrelated and same-runner reentrant direct emissions', async () => {
+  const { f, a, r, G } = await rig();
+  const b = f.make('dualies');
+  b.aimPoint.set(0, 1.05, 100); b.aimDir.set(0, 0, 1);
+  b.isLocal = false; b.form = 'human'; b.grounded = true; b.ground.hit = true; b.ink = 1;
+  const before = G.projectiles.list.length;
+  let injected = false;
+  const stop = f.on('weapon:fire', ({ actor }) => {
+    if (actor !== a || injected) return;
+    injected = true;
+    G.projectiles.fireDualies(b, b.weapon, 2, 0);
+    G.projectiles.fireDualies(a, a.weapon, 2, 0);
+  });
+  f.setRandom(() => 0.5);
+  try {
+    for (let i = 0; i < 30 && r.s3DualiesNormalEmissionCount === 0; i++) {
+      a.intent.fire = true; a.intent.sub = false; G.time += 1 / 60; a.update(1 / 60);
+    }
+  } finally {
+    stop(); f.restoreRandom();
+  }
+  assert.equal(injected, true);
+  assert.equal(G.projectiles.list.length - before, 3);
+  assert.equal(r.s3DualiesNormalEmissionCount, 1);
+  assert.equal(r.s3DualiesBias, 0.02);
+  assert.equal(b.weaponRunner.s3DualiesNormalEmissionCount, 0);
+  assert.equal(b.weaponRunner.s3DualiesBias, 0.01);
+});
