@@ -65,9 +65,9 @@ test('#890 default S1-inspired tuning gives shorter 1F tap than sustained B hold
   const Actor=makeHarness({}),tap=new Actor(),held=new Actor();
   for(const a of [tap,held]){a.intent.jump=true;a.launch=true;a.update(1/60);}
   tap.intent.jump=false;tap.update(1/60);
-  for(let k=0;k<8;k++)held.update(1/60);
+  for(let k=0;k<8;k++){tap.update(1/60);held.update(1/60);}
   held.intent.jump=false;held.update(1/60);
-  assert.ok(tap.vel.y<held.vel.y,'tap loses upward speed, high jump keeps the full impulse');
+  assert.ok(tap.vel.y<held.vel.y,'compare the same simulated frame, not a newly released shot against an earlier frame');
   assert.equal(normalJumpHoldState(tap).applied,true);
   assert.equal(normalJumpHoldState(held).applied,false);
   assert.ok(Math.abs(tap.vel.y-(8.4*0.7-25/60))<1e-10);
