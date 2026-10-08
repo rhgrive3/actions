@@ -214,7 +214,8 @@ function adaptQualityLayer(rel, code) {
       '    // #862: Physics.cameraProbe only queries the current level broadphase. Reuse its exact\n' +
       '    // result while the follow probe is effectively stationary (1 mm pivot/want-distance\n' +
       '    // tolerance and 0.001 unit-vector delta); keep a short bound for\n' +
-      '    // geometry edits that preserve the Level/collection objects.\n' +
+      '    // geometry edits that preserve the Level/collection objects. Super Jump\n' +
+      '    // flight uses exact per-frame collision to preserve boom parity.\n' +
       '    const _qcPhysics = G.physics, _qcLevel = _qcPhysics.level;\n' +
       '    const _qcOld = this._inkwaveCameraProbeCache;\n' +
       '    const _qcAge = _qcOld ? _qcOld.age + (Number.isFinite(dt) ? Math.max(0, dt) : 0) : 0;\n' +
@@ -224,7 +225,7 @@ function adaptQualityLayer(rel, code) {
       '    const _qcBX = _qcOld ? _back.x - _qcOld.bx : Infinity;\n' +
       '    const _qcBY = _qcOld ? _back.y - _qcOld.by : Infinity;\n' +
       '    const _qcBZ = _qcOld ? _back.z - _qcOld.bz : Infinity;\n' +
-      '    const _qcChanged = !_qcOld || _qcOld.target !== a || _qcOld.mode !== this.mode ||\n' +
+      '    const _qcChanged = !_qcOld || !!a?.superJumpState || _qcOld.target !== a || _qcOld.mode !== this.mode ||\n' +
       '      _qcOld.level !== G.level || _qcOld.physics !== _qcPhysics ||\n' +
       '      _qcOld.probe !== _qcPhysics.cameraProbe || _qcOld.raycast !== _qcPhysics.raycast ||\n' +
       '      _qcOld.collisionLevel !== _qcLevel || _qcOld.blocks !== _qcLevel?.blocks ||\n' +
