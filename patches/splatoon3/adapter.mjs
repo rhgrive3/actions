@@ -539,14 +539,19 @@ export function adaptSource(rel, code) {
       'pwa service worker');
   }
   if (rel === 'src/game/physics.js') {
-    if (!code.includes('c.ceilingBlock = -1;')) code = replaceOnce(code,
+    const capsuleStart = code.indexOf('  collideCapsule(');
+    const capsuleEnd = code.indexOf('\n  // Flat-footprint ground probe', capsuleStart);
+    if (capsuleStart < 0 || capsuleEnd < capsuleStart) throw new Error('INKWAVE patch conflict: collideCapsule boundary');
+    let capsule = code.slice(capsuleStart, capsuleEnd);
+    if (!capsule.includes('c.ceilingBlock = -1;')) capsule = replaceOnce(capsule,
       '    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1;',
       '    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1; c.ceilingBlock = -1;',
       'ceiling contact block identity');
-    if (!code.includes('c.ceiling = true; c.ceilingBlock = b.id;')) code = replaceOnce(code,
+    if (!capsule.includes('c.ceiling = true; c.ceilingBlock = b.id;')) capsule = replaceOnce(capsule,
       '          else if (_n.y < -0.6) c.ceiling = true;',
       '          else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }',
       'ceiling contact classification');
+    code = code.slice(0, capsuleStart) + capsule + code.slice(capsuleEnd);
     return code;
   }
   if (rel === 'src/world/level.js') {
