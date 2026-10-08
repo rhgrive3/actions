@@ -134,7 +134,7 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     code = code.slice(0, shooterStart) + shooter + code.slice(shooterEnd);
 
     const roundStart = code.indexOf('  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch, hand = null) {');
-    const roundEnd = code.indexOf('\n  ', roundStart + 4);
+    const roundEnd = code.indexOf('\n  fireDualies(', roundStart);
     if (roundStart < 0 || roundEnd < roundStart) throw new Error('INKWAVE patch conflict: source-guided Dualies/Splatling flight');
     let round = code.slice(roundStart, roundEnd);
     round = replaceOnce(round,
