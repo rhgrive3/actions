@@ -14,6 +14,7 @@ import { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';
 import { adaptStormEffects } from './storm-effects-adapter.mjs';
 import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
 import { adaptKitRescue } from './kit-rescue-adapter.mjs';
+import { adaptRollerDepletion } from './roller-depletion-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
@@ -792,6 +793,7 @@ export function adaptSource(rel, code) {
       'let tail = p.fidelitySloshDraw ? fidelitySlosherDrawTail(p, sp) : (p.tail0 ?? 1) + Math.min(p.tailK ?? 1.2, sp * 0.04) * g;', 'slosher source tail window');
     code = replaceOnce(code, 'const r0 = p.vis || p.size, spk =',
       'const r0 = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : p.vis || p.size, spk =', 'slosher satellite source radius');
+    code = adaptRollerDepletion(rel, code, replaceOnce);
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
     code = replaceOnce(code, 'if (g.hit && !c.ghost) c.owner.addTurf(', 'if (g.hit && (!c.ghost || !c.owner.remote)) c.owner.addTurf(', 'adopted Storm owns its remaining paint');
     code = replaceOnce(code, '        if (!c.ghost) G.boss?.rain(', '        if (!c.ghost || !c.owner.remote) G.boss?.rain(', 'adopted Storm owns its remaining Boss rain');

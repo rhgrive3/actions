@@ -1772,3 +1772,9 @@ to mask budget evidence. This compatibility repair does not claim a new Issue.
 **再現と確認。** `node --experimental-vm-modules scripts/check-inkwave-composer-target.mjs` は現在の six-adapter composition を通し、pre-change target ordering、HalfFloat policy、source parse、変換の round-trip を確認する。`node --test patches/local-quality/tests/composer-target-adapter.test.mjs` は vendored Three r186 の実 `WebGLRenderTarget` / `EffectComposer` object を使う 4 cases で、baseline clone、lazy creation、resize、visibility disposal/recreation、offscreen output、quality/sample rebuild、final disposal を確認する。これは native Three object lifecycle check で、WebGL driver allocation・GPU memory・pixel output の測定ではない。
 
 **プレイへの影響と限界。** 可視状態で通常描画中の二つの HalfFloat target と pass order は維持されるため、ゲーム操作・simulation・tone/color shader を変えず、出力 pixel parity も推定しない。削減対象は初回 render 前と document hidden 中の composer pair 寿命であり、可視状態の target memory は従来どおり残る。今回の環境には Chromium/Firefox、Playwright/Puppeteer、headless-gl がなく、小さな GPU probe を実行できなかった。Switch 実機比較、driver が実際に確保する bytes、tone mapping/ScreenFX/FXAA の pixel diff は未確認。
+
+## 2026-10-08 — Roller depleted paint footprint (#305)
+
+Reference: Splatoon 3 Ver. 11.3.0 Splat Roller, using the pinned `WeaponRollerNormal` table linked in the issue context. Its horizontal and vertical per-unit `PaintParam.DepletionDepthWidthRate` values are 0.5. The field describes the depleted projectile paint footprint; it does not replace collision radius, damage reach, or the sourced damage/speed parameters. The reduced fan's angular distribution is not specified by the available fields and remains unknown.
+
+INKWAVE's production adapter composition now carries the paid depletion state at projectile birth and applies the mapped 0.5 scale only to depleted Roller paint footprints along flight and at impact. Missing per-unit paint data keeps the native default; normal swings use scale 1. This comparison is limited to deterministic installed-runtime tests, not Switch hardware or browser rendering.

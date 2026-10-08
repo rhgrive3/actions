@@ -947,16 +947,18 @@ export function fidelitySlosherDrawTail(p,speed) {
 }
 // One unit-selection rule, shared by the main volley and the appended
 // nearest-glob unit, so both read the same pinned DrawSizeParam.
-function flickUnitFor(weapon,vertical,index) {
+function flickUnitFor(weapon,vertical,index,depleted=false) {
   const raw=rawWeapon(weapon);
   const group=raw?raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam']:null;
   if(!group)return null;
   let offset=index;
-  for(const u of group.Unit){if(offset<(u.BulletNum??1))return {unit:u,offset};offset-=u.BulletNum??1;}
+  // #305: a depleted swing emits the sourced DepletionBulletNum per unit; an
+  // absent field falls back to that unit's own BulletNum, never a foreign unit.
+  for(const u of group.Unit){const count=depleted?(u.DepletionBulletNum??u.BulletNum??1):(u.BulletNum??1);if(offset<count)return {unit:u,offset};offset-=count;}
   return null;
 }
-export function rollerFlickDrawRadius(weapon,vertical,index,age=0,fallback=null) {
-  const picked=flickUnitFor(weapon,vertical,index);
+export function rollerFlickDrawRadius(weapon,vertical,index,age=0,fallback=null,depleted=false) {
+  const picked=flickUnitFor(weapon,vertical,index,depleted);
   if(!picked)return fallback;
   const record=drawRadiusRecord(picked.unit.UnitParam?.DrawSizeParam);
   return record?radiusAt(record,age,fallback):fallback;
@@ -967,21 +969,31 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   // _push so a later actor/profile mutation cannot rewrite an already-fired volley.
   p.s3Weapon=weapon; p.wid=weapon.id;
   const vertical=!!actor.weaponRunner.s3FlickVertical;
+  // #305: a depleted swing sends fewer, slower, weaker rounds whose per-unit
+  // rates come from the same pinned Depletion* records as the full volley.
+  const depleted=!!weapon.s3Depletion;
+  p.s3DepletionRound=depleted;
+  p.s3DepletionPaintScale=1;
   const group=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'];
-  const picked=flickUnitFor(weapon,vertical,index);
+  const picked=flickUnitFor(weapon,vertical,index,depleted);
   if(!picked)throw new RangeError('Roller index exceeds pinned units + labelled defaults');
   const {unit,offset}=picked;
   // #1128: camera aim already owns the legal gameplay pitch envelope. Do not
   // collapse Roller flicks onto the legacy [-0.2,+0.5] plateaus before applying
   // the extracted per-unit launch offsets.
+  const speedRate=depleted?(unit.DepletionSpeedRate??1):1;
   let pitch=Number.isFinite(actor.aimPitch)?actor.aimPitch:0;
+
   if(vertical){
-    speed=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0));
+    speed=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0))*speedRate;
     pitch+=radians((unit.SpawnRotateXDegreeBase||0)+offset*(unit.AfterOffsetSpawnRotateXDegree||0));
     angle=actor.yaw+radians(unit.SpawnRotateYDegree||0);
   }else{
-    const count=unit.BulletNum??1,fan=count>1?offset/(count-1)*2-1:0;
-    speed=60*(unit.SpawnSpeedBase+(Math.random()*2-1)*(unit.SpawnSpeedRandom||0));
+    // The depleted fan spreads the sourced DepletionBulletNum slots over the
+    // same SpawnWideDegree; the exact angular distribution of the reduced set is
+    // not recovered from the parameter table and is an INKWAVE model.
+    const count=(depleted?(unit.DepletionBulletNum??unit.BulletNum):unit.BulletNum)??1,fan=count>1?offset/(count-1)*2-1:0;
+    speed=60*(unit.SpawnSpeedBase+(Math.random()*2-1)*(unit.SpawnSpeedRandom||0))*speedRate;
     angle=actor.yaw+fan*radians(unit.SpawnWideDegree||0);
     pitch+=radians(b.horizontalPitchDegrees); // retained calibrated launch angle, NOT extracted
     const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnPositionRandomCube||0;
@@ -999,6 +1011,8 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;p.fidelityRollerUnitIndex=group.Unit.indexOf(unit);
   setCollision(p,unit.UnitParam.CollisionParam);
   setDrawRadius(p,unit);
+  const depletionPaintRate=unit.UnitParam?.PaintParam?.DepletionDepthWidthRate;
+  p.s3DepletionPaintScale=depleted && Number.isFinite(depletionPaintRate) && depletionPaintRate>0 ? depletionPaintRate : 1;
   p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;
   p.grav=weapon.flickGravity;p.drag=weapon.flickDrag;
 }
@@ -1169,7 +1183,11 @@ export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
     const source=rawWeapon(w)[p.s3Vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].DamageParam;
     const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*impactT;
     const t=clamp01((age*60-source.DamageRejectStartFrame)/(source.DamageRejectEndFrame-source.DamageRejectStartFrame));
-    return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t);
+    // #305: the depleted round keeps the DepletionDamageRate of the exact table
+    // it hit (Inside/Outside); a family without that sourced field (vertical)
+    // keeps its full-table damage.
+    const depletionRate=p.s3DepletionRound?((outside?source.Outside:source.Inside)?.DepletionDamageRate??1):1;
+    return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t)*depletionRate;
   }
   if(w.kind==='slosher'&&p.fidelitySloshUnit){
     const d=p.fidelitySloshUnit.DamageParam,fall=Math.max(0,p.start.y-point.y);
@@ -1377,7 +1395,8 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.s3DepletionPaintScale=1;p.fidelitySloshUnit=null;p.fidelitySloshDraw=null;p.s3DepletionRound=false;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
+
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -1470,7 +1489,7 @@ export function installWeaponsFidelity(context,profile) {
     applySlosherSpawnVelocity(p);
     if(w?.kind==='blaster' && !p.s3SpecialWeapon && !p.ghost) configureBlasterFlightPaint(p,rawWeapon(w),completion.worldUnitsPerSourceUnit);
     if(w?.kind==='roller' && p.fidelityMode==='vertical' && p.fidelityRollerUnitIndex===0 && !p.ghost)
-      configureRollerVerticalPaint(p,rawWeapon(w).VerticalSwingUnitGroupParam,completion.worldUnitsPerSourceUnit);
+      configureRollerVerticalPaint(p,rawWeapon(w).VerticalSwingUnitGroupParam,completion.worldUnitsPerSourceUnit,p.s3DepletionPaintScale??1);
     const group=p.s3DamageGroup;const result=push.call(this,p);
     // The generic wrapper snapshots owner state too; retain a single per-volley owner.
     if(group)p.s3DamageGroup=group;
