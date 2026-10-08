@@ -233,6 +233,14 @@ INKWAVE の `patches/reliability/combat-credit-adapter.mjs` は owner と event 
 
 練習場のロジック測定で、スプラッシュボムを水平に投げると約 48.8 m 先で爆発することを記録した（`profile.json` の初速 67.2・重力 57.6、ロジック単独、描画・実機なし）。シューター射程 12.9 m の約 3.8 倍。本家の投擲距離との比較は単位対応が未確立のため未確認とし、値は変更していない。
 
+#### 2026-10-08: #947 練習場のブキ変更と Ink Vac の所有権
+
+比較条件は公開 INKWAVE、参照プロフィールの Splatoon 3 Ver.11.3.0、`charger` の Ink Vac 吸入中、練習場のローカル Actor、既定テスト装備。操作は `RangeSession.setWeapon()` による有効な異ブキ選択。本家との対応は未確認：この INKWAVE 練習場パッド操作に対応する本家の同一試合中ブキ切替を、公式資料または Switch 実機で確認していない。したがってスペシャル中の本家ブキ変更挙動や数値は主張しない。
+
+INKWAVE の差分は、成功した異ブキ切替後も `installKitInkVac()` が所有する旧吸入状態が残り、次の射撃入力を取り込み続けることだった。`patches/practice-range/runtime/session.mjs` は `Actor.setWeapon()` の成功と実際の ID 変更を確認してから既存 `disposeInkVac()` を呼ぶ。同ブキ選択、無効 ID、例外で失敗した切替では保持状態を変えない。既存の dispose イベントがネットワーク複製へ送られ、既発射 blast、消費済みゲージ、通常対戦の `Actor.setWeapon()` は変更しない。影響は練習場の異ブキ選択後も旧スペシャルが入力を所有する点の解消。
+
+確認状態：完全な6層アダプター合成でインストールした実 Actor と実 `RangeSession.setWeapon()` を使用する focused lifecycle 7/7。これはロジック確認であり、ブラウザ実動作・本家実機比較ではない。Nintendo の新しい数値は追加していない。
+
 ## Batch C の着地と通信状態の確認（2026-10-04）
 
 比較条件は公開INKWAVE、既存Splatoon 3 Ver.11.3.0参照、通常装備・通常着地。
