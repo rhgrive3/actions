@@ -282,6 +282,15 @@ def smooth_regions(steps):
               'max move mm', round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def set_local_mm(obj, loc):
+    """Vertex positions from head-frame mm."""
+    W = er.M.to_world(np.asarray(loc, float) / 1000)
+    inv = np.array(obj.matrix_world.inverted())
+    co = (np.c_[W, np.ones(len(W))] @ inv.T)[:, :3]
+    obj.data.vertices.foreach_set('co', co.astype(np.float32).ravel())
+    obj.data.update()
+
+
 def neck_flare(cfg):
     """The neck went straight up into the skull: from the back and the back 3/4 the head sat on it like a ball on a
     stick with a ledge under it (2026-10-08, user: もっと滑らかに繋げろ).  The top of the neck widens toward the
@@ -296,36 +305,35 @@ def neck_flare(cfg):
     before = er.world(obj)
     fl = cfg.get('follow')
     if fl:
-        # the head's lower band lies on the neck: it is bound to the neck first (Surface Deform, full within
-        # fl['mm'][0] of it, none beyond fl['mm'][1]) so its edge moves out with the neck instead of showing
-        from mathutils.bvhtree import BVHTree
+        # the head's lower band lies on the neck: it takes the move of the nearest neck vertex (full within
+        # fl['mm'][0] of the neck, none beyond fl['mm'][1]) so its edge moves out with the neck instead of showing
+        # (Surface Deform does not bind the head to this neck)
+        from mathutils.kdtree import KDTree
         head = bpy.data.objects[fl['mesh']]
-        tree = BVHTree.FromObject(obj, bpy.context.evaluated_depsgraph_get())
-        inv = obj.matrix_world.inverted()
+        Wn0 = er.world(obj)
+        kd = KDTree(len(Wn0))
+        for i, c in enumerate(Wn0):
+            kd.insert(Vector(c), i)
+        kd.balance()
         Wh = er.world(head)
         Lh = er.M.to_local(Wh) * 1000
         near = np.flatnonzero(Lh[:, 1] < y2 + 10)
+        nid = np.zeros(len(Wh), int)
         dist = np.full(len(Wh), 1e9)
-        dist[near] = [tree.find_nearest(inv @ Vector(Wh[i]))[3] * 1000 for i in near]
+        for i in near:
+            _, j, dd = kd.find(Vector(Wh[i]))
+            nid[i], dist[i] = j, dd * 1000
         d0, d1 = fl['mm']
         wh = 1 - smoothstep((dist - d0) / (d1 - d0))
-        vg = head.vertex_groups.new(name='INKWAVE_flare_follow')
-        for v in np.unique(np.round(wh[wh > 1e-3], 3)):
-            vg.add([int(i) for i in np.flatnonzero(np.abs(np.round(wh, 3) - v) < 1e-9)], float(v), 'REPLACE')
-        sd = head.modifiers.new('INKWAVE_flare_follow', 'SURFACE_DEFORM')
-        sd.target, sd.vertex_group = obj, vg.name
-        er.with_object(head, lambda: bpy.ops.object.surfacedeform_bind(modifier=sd.name))
-        if not sd.is_bound:
-            raise RuntimeError('Surface Deform could not bind ' + head.name)
     er.apply_weighted_modifier(obj, w, 'DISPLACE', direction='NORMAL', strength=cfg['mm'] / 1000, mid_level=0.0)
     if cfg.get('smooth_iters'):
         er.apply_weighted_modifier(obj, np.clip(w * 3, 0, 1), 'SMOOTH', factor=0.5, iterations=cfg['smooth_iters'])
     if fl:
-        hb = er.world(head)
-        er.apply_modifier(head, sd)
-        head.vertex_groups.remove(head.vertex_groups['INKWAVE_flare_follow'])
+        mv = er.world(obj) - Wn0
+        Lnew = er.M.to_local(Wh + wh[:, None] * mv[nid]) * 1000
+        set_local_mm(head, Lnew)
         print('BODY_SHAPE neck_flare head follows, max move mm',
-              round(float(np.linalg.norm(er.world(head) - hb, axis=1).max() * 1000), 2))
+              round(float(np.linalg.norm(er.world(head) - Wh, axis=1).max() * 1000), 2))
     print('BODY_SHAPE neck_flare vertices', int((w > 1e-3).sum()), 'max move mm',
           round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
