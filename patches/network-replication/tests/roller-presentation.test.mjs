@@ -33,8 +33,11 @@ async function makePair() {
     tr: { broadcast() {}, sendTo() {} } }, cfg);
   receiver.bind({ actors: [remote], state: 'playing', time: 180, opts: {} });
 
-  function ownerStep(dt, input) {
+  function advanceClock(dt) {
     nowMs += dt * 1000; G.time += dt;
+  }
+  function ownerStep(dt, input) {
+    advanceClock(dt);
     owner.weaponRunner.update(dt, input);
   }
   function snapshot() {
@@ -47,12 +50,12 @@ async function makePair() {
     const peer = receiver._peer('owner'); peer.tr = packet.ts;
     receiver._sample(remote, packet.ts, 0); receiver.applyRemote(remote, dt);
   }
-  return { f, G, owner, remote, sender, receiver, packets, ownerStep, snapshot, deliver };
+  return { f, G, owner, remote, sender, receiver, packets, advanceClock, ownerStep, snapshot, deliver };
 }
 
 test('C1155 full production composition replicates accepted Roller pose mode and epoch only', async () => {
   const pair = await makePair();
-  const { f, G, owner, remote, receiver, ownerStep, snapshot, deliver } = pair;
+  const { f, G, owner, remote, receiver, advanceClock, ownerStep, snapshot, deliver } = pair;
   const poses = new Map();
   let lastEpoch = 0;
 
@@ -60,6 +63,7 @@ test('C1155 full production composition replicates accepted Roller pose mode and
     owner.weaponRunner.reset(); remote.weaponRunner.reset();
     remote.character.s3RollerFlick = null;
     owner.alive = true; owner.grounded = mode === 'horizontal'; owner.stats.deaths = 0;
+    if (mode === 'vertical') f.emit('actor:jump', { actor: owner });
     ownerStep(1 / 60, { fire: true, firePressed: true });
     const accepted = owner.weaponRunner.s3RollerAttack;
     assert.ok(accepted, `${mode} input was accepted by the owner runner`);
@@ -76,7 +80,9 @@ test('C1155 full production composition replicates accepted Roller pose mode and
 
     const presentation = remote.character.s3RollerFlick;
     assert.equal(presentation?.networkRemote, true);
-    assert.equal(presentation?.vertical, accepted.vertical);
+    assert.equal(presentation?.vertical, accepted.vertical, JSON.stringify({ accepted: accepted.vertical,
+      wire: wire.slice(0, 11), sampled: remote.net.cur?.rollerFlick, pose: presentation,
+      rowFlags: packet.a[0][10], legacy: remote.weaponRunner.s3RollerAttack }));
     assert.equal(presentation?.epoch, wire[2]);
     assert.equal(presentation?.windup, accepted.windup);
     assert.equal(presentation?.interval, accepted.interval);
@@ -111,8 +117,9 @@ test('C1155 full production composition replicates accepted Roller pose mode and
     assert.equal(remote.net.buf.length, beforeDuplicate,
       'duplicate and older snapshots cannot rewind accepted presentation');
 
+    ownerStep(1 / 60, { fire: true });
     const lowerEpoch = clone(snapshot());
-    lowerEpoch.ts += .03; lowerEpoch.rf[ACTOR_NID][2] = wire[2] - 1;
+    lowerEpoch.rf[ACTOR_NID][2] = wire[2] - 1;
     lowerEpoch.rf[ACTOR_NID][10] += 2;
     deliver(lowerEpoch);
     assert.equal(remote.character.s3RollerFlick?.epoch, wire[2],
@@ -127,9 +134,10 @@ test('C1155 full production composition replicates accepted Roller pose mode and
     'accepted mode selects a different real Character swing pose');
 
   owner.weaponRunner.reset(); owner.stats.deaths = 1; owner.alive = false;
+  advanceClock(1 / 60);
   const death = snapshot(); deliver(death);
   assert.equal(remote.character.s3RollerFlick, null, 'death clears the remote pose timeline');
-  owner.alive = true;
+  owner.alive = true; advanceClock(1 / 60);
   const respawn = snapshot(); deliver(respawn);
   assert.equal(remote.character.s3RollerFlick, null, 'respawn does not revive an earlier flick');
 

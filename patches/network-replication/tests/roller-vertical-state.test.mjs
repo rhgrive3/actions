@@ -87,8 +87,9 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   assert.equal(local.weaponRunner.s3RollerAttack?.vertical, true);
   assert.equal(local.character.s3RollerFlick?.vertical, true);
   receive({ receiver, remote }, airborne);
-  assert.equal(remote.weaponRunner.s3FlickVertical, true);
-  assert.equal(remote.weaponRunner.s3RollerAttack.vertical, true);
+  assert.equal(remote.weaponRunner.s3FlickVertical, false,
+    'remote vertical mode stays out of the simulated WeaponRunner');
+  assert.equal(remote.weaponRunner.s3RollerAttack, null);
   assert.equal(remote.character.s3RollerFlick.vertical, true);
   assert.deepEqual(remoteTriggers.filter(name => name === 'flick'), ['flick']);
 
@@ -123,8 +124,9 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   assert.equal(recovery.a[0][10] & FLICK, 0, 'the windup bit ends at release');
   assert.ok(recovery.a[0][10] & FLICK_VERTICAL, 'the vertical selection remains through recovery');
   receive({ receiver, remote }, recovery);
-  assert.equal(remote.weaponRunner.s3RollerAttack?.released, true);
+  assert.equal(remote.weaponRunner.s3RollerAttack, null);
   assert.equal(remote.character.s3RollerFlick.vertical, true);
+  assert.equal(remote.character.s3RollerFlick.released, true);
 
   const stale = clone(recovery);
   stale.ts -= 0.01;
@@ -135,7 +137,8 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   receiver.peers.get('owner').tr = recovery.ts;
   receiver._sample(remote, recovery.ts, 0);
   receiver.applyRemote(remote, dt);
-  assert.equal(remote.weaponRunner.s3FlickVertical, true);
+  assert.equal(remote.weaponRunner.s3FlickVertical, false);
+  assert.equal(remote.character.s3RollerFlick.vertical, true);
 
   // A new grounded flick uses the existing horizontal path and clears only the
   // network-owned vertical presentation state on the proxy.
@@ -149,7 +152,7 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   assert.equal(remote.weaponRunner.flick, 0);
   assert.equal(remote.weaponRunner.s3FlickVertical, false);
   assert.equal(remote.weaponRunner.s3RollerAttack, null);
-  assert.equal(remote.character.s3RollerFlick, null);
+  assert.equal(remote.character.s3RollerFlick?.vertical, false);
 
   local.weaponRunner.reset();
   assert.equal(local.weaponRunner.s3RollerAttack, null, 'owner reset drops its attack selection');

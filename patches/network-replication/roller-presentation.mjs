@@ -25,7 +25,10 @@ export function packRollerPresentation(actor, match, simulationTick) {
   }
 
   if (!track) return null;
-  if (track.suppressed && (!attack || attack !== track.suppressed)) track.suppressed = null;
+  if (actor.alive === false) {
+    track.suppressed = attack || track.attack || track.suppressed || null;
+    track.attack = null;
+  } else if (track.suppressed && attack && attack !== track.suppressed) track.suppressed = null;
   if (attack && !track.suppressed && attack !== track.attack) {
     track = { life, epoch: Math.max(tick, track.epoch + 1), attack, suppressed: null };
   } else if (!attack) track.attack = null;
@@ -56,33 +59,56 @@ export function readRollerPresentation(value) {
     rolling: value[9] === 1, tick: value[10] };
 }
 
-export function applyRemoteRollerPresentation(actor, presentation, dt) {
-  if (!actor?.remote || !presentation || !actor.character) return false;
-  const net = actor.net || (actor.net = {});
-  const previous = net._rollerPresentationState;
-  const ownerChanged = previous && presentation.owner !== previous.owner;
-  const lifeChanged = previous && presentation.life !== previous.life;
-  if (previous && !ownerChanged && !lifeChanged
-      && (presentation.epoch < previous.epoch || presentation.tick < previous.tick)) return false;
-  if (previous && !ownerChanged && presentation.life < previous.life) return false;
-
+function clearRemoteRollerPose(actor) {
+  if (actor.character) actor.character.s3RollerFlick = null;
   const runner = actor.weaponRunner;
+  if (runner?.s3RollerAttack?.networkRemote) runner.s3RollerAttack = null;
+  if (runner) runner.s3FlickVertical = false;
+}
+
+export function applyRemoteRollerPresentation(actor, presentation, dt, snapshotAlive = true) {
+  if (!actor?.remote || !actor.character) return false;
+  const net = actor.net || (actor.net = {});
+  let previous = net._rollerPresentationState;
+  const owner = actor.owner ?? null;
+  const ownerChanged = previous && owner !== previous.owner;
+  if (ownerChanged) {
+    clearRemoteRollerPose(actor);
+    net._rollerPresentationState = { owner, life: -1, epoch: -1, tick: -1, active: false };
+    previous = net._rollerPresentationState;
+  }
+  if (!presentation) {
+    clearRemoteRollerPose(actor);
+    if (!previous) net._rollerPresentationState = { owner, life: -1, epoch: -1, tick: -1, active: false };
+    else net._rollerPresentationState = { ...previous, owner, active: false };
+    return true;
+  }
+  if (presentation.owner !== owner) {
+    clearRemoteRollerPose(actor);
+    return false;
+  }
+  if (previous && presentation.life < previous.life) return false;
+  if (previous && (presentation.epoch < previous.epoch || presentation.tick < previous.tick)) return false;
+  if (previous && previous.owner === owner && presentation.life === previous.life
+      && presentation.active && !previous.active && presentation.epoch <= previous.epoch) return false;
+
   const character = actor.character;
   const old = character.s3RollerFlick;
-  const sameAction = !ownerChanged && !lifeChanged && old?.networkRemote === true
-    && old.epoch === presentation.epoch && old.life === presentation.life;
+  const sameAction = previous?.owner === owner && previous.active && old?.networkRemote === true
+    && old.owner === owner && old.epoch === presentation.epoch && old.life === presentation.life;
   net._rollerPresentationState = { owner: presentation.owner, life: presentation.life,
     epoch: presentation.epoch, tick: presentation.tick, active: presentation.active };
 
-  if (!presentation.active || actor.weapon?.kind !== 'roller') {
-    if (old?.networkRemote) character.s3RollerFlick = null;
-    if (runner?.s3RollerAttack?.networkRemote) runner.s3RollerAttack = null;
-    if (runner) runner.s3FlickVertical = false;
+  const runner = actor.weaponRunner;
+  if (!snapshotAlive || !actor.alive || !presentation.active || actor.weapon?.kind !== 'roller') {
+    clearRemoteRollerPose(actor);
+    net._rollerPresentationState.active = false;
     return true;
   }
 
   const elapsed = sameAction
-    ? Math.min(presentation.interval, Math.max(presentation.elapsed, old.elapsed + Math.max(0, dt || 0)))
+    ? Math.min(presentation.interval, Math.max(presentation.elapsed,
+      old.elapsed + (Number.isFinite(dt) ? Math.max(0, dt) : 0)))
     : presentation.elapsed;
   const pose = sameAction ? old : { networkRemote: true };
   Object.assign(pose, { networkRemote: true, owner: presentation.owner, life: presentation.life,
@@ -91,15 +117,18 @@ export function applyRemoteRollerPresentation(actor, presentation, dt) {
   character.s3RollerFlick = pose;
   // NetMatch pose metadata never becomes a simulated WeaponRunner action.
   if (runner?.s3RollerAttack?.networkRemote) runner.s3RollerAttack = null;
-  if (runner) runner.s3FlickVertical = presentation.vertical;
+  if (runner) runner.s3FlickVertical = false;
   return true;
 }
 
 export function clearRemoteRollerPresentation(actor) {
   if (!actor?.remote || !actor.character) return false;
-  if (actor.character.s3RollerFlick?.networkRemote) actor.character.s3RollerFlick = null;
-  const runner = actor.weaponRunner;
-  if (runner?.s3RollerAttack?.networkRemote) runner.s3RollerAttack = null;
-  if (runner) runner.s3FlickVertical = false;
+  clearRemoteRollerPose(actor);
+  const net = actor.net || (actor.net = {});
+  const previous = net._rollerPresentationState;
+  const owner = actor.owner ?? null;
+  net._rollerPresentationState = previous && previous.owner === owner
+    ? { ...previous, active: false }
+    : { owner, life: -1, epoch: -1, tick: -1, active: false };
   return true;
 }
