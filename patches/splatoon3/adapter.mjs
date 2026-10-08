@@ -764,8 +764,8 @@ export function adaptSource(rel, code) {
       '          const g = G.physics.raycast(_v, DOWN, inkWaveRainReach, _hit);\n          const audit = c.s3RainAudit || (c.s3RainAudit = { candidateDrops: 0, groundHits: 0, paintEvents: 0 });\n          audit.candidateDrops++;\n          if (g.hit) audit.groundHits++;\n          if (g.hit && (!c.ghost || !c.owner.remote)) audit.paintEvents++;',
       'count Storm rain candidate/contact/paint separately');
     code = replaceOnce(code,
-      '          if (dx * dx + dz * dz > sp.radius * sp.radius || e.pos.y > c.group.position.y) continue;',
-      '          if (dx * dx + dz * dz > sp.radius * sp.radius || e.pos.y > c.group.position.y ||\n              e.pos.y + 1.2 < c.group.position.y - 0.8 - inkWaveRainReach) continue;',
+      '          if (dx * dx + dz * dz > (sp.radius * s) ** 2 || e.pos.y > c.group.position.y) continue;',
+      '          if (dx * dx + dz * dz > (sp.radius * s) ** 2 || e.pos.y > c.group.position.y ||\n              e.pos.y + 1.2 < c.group.position.y - 0.8 - inkWaveRainReach) continue;',
       'prevent damage beyond own finite rain reach');
     code = "import { fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     code = replaceOnce(code, 'let vis = (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));',

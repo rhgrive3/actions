@@ -1,3 +1,4 @@
+import { adaptBuildSource } from './inkwave-source-composition.mjs';
 #!/usr/bin/env node
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
 // Keep inkwave-public/ unchanged, then minify every JS and CSS file
