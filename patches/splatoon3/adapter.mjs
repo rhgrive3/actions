@@ -1092,21 +1092,28 @@ export function adaptSource(rel, code) {
     if (!worldHidden && (!halfRateShadow || (this._frameN & 1))) sm.needsUpdate = true;`,
       'effective mobile shadow cadence');
     code = replaceOnce(code, '    this.input.endFrame();\n', '', 'input consumption');
-    code = replaceOnce(code,
-      "    const gained = Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);\n" +
-      "    const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };\n" +
-      "    p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n" +
-      "    while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n" +
-      "    saveJSON('inkwave.profile', p);",
-      "    const privateBattle = !!G.netm;\n" +
-      "    const gained = privateBattle ? 0 : Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);\n" +
-      "    const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };\n" +
-      "    if (!privateBattle) {\n" +
-      "      p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n" +
-      "      while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n" +
-      "      saveJSON('inkwave.profile', p);\n" +
-      "    }",
-      'Private Battle persistent progression');
+    {
+      const judgeStart = code.indexOf('  async _judge() {');
+      const judgeEnd = code.indexOf('\n  _fade(', judgeStart);
+      if (judgeStart < 0 || judgeEnd < judgeStart) throw new Error('INKWAVE patch conflict (Private Battle persistent progression): judge boundary');
+      let judge = code.slice(judgeStart, judgeEnd);
+      if (!judge.includes('const privateBattle = !!G.netm;')) {
+        const gainedPattern = /    const gained = Math\.round\(([^\n]+)\);/g;
+        const gainedMatches = [...judge.matchAll(gainedPattern)];
+        if (gainedMatches.length !== 1) throw new Error(`INKWAVE patch conflict (Private Battle persistent progression): expected one Turf gained line (${gainedMatches.length})`);
+        judge = judge.replace(gainedPattern, '    const privateBattle = !!G.netm;\n    const gained = privateBattle ? 0 : Math.round($1);');
+
+        const mutStart = judge.indexOf('    p.xp += gained;');
+        const saveLine = "    saveJSON('inkwave.profile', p);";
+        const saveStart = judge.indexOf(saveLine, mutStart);
+        if (mutStart < 0 || saveStart < mutStart) throw new Error('INKWAVE patch conflict (Private Battle persistent progression): profile mutation block');
+        const mutEnd = saveStart + saveLine.length;
+        const mutation = judge.slice(mutStart, mutEnd);
+        const indented = mutation.split('\n').map(line => '  ' + line).join('\n');
+        judge = judge.slice(0, mutStart) + '    if (!privateBattle) {\n' + indented + '\n    }' + judge.slice(mutEnd);
+      }
+      code = code.slice(0, judgeStart) + judge + code.slice(judgeEnd);
+    }
     code = replaceOnce(code,
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES });',
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
