@@ -80,6 +80,15 @@
 - INKWAVE の変更：`patches/local-quality/offscreen-visual-budget.mjs` を bootstrap の `installQuality` から接続。native `_camHook` の実描画フレームを使い、保守的な perspective-camera 判定で画面外が続く遠隔 Character のみ表示更新を抑える。判定でモデル化していない shifted/zoom/filmOffset/parented/custom camera は通常更新に戻す。カメラ更新が Actor update の後になる場合に備え、最初の mesh `onBeforeRender` で既存 `_camHook` の前に保留 pose を反映する。ローカル Actor、Practice Range、未知カメラは抑制しない。
 - ゲームへの影響：足 IK と装飾 pose/hair の表示用作業を、画面外の遠隔 Character に限って減らす。Actor の移動、衝突、武器、ダメージ、通信、AI、シミュレーション時計は変更しない。30/60/120 Hz のロジック確認と初回可視描画順の native regression は通過したが、端末 CPU 時間、FPS、電力、Switch との同等性は未計測・未確認。
 
+## #1160: 頭上クリアランスのない段差上り（2026年10月9日）
+
+- 本家参照版：スプラトゥーン3 Ver.11.3.0。任天堂の更新履歴で版を確認した。公式の基本説明はイカ状態で自分の色のインクを泳ぎ、壁やフェンスを通ることを説明するが、段差・天井の当たり判定寸法や歩行時のステップ許可条件は公開していない。[更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/kw/Splatoon%203)、[公式ゲーム説明](https://splatoon.nintendo.com/ca/gameplay/)。この条件の Switch 実機確認は未実施で、本家と同じ挙動とは判定しない。
+- 比較条件：本家は実機未計測のため、ステージ・ブキ・ギアの条件は未確定。INKWAVE fixture では weapon=`shooter`、ヒト状態、ギア効果なし、前方へ移動、射撃・ジャンプ・サブ・スペシャルなし。再現地形は高さ 0.30 m の curb、上面の下面が y=1.50 m の天井。現行設定の `stepUp=0.35 m`、`height=1.45 m` を使うため、段差上では頭部が天井へ 0.25 m 入る。これらは INKWAVE の fixture 値で、本家の寸法値ではない。
+- 変更前の最初の差：full production adapter composition と全 runtime installer を通した Actor/Level/Physics で、z=0.402 m の固定 tick に足プローブが y=0.30 m の curb を選び、Actor の y が 0 から 0.30 m へ上がった。その candidate の頭上は y=1.75 m となり、天井下面を 0.25 m 越える。既存の body 解決は上がる前の y で実行され、候補の全身 fit を snap 前に確かめていなかった。根拠は `codex3-1160-production-red.log`。
+- INKWAVE の変更：`patches/splatoon3/movement-physics-adapter.mjs` が build 時の `Actor._resolve` に、上方の足支持候補を実際の form 別 terrain radius・lift・height・grate 除外条件で `Physics.bodyFits` に照会する処理を接続する。不適合なら候補へ snap せず、lift を足元まで下げた `collideBody` で curb 側を押し戻し、側面接触が続く間は次 tick も押し戻す。比較対象の `inkwave-public/src/game/actor.js` は変更していない。実機由来でない寸法や補正量は追加していない。
+- 再現と確認：`patches/splatoon3/tests/issue-1160-step-clearance.test.mjs` が `source-fixture` の全 production adapter chain と `fullRuntime` installer を使い、実際の Actor/Level/Physics、`FixedClock` の 30/60/120 Hz 描画刻みで比較する。変更後、最初の side resolution は y=0、z=0.251539 m で curb 側へ押し戻し、頭上クリアランスのない curb の移動結果は描画刻みに依存しない。開けた curb は一度だけ上がり、ramp・step-down・kid の grate 接地・squid の grate 通過も継続する。これはロジック fixture の結果であり、ブラウザ描画・Character の足運び・端末実測・本家実機比較ではない。
+- 遊びへの影響と状態：変更前は低い天井の下へ足だけが先に乗り、身体が地形へ食い込む可能性があった。変更後はその段差を越えられず、下の床に立ったままになる。INKWAVE の production composition 回帰は確認済み。本家での同一操作、足運び、頭部接触、ブキ・ギア別条件は未確認のまま残す。
+
 ## 継続比較の手順
 
 1. 変更に関係する挙動を選び、本家の参照版・ブキ・ギア・入力・地形を固定する。
