@@ -617,6 +617,9 @@ test('a shooter proposal neutralises its damage and the owner credits it exactly
   // A proposal for a finished activation is refused even with a fresh key.
   disposeInkVac(p1);                                             // end the first activation
   assert.equal(f.inkVacState(p1), null, 'the first activation really ended');
+  // activate() leaves the prior special press in _prevIntent until one neutral
+  // actor tick consumes the physical release edge.
+  p1.intent.special = false; f.tick(p1);
   p1.special = 190; activate(f, p1);
   const serial2 = f.inkVacState(p1).serial;
   assert.notEqual(serial2, serial, 'a second activation gets a new serial');
