@@ -23,7 +23,10 @@ export function validateDetailReceipts(loaded) {
   for (const module of ['bomb-motion','flow-motion','weapon-detail-motion'])
     if (!loaded.some(file=>file.endsWith('/patches/splatoon3/runtime/'+module+'.mjs'))) throw Error('Actual detail module not loaded: '+module);
 }
-export function validateDetailResult(result) {
+export // #1037: native Splat Bomb creation follows the admitted sub release by
+// 1 fixed frame. The held pose is still sampled on frame 29, while the actual
+// projectile/contact is asserted on frame 31 rather than the input edge (30).
+function validateDetailResult(result) {
   if(result.pixelControls?.dither!==false||result.pixelControls?.samples!==0||result.pixelControls?.target!=='explicit-srgb-rgba8')throw Error('Controlled detail pixel framebuffer');
   const finite=(v,path)=>{ if(typeof v!=='number'||!Number.isFinite(v))throw Error('Non-finite detail '+path); };
   const numericTree=(v,path)=>{ if(typeof v==='number')finite(v,path);else if(v&&typeof v==='object')for(const [key,value] of Object.entries(v))numericTree(value,path+'.'+key); };
