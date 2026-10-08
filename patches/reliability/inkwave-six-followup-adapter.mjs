@@ -9,16 +9,17 @@ function once(code, before, after, label) {
 // Runtime/gameplay ownership remains in the canonical native classes.
 export function adaptSixFollowup(rel, code) {
   if (rel === 'src/net/session.js') {
-    // Compose after adaptHostTeams: preserve its confirmed-team/all-ready gates
-    // while enforcing a minimum of two human players for Turf matches.
-    code = once(code,
-      "    return !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));",
-      "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));",
-      '#1003 canStart two-human Turf minimum');
-    code = once(code,
-      "    if (!this.isHost || this.state !== 'lobby' || !this.tr || !this.canStart()) return false;",
-      "    if (!this.isHost || this.state !== 'lobby' || !this.tr || !this.canStart() || (this.lobby.mode === 'turf' && this.lobby.players.length < 2)) return false;",
-      '#1003 start two-human Turf minimum');
+    // This adapter is used both by its standalone regression fixture (raw source)
+    // and by the production build after the host-owned team-confirmation adapter.
+    // Preserve whichever valid admission policy is present, then add #1003.
+    const hostTeams = code.includes("    return !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));");
+    const oldCan = hostTeams ? "    return !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));" : "    return !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);";
+    const newCan = hostTeams ? "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));" : "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);";
+    code = once(code, oldCan, newCan, '#1003 canStart two-human Turf minimum');
+
+    const oldStart = hostTeams ? "    if (!this.isHost || this.state !== 'lobby' || !this.tr || !this.canStart()) return false;" : "    if (!this.isHost || this.state !== 'lobby' || !this.tr || this.startBlock()) return false;";
+    const newStart = hostTeams ? "    if (!this.isHost || this.state !== 'lobby' || !this.tr || !this.canStart() || (this.lobby.mode === 'turf' && this.lobby.players.length < 2)) return false;" : "    if (!this.isHost || this.state !== 'lobby' || !this.tr || this.startBlock() || (this.lobby.mode === 'turf' && this.lobby.players.length < 2)) return false;";
+    code = once(code, oldStart, newStart, '#1003 start two-human Turf minimum');
   }
   if (rel === 'src/main.js') {
     const judgeStart = code.indexOf('  async _judge() {');
