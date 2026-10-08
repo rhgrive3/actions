@@ -366,7 +366,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     // #1105: an idle tick cannot emit native Roller contact, so do not create
     // an admission closure or swap the shared applyHit method on that path.
     // Held fire is conservatively included: native may enter rolling THIS tick.
-    if (typeof applyHit === 'function' && (this.rolling || !!fireIn.fire)) {
+    if (typeof applyHit === 'function' && (this.rolling || state?.rolling || !!fireIn.fire)) {
       const runner = this;
       const admittedHit = function (attacker, victim, ...args) {
         const admission = applyHit.call(this, attacker, victim, ...args);
