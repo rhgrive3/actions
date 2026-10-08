@@ -494,7 +494,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     const rollSpeed = Math.hypot(a.vel.x, a.vel.z);
     if (this.rolling && rollSpeed > 1.0) {
       const bubbler = rollerBubblerCandidate(a, Math.sin(a.yaw), Math.cos(a.yaw), w.rollWidth);
-      if (bubbler && G.time - (this.rollHits.get(bubbler.dome) || -9) + 1e-10 >= (w.rollContactInterval ?? (24 / 60))) {
+      if (bubbler && G.time - (this.rollHits.get(bubbler.dome) ?? -9) + 1e-10 >= (w.rollContactInterval ?? (24 / 60))) {
         this.rollHits.set(bubbler.dome, G.time);
         applyRollerBubblerHit(bubbler, a, w.rollDamage);
       }
