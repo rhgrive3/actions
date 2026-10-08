@@ -539,11 +539,11 @@ export function adaptSource(rel, code) {
       'pwa service worker');
   }
   if (rel === 'src/game/physics.js') {
-    code = replaceOnce(code,
+    if (!code.includes('c.ceilingBlock = -1;')) code = replaceOnce(code,
       '    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1;',
       '    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1; c.ceilingBlock = -1;',
       'ceiling contact block identity');
-    code = replaceOnce(code,
+    if (!code.includes('c.ceiling = true; c.ceilingBlock = b.id;')) code = replaceOnce(code,
       '          else if (_n.y < -0.6) c.ceiling = true;',
       '          else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }',
       'ceiling contact classification');
@@ -743,7 +743,7 @@ export function adaptSource(rel, code) {
       "if (b.kind === 'storm' && b.age > 1.1) { this._spawnCloud(b); if (b.ghost) this.clouds[this.clouds.length - 1].ghost = true; this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
       "if (b.kind === 'storm' && b.age > 30) { this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
       'storm airborne deploy');
-    code = replaceOnce(code, '  clear() {',
+    if (!code.includes('  _recycle(p) {')) code = replaceOnce(code, '  clear() {',
       '  // Pooled records wait inside the persistent G.projectiles pool across matches;\n' +
       '  // sever the Actor reference before the record is pooled (#622).\n' +
       '  _recycle(p) {\n' +
@@ -751,9 +751,15 @@ export function adaptSource(rel, code) {
       '    this.pool.push(p);\n' +
       '  }\n\n' +
       '  clear() {', 'projectile owner-severing recycle helper');
-    code = replaceOnce(code, '  clear() {\n    for (const p of this.list) this.pool.push(p);',
-      '  clear() {\n    for (const p of this.list) this._recycle(p);',
-      'clear recycles without owners');
+    if (!code.includes('for (const p of this.list) this._recycle(p);')) {
+      const clearAnchor = code.includes('  clear() {\n    this.inkFlight.clear();\n    for (const p of this.list) this.pool.push(p);')
+        ? '  clear() {\n    this.inkFlight.clear();\n    for (const p of this.list) this.pool.push(p);'
+        : '  clear() {\n    for (const p of this.list) this.pool.push(p);';
+      const clearTarget = clearAnchor.includes('inkFlight.clear')
+        ? '  clear() {\n    this.inkFlight.clear();\n    for (const p of this.list) this._recycle(p);'
+        : '  clear() {\n    for (const p of this.list) this._recycle(p);';
+      code = replaceOnce(code, clearAnchor, clearTarget, 'clear recycles without owners');
+    }
     code = replaceOnce(code, '{ list[i] = list[list.length - 1]; list.pop(); this.pool.push(p); } }',
       '{ list[i] = list[list.length - 1]; list.pop(); this._recycle(p); } }',
       'normal completion recycles without owners');
