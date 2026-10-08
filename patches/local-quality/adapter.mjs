@@ -55,6 +55,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptFrameOrder } from './frame-order-adapter.mjs';
 import { adaptReflSkip } from './refl-skip-adapter.mjs';
 import { adaptFinishTape } from './finish-tape-adapter.mjs';
+import { adaptOffscreenCharacter } from './offscreen-character-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
@@ -63,6 +64,7 @@ const IDENTITY_FILES = [
   'boss-hit-adapter.mjs',
   'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
   'screenfx-damage-reset-adapter.mjs',
+  'offscreen-character-adapter.mjs', 'offscreen-character-presentation.mjs',
   'fx-actor-lifetime-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
   'hud-authority-adapter.mjs',
@@ -107,7 +109,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptIssue482(rel, code);
   code = adaptIssue405(rel, code);
   code = adaptIssue484(rel, code);
-  return adaptFrameOrder(rel, adaptQualityLayer(rel, code));
+  return adaptOffscreenCharacter(rel, adaptFrameOrder(rel, adaptQualityLayer(rel, code)), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
