@@ -310,10 +310,9 @@ function absorbedDamageEquivalent(projectile) {
 // Its independently known, authenticated shooter's weapon bounds proposals.
 function proposalWeaponDamage(weapon) {
   if (!weapon) return 0;
-  // Chargers expose damageMin/damageMax rather than a damage scalar. Use
-  // the trusted minimum for a conservative credit when per-shot charge
-  // cannot be independently reconstructed from a remote proposal.
-  const value = [weapon.damage, weapon.damageHead, weapon.directDamage,
+  // The receiver's equipped weapon bounds the claimed projectile damage.
+  // Chargers have a charge-dependent damageMax, not a fixed damage scalar.
+  const value = [weapon.damage, weapon.damageMax, weapon.damageHead, weapon.directDamage,
     weapon.flickDamageNear, weapon.damageMin].find(v => Number.isFinite(v) && v > 0);
   return value || 0;
 }
@@ -570,7 +569,10 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     if (ledger.set.has(key)) return drop('duplicate-proposal');
     ledger.set.add(key); ledger.order.push(key);
     while (ledger.order.length > PROPOSAL_MEMORY) ledger.set.delete(ledger.order.shift());
-    creditCharge(state, proposalWeaponDamage(actor.weapon)); // owner-derived, never packet-supplied
+    // Keep fractional/partial-hit damage from the proposal, but NEVER credit
+    // more than the sender's locally resolved weapon can deliver. Missing
+    // authenticated weapon data fails closed with zero charge.
+    creditCharge(state, Math.min(damage, proposalWeaponDamage(actor.weapon)));
     return { applied: true, serial, charge: state.charge };
   }
 
