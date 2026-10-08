@@ -703,10 +703,12 @@ export function installWeapons(context, profile) {
     const groups = this._s3SlosherOwnerGroups || (this._s3SlosherOwnerGroups = new Map());
     const floors = this._s3SlosherOwnerFloors || (this._s3SlosherOwnerFloors = new Map());
     const source = volleySourceKey(attacker);
-    if (sequence <= (floors.get(source) || 0)) return 'rejected';
     const key = volleyOwnerKey(attacker, groupId);
     let group = groups.get(key);
+    // Already-admitted groups retain their own committed damage maximum even
+    // when an out-of-order newer volley advances the eviction watermark.
     if (!group) {
+      if (sequence <= (floors.get(source) || 0)) return 'rejected';
       if (groups.size >= SLOSHER_OWNER_GROUP_LIMIT) {
         const retired = groups.keys().next().value;
         const [owner, actorId, retiredId] = JSON.parse(retired);
