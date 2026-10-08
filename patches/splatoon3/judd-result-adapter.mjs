@@ -49,26 +49,17 @@ export function adaptJuddResult(rel, code, once) {
     `      // #894 result referees: Judd stands for the local player's team, Li'l Judd for the
       // opponent. Both stay on the stage plate for the whole judgement (win and loss alike).
       const localTeam = (() => { const me = (this.lab && this.lab.local) || (typeof G !== 'undefined' && G && G.match && G.match.local) || null; return me && me.team === 1 ? 1 : 0; })();
-      // Refresh only the existing minimap renderer at zero game-time so the captured pixels
-      // include final paint even when the corner minimap is hidden. The force update reads the
-      // current level/paint state; toDataURL below then takes a read-only snapshot of its canvas.
+      // #1092: the result scene may never sample mutable post-TIME-UP paint.
+      // The host freezes this PNG beside s3FinishCoverage and online followers
+      // receive the same immutable value with the finish-state packet.
       const resultMap = (() => {
-        const minimap = (typeof G !== 'undefined' && G && G.game && G.game.minimap) || null;
-        let canvas = minimap && minimap.canvas || this._mapCanvas || null;
-        if (minimap && typeof minimap.update === 'function') {
-          try {
-            let passes = 0;
-            while (minimap._band > 0 && passes < 8) { minimap.update(0, true); passes++; }
-            if (minimap._band > 0) return null;
-            minimap.update(0, true);
-            canvas = minimap.canvas || canvas;
-          } catch { return null; }
-        }
-        if (!canvas || typeof canvas.toDataURL !== 'function') return null;
+        const match = (typeof G !== 'undefined' && G && G.match) || null;
+        const frozen = match?.s3FinishMapDataUrl;
+        if (typeof frozen !== 'string' || !frozen.startsWith('data:image/png;base64,')) return null;
         try {
           const image = h('img', { class: 'iw-jd__map-snapshot' });
           image.alt = '';
-          image.src = canvas.toDataURL('image/png');
+          image.src = frozen;
           return image;
         } catch { return null; }
       })();
