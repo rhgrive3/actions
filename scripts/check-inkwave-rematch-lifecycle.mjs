@@ -111,6 +111,21 @@ const snap = () => page.evaluate(() => {
   for (const e of document.querySelectorAll('[id]')) ids[e.id] = (ids[e.id] || 0) + 1;
   const q = (s) => document.querySelectorAll(s).length;
   const f = menus?._focus, ring = menus?.cursorEl, C = menus?._cur;
+  const n = (v) => Number.isFinite(v) ? Math.round(v * 1000) / 1000 : null;
+  const rect = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { x: n(r.x), y: n(r.y), top: n(r.top), right: n(r.right), bottom: n(r.bottom), left: n(r.left), width: n(r.width), height: n(r.height) };
+  };
+  const spring = (s) => s ? { target: n(s.target), position: n(s.x), velocity: n(s.v), stiffness: n(s.k), damping: n(s.c) } : null;
+  const ringStyle = ring ? getComputedStyle(ring) : null;
+  let connectedPads = [];
+  try {
+    connectedPads = Array.from(navigator.getGamepads?.() || []).slice(0, 4).filter((pad) => pad?.connected).map((pad) => ({
+      index: pad.index, id: String(pad.id || '').slice(0, 120), mapping: pad.mapping, connected: !!pad.connected,
+      buttonCount: pad.buttons.length, axisCount: pad.axes.length,
+    }));
+  } catch {}
   let ringOnFocus = null;
   if (C?.on && f?.isConnected) {
     const r = f.getBoundingClientRect(), pad = f.dataset.curPad != null ? +f.dataset.curPad : 7;
@@ -124,6 +139,19 @@ const snap = () => page.evaluate(() => {
     hudHidden: hud?.el.classList.contains('is-hidden'), hudLive: hud?.el.classList.contains('is-live'), hudRange: hud?.el.classList.contains('iw-hud--range'), timer: hud?.timerTxt?.textContent, lineup: q('.iw-sq'),
     judges: q('.iw-jd'), touchVisible: !!mob?.visible, touchDown: mob ? Object.entries(mob.buttons).filter(([k, v]) => v && k !== 'map').map(([k]) => k) : [], touchDownEls: mob?.root?.querySelectorAll('.is-down').length ?? 0,
     starting: !!menus?._starting, modal: !!menus?._modal, focusConnected: f ? f.isConnected : null, ringOn: !!C?.on, ringVisible: ring ? ring.style.visibility !== 'hidden' : null, ringOnFocus,
+    uiDiagnostics: {
+      menuInputOwner: menus?._input ?? null, inputLastDevice: g.input?.lastDevice ?? null,
+      focus: f ? { connected: f.isConnected, id: f.id || null, nav: f.dataset.nav ?? null, cur: f.dataset.cur ?? null, type: f.type ?? null, tagName: f.tagName || null, rect: rect(f) } : null,
+      screenNoCursor: menus?._scr?.noCursor ?? null,
+      ring: ring ? { className: String(ring.className), display: ringStyle.display, visibility: ringStyle.visibility, opacity: ringStyle.opacity, rect: rect(ring) } : null,
+      cursorAnimation: C ? { on: !!C.on, snapNext: !!C.snapNext, radius: C.r ?? null, axes: { x: spring(C.x), y: spring(C.y), w: spring(C.w), h: spring(C.h) } } : null,
+      document: { visibilityState: document.visibilityState, hidden: document.hidden }, connectedPads,
+      frameDriver: {
+        platform: g.platform?.driver?.snapshot?.() ?? null,
+        menuRaf: menus?._raf ?? null, menuLastT: n(menus?._lastT), menuExternalTick: n(menus?._extTick),
+        main: { frozen: !!g.frozen, frameRate: g.settings?.frameRate ?? null, fps: n(g.fps), fpsAcc: n(g.fpsAcc), fpsN: Number.isFinite(g.fpsN) ? g.fpsN : null, frameCapAcc: n(g._frameCapAcc), frameCapElapsed: n(g._frameCapElapsed), frameN: Number.isFinite(g._frameN) ? g._frameN : null },
+      },
+    },
     controller: m?.controller ? { enabled: m.controller.enabled, blocked: !!m.controller.menuBlocked, local: m.controller.a === m.local } : null,
     rigFollowsLocal: g.rig?.mode === 'follow' && g.rig?.target === m?.local, actors: G.actors?.length, sights: G.projectiles?.sights?.size,
     sceneChildren: G.scene?.children.length, listeners: Object.fromEntries([...window.__lifecycleListeners].filter(([, n]) => n > 0).sort()), intervals: window.__lifecycleIntervals(),
@@ -184,7 +212,7 @@ try {
     check(i + 1, 'menu', menu.menu === 'main' && menu.screen === 'main' && menu.screens === 1 && !menu.starting && !menu.modal, 'one live main menu screen', menu);
     check(i + 1, 'menu', menu.huds === 1 && menu.hudOverlays === 1 && menu.menuLayers === 1 && menu.mobileRoots === 1 && menu.duplicateIds.length === 0, 'no duplicated UI roots or ids', menu);
     check(i + 1, 'menu', menu.hudHidden && !menu.touchVisible && menu.touchDown.length === 0 && menu.judges === 0, 'HUD and touch controls retired in the menus', menu);
-    check(i + 1, 'menu', menu.focusConnected === true && menu.ringOn && menu.ringVisible && menu.ringOnFocus === true, 'selection ring painted on the focused item', menu);
+    check(i + 1, 'menu', menu.focusConnected === true && menu.ringOn && menu.ringVisible && menu.ringOnFocus === true, 'selection ring state is on and its geometry matches the focused item (no pixel readback)', menu);
     check(i + 1, 'menu', menu.fade < 0.05, 'fade cleared', menu.fade);
     if (!baseline) baseline = menu;
     else {

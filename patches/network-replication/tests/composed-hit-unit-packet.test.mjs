@@ -1,4 +1,5 @@
 import {respawnPunisherEquipped,withHitPunisher} from '../../splatoon3/runtime/clothing-gear.mjs';
+import { C1088_SURGE_TAG, clearRemoteC1088Surge } from '../issue-1088-surge-presentation.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -29,9 +30,9 @@ function hitWorld() {
   const G = { projectiles: { applyHit(a, v, damage, weapon, group) {
     calls.push({ a, v, damage, weapon, group, punisher:respawnPunisherEquipped(a) }); emit('damage', { victim: v, attacker: a, amount: damage });
   } } };
-  const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher',
+  const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
     'return class {' + ['sendHit', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
-    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher);
+    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge);
   const n = new C();
   Object.assign(n, { myId: 'A', byNid: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); } } },
     peers: new Map(), _peer(id) { if (!this.peers.has(id)) this.peers.set(id, {}); return this.peers.get(id); } });
@@ -77,12 +78,15 @@ test('composed respawn preserves all current retirements and clears only this vi
   const f = hitWorld(), a = { nid: 2, alive: false, hp: 0, invuln: 0, respawnTimer: 4, lastDamage: 0,
     superJumpGround: {}, net: { _stormBirthAuth: {} }, s3: { revealedUntil: 99 }, s3SpecialCost: 100,
     s3SpecialReady: true, lastAttacker: {}, lastAttackerHitAge: 0 };
+  a.s3.c1088SurgePresentation = { tag: C1088_SURGE_TAG, life: 1, epoch: 1, phase: 'burst', charge: .8, time: .25, sampleAge: 0 };
   f.n._pendingHits = new Map([[1, { v: 2 }], [2, { v: 9 }]]);
+  assert.equal(a.s3.c1088SurgePresentation.tag, C1088_SURGE_TAG, 'a live remote Surge presentation exists before respawn');
   f.n._remoteRespawn(a);
   assert.equal(a.alive, true); assert.equal(a.hp, 100); assert.equal(a.superJumpGround, null);
   assert.equal(a.net._stormBirthAuth, null); assert.equal(a.net.spawnPending, true);
   assert.equal(a.lastDamage, 99); assert.equal(a.lastAttacker, null); assert.equal(a.lastAttackerHitAge, 99);
   assert.equal(a.s3.revealedUntil, undefined); assert.equal(a.s3SpecialCost, undefined); assert.equal(a.s3SpecialReady, false);
+  assert.equal(a.s3.c1088SurgePresentation, undefined, 'respawn retires the actual remote Surge presentation state');
   assert.deepEqual([...f.n._pendingHits.keys()], [2]);
   assert.equal(f.events.filter(e => e.type === 'combat:respawn').length, 1);
 });
