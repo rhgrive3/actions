@@ -585,8 +585,8 @@ test('the real _play hands a curling ghost its identity, charge and rolling beha
   assert.equal(ghost.s3Sub, undefined, 'and no authoritative kit identity');
 
   // Presentation follows the sub: it arcs on FlyGravity, lands on GroundGravity and
-  // bursts on Curling's BurstFrame rather than the generic fuse. The flight is driven
-  // from a height the water guard cannot end early, so every phase is actually run.
+  // uses the owner-resolved full-charge lifetime (90F here) from release. The flight
+  // is driven from a height the water guard cannot end early, so every phase is run.
   api.G.physics.segment = (a, b, out) => { out.hit = false; return out; };
   const g0 = kitBombGravity(api.SUB, ghost);
   assert.equal(g0, CURLING.flyGravity, 'a ghost in flight uses the kit FlyGravity');
@@ -600,8 +600,8 @@ test('the real _play hands a curling ghost its identity, charge and rolling beha
   tick(api, api.G.projectiles, 1 / 60);
   assert.equal(ghost.s3Mode, 'rolling', 'a remote Curling Bomb rolls instead of bouncing');
   assert.equal(kitBombGravity(api.SUB, ghost), CURLING.groundGravity, 'and rolls on GroundGravity');
-  assert.ok(ghost.fuse > 0 && ghost.fuse <= CURLING.burstFrame, 'it is armed on the Curling burst window');
-  assert.equal(kitBombFuseTotal(api.SUB, ghost), CURLING.burstFrame, 'and its beep curve uses that window');
+  assert.ok(ghost.fuse > 0 && ghost.fuse < ghost.s3GhostResolved.fuse, 'the release-started fuse consumed the airborne interval');
+  near(kitBombFuseTotal(api.SUB, ghost), 90 / 60, 'and its beep curve uses the full-charge 90F window');
 });
 
 test('a remote Suction Bomb sticks where the owner stuck it', async () => {
