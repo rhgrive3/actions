@@ -72,8 +72,10 @@ export function installIssueEightFollowup({ Actor, WeaponRunner, Projectiles }) 
     if (r?.s3DualiesRollSubRemaining > 0) {
       if (!this.alive || this.weapon?.kind !== 'dualies' || this.specialActive || this.superJumpState)
         r.s3DualiesRollSubRemaining = 0;
-      else
-        r.s3DualiesRollSubRemaining = Math.max(0, r.s3DualiesRollSubRemaining - Math.max(0, dt));
+      else {
+        const remaining = Math.max(0, r.s3DualiesRollSubRemaining - Math.max(0, dt));
+        r.s3DualiesRollSubRemaining = remaining <= EPS ? 0 : remaining;
+      }
     }
     return actorUpdate.call(this, dt, ...args);
   };
