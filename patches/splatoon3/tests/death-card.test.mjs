@@ -16,8 +16,16 @@ const compose = (rel, code = read(rel)) => adaptQualitySource(rel, adaptReliabil
 function section(code, start, end) { const a = code.indexOf(start), b = code.indexOf(end, a); assert(a >= 0 && b > a, start); return code.slice(a, b); }
 
 const context = vm.createContext({ console });
+// Current config imports sourced InkFlight constants; evaluate that real,
+// dependency-free module in the same VM as the death-card target.
+const inkFlight = new vm.SourceTextModule(read('src/game/inkFlight.js'), { context });
+await inkFlight.link(() => { throw Error('unexpected ink flight import'); });
 const config = new vm.SourceTextModule(read('src/config.js'), { context });
-await config.link(() => { throw Error('unexpected config import'); }); await config.evaluate();
+await config.link(spec => {
+  if (spec === './game/inkFlight.js') return inkFlight;
+  throw Error('unexpected config import: ' + spec);
+});
+await config.evaluate();
 const card = new vm.SourceTextModule(fs.readFileSync(new URL('patches/splatoon3/runtime/death-card.mjs', root), 'utf8'), { context });
 await card.link(() => config); await card.evaluate();
 const { splatCardText } = card.namespace, { WEAPONS } = config.namespace;
