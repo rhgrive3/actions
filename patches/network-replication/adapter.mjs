@@ -251,8 +251,8 @@ export function emit(name, payload) {
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
       'owner simulation tick preserving existing sidecars');
     patch('    const a = [];\n    for (const x of this.byNid.values()) if (!x.remote) a.push(packActor(x));',
-      '    const a = [], sq = Object.create(null);\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n    }',
-      'append optional Squid Roll presentation sidecar');
+      '    const a = [], sq = Object.create(null), bw = Object.create(null);\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const windup = x.weapon?.kind === \'blaster\' ? x.weaponRunner?.s3BlasterWindup : 0;\n      if (Number.isFinite(windup) && windup > 0) bw[x.nid] = Math.min(1, windup);\n    }',
+      'append optional Squid Roll and Blaster windup presentation sidecars');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
       const points = p.physicsPoints || (p.physicsPoints = []);
@@ -260,13 +260,13 @@ export function emit(name, payload) {
     }
     // actors
     if (d.a)`, 'snapshot physics tick pair');
-    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional Roll sidecar');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
-      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const a = this.byNid.get(s[0]);',
-      'strict optional Squid Roll metadata validation');
+      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const a = this.byNid.get(s[0]);',
+      'strict optional Squid Roll and Blaster windup metadata validation');
     patch('      const snap = unpackActor(s, d.ts);\n      snap.spCost = d.sc?.[a.nid];',
-      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.spCost = d.sc?.[a.nid];',
-      'attach validated presentation-only roll snapshot');
+      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.blasterWindup = windup;\n      snap.spCost = d.sc?.[a.nid];',
+      'attach validated presentation-only roll and Blaster startup snapshot');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
@@ -300,11 +300,14 @@ export function emit(name, payload) {
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
     patch('  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  o.spCost = a.spCost;\n  return o;',
-      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  o.spCost = a.spCost;\n  return o;',
-      'interpolate only matching owner Roll identity');
+      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  o.blasterWindup = (a.blasterWindup || 0) + ((b.blasterWindup || 0) - (a.blasterWindup || 0)) * u;\n  o.spCost = a.spCost;\n  return o;',
+      'interpolate owner Roll identity and Blaster startup time');
     patch('    const S = n.cur;\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
       '    const S = n.cur;\n    if (a.remote) {\n      const flags = S.f;\n      if (!a.alive || !(flags & F.alive) || !(flags & F.squid) || (flags & F.special) || !S.rollId) clearRemoteSquidroll(a);\n      else syncRemoteSquidroll(a, S, this.peers.get(a.owner));\n    }\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
       'remote presentation follows accepted owner Roll snapshot');
+    patch('    wr.aimingSub = !!(f & F.subAim); wr.firingT = f & F.firing ? 0.3 : 0;',
+      '    wr.aimingSub = !!(f & F.subAim); wr.firingT = f & F.firing ? 0.3 : 0;\n    wr.s3BlasterWindup = a.weapon.kind === \'blaster\' ? Math.max(0, Number(S.blasterWindup) || 0) : 0;',
+      'remote Blaster pre-shot windup presentation');
     patch('        a.character._netTrig?.(e[3], unpackTrig(e[4]));',
       "        if (e[3] === 'movement_cancel' || e[3] === 'land' || e[3] === 'spawn') clearRemoteSquidroll(a, true);\n        a.character._netTrig?.(e[3], unpackTrig(e[4]));",
       'remote cancellation event invalidates current visual Roll');
