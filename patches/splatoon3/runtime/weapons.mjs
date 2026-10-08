@@ -186,27 +186,6 @@ export function distanceDamage(bands, distance, linear = true) {
   }
   return bands[bands.length - 1][1];
 }
-// #1043: splash visibility follows the target's collision capsule instead of one
-// fixed y+0.7 point. Partial cover may expose an edge; fully sealed cover still
-// blocks every sample.
-export function blasterSplashExposed(physics, center, actor, player) {
-  if (!physics?.los || !center || !actor?.pos || !player) return false;
-  const radius = Math.max(0, +player.radius || 0);
-  const height = actor.form === 'squid' ? (+player.squidHeight || +player.height || 1) : (+player.height || 1);
-  const baseY = actor.pos.y + (actor.smoothY || 0);
-  const dx = actor.pos.x - center.x, dz = actor.pos.z - center.z, dl = Math.hypot(dx, dz);
-  const sx = dl > 1e-8 ? -dz / dl : 1, sz = dl > 1e-8 ? dx / dl : 0, side = radius * 0.85;
-  const point = actor.pos.clone();
-  const low = baseY + Math.min(radius, height * 0.25);
-  const mid = baseY + height * 0.5;
-  const high = baseY + Math.max(height - radius, height * 0.75);
-  for (const y of [low, mid, high]) for (const offset of [-side, 0, side]) {
-    point.set(actor.pos.x + sx * offset, y, actor.pos.z + sz * offset);
-    if (physics.los(center, point)) return true;
-  }
-  return false;
-}
-
 export function applyProjectileHit(system, projectile, victim, amount, point) {
   if (!api) throw new Error('INKWAVE weapon patch not installed');
   const weapon = projectile.s3Weapon || projectile.owner.weapon;
