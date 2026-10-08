@@ -939,35 +939,12 @@ export function adaptSource(rel, code) {
       '    if (G.boss && hs > 1.0) {',
       '    if (G.boss && rollerStickActive(a)) {',
       'Roller micro-speed boss contact admission');
-    // #839: zero is a valid first-hit timestamp. Native `|| -9` treats the
-    // very first contact at game time zero as absent, admitting an extra hit
-    // on frame one. Preserve zero for both actor and Boss roll-hit ledgers.
-    code = replaceOnce(code,
-      'const last = this.rollHits.get(e) || -9;',
-      'const last = this.rollHits.get(e) ?? -9;',
-      'Roller actor hit timestamp zero');
-    code = replaceOnce(code,
-      'this.rollHits.get(key) || -9',
-      'this.rollHits.get(key) ?? -9',
-      'Roller Boss hit timestamp zero');
-    // #839: the ordinary and Boss Roller body-hit admission uses the sourced
-    // DamageSpanSecond (24 fixed frames), without changing the hit-rejection
-    // ownership from #558 or the geometry/paint/knockback paths.
-    // The actor and Boss zero-time ledgers are already normalised above.
-    code = replaceOnce(code,
-      'G.time - last > 0.5',
-      'G.time - last + 1e-10 >= (w.rollContactInterval ?? (24 / 60))',
-      'S3 Roller actor contact 24F repeat');
-    code = replaceOnce(code,
-      'G.time - (this.rollHits.get(key) ?? -9) > 0.5',
-      'G.time - (this.rollHits.get(key) ?? -9) + 1e-10 >= (w.rollContactInterval ?? (24 / 60))',
-      'S3 Roller Boss contact 24F repeat');
     // #498: only the gameplay Roller trail stamp consumes the sourced
     // 20/30F->50F width window. The separate #411 unit/near-far impact owner
     // computes its own age-scaled radius in roller-impact-paint.mjs.
     code = replaceOnce(code,
-      'p.trailRadius * (0.8 + Math.random() * 0.4), p.team, { seed: Math.random() }',
-      'rollerTrailAgeWidth(p, p.trailRadius * (0.8 + Math.random() * 0.4)), p.team, { seed: Math.random() }',
+      'fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }',
+      'rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random() }',
       'Roller native trail age width');
     code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\n" + code;
     return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;

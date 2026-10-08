@@ -49,8 +49,8 @@ test('#498 preserves other weapons, ghosts, collision radii and stored paint wid
 test('#498 emitted native projectile trail is composed exactly once and upstream remains locked',()=>{
   const raw=fs.readFileSync(path.join(SOURCE,'src/game/weapons.js'),'utf8');
   const output=adaptSource('src/game/weapons.js',raw);
-  assert.equal((output.match(/rollerTrailAgeWidth\(p, p\.trailRadius/g)||[]).length,1);
+  assert.equal((output.match(/rollerTrailAgeWidth\(p, fidelityFlightPaintRadius\(p\)\)/g)||[]).length,1);
   assert.equal((output.match(/import \{ rollerTrailAgeWidth \}/g)||[]).length,1);
   assert.equal(raw.includes('rollerTrailAgeWidth'),false);
-  assert.match(output,/p\.trailRadius \* \(0\.8 \+ Math\.random\(\) \* 0\.4\)/);
+  assert.doesNotMatch(output,/p\.trailRadius \* \(0\.8 \+ Math\.random\(\) \* 0\.4\)/,'the existing fidelity adapter owns the trail base radius');
 });
