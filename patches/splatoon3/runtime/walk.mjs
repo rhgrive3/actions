@@ -151,6 +151,7 @@ function updateFeet(ch,dt){
   ch.footTwist=damp(ch.footTwist,clamp(twist,-1.2,1.2),20,dt);
 }
 function footPose(ch,f){
+  const M=api.CHARACTER_FOOT_MODES;
   if(f.planted||!f.sw){
     f.cw.copy(f.pw);f.cyaw=f.yaw;f.cn.copy(f.n);
     const desired=ch.moving?-f.land*(1-smooth(0,.28,f.stU))+f.toe*smooth(.42,1,f.stU):0;
