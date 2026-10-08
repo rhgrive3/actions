@@ -158,6 +158,10 @@ test('#201: first-minute disconnect starts 6s no-contest and bypasses normal res
 test('#201: No Contest wins against the ordinary timeout/judge and late host results', () => {
   const a = fakeActor(30);
   const match = fakeMatch('playing', 59, [a]);
+  // A one-minute Turf variant reproduces the exact race: the first-minute
+  // disconnect occurs one second before the regular match timeout.
+  match.duration = 60;
+  match.time = 1;
   match.follower = false;
   let judged = 0, ended = 0;
   match.setState = function (next) { this.state = next; };
