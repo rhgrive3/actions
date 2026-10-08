@@ -84,15 +84,20 @@ const HUD_CSS = `
 @keyframes iw-s3-sp-gain { 0% { stroke: ${S3_TOOTH.fill}; stroke-width: 3.5; } }
 .iw-turf { top: calc(var(--u) * 10.8); }
 
+/* ink tank: canister art everywhere; in squid form it rides beside the squid (JS sets the translate) */
+.iw-tank { width: calc(var(--u) * 1.7); height: calc(var(--u) * 5.2); top: calc(var(--u) * -2.6); }
+.iw-xh .iw-tank.is-swim { --th: max(56px, calc(var(--u) * 7.4)); left: max(14px, calc(var(--u) * 2)); top: calc(var(--th) * -.76); width: max(20px, calc(var(--u) * 2.6)); height: var(--th); translate: none; transition: opacity .2s; }
+.iw-xh .iw-tank.is-swim:not(.is-idle) { animation: iw-s3-tank-in .18s ease-out; }
+@keyframes iw-s3-tank-in { 0% { opacity: 0; scale: .85; } }
 /* splat notice: one dark bar at the bottom centre — squid + your-ink splat, then "<name> をたおした!" */
 .iw-kcards { bottom: calc(var(--u) * 2.6); gap: calc(var(--u) * .3); }
 .iw-kcards .iw-kcard + .iw-kcard { scale: 1; opacity: .92; margin-top: 0; }
 .iw-kcard { gap: calc(var(--u) * .45); min-width: calc(var(--u) * 24); padding: calc(var(--u) * .5) calc(var(--u) * 2.6) calc(var(--u) * .5) calc(var(--u) * .8); border-radius: calc(var(--u) * .2);
   background: rgba(16, 14, 18, .88); box-shadow: 0 calc(var(--u) * .1) calc(var(--u) * .3) rgba(0, 0, 0, .3); animation: iw-s3-kill-in .26s cubic-bezier(.2, .8, .3, 1) backwards; }
 @keyframes iw-s3-kill-in { 0% { opacity: 0; scale: .85 1; } }
-.iw-kcard__w { order: 0; width: calc(var(--u) * 2.3); height: calc(var(--u) * 2.3); border-radius: 0; background: none; box-shadow: none; color: #fff; }
+.iw-kcard__w { order: 0; width: calc(var(--u) * 2.7); height: calc(var(--u) * 2.7); margin: calc(var(--u) * -.25) 0; border-radius: 0; background: none; box-shadow: none; color: #fff; rotate: 30deg; }   /* the footage tilts the squid ~30deg clockwise */
 .iw-kcard__w svg { width: 100%; height: 100%; filter: none; }
-.iw-kcard__splat { order: 1; position: relative; z-index: 0; left: auto; top: auto; flex: none; width: calc(var(--u) * 2.1); height: calc(var(--u) * 2.1); translate: none; rotate: -8deg; }
+.iw-kcard__splat { order: 1; position: relative; z-index: 0; left: auto; top: auto; flex: none; width: calc(var(--u) * 2.4); height: calc(var(--u) * 2.4); margin-left: calc(var(--u) * -.35); translate: none; rotate: 0deg; scale: 1.25 .95; }
 .iw-kcard__txt { order: 2; flex: 1; flex-direction: row; align-items: baseline; justify-content: center; gap: .3em; padding-left: calc(var(--u) * .8); }
 .iw-kcard__txt b, .iw-kcard__txt small { font: 900 calc(var(--u) * 1.45) / 1.1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .02em; color: #fff; }
 .iw-kcard--ja .iw-kcard__txt b { order: -1; }
@@ -101,16 +106,23 @@ const HUD_CSS = `
 // Touch: the SP button stays the gauge (same position, size and hit area); only its
 // artwork becomes the S3 dial — dark disc, measured teeth and colours.
 const MOBILE_CSS = `
-/* ---- Splatoon 3 dial on the touch SP button (presentation only; hit area unchanged) ---- */
+/* ---- Splatoon 3 colours on the touch SP button: one thin full ring of steps (presentation only; hit area unchanged) ---- */
 .iwm-b--special { background: rgba(30, 26, 28, .84); }
-.iwm-sp-segment { fill: rgba(255, 255, 255, .13); stroke: rgba(0, 0, 0, .55); stroke-width: .7; stroke-linejoin: round; }
-.iwm-sp-segment.is-filled { fill: ${S3_TOOTH.fill}; stroke: ${S3_TOOTH.edge}; stroke-width: 1; }
+.iwm-sp-segment { fill: rgba(255, 255, 255, .2); stroke: none; }
+.iwm-sp-segment.is-filled { fill: ${S3_TOOTH.fill}; }
+.iwm-b--special .iwm-b__gauge { filter: drop-shadow(0 0 1px rgba(0, 0, 0, .6)); }
 .iwm-b--special .iwm-b__ico { width: 46%; height: 46%; }
 .iwm-b--special.is-ready .iwm-sp-segment.is-filled { fill: #ffe27a; stroke: #e08a00; }
 /* phones: keep the splat bar legible (the HUD unit drops below 7px in landscape) */
 html.iw-touch-ui .iw-hud .iw-kcard__txt :is(b, small) { font-size: max(12px, calc(var(--u) * 1.45)); }
-html.iw-touch-ui .iw-hud .iw-kcard__w, html.iw-touch-ui .iw-hud .iw-kcard__splat { width: max(16px, calc(var(--u) * 2.3)); height: max(16px, calc(var(--u) * 2.3)); }
+html.iw-touch-ui .iw-hud .iw-kcard__w, html.iw-touch-ui .iw-hud .iw-kcard__splat { width: max(18px, calc(var(--u) * 2.7)); height: max(18px, calc(var(--u) * 2.7)); }
 `;
+
+function section(code, start, end, after, label) {
+  const a = code.indexOf(start), b = code.indexOf(end, a + start.length);
+  if (a < 0 || b < a || code.indexOf(start, a + 1) >= 0) throw new Error(`INKWAVE S3 HUD look conflict (${label}): missing boundary`);
+  return code.slice(0, a) + after + code.slice(b);
+}
 
 function once(code, before, after, label) {
   const at = code.indexOf(before);
@@ -119,8 +131,96 @@ function once(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 
+const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
+    // Splatoon 3 ink tank: a canister (cap, short neck, square shoulders, rounded foot) on dark glass.
+    const T = this._tank, c = this.tankCtx, cv = this.tankCanvas;
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    const cw = cv.clientWidth || 18, chh = cv.clientHeight || 74;
+    const W = Math.round(cw * dpr), H = Math.round(chh * dpr);
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    const L = this._L;
+    if (!L.tankCol) { const s = L.ca || '#ff8a14'; L.tankCol = [shade(s, 0.42), s, shade(s, -0.3), shade(s, -0.55)]; }
+    const [cLight, cMid, cDark, cDeep] = L.tankCol;
+    c.clearRect(0, 0, W, H);
+    const pad = 2.5 * dpr, bw = W - pad * 2, capH = Math.max(3 * dpr, (H - pad * 2) * 0.1), top = pad + capH, bh = H - pad - top;
+    const T2 = this._tankCache || (this._tankCache = {});
+    if (T2.W !== W || T2.H !== H || T2.col !== cMid) {
+      T2.W = W; T2.H = H; T2.col = cMid;
+      T2.body = new Path2D(); T2.body.roundRect(pad, top, bw, bh, [bw * 0.2, bw * 0.2, bw * 0.45, bw * 0.45]);
+      T2.cap = new Path2D(); T2.cap.roundRect(pad + bw * 0.3, pad, bw * 0.4, capH + bw * 0.12, [bw * 0.08, bw * 0.08, 0, 0]);
+      T2.g = c.createLinearGradient(pad, 0, pad + bw, 0);
+      T2.g.addColorStop(0, cDark); T2.g.addColorStop(0.5, cMid); T2.g.addColorStop(1, cLight);
+    }
+    const body = T2.body;
+    c.fillStyle = 'rgba(16,14,18,.86)';
+    c.fill(T2.cap);
+    c.fillStyle = 'rgba(16,14,18,.7)';
+    c.fill(body);
+    c.save();
+    c.clip(body);
+    const lvl = top + bh * (1 - T.level);
+    const amp = (0.8 + T.wobble * 2.5 + Math.abs(T.sloshV) * 1.8) * dpr;
+    const tilt = T.slosh * bw * 0.7;
+    c.beginPath();
+    c.moveTo(pad - 2, H + 2);
+    const N = 10;
+    for (let i = 0; i <= N; i++) {
+      const u = i / N, x = pad + u * bw;
+      c.lineTo(x, lvl + (u - 0.5) * tilt + Math.sin(u * 6.5 + T.t * 7) * amp * 0.5 + Math.sin(u * 11 - T.t * 9.5) * amp * 0.25);
+    }
+    c.lineTo(pad + bw + 2, H + 2);
+    c.closePath();
+    c.fillStyle = T2.g;
+    c.fill();
+    // bright meniscus line and depth toward the foot
+    const g2 = c.createLinearGradient(0, lvl, 0, H);
+    g2.addColorStop(0, 'rgba(255,255,255,.32)'); g2.addColorStop(0.06, 'rgba(255,255,255,0)'); g2.addColorStop(1, cDeep + '55');
+    c.fillStyle = g2;
+    c.fill();
+    c.fillStyle = 'rgba(255,255,255,.55)';
+    for (let i = T.bubbles.length - 1; i >= 0; i--) {
+      const b = T.bubbles[i];
+      b.y += b.v * dt;
+      const by = H - pad - b.y * bh;
+      if (by < lvl + 2) { T.bubbles.splice(i, 1); continue; }
+      c.beginPath(); c.arc(pad + b.x * bw + Math.sin(b.y * 20) * dpr, by, b.r * dpr, 0, TAU); c.fill();
+    }
+    c.restore();
+    if (sub > 0) {
+      const sy = top + bh * (1 - sub);
+      c.fillStyle = nosub ? '#ff4d5e' : 'rgba(255,255,255,.9)';
+      c.fillRect(pad + bw * 0.12, sy - 1 * dpr, bw * 0.76, 2 * dpr);
+    }
+    // glass edge: dark outer line with a faint light inner line (no white rim)
+    c.lineWidth = 2.6 * dpr; c.strokeStyle = 'rgba(8,6,10,.9)'; c.stroke(body); c.stroke(T2.cap);
+    c.lineWidth = 1 * dpr; c.strokeStyle = low ? (Math.sin(T.t * 14) > 0 ? '#ff3d5e' : 'rgba(255,255,255,.7)') : 'rgba(255,255,255,.28)'; c.stroke(body);
+    c.fillStyle = 'rgba(255,255,255,.16)';
+    c.beginPath(); c.roundRect(pad + bw * 0.16, top + bh * 0.08, bw * 0.12, bh * 0.5, bw * 0.06); c.fill();
+  }
+
+`;
+
+// Squid form: the tank leaves the reticle and rides beside the player's squid on screen, as in the
+// footage (it follows the squid up and down with camera pitch). It shows only while refilling and
+// leaves shortly after the tank is full; kid form keeps the existing show-when-not-full rule.
+const SWIM_TANK = `    const me = this._local();
+    const swimTank = !!(me && me.alive !== false && me.form === 'squid' && !me.superJumpState);
+    if (swimTank !== L.swimTank) { L.swimTank = swimTank; this.tank.classList.toggle('is-swim', swimTank); if (!swimTank) this.tank.style.transform = ''; }
+    if (swimTank && G.camera && me.pos) {
+      const p = this._project(G.camera, me.pos.x, me.pos.y + 0.3, me.pos.z);
+      if (p && p.z < 1) {
+        const hw = innerWidth / 2, hh = innerHeight / 2;
+        const x = Math.max(-hw * 0.8, Math.min(hw * 0.7, p.x * hw)), y = Math.max(-hh * 0.5, Math.min(hh * 0.55, -p.y * hh));   // stays above the bottom splat bar
+        this.tank.style.transform = \`translate3d(\${x.toFixed(1)}px,\${y.toFixed(1)}px,0)\`;
+      }
+    }
+`;
+
 export function adaptS3HudLook(rel, code) {
   if (rel === 'src/ui/hud.js') {
+    code = section(code, '  _drawTank(dt, sub, low, nosub) {\n', '  // ---------------------------------------------------------------- special gauge', S3_DRAW_TANK, 'S3 canister ink tank');
+    code = once(code, '    L.fullT = ink >= 0.995 && !low && !L.aim ? (L.fullT || 0) + dt : 0;\n    const idle = L.fullT > 1.4;',
+      SWIM_TANK + '    L.fullT = ink >= 0.995 && !low && !L.aim ? (L.fullT || 0) + dt : 0;\n    const idle = L.fullT > (swimTank ? 0.35 : 1.4);', 'squid-form tank anchor');
     code = once(code, OLD_BADGE, `const BADGE_PATH = '${S3_SQUID_BADGE}';`, 'S3 roster squid silhouette');
     code = once(code, "    const card = h('div', { class: `iw-kcard iw-kcard--${kind}` },",
       "    const card = h('div', { class: `iw-kcard iw-kcard--${kind}${isJa ? ' iw-kcard--ja' : ''}` },", 'splat bar word order');

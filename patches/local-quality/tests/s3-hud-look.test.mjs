@@ -34,7 +34,7 @@ test('S3 look: gauge teeth use the measured count, arc, radii and colours', () =
 
 test('S3 look: touch SP keeps its geometry; only artwork and text minimums change', () => {
   const css = compose('styles/mobile.css');
-  const look = css.slice(css.indexOf('Splatoon 3 dial on the touch SP button'));
+  const look = css.slice(css.indexOf('Splatoon 3 colours on the touch SP button'));
   assert.ok(look.length > 0);
   // The button box itself (not its icon) owns the layout-editor geometry and hit area.
   assert.doesNotMatch(look, /\.iwm-b--special(\.is-[\w-]+)?\s*\{[^}]*\b(left|top|width|height|inset|translate|scale|pointer-events)\s*:/);
@@ -63,4 +63,18 @@ test('S3 look: HUD fonts ship with the quality layer and stay scoped to in-match
     if (!selector.includes('@font-face')) assert.match(selector, /iw-hud|iw-squad/, selector);
   }
   assert.ok(JSON.stringify(qualityIdentity()).includes('fonts/iw-s3-jp.woff2'));
+});
+
+test('S3 look: squid-form ink tank rides beside the squid only while refilling', () => {
+  const hud = compose('src/ui/hud.js');
+  const start = hud.indexOf('  _updTank(f, dt) {'), body = hud.slice(start, hud.indexOf('  _drawTank(', start));
+  assert.match(body, /me\.form === 'squid' && !me\.superJumpState/);
+  assert.match(body, /classList\.toggle\('is-swim', swimTank\)/);
+  // Full tank hides shortly after in squid form; kid form keeps the original 1.4 s linger.
+  assert.match(body, /const idle = L\.fullT > \(swimTank \? 0\.35 : 1\.4\);/);
+  assert.match(body, /this\._project\(G\.camera, me\.pos\.x, me\.pos\.y \+ 0\.3, me\.pos\.z\)/);
+  const draw = hud.slice(hud.indexOf('  _drawTank('), hud.indexOf('  // ---------------------------------------------------------------- special gauge'));
+  assert.match(draw, /T2\.cap = new Path2D\(\)/);
+  const css = compose('styles/hud.css');
+  assert.doesNotMatch(css.slice(css.indexOf('.iw-xh .iw-tank.is-swim {')).split('}')[0], /opacity:/, 'swim layout must not override the refill-only idle fade');
 });

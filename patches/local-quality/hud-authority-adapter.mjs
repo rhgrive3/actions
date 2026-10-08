@@ -27,6 +27,15 @@ function toothPaths(inner, outer, name, duty = .46) {
     return `<path class="${name}" d="M${point(inner,a)} L${point(outer,a)} A${outer} ${outer} 0 0 1 ${point(outer,b)} L${point(inner,b)} A${inner} ${inner} 0 0 0 ${point(inner,a)} Z"/>`;
   }).join('');
 }
+// Touch SP: the same steps as one thin ring hugging the round button (arc segments separated
+// by hairline gaps), so a circular control reads as a clean full-circle meter.
+function ringPaths(inner, outer, name, gapDeg = 1.6) {
+  const step = 2 * Math.PI / SPECIAL_SEGMENTS, gap = gapDeg * Math.PI / 360;
+  return Array.from({ length: SPECIAL_SEGMENTS }, (_, i) => {
+    const a = -Math.PI / 2 + i * step + gap, b = a + step - 2 * gap;
+    return `<path class="${name}" d="M${point(outer,a)} A${outer} ${outer} 0 0 1 ${point(outer,b)} L${point(inner,b)} A${inner} ${inner} 0 0 0 ${point(inner,a)} Z"/>`;
+  }).join('');
+}
 // Team-ink burst behind the special icon (disc + eight short rays), as in the footage.
 function burst() {
   const rays = Array.from({ length: 8 }, (_, i) => {
@@ -110,7 +119,7 @@ export function adaptHudAuthority(rel, code) {
     code = once(code, "if (sp !== L.sp) { L.sp = sp; E.special.style.setProperty('--g', (sp / 100).toFixed(2)); }",
       "if (sp !== L.sp) { L.sp = sp; E.special.querySelectorAll('.iwm-sp-segment').forEach((segment, i) => segment.classList.toggle('is-filled', i < sp)); }", 'touch gauge state');
     return once(code, '<svg class="iwm-b__gauge" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>',
-      '<svg class="iwm-b__gauge" viewBox="0 0 100 100" aria-hidden="true">' + toothPaths(36, 49, 'iwm-sp-segment') + '</svg>', 'touch gauge markup');
+      '<svg class="iwm-b__gauge" viewBox="0 0 100 100" aria-hidden="true">' + ringPaths(44.5, 49.5, 'iwm-sp-segment') + '</svg>', 'touch gauge markup');
   }
   if (rel === 'styles/mobile.css') return code + '\n/* #425: touch SP replaces the hidden desktop gauge with the same segment steps. */\n.iwm-b__gauge { transform: none; }\n.iwm-sp-segment { fill: rgba(255,255,255,.16); stroke: rgba(0,0,0,.65); stroke-width: .6; }\n.iwm-sp-segment.is-filled { fill: var(--iwm-c); }\n';
   if (rel === 'styles/hud.css') return code + '\n/* #425: discrete fill; no animated interpolation across segment boundaries. */\n.iw-sp__segment { fill: rgba(255,255,255,.16); stroke: rgba(0,0,0,.65); stroke-width: 1; }\n.iw-sp__segment.is-filled { fill: var(--self); }\n';
