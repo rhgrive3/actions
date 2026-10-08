@@ -752,6 +752,21 @@ export function adaptSource(rel, code) {
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
+    // #226/#735: count INKWAVE rain candidates, ground contact and owned
+    // paint separately. The existing 12-unit ray is an internal consistency
+    // bound, not a verified S3-specific HP cutoff or RainNum semantics.
+    code = replaceOnce(code,
+      '  _updateClouds(dt) {\n    const sp = SPECIALS.storm;',
+      '  _updateClouds(dt) {\n    const sp = SPECIALS.storm;\n    const inkWaveRainReach = 12;',
+      'finite rain trace');
+    code = replaceOnce(code,
+      '          const g = G.physics.raycast(_v, DOWN, 12, _hit);',
+      '          const g = G.physics.raycast(_v, DOWN, inkWaveRainReach, _hit);\n          const audit = c.s3RainAudit || (c.s3RainAudit = { candidateDrops: 0, groundHits: 0, paintEvents: 0 });\n          audit.candidateDrops++;\n          if (g.hit) audit.groundHits++;\n          if (g.hit && (!c.ghost || !c.owner.remote)) audit.paintEvents++;',
+      'count Storm rain candidate/contact/paint separately');
+    code = replaceOnce(code,
+      '          if (dx * dx + dz * dz > sp.radius * sp.radius || e.pos.y > c.group.position.y) continue;',
+      '          if (dx * dx + dz * dz > sp.radius * sp.radius || e.pos.y > c.group.position.y ||\n              e.pos.y + 1.2 < c.group.position.y - 0.8 - inkWaveRainReach) continue;',
+      'prevent damage beyond own finite rain reach');
     code = "import { fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     code = replaceOnce(code, 'let vis = (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));',
       'let vis = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));', 'slosher source draw radius');
