@@ -116,8 +116,8 @@ test('#298: cloud lifetime expires at its exact480/491/600F snapshot, never one 
 
 test('#193: nested actor sub updates cannot double-apply the other players saver curve',async()=>{
  const f=await fixture(),a=f.make(),b=f.make();equip(a,57,'inkSaverSub');equip(b,0,'inkSaverSub');let second=false;
- f.G.projectiles.throwBomb=owner=>{if(owner===a&&!second){second=true;step(b,6,{sub:true});step(b,1,{subReleased:true});}};
- step(a,6,{sub:true});step(a,1,{subReleased:true});near(a.ink,54.5);near(b.ink,30);near(f.SUB.bomb.inkCost,70);
+ f.G.projectiles.throwBomb=owner=>{if(owner===a&&!second){second=true;step(b,6,{sub:true});step(b,1,{subReleased:true});step(b,1,{});}};
+ step(a,6,{sub:true});step(a,1,{subReleased:true});step(a,1,{});near(a.ink,54.5);near(b.ink,30);near(f.SUB.bomb.inkCost,70);
 });
 
 test('#267: actual guide and released bomb use the same actor-local speed at0/10/57AP',async()=>{
@@ -125,7 +125,7 @@ test('#267: actual guide and released bomb use the same actor-local speed at0/10
   const f=await fixture(),a=f.make(),ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;equip(a,gp,'subPower');a.vel.set(2,3,-1);a.aimPitch=-.1;
   f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};ps.updateArc(a,true);
   const preview=new f.THREE.Vector3(ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz);
-  step(a,6,{sub:true});step(a,1,{subReleased:true});const actual=ps.bombs.at(-1).vel;
+  step(a,6,{sub:true});step(a,1,{subReleased:true});step(a,1,{});const actual=ps.bombs.at(-1).vel;
   near(actual.distanceTo(preview),0);near(f.SUB.bomb.throwSpeed,67.2);
   const inherited=new f.THREE.Vector3(.8,1.5,-.4);near(actual.clone().sub(inherited).length()/67.2,gearCurve(gp,1,1.25,1.5));
   for(let tick=1;tick<=20;tick++){ps._updateBombs(DT);if(tick%2===0){const expected=new f.THREE.Vector3().fromBufferAttribute(ps.arcGeo.attributes.position,tick/2);assert.ok(ps.bombs[0].pos.distanceTo(expected)<3e-5,'Float32 arc matches actual semi-implicit path');}}
@@ -140,8 +140,8 @@ test('#267: preview cache invalidates after gear changes and low ink does not su
 
 test('#267: nested other-actor guide and throw cannot inherit the first actors57AP boost',async()=>{
  const f=await fixture(),a=f.make(),b=f.make(),ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;equip(a,57,'subPower');equip(b,0,'subPower');f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};let inside=false,preview;
- f.G.netm={recBomb:bomb=>{if(bomb.owner!==a||inside)return;inside=true;ps.updateArc(b,true);preview=[ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz];step(b,6,{sub:true});step(b,1,{subReleased:true});}};
- step(a,6,{sub:true});step(a,1,{subReleased:true});assert.equal(ps.bombs.length,2);
+ f.G.netm={recBomb:bomb=>{if(bomb.owner!==a||inside)return;inside=true;ps.updateArc(b,true);preview=[ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz];step(b,6,{sub:true});step(b,1,{subReleased:true});step(b,1,{});}};
+ step(a,6,{sub:true});step(a,1,{subReleased:true});step(a,1,{});assert.equal(ps.bombs.length,2);
  near(ps.bombs[1].vel.distanceTo(new f.THREE.Vector3(...preview)),0);near(ps.bombs[0].vel.clone().sub(new f.THREE.Vector3(0,1.5,0)).length()/ps.bombs[1].vel.clone().sub(new f.THREE.Vector3(0,1.5,0)).length(),1.5);near(f.SUB.bomb.throwSpeed,67.2);
 });
 

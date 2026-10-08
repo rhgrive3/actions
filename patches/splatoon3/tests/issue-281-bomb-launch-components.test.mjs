@@ -17,6 +17,8 @@ test('#281 native throw and preview preserve separate14.4Y/67.2Z components at0/
    a.vel.y=vy;p.updateArc(a,true);
    a.weaponRunner.update(1/60,{sub:true});for(let i=0;i<5;i++)a.weaponRunner.update(1/60,{sub:true});
    a.weaponRunner.update(1/60,{subReleased:true});
+   assert.equal(p.bombs.length,0, 'no 0F bomb device before the sourced #1037 use frame');
+   a.weaponRunner.update(1/60,{});
    const b=p.bombs.at(-1);assert.ok(b);near(b.vel.x,0);near(b.vel.y,14.4+inherit);near(b.vel.z,67.2*gearCurve(ap,1,1.25,1.5));
    near(b.vel.x,p._arcCache.vx);near(b.vel.y,p._arcCache.vy);near(b.vel.z,p._arcCache.vz);
    near(f.SUB.bomb.gravity,57.6);
