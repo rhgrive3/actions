@@ -50,6 +50,18 @@ export function chargerActorBeforeStop(entryFraction, stepLength, stopDistance) 
   return entryFraction !== null && Number.isFinite(entryFraction) &&
     entryFraction * stepLength < stopDistance - EPS;
 }
+// #1098: map S3 keep-charge source-local XYZ into INKWAVE's procedural
+// gun-local axes using the live model's forward barrel-tip coordinate.
+// This documented scale is provisional: exact S3 skeleton calibration is not
+// derivable from the sparse MuzzleLocalPos record alone.
+export function storedChargerModelMuzzle(source, modelMuzzle, out) {
+  if (!source || !modelMuzzle || !out ||
+      ![source.X, source.Y, source.Z, modelMuzzle.z].every(Number.isFinite) ||
+      source.Z <= 0 || modelMuzzle.z <= 0) return false;
+  const scale = modelMuzzle.z / source.Z;
+  out.set(source.X * scale, source.Y * scale, source.Z * scale);
+  return true;
+}
 // Finite straight flight. Source supplies endpoints and radii, not recovered engine
 // interpolation code. Uses the existing weapon:fire packet; no new network fields.
 export function installChargerFlight(api,completion) {
@@ -100,8 +112,26 @@ export function installChargerFlight(api,completion) {
     }
     if(actor.isLocal||actor._nearCamera?.())G.audio?.play('shoot_charger',{pos:actor.isLocal?undefined:origin,volume:actor.isLocal ? .8 : .6,pitch:1.08-.16*charge});
   }
+  const keepMuzzle = completion.weapons.charger.WeaponKeepChargeParam?.MuzzleLocalPos;
+  const keepBody = new THREE.Vector3();
+  function resolveKeepOrigin(actor, out) {
+    const gun = actor.character?.weapon;
+    if (!gun?.off?.localToWorld ||
+        !storedChargerModelMuzzle(keepMuzzle, gun.def?.muzzle, out)) return false;
+    gun.off.localToWorld(out); // live hand pose, shared with ordinary gun muzzle
+    keepBody.copy(actor.pos); keepBody.y += actor.form === 'squid' ? .4 : 1.05;
+    // Keep the native geometry/finite-value muzzle guard; unsafe points fall
+    // back to the ordinary muzzle instead of spawning through nearby cover.
+    return Number.isFinite(out.x) && Number.isFinite(out.y) && Number.isFinite(out.z) &&
+      out.distanceToSquared(keepBody) <= 2.5 && G.physics.los(keepBody, out);
+  }
   P.fireCharger=function(actor,w,charge){
-    const origin=this._muzzle(actor,new THREE.Vector3()).clone(),dir=this._aimFrom(actor,origin,new THREE.Vector3()).clone();
+    const origin=this._muzzle(actor,new THREE.Vector3()).clone();
+    if (actor.weaponRunner?.s3KeepMuzzleFiring) {
+      const kept = new THREE.Vector3();
+      if (resolveKeepOrigin(actor, kept)) origin.copy(kept);
+    }
+    const dir=this._aimFrom(actor,origin,new THREE.Vector3()).clone();
     begin(this,actor,w,charge,origin,dir);
   };
   P.ghostFire=function(actor,event){

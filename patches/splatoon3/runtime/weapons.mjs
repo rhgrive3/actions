@@ -321,7 +321,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     clearSplatlingSubInterrupt(this);
-    this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
+    this.s3Stored = null; this.s3KeepMuzzlePending = false; this.s3KeepMuzzleFiring = false; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false; this.s3BlasterMoveRemaining = 0;
     this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
     this.s3SloshRecovery = false; this.s3SloshPrevYaw = null; this.s3SloshTurnDelta = 0;
@@ -488,7 +488,7 @@ export function installWeapons(context, profile) {
   // Stored-charge lifetime/startup ownership from C22 is composed with #775's
   // progressive ink commitment. Paid ink is never refunded by cancel/keep.
   const cancelStored = r => {
-    r.s3Stored = null; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
+    r.s3Stored = null; r.s3KeepMuzzlePending = false; r.s3KeepMuzzleFiring = false; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
     r.s3ChargerSpent = 0;
     r.s3ChargerElapsed = null; r.s3ChargerElapsedCompensation = 0;
     r.chargeLoop?.stop(.05); r.chargeLoop = null;
@@ -561,7 +561,7 @@ export function installWeapons(context, profile) {
       if (this.s3Stored) {
         this.s3Stored.remaining -= dt;
         this.s3Stored.resurfaced = false;
-        if (this.s3Stored.remaining <= epsilon) { this.s3Stored = null; this.s3ChargerSpent = 0; }
+        if (this.s3Stored.remaining <= epsilon) { this.s3Stored = null; this.s3KeepMuzzlePending = false; this.s3ChargerSpent = 0; }
       }
       return;
     }
@@ -587,6 +587,8 @@ export function installWeapons(context, profile) {
       this.s3ChargerElapsed = w.chargeTime; this.s3ChargerElapsedCompensation = 0;
       this.s3ChargerSpent = this.s3Stored.paid ?? w.inkFull;
       this.s3ChargerHeldTime = w.minReleaseTime || 0;
+      // Keep-shot identity survives the ordinary 1F deferred release.
+      this.s3KeepMuzzlePending = true;
       this.s3Stored = null;
     }
 
@@ -629,6 +631,7 @@ export function installWeapons(context, profile) {
     if (inp.fire && this.cooldown <= 0) {
       if (!this.charging) {
         this.s3ChargerSpent = 0;
+        this.s3KeepMuzzlePending = false; // fresh charge must not inherit an old keep origin
         this.s3ChargerElapsed = 0; this.s3ChargerElapsedCompensation = 0;
       }
       const beforeT = this.chargeT || 0, realInk = a.ink;
@@ -687,10 +690,15 @@ export function installWeapons(context, profile) {
       const realInk = a.ink, c = Math.max(0, this.charge || 0);
       const legacyDebit = Math.max(w.inkMin, w.inkFull * c);
       a.ink = realInk + legacyDebit;
-      const result = charger.call(this, dt, inp, w);
-      a.ink = realInk;
-      this.s3ChargerSpent = 0;
-      return result;
+      // The projectile engine reads this ONLY within the synchronous native shot.
+      this.s3KeepMuzzleFiring = !!this.s3KeepMuzzlePending;
+      try { return charger.call(this, dt, inp, w); }
+      finally {
+        a.ink = realInk;
+        this.s3ChargerSpent = 0;
+        this.s3KeepMuzzlePending = false;
+        this.s3KeepMuzzleFiring = false;
+      }
     }
     return charger.call(this, dt, inp, w);
   };
