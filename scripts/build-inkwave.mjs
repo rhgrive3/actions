@@ -62,7 +62,7 @@ for (const file of walk(SRC)) {
 }
 for (const file of walk(PATCH_ROOT)) {
   const rel = path.relative(PATCH_ROOT, file);
-  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json' || rel === 'roller-depletion-adapter.mjs') continue;
+  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json' || ['roller-depletion-adapter.mjs', 'paint-ownership-adapter.mjs', 'paint-splat-pool-adapter.mjs'].includes(rel)) continue;
   const dst = path.join(BUILD, 'patches/splatoon3', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
