@@ -33,6 +33,11 @@ export function packC1088SurgePresentation(actor) {
     state.action = action;
   } else if (!action) state.action = null;
 
+  // An untouched actor has no Surge pose to retire. Keep its original 22-column
+  // packet. After an action or a life change, retain explicit end markers so
+  // remote phase/life watermarks still reject late presentation samples.
+  if (!action && state.epoch === 0 && life === 0) return null;
+
   const phase = action?.phase;
   if (actor.alive && (phase === 'charge' || phase === 'burst')) {
     const charge = action.charge;

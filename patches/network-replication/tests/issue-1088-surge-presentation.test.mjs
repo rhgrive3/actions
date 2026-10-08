@@ -103,6 +103,25 @@ function assertPoseParity(f, owner, remote, label) {
   }
 }
 
+test('C1088 keeps untouched snapshots at 22 columns and retains explicit Surge end/life markers', async () => {
+  const w = await makePair();
+  const untouched = w.step(1 / 60, false, 'normal');
+  assert.equal(untouched.a[0].length, 22, 'ordinary snapshots keep the existing wire shape');
+  const active = w.step(1 / 60, true);
+  assert.equal(active.a[0].length, 23);
+  assert.equal(active.a[0][22].phase, 'charge');
+  w.owner.s3.actions.surge = null;
+  const ended = w.step(1 / 60, false, 'normal');
+  assert.equal(ended.a[0].length, 23, 'a used action still sends its retirement marker');
+  assert.equal(ended.a[0][22].phase, 'end');
+  assert.equal(ended.a[0][22].epoch, active.a[0][22].epoch);
+  assert.equal(w.remote.s3?.c1088SurgePresentation, undefined);
+  w.owner.stats.deaths++;
+  const nextLife = w.step(1 / 60, false, 'normal');
+  assert.equal(nextLife.a[0][22].phase, 'end');
+  assert.equal(nextLife.a[0][22].life, w.owner.stats.deaths);
+});
+
 test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycle controls', async () => {
   const pair = await makePair();
   const { f, G, owner, remote, sender, receiver, step, deliver } = pair;
