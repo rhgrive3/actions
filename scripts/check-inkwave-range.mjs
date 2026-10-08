@@ -132,9 +132,21 @@ for (const run of RUNS) {
     // a hit on the 10 m gallery target from its stand mark
     out.checks.hit = await page.evaluate(async () => {
       const G = window.__G, g = window.__inkwave, s = G.match.range, a = G.local;
-      s.travel('gallery'); a.pos.set(-12, 0.05, 0); g.rig.yaw = 0; g.rig.pitch = -0.02;
+      // Use the actual gallery travel/stand admission (which also updates the
+      // character root, controller and teleport state). Directly writing
+      // a.pos at the firing line can put the Actor inside solid signage, then
+      // physics ejects it away from the target before the first shot.
+      s.travel('gallery');
       await new Promise((r) => setTimeout(r, 2500));
       const target = s.targets.find((x) => x.rangeTarget?.dist === 10);
+      if (!target) throw new Error('Missing actual 10 m gallery target');
+      // The published gallery stand is not aligned with the 10 m column.
+      // Turn the real controller/rig toward the native target, preserving
+      // Shooter spread and ballistics (no damage or hit-test overrides).
+      const yaw = Math.atan2(target.pos.x - a.pos.x, target.pos.z - a.pos.z);
+      g.rig.yaw = yaw; g.rig.pitch = -0.02;
+      a.yaw = a.aimYaw = yaw;
+      if (s.m.controller) s.m.controller.yaw = yaw;
       const births = [];
       const push = G.projectiles?._push;
       if (push) G.projectiles._push = function (p) {
