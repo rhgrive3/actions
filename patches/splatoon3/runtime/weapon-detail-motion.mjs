@@ -6,6 +6,7 @@ import { slosherMotionSnapshot } from './weapon-motion.mjs';
 const INSTALLED = Symbol.for('inkwave.weapon-detail-motion.installed');
 const RESET_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.runner-reset-installed');
 const tracks = new WeakMap(), fills = new WeakMap(), reaches = new WeakMap(), disposed = new WeakSet();
+const recoilOverlayStates = new WeakMap(), spreadSymbols = new WeakMap(), EMPTY_SYMBOLS = Object.freeze([]);
 const TAU = Math.PI * 2;
 const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
@@ -33,6 +34,45 @@ function track(ch) {
 }
 function enabled(ch) { return !!ch && ch.s3WeaponDetailMotionEnabled !== false && ch.s3WeaponMotionEnabled !== false
   && !registry(ch)?.disposed?.has(ch); }
+// Cache per-record symbol-key lists; each overlay belongs to one Character
+// and nesting depth, and refreshes string keys and values from live records.
+function enumerableSymbols(source) {
+  if (source == null || (typeof source !== 'object' && typeof source !== 'function')) return EMPTY_SYMBOLS;
+  let symbols = spreadSymbols.get(source);
+  if (!symbols) { symbols = Object.getOwnPropertySymbols(source); spreadSymbols.set(source, symbols); }
+  return symbols;
+}
+function refreshSpread(target, source, slot, symbolField) {
+  for (const key of slot[symbolField]) delete target[key];
+  for (const key in target) if (Object.hasOwn(target, key)) delete target[key];
+  const symbols = enumerableSymbols(source);
+  slot[symbolField] = symbols;
+  if (source == null) return;
+  for (const key in source) if (Object.hasOwn(source, key)) {
+    const value = source[key];
+    if (key === '__proto__') Object.defineProperty(target, key, { value, writable: true, configurable: true, enumerable: true });
+    else target[key] = value;
+  }
+  for (const key of symbols) if (Object.prototype.propertyIsEnumerable.call(source, key)) target[key] = source[key];
+}
+function spreadInto(target, source) {
+  for (const key in source) if (Object.hasOwn(source, key)) target[key] = source[key];
+  const symbols = enumerableSymbols(source);
+  for (const key of symbols) if (Object.prototype.propertyIsEnumerable.call(source, key)) target[key] = source[key];
+}
+function recoilOverlayState(ch) {
+  let state = recoilOverlayStates.get(ch);
+  if (!state) { state = { depth: 0, slots: [] }; recoilOverlayStates.set(ch, state); }
+  return state;
+}
+function recoilOverlaySlot(state, depth) {
+  let slot = state.slots[depth];
+  if (!slot) {
+    slot = { hold: {}, rc: {}, holdSymbols: EMPTY_SYMBOLS, rcSymbols: EMPTY_SYMBOLS };
+    state.slots[depth] = slot;
+  }
+  return slot;
+}
 function activeSpecial(ch, T) {
   return !specialMotionAllowsAction(ch, !(ch._owner()?.specialActive ||
     Number.isInteger(T.T_SLAM) && ch.tr[T.T_SLAM] < 1.4 ||
@@ -41,8 +81,20 @@ function activeSpecial(ch, T) {
 function withRecoil(ch, fn) {
   const original = ch.hold, tune = recoil[ch.weaponKind];
   if (!enabled(ch) || !tune || !original) return fn();
-  ch.hold = { ...original, rc: { ...original.rc, ...tune } };
-  try { return fn(); } finally { ch.hold = original; }
+  const state = recoilOverlayState(ch), depth = state.depth;
+  state.depth = depth + 1;
+  try {
+    const overlay = recoilOverlaySlot(state, depth);
+    // Re-read native fields on every entry so mutable records and weapon
+    // changes stay visible; a nested call gets another slot and finally puts
+    // back the exact hold identity that was installed on entry.
+    refreshSpread(overlay.hold, original, overlay, 'holdSymbols');
+    refreshSpread(overlay.rc, original.rc, overlay, 'rcSymbols');
+    spreadInto(overlay.rc, tune);
+    overlay.hold.rc = overlay.rc;
+    ch.hold = overlay.hold;
+    try { return fn(); } finally { ch.hold = original; }
+  } finally { state.depth = depth; }
 }
 // Integrate the exponential motor's angle as well as velocity. Updating angle
 // with the end-of-step velocity produces different coast at 30 and 120 Hz.
