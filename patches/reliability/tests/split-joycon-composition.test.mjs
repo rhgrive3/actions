@@ -12,17 +12,17 @@ const PLAYER_REL = 'src/game/player.js';
 const inputSource = adaptBuildSource(INPUT_REL, fs.readFileSync(path.join(ROOT, 'inkwave-public', INPUT_REL), 'utf8'));
 const playerSource = adaptBuildSource(PLAYER_REL, fs.readFileSync(path.join(ROOT, 'inkwave-public', PLAYER_REL), 'utf8'));
 
-const nativeButtons = () => Array.from({ length: 22 }, () => ({ pressed: false, touched: false, value: 0 }));
+const nativeButtons = (length = 17) => Array.from({ length }, () => ({ pressed: false, touched: false, value: 0 }));
 const button = value => ({ pressed: value > 0.3, touched: value > 0, value });
 const joycon = (index, side, axes, held = {}) => {
   const product = side === 'L' ? '2006' : '2007';
-  const buttons = nativeButtons();
+  const buttons = nativeButtons(17);
   for (const [index, value] of Object.entries(held)) buttons[Number(index)] = button(value);
   return { index, id: `Joy-Con (${side}) (STANDARD GAMEPAD Vendor: 057e Product: ${product})`, connected: true,
     mapping: 'standard', axes, buttons, timestamp: 1 };
 };
 const standardPad = (index, id = `standard-${index}`, axes = [0, 0, 0, 0], held = {}) => {
-  const buttons = nativeButtons();
+  const buttons = nativeButtons(17);
   for (const [buttonIndex, value] of Object.entries(held)) buttons[Number(buttonIndex)] = button(value);
   return { index, id, connected: true, mapping: 'standard', axes, buttons, timestamp: 1 };
 };
@@ -97,11 +97,17 @@ function fileModule(context, cache, file) {
 
 async function composedPairTrace(reverse) {
   const h = await boot();
-  const left = joycon(2, 'L', [-0.2, -0.8, 0, 0], { 6: 0.8 });
-  const right = joycon(7, 'R', [0.25, 0.6, 0, 0], { 7: 0.9 });
+  const left = joycon(2, 'L', [-0.2, -0.8], { 6: 0.8 });
+  const right = joycon(7, 'R', [0.25, 0.6], { 7: 0.9 });
+  assert.equal(left.buttons.length, 17); assert.equal(left.axes.length, 2);
+  assert.equal(right.buttons.length, 17); assert.equal(right.axes.length, 2);
   h.setPads(reverse ? [right, left] : [left, right]);
   h.input.pollPad();
   assert.equal(h.input.pad._inkwaveJoyconPair, true);
+  assert.equal(h.input.pad.buttons.length, 22, 'the pair restores Chromium composite button slots');
+  assert.equal(h.input.pad.axes.length, 4, 'the pair restores both standard sticks');
+  assert.equal(h.input.pad.buttons[6].pressed, true, 'left ZL keeps its composite index');
+  assert.equal(h.input.pad.buttons[7].pressed, true, 'right ZR keeps its composite index');
   assert.equal(h.input.padPressed.size, 0, 'initially held pair controls do not create press edges');
   h.controller.update(1 / 60);
   assert.equal(h.actor.intent.squid, false, 'initial held ZL is rebased until release');
@@ -111,10 +117,11 @@ async function composedPairTrace(reverse) {
   left.axes.fill(0); right.axes.fill(0);
   left.buttons[6] = button(0); right.buttons[7] = button(0);
   h.input.pollPad();
-  left.axes.splice(0, 4, -0.2, -0.8, 0, 0);
-  right.axes.splice(0, 4, 0.25, 0.6, 0, 0);
+  left.axes.splice(0, 2, -0.2, -0.8);
+  right.axes.splice(0, 2, 0.25, 0.6);
   left.buttons[6] = button(0.8); right.buttons[7] = button(0.9);
   h.input.pollPad();
+  assert.equal(h.input.pad._inkwaveJoyconPair, true, 'stick motion keeps the documented standalone shape');
   h.controller.update(1 / 60);
   assert.equal(h.input.lastDevice, 'pad', 'fresh pair input follows existing device auto-selection');
   assert.deepEqual([...h.input.padPressed].sort((a, b) => a - b), [6, 7]);
@@ -140,14 +147,17 @@ test('the full six-stage Input.pollPad composition combines recognized L/R axes 
 
 test('only one unambiguous recognized Joy-Con pair is composed; standard pads retain priority', async () => {
   const h = await boot();
-  const left = joycon(2, 'L', [0, 0, 0, 0]), right = joycon(7, 'R', [0, 0, 0, 0]);
+  const left = joycon(2, 'L', [0, 0]), right = joycon(7, 'R', [0, 0]);
   const ordinary = standardPad(11, 'unrelated standard controller');
   h.setPads([left, right, ordinary]); h.input.pollPad();
   assert.equal(h.input.pad, ordinary, 'an existing standard controller wins over pair synthesis');
 
   const combined = standardPad(12, 'Nintendo Charging Grip (STANDARD GAMEPAD Vendor: 057e Product: 200e)');
+  combined.buttons = nativeButtons(22);
   h.setPads([combined]); h.input.pollPad();
   assert.equal(h.input.pad, combined, 'an OS-combined Nintendo controller is used as-is');
+  assert.equal(h.input.pad._inkwaveJoyconPair, undefined, 'a pre-combined 200e device is not composed a second time');
+  assert.equal(combined.buttons.length, 22); assert.equal(combined.axes.length, 4);
 
   const first = standardPad(20, 'first unrelated pad', [0.7, 0, 0, 0]);
   const second = standardPad(21, 'second unrelated pad', [0, 0, 0.9, 0]);
@@ -156,20 +166,42 @@ test('only one unambiguous recognized Joy-Con pair is composed; standard pads re
 
   const partialLeft = joycon(22, 'L', [0, 0], {});
   partialLeft.buttons = partialLeft.buttons.slice(0, 8);
-  const fullRight = joycon(23, 'R', [0, 0, 0, 0]);
+  const fullRight = joycon(23, 'R', [0, 0]);
   h.setPads([partialLeft, fullRight]); h.input.pollPad();
   assert.equal(h.input.pad, partialLeft, 'partial mappings do not qualify as the supported Chromium layout');
 
+  const mixedLeft = joycon(24, 'L', [0]);
+  const validRight = joycon(25, 'R', [0, 0]);
+  h.setPads([mixedLeft, validRight]); h.input.pollPad();
+  assert.equal(h.input.pad._inkwaveJoyconPair, undefined, 'a mixed unsupported shape cannot activate pair composition');
+  assert.equal(h.input.pad, mixedLeft);
+
   h.setPads([left]); h.input.pollPad();
   assert.equal(h.input.pad, left, 'a lone Joy-Con stays a single standard-mapped device');
-  const extraLeft = joycon(3, 'L', [0, 0, 0, 0]), extraRight = joycon(9, 'R', [0, 0, 0, 0]);
+  const extraLeft = joycon(3, 'L', [0, 0]), extraRight = joycon(9, 'R', [0, 0]);
   h.setPads([left, extraLeft, right, extraRight]); h.input.pollPad();
   assert.equal(h.input.pad, left, 'ambiguous multiple pairs fall back to existing first-standard priority');
 });
 
+test('Chromium standalone button slots return to their two-hand composite positions', async () => {
+  const h = await boot();
+  const left = joycon(2, 'L', [0, 0], { 0: 1, 4: 1, 8: 1, 16: 1 });
+  const right = joycon(7, 'R', [0, 0], { 2: 1, 5: 1, 8: 1, 16: 1 });
+  h.setPads([left, right]); h.input.pollPad();
+  assert.equal(h.input.pad._inkwaveJoyconPair, true);
+  assert.equal(h.input.pad.buttons[14].pressed, true, 'left horizontal d-pad action maps to composite d-pad left');
+  assert.equal(h.input.pad.buttons[18].pressed, true, 'left SL maps to the left-side grip shoulder');
+  assert.equal(h.input.pad.buttons[4].pressed, true, 'left L maps to the grip L shoulder');
+  assert.equal(h.input.pad.buttons[17].pressed, true, 'left capture remains an extra composite button');
+  assert.equal(h.input.pad.buttons[0].pressed, true, 'right face action maps to composite B');
+  assert.equal(h.input.pad.buttons[21].pressed, true, 'right SR maps to the right-side grip shoulder');
+  assert.equal(h.input.pad.buttons[5].pressed, true, 'right R maps to the grip R shoulder');
+  assert.equal(h.input.pad.buttons[16].pressed, true, 'right Home stays the composite meta button');
+});
+
 test('disconnect, reconnect, and member disconnect events rebase composite held controls', async () => {
   const h = await boot();
-  const left = joycon(2, 'L', [0, 0, 0, 0]), right = joycon(7, 'R', [0, 0, 0, 0]);
+  const left = joycon(2, 'L', [0, 0]), right = joycon(7, 'R', [0, 0]);
   h.setPads([left, right]); h.input.pollPad();
   left.buttons[6] = button(0.8); right.buttons[7] = button(0.9);
   h.input.pollPad(); h.controller.update(1 / 60);
@@ -201,7 +233,7 @@ test('disconnect, reconnect, and member disconnect events rebase composite held 
 
 test('touch gyro routing and keyboard ownership stay available with a composed pair connected', async () => {
   const h = await boot();
-  const left = joycon(2, 'L', [0, 0, 0, 0]), right = joycon(7, 'R', [0, 0, 0, 0]);
+  const left = joycon(2, 'L', [0, 0]), right = joycon(7, 'R', [0, 0]);
   h.setPads([left, right]); h.input.pollPad();
   const touch = { active: true, root: {}, moveX: 0, moveY: 0, lookDX: 0, lookDY: 0, mapOpen: false,
     down: () => false, wasPressed: () => false,
