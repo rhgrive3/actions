@@ -225,6 +225,14 @@ INKWAVE の `patches/reliability/combat-credit-adapter.mjs` は owner と event 
 
 再現回帰は native `Actor` の hit → splat event → `NetMatch._sendTick` → remote `_tick` / `_advance` / sample / `_playEvents` を使う。20Hz の固定 clock で life 4 の terminal event を保留中に、owner が life 5 の生存 snapshot と respawn event を送る。再生中 sample は life 4、最新 owner snapshot は alive/life 5 であることを確かめ、古い terminal は撃破表示と死亡状態を変えず、元の塗りと attacker reward を一度だけ反映し、その後の respawn event は通常どおり再生する。重複 terminal と forged owner も拒否する。これは source VM のロジック検証であり、ブラウザ実動作・実ネットワーク・本家実機との比較は未確認。
 
+## 同時 splat の turf 所有順（#365、2026-10-08）
+
+比較の参照条件は Splatoon 3 Ver.11.3.0、オンライン Regular Battle / Turf War、敵味方が同じ床面に重なる paint を行う状態。標準 gear を前提とするが、本家実機では weapon・入力・通信遅延を固定した計測をしていない。任天堂の [オンライン対戦案内](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59459/p/897) と [公式ゲーム紹介](https://splatoon.nintendo.com/en/gameplay/) は対戦と Turf War を案内する一方、同時 paint の内部 event 順序や ownership の競合解決方法は説明していない。したがって、本家の非公開 network 数値・処理順への一致は未確認で、移動や weapon の数値比較には転用しない。
+
+INKWAVE は `patches/network-replication/adapter.mjs` で既存 `t` packet に match id を載せ、relay-provided sender id、client が採番する simulation tick / event sequence、match roster の安定 rank から、対応する各 client が同じ全順序を再構成する。tick / sequence は server-authoritative な anti-cheat 証明ではない。`PaintSystem` の CPU grid は cell ごとに最後の accepted order を固定長配列へ記録し、古い／重複 splat は cell を上書きしない。local prediction と remote replay は同じ比較を使う。GPU growth と wall drip も draw 時点の cell owner に沿って quad を分割するため、遅れて進む古い splat が新しい owner を塗り戻さない。relay は sender に event を echo しない。仮に echo された場合も local owner event を再適用しない。新しい packet type や server ordering queue は追加せず、practice range の reset が呼ぶ `PaintSystem.clear()` で order 配列も消去する。配列は CPU grid と同じ cell 数で、event 履歴を蓄積しない。新しい client は order metadata のない legacy paint event を受け付けないため、異なる client version が同じ match に入った場合の互換性は未確認。
+
+再現は base `c2c938b9af5b6cce2a7bdbecf0415c7c3836cadb` の full six-adapter source composition を通し、実 `PaintSystem` と `NetMatch` を2 client で実行した。radius 0.9、seed 0.42、tick 60 / sequence 1 の opposing local prediction を互いに replay すると、修正前は 134,400 CPU cells 中41 cellが異なり、coverage も逆の team に分かれた。修正後の focused regression は実 `PaintSystem` の全 grid と生成 atlas quad、3 client、両方の receive permutation、duplicate / stale / late packet、owner leave、unknown reconnect ID、match epoch、range clear、local turf credit を検査し、各 client の grid hash と coverage が一致した。renderer は atlas geometry submission を記録する stub であり、実 WebGL pixel readback、browser / WebSocket session、Switch 実機での比較は未確認。
+
 ## 練習場（2026-10-03）
 
 ブランチ `inkwave/practice-range` に、既存システムを測るためのソロ練習場を独立パッチ `patches/practice-range/` として追加した（[練習場レポート](practice-range-report.md)）。歩行・泳ぎ・射撃・塗り・ボム・スペシャル・被弾の数値とロジックは変更していない。練習場の目盛りはワールド座標（1 m = 1 ワールド単位）で、本家の距離単位との対応は引き続き未確認（`distanceScale` は推定）。この記録の既存の差分・未確認項目は、練習場の追加によって解消済みとしない。

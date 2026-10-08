@@ -132,6 +132,7 @@ export function emit(name, payload) {
   if (rel === 'src/net/netmatch.js') {
     patch("import { G, emit, on } from '../core/ctx.js'", "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js'", 'read numeric event snapshots');
     patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
+    patch('    this.myId = session.myId;\n    this.byNid = new Map();', '    this.myId = session.myId;\n    this._paintOwnerRanks = stablePaintOwnerRanks(session);\n    this._recordingPaint = false;\n    this._lastPaintOrder = null;\n    this._currentPaintOrder = null;\n    this.byNid = new Map();', 'stable paint owner rank and transient order');
     patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
     patch("      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;", "      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;\n      case 'fs': this._acceptFirstSplat(from,d); break;\n      case 'fsq': this._answerFirstSplat(from,d); break;", 'first-splat host confirmation packets');
     patch('  _remoteSplat(victim, attacker, cause) {', `  _requestFirstSplat() {
@@ -232,11 +233,13 @@ export function emit(name, payload) {
     patch('  _rec(e) { this.out.push([r3(now()), ...e]); }', `  _rec(e) {
     const seq = this._eventSeq = (this._eventSeq || 0) + 1;
     const tick = Math.round((G.time || 0)*60);
-    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event);
+    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick;
+    if (this._recordingPaint) this._lastPaintOrder = paintOrderFor(this, this.myId, tick, seq);
+    this.out.push(event);
   }`, 'ordered event identity');
     patch("const msg = { k: 't', ts: r3(now()), a",
-      "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
-      'owner simulation tick preserving existing sidecars');
+      "const msg = { k: 't', m: this.cfg?.id, ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
+      'match epoch and owner simulation tick preserving existing sidecars');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
       const points = p.physicsPoints || (p.physicsPoints = []);
@@ -247,7 +250,18 @@ export function emit(name, payload) {
     patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema only in event packets');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
-      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
+      if (d.r === 2) {
+        const seq = e[e.length-1], tick = e[e.length-2];
+        if (!Number.isSafeInteger(seq) || seq < 1) continue;
+        e._netSeq = seq;
+        if (Number.isSafeInteger(tick)) e._netTick = tick;
+        if (e[1] === 's') {
+          const order = paintOrderFor(this, from, tick, seq);
+          if (d.m !== this.cfg?.id || order === null || !Number.isSafeInteger(d.u)
+            || d.u < tick || d.u - tick > 120 || e[0] > d.ts + 0.001) continue;
+          e._netPaintOrder = order; e._netPaintMatch = d.m; e._netPacketTick = d.u;
+        }
+      } else if (e[1] === 's') continue;
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
@@ -308,6 +322,12 @@ export function emit(name, payload) {
     }
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
+    if (e[1] === 's') {
+      const expectedOrder = paintOrderFor(this, from, e._netTick, e._netSeq);
+      if (from === this.myId || expectedOrder === null || expectedOrder !== e._netPaintOrder
+        || e._netPaintMatch !== this.cfg?.id || !Number.isSafeInteger(e._netPacketTick)
+        || e._netPacketTick < e._netTick || e._netPacketTick - e._netTick > 120) return;
+    }
     const eventPeer = this.peers.get(from);
     if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
@@ -328,6 +348,29 @@ export function emit(name, payload) {
       } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
     }
     switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
+    patch(`case 's': {
+        this.applying = true;
+        const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
+        const opts = { seed: e[7] };
+        if (e[8]) opts.kind = e[8];
+        if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+        G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
+        this.applying = false;
+        break;
+      }`, `case 's': {
+        const order = e._netPaintOrder;
+        if (!Number.isSafeInteger(order) || order <= 0) break;
+        const previousOrder = this._currentPaintOrder, previousApplying = this.applying;
+        this._currentPaintOrder = order; this.applying = true;
+        try {
+          const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
+          const opts = { seed: e[7], _netPaintOrder: order };
+          if (e[8]) opts.kind = e[8];
+          if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+          G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
+        } finally { this.applying = previousApplying; this._currentPaintOrder = previousOrder; }
+        break;
+      }`, 'replay paint under the sender-derived canonical owner order');
     {
       const bombWithKitMeta = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12]); break; }";
       const bombWithKit = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11]); break; }";
@@ -398,6 +441,23 @@ export function emit(name, payload) {
         break;
       }`, 'birth and terminal events');
     code += `
+const MAX_PAINT_TICK = 0x1fffff;
+const MAX_PAINT_SEQUENCE = 0x1fffffff;
+function stablePaintOwnerRanks(session) {
+  const ids = session?._members && typeof session._members.keys === 'function' ? [...session._members.keys()] : [];
+  if (typeof session?.myId === 'string') ids.push(session.myId);
+  const owners = [...new Set(ids.filter(id => typeof id === 'string' && id.length > 0))].sort();
+  return owners.length <= 8 ? new Map(owners.map((id, rank) => [id, rank])) : new Map();
+}
+function paintOrderFor(match, owner, tick, sequence) {
+  const rank = match?._paintOwnerRanks?.get(owner);
+  if (!Number.isSafeInteger(rank) || rank < 0 || rank > 7
+    || !Number.isSafeInteger(tick) || tick < 0 || tick > MAX_PAINT_TICK
+    || !Number.isSafeInteger(sequence) || sequence < 1 || sequence > MAX_PAINT_SEQUENCE
+    || sequence > (tick + 1) * 256) return null;
+  const order = tick * 0x100000000 + rank * 0x20000000 + sequence;
+  return Number.isSafeInteger(order) && order > 0 ? order : null;
+}
 function stormSnapshotAllows(actor, proof, from) {
   const latest = actor?.net?.buf?.at(-1);
   return !!(proof && actor?.alive && actor.remote && actor.owner === from && proof.owner === from
@@ -434,6 +494,69 @@ function firstSplatStateFor(session,cfg) {
   return state;
 }
 `;
+  }
+  if (rel === 'src/world/paint.js') {
+    patch('    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1',
+      '    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.gridOrder = new Float64Array(total); // last accepted network paint order per cell',
+      'bounded per-cell canonical paint order');
+    patch('    this.grid.fill(0);', '    this.grid.fill(0);\n    this.gridOrder.fill(0);', 'paint order resets with the gameplay grid');
+    patch(`    if (nm && !opts.cosmetic) {
+      if (nm.mute > 0) return 0;
+      if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }
+    }`, `    if (nm && !opts.cosmetic) {
+      if (nm.mute > 0) return 0;
+      if (!nm.applying) {
+        if (opts.seed === undefined) opts.seed = Math.random();
+        nm._lastPaintOrder = null; nm._recordingPaint = true;
+        try { nm.recSplat(center, radius, team, opts); } finally { nm._recordingPaint = false; }
+        opts._netPaintOrder = nm._lastPaintOrder;
+      } else opts._netPaintOrder = nm._currentPaintOrder;
+      if (!Number.isSafeInteger(opts._netPaintOrder) || opts._netPaintOrder <= 0) return 0;
+    }`, 'local prediction and remote replay require the same accepted order');
+    patch('this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind)',
+      'this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, opts._netPaintOrder)', 'pass canonical paint order to CPU ownership');
+    if (code.includes('g.cx = center.x; g.cy = center.y; g.cz = center.z;')) {
+      patch('g.cx = center.x; g.cy = center.y; g.cz = center.z;',
+        'g.cx = center.x; g.cy = center.y; g.cz = center.z; g.netOrder = opts._netPaintOrder;', 'retain canonical order for pooled GPU growth');
+    } else {
+      patch('        cx: center.x, cy: center.y, cz: center.z,',
+        '        cx: center.x, cy: center.y, cz: center.z, netOrder: opts._netPaintOrder,', 'retain canonical order for GPU growth');
+    }
+    patch('this._pushQuad(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);',
+      'this._pushOrderedQuad(g, f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);', 'clip delayed drips to current cell owners');
+    patch('this._pushQuad(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);',
+      'this._pushOrderedQuad(g, f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);', 'clip paint growth to current cell owners');
+    patch('  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind) {', `  _pushOrderedQuad(g, f, u0, u1, v0, v1, ...draw) {
+    const order = g.netOrder;
+    if (!Number.isSafeInteger(order) || order <= 0) return this._pushQuad(f,u0,u1,v0,v1,...draw);
+    const i0 = Math.max(0, Math.floor(u0 / f.cu)), i1 = Math.min(f.nu - 1, Math.floor(u1 / f.cu));
+    const j0 = Math.max(0, Math.floor(v0 / f.cv)), j1 = Math.min(f.nv - 1, Math.floor(v1 / f.cv));
+    if (i1 < i0 || j1 < j0) return;
+    for (let j = j0; j <= j1; j++) {
+      const cv0 = Math.max(v0, j * f.cv), cv1 = Math.min(v1, (j + 1) * f.cv);
+      if (cv1 <= cv0) continue;
+      const row = f.grid + j * f.nu;
+      let start = -1;
+      for (let i = i0; i <= i1 + 1; i++) {
+        const ownsCell = i <= i1 && this.gridOrder[row + i] === order;
+        if (ownsCell) { if (start < 0) start = i; }
+        else if (start >= 0) {
+          const cu0 = Math.max(u0, start * f.cu), cu1 = Math.min(u1, i * f.cu);
+          if (cu1 > cu0) this._pushQuad(f,cu0,cu1,cv0,cv1,...draw);
+          start = -1;
+        }
+      }
+    }
+  }
+
+  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind, netOrder) {`, 'per-cell CPU order and bounded GPU ownership clipping');
+    patch('        const k = f.grid + j * f.nu + i;\n        const prev = this.grid[k];', `        const k = f.grid + j * f.nu + i;
+        if (netOrder !== undefined) {
+          if (!Number.isSafeInteger(netOrder) || netOrder <= this.gridOrder[k]) continue;
+          this.gridOrder[k] = netOrder;
+        }
+        const prev = this.grid[k];`, 'last accepted order wins only when newer');
+    return code;
   }
   if (rel === 'src/fx/fxHooks.js') {
     patch("import { on } from '../core/ctx.js';", "import { on, copyEventVector, hasEventVector } from '../core/ctx.js';", 'consume vector snapshots without materialization');
