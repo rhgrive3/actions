@@ -490,11 +490,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       finally { if (projectiles.applyHit === admittedHit) projectiles.applyHit = applyHit; }
     } else result = roller.call(this, dt, rollInp, mode);
     // #1036: the Bubbler shell is permeable. Only base/emitter hardware enters
-    // the existing 0.5s Roller contact-damage cadence.
+    // the same 24F source-backed Roller body-contact cadence (#839).
     const rollSpeed = Math.hypot(a.vel.x, a.vel.z);
     if (this.rolling && rollSpeed > 1.0) {
       const bubbler = rollerBubblerCandidate(a, Math.sin(a.yaw), Math.cos(a.yaw), w.rollWidth);
-      if (bubbler && G.time - (this.rollHits.get(bubbler.dome) || -9) > 0.5) {
+      if (bubbler && G.time - (this.rollHits.get(bubbler.dome) || -9) + 1e-10 >= (w.rollContactInterval ?? (24 / 60))) {
         this.rollHits.set(bubbler.dome, G.time);
         applyRollerBubblerHit(bubbler, a, w.rollDamage);
       }
