@@ -22,15 +22,15 @@ async function rig(){
 test('full installed Kit releases keep nested same-sub cost actor-local',async()=>{
  for(const kind of ['charger','shooter','roller']){
   const f=await rig(),a=f.make(kind,'inkSaverSub',57),b=f.make(kind,'inkSaverSub',0),base=f.SUB[a.weapon.sub],before=JSON.stringify(base);let nested=false;
-  f.G.netm={recBomb(){if(nested)return;nested=true;f.step(b,{sub:true},8);f.step(b,{subReleased:true});}};
-  f.step(a,{sub:true},8);f.step(a,{subReleased:true});assert.equal(f.G.projectiles.bombs.length,2);
+  f.G.netm={recBomb(){if(nested)return;nested=true;f.step(b,{sub:true},8);f.step(b,{subReleased:true});f.step(b,{});}};
+  f.step(a,{sub:true},8);f.step(a,{subReleased:true});f.step(a,{});assert.equal(f.G.projectiles.bombs.length,2);
   const cost=base.inkCost??base.inkCostFallback;assert.ok(Math.abs((100-a.ink)-cost*a.s3.modifiers.inkSaverSub)<1e-8);assert.ok(Math.abs((100-b.ink)-cost)<1e-8);assert.equal(JSON.stringify(base),before);
  }
 });
 test('full installed Kit preview and nested throw share actor-local power and restore preview context on error',async()=>{
  const f=await rig(),a=f.make('charger','subPower',57),b=f.make('charger','subPower',0),ps=f.G.projectiles,base=f.SUB.bomb.throwSpeed;let nested=false,preview;
- f.G.netm={recBomb(){if(nested)return;nested=true;ps.updateArc(b,true);preview=new f.THREE.Vector3(ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz);f.step(b,{sub:true},8);f.step(b,{subReleased:true});}};
- f.step(a,{sub:true},8);f.step(a,{subReleased:true});assert.equal(ps.bombs.length,2);assert.ok(ps.bombs[1].vel.distanceTo(preview)<1e-8);
+ f.G.netm={recBomb(){if(nested)return;nested=true;ps.updateArc(b,true);preview=new f.THREE.Vector3(ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz);f.step(b,{sub:true},8);f.step(b,{subReleased:true});f.step(b,{});}};
+ f.step(a,{sub:true},8);f.step(a,{subReleased:true});f.step(a,{});assert.equal(ps.bombs.length,2);assert.ok(ps.bombs[1].vel.distanceTo(preview)<1e-8);
  const inherited=ps.throwVelocity(a,0,new f.THREE.Vector3());const ratio=ps.bombs[0].vel.clone().sub(inherited).length()/ps.bombs[1].vel.clone().sub(ps.throwVelocity(b,0,new f.THREE.Vector3())).length();assert.ok(Math.abs(ratio-a.s3.modifiers.subPower)<1e-8,JSON.stringify({ratio,wanted:a.s3.modifiers.subPower,a:ps.bombs[0].vel.toArray(),b:ps.bombs[1].vel.toArray(),inherited:inherited.toArray()}));assert.equal(f.SUB.bomb.throwSpeed,base);
  ps.updateArc(a,false);f.G.physics.segment=()=>{throw Error('arc collision failed');};assert.throws(()=>ps.updateArc(a,true),/arc collision failed/);assert.equal(ps.s3PreviewSubSpeed,undefined);assert.equal(f.SUB.bomb.throwSpeed,base);
 });
@@ -86,7 +86,7 @@ test('#968 kit swaps and actual authoritative Curling throws do not accumulate p
  const f=await rig(),a=f.make('roller','subPower',57),b=f.make('roller','subPower',0);
  const originals=JSON.stringify(f.SUB),packets=[];f.G.netm={recBomb(owner,bomb){packets.push([owner,bomb]);}};
  for(const kind of ['shooter','roller','shooter','roller'])a.setWeapon(kind);
- for(const actor of [a,b]){f.step(actor,{sub:true},8);f.step(actor,{subReleased:true});}
+ for(const actor of [a,b]){f.step(actor,{sub:true},8);f.step(actor,{subReleased:true});f.step(actor,{});}
  assert.equal(f.G.projectiles.bombs.length,2);assert.equal(packets.length,2);
  const [first,second]=f.G.projectiles.bombs;
  assert.ok(Math.abs(first.s3Resolved.throwSpeed/second.s3Resolved.throwSpeed-1.3)<1e-9);

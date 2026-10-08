@@ -124,6 +124,8 @@ test('#294: R stops the stream before sub processing; release never revives the 
   assert.equal(a.weaponRunner.streaming, false); near(a.ink, 97.75);
   for(let i=0;i<5;i++)a.weaponRunner.update(DT,{sub:true});
   a.weaponRunner.update(DT, { fire: false, subReleased: true });
+  assert.equal(bombs, 0, '#1037 release is admitted but does not create the device in the same tick');
+  a.weaponRunner.update(DT, { fire: false });
   assert.equal(bombs, 1); near(a.ink, 27.75);
   advance(a, 60, { fire: false }); assert.equal(f.shots.length, before);
   advance(a, 1); assert.equal(a.weaponRunner.charging, true);
