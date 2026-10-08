@@ -33,6 +33,11 @@ const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
 export const VAC_ID = 'inkVac';
 
 const RAW_TO_HP = 10;             // repository conversion rawDamageToHP: "/10"
+// #1090: S3 Ink Vac gauge is damage-equivalent (~1100 HP), not round count.
+// 1100 is a verified approximate capacity; upper bound prevents infinite/NaN
+// transport values, but is not proof of the remote projectile's damage.
+const ABSORB_CAPACITY_HP = 1100;
+const MAX_ACCEPTED_DAMAGE_HP = 220;
 const INHALE_LENGTH = 15;         // pinned LengthMax
 const NEAR_LOW = 0.8, NEAR_HIGH = 1.4;   // pinned RadiusMin.Low/.High
 const FAR_LOW = 3.3, FAR_HIGH = 4.3;     // pinned RadiusMax.Low/.High
@@ -58,7 +63,9 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   framesPerSecond: 60,
   breathOriginHeight: 1.0,   // intake origin above feet (kid chest) — calibration
   frontalEpsilon: -0.05,    // projectile must travel against player aim — calibration
-  absorbCapacityDamage: 1100, // S3 11.3.0: approximate damage-equivalent intake capacity
+  absorbCapacityDamage: ABSORB_CAPACITY_HP,
+  absorbDamageLimit: MAX_ACCEPTED_DAMAGE_HP,
+  absorbStatus: 'damage-proportional, 1100 approximate S3 capacity; remote source damage requires separate authoritative hit attestation',
   geometry: 'frustum: near radius at the muzzle growing linearly to far radius at LengthMax; RadiusMin/RadiusMax read as near/far and Low/High as charge ends',
   geometryStatus: 'interpretation / calibration; Nintendo field meaning unconfirmed',
   speedStatus: 'pinned per-frame values multiplied by 60 to per-second',
@@ -313,6 +320,16 @@ function creditCharge(state, damageEquivalent) {
   const capacity = INK_VAC_CALIBRATION.absorbCapacityDamage;
   state.absorbedDamage = Math.min(capacity, (state.absorbedDamage || 0) + delta);
   state.charge = inkVacChargeFromDamage(state.absorbedDamage, capacity);
+// Use the projectile's damage BEFORE neutralising it. Native bombs may carry
+// their damaging hitbox on the linked bomb rather than on their visual proxy.
+function absorbDamageEquivalent(projectile) {
+  const bomb = projectile?.s3InkVacBomb;
+  const values = [projectile?.damage, bomb?.damage,
+    projectile?.splashDamageMax, bomb?.splashDamageMax,
+    projectile?.splashDamage, bomb?.splashDamage];
+  const damage = values.find(v => Number.isFinite(v) && v > 0) ?? 0;
+  return Math.min(MAX_ACCEPTED_DAMAGE_HP, damage);
+}
   state.absorbed++;
   updateVisual(state);
   api.emit?.(INK_VAC_EVENTS.charge, { actor: state.actor, kit: VAC_ID, serial: state.serial, charge: state.charge });
@@ -323,12 +340,12 @@ function creditCharge(state, damageEquivalent) {
 // own round, so it neutralises the shooter-authoritative damage at first contact
 // and asks the owner to credit once. `actor` is the shooter and `target` the Vac
 // owner, both flat actor references the native packer keeps.
-function proposeAbsorption(state, projectile) {
+function proposeAbsorption(state, projectile, damage) {
   const shooter = projectile.owner;
   if (!shooter || shooter.remote === true) return false;   // only a locally owned shooter may propose
   if (!Number.isInteger(state.serial)) return false;
   const key = `${shooter.nid !== undefined ? shooter.nid : 'i' + identityOf(shooter)}#p${++proposalSeq}`;
-  api.emit?.(INK_VAC_EVENTS.absorb, { actor: shooter, target: state.actor, kit: VAC_ID, serial: state.serial, key });
+  api.emit?.(INK_VAC_EVENTS.absorb, { actor: shooter, target: state.actor, kit: VAC_ID, serial: state.serial, key, damage });
   return true;
 }
 
@@ -346,11 +363,11 @@ function absorb(state, projectile) {
   // authority to it, so it may be consumed VISUALLY only -- no damage edit, no
   // charge, no proposal, no paint.
   if (projectile.ghost) return false;
-  const absorbedDamage = absorbedDamageEquivalent(projectile);
+  const damage = absorbDamageEquivalent(projectile);
   projectile.damage = 0;      // neutralise the shooter-authoritative damage here
   // A replica may not claim charge from a replayed ghost; it proposes instead.
-  if (state.remote) return proposeAbsorption(state, projectile);
-  creditCharge(state, absorbedDamage);
+  if (state.remote) return proposeAbsorption(state, projectile, damage);
+  creditCharge(state, damage);
   return true;
 }
 
@@ -539,6 +556,12 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     const key = payload.key;
     if (typeof key !== 'string' || key.length === 0 || key.length > MAX_KEY_LENGTH || !KEY_PATTERN.test(key)) {
       return drop('malformed-proposal-key');
+    }
+    // Mandatory numerical proposal: old flat-count packets cannot regain the
+    // removed 34% fallback. Peer binding/serial/dedup remain required above.
+    const damage = payload.damage;
+    if (!Number.isFinite(damage) || damage < 0 || damage > MAX_ACCEPTED_DAMAGE_HP) {
+      return drop('invalid-absorb-damage');
     }
     const ledger = proposalLedger(subject);
     if (ledger.set.has(key)) return drop('duplicate-proposal');
