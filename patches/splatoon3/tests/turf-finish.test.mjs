@@ -51,6 +51,37 @@ function clockGame(f) {
  installClock({G:f.G});
  return {match:f.m,input:{padPressed:new Set(),pollPad(){},endFrame(){}},rig:{},_padMenus(){},_updateAttract(){}};
 }
+test('#923 finish/judge skip costly Actor stepping and soft-push without retiring live projectiles',async()=>{
+ for(const hz of [30,60,120]){
+  const f=await fixture(),game=clockGame(f),V=f.THREE.Vector3;
+  let actors=0,bots=0,projectiles=0;
+  const pos0=new V(0,0,0),pos1=new V(.2,0,0);
+  const local={alive:true,remote:false,pos:pos0,intent:{move:new V(),fire:true,sub:true,squid:true,jump:true,special:true},
+    bot:{update(){bots++;}},update(){actors++;}};
+  const other={alive:true,remote:false,pos:pos1,update(){actors++;}};
+  f.m.actors=[local,other];f.G.time=0;f.m.setState('finish');
+  f.G.projectiles={update(){projectiles++;if(projectiles===1)f.G.paint.splat();}};
+  for(let frame=0;frame<hz*3;frame++)runSimulation(game,1/hz);
+  assert.equal(actors,0,`native actor physics at ${hz}Hz`);
+  assert.equal(bots,0,`finished bot decisions at ${hz}Hz`);
+  assert.equal(local.intent.fire,false);assert.equal(local.intent.sub,false);
+  assert.deepEqual(pos0.toArray(),[0,0,0]);assert.deepEqual(pos1.toArray(),[.2,0,0]);
+  assert.equal(projectiles,180,'late projectile stepping must not be cleared or frozen');
+  assert.deepEqual(plain(f.m.result),{coverage:[.51,.49],winner:0});
+  assert.deepEqual(f.coverage,[.4,.6],'late paint still renders, judge stays frozen at deadline');
+  assert.equal(f.m.state,'judge');
+ }
+});
+test('#923 boss finish keeps native Actor and boss physics; normal playing remains unaffected',async()=>{
+ const f=await fixture();let actorTicks=0,bossTicks=0;
+ f.m.actors=[{remote:false,update(){actorTicks++;}}];
+ f.m.bossCfg={finishWin:2.6,finishLose:2.6};
+ f.m.bossMode={boss:{dead:false},update(){bossTicks++;}};
+ f.m.setState('finish');f.m.update(1/60);
+ assert.equal(actorTicks,1);assert.equal(bossTicks,1);
+ f.m.bossMode=null;f.m.time=10;f.m.setState('playing');f.m.update(1/60);
+ assert.equal(actorTicks,2);
+});
 test('#980 final legal projectile interval flips the frozen winner at every render cadence',async()=>{
  for(const hz of [30,60,120,144]){
   const f=await fixture(),game=clockGame(f);f.m.time=1/60;f.G.time=0;
