@@ -9,6 +9,20 @@ function once(code, before, after, label) {
 // Runtime/gameplay ownership remains in the canonical native classes.
 export function adaptSixFollowup(rel, code) {
   if (rel === 'src/net/session.js') {
+    // #1003 and S3 #host-team-assignment are both installed. S3 has already
+    // replaced the original canStart/start guards before reliability runs.
+    // Preserve the S3 host confirmation and ready rule while requiring 2
+    // actual players in Turf; start() already calls canStart() after S3.
+    const hostGuard="    return !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));";
+    if (code.includes(hostGuard.replace('\\n', '\\n'))) {
+      const oldGuard=hostGuard.replace('\\n', '\\n');
+      code=once(code,oldGuard,
+        "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));".replace('\\n','\\n'),
+        '#1003 minimum composes with S3 host team confirmation');
+      if (!code.includes("    if (!this.isHost || this.state !== 'lobby' || !this.tr || !this.canStart()) return false;"))
+        throw new Error('Six-followup adapter anchor mismatch: S3 start requires canStart');
+      return code;
+    }
     code = once(code,
       "    return !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);",
       "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);",
