@@ -346,6 +346,16 @@ export function emit(name, payload) {
       '    a.landT += dt; a.lastDamage += dt;\n    applyAdoptionRecoveryAge(this, a, S);',
       'retain remote elapsed damage recovery clock');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
+    // #1112: CPU turf ownership must consume the exact same canonical stamp on
+    // sender and receiver. Paint event transport therefore keeps gameplay
+    // position/radius/stretch scalars unrounded; render-only compression belongs elsewhere.
+    patch("this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team, o.seed ?? Math.random(), o.kind ?? 0,",
+      "this._rec(['s', c.x, c.y, c.z, radius, team, o.seed ?? Math.random(), o.kind ?? 0,",
+      'full-precision paint position/radius');
+    patch('st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0',
+      'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0',
+      'full-precision paint stretch');
+
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     const inkMetaBase = 'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null]);';
     const inkMetaKitBirth = 'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
