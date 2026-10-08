@@ -76,6 +76,7 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       if (disposed.has(this)) return;
       s = s || {}; // preserve the public Character's nullable preview input
       const m = get(this), frame = s.movementMotion, step = Math.max(0, Math.min(.1, dt || 0));
+      const action = frame?.surgePresentationC1088 ?? frame?.actions?.surge;
       // Actor state is authoritative. A missed notification cannot strand a
       // pose; hidden characters still advance/cancel their action clocks.
       const allowed = (s.form || 'kid') !== 'kid' && !this.dance && !(frame && (!frame.alive || frame.special));
@@ -94,7 +95,7 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
             m.roll.age = Math.max(m.roll.age, age);
           }
           if (frame.superJump) { m.roll = m.top = m.burst = null; }
-          if (!frame.actions?.surge) m.burst = null;
+          if (!action) m.burst = null;
         }
         if (m.roll) {
           if (live?.remotePresentation !== true) m.roll.age = Math.min(m.roll.duration, m.roll.age + step);
@@ -111,7 +112,7 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
         if (s.grounded && s.form !== 'climb') m.roll = m.top = m.burst = null;
       }
       m.phase = null; m.charge = m.spin = 0;
-      const action = frame?.actions?.surge, sj = frame?.superJump;
+      const sj = frame?.superJump;
       if (allowed && sj?.phase === 'charge') {
         m.phase = 'superjump-charge';
         m.charge = clamp(sj.t / (frame.chargeTime ?? profile.superJump.chargeTime));
@@ -176,6 +177,7 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
           actions.roll = this.remoteSquidrollVisual || null;
           frame.actions = actions;
         } else frame.actions = this.s3?.actions;
+        frame.surgePresentationC1088 = this.s3?.c1088SurgePresentation;
         frame.superJump = this.superJumpState;
         frame.chargeTime = this.s3?.jumpChargeTime;
         frame.alive = this.alive; frame.special = this.specialActive;

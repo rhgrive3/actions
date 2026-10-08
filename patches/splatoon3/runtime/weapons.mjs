@@ -101,6 +101,16 @@ export function splatlingChargeCap(ink, w) {
   const fraction = Math.max(0, Math.min(1, ink / w.inkFull)), first = w.burstFirst / w.burstMax, boundary = w.firstChargeTime / w.chargeTime;
   return fraction <= first ? fraction / first * boundary : boundary + (fraction - first) / (1 - first) * (1 - boundary);
 }
+// Single authoritative full-charge predicate (#840). The base Charger ding
+// fires only at `charge >= 1` (inkwave-public/src/game/weapons.js:157), so
+// every discrete full-only effect (160 damage, opponent piercing, squid
+// charge-keep storage, exact full range/speed/paint endpoints) must key off
+// the same state. A near-full partial (e.g. q=0.999, reachable via the
+// low-ink progress cap) stays partial. Match the native ding without an
+// epsilon: every finite value below 1 remains a partial charge.
+export function isChargerFullCharge(charge) {
+  return Number.isFinite(charge) && charge >= 1;
+}
 export function chargerDamage(actor, weapon, charge) {
   const legacy = weapon.damageMin + (weapon.damagePartialMax - weapon.damageMin) * charge;
   const minimum = weapon.damageMinChargeTime, rate = weapon.partialDamagePerSecond;
@@ -113,11 +123,56 @@ export function chargerDamage(actor, weapon, charge) {
   return Math.min(weapon.damagePartialMax, weapon.damageMin + (elapsed - minimum) * rate);
 }
 export const SPLATLING_INTERRUPT = 6 / 60;
+// Splatling R cancellation is a separate destination from its 6F squid
+// interruption window. The sub-ready owner consumes this delay before aiming.
+export const SPLATLING_SUB_INTERRUPT = 5 / 60;
 const INTERRUPT_EPS = 1e-10;
 const INTERRUPT_SLOTS = {
   charge: { time: 's3ChargeInterruptT', press: 's3ChargeInterruptPressT', live: r => r.charging },
   stream: { time: 's3StreamInterrupt', press: 's3StreamInterruptPressT', live: r => r.streaming },
 };
+export function clearSplatlingSubInterrupt(runner) {
+  runner.s3SplatlingSubInterruptPending = false;
+  runner.s3SplatlingSubInterruptRemaining = 0;
+  runner.s3SplatlingSubInterruptReleased = false;
+  runner.s3SplatlingSubInterruptReady = false;
+}
+export function splatlingSubInterrupt(runner, actor, dt, input) {
+  if (actor?.weapon?.kind !== 'splatling') {
+    clearSplatlingSubInterrupt(runner);
+    return null;
+  }
+  if (runner.s3SplatlingSubInterruptPending) {
+    if (actor.form === 'squid') {
+      clearSplatlingSubInterrupt(runner);
+      return 'cancelled';
+    }
+    if (!input?.sub) {
+      if (input?.subReleased || actor.intent?.sub) runner.s3SplatlingSubInterruptReleased = true;
+      else if (!runner.s3SplatlingSubInterruptReleased) {
+        clearSplatlingSubInterrupt(runner);
+        return 'cancelled';
+      }
+    }
+    runner.s3SplatlingSubInterruptRemaining = Math.max(0,
+      runner.s3SplatlingSubInterruptRemaining - Math.max(0, dt));
+    if (runner.s3SplatlingSubInterruptRemaining > INTERRUPT_EPS) return 'wait';
+    runner.s3SplatlingSubInterruptPending = false;
+    runner.s3SplatlingSubInterruptReady = true;
+    return 'ready';
+  }
+  if (!input?.sub || !(runner.charging || runner.streaming)) return null;
+  runner.s3SplatlingSubInterruptPending = true;
+  // The input update is the first fixed frame of the interruption window.
+  // Consume its dt here so the native sub-ready handoff lands on frame five,
+  // rather than waiting five more updates after the R edge.
+  runner.s3SplatlingSubInterruptRemaining = Math.max(0,
+    SPLATLING_SUB_INTERRUPT - Math.max(0, dt));
+  if (runner.s3SplatlingSubInterruptRemaining > INTERRUPT_EPS) return 'wait';
+  runner.s3SplatlingSubInterruptPending = false;
+  runner.s3SplatlingSubInterruptReady = true;
+  return 'ready';
+}
 export function splatlingInterrupt(runner, actor, slot) {
   const x = INTERRUPT_SLOTS[slot];
   if (actor.weapon.kind !== 'splatling') return false;
@@ -244,6 +299,12 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
 export function installWeapons(context, profile) {
   api = context;
   const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  WeaponRunner.prototype.s3StepSplatlingSubInterrupt = function (dt, input) {
+    return splatlingSubInterrupt(this, this.a, dt, input);
+  };
+  WeaponRunner.prototype.s3ClearSplatlingSubInterrupt = function () {
+    clearSplatlingSubInterrupt(this);
+  };
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
   Projectiles.prototype._new = function (...args) {
     const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3DamageGroupId = null; p.s3Weapon = null; p.s3SpecialWeapon = null; p.s3Vertical = false; return p;
@@ -259,6 +320,7 @@ export function installWeapons(context, profile) {
   const reset = WeaponRunner.prototype.reset, busy = WeaponRunner.prototype.busy;
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
+    clearSplatlingSubInterrupt(this);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false; this.s3BlasterMoveRemaining = 0;
     this.s3SloshRecovery = false;
@@ -269,6 +331,7 @@ export function installWeapons(context, profile) {
     // marker that suppresses the pre-gap after a shot.
     this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
     this.s3ChargerSpent = 0; this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
+    this.s3ChargerElapsed = null; this.s3ChargerElapsedCompensation = 0;
     this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0;
     releaseSplatlingInterrupt(this, -1);
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
@@ -408,11 +471,22 @@ export function installWeapons(context, profile) {
     if (value <= w.inkMin) return minT * value / Math.max(1e-10, w.inkMin);
     return Math.min(1, minT + (1 - minT) * (value - w.inkMin) / Math.max(1e-10, w.inkFull - w.inkMin));
   };
+  const accumulateChargerElapsed = (r, seconds) => {
+    const elapsed = Number.isFinite(r.s3ChargerElapsed) ? r.s3ChargerElapsed : 0;
+    if (!(seconds > 0)) return elapsed;
+    const compensation = Number.isFinite(r.s3ChargerElapsedCompensation) ? r.s3ChargerElapsedCompensation : 0;
+    const adjusted = seconds - compensation;
+    const total = elapsed + adjusted;
+    r.s3ChargerElapsedCompensation = (total - elapsed) - adjusted;
+    r.s3ChargerElapsed = total;
+    return total;
+  };
   // Stored-charge lifetime/startup ownership from C22 is composed with #775's
   // progressive ink commitment. Paid ink is never refunded by cancel/keep.
   const cancelStored = r => {
     r.s3Stored = null; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
     r.s3ChargerSpent = 0;
+    r.s3ChargerElapsed = null; r.s3ChargerElapsedCompensation = 0;
     r.chargeLoop?.stop(.05); r.chargeLoop = null;
   };
   // Input suppression is not a life/weapon reset: recovery, Dodge and hit history continue.
@@ -470,7 +544,7 @@ export function installWeapons(context, profile) {
     if (a.form === 'squid') {
       this.s3WasSquid = true;
       if (this.charging) {
-        if (this.charge >= .999 && held && a.submerged === true) this.s3Stored = {
+        if (isChargerFullCharge(this.charge) && held && a.submerged === true) this.s3Stored = {
           charge: 1, remaining: w.keepChargeTime,
           fireDelay: w.storedFireDelay || 0, laserDelay: w.storedLaserDelay || 0,
           resurfaced: false,
@@ -506,6 +580,7 @@ export function installWeapons(context, profile) {
       if (this.s3Stored.fireDelay > epsilon || (held && !inp.fire)) return;
       if (!held) inp = { ...inp, fire: false };
       this.chargeT = 1; this.charging = true;
+      this.s3ChargerElapsed = w.chargeTime; this.s3ChargerElapsedCompensation = 0;
       this.s3ChargerSpent = this.s3Stored.paid ?? w.inkFull;
       this.s3ChargerHeldTime = w.minReleaseTime || 0;
       this.s3Stored = null;
@@ -548,14 +623,34 @@ export function installWeapons(context, profile) {
     }
 
     if (inp.fire && this.cooldown <= 0) {
-      if (!this.charging) this.s3ChargerSpent = 0;
+      if (!this.charging) {
+        this.s3ChargerSpent = 0;
+        this.s3ChargerElapsed = 0; this.s3ChargerElapsedCompensation = 0;
+      }
       const beforeT = this.chargeT || 0, realInk = a.ink;
       const fundedInk = (this.s3ChargerSpent || 0) + realInk;
       const low = fundedInk + epsilon < w.inkMin;
       const rate = !a.grounded ? (w.airChargeRate ?? 1 / 3) : low ? (w.emptyChargeRate ?? 1 / 3) : 1;
-      let targetT = Math.min(1, beforeT + dt / Math.max(epsilon, w.chargeTime) * rate);
-      targetT = Math.min(targetT, chargerProgressForInk(w, fundedInk));
+      const chargeDuration = Math.max(epsilon, w.chargeTime);
+      if (!Number.isFinite(this.s3ChargerElapsed)) {
+        this.s3ChargerElapsed = beforeT * chargeDuration;
+        this.s3ChargerElapsedCompensation = 0;
+      }
+      const requestedT = Math.min(1, beforeT + dt / chargeDuration * rate);
+      const inkLimitT = chargerProgressForInk(w, fundedInk);
+      const targetT = Math.min(requestedT, inkLimitT);
+      const inkLimited = inkLimitT < requestedT;
+      const elapsedStep = inkLimited
+        ? Math.max(0, targetT - beforeT) * chargeDuration
+        : Math.min(dt * rate, Math.max(0, (1 - beforeT) * chargeDuration));
+      const elapsed = accumulateChargerElapsed(this, elapsedStep);
       const scaledDt = Math.max(0, targetT - beforeT) * w.chargeTime;
+      // Normalized progress can land one ULP below 1 after repeated fractional
+      // frame durations (30 × 1/30). The compensated elapsed clock reaches the
+      // native full endpoint on its completion tick. It does not soften
+      // isChargerFullCharge: q<1 presentation/packets remain partial, and
+      // ink-limited progress cannot complete the clock.
+      if (!inkLimited && elapsed >= w.chargeTime) this.chargeT = 1;
 
       // Advance the native charge owner with a temporary admissible tank, then
       // debit the real tank from the sourced min/full endpoints.
@@ -719,7 +814,7 @@ export function installWeapons(context, profile) {
   };
   const fireCharger = Projectiles.prototype.fireCharger;
   Projectiles.prototype.fireCharger = function (a, w, charge) {
-    if (charge < .999) return fireCharger.call(this, a, w, charge);
+    if (!isChargerFullCharge(charge)) return fireCharger.call(this, a, w, charge);
     const muzzle = this._muzzle(a, new THREE.Vector3()).clone(), dir = this._aimFrom(a, muzzle, new THREE.Vector3()).clone();
     const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
     let length = hit.hit ? hit.dist : w.rangeMax;
