@@ -511,7 +511,19 @@ def neck_join(cfg):
     tdata = T.data
     bpy.data.objects.remove(T)
     bpy.data.meshes.remove(tdata)
-    print('BODY_SHAPE neck_join faces turned to face out', consistent_normals(R.data))   # dark specks
+    # thin slivers along the crossing line showed as dark specks: points closer than cfg['weld_mm'] are merged
+    # there and the collapsed faces dissolved (Blender's Merge by Distance, Dissolve Degenerate)
+    bm = bmesh.new()
+    bm.from_mesh(R.data)
+    Lj = er.M.to_local(np.array([R.matrix_world @ v.co for v in bm.verts])) * 1000
+    zone = [v for v in bm.verts if -125 < Lj[v.index, 1] < -45]
+    nv0 = len(bm.verts)
+    bmesh.ops.remove_doubles(bm, verts=zone, dist=cfg.get('weld_mm', 0.2) / 1000)
+    bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=cfg.get('weld_mm', 0.2) / 1000)
+    bm.to_mesh(R.data)
+    bm.free()
+    print('BODY_SHAPE neck_join slivers: vertices merged', nv0 - len(R.data.vertices),
+          'faces turned to face out', consistent_normals(R.data))
     head_mats = {m.name for m in head.data.materials if m}
     rm0 = [m.name if m else None for m in R.data.materials]
     mi0 = np.zeros(len(R.data.polygons), int)
