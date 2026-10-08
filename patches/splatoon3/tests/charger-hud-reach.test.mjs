@@ -76,7 +76,7 @@ async function boot({ main = false } = {}) {
   return { ...api, make, inRange, close, composed, real, math };
 }
 
-const CHARGES = [0, .5, .998, 1];
+const CHARGES = [0, .5, .998, .9999999995, 1];
 // One VM boot per composition (boot is the slow part); tests clear projectiles and read charge explicitly.
 const booted = [];
 const shared = {};

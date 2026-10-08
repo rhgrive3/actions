@@ -286,6 +286,7 @@ export function installWeapons(context, profile) {
     // marker that suppresses the pre-gap after a shot.
     this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
     this.s3ChargerSpent = 0; this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
+    this.s3ChargerElapsed = null; this.s3ChargerElapsedCompensation = 0;
     this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0;
     releaseSplatlingInterrupt(this, -1);
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
@@ -383,11 +384,22 @@ export function installWeapons(context, profile) {
     if (value <= w.inkMin) return minT * value / Math.max(1e-10, w.inkMin);
     return Math.min(1, minT + (1 - minT) * (value - w.inkMin) / Math.max(1e-10, w.inkFull - w.inkMin));
   };
+  const accumulateChargerElapsed = (r, seconds) => {
+    const elapsed = Number.isFinite(r.s3ChargerElapsed) ? r.s3ChargerElapsed : 0;
+    if (!(seconds > 0)) return elapsed;
+    const compensation = Number.isFinite(r.s3ChargerElapsedCompensation) ? r.s3ChargerElapsedCompensation : 0;
+    const adjusted = seconds - compensation;
+    const total = elapsed + adjusted;
+    r.s3ChargerElapsedCompensation = (total - elapsed) - adjusted;
+    r.s3ChargerElapsed = total;
+    return total;
+  };
   // Stored-charge lifetime/startup ownership from C22 is composed with #775's
   // progressive ink commitment. Paid ink is never refunded by cancel/keep.
   const cancelStored = r => {
     r.s3Stored = null; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
     r.s3ChargerSpent = 0;
+    r.s3ChargerElapsed = null; r.s3ChargerElapsedCompensation = 0;
     r.chargeLoop?.stop(.05); r.chargeLoop = null;
   };
   // Input suppression is not a life/weapon reset: recovery, Dodge and hit history continue.
@@ -463,6 +475,7 @@ export function installWeapons(context, profile) {
       this.s3Stored.fireDelay = Math.max(0, (this.s3Stored.fireDelay || 0) - dt);
       if ((this.s3Stored.fireDelay || 0) > epsilon || !held || !inp.fire) return;
       this.chargeT = 1; this.charging = true;
+      this.s3ChargerElapsed = w.chargeTime; this.s3ChargerElapsedCompensation = 0;
       this.s3ChargerSpent = this.s3Stored.paid ?? w.inkFull;
       this.s3ChargerHeldTime = w.minReleaseTime || 0;
       this.s3Stored = null;
@@ -492,14 +505,34 @@ export function installWeapons(context, profile) {
     }
 
     if (inp.fire && this.cooldown <= 0) {
-      if (!this.charging) this.s3ChargerSpent = 0;
+      if (!this.charging) {
+        this.s3ChargerSpent = 0;
+        this.s3ChargerElapsed = 0; this.s3ChargerElapsedCompensation = 0;
+      }
       const beforeT = this.chargeT || 0, realInk = a.ink;
       const fundedInk = (this.s3ChargerSpent || 0) + realInk;
       const low = fundedInk + epsilon < w.inkMin;
       const rate = !a.grounded ? (w.airChargeRate ?? 1 / 3) : low ? (w.emptyChargeRate ?? 1 / 3) : 1;
-      let targetT = Math.min(1, beforeT + dt / Math.max(epsilon, w.chargeTime) * rate);
-      targetT = Math.min(targetT, chargerProgressForInk(w, fundedInk));
+      const chargeDuration = Math.max(epsilon, w.chargeTime);
+      if (!Number.isFinite(this.s3ChargerElapsed)) {
+        this.s3ChargerElapsed = beforeT * chargeDuration;
+        this.s3ChargerElapsedCompensation = 0;
+      }
+      const requestedT = Math.min(1, beforeT + dt / chargeDuration * rate);
+      const inkLimitT = chargerProgressForInk(w, fundedInk);
+      const targetT = Math.min(requestedT, inkLimitT);
+      const inkLimited = inkLimitT < requestedT;
+      const elapsedStep = inkLimited
+        ? Math.max(0, targetT - beforeT) * chargeDuration
+        : Math.min(dt * rate, Math.max(0, (1 - beforeT) * chargeDuration));
+      const elapsed = accumulateChargerElapsed(this, elapsedStep);
       const scaledDt = Math.max(0, targetT - beforeT) * w.chargeTime;
+      // Normalized progress can land one ULP below 1 after repeated fractional
+      // frame durations (30 × 1/30). The compensated elapsed clock reaches the
+      // native full endpoint on its completion tick. It does not soften
+      // isChargerFullCharge: q<1 presentation/packets remain partial, and
+      // ink-limited progress cannot complete the clock.
+      if (!inkLimited && elapsed >= w.chargeTime) this.chargeT = 1;
 
       // Advance the native charge owner with a temporary admissible tank, then
       // debit the real tank from the sourced min/full endpoints.
