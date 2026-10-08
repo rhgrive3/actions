@@ -427,6 +427,19 @@ export function installWeapons(context, profile) {
     }
     if (!this.charging && !this.s3Stored) this.s3ChargerHeldTime = 0;
 
+    // #823 follow-up: zero/underfunded low-ink charge can be armed with a
+    // temporary full native tank, but must never enter native release. Native
+    // release clamps progress to a minimum 0.12 projectile even when no ink was
+    // committed. Wait for the *paid* sourced minimum, not just held elapsed time.
+    if (this.charging && !inp.fire && (this.s3ChargerSpent || 0) + epsilon < w.inkMin) {
+      cancelStored(this);
+      this.s3ChargerHeldTime = 0;
+      this.s3ChargerRepeat = false;
+      this.s3ReleaseHold = false;
+      this.s3HeldCharge = this.s3HeldChargeT = 0;
+      return;
+    }
+
     // A release from a live charge enters the repeat cycle. Release handling
     // below neutralizes only the legacy debit, not the shot/recovery clocks.
     if (this.charging && !inp.fire) this.s3ChargerRepeat = true;
