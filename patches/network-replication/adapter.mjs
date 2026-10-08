@@ -251,17 +251,17 @@ export function emit(name, payload) {
     patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema only in event packets');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
+      if (d.r !== undefined && d.r !== 2) continue;
       if (d.r === 2) {
+        if (!['s','p','pe','b','tr','ev','bm','bc'].includes(e[1])) continue;
         const seq = e[e.length-1], tick = e[e.length-2];
         if (!Number.isSafeInteger(seq) || seq < 1 || !Number.isSafeInteger(tick) || tick < 0) continue;
+        if (d.u !== undefined && (!Number.isSafeInteger(d.u) || tick > d.u)) continue;
         e._netSeq = seq; e._netTick = tick;
         if (e[1] === 's') {
           if (e.length < 15 || !Number.isFinite(d.ts) || e[0] > d.ts) continue;
           if (d.u === undefined) e._netLegacyPaint = true;
-          else {
-            if (!Number.isSafeInteger(d.u) || tick > d.u) continue;
-            e._netLegacyPaint = false;
-          }
+          else e._netLegacyPaint = false;
         }
       }
       // Receiver-created proof only: an event cannot supply its own authority.

@@ -108,6 +108,50 @@ test('full production composition converges opposing owner predictions and a rev
   assert.deepEqual(qa, qc);
 });
 
+test('r2 replay accepts delayed prediction paint and rejects future owner ticks', async () => {
+  const sender = await client('a'), observer = await client('c');
+  sender.paint.splat(new sender.f.THREE.Vector3(1, 0, 1), 0.42, 0, { seed: 0.27 });
+  const paint = sender.nm.out.at(-1), tick = paint.at(-2), seq = paint.at(-1);
+
+  observer.nm._tick('a', { ts: paint[0] + 0.01, u: tick + 10 });
+  const delayedTs = paint[0] + 0.02;
+  observer.nm._tick('a', { ts: delayedTs, u: tick + 20, r: 2, e: [paint] });
+  const peer = observer.nm.peers.get('a');
+  assert.equal(peer.events.length, 1, 'delayed paint remains admissible behind a newer owner snapshot');
+  peer.tr = delayedTs;
+  peer.sim = tick + 20;
+  observer.nm._playEvents();
+  assert.deepEqual(Array.from(observer.paint.grid), Array.from(sender.paint.grid), 'stale owner prediction replays through per-cell order');
+
+  const future = [...paint];
+  future[1] = 'pe';
+  future[future.length - 2] = tick + 21;
+  future[future.length - 1] = seq + 1;
+  observer.nm._tick('a', { ts: delayedTs + 0.01, u: tick + 20, r: 2, e: [future] });
+  assert.equal(peer.events.length, 0, 'an event beyond its packet owner tick is rejected');
+
+  const invalidBound = [...future];
+  invalidBound[invalidBound.length - 2] = tick + 19;
+  invalidBound[invalidBound.length - 1] = seq + 2;
+  observer.nm._tick('a', { ts: delayedTs + 0.02, u: NaN, r: 2, e: [invalidBound] });
+  assert.equal(peer.events.length, 0, 'a non-finite packet owner tick cannot admit r2 events');
+});
+
+test('r2 rejects unsupported event tags without queuing them', async () => {
+  const observer = await client('c');
+  const invalid = [1000, 'not-an-event', 0, 740, 2];
+  observer.nm._tick('a', { ts: 1000.01, u: 750, r: 2, e: [invalid] });
+  assert.equal(observer.nm.peers.get('a').events.length, 0);
+});
+
+test('an unsupported event schema tag is not downgraded to legacy paint', async () => {
+  const sender = await client('a'), observer = await client('c');
+  sender.paint.splat(new sender.f.THREE.Vector3(1, 0, 1), 0.42, 0, { seed: 0.27 });
+  const row = [...sender.nm.out.at(-1)];
+  observer.nm._tick('a', { ts: row[0] + 0.01, u: row.at(-2) + 10, r: 3, e: [row] });
+  assert.equal(observer.nm.peers.get('a').events.length, 0);
+});
+
 test('late, duplicate, and legacy-width paint records preserve order and ownership checks', async () => {
   const c = await client('c'), a = await client('a'), b = await client('b');
   const center = new c.f.THREE.Vector3(1, 0, 1);
