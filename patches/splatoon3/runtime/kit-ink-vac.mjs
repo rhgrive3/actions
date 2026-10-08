@@ -314,12 +314,6 @@ function proposalWeaponDamage(weapon) {
     weapon.flickDamageNear].find(v => Number.isFinite(v) && v > 0);
   return value || 0;
 }
-function creditCharge(state, damageEquivalent) {
-  const delta = Number.isFinite(damageEquivalent) ? Math.max(0, damageEquivalent) : 0;
-  if (!(delta > 0)) return state.charge;
-  const capacity = INK_VAC_CALIBRATION.absorbCapacityDamage;
-  state.absorbedDamage = Math.min(capacity, (state.absorbedDamage || 0) + delta);
-  state.charge = inkVacChargeFromDamage(state.absorbedDamage, capacity);
 // Use the projectile's damage BEFORE neutralising it. Native bombs may carry
 // their damaging hitbox on the linked bomb rather than on their visual proxy.
 function absorbDamageEquivalent(projectile) {
@@ -330,6 +324,12 @@ function absorbDamageEquivalent(projectile) {
   const damage = values.find(v => Number.isFinite(v) && v > 0) ?? 0;
   return Math.min(MAX_ACCEPTED_DAMAGE_HP, damage);
 }
+function creditCharge(state, damageEquivalent) {
+  const delta = Number.isFinite(damageEquivalent) ? Math.max(0, damageEquivalent) : 0;
+  if (!(delta > 0)) return state.charge;
+  const capacity = INK_VAC_CALIBRATION.absorbCapacityDamage;
+  state.absorbedDamage = Math.min(capacity, (state.absorbedDamage || 0) + delta);
+  state.charge = inkVacChargeFromDamage(state.absorbedDamage, capacity);
   state.absorbed++;
   updateVisual(state);
   api.emit?.(INK_VAC_EVENTS.charge, { actor: state.actor, kit: VAC_ID, serial: state.serial, charge: state.charge });
