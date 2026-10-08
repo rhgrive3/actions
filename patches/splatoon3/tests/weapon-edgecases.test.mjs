@@ -10,6 +10,49 @@ async function setup(kind) {
 }
 function projectiles(f){const ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;return ps;}
 function trace(f,frames){const out=[];for(let i=1;i<=frames;i++){const n=f.shots.length;f.tick(f.a);if(n!==f.shots.length)out.push([i,f.shots.length-n]);}return out;}
+test('ordinary Dualies ticks reuse input without per-frame spread or Proxy, but locks retain gate', async () => {
+  const f = await setup('dualies');
+  const runner = f.a.weaponRunner;
+  let ownKeys = 0;
+  const input = new Proxy({ fire: false, sub: false, subReleased: false }, {
+    ownKeys(target) { ownKeys++; return Reflect.ownKeys(target); },
+  });
+  // This verifies the live WeaponRunner wrapper, not a synthetic allocation model.
+  for (let i = 0; i < 120; i++) runner.update(1 / 60, input);
+  assert.equal(ownKeys, 0, 'normal fixed ticks must not spread input to allocate a new Proxy');
+  assert.equal(runner.s3DualiesSubBuffered, false);
+  runner.s3DualiesPostShot = 4 / 60;
+  runner.update(1 / 60, input);
+  assert.ok(ownKeys > 0, 'post-shot lock must still use dynamically gated input');
+  const ownKeysAfterLock = ownKeys;
+  runner.s3DualiesPostShot = 0;
+  const released = new Proxy({ fire: false, sub: false, subReleased: true }, {
+    ownKeys(target) { ownKeys++; return Reflect.ownKeys(target); },
+  });
+  runner.update(1 / 60, released);
+  assert.ok(ownKeys > ownKeysAfterLock, 'sub-release edge must not take the fast path');
+});
+
+test('Dualies sub release on the post-shot unlock tick replays the buffered press exactly once', async () => {
+  const f = await setup('dualies'), a = f.a, runner = a.weaponRunner;
+  let thrown = 0;
+  f.G.projectiles.throwBomb = () => { thrown++; };
+  // A real Actor fixed step decrements the lock before WeaponRunner.update,
+  // so this crosses the 1F lock-to-release boundary on the second tick.
+  runner.s3DualiesPostShot = 2 / 60;
+  a.intent.sub = true;
+  f.tick(a);
+  assert.equal(thrown, 0, 'sub must not throw while the post-shot lock is positive');
+  assert.equal(runner.s3DualiesSubBuffered, true, 'press was buffered under the lock');
+  a.intent.sub = false;
+  f.tick(a);
+  assert.equal(thrown, 1, 'unlock-frame release must replay the buffered press and release');
+  assert.equal(runner.s3DualiesSubBuffered, false);
+  assert.equal(runner.s3DualiesSubReleaseBuffered, false);
+  f.tick(a, 4);
+  assert.equal(thrown, 1, 'the same release cannot throw again');
+});
+
 test('dualies stable human starts on recognized frame 3, then every 5F without early ink',async()=>{
  const f=await setup('dualies');f.tick(f.a,600);f.a.intent.fire=true;
  f.tick(f.a);assert.equal(f.shots.length,0);assert.equal(f.a.ink,100);f.tick(f.a);assert.equal(f.shots.length,0);assert.equal(f.a.ink,100);
