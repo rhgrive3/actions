@@ -86,8 +86,13 @@ const HUD_CSS = `
 
 /* ink tank: canister art everywhere; in squid form it rides beside the squid (JS sets the translate) */
 .iw-tank { width: calc(var(--u) * 1.7); height: calc(var(--u) * 5.2); top: calc(var(--u) * -2.6); }
-.iw-xh .iw-tank.is-swim { --th: max(56px, calc(var(--u) * 7.4)); left: max(14px, calc(var(--u) * 2)); top: calc(var(--th) * -.76); width: max(20px, calc(var(--u) * 2.6)); height: var(--th); translate: none; transition: opacity .2s; }
+.iw-xh .iw-tank.is-swim { --th: max(58px, calc(var(--u) * 8.2)); left: max(30px, calc(var(--u) * 4.6)); top: calc(var(--th) * -.76); width: max(22px, calc(var(--u) * 3.1)); height: var(--th); translate: none; transition: opacity .2s; }
 .iw-xh .iw-tank.is-swim:not(.is-idle) { animation: iw-s3-tank-in .18s ease-out; }
+.iw-tank__tube { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; display: none; }
+.iw-tank.is-swim .iw-tank__tube { display: block; }
+.iw-tank__tube path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.iw-tank__tube .o { stroke: rgba(22, 14, 26, .85); stroke-width: 6px; }
+.iw-tank__tube .i { stroke: var(--self); stroke-width: 3.6px; }
 @keyframes iw-s3-tank-in { 0% { opacity: 0; scale: .85; } }
 /* splat notice: one dark bar at the bottom centre — squid + your-ink splat, then "<name> をたおした!" */
 .iw-kcards { bottom: calc(var(--u) * 2.6); gap: calc(var(--u) * .3); }
@@ -132,70 +137,61 @@ function once(code, before, after, label) {
 }
 
 const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
-    // Splatoon 3 ink tank: a canister (cap, short neck, square shoulders, rounded foot) on dark glass.
+    // Splatoon 3 ink tank: a near-black bottle (stepped cap: shoulders, neck, nub; straight sides,
+    // rounded foot) with a thick frame; the ink is flat team colour inside the frame with one bright
+    // meniscus line, and a thin white line marks the sub-weapon cost. No gloss, no bubbles.
     const T = this._tank, c = this.tankCtx, cv = this.tankCanvas;
     const dpr = Math.min(2, devicePixelRatio || 1);
     const cw = cv.clientWidth || 18, chh = cv.clientHeight || 74;
     const W = Math.round(cw * dpr), H = Math.round(chh * dpr);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     const L = this._L;
-    if (!L.tankCol) { const s = L.ca || '#ff8a14'; L.tankCol = [shade(s, 0.42), s, shade(s, -0.3), shade(s, -0.55)]; }
-    const [cLight, cMid, cDark, cDeep] = L.tankCol;
+    if (!L.tankCol) { const s = L.ca || '#ff8a14'; L.tankCol = [shade(s, 0.55), shade(s, 0.08), s, s]; }
+    const [cLine, cInk] = L.tankCol;
     c.clearRect(0, 0, W, H);
-    const pad = 2.5 * dpr, bw = W - pad * 2, capH = Math.max(3 * dpr, (H - pad * 2) * 0.1), top = pad + capH, bh = H - pad - top;
     const T2 = this._tankCache || (this._tankCache = {});
-    if (T2.W !== W || T2.H !== H || T2.col !== cMid) {
-      T2.W = W; T2.H = H; T2.col = cMid;
-      T2.body = new Path2D(); T2.body.roundRect(pad, top, bw, bh, [bw * 0.2, bw * 0.2, bw * 0.45, bw * 0.45]);
-      T2.cap = new Path2D(); T2.cap.roundRect(pad + bw * 0.3, pad, bw * 0.4, capH + bw * 0.12, [bw * 0.08, bw * 0.08, 0, 0]);
-      T2.g = c.createLinearGradient(pad, 0, pad + bw, 0);
-      T2.g.addColorStop(0, cDark); T2.g.addColorStop(0.5, cMid); T2.g.addColorStop(1, cLight);
+    if (T2.W !== W || T2.H !== H) {
+      T2.W = W; T2.H = H;
+      const p = 1 * dpr, x0 = p, x1 = W - p, bw = x1 - x0;
+      const nub = H * 0.035, neck = H * 0.075, sh = bw * 0.2, yb = p + nub + neck + sh, yEnd = H - p, rf = bw * 0.32;
+      const nL = x0 + bw * 0.22, nR = x1 - bw * 0.22, uL = x0 + bw * 0.36, uR = x1 - bw * 0.36;
+      const o = new Path2D();
+      o.moveTo(x0, yb); o.lineTo(nL - bw * 0.04, yb - sh); o.lineTo(nL, yb - sh); o.lineTo(nL, p + nub);
+      o.lineTo(uL, p + nub); o.arcTo(uL, p, uR, p, nub * 0.6); o.arcTo(uR, p, uR, p + nub, nub * 0.6); o.lineTo(uR, p + nub);
+      o.lineTo(nR, p + nub); o.lineTo(nR, yb - sh); o.lineTo(nR + bw * 0.04, yb - sh); o.lineTo(x1, yb);
+      o.lineTo(x1, yEnd - rf); o.arcTo(x1, yEnd, x1 - rf, yEnd, rf); o.lineTo(x0 + rf, yEnd); o.arcTo(x0, yEnd, x0, yEnd - rf, rf); o.closePath();
+      const f = Math.max(2.4 * dpr, bw * 0.13);
+      const well = new Path2D(); well.roundRect(x0 + f, yb + f * 0.2, bw - f * 2, yEnd - f - (yb + f * 0.2), [bw * 0.06, bw * 0.06, rf - f * 0.6, rf - f * 0.6]);
+      Object.assign(T2, { outline: o, well, wx: x0 + f, ww: bw - f * 2, wy: yb + f * 0.2, wh: yEnd - f - (yb + f * 0.2) });
     }
-    const body = T2.body;
-    c.fillStyle = 'rgba(16,14,18,.86)';
-    c.fill(T2.cap);
-    c.fillStyle = 'rgba(16,14,18,.7)';
-    c.fill(body);
+    c.fillStyle = 'rgba(26,19,27,.92)';
+    c.fill(T2.outline);
     c.save();
-    c.clip(body);
-    const lvl = top + bh * (1 - T.level);
-    const amp = (0.8 + T.wobble * 2.5 + Math.abs(T.sloshV) * 1.8) * dpr;
-    const tilt = T.slosh * bw * 0.7;
+    c.clip(T2.well);
+    c.fillStyle = 'rgba(58,48,58,.55)';
+    c.fill(T2.well);
+    const lvl = T2.wy + T2.wh * (1 - T.level);
+    const amp = (0.25 + T.wobble * 1.2 + Math.abs(T.sloshV) * 0.8) * dpr, tilt = T.slosh * T2.ww * 0.35;
     c.beginPath();
-    c.moveTo(pad - 2, H + 2);
-    const N = 10;
-    for (let i = 0; i <= N; i++) {
-      const u = i / N, x = pad + u * bw;
-      c.lineTo(x, lvl + (u - 0.5) * tilt + Math.sin(u * 6.5 + T.t * 7) * amp * 0.5 + Math.sin(u * 11 - T.t * 9.5) * amp * 0.25);
+    c.moveTo(T2.wx - 2, H + 2);
+    for (let i = 0; i <= 8; i++) {
+      const u = i / 8;
+      c.lineTo(T2.wx + u * T2.ww, lvl + (u - 0.5) * tilt + Math.sin(u * 6 + T.t * 7) * amp);
     }
-    c.lineTo(pad + bw + 2, H + 2);
+    c.lineTo(T2.wx + T2.ww + 2, H + 2);
     c.closePath();
-    c.fillStyle = T2.g;
+    c.fillStyle = cInk;
     c.fill();
-    // bright meniscus line and depth toward the foot
-    const g2 = c.createLinearGradient(0, lvl, 0, H);
-    g2.addColorStop(0, 'rgba(255,255,255,.32)'); g2.addColorStop(0.06, 'rgba(255,255,255,0)'); g2.addColorStop(1, cDeep + '55');
-    c.fillStyle = g2;
-    c.fill();
-    c.fillStyle = 'rgba(255,255,255,.55)';
-    for (let i = T.bubbles.length - 1; i >= 0; i--) {
-      const b = T.bubbles[i];
-      b.y += b.v * dt;
-      const by = H - pad - b.y * bh;
-      if (by < lvl + 2) { T.bubbles.splice(i, 1); continue; }
-      c.beginPath(); c.arc(pad + b.x * bw + Math.sin(b.y * 20) * dpr, by, b.r * dpr, 0, TAU); c.fill();
-    }
+    if (T.level > 0.01) { c.fillStyle = cLine; c.fillRect(T2.wx, lvl - 0.6 * dpr, T2.ww, 1.6 * dpr); }
     c.restore();
     if (sub > 0) {
-      const sy = top + bh * (1 - sub);
-      c.fillStyle = nosub ? '#ff4d5e' : 'rgba(255,255,255,.9)';
-      c.fillRect(pad + bw * 0.12, sy - 1 * dpr, bw * 0.76, 2 * dpr);
+      const sy = T2.wy + T2.wh * (1 - sub);
+      c.fillStyle = nosub ? 'rgba(255,190,200,.95)' : 'rgba(255,255,255,.9)';
+      c.fillRect(T2.wx, sy - 0.7 * dpr, T2.ww, 1.4 * dpr);
     }
-    // glass edge: dark outer line with a faint light inner line (no white rim)
-    c.lineWidth = 2.6 * dpr; c.strokeStyle = 'rgba(8,6,10,.9)'; c.stroke(body); c.stroke(T2.cap);
-    c.lineWidth = 1 * dpr; c.strokeStyle = low ? (Math.sin(T.t * 14) > 0 ? '#ff3d5e' : 'rgba(255,255,255,.7)') : 'rgba(255,255,255,.28)'; c.stroke(body);
-    c.fillStyle = 'rgba(255,255,255,.16)';
-    c.beginPath(); c.roundRect(pad + bw * 0.16, top + bh * 0.08, bw * 0.12, bh * 0.5, bw * 0.06); c.fill();
+    c.lineWidth = 1 * dpr; c.strokeStyle = low ? (Math.sin(T.t * 14) > 0 ? '#ff3d5e' : 'rgba(255,255,255,.5)') : 'rgba(255,255,255,.12)';
+    c.stroke(T2.outline);
+    T.bubbles.length = 0;
   }
 
 `;
@@ -205,20 +201,57 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
 // leaves shortly after the tank is full; kid form keeps the existing show-when-not-full rule.
 const SWIM_TANK = `    const me = this._local();
     const swimTank = !!(me && me.alive !== false && me.form === 'squid' && !me.superJumpState);
-    if (swimTank !== L.swimTank) { L.swimTank = swimTank; this.tank.classList.toggle('is-swim', swimTank); if (!swimTank) this.tank.style.transform = ''; }
+    if (swimTank !== L.swimTank) { L.swimTank = swimTank; L.tubeGeo = null; this.tank.classList.toggle('is-swim', swimTank); if (!swimTank) this.tank.style.transform = ''; }
     if (swimTank && G.camera && me.pos) {
       const p = this._project(G.camera, me.pos.x, me.pos.y + 0.3, me.pos.z);
       if (p && p.z < 1) {
         const hw = innerWidth / 2, hh = innerHeight / 2;
         const x = Math.max(-hw * 0.8, Math.min(hw * 0.7, p.x * hw)), y = Math.max(-hh * 0.5, Math.min(hh * 0.55, -p.y * hh));   // stays above the bottom splat bar
         this.tank.style.transform = \`translate3d(\${x.toFixed(1)}px,\${y.toFixed(1)}px,0)\`;
+        this._s3TankTube(ink, dt);
       }
     }
 `;
 
+// The footage joins the squid to the tank foot with a thin team-ink squiggle (dark edged) that writhes while ink flows
+// in. Endpoints stay pinned (squid side, tank foot); the wave travels toward the tank and its
+// amplitude beats ("doku-doku") while refilling. Tank-local coordinates: the squid sits at
+// (-left, -top) because the tank box is offset from the squid point by its CSS left/top.
+const TANK_TUBE = `  _s3TankTube(ink, dt) {
+    const L = this._L, T = this._tank;
+    if (!this._tube) {
+      const NS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('class', 'iw-tank__tube'); svg.setAttribute('aria-hidden', 'true');
+      this._tube = [document.createElementNS(NS, 'path'), document.createElementNS(NS, 'path')];
+      this._tube[0].setAttribute('class', 'o'); this._tube[1].setAttribute('class', 'i');
+      svg.append(...this._tube); this.tank.prepend(svg);
+    }
+    const vw = innerWidth, vh = innerHeight;
+    // geometry is read once per squid entry / viewport size, never every frame (no layout thrash)
+    if (!L.tubeGeo || L.tubeGeo.vw !== vw || L.tubeGeo.vh !== vh)
+      L.tubeGeo = { vw, vh, l: this.tank.offsetLeft, t: this.tank.offsetTop, h: this.tank.offsetHeight, w: this.tank.offsetWidth };
+    const g = L.tubeGeo;
+    const x0 = g.w * 0.1, y0 = g.h * 0.94, x1 = -g.l * 0.72, y1 = -g.t + g.l * 0.08;
+    const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+    const flowing = ink < 0.995;
+    L.tubePhase = ((L.tubePhase || 0) + dt * (flowing ? 11 : 3)) % (Math.PI * 2000);
+    const beat = flowing ? 0.55 + 0.45 * Math.max(0, Math.sin(T.t * 8.5)) ** 2 : 0.35;
+    const amp = Math.min(5, len * 0.07) * beat;
+    let d = '';
+    for (let i = 0; i <= 18; i++) {
+      const u = i / 18, env = Math.sin(Math.PI * u);
+      const o = env * amp * (Math.sin(u * 15 + L.tubePhase) + 0.25 * Math.sin(u * 31 + L.tubePhase * 1.6));   // u = 0 is the tank foot: + phase travels into the tank
+      d += (i ? 'L' : 'M') + (x0 + dx * u + nx * o).toFixed(1) + ' ' + (y0 + dy * u + ny * o).toFixed(1);
+    }
+    this._tube[0].setAttribute('d', d); this._tube[1].setAttribute('d', d);
+  }
+
+`;
+
 export function adaptS3HudLook(rel, code) {
   if (rel === 'src/ui/hud.js') {
-    code = section(code, '  _drawTank(dt, sub, low, nosub) {\n', '  // ---------------------------------------------------------------- special gauge', S3_DRAW_TANK, 'S3 canister ink tank');
+    code = section(code, '  _drawTank(dt, sub, low, nosub) {\n', '  // ---------------------------------------------------------------- special gauge', TANK_TUBE + S3_DRAW_TANK, 'S3 canister ink tank');
     code = once(code, '    L.fullT = ink >= 0.995 && !low && !L.aim ? (L.fullT || 0) + dt : 0;\n    const idle = L.fullT > 1.4;',
       SWIM_TANK + '    L.fullT = ink >= 0.995 && !low && !L.aim ? (L.fullT || 0) + dt : 0;\n    const idle = L.fullT > (swimTank ? 0.35 : 1.4);', 'squid-form tank anchor');
     code = once(code, OLD_BADGE, `const BADGE_PATH = '${S3_SQUID_BADGE}';`, 'S3 roster squid silhouette');

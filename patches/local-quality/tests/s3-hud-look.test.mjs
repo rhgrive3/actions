@@ -74,7 +74,17 @@ test('S3 look: squid-form ink tank rides beside the squid only while refilling',
   assert.match(body, /const idle = L\.fullT > \(swimTank \? 0\.35 : 1\.4\);/);
   assert.match(body, /this\._project\(G\.camera, me\.pos\.x, me\.pos\.y \+ 0\.3, me\.pos\.z\)/);
   const draw = hud.slice(hud.indexOf('  _drawTank('), hud.indexOf('  // ---------------------------------------------------------------- special gauge'));
-  assert.match(draw, /T2\.cap = new Path2D\(\)/);
+  assert.match(draw, /T2\.well/); assert.doesNotMatch(draw, /bubbles\[i\]/, 'S3 tank has no bubbles');
   const css = compose('styles/hud.css');
   assert.doesNotMatch(css.slice(css.indexOf('.iw-xh .iw-tank.is-swim {')).split('}')[0], /opacity:/, 'swim layout must not override the refill-only idle fade');
+});
+
+test('S3 look: a pinned squiggle joins the squid to the tank foot and beats while refilling', () => {
+  const hud = compose('src/ui/hud.js');
+  const tube = hud.slice(hud.indexOf('  _s3TankTube(ink, dt) {'), hud.indexOf('  _drawTank('));
+  assert.ok(tube.length > 0);
+  assert.match(hud, /this\._s3TankTube\(ink, dt\);/);
+  assert.match(tube, /env = Math\.sin\(Math\.PI \* u\)/, 'both ends stay pinned');
+  assert.match(tube, /const flowing = ink < 0\.995;/);
+  assert.doesNotMatch(tube.split('if (!L.tubeGeo')[1].split('\n')[0], /offset(Height|Width|Left|Top)/, 'no per-frame layout read in the guard');
 });
