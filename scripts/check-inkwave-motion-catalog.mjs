@@ -821,6 +821,8 @@ async function main() {
     const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
     browser = await chromium.launchPersistentContext(profileDir, { headless: true, viewport: { width: 960, height: 720 }, args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
     page = await browser.newPage(); page.on('pageerror', e => error(e.message)); page.on('crash', () => error('Catalog renderer process crashed')); page.on('console', m => { if (m.type() === 'error') error(m.text()); });
+    page.on('requestfailed', req => { if (/\.(?:m?js|json)(?:$|\?)/.test(req.url())) error('Catalog module request failed: ' + req.url() + ' (' + (req.failure()?.errorText || 'unknown') + ')'); });
+    page.on('response', res => { if (res.status() >= 400) error('Catalog HTTP ' + res.status() + ': ' + res.url()); });
     const safeName = name => { if (!/^[a-z0-9-]+$/.test(name)) throw Error('Unsafe catalog evidence name'); return name; };
     await page.exposeFunction('catalogSaveImage', (name, image) => {
       safeName(name); if (!image.startsWith('data:image/png;base64,')) throw Error('Invalid screenshot encoding');
@@ -856,7 +858,7 @@ async function main() {
   } finally {
     for (const close of [() => browser?.close(), () => server?.listening ? new Promise((resolve, reject) => server.close(e => e ? reject(e) : resolve())) : null]) try { await close(); } catch (e) { failure ||= e; }
   }
-  if (failure) { publish('motion-catalog-result.json', { status: 'failed', contentHash: manifest?.contentHash || null, build: manifest?.build || null, message: String(failure.message || failure), errors, loaded: [...loaded.values()], casesFinished: result?.data?.length || 0 }); console.error(JSON.stringify({ status: 'failed', message: failure.message, evidence: path.join(output, 'motion-catalog-result.json') })); process.exitCode = 1; return; }
+  if (failure) { publish('motion-catalog-result.json', { status: 'failed', contentHash: manifest?.contentHash || null, build: manifest?.build || null, message: String(failure.message || failure), errors, loaded: [...loaded.values()], casesFinished: result?.data?.length || 0 }); console.error(JSON.stringify({ status: 'failed', message: failure.message, networkAndPageErrors: errors.slice(0, 15), modulesLoaded: loaded.size, evidence: path.join(output, 'motion-catalog-result.json') })); process.exitCode = 1; return; }
   result.status = 'passed'; publish('motion-catalog-result.json', result);
   console.log(JSON.stringify({ status: 'passed', contentHash: result.contentHash, cases: result.data.length, frames: result.data.reduce((n, r) => n + r.frames, 0), renderPairs: result.data.reduce((n, r) => n + r.renders.length, 0), verifiedModules: loaded.size, evidence: path.join(output, 'motion-catalog-result.json') }));
 }
