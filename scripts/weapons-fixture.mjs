@@ -15,7 +15,7 @@ const SOURCE = path.join(ROOT, 'inkwave-public');
 const adaptBuildSource = (rel, code) => adaptRange(rel,
   adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 export const BASELINE = process.env.INKWAVE_BASELINE_SITE || path.join(ROOT, '.baseline');
-export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true, cell = .25, fidelity = false, network = false} = {}) {
+export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true, cell = .25, fidelity = false, network = false, jumpSpreadControl = false} = {}) {
   site = path.resolve(site);
   // Pre-build patch tests run before _site exists. In that phase execute the
   // same composed source graph directly from immutable upstream + repo patches.
@@ -69,9 +69,16 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
     }
     if (!modules.has(p)) {
       let code = fs.readFileSync(p, 'utf8');
+      const rel = (sourceMode
+        ? (p.startsWith(SOURCE + path.sep) ? path.relative(SOURCE, p) : path.relative(ROOT, p))
+        : path.relative(site, p)).split(path.sep).join('/');
+      if (jumpSpreadControl && rel === 'patches/splatoon3/runtime/weapons.mjs') {
+        const hook = '  installSplatlingJumpSpread(api);';
+        if (code.split(hook).length !== 2) throw new Error('Expected one Splatling jump-spread subject hook');
+        code = code.replace(hook, '  // Splatling jump-spread subject disabled for same-composition control.');
+      }
       if (sourceMode && p !== path.join(SOURCE, 'vendor/three/build/three.module.js')) {
-        const rel = p.startsWith(SOURCE + path.sep) ? path.relative(SOURCE, p) : path.relative(ROOT, p);
-        code = adaptBuildSource(rel.split(path.sep).join('/'), code);
+        code = adaptBuildSource(rel, code);
       }
       modules.set(p, new vm.SourceTextModule(code, {context, identifier: p}));
     }
