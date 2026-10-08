@@ -26,10 +26,13 @@ function simulate(f, init, {dt=SIM_DT,steps=120}={}) {
 
 // Wire packet -> the plain state a ghost would integrate (mirrors ghostProjectile).
 function fromPacket(e) {
+  const inkMetaOffset = e[27] === null || typeof e[27] === 'object' ? 1 : 0;
+  const kitOffset = e.length === 35 || e.length === 36 || e.length === 37 ? 2 : 0;
+  const birth = 27 + inkMetaOffset + kitOffset;
   return {
     type: e[3], pos: { x: e[5], y: e[6], z: e[7] }, vel: { x: e[8], y: e[9], z: e[10] },
     delay: e[11], life: e[12], straight: e[13], grav: e[16], drag: e[17],
-    vertical: e[e.length===35?29:27], seed: e[e.length===35?30:28], netId: e[e.length===35?31:29],
+    vertical: e[birth], seed: e[birth + 1], netId: e[birth + 2],
   };
 }
 
