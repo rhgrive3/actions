@@ -50,6 +50,36 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  // The source-guided shooter-family InkFlightRuntime is the authority for
+  // head integration and detached paint drops. It does not traverse the
+  // patched generic Projectiles._step actor loop. Bridge its actor contact
+  // with the SAME sourced teammate-through window installed on each main
+  // projectile, rather than silently letting bullets cross an ally.
+  if (rel === 'src/game/inkFlightRuntime.js') {
+    code = replaceOnce(code,
+      '        if (!actor.alive || actor.team === p.team) continue;',
+      '        const friendly = actor.team === p.team;\n' +
+      '        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;',
+      'ink flight S3 team contact eligibility');
+    code = replaceOnce(code,
+      '        // World wins ties: no wall-through damage, independent of actors order.',
+      '        if (friendly && Number.isFinite(t) && (previousAge + INK_DT * t) * INK_HZ + EPS < p.fidelityFriendThrough) continue;\n' +
+      '        // World wins ties: no wall-through damage, independent of actors order.',
+      'ink flight S3 friend-through at first-contact age');
+    code = replaceOnce(code,
+      '            this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
+      '            if (target.team !== p.team) this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
+      'ink flight never damages a teammate');
+    code = replaceOnce(code,
+      "            G.fx?.burst(p.pos, this.normal, p.owner.color, { count: 6, speed: 3, size: 0.07 });",
+      "            if (target.team !== p.team) G.fx?.burst(p.pos, this.normal, p.owner.color, { count: 6, speed: 3, size: 0.07 });",
+      'ink flight friendly contact has no hostile-hit FX');
+    code = replaceOnce(code,
+      "            emit('weapon:impact', { pos: p.pos.clone(), normal: this.normal.clone(), team: p.team, kind: 'shot', radius: 0.3, victim: target });",
+      "            if (target.team !== p.team) emit('weapon:impact', { pos: p.pos.clone(), normal: this.normal.clone(), team: p.team, kind: 'shot', radius: 0.3, victim: target });",
+      'ink flight friendly contact has no hostile-hit packet');
+    return code;
+  }
   code = adaptLocalBatch01(rel, code, replaceOnce);
   code = adaptRollerMaxPaint(rel,code,replaceOnce);
   // Only raw locked sources enter this build-only adapter. Re-applying a
