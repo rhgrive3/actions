@@ -232,10 +232,20 @@ export function emit(name, payload) {
       '  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {', 'Slosher volley identity send');
     {
       const matches = [...code.matchAll(/    this\.s\.tr\?\.sendTo\(victim\.owner, \{ k: 'hit',[^\n]+\}\);/g)];
-      if (matches.length !== 1) throw Error('Network replication anchor mismatch: ' + rel + ': Slosher volley identity wire field');
-      const match = matches[0], payload = match[0].slice(match[0].indexOf('{'), -2);
-      const replacement = `    const hit = ${payload};\n    if (slosherVolleyId != null) hit.g = slosherVolleyId;\n    this.s.tr?.sendTo(victim.owner, hit);`;
-      code = code.slice(0, match.index) + replacement + code.slice(match.index + match[0].length);
+      if (matches.length === 1) {
+        const match = matches[0], payload = match[0].slice(match[0].indexOf('{'), -2);
+        const replacement = `    const hit = ${payload};\n    if (slosherVolleyId != null) hit.g = slosherVolleyId;\n    this.s.tr?.sendTo(victim.owner, hit);`;
+        code = code.slice(0, match.index) + replacement + code.slice(match.index + match[0].length);
+      } else if (matches.length === 0 && code.includes("const message = { k: 'hit', v: victim.nid, a: attacker.nid,")) {
+        // #1033 stores a bounded retransmission record before attempting
+        // delivery. Carry the Slosher group on THAT stored object so a later
+        // negative-ACK retry retains the same group identity.
+        patch('    this.s.tr?.sendTo(victim.owner, message);',
+          '    if (slosherVolleyId != null) message.g = slosherVolleyId;\n    this.s.tr?.sendTo(victim.owner, message);',
+          'Slosher volley identity on retryable hit');
+      } else {
+        throw Error('Network replication anchor mismatch: ' + rel + ': Slosher volley identity wire field');
+      }
     }
     const groupedHit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
     patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
