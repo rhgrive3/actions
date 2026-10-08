@@ -21,7 +21,7 @@ async function setup() {
 const activate = (f, a) => { a.intent.special = true; f.tick(a); a.intent.special = false; };
 const enemyShot = (f, x, y, z, vx, vy, vz) => ({ pos: new f.THREE.Vector3(x, y, z),
   vel: new f.THREE.Vector3(vx, vy, vz), team: 1, damage: 30 });
-const shoot = (f, a, n = 3) => {
+const shoot = (f, a, n = Math.ceil(INK_VAC_CALIBRATION.absorbCapacityDamage / 30)) => {
   for (let i = 0; i < n; i++) {
     const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
     const c = inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p);

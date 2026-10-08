@@ -26,7 +26,37 @@ const blasterPaintContracts = new WeakMap();
 const blasterAxisDirectionsCache = new WeakMap();
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
+// Splatoon deviation law: magnitude = s * x^(log_0.5(bias)).
+// Reflect the same ONE existing uniform RNG draw around zero, keeping the
+// sign independent of |x|. 0.5 retains the previous uniform yaw; 0 -> 0;
+// 1 -> full deviation. Exempt source indices consume no random numbers.
+export function biasedSourceYaw(uniform, degrees, bias = 0.5) {
+  const half = Math.min(1, Math.max(0, Number.isFinite(bias) ? bias : 0.5));
+  if (half <= 0 || !Number.isFinite(degrees) || degrees === 0) return 0;
+  const x = Math.min(1, Math.max(0, Number.isFinite(uniform) ? uniform : 0.5)) * 2 - 1;
+  const magnitude = half >= 1 ? (x === 0 ? 0 : 1) : Math.pow(Math.abs(x), Math.log(half) / Math.log(0.5));
+  return Math.sign(x) * magnitude * radians(degrees);
+}
 const MAIN_SHOT_LIFETIME = 1.2;
+// Current S3 parameter glossary: Slosher WidthHalf and DistanceXZ values
+// use 0.2-world-unit notation. Near/far interpolation is a documented
+// local approximation pending S3 capture; the source endpoint values and
+// first-versus-after unit identity are authoritative.
+const SLOSHER_PAINT_UNIT = 0.2;
+export function slosherImpactPaintSource(unit, index, xzDistance) {
+  const paint = index === 0 ? unit?.PaintParam : unit?.AfterPaintParam;
+  if (!paint || ![paint.DistanceXZNear,paint.DistanceXZFar,
+      paint.WidthHalfNear,paint.WidthHalfFar,paint.DepthScaleNear,paint.DepthScaleFar].every(Number.isFinite))
+    return null;
+  const near = paint.DistanceXZNear*SLOSHER_PAINT_UNIT;
+  const far = paint.DistanceXZFar*SLOSHER_PAINT_UNIT;
+  const t = far>near ? clamp01((Math.max(0,xzDistance)-near)/(far-near)) : (xzDistance>=far?1:0);
+  return {
+    radius:(paint.WidthHalfNear+(paint.WidthHalfFar-paint.WidthHalfNear)*t)*SLOSHER_PAINT_UNIT,
+    depthScale:paint.DepthScaleNear+(paint.DepthScaleFar-paint.DepthScaleNear)*t,
+    source: index === 0 ? 'PaintParam' : 'AfterPaintParam', t,
+  };
+}
 
 function freezeDeep(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -347,10 +377,24 @@ function wallDropFallPaint(p, state, from, to) {
 }
 
 
+// The source JSON is sparse: default-valued spl__BulletBlasterBurstParam
+// members are omitted, not disabled. Do not infer zero from their absence.
+export const BLASTER_BURST_PARAM_DEFAULTS = Object.freeze({
+  SplashDropOn: true,
+  SplashDropCollisionRadius: 0.4,
+  SplashDropDrawRadius: 0.6,
+  SplashDropInitSpeed: 0,
+  SplashDropPaintRadius: 3.2,
+  SplashPaintRadius: 2.0,
+});
+export function resolvedBlasterBurstParam(raw) {
+  if (!raw?.BlasterBurstParam) return null;
+  return { ...BLASTER_BURST_PARAM_DEFAULTS, ...raw.BlasterBurstParam };
+}
 export function blasterPaintContract(raw) {
   if (!raw || typeof raw !== 'object') return null;
   if (blasterPaintContracts.has(raw)) return blasterPaintContracts.get(raw);
-  const splash = raw.SplashPaintParam, wall = raw.SplashWallHitParam, burst = raw.BlasterBurstParam;
+  const splash = raw.SplashPaintParam, wall = raw.SplashWallHitParam, burst = resolvedBlasterBurstParam(raw);
   if (!splash || !wall?.SpawnParam || !wall?.WallDropMoveParam || !wall?.WallDropCollisionPaintParam ||
       !burst?.SplashWallDropMoveParam || !burst?.SplashWallDropPaintParam) return null;
   const x = burst.SplashRoundAxisXArray, y = burst.SplashRoundAxisYArray;
@@ -359,6 +403,7 @@ export function blasterPaintContract(raw) {
     wall.SpawnParam.FirstDistance, wall.SpawnParam.VelocityMinusYRate,
     wall.WallDropCollisionPaintParam.PaintRadiusShock, wall.WallDropCollisionPaintParam.PaintRadiusFall,
     burst.SplashDropPaintShotColHitRadius,
+    burst.SplashDropPaintRadius, burst.SplashPaintRadius,
     burst.SplashWallDropPaintParam.PaintRadiusShock,
     burst.SplashWallDropPaintParam.PaintRadiusFall,
     burst.SplashWallDropPaintParam.PaintRadiusGround,
@@ -380,6 +425,11 @@ export function blasterPaintContract(raw) {
       paint: wall.WallDropCollisionPaintParam,
     },
     burst: {
+      // Normal timed airburst (type-default fields), never the explicit
+      // shot-collision override below.
+      splashDropOn: burst.SplashDropOn,
+      splashDropPaintRadius: burst.SplashDropPaintRadius,
+      splashPaintRadius: burst.SplashPaintRadius,
       radius: burst.SplashDropPaintShotColHitRadius,
       axisX: x,
       axisY: y,
@@ -1232,7 +1282,8 @@ export function installWeaponsFidelity(context,profile) {
       const speed=((p.owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
       const aim=p.owner.aimDir.clone().normalize();
       const yaw=Math.atan2(aim.x,aim.z)+radians(u.BaseRotateYDegree||0)+
-        (u.RandomRotateYOffOrderNum?.includes(index)?0:(Math.random()*2-1)*radians(u.RandomRotateYDegree||0));
+        (u.RandomRotateYOffOrderNum?.includes(index) ? 0 :
+          biasedSourceYaw(Math.random(), u.RandomRotateYDegree||0, u.RandomRotateYBias));
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
       p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
@@ -1716,10 +1767,46 @@ export function installWeaponsFidelity(context,profile) {
     context.emit('weapon:impact',{pos:hit.point.clone(),normal:p.vel.clone().normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});
   };
   Projectiles.prototype._blastBurst=function(p,point,victim){
-    if(!p.ghost)return blastBurst.call(this,p,point,victim);
-    const w=p.s3Weapon||WEAPONS.blaster;
-    context.G.fx?.explosion(point,p.owner.color,w.burstRadius);
-    context.G.audio?.play('blaster_boom',{pos:point,volume:.7});
+    if(p.ghost){
+      const w=p.s3Weapon||WEAPONS.blaster;
+      context.G.fx?.explosion(point,p.owner.color,w.burstRadius);
+      context.G.audio?.play('blaster_boom',{pos:point,volume:.7});
+      return;
+    }
+    const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon;
+    const c=w?.kind==='blaster' ? blasterPaintContract(rawWeapon(w)) : null;
+    // Only the unobstructed terminal explosion owns this normal burst paint.
+    // Shot/actor/terrain collisions keep their separate collision paint
+    // contract; special burst weapons must never inherit Blaster defaults.
+    if(!c?.burst?.splashDropOn || victim!=null || p.s3BurstCollisionHit)
+      return blastBurst.call(this,p,point,victim);
+    const paint=context.G.paint;
+    if(!paint?.splat || !context.G.physics?.raycast)
+      return blastBurst.call(this,p,point,victim);
+    // The public native burst emits one obsolete generic floor stamp.
+    // Suppress only that direct stamp, preserving FX, sound and hit authority.
+    const nativeSplat=paint.splat;
+    let suppressed=0;
+    paint.splat=function(...args){
+      if(suppressed++===0)return 0;
+      return nativeSplat.apply(this,args);
+    };
+    try{blastBurst.call(this,p,point,victim);}
+    finally{paint.splat=nativeSplat;}
+    // Resolve dedicated type-default splash-drop paint from the actual burst
+    // world position. The precise Nintendo stochastic drop placement remains
+    // a calibration target, not an invented source emission distribution.
+    const down=this._s3BurstDown||(this._s3BurstDown=new context.THREE.Vector3(0,-1,0));
+    const start=this._s3BurstStart||(this._s3BurstStart=new context.THREE.Vector3());
+    start.copy(point); start.y+=0.2;
+    const hit=this._s3BurstPaintHit||(this._s3BurstPaintHit=new context.Hit());
+    const g=context.G.physics.raycast(start,down,3.5,hit);
+    if(g.hit && !p.ghost){
+      const stamp=this._s3BurstPaintPoint||(this._s3BurstPaintPoint=new context.THREE.Vector3());
+      stamp.copy(g.point).addScaledVector(g.normal,0.1);
+      const area=nativeSplat.call(paint,stamp,c.burst.splashDropPaintRadius,p.team,{seed:p.seed??0});
+      p.owner?.addTurf?.(area);
+    }
   };
   const nativeImpact=Projectiles.prototype._impact;
   Projectiles.prototype._impact=function(p,hit){
@@ -1731,6 +1818,24 @@ export function installWeaponsFidelity(context,profile) {
         if(w?.kind==='roller' && p.type==='drop' && p.fidelityRollerUnit){
           // #411/#674/#611 share one authoritative landing-paint sample.
           return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));
+        }
+        if(w?.kind==='slosher' && p.type==='slosh' && p.fidelitySloshUnit && context.G.paint?.splat){
+          // #1011: native _impact paints its first stamp using legacy global
+          // radius plus a random multiplier. Replace THAT stamp with this
+          // projectile's distinct source unit/index contract, never foot paint.
+          const dx=hit.point.x-p.start.x,dz=hit.point.z-p.start.z;
+          const source=slosherImpactPaintSource(p.fidelitySloshUnit,p.fidelitySloshIndex,Math.hypot(dx,dz));
+          if(source){
+            const paint=context.G.paint,nativeSplat=paint.splat;
+            let first=true;
+            paint.splat=function(center,radius,team,opts){
+              if(!first)return nativeSplat.call(this,center,radius,team,opts);
+              first=false;
+              return nativeSplat.call(this,center,source.radius,team,{...opts,stretchAmt:source.depthScale});
+            };
+            try{return nativeImpact.call(this,p,hit);}
+            finally{paint.splat=nativeSplat;}
+          }
         }
         return nativeImpact.call(this,p,hit);
       }finally{p.s3BurstCollisionHit=before;}
