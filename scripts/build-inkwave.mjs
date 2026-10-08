@@ -84,6 +84,32 @@ for (const file of walk(QUALITY_ROOT)) {
   } else fs.copyFileSync(file, dst);
 }
 
+// The reliability/network overlays are independent from splatoon3 and local-quality.
+// The production adapters import their runtime modules at those exact public paths
+// (e.g. patches/reliability/menu-takeover.mjs). Stage the shipped helpers BEFORE
+// computing the static module graph and content-addressed revision. Otherwise
+// every browser fails to import runtime/install.mjs despite passing the build step.
+// Adapter/test sources remain build-only; never publish those as executable assets.
+for (const [root, prefix] of [
+  [RELIABILITY_ROOT, 'patches/reliability'],
+  [NETWORK_ROOT, 'patches/network-replication'],
+]) {
+  for (const file of walk(root)) {
+    const rel = path.relative(root, file).split(path.sep).join('/');
+    if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs')) continue;
+    const dst = path.join(BUILD, prefix, rel);
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    if (/\.(?:m?js|css)$/.test(rel)) {
+      const sourcefile = prefix + '/' + rel;
+      const result = await esbuild.transform(adaptBuildSource(sourcefile, fs.readFileSync(file, 'utf8')), {
+        loader: rel.endsWith('.css') ? 'css' : 'js',
+        minify: true, charset: 'utf8', legalComments: 'inline', sourcefile,
+      });
+      fs.writeFileSync(dst, result.code);
+    } else fs.copyFileSync(file, dst);
+  }
+}
+
 // Practice Range layer: runtime modules + stylesheet under patches/practice-range/ (tests, docs, the adapter and the
 // offline bake tools stay out), its stage assets (lightmap, menu art) overlaid at their upstream paths — never over an
 // existing upstream file.
@@ -114,7 +140,7 @@ if (fs.existsSync(pwaWorker)) fs.copyFileSync(pwaWorker, path.join(BUILD, 'sw.js
 // access in the sources is static (verified: no computed THREE[...] lookups), so the namespace keeps what it needs.
 const THREE_DIR = path.join(SRC, 'vendor/three/build');
 if (fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && process.env.INKWAVE_NO_THREE_SHAKE !== '1') {
-  const srcFiles = [...walk(path.join(SRC, 'src')), ...walk(path.join(SRC, 'vendor/three/jsm')), ...walk(PATCH_ROOT), ...walk(QUALITY_ROOT), ...walk(RANGE_ROOT)].filter((f) => /\.m?js$/.test(f) && !f.includes('/tests/'));
+  const srcFiles = [...walk(path.join(SRC, 'src')), ...walk(path.join(SRC, 'vendor/three/jsm')), ...walk(PATCH_ROOT), ...walk(QUALITY_ROOT), ...walk(RELIABILITY_ROOT), ...walk(NETWORK_ROOT), ...walk(RANGE_ROOT)].filter((f) => /\.m?js$/.test(f) && !f.includes('/tests/'));
   const used = new Set();
   for (const f of srcFiles) {
     const s = fs.readFileSync(f, 'utf8');
@@ -154,7 +180,7 @@ const visit = (rel) => {
   const abs = path.join(BUILD, rel);
   if (!fs.existsSync(abs)) return;
   seen.add(rel);
-  const original = rel.startsWith('patches/splatoon3/') ? path.join(PATCH_ROOT, rel.slice('patches/splatoon3/'.length)) : rel.startsWith('patches/local-quality/') ? path.join(QUALITY_ROOT, rel.slice('patches/local-quality/'.length)) : rel.startsWith('patches/practice-range/') ? path.join(RANGE_ROOT, rel.slice('patches/practice-range/'.length)) : path.join(SRC, rel);
+  const original = rel.startsWith('patches/splatoon3/') ? path.join(PATCH_ROOT, rel.slice('patches/splatoon3/'.length)) : rel.startsWith('patches/local-quality/') ? path.join(QUALITY_ROOT, rel.slice('patches/local-quality/'.length)) : rel.startsWith('patches/reliability/') ? path.join(RELIABILITY_ROOT, rel.slice('patches/reliability/'.length)) : rel.startsWith('patches/network-replication/') ? path.join(NETWORK_ROOT, rel.slice('patches/network-replication/'.length)) : rel.startsWith('patches/practice-range/') ? path.join(RANGE_ROOT, rel.slice('patches/practice-range/'.length)) : path.join(SRC, rel);
   const s = fs.existsSync(original) ? adaptBuildSource(rel, fs.readFileSync(original, 'utf8')) : fs.readFileSync(abs, 'utf8');
   const specs = [];
   for (const m of s.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
