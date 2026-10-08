@@ -15,6 +15,7 @@ async function throwSlosher(previousYaw, renderHz) {
   try {
     for (let frame = 0; clock.ticks < 13 && frame < 100; frame++) {
       clock.advance(1 / renderHz, dt => {
+        if (ticks >= 13) return; // A 30Hz render frame carries two fixed ticks.
         ticks++;
         // Same final aim, but different heading one simulation tick earlier.
         const yaw = ticks === 13 ? 0 : previousYaw;
@@ -24,7 +25,7 @@ async function throwSlosher(previousYaw, renderHz) {
         a.weaponRunner.update(dt, { fire: true });
       });
     }
-    assert.equal(clock.ticks, 13);
+    assert.equal(ticks, 13);
     const projectiles = f.G.projectiles.list;
     assert.equal(projectiles.length, 9, '4+5 current S3 source units');
     const result = projectiles.map(p => ({
