@@ -144,3 +144,13 @@ test('#953 a newer completed snapshot cannot revive an older displayed Slam',asy
   assert.equal(host.a.net.buf.at(-1).adoption.slam,null);
   host.nm.onLeave('p2',false);assert.equal(host.a.specialActive,null);
 });
+
+for (const length of [8,9]) test(`legacy ${length}-field adoption remains readable without manufacturing Slam authority`,async()=>{
+  const owner=await started('rise'),packet=sendTick(owner.nm);
+  const tag=packet.a[0].at(-1);tag.length=length;
+  const host=await receiving(packet);
+  assert.ok(host.a.net.buf.length>0,'accepted legacy packet');
+  assert.equal(host.a.net.buf.at(-1).adoption.slam,null);
+  host.nm.onLeave('p2',false);
+  assert.ok(!host.a.specialActive || host.a.specialActive.net,'missing state cannot become native Slam authority');
+});

@@ -16,7 +16,12 @@ export function cancelMenuGameplay(c, keys=KEYS) {
  for(const key of keys)if(a.intent?.[key]||a._prevIntent?.[key]||(keys!==KEYS&&held(c,key)))blocked.add(key);
  if(r?.charging||r?.streaming||r?.s3Stored||r?.s3ReleaseHold)blocked.add('fire');
  if(r?.aimingSub||r?.s3SubReady)blocked.add('sub');
- r?.cancelPendingInput?.();r?.cancelHold?.(true,true);cancelStormPendingInput(a);
+ // A paid Slosher heave is already committed by its press. Map ownership
+ // cancels release-triggered input, but must not erase that native windup.
+ const committedSlosh=keys!==KEYS&&a.weapon?.kind==='slosher'&&r?.slosh>=0?r.slosh:null;
+ r?.cancelPendingInput?.();
+ if(committedSlosh!==null)r.slosh=committedSlosh;
+ r?.cancelHold?.(true,true);cancelStormPendingInput(a);
  for(const state of [a.intent,a._prevIntent])if(state)for(const key of keys)state[key]=false;
  a.fireBuffer=0;
  if(keys===KEYS){a.jumpBuffer=0;a.intent?.move?.set(0,0,0);}

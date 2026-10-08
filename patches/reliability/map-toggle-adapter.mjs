@@ -26,7 +26,7 @@ export function adaptMapToggle(rel, code) {
     code = code.replaceAll('release [TAB] to cancel', 'press [TAB] or [M] to close');
   }
   if (rel !== 'src/game/player.js') return code;
-  patch('    this.mapHeld = false;', '    this.mapHeld = false;\n    if (input.mobile) input.mobile.onMapChange = open => (G.match?.controller?.input === input ? G.match.controller : this).setTurfMap(open);', 'touch shares controller latch');
+  patch('    this.mapHeld = false;', '    this.mapHeld = false;\n    if (input?.mobile) input.mobile.onMapChange = open => (G.match?.controller?.input === input ? G.match.controller : this).setTurfMap(open);', 'touch shares controller latch');
   patch('    if (this.updateRespawnNavigation()) return;', '    this.updateMapInput();\n    if (this.updateRespawnNavigation()) return;', 'map edge before navigation');
   patch(`    if (!standardPad) this.padMapOpen = false;
     if (standardPad && inp.padPressed.has(3)) { this.padMapOpen = !this.padMapOpen; inp.padPressed.delete(3); }
