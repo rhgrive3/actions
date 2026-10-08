@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { combatWorld } from '../../reliability/tests/combat-integration-fixture.mjs';
+import { SLOSHER_OWNER_GROUP_LIMIT } from '../runtime/weapons.mjs';
 
 const fidelityProfile = JSON.parse(fs.readFileSync(new URL('../profile.json', import.meta.url), 'utf8'));
 
@@ -161,5 +162,35 @@ test('host adoption gives a reused Slosher volley id an independent victim budge
     assert.equal(groups.size, 0, 'native projectile clear releases per-match owner group state');
   } finally {
     oldOwner.dispose(); newHost.dispose(); victimOwner.dispose();
+  }
+});
+
+test('remote Slosher budget ledger is bounded and evicted volley IDs cannot be replayed', async () => {
+  const w = await combatWorld('B', { network: true });
+  try {
+    const { G, attacker, victim } = w;
+    // Drive the authoritative victim-side ledger directly, as the validated
+    // network owner does after shouldApplyHit selects the local route.
+    G.netm = null;
+    victim.owner = 'B';
+    const prefix = String(attacker.nid ?? 'local');
+    for (let i = 1; i <= SLOSHER_OWNER_GROUP_LIMIT + 3; i++) {
+      victim.hp = 100; victim.alive = true; victim.invuln = 0;
+      G.projectiles.applyHit(attacker, victim, 1, 'slosher', `${prefix}:${i}`);
+    }
+    const ledger = G.projectiles._s3SlosherOwnerGroups;
+    assert.equal(ledger.size, SLOSHER_OWNER_GROUP_LIMIT, 'per-match memory stays bounded');
+    victim.hp = 100; victim.alive = true; victim.invuln = 0;
+    const stale = G.projectiles.applyHit(attacker, victim, 70, 'slosher', `${prefix}:1`);
+    assert.equal(stale, 'rejected', 'retirement watermark prevents old packet damage replay');
+    assert.equal(victim.hp, 100);
+    assert.equal(G.projectiles.applyHit(attacker, victim, 70, 'slosher', 'x'.repeat(100)), 'rejected',
+      'oversized untrusted group keys cannot enter the ledger');
+    assert.equal(victim.hp, 100);
+    G.projectiles.clear();
+    assert.equal(ledger.size, 0, 'match cleanup empties the bounded ledger');
+    assert.equal(G.projectiles._s3SlosherOwnerFloors.size, 0, 'match cleanup clears replay floors');
+  } finally {
+    w.dispose();
   }
 });
