@@ -741,7 +741,7 @@ export function fidelityPlayerCollisionRadius(p) { return slosherCollisionRadius
 function fieldRadiusAt(p,age,y=p.pos?.y) { return slosherCollisionRadius(p,age,true,y); }
 // #1011: footprint uses the source unit and first/after bullet distinctions.
 export function fidelitySlosherImpactPaint(p, point) {
-  const src=slosherPaintRecord(p), start=p?.start, scale=completion?.worldUnitsPerSourceUnit;
+  const src=slosherPaintRecord(p), start=p?.start, scale=completion?.worldUnitsPerSourceUnit ?? 1;
   if (!src || !start || !point || !(scale>0)) return null;
   const n=src.DistanceXZNear,f=src.DistanceXZFar,w0=src.WidthHalfNear,w1=src.WidthHalfFar;
   const d0=src.DepthScaleNear,d1=src.DepthScaleFar;
