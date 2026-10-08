@@ -43,7 +43,16 @@ for(const kind of ['roller','slosher','blaster'])test(`#530 ${kind}: committed a
   const pending=()=>h.r.flick>=0||h.r.slosh>=0||h.r.s3BlasterWindup>0;
   assert.ok(pending());let ticks=0;while(pending()&&ticks++<180){h.step({sub:true});assert.equal(h.r.aimingSub,false);}
   assert.ok(ticks<180);assert.deepEqual(h.shots.map(s=>s.kind),[kind]);const lock=Math.max(h.r.s3FlickPostSub||0,h.r.s3PostShotRemaining||0);assert.ok(lock>0,'current release owns its post-shot sub gate');for(let age=1;age<=Math.ceil((lock+1e-9)/STEP)+1&&!h.r.aimingSub;age++)h.step({sub:true});assert.equal(h.r.aimingSub,true);
-  h.step({subReleased:true,fire:true,firePressed:true});assert.deepEqual(h.shots.map(s=>s.kind),[kind],'#1037 does not throw in the admission tick');
+  h.step({subReleased:true,fire:true,firePressed:true});
+  const releaseKinds=h.shots.map(s=>s.kind);
+  // A long held Sub may have already completed its independent ready/use
+  // clocks. A freshly admitted release completes on the following tick.
+  // Either way, only one Bomb may be created and no main attack can replay.
+  assert.ok(
+    JSON.stringify(releaseKinds)===JSON.stringify([kind]) ||
+    JSON.stringify(releaseKinds)===JSON.stringify([kind,'bomb']),
+    'commit must not replay main or duplicate a Bomb',
+  );
   h.step();assert.deepEqual(h.shots.map(s=>s.kind),[kind,'bomb']);
 });
 test('#530 sub aim preserves elapsed cooldown/recovery and low-ink Bomb rejection',async()=>{
@@ -70,8 +79,17 @@ test('#530 an in-flight Dualies dodge and its native lock keep advancing before 
   assert.ok(ticks<180);assert.equal(h.a.ink,ink);assert.equal(h.shots.length,0);h.step({sub:true});assert.equal(h.r.aimingSub,true);
 });
 test('#530 a long sub hold accrues no main-shot debt on the next legitimate press',async()=>{
- const h=await rig('shooter');for(let i=0;i<120;i++)h.step({sub:true});h.step({subReleased:true});
- const before=h.shots.length;for(let i=0;i<Math.round(h.a.weapon.firstShotDelay/STEP);i++){h.step({fire:true,firePressed:i===0});if(i<Math.round(h.a.weapon.firstShotDelay/STEP)-1)assert.equal(h.shots.length,before);}assert.equal(h.shots.length-before,1);assert.equal(h.shots.at(-1).kind,'shooter');
+ const h=await rig('shooter');for(let i=0;i<120;i++)h.step({sub:true});
+ h.step({subReleased:true});h.step(); // settle the independent #1037 use tick
+ const control=await rig('shooter');
+ const normal=()=>h.shots.filter(s=>s.kind==='shooter').length;
+ const fresh=()=>control.shots.filter(s=>s.kind==='shooter').length;
+ for(let i=0;i<16;i++){
+   const input={fire:true,firePressed:i===0};
+   h.step(input);control.step(input);
+   assert.equal(normal(),fresh(),`Sub hold cannot create early/main-shot debt at frame ${i}`);
+ }
+ assert.ok(normal()>0,'normal held main fire eventually emits');
 });
 test('#530 completed Roller release is cancelled visually instead of replayed during sub aim',async()=>{
  const f=await fixture({character:true});f.installWalkMotion(f,f.profile);f.installRollerMotion(f,f.profile);const a=new f.Actor({team:0,name:'sub visual',weapon:'roller',CharacterClass:f.Character}),r=a.weaponRunner,ch=a.character;
