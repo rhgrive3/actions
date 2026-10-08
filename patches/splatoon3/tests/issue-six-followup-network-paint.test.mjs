@@ -52,6 +52,9 @@ class FakeNetMatch {
     this.sent = [];
     this.remoteCalls = 0;
     this.updateCalls = 0;
+    this.playCalls = 0;
+    this.tickCalls = 0;
+    this.messageCalls = 0;
     this.clockT = 1;
   }
   get isHost() { return this.s.hostId === this.myId; }
@@ -70,7 +73,9 @@ class FakeNetMatch {
   }
   applyRemote() { this.remoteCalls++; }
   shouldApplyHit() { return 'local'; }
-  onMessage() {}
+  onMessage() { this.messageCalls++; }
+  _tick() { this.tickCalls++; }
+  _play() { this.playCalls++; }
   update() { this.updateCalls++; }
 }
 function fakeActor(nid, owner = 'gone') {
@@ -180,6 +185,60 @@ test('#201: first-minute disconnect starts 6s no-contest and bypasses normal res
   assert.deepEqual(nm.sent.at(-1), { k: 'ncend' });
 });
 
+test('#201: No Contest wins against the ordinary timeout/judge and late host results', () => {
+  const a = fakeActor(30);
+  const match = fakeMatch('playing', 59, [a]);
+  // A one-minute Turf variant reproduces the exact race: the first-minute
+  // disconnect occurs one second before the regular match timeout.
+  match.duration = 60;
+  match.time = 1;
+  match.follower = false;
+  let judged = 0, ended = 0;
+  match.setState = function (next) { this.state = next; };
+  match._judge = () => { judged++; match.setState('judge'); };
+  match.update = function (dt) {
+    this.time = Math.max(0, this.time - dt);
+    if (this.time === 0) this.setState('finish');
+  };
+  const G = { game: { hud: { banner() {} }, netMatchEnd() { ended++; } } };
+  installDisconnectFidelity({ NetMatch: FakeNetMatch, G });
+  const nm = new FakeNetMatch({ myId: 'me', hostId: 'me', _members: new Map([['me', true]]) });
+  nm.bind(match);
+  nm.onLeave('gone', false);
+  assert.equal(nm.s3NoContestRemaining, 6);
+  match.update(2); // 1s remaining became 0 while the six-second notice is still active
+  match._judge();
+  assert.equal(match.state, 'playing', 'normal finish state cannot override a pending No Contest');
+  assert.equal(judged, 0, 'ordinary winner/scoring must not run');
+  const previous = nm.messageCalls;
+  for (const k of ['res', 'end']) nm.onMessage('me', { k });
+  for (const s of ['finish', 'judge', 'results']) nm.onMessage('me', { k: 'st', s });
+  assert.equal(nm.messageCalls, previous, 'delayed authoritative result packets are suppressed');
+  nm.update(6);
+  assert.equal(match.s3NoContestFinished, true);
+  assert.equal(ended, 1);
+});
+
+test('#201: departed senders lose queued paint and cannot replay delayed tick events', () => {
+  const a = fakeActor(31);
+  const match = fakeMatch('playing', 70, [a]);
+  const G = { game: { hud: { banner() {} } } };
+  installDisconnectFidelity({ NetMatch: FakeNetMatch, G });
+  const nm = new FakeNetMatch({ myId: 'me', hostId: 'me', _members: new Map([['me', true]]) });
+  nm.peers = new Map([['gone', { tr: 0, events: [[0, 's', 1, 2, 3]] }]]);
+  nm.bind(match);
+  nm.onLeave('gone', false);
+  assert.equal(nm.peers.get('gone').events.length, 0, 'no sender-free paint may remain queued');
+  nm._tick('gone', { k: 't', e: [[0, 's']] });
+  nm._play('gone', [0, 's']);
+  assert.equal(nm.tickCalls, 0);
+  assert.equal(nm.playCalls, 0);
+  nm._tick('me', {});
+  nm._play('me', []);
+  assert.equal(nm.tickCalls, 1, 'live transport peers retain normal playback');
+  assert.equal(nm.playCalls, 1);
+});
+
 test('#201: disconnected actor deactivation is idempotent and keeps statistics', () => {
   const a = fakeActor(4);
   const nm = { match: fakeMatch('playing', 70, [a]), _stopLoops() {} };
@@ -256,4 +315,37 @@ test('#1002: intermediate splash paints once, scores once and disables legacy tr
   assert.equal(turf, 5);
   ps._step(p, 1 / 60);
   assert.equal(splats.length, 1, 'SpawnNum/TotalNum cap is one');
+});
+
+test('#1002: Slosher flight caches the source spec across ticks and invalidates on seed change', () => {
+  const group = {
+    ...unit2.SplashAndSplashWallHitSpawnPrm,
+    Combination: [...unit2.SplashAndSplashWallHitSpawnPrm.Combination],
+  };
+  let lookups = 0;
+  group.Combination.find = function (predicate) {
+    lookups++;
+    return Array.prototype.find.call(this, predicate);
+  };
+  class Projectiles {
+    _step(p) { p.pos.x += .4; return false; }
+  }
+  class MissHit extends FakeHit {}
+  const G = { physics: { raycast(_p, _d, _dist, hit) { hit.hit = false; return hit; } } };
+  installSlosherIntermediatePaint(
+    { Projectiles, G, THREE: { Vector3: Vec3 }, Hit: MissHit },
+    { weaponsFidelityCompletion: { worldUnitsPerSourceUnit: 1 } },
+  );
+  const p = {
+    type: 'slosh', ghost: false,
+    fidelitySloshUnit: { SplashAndSplashWallHitSpawnPrm: group },
+    fidelitySloshIndex: 3, seed: .5,
+    pos: new Vec3(), vel: new Vec3(1, 0, 0),
+  };
+  const ps = new Projectiles();
+  for (let i = 0; i < 5; i++) ps._step(p, 1 / 60);
+  assert.equal(lookups, 1, 'no per-fixed-tick Combination scan while source is unchanged');
+  p.seed = .7;
+  ps._step(p, 1 / 60);
+  assert.equal(lookups, 2, 'pooled projectile new seed invalidates source-dependent spec');
 });
