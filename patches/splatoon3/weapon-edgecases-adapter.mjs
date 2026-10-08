@@ -35,5 +35,12 @@ export function adaptWeaponEdgecases(rel, code, replace) {
   code = replace(code,
     "this.applyHit(p.owner, e, distanceDamage(w.damageBands, d), 'blaster');",
     "this.applyHit(p.owner, e, blasterBurstDamage(p, w, d, distanceDamage), 'blaster');", 'blaster terrain player damage');
+  // #911: actor-direct and terrain contact explosions share the small
+  // impact burst admission radius; natural timed airbursts keep full reach.
+  // The damage envelope is already reduced by blasterBurstDamage.
+  code = replace(code,
+    '      if (d > w.splashRadius) continue;',
+    '      if (d > w.splashRadius * (p.s3TerrainBurst ? (w.terrainSplashRadiusRate ?? 1) : 1)) continue;',
+    'Blaster direct and terrain impact splash radius');
   return "import { spreadWeaponRound, appendRollerNearUnit, paintRollerReleaseFootprint, blasterBurstDamage } from '../../patches/splatoon3/runtime/weapon-edgecases.mjs';\n" + code;
 }
