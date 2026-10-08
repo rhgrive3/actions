@@ -435,6 +435,24 @@ def back_profile(cfg):
               round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def consistent_normals(me):
+    """Blender's Recalculate Normals (outside) on the whole mesh; if that turned most faces round (an open mesh can
+    fool it), all faces are turned back, so only the few faces against their neighbours change."""
+    import bmesh
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    before = np.array([f.normal.copy() for f in bm.faces])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    after = np.array([f.normal.copy() for f in bm.faces])
+    flipped = (before * after).sum(1) < 0
+    if flipped.mean() > 0.5:
+        bmesh.ops.reverse_faces(bm, faces=list(bm.faces))
+        flipped = ~flipped
+    bm.to_mesh(me)
+    bm.free()
+    return int(flipped.sum())
+
+
 def neck_join(cfg):
     """The head (a closed shell, its two halves split at the midline) only dived into the neck: where the two
     surfaces cross there was a line and the head's underside stood over the neck (2026-10-08, user: 繋げろ, the
@@ -493,11 +511,7 @@ def neck_join(cfg):
     tdata = T.data
     bpy.data.objects.remove(T)
     bpy.data.meshes.remove(tdata)
-    bm = bmesh.new()                                    # slivers the Boolean leaves (dark specks)
-    bm.from_mesh(R.data)
-    bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=cfg.get('degenerate_mm', 0.05) / 1000)
-    bm.to_mesh(R.data)
-    bm.free()
+    print('BODY_SHAPE neck_join faces turned to face out', consistent_normals(R.data))   # dark specks
     head_mats = {m.name for m in head.data.materials if m}
     rm0 = [m.name if m else None for m in R.data.materials]
     mi0 = np.zeros(len(R.data.polygons), int)
@@ -589,13 +603,12 @@ def neck_join(cfg):
         small = [e for e in bm.edges if e.is_boundary and Lb[e.verts[0].index, 1] > cfg['cut_y'] + 5
                  and Lb[e.verts[0].index, 1] < -40]
         filled = bmesh.ops.holes_fill(bm, edges=small, sides=cfg.get('hole_sides', 12))['faces']
-        if filled:
-            bmesh.ops.recalc_face_normals(bm, faces=filled)
         print('BODY_SHAPE neck_join', obj.name, 'small holes filled', len(filled))
         new = bpy.data.meshes.new(obj.data.name + '_joined')
         bm.to_mesh(new)
         bm.free()
         new.transform(obj.matrix_world.inverted() @ R.matrix_world)
+        print('BODY_SHAPE neck_join', obj.name, 'faces turned to face out', consistent_normals(new))
         if obj is neck:
             # the body below the cut comes back, welded along the cut
             bm = bmesh.new()
