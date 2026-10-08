@@ -16,7 +16,7 @@ import {distanceDamage, groupDamage, applyProjectileHit as legacyHit, applySlosh
 import {damageGroupId} from './final-damage.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
-import { correctInkAim, launchSpeed, profileFor, referenceReach } from '../../../inkwave-public/src/game/inkFlight.js';
+import { correctInkAim, launchSpeed, profileFor, referenceReach } from '../../../src/game/inkFlight.js';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
 const SPLATLING_NOMINAL_LIFETIME = 1.2;
@@ -232,14 +232,22 @@ export function fidelityDualiesAimTarget(projectiles, actor, muzzle, hand) {
 
 // The guide and live Dualies fire path share this production launch correction
 // and speed. Direction already contains the per-hand aim ray and target.
-export function fidelityDualiesLaunchPlan(actor, weapon, muzzle, target, dir) {
+function dualiesLaunchScratch(projectiles) {
+  return projectiles._fidelityDualiesLaunchScratch || (projectiles._fidelityDualiesLaunchScratch = {
+    profile: null, speed: 0, chargeSeconds: 0,
+  });
+}
+
+export function fidelityDualiesLaunchPlan(projectiles, actor, weapon, muzzle, target, dir) {
   const profile = profileFor(weapon);
   if (!profile) return null;
   const chargeSeconds = (actor.weaponRunner?.charge || 0) * (weapon.chargeTime || 0);
   const speed = launchSpeed(profile, chargeSeconds);
   correctInkAim(profile, muzzle, dir, target, speed,
     Math.min(weapon.range, referenceReach(profile, chargeSeconds)));
-  return { profile, speed, chargeSeconds };
+  const plan = dualiesLaunchScratch(projectiles);
+  plan.profile = profile; plan.speed = speed; plan.chargeSeconds = chargeSeconds;
+  return plan;
 }
 
 // Source records supply endpoints/counts. Added random draws are deterministic
@@ -1584,7 +1592,7 @@ export function installWeaponsFidelity(context,profile) {
     for(let hand=0;hand<2;hand++){
       const p=shots[hand],out=points[hand],dir=dirs[hand];
       this._aimFrom(actor,p.pos,dir,targets[hand]);
-      const launch=fidelityDualiesLaunchPlan(actor,w,p.pos,targets[hand],dir);
+      const launch=fidelityDualiesLaunchPlan(this,actor,w,p.pos,targets[hand],dir);
       if(!launch)return null;
       p.owner=actor;p.type='shot';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=1.2;p.straight=w.straightTime;
       p.delay=0;p.ghost=false;p.size=w.impactRadius??.15;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
