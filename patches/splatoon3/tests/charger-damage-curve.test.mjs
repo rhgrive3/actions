@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { FixedClock } from '../runtime/clock.mjs';
+import { chargerRangeCharge } from '../runtime/weapons-charger-flight.mjs';
 import { isChargerFullCharge } from '../runtime/weapons.mjs';
 import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
@@ -170,8 +171,9 @@ async function fireAt(runtime, frames, renderHz) {
   const progress = releaseAt / owner.weapon.chargeTime;
   const charge = progress < .2 ? progress * 1.25 : .25 + (progress - .2) * .9375;
   near(firedJob.charge, charge, 1e-10);
-  const expectedRange = isChargerFullCharge(charge) ? profile.weapons.charger.rangeMax
-    : profile.weapons.charger.rangeMin + (profile.weapons.charger.rangeMax - profile.weapons.charger.rangeMin) * charge;
+  // #514: reachFor remaps raw charge through the shared legal-minimum band.
+  const expectedRange = profile.weapons.charger.rangeMin
+    + (profile.weapons.charger.rangeMax - profile.weapons.charger.rangeMin) * chargerRangeCharge(charge);
   near(firedJob.range, expectedRange, 1e-7);
   return { damage: hits[0].amount, charge: firedJob.charge, chargeT: firedJob.chargeT, range: firedJob.range };
 }

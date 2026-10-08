@@ -10,13 +10,24 @@ import { chargerDamage, isChargerFullCharge } from './weapons.mjs';
 // (#840: isChargerFullCharge, ding-aligned at charge 1). Charge-rate modifiers
 // (airborne/empty tank) only change how fast the progression advances, and
 // releases below the boundary clamp to 0, so the legal minimum endpoint never
-// shifts. Damage (#506), range (#514), projectile speed, ink consumption and
-// the sub-8f release gate (#304) keep consuming the raw charge separately.
+// shifts. Damage (#506), projectile speed, ink consumption and the sub-8f
+// release gate (#304) keep consuming the raw charge separately; range (#514)
+// now shares this band through the chargerRangeCharge alias below.
 export const CHARGER_FIRST_LEGAL_CHARGE = 1 / 6;
 export function chargerPartialCharge(charge) {
   const c = Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0));
   return c <= CHARGER_FIRST_LEGAL_CHARGE ? 0 : (c - CHARGER_FIRST_LEGAL_CHARGE) / (1 - CHARGER_FIRST_LEGAL_CHARGE);
 }
+// #514: range uses the same legal-minimum band as the paint coordinate above.
+// The native eased charge is 1/6 after the first legal 8F release, so that
+// value — not raw zero — anchors DistanceMinCharge: a legal 8F tap resolves to
+// 9.033 instead of the interior 11.5337 the raw-charge lerp produced. Sub-law
+// releases clamp to the lower endpoint and full charge keeps
+// DistanceFullCharge. Aliases keep one band law shared by paint and range;
+// damage (#506), launch speed, ink, laser sight and the 1-7F gate (#304) are
+// separate coordinates and stay unchanged.
+export const CHARGER_MIN_LEGAL_CHARGE = CHARGER_FIRST_LEGAL_CHARGE;
+export const chargerRangeCharge = chargerPartialCharge;
 // Linear interpolation of extracted endpoints; ellipse rasterization remains INKWAVE's.
 export function chargerPaintParameters(raw,charge){
   const full=isChargerFullCharge(charge),q=chargerPartialCharge(charge);
@@ -59,9 +70,13 @@ export function installChargerFlight(api,completion) {
   const raw=completion.weapons.charger.MoveParam,collision=completion.weapons.charger.CollisionParam;
   const nativeGhost=P.ghostFire,nativeUpdate=P.update,nativeClear=P.clear;
   // Single source of the finite flight distance (world units); begin() and the HUD reach query share it.
+  // #514: remap raw charge through the legal-minimum band so the first legal
+  // 8F release (native eased charge 1/6) lands on DistanceMinCharge exactly.
   const reachFor=charge=>{
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
-    return isChargerFullCharge(charge)?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge;
+    if(isChargerFullCharge(charge))return raw.DistanceFullCharge;
+    const q=chargerRangeCharge(charge);
+    return raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*q;
   };
   P.chargerReach=function(charge){return reachFor(charge);};
   const feetDown=new THREE.Vector3(0,-1,0),feetFrom=new THREE.Vector3(),feetAt=new THREE.Vector3(),feetHit=new Hit();
