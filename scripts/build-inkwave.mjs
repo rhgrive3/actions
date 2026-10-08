@@ -242,6 +242,8 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/weapon-edgecases.mjs',
   // PR587 dependencies: defer only eager hints; retain the complete precache graph.
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
+  // #1040 pose capture runs inside fixed simulation ticks; retain its static imports and full precache.
+  'patches/splatoon3/runtime/actor-motion.mjs',
   'patches/splatoon3/runtime/weapons-collision.mjs',
   'patches/splatoon3/runtime/weapons-charger-flight.mjs',
   // PR868 combat and Actor rules; the importing runtime still requests these dependencies.
