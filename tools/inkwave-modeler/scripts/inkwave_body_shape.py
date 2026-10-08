@@ -435,6 +435,24 @@ def back_profile(cfg):
               round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def clean_manifold(bm):
+    """Loose edges and vertices go; at an edge with more than two faces the smallest extra faces go (Surface Deform
+    cannot bind to such a surface).  Returns the number of faces removed."""
+    import bmesh
+    bmesh.ops.delete(bm, geom=[e for e in bm.edges if not e.link_faces], context='EDGES')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    extra = set()
+    for e in bm.edges:
+        if len(e.link_faces) > 2:
+            fs = sorted(e.link_faces, key=lambda f: f.calc_area())
+            extra.update(fs[:len(fs) - 2])
+    if extra:
+        bmesh.ops.delete(bm, geom=list(extra), context='FACES_ONLY')
+        bmesh.ops.delete(bm, geom=[e for e in bm.edges if not e.link_faces], context='EDGES')
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    return len(extra)
+
+
 def consistent_normals(me):
     """Blender's Recalculate Normals (outside) on the whole mesh; if that turned most faces round (an open mesh can
     fool it), all faces are turned back, so only the few faces against their neighbours change."""
@@ -724,7 +742,8 @@ def neck_join(cfg):
         # to the head) cannot bind to those, so they are made into triangles
         ngons = [f for f in bm.faces if len(f.verts) > 4]
         bmesh.ops.triangulate(bm, faces=ngons)
-        print('BODY_SHAPE neck_join', obj.name, 'n-gons triangulated', len(ngons))
+        print('BODY_SHAPE neck_join', obj.name, 'n-gons triangulated', len(ngons), 'extra faces removed',
+              clean_manifold(bm))
         new = bpy.data.meshes.new(obj.data.name + '_joined')
         bm.to_mesh(new)
         bm.free()
