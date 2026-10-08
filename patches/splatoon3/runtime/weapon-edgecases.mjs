@@ -169,6 +169,14 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       if (source.sub) this.s3DualiesSubBuffered = true;
       if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
+    // The steady-state Dualies path has no gated sub edge or buffered release.
+    // Preserve the original input object instead of cloning it and allocating
+    // a Proxy/handler on every fixed gameplay tick. Keep the dynamic wrapper
+    // for genuine post-shot locks and sub-edge transitions.
+    if (input && !locked && !this.s3DualiesSubBuffered &&
+        !this.s3DualiesSubReleaseBuffered && !source.sub && !source.subReleased) {
+      return weaponUpdate.call(this, dt, input);
+    }
     let prepared = locked ? { ...source, sub: false, subReleased: false } : { ...source };
     if (!locked && this.s3DualiesSubReleaseBuffered) {
       prepared.sub = true; prepared.subReleased = true;
