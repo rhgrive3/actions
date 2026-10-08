@@ -541,6 +541,7 @@ jobs:
         run: |
           node --experimental-vm-modules --test patches/splatoon3/tests/seven-charge-swim-falloff.test.mjs patches/network-replication/tests/protection-adoption.test.mjs patches/splatoon3/tests/charger-launch-speed.test.mjs patches/splatoon3/tests/issue-620-charger-min-charge-paint.test.mjs patches/splatoon3/tests/issue-430-humanoid-hurtbox.test.mjs patches/splatoon3/tests/issue-525-form-collision-radius.test.mjs patches/splatoon3/tests/charger-fresh-start.test.mjs patches/splatoon3/tests/charger-store-359.test.mjs patches/splatoon3/tests/issue-1038-charger-low-ink.test.mjs patches/splatoon3/tests/issue-959-slosher-free-state.test.mjs patches/splatoon3/tests/issue-1098-stored-muzzle.test.mjs patches/splatoon3/tests/issue-982-charger-rumble.test.mjs patches/splatoon3/tests/charger-damage-curve.test.mjs
           node --experimental-vm-modules --test --test-name-pattern='splatling retained horizontal' patches/splatoon3/tests/weapon-edgecases.test.mjs
+          node --experimental-vm-modules --test --test-name-pattern='1007|1052|airborne Charger charge|407|420' patches/splatoon3/tests/charger-postshot-flight.test.mjs patches/splatoon3/tests/integration.test.mjs patches/splatoon3/tests/weapon-paint-inertia.test.mjs
       - name: Verify emitted gameplay and mural resource lifetime in both browsers
         run: |
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/seven-site

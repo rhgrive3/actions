@@ -1921,3 +1921,12 @@ anchor, Splatling jump-test lifetime/range fixtures, Dualies allocation/sub gate
 and generic floor-impact expectation. Existing adoption tests also assert an
 obsolete outer packet index; this change adds current-wire round-trip tests
 instead of repairing that inherited base work here. No merge is performed.
+
+
+## 2026-10-08 — PR #1173 Charger regression follow-up
+
+Compared exact heads `5e0af85cec522de53b128587a2fd7d2e961cf748` (#1172, run 37846910846) and `cad164b97b40ddbd48a9955cb4d0b330d1f0211f` (#1173, run 37851118110). The validate failure-name delta is exactly four tests: #1007/#1052 feet-versus-line paint, airborne Charger charge, #407 impact paint, and #420 line paint. No inherited failures were edited.
+
+The #961 linear charge owner moves the first legal release coordinate from the retired 1/6 to 8/60. Three native-projectile fixtures still passed 1/6 while expecting minimum-charge paint. They now sample 8/60 and the same independent min/mid/near-full/full endpoint fractions, retaining exact radius/spacing/nearest-footprint assertions. #971 preserves the first eight airborne charge frames at normal rate; the landing-continuation test now verifies (8 + 52/3)/60 progress after 60 charge frames, the remaining partial state after 34 grounded frames, and full charge on the 35th.
+
+Validation: all four targeted tests passed on #1172 before this change and on the corrected #1173 tree. The #1173 focused seven_claims CI job now explicitly runs all four. These are native/composed JavaScript checks, not new Nintendo hardware measurements. Sources, gear-free Splat Charger assumptions, full-charge threshold, and production damage/paint implementations are unchanged. Exact-head CI for the pushed follow-up is required; #1083/#1169/#401 remain untouched and no merge is authorized.
