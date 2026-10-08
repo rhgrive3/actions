@@ -1233,7 +1233,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code,
       '  _renderPortrait(req) {',
       `  _releasePortraitTargets(final = false) {
-    if (!final && (this._pflight || 0) > 0) { this._portraitReleasePending = true; return false; }
+    if (!final && ((this._pflight || 0) > 0 || this._pq?.some?.((x) => x.cbs?.length))) { this._portraitReleasePending = true; return false; }
     this._portraitReleasePending = false;
     this._prt?.dispose(); this._prt8?.dispose();
     this._prt = this._prt8 = null;
@@ -1251,6 +1251,10 @@ export function adaptSource(rel, code) {
       "    read.then((cv) => { this._pflight--; finish(cv); }, (e) => { this._pflight--; console.error('[showcase] portrait read', e); finish(null); });",
       "    const settle = () => { this._pflight--; if (this._portraitReleasePending && this._pflight === 0) this._releasePortraitTargets(false); };\n    read.then((cv) => { settle(); finish(cv); }, (e) => { settle(); console.error('[showcase] portrait read', e); finish(null); });",
       'portrait readback-safe release');
+    code = replaceOnce(code,
+      '    const job = this._pq.shift();\n    if (!job) return;',
+      '    const job = this._pq.shift();\n    if (!job) { if (this._portraitReleasePending && (this._pflight || 0) === 0) this._releasePortraitTargets(false); return; }',
+      'portrait empty-queue release');
     return code;
   }
 
