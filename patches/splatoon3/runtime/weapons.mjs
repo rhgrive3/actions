@@ -715,9 +715,11 @@ export function installWeapons(context, profile) {
         const retiredSequence = slosherSequence(retiredId);
         if (retiredSequence === null) return 'rejected'; // preserve fail-closed replay safety
         const retiredSource = JSON.stringify([owner, actorId]);
-        floors.set(retiredSource, Math.max(floors.get(retiredSource) || 0, retiredSequence));
+        const nextFloor = Math.max(floors.get(retiredSource) || 0, retiredSequence);
+        // A rejected late/alias packet must not evict a healthy live ledger.
+        if (retiredSource === source && sequence <= nextFloor) return 'rejected';
+        floors.set(retiredSource, nextFloor);
         groups.delete(retired);
-        if (sequence <= (floors.get(source) || 0)) return 'rejected';
       }
       group = new WeakMap(); groups.set(key, group);
     }
