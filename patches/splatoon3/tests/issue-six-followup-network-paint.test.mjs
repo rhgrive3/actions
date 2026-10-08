@@ -130,6 +130,36 @@ test('#201: late disconnect preserves stats/identity but cannot simulate, hit or
   assert.match(summary[1].players[0].name, /DISCONNECTED/);
 });
 
+test('#905 live owner-leave retires only the disconnected Storm, on host and peer, once', () => {
+  for (const host of [true, false]) {
+    const actor = fakeActor(41), other = fakeActor(42, 'connected');
+    const ownCloud = { owner: actor }, otherCloud = { owner: other };
+    const ownStorm = { owner: actor, kind: 'storm' };
+    const ownNormalBomb = { owner: actor, kind: 'bomb' };
+    const otherStorm = { owner: other, kind: 'storm' };
+    const released = [];
+    const G = { game: { hud: { banner() {} } }, projectiles: {
+      clouds: [ownCloud, otherCloud],
+      bombs: [ownStorm, ownNormalBomb, otherStorm],
+      _releaseCloud(c) { released.push(['cloud', c]); },
+      _releaseBomb(b) { released.push(['bomb', b]); },
+    } };
+    installDisconnectFidelity({ NetMatch: FakeNetMatch, G });
+    const members = new Map([['me', true], ['gone', true], ['connected', true]]);
+    const nm = new FakeNetMatch({ myId: 'me', hostId: host ? 'me' : 'connected', _members: members });
+    nm.bind(fakeMatch('playing', 75, [actor, other]));
+    nm.onLeave('gone', false);
+    assert.deepEqual(G.projectiles.clouds, [otherCloud], 'orphan Storm cloud no longer damages without turf authority');
+    assert.deepEqual(G.projectiles.bombs, [ownNormalBomb, otherStorm], 'only disconnected Storm devices retire');
+    assert.deepEqual(released, [['cloud', ownCloud], ['bomb', ownStorm]]);
+    assert.equal(actor.isBot, false, 'the current #201 no-bot disconnect policy is preserved');
+    assert.equal(actor.s3.disconnected, true);
+    assert.equal(actor.stats.turf, 12, 'historical contribution is preserved');
+    nm.onLeave('gone', false);
+    assert.equal(released.length, 2, 'duplicate leaves cannot double-release scene resources');
+  }
+});
+
 test('#201: first-minute disconnect starts 6s no-contest and bypasses normal result path', () => {
   const a = fakeActor(3);
   let ended = 0;
