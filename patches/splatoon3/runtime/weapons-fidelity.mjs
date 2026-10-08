@@ -347,10 +347,21 @@ function wallDropFallPaint(p, state, from, to) {
 }
 
 
+// The source JSON is sparse: default-valued spl__BulletBlasterBurstParam
+// members are omitted, not disabled. Do not infer zero from their absence.
+export const BLASTER_BURST_PARAM_DEFAULTS = Object.freeze({
+  SplashDropOn: true,
+  SplashDropPaintRadius: 3.2,
+  SplashPaintRadius: 2.0,
+});
+export function resolvedBlasterBurstParam(raw) {
+  if (!raw?.BlasterBurstParam) return null;
+  return { ...BLASTER_BURST_PARAM_DEFAULTS, ...raw.BlasterBurstParam };
+}
 export function blasterPaintContract(raw) {
   if (!raw || typeof raw !== 'object') return null;
   if (blasterPaintContracts.has(raw)) return blasterPaintContracts.get(raw);
-  const splash = raw.SplashPaintParam, wall = raw.SplashWallHitParam, burst = raw.BlasterBurstParam;
+  const splash = raw.SplashPaintParam, wall = raw.SplashWallHitParam, burst = resolvedBlasterBurstParam(raw);
   if (!splash || !wall?.SpawnParam || !wall?.WallDropMoveParam || !wall?.WallDropCollisionPaintParam ||
       !burst?.SplashWallDropMoveParam || !burst?.SplashWallDropPaintParam) return null;
   const x = burst.SplashRoundAxisXArray, y = burst.SplashRoundAxisYArray;
@@ -359,6 +370,7 @@ export function blasterPaintContract(raw) {
     wall.SpawnParam.FirstDistance, wall.SpawnParam.VelocityMinusYRate,
     wall.WallDropCollisionPaintParam.PaintRadiusShock, wall.WallDropCollisionPaintParam.PaintRadiusFall,
     burst.SplashDropPaintShotColHitRadius,
+    burst.SplashDropPaintRadius, burst.SplashPaintRadius,
     burst.SplashWallDropPaintParam.PaintRadiusShock,
     burst.SplashWallDropPaintParam.PaintRadiusFall,
     burst.SplashWallDropPaintParam.PaintRadiusGround,
@@ -380,6 +392,11 @@ export function blasterPaintContract(raw) {
       paint: wall.WallDropCollisionPaintParam,
     },
     burst: {
+      // Normal timed airburst (type-default fields), never the explicit
+      // shot-collision override below.
+      splashDropOn: burst.SplashDropOn,
+      splashDropPaintRadius: burst.SplashDropPaintRadius,
+      splashPaintRadius: burst.SplashPaintRadius,
       radius: burst.SplashDropPaintShotColHitRadius,
       axisX: x,
       axisY: y,
@@ -1716,10 +1733,46 @@ export function installWeaponsFidelity(context,profile) {
     context.emit('weapon:impact',{pos:hit.point.clone(),normal:p.vel.clone().normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});
   };
   Projectiles.prototype._blastBurst=function(p,point,victim){
-    if(!p.ghost)return blastBurst.call(this,p,point,victim);
-    const w=p.s3Weapon||WEAPONS.blaster;
-    context.G.fx?.explosion(point,p.owner.color,w.burstRadius);
-    context.G.audio?.play('blaster_boom',{pos:point,volume:.7});
+    if(p.ghost){
+      const w=p.s3Weapon||WEAPONS.blaster;
+      context.G.fx?.explosion(point,p.owner.color,w.burstRadius);
+      context.G.audio?.play('blaster_boom',{pos:point,volume:.7});
+      return;
+    }
+    const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon;
+    const c=w?.kind==='blaster' ? blasterPaintContract(rawWeapon(w)) : null;
+    // Only the unobstructed terminal explosion owns this normal burst paint.
+    // Shot/actor/terrain collisions keep their separate collision paint
+    // contract; special burst weapons must never inherit Blaster defaults.
+    if(!c?.burst?.splashDropOn || victim!=null || p.s3BurstCollisionHit)
+      return blastBurst.call(this,p,point,victim);
+    const paint=context.G.paint;
+    if(!paint?.splat || !context.G.physics?.raycast)
+      return blastBurst.call(this,p,point,victim);
+    // The public native burst emits one obsolete generic floor stamp.
+    // Suppress only that direct stamp, preserving FX, sound and hit authority.
+    const nativeSplat=paint.splat;
+    let suppressed=0;
+    paint.splat=function(...args){
+      if(suppressed++===0)return 0;
+      return nativeSplat.apply(this,args);
+    };
+    try{blastBurst.call(this,p,point,victim);}
+    finally{paint.splat=nativeSplat;}
+    // Resolve dedicated type-default splash-drop paint from the actual burst
+    // world position. The precise Nintendo stochastic drop placement remains
+    // a calibration target, not an invented source emission distribution.
+    const down=this._s3BurstDown||(this._s3BurstDown=new context.THREE.Vector3(0,-1,0));
+    const start=this._s3BurstStart||(this._s3BurstStart=new context.THREE.Vector3());
+    start.copy(point); start.y+=0.2;
+    const hit=this._s3BurstPaintHit||(this._s3BurstPaintHit=new context.Hit());
+    const g=context.G.physics.raycast(start,down,3.5,hit);
+    if(g.hit && !p.ghost){
+      const stamp=this._s3BurstPaintPoint||(this._s3BurstPaintPoint=new context.THREE.Vector3());
+      stamp.copy(g.point).addScaledVector(g.normal,0.1);
+      const area=nativeSplat.call(paint,stamp,c.burst.splashDropPaintRadius,p.team,{seed:p.seed??0});
+      p.owner?.addTurf?.(area);
+    }
   };
   const nativeImpact=Projectiles.prototype._impact;
   Projectiles.prototype._impact=function(p,hit){
