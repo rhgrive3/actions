@@ -73,6 +73,53 @@ export function rollerStickActive(a) {
   return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;
 }
 
+// #1122: authoritative lowered-drum contact. The 0.75 forward offset and
+// 0.4/1.4 drum dimensions are existing/pinned values above; vertical aim rotates
+// that offset in 3D instead of inventing an angle→height tuning coefficient.
+function segmentDistanceSq(p1, q1, p2, q2) {
+  const ux=q1.x-p1.x, uy=q1.y-p1.y, uz=q1.z-p1.z;
+  const vx=q2.x-p2.x, vy=q2.y-p2.y, vz=q2.z-p2.z;
+  const wx=p1.x-p2.x, wy=p1.y-p2.y, wz=p1.z-p2.z;
+  const a=ux*ux+uy*uy+uz*uz, b=ux*vx+uy*vy+uz*vz, cc=vx*vx+vy*vy+vz*vz;
+  const d=ux*wx+uy*wy+uz*wz, e=vx*wx+vy*wy+vz*wz, D=a*cc-b*b;
+  let sN, sD=D, tN, tD=D;
+  if (D < 1e-12) { sN=0; sD=1; tN=e; tD=cc; }
+  else {
+    sN=b*e-cc*d; tN=a*e-b*d;
+    if (sN<0) { sN=0; tN=e; tD=cc; }
+    else if (sN>sD) { sN=sD; tN=e+b; tD=cc; }
+  }
+  if (tN<0) {
+    tN=0;
+    if (-d<0) sN=0; else if (-d>a) sN=sD; else { sN=-d; sD=a; }
+  } else if (tN>tD) {
+    tN=tD;
+    if (-d+b<0) sN=0; else if (-d+b>a) sN=sD; else { sN=-d+b; sD=a; }
+  }
+  const sc=Math.abs(sN)<1e-12?0:sN/sD, tc=Math.abs(tN)<1e-12?0:tN/tD;
+  const dx=wx+sc*ux-tc*vx, dy=wy+sc*uy-tc*vy, dz=wz+sc*uz-tc*vz;
+  return dx*dx+dy*dy+dz*dz;
+}
+
+export function rollerContactCandidate(actor, target, weapon, player) {
+  if (!actor?.pos || !target?.pos || !player) return false;
+  const yaw=Number.isFinite(actor.yaw)?actor.yaw:0;
+  const pitch=Number.isFinite(actor.aimPitch)?actor.aimPitch:0;
+  const fx=Math.sin(yaw), fz=Math.cos(yaw), rx=fz, rz=-fx;
+  const cp=Math.cos(pitch), sp=Math.sin(pitch);
+  const cx=actor.pos.x+fx*DRUM_FORWARD*cp;
+  const cy=actor.pos.y+ROLLER_BODY_RADIUS+sp*DRUM_FORWARD;
+  const cz=actor.pos.z+fz*DRUM_FORWARD*cp;
+  const half=Number.isFinite(weapon?.rollWidth) ? Math.max(0, weapon.rollWidth/2) : ROLLER_BODY_HALF_WIDTH;
+  const d0={x:cx-rx*half,y:cy,z:cz-rz*half}, d1={x:cx+rx*half,y:cy,z:cz+rz*half};
+  const tr=Number.isFinite(player.radius)?player.radius:0.35;
+  const h=target.form==='squid' ? player.squidHeight : player.height;
+  const low=target.pos.y+Math.min(tr,h/2), high=target.pos.y+Math.max(Math.min(tr,h/2),h-tr);
+  const t0={x:target.pos.x,y:low,z:target.pos.z}, t1={x:target.pos.x,y:high,z:target.pos.z};
+  const rr=ROLLER_BODY_RADIUS+tr;
+  return segmentDistanceSq(d0,d1,t0,t1) <= rr*rr+CONTACT_EPS;
+}
+
 function rollerCapsuleTouchesBlock(start, delta, block, scratch) {
   const axes = block.axes, center = block.center, half = block.half;
   const p0x = (start.x - center.x) * axes[0].x + (start.y - center.y) * axes[0].y + (start.z - center.z) * axes[0].z;
