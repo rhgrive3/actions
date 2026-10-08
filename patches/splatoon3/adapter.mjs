@@ -111,6 +111,14 @@ export function adaptSource(rel, code) {
       '    const cov = this.s3FinishCoverage ? [...this.s3FinishCoverage] : G.paint.coverage();', 'Turf judge deadline coverage');
     code = replaceOnce(code, "          if (!this.follower) this.setState('finish');",
       "          if (!this.follower) requestTurfFinish(this); else if (!this.s3DeadlineStep) blockExpiredGuestInput(this);", 'guest local deadline input cancellation');
+    // #923: the turf finish/judge state machine and neutral bot intents still
+    // advance. Only Actor combat/physics and the pairwise soft-push are skipped.
+    // simulateMatchInterval continues ticking projectiles and their distinct
+    // post-time special terminal rules; never clear the flight queue at TIME UP.
+    code = replaceOnce(code,
+      '    const nm = G.netm;\n    for (const a of this.actors) { if (a.remote && nm) nm.applyRemote(a, dt); else a.update(dt); }',
+      '    if (!this.attract && !this.bossMode && (this.mode == null || this.mode === \'turf\') && (this.state === \'finish\' || this.state === \'judge\')) return;\n    const nm = G.netm;\n    for (const a of this.actors) { if (a.remote && nm) nm.applyRemote(a, dt); else a.update(dt); }',
+      'post-TIME-UP turf actors stop physics while live projectiles continue');
     code = replaceOnce(code, '    if (!this.controller) return;',
       '    if (blockExpiredGuestInput(this) || !this.controller) return;', 'guest deadline controller admission');
     code = replaceOnce(code,
