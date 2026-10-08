@@ -326,7 +326,15 @@ function removeDome(dome, reason) {
   return true;
 }
 
-function makeDome({ id, serial, owner, team, pos, remote }) {
+// Historical #1013 API name retained. Under #1051's corrected mapping this
+// curve belongs to the MaxHP-backed weak/device target (fieldHp), while the
+// outer barrier remains MaxFieldHP.
+export function bigBubblerCanopyHp(owner) {
+  const ap = owner?.s3?.modifiers?.specialPowerAP || 0;
+  return gearCurve(ap, raw.maxHp, raw.maxHpMid, raw.maxHpHigh);
+}
+
+function makeDome({ id, serial, owner, team, pos, remote, hpMax = raw.maxFieldHp, fieldHpMax = raw.maxHp }) {
   return {
     id, serial, owner, team, pos, t: 0, remote: !!remote,
     color: new api.THREE.Color(api.G.teamColors?.[team] ?? 0xffffff),
@@ -352,7 +360,7 @@ function deploy(owner) {
   const serial = ++deploySerial;
   const dome = makeDome({
     id: `${owner.team}:${bigBubblerOwnerId(owner) ?? 'unknown'}:${serial}`,
-    serial, owner, team: owner.team, pos, remote: false, hpMax: bigBubblerCanopyHp(owner),
+    serial, owner, team: owner.team, pos, remote: false, fieldHpMax: bigBubblerCanopyHp(owner),
   });
   buildVisual(dome);
   domes.push(dome);
@@ -388,7 +396,7 @@ function syncVisual(dome) {
 function damageDome(dome, target, amount, cause = 'shot') {
   if (dome.dead || !(amount > 0)) return 0;
   const weak = target === 'field'; // historical wire name: exposed launcher/device
-  const max = weak ? raw.maxHp : raw.maxFieldHp;
+  const max = weak ? dome.fieldHpMax : dome.hpMax;
   if (weak) dome.fieldHp = Math.max(0, dome.fieldHp - amount);
   else dome.hp = Math.max(0, dome.hp - amount);
   // #1051: shell and weak-point damage are alternate ways to advance one
@@ -862,7 +870,7 @@ function replayDeploy(owner, payload) {
   if (!remember(key)) return ok('duplicate', { domeId: v.domeId });
   const dome = makeDome({
     id: v.domeId, serial: v.serial, owner: owner ?? null, team: v.team,
-    pos: new api.THREE.Vector3(v.pos[0], v.pos[1], v.pos[2]), remote: true, hpMax: Math.max(raw.maxHp, v.hp),
+    pos: new api.THREE.Vector3(v.pos[0], v.pos[1], v.pos[2]), remote: true, hpMax: Math.max(raw.maxFieldHp, v.hp), fieldHpMax: Math.max(raw.maxHp, v.fieldHp),
   });
   // The transmitted state is authoritative for the IMAGE only.
   dome.t = v.t;
@@ -915,7 +923,7 @@ function replayHit(owner, payload) {
   if (weak) dome.fieldHp = Math.max(0, dome.fieldHp - v.amount);
   else dome.hp = Math.max(0, dome.hp - v.amount);
   dome.damageProgress = clamp((dome.damageProgress || 0) +
-    v.amount / Math.max(1e-10, weak ? raw.maxHp : raw.maxFieldHp), 0, 1);
+    v.amount / Math.max(1e-10, weak ? dome.fieldHpMax : dome.hpMax), 0, 1);
   return ok('displayed', { domeId: v.domeId, eventId: v.eventId,
     hp: dome.hp, fieldHp: dome.fieldHp, damageProgress: dome.damageProgress });
 }
