@@ -1685,3 +1685,24 @@ Pinned Chromium primary sources: [Windows product mapping at revision 413fd160](
 **INKWAVE implementation and reproduction.** `patches/splatoon3/runtime/clock.mjs` captures actor state before the composed actor update; `patches/splatoon3/runtime/weapons-fidelity.mjs::fidelityProjectileTargets()` sweeps continuous actor and projectile motion over that shared fixed tick. `patches/splatoon3/runtime/actor-motion.mjs` now rejects intervals when an actor lifecycle epoch changes or the real remote sample's `tp` identity changes, then retains the previous end-pose collision test. There is no distance threshold. Reproduce with `node --experimental-vm-modules --test patches/splatoon3/tests/issue-1040-time-coherent-projectiles.test.mjs`: the tests exercise the installed six-adapter composition through `runSimulation`, real local `Actor.update` for Dualies dodge and Splatling movement, all four admitted round families, and continuous remote samples at 24/30/60/120 Hz plus a simulated render hitch. The short remote teleport is a test fixture identity change, not a Nintendo movement value.
 
 **Player impact and confirmation.** Continuous actor motion is tested at its contact time so a target that enters the path after a round passes is not hit and a target that occupies the path at pass time is not missed. A marked spawn or NetMatch teleport is not swept through intermediate positions; the target's current pose keeps the legacy static fallback. Focused full-composition confirmation: 11/11 pass, including once-only damage, nearest-target selection, terrain ordering, local and remote cases, four render cadences, and the hitch control. Charger hitscan, bombs, special blasts, and reticle targeting remain separate collision roots and are not covered by this flight-projectile comparison. Fixture velocities and relocation distances are internal test data only; they do not assert Splatoon 3 numeric values.
+
+## 2026-10-08 — #358 roller foot-paint current reconciliation (test-only)
+
+Reference: Splatoon 3 Ver. 11.3.0 Splat Roller, no gear effects. INKWAVE scope is
+`patches/splatoon3/tests/roller-foot-paint-composition.test.mjs` through the complete
+six-adapter production composition plus installed native runtime. Raw `inkwave-public`
+alone is not a reproduction. Parent evidence `EV/C358-current-native-root-cl3-r576.json`
+accepts the actual root: only the vertical projectile-physics hash differs
+(`647ddc60...` vs stale `e0845aaa...`); grounded and airborne payloads stay invariant,
+horizontal golden unchanged, height 2.21 source bound still yields no paint.
+
+Change (test-only, no Roller runtime tuning): the vertical assertion no longer compares
+against the stale a628-tuned golden. It runs one independent SAME current-production
+grounded control (`y=0`, grounded) and requires airborne `y=1.8` physics to equal that
+control field-for-field, with height-origin normalization `[1.8, 1.3, 1.3, 0.3, 0.3]`,
+unchanged seed/counts/RNG (`30` draws)/life/velocity/damage/radii, and intentional
+`trailEvery=0` primary-trail-owner expectation (`roller-vertical-paint.mjs:23`, #423;
+legacy `1.8` stays disabled to prevent double paint). Stale hashes remain only as
+provenance comments. Owner/proxy release-paint replay still runs once. Neighboring
+`issue-423` (4 fail) and `issue-847` final b34 case (missing `rollerContactCandidate`
+export) fail identically before this edit and are out of scope.

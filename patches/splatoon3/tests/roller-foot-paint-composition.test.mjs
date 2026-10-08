@@ -175,8 +175,39 @@ function projectilePhysicsDigest(projectiles) {
 
 const mainSnapshots = {
   horizontal: { randomDraws: 124, sha256: '860b86cdb44a3383c84d960bfa43caea55df8534f394265bd7dcac48682b3040', physicsSha256: 'dabc60d166032b840ed07cf05e4fce3dcd0bc157d4bf7527b688aa956f532e49' },
-  vertical: { randomDraws: 30, sha256: '12ce562aae09f7f292c207211671ae352298f49ed7c0edd6464ef9ad09126bfc', physicsSha256: 'e0845aaa2a4d5ca278ba35c330c57cb234ad7be94cb2cf4749f3c93c8173debf' },
+  // Vertical provenance (stale a628 golden, kept for audit only): grounded y=0 full
+  // '12ce562aae09f7f292c207211671ae352298f49ed7c0edd6464ef9ad09126bfc' and physics
+  // 'e0845aaa2a4d5ca278ba35c330c57cb234ad7be94cb2cf4749f3c93c8173debf'. Current main
+  // intentionally emits trailEvery=0 via the #423 primary vertical-paint owner
+  // (patches/splatoon3/runtime/roller-vertical-paint.mjs:23) instead of the legacy
+  // random trail (1.8), so physics payloads differ only there. Independent SAME
+  // current-production grounded control below replaces the stale golden.
+  vertical: { randomDraws: 30, sha256: null, physicsSha256: null },
 };
+
+const verticalGroundControl = { digest: null, physics: null, randomDraws: null };
+
+async function currentVerticalGroundControl() {
+  if (verticalGroundControl.digest) return verticalGroundControl;
+  const f = await setup({ y: 0, grounded: true, vertical: true });
+  f.resetRandom();
+  f.projectiles.fireFlick(f.actor, f.actor.weapon);
+  assert.equal(f.projectiles.list.length, 5, 'independent grounded control keeps 5 release units');
+  assert.equal(f.paintCalls.length, 1, 'independent grounded control keeps one release footprint');
+  assert.equal(f.paintCalls[0].radius, 1.462, 'independent grounded control keeps source radius');
+  assert.equal(f.randomCount(), mainSnapshots.vertical.randomDraws, 'grounded control consumes the same draws');
+  assert.ok(f.projectiles.list.every(p => p.trailEvery === 0),
+    'primary vertical-paint owner disables the legacy random trail (no double paint)');
+  verticalGroundControl.digest = crypto.createHash('sha256')
+    .update(JSON.stringify(projectileSnapshot(f.projectiles))).digest('hex');
+  verticalGroundControl.physics = projectileSnapshot(f.projectiles).map(p => ({
+    unit: p.unit, mode: p.mode, vertical: p.vertical, vel: p.vel, seed: p.seed,
+    life: p.life, straight: p.straight, damage: p.damage, dmgFar: p.dmgFar,
+    radius: p.radius, size: p.size, grav: p.grav, drag: p.drag, trailEvery: p.trailEvery,
+  }));
+  verticalGroundControl.randomDraws = f.randomCount();
+  return verticalGroundControl;
+}
 
 async function assertReleaseShape(mode, y, grounded) {
   const f = await setup({ y, grounded, vertical: mode === 'vertical' });
@@ -199,12 +230,23 @@ async function assertReleaseShape(mode, y, grounded) {
   assert.equal(net.out.filter(e => e[1] === 's').length, 1, 'owner records one authoritative paint event');
   assert.equal(net.out.filter(e => e[1] === 'p').length, expected.count, 'projectile packet count remains unchanged');
   assert.equal(f.randomCount(), mainSnapshots[mode].randomDraws, 'foot paint consumes no additional random draws');
-  if (actor.pos.y === 0) {
+  if (mode === 'horizontal' && actor.pos.y === 0) {
     const digest = crypto.createHash('sha256').update(JSON.stringify(projectileSnapshot(projectiles))).digest('hex');
     assert.equal(digest, mainSnapshots[mode].sha256, 'launch transform and full projectile payload match main');
-  } else {
-    assert.equal(projectilePhysicsDigest(projectiles), mainSnapshots[mode].physicsSha256,
+  } else if (mode === 'vertical') {
+    // Independent SAME current-production grounded control (no copied golden):
+    // airborne physics must equal the current grounded release payload field-for-field.
+    const control = await currentVerticalGroundControl();
+    const controlDigest = crypto.createHash('sha256').update(JSON.stringify(control.physics)).digest('hex');
+    assert.equal(projectilePhysicsDigest(projectiles), controlDigest,
       'airborne height does not change seed, velocity, lifetime, damage or projectile payload');
+    assert.deepEqual(projectileSnapshot(projectiles).map(p => ({
+      unit: p.unit, mode: p.mode, vertical: p.vertical, vel: p.vel, seed: p.seed,
+      life: p.life, straight: p.straight, damage: p.damage, dmgFar: p.dmgFar,
+      radius: p.radius, size: p.size, grav: p.grav, drag: p.drag, trailEvery: p.trailEvery,
+    })), control.physics, 'grounded and airborne physics payloads stay field-identical');
+    assert.ok(projectiles.list.every(p => p.trailEvery === 0),
+      'primary vertical-paint owner keeps legacy random trail disabled (no double paint)');
     const normalizedY = Array.from(projectileSnapshot(projectiles, actor.pos.y), p => Number(p.start[1].toFixed(6)));
     assert.deepEqual(normalizedY, [1.8, 1.3, 1.3, 0.3, 0.3], 'airborne release shifts launch origins only by actor height');
   }
