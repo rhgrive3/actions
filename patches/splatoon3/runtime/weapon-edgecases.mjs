@@ -178,7 +178,11 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       return weaponUpdate.call(this, dt, input);
     }
     let prepared = locked ? { ...source, sub: false, subReleased: false } : { ...source };
-    if (!locked && this.s3DualiesSubReleaseBuffered) {
+    // A sub pressed during the lock and released on the exact unlock tick
+    // has not yet populated SubReleaseBuffered. Replay its press and release
+    // together; otherwise the native runner sees only release and drops the bomb.
+    if (!locked && (this.s3DualiesSubReleaseBuffered ||
+        (this.s3DualiesSubBuffered && source.subReleased))) {
       prepared.sub = true; prepared.subReleased = true;
       this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
     }
