@@ -18,6 +18,7 @@ import { HUD } from '../../../src/ui/hud.js';
 import { SUB_ICONS, SPECIAL_ICONS } from '../../../src/ui/ui-icons.js';
 import { ShadowCache } from '../../../src/core/shadowcache.js';
 import { installMovement } from './movement.mjs';
+import { installNormalJumpHold } from './normal-jump-hold.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
 import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
@@ -91,6 +92,7 @@ export function install(profile) {
   installKitNetwork(api);
   installRollerMotion(api, profile);
   installMovement(api, profile);
+  installNormalJumpHold(api, profile);
   installMovementMotion(api, profile);
   installGear(api, profile);
   installFlow(api, profile);
