@@ -486,6 +486,9 @@ export function adaptSource(rel, code) {
       void to;
     }),`,
       'exact recipient Super Jump target event');
+    code = replaceOnce(code, '      this._chargeC = C;',
+      '      r.innerHTML += \'<i class="iw-ret__reach-marker is-current" aria-hidden="true"></i><i class="iw-ret__reach-marker is-full-range" aria-hidden="true"></i>\';\n      this._chargeC = C;',
+      'Charger dual endpoint markers');
     code = adaptJuddResult(rel, code, replaceOnce);
     code = replaceOnce(code,
       "  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
@@ -698,6 +701,16 @@ export function adaptSource(rel, code) {
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
+    // #1060: never apply generic floor paint on an airburst; contact/flight
+    // and timed Blaster splash have their own independent paint owners.
+    code = replaceOnce(code,
+      "    // paint under the burst\n    const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n",
+      "", 'Blaster timed burst generic floor paint');
+    // #1043: substitute only the normal Blaster's one-point LOS gate.
+    code = replaceOnce(code,
+      '      if (!G.physics.los(c, _v)) continue;',
+      "      if (!(p.s3SpecialWeapon ? G.physics.los(c, _v) : blasterSplashExposed(G.physics, c, e, PLAYER))) continue;",
+      'Blaster capsule edge exposure');
     code = replaceOnce(code,
       '      if (d > kitBombRadius(SUB, b, s.radius)) continue;',
       '      if (d > Math.max(kitBombRadius(SUB, b, s.radius), b.s3Sub ? 0 : (s.knockback?.distance ?? 0))) continue;',
@@ -710,7 +723,7 @@ export function adaptSource(rel, code) {
       '        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);',
       '        applySplatBombSurfaceResponse(b, hit.normal);', 'Splat Bomb sourced ground resistance');
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
-    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\n` + code;
+    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap, blasterSplashExposed } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
@@ -1004,6 +1017,14 @@ export function adaptSource(rel, code) {
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
       'authoritative Turf winner Game to HUD');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
+    code = replaceOnce(code,
+      "    const p = this.profile;\n    const turf = Math.round(local.stats.turf);",
+      "    const p = this.profile;\n    const privateBattle = !!(G.netm || (G.net && (G.net.state === 'match' || G.net.state === 'starting')));\n    const turf = Math.round(local.stats.turf);",
+      'Private Battle no progression admission');
+    code = replaceOnce(code,
+      "    p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n    while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n    saveJSON('inkwave.profile', p);",
+      "    if (!privateBattle) {\n      p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n      while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n      saveJSON('inkwave.profile', p);\n    }",
+      'Private Battle progression persistence');
     // Issue #605: the turf intro starts the dedicated Opening cue instead of silence.
     // The boss intro keeps its own _playMusic(null); mode is guarded for a boss match
     // without a resolved entity. Practice Range / attract never reach _intro().
@@ -1031,6 +1052,10 @@ export function adaptSource(rel, code) {
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },",
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H), muzzleBlock },",
       'S3 ShotGuideFrame and muzzle-contact HUD projection');
+    code = replaceOnce(code,
+      'muzzleBlock },',
+      "muzzleBlock, chargerCurrent: m.controller?.enabled && m.controller?.chargerReachVisible && m.local?.alive ? { x: m.controller.chargerCurrentReach.x, y: m.controller.chargerCurrentReach.y, z: m.controller.chargerCurrentReach.z } : null, chargerFull: m.controller?.enabled && m.controller?.chargerReachVisible && m.local?.alive ? { x: m.controller.chargerFullReach.x, y: m.controller.chargerFullReach.y, z: m.controller.chargerFullReach.z } : null },",
+      'Charger dual endpoint HudFrame bridge');
     {
       const rawEnemyReveal = "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;";
       const scoreHudEnemyReveal = "          if (!mapActorVisible(o, a, PLAYER.hp, G.time)) continue;";
