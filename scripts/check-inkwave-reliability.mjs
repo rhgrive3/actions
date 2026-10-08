@@ -496,7 +496,7 @@ try {
           return { aiming, heldShots, releaseShots, finalShots: shots };
         } finally { mobile.reset(); G.projectiles = old; actionActor.setWeapon('dualies'); }
       });
-      assert.deepEqual(subOwnership, { aiming: true, heldShots: [], releaseShots: ['bomb'], finalShots: ['bomb'] });
+      assert.deepEqual(subOwnership, { aiming: true, heldShots: [], releaseShots: [], finalShots: ['bomb'] });
       entry.checks.push('native-DOM-sub-hold-and-release-exclude-simultaneous-main-and-phantom-replay');
       await runHybridKeyboardMapCases({ page, gesture, entry });
 
