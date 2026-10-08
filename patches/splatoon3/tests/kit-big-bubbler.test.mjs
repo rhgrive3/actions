@@ -120,7 +120,7 @@ test('the pinned Hermit2DSmooth curves evaluate through their pinned endpoints',
   }
 });
 
-test('#1013 Big Bubbler canopy durability follows Special Power Up AP while field HP stays independent', async () => {
+test('#1013 MaxHP-backed target durability follows Special Power Up AP while outer MaxFieldHP stays independent', async () => {
   const { f } = await composed();
   assert.equal(bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 0 } } }), BIG_BUBBLER_RAW.maxHp);
   assert.equal(bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 57 } } }), BIG_BUBBLER_RAW.maxHpHigh);
@@ -130,9 +130,10 @@ test('#1013 Big Bubbler canopy durability follows Special Power Up AP while fiel
   level(f);
   const a = roller(f); a.s3.modifiers.specialPowerAP = 57; f.G.actors = [a]; activate(f, a);
   const dome = bigBubblerDomes()[0];
-  assert.equal(dome.hp, BIG_BUBBLER_RAW.maxHpHigh);
-  assert.equal(dome.hpMax, BIG_BUBBLER_RAW.maxHpHigh);
-  assert.equal(dome.fieldHp, BIG_BUBBLER_RAW.maxFieldHp, 'emitter HP is not scaled by Special Power Up');
+  assert.equal(dome.hp, BIG_BUBBLER_RAW.maxFieldHp, 'outer barrier keeps MaxFieldHP ownership from #1051');
+  assert.equal(dome.hpMax, BIG_BUBBLER_RAW.maxFieldHp);
+  assert.equal(dome.fieldHp, BIG_BUBBLER_RAW.maxHpHigh, 'MaxHP-backed target receives Special Power Up');
+  assert.equal(dome.fieldHpMax, BIG_BUBBLER_RAW.maxHpHigh);
 });
 
 test('activating the special deploys a stationary dome with the pinned durability', async () => {
