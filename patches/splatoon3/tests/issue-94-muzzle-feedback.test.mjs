@@ -199,3 +199,25 @@ test('#94 stationary Shooter HUD reuses first-hit sweep, invalidating on aim, st
     assert.equal(solved, initial + 4, 'block collection mutation invalidates immediately');
   } finally { projectiles._ballistic = original; }
 });
+
+
+test('#94 open-field fixed aim bounds swept broadphase cost at 60 Hz', async () => {
+  const { api, actor, projectiles } = await nearCoverScene();
+  api.G.level.blocks.length = 0;
+  const level = api.G.level, nativeQuery = level.queryBlocks;
+  let broadphaseQueries = 0;
+  level.queryBlocks = function (...args) {
+    broadphaseQueries++;
+    return nativeQuery.apply(this, args);
+  };
+  try {
+    for (let frame = 0; frame < 120; frame++) {
+      api.G.time = frame / 60;
+      assert.equal(projectiles.muzzleBlockFeedback(actor), null);
+    }
+    assert.ok(broadphaseQueries < 1600,
+      `idle Shooter preview must not run up to 72 field sweeps on every frame: ${broadphaseQueries} queries / 120 frames`);
+  } finally {
+    level.queryBlocks = nativeQuery;
+  }
+});
