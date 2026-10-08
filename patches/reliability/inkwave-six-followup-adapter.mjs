@@ -13,12 +13,11 @@ export function adaptSixFollowup(rel, code) {
     // replaced the original canStart/start guards before reliability runs.
     // Preserve the S3 host confirmation and ready rule while requiring 2
     // actual players in Turf; start() already calls canStart() after S3.
-    const hostGuard="    return !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));";
-    if (code.includes(hostGuard.replace('\\n', '\\n'))) {
-      const oldGuard=hostGuard.replace('\\n', '\\n');
-      code=once(code,oldGuard,
-        "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));".replace('\\n','\\n'),
-        '#1003 minimum composes with S3 host team confirmation');
+    const hostGuard="    return !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));";
+    if (code.includes(hostGuard)) {
+      code=once(code,hostGuard,
+        "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));",
+        '#1003 minimum composes with S3 host-team confirmation');
       if (!code.includes("    if (!this.isHost || this.state !== 'lobby' || !this.tr || !this.canStart()) return false;"))
         throw new Error('Six-followup adapter anchor mismatch: S3 start requires canStart');
       return code;
