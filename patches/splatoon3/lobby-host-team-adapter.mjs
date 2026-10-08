@@ -33,5 +33,25 @@ export function adaptHostTeams(rel, code, replaceOnce) {
       "    if (this.isHost) { this.tr.lock(false); this.lobby.teamsConfirmed=false;\n      for (const p of this.lobby.players) p.ready=false; this._broadcastLobby(); }",'new match requires reassignment');
     return code;
   }
+
+  if (rel==='src/ui/menus.js') {
+    patch("const sig = JSON.stringify([bossMode(), players().map((p) => [p.id, p.name, p.team, p.weapon, p.ready, p.host, p.you])]);",
+      "const sig = JSON.stringify([bossMode(), isHost(), !!lob.teamsConfirmed, players().map((p) => [p.id, p.name, p.team, p.weapon, p.ready, p.host, p.you])]);",'host roster refresh');
+    patch("        return row;\n      }));",
+      "        if (isHost() && !bossMode()) {\n          const assign = team => safeCall(() => net.assignTeam(p.id,team));\n          row.appendChild(h('span', { class: 'iw-lob__hostteams' },\n            h('button', { type: 'button', class: 'iw-lob__teamassign',\n              title: 'Assign ' + p.name + ' to Alpha', onclick: () => assign(0) }, 'A'),\n            h('button', { type: 'button', class: 'iw-lob__teamassign',\n              title: 'Assign ' + p.name + ' to Bravo', onclick: () => assign(1) }, 'B')));\n        }\n        return row;\n      }));",'assign each teammate from host roster');
+    patch("    const open = Array.from({ length: 8 }, (_, k) => {",
+      "    const confirmTeamsBtn = h('button', { class: 'iw-lob__teamconfirm', type: 'button',\n      onclick: () => { if (isHost() && !bossMode() && !S.launching) safeCall(() => net.confirmTeams()); }\n    }, 'CONFIRM TEAMS');\n    const open = Array.from({ length: 8 }, (_, k) => {",'host confirm control');
+    patch("top, status, side, touchRoster, bar, countdown, prompts);",
+      "top, status, side, touchRoster, confirmTeamsBtn, bar, countdown, prompts);",'show team confirm');
+    patch("      if (bossMode()) { restartAnim(teamRow, 'is-shake'); this._sfx('ui_error', 0.15); return; }",
+      "      if (bossMode() || !isHost() || v === 'auto') { restartAnim(teamRow, 'is-shake'); this._sfx('ui_error', 0.15); return; }",'team picker only host');
+    patch("      safeCall(() => net.setMe({ team: v }));",
+      "      safeCall(() => net.assignTeam(me.id,v));",'no guest team write');
+    patch("      const host = isHost();\n      el.classList.toggle('is-host', host);",
+      "      const host = isHost();\n      confirmTeamsBtn.style.display = host && !bossMode() ? '' : 'none';\n      confirmTeamsBtn.textContent = lob.teamsConfirmed ? 'TEAMS CONFIRMED — READY UP' : 'CONFIRM TEAMS';\n      el.classList.toggle('is-host', host);",'show host confirmation phase');
+    patch("      teamRow.classList.toggle('is-locked', bossMode());",
+      "      teamRow.classList.toggle('is-locked', bossMode() || !host);",'guest picker is locked');
+    return code;
+  }
   return code;
 }
