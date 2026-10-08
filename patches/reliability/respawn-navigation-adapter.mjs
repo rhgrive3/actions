@@ -69,6 +69,10 @@ const METHODS = `  canRequestMapJump() {
   }
 
   validMapJumpTarget(target) {
+    // #1153: a deployed friendly Big Bubbler is a valid receiver whose identity
+    // is the structure itself. It is never an actor in G.actors, so it is
+    // admitted on its own live-structure terms instead of the actor terms below.
+    if (target?.bubblerTarget === true) return !!(target.dome && !target.dome.dead && target.dome.team === this.a.team);
     if (target?.pos?.isVector3) return target !== this.a && target.team === this.a.team &&
       G.actors.includes(target) && target.alive && !target.superJumpState;
     return !!(target?.isVector3 && [target.x, target.y, target.z].every(Number.isFinite));
@@ -79,6 +83,18 @@ const METHODS = `  canRequestMapJump() {
     if (!this.validMapJumpTarget(target)) {
       if (this._respawnNavigationActive) this.pendingRespawnJump = null;
       return false;
+    }
+    // #1153: a deployed Big Bubbler receiver has no actor identity. While the
+    // local player is alive it launches immediately through the native Super
+    // Jump; otherwise the committed dome base is queued through the existing
+    // point path (the receiver identity is re-checked on the charge frame).
+    if (target?.bubblerTarget === true) {
+      if (this.a.alive) return this.a.superJump(target);
+      const ground = target.dome?.pos;
+      if (!ground) return false;
+      this._respawnNavigationOwner = this.input.navigationDevice ?? this.input.lastDevice;
+      this.pendingRespawnJump = { point: ground.clone() };
+      return true;
     }
     if (!this.a.alive || (this._respawnNavigationActive && !this.a.grounded)) {
       // A fresh explicit choice belongs to the device that made that choice.

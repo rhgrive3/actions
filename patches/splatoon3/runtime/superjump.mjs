@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { G } from '../../../src/core/ctx.js';
 import { PLAYER } from '../../../src/config.js';
+import { bubblerTargetLive, bubblerTargetGround } from './bubbler-jump-target.mjs';
 
 // Preserve the public game's existing human-form boundary, NOT a measured S3
 // frame value. Nintendo confirms pre-landing attacks but not their exact gate.
@@ -89,6 +90,16 @@ export function prepareSuperJump(a, dt) {
 }
 
 export function superJumpTarget(target, out) {
+  // #1153: a deployed Big Bubbler is a FIXED receiver, not an actor. Its
+  // committed landing point is the dome's own base (never the owner's live
+  // position), and it must still be a live friendly dome at admission.
+  if (target?.bubblerTarget === true) {
+    if (!bubblerTargetLive(target)) return false;
+    const ground = bubblerTargetGround(target);
+    if (!ground || !Number.isFinite(ground.x + ground.y + ground.z)) return false;
+    out.copy(ground);
+    return true;
+  }
   if (!target?.pos?.isVector3) {
     if (!target?.isVector3 || ![target.x, target.y, target.z].every(Number.isFinite)) return false;
     out.copy(target); return true;
