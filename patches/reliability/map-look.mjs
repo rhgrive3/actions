@@ -51,13 +51,18 @@ export function adaptMapLook(rel, code) {
     code = code.replace(yawPattern, '$1if (!mapUp) ' + yawMatches[0][0].trimStart());
   }
 
-  if (!code.includes('if (!mapUp) rig.pitch -= this.padLook.y')) {
-    const pitchPattern = /^([ \t]*)rig\.pitch -= this\.padLook\.y[^;]*;$/gm;
+  if (!code.includes('if (!mapUp) rig.pitch -= this.padLook.y') &&
+      !code.includes('if (!mapUp && !gyroActive) rig.pitch -= this.padLook.y')) {
+    const pitchPattern = /^([ \t]*)(?:if \(!gyroActive\) )?rig\.pitch -= this\.padLook\.y[^;]*;$/gm;
     const pitchMatches = [...code.matchAll(pitchPattern)];
     if (pitchMatches.length !== 1) {
       throw new Error(`INKWAVE reliability patch conflict (map look: map pitch suppression): expected exactly one padLook pitch line (${pitchMatches.length})`);
     }
-    code = code.replace(pitchPattern, '$1if (!mapUp) ' + pitchMatches[0][0].trimStart());
+    code = code.replace(pitchPattern, (line, indent) => {
+      const body = line.trimStart();
+      if (body.startsWith('if (!gyroActive) ')) return indent + body.replace('if (!gyroActive) ', 'if (!mapUp && !gyroActive) ');
+      return indent + 'if (!mapUp) ' + body;
+    });
   }
 
   return code;
