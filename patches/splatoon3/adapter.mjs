@@ -108,8 +108,14 @@ export function adaptSource(rel, code) {
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
   code = adaptAssistPresentation(rel, code, replaceOnce);
-  if (rel === 'src/config.js') return replaceOnce(code,
-    '  minimap: true,', '  minimap: false,', 'optional corner map default');
+  if (rel === 'src/config.js') {
+    code = replaceOnce(code,
+      '  gyroSens: 0,              // −5..+5, Splatoon 3 scale (0 = 132° of device turn per in-game 360°)',
+      '  gyroSens: 0,              // −5..+5; provisional public bridge ~1.8x at zero (S3 curve unverified)',
+      'gyro default sensitivity provenance');
+    return replaceOnce(code,
+      '  minimap: true,', '  minimap: false,', 'optional corner map default');
+  }
   if (rel === 'src/ui/menus.js') {
     code = replaceOnce(code,
       'const fnv = (str) => { let x = 2166136261;',
