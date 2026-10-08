@@ -38,8 +38,9 @@ function testElement(tag) {
   return el;
 }
 
-async function boot({ floor = true, extra = [] } = {}) {
-  const context = vm.createContext({ console, performance, URL, innerHeight: 720, innerWidth: 1280,
+async function boot({ floor = true, extra = [], wireClock = null } = {}) {
+  const context = vm.createContext({ console, performance: wireClock ? { now: () => wireClock.value } : performance,
+    URL, innerHeight: 720, innerWidth: 1280,
     screen: { width: 1280, height: 720, orientation: { angle: 0 } },
     document: { body: testElement('body'), documentElement: testElement('html'), createElement: tag => testElement(tag) } }), modules = new Map();
   const compose = (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
@@ -94,6 +95,66 @@ async function boot({ floor = true, extra = [] } = {}) {
 
 const track = f => { const deaths = []; f.on('splatted', e => deaths.push({ victim: e.victim, cause: e.cause })); return deaths; };
 const waterDeaths = (deaths, a) => deaths.filter(d => d.victim === a && d.cause === 'water');
+
+test('#1050 real NetMatch keeps proxy hazards visual-only and replays the owner water death once', async t => {
+  const wireClock = { value: 0 };
+  const f = await boot({ wireClock }); t.after(f.close);
+  const owner = f.make({ pos: [0, -1.46, 0], isLocal: true });
+  const proxy = f.make({ pos: [0, -1.46, 0] });
+  for (const a of [owner, proxy]) { a.nid = 17; a.owner = 'owner'; a._nearCamera = () => false; }
+  const members = new Set(['owner', 'viewer']);
+  const cfg = { id: 'issue-1050-owner-water', map: 'reef', difficulty: 'normal' };
+  const sent = [], echoed = [];
+  const sender = new f.NetMatch({ myId: 'owner', hostId: 'owner', isHost: true, _members: members,
+    tr: { broadcast: p => sent.push(JSON.parse(JSON.stringify(p))), sendTo() {} } }, cfg);
+  sender.bind({ actors: [owner], state: 'playing', time: 180, opts: {} });
+  const receiver = new f.NetMatch({ myId: 'viewer', hostId: 'owner', isHost: false, _members: members,
+    tr: { broadcast: p => echoed.push(JSON.parse(JSON.stringify(p))), sendTo() {} } }, cfg);
+  receiver.bind({ actors: [proxy], state: 'playing', time: 180, opts: {} });
+  t.after(() => { receiver.dispose(); sender.dispose(); });
+  const deaths = track(f);
+  f.G.netm = sender;
+  sender._sendTick();
+  const alivePacket = sent.at(-1);
+  f.G.netm = receiver;
+  receiver.onMessage('owner', alivePacket);
+  receiver._peer('owner').tr = alivePacket.ts;
+  receiver._sample(proxy, alivePacket.ts, STEP);
+  receiver.applyRemote(proxy, STEP);
+  assert.ok(proxy.pos.y < LETHAL_Y, 'proxy consumes the actual below-water owner position');
+  assert.equal(proxy.alive, true, 'remote presentation does not run the local hazard owner');
+  assert.equal(proxy.stats.deaths, 0);
+
+  wireClock.value += STEP * 1000;
+  f.G.netm = sender;
+  assert.equal(owner.superJump(new f.THREE.Vector3(10, 0, 0)), false);
+  sender._sendTick();
+  const deathPacket = sent.at(-1);
+  assert.equal(deathPacket.e.filter(e => e[1] === 'ev' && e[2] === 'splatted').length, 1);
+  assert.equal(owner.stats.deaths, 1);
+  assert.equal(waterDeaths(deaths, owner).length, 1);
+
+  f.G.netm = receiver;
+  receiver.onMessage('owner', deathPacket);
+  receiver._peer('owner').tr = deathPacket.ts;
+  receiver._playEvents();
+  assert.equal(proxy.alive, false);
+  assert.equal(proxy.stats.deaths, 1);
+  assert.equal(proxy.superJumpState, null);
+  receiver.onMessage('owner', deathPacket); // duplicated current packet
+  receiver.onMessage('owner', alivePacket); // late pre-death snapshot
+  receiver._playEvents();
+  receiver.applyRemote(proxy, STEP);
+  assert.equal(proxy.alive, false, 'late alive samples cannot resurrect the proxy');
+  assert.equal(proxy.stats.deaths, 1, 'duplicated packets cannot double the owner death');
+  receiver._sendTick();
+  assert.equal(echoed.at(-1).e?.some(e => e[1] === 'ev' && e[2] === 'splatted') ?? false, false,
+    'remote playback does not re-forward the authoritative death');
+  f.G.netm = sender;
+  f.tick(owner, 3);
+  assert.equal(owner.stats.deaths, 1);
+  assert.equal(waterDeaths(deaths, owner).length, 1);
+});
 
 test('#1050 lethal open-water admission commits the owner water splat exactly once and cannot start a jump', async t => {
   const f = await boot(); t.after(f.close);
@@ -236,7 +297,7 @@ test('#1050 dry low terrain below sea level and a normal jump stay unchanged', a
   assert.equal(b.grounded, true, 'the normal jump trajectory/landing is preserved');
 });
 
-test('#1050 outcomes hold at 30/60/120 Hz fixed-step rendering and for remote-owned actors', async t => {
+test('#1050 fixed-step outcomes hold at 30/60/120 Hz with direct Actor flag controls', async t => {
   for (const dt of [1 / 30, 1 / 60, 1 / 120]) {
     const f = await boot(); t.after(f.close);
     const deaths = track(f);
