@@ -212,6 +212,9 @@ export function installWeapons(context, profile) {
   // camera target. Use the launch ray as aimed; gravity acts on the bullet.
   Projectiles.prototype._ballistic = function (_from, direction) { return direction; };
   const reset = WeaponRunner.prototype.reset, busy = WeaponRunner.prototype.busy;
+  const dualiesBiasSourceEarly = profile.weaponsFidelityCompletion?.weapons?.dualies?.WeaponParam;
+  const DUALIES_BIAS_MIN_EARLY = Number.isFinite(dualiesBiasSourceEarly?.Stand_DegBiasMin)
+    ? dualiesBiasSourceEarly.Stand_DegBiasMin : 0.01;
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
@@ -230,6 +233,11 @@ export function installWeapons(context, profile) {
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
+    // #891: Dualies sustained-fire bias rest values; emission/recovery fields
+    // below are owned with the fireDualies/_dualies/_spreadDeg branch.
+    this.s3DualiesBias = DUALIES_BIAS_MIN_EARLY; this.s3DualiesBiasHold = 0;
+    this.s3DualiesBiasFrameAccumulator = 0; this.s3DualiesBiasGrounded = !!this.a?.grounded;
+    this.s3DualiesNormalEmissionCount = 0;
     return result;
   };
   WeaponRunner.prototype.busy = function () {
@@ -528,14 +536,140 @@ export function installWeapons(context, profile) {
     };
   }
   const fireDualies = Projectiles.prototype.fireDualies;
+  const DUALIES_RUNNER_EMISSION = Symbol.for('inkwave.s3.dualies-runner-emission.v1');
+  const DUALIES_STUB_EMISSION = '__inkwaveS3DualiesRunnerEmission';
+  const dualiesRunnerFlag = system => {
+    if (!system || (typeof system !== 'object' && typeof system !== 'function')) return null;
+    try {
+      if (Symbol.for('inkwave.s3.dualies-runner-emission.v1') in Object(system)) return 'symbol';
+    } catch { /* non-extensible stub: fall through to string key */ }
+    return 'string';
+  };
+  const setDualiesRunnerFlag = (system, on) => {
+    const mode = dualiesRunnerFlag(system);
+    if (mode === 'symbol') {
+      try {
+        system[DUALIES_RUNNER_EMISSION] = on;
+      } catch {
+        try {
+          system[DUALIES_STUB_EMISSION] = on;
+          return 'string';
+        } catch {
+          return null;
+        }
+      }
+    } else if (mode === 'string') {
+      try {
+        system[DUALIES_STUB_EMISSION] = on;
+      } catch {
+        return null;
+      }
+    }
+    return mode;
+  };
+  const hasDualiesRunnerFlag = system => {
+    if (!system || (typeof system !== 'object' && typeof system !== 'function')) return false;
+    try {
+      if (system[DUALIES_RUNNER_EMISSION]) return true;
+    } catch { /* ignore and try the string fallback */ }
+    try {
+      return !!system[DUALIES_STUB_EMISSION];
+    } catch {
+      return false;
+    }
+  };
   Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
-    const result = fireDualies.call(this, a, w, spreadDeg, hand);
-    if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
+    const runner = a?.weaponRunner;
+    // Direct fireDualies calls (tests, ghosts, tooling) keep the existing
+    // scalar sampler untouched: bias sampling and emission counting apply
+    // only to runner-driven normal emissions flagged via the wrapper below.
+    if (!hasDualiesRunnerFlag(this) || !runner) {
+      const result = fireDualies.call(this, a, w, spreadDeg, hand);
+      if (runner) runner.s3DualiesPostShot = 4 / 60;
+      return result;
+    }
+    const state = runner?.s3DualiesBiasState?.(w);
+    const turret = !!runner?.dodge || (runner?.lockT ?? 0) > 0 || !!runner?.s3Turret
+      || (runner?.s3DodgeShotPending ?? 0) > 1e-10;
+    const normalShot = state?.supported && w?.kind === 'dualies' && !turret && a?.form !== 'squid';
+    // Reuse the native cone sampler at the current outer endpoint. The separate
+    // Bernoulli bias chooses the inner aim (0°) or that existing envelope; it
+    // does not interpolate the envelope or invent a new angular curve.
+    const outerEndpoint = Number.isFinite(spreadDeg) ? spreadDeg : state?.outerEndpoint;
+    const resolved = normalShot ? (Math.random() < state.bias ? outerEndpoint : 0) : spreadDeg;
+    const result = fireDualies.call(this, a, w, resolved, hand);
+    if (runner) {
+      runner.s3DualiesPostShot = 4 / 60;
+      if (normalShot) {
+        // This callback is reached only after the native runner has admitted
+        // and emitted a round: empty clicks never arrive here, and squid-masked
+        // holds are excluded by normalShot, so success counting stays exact
+        // when gear or the Practice Range refills the tank between emissions.
+        runner.s3DualiesNormalEmissionCount = (runner.s3DualiesNormalEmissionCount || 0) + 1;
+        const cap = a.grounded ? DUALIES_BIAS_STAND_CAP : DUALIES_BIAS_JUMP_MAX;
+        if (runner.s3DualiesBias < cap) runner.s3DualiesBias = Math.min(cap, runner.s3DualiesBias + DUALIES_BIAS_STEP);
+        runner.s3DualiesBiasHold = DUALIES_BIAS_HOLD;
+        runner.s3DualiesBiasFrameAccumulator = 0;
+      }
+    }
     return result;
   };
   const dualies = WeaponRunner.prototype._dualies, spread = WeaponRunner.prototype._spreadDeg;
+  // #891: Splat Dualies sustained-fire accuracy is a sourced outer-reticle
+  // bias state, not the generic 4-step cone bloom. Only the pinned 11.3.0
+  // WeaponManeuverNormal probability boundaries are modelled: grounded minimum
+  // 0.01, +0.01 per successful normal emission, grounded cap 0.25, 5F hold
+  // after the last successful emission, then -0.005 per fixed frame, and the
+  // airborne shot bias endpoint 0.40. The angular envelope
+  // (spreadGround/spreadAir) and turret spreadLock stay untouched; the 25F-70F
+  // jump-envelope recovery belongs to #887 and is not modelled here.
+  const dualiesSource = profile.weaponsFidelityCompletion?.weapons?.dualies?.WeaponParam;
+  const DUALIES_BIAS_MIN = dualiesSource?.Stand_DegBiasMin;
+  const DUALIES_BIAS_STEP = dualiesSource?.Stand_DegBiasKf;
+  const DUALIES_BIAS_RECOVER = dualiesSource?.Stand_DegBiasDecrease;
+  // The pinned parameter record omits Stand_DegBiasMax; the 25% grounded cap
+  // and 5F recovery delay follow the Splat Dualies mechanics entry, not a
+  // Nintendo-published frame description.
+  const DUALIES_BIAS_STAND_CAP = 0.25, DUALIES_BIAS_JUMP_MAX = dualiesSource?.Jump_DegBiasMax;
+  const DUALIES_BIAS_HOLD = 5;
+  const dualiesBiasSupported = () => Number.isFinite(DUALIES_BIAS_MIN) && DUALIES_BIAS_MIN >= 0
+    && Number.isFinite(DUALIES_BIAS_STEP) && DUALIES_BIAS_STEP > 0
+    && Number.isFinite(DUALIES_BIAS_RECOVER) && DUALIES_BIAS_RECOVER > 0
+    && DUALIES_BIAS_STAND_CAP > DUALIES_BIAS_MIN
+    && Number.isFinite(DUALIES_BIAS_JUMP_MAX) && DUALIES_BIAS_JUMP_MAX >= DUALIES_BIAS_STAND_CAP;
+  const ensureDualiesBias = r => {
+    if (!Number.isFinite(r.s3DualiesBias)) r.s3DualiesBias = DUALIES_BIAS_MIN;
+    if (!Number.isFinite(r.s3DualiesBiasHold)) r.s3DualiesBiasHold = 0;
+    if (!Number.isFinite(r.s3DualiesBiasFrameAccumulator)) r.s3DualiesBiasFrameAccumulator = 0;
+    if (typeof r.s3DualiesBiasGrounded !== 'boolean') r.s3DualiesBiasGrounded = !!r.a?.grounded;
+    if (!Number.isFinite(r.s3DualiesNormalEmissionCount)) r.s3DualiesNormalEmissionCount = 0;
+  };
+  WeaponRunner.prototype.s3DualiesBiasState = function (w) {
+    if (!w || w.kind !== 'dualies' || !dualiesBiasSupported()) {
+      return { supported: false, bias: DUALIES_BIAS_MIN, hold: 0, innerEndpoint: 0, outerEndpoint: 0,
+        groundEnvelope: 0, airEnvelope: 0 };
+    }
+    ensureDualiesBias(this);
+    const groundEnvelope = w.spreadGround, airEnvelope = w.spreadAir;
+    const outerEndpoint = this.a?.grounded ? groundEnvelope : airEnvelope;
+    return { supported: true, bias: this.s3DualiesBias, hold: this.s3DualiesBiasHold,
+      innerEndpoint: 0, outerEndpoint, groundEnvelope, airEnvelope };
+  };
   WeaponRunner.prototype._dualies = function (dt, inp, w) {
-    const dodging = !!this.dodge;
+    if (w?.kind === 'dualies' && dualiesBiasSupported()) ensureDualiesBias(this);
+    if (w?.kind === 'dualies' && dualiesBiasSupported()) {
+      const grounded = !!this.a?.grounded;
+      // The pinned jump maximum is a probability endpoint. The separate
+      // 25F→70F angular-envelope recovery remains owned by #887.
+      if (!grounded && this.a?.form !== 'squid' && this.a?.intent?.fire) this.s3DualiesBias = DUALIES_BIAS_JUMP_MAX;
+      this.s3DualiesBiasGrounded = grounded;
+    }
+    const projectiles = G?.projectiles;
+    const flagMode = setDualiesRunnerFlag(projectiles, true);
+    let result;
+    let dodging = false;
+    try {
+      dodging = !!this.dodge;
     if (this.s3DodgeShotPending > 1e-10 && (!inp.fire || inp.sub || this.a.form === 'squid')) this.s3DodgeShotPending = 0;
     if (this.s3Turret && (!inp.fire || Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 && this.lockT <= 0 || this.a.form === 'squid' || inp.sub)) this.s3Turret = false;
     if (this.s3DodgeShotPending > 1e-10) {
@@ -550,8 +684,39 @@ export function installWeapons(context, profile) {
         }
       }
     }
-    const result = dualies.call(this, dt, inp,
+    result = dualies.call(this, dt, inp,
       this.s3Turret ? cachedWeaponOverrideConfig(dualiesLockConfigs, w, 'fireInterval', w.lockInterval) : w);
+    } finally {
+      if (flagMode === 'symbol') {
+        try {
+          projectiles[DUALIES_RUNNER_EMISSION] = false;
+        } catch {
+          try {
+            projectiles[DUALIES_STUB_EMISSION] = false;
+          } catch { /* stub ignores teardown */ }
+        }
+      } else if (flagMode === 'string') {
+        try {
+          projectiles[DUALIES_STUB_EMISSION] = false;
+        } catch { /* stub ignores teardown */ }
+      }
+    }
+    if (w?.kind === 'dualies' && dualiesBiasSupported()) {
+      ensureDualiesBias(this);
+      if (this.a?.intent?.fire) {
+        this.s3DualiesBiasFrameAccumulator = 0;
+      } else {
+        // `dt * 60` is reference-frame time. Carry fractional frames so 120Hz
+        // rendering advances the same 5F hold and 0.005/frame recovery as 30Hz.
+        this.s3DualiesBiasFrameAccumulator += Math.max(0, Number.isFinite(dt) ? dt * 60 : 0);
+        while (this.s3DualiesBiasFrameAccumulator >= 1 - 1e-9) {
+          this.s3DualiesBiasFrameAccumulator = Math.max(0, this.s3DualiesBiasFrameAccumulator - 1);
+          if (this.s3DualiesBiasHold > 0) this.s3DualiesBiasHold -= 1;
+          else this.s3DualiesBias = Math.max(DUALIES_BIAS_MIN, this.s3DualiesBias - DUALIES_BIAS_RECOVER);
+        }
+        this.s3DualiesBiasHold = Math.max(0, this.s3DualiesBiasHold);
+      }
+    }
     if (dodging && !this.dodge) {
       this.s3Turret = true;
       this.s3DodgeShotPending = 4 / 60;
@@ -577,7 +742,17 @@ export function installWeapons(context, profile) {
       const first = w.spreadFirst ?? .45;
       return base * (first + (1 - first) * this.bloom);
     }
-    return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
+    if (w.kind === 'dualies' && (this.s3Turret || this.lockT > 0)) return w.spreadLock;
+    // HUD/main.js renders weaponRunner.spread. Keep it at the sourced outer
+    // envelope endpoint; the stochastic bias is a separate probability state.
+    if (w.kind === 'dualies' && dualiesBiasSupported()) {
+      ensureDualiesBias(this);
+      if (!this.dodge && !this.s3Turret) {
+        const state = this.s3DualiesBiasState(w);
+        if (state.supported) return state.outerEndpoint;
+      }
+    }
+    return spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
   Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {
