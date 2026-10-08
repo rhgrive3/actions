@@ -27,6 +27,7 @@
 | `runtime/dualies-motion.mjs` | マニューバーのスライドと直後の構え |
 | `runtime/roller.mjs` | ローラーの縦振り・横振り、振り下ろしと回復を射撃時刻へ同期 |
 | `runtime/roller-model.mjs` | ローラーのドラムの幅・直径とヨーク（見た目だけ。塗り・当たりは不変） |
+| `runtime/roller-paint.mjs` | ローラーの転がり塗りを実際の移動速度で拡幅する。本体の帯幅と接触は不変、床のみのサイド飛沫が速度で外へ出る（#649） |
 | `runtime/roller-detail-motion.mjs` | 横振りの巻き込み方向と、実際の攻撃終了後の姿勢 |
 | `runtime/hit-spawn-motion.mjs` | 被弾・復活の表示と操作復帰に残る姿勢の補正 |
 | `runtime/idle-motion.mjs`, `runtime/emotes-motion.mjs` | 待機の身振り、勝敗・メニューの姿勢と中断 |

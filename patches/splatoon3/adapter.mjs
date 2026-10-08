@@ -150,6 +150,17 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '  _emitGrowth(g, tn, dT, dripOnly) {', '  _emitGrowth(g, tn, dT, dripOnly) {', 'paint growth submission');
     code = replaceOnce(code, '  _pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, dripOnly) {', '  _pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, dripOnly) {', 'paint quad submission');
     code = replaceOnce(code, 'this.growing.push(g);', 'this.growing.push(g);', 'paint deferred growth record');
+    // #649: Splatoon 3 paints walls with the roller body and floor with the side
+    // splashes that grow with roll speed. `floorOnly` is opt-in per splat call and
+    // is carried on the network record, so a remote replay marks the same faces.
+    code = replaceOnce(code,
+      '    const seed = opts.seed ?? Math.random();\n    const cosmetic = !!opts.cosmetic;',
+      '    const seed = opts.seed ?? Math.random();\n    const cosmetic = !!opts.cosmetic;\n    const floorOnly = !!opts.floorOnly;   // #649 roller side splashes never mark a wall face',
+      'floor-only splat option');
+    code = replaceOnce(code,
+      '          _rel.copy(center).sub(f.origin);\n          const dn = _rel.dot(f.n);',
+      '          if (floorOnly && f.wall) continue;\n          _rel.copy(center).sub(f.origin);\n          const dn = _rel.dot(f.n);',
+      'floor-only splat skips wall faces');
   }
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
@@ -628,7 +639,24 @@ export function adaptSource(rel, code) {
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
-    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
+    // #649: the rolling turf footprint must widen with actual roll speed. The
+    // roller-body bands keep their upstream offsets and radius at every speed, so
+    // only the body can ever paint a wall; the speed-dependent lateral reach is
+    // emitted separately as floor-only side splashes.
+    code = replaceOnce(code,
+      '    let area = 0;\n' +
+      '    const rx = fz, rz = -fx; // right-ish perpendicular\n' +
+      '    _fwd.set(fx, 0, fz);\n' +
+      '    for (let i = -1; i <= 1; i++) {\n' +
+      '      const off = i * w.rollWidth * 0.33;\n' +
+      '      _v.set(a.pos.x + fx * 0.75 + rx * off, a.pos.y + 0.35, a.pos.z + fz * 0.75 + rz * off);\n' +
+      "      area += G.paint.splat(_v, 0.62, a.team, { seed: Math.random(), kind: 'roll', stretch: _fwd });\n" +
+      '    }',
+      '    const rx = fz, rz = -fx; // right-ish perpendicular\n' +
+      '    _fwd.set(fx, 0, fz);\n' +
+      '    const area = rollerRollPaint(a, w, hs, fx, fz, rx, rz, _fwd, _v, G.paint);',
+      'speed-dependent roller roll paint');
+    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { rollerRollPaint } from '../../patches/splatoon3/runtime/roller-paint.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
@@ -650,6 +678,16 @@ export function adaptSource(rel, code) {
       '  if (wr.flick >= 0) f |= F.flick;',
       '  if (wr.flick >= 0) f |= F.flick;\n  if (wr.s3RollerAttack?.vertical) f |= F.flickVertical;',
       'network vertical Roller owner state');
+    // #649: the floor-only flag of the roller side splashes must survive the
+    // record/replay, so a remote client marks exactly the faces the owner marked.
+    code = replaceOnce(code,
+      `    this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team, r3(o.seed ?? Math.random()), o.kind ?? 0,\n      st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0]);`,
+      `    this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team, r3(o.seed ?? Math.random()), o.kind ?? 0,\n      st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0, o.floorOnly ? 1 : 0]);`,
+      'roller floor-only splat flag on the wire');
+    code = replaceOnce(code,
+      '        if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }',
+      '        if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }\n        if (e[13]) opts.floorOnly = true;',
+      'roller floor-only splat flag restored on replay');
     code = replaceOnce(code,
       '    wr.flick = f & F.flick ? Math.max(0, wr.flick) : -1;\n    wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
       `    wr.flick = f & F.flick ? Math.max(0, wr.flick) : -1;
