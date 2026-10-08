@@ -114,7 +114,8 @@ test('#711 reach is monotonic, clamps out-of-range input and spans min to full r
   assert.equal(P.chargerReach(-3), P.chargerReach(0));
   assert.equal(P.chargerReach(7), P.chargerReach(1));
   assert.equal(P.chargerReach(NaN), P.chargerReach(0));
-  assert.equal(P.chargerReach(.999), P.chargerReach(1), 'full-charge branch starts at .999 exactly like begin()');
+  assert.equal(P.chargerReach(.999) < P.chargerReach(1), true, 'near-full partial reach stays below the exact full endpoint');
+  assert.equal(P.chargerReach(.9999) < P.chargerReach(1), true, 'near-full partial reach stays below the exact full endpoint');
 });
 
 test('#711 begin() keeps its maxDistance override for networked ghost shots', async () => {
