@@ -67,12 +67,27 @@ export function adaptSource(rel, code) {
       '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);',
       '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);\n        if (!target && !boss && world.hit && beginFidelityWallDrop(this.system, p, world)) return false;',
       'ink flight first wall contact admits sourced WallDrop phase');
-    code = "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    code = "import { coherentMotionStart } from '../../patches/splatoon3/runtime/actor-motion.mjs';\n" +
+      "import { hurtboxRadius, hurtboxHeight } from '../../patches/splatoon3/runtime/player-hurtbox.mjs';\n" +
+      "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     code = replaceOnce(code,
       '        if (!actor.alive || actor.team === p.team) continue;',
       '        const friendly = actor.team === p.team;\n' +
       '        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;',
       'ink flight S3 team contact eligibility');
+    code = replaceOnce(code,
+      '        const t = capsuleEntry(p.prev, p.pos, this.base, PLAYER.radius,\n' +
+      '          actor.form === \'squid\' ? PLAYER.squidHeight : PLAYER.height, p.inkPlayerRadius);',
+      '        const motion = coherentMotionStart(actor);\n' +
+      '        const bodyRadius = hurtboxRadius(actor, PLAYER), bodyHeight = hurtboxHeight(actor, PLAYER);\n' +
+      '        let t;\n' +
+      '        if (motion) {\n' +
+      '          this.base.set(motion.x0, motion.y0, motion.z0);\n' +
+      '          this.point.set(p.pos.x - (actor.pos.x - motion.x0), p.pos.y - (actor.pos.y - motion.y0),\n' +
+      '            p.pos.z - (actor.pos.z - motion.z0));\n' +
+      '          t = capsuleEntry(p.prev, this.point, this.base, bodyRadius, bodyHeight, p.inkPlayerRadius);\n' +
+      '        } else t = capsuleEntry(p.prev, p.pos, this.base, bodyRadius, bodyHeight, p.inkPlayerRadius);',
+      'ink flight same-tick actor motion and current per-form hurtbox');
     code = replaceOnce(code,
       '        // World wins ties: no wall-through damage, independent of actors order.',
       '        if (friendly && Number.isFinite(t) && (previousAge + INK_DT * t) * INK_HZ + EPS < p.fidelityFriendThrough) continue;\n' +
