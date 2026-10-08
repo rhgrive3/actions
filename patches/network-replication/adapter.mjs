@@ -261,7 +261,15 @@ export function emit(name, payload) {
             || d.u < tick || d.u - tick > 120 || e[0] > d.ts + 0.001) continue;
           e._netPaintOrder = order; e._netPaintMatch = d.m; e._netPacketTick = d.u;
         }
-      } else if (e[1] === 's') continue;
+      } else if (e[1] === 's') {
+        // #365 F1: a pre-order (mixed-version) sender has no tick/seq tail and no
+        // match epoch. Accept it exactly like every other legacy event, but mark it
+        // unordered so it can never outrank an ordered record.
+        if (!Number.isFinite(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4])
+          || !Number.isFinite(e[5]) || !Number.isFinite(e[6])) continue;
+        e._netPaintLegacy = true;
+        e._netPaintOrder = undefined;
+      }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
@@ -322,14 +330,22 @@ export function emit(name, payload) {
     }
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
-    if (e[1] === 's') {
+    // An owner echo never repaints local prediction, ordered or legacy.
+    if (e[1] === 's' && from === this.myId) return;
+    if (e[1] === 's' && !e._netPaintLegacy) {
       const expectedOrder = paintOrderFor(this, from, e._netTick, e._netSeq);
-      if (from === this.myId || expectedOrder === null || expectedOrder !== e._netPaintOrder
+      if (expectedOrder === null || expectedOrder !== e._netPaintOrder
         || e._netPaintMatch !== this.cfg?.id || !Number.isSafeInteger(e._netPacketTick)
         || e._netPacketTick < e._netTick || e._netPacketTick - e._netTick > 120) return;
     }
     const eventPeer = this.peers.get(from);
-    if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
+    if (e._netSeq !== undefined && eventPeer) {
+      // #365 F3: paint keeps its own watermark, so a newer non-paint record from
+      // the same sender can never drop a stale-but-still-valid paint record.
+      const key = e[1] === 's' ? '_lastPaintSeq' : '_lastEventSeq';
+      if (e._netSeq <= (eventPeer[key] || 0)) return;
+      eventPeer[key] = e._netSeq;
+    }
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
       const actor = this.byNid.get(e[2]);
       if (!actor?.remote || actor.owner !== from) return;
@@ -357,14 +373,17 @@ export function emit(name, payload) {
         G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
         this.applying = false;
         break;
-      }`, `case 's': {
+      }`,      `case 's': {
         const order = e._netPaintOrder;
-        if (!Number.isSafeInteger(order) || order <= 0) break;
+        const usable = Number.isSafeInteger(order) && order > 0;
+        // A record without a usable order only replays when it is the explicitly
+        // accepted legacy/mixed-version form; an ordered record never degrades.
+        if (!usable && !e._netPaintLegacy) break;
         const previousOrder = this._currentPaintOrder, previousApplying = this.applying;
-        this._currentPaintOrder = order; this.applying = true;
+        this._currentPaintOrder = usable ? order : undefined; this.applying = true;
         try {
           const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
-          const opts = { seed: e[7], _netPaintOrder: order };
+          const opts = { seed: e[7], _netPaintOrder: this._currentPaintOrder };
           if (e[8]) opts.kind = e[8];
           if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
           G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
@@ -441,21 +460,41 @@ export function emit(name, payload) {
         break;
       }`, 'birth and terminal events');
     code += `
-const MAX_PAINT_TICK = 0x1fffff;
-const MAX_PAINT_SEQUENCE = 0x1fffffff;
+const MAX_PAINT_TICK = 0x1fffff;      // 21 bits of owner simulation tick
+const MAX_PAINT_SEQUENCE = 0x3ffffff;  // 26 bits, also bounded by (tick+1)*256
+const PAINT_SLOT_MASK = 0x3f;          // 6 bits -> up to 64 owners addressed
+const PAINT_SLOT_SHIFT = 0x4000000;    // 2**26
+const PAINT_TICK_SHIFT = 0x100000000;  // 2**32  (21 + 6 + 26 = 53 bits, exactly safe)
 function stablePaintOwnerRanks(session) {
   const ids = session?._members && typeof session._members.keys === 'function' ? [...session._members.keys()] : [];
   if (typeof session?.myId === 'string') ids.push(session.myId);
   const owners = [...new Set(ids.filter(id => typeof id === 'string' && id.length > 0))].sort();
-  return owners.length <= 8 ? new Map(owners.map((id, rank) => [id, rank])) : new Map();
+  return new Map(owners.map((id, rank) => [id, rank]));
+}
+// Deterministic 6-bit owner slot: every client derives it from the sender id
+// alone, so an oversized roster can never turn into a total paint drop.
+function stableOwnerSlot(owner) {
+  if (typeof owner !== 'string' || owner === '') return -1;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < owner.length; i++) { h ^= owner.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h & PAINT_SLOT_MASK;
+}
+function paintOwnerSlot(match, owner) {
+  const ranks = match && match._paintOwnerRanks;
+  if (ranks && ranks.size <= PAINT_SLOT_MASK + 1) {
+    const rank = ranks.get(owner);
+    // A small authoritative roster still refuses an owner it does not know.
+    return Number.isSafeInteger(rank) && rank >= 0 && rank <= PAINT_SLOT_MASK ? rank : -1;
+  }
+  return stableOwnerSlot(owner);
 }
 function paintOrderFor(match, owner, tick, sequence) {
-  const rank = match?._paintOwnerRanks?.get(owner);
-  if (!Number.isSafeInteger(rank) || rank < 0 || rank > 7
+  const slot = paintOwnerSlot(match, owner);
+  if (slot < 0
     || !Number.isSafeInteger(tick) || tick < 0 || tick > MAX_PAINT_TICK
     || !Number.isSafeInteger(sequence) || sequence < 1 || sequence > MAX_PAINT_SEQUENCE
     || sequence > (tick + 1) * 256) return null;
-  const order = tick * 0x100000000 + rank * 0x20000000 + sequence;
+  const order = tick * PAINT_TICK_SHIFT + slot * PAINT_SLOT_SHIFT + sequence;
   return Number.isSafeInteger(order) && order > 0 ? order : null;
 }
 function stormSnapshotAllows(actor, proof, from) {
