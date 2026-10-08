@@ -3,6 +3,6 @@
 export function compactLoadingWorkerTemplate(source, transformSync) {
   return transformSync(source, {
     loader: 'js', minifyWhitespace: true, minifyIdentifiers: true,
-    minifySyntax: false, legalComments: 'inline',
+    minifySyntax: true, legalComments: 'inline',
   }).code;
 }
