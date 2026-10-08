@@ -72,6 +72,14 @@
 | P11 | サブとスペシャル | ボムは面の法線yが0.6を超える接触時に0.95秒の導火線を開始する。その条件を満たす接触がなければ開始しない（`src/game/weapons.js:1302`）。飛び上がって落下爆発するスペシャルには被ダメージを25%にする装甲があり、着地後にも0.3秒の無敵がある（`src/game/actor.js:162`、`:774`、`:819`）。 | 斜面・壁でのボム、発動前後の被弾、爆発の遮蔽・範囲・段差。見た目の似た本家スペシャルを、対応確認なしに同一仕様と扱わない。 |
 | P12 | 金網と細い足場 | ヒトは金網に接地するが、イカ状態の接地・身体衝突では金網を除外する（`src/game/physics.js:207`、`src/game/actor.js:536`、`:548`、`:561`）。細い手すりにはヒト用の足位置補正もある。 | 金網上で変身する、ジャンプ中に変身する、手すりを歩く。各状態の通過・接地・塗りを実機と照合する。 |
 
+## #845: 画面外 Actor の presentation work（2026年10月8日）
+
+- 本家参照版：スプラトゥーン3 Ver.11.3.0。[任天堂の更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/kw/Splatoon%203)には武器追加・調整などが公開されているが、画面外キャラクターのポーズ、足 IK、髪の更新頻度や CPU 予算は記載されていない。Switch 上の該当挙動は未確認。
+- 比較条件：ブキ・ギア・操作入力の変更ではなく表示専用 CPU 作業を対象にするため、ブキ・ギア条件は該当しない。INKWAVE では遠隔 Actor をカメラ外に置き、描画フレームを進めず native Actor frame を120回実行した。
+- INKWAVE の変更前：`Actor._finishFrame` から `Character.update` に入り、`root.visible` だけで姿勢更新を判断していた。実際の frustum 外でも120回の足・姿勢構築・姿勢適用、129回の足 IK raycast、110回の髪更新が続いた。これは6層の build adapter と本番 runtime installer を通したロジック測定で、ブラウザや端末のプロファイル値ではない。
+- INKWAVE の変更：`patches/local-quality/offscreen-visual-budget.mjs` を bootstrap の `installQuality` から接続。native `_camHook` の実描画フレームを使い、保守的な perspective-camera 判定で画面外が続く遠隔 Character のみ表示更新を抑える。判定でモデル化していない shifted/zoom/filmOffset/parented/custom camera は通常更新に戻す。カメラ更新が Actor update の後になる場合に備え、最初の mesh `onBeforeRender` で既存 `_camHook` の前に保留 pose を反映する。ローカル Actor、Practice Range、未知カメラは抑制しない。
+- ゲームへの影響：足 IK と装飾 pose/hair の表示用作業を、画面外の遠隔 Character に限って減らす。Actor の移動、衝突、武器、ダメージ、通信、AI、シミュレーション時計は変更しない。30/60/120 Hz のロジック確認と初回可視描画順の native regression は通過したが、端末 CPU 時間、FPS、電力、Switch との同等性は未計測・未確認。
+
 ## 継続比較の手順
 
 1. 変更に関係する挙動を選び、本家の参照版・ブキ・ギア・入力・地形を固定する。
