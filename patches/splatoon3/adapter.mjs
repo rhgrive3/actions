@@ -56,6 +56,18 @@ export function adaptSource(rel, code) {
   // with the SAME sourced teammate-through window installed on each main
   // projectile, rather than silently letting bullets cross an ally.
   if (rel === 'src/game/inkFlightRuntime.js') {
+    // #385/#604/#597: Source-guided head motion and sourced S3 wall-drop
+    // share one collision authority. A wall impact must retain the falling
+    // droplet state instead of treating every wall as a terminal head hit.
+    code = replaceOnce(code,
+      '  stepHead(p, dt) {\n    p.inkCarry += dt;',
+      '  stepHead(p, dt) {\n    if (p.fidelityWallDrop) return advanceFidelityWallDrop(this.system, p, dt);\n    p.inkCarry += dt;',
+      'ink flight retained S3 wall-drop update');
+    code = replaceOnce(code,
+      '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);',
+      '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);\n        if (!target && !boss && world.hit && beginFidelityWallDrop(this.system, p, world)) return false;',
+      'ink flight first wall contact admits sourced WallDrop phase');
+    code = "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     code = replaceOnce(code,
       '        if (!actor.alive || actor.team === p.team) continue;',
       '        const friendly = actor.team === p.team;\n' +
