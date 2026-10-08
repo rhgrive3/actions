@@ -5,9 +5,9 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('  _aimFrom(a, from, out) {\n    out.copy(a.aimPoint).sub(from);',
     '  _aimFrom(a, from, out, target = a.aimPoint) {\n    out.copy(target).sub(from);',
     'Dualies per-hand aim target');
-  patch(`  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);`,
-    `  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch, hand = null) {\n    const aimTarget = w.kind === 'dualies' && hand != null\n      ? fidelityDualiesAimTarget(this, a, m, hand)\n      : a.aimPoint;\n    const dir = this._aimFrom(a, m, _dir, aimTarget);`,
-    'dualies launch uses its live hand target');
+  patch(`  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    const inkProfile = profileFor(w);\n    const inkSpeed = inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;\n    if (inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));\n    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);`,
+    `  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch, hand = null) {\n    const aimTarget = w.kind === 'dualies' && hand != null\n      ? fidelityDualiesAimTarget(this, a, m, hand)\n      : a.aimPoint;\n    const dir = this._aimFrom(a, m, _dir, aimTarget);\n    const dualiesLaunch = w.kind === 'dualies' && hand != null\n      ? fidelityDualiesLaunchPlan(a, w, m, aimTarget, dir)\n      : null;\n    const inkProfile = dualiesLaunch?.profile ?? profileFor(w);\n    const chargeSeconds = dualiesLaunch?.chargeSeconds ?? ((a.weaponRunner?.charge || 0) * (w.chargeTime || 0));\n    const inkSpeed = dualiesLaunch?.speed ?? (inkProfile ? launchSpeed(inkProfile, chargeSeconds) : w.projSpeed);\n    if (!dualiesLaunch && inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, chargeSeconds)));\n    else if (!inkProfile) this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);`,
+    'Dualies live fire and guide share the production launch plan');
   patch(`    const dir = this._fireRound(a, w, spreadDeg, m, hand ? LOOK_DUAL_L : LOOK_DUAL_R, 'shoot_dualies', 0.5, hand ? 1.05 : 0.97);`,
     `    const dir = this._fireRound(a, w, spreadDeg, m, hand ? LOOK_DUAL_L : LOOK_DUAL_R, 'shoot_dualies', 0.5, hand ? 1.05 : 0.97, hand);`,
     'native fireDualies hand index');
@@ -140,13 +140,13 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     if (roundStart < 0 || roundEnd < roundStart) throw new Error('INKWAVE patch conflict: source-guided Dualies/Splatling flight');
     let round = code.slice(roundStart, roundEnd);
     round = replaceOnce(round,
-      '    if (inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));',
-      '    if (inkProfile) correctInkAim(inkProfile, m, dir, aimTarget, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));',
-      'weapons fidelity: dualies source-guided aim target');
+      '    if (!dualiesLaunch && inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, chargeSeconds)));',
+      '    if (!dualiesLaunch && inkProfile) correctInkAim(inkProfile, m, dir, aimTarget, inkSpeed, Math.min(w.range, referenceReach(inkProfile, chargeSeconds)));',
+      'weapons fidelity: non-Dualies source-guided aim target');
     round = replaceOnce(round,
-      '    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);',
-      '    else fidelityAimConvergence(m, dir, aimTarget, w, w.projSpeed);',
-      'weapons fidelity: dualies/splatling centerline convergence');
+      '    else if (!inkProfile) this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);',
+      '    else if (!inkProfile) fidelityAimConvergence(m, dir, aimTarget, w, w.projSpeed);',
+      'weapons fidelity: Dualies/Splatling centerline convergence');
     code = code.slice(0, roundStart) + round + code.slice(roundEnd);
   } else {
     patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
@@ -180,5 +180,5 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
   patch("    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", "    area += fidelityRollerMaximumPaint(this,w,fx,fz);\n    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", 'source maximum Roller floor width');
-  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, fidelitySlosherImpactPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityDualiesLaunchPlan, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, fidelitySlosherImpactPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }
