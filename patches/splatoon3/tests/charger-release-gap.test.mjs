@@ -168,7 +168,9 @@ test('zero and under-minimum paid ink cannot synthesize a Charger shot on releas
 test('exactly paid Charger minimum still releases after the existing one-tick gap', async () => {
   const f = await fixture(), a = f.make('charger'), r = a.weaponRunner;
   a.ink = a.weapon.inkMin; a.intent.fire = true;
-  for (let i = 0; i < 45; i++) { f.tick(a); a.ink = 0; }
+  // Keep the remaining tank available so progressive payment can actually
+  // reach the minimum (unlike the deliberately unfunded negative fixtures).
+  f.tick(a, 45);
   assert.ok(r.s3ChargerSpent + 1e-10 >= a.weapon.inkMin, 'minimum ink has been paid');
   a.intent.fire = false; f.tick(a);
   assert.equal(f.shots.length, 0, 'release gap remains intact at the paid minimum');
