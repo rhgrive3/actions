@@ -37,7 +37,7 @@ const SPLAT_ENTRY_POOL_MAX_FACES = ${ENTRY_POOL_MAX_FACES};`, 'splat pool bounds
     const pool = this._splatGrowthPool;
     if (pool?.length) { this._splatPoolStats.growthRecordsReused++; return pool.pop(); }
     this._splatPoolStats.growthRecordsCreated++;
-    return { entries: null, R: 0, team: 0, seed: 0, kind: 0, age: 0, dur: 0, dripDur: 0, cx: 0, cy: 0, cz: 0 };
+    return { entries: null, R: 0, team: 0, seed: 0, kind: 0, age: 0, dur: 0, dripDur: 0, cx: 0, cy: 0, cz: 0, paintOwner: null, paintCreditMode: 0, paintOrder: 0, netOrderId: 0 };
   }
 
   _releaseSplatGrowth(g) {
@@ -45,6 +45,7 @@ const SPLAT_ENTRY_POOL_MAX_FACES = ${ENTRY_POOL_MAX_FACES};`, 'splat pool bounds
     this._releaseSplatEntries(g.entries);
     g.entries = null;
     g.R = g.team = g.seed = g.kind = g.age = g.dur = g.dripDur = g.cx = g.cy = g.cz = 0;
+    g.paintOwner = null; g.paintCreditMode = 0; g.paintOrder = 0; g.netOrderId = 0;
     const pool = this._splatGrowthPool;
     if (!this._splatPoolsDisposed && pool && pool.length < SPLAT_GROWTH_POOL_MAX) pool.push(g);
   }
@@ -91,7 +92,10 @@ const SPLAT_ENTRY_POOL_MAX_FACES = ${ENTRY_POOL_MAX_FACES};`, 'splat pool bounds
       // the body floods out in ≈ 0.1–0.3 s (bigger = heavier), droplets land up to ~1.3× that later; drips run on
       g.dur = kind === K_SPECK ? 0.05 : 0.085 + Math.min(0.22, radius * 0.075);
       g.dripDur = drips ? 1.1 + Math.min(2.2, radius * 1.5) : 0;
-      g.cx = center.x; g.cy = center.y; g.cz = center.z;`, 'reuse growth record');
+      g.cx = center.x; g.cy = center.y; g.cz = center.z;
+      g.paintOwner = this._paintOwnerContext?.owner || null;
+      g.paintCreditMode = this._paintOwnerContext?.mode || 0;
+      g.paintOrder = this._paintCurrentOrder || 0;`, 'reuse growth record');
 
   code = replaceOnce(code,
     '      if (opts.instant) this._emitGrowth(g, 3, 1, false);\n      else this.growing.push(g);',

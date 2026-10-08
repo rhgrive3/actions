@@ -65,6 +65,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
   const root = new vm.SourceTextModule(`
     export * from './inkwave-public/src/core/ctx.js';
     export * from './inkwave-public/src/config.js';
+    export { PaintSystem } from './inkwave-public/src/world/paint.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/actor.js';
     export * from './inkwave-public/src/game/weapons.js';

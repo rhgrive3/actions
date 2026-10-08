@@ -21,6 +21,38 @@ export function networkIdentity() {
 }
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
+  if (rel === 'src/world/paint.js') {
+    patch('    const nm = G.netm;', '    const nm = G.netm;\n    let paintOrder = opts.__netOrder || null;', 'paint event identity enters shared owner');
+    patch('if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }',
+      'if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); paintOrder = nm.recSplat(center, radius, team, opts) || null; }',
+      'local paint captures canonical network identity');
+    patch('    const cosmetic = !!opts.cosmetic;',
+      '    const cosmetic = !!opts.cosmetic;\n    const netOrderId = !cosmetic && paintOrder ? this._paintOrderId(paintOrder) : 0;\n    const ownerOrder = netOrderId || this._paintCurrentOrder || 0;\n    const orderState = ownerOrder && !cosmetic ? { accepted: false } : null;',
+      'shared local and network cell owner');
+    patch('if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n          entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      'if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);\n          if (!orderState || orderState.accepted) entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      'late or duplicate event cannot create unowned GPU growth');
+    patch('        g.cx = center.x; g.cy = center.y; g.cz = center.z;\n        g.paintOwner = this._paintOwnerContext?.owner || null;\n        g.paintCreditMode = this._paintOwnerContext?.mode || 0;\n        g.paintOrder = this._paintCurrentOrder || 0;',
+      '        g.cx = center.x; g.cy = center.y; g.cz = center.z;\n        g.paintOwner = this._paintOwnerContext?.owner || null;\n        g.paintCreditMode = this._paintOwnerContext?.mode || 0;\n        g.paintOrder = ownerOrder; g.netOrderId = netOrderId;',
+      'growth keeps the shared canonical owner');
+    patch('  _emitGrowth(g, tn, dT, dripOnly) {', `  _emitGrowth(g, tn, dT, dripOnly) {
+    const draw = (f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode) => {
+      if (!g.netOrderId) { this._pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode); return; }
+      const count = this._paintOrderRuns(f, g.netOrderId, u0, u1, v0, v1), runs = this._paintOrderRunScratch;
+      for (let i = 0; i < count; i++) { const at = i * 4;
+        this._pushQuad(f, runs[at], runs[at + 1], runs[at + 2], runs[at + 3], lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode);
+      }
+    };`, 'GPU growth uses the CPU owner mask');
+    patch('this._pushQuad(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);',
+      'draw(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);',
+      'wall drips respect the shared CPU mask');
+    patch('this._pushQuad(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);',
+      'draw(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);',
+      'body growth respects the shared CPU mask');
+    patch('    if (r <= 0.02) return 0;',
+      '    if (r <= 0.02) { if (orderState) orderState.accepted = true; return 0; }',
+      'keep existing fine paint presentation');
+  }
   if (rel === 'src/core/ctx.js') {
     patch('export function emit(name, payload) {\n  const set = listeners.get(name);\n  if (!set) return;\n  for (const fn of set) fn(payload);\n}', `const EVENT_VECTOR_FIELDS = Object.freeze({
   muzzle: eventVectorField('weapon-fire-muzzle', readMuzzle, writeMuzzle),
@@ -272,10 +304,13 @@ export function emit(name, payload) {
     if (this._applyingHit) return 'local';
     if (weaponId === 'bomb' || weaponId === 'splat-bomb-far') return victim.remote ? 'drop' : 'local';`, 'bomb recipient authority');
 
+    patch('  onLeave(id, hostChanged) {', '  onLeave(id, hostChanged) {\n    this.s._members?.delete(id);\n    this.peers.delete(id);', 'retire departed paint sender before replay');
     patch('  _rec(e) { this.out.push([r3(now()), ...e]); }', `  _rec(e) {
-    const seq = this._eventSeq = (this._eventSeq || 0) + 1;
+    const seq = this._eventSeq = Math.max(this._eventSeq || 0, this.s._inkwaveEventSeq || 0) + 1;
+    if (!Number.isSafeInteger(seq)) throw new Error('Network event sequence exhausted');
+    this.s._inkwaveEventSeq = seq;
     const tick = Math.round((G.time || 0)*60);
-    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event);
+    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event); return event;
   }`, 'ordered event identity');
     patch("const msg = { k: 't', ts: r3(now()), a",
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
@@ -299,6 +334,7 @@ export function emit(name, payload) {
       'attach validated presentation-only action clocks');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
+      e._netPeer = from;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
@@ -398,6 +434,12 @@ export function emit(name, payload) {
     patch('st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0',
       'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0',
       'full-precision paint stretch');
+    patch("this._rec(['s', c.x, c.y, c.z, radius, team, o.seed ?? Math.random(), o.kind ?? 0,",
+      "const event = this._rec(['s', c.x, c.y, c.z, radius, team, o.seed ?? Math.random(), o.kind ?? 0,",
+      'return local paint order identity');
+    patch('st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1]);',
+      'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1]);\n    return { tick: event._netTick, peer: this.s.myId, seq: event._netSeq };',
+      'return local paint order identity');
 
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     const inkMetaBase = 'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null]);';
@@ -445,6 +487,8 @@ export function emit(name, payload) {
     try {
       const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
       const opts = { seed: e[7] };
+      if (typeof e._netPeer === 'string' && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(e._netSeq))
+        opts.__netOrder = { tick: e._netTick, peer: e._netPeer, seq: e._netSeq };
       if (e[8]) opts.kind = e[8];
       if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
       if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
@@ -480,6 +524,12 @@ export function emit(name, payload) {
         break;
       }`, 'deadline paint is never double-applied');
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
+    if (e[1] === 's' && typeof e._netPeer !== 'string') e._netPeer = from;
+    if (e[1] === 's') {
+      const hasTick = e._netTick !== undefined, hasSeq = e._netSeq !== undefined;
+      if (!this.s._members?.has(from) || hasTick !== hasSeq
+        || hasTick && (!Number.isSafeInteger(e._netTick) || e._netTick < 0 || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)) return;
+    }
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
     const eventPeer = this.peers.get(from);
     if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }

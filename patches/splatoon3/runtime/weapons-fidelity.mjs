@@ -403,7 +403,7 @@ function eligibleWallDropHit(hit) {
 }
 function wallDropPaint(p, point, radius, state, salt) {
   if (p.ghost || !(radius > 0) || !api.G.paint) return 0;
-  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++) });
+  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), claimOwner: p.owner });
   if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   return area || 0;
 }
