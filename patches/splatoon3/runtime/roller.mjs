@@ -164,6 +164,11 @@ function rollerCapsuleTouchesBlock(start, delta, block, scratch) {
     else { nz = z < 0 ? -1 : 1; nx = ny = 0; }
   }
   scratch.normalY = nx * axes[0].y + ny * axes[1].y + nz * axes[2].y;
+  // Closest actual contact point on this oriented solid, not the player's feet.
+  const qx = Math.max(-hx, Math.min(hx, x)), qy = Math.max(-hy, Math.min(hy, y)), qz = Math.max(-hz, Math.min(hz, z));
+  scratch.contactPoint.x = center.x + qx * axes[0].x + qy * axes[1].x + qz * axes[2].x;
+  scratch.contactPoint.y = center.y + qx * axes[0].y + qy * axes[1].y + qz * axes[2].y;
+  scratch.contactPoint.z = center.z + qx * axes[0].z + qy * axes[1].z + qz * axes[2].z;
   return true;
 }
 
@@ -187,7 +192,12 @@ export function rollerDrumSupport(a, G, scratch) {
     if (!rollerCapsuleTouchesBlock(start, delta, block, scratch)) continue;
     const ny = scratch.normalY;
     if (ny >= WALL_BAND) floor = true;
-    else if (Math.abs(ny) < WALL_BAND) wall = true;
+    else if (Math.abs(ny) < WALL_BAND) {
+      wall = true;
+      scratch.wallPoint.x = scratch.contactPoint.x;
+      scratch.wallPoint.y = scratch.contactPoint.y;
+      scratch.wallPoint.z = scratch.contactPoint.z;
+    }
     if (floor && wall) break;
   }
   return { floor, wall, supported: floor || wall };
@@ -203,10 +213,15 @@ export function rollStopLocks(now) {
   return { main: now + ROLL_STOP_LOCKS.main, sub: now + ROLL_STOP_LOCKS.sub, squid: now + ROLL_STOP_LOCKS.squid };
 }
 
+// Stationary drum-to-wall contact is paint-eligible without stick input. It
+// must never open the native contact-damage gate, which still requires speed.
+export function stationaryRollerWallPaintEligible({ firing, wall, stick, alive, ink, cooldown }) {
+  return !!firing && !!wall && !stick && !!alive && ink > 0.5 && cooldown <= 0.25;
+}
 export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset, actorUpdate = Actor.prototype.update;
   const runnerUpdate = WeaponRunner.prototype.update;
-  const scratch = { ids: [], start: { x: 0, y: 0, z: 0 }, delta: { x: 0, y: 0, z: 0 }, normalY: 0 };
+  const scratch = { ids: [], start: { x: 0, y: 0, z: 0 }, delta: { x: 0, y: 0, z: 0 }, normalY: 0, contactPoint: { x: 0, y: 0, z: 0 }, wallPoint: { x: 0, y: 0, z: 0 } };
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
     if (r && this.weapon?.kind === 'roller') {
@@ -342,7 +357,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     const onFlickPath = starting || winding;
     const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);
     const stick = onFlickPath || rollerStickActive(a);
-    const fireIn = (onFlickPath || (sup?.supported && stick)) ? inp : { ...inp, fire: false, firePressed: false };
+    const wallIdle = !onFlickPath && stationaryRollerWallPaintEligible({
+      firing: inp.fire, wall: sup?.wall, stick, alive: a.alive,
+      ink: a.ink, cooldown: this.cooldown,
+    });
+    const fireIn = (onFlickPath || (sup?.supported && (stick || wallIdle))) ? inp : { ...inp, fire: false, firePressed: false };
     const restoreAirborne = !!(sup?.wall && !sup.floor && !a.grounded);
     if (restoreAirborne) a.grounded = true;
     try {
@@ -431,6 +450,17 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
       try { result = roller.call(this, dt, rollInp, mode); }
       finally { if (projectiles.applyHit === admittedHit) projectiles.applyHit = applyHit; }
     } else result = roller.call(this, dt, rollInp, mode);
+    // #1108: a lowered, stationary drum contacting a solid wall paints the
+    // touched surface even though the native displacement stripe is skipped.
+    // Keep wall paint separate from 1.0-speed roller-body HP contact.
+    this.s3WallPaintWait = Math.max(0, (this.s3WallPaintWait || 0) - dt);
+    if (wallIdle && this.rolling && !a.remote && G.paint?.splat && this.s3WallPaintWait <= EPS) {
+      const point = scratch.wallPoint;
+      const contact = a.pos.clone().set(point.x, point.y, point.z);
+      const area = G.paint.splat(contact, 0.28, a.team, { kind: 'roll', seed: Math.random() });
+      a.addTurf(area);
+      this.s3WallPaintWait = 0.12;
+    }
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;
