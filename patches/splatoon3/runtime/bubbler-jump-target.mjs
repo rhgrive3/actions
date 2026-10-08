@@ -53,19 +53,38 @@ export function bubblerTargetDescriptor(dome) {
   };
 }
 
+// Exact activation identity. A dome id can be reused by a LATER activation, so a
+// receiver is matched on (id, serial, team) rather than the id alone.
+export function bubblerActivationKey(dome) {
+  return `${dome?.id}|${dome?.serial}|${dome?.team}`;
+}
+
+function isLiveDome(dome) {
+  return !!dome && dome.dead !== true && !!dome.pos
+    && Number.isFinite(dome.pos.x) && Number.isFinite(dome.pos.y) && Number.isFinite(dome.pos.z);
+}
+
 // Every friendly, live deployed dome as an independent Super Jump receiver.
-// Enemy domes, dead/collapsed domes and domes with no live location are omitted.
+// Enemy domes, dead/collapsed domes, domes with a non-finite location and a
+// duplicated activation are omitted.
+//
+// local is the AUTHORITATIVE list and is walked first, so when the same
+// activation is also replicated back into remoteDomes() the local structure is
+// the one receiver that survives the dedupe (never two icons for one dome).
 export function bubblerJumpTargets(me, pools = null) {
   if (!me || !Number.isInteger(me.team)) return [];
   const [local, remote] = pools
     ? [pools.local || [], pools.remote || []]
     : [bigBubblerDomes(), bigBubblerRemoteDomes()];
   const out = [];
+  const seen = new Set();
   for (const pool of [local, remote]) {
     for (const dome of pool) {
-      if (!dome || dome.dead) continue;
+      if (!isLiveDome(dome)) continue;
       if (dome.team !== me.team) continue;
-      if (!dome.pos || !Number.isFinite(dome.pos.x + dome.pos.z)) continue;
+      const key = bubblerActivationKey(dome);
+      if (seen.has(key)) continue;
+      seen.add(key);
       out.push(bubblerTargetDescriptor(dome));
     }
   }
@@ -75,10 +94,17 @@ export function bubblerJumpTargets(me, pools = null) {
 // Liveness re-checked against the SAME lists the dome lifecycle mutates. A
 // collapse / expiry removes the dome there first, so this is what invalidates a
 // stale receiver on selection, admission and every charge frame.
+//
+// Four independent things must hold: the structure is live with finite
+// coordinates, the descriptor still names THIS exact activation, the team still
+// matches the ACTUAL jumper (when supplied, so an enemy receiver is refused at
+// admission and not only filtered in presentation), and the structure is still
+// present in one of the live pools (a disposed activation is gone from both).
 export function bubblerTargetLive(target, actor = null) {
   if (!target || target.bubblerTarget !== true) return false;
   const dome = target.dome;
-  if (!dome || dome.dead) return false;
+  if (!isLiveDome(dome)) return false;
+  if (target.domeId !== dome.id || target.serial !== dome.serial || target.team !== dome.team) return false;
   if (actor && Number.isInteger(actor.team) && dome.team !== actor.team) return false;
   return bigBubblerDomes().includes(dome) || bigBubblerRemoteDomes().includes(dome);
 }
