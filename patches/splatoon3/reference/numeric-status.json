@@ -1257,6 +1257,26 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.roller.rollInkMinPerFrame": {
+    "value": 0.0002,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.rollInkMaxPerFrame": {
+    "value": 0.001,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.rollInkMinSpeed": {
+    "value": 1.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.rollInkMaxSpeed": {
+    "value": 7.92,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.flickWindup": {
     "value": 0.35,
     "status": "calibration or derived value; see reference raw table and unverified list",
