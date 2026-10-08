@@ -493,6 +493,11 @@ def neck_join(cfg):
     tdata = T.data
     bpy.data.objects.remove(T)
     bpy.data.meshes.remove(tdata)
+    bm = bmesh.new()                                    # slivers the Boolean leaves (dark specks)
+    bm.from_mesh(R.data)
+    bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=cfg.get('degenerate_mm', 0.05) / 1000)
+    bm.to_mesh(R.data)
+    bm.free()
     head_mats = {m.name for m in head.data.materials if m}
     rm0 = [m.name if m else None for m in R.data.materials]
     mi0 = np.zeros(len(R.data.polygons), int)
@@ -542,6 +547,35 @@ def neck_join(cfg):
             dd = np.array([q[2] for q in near]) * 1000
             f = 1 - smoothstep((dd - 2.0) / 8.0)
             set_local_mm(o, er.M.to_local(Wo + f[:, None] * mv[idx]) * 1000)
+    if cfg.get('border_mm') is not None:
+        # the two materials met along the jagged crossing line: the head faces just under the highest point of
+        # that line (one smooth line round the neck) take the neck's plain skin, so the border is a smooth line
+        # (only head faces change: the neck material has no texture, the head's has)
+        Lr = er.M.to_local(er.world(R)) * 1000
+        ax, az = cfg.get('axis_xz', [0.0, 10.0])
+        th = lambda P: np.arctan2(P[:, 0] - ax, P[:, 2] - az)
+        nb = 72
+        tj, yj = th(Lr[joint]), Lr[joint, 1]
+        bins = ((tj + np.pi) / (2 * np.pi) * nb).astype(int) % nb
+        top = np.full(nb, -1e9)
+        np.maximum.at(top, bins, yj)
+        ok = top > -1e8
+        idx = np.arange(nb)
+        top = np.interp(idx, idx[ok], top[ok], period=nb)
+        k = np.exp(-0.5 * (np.arange(-6, 7) / 2.0) ** 2)
+        top = np.convolve(np.r_[top[-6:], top, top[:6]], k / k.sum(), mode='valid')
+        cen = np.array([Lr[list(f.vertices)].mean(0) for f in R.data.polygons])
+        tb = ((th(cen) + np.pi) / (2 * np.pi) * nb) % nb
+        border = np.interp(tb, idx, top, period=nb) + cfg['border_mm']
+        neck_mat = next(i for i, m in enumerate(R.data.materials) if m and m.name not in head_mats)
+        near = np.linalg.norm(cen[:, None, :] - Lr[joint][None, ::8, :], axis=2).min(1) < cfg.get('border_zone_mm', 30.0)
+        switch = is_head & near & (cen[:, 1] < border) & (cen[:, 2] < cfg['z'][0])   # back and sides only
+        mi2 = np.zeros(len(R.data.polygons), int)
+        R.data.polygons.foreach_get('material_index', mi2)
+        mi2[switch] = neck_mat
+        R.data.polygons.foreach_set('material_index', mi2)
+        is_head = is_head & ~switch
+        print('BODY_SHAPE neck_join border faces to the neck skin', int(switch.sum()))
     if R.data.attributes.get('custom_normal') is not None:      # the merged surface's own normals
         R.data.attributes.remove(R.data.attributes['custom_normal'])
     for obj, keep in ((head, is_head), (neck, ~is_head)):
