@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
 import { PLAYER, WEAPONS, WEAPON_ORDER } from '../../../src/config.js';
 import { Actor } from '../../../src/game/actor.js';
+import { disposeInkVac } from '../../splatoon3/runtime/kit-ink-vac.mjs';
 import { TargetDummyCharacter } from './dummy.mjs';
 import { RangePads } from './pads.mjs';
 import { RangeHud } from './hud.mjs';
@@ -162,7 +163,9 @@ export class RangeSession {
   setWeapon(id) {
     const a = this.local;
     if (!a || !WEAPONS[id] || a.weaponId === id) return;
+    const previousWeapon = a.weaponId;
     a.setWeapon(id);
+    if (a.weaponId === id && a.weaponId !== previousWeapon) disposeInkVac(a);
     // a weapon switch starts from a full tank and an empty special gauge, as if you had just picked it up
     a.ink = PLAYER.inkMax; a.special = 0;
     G.game?.api?.setLoadout?.({ weapon: id });
