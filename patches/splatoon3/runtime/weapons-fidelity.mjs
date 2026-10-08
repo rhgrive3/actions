@@ -1029,6 +1029,8 @@ export function installWeaponsFidelity(context,profile) {
     if(projectile?.start)cache.clearRadius=certifyS3GuideMuzzleRadius(cache,actor,projectile.start);
     return cache.point;
   }
+  // The guide is a scratch projectile: initialize(p, w) already rebinds
+  // s3Weapon to w, so cloning the immutable profile every HUD tick is wasteful.
   function computeS3SlosherGuide(system,actor,w){
     const guide=w?.shotGuide,raw=rawWeapon(w),unit=guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
     const index=guide?.bulletOrderNumInUnit;
@@ -1038,7 +1040,7 @@ export function installWeaponsFidelity(context,profile) {
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     });
     system._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
-    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2.4;p.straight=0;
+    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2.4;p.straight=0;
     p.delay=((unit.UnitDelayFrame||0)+index*(unit.AfterOffsetDelayFrame||0))/60;
     p.fidelitySloshUnit=unit;p.fidelitySloshIndex=index;p.fidelityPhase=0;p.fidelityMove=null;
     p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
@@ -1061,7 +1063,7 @@ export function installWeaponsFidelity(context,profile) {
     const dir=system._s3BlasterGuideDir||(system._s3BlasterGuideDir=new THREE.Vector3());
     system._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
     system._aimFrom(actor,p.pos,dir);
-    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2;p.straight=0;
+    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2;p.straight=0;
     p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
     p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
@@ -1112,7 +1114,7 @@ export function installWeaponsFidelity(context,profile) {
       this._muzzleHand(actor,hand,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
       this._aimFrom(actor,p.pos,dir);
       fidelityAimConvergence(p.pos,dir,actor.aimPoint,w,w.projSpeed);
-      p.owner=actor;p.type='shot';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=1.2;p.straight=w.straightTime;
+      p.owner=actor;p.type='shot';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=1.2;p.straight=w.straightTime;
       p.delay=0;p.ghost=false;p.size=w.impactRadius??.15;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
       p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
       p.vel.copy(dir).multiplyScalar(w.projSpeed);
