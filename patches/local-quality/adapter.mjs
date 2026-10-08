@@ -231,7 +231,9 @@ function adaptQualityLayer(rel, code) {
       '      _qcOld.hash !== _qcLevel?.hash || _qcOld.blockStamp !== _qcLevel?.blockStamp ||\n' +
       '      _qcPX * _qcPX + _qcPY * _qcPY + _qcPZ * _qcPZ > 0.000001 ||\n' +
       '      _qcBX * _qcBX + _qcBY * _qcBY + _qcBZ * _qcBZ > 0.000001 ||\n' +
-      '      Math.abs(this.wantDist - _qcOld.want) > 0.001;\n' +
+      '      Math.abs(this.wantDist - _qcOld.want) > 0.001 ||\n' +
+      '      (this.wantDist !== _qcOld.want &&\n' +
+      '       (_qcOld.hard !== _qcOld.want || _qcOld.soft !== _qcOld.want));\n' +
       '    if (_qcChanged || _qcAge >= 0.25) {\n' +
       '      _qcPhysics.cameraProbe(this.pivot, _back, this.wantDist, 0.62, _probe);\n' +
       '      this._inkwaveCameraProbeCache = { target: a, mode: this.mode, level: G.level,\n' +
@@ -242,7 +244,11 @@ function adaptQualityLayer(rel, code) {
       '        hard: _probe.hard, soft: _probe.soft, floor: _probe.floor, age: 0 };\n' +
       '    } else {\n' +
       '      _qcOld.age = _qcAge;\n' +
-      '      _probe.hard = _qcOld.hard; _probe.soft = _qcOld.soft; _probe.floor = _qcOld.floor;\n' +
+      '      // A free probe is equal to its sampled request distance. Keep that\n' +
+      '      // endpoint live when a sub-millimetre zoom step reuses the cache.\n' +
+      '      _probe.hard = _qcOld.hard === _qcOld.want ? this.wantDist : _qcOld.hard;\n' +
+      '      _probe.soft = _qcOld.soft === _qcOld.want ? this.wantDist : _qcOld.soft;\n' +
+      '      _probe.floor = _qcOld.floor;\n' +
       '    }',
       'stationary follow-camera collision probe cache');
   }
