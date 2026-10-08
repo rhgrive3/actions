@@ -12,17 +12,14 @@
 // plain number writes, and the sweep reads plain fields. No per-frame arrays,
 // closures, or Vector allocations.
 //
-// MAX_TRAVEL_PER_TICK is an INTERNAL discontinuity guard, not a sourced
-// Nintendo value: it only disables sweeping across pose jumps that cannot be
-// continuous motion (spawn, teleport, net adoption/relocation, dead-owner
-// changes). It sits above every continuous native motion measured in this
-// tree (super-jump flight peaks near 1.5 m/tick; remote sample corrections
-// stay below ~4.2 m/tick) and far below respawn/adoption jumps (spawn pads are
-// tens of metres apart). When the guard trips, callers fall back to testing
-// the actor's current pose exactly as before this issue.
-const MAX_TRAVEL_PER_TICK = 6.0;
-const MAX_TRAVEL_SQ = MAX_TRAVEL_PER_TICK * MAX_TRAVEL_PER_TICK;
 let tickNow = 0;
+
+// Lifecycle entry points call this when they replace an actor's pose. The
+// monotonically changing identity lets the sweep reject that interval without
+// guessing from a gameplay-distance threshold.
+export function markActorMotionDiscontinuity(actor) {
+  if (actor) actor.s3MotionEpoch = (actor.s3MotionEpoch || 0) + 1;
+}
 
 // Called once per fixed simulation tick before any actor moves (clock.mjs),
 // including the results-branch remote sample application.
@@ -36,12 +33,15 @@ export function beginActorMotionTick(actors) {
     const a = actors[i];
     const r = a.s3Motion || (a.s3Motion = {
       x0: 0, y0: 0, z0: 0, valid: false, alive: false,
-      nid: undefined, owner: null, tick: -1,
+      nid: undefined, owner: null, epoch: 0, netReady: false, netTp: undefined, tick: -1,
     });
     r.x0 = a.pos.x; r.y0 = a.pos.y; r.z0 = a.pos.z;
     r.alive = !!a.alive;
     r.nid = a.nid;
     r.owner = a.owner ?? null;
+    r.epoch = a.s3MotionEpoch || 0;
+    r.netReady = !!a.net?.ready;
+    r.netTp = a.net?.tp;
     r.tick = tickNow;
     r.valid = true;
   }
@@ -57,9 +57,11 @@ export function coherentMotionStart(actor) {
   if (!r || !r.valid || !r.alive || !actor.alive) return null;
   if (r.tick !== tickNow) return null;
   if (r.nid !== actor.nid || r.owner !== (actor.owner ?? null)) return null;
-  const dx = actor.pos.x - r.x0, dy = actor.pos.y - r.y0, dz = actor.pos.z - r.z0;
-  // NaN-safe: a non-finite travel fails the comparison and falls back.
-  if (!(dx * dx + dy * dy + dz * dz <= MAX_TRAVEL_SQ)) return null;
+  if (r.epoch !== (actor.s3MotionEpoch || 0)) return null;
+  // NetMatch carries an explicit teleport identity (`tp`) in its buffered
+  // samples. A first ready sample and each later identity change are snaps,
+  // even when the relocation is shorter than ordinary movement can be.
+  if (actor.remote && actor.net && (r.netReady !== !!actor.net.ready || r.netTp !== actor.net.tp)) return null;
   return r;
 }
 

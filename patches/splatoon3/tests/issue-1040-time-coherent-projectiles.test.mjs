@@ -67,7 +67,8 @@ async function boot() {
   const api = { ...entry.namespace.install(profile), ...entry.namespace }, { G, THREE, Physics, Level } = api;
   // Visual/audio sinks: any method exists and any call is a no-op, so native
   // fx/audio calls (muzzle, burst, wake, loop handles) never break the harness.
-  const sink = () => new Proxy({}, { get: (t, k) => (typeof k === 'symbol' ? undefined : () => t) });
+  const sink = () => new Proxy({ loop: () => ({ set() {}, stop() {} }) },
+    { get: (t, k) => (typeof k === 'symbol' ? undefined : k in t ? t[k] : () => t) });
   const level = new Level({ bounds: { minX: -100, maxX: 100, minZ: -100, maxZ: 100 }, spawnPads: [[-80, 0, 0], [80, 0, 0]], spawnBarrier: 0,
     single: [{ kind: 'box', min: [-100, -.5, -100], max: [100, 0, 100] }], half: [] });
   Object.assign(G, { scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(), settings: { quality: 'high' }, actors: [], time: 0,
@@ -79,8 +80,8 @@ async function boot() {
     _owner() { return this.actor; } trigger(...a) { this.events.push(a); } update() {}
     getMuzzle(o) { return o.copy(this.root.position).add(new THREE.Vector3(0, 1.05, .3)); }
     setVisible() {} setHurt() {} setWeapon() {} dispose() {} }
-  const make = ({ pos = [0, 0, 0], team = 0, name = 'p' } = {}) => {
-    const a = new api.Actor({ team, name, weapon: 'shooter', CharacterClass: C, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+  const make = ({ pos = [0, 0, 0], team = 0, name = 'p', weapon = 'shooter', isLocal = false } = {}) => {
+    const a = new api.Actor({ team, name, weapon, isLocal, CharacterClass: C, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
     a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
     a.spawnAt(new THREE.Vector3(...pos), 0); a.invuln = 0; return a;
   };
@@ -100,7 +101,16 @@ async function boot() {
     updateController() {},
     update(dt) {
       const nm = G.netm;
-      for (const a of this.actors) { if (a.remote && nm) nm.applyRemote(a, dt); else a.update(dt); }
+      for (const a of this.actors) {
+        if (a.remote && nm) {
+          if (nm.sampleInTick) {
+            const peer = nm._peer(a.owner);
+            if (nm.advancePeer) peer.tr += dt;
+            nm._sample(a, peer.tr, dt);
+          }
+          nm.applyRemote(a, dt);
+        } else a.update(dt);
+      }
     },
   };
   return { ...api, make, remove, game, G };
@@ -262,7 +272,7 @@ test('#1040 remote victim driven by the real sample pipeline is time-coherent', 
       rendered: new THREE.Vector3(), has: false, prevGrounded: true, prevVy: 0, yawPrev: 0,
       loops: {}, sjTo: null, sjRing: 0, spawnPending: false, ready: false };
   };
-  const pushSample = (a, t, y) => a.net.buf.push({ t, tp: 0, x: 0, y, z: 0, vx: 0, vy: 0, vz: 0,
+  const pushSample = (a, t, y, { x = 0, z = 0, tp = 0 } = {}) => a.net.buf.push({ t, tp, x, y, z, vx: 0, vy: 0, vz: 0,
     yaw: 0, aimYaw: 0, aimPitch: 0, f: 0, hp: 100, ink: 100, sp: 0, ch: 0, turf: 0, wx: 0, wy: 0, wz: 1, lock: 0 });
   // Remote CE-2: sample path rises out of the band inside the tick, round still
   // alongside -> exactly one hit.
@@ -289,18 +299,44 @@ test('#1040 remote victim driven by the real sample pipeline is time-coherent', 
   assert.equal(rv2.hp, 100, 'remote CE-1: untouched');
   assert.ok(f.coherentMotionStart(rv2), 'remote CE-1: coherent record over the applied sample');
   c1.off?.(); clearProjectiles(); f.remove(rv2);
+  // Explicit NetMatch teleport identity, applied inside the real fixed tick.
+  // This 4 m relocation used to be treated as continuous by the 6 m heuristic.
+  const rv3 = f.make({ pos: [4, BAND_IN, 0], team: 1, name: 'remote-short-teleport' });
+  netInit(rv3);
+  nm.sampleInTick = true;
+  peer.tr += STEP; pushSample(rv3, peer.tr, BAND_IN, { x: 4, tp: 0 });
+  runTick();
+  assert.equal(rv3.pos.x, 4, 'initial network sample places the remote actor at its owner pose');
+  peer.tr += STEP; pushSample(rv3, peer.tr, BAND_IN, { x: 0, tp: 1 });
+  const c3 = hitCounter(rv3);
+  spawnShot(400); runTick();
+  assert.equal(rv3.pos.x, 0, 'NetMatch applied the short teleport sample during runSimulation');
+  assert.equal(f.coherentMotionStart(rv3), null, 'sample teleport identity invalidates the short relocation sweep');
+  assert.equal(c3.hits, 1, 'discontinuous remote motion falls back to the end-pose collision');
+  c3.off?.(); clearProjectiles(); f.remove(rv3);
+  nm.sampleInTick = false;
   G.netm = null;
 });
 
 test('#1040 teleport, spawn and owner change reset the record (no sweep across discontinuities)', () => {
   // T1: teleport out of the band inside the tick -> record must not be swept.
   let v = f.make({ pos: [0, BAND_IN, 0], team: 1, name: 'teleport-victim' });
-  v.update = () => { v.pos.set(40, BAND_IN, 0); };
+  v.update = () => { v.spawnAt(new THREE.Vector3(40, BAND_IN, 0), 0); v.invuln = 0; };
   let c = hitCounter(v);
   spawnShot(400); runTick();
   assert.equal(f.coherentMotionStart(v), null, 'teleport invalidates the record');
   assert.equal(c.hits, 0, 'no hit swept across the teleport path');
   assert.equal(v.hp, 100, 'teleported target untouched');
+  c.off?.(); clearProjectiles(); f.remove(v);
+  // T1b: a real spawn/lifecycle relocation shorter than the former 6 m guard
+  // still invalidates the interval; the endpoint is outside the shot segment.
+  v = f.make({ pos: [0, BAND_IN, 0], team: 1, name: 'short-teleport-victim' });
+  v.update = () => { v.spawnAt(new THREE.Vector3(3.5, BAND_IN + 3, 0), 0); v.invuln = 0; };
+  c = hitCounter(v);
+  spawnShot(40); runTick();
+  assert.ok(Math.hypot(v.pos.x, v.pos.y - BAND_IN, v.pos.z) < 6, 'short lifecycle relocation stays below old threshold');
+  assert.equal(f.coherentMotionStart(v), null, 'short teleport lifecycle identity invalidates the sweep');
+  assert.equal(c.hits, 0, 'short teleport does not sweep through the intermediate path');
   c.off?.(); clearProjectiles(); f.remove(v);
   // T2: die and respawn far away inside the tick -> no sweep across the death.
   v = f.make({ pos: [0, BAND_IN, 0], team: 1, name: 'death-respawn-victim' });
@@ -345,24 +381,102 @@ test('#1040 motion record is one preallocated object per actor, stable across ti
 });
 
 test('#1040 24/30/60/120 Hz render cadence produces identical fixed-tick outcomes', () => {
-  const cadences = [[1 / 24, 24], [1 / 30, 30], [1 / 60, 60], [1 / 120, 120]];
+  const repeat = (dt, n) => Array(n).fill(dt);
+  const cadences = [
+    ['24Hz', repeat(1 / 24, 24)], ['30Hz', repeat(1 / 30, 30)],
+    ['60Hz', repeat(1 / 60, 60)], ['120Hz', repeat(1 / 120, 120)], ['hitch', [0.5, 0.5]],
+  ];
   const outcomes = [];
-  for (const [dt, calls] of cadences) {
+  for (const [name, frames] of cadences) {
     const v = f.make({ pos: [0, BAND_TOP + 0.03 - dRise, 0], team: 1, name: 'cadence-victim' });
     v.vel.set(0, 6.982, 0); v.grounded = false; v.hp = 100;
     const c = hitCounter(v);
     spawnShot(40);
-    f.game.s3Clock?.reset();
-    const before = f.game.s3Clock?.ticks ?? 0;
-    for (let i = 0; i < calls; i++) f.runSimulation(f.game, dt);
-    const ticks = (f.game.s3Clock?.ticks ?? 0) - before;
-    outcomes.push({ dt, ticks, hits: c.hits, hp: v.hp });
+    f.game.s3Clock = new f.FixedClock();
+    for (const dt of frames) f.runSimulation(f.game, dt);
+    outcomes.push({ name, ticks: f.game.s3Clock.ticks, hits: c.hits, hp: v.hp });
     c.off?.(); clearProjectiles(); f.remove(v);
   }
   for (const o of outcomes) {
-    assert.equal(o.ticks, 60, `dt=${o.dt} must run exactly 60 fixed ticks in 1 s of render time`);
-    assert.equal(o.hits, 1, `dt=${o.dt} must land exactly one hit`);
+    assert.equal(o.ticks, 60, `${o.name} must run exactly 60 fixed ticks in 1 s of render time`);
+    assert.equal(o.hits, 1, `${o.name} must land exactly one hit`);
   }
   const ref = outcomes[0];
-  for (const o of outcomes) assert.equal(o.hp, ref.hp, `dt=${o.dt} damage identical to dt=${ref.dt}`);
+  for (const o of outcomes) assert.equal(o.hp, ref.hp, `${o.name} damage matches ${ref.name}`);
+});
+
+test('#1040 remote sample hit stays once-only at 24/30/60/120 Hz and across a render hitch', () => {
+  const repeat = (dt, n) => Array(n).fill(dt);
+  const cadences = [
+    ['24Hz', repeat(1 / 24, 24)], ['30Hz', repeat(1 / 30, 30)],
+    ['60Hz', repeat(1 / 60, 60)], ['120Hz', repeat(1 / 120, 120)], ['hitch', [0.5, 0.5]],
+  ];
+  for (const [name, frames] of cadences) {
+    const peer = { tr: 0, rate: 1, delay: 0, events: [] };
+    const nm = Object.create(f.NetMatch.prototype);
+    Object.assign(nm, { stats: { extrap: 0, snaps: 0 }, debug: false, mute: 0,
+      sampleInTick: true, advancePeer: true, _peer: () => peer,
+      shouldApplyHit: () => 'local', recProj() {}, _rec() {}, sendHit() {} });
+    G.netm = nm;
+    const v = f.make({ pos: [0, BAND_TOP + 0.03 - dRise, 0], team: 1, name: `remote-cadence-${name}` });
+    v.remote = true; v.owner = peer; v.nid = 'remote-cadence';
+    const sample = (t, y) => ({ t, tp: 0, x: 0, y, z: 0, vx: 0, vy: 6.982, vz: 0,
+      yaw: 0, aimYaw: 0, aimPitch: 0, f: 0, hp: 100, ink: 100, sp: 0, ch: 0, turf: 0, wx: 0, wy: 0, wz: 1, lock: 0 });
+    v.net = { buf: [sample(0, v.pos.y), sample(1, v.pos.y + 6.982)], err: new THREE.Vector3(),
+      errV: new THREE.Vector3(), tp: -1, lastRaw: null, rendered: new THREE.Vector3(), has: false,
+      prevGrounded: true, prevVy: 0, yawPrev: 0, loops: {}, sjTo: null, sjRing: 0,
+      spawnPending: false, ready: false };
+    nm._sample(v, peer.tr, STEP); // establish the real sample before the first swept tick
+    const c = hitCounter(v);
+    spawnShot(40);
+    f.game.s3Clock = new f.FixedClock();
+    for (const dt of frames) f.runSimulation(f.game, dt);
+    assert.equal(f.game.s3Clock.ticks, 60, `${name} remote simulation advances 60 fixed ticks`);
+    assert.equal(c.hits, 1, `${name} remote sample lands the projectile exactly once`);
+    assert.ok(f.coherentMotionStart(v), `${name} continuous remote sample retains a coherent actor record`);
+    c.off?.(); clearProjectiles(); f.remove(v); G.netm = null;
+  }
+});
+
+test('#1040 installed Actor updates preserve real Dualies dodge and Splatling motion; all four shot families are admitted', () => {
+  clearProjectiles();
+  const dualies = f.make({ pos: [0, 0, 0], team: 1, name: 'dualies-dodge-victim', weapon: 'dualies' });
+  dualies.intent.move.set(1, 0, 0); dualies.intent.fire = true; dualies.intent.jump = true;
+  const dx0 = dualies.pos.x, dualHits = hitCounter(dualies);
+  spawnShot(40); runTick();
+  assert.ok(dualies.weaponRunner.dodge, 'native jump/fire edge starts the Dualies dodge');
+  assert.ok(dualies.pos.x > dx0, 'installed Actor.update applies the dodge displacement');
+  assert.ok(f.coherentMotionStart(dualies), 'Dualies dodge motion remains eligible for the same-tick sweep');
+  assert.equal(dualHits.hits, 1, 'the actual Actor dodge and projectile segment are resolved once');
+  dualHits.off?.(); clearProjectiles(); f.remove(dualies);
+
+  const splatling = f.make({ pos: [0, 0, 0], team: 1, name: 'splatling-moving-victim', weapon: 'splatling' });
+  splatling.intent.move.set(1, 0, 0); splatling.intent.fire = true;
+  const sx0 = splatling.pos.x, splatHits = hitCounter(splatling);
+  spawnShot(40); runTick();
+  assert.ok(splatling.pos.x > sx0, 'installed Actor.update advances continuous Splatling movement');
+  assert.ok(f.coherentMotionStart(splatling), 'continuous Splatling motion keeps a coherent sample');
+  assert.equal(splatHits.hits, 1, 'continuous Splatling motion is tested against the projectile once');
+  splatHits.off?.(); clearProjectiles(); f.remove(splatling);
+
+  const weapons = ['shooter', 'dualies', 'splatling', 'blaster'];
+  const actors = weapons.map((weapon, i) => f.make({ pos: [-36 + i * 24, 0, -70], team: 0,
+    name: `admitted-${weapon}`, weapon, isLocal: true }));
+  const admitted = new Map(actors.map(actor => [actor, 0]));
+  const offFire = f.on('weapon:fire', e => { if (admitted.has(e.actor)) admitted.set(e.actor, admitted.get(e.actor) + 1); });
+  for (const actor of actors) {
+    actor.intent.fire = true;
+    assert.equal(actor.update, Object.getPrototypeOf(actor).update, `${actor.weaponId} uses installed Actor.update`);
+  }
+  runTick(150);
+  for (const actor of actors.filter(a => a.weaponId !== 'splatling')) {
+    assert.ok(admitted.get(actor) > 0, `${actor.weaponId} admits a real round through WeaponRunner`);
+  }
+  const splatlingGun = actors.find(a => a.weaponId === 'splatling');
+  assert.ok(splatlingGun.weaponRunner.charging, 'Splatling control reaches the real charge state');
+  splatlingGun.intent.fire = false; runTick(2);
+  assert.ok(admitted.get(splatlingGun) > 0, 'Splatling admits a stream round on release');
+  offFire?.();
+  for (const actor of actors) f.remove(actor);
+  clearProjectiles();
 });
