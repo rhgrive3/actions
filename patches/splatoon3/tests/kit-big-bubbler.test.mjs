@@ -21,7 +21,7 @@ import {
   tickBigBubblers, tickRemoteBigBubblers, replayBigBubbler, resetBigBubblerReplay,
   adjudicateBigBubblerDamage,
   BIG_BUBBLER_RAW, BIG_BUBBLER_CALIBRATION, hermite2d, kitBarrierShelter, bigBubblerCanopyHp,
-  BIG_BUBBLER_OWNERSHIP,
+  BIG_BUBBLER_OWNERSHIP, rollerBubblerCandidate, applyRollerBubblerHit,
 } from '../runtime/kit-big-bubbler.mjs';
 
 const MODULE_PATH = new URL('../runtime/kit-big-bubbler.mjs', import.meta.url);
@@ -1305,4 +1305,63 @@ test('parent: reordered distinct replica hits apply both deltas and retransmissi
     assert.equal(a.ink, 23, key); assert.equal(bigBubblerDomes().length, 0, key); a[key] = before;
   }
   a.special = 0; const count = a.stats.specials; a._startSpecial(); assert.equal(a.stats.specials, count);
+});
+
+test('#1036 Roller contact damages only hostile Bubbler hardware at the 1.0x object modifier', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  const owner = roller(f); owner.nid = 11; f.G.actors = [owner]; activate(f, owner);
+  const dome = bigBubblerDomes()[0];
+  const enemy = roller(f, dome.pos.x, dome.pos.z - 0.8, 0); enemy.team = 1; enemy.nid = 22;
+  const candidate = rollerBubblerCandidate(enemy, 0, 1, enemy.weapon.rollWidth);
+  assert.ok(candidate, 'drum corridor reaches the damageable base');
+  assert.equal(candidate.target, 'canopy');
+  const beforeHp = dome.hp;
+  const applied = applyRollerBubblerHit(candidate, enemy, enemy.weapon.rollDamage);
+  assert.equal(applied, enemy.weapon.rollDamage * BIG_BUBBLER_CALIBRATION.rawPerDamageUnit);
+  assert.equal(dome.hp, beforeHp - applied, 'rolling uses the 1.0x Roller object amount');
+
+  assert.equal(applyRollerBubblerHit(candidate, enemy, enemy.weapon.rollDamage), 0,
+    'settling the same contact twice is idempotent');
+  assert.equal(dome.hp, beforeHp - applied);
+
+  const friend = roller(f, dome.pos.x, dome.pos.z - 0.8, 0); friend.team = dome.team;
+  assert.equal(rollerBubblerCandidate(friend, 0, 1, friend.weapon.rollWidth), null, 'friendly hardware is ignored');
+});
+
+test('#1036 crossing only the permeable dome shell is not Roller damage', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  const owner = roller(f); f.G.actors = [owner]; activate(f, owner);
+  const dome = bigBubblerDomes()[0];
+  const shellOnly = roller(f, dome.pos.x, dome.pos.z - dome.radius + 0.05, 0);
+  shellOnly.team = 1;
+  assert.ok(Math.abs(shellOnly.pos.z - dome.pos.z) < dome.radius, 'fixture is just inside the shell');
+  assert.equal(rollerBubblerCandidate(shellOnly, 0, 1, shellOnly.weapon.rollWidth), null,
+    'shell entry alone does not reach base/emitter hardware');
+});
+
+test('#1036 local Roller against a remote Bubbler proposes damage without mutating presentation HP', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; proxy.nid = 9; f.G.actors = [proxy];
+  replayBigBubbler('deploy', proxy, VALID_DEPLOY());
+  const remote = bigBubblerRemoteDomes()[0], hp = remote.hp, field = remote.fieldHp;
+  const attacker = roller(f, remote.pos.x, remote.pos.z - 0.8, 0);
+  attacker.team = 0; attacker.nid = 4;
+  const proposals = [];
+  const stop = f.on('kit:bubbler:damage-proposal', p => proposals.push(p));
+  const candidate = rollerBubblerCandidate(attacker, 0, 1, attacker.weapon.rollWidth);
+  assert.ok(candidate && candidate.remote);
+  assert.equal(applyRollerBubblerHit(candidate, attacker, attacker.weapon.rollDamage), 0);
+  stop();
+  assert.equal(remote.hp, hp);
+  assert.equal(remote.fieldHp, field);
+  assert.equal(proposals.length, 1);
+  assert.equal(proposals[0].shooter, 'n4');
+  assert.equal(proposals[0].domeOwner, 'n9');
+  assert.equal(proposals[0].amount, attacker.weapon.rollDamage * BIG_BUBBLER_CALIBRATION.rawPerDamageUnit);
+  attacker.remote = true;
+  assert.equal(rollerBubblerCandidate(attacker, 0, 1, attacker.weapon.rollWidth), null,
+    'remote replay actors cannot originate a second authoritative contact');
 });
