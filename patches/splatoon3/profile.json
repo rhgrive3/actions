@@ -208,6 +208,7 @@
       "reticleDelayF": 5
     },
     "roller": {
+      "rollContactInterval": 0.4,
       "rollSpeed": 7.92,
       "rollBaseSpeed": 6.4799999999999995,
       "rollDashTime": 1.5,
