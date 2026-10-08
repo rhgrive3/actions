@@ -26,6 +26,17 @@ const blasterPaintContracts = new WeakMap();
 const blasterAxisDirectionsCache = new WeakMap();
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
+// Splatoon deviation law: magnitude = s * x^(log_0.5(bias)).
+// Reflect the same ONE existing uniform RNG draw around zero, keeping the
+// sign independent of |x|. 0.5 retains the previous uniform yaw; 0 -> 0;
+// 1 -> full deviation. Exempt source indices consume no random numbers.
+export function biasedSourceYaw(uniform, degrees, bias = 0.5) {
+  const half = Math.min(1, Math.max(0, Number.isFinite(bias) ? bias : 0.5));
+  if (half <= 0 || !Number.isFinite(degrees) || degrees === 0) return 0;
+  const x = Math.min(1, Math.max(0, Number.isFinite(uniform) ? uniform : 0.5)) * 2 - 1;
+  const magnitude = half >= 1 ? (x === 0 ? 0 : 1) : Math.pow(Math.abs(x), Math.log(half) / Math.log(0.5));
+  return Math.sign(x) * magnitude * radians(degrees);
+}
 const MAIN_SHOT_LIFETIME = 1.2;
 
 function freezeDeep(value) {
@@ -1249,7 +1260,8 @@ export function installWeaponsFidelity(context,profile) {
       const speed=((p.owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
       const aim=p.owner.aimDir.clone().normalize();
       const yaw=Math.atan2(aim.x,aim.z)+radians(u.BaseRotateYDegree||0)+
-        (u.RandomRotateYOffOrderNum?.includes(index)?0:(Math.random()*2-1)*radians(u.RandomRotateYDegree||0));
+        (u.RandomRotateYOffOrderNum?.includes(index) ? 0 :
+          biasedSourceYaw(Math.random(), u.RandomRotateYDegree||0, u.RandomRotateYBias));
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
       p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
