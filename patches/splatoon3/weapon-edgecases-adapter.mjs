@@ -4,9 +4,17 @@ export function adaptWeaponEdgecases(rel, code, replace) {
   code = replace(code,
     "import { Physics, Hit } from './physics.js';",
     "import { Physics, Hit, WALKABLE } from './physics.js';", 'roller release foot paint native walkable threshold');
-  code = replace(code,
-    '  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);\n    this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));',
-    '  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);\n    spreadWeaponRound(this, dir, a, w, spreadDeg);', 'splatling independent ground pitch');
+  if (code.includes('    const inkProfile = profileFor(w);')) {
+    code = replace(code,
+      '  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    const inkProfile = profileFor(w);\n    const inkSpeed = inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;\n    if (inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));\n    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);\n    this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));',
+      '  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    const inkProfile = profileFor(w);\n    const inkSpeed = inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;\n    if (inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));\n    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);\n    spreadWeaponRound(this, dir, a, w, spreadDeg);',
+      'splatling independent ground pitch');
+  } else {
+    code = replace(code,
+      '  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);\n    this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));',
+      '  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);\n    spreadWeaponRound(this, dir, a, w, spreadDeg);',
+      'splatling independent ground pitch');
+  }
   code = replace(code,
     '    this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));',
     '    spreadWeaponRound(this, dir, a, w, spreadDeg);', 'shooter scalar spread cone');
