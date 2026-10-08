@@ -746,13 +746,18 @@ function syncRemoteSquidroll(actor, sample, peer) {
   }
 }
 const firstSplatSessions = new WeakMap();
+// #529: retain reconnect decisions for the eight most recent match IDs.
+const FIRST_SPLAT_RECENT_MATCHES = 8;
 function firstSplatStateFor(session,cfg) {
   const id = typeof cfg?.id === 'string' && cfg.id ? cfg.id : null;
   if (!id) return { matchId:null, claimed:false, attackerNid:null, victimNid:null };
   let matches = firstSplatSessions.get(session);
   if (!matches) { matches = new Map(); firstSplatSessions.set(session,matches); }
   let state = matches.get(id);
-  if (!state) { state = { matchId:id, claimed:false, attackerNid:null, victimNid:null }; matches.set(id,state); }
+  if (state) matches.delete(id);
+  else state = { matchId:id, claimed:false, attackerNid:null, victimNid:null };
+  matches.set(id,state);
+  if (matches.size > FIRST_SPLAT_RECENT_MATCHES) matches.delete(matches.keys().next().value);
   return state;
 }
 `;
