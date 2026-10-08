@@ -849,7 +849,10 @@ export function installWeapons(context, profile) {
   Projectiles.prototype.fireCharger = function (a, w, charge) {
     if (!isChargerFullCharge(charge)) return fireCharger.call(this, a, w, charge);
     const muzzle = this._muzzle(a, new THREE.Vector3()).clone(), dir = this._aimFrom(a, muzzle, new THREE.Vector3()).clone();
-    const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
+    const fieldRadius = Math.max(0, +w.fieldCollisionRadius || 0);
+    const hit = fieldRadius && this.inkFlight?.world && G.physics.level
+      ? this.inkFlight.world(muzzle, muzzle.clone().addScaledVector(dir, w.rangeMax), fieldRadius, new Hit())
+      : G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
     let length = hit.hit ? hit.dist : w.rangeMax;
     if (G.boss) { const bh = G.boss.segHit(muzzle, muzzle.clone().addScaledVector(dir, length), .1); if (bh) length = Math.min(length, bh.dist); }
     const end = muzzle.clone().addScaledVector(dir, length), result = { t: 0, dist: 0 }, victims = [];
