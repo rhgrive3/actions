@@ -70,7 +70,7 @@ test('#890 default S1-inspired tuning gives shorter 1F tap than sustained B hold
   assert.ok(tap.vel.y<held.vel.y,'compare the same simulated frame, not a newly released shot against an earlier frame');
   assert.equal(normalJumpHoldState(tap).applied,true);
   assert.equal(normalJumpHoldState(held).applied,false);
-  assert.ok(Math.abs(tap.vel.y-(8.4*0.7-25/60))<1e-10);
+  assert.ok(Math.abs(tap.vel.y-(8.4*0.7-9*25/60))<1e-10, 'nine gravitational steps after the original launch');
 });
 test('#890 fabricated legacy calibration is rejected without explicit status and source identity',()=>{
   const candidate={...LEGACY_JUMP_FEEL};
