@@ -270,9 +270,20 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       projectiles._draw();camera.position.copy(ch.root.position).add(new THREE.Vector3(2.6,1.3,3.4));
       camera.lookAt(ch.root.position.clone().add(new THREE.Vector3(0,.62,0)));camera.updateMatrixWorld();renderer.render(scene,camera);
       const actual=pixels(),image=frameImage(),visible=ch.root.visible;
+      // This counterfactual measures the actual native character rig, not the
+      // cumulative projectile overlay. Repeated Slosher volleys remain at the
+      // muzzle in this *motion-only* driver (it never advances Projectiles),
+      // and can hide the whole character at the camera. Exclude the same
+      // instanced ink draw from both comparison frames, restoring its exact
+      // visibility afterward; native gameplay/shot clocks stay untouched.
+      const inkDraw=projectiles.blobs,inkWasVisible=inkDraw?.visible;
       let rig;
-      try{ch.root.visible=false;renderer.render(scene,camera);rig=globalThis.motionPixelDifference(actual,pixels());}
-      finally{ch.root.visible=visible;}
+      try{
+        if(inkDraw)inkDraw.visible=false;
+        renderer.render(scene,camera);const rigActual=pixels();
+        ch.root.visible=false;renderer.render(scene,camera);
+        rig=globalThis.motionPixelDifference(rigActual,pixels());
+      }finally{ch.root.visible=visible;if(inkDraw)inkDraw.visible=inkWasVisible;}
       let flow=null,wholeSceneFlow=null,flowIsolation=null;
       if(scenario.type==='flow'){
         // Each visibility pair owns a fresh baseline. The preceding rig-hidden
