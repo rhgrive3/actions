@@ -338,6 +338,7 @@ function makeState(actor, opts = {}) {
   const specialPower = clamp01(Number.isFinite(opts.specialPower)
     ? opts.specialPower : actor?.s3?.modifiers?.specialPower || 0);
   return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0, specialPower,
+    fireHeld: false, exhaleArmed: false,
     nearR: intakeNearRadius(specialPower), farR: intakeFarRadius(specialPower), baseFar: FAR_HIGH,
     mesh: null, geo: null, mat: null,
     _fwd: new api.THREE.Vector3(), _org: new api.THREE.Vector3(), _q: new api.THREE.Vector3(),
@@ -401,6 +402,9 @@ function beginExhale(state) {
   if (!state || state.phase !== 'inhale') return false;
   state.phase = 'exhale';
   state.t = 0;
+  // #1120: a ZR hold carried out of suction arms a later RELEASE edge; the
+  // held level itself never authors the return shot.
+  state.exhaleArmed = !!state.fireHeld;
   disposeVisual(state);
   const active = state.actor?.specialActive;
   if (active?.id === VAC_ID) active.phase = 'exhale';
@@ -612,10 +616,16 @@ export function installKitInkVac(context, _profile) {
 
       if (states.get(this) !== state || !this.alive) return result;
       if (state.phase === 'inhale') {
+        // Keep the physical ZR level across the inhale→exhale boundary. A held
+        // suction input may arm the future release edge but cannot fire here.
+        state.fireHeld = !!fire;
         inkVacUpdate(this, dt);
       } else if (state.phase === 'exhale') {
         state.t += dt;
-        if (fire || state.t + 1e-10 >= INK_VAC_CALIBRATION.exhaleHoldSeconds) release(state);
+        const releaseEdge = state.exhaleArmed && state.fireHeld && !fire;
+        if (fire) state.exhaleArmed = true;
+        state.fireHeld = !!fire;
+        if (releaseEdge || state.t + 1e-10 >= INK_VAC_CALIBRATION.exhaleHoldSeconds) release(state);
       }
       return result;
     };
