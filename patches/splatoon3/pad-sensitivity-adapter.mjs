@@ -1,7 +1,7 @@
 // Build-only right-stick sensitivity migration. Keep locked native sources unchanged.
 export function adaptPadSensitivity(rel, code, replaceOnce) {
-  if (rel === 'src/config.js') return replaceOnce(
-    code, '  padSensitivity: 1.0,', '  padSensitivity: 0,        // S3 -5..+5 right-stick setting (provisional gain curve)', 'S3 pad default');
+  // Keep the legacy locked config anchor: reliability/controls-adapter.mjs
+  // must first inject padInvertX. The first-boot migration maps default 1x to S3 0.
   if (rel === 'src/ui/menus.js') return replaceOnce(
     code,
     "{ key: 'padSensitivity', label: 'Controller sensitivity', type: 'slider', min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×', help: 'Camera turn speed with the right stick.' },",
