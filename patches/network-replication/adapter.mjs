@@ -354,31 +354,31 @@ export function emit(name, payload) {
       '    a.superJumpState = null; a.specialActive = null;\n    restoreAdoptionState(this, a, adoptionTransfer);',
       'restore authoritative actor state after ordinary runner reset');
     {
-      const rowWithStats = 'r2(wr.lockT || 0), a.stats.specials || 0];';
+      const rowWithStats = 'r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0), a.stats.specials || 0];';
       if (code.includes(rowWithStats)) patch(rowWithStats,
-        'r2(wr.lockT || 0), a.stats.specials || 0, packAdoptionState(a)];',
+        'r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0), a.stats.specials || 0, packAdoptionState(a)];',
         'append tagged adoption state after existing special counter');
       else patch('r2(wr.lockT || 0)];',
         'r2(wr.lockT || 0), packAdoptionState(a)];',
         'append tagged adoption state to legacy actor row');
     }
-    patch('wz: s[19], lock: s[20] };',
-      'wz: s[19], lock: s[20], adoption: s[22] };',
+    patch('wz: s[19], lock: s[20], sjT: Number.isFinite(s[21]) ? s[21] : 0 };',
+      'wz: s[19], lock: s[20], sjT: Number.isFinite(s[21]) ? s[21] : 0, adoption: s[23] };',
       'unpack independent adoption row slot');
     patch('const mode = this._pathAt(buf, tr, S);',
       'const mode = this._pathAt(buf, tr, S);\n    S.adoption = sampleAdoptionState(buf, tr, mode, peer.sim);',
       'sample adoption state on the sender timeline');
-    patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23) continue;
-      const adoption = s.length === 23
-        ? readAdoptionState(s[22], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq)
+    patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23 && s.length !== 24) continue;
+      const adoption = s.length === 24
+        ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq)
         : null;
-      if (s.length === 23 && !adoption) continue;
+      if (s.length === 24 && !adoption) continue;
       if (adoption) { snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence; }
       else delete snap.adoption;
       a.net.lastLife = snap.life;`, 'strict life/sequence-bound adoption packet');
-    patch('    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? \'flight\' : \'charge\';',
-      '    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? \'flight\' : \'charge\';\n    applyAdoptionSample(this, a, S);',
-      'restore exact remote Super Jump destination and recovery sample');
+    patch('    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
+      '    applyAdoptionSample(this, a, S);\n    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
+      'restore adoption sample after authoritative age-based Super Jump phase');
     patch('    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;',
       "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;\n    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }",
       'remote Tidal Slam phase clock');
