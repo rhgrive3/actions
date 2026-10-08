@@ -1168,12 +1168,41 @@ export function installWeaponsFidelity(context,profile) {
     if(!actor||!w||w.kind!=='shooter'||!actor.aimPoint||!actor.aimDir||!actor.character||
       typeof actor.character.getMuzzle!=='function'||!api.G?.physics||
       typeof this._muzzle!=='function'||typeof this._aimFrom!=='function'||typeof this._ballistic!=='function')return null;
-    const THREE=context.THREE;
+    const THREE=context.THREE,physics=api.G.physics,level=physics.level||api.G.level;
     const p=this._s3ShooterImpact||(this._s3ShooterImpact={
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()});
     const dir=this._s3ShooterImpactDir||(this._s3ShooterImpactDir=new THREE.Vector3());
+    const cache=this._s3ShooterImpactCache||(this._s3ShooterImpactCache={
+      valid:false, muzzle:new THREE.Vector3(),dir:new THREE.Vector3(),
+      aimPoint:new THREE.Vector3(),aimDir:new THREE.Vector3(),result:null
+    });
+    // Observe the real muzzle every render, but only replay the up-to-72
+    // swept collisions when a simulation input or field generation changes.
+    // This is exact-pose reuse: no quantized aim, no alteration to first-hit
+    // geometry, and no extra render pass / physics step.
     this._muzzle(actor,p.pos);
     this._aimFrom(actor,p.pos,dir);
+    const t=api.G.time,gen=level?.geometryGeneration??level?._geometryGeneration??level?._generation;
+    if(cache.valid&&cache.actor===actor&&cache.weapon===w&&cache.physics===physics&&
+      cache.raycast===physics.raycast&&cache.segment===physics.segment&&
+      cache.level===level&&cache.blocks===level?.blocks&&cache.faces===level?.faces&&
+      cache.blocksLength===level?.blocks?.length&&cache.facesLength===level?.faces?.length&&
+      cache.generation===gen&&cache.form===actor.form&&cache.grounded===actor.grounded&&
+      cache.speed===w.projSpeed&&cache.straight===w.straightTime&&
+      cache.range===w.range&&cache.radius===w.impactRadius&&
+      cache.ballistics===w.ballistics&&cache.muzzle.equals(p.pos)&&cache.dir.equals(dir)&&
+      cache.aimPoint.equals(actor.aimPoint)&&cache.aimDir.equals(actor.aimDir)&&
+      (!Number.isFinite(t)||(t>=cache.at&&t-cache.at<.2)))return cache.result;
+    cache.valid=false;
+    cache.actor=actor;cache.weapon=w;cache.physics=physics;cache.raycast=physics.raycast;
+    cache.segment=physics.segment;cache.level=level;cache.blocks=level?.blocks;
+    cache.faces=level?.faces;cache.blocksLength=level?.blocks?.length;
+    cache.facesLength=level?.faces?.length;cache.generation=gen;
+    cache.form=actor.form;cache.grounded=actor.grounded;
+    cache.speed=w.projSpeed;cache.straight=w.straightTime;
+    cache.range=w.range;cache.radius=w.impactRadius;cache.ballistics=w.ballistics;
+    cache.muzzle.copy(p.pos);cache.dir.copy(dir);cache.aimPoint.copy(actor.aimPoint);
+    cache.aimDir.copy(actor.aimDir);cache.at=t;
     // fireShooter pitches the nominal launch toward the aim point before spread.
     this._ballistic(p.pos,dir,actor.aimPoint,w.projSpeed,w.straightTime,28,0.8,w.range);
     p.owner=actor;p.team=actor.team;p.type='shot';p.ghost=false;p.delay=0;p.vol=null;
@@ -1185,15 +1214,15 @@ export function installWeaponsFidelity(context,profile) {
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
     initialize(p,w);
     const hit=this._s3ShooterImpactHit||(this._s3ShooterImpactHit=new api.Hit());
-    let guard=0;
+    let guard=0,result=null;
     while(p.age+EPSILON<p.life){
       advanceFidelityProjectile(p,1/60);
-      sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge),fieldRadiusAt(p,p.age),hit,true);
-      if(hit.hit)return hit;
-      if(p.pos.y<api.PLAYER.waterY-1.8)return null;
-      if(++guard>144)return null;
+      sweptWorldHit(physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge),fieldRadiusAt(p,p.age),hit,true);
+      if(hit.hit){result=hit;break;}
+      if(p.pos.y<api.PLAYER.waterY-1.8||++guard>144)break;
     }
-    return null;
+    cache.result=result;cache.valid=true;
+    return result;
   };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
   WeaponRunner.prototype.reset=function(...args){const result=reset.apply(this,args);this.fidelitySplatlingCharge=null;return result;};
