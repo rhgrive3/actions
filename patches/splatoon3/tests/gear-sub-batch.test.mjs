@@ -16,7 +16,10 @@ test('#193: Splat Bomb per-sub Lv2 curve crosses the two-bomb boundary at 35AP, 
  for(const gp of [0,3,10,34,35,57]){
   const f=await fixture(),a=f.make();equip(a,gp,'inkSaverSub');let bombs=0;f.G.projectiles.throwBomb=()=>bombs++;
   const cost=70*gearCurve(gp,1,.825,.65);near(a.s3.modifiers.inkSaverSub*70,cost);
-  for(let attempt=0;attempt<2;attempt++){step(a,6,{sub:true});step(a,1,{subReleased:true});}
+  for(let attempt=0;attempt<2;attempt++){
+   step(a,6,{sub:true});step(a,1,{subReleased:true});
+   step(a,1,{}); // #1037: settle the independent 1F device use before the next hold
+  }
   assert.equal(bombs,gp>=35?2:1);near(a.ink,100-cost*bombs);near(f.SUB.bomb.inkCost,70);
  }
 });
@@ -26,7 +29,7 @@ test('#235: human 1F/4F release waits until elapsed5F; a long hold has no extra 
   const f=await fixture(),a=f.make(),r=a.weaponRunner,ticks=[];let tick=0;f.G.projectiles.throwBomb=()=>ticks.push(tick);
   for(tick=0;tick<hold;tick++)r.update(DT,{sub:true});
   r.update(DT,{subReleased:true});for(tick=hold+1;tick<15;tick++)r.update(DT,{});
-  assert.deepEqual(ticks,[Math.max(5,hold)]);near(a.ink,30);assert.equal(r.s3SubReady,null);
+  assert.deepEqual(ticks,[Math.max(5,hold)+1]);near(a.ink,30);assert.equal(r.s3SubReady,null);
  }
 });
 
@@ -36,7 +39,7 @@ test('#235: real Actor distinguishes squid-origin10F from human5F with no double
   a.form=origin;a.intent.squid=origin==='squid';if(origin==='squid')f.tick(a,2);a.intent.sub=true;f.tick(a);
   a.intent.sub=false;a.intent.squid=false;
   for(tick=1;tick<=12;tick++)f.tick(a);
-  assert.deepEqual(times,[frame]);
+  assert.deepEqual(times,[frame+1]);
  }
 });
 
