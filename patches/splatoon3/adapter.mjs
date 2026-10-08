@@ -1419,12 +1419,7 @@ export function adaptSource(rel, code) {
     // #839: the ordinary and Boss Roller body-hit admission uses the sourced
     // DamageSpanSecond (24 fixed frames), without changing the hit-rejection
     // ownership from #558 or the geometry/paint/knockback paths.
-    // A first accepted contact can occur at G.time === 0. `|| -9` would
-    // mistake that real timestamp for a missing entry on every next frame.
-    code = replaceOnce(code,
-      'const last = this.rollHits.get(e) || -9;',
-      'const last = this.rollHits.get(e) ?? -9;',
-      'S3 Roller retain zero-time player contact timestamp');
+    // The actor and Boss zero-time ledgers are already normalised above.
     code = replaceOnce(code,
       'G.time - last > 0.5',
       'G.time - last + 1e-10 >= (w.rollContactInterval ?? (24 / 60))',
