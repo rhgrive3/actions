@@ -53,10 +53,25 @@ export function validateDetailResult(result) {
       if(typeof s.flow.active!=='boolean'||typeof s.flow.visible!=='boolean')throw Error('Detail Flow identity: '+name);
       if(s.flow.opacity<0||s.flow.opacity>1||s.flow.resources<0||s.flow.aliveParticles<0)throw Error('Detail Flow range: '+name);
     }
-    const renderFrames=[21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].filter(f=>f<frames);
-    if(!Array.isArray(events)||!Array.isArray(releaseFrames)||!Array.isArray(renderMetrics)||renderMetrics.length!==renderFrames.length||new Set(renderMetrics.map(m=>m.frame)).size!==renderFrames.length||renderFrames.some(f=>!renderMetrics.some(m=>m.frame===f)))throw Error('Detail event/render denominator: '+name);
-    for(const event of events){finite(event.frame,name+'.eventFrame');if(typeof event.name!=='string'||event.frame<0||event.frame>=frames)throw Error('Detail release event identity: '+name);}
-    for(const release of releaseFrames){for(const key of ['frame','fuse','meshOriginError','releaseSnapshotError'])finite(release[key],name+'.release.'+key);for(const key of ['pos','velocity']){if(!Array.isArray(release[key])||release[key].length!==3)throw Error('Detail release vector denominator');release[key].forEach(v=>finite(v,name+'.releaseVector'));}}
+    if(!Array.isArray(events)||!Array.isArray(releaseFrames)||!Array.isArray(renderMetrics))throw Error('Detail event/render denominator: '+name);
+    for(const event of events){finite(event.frame,name+'.eventFrame');if(!Number.isInteger(event.frame)||typeof event.name!=='string'||event.frame<0||event.frame>=frames)throw Error('Detail release event identity: '+name);}
+    for(const release of releaseFrames){for(const key of ['frame','fuse','meshOriginError','releaseSnapshotError'])finite(release[key],name+'.release.'+key);if(release.meshType!=='Group')throw Error('Missing actual released bomb mesh group: '+name);for(const key of ['pos','velocity']){if(!Array.isArray(release[key])||release[key].length!==3)throw Error('Detail release vector denominator');release[key].forEach(v=>finite(v,name+'.releaseVector'));}}
+    let actualBombThrowFrame=null;
+    if(scenario.type==='bomb'){
+      const throws=events.filter(event=>event.name==='throwBomb'),timing=row.releaseTiming;
+      if(throws.length!==1||releaseFrames.length!==1)throw Error('Actual bomb throw event denominator: '+name);
+      if(!timing||timing.heldStartFrame!==0||timing.heldEndFrame!==29||timing.releaseInputFrame!==30)throw Error('Actual bomb preparation identity: '+name);
+      finite(timing.useStartupSeconds,name+'.releaseTiming.useStartupSeconds');
+      finite(timing.actualReleaseFrame,name+'.releaseTiming.actualReleaseFrame');
+      finite(timing.measuredDelayFrames,name+'.releaseTiming.measuredDelayFrames');
+      const configuredDelayFrames=timing.useStartupSeconds*60,eventFrame=throws[0].frame;
+      if(!Number.isInteger(configuredDelayFrames)||configuredDelayFrames<1||eventFrame-timing.releaseInputFrame!==configuredDelayFrames||timing.actualReleaseFrame!==eventFrame||timing.measuredDelayFrames!==configuredDelayFrames||releaseFrames[0].frame!==eventFrame)throw Error('Measured native bomb preparation/release delay: '+name);
+      actualBombThrowFrame=eventFrame;
+    }else if(events.some(event=>event.name==='throwBomb')||releaseFrames.length!==0)throw Error('Unexpected bomb release event: '+name);
+    const expectedRenderFrames=[21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].filter(f=>f<frames);
+    if(actualBombThrowFrame!==null)expectedRenderFrames.push(actualBombThrowFrame);
+    const renderFrames=[...new Set(expectedRenderFrames)].sort((a,b)=>a-b);
+    if(renderMetrics.length!==renderFrames.length||new Set(renderMetrics.map(m=>m.frame)).size!==renderFrames.length||renderFrames.some(f=>!renderMetrics.some(m=>m.frame===f)))throw Error('Detail event/render denominator: '+name);
     for(const m of renderMetrics) {
       if(m.renderClocksStable!==true)throw Error('Detail render changed native clocks/gameplay: '+name);
       finite(m.frame,name+'.renderFrame');
@@ -78,10 +93,11 @@ export function validateDetailResult(result) {
     if(!disposed?.disposed||disposed.resources!==0||disposed.aliveParticles!==0)throw Error('Flow resources survived Character disposal: '+name);
     const peak=Math.max(...samples.map(s=>Math.abs(s.rcP))),tail=samples.slice(-24);
     if(scenario.type==='bomb') {
-      if(releaseFrames.length!==1||releaseFrames[0].frame!==30||!samples[29].heldVisible||samples[30].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
+      if(!samples[29].heldVisible||samples[30].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
       if(scenario.kind==='dualies'&&(samples[29].leftPistolVisible||!samples.at(-1).leftPistolVisible))throw Error('Bomb dualies pistol recovery regression');
-      const held=renderMetrics.find(m=>m.frame===29)?.heldBomb,released=renderMetrics.find(m=>m.frame===30)?.releasedBomb;
+      const held=renderMetrics.find(m=>m.frame===29)?.heldBomb,released=renderMetrics.find(m=>m.frame===actualBombThrowFrame)?.releasedBomb;
       if(!held||held.indexedVertices<50||held.nearestLeft>=.12||!released||released.indexedVertices<100||released.nearestLeft>=.22)throw Error('Actual indexed bomb/hand contact regression: '+name);
+      if(renderMetrics.some(m=>m.frame!==actualBombThrowFrame&&m.releasedBomb))throw Error('Released bomb captured outside its actual native birth frame: '+name);
       if(samples[29].ik.slice(0,2).some(e=>e>=.015)||tail.some(s=>s.ik.slice(0,2).some(e=>e>=.015)))throw Error('Native bomb arm reach regression: '+name);
       if(releaseFrames[0].meshOriginError>1e-10||releaseFrames[0].releaseSnapshotError>1e-8)throw Error('Rendered/collision bomb release regression: '+name);
     }
@@ -264,7 +280,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       if(!indexedVertices||!Number.isFinite(nearestLeft)||!Number.isFinite(nearestRight))throw Error('Empty/non-finite indexed contact draw');
       return {indexedVertices,nearestLeft,nearestRight};
     }
-    function capture(scenario,frame,ch,actor) {
+    function capture(scenario,frame,ch,actor,events) {
       const nativeRenderState=()=>JSON.stringify({time:G.time,characterTime:ch.t,pose:Array.from(ch.P),timers:Array.from(ch.tr),root:ch.root.position.toArray(),position:actor.pos.toArray(),velocity:actor.vel.toArray(),hp:actor.hp,ink:actor.ink,invuln:actor.invuln,flow:actor.s3.flow,runner:Object.fromEntries(['cooldown','chargeT','charge','lockT','streaming','aimingSub','fuse','subFuse'].map(k=>[k,actor.weaponRunner[k]]))});
       const beforeRender=nativeRenderState();
       projectiles._draw();camera.position.copy(ch.root.position).add(new THREE.Vector3(2.6,1.3,3.4));
@@ -307,7 +323,13 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       images.push({name:scenario.name+'-'+String(frame).padStart(3,'0'),image});
       const left=ch.bones.handL.getWorldPosition(new THREE.Vector3()),right=ch.bones.handR.getWorldPosition(new THREE.Vector3());
       if(nativeRenderState()!==beforeRender)throw Error('Rendered pair advanced native clocks/gameplay: '+scenario.name+' frame '+frame);
-      return {frame,renderClocksStable:true,rig,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===30?drawnContact(projectiles.bombs.at(-1).mesh,left,right):null};
+      let releasedBomb=null;
+      if(scenario.type==='bomb'&&events.some(event=>event.name==='throwBomb'&&event.frame===frame)){
+        const bomb=projectiles.bombs.at(-1);
+        if(!bomb||bomb.owner!==actor||bomb.mesh?.type!=='Group')throw Error('Missing actual released bomb mesh group: '+scenario.name+' frame '+frame);
+        releasedBomb=drawnContact(bomb.mesh,left,right);
+      }
+      return {frame,renderClocksStable:true,rig,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb};
     }
     try {
     for (const scenario of cases) {
@@ -317,6 +339,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       const ch = actor.character; ch.actor = actor; ch.s3WeaponDetailMotionEnabled = scenario.detailEnabled !== false; ch.onEvent = null; G.actors = [actor]; scene.add(ch.root);
       actor.grounded = true; actor.ground.hit = true; actor.vel.set(0, 0, 0);
       const frames=scenario.type==='splatling'?420:240,samples=[],releaseFrames=[],events=[],renderMetrics=[],methods=new Map();
+      const releaseInputFrame=30;let releaseTiming=null;
       let frame=-1;
       for(const name of ['throwBomb','fireShooter','fireCharger','fireBlaster','fireSlosh','fireSplatling']){
         const native=projectiles[name];methods.set(name,native);
@@ -325,9 +348,11 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
           if(args[0]===actor){
             events.push({name,frame,charge:name==='fireCharger'?args[2]:null});
             if(name==='throwBomb'){
-              const b=this.bombs.at(-1),snap=bombMotionSnapshot(ch),release=new THREE.Vector3().fromArray(snap.releasePosition||[]);
-              if(!b||!snap.releasePosition)throw Error('Missing actual bomb release origin');
-              releaseFrames.push({frame,pos:b.pos.toArray(),velocity:b.vel.toArray(),fuse:b.fuse,meshOriginError:b.mesh.position.distanceTo(b.pos),releaseSnapshotError:release.distanceTo(b.pos)});
+              const b=this.bombs.at(-1),snap=bombMotionSnapshot(ch);
+              if(!b||b.owner!==actor||b.mesh?.type!=='Group')throw Error('Missing actual released bomb mesh group: '+scenario.name+' frame '+frame);
+              if(!snap.releasePosition)throw Error('Missing actual bomb release origin');
+              const release=new THREE.Vector3().fromArray(snap.releasePosition);
+              releaseFrames.push({frame,pos:b.pos.toArray(),velocity:b.vel.toArray(),fuse:b.fuse,meshType:b.mesh.type,meshOriginError:b.mesh.position.distanceTo(b.pos),releaseSnapshotError:release.distanceTo(b.pos)});
             }
           }
           return value;
@@ -346,7 +371,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
           let fire = ['bucket', 'blaster', 'shooter'].includes(scenario.type) && frame < 100;
           if (scenario.type === 'charger') fire = frame < 80;
           if (scenario.type === 'splatling') fire = frame < 140;
-          const sub = scenario.type === 'bomb' && frame < 30;
+          const sub = scenario.type === 'bomb' && frame < releaseInputFrame;
           if (scenario.type === 'flow') {
             if (frame === 20) { actor.s3.flow.active = true; actor.s3.flow.remaining = 10; }
             if (frame === 90) actor.s3.flow.remaining += 5;
@@ -356,7 +381,12 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
             if (scenario.reset && frame === 110) { actor.reset(); actor.grounded = true; }
           }
           const v = actor.form === 'squid' && scenario.squidSpeed ? scenario.squidSpeed : scenario.speed || 0; actor.vel.set(0, 0, v); actor.pos.z += v / 60;
-          tick({ fire, sub, subReleased: scenario.type === 'bomb' && frame === 30 });
+          tick({ fire, sub, subReleased: scenario.type === 'bomb' && frame === releaseInputFrame });
+          if(scenario.type==='bomb'&&frame===releaseInputFrame){
+            const pending=actor.weaponRunner.s3SubReady,startup=pending?.useStartup;
+            if(!pending?.pending||!Number.isFinite(startup)||startup<=0)throw Error('Missing measured native bomb use-startup after preparation: '+scenario.name);
+            releaseTiming={heldStartFrame:0,heldEndFrame:releaseInputFrame-1,releaseInputFrame,useStartupSeconds:startup};
+          }
           const bomb = bombMotionSnapshot(ch), flow = flowMotionSnapshot(ch), weapon = weaponDetailMotionSnapshot(ch);
           const left = ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray();
           const right = ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray();
@@ -372,9 +402,16 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
             // simulation step. Preserve the last completed frame on a crash.
             await new Promise(resolve=>setTimeout(resolve,0));
           }
-          if([21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame))renderMetrics.push(capture(scenario,frame,ch,actor));
+          if([21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame)||scenario.type==='bomb'&&events.some(event=>event.name==='throwBomb'&&event.frame===frame))renderMetrics.push(capture(scenario,frame,ch,actor,events));
         }
-        data.push({name:scenario.name,scenario,frames,fireInterval:actor.weapon.fireInterval,firstShotDelay:actor.weapon.firstShotDelay||0,samples,releaseFrames,events,renderMetrics});
+        if(scenario.type==='bomb'){
+          const throws=events.filter(event=>event.name==='throwBomb');
+          if(throws.length!==1||releaseFrames.length!==1||!releaseTiming)throw Error('Missed or duplicated actual native bomb throw event: '+scenario.name);
+          const actualReleaseFrame=throws[0].frame,measuredDelayFrames=actualReleaseFrame-releaseTiming.releaseInputFrame,configuredDelayFrames=releaseTiming.useStartupSeconds*60;
+          if(!Number.isInteger(configuredDelayFrames)||measuredDelayFrames!==configuredDelayFrames||releaseFrames[0].frame!==actualReleaseFrame)throw Error('Native bomb preparation/release timing mismatch: '+scenario.name);
+          releaseTiming={...releaseTiming,actualReleaseFrame,measuredDelayFrames};
+        }
+        data.push({name:scenario.name,scenario,frames,fireInterval:actor.weapon.fireInterval,firstShotDelay:actor.weapon.firstShotDelay||0,samples,releaseFrames,releaseTiming,events,renderMetrics});
       } finally {
         for(const [name,native] of methods)projectiles[name]=native; scene.remove(ch.root); ch.dispose();
         const disposed = flowMotionSnapshot(ch);

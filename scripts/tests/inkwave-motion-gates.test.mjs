@@ -41,6 +41,11 @@ test('detail accepts valid semantic records and rejects original false-pass coun
   r=>row(r,'flow-kid').samples[170].flow.resources=99,
   r=>row(r,'shooter-recoil').samples.forEach(s=>s.rcP=0),
   r=>row(r,'shooter-recoil').events.pop(),
+  r=>row(r,'bomb-standing').events.pop(),
+  r=>row(r,'bomb-standing').events.push({name:'throwBomb',frame:32,charge:null}),
+  r=>row(r,'bomb-standing').releaseFrames[0].meshType='Mesh',
+  r=>row(r,'bomb-standing').releaseTiming.measuredDelayFrames++,
+  r=>row(r,'bomb-standing').renderMetrics.find(m=>m.frame===31).releasedBomb=null,
   r=>row(r,'shooter-recoil').events[1].frame++,
   r=>row(r,'shooter-recoil').samples[239].rcP=.01,
   r=>row(r,'shooter-recoil').samples[99].rcP=.04,
@@ -49,7 +54,7 @@ test('detail accepts valid semantic records and rejects original false-pass coun
   r=>row(r,'charger-return').events[0].frame=80, // old same-tick release
   r=>row(r,'charger-return').events[0].frame=82, // extra deferred tick
   r=>delete row(r,'charger-return').events[0].charge,
-  r=>row(r,'bomb-standing').renderMetrics.find(m=>m.frame===30).releasedBomb.nearestLeft=.3,
+  r=>row(r,'bomb-standing').renderMetrics.find(m=>m.frame===31).releasedBomb.nearestLeft=.3,
   r=>delete row(r,'bomb-standing').releaseFrames[0].meshOriginError,
   r=>delete row(r,'flow-kid').renderMetrics[0].renderClocksStable,
   r=>row(r,'flow-kid').renderMetrics[0].renderClocksStable=false,
