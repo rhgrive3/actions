@@ -703,6 +703,11 @@ def neck_join(cfg):
                  and Lb[e.verts[0].index, 1] < -40]
         filled = bmesh.ops.holes_fill(bm, edges=small, sides=cfg.get('hole_sides', 12))['faces']
         print('BODY_SHAPE neck_join', obj.name, 'small holes filled', len(filled))
+        # the Boolean and the fills leave n-gons (some concave): Surface Deform (later steps bind the skin layers
+        # to the head) cannot bind to those, so they are made into triangles
+        ngons = [f for f in bm.faces if len(f.verts) > 4]
+        bmesh.ops.triangulate(bm, faces=ngons)
+        print('BODY_SHAPE neck_join', obj.name, 'n-gons triangulated', len(ngons))
         new = bpy.data.meshes.new(obj.data.name + '_joined')
         bm.to_mesh(new)
         bm.free()
