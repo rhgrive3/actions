@@ -58,7 +58,7 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   framesPerSecond: 60,
   breathOriginHeight: 1.0,   // intake origin above feet (kid chest) — calibration
   frontalEpsilon: -0.05,    // projectile must travel against player aim — calibration
-  absorbCreditPerProjectile: 0.34, // charge added per accepted projectile — calibration
+  absorbCapacityDamage: 1100, // S3 11.3.0: approximate damage-equivalent intake capacity
   geometry: 'frustum: near radius at the muzzle growing linearly to far radius at LengthMax; RadiusMin/RadiusMax read as near/far and Low/High as charge ends',
   geometryStatus: 'interpretation / calibration; Nintendo field meaning unconfirmed',
   speedStatus: 'pinned per-frame values multiplied by 60 to per-second',
@@ -289,8 +289,30 @@ export function inkVacAbsorbCandidate(actor, start, end, projectile) {
 
 // Credit the held local intake by its OWN calibration value. Only the owner may
 // credit; a replica never calls this from a replayed packet.
-function creditCharge(state) {
-  state.charge = Math.min(1, state.charge + INK_VAC_CALIBRATION.absorbCreditPerProjectile);
+export function inkVacChargeFromDamage(damage, capacity = INK_VAC_CALIBRATION.absorbCapacityDamage) {
+  return Number.isFinite(damage) && Number.isFinite(capacity) && capacity > 0
+    ? Math.max(0, Math.min(1, damage / capacity)) : 0;
+}
+// Native shots carry their authoritative damage in projectile.damage. If a
+// special object has no such value, neutralise it without inventing credit.
+function absorbedDamageEquivalent(projectile) {
+  const raw = projectile?.damage;
+  return Number.isFinite(raw) && raw > 0 ? raw : 0;
+}
+// The Vac owner does not trust an arbitrary damage amount from a client.
+// Its independently known, authenticated shooter's weapon bounds proposals.
+function proposalWeaponDamage(weapon) {
+  if (!weapon) return 0;
+  const value = [weapon.damage, weapon.damageHead, weapon.directDamage,
+    weapon.flickDamageNear].find(v => Number.isFinite(v) && v > 0);
+  return value || 0;
+}
+function creditCharge(state, damageEquivalent) {
+  const delta = Number.isFinite(damageEquivalent) ? Math.max(0, damageEquivalent) : 0;
+  if (!(delta > 0)) return state.charge;
+  const capacity = INK_VAC_CALIBRATION.absorbCapacityDamage;
+  state.absorbedDamage = Math.min(capacity, (state.absorbedDamage || 0) + delta);
+  state.charge = inkVacChargeFromDamage(state.absorbedDamage, capacity);
   state.absorbed++;
   updateVisual(state);
   api.emit?.(INK_VAC_EVENTS.charge, { actor: state.actor, kit: VAC_ID, serial: state.serial, charge: state.charge });
@@ -324,10 +346,11 @@ function absorb(state, projectile) {
   // authority to it, so it may be consumed VISUALLY only -- no damage edit, no
   // charge, no proposal, no paint.
   if (projectile.ghost) return false;
+  const absorbedDamage = absorbedDamageEquivalent(projectile);
   projectile.damage = 0;      // neutralise the shooter-authoritative damage here
   // A replica may not claim charge from a replayed ghost; it proposes instead.
   if (state.remote) return proposeAbsorption(state, projectile);
-  creditCharge(state);
+  creditCharge(state, absorbedDamage);
   return true;
 }
 
@@ -521,7 +544,7 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     if (ledger.set.has(key)) return drop('duplicate-proposal');
     ledger.set.add(key); ledger.order.push(key);
     while (ledger.order.length > PROPOSAL_MEMORY) ledger.set.delete(ledger.order.shift());
-    creditCharge(state);            // owner's own calibration, once
+    creditCharge(state, proposalWeaponDamage(actor.weapon)); // owner-derived, never packet-supplied
     return { applied: true, serial, charge: state.charge };
   }
 
