@@ -1,4 +1,5 @@
 import { adaptRollerMaxPaint } from './roller-max-paint-adapter.mjs';
+import { adaptHostTeams } from './lobby-host-team-adapter.mjs';
 import { adaptLocalBatch01 } from './local-batch-01-adapter.mjs';
 import { adaptAssistPresentation } from './assist-presentation-adapter.mjs';
 import { adaptMatchHud } from './match-hud-adapter.mjs';
@@ -92,6 +93,7 @@ export function adaptSource(rel, code) {
       'ink flight friendly contact has no hostile-hit packet');
     return code;
   }
+  code = adaptHostTeams(rel, code, replaceOnce);
   code = adaptLocalBatch01(rel, code, replaceOnce);
   code = adaptRollerMaxPaint(rel,code,replaceOnce);
   // Only raw locked sources enter this build-only adapter. Re-applying a
