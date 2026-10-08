@@ -307,3 +307,42 @@ test('adoption sampling after newest packet retains its new-hit recovery age', a
   close(remote.lastDamage, .1);
   receiver.onLeave('p2', false); close(remote.lastDamage, .1);
 });
+
+
+test('#1101 adoption preserves remaining main-weapon cooldown instead of granting an early refire', async () => {
+  const owner = await runtimeFixture();
+  const source = makeActor(owner, { nid: 71, owner: 'p2', team: 0, weapon: 'blaster' });
+  const sender = owner.makeNetMatch(owner.makeSession('p2', 'p2'));
+  bindActors(owner, sender, [source]);
+  source.weaponRunner.cooldown = 30 * DT;
+  const packet = sendTick(sender);
+  const row = packet.a.find(value => value[0] === source.nid);
+  close(row[22][8], 30 * DT);
+
+  const host = await runtimeFixture();
+  const remote = makeActor(host, { nid: 71, owner: 'p2', remote: true, team: 0, weapon: 'blaster' });
+  const receiver = host.makeNetMatch(host.makeSession('host', 'host'));
+  bindActors(host, receiver, [remote]);
+  receiveTick(host, receiver, [remote], packet);
+  receiver.onLeave('p2', false);
+
+  close(remote.weaponRunner.cooldown, 30 * DT);
+  tick(host, remote);
+  assert.ok(remote.weaponRunner.cooldown > 0, 'one adopted tick cannot clear the preserved repeat gate');
+  close(remote.weaponRunner.cooldown, 29 * DT, 1e-7);
+
+  const ownerIdle = await runtimeFixture();
+  const idle = makeActor(ownerIdle, { nid: 72, owner: 'p2', team: 0, weapon: 'blaster' });
+  const idleSender = ownerIdle.makeNetMatch(ownerIdle.makeSession('p2', 'p2'));
+  bindActors(ownerIdle, idleSender, [idle]);
+  idle.weaponRunner.cooldown = 0;
+  const idlePacket = sendTick(idleSender);
+
+  const hostIdle = await runtimeFixture();
+  const remoteIdle = makeActor(hostIdle, { nid: 72, owner: 'p2', remote: true, team: 0, weapon: 'blaster' });
+  const idleReceiver = hostIdle.makeNetMatch(hostIdle.makeSession('host', 'host'));
+  bindActors(hostIdle, idleReceiver, [remoteIdle]);
+  receiveTick(hostIdle, idleReceiver, [remoteIdle], idlePacket);
+  idleReceiver.onLeave('p2', false);
+  assert.equal(remoteIdle.weaponRunner.cooldown, 0, 'long-idle adoption does not invent a cooldown');
+});
