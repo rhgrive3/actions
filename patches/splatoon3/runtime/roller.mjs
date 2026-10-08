@@ -1,6 +1,7 @@
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { ROLLER_DRUM } from './roller-model.mjs';
 import { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';
+import { rollerBubblerCandidate, applyRollerBubblerHit } from './kit-big-bubbler.mjs';
 // Roller-specific refinements. Timing comes from the existing gameplay profile;
 // joint curves are visual calibration against Nintendo's public roller videos.
 const EPS = 1e-10;
@@ -405,10 +406,21 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
         if (a.character) a.character.s3RollerFlick = state;
       }
     }
+    if (state && !starting) state.elapsed += dt;
+    // #1056: if ZR was first pressed in the air, touching down in the first
+    // five 60Hz frames turns that pending vertical flick into the faster
+    // horizontal flick. #1041 grounded-start jump conversions stay separate.
+    if (state && state.vertical && !state.groundedStart && !state.jumpConverted &&
+        !state.released && a.grounded && state.elapsed > EPS &&
+        state.elapsed <= 5 / 60 + EPS) {
+      const horizontal = rollerMode(w, false);
+      state.vertical = false; this.s3FlickVertical = false;
+      state.windup = Math.max(EPS, horizontal.flickWindup - 1 / 60);
+      state.interval = horizontal.flickInterval;
+    }
     const vertical = state ? state.vertical : this.s3FlickVertical;
     let mode = rollerMode(w, vertical);
     if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
-    if (state && !starting) state.elapsed += dt;
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
     let rollInp = fireIn;
@@ -419,7 +431,10 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     }
     const projectiles = G.projectiles, applyHit = projectiles?.applyHit;
     let result;
-    if (typeof applyHit === 'function') {
+    // #1105: an idle tick cannot emit native Roller contact, so do not create
+    // an admission closure or swap the shared applyHit method on that path.
+    // Held fire is conservatively included: native may enter rolling THIS tick.
+    if (typeof applyHit === 'function' && (this.rolling || state?.rolling || !!fireIn.fire)) {
       const runner = this;
       const admittedHit = function (attacker, victim, ...args) {
         const admission = applyHit.call(this, attacker, victim, ...args);
@@ -460,6 +475,16 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
       const area = G.paint.splat(contact, 0.28, a.team, { kind: 0, seed: Math.random() });
       a.addTurf(area);
       this.s3WallPaintWait = 0.12;
+    }
+    // #1036: the Bubbler shell is permeable. Only base/emitter hardware enters
+    // the existing 0.5s Roller contact-damage cadence.
+    const rollSpeed = Math.hypot(a.vel.x, a.vel.z);
+    if (this.rolling && rollSpeed > 1.0) {
+      const bubbler = rollerBubblerCandidate(a, Math.sin(a.yaw), Math.cos(a.yaw), w.rollWidth);
+      if (bubbler && G.time - (this.rollHits.get(bubbler.dome) || -9) > 0.5) {
+        this.rollHits.set(bubbler.dome, G.time);
+        applyRollerBubblerHit(bubbler, a, w.rollDamage);
+      }
     }
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {

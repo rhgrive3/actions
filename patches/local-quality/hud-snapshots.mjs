@@ -39,6 +39,8 @@ export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt
   crosshair.spread = spread; crosshair.onTarget = m.controller?.onTarget ? 'enemy' : null; crosshair.inRange = m.controller ? m.controller.inRange !== false : true;
   if (guide === undefined) delete crosshair.guide; else crosshair.guide = guide;
   if (muzzleBlock === undefined) delete crosshair.muzzleBlock; else crosshair.muzzleBlock = muzzleBlock;
+  // Distinct Charger current-release/maximum endpoint presentation survives
+  // the persistent-frame fast path; no alternate hit or range owner.
   if (chargerCurrent === undefined) delete crosshair.chargerCurrent; else crosshair.chargerCurrent = chargerCurrent;
   if (chargerFull === undefined) delete crosshair.chargerFull; else crosshair.chargerFull = chargerFull;
   frame.crosshair = crosshair;
