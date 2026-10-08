@@ -69,7 +69,10 @@ export function rollerImpactDepthScale(projectile, normal) {
  * collision, trajectory and wall-drop ownership untouched.
  */
 export function withRollerImpactPaint(game,projectile,hit,scale,callback) {
-  const radius=rollerImpactRadius(projectile,hit?.point,scale);
+  const paintScale=projectile?.s3DepletionRound===true && Number.isFinite(projectile.s3DepletionPaintScale) && projectile.s3DepletionPaintScale>0
+    ? projectile.s3DepletionPaintScale : 1;
+  const baseRadius=rollerImpactRadius(projectile,hit?.point,scale);
+  const radius=baseRadius===null?null:baseRadius*paintScale;
   const depthScale=rollerImpactDepthScale(projectile,hit?.normal);
   const paint=game?.paint;
   if(!(radius>0) || !(depthScale>0) || !paint || typeof paint.splat!=='function')return callback();
@@ -78,7 +81,7 @@ export function withRollerImpactPaint(game,projectile,hit,scale,callback) {
   paint.splat=function(point,nativeRadius,team,opts={}){
     if(replaced)return native.call(this,point,nativeRadius,team,opts);
     replaced=true;
-    return native.call(this,point,radius,team,{...opts,stretchAmt:Math.max(0,depthScale-1)});
+    return native.call(this,point,radius,team,{...opts,stretchAmt:Math.max(0,(depthScale-1)*paintScale)});
   };
   try{return callback({radius,depthScale});}finally{context.splat=native;}
 }

@@ -252,6 +252,15 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     }
     if (area) a.addTurf(area);
   };
+  // #305 depletion admission is enabled only when the pinned profile maps its
+  // explicit payment share and reduced per-mode projectile counts.
+  const depletionSource = _profile?.weapons?.roller ?? null;
+  const DEPLETION_INK_RATE = Number(depletionSource?.depletionInkRate);
+  const DEPLETION_ENABLED = Number.isFinite(DEPLETION_INK_RATE) && DEPLETION_INK_RATE > 0 && DEPLETION_INK_RATE <= 1;
+  const depletionDrops = vertical => {
+    const value = vertical ? depletionSource?.verticalDepletionDrops : depletionSource?.flickDepletionDrops;
+    return Number.isFinite(value) && value >= 0 ? value : null;
+  };
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
     if (r && this.weapon?.kind === 'roller') {
@@ -353,6 +362,8 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     this.s3RollerAttack = null;
     this.s3RollerSquidPressT = null;
     this.s3RollerJumpPressed = false;
+
+    this.s3RollerDepletion = null;
     this.s3PendingRollHits = new Map();
     this.s3RollHitEpochs = new Map();
     this.s3RollHitConfirmDisabled = uncorrelated;
@@ -396,9 +407,15 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       this.s3FlickPostSquid -= dt;
       if (this.s3FlickPostSquid < EPS) this.s3FlickPostSquid = 0;
     }
+    // #305: any positive tank below the full swing cost runs a depletion swing.
+    // A truly empty tank still rejects, and the paid amount is the satisfied
+    // depletion cost (swing InkConsume * DepletionRate) capped by the tank.
     const fullCancelGroundAttack = hasFullCancelGroundAttack(a);
+    const flickCost = fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk;
+    const depleted = DEPLETION_ENABLED && this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&
+      a.ink > EPS && a.ink + EPS < flickCost;
     const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&
-      a.ink >= (fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk);
+      (a.ink + EPS >= flickCost || depleted);
     const winding = this.flick >= 0;
     const onFlickPath = starting || winding;
     const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);
@@ -412,10 +429,14 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     if (stillWall) { a.vel.x = 0; a.vel.z = 0; }
     if (restoreAirborne) a.grounded = true;
     try {
+
     if (starting) {
       this.cooldown = Math.min(0, this.cooldown);
       const groundedCancel = takeFullCancelGroundAttack(a);
       this.s3FlickVertical = !groundedCancel && !a.grounded;
+      // The public admission gate reads this to pay the short swing once, with
+      // the real ink rest subtracted from the actual tank (no injected ink).
+      this.s3RollerDepletion = depleted ? { inkCost: Math.min(a.ink, flickCost * DEPLETION_INK_RATE) } : null;
       const mode = rollerMode(w, this.s3FlickVertical);
       let windup = mode.flickWindup;
       if (!this.s3FlickVertical && Number.isFinite(this.s3RollerSquidPressT)) {
@@ -424,10 +445,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       }
       this.s3RollerAttack = {
         vertical: this.s3FlickVertical, windup, interval: mode.flickInterval,
-        elapsed: 0, released: false, rolling: false,
+        elapsed: 0, released: false, rolling: false, depleted,
         groundedStart: !this.s3FlickVertical && !!a.grounded && !groundedCancel,
         jumpConverted: false,
       };
+
       this.s3RollerSquidPressT = null;
       a.character.s3RollerFlick = this.s3RollerAttack;
       // Starting a new flick lifts the drum. The public runner otherwise leaves
@@ -467,6 +489,15 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     const vertical = state ? state.vertical : this.s3FlickVertical;
     let mode = rollerMode(w, vertical);
     if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
+    // The depletion volley keeps the swing's sourced count/speed/damage owners:
+    // the public emitter reads flickDrops, the vertical wrapper reads the
+    // sibling drops field, and configureFidelityFlick reads the per-unit
+    // DepletionBulletNum/DepletionSpeedRate straight from the pinned raw units.
+    if (state?.depleted) {
+      const drops = depletionDrops(vertical);
+      if (drops !== null) mode = { ...mode, s3Depletion: true, s3DepletionDrops: drops, flickDrops: drops };
+    }
+
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
     let rollInp = fireIn;
