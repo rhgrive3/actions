@@ -23,7 +23,10 @@ export function validateDetailReceipts(loaded) {
   for (const module of ['bomb-motion','flow-motion','weapon-detail-motion'])
     if (!loaded.some(file=>file.endsWith('/patches/splatoon3/runtime/'+module+'.mjs'))) throw Error('Actual detail module not loaded: '+module);
 }
-export function validateDetailResult(result) {
+export // #1037: native Splat Bomb creation follows the admitted sub release by
+// 1 fixed frame. The held pose is still sampled on frame 29, while the actual
+// projectile/contact is asserted on frame 31 rather than the input edge (30).
+function validateDetailResult(result) {
   if(result.pixelControls?.dither!==false||result.pixelControls?.samples!==0||result.pixelControls?.target!=='explicit-srgb-rgba8')throw Error('Controlled detail pixel framebuffer');
   const finite=(v,path)=>{ if(typeof v!=='number'||!Number.isFinite(v))throw Error('Non-finite detail '+path); };
   const numericTree=(v,path)=>{ if(typeof v==='number')finite(v,path);else if(v&&typeof v==='object')for(const [key,value] of Object.entries(v))numericTree(value,path+'.'+key); };
@@ -53,7 +56,7 @@ export function validateDetailResult(result) {
       if(typeof s.flow.active!=='boolean'||typeof s.flow.visible!=='boolean')throw Error('Detail Flow identity: '+name);
       if(s.flow.opacity<0||s.flow.opacity>1||s.flow.resources<0||s.flow.aliveParticles<0)throw Error('Detail Flow range: '+name);
     }
-    const renderFrames=[21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].filter(f=>f<frames);
+    const renderFrames=[21,29,30,31,45,75,95,110,111,145,160,165,200,239,310,360,419].filter(f=>f<frames);
     if(!Array.isArray(events)||!Array.isArray(releaseFrames)||!Array.isArray(renderMetrics)||renderMetrics.length!==renderFrames.length||new Set(renderMetrics.map(m=>m.frame)).size!==renderFrames.length||renderFrames.some(f=>!renderMetrics.some(m=>m.frame===f)))throw Error('Detail event/render denominator: '+name);
     for(const event of events){finite(event.frame,name+'.eventFrame');if(typeof event.name!=='string'||event.frame<0||event.frame>=frames)throw Error('Detail release event identity: '+name);}
     for(const release of releaseFrames){for(const key of ['frame','fuse','meshOriginError','releaseSnapshotError'])finite(release[key],name+'.release.'+key);for(const key of ['pos','velocity']){if(!Array.isArray(release[key])||release[key].length!==3)throw Error('Detail release vector denominator');release[key].forEach(v=>finite(v,name+'.releaseVector'));}}
@@ -78,9 +81,9 @@ export function validateDetailResult(result) {
     if(!disposed?.disposed||disposed.resources!==0||disposed.aliveParticles!==0)throw Error('Flow resources survived Character disposal: '+name);
     const peak=Math.max(...samples.map(s=>Math.abs(s.rcP))),tail=samples.slice(-24);
     if(scenario.type==='bomb') {
-      if(releaseFrames.length!==1||releaseFrames[0].frame!==30||!samples[29].heldVisible||samples[30].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
+      if(releaseFrames.length!==1||releaseFrames[0].frame!==31||!samples[29].heldVisible||samples[31].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
       if(scenario.kind==='dualies'&&(samples[29].leftPistolVisible||!samples.at(-1).leftPistolVisible))throw Error('Bomb dualies pistol recovery regression');
-      const held=renderMetrics.find(m=>m.frame===29)?.heldBomb,released=renderMetrics.find(m=>m.frame===30)?.releasedBomb;
+      const held=renderMetrics.find(m=>m.frame===29)?.heldBomb,released=renderMetrics.find(m=>m.frame===31)?.releasedBomb;
       if(!held||held.indexedVertices<50||held.nearestLeft>=.12||!released||released.indexedVertices<100||released.nearestLeft>=.22)throw Error('Actual indexed bomb/hand contact regression: '+name);
       if(samples[29].ik.slice(0,2).some(e=>e>=.015)||tail.some(s=>s.ik.slice(0,2).some(e=>e>=.015)))throw Error('Native bomb arm reach regression: '+name);
       if(releaseFrames[0].meshOriginError>1e-10||releaseFrames[0].releaseSnapshotError>1e-8)throw Error('Rendered/collision bomb release regression: '+name);
@@ -307,7 +310,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       images.push({name:scenario.name+'-'+String(frame).padStart(3,'0'),image});
       const left=ch.bones.handL.getWorldPosition(new THREE.Vector3()),right=ch.bones.handR.getWorldPosition(new THREE.Vector3());
       if(nativeRenderState()!==beforeRender)throw Error('Rendered pair advanced native clocks/gameplay: '+scenario.name+' frame '+frame);
-      return {frame,renderClocksStable:true,rig,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===30?drawnContact(projectiles.bombs.at(-1).mesh,left,right):null};
+      return {frame,renderClocksStable:true,rig,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===31&&projectiles.bombs.at(-1)?.mesh?drawnContact(projectiles.bombs.at(-1).mesh,left,right):null};
     }
     try {
     for (const scenario of cases) {
@@ -372,7 +375,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
             // simulation step. Preserve the last completed frame on a crash.
             await new Promise(resolve=>setTimeout(resolve,0));
           }
-          if([21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame))renderMetrics.push(capture(scenario,frame,ch,actor));
+          if([21,29,30,31,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame))renderMetrics.push(capture(scenario,frame,ch,actor));
         }
         data.push({name:scenario.name,scenario,frames,fireInterval:actor.weapon.fireInterval,firstShotDelay:actor.weapon.firstShotDelay||0,samples,releaseFrames,events,renderMetrics});
       } finally {
