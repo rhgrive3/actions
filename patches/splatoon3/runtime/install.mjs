@@ -11,6 +11,7 @@ import { NetMatch } from '../../../src/net/netmatch.js';
 import { PaintSystem } from '../../../src/world/paint.js';
 import { Minimap } from '../../../src/game/minimap.js';
 import { PlayerController } from '../../../src/game/player.js';
+import { Input } from '../../../src/core/input.js';
 import { Physics, Hit } from '../../../src/game/physics.js';
 import { Menus } from '../../../src/ui/menus.js';
 import { HUD } from '../../../src/ui/hud.js';
@@ -64,6 +65,7 @@ import { installSpecialMotion } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
 import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
+import { installControllerMotion } from './controller-motion.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -122,6 +124,7 @@ export function install(profile) {
   installFlowMotion(api);
   installFaceMotion(api, profile);
   installRespawnLifecycle(api, profile);
+  installControllerMotion({ Input, PlayerController, G });
   // Issue #798: the arc guide is presentation-only. Throttle its native
   // collision-query cadence without touching actual bomb physics.
   installArcPreviewPerformance(api);
