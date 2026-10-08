@@ -74,7 +74,9 @@ for (const file of walk(PATCH_ROOT)) {
 }
 for (const file of walk(QUALITY_ROOT)) {
   const rel = path.relative(QUALITY_ROOT, file);
-  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs') continue;
+  // Source transformers are build-only, as in the reliability/network stages.
+  // Their identities remain recorded; runtime dependency closure is checked below.
+  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs')) continue;
   const dst = path.join(BUILD, 'patches/local-quality', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {

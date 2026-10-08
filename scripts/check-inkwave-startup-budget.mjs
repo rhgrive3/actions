@@ -34,7 +34,7 @@ for(const file of core){
  }
  if(file.endsWith('.css'))for(const match of bytes.toString().matchAll(/@import\s*(?:url\()?['"]([^'"]+)['"]/g))assert(core.has(resolve(file,'./'+match[1])),`CSS import missing: ${file} -> ${match[1]}`);
 }
-for(const file of Object.keys(config.assets)){assert(!file.includes('..'));const bytes=fs.readFileSync(path.join(root,'_versions',revision,file));assert.equal(hash(bytes),config.assets[file].sha256);}
+for(const file of Object.keys(config.assets)){assert(!(file.startsWith('patches/local-quality/')&&file.endsWith('-adapter.mjs')),'build-only quality transformer published: '+file);assert(!file.includes('..'));const bytes=fs.readFileSync(path.join(root,'_versions',revision,file));assert.equal(hash(bytes),config.assets[file].sha256);}
 assert(!fs.readFileSync(path.join(root,'src/main.js'),'utf8').includes('.png?h='),'lightmap URL must match precache');
 assert(!html.includes('navigator.serviceWorker.register'),'single runtime registration owner');
 console.log(JSON.stringify({status:'passed',revision,initialJSRequests:initial.length,modulePreloads:preloads.length,coreModulePreloads:corePreloads.length,practiceRangeModulePreloads:rangePreloads.length,practiceRangePreloadBytes:rangePreloadBytes,initialJSBytes,criticalHTMLBytes:Buffer.byteLength(html),precacheCount:core.size,precacheBytes,workerBytes:Buffer.byteLength(worker),declaredBytes:config.declaredBytes,measurementKind:'deterministic file and dependency gates; not native browser timings'},null,2));
