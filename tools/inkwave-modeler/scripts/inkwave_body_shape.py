@@ -306,6 +306,50 @@ def nape_fillet(cfg):
           round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 2))
 
 
+def back_profile(cfg):
+    """Moves added one after the other (nape, skull_back, ...) left the back of the head with a flat stretch at ear
+    height and a dent where it meets the neck (2026-10-08, user circled both on a side view).  One smooth target
+    line instead: the back midline (head x 0, the furthest-back point of the head and the neck at each height) is
+    moved onto cfg['target'] ([y_mm, z_mm], one smooth curve from the neck to the crown).  Move = target - now at
+    each height (smoothed, sigma cfg['sigma_mm']), the same for the whole slice at that height, back part only
+    (head z < cfg['z'][0], full behind cfg['z'][1]), fading to the sides (cfg['x_out'] = [full, none] |x| mm).
+    Blender's Warp, forward and backward as two passes, on cfg['meshes']."""
+    fwd = er.M.to_world_delta(np.array([[0.0, 0.0, 1.0]]))[0]
+    fwd /= np.linalg.norm(fwd)
+    Ls = [er.M.to_local(er.world(bpy.data.objects[n])) * 1000 for n in cfg['measure']]
+    A = np.concatenate(Ls)
+    A = A[(np.abs(A[:, 0]) < 4) & (A[:, 2] < 0)]
+    tg = np.array(cfg['target'], float)
+    tg = tg[np.argsort(tg[:, 0])]
+    ys = np.arange(tg[0, 0], tg[-1, 0] + 0.1, 1.0)
+    now = np.array([A[np.abs(A[:, 1] - y) < 2.0, 2].min() if np.any(np.abs(A[:, 1] - y) < 2.0) else np.nan for y in ys])
+    ok = ~np.isnan(now)
+    now = np.interp(ys, ys[ok], now[ok])
+    move = np.interp(ys, tg[:, 0], tg[:, 1]) - now
+    sig = cfg.get('sigma_mm', 5.0)
+    k = np.exp(-0.5 * (np.arange(-3 * sig, 3 * sig + 1) / sig) ** 2)
+    move = np.convolve(np.pad(move, len(k) // 2, mode='edge'), k / k.sum(), mode='valid')
+    ramp = cfg.get('end_ramp_mm', 10.0)        # nothing at the two ends of the target line
+    move *= np.clip((ys - ys[0]) / ramp, 0, 1) * np.clip((ys[-1] - ys) / ramp, 0, 1)
+    print('BODY_SHAPE back_profile move mm by y', [(int(y), round(float(m), 1)) for y, m in zip(ys[::10], move[::10])])
+    (z0, z1), (x0, x1) = cfg['z'], cfg['x_out']
+    peak = float(np.abs(move).max())
+    if peak < 1e-3:
+        return
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        L = er.M.to_local(er.world(obj)) * 1000
+        d = np.interp(L[:, 1], ys, move, left=0.0, right=0.0)
+        w = d / peak * smoothstep((z0 - L[:, 2]) / (z0 - z1)) * smoothstep((x1 - np.abs(L[:, 0])) / (x1 - x0))
+        before = er.world(obj)
+        for sign in (1, -1):
+            ws = np.maximum(sign * w, 0)
+            if ws.max() > 0:
+                warp(obj, ws, tuple(sign * fwd * peak / 1000))
+        print('BODY_SHAPE back_profile', name, 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
 def seam_normals(cfg):
     """A line ran from under the ear to under the jaw in the side and 3/4 views where the face (laid on the neck by
     face_volume jaw_tuck) meets the neck: the shading jumped there (clay +5 brighter on the neck side).  The face
@@ -809,6 +853,7 @@ def main():
     names += [n for n in p.get('skull_back', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('occiput_in', {}).get('meshes', []) if n not in names]
     names += [n for n in [p.get('nape_fillet', {}).get('mesh')] if n and n not in names]
+    names += [n for n in p.get('back_profile', {}).get('meshes', []) if n not in names]
     for sm in p.get('smooth_regions', []):
         names += [n for n in [sm['mesh']] + sm.get('follow', []) if n not in names]
     names += [n for n in [p.get('seam_normals', {}).get('face')] if n and n not in names]
@@ -892,6 +937,8 @@ def main():
             # 首に対して後頭部が滑らかに繋がってなくて、後ろに出すぎ): the same forward move as skull_back,
             # with its own height profile (most at y -50, nothing at the neck and the crown)
             skull_back(p['occiput_in'])
+        if p.get('back_profile'):
+            back_profile(p['back_profile'])
         if p.get('nape_fillet'):
             nape_fillet(p['nape_fillet'])
         if p.get('smooth_regions'):
