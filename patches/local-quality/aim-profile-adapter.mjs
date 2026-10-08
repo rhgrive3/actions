@@ -143,24 +143,20 @@ export function adaptAimProfiles(rel, code) {
     // a global padInvertX multiplier, and map ownership may already suppress the
     // camera output while keeping the stick filter live. Compose with every
     // accepted predecessor shape without dropping either owner.
-    code = replaceVariantOnce(code, [
-      {
-        before: "      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);",
-        after: "      const invX = s.invertX ? -1 : 1;\n      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1) * invX;",
-      },
-      {
-        before: "      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);",
-        after: "      const invX = s.invertX ? -1 : 1;\n      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1) * invX;",
-      },
-      {
-        before: "      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;",
-        after: "      const invX = s.invertX ? -1 : 1;\n      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * invX;",
-      },
-      {
-        before: "      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;",
-        after: "      const invX = s.invertX ? -1 : 1;\n      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * invX;",
-      },
-    ], 'player pad invertX');
+    if (!code.includes('const invX = s.invertX ? -1 : 1;')) {
+      const yawPattern = /^([ \t]*)(?:if \(!mapUp\) )?rig\.yaw -= this\.padLook\.x[^;]*;$/gm;
+      const matches = [...code.matchAll(yawPattern)];
+      if (matches.length !== 1) {
+        throw new Error(`INKWAVE quality patch conflict (aim profile: player pad invertX): expected exactly one padLook yaw line (${matches.length})`);
+      }
+      code = code.replace(yawPattern, (line, indent) => {
+        const body = line.trimStart();
+        const guarded = body.startsWith('if (!mapUp) ');
+        const expr = guarded ? body.slice('if (!mapUp) '.length) : body;
+        const rewritten = expr.replace(/;$/, ' * invX;');
+        return indent + 'const invX = s.invertX ? -1 : 1;\n' + indent + (guarded ? 'if (!mapUp) ' : '') + rewritten;
+      });
+    }
 
     return code;
   }
