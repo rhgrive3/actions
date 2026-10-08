@@ -4,7 +4,9 @@ import {test} from 'node:test';import assert from 'node:assert/strict';import {f
 const pad=(x=0,y=0,held=[])=>[{index:0,id:'pad',mapping:'standard',connected:true,axes:[0,0,x,y],buttons:Array.from({length:17},(_,i)=>({pressed:held.includes(i),value:held.includes(i)?1:0}))}];
 async function setup(){const f=await fixture(),input=new f.Input({}),a=f.make(),rig={yaw:0,pitch:0},c=new f.PlayerController(a,rig,input);c.computeAim=()=>{};f.G.settings={...f.DEFAULT_SETTINGS,aimAssist:0};f.G.rig=rig;f.G.actors=[a];return {...f,input,a,rig,c,frame(x=0,y=0,dt=1/60,held=[]){f.setPads(pad(x,y,held));input.pollPad();c.update(dt);input.endFrame();}};}
 test('#521 saturated X/Y and rim boost clear once on disable, before any disabled update',async()=>{
- for(const [x,y] of [[1,0],[0,1],[1,1]]){const f=await setup();for(let n=0;n<60;n++)f.frame(x,y);assert.ok(Math.abs(f.c.padLook.x)+Math.abs(f.c.padLook.y)>.5);assert.ok(f.c.edgeT>.16);
+ for(const [x,y] of [[1,0],[0,1],[1,1]]){const f=await setup();for(let n=0;n<60;n++)f.frame(x,y);assert.ok(Math.abs(f.c.padLook.x)+Math.abs(f.c.padLook.y)>.5);
+  assert.equal(f.c.edgeT,0,'S3 right-stick yaw is capped, not accelerated by a rim boost');
+  f.c.edgeT=.5; // Inject a stale pre-S3 transient to verify disable clears it.
   let clears=0;const original=f.c._s3ClearDisabledLook;f.c._s3ClearDisabledLook=function(){clears++;return original.call(this);};f.c.enabled=false;assert.equal(f.c.padLook.x,0);assert.equal(f.c.padLook.y,0);assert.equal(f.c.edgeT,0);
   const {yaw,pitch}=f.rig;for(let n=0;n<300;n++){f.c.enabled=false;f.frame();}assert.equal(clears,1);f.c.enabled=true;for(let n=0;n<30;n++)f.frame();assert.deepEqual(f.rig,{yaw,pitch});
  }

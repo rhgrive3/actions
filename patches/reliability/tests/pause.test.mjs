@@ -150,10 +150,33 @@ test('blur and disconnect clear menu channel; held reconnect waits for release a
 });
 
 test('adapter rejects missing/duplicated/already applied anchors and leaves unrelated modules intact', () => {
-  for (const rel of ['src/main.js', 'src/core/input.js', 'src/game/match.js']) {
+  for (const rel of ['src/main.js', 'src/core/input.js', 'src/game/match.js', 'src/game/player.js']) {
     const source = composed(rel); assert.throws(() => adaptPause(rel, ''), /conflict/);
     assert.throws(() => adaptPause(rel, source + source), /conflict/);
     assert.throws(() => adaptPause(rel, adaptPause(rel, source)), /conflict/);
   }
-  assert.equal(adaptPause('src/game/player.js', 'untouched'), 'untouched');
+  assert.equal(adaptPause('src/game/character.js', 'untouched'), 'untouched');
+});
+
+
+for(const hz of [30,60,120])test(`#974 online menu cancels live release actions and requires rearm at ${hz}Hz`,async()=>{
+ for(const weapon of ['charger','splatling','shooter']){
+  const h=await boot();h.actor.setWeapon(weapon);h.G.netm={};let bombs=0;h.G.projectiles.throwBomb=()=>bombs++;
+  const sub=weapon==='shooter';if(sub)h.input.mouse.right=true;else h.input.mouse.left=true;
+  for(let i=0;i<(weapon==='splatling'?55:20);i++)h.frame(STEP);
+  const r=h.actor.weaponRunner;assert.equal(sub?r.aimingSub:r.charging,true,weapon);
+  const beforeShots=h.shots.length,beforeInk=h.actor.ink,time=h.m.time;h.other.intent.fire=true;
+  h.game.pause();assert.equal(h.m.paused,false);
+  for(let i=0;i<hz*2;i++)h.frame(1/hz);
+  assert.equal(bombs,0);assert.equal(r.charging,false);assert.equal(r.streaming,false);assert.equal(r.s3ReleaseHold||false,false);assert.equal(r.aimingSub,false);
+  assert.ok(h.actor.ink>=beforeInk-1e-8);assert.ok(h.m.time<time);assert.ok(h.ownedShots.includes(h.other));
+  if(!sub)assert.equal(h.shots.filter(s=>s.kind===weapon).length,0);
+  h.game.resume();for(let i=0;i<10;i++)h.frame(STEP);
+  assert.equal(sub?h.actor.intent.sub:h.actor.intent.fire,false,'interrupted hold is not a new press');assert.equal(bombs,0);
+  h.input.mouse.left=h.input.mouse.right=false;h.frame(STEP);
+  if(sub)h.input.mouse.right=true;else h.input.mouse.left=true;
+  for(let i=0;i<(weapon==='splatling'?55:20);i++)h.frame(STEP);
+  h.input.mouse.left=h.input.mouse.right=false;h.frame(STEP);h.frame(STEP);
+  if(sub)assert.equal(bombs,1);else assert.ok(h.shots.some(s=>s.kind===weapon));
+ }
 });

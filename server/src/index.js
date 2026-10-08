@@ -157,6 +157,13 @@ export class RoomDurableObject {
           const target = this.members.get(targetId);
           if (target) {
             try { target.ws.send(`m|${id}|${payload}`); } catch (e) {}
+          } else {
+            // Return a delivery failure for directed combat events. Do not
+            // silently lose a hit when its owner has just disconnected.
+            let hit;
+            try { hit = JSON.parse(payload); } catch {}
+            if (hit?.k === 'hit' && Number.isInteger(hit.seq) && hit.seq >= 0)
+              try { ws.send(`m|__relay__|${JSON.stringify({k:'hit_nack',seq:hit.seq,to:targetId})}`); } catch {}
           }
         }
         return;

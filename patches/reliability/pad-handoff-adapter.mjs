@@ -6,12 +6,14 @@ export function adaptPadHandoff(rel, code) {
     this._padIdentity = null; this._padIdentityLost = false; this._padDisconnected = false; this._padEpoch = 0;
     this._padTakeoverBlocked = new Set(); this._padTakeoverAxes = false;
     window.addEventListener('gamepaddisconnected', e => {
-      if (this._padIdentity && e.gamepad && e.gamepad.index === this._padIdentity.index) this._padIdentityLost = true;
+      if (this._padIdentity && e.gamepad && (e.gamepad.index === this._padIdentity.index || this._padIdentity.joyconIndices?.includes(e.gamepad.index))) this._padIdentityLost = true;
     });`, 'pad identity lifecycle');
     code = replaceOnce(code, '    this.pad = pad;', `    const previous = this._padIdentity;
-    const identity = pad ? { index: pad.index, id: pad.id, mapping: pad.mapping } : null;
+    const joyconIndices = pad?._inkwaveJoyconPair ? [...pad._inkwaveJoyconIndices] : null;
+    const identity = pad ? { index: pad.index, id: pad.id, mapping: pad.mapping, joyconIndices } : null;
     const disconnected = this._padDisconnected;
-    const changed = identity && (this._platformPadFocusRebase || disconnected || previous && (this._padIdentityLost || previous.index !== identity.index || previous.id !== identity.id || previous.mapping !== identity.mapping));
+    const initialPair = identity && !previous && pad._inkwaveJoyconPair;
+    const changed = identity && (this._platformPadFocusRebase || disconnected || initialPair || previous && (this._padIdentityLost || previous.index !== identity.index || previous.id !== identity.id || previous.mapping !== identity.mapping));
     if (identity) { this._platformPadFocusRebase = false; this._padDisconnected = false; }
     else if (previous) this._padDisconnected = true;
     this._padIdentity = identity; this._padIdentityLost = false;

@@ -5,15 +5,15 @@ import {pathToFileURL} from 'node:url';
 import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import path from 'node:path';
 import {teamHudSnapshot,hudFrameSnapshot} from '../hud-snapshots.mjs';import {adaptQualitySource} from '../adapter.mjs';
 import {adaptSource} from '../../splatoon3/adapter.mjs';import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';import {adaptReliability} from '../../reliability/adapter.mjs';import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
-const buildHealthMarkers=vm.runInNewContext(fs.readFileSync(new URL('../../splatoon3/runtime/combat-info.mjs',import.meta.url),'utf8').replace(/^export /gm,'')+';buildHealthMarkers',{innerWidth:800,innerHeight:600,Math});
+// Link the actual ESM health module, including private tracking dependencies.
 const raw=rel=>fs.readFileSync(path.join('inkwave-public',rel),'utf8'),compose=(rel,s=raw(rel))=>adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,s))));
 function method(source,start,end){const a=source.indexOf(start),b=source.indexOf(end,a);assert.ok(a>=0&&b>a);return source.slice(a,b);}
-async function setup(patched=true){const f=await fixture("export {projectShotGuide,installShotGuide} from './patches/splatoon3/runtime/weapons-fidelity.mjs';"),G=f.G;f.installShotGuide(f,JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json',import.meta.url),'utf8')));G.teamHex=['orange','blue'];G.camera=new f.THREE.PerspectiveCamera(70,1,0.1,200);G.camera.position.set(0,8,20);G.camera.lookAt(0,0,0);G.camera.updateMatrixWorld();
+async function setup(patched=true){const f=await fixture("export {projectShotGuide,installShotGuide} from './patches/splatoon3/runtime/weapons-fidelity.mjs'; export {buildHealthMarkers} from './patches/splatoon3/runtime/combat-info.mjs'; export function setHudTestViewport(){globalThis.innerWidth=800;globalThis.innerHeight=600;}"),G=f.G;f.setHudTestViewport();f.installShotGuide(f,JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json',import.meta.url),'utf8')));G.teamHex=['orange','blue'];G.camera=new f.THREE.PerspectiveCamera(70,1,0.1,200);G.camera.position.set(0,8,20);G.camera.lookAt(0,0,0);G.camera.updateMatrixWorld();
  const actors=Array.from({length:8},(_,i)=>{const a=f.make(i%2?'dualies':'shooter');a.team=i<4?0:1;a.name='P'+i;a.isLocal=i===0;a.pos.set(i,0,0);a.anim={form:'idle'};a.yaw=0;a.hp=f.PLAYER.hp-18;return a;});
  const teamCode=patched?compose('src/game/match.js'):raw('src/game/match.js'),teamMethod=method(teamCode,patched?'  teamSummary(viewerTeam = 0)':'  teamSummary()', '\n}');
  const Match=vm.runInNewContext(`class Match {${teamMethod}};Match`,{G,Math,teamHudSnapshot});const m=Object.assign(new Match(),{actors,local:actors[0],time:100,duration:180,state:'playing',controller:{onTarget:false,inRange:true}});
  const gameCode=patched?compose('src/main.js'):raw('src/main.js'),gameMethod=method(gameCode,'  _updateHud(dt) {','\n  // ---------------------------------------------------------------------------------------- touch / gyro');
- const Game=vm.runInNewContext(`class Game {${gameMethod}};Game`,{G,THREE:f.THREE,PLAYER:f.PLAYER,SUB:f.SUB,innerWidth:800,innerHeight:600,Math,t:x=>x,hudFrameSnapshot,mapActorVisible,buildHealthMarkers,enemyRevealedOnMap,selectedSubCost,projectShotGuide:f.projectShotGuide});let latest,mobile;
+ const Game=vm.runInNewContext(`class Game {${gameMethod}};Game`,{G,THREE:f.THREE,PLAYER:f.PLAYER,SUB:f.SUB,innerWidth:800,innerHeight:600,Math,t:x=>x,hudFrameSnapshot,mapActorVisible,buildHealthMarkers:f.buildHealthMarkers,enemyRevealedOnMap,selectedSubCost,projectShotGuide:f.projectShotGuide});let latest,mobile;
  const game=Object.assign(new Game(),{match:m,settings:{minimap:true,showFps:false},fps:60,_hintT:0,_hints:{shot:true},_lowInkFlash:0,minimap:{canvas:{id:'map'},w:100,h:100,flip:false,update(){},tickHidden(){},toCanvas(x,z,out){out.x=x+50;out.y=z+50;}},hud:{update(_dt,frame){latest=frame;}},input:{mobile:{setHud(frame){mobile=frame;}}}});
  return {...f,m,actors,game,step(){game._updateHud(1/60);return {frame:latest,mobile};}};
 }
@@ -21,7 +21,7 @@ async function setup(patched=true){const f=await fixture("export {projectShotGui
 // presentation changes are asserted separately instead of restoring old meanings.
 function comparable(r){const value=JSON.parse(JSON.stringify({frame:r.frame,mobile:r.mobile}));
  for(const f of [value.frame,value.mobile])for(const k of ['inkLow','subCost','subReady'])delete f[k];
- delete value.frame.crosshair.guide;delete value.frame.crosshair.muzzleBlock;delete value.frame.healthMarkers;
+ delete value.frame.crosshair.guide;delete value.frame.crosshair.muzzleBlock;delete value.frame.crosshair.chargerCurrent;delete value.frame.crosshair.chargerFull;delete value.frame.healthMarkers;
  for(const t of value.frame.teams){delete t.leading;delete t.danger;for(const p of t.players)delete p.respawn;}
  return value;
 }
@@ -80,4 +80,19 @@ test('#510 emitted full Game/Match modules preserve reusable transport and live 
  const f=await setup(),G=mods.get(path.join(site,'src/core/ctx.js')).namespace.G;G.camera=f.G.camera;G.teamHex=f.G.teamHex;
  const Match=mods.get(path.join(site,'src/game/match.js')).namespace.Match;f.m.teamSummary=Match.prototype.teamSummary;f.game._updateHud=main.namespace.Game.prototype._updateHud;
  const first=f.step();for(let i=0;i<3600;i++){f.m.time=i;const next=f.step();assert.equal(next.frame,first.frame);assert.equal(next.mobile,first.mobile);assert.equal(next.frame.time,i);}f.actors[1].special=999;assert.equal(f.step().frame.teams[0].players[1].specialReady,true);
+});
+
+test('#1058 persistent HUD transport retains both Charger reach endpoints without leaking stale state',async()=>{
+  const f=await setup();
+  const near=new f.THREE.Vector3(0,1,5),far=new f.THREE.Vector3(0,1,15);
+  f.m.controller.chargerReachVisible=true;
+  f.m.controller.chargerCurrentReach=near;
+  f.m.controller.chargerFullReach=far;
+  let view=f.step().frame.crosshair;
+  assert.equal(view.chargerCurrent,near,'current released-shot endpoint is preserved');
+  assert.equal(view.chargerFull,far,'unobstructed full-range endpoint is preserved');
+  f.m.controller.chargerReachVisible=false;
+  view=f.step().frame.crosshair;
+  assert.equal(view.chargerCurrent,null,'stale current endpoint does not remain when charge ends');
+  assert.equal(view.chargerFull,null,'stale full endpoint does not remain when charge ends');
 });

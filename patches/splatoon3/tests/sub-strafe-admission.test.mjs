@@ -110,8 +110,10 @@ test('#591 committed sub throw: releasing R after humanoid sub hold throws exact
   a.intent.squid = false;
   a.intent.sub = false;
   f.tick(a, 1);
+  assert.equal(thrownBombs.length, 0, '#1037 release admission precedes device birth');
+  f.tick(a, 1);
 
-  assert.equal(thrownBombs.length, 1, 'exactly 1 bomb thrown on release');
+  assert.equal(thrownBombs.length, 1, 'exactly 1 bomb thrown after the independent use frame');
   assert.equal(a.ink, initialInk - bombCost, 'bomb ink cost deducted');
   assert.equal(a.weaponRunner.aimingSub, false, 'aimingSub ended after throw');
 });
@@ -156,7 +158,9 @@ test('#591 ordinary sub throw from humanoid form is preserved', async () => {
 
   a.intent.sub = false;
   f.tick(a, 1);
-  assert.equal(thrownBombs.length, 1, 'ordinary humanoid sub throw succeeds');
+  assert.equal(thrownBombs.length, 0, 'release tick has not spawned the bomb');
+  f.tick(a, 1);
+  assert.equal(thrownBombs.length, 1, 'ordinary humanoid sub throw succeeds after 1F use');
 });
 
 test('#591 Squid Roll admission remains independent; sub strafing does not grant roll armor', async () => {
@@ -241,7 +245,8 @@ test('#591 local and network replication: once-only broadcast on committed throw
   a.intent.squid = false;
   a.intent.sub = false;
   f.tick(a, 1);
-
+  assert.equal(recBombs.length, 0, 'no premature sub network packet on release tick');
+  f.tick(a, 1);
   assert.equal(recBombs.length, 1, 'committed throw broadcasts exactly 1 bomb to peers');
 
   // 3. Remote proxy actor never calls recBomb even if trigger fires

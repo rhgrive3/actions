@@ -147,3 +147,33 @@ test('reset retires a pending paid release and does not replay it', async () => 
   assert.equal(r.s3ReleaseHold, false);
   assert.equal(f.shots.length, 0);
 });
+
+test('zero and under-minimum paid ink cannot synthesize a Charger shot on release', async () => {
+  for (const ink of [0, 0.1, 1]) {
+    const f = await fixture(), a = f.make('charger'), r = a.weaponRunner;
+    a.ink = ink; a.intent.fire = true;
+    for (let i = 0; i < 45; i++) {
+      f.tick(a);
+      // Deliberately prevent refill in this negative fixture so the payment
+      // never reaches the pinned 2.25-ink minimum, even after a long hold.
+      a.ink = 0;
+    }
+    assert.ok((r.s3ChargerSpent || 0) < a.weapon.inkMin, 'fixture must remain underfunded');
+    a.intent.fire = false; f.tick(a, 3);
+    assert.equal(f.shots.length, 0, `underfunded ${ink}-ink hold created a free projectile`);
+    assert.equal(r.s3ReleaseHold, false, 'underfunded release must not arm a deferred shot');
+  }
+});
+
+test('exactly paid Charger minimum still releases after the existing one-tick gap', async () => {
+  const f = await fixture(), a = f.make('charger'), r = a.weaponRunner;
+  a.ink = a.weapon.inkMin; a.intent.fire = true;
+  // Keep the remaining tank available so progressive payment can actually
+  // reach the minimum (unlike the deliberately unfunded negative fixtures).
+  f.tick(a, 45);
+  assert.ok(r.s3ChargerSpent + 1e-10 >= a.weapon.inkMin, 'minimum ink has been paid');
+  a.intent.fire = false; f.tick(a);
+  assert.equal(f.shots.length, 0, 'release gap remains intact at the paid minimum');
+  f.tick(a);
+  assert.equal(f.shots.length, 1, 'paid minimum charge must still fire exactly once');
+});

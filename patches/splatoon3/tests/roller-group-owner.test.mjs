@@ -16,14 +16,19 @@ test('Roller incremental volley top-ups preserve the actual 6.1 full-damage boun
 test('negative cumulative-max interpretation drops the second Roller increment', async () => {
   const f = await fixture({site: `${ROOT}.group-source`, fidelity:true});
   const c = CASES.find(c => c.key === 'roller-horizontal'), a = reset(f,c,5.6);
-  const apply = f.projectiles.applyHit; let maximum = 0;
+  const apply = f.projectiles.applyHit; let maximum = 0; const submitted = [];
   f.projectiles.applyHit = function(owner,victim,damage,weapon,group) {
-    if (group != null) { const next=Math.max(maximum,damage); damage=next-maximum; maximum=next; }
+    if (group != null) { submitted.push(damage); const next=Math.max(maximum,damage); damage=next-maximum; maximum=next; }
     if (damage>0) return apply.call(this,owner,victim,damage,weapon,group);
   };
   launch(f,a,c); finish(f,a);
   const total = f.hits.reduce((n,h) => n+h.damage,0);
-  assert.ok(Math.abs(total-149.19758204830146)<1e-9);
+  // #430 changes capsule contact time, and thus the exact first pellet's damage.
+  // Keep a differential negative control instead of pinning a terrain-radius accident.
+  assert.ok(submitted.length > 1, 'real volley must submit multiple increments');
+  assert.ok(Math.abs(submitted.reduce((n,d)=>n+d,0)-150)<1e-9, 'correct additive volley remains 150');
+  assert.ok(Math.abs(total-Math.max(...submitted))<1e-9, 'buggy cumulative-max path drops the real top-up');
+  assert.ok(total < 150-1e-7, 'the negative implementation must lose lethal damage');
 });
 
 test('receiver uses immutable hit weapon identity after attacker switches weapon', async () => {

@@ -76,23 +76,29 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       if (disposed.has(this)) return;
       s = s || {}; // preserve the public Character's nullable preview input
       const m = get(this), frame = s.movementMotion, step = Math.max(0, Math.min(.1, dt || 0));
+      const action = frame?.surgePresentationC1088 ?? frame?.actions?.surge;
       // Actor state is authoritative. A missed notification cannot strand a
       // pose; hidden characters still advance/cancel their action clocks.
       const allowed = (s.form || 'kid') !== 'kid' && !this.dance && !(frame && (!frame.alive || frame.special));
       if (!allowed) cancel(this, m);
       else {
+        const live = frame?.actions?.roll;
         if (frame) {
-          const live = frame.actions?.roll;
           if (!live) m.roll = m.liveRoll = null;
           else if (live !== m.liveRoll) {
             m.liveRoll = live;
-            m.roll = { age: 0, duration: cfg.roll.duration };
+            const age = live.remotePresentation === true && Number.isFinite(live.remaining)
+              ? Math.max(0, Math.min(cfg.roll.duration, cfg.roll.duration - live.remaining)) : 0;
+            m.roll = { age, duration: cfg.roll.duration };
+          } else if (live.remotePresentation === true && m.roll && Number.isFinite(live.remaining)) {
+            const age = Math.max(0, Math.min(cfg.roll.duration, cfg.roll.duration - live.remaining));
+            m.roll.age = Math.max(m.roll.age, age);
           }
           if (frame.superJump) { m.roll = m.top = m.burst = null; }
-          if (!frame.actions?.surge) m.burst = null;
+          if (!action) m.burst = null;
         }
         if (m.roll) {
-          m.roll.age = Math.min(m.roll.duration, m.roll.age + step);
+          if (live?.remotePresentation !== true) m.roll.age = Math.min(m.roll.duration, m.roll.age + step);
           if (!frame && m.roll.age + EPS >= m.roll.duration) m.roll = null;
         }
         if (m.top) {
@@ -106,10 +112,10 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
         if (s.grounded && s.form !== 'climb') m.roll = m.top = m.burst = null;
       }
       m.phase = null; m.charge = m.spin = 0;
-      const action = frame?.actions?.surge, sj = frame?.superJump;
+      const sj = frame?.superJump;
       if (allowed && sj?.phase === 'charge') {
         m.phase = 'superjump-charge';
-        m.charge = clamp(sj.t / (frame.chargeTime ?? profile.superJump.chargeTime));
+        m.charge = clamp((Number.isFinite(sj.t) ? sj.t : 0) / Math.max(1e-10, frame.chargeTime ?? profile.superJump.chargeTime));
       } else if (allowed && sj?.phase === 'flight') m.phase = 'superjump-flight';
       // A wall charge/burst owns the visible pose. Do not introduce a new
       // gameplay armor-cancellation rule merely to switch the body animation.
@@ -166,7 +172,13 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       if (ch?.[CHARACTER_OWNER]?.disposed(ch)) delete this.anim.movementMotion;
       else {
         const frame = this.anim.movementMotion ||= {};
-        frame.actions = this.s3?.actions; frame.superJump = this.superJumpState;
+        if (this.remote) {
+          const actions = frame.remoteActions ||= { roll: null };
+          actions.roll = this.remoteSquidrollVisual || null;
+          frame.actions = actions;
+        } else frame.actions = this.s3?.actions;
+        frame.surgePresentationC1088 = this.s3?.c1088SurgePresentation;
+        frame.superJump = this.superJumpState;
         frame.chargeTime = this.s3?.jumpChargeTime;
         frame.alive = this.alive; frame.special = this.specialActive;
       }

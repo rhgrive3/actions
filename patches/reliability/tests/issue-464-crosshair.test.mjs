@@ -179,9 +179,14 @@ function nativeFrame({ wallZ = null, enemyZ = 6, device = 'mouse', viaUpdate = t
   if (viaUpdate) {
     c.onTarget = 'sentinel'; c.inRange = 'sentinel';
     c.update(1 / 60);
-    // update() must have run the real computeAim and replaced the sentinel values.
-    assert.notEqual(c.onTarget, 'sentinel', `${device}: update() ran computeAim`);
-    assert.notEqual(c.inRange, 'sentinel', `${device}: update() ran computeAim`);
+    // #1008: with gameCam present the live frame (after CameraRig.update)
+    // is the sole authoritative computeAim owner. Controller.update must
+    // NOT perform a second stale-camera collision query.
+    assert.equal(c.onTarget, 'sentinel', `${device}: controller defers to the live frame`);
+    assert.equal(c.inRange, 'sentinel', `${device}: reach query is deferred too`);
+    c.computeAim();
+    assert.notEqual(c.onTarget, 'sentinel', `${device}: post-camera native computeAim ran`);
+    assert.notEqual(c.inRange, 'sentinel', `${device}: post-camera reach query ran`);
   } else {
     c.computeAim();
   }

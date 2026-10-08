@@ -2,6 +2,15 @@
 // verifier. No code outside the main-projectile paths is replaced.
 export function adaptWeaponsFidelity(code,replaceOnce) {
   const patch=(before,after,label)=>{code=replaceOnce(code,before,after,'weapons fidelity: '+label);};
+  patch('  _aimFrom(a, from, out) {\n    out.copy(a.aimPoint).sub(from);',
+    '  _aimFrom(a, from, out, target = a.aimPoint) {\n    out.copy(target).sub(from);',
+    'Dualies per-hand aim target');
+  patch(`  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);`,
+    `  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch, hand = null) {\n    const aimTarget = w.kind === 'dualies' && hand != null\n      ? fidelityDualiesAimTarget(this, a, m, hand)\n      : a.aimPoint;\n    const dir = this._aimFrom(a, m, _dir, aimTarget);`,
+    'dualies launch uses its live hand target');
+  patch(`    const dir = this._fireRound(a, w, spreadDeg, m, hand ? LOOK_DUAL_L : LOOK_DUAL_R, 'shoot_dualies', 0.5, hand ? 1.05 : 0.97);`,
+    `    const dir = this._fireRound(a, w, spreadDeg, m, hand ? LOOK_DUAL_L : LOOK_DUAL_R, 'shoot_dualies', 0.5, hand ? 1.05 : 0.97, hand);`,
+    'native fireDualies hand index');
   patch(`      p.age += dt;
       p.prev.copy(p.pos);
       if (p.age > p.straight) p.vel.y -= p.grav * dt;
@@ -43,6 +52,37 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     '      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));\n      p.delay = Math.max(0, (p.delay || 0) - dt);\n      if (elapsed <= 1e-10) continue;', 'delayed projectile active fraction');
   patch('try { if (this._step(p, dt))', 'try { if (this._step(p, elapsed))', 'delayed movement duration');
   patch('      if (!dead && p.trailEvery) {','      if (!dead && !p.ghost && p.trailEvery) {','ghost trails never score paint');
+  patch('p.trailRadius * (0.8 + Math.random() * 0.4)', 'fidelityFlightPaintRadius(p)', 'source-bound Shooter intermediate paint width');
+  patch(`          const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);
+          if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }));`,
+    `          if (!applyFidelityBlasterFlightPaint(this, p)) {
+            const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);
+            if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }));
+          }`, 'Blaster source-backed flight splash paint');
+  // #1034: current-S3 Blaster ordinary projectile PaintParam is zero.
+  // Keep dedicated burst/wall/splash paint, but suppress the legacy generic impact splat.
+  patch(`    let area;
+    if (p.type === 'slosh') {
+      // the wave lands as a thick stripe along its travel: stretched along the horizontal heading
+      _dir.y = 0; if (_dir.lengthSq() < 1e-4) _dir.set(0, 0, 1); _dir.normalize();
+      area = G.paint.splat(_v, rad * 1.12, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 1.25 });
+      if (p.head) this._sloshSplash(p, hit.point, null);
+    } else area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });
+    p.owner.addTurf(area);`,
+    `    let area = null;
+    if (p.type === 'slosh') {
+      // Source first/after unit PaintParam owns each terrain-impact footprint.
+      _dir.y = 0; if (_dir.lengthSq() < 1e-4) _dir.set(0, 0, 1); _dir.normalize();
+      const paint = fidelitySlosherImpactPaint(p, hit.point);
+      area = G.paint.splat(_v, paint?.radius ?? rad * 1.12, p.team,
+        { seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25 });
+      if (p.head) this._sloshSplash(p, hit.point, null);
+    } else if (!(p.type === 'blast' && p.s3Weapon?.kind === 'blaster')) {
+      area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });
+    }
+    if (area != null) p.owner.addTurf(area);`,
+    'Blaster zero ordinary impact paint');
+
   // #740: use the selected vertical unit's source rates in the actual instanced
   // projectile renderer. The rates stay render-only and are read from the already
   // reconstructed unit on both owners and ghosts; no packet fields are added.
@@ -81,22 +121,51 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     this.blobFourPetals.updateRanges.length = 0; this.blobFourPetals.updateRanges.push(fr);
     this.blobFourPetals.needsUpdate = true;
   }`, 'FourPetals instance upload');
-  patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
+  if (code.includes('    const inkProfile = profileFor(w);')) {
+    // #1082 source-guided ink flight owns Shooter-family launch speed and aim
+    // correction. Preserve it; only compose the existing fallback and Dualies
+    // per-hand target into that source path.
+    const shooterStart = code.indexOf('  fireShooter(a, w, spreadDeg) {');
+    const shooterEnd = code.indexOf('\n  // Left-hand muzzle', shooterStart);
+    if (shooterStart < 0 || shooterEnd < shooterStart) throw new Error('INKWAVE patch conflict: source-guided Shooter flight');
+    let shooter = code.slice(shooterStart, shooterEnd);
+    shooter = replaceOnce(shooter,
+      '    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);',
+      '    else fidelityAimConvergence(m, dir, a.aimPoint, w, w.projSpeed);',
+      'weapons fidelity: shooter centerline convergence');
+    code = code.slice(0, shooterStart) + shooter + code.slice(shooterEnd);
+
+    const roundStart = code.indexOf('  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch, hand = null) {');
+    const roundEnd = code.indexOf('\n  fireDualies(', roundStart);
+    if (roundStart < 0 || roundEnd < roundStart) throw new Error('INKWAVE patch conflict: source-guided Dualies/Splatling flight');
+    let round = code.slice(roundStart, roundEnd);
+    round = replaceOnce(round,
+      '    if (inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));',
+      '    if (inkProfile) correctInkAim(inkProfile, m, dir, aimTarget, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));',
+      'weapons fidelity: dualies source-guided aim target');
+    round = replaceOnce(round,
+      '    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);',
+      '    else fidelityAimConvergence(m, dir, aimTarget, w, w.projSpeed);',
+      'weapons fidelity: dualies/splatling centerline convergence');
+    code = code.slice(0, roundStart) + round + code.slice(roundEnd);
+  } else {
+    patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     // trail starts ~2.5 m out`,
-    `    fidelityAimConvergence(m, dir, a.aimPoint, w, w.projSpeed);
+      `    fidelityAimConvergence(m, dir, a.aimPoint, w, w.projSpeed);
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     // trail starts ~2.5 m out`, 'shooter centerline convergence');
-  patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
+    patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     Object.assign(p, { type: 'shot', wid: w.id`,
-    `    fidelityAimConvergence(m, dir, a.aimPoint, w, w.projSpeed);
+      `    fidelityAimConvergence(m, dir, aimTarget, w, w.projSpeed);
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     Object.assign(p, { type: 'shot', wid: w.id`, 'dualies/splatling centerline convergence');
+  }
   patch('    if (!victim.alive || victim.team === attacker.team) return;',
     "    if (!victim.alive || victim.team === attacker.team || !(dmg > 0)) return 'rejected';", 'hit pre-admission');
   patch('    if (route === \'drop\') return;', "    if (route === 'drop') return 'rejected';", 'dropped hit result');
@@ -110,5 +179,6 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     'if (G.time - last + 1e-10 >= w.rollContactInterval)', 'Roller same-target contact interval');
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
-  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  patch("    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", "    area += fidelityRollerMaximumPaint(this,w,fx,fz);\n    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", 'source maximum Roller floor width');
+  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, fidelitySlosherImpactPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }

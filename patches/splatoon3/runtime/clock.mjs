@@ -1,3 +1,4 @@
+import { simulateMatchInterval } from './turf-finish.mjs';
 // Render cadence is independent of the 60 Hz gameplay clock.
 import { idleAttractMenuBudget, MENU_ATTRACT_STEP } from '../../local-quality/idle-resources.mjs';
 
@@ -15,20 +16,31 @@ export class FixedClock {
     }
     return count; // Unprocessed time remains queued, never silently discarded.
   }
-  reset() { this.accumulator = 0; }
+  reset() { this.accumulator = 0; this._pendingPadEdges?.clear(); }
 }
 let context;
+let hiddenGuestListenerInstalled = false;
 export function installClock(api) { context = api; }
 export function runSimulation(game, dt) {
   if (!context) throw new Error('INKWAVE patches were not installed');
   const { G } = context;
   const clock = game.s3Clock || (game.s3Clock = new FixedClock());
-  // pollPad clears edges. Preserve those collected on a render without a tick.
-  const pending = new Set(game.input.padPressed);
+  // #1111: no gamepad edge => no allocation. Reuse a per-clock snapshot on
+  // active edges so 0-tick render frames preserve them across destructive pollPad.
+  const edges = game.input.padPressed;
+  let pending = null;
+  if (edges.size) {
+    pending = clock._pendingPadEdges || (clock._pendingPadEdges = new Set());
+    pending.clear();
+    for (const key of edges) pending.add(key);
+  }
   const pendingPadEpoch = game.input._padEpoch;
   game.input.pollPad();
-  if (pendingPadEpoch === game.input._padEpoch) {
-    for (const key of pending) game.input.padPressed.add(key);
+  if (pending) {
+    if (pendingPadEpoch === game.input._padEpoch)
+      for (const key of pending) game.input.padPressed.add(key);
+    // Epoch change never resurrects stale input; no carried snapshot remains.
+    pending.clear();
   }
   game._padMenus();
   G.net?.update?.(dt);
@@ -62,10 +74,7 @@ export function runSimulation(game, dt) {
         if (results && G.netm) {
           if (!m.paused) for (const a of m.actors || []) if (a.remote && G.netm.applyRemote) G.netm.applyRemote(a, simDt);
         } else if (!results) {
-          m.updateController(simDt);
-          m.controller?.computeAim?.();
-          m.update(simDt);
-          if (!m.paused) G.projectiles.update(simDt);
+          simulateMatchInterval(m, simDt, G);
         }
         if (m.attract) game._updateAttract(simDt);
         else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);
@@ -83,6 +92,20 @@ export function runSimulation(game, dt) {
   } else game._menuAttractRenderElapsed = menuRenderElapsed;
 }
 export function installGame(Game) {
+  // #1032: browsers may stop RAF entirely while a tab is hidden. A guest must
+  // therefore leave at the visibility edge itself instead of waiting for the
+  // next gameplay/network tick. The relay's normal leave event then enters the
+  // same #201 disconnect/no-contest policy on every remaining client.
+  if (!hiddenGuestListenerInstalled && globalThis.document?.addEventListener) {
+    globalThis.document.addEventListener('visibilitychange', () => {
+      const G = context?.G, net = G?.net;
+      if (!globalThis.document.hidden || !G?.netm || !net || net.isHost || net.state !== 'match' || net._s3HiddenGuestLeft) return;
+      net._s3HiddenGuestLeft = true;
+      net.leave(true);
+      G.game?.netMatchAborted?.('Disconnected while backgrounded');
+    });
+    hiddenGuestListenerInstalled = true;
+  }
   const original = Game.prototype._loop;
   Game.prototype._loop = function () {
     // A hidden tab explicitly suspends local play; it cannot accumulate hours

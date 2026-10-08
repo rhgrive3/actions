@@ -1,12 +1,37 @@
 import { cancelStormPendingInput } from './storm-effects.mjs';
-// Host Turf coverage belongs to the deadline, before state listeners and the
-// remainder of the simulation tick can advance paint. Presentation may continue.
-export function captureTurfFinish(match, nextState, paint) {
-  if (nextState === 'intro' || nextState === 'playing') match.s3FinishCoverage = null;
+// Host Turf coverage belongs to the deadline, after its final legal simulation
+// interval but before state listeners or finish presentation can advance paint.
+export function validFinishCoverage(value) {
+  return Array.isArray(value) && value.length === 2
+    && value.every(v => Number.isFinite(v) && v >= 0 && v <= 1);
+}
+export function validFinishMapDataUrl(value) {
+  return typeof value === 'string' && value.startsWith('data:image/png;base64,') && value.length <= 1500000;
+}
+export function captureFinishMapSnapshot(match, minimap) {
+  if (!minimap || typeof minimap.update !== 'function') return null;
+  try {
+    let passes = 0;
+    while (minimap._band > 0 && passes < 8) { minimap.update(0, true); passes++; }
+    if (minimap._band > 0) return null;
+    minimap.update(0, true);
+    const data = minimap.canvas?.toDataURL?.('image/png');
+    if (!validFinishMapDataUrl(data)) return null;
+    match.s3FinishMapDataUrl = data;
+    return data;
+  } catch { return null; }
+}
+export function captureTurfFinish(match, nextState, paint, netm = null, minimap = null) {
+  if (nextState === 'intro' || nextState === 'playing') {
+    match.s3FinishCoverage = null;
+    match.s3FinishMapDataUrl = null;
+  }
   if (nextState !== 'finish' || match.state !== 'playing' || match.bossMode) return;
   if (!match.follower) {
+    netm?.commitDeadlinePaint?.();
     const coverage = paint.coverage();
     match.s3FinishCoverage = Object.freeze([coverage[0], coverage[1]]);
+    captureFinishMapSnapshot(match, minimap);
   }
   // Retire held/pending offensive state before neutral levels can become releases.
   match.local?.weaponRunner?.cancelPendingInput?.();
@@ -66,4 +91,39 @@ export function blockExpiredGuestInput(match) {
     controller.input?.mobile?.gyro?.discard?.();
   }
   return true;
+}
+
+// #980: Match owns the clock, but Projectiles advances outside Match.update.
+// Only the fixed-step orchestrator may defer this transition; direct Match users
+// retain the historical synchronous boundary (catalog/native integrations).
+export function requestTurfFinish(match) {
+  if (match.s3DeadlineStep && !match.bossMode) match.s3FinishPending = true;
+  else match.setState('finish');
+}
+export function simulateMatchInterval(match, dt, G) {
+  const advance = (span, controller = true) => {
+    if (!(span > 0)) return;
+    if (controller) { match.updateController(span); match.controller?.computeAim?.(); }
+    match.update(span);
+    if (!match.paused) G.projectiles.update(span);
+  };
+  const turf = !match.bossMode && !match.attract && (match.mode == null || match.mode === 'turf');
+  const boundary = turf && !match.paused && match.state === 'playing'
+    && Number.isFinite(match.time) && match.time <= dt + 1e-10;
+  if (!boundary) { advance(dt); return; }
+  const legal = Math.max(0, Math.min(dt, match.time));
+  const endTime = G.time;
+  // Preserve endpoint timestamps for both fractions of this fixed-clock step.
+  G.time = endTime - dt + legal;
+  match.s3DeadlineStep = true;
+  try { advance(legal); }
+  finally { match.s3DeadlineStep = false; }
+  // Floating-point subtraction can leave a sub-epsilon remainder at 180 s.
+  match.time = 0;
+  if (!match.follower && match.state === 'playing') match.setState('finish');
+  else if (match.follower) blockExpiredGuestInput(match);
+  match.s3FinishPending = false;
+  G.time = endTime;
+  // Visual effects may use the remainder; score and combat authority have ended.
+  advance(Math.max(0, dt - legal), false);
 }

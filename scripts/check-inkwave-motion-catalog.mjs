@@ -360,6 +360,27 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
   const { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
   const api = install(profile), { Actor, Character, Projectiles, Physics, G, CHARACTER_CHANNELS: C, CHARACTER_FOOT_METRICS: F } = api;
+  // Install the same post-install S3 owners used by bootstrap.mjs. These
+  // modules are genuinely active in the shipped game, not optional imports.
+  // An isolated catalog must exercise their runtime and network graphs too.
+  const [
+    { installIssueFiveHotfixA }, { installIssueFiveHotfixB }, { installIssueFiveHotfixC },
+    { installDisconnectFidelity }, { installSlosherIntermediatePaint },
+    { installIssueEightFollowup },
+  ] = await Promise.all([
+    import(prefix + 'patches/splatoon3/runtime/issue-five-hotfix-a.mjs'),
+    import(prefix + 'patches/splatoon3/runtime/issue-five-hotfix-b.mjs'),
+    import(prefix + 'patches/splatoon3/runtime/issue-five-hotfix-c.mjs'),
+    import(prefix + 'patches/splatoon3/runtime/disconnect-fidelity.mjs'),
+    import(prefix + 'patches/splatoon3/runtime/slosher-intermediate-paint.mjs'),
+    import(prefix + 'patches/splatoon3/runtime/issue-eight-followup.mjs'),
+  ]);
+  installIssueFiveHotfixA(api, profile);
+  installIssueFiveHotfixB(api, profile);
+  installIssueFiveHotfixC(api, profile);
+  installDisconnectFidelity(api);
+  installSlosherIntermediatePaint(api, profile);
+  installIssueEightFollowup(api);
   // Exercise the real Match dependency entry, including its deadline helper.
   const { Match } = await import(prefix + 'src/game/match.js');
   const turfFinish = globalThis.catalogTurfFinishProbe(Match, G);
@@ -378,6 +399,11 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   // in the catalog realm as well so immutable installed-graph receipts cover it.
   const { enemyRevealedOnMap } = await import(prefix + 'patches/splatoon3/runtime/map-reveal.mjs');
   if (typeof enemyRevealedOnMap !== 'function' || enemyRevealedOnMap({ alive: true, hp: 100, maxHp: 100 }, 100) !== false || enemyRevealedOnMap({ alive: true, hp: 82, maxHp: 100 }, 100) !== true) throw Error('Installed map-reveal helper mismatch');
+  // src/main.js also imports the death-card helper; load it in this isolated
+  // production catalog realm so installed-graph receipts cover the emitted module.
+  const { splatCardText } = await import(prefix + 'patches/splatoon3/runtime/death-card.mjs');
+  const deathCardProbe = splatCardText('water', null, value => value);
+  if (deathCardProbe?.cause !== 'the sea' || deathCardProbe?.who !== null) throw Error('Installed death-card helper mismatch');
   const { FIST_OFFSET, GRIP_HOLE_L } = await import(prefix + 'src/game/character-weapons.js');
   const methods = [Character, Actor, api.WeaponRunner].flatMap(Type => Reflect.ownKeys(Type.prototype).filter(k => typeof Object.getOwnPropertyDescriptor(Type.prototype, k).value === 'function').map(key => [Type.prototype, key, Type.prototype[key]]));
   const iframe = document.createElement('iframe'); iframe.src = '/motion-catalog'; document.body.appendChild(iframe);
@@ -701,7 +727,14 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
           if (n === 'wall-surge-ready-crest') { a.intent.jump = frame < scenario.surgeReleaseFrame; a._updateClimb(1 / 60, true); beforeActions(a, 1 / 60, false); a._integrate(1 / 60, true, false); }
           if (n === 'form-both-directions-interrupt') { if ([0, 70, 82].includes(frame)) { a.form = 'squid'; a.submerged = true; } if ([40, 76, 100].includes(frame)) { a.form = 'kid'; a.submerged = false; } input.fire = frame >= 100 && frame < 120; input.sub = frame >= 140 && frame < 155; }
           if (n === 'dualies-roll-lock-interrupt') Object.assign(input, globalThis.catalogDualiesInput(frame, a, ch, THREE));
-          if (n === 'roller-horizontal-push') { input.fire = frame < 125; input.firePressed = frame === 0; move(frame >= 45 && frame < 125 ? a.weapon.rollSpeed : 0); }
+          if (n === 'roller-horizontal-push') {
+            const pushing = frame >= 45 && frame < 125;
+            input.fire = frame < 125; input.firePressed = frame === 0;
+            // The kinematic pose driver must retain the owner's actual stick
+            // admission: velocity alone never authorizes Roller contact (#847).
+            a.intent.move.set(0, 0, pushing ? 1 : 0);
+            move(pushing ? a.weapon.rollSpeed : 0);
+          }
           if (n === 'roller-vertical-land') { input.fire = frame < 60; input.firePressed = frame === 0; if (!a.grounded) a._integrate(1 / 60, false, false); }
           if (n.startsWith('superjump-') && a.superJumpState) a._updateSuperJump(1 / 60);
           if (n.startsWith('squidroll-')) { beforeActions(a, 1 / 60, false); if (frame === 12 && n.endsWith('interrupt')) { a.form = 'kid'; a.submerged = false; a.s3.actions.roll = null; ch.trigger('movement_cancel'); } if (frame === 40) { a.form = 'kid'; a.grounded = true; a.submerged = false; ch.trigger('land', 8); } if (!a.grounded) { a.pos.addScaledVector(a.vel, 1 / 60); a.vel.y -= api.PLAYER.gravity / 60; } else a.vel.set(0, 0, 0); }
@@ -809,6 +842,8 @@ async function main() {
     const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
     browser = await chromium.launchPersistentContext(profileDir, { headless: true, viewport: { width: 960, height: 720 }, args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
     page = await browser.newPage(); page.on('pageerror', e => error(e.message)); page.on('crash', () => error('Catalog renderer process crashed')); page.on('console', m => { if (m.type() === 'error') error(m.text()); });
+    page.on('requestfailed', req => { if (/\.(?:m?js|json)(?:$|\?)/.test(req.url())) error('Catalog module request failed: ' + req.url() + ' (' + (req.failure()?.errorText || 'unknown') + ')'); });
+    page.on('response', res => { if (res.status() >= 400) error('Catalog HTTP ' + res.status() + ': ' + res.url()); });
     const safeName = name => { if (!/^[a-z0-9-]+$/.test(name)) throw Error('Unsafe catalog evidence name'); return name; };
     await page.exposeFunction('catalogSaveImage', (name, image) => {
       safeName(name); if (!image.startsWith('data:image/png;base64,')) throw Error('Invalid screenshot encoding');
@@ -844,7 +879,7 @@ async function main() {
   } finally {
     for (const close of [() => browser?.close(), () => server?.listening ? new Promise((resolve, reject) => server.close(e => e ? reject(e) : resolve())) : null]) try { await close(); } catch (e) { failure ||= e; }
   }
-  if (failure) { publish('motion-catalog-result.json', { status: 'failed', contentHash: manifest?.contentHash || null, build: manifest?.build || null, message: String(failure.message || failure), errors, loaded: [...loaded.values()], casesFinished: result?.data?.length || 0 }); console.error(JSON.stringify({ status: 'failed', message: failure.message, evidence: path.join(output, 'motion-catalog-result.json') })); process.exitCode = 1; return; }
+  if (failure) { publish('motion-catalog-result.json', { status: 'failed', contentHash: manifest?.contentHash || null, build: manifest?.build || null, message: String(failure.message || failure), errors, loaded: [...loaded.values()], casesFinished: result?.data?.length || 0 }); console.error(JSON.stringify({ status: 'failed', message: failure.message, networkAndPageErrors: errors.slice(0, 15), modulesLoaded: loaded.size, evidence: path.join(output, 'motion-catalog-result.json') })); process.exitCode = 1; return; }
   result.status = 'passed'; publish('motion-catalog-result.json', result);
   console.log(JSON.stringify({ status: 'passed', contentHash: result.contentHash, cases: result.data.length, frames: result.data.reduce((n, r) => n + r.frames, 0), renderPairs: result.data.reduce((n, r) => n + r.renders.length, 0), verifiedModules: loaded.size, evidence: path.join(output, 'motion-catalog-result.json') }));
 }

@@ -101,6 +101,10 @@ test('streaming Splatling reuses the split owner config without changing ink', a
   arm(a.weapon, 1);
   assert.strictEqual(passed.at(-1), a.weapon);
   assert.notEqual(passed.at(-1), passed[0]);
+  for (const config of passed) {
+    for (const key of ['kind', 'id', 'damage', 'damageMin', 'referenceGravity', 'spreadGround', 'spreadAir', 'impactRadius', 'fireInterval'])
+      assert.equal(config[key], weapon[key], `stream preserves ${key}`);
+  }
 });
 
 test('projectile keeps the fired actor-local config reference after weapon rebind', async () => {

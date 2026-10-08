@@ -35,8 +35,8 @@ export function adaptMatchHud(rel,code) {
     // A monotonic owner counter is replay-safe. Never count visual special
     // events, since duplicates, snapshots and delayed replay must not add uses.
     code='function acceptSpecialCount(a, n) { if (a && Number.isSafeInteger(n) && n >= 0) a.stats.specials = Math.max(a.stats.specials || 0, n); }\n'+code;
-    code=once(code,'r2(wr.lockT || 0)];','r2(wr.lockT || 0), a.stats.specials || 0];','snapshot special counter');
-    code=once(code,'      buf.push(snap);\n      if (buf.length > 40)', '      acceptSpecialCount(a, s[21]);\n      buf.push(snap);\n      if (buf.length > 40)','owner-admitted current special counter');
+    code=once(code,'r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0)];','r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0), a.stats.specials || 0];','snapshot special counter');
+    code=once(code,'      buf.push(snap);\n      if (buf.length > 40)', '      acceptSpecialCount(a, s[22]);\n      buf.push(snap);\n      if (buf.length > 40)','owner-admitted current special counter');
     code=once(code,"this._sendNow({ k: 'res', cov: result.coverage, win: result.winner, mode: result.mode, bo: result.boss,", "this._sendNow({ k: 'res', cov: result.coverage, win: result.winner, mode: result.mode, bo: result.boss,\n      specialCounts: this.match.actors.map(a => [a.nid, a.stats.specials || 0]),",'final special counters outside legacy stat tuple');
     return once(code,'  _result(d) {\n    const m = this.match;\n    if (!m || this.isHost) return;', '  _result(d) {\n    const m = this.match;\n    if (!m || this.isHost) return;\n    for (const entry of Array.isArray(d.specialCounts) ? d.specialCounts : []) if (Array.isArray(entry) && entry.length === 2) acceptSpecialCount(this.byNid.get(entry[0]), entry[1]);','final special counter restore');
   }

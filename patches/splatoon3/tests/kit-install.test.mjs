@@ -55,7 +55,7 @@ async function production() {
 
 test('the unmodified public installer activates all three genuine base kits before actors copy them', async () => {
   const api = await production();
-  for (const [main, sub, special, cost] of [['shooter','suction','trizooka',200],['roller','curling','bubbler',180],['charger','bomb','inkVac',190]]) {
+  for (const [main, sub, special, cost] of [['shooter','suction','trizooka',210],['roller','curling','bubbler',180],['charger','bomb','inkVac',190]]) {
     assert.equal(api.WEAPONS[main].sub, sub, main + ' installed sub');
     assert.equal(api.WEAPONS[main].special, special, main + ' installed special');
     assert.equal(api.WEAPONS[main].specialCost, cost);
@@ -90,7 +90,10 @@ test('the complete production wrapper chain activates each kit and refills exact
       const count = a.stats.specials;
       a._startSpecial();
       assert.equal(a.stats.specials, count + 1, main + ' native activation once');
-      assert.equal(a.special, 0); assert.equal(a.ink, api.PLAYER.inkMax, main + ' outer resource refill');
+      // #1030: active Trizooka converts the spent activation charge into its
+      // full duration meter; Bubbler and Ink Vac clear the ordinary gauge.
+      assert.equal(a.special, main === 'shooter' ? cost : 0);
+      assert.equal(a.ink, api.PLAYER.inkMax, main + ' outer resource refill');
       if (main === 'shooter') assert.equal(api.trizookaIsActive(a), true);
       if (main === 'roller') assert.equal(api.bigBubblerSnapshot().length, 1, 'delegated real Bubbler deployment');
       if (main === 'charger') assert.equal(api.inkVacState(a)?.phase, 'inhale', 'delegated real Vac intake');

@@ -20,7 +20,7 @@ function literal(root) {
   return JSON.parse(code.slice(node.start,node.end));
 }
 test('worker compaction occurs before configuration insertion and retains the complete JSON contract',t=>{
-  const root=setup(t),assets={'asset with space.js':{bytes:7,sha256:'b'.repeat(64)},'__INKWAVE_CACHE_CONFIG_VALUE__.png':{bytes:9,sha256:'c'.repeat(64)}};
+  const root=setup(t),assets={'asset with space.js':[7,'b'.repeat(64)],'__INKWAVE_CACHE_CONFIG_VALUE__.png':[9,'c'.repeat(64)]};
   const plan={assets,precache:Object.keys(assets),assetBytes:16,precacheBytes:16};
   finalizeLoadingWorker(root,revision,plan);const before=literal(root);let calls=0;
   const result=finalizeLoadingWorker(root,revision,plan,source=>{
@@ -37,7 +37,7 @@ test('lost or duplicated compaction markers fail closed',t=>{
 });
 test('template compaction never bypasses the unchanged worker size ceiling',t=>{
   const root=setup(t),assets={};
-  for(let i=0;i<1000;i++)assets[`asset-${i}.js`]={bytes:1,sha256:'d'.repeat(64)};
+  for(let i=0;i<1000;i++)assets[`asset-${i}.js`]=[1,'d'.repeat(64)];
   const plan={assets,precache:Object.keys(assets),assetBytes:1000,precacheBytes:1000};
   assert.throws(()=>finalizeLoadingWorker(root,revision,plan,()=> 'const BUILD=__INKWAVE_CACHE_CONFIG_VALUE__;'),/64 KiB/);
 });

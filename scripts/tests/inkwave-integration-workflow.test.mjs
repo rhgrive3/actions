@@ -96,3 +96,15 @@ test('isolated render diagnosis cannot replace full acceptance jobs or emit pass
   assert.ok(!diagnostic.includes('ci-result.json'));
   assert.ok(!diagnostic.includes('name: inkwave-browser-'));
 });
+
+
+test('optional focused regressions preserve the canonical gate and publish only completed source evidence', () => {
+  const focus = workflow.indexOf('name: Run requested focused source regressions');
+  const canonical = workflow.indexOf('name: Verify gameplay patch contracts and regressions');
+  assert.ok(focus > 0 && canonical > focus);
+  assert.ok(workflow.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
+  assert.ok(workflow.includes("steps.focused_native.outcome == 'success'"));
+  assert.ok(workflow.includes('FOCUSED_TESTS: ${{ inputs.focused_tests }}'));
+  assert.ok(workflow.includes('FOCUSED_BASELINES: ${{ inputs.focused_baselines }}'));
+  assert.ok(workflow.includes('FOCUSED_EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/evidence/inkwave-focused-'));
+});

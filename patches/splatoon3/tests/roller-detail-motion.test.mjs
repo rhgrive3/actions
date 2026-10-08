@@ -59,6 +59,7 @@ function rig(api, { enabled = true, weapon = 'roller', interval } = {}) {
   ch._solveLimb = function (...args) { solves++; return solve.apply(this, args); };
   function step(dt = 1 / 60, input = {}) {
     a.intent.fire = !!input.fire; a.intent.sub = !!input.sub;
+    if (input.move) a.intent.move.set(input.move.x, 0, input.move.z);
     if (input.grounded !== undefined) a.grounded = input.grounded;
     if (input.speed !== undefined) a.vel.set(0, 0, input.speed);
     a.pos.addScaledVector(a.vel, dt); G.time += dt;
@@ -171,6 +172,11 @@ test('horizontal startup removes the double lift in actual posed geometry while 
         rows.push(poseRow(api, r, i, [0, 5, 8, 12, 14, 18, 21, 30, 42, 60].includes(i)));
       }
       assert.equal(r.shots, 1); assert.ok(r.solves > 300, 'the public two-bone solver executed for real limbs');
+      // #896: the drum fling impulse follows the authoritative release clock (21F), not the legacy fixed 9F trigger.
+      const released = rows.findIndex(x => x.gameplay.shots === 1);
+      assert.equal(released, 21, 'horizontal gameplay release is on elapsed tick 21');
+      assert.ok(rows.slice(0, released).every(x => x.drumW === 0), 'no drum fling before release (the legacy trigger fired at 9F)');
+      assert.ok(rows[released].drumW > 30, 'drum fling lands on the release tick');
       assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002));
       assert.ok(rows.every(x => x.bottom >= -.006 && x.drawnIndexCount > 500));
       assert.ok(rows[8].bodyMeshes.some(m => m.skinned && m.triangles.length > 1000
@@ -197,7 +203,7 @@ test('vertical release, recovery, held ground pushing and lift on a fresh attack
     const r = rig(api, { enabled }), rows = [];
     try {
       for (let i = 0; i < 115; i++) {
-        r.step(1 / 60, { fire: i < 80 || i >= 100, firePressed: i === 0 || i === 100,
+        r.step(1 / 60, { fire: i < 80 || i >= 100, firePressed: i === 0 || i === 100, move: { x: 0, z: 1 },
           grounded: i < 40 ? false : i < 100, speed: i > 45 && i < 80 ? 6.48 : 0 });
         rows.push(poseRow(api, r, i, [0, 18, 31, 38, 56, 65, 79, 85, 100, 110].includes(i)));
       }

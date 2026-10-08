@@ -36,7 +36,11 @@ function router({ match }) {
     hud: { feed: v => feeds.push(v), showSplatted: v => deaths.push(v) },
     rig: { lookAt: { copy() {} } },
   };
-  vm.runInNewContext(`(function(){${code}}).call(game)`, { on: (n, fn) => { handlers[n] = fn; }, game, t, G, PLAYER: { respawnTime: 5 }, console });
+  const splatCardText = (cause, attacker) => ({
+    cause: cause === 'water' ? 'the sea' : cause === 'ink' ? 'enemy ink' : attacker?.name || 'enemy ink',
+    who: attacker?.name || null,
+  });
+  vm.runInNewContext(`(function(){${code}}).call(game)`, { on: (n, fn) => { handlers[n] = fn; }, game, t, G, PLAYER: { respawnTime: 5 }, splatCardText, console });
   assert.equal(typeof handlers.splatted, 'function', 'installed splatted router is registered');
   return { emit: ev => handlers.splatted(ev), feeds, audios, deaths, game };
 }
@@ -82,7 +86,8 @@ test('#614 own death still identifies who splatted the local player', () => {
   r.emit({ victim: local, attacker, cause: 'ink' });
   assert.equal(r.feeds.length, 0, 'own death uses showSplatted, not the text feed');
   assert.equal(r.deaths.length, 1);
-  assert.equal(r.deaths[0].by, 'Enemy');
+  assert.equal(r.deaths[0].by, 'enemy ink');
+  assert.equal(r.deaths[0].who, 'Enemy');
   assert.equal(r.game.rig.mode, 'spectate');
   assert.ok(r.audios.includes('splatted_self'));
 });
@@ -93,6 +98,7 @@ test('#614 water/environment death of the local player still shows the death pre
   r.emit({ victim: local, attacker: null, cause: 'water' });
   assert.equal(r.deaths.length, 1);
   assert.equal(r.deaths[0].by, 'the sea');
+  assert.equal(r.deaths[0].who, null);
   assert.equal(r.feeds.length, 0);
 });
 

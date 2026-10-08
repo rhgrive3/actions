@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { FixedClock } from '../runtime/clock.mjs';
+import { isChargerFullCharge } from '../runtime/weapons.mjs';
 import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
@@ -169,14 +170,14 @@ async function fireAt(runtime, frames, renderHz) {
   const progress = releaseAt / owner.weapon.chargeTime;
   const charge = progress < .2 ? progress * 1.25 : .25 + (progress - .2) * .9375;
   near(firedJob.charge, charge, 1e-10);
-  const expectedRange = charge >= .999 ? profile.weapons.charger.rangeMax
+  const expectedRange = isChargerFullCharge(charge) ? profile.weapons.charger.rangeMax
     : profile.weapons.charger.rangeMin + (profile.weapons.charger.rangeMax - profile.weapons.charger.rangeMin) * charge;
   near(firedJob.range, expectedRange, 1e-7);
   return { damage: hits[0].amount, charge: firedJob.charge, chargeT: firedJob.chargeT, range: firedJob.range };
 }
 
 const expectedDamage = frames => frames >= 60 ? 160
-  : Math.min(80, 40 + (frames / 60 - 8 / 60) * 138.46);
+  : 40 + (80 - 40) * (frames - 8) / (60 - 8);
 
 test('#506 actual runtime/install() applies the sourced Charger damage to native target hits at 30/60/120Hz', async () => {
   const runtime = await fixedBoot();
@@ -187,7 +188,7 @@ test('#506 actual runtime/install() applies the sourced Charger damage to native
   assert.equal(typeof runtime.projectiles.chargerReach, 'function', 'active Charger flight is installed');
 
   for (const renderHz of [30, 60, 120]) {
-    for (const frames of [8, 9, 30, 60]) {
+    for (const frames of [8, 9, 25, 26, 30, 59, 60]) {
       const hit = await fireAt(runtime, frames, renderHz);
       near(hit.damage, expectedDamage(frames));
     }

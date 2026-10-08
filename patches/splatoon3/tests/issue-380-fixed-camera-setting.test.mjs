@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { fixture } from './source-fixture.mjs';
+import { adaptSource } from '../adapter.mjs';
+import { BATTLE_HUMANOID_VERTICAL_FOV,BATTLE_SWIM_VERTICAL_FOV,BATTLE_HUMANOID_HORIZONTAL_FOV,BATTLE_SWIM_HORIZONTAL_FOV } from '../runtime/battle-framing.mjs';
+const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
+test('#380 legacy, malformed and changed settings cannot change normal gameplay projection',async()=>{const f=await fixture();for(const aspect of [16/9,32/9,9/16]){const c=new f.THREE.PerspectiveCamera(60,aspect,.15,6500),r=new f.CameraRig(c);r.mode=r._prevMode='follow';r.target={form:'kid'};r._follow=()=>{};let expected=null;for(const setting of [65,100,82,undefined,NaN,Infinity,-10]){f.G.settings={fov:setting,cameraShake:0};r.update(1/60);close(r.baseFov,BATTLE_HUMANOID_HORIZONTAL_FOV);expected??=c.fov;close(c.fov,expected);close(r.gameCam.fov,expected);}}});
+test('#380 battle FOV matches the verified S3 humanoid/swim vertical values at 16:9',async()=>{const f=await fixture(),c=new f.THREE.PerspectiveCamera(60,16/9,.15,6500),r=new f.CameraRig(c);r.mode=r._prevMode='follow';r._follow=()=>{};f.G.settings={cameraShake:0};r.target={form:'kid'};r.update(1/60);close(c.fov,BATTLE_HUMANOID_VERTICAL_FOV);close(r.baseFov,BATTLE_HUMANOID_HORIZONTAL_FOV);r.target.form='squid';r.update(1/60);close(c.fov,BATTLE_SWIM_VERTICAL_FOV);close(r.baseFov,BATTLE_SWIM_HORIZONTAL_FOV);assert.equal(BATTLE_HUMANOID_VERTICAL_FOV,55);assert.equal(BATTLE_SWIM_VERTICAL_FOV,60);});
+test('#380 ordinary settings no longer expose a field-of-view slider',()=>{const native=fs.readFileSync(new URL('../../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8');assert.doesNotMatch(adaptSource('src/ui/menus.js',native),/key: 'fov'/);});

@@ -22,56 +22,43 @@ export function adaptIssue479(rel, code) {
   // Keep current Roller reset/contact/roll-stop owners and pass their existing API.
   const oldInstall = 'export function installRollerLogic({ WeaponRunner }, _profile) {';
   const currentInstall = 'export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {';
-  const matches = [oldInstall, currentInstall].filter(anchor => code.includes(anchor));
+  const extendedInstall = 'export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _profile) {';
+  const matches = [oldInstall, currentInstall, extendedInstall].filter(anchor => code.includes(anchor));
   if (matches.length !== 1) throw new Error('INKWAVE issue-479 patch conflict (roller install owner): expected one known shape');
   const installAnchor = matches[0];
   // 1. Pass api (containing Actor, Character, WeaponRunner, on, emit) to install free-fall hooks
   code = replaceOnce(
     code,
     installAnchor,
-    'export function installRollerLogic(api, _profile) {\n  const { WeaponRunner, Actor, G, on } = api || {};\n  installActorFreefallHooks(api);',
+    'export function installRollerLogic(api, _profile) {\n  const { WeaponRunner, Actor, G, on, THREE, Hit } = api || {};\n  installActorFreefallHooks(api);',
     'roller installRollerLogic actor hook connection'
   );
 
-  // 2. Select vertical mode considering 25F natural free-fall grace and latched attacks.
-  // C37 may already own a one-shot grounded full-cancel context; keep that
-  // override while composing the sourced free-fall selector for every other attack.
-  const fullCancelShape =
+  // Select the sourced free-fall mode without removing C37's grounded
+  // full-cancel override or C43's intervening drum-support admission.
+  const fullCancelStart =
     '    const fullCancelGroundAttack = hasFullCancelGroundAttack(a);\n' +
     '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&\n' +
-    '      a.ink >= (fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk);\n' +
-    '    if (starting) {\n' +
-    '      this.cooldown = Math.min(0, this.cooldown);\n' +
-    '      const groundedCancel = takeFullCancelGroundAttack(a);\n' +
-    '      this.s3FlickVertical = !groundedCancel && !a.grounded;';
-  if (code.includes(fullCancelShape)) {
-    code = replaceOnce(
-      code,
-      fullCancelShape,
+    '      a.ink >= (fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk);';
+  if (code.includes(fullCancelStart)) {
+    code = replaceOnce(code, fullCancelStart,
       '    const fullCancelGroundAttack = hasFullCancelGroundAttack(a);\n' +
       '    const isVertical = !fullCancelGroundAttack && selectRollerFlickVertical(a, this);\n' +
       '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&\n' +
-      '      a.ink >= (isVertical ? w.verticalInk : w.flickInk);\n' +
-      '    if (starting) {\n' +
-      '      this.cooldown = Math.min(0, this.cooldown);\n' +
-      '      const groundedCancel = takeFullCancelGroundAttack(a);\n' +
+      '      a.ink >= (isVertical ? w.verticalInk : w.flickInk);',
+      'roller free-fall mode with grounded full-cancel and drum support');
+    code = replaceOnce(code, '      this.s3FlickVertical = !groundedCancel && !a.grounded;',
       '      this.s3FlickVertical = groundedCancel ? false : isVertical;',
-      'roller selectRollerFlickVertical 25F grace with grounded full-cancel'
-    );
+      'roller grounded cancel retains horizontal mode');
   } else {
-    code = replaceOnce(
-      code,
-      '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);\n' +
-      '    if (starting) {\n' +
-      '      this.cooldown = Math.min(0, this.cooldown);\n' +
-      '      this.s3FlickVertical = !a.grounded;',
+    code = replaceOnce(code,
+      '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);',
       '    const isVertical = selectRollerFlickVertical(a, this);\n' +
-      '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (isVertical ? w.verticalInk : w.flickInk);\n' +
-      '    if (starting) {\n' +
-      '      this.cooldown = Math.min(0, this.cooldown);\n' +
+      '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (isVertical ? w.verticalInk : w.flickInk);',
+      'roller selectRollerFlickVertical 25F grace and latching');
+    code = replaceOnce(code, '      this.s3FlickVertical = !a.grounded;',
       '      this.s3FlickVertical = isVertical;',
-      'roller selectRollerFlickVertical 25F grace and latching'
-    );
+      'roller selected free-fall mode owns attack');
   }
 
   if (!code.includes('./roller-freefall.mjs')) {

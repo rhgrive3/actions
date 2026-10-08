@@ -184,6 +184,24 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     for (const actor of teammates) if (!(actor.isBot && cfg.bots === false)) awardWipeoutFlow(state(actor), cfg);
   });
   on('turf', ({ actor, area }) => award(actor, 'turf', area));
+  on('assist:mark', ({ helper, victim, source, accepted, victimLife, helperLife } = {}) => {
+    if (accepted !== true || !helper?.alive || !victim?.alive || helper === victim ||
+        helper.team === victim.team || G.match?.attract ||
+        !cfg.assistPoints?.sources?.includes(source) ||
+        victimLife !== (victim.netLife ?? 0) || helperLife !== (helper.netLife ?? 0)) return;
+    const map = credits.get(victim) || new Map(), prior = map.get(helper);
+    const time = typeof prior === 'number' ? prior : prior?.time;
+    const damage = prior != null && (typeof prior === 'number' || prior.kind !== 'marking') &&
+      G.time >= time && G.time - time <= cfg.assistWindow &&
+      (typeof prior === 'number' || (prior.victimLife === victimLife && prior.helperLife === helperLife));
+    if (!damage) map.set(helper, { time: G.time, victimLife, helperLife, kind: 'marking', source });
+    credits.set(victim, map);
+  });
+  function assistValue(helper, victim) {
+    const credit = credits.get(victim)?.get(helper), points = cfg.assistPoints;
+    if (credit?.kind !== 'marking' || !points || !(points.damage > 0)) return 1;
+    return points.marking / points.damage;
+  }
   on('damage', ({ victim, attacker, amount, source }) => {
     if (!attacker || attacker === victim || source === 'ink' || victim.team === attacker.team) return;
     const map = credits.get(victim) || new Map(); map.set(attacker, G.time); credits.set(victim, map);
@@ -195,13 +213,13 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     // One victim-authoritative assist list feeds stats, Flow and conditional gear
     // while the current-main death-progress policy remains authoritative.
     const candidates = Array.isArray(event.assists) ? event.assists :
-      [...(credits.get(victim) || [])].filter(([, time]) => G.time - time <= cfg.assistWindow).map(([helper]) => helper);
+      [...(credits.get(victim) || [])].filter(([, credit]) => G.time - (typeof credit === 'number' ? credit : credit.time) <= cfg.assistWindow).map(([helper]) => helper);
     const helpers = attacker && attacker !== victim && attacker.team !== victim.team
       ? [...new Set(candidates)].filter(helper => helper !== attacker && helper !== victim && helper.team === attacker.team) : [];
     event.assists = helpers;
     for (const helper of helpers) {
       helper.stats.assists = (helper.stats.assists || 0) + 1;
-      award(helper, 'assist', 1);
+      award(helper, 'assist', assistValue(helper, victim));
       emit('actor:assist', { actor: helper, victim, attacker });
     }
     credits.delete(victim);

@@ -49,7 +49,8 @@ async function verify(response, expected) {
   }
   // Clone before exposing the response. Never clone a response whose body the page already consumed.
   const bytes = await response.clone().arrayBuffer();
-  if (bytes.byteLength !== expected.bytes || await digest(bytes) !== expected.sha256) {
+  if (!Array.isArray(expected) || expected.length !== 2 ||
+      bytes.byteLength !== expected[0] || await digest(bytes) !== expected[1]) {
     throw new Error('Revision asset integrity mismatch');
   }
   return response;

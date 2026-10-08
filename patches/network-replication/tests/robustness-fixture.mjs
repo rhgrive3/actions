@@ -3,7 +3,7 @@
 // supplies the socket-free platform, the scene, and physics/paint/audio stubs.
 //
 // Composition order matches scripts/build-inkwave.mjs exactly:
-//   adaptNetworkSource(adaptQualitySource(adaptReliability(adaptTouchLayout(adaptSource(...)))))
+//   adaptRange(adaptNetworkSource(adaptQualitySource(adaptReliability(adaptTouchLayout(adaptSource(...))))))
 // Passing { network: false } omits ONLY the newest adapter so a test can reproduce
 // the pre-fix baseline on the same sources.
 import fs from 'node:fs';
@@ -15,6 +15,7 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 
 export const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -31,14 +32,14 @@ function relFor(file) {
 }
 
 // One module environment. `network` selects whether the newest adapter participates.
-export async function fixture({ network = true, flow = false } = {}) {
+export async function fixture({ network = true, flow = false, fullRuntime = false } = {}) {
   let seconds = 1000;
   const context = vm.createContext({ console, performance: { now: () => seconds * 1000 } });
   const modules = new Map();
 
   const compose = network
-    ? (rel, code) => adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))))
-    : (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+    ? (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))))
+    : (rel, code) => adaptRange(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))));
 
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
@@ -71,6 +72,11 @@ export async function fixture({ network = true, flow = false } = {}) {
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
+    export * from './patches/splatoon3/runtime/resources.mjs';
+    export * from './patches/splatoon3/runtime/damage-timing.mjs';
+    export * from './patches/splatoon3/runtime/splatling.mjs';
+    export * from './patches/splatoon3/runtime/movement.mjs';
+    export * from './patches/splatoon3/runtime/gear.mjs';
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/local-quality/roller-visual.mjs';
     export * as THREE from 'three';
@@ -89,7 +95,12 @@ export async function fixture({ network = true, flow = false } = {}) {
   api.installWeapons(api, profile);
   api.installWeaponsFidelity(api, profile);
   api.installRollerVisualQuality(api);
-  if (flow) api.installFlow(api, profile);
+  if (fullRuntime) {
+    api.installMovement(api, profile);
+    api.installGear(api, profile);
+    if (flow) api.installFlow(api, profile);
+    api.installResources(api, profile);
+  } else if (flow) api.installFlow(api, profile);
 
   // ---- world stubs: physics only reports a flat floor at y = 0, no actors, no boss
   const floorHit = (a, b, hit) => {

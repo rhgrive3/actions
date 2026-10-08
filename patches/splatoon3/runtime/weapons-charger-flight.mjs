@@ -1,11 +1,13 @@
+import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
-import { chargerDamage } from './weapons.mjs';
+import { chargerDamage, isChargerFullCharge } from './weapons.mjs';
 // Splatoon-3-normalized partial-charge coordinate for Charger paint endpoints.
 // The authoritative charge progression reaches charge = 1/6 after the first
 // legal 8 frames at 60Hz (chargeT = 8/60 through the installed charge curve)
 // and 1 at the full 60th frame, so the pinned S3 11.3.0 MinCharge family
 // anchors to the first legal release and the MaxCharge family to 60f;
-// charge >= .999 keeps the extracted FullCharge step. Charge-rate modifiers
+// the extracted FullCharge step applies only at the authoritative full state
+// (#840: isChargerFullCharge, ding-aligned at charge 1). Charge-rate modifiers
 // (airborne/empty tank) only change how fast the progression advances, and
 // releases below the boundary clamp to 0, so the legal minimum endpoint never
 // shifts. Damage (#506), range (#514), projectile speed, ink consumption and
@@ -13,12 +15,11 @@ import { chargerDamage } from './weapons.mjs';
 export const CHARGER_FIRST_LEGAL_CHARGE = 1 / 6;
 export function chargerPartialCharge(charge) {
   const c = Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0));
-  if (c >= .999) return 1;
   return c <= CHARGER_FIRST_LEGAL_CHARGE ? 0 : (c - CHARGER_FIRST_LEGAL_CHARGE) / (1 - CHARGER_FIRST_LEGAL_CHARGE);
 }
 // Linear interpolation of extracted endpoints; ellipse rasterization remains INKWAVE's.
 export function chargerPaintParameters(raw,charge){
-  const full=charge>=.999,q=chargerPartialCharge(charge);
+  const full=isChargerFullCharge(charge),q=chargerPartialCharge(charge);
   const value=(record,name)=>full?record[name+'FullCharge']:record[name+'MinCharge']+(record[name+'MaxCharge']-record[name+'MinCharge'])*q;
   const width=value(raw.SplashPaintParam,'WidthHalf'),depth=value(raw.SplashPaintParam,'DepthHalf');
   const onTop=value(raw.SplashSpawnParam,'OnTopRate');
@@ -41,6 +42,14 @@ export function chargerLaunchSpeed(raw, charge) {
   return 60 * (raw.SpawnSpeedMinCharge + (raw.SpawnSpeedMaxCharge - raw.SpawnSpeedMinCharge) * q);
 }
 const INSTALLED=Symbol.for('inkwave.charger-flight.v1'),EPS=1e-10,SIM_DT=1/60;
+// #1134: an actor may only enter the authoritative candidate set when its
+// swept-capsule entry lies strictly before the nearest world/kit-defense stop.
+// Keeping this as one predicate prevents a later refactor from reintroducing
+// "damage every capsule on the full segment, then stop at the shield" ordering.
+export function chargerActorBeforeStop(entryFraction, stepLength, stopDistance) {
+  return entryFraction !== null && Number.isFinite(entryFraction) &&
+    entryFraction * stepLength < stopDistance - EPS;
+}
 // Finite straight flight. Source supplies endpoints and radii, not recovered engine
 // interpolation code. Uses the existing weapon:fire packet; no new network fields.
 export function installChargerFlight(api,completion) {
@@ -52,7 +61,7 @@ export function installChargerFlight(api,completion) {
   // Single source of the finite flight distance (world units); begin() and the HUD reach query share it.
   const reachFor=charge=>{
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
-    return charge>=.999?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge;
+    return isChargerFullCharge(charge)?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge;
   };
   P.chargerReach=function(charge){return reachFor(charge);};
   const feetDown=new THREE.Vector3(0,-1,0),feetFrom=new THREE.Vector3(),feetAt=new THREE.Vector3(),feetHit=new Hit();
@@ -67,7 +76,7 @@ export function installChargerFlight(api,completion) {
   }
   function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
-    const full=charge>=.999;
+    const full=isChargerFullCharge(charge);
     // The native runner resets chargeT immediately after this synchronous release
     // call. Snapshot it here and keep it with the in-flight shot; `charge` stays
     // the generic nonlinear value used for range and launch speed.
@@ -78,7 +87,7 @@ export function installChargerFlight(api,completion) {
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;
     const job={owner:actor,team:actor.team,weapon:w,charge,chargeT,damage,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
-      pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
+      pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,nearestPending:true,paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
     system._ghostBeam(actor,origin,direction,.0001,charge,false);
     job.beam=system.beams.at(-1);
     (system._fidelityChargerFlights||(system._fidelityChargerFlights=[])).push(job);
@@ -107,9 +116,14 @@ export function installChargerFlight(api,completion) {
     if(!(interval>EPS))return;
     let area=0;
     for(;job.nextPaint<end-.3;job.nextPaint+=interval){
+      // The first checkpoint owns the sourced RadiusSpawnNearest (1.2),
+      // not the ordinary charge-dependent SplashPaintParam.WidthHalf.
+      // Consume this first slot even if the surface probe misses.
+      const radius=job.nearestPending?paint.nearest:paint.width;
+      job.nearestPending=false;
       const p=job.origin.clone().addScaledVector(job.dir,job.nextPaint);
       const h=G.physics.raycast(p,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
-      if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),job.nextPaint===1.2?paint.nearest:paint.width,job.team,
+      if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),radius,job.team,
         {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1),claimOwner:job.owner});
     }
     job.owner.addTurf(area);
@@ -129,9 +143,9 @@ export function installChargerFlight(api,completion) {
       // Partial rounds meet allied bodies; full rounds retain teammate piercing.
       if(!actor.alive||actor===job.owner||(job.full&&actor.team===job.team)||job.seen.has(actor))continue;
       job.base.copy(actor.pos); // same authoritative basis as ordinary projectiles
-      const t=capsuleEntry(job.prev,job.pos,job.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,
+      const t=capsuleEntry(job.prev,job.pos,job.base,hurtboxRadius(actor,PLAYER),hurtboxHeight(actor,PLAYER),
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
-      if(t!==null&&t*length<distance-EPS)actors.push({actor,d:t*length});
+      if(chargerActorBeforeStop(t,length,distance))actors.push({actor,d:t*length});
     }
     actors.sort((a,b)=>a.d-b.d||String(a.actor.nid??a.actor.name).localeCompare(String(b.actor.nid??b.actor.name)));
     const amount=job.damage;

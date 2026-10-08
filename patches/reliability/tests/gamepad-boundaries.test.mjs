@@ -40,7 +40,9 @@ test('#681 unused axes may change while centered sticks and button rebase keep t
  h.setPads(device([0,0,0,0,1],''));h.input.pollPad();h.setPads(device([0,0,0,0,-1],'',[0]));h.input.pollPad();assert.equal(h.input.padPressed.has(0),true);assert.equal(h.input.padButton(0),true);
 });
 for(const hz of [30,60,120,144])test(`#676 disconnect/reconnect at ${hz}Hz cannot replay filtered camera turn`,async()=>{
- const h=await rig();h.setPads(device([0,0,1,.6]));for(let i=0;i<hz;i++){h.input.pollPad();h.controller.update(1/hz);h.input.endFrame();}assert.ok(h.controller.padLook.x>.8);assert.ok(h.controller.edgeT>.16);
+ const h=await rig();h.setPads(device([0,0,1,.6]));for(let i=0;i<hz;i++){h.input.pollPad();h.controller.update(1/hz);h.input.endFrame();}assert.ok(h.controller.padLook.x>.8);
+ assert.equal(h.controller.edgeT,0,'S3 uses steady right-stick yaw without the old edge timer');
+ h.controller.edgeT=.4; // Legacy transient must be retired on disconnection.
  h.rig.pitch=0; // Keep the comparison away from pitch clamp saturation.
  const before=[h.rig.yaw,h.rig.pitch];h.setPads([]);for(let i=0;i<hz;i++){h.input.pollPad();h.controller.update(1/hz);}
  assert.equal(h.controller.padLook.x,0);assert.equal(h.controller.padLook.y,0);assert.equal(h.controller.edgeT,0);assert.deepEqual([h.rig.yaw,h.rig.pitch],before);

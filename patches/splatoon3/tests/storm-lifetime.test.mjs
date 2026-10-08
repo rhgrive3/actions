@@ -15,7 +15,7 @@ async function setup({baseline=false,ghost=false}={}){
  const site=process.env.INKWAVE_STORM_LIFETIME_SITE;
  const f=site&&!baseline?await builtFixture({site,fidelity:true,network:true}):await fixture({adapt});
  const install=f.installSubSpecialFidelity||(await import(pathToFileURL(path.join(site,'patches/splatoon3/runtime/sub-special-fidelity.mjs')).href)).installSubSpecialFidelity;install(f,f.profile);
- const {G,THREE}=f,owner=f.make('charger'),ps=G.projectiles=f.projectiles||new f.Projectiles(new THREE.Scene());
+ const {G,THREE}=f,owner=f.make('charger'),ps=G.projectiles=f.projectiles||new f.Projectiles(new THREE.Scene()); if(ghost) owner.remote=true;
  let frame=0,paint=0;const hits=[],ends=[];G.physics.los=()=>true;G.physics.raycast=(o,_d,_r,h)=>{h.hit=true;h.point.copy(o).setY(0);h.normal.set(0,1,0);return h;};G.paint.splat=()=>{paint++;return 0;};G.actors=[];
  ps._spawnCloud({owner,team:0,pos:new THREE.Vector3(),dir:new THREE.Vector3(),_netBorn:0,_netBornTick:0,_netSteps:1});const c=ps.clouds[0];c.ghost=ghost;if(ghost)c._netPeer={sim:0,tr:0,lastTs:100};
  const victim={team:1,alive:true,remote:false,pos:c.group.position.clone().add(new THREE.Vector3(0,-2,0)),damage(amount,attacker,source){hits.push({frame,amount,attacker,source});return false;}};G.actors=[victim];f.on('storm:end',()=>ends.push(frame));
