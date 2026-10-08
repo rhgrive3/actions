@@ -13,12 +13,12 @@ export function adaptIssue1088SurgePresentation(code) {
     '  const c1088Row = [a.nid, r2(a.pos.x), r2(y), r2(a.pos.z)',
     'preserve the existing snapshot columns before optional presentation');
   code = once(code,
-    'n ? r2(n.z) : 0, r2(wr.lockT || 0), a.stats.specials || 0];',
-    'n ? r2(n.z) : 0, r2(wr.lockT || 0), a.stats.specials || 0];\n  const c1088Surge = packC1088SurgePresentation(a);\n  if (c1088Surge) c1088Row.push(c1088Surge);\n  return c1088Row;',
+    'n ? r2(n.z) : 0, r2(wr.lockT || 0), r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0), a.stats.specials || 0, packAdoptionState(a)];',
+    'n ? r2(n.z) : 0, r2(wr.lockT || 0), r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0), a.stats.specials || 0, packAdoptionState(a)];\n  const c1088Surge = packC1088SurgePresentation(a);\n  if (c1088Surge) c1088Row.push(c1088Surge);\n  return c1088Row;',
     'owner-only packed presentation sidecar');
   code = once(code,
-    'function unpackActor(s, ts) {\n  return { t: ts, x: s[1], y: s[2], z: s[3], vx: s[4], vy: s[5], vz: s[6], yaw: s[7], aimYaw: s[8], aimPitch: s[9], f: s[10], hp: s[11], ink: s[12], sp: s[13], ch: s[14], turf: s[15], tp: s[16], wx: s[17], wy: s[18], wz: s[19], lock: s[20] };\n}',
-    'function unpackActor(s, ts) {\n  return { t: ts, x: s[1], y: s[2], z: s[3], vx: s[4], vy: s[5], vz: s[6], yaw: s[7], aimYaw: s[8], aimPitch: s[9], f: s[10], hp: s[11], ink: s[12], sp: s[13], ch: s[14], turf: s[15], tp: s[16], wx: s[17], wy: s[18], wz: s[19], lock: s[20], surgePresentation: s[22] ?? null, surgeSampleTime: ts };\n}',
+    'function unpackActor(s, ts) {\n  return { t: ts, x: s[1], y: s[2], z: s[3], vx: s[4], vy: s[5], vz: s[6], yaw: s[7], aimYaw: s[8], aimPitch: s[9], f: s[10], hp: s[11], ink: s[12], sp: s[13], ch: s[14], turf: s[15], tp: s[16], wx: s[17], wy: s[18], wz: s[19], lock: s[20], sjT: Number.isFinite(s[21]) ? s[21] : 0, adoption: s[23] };\n}',
+    'function unpackActor(s, ts) {\n  return { t: ts, x: s[1], y: s[2], z: s[3], vx: s[4], vy: s[5], vz: s[6], yaw: s[7], aimYaw: s[8], aimPitch: s[9], f: s[10], hp: s[11], ink: s[12], sp: s[13], ch: s[14], turf: s[15], tp: s[16], wx: s[17], wy: s[18], wz: s[19], lock: s[20], sjT: Number.isFinite(s[21]) ? s[21] : 0, adoption: s[23], surgePresentation: s[24] ?? null, surgeSampleTime: ts };\n}',
     'optional tagged sidecar sample reconstruction');
   code = once(code,
     '      const snap = unpackActor(s, d.ts);',
@@ -29,8 +29,8 @@ export function adaptIssue1088SurgePresentation(code) {
     'if (!n.ready) { resetC1088SurgePresentation(a); a.character.root.visible = false; return; }',
     'unready and reconnect presentation cleanup');
   code = once(code,
-    '    const S = n.cur;\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
-    '    const S = n.cur;\n    if (!a.alive) { clearRemoteC1088Surge(a); a.respawnTimer -= dt; return; }\n    applyRemoteC1088Surge(a, S.surgePresentation, S.surgeSampleTime, this._peer(a.owner).tr, S.surgeOwner, a.owner);',
+    '    if (!a.alive) { a.respawnTimer -= dt; return; }',
+    '    if (!a.alive) { clearRemoteC1088Surge(a); a.respawnTimer -= dt; return; }\n    applyRemoteC1088Surge(a, S.surgePresentation, S.surgeSampleTime, this._peer(a.owner).tr, S.surgeOwner, a.owner);',
     'owner-authorized life/epoch/phase application on the playback timeline');
   code = once(code,
     '  _remoteSplat(victim, attacker, cause) {',

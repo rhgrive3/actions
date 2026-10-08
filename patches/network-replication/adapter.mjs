@@ -368,11 +368,11 @@ export function emit(name, payload) {
     patch('const mode = this._pathAt(buf, tr, S);',
       'const mode = this._pathAt(buf, tr, S);\n    S.adoption = sampleAdoptionState(buf, tr, mode, peer.sim);',
       'sample adoption state on the sender timeline');
-    patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23 && s.length !== 24) continue;
-      const adoption = s.length === 24
+    patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23 && s.length !== 24 && s.length !== 25) continue;
+      const adoption = s.length >= 24
         ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq)
         : null;
-      if (s.length === 24 && !adoption) continue;
+      if (s.length >= 24 && !adoption) continue;
       if (adoption) { snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence; }
       else delete snap.adoption;
       a.net.lastLife = snap.life;`, 'strict life/sequence-bound adoption packet');
