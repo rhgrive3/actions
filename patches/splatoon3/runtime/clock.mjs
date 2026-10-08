@@ -1,6 +1,7 @@
 import { simulateMatchInterval } from './turf-finish.mjs';
 // Render cadence is independent of the 60 Hz gameplay clock.
 import { idleAttractMenuBudget, MENU_ATTRACT_STEP } from '../../local-quality/idle-resources.mjs';
+import { beginActorMotionTick } from './actor-motion.mjs';
 
 export const STEP = 1 / 60;
 export class FixedClock {
@@ -65,6 +66,10 @@ export function runSimulation(game, dt) {
         }
       }
       if (simDt > 0) {
+        // #1040: capture every actor's start-of-tick pose BEFORE any of them
+        // moves this tick. The projectile sweep below runs after m.update, so
+        // round segment and actor interval then cover the SAME fixed step.
+        beginActorMotionTick(G.actors);
         // Results keep input/presentation/network cadence without advancing local
         // authoritative actor/projectile simulation. Menu attract budgeting remains
         // independent and applies only when that attract match owns the menu backdrop.
