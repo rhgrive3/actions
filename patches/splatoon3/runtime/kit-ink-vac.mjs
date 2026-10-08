@@ -428,7 +428,7 @@ function inkVacUpdate(a, dt) {
   if (!state || state.phase !== 'inhale' || !(dt > 0)) return;
   state.t += dt;
   updateVisual(state);
-  if (state.t >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
+  if (state.t + 1e-10 >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
       state.charge >= 1 && state.t + 1e-10 >= INK_VAC_CALIBRATION.minInhaleSeconds) {
     beginExhale(state);
   }
@@ -444,7 +444,7 @@ export function advanceInkVacReplica(actor, dt) {
   state.t += dt;
   if (state.phase === 'inhale') {
     updateVisual(state);
-    if (state.t >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
+    if (state.t + 1e-10 >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
         state.charge >= 1 && state.t + 1e-10 >= INK_VAC_CALIBRATION.minInhaleSeconds) beginExhale(state);
   } else if (state.phase === 'exhale' && state.t >= INK_VAC_CALIBRATION.exhaleHoldSeconds + 5) {
     state.phase = 'done';
