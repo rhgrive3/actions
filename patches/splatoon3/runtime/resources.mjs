@@ -22,6 +22,13 @@ export function resourceSurface(a) {
 export function enemyInkDamageRate(rate, referenceHz = 60, quantum = 0.1) {
   return Math.max(0, Math.floor(rate / referenceHz / quantum + 1e-10)) * quantum * referenceHz;
 }
+export function rollerStationaryRecoveryEligible(a) {
+  if (a?.weapon?.kind !== 'roller' || !a.weaponRunner?.rolling || !a.s3?.rollerRefillMode) return false;
+  const move = a.intent?.move;
+  const input = Math.hypot(move?.x || 0, move?.z || 0);
+  const speed = Math.hypot(a.vel?.x || 0, a.vel?.z || 0);
+  return input <= 1e-3 && speed <= 0.1;
+}
 // State-owned airborne actions share HP recovery without running ground contact
 // damage, surface sampling, ink refill, or resource recovery clocks.
 export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) {
@@ -70,6 +77,7 @@ export function updateResources(a, dt) {
   updateHealthRecovery(a, dt, onEnemy, swimmingForRecovery);
   const wasFull = a.ink >= P.inkMax;
   const rollingRecovery = a.weapon.kind === 'roller' && a.s3?.rollerRefillMode;
+  const stationaryRollRecovery = rollingRecovery && rollerStationaryRecoveryEligible(a);
   const weaponDelay = rollingRecovery ? 0 : a.weapon.inkRecoverStop ?? r.inkRefillDelay;
   const delay = Math.max(weaponDelay, a.s3?.inkRecoverStop || 0);
   if(a.s3) a.s3.recoverStopRemaining = Math.max(0,(a.s3.recoverStopRemaining || 0)-dt);
@@ -97,7 +105,7 @@ export function updateResources(a, dt) {
   const chargerLowRecovery = a.weapon?.kind === 'charger' && runner?.charging &&
     a.ink + 1e-10 < (a.weapon.inkMin ?? 0) && chargerInterruptRecover <= 1e-10 && chargerKeepRecover <= 1e-10;
   const canRefill = chargerLowRecovery ||
-    ((rollingRecovery ? !a.weaponRunner.rolling && a.lastFire + 1e-10 >= (a.s3?.inkRecoverStop || 0) : a.lastFire + 1e-10 >= delay)
+    ((rollingRecovery ? (!a.weaponRunner.rolling || stationaryRollRecovery) : a.lastFire + 1e-10 >= delay)
       && (a.s3?.recoverStopRemaining || 0) <= 1e-10
       && (a.weaponRunner.s3DodgeInkRemaining || 0) <= 1e-10
       && chargerInterruptRecover <= 1e-10
