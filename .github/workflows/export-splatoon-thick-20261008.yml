@@ -1,4 +1,5 @@
-name: Export Splatoon thick ZIP (temporary)
+name: Export Splatoon research bundle (temporary)
+
 on:
   push:
     branches:
@@ -8,40 +9,86 @@ permissions:
   contents: read
 
 jobs:
-  export:
+  bundle:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
-      - name: Checkout public source at fixed commit
+      - name: Checkout original Splatoon thick folder
         uses: actions/checkout@v4
         with:
           repository: Dexx-io/Splatoon-Decomp
           ref: 9ef403d96f1a370bdd70434ce158a0c29879bfcf
-          path: upstream
+          path: sources/Splatoon-Decomp
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Stage exact thick folder
+      - name: Checkout Splatoon 3 parameters and data
+        uses: actions/checkout@v4
+        with:
+          repository: Leanny/splat3
+          ref: 7280ff9cde8bb1c5dcef46c700c326471584d2e6
+          path: sources/splat3
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout Splatoon 3 model viewer
+        uses: actions/checkout@v4
+        with:
+          repository: nvnprogram/HoianViewer
+          ref: 89f23684b9dede5da8207e5f9f1980150bec774a
+          path: sources/HoianViewer
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout Splatoon 3 hacking reference index
+        uses: actions/checkout@v4
+        with:
+          repository: DesperC/Awesome-Splatoon3-Hacking
+          ref: 07b2888c04cc383a54b27b05edb62051868ebe03
+          path: sources/Awesome-Splatoon3-Hacking
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Assemble single bundle preserving thick contents
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import shutil
-          src = Path("upstream/NTSC Splatoon/thick")
-          dst = Path("package/thick")
-          if not src.is_dir():
-              raise SystemExit("Source thick folder does not exist")
-          shutil.copytree(src, dst)
-          files = [p for p in dst.rglob("*") if p.is_file()]
-          total = sum(p.stat().st_size for p in files)
-          print(f"Packaged {len(files)} files; {total} bytes")
-          PY
 
-      - name: Upload thick folder as ZIP artifact
+          folder_map = {
+              Path("sources/Splatoon-Decomp/NTSC Splatoon/thick"): Path("package/thick"),
+              Path("sources/splat3"): Path("package/Splatoon3-resources/splat3"),
+              Path("sources/HoianViewer"): Path("package/Splatoon3-resources/HoianViewer"),
+              Path("sources/Awesome-Splatoon3-Hacking"): Path("package/Splatoon3-resources/Awesome-Splatoon3-Hacking"),
+          }
+          for src, dst in folder_map.items():
+              if not src.is_dir():
+                  raise SystemExit(f"Missing directory: {src}")
+              shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".git"))
+              files = [p for p in dst.rglob("*") if p.is_file()]
+              total = sum(p.stat().st_size for p in files)
+              print(f"{dst}: {len(files)} files, {total:,} bytes", flush=True)
+
+          (Path("package") / "SOURCE_INFO.txt").write_text(
+              "Splatoon research bundle; snapshots of public GitHub repositories.\n"
+              "thick/: Dexx-io/Splatoon-Decomp, NTSC Splatoon/thick; commit 9ef403d96f1a370bdd70434ce158a0c29879bfcf\n"
+              "Splatoon3-resources/splat3/: Leanny/splat3; commit 7280ff9cde8bb1c5dcef46c700c326471584d2e6\n"
+              "Splatoon3-resources/HoianViewer/: nvnprogram/HoianViewer; commit 89f23684b9dede5da8207e5f9f1980150bec774a\n"
+              "Splatoon3-resources/Awesome-Splatoon3-Hacking/: DesperC/Awesome-Splatoon3-Hacking; commit 07b2888c04cc383a54b27b05edb62051868ebe03\n"
+              "Git histories, external downloads, and Splatoon 3 game RomFS are NOT included.\n"
+              "HoianViewer requires a separately obtained legitimate Splatoon 3 RomFS.\n",
+              encoding="utf-8"
+          )
+          PY
+          du -sh package package/Splatoon3-resources/* package/thick || true
+
+      - name: ZIP all four directories into one downloadable artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Splatoon-Decomp-NTSC-thick
+          name: Splatoon-Decomp-NTSC-thick-plus-Splatoon3-resources
           path: package/
           include-hidden-files: true
           if-no-files-found: error
           compression-level: 6
+          retention-days: 30
