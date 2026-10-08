@@ -120,14 +120,25 @@ test('#294: R stops the stream before sub processing; release never revives the 
   f.G.projectiles.throwBomb = () => bombs++;
   advance(a, 72); release(a); advance(a, 13, { fire: false });
   const before = f.shots.length; assert.equal(before, 4);
-  a.weaponRunner.update(DT, { fire: false, sub: true });
-  assert.equal(a.weaponRunner.streaming, false); near(a.ink, 97.75);
+  for(let frame=1;frame<=4;frame++){
+    a.weaponRunner.update(DT,{fire:false,sub:true});
+    assert.equal(a.weaponRunner.streaming,true,`frame ${frame}: stream remains live`);
+    assert.equal(a.weaponRunner.aimingSub,false);assert.equal(a.weaponRunner.s3SubReady,null);
+    assert.equal(bombs,0,`frame ${frame}: no sub projectile before the boundary`);
+  }
+  const inkAtBoundary=a.ink,unspentAtBoundary=a.weaponRunner.s3Spin.unspent;
+  a.weaponRunner.update(DT,{fire:false,sub:true});
+  assert.equal(a.weaponRunner.streaming,false);assert.equal(a.weaponRunner.s3Spin,null);
+  near(a.ink,Math.min(f.PLAYER.inkMax,inkAtBoundary+unspentAtBoundary));
+  assert.equal(a.weaponRunner.aimingSub,true);assert.equal(a.weaponRunner.s3SubReady.age,0);
+  const inkAfterRefund=a.ink;
   for(let i=0;i<5;i++)a.weaponRunner.update(DT,{sub:true});
   a.weaponRunner.update(DT, { fire: false, subReleased: true });
   assert.equal(bombs, 0, '#1037 release is admitted but does not create the device in the same tick');
   a.weaponRunner.update(DT, { fire: false });
-  assert.equal(bombs, 1); near(a.ink, 27.75);
-  advance(a, 60, { fire: false }); assert.equal(f.shots.length, before);
+  assert.equal(bombs, 1); near(a.ink, inkAfterRefund-f.SUB.bomb.inkCost);
+  const shotsAfterRetirement = f.shots.length;
+  advance(a, 60, { fire: false }); assert.equal(f.shots.length, shotsAfterRetirement);
   advance(a, 1); assert.equal(a.weaponRunner.charging, true);
 });
 
@@ -135,9 +146,20 @@ test('#294: insufficient sub, special, weapon switch, reset and death cannot dup
   const f = await fixture(), a = f.make('splatling'); let bombs = 0;
   f.G.projectiles.throwBomb = () => bombs++;
   a.ink = 3; advance(a, 288); release(a); advance(a, 13, { fire: false });
-  a.weaponRunner.update(DT, { sub: true }); a.weaponRunner.update(DT, { subReleased: true });
-  assert.equal(bombs, 0); assert.equal(a.weaponRunner.streaming, false); near(a.ink, .75);
-  a.setWeapon('shooter'); near(a.ink, .75); a.reset(); assert.equal(a.ink, 100);
+  for(let frame=1;frame<=4;frame++){
+    a.weaponRunner.update(DT,{sub:true});
+    assert.equal(a.weaponRunner.aimingSub,false);assert.equal(a.weaponRunner.s3SubReady,null);
+    assert.equal(bombs,0,`frame ${frame}: insufficient sub cannot throw early`);
+  }
+  const lowInkAtBoundary=a.ink,lowUnspentAtBoundary=a.weaponRunner.s3Spin?.unspent??0;
+  a.weaponRunner.update(DT,{sub:true});
+  assert.equal(a.weaponRunner.streaming,false);assert.equal(a.weaponRunner.s3Spin,null);
+  near(a.ink,Math.min(f.PLAYER.inkMax,lowInkAtBoundary+lowUnspentAtBoundary));
+  assert.equal(a.weaponRunner.aimingSub,true);assert.equal(a.weaponRunner.s3SubReady.age,0);
+  const lowInkAfterBoundary=a.ink;
+  a.weaponRunner.update(DT,{subReleased:true});
+  assert.equal(bombs,0);near(a.ink,lowInkAfterBoundary);
+  a.setWeapon('shooter'); near(a.ink, lowInkAfterBoundary); a.reset(); assert.equal(a.ink, 100);
   a.setWeapon('splatling'); a.grounded = true;
   advance(a, 72); release(a); advance(a, 13, { fire: false });
   a.weapon = { ...a.weapon, special: 'storm' }; f.G.projectiles.throwStorm = () => {};

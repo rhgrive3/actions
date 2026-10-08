@@ -1,10 +1,12 @@
 // #870: actual finite Charger flight + Physics + continuous capsule chronology.
-// The existing .999 full-charge threshold is preserved, not calibrated here.
+// #840 moved the full-charge boundary to the authoritative ding-aligned
+// predicate (charge 1); near-full partials stay partial here too.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 import { hurtboxRadius } from '../runtime/player-hurtbox.mjs';
+import { isChargerFullCharge } from '../runtime/weapons.mjs';
 
 async function trace({charge=.5, allyX=0, allyZ=3, enemyZ=6, ghost=false, wallZ=null, reverse=false, hz=60}={}) {
   const f=await fixture(), a=f.make('charger'), ally=f.make('shooter'), enemy=f.make('shooter'), V=f.THREE.Vector3;
@@ -34,8 +36,11 @@ test('partial ally contact stops before the enemy and emits no enemy-hit victim'
 test('off-ray ally permits partial enemy damage and the shooter never obstructs itself',async()=>{
   const row=await trace({allyX:2}); assert.equal(row.hits.length,1); assert.equal(row.hits[0].victim,'enemy'); assert.ok(row.hits[0].damage>0);
 });
-test('existing full-charge threshold preserves teammate pass-through',async()=>{
-  for(const charge of [.998,.999,1]){const row=await trace({charge});assert.equal(row.full,charge>=.999);assert.equal(row.hits.length,charge>=.999?1:0);}
+test('authoritative full-charge boundary preserves teammate pass-through',async()=>{
+  for(const charge of [.998,.999,1]){const row=await trace({charge});assert.equal(row.full,isChargerFullCharge(charge));assert.equal(row.hits.length,isChargerFullCharge(charge)?1:0);}
+  for (const charge of [.9999, 1 - 5e-10]) {
+    const near=await trace({charge});assert.equal(near.full,false,`charge ${charge} has not reached the native ding`);assert.equal(near.hits.length,0);
+  }
 });
 test('ally obstruction uses the same pinned .125 player radius as enemy contacts',async()=>{
   const f=await fixture();assert.equal(f.profile.weaponsFidelityCompletion.weapons.charger.CollisionParam.InitRadiusForPlayer,.125);
