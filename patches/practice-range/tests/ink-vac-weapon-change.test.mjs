@@ -113,6 +113,15 @@ test('Practice Range Ink Vac weapon-change lifecycle through the complete six-ad
         assert.equal(R.inkVacState(local) === state, true);
         assert.ok(local.specialActive);
         assert.equal(events.length, 0);
+        local.setWeapon = function (id) {
+          original.call(this, id);
+          throw new Error('downstream observer failed after commit');
+        };
+        assert.throws(() => session.setWeapon('shooter'), /downstream observer failed after commit/);
+        assert.equal(local.weaponId, 'shooter', 'the requested native loadout change already landed');
+        assert.equal(R.inkVacState(local), null, 'the old input owner is retired even when a later observer throws');
+        assert.equal(local.specialActive, null);
+        assert.equal(events.length, 1, 'partial setter failure emits disposal exactly once');
       } finally { local.setWeapon = original; off(); }
     });
 

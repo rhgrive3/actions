@@ -164,8 +164,12 @@ export class RangeSession {
     const a = this.local;
     if (!a || !WEAPONS[id] || a.weaponId === id) return;
     const previousWeapon = a.weaponId;
-    a.setWeapon(id);
-    if (a.weaponId === id && a.weaponId !== previousWeapon) disposeInkVac(a);
+    try { a.setWeapon(id); }
+    finally {
+      // A downstream setter can throw after the new loadout was committed.
+      // Retire the old input owner whenever the requested change actually landed.
+      if (a.weaponId === id && a.weaponId !== previousWeapon) disposeInkVac(a);
+    }
     // a weapon switch starts from a full tank and an empty special gauge, as if you had just picked it up
     a.ink = PLAYER.inkMax; a.special = 0;
     G.game?.api?.setLoadout?.({ weapon: id });
