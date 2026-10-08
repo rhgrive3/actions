@@ -8,7 +8,7 @@ export async function batchFixture() {
   G.physics = new f.Physics(G.level);
   G.physics.raycast = (from, direction, distance, hit) => {
     hit.hit = direction.y < 0 && from.y >= 0 && from.y / -direction.y <= distance;
-    if(hit.hit){hit.point.copy(from).addScaledVector(direction,from.y / -direction.y);hit.normal.set(0,1,0);hit.face=0;hit.block=0;}
+    if(hit.hit){hit.point.copy(from).addScaledVector(direction,from.y / -direction.y);hit.normal.set(0,1,0);hit.face=0;hit.block=-1; // synthetic floor has no backing block; native groundProbe must not dereference blocks[0]}
     return hit;
   };
   G.physics.los = () => true;
