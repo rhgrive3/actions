@@ -1355,3 +1355,16 @@ Targeted against PR868 `aa094850fdd60b3b70adfdaad54b3e3837cb1402`, whose Charger
 Partial flights now include living allied capsules except the firing Actor itself. They use the existing continuous capsule query, existing pinned player radius0.125 and earliest-contact / actor-ID tie ordering. An allied contact consumes the non-piercing flight without calling friendly damage or publishing that ally as an enemy-hit victim. Full shots retain teammate pass-through and enemy piercing; ghost flight remains visual-only. No radius, charge threshold, damage, payment, cadence, flight distance, network packet or source-authority rule is changed.
 
 Seven focused production-module tests cover blocked partial, off-ray control, the existing .999 full threshold, both sides of the .125 contact-radius boundary, wall / actor ordering and actor enumeration reversal, ghost non-authority, and30/60/120Hz rendering over fixed steps. They instantiate native Actor/Projectiles and Physics; the hit callback is recorded at the solver boundary. This is not a full recipient HP/network acceptance test or a Switch measurement. The behavior requirement follows Issue870's current-series teammate-bodyblock evidence and the existing partial/full distinction; the questionable .999 threshold remains explicitly unchanged. Full build/browser/CI acceptance belongs to the next integration batch.
+
+## 2026-10-08: HUD look compared with a Splatoon 3 recording
+
+A user-supplied Splatoon 3 recording (Splat Zones, 1280x720 game area) was measured frame by frame.
+The special gauge has **30** radial teeth (11.9 deg mean pitch over 20 lit teeth after a least-squares
+ring fit), lit clockwise from 12 o'clock in a fixed yellow-orange (#fac337 centre, #b56a00 edge), not
+the 23 segments of the 2026-10-04 entry, which came from a wiki sentence. The quality layer now draws
+30 teeth with the measured radii and colours; quantization and readiness keep their single authority.
+The roster uses squid silhouettes, dark splatted icons under a grey X and a flat timer plate; the splat
+notice is a bottom bar reading "<name> をたおした！". Touch keeps the SP button as the gauge with the same
+position, size and hit area. Presentation only: no special points, costs, timer or match rules change.
+Full-gauge appearance, other team colours and Turf War-specific HUD remain unconfirmed. Details:
+[the HUD look report](inkwave-s3-hud-look-2026-10-08.md).
