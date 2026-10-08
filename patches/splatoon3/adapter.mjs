@@ -1021,10 +1021,18 @@ export function adaptSource(rel, code) {
       "    const p = this.profile;\n    const turf = Math.round(local.stats.turf);",
       "    const p = this.profile;\n    const privateBattle = !!(G.netm || (G.net && (G.net.state === 'match' || G.net.state === 'starting')));\n    const turf = Math.round(local.stats.turf);",
       'Private Battle no progression admission');
-    code = replaceOnce(code,
-      "    p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n    while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n    saveJSON('inkwave.profile', p);",
-      "    if (!privateBattle) {\n      p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n      while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n      saveJSON('inkwave.profile', p);\n    }",
-      'Private Battle progression persistence');
+    // The native boss-results path uses the same progression lines, so scope
+    // the replace to _judge() instead of claiming the shared text is unique.
+    {
+      const judgeStart = code.indexOf('  async _judge() {');
+      const judgeEnd = code.indexOf('  _fade(to, ms) {', judgeStart);
+      if (judgeStart < 0 || judgeEnd <= judgeStart) throw new Error('INKWAVE patch conflict (Private Battle judge boundary)');
+      const judge = replaceOnce(code.slice(judgeStart, judgeEnd),
+        "    p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n    while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n    saveJSON('inkwave.profile', p);",
+        "    if (!privateBattle) {\n      p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n      while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n      saveJSON('inkwave.profile', p);\n    }",
+        'Private Battle progression persistence');
+      code = code.slice(0, judgeStart) + judge + code.slice(judgeEnd);
+    }
     // Issue #605: the turf intro starts the dedicated Opening cue instead of silence.
     // The boss intro keeps its own _playMusic(null); mode is guarded for a boss match
     // without a resolved entity. Practice Range / attract never reach _intro().
