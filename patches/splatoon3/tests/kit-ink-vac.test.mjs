@@ -187,6 +187,25 @@ test('#1042 filling the Vac ends suction early but still enters the return-shot 
   assert.equal(system.list.length, 1);
 });
 
+test('#1120 a held suction ZR waits for a genuine release edge after entering exhale', async () => {
+  const { f, a, system } = await setup();
+  activate(f, a);
+  a.intent.fire = true;
+  f.tick(a); // hold ZR during suction, not a countershot request
+  shoot(f, a);
+  enterExhale(f, a, 30);
+  assert.equal(f.inkVacState(a).phase, 'exhale');
+  assert.equal(system.list.length, 0);
+  for (let frame = 0; frame < 5; frame++) {
+    f.tick(a);
+    assert.equal(system.list.length, 0, 'continuing to hold suction ZR cannot auto-fire');
+  }
+  a.intent.fire = false;
+  f.tick(a);
+  assert.equal(f.inkVacState(a), null, 'actual ZR release fires the return shot');
+  assert.equal(system.list.length, 1, 'release authors exactly one countershot');
+});
+
 test('zero-length segments, tangent contact and a zero aim vector are safe', async () => {
   const { f, a } = await setup();
   activate(f, a);
