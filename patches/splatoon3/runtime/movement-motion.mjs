@@ -115,7 +115,7 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       const sj = frame?.superJump;
       if (allowed && sj?.phase === 'charge') {
         m.phase = 'superjump-charge';
-        m.charge = clamp(sj.t / (frame.chargeTime ?? profile.superJump.chargeTime));
+        m.charge = clamp((Number.isFinite(sj.t) ? sj.t : 0) / Math.max(1e-10, frame.chargeTime ?? profile.superJump.chargeTime));
       } else if (allowed && sj?.phase === 'flight') m.phase = 'superjump-flight';
       // A wall charge/burst owns the visible pose. Do not introduce a new
       // gameplay armor-cancellation rule merely to switch the body animation.

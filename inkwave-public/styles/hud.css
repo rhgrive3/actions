@@ -188,6 +188,8 @@
 .iw-ret--slosher .iw-ret__arch { transform-box: fill-box; transform-origin: 50% 100%; transform: translateY(calc(var(--kk, 0) * -4px)) scaleY(calc(1 + var(--kk, 0) * .35)); }
 /* splatling: 8-segment spin-up meter — fills while charging (white), full = your ink + flash, drains while streaming */
 .iw-ret--splatling .iw-ret__svg { transform: rotate(-90deg); }
+/* Four outward-facing spread brackets, separate from the eight charge segments. */
+.iw-ret--splatling .iw-ret__tick { left: -4px; top: -4px; width: 8px; height: 8px; background: none; border-top: 2px solid currentColor; border-left: 2px solid currentColor; border-radius: 0; }
 .iw-ret--splatling .iw-ret__track { stroke-width: 4.5; opacity: .28; }
 .iw-ret--splatling .iw-ret__charge { stroke: #fff; stroke-width: 4.5; stroke-linecap: butt; transition: stroke-dashoffset .05s linear; }
 .iw-ret--splatling .iw-ret__segs path { stroke: rgba(0, 0, 0, .55); stroke-width: 1.6; }

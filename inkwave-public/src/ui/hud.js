@@ -838,7 +838,7 @@ export class HUD {
       r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="21" class="iw-ret__track"/>
         <circle r="21" class="iw-ret__charge" pathLength="100" style="stroke-dasharray:100;stroke-dashoffset:100"/>
         <g class="iw-ret__segs">${Array.from({ length: 8 }, (_, i) => `<path d="M0 -17 L0 -25" transform="rotate(${i * 45})"/>`).join('')}</g></svg>
-        <i class="iw-ret__tick" style="--a:90deg"></i><i class="iw-ret__tick" style="--a:270deg"></i>`;
+        <i class="iw-ret__tick" style="--a:45deg"></i><i class="iw-ret__tick" style="--a:135deg"></i><i class="iw-ret__tick" style="--a:225deg"></i><i class="iw-ret__tick" style="--a:315deg"></i>`;
       this._chargeEl = r.querySelector('.iw-ret__charge'); this._chargeC = 100;
     } else {
       r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__ring thin"/></svg>

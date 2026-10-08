@@ -323,6 +323,7 @@ export function installWeapons(context, profile) {
     clearSplatlingSubInterrupt(this);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false; this.s3BlasterMoveRemaining = 0;
+    this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
     this.s3SloshRecovery = false;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0;
     this.s3SplatlingHeld = false;
@@ -407,13 +408,16 @@ export function installWeapons(context, profile) {
     else this.s3BlasterMoveRemaining = 0;
     if (blasterJumpSupported() && weapon?.kind === 'blaster') {
       const grounded = !!this.a.grounded;
-      if (this.s3BlasterWasGrounded === true && !grounded) this.s3BlasterJumpT = 0;
+      const jumpSerial = this.a.s3JumpSerial || 0;
+      if (jumpSerial !== this.s3BlasterJumpSeen) this.s3BlasterJumpT = 0;
       else if (this.s3BlasterJumpT != null) this.s3BlasterJumpT += dt;
+      this.s3BlasterJumpSeen = jumpSerial;
       this.s3BlasterWasGrounded = grounded;
       if (this.s3BlasterJumpT != null && grounded && this.s3BlasterJumpT >= BLASTER_END) this.s3BlasterJumpT = null;
     } else {
       this.s3BlasterJumpT = null;
       this.s3BlasterWasGrounded = false;
+      this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
     }
     if (weapon.kind === 'shooter') {
       if (this.s3WasGrounded && !this.a.grounded) this.s3JumpSpreadAge = 0;
