@@ -1190,6 +1190,50 @@ export function adaptSource(rel, code) {
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\nimport { splatCardText } from '../patches/splatoon3/runtime/death-card.mjs';\n` + code;
   }
 
+  if (rel === 'src/game/showcase.js') {
+    // #1119: portrait readback staging targets are lazy resources, not
+    // lifetime Showcase allocations. Leaving Locker releases them once async
+    // readbacks settle; final dispose also tears down the resolve material/scene.
+    code = replaceOnce(code,
+      '    this._pq = []; this._pcache = new Map(); this._prt = null; this._prt8 = null; this._pbuf = null; this._pcam = null;',
+      '    this._pq = []; this._pcache = new Map(); this._prt = null; this._prt8 = null; this._pbuf = null; this._pcam = null; this._portraitReleasePending = false;',
+      'portrait target lifecycle state');
+    code = replaceOnce(code,
+      '  hide() {\n    if (!this.mode) return;',
+      "  hide() {\n    if (!this.mode) return;\n    const leavingPortraitScreen = this.mode === 'locker';",
+      'portrait screen exit capture');
+    code = replaceOnce(code,
+      '    this.mode = null;\n  }\n\n  dispose() {',
+      "    this.mode = null;\n    if (leavingPortraitScreen) this._releasePortraitTargets(false);\n  }\n\n  dispose() {",
+      'portrait target release on Locker exit');
+    code = replaceOnce(code,
+      '    this._lobRelease();\n    this._rt?.dispose(); this._rt = null;',
+      '    this._lobRelease();\n    this._releasePortraitTargets(true);\n    this._rt?.dispose(); this._rt = null;',
+      'portrait target final disposal');
+    code = replaceOnce(code,
+      '  _renderPortrait(req) {',
+      `  _releasePortraitTargets(final = false) {
+    if (!final && (this._pflight || 0) > 0) { this._portraitReleasePending = true; return false; }
+    this._portraitReleasePending = false;
+    this._prt?.dispose(); this._prt8?.dispose();
+    this._prt = this._prt8 = null;
+    if (final) {
+      this._pres?.dispose(); this._pres = null;
+      this._presScene?.clear?.(); this._presScene = null;
+      this._pcam = null; this._pbuf = null;
+    }
+    return true;
+  }
+
+  _renderPortrait(req) {`,
+      'portrait target release helper');
+    code = replaceOnce(code,
+      "    read.then((cv) => { this._pflight--; finish(cv); }, (e) => { this._pflight--; console.error('[showcase] portrait read', e); finish(null); });",
+      "    const settle = () => { this._pflight--; if (this._portraitReleasePending && this._pflight === 0) this._releasePortraitTargets(false); };\n    read.then((cv) => { settle(); finish(cv); }, (e) => { settle(); console.error('[showcase] portrait read', e); finish(null); });",
+      'portrait readback-safe release');
+    return code;
+  }
+
   if (rel === 'src/core/shadowcache.js') {
     // #658: a stage switch must release the previously collected static-caster
     // generation immediately. While Shadows are OFF no shadow-map render runs,
