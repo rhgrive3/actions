@@ -1546,7 +1546,7 @@
   {
    "name": "under_ear_hollow",
    "kind": "displace",
-   "mm": -3.5,
+   "mm": -1.0,
    "weight_smooth": 10,
    "protect_lips": false,
    "after_delta_smooth": true,
@@ -1607,6 +1607,59 @@
      "ry": 6,
      "rz": 12,
      "scale": 0.35,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "jaw_cheek_full",
+   "kind": "displace",
+   "mm": 7.0,
+   "weight_smooth": 6,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "bumps": [
+    {
+     "centre": [
+      52,
+      -80,
+      45
+     ],
+     "rx": 16,
+     "ry": 12,
+     "rz": 34,
+     "front_only": false
+    },
+    {
+     "centre": [
+      57,
+      -72,
+      22
+     ],
+     "rx": 13,
+     "ry": 11,
+     "rz": 16,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "jaw_cheek_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 40,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "bumps": [
+    {
+     "centre": [
+      54,
+      -76,
+      40
+     ],
+     "rx": 22,
+     "ry": 20,
+     "rz": 45,
      "front_only": false
     }
    ]

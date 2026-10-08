@@ -478,7 +478,9 @@ def neck_side_sculpt(R, steps):
     front of the collar (2026-10-08, user: ここの立体感).  Each is Blender's Displace along the normals on the merged
     head and neck, weighted by distance to a line or a point (head-frame mm, both sides by |x|):
     'under_line' = just under a side-view line [[z, y], ...] (cfg['below'] = [start, full, end] mm under it),
-    'blob' = an ellipsoid, 'line' = a tube round a 3D polyline (tapering to its ends)."""
+    'blob' = an ellipsoid, 'line' = a tube round a 3D polyline (tapering to its ends), 'outline' = the front-view
+    outline moved sideways to the reference line by height (2026-10-08, after the jaw band smoothing made the jaw
+    3-5 px narrower in front).  A step with 'iters' only smooths (Smooth) inside its weight."""
     for st in steps:
         L = er.M.to_local(er.world(R)) * 1000
         A = np.c_[np.abs(L[:, 0]), L[:, 1], L[:, 2]]
@@ -492,6 +494,38 @@ def neck_side_sculpt(R, steps):
             w *= smoothstep((A[:, 0] - st['x_min']) / 6.0)
             z0, z1 = st.get('z', [-1e9, 1e9])
             w *= smoothstep((A[:, 2] - z0) / 8.0) * smoothstep((z1 - A[:, 2]) / 8.0)
+        elif st['kind'] == 'outline':
+            # the front-view outline (the widest point of each height, per side) is moved sideways by
+            # st['rows'] = [[y, mm], ...] (head-frame height, outward mm): vertices within st['band'] = [full, none]
+            # mm inside that widest point move, and only them, so the front outline goes to the reference line
+            # and the side / 3/4 views keep their shape
+            # st['rows'] for the character's right (x < 0), st['rows_pos'] (default the same) for the left: the
+            # neck leans a little to one side in the head frame
+            rows = np.array(st['rows'], float)
+            rows_p = np.array(st.get('rows_pos', st['rows']), float)
+            amt = np.where(L[:, 0] < 0, np.interp(L[:, 1], rows[:, 0], rows[:, 1], left=0.0, right=0.0),
+                           np.interp(L[:, 1], rows_p[:, 0], rows_p[:, 1], left=0.0, right=0.0))
+            edge = np.zeros(len(L))
+            for sgn in (-1, 1):
+                sd = np.sign(L[:, 0]) == sgn
+                bins = np.floor(L[:, 1] / 2.0).astype(int)
+                for b in np.unique(bins[sd]):
+                    m = sd & (np.abs(bins - b) <= 1)
+                    edge[sd & (bins == b)] = np.abs(L[m, 0]).max()
+            f0, f1 = st.get('band', [8.0, 18.0])
+            w = 1 - smoothstep((edge - A[:, 0] - f0) / (f1 - f0))
+            z0, z1 = st.get('z', [-1e9, 1e9])
+            w *= smoothstep((A[:, 2] - z0) / 8.0) * smoothstep((z1 - A[:, 2]) / 8.0)
+            before = er.world(R)
+            L2 = L.copy()
+            L2[:, 0] += np.sign(L[:, 0]) * amt * w
+            set_local_mm(R, L2)
+            if st.get('smooth'):
+                er.apply_weighted_modifier(R, np.clip(w * (amt > 0.05) * 2, 0, 1), 'SMOOTH', factor=0.5,
+                                           iterations=int(st['smooth']))
+            print('BODY_SHAPE neck sculpt', st['name'], 'vertices', int(((amt * w) > 0.05).sum()), 'max move mm',
+                  round(float(np.linalg.norm(er.world(R) - before, axis=1).max() * 1000), 2))
+            continue
         elif st['kind'] == 'blob':
             dd = np.linalg.norm((A - np.array(st['centre'], float)) / np.array(st['r'], float), axis=1)
             w = np.where(dd < 1, np.cos(np.clip(dd, 0, 1) * np.pi / 2) ** 2, 0.0)
@@ -510,6 +544,11 @@ def neck_side_sculpt(R, steps):
             a, b = st.get('taper', [0.15, 0.85])
             w *= smoothstep(tpar / a) * smoothstep((1 - tpar) / (1 - b))
         before = er.world(R)
+        if st.get('iters'):                          # a smoothing step (no displacement)
+            er.apply_weighted_modifier(R, w, 'SMOOTH', factor=0.5, iterations=int(st['iters']))
+            print('BODY_SHAPE neck sculpt', st['name'], 'smoothed', int((w > 1e-3).sum()), 'max move mm',
+                  round(float(np.linalg.norm(er.world(R) - before, axis=1).max() * 1000), 2))
+            continue
         sign = 1.0 if st['mm'] > 0 else -1.0
         er.apply_weighted_modifier(R, w, 'DISPLACE', direction='NORMAL', strength=sign * abs(st['mm']) / 1000,
                                    mid_level=0.0)
