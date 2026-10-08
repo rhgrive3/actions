@@ -527,8 +527,9 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     // Paint, contact damage, and further ink spend are all native-gated on
     // the zeroed tank, so this restores state only — no dry turf, no dry
     // hits, no new movement/audio numerics. `rollT` keeps accumulating so
-    // dash timing stays continuous; `lastRollPos` is re-anchored so the
-    // next inked stripe cannot bill the whole dry distance at once.
+    // dash timing stays continuous; both movement and ink-charge positions
+    // are re-anchored so refill cannot bill dry travel. The charged-distance
+    // counter starts a fresh paint interval with `lastRollPos`.
     if (dryHold && this.rolling !== true && this.flick < 0) {
       this.rolling = true;
       // Continue from the entry value: native zeroes rollT on the dry tick,
@@ -537,6 +538,9 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       this.rollT = prevRollT + dt;
       if (this.lastRollPos && a.pos?.copy) this.lastRollPos.copy(a.pos);
       else if (a.pos?.clone) this.lastRollPos = a.pos.clone();
+      if (this.lastRollInkPos && a.pos?.copy) this.lastRollInkPos.copy(a.pos);
+      else if (a.pos?.clone) this.lastRollInkPos = a.pos.clone();
+      this.rollInkChargedDistance = 0;
       // Dry audio stays as the native teardown leaves it (loop stopped).
       // S3's dry-roll clunk is unmodelled: no invented audio numeric.
       this.s3RollerWasDry = true;
