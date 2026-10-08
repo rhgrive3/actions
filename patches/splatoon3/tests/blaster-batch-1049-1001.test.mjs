@@ -97,7 +97,8 @@ test('#1035 held-Blaster cancellation exposes distinct 3F sub and 4F squid gates
 });
 
 test('build adapter routes both flight and collision Blaster paint through fidelity owners', () => {
-  const adapter = fs.readFileSync(new URL('../weapons-adapter.mjs', import.meta.url), 'utf8');
-  assert.match(adapter, /applyFidelityBlasterFlightPaint\(this, p\)/);
-  assert.match(adapter, /applyFidelityBlasterBurstPaint\(this, p, c, direct\)/);
+  const flightAdapter = fs.readFileSync(new URL('../weapons-adapter.mjs', import.meta.url), 'utf8');
+  const burstAdapter = fs.readFileSync(new URL('../adapter.mjs', import.meta.url), 'utf8');
+  assert.match(flightAdapter, /applyFidelityBlasterFlightPaint\(this, p\)/);
+  assert.match(burstAdapter, /applyFidelityBlasterBurstPaint\(this, p, c, direct\)/);
 });
