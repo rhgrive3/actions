@@ -1736,3 +1736,10 @@ weapon or launch-critical settings change. Boss solo admission remains distinct.
 composition and the actual native method bodies for both admission and mutation.
 This is an INKWAVE integration repair; no Nintendo balance value or protocol is
 changed. Existing upstream claims remain with their owners.
+
+The current merged module graph also produced 160 eager core HTML hints, above
+its unchanged 131-request gate. The build now bounds only those eager hints in
+existing deterministic graph order. It preserves every runtime import and the
+complete immutable service-worker graph; the unchanged startup gate checks all
+transitive imports, cache bytes, digests, and artifact identity. This is file and
+dependency evidence, not a measured browser startup-time improvement.

@@ -302,7 +302,15 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/depth-cache.mjs',
   'patches/local-quality/resource-budget.mjs',
 ]);
-const preloadOrder = order.filter((f) => !deferredIntegrationPreloads.has(f));
+// Keep eager hints within the existing core request budget as integration adds
+// modules. Graph order stays deterministic; omitted hints retain their normal
+// static imports and the complete service-worker precache below.
+let corePreloadCount = 0;
+const preloadOrder = order.filter((f) => {
+  if (deferredIntegrationPreloads.has(f)) return false;
+  if (f.startsWith('patches/practice-range/')) return true;
+  return corePreloadCount++ < 131;
+});
 const preload = preloadOrder.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');
 const html = html0.replace('</head>', `<!-- build: module graph preloaded (${preloadOrder.length} modules) -->\n${preload}\n</head>`);
 fs.writeFileSync(path.join(BUILD, 'index.html'), html);
