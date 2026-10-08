@@ -856,12 +856,12 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    if (!this.alive || amount <= 0) return false;',
       '    if (!this.alive || amount <= 0) return false;\n    if (hasPendingLethal(this)) return false;', 'pending lethal damage admission');
     code = replaceOnce(code, '    if (this.hp <= 0) { this.splat(attacker, source); return true; }',
-      '    if (this.hp <= 0) { scheduleLethal(this, attacker, source); return true; }', 'one-frame lethal decision delay');
+      '    if (this.hp <= 0) { scheduleLethal(this, attacker, source, G.time); return true; }', 'one-frame lethal decision delay');
     const actorUpdateHead = code.includes('  update(dt) {\n    advanceStormLock(this, dt);\n    this.anim.time = G.time;')
       ? '  update(dt) {\n    advanceStormLock(this, dt);\n    this.anim.time = G.time;'
       : '  update(dt) {\n    this.anim.time = G.time;';
     code = replaceOnce(code, actorUpdateHead,
-      actorUpdateHead.replace('    this.anim.time = G.time;', '    flushPendingLethal(this);\n    this.anim.time = G.time;'),
+      actorUpdateHead.replace('    this.anim.time = G.time;', '    flushPendingLethal(this, G.time);\n    this.anim.time = G.time;'),
       'flush lethal on next fixed tick');
     code = replaceOnce(code, '  _finishFrame(dt) {', '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);', 'record grounded jump destination');
     code = replaceOnce(code, '    this.grounded = grounded;\n    this.airTime', '    this.grounded = grounded;\n    rememberSuperJumpGround(this);\n    this.airTime', 'record resolved jump destination');

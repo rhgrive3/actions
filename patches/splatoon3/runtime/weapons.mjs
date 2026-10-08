@@ -172,8 +172,36 @@ export function applySlosherVolleyHit(system, owner, victim, group, groupId, amo
   if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
   return result;
 }
-function volleyOwnerKey(owner, groupId) {
-  return JSON.stringify([owner.owner ?? null, owner.nid ?? owner.name ?? 'actor', String(groupId)]);
+// Preserve in-flight volley dedupe without retaining every historical wire id
+// for an entire match. Reject malformed wire identities before key creation.
+const SLOSHER_LEDGER_LIMIT = 512;
+const SLOSHER_LEDGER_TTL = 8; // seconds of simulation time; exceeds projectile lifetime
+const SLOSHER_ID_LIMIT = 128;
+export function volleyOwnerKey(owner, groupId) {
+  const validPart = v => v == null || (typeof v === 'string' && v.length <= SLOSHER_ID_LIMIT)
+    || (typeof v === 'number' && Number.isSafeInteger(v));
+  const peer = owner?.owner ?? null, actorId = owner?.nid ?? owner?.name ?? 'actor';
+  if (!owner || !validPart(peer) || !validPart(actorId) || !validPart(groupId)) return null;
+  const id = String(groupId);
+  if (!id.length || id.length > SLOSHER_ID_LIMIT) return null;
+  return JSON.stringify([peer, actorId, id]);
+}
+// Map insertion order is the birth order: pruning is amortized O(1) per
+// admitted volley, and over-capacity traffic fails closed rather than evicting
+// a still-live group's duplicate-damage protection.
+export function trackedSlosherVolley(groups, key, now) {
+  if (!(groups instanceof Map) || typeof key !== 'string' || key.length > 420 || !Number.isFinite(now)) return null;
+  const existing = groups.get(key);
+  if (existing) return existing.hits;
+  for (let first = groups.keys().next(); !first.done; first = groups.keys().next()) {
+    const created = groups.get(first.value).at;
+    if (now >= created && now - created <= SLOSHER_LEDGER_TTL) break;
+    groups.delete(first.value);
+  }
+  if (groups.size >= SLOSHER_LEDGER_LIMIT) return null;
+  const hits = new WeakMap();
+  groups.set(key, { at: now, hits });
+  return hits;
 }
 export function distanceDamage(bands, distance, linear = true) {
   if (!bands?.length) return 0;
@@ -762,8 +790,8 @@ export function installWeapons(context, profile) {
     if (route === 'send' || route === 'drop') return applyHit.call(this, attacker, victim, damage, weaponId, groupId);
     const groups = this._s3SlosherOwnerGroups || (this._s3SlosherOwnerGroups = new Map());
     const key = volleyOwnerKey(attacker, groupId);
-    let group = groups.get(key);
-    if (!group) { group = new WeakMap(); groups.set(key, group); }
+    const group = trackedSlosherVolley(groups, key, G.time);
+    if (!group) return 'drop'; // invalid/flooded group: never bypass the damage ledger
     const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
     if (!(delta > 0)) return 'accepted';
     const hpBefore = victim.hp, aliveBefore = victim.alive;
