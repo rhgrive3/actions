@@ -1,9 +1,19 @@
 export function adaptChargerSightCache(rel, code, replaceOnce) {
   if (rel === 'src/game/weapons.js') {
-    code = replaceOnce(code,
-      `        const range = lerp(w.rangeMin, w.rangeMax, ch);
+    const maxReachSource = `        const range = this.chargerReach ? this.chargerReach(1) : w.rangeMax;
         const hit = G.physics.raycast(m, dir, range, _hit, true);
-        const len = hit.hit ? hit.dist : range;`,
+        const len = hit.hit ? hit.dist : range;`;
+    const nativeSource = `        const range = lerp(w.rangeMin, w.rangeMax, ch);
+        const hit = G.physics.raycast(m, dir, range, _hit, true);
+        const len = hit.hit ? hit.dist : range;`;
+    if (code.includes(maxReachSource)) code = replaceOnce(code,
+      maxReachSource,
+      `        const range = this.chargerReach ? this.chargerReach(1) : w.rangeMax;
+        const hit = G.physics.raycast(m, dir, chargerSightRayRange(range), _hit, true);
+        const len = hit.hit ? Math.min(hit.dist, range) : range;`,
+      'charger sight includes the existing laser-dot reach while keeping line range capped');
+    else code = replaceOnce(code,
+      nativeSource,
       `        const range = lerp(w.rangeMin, w.rangeMax, ch);
         const hit = G.physics.raycast(m, dir, chargerSightRayRange(range), _hit, true);
         const len = hit.hit ? Math.min(hit.dist, range) : range;`,
