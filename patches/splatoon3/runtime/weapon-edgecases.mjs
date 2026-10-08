@@ -4,6 +4,40 @@ import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
 
 import { splatlingJumpRecoveryAt } from './splatling-jump-spread.mjs';
 const EPS = 1e-10, DEG = Math.PI / 180;
+const EMPTY_SUB_GATE_INPUT = Object.freeze({});
+function subGateLocked(runner, kind, dt) {
+  const postShot = kind === 'slosher'
+    ? Math.max(0, (runner.s3SloshPostShot || 0) - (runner.s3GateInActor ? 0 : dt))
+    : runner.s3DualiesPostShot;
+  return postShot > EPS || (kind === 'dualies' && (runner.s3DualiesInterruptSub || 0) > EPS);
+}
+function makeSubGateInput(runner) {
+  const state = { runner, source: EMPTY_SUB_GATE_INPUT, kind: '', dt: 0,
+    sub: false, subReleased: false, cancelMain: false };
+  const read = prop => {
+    if (prop === 'sub' || prop === 'subReleased')
+      return subGateLocked(runner, state.kind, state.dt) ? false : state[prop];
+    if (state.cancelMain && (prop === 'fire' || prop === 'firePressed')) return false;
+    return state.source[prop];
+  };
+  const view = new Proxy({}, {
+    get: (_, prop) => read(prop),
+    has: (_, prop) => prop === 'sub' || prop === 'subReleased' || Reflect.has(state.source, prop),
+    ownKeys: () => {
+      const keys = Reflect.ownKeys(state.source);
+      for (const prop of ['sub', 'subReleased'])
+        if (!keys.includes(prop)) keys.push(prop);
+      return keys;
+    },
+    getOwnPropertyDescriptor: (_, prop) => {
+      const descriptor = Object.getOwnPropertyDescriptor(state.source, prop);
+      if (!descriptor && prop !== 'sub' && prop !== 'subReleased') return undefined;
+      return { configurable: true, enumerable: descriptor?.enumerable ?? true,
+        writable: true, value: read(prop) };
+    },
+  });
+  return { state, view };
+}
 
 // #729 — S3 Ver.11.3.0 resolves an impact-triggered blast one fixed frame after the
 // contact (tick N impact -> tick N+1 burst), so a target can move between the two
@@ -149,6 +183,12 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   WeaponRunner.prototype.reset = function (...args) {
     const out = reset.apply(this, args);
     clear(this); clearDualiesLocks(this); this.s3DualiesEmerging = false; this.s3ChargerPostShot = 0; this.s3DualiesSwimStart = null;
+    // Keep the reusable gate, but do not retain the previous life/input source.
+    if (this.s3SubGateInput) {
+      const gate = this.s3SubGateInput.state;
+      gate.source = EMPTY_SUB_GATE_INPUT; gate.sub = false; gate.subReleased = false;
+      gate.cancelMain = false; gate.kind = ''; gate.dt = 0;
+    }
     return out;
   };
   // #874: dodge admission uses current fire intent, not the recent-fire presentation timer.
@@ -220,34 +260,33 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
         get subReleased() { return chargerPostShotBlocksSub(runner) ? false : source.subReleased; },
       });
     }
-    const kind = this.a.weapon.kind, postShot = () => kind === 'slosher'
-      ? Math.max(0, (this.s3SloshPostShot || 0) - (this.s3GateInActor ? 0 : dt))
-      : this.s3DualiesPostShot;
+    const kind = this.a.weapon.kind;
     if (kind !== 'dualies' && kind !== 'slosher') return weaponUpdate.call(this, dt, input);
-    const source = input || {};
-    const interruptSub = () => kind === 'dualies' ? (this.s3DualiesInterruptSub || 0) : 0;
-    const locked = postShot() > EPS || interruptSub() > EPS;
-    if (locked) {
+    const source = input || EMPTY_SUB_GATE_INPUT;
+    const lockedAtStart = subGateLocked(this, kind, dt);
+    if (lockedAtStart) {
       if (source.sub) this.s3DualiesSubBuffered = true;
       if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
-    let prepared = locked ? { ...source, sub: false, subReleased: false } : { ...source };
-    if (kind === 'dualies' && this.s3DualiesInterruptCancelMain) {
-      prepared.fire = false; prepared.firePressed = false;
-    }
-    if (!locked && this.s3DualiesSubReleaseBuffered) {
-      prepared.sub = true; prepared.subReleased = true;
+    let sub = lockedAtStart ? false : source.sub;
+    let subReleased = lockedAtStart ? false : source.subReleased;
+    if (!lockedAtStart && this.s3DualiesSubReleaseBuffered) {
+      sub = true; subReleased = true;
       this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
     }
-    const runner = this;
-    const gated = new Proxy(prepared, { get(target, prop) {
-      if ((prop === 'sub' || prop === 'subReleased') && (postShot() > EPS || interruptSub() > EPS)) return false;
-      return target[prop];
-    }});
-    const out = weaponUpdate.call(this, dt, gated);
-    if (postShot() > EPS || interruptSub() > EPS) {
-      if (prepared.sub) this.s3DualiesSubBuffered = true;
-      if (prepared.subReleased) this.s3DualiesSubReleaseBuffered = true;
+    // The native runner checks sub both before and after weapon processing;
+    // post-shot lock may become active between those reads. Retain the dynamic
+    // gate but allocate its Proxy only once per runner, not on every fixed tick.
+    let gate = this.s3SubGateInput;
+    if (!gate) gate = this.s3SubGateInput = makeSubGateInput(this);
+    const state = gate.state;
+    state.source = source; state.kind = kind; state.dt = dt;
+    state.sub = sub; state.subReleased = subReleased;
+    state.cancelMain = kind === 'dualies' && !!this.s3DualiesInterruptCancelMain;
+    const out = weaponUpdate.call(this, dt, gate.view);
+    if (subGateLocked(this, kind, dt)) {
+      if (sub) this.s3DualiesSubBuffered = true;
+      if (subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
     return out;
   };

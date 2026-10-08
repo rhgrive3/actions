@@ -16,14 +16,15 @@ export function hasPendingLethal(actor) {
   return pending.has(actor);
 }
 
-export function scheduleLethal(actor, attacker, cause = 'weapon') {
+export function scheduleLethal(actor, attacker, cause = 'weapon', simTime = NaN) {
   if (!actor || !actor.alive || pending.has(actor)) return false;
   if (!validCause(cause)) cause = 'weapon';
   const previous = Number.isSafeInteger(actor._s3LethalSequence) && actor._s3LethalSequence >= 0 ? actor._s3LethalSequence : 0;
   if (previous >= Number.MAX_SAFE_INTEGER) return false;
   const sequence = previous + 1;
   actor._s3LethalSequence = sequence;
-  pending.set(actor, { attacker: attacker || null, cause, punisher: respawnPunisherEquipped(attacker), life: actorLife(actor), sequence });
+  pending.set(actor, { attacker: attacker || null, cause, punisher: respawnPunisherEquipped(attacker), life: actorLife(actor), sequence,
+    admittedAt: Number.isFinite(simTime) ? simTime : null });
   return true;
 }
 
@@ -61,9 +62,12 @@ export function clearPendingLethal(actor) {
 
 // Actor.update owns this flush, so a lethal decision made later in fixed tick N
 // cannot become a splat until the actor phase of fixed tick N+1.
-export function flushPendingLethal(actor) {
+export function flushPendingLethal(actor, simTime = NaN) {
   const state = actor && pending.get(actor);
   if (!state) return false;
+  // Actor updates are ordered: a hit from an earlier Actor in tick N can be
+  // observed by a later Actor in *the same* tick. Do not flush until N+1.
+  if (Number.isFinite(state.admittedAt) && (!Number.isFinite(simTime) || simTime <= state.admittedAt)) return false;
   pending.delete(actor);
   if (!actor.alive || state.life !== actorLife(actor)) return false;
   withHitPunisher(state.attacker, state.punisher, () => actor.splat(state.attacker, state.cause));
