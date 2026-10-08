@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 import {FixedClock} from '../runtime/clock.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
-const legacy=(rel,s)=>rel.endsWith('runtime/movement.mjs')?s.replace('surge.armorTime = surge.charge > 0 ?','surge.armorTime = surge.charge >= 1 ?'):s;
+const legacy=(rel,s)=>rel.endsWith('runtime/movement.mjs')?s.replace('surge.armorPending = surge.charge > 0','surge.armorPending = surge.charge >= 1'):s;
 async function world(old=false){const f=await fixture(old?{adaptRuntime:legacy}:{});return f;}
-function charge(f,ticks){const a=f.make();a.form='squid';a.intent.squid=true;a.intent.jump=true;a.climbing=true;a.grounded=false;a._updateClimb=()=>{};f.tick(a,ticks);a.intent.jump=false;f.tick(a);return a;}
+function charge(f,ticks){const a=f.make();a.form='squid';a.intent.squid=true;a.intent.jump=true;a.climbing=true;a.grounded=false;a._updateClimb=()=>{};f.tick(a,ticks);a.intent.jump=false;f.tick(a);a._ledgePop(new f.THREE.Vector3(0,0,-1));return a;}
 test('#473 original current-runtime negative rejects partial armor but admits full charge',async()=>{
  const f=await world(true);for(const n of [1,15,30,44]){const a=charge(f,n);assert.equal(a.s3.actions.armor,null);const hp=a.hp;a.damage(50,null,'shooter');near(hp-a.hp,50);}
  const full=charge(f,45);assert.ok(full.s3.actions.armor.armorTime>0);

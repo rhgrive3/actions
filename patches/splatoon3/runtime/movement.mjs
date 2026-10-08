@@ -1,3 +1,4 @@
+import { slamProtected } from './tidal-slam-gauge.mjs';
 import { absorbSpawnDamage, spawnProtectionRemaining } from './respawn-lifecycle.mjs';
 let api, config;
 const EPSILON = 1e-10;
@@ -84,6 +85,7 @@ function launch(a, direction, speed, vertical, kind) {
   api.emit('actor:' + kind, { actor: a });
 }
 function tickArmorTimer(action, dt) {
+  if (action.armorBornAt === api.G.time) return;
   const remaining = (action.armorTime || 0) - dt;
   action.armorTime = remaining <= 1e-10 ? 0 : remaining;
 }
@@ -189,9 +191,11 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
     else if (!a.intent.jump) {
       surge.phase = 'burst'; surge.time = cfg.surge.duration * surge.charge;
       surge.speed = cfg.surge.minimumVelocity + (cfg.surge.velocity - cfg.surge.minimumVelocity) * surge.charge;
-      surge.armorTime = surge.charge > 0 ? cfg.surge.armorTime : 0;
+      // #568: reserve eligibility; the native wall launch starts the clock.
+      surge.armorPending = surge.charge > 0;
+      surge.armorTime = 0;
       surge.armorHP = cfg.surge.armorHP; surge.armorThreshold = cfg.surge.armorThreshold;
-      if (surge.armorTime > 0) state.armor = surge;
+      // No post-launch shield while still attached to the wall.
       a.jumpBuffer = 0; a.anim.surgeCharge = 0;
       a.character.trigger('squidsurge', { charge: surge.charge, duration: surge.time });
       api.emit('actor:squidsurge', { actor: a, charge: surge.charge });
@@ -220,7 +224,16 @@ export function crossSurgeInkGap(a, hit, into) {
       hit.face < 0 || api.G.paint.sample(hit.face, hit.u, hit.v) !== 0 ||
       into < api.PLAYER.climbDetachDot) return false;
   a._setClimb(false); a.grounded = false; a.climbExit = 0;
+  beginSurgeLaunchArmor(a, burst);
   return true;
+}
+function beginSurgeLaunchArmor(actor, surge) {
+  if (!surge?.armorPending || !actor.alive || actor.form !== 'squid' || actor.climbing ||
+      actor.specialActive || actor.superJumpState || movementState(actor).surge !== surge) return;
+  surge.armorPending = false;
+  surge.armorTime = config.surge.armorTime;
+  surge.armorBornAt = api.G.time;
+  movementState(actor).armor = surge;
 }
 export function normalJumpVelocity(a, velocity) {
   const r = a.weaponRunner, cap = a.weapon.fullChargeJumpVelocity;
@@ -250,7 +263,7 @@ export function installMovement(context, tuning) {
     const value = reset.apply(this, args); clearMovement(this); return value;
   };
   Actor.prototype.damage = function (amount, attacker, source) {
-    if (this.invuln > 0 || !this.alive) return false;
+    if (this.invuln > 0 || slamProtected(this) || !this.alive) return false;
     if (source !== 'ink') {
       // Spawn armor is the sole shield owner for this hit; do not charge a
       // simultaneous Roll/Surge armor pool as a second layer.
@@ -303,7 +316,8 @@ export function installMovement(context, tuning) {
   };
   const ledge = Actor.prototype._ledgePop;
   Actor.prototype._ledgePop = function (...args) {
-    const surge = movementState(this).surge, value = ledge.apply(this, args);
+    const wasClimbing = this.climbing, surge = movementState(this).surge, value = ledge.apply(this, args);
+    if (wasClimbing && !this.climbing && (surge?.phase === 'burst' || surge?.phase === 'auto-climb')) beginSurgeLaunchArmor(this, surge);
     if (surge?.phase === 'burst') {
       this.vel.y = Math.max(this.vel.y, surge.speed);
       this.character.trigger('squidsurge_top', { charge: surge.charge, duration: config.surge.duration });
@@ -338,6 +352,7 @@ export function installMovement(context, tuning) {
     let value;
     try { value = climb.apply(this, args); }
     finally { P.climbSpeed = speed; P.climbSideSpeed = side; if (continueNeutral) { move.x = savedX; move.z = savedZ; } }
+    if (was && !this.climbing && state.surge?.armorPending) state.surge.armorPending = false;
     if (was && !this.climbing && movementState(this).surge?.phase === 'auto-climb') { movementState(this).surge = null; sync(this, state); }
     // Losing an inked wall cancels charge. A ledge burst is kept in the air.
     if (was && !this.climbing && movementState(this).surge?.phase === 'charge') { movementState(this).surge = null; this.anim.surgeCharge = 0; }

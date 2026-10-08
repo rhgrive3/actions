@@ -132,6 +132,16 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
+    patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
+    code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
+    code = "import { recordWipeoutLife, packWipeoutTimeline, acceptWipeoutTimeline, acceptWipeoutConfirmation, replayWipeoutConfirmations } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
+    patch("    this._rec(['ev', name, packEvent(e)]);", "    recordWipeoutLife(this, name, e);\n    this._rec(['ev', name, packEvent(e)]);", 'owner wipeout transitions');
+    patch('    if (this.out.length) { msg.e = this.out; this.out = []; }', '    const wf = packWipeoutTimeline(this); if (wf) msg.wf = wf;\n    replayWipeoutConfirmations(this);\n    if (this.out.length) { msg.e = this.out; this.out = []; }', 'owner wipeout history and watermark');
+    patch("      case 't': this._tick(from, d); break;", "      case 't': if (d.wf) acceptWipeoutTimeline(this, from, d.wf); this._tick(from, d); break;\n      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", 'authenticated wipeout protocol');
+    code = "import { acceptOnlineContinuation, tickOnlineContinuation } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
+    patch('  _sendTick() {', '  _sendTick() {\n    tickOnlineContinuation(this);', 'per-player result continuation');
+    patch("      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", "      case 'wc': acceptWipeoutConfirmation(this, from, d); break;\n      case 'rc': acceptOnlineContinuation(this, from, d); break;", 'continuation sender and match identity');
+    patch('    this.myId = session.myId;', '    this.myId = session.myId;\n    this._matchStateAPI = { G, emit };', 'native match-state protocol context');
     patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
     patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
     patch("    this.unsubs.push(on('match:state', ({ state, match: m }) => { if (m === this.match && this.isHost) this._sendNow({ k: 'st', s: state, t: r2(m.time) }); }));",
@@ -827,6 +837,7 @@ function sampleOwnerSimulation(peer) {
 }
 function retireNetworkGhosts(owner = null) {
   const P = G.projectiles; if (!P) return;
+  retireDisconnectedMainProjectiles(P, owner, {ghostOnly:true});
   const owns = p => !owner || p.owner === owner;
   for (const p of P.list) if (p.ghost && owns(p)) { p._netEnded = true; p._qualityDead = true; p._netEndStep = p._netSteps; }
   for (let i = P.bombs.length-1; i >= 0; i--) if (P.bombs[i].ghost && owns(P.bombs[i])) { P._releaseBomb(P.bombs[i]); P.bombs.splice(i,1); }

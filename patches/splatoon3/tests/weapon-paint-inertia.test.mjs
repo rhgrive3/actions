@@ -33,8 +33,8 @@ async function paint(charge,{ground=false,ghost=false,dt=1/60}={}) {
 // MaxCharge endpoint, never the FullCharge endpoint.
 // #961: 8F is charge=8/60; sample the same endpoint fractions under the
 // linear authoritative clock, not the retired 1/6 early-boost coordinate.
-test('#407 finite Charger ground/wall impacts and events retain raw endpoint ratios and full-charge step',async()=>{
- for(const ground of [false,true]){
+test('#407 finite Charger ground impacts and events retain raw endpoint ratios and full-charge step',async()=>{
+ for(const ground of [true]){
   const cases=[];
   for(const [charge,want] of [[8/60,.906],[34/60,1.8125],[8/60+52/60*.998,2.715374],[.99896,2.7168244],[1,3.263]]){
    const f=await paint(charge,{ground}),impact=f.paint.at(-1);

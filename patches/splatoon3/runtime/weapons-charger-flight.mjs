@@ -91,7 +91,7 @@ export function installChargerFlight(api,completion) {
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;
     const job={owner:actor,team:actor.team,weapon:w,charge,chargeT,damage,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
-      pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,nearestPending:true,paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
+      pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,nearestPending:true,seed:Math.random(),paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
     system._ghostBeam(actor,origin,direction,.0001,charge,false);
     job.beam=system.beams.at(-1);
     (system._fidelityChargerFlights||(system._fidelityChargerFlights=[])).push(job);
@@ -135,7 +135,7 @@ export function installChargerFlight(api,completion) {
     const origin=new THREE.Vector3().copy(event.muzzle||actor.pos),dir=new THREE.Vector3().copy(event.dir||actor.aimDir);
     begin(this,actor,w,event.charge??0,origin,dir,true,event.len??null);
   };
-  function paintTravel(job,end){
+  function paintTravel(system,job,end){
     if(job.ghost)return;
     const paint=job.paint,interval=paint.interval;
     if(!(interval>EPS))return;
@@ -148,6 +148,7 @@ export function installChargerFlight(api,completion) {
       job.nearestPending=false;
       const p=job.origin.clone().addScaledVector(job.dir,job.nextPaint);
       const h=G.physics.raycast(p,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
+      if(h.hit && beginChargerWallDrop(system,job,h,completion.weapons.charger,api,true)) continue;
       if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),radius,job.team,
         {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1)});
     }
@@ -181,7 +182,7 @@ export function installChargerFlight(api,completion) {
     if(target==='boss'&&!job.ghost)G.boss.hit(job.owner,amount,boss.target,job.weapon.id,boss.point.clone());
     if(target==='defense')defense.onHit();
     job.pos.copy(job.prev).addScaledVector(job.dir,distance);job.travel+=distance;
-    paintTravel(job,job.travel);
+    paintTravel(system,job,job.travel);
     if(job.beam){job.beam.mesh.scale.z=Math.max(.0001,job.travel);job.beam.mesh.material.uniforms.uLen.value=Math.max(.0001,job.travel);}
     ended=ended||job.travel+EPS>=job.range;
     if(ended){
@@ -192,8 +193,10 @@ export function installChargerFlight(api,completion) {
           {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/job.paint.width-1)}));
       }
       if(world.hit&&!target&&!job.ghost){
-        const area=G.paint.splat(world.point.clone().addScaledVector(world.normal,.12),job.paint.impact,job.team,
-          {seed:Math.random(),stretch:job.dir,stretchAmt:.6});job.owner.addTurf(area);
+        if (!beginChargerWallDrop(system,job,world,completion.weapons.charger,api)) {
+          const area=G.paint.splat(world.point.clone().addScaledVector(world.normal,.12),job.paint.impact,job.team,
+            {seed:Math.random(),stretch:job.dir,stretchAmt:.6});job.owner.addTurf(area);
+        }
         G.fx?.burst(world.point,world.normal,job.owner.color,{count:10,speed:4,size:.09,paint:false});
       }
       if(!job.ghost)emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});
@@ -201,6 +204,7 @@ export function installChargerFlight(api,completion) {
     return ended;
   }
   P.update=function(dt){
+    advanceChargerWallDrops(this,dt,api);
     const list=this._fidelityChargerFlights;
     if(list)for(let i=list.length-1;i>=0;i--){
       const job=list[i],beam=job.beam,peer=job.ghost&&beam?._netPeer;
@@ -217,5 +221,63 @@ export function installChargerFlight(api,completion) {
     }
     return nativeUpdate.call(this,dt);
   };
-  P.clear=function(...args){this._fidelityChargerFlights=[];return nativeClear.apply(this,args);};
+  P.clear=function(...args){this._s3ChargerWallDrops=[];this._fidelityChargerFlights=[];return nativeClear.apply(this,args);};
+}
+
+// #625: charge-dependent post-contact gameplay paint. Explicit endpoints come
+// from pinned 11.3.0 WeaponChargerNormal. Missing movement defaults (30,15,10,
+// gravity .008) come from XarrotD's original paramtable, not zero-filled JSON.
+// Seeded inclusive phase selection, linear charge interpolation, 60Hz force
+// integration and overlapping raster stamps are INKWAVE calibration; the
+// Nintendo engine/PRNG and the omitted main Ground radius remain unverified.
+const WALL_DROP_EPS=1e-9;
+const defaults=Object.freeze({FallPeriodFirstFrameMax:30,FallPeriodLastFrameMin:15,FallPeriodSecondFrame:10,FreeGravityType:'value_0_008'});
+const unit=(seed,salt)=>{let x=((seed*0x100000000)>>>0)^salt;x=Math.imul(x^(x>>>16),0x7feb352d);x=Math.imul(x^(x>>>15),0x846ca68b);return ((x^(x>>>16))>>>0)/0x100000000;};
+export function chargerWallDropParameters(raw,charge,splash=false,seed=.5){
+ const source=splash?raw.SplashWallHitParam:raw,move={...defaults,...source?.WallDropMoveParam},paint=source?.WallDropCollisionPaintParam;
+ if(!paint)throw Error('Missing Charger wall paint source');
+ const q=Math.max(0,Math.min(1,(charge-8/60)/(1-8/60)));
+ const radius=name=>charge===1?paint[name]:paint[name+'MinCharge']+(paint[name+'MaxCharge']-paint[name+'MinCharge'])*q;
+ const frames=(min,max,salt)=>min+Math.floor(unit(seed,salt)*(max-min+1));
+ const gravity=/^value_(\d+)_(\d+)$/.exec(move.FreeGravityType);
+ if(!gravity)throw Error('Unsupported Charger wall-drop gravity');
+ const result={first:frames(move.FallPeriodFirstFrameMin,move.FallPeriodFirstFrameMax,625),second:move.FallPeriodSecondFrame,
+  last:frames(move.FallPeriodLastFrameMin,move.FallPeriodLastFrameMax,626),
+  firstSpeed:move.FallPeriodFirstTargetSpeed,secondSpeed:move.FallPeriodSecondTargetSpeed,
+  gravity:Number(gravity[1]+'.'+gravity[2]),shock:radius('PaintRadiusShock'),fall:radius('PaintRadiusFall'),
+  ground:Number.isFinite(paint.PaintRadiusGround)?paint.PaintRadiusGround:null};
+ if(!Object.entries(result).every(([k,v])=>k==='ground'&&v===null||Number.isFinite(v)&&v>=0))throw Error('Invalid Charger wall-drop source');
+ return result;
+}
+export function beginChargerWallDrop(system,job,hit,raw,api,splash=false){
+ if(job.ghost||!hit?.hit||Math.abs(hit.normal.y)>=.55||hit.block?.grate)return false;
+ const seed=Number.isFinite(job.seed)?job.seed:.5,plan=chargerWallDropParameters(raw,job.charge,splash,seed);
+ const state={owner:job.owner,team:job.team,ghost:false,plan,seed,frame:0,carry:0,speed:0,paintIndex:0,
+  pos:hit.point.clone().addScaledVector(hit.normal,.025),normal:hit.normal.clone(),face:hit.face,
+  prev:new api.THREE.Vector3(),next:new api.THREE.Vector3(),point:new api.THREE.Vector3(),hit:new api.Hit(),paintCarry:0};
+ (system._s3ChargerWallDrops||=[]).push(state);stamp(state,state.pos,plan.shock,api,state.face);return true;
+}
+function stamp(s,point,radius,api,face){
+ if(s.ghost||!(radius>0))return;
+ const opts={seed:unit(s.seed,++s.paintIndex),kind:'drop'};
+ if(Number.isInteger(face)&&face>=0)opts.face=face;
+ const area=api.G.paint.splat(point,radius,s.team,opts);if(Number.isFinite(area))s.owner?.addTurf?.(area);
+}
+export function advanceChargerWallDrops(system,dt,api){
+ const list=system._s3ChargerWallDrops;if(!list?.length||!(dt>0))return;
+ for(let i=list.length-1;i>=0;i--){const s=list[i],p=s.plan;let done=false;s.carry+=dt;
+  while(s.carry+WALL_DROP_EPS>=1/60&&!done){s.carry=Math.max(0,s.carry-1/60);
+   if(s.frame>=p.first+p.second+p.last){done=true;break;}
+   s.speed=s.frame<p.first?p.firstSpeed:s.frame<p.first+p.second?p.secondSpeed:s.speed+p.gravity;
+   s.prev.copy(s.pos);s.next.copy(s.pos);s.next.y-=s.speed;
+   const h=api.G.physics.segment(s.prev,s.next,s.hit,true);
+   if(h.hit){if(h.normal.y>.55)stamp(s,h.point.clone().addScaledVector(h.normal,.025),p.ground,api,h.face);done=true;break;}
+   s.pos.copy(s.next);const distance=s.prev.distanceTo(s.pos),spacing=Math.max(.025,p.fall*.5);
+   for(let cursor=spacing-s.paintCarry;cursor<=distance+WALL_DROP_EPS;cursor+=spacing){s.point.copy(s.prev).lerp(s.pos,Math.min(1,cursor/distance));stamp(s,s.point,p.fall,api,s.face);}
+   s.paintCarry=(s.paintCarry+distance)%spacing;
+   if(s.paintCarry< WALL_DROP_EPS || spacing-s.paintCarry<WALL_DROP_EPS)s.paintCarry=0;
+   s.frame++;
+  }
+  if(done||s.frame>=p.first+p.second+p.last)list.splice(i,1);
+ }
 }
