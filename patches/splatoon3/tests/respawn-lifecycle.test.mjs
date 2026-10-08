@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fixture } from './source-fixture.mjs';
-import { installRespawnLifecycle, advanceSpawnProtection, spawnProtectionRemaining, sampleRespawnCountdown } from '../runtime/respawn-lifecycle.mjs';
+import { installRespawnLifecycle, advanceSpawnProtection, spawnProtectionRemaining, sampleRespawnCountdown, beginInitialSquidSpawn } from '../runtime/respawn-lifecycle.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 const patched = process.env.INKWAVE_RESPAWN_BASELINE !== '1';
 async function setup() {
@@ -121,7 +121,7 @@ test('native NetMatch snapshots carry armor separately from invulnerability and 
   f.G.physics.groundProbe=(_x,_y,_z,_u,_d,_r,h)=>{h.hit=false;return h;};
   const a=f.make(),proxy=f.make();a.nid=1;a.slot=0;a.respawn();proxy.remote=true;proxy._finishFrame=()=>{};
   const out=[],nm=Object.create(f.NetMatch.prototype);Object.assign(nm,{byNid:new Map([[1,a]]),out:[],stats:{out:0},s:{tr:{broadcast:m=>out.push(m)}}});
-  nm._sendTick();const packet=out[0].a[0];assert.equal(packet.length,22);assert.equal(packet[21],a.stats.specials||0,'current special-count sidecar');assert.ok(packet[10]&8388608);assert.equal(packet[10]&262144,0);
+  nm._sendTick();const packet=out[0].a[0];assert.equal(packet.length,23);assert.equal(packet[21],0,'no Super Jump clock in this live spawn');assert.equal(packet[22],a.stats.specials||0,'current special-count sidecar');assert.ok(packet[10]&8388608);assert.equal(packet[10]&262144,0);
   const sample={x:packet[1],y:packet[2],z:packet[3],vx:0,vy:0,vz:0,yaw:0,aimYaw:0,aimPitch:0,f:packet[10],hp:100,ink:100,sp:80,turf:0,ch:0,lockT:0};
   proxy.net={ready:true,cur:sample,err:new f.THREE.Vector3(),prevGrounded:false,prevVy:0};nm.applyRemote(proxy,1/60);
   assert.ok(spawnProtectionRemaining(proxy)>0);assert.equal(proxy.invuln,0);assert.equal(proxy.s3.spawnArmor,undefined,'visual sample cannot create proxy damage authority');
@@ -151,4 +151,17 @@ test('#93 human post-death Squid Spawn selects different legal targets from aim 
     samples.push({...a.s3.squidSpawn.to});
   }
   assert.ok(samples[0].x>0&&samples[1].x<0,'ordinary respawns are not fixed slot positions');
+});
+
+
+test('Practice Range keeps immediate control and legacy respawn without Turf Squid Spawn', async () => {
+  const f = await setup(), a = f.make();
+  f.G.match.mode = 'turf'; f.G.match.opts = { range: true };
+  a.pos.set(-12, 0, 0); const position = a.pos.clone();
+  assert.equal(beginInitialSquidSpawn(a), false);
+  assert.deepEqual(a.pos, position);
+  assert.equal(a.s3.squidSpawn, undefined);
+  a.splat(null); assert.equal(a.alive, false); a.respawn();
+  assert.equal(a.alive, true);
+  assert.equal(a.s3.squidSpawn, undefined, 'range respawns never create a FIRE-owned launch');
 });

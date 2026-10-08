@@ -94,7 +94,7 @@ export function installRespawnLifecycle(api, profile) {
     return true;
   }
   function begin(actor, initial = false) {
-    if (!actor || G.match?.mode !== 'turf') return false;
+    if (!actor || G.match?.mode !== 'turf' || G.match?.opts?.range) return false;
     const wasDead = !actor.alive, special = actor.special, p = slotPoint(actor), yaw = actor.team === 0 ? 0 : Math.PI;
     actor._respawnLifecycle = { wasDead, special };
     try { const point = actor.pos.clone().set(p.x,p.y,p.z); spawnAt.call(actor, point, yaw); }
@@ -131,7 +131,7 @@ export function installRespawnLifecycle(api, profile) {
     return result;
   };
   A.respawn = function (...args) {
-    if (!this.alive && G.match?.mode === 'turf') return begin(this, false);
+    if (!this.alive && G.match?.mode === 'turf' && !G.match?.opts?.range) return begin(this, false);
     this._respawnLifecycle = { wasDead: !this.alive, special: this.special };
     try {
       const result = respawn.apply(this, args);
