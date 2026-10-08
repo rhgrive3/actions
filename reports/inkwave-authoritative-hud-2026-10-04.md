@@ -26,8 +26,8 @@ retrieval was blocked; the indexed statement was available. No claim is made
 that the replacement vector artwork matches Nintendo pixels or its hidden
 sub-segment interpolation timing.
 
-**2026-10-08 correction:** a Splatoon 3 recording measures 30 teeth (11.9 deg pitch),
-not 23. The segment count is now 30; see [the HUD look report](inkwave-s3-hud-look-2026-10-08.md).
+**2026-10-08 measurement:** a Splatoon 3 recording confirms 23 teeth at ~11.9 deg pitch on an
+arc that leaves the upper-left quarter empty; see [the HUD look report](inkwave-s3-hud-look-2026-10-08.md).
 
 ## Implementation
 

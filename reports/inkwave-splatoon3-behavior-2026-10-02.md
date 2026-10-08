@@ -1359,12 +1359,14 @@ Seven focused production-module tests cover blocked partial, off-ray control, th
 ## 2026-10-08: HUD look compared with a Splatoon 3 recording
 
 A user-supplied Splatoon 3 recording (Splat Zones, 1280x720 game area) was measured frame by frame.
-The special gauge has **30** radial teeth (11.9 deg mean pitch over 20 lit teeth after a least-squares
-ring fit), lit clockwise from 12 o'clock in a fixed yellow-orange (#fac337 centre, #b56a00 edge), not
-the 23 segments of the 2026-10-04 entry, which came from a wiki sentence. The quality layer now draws
-30 teeth with the measured radii and colours; quantization and readiness keep their single authority.
+The special gauge has **23** radial teeth at ~11.9 deg pitch on an arc from 12 o'clock clockwise
+to ~272 deg; the upper-left quarter has no teeth. Lit teeth are a fixed yellow-orange (#fac337 centre,
+#b56a00 edge), not the team ink. The 23-segment count of the 2026-10-04 entry is confirmed; only the
+layout changed from a full ring to the measured arc. (A first pass assumed a full ring and drew 30 teeth;
+re-measuring the unlit teeth corrected it.) Quantization and readiness keep their single authority.
 The roster uses squid silhouettes, dark splatted icons under a grey X and a flat timer plate; the splat
 notice is a bottom bar reading "<name> をたおした！". Touch keeps the SP button as the gauge with the same
 position, size and hit area. Presentation only: no special points, costs, timer or match rules change.
-Full-gauge appearance, other team colours and Turf War-specific HUD remain unconfirmed. Details:
+In-match type now uses original condensed chamfered timer numerals and an OFL Rounded M+ 1c Black
+subset for Japanese HUD text; roster squids get a masked ink shading. Full-gauge appearance, other team colours and Turf War-specific HUD remain unconfirmed. Details:
 [the HUD look report](inkwave-s3-hud-look-2026-10-08.md).

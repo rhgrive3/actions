@@ -66,7 +66,7 @@ const IDENTITY_FILES = [
   'screenfx-damage-reset-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
-  'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs',
+  'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt',
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
   'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs',
   'team-wipeout.mjs', 'team-wipeout-adapter.mjs',

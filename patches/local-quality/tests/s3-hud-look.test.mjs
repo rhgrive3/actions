@@ -15,14 +15,16 @@ test('S3 look: roster silhouette, squid splat bar and Japanese word order compos
   assert.ok(hud.includes(`const BADGE_PATH = '${S3_SQUID_BADGE}';`));
   assert.match(hud, /iw-kcard--\$\{kind\}\$\{isJa \? ' iw-kcard--ja' : ''\}/);
   assert.match(hud, /h\('span', \{ class: 'iw-kcard__w', html: SQUID \}\)/);
-  assert.match(hud, /isJa \? 'をたおした！' : 'SPLATTED'/);
+  assert.match(hud, /isJa \? 'をたおした!' : 'SPLATTED'/);
   assert.ok(JSON.stringify(qualityIdentity()).includes('s3-hud-look-adapter.mjs'));
 });
 
-test('S3 look: gauge teeth use the measured count, radii and colours', () => {
+test('S3 look: gauge teeth use the measured count, arc, radii and colours', () => {
   const svg = specialGaugeSVG();
-  assert.equal(SPECIAL_SEGMENTS, 30);
-  assert.equal((svg.match(/class="iw-sp__segment"/g) || []).length, 30);
+  assert.equal(SPECIAL_SEGMENTS, 23);
+  assert.equal((svg.match(/class="iw-sp__segment"/g) || []).length, 23);
+  // No tooth reaches into the upper-left quarter (x < 50 and y < 50 in the 100 box).
+  for (const [, x, y] of svg.matchAll(/class="iw-sp__segment" d="M([\d.]+) ([\d.]+)/g)) assert.ok(!(+x < 49 && +y < 49), `tooth at ${x},${y}`);
   assert.match(svg, /class="iw-sp__burst"/);
   const css = compose('styles/hud.css');
   assert.ok(css.includes(`.iw-sp__segment.is-filled { fill: ${S3_TOOTH.fill}; stroke: ${S3_TOOTH.edge};`));
@@ -43,4 +45,22 @@ test('S3 look: missing or duplicated anchors fail closed', () => {
   const raw = readSource('src/ui/hud.js');
   for (const input of ['', raw + raw]) assert.throws(() => adaptS3HudLook('src/ui/hud.js', input), /S3 HUD look conflict/);
   assert.equal(adaptS3HudLook('src/game/actor.js', 'unchanged'), 'unchanged');
+});
+
+test('S3 look: HUD fonts ship with the quality layer and stay scoped to in-match text', async () => {
+  const fs = await import('node:fs');
+  const css = compose('styles/hud.css');
+  for (const file of ['iw-s3-digits.woff2', 'iw-s3-jp.woff2']) {
+    assert.ok(css.includes(`url('../patches/local-quality/fonts/${file}')`), file);
+    const bytes = fs.readFileSync(new URL(`../fonts/${file}`, import.meta.url));
+    assert.equal(bytes.subarray(0, 4).toString('latin1'), 'wOF2', file);
+  }
+  assert.ok(fs.existsSync(new URL('../fonts/OFL-RoundedMplus1c.txt', import.meta.url)), 'OFL text ships with the subset');
+  assert.match(css, /\.iw-timer__txt \{ font-family: 'IW S3 Digits'/);
+  // Menus keep their own type: the JP subset is only named inside HUD selectors.
+  for (const rule of css.match(/[^{}]*\{[^}]*'IW S3 JP'[^}]*\}/g)) {
+    const selector = rule.slice(0, rule.indexOf('{'));
+    if (!selector.includes('@font-face')) assert.match(selector, /iw-hud|iw-squad/, selector);
+  }
+  assert.ok(JSON.stringify(qualityIdentity()).includes('fonts/iw-s3-jp.woff2'));
 });

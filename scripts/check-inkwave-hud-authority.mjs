@@ -177,12 +177,12 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
     const saved={special:a.special,active:a.specialActive};
     const frames=[];
     try {
-      for(const [fraction,ready,filled] of [[0,false,0],[.47,false,14],[.9999,false,29],[1,true,30],[1,true,30],[0,false,0],[.5,false,15]]){
+      for(const [fraction,ready,filled] of [[0,false,0],[.47,false,10],[.9999,false,22],[1,true,23],[1,true,23],[0,false,0],[.5,false,11]]){
         a.specialActive=null;a.special=a.specialCost()*fraction;g._updateHud(1/60);
         const count=h.sp.querySelectorAll('.iw-sp__segment').length;
         const lit=h.sp.querySelectorAll('.iw-sp__segment.is-filled').length;
         const isReady=h.sp.classList.contains('is-ready');
-        if(count!==30||lit!==filled||isReady!==ready)throw Error(`Special state ${fraction}: ${count}/${lit}/${isReady}`);
+        if(count!==23||lit!==filled||isReady!==ready)throw Error(`Special state ${fraction}: ${count}/${lit}/${isReady}`);
         if(h.sp.querySelector('.iw-sp__pct,.iw-sp__liquid')||/%/.test(h.sp.textContent))throw Error('Precise/continuous gauge leaked');
         if(h.sp.getAttribute('aria-valuenow')!==String(filled))throw Error('Accessible segment count drift');
         const color=getComputedStyle(h.sp.querySelector('.iw-sp__segment')).fill;
@@ -197,7 +197,7 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
     for(const width of [1280]){
       await page.setViewportSize({width,height:width===375?812:800});
       await page.evaluate(async()=>{const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);const a=G.game.match.local;globalThis.__hudSavedSpecial=a.special;a.special=a.specialCost()*.47;G.game._updateHud(1/60);});
-      await page.screenshot({path:path.join(evidence,`special-30-segments-${width}.png`),animations:'disabled',timeout:90000});
+      await page.screenshot({path:path.join(evidence,`special-23-segments-${width}.png`),animations:'disabled',timeout:90000});
       await page.evaluate(async()=>{const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);G.game.match.local.special=globalThis.__hudSavedSpecial;delete globalThis.__hudSavedSpecial;G.game._updateHud(1/60);});
     }
   } finally {if(viewport)await page.setViewportSize(viewport);}
@@ -225,11 +225,11 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
       g.input.mobile=m;g.input.lastDevice='touch';document.documentElement.classList.add('iw-touch-ui');m.setVisible(true);
       if(resumeForTouch)g.resume();
       const rows=[];
-      for(const [fraction,ready,filled]of [[0,false,0],[.47,false,14],[.99999,false,29],[1,true,30],[1,true,30],[0,false,0],[.47,false,14]]){
+      for(const [fraction,ready,filled]of [[0,false,0],[.47,false,10],[.99999,false,22],[1,true,23],[1,true,23],[0,false,0],[.47,false,10]]){
         a.specialActive=null;a.special=a.specialCost()*fraction;g._updateHud(1/60);
         const count=m.els.special.querySelectorAll('.iwm-sp-segment').length;
         const lit=m.els.special.querySelectorAll('.iwm-sp-segment.is-filled').length;
-        if(count!==30||lit!==filled||m.els.special.classList.contains('is-ready')!==ready)throw Error('Touch special segment state drift');
+        if(count!==23||lit!==filled||m.els.special.classList.contains('is-ready')!==ready)throw Error('Touch special segment state drift');
         rows.push({fraction,count,lit,ready});
       }
       if(getComputedStyle(g.hud.sp).display!=='none')throw Error('Touch replacement did not hide desktop gauge');
@@ -241,10 +241,10 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
       const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href),m=G.game.input.mobile;
       return {owner:G.game.input.lastDevice,buttonVisible:!!m.els?.special?.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}),desktopHidden:getComputedStyle(G.game.hud.sp).display==='none',segments:m.els?.special?.querySelectorAll('.iwm-sp-segment').length};
     });
-    const requireTouch=state=>{if(state.owner!=='touch'||!state.buttonVisible||!state.desktopHidden||state.segments!==30)throw Error('Touch capture lost native ownership/visibility: '+JSON.stringify(state));};
+    const requireTouch=state=>{if(state.owner!=='touch'||!state.buttonVisible||!state.desktopHidden||state.segments!==23)throw Error('Touch capture lost native ownership/visibility: '+JSON.stringify(state));};
     result.touchBeforeCapture=await touchState();requireTouch(result.touchBeforeCapture);
-    await page.locator('.iwm-b--special').screenshot({path:path.join(evidence,'special-30-segments-touch-button.png'),animations:'disabled',timeout:90000});
-    await page.screenshot({path:path.join(evidence,'special-30-segments-touch.png'),animations:'disabled',timeout:90000});
+    await page.locator('.iwm-b--special').screenshot({path:path.join(evidence,'special-23-segments-touch-button.png'),animations:'disabled',timeout:90000});
+    await page.screenshot({path:path.join(evidence,'special-23-segments-touch.png'),animations:'disabled',timeout:90000});
     result.touchAfterCapture=await touchState();requireTouch(result.touchAfterCapture);
   } finally {
     await page.evaluate(async()=>{

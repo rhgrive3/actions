@@ -1,5 +1,5 @@
 // Splatoon 3 HUD look (presentation only): top-bar squid roster, splatted marks, timer plate,
-// special dial colours and the bottom "<name> をたおした！" bar.
+// special dial colours, timer/Japanese HUD type and the bottom "<name> をたおした!" bar.
 //
 // Reference: Splatoon 3 screen recording supplied on 2026-10-08 (version not shown;
 // Splat Zones, 1280x720 game area). Measurements are recorded in
@@ -10,6 +10,8 @@
 // Squid icon silhouette of the S3 roster (64 box): pointed mantle, side fins at ~48%
 // height, straight body and a wavy tentacle edge.
 export const S3_SQUID_BADGE = 'M32 2 C34 2 36 3.4 37.8 5.4 L59.6 28 C61.6 30.2 60.6 31.9 58 32.1 L53 32.6 L53 54.5 C53 60 47.4 61 45.4 57 C43.4 61.6 38.2 62 36.6 57.6 C35 62.2 29 62.2 27.4 57.6 C25.8 62 20.6 61.6 18.6 57 C16.6 61 11 60 11 54.5 L11 32.6 L6 32.1 C3.4 31.9 2.4 30.2 4.4 28 L26.2 5.4 C28 3.4 30 2 32 2 Z';
+const BADGE_MASK = `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='${S3_SQUID_BADGE}'/></svg>`)}")`;
+const FONT_DIR = '../patches/local-quality/fonts';
 const OLD_BADGE = "const BADGE_PATH = 'M32 2.5 C35.5 2.5 43 9 47.5 14.5 C50 14 55 15.5 57 18.5 C58.6 21 57.4 23.6 55.2 24.8 A24.5 24.5 0 1 1 8.8 24.8 C6.6 23.6 5.4 21 7 18.5 C9 15.5 14 14 16.5 14.5 C21 9 28.5 2.5 32 2.5 Z';";
 
 // Measured gauge tooth colours (centre / outline of a lit tooth in the footage).
@@ -17,20 +19,38 @@ export const S3_TOOTH = Object.freeze({ fill: '#fac337', edge: '#b56a00' });
 
 const HUD_CSS = `
 /* ---- Splatoon 3 HUD look (reports/inkwave-s3-hud-look-2026-10-08.md) ---- */
+/* fonts: original condensed chamfered timer numerals, and a kana/kanji subset of Rounded M+ 1c Black (OFL)
+   for in-match Japanese. Latin keeps Titan One / Rubik; anything outside the subset falls back to IW JP. */
+@font-face { font-family: 'IW S3 Digits'; src: url('${FONT_DIR}/iw-s3-digits.woff2') format('woff2'); unicode-range: U+0020, U+0030-003A; font-display: swap; }
+@font-face { font-family: 'IW S3 JP'; src: url('${FONT_DIR}/iw-s3-jp.woff2') format('woff2'); unicode-range: U+3000-30FF, U+4E00-9FFF, U+FF00-FFEF; font-weight: 400 900; font-display: swap; }
+:is(.iw-hud, .iw-hud-over) .iw-display { font-family: 'Titan One', 'IW S3 JP', 'IW JP Display', sans-serif; }
+:is(.iw-hud, .iw-hud-over) :is(.iw-kcard__txt b, .iw-kcard__txt small, .iw-call__sub, .iw-prompt, .iw-feed__item, .iw-down span, .iw-spl__by, .iw-spl__wn, .iw-spl__ring small),
+.iw-squad::after { font-family: 'Rubik', 'IW S3 JP', 'IW JP Body', sans-serif; }
 /* roster: squid icons nearly touching, a flat dark timer plate between the teams */
 .iw-hud__top { top: calc(var(--u) * .8); gap: calc(var(--u) * 1); }   /* the 1.08 leading-team emphasis must still clear the timer */
 .iw-squad { gap: calc(var(--u) * .1); }
 .iw-sq { width: calc(var(--u) * 4.3); height: calc(var(--u) * 4.3); }
 .iw-sq__badge { filter: drop-shadow(0 0 calc(var(--u) * .1) rgba(0, 0, 0, .5)); }
 .iw-sq__shape { overflow: visible; }
-.iw-sq__shape .o { stroke: rgba(12, 10, 14, .5); stroke-width: 3.5; }
+.iw-sq__shape .o { stroke: var(--tc); stroke-opacity: .45; stroke-width: 2.6; }   /* soft ink edge, no outline */
 .iw-sq__shape .f { fill: var(--tc); stroke: none; }
 .iw-sq__shape .g { display: none; }
+/* ink body: lighter crown, darker foot and a few faint blotches, clipped to the squid by a mask (static, no repaint) */
+.iw-sq__badge::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 58% 36% at 47% 15%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 72%),
+    radial-gradient(circle at 26% 57%, rgba(255, 255, 255, .13) 0 6%, rgba(255, 255, 255, 0) 7.5%),
+    radial-gradient(circle at 73% 45%, rgba(0, 0, 0, .1) 0 7%, rgba(0, 0, 0, 0) 8.5%),
+    radial-gradient(ellipse 13% 9% at 38% 79%, rgba(0, 0, 0, .13), rgba(0, 0, 0, 0) 100%),
+    radial-gradient(circle at 64% 70%, rgba(255, 255, 255, .09) 0 6%, rgba(255, 255, 255, 0) 7.5%),
+    linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, .2));
+  -webkit-mask: ${BADGE_MASK} center / 100% 100% no-repeat; mask: ${BADGE_MASK} center / 100% 100% no-repeat; }
+.iw-sq:nth-child(even) .iw-sq__badge::before { transform: scaleX(-1); }
+.iw-sq.is-dead .iw-sq__badge::before { opacity: .3; }
 .iw-sq__w { left: -9%; right: -9%; top: 27%; bottom: 3%; }
 .iw-sq__w svg { filter: drop-shadow(0 0 1px rgba(10, 8, 14, .9)) drop-shadow(0 1px 0 rgba(10, 8, 14, .6)); }
 /* splatted: dark silhouette, faded weapon and a large grey X over the whole icon */
 .iw-sq.is-dead .iw-sq__shape .f { fill: #29262c; fill-opacity: .86; stroke: none; }
-.iw-sq.is-dead .iw-sq__shape .o { stroke: rgba(0, 0, 0, .3); }
+.iw-sq.is-dead .iw-sq__shape .o { stroke: #29262c; stroke-opacity: .5; }
 .iw-sq.is-dead .iw-sq__w { opacity: .32; scale: 1; filter: grayscale(1); }
 .iw-sq__x { inset: 0; color: transparent; filter: none; }
 .iw-sq__x svg { display: none; }
@@ -41,7 +61,7 @@ const HUD_CSS = `
 .iw-timer { width: calc(var(--u) * 6.8); height: calc(var(--u) * 3.6); }
 .iw-timer__blob { border-radius: calc(var(--u) * .45); background: rgba(16, 14, 18, .9); box-shadow: 0 0 0 1px rgba(255, 255, 255, .05), 0 calc(var(--u) * .1) calc(var(--u) * .3) rgba(0, 0, 0, .35); }
 .iw-timer__drip { display: none; }
-.iw-timer__txt { font-size: calc(var(--u) * 2.45); letter-spacing: .05em; color: #fff; }
+.iw-timer__txt { font-family: 'IW S3 Digits', 'Titan One', 'IW JP Display', sans-serif; font-size: calc(var(--u) * 2.6); letter-spacing: 0; color: #fff; }
 .iw-timer.is-last .iw-timer__blob { background: rgba(16, 14, 18, .9); }
 .iw-timer.is-final .iw-timer__blob { animation: iw-s3-timer-final 1s ease-in-out infinite; }
 @keyframes iw-s3-timer-final { 50% { box-shadow: 0 0 0 1px rgba(255, 255, 255, .25), 0 0 calc(var(--u) * 1.4) rgba(255, 50, 80, .7); } }
@@ -64,7 +84,7 @@ const HUD_CSS = `
 @keyframes iw-s3-sp-gain { 0% { stroke: ${S3_TOOTH.fill}; stroke-width: 3.5; } }
 .iw-turf { top: calc(var(--u) * 10.8); }
 
-/* splat notice: one dark bar at the bottom centre — squid + your-ink splat, then "<name> をたおした！" */
+/* splat notice: one dark bar at the bottom centre — squid + your-ink splat, then "<name> をたおした!" */
 .iw-kcards { bottom: calc(var(--u) * 2.6); gap: calc(var(--u) * .3); }
 .iw-kcards .iw-kcard + .iw-kcard { scale: 1; opacity: .92; margin-top: 0; }
 .iw-kcard { gap: calc(var(--u) * .45); min-width: calc(var(--u) * 24); padding: calc(var(--u) * .5) calc(var(--u) * 2.6) calc(var(--u) * .5) calc(var(--u) * .8); border-radius: calc(var(--u) * .2);
@@ -107,7 +127,7 @@ export function adaptS3HudLook(rel, code) {
     code = once(code, "      h('span', { class: 'iw-kcard__w', html: weaponIcon(kindOf(victim.weaponId)) }),",
       "      h('span', { class: 'iw-kcard__w', html: SQUID }),", 'splat bar squid icon');
     // Anchored on the common expression: the raw upstream line still carries the assist branch.
-    return once(code, "isJa ? 'たおした！' : 'SPLATTED'", "isJa ? 'をたおした！' : 'SPLATTED'", 'splat bar Japanese text');
+    return once(code, "isJa ? 'たおした！' : 'SPLATTED'", "isJa ? 'をたおした!' : 'SPLATTED'", 'splat bar Japanese text');
   }
   if (rel === 'styles/hud.css') return code + HUD_CSS;
   if (rel === 'styles/mobile.css') return code + MOBILE_CSS;

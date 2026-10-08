@@ -12,15 +12,16 @@ function section(code, start, end, after, label) {
 }
 
 // Splatoon 3 footage (2026-10-08 capture, version not shown; Splat Zones, 1280x720 game area):
-// a least-squares ring fit gives 20 consecutive lit teeth at 11.9 deg pitch, i.e. 30
-// teeth per turn. The earlier 23 came from a community wiki sentence, not a measurement.
-export const SPECIAL_SEGMENTS = 30;
+// after a least-squares ring fit, lit and unlit teeth repeat every ~11.9 deg from 12 o'clock
+// clockwise and stop near 272 deg. The upper-left quarter carries no teeth (an icon sits
+// there), so the gauge is 23 teeth on a 23 x 11.9 deg arc, not a full ring.
+export const SPECIAL_SEGMENTS = 23;
+export const TOOTH_PITCH_DEG = 11.9;
 const point = (r, a) => `${(50 + r * Math.cos(a)).toFixed(3)} ${(50 + r * Math.sin(a)).toFixed(3)}`;
-// Radial teeth: each tooth is centred in its 12 deg cell, so the boundary between the
-// last and the first tooth sits at 12 o'clock and the fill runs clockwise from there.
-// The footage shows ~46% duty (5.5 deg of 12) and bars from 0.64R to 0.93R of the dial.
+// Radial teeth: tooth i is centred at (i + .5) pitches clockwise from 12 o'clock and the fill
+// runs clockwise from there. The footage shows ~46% duty and bars from 0.64R to 0.93R.
 function toothPaths(inner, outer, name, duty = .46) {
-  const step = 2 * Math.PI / SPECIAL_SEGMENTS, half = step * duty / 2;
+  const step = TOOTH_PITCH_DEG * Math.PI / 180, half = step * duty / 2;
   return Array.from({ length: SPECIAL_SEGMENTS }, (_, i) => {
     const c = -Math.PI / 2 + (i + .5) * step, a = c - half, b = c + half;
     return `<path class="${name}" d="M${point(inner,a)} L${point(outer,a)} A${outer} ${outer} 0 0 1 ${point(outer,b)} L${point(inner,b)} A${inner} ${inner} 0 0 0 ${point(inner,a)} Z"/>`;

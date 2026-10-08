@@ -24,8 +24,8 @@ function specialRig(code = hudCode) {
 }
 
 test('#425: native markup has exactly one path per measured Splatoon 3 tooth and no continuous/numeric presentation', () => {
-  // 30 teeth measured from Splatoon 3 footage (11.9 deg pitch over 20 lit teeth).
-  assert.equal(SPECIAL_SEGMENTS,30);
+  // 23 teeth measured from Splatoon 3 footage: 11.9 deg pitch, no teeth in the upper-left quarter.
+  assert.equal(SPECIAL_SEGMENTS,23);
   assert.equal((specialGaugeSVG().match(/class="iw-sp__segment"/g)||[]).length,N);
   assert.equal((hudCode.match(/class=\\?"iw-sp__segment\\?"/g)||[]).length,N);
   assert.doesNotMatch(hudCode,/spLiquid|spPct|iw-sp__pct|iw-sp__liquid|Math.floor\(s \* 100\)/);
