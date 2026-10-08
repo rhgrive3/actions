@@ -22,7 +22,7 @@ test('complete integration-sized manifest fits the unchanged worker ceiling afte
   const { config } = makeBuild();
   for (let i = 0; JSON.stringify(config).length < 57000; i++) {
     const key = `patches/runtime/complete-${i}.mjs`;
-    config.assets[key] = { bytes: i + 1, sha256: 'c'.repeat(64) };
+    config.assets[key] = [i + 1, 'c'.repeat(64)];
     config.precache.push(key);
   }
   const before = transformSync(unstamped, { loader: 'js', minifyWhitespace: true,
