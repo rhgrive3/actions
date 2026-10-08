@@ -19,7 +19,10 @@ for (const kind of ['shooter','charger','roller','splatling','dualies','slosher'
     assert.equal(h.r.charging,false); assert.equal(h.r.streaming,false); assert.equal(h.r.rolling,false);
     assert.equal(h.a.ink,100,'no main ink spent during aim');
     h.step({subReleased:true,fire:true,firePressed:true});
-    assert.deepEqual(h.shots.map(s=>s.kind),['bomb'],'release emits only the bomb');
+    assert.deepEqual(h.shots.map(s=>s.kind),[], '#1037 uses one independent fixed tick after admission');
+    assert.equal(h.r.s3SubReady?.pending,true,'admitted release survives the use-startup boundary');
+    h.step();
+    assert.deepEqual(h.shots.map(s=>s.kind),['bomb'],'only the bomb emits on the next fixed tick');
     assert.equal(h.a.ink,100-h.SUB.bomb.inkCost);
     for(let i=0;i<120;i++) h.step();
     assert.deepEqual(h.shots.map(s=>s.kind),['bomb'],'aborted or released aim leaves no main action queued');
@@ -40,7 +43,8 @@ for(const kind of ['roller','slosher','blaster'])test(`#530 ${kind}: committed a
   const pending=()=>h.r.flick>=0||h.r.slosh>=0||h.r.s3BlasterWindup>0;
   assert.ok(pending());let ticks=0;while(pending()&&ticks++<180){h.step({sub:true});assert.equal(h.r.aimingSub,false);}
   assert.ok(ticks<180);assert.deepEqual(h.shots.map(s=>s.kind),[kind]);const lock=Math.max(h.r.s3FlickPostSub||0,h.r.s3PostShotRemaining||0);assert.ok(lock>0,'current release owns its post-shot sub gate');for(let age=1;age<=Math.ceil((lock+1e-9)/STEP)+1&&!h.r.aimingSub;age++)h.step({sub:true});assert.equal(h.r.aimingSub,true);
-  h.step({subReleased:true,fire:true,firePressed:true});assert.deepEqual(h.shots.map(s=>s.kind),[kind,'bomb']);
+  h.step({subReleased:true,fire:true,firePressed:true});assert.deepEqual(h.shots.map(s=>s.kind),[kind],'#1037 does not throw in the admission tick');
+  h.step();assert.deepEqual(h.shots.map(s=>s.kind),[kind,'bomb']);
 });
 test('#530 sub aim preserves elapsed cooldown/recovery and low-ink Bomb rejection',async()=>{
   const h=await rig('shooter');h.a.ink=1;h.r.cooldown=.5;h.r.flickRecover=.4;
