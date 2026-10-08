@@ -32,9 +32,12 @@ test('walking diagonal blends four source direction clips, not a faster procedur
   assert.ok(distance(front, clip(.28, 0, 1, 0, 1)) > .1, 'running uses a shorter source clip');
   assert.ok(distance(clip(.28, 0, 1, 0, 1), clip(.28, 0, 1, 1, 1)) > .1,
     'held run and shooting run use distinct 32-frame native reference clips');
+  // Compare samples at the same gait phase: .28 was tested above, while this
+  // directional sign crossing intentionally probes .21.
+  const straightAtCrossing = clip(.21, 0, 1);
   for (const x of [-1e-9, 0, 1e-9]) {
     const u = clip(.21, x, 1);
-    assert.ok(distance(u, front) < 1e-6, 'no abrupt source pose at a diagonal sign crossing');
+    assert.ok(distance(u, straightAtCrossing) < 1e-6, 'no abrupt source pose at a diagonal sign crossing');
   }
 });
 
