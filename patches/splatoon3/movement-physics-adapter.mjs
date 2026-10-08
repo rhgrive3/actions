@@ -52,6 +52,30 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
       '      }\n' +
       '      if (gh.hit) {',
       '#1160 head clearance and curb-side collision');
+    replace('      if (gh.hit && gh.y >= this.pos.y - 0.02 && (this.vel.y <= 0 || gh.y - this.pos.y < 0.02)) {',
+      '      const raisedLanding = gh.hit && gh.y > this.pos.y + 1e-4;\n' +
+      '      let landingFits = !raisedLanding || !G.physics.bodyFits ||\n' +
+      '        G.physics.bodyFits(_fitGround.set(this.pos.x, gh.y, this.pos.z), terrainRadius, lift, height, isSquid);\n' +
+      '      if (raisedLanding && !landingFits) {\n' +
+      '        // A jump can reach the same raised support as a step. Test its body fit,\n' +
+      '        // then resolve from below the support so the curb side remains solid.\n' +
+      '        const landingY = this.pos.y;\n' +
+      '        this.pos.y = Math.min(landingY, gh.y - up);\n' +
+      '        G.physics.collideBody(this.pos, terrainRadius, 0, height, this.contacts, true, isSquid);\n' +
+      '        if (this.contacts.wall) {\n' +
+      '          const n = this.contacts.wallNormal;\n' +
+      '          const vn = this.vel.x * n.x + this.vel.z * n.z;\n' +
+      '          if (vn < 0) { this.vel.x -= n.x * vn; this.vel.z -= n.z * vn; }\n' +
+      '        }\n' +
+      '        this.pos.y = landingY;\n' +
+      '        G.physics.groundProbe(this.pos.x, this.pos.y, this.pos.z, 0, P.stepDown, P.footRadius, gh, isSquid);\n' +
+      '        if (!isSquid) this._railFeet(gh, this.pos.y - P.stepDown, this.pos.y);\n' +
+      '        const lowerSupport = gh.hit && gh.y > this.pos.y + 1e-4;\n' +
+      '        landingFits = !lowerSupport || !G.physics.bodyFits ||\n' +
+      '          G.physics.bodyFits(_fitGround.set(this.pos.x, gh.y, this.pos.z), terrainRadius, lift, height, isSquid);\n' +
+      '      }\n' +
+      '      if (landingFits && gh.hit && gh.y >= this.pos.y - 0.02 && (this.vel.y <= 0 || gh.y - this.pos.y < 0.02)) {',
+      '#1160 airborne landing fit and curb-side collision');
     replace('    const side = _v2.set(mv.x, 0, mv.z);',
       '    const side = _v2.set(mv.x, 0, mv.z);\n    if (mh > 1) side.multiplyScalar(1 / mh);', 'wall lateral magnitude');
     replace('    } else if (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub) {',

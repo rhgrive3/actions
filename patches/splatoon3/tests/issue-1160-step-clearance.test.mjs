@@ -65,6 +65,23 @@ function advance(f, a, hz, seconds = 2) {
   return trace;
 }
 
+function jumpAdvance(f, a, hz, seconds = 2) {
+  advance(f, a, hz, 18 / 60); // build the approach used by the reviewer before the jump press
+  const clock = new f.FixedClock();
+  const trace = [];
+  let jumpPending = true;
+  for (let frame = 0; frame < hz * seconds; frame++) {
+    clock.advance(1 / hz, dt => {
+      f.G.time += dt;
+      a.intent.jump = jumpPending;
+      a.update(dt);
+      if (a.s3JumpSerial > 0) jumpPending = false;
+      trace.push({ y: a.pos.y, z: a.pos.z, grounded: a.grounded, wall: a.contacts.wall, jumpSerial: a.s3JumpSerial || 0 });
+    });
+  }
+  return trace;
+}
+
 test('#1160 full production composition rejects a blocked curb step without walking through its side', async () => {
   const f = await productionWorld(floorAndCurb(1.5));
   const radius = f.PLAYER.s3HumanoidTerrainRadiusRaw * f.PLAYER.s3TerrainDistanceScale;
@@ -89,6 +106,36 @@ test('#1160 full production composition rejects a blocked curb step without walk
     assert.equal(f.G.physics.bodyFits(a.pos, radius, f.PLAYER.stepUp, f.PLAYER.height), true,
       'the committed lower-floor body pose fits solid geometry');
     if (reference) assert.deepEqual(trace, reference, 'fixed gameplay ticks are independent of render cadence');
+    else reference = trace;
+  }
+});
+
+test('#1160 full production composition rejects a jump landing that cannot fit beneath a roof', async () => {
+  let reference;
+  for (const hz of [30, 60, 120]) {
+    const f = await productionWorld(floorAndCurb(1.5));
+    const a = actorAt(f);
+    const trace = jumpAdvance(f, a, hz);
+    assert.ok(a.s3JumpSerial > 0, 'the native Actor admitted the reviewer’s jump input');
+    const invalidLanding = trace.findIndex(row => row.grounded && row.y > 0.05);
+    assert.equal(invalidLanding, -1,
+      `a ${hz} Hz jump must not commit feet to the 0.30 m curb beneath the 1.50 m roof`);
+    assert.equal(trace.some(row => row.grounded && Math.abs(row.y) < 0.02 && row.wall), true,
+      'rejected raised support resolves against the curb side while retaining the lower floor');
+    assert.ok(Math.abs(a.pos.y) < 0.02);
+    assert.ok(a.pos.z <= CURB_FRONT - f.PLAYER.s3HumanoidTerrainRadiusRaw * f.PLAYER.s3TerrainDistanceScale + 0.03);
+    if (reference) assert.deepEqual(trace, reference, 'jump clearance agrees at 30/60/120 Hz render cadence');
+    else reference = trace;
+  }
+
+  reference = null;
+  for (const hz of [30, 60, 120]) {
+    const f = await productionWorld(floorAndCurb());
+    const a = actorAt(f);
+    const trace = jumpAdvance(f, a, hz);
+    assert.ok(trace.some(row => row.grounded && Math.abs(row.y - 0.3) < 0.01),
+      `an open ${hz} Hz jump still lands on the curb support`);
+    if (reference) assert.deepEqual(trace, reference, 'open jump landing agrees at 30/60/120 Hz render cadence');
     else reference = trace;
   }
 });
