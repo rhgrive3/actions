@@ -303,7 +303,7 @@ test('NetMatch replays owner paint once and remote projectile visuals never pain
   }
 });
 
-test('WeaponRunner admission pays once, releases once, and suppresses idle, low-ink and reset windups', async () => {
+test('WeaponRunner admission pays once, releases once, and suppresses idle, empty-ink and reset windups', async () => {
   const f = await setup();
   const { actor, projectiles, paintCalls } = f;
   const runner = actor.weaponRunner;
@@ -311,9 +311,10 @@ test('WeaponRunner admission pays once, releases once, and suppresses idle, low-
   runner.update(dt, { fire: false });
   assert.equal(paintCalls.length, 0);
   assert.equal(projectiles.list.length, 0);
-  actor.ink = actor.weapon.flickInk - 0.01;
+  // #305 permits positive-tank depletion swings; only an empty tank rejects.
+  actor.ink = 0;
   runner.update(dt, { fire: false, firePressed: true });
-  assert.equal(paintCalls.length, 0, 'insufficient ink is rejected before release');
+  assert.equal(paintCalls.length, 0, 'empty ink is rejected before release');
   assert.equal(projectiles.list.length, 0);
 
   actor.ink = 100;
