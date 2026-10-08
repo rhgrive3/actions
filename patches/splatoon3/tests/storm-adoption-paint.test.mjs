@@ -3,9 +3,12 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 
-// #905: a replayed (ghost) Ink Storm paints nothing locally because the owner's client authors its turf.
-// When the owner leaves and this host adopts the Actor (NetMatch._adopt sets remote=false) the live cloud must
-// author the rest of the rain; peers that still see the Actor as remote keep a visual-only ghost.
+// #905 native compatibility control: a replayed (ghost) Ink Storm paints nothing locally
+// while the owner's client authors turf. Raw upstream NetMatch can adopt an Actor, so
+// these tests preserve that hypothetical fallback when remote flips to false.
+// The *published S3 online* install uses #201 disconnect deactivation instead of
+// adopting a bot. Its actual owner-leave / no-orphan-Storm behavior is verified
+// separately in issue-six-followup-network-paint.test.mjs.
 async function storm({ ghost = true, remote = true } = {}) {
   const f = await fixture();
   const { G, THREE } = f; G.scene = new THREE.Scene(); G.netm = null; G.actors = [];
