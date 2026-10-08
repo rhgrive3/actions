@@ -443,6 +443,8 @@ test('partial Surge armor and Roller accepted-launch mode compose in the product
     a.climbing = true; a.grounded = false; a._updateClimb = () => {};
     f.tick(a, 1); a.intent.jump = false; f.tick(a, 1);
     assert.ok(!a.s3.surge || a.s3.surge.time <= 1e-10, 'short movement boost ended');
+    assert.equal(a.s3.actions.armor, null, '#568 no shield while still on the wall');
+    a._ledgePop(new f.THREE.Vector3(0, 0, -1));
     assert.ok(a.s3.actions.armor?.armorTime > 0, 'current independent shield remains alive');
     const hp = a.hp; a.damage(30, null, 'shooter'); assert.equal(a.hp, hp);
     assert.equal(a.s3.actions.armor.armorHP, Math.max(0,f.profile.movement.surge.armorHP-30));

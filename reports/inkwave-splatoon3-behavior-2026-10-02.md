@@ -1964,3 +1964,9 @@ Validation before publication:
 - The four PR1173 regression tests also pass on this branch. PR1173's exact-head follow-up run `37854570747` has 128 native failures, identical by name to PR1172 run `37846910846` (zero added/removed), and its `seven_claims` job is green. Its overall CI remains red: active/browser and UI failures are reported separately; the UI selection-ring failure is not assumed to belong to a base owner without evidence.
 
 Full Switch captures remain outstanding for wall-paint shape/default ground behavior, post-Slam landing timing and network latency equivalence. The implementation and tests do not mark those measurement gaps as verified.
+
+### Same-batch CI compatibility follow-up
+
+The first PR1174 head `c5eb685f17a3cd077fed511afcee0f21e9479372`, run `37857488610`, passes both focused jobs, including 61 emitted/composed tests and all four Chromium/WebKit × desktop/touch browser cases. Runtime build revision is `ac4a8bfb83af0c67f28b56499bbaed85747950882db984bb2079c2b069145820`.
+
+A targeted scan of the existing Surge suite found five passing-on-parent tests whose fixtures still started armor on B release. These are this batch's compatibility regressions, not base failures. `movement-resources`, `movement-motion` (two cases), `armor-charger-batch` and `roller-freefall` now assert reserved eligibility on the wall and use the native ledge launch before shield assertions. The independent 45F test advances the game clock for its direct action updates. Existing charge, pose, timer, damage and Roller mode assertions remain. All five corrected cases pass and are added to the exact-head focused CI job. This follow-up changes tests/workflow/report only; production runtime and build bytes are unchanged. The inherited #208 ceiling-contact failure is outside this follow-up and remains with the base owner.

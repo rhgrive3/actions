@@ -59,13 +59,17 @@ test('#208 floor 18F and wall 45F armor outlive the 15F roll motion without exte
 
 test('#208 surge armor retains its independent45F clock after boost; partial charge is covered too',async()=>{
   const f=await fixture(),a=f.make();wallFixture(f,a);burst(f,a);
+  assert.equal(a.s3.actions.armor,null);assert.equal(a.s3.surge.armorPending,true);
+  for(let i=0;i<44;i++){f.G.time+=1/60;f.beforeActions(a,1/60,false);}
+  assert.equal(a.s3.surge.phase,'auto-climb');close(a.s3.surge.time,0);
+  a._ledgePop(new f.THREE.Vector3(0,0,-1));
   const shield=a.s3.actions.armor;close(shield.armorTime,.75);
-  for(let i=0;i<44;i++)f.beforeActions(a,1/60,false);
-  assert.equal(a.s3.surge.phase,'auto-climb');close(a.s3.surge.time,0);assert.ok(shield.armorTime>0);
-  a.damage(20,null,'shooter');close(a.hp,100);
-  f.beforeActions(a,1/60,false);a.damage(20,null,'shooter');close(a.hp,80);
+  for(let i=0;i<44;i++){f.G.time+=1/60;f.beforeActions(a,1/60,false);}
+  assert.ok(shield.armorTime>0);a.damage(20,null,'shooter');close(a.hp,100);
+  f.G.time+=1/60;f.beforeActions(a,1/60,false);a.damage(20,null,'shooter');close(a.hp,80);
   const b=f.make();wallFixture(f,b);b.intent.jump=true;f.beforeActions(b,1/60,false);
-  b.intent.jump=false;f.beforeActions(b,1/60,false);assert.ok(b.s3.actions.armor.armorTime>0);
+  b.intent.jump=false;f.beforeActions(b,1/60,false);assert.equal(b.s3.actions.armor,null);
+  b._ledgePop(new f.THREE.Vector3(0,0,-1));close(b.s3.actions.armor.armorTime,.75);
   b.damage(20,null,'shooter');close(b.hp,100);
 });
 
