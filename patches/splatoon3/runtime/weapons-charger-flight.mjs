@@ -108,7 +108,8 @@ export function installChargerFlight(api,completion) {
       if(actor.weaponRunner)actor.weaponRunner.s3ChargerPostShot=16/60;
       emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});
       if(actor.isLocal)emit('recoil',{amount:.005+charge*.013});
-      if(actor.isLocal)G.input?.rumble?.(.12+charge*.45,.2+charge*.35,80+charge*90);
+      // #982: S3 Charger fires below 50% without shot vibration.
+      if(actor.isLocal && charge >= .5)G.input?.rumble?.(.12+charge*.45,.2+charge*.35,80+charge*90);
     }
     if(actor.isLocal||actor._nearCamera?.())G.audio?.play('shoot_charger',{pos:actor.isLocal?undefined:origin,volume:actor.isLocal ? .8 : .6,pitch:1.08-.16*charge});
   }
