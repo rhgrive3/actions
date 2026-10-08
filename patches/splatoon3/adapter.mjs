@@ -35,6 +35,40 @@ export function replaceOnce(source, before, after, label) {
   return source.slice(0, first) + after + source.slice(first + before.length);
 }
 
+function attachPaintShaderOwnershipContract(code) {
+  const start = code.indexOf('vec4 kindShape(float k) {');
+  const end = code.indexOf('\n}\nvoid main()', start);
+  if (start < 0 || end < 0) throw new Error('INKWAVE patch conflict (paint shader mask contract): kindShape is missing');
+  const shapeSource = code.slice(start, end);
+  const rows = [...shapeSource.matchAll(/if \(k < [\d.]+\) return vec4\(([\d.]+), ([\d.]+), ([\d.]+), ([\d.]+)\);/g)];
+  if (rows.length !== 6) throw new Error('INKWAVE patch conflict (paint shader mask contract): expected six native kind masks');
+  const kindShapes = rows.map(row => row.slice(1).map(Number));
+  const anchors = [
+    'float hsh(float n) { return fract(sin(n) * 43758.5453123); }',
+    'float smin(float a, float b, float k)',
+    'float sdRay(vec2 p, vec2 a, vec2 b, float ra, float rb)',
+    'float tsp = 1.0 - pow(1.0 - clamp(tn * 1.4, 0.0, 1.0), 3.0);',
+    'float land = smoothstep(tl, tl + 0.2, tn);',
+    'if (tn < 0.45 + 0.95 * h2) continue;',
+    'float nD = min(6.0, ks.w + floor(R * 1.2));',
+    'float a = 1.0 - smoothstep(-1.5 * fw, 1.5 * fw, sd);',
+  ];
+  for (const anchor of anchors) {
+    if (code.indexOf(anchor) < 0 || code.indexOf(anchor, code.indexOf(anchor) + anchor.length) >= 0) {
+      throw new Error(`INKWAVE patch conflict (paint shader mask contract): expected one native anchor ${anchor}`);
+    }
+  }
+  return replaceOnce(code,
+    'const BAND_L = 0.55, BAND_W = 0.62, BAND_R = 0.1;',
+    `const BAND_L = 0.55, BAND_W = 0.62, BAND_R = 0.1;\n` +
+    `export const PAINT_GPU_OWNERSHIP_CONTRACT = Object.freeze({\n` +
+    `  kind: Object.freeze({ ...K }), reach: Object.freeze(REACH.slice()), dripReach: DRIP_REACH,\n` +
+    `  band: Object.freeze([BAND_L, BAND_W, BAND_R]),\n` +
+    `  kindShapes: Object.freeze(${JSON.stringify(kindShapes)}.map(row => Object.freeze(row))),\n` +
+    `});`,
+    'native paint shader ownership contract');
+}
+
 export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
   const lock = JSON.parse(fs.readFileSync(path.join(patchRoot, 'upstream-lock.json'), 'utf8'));
   const conflicts = [];
@@ -112,6 +146,7 @@ export function adaptSource(rel, code) {
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
   code = adaptPaintSplatPool(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptKitRescue(rel, code, replaceOnce);
+  if (rel === 'src/world/paint.js') code = attachPaintShaderOwnershipContract(code);
   if (rel === 'src/world/paint.js') {
     code = replaceOnce(code,
       '  float tn = vGrow.x;',
@@ -976,7 +1011,9 @@ export function adaptSource(rel, code) {
 
   if (rel === 'src/world/paint.js') {
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
-      code + '\ninstallIssue570PaintPresentation(PaintSystem);\n';
+      "import { installIssue264PaintOwnership } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" +
+      code + '\ninstallIssue570PaintPresentation(PaintSystem);\n' +
+      'installIssue264PaintOwnership(PaintSystem, PAINT_GPU_OWNERSHIP_CONTRACT, blobWobble);\n';
   }
   return code;
 }

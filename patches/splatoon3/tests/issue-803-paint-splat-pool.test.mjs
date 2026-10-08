@@ -12,7 +12,7 @@ const UPSTREAM = path.join(ROOT, 'inkwave-public');
 const PAINT_PATH = path.join(UPSTREAM, 'src/world/paint.js');
 const THREE_PATH = path.join(UPSTREAM, 'vendor/three/build/three.module.js');
 
-async function loadPaintSystem({ adapted, countNativeAllocations = false }) {
+async function loadPaintSystem({ adapted, countNativeAllocations = false, ownership = true }) {
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   function resolve(spec, from) {
@@ -26,6 +26,11 @@ async function loadPaintSystem({ adapted, countNativeAllocations = false }) {
     if (modules.has(file)) return modules.get(file);
     const original = fs.readFileSync(file, 'utf8');
     let source = adapted && file === PAINT_PATH ? adaptSource('src/world/paint.js', original) : original;
+    if (adapted && file === PAINT_PATH && !ownership) {
+      const install = 'installIssue264PaintOwnership(PaintSystem, PAINT_GPU_OWNERSHIP_CONTRACT, blobWobble);\n';
+      assert.equal(source.split(install).length - 1, 1, 'the production ownership hook can be isolated for the pooling-only baseline');
+      source = source.replace(install, '');
+    }
     if (countNativeAllocations && file === PAINT_PATH) {
       for (const [before, after] of [
         ['    const entries = [];', '    this._nativeSplatStats.entryArraysCreated++;\n    const entries = [];'],
@@ -92,9 +97,10 @@ function makeOwner(Actor) {
   });
 }
 
-test('#803: installed adapter preserves native seeded Turf area, cell ownership, and special credit', async () => {
+test('#803: pooling preserves native growth behavior; Issue #264 adds the full shader turf mask', async () => {
   const native = await loadPaintSystem({ adapted: false });
   const installed = await loadPaintSystem({ adapted: true });
+  const pooledWithout264 = await loadPaintSystem({ adapted: true, ownership: false });
   const { Actor } = await fixture();
 
   function run(runtime, adapted) {
@@ -124,11 +130,19 @@ test('#803: installed adapter preserves native seeded Turf area, cell ownership,
   }
 
   const before = run(native, false);
+  const poolOnly = run(pooledWithout264, true);
   const after = run(installed, true);
   const immediate = e => e[2] === 3 && e[3] === 0 && e[4] === false;
   assert.equal(after.events.filter(immediate).length, 5, 'current #570 submits exactly one immediate body for each non-instant splat');
   assert.deepEqual(after.events.filter(immediate).map(e => e.slice(0, 5)), [[0,.14,3,0,false],[1,.73,3,0,false],[1,.8,3,0,false],[0,.37,3,0,false],[1,.91,3,0,false]]);
-  assert.deepEqual({ ...after, events: after.events.filter(e => !immediate(e)) }, before);
+  assert.deepEqual({ ...poolOnly, events: poolOnly.events.filter(e => !immediate(e)) }, before,
+    'entry/growth pooling alone retains the pre-#264 CPU ownership and full-growth emission order');
+  assert.deepEqual(after.events.filter(e => !immediate(e)), poolOnly.events.filter(e => !immediate(e)),
+    'Issue #264 preserves the native full-growth draw/order events');
+  assert.ok(after.areas.every((area, i) => area >= poolOnly.areas[i]), 'the supported final shader footprint cannot reduce native area credit');
+  assert.ok(after.actorTurf > poolOnly.actorTurf && after.special > poolOnly.special,
+    'the newly CPU-owned normal ink reaches the existing Turf and special-credit callers');
+  assert.notDeepEqual(after.grid, poolOnly.grid, 'the production CPU grid now contains the shader-supported ancillary cells');
   assert.ok(before.areas.some(area => area > 0));
   assert.ok(before.special > 0);
 });
