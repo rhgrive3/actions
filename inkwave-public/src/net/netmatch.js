@@ -49,6 +49,8 @@ export class NetMatch {
     this.cfg = cfg;
     this.myId = session.myId;
     this.byNid = new Map();
+    this.hitNextSeq = 0;
+    this.hitPending = new Map(); // capped, for relay-confirmed undeliverable hits
     this.peers = new Map();        // sender id → playback clock { off, delay, want, tr, rate, lastTs, events }
     this.out = [];                 // events recorded since the last tick
     this.tickT = 0;
@@ -96,6 +98,7 @@ export class NetMatch {
   dispose() {
     for (const u of this.unsubs) u();
     this.unsubs.length = 0;
+    this.hitPending.clear();
     for (const a of this.byNid.values()) this._stopLoops(a);
     if (G.netm === this) G.netm = null;
   }
@@ -142,8 +145,26 @@ export class NetMatch {
   // hits land on the victim's owner right away (not on the playback timeline: health must be current)
   sendHit(attacker, victim, dmg, wid) {
     if (victim.owner === this.myId) return false;
-    this.s.tr?.sendTo(victim.owner, { k: 'hit', v: victim.nid, a: attacker.nid, d: r2(dmg), w: wid });
+    const message = { k: 'hit', v: victim.nid, a: attacker.nid, d: r2(dmg), w: wid,
+      seq: ++this.hitNextSeq };
+    this.hitPending.set(message.seq, { message, oldOwner: victim.owner });
+    while (this.hitPending.size > 64) this.hitPending.delete(this.hitPending.keys().next().value);
+    this.s.tr?.sendTo(victim.owner, message);
     return true;
+  }
+  // A relay-owned negative delivery acknowledgement is sent only if the
+  // addressed peer no longer exists. Process it after the ordered leave notice
+  // has transferred this exact victim to the new authoritative owner.
+  _hitNack(d) {
+    const pending = this.hitPending.get(d.seq);
+    if (!pending || pending.oldOwner !== d.to) return;
+    this.hitPending.delete(d.seq);
+    const victim = this.byNid.get(pending.message.v);
+    const attacker = this.byNid.get(pending.message.a);
+    if (!victim?.alive || !attacker || attacker.owner !== this.myId ||
+        victim.owner === pending.oldOwner) return;
+    if (victim.owner === this.myId) this._hit(pending.message, this.myId);
+    else this.s.tr?.sendTo(victim.owner, pending.message);
   }
 
   _sendNow(d) { this.s.tr?.broadcast(d); }
@@ -186,7 +207,8 @@ export class NetMatch {
   onMessage(from, d) {
     switch (d.k) {
       case 't': this._tick(from, d); break;
-      case 'hit': this._hit(d); break;
+      case 'hit': this._hit(d, from); break;
+      case 'hit_nack': if (from === '__relay__') this._hitNack(d); break;
       case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d); break;
       case 'st': if (from === this.s.hostId) this._hostState(d); break;
       case 'res': if (from === this.s.hostId) this._result(d); break;
@@ -590,12 +612,13 @@ export class NetMatch {
   }
 
   // ---- hits (victim's owner) ------------------------------------------------------------------------------------------
-  _hit(d) {
+  _hit(d, from) {
     const v = this.byNid.get(d.v), atk = this.byNid.get(d.a);
-    if (!v || v.remote || !v.alive || !atk || atk.team === v.team) return;
+    if (!v || v.remote || !v.alive || !atk || atk.team === v.team ||
+        atk.owner !== from || !Number.isFinite(d.d) || d.d <= 0 || d.d > 10000) return;
     this._applyingHit = true;
-    G.projectiles?.applyHit(atk, v, d.d, d.w);
-    this._applyingHit = false;
+    try { G.projectiles?.applyHit(atk, v, d.d, d.w); }
+    finally { this._applyingHit = false; }
   }
 
   // ---- host clock / state / result --------------------------------------------------------------------------------------
