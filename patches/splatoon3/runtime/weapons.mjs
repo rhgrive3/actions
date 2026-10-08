@@ -324,7 +324,7 @@ export function installWeapons(context, profile) {
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false; this.s3BlasterMoveRemaining = 0;
     this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
-    this.s3SloshRecovery = false;
+    this.s3SloshRecovery = false; this.s3SloshPrevYaw = null; this.s3SloshTurnDelta = 0;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0;
     this.s3SplatlingHeld = false;
     // #726 fresh-start state: pending humanoid startup seconds, the
@@ -696,11 +696,30 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype._slosher = function (dt, inp, w) {
     const a = this.a, epsilon = 1e-10;
+    // #258: sample consecutive fixed-simulation aim headings during the
+    // committed windup. A stationary aim or first sample must have zero sweep.
+    if (this.slosh >= 0) {
+      const aim = a.aimDir;
+      const yaw = aim && Number.isFinite(aim.x) && Number.isFinite(aim.z)
+        ? Math.atan2(aim.x, aim.z) : Number.isFinite(a.aimYaw) ? a.aimYaw : null;
+      if (yaw !== null) {
+        const prior = this.s3SloshPrevYaw;
+        const delta = Number.isFinite(prior)
+          ? Math.atan2(Math.sin(yaw - prior), Math.cos(yaw - prior)) : 0;
+        // Current S3 verification: a maximum ten degrees of sweep per 60 Hz step.
+        this.s3SloshTurnDelta = Math.max(-Math.PI / 18, Math.min(Math.PI / 18, delta));
+      } else this.s3SloshTurnDelta = 0;
+      this.s3SloshPrevYaw = yaw;
+    } else {
+      this.s3SloshPrevYaw = null;
+      this.s3SloshTurnDelta = 0;
+    }
     const release = () => {
       // Preserve fractional seconds at both boundaries. Without the epsilon,
       // 12 * (1/60) misses .2 and the 17F recovery also gains an extra tick.
       const carry = Math.max(0, this.slosh - w.windup);
       this.slosh = -1; G.projectiles.fireSlosh(a, w);
+      this.s3SloshTurnDelta = 0; this.s3SloshPrevYaw = null;
       this.s3SloshPostShot = w.postShotLock ?? 0;
       a.lastFire = 0;
       this.s3PostShotRemaining = w.postShotDelay;
