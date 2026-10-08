@@ -3,13 +3,16 @@ import { replaceOnce } from './input-adapter.mjs';
 const INPUT_REL = 'src/core/input.js';
 const JOYCON_HELPERS = String.raw`
 // Chromium's native Gamepad.id includes these Nintendo vendor/product fields.
-// Only its standard-mapped split Joy-Con IDs are eligible for composition.
+// Its standard-mapped standalone Joy-Con shape is 17 buttons and 2 axes.
+const INKWAVE_JOYCON_BUTTON_COUNT = 17;
+const INKWAVE_JOYCON_AXIS_COUNT = 2;
 const INKWAVE_JOYCON_L_ID = /Vendor:\s*057e\s+Product:\s*2006\b/i;
 const INKWAVE_JOYCON_R_ID = /Vendor:\s*057e\s+Product:\s*2007\b/i;
 function inkwaveIsJoyCon(pad, side) {
   const id = side === 'L' ? INKWAVE_JOYCON_L_ID : INKWAVE_JOYCON_R_ID;
   return !!pad && pad.connected === true && pad.mapping === 'standard' && Number.isInteger(pad.index) &&
-    typeof pad.id === 'string' && id.test(pad.id) && pad.axes?.length >= 4 && pad.buttons?.length >= 22;
+    typeof pad.id === 'string' && id.test(pad.id) &&
+    pad.axes?.length === INKWAVE_JOYCON_AXIS_COUNT && pad.buttons?.length === INKWAVE_JOYCON_BUTTON_COUNT;
 }
 function inkwaveJoyConButton(pad, index) {
   const source = pad.buttons?.[index];
