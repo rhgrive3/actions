@@ -173,6 +173,21 @@ export function applySlosherVolleyHit(system, owner, victim, group, groupId, amo
 function volleyOwnerKey(owner, groupId) {
   return JSON.stringify([owner.owner ?? null, owner.nid ?? owner.name ?? 'actor', String(groupId)]);
 }
+// Retain enough concurrent/delayed volleys for a full match, but never let
+// peer-provided group IDs grow the victim-owner ledger without bound. Evicted
+// numeric sequences are tombstoned by authenticated owner+actor identity so
+// replay cannot re-open the damage budget after eviction.
+export const SLOSHER_OWNER_GROUP_LIMIT = 2048;
+const SLOSHER_GROUP_ID_LIMIT = 96;
+function slosherSequence(groupId) {
+  if (typeof groupId !== 'string' || groupId.length === 0 || groupId.length > SLOSHER_GROUP_ID_LIMIT) return null;
+  const match = /:([1-9][0-9]{0,14})$/.exec(groupId);
+  return match ? Number(match[1]) : null;
+}
+function volleySourceKey(owner) {
+  return JSON.stringify([owner.owner ?? null, owner.nid ?? owner.name ?? 'actor']);
+}
+
 export function distanceDamage(bands, distance, linear = true) {
   if (!bands?.length) return 0;
   if (distance <= bands[0][0]) return bands[0][1];
@@ -682,10 +697,28 @@ export function installWeapons(context, profile) {
       return applyHit.call(this, attacker, victim, damage, weaponId, groupId);
     const route = G.netm?.shouldApplyHit?.(attacker, victim);
     if (route === 'send' || route === 'drop') return applyHit.call(this, attacker, victim, damage, weaponId, groupId);
+    // Reject unbounded/malformed remote IDs before allocating a wire ledger.
+    const sequence = slosherSequence(groupId);
+    if (sequence === null) return 'rejected';
     const groups = this._s3SlosherOwnerGroups || (this._s3SlosherOwnerGroups = new Map());
+    const floors = this._s3SlosherOwnerFloors || (this._s3SlosherOwnerFloors = new Map());
+    const source = volleySourceKey(attacker);
+    if (sequence <= (floors.get(source) || 0)) return 'rejected';
     const key = volleyOwnerKey(attacker, groupId);
     let group = groups.get(key);
-    if (!group) { group = new WeakMap(); groups.set(key, group); }
+    if (!group) {
+      if (groups.size >= SLOSHER_OWNER_GROUP_LIMIT) {
+        const retired = groups.keys().next().value;
+        const [owner, actorId, retiredId] = JSON.parse(retired);
+        const retiredSequence = slosherSequence(retiredId);
+        if (retiredSequence === null) return 'rejected'; // preserve fail-closed replay safety
+        const retiredSource = JSON.stringify([owner, actorId]);
+        floors.set(retiredSource, Math.max(floors.get(retiredSource) || 0, retiredSequence));
+        groups.delete(retired);
+        if (sequence <= (floors.get(source) || 0)) return 'rejected';
+      }
+      group = new WeakMap(); groups.set(key, group);
+    }
     const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
     if (!(delta > 0)) return 'accepted';
     const hpBefore = victim.hp, aliveBefore = victim.alive;
@@ -696,6 +729,7 @@ export function installWeapons(context, profile) {
   const clearProjectiles = Projectiles.prototype.clear;
   Projectiles.prototype.clear = function (...args) {
     this._s3SlosherOwnerGroups?.clear();
+    this._s3SlosherOwnerFloors?.clear();
     return clearProjectiles.apply(this, args);
   };
   installContactRecovery(api);
