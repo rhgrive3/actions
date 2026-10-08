@@ -23,7 +23,10 @@ export function validateDetailReceipts(loaded) {
   for (const module of ['bomb-motion','flow-motion','weapon-detail-motion'])
     if (!loaded.some(file=>file.endsWith('/patches/splatoon3/runtime/'+module+'.mjs'))) throw Error('Actual detail module not loaded: '+module);
 }
-export function validateDetailResult(result) {
+export // #1037: native Splat Bomb creation follows the admitted sub release by
+// 1 fixed frame. The held pose is still sampled on frame 29, while the actual
+// projectile/contact is asserted on frame 31 rather than the input edge (30).
+function validateDetailResult(result) {
   if(result.pixelControls?.dither!==false||result.pixelControls?.samples!==0||result.pixelControls?.target!=='explicit-srgb-rgba8')throw Error('Controlled detail pixel framebuffer');
   const finite=(v,path)=>{ if(typeof v!=='number'||!Number.isFinite(v))throw Error('Non-finite detail '+path); };
   const numericTree=(v,path)=>{ if(typeof v==='number')finite(v,path);else if(v&&typeof v==='object')for(const [key,value] of Object.entries(v))numericTree(value,path+'.'+key); };
@@ -78,9 +81,9 @@ export function validateDetailResult(result) {
     if(!disposed?.disposed||disposed.resources!==0||disposed.aliveParticles!==0)throw Error('Flow resources survived Character disposal: '+name);
     const peak=Math.max(...samples.map(s=>Math.abs(s.rcP))),tail=samples.slice(-24);
     if(scenario.type==='bomb') {
-      if(releaseFrames.length!==1||releaseFrames[0].frame!==31||!samples[30].heldVisible||samples[31].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
-      if(scenario.kind==='dualies'&&(samples[30].leftPistolVisible||!samples.at(-1).leftPistolVisible))throw Error('Bomb dualies pistol recovery regression');
-      const held=renderMetrics.find(m=>m.frame===30)?.heldBomb,released=renderMetrics.find(m=>m.frame===31)?.releasedBomb;
+      if(releaseFrames.length!==1||releaseFrames[0].frame!==31||!samples[29].heldVisible||samples[31].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
+      if(scenario.kind==='dualies'&&(samples[29].leftPistolVisible||!samples.at(-1).leftPistolVisible))throw Error('Bomb dualies pistol recovery regression');
+      const held=renderMetrics.find(m=>m.frame===29)?.heldBomb,released=renderMetrics.find(m=>m.frame===31)?.releasedBomb;
       if(!held||held.indexedVertices<50||held.nearestLeft>=.12||!released||released.indexedVertices<100||released.nearestLeft>=.22)throw Error('Actual indexed bomb/hand contact regression: '+name);
       if(samples[29].ik.slice(0,2).some(e=>e>=.015)||tail.some(s=>s.ik.slice(0,2).some(e=>e>=.015)))throw Error('Native bomb arm reach regression: '+name);
       if(releaseFrames[0].meshOriginError>1e-10||releaseFrames[0].releaseSnapshotError>1e-8)throw Error('Rendered/collision bomb release regression: '+name);
@@ -246,7 +249,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
     ];
     const data = [], images = [];
     const pixels=()=>{const gl=renderer.getContext(),p=new Uint8Array(960*720*4);renderer.readRenderTargetPixels(pixelTarget,0,0,960,720,p);return p;};
-    const drawable=root=>{for(let node=root;node;node=node.parent)if(!node.visible)return false;return true;};
+    const drawable=root=>{if(!root)return false;for(let node=root;node;node=node.parent)if(!node.visible)return false;return true;};
     function drawnContact(root,left,right) {
       if(!drawable(root))throw Error('Attempt to measure an invisible indexed draw');
       let indexedVertices=0,nearestLeft=Infinity,nearestRight=Infinity;const point=new THREE.Vector3();
@@ -337,7 +340,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       images.push({name:scenario.name+'-'+String(frame).padStart(3,'0'),image});
       const left=ch.bones.handL.getWorldPosition(new THREE.Vector3()),right=ch.bones.handR.getWorldPosition(new THREE.Vector3());
       if(nativeRenderState()!==beforeRender)throw Error('Rendered pair advanced native clocks/gameplay: '+scenario.name+' frame '+frame);
-      return {frame,renderClocksStable:true,rig,rigDiagnostic,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===31?drawnContact(projectiles.bombs.at(-1)?.mesh,left,right):null};
+      return {frame,renderClocksStable:true,rig,rigDiagnostic,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon?.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb?.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===31?drawnContact(projectiles.bombs.at(-1)?.mesh,left,right):null};
     }
     try {
     for (const scenario of cases) {

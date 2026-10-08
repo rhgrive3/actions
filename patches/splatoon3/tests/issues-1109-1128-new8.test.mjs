@@ -5,13 +5,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { adaptSource } from '../adapter.mjs';
-import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const readPublic = rel => fs.readFileSync(path.join(ROOT, 'inkwave-public', rel), 'utf8');
 const readPatch = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const s3 = rel => adaptSource(rel, readPublic(rel));
-const networked = rel => adaptNetworkSource(rel, s3(rel));
+// Replication applies after gameplay, touch, reliability and quality overlays.
+// Partial composition misses the shared action-clock anchor introduced there.
+const networked = rel => adaptBuildSource(rel, readPublic(rel));
 
 test('#1128 Roller flick launch uses legal actor aim pitch without the legacy plateau clamp', () => {
   const code = readPatch('patches/splatoon3/runtime/weapons-fidelity.mjs');

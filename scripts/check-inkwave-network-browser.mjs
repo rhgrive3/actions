@@ -64,21 +64,21 @@ try{
  await pages[1].evaluate(c=>NG.net.join(c,'Network Guest'),code);
  await pages[0].waitForFunction(()=>NG.net.lobby.players.length===2);
  await pages[1].waitForFunction(()=>NG.net.lobby.players.length===2);
- // S3 Private Turf is host-assigned and launch-confirmed. A guest cannot
- // self-select teams and both players must explicitly ready AFTER confirmation.
+ // #1039/#1103: setting weapons and room rules invalidates readiness. The
+ // host must confirm assignments, then BOTH participants ready up before Turf.
+ await pages[1].evaluate(()=>NG.net.setMe({weapon:'roller'}));
+ await pages[0].evaluate(()=>{NG.net.setMe({weapon:'roller'});NG.net.setSettings({bots:false});});
+ await pages[0].waitForFunction(()=>NG.net.lobby.players.length===2 &&
+   NG.net.lobby.players.every(p=>p.weapon==='roller'),null,{timeout:30000});
  await pages[0].evaluate(()=>{
-  const net=NG.net;
-  net.setSettings({bots:false});
-  const guest=net.lobby.players.find(p=>p.id!==net.myId);
-  if(!guest || !net.assignTeam(net.myId,0) || !net.assignTeam(guest.id,1) ||
-     !net.confirmTeams()) throw Error('Network fixture could not confirm two-player Turf teams');
+   if(!NG.net.confirmTeams())throw Error('Network host could not confirm Turf teams');
  });
- await pages[1].waitForFunction(()=>NG.net.lobby.teamsConfirmed===true);
- await pages[1].evaluate(()=>NG.net.setMe({weapon:'roller',ready:true}));
- await pages[0].waitForFunction(()=>NG.net.lobby.players.some(p=>p.id!==NG.net.myId&&p.ready));
+ await pages[1].waitForFunction(()=>NG.net.lobby.teamsConfirmed===true,null,{timeout:30000});
+ await pages[1].evaluate(()=>NG.net.setMe({ready:true}));
+ await pages[0].evaluate(()=>NG.net.setMe({ready:true}));
+ await pages[0].waitForFunction(()=>NG.net.canStart(),null,{timeout:30000});
  await pages[0].evaluate(()=>{
-  NG.net.setMe({weapon:'roller',ready:true});
-  if(!NG.net.start()) throw Error('Network fixture rejected confirmed Turf start');
+   if(!NG.net.start())throw Error('Confirmed and ready Turf match did not start');
  });
  await Promise.all(pages.map(p=>p.waitForFunction(()=>NG.game.match?.state==='playing'&&NG.net.active,null,{timeout:180000})));
  console.log('network browser match ready');for(const page of pages)await page.evaluate(baseline=>{

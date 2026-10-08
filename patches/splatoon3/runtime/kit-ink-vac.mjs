@@ -310,8 +310,10 @@ function absorbedDamageEquivalent(projectile) {
 // Its independently known, authenticated shooter's weapon bounds proposals.
 function proposalWeaponDamage(weapon) {
   if (!weapon) return 0;
-  const value = [weapon.damage, weapon.damageHead, weapon.directDamage,
-    weapon.flickDamageNear].find(v => Number.isFinite(v) && v > 0);
+  // The receiver's equipped weapon bounds the claimed projectile damage.
+  // Chargers have a charge-dependent damageMax, not a fixed damage scalar.
+  const value = [weapon.damage, weapon.damageMax, weapon.damageHead, weapon.directDamage,
+    weapon.flickDamageNear, weapon.damageMin].find(v => Number.isFinite(v) && v > 0);
   return value || 0;
 }
 // Use the projectile's damage BEFORE neutralising it. Native bombs may carry
@@ -567,7 +569,10 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     if (ledger.set.has(key)) return drop('duplicate-proposal');
     ledger.set.add(key); ledger.order.push(key);
     while (ledger.order.length > PROPOSAL_MEMORY) ledger.set.delete(ledger.order.shift());
-    creditCharge(state, proposalWeaponDamage(actor.weapon)); // owner-derived, never packet-supplied
+    // Keep fractional/partial-hit damage from the proposal, but NEVER credit
+    // more than the sender's locally resolved weapon can deliver. Missing
+    // authenticated weapon data fails closed with zero charge.
+    creditCharge(state, Math.min(damage, proposalWeaponDamage(actor.weapon)));
     return { applied: true, serial, charge: state.charge };
   }
 
@@ -670,9 +675,13 @@ export function installKitInkVac(context, _profile) {
         inkVacUpdate(this, dt);
       } else if (state.phase === 'exhale') {
         state.t += dt;
+        // A held suction ZR is not a NEW shot request. It waits until release.
+        // A fresh press after suction, however, authors the return shot at once.
+        const freshPressEdge = !state.exhaleArmed && !state.fireHeld && !!fire;
         const releaseEdge = state.exhaleArmed && state.fireHeld && !fire;
-        if (fire) state.exhaleArmed = true;
+        if (fire && !freshPressEdge) state.exhaleArmed = true;
         state.fireHeld = !!fire;
+        if (freshPressEdge) { release(state); return result; }
         if (releaseEdge || state.t + 1e-10 >= INK_VAC_CALIBRATION.exhaleHoldSeconds) release(state);
       }
       return result;
