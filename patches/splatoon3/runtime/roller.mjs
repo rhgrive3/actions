@@ -247,7 +247,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       if (!h?.hit || Math.abs(h.normal.y) >= WALL_BAND) continue;
       wallContact.copy(h.point).addScaledVector(h.normal, .025);
       const painted = G.paint.splat(wallContact, ROLLER_BODY_RADIUS, a.team,
-        { kind: 'roll', seed: ((Math.imul((Math.round(G.time * 60) || 0) + i + 7, 2654435761) >>> 0) / 4294967296) });
+        { kind: 'roll', seed: ((Math.imul((Math.round(G.time * 60) || 0) + i + 7, 2654435761) >>> 0) / 4294967296), claimOwner: a });
       if (Number.isFinite(painted)) area += painted;
     }
     if (area) a.addTurf(area);

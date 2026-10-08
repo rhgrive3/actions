@@ -22,6 +22,7 @@ import { adaptChargerSightCache } from './charger-sight-cache-adapter.mjs';
 import { adaptJuddResult } from './judd-result-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
 import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
+import { adaptPaintOwnership } from './paint-ownership-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -960,6 +961,22 @@ export function adaptSource(rel, code) {
       '    if (G.boss && hs > 1.0) {',
       '    if (G.boss && rollerStickActive(a)) {',
       'Roller micro-speed boss contact admission');
+    code = replaceOnce(code,
+      "seed: Math.random(), kind: 'roll', stretch: _fwd });",
+      "seed: Math.random(), kind: 'roll', stretch: _fwd, claimOwner: a });",
+      'roller body ownership credit');
+    code = replaceOnce(code,
+      '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25 });',
+      '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner });',
+      'slosher impact paint ownership credit');
+    code = replaceOnce(code,
+      'area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });',
+      'area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7, claimOwner: p.owner });',
+      'projectile impact paint ownership credit');
+    code = replaceOnce(code,
+      '0.45 + Math.random() * 0.35, c.team, { seed: Math.random() }));',
+      '0.45 + Math.random() * 0.35, c.team, { seed: Math.random(), claimOwner: c.owner }));',
+      'Storm rain paint ownership credit');
     return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
@@ -1426,9 +1443,13 @@ export function adaptSource(rel, code) {
   }
 
   if (rel === 'src/world/paint.js') {
+    code = adaptPaintOwnership(rel, code, replaceOnce);
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
-      code + '\ninstallIssue570PaintPresentation(PaintSystem);\n';
+      "import { installIssue264PaintOwnership } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" +
+      code + '\ninstallIssue570PaintPresentation(PaintSystem);\n' +
+      'installIssue264PaintOwnership(PaintSystem, { kind: K, reach: REACH, dripReach: DRIP_REACH, shapes: [[5, 7, 8, 3], [3, 4, 5, 2], [7, 9, 10, 4], [10, 12, 14, 5], [3, 4, 4, 2], [2, 2, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]] });\n';
   }
+  code = adaptPaintOwnership(rel, code, replaceOnce);
   return code;
 }
 
