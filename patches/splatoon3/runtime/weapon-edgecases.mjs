@@ -183,6 +183,12 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   WeaponRunner.prototype.reset = function (...args) {
     const out = reset.apply(this, args);
     clear(this); clearDualiesLocks(this); this.s3DualiesEmerging = false; this.s3ChargerPostShot = 0; this.s3DualiesSwimStart = null;
+    // Keep the reusable gate, but do not retain the previous life/input source.
+    if (this.s3SubGateInput) {
+      const gate = this.s3SubGateInput.state;
+      gate.source = EMPTY_SUB_GATE_INPUT; gate.sub = false; gate.subReleased = false;
+      gate.cancelMain = false; gate.kind = ''; gate.dt = 0;
+    }
     return out;
   };
   // #874: dodge admission uses current fire intent, not the recent-fire presentation timer.
