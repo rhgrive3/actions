@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {batchFixture,cpuFloor} from './batch03-fixture.mjs';
-async function draw(speed=7.92,yaw=0){const f=await batchFixture(),a=f.make('roller'),r=a.weaponRunner;a.isLocal=true;a.yaw=yaw;a.vel.set(Math.sin(yaw)*speed,0,Math.cos(yaw)*speed);r.rolling=true;r.rollT=1.5;r.lastRollPos=a.pos.clone().add(new f.THREE.Vector3(0,0,-1));r._roller(1/60,{fire:true},a.weapon);return {...f,a,r};}
+async function draw(speed=7.92,yaw=0){const f=await batchFixture(),a=f.make('roller'),r=a.weaponRunner;const V=f.THREE.Vector3;f.G.level.blocks.push({solid:true,grate:false,center:new V(0,-1,0),half:new V(20,1,20),aabbMin:new V(-20,-2,-20),aabbMax:new V(20,0,20),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)]});f.G.level.queryBlocks=(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;};a.isLocal=true;a.intent.move.set(Math.sin(yaw),0,Math.cos(yaw));a.yaw=yaw;a.vel.set(Math.sin(yaw)*speed,0,Math.cos(yaw)*speed);r.rolling=true;r.rollT=1.5;r.lastRollPos=a.pos.clone().add(new f.THREE.Vector3(0,0,-1));r._roller(1/60,{fire:true},a.weapon);return {...f,a,r};}
 test('#189 real rolling emission scores a continuous 5.6-wide maximum-speed CPU footprint, in both axes',async()=>{
  for(const yaw of [0,Math.PI/2]){const f=await draw(7.92,yaw),floor=cpuFloor(f,20,.025);assert.equal(f.paint.length,5,'3 body bands + 2 floor-only edge bands');f.paint.forEach(e=>floor.splat(e.point,e.radius,e.team,e.opts));const ext=floor.extent(yaw===0?'x':'z');assert.ok(Math.abs(ext.width-5.6)<.06,JSON.stringify(ext));
   const row=Math.floor((.75+10)/.025);for(let k=Math.ceil((10-2.7)/.025);k<Math.floor((10+2.7)/.025);k++){const index=yaw===0?row*floor.face.nu+k:k*floor.face.nu+row;assert.equal(floor.p.grid[index],1,'no unpainted band seams');}
@@ -25,6 +25,6 @@ test('#189 existing wire recorder/replayer preserves floor-only kind and avoids 
 test('#189 reduced source composition retains native body paint without a fidelity installer',async()=>{
  const {fixture}=await import('./source-fixture.mjs');const f=await fixture(),a=f.make('roller'),r=a.weaponRunner;
  const paints=[];f.G.actors=[];f.G.paint.splat=(point,radius,team,opts)=>{paints.push({radius,kind:opts.kind});return 0;};
- a.isLocal=true;a.vel.set(0,0,7.92);r.rolling=true;r.rollT=1.5;r.lastRollPos=a.pos.clone().add(new f.THREE.Vector3(0,0,-1));
+ a.isLocal=true;a.intent.move.set(0,0,1);a.vel.set(0,0,7.92);r.rolling=true;r.rollT=1.5;r.lastRollPos=a.pos.clone().add(new f.THREE.Vector3(0,0,-1));
  r._roller(1/60,{fire:true},a.weapon);assert.equal(paints.length,3);assert.ok(paints.every(p=>p.radius===.62));
 });

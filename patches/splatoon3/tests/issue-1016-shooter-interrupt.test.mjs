@@ -47,7 +47,10 @@ test('#1016 R cancel delays sub aim for 3F while preserving a due cancellation-f
     assert.equal(f.shots.length, before + 1, 'no later repeat shot escapes after cancellation');
   }
   f.tick(a);
-  assert.equal(r.aimingSub, true, 'sub prep begins at C+3');
+  close(r.s3ShooterInterruptSub, 0, 'the cancellation gate expires at C+3');
+  assert.equal(r.aimingSub, false, 'independent humanoid startup still owns this tick');
+  f.tick(a);
+  assert.equal(r.aimingSub, true, 'sub aim follows the independent 1F humanoid startup');
   assert.equal(f.shots.length, before + 1);
 });
 

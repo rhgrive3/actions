@@ -33,9 +33,10 @@ test('native packed absorption proposal credits only the real owner once and rej
   const { f, sender, receiver, make } = await setup();
   const vac = make(2, 'peer-B', false), shooter = make(3, 'peer-A', false, 1), shooterProxy = make(3, 'peer-A', true, 1);
   vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();
+  shooter.setWeapon('shooter'); shooterProxy.setWeapon('shooter');
   const state = f.inkVacState(vac); receiver.byNid.set(2, vac); receiver.byNid.set(3, shooterProxy);
   f.G.netm = sender;
-  sender._onLocalEvent(EV.absorb, { actor: shooter, target: vac, kit: 'inkVac', serial: state.serial, key: '3#p1' });
+  sender._onLocalEvent(EV.absorb, { actor: shooter, target: vac, kit: 'inkVac', serial: state.serial, key: '3#p1', damage: shooter.weapon.damage });
   assert.equal(sender.out.length, 1); const packet = JSON.parse(JSON.stringify(sender.out[0]));
   f.G.netm = receiver; receiver._play('spoofed-peer', packet); assert.equal(state.charge, 0);
   receiver._play('peer-A', packet); assert.ok(state.charge > 0); const credited = state.charge;

@@ -35,7 +35,7 @@ test('#349: real Game, HUD, tank and Mobile agree with actual bomb payment below
   const f=await fixture(extra),a=f.make();equip(a,gp);const cost=subInkSpec(a,f.SUB.bomb).inkCost;a.ink=cost+delta;for(let i=0;i<6;i++)a.weaponRunner.update(DT,{sub:true});
   const frames=game(f,a).read(),display=ui(f,a).read(frames.hud,frames.mobile),ready=delta>=0;near(frames.hud.subCost,cost/100);near(frames.mobile.subCost,cost/100);assert.equal(frames.hud.subReady,ready);assert.equal(frames.mobile.subReady,ready);
   assert.equal(display.short,!ready);assert.equal(display.tank,!ready);assert.equal(display.mobile,!ready);assert.equal(display.label,`${Math.round(cost)}%`);near(display.line,cost/100);
-  let bombs=0;f.G.projectiles.throwBomb=()=>bombs++;a.weaponRunner.update(DT,{subReleased:true});assert.equal(bombs,ready?1:0);near(a.ink,ready?delta:cost+delta);near(f.SUB.bomb.inkCost,70);
+  let bombs=0;f.G.projectiles.throwBomb=()=>bombs++;a.weaponRunner.update(DT,{subReleased:true});assert.equal(bombs,0,'no bomb on the release edge');a.weaponRunner.update(DT,{});assert.equal(bombs,ready?1:0);near(a.ink,ready?delta:cost+delta);near(f.SUB.bomb.inkCost,70);
  }
 });
 test('#349: changing actor-local modifiers, equipment, respawn and local actor refreshes labels without sharing costs',async()=>{

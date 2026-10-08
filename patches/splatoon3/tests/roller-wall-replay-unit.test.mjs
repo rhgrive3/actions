@@ -17,10 +17,10 @@ function wallStates(f,p,q){
  for(let tick=0;tick<10;tick++){f.advanceFidelityWallDrop(f.projectiles,p,1/60);f.advanceFidelityWallDrop(f.projectiles,q,1/60);assert.deepEqual(q.pos.toArray(),p.pos.toArray());}
 }
 
-test('seed13 actual35-field horizontal replay retains main/near wall state and ten-frame motion',async()=>{
+test('seed13 actual36-field horizontal replay retains main/near wall state and ten-frame motion',async()=>{
  const {f,nm,local,ghosts,packets}=await volley(false,'seed13');
  const units=f.profile.weaponsFidelityCompletion.weapons.roller.WideSwingUnitGroupParam.Unit;
- assert.equal(local.length,13);assert(packets.every(e=>e.length===35)); packets.forEach((e,i)=>assert.equal(e[32],local[i].fidelityRollerUnitIndex,'wire retains the explicit unit identity'));
+ assert.equal(local.length,13);assert(packets.every(e=>e.length===36)); packets.forEach((e,i)=>assert.equal(e[33],local[i].fidelityRollerUnitIndex,'wire retains the explicit unit identity'));
  // The old nominal-distance policy chooses near for this ordinary low-speed main glob.
  const speed=ghosts[8].vel.length();assert(Math.abs(speed-units[1].SpawnSpeedBase*60)<Math.abs(speed-units[0].SpawnSpeedBase*60));
  assert.equal(local[8].fidelityRollerUnit,units[0]);assert.equal(ghosts[8].fidelityRollerUnit,units[0]);
@@ -30,7 +30,7 @@ test('seed13 actual35-field horizontal replay retains main/near wall state and t
 
 test('source lower/upper launch bounds survive component rounding for both horizontal units',async()=>{
  for(const draw of [0,.5,1-Number.EPSILON]){
-  const {f,nm,local,ghosts,packets}=await volley(false,draw);assert(packets.every(e=>e.length===35)); packets.forEach((e,i)=>assert.equal(e[32],local[i].fidelityRollerUnitIndex,'wire retains the explicit unit identity'));
+  const {f,nm,local,ghosts,packets}=await volley(false,draw);assert(packets.every(e=>e.length===36)); packets.forEach((e,i)=>assert.equal(e[33],local[i].fidelityRollerUnitIndex,'wire retains the explicit unit identity'));
   for(let i=0;i<local.length;i++){assert.equal(ghosts[i].fidelityRollerUnit,local[i].fidelityRollerUnit);wallStates(f,local[i],ghosts[i]);}
   const units=f.profile.weaponsFidelityCompletion.weapons.roller.WideSwingUnitGroupParam.Unit;
   for(const unit of units)for(const sign of [-1,1])for(const yaw of [0,.7,1.3]){

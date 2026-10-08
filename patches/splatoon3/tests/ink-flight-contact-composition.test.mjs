@@ -18,7 +18,7 @@ test('#656/#929/#939 production InkFlight bridge retains sourced teammate contac
   assert.match(compiled, /advanceFidelityWallDrop\(this\.system, p, dt\)/, 'retained wall-drop runs on the same head');
   assert.match(compiled, /beginFidelityWallDrop\(this\.system, p, world\)/, 'first wall contact enters the sourced phase');
   assert.match(compiled, /!target && !boss && world\.hit/, 'actor and boss contacts cannot enter wall-drop');
-  assert.match(compiled, /import \{ beginFidelityWallDrop, advanceFidelityWallDrop \}/, 'reuses the installed S3 owner');
-  assert.throws(() => adaptSource(rel, compiled), /ink flight S3 team contact eligibility/,
+  assert.match(compiled, /import \{ beginFidelityWallDrop, advanceFidelityWallDrop, fidelityPlayerCollisionRadius \}/, 'reuses the installed S3 owner');
+  assert.throws(() => adaptSource(rel, compiled), /ink flight retained S3 wall-drop update/,
     'duplicate build transforms are rejected, never double-applied');
 });

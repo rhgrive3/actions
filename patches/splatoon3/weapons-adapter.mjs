@@ -140,6 +140,10 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     if (roundStart < 0 || roundEnd < roundStart) throw new Error('INKWAVE patch conflict: source-guided Dualies/Splatling flight');
     let round = code.slice(roundStart, roundEnd);
     round = replaceOnce(round,
+      '    const inkSpeed = inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;',
+      '    const inkSpeed = w.kind === \'splatling\' ? w.projSpeed : inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;',
+      'weapons fidelity: retain sampled Splatling launch speed before recording');
+    round = replaceOnce(round,
       '    if (inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));',
       '    if (inkProfile) correctInkAim(inkProfile, m, dir, aimTarget, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));',
       'weapons fidelity: dualies source-guided aim target');

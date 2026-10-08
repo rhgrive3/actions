@@ -22,11 +22,13 @@ test('actual stationary post-dodge state persists after lock and cancels on move
   assert.equal(r.lockT, 0); assert.equal(r.s3Turret, true); assert.equal(r._spreadDeg(a.weapon), 0);
   a.intent.move.set(1, 0, 0); r.update(1 / 60, { fire: true }); assert.equal(r.s3Turret, false);
 });
-test('jump initiation selects vertical roller windup, retaining it after landing', async () => {
+test('airborne roller windup remains vertical when landing after the 5F conversion window', async () => {
   const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
   a.grounded = false; r.update(1 / 60, { fire: true, firePressed: true });
-  assert.equal(r.s3FlickVertical, true); a.grounded = true;
-  for (let i = 0; i < 31; i++) r.update(1 / 60, { fire: true });
+  assert.equal(r.s3FlickVertical, true);
+  for(let i=0;i<6;i++)r.update(1 / 60, { fire: true });
+  a.grounded = true;
+  for (let i = 0; i < 25; i++) r.update(1 / 60, { fire: true });
   assert.equal(f.shots.length, 1); assert.equal(f.shots[0].windup, 31 / 60);
 });
 test('actual roll consumes one jump edge and routes armor overflow through damage', async () => {
@@ -130,7 +132,8 @@ test('bomb sub power normalizes the low base once and reaches the raw high value
   const velocity = ps.throwVelocity.bind(ps);
   ps.throwVelocity = (actor, speed, out) => { thrown = speed; return velocity(actor, speed, out); };
   for (let i = 0; i < 6; i++) r.update(1/60,{sub:true});
-  r.update(1/60,{subReleased:true}); assert.equal(ps.bombs.length,1);
+  r.update(1/60,{subReleased:true}); assert.equal(ps.bombs.length,0,'release retains the independent 1F use startup');
+  r.update(1/60,{}); assert.equal(ps.bombs.length,1);
   assert.ok(Math.abs(thrown-1.68*60)<1e-9);assert.ok(Math.abs(f.SUB.bomb.throwSpeed-1.12*60)<1e-9);
 });
 test('splatling diving cancels both charging and an active stream', async () => {

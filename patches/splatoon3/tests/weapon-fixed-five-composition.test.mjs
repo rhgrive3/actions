@@ -97,7 +97,7 @@ test('596 owner guard is transported once; remote pose cannot relocate nine birt
  const wall={id:0,solid:true,center:new V(0,1,.5),half:new V(10,4,.05),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};f.G.level.blocks=[wall];f.G.level.queryBlocks=(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;};
  a.intent.fire=true;for(let i=0;i<13;i++){a.weaponRunner.update(DT,{fire:true});a._finishFrame(DT);f.ps.update(DT);}
  for(let i=0;i<16&&births.length<9;i++)f.ps.update(DT);
- const packets=n.out.filter(e=>e[1]==='p');assert.equal(packets.length,9);assert.equal(births.length,9);assert.ok(packets.every(e=>e.length===35));assert.ok(births.every(p=>p.pos.z<.45));
+ const packets=n.out.filter(e=>e[1]==='p');assert.equal(packets.length,9);assert.equal(births.length,9);assert.ok(packets.every(e=>e.length===36));assert.ok(births.every(p=>p.pos.z<.45));
  const g=await world(true),b=actor(g,'slosher',true),remote=net(g,b,'B');b.pos.set(100,20,-100);b.character.getMuzzle=()=>{throw Error('remote recomputed local muzzle');};
  for(const packet of packets){remote._play('A',packet);}
  assert.equal(g.ps.list.length,9);for(let i=0;i<9;i++){assert.ok(g.ps.list[i].pos.distanceTo(births[i].pos)<.009);assert.deepEqual(Array.from(g.ps.list[i].vel.toArray()),Array.from(births[i].vel.toArray()));}

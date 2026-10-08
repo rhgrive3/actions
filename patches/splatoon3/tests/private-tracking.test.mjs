@@ -65,7 +65,7 @@ test('#348 reset, target death/respawn, owner transfer, roster retirement and ne
  }
 });
 test('#348 confirmed-hit transport stores no public mark and admits only a validated nonzero owner ACK',async()=>{
- const f=await rig(true);f.b.remote=true;const nm=Object.create(f.NetMatch.prototype);nm.myId='local';nm.byNid=new Map([[1,f.a],[2,f.b]]);const packets=[];nm.s={tr:{sendTo:(to,packet)=>packets.push({to,packet})}};
+ const f=await rig(true);f.b.remote=true;const nm=new f.NetMatch({myId:'local',hostId:'local',isHost:true},{id:'tracking'});nm.byNid=new Map([[1,f.a],[2,f.b]]);const packets=[];nm.s={tr:{sendTo:(to,packet)=>packets.push({to,packet})}};
  f.withMainDirectDamage(f.a,f.b,()=>nm.sendHit(f.a,f.b,10,'blaster'));
  assert.equal(f.thermalTrackingRecord(f.b,f.a),null,'prediction has no mark');assert.equal(packets[0].packet.privateThermal,undefined);
  const h=nm._hitSeq,receipt={h,a:1,v:2,d:10,kld:0,vl:3};nm._hitAck(receipt,'forged');assert.equal(f.thermalTrackingRecord(f.b,f.a),null);
