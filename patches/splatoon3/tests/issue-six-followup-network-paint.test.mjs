@@ -189,7 +189,7 @@ test('#1002: Unit-2 order 3 resolves exactly one paint-only source splash', () =
   const p = { fidelitySloshUnit: unit2, fidelitySloshIndex: 3, seed: .5 };
   const spec = slosherIntermediateSpec(p, 1);
   assert.ok(spec);
-  assert.equal(spec.targetLength, 1.2);
+  assert.ok(Math.abs(spec.targetLength - 1.2) < 1e-12);
   assert.equal(spec.widthHalf, .7);
   assert.equal(spec.depthScale, 2);
   assert.equal(spec.spawnNum, 1);
