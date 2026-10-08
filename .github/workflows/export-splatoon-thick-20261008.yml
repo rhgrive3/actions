@@ -1,0 +1,47 @@
+name: Export Splatoon thick ZIP (temporary)
+on:
+  push:
+    branches:
+      - tmp/export-splatoon-thick-20261008
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout public source at fixed commit
+        uses: actions/checkout@v4
+        with:
+          repository: Dexx-io/Splatoon-Decomp
+          ref: 9ef403d96f1a370bdd70434ce158a0c29879bfcf
+          path: upstream
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Stage exact thick folder
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          src = Path("upstream/NTSC Splatoon/thick")
+          dst = Path("package/thick")
+          if not src.is_dir():
+              raise SystemExit("Source thick folder does not exist")
+          shutil.copytree(src, dst)
+          files = [p for p in dst.rglob("*") if p.is_file()]
+          total = sum(p.stat().st_size for p in files)
+          print(f"Packaged {len(files)} files; {total} bytes")
+          PY
+
+      - name: Upload thick folder as ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Splatoon-Decomp-NTSC-thick
+          path: package/
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 6
