@@ -424,13 +424,19 @@ function retireNetworkGhosts(owner = null) {
   for (const [a,mesh] of P.sights) if (a.remote && (!owner || a === owner)) { P.scene.remove(mesh); mesh.material.dispose(); P.sights.delete(a); }
 }
 const firstSplatSessions = new WeakMap();
+// Keep reconnect decisions for recent matches, never the complete lifetime history
+// of a Session (which may survive hundreds of 24/7 room rematches).
+const FIRST_SPLAT_RECENT_MATCHES = 8;
 function firstSplatStateFor(session,cfg) {
   const id = typeof cfg?.id === 'string' && cfg.id ? cfg.id : null;
   if (!id) return { matchId:null, claimed:false, attackerNid:null, victimNid:null };
   let matches = firstSplatSessions.get(session);
   if (!matches) { matches = new Map(); firstSplatSessions.set(session,matches); }
   let state = matches.get(id);
-  if (!state) { state = { matchId:id, claimed:false, attackerNid:null, victimNid:null }; matches.set(id,state); }
+  if (state) matches.delete(id); // reconnect refreshes this match's recency
+  else state = { matchId:id, claimed:false, attackerNid:null, victimNid:null };
+  matches.set(id,state);
+  if (matches.size > FIRST_SPLAT_RECENT_MATCHES) matches.delete(matches.keys().next().value);
   return state;
 }
 `;
