@@ -26,24 +26,31 @@ export function adaptEightFollowup(rel, code) {
       '#1103 capture player launch confirmation state',
     );
 
+    const hostTeams = code.includes('\n  assignTeam(id, team) {');
+    const end = hostTeams ? '  assignTeam(id, team) {' : '  setSettings(s = {}) {';
     code = replaceOnce(
       code,
-      '    this._fixTeams();\n    this._broadcastLobby();\n  }\n\n  setSettings(s = {}) {',
-      '    this._fixTeams();\n    if (p.weapon !== beforeWeapon) p.ready = false;\n    if (this.lobby.players.some((x) => x.team !== beforeTeams.get(x.id)))\n      for (const x of this.lobby.players) if (x.id !== this.hostId) x.ready = false;\n    this._broadcastLobby();\n  }\n\n  setSettings(s = {}) {',
+      '    this._fixTeams();\n    this._broadcastLobby();\n  }\n\n' + end,
+      '    this._fixTeams();\n    if (p.weapon !== beforeWeapon) p.ready = false;\n    if (this.lobby.players.some((x) => x.team !== beforeTeams.get(x.id)))\n      for (const x of this.lobby.players) if (x.id !== this.hostId) x.ready = false;\n    this._broadcastLobby();\n  }\n\n' + end,
       '#1103 invalidate ready after weapon/team mutation',
     );
 
     code = replaceOnce(
       code,
-      '    const l = this.lobby, wasMap = l.map;',
-      '    const l = this.lobby, wasMap = l.map;\n    const beforeSettings = [l.map, l.time, l.duration, l.bots, l.difficulty, l.palette, l.mode, this._botsPref];',
+      hostTeams ? '    const l = this.lobby, wasMap = l.map, oldMode = l.mode;' : '    const l = this.lobby, wasMap = l.map;',
+      (hostTeams ? '    const l = this.lobby, wasMap = l.map, oldMode = l.mode;' : '    const l = this.lobby, wasMap = l.map;') +
+      '\n    const beforeSettings = [l.map, l.time, l.duration, l.bots, l.difficulty, l.palette, l.mode, this._botsPref];',
       '#1103 capture room configuration revision',
     );
 
     code = replaceOnce(
       code,
-      '    l.bots = mapNoBots(l.map) ? false : (this._botsPref ?? l.bots);\n    this._broadcastLobby();',
-      '    l.bots = mapNoBots(l.map) ? false : (this._botsPref ?? l.bots);\n    const afterSettings = [l.map, l.time, l.duration, l.bots, l.difficulty, l.palette, l.mode, this._botsPref];\n    if (afterSettings.some((v, i) => v !== beforeSettings[i]))\n      for (const p of l.players) if (p.id !== this.hostId) p.ready = false;\n    this._broadcastLobby();',
+      '    l.bots = mapNoBots(l.map) ? false : (this._botsPref ?? l.bots);\n' +
+      (hostTeams ? '    if (oldMode !== l.mode) { l.teamsConfirmed=false; for (const p of l.players) p.ready=false; }\n' : '') +
+      '    this._broadcastLobby();',
+      '    l.bots = mapNoBots(l.map) ? false : (this._botsPref ?? l.bots);\n' +
+      (hostTeams ? '    if (oldMode !== l.mode) { l.teamsConfirmed=false; for (const p of l.players) p.ready=false; }\n' : '') +
+      '    const afterSettings = [l.map, l.time, l.duration, l.bots, l.difficulty, l.palette, l.mode, this._botsPref];\n    if (afterSettings.some((v, i) => v !== beforeSettings[i]))\n      for (const p of l.players) if (p.id !== this.hostId) p.ready = false;\n    this._broadcastLobby();',
       '#1103 invalidate ready after launch-critical room change',
     );
   }
