@@ -6,8 +6,10 @@ const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwa
 
 test('integration retains immutable source and independently rebuilt artifact identity checks', () => {
   const checkoutCount = (workflow.match(/uses: actions\/checkout@v4/g) || []).length;
-  const pinnedCheckoutCount = (workflow.match(/ref: \$\{\{ inputs\.source_sha \|\| github\.sha \}\}/g) || []).length;
+  const pinnedCheckoutCount = (workflow.match(/ref: \$\{\{ env\.SOURCE_SHA \}\}/g) || []).length;
   assert.ok(checkoutCount > 0);
+  assert.ok(workflow.includes("SOURCE_SHA: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}"),
+    "PR validation uses its immutable head, explicit dispatch takes precedence, push falls back to github.sha");
   assert.equal(pinnedCheckoutCount, checkoutCount);
   assert.ok(workflow.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
   assert.ok(workflow.includes('node scripts/build-inkwave.mjs inkwave-public .built-site/_site'));
@@ -50,7 +52,7 @@ test('successful browser artifacts require validated reports and source-bound su
   assert.ok(workflow.includes("report['contentHash']==build['contentHash']"));
   assert.ok(workflow.includes("'suite':suite"));
   assert.ok(workflow.includes('if: success()'));
-  assert.ok(workflow.includes('name: inkwave-browser-${{ matrix.suite }}-${{ inputs.source_sha || github.sha }}'));
+  assert.ok(workflow.includes('name: inkwave-browser-${{ matrix.suite }}-${{ env.SOURCE_SHA }}'));
   assert.ok(workflow.includes("if suite=='network':"));
   assert.ok(workflow.includes("for name in checks: assert reports[name]['sourceSha']==os.environ['SOURCE_SHA']"));
 });

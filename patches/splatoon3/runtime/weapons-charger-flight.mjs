@@ -50,16 +50,24 @@ export function chargerActorBeforeStop(entryFraction, stepLength, stopDistance) 
   return entryFraction !== null && Number.isFinite(entryFraction) &&
     entryFraction * stepLength < stopDistance - EPS;
 }
-// #1098: map S3 keep-charge source-local XYZ into INKWAVE's procedural
-// gun-local axes using the live model's forward barrel-tip coordinate.
-// This documented scale is provisional: exact S3 skeleton calibration is not
-// derivable from the sparse MuzzleLocalPos record alone.
+// #1098: ordinary-muzzle-relative retargeting from the independently measured
+// S3 Charger Root/Muzzle joint (not from the keep anchor being transformed).
+// Source: Models Resource asset 342258, Wmn_Charger_NormalT.dae, SHA-256
+// 7914851c0cd0c1cf30970774b22362ae7e01969ed084c95d94ad87605c951626.
+// Joint-local +Y up/+Z barrel forward; exporter scene rotation/"inch" label
+// are not game-unit calibration. See the behavior report and extraction script.
+// This is an INKWAVE rig retarget; Nintendo's keep-charge frame binding remains
+// unverified. A model extract alone cannot prove runtime engine equivalence.
+export const CHARGER_SOURCE_MODEL_MUZZLE = Object.freeze({ X: 0, Y: .1781852, Z: 1.717447 });
 export function storedChargerModelMuzzle(source, modelMuzzle, out) {
   if (!source || !modelMuzzle || !out ||
-      ![source.X, source.Y, source.Z, modelMuzzle.z].every(Number.isFinite) ||
+      ![source.X, source.Y, source.Z, modelMuzzle.x, modelMuzzle.y, modelMuzzle.z].every(Number.isFinite) ||
       source.Z <= 0 || modelMuzzle.z <= 0) return false;
-  const scale = modelMuzzle.z / source.Z;
-  out.set(source.X * scale, source.Y * scale, source.Z * scale);
+  const reference = CHARGER_SOURCE_MODEL_MUZZLE;
+  const scale = modelMuzzle.z / reference.Z;
+  out.set(modelMuzzle.x + (source.X - reference.X) * scale,
+    modelMuzzle.y + (source.Y - reference.Y) * scale,
+    modelMuzzle.z + (source.Z - reference.Z) * scale);
   return true;
 }
 // Finite straight flight. Source supplies endpoints and radii, not recovered engine

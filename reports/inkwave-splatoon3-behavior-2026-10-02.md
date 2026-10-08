@@ -1730,3 +1730,66 @@ The base's 128 failures remain unresolved. No integration-base, #1083 or #401
 branch was modified and no PR was merged. CI run 37833984659 passed the original
 idle/build and gait failure points plus the new focused and rendered checks,
 but its later weapon-detail browser gate failed; full CI is not claimed green.
+
+
+### PR1171 / #1098 independent model-anchor calibration and exact-head CI
+
+The old `modelMuzzle.z / keepAnchor.Z` scale normalized the subject coordinate
+against itself: changing only source Z could not change the resolved Z. Replace
+it with an independently extracted ordinary-model muzzle reference. Source:
+[Splatoon 3 Splat Charger, Models Resource asset 342258](https://models.spriters-resource.com/nintendo_switch/splatoon3/asset/342258/),
+Centrixe the Dodo extraction, published 2023-02-27. Both included Collada exports
+have `Root` → `Muzzle` joint-local translation `(0, 0.1781852, 1.717447)`.
+The current `Wmn_Charger_NormalT.dae` SHA-256 is
+`7914851c0cd0c1cf30970774b22362ae7e01969ed084c95d94ad87605c951626`;
+the Previous Ver. file is
+`9d1167de7d734f79cad6bd234eca937bc8b2f6404553d178b292517094730e3a`.
+`python scripts/check-inkwave-charger-calibration.py /path/to/342258.zip`
+reproduces the extraction and rejects unknown file revisions. No model or
+texture is redistributed in this repository.
+
+This is a documented **INKWAVE model retarget**, with the following explicit
+conventions: retain joint-local +Y up / +Z barrel forward, match the ordinary
+muzzle anchors, and scale offsets uniformly by the ratio of forward barrel
+coordinates. The exporter's scene-root 90-degree rotation and declared inches
+are not Nintendo game-unit evidence and are not applied to game parameters.
+Let `r=(0,.1781852,1.717447)`, live INKWAVE model muzzle `m=(0,.058,.686)`,
+and pinned S3 11.3.0 keep parameter `k=(-.314,.2105,2.0176)`. Then
+`s=m.z/r.z=0.39943008430536725`, and `local=m+s*(k-r)` yields
+`(-.12542104647188532,.07090750328831108,.8058901380945089)`.
+The live native `weapon.off.localToWorld` transform carries this point through
+the hand and character hierarchy. Each source-axis perturbation now has an
+independent nonzero effect, and the source ordinary anchor maps exactly to the
+INKWAVE ordinary anchor. Existing native finite/distance/LOS guards retain the
+safe generic fallback. Fresh shots, charge-keep lifetime and release gates are
+unchanged; `weapon:fire.muzzle` and remote ghosts use the authoritative point.
+
+**Validation:** source extraction agrees in both included exports; native
+regressions cover all three independent axes, invalid inputs, full-charge →
+store → surface → native 1F release identity and reset, ordinary isolation,
+packet/ghost agreement and obstruction fallback. The production-build browser
+probe uses real Character weapon nodes, Projectiles beam meshes and Physics /
+swept-world collision in six yaw/pitch poses. A close-cover edge hits from the
+stored origin and misses from the ordinary origin; moving cover across the
+chest-to-anchor segment forces the safe fallback. The existing rendered
+reticle, 4,000-cell Roller parity, 12 Dualies widths and 6,100-hidden-stroke
+checks also pass.
+
+**Remaining evidence limit:** the 2023 extracted model is not proven unchanged
+in 11.3.0, and a weapon model does not establish which Nintendo runtime frame
+owns `WeaponKeepChargeParam.MuzzleLocalPos`. The supplied Drive research bundle
+explicitly excludes Splatoon 3 RomFS; its S1 rig cannot establish S3 charge-keep
+behavior. Thus model-derived retargeting and INKWAVE regression acceptance are
+measured, but Nintendo keep-frame binding / console spatial equivalence remain
+unverified. Do not auto-close #1098 or represent this as recovered Nintendo
+engine calibration. Required closing evidence is the S3 keep-charge coordinate
+frame/binding (or a measured stored/fresh muzzle comparison with known scale,
+weapon, version, pose and cover). This supersedes only the old self-normalized
+barrel calibration above, not that outstanding fidelity requirement.
+
+The integration workflow now chooses explicit dispatch SHA, otherwise immutable
+PR head SHA, otherwise push SHA. Every checkout and artifact name uses the same
+`SOURCE_SHA`; existing checkout, rebuilt-site and browser report identity gates
+remain active, and the workflow regression itself joins the focused CI step.
+No inherited acceptance gate is removed or marked allowed-to-fail. The base
+failures remain owned by #1083; neither #1083 nor #401 is changed or merged.

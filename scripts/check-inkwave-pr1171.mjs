@@ -37,6 +37,70 @@ try {
     const locked=shape();hud.ret.classList.remove('is-lock');await new Promise(r=>setTimeout(r,240));const restored=shape();
     const THREE=await import('three');const {PaintSystem}=await import('/src/world/paint.js');const {G}=await import('/src/core/ctx.js');
     G.netm=null;G.settings={quality:'low'};G.actors=[];
+    // Native built Character gun hierarchy, Projectiles/beam and world sweep.
+    // Controlled hand poses isolate coordinate retargeting from gait animation.
+    const {Character}=await import('/src/game/character.js');
+    const {Projectiles}=await import('/src/game/weapons.js');
+    const {Physics,Hit}=await import('/src/game/physics.js');
+    const {WEAPONS,PLAYER}=await import('/src/config.js');
+    const {installChargerFlight}=await import('/patches/splatoon3/runtime/weapons-charger-flight.mjs');
+    const {sweptWorldHit}=await import('/patches/splatoon3/runtime/weapons-collision.mjs');
+    const profile=await (await fetch('/patches/splatoon3/profile.json')).json();
+    const completion=profile.weaponsFidelityCompletion;
+    Object.assign(WEAPONS.charger,profile.weapons.charger);
+    const scene=new THREE.Scene(),character=new Character({weapon:'charger',isLocal:false});
+    scene.add(character.root);character.kid.add(character.weapon.pivot);
+    character.weapon.off.position.set(0,0,0);character.weapon.off.quaternion.identity();
+    character.weapon.pivot.position.set(0,1.05,0);character.wAim=1;character.form='kid';
+    const blocks=[],coverLevel={blocks,faces:[],queryBlocks:()=>blocks.map((_,i)=>i)};
+    G.physics=new Physics(coverLevel);G.paint={splat:()=>0};
+    const packets=[];
+    installChargerFlight({Projectiles,WEAPONS,THREE,G,Hit,PLAYER,
+      emit:(name,event)=>{if(name==='weapon:fire')packets.push(event);}},completion);
+    const system=new Projectiles(scene), actor={character,pos:new THREE.Vector3(),form:'kid',team:0,alive:true,
+      weapon:WEAPONS.charger,weaponRunner:{chargeT:1,s3KeepMuzzleFiring:true},color:new THREE.Color('orange'),
+      aimDir:new THREE.Vector3(0,0,1),aimPoint:new THREE.Vector3(),addTurf(){},_nearCamera:()=>false};
+    const same=(a,b,label)=>{if(a.distanceTo(b)>1e-10)throw Error(label+JSON.stringify({a:a.toArray(),b:b.toArray()}));};
+    let chargerPoses=0,coverWitness=false,blockedFallback=false;
+    for(const yaw of [0,Math.PI/2,-1.1])for(const pitch of [-.35,.4]){
+      character.root.rotation.y=yaw;character.weapon.pivot.rotation.x=pitch;
+      character.root.updateMatrixWorld(true);
+      actor.aimDir.set(0,0,1).transformDirection(character.weapon.off.matrixWorld);
+      actor.aimPoint.copy(actor.pos).addScaledVector(actor.aimDir,30);
+      const expected=new THREE.Vector3(-.12542104647188532,.07090750328831108,.8058901380945089)
+        .applyMatrix4(character.weapon.off.matrixWorld);
+      const ordinary=system._muzzle(actor,new THREE.Vector3()).clone();
+      actor.weaponRunner.s3KeepMuzzleFiring=true;system.fireCharger(actor,WEAPONS.charger,1);
+      const job=system._fidelityChargerFlights.at(-1),packet=packets.at(-1);
+      same(job.origin,expected,'Stored origin must use calibrated native gun transform');
+      same(job.beam.mesh.position,expected,'Native beam origin');same(packet.muzzle,expected,'Packet origin');
+      // Replay must use the packet even after the remote gun pose changes.
+      character.root.position.x+=4;system.ghostFire(actor,packet);character.root.position.x-=4;
+      same(system._fidelityChargerFlights.at(-1).origin,expected,'Ghost packet origin');
+      actor.weaponRunner.s3KeepMuzzleFiring=false;system.fireCharger(actor,WEAPONS.charger,1);
+      same(system._fidelityChargerFlights.at(-1).origin,ordinary,'Ordinary muzzle isolation');
+      if(expected.distanceTo(ordinary)<.1)throw Error('Missing dedicated stored offset');
+      system.clear();chargerPoses++;
+    }
+    character.root.rotation.set(0,0,0);character.weapon.pivot.rotation.set(0,0,0);
+    character.root.updateMatrixWorld(true);actor.aimDir.set(0,0,1);actor.aimPoint.set(0,1.05,30);
+    const ordinary=system._muzzle(actor,new THREE.Vector3()).clone();
+    actor.weaponRunner.s3KeepMuzzleFiring=true;system.fireCharger(actor,WEAPONS.charger,1);
+    const kept=system._fidelityChargerFlights.at(-1).origin.clone();
+    const radius=completion.weapons.charger.CollisionParam.InitRadiusForField;
+    const edge=(ordinary.x+kept.x)/2-radius;
+    const box={id:0,solid:true,grate:false,center:new THREE.Vector3(edge-.2,kept.y,1.5),half:new THREE.Vector3(.2,.5,.05),
+      axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
+    blocks.push(box);
+    const sweep=origin=>sweptWorldHit(G.physics,origin,origin.clone().add(new THREE.Vector3(0,0,2)),radius,radius,new Hit()).hit;
+    if(!sweep(kept)||sweep(ordinary))throw Error('Close-cover witness must distinguish stored and ordinary flight origins');
+    coverWitness=true;
+    // Move cover across the chest-to-stored-muzzle segment: native LOS must
+    // reject the candidate and preserve the generic resolver's safe fallback.
+    box.center.set(kept.x/2,1.05,.4);box.half.set(.4,.5,.03);
+    const safe=system._muzzle(actor,new THREE.Vector3()).clone();system.fireCharger(actor,WEAPONS.charger,1);
+    same(system._fidelityChargerFlights.at(-1).origin,safe,'Blocked anchor fallback');blockedFallback=true;
+    blocks.length=0;system.clear();character.dispose();
     const renderer=new THREE.WebGLRenderer();
     const v=(x,y,z)=>new THREE.Vector3(x,y,z);
     const face={paintable:true,turf:true,origin:v(0,0,0),u:v(1,0,0),v:v(0,0,1),n:v(0,1,0),su:8,sv:8,block:0,wall:false};
@@ -90,8 +154,9 @@ try {
     Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});paint.splat(v(4,0,4),.62,0,{seed:0,kind:'roll',stretch:v(1,0,0),instant:true});
     paint.clear();const cleared=paint._hiddenQuads===null;delete document.hidden;
     paint.dispose();renderer.dispose();
-    return {normal,locked,restored,cells,edgeTolerance,witness,slideWidths,hidden,resumed,cleared};
+    return {chargerPoses,coverWitness,blockedFallback,normal,locked,restored,cells,edgeTolerance,witness,slideWidths,hidden,resumed,cleared};
   });
+  assert.equal(result.chargerPoses,6);assert.equal(result.coverWitness,true);assert.equal(result.blockedFallback,true);
   assert.deepEqual(result.normal,{l:true,r:true,merged:false,lock:false});
   assert.deepEqual(result.locked,{l:false,r:false,merged:true,lock:false});
   assert.deepEqual(result.restored,result.normal);

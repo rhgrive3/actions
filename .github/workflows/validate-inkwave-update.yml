@@ -63,7 +63,7 @@ concurrency:
 permissions:
   contents: read
 env:
-  SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
+  SOURCE_SHA: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
   FOCUSED_EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/evidence/inkwave-focused-${{ github.run_id }}-${{ github.run_attempt }}
   RUNTIME_PERFORMANCE: ${{ inputs.runtime_performance == true || (github.event_name == 'pull_request' && (github.head_ref == 'inkwave/runtime-performance-ui' || github.head_ref == 'inkwave/final-nine-way-integration')) }}
   REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}
@@ -75,7 +75,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_sha || github.sha }}
+          ref: ${{ env.SOURCE_SHA }}
       - name: Verify immutable checkout identity
         run: |
           [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
@@ -101,12 +101,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: inputs.focused_tests != '' && steps.focused_native.outcome == 'success'
         with:
-          name: inkwave-focused-${{ inputs.source_sha || github.sha }}
+          name: inkwave-focused-${{ env.SOURCE_SHA }}
           if-no-files-found: error
           path: ${{ env.FOCUSED_EVIDENCE_DIR }}/
           retention-days: 14
       - name: Verify PR1171 seven-issue and composition regressions
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-1098-stored-muzzle.test.mjs patches/splatoon3/tests/issue-982-charger-rumble.test.mjs patches/splatoon3/tests/issue-batch-1171.test.mjs patches/splatoon3/tests/issue-979-slide-paint.test.mjs patches/splatoon3/tests/issue-570-paint-ownership-visibility.test.mjs patches/splatoon3/tests/results-presentation.test.mjs patches/local-quality/tests/idle-attract-budget.test.mjs patches/local-quality/tests/idle-resources.test.mjs patches/reliability/tests/net.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-1098-stored-muzzle.test.mjs patches/splatoon3/tests/issue-982-charger-rumble.test.mjs patches/splatoon3/tests/issue-batch-1171.test.mjs patches/splatoon3/tests/issue-979-slide-paint.test.mjs patches/splatoon3/tests/issue-570-paint-ownership-visibility.test.mjs patches/splatoon3/tests/results-presentation.test.mjs patches/local-quality/tests/idle-attract-budget.test.mjs patches/local-quality/tests/idle-resources.test.mjs patches/reliability/tests/net.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs
       - name: Verify six follow-up INKWAVE regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-six-followup-network-paint.test.mjs patches/splatoon3/tests/issue-1032-background-guest.test.mjs
       - name: Verify eight additional INKWAVE regressions
@@ -130,7 +130,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always() && hashFiles('.ci-scratch/network-comparison/*.json') != ''
         with:
-          name: inkwave-network-comparison-${{ inputs.source_sha || github.sha }}
+          name: inkwave-network-comparison-${{ env.SOURCE_SHA }}
           if-no-files-found: error
           path: .ci-scratch/network-comparison/
           retention-days: 14
@@ -149,7 +149,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''
         with:
-          name: inkwave-patch-failure-diagnostics-${{ inputs.source_sha || github.sha }}
+          name: inkwave-patch-failure-diagnostics-${{ env.SOURCE_SHA }}
           if-no-files-found: error
           path: .ci-scratch/inkwave-patches/
           retention-days: 14
@@ -243,7 +243,7 @@ jobs:
         run: node --experimental-vm-modules scripts/check-inkwave-weapons-fidelity.mjs --site _site
       - uses: actions/upload-artifact@v4
         with:
-          name: inkwave-patched-site-${{ inputs.source_sha || github.sha }}
+          name: inkwave-patched-site-${{ env.SOURCE_SHA }}
           include-hidden-files: true
           if-no-files-found: error
           path: |
@@ -283,7 +283,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_sha || github.sha }}
+          ref: ${{ env.SOURCE_SHA }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -356,7 +356,7 @@ jobs:
         if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
-          name: inkwave-runtime-baseline-diagnostics-${{ inputs.source_sha || github.sha }}
+          name: inkwave-runtime-baseline-diagnostics-${{ env.SOURCE_SHA }}
           include-hidden-files: true
           if-no-files-found: warn
           path: ${{ env.CI_STORAGE }}/evidence/runtime-before/
@@ -432,21 +432,21 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure() && matrix.suite == 'active'
         with:
-          name: inkwave-game-failure-${{ github.sha }}
+          name: inkwave-game-failure-${{ env.SOURCE_SHA }}
           if-no-files-found: warn
           path: ${{ env.CI_STORAGE }}/evidence/game/
           retention-days: 7
       - uses: actions/upload-artifact@v4
         if: failure() && matrix.suite == 'active'
         with:
-          name: inkwave-idle-resource-failure-${{ github.sha }}
+          name: inkwave-idle-resource-failure-${{ env.SOURCE_SHA }}
           if-no-files-found: warn
           path: ${{ env.CI_STORAGE }}/evidence/idle-resources/
           retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always() && (failure() || cancelled())
         with:
-          name: inkwave-browser-failure-${{ matrix.suite }}-${{ inputs.source_sha || github.sha }}
+          name: inkwave-browser-failure-${{ matrix.suite }}-${{ env.SOURCE_SHA }}
           include-hidden-files: true
           if-no-files-found: warn
           path: ${{ env.CI_STORAGE }}/evidence/
@@ -454,7 +454,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: inkwave-browser-${{ matrix.suite }}-${{ inputs.source_sha || github.sha }}
+          name: inkwave-browser-${{ matrix.suite }}-${{ env.SOURCE_SHA }}
           include-hidden-files: true
           if-no-files-found: error
           path: ${{ env.CI_STORAGE }}/evidence/
@@ -467,7 +467,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_sha || github.sha }}
+          ref: ${{ env.SOURCE_SHA }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -498,7 +498,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: inkwave-render-diagnostic-${{ inputs.source_sha || github.sha }}
+          name: inkwave-render-diagnostic-${{ env.SOURCE_SHA }}
           if-no-files-found: warn
           path: ${{ env.DIAGNOSTIC_STORAGE }}/probe/
           retention-days: 14
