@@ -19,10 +19,24 @@ export function advanceSpawnProtection(actor, dt) {
   if (s.breakRemaining !== null) s.breakRemaining = Math.max(0, s.breakRemaining - dt);
   if (s.remaining <= EPS || s.breakRemaining !== null && s.breakRemaining <= EPS) actor.s3.spawnArmor = null;
 }
-export function absorbSpawnDamage(actor, amount, source, tuning) {
+export function absorbSpawnDamage(actor, amount, source, tuning, attacker = null) {
   const s = actor.s3?.spawnArmor;
   if (!s || source === 'ink' || spawnProtectionRemaining(actor) <= EPS) return amount;
-  const penetration = amount > tuning.maxAbsorb ? amount - tuning.maxAbsorb : 0;
+  let penetration = Math.max(0, amount - tuning.maxAbsorb);
+  // #999: Roller flicks use cumulative damage groups, but are delivered as
+  // incremental contributions. The 100 HP penetration threshold applies ONCE
+  // to the whole logical swing, not once per incoming 90 + 60 delta.
+  const id = actor.s3PendingHitGroup;
+  if (attacker && typeof attacker === 'object' && Number.isSafeInteger(id) && id > 0 && amount > 0) {
+    const all = s.groupPenetration || (s.groupPenetration = new WeakMap());
+    let groups = all.get(attacker);
+    if (!groups) { groups = new Map(); all.set(attacker, groups); }
+    let prev = groups.get(id) || 0;
+    if (groups.size >= 128 && !groups.has(id)) groups.delete(groups.keys().next().value);
+    const next = prev + amount;
+    penetration = Math.max(0, next - tuning.maxAbsorb) - Math.max(0, prev - tuning.maxAbsorb);
+    groups.set(id, next);
+  }
   s.hp = Math.max(0, s.hp - amount);
   if (s.hp <= EPS && s.breakRemaining === null) s.breakRemaining = Math.min(s.remaining, tuning.breakDelay);
   return penetration;
