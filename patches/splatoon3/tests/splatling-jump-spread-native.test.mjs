@@ -188,10 +188,10 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   assert.ok(Math.abs(pitchAtLanding - pitchBeforeLanding) < 0.2 * Math.PI / 180,
     'ground pitch advances through the same jump age instead of snapping on contact');
   a.s3SplatlingJumpAgeFrames = landingAge; a.grounded = true;
-  const nm = Object.create(f.NetMatch.prototype);
+  const nm = new f.NetMatch({ myId: 'owner', isHost: true, _members: new Map([['owner', 'Owner']]) }, {});
   nm.mute = 0; nm.out = []; nm.eventSeq = 0; nm.isMine = () => true;
   G.netm = nm;
-  const controlNm = Object.create(control.NetMatch.prototype);
+  const controlNm = new control.NetMatch({ myId: 'control', isHost: true, _members: new Map([['control', 'Control']]) }, {});
   controlNm.mute = 0; controlNm.out = []; controlNm.eventSeq = 0; controlNm.isMine = () => true;
   control.G.netm = controlNm;
 
