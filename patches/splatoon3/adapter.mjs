@@ -771,6 +771,26 @@ export function adaptSource(rel, code) {
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
+    // #1118/#1113: arbitrate the native bomb's swept segment against Vac and
+    // Big Bubbler before native world-contact mutation. A nearer stage surface
+    // wins ties/order; a Vac consumes without detonation, a Bubbler contact
+    // detonates exactly once at the contact point.
+    code = replaceOnce(code,
+      '      const hit = G.physics.segment(_v, b.pos, _hit);',
+      `      const hit = G.physics.segment(_v, b.pos, _hit);
+      const s3BombDefense = this.kitBombDefenseCandidate?.(b, _v, b.pos);
+      const s3BombStep = _v.distanceTo(b.pos);
+      const s3WorldDistance = hit.hit ? _v.distanceTo(hit.point) : Infinity;
+      if (s3BombDefense && s3BombDefense.distance < s3WorldDistance - 1e-10) {
+        if (s3BombStep > 1e-10) b.pos.copy(_v).lerp(b.pos, Math.max(0, Math.min(1, s3BombDefense.distance / s3BombStep)));
+        s3BombDefense.onHit();
+        if (s3BombDefense.kind === 'bubbler') {
+          const nm = G.netm; if (b.ghost && nm) nm.mute++;
+          try { this._explodeBomb(b); } finally { if (b.ghost && nm) nm.mute--; }
+        }
+        this._releaseBomb(b); this.bombs.splice(i, 1); continue;
+      }`,
+      'native bomb first-contact Vac/Bubbler arbitration');
     // #1109: Roller contact damage is keyed to valid nonzero stick intent, not
     // horizontal world speed. This preserves micro-speed rolling while refusing
     // neutral-stick coasting/knockback hits.
