@@ -203,6 +203,21 @@ export function trackedSlosherVolley(groups, key, now) {
   groups.set(key, { at: now, hits });
   return hits;
 }
+// Retain enough concurrent/delayed volleys for a full match, but never let
+// peer-provided group IDs grow the victim-owner ledger without bound. Evicted
+// numeric sequences are tombstoned by authenticated owner+actor identity so
+// replay cannot re-open the damage budget after eviction.
+export const SLOSHER_OWNER_GROUP_LIMIT = 2048;
+const SLOSHER_GROUP_ID_LIMIT = 96;
+function slosherSequence(groupId) {
+  if (typeof groupId !== 'string' || groupId.length === 0 || groupId.length > SLOSHER_GROUP_ID_LIMIT) return null;
+  const match = /:([1-9][0-9]{0,14})$/.exec(groupId);
+  return match ? Number(match[1]) : null;
+}
+function volleySourceKey(owner) {
+  return JSON.stringify([owner.owner ?? null, owner.nid ?? owner.name ?? 'actor']);
+}
+
 export function distanceDamage(bands, distance, linear = true) {
   if (!bands?.length) return 0;
   if (distance <= bands[0][0]) return bands[0][1];
@@ -502,6 +517,19 @@ export function installWeapons(context, profile) {
     }
     if (!this.charging && !this.s3Stored) this.s3ChargerHeldTime = 0;
 
+    // #823 follow-up: zero/underfunded low-ink charge can be armed with a
+    // temporary full native tank, but must never enter native release. Native
+    // release clamps progress to a minimum 0.12 projectile even when no ink was
+    // committed. Wait for the *paid* sourced minimum, not just held elapsed time.
+    if (this.charging && !inp.fire && (this.s3ChargerSpent || 0) + epsilon < w.inkMin) {
+      cancelStored(this);
+      this.s3ChargerHeldTime = 0;
+      this.s3ChargerRepeat = false;
+      this.s3ReleaseHold = false;
+      this.s3HeldCharge = this.s3HeldChargeT = 0;
+      return;
+    }
+
     // A release from a live charge enters the repeat cycle. Release handling
     // below neutralizes only the legacy debit, not the shot/recovery clocks.
     if (this.charging && !inp.fire) this.s3ChargerRepeat = true;
@@ -788,10 +816,32 @@ export function installWeapons(context, profile) {
       return applyHit.call(this, attacker, victim, damage, weaponId, groupId);
     const route = G.netm?.shouldApplyHit?.(attacker, victim);
     if (route === 'send' || route === 'drop') return applyHit.call(this, attacker, victim, damage, weaponId, groupId);
+    // Reject unbounded/malformed remote IDs before allocating a wire ledger.
+    const sequence = slosherSequence(groupId);
+    if (sequence === null) return 'rejected';
     const groups = this._s3SlosherOwnerGroups || (this._s3SlosherOwnerGroups = new Map());
+    const floors = this._s3SlosherOwnerFloors || (this._s3SlosherOwnerFloors = new Map());
+    const source = volleySourceKey(attacker);
     const key = volleyOwnerKey(attacker, groupId);
-    const group = trackedSlosherVolley(groups, key, G.time);
-    if (!group) return 'drop'; // invalid/flooded group: never bypass the damage ledger
+    let group = groups.get(key);
+    // Already-admitted groups retain their own committed damage maximum even
+    // when an out-of-order newer volley advances the eviction watermark.
+    if (!group) {
+      if (sequence <= (floors.get(source) || 0)) return 'rejected';
+      if (groups.size >= SLOSHER_OWNER_GROUP_LIMIT) {
+        const retired = groups.keys().next().value;
+        const [owner, actorId, retiredId] = JSON.parse(retired);
+        const retiredSequence = slosherSequence(retiredId);
+        if (retiredSequence === null) return 'rejected'; // preserve fail-closed replay safety
+        const retiredSource = JSON.stringify([owner, actorId]);
+        const nextFloor = Math.max(floors.get(retiredSource) || 0, retiredSequence);
+        // A rejected late/alias packet must not evict a healthy live ledger.
+        if (retiredSource === source && sequence <= nextFloor) return 'rejected';
+        floors.set(retiredSource, nextFloor);
+        groups.delete(retired);
+      }
+      group = new WeakMap(); groups.set(key, group);
+    }
     const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
     if (!(delta > 0)) return 'accepted';
     const hpBefore = victim.hp, aliveBefore = victim.alive;
@@ -802,6 +852,7 @@ export function installWeapons(context, profile) {
   const clearProjectiles = Projectiles.prototype.clear;
   Projectiles.prototype.clear = function (...args) {
     this._s3SlosherOwnerGroups?.clear();
+    this._s3SlosherOwnerFloors?.clear();
     return clearProjectiles.apply(this, args);
   };
   installContactRecovery(api);

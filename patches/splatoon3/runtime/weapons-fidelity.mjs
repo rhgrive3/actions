@@ -1532,6 +1532,8 @@ export function installWeaponsFidelity(context,profile) {
     if(projectile?.start)cache.clearRadius=certifyS3GuideMuzzleRadius(cache,actor,projectile.start);
     return cache.point;
   }
+  // The guide is a scratch projectile: initialize(p, w) already rebinds
+  // s3Weapon to w, so cloning the immutable profile every HUD tick is wasteful.
   function computeS3SlosherGuide(system,actor,w){
     const guide=w?.shotGuide,raw=rawWeapon(w),unit=guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
     const index=guide?.bulletOrderNumInUnit;

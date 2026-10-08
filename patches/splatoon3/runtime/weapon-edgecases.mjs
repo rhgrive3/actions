@@ -39,6 +39,27 @@ function makeSubGateInput(runner) {
   return { state, view };
 }
 
+// Reuse one late-bound input view per runner instead of creating a Proxy
+// on every 60 Hz update. The visible keys and descriptors still come from
+// the *current* spread snapshot, including when native code enumerates it.
+// The owner pointer is temporarily restored by the call site for reentry.
+export function dualiesInputGate(runner) {
+  const current = () => runner._s3DualiesPreparedInput || {};
+  return new Proxy({}, {
+    get(_target, prop) {
+      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
+      return current()[prop];
+    },
+    has(_target, prop) { return prop in current(); },
+    set(_target, prop, value) { current()[prop] = value; return true; },
+    deleteProperty(_target, prop) { return delete current()[prop]; },
+    ownKeys() { return Reflect.ownKeys(current()); },
+    getOwnPropertyDescriptor(_target, prop) { return Object.getOwnPropertyDescriptor(current(), prop); },
+    defineProperty(_target, prop, descriptor) { return Reflect.defineProperty(current(), prop, descriptor); },
+  });
+}
+
+
 // #729 — S3 Ver.11.3.0 resolves an impact-triggered blast one fixed frame after the
 // contact (tick N impact -> tick N+1 burst), so a target can move between the two
 // frames. Queued bursts are resolved from inside `Projectiles.update`; this flag keeps
