@@ -341,6 +341,18 @@ export function installMovement(context, tuning) {
     if (was && !this.climbing && movementState(this).surge?.phase === 'auto-climb') { movementState(this).surge = null; sync(this, state); }
     // Losing an inked wall cancels charge. A ledge burst is kept in the air.
     if (was && !this.climbing && movementState(this).surge?.phase === 'charge') { movementState(this).surge = null; this.anim.surgeCharge = 0; }
+    // #253: Ordinary inked-wall cling has a neutral descent, separate from
+    // Squid Surge charging/auto-climb and from stick-driven upward swimming.
+    // 0.9 world units/s is a provisional movement calibration, not measured S3.
+    const neutralCling = this.alive && this.climbing && this.form === 'squid' &&
+      !this.specialActive && !this.superJumpState && !this.intent.jump && !state.surge &&
+      Math.hypot(savedX, savedZ) <= 0.01;
+    if (neutralCling && Number.isFinite(args[0]) && args[0] > 0) {
+      this.s3NeutralWallSlideT = Math.min(1, (this.s3NeutralWallSlideT || 0) + args[0]);
+      const descent = -Math.min(0.9, this.s3NeutralWallSlideT * 3.6);
+      this.climbV = descent;
+      this.vel.y = descent;
+    } else this.s3NeutralWallSlideT = 0;
     return value;
   };
   for (const method of ['_startSpecial', 'superJump']) {

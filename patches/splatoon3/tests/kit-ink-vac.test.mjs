@@ -398,7 +398,8 @@ test('#1010 absorbed charge does not resize suction; Special Power Up does', asy
   assert.equal(state.farR, intakeFarRadius(0.5));
   const before = [state.nearR, state.farR];
   shoot(f, a, 2);
-  assert.ok(state.charge > 0.5, 'precondition: absorbed charge increased');
+  assert.ok(Math.abs(state.charge - 60 / INK_VAC_CALIBRATION.absorbCapacityDamage) < 1e-9,
+    'two 30 HP rounds credit exactly 60 HP-equivalent, not two 34% chunks');
   assert.deepEqual([state.nearR, state.farR], before, 'absorption never changes suction geometry');
 });
 
@@ -601,7 +602,8 @@ test('a shooter proposal neutralises its damage and the owner credits it exactly
   assert.equal(proposal.payload.target, q1, 'and the Vac owner as target');
   assert.equal(proposal.payload.serial, serial, 'keyed by the source activation');
   assert.equal(typeof proposal.payload.key, 'string', 'keyed by the source projectile');
-  assert.deepEqual(Object.keys(packEvent(proposal.payload)).sort(), ['actor', 'key', 'kit', 'serial', 'target'],
+  assert.equal(proposal.payload.damage, 30, 'the shooter includes source damage before zeroing it');
+  assert.deepEqual(Object.keys(packEvent(proposal.payload)).sort(), ['actor', 'damage', 'key', 'kit', 'serial', 'target'],
     'the proposal is flat so the native packer keeps both actor references');
   // Machine P consumes the proposal exactly once, over the real wire shape.
   const { wire, verdict: c1 } = hop(f, viewP, proposal.payload, EV.absorb);
@@ -610,7 +612,8 @@ test('a shooter proposal neutralises its damage and the owner credits it exactly
   assert.equal(c1.applied, true, 'the owner credits the proposal');
   const credited = f.inkVacState(p1).charge;
   assert.ok(credited > 0, 'the owner charged');
-  assert.equal(credited, c1.charge, 'the owner applied its OWN calibration, not a remote number');
+  assert.equal(credited, c1.charge, 'the owner applied the damage-equivalent gauge conversion');
+  assert.ok(Math.abs(credited - 30 / 1100) < 1e-9);
   const c2 = hop(f, viewP, proposal.payload, EV.absorb);
   assert.equal(c2.verdict.reason, 'duplicate-proposal', 'a duplicated packet credits nothing');
   assert.equal(f.inkVacState(p1).charge, credited, 'no double credit');
@@ -626,6 +629,26 @@ test('a shooter proposal neutralises its damage and the owner credits it exactly
   assert.equal(f.replayInkVac(EV.absorb, p2, { actor: p2, target: p1, kit: VAC_ID, serial, key: 'fresh' }).reason,
     'stale-or-mismatched-serial');
   assert.equal(f.inkVacState(p1).charge, 0, 'the new activation was not credited from the old packet');
+});
+
+test('#1090 damage-equivalent charge is proportional, saturates and rejects invalid proposals', async () => {
+  const { f, a } = await setup(); activate(f, a);
+  const makeShot = damage => ({ ...enemyShot(f, 0, 1, 5, 0, 0, -3), damage });
+  for (const damage of [30, 60, 100]) {
+    const p=makeShot(damage);
+    const c=inkVacAbsorbCandidate(a,p.pos.clone(),p.pos.clone().addScaledVector(p.vel,1/60),p);
+    assert.ok(c); c.onHit();
+  }
+  assert.ok(Math.abs(f.inkVacState(a).charge - 190 / 1100)<1e-9);
+  const { p1, p2, rec }=await twoActorSetup();
+  activate(f,p1); const serial=rec.filter(e=>e.name===f.INK_VAC_EVENTS.activation).at(-1).payload.serial;
+  const baseline=f.inkVacState(p1).charge;
+  for(const damage of [NaN,-1,Infinity,221,undefined]) {
+    const verdict=f.replayInkVac(f.INK_VAC_EVENTS.absorb,p2,
+      { actor:p2,target:p1,kit:VAC_ID,serial,key:'bad'+String(damage).replace(/[^A-Za-z0-9]/g,''),damage });
+    assert.equal(verdict.reason,'invalid-absorb-damage');
+    assert.equal(f.inkVacState(p1).charge,baseline);
+  }
 });
 
 test('a ghost round in a replica intake is consumed visually and proposes nothing', async () => {
@@ -752,7 +775,7 @@ test('the absorb branch refuses a sender that is not the transport-resolved acto
   const EV = f.INK_VAC_EVENTS;
   activate(f, p1);
   const serial = rec.find(r => r.name === EV.activation).payload.serial;
-  const good = { actor: p2, target: p1, kit: VAC_ID, serial, key: 'p1#a' };
+  const good = { actor: p2, target: p1, kit: VAC_ID, serial, key: 'p1#a', damage: 30 };
   // payload.actor names somebody else than the actor the transport resolved.
   assert.equal(f.replayInkVac(EV.absorb, p2, { ...good, actor: q2 }).reason, 'sender-actor-mismatch');
   assert.equal(f.replayInkVac(EV.absorb, p2, { ...good, actor: null }).reason, 'sender-actor-mismatch');
@@ -767,7 +790,7 @@ test('the absorb branch requires a live ENEMY sender and a live LOCALLY owned ta
   const EV = f.INK_VAC_EVENTS;
   activate(f, p1);
   const serial = rec.find(r => r.name === EV.activation).payload.serial;
-  const base = (over = {}) => ({ actor: p2, target: p1, kit: VAC_ID, serial, key: 'p1#k', ...over });
+  const base = (over = {}) => ({ actor: p2, target: p1, kit: VAC_ID, serial, key: 'p1#k', damage: 30, ...over });
 
   p2.team = p1.team;                       // friendly fire
   assert.equal(f.replayInkVac(EV.absorb, p2, base()).reason, 'same-team-sender');
@@ -794,7 +817,7 @@ test('proposal keys are bounded and charset-checked', async () => {
   const EV = f.INK_VAC_EVENTS;
   activate(f, p1);
   const serial = rec.find(r => r.name === EV.activation).payload.serial;
-  const base = key => ({ actor: p2, target: p1, kit: VAC_ID, serial, key });
+  const base = key => ({ actor: p2, target: p1, kit: VAC_ID, serial, key, damage: 30 });
   const reject = key => assert.equal(f.replayInkVac(EV.absorb, p2, base(key)).reason, 'malformed-proposal-key');
   reject('');
   reject('x'.repeat(INK_VAC_CALIBRATION.proposalKeyMaxLength + 1));   // unbounded payload refused
@@ -816,7 +839,7 @@ test('the sender is bound to the peer the packet came from (parent-installed val
   const EV = f.INK_VAC_EVENTS;
   activate(f, p1);
   const serial = rec.find(r => r.name === EV.activation).payload.serial;
-  const payload = { actor: p2, target: p1, kit: VAC_ID, serial, key: '2#p1' };
+  const payload = { actor: p2, target: p1, kit: VAC_ID, serial, key: '2#p1', damage: 30 };
   // A spoofed peer cannot claim an actor it does not own.
   const owner = new Map([[p2, 'peerQ']]);
   f.installInkVacSenderValidator((actor, from) => owner.get(actor) === from);
@@ -925,7 +948,7 @@ test('a proposal that arrives after the owner died is stale, not credited', asyn
   activate(f, p1);
   const serial = rec.find(r => r.name === EV.activation).payload.serial;
   // A genuinely serialised proposal, delivered only after the owner is gone.
-  const proposal = { actor: p2, target: p1, kit: VAC_ID, serial, key: '2#p9' };
+  const proposal = { actor: p2, target: p1, kit: VAC_ID, serial, key: '2#p9', damage: 30 };
   p1.alive = false; p1.splat(0, q1, VAC_ID);
   assert.equal(f.inkVacState(p1), null, 'the owner state is gone');
   assert.equal(hop(f, viewP, proposal, EV.absorb).verdict.reason, 'dead-target');

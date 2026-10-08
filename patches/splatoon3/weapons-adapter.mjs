@@ -71,9 +71,11 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     p.owner.addTurf(area);`,
     `    let area = null;
     if (p.type === 'slosh') {
-      // the wave lands as a thick stripe along its travel: stretched along the horizontal heading
+      // Source first/after unit PaintParam owns each terrain-impact footprint.
       _dir.y = 0; if (_dir.lengthSq() < 1e-4) _dir.set(0, 0, 1); _dir.normalize();
-      area = G.paint.splat(_v, rad * 1.12, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 1.25 });
+      const paint = fidelitySlosherImpactPaint(p, hit.point);
+      area = G.paint.splat(_v, paint?.radius ?? rad * 1.12, p.team,
+        { seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25 });
       if (p.head) this._sloshSplash(p, hit.point, null);
     } else if (!(p.type === 'blast' && p.s3Weapon?.kind === 'blaster')) {
       area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });
@@ -178,5 +180,5 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
   patch("    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", "    area += fidelityRollerMaximumPaint(this,w,fx,fz);\n    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", 'source maximum Roller floor width');
-  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, fidelitySlosherImpactPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }

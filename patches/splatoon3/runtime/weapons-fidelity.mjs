@@ -431,6 +431,14 @@ export function blasterPaintContract(raw) {
       splashDropPaintRadius: burst.SplashDropPaintRadius,
       splashPaintRadius: burst.SplashPaintRadius,
       radius: burst.SplashDropPaintShotColHitRadius,
+      // #1107: omitted members of sparse S3 BlasterBurstParam use their
+      // documented type defaults; shot-collision override is NOT the
+      // ordinary timed-burst paint or falling splash-drop radius.
+      timedSplashRadius: burst.SplashPaintRadius ?? 2.0,
+      timedDropRadius: burst.SplashDropPaintRadius ?? 3.2,
+      timedDropOn: burst.SplashDropOn ?? true,
+      timedDropInitialSpeed: burst.SplashDropInitSpeed ?? 0,
+      timedDropCollisionRadius: burst.SplashDropCollisionRadius ?? 0.4,
       axisX: x,
       axisY: y,
       move: burst.SplashWallDropMoveParam,
@@ -570,13 +578,59 @@ export function applyFidelityBlasterFlightPaint(system, p) {
   return true;
 }
 
+// #1107: falling paint drops are separate from the actual burst's damage
+// collision. A small bounded owner-only queue ensures an airburst can paint the
+// later landing surface without inventing an immediate generic floor stamp.
+function queueTimedBlasterDrop(system,p,point,burst) {
+  if (!burst.timedDropOn || !(burst.timedDropRadius>0) || !api.G.physics?.segment) return;
+  const drops=system._s3TimedBlasterDrops || (system._s3TimedBlasterDrops=[]);
+  if (drops.length>=128) drops.shift();
+  drops.push({ pos:point.clone(), next:point.clone(), hit:new api.Hit(),
+    speed:Math.max(0,burst.timedDropInitialSpeed)*60,
+    t:0, radius:burst.timedDropRadius, owner:p.owner,team:p.team,
+    seed:seededUnit(p.seed,0x1107) });
+}
+function advanceTimedBlasterDrops(system,dt) {
+  const drops=system._s3TimedBlasterDrops;
+  if (!drops?.length || !(dt>0)) return;
+  const physics=api.G.physics,paint=api.G.paint;
+  const gravity=Number.isFinite(api.PLAYER?.gravity)?api.PLAYER.gravity:20;
+  for(let i=drops.length-1;i>=0;i--){
+    const d=drops[i];d.t+=dt;d.speed+=gravity*dt;
+    d.next.copy(d.pos);d.next.y-=d.speed*dt;
+    const hit=physics?.segment?.(d.pos,d.next,d.hit,true);
+    if(hit?.hit) {
+      if(paint?.splat&&d.owner){
+        const at=hit.point.clone().addScaledVector(hit.normal,.025);
+        const area=paint.splat(at,d.radius,d.team,{seed:d.seed});
+        if(Number.isFinite(area))d.owner.addTurf?.(area);
+      }
+      drops.splice(i,1);
+    }else if(d.t>2.5 || d.next.y<(api.PLAYER?.waterY??-100)-2) drops.splice(i,1);
+    else d.pos.copy(d.next);
+  }
+}
 export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   const source = blasterPaintSource(p);
   if (!source) return false;
   const collision = direct != null || !!p.s3BurstCollisionHit || !!p.s3TerrainBurst;
-  if (!collision) return false; // timed airburst remains owned by its separate issue/path
   if (p.ghost) return true;
   const { contract } = source, burst = contract.burst;
+  if (!collision) {
+    const physics=api.G.physics;
+    const origin=system._s3BlasterTimedBurstOrigin || (system._s3BlasterTimedBurstOrigin=new api.THREE.Vector3());
+    const down=system._s3BlasterTimedBurstDown || (system._s3BlasterTimedBurstDown=new api.THREE.Vector3(0,-1,0));
+    const hit=system._s3BlasterTimedBurstHit || (system._s3BlasterTimedBurstHit=new api.Hit());
+    origin.copy(point);origin.y+=.2;
+    const floor=physics?.raycast?.(origin,down,3.5,hit,true);
+    if(floor?.hit&&burst.timedSplashRadius>0){
+      const at=floor.point.clone().addScaledVector(floor.normal,.025);
+      const area=api.G.paint?.splat?.(at,burst.timedSplashRadius,p.team,{seed:seededUnit(p.seed,0x1106)});
+      if(Number.isFinite(area))p.owner?.addTurf?.(area);
+    }
+    queueTimedBlasterDrop(system,p,point,burst);
+    return true;
+  }
   const floorHit = system._s3BlasterBurstFloorHit || (system._s3BlasterBurstFloorHit = new api.Hit());
   const floorOrigin = system._s3BlasterBurstFloorOrigin || (system._s3BlasterBurstFloorOrigin = new api.THREE.Vector3());
   const floorPoint = system._s3BlasterBurstFloorPoint || (system._s3BlasterBurstFloorPoint = new api.THREE.Vector3());
@@ -708,8 +762,57 @@ function radiusAt(c, age, fallback) {
   const t=c.changeTime>0?clamp01(age/c.changeTime):1;
   return c.initRadius+(c.endRadius-c.initRadius)*t;
 }
-export function fidelityPlayerCollisionRadius(p) { return p.s3PlayerRadius ?? radiusAt(p.fidelityPlayerCollision,p.age,p.size); }
-function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.fieldRadius||0); }
+function slosherPaintRecord(p) {
+  const u=p?.fidelitySloshUnit;
+  return u ? ((p.fidelitySloshIndex || 0) > 0 ? u.AfterPaintParam : u.PaintParam) : null;
+}
+// #1140: age growth and high-drop shrink are distinct. The documented
+// PaintParam fall-distance anchors guide a *provisional* collision/visual
+// scale, not an asserted Nintendo collision-radius equation.
+export function slosherDropScale(p, atY=p?.pos?.y) {
+  const src=slosherPaintRecord(p), origin=p?.start?.y;
+  if (!src || !Number.isFinite(origin) || !Number.isFinite(atY)) return 1;
+  const from=src.ScaleStartFallDistance, to=src.ScaleEndFallDistance, rate=src.WidthDepthScaleFall;
+  if (![from,to,rate].every(Number.isFinite) || !(to>from) || !(rate>0&&rate<=1)) return 1;
+  const drop=Math.max(0,origin-atY);
+  if (drop<=from) return 1;
+  const scale=1-(1-rate)*clamp01((drop-from)/(to-from));
+  // Continue narrowing beyond the sourced paint interpolation end rather than
+  // leaving an immortal full-size hit volume from extreme height.
+  return Math.max(0,scale*Math.exp(-Math.max(0,drop-to)/(to-from)));
+}
+function slosherCollisionRadius(p, age, field, y) {
+  const record=field?p.fidelityFieldCollision:p.fidelityPlayerCollision;
+  const fallback=field?(p.fieldRadius||0):(p.s3PlayerRadius??p.size);
+  const grown=field?radiusAt(record,age,fallback):(p.s3PlayerRadius??radiusAt(record,age,fallback));
+  return grown*slosherDropScale(p,y);
+}
+export function fidelityPlayerCollisionRadius(p) { return slosherCollisionRadius(p,p.age,false,p.pos?.y); }
+function fieldRadiusAt(p,age,y=p.pos?.y) { return slosherCollisionRadius(p,age,true,y); }
+// #1011: footprint uses the source unit and first/after bullet distinctions.
+export function fidelitySlosherImpactPaint(p, point) {
+  const src=slosherPaintRecord(p), start=p?.start, scale=completion?.worldUnitsPerSourceUnit ?? 1;
+  if (!src || !start || !point || !(scale>0)) return null;
+  const n=src.DistanceXZNear,f=src.DistanceXZFar,w0=src.WidthHalfNear,w1=src.WidthHalfFar;
+  const d0=src.DepthScaleNear,d1=src.DepthScaleFar;
+  if (![n,f,w0,w1,d0,d1].every(Number.isFinite) || !(f>n) || !(w0>0&&w1>0)) return null;
+  const distance=Math.hypot(point.x-start.x,point.z-start.z)/scale;
+  const t=clamp01((distance-n)/(f-n)), shrink=slosherDropScale(p,point.y);
+  const radius=(w0+(w1-w0)*t)*scale*shrink;
+  return radius>0?{radius,stretchAmt:Math.max(.05,(d0+(d1-d0)*t)*shrink)}:null;
+}
+// #1022: explicit source bias input, keeping one RNG draw and exclusions.
+// The exponent is a deliberately labelled symmetric calibration, NOT a
+// verified Nintendo distribution; replace it when sampling semantics are known.
+export function slosherYawOffset(u,index,rng=Math.random) {
+  if (!u || u.RandomRotateYOffOrderNum?.includes(index)) return 0;
+  const angle=u.RandomRotateYDegree || 0;
+  if (!Number.isFinite(angle)) return 0;
+  const bias=Number.isFinite(u.RandomRotateYBias)?clamp01(u.RandomRotateYBias):0;
+  const sample=Math.max(-1,Math.min(1,2*rng()-1));
+  const centered=Math.sign(sample)*Math.pow(Math.abs(sample),1+bias);
+  return radians(angle*centered);
+}
 function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
@@ -785,7 +888,7 @@ function setSlosherDraw(p,unit,index) {
   p.tail0=fidelitySlosherDrawTail(p,p.vel.length());p.tailK=0;
 }
 export function fidelitySlosherDrawRadius(p) {
-  return radiusAt(p.fidelitySloshDraw,Math.max(0,p.age||0),p.vis??p.size);
+  return radiusAt(p.fidelitySloshDraw,Math.max(0,p.age||0),p.vis??p.size)*slosherDropScale(p,p.pos?.y);
 }
 export function fidelitySlosherDrawTail(p,speed) {
   const d=p.fidelitySloshDraw,r=fidelitySlosherDrawRadius(p);
@@ -867,7 +970,7 @@ export function fidelityWorldHit(system,p) {
   if(!s.worldReady){
     s.world.kitDefense=null;
     if(isKitProjectile(p)) kitTrizookaWorldSweep(system,p,s.world,api.G.physics);
-    else sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge??p.age),fieldRadiusAt(p,p.age),s.world,true);
+    else sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge??p.age,p.prev?.y),fieldRadiusAt(p,p.age,p.pos?.y),s.world,true);
     const defense=system.kitDefenseCandidate?.(p);
     if(defense&&Number.isFinite(defense.distance)&&defense.distance>=0&&(!s.world.hit||defense.distance<s.world.dist-EPSILON)){
       s.world.hit=true;s.world.dist=defense.distance;s.world.kitDefense=defense;
@@ -902,7 +1005,7 @@ export function fidelityProjectileTargets(system,p) {
   // give it no targets on the terminal wall-drop frame.
   if (p.fidelityWallDrop?.done) return s.targets;
   // Ghosts share visual collision chronology, but never damage/paint ownership.
-  const r0=p.s3PlayerRadius ?? radiusAt(p.fidelityPlayerCollision,p.fidelityPrevAge??p.age,p.size);
+  const r0=slosherCollisionRadius(p,p.fidelityPrevAge??p.age,false,p.prev?.y);
   const r1=fidelityPlayerCollisionRadius(p);
   let nearest=null,best=Infinity;
   for(const actor of G.actors){
@@ -1197,8 +1300,8 @@ export function installWeaponsFidelity(context,profile) {
     return reach;
   };
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,step=Projectiles.prototype._step,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear,updateSystem=Projectiles.prototype.update;
-  Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;this._dualiesGuideCache=null;this._s3DetachedWallDrops?.splice(0);return result;};
-  Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);return updateSystem.call(this,dt);};
+  Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;this._dualiesGuideCache=null;this._s3DetachedWallDrops?.splice(0);this._s3TimedBlasterDrops?.splice(0);return result;};
+  Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);advanceTimedBlasterDrops(this,dt);return updateSystem.call(this,dt);};
   Projectiles.prototype._new=function(...args){
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
@@ -1285,9 +1388,7 @@ export function installWeaponsFidelity(context,profile) {
       // each source unit from the last two fixed-tick aim headings. A source
       // UnitDelayFrame (not array position) determines the angular offset.
       const launchFrame=(u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0);
-      const yaw=Math.atan2(aim.x,aim.z)+active.turnDelta*launchFrame+radians(u.BaseRotateYDegree||0)+
-        (u.RandomRotateYOffOrderNum?.includes(index) ? 0 :
-          biasedSourceYaw(Math.random(), u.RandomRotateYDegree||0, u.RandomRotateYBias));
+      const yaw=Math.atan2(aim.x,aim.z)+active.turnDelta*launchFrame+radians(u.BaseRotateYDegree||0)+slosherYawOffset(u,index);
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
       p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
@@ -1367,7 +1468,7 @@ export function installWeaponsFidelity(context,profile) {
     'projectileSpeed','weaponStraight','weaponGravity','weaponDrag','moveFreeGravity','moveFreeDrag',
     'moveEndSpeed','moveBrakeDrag','moveBrakeGravity','moveFreeVelocityY','moveFreeFrame','moveHz',
     'unitDelay','unitOffsetDelay','unitBulletNum','unitGroundSpeed','unitAirSpeed','unitOffsetSpeed','unitBaseYaw',
-    'unitRandomYaw','unitRandomOffOrder','unitAddYRate','unitMove','unitGoStraightFrame','unitEndSpeed',
+    'unitRandomYaw','unitRandomBias','unitRandomOffOrder','unitAddYRate','unitMove','unitGoStraightFrame','unitEndSpeed',
     'unitBrakeDrag','unitBrakeGravity','unitFreeDrag','unitFreeGravity','unitFreeVelocityY','unitFreeFrame',
     'actorForm','grounded','climbing','dancing','specialActive','superJumpState','aimPitch',
     'actorYaw','actorVelX','actorVelZ','blasterZRate',
@@ -1411,7 +1512,7 @@ export function installWeaponsFidelity(context,profile) {
     s.moveFreeFrame=move?.freeFrame;s.moveHz=move?.hz;
     s.unitDelay=unit?.UnitDelayFrame;s.unitOffsetDelay=unit?.AfterOffsetDelayFrame;s.unitBulletNum=unit?.BulletNum;
     s.unitGroundSpeed=unit?.SpawnSpeedGround;s.unitAirSpeed=unit?.SpawnSpeedAir;s.unitOffsetSpeed=unit?.AfterOffsetSpawnSpeed;
-    s.unitBaseYaw=unit?.BaseRotateYDegree;s.unitRandomYaw=unit?.RandomRotateYDegree;
+    s.unitBaseYaw=unit?.BaseRotateYDegree;s.unitRandomYaw=unit?.RandomRotateYDegree;s.unitRandomBias=unit?.RandomRotateYBias;
     s.unitRandomOffOrder=unit?.RandomRotateYOffOrderNum;s.unitAddYRate=unit?.AddSpawnSpeedYRateByXZ;s.unitMove=unitMove;
     s.unitGoStraightFrame=unitMove?.GoStraightToBrakeStateFrame;s.unitEndSpeed=unitMove?.GoStraightStateEndMaxSpeed;
     s.unitBrakeDrag=unitMove?.BrakeAirResist;s.unitBrakeGravity=unitMove?.BrakeGravity;
