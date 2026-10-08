@@ -112,7 +112,8 @@ jobs:
       - name: Verify PR1172 Slosher and Ink Vac regressions
         run: node --experimental-vm-modules --test patches/network-replication/tests/slosher-birth-sampling.test.mjs patches/splatoon3/tests/issue-1150-volley-wire.test.mjs patches/splatoon3/tests/slosher-wire-group-forwarding.test.mjs patches/splatoon3/tests/issue-1149-vortex-contact.test.mjs patches/splatoon3/tests/issue-1090-ink-vac-damage-credit.test.mjs patches/splatoon3/tests/kit-ink-vac.test.mjs patches/splatoon3/tests/batch-b-final-damage.test.mjs
       - name: Verify PR1172 updated wire contracts
-        run: node --experimental-vm-modules --test --test-name-pattern='Slosher|slosher: true-birth|forwards the existing damage' patches/network-replication/tests/robustness-timing.test.mjs patches/network-replication/tests/comparison.test.mjs patches/network-replication/tests/composed-hit-unit-packet.test.mjs
+        run: |
+          node --experimental-vm-modules --test --test-name-pattern='Slosher|slosher: true-birth|forwards the existing damage' patches/network-replication/tests/robustness-timing.test.mjs patches/network-replication/tests/comparison.test.mjs patches/network-replication/tests/composed-hit-unit-packet.test.mjs
       - name: Verify PR1171 seven-issue and composition regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-1098-stored-muzzle.test.mjs patches/splatoon3/tests/issue-982-charger-rumble.test.mjs patches/splatoon3/tests/issue-batch-1171.test.mjs patches/splatoon3/tests/issue-979-slide-paint.test.mjs patches/splatoon3/tests/issue-570-paint-ownership-visibility.test.mjs patches/splatoon3/tests/results-presentation.test.mjs patches/local-quality/tests/idle-attract-budget.test.mjs patches/local-quality/tests/idle-resources.test.mjs patches/reliability/tests/net.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs
       - name: Verify six follow-up INKWAVE regressions
