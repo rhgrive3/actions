@@ -170,6 +170,11 @@ export function adaptIssue477DualiesMotion(code) {
 }
 
 export function adaptIssue477Net(code) {
+  code = replaceOnce(code,
+    "import { G, emit, on } from '../core/ctx.js';",
+    "import { G, emit, on } from '../core/ctx.js';\nimport { acceptDodgeEpoch, calibrateDodgeEpoch, dodgeClockAt, sampleForAcceptedDodgeEvent, DUALIES_DODGE_STARTUP_SECONDS } from '../../patches/splatoon3/runtime/dualies-dodge-clock.mjs';",
+    'accepted Dualies event clock helper');
+
   // 1. Owner tick: replicate authoritative roll token/phase/time via OPTIONAL NAMED sidecar 'rl'
   // Attaches msg.rl at unique broadcast boundary, preserving any existing 'l' (combat-life),
   // 'sc' (special-charge PR495), and reserved slot 21 / flag 20.
@@ -196,7 +201,14 @@ export function adaptIssue477Net(code) {
     '      if (buf.length && snap.t <= buf[buf.length - 1].t) continue;\n',
     `      if (buf.length && snap.t <= buf[buf.length - 1].t) continue;
       const _rl = d.rl?.[a.nid] ?? d.roll?.[a.nid];
-      snap.roll = (_rl && typeof _rl === 'object') ? { ..._rl, origT: snap.t } : null;\n`,
+      snap.roll = (_rl && typeof _rl === 'object') ? { ..._rl, origT: snap.t } : null;
+      if (snap.roll && a.net.rollEventEpoch && (snap.f & F.dodge)) {
+        a.net.rollEventEpoch = calibrateDodgeEpoch(a.net.rollEventEpoch, {
+          owner: from, life: snap.life ?? a.net.lastLife ?? 0, token: snap.roll.token,
+          teleport: snap.tp, sampleTime: snap.t, phase: snap.roll.phase, time: snap.roll.time
+        });
+      }
+`,
     'netmatch _tick unpack roll sidecar'
   );
 
@@ -229,34 +241,44 @@ export function adaptIssue477Net(code) {
           const tr = (peer && Number.isFinite(peer.tr)) ? peer.tr : S.t;
           const origT = (rl.origT !== undefined && Number.isFinite(rl.origT)) ? rl.origT : S.t;
           const phaseAge = Math.min(Math.max(0, tr - origT), 0.18);
-          if (rl.phase === 'startup') {
-            const startupDur = 4 / 60;
+          const epoch = a.net.rollEventEpoch;
+          const epochMatches = a.weapon?.kind === 'dualies' && epoch
+            && epoch.owner === a.owner && epoch.life === currentLife && epoch.token === tk
+            && epoch.teleport === S.tp;
+          if (epoch && !epochMatches) a.net.rollEventEpoch = null;
+          if (epochMatches) {
+            const clock = dodgeClockAt(epoch, tr, rl.dur);
+            if (clock) wr.dodge = { token: tk, ...clock };
+          } else {
+            const startupDur = DUALIES_DODGE_STARTUP_SECONDS;
             const startupRemainingAtOrig = Math.max(0, startupDur - rl.time);
-            if (phaseAge <= startupRemainingAtOrig + 1e-10) {
-              wr.dodge = {
-                token: tk,
-                t: 0,
-                dur: rl.dur,
-                startup: Math.max(0, startupRemainingAtOrig - phaseAge),
-                startupDur: startupDur
-              };
+            if (rl.phase === 'startup') {
+              if (phaseAge <= startupRemainingAtOrig + 1e-10) {
+                wr.dodge = {
+                  token: tk,
+                  t: 0,
+                  dur: rl.dur,
+                  startup: Math.max(0, startupRemainingAtOrig - phaseAge),
+                  startupDur: startupDur
+                };
+              } else {
+                wr.dodge = {
+                  token: tk,
+                  t: Math.min(rl.dur, phaseAge - startupRemainingAtOrig),
+                  dur: rl.dur,
+                  startup: 0,
+                  startupDur: 0
+                };
+              }
             } else {
               wr.dodge = {
                 token: tk,
-                t: Math.min(rl.dur, phaseAge - startupRemainingAtOrig),
+                t: Math.min(rl.dur, rl.time + phaseAge),
                 dur: rl.dur,
                 startup: 0,
                 startupDur: 0
               };
             }
-          } else {
-            wr.dodge = {
-              token: tk,
-              t: Math.min(rl.dur, rl.time + phaseAge),
-              dur: rl.dur,
-              startup: 0,
-              startupDur: 0
-            };
           }
           if (rl.dir && Array.isArray(rl.dir) && Number.isFinite(rl.dir[0]) && Number.isFinite(rl.dir[1])) {
             if (!wr._dodgeDir) wr._dodgeDir = new THREE.Vector3();
@@ -264,11 +286,13 @@ export function adaptIssue477Net(code) {
           }
         }
       } else {
+        a.net.rollEventEpoch = null;
         if (!wr.dodge) wr.dodge = { token: 0, t: 0, dur: a.weapon?.rollTime || 0.2 };
         wr.dodge.startup = 0; wr.dodge.startupDur = 0;
         wr.dodge.t = Math.min(wr.dodge.dur, wr.dodge.t + dt);
       }
     } else {
+      a.net.rollEventEpoch = null;
       wr.dodge = null;
     }`;
   code = replaceOnce(code, netDodgeOld, netDodgeNew, 'netmatch applyRemote authoritative roll sidecar');
@@ -277,7 +301,7 @@ export function adaptIssue477Net(code) {
   code = replaceOnce(
     code,
     '    a.net.buf.length = 0;\n    if (a.alive && a.net.spawnPending)',
-    '    delete a.net.lastRollToken; delete a.net.rollOwner; delete a.net.rollLife;\n    a.net.buf.length = 0;\n    if (a.alive && a.net.spawnPending)',
+    '    delete a.net.lastRollToken; delete a.net.rollOwner; delete a.net.rollLife; delete a.net.rollEventEpoch;\n    a.net.buf.length = 0;\n    if (a.alive && a.net.spawnPending)',
     'netmatch _adopt roll admission reset'
   );
 

@@ -541,6 +541,21 @@ export function emit(name, payload) {
       const nid = e[3]?.actor?.n ?? e[3]?.victim?.n;
       const actor = this.byNid.get(nid);
       if (!actor?.remote || actor.owner !== from) return;
+      if (e[2] === 'weapon:dodge') {
+        const snap = sampleForAcceptedDodgeEvent(actor.net?.buf, e[0]);
+        const rl = snap?.roll;
+        if (actor.alive && actor.weapon?.kind === 'dualies'
+          && Number.isFinite(e[0]) && Number.isFinite(eventPeer?.tr) && e[0] <= eventPeer.tr + 0.001
+          && snap && (snap.f & F.dodge) && rl && Number.isSafeInteger(rl.token) && rl.token > 0
+          && Number.isFinite(rl.time) && rl.time >= 0 && Number.isFinite(rl.dur) && rl.dur > 0
+          && (rl.phase === 'startup' || rl.phase === 'roll')) {
+          actor.net.rollEventEpoch = acceptDodgeEpoch(actor.net.rollEventEpoch, {
+            owner: from, life: snap.life ?? actor.net.lastLife ?? 0, token: rl.token,
+            teleport: snap.tp, epoch: e[0], sampleTime: rl.origT ?? snap.t,
+            phase: rl.phase, time: rl.time
+          });
+        }
+      }
     }
     // Boss hazard/crablet timeline records are host-authoritative at admission.
     if (e[1] === 'bm' || e[1] === 'bc') {
