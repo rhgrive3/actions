@@ -114,6 +114,10 @@ async function setup({ remote = false, y = 0, grounded = true, vertical = false,
   const paintCalls = [];
   const paint = Object.create(api.PaintSystem.prototype);
   paint.level = level;
+  // This release-geometry fixture has no atlas faces, but uses native CPU state.
+  paint.cell = 0.25;
+  paint.paintFaces = level.faces.filter(face => face.paintable);
+  paint._initGrid();
   paint.growing = [];
   paint._qb = [];
   // Match the current production constructor's native splat-pool ownership.
@@ -130,7 +134,8 @@ async function setup({ remote = false, y = 0, grounded = true, vertical = false,
   api.G.paint = paint;
   api.G.netm = null;
   const actor = makeActor(api, { remote, y, grounded, vertical, yaw });
-  const net = new api.NetMatch({ myId: remote ? 'remote' : 'owner', isHost: true }, {});
+  const net = new api.NetMatch({ myId: remote ? 'remote' : 'owner', isHost: true,
+    _members: new Map([['owner', 'Owner'], ['remote', 'Remote']]) }, {});
   net.byNid.set(actor.nid, actor);
   api.G.netm = net;
   const projectiles = new api.Projectiles(api.G.scene);
