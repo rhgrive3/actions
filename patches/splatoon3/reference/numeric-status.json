@@ -1237,6 +1237,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.roller.rollContactInterval": {
+    "value": 0.4,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.rollSpeed": {
     "value": 7.92,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1735,11 +1740,6 @@
       "factor": 0.016666666666666666,
       "rawValue": 20
     }
-  },
-  "weapons.roller.rollContactInterval": {
-    "value": 0.4,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
   },
   "weapons.slosher.inkPerShot": {
     "value": 7.6,
