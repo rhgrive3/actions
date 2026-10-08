@@ -42,9 +42,38 @@ export function adaptIssue479(rel, code) {
     '      a.ink >= (fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk);\n' +
     '    if (starting) {\n' +
     '      this.cooldown = Math.min(0, this.cooldown);\n' +
+    '      const groundedCancel = takeFullCancelGroundAttack(a);\n' +      '      this.s3FlickVertical = !groundedCancel && !a.grounded;';
+  // #305 composes a flipped-cost admission into the same block. Keep the
+  // sourced 25F free-fall selector and the depletion/ink gate together.
+  const depletionShape =
+    '    const fullCancelGroundAttack = hasFullCancelGroundAttack(a);\n' +
+    '    const flickCost = fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk;\n' +
+    '    const depleted = DEPLETION_ENABLED && this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&\n' +
+    '      a.ink > EPS && a.ink + EPS < flickCost;\n' +
+    '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&\n' +
+    '      (a.ink + EPS >= flickCost || depleted);\n' +
+    '    if (starting) {\n' +
+    '      this.cooldown = Math.min(0, this.cooldown);\n' +
     '      const groundedCancel = takeFullCancelGroundAttack(a);\n' +
     '      this.s3FlickVertical = !groundedCancel && !a.grounded;';
-  if (code.includes(fullCancelShape)) {
+  if (code.includes(depletionShape)) {
+    code = replaceOnce(
+      code,
+      depletionShape,
+      '    const fullCancelGroundAttack = hasFullCancelGroundAttack(a);\n' +
+      '    const isVertical = !fullCancelGroundAttack && selectRollerFlickVertical(a, this);\n' +
+      '    const flickCost = fullCancelGroundAttack ? w.flickInk : isVertical ? w.verticalInk : w.flickInk;\n' +
+      '    const depleted = DEPLETION_ENABLED && this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&\n' +
+      '      a.ink > EPS && a.ink + EPS < flickCost;\n' +
+      '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&\n' +
+      '      (a.ink + EPS >= flickCost || depleted);\n' +
+      '    if (starting) {\n' +
+      '      this.cooldown = Math.min(0, this.cooldown);\n' +
+      '      const groundedCancel = takeFullCancelGroundAttack(a);\n' +
+      '      this.s3FlickVertical = groundedCancel ? false : isVertical;',
+      'roller selectRollerFlickVertical 25F grace with #305 depletion'
+    );
+  } else if (code.includes(fullCancelShape)) {
     code = replaceOnce(
       code,
       fullCancelShape,

@@ -1252,6 +1252,26 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.roller.depletionInkRate": {
+    "value": 0.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.flickDepletionDrops": {
+    "value": 3,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalDepletionDrops": {
+    "value": 3,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.depletionDamageRate": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.flickDamageBands.0.0": {
     "value": 4.2,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1453,6 +1473,11 @@
     }
   },
   "weapons.roller.nearFlickUnit.widthRatio": {
+    "value": 0.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.nearFlickUnit.depletionSpeedRate": {
     "value": 0.5,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null

@@ -89,9 +89,11 @@ test('a new flick lifts the rolling drum, a held trigger resumes rolling, releas
   r.reset(); assert.equal(r.s3RollerAttack, null); assert.equal(a.character.s3RollerFlick, null);
 });
 test('dry input does not create a phantom pose or spend ink', async () => {
-  const f = await fixture(), a = f.make('roller'); a.ink = 2; start(f, a, true);
+  // #305: only a truly empty tank is dry; a positive tank below the swing cost
+  // now runs the depletion attack (covered by the issue-305 test).
+  const f = await fixture(), a = f.make('roller'); a.ink = 0; start(f, a, true);
   assert.equal(a.weaponRunner.flick, -1); assert.equal(a.weaponRunner.s3RollerAttack, null);
-  assert.equal(a.character.s3RollerFlick, null); assert.equal(a.ink, 2);
+  assert.equal(a.character.s3RollerFlick, null); assert.equal(a.ink, 0);
 });
 test('actual projectile path retains narrow vertical paint flight and one-attack damage aggregation', async () => {
   const f = await fixture(), a = f.make('roller'), system = new f.Projectiles(new f.THREE.Scene());
