@@ -14,6 +14,7 @@ import { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';
 import { adaptStormEffects } from './storm-effects-adapter.mjs';
 import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
 import { adaptPadSensitivity } from './pad-sensitivity-adapter.mjs';
+import { adaptCombatRange } from './combat-range-adapter.mjs';
 import { adaptKitRescue } from './kit-rescue-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
@@ -95,6 +96,7 @@ export function adaptSource(rel, code) {
     return code;
   }
   code = adaptPadSensitivity(rel, code, replaceOnce);
+  code = adaptCombatRange(rel, code, replaceOnce);
   code = adaptHostTeams(rel, code, replaceOnce);
   code = adaptLocalBatch01(rel, code, replaceOnce);
   code = adaptRollerMaxPaint(rel,code,replaceOnce);
