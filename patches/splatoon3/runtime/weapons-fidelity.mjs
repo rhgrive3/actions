@@ -672,26 +672,32 @@ function setCollision(p,c,offset=0) {
 // their first30 entries, then carry unit before the existing owner tick/sequence.
 export function validFidelityRollerUnitPacket(event) {
   if (!Array.isArray(event)) return false;
-  if ([27, 30, 32].includes(event.length)) return true;
-  if (event.length !== 33 && event.length !== 35 && event.length !== 36) return false;
-  // #977: optional, tagged immutable special power precedes the tick/sequence.
-  // Ordinary weapons retain the existing packet; arbitrary trailing data is rejected.
-  if (event.length === 36) {
-    const power = event[33]?.s3SpecialPowerAP;
+  if ([27, 30, 32].includes(event.length)) return true; // legacy pre-birth layouts
+  const hasInkMeta = event[27] === null || typeof event[27] === 'object';
+  const accepted = hasInkMeta
+    ? event.length === 34 || event.length === 36 || event.length === 37
+    : event.length === 33 || event.length === 35 || event.length === 36;
+  if (!accepted) return false;
+  const inkMetaOffset = hasInkMeta ? 1 : 0;
+  const kitOffset = event.length === 35 || event.length === 36 || event.length === 37 ? 2 : 0;
+  const birthOffset = inkMetaOffset + kitOffset;
+  const powerIndex = 27 + birthOffset + 4;
+  const hasPower = hasInkMeta ? event.length === 37 : event.length === 36;
+  if (hasPower) {
+    const power = event[powerIndex]?.s3SpecialPowerAP;
     const entry = api?.SPECIALS && Object.hasOwn(api.SPECIALS, event[4]) ? api.SPECIALS[event[4]] : null;
     if (typeof entry?.projectileDescriptor !== 'function' || !Number.isFinite(power) || power < 0 || power > 57) return false;
   }
-  // The composed Kit recorder inserts volley/action slots before network metadata.
-  const kitOffset = event.length >= 35 ? 2 : 0;
   const weapons = api?.WEAPONS;
-  const weapon = weapons && Object.hasOwn(weapons, event[4]) ? weapons[event[4]] : null, unit = event[30 + kitOffset];
+  const weapon = weapons && Object.hasOwn(weapons, event[4]) ? weapons[event[4]] : null;
+  const unit = event[30 + birthOffset];
   if (!weapon) {
     const specials=api?.SPECIALS,entry=specials&&Object.hasOwn(specials,event[4])?specials[event[4]]:null;
     return typeof entry?.projectileDescriptor==='function' && unit===-1;
   }
   if (weapon.kind !== 'roller') return unit === -1;
-  if (event[27 + kitOffset] !== 0 && event[27 + kitOffset] !== 1) return false;
-  const units = rawWeapon(weapon)?.[event[27 + kitOffset] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
+  if (event[27 + birthOffset] !== 0 && event[27 + birthOffset] !== 1) return false;
+  const units = rawWeapon(weapon)?.[event[27 + birthOffset] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
   return Number.isSafeInteger(unit) && unit >= 0 && !!units && unit < units.length;
 }
 // #750: the swing unit declares the head's *rendered* size in
@@ -1272,7 +1278,7 @@ export function installWeaponsFidelity(context,profile) {
     const before=this.list.length;const result=ghost.call(this,actor,event);
     if(this.list.length>before){const p=this.list.at(-1);const special=api.SPECIALS&&Object.hasOwn(api.SPECIALS,p.wid)?api.SPECIALS[p.wid]:null;
       if(!p.s3SpecialWeapon&&typeof special?.projectileDescriptor==='function'){p.s3SpecialWeapon=special.projectileDescriptor(p);p.s3Weapon=p.s3SpecialWeapon;}
-      const kitOffset=event.length===35?2:0;if((event.length===33||event.length===35)&&event[30+kitOffset]>=0){p.fidelityRollerUnitIndex=event[30+kitOffset];p.fidelityMode=event[27+kitOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
+      const inkMetaOffset=event[27]===null||typeof event[27]==='object'?1:0,kitOffset=(event.length===35||event.length===36||event.length===37)?2:0,birthOffset=inkMetaOffset+kitOffset;if([33,34,35,36,37].includes(event.length)&&event[30+birthOffset]>=0){p.fidelityRollerUnitIndex=event[30+birthOffset];p.fidelityMode=event[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;
