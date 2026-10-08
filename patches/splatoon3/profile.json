@@ -46,7 +46,9 @@
       "swimFirstShotDelay": 0.2,
       "postFireSwimLock": 0.06666666666666667,
       "jumpSpreadHold": 0.4166666666666667,
-      "jumpSpreadRecoverEnd": 1.1666666666666667
+      "jumpSpreadRecoverEnd": 1.1666666666666667,
+      "combatRange": 11.56,
+      "matchmakingRange": 12.9
     },
     "dualies": {
       "inkPerShot": 0.72,
