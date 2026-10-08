@@ -456,7 +456,33 @@ def neck_join(cfg):
     R = bpy.data.objects.new('INKWAVE_neck_join', me)
     sc.collection.objects.link(R)
     R.matrix_world = head.matrix_world.copy()
-    T = bpy.data.objects.new('INKWAVE_neck_join_operand', neck.data.copy())
+    # the operand is only the neck (above head y cfg['cut_y']), closed: an open neck top inside the head made the
+    # Boolean take parts of the back of the head for 'inside' (holes there)
+    tme = neck.data.copy()
+    Ln = er.M.to_local(er.world(neck)) * 1000
+    low = Ln[:, 1] < cfg['cut_y']
+    cap = bpy.data.materials.get('INKWAVE_join_cap') or bpy.data.materials.new('INKWAVE_join_cap')
+    tme.materials.append(cap)
+    cap_i = len(tme.materials) - 1
+    lower = neck.data.copy()                           # the body below the cut, unchanged
+    bm = bmesh.new()
+    bm.from_mesh(lower)
+    bm.faces.ensure_lookup_table()
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if not all(low[v.index] for v in f.verts)], context='FACES_ONLY')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    bm.to_mesh(lower)
+    bm.free()
+    bm = bmesh.new()
+    bm.from_mesh(tme)
+    bm.faces.ensure_lookup_table()
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if all(low[v.index] for v in f.verts)], context='FACES_ONLY')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    filled = bmesh.ops.holes_fill(bm, edges=[e for e in bm.edges if e.is_boundary], sides=0)
+    for f in filled['faces']:
+        f.material_index = cap_i
+    bm.to_mesh(tme)
+    bm.free()
+    T = bpy.data.objects.new('INKWAVE_neck_join_operand', tme)
     sc.collection.objects.link(T)
     T.matrix_world = neck.matrix_world.copy()
     mod = R.modifiers.new('INKWAVE_neck_join', 'BOOLEAN')
@@ -468,6 +494,16 @@ def neck_join(cfg):
     bpy.data.objects.remove(T)
     bpy.data.meshes.remove(tdata)
     head_mats = {m.name for m in head.data.materials if m}
+    rm0 = [m.name if m else None for m in R.data.materials]
+    mi0 = np.zeros(len(R.data.polygons), int)
+    R.data.polygons.foreach_get('material_index', mi0)
+    bm = bmesh.new()                                    # the caps go
+    bm.from_mesh(R.data)
+    bm.faces.ensure_lookup_table()
+    bmesh.ops.delete(bm, geom=[bm.faces[i] for i in np.flatnonzero(np.array([rm0[k] == cap.name for k in mi0]))], context='FACES_ONLY')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    bm.to_mesh(R.data)
+    bm.free()
     neck_mats = [m for m in neck.data.materials]
     rm = [m.name if m else None for m in R.data.materials]
     mi = np.zeros(len(R.data.polygons), int)
@@ -506,8 +542,8 @@ def neck_join(cfg):
             dd = np.array([q[2] for q in near]) * 1000
             f = 1 - smoothstep((dd - 2.0) / 8.0)
             set_local_mm(o, er.M.to_local(Wo + f[:, None] * mv[idx]) * 1000)
-    with_obj = er.with_object
-    R.data.normals_split_custom_set([])            # the merged surface's own normals
+    if R.data.attributes.get('custom_normal') is not None:      # the merged surface's own normals
+        R.data.attributes.remove(R.data.attributes['custom_normal'])
     for obj, keep in ((head, is_head), (neck, ~is_head)):
         bm = bmesh.new()
         bm.from_mesh(R.data)
@@ -518,6 +554,16 @@ def neck_join(cfg):
         bm.to_mesh(new)
         bm.free()
         new.transform(obj.matrix_world.inverted() @ R.matrix_world)
+        if obj is neck:
+            # the body below the cut comes back, welded along the cut
+            bm = bmesh.new()
+            bm.from_mesh(new)
+            nfirst = len(bm.verts)
+            bm.from_mesh(lower)
+            bm.verts.ensure_lookup_table()
+            bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=1e-6)
+            bm.to_mesh(new)
+            bm.free()
         own = list(obj.data.materials)
         for m in own:
             new.materials.append(m)
@@ -540,6 +586,8 @@ def neck_join(cfg):
     rdata = R.data
     bpy.data.objects.remove(R)
     bpy.data.meshes.remove(rdata)
+    bpy.data.meshes.remove(lower)
+    bpy.data.materials.remove(cap)
 
 
 def seam_normals(cfg):

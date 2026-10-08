@@ -866,6 +866,21 @@
    90
   ]
  },
+ "neck_join": {
+  "head": "HEAD_face",
+  "neck": "BODY_torso",
+  "r_mm": 18.0,
+  "iters": 40,
+  "z": [
+   30.0,
+   10.0
+  ],
+  "follow": [
+   "HAIR_hair",
+   "HAIR_scalp"
+  ],
+  "cut_y": -150.0
+ },
  "seam_normals": {
   "face": "HEAD_face",
   "neck": "BODY_torso",
