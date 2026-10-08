@@ -316,8 +316,10 @@ function proposeAbsorption(state, projectile) {
 function absorb(state, projectile) {
   if (!projectile) return false;
   if (states.get(state.actor) !== state || state.phase !== 'inhale') return false;  // stale / disposed
-  if (projectile.s3InkVacAbsorbed) return false;
+  const nativeBomb = projectile.s3InkVacBomb;
+  if (projectile.s3InkVacAbsorbed || nativeBomb?.s3InkVacAbsorbed) return false;
   projectile.s3InkVacAbsorbed = true;
+  if (nativeBomb) nativeBomb.s3InkVacAbsorbed = true; // #1118 native bomb lifetime owner consumes it
   // A net ghost is a replay of an authoritative shot: this module applies no
   // authority to it, so it may be consumed VISUALLY only -- no damage edit, no
   // charge, no proposal, no paint.
