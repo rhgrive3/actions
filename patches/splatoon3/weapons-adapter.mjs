@@ -22,6 +22,14 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     '          if (p.type === \'slosh\' && p.head && e.team !== p.team) this._sloshSplash(p, _v, e);','ally-consumed slosh never splashes');
   patch('          if (dmg > 0) applyProjectileHit(this, p, e, dmg, _v);',
     '          if (dmg > 0) applyFidelityProjectileHit(this, p, e, dmg, _v);','roller damage envelope');
+  // #713: Roller break/free landing paint selects its longitudinal depth
+  // scale by height between the pinned HeightUse endpoints. The generic path
+  // keeps 0.7 for every other round; only a resolved Roller break/free depth
+  // rewrites the elongation through the project's existing depthScale - 1
+  // normalisation (same convention as charger-surface.mjs depth/width - 1).
+  patch('    } else area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });',
+    '    } else { const rollerDepth = rollerBreakFreeDepthScale(p, hit.point); area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: rollerDepth === null ? 0.7 : Math.max(0, rollerDepth - 1) }); }',
+    'roller break/free impact depth scale');
   patch('        const bh = G.boss.segHit(p.prev, p.pos, p.size * 0.6);',
     '        const bh = fidelityBossHit(this, p);','solid obstruction before boss');
   patch('        const hit = G.physics.segment(p.prev, p.pos, _hit, true);',
@@ -110,5 +118,5 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     'if (G.time - last + 1e-10 >= w.rollContactInterval)', 'Roller same-target contact interval');
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
-  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, rollerBreakFreeDepthScale } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }

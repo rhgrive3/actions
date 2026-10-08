@@ -541,6 +541,25 @@ export function rollerHitAngle(p,point) {
   const yaw=Math.atan2(dx,dz)-p.fidelitySectorYaw;
   return Math.atan2(Math.sin(yaw),Math.cos(yaw));
 }
+// #713: S3 selects the Roller break/free longitudinal depth scale by the
+// glob's height between the pinned HeightUseDepthScaleMaxBreakFree (1.5) and
+// HeightUseDepthScaleMinBreakFree (10) endpoints. Endpoints and thresholds
+// are extracted; the height quantity (spawn-relative fall, the same
+// start.y - point.y convention as the slosher damage falloff below) and the
+// clamped linear blend between the endpoints are a labelled minimal model,
+// not recovered Nintendo code. Straight-flight depth belongs to the separate
+// straight/free and impact-angle roots; non-Roller rounds keep the existing
+// paint amount.
+export function rollerBreakFreeDepthScale(p,point) {
+  if(p.ghost||!((p.fidelityPhase??0)>0))return null;
+  const paint=p.fidelityRollerUnit?.UnitParam?.PaintParam;
+  const atMax=paint?.HeightUseDepthScaleMaxBreakFree,atMin=paint?.HeightUseDepthScaleMinBreakFree;
+  const max=paint?.DepthScaleMaxBreakFree,min=paint?.DepthScaleMinBreakFree;
+  if(![atMax,atMin,max,min].every(Number.isFinite)||atMin===atMax||!(max>0)||!(min>0))return null;
+  if(!p.start||!point||!Number.isFinite(p.start.y)||!Number.isFinite(point.y))return null;
+  const height=Math.max(0,p.start.y-point.y);
+  return max+(min-max)*clamp01((height-atMax)/(atMin-atMax));
+}
 export function fidelityDamage(p,point) {
   const w=p.s3Weapon||p.owner.weapon;
   if(w.kind==='roller'&&w.ballistics){
