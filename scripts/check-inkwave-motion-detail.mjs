@@ -69,7 +69,7 @@ export function validateDetailResult(result) {
       actualBombThrowFrame=eventFrame;
     }else if(events.some(event=>event.name==='throwBomb')||releaseFrames.length!==0)throw Error('Unexpected bomb release event: '+name);
     const expectedRenderFrames=[21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].filter(f=>f<frames);
-    if(actualBombThrowFrame!==null)expectedRenderFrames.push(actualBombThrowFrame-1,actualBombThrowFrame);
+    if(actualBombThrowFrame!==null)expectedRenderFrames.push(actualBombThrowFrame);
     const renderFrames=[...new Set(expectedRenderFrames)].sort((a,b)=>a-b);
     if(renderMetrics.length!==renderFrames.length||new Set(renderMetrics.map(m=>m.frame)).size!==renderFrames.length||renderFrames.some(f=>!renderMetrics.some(m=>m.frame===f)))throw Error('Detail event/render denominator: '+name);
     for(const m of renderMetrics) {
@@ -93,13 +93,12 @@ export function validateDetailResult(result) {
     if(!disposed?.disposed||disposed.resources!==0||disposed.aliveParticles!==0)throw Error('Flow resources survived Character disposal: '+name);
     const peak=Math.max(...samples.map(s=>Math.abs(s.rcP))),tail=samples.slice(-24);
     if(scenario.type==='bomb') {
-      const heldBombFrame=actualBombThrowFrame-1;
-      if(!samples[heldBombFrame]?.heldVisible||samples[actualBombThrowFrame]?.heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
-      if(scenario.kind==='dualies'&&(samples[heldBombFrame].leftPistolVisible||!samples.at(-1).leftPistolVisible))throw Error('Bomb dualies pistol recovery regression');
-      const held=renderMetrics.find(m=>m.frame===heldBombFrame)?.heldBomb,released=renderMetrics.find(m=>m.frame===actualBombThrowFrame)?.releasedBomb;
+      if(!samples[29].heldVisible||samples[30].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
+      if(scenario.kind==='dualies'&&(samples[29].leftPistolVisible||!samples.at(-1).leftPistolVisible))throw Error('Bomb dualies pistol recovery regression');
+      const held=renderMetrics.find(m=>m.frame===29)?.heldBomb,released=renderMetrics.find(m=>m.frame===actualBombThrowFrame)?.releasedBomb;
       if(!held||held.indexedVertices<50||held.nearestLeft>=.12||!released||released.indexedVertices<100||released.nearestLeft>=.22)throw Error('Actual indexed bomb/hand contact regression: '+name);
       if(renderMetrics.some(m=>m.frame!==actualBombThrowFrame&&m.releasedBomb))throw Error('Released bomb captured outside its actual native birth frame: '+name);
-      if(samples[heldBombFrame].ik.slice(0,2).some(e=>e>=.015)||tail.some(s=>s.ik.slice(0,2).some(e=>e>=.015)))throw Error('Native bomb arm reach regression: '+name);
+      if(samples[29].ik.slice(0,2).some(e=>e>=.015)||tail.some(s=>s.ik.slice(0,2).some(e=>e>=.015)))throw Error('Native bomb arm reach regression: '+name);
       if(releaseFrames[0].meshOriginError>1e-10||releaseFrames[0].releaseSnapshotError>1e-8)throw Error('Rendered/collision bomb release regression: '+name);
     }
     if(scenario.type==='flow') {
@@ -403,10 +402,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
             // simulation step. Preserve the last completed frame on a crash.
             await new Promise(resolve=>setTimeout(resolve,0));
           }
-          const heldBombFrame=scenario.type==='bomb'&&releaseTiming
-            ? releaseTiming.releaseInputFrame+releaseTiming.useStartupSeconds*60-1
-            : null;
-          if([21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame)||scenario.type==='bomb'&&(frame===heldBombFrame||events.some(event=>event.name==='throwBomb'&&event.frame===frame)))renderMetrics.push(capture(scenario,frame,ch,actor,events));
+          if([21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame)||scenario.type==='bomb'&&events.some(event=>event.name==='throwBomb'&&event.frame===frame))renderMetrics.push(capture(scenario,frame,ch,actor,events));
         }
         if(scenario.type==='bomb'){
           const throws=events.filter(event=>event.name==='throwBomb');

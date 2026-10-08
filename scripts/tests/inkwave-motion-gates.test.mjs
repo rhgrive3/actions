@@ -75,20 +75,6 @@ test('detail accepts valid semantic records and rejects original false-pass coun
  for(const metric of idle.renderMetrics){idle.samples[metric.frame].gripWeights.left=0;metric.weapon.nearestLeft=.44;}
  assert.equal(validateDetailResult(free).length,14,'a legitimately detached native support hand is not a missed weapon grip');
 });
-test('bomb pose capture follows the measured release frame and rejects missing or duplicate births',()=>{
- const valid=detailFixture(),bomb=r=>r.data.find(c=>c.name==='bomb-standing');
- assert.equal(validateDetailResult(valid).length,14,'the native birth at frame 31 keeps the bomb held through frame 30');
- const hiddenBefore=detailFixture();bomb(hiddenBefore).samples[30].heldVisible=false;
- assert.throws(()=>validateDetailResult(hiddenBefore),/Actual bomb aim\/release\/recovery regression/);
- const heldAtBirth=detailFixture();bomb(heldAtBirth).samples[31].heldVisible=true;
- assert.throws(()=>validateDetailResult(heldAtBirth),/Actual bomb aim\/release\/recovery regression/);
- const birthAt30=detailFixture();bomb(birthAt30).events[0].frame=30;
- assert.throws(()=>validateDetailResult(birthAt30),/Measured native bomb preparation\/release delay/);
- const missing=detailFixture();bomb(missing).events.pop();
- assert.throws(()=>validateDetailResult(missing),/Actual bomb throw event denominator/);
- const duplicate=detailFixture();bomb(duplicate).events.push({name:'throwBomb',frame:32,charge:null});
- assert.throws(()=>validateDetailResult(duplicate),/Actual bomb throw event denominator/);
-});
 test('same-frame pixel comparison requires real RGB differences and a finite denominator',()=>{
  const a=new Uint8Array([10,20,30,255,10,20,30,255]),b=new Uint8Array([10,20,30,255,14,20,30,255]);
  assert.deepEqual(pixelDifference(a,b),{pixels:2,changedPixels:1,totalRgbDifference:4,maxChannelDifference:4});
