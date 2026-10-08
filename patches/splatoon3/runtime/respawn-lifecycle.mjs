@@ -27,7 +27,7 @@ export function absorbSpawnDamage(actor, amount, source, tuning, attacker = null
   // incremental contributions. The 100 HP penetration threshold applies ONCE
   // to the whole logical swing, not once per incoming 90 + 60 delta.
   const id = actor.s3PendingHitGroup;
-  if (attacker && typeof attacker === 'object' && Number.isSafeInteger(id) && id > 0 && amount > 0) {
+  if (source === 'roller' && attacker && typeof attacker === 'object' && Number.isSafeInteger(id) && id > 0 && amount > 0) {
     const all = s.groupPenetration || (s.groupPenetration = new WeakMap());
     let groups = all.get(attacker);
     if (!groups) { groups = new Map(); all.set(attacker, groups); }
