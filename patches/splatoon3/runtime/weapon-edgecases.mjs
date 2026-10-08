@@ -15,8 +15,11 @@ export function dualiesInputGate(runner) {
       return current()[prop];
     },
     has(_target, prop) { return prop in current(); },
+    set(_target, prop, value) { current()[prop] = value; return true; },
+    deleteProperty(_target, prop) { return delete current()[prop]; },
     ownKeys() { return Reflect.ownKeys(current()); },
     getOwnPropertyDescriptor(_target, prop) { return Object.getOwnPropertyDescriptor(current(), prop); },
+    defineProperty(_target, prop, descriptor) { return Reflect.defineProperty(current(), prop, descriptor); },
   });
 }
 
