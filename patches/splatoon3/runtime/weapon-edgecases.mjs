@@ -268,9 +268,17 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       if (source.sub) this.s3DualiesSubBuffered = true;
       if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
+    // #819: no input gating or buffered edges on steady-state Dualies ticks.
+    // Keep the original input identity and skip the wrapper's dispatch.
+    if (kind === 'dualies' && input && !lockedAtStart &&
+        !this.s3DualiesSubBuffered && !this.s3DualiesSubReleaseBuffered &&
+        !source.sub && !source.subReleased) {
+      return weaponUpdate.call(this, dt, input);
+    }
     let sub = lockedAtStart ? false : source.sub;
     let subReleased = lockedAtStart ? false : source.subReleased;
-    if (!lockedAtStart && this.s3DualiesSubReleaseBuffered) {
+    if (!lockedAtStart && (this.s3DualiesSubReleaseBuffered ||
+        (kind === 'dualies' && this.s3DualiesSubBuffered && source.subReleased))) {
       sub = true; subReleased = true;
       this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
     }

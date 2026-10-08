@@ -311,3 +311,58 @@ test('Issue #862: a same-context collision result change is observed by the boun
   assert.ok(waited <= 0.25 + dt, `in-place change waited ${waited}s, beyond the 250ms refresh bound`);
   assert.ok(env.rig.curDist < before, 'the refreshed wall result must still retract the camera');
 });
+
+test('Issue #862: sub-millimetre Super Jump zoom changes keep cached free-camera endpoints exact', async () => {
+  const { THREE } = await boot();
+  const InstalledRig = await loadRig(true);
+  for (const hz of [30, 60, 120]) {
+    const uncached = makeRuntime(InstalledRig, THREE);
+    const cached = makeRuntime(InstalledRig, THREE);
+    const flight = {
+      phase: 'flight', t: 0.4, dur: 1,
+      from: { x: 0, y: 0, z: 0 }, to: { x: 3, y: 0, z: 4 },
+    };
+    uncached.actor.superJumpState = { ...flight };
+    cached.actor.superJumpState = { ...flight };
+    const dt = 1 / hz;
+    let reusedWhileChanging = 0;
+    for (let i = 0; i < hz * 3; i++) {
+      // Keep all production adapters, only turn cache reuse off in the control.
+      uncached.rig._inkwaveCameraProbeCache = null;
+      const previousCalls = cached.counts.probeCalls;
+      const previousWant = cached.rig.wantDist;
+      step(uncached, dt);
+      step(cached, dt);
+      if (cached.counts.probeCalls === previousCalls && cached.rig.wantDist !== previousWant) {
+        reusedWhileChanging++;
+      }
+      assertSameView(uncached, cached, `${hz}Hz Super Jump zoom frame ${i}`);
+    }
+    assert.ok(reusedWhileChanging > 0,
+      `${hz}Hz must exercise cached probe reuse during small zoom changes`);
+    assert.ok(cached.counts.probeCalls < uncached.counts.probeCalls,
+      `${hz}Hz caching must still save collision queries`);
+  }
+});
+
+test('Issue #862: obstructed probes refresh when the requested zoom distance changes', async () => {
+  const { THREE } = await boot();
+  const InstalledRig = await loadRig(true);
+  for (const hz of [30, 60, 120]) {
+    const raw = makeRuntime(InstalledRig, THREE, { probeLimit: () => 0.8 });
+    const cached = makeRuntime(InstalledRig, THREE, { probeLimit: () => 0.8 });
+    const flight = {
+      phase: 'flight', t: 0.4, dur: 1,
+      from: { x: 0, y: 0, z: 0 }, to: { x: 3, y: 0, z: 4 },
+    };
+    raw.actor.superJumpState = { ...flight };
+    cached.actor.superJumpState = { ...flight };
+    const dt = 1 / hz;
+    for (let i = 0; i < hz * 3; i++) {
+      raw.rig._inkwaveCameraProbeCache = null;
+      step(raw, dt);
+      step(cached, dt);
+      assertSameView(raw, cached, `${hz}Hz blocked zoom frame ${i}`);
+    }
+  }
+});
