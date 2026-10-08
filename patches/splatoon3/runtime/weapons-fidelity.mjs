@@ -6,6 +6,7 @@ import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-coll
 import {distanceDamage, groupDamage, applyProjectileHit as legacyHit, applySlosherVolleyHit, cachedWeaponOverrideConfig, withWeaponScalarOverride} from './weapons.mjs';
 import {damageGroupId} from './final-damage.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
+import { coherentMotionStart } from './actor-motion.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
@@ -432,7 +433,7 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
 function scratch(system) {
   return system._fidelityCollision || (system._fidelityCollision = {
     worldReady:false, bossReady:false, world:new api.Hit(), boss:null,
-    base:new api.THREE.Vector3(), res:{t:0,dist:0}, targets:[],
+    base:new api.THREE.Vector3(), moved:new api.THREE.Vector3(), res:{t:0,dist:0}, targets:[],
   });
 }
 export function fidelityWorldHit(system,p) {
@@ -477,6 +478,11 @@ export function fidelityProjectileTargets(system,p) {
   // Ghosts share visual collision chronology, but never damage/paint ownership.
   const r0=p.s3PlayerRadius ?? radiusAt(p.fidelityPlayerCollision,p.fidelityPrevAge??p.age,p.size);
   const r1=fidelityPlayerCollisionRadius(p),radius=PLAYER.radius+Math.max(r0,r1);
+  // #1040 broad phase: the round segment's expanded XZ footprint, tested
+  // against the actor's whole pose interval for this tick (or its single
+  // current pose when no coherent record exists).
+  const segMinX=Math.min(p.prev.x,p.pos.x)-radius,segMaxX=Math.max(p.prev.x,p.pos.x)+radius;
+  const segMinZ=Math.min(p.prev.z,p.pos.z)-radius,segMaxZ=Math.max(p.prev.z,p.pos.z)+radius;
   let nearest=null,best=Infinity;
   for(const actor of G.actors){
     if(!actor.alive||actor===p.owner)continue;
@@ -485,11 +491,31 @@ export function fidelityProjectileTargets(system,p) {
     // FriendThroughFrameForPlayer window. A missing source record keeps the
     // native same-team skip instead of inventing one global collider rule.
     if(friendly&&!Number.isFinite(p.fidelityFriendThrough))continue;
-    if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
-       actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
-    s.base.copy(actor.pos); // render easing does not move the authoritative capsule
+    // #1040: start-of-tick pose of this actor over the SAME fixed step the
+    // round segment spans; null (spawn/teleport/adoption/death/no-snapshot)
+    // falls back to the single current pose used before this issue.
+    const rec=coherentMotionStart(actor);
+    const x0=rec?rec.x0:actor.pos.x,y0=rec?rec.y0:actor.pos.y,z0=rec?rec.z0:actor.pos.z;
+    if(Math.min(x0,actor.pos.x)>segMaxX||Math.max(x0,actor.pos.x)<segMinX||
+       Math.min(z0,actor.pos.z)>segMaxZ||Math.max(z0,actor.pos.z)<segMinZ)continue;
+    const height=actor.form==='squid'?PLAYER.squidHeight:PLAYER.height;
     const kr=kitTrizookaActorRadius(system,p);
-    const t=kr==null?capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1):kitSegmentCapsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,kr);
+    let t;
+    if(rec){
+      // Time-coherent relative motion: solving the round segment shifted back
+      // by the actor's tick displacement against the START pose is exactly the
+      // contact of (round(t) - actor(t)) with the capsule, for linear motion
+      // of both over the tick. The returned parameter is the true shared-time
+      // contact, so age windows, impact point and world/boss distance ordering
+      // keep their original meaning (world tests remain against the static
+      // terrain segment, compared by the round's travelled distance).
+      s.base.set(x0,y0,z0);
+      s.moved.set(p.pos.x-(actor.pos.x-x0),p.pos.y-(actor.pos.y-y0),p.pos.z-(actor.pos.z-z0));
+      t=kr==null?capsuleEntry(p.prev,s.moved,s.base,PLAYER.radius,height,r0,r1):kitSegmentCapsuleEntry(p.prev,s.moved,s.base,PLAYER.radius,height,kr);
+    }else{
+      s.base.copy(actor.pos); // render easing does not move the authoritative capsule
+      t=kr==null?capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,height,r0,r1):kitSegmentCapsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,height,kr);
+    }
     if(t===null)continue;
     if(friendly){
       // The window is measured in source frames at the contact point of this
