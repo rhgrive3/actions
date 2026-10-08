@@ -51,6 +51,7 @@ import { installWallMotion } from './wall-motion.mjs';
 import { installFormMotion } from './form-motion.mjs';
 import { installDualiesMotion } from './dualies-motion.mjs';
 import { installRollerDetailMotion } from './roller-detail-motion.mjs';
+import { installRollerPaint } from './roller-paint.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSuperJumpTargetNotification } from './superjump-target-notification.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
@@ -85,6 +86,9 @@ export function install(profile) {
   composeKits(api);
   installKitNetwork(api);
   installRollerMotion(api, profile);
+  // Bound before any rollout can paint, so a profile without the pinned S3 roller
+  // paint values fails the boot instead of shipping a fixed-width stripe (#649).
+  installRollerPaint(profile, WEAPONS.roller);
   installMovement(api, profile);
   installMovementMotion(api, profile);
   installGear(api, profile);

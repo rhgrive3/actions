@@ -66,6 +66,7 @@ export async function fixture(options = {}) {
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';
     export * from './patches/splatoon3/runtime/render.mjs';
+    export * from './patches/splatoon3/runtime/roller-paint.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
     export * from './patches/splatoon3/runtime/clock.mjs';
     export const TEST_MATH = Math;
