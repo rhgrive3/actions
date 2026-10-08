@@ -813,6 +813,37 @@ export function adaptSource(rel, code) {
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
+    // #1118/#1113: arbitrate the native bomb's swept segment against Vac and
+    // Big Bubbler before native world-contact mutation. A nearer stage surface
+    // wins ties/order; a Vac consumes without detonation, a Bubbler contact
+    // detonates exactly once at the contact point.
+    code = replaceOnce(code,
+      '      const hit = G.physics.segment(_v, b.pos, _hit);',
+      `      const hit = G.physics.segment(_v, b.pos, _hit);
+      const s3BombDefense = this.kitBombDefenseCandidate?.(b, _v, b.pos);
+      const s3BombStep = _v.distanceTo(b.pos);
+      const s3WorldDistance = hit.hit ? _v.distanceTo(hit.point) : Infinity;
+      if (s3BombDefense && s3BombDefense.distance < s3WorldDistance - 1e-10) {
+        if (s3BombStep > 1e-10) b.pos.copy(_v).lerp(b.pos, Math.max(0, Math.min(1, s3BombDefense.distance / s3BombStep)));
+        s3BombDefense.onHit();
+        if (s3BombDefense.kind === 'bubbler') {
+          const nm = G.netm; if (b.ghost && nm) nm.mute++;
+          try { this._explodeBomb(b); } finally { if (b.ghost && nm) nm.mute--; }
+        }
+        this._releaseBomb(b); this.bombs.splice(i, 1); continue;
+      }`,
+      'native bomb first-contact Vac/Bubbler arbitration');
+    // #1109: Roller contact damage is keyed to valid nonzero stick intent, not
+    // horizontal world speed. This preserves micro-speed rolling while refusing
+    // neutral-stick coasting/knockback hits.
+    code = replaceOnce(code,
+      '      if (fwd > -0.2 && fwd < 1.35 && lat < w.rollWidth / 2 + 0.35 && Math.abs(dy) < 1.2 && hs > 1.0) {',
+      '      if (fwd > -0.2 && fwd < 1.35 && lat < w.rollWidth / 2 + 0.35 && Math.abs(dy) < 1.2 && rollerStickActive(a)) {',
+      'Roller micro-speed actor contact admission');
+    code = replaceOnce(code,
+      '    if (G.boss && hs > 1.0) {',
+      '    if (G.boss && rollerStickActive(a)) {',
+      'Roller micro-speed boss contact admission');
     // #1060: remove only the generic burst-floor stamp after the kit authority
     // adapter has attached its owner/ghost gate to this exact burst location.
     code = replaceOnce(code,
@@ -836,7 +867,7 @@ export function adaptSource(rel, code) {
       '        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);',
       '        applySplatBombSurfaceResponse(b, hit.normal);', 'Splat Bomb sourced ground resistance');
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
-    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
+    return `import { rollerStickActive } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
@@ -1219,6 +1250,54 @@ export function adaptSource(rel, code) {
       "        const card = splatCardText(cause, attacker, t); // SPLATTED BY names the cause; the opponent is a separate line\n        this.hud?.showSplatted({ by: card.cause, who: card.who, byColor:",
       'death card splat cause');
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\nimport { splatCardText } from '../patches/splatoon3/runtime/death-card.mjs';\n` + code;
+  }
+
+  if (rel === 'src/game/showcase.js') {
+    // #1119: portrait readback staging targets are lazy resources, not
+    // lifetime Showcase allocations. Leaving Locker releases them once async
+    // readbacks settle; final dispose also tears down the resolve material/scene.
+    code = replaceOnce(code,
+      '    this._pq = []; this._pcache = new Map(); this._prt = null; this._prt8 = null; this._pbuf = null; this._pcam = null;',
+      '    this._pq = []; this._pcache = new Map(); this._prt = null; this._prt8 = null; this._pbuf = null; this._pcam = null; this._portraitReleasePending = false;',
+      'portrait target lifecycle state');
+    code = replaceOnce(code,
+      '  hide() {\n    if (!this.mode) return;',
+      "  hide() {\n    if (!this.mode) return;\n    const leavingPortraitScreen = this.mode === 'locker';",
+      'portrait screen exit capture');
+    code = replaceOnce(code,
+      '    this.mode = null;\n  }\n\n  dispose() {',
+      "    this.mode = null;\n    if (leavingPortraitScreen) this._releasePortraitTargets(false);\n  }\n\n  dispose() {",
+      'portrait target release on Locker exit');
+    code = replaceOnce(code,
+      '    this._lobRelease();\n    this._rt?.dispose(); this._rt = null;',
+      '    this._lobRelease();\n    this._releasePortraitTargets(true);\n    this._rt?.dispose(); this._rt = null;',
+      'portrait target final disposal');
+    code = replaceOnce(code,
+      '  _renderPortrait(req) {',
+      `  _releasePortraitTargets(final = false) {
+    if (!final && ((this._pflight || 0) > 0 || this._pq?.some?.((x) => x.cbs?.length))) { this._portraitReleasePending = true; return false; }
+    this._portraitReleasePending = false;
+    this._prt?.dispose(); this._prt8?.dispose();
+    this._prt = this._prt8 = null;
+    if (final) {
+      this._pres?.dispose(); this._pres = null;
+      this._presScene?.clear?.(); this._presScene = null;
+      this._pcam = null; this._pbuf = null;
+    }
+    return true;
+  }
+
+  _renderPortrait(req) {`,
+      'portrait target release helper');
+    code = replaceOnce(code,
+      "    read.then((cv) => { this._pflight--; finish(cv); }, (e) => { this._pflight--; console.error('[showcase] portrait read', e); finish(null); });",
+      "    const settle = () => { this._pflight--; if (this._portraitReleasePending && this._pflight === 0) this._releasePortraitTargets(false); };\n    read.then((cv) => { settle(); finish(cv); }, (e) => { settle(); console.error('[showcase] portrait read', e); finish(null); });",
+      'portrait readback-safe release');
+    code = replaceOnce(code,
+      '    const job = this._pq.shift();\n    if (!job) return;',
+      '    const job = this._pq.shift();\n    if (!job) { if (this._portraitReleasePending && (this._pflight || 0) === 0) this._releasePortraitTargets(false); return; }',
+      'portrait empty-queue release');
+    return code;
   }
 
   if (rel === 'src/core/shadowcache.js') {

@@ -251,8 +251,8 @@ export function emit(name, payload) {
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
       'owner simulation tick preserving existing sidecars');
     patch('    const a = [];\n    for (const x of this.byNid.values()) if (!x.remote) a.push(packActor(x));',
-      '    const a = [], sq = Object.create(null);\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n    }',
-      'append optional Squid Roll presentation sidecar');
+      '    const a = [], sq = Object.create(null), wp = Object.create(null);\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const wr = x.weaponRunner, slosh = x.weapon?.kind === \'slosher\' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n      const sp = x.specialActive, phase = sp?.id === \'slam\' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n      const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n      if (slosh >= 0 || phase) wp[x.nid] = [slosh, phase, slamT];\n    }',
+      'append optional Squid Roll and weapon/special motion sidecars');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
       const points = p.physicsPoints || (p.physicsPoints = []);
@@ -260,13 +260,13 @@ export function emit(name, payload) {
     }
     // actors
     if (d.a)`, 'snapshot physics tick pair');
-    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional Roll sidecar');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
-      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const a = this.byNid.get(s[0]);',
-      'strict optional Squid Roll metadata validation');
+      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const a = this.byNid.get(s[0]);',
+      'strict optional Squid Roll and motion metadata validation');
     patch('      const snap = unpackActor(s, d.ts);\n      snap.spCost = d.sc?.[a.nid];',
-      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.spCost = d.sc?.[a.nid];',
-      'attach validated presentation-only roll snapshot');
+      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.sloshElapsed = pose ? pose[0] : -1; snap.slamPhase = pose ? pose[1] : 0; snap.slamT = pose ? pose[2] : 0;\n      snap.spCost = d.sc?.[a.nid];',
+      'attach validated presentation-only action clocks');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
@@ -300,8 +300,8 @@ export function emit(name, payload) {
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
     patch('  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  o.spCost = a.spCost;\n  return o;',
-      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  o.spCost = a.spCost;\n  return o;',
-      'interpolate only matching owner Roll identity');
+      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.sloshElapsed >= 0 && b.sloshElapsed >= 0) o.sloshElapsed = a.sloshElapsed + (b.sloshElapsed - a.sloshElapsed) * u;\n  if (a.slamPhase && a.slamPhase === b.slamPhase) o.slamT = a.slamT + (b.slamT - a.slamT) * u;\n  o.spCost = a.spCost;\n  return o;',
+      'interpolate matching presentation action clocks');
     patch('    const S = n.cur;\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
       '    const S = n.cur;\n    if (a.remote) {\n      const flags = S.f;\n      if (!a.alive || !(flags & F.alive) || !(flags & F.squid) || (flags & F.special) || !S.rollId) clearRemoteSquidroll(a);\n      else syncRemoteSquidroll(a, S, this.peers.get(a.owner));\n    }\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
       'remote presentation follows accepted owner Roll snapshot');
@@ -342,10 +342,26 @@ export function emit(name, payload) {
     patch('    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? \'flight\' : \'charge\';',
       '    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? \'flight\' : \'charge\';\n    applyAdoptionSample(this, a, S);',
       'restore exact remote Super Jump destination and recovery sample');
+    patch('    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;',
+      "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;\n    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }",
+      'remote Tidal Slam phase clock');
+    patch('    wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
+      '    wr.slosh = f & F.slosh ? (Number.isFinite(S.sloshElapsed) && S.sloshElapsed >= 0 ? S.sloshElapsed : Math.max(0, wr.slosh)) : -1;',
+      'remote Slosher elapsed windup clock');
     patch('    a.landT += dt; a.lastDamage += dt;',
       '    a.landT += dt; a.lastDamage += dt;\n    applyAdoptionRecoveryAge(this, a, S);',
       'retain remote elapsed damage recovery clock');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
+    // #1112: CPU turf ownership must consume the exact same canonical stamp on
+    // sender and receiver. Paint event transport therefore keeps gameplay
+    // position/radius/stretch scalars unrounded; render-only compression belongs elsewhere.
+    patch("this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team, o.seed ?? Math.random(), o.kind ?? 0,",
+      "this._rec(['s', c.x, c.y, c.z, radius, team, o.seed ?? Math.random(), o.kind ?? 0,",
+      'full-precision paint position/radius');
+    patch('st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0',
+      'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0',
+      'full-precision paint stretch');
+
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     const inkMetaBase = 'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null]);';
     const inkMetaKitBirth = 'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
