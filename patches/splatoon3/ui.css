@@ -263,3 +263,33 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+
+/* #1058 — S3 Charger current-release and unobstructed full-reach markers.
+   Relative to the existing screen-centred reticle root. CSS-only presentation:
+   no projectile, collision or paint ownership. */
+.iw-ret--charger .iw-ret__reach-marker {
+  position: absolute;
+  display: none;
+  width: 15px;
+  height: 15px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  pointer-events: none;
+  box-sizing: border-box;
+  filter: drop-shadow(0 1px 2px #0009);
+  transform: translate(-50%, -50%);
+}
+.iw-ret--charger.has-reach .iw-ret__reach-marker { display: block; }
+.iw-ret--charger .iw-ret__reach-marker.is-current {
+  left: var(--crx, 0px);
+  top: var(--cry, 0px);
+  border-width: 3px;
+}
+.iw-ret--charger .iw-ret__reach-marker.is-full-range {
+  left: var(--cfx, 0px);
+  top: var(--cfy, 0px);
+  width: 23px;
+  height: 23px;
+  border-style: dashed;
+  opacity: .68;
+}
