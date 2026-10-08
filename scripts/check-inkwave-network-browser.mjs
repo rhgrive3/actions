@@ -64,8 +64,22 @@ try{
  await pages[1].evaluate(c=>NG.net.join(c,'Network Guest'),code);
  await pages[0].waitForFunction(()=>NG.net.lobby.players.length===2);
  await pages[1].waitForFunction(()=>NG.net.lobby.players.length===2);
+ // S3 Private Turf is host-assigned and launch-confirmed. A guest cannot
+ // self-select teams and both players must explicitly ready AFTER confirmation.
+ await pages[0].evaluate(()=>{
+  const net=NG.net;
+  net.setSettings({bots:false});
+  const guest=net.lobby.players.find(p=>p.id!==net.myId);
+  if(!guest || !net.assignTeam(net.myId,0) || !net.assignTeam(guest.id,1) ||
+     !net.confirmTeams()) throw Error('Network fixture could not confirm two-player Turf teams');
+ });
+ await pages[1].waitForFunction(()=>NG.net.lobby.teamsConfirmed===true);
  await pages[1].evaluate(()=>NG.net.setMe({weapon:'roller',ready:true}));
- await pages[0].evaluate(()=>{NG.net.setMe({weapon:'roller',ready:true});NG.net.setSettings({bots:false});NG.net.start();});
+ await pages[0].waitForFunction(()=>NG.net.lobby.players.some(p=>p.id!==NG.net.myId&&p.ready));
+ await pages[0].evaluate(()=>{
+  NG.net.setMe({weapon:'roller',ready:true});
+  if(!NG.net.start()) throw Error('Network fixture rejected confirmed Turf start');
+ });
  await Promise.all(pages.map(p=>p.waitForFunction(()=>NG.game.match?.state==='playing'&&NG.net.active,null,{timeout:180000})));
  console.log('network browser match ready');for(const page of pages)await page.evaluate(baseline=>{
   globalThis.isBaseline=baseline;
