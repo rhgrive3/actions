@@ -873,8 +873,11 @@ function firstSplatStateFor(session,cfg) {
       'nm.sendHit(attacker, victim, dmg, weaponId, slosherVolleyId)', 'Slosher volley identity projectile forwarding');
     patch("    const route = nm ? nm.shouldApplyHit(attacker, victim) : 'local';",
       "    const route = nm ? nm.shouldApplyHit(attacker, victim, weaponId) : 'local';", 'pass weapon to damage authority');
-    patch('    const c = b.pos;\n    let area = G.paint.splat',
-      '    const c = b.pos;\n    const detonationLocalTime = b.ghost ? b._netBornLocal + b.age : null;\n    let area = G.paint.splat',
+// Kit explosion paint may have replaced the legacy body splat already.
+    // This stable, single-location anchor is the bomb explosion's event clock
+    // and must precede both ordinary and kit-specific paint paths.
+    patch('    const c = b.pos;',
+      '    const c = b.pos;\n    const detonationLocalTime = b.ghost ? b._netBornLocal + b.age : null;',
       'bomb detonation playback time');
     {
       // Gameplay fidelity may classify the far Splat Bomb band as
