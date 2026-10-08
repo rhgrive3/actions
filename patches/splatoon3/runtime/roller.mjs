@@ -110,7 +110,9 @@ export function rollerContactCandidate(actor, target, weapon, player) {
   const cx=actor.pos.x+fx*DRUM_FORWARD*cp;
   const cy=actor.pos.y+ROLLER_BODY_RADIUS+sp*DRUM_FORWARD;
   const cz=actor.pos.z+fz*DRUM_FORWARD*cp;
-  const half=Number.isFinite(weapon?.rollWidth) ? Math.max(0, weapon.rollWidth/2) : ROLLER_BODY_HALF_WIDTH;
+  // WidthHalf is the sourced physical drum half-width; weapon.rollWidth is
+  // paint/gameplay reach and must not reshape the body-contact volume.
+  const half=ROLLER_BODY_HALF_WIDTH;
   const d0={x:cx-rx*half,y:cy,z:cz-rz*half}, d1={x:cx+rx*half,y:cy,z:cz+rz*half};
   const tr=Number.isFinite(player.radius)?player.radius:0.35;
   const h=target.form==='squid' ? player.squidHeight : player.height;
