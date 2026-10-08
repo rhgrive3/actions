@@ -49,8 +49,13 @@ async function verify(response, expected) {
   }
   // Clone before exposing the response. Never clone a response whose body the page already consumed.
   const bytes = await response.clone().arrayBuffer();
-  if (!Array.isArray(expected) || expected.length !== 2 ||
-      bytes.byteLength !== expected[0] || await digest(bytes) !== expected[1]) {
+  // Assets use compact tuples; the navigation index retains its named metadata.
+  const size = Array.isArray(expected) ? expected[0] : expected?.bytes;
+  const checksum = Array.isArray(expected) ? expected[1] : expected?.sha256;
+  if ((Array.isArray(expected) && expected.length !== 2) ||
+      !Number.isSafeInteger(size) || size < 0 ||
+      typeof checksum !== 'string' || !/^[a-f0-9]{64}$/.test(checksum) ||
+      bytes.byteLength !== size || await digest(bytes) !== checksum) {
     throw new Error('Revision asset integrity mismatch');
   }
   return response;

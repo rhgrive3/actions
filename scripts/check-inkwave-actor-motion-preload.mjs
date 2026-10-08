@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { normalizeCacheAssets } from './lib/inkwave-cache-manifest.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -25,6 +26,7 @@ const worker = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 const workerAst = parse(worker, { ecmaVersion: 'latest', sourceType: 'script' });
 const build = workerAst.body.find(node => node.type === 'VariableDeclaration' && node.declarations[0].id.name === 'BUILD').declarations[0].init;
 const config = JSON.parse(worker.slice(build.start, build.end));
+config.assets = normalizeCacheAssets(config.assets);
 assert.equal(config.revision, identity.build.revision, 'service-worker and build identity revision');
 assert(config.precache.includes(actorMotion), 'actor-motion must remain in the service-worker precache');
 assert.equal(config.assets[actorMotion].sha256, identity.artifacts[actorMotion], 'service-worker and build artifact digest');

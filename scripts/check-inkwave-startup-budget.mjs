@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { normalizeCacheAssets } from './lib/inkwave-cache-manifest.mjs';
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import crypto from 'node:crypto';
 import {parse} from '../patches/loading-cache/vendor/acorn.mjs';
 const root=path.resolve(process.argv[2]||'_site');const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
@@ -19,7 +20,7 @@ const initial=[...new Set([...preloads,entry])];const initialJSBytes=initial.red
 assert(fs.statSync(path.join(root,entry)).size<=12*1024,'new startup module budget');assert(Buffer.byteLength(html)<=24*1024,'critical HTML budget');
 const worker=fs.readFileSync(path.join(root,'sw.js'),'utf8');assert(Buffer.byteLength(worker)<=64*1024,'worker budget');
 const ast=parse(worker,{ecmaVersion:'latest',sourceType:'script'});const build=ast.body.find(node=>node.type==='VariableDeclaration'&&node.declarations[0].id.name==='BUILD').declarations[0].init;
-const config=JSON.parse(worker.slice(build.start,build.end));assert.equal(config.revision,revision);assert.equal(config.index.sha256,hash(Buffer.from(html)));assert(config.index.bytes===Buffer.byteLength(html));
+const config=JSON.parse(worker.slice(build.start,build.end));config.assets=normalizeCacheAssets(config.assets);assert.equal(config.revision,revision);assert.equal(config.index.sha256,hash(Buffer.from(html)));assert(config.index.bytes===Buffer.byteLength(html));
 const core=new Set(config.precache);assert.equal(core.size,config.precache.length);const precacheBytes=config.precache.reduce((sum,file)=>sum+config.assets[file].bytes,0);assert(precacheBytes<=5*1024*1024,'core precache budget');assert(config.declaredBytes<=12*1024*1024,'revision payload budget');
 const importMap=JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]).imports;
 const resolve=(from,spec)=>{for(const[k,v]of Object.entries(importMap).sort((a,b)=>b[0].length-a[0].length))if(k.endsWith('/')?spec.startsWith(k):spec===k)return path.posix.normalize(v.replace(/^\.\//,'')+(k.endsWith('/')?spec.slice(k.length):''));return spec.startsWith('.')?path.posix.normalize(path.posix.join(path.posix.dirname(from),spec)):null;};

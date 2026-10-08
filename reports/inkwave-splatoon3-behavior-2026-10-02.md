@@ -1745,3 +1745,12 @@ existing deterministic graph order. It preserves every runtime import and the
 complete immutable service-worker graph; the unchanged startup gate checks all
 transitive imports, cache bytes, digests, and artifact identity. This is file and
 dependency evidence, not a measured browser startup-time improvement.
+
+Current master encodes cache assets as `[bytes, sha256]`, while navigation index
+metadata remains `{bytes, sha256}`. The worker rejected that index during every
+cold install; the existing exact worker-install test reproduced the rejection.
+Integrity verification now validates both encodings strictly. Artifact gates
+normalize descriptors before applying their original byte/digest/closure checks;
+all budget limits remain unchanged. Negative descriptor tests reject missing,
+malformed, non-finite and incorrectly typed metadata instead of allowing `NaN`
+to mask budget evidence. This compatibility repair does not claim a new Issue.
