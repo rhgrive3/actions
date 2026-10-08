@@ -582,11 +582,29 @@ def neck_join(cfg):
     # there and the collapsed faces dissolved (Blender's Merge by Distance, Dissolve Degenerate)
     bm = bmesh.new()
     bm.from_mesh(R.data)
-    Lj = er.M.to_local(np.array([R.matrix_world @ v.co for v in bm.verts])) * 1000
-    zone = [v for v in bm.verts if -125 < Lj[v.index, 1] < -45]
+    # only next to the crossing line (where faces of the two parts meet): elsewhere the head has its own tiny
+    # rings (the poles under the chin and at the crown) that must not be merged
+    hm = {m.name for m in head.data.materials if m}
+    rmw = [m.name if m else None for m in R.data.materials]
+    bm.verts.ensure_lookup_table()
+    side = np.zeros((len(bm.verts), 2), bool)
+    for f in bm.faces:
+        k = 0 if rmw[f.material_index] in hm else 1
+        for v in f.verts:
+            side[v.index, k] = True
+    jv = np.flatnonzero(side.all(1))
+    Pj = np.array([v.co[:] for v in bm.verts])
+    from mathutils.kdtree import KDTree as _KD
+    kdj = _KD(len(jv))
+    for i in jv:
+        kdj.insert(Vector(Pj[i]), int(i))
+    kdj.balance()
+    zone = [v for v in bm.verts if kdj.find(v.co)[2] * 1000 < cfg.get('weld_zone_mm', 3.0)] if len(jv) else []
     nv0 = len(bm.verts)
     bmesh.ops.remove_doubles(bm, verts=zone, dist=cfg.get('weld_mm', 0.2) / 1000)
-    bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=cfg.get('weld_mm', 0.2) / 1000)
+    zs = {v for v in zone if v.is_valid}
+    bmesh.ops.dissolve_degenerate(bm, edges=[e for e in bm.edges if e.verts[0] in zs or e.verts[1] in zs],
+                                  dist=cfg.get('weld_mm', 0.2) / 1000)
     # merging leaves loose edges and a few edges with three faces (the skin layers cannot be bound to such a
     # surface by Surface Deform later): loose parts go, the smallest face at such an edge goes, the small hole
     # left is filled
