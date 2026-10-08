@@ -453,6 +453,54 @@ def consistent_normals(me):
     return int(flipped.sum())
 
 
+def neck_side_sculpt(R, steps):
+    """The side of the neck under the ear was one smooth slope from the cheek to the collar; the reference (3/4
+    views) shows three forms there: a clear jaw corner and jaw line with a narrow shadow under it, a small hollow
+    behind and under the jaw corner, and the neck muscle as a round lit column from behind the ear down to the
+    front of the collar (2026-10-08, user: ここの立体感).  Each is Blender's Displace along the normals on the merged
+    head and neck, weighted by distance to a line or a point (head-frame mm, both sides by |x|):
+    'under_line' = just under a side-view line [[z, y], ...] (cfg['below'] = [start, full, end] mm under it),
+    'blob' = an ellipsoid, 'line' = a tube round a 3D polyline (tapering to its ends)."""
+    for st in steps:
+        L = er.M.to_local(er.world(R)) * 1000
+        A = np.c_[np.abs(L[:, 0]), L[:, 1], L[:, 2]]
+        if st['kind'] == 'under_line':
+            ln = np.array(st['line'], float)
+            o = np.argsort(ln[:, 0])
+            ly = np.interp(A[:, 2], ln[o, 0], ln[o, 1], left=np.nan, right=np.nan)
+            d = ly - A[:, 1]                              # mm under the line
+            b0, b1, b2 = st['below']
+            w = np.where(np.isnan(d), 0.0, smoothstep((d - b0) / (b1 - b0)) * smoothstep((b2 - d) / (b2 - b1)))
+            w *= smoothstep((A[:, 0] - st['x_min']) / 6.0)
+            z0, z1 = st.get('z', [-1e9, 1e9])
+            w *= smoothstep((A[:, 2] - z0) / 8.0) * smoothstep((z1 - A[:, 2]) / 8.0)
+        elif st['kind'] == 'blob':
+            dd = np.linalg.norm((A - np.array(st['centre'], float)) / np.array(st['r'], float), axis=1)
+            w = np.where(dd < 1, np.cos(np.clip(dd, 0, 1) * np.pi / 2) ** 2, 0.0)
+        else:
+            P = np.array(st['pts'], float)
+            seg_t = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
+            seg_t /= seg_t[-1]
+            best, tpar = np.full(len(A), 1e9), np.zeros(len(A))
+            for i, (q0, q1) in enumerate(zip(P[:-1], P[1:])):
+                dv = q1 - q0
+                t = np.clip(((A - q0) @ dv) / (dv @ dv), 0, 1)
+                dist = np.linalg.norm(A - (q0 + t[:, None] * dv), axis=1)
+                upd = dist < best
+                best[upd], tpar[upd] = dist[upd], (seg_t[i] + t * (seg_t[i + 1] - seg_t[i]))[upd]
+            w = np.where(best < st['r'], np.cos(np.clip(best / st['r'], 0, 1) * np.pi / 2) ** 2, 0.0)
+            a, b = st.get('taper', [0.15, 0.85])
+            w *= smoothstep(tpar / a) * smoothstep((1 - tpar) / (1 - b))
+        before = er.world(R)
+        sign = 1.0 if st['mm'] > 0 else -1.0
+        er.apply_weighted_modifier(R, w, 'DISPLACE', direction='NORMAL', strength=sign * abs(st['mm']) / 1000,
+                                   mid_level=0.0)
+        if st.get('smooth'):
+            er.apply_weighted_modifier(R, np.clip(w * 2, 0, 1), 'SMOOTH', factor=0.5, iterations=int(st['smooth']))
+        print('BODY_SHAPE neck sculpt', st['name'], 'vertices', int((w > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(R) - before, axis=1).max() * 1000), 2))
+
+
 def neck_join(cfg):
     """The head (a closed shell, its two halves split at the midline) only dived into the neck: where the two
     surfaces cross there was a line and the head's underside stood over the neck (2026-10-08, user: 繋げろ, the
@@ -602,6 +650,8 @@ def neck_join(cfg):
         R.data.polygons.foreach_set('material_index', mi2)
         is_head = is_head & ~switch
         print('BODY_SHAPE neck_join border faces to the neck skin', int(switch.sum()))
+    if cfg.get('sculpt'):
+        neck_side_sculpt(R, cfg['sculpt'])
     if cfg.get('neck_skin_y') is not None:
         # the head skin (its texture is one plain colour away from the lashes) and the neck skin differ in colour
         # and subsurface: the neck above the collar takes the head skin, so the colour border lies under the collar.
