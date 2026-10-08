@@ -34,7 +34,9 @@ const enterExhale = (f, a, max = 400) => {
 };
 const fireReturn = (f, a) => {
   enterExhale(f, a);
-  a.intent.fire = true; f.tick(a); a.intent.fire = false;
+  a.intent.fire = true; f.tick(a);
+  assert.ok(f.inkVacState(a), 'holding ZR in exhale does not launch early (#1120)');
+  a.intent.fire = false; f.tick(a);
 };
 
 test('activation consumes the special once, refills the tank once, and opens a held intake', async () => {
@@ -182,8 +184,10 @@ test('#1042 filling the Vac ends suction early but still enters the return-shot 
   enterExhale(f, a, 30);
   assert.ok(f.inkVacState(a).t < 0.1, 'post-suction hold owns a fresh clock');
   assert.equal(system.list.length, 0, 'full charge transitions state without auto-firing immediately');
-  a.intent.fire = true; f.tick(a); a.intent.fire = false;
-  assert.equal(f.inkVacState(a), null, 'manual fire is accepted in the exhale phase');
+  a.intent.fire = true; f.tick(a);
+  assert.ok(f.inkVacState(a), 'held ZR cannot release the countershot');
+  a.intent.fire = false; f.tick(a);
+  assert.equal(f.inkVacState(a), null, 'the ZR release edge fires in exhale phase');
   assert.equal(system.list.length, 1);
 });
 
@@ -267,7 +271,9 @@ test('the release frame does not also fire the replaced main weapon or sub', asy
   const runner = a.weaponRunner, real = runner.update;
   runner.update = function (dt, inp) { seen.push({ ...inp }); return real.call(this, dt, inp); };
   a.intent.fire = true; a.intent.sub = true; f.tick(a);
-  assert.equal(a.specialActive, null, 'the return shot released');
+  assert.ok(a.specialActive, 'held ZR keeps the return shot armed');
+  a.intent.fire = false; f.tick(a);
+  assert.equal(a.specialActive, null, 'ZR release launches the return shot');
   assert.ok(seen.every(i => !i.fire && !i.sub && !i.subReleased),
     'main and sub stay suppressed on the release frame');
 });
@@ -276,7 +282,9 @@ test('primary fire releases the countershot only after suction has entered exhal
   const { f, a, system } = await setup();
   activate(f, a); shoot(f, a); enterExhale(f, a, 30);
   const before = system.list.length;
-  a.intent.fire = true; f.tick(a); a.intent.fire = false;
+  a.intent.fire = true; f.tick(a);
+  assert.ok(a.specialActive, 'the held exhale shot cannot launch early');
+  a.intent.fire = false; f.tick(a);
   assert.equal(a.specialActive, null);
   assert.equal(f.inkVacState(a), null);
   assert.ok(system.list.length > before);
@@ -328,7 +336,8 @@ test('a remote ghost authors no projectile (and thus no damage/paint) on release
   shoot(f, a);
   enterExhale(f, a, 30);
   const before = system.list.length;
-  a.intent.fire = true; f.tick(a); a.intent.fire = false;
+  a.intent.fire = true; f.tick(a);
+  a.intent.fire = false; f.tick(a);
   assert.equal(system.list.length, before, 'a remote ghost authors no projectile');
   assert.equal(a.specialActive, null, 'the remote special still ends cleanly');
 });
@@ -470,7 +479,7 @@ async function twoActorSetup() {
   const p1 = f.make('charger');
   p1.nid = 1; p1.remote = false; p1.team = 0;
   p1.weapon = { ...p1.weapon, special: VAC_ID, specialCost: 190 }; p1.special = 190;
-  const p2 = f.make('charger'); p2.nid = 2; p2.remote = true; p2.team = 1;
+  const p2 = f.make('shooter'); p2.nid = 2; p2.remote = true; p2.team = 1;
   const q1 = f.make('charger'); q1.nid = 1; q1.remote = true; q1.team = 0;
   q1.aimDir.set(0, 0, 1); q1.aimYaw = 0;
   const q2 = f.make('shooter'); q2.nid = 2; q2.remote = false; q2.team = 1;
@@ -613,7 +622,7 @@ test('a shooter proposal neutralises its damage and the owner credits it exactly
   const credited = f.inkVacState(p1).charge;
   assert.ok(credited > 0, 'the owner charged');
   assert.equal(credited, c1.charge, 'the owner applied the damage-equivalent gauge conversion');
-  assert.ok(Math.abs(credited - 30 / 1100) < 1e-9);
+  assert.ok(Math.abs(credited - p2.weapon.damage / 1100) < 1e-9, 'owner source weapon damage, never proposal-supplied HP');
   const c2 = hop(f, viewP, proposal.payload, EV.absorb);
   assert.equal(c2.verdict.reason, 'duplicate-proposal', 'a duplicated packet credits nothing');
   assert.equal(f.inkVacState(p1).charge, credited, 'no double credit');
