@@ -27,7 +27,10 @@ const state = (a) => a.weaponRunner.s3BlasterJumpState(a.weapon);
 function jump(f, a) {
   f.tick(a, 2);
   a.grounded = true; f.tick(a, 2);
-  a.grounded = false; f.tick(a);          // leave-ground edge frame
+  // #1102: leaving a ledge must NOT activate Blaster jump accuracy. The
+  // native jump owner increments s3JumpSerial only for an actual jump.
+  a.grounded = false; a.s3JumpSerial = (a.s3JumpSerial || 0) + 1;
+  f.tick(a); // explicit jump edge frame
   return a;
 }
 function airborne(f, a, frames) { for (let i = 0; i < frames; i++) f.tick(a); return a; }
@@ -50,7 +53,8 @@ test('#684 grounded endpoint stays 0 and the jump edge starts the bias state at 
   assert.equal(a.weaponRunner._spreadDeg(a.weapon), 0, 'grounded cone');
   assert.equal(state(a).active, false, 'no jump-accuracy state while grounded');
 
-  a.grounded = false; f.tick(a);
+  a.grounded = false; a.s3JumpSerial = (a.s3JumpSerial || 0) + 1;
+  f.tick(a);
   const s = state(a);
   assert.equal(s.active, true, 'a live jump-accuracy state after leaving the ground');
   assert.equal(s.frames, 0, 'state starts on the jump edge');
@@ -247,7 +251,8 @@ test('#684 the accuracy timeline follows the fixed simulation clock, not the ren
   // step sizes: the state must be a function of simulated time, not of frames.
   const run = (steps, dt) => {
     const a = f.make('blaster'); a.grounded = true; a.weaponRunner.update(STEP, { fire: false });
-    a.grounded = false; a.weaponRunner.update(STEP, { fire: false });
+    a.grounded = false; a.s3JumpSerial = (a.s3JumpSerial || 0) + 1;
+    a.weaponRunner.update(STEP, { fire: false });
     for (let i = 0; i < steps; i++) a.weaponRunner.update(dt, { fire: false });
     return a;
   };

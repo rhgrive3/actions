@@ -75,7 +75,8 @@ test('#1066 Private Battle gates persistent level progression and omits the norm
   const main = compose('src/main.js');
   const judge = section(main, '  async _judge() {', '\n  _fade(to, ms) {');
   assert.match(judge, /const privateBattle = !!G\.netm/);
-  assert.match(judge, /const gained = privateBattle \? 0 : Math\.round/);
+  // Score-HUD may replace the XP arithmetic; Private Battle must still gate it.
+  assert.match(judge, /const gained = privateBattle \? 0 : /);
   assert.match(judge, /if \(!privateBattle\) \{[\s\S]*p\.xp \+= gained;[\s\S]*saveJSON\('inkwave\.profile', p\);[\s\S]*\}/);
   assert.match(judge, /if \(G\.netm\) data\.online = true/);
 

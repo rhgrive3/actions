@@ -71,6 +71,12 @@ async function boot() {
     if (spec === '../../patches/splatoon3/runtime/weapons-fidelity.mjs') {
       return stubModule(playerContext, playerDepsCache, spec, 'export function updateShotGuide() {} export function projectShotGuide() {}');
     }
+    // Input-pair tests do not enter menus. The production controller now imports
+    // menu takeover hooks, which belong to their separately tested lifecycle.
+    if (spec === '../../patches/reliability/menu-takeover.mjs') {
+      return stubModule(playerContext, playerDepsCache, spec,
+        'export function cancelMenuGameplay() {} export function rearmMenuGameplay() {}');
+    }
     if (!(spec in playerDeps)) throw new Error(`unexpected player dependency: ${spec}`);
     return stubModule(playerContext, playerDepsCache, spec, playerDeps[spec]);
   });
