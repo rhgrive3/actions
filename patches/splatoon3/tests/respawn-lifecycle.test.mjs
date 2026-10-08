@@ -135,3 +135,20 @@ test('a spawn hit has one armor owner even when roll/surge protection overlaps',
   a.s3.actions={roll:{armorTime:1,armorHP:100}};a.damage(160,null,'charger');
   assert.equal(a.hp,40);assert.equal(a.s3.actions.roll.armorHP,100,'spawn hit is not charged to a second shield');
 });
+
+
+test('#93 human post-death Squid Spawn selects different legal targets from aim and confirms via FIRE',async()=>{
+  const f=await setup();f.G.match.mode='turf';
+  const samples=[];
+  for(const x of [4,-4]) {
+    const a=f.make();a.slot=0;a.aimPoint.set(x,0,7);a.splat(null);
+    a.respawn();assert.equal(a.s3.squidSpawn.phase,'aim');
+    assert.equal(a.s3.squidSpawn.initial,false);
+    const target=a.s3.squidSpawn.target;
+    assert.ok(Math.hypot(target.x,target.z)<=12+1e-9,'landing selection remains inside base region');
+    a.intent.fire=true;a.update(1/60);
+    assert.equal(a.s3.squidSpawn.phase,'flight');
+    samples.push({...a.s3.squidSpawn.to});
+  }
+  assert.ok(samples[0].x>0&&samples[1].x<0,'ordinary respawns are not fixed slot positions');
+});
