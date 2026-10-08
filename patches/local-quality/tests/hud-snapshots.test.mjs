@@ -21,7 +21,7 @@ async function setup(patched=true){const f=await fixture("export {projectShotGui
 // presentation changes are asserted separately instead of restoring old meanings.
 function comparable(r){const value=JSON.parse(JSON.stringify({frame:r.frame,mobile:r.mobile}));
  for(const f of [value.frame,value.mobile])for(const k of ['inkLow','subCost','subReady'])delete f[k];
- delete value.frame.crosshair.guide;delete value.frame.crosshair.muzzleBlock;delete value.frame.healthMarkers;
+ delete value.frame.crosshair.guide;delete value.frame.crosshair.muzzleBlock;delete value.frame.crosshair.chargerCurrent;delete value.frame.crosshair.chargerFull;delete value.frame.healthMarkers;
  for(const t of value.frame.teams){delete t.leading;delete t.danger;for(const p of t.players)delete p.respawn;}
  return value;
 }
@@ -80,4 +80,19 @@ test('#510 emitted full Game/Match modules preserve reusable transport and live 
  const f=await setup(),G=mods.get(path.join(site,'src/core/ctx.js')).namespace.G;G.camera=f.G.camera;G.teamHex=f.G.teamHex;
  const Match=mods.get(path.join(site,'src/game/match.js')).namespace.Match;f.m.teamSummary=Match.prototype.teamSummary;f.game._updateHud=main.namespace.Game.prototype._updateHud;
  const first=f.step();for(let i=0;i<3600;i++){f.m.time=i;const next=f.step();assert.equal(next.frame,first.frame);assert.equal(next.mobile,first.mobile);assert.equal(next.frame.time,i);}f.actors[1].special=999;assert.equal(f.step().frame.teams[0].players[1].specialReady,true);
+});
+
+test('#1058 persistent HUD transport retains both Charger reach endpoints without leaking stale state',async()=>{
+  const f=await setup();
+  const near=new f.THREE.Vector3(0,1,5),far=new f.THREE.Vector3(0,1,15);
+  f.m.controller.chargerReachVisible=true;
+  f.m.controller.chargerCurrentReach=near;
+  f.m.controller.chargerFullReach=far;
+  let view=f.step().frame.crosshair;
+  assert.equal(view.chargerCurrent,near,'current released-shot endpoint is preserved');
+  assert.equal(view.chargerFull,far,'unobstructed full-range endpoint is preserved');
+  f.m.controller.chargerReachVisible=false;
+  view=f.step().frame.crosshair;
+  assert.equal(view.chargerCurrent,null,'stale current endpoint does not remain when charge ends');
+  assert.equal(view.chargerFull,null,'stale full endpoint does not remain when charge ends');
 });
