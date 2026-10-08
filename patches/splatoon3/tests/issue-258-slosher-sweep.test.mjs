@@ -28,7 +28,7 @@ async function throwSlosher(previousYaw, renderHz) {
     assert.equal(ticks, 13);
     const projectiles = f.G.projectiles.list;
     assert.equal(projectiles.length, 9, '4+5 current S3 source units');
-    const result = projectiles.map(p => ({
+    const result = Array.from(projectiles, p => ({
       yaw: p._s3SloshYaw, damage: p.damage,
       frame: Math.round(p.delay * 60),
       pending: p._s3SloshBirthPending
