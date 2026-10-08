@@ -606,13 +606,28 @@ def neck_join(cfg):
     # meshes on the head / neck there follow the smoothing (move of the nearest merged vertex)
     W0 = W.copy()
     er.apply_weighted_modifier(R, w, 'SMOOTH', factor=0.5, iterations=int(cfg['iters']))
-    W1 = er.world(R)
+    ns = cfg.get('neck_smooth')
+    if ns:
+        # wrinkles and the front crossing line on the neck: the whole neck (all round) is smoothed; on the head
+        # side only within ns['head_mm'] of the joint (the jaw and the face stay)
+        L = er.M.to_local(er.world(R)) * 1000
+        ax, az = cfg.get('axis_xz', [0.0, 10.0])
+        y0, y1, y2, y3 = ns['y']
+        wn = smoothstep((L[:, 1] - y0) / (y1 - y0)) * smoothstep((y3 - L[:, 1]) / (y3 - y2))
+        wn *= smoothstep((ns['r_mm'] - np.hypot(L[:, 0] - ax, L[:, 2] - az)) / 10.0)
+        only_head = vh & ~vn
+        h0, h1 = ns['head_mm']
+        wn = np.where(only_head, wn * (1 - smoothstep((dist - h0) / (h1 - h0))), wn)
+        er.apply_weighted_modifier(R, wn, 'SMOOTH', factor=0.5, iterations=int(ns['iters']))
+        print('BODY_SHAPE neck_join neck smoothed', int((wn > 1e-3).sum()))
+    if cfg.get('sculpt'):
+        neck_side_sculpt(R, cfg['sculpt'])
     if cfg.get('follow'):
         kd2 = KDTree(nv)
         for i, c in enumerate(W0):
             kd2.insert(Vector(c), i)
         kd2.balance()
-        mv = W1 - W0
+        mv = er.world(R) - W0
         for n in cfg['follow']:
             o = bpy.data.objects[n]
             Wo = er.world(o)
@@ -650,8 +665,7 @@ def neck_join(cfg):
         R.data.polygons.foreach_set('material_index', mi2)
         is_head = is_head & ~switch
         print('BODY_SHAPE neck_join border faces to the neck skin', int(switch.sum()))
-    if cfg.get('sculpt'):
-        neck_side_sculpt(R, cfg['sculpt'])
+
     if cfg.get('neck_skin_y') is not None:
         # the head skin (its texture is one plain colour away from the lashes) and the neck skin differ in colour
         # and subsurface: the neck above the collar takes the head skin, so the colour border lies under the collar.
