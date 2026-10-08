@@ -1882,3 +1882,42 @@ The Vac owner scans live hostile actors, deduplicates actor identities and autho
 - Workflow adds the same native gates and the built three-client probe in Chromium/WebKit on the immutable PR source SHA. Existing full gates remain enabled.
 - Broader network source suite: 31 failures reproduce on immutable base `04e4547`; no repairs here. The initial candidate additionally exposed two intentionally changed Slosher-delay expectations and a newly required dependency in the extracted-method test harness; those three contract updates pass. Base fixture/protocol-layout/movement failures stay with #1083.
 - Exact pushed SHA and CI results are recorded on PR #1172 after the remote run, rather than claiming the pre-push tree was CI-green.
+
+## Seven-issue follow-up — 2026-10-08 (#1045, #1065, #971, #961, #958, #534, #202)
+
+Ownership: issue state, assignees, comments, all eight open PR descriptions and
+relevant implementation diffs were checked before posting takeover claims. These
+seven reports had only abandoned claims older than 24 hours and retained concrete
+unfixed paths. Work is stacked on PR1172 `5e0af85cec522de53b128587a2fd7d2e961cf748`.
+The integration/base and bucket-repeat work, PR1169 and PR401 are excluded.
+
+Reference conditions: Splatoon 3 Ver.11.3.0, Splat Charger / Heavy Splatling /
+Bucket Slosher, no gear unless a control explicitly adds it, ordinary human or
+swim form, fixed 60 Hz simulation with 30/60/120 Hz outer rendering. The pinned
+parameter source remains Leanny/splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6`
+(`data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json`,
+`WeaponSpinnerStandard.game__GameParameterTable.json`,
+`WeaponSlosherStrong.game__GameParameterTable.json`). Behavioral interpretation
+and form-size measurements are the evidence linked in the corresponding issues;
+this work does not turn extracted endpoints or engine tests into retail footage.
+
+| Issue | Remaining cause and correction | Reproduction / acceptance evidence |
+| --- | --- | --- |
+| #971 | The Charger applied airborne 1/3 speed from charge entry. A crossing update now splits at the sourced 8F minimum; low-ink slowdown remains independent. | Funded air charge reaches minimum in 8 charge frames and full in 164, excluding the existing 1F fresh-start admission. Ground/air transition, a 2F crossing update, dry tank and 30/60/120 Hz agree. Only one-ULP clock completion error is normalized; the strict full-charge predicate for received/ink-limited partial states is unchanged. |
+| #961 | Native `_charger` still transformed chargeT through an early-boost curve before audio, presentation and release. The build overlay now uses linear progress. Paint and launch-speed minimum coordinates move from the obsolete 1/6 to 8/60. | Real native charge, loop pitch and full ding agree at every frame; 8F spends 2.25% and full spends 18%. Actual finite-flight tests retain minimum/full speed and paint endpoints, sourced damage, stored-charge origin and release gaps. No range-calibration formula from another PR is duplicated. |
+| #1045 | Air and jump recovery routed Splatling pitch through `horizontal * .55`. The independent 1.6-degree pitch axis now remains active in all those states. | Actual emitted edge samples at air/ground and jump ages 0/25/40/70 stay at 1.6 degrees while horizontal spread retains its own state. Existing two-draw radial sampler/RNG order remains. The full Nintendo PDF, inner/outer bias and IA correlation are still unverified. |
+| #1065 | Slosher fall damage charged initially downward 2F straight descent against the falloff budget. The true-birth velocity selects a separate phase-aware fall anchor. | A steep shot dropping over 2 units during straight flight stays at 70 HP. After that phase, descent starts at the sourced 1.5 baseline and reaches 50 over the remaining 6.125 units. Upward/horizontal controls, unit envelopes, pooled reuse and fixed-clock cadence are covered. This does not change bucket repeat, birth delays, movement integration or volley accounting. |
+| #958 | Adoption converted the visual binary invulnerability/armor indicators into gameplay state. A tagged protection payload now accompanies the already life/sequence-validated adoption state. | Actual NetMatch send/receive/adopt retains 1.6s finite invulnerability, then expires on native ticks. Breakable armor HP, remaining duration and existing break delay resume from the newest accepted owner state; an old interpolated sample cannot restore expired armor. Invalid, stale and foreign rows are rejected. Old numeric recovery-age payloads remain readable but cannot supply missing protection clocks. The payload uses the recovery-age slot, leaving the outer row and the separate Slam extension slot untouched. It transfers finite protection; it does not reconstruct an absent infinite Squid Spawn aim phase. |
+| #534 | A full 2048-square mural atlas and Halyard fallback were allocated even for stages using only shared strips. Shared-only layouts now use 2048x1024; Halyard/Cargo/Range stage rows allocate on demand. | Built Chromium uses actual Canvas2D and WebGL texture upload across nine stage changes. Shared pixels survive resize exactly; original stage pixels and UV/placement tables compare exactly with the same canvas raster backend. Exactly one GPU texture remains allocated across changes and zero after disposal. Canvas backing falls from 16 to 8 MiB; nominal RGBA8 mip storage falls from 21.33 to 10.67 MiB (about 18.67 MiB total reduction). Byte figures are dimension/format accounting, not driver process-memory measurements. Mobile device thermals/long-session eviction remain unmeasured. |
+| #202 | The common weapon hurtbox helper still returned legacy terrain radius .38 in swim form, despite the separate .35 humanoid hurt radius. A separate .675 swim hurt radius now feeds the same helper. | Real continuous main-projectile and finite Charger graze tests resolve .35 versus .675, retaining the referenced 1.9286 form ratio in the existing project scale. Terrain radius, body dimensions, grate behavior and projectile radii are unchanged. Exact Nintendo-to-project world scaling remains the pre-existing calibration. |
+
+Validation distinguishes native engine logic, emitted Chromium/WebKit browser
+execution, and retail/device measurement. The added `seven_claims` CI job checks
+out and verifies `SOURCE_SHA`, runs the focused native regressions, builds that
+checkout, checks every emitted artifact hash, then tests Chromium and WebKit.
+The older broad suite remains enabled. Seven unrelated failures reproduced on
+the unchanged PR1172 base: Splatling HUD lifetime, Charger sight-cache source
+anchor, Splatling jump-test lifetime/range fixtures, Dualies allocation/sub gate,
+and generic floor-impact expectation. Existing adoption tests also assert an
+obsolete outer packet index; this change adds current-wire round-trip tests
+instead of repairing that inherited base work here. No merge is performed.

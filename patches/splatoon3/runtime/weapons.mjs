@@ -638,19 +638,25 @@ export function installWeapons(context, profile) {
       const beforeT = this.chargeT || 0, realInk = a.ink;
       const fundedInk = (this.s3ChargerSpent || 0) + realInk;
       const low = fundedInk + epsilon < w.inkMin;
-      const rate = !a.grounded ? (w.airChargeRate ?? 1 / 3) : low ? (w.emptyChargeRate ?? 1 / 3) : 1;
       const chargeDuration = Math.max(epsilon, w.chargeTime);
+      // #971: air slowdown starts only beyond the minimum charge. Split a
+      // crossing step; low-ink slowdown is independent and still applies first.
+      const fundedRate = low ? (w.emptyChargeRate ?? 1 / 3) : 1;
+      const airRate = a.grounded ? 1 : (w.airChargeRate ?? 1 / 3);
+      const minimum = w.minimumChargeTime ?? 8 / 60;
+      const earlyDt = Math.min(dt, Math.max(0, minimum - beforeT * chargeDuration) / fundedRate);
+      const progressDt = earlyDt * fundedRate + (dt - earlyDt) * Math.min(fundedRate, airRate);
       if (!Number.isFinite(this.s3ChargerElapsed)) {
         this.s3ChargerElapsed = beforeT * chargeDuration;
         this.s3ChargerElapsedCompensation = 0;
       }
-      const requestedT = Math.min(1, beforeT + dt / chargeDuration * rate);
+      const requestedT = Math.min(1, beforeT + progressDt / chargeDuration);
       const inkLimitT = chargerProgressForInk(w, fundedInk);
       const targetT = Math.min(requestedT, inkLimitT);
       const inkLimited = inkLimitT < requestedT;
       const elapsedStep = inkLimited
         ? Math.max(0, targetT - beforeT) * chargeDuration
-        : Math.min(dt * rate, Math.max(0, (1 - beforeT) * chargeDuration));
+        : Math.min(progressDt, Math.max(0, (1 - beforeT) * chargeDuration));
       const elapsed = accumulateChargerElapsed(this, elapsedStep);
       const scaledDt = Math.max(0, targetT - beforeT) * w.chargeTime;
       // Normalized progress can land one ULP below 1 after repeated fractional
@@ -658,7 +664,9 @@ export function installWeapons(context, profile) {
       // native full endpoint on its completion tick. It does not soften
       // isChargerFullCharge: q<1 presentation/packets remain partial, and
       // ink-limited progress cannot complete the clock.
-      if (!inkLimited && elapsed >= w.chargeTime) this.chargeT = 1;
+      // The 1/3 airborne rate can finish one representable double below 1s.
+      // Only normalize clock roundoff, never partial packet/ink-limited charge.
+      if (!inkLimited && elapsed + Number.EPSILON * Math.max(1, w.chargeTime) >= w.chargeTime) this.chargeT = 1;
 
       // Advance the native charge owner with a temporary admissible tank, then
       // debit the real tank from the sourced min/full endpoints.

@@ -2,7 +2,6 @@ import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
 
-import { splatlingJumpRecoveryAt } from './splatling-jump-spread.mjs';
 const EPS = 1e-10, DEG = Math.PI / 180;
 const EMPTY_SUB_GATE_INPUT = Object.freeze({});
 function subGateLocked(runner, kind, dt) {
@@ -67,8 +66,7 @@ export function dualiesInputGate(runner) {
 let flushing = 0;
 
 // This retains the existing two-draw radial sampler, not a claimed S3 PDF.
-// The 0.55 air-pitch factor is the existing INKWAVE sampler. The jump blend to
-// the existing ground pitch endpoint is internal and unverified against S3.
+// #1045: PitchDegSwerve is independent of the horizontal jump/recovery envelope.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
   // #883: Dualies expose one scalar spread envelope, so do not inherit the
@@ -97,17 +95,14 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
     return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
       .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
   }
-  const recovery = w.kind === 'splatling' ? splatlingJumpRecoveryAt(a.s3SplatlingJumpAgeFrames) : null;
-  if (w.kind !== 'splatling' || !Number.isFinite(w.spreadPitchGround) || (!a.grounded && recovery === null)) {
+  if (w.kind !== 'splatling' || !Number.isFinite(w.spreadPitchGround)) {
     return system._spread(dir, horizontal);
   }
   // Keep both Splatling spread draws when the horizontal cone is zero. The
   // projectile seed and later paint effects share this gameplay RNG stream.
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
   const horizontalAngle = Math.max(0, horizontal) * DEG * radius;
-  const groundPitchAngle = w.spreadPitchGround * DEG * radius;
-  const airPitchAngle = Math.atan(0.55 * Math.tan(horizontalAngle));
-  const pitchAngle = recovery === null ? groundPitchAngle : airPitchAngle + (groundPitchAngle - airPitchAngle) * recovery;
+  const pitchAngle = w.spreadPitchGround * DEG * radius;
   const right = dir.clone().set(-dir.z, 0, dir.x);
   if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
   right.normalize();

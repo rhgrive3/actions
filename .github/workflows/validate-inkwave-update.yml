@@ -517,3 +517,38 @@ jobs:
           if-no-files-found: warn
           path: ${{ env.DIAGNOSTIC_STORAGE }}/probe/
           retention-days: 14
+
+  seven_claims:
+    if: inputs.diagnostic_only != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+      - name: Verify immutable checkout identity
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install build and browser dependencies
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium webkit
+      - name: Verify seven claimed gameplay and handoff regressions
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/seven-charge-swim-falloff.test.mjs patches/network-replication/tests/protection-adoption.test.mjs patches/splatoon3/tests/charger-launch-speed.test.mjs patches/splatoon3/tests/issue-620-charger-min-charge-paint.test.mjs patches/splatoon3/tests/issue-430-humanoid-hurtbox.test.mjs patches/splatoon3/tests/issue-525-form-collision-radius.test.mjs patches/splatoon3/tests/charger-fresh-start.test.mjs patches/splatoon3/tests/charger-store-359.test.mjs patches/splatoon3/tests/issue-1038-charger-low-ink.test.mjs patches/splatoon3/tests/issue-959-slosher-free-state.test.mjs patches/splatoon3/tests/issue-1098-stored-muzzle.test.mjs patches/splatoon3/tests/issue-982-charger-rumble.test.mjs patches/splatoon3/tests/charger-damage-curve.test.mjs
+          node --experimental-vm-modules --test --test-name-pattern='splatling retained horizontal' patches/splatoon3/tests/weapon-edgecases.test.mjs
+      - name: Verify emitted gameplay and mural resource lifetime in both browsers
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public .ci-scratch/seven-site
+          node scripts/check-inkwave-seven-claims.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/seven-browser.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-seven-claims-${{ env.SOURCE_SHA }}
+          path: .ci-scratch/seven-browser.json
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,18 +1,10 @@
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { chargerDamage, isChargerFullCharge } from './weapons.mjs';
-// Splatoon-3-normalized partial-charge coordinate for Charger paint endpoints.
-// The authoritative charge progression reaches charge = 1/6 after the first
-// legal 8 frames at 60Hz (chargeT = 8/60 through the installed charge curve)
-// and 1 at the full 60th frame, so the pinned S3 11.3.0 MinCharge family
-// anchors to the first legal release and the MaxCharge family to 60f;
-// the extracted FullCharge step applies only at the authoritative full state
-// (#840: isChargerFullCharge, ding-aligned at charge 1). Charge-rate modifiers
-// (airborne/empty tank) only change how fast the progression advances, and
-// releases below the boundary clamp to 0, so the legal minimum endpoint never
-// shifts. Damage (#506), range (#514), projectile speed, ink consumption and
-// the sub-8f release gate (#304) keep consuming the raw charge separately.
-export const CHARGER_FIRST_LEGAL_CHARGE = 1 / 6;
+// #961: linear authoritative charge reaches the legal minimum at 8/60.
+// Paint and launch endpoints must share this coordinate; retaining the old
+// 1/6 early-boost boundary would create a second plateau after frame 8.
+export const CHARGER_FIRST_LEGAL_CHARGE = 8 / 60;
 export function chargerPartialCharge(charge) {
   const c = Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0));
   return c <= CHARGER_FIRST_LEGAL_CHARGE ? 0 : (c - CHARGER_FIRST_LEGAL_CHARGE) / (1 - CHARGER_FIRST_LEGAL_CHARGE);
@@ -27,16 +19,8 @@ export function chargerPaintParameters(raw,charge){
     onTop,interval:2*depth*(1-onTop)*Math.max(1,raw.SplashSpawnParam.SkipNum),
     terminalRate:1.5}; // community-reported omitted default, NOT an explicit pinned field
 }
-// Normalized S3 launch-speed coordinate. WeaponRunner._charger's upstream
-// S-curve reaches 1/6 after the S3 8-frame legal minimum (8/60 * 1.25) and 1
-// at the 60-frame full charge, while the extracted SpawnSpeed* endpoints are
-// per-frame values anchored at the minimum legal shot (pinned Ver. 11.3.0
-// completion table). Mapping [1/6, 1] -> [0, 1] makes the first legal 8f shot
-// launch exactly at SpawnSpeedMinCharge, keeps full charge on
-// SpawnSpeedFullCharge, and clamps sub-minimum taps to the minimum endpoint.
-// Damage, distance, paint and ink keep consuming the raw runner charge; their
-// separate issues track those coordinates. No device measurement is claimed.
-export const CHARGER_MIN_CHARGE = 1 / 6;
+// Extracted minimum/max/full launch speeds remain independent endpoints.
+export const CHARGER_MIN_CHARGE = CHARGER_FIRST_LEGAL_CHARGE;
 export function chargerLaunchSpeed(raw, charge) {
   const q = Math.max(0, Math.min(1, (charge - CHARGER_MIN_CHARGE) / (1 - CHARGER_MIN_CHARGE)));
   return 60 * (raw.SpawnSpeedMinCharge + (raw.SpawnSpeedMaxCharge - raw.SpawnSpeedMinCharge) * q);
@@ -99,7 +83,7 @@ export function installChargerFlight(api,completion) {
     const full=isChargerFullCharge(charge);
     // The native runner resets chargeT immediately after this synchronous release
     // call. Snapshot it here and keep it with the in-flight shot; `charge` stays
-    // the generic nonlinear value used for range and launch speed.
+    // the same linear value used for range and launch speed.
     const chargeT=!ghost&&Number.isFinite(actor.weaponRunner?.chargeT)?actor.weaponRunner.chargeT:null;
     const damage=ghost?0:full?w.damageMax:chargerDamage({weaponRunner:{chargeT}},w,charge);
     const speed=full?60*raw.SpawnSpeedFullCharge:chargerLaunchSpeed(raw,charge);
@@ -117,7 +101,7 @@ export function installChargerFlight(api,completion) {
       emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});
       if(actor.isLocal)emit('recoil',{amount:.005+charge*.013});
       // #982: S3 Charger fires below 50% without shot vibration.
-      // charge is the legacy nonlinear range/presentation curve (already .5
+      // charge and chargeT now share the linear progression (formerly .5
       // at 7/15 progress). Haptics use the authoritative normalized clock.
       if(actor.isLocal && chargeT >= .5)G.input?.rumble?.(.12+charge*.45,.2+charge*.35,80+charge*90);
     }

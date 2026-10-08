@@ -2,6 +2,9 @@
 // verifier. No code outside the main-projectile paths is replaced.
 export function adaptWeaponsFidelity(code,replaceOnce) {
   const patch=(before,after,label)=>{code=replaceOnce(code,before,after,'weapons fidelity: '+label);};
+  patch('const t = this.chargeT, curve = t < 0.2 ? t * 1.25 : 0.25 + (t - 0.2) * 0.9375;',
+    'const curve = this.chargeT; // #961: one authoritative linear charge for pose, sound and release',
+    'linear Charger charge presentation');
   patch('  _aimFrom(a, from, out) {\n    out.copy(a.aimPoint).sub(from);',
     '  _aimFrom(a, from, out, target = a.aimPoint) {\n    out.copy(target).sub(from);',
     'Dualies per-hand aim target');

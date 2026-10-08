@@ -645,6 +645,38 @@ function validLethalState(row, life, flags, hp) {
     || typeof punisher !== 'boolean' || typeof cause !== 'string' || !cause.length || cause.length > 48 || /[\\u0000-\\u001f\\u007f]/.test(cause)) return undefined;
   return [hitLife, sequence, attackerNid, cause, punisher];
 }
+// #958: versioned protection payload inside the existing recovery-age slot.
+// The outer adoption row and its extension slots remain unchanged (#1169 owns
+// the separate Slam extension). Old numeric recovery ages remain readable.
+const PROTECTION_TAG = 'inkwave-protection-v1';
+function packProtectionAge(actor) {
+  const armor = actor.s3?.spawnArmor;
+  return [PROTECTION_TAG, clampAdoptionAge(actor.lastDamage),
+    Number.isFinite(actor.invuln) ? Math.max(0, Math.min(10, actor.invuln)) : 0,
+    !!actor.s3?.spawnArmorManaged,
+    armor ? [armor.hp, armor.remaining, armor.breakRemaining] : null];
+}
+function readProtectionAge(row) {
+  if (!Array.isArray(row) || row.length !== 5 || row[0] !== PROTECTION_TAG
+    || !Number.isFinite(row[1]) || row[1] < 0 || row[1] > ADOPTION_AGE_MAX
+    || !Number.isFinite(row[2]) || row[2] < 0 || row[2] > 10 || typeof row[3] !== 'boolean') return null;
+  const armor = row[4];
+  if (armor !== null && (!row[3] || !Array.isArray(armor) || armor.length !== 3
+    || !Number.isFinite(armor[0]) || armor[0] < 0 || armor[0] > 30
+    || !Number.isFinite(armor[1]) || armor[1] < 0 || armor[1] > 235 / 60
+    || armor[2] !== null && (!Number.isFinite(armor[2]) || armor[2] < 0 || armor[2] > 20 / 60))) return null;
+  return { invuln: row[2], managed: row[3], armor: armor?.slice() || null };
+}
+function restoreProtection(actor, state) {
+  const p = state.protection;
+  if (!p || !actor.alive) return;
+  actor.invuln = p.invuln;
+  actor.s3 ||= {};
+  actor.s3.spawnArmorManaged = p.managed;
+  actor.s3.spawnArmorRemote = false;
+  actor.s3.spawnArmor = p.armor && p.armor[1] > 0
+    ? { hp: p.armor[0], remaining: p.armor[1], breakRemaining: p.armor[2] } : null;
+}
 function packAdoptionState(actor) {
   const life = Number.isSafeInteger(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
   const previous = Number.isSafeInteger(actor._adoptionSequence) && actor._adoptionSequence >= 0 ? actor._adoptionSequence : 0;
@@ -655,12 +687,15 @@ function packAdoptionState(actor) {
   const spin = exportSplatlingReservation(actor.weaponRunner);
   const cooldown = Number.isFinite(actor.weaponRunner?.cooldown)
     ? Math.min(ADOPTION_COOLDOWN_MAX, Math.max(0, actor.weaponRunner.cooldown)) : 0;
-  return [ADOPTION_STATE_TAG, life, sequence, tick, clampAdoptionAge(actor.lastDamage),
+  return [ADOPTION_STATE_TAG, life, sequence, tick, packProtectionAge(actor),
     packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin, cooldown];
 }
 function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
   if (!Array.isArray(row) || (row.length !== 8 && row.length !== 9) || row[0] !== ADOPTION_STATE_TAG) return null;
-  const [tag, rowLife, sequence, tick, recoveryAge, jumpRow, lethalRow, spinRow] = row;
+  const [tag, rowLife, sequence, tick, ageRow, jumpRow, lethalRow, spinRow] = row;
+  const protection = Array.isArray(ageRow) ? readProtectionAge(ageRow) : null;
+  if (Array.isArray(ageRow) && !protection) return null;
+  const recoveryAge = Array.isArray(ageRow) ? ageRow[1] : ageRow;
   const cooldown = row.length === 9 ? row[8] : 0;
   if (!Number.isSafeInteger(rowLife) || rowLife < 0 || rowLife !== life
     || !Number.isSafeInteger(sequence) || sequence < 1 || sequence <= (previousSequence || 0)
@@ -673,7 +708,7 @@ function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
   if (lethal === undefined) return null;
   const streaming = !!(flags & F.streaming);
   if (spinRow === null ? streaming : (!streaming || weaponKind !== 'splatling' || !isValidSplatlingReservation(spinRow, PLAYER.inkMax))) return null;
-  return { life: rowLife, sequence, tick, recoveryAge, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown };
+  return { life: rowLife, sequence, tick, recoveryAge, protection, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown };
 }
 function copyAdoptionState(state) {
   if (!state) return null;
@@ -753,6 +788,9 @@ function restoreAdoptionState(match, actor, transfer) {
   if (latest.life !== life) return;
   actor._adoptionSequence = Math.max(Number.isSafeInteger(actor._adoptionSequence) ? actor._adoptionSequence : 0, latest.sequence);
   actor.net._adoptionSeq = Math.max(Number.isSafeInteger(actor.net._adoptionSeq) ? actor.net._adoptionSeq : 0, latest.sequence);
+  // Resume from the newest accepted owner state, not the delayed visual
+  // sample (which would extend protection or undo an already broken armor).
+  restoreProtection(actor, latest);
   actor.lastDamage = clampAdoptionAge(current.recoveryAge);
   actor.weaponRunner.cooldown = Math.max(actor.weaponRunner.cooldown || 0, current.cooldown || 0);
   if (current.jump) {

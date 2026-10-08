@@ -71,6 +71,12 @@ function freezeDeep(value) {
 // Unsupported families retain native force order; all main rounds now respect their declared lifetime.
 export function advanceFidelityProjectile(p, dt) {
   p.prev.copy(p.pos);
+  // #1065: capture final launch velocity at true birth, after owner motion and
+  // packet reconstruction. Pool reuse must not inherit the previous glob.
+  if (p.fidelitySloshUnit && p.fidelitySloshDownward == null) {
+    p.fidelitySloshDownward = p.vel.y < 0;
+    p.fidelitySloshFallAnchorY = p.pos.y;
+  }
   p.fidelityPrevAge = p.age;
   const remaining = Math.max(0, p.life - p.age);
   const step = Math.min(dt, remaining);
@@ -113,6 +119,8 @@ export function advanceFidelityProjectile(p, dt) {
     }
   }
   p.pos.addScaledVector(p.vel, step);
+  if (p.fidelitySloshDownward && p.age <= p.straight + EPSILON)
+    p.fidelitySloshFallAnchorY = p.pos.y;
   if (isKitProjectile(p)) kitTrizookaOrbitDelta(null, p, step);
 }
 
@@ -1110,7 +1118,11 @@ export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
     return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t);
   }
   if(w.kind==='slosher'&&p.fidelitySloshUnit){
-    const d=p.fidelitySloshUnit.DamageParam,fall=Math.max(0,p.start.y-point.y);
+    const d=p.fidelitySloshUnit.DamageParam;
+    const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*impactT;
+    const fall=p.fidelitySloshDownward
+      ? (age<=p.straight+EPSILON ? 0 : d.ReduceStartFallDistance+Math.max(0,p.fidelitySloshFallAnchorY-point.y))
+      : Math.max(0,p.start.y-point.y);
     const t=clamp01((fall-d.ReduceStartFallDistance)/(d.ReduceEndFallDistance-d.ReduceStartFallDistance));
     return (d.ValueMax+(d.ValueMin-d.ValueMax)*t)/10;
   }
@@ -1315,7 +1327,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshPacketIndex=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshDownward=null;p.fidelitySloshFallAnchorY=null;p.fidelitySloshPacketIndex=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,

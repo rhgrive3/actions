@@ -1,3 +1,4 @@
+import { adaptMuralAtlas } from './mural-atlas-adapter.mjs';
 import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
 import { adaptClothingGear } from '../splatoon3/clothing-gear-adapter.mjs';
 import { adaptIssue465 } from '../splatoon3/issue-465-adapter.mjs';
@@ -63,6 +64,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'mural-atlas-adapter.mjs',
   'bot-paint-observation-adapter.mjs',
   'issue-418-adapter.mjs','world-quality.mjs','quality-probe.mjs','texlib-adapter.mjs','texlib.mjs',
   'boss-hit-adapter.mjs',
@@ -110,6 +112,7 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  code = adaptMuralAtlas(rel, code, replaceOnce);
   code = adaptIssue482(rel, code);
   code = adaptIssue405(rel, code);
   code = adaptIssue484(rel, code);
