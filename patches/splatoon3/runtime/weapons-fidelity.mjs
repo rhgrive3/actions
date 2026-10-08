@@ -381,6 +381,14 @@ export function blasterPaintContract(raw) {
     },
     burst: {
       radius: burst.SplashDropPaintShotColHitRadius,
+      // #1107: omitted members of sparse S3 BlasterBurstParam use their
+      // documented type defaults; shot-collision override is NOT the
+      // ordinary timed-burst paint or falling splash-drop radius.
+      timedSplashRadius: burst.SplashPaintRadius ?? 2.0,
+      timedDropRadius: burst.SplashDropPaintRadius ?? 3.2,
+      timedDropOn: burst.SplashDropOn ?? true,
+      timedDropInitialSpeed: burst.SplashDropInitSpeed ?? 0,
+      timedDropCollisionRadius: burst.SplashDropCollisionRadius ?? 0.4,
       axisX: x,
       axisY: y,
       move: burst.SplashWallDropMoveParam,
@@ -520,13 +528,59 @@ export function applyFidelityBlasterFlightPaint(system, p) {
   return true;
 }
 
+// #1107: falling paint drops are separate from the actual burst's damage
+// collision. A small bounded owner-only queue ensures an airburst can paint the
+// later landing surface without inventing an immediate generic floor stamp.
+function queueTimedBlasterDrop(system,p,point,burst) {
+  if (!burst.timedDropOn || !(burst.timedDropRadius>0) || !api.G.physics?.segment) return;
+  const drops=system._s3TimedBlasterDrops || (system._s3TimedBlasterDrops=[]);
+  if (drops.length>=128) drops.shift();
+  drops.push({ pos:point.clone(), next:point.clone(), hit:new api.Hit(),
+    speed:Math.max(0,burst.timedDropInitialSpeed)*60,
+    t:0, radius:burst.timedDropRadius, owner:p.owner,team:p.team,
+    seed:seededUnit(p.seed,0x1107) });
+}
+function advanceTimedBlasterDrops(system,dt) {
+  const drops=system._s3TimedBlasterDrops;
+  if (!drops?.length || !(dt>0)) return;
+  const physics=api.G.physics,paint=api.G.paint;
+  const gravity=Number.isFinite(api.PLAYER?.gravity)?api.PLAYER.gravity:20;
+  for(let i=drops.length-1;i>=0;i--){
+    const d=drops[i];d.t+=dt;d.speed+=gravity*dt;
+    d.next.copy(d.pos);d.next.y-=d.speed*dt;
+    const hit=physics?.segment?.(d.pos,d.next,d.hit,true);
+    if(hit?.hit) {
+      if(paint?.splat&&d.owner){
+        const at=hit.point.clone().addScaledVector(hit.normal,.025);
+        const area=paint.splat(at,d.radius,d.team,{seed:d.seed});
+        if(Number.isFinite(area))d.owner.addTurf?.(area);
+      }
+      drops.splice(i,1);
+    }else if(d.t>2.5 || d.next.y<(api.PLAYER?.waterY??-100)-2) drops.splice(i,1);
+    else d.pos.copy(d.next);
+  }
+}
 export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   const source = blasterPaintSource(p);
   if (!source) return false;
   const collision = direct != null || !!p.s3BurstCollisionHit || !!p.s3TerrainBurst;
-  if (!collision) return false; // timed airburst remains owned by its separate issue/path
   if (p.ghost) return true;
   const { contract } = source, burst = contract.burst;
+  if (!collision) {
+    const physics=api.G.physics;
+    const origin=system._s3BlasterTimedBurstOrigin || (system._s3BlasterTimedBurstOrigin=new api.THREE.Vector3());
+    const down=system._s3BlasterTimedBurstDown || (system._s3BlasterTimedBurstDown=new api.THREE.Vector3(0,-1,0));
+    const hit=system._s3BlasterTimedBurstHit || (system._s3BlasterTimedBurstHit=new api.Hit());
+    origin.copy(point);origin.y+=.2;
+    const floor=physics?.raycast?.(origin,down,3.5,hit,true);
+    if(floor?.hit&&burst.timedSplashRadius>0){
+      const at=floor.point.clone().addScaledVector(floor.normal,.025);
+      const area=api.G.paint?.splat?.(at,burst.timedSplashRadius,p.team,{seed:seededUnit(p.seed,0x1106)});
+      if(Number.isFinite(area))p.owner?.addTurf?.(area);
+    }
+    queueTimedBlasterDrop(system,p,point,burst);
+    return true;
+  }
   const floorHit = system._s3BlasterBurstFloorHit || (system._s3BlasterBurstFloorHit = new api.Hit());
   const floorOrigin = system._s3BlasterBurstFloorOrigin || (system._s3BlasterBurstFloorOrigin = new api.THREE.Vector3());
   const floorPoint = system._s3BlasterBurstFloorPoint || (system._s3BlasterBurstFloorPoint = new api.THREE.Vector3());
@@ -1196,8 +1250,8 @@ export function installWeaponsFidelity(context,profile) {
     return reach;
   };
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,step=Projectiles.prototype._step,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear,updateSystem=Projectiles.prototype.update;
-  Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;this._dualiesGuideCache=null;this._s3DetachedWallDrops?.splice(0);return result;};
-  Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);return updateSystem.call(this,dt);};
+  Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;this._dualiesGuideCache=null;this._s3DetachedWallDrops?.splice(0);this._s3TimedBlasterDrops?.splice(0);return result;};
+  Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);advanceTimedBlasterDrops(this,dt);return updateSystem.call(this,dt);};
   Projectiles.prototype._new=function(...args){
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
