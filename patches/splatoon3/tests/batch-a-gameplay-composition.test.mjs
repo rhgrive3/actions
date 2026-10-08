@@ -104,7 +104,7 @@ async function runScenario(hz, { secondAction = 'floor', keepSquid = false } = {
         obs.lastFireOnRelease = a.lastFire;
         obs.cooldownOnRelease = a.weaponRunner.cooldown;
       }
-      if (t === 79) {
+      if (t === 77) {
         obs.inkAfterRefill = a.ink;
       }
 
@@ -217,8 +217,8 @@ test('Issue #390 regression: releasing fire while squid cancels store without sh
   assert.equal(obs.inkOnRelease, obs.inkBeforeCancel, 'No ink consumed on store cancellation');
   assert.ok(Math.abs(obs.lastFireOnRelease - (obs.lastFireBeforeCancel + 1 / 60)) < 1e-9, 'lastFire only advances by the simulation tick');
   assert.ok(Math.abs(obs.cooldownOnRelease - (obs.cooldownBeforeCancel - 1 / 60)) < 1e-9, 'cooldown only decays by the simulation tick');
-  // #1070: cancelling a stored charge owns a 3F recovery lock; sample after that boundary.
-  assert.ok(obs.inkAfterRefill > obs.inkOnRelease, 'Legitimate ink refill resumes after the 3F stored-charge cancellation delay');
+  // Resources update runs before weapon cancel: cancellation tick does not refill, legitimate refill accounts separately
+  assert.ok(obs.inkAfterRefill > obs.inkOnRelease, 'Legitimate ink refill resumes on subsequent tick after stored charge is cleared');
 });
 
 test('Issue #390 regression: re-emerge fresh charging never resurrects full charge', async () => {

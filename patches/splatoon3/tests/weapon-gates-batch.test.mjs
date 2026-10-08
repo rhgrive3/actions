@@ -134,7 +134,7 @@ test('#214: a sub released during the lock is discarded, while holding past the 
  f.G.projectiles.throwBomb=()=>bombs++;
  while(!r.s3PostShotRemaining)step(a,1,{fire:true});
  step(a,1,{subReleased:true});step(a,30);assert.equal(bombs,0);assert.equal(r.aimingSub,false);
- step(a,1,{sub:true});assert.equal(r.aimingSub,true);step(a,5,{sub:true});step(a,1,{subReleased:true});assert.equal(bombs,0);step(a,1);assert.equal(bombs,1);
+ step(a,1,{sub:true});assert.equal(r.aimingSub,true);step(a,5,{sub:true});step(a,1,{subReleased:true});assert.equal(bombs,1);
 });
 
 function saverLoadout(gp){

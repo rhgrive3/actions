@@ -33,8 +33,6 @@ const enterExhale = (f, a, max = 400) => {
   assert.equal(f.inkVacState(a)?.phase, 'exhale', 'suction transitioned to the return-shot hold');
 };
 const fireReturn = (f, a) => {
-  // Carry the physical hold across suction; a fresh exhale press fires immediately.
-  a.intent.fire = true;
   enterExhale(f, a);
   a.intent.fire = true; f.tick(a);
   assert.ok(f.inkVacState(a), 'holding ZR in exhale does not launch early (#1120)');
@@ -182,7 +180,6 @@ test('#1042 unfilled suction lasts 360F, then a separate 150F return-shot hold a
 test('#1042 filling the Vac ends suction early but still enters the return-shot hold', async () => {
   const { f, a, system } = await setup();
   activate(f, a);
-  a.intent.fire = true;
   shoot(f, a);
   enterExhale(f, a, 30);
   assert.ok(f.inkVacState(a).t < 0.1, 'post-suction hold owns a fresh clock');
@@ -288,7 +285,7 @@ test('a dt0 frame is a strict no-op: no release, no countershot, no main shot', 
 
 test('the release frame does not also fire the replaced main weapon or sub', async () => {
   const { f, a } = await setup();
-  activate(f, a); a.intent.fire = true; shoot(f, a); enterExhale(f, a, 30);
+  activate(f, a); shoot(f, a); enterExhale(f, a, 30);
   const seen = [];
   const runner = a.weaponRunner, real = runner.update;
   runner.update = function (dt, inp) { seen.push({ ...inp }); return real.call(this, dt, inp); };
@@ -302,7 +299,7 @@ test('the release frame does not also fire the replaced main weapon or sub', asy
 
 test('primary fire releases the countershot only after suction has entered exhale', async () => {
   const { f, a, system } = await setup();
-  activate(f, a); a.intent.fire = true; shoot(f, a); enterExhale(f, a, 30);
+  activate(f, a); shoot(f, a); enterExhale(f, a, 30);
   const before = system.list.length;
   a.intent.fire = true; f.tick(a);
   assert.ok(a.specialActive, 'the held exhale shot cannot launch early');
@@ -644,7 +641,7 @@ test('a shooter proposal neutralises its damage and the owner credits it exactly
   const credited = f.inkVacState(p1).charge;
   assert.ok(credited > 0, 'the owner charged');
   assert.equal(credited, c1.charge, 'the owner applied the damage-equivalent gauge conversion');
-  assert.ok(Math.abs(credited - Math.min(proposal.payload.damage, p2.weapon.damage) / 1100) < 1e-9, 'partial damage is capped by the authenticated owner-side weapon');
+  assert.ok(Math.abs(credited - p2.weapon.damage / 1100) < 1e-9, 'owner source weapon damage, never proposal-supplied HP');
   const c2 = hop(f, viewP, proposal.payload, EV.absorb);
   assert.equal(c2.verdict.reason, 'duplicate-proposal', 'a duplicated packet credits nothing');
   assert.equal(f.inkVacState(p1).charge, credited, 'no double credit');

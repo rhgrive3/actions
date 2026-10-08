@@ -172,8 +172,7 @@ test('Bomb hold/throw and Flow material signal use actual runner/actor states wi
   try {
     for (let i = 0; i < 30; i++) r.step(1 / 60, { sub: true });
     assert.equal(r.ch.bombHeld, true); assert.ok(r.ch.bombSwap > .99);
-    r.step(1 / 60, { subReleased: true }); assert.equal(r.launches.length, 0);
-    r.step(1 / 60, {}); assert.equal(r.launches.length, 1); assert.equal(r.ch.bombHeld, false);
+    r.step(1 / 60, { subReleased: true }); assert.equal(r.launches.length, 1); assert.equal(r.ch.bombHeld, false);
     for (let i = 0; i < 60; i++) r.step(1 / 60);
     assert.ok(r.ch.bombSwap < .001);
     r.a.s3.flow.active = true; r.a.s3.flow.remaining = 10; r.step(1 / 60);

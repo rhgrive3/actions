@@ -48,11 +48,9 @@ test('#926 sub use is blocked for the post-shot window; a buffered sub resolves 
 test('#926 sub is legal again without delay once the gate has expired', async () => {
   const r = await setup();
   shootOnce(r); r.step(20);
-  r.a.intent.sub = true; r.step(6); r.a.intent.sub = false; r.step();
-  assert.equal(r.log.bomb.length, 0, 'release retains the independent 1F use startup');
-  r.step();
+  r.a.intent.sub = true; r.step(); r.a.intent.sub = false; r.step();
   assert.equal(r.log.bomb.length, 1);
-  assert.equal(r.log.bomb[0], r.tick, 'throw follows the release by one fixed tick');
+  assert.equal(r.log.bomb[0], r.tick, 'immediate throw on the release tick');
 });
 
 test('#926 the 29F repeat interval and the held-ZR carry are unchanged', async () => {

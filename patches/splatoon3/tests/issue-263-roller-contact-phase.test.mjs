@@ -16,7 +16,7 @@ async function trace(held=true,hz=60){
  G.paint.splat=(_p,_r,_t,o)=>{if(o?.kind==='roll')painted=true;return 0;};
  const rows=[],v=new THREE.Vector3();
  function step(fire,pressed=false,moving=false){
-  painted=hit=false;a.intent.fire=fire;a.intent.move.set(0,0,moving?1:0);a.vel.set(0,0,moving?r.moveSpeed():0);a.pos.addScaledVector(a.vel,DT);enemy.pos.copy(a.pos);enemy.pos.z+=1;
+  painted=hit=false;a.intent.fire=fire;a.vel.set(0,0,moving?r.moveSpeed():0);a.pos.addScaledVector(a.vel,DT);enemy.pos.copy(a.pos);enemy.pos.z+=1;
   G.time+=DT;r.update(DT,{fire,firePressed:pressed});a._finishFrame(DT);c.root.updateMatrixWorld(true);
   let bottom=Infinity;c.weapon.drum.traverse(m=>{
    if(!m.isMesh||!m.visible)return;const p=m.geometry.attributes.position,idx=m.geometry.index;

@@ -21,7 +21,7 @@ test('S3 adapters reuse the primary hit, retain the grate mask, and cap sight le
   assert.match(weapons, /raycast\(m, dir, chargerSightRayRange\(range\), _hit, true\)/);
   assert.match(weapons, /const len = hit\.hit \? Math\.min\(hit\.dist, range\) : range;/);
   assert.match(weapons, /for \(const a of G\.actors\)/);
-  assert.match(weapons, /const on = chargerSightVisible\(a\);/);
+  assert.match(weapons, /const on = a\.alive && a\.weaponRunner\.charging && a\.weapon\.kind === 'charger';/);
   assert.match(weapons, /cacheChargerSightDot\(s, hit\)/);
   assert.match(weapons, /clearChargerSightDot\(s\)/);
   assert.ok(

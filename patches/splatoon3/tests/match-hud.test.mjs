@@ -50,10 +50,10 @@ test('#300 real activation counts survive owner snapshots and authoritative resu
  a.special=a.specialCost();a.intent.special=false;f.tick(a);assert.equal(a.stats.specials,0,'filled gauge is not use');
  for(let i=0;i<3;i++){a.intent.special=false;f.tick(a);a.special=a.specialCost();a.specialActive=null;a.intent.special=true;f.tick(a);a.specialActive=null;}
  assert.equal(a.stats.specials,3);a.special=0;a.intent.special=false;f.tick(a);a.intent.special=true;f.tick(a);assert.equal(a.stats.specials,3,'blocked input is not use');
- let packet;const sender=new f.NetMatch({myId:'owner',isHost:false,tr:{broadcast:d=>{packet=plain(d);}}},{});sender.byNid.set(7,a);sender._sendTick();assert.equal(packet.a[0][22],3);
+ let packet;const sender=new f.NetMatch({myId:'owner',isHost:false,tr:{broadcast:d=>{packet=plain(d);}}},{});sender.byNid.set(7,a);sender._sendTick();assert.equal(packet.a[0][21],3);
  const remote=f.make();Object.assign(remote,{nid:7,owner:'owner',remote:true,net:{buf:[]}});const host=new f.NetMatch({myId:'host',hostId:'host',isHost:true},{});host.byNid.set(7,remote);
  packet.ts=1;host._tick('intruder',packet);assert.equal(remote.stats.specials,0);host._tick('owner',packet);assert.equal(remote.stats.specials,3);
- host._tick('owner',packet);assert.equal(remote.stats.specials,3);packet.ts=.9;packet.a[0][22]=2;host._tick('owner',packet);assert.equal(remote.stats.specials,3);
+ host._tick('owner',packet);assert.equal(remote.stats.specials,3);packet.ts=.9;packet.a[0][21]=2;host._tick('owner',packet);assert.equal(remote.stats.specials,3);
  let result;host.match={actors:[remote]};host._sendNow=d=>{result=plain(d);};host.sendResult({coverage:[.6,.4],winner:0});assert.deepEqual(result.specialCounts,[[7,3]]);assert.equal(result.st[0].length,7,'legacy stat tuple left for assist owner');
  const guest=new f.NetMatch({myId:'guest',isHost:false},{}),actor=f.make();guest.byNid.set(7,actor);guest.match={time:1,setState(s){this.state=s;}};guest._result(result);assert.equal(actor.stats.specials,3);
  guest._result({...result,specialCounts:[[7,1]]});assert.equal(actor.stats.specials,3,'stale result cannot erase known own count');

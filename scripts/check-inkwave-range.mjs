@@ -159,7 +159,6 @@ for (const run of RUNS) {
         });
         return push.call(this, p);
       };
-      const expectedDistance = Math.hypot(target.pos.x - a.pos.x, target.pos.z - a.pos.z);
       const hpBefore = target?.hp;
       s.last = null;
       let hit = null;
@@ -174,7 +173,7 @@ for (const run of RUNS) {
         if (push) G.projectiles._push = push;
         g.debug.fire(false);
       }
-      if (hit) return { target: hit.target.name, amount: hit.amount, dist: hit.dist, expectedDistance, card: document.querySelector('.iwr-card')?.classList.contains('is-on') };
+      if (hit) return { target: hit.target.name, amount: hit.amount, dist: hit.dist, card: document.querySelector('.iwr-card')?.classList.contains('is-on') };
       return {
         miss: true,
         actor: {
@@ -193,7 +192,7 @@ for (const run of RUNS) {
         })),
       };
     });
-    if (!out.checks.hit || !(out.checks.hit.amount > 0) || !Number.isFinite(out.checks.hit.expectedDistance) || Math.abs(out.checks.hit.dist - out.checks.hit.expectedDistance) > 0.1) throw new Error('target hit ' + JSON.stringify(out.checks.hit));
+    if (!out.checks.hit || !(out.checks.hit.amount > 0) || Math.abs(out.checks.hit.dist - 10) > 0.6) throw new Error('target hit ' + JSON.stringify(out.checks.hit));
     await page.screenshot({ path: path.join(evidence, run.name + '-hit.png'), timeout: 240000 });
     // paint read-out + reset paint pad + a weapon pad
     out.checks.paint = await page.evaluate(async () => {

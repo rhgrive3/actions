@@ -68,11 +68,7 @@ export function adaptSource(rel, code) {
       '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);',
       '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);\n        if (!target && !boss && world.hit && beginFidelityWallDrop(this.system, p, world)) return false;',
       'ink flight first wall contact admits sourced WallDrop phase');
-    code = "import { beginFidelityWallDrop, advanceFidelityWallDrop, fidelityPlayerCollisionRadius } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { hurtboxRadius, hurtboxHeight } from '../../patches/splatoon3/runtime/player-hurtbox.mjs';\n" + code;
-    code = replaceOnce(code,
-      '        this.base.set(actor.pos.x, actor.pos.y + (actor.smoothY || 0), actor.pos.z);\n        const t = capsuleEntry(p.prev, p.pos, this.base, PLAYER.radius,\n          actor.form === \'squid\' ? PLAYER.squidHeight : PLAYER.height, p.inkPlayerRadius);',
-      '        this.base.copy(actor.pos);\n        const t = capsuleEntry(p.prev, p.pos, this.base, hurtboxRadius(actor, PLAYER),\n          hurtboxHeight(actor, PLAYER), fidelityPlayerCollisionRadius(p));',
-      'ink flight shares authoritative actor and projectile collision dimensions');
+    code = "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     code = replaceOnce(code,
       '        if (!actor.alive || actor.team === p.team) continue;',
       '        const friendly = actor.team === p.team;\n' +

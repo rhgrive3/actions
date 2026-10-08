@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { boot, STEP } from './full-install-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
-import { hurtboxRadius } from '../runtime/player-hurtbox.mjs';
 
 // #939: Splat Dualies' FriendThroughFrameForPlayer is 0F in both the normal and the post-roll (LapOver) collision
 // records, so a live teammate is a body obstruction from projectile birth (no damage to the ally, nothing passes
@@ -49,7 +48,7 @@ for (const hand of [0, 1]) test(`#939 a teammate blocks a normal shot (hand ${ha
 test('#939 post-roll shots use the wider LapOver radius to block, exactly at the profile radius', async t => {
   const f = await boot(); t.after(f.close);
   const raw = f.profile.weaponsFidelityCompletion.weapons.dualies;
-  const reach = turret => hurtboxRadius({form:'kid'},f.PLAYER) + raw[turret ? 'CollisionLapOverParam' : 'CollisionParam'].InitRadiusForPlayer;
+  const reach = turret => f.PLAYER.radius + raw[turret ? 'CollisionLapOverParam' : 'CollisionParam'].InitRadiusForPlayer;
   assert.ok(reach(true) > reach(false));
   const mid = (reach(true) + reach(false)) / 2;
   // Lateral offset between the two radii: the standing round slips past the ally, the post-roll round is blocked.

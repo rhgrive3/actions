@@ -27,7 +27,7 @@ test('production adapter owns only Slosher wall-drop and Roller body admission',
   assert.match(out, /agent3-weapon-physics\.mjs/);
   assert.match(out, /stepAgent3SlosherWallDrop\(this, p, dt\)/);
   assert.match(out, /beginAgent3SlosherWallDrop\(this, p, hit\)/);
-  assert.match(out, /agent3RollerBodyContact\(a, e, hs, true\)/);
+  assert.match(out, /agent3RollerBodyContact\(a, e, hs\)/);
   assert.doesNotMatch(out, /lat < w\.rollWidth \/ 2 \+ 0\.35/);
 });
 

@@ -16,7 +16,7 @@ test('#373 independent target remains constant with gear/Flow and selected mode 
  for(const vertical of [false,true]){
   const f=await setup(vertical),{a,r}=f;a.s3.loadout=Array.from({length:3},()=>({main:'runSpeed',subs:['runSpeed','runSpeed','runSpeed']}));a.setWeapon('roller');
   r.update(dt,{fire:true,firePressed:true});const expected=r.moveSpeed();assert.ok(expected>=2.88); // Preserve whichever gear classification the composed gear owner selects.
-  if(vertical){for(let i=0;i<6;i++)r.update(dt,{fire:false});a.grounded=true;}
+  if(vertical)a.grounded=true;
   for(let i=0;i<10;i++)r.update(dt,{fire:false});near(r.moveSpeed(),expected);assert.equal(r.s3FlickVertical,vertical);
   a.s3.flow.active=true;near(r.moveSpeed(),expected*f.profile.flow.runMultiplier);
  }

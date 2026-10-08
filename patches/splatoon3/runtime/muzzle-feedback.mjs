@@ -8,17 +8,14 @@ export function installMuzzleFeedback(api) {
     if (!actor || !actor.alive || actor.form !== 'kid' || actor.weapon?.kind !== 'shooter'
       || !actor.character || !actor.aimPoint || !actor.aimDir || !G.physics?.raycast
       || typeof this.s3ShooterImpact !== 'function' || typeof this._muzzle !== 'function') return null;
-    const w = actor.weapon, physics = G.physics, level = physics.level || G.level;
-    const generation = level?.geometryGeneration ?? level?._geometryGeneration ?? level?._generation;
+    const w = actor.weapon, physics = G.physics, level = physics.level;
     this._muzzle(actor, muzzle);
     const aim = actor.aimPoint, dir = actor.aimDir, pos = actor.pos;
     const t = G.time;
     const m = this._s3MuzzleFeedbackCache;
-    if (m && Number.isFinite(t) && t >= m.t && t - m.t < .2 &&
+    if (m && Number.isFinite(t) && t >= m.t && t - m.t < .25 &&
       m.actor === actor && m.character === actor.character && m.weapon === w &&
       m.physics === physics && m.level === level && m.blocks === level?.blocks &&
-      m.blocksLength === level?.blocks?.length && m.faces === level?.faces &&
-      m.facesLength === level?.faces?.length && m.generation === generation &&
       m.hash === level?.hash && m.blockStamp === level?.blockStamp &&
       m.raycast === physics.raycast && m.impact === this.s3ShooterImpact &&
       m.muzzleFn === this._muzzle && m.ballistic === this._ballistic &&
@@ -34,8 +31,6 @@ export function installMuzzleFeedback(api) {
     const cache = m || { hitCopy: new Hit() };
     cache.actor = actor; cache.character = actor.character; cache.weapon = w;
     cache.physics = physics; cache.level = level; cache.blocks = level?.blocks;
-    cache.blocksLength = level?.blocks?.length; cache.faces = level?.faces;
-    cache.facesLength = level?.faces?.length; cache.generation = generation;
     cache.hash = level?.hash; cache.blockStamp = level?.blockStamp;
     cache.raycast = physics.raycast; cache.impact = this.s3ShooterImpact;
     cache.muzzleFn = this._muzzle; cache.ballistic = this._ballistic;
