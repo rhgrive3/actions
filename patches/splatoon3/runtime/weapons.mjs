@@ -8,6 +8,7 @@ import { installSplatlingStartupCompat } from './splatling-startup-compat.mjs';
 import { installWeaponGates } from './weapon-gates.mjs';
 import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 import { installRollerLogic } from './roller.mjs';
+import { dualiesJumpSpreadConfig, dualiesJumpState, tickDualiesJumpClock, resetDualiesJumpClock } from './dualies-jump-spread.mjs';
 let api;
 const dualiesLockConfigs = new WeakMap();
 const splatlingStreamConfigs = new WeakMap();
@@ -227,6 +228,7 @@ export function installWeapons(context, profile) {
     this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0;
     releaseSplatlingInterrupt(this, -1);
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
+    resetDualiesJumpClock(this, this.a);
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
@@ -266,9 +268,14 @@ export function installWeapons(context, profile) {
     return { supported: true, active, age: active ? this.s3BlasterJumpT : null,
       frames, bias, envelope, ground, phase, recovering: phase === 'recovering' };
   };
+  const dualiesJumpConfig = dualiesJumpSpreadConfig(profile);
+  WeaponRunner.prototype.s3DualiesJumpState = function (w) {
+    return dualiesJumpState(this, w, dualiesJumpConfig);
+  };
   const runnerUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const weapon = this.a.weapon;
+    tickDualiesJumpClock(this, dt, dualiesJumpConfig);
     if (blasterJumpSupported() && weapon?.kind === 'blaster') {
       const grounded = !!this.a.grounded;
       if (this.s3BlasterWasGrounded === true && !grounded) this.s3BlasterJumpT = 0;
@@ -577,7 +584,22 @@ export function installWeapons(context, profile) {
       const first = w.spreadFirst ?? .45;
       return base * (first + (1 - first) * this.bloom);
     }
-    return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
+    // #887: while the Dualies jump-accuracy clock is active, publish the jump
+    // endpoint (subject to the independent bloom layer exactly as native does)
+    // so landing cannot collapse to spreadGround on the first grounded tick.
+    // The 25F->70F interior curve stays UNKNOWN: the envelope is held, never
+    // interpolated. Turret (spreadLock) keeps precedence; firing bias stays
+    // with #891 and is untouched here. Turret keeps its exact native gate
+    // (s3Turret); a bare physical lockT without turret keeps the normal path.
+    if (w.kind === 'dualies' && this.s3Turret) return w.spreadLock;
+    if (w.kind === 'dualies') {
+      const jump = this.s3DualiesJumpState(w);
+      if (jump.holdUntilEnd) {
+        const first = w.spreadFirst ?? .45;
+        return w.spreadAir * (first + (1 - first) * this.bloom);
+      }
+    }
+    return spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
   Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {
