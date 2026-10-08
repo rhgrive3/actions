@@ -528,7 +528,7 @@ export function kitBombTrail(SUB, b, paint, projectiles) {
   // and no per-frame allocation.
   if (!b.s3TrailPoint) b.s3TrailPoint = new b.pos.constructor();
   b.s3TrailPoint.copy(b.pos);
-  const area = paint.splat(b.s3TrailPoint, radius, b.team, { seed: Math.random() });
+  const area = paint.splat(b.s3TrailPoint, radius, b.team, { seed: Math.random(), claimOwner: b.owner });
   if (area > 0) b.owner?.addTurf?.(area);
   return area;
 }

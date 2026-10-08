@@ -19,6 +19,7 @@ import { adaptChargerSightCache } from './charger-sight-cache-adapter.mjs';
 import { adaptJuddResult } from './judd-result-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
 import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
+import { adaptPaintOwnership } from './paint-ownership-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -111,8 +112,13 @@ export function adaptSource(rel, code) {
   code = adaptMovementPhysics(rel, code, replaceOnce);
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
   code = adaptPaintSplatPool(rel, code, replaceOnce);
+  code = adaptPaintOwnership(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptKitRescue(rel, code, replaceOnce);
   if (rel === 'src/world/paint.js') {
+    code = replaceOnce(code,
+      'float hsh(float n) { return fract(sin(n) * 43758.5453123); }',
+      'float hsh(float n) { float x = fract(n * 0.1031); x *= x + 33.33; return fract(x * (x + x)); }',
+      'stable shader paint hash');
     code = replaceOnce(code,
       '  float tn = vGrow.x;',
       '  float tn = vGrow.x;\n  bool bodyOnly = vGrow.z > 1.5;',
@@ -976,7 +982,10 @@ export function adaptSource(rel, code) {
 
   if (rel === 'src/world/paint.js') {
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
-      code + '\ninstallIssue570PaintPresentation(PaintSystem);\n';
+      "import { installIssue264PaintOwnership } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" +
+      code + '\n' +
+      'installIssue570PaintPresentation(PaintSystem);\n' +
+      'installIssue264PaintOwnership(PaintSystem, { kind: K, reach: REACH, dripReach: DRIP_REACH, shapes: [[5, 7, 8, 3], [3, 4, 5, 2], [7, 9, 10, 4], [10, 12, 14, 5], [3, 4, 4, 2], [2, 2, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]] });\n';
   }
   return code;
 }

@@ -62,7 +62,7 @@ export function installChargerFlight(api,completion) {
     feetFrom.set(actor.pos.x,actor.pos.y+.2,actor.pos.z);
     const h=G.physics.raycast(feetFrom,feetDown,3.5,feetHit,true);
     if(!h.hit)return;
-    const area=G.paint.splat(feetAt.copy(h.point).addScaledVector(h.normal,.1),radius,actor.team,{seed:0,kind:'trail'});
+    const area=G.paint.splat(feetAt.copy(h.point).addScaledVector(h.normal,.1),radius,actor.team,{seed:0,kind:'trail',claimOwner:actor});
     actor.addTurf(area);
   }
   function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
@@ -110,7 +110,7 @@ export function installChargerFlight(api,completion) {
       const p=job.origin.clone().addScaledVector(job.dir,job.nextPaint);
       const h=G.physics.raycast(p,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
       if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),job.nextPaint===1.2?paint.nearest:paint.width,job.team,
-        {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1)});
+        {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1),claimOwner:job.owner});
     }
     job.owner.addTurf(area);
   }
@@ -150,11 +150,11 @@ export function installChargerFlight(api,completion) {
       if(!job.ghost && target!=='defense' && !(world.hit && !target)){
         const h=G.physics.raycast(job.pos,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
         if(h.hit)job.owner.addTurf(G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),job.paint.width*job.paint.terminalRate,job.team,
-          {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/job.paint.width-1)}));
+          {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/job.paint.width-1),claimOwner:job.owner}));
       }
       if(world.hit&&!target&&!job.ghost){
         const area=G.paint.splat(world.point.clone().addScaledVector(world.normal,.12),job.paint.impact,job.team,
-          {seed:Math.random(),stretch:job.dir,stretchAmt:.6});job.owner.addTurf(area);
+          {seed:Math.random(),stretch:job.dir,stretchAmt:.6,claimOwner:job.owner});job.owner.addTurf(area);
         G.fx?.burst(world.point,world.normal,job.owner.color,{count:10,speed:4,size:.09,paint:false});
       }
       if(!job.ghost)emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});
