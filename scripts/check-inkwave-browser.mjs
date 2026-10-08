@@ -151,9 +151,26 @@ try {
     // orientation/barriers can legitimately block W on a given map, so probe
     // all four keyboard directions and retain the maximum real displacement.
     let movement = 0;
+    const movementProbe = {
+      state: g.match.state, paused: g.match.paused, alive: actor.alive,
+      form: actor.form, grounded: actor.grounded,
+      controller: !!g.match.controller, enabled: g.match.controller?.enabled,
+      menuBlocked: !!g.match.controller?.menuBlocked, samples: [],
+    };
     for (const key of ['KeyW','KeyD','KeyS','KeyA']) {
       const start = actor.pos.clone();
-      g.debug.key(key,true); for(let i=0;i<30;i++)g._frame(1/60); g.debug.key(key,false);
+      g.debug.key(key,true);
+      const keyPresent = g.input.keys.has(key);
+      g._frame(1/60);
+      movementProbe.samples.push({
+        key, keyPresent, enabled: g.match.controller?.enabled,
+        menuBlocked: !!g.match.controller?.menuBlocked,
+        intent: [actor.intent.move.x, actor.intent.move.y, actor.intent.move.z],
+        vel: [actor.vel.x, actor.vel.y, actor.vel.z],
+        deltaAfterFirstTick: actor.pos.distanceTo(start),
+      });
+      for(let i=1;i<30;i++)g._frame(1/60);
+      g.debug.key(key,false);
       movement = Math.max(movement, actor.pos.distanceTo(start), actor.pos.distanceTo(before));
       if (movement > 1e-6) break;
     }
@@ -166,7 +183,7 @@ try {
       paintedFloorArea=G.paint.splat(point,.7,0,{seed:1}); if(paintedFloorArea>0)break;
     }
     g._skipRender = false;
-    return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement, hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
+    return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement, movementProbe, hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
   result.turfLead = await probeTurfLead(page, evidence);
