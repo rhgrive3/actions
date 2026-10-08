@@ -22,16 +22,29 @@ test('local Charger rumble starts at 50%, not on lower legal partial shots', asy
   const actor = {
     pos: new THREE.Vector3(), team: 0, form: 'kid', alive: true,
     aimDir: new THREE.Vector3(0, 0, 1),
-    weaponRunner: {chargeT: 1}, character: {},
+    weaponRunner: {chargeT: 0}, character: {},
     isLocal: true, _nearCamera: () => false, addTurf() {}
   };
   const system = new ShotSystem(), weapon = WEAPONS.charger;
-  for (const charge of [0.25, 0.4999]) system.fireCharger(actor, weapon, charge);
+  for (const [progress, charge] of [[8/60, 1/6], [0.25, 0.296875], [7/15, 0.5], [0.4999, 0.53115625]]) {
+    actor.weaponRunner.chargeT = progress;
+    system.fireCharger(actor, weapon, charge);
+  }
   assert.equal(requests.length, 0, 'no rumble below 50%');
-  for (const charge of [0.5, 1]) system.fireCharger(actor, weapon, charge);
+  for (const [progress, charge] of [[0.5, 0.53125], [1, 1]]) {
+    actor.weaponRunner.chargeT = progress;
+    system.fireCharger(actor, weapon, charge);
+  }
   assert.equal(requests.length, 2, 'boundary and full-charge shots rumble');
   for (const args of requests) assert.ok(args[0] > 0 && args[1] > 0 && args[2] > 0);
   const sent = requests.length;
+  actor.isLocal = false;
+  system.fireCharger(actor, weapon, 1);
+  assert.equal(requests.length, sent, 'non-local owner never rumbles');
+  actor.isLocal = true;
+  delete actor.weaponRunner.chargeT;
+  system.fireCharger(actor, weapon, 1);
+  assert.equal(requests.length, sent, 'missing authoritative progress fails closed');
   system.ghostFire(actor, { weapon: weapon.id, charge: 1,
     muzzle: new THREE.Vector3(0, 1.05, 0.3), dir: new THREE.Vector3(0, 0, 1) });
   assert.equal(requests.length, sent, 'ghost never duplicates local rumble');

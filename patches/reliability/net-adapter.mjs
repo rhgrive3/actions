@@ -145,6 +145,7 @@ export function adaptNet(rel, code) {
     this.error = reason === 'bye' ? null : 'Lost connection to the room';`, rel);
     code = replaceOnce(code, `  async _begin(cfg) {
     this._startCfg = cfg;`, `  async _begin(cfg) {
+    clearTimeout(this._goT); this._goT = null;
     const attempt = this._roomAttempt, tr = this.tr;
     const current = () => this._roomAttempt === attempt && this.tr === tr && this._startCfg === cfg;
     this._startCfg = cfg;`, rel);
@@ -161,9 +162,9 @@ export function adaptNet(rel, code) {
     code = replaceOnce(code, `    if (this.isHost) this._markReady(this.myId);`, `    if (!current()) return;
     if (this.isHost) this._markReady(this.myId);`, rel);
     code = replaceOnce(code, `    else if (!this._goT) this._goT = setTimeout(() => this._go(), 12000);   // don't hold everyone for one slow load`, `    else if (!this._goT) {
-      const attempt = this._roomAttempt, cfg = this._startCfg;
+      const attempt = this._roomAttempt, cfg = this._startCfg, tr = this.tr;
       this._goT = setTimeout(() => {
-        if (this._roomAttempt === attempt && this._startCfg === cfg) this._go();
+        if (this.state === 'starting' && this._roomAttempt === attempt && this._startCfg === cfg && this.tr === tr) this._go();
       }, 12000);
     }`, rel);
     code = replaceOnce(code, `  endMatch() {

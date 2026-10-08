@@ -105,6 +105,8 @@ jobs:
           if-no-files-found: error
           path: ${{ env.FOCUSED_EVIDENCE_DIR }}/
           retention-days: 14
+      - name: Verify PR1171 seven-issue and composition regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-1098-stored-muzzle.test.mjs patches/splatoon3/tests/issue-982-charger-rumble.test.mjs patches/splatoon3/tests/issue-batch-1171.test.mjs patches/local-quality/tests/idle-attract-budget.test.mjs patches/local-quality/tests/idle-resources.test.mjs patches/reliability/tests/net.test.mjs
       - name: Verify six follow-up INKWAVE regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-six-followup-network-paint.test.mjs patches/splatoon3/tests/issue-1032-background-guest.test.mjs
       - name: Verify eight additional INKWAVE regressions
@@ -306,6 +308,9 @@ jobs:
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
           npx playwright install --with-deps ${{ matrix.browsers }}
+      - name: Verify PR1171 rendered reticle and GPU paint parity
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-pr1171.mjs .built-site/_site
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source

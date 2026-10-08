@@ -22,30 +22,26 @@ export function adaptIssueBatch1171(rel, code, replaceOnce) {
       '#1162 zero-array water footprint iteration');
   }
 
-  if (rel === 'src/net/session.js') {
-    // Explicitly retire the old round deadline on *every* owner retirement.
-    // A late callback also carries the exact cfg object and Transport identity,
-    // so it cannot act on a different room even if an old callback was queued.
-    for (const sig of ['  leave(silent = false) {', '  _fail(e) {',
-                       '  _closed(reason) {', '  endMatch() {']) {
-      patch(sig, sig + '\n    clearTimeout(this._goT); this._goT = null;',
-        '#1159 retire GO deadline: ' + sig.trim());
-    }
-    patch('  async _begin(cfg) {',
-      '  async _begin(cfg) {\n    clearTimeout(this._goT); this._goT = null;',
-      '#1159 new round owns fresh deadline');
-    patch("else if (!this._goT) this._goT = setTimeout(() => this._go(), 12000);   // don't hold everyone for one slow load",
-      `else if (!this._goT) {
-      const round = this._startCfg, tr = this.tr;
-      this._goT = setTimeout(() => {
-        if (this.state !== 'starting' || this._startCfg !== round || this.tr !== tr) return;
-        this._go();
-      }, 12000);
-    }`,
-      '#1159 late room GO fencing');
-  }
+  // #1159 is composed by reliability/net-adapter.mjs, which owns room
+  // generations and teardown. Keep one timer owner across both layers.
 
   if (rel === 'src/world/paint.js') {
+    // Simulation can still land paint while hidden. Native _pushQuad flushes
+    // a full batch immediately, bypassing Game._frame's visual gate. Defer
+    // those commands in arrival order while CPU ownership remains immediate.
+    const quad = '  _pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, dripOnly) {';
+    patch(quad, quad + `
+    if (globalThis.document?.hidden) {
+      (this._hiddenQuads ||= []).push([f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, dripOnly]);
+      return;
+    }`, '#1166 defer hidden atlas batch overflow');
+    patch('  flush(dt = 1 / 60) {', `  flush(dt = 1 / 60) {
+    if (globalThis.document?.hidden) return;
+    const pending = this._hiddenQuads;
+    this._hiddenQuads = null;
+    if (pending) for (const args of pending) this._pushQuad(...args);`,
+      '#1166 replay hidden paint before visible growth');
+    patch('    this.grid.fill(0);', '    this._hiddenQuads = null;\n    this.grid.fill(0);', '#1166 discard old-stage deferred paint');
     // Shader roller band: q.x along drum, q.y across; the seed-dependent
     // width wobble is part of the *main body*, not a cosmetic satellite.
     // The former CPU -0.03*r inset + zero wobble permanently disagreed with

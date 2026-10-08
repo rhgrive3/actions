@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptIssueBatch1171 } from '../issue-batch-1171-adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -13,7 +14,7 @@ function checkedReplace(source, before, after, label) {
 }
 function composed(rel) {
   const raw = fs.readFileSync(path.join(ROOT, 'inkwave-public', rel), 'utf8');
-  return { raw, code: adaptIssueBatch1171(rel, raw, checkedReplace) };
+  return { raw, code: rel === 'src/net/session.js' ? adaptBuildSource(rel, raw) : adaptIssueBatch1171(rel, raw, checkedReplace) };
 }
 
 test('#1158 post-roll Dualies exposes one centered ring and preserves normal twin shot cues', () => {
@@ -71,8 +72,8 @@ test('#1159 orphan timer cannot fire into a new room even if its callback was qu
   a._startCfg={id:'new',roster:a._startCfg.roster};a.tr={};
   timers[0]();
   assert.equal(a.count,0,'old callback cannot launch the new room');
-  assert.equal(code.split('clearTimeout(this._goT); this._goT = null;').length-1,6,
-    'five retirement hooks plus the original _go completion retire the deadline');
+  assert.equal(code.split('clearTimeout(this._goT); this._goT = null;').length-1,4,
+    'leave, new round, end and GO completion retire the deadline; fail/close delegate to leave');
 });
 
 test('#1165 CPU owner shares the shader roller body outline across seeds and directions', () => {

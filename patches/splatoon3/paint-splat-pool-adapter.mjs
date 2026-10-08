@@ -50,6 +50,7 @@ const SPLAT_ENTRY_POOL_MAX_FACES = ${ENTRY_POOL_MAX_FACES};`, 'splat pool bounds
   }
 
   _disposeSplatPools() {
+    this._hiddenQuads = null;
     this._splatPoolsDisposed = true;
     if (this.growing) {
       for (let i = 0; i < this.growing.length; i++) this._releaseSplatGrowth(this.growing[i]);

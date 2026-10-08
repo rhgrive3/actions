@@ -1664,3 +1664,48 @@ Pinned Chromium primary sources: [Windows product mapping at revision 413fd160](
 - Practice Range is an untimed training session, so its immediate-control start and ordinary respawn must not acquire Turf's FIRE-confirmed Squid Spawn owner. `runtime/respawn-lifecycle.mjs` now excludes `opts.range`; the new regression checks initial position, control ownership and post-death respawn. This preserves the training-session contract and does not claim a new S3 frame measurement.
 - Super Jump checks the existing lethal-water boundary before acquiring charge ownership, and the reliability adapter preserves `_checkFallDeath()`'s boolean return. Existing #1050 regressions cover lethal request admission, ordinary flight, walls, owner/proxy playback and 30/60/120 Hz. The matching remote clothing lookup now fails closed before its first authenticated equipment snapshot.
 - Fixtures now use the actual playing state, isolate the newly sourced low-ink Charger refill in the unpaid-shot negative control, include the existing player hurtbox dependency and account for the independent 1F Bomb use-startup and Super Jump clock tuple field. No test gate or threshold was disabled. Browser acceptance remains subject to exact-head CI; no new Switch measurement is claimed.
+
+
+## 2026-10-08 — PR1171 CI and seven-issue completion pass
+
+The existing batch is #1098, #982, #1158, #1159, #1162, #1165 and #1166.
+All seven have existing ownership comments; this continuation does not claim
+other active work. Changes are on `fix/1098-stored-charge-muzzle-local-pos`.
+
+- **#982:** the 50% firing-vibration gate now uses normalized `chargeT`.
+  The native presentation/range curve reaches 0.5 at only 7/15 actual progress;
+  using that curve admitted vibration early. Tests cover the legal minimum,
+  25%, 7/15, just below 50%, 50%, full, missing progress and remote/ghost paths.
+  Exact Nintendo vibration amplitudes remain uncalibrated.
+- **#1158:** actual built HUD/CSS presents two ordinary rings, one centered
+  post-roll ring, then restores two; the old diamond remains hidden.
+- **#1159:** reliability owns room generation, transport identity and the GO
+  deadline together. Leave, failure, socket closure, round replacement and end
+  retire the timer. Queued old callbacks cannot launch or clear a new timer.
+  A new round gets its full native 12-second fallback; this is an INKWAVE value.
+- **#1162:** 500 marina/non-marina samples remain bit-identical, without the
+  per-call footprint wrapper Array. No device FPS/GC improvement is claimed.
+- **#1165:** built native PaintSystem/WebGL tests compare 4,000 cell samples,
+  five seeds, four directions and both paint teams over enemy ink. The published
+  pi/60 witness is corrected; two near-edge samples fall within the explicit
+  two-atlas-texel AA tolerance. Coverage agrees with CPU ownership counts.
+- **#1166:** the visual gate composes with offline pause and menu cadence.
+  Actual hidden atlas overflow queues 6,100 strokes with zero render calls,
+  updates CPU ownership immediately, and replays in order on visibility return.
+  Clear/dispose retire deferred commands. Fixed online clock/network work is
+  preserved in the composed frame regression. Physical battery savings and
+  browser-specific hidden-RAF scheduling are not inferred from these tests.
+- **#1098:** kept-shot identity, ordinary-shot isolation, obstruction fallback
+  and owner/network/ghost origin agreement pass. The existing barrel-tip-based
+  source-to-procedural-model scale is still provisional. Nintendo skeleton-space
+  calibration is not established, so this issue must not be declared fully
+  fidelity-complete or auto-closed on the strength of these tests.
+
+CI run 37797422797 failed before these tests on an idle composition anchor and
+a gait assertion comparing phase .21 against phase .28. The former now retains
+both visibility and pause predicates; the latter compares equal phases across
+both signs of all four directions. Subsequent production-build conflicts in
+room timer/team-ready adapters were composed while preserving their behaviors.
+Native `inkwave-public/` stays unchanged. Broader integration regressions remain
+separate from this focused acceptance; a passing focused suite is not a claim
+that the entire integration workflow or Nintendo hardware comparison is green.
