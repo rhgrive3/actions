@@ -104,12 +104,10 @@ export function splatlingChargeCap(ink, w) {
 // every discrete full-only effect (160 damage, opponent piercing, squid
 // charge-keep storage, exact full range/speed/paint endpoints) must key off
 // the same state. A near-full partial (e.g. q=0.999, reachable via the
-// low-ink progress cap) stays partial. Epsilon is applied only here (exact
-// binary 1 survives), never by promoting partial values downstream.
-export const CHARGER_FULL_CHARGE_EPSILON = 1e-9;
+// low-ink progress cap) stays partial. Match the native ding without an
+// epsilon: every finite value below 1 remains a partial charge.
 export function isChargerFullCharge(charge) {
-  const c = Number.isFinite(charge) ? charge : 0;
-  return c >= 1 - CHARGER_FULL_CHARGE_EPSILON && c <= 1 + CHARGER_FULL_CHARGE_EPSILON;
+  return Number.isFinite(charge) && charge >= 1;
 }
 export function chargerDamage(actor, weapon, charge) {
   const legacy = weapon.damageMin + (weapon.damagePartialMax - weapon.damageMin) * charge;

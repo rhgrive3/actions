@@ -37,7 +37,9 @@ test('off-ray ally permits partial enemy damage and the shooter never obstructs 
 });
 test('authoritative full-charge boundary preserves teammate pass-through',async()=>{
   for(const charge of [.998,.999,1]){const row=await trace({charge});assert.equal(row.full,isChargerFullCharge(charge));assert.equal(row.hits.length,isChargerFullCharge(charge)?1:0);}
-  const near=await trace({charge:.9999});assert.equal(near.full,false);assert.equal(near.hits.length,0);
+  for (const charge of [.9999, 1 - 5e-10]) {
+    const near=await trace({charge});assert.equal(near.full,false,`charge ${charge} has not reached the native ding`);assert.equal(near.hits.length,0);
+  }
 });
 test('ally obstruction uses the same pinned .125 player radius as enemy contacts',async()=>{
   const f=await fixture();assert.equal(f.profile.weaponsFidelityCompletion.weapons.charger.CollisionParam.InitRadiusForPlayer,.125);
