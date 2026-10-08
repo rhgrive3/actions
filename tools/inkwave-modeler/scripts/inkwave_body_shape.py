@@ -777,6 +777,16 @@ def neck_join(cfg):
         md.data_types_loops = {'CUSTOM_NORMAL'}
         md.loop_mapping = 'POLYINTERP_NEAREST'
         er.apply_modifier(obj, md)
+        # where the merged surface faced the other way, the copied normal points into the part (black in renders):
+        # those corner normals are turned to the face's side
+        me = obj.data
+        cn = np.array([l.vector[:] for l in me.corner_normals]).reshape(-1, 3)
+        fnm = np.array([p.normal[:] for p in me.polygons])
+        fl = np.repeat(np.arange(len(me.polygons)), [p.loop_total for p in me.polygons])
+        bad = (cn * fnm[fl]).sum(1) < 0
+        cn[bad] *= -1
+        me.normals_split_custom_set([tuple(v) for v in cn])
+        print('BODY_SHAPE neck_join', obj.name, 'copied normals turned to the face side', int(bad.sum()))
         print('BODY_SHAPE neck_join', obj.name, 'vertices', len(new.vertices))
     rdata = R.data
     bpy.data.objects.remove(R)
