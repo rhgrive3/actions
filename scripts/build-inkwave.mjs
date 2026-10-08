@@ -82,6 +82,19 @@ for (const file of walk(QUALITY_ROOT)) {
   } else fs.copyFileSync(file, dst);
 }
 
+// Network presentation helpers are runtime dependencies of the composed source.
+// Keep build-time adapters and tests out of the distributed module graph.
+for (const file of walk(NETWORK_ROOT)) {
+  const rel = path.relative(NETWORK_ROOT, file).split(path.sep).join('/');
+  if (rel.startsWith('tests/') || !/\.m?js$/.test(rel) || /(?:^|-)adapter\.mjs$/.test(rel)) continue;
+  const patchRel = 'patches/network-replication/' + rel;
+  const dst = path.join(BUILD, patchRel);
+  fs.mkdirSync(path.dirname(dst), { recursive: true });
+  const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
+  const res = await esbuild.transform(code, { loader: 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
+  fs.writeFileSync(dst, res.code);
+}
+
 // Practice Range layer: runtime modules + stylesheet under patches/practice-range/ (tests, docs, the adapter and the
 // offline bake tools stay out), its stage assets (lightmap, menu art) overlaid at their upstream paths — never over an
 // existing upstream file.
@@ -152,7 +165,7 @@ const visit = (rel) => {
   const abs = path.join(BUILD, rel);
   if (!fs.existsSync(abs)) return;
   seen.add(rel);
-  const original = rel.startsWith('patches/splatoon3/') ? path.join(PATCH_ROOT, rel.slice('patches/splatoon3/'.length)) : rel.startsWith('patches/local-quality/') ? path.join(QUALITY_ROOT, rel.slice('patches/local-quality/'.length)) : rel.startsWith('patches/practice-range/') ? path.join(RANGE_ROOT, rel.slice('patches/practice-range/'.length)) : path.join(SRC, rel);
+  const original = rel.startsWith('patches/splatoon3/') ? path.join(PATCH_ROOT, rel.slice('patches/splatoon3/'.length)) : rel.startsWith('patches/local-quality/') ? path.join(QUALITY_ROOT, rel.slice('patches/local-quality/'.length)) : rel.startsWith('patches/network-replication/') ? path.join(NETWORK_ROOT, rel.slice('patches/network-replication/'.length)) : rel.startsWith('patches/practice-range/') ? path.join(RANGE_ROOT, rel.slice('patches/practice-range/'.length)) : path.join(SRC, rel);
   const s = fs.existsSync(original) ? adaptBuildSource(rel, fs.readFileSync(original, 'utf8')) : fs.readFileSync(abs, 'utf8');
   const specs = [];
   for (const m of s.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
