@@ -1850,3 +1850,35 @@ WebKit before the existing UI gates, at the immutable PR head. All inherited
 full gates remain enabled. The broader gyro matrix has the same 11 failures on
 base and candidate (base 83/94; candidate plus room/new tests 131/142), including
 #524/#615/#678; those inherited failures are not repaired or hidden here.
+
+## PR #1172 remaining claims: #1152, #1150, #1149 (2026-10-08)
+
+This section supersedes the earlier pending-implementation status for these three claims. Stacked base remains `04e4547c053f99ed9db0019c4bc98003d19b108e` / #1171; inherited base and Bucket repeat work belongs to #1083. #401 is outside this work. No merge.
+
+### #1152 — Slosher birth replication
+
+Splatoon 3 reference: 11.3.0 Bucket Slosher, no gear, grounded/airborne transitions and moving muzzle. Existing source schedule remains 0,1,2,3,4,6,8,10,12 frames. Existing allocation suppression is reused. The one record at true birth now carries zero remaining delay and the flattened source-unit index in the existing family-unit slot. Receivers reconstruct collision/movement/draw parameters from that index; legacy packets retain the delay inference fallback. Pool allocation clears the new field. No Bucket repeat/cooldown change.
+
+Tests drive real emission/recorder/replay at 30/60/120 Hz, two/three clients, moving muzzle, ground/air transitions, duplicate/late packets and invalidated owner epochs. Exactly nine births, no allocation records and no ghost records. Existing timing contracts were updated to assert the birth tick plus zero remaining delay, not reapply the elapsed source delay.
+
+### #1150 — one Slosher damage maximum per victim/volley
+
+Existing authenticated native hit forwarding, victim life, retry, adoption and bounded volley admission remain the owners of those concerns. A missing or invalid Slosher group now fails closed. The emitted string volley identity reaches final post-defense quantization; local incremental admission uses a scoped rounding group, and remote maximum admission forwards that same group. This avoids quantizing each fractional increment separately.
+
+Actual emitted native volleys through Projectiles → NetMatch → victim Actor produce identical local/online results for 70/70, 50/70, 70/50 and 30.39/34.31 (34.3 total). Duplicate, reordered, forged sender, rejected invulnerability, fresh volley, respawn and reset paths are covered. The existing combat-life protocol is reused, not duplicated.
+
+### #1149 — hostile actor contact with Ink Vac
+
+Reference: S3 11.3.0 Splat Charger / Ink Vac, no gear, live non-firing enemy in the existing 3D vortex, unobstructed LOS. Pinned primary extraction: [WeaponSpBlower, Leanny/splat3 @7280ff9c](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json). `GameParameters.InhaleParam.ReceiveDamageForPlayer=15`: repository raw /10 conversion gives 1.5 damage-equivalent per 60 Hz frame, 90/s. Thirty eligible ticks add 45/1100 charge, separately from projectile count. Enemy HP is not touched.
+
+The Vac owner scans live hostile actors, deduplicates actor identities and authors only its gauge. Each local victim uses authenticated replica/local cone geometry plus solid LOS to author its own tank and movement. Ghosts never drain a remote tank or author gauge. Allies, dead actors, behind/outside/elevated targets and occluded targets are excluded. Exit, release, death and reset clear eligibility immediately; there is no persistent debuff field. Native movement is capped after acceleration and at the movement collision entry, while refill cannot cancel eligible tank drain.
+
+**Calibration still unverified:** the sparse extraction's `PoisonMistForPlayer` lists EffectFrame/Level/SideStepInkConsumeRate but omits ordinary tank-drain and movement defaults. The implementation explicitly labels **12% tank/s and 60% movement-speed cap as INKWAVE engineering calibration**, not extracted Nintendo values. Progressive Toxic Mist levels, post-contact linger and exact retail magnitudes are not claimed matched. Existing frustum field interpretation remains calibration too. These limits are not marked resolved by automated tests.
+
+### Verification and remaining base failures
+
+- Focused native acceptance: 72/72 pass, plus 3/3 updated wire contracts. Existing Ink Vac projectile/LOS/replay/tombstone coverage and final-damage regression coverage remain enabled.
+- Built Chromium, three isolated clients using real Actor, Projectiles, NetSession, NetMatch, WebSocket Transport and production RoomDurableObject: nine true births with explicit units and zero delay; 34.3 cumulative damage on victim owner; 45 contact charge, tank 100→94 in 30 ticks, HP 100, slowdown/exit and zero replica authority. Display/audio/collision surfaces are controlled; no retail or physical device claim.
+- Workflow adds the same native gates and the built three-client probe in Chromium/WebKit on the immutable PR source SHA. Existing full gates remain enabled.
+- Broader network source suite: 31 failures reproduce on immutable base `04e4547`; no repairs here. The initial candidate additionally exposed two intentionally changed Slosher-delay expectations and a newly required dependency in the extracted-method test harness; those three contract updates pass. Base fixture/protocol-layout/movement failures stay with #1083.
+- Exact pushed SHA and CI results are recorded on PR #1172 after the remote run, rather than claiming the pre-push tree was CI-green.

@@ -848,6 +848,10 @@ export function validFidelityRollerUnitPacket(event) {
     const specials=api?.SPECIALS,entry=specials&&Object.hasOwn(specials,event[4])?specials[event[4]]:null;
     return typeof entry?.projectileDescriptor==='function' && unit===-1;
   }
+  if (weapon.kind === 'slosher') {
+    const count = rawWeapon(weapon)?.UnitGroupParam?.Unit?.reduce((n,u)=>n+(u.BulletNum??1),0);
+    return unit === -1 || Number.isSafeInteger(unit) && unit >= 0 && unit < count;
+  }
   if (weapon.kind !== 'roller') return unit === -1;
   if (event[27 + birthOffset] !== 0 && event[27 + birthOffset] !== 1) return false;
   const units = rawWeapon(weapon)?.[event[27 + birthOffset] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
@@ -1311,7 +1315,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshPacketIndex=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -1351,11 +1355,18 @@ export function installWeaponsFidelity(context,profile) {
       p.straight=(vertical?w.ballistics.verticalStraightTime:w.ballistics.horizontalStraightTime);
       p.grav=w.flickGravity;p.drag=w.flickDrag;
     }else if(w.kind==='slosher'){
+      if(!p.fidelitySloshUnit && Number.isSafeInteger(p.fidelitySloshPacketIndex) && p.fidelitySloshPacketIndex>=0){
+        let index=p.fidelitySloshPacketIndex;
+        for(const u of raw.UnitGroupParam.Unit){
+          if(index<(u.BulletNum??1)){p.fidelitySloshUnit=u;p.fidelitySloshIndex=index;break;}
+          index-=u.BulletNum??1;
+        }
+      }
       if(!p.fidelitySloshUnit){
         let best=Infinity;
         for(const u of raw.UnitGroupParam.Unit)for(let i=0;i<(u.BulletNum??1);i++){
-          // Packet radius is rounded to 0.01, so use the unique source launch delay,
-          // serialized at 0.001 seconds, to recover the unit without extra fields.
+          // Legacy peers encoded the source delay. New true-birth packets
+          // carry an explicit flattened unit index and zero remaining delay.
           const delay=((u.UnitDelayFrame||0)+i*(u.AfterOffsetDelayFrame||0))/60;
           const delta=Math.abs((p.delay||0)-delay);
           if(delta<best){best=delta;p.fidelitySloshUnit=u;p.fidelitySloshIndex=i;}
@@ -1378,6 +1389,7 @@ export function installWeaponsFidelity(context,profile) {
     const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon,active=this._fidelitySloshContext;
     if(active&&p.type==='slosh'){
       let index=active.index++,u;
+      p.fidelitySloshPacketIndex=index;
       for(const unit of rawWeapon(w).UnitGroupParam.Unit){if(index<(unit.BulletNum??1)){u=unit;break;}index-=unit.BulletNum??1;}
       if(!u)throw new RangeError('Slosher unit index');
       p.fidelitySloshUnit=u;p.fidelitySloshIndex=index;
@@ -1426,7 +1438,9 @@ export function installWeaponsFidelity(context,profile) {
       p.vel.set(Math.sin(p._s3SloshYaw)*horizontal,
         Math.sin(p._s3SloshPitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),
         Math.cos(p._s3SloshYaw)*horizontal);
-      p.delay=p._s3SloshBirthDelay;
+      // #1152: the source birth delay has elapsed. The only wire record is
+      // authored here, after resampling this frame's muzzle and launch speed.
+      p.delay=0;
       try{if(!p.ghost)context.G?.netm?.recProj?.(p);}
       finally{p.delay=0;p._s3SloshBirthPending=false;}
     }
@@ -1437,7 +1451,7 @@ export function installWeaponsFidelity(context,profile) {
     const before=this.list.length;const result=ghost.call(this,actor,event);
     if(this.list.length>before){const p=this.list.at(-1);const special=api.SPECIALS&&Object.hasOwn(api.SPECIALS,p.wid)?api.SPECIALS[p.wid]:null;
       if(!p.s3SpecialWeapon&&typeof special?.projectileDescriptor==='function'){p.s3SpecialWeapon=special.projectileDescriptor(p);p.s3Weapon=p.s3SpecialWeapon;}
-      const inkMetaOffset=event[27]===null||typeof event[27]==='object'?1:0,kitOffset=(event.length===35||event.length===36||event.length===37)?2:0,birthOffset=inkMetaOffset+kitOffset;if([33,34,35,36,37].includes(event.length)&&event[30+birthOffset]>=0){p.fidelityRollerUnitIndex=event[30+birthOffset];p.fidelityMode=event[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
+      const inkMetaOffset=event[27]===null||typeof event[27]==='object'?1:0,kitOffset=(event.length===35||event.length===36||event.length===37)?2:0,birthOffset=inkMetaOffset+kitOffset;if([33,34,35,36,37].includes(event.length)&&event[30+birthOffset]>=0){p.fidelitySloshPacketIndex=event[30+birthOffset];p.fidelityRollerUnitIndex=event[30+birthOffset];p.fidelityMode=event[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;

@@ -1,7 +1,7 @@
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
-import { installFinalDamage, damageGroupId } from './final-damage.mjs';
+import { installFinalDamage, damageGroupId, withFinalDamageGroup } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installSplatling } from './splatling.mjs';
@@ -223,7 +223,8 @@ export function applySlosherVolleyHit(system, owner, victim, group, groupId, amo
   if (!(delta > 0)) return;
   if (!group) return system.applyHit(owner, victim, delta, weaponId);
   const hpBefore = victim.hp, aliveBefore = victim.alive;
-  const result = system.applyHit(owner, victim, delta, weaponId);
+  const result = withFinalDamageGroup(victim, groupId ?? damageGroupId(group),
+    () => system.applyHit(owner, victim, delta, weaponId));
   if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
   return result;
 }
@@ -971,7 +972,7 @@ export function installWeapons(context, profile) {
     const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
     if (!(delta > 0)) return 'accepted';
     const hpBefore = victim.hp, aliveBefore = victim.alive;
-    const result = applyHit.call(this, attacker, victim, delta, weaponId);
+    const result = applyHit.call(this, attacker, victim, delta, weaponId, groupId);
     if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
     return result;
   };

@@ -252,6 +252,17 @@ export function emit(name, payload) {
     const groupedHit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
     patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
       groupedHit, 'Slosher volley identity owner admission');
+    // #1150: a missing/invalid volley cannot downgrade an online maximum to
+    // ungrouped damage. Existing combat-life admission owns respawn isolation.
+    code = "import { validDamageGroup } from '../../patches/splatoon3/runtime/final-damage.mjs';\n" + code;
+    patch('    this.s.tr?.sendTo(victim.owner, message);',
+      `    if (WEAPONS[wid]?.kind === 'slosher') {
+      if (typeof message.g !== 'string' || !validDamageGroup(message.g)) { this.hitPending.delete(message.seq); this._pendingHits?.delete(message.h); return false; }
+    }
+    this.s.tr?.sendTo(victim.owner, message);`, 'Slosher required volley identity');
+    patch('    this._applyingHit = true;', `    if (WEAPONS[d.w]?.kind === 'slosher' &&
+      (typeof d.g !== 'string' || !validDamageGroup(d.g))) return;
+    this._applyingHit = true;`, 'Slosher owner identity admission');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     for (const a of this.byNid.values()) clearRemoteSquidroll(a);
     retireNetworkGhosts();
@@ -406,22 +417,22 @@ export function emit(name, payload) {
     const kitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
     const poweredKitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);';
     if (code.includes(poweredInkMetaKitBirth)) patch(poweredInkMetaKitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
       'append immutable special power after ink metadata and stable birth fields');
     else if (code.includes(inkMetaKitBirth)) patch(inkMetaKitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth fields after ink metadata and kit fields');
     else if (code.includes(poweredKitBirth)) patch(poweredKitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
       'append immutable special power after stable birth fields');
     else if (code.includes(kitBirth)) patch(kitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth mode, appearance seed, identity, roller unit after kit fields');
     else if (code.includes(inkMetaBase)) patch(inkMetaBase,
-      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth fields after ink metadata');
     else patch('p.nose ?? 0.3, p.sats ?? 3]);',
-      'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth mode, appearance seed, identity, roller unit');
     {
       const combatLifeTick = '  _tick(from, d) {\n    this.stats.in++;\n    // Ordered WebSocket ticks cannot replay paint or terminal events.\n    if (!Number.isFinite(d.ts) || d.ts <= (this.peers.get(from)?.lastTs ?? -Infinity)) return;\n    const p = this._peer(from);';
