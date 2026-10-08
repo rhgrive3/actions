@@ -96,7 +96,6 @@ export function adaptSource(rel, code) {
     return code;
   }
   code = adaptPadSensitivity(rel, code, replaceOnce);
-  code = adaptCombatRange(rel, code, replaceOnce);
   code = adaptHostTeams(rel, code, replaceOnce);
   code = adaptLocalBatch01(rel, code, replaceOnce);
   code = adaptRollerMaxPaint(rel,code,replaceOnce);
@@ -755,6 +754,7 @@ export function adaptSource(rel, code) {
       }
     };`,
       'player map Super Jump target selection cue');
+    code = adaptCombatRange(rel, code, replaceOnce);
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
