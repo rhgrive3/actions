@@ -12,13 +12,15 @@ async function setup() {
   const f = await fixture({ site: `${ROOT}.codex1-splatling-sub-cancel`, fidelity: true });
   const a = f.make('splatling');
   f.G.actors = [a];
+  let bombs = 0;
+  f.G.projectiles.throwBomb = () => { bombs++; };
   const step = (fire = false, sub = false) => {
     a.intent.fire = fire;
     a.intent.sub = sub;
     f.G.time += STEP;
     a.update(STEP);
   };
-  return { f, a, r: a.weaponRunner, step };
+  return { f, a, r: a.weaponRunner, step, bombs: () => bombs };
 }
 
 async function charging() {
@@ -60,25 +62,31 @@ function snap({ a, r, f }) {
 test('#1021 full-composition charge -> sub waits five fixed frames before native sub preparation', async () => {
   const h = await charging();
   const initialCharge = h.r.charge, initialInk = h.a.ink;
+  const shotsBeforeInterrupt = h.f.fires.length;
   assert.equal(SPLATLING_SUB_INTERRUPT, 5 / 60);
 
   // Match the reported simultaneous input: ZR is released on the R edge.
   // The pending gate keeps the unpaid charge alive until its cancel boundary.
-  for (let frame = 0; frame < 5; frame++) {
+  for (let frame = 1; frame <= 4; frame++) {
     h.step(false, true);
     assert.equal(h.r.charging, true, `frame ${frame}: charge remains interruptible`);
     assert.equal(h.r.streaming, false, `frame ${frame}: no paid stream starts`);
     assert.equal(h.r.aimingSub, false, `frame ${frame}: aimingSub stays off`);
     assert.equal(h.r.s3SubReady, null, `frame ${frame}: bomb-ready clock stays off`);
     assert.equal(h.a.ink, initialInk, `frame ${frame}: no charge payment`);
+    assert.equal(h.f.fires.length, shotsBeforeInterrupt, `frame ${frame}: no charge-release burst`);
+    assert.equal(h.bombs(), 0, `frame ${frame}: no sub projectile before the boundary`);
   }
   assert.ok(h.r.charge > initialCharge, 'the held charge continues during the delay');
 
+  // The fifth fixed update retires the pending charge and admits normal sub aim.
   h.step(false, true);
   assert.equal(h.r.charging, false, 'charge cancels at the 5F boundary');
   assert.equal(h.r.streaming, false, 'charge does not become a paid stream');
   assert.equal(h.r.aimingSub, true, 'normal sub aim begins at the boundary');
   assert.equal(h.r.s3SubReady.age, 0, 'normal sub-ready age starts at zero');
+  assert.equal(h.f.fires.length, shotsBeforeInterrupt, 'charge cancellation emits no main projectile');
+  assert.equal(h.bombs(), 0, 'holding sub does not throw the bomb');
   assert.equal(h.a.ink, initialInk, 'an unpaid charge has no ink refund or charge');
   assert.equal(h.r.s3SplatlingSubInterruptPending, false);
   assert.equal(h.r.s3SplatlingSubInterruptReady, false);
@@ -89,12 +97,13 @@ test('#1006 full-composition stream -> sub waits five fixed frames and refunds o
   const paidInk = h.a.ink;
   const shotsBefore = h.f.fires.length;
 
-  for (let frame = 0; frame < 5; frame++) {
+  for (let frame = 1; frame <= 4; frame++) {
     h.step(false, true);
     assert.equal(h.r.streaming, true, `frame ${frame}: stream remains active`);
     assert.equal(h.r.charging, false);
     assert.equal(h.r.aimingSub, false, `frame ${frame}: aimingSub stays off`);
     assert.equal(h.r.s3SubReady, null, `frame ${frame}: bomb-ready clock stays off`);
+    assert.equal(h.bombs(), 0, `frame ${frame}: no sub projectile before the boundary`);
   }
   assert.ok(h.f.fires.length > shotsBefore, 'the paid stream continues during the delay');
   const refund = h.r.s3Spin.unspent;
@@ -102,11 +111,13 @@ test('#1006 full-composition stream -> sub waits five fixed frames and refunds o
   assert.ok(refund > 0, 'the interruption retains an exact partial unspent-round balance');
   assert.ok(refund < h.r.s3Spin.paid, 'some paid rounds were already emitted');
 
+  // On fixed frame five, retire the stream and transfer its refund once.
   h.step(false, true);
   assert.equal(h.r.streaming, false, 'stream cancels at the 5F boundary');
   assert.equal(h.r.s3Spin, null, 'the stream reservation retires');
   assert.equal(h.r.aimingSub, true, 'normal sub aim begins at the boundary');
   assert.equal(h.r.s3SubReady.age, 0, 'normal sub-ready age starts at zero');
+  assert.equal(h.bombs(), 0, 'holding sub does not throw the bomb');
   near(h.a.ink, Math.min(h.f.PLAYER.inkMax, inkBeforeCancel + refund), 'one exact partial refund');
   assert.ok(h.a.ink > paidInk, 'the remaining prepaid rounds return to the tank');
 
@@ -125,24 +136,24 @@ test('Splatling R/sub boundary histories match at 30/60/120Hz render cadence thr
       const clock = new FixedClock();
       const trace = [];
       let ticks = 0;
-      while (ticks < 6) {
+      while (ticks < 5) {
         clock.advance(1 / hz, dt => {
-          if (ticks >= 6) return;
+          if (ticks >= 5) return;
           h.f.G.time += dt;
           h.a.update(dt);
           ticks++;
           trace.push(snap(h));
         });
       }
-      assert.equal(trace.length, 6, `${name}, ${hz}Hz: six fixed simulation updates`);
-      for (let frame = 0; frame < 5; frame++) {
+      assert.equal(trace.length, 5, `${name}, ${hz}Hz: five fixed simulation updates`);
+      for (let frame = 0; frame < 4; frame++) {
         assert.equal(trace[frame].aimingSub, false, `${name}, ${hz}Hz frame ${frame}`);
         assert.equal(trace[frame].subReadyAge, null, `${name}, ${hz}Hz frame ${frame}`);
         assert.equal(name === 'charge' ? trace[frame].charging : trace[frame].streaming, true,
           `${name}, ${hz}Hz frame ${frame}: main state remains live`);
       }
-      assert.equal(trace[5].aimingSub, true, `${name}, ${hz}Hz: R aim enters at 5F`);
-      assert.equal(trace[5].subReadyAge, 0, `${name}, ${hz}Hz: sub-ready starts at age zero`);
+      assert.equal(trace[4].aimingSub, true, `${name}, ${hz}Hz: R aim enters on fixed frame five`);
+      assert.equal(trace[4].subReadyAge, 0, `${name}, ${hz}Hz: sub-ready starts at age zero`);
       traces.push(trace);
     }
     assert.deepEqual(traces[1], traces[0], `${name}: 60Hz render matches 30Hz`);
