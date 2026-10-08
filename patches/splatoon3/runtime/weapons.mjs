@@ -99,6 +99,18 @@ export function splatlingChargeCap(ink, w) {
   const fraction = Math.max(0, Math.min(1, ink / w.inkFull)), first = w.burstFirst / w.burstMax, boundary = w.firstChargeTime / w.chargeTime;
   return fraction <= first ? fraction / first * boundary : boundary + (fraction - first) / (1 - first) * (1 - boundary);
 }
+// Single authoritative full-charge predicate (#840). The base Charger ding
+// fires only at `charge >= 1` (inkwave-public/src/game/weapons.js:157), so
+// every discrete full-only effect (160 damage, opponent piercing, squid
+// charge-keep storage, exact full range/speed/paint endpoints) must key off
+// the same state. A near-full partial (e.g. q=0.999, reachable via the
+// low-ink progress cap) stays partial. Epsilon is applied only here (exact
+// binary 1 survives), never by promoting partial values downstream.
+export const CHARGER_FULL_CHARGE_EPSILON = 1e-9;
+export function isChargerFullCharge(charge) {
+  const c = Number.isFinite(charge) ? charge : 0;
+  return c >= 1 - CHARGER_FULL_CHARGE_EPSILON && c <= 1 + CHARGER_FULL_CHARGE_EPSILON;
+}
 export function chargerDamage(actor, weapon, charge) {
   const legacy = weapon.damageMin + (weapon.damagePartialMax - weapon.damageMin) * charge;
   const minimum = weapon.damageMinChargeTime, rate = weapon.partialDamagePerSecond;
@@ -418,7 +430,7 @@ export function installWeapons(context, profile) {
     if (a.form === 'squid') {
       this.s3WasSquid = true;
       if (this.charging) {
-        if (this.charge >= .999 && held && a.submerged === true) this.s3Stored = {
+        if (isChargerFullCharge(this.charge) && held && a.submerged === true) this.s3Stored = {
           charge: 1, remaining: w.keepChargeTime,
           fireDelay: Math.max(0, (w.storedFireDelay || 0) - dt),
           paid: Math.max(this.s3ChargerSpent || 0, w.inkFull)
@@ -639,7 +651,7 @@ export function installWeapons(context, profile) {
   };
   const fireCharger = Projectiles.prototype.fireCharger;
   Projectiles.prototype.fireCharger = function (a, w, charge) {
-    if (charge < .999) return fireCharger.call(this, a, w, charge);
+    if (!isChargerFullCharge(charge)) return fireCharger.call(this, a, w, charge);
     const muzzle = this._muzzle(a, new THREE.Vector3()).clone(), dir = this._aimFrom(a, muzzle, new THREE.Vector3()).clone();
     const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
     let length = hit.hit ? hit.dist : w.rangeMax;
