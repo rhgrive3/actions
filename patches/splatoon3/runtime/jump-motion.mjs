@@ -17,6 +17,17 @@ function foot(P, position, rotation, side, height, rear, pitch, tuck, weight) {
   P[rotation + 2] = mix(P[rotation + 2], 0, weight);
 }
 
+// #1116: public S3 animation-name corpus distinguishes family resources.
+// A name is a catalog hint, NOT proof that gameplay selects that clip or proof
+// of its FSKA joint tracks. This table intentionally does not invent curves.
+export const JUMP_REFERENCE_CANDIDATES = Object.freeze({
+  shooter: 'Jump_Shtr00', roller: 'Jump_Rllr00', dualies: 'Jump_Mnvr00',
+  slosher: 'Jump_Slsh00', splatling: 'Jump_Spnr00', stringer: 'Jump_Strn00',
+  brella: 'Jump_Shlt00', splatana: 'Jump_Sber00', fallback: 'Jump_Nrml00',
+});
+export function jumpReferenceCandidate(weaponKind) {
+  return JUMP_REFERENCE_CANDIDATES[weaponKind] || JUMP_REFERENCE_CANDIDATES.fallback;
+}
 export const JUMP_MOTION_CALIBRATION = Object.freeze({
   ankleWidth: .10, leftHeight: .35, rightHeight: .33,
   leftRear: -.20, rightRear: -.22, leftPitch: .95, rightPitch: 1.02,
@@ -25,7 +36,8 @@ export const JUMP_MOTION_CALIBRATION = Object.freeze({
 export function jumpMotionSnapshot(ch) {
   const s = ch?.[GUARD]?.states.get(ch);
   return s ? { active: s.started !== null, age: s.started === null ? null : Math.max(0, ch.t - s.started),
-    phase: s.phase, weight: s.weight } : null;
+    phase: s.phase, weight: s.weight, catalogCandidate: jumpReferenceCandidate(ch.weaponKind),
+    referenceCurveVerified: false } : null;
 }
 
 export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }, _profile) {

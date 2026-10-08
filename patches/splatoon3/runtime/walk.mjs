@@ -1,6 +1,6 @@
 import { dualiesMotionAllowsFootPlant } from './action-admission.mjs';
 import { specialMotionAllowsFootPlant } from './special-motion.mjs';
-import { sampleLegacyGait, LEGACY_GAIT_CHANNELS as REF } from './legacy-walk-curves.mjs';
+import { sampleLegacyGait, LEGACY_GAIT_CHANNELS as REF, LEGACY_GAIT_INFO } from './legacy-walk-curves.mjs';
 // Walking is an animation layer. It never writes actor speed or collision state.
 // Body/foot motion is guided by compact relative FSKA channels from Splatoon 1.
 // Clip frame counts are source frames, NOT proven Splatoon 3 animation runtime rates.
@@ -306,6 +306,20 @@ export function walkPelvisDrop(ch,nativeDrop){
   return drop;
 }
 
+// #997: repeatable weak-diagonal trace of the ACTUAL composed gait clock and
+// first-generation sampled pose. This is diagnostic only: the Splatoon 1
+// source does not prove the current Splatoon 3 directional blend/phase.
+export function weakDiagonalWalkTrace(ch) {
+  if (!ch) return null;
+  const speed=Number.isFinite(ch.gv)?ch.gv:0;
+  const x=Number.isFinite(ch.mdx)?ch.mdx:0,z=Number.isFinite(ch.mdz)?ch.mdz:1;
+  const phase=Number.isFinite(ch.phase)?ch.phase:0;
+  const sampled=sampleLegacyGait(new Float32Array(14),phase,x,z,0,Math.max(0,Math.min(1,ch.runW||0)));
+  return { active:walkActive(ch),speed,travelX:x,travelZ:z,phase,
+    cadence:ch.cad,duty:ch.duty,hipTwist:ch.hipTwist,
+    legacyWalkFrames:LEGACY_GAIT_INFO.walkFrames,legacyRunFrames:LEGACY_GAIT_INFO.runFrames,
+    referenceGame:LEGACY_GAIT_INFO.game,s3CurveVerified:false,pose:Array.from(sampled) };
+}
 export function walkActive(ch){return !!states.get(ch)?.active;}
 
 // A reversing filtered velocity can pass through zero while the real root
