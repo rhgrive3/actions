@@ -22,14 +22,15 @@ export function adaptIssue479(rel, code) {
   // Keep current Roller reset/contact/roll-stop owners and pass their existing API.
   const oldInstall = 'export function installRollerLogic({ WeaponRunner }, _profile) {';
   const currentInstall = 'export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {';
-  const matches = [oldInstall, currentInstall].filter(anchor => code.includes(anchor));
+  const extendedInstall = 'export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _profile) {';
+  const matches = [oldInstall, currentInstall, extendedInstall].filter(anchor => code.includes(anchor));
   if (matches.length !== 1) throw new Error('INKWAVE issue-479 patch conflict (roller install owner): expected one known shape');
   const installAnchor = matches[0];
   // 1. Pass api (containing Actor, Character, WeaponRunner, on, emit) to install free-fall hooks
   code = replaceOnce(
     code,
     installAnchor,
-    'export function installRollerLogic(api, _profile) {\n  const { WeaponRunner, Actor, G, on } = api || {};\n  installActorFreefallHooks(api);',
+    'export function installRollerLogic(api, _profile) {\n  const { WeaponRunner, Actor, G, on, THREE, Hit } = api || {};\n  installActorFreefallHooks(api);',
     'roller installRollerLogic actor hook connection'
   );
 

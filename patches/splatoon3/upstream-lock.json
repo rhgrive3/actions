@@ -4,7 +4,7 @@
   "files": {
     "index.html": "13e4485f3974f806a1672e60200d6c86efd419a1cd41b18c9aa3e9cbf461a580",
     "src/main.js": "af8d0c1e0d5850ba10b5a1e5f1b5be15860927aab78fd85390775876bd41bcd1",
-    "src/game/actor.js": "7330c84f1e095bcbbc41df26cab68d63cb0e3c9490d86bc45d60a45be6c4d4f3",
+    "src/game/actor.js": "403e66794a9dbb22c8d1f548a900030694e379d14f3b91e952118bea63730f42",
     "src/game/weapons.js": "a7dfed27d9e67f2b47cde32d12b319cb8d7f77d50b70baa89daee50df0bb78f5",
     "src/game/player.js": "96b7ebb2e1c8715f08d15aeb292f9090d64c38f255361cfd78a0a095a53f9dfa",
     "src/game/match.js": "c76ca6b008204c70f3514d4fdfb76c19721d4363f8f6184f62067bc736d082c0",
@@ -13,14 +13,15 @@
     "src/ui/menus.js": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e",
     "src/core/shadowcache.js": "f062770e5bb6ca3f397cf83cb01ee3b0290bfabac5c3026c8a6355dd452a4391",
     "src/core/input.js": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4",
-    "src/ui/hud.js": "7e99727b738b888d671ebca73c65f9c282b022783b42bddb2b63550de329a29c",
+    "src/ui/hud.js": "eb21ae4c9bd76f85f104db92c0b2beb70bf1b9013a5b630d3a37f19283bb062e",
     "src/i18n.js": "48f38fafdcbf75d93bbf46a0566b96f2d409025f48e9893c7ad316a6acecef07",
     "src/game/physics.js": "69cef214461935a77ec3a167b70d50fd0e35a953334cd837ab9b8c037da5bb48",
     "src/core/ctx.js": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04",
     "src/game/character.js": "264230c01feb1eaae2967ee5c990d59b5711cd412647031f0e7767febfb26c8d",
     "src/game/character-weapons.js": "aa6f865e329016aff6efac127ee69dd288b046a911f89189466a4f18c68f5f89",
-    "src/net/netmatch.js": "fc4187964285e3e0ab1a88176a773b37b911156e8b5a85133abd417a4672eb7f",
+    "src/net/netmatch.js": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8",
     "src/core/mobile.js": "4d8de2a521522a96edae3b026545adf3cd39631bd6edfef1349325b450eb7044",
     "src/game/cameraRig.js": "c00a66368c0f2175a53db212bb8fdd8bc812d15958119bd5927bcad5a726c7c7"
-  }
+  },
+  "integrationNote": "Three upstream-file overrides from INKWAVE PR #1142 are reviewed and pinned here; base sourceCommit describes the imported upstream snapshot, not these local overrides."
 }

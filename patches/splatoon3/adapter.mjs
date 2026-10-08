@@ -756,8 +756,8 @@ export function adaptSource(rel, code) {
     // paint separately. The existing 12-unit ray is an internal consistency
     // bound, not a verified S3-specific HP cutoff or RainNum semantics.
     code = replaceOnce(code,
-      '  _updateClouds(dt) {\n    const sp = SPECIALS.storm;',
-      '  _updateClouds(dt) {\n    const sp = SPECIALS.storm;\n    const inkWaveRainReach = 12;',
+      '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;',
+      '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;\n    const inkWaveRainReach = 12;',
       'finite rain trace');
     code = replaceOnce(code,
       '          const g = G.physics.raycast(_v, DOWN, 12, _hit);',
