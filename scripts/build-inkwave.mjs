@@ -182,6 +182,8 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  // NetMatch imports this helper; retain revision/precache without an extra eager request.
+  'patches/network-replication/issue-1088-surge-presentation.mjs',
   // C30-C39 static helpers remain imported and precached; avoid four redundant eager hints.
   'patches/splatoon3/runtime/charger-sight-cache.mjs',
   'patches/splatoon3/runtime/minimap-dirty.mjs',
