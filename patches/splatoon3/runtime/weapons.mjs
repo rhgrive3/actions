@@ -1,4 +1,5 @@
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
+import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
 import { installFinalDamage, damageGroupId } from './final-damage.mjs';
@@ -337,6 +338,7 @@ export function installWeapons(context, profile) {
     releaseSplatlingInterrupt(this, -1);
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
+    this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
     return result;
@@ -446,6 +448,7 @@ export function installWeapons(context, profile) {
         next = { ...next, fire: false, firePressed: false };
       input = next;
     }
+    if (weapon.kind === 'shooter' && !input.fire) this.s3Accuracy?.advance(dt);
     const result = runnerUpdate.call(this, dt, input);
     if (weapon.kind === 'shooter' && this.s3ShooterInterruptJustArmed) {
       // R/ZL cancellation may coincide with a due repeat; the native owner above
@@ -814,9 +817,9 @@ export function installWeapons(context, profile) {
       if (age <= hold + 1e-10) base = w.spreadAir;
       else if (age < end - 1e-10) base = w.spreadAir + (w.spreadGround - w.spreadAir) * ((age - hold) / (end - hold));
       else { base = w.spreadGround; this.s3JumpSpreadAge = null; }
-      const first = w.spreadFirst ?? .45;
-      return base * (first + (1 - first) * this.bloom);
+      return base; // S3 maximum outer envelope; selection happens on each admitted shot
     }
+    if (w.kind === 'shooter') return w.spreadGround;
     return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
@@ -828,7 +831,14 @@ export function installWeapons(context, profile) {
   };
   const fireShooter = Projectiles.prototype.fireShooter;
   Projectiles.prototype.fireShooter = function (a, weapon, spreadDeg) {
-    const result = fireShooter.call(this, a, weapon, spreadDeg);
+    const accuracy = a.weaponRunner?.s3Accuracy;
+    const outerChance = accuracy?.shot(!!a.grounded, a.weaponRunner?.s3JumpSpreadAge);
+    // The sourced probability is independent of the native generic cone bloom.
+    // Inner angular kernel remains a provisional narrow cone pending Nintendo validation.
+    const maxDeviation = Number.isFinite(spreadDeg) ? spreadDeg : (a.grounded ? weapon.spreadGround : weapon.spreadAir);
+    const deviation = outerChance == null ? maxDeviation :
+      (Math.random() < outerChance ? maxDeviation : maxDeviation * (weapon.spreadFirst ?? 0.45));
+    const result = fireShooter.call(this, a, weapon, deviation);
     if (a.weaponRunner && weapon.kind === 'shooter') {
       a.weaponRunner.s3PostFireLockActive = true;
       a.weaponRunner.s3ShooterStreamActive = true;
