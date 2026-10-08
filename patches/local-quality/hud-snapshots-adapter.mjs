@@ -44,7 +44,9 @@ export function adaptHudSnapshots(rel, code, once) {
       + [subValue, guideValue, healthValue, muzzleValue, chargerCurrent, chargerFull].join(', ') + ');';
     code = code.slice(0, frameStart) + frameCall + code.slice(frameEnd + '    };'.length);
 
-    const mobileStart = code.indexOf('    this.input.mobile?.setHud(', hudUpdate);
+    const hudUpdateAfter = code.indexOf('\n    this.hud.update(dt, frame);', frameStart);
+    if (hudUpdateAfter < frameStart) throw new Error('INKWAVE quality patch conflict (persistent Game HUD frame): hud.update moved unexpectedly');
+    const mobileStart = code.indexOf('    this.input.mobile?.setHud(', hudUpdateAfter);
     if (mobileStart < 0) throw new Error('INKWAVE quality patch conflict (persistent touch HUD frame): setHud call missing');
     const mobileEnd = code.indexOf(');', mobileStart);
     if (mobileEnd < mobileStart || code.indexOf('    this.input.mobile?.setHud(', mobileStart + 1) >= 0) {
