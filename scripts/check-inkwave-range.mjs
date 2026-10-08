@@ -146,7 +146,9 @@ for (const run of RUNS) {
       const yaw = Math.atan2(target.pos.x - a.pos.x, target.pos.z - a.pos.z);
       g.rig.yaw = yaw; g.rig.pitch = -0.02;
       a.yaw = a.aimYaw = yaw;
-      if (s.m.controller) s.m.controller.yaw = yaw;
+      // PlayerController reads its *rig* each frame (player.js), not a
+      // `controller.yaw` field. Aim through that real input owner.
+      if (s.m.controller?.rig) { s.m.controller.rig.yaw = yaw; s.m.controller.rig.pitch = -0.02; }
       const births = [];
       const push = G.projectiles?._push;
       if (push) G.projectiles._push = function (p) {
