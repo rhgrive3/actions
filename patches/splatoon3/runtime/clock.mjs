@@ -16,7 +16,7 @@ export class FixedClock {
     }
     return count; // Unprocessed time remains queued, never silently discarded.
   }
-  reset() { this.accumulator = 0; }
+  reset() { this.accumulator = 0; this._pendingPadEdges?.clear(); }
 }
 let context;
 let hiddenGuestListenerInstalled = false;
@@ -25,12 +25,22 @@ export function runSimulation(game, dt) {
   if (!context) throw new Error('INKWAVE patches were not installed');
   const { G } = context;
   const clock = game.s3Clock || (game.s3Clock = new FixedClock());
-  // pollPad clears edges. Preserve those collected on a render without a tick.
-  const pending = new Set(game.input.padPressed);
+  // #1111: no gamepad edge => no allocation. Reuse a per-clock snapshot on
+  // active edges so 0-tick render frames preserve them across destructive pollPad.
+  const edges = game.input.padPressed;
+  let pending = null;
+  if (edges.size) {
+    pending = clock._pendingPadEdges || (clock._pendingPadEdges = new Set());
+    pending.clear();
+    for (const key of edges) pending.add(key);
+  }
   const pendingPadEpoch = game.input._padEpoch;
   game.input.pollPad();
-  if (pendingPadEpoch === game.input._padEpoch) {
-    for (const key of pending) game.input.padPressed.add(key);
+  if (pending) {
+    if (pendingPadEpoch === game.input._padEpoch)
+      for (const key of pending) game.input.padPressed.add(key);
+    // Epoch change never resurrects stale input; no carried snapshot remains.
+    pending.clear();
   }
   game._padMenus();
   G.net?.update?.(dt);
