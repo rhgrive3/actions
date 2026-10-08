@@ -19,10 +19,17 @@ export function adaptSixFollowup(rel, code) {
       '#1003 start two-human Turf minimum');
   }
   if (rel === 'src/main.js') {
-    code = once(code,
-      "players: m.actors.map((a) => ({ name: a.name, team: a.team, weapon: a.weaponId, turf: Math.round(a.stats.turf), splats: a.stats.splats, deaths: a.stats.deaths, isSelf: a.isLocal, bot: !!a.isBot })),",
-      "players: m.actors.map((a) => ({ name: a.name, team: a.team, weapon: a.weaponId, turf: Math.round(a.stats.turf), splats: a.stats.splats, deaths: a.stats.deaths, isSelf: a.isLocal, bot: !!a.isBot, disconnected: !!a.s3?.disconnected })),",
-      '#201 preserve disconnected result identity');
+    const judgeStart = code.indexOf('  async _judge() {');
+    const judgeEnd = code.indexOf('\n  _fade(', judgeStart);
+    if (judgeStart < 0 || judgeEnd < judgeStart) throw new Error('Six-followup adapter anchor mismatch: #201 judge boundary');
+    let judge = code.slice(judgeStart, judgeEnd);
+    if (!judge.includes('disconnected: !!a.s3?.disconnected')) {
+      const rowPattern = /players: m\.actors\.map\(\(a\) => \(\{([^\n]+)\}\)\),/g;
+      const rows = [...judge.matchAll(rowPattern)];
+      if (rows.length !== 1) throw new Error('Six-followup adapter anchor mismatch: #201 preserve disconnected result identity (' + rows.length + ')');
+      judge = judge.replace(rowPattern, (line) => line.replace(' })),', ', disconnected: !!a.s3?.disconnected })),'));
+    }
+    code = code.slice(0, judgeStart) + judge + code.slice(judgeEnd);
   }
   return code;
 }
