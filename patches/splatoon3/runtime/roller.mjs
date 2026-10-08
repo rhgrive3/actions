@@ -23,6 +23,12 @@ export const ROLLER_POSE = Object.freeze({ READY_ANCHOR, READY_ROTATION, ROLL_AN
 const POST_SUB = { horizontal: 14 / 60, vertical: 18 / 60 };
 const POST_SQUID = { horizontal: 15 / 60, vertical: 19 / 60 };
 
+// Issue #541: an established roll must persist as a S3 dry roll when the
+// tank depletes while ZR stays held. Separate Roller-down state from the
+// ink-gated paint/contact path. No new dry movement/audio numerics are
+// invented: reuse existing rolling speed/pose and keep dry audio muted.
+const DRY_INK = 0.5;
+
 function observedLife(actor) {
   if (Number.isSafeInteger(actor?.netLife)) return actor.netLife;
   if (Number.isSafeInteger(actor?.net?.lastLife)) return actor.net.lastLife;
@@ -351,6 +357,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     this.s3RollHitEpochs = new Map();
     this.s3RollHitConfirmDisabled = uncorrelated;
     this.s3RollStop = null;
+    this.s3RollerWasDry = false; this.s3RollerPrevInk = null;
     this.s3FlickPostSub = 0; this.s3FlickPostSquid = 0;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
@@ -366,6 +373,21 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     // restore): movement already integrated, anim reads the restored state,
     // and roll speed/ink/damage/group/packet law is untouched.
     resolveRollHitEpochs(this);
+    // Issue #541: snapshot the hold before native `_roller` can tear it down
+    // on the depletion tick. Restoration runs after the native call below and
+    // only continues an already-Roller-down roll (never a cold start).
+    // `prevInk` is read before the native spend so a paid roll holds its own
+    // tick even when the stripe lands exactly on the threshold.
+    const prevInk = a.ink;
+    const prevRollT = this.rollT;
+    // `s3RollerPrevInk` carries the paid-roll history across ticks; `prevInk`
+    // covers the natural depletion tick where the native spend crosses the
+    // threshold inside this same call. Both reject a cold start at zero ink
+    // (prev null on first tick, 0 after a zero-ink tick completes).
+    const hadPaidInk = this.s3RollerWasDry === true || prevInk > DRY_INK ||
+      (this.s3RollerPrevInk ?? -Infinity) > DRY_INK;
+    const dryHold = inp.fire === true && this.rolling === true && this.flick < 0 &&
+      this.cooldown <= 0.25 && a.grounded === true && a.ink <= DRY_INK && hadPaidInk;
     if (this.s3FlickPostSub > 0) {
       this.s3FlickPostSub -= dt;
       if (this.s3FlickPostSub < EPS) this.s3FlickPostSub = 0;
@@ -499,6 +521,29 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
         applyRollerBubblerHit(bubbler, a, w.rollDamage);
       }
     }
+
+    // Issue #541: keep the established Roller-down state on the depletion
+    // tick (and every dry hold tick after it) instead of tearing it down.
+    // Paint, contact damage, and further ink spend are all native-gated on
+    // the zeroed tank, so this restores state only — no dry turf, no dry
+    // hits, no new movement/audio numerics. `rollT` keeps accumulating so
+    // dash timing stays continuous; `lastRollPos` is re-anchored so the
+    // next inked stripe cannot bill the whole dry distance at once.
+    if (dryHold && this.rolling !== true && this.flick < 0) {
+      this.rolling = true;
+      // Continue from the entry value: native zeroes rollT on the dry tick,
+      // so re-adding one dt alone would pin it. Dash timing stays continuous
+      // with the paid roll; dry speed itself is unconfirmed (report).
+      this.rollT = prevRollT + dt;
+      if (this.lastRollPos && a.pos?.copy) this.lastRollPos.copy(a.pos);
+      else if (a.pos?.clone) this.lastRollPos = a.pos.clone();
+      // Dry audio stays as the native teardown leaves it (loop stopped).
+      // S3's dry-roll clunk is unmodelled: no invented audio numeric.
+      this.s3RollerWasDry = true;
+    } else if (this.rolling === true && a.ink > DRY_INK) {
+      this.s3RollerWasDry = false;
+    }
+    this.s3RollerPrevInk = Math.max(prevInk, a.ink);
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;

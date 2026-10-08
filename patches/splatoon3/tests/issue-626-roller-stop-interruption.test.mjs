@@ -221,11 +221,14 @@ test('#626 the same-tick boundaries are exact at 30/60/120 Hz render schedules',
 });
 
 test('#626 a dry roll and a roll released into a flick keep their existing behaviour', async () => {
-  // Dry roll (#541): no ink is not an interruption of the sourced kind.
+  // Dry roll (#541): the established roll persists with no ink, and running
+  // dry is still not an interruption of the sourced kind.
   const dry = await establishedRoll({ frames: 60 });
+  const dryRollT = dry.r.rollT;
   dry.a.ink = 0;
   runnerTick(dry.f, dry.a, { fire: true });
-  assert.equal(dry.r.rolling, false, 'the dry roll ends');
+  assert.equal(dry.r.rolling, true, 'the dry roll persists (#541)');
+  assert.ok(dry.r.rollT >= dryRollT, 'dry rollT continues');
   assert.equal(dry.r.s3RollStop, null, 'a dry roll must not arm the sourced interruption');
 
   // Releasing into a flick is a normal transition, not a roll stop.
