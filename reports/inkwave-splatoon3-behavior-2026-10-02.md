@@ -1577,3 +1577,24 @@ Reference conditions: Splatoon 3 Ver. 11.3.0, Splattershot / Splat Charger / Hea
 | Verification state | Logic-only: production adapters at fixed 60 Hz; browser / Switch not measured | Logic-only: production Input / MobileInput / PlayerController; Android / iPad Bluetooth-controller hardware not measured |
 
 Known residual: while a finger is down, a pad **menu** press does not take ownership until the finger lifts.
+
+## 2026-10-08 — #358 roller foot-paint current reconciliation (test-only)
+
+Reference: Splatoon 3 Ver. 11.3.0 Splat Roller, no gear effects. INKWAVE scope is
+`patches/splatoon3/tests/roller-foot-paint-composition.test.mjs` through the complete
+six-adapter production composition plus installed native runtime. Raw `inkwave-public`
+alone is not a reproduction. Parent evidence `EV/C358-current-native-root-cl3-r576.json`
+accepts the actual root: only the vertical projectile-physics hash differs
+(`647ddc60...` vs stale `e0845aaa...`); grounded and airborne payloads stay invariant,
+horizontal golden unchanged, height 2.21 source bound still yields no paint.
+
+Change (test-only, no Roller runtime tuning): the vertical assertion no longer compares
+against the stale a628-tuned golden. It runs one independent SAME current-production
+grounded control (`y=0`, grounded) and requires airborne `y=1.8` physics to equal that
+control field-for-field, with height-origin normalization `[1.8, 1.3, 1.3, 0.3, 0.3]`,
+unchanged seed/counts/RNG (`30` draws)/life/velocity/damage/radii, and intentional
+`trailEvery=0` primary-trail-owner expectation (`roller-vertical-paint.mjs:23`, #423;
+legacy `1.8` stays disabled to prevent double paint). Stale hashes remain only as
+provenance comments. Owner/proxy release-paint replay still runs once. Neighboring
+`issue-423` (4 fail) and `issue-847` final b34 case (missing `rollerContactCandidate`
+export) fail identically before this edit and are out of scope.
