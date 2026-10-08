@@ -2,12 +2,20 @@ import { replaceOnce } from './input-adapter.mjs';
 
 export function adaptEightFollowup(rel, code) {
   if (rel === 'src/game/cameraRig.js') {
-    return replaceOnce(
-      code,
-      '    const charging = a.weaponRunner?.charging ? a.weaponRunner.charge : 0;',
-      "    const charging = a.weapon?.kind === 'charger' && a.weaponRunner?.charging ? a.weaponRunner.charge : 0;",
-      '#1106 Heavy Splatling must not enter Charger camera zoom',
-    );
+    const lines = code.split('\n');
+    const chargingLines = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (/^\s*const charging\s*=/.test(lines[i]) && lines[i].includes('weaponRunner') && lines[i].includes('charge'))
+        chargingLines.push(i);
+    }
+    if (chargingLines.length !== 1)
+      throw new Error(`Eight-followup camera anchor mismatch (#1106): expected one charging source, got ${chargingLines.length}`);
+    const i = chargingLines[0];
+    if (!lines[i].includes("kind === 'charger'")) {
+      const indent = lines[i].match(/^\s*/)?.[0] || '';
+      lines[i] = indent + "const charging = a.weapon?.kind === 'charger' && a.weaponRunner?.charging ? a.weaponRunner.charge : 0;";
+    }
+    return lines.join('\n');
   }
 
   if (rel === 'src/net/session.js') {
