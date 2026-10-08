@@ -1723,3 +1723,18 @@ Reference: Splatoon 3 Ver. 11.3.0, Splat Roller, with no gear for the baseline. 
 On main `c2c938b9`, the S3 adapter composed through touch layout, reliability, local quality, network replication, and practice range still left the public `WeaponRunner` drain in the 0.28-unit paint batch: it deducted `rollInkPerMeter × moved`. At 1.2 units/second that yields about 0.9091%/s and delays each tank update until a paint batch is committed, although the full-speed distance rule reaches 6%/s. The adapter now charges ink each simulation update independently of the paint batch. At and above the sourced minimum speed it retains the existing per-distance rate and raises that update's charge only when needed to meet the sourced 1.2%/s minimum; it does not infer an intermediate rate curve from the endpoint fields. At the 7.92 units/second cap, the unchanged distance rule still gives 6%/s. Ink Saver (Main) scales both the distance rule and minimum floor through the existing gear modifier. Existing 6.48/7.92 roll caps and the 90-frame dash transition are unchanged.
 
 Below `SpeedInkConsumeMin` and while stationary, the extracted fields do not establish native behavior. Those cases retain the previous distance-based rule and are not claimed as a Splatoon 3 match. Focused tests exercise the six-adapter source composition at the minimum and maximum, verify the preexisting distance policy at an interior speed above the floor, and preserve below-threshold, stationary, gear-scaled, paint-batch-independent, and 30/60/120 Hz behavior; an existing full-composition Roller baseline also passed. The intermediate-speed policy is retained from INKWAVE and remains unverified against Nintendo hardware. This verifies the INKWAVE composition and deterministic rate model, not a Switch capture or the exact native intermediate curve.
+
+
+## 2026-10-08 — Current integration lobby adapter reconciliation
+
+Current integration `4a3cc811` introduced host-owned team confirmation (#1039)
+before reliability source adapters. This invalidated three exact source anchors
+used by the existing #1003 minimum-human and #1103 ready-invalidation gates;
+the production build stopped before generating a deployable site. The adapters
+now preserve the host-confirmation predicate and method-local lobby revisions
+while still requiring two human players for Turf and invalidating ready after
+weapon or launch-critical settings change. Boss solo admission remains distinct.
+`host-teams-start-composition.test.mjs` exercises the complete production source
+composition and the actual native method bodies for both admission and mutation.
+This is an INKWAVE integration repair; no Nintendo balance value or protocol is
+changed. Existing upstream claims remain with their owners.

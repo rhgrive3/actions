@@ -10,12 +10,16 @@ function once(code, before, after, label) {
 export function adaptSixFollowup(rel, code) {
   if (rel === 'src/net/session.js') {
     code = once(code,
-      "    return !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);",
-      "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);",
+      "    return !this.startBlock() && ",
+      "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && ",
       '#1003 canStart two-human Turf minimum');
+    // S3 host-team confirmation may already delegate admission to canStart().
+    // Preserve that authority gate when adding the independent human minimum.
+    const startBlock = code.includes("    if (!this.isHost || this.state !== 'lobby' || !this.tr || !this.canStart()) return false;")
+      ? "!this.canStart()" : "this.startBlock()";
     code = once(code,
-      "    if (!this.isHost || this.state !== 'lobby' || !this.tr || this.startBlock()) return false;",
-      "    if (!this.isHost || this.state !== 'lobby' || !this.tr || this.startBlock() || (this.lobby.mode === 'turf' && this.lobby.players.length < 2)) return false;",
+      `    if (!this.isHost || this.state !== 'lobby' || !this.tr || ${startBlock}) return false;`,
+      `    if (!this.isHost || this.state !== 'lobby' || !this.tr || ${startBlock} || (this.lobby.mode === 'turf' && this.lobby.players.length < 2)) return false;`,
       '#1003 start two-human Turf minimum');
   }
   if (rel === 'src/main.js') {
