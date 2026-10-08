@@ -108,6 +108,11 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   receiver.applyRemote(remote, dt);
   assert.deepEqual(remoteTriggers.filter(name => name === 'flick'), ['flick']);
 
+  // #1056: an air-started vertical flick deliberately converts to horizontal
+  // when the owner touches down within the first five fixed frames. Advance the
+  // accepted swing past that window so this asserts the post-window latch rather
+  // than re-testing the documented early-landing conversion.
+  for (let i = 0; i < 6; i++) ownerStep({ owner, local }, dt, { fire: true });
   local.grounded = true;
   ownerStep({ owner, local }, dt, { fire: true });
   const landed = snapshot(sender);

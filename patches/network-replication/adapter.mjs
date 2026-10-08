@@ -300,9 +300,11 @@ export function emit(name, payload) {
     const groupedHit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
     patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
       groupedHit, 'Slosher volley identity owner admission');
+    patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     for (const a of this.byNid.values()) { clearRemoteSquidroll(a); clearRemoteRollerPresentation(a); }
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
+    patch('  _remove(a) {\n    this.byNid.delete(a.nid);', `  _remove(a) {
     clearRemoteSquidroll(a);
     clearRemoteRollerPresentation(a);
     retireNetworkGhosts(a);
