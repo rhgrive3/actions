@@ -132,7 +132,25 @@ export function emit(name, payload) {
   if (rel === 'src/net/netmatch.js') {
     patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
     patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
+    patch("    this.unsubs.push(on('match:state', ({ state, match: m }) => { if (m === this.match && this.isHost) this._sendNow({ k: 'st', s: state, t: r2(m.time) }); }));",
+      "    this.unsubs.push(on('match:state', ({ state, match: m }) => { if (m === this.match && this.isHost) { const d={ k:'st', s:state, t:r2(m.time) }; if (state==='finish' && validFinishCoverage(m.s3FinishCoverage)) d.fc=[...m.s3FinishCoverage]; if (state==='finish' && validFinishMapDataUrl(m.s3FinishMapDataUrl)) d.fm=m.s3FinishMapDataUrl; this._sendNow(d); } }));",
+      'propagate immutable Turf finish snapshot');
     patch("      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;", "      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;\n      case 'fs': this._acceptFirstSplat(from,d); break;\n      case 'fsq': this._answerFirstSplat(from,d); break;", 'first-splat host confirmation packets');
+    patch(`  _hostState(d) {
+    const m = this.match;
+    if (!m || this.isHost) return;
+    if (typeof d.t === 'number') m.time = d.t;
+    if (d.s !== m.state && d.s !== 'judge') m.setState(d.s);
+  }`, `  _hostState(d) {
+    const m = this.match;
+    if (!m || this.isHost) return;
+    if (typeof d.t === 'number') m.time = d.t;
+    if (d.s === 'finish') {
+      if (validFinishCoverage(d.fc)) m.s3FinishCoverage = Object.freeze([d.fc[0], d.fc[1]]);
+      if (validFinishMapDataUrl(d.fm)) m.s3FinishMapDataUrl = d.fm;
+    }
+    if (d.s !== m.state && d.s !== 'judge') m.setState(d.s);
+  }`, 'receive immutable Turf finish snapshot');
     patch('  _remoteSplat(victim, attacker, cause) {', `  _requestFirstSplat() {
     const id = this.cfg?.id;
     if (!this.isHost && typeof id === 'string' && id && this.s.hostId) this.s.tr?.sendTo(this.s.hostId,{k:'fsq',m:id});
@@ -182,7 +200,7 @@ export function emit(name, payload) {
   _remoteSplat(victim, attacker, cause) {`, 'host-authoritative first-splat protocol');
     patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    clearRemoteSquidroll(victim);\n    victim.alive = false;", 'Flow observes only accepted remote splats');
     patch("import { G, emit, on } from '../core/ctx.js'",
-      "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js';\nimport { exportPendingLethal, restorePendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\nimport { exportSplatlingReservation, isValidSplatlingReservation, refundSplatlingReservation } from '../../patches/splatoon3/runtime/splatling.mjs'",
+      "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js';\nimport { exportPendingLethal, restorePendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\nimport { exportSplatlingReservation, isValidSplatlingReservation, refundSplatlingReservation } from '../../patches/splatoon3/runtime/splatling.mjs';\nimport { validFinishCoverage, validFinishMapDataUrl } from '../../patches/splatoon3/runtime/turf-finish.mjs'",
       'read numeric event and adoption snapshots');
     patch('invuln: 262144, enemy: 524288,',
       'invuln: 262144, enemy: 524288, rollerFoldAttack: 1048576, rollerFoldVertical: 2097152,',
@@ -272,6 +290,10 @@ export function emit(name, payload) {
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
+      e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
+        && d.r === 2 && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(d.u)
+        && e._netTick >= 0 && e._netTick <= d.u;
+      e._finishPaintApplied = false;
       const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
         : e[1] === 'ev' && e[2] === 'special:use' && e[3]?.id === 'storm' ? e[3]?.actor?.n : null;
       const stormActor = this.byNid.get(stormNid), snap = stormActor?.net?.buf?.at(-1);
@@ -406,6 +428,45 @@ export function emit(name, payload) {
     if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
     this.stats.in++;`, 'ordered tick replay guard');
     }
+    patch('  _playEvents() {', `  _applyRemoteSplatEvent(e) {
+    this.applying = true;
+    try {
+      const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
+      const opts = { seed: e[7] };
+      if (e[8]) opts.kind = e[8];
+      if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+      if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
+      G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
+    } finally { this.applying = false; }
+  }
+
+  commitDeadlinePaint() {
+    if (!this.isHost || !this.match || this.match.state !== 'playing') return 0;
+    let committed = 0;
+    for (const p of this.peers.values()) for (const e of p.events) {
+      if (e[1] !== 's' || !e._deadlineEligible || e._finishPaintApplied) continue;
+      this._applyRemoteSplatEvent(e);
+      e._finishPaintApplied = true;
+      committed++;
+    }
+    return committed;
+  }
+
+  _playEvents() {`, 'authoritative pre-deadline paint commit');
+    patch(`      case 's': {
+        this.applying = true;
+        const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
+        const opts = { seed: e[7] };
+        if (e[8]) opts.kind = e[8];
+        if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+        if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
+        G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
+        this.applying = false;
+        break;
+      }`, `      case 's': {
+        if (!e._finishPaintApplied) this._applyRemoteSplatEvent(e);
+        break;
+      }`, 'deadline paint is never double-applied');
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
     const eventPeer = this.peers.get(from);
@@ -501,7 +562,7 @@ export function emit(name, payload) {
       }`, 'birth and terminal events');
     code += `
 const ADOPTION_STATE_TAG = 'inkwave-adoption-v1';
-const ADOPTION_AGE_MAX = 60, ADOPTION_WORLD_MAX = 100000;
+const ADOPTION_AGE_MAX = 60, ADOPTION_COOLDOWN_MAX = 10, ADOPTION_WORLD_MAX = 100000;
 function clampAdoptionAge(value) { return Number.isFinite(value) ? Math.min(ADOPTION_AGE_MAX, Math.max(0, value)) : 0; }
 function vectorRow(value) {
   return value?.isVector3 && [value.x, value.y, value.z].every(Number.isFinite)
@@ -569,23 +630,27 @@ function packAdoptionState(actor) {
   const tick = Number.isFinite(G.time) ? Math.max(0, Math.round(G.time * 60)) : 0;
   const lethal = exportPendingLethal(actor);
   const spin = exportSplatlingReservation(actor.weaponRunner);
+  const cooldown = Number.isFinite(actor.weaponRunner?.cooldown)
+    ? Math.min(ADOPTION_COOLDOWN_MAX, Math.max(0, actor.weaponRunner.cooldown)) : 0;
   return [ADOPTION_STATE_TAG, life, sequence, tick, clampAdoptionAge(actor.lastDamage),
-    packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin];
+    packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin, cooldown];
 }
 function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
-  if (!Array.isArray(row) || row.length !== 8 || row[0] !== ADOPTION_STATE_TAG) return null;
+  if (!Array.isArray(row) || (row.length !== 8 && row.length !== 9) || row[0] !== ADOPTION_STATE_TAG) return null;
   const [tag, rowLife, sequence, tick, recoveryAge, jumpRow, lethalRow, spinRow] = row;
+  const cooldown = row.length === 9 ? row[8] : 0;
   if (!Number.isSafeInteger(rowLife) || rowLife < 0 || rowLife !== life
     || !Number.isSafeInteger(sequence) || sequence < 1 || sequence <= (previousSequence || 0)
     || !Number.isSafeInteger(tick) || tick < 0 || !Number.isFinite(recoveryAge)
-    || recoveryAge < 0 || recoveryAge > ADOPTION_AGE_MAX) return null;
+    || recoveryAge < 0 || recoveryAge > ADOPTION_AGE_MAX
+    || !Number.isFinite(cooldown) || cooldown < 0 || cooldown > ADOPTION_COOLDOWN_MAX) return null;
   const jump = readSuperJumpState(jumpRow, flags);
   if (jump === undefined) return null;
   const lethal = validLethalState(lethalRow, rowLife, flags, hp);
   if (lethal === undefined) return null;
   const streaming = !!(flags & F.streaming);
   if (spinRow === null ? streaming : (!streaming || weaponKind !== 'splatling' || !isValidSplatlingReservation(spinRow, PLAYER.inkMax))) return null;
-  return { life: rowLife, sequence, tick, recoveryAge, jump, lethal, spin: spinRow === null ? null : spinRow.slice() };
+  return { life: rowLife, sequence, tick, recoveryAge, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown };
 }
 function copyAdoptionState(state) {
   if (!state) return null;
@@ -602,6 +667,7 @@ function sampleAdoptionState(buf, t, mode, ownerTick) {
     const out = copyAdoptionState(a);
     const dt = Number.isFinite(ownerTick) && ownerTick > a.tick ? (ownerTick - a.tick) / 60 : 0;
     out.tick = a.tick + dt * 60; out.recoveryAge = clampAdoptionAge(a.recoveryAge + dt);
+    out.cooldown = Math.max(0, (a.cooldown || 0) - dt);
     if (out.jump?.phase === 'flight') out.jump.elapsed = Math.min(out.jump.duration, out.jump.elapsed + dt);
     return out;
   }
@@ -613,6 +679,7 @@ function sampleAdoptionState(buf, t, mode, ownerTick) {
   out.sequence = a.sequence;
   out.tick = a.tick + (b.tick - a.tick) * u;
   out.recoveryAge = clampAdoptionAge(a.recoveryAge + (b.recoveryAge - a.recoveryAge) * u);
+  out.cooldown = Math.max(0, (a.cooldown || 0) + ((b.cooldown || 0) - (a.cooldown || 0)) * u);
   if (a.jump && b.jump && a.jump.phase === b.jump.phase) {
     out.jump.elapsed = a.jump.elapsed + (b.jump.elapsed - a.jump.elapsed) * u;
     out.jump.duration = a.jump.duration + (b.jump.duration - a.jump.duration) * u;
@@ -664,6 +731,7 @@ function restoreAdoptionState(match, actor, transfer) {
   actor._adoptionSequence = Math.max(Number.isSafeInteger(actor._adoptionSequence) ? actor._adoptionSequence : 0, latest.sequence);
   actor.net._adoptionSeq = Math.max(Number.isSafeInteger(actor.net._adoptionSeq) ? actor.net._adoptionSeq : 0, latest.sequence);
   actor.lastDamage = clampAdoptionAge(current.recoveryAge);
+  actor.weaponRunner.cooldown = Math.max(actor.weaponRunner.cooldown || 0, current.cooldown || 0);
   if (current.jump) {
     let jump = current.jump;
     if (latest.jump?.phase === 'flight' && jump.phase !== 'flight') {

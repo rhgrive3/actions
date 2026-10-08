@@ -1,12 +1,37 @@
 import { cancelStormPendingInput } from './storm-effects.mjs';
 // Host Turf coverage belongs to the deadline, after its final legal simulation
 // interval but before state listeners or finish presentation can advance paint.
-export function captureTurfFinish(match, nextState, paint) {
-  if (nextState === 'intro' || nextState === 'playing') match.s3FinishCoverage = null;
+export function validFinishCoverage(value) {
+  return Array.isArray(value) && value.length === 2
+    && value.every(v => Number.isFinite(v) && v >= 0 && v <= 1);
+}
+export function validFinishMapDataUrl(value) {
+  return typeof value === 'string' && value.startsWith('data:image/png;base64,') && value.length <= 1500000;
+}
+export function captureFinishMapSnapshot(match, minimap) {
+  if (!minimap || typeof minimap.update !== 'function') return null;
+  try {
+    let passes = 0;
+    while (minimap._band > 0 && passes < 8) { minimap.update(0, true); passes++; }
+    if (minimap._band > 0) return null;
+    minimap.update(0, true);
+    const data = minimap.canvas?.toDataURL?.('image/png');
+    if (!validFinishMapDataUrl(data)) return null;
+    match.s3FinishMapDataUrl = data;
+    return data;
+  } catch { return null; }
+}
+export function captureTurfFinish(match, nextState, paint, netm = null, minimap = null) {
+  if (nextState === 'intro' || nextState === 'playing') {
+    match.s3FinishCoverage = null;
+    match.s3FinishMapDataUrl = null;
+  }
   if (nextState !== 'finish' || match.state !== 'playing' || match.bossMode) return;
   if (!match.follower) {
+    netm?.commitDeadlinePaint?.();
     const coverage = paint.coverage();
     match.s3FinishCoverage = Object.freeze([coverage[0], coverage[1]]);
+    captureFinishMapSnapshot(match, minimap);
   }
   // Retire held/pending offensive state before neutral levels can become releases.
   match.local?.weaponRunner?.cancelPendingInput?.();
