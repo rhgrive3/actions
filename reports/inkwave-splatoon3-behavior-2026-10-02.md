@@ -1709,3 +1709,24 @@ room timer/team-ready adapters were composed while preserving their behaviors.
 Native `inkwave-public/` stays unchanged. Broader integration regressions remain
 separate from this focused acceptance; a passing focused suite is not a claim
 that the entire integration workflow or Nintendo hardware comparison is green.
+
+
+### PR1171 integration-base differential and slide-width follow-up
+
+Rebased only PR1171 onto `69add0203d127b790f009e3502f7110212262066`.
+The unchanged full patch gate produced 128 failing tests on that base and
+133 at `3c207b20`; comparison of the full failure-name sets found exactly five
+new failures. The shared Roller outline widened Dualies slide paint because
+its radius conversion still used the removed CPU-only inset. It now accounts
+for the band, corner rounding and maximum two-wave displacement, preserving
+the pinned 1.8 half-width. Native grid tests cover nine seed/heading cases;
+the built WebGL check covers twelve and keeps the same two-texel AA bound.
+The three RESULT-frame harness failures now supply a visible document fixture,
+and the first-frame paint-presentation A/B uses the same #1165 ownership
+geometry on both sides while preserving its original delayed-draw negative
+control. All five new failure cases pass after these corrections (11/11 in
+their three complete files); the earlier focused selection is 95/95.
+The base's 128 failures remain unresolved. No integration-base, #1083 or #401
+branch was modified and no PR was merged. CI run 37833984659 passed the original
+idle/build and gait failure points plus the new focused and rendered checks,
+but its later weapon-detail browser gate failed; full CI is not claimed green.

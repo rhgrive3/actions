@@ -64,6 +64,21 @@ try {
       const counts=[0,0];for(let k=0;k<paint.grid.length;k++)if(!paint.dead[k]&&paint.grid[k])counts[paint.grid[k]-1]++;
       const cov=paint.coverage();for(let t=0;t<2;t++)if(Math.abs(cov[t]-counts[t]/paint.turfTotal)>1e-12)throw Error('Coverage differs from ownership');
     }
+    // The shared Roller outline is also used by Dualies. Its radius conversion
+    // must preserve the sourced 1.8 half-width in the actual GPU footprint.
+    const {slideStampRadius}=await import('/patches/splatoon3/runtime/dualies-slide-paint.mjs');
+    const atlasPixels=new Uint8Array(paint.rt.width*paint.rt.height*4);let slideWidths=0;
+    for(const seed of [0,.1,.5,.99]) for(const angle of [0,.3,Math.PI/2]) {
+      paint.clear();paint.splat(v(4,.03,4),slideStampRadius(1.8),0,{seed,kind:'roll',stretch:v(Math.sin(angle),0,Math.cos(angle)),instant:true});paint.flush(1/60);
+      renderer.readRenderTargetPixels(paint.rt,0,0,paint.rt.width,paint.rt.height,atlasPixels);
+      const a=face.atlas;let lo=Infinity,hi=-Infinity;
+      for(let y=0;y<paint.rt.height;y++)for(let x=0;x<paint.rt.width;x++)if(atlasPixels[(y*paint.rt.width+x)*4+3]>=128) {
+        const u=(x+.5-a.x-a.pad)/a.ppm-4,w=(y+.5-a.y-a.pad)/a.ppm-4;
+        const across=u*Math.cos(angle)-w*Math.sin(angle);lo=Math.min(lo,across);hi=Math.max(hi,across);
+      }
+      if(lo< -1.8-2/a.ppm||hi>1.8+2/a.ppm||hi-lo<3.45)throw Error('Dualies rendered source-width regression '+JSON.stringify({seed,angle,lo,hi}));
+      slideWidths++;
+    }
     paint.clear();let draws=0;const render=renderer.render.bind(renderer);renderer.render=(...args)=>{draws++;return render(...args);};
     Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
     for(let i=0;i<6100;i++)paint.splat(v(4,0,4),.62,i%2,{seed:.1,kind:'roll',stretch:v(1,0,0),instant:true});
@@ -75,11 +90,12 @@ try {
     Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});paint.splat(v(4,0,4),.62,0,{seed:0,kind:'roll',stretch:v(1,0,0),instant:true});
     paint.clear();const cleared=paint._hiddenQuads===null;delete document.hidden;
     paint.dispose();renderer.dispose();
-    return {normal,locked,restored,cells,edgeTolerance,witness,hidden,resumed,cleared};
+    return {normal,locked,restored,cells,edgeTolerance,witness,slideWidths,hidden,resumed,cleared};
   });
   assert.deepEqual(result.normal,{l:true,r:true,merged:false,lock:false});
   assert.deepEqual(result.locked,{l:false,r:false,merged:true,lock:false});
   assert.deepEqual(result.restored,result.normal);
+  assert.equal(result.slideWidths,12);
   assert.equal(result.witness,true);assert.equal(result.hidden.draws,0);assert.equal(result.hidden.pending,6100);
   assert.equal(result.hidden.owner,2);assert.ok(result.resumed.draws>0);assert.equal(result.resumed.pending,0);assert.equal(result.resumed.gpuOwner,2);assert.equal(result.cleared,true);
   assert.deepEqual(errors,[]);console.log(JSON.stringify(result,null,2));

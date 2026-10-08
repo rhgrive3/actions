@@ -27,6 +27,27 @@ test('#979 fixed simulation has identical paint at 30/60/120Hz; rolls remain ind
   assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);
 });
 
+test('#1165 shared wavy band keeps Dualies slide ownership inside the sourced width across seeds and headings',async()=>{
+  const f=await batchFixture();
+  for(const nid of ['local','peer-17','peer-52']) for(const angle of [0,.3,Math.PI/2]) {
+    const a=f.make('dualies'),r=a.weaponRunner,cpu=cpuFloor(f,12,.05);
+    a.nid=nid;a.pos.set(0,0,0);r.dodge={t:0,dur:.2};
+    r._dodgeDir.set(Math.sin(angle),0,Math.cos(angle));
+    f.G.paint.splat=(...args)=>cpu.splat(...args);
+    r._dualies(1/60,{fire:false},a.weapon);
+    let lo=Infinity,hi=-Infinity;
+    const {p,face}=cpu;
+    for(let j=0;j<face.nv;j++) for(let i=0;i<face.nu;i++) if(p.grid[face.grid+j*face.nu+i]) {
+      const x=(i+.5)*face.cu-6,z=(j+.5)*face.cv-6;
+      const across=x*Math.cos(angle)-z*Math.sin(angle);
+      lo=Math.min(lo,across);hi=Math.max(hi,across);
+    }
+    const half=a.weapon.rollPaintWidthHalf;
+    assert.ok(lo>=-half && hi<=half,`${nid}/${angle}: source width exceeded (${lo},${hi})`);
+    assert.ok(hi-lo>=2*half-.15,`${nid}/${angle}: slide unexpectedly narrowed`);
+  }
+});
+
 test('#979 scale follows profile; air, remote and dead actors cannot score slide paint',async()=>{
   const f=await batchFixture();f.profile.weaponsFidelityCompletion.worldUnitsPerSourceUnit=2;configureDualiesSlidePaint(f.WEAPONS,f.profile);
   assert.equal(f.WEAPONS.dualies.rollPaintWidthHalf,3.6);
