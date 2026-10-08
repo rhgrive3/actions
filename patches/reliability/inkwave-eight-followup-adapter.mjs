@@ -37,8 +37,12 @@ export function adaptEightFollowup(rel, code) {
 
     code = replaceOnce(
       code,
-      '    const l = this.lobby, wasMap = l.map;',
-      '    const l = this.lobby, wasMap = l.map;\n    const beforeSettings = [l.map, l.time, l.duration, l.bots, l.difficulty, l.palette, l.mode, this._botsPref];',
+      code.includes('    const l = this.lobby, wasMap = l.map, oldMode = l.mode;')
+        ? '    const l = this.lobby, wasMap = l.map, oldMode = l.mode;'
+        : '    const l = this.lobby, wasMap = l.map;',
+      '    const l = this.lobby, wasMap = l.map' +
+      (code.includes('    const l = this.lobby, wasMap = l.map, oldMode = l.mode;') ? ', oldMode = l.mode' : '') +
+      ';\n    const beforeSettings = [l.map, l.time, l.duration, l.bots, l.difficulty, l.palette, l.mode, this._botsPref];',
       '#1103 capture room configuration revision',
     );
 
