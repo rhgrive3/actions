@@ -1416,6 +1416,14 @@ export function adaptSource(rel, code) {
       'G.time - (this.rollHits.get(key) || -9) > 0.5',
       'G.time - (this.rollHits.get(key) || -9) + 1e-10 >= (w.rollContactInterval ?? (24 / 60))',
       'S3 Roller Boss contact 24F repeat');
+    // #498: only the gameplay Roller trail stamp consumes the sourced
+    // 20/30F->50F width window. The separate #411 unit/near-far impact owner
+    // computes its own age-scaled radius in roller-impact-paint.mjs.
+    code = replaceOnce(code,
+      'p.trailRadius * (0.8 + Math.random() * 0.4), p.team, { seed: Math.random() }',
+      'rollerTrailAgeWidth(p, p.trailRadius * (0.8 + Math.random() * 0.4)), p.team, { seed: Math.random() }',
+      'Roller native trail age width');
+    code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\\n" + code;
   }
 
   if (rel === 'src/world/paint.js') {
