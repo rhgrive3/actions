@@ -19,7 +19,7 @@ import {adaptKitSource as adaptSource} from './kit-composed-fixture.mjs';
 import {
   TRIZOOKA, TRIZOOKA_KIT_COST, TRIZOOKA_SOURCE, TRIZOOKA_SPEC_UP, VOLLEY_CONFIG,
   installKitTrizooka, installTrizookaLifecycle, trizookaSpecialWeapon, trizookaProjectileDescriptor,
-  startTrizooka, stepTrizooka, endTrizooka, canActivateTrizooka, disposeTrizooka, trizookaIsActive,
+  startTrizooka, stepTrizooka, endTrizooka, canActivateTrizooka, disposeTrizooka, trizookaIsActive, trizookaGaugeFraction,
   newTrizookaState, newTrizookaReplayState, trizookaReplayActivate, trizookaReplayFire, trizookaReplayEnd,
   splashBandsFor, splashRadiusFor, perpendicularBasis,
   throwVolley, apOf, durationFor,
@@ -413,7 +413,9 @@ test('death drops the token, resets the gauge and cannot be restored', async () 
   pressFire(a); api_time(a, F);
   assert.ok(trizookaIsActive(a));
 
+  const activeGauge = a.special;
   a.splat(null, 'test');
+  near(a.special, activeGauge * 0.5, '#1030 death applies the ordinary remaining-gauge loss');
   assert.equal(a.s3Trizooka, null, 'splat disposes the token');
   assert.equal(a.specialActive, null);
   assert.equal(trizookaIsActive(a), false);
@@ -517,18 +519,19 @@ test('a refused _startSpecial does not reach the native call at all', async () =
   assert.ok(!a.s3Trizooka, 'no token was installed');
 });
 
-test('an accepted _startSpecial spends the gauge and counter exactly once', async () => {
+test('an accepted _startSpecial converts the spent charge into one active duration meter', async () => {
   const api = await production();
   world(api);
   const a = makeActor(api);
   const specials = a.stats.specials;
   a._startSpecial();
   assert.equal(a.stats.specials, specials + 1);
-  assert.equal(a.special, 0);
+  assert.equal(a.special, TRIZOOKA_KIT_COST, 'the active duration meter starts full after native charge spend');
   assert.equal(a.specialActive?.id, 'trizooka');
   assert.ok(trizookaIsActive(a));
   a._startSpecial();                                  // re-entrant call
   assert.equal(a.stats.specials, specials + 1, 'a second direct call never double-spends');
+  assert.equal(a.special, TRIZOOKA_KIT_COST, 're-entry does not refill or consume the active meter again');
 });
 
 test('other specials still delegate to native untouched', async () => {
