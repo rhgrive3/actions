@@ -256,7 +256,7 @@ export function installMovement(context, tuning) {
       // simultaneous Roll/Surge armor pool as a second layer.
       if (this.s3?.spawnArmor && spawnProtectionRemaining(this) > 0) {
         const shield = this.s3.spawnArmor;
-        const left = absorbSpawnDamage(this, amount, source, tuning.spawnArmor);
+        const left = absorbSpawnDamage(this, amount, source, tuning.spawnArmor, attacker);
         if (left !== amount) api.emit('actor:armorhit', { actor: this, absorbed: amount - left, broken: !this.s3.spawnArmor || shield.hp <= 0, kind: 'spawn' });
         amount = left;
       } else {
