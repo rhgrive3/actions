@@ -1098,10 +1098,12 @@ export function adaptSource(rel, code) {
       if (judgeStart < 0 || judgeEnd < judgeStart) throw new Error('INKWAVE patch conflict (Private Battle persistent progression): judge boundary');
       let judge = code.slice(judgeStart, judgeEnd);
       if (!judge.includes('const privateBattle = !!G.netm;')) {
-        const gainedPattern = /    const gained = Math\.round\(([^\n]+)\);/g;
+        // score-hud runs before this inline composition and may already own
+        // the Turf XP formula. Preserve whichever accepted RHS is present.
+        const gainedPattern = /    const gained = (Math\.round\([^\n]+\)|turfExperience\(turf, won\)\.total);/g;
         const gainedMatches = [...judge.matchAll(gainedPattern)];
         if (gainedMatches.length !== 1) throw new Error(`INKWAVE patch conflict (Private Battle persistent progression): expected one Turf gained line (${gainedMatches.length})`);
-        judge = judge.replace(gainedPattern, '    const privateBattle = !!G.netm;\n    const gained = privateBattle ? 0 : Math.round($1);');
+        judge = judge.replace(gainedPattern, '    const privateBattle = !!G.netm;\n    const gained = privateBattle ? 0 : $1;');
 
         const mutStart = judge.indexOf('    p.xp += gained;');
         const saveLine = "    saveJSON('inkwave.profile', p);";
