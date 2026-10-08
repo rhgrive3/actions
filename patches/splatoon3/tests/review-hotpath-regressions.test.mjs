@@ -40,8 +40,8 @@ test('Dualies gate preserves native input writes and descriptor/enumeration sema
 test('HUD guides do not clone the weapon profile on every simulation advance', () => {
   const path = fileURLToPath(new URL('../runtime/weapons-fidelity.mjs', import.meta.url));
   const source = readFileSync(path, 'utf8');
-  assert.doesNotMatch(source, /p\\.s3Weapon\\s*=\\s*\\{\\s*\\.\\.\\.w\\s*\\}/);
-  assert.match(source, /function computeS3SlosherGuide\\(/);
-  assert.match(source, /function computeS3BlasterGuide\\(/);
-  assert.match(source, /s3DualiesGuides\\s*=\\s*function/);
+  assert.doesNotMatch(source, /p\.s3Weapon\s*=\s*\{\s*\.\.\.w\s*\}/);
+  assert.match(source, /function computeS3SlosherGuide\(/);
+  assert.match(source, /function computeS3BlasterGuide\(/);
+  assert.match(source, /s3DualiesGuides\s*=\s*function/);
 });
