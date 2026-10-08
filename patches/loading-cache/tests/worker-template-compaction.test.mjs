@@ -8,6 +8,11 @@ import { finalizeLoadingWorker } from '../adapter.mjs';
 const revision='a'.repeat(64);
 function setup(t) {
   const persistent=path.resolve(process.env.INKWAVE_TEST_SCRATCH || '/mnt/workspace/.dev-state/agent-work/scratch/inkwave-worker-template-tests');
+  assert(persistent.startsWith('/mnt/workspace/'), 'worker fixture destination must be under persistent workspace');
+  let ancestor=persistent;
+  while(!fs.existsSync(ancestor)) ancestor=path.dirname(ancestor);
+  const realAncestor=fs.realpathSync(ancestor);
+  assert(realAncestor==='/mnt/workspace'||realAncestor.startsWith('/mnt/workspace/'), 'worker fixture ancestor must resolve to persistent workspace');
   fs.mkdirSync(persistent,{recursive:true});
   const resolved=fs.realpathSync(persistent);
   assert(resolved.startsWith('/mnt/workspace/'), 'worker fixtures require persistent workspace storage');
