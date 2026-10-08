@@ -548,8 +548,8 @@ export function adaptSource(rel, code) {
       '    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1; c.ceilingBlock = -1;',
       'ceiling contact block identity');
     if (!capsule.includes('c.ceiling = true; c.ceilingBlock = b.id;')) capsule = replaceOnce(capsule,
-      '          else if (_n.y < -0.6) c.ceiling = true;',
-      '          else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }',
+      '        else if (_n.y < -0.6) c.ceiling = true;',
+      '        else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }',
       'ceiling contact classification');
     code = code.slice(0, capsuleStart) + capsule + code.slice(capsuleEnd);
     return code;
