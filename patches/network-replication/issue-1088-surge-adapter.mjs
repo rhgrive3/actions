@@ -18,7 +18,7 @@ export function adaptIssue1088SurgePresentation(code) {
     'owner-only packed presentation sidecar');
   code = once(code,
     'adoption: s[23] };',
-    'adoption: s[23], surgePresentation: s[24] ?? null, surgeSampleTime: ts };
+    'adoption: s[23], surgePresentation: s[24] ?? null, surgeSampleTime: ts };',
     'optional tagged sidecar sample reconstruction');
   code = once(code,
     '      const snap = unpackActor(s, d.ts);',
