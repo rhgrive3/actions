@@ -568,8 +568,25 @@ def neck_join(cfg):
     nv0 = len(bm.verts)
     bmesh.ops.remove_doubles(bm, verts=zone, dist=cfg.get('weld_mm', 0.2) / 1000)
     bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=cfg.get('weld_mm', 0.2) / 1000)
+    # merging leaves loose edges and a few edges with three faces (the skin layers cannot be bound to such a
+    # surface by Surface Deform later): loose parts go, the smallest face at such an edge goes, the small hole
+    # left is filled
+    bmesh.ops.delete(bm, geom=[e for e in bm.edges if not e.link_faces], context='EDGES')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    extra = set()
+    for e in bm.edges:
+        if len(e.link_faces) > 2:
+            fs = sorted(e.link_faces, key=lambda f: f.calc_area())
+            extra.update(fs[:len(fs) - 2])
+    if extra:
+        bmesh.ops.delete(bm, geom=list(extra), context='FACES_ONLY')
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+        Lh = er.M.to_local(np.array([R.matrix_world @ v.co for v in bm.verts])) * 1000
+        hole = [e for e in bm.edges if e.is_boundary and -130 < Lh[e.verts[0].index, 1] < -40]
+        bmesh.ops.holes_fill(bm, edges=hole, sides=8)
     bm.to_mesh(R.data)
     bm.free()
+    print('BODY_SHAPE neck_join faces removed at edges with three faces', len(extra))
     print('BODY_SHAPE neck_join slivers: vertices merged', nv0 - len(R.data.vertices),
           'faces turned to face out', consistent_normals(R.data))
     head_mats = {m.name for m in head.data.materials if m}
