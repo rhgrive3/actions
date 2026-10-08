@@ -571,22 +571,22 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/game/weapons.js') {
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
-    // #537: rolling ink is authoritative and consumed once per fixed sim tick from the actual
-    // roll speed, so the tank updates every step instead of waiting for the 0.28-unit paint
-    // batch (which now gates paint only). The endpoints are the pinned WeaponRollParam pair
-    // (InkConsumeMin/MaxPerFrame reached at SpeedInkConsumeMin/Max): a floor while rolling.
+    // #537: apply the pinned rate curve from SpeedInkConsumeMin upward, independently of
+    // the 0.28-unit paint batch. Lower-speed and stationary behavior is unspecified by the
+    // source fields; preserve the pre-existing distance rule there instead of extending the floor.
     code = replaceOnce(code,
       '    if (moved < 0.28) return;\n    this.lastRollPos.copy(a.pos);\n    a.ink = Math.max(0, a.ink - w.rollInkPerMeter * moved);',
-      '    if (w.rollInkMinPerFrame != null && w.rollInkMaxPerFrame != null) {\n' +
-      '      const minS = w.rollInkMinSpeed ?? 1.2, maxS = w.rollInkMaxSpeed ?? 7.92;\n' +
+      '    const minS = w.rollInkMinSpeed, maxS = w.rollInkMaxSpeed;\n' +
+      '    const hasRollInkRate = Number.isFinite(w.rollInkMinPerFrame) && Number.isFinite(w.rollInkMaxPerFrame) && Number.isFinite(minS) && Number.isFinite(maxS);\n' +
+      '    if (hasRollInkRate && hs >= minS) {\n' +
       '      const inkT = maxS > minS ? clamp((hs - minS) / (maxS - minS), 0, 1) : 1;\n' +
-      // InkConsume*PerFrame is a tank fraction; a.ink is percent (0-100), so x100.
+      // Use profile calibration's fraction-to-points (*100) and per-frame-to-dt (*60 * dt) conversions.
       '      a.ink = Math.max(0, a.ink - (w.rollInkMinPerFrame + (w.rollInkMaxPerFrame - w.rollInkMinPerFrame) * inkT) * 100 * 60 * dt);\n' +
       '    }\n' +
       '    if (moved < 0.28) return;\n' +
       '    this.lastRollPos.copy(a.pos);\n' +
-      '    if (w.rollInkMinPerFrame == null || w.rollInkMaxPerFrame == null) a.ink = Math.max(0, a.ink - w.rollInkPerMeter * moved);',
-      'roller rolling ink floor');
+      '    if (!hasRollInkRate || hs < minS) a.ink = Math.max(0, a.ink - w.rollInkPerMeter * moved);',
+      'roller rolling ink rate and paint batch');
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
     code = replaceOnce(code, 'Math.max(this.cooldown, 0.22)', 'Math.max(this.cooldown, w.postStreamDelay)', 'splatling sourced post-stream delay');
