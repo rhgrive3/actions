@@ -138,12 +138,12 @@ export function installSubSpecialFidelity(api, profile) {
     if (b.ghost) return result;
 
     const p = SUB_SPECIAL_FIDELITY.bomb, random = localRng(bombSeed(b));
-    let area = nativeSplat.call(paint, c0.copy(b.pos).setY(b.pos.y + p.paintOffsetY), SUB.bomb.paintRadius, b.team, { seed: random() });
+    let area = nativeSplat.call(paint, c0.copy(b.pos).setY(b.pos.y + p.paintOffsetY), SUB.bomb.paintRadius, b.team, { seed: random(), claimOwner: b.owner });
     for (let i = 0; i < p.splashAroundCount; i++) {
       const angle = random() * TAU;
       const reach = SUB.bomb.paintRadius * (0.6 + random() * 0.4);
       c1.set(b.pos.x + Math.cos(angle) * reach, b.pos.y + p.splashAroundOffsetY, b.pos.z + Math.sin(angle) * reach);
-      area += nativeSplat.call(paint, c1, p.splashAroundPaintRadius, b.team, { seed: random() });
+      area += nativeSplat.call(paint, c1, p.splashAroundPaintRadius, b.team, { seed: random(), claimOwner: b.owner });
     }
     b.owner?.addTurf?.(area);
     return result;
