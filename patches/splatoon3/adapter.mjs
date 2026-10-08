@@ -1404,6 +1404,20 @@ export function adaptSource(rel, code) {
       'stage-root static release');
   }
 
+  if (rel === 'src/game/weapons.js') {
+    // #839: the ordinary and Boss Roller body-hit admission uses the sourced
+    // DamageSpanSecond (24 fixed frames), without changing the hit-rejection
+    // ownership from #558 or the geometry/paint/knockback paths.
+    code = replaceOnce(code,
+      'G.time - last > 0.5',
+      'G.time - last + 1e-10 >= (w.rollContactInterval ?? (24 / 60))',
+      'S3 Roller actor contact 24F repeat');
+    code = replaceOnce(code,
+      'G.time - (this.rollHits.get(key) || -9) > 0.5',
+      'G.time - (this.rollHits.get(key) || -9) + 1e-10 >= (w.rollContactInterval ?? (24 / 60))',
+      'S3 Roller Boss contact 24F repeat');
+  }
+
   if (rel === 'src/world/paint.js') {
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
       code + '\ninstallIssue570PaintPresentation(PaintSystem);\n';
