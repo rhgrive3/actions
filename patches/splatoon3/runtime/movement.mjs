@@ -216,6 +216,20 @@ export function normalJumpVelocity(a, velocity) {
   const r = a.weaponRunner, cap = a.weapon.fullChargeJumpVelocity;
   if (a.form !== 'squid' && a.weapon.kind === 'charger' && a.intent.fire &&
       r.charging && r.charge >= 1 && Number.isFinite(cap)) return Math.min(velocity, cap);
+  // #888 Heavy Splatling (WeaponSpinnerStandard) charging jump. S3 Ver. 11.3.0
+  // keeps the charge state at 0.7 DU/F, the same S3 velocity as the calibrated
+  // charger full-charge value, so this reuses that established INKWAVE velocity
+  // via shared normalization (no new DU/F->WU factor is invented). It composes
+  // as a cap under the enemy-ink / Ink Resistance result (lower wins), applies
+  // in any charging state (no invented charge-amount interpolation), and never
+  // touches streaming fire, squid form, or other weapons. The 1.0 DU/F
+  // exception Splatlings stay data-driven (a future per-weapon value overrides
+  // or removes this cap without changing the owner).
+  if (a.form !== 'squid' && a.weapon.kind === 'splatling' && a.intent.fire &&
+      r.charging && !r.streaming) {
+    const chargeCap = a.weapon.chargeJumpVelocity;
+    if (Number.isFinite(chargeCap)) return Math.min(velocity, chargeCap);
+  }
   return velocity;
 }
 export function installMovement(context, tuning) {
