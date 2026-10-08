@@ -225,6 +225,14 @@ emitted-graph cases. See [sources, reproduction, limits and merge resolutions](i
 
 ローラー横／縦振りの owner physics を packet 化する順序を修正し、remote の trajectory と projectile に紐付く curtain の時間軸を一致させた。基準射程・威力・spread・local physics・animation pose の変更はない。全武器の native replay、二人の WebSocket arena、遅延／重複／退出回帰の詳細は [Network replication report](network-replication-report.md) に記録する。これは INKWAVE 内の同期比較であり、本家の実機比較、原作の射程校正、physical iOS 検証の未確認項目を解消したという意味ではない。
 
+## Remote Dualies 固定姿勢の同期（#1156、2026-10-09）
+
+対象は Splatoon 3 Ver.11.3.0 を比較基準とする公開版 INKWAVE の owner / remote 表示整合。任天堂の [ブキの基本説明](https://splatoon.nintendo.com/en/news/beginner-basics-for-splatoon-3-choosing-the-right-weapons/) は Dualies の dodge roll を案内しているが、remote pose protocol と正確な切替フレームは示していない。今回の修正は INKWAVE owner がすでに持つ受理済み姿勢を remote に渡す。Nintendo の joint curve、姿勢切替フレーム、実機通信挙動を校正・検証したという主張はしない。
+
+公開版 INKWAVE では owner の `WeaponRunner.s3Turret` が固定射撃姿勢を所有し、既存 `Character` pose adapter がこれを描く一方、`NetMatch.packActor` の 20 Hz snapshot は `lockT` などを送っても `s3Turret` を含めず、`applyRemote` も再構成していなかった。Issue [#1156](https://github.com/rhgrive3/actions/issues/1156) の修正は既存 snapshot flag の予約 bit に Dualies 姿勢を載せ、remote 側では受理済み sample の既存 sender playback clock から Character 限定の pose view を復元する。remote の `WeaponRunner` は変更せず、射撃、ink、damage、collision、cadence に姿勢 bit を使わない。death、respawn 待機、weapon switch、ownership adoption では古い姿勢を解除する。旧 tuple 長は維持し、bit がない旧 sender は解除状態として読む。bit27 を使用し、bit20–26 の泳ぎ・Roller・復活 armor・gear・special readiness と衝突しないことを全 adapter 構成で検証する。
+
+再現は現行 production `install(profile)`、native `Actor` / `Character` / `NetMatch` を読み込む VM fixture と、全 source adapter を重ねる別の native composition 回帰 で、Dualies roll 後 90 frame fire、20 Hz 送信、受信側 playback sample、実 skeleton と indexed geometry を通す。修正前は owner が `s3Turret=true` のままでも remote は false で、turret pose の geometry 差が出なかった。修正後は remote の plant channel と実 geometry が切り替わり、30/60/120 Hz sample、初期 playback delay、duplicate/out-of-order/stale snapshot、旧 tuple、death/respawn、weapon switch、ownership handoff の回帰が通る。これは source VM の engine regression であり、ブラウザ上の実通信と Splatoon 3 実機の同期挙動は未確認。
+
 ## 遅延した remote splat と復活 life（#599、2026-10-06）
 
 比較条件は Splatoon 3 Ver.11.3.0、オンラインの Regular Battle / Turf War、シューター、標準ギア、相手の splat 後に復活する状態。任天堂の [オンライン対戦案内](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59459/p/897) と [公式ゲーム紹介](https://splatoon.nintendo.com/en/gameplay/) はオンライン対戦と Turf War を案内しているが、remote death event の順序・送信者権限・life epoch は説明していない。この内部同期の本家比較は未確認であり、Switch 実機や稼働中のオンライン対戦での再現はしていない。
