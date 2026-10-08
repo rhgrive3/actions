@@ -46,7 +46,7 @@ window.rig={yaw:0,pitch:0,mode:'follow',target:actor};
 window.controller=new PlayerController(actor,rig,input);controller.computeAim=()=>{};
 G.rig=rig;G.projectiles={update(){}};
 window.intents=[];const match={state:'playing',local:actor,controller,updateController(dt){controller.update(dt);},update(){intents.push({...actor.intent,move:actor.intent.move.toArray()});}};
-window.sim={input,rig,match,showcase:{},_padMenus(){}};installClock({G});
+G.match=match;window.sim={input,rig,match,showcase:{},_padMenus(){}};installClock({G});
 window.advance=dt=>runSimulation(sim,dt);window.G=G;window.Match=Match;window.NetSession=NetSession;window.HUD=HUD;window.DioramaOverlay=DioramaOverlay;window.THREE=THREE;window.ready=true;
 </script></html>`;
 const receipts = {}, errors = [];
@@ -471,7 +471,9 @@ try {
         G.level = { blocks: [], groundHeight: () => 0 };
         G.paint = { sample: () => 1, splat: () => 0 };
         G.physics = { los: () => true, raycast: (_a, _b, _c, hit) => { hit.hit = false; return hit; } };
-        G.match = { playing: () => true };
+        // MobileInput routes map changes to the active Match controller, just
+        // as in production, even after temporary controller probes above.
+        G.match = { playing: () => true, controller };
         G.projectiles = { update() {}, fireDualies() {} };
         const a = window.actionActor = new Actor({ team: 0, name: 'browser input', weapon: 'dualies', CharacterClass: Character });
         a.grounded = a.ground.hit = true; a._integrate = () => {}; a._spawnBarrier = () => {};

@@ -67,3 +67,14 @@ test('#964 a Charger release queued for its next tick is revoked by a touch map 
   m.setMap(true);m.setMap(false);advance(h,.2,60);
   assert.equal(h.shots.length,0);
 });
+
+test('#960 touch map routes to the active Match after a temporary controller probe',async()=>{
+  const h=await boot(),m=touch(h);
+  const probe=new h.controller.constructor(h.actor,h.rig,h.input);
+  assert.equal(h.G.match.controller,h.controller);
+  m.setMap(true);
+  assert.equal(h.controller.mapHeld,true);
+  assert.equal(probe.mapHeld,false,'inactive probe cannot own the live map');
+  m.setMap(false);
+  assert.equal(h.controller.mapHeld,false);
+});
