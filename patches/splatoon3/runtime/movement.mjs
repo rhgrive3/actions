@@ -228,6 +228,12 @@ export function normalJumpVelocity(a, velocity) {
       r.charging && r.charge >= 1 && Number.isFinite(cap)) return Math.min(velocity, cap);
   return velocity;
 }
+export function isSquidReturnerCeiling(actor, physics) {
+  const id = actor?.contacts?.ceilingBlock;
+  return actor?.contacts?.ceiling === true && Number.isInteger(id) && id >= 0 &&
+    physics?.level?.blocks?.[id]?.squidReturner === true;
+}
+
 export function installMovement(context, tuning) {
   api = context; config = tuning.movement;
   const { Actor } = api;
@@ -266,7 +272,8 @@ export function installMovement(context, tuning) {
   const integrate = Actor.prototype._integrate, splat = Actor.prototype.splat;
   Actor.prototype._integrate = function (...args) {
     const value = integrate.apply(this, args);
-    if (this.contacts.ceiling) {
+    // #1075: normal ceilings are geometry, not Squid Returners.
+    if (isSquidReturnerCeiling(this, api.G.physics)) {
       const state = movementState(this);
       for (const shield of new Set([state.armor, state.roll, state.surge])) if (shield) shield.armorTime = 0;
       state.armor = null;
