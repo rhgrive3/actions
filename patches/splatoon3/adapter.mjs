@@ -108,8 +108,14 @@ export function adaptSource(rel, code) {
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
   code = adaptAssistPresentation(rel, code, replaceOnce);
-  if (rel === 'src/config.js') return replaceOnce(code,
-    '  minimap: true,', '  minimap: false,', 'optional corner map default');
+  if (rel === 'src/config.js') {
+    code = replaceOnce(code,
+      '  gyroSens: 0,              // −5..+5, Splatoon 3 scale (0 = 132° of device turn per in-game 360°)',
+      '  gyroSens: 0,              // −5..+5; provisional bridge ~1.8x at zero (S3 response unverified)',
+      'gyro sensitivity provenance');
+    return replaceOnce(code,
+      '  minimap: true,', '  minimap: false,', 'optional corner map default');
+  }
   if (rel === 'src/ui/menus.js') {
     code = replaceOnce(code,
       'const fnv = (str) => { let x = 2166136261;',
@@ -135,6 +141,13 @@ export function adaptSource(rel, code) {
       "h('div', { class: 'iw-res__teams' }, table(0), table(1)),",
       "h('div', { class: 'iw-res__teams' }, table(winTeam), table(1 - winTeam)),",
       'winner-first Turf results order');
+  }
+  if (rel === 'src/core/gyro.js') {
+    // #725: approximate public bridge endpoints, not extracted Nintendo code.
+    return replaceOnce(code,
+      'const GYRO_DEG = [[-5, 278], [-2.5, 178], [0, 132], [2.5, 119], [5, 110]];',
+      'const GYRO_DEG = [[-5, 360], [0, 200], [5, 120]]; // ~1x / ~1.8x / ~3x public bridge',
+      'gyro sensitivity reference endpoints');
   }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",
@@ -739,6 +752,21 @@ export function adaptSource(rel, code) {
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
+    // #226/#735: count INKWAVE rain candidates, ground contact and owned
+    // paint separately. The existing 12-unit ray is an internal consistency
+    // bound, not a verified S3-specific HP cutoff or RainNum semantics.
+    code = replaceOnce(code,
+      '  _updateClouds(dt) {\n    const sp = SPECIALS.storm;',
+      '  _updateClouds(dt) {\n    const sp = SPECIALS.storm;\n    const inkWaveRainReach = 12;',
+      'finite rain trace');
+    code = replaceOnce(code,
+      '          const g = G.physics.raycast(_v, DOWN, 12, _hit);',
+      '          const g = G.physics.raycast(_v, DOWN, inkWaveRainReach, _hit);\n          const audit = c.s3RainAudit || (c.s3RainAudit = { candidateDrops: 0, groundHits: 0, paintEvents: 0 });\n          audit.candidateDrops++;\n          if (g.hit) audit.groundHits++;\n          if (g.hit && (!c.ghost || !c.owner.remote)) audit.paintEvents++;',
+      'count Storm rain candidate/contact/paint separately');
+    code = replaceOnce(code,
+      '          if (dx * dx + dz * dz > sp.radius * sp.radius || e.pos.y > c.group.position.y) continue;',
+      '          if (dx * dx + dz * dz > sp.radius * sp.radius || e.pos.y > c.group.position.y ||\n              e.pos.y + 1.2 < c.group.position.y - 0.8 - inkWaveRainReach) continue;',
+      'prevent damage beyond own finite rain reach');
     code = "import { fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     code = replaceOnce(code, 'let vis = (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));',
       'let vis = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));', 'slosher source draw radius');

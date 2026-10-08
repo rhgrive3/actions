@@ -110,3 +110,12 @@ test('dualies pre-aim and contact admission stop on missing or duplicated native
     assert.throws(() => adaptSource('src/game/character.js', character + '\n' + anchor), new RegExp(label));
   }
 });
+
+
+test('#725 gyro adapter replaces only the measured public endpoints', () => {
+  const native=fs.readFileSync(new URL('src/core/gyro.js',publicRoot),'utf8');
+  const adapted=adaptSource('src/core/gyro.js',native);
+  assert.ok(adapted.includes('const GYRO_DEG = [[-5, 360], [0, 200], [5, 120]];'));
+  assert.ok(!adapted.includes('[-5, 278]'));
+  assert.throws(()=>adaptSource('src/core/gyro.js',adapted),/conflict/);
+});
