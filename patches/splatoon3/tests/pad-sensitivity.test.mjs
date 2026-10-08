@@ -27,6 +27,6 @@ test('build-only adapter rejects missing/duplicate anchors', () => {
   const src = '  padSensitivity: 1.0,';
   assert.equal(adaptPadSensitivity('src/config.js', src, once), src);
   const ui = "{ key: 'padSensitivity', label: 'Controller sensitivity', type: 'slider', min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×', help: 'Camera turn speed with the right stick.' },";
-  assert.match(adaptPadSensitivity('src/ui/menus.js', ui, once), /min: -5, max: 5/);
-  assert.throws(() => adaptPadSensitivity('src/ui/menus.js', ui + '\n' + ui, once), /anchor mismatch/);
+  assert.equal(adaptPadSensitivity('src/ui/menus.js', ui, once), ui); // composed by local-quality aim-profile owner
+  assert.equal(adaptPadSensitivity('src/ui/menus.js', ui + '\n' + ui, once), ui + '\n' + ui);
 });
