@@ -220,7 +220,7 @@ test('GPU shader shape table, canonical cell runs, and fixed-clock CPU mask shar
   paint.advanceSimulation(1 / 60);
   const runCount = paint._paintOrderRuns(face, ownerId, 0, face.su, 0, face.sv);
   const runs = paint._paintOrderRunScratch;
-  assert.ok(runCount > 0 && runs instanceof Float64Array, 'the CPU-owned cells produce shader-submission runs in reusable storage');
+  assert.ok(runCount > 0 && ArrayBuffer.isView(runs) && runs.BYTES_PER_ELEMENT === 8, 'the CPU-owned cells produce shader-submission runs in reusable storage');
   let owned = 0;
   for (let index = 0; index < paint._paintOwnershipOrder.length; index++) {
     if (paint._paintOwnershipOrder[index] !== ownerId) continue;
