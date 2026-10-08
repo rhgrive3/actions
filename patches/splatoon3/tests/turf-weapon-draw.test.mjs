@@ -26,6 +26,9 @@ function setup(source, { mode = 'turf', attract = false, weapon = 'shooter', ran
     G, Actor, PlayerController: class {}, BotBrain: class {}, on: () => () => {}, Math: math,
     WEAPON_ORDER: ORDER, MATCH: { teamSize: 4 }, BOT_NAMES: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], shuffle: a => a, randomStyle: () => ({}),
     _v: { set() { return this; } },
+    // This fixture isolates weapon assignment, not the separate #512 Squid Spawn
+    // system. Let its real composed setup take the original fallback placement.
+    beginInitialSquidSpawn: () => false,
   });
   const m = Object.assign(Object.create(Match.prototype), { opts: { weapon, CharacterClass: class {} }, mode, attract, actors: [], bossCfg: { squad: 8 }, unsubs: [], bossModule: { BossMode: class { constructor() { this.boss = {}; } } } });
   m.setup();
