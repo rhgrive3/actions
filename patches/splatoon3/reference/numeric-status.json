@@ -1881,6 +1881,21 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "bomb.knockback.accel": {
+    "value": 700,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "bomb.knockback.bias": {
+    "value": 0.8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "bomb.knockback.distance": {
+    "value": 12,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "bomb.inkRecoverStop": {
     "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -2663,6 +2678,21 @@
   },
   "flow.abilityPoints": {
     "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.assistPoints.referenceThreshold": {
+    "value": 100,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.assistPoints.damage": {
+    "value": 14,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.assistPoints.marking": {
+    "value": 4,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -3531,21 +3561,6 @@
   },
   "clothingGear.respawnPunisher.specialSaverAPScale": {
     "value": 0.7,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "flow.assistPoints.referenceThreshold": {
-    "value": 100,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "flow.assistPoints.damage": {
-    "value": 14,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "flow.assistPoints.marking": {
-    "value": 4,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
