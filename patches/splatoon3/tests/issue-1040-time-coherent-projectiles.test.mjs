@@ -126,12 +126,13 @@ const hitCounter = victim => {
   c.off = f.on('hit', e => { if (e.victim === victim) c.hits++; });
   return c;
 };
-// One round repositioned onto the victim line after a real fireShooter push;
-// vel parameterised so scenarios can control how far it travels in one tick.
-const spawnShot = (vel = 40) => {
+// One real fireShooter round placed outside the target capsule. Its internal
+// velocity and start point define a controlled one-tick segment without a
+// time-zero overlap that would stop native InkFlight before it travels.
+const spawnShot = (vel = 40, startX = -1) => {
   G.projectiles.fireShooter(shooter, shooter.weapon, 0);
   const p = G.projectiles.list.at(-1);
-  p.pos.set(-0.08, 0.6, 0); p.prev.copy(p.pos); p.start.copy(p.pos);
+  p.pos.set(startX, 0.6, 0); p.prev.copy(p.pos); p.start.copy(p.pos);
   p.vel.set(vel, 0, 0); p.straight = 1e9; p.drag = 0; p.life = 5; p.age = 0; p.delay = 0;
   return p;
 };
@@ -155,7 +156,7 @@ freeze(victim);
 let lastHitY = null, firstMissY = null;
 for (let y = 0.7; y <= 1.45; y += 0.05) {
   victim.pos.set(0, y, 0); victim.hp = 1000; victim.alive = true;
-  spawnShot(); runTick();                       // one REAL fixed tick
+  spawnShot(400, -2); runTick();                // crosses the target from outside its capsule
   const hit = victim.hp < 1000;
   clearProjectiles();
   if (hit) lastHitY = y; else if (lastHitY !== null && firstMissY === null) firstMissY = y;
@@ -170,7 +171,7 @@ test('#1040 static target in the band still takes exactly one hit (coherent reco
   const v = f.make({ pos: [0, BAND_IN, 0], team: 1, name: 'static-victim' });
   freeze(v);
   const c = hitCounter(v);
-  spawnShot(40); runTick();
+  spawnShot(400, -2); runTick();
   assert.equal(c.hits, 1, 'stationary target must still be hit');
   assert.ok(v.hp < 100 && v.hp > 0, 'victim damaged, alive');
   assert.ok(f.coherentMotionStart(v), 'snapshot record is coherent for a continuous target');
@@ -188,7 +189,8 @@ test('#1040 CE-1: target entering the path only after the round passed takes no 
   v.pos.set(0, y0, 0); v.vel.set(0, -6.982, 0); v.grounded = false;
   v.hp = 100;
   const c = hitCounter(v);
-  spawnShot(400); runTick();
+  const p = spawnShot(400, -2); runTick();
+  assert.ok(p.pos.x > 4, 'control: the shot traversed its full six-metre test segment');
   const yEndActual = v.pos.y;
   assert.ok(Math.abs(yEndActual - yEnd) < 1e-6, 'victim really ends the tick inside the band');
   assert.ok(yEndActual <= lastHitY, 'legacy end-pose test would have hit (phantom is real)');
@@ -205,7 +207,8 @@ test('#1040 CE-2: target occupying the path at the pass time takes exactly one h
   v.hp = 100;
   assert.ok(y0 <= lastHitY, 'victim starts inside the band');
   const c = hitCounter(v);
-  spawnShot(40); runTick();
+  const p = spawnShot(40, -0.4); runTick();
+  assert.ok(p.pos.x > p.prev.x + 0.02, 'contact follows projectile travel, not a start-overlap');
   assert.ok(v.pos.y > BAND_TOP, 'target has left the band by end of tick (legacy dropped the hit)');
   assert.equal(c.hits, 1, 'exactly one hit');
   assert.ok(v.hp < 100, 'damage applied');
@@ -220,13 +223,13 @@ test('#1040 nearest victim wins; the later one on the line stays untouched', () 
   // b alone is reachable, otherwise the "nearest" claim would be vacuous.
   a.alive = false;
   const solo = hitCounter(b);
-  spawnShot(40); runTick();
+  spawnShot(400, -2); runTick();
   assert.equal(solo.hits, 1, 'later victim is reachable on its own');
   solo.off?.(); clearProjectiles();
   a.alive = true;
   const ca = hitCounter(a), cb = hitCounter(b);
   a.hp = b.hp = 100;
-  spawnShot(40); runTick();
+  spawnShot(400, -2); runTick();
   assert.equal(ca.hits, 1, 'nearest victim takes the hit');
   assert.equal(cb.hits, 0, 'later victim untouched');
   assert.ok(b.hp === 100, 'later victim full hp');
@@ -238,7 +241,7 @@ test('#1040 terrain between round and victim wins the ordering (no victim hit)',
   freeze(v);
   // Control: no wall -> the far victim is hit inside the same tick.
   let c = hitCounter(v);
-  spawnShot(400); runTick();
+  spawnShot(400, -2); runTick();
   assert.equal(c.hits, 1, 'control: far victim reachable without the wall');
   c.off?.(); clearProjectiles();
   // Wall slab between the round origin and the victim.
@@ -279,7 +282,7 @@ test('#1040 remote victim driven by the real sample pipeline is time-coherent', 
   const rv = f.make({ pos: [0, BAND_TOP + 0.03 - dRise, 0], team: 1, name: 'remote-ce2' });
   netInit(rv);
   const c2 = hitCounter(rv);
-  spawnShot(40);
+  spawnShot(40, -0.4);
   peer.tr += STEP; pushSample(rv, peer.tr, rv.pos.y + dRise);
   nm._sample(rv, peer.tr, STEP);                 // real NetMatch sample evaluation
   runTick();                                     // snapshot -> applyRemote -> sweep
@@ -293,7 +296,7 @@ test('#1040 remote victim driven by the real sample pipeline is time-coherent', 
   const c1 = hitCounter(rv2);
   peer.tr += STEP; pushSample(rv2, peer.tr, rv2.pos.y - dFall);
   nm._sample(rv2, peer.tr, STEP);
-  spawnShot(400); runTick();
+  spawnShot(400, -2); runTick();
   assert.ok(Math.abs(rv2.pos.y - (BAND_TOP - 0.03)) < 1e-6, 'remote CE-1: sample ends inside the band');
   assert.equal(c1.hits, 0, 'remote CE-1: no phantom hit');
   assert.equal(rv2.hp, 100, 'remote CE-1: untouched');
@@ -309,7 +312,7 @@ test('#1040 remote victim driven by the real sample pipeline is time-coherent', 
   assert.equal(rv3.pos.x, 4, 'initial network sample places the remote actor at its owner pose');
   peer.tr += STEP; pushSample(rv3, peer.tr, BAND_IN, { x: 0, tp: 1 });
   const c3 = hitCounter(rv3);
-  spawnShot(400); runTick();
+  spawnShot(400, -2); runTick();
   assert.equal(rv3.pos.x, 0, 'NetMatch applied the short teleport sample during runSimulation');
   assert.equal(f.coherentMotionStart(rv3), null, 'sample teleport identity invalidates the short relocation sweep');
   assert.equal(c3.hits, 1, 'discontinuous remote motion falls back to the end-pose collision');
@@ -365,6 +368,15 @@ test('#1040 teleport, spawn and owner change reset the record (no sweep across d
   assert.equal(f.coherentMotionStart(v), null, 'owner change invalidates the record');
   assert.equal(c.hits, 1, 'static fallback still tests the unchanged current pose');
   c.off?.(); clearProjectiles(); f.remove(v);
+  // T5: changing body form invalidates the old capsule interval; the end pose
+  // is outside this segment, while a stale standing capsule would sweep across it.
+  v = f.make({ pos: [0, BAND_IN, 0], team: 1, name: 'form-change-victim' });
+  v.update = () => { v.pos.x = -2; v.form = 'squid'; };
+  c = hitCounter(v);
+  spawnShot(40, -1); runTick();
+  assert.equal(f.coherentMotionStart(v), null, 'form changes do not sweep between different native capsules');
+  assert.equal(c.hits, 0, 'changed-form endpoint outside the shot segment remains untouched');
+  c.off?.(); clearProjectiles(); f.remove(v);
 });
 
 test('#1040 motion record is one preallocated object per actor, stable across ticks', () => {
@@ -391,7 +403,7 @@ test('#1040 24/30/60/120 Hz render cadence produces identical fixed-tick outcome
     const v = f.make({ pos: [0, BAND_TOP + 0.03 - dRise, 0], team: 1, name: 'cadence-victim' });
     v.vel.set(0, 6.982, 0); v.grounded = false; v.hp = 100;
     const c = hitCounter(v);
-    spawnShot(40);
+  spawnShot(40, -0.4);
     f.game.s3Clock = new f.FixedClock();
     for (const dt of frames) f.runSimulation(f.game, dt);
     outcomes.push({ name, ticks: f.game.s3Clock.ticks, hits: c.hits, hp: v.hp });
@@ -428,7 +440,7 @@ test('#1040 remote sample hit stays once-only at 24/30/60/120 Hz and across a re
       spawnPending: false, ready: false };
     nm._sample(v, peer.tr, STEP); // establish the real sample before the first swept tick
     const c = hitCounter(v);
-    spawnShot(40);
+    spawnShot(40, -0.4);
     f.game.s3Clock = new f.FixedClock();
     for (const dt of frames) f.runSimulation(f.game, dt);
     assert.equal(f.game.s3Clock.ticks, 60, `${name} remote simulation advances 60 fixed ticks`);
@@ -443,7 +455,7 @@ test('#1040 installed Actor updates preserve real Dualies dodge and Splatling mo
   const dualies = f.make({ pos: [0, 0, 0], team: 1, name: 'dualies-dodge-victim', weapon: 'dualies' });
   dualies.intent.move.set(1, 0, 0); dualies.intent.fire = true; dualies.intent.jump = true;
   const dx0 = dualies.pos.x, dualHits = hitCounter(dualies);
-  spawnShot(40); runTick();
+  spawnShot(40, -0.4); runTick();
   assert.ok(dualies.weaponRunner.dodge, 'native jump/fire edge starts the Dualies dodge');
   assert.ok(dualies.pos.x > dx0, 'installed Actor.update applies the dodge displacement');
   assert.ok(f.coherentMotionStart(dualies), 'Dualies dodge motion remains eligible for the same-tick sweep');
@@ -453,7 +465,7 @@ test('#1040 installed Actor updates preserve real Dualies dodge and Splatling mo
   const splatling = f.make({ pos: [0, 0, 0], team: 1, name: 'splatling-moving-victim', weapon: 'splatling' });
   splatling.intent.move.set(1, 0, 0); splatling.intent.fire = true;
   const sx0 = splatling.pos.x, splatHits = hitCounter(splatling);
-  spawnShot(40); runTick();
+  spawnShot(40, -0.4); runTick();
   assert.ok(splatling.pos.x > sx0, 'installed Actor.update advances continuous Splatling movement');
   assert.ok(f.coherentMotionStart(splatling), 'continuous Splatling motion keeps a coherent sample');
   assert.equal(splatHits.hits, 1, 'continuous Splatling motion is tested against the projectile once');

@@ -33,12 +33,13 @@ export function beginActorMotionTick(actors) {
     const a = actors[i];
     const r = a.s3Motion || (a.s3Motion = {
       x0: 0, y0: 0, z0: 0, valid: false, alive: false,
-      nid: undefined, owner: null, epoch: 0, netReady: false, netTp: undefined, tick: -1,
+      nid: undefined, owner: null, form: null, epoch: 0, netReady: false, netTp: undefined, tick: -1,
     });
     r.x0 = a.pos.x; r.y0 = a.pos.y; r.z0 = a.pos.z;
     r.alive = !!a.alive;
     r.nid = a.nid;
     r.owner = a.owner ?? null;
+    r.form = a.form;
     r.epoch = a.s3MotionEpoch || 0;
     r.netReady = !!a.net?.ready;
     r.netTp = a.net?.tp;
@@ -57,6 +58,7 @@ export function coherentMotionStart(actor) {
   if (!r || !r.valid || !r.alive || !actor.alive) return null;
   if (r.tick !== tickNow) return null;
   if (r.nid !== actor.nid || r.owner !== (actor.owner ?? null)) return null;
+  if (r.form !== actor.form) return null;
   if (r.epoch !== (actor.s3MotionEpoch || 0)) return null;
   // NetMatch carries an explicit teleport identity (`tp`) in its buffered
   // samples. A first ready sample and each later identity change are snaps,
