@@ -306,7 +306,7 @@ export function emit(name, payload) {
       '    const S = n.cur;\n    if (a.remote) {\n      const flags = S.f;\n      if (!a.alive || !(flags & F.alive) || !(flags & F.squid) || (flags & F.special) || !S.rollId) clearRemoteSquidroll(a);\n      else syncRemoteSquidroll(a, S, this.peers.get(a.owner));\n    }\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
       'remote presentation follows accepted owner Roll snapshot');
     patch('    wr.aimingSub = !!(f & F.subAim); wr.firingT = f & F.firing ? 0.3 : 0;',
-      '    wr.aimingSub = !!(f & F.subAim); wr.firingT = f & F.firing ? 0.3 : 0;\\n    wr.s3BlasterWindup = a.weapon.kind === \\'blaster\\' ? Math.max(0, Number(S.blasterWindup) || 0) : 0;',
+      '    wr.aimingSub = !!(f & F.subAim); wr.firingT = f & F.firing ? 0.3 : 0;\n    wr.s3BlasterWindup = a.weapon.kind === \'blaster\' ? Math.max(0, Number(S.blasterWindup) || 0) : 0;',
       'remote Blaster startup windup presentation');
     patch('        a.character._netTrig?.(e[3], unpackTrig(e[4]));',
       "        if (e[3] === 'movement_cancel' || e[3] === 'land' || e[3] === 'spawn') clearRemoteSquidroll(a, true);\n        a.character._netTrig?.(e[3], unpackTrig(e[4]));",
