@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LEGACY_GAIT_INFO, LEGACY_GAIT_CHANNELS as C, sampleLegacyGait } from '../runtime/legacy-walk-curves.mjs';
+import { weakDiagonalWalkTrace } from '../runtime/walk.mjs';
 import { character } from './real-character-fixture.mjs';
 
 const clip = (phase, x = 0, z = 1, aim = 0, run = 0) =>
@@ -104,4 +105,21 @@ test('real Character remains finite in backwards, shooting, and 30/60/120 Hz sam
     assert.ok(result.contacts > 20);
     assert.ok(result.phases.at(-1) > result.phases[0]);
   }
+});
+
+
+test('#997 weak-diagonal gait exposes per-tick reference and game-generation provenance without changing movement', () => {
+  const ch={gv:.45,mdx:Math.SQRT1_2,mdz:Math.SQRT1_2,phase:.25,cad:1.2,duty:.64,hipTwist:.13,runW:.1};
+  const before={...ch};
+  const trace=weakDiagonalWalkTrace(ch);
+  assert.equal(trace.referenceGame,'Splatoon (Wii U)');
+  assert.equal(trace.s3CurveVerified,false);
+  assert.equal(trace.legacyWalkFrames,40);
+  assert.equal(trace.legacyRunFrames,32);
+  assert.equal(trace.speed,.45);
+  assert.equal(trace.phase,.25);
+  assert.equal(trace.cadence,1.2);
+  assert.equal(trace.pose.length,14);
+  assert.ok(trace.pose.every(Number.isFinite));
+  assert.deepEqual(ch,before,'diagnostics never retune actor or visual state');
 });
