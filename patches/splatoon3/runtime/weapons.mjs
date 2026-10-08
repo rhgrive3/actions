@@ -10,6 +10,7 @@ import { installWeaponGates } from './weapon-gates.mjs';
 import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 import { installRollerLogic } from './roller.mjs';
 import { installSplatlingJumpSpread } from './splatling-jump-spread.mjs';
+import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 let api;
 const dualiesLockConfigs = new WeakMap();
 const splatlingStreamConfigs = new WeakMap();
@@ -337,6 +338,7 @@ export function installWeapons(context, profile) {
     releaseSplatlingInterrupt(this, -1);
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
+    this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
     return result;
@@ -827,11 +829,38 @@ export function installWeapons(context, profile) {
     return fireBlaster.call(this, a, w, spreadDeg);
   };
   const fireShooter = Projectiles.prototype.fireShooter;
+  const shooterSource = profile.weaponsFidelityCompletion?.weapons?.shooter;
+  const shooterSpawn = shooterSource?.SplashSpawnParam;
+  const shooterPaint = shooterSource?.SplashPaintParam;
+  const shooterScale = profile.weaponsFidelityCompletion?.worldUnitsPerSourceUnit;
+  const nearDown = new THREE.Vector3(0, -1, 0), nearOrigin = new THREE.Vector3(), nearHit = new Hit();
   Projectiles.prototype.fireShooter = function (a, weapon, spreadDeg) {
     const result = fireShooter.call(this, a, weapon, spreadDeg);
     if (a.weaponRunner && weapon.kind === 'shooter') {
-      a.weaponRunner.s3PostFireLockActive = true;
-      a.weaponRunner.s3ShooterStreamActive = true;
+      const runner = a.weaponRunner;
+      runner.s3PostFireLockActive = true;
+      runner.s3ShooterStreamActive = true;
+      // #507: count only accepted, emitted main rounds. Remote visual ghosts
+      // must not claim turf or move the authoritative nearest-splash cadence.
+      if (!a.remote && shooterSpawn && shooterPaint &&
+          Number.isFinite(shooterScale) && shooterScale > 0 &&
+          Number.isFinite(shooterSpawn.SpawnNearestLength) &&
+          Number.isFinite(shooterPaint.WidthHalfNearest) &&
+          advanceShooterNearestSlot(runner, shooterSpawn) &&
+          G.physics?.raycast && G.paint?.splat) {
+        const heading = Number.isFinite(a.aimYaw) ? a.aimYaw : a.yaw;
+        const dist = shooterSpawn.SpawnNearestLength * shooterScale;
+        nearOrigin.copy(a.pos);
+        nearOrigin.x += Math.sin(heading) * dist;
+        nearOrigin.z += Math.cos(heading) * dist;
+        nearOrigin.y += 0.4;
+        const contact = G.physics.raycast(nearOrigin, nearDown, 10 * shooterScale, nearHit, true);
+        if (contact.hit && contact.normal.y >= 0.4) {
+          const radius = shooterPaint.WidthHalfNearest * shooterScale;
+          const seed = ((runner.s3ShooterNearestSlot * 2654435761) >>> 0) / 4294967296;
+          a.addTurf(G.paint.splat(nearOrigin.copy(contact.point).addScaledVector(contact.normal, 0.05), radius, a.team, { seed }));
+        }
+      }
     }
     return result;
   };
