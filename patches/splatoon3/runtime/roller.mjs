@@ -457,7 +457,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     if (wallIdle && this.rolling && !a.remote && G.paint?.splat && this.s3WallPaintWait <= EPS) {
       const point = scratch.wallPoint;
       const contact = a.pos.clone().set(point.x, point.y, point.z);
-      const area = G.paint.splat(contact, 0.28, a.team, { kind: 'roll', seed: Math.random() });
+      const area = G.paint.splat(contact, 0.28, a.team, { kind: 0, seed: Math.random() });
       a.addTurf(area);
       this.s3WallPaintWait = 0.12;
     }
