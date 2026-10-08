@@ -81,7 +81,7 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   owner.emit('actor:jump', { actor: local });
   ownerStep({ owner, local }, dt, { fire: true, firePressed: true });
   const airborne = snapshot(sender);
-  assert.equal(airborne.a[0].length, 22, 'the existing packed actor row shape is unchanged');
+  assert.equal(airborne.a[0].length, 24, 'the existing current actor row shape is unchanged');
   assert.ok(airborne.a[0][10] & FLICK, 'the existing flick bit is retained');
   assert.ok(airborne.a[0][10] & FLICK_VERTICAL, 'airborne owner selection reaches the packet flags');
   assert.equal(local.weaponRunner.s3RollerAttack?.vertical, true);

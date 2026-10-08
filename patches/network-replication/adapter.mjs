@@ -243,7 +243,7 @@ export function emit(name, payload) {
       'if (wr.slosh >= 0) f |= F.slosh;\n  if (wr.s3RollerAttack) f |= F.rollerFoldAttack;\n  if (wr.s3RollerAttack?.vertical) f |= F.rollerFoldVertical;',
       'pack owner Roller fold mode');
     patch('wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
-      'wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;\n    wr.s3RollerFoldAttack = f & F.rollerFoldAttack ? { vertical: !!(f & F.rollerFoldVertical) } : null;',
+      'wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;\n    wr.s3RollerFoldAttack = f & F.rollerFoldAttack ? { vertical: !!(f & F.rollerFoldVertical) } : null;\n    applyRemoteRollerPresentation(a, S.rollerFlick, dt);',
       'apply remote Roller fold mode');
     patch('const FORWARD = [', "const FORWARD = ['hit', 'hit:rejected', ",
       'authoritative hit admission feedback');
@@ -261,7 +261,7 @@ export function emit(name, payload) {
         `const hitAdmission = ${hitCall.slice(0, -1)};\n    if (hitAdmission === 'rejected-invulnerable') emit('hit:rejected', { attacker: atk, victim: v, damage: d.d, weaponId: d.w });`,
         'owner confirms invulnerability rejection');
     }
-    code = "import { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    code = "import { packRollerPresentation, readRollerPresentation, applyRemoteRollerPresentation } from '../../patches/network-replication/roller-presentation.mjs';\nimport { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     patch('  sendHit(attacker, victim, dmg, wid) {',
       '  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {', 'Slosher volley identity send');
     {
@@ -316,7 +316,7 @@ export function emit(name, payload) {
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
       'owner simulation tick preserving existing sidecars');
     patch('    const a = [];\n    for (const x of this.byNid.values()) if (!x.remote) a.push(packActor(x));',
-      '    const a = [], sq = Object.create(null), wp = Object.create(null), bw = Object.create(null);\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const wr = x.weaponRunner, slosh = x.weapon?.kind === \'slosher\' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n      const sp = x.specialActive, phase = sp?.id === \'slam\' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n      const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n      if (slosh >= 0 || phase) wp[x.nid] = [slosh, phase, slamT];\n      const windup = x.weapon?.kind === \'blaster\' ? x.weaponRunner?.s3BlasterWindup : 0;\n      if (Number.isFinite(windup) && windup > 0) bw[x.nid] = Math.min(1, windup);\n    }',
+      '    const a = [], sq = Object.create(null), wp = Object.create(null), bw = Object.create(null), rf = Object.create(null);\n    const simulationTick = Math.max(0, Math.round((G.time || 0) * 60));\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const flick = packRollerPresentation(x, this, simulationTick);\n      if (flick) rf[x.nid] = flick;\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const wr = x.weaponRunner, slosh = x.weapon?.kind === \'slosher\' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n      const sp = x.specialActive, phase = sp?.id === \'slam\' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n      const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n      if (slosh >= 0 || phase) wp[x.nid] = [slosh, phase, slamT];\n      const windup = x.weapon?.kind === \'blaster\' ? x.weaponRunner?.s3BlasterWindup : 0;\n      if (Number.isFinite(windup) && windup > 0) bw[x.nid] = Math.min(1, windup);\n    }',
       'append optional Squid Roll and weapon/special motion sidecars');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
@@ -325,12 +325,12 @@ export function emit(name, payload) {
     }
     // actors
     if (d.a)`, 'snapshot physics tick pair');
-    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (Object.keys(rf).length) msg.rf = rf;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
-      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const a = this.byNid.get(s[0]);',
+      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
       'strict optional Squid Roll and motion metadata validation');
     patch('      const snap = unpackActor(s, d.ts);\n      snap.spCost = d.sc?.[a.nid];',
-      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.sloshElapsed = pose ? pose[0] : -1; snap.slamPhase = pose ? pose[1] : 0; snap.slamT = pose ? pose[2] : 0;\n      snap.blasterWindup = windup;\n      snap.spCost = d.sc?.[a.nid];',
+      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.sloshElapsed = pose ? pose[0] : -1; snap.slamPhase = pose ? pose[1] : 0; snap.slamT = pose ? pose[2] : 0;\n      snap.blasterWindup = windup; if (flick) snap.rollerFlick = flick;\n      snap.spCost = d.sc?.[a.nid];',
       'attach validated presentation-only action clocks');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
@@ -1239,6 +1239,9 @@ ${bombHit}`;
       aC[i4] = C[i3]; aC[i4 + 1] = C[i3 + 1]; aC[i4 + 2] = C[i3 + 2]; aC[i4 + 3] = a;`, 'puff presentation belongs to source');
 
   }
-  if (rel === 'src/net/netmatch.js') code = adaptIssue1088SurgePresentation(code);
+  if (rel === 'src/net/netmatch.js') {
+    code = adaptIssue1088SurgePresentation(code);
+    patch('    const S = n.cur;', '    const S = n.cur;\n    applyRemoteRollerPresentation(a, S.rollerFlick, dt);', 'apply Roller presentation before native death return');
+  }
   return code;
 }
