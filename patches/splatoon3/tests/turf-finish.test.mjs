@@ -65,7 +65,7 @@ test('#923 finish/judge skip costly Actor stepping and soft-push without retirin
   assert.equal(actors,0,`native actor physics at ${hz}Hz`);
   assert.equal(bots,0,`finished bot decisions at ${hz}Hz`);
   assert.equal(local.intent.fire,false);assert.equal(local.intent.sub,false);
-  assert.deepEqual(pos0.toArray(),[0,0,0]);assert.deepEqual(pos1.toArray(),[.2,0,0]);
+  assert.deepEqual(plain(pos0.toArray()),[0,0,0]);assert.deepEqual(plain(pos1.toArray()),[.2,0,0]);
   assert.equal(projectiles,180,'late projectile stepping must not be cleared or frozen');
   assert.deepEqual(plain(f.m.result),{coverage:[.51,.49],winner:0});
   assert.deepEqual(f.coverage,[.4,.6],'late paint still renders, judge stays frozen at deadline');
