@@ -43,6 +43,7 @@ import { adaptFinalCount } from './final-count-adapter.mjs';
 import { adaptTurfLead } from './turf-lead-adapter.mjs';
 import { adaptScoreReticle } from './score-reticle-adapter.mjs';
 import { adaptMapTeammateStatus } from './map-teammate-status-adapter.mjs';
+import { adaptBubblerJumpTarget } from '../splatoon3/bubbler-jump-target-adapter.mjs';
 import { adaptResourceSource } from './resource-adapter.mjs';
 import { adaptMedalSource } from './medal-adapter.mjs';
 import { adaptAimProfiles } from './aim-profile-adapter.mjs';
@@ -132,6 +133,8 @@ function adaptQualityLayer(rel, code) {
   code = adaptTurfLead(rel, code, replaceOnce);
   code = adaptScoreReticle(rel, code, replaceOnce);
   code = adaptMapTeammateStatus(rel, code, replaceOnce);
+  // #1153: deployed friendly Big Bubbler is an independent Super Jump receiver.
+  code = adaptBubblerJumpTarget(rel, code, replaceOnce);
   code = adaptIssue427(rel, code);
   code = adaptClothingGear(rel, code, replaceOnce);
   code = adaptBossHit(rel, code);
