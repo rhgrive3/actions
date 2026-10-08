@@ -110,7 +110,7 @@ test('#911 player-direct Blaster collision shares reduced impact radius and dama
  near.hp=100;far.hp=100;
  ps._blastBurst(p,at,null);
  close(near.hp,30);assert.ok(far.hp<100,'ordinary timed burst retains full radius');
- close(direct.hp,30,'direct victim is excluded only from its own collision burst');
+ assert.equal(direct.hp,30,'direct victim is excluded only from its own collision burst');
 });
 test('terrain cause restored on exception and pooled reuse; paint/FX/boss dimensions stay native',async()=>{
  const f=await setup('blaster'),ps=projectiles(f),p=blast(f,ps),at=new f.THREE.Vector3(),normal=new f.THREE.Vector3(0,1,0);const paint=[],fx=[],boss=[];
