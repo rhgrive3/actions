@@ -1762,3 +1762,13 @@ normalize descriptors before applying their original byte/digest/closure checks;
 all budget limits remain unchanged. Negative descriptor tests reject missing,
 malformed, non-finite and incorrectly typed metadata instead of allowing `NaN`
 to mask budget evidence. This compatibility repair does not claim a new Issue.
+
+## 2026-10-08 — #642 lazy HDR composer target lifetime
+
+**本家参照と条件。** 比較対象は Splatoon 3 Ver. 11.3.0（[公式更新履歴](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)）。この変更はブラウザ側の描画リソース寿命だけを扱い、武器、ギア、プレイヤー状態、操作入力、ゲームロジックを変えないため、個別の武器・ギア・操作条件は該当しない。Nintendo の公開資料は post-processing composer のターゲット形式・確保時期・破棄時期を示しておらず、Switch の GPU メモリや描画同等性は未確認。
+
+**INKWAVE の根拠と変更。** exact base `4206a4b7` の `inkwave-public/src/core/renderer.js` は、pass stack を作る前に full-size `THREE.HalfFloatType` ターゲットを作り、vendored Three.js r186 `EffectComposer` がそのターゲットを直ちに clone する。full-six production composition でも同じ順序を確認した。`patches/local-quality/composer-target-adapter.mjs` は composer と ping-pong pair の生成を最初の実 render まで遅らせ、同じ HalfFloat/sample/size 設定を使う。ページが hidden になったときは screen composer を破棄し、visible 後の最初の frame で再生成する。`renderToScreen=false` の明示的な offscreen render は hidden 状態でも通す。resize と動的 pixel ratio は lazy state に反映し、quality rebuild は既存 pair を破棄して新しい quality の設定で遅延生成する。WebGL context loss/restore は既存 Three renderer の管理に任せ、この adapter から listener を追加しない。
+
+**再現と確認。** `node --experimental-vm-modules scripts/check-inkwave-composer-target.mjs` は現在の six-adapter composition を通し、pre-change target ordering、HalfFloat policy、source parse、変換の round-trip を確認する。`node --test patches/local-quality/tests/composer-target-adapter.test.mjs` は vendored Three r186 の実 `WebGLRenderTarget` / `EffectComposer` object を使う 4 cases で、baseline clone、lazy creation、resize、visibility disposal/recreation、offscreen output、quality/sample rebuild、final disposal を確認する。これは native Three object lifecycle check で、WebGL driver allocation・GPU memory・pixel output の測定ではない。
+
+**プレイへの影響と限界。** 可視状態で通常描画中の二つの HalfFloat target と pass order は維持されるため、ゲーム操作・simulation・tone/color shader を変えず、出力 pixel parity も推定しない。削減対象は初回 render 前と document hidden 中の composer pair 寿命であり、可視状態の target memory は従来どおり残る。今回の環境には Chromium/Firefox、Playwright/Puppeteer、headless-gl がなく、小さな GPU probe を実行できなかった。Switch 実機比較、driver が実際に確保する bytes、tone mapping/ScreenFX/FXAA の pixel diff は未確認。
