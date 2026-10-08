@@ -161,8 +161,15 @@ export function splatlingSubInterrupt(runner, actor, dt, input) {
   }
   if (!input?.sub || !(runner.charging || runner.streaming)) return null;
   runner.s3SplatlingSubInterruptPending = true;
-  runner.s3SplatlingSubInterruptRemaining = SPLATLING_SUB_INTERRUPT;
-  return 'wait';
+  // The input update is the first fixed frame of the interruption window.
+  // Consume its dt here so the native sub-ready handoff lands on frame five,
+  // rather than waiting five more updates after the R edge.
+  runner.s3SplatlingSubInterruptRemaining = Math.max(0,
+    SPLATLING_SUB_INTERRUPT - Math.max(0, dt));
+  if (runner.s3SplatlingSubInterruptRemaining > INTERRUPT_EPS) return 'wait';
+  runner.s3SplatlingSubInterruptPending = false;
+  runner.s3SplatlingSubInterruptReady = true;
+  return 'ready';
 }
 export function splatlingInterrupt(runner, actor, slot) {
   const x = INTERRUPT_SLOTS[slot];

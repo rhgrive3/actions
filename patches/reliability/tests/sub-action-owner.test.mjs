@@ -27,12 +27,25 @@ for (const kind of ['shooter','charger','roller','splatling','dualies','slosher'
 }
 for (const kind of ['charger','splatling']) test(`#530 ${kind}: entering sub cancels an existing charge without firing`, async()=>{
   const h=await rig(kind);for(let i=0;i<20;i++)h.step({fire:true,firePressed:i===0});assert.equal(h.r.charging,true);
-  const ink=h.a.ink;h.step({sub:true});assert.equal(h.r.charging,false);assert.equal(h.r.streaming,false);assert.equal(h.r.s3Stored,null);assert.equal(h.shots.length,0);assert.equal(h.a.ink,ink);
+  const ink=h.a.ink;
+  if(kind==='splatling'){
+    for(let frame=1;frame<=4;frame++){
+      h.step({sub:true});assert.equal(h.r.charging,true,`frame ${frame}: charge remains live`);
+      assert.equal(h.r.aimingSub,false);assert.equal(h.r.s3SubReady,null);assert.equal(h.shots.length,0);
+    }
+    h.step({sub:true});
+  }else h.step({sub:true});
+  assert.equal(h.r.charging,false);assert.equal(h.r.streaming,false);assert.equal(h.r.s3Stored,null);assert.equal(h.shots.length,0);assert.equal(h.a.ink,ink);
   h.step();for(let i=0;i<60;i++)h.step();assert.equal(h.shots.length,0,'abort does not release a latent main charge');
 });
 test('#530 a cancelled prepaid stream refunds only its recorded unspent balance and never reappears',async()=>{
   const h=await rig('splatling');for(let i=0;i<72;i++)h.step({fire:true});h.step();assert.equal(h.r.streaming,true);
-  const ink=h.a.ink,unspent=h.r.s3Spin.unspent;h.step({sub:true});assert.equal(h.r.streaming,false);assert.equal(h.a.ink,Math.min(100,ink+unspent));const shots=h.shots.length;
+  for(let frame=1;frame<=4;frame++){
+    h.step({sub:true});assert.equal(h.r.streaming,true,`frame ${frame}: stream remains live`);
+    assert.equal(h.r.aimingSub,false);assert.equal(h.r.s3SubReady,null);
+  }
+  const ink=h.a.ink,unspent=h.r.s3Spin.unspent;h.step({sub:true});
+  assert.equal(h.r.streaming,false);assert.equal(h.r.s3Spin,null);assert.equal(h.a.ink,Math.min(100,ink+unspent));const shots=h.shots.length;
   h.step();for(let i=0;i<120;i++)h.step();assert.equal(h.shots.length,shots);
 });
 for(const kind of ['roller','slosher','blaster'])test(`#530 ${kind}: committed attack completes before admitting a fresh sub hold`,async()=>{
