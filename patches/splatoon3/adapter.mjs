@@ -186,7 +186,9 @@ export function adaptSource(rel, code) {
       '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
       '    this._L.spread = null; this._L.charge = null; this._L.full = null;\n' +
       '    this._L.blasterCue = null; this._L.blasterCuePhase = null;\n' +
-      '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;',
+      '    this._L.dualiesCue = null; this._L.dualiesCuePhase = null;\n' +
+      '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;\n' +
+      '    this._dualiesBiasEl = kind === \'dualies\' ? r.querySelector(\'.iw-ret__bias\') : null;',
       'Blaster outer-bias cue ownership');
     code = replaceOnce(code,
       '    const ch = f.crosshair || {};',
@@ -205,6 +207,16 @@ export function adaptSource(rel, code) {
       '        this._blasterBiasEl.textContent = cue;\n' +
       '        this._blasterBiasEl.dataset.phase = cuePhase;\n' +
       '      }\n' +
+      '    }\n' +
+      '    const dualiesBias = L.kind === \'dualies\' ? localActor?.weaponRunner?.s3DualiesFireBiasState?.(localActor.weapon) : null;\n' +
+      '    const dualiesCueActive = !!(dualiesBias?.supported && dualiesBias.active);\n' +
+      '    const dualiesPercent = dualiesCueActive ? Math.round(dualiesBias.bias * 100) : 0;\n' +
+      '    const dualiesCue = !dualiesCueActive ? \'\' : dualiesBias.phase === \'recovering\' ? \'RECOVERING\' : \'OUTER \' + dualiesPercent + \'%\';\n' +
+      '    if (this._dualiesBiasEl && (dualiesCue !== L.dualiesCue || dualiesBias?.phase !== L.dualiesCuePhase)) {\n' +
+      '      L.dualiesCue = dualiesCue; L.dualiesCuePhase = dualiesBias?.phase ?? \'idle\';\n' +
+      '      this._dualiesBiasEl.hidden = !dualiesCueActive;\n' +
+      '      this._dualiesBiasEl.textContent = dualiesCue;\n' +
+      '      this._dualiesBiasEl.dataset.phase = L.dualiesCuePhase;\n' +
       '    }',
       'Blaster sourced bias and recovery presentation');
     code = replaceOnce(code,

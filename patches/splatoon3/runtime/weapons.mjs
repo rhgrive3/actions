@@ -8,6 +8,7 @@ import { installSplatlingStartupCompat } from './splatling-startup-compat.mjs';
 import { installWeaponGates } from './weapon-gates.mjs';
 import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 import { installRollerLogic } from './roller.mjs';
+import { installDualiesFireBias } from './dualies-fire-bias.mjs';
 let api;
 const dualiesLockConfigs = new WeakMap();
 const splatlingStreamConfigs = new WeakMap();
@@ -699,6 +700,7 @@ export function installWeapons(context, profile) {
     return clearProjectiles.apply(this, args);
   };
   installContactRecovery(api);
+  installDualiesFireBias(api, profile);
 }
 
 // Trajectory-preview presentation budget for Issue #798.
