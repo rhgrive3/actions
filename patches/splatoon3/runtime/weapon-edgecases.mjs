@@ -3,6 +3,24 @@ import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
 const EPS = 1e-10, DEG = Math.PI / 180;
 
+// Reuse one late-bound input view per runner instead of creating a Proxy
+// on every 60 Hz update. The visible keys and descriptors still come from
+// the *current* spread snapshot, including when native code enumerates it.
+// The owner pointer is temporarily restored by the call site for reentry.
+export function dualiesInputGate(runner) {
+  const current = () => runner._s3DualiesPreparedInput || {};
+  return new Proxy({}, {
+    get(_target, prop) {
+      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
+      return current()[prop];
+    },
+    has(_target, prop) { return prop in current(); },
+    ownKeys() { return Reflect.ownKeys(current()); },
+    getOwnPropertyDescriptor(_target, prop) { return Object.getOwnPropertyDescriptor(current(), prop); },
+  });
+}
+
+
 // #729 — S3 Ver.11.3.0 resolves an impact-triggered blast one fixed frame after the
 // contact (tick N impact -> tick N+1 burst), so a target can move between the two
 // frames. Queued bursts are resolved from inside `Projectiles.update`; this flag keeps
@@ -174,12 +192,15 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       prepared.sub = true; prepared.subReleased = true;
       this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
     }
-    const runner = this;
-    const gated = new Proxy(prepared, { get(target, prop) {
-      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
-      return target[prop];
-    }});
-    const out = weaponUpdate.call(this, dt, gated);
+    // A runner owns one gating Proxy for its lifetime; only the current
+    // snapshot changes. Preserve late post-shot gating after the native
+    // update decrements its lock, without allocating a new Proxy each tick.
+    const gated = this._s3DualiesInputGate || (this._s3DualiesInputGate = dualiesInputGate(this));
+    const previous = this._s3DualiesPreparedInput;
+    this._s3DualiesPreparedInput = prepared;
+    let out;
+    try { out = weaponUpdate.call(this, dt, gated); }
+    finally { this._s3DualiesPreparedInput = previous; }
     if (this.s3DualiesPostShot > EPS) {
       if (prepared.sub) this.s3DualiesSubBuffered = true;
       if (prepared.subReleased) this.s3DualiesSubReleaseBuffered = true;
