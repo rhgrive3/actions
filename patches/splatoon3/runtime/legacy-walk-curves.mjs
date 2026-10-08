@@ -32,7 +32,16 @@ const clamp01 = x => Math.max(0, Math.min(1, Number.isFinite(x) ? x : 0));
 function channel(clip, phase, i) {
   const a = clips[clip], frames = a.length / CHANNELS;
   const p = ((phase % 1 + 1) % 1) * frames, j = Math.floor(p), t = p - j;
-  return mix(a[j * CHANNELS + i], a[((j + 1) % frames) * CHANNELS + i], t) / 1000;
+  const v0 = a[((j + frames - 1) % frames) * CHANNELS + i];
+  const v1 = a[j * CHANNELS + i];
+  const v2 = a[((j + 1) % frames) * CHANNELS + i];
+  const v3 = a[((j + 2) % frames) * CHANNELS + i];
+  // Centered cubic interpolation of every-other-source-frame samples avoids
+  // a velocity kink at each 2F key. It does not change the 40F/32F loops.
+  const t2 = t * t, t3 = t2 * t;
+  return (0.5 * ((2 * v1) + (v2 - v0) * t +
+    (2 * v0 - 5 * v1 + 4 * v2 - v3) * t2 +
+    (3 * (v1 - v2) + v3 - v0) * t3)) / 1000;
 }
 // out is caller-owned and reused. Phase is NEVER reset when changing direction,
 // weapon pose, or walk/run; convex clips blend with the same normalized clock.
