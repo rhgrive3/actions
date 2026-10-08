@@ -64,7 +64,7 @@ async function production() {
     scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(), settings: { quality: 'high' },
     actors: [], time: 0, level, physics: new Physics(level), mode: 'match',
     teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')],
-    match: { playing: () => true, canRespawn: () => false, time: 0, state: 'battle', boss: null },
+    match: { playing: () => true, canRespawn: () => false, time: 180, state: 'playing', boss: null },
   });
   let paintSample = 1;
   G.paint = { sample: () => paintSample, splat: () => 0 };
@@ -75,7 +75,7 @@ async function production() {
 
 async function fixture({ paint = 1 } = {}) {
   const f = await production(), { G, THREE, Actor, Character } = f;
-  G.time = 0; G.actors.length = 0; G.netm = null; G.match.time = 0; G.match.state = 'battle';
+  G.time = 0; G.actors.length = 0; G.netm = null; G.match.time = 180; G.match.state = 'playing';
   G.projectiles.clear(); f.setPaintSample(paint);
   const actors = [], nets = [];
   function make({ airborne = false, owner = undefined, nid = undefined, name = 'issue 359 actor' } = {}) {
@@ -224,7 +224,7 @@ test('owned wirepack carries only remote swim visuals; the owner fires the resto
     const ownerSession = { myId: 'owner', isHost: false, hostId: 'host', _members: new Set(['owner', 'observer']),
       tr: { broadcast: packet => ownerPackets.push(packet) } };
     const ownerNet = new f.NetMatch(ownerSession, { map: 'Scorch Gorge' });
-    f.bindNet(ownerNet, { actors: [owner], state: 'battle', time: 0, boss: null });
+    f.bindNet(ownerNet, { actors: [owner], state: 'playing', time: 0, boss: null });
     f.chargeFully(owner); f.enterSquid(owner);
     assert.ok(owner.weaponRunner.s3Stored);
     ownerNet._sendTick();
@@ -242,7 +242,7 @@ test('owned wirepack carries only remote swim visuals; the owner fires the resto
     const observerSession = { myId: 'observer', isHost: false, hostId: 'host', _members: new Set(['owner', 'observer']),
       tr: { broadcast() {} } };
     const observerNet = new f.NetMatch(observerSession, { map: 'Scorch Gorge' });
-    f.bindNet(observerNet, { actors: [remote], state: 'battle', time: 0, boss: null });
+    f.bindNet(observerNet, { actors: [remote], state: 'playing', time: 0, boss: null });
     observerNet.onMessage('owner', packet);
     const peer = observerNet._peer('owner');
     observerNet._advance(peer, 1 / 60);
