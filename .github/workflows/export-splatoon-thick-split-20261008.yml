@@ -1,0 +1,88 @@
+name: Split Splatoon research ZIP for Drive transfer (temporary)
+
+on:
+  push:
+    branches:
+      - tmp/export-splatoon-thick-20261008
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  split-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Download already-created complete ZIP artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --retry-delay 5 \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/rhgrive3/actions/actions/artifacts/11541451903/zip" \
+            --output bundle.zip
+          actual_size="$(stat -c%s bundle.zip)"
+          echo "Full ZIP byte size: ${actual_size}"
+          test "${actual_size}" -eq 1252712824
+          echo "71868607f8c2c5498d5b7f0f2de4f28469c098eafb9945c5c7af7418d0feb7bd  bundle.zip" | sha256sum --check
+
+      - name: Split byte-for-byte without modifying ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p chunks
+          split --bytes=250M --numeric-suffixes=0 --suffix-length=2 bundle.zip chunks/splatoon-research.zip.part-
+          ls -lh chunks
+          test "$(find chunks -type f | wc -l)" -eq 5
+          cat chunks/splatoon-research.zip.part-* | sha256sum
+          sha256sum bundle.zip
+
+      - name: Upload part 00
+        uses: actions/upload-artifact@v4
+        with:
+          name: splatoon-research-part-00
+          path: chunks/splatoon-research.zip.part-00
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload part 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: splatoon-research-part-01
+          path: chunks/splatoon-research.zip.part-01
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload part 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: splatoon-research-part-02
+          path: chunks/splatoon-research.zip.part-02
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload part 03
+        uses: actions/upload-artifact@v4
+        with:
+          name: splatoon-research-part-03
+          path: chunks/splatoon-research.zip.part-03
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload part 04
+        uses: actions/upload-artifact@v4
+        with:
+          name: splatoon-research-part-04
+          path: chunks/splatoon-research.zip.part-04
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
