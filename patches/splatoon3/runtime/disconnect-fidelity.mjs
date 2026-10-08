@@ -11,8 +11,37 @@ export function disconnectStartsNoContest(match) {
   return match?.state === 'playing' && matchElapsed(match) < NO_CONTEST_WINDOW - EPS;
 }
 
+// #905: the current disconnect policy retires a human instead of adopting
+// a bot. Never leave ownerless live Ink Storm rain damaging nearby players
+// without any peer that can author its remaining turf. Every peer receives
+// the same owner-leave transition and retires only that owner's storm.
+// Splat Bombs/other specials have their own separate lifecycle policies.
+export function retireDisconnectedStorms(netmatch, actor) {
+  const projectiles = (netmatch?.__s3G || world)?.projectiles;
+  if (!projectiles || !actor) return { clouds: 0, bombs: 0 };
+  let clouds = 0, bombs = 0;
+  const activeClouds = projectiles.clouds;
+  if (Array.isArray(activeClouds)) for (let i = activeClouds.length - 1; i >= 0; i--) {
+    const c = activeClouds[i];
+    if (c?.owner !== actor) continue;
+    projectiles._releaseCloud?.(c, 0.1);
+    activeClouds.splice(i, 1);
+    clouds++;
+  }
+  const activeBombs = projectiles.bombs;
+  if (Array.isArray(activeBombs)) for (let i = activeBombs.length - 1; i >= 0; i--) {
+    const b = activeBombs[i];
+    if (b?.owner !== actor || b.kind !== 'storm') continue;
+    projectiles._releaseBomb?.(b);
+    activeBombs.splice(i, 1);
+    bombs++;
+  }
+  return { clouds, bombs };
+}
+
 export function deactivateDisconnectedActor(netmatch, actor) {
   if (!actor || actor.s3?.disconnected) return actor;
+  retireDisconnectedStorms(netmatch, actor);
   actor.s3 ||= {};
   actor.s3.disconnected = true;
   actor.s3.disconnectedAt = netmatch.match ? matchElapsed(netmatch.match) : 0;
