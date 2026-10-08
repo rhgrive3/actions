@@ -81,3 +81,24 @@ test('#757 30/60/120Hz fixed ticks give identical paint envelopes', async () => 
     const r = JSON.parse(JSON.stringify(rows)); if (expected) assert.deepEqual(r, expected); else expected = r;
   }
 });
+
+
+test('#226 rain audit counts sampled candidate, ground contacts and actual paint separately',async()=>{
+  const s=await storm();s.p._updateClouds(1/60);
+  const audit=s.c.s3RainAudit;assert.ok(audit&&audit.candidateDrops>0);
+  assert.equal(audit.candidateDrops,audit.groundHits);
+  assert.equal(audit.paintEvents,s.paints.length);
+  assert.ok(audit.candidateDrops!==72,'source RainNum is not silently substituted for native per-tick paint calls');
+});
+
+test('#735 actors far below rain trace cannot receive infinite-cylinder damage',async()=>{
+  const s=await storm(),{G,THREE}=s.f,enemy=s.f.make();
+  enemy.team=1;enemy.remote=false;enemy.alive=true;enemy.pos.set(0,0,0);
+  let damage=0;enemy.damage=n=>{damage+=n;return false;};
+  G.actors=[enemy];G.physics.los=()=>true;
+  s.c.group.position.set(0,100,0);
+  s.p._updateClouds(1/60);assert.equal(damage,0);
+  enemy.pos.set(0,98,0);
+  s.p._updateClouds(1/60);assert.ok(damage>0,'nearby uncovered actor remains eligible');
+  assert.ok(s.c.s3RainAudit.groundHits>0,'rain/paint diagnostics remain independent of HP gate');
+});
