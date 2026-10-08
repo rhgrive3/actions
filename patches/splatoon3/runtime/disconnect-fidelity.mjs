@@ -147,7 +147,12 @@ export function installDisconnectFidelity(api) {
     // A loading/intro owner that vanished never becomes a dead remote slot.
     // It was not yet a live battle participant, so remove it from this match.
     if (!live) {
-      for (const a of affected) this._remove(a);
+      for (const a of affected) {
+        // An owner may leave during finish/judge while an old Storm is still
+        // animated. The roster removal must not strand its projectile objects.
+        retireDisconnectedStorms(this, a);
+        this._remove(a);
+      }
     } else {
       for (const a of affected) {
         deactivateDisconnectedActor(this, a);
