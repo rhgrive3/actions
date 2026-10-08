@@ -721,6 +721,48 @@
    "chunks": 10
   },
   {
+   "name": "back_wide_smooth",
+   "mesh": "HEAD_face",
+   "follow": [
+    "HAIR_scalp",
+    "HAIR_hair"
+   ],
+   "centre": [
+    0,
+    -25,
+    -85
+   ],
+   "r": [
+    105,
+    70,
+    60
+   ],
+   "factor": 0.5,
+   "iters": 400,
+   "chunks": 20
+  },
+  {
+   "name": "behind_ear_smooth",
+   "mesh": "HEAD_face",
+   "follow": [
+    "HAIR_scalp",
+    "HAIR_hair"
+   ],
+   "centre": [
+    0,
+    -60,
+    -25
+   ],
+   "r": [
+    100,
+    24,
+    45
+   ],
+   "factor": 0.5,
+   "iters": 400,
+   "chunks": 20
+  },
+  {
    "name": "nape_join_smooth",
    "mesh": "HEAD_face",
    "centre": [
@@ -869,8 +911,8 @@
  "neck_join": {
   "head": "HEAD_face",
   "neck": "BODY_torso",
-  "r_mm": 18.0,
-  "iters": 40,
+  "r_mm": 45.0,
+  "iters": 500,
   "z": [
    30.0,
    10.0
@@ -879,7 +921,84 @@
    "HAIR_hair",
    "HAIR_scalp"
   ],
-  "cut_y": -150.0
+  "cut_y": -150.0,
+  "neck_skin_y": -128.0,
+  "neck_skin_r": 60.0,
+  "neck_skin_uv": [
+   0.5,
+   0.35
+  ],
+  "weld_mm": 0.6,
+  "neck_smooth": {
+   "y": [
+    -132,
+    -124,
+    -70,
+    -60
+   ],
+   "r_mm": 90.0,
+   "head_mm": [
+    3.0,
+    12.0
+   ],
+   "iters": 150
+  },
+  "sculpt": [
+   {
+    "name": "jaw_undercut",
+    "kind": "under_line",
+    "line": [
+     [
+      25.7,
+      -58.0
+     ],
+     [
+      27.8,
+      -62.7
+     ],
+     [
+      30.6,
+      -75.9
+     ],
+     [
+      35.4,
+      -82.4
+     ],
+     [
+      46.8,
+      -89.8
+     ],
+     [
+      54,
+      -89
+     ],
+     [
+      68,
+      -93
+     ],
+     [
+      82,
+      -98
+     ],
+     [
+      96,
+      -102
+     ]
+    ],
+    "below": [
+     1.0,
+     5.0,
+     16.0
+    ],
+    "mm": -3.0,
+    "x_min": 10.0,
+    "z": [
+     22,
+     100
+    ],
+    "smooth": 4
+   }
+  ]
  },
  "seam_normals": {
   "face": "HEAD_face",
