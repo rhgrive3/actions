@@ -17,9 +17,9 @@ import {damageGroupId} from './final-damage.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { coherentMotionStart } from './actor-motion.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
-import { correctInkAim, launchSpeed, profileFor, referenceReach } from '../../../src/game/inkFlight.js';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
+const inkFlightHelpers = new WeakMap();
 const SPLATLING_NOMINAL_LIFETIME = 1.2;
 let api, completion, moves, slosherVolleySequence = 0;
 const slosherDropConfigs = new WeakMap();
@@ -270,6 +270,9 @@ function dualiesLaunchScratch(projectiles) {
 }
 
 export function fidelityDualiesLaunchPlan(projectiles, actor, weapon, muzzle, target, dir) {
+  const helpers = inkFlightHelpers.get(projectiles);
+  if (!helpers) throw new Error('InkFlight helpers were not injected by the adapted source weapons module');
+  const { profileFor, launchSpeed, correctInkAim, referenceReach } = helpers;
   const profile = profileFor(weapon);
   if (!profile) return null;
   const chargeSeconds = (actor.weaponRunner?.charge || 0) * (weapon.chargeTime || 0);
@@ -279,6 +282,25 @@ export function fidelityDualiesLaunchPlan(projectiles, actor, weapon, muzzle, ta
   const plan = dualiesLaunchScratch(projectiles);
   plan.profile = profile; plan.speed = speed; plan.chargeSeconds = chargeSeconds;
   return plan;
+}
+
+// The adapted source Projectiles constructor supplies its own imported native
+// InkFlight helpers once per system. This keeps guide and live launches on the
+// same functions while allowing both flattened site builds and source-tree Node imports.
+export function configureFidelityInkFlight(projectiles, helpers) {
+  if (!projectiles || (typeof projectiles !== 'object' && typeof projectiles !== 'function'))
+    throw new TypeError('Projectiles instance required for InkFlight helper injection');
+  if (!helpers || !['profileFor', 'launchSpeed', 'correctInkAim', 'referenceReach']
+    .every(name => typeof helpers[name] === 'function'))
+    throw new TypeError('Complete native InkFlight helpers required');
+  const current = inkFlightHelpers.get(projectiles);
+  if (current) {
+    if (['profileFor', 'launchSpeed', 'correctInkAim', 'referenceReach']
+      .every(name => current[name] === helpers[name])) return projectiles;
+    throw new Error('Projectiles InkFlight helpers already configured');
+  }
+  inkFlightHelpers.set(projectiles, helpers);
+  return projectiles;
 }
 
 // Source records supply endpoints/counts. Added random draws are deterministic
