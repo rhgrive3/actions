@@ -147,6 +147,7 @@ const snap = () => page.evaluate(() => {
       cursorAnimation: C ? { on: !!C.on, snapNext: !!C.snapNext, radius: C.r ?? null, axes: { x: spring(C.x), y: spring(C.y), w: spring(C.w), h: spring(C.h) } } : null,
       document: { visibilityState: document.visibilityState, hidden: document.hidden }, connectedPads,
       frameDriver: {
+        platform: g.platform?.driver?.snapshot?.() ?? null,
         menuRaf: menus?._raf ?? null, menuLastT: n(menus?._lastT), menuExternalTick: n(menus?._extTick),
         main: { frozen: !!g.frozen, frameRate: g.settings?.frameRate ?? null, fps: n(g.fps), fpsAcc: n(g.fpsAcc), fpsN: Number.isFinite(g.fpsN) ? g.fpsN : null, frameCapAcc: n(g._frameCapAcc), frameCapElapsed: n(g._frameCapElapsed), frameN: Number.isFinite(g._frameN) ? g._frameN : null },
       },
