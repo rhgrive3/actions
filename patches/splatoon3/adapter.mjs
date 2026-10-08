@@ -864,8 +864,8 @@ export function adaptSource(rel, code) {
     // #1123: selected kit bombs own one source-shaped explosion paint pass.
     // Generic Splat Bomb keeps the native footprint unchanged.
     code = replaceOnce(code,
-      "    let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), s.paintRadius, b.team, { seed: Math.random() });\n    for (let i = 0; i < 5; i++) {\n      const a = Math.random() * Math.PI * 2, r = s.paintRadius * (0.6 + Math.random() * 0.4);\n      area += G.paint.splat(_v.set(c.x + Math.cos(a) * r, c.y + 0.5, c.z + Math.sin(a) * r), 0.7 + Math.random() * 0.5, b.team, { seed: Math.random() });\n    }\n    b.owner.addTurf(area);",
-      "    const kitArea = kitBombExplosionPaint(SUB, b, G.paint);\n    if (kitArea == null) {\n      let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), s.paintRadius, b.team, { seed: Math.random() });\n      for (let i = 0; i < 5; i++) {\n        const a = Math.random() * Math.PI * 2, r = s.paintRadius * (0.6 + Math.random() * 0.4);\n        area += G.paint.splat(_v.set(c.x + Math.cos(a) * r, c.y + 0.5, c.z + Math.sin(a) * r), 0.7 + Math.random() * 0.5, b.team, { seed: Math.random() });\n      }\n      b.owner.addTurf(area);\n    } else b.owner.addTurf(kitArea);",
+      "    let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), s.paintRadius, b.team, { seed: Math.random(), claimOwner: b.owner });\n    for (let i = 0; i < 5; i++) {\n      const a = Math.random() * Math.PI * 2, r = s.paintRadius * (0.6 + Math.random() * 0.4);\n      area += G.paint.splat(_v.set(c.x + Math.cos(a) * r, c.y + 0.5, c.z + Math.sin(a) * r), 0.7 + Math.random() * 0.5, b.team, { seed: Math.random(), claimOwner: b.owner });\n    }\n    b.owner.addTurf(area);",
+      "    const kitArea = kitBombExplosionPaint(SUB, b, G.paint);\n    if (kitArea == null) {\n      let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), s.paintRadius, b.team, { seed: Math.random(), claimOwner: b.owner });\n      for (let i = 0; i < 5; i++) {\n        const a = Math.random() * Math.PI * 2, r = s.paintRadius * (0.6 + Math.random() * 0.4);\n        area += G.paint.splat(_v.set(c.x + Math.cos(a) * r, c.y + 0.5, c.z + Math.sin(a) * r), 0.7 + Math.random() * 0.5, b.team, { seed: Math.random(), claimOwner: b.owner });\n      }\n      b.owner.addTurf(area);\n    } else b.owner.addTurf(kitArea);",
       'kit-specific bomb explosion paint');
     // #1118/#1113: arbitrate the native bomb's swept segment against Vac and
     // Big Bubbler before native world-contact mutation. A nearer stage surface
@@ -890,8 +890,8 @@ export function adaptSource(rel, code) {
     // #1060: remove only the generic burst-floor stamp after the kit authority
     // adapter has attached its owner/ghost gate to this exact burst location.
     code = replaceOnce(code,
-      "    // paint under the burst\n    const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n",
-      "    // paint under the burst\n    if (p.s3Weapon?.kind === 'blaster') {\n      applyFidelityBlasterBurstPaint(this, p, c, direct);\n    } else {\n      const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n      if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n    }\n",
+      "    // paint under the burst\n    const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random(), claimOwner: p.owner }));\n",
+      "    // paint under the burst\n    if (p.s3Weapon?.kind === 'blaster') {\n      applyFidelityBlasterBurstPaint(this, p, c, direct);\n    } else {\n      const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n      if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random(), claimOwner: p.owner }));\n    }\n",
       'Blaster source collision-burst paint with timed-burst suppression');
     // #1049: sourced Blaster SplashPaintParam owns the vertical receiving-surface window.
     code = replaceOnce(code,

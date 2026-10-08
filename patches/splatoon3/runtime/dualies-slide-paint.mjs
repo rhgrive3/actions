@@ -55,7 +55,7 @@ export function paintDualiesSlide(game, runner, weapon, ending = false) {
     state.sample.copy(hit.point).addScaledVector(hit.normal, SURFACE_OFFSET);
     const painted = game.paint.splat(state.sample, slideStampRadius(half), actor.team, {
       kind: 'roll', stretch: state.direction, stretchAmt: 0,
-      seed: stampSeed(actor.nid ?? 'local', state.token ?? 0, state.index++)
+      seed: stampSeed(actor.nid ?? 'local', state.token ?? 0, state.index++), claimOwner: actor
     });
     if (Number.isFinite(painted)) area += painted;
     state.lastStamp = point.clone();

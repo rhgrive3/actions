@@ -9,6 +9,7 @@ import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
+import { kitBombExplosionPaint, resolveSubAtCharge, SUCTION } from '../runtime/kit-subs.mjs';
 import { fixture } from './source-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -66,7 +67,7 @@ test('production-composed paint keeps the landing body immediate and advances ow
   assert.ok(paint.drawCalls >= 30, 'fixed simulation reaches the paint draw hook while render is idle');
 });
 
-test('six composed weapon paths attach their actual local owner to real PaintSystem emissions', async () => {
+test('composed weapon and kit paint paths attach their actual local owner to PaintSystem emissions', async () => {
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
   const { G, THREE, Projectiles, WEAPONS } = f, { paint, V } = makePaintWorld(f);
   G.projectiles = new Projectiles(G.scene);
@@ -78,13 +79,19 @@ test('six composed weapon paths attach their actual local owner to real PaintSys
 
   const roller = f.make('roller');
   roller.weaponRunner.rolling = true; roller.weaponRunner.rollT = 0.5;
+  roller.intent = { ...(roller.intent || {}), move: V(0, 0, 1) };
   roller.weaponRunner.lastRollPos = roller.pos.clone().add(V(-1, 0, 0)); roller.pos.set(1, 0, 1); roller.vel.set(0, 0, 2);
   roller.weaponRunner.update(1 / 60, { fire: true });
   assert.ok(emissions.some(e => e.owner === roller), 'roller roll');
 
   const dualies = f.make('dualies');
-  dualies.weaponRunner.dodge = { t: 0, dur: 1 }; dualies.weaponRunner.rollPaint = 0;
+  dualies.weaponRunner.firingT = 0.35;
+  dualies.intent = { ...(dualies.intent || {}), fire: true, move: V(0, 0, 1) };
+  assert.equal(dualies.weaponRunner.tryDodge(V(0, 0, 1)), true, 'enter the dodge through its native admission');
+  dualies.weaponRunner.rollPaint = 0;
   dualies.weaponRunner.update(1 / 60, { fire: true });
+  for (let i = 0; i < 3; i++) dualies.weaponRunner.update(1 / 60, { fire: true }); // pass the native dodge startup window
+  dualies.weaponRunner._dualies(1 / 60, { fire: false }, dualies.weapon);
   assert.ok(emissions.some(e => e.owner === dualies), 'dualies trail');
 
   const charger = f.make('charger');
@@ -94,6 +101,20 @@ test('six composed weapon paths attach their actual local owner to real PaintSys
   const bomber = f.make('shooter');
   G.projectiles._explodeBomb({ pos: V(0, 0.2, 5), team: bomber.team, owner: bomber });
   assert.ok(emissions.some(e => e.owner === bomber), 'sub-special fidelity replacement splats');
+
+  const kitOwner = f.make('shooter'), kitOptions = [];
+  const kitBomb = { ghost: false, s3Resolved: resolveSubAtCharge(SUCTION, 0),
+    pos: V(0, 0.2, 5), team: kitOwner.team, owner: kitOwner };
+  const kitArea = kitBombExplosionPaint(SUCTION, kitBomb, { splat(_center, _radius, _team, opts) {
+    kitOptions.push(opts); return 1;
+  } });
+  assert.equal(kitArea, 16, 'the #1123 core and 15 satellites emit through the paint owner');
+  assert.ok(kitOptions.every(opts => opts.claimOwner === kitOwner), 'each kit explosion splat retains its local owner');
+  const beforeGhost = kitOptions.length;
+  assert.equal(kitBombExplosionPaint(SUCTION, { ...kitBomb, ghost: true }, { splat(...args) {
+    kitOptions.push(args[3]); return 1;
+  } }), null, 'ghost kit effects never enter authoritative paint');
+  assert.equal(kitOptions.length, beforeGhost);
 
   const impactOwner = f.make('shooter');
   G.projectiles._impact({ owner: impactOwner, team: impactOwner.team, type: 'slosh', radius: 0.7,

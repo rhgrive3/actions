@@ -19,7 +19,7 @@ export function paintRollerMaximumWidth(game,runner,weapon,paintSource,scale,fx,
   let area=0;
   for(const side of [-1,1]){
     state.point.set(a.pos.x+fx*.75+fz*offset*side,a.pos.y+.35,a.pos.z+fz*.75-fx*offset*side);
-    const result=game.paint.splat(state.point,radius,a.team,{kind:'rollFloor',stretch:state.direction,seed:((Math.imul(state.sequence,2654435761)^(side<0?0x189:0x981))>>>0)/4294967296});
+    const result=game.paint.splat(state.point,radius,a.team,{kind:'rollFloor',stretch:state.direction,seed:((Math.imul(state.sequence,2654435761)^(side<0?0x189:0x981))>>>0)/4294967296,claimOwner:a});
     if(Number.isFinite(result))area+=result;
   }
   return area;

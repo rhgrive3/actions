@@ -472,7 +472,7 @@ export function blasterBurstAxisDirections(contract) {
 function detachedPaint(system, state, point, radius, salt) {
   if (state.ghost || !(radius > 0) || !api?.G?.paint) return 0;
   const area = api.G.paint.splat(point, radius, state.team, {
-    seed: seededUnit(state.seed, salt + state.paintIndex++),
+    seed: seededUnit(state.seed, salt + state.paintIndex++), claimOwner: state.owner,
   });
   if (Number.isFinite(area)) state.owner?.addTurf?.(area);
   return area || 0;
@@ -573,7 +573,7 @@ export function applyFidelityBlasterFlightPaint(system, p) {
   const point = system._s3BlasterFlightSplashPoint || (system._s3BlasterFlightSplashPoint = new api.THREE.Vector3());
   point.copy(g.point).addScaledVector(g.normal, .1);
   const radius = p.trailRadius * (.8 + seededUnit(p.seed, 0x1049 + index) * .4);
-  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, 0x1490 + index) });
+  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, 0x1490 + index), claimOwner: p.owner });
   if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   return true;
 }
@@ -602,7 +602,7 @@ function advanceTimedBlasterDrops(system,dt) {
     if(hit?.hit) {
       if(paint?.splat&&d.owner){
         const at=hit.point.clone().addScaledVector(hit.normal,.025);
-        const area=paint.splat(at,d.radius,d.team,{seed:d.seed});
+        const area=paint.splat(at,d.radius,d.team,{seed:d.seed,claimOwner:d.owner});
         if(Number.isFinite(area))d.owner.addTurf?.(area);
       }
       drops.splice(i,1);
@@ -625,7 +625,7 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
     const floor=physics?.raycast?.(origin,down,3.5,hit,true);
     if(floor?.hit&&burst.timedSplashRadius>0){
       const at=floor.point.clone().addScaledVector(floor.normal,.025);
-      const area=api.G.paint?.splat?.(at,burst.timedSplashRadius,p.team,{seed:seededUnit(p.seed,0x1106)});
+      const area=api.G.paint?.splat?.(at,burst.timedSplashRadius,p.team,{seed:seededUnit(p.seed,0x1106),claimOwner:p.owner});
       if(Number.isFinite(area))p.owner?.addTurf?.(area);
     }
     queueTimedBlasterDrop(system,p,point,burst);
@@ -639,7 +639,7 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   const floor = api.G.physics.raycast(floorOrigin, down, 3.5, floorHit, true);
   if (floor.hit) {
     floorPoint.copy(floor.point).addScaledVector(floor.normal, .1);
-    const area = api.G.paint.splat(floorPoint, burst.radius, p.team, { seed: seededUnit(p.seed, 0x1001) });
+    const area = api.G.paint.splat(floorPoint, burst.radius, p.team, { seed: seededUnit(p.seed, 0x1001), claimOwner: p.owner });
     if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   }
 

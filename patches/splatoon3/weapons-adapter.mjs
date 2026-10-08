@@ -54,10 +54,10 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('      if (!dead && p.trailEvery) {','      if (!dead && !p.ghost && p.trailEvery) {','ghost trails never score paint');
   patch('p.trailRadius * (0.8 + Math.random() * 0.4)', 'fidelityFlightPaintRadius(p)', 'source-bound Shooter intermediate paint width');
   patch(`          const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);
-          if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }));`,
+          if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random(), claimOwner: p.owner }));`,
     `          if (!applyFidelityBlasterFlightPaint(this, p)) {
             const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);
-            if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }));
+            if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random(), claimOwner: p.owner }));
           }`, 'Blaster source-backed flight splash paint');
   // #1034: current-S3 Blaster ordinary projectile PaintParam is zero.
   // Keep dedicated burst/wall/splash paint, but suppress the legacy generic impact splat.
@@ -65,9 +65,9 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     if (p.type === 'slosh') {
       // the wave lands as a thick stripe along its travel: stretched along the horizontal heading
       _dir.y = 0; if (_dir.lengthSq() < 1e-4) _dir.set(0, 0, 1); _dir.normalize();
-      area = G.paint.splat(_v, rad * 1.12, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 1.25 });
+      area = G.paint.splat(_v, rad * 1.12, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 1.25, claimOwner: p.owner });
       if (p.head) this._sloshSplash(p, hit.point, null);
-    } else area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });
+    } else area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7, claimOwner: p.owner });
     p.owner.addTurf(area);`,
     `    let area = null;
     if (p.type === 'slosh') {
@@ -75,10 +75,10 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
       _dir.y = 0; if (_dir.lengthSq() < 1e-4) _dir.set(0, 0, 1); _dir.normalize();
       const paint = fidelitySlosherImpactPaint(p, hit.point);
       area = G.paint.splat(_v, paint?.radius ?? rad * 1.12, p.team,
-        { seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25 });
+        { seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner });
       if (p.head) this._sloshSplash(p, hit.point, null);
     } else if (!(p.type === 'blast' && p.s3Weapon?.kind === 'blaster')) {
-      area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });
+      area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7, claimOwner: p.owner });
     }
     if (area != null) p.owner.addTurf(area);`,
     'Blaster zero ordinary impact paint');
