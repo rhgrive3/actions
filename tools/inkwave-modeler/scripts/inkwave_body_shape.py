@@ -282,6 +282,25 @@ def smooth_regions(steps):
               'max move mm', round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def neck_flare(cfg):
+    """The neck went straight up into the skull: from the back and the back 3/4 the head sat on it like a ball on a
+    stick with a ledge under it (2026-10-08, user: もっと滑らかに繋げろ).  The top of the neck widens toward the
+    skull: Blender's Displace along the normals on the neck (cfg['mesh']), cfg['mm'] at the top, by height
+    (smoothstep from head y cfg['y'][0] to cfg['y'][1], back to 0 by cfg['y'][2] inside the head), back and sides
+    only (head z < cfg['z'][0], full behind cfg['z'][1])."""
+    obj = bpy.data.objects[cfg['mesh']]
+    L = er.M.to_local(er.world(obj)) * 1000
+    y0, y1, y2 = cfg['y']
+    w = smoothstep((L[:, 1] - y0) / (y1 - y0)) * smoothstep((y2 - L[:, 1]) / (y2 - y1))
+    w *= smoothstep((cfg['z'][0] - L[:, 2]) / (cfg['z'][0] - cfg['z'][1]))
+    before = er.world(obj)
+    er.apply_weighted_modifier(obj, w, 'DISPLACE', direction='NORMAL', strength=cfg['mm'] / 1000, mid_level=0.0)
+    if cfg.get('smooth_iters'):
+        er.apply_weighted_modifier(obj, np.clip(w * 3, 0, 1), 'SMOOTH', factor=0.5, iterations=cfg['smooth_iters'])
+    print('BODY_SHAPE neck_flare vertices', int((w > 1e-3).sum()), 'max move mm',
+          round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
 def nape_fillet(cfg):
     """The head's lower edge rode over the back of the neck as a thin lip (seen from behind and the back 3/4).
     Near the neck the head is laid onto it: Blender's Shrinkwrap (nearest surface point, outside, cfg['offset_mm'])
@@ -853,6 +872,7 @@ def main():
     names += [n for n in p.get('skull_back', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('occiput_in', {}).get('meshes', []) if n not in names]
     names += [n for n in [p.get('nape_fillet', {}).get('mesh')] if n and n not in names]
+    names += [n for n in [p.get('neck_flare', {}).get('mesh')] if n and n not in names]
     names += [n for n in p.get('back_profile', {}).get('meshes', []) if n not in names]
     for sm in p.get('smooth_regions', []):
         names += [n for n in [sm['mesh']] + sm.get('follow', []) if n not in names]
@@ -937,6 +957,8 @@ def main():
             # 首に対して後頭部が滑らかに繋がってなくて、後ろに出すぎ): the same forward move as skull_back,
             # with its own height profile (most at y -50, nothing at the neck and the crown)
             skull_back(p['occiput_in'])
+        if p.get('neck_flare'):
+            neck_flare(p['neck_flare'])
         if p.get('nape_fillet'):
             nape_fillet(p['nape_fillet'])
         if p.get('smooth_regions'):
