@@ -71,8 +71,8 @@ test('#1159 orphan timer cannot fire into a new room even if its callback was qu
   a._startCfg={id:'new',roster:a._startCfg.roster};a.tr={};
   timers[0]();
   assert.equal(a.count,0,'old callback cannot launch the new room');
-  assert.equal(code.split('clearTimeout(this._goT); this._goT = null;').length-1,5,
-    'abort, failure, disconnect, result and new round each retire deadline');
+  assert.equal(code.split('clearTimeout(this._goT); this._goT = null;').length-1,6,
+    'five retirement hooks plus the original _go completion retire the deadline');
 });
 
 test('#1165 CPU owner shares the shader roller body outline across seeds and directions', () => {
