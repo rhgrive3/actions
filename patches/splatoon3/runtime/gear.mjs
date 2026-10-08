@@ -101,7 +101,8 @@ export function installGear(api, tuning) {
     // Its Ver. 11.0.0 movement penalty is consumed by the Super Jump flight
     // state and deliberately does not alter Quick Super Jump AP curves.
     m.stealthJump = loadout[2].main === 'stealthJump';
-    const ap = points, extra = tuning.gearExtra;\n    m.specialPowerAP = ap.specialPower || 0;
+    const ap = points, extra = tuning.gearExtra;
+    m.specialPowerAP = ap.specialPower || 0;
     const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
     const around = Math.floor(gearCurve(ap.quickRespawn || 0, ...extra.quickRespawnAroundFrames) + 1e-10);
     const chase = Math.floor(chaseBase * (m.quickRespawn ?? 1) + 1e-10);
