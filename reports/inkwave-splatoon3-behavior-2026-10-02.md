@@ -240,6 +240,8 @@ INKWAVE の `patches/reliability/combat-credit-adapter.mjs` は owner と event 
 INKWAVE の差分は、成功した異ブキ切替後も `installKitInkVac()` が所有する旧吸入状態が残り、次の射撃入力を取り込み続けることだった。`patches/practice-range/runtime/session.mjs` は `Actor.setWeapon()` の成功と実際の ID 変更を確認してから既存 `disposeInkVac()` を呼ぶ。同ブキ選択、無効 ID、例外で失敗した切替では保持状態を変えない。既存の dispose イベントがネットワーク複製へ送られ、既発射 blast、消費済みゲージ、通常対戦の `Actor.setWeapon()` は変更しない。影響は練習場の異ブキ選択後も旧スペシャルが入力を所有する点の解消。
 
 確認状態：完全な6層アダプター合成でインストールした実 Actor と実 `RangeSession.setWeapon()` を使用する focused lifecycle 7/7。これはロジック確認であり、ブラウザ実動作・本家実機比較ではない。Nintendo の新しい数値は追加していない。
+2026-10-08 追記（cl5 r635）: 統合基準（main `9271e6c2`、完全な6層アダプター合成）で上記 focused の `a released blast and spent gauge survive a later weapon change` のみが `the real native projectile path launched its blast` で失敗することを、同一 worktree でのベース再現と parent 基準ログの双方で確認した（他6サブテストは成功）。原因はテスト装備のライフサイクル仮定で、旧装備は `tick(30)`（0.5 秒）後に一度 ZR を押すだけで終えていた。実キットは設定どおり 360F/6.0 秒の吸入を保持してから `exhale` に入り、そこで初めて ZR 押し→離しのエッジ（または 150F の exhale タイムアウト）が release を発火して blast を実発射する（`kit-ink-vac.mjs` の `beginExhale`/`release`、`#1120` のアーム規則どおり）。つまり session.mjs の所有権処理ではなく装備側の birth 前提が誤りだった。装備は `INK_VAC_CALIBRATION.inhaleDurationSeconds` から算出した既知の設定タイミング内で `exhale` 到達フレームを測定し、独立した実入力エッジ（1押し1離し）で release を1回、`authored` の実発射をちょうど1 blastとして検証したうえで、後続の異ブキ切替後も blast と消費済みゲージの保持を確認する。武器の値・ワールド権限・スペシャル調整は変更していない。装備の修正であり挙動変更ではない。これはソース VM のロジック確認であり、ブラウザ実動作・本家実機比較は未確認。
+
 
 ## Batch C の着地と通信状態の確認（2026-10-04）
 
