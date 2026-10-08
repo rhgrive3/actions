@@ -195,6 +195,9 @@ export function offscreenBudgeted(ch, s, G) {
   // spectate and imminent first-person visibility all live here.
   if (s.isLocal || ch.isLocal) return reset();
   if (G?.match?.local && s === G.match.local) return reset();
+  // Only network replicas are presentation-only. Offline bots and adopted
+  // actors can author projectiles whose native muzzle comes from rig bones.
+  if (s.remote !== true) return reset();
   // Practice Range is isolated from this presentation budget.
   if (G?.match?.opts?.range) return reset();
   // Only characters in the live match scene. Menus, showcase portraits, labs and

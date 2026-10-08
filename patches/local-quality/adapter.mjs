@@ -529,6 +529,12 @@ function adaptQualityLayer(rel, code) {
     if (this.shoulder > 1e-3) cam.position.addScaledVector(_right, this.shoulder);`, 'camera persistent shoulder framing and wall-transition clearance');
   }
 
+  if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code, '    ch.update(dt, a);',
+      '    a.remote = this.remote === true;\n    ch.update(dt, a);',
+      'carry actor authority into Character presentation budget');
+  }
+
   return code;
 }
 
