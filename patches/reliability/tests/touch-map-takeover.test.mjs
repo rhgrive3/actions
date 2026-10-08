@@ -18,9 +18,9 @@ test('#571 keyboard takeover closes the touch latch and restores camera/fire/sub
 test('#571 deliberate pad takeover closes touch map and restores pad camera/actions',async()=>{
  const h=await rig();h.open();h.poll([5,7],[.8,0,.8,0]);h.update();assert.equal(h.input.navigationDevice,'pad');assert.equal(h.m.mapOpen,false);assert.equal(h.c.mapHeld,false);assert.notEqual(h.camera.yaw,0);assert.equal(h.a.intent.fire,true);assert.equal(h.a.intent.sub,true);
 });
-test('#571 keyboard map hold and standard pad toggle retain their own close controls',async()=>{
- const h=await rig();h.open();h.key('KeyM');h.update();assert.equal(h.m.mapOpen,false);assert.equal(h.c.mapHeld,true);h.key('KeyM','keyup');h.update();assert.equal(h.c.mapHeld,false);
- h.open();h.poll([3]);h.update();assert.equal(h.m.mapOpen,false);assert.equal(h.c.mapHeld,true);h.poll([]);h.update();h.poll([3]);h.update();assert.equal(h.c.mapHeld,false);
+test('#571 explicit keyboard/pad map taps close the shared touch latch exactly once',async()=>{
+ const h=await rig();h.open();h.key('KeyM');h.update();assert.equal(h.m.mapOpen,false);assert.equal(h.c.mapHeld,false);h.key('KeyM','keyup');h.update();assert.equal(h.c.mapHeld,false);
+ h.open();h.poll([3]);h.update();assert.equal(h.m.mapOpen,false);assert.equal(h.c.mapHeld,false);h.poll([]);h.update();h.poll([3]);h.update();assert.equal(h.c.mapHeld,true);
 });
 test('#571 unchanged held pad axes do not revoke touch map; fresh same-owner pad input does',async()=>{
  const h=await rig(),axes=[.9,-.5,.8,.7];h.poll([],axes);h.update();h.open();h.poll([],axes);h.update();assert.equal(h.input.lastDevice,'pad');assert.equal(h.input.navigationDevice,'touch');assert.equal(h.m.mapOpen,true);assert.equal(h.c.mapHeld,true);

@@ -41,7 +41,7 @@ async function setup(dead=false){
  const h=await rig();h.allies.forEach((a,i)=>a.pos.set((i-1)*4,0,-i*3));if(dead)h.dead();h.touch();h.input.mobile.gyro.enabled=true;h.G.rig=h.camera;h.camera.dioLook={x:0,y:0};
  h.G.camera=new h.THREE.PerspectiveCamera(60,1000/700,.1,100);h.G.camera.position.set(0,8,12);h.G.camera.lookAt(0,0,0);h.G.camera.updateMatrixWorld();
  const ui=Object.create(h.DioramaOverlay.prototype);Object.assign(ui,{on:true,k:1,cx:.5,cy:.62,hover:-1,_last:{},el:element(),cursor:element(),arc:element(),pins:Array.from({length:5},()=>({el:element(),icon:element(),name:element(),state:element()}))});
- h.input.keys.add('Tab');h.m.updateController(STEP);ui.update(STEP,1);
+ h.input.keys.add('Tab');h.input.pressed.add('Tab');h.m.updateController(STEP);ui.update(STEP,1);
  function motion(yaw,pitch){h.input.mobile.gyro.dYaw=yaw;h.input.mobile.gyro.dPitch=pitch;h.m.updateController(STEP);}
  return {...h,ui,motion};
 }
@@ -51,8 +51,8 @@ for(const dead of [false,true])test(`#533 actual Diorama ${dead?'dead':'alive'} 
 });
 test('#533 repeated close/open discards boundary samples and returns ownership without replay',async()=>{
  const h=await setup();for(let i=0;i<10;i++){
-  h.motion(.03,.02);h.ui.update(STEP,1);h.input.keys.delete('Tab');const before=h.camera.yaw;h.motion(.4,.3);assert.equal(h.camera.yaw,before);assert.deepEqual({...h.c.consumeMapGyro()},{yaw:0,pitch:0});
-  h.motion(.02,.01);assert.ok(h.camera.yaw>before);h.input.keys.add('Tab');const aim=h.camera.yaw;h.motion(.4,.3);h.ui.update(STEP,1);assert.equal(h.camera.yaw,aim);assert.deepEqual({...h.c.consumeMapGyro()},{yaw:0,pitch:0});
+  h.motion(.03,.02);h.ui.update(STEP,1);h.input.keys.delete('Tab');h.c.setTurfMap(false);const before=h.camera.yaw;h.motion(.4,.3);assert.equal(h.camera.yaw,before);assert.deepEqual({...h.c.consumeMapGyro()},{yaw:0,pitch:0});
+  h.motion(.02,.01);assert.ok(h.camera.yaw>before);h.input.keys.add('Tab');h.input.pressed.add('Tab');const aim=h.camera.yaw;h.motion(.4,.3);h.ui.update(STEP,1);assert.equal(h.camera.yaw,aim);assert.deepEqual({...h.c.consumeMapGyro()},{yaw:0,pitch:0});
  }
 });
 test('#533 reset, gyro OFF, and pause clear undelivered motion',async()=>{
@@ -96,7 +96,7 @@ test('#533 composed pending startup and real gyro resync preserve one consumer a
  h.m.updateController(STEP);assert.equal(consumes,1);assert.deepEqual([h.camera.yaw,h.camera.pitch],pose);h.ui.update(STEP,1);assert.notDeepEqual([h.ui.cx,h.ui.cy],xy);const moved=[h.ui.cx,h.ui.cy];h.ui.update(STEP,1);assert.deepEqual([h.ui.cx,h.ui.cy],moved);assert.equal(consumes,1);
  resetPlatformInput(h.input,h.c);assert.deepEqual({...h.c.consumeMapGyro()},{yaw:0,pitch:0});sensor.orientation({alpha:20,beta:0,gamma:90});h.m.updateController(STEP);assert.deepEqual([h.camera.yaw,h.camera.pitch],pose,'resync accepts a new baseline without replay');
  sensor.orientation({alpha:21,beta:0,gamma:90});h.m.updateController(STEP);assert.notDeepEqual([h.camera.yaw,h.camera.pitch],pose);assert.equal(consumes,3,'one sample consume per live controller update after reset');
- h.input.keys.add('Tab');sensor.orientation({alpha:22,beta:0,gamma:90});h.m.updateController(STEP);assert.equal(consumes,3,'reopening discards rather than consumes into aim');assert.deepEqual({...h.c.consumeMapGyro()},{yaw:0,pitch:0});
+ h.input.keys.add('Tab');h.input.pressed.add('Tab');sensor.orientation({alpha:22,beta:0,gamma:90});h.m.updateController(STEP);assert.equal(consumes,3,'reopening discards rather than consumes into aim');assert.deepEqual({...h.c.consumeMapGyro()},{yaw:0,pitch:0});
 });
 
 // Execute the published Game/Match HUD transport alongside the actual input/Diorama path.

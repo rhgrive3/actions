@@ -373,7 +373,7 @@ try {
         let hud,dio;
         try {
           G.match=match;G.actors=[a,ally];G.input=input;G.level={spawnPads:[new THREE.Vector3()]};
-          input.lastDevice='kbm';input.keys.add('Tab');input.keys.add('KeyW');input.mouse.left=true;
+          input.lastDevice='kbm';input.keys.add('Tab');input.pressed.add('Tab');input.keys.add('KeyW');input.mouse.left=true;
           Match.prototype.updateController.call(match,1/60);
           const deadBlocked=!c.enabled&&c.mapHeld&&a.intent.move.lengthSq()===0&&!a.intent.fire&&camera.yaw===.4&&camera.pitch===.2;
           hud=new HUD();hud._local=()=>a;hud._beaconTargets=()=>[{ok:true,actor:ally}];hud._jumpTo(0);
@@ -416,11 +416,11 @@ try {
         try {
           G.match=match;G.actors=[a];G.rig=rig;G.level={spawnPads:[new THREE.Vector3()]};
           G.camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,100);G.camera.position.set(0,8,12);G.camera.lookAt(0,0,0);G.camera.updateMatrixWorld();
-          mobile.active=true;mobile.gyro.enabled=true;mobile.setMap(false);input.lastDevice='touch';input.keys.add('Tab');
+          mobile.active=true;mobile.gyro.enabled=true;mobile.setMap(false);input.lastDevice='touch';input.keys.add('Tab');input.pressed.add('Tab');
           dio=new DioramaOverlay(document.body);Match.prototype.updateController.call(match,1/60);dio.update(1/60,1);
           const x=dio.cx,y=dio.cy;mobile.gyro.dYaw=.04;mobile.gyro.dPitch=.03;Match.prototype.updateController.call(match,1/60);dio.update(1/60,1);
           const cursorMoves=dio.cx<x&&dio.cy<y,frozen=rig.yaw===.2&&rig.pitch===.3,after=[dio.cx,dio.cy];dio.update(1/60,1);
-          const once=dio.cx===after[0]&&dio.cy===after[1];input.keys.delete('Tab');mobile.gyro.dYaw=.5;Match.prototype.updateController.call(match,1/60);
+          const once=dio.cx===after[0]&&dio.cy===after[1];input.keys.delete('Tab');c.setTurfMap(false);mobile.gyro.dYaw=.5;Match.prototype.updateController.call(match,1/60);
           const noReplay=rig.yaw===.2;mobile.gyro.dYaw=.02;Match.prototype.updateController.call(match,1/60);const battleResumes=rig.yaw>.2;
           return {cursorMoves,frozen,once,noReplay,battleResumes};
         } finally {
@@ -430,6 +430,32 @@ try {
       });
       assert.deepEqual(mapGyro,{cursorMoves:true,frozen:true,once:true,noReplay:true,battleResumes:true});
       entry.checks.push('actual-built-gyro-map-cursor-single-consumption-and-camera-ownership');
+
+      const shooterCorners = await page.evaluate(async () => {
+        const hud = new HUD();
+        try {
+          hud._buildReticle('shooter');
+          const rows = [];
+          for (const spread of [0,20,0]) {
+            hud.ret.style.setProperty('--sp',String(spread));
+            const ticks=[...hud.ret.querySelectorAll('.iw-ret__tick')];
+            ticks.forEach(t=>t.style.transition='none');
+            await new Promise(requestAnimationFrame);
+            rows.push(ticks.map(t=>{
+              const s=getComputedStyle(t),m=new DOMMatrix(s.transform);
+              return {x:m.e,y:m.f,width:parseFloat(s.width),height:parseFloat(s.height),diagonal:Math.abs(Math.abs(m.a)-Math.SQRT1_2)<1e-5};
+            }));
+          }
+          return rows;
+        } finally { hud.dispose(); }
+      });
+      for (const [i,row] of shooterCorners.entries()) {
+        assert.equal(row.length,4);
+        const x=i===1?44:24;
+        assert.deepEqual(row.map(t=>[t.x,t.y]),[[-x,-24],[x,-24],[-x,24],[x,24]]);
+        assert(row.every(t=>t.width===3&&t.height===14&&t.diagonal));
+      }
+      entry.checks.push('actual-built-Shooter-measured-diagonal-corners-expand-and-contract');
 
 
       // Complete built action pipeline, including the native Character trigger.

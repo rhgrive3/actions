@@ -132,17 +132,20 @@ for (const run of RUNS) {
     // a hit on the 10 m gallery target from its stand mark
     out.checks.hit = await page.evaluate(async () => {
       const G = window.__G, g = window.__inkwave, s = G.match.range, a = G.local;
-      // Use the actual gallery travel/stand admission (which also updates the
-      // character root, controller and teleport state). Directly writing
-      // a.pos at the firing line can put the Actor inside solid signage, then
-      // physics ejects it away from the target before the first shot.
+      // Admit through native travel, then use the 10 m column's firing mark.
+      // The gallery travel point is x=-6.8 (the 20 m column); aiming diagonally
+      // from there makes this shot sqrt(10^2 + 5.2^2) = 11.2712 m.
       s.travel('gallery');
-      await new Promise((r) => setTimeout(r, 2500));
       const target = s.targets.find((x) => x.rangeTarget?.dist === 10);
       if (!target) throw new Error('Missing actual 10 m gallery target');
-      // The published gallery stand is not aligned with the 10 m column.
-      // Turn the real controller/rig toward the native target, preserving
-      // Shooter spread and ballistics (no damage or hit-test overrides).
+      a.pos.x = target.pos.x;
+      a.character.root.position.copy(a.pos);
+      a.netTp = (a.netTp || 0) + 1;
+      g.rig.follow(a, true);
+      await new Promise((r) => setTimeout(r, 2500));
+      const standDistance = Math.hypot(target.pos.x - a.pos.x, target.pos.z - a.pos.z);
+      if (Math.abs(standDistance - 10) > 0.05) throw new Error('10 m firing mark displaced: ' + JSON.stringify({ actor:a.pos.toArray(), target:target.pos.toArray(), standDistance }));
+      // Aim through the controller, preserving real spread and ballistics.
       const yaw = Math.atan2(target.pos.x - a.pos.x, target.pos.z - a.pos.z);
       g.rig.yaw = yaw; g.rig.pitch = -0.02;
       a.yaw = a.aimYaw = yaw;

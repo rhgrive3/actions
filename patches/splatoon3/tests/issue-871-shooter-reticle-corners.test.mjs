@@ -31,7 +31,7 @@ test('#871: Shooter retains four physical tick nodes and the existing shared spr
   assert.equal(shooter,reticle('slosher'),'#652 shared base structure must not be rewritten');
   assert.match(hud,/"--sp"|\'--sp\'/,'spread state remains wired');
 });
-test('#871: published CSS positions rectangular four-corner brackets, not cardinal bars',()=>{
+test('#871: published CSS positions rectangular four-corner strokes, not cardinal bars',()=>{
   const base=read('styles/hud.css');
   assert.ok(!base.includes('.iw-ret--shooter .iw-ret__tick {'),'locked upstream stays unmodified');
   const topLeft=css.match(/\.iw-ret--shooter \.iw-ret__tick:nth-child\(3\) \{([^}]+)\}/)?.[1];
@@ -39,11 +39,12 @@ test('#871: published CSS positions rectangular four-corner brackets, not cardin
   const bottomLeft=css.match(/\.iw-ret--shooter \.iw-ret__tick:nth-child\(5\) \{([^}]+)\}/)?.[1];
   const bottomRight=css.match(/\.iw-ret--shooter \.iw-ret__tick:nth-child\(6\) \{([^}]+)\}/)?.[1];
   for(const rule of [topLeft,topRight,bottomLeft,bottomRight])assert.ok(rule,'one CSS corner per Shooter tick');
-  assert.match(topLeft,/border-top.*border-left/);
-  assert.match(topRight,/border-top.*border-right/);
-  assert.match(bottomLeft,/border-bottom.*border-left/);
-  assert.match(bottomRight,/border-bottom.*border-right/);
-  assert.match(css,/--iw-corner:\s*calc\(12px \+ var\(--sp, 0\) \* \.707px\)/);
+  assert.match(topLeft,/--iw-cy: -24px; --iw-angle: 45deg/);
+  assert.match(topRight,/--iw-cy: -24px; --iw-angle: -45deg/);
+  assert.match(bottomLeft,/--iw-cy: 24px; --iw-angle: -45deg/);
+  assert.match(bottomRight,/--iw-cy: 24px; --iw-angle: 45deg/);
+  assert.match(css,/--iw-corner-x:\s*calc\(24px \+ var\(--sp, 0\) \* 1px\)/);
+  assert.match(css,/width: 3px; height: 14px/);
   assert.match(css,/\.iw-ret--splatling \.iw-ret__tick \{/,'Splatling retains its own bracket CSS');
   assert.ok(!css.includes('.iw-ret--slosher .iw-ret__tick:nth-child'),'Slosher styling stays independent');
 });
