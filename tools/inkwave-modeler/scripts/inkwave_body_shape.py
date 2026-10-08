@@ -550,6 +550,14 @@ def neck_join(cfg):
         bm.faces.ensure_lookup_table()
         bmesh.ops.delete(bm, geom=[bm.faces[i] for i in np.flatnonzero(~keep)], context='FACES_ONLY')
         bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+        # small holes the Boolean left near the joint (dark specks on the back of the neck) are filled
+        Lb = er.M.to_local(np.array([R.matrix_world @ v.co for v in bm.verts])) * 1000
+        small = [e for e in bm.edges if e.is_boundary and Lb[e.verts[0].index, 1] > cfg['cut_y'] + 5
+                 and Lb[e.verts[0].index, 1] < -40]
+        filled = bmesh.ops.holes_fill(bm, edges=small, sides=cfg.get('hole_sides', 12))['faces']
+        if filled:
+            bmesh.ops.recalc_face_normals(bm, faces=filled)
+        print('BODY_SHAPE neck_join', obj.name, 'small holes filled', len(filled))
         new = bpy.data.meshes.new(obj.data.name + '_joined')
         bm.to_mesh(new)
         bm.free()
