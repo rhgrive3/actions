@@ -64,12 +64,15 @@ async function flick(vertical) {
 }
 
 // Pre-fix fingerprints captured on the unmodified baseline. Only `vis` is
-// allowed to differ afterwards.
+// allowed to differ afterwards, plus the #771 horizontal launch velocities:
+// per-glob yaw now carries the sourced SwerveRateBySpeed, so the three
+// horizontal `vel` entries were re-encoded under #771 (positions, seeds,
+// radii, counts, sizes and both draw budgets are byte-identical to baseline).
 const FINGERPRINT = {
   horizontal: {
     count: 13, draws: 124,
     pos: [[-0.885567, 1.218557, 0.516495], [-0.719494, 1.239175, 0.537113], [-0.553421, 1.259794, 0.557732]],
-    vel: [[-13.619048, 0, 41.91512], [-12.336141, 0, 46.931549], [-10.5212, 0, 51.924168]],
+    vel: [[-15.441877, 0, 41.278374], [-13.901372, 0, 46.491962], [-11.722688, 0, 51.666173]],
     seed: [0.030928, 0.134021, 0.237113],
     radius: [0.856186, 0.887113, 0.918041],
     sats: [1, 1, 1], size: 0.12,

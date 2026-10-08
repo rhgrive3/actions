@@ -23,7 +23,11 @@ test('negative cumulative-max interpretation drops the second Roller increment',
   };
   launch(f,a,c); finish(f,a);
   const total = f.hits.reduce((n,h) => n+h.damage,0);
-  assert.ok(Math.abs(total-149.19758204830146)<1e-9);
+  // #771 re-encodes this seeded volley: per-glob yaw now carries the sourced
+  // SwerveRateBySpeed, so the single recorded increment lands at 146.24…
+  // instead of 149.19…. The assertion's purpose (second increment dropped,
+  // one cumulative-maximum hit) is unchanged.
+  assert.ok(Math.abs(total-146.2467193896255)<1e-9);
 });
 
 test('receiver uses immutable hit weapon identity after attacker switches weapon', async () => {

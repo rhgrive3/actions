@@ -266,6 +266,7 @@
         "speedRandom": 0.11,
         "mainSpeedBase": 1.05,
         "halfAngleDegrees": 4,
+        "swerveRate": 0.1,
         "mainWidthReference": 0.8,
         "widthRatio": 0.5
       },
@@ -1423,6 +1424,12 @@
       "index": null,
       "factor": 1,
       "rawValue": 4
+    },
+    "weapons.roller.nearFlickUnit.swerveRate": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SwerveRateBySpeed",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.1
     },
     "weapons.roller.nearFlickUnit.mainWidthReference": {
       "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnPositionWidth",

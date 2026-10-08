@@ -63,8 +63,17 @@ export function blasterBurstDamage(p, w, distance, distanceDamage) {
 export function appendRollerNearUnit(system, a, w) {
   const u = w.nearFlickUnit;
   if (!u || a.weaponRunner.s3FlickVertical || a.remote) return;
-  const angle = a.yaw + (Math.random() * 2 - 1) * u.halfAngleDegrees * DEG;
-  const speed = w.flickSpeed * (u.speedBase + (Math.random() * 2 - 1) * u.speedRandom) / u.mainSpeedBase;
+  // #771: the near unit carries pinned SwerveRateBySpeed 0.1 (Unit[1],
+  // via w.nearFlickUnit.swerveRate). Draw roles are unchanged (fan draw,
+  // then speed draw); the swerve reuses the speed draw so the near yaw is
+  // tied to its own sampled speed with no extra RNG draw or packet field.
+  // Same UNVERIFIED-model note as configureFidelityFlick: linear coupling
+  // in radians, native law undocumented; a missing/zero rate keeps the
+  // prior fan-only angle exactly.
+  const fanSample = Math.random() * 2 - 1;
+  const speedSample = Math.random() * 2 - 1;
+  const angle = a.yaw + fanSample * u.halfAngleDegrees * DEG + speedSample * (u.swerveRate || 0);
+  const speed = w.flickSpeed * (u.speedBase + speedSample * u.speedRandom) / u.mainSpeedBase;
   // Width is a full-width local span in this provisional mapping. A future
   // main-unit width calibration can supply flickSpawnWidth without changing
   // the sourced 0.4 / 0.8 ratio. No exact S3 position/PDF claim is made.

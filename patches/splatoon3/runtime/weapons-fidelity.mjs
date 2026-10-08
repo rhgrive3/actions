@@ -407,8 +407,22 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
     angle=actor.yaw+radians(unit.SpawnRotateYDegree||0);
   }else{
     const count=unit.BulletNum??1,fan=count>1?offset/(count-1)*2-1:0;
-    speed=60*(unit.SpawnSpeedBase+(Math.random()*2-1)*(unit.SpawnSpeedRandom||0));
-    angle=actor.yaw+fan*radians(unit.SpawnWideDegree||0);
+    // #771: pinned 11.3.0 WideSwingUnitGroupParam carries per-unit
+    // SwerveRateBySpeed (main 0.05 / near 0.1). This layer rebuilt yaw as a
+    // pure fan, so each main index kept one fixed yaw while speed/spawn
+    // varied. Reuse the single normalized speed draw so yaw is tied to the
+    // glob's own sampled speed with no extra RNG draw, packet field, or
+    // numeric default. The linear speedSample coupling in radians
+    // (engine-native yaw; the field name carries no Degree unit, so no
+    // degree conversion is invented) is an explicit UNVERIFIED model: the
+    // native swerve law is undocumented in the pinned JSON and this repo.
+    // A missing/zero field keeps the previous fan angle exactly. The
+    // vertical path is untouched (its units carry no such field). #734
+    // damage uses spawn->hit geometry vs fidelitySectorYaw, so recording
+    // the true launch in fidelityYaw below does not retune that boundary.
+    const speedSample=Math.random()*2-1;
+    speed=60*(unit.SpawnSpeedBase+speedSample*(unit.SpawnSpeedRandom||0));
+    angle=actor.yaw+fan*radians(unit.SpawnWideDegree||0)+speedSample*(unit.SwerveRateBySpeed||0);
     pitch+=radians(b.horizontalPitchDegrees); // retained calibrated launch angle, NOT extracted
     const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnPositionRandomCube||0;
     p.pos.x+=Math.cos(actor.yaw)*side+(Math.random()*2-1)*j;

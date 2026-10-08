@@ -772,6 +772,14 @@
       "unit": "raw reference units",
       "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
     },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SwerveRateBySpeed": {
+      "value": 0.05,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/SwerveRateBySpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference rate; angular mapping unvalidated",
+      "notes": "Pinned 11.3.0 value only (#771). No formula, units, curve, or RNG semantics are documented in the pinned JSON; the speed-to-yaw mapping applied in the runtime is an explicit unverified model."
+    },
     "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponVerticalSwingParam/SwingFrame": {
       "value": 26,
       "pointer": "/GameParameters/WeaponVerticalSwingParam/SwingFrame",
@@ -1337,6 +1345,14 @@
       "status": "extracted",
       "unit": "raw reference units",
       "notes": "Pinned11.3.0; angular sampler and world-space spawn mapping remain separately uncalibrated."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SwerveRateBySpeed": {
+      "value": 0.1,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/1/SwerveRateBySpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference rate; angular mapping unvalidated",
+      "notes": "Pinned 11.3.0 value only (#771); bound to weapons.roller.nearFlickUnit.swerveRate. No formula, units, curve, or RNG semantics are documented in the pinned JSON; the speed-to-yaw mapping applied in the runtime is an explicit unverified model."
     },
     "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnPositionWidth": {
       "value": 0.8,

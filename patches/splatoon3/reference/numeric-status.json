@@ -1442,6 +1442,16 @@
       "rawValue": 4
     }
   },
+  "weapons.roller.nearFlickUnit.swerveRate": {
+    "value": 0.1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SwerveRateBySpeed",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.1
+    }
+  },
   "weapons.roller.nearFlickUnit.mainWidthReference": {
     "value": 0.8,
     "status": "derived from pinned extracted data; physical scale unverified",
