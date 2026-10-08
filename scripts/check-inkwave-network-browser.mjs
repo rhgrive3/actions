@@ -64,8 +64,15 @@ try{
  await pages[1].evaluate(c=>NG.net.join(c,'Network Guest'),code);
  await pages[0].waitForFunction(()=>NG.net.lobby.players.length===2);
  await pages[1].waitForFunction(()=>NG.net.lobby.players.length===2);
- await pages[1].evaluate(()=>NG.net.setMe({weapon:'roller',ready:true}));
- await pages[0].evaluate(()=>{NG.net.setMe({weapon:'roller',ready:true});NG.net.setSettings({bots:false});NG.net.start();});
+ await pages[1].evaluate(()=>NG.net.setMe({weapon:'roller',team:1,ready:true}));
+ await pages[0].evaluate(()=>{NG.net.setMe({weapon:'roller',team:0,ready:true});NG.net.setSettings({bots:false});});
+ await pages[0].waitForFunction(()=>NG.net.lobby.players.length===2&&!NG.net.lobby.bots&&NG.net.lobby.players.some(p=>p.id===NG.net.myId&&p.host&&p.team===0&&p.ready)&&NG.net.lobby.players.some(p=>p.id!==NG.net.myId&&!p.host&&p.team===1&&p.ready));
+ await pages[1].waitForFunction(()=>NG.net.lobby.players.length===2&&!NG.net.lobby.bots&&NG.net.lobby.players.some(p=>p.id===NG.net.myId&&!p.host&&p.team===1&&p.ready)&&NG.net.lobby.players.some(p=>p.host&&p.team===0&&p.ready));
+ const hostStart=await pages[0].evaluate(()=>({host:NG.net.isHost,canStart:NG.net.canStart(),block:NG.net.startBlock(),bots:NG.net.lobby.bots,players:NG.net.lobby.players.map(({id,host,team,ready})=>({id,host,team,ready}))}));
+ assert.equal(hostStart.host,true,JSON.stringify(hostStart));
+ assert.equal(hostStart.canStart,true,JSON.stringify(hostStart));
+ assert.equal(await pages[1].evaluate(()=>NG.net.canStart()),false,'the remote peer must not own the start gate');
+ assert.equal(await pages[0].evaluate(()=>NG.net.start()),true,'configured host must start the confirmed lobby');
  await Promise.all(pages.map(p=>p.waitForFunction(()=>NG.game.match?.state==='playing'&&NG.net.active,null,{timeout:180000})));
  console.log('network browser match ready');for(const page of pages)await page.evaluate(baseline=>{
   globalThis.isBaseline=baseline;
