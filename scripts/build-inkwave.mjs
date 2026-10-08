@@ -11,16 +11,14 @@ import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
 import { pathToFileURL } from 'url';
-import { PATCH_ROOT, checkCompatibility, adaptSource, writeBuildIdentity, sha256 } from '../patches/splatoon3/adapter.mjs';
-import { adaptTouchLayout, touchLayoutIdentity } from '../patches/touch-layout/adapter.mjs';
-import { adaptReliability, reliabilityIdentity, RELIABILITY_ROOT } from '../patches/reliability/adapter.mjs';
-import { adaptQualitySource, qualityIdentity, QUALITY_ROOT } from '../patches/local-quality/adapter.mjs';
-import { adaptNetworkSource, networkIdentity, NETWORK_ROOT } from '../patches/network-replication/adapter.mjs';
+import { PATCH_ROOT, checkCompatibility, writeBuildIdentity, sha256 } from '../patches/splatoon3/adapter.mjs';
+import { touchLayoutIdentity } from '../patches/touch-layout/adapter.mjs';
+import { reliabilityIdentity, RELIABILITY_ROOT } from '../patches/reliability/adapter.mjs';
+import { qualityIdentity, QUALITY_ROOT } from '../patches/local-quality/adapter.mjs';
+import { networkIdentity, NETWORK_ROOT } from '../patches/network-replication/adapter.mjs';
 import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity } from '../patches/loading-cache/adapter.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
-
-const adaptBuildSource = (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
 const SRC = physicalLocation(path.resolve(process.argv[2] || 'inkwave-public'));
@@ -197,6 +195,8 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  // #1088 remains precached but is not a new eager preload hint.
+  'patches/network-replication/issue-1088-surge-presentation.mjs',
   // C30-C39 helpers keep static imports and full precache without four new eager hints.
   'patches/splatoon3/runtime/charger-sight-cache.mjs',
   'patches/splatoon3/runtime/minimap-dirty.mjs',

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
@@ -18,12 +19,19 @@ import { BLASTER_MECHANISM } from '../runtime/blaster-mechanism.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
-let cached;
+const adaptProductionSource = (rel, code) => adaptRange(rel,
+  adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
+let cached, fullSixCached, deterministicFullSixCached;
 // One VM runs the complete production installer exactly once. Duplicate
 // installers below may verify guards, but cannot repair a missing installation.
-async function production() {
-  if (cached) return cached;
-  const context = vm.createContext({ console, performance, URL, innerWidth: 1280, innerHeight: 720 }), modules = new Map();
+async function production({ deterministic = false, fullAdapters = false } = {}) {
+  const existing = fullAdapters ? (deterministic ? deterministicFullSixCached : fullSixCached) : cached;
+  if (existing) return existing;
+  const sandbox = { console, performance, URL, innerWidth: 1280, innerHeight: 720 };
+  if (deterministic) {
+    const math = Object.create(Math); math.random = () => 0.5; sandbox.Math = math;
+  }
+  const context = vm.createContext(sandbox), modules = new Map();
   const load = requested => {
     let file = requested.startsWith(path.join(SRC, 'patches') + path.sep)
       ? path.join(ROOT, path.relative(SRC, requested)) : requested;
@@ -35,7 +43,9 @@ async function production() {
     const prior = baseline && file.startsWith(path.join(ROOT, 'patches/splatoon3/runtime') + path.sep)
       ? path.join(fs.realpathSync(baseline), path.basename(file)) : null;
     const source = fs.readFileSync(prior && fs.existsSync(prior) ? prior : file, 'utf8');
-    const m = new vm.SourceTextModule(adaptProduction(file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file), source),
+    const m = new vm.SourceTextModule(file.startsWith(SRC + path.sep)
+      ? (fullAdapters ? adaptProductionSource : adaptProduction)(path.relative(SRC, file), source)
+      : adaptProduction(path.relative(ROOT, file), source),
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, m); return m;
   };
@@ -70,7 +80,11 @@ async function production() {
   G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true };
   G.physics = new api.Physics(G.level);
   G.actors = []; G.time = 0;
-  cached = { ...api, ...entry.namespace, profile }; return cached;
+  const result = { ...api, ...entry.namespace, profile };
+  if (fullAdapters && deterministic) deterministicFullSixCached = result;
+  else if (fullAdapters) fullSixCached = result;
+  else cached = result;
+  return result;
 }
 function rig(api, kind, enabled = true, { nativeProjectiles = false } = {}) {
   const { Actor, Character, G, THREE } = api;
@@ -166,6 +180,174 @@ test('second-realm helpers observe the installed weapon attack and reset state',
       assert.deepEqual(JSON.parse(JSON.stringify(snapshotFromAnotherRealm(r.ch))), JSON.parse(JSON.stringify(r.snapshot())));
     } finally { r.close(); }
   }
+});
+
+const issue1096Digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const issue1096Tuning = {
+  shooter: { kick: .045, back: .022, hz: 11, z: .93, jit: .012 },
+  blaster: { kick: .24, back: .045, hz: 5.2, z: .85, jit: .016 },
+  charger: { kick: .36, back: .047, hz: 5.6, z: .84, jit: .006 },
+  splatling: { kick: .022, back: .012, hz: 10, z: .92, jit: .006 },
+};
+const issue1096BaselineOutputs = {
+  shooter: { pose: '30af48a6030396e5ae2567e02e8a3c8df9aae41c9a40ac0716db24d08e737b70',
+    recoilTrigger: 'c55ee6a095526ed1965e6f6cbef8c03a5b9686dc2c7529a2e4282c0ef6c568b5',
+    breath: 'ee90765bb7397f23b02406e461a0ee4e585f12b49e5aa781809705cb62f46631',
+    layerOutputs: '41c1d4db3adf64fbc6caa1429c64a00423411cad65fc1dd058388f17983abfd3' },
+  blaster: { pose: '2151f73a8c00e9957f5ebdc1a176fe98d2f203e0735befd1e42d64f520d17cd3',
+    recoilTrigger: '5748cbe9dbab8c3a56152617d50c5b9a9678407699418c49c45ddeeece7168b7',
+    breath: '8c93ebe1f00af866bbd0224bf845ef5bab4a9e1f70aca86e30c425e7c2ae26e3',
+    layerOutputs: '0a036fe02ba66323fc19a27ca4afd36188a0ff76489ab121d6dffcf87f89e1e1' },
+  charger: { pose: '376b2d767cef5a28fd41b4e4b26f830eefc659a26e086850174c1b5d08ee9a91',
+    recoilTrigger: '5dcb431b1181d3439057d9c25930ee1c265075acfbdbe8597cfcdb96a082c5c8',
+    breath: '032a83c35d476343a5ccfae4b2014ab4a6a5f0b27d83265df7c4176a485a588a',
+    layerOutputs: '95051ac67aed4a748fea50c3d86e183baba8a0ffaf52c08a4ddcf2a3b6f77b82' },
+  splatling: { pose: '018401c98fd654ab677aae0047e32c2c4ac3ec88177301dde67128bcf7661a3c',
+    recoilTrigger: '7fb83087b1f7834c290d73aeac631a30d611661202ce0e1dd4393267e84f59c4',
+    breath: 'a987c0ddfe2bd9504e787512c686489283cf085907398a96a903086eb6145dbd',
+    layerOutputs: '9e07668395b70735372b84d6230ea88666dd7c1d1307d9e212f9a5caa3fda1ee' },
+};
+
+test('#1096 current production pose wrapper identity and independent output baselines', async t => {
+  const api = await production({ deterministic: true, fullAdapters: true }), traces = [], C = api.CHARACTER_CHANNELS;
+  for (const kind of Object.keys(issue1096Tuning)) {
+    const oldTime = api.G.time; api.G.time = 0;
+    const r = rig(api, kind), ch = r.ch, nativeHold = ch.hold;
+    const holdOverlays = new Set(), recoilOverlays = new Set();
+    const tuning = issue1096Tuning[kind];
+    let holdValue = nativeHold, poseCalls = 0;
+    const nativePose = ch._poseWeapon;
+    Object.defineProperty(ch, 'hold', { configurable: true, get: () => holdValue, set(value) {
+      holdValue = value;
+      if (value?.rc && value.rc !== nativeHold.rc && Object.keys(tuning).every(key => value.rc[key] === tuning[key])) {
+        holdOverlays.add(value); recoilOverlays.add(value.rc);
+      }
+    } });
+    ch._poseWeapon = function (...args) { poseCalls++; return nativePose.apply(this, args); };
+    try {
+      for (let frame = 0; frame < 600; frame++) {
+        const fire = kind === 'shooter' ? frame < 96 || frame >= 240 && frame < 264
+          : kind === 'blaster' ? frame < 144
+            : kind === 'charger' ? frame < 132 : frame < 192;
+        r.step(1 / 60, { fire });
+        assert.equal(ch.hold, nativeHold, `${kind} restores the native hold after pose ${frame + 1}`);
+      }
+      const pose = Array.from(ch.P), springs = Array.from(ch.sp);
+      const breath = { phase: ch.brPh, charge: ch.charge, aim: ch.wAim,
+        channels: [C.ANC, C.ANC + 1, C.ANCR, C.CHEST, C.HEAD].map(index => ch.P[index]) };
+      const runner = r.a.weaponRunner;
+      const layers = { detail: r.snapshot(), weaponKind: ch.weaponKind,
+        weapon: { pump: ch.weapon?.pump ?? 0, spinW: ch.spinW || 0, spinA: ch.spinA || 0 },
+        runner: { charge: runner.charge ?? null, charging: !!runner.charging, streaming: !!runner.streaming,
+          burstFrac: runner.burstFrac ?? null }, fires: r.events.map(event => ({ ...event })) };
+      traces.push({ weapon: kind, poseCalls, distinctHoldOverlayObjects: holdOverlays.size,
+        distinctRecoilOverlayObjects: recoilOverlays.size,
+        independentBaseline: { pose: issue1096Digest(pose), recoilTrigger: issue1096Digest(springs),
+          breath: issue1096Digest(breath), layerOutputs: issue1096Digest(layers) } });
+    } finally { r.close(); api.G.time = oldTime; }
+  }
+  t.diagnostic(JSON.stringify({ issue: 1096, production: 'full install.mjs + actual Character', framesPerWeapon: 600, traces }));
+  assert.deepEqual(traces.map(row => [row.poseCalls, row.distinctHoldOverlayObjects, row.distinctRecoilOverlayObjects]),
+    [[600, 1, 1], [600, 1, 1], [600, 1, 1], [600, 1, 1]],
+    '600 full Character frames reuse one tuned hold/rc identity per weapon');
+  assert.deepEqual(Object.fromEntries(traces.map(row => [row.weapon, row.independentBaseline])), issue1096BaselineOutputs,
+    'pose, recoil trigger, charger breath and installed layer outputs match current-main baseline digests');
+});
+
+test('#1096 refreshes mutable native records, switches tuning, and unwinds nested throws', async () => {
+  const api = await production({ deterministic: true, fullAdapters: true }), r = rig(api, 'blaster'), ch = r.ch;
+  const shared = ch.hold, sharedBefore = JSON.stringify(shared);
+  const nativeRecord = { ...shared, marker: 'first', rc: { ...shared.rc, hz: 99, torso: .123, dynamic: 1 } };
+  ch.hold = nativeRecord;
+  let holdValue = nativeRecord, capture = false, originalForCall = nativeRecord;
+  let overlays = [];
+  Object.defineProperty(ch, 'hold', { configurable: true, get: () => holdValue, set(value) {
+    holdValue = value;
+    if (capture && value !== originalForCall) overlays.push(value);
+  } });
+  const capturePose = (dt = 1 / 60, state = { aimPitch: .2 }) => {
+    originalForCall = ch.hold; overlays = []; capture = true;
+    try { ch._poseWeapon(dt, state); }
+    finally { capture = false; }
+    assert.equal(ch.hold, originalForCall, 'pose restores the exact native hold identity');
+    assert.ok(overlays.length > 0, 'the production pose applied a tuned hold overlay');
+    const tuning = issue1096Tuning[ch.weaponKind];
+    const tuned = overlays.filter(overlay => Object.keys(tuning).every(key => overlay?.rc?.[key] === tuning[key]));
+    assert.ok(tuned.length > 0, 'the active weapon recoil tuning reached the native pose');
+    return tuned.at(-1);
+  };
+  try {
+    const first = capturePose();
+    assert.deepEqual(Object.fromEntries(Object.keys(issue1096Tuning.blaster).map(key => [key, first.rc[key]])), issue1096Tuning.blaster);
+    assert.equal(first.rc.torso, .123); assert.equal(first.rc.dynamic, 1); assert.equal(first.marker, 'first');
+    nativeRecord.rc.torso = .456; nativeRecord.rc.dynamic = 2; nativeRecord.marker = 'second'; delete nativeRecord.unused;
+    const refreshed = capturePose();
+    assert.equal(refreshed, first, 'the same private Character overlay is refreshed in place');
+    assert.equal(refreshed.rc, first.rc); assert.equal(refreshed.rc.torso, .456); assert.equal(refreshed.rc.dynamic, 2);
+    assert.equal(refreshed.marker, 'second');
+    nativeRecord.rc.jit = 777; nativeRecord.rc.addedAfterCache = 'live';
+    const dynamic = capturePose();
+    assert.equal(dynamic, first); assert.equal(dynamic.rc.jit, issue1096Tuning.blaster.jit);
+    assert.equal(dynamic.rc.addedAfterCache, 'live', 'new native rc fields are visible after cache initialization');
+    const sourceRc = nativeRecord.rc; let getterReads = 0;
+    Object.defineProperty(sourceRc, 'poseRead', { configurable: true, enumerable: true, get() {
+      assert.equal(this, sourceRc, 'native spread getters keep their original receiver'); return ++getterReads;
+    } });
+    const readsBefore = getterReads, getterPose = capturePose();
+    assert.ok(getterReads > readsBefore); assert.equal(getterPose.rc.poseRead, getterReads);
+    const readsAfter = getterReads, refreshedGetterPose = capturePose();
+    assert.ok(getterReads > readsAfter, 'mutable native accessors are read again on later poses');
+    assert.equal(refreshedGetterPose.rc.poseRead, getterReads);
+    const getterFailure = new Error('native rc getter failure');
+    Object.defineProperty(sourceRc, 'throwOnPose', { configurable: true, enumerable: true, get() { throw getterFailure; } });
+    assert.throws(() => capturePose(), error => error === getterFailure);
+    assert.equal(ch.hold, nativeRecord, 'a throw while refreshing native fields leaves the original hold installed');
+    delete sourceRc.throwOnPose;
+    assert.doesNotThrow(() => capturePose(), 'cache depth is restored after a field getter throws');
+
+    for (const kind of ['charger', 'splatling', 'shooter']) {
+      r.a.setWeapon(kind);
+      const switched = capturePose();
+      assert.equal(switched, first, `${kind} reuses this Character's private overlay`);
+      assert.deepEqual(Object.fromEntries(Object.keys(issue1096Tuning[kind]).map(key => [key, switched.rc[key]])), issue1096Tuning[kind]);
+      assert.equal(ch.hold, r.a.character.hold);
+    }
+    for (const kind of ['roller', 'slosher', 'dualies']) {
+      r.a.setWeapon(kind); originalForCall = ch.hold; overlays = []; capture = true;
+      try { ch._poseWeapon(0, {}); } finally { capture = false; }
+      assert.equal(ch.hold, originalForCall, `${kind} keeps its native hold identity`);
+      assert.equal(overlays.length, 0, `${kind} bypasses recoil overlay tuning`);
+    }
+    r.a.setWeapon('shooter');
+    const oldDt = ch._dt;
+    r.a.isLocal = false; ch._dt = 0; ch.tr[api.CHARACTER_TIMERS.T_LEAP] = .5;
+    const remoteSpecialPreview = capturePose(0, {});
+    assert.equal(remoteSpecialPreview, first, 'remote zero-time special/preview path keeps the same scoped cache');
+    assert.equal(remoteSpecialPreview.rc.kick, issue1096Tuning.shooter.kick);
+    ch._dt = oldDt;
+    assert.equal(JSON.stringify(shared), sharedBefore, 'shared native weapon hold records were never mutated');
+  } finally { r.close(); }
+
+  const disabled = rig(api, 'shooter', false), disabledHold = disabled.ch.hold;
+  try {
+    assert.doesNotThrow(() => disabled.ch._poseWeapon(1 / 60, { aimPitch: 0 }));
+    assert.equal(disabled.ch.hold, disabledHold, 'disabled detail motion keeps its original path');
+  } finally { disabled.close(); }
+
+  const nested = rig(api, 'splatling'), nestedHold = nested.ch.hold, failure = new Error('nested pose failure');
+  try {
+    let reentered = false;
+    nested.ch._runner = function () {
+      if (!reentered) { reentered = true; this._poseWeapon(1 / 60, {}); }
+      throw failure;
+    };
+    assert.throws(() => nested.ch._poseWeapon(1 / 60, {}), error => error === failure);
+    assert.equal(reentered, true, 'native pose reentered the recoil wrapper');
+    assert.equal(nested.ch.hold, nestedHold, 'nested throw cleanup restores the original hold identity');
+    nested.ch._runner = function (s) { return nested.a.weaponRunner; };
+    assert.doesNotThrow(() => nested.ch._poseWeapon(1 / 60, {}), 'the overlay depth is usable after an exception');
+    assert.equal(nested.ch.hold, nestedHold);
+  } finally { nested.close(); }
 });
 
 test('production supported shooter carry retains both actual indexed grips through Flow and aim', async t => {
