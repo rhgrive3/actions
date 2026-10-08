@@ -96,7 +96,7 @@ function validateDetailResult(result) {
     if(!disposed?.disposed||disposed.resources!==0||disposed.aliveParticles!==0)throw Error('Flow resources survived Character disposal: '+name);
     const peak=Math.max(...samples.map(s=>Math.abs(s.rcP))),tail=samples.slice(-24);
     if(scenario.type==='bomb') {
-      if(!samples[29].heldVisible||samples[30].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
+      if(!samples[29].heldVisible||samples[actualBombThrowFrame].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
       if(scenario.kind==='dualies'&&(samples[29].leftPistolVisible||!samples.at(-1).leftPistolVisible))throw Error('Bomb dualies pistol recovery regression');
       const held=renderMetrics.find(m=>m.frame===29)?.heldBomb,released=renderMetrics.find(m=>m.frame===actualBombThrowFrame)?.releasedBomb;
       if(!held||held.indexedVertices<50||held.nearestLeft>=.12||!released||released.indexedVertices<100||released.nearestLeft>=.22)throw Error('Actual indexed bomb/hand contact regression: '+name);

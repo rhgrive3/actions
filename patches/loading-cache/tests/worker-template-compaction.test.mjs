@@ -1,14 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { parse } from '../vendor/acorn.mjs';
 import { finalizeLoadingWorker } from '../adapter.mjs';
 
 const revision='a'.repeat(64);
 function setup(t) {
-  const root=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-worker-template-'));
+  const persistent=path.resolve(process.env.INKWAVE_TEST_SCRATCH || '/mnt/workspace/.dev-state/agent-work/scratch/inkwave-worker-template-tests');
+  fs.mkdirSync(persistent,{recursive:true});
+  const resolved=fs.realpathSync(persistent);
+  assert(resolved.startsWith('/mnt/workspace/'), 'worker fixtures require persistent workspace storage');
+  const root=fs.mkdtempSync(path.join(resolved,'case-'));
   t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
   fs.writeFileSync(path.join(root,'index.html'),'<html>preserved index</html>');
   return root;

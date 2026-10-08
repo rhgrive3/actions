@@ -45,6 +45,7 @@ test('detail accepts valid semantic records and rejects original false-pass coun
   r=>row(r,'bomb-standing').events.push({name:'throwBomb',frame:32,charge:null}),
   r=>row(r,'bomb-standing').releaseFrames[0].meshType='Mesh',
   r=>row(r,'bomb-standing').releaseTiming.measuredDelayFrames++,
+  r=>row(r,'bomb-standing').samples[31].heldVisible=true,
   r=>row(r,'bomb-standing').renderMetrics.find(m=>m.frame===31).releasedBomb=null,
   r=>row(r,'shooter-recoil').events[1].frame++,
   r=>row(r,'shooter-recoil').samples[239].rcP=.01,
