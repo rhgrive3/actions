@@ -62,11 +62,13 @@ function finishNoContest(nm, announce = false) {
 
 export function installDisconnectFidelity(api) {
   const { NetMatch, G } = api || {};
-  if (!NetMatch?.prototype || NetMatch.prototype[INSTALLED]) return;
+  if (!NetMatch?.prototype) return;
   const nm = NetMatch.prototype;
-  Object.defineProperty(nm, INSTALLED, { value: true });
-  // Keep the current G reachable without adding a new global import.
+  // Refresh the runtime context even when the same prototype is installed again
+  // by an isolated fixture; wrapped methods must not retain a stale G instance.
   Object.defineProperty(nm, '__s3G', { get() { return G; }, configurable: true });
+  if (nm[INSTALLED]) return;
+  Object.defineProperty(nm, INSTALLED, { value: true });
 
   const bind = nm.bind;
   nm.bind = function (match, ...args) {
@@ -118,7 +120,7 @@ export function installDisconnectFidelity(api) {
     } else {
       for (const a of affected) {
         deactivateDisconnectedActor(this, a);
-        G?.game?.hud?.banner?.(`${a.name} DISCONNECTED`);
+        this.__s3G?.game?.hud?.banner?.(`${a.name} DISCONNECTED`);
       }
       // #201: first-minute communication errors become a six-second no-contest
       // countdown. Only the host emits the authoritative countdown/end packet.
