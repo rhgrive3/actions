@@ -590,6 +590,29 @@ def neck_join(cfg):
         R.data.polygons.foreach_set('material_index', mi2)
         is_head = is_head & ~switch
         print('BODY_SHAPE neck_join border faces to the neck skin', int(switch.sum()))
+    if cfg.get('neck_skin_y') is not None:
+        # the head skin (its texture is one plain colour away from the lashes) and the neck skin differ in colour
+        # and subsurface: the neck above the collar takes the head skin, so the colour border lies under the collar.
+        # Those faces read the head texture at a plain-skin point (cfg['neck_skin_uv']); they go to HEAD_face.
+        Lr = er.M.to_local(er.world(R)) * 1000
+        ax, az = cfg.get('axis_xz', [0.0, 10.0])
+        cen = np.array([Lr[list(f.vertices)].mean(0) for f in R.data.polygons])
+        band = (~is_head) & (cen[:, 1] > cfg['neck_skin_y']) & (np.hypot(cen[:, 0] - ax, cen[:, 2] - az) < cfg.get('neck_skin_r', 60.0))
+        head_slot = next(i for i, m in enumerate(R.data.materials) if m and m.name in head_mats)
+        mi2 = np.zeros(len(R.data.polygons), int)
+        R.data.polygons.foreach_get('material_index', mi2)
+        mi2[band] = head_slot
+        R.data.polygons.foreach_set('material_index', mi2)
+        uvl = R.data.uv_layers.active
+        uvs = np.zeros(len(R.data.loops) * 2)
+        uvl.data.foreach_get('uv', uvs)
+        uvs = uvs.reshape(-1, 2)
+        for f in np.flatnonzero(band):
+            poly = R.data.polygons[f]
+            uvs[poly.loop_start:poly.loop_start + poly.loop_total] = cfg['neck_skin_uv']
+        uvl.data.foreach_set('uv', uvs.ravel())
+        is_head = is_head | band
+        print('BODY_SHAPE neck_join neck faces with the head skin', int(band.sum()))
     if R.data.attributes.get('custom_normal') is not None:      # the merged surface's own normals
         R.data.attributes.remove(R.data.attributes['custom_normal'])
     for obj, keep in ((head, is_head), (neck, ~is_head)):
