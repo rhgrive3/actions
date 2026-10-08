@@ -132,7 +132,12 @@ for (const run of RUNS) {
     // a hit on the 10 m gallery target from its stand mark
     out.checks.hit = await page.evaluate(async () => {
       const G = window.__G, g = window.__inkwave, s = G.match.range, a = G.local;
-      s.travel('gallery'); a.pos.set(-12, 0.05, 0); g.rig.yaw = 0; g.rig.pitch = -0.02;
+      s.travel('gallery');
+      // Put the shooter on the actual 10 m stand with the game's spawn path so its ground/root state and camera
+      // follow stay synchronized. The gallery target is directly north (+Z) from this stand.
+      a.spawnAt(a.pos.clone().set(-12, 0.05, 0), 0);
+      a.intent.move.set(0, 0, 0);
+      g.rig.follow(a, true); g.rig.yaw = 0; g.rig.pitch = -0.02;
       await new Promise((r) => setTimeout(r, 2500));
       const target = s.targets.find((x) => x.rangeTarget?.dist === 10);
       const births = [];
