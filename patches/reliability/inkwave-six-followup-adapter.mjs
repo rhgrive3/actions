@@ -9,13 +9,15 @@ function once(code, before, after, label) {
 // Runtime/gameplay ownership remains in the canonical native classes.
 export function adaptSixFollowup(rel, code) {
   if (rel === 'src/net/session.js') {
+    // Compose after adaptHostTeams: preserve its confirmed-team/all-ready gates
+    // while enforcing a minimum of two human players for Turf matches.
     code = once(code,
-      "    return !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);",
-      "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);",
+      "    return !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));",
+      "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));",
       '#1003 canStart two-human Turf minimum');
     code = once(code,
-      "    if (!this.isHost || this.state !== 'lobby' || !this.tr || this.startBlock()) return false;",
-      "    if (!this.isHost || this.state !== 'lobby' || !this.tr || this.startBlock() || (this.lobby.mode === 'turf' && this.lobby.players.length < 2)) return false;",
+      "    if (!this.isHost || this.state !== 'lobby' || !this.tr || !this.canStart()) return false;",
+      "    if (!this.isHost || this.state !== 'lobby' || !this.tr || !this.canStart() || (this.lobby.mode === 'turf' && this.lobby.players.length < 2)) return false;",
       '#1003 start two-human Turf minimum');
   }
   if (rel === 'src/main.js') {
