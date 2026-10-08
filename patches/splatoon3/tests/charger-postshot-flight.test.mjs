@@ -72,7 +72,10 @@ test('#1007/#1052 finite Charger keeps feet paint and forward trajectory widths 
     close(f.painted[0].radius, 1.2, 'feet splat uses RadiusSpawnNearest');
     ps.update(STEP);
     assert.ok(f.painted.length >= 2, 'flight creates a forward trajectory stamp');
-    close(f.painted[1].radius, forwardWidth, 'first forward stamp uses charge-dependent WidthHalf');
+    close(f.painted[1].radius, 1.2, 'first forward stamp consumes sourced RadiusSpawnNearest');
+    for(let frame=0;frame<8 && f.painted.length<3;frame++) ps.update(STEP);
+    assert.ok(f.painted.length>=3, 'the following paint stamp uses the charge-dependent width');
+    close(f.painted[2].radius, forwardWidth, 'later trajectory stamp uses charge-dependent WidthHalf');
   }
 });
 

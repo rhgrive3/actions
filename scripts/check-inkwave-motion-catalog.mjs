@@ -360,6 +360,27 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
   const { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
   const api = install(profile), { Actor, Character, Projectiles, Physics, G, CHARACTER_CHANNELS: C, CHARACTER_FOOT_METRICS: F } = api;
+  // Install the same post-install S3 owners used by bootstrap.mjs. These
+  // modules are genuinely active in the shipped game, not optional imports.
+  // An isolated catalog must exercise their runtime and network graphs too.
+  const [
+    { installIssueFiveHotfixA }, { installIssueFiveHotfixB }, { installIssueFiveHotfixC },
+    { installDisconnectFidelity }, { installSlosherIntermediatePaint },
+    { installIssueEightFollowup },
+  ] = await Promise.all([
+    import(prefix + 'patches/splatoon3/runtime/issue-five-hotfix-a.mjs'),
+    import(prefix + 'patches/splatoon3/runtime/issue-five-hotfix-b.mjs'),
+    import(prefix + 'patches/splatoon3/runtime/issue-five-hotfix-c.mjs'),
+    import(prefix + 'patches/splatoon3/runtime/disconnect-fidelity.mjs'),
+    import(prefix + 'patches/splatoon3/runtime/slosher-intermediate-paint.mjs'),
+    import(prefix + 'patches/splatoon3/runtime/issue-eight-followup.mjs'),
+  ]);
+  installIssueFiveHotfixA(api, profile);
+  installIssueFiveHotfixB(api, profile);
+  installIssueFiveHotfixC(api, profile);
+  installDisconnectFidelity(api);
+  installSlosherIntermediatePaint(api, profile);
+  installIssueEightFollowup(api);
   // Exercise the real Match dependency entry, including its deadline helper.
   const { Match } = await import(prefix + 'src/game/match.js');
   const turfFinish = globalThis.catalogTurfFinishProbe(Match, G);
