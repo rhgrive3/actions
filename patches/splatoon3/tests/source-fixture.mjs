@@ -18,8 +18,9 @@ const adaptProduction = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
 export async function fixture(options = {}) {
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
   const { adapt = adaptSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
-    fullRuntime = false, productionComposition = false, realProjectiles = false } = typeof options === 'string' ? {} : options;
-  const context = vm.createContext({ console, performance, URL, URLSearchParams, TextEncoder, TextDecoder,
+    fullRuntime = false, productionComposition = false, realProjectiles = false,
+    vmPerformance = performance } = typeof options === 'string' ? {} : options;
+  const context = vm.createContext({ console, performance: vmPerformance, URL, URLSearchParams, TextEncoder, TextDecoder,
     setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
   const modules = new Map();
   function resolve(spec, from) {
