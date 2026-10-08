@@ -22,6 +22,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './kit-composed-fixture.mjs';
+import { fixture as productionFixture } from './source-fixture.mjs';
 import {
   installKitBigBubbler, bigBubblerDomes, bigBubblerRemoteDomes,
   clearBigBubblers, kitBarrierCandidate, adjudicateBigBubblerDamage,
@@ -239,4 +240,29 @@ test('#1161 the 1.9x is applied once: local spend, remote proposal and host adju
 
   // sanity: the owner identity used by adjudication is the real one
   assert.equal(remoteCand.proposal.domeOwner, bigBubblerOwnerId(owner));
+});
+
+
+test('#1161 complete production composition and installed runtime retain one direct contact multiplier', async () => {
+  const f = await productionFixture({ productionComposition: true, fullRuntime: true, realProjectiles: true,
+    extraExports: "export { bigBubblerDomes as productionDomes } from './patches/splatoon3/runtime/kit-big-bubbler.mjs';" });
+  f.G.scene = new f.THREE.Scene();
+  f.G.projectiles = new f.Projectiles(f.G.scene);
+  level(f);
+  const owner = f.make('roller');
+  owner.pos.set(0, 0, 0); owner.yaw = owner.aimYaw = 0;
+  owner.weapon = { ...owner.weapon, special: 'bubbler', specialCost: 180 };
+  owner.special = owner.specialCost();
+  owner._startSpecial();
+  const dome = f.productionDomes()[0];
+  assert.ok(dome, 'the installed production runtime deploys the actual dome');
+  for (let i = 0; i < 240; i++) f.G.projectiles.update(1 / 60);
+  dome.hp = DOME_HP;
+  f.G.actors = [];
+  const enemy = f.make('blaster'); enemy.team = 1;
+  enemy.pos.set(dome.pos.x, 0, dome.pos.z - 40); enemy.yaw = enemy.aimYaw = 0;
+  const round = spawnBlaster(f, enemy, new f.THREE.Vector3(dome.pos.x, 1.2, dome.pos.z - 40), new f.THREE.Vector3(0, 0, 1));
+  assert.equal(round.s3Weapon.kind, 'blaster');
+  assert.ok(runPinningBeforeContact(f, round, dome, DOME_HP));
+  assert.equal(DOME_HP - dome.hp, BLASTER_DIRECT * BLASTER_OBJECT_MULTIPLIER * RAW_PER_DAMAGE_UNIT * CANOPY_RATIO);
 });
