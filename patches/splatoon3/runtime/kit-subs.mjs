@@ -263,7 +263,10 @@ export function resolveSubAtCharge(sub, charge) {
   const c = sub.chargeable ? clamp01(Number.isFinite(charge) ? charge : 0) : 0;
   const tpl = kitTemplate(sub);
   const blast = sub.chargeable ? curlingBlastParams(c, sub) : sub;
-  const fuse = sub.fuse ?? sub.fuseFallback ?? sub.burstFrame ?? null;
+  const fuse = sub.chargeable && sub.mode === 'roll' &&
+    Number.isFinite(sub.burstFrame) && Number.isFinite(sub.maxChargeTime) && Number.isFinite(sub.chargeFrameBlastRate)
+    ? Math.max(0, sub.burstFrame - c * sub.maxChargeTime * sub.chargeFrameBlastRate)
+    : sub.fuse ?? sub.fuseFallback ?? sub.burstFrame ?? null;
   return {
     spec: sub,
     charge: c,
@@ -410,6 +413,9 @@ export function kitBombAttach(SUB, projectiles, actor, release) {
   b.s3Bounces = 0;
   b.s3TrailPoint = null;                 // allocated lazily, reused for the roll
   b.s3FuseTotal = resolved.fuse;         // denominator for the native beep curve
+  // #1099: Curling's source-backed lifetime starts at release, not at first
+  // floor contact. Suction/Splat Bomb keep their own contact arming.
+  if (sub.mode === 'roll' && Number.isFinite(resolved.fuse)) b.fuse = resolved.fuse;
   // Held charge re-aims through the native throwVelocity, so aim pitch and
   // player-velocity carry stay with the native implementation.
   if (resolved.throwSpeed != null) {
@@ -672,7 +678,7 @@ export function kitBombPacket(b) {
   if (ghostBombSpawning() || b?.ghost) return null;
   const id = b?.s3Sub ? packetSubId(b.s3Sub.id) : null;
   if (!id) return ['', 0];
-  const charge = id && Number.isFinite(b.s3Charge) ? Math.round(clamp01(b.s3Charge) * 1000) / 1000 : 0;
+  const charge = id && Number.isFinite(b.s3Charge) ? clamp01(b.s3Charge) : 0;
   return [id, charge];
 }
 
@@ -698,6 +704,7 @@ export function kitGhostBombAttach(SUB, projectiles, b, rawId, rawCharge) {
   b.s3Mode = 'flight';
   b.s3Bounces = 0;
   b.s3FuseTotal = resolved.fuse;
+  if (spec.mode === 'roll' && Number.isFinite(resolved.fuse)) b.fuse = resolved.fuse;
   return b;
 }
 
