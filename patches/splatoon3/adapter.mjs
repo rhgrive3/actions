@@ -813,6 +813,24 @@ export function adaptSource(rel, code) {
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
+    // #1135: S3 standard Slosher has no opponent-damage landing splash record.
+    // Keep landing FX/paint, but do not let a zero-damage legacy radius poison
+    // the shared volley hit cache or emit false hit feedback.
+    code = replaceOnce(code,
+      "    const w = WEAPONS[p.wid] || WEAPONS.slosher;\n    for (const e of G.actors) {",
+      "    const w = WEAPONS[p.wid] || WEAPONS.slosher;\n    if (w.splashDamage > 0) {\n    for (const e of G.actors) {",
+      'Slosher qualifying landing damage gate');
+    code = replaceOnce(code,
+      "    if (G.boss && direct !== 'boss' && !(p.vol && p.vol.hits.includes(G.boss))) { p.vol?.hits.push(G.boss); G.boss.splash(p.owner, at, w.splashRadius + 0.3, w.splashDamage, w.splashDamage, p.wid || 'slosher'); }\n    if (p.owner.isLocal || G.camera.position.distanceToSquared(at) < 26 * 26) {",
+      "    if (G.boss && direct !== 'boss' && !(p.vol && p.vol.hits.includes(G.boss))) { p.vol?.hits.push(G.boss); G.boss.splash(p.owner, at, w.splashRadius + 0.3, w.splashDamage, w.splashDamage, p.wid || 'slosher'); }\n    }\n    if (p.owner.isLocal || G.camera.position.distanceToSquared(at) < 26 * 26) {",
+      'Slosher visual-only landing path');
+
+    // #1123: selected kit bombs own one source-shaped explosion paint pass.
+    // Generic Splat Bomb keeps the native footprint unchanged.
+    code = replaceOnce(code,
+      "    let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), s.paintRadius, b.team, { seed: Math.random() });\n    for (let i = 0; i < 5; i++) {\n      const a = Math.random() * Math.PI * 2, r = s.paintRadius * (0.6 + Math.random() * 0.4);\n      area += G.paint.splat(_v.set(c.x + Math.cos(a) * r, c.y + 0.5, c.z + Math.sin(a) * r), 0.7 + Math.random() * 0.5, b.team, { seed: Math.random() });\n    }\n    b.owner.addTurf(area);",
+      "    const kitArea = kitBombExplosionPaint(SUB, b, G.paint);\n    if (kitArea == null) {\n      let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), s.paintRadius, b.team, { seed: Math.random() });\n      for (let i = 0; i < 5; i++) {\n        const a = Math.random() * Math.PI * 2, r = s.paintRadius * (0.6 + Math.random() * 0.4);\n        area += G.paint.splat(_v.set(c.x + Math.cos(a) * r, c.y + 0.5, c.z + Math.sin(a) * r), 0.7 + Math.random() * 0.5, b.team, { seed: Math.random() });\n      }\n      b.owner.addTurf(area);\n    } else b.owner.addTurf(kitArea);",
+      'kit-specific bomb explosion paint');
     // #1118/#1113: arbitrate the native bomb's swept segment against Vac and
     // Big Bubbler before native world-contact mutation. A nearer stage surface
     // wins ties/order; a Vac consumes without detonation, a Bubbler contact
@@ -838,7 +856,7 @@ export function adaptSource(rel, code) {
     // neutral-stick coasting/knockback hits.
     code = replaceOnce(code,
       '      if (fwd > -0.2 && fwd < 1.35 && lat < w.rollWidth / 2 + 0.35 && Math.abs(dy) < 1.2 && hs > 1.0) {',
-      '      if (fwd > -0.2 && fwd < 1.35 && lat < w.rollWidth / 2 + 0.35 && Math.abs(dy) < 1.2 && rollerStickActive(a)) {',
+      '      if (fwd > -0.2 && fwd < 1.35 && lat < w.rollWidth / 2 + 0.35 && rollerContactCandidate(a, e, w, PLAYER) && rollerStickActive(a)) {',
       'Roller micro-speed actor contact admission');
     code = replaceOnce(code,
       '    if (G.boss && hs > 1.0) {',
@@ -867,7 +885,7 @@ export function adaptSource(rel, code) {
       '        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);',
       '        applySplatBombSurfaceResponse(b, hit.normal);', 'Splat Bomb sourced ground resistance');
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
-    return `import { rollerStickActive } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
+    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
@@ -1249,6 +1267,21 @@ export function adaptSource(rel, code) {
       "        const by = attacker ? attacker.name : t(cause === 'water' ? 'the sea' : 'enemy ink');\n        this.hud?.showSplatted({ by, byColor:",
       "        const card = splatCardText(cause, attacker, t); // SPLATTED BY names the cause; the opponent is a separate line\n        this.hud?.showSplatted({ by: card.cause, who: card.who, byColor:",
       'death card splat cause');
+    // #1131: an async Judd reveal belongs to the match/epoch that started it.
+    // Quitting/room abort invalidates the epoch synchronously, before the fade,
+    // so stale continuation cannot revive results or mutate persistent XP.
+    code = replaceOnce(code,
+      '  async _judge() {\n    const m = this.match;',
+      '  async _judge() {\n    const m = this.match;\n    const judgeEpoch = this._s3JudgeEpoch = (this._s3JudgeEpoch || 0) + 1;',
+      'Judd result epoch');
+    code = replaceOnce(code,
+      '    await (judgeP || new Promise((r) => setTimeout(r, 4000)));',
+      '    await (judgeP || new Promise((r) => setTimeout(r, 4000)));\n    if (this._s3JudgeEpoch !== judgeEpoch || this.match !== m || m.state !== \'judge\') return;',
+      'Judd stale continuation guard');
+    code = replaceOnce(code,
+      '  async quitToMenu() {\n    clearTimeout(this._netEndT);',
+      '  async quitToMenu() {\n    this._s3JudgeEpoch = (this._s3JudgeEpoch || 0) + 1;\n    clearTimeout(this._netEndT);',
+      'menu exit invalidates Judd result');
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\nimport { splatCardText } from '../patches/splatoon3/runtime/death-card.mjs';\n` + code;
   }
 
