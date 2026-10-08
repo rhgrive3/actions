@@ -337,6 +337,7 @@ export function installWeapons(context, profile) {
     this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0;
     releaseSplatlingInterrupt(this, -1);
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
+    this.s3ChargerCancelSwimRemaining = 0; // #416 partial-charge squid cancel recovery
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
@@ -346,6 +347,24 @@ export function installWeapons(context, profile) {
   const shooterActorUpdate = Actor.prototype.update;
   Actor.prototype.update = function (dt, ...args) {
     const r = this.weaponRunner;
+    if (r && this.weapon?.kind === 'charger') {
+      // #416: the partial-charge -> squid edge cancels the paid charge
+      // immediately, but cannot enter swim movement until six fixed frames.
+      const interrupted = !this.alive || this.specialActive || this.superJumpState ||
+        (this.intent?.special && this.specialReady?.());
+      if (interrupted) r.s3ChargerCancelSwimRemaining = 0;
+      else if (this.intent?.squid && !this._prevIntent?.squid &&
+          r.charging && !r.s3Stored && r.charge > 0 && r.charge < .999) {
+        cancelStored(r); // already committed ink is not refunded
+        r.s3ChargerStartupT = 0; r.s3ChargerHeldGate = false; r.s3ChargerRepeat = false;
+        r.s3ReleaseHold = false; r.s3HeldCharge = r.s3HeldChargeT = r.s3ReleaseAt = 0;
+        r.s3ChargerProgressiveSpend = false;
+        r.s3ChargerCancelSwimRemaining = 6 / 60;
+      } else if (r.s3ChargerCancelSwimRemaining > 0) {
+        const remaining = r.s3ChargerCancelSwimRemaining - dt;
+        r.s3ChargerCancelSwimRemaining = remaining > 1e-10 ? remaining : 0;
+      }
+    }
     if (r && this.weapon?.kind === 'shooter') {
       if (r.s3ShooterInterruptSub > 0) r.s3ShooterInterruptSub = Math.max(0, r.s3ShooterInterruptSub - dt);
       if (r.s3ShooterInterruptSquid > 0) r.s3ShooterInterruptSquid = Math.max(0, r.s3ShooterInterruptSquid - dt);
@@ -378,7 +397,7 @@ export function installWeapons(context, profile) {
         this.s3PostFireLockActive = false;
       }
     }
-    if (kind === 'charger' && this.s3ChargerPostShot > 1e-10) return true;
+    if (kind === 'charger' && (this.s3ChargerCancelSwimRemaining > 1e-10 || this.s3ChargerPostShot > 1e-10)) return true;
     if (kind === 'dualies' && this.s3DualiesPostShot > 1e-10) return true;
     if (kind === 'slosher' && this.s3SloshPostShot > 1e-10) return true;
     if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
@@ -499,6 +518,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.cancelPendingInput = function () {
     if (this.a.weapon.kind === 'charger') {
       cancelStored(this);
+      this.s3ChargerCancelSwimRemaining = 0;
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
       this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
       this.s3ReleaseHold = false; this.s3HeldCharge = this.s3HeldChargeT = this.s3ReleaseAt = 0;
@@ -514,6 +534,8 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
     const a = this.a, held = !!a.intent.fire, epsilon = 1e-10;
+    // A held ZR must not reopen a new charge during the 6F ZL-cancel recovery.
+    if (this.s3ChargerCancelSwimRemaining > epsilon) return;
     // #680: retain the already-paid charge across the one fixed release frame.
     // The current progressive-payment and finite-flight owners still perform release.
     let releaseDue = false;
