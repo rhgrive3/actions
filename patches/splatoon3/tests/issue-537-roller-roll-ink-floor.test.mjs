@@ -1,14 +1,14 @@
-// #537: rolling ink follows the pinned WeaponRollParam endpoints from the minimum
-// source speed upward, independently of the paint batch, and scales with Ink Saver
-// (Main). Below that speed the legacy distance-based INKWAVE rule remains in place;
-// Nintendo's lower-speed and stationary semantics are not established by the fields.
+// #537: rolling ink keeps INKWAVE's distance rate with only the pinned minimum
+// floor at/above its source speed, independently of the paint batch. Below that
+// speed the legacy batch-based rule remains; Nintendo's intermediate, lower-speed,
+// and stationary semantics are not established by the extracted fields.
 //
 // Sourced endpoints (Leanny Splat3 Ver. 11.3.0 WeaponRollerNormal + Splatoon Wiki
 // "Ink consumption per second while rolling scales from 1.2% to 6% depending on
 // the rolling speed"): 0.0002/0.001 tank-fraction per 60Hz frame at 0.02/0.132
-// units per frame => 1.2%/s at 1.2 u/s and 6.0%/s at 7.92 u/s. The extracted
-// fields do not specify below-minimum or stationary behavior; the model preserves
-// its prior distance rule below the threshold until direct comparison is available.
+// units per frame => 1.2%/s minimum at 1.2 u/s and 6.0%/s at 7.92 u/s. The
+// maximum endpoint remains the preexisting distance-rate result; no intermediate
+// rate curve is inferred from the endpoint fields.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
@@ -31,6 +31,8 @@ function drain(rig, speed, seconds, hz = 60) {
   const { f, a, r } = rig;
   const dt = 1 / hz, frames = Math.round(seconds / dt), step = speed * dt;
   a.ink = 100; a.vel.set(0, 0, speed); r.lastRollPos = a.pos.clone();
+  r.lastRollInkPos = a.pos.clone();
+  r.rollInkChargedDistance = 0;
   let gross = 0, firstTick = null;
   for (let i = 0; i < frames; i++) {
     const before = a.ink;
@@ -51,11 +53,15 @@ test('the active profile carries the pinned rolling-consumption endpoints', asyn
   assert.equal(w.rollInkMaxSpeed, MAX_SPEED);
 });
 
-test('rolling ink follows the pinned endpoints and interpolation while paint remains batched', async () => {
+test('minimum floor, intermediate distance rate, and maximum remain independent of paint batching', async () => {
   const rig = await rollRig();
   assert.ok(Math.abs(drain(rig, MAX_SPEED, 3).rate - MAX_RATE) < 1e-3, 'max endpoint 6%/s');
-  const mid = MIN_RATE + (MAX_RATE - MIN_RATE) * (4.56 - MIN_SPEED) / (MAX_SPEED - MIN_SPEED);
-  assert.ok(Math.abs(drain(rig, 4.56, 5).rate - mid) < 1e-3, `between endpoints ${mid.toFixed(3)}%/s`);
+  const interiorSpeed = 4.56;
+  const nativeDistanceRate = interiorSpeed * rig.f.WEAPONS.roller.rollInkPerMeter;
+  const interior = drain(rig, interiorSpeed, 5);
+  assert.ok(Math.abs(interior.rate - nativeDistanceRate) < 1e-3, `interior retains the distance rate ${nativeDistanceRate.toFixed(3)}%/s`);
+  assert.ok(interior.rate > MIN_RATE, 'minimum floor does not replace an interior distance rate above the floor');
+  assert.equal(interior.firstTick, 1, 'per-update ink charge is independent of the paint batch');
   const atMin = drain(rig, MIN_SPEED, 5);
   assert.ok(Math.abs(atMin.rate - MIN_RATE) < 1e-3, 'minimum endpoint is 1.2%/s at 1.2 units/s');
   assert.equal(atMin.firstTick, 1, 'ink is consumed before the 0.28-unit paint batch');
@@ -76,6 +82,27 @@ test('below-minimum and stationary rolls do not inherit the minimum endpoint', a
   assert.equal(stationary.firstTick, null, 'stationary roll never drains ink');
 });
 
+test('a paint batch does not charge already-drained above-floor distance twice', async () => {
+  const rig = await rollRig();
+  const { f, a, r } = rig, start = a.pos.clone();
+  a.ink = 100; r.lastRollPos = start.clone(); r.lastRollInkPos = start.clone();
+  r.rollInkChargedDistance = 0;
+
+  a.vel.set(0, 0, MAX_SPEED);
+  a.pos.z += MAX_SPEED * DT; f.G.time += DT; r.update(DT, { fire: true });
+  let lowDistance = 0;
+  for (let lowTicks = 0; lowTicks < 15; lowTicks++) {
+    const speed = 0.6;
+    a.vel.set(0, 0, speed); a.pos.z += speed * DT;
+    f.G.time += DT; r.update(DT, { fire: true });
+    lowDistance += speed * DT;
+  }
+
+  const expectedDrain = MAX_SPEED * DT * rig.f.WEAPONS.roller.rollInkPerMeter + lowDistance * rig.f.WEAPONS.roller.rollInkPerMeter;
+  assert.ok(r.lastRollPos.distanceTo(a.pos) < 1e-12, 'the low-speed segment reaches the existing paint batch');
+  assert.ok(Math.abs((100 - a.ink) - expectedDrain) < 1e-9, 'only the uncharged low-speed distance is added at batch commit');
+});
+
 test('rolling ink is fixed-step invariant and never waits for the 0.28-unit paint batch', async () => {
   const rig = await rollRig();
   for (const hz of [30, 60, 120]) {
@@ -85,7 +112,7 @@ test('rolling ink is fixed-step invariant and never waits for the 0.28-unit pain
   }
 });
 
-test('Ink Saver (Main) scales both rolling endpoints and the measured drain', async () => {
+test('Ink Saver (Main) scales the sourced floor and retained distance rate', async () => {
   const rig = await rollRig();
   const { f, a } = rig;
   const base = f.WEAPONS.roller;
@@ -97,6 +124,11 @@ test('Ink Saver (Main) scales both rolling endpoints and the measured drain', as
   assert.ok(m > 0 && m < 1, `inkSaverMain modifier applied (${m})`);
   assert.ok(Math.abs(a.weapon.rollInkMinPerFrame - base.rollInkMinPerFrame * m) < 1e-12);
   assert.ok(Math.abs(a.weapon.rollInkMaxPerFrame - base.rollInkMaxPerFrame * m) < 1e-12);
+  assert.ok(Math.abs(a.weapon.rollInkPerMeter - base.rollInkPerMeter * m) < 1e-12);
+  assert.ok(Math.abs(drain(rig, MIN_SPEED, 3).rate - MIN_RATE * m) < 1e-3, 'minimum floor scales with gear');
+  const interiorSpeed = 4.56;
+  const interiorDistanceRate = interiorSpeed * base.rollInkPerMeter * m;
+  assert.ok(Math.abs(drain(rig, interiorSpeed, 3).rate - interiorDistanceRate) < 1e-3, 'existing interior distance rate scales with gear');
   assert.ok(Math.abs(drain(rig, MAX_SPEED, 3).rate - MAX_RATE * m) < 1e-3, 'drain scales with gear');
 });
 
@@ -105,6 +137,8 @@ test('rolling ink stops at the existing dry-roll threshold without further drain
   const { a, r } = rig;
   a.ink = 0.55; a.vel.set(0, 0, MAX_SPEED);
   r.lastRollPos = a.pos.clone();
+  r.lastRollInkPos = a.pos.clone();
+  a.pos.z += MAX_SPEED * DT;
   r.update(DT, { fire: true });
   assert.ok(a.ink >= 0, 'rolling never makes the tank negative');
   assert.ok(Math.abs(a.ink - 0.45) < 1e-10, 'one maximum-speed tick consumes the sourced 0.1%');
