@@ -561,6 +561,7 @@ def neck_join(cfg):
     bm.faces.ensure_lookup_table()
     bmesh.ops.delete(bm, geom=[f for f in bm.faces if all(low[v.index] for v in f.verts)], context='FACES_ONLY')
     bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)      # the neck's halves meet at the midline too
     filled = bmesh.ops.holes_fill(bm, edges=[e for e in bm.edges if e.is_boundary], sides=0)
     for f in filled['faces']:
         f.material_index = cap_i
