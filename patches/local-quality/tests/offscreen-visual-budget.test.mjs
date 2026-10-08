@@ -63,6 +63,38 @@ G.match = {};
 G.rig = null;
 const camera = new THREE.PerspectiveCamera(60, 16 / 9, 0.15, 6500);
 G.camera = camera;
+
+// Reproduce current MAIN (4a integration) before the local-quality installer:
+// all six production source adapters and the native runtime are active, while
+// the #845 presentation wrapper has not yet been installed.
+const mainBaseline = (() => {
+  const pose0 = counts.pose, ray0 = counters.ray;
+  const baselineCharacter = new api.Character({ name: 'current-main-baseline', weapon: 'shooter', style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+  G.scene.add(baselineCharacter.root);
+  baselineCharacter._warmed = true;
+  const baselineState = { localMove: { x: 0, z: 0 } };
+  const baselineActor = Object.assign(Object.create(api.Actor.prototype), {
+    remote: true, isLocal: false, team: 1, netTurnRate: 0, anim: baselineState, form: 'kid',
+    pos: new THREE.Vector3(), vel: new THREE.Vector3(0, 0, -2.4), yaw: 0,
+    smoothY: 0, smoothYV: 0, grounded: true, aimPitch: 0, ink: 100,
+    weaponRunner: { firingPose: () => false, charge: 0, rolling: false, aimingSub: false },
+    character: baselineCharacter, hurtFlash: 0, hp: 100, invuln: 0,
+    onEnemy: false, groundTeam: 0, specialActive: null,
+    specialFrac: () => 0, _events() {},
+  });
+  camera.position.set(0, 1.5, 8);
+  camera.lookAt(0, 1.5, 100);
+  renderer.info.render.frame = 0;
+  for (let i = 0; i < 120; i++) {
+    baselineActor.pos.z -= 0.04;
+    baselineActor._finishFrame(1 / 60);
+  }
+  const result = { ticks: 120, poseCalls: counts.pose - pose0, footRaycasts: counters.ray - ray0,
+    rendererFrame: renderer.info.render.frame, nativeHookFrame: baselineCharacter._camFrame ?? -1 };
+  baselineCharacter.dispose();
+  return result;
+})();
+
 api.installQuality(api.profile);
 const installed = Object.hasOwn(proto, Symbol.for('inkwave.local-quality.offscreen-visual-budget.v1'));
 
@@ -113,6 +145,7 @@ function reset({ range = false, frames = 120 } = {}) {
   ch.lod.force = -1;
   ch.isLocal = false;
   s.isLocal = false;
+  s.remote = true;
   turnTo();
   for (let i = 0; i < frames; i++) step();
 }
@@ -123,8 +156,18 @@ test('wiring: the owned helper is connected from installQuality and carries a bu
   const src = fs.readFileSync(ROOT + 'patches/local-quality/install.mjs', 'utf8');
   assert.match(src, /import \{ installOffscreenVisualBudget \} from '\.\/offscreen-visual-budget\.mjs';/);
   assert.match(src, /installOffscreenVisualBudget\(api,G\);/);
+  const adapter = fs.readFileSync(ROOT + 'patches/local-quality/adapter.mjs', 'utf8');
+  assert.match(adapter, /a\.remote = this\.remote === true;/, 'native authority state reaches Character.update');
   const id = qualityIdentity()['offscreen-visual-budget.mjs'];
   assert.ok(id && /^[0-9a-f]{64}$/.test(id), 'shipped file is part of the build identity');
+});
+
+test('current MAIN full composition reproduces #845 before the local-quality installer', () => {
+  assert.equal(mainBaseline.ticks, 120);
+  assert.equal(mainBaseline.poseCalls, 240, `native pose passes: ${JSON.stringify(mainBaseline)}`);
+  assert.ok(mainBaseline.footRaycasts > 0, `native foot IK runs offscreen: ${JSON.stringify(mainBaseline)}`);
+  assert.equal(mainBaseline.rendererFrame, 0, 'the renderer stayed at its initial frame');
+  assert.equal(mainBaseline.nativeHookFrame, -1, 'the offscreen actor never submitted to the native draw hook');
 });
 
 test('view-volume test: facing / away / unusable cameras', () => {
@@ -343,20 +386,115 @@ test('decision guards are individually testable and never invent a Nintendo timi
   assert.equal(OUTSIDE_STREAK, 2, 'outside streak is a fixed verdict count');
   const G2 = { renderer: { info: { render: { frame: 100 } } }, camera: null };
   const probe = { inWorld: true, lod: { force: -1 }, _camFrame: 90, _ovbOutsideStreak: 0, root: null };
-  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'unknown camera');
+  const proxy = { remote: true };
+  assert.equal(offscreenBudgeted(probe, proxy, G2), false, 'unknown camera');
   probe.isLocal = true;
-  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'local Character');
+  assert.equal(offscreenBudgeted(probe, proxy, G2), false, 'local Character');
   probe.isLocal = false;
   probe._camFrame = -1;
-  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'no native draw signal');
+  assert.equal(offscreenBudgeted(probe, proxy, G2), false, 'no native draw signal');
   probe._camFrame = 90;
   G2.match = { opts: { range: true } };
-  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'Practice Range');
+  assert.equal(offscreenBudgeted(probe, proxy, G2), false, 'Practice Range');
   G2.match = {};
   G2.camera = { isPerspectiveCamera: true, view: null, parent: null, fov: 60, aspect: 16 / 9, near: 0.15, far: 6500, updateMatrixWorld() {}, matrixWorld: { elements: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1.5, 8, 1] } };
   probe.root = { position: { x: 0, y: 0, z: 0 }, parent: null };
-  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'inside the view volume resets the streak');
+  assert.equal(offscreenBudgeted(probe, proxy, G2), false, 'inside the view volume resets the streak');
   probe.root.position.z = 200;
-  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'first outside verdict does not budget');
-  assert.equal(offscreenBudgeted(probe, {}, G2), true, 'second consecutive outside verdict budgets');
+  assert.equal(offscreenBudgeted(probe, proxy, G2), false, 'first outside verdict does not budget');
+  assert.equal(offscreenBudgeted(probe, proxy, G2), true, 'second consecutive outside verdict budgets');
+  assert.equal(offscreenBudgeted(probe, { remote: false }, G2), false, 'adopted actor authority stays full rate');
+});
+
+test('adopted dualies authority keeps native bone muzzle and projectile origin at 30/60/120Hz', () => {
+  function fireAdoptedDualies(hz, offscreen) {
+    const dt = 1 / hz;
+    G.scene = new THREE.Scene();
+    G.physics = { los: () => true, raycast: (_o, _d, _f, hit) => { hit.hit = false; return hit; } };
+    G.match = {};
+    G.camera = camera; G.renderer = renderer; G.rig = null;
+    G.projectiles = new api.Projectiles(G.scene);
+    turnTo();
+    const adopted = new api.Actor({ team: 1, name: `adopted-${hz}`, weapon: 'dualies', isBot: false, CharacterClass: api.Character });
+    const ch = adopted.character;
+    G.scene.add(ch.root); ch._warmed = true; ch.lod.force = -1;
+    adopted.remote = true;
+    // A replica can be adopted while its last visible animation is still aimed.
+    adopted.weaponRunner.firingT = 0.35;
+    for (let i = 0; i < hz; i++) {
+      const t = (i + 1) * dt;
+      renderer.info.render.frame = 700 + i;
+      adopted.pos.x = 0.25 * Math.sin(t);
+      adopted.vel.set(0.25 * Math.cos(t), 0, -1.1);
+      adopted.aimPitch = -0.55;
+      adopted.aimPoint.set(3, 1.5, -12);
+      adopted.aimDir.set(0.15, 0.1, -1).normalize();
+      adopted._finishFrame(dt);
+      ch._camHook(renderer, G.scene, camera);
+    }
+    assert.ok(ch.wAim > 0.99, 'pre-adoption native rig has the aimed pose');
+
+    adopted.net = { buf: [], tp: 0, err: new THREE.Vector3(), errV: new THREE.Vector3(), spawnPending: false };
+    const net = Object.assign(Object.create(api.NetMatch.prototype), { cfg: { difficulty: 'normal' }, _stopLoops() {} });
+    api.NetMatch.prototype._adopt.call(net, adopted);
+    assert.equal(adopted.remote, false, 'native adoption transfers actor simulation authority');
+    assert.equal(adopted.isBot, true, 'native adoption installs the local bot driver');
+
+    const firstDrawFrame = renderer.info.render.frame;
+    ch._camHook(renderer, G.scene, camera);
+    if (offscreen) turnAway();
+    for (let i = 0; i < hz; i++) {
+      const t = (i + 1) * dt;
+      renderer.info.render.frame = firstDrawFrame + i + 1;
+      adopted.pos.x = 0.25 * Math.sin(1 + t);
+      adopted.vel.set(0.25 * Math.cos(1 + t), 0, -1.1);
+      adopted.aimPitch = 0.55 * Math.sin(t * Math.PI);
+      adopted.aimPoint.set(5 * Math.sin(t), 1.7, -14);
+      adopted.aimDir.set(0.3 * Math.sin(t), 0.1, -1).normalize();
+      adopted.weaponRunner.update(dt, { fire: false, firePressed: false, sub: false, subReleased: false });
+      adopted._finishFrame(dt);
+      if (!offscreen) ch._camHook(renderer, G.scene, camera);
+    }
+    const expectedMuzzle = ch.getMuzzleHand(new THREE.Vector3(), 1).clone();
+    G.projectiles.fireDualies(adopted, adopted.weapon, 0, 1);
+    const shot = G.projectiles.list.at(-1);
+    assert.ok(shot, 'the native Projectiles dualies path emitted a shot');
+    assert.ok(shot.start.distanceTo(expectedMuzzle) < 1e-8, 'native projectile start is the left bone muzzle');
+    const result = { start: shot.start.clone(), budgetTicks: ch._ovbBudgetTicks || 0, poseSkips: ch._ovbPoseSkips || 0 };
+    ch.dispose();
+    return result;
+  }
+
+  const failures = [];
+  for (const hz of [30, 60, 120]) {
+    const visible = fireAdoptedDualies(hz, false);
+    const offscreen = fireAdoptedDualies(hz, true);
+    const originDelta = offscreen.start.distanceTo(visible.start);
+    if (offscreen.budgetTicks !== 0 || offscreen.poseSkips !== 0 || originDelta >= 1e-6) {
+      failures.push({ hz, budgetTicks: offscreen.budgetTicks, poseSkips: offscreen.poseSkips, originDelta,
+        visible: Array.from(visible.start.toArray()), offscreen: Array.from(offscreen.start.toArray()) });
+    }
+  }
+  assert.deepEqual(failures, [], `adopted authority must retain native launch state: ${JSON.stringify(failures)}`);
+});
+
+test('remote proxy muzzle effects and projectile births use network-owned world positions', () => {
+  G.scene = new THREE.Scene();
+  G.camera = camera; camera.position.set(0, 1, 2); camera.lookAt(0, 1, 0);
+  const remote = new api.Actor({ team: 1, name: 'remote-proxy', weapon: 'shooter', CharacterClass: api.Character });
+  remote.remote = true;
+  remote.character.getMuzzle = () => { throw new Error('remote packet replay must not query the local rig'); };
+  remote.character.getMuzzleHand = () => { throw new Error('remote packet replay must not query the local rig'); };
+  const fxMuzzles = [];
+  G.fx = { muzzle: (m) => fxMuzzles.push(m.clone()) };
+  const projectiles = new api.Projectiles(G.scene);
+  const suppliedMuzzle = new THREE.Vector3(3, 2, -4);
+  const suppliedDir = new THREE.Vector3(0.2, 0.1, -1).normalize();
+  projectiles.ghostFire(remote, { weapon: 'shooter', muzzle: suppliedMuzzle, dir: suppliedDir });
+  assert.deepEqual(Array.from(fxMuzzles[0].toArray()), Array.from(suppliedMuzzle.toArray()), 'remote muzzle FX uses the packet snapshot');
+  const birth = [0, 'p', 1, 'shot', 'shooter', 7, 3, -5, 0, 0, -1, 0, 1.2, 0.35, 0.2, 0.15, 28, 0.8, 0.1, 0, 0.2, 0.8, 1.3, 0.03, 26, 0.3, 3];
+  projectiles.ghostProjectile(remote, birth);
+  const ghost = projectiles.list.at(-1);
+  assert.ok(ghost, 'native network replay created the ghost projectile');
+  assert.deepEqual(Array.from(ghost.start.toArray()), [7, 3, -5], 'remote projectile origin is the transmitted world position');
 });
