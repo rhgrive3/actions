@@ -965,12 +965,18 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '  _finishFrame(dt) {', '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);', 'record grounded jump destination');
     code = replaceOnce(code, '    this.grounded = grounded;\n    this.airTime', '    this.grounded = grounded;\n    rememberSuperJumpGround(this);\n    this.airTime', 'record resolved jump destination');
     code = replaceOnce(code, 'this.groundN.copy(gh.normal); }\n  }', 'this.groundN.copy(gh.normal); }\n    rememberSuperJumpGround(this);\n  }', 'record spawn jump destination');
-    code = replaceOnce(code, "    if (this.superJumpState) { this._updateSuperJump(dt); this._finishFrame(dt); return; }", "    if (this.superJumpState) { clearFullCancelCandidate(this); this._updateSuperJump(dt); updateSuperJumpMain(this, dt, firePressed); if (this.alive) this._finishFrame(dt); return; }", 'super jump main input');
+    // Issue #1050: the Super Jump-owned branch must run the shared lethal-water
+    // owner before and after each jump step so a request or a crossing inside
+    // lethal open water commits the owner water splat exactly once instead of
+    // being rescued by charge/flight. Dead actors never reach this branch
+    // (update() returns earlier), and the owner's own alive guard keeps the
+    // splat single-fire for local and remote owners alike.
+    code = replaceOnce(code, "    if (this.superJumpState) { this._updateSuperJump(dt); this._finishFrame(dt); return; }", "    if (this.superJumpState) { clearFullCancelCandidate(this); this._checkFallDeath(); if (!this.alive) return; this._updateSuperJump(dt); if (this.alive) { this._checkFallDeath(); if (!this.alive) return; } updateSuperJumpMain(this, dt, firePressed); if (this.alive) this._finishFrame(dt); return; }", 'super jump main input and lethal-water hazard');
     // Issue #744: the Super Jump branch returns before the shared post-movement
     // resource phase. Charge stays damageable (#255 protects flight only), so a
     // tick that starts in charge runs the same phase once. Flight runs HP only.
-    code = replaceOnce(code, '    if (this.superJumpState) { clearFullCancelCandidate(this); this._updateSuperJump(dt); updateSuperJumpMain(',
-      "    if (this.superJumpState) { clearFullCancelCandidate(this); const superJumpCharge = this.superJumpState.phase === 'charge'; this._updateSuperJump(dt); if (this.alive) { if (superJumpCharge) updateResources(this, dt); else if (!this.remote) updateHealthRecovery(this, dt); } updateSuperJumpMain(",
+    code = replaceOnce(code, '    if (this.superJumpState) { clearFullCancelCandidate(this); this._checkFallDeath(); if (!this.alive) return; this._updateSuperJump(dt); if (this.alive) { this._checkFallDeath(); if (!this.alive) return; } updateSuperJumpMain(',
+      "    if (this.superJumpState) { clearFullCancelCandidate(this); this._checkFallDeath(); if (!this.alive) return; const superJumpCharge = this.superJumpState.phase === 'charge'; this._updateSuperJump(dt); if (this.alive) { this._checkFallDeath(); if (!this.alive) return; } if (this.alive) { if (superJumpCharge) updateResources(this, dt); else if (!this.remote) updateHealthRecovery(this, dt); } updateSuperJumpMain(",
       'super jump charge resource phase');
     const specialActiveHead = code.includes("    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }")
       ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }"
