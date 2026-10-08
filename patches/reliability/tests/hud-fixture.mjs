@@ -59,8 +59,16 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
   const util = new vm.SourceTextModule(readSource('src/ui/ui-util.js'),{context});
   const tx = new vm.SourceTextModule('export const tx=value=>value;',{context});
   await util.link(() => tx); await util.evaluate();
+  // Current config uses the real source-guided ink flight constants. Evaluate
+  // that dependency instead of rejecting the production config import.
+  const inkFlight = new vm.SourceTextModule(readSource('src/game/inkFlight.js'),{context});
+  await inkFlight.link(() => { throw Error('Unexpected inkFlight import'); });
   const config = new vm.SourceTextModule(readSource('src/config.js'),{context});
-  await config.link(() => { throw Error('Unexpected config import'); }); await config.evaluate();
+  await config.link(spec => {
+    if (spec === './game/inkFlight.js') return inkFlight;
+    throw Error('Unexpected config import: ' + spec);
+  });
+  await config.evaluate();
   Object.assign(context, util.namespace, config.namespace);
   const hudMethods = [
     section(hudSource, '  setVisible(v) {', '\n  /** ScreenFX'),
