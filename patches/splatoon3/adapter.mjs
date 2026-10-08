@@ -543,6 +543,14 @@ export function adaptSource(rel, code) {
     const capsuleEnd = code.indexOf('\n  // Flat-footprint ground probe', capsuleStart);
     if (capsuleStart < 0 || capsuleEnd < capsuleStart) throw new Error('INKWAVE patch conflict: collideCapsule boundary');
     let capsule = code.slice(capsuleStart, capsuleEnd);
+    if (!capsule.includes('c.ceilingBlock = -1;')) {
+      const matches = capsule.match(/c\.wallBlock\s*=\s*-1;/g) || [];
+      if (matches.length !== 1) throw new Error('INKWAVE patch conflict (ceiling contact block identity): expected exactly one wall-block reset in collideCapsule.');
+      capsule = capsule.replace(/c\.wallBlock\s*=\s*-1;/, '  if (rel === 'src/game/physics.js') {
+    const capsuleStart = code.indexOf('  collideCapsule(');
+    const capsuleEnd = code.indexOf('\n  // Flat-footprint ground probe', capsuleStart);
+    if (capsuleStart < 0 || capsuleEnd < capsuleStart) throw new Error('INKWAVE patch conflict: collideCapsule boundary');
+    let capsule = code.slice(capsuleStart, capsuleEnd);
     if (!capsule.includes('c.ceilingBlock = -1;')) capsule = replaceOnce(capsule,
       '    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1;',
       '    c.ground = false; c.wall = false; c.ceiling = false;\n    c.groundNormal.set(0, 1, 0); c.wallNormal.set(0, 0, 0); c.groundBlock = -1; c.wallBlock = -1; c.ceilingBlock = -1;',
@@ -551,6 +559,16 @@ export function adaptSource(rel, code) {
       '        else if (_n.y < -0.6) c.ceiling = true;',
       '        else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }',
       'ceiling contact classification');
+    code = code.slice(0, capsuleStart) + capsule + code.slice(capsuleEnd);
+    return code;
+  } c.ceilingBlock = -1;');
+    }
+    if (!capsule.includes('c.ceilingBlock = b.id;')) {
+      const ceilingLine = /else if \(_n\.y < -0\.6\)\s*(?:\{\s*)?c\.ceiling = true;(?:\s*\})?/;
+      const matches = capsule.match(new RegExp(ceilingLine.source, 'g')) || [];
+      if (matches.length !== 1) throw new Error('INKWAVE patch conflict (ceiling contact classification): expected exactly one ceiling contact branch in collideCapsule.');
+      capsule = capsule.replace(ceilingLine, 'else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }');
+    }
     code = code.slice(0, capsuleStart) + capsule + code.slice(capsuleEnd);
     return code;
   }
