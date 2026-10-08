@@ -1424,8 +1424,8 @@ export function adaptSource(rel, code) {
       'G.time - last + 1e-10 >= (w.rollContactInterval ?? (24 / 60))',
       'S3 Roller actor contact 24F repeat');
     code = replaceOnce(code,
-      'G.time - (this.rollHits.get(key) || -9) > 0.5',
-      'G.time - (this.rollHits.get(key) || -9) + 1e-10 >= (w.rollContactInterval ?? (24 / 60))',
+      'G.time - (this.rollHits.get(key) ?? -9) > 0.5',
+      'G.time - (this.rollHits.get(key) ?? -9) + 1e-10 >= (w.rollContactInterval ?? (24 / 60))',
       'S3 Roller Boss contact 24F repeat');
     // #498: only the gameplay Roller trail stamp consumes the sourced
     // 20/30F->50F width window. The separate #411 unit/near-far impact owner
