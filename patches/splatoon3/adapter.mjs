@@ -1423,7 +1423,7 @@ export function adaptSource(rel, code) {
       'p.trailRadius * (0.8 + Math.random() * 0.4), p.team, { seed: Math.random() }',
       'rollerTrailAgeWidth(p, p.trailRadius * (0.8 + Math.random() * 0.4)), p.team, { seed: Math.random() }',
       'Roller native trail age width');
-    code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\\n" + code;
+    code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\n" + code;
   }
 
   if (rel === 'src/world/paint.js') {
