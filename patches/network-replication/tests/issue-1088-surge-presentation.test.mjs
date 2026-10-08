@@ -103,23 +103,23 @@ function assertPoseParity(f, owner, remote, label) {
   }
 }
 
-test('C1088 keeps untouched snapshots at 22 columns and retains explicit Surge end/life markers', async () => {
+test('C1088 keeps untouched snapshots at 24 columns and retains explicit Surge end/life markers', async () => {
   const w = await makePair();
   const untouched = w.step(1 / 60, false, 'normal');
-  assert.equal(untouched.a[0].length, 22, 'ordinary snapshots keep the existing wire shape');
+  assert.equal(untouched.a[0].length, 24, 'ordinary snapshots keep the existing wire shape');
   const active = w.step(1 / 60, true);
-  assert.equal(active.a[0].length, 23);
-  assert.equal(active.a[0][22].phase, 'charge');
+  assert.equal(active.a[0].length, 25);
+  assert.equal(active.a[0][24].phase, 'charge');
   w.owner.s3.actions.surge = null;
   const ended = w.step(1 / 60, false, 'normal');
-  assert.equal(ended.a[0].length, 23, 'a used action still sends its retirement marker');
-  assert.equal(ended.a[0][22].phase, 'end');
-  assert.equal(ended.a[0][22].epoch, active.a[0][22].epoch);
+  assert.equal(ended.a[0].length, 25, 'a used action still sends its retirement marker');
+  assert.equal(ended.a[0][24].phase, 'end');
+  assert.equal(ended.a[0][24].epoch, active.a[0][24].epoch);
   assert.equal(w.remote.s3?.c1088SurgePresentation, undefined);
   w.owner.stats.deaths++;
   const nextLife = w.step(1 / 60, false, 'normal');
-  assert.equal(nextLife.a[0][22].phase, 'end');
-  assert.equal(nextLife.a[0][22].life, w.owner.stats.deaths);
+  assert.equal(nextLife.a[0][24].phase, 'end');
+  assert.equal(nextLife.a[0][24].life, w.owner.stats.deaths);
 });
 
 test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycle controls', async () => {
@@ -136,8 +136,10 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
     const packet = packetCopy(source);
     packet.ts = Math.round(pair.wireTime() * 1000) / 1000;
     delete packet.e;
-    if (omitSidecar) delete packet.a[0][22];
-    else packet.a[0][22] = JSON.parse(JSON.stringify(payload));
+    // Keep the enclosing adoption identity fresh while mutating only Surge.
+    packet.a[0][23][2] = ++owner._adoptionSequence;
+    if (omitSidecar) delete packet.a[0][24];
+    else packet.a[0][24] = JSON.parse(JSON.stringify(payload));
     deliver(remote, receiver, packet, 1 / 60);
     return packet;
   };
@@ -148,7 +150,7 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
     const dt = 1 / hz;
     for (let i = 0; i < hz / 5; i++) {
       currentChargePacket = step(dt, true);
-      const wire = currentChargePacket.a[0][22];
+      const wire = currentChargePacket.a[0][24];
       assert.equal(wire?.tag, 'inkwave.s3.surge.v1');
       assert.equal(wire.life, owner.stats.deaths);
       assert.equal(wire.phase, 'charge');
@@ -177,16 +179,16 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
         'a non-owner sender cannot alter the authorized presentation timeline');
 
       const active = remote.s3.c1088SurgePresentation;
-      const oldEpoch = { ...currentChargePacket.a[0][22], epoch: active.epoch - 1,
+      const oldEpoch = { ...currentChargePacket.a[0][24], epoch: active.epoch - 1,
         phase: 'end', charge: 0, time: 0 };
       inject(currentChargePacket, oldEpoch);
       assert.equal(remote.s3.c1088SurgePresentation?.epoch, active.epoch,
         'a newer packet carrying a stale action epoch cannot rewind the pose');
 
-      const oldLife = { ...currentChargePacket.a[0][22], life: 0 };
+      const oldLife = { ...currentChargePacket.a[0][24], life: 0 };
       owner.stats.deaths = 1;
       currentChargePacket = step(dt, true);
-      assert.equal(currentChargePacket.a[0][22].life, 1);
+      assert.equal(currentChargePacket.a[0][24].life, 1);
       assert.equal(remote.s3.c1088SurgePresentation?.life, 1,
         'owner life change retires the previous presentation before accepting the new life');
       inject(currentChargePacket, oldLife);
@@ -199,7 +201,7 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
     let sawEnd = false;
     for (let i = 0; i < hz * 2; i++) {
       const packet = step(dt, false);
-      const wire = packet.a[0][22];
+      const wire = packet.a[0][24];
       if (wire.phase === 'burst') {
         sawBurst = true;
         assert.ok(Number.isFinite(wire.time) && wire.time > 0);
@@ -243,7 +245,7 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
           pair.advanceWireClock(2);
           legacy.ts = Math.round(pair.wireTime() * 1000) / 1000;
           delete legacy.e;
-          delete legacy.a[0][22];
+          delete legacy.a[0][24];
           deliver(remote, receiver, legacy, 1 / 60);
           assert.equal(remote.s3?.c1088SurgePresentation, undefined,
             'legacy snapshots without the optional sidecar clear stale remote poses');
@@ -276,7 +278,7 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
     special: owner.special, turf: owner.stats.turf, splats: owner.stats.splats, deaths: owner.stats.deaths };
   assert.deepEqual(normalAfter, normalBefore,
     'ordinary local gameplay fields stay unchanged by presentation serialization');
-  assert.equal(normalPacket.a[0][22].phase, 'end');
+  assert.equal(normalPacket.a[0][24].phase, 'end');
   assert.equal(remote.s3?.c1088SurgePresentation, undefined,
     'normal gameplay and the range-flagged control have no active surge pose');
   assert.equal(remote.s3?.actions?.surge ?? null, null);
@@ -307,7 +309,7 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
     'ownership adoption clears the remote-only pose');
   assert.equal(remote.net?.c1088SurgeState, undefined);
   assert.equal(remote.s3?.actions?.surge ?? null, null);
-  assert.equal(active.a[0][22].phase, 'charge');
-  assert.equal(reconnected.a[0][22].life, 0);
-  assert.equal(reconnected.a[0][22].phase, 'charge');
+  assert.equal(active.a[0][24].phase, 'charge');
+  assert.equal(reconnected.a[0][24].life, 0);
+  assert.equal(reconnected.a[0][24].phase, 'charge');
 });

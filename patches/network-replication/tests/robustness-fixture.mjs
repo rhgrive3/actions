@@ -106,7 +106,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
   const floorHit = (a, b, hit) => {
     if (b.y <= 0 && a.y > 0) {
       const t = a.y / Math.max(1e-6, a.y - b.y);
-      hit.hit = true;
+      hit.hit = true; hit.face = 0;
       hit.point = a.clone().lerp(b, t);
       hit.normal = new THREE.Vector3(0, 1, 0);
       return hit;
@@ -165,7 +165,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
 
   function bind(nm, actors) {
     nm.match = {
-      actors, state: 'playing', time: 0, follower: false,
+      actors, state: 'playing', time: 180, follower: false,
       removeActor(a) { this.actors = this.actors.filter((x) => x !== a); },
     };
     for (const a of actors) { nm.byNid.set(a.nid, a); nm._setupActor(a); }

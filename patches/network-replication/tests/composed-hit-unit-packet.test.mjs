@@ -31,10 +31,10 @@ function hitWorld() {
     calls.push({ a, v, damage, weapon, group, punisher:respawnPunisherEquipped(a) }); emit('damage', { victim: v, attacker: a, amount: damage });
   } } };
   const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
-    'return class {' + ['sendHit', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
+    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + 'return class {' + ['sendHit', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
     (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge);
   const n = new C();
-  Object.assign(n, { myId: 'A', byNid: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); } } },
+  Object.assign(n, { myId: 'A', byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); } } },
     peers: new Map(), _peer(id) { if (!this.peers.has(id)) this.peers.set(id, {}); return this.peers.get(id); } });
   return { n, sent, events, calls, G, listeners };
 }
@@ -108,7 +108,7 @@ test('current QR splat history shares the existing local/enemy guards with confi
   assert.equal(attacker.s3.splatsThisLife, 2); assert.equal(attacker.s3.quickRespawnHistory.splats, 2);
 });
 
-test('current 35-field projectile layout validates units without dropping legacy33 or accepting malformed units', async () => {
+test('current 36-field projectile layout validates units without dropping legacy33 or accepting malformed units', async () => {
   const f = await fixture(), nm = f.makeNetMatch(f.makeSession());
   const a = f.makeActor({ nid: 0, owner: 'me', roller: true });
   a.character.getMuzzle = out => out.copy(a.pos).add(new f.THREE.Vector3(0, 1.05, .3));
@@ -117,17 +117,17 @@ test('current 35-field projectile layout validates units without dropping legacy
     f.projectiles.fireFlick(a, a.weapon, false);
     const packets = JSON.parse(JSON.stringify(nm.out.filter(e => e[1] === 'p')));
     assert.ok(packets.length > 0);
-    const packet = packets[0], unit = packet[32];
-    assert.equal(packet.length, 35); assert.ok(Number.isSafeInteger(unit) && unit >= 0);
+    const packet = packets[0], unit = packet[33];
+    assert.equal(packet.length, 36); assert.ok(Number.isSafeInteger(unit) && unit >= 0);
     f.projectiles.clear(); a.remote = true; a.owner = 'B'; nm.peers.set('B', { tr: packet[0] });
-    const invalid = [...packet]; invalid[32] = 999;
+    const invalid = [...packet]; invalid[33] = 999;
     nm._play('B', invalid); assert.equal(f.projectiles.list.length, 0);
-    const wrongMode = [...packet]; wrongMode[29] = 2;
+    const wrongMode = [...packet]; wrongMode[30] = 2;
     nm._play('B', wrongMode); assert.equal(f.projectiles.list.length, 0);
     nm._play('B', packet); assert.equal(f.projectiles.list.length, 1);
     assert.equal(f.projectiles.list[0].fidelityRollerUnitIndex, unit);
     f.projectiles.clear(); nm.peers.set('B', { tr: packet[0] });
-    const legacy = [...packet.slice(0, 27), ...packet.slice(29)];
+    const legacy = [...packet.slice(0, 27), ...packet.slice(30)];
     assert.equal(legacy.length, 33);
     const result = f.projectiles.ghostProjectile(a, legacy);
     assert.ok(result); assert.equal(f.projectiles.list[0].fidelityRollerUnitIndex, unit);

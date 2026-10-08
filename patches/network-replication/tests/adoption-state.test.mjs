@@ -91,10 +91,10 @@ test('native Super Jump transfers its exact flight and lands continuously at 30/
     const ownerState = source.superJumpState;
     assert.ok(ownerState.t > 0 && ownerState.t < ownerState.dur);
     const packet = sendTick(sender);
-    assert.equal(packet.a[0].length, 23, 'legacy special count remains at index 21 and adoption state uses index 22');
-    assert.equal(packet.a[0][21], source.stats.specials);
-    assert.equal(packet.a[0][22][0], ADOPTION_TAG);
-    assert.deepEqual(packet.a[0][22][5].slice(6, 9), [destination.x, destination.y, destination.z]);
+    assert.equal(packet.a[0].length, 24, 'legacy special count remains at index 22 after the Super Jump clock, and adoption state uses index 23');
+    assert.equal(packet.a[0][22], source.stats.specials);
+    assert.equal(packet.a[0][23][0], ADOPTION_TAG);
+    assert.deepEqual(packet.a[0][23][5].slice(6, 9), [destination.x, destination.y, destination.z]);
     delete packet.e; // the exact destination must arrive in the actor row, without a Super Jump hint event.
 
     const host = await runtimeFixture();
@@ -147,7 +147,7 @@ test('native recovery age transfers early-hit, already-elapsed, and clamped fini
   const sender = owner.makeNetMatch(owner.makeSession('p2', 'p2'));
   bindActors(owner, sender, sources);
   const packet = sendTick(sender);
-  assert.deepEqual(packet.a.map(row => row[22][4]), [0.2, delay + 0.2, 60]);
+  assert.deepEqual(packet.a.map(row => row[23][4]), [0.2, delay + 0.2, 60]);
 
   const host = await runtimeFixture();
   const local = makeActor(host, { nid: 29, owner: 'host', team: 1 });
@@ -179,7 +179,7 @@ test('accepted lethal hit transfers once with life, sequence, cause, splat and f
   assert.equal(victim.alive, true, 'accepted lethal decision is still pending for the native next tick');
   const packet = sendTick(sender);
   const row = packet.a.find(value => value[0] === victim.nid);
-  assert.equal(row[22][6][3], 'shooter');
+  assert.equal(row[23][6][3], 'shooter');
 
   const host = await runtimeFixture({ flow: true });
   const hostAttacker = makeActor(host, { nid: 38, owner: 'host', team: 1 });
@@ -197,14 +197,14 @@ test('accepted lethal hit transfers once with life, sequence, cause, splat and f
   const duplicate = structuredClone(packet);
   receiver.onMessage('p2', duplicate);
   const malformed = structuredClone(packet);
-  malformed.ts += 0.01; malformed.a[0][22][4] = NaN;
+  malformed.ts += 0.01; malformed.a[0][23][4] = NaN;
   receiver.onMessage('p2', malformed);
   const newLifeMismatch = structuredClone(packet);
   newLifeMismatch.ts += 0.02; newLifeMismatch.l[victim.nid]++;
-  newLifeMismatch.a[0][22][2]++;
+  newLifeMismatch.a[0][23][2]++;
   receiver.onMessage('p2', newLifeMismatch);
   const outOfOrder = structuredClone(packet);
-  outOfOrder.ts += 0.03; outOfOrder.a[0][22][2]--;
+  outOfOrder.ts += 0.03; outOfOrder.a[0][23][2]--;
   receiver.onMessage('p2', outOfOrder);
   assert.equal(remoteVictim.net.buf.length, 1, 'duplicate, NaN, new-life mismatch and stale sequence rows were rejected');
   assert.equal(remoteVictim.net.lastLife, packet.l[victim.nid], 'invalid metadata did not advance the accepted life');
@@ -247,8 +247,8 @@ test('native Splatling handoff refunds exactly the prepaid unspent rounds withou
   assert.ok(reservation && reservation[3] >= 4 && reservation[4] > reservation[3]);
   const packet = sendTick(sender);
   const row = packet.a.find(value => value[0] === source.nid);
-  assert.equal(row[22][7].length, reservation.length);
-  assert.ok(row[22][7].every((value, index) => value === reservation[index]),
+  assert.equal(row[23][7].length, reservation.length);
+  assert.ok(row[23][7].every((value, index) => value === reservation[index]),
     'wire carries paid amount, remaining round count/progress, and exact tank value');
 
   const host = await runtimeFixture();
@@ -267,7 +267,7 @@ test('native Splatling handoff refunds exactly the prepaid unspent rounds withou
   assert.equal(remote._s3SplatlingRefund.shots, reservation[4]);
   assert.equal(remote._s3SplatlingRefund.elapsed, reservation[2]);
   assert.equal(host.refundSplatlingReservation(remote.weaponRunner, reservation,
-    row[22][1], row[22][2], host.PLAYER.inkMax), false, 'repeated refund is idempotently rejected');
+    row[23][1], row[23][2], host.PLAYER.inkMax), false, 'repeated refund is idempotently rejected');
   for (let i = 0; i < 24; i++) tick(host, remote);
   assert.equal(host.projectiles.list.length, projectilesBefore, 'adoption did not emit another paid round or ghost projectile');
   assert.equal(host.paints.length, paintBefore, 'adoption did not replay paint');
