@@ -277,12 +277,31 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       // instanced ink draw from both comparison frames, restoring its exact
       // visibility afterward; native gameplay/shot clocks stay untouched.
       const inkDraw=projectiles.blobs,inkWasVisible=inkDraw?.visible;
-      let rig;
+      let rig,rigDiagnostic=null;
       try{
         if(inkDraw)inkDraw.visible=false;
-        renderer.render(scene,camera);const rigActual=pixels();
+        renderer.render(scene,camera);const rigActual=pixels(),withRigCalls=renderer.info.render.calls;
         ch.root.visible=false;renderer.render(scene,camera);
         rig=globalThis.motionPixelDifference(rigActual,pixels());
+        // Preserve the original non-zero-pixel assertion. If an actual rig
+        // disappears, record whether the Actor, display root, shaders or
+        // renderer own the disappearance instead of muting the regression.
+        if(rig.changedPixels<16){
+          let totalMeshes=0,visibleMeshes=0,colorWriteMeshes=0;
+          ch.root.traverse(node=>{
+            if(!node.isMesh)return;
+            totalMeshes++;
+            if(node.visible){
+              visibleMeshes++;
+              if((Array.isArray(node.material)?node.material:[node.material])
+                .some(mat=>mat?.visible!==false&&mat?.colorWrite!==false))colorWriteMeshes++;
+            }
+          });
+          rigDiagnostic={rootVisible:visible,characterVisible:ch.visible,actorAlive:actor.alive,
+            kidRootVisible:ch.kidRoot?.visible??null,totalMeshes,visibleMeshes,colorWriteMeshes,
+            withRigCalls,withoutRigCalls:renderer.info.render.calls,projectileCount:projectiles.list.length,
+            inkBlobCount:inkDraw?.count??null,actorPosition:actor.pos.toArray()};
+        }
       }finally{ch.root.visible=visible;if(inkDraw)inkDraw.visible=inkWasVisible;}
       let flow=null,wholeSceneFlow=null,flowIsolation=null;
       if(scenario.type==='flow'){
@@ -318,7 +337,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       images.push({name:scenario.name+'-'+String(frame).padStart(3,'0'),image});
       const left=ch.bones.handL.getWorldPosition(new THREE.Vector3()),right=ch.bones.handR.getWorldPosition(new THREE.Vector3());
       if(nativeRenderState()!==beforeRender)throw Error('Rendered pair advanced native clocks/gameplay: '+scenario.name+' frame '+frame);
-      return {frame,renderClocksStable:true,rig,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===31?drawnContact(projectiles.bombs.at(-1)?.mesh,left,right):null};
+      return {frame,renderClocksStable:true,rig,rigDiagnostic,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===31?drawnContact(projectiles.bombs.at(-1)?.mesh,left,right):null};
     }
     try {
     for (const scenario of cases) {
