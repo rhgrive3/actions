@@ -78,7 +78,9 @@ test('#1101 disconnect adoption preserves the remaining Blaster repeat cooldown'
   const packet = sendTick(sender);
   const row = packet.a.find(value => value[0] === source.nid);
   assert.ok(row);
-  close(row[22][8], 30 * DT);
+  // Column 21 is remote Super Jump age, 22 is the special-use count;
+  // the tagged adoption state follows at column 23.
+  close(row[23][8], 30 * DT);
 
   const host = await runtimeFixture();
   const remote = makeActor(host, { nid: 71, owner: 'p2', remote: true });
