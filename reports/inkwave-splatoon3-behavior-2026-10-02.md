@@ -1584,6 +1584,12 @@ The local combined native/network/Practice Range check passed 121 tests on `eae7
 
 The combined asset manifest also exceeded the existing 64 KiB worker ceiling after whitespace-only compaction. Build-only local identifier compaction preserves top-level worker bindings and stamps the complete JSON manifest afterward. An integration-sized manifest negative control exceeds the unchanged ceiling before compaction and fits afterward; the real compacted worker retains offline revision replay and rejects corrupted assets. No cache member, digest, runtime protocol, gameplay value or budget is removed or relaxed.
 
+## 2026-10-08 — #915 motion-detail bomb capture timing reconciliation
+
+Reference conditions: Splatoon 3 Ver. 11.3.0; bomb, gear and controller timing for this capture are not established. The correction measures INKWAVE's installed native runtime only: a Shooter configured with the selected Suction sub, SUB held on frames 0–29, release input on frame 30, fixed 1/60 s ticks, and the complete six-adapter composition. Both the native `WeaponRunner.update` control and the actual `Actor.update` owner path allocate the real Three `Group` on frame 31 after the runtime's measured `useStartup=1/60 s`.
+
+The motion-detail probe retains frame 30 for the release-input pose and adds the first observed native `throwBomb` birth frame to its render denominator. It requires exactly one native throw/release record, the measured frame delay to match the configured startup, the actual owner and mesh group to exist, and the released-bomb geometry to be captured at that birth frame. Existing grip, origin, velocity, and geometry thresholds remain in force. This changes capture timing only; no game runtime values or Nintendo timing are inferred. Browser rendering remains with parent CI, and Switch comparison is 未確認.
+
 
 ## 2026-10-07: Input-boundary cancellation of deferred shots and touch holds (#991, #990)
 
