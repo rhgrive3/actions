@@ -119,22 +119,51 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     this.blobFourPetals.updateRanges.length = 0; this.blobFourPetals.updateRanges.push(fr);
     this.blobFourPetals.needsUpdate = true;
   }`, 'FourPetals instance upload');
-  patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
+  if (code.includes('    const inkProfile = profileFor(w);')) {
+    // #1082 source-guided ink flight owns Shooter-family launch speed and aim
+    // correction. Preserve it; only compose the existing fallback and Dualies
+    // per-hand target into that source path.
+    const shooterStart = code.indexOf('  fireShooter(a, w, spreadDeg) {');
+    const shooterEnd = code.indexOf('\n  // Left-hand muzzle', shooterStart);
+    if (shooterStart < 0 || shooterEnd < shooterStart) throw new Error('INKWAVE patch conflict: source-guided Shooter flight');
+    let shooter = code.slice(shooterStart, shooterEnd);
+    shooter = replaceOnce(shooter,
+      '    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);',
+      '    else fidelityAimConvergence(m, dir, a.aimPoint, w, w.projSpeed);',
+      'weapons fidelity: shooter centerline convergence');
+    code = code.slice(0, shooterStart) + shooter + code.slice(shooterEnd);
+
+    const roundStart = code.indexOf('  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch, hand = null) {');
+    const roundEnd = code.indexOf('\n  ', roundStart + 4);
+    if (roundStart < 0 || roundEnd < roundStart) throw new Error('INKWAVE patch conflict: source-guided Dualies/Splatling flight');
+    let round = code.slice(roundStart, roundEnd);
+    round = replaceOnce(round,
+      '    if (inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));',
+      '    if (inkProfile) correctInkAim(inkProfile, m, dir, aimTarget, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));',
+      'weapons fidelity: dualies source-guided aim target');
+    round = replaceOnce(round,
+      '    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);',
+      '    else fidelityAimConvergence(m, dir, aimTarget, w, w.projSpeed);',
+      'weapons fidelity: dualies/splatling centerline convergence');
+    code = code.slice(0, roundStart) + round + code.slice(roundEnd);
+  } else {
+    patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     // trail starts ~2.5 m out`,
-    `    fidelityAimConvergence(m, dir, a.aimPoint, w, w.projSpeed);
+      `    fidelityAimConvergence(m, dir, a.aimPoint, w, w.projSpeed);
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     // trail starts ~2.5 m out`, 'shooter centerline convergence');
-  patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
+    patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     Object.assign(p, { type: 'shot', wid: w.id`,
-    `    fidelityAimConvergence(m, dir, aimTarget, w, w.projSpeed);
+      `    fidelityAimConvergence(m, dir, aimTarget, w, w.projSpeed);
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     Object.assign(p, { type: 'shot', wid: w.id`, 'dualies/splatling centerline convergence');
+  }
   patch('    if (!victim.alive || victim.team === attacker.team) return;',
     "    if (!victim.alive || victim.team === attacker.team || !(dmg > 0)) return 'rejected';", 'hit pre-admission');
   patch('    if (route === \'drop\') return;', "    if (route === 'drop') return 'rejected';", 'dropped hit result');
