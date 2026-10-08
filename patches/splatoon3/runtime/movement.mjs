@@ -2,6 +2,8 @@ import { slamProtected } from './tidal-slam-gauge.mjs';
 import { absorbSpawnDamage, spawnProtectionRemaining } from './respawn-lifecycle.mjs';
 let api, config;
 const EPSILON = 1e-10;
+// Scheduling metadata is private: absolute world time is not actor/adoption state.
+const armorBirthTimes = new WeakMap();
 export function rollEligible(velocity, move, cfg) {
   const speed = Math.hypot(velocity.x, velocity.z), input = Math.hypot(move.x, move.z);
   if (!Number.isFinite(speed + input) || speed + EPSILON < cfg.minimumSpeed || input <= EPSILON || input < cfg.minimumInput) return false;
@@ -85,7 +87,7 @@ function launch(a, direction, speed, vertical, kind) {
   api.emit('actor:' + kind, { actor: a });
 }
 function tickArmorTimer(action, dt) {
-  if (action.armorBornAt === api.G.time) return;
+  if (armorBirthTimes.has(action) && armorBirthTimes.get(action) === api.G.time) return;
   const remaining = (action.armorTime || 0) - dt;
   action.armorTime = remaining <= 1e-10 ? 0 : remaining;
 }
@@ -232,7 +234,7 @@ function beginSurgeLaunchArmor(actor, surge) {
       actor.specialActive || actor.superJumpState || movementState(actor).surge !== surge) return;
   surge.armorPending = false;
   surge.armorTime = config.surge.armorTime;
-  surge.armorBornAt = api.G.time;
+  armorBirthTimes.set(surge, api.G.time);
   movementState(actor).armor = surge;
 }
 export function normalJumpVelocity(a, velocity) {

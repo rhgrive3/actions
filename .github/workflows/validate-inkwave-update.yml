@@ -574,6 +574,8 @@ jobs:
       - name: Verify existing Surge tests at the native wall-launch boundary
         run: |
           node --experimental-vm-modules --test --test-name-pattern='extracted 45-frame|surge charge, partial|wall charge takes|surge armor retains|partial Surge armor' patches/splatoon3/tests/movement-resources.test.mjs patches/splatoon3/tests/movement-motion.test.mjs patches/splatoon3/tests/armor-charger-batch.test.mjs patches/splatoon3/tests/roller-freefall.test.mjs
+      - name: Verify native wall geometry and private armor scheduling
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/wall-motion.test.mjs
       - name: Install build and browser dependencies
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
