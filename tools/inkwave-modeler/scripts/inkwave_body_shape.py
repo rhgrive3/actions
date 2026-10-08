@@ -937,12 +937,13 @@ def main():
             # 首に対して後頭部が滑らかに繋がってなくて、後ろに出すぎ): the same forward move as skull_back,
             # with its own height profile (most at y -50, nothing at the neck and the crown)
             skull_back(p['occiput_in'])
-        if p.get('back_profile'):
-            back_profile(p['back_profile'])
         if p.get('nape_fillet'):
             nape_fillet(p['nape_fillet'])
         if p.get('smooth_regions'):
             smooth_regions(p['smooth_regions'])
+        if p.get('back_profile'):
+            # last of the head shapes: the smoothing above shrinks the round back a little
+            back_profile(p['back_profile'])
         if p.get('nails'):
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:
