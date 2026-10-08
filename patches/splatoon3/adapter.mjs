@@ -1405,6 +1405,17 @@ export function adaptSource(rel, code) {
   }
 
   if (rel === 'src/game/weapons.js') {
+    // #839: zero is a valid first-hit timestamp. Native `|| -9` treats the
+    // very first contact at game time zero as absent, admitting an extra hit
+    // on frame one. Preserve zero for both actor and Boss roll-hit ledgers.
+    code = replaceOnce(code,
+      'const last = this.rollHits.get(e) || -9;',
+      'const last = this.rollHits.get(e) ?? -9;',
+      'Roller actor hit timestamp zero');
+    code = replaceOnce(code,
+      'this.rollHits.get(key) || -9',
+      'this.rollHits.get(key) ?? -9',
+      'Roller Boss hit timestamp zero');
     // #839: the ordinary and Boss Roller body-hit admission uses the sourced
     // DamageSpanSecond (24 fixed frames), without changing the hit-rejection
     // ownership from #558 or the geometry/paint/knockback paths.
