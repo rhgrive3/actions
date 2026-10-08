@@ -4,6 +4,12 @@ import {fixture} from '../../../scripts/weapons-fixture.mjs';
 const DT=1/60,near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
 async function setup(underwater=60){
  const f=await fixture({fidelity:true,network:true}),a=f.make('charger'),r=a.weaponRunner;
+ // #291 is explicitly an own-ink Squid keep. The production CPU paint fixture
+ // begins with an unpainted floor, which never marks a Squid as submerged and
+ // therefore cannot admit the pinned keep state. Paint actual turf rather than
+ // forging a stored-charge flag or skipping the real Actor._surface probe.
+ const owned = f.G.paint.splat(new f.THREE.Vector3(a.pos.x,a.pos.y+.07,a.pos.z),3,a.team,{seed:.5});
+ assert.ok(owned>0,'precondition: a real own-ink patch exists beneath the Charger');
  f.G.actors=[a];a.intent.fire=true;
  const step=()=>{f.G.time+=DT;a.update(DT);f.projectiles._updateBeams(DT);f.projectiles.syncSights();};
  for(let i=0;i<80;i++)step();assert.equal(r.charging,true);
