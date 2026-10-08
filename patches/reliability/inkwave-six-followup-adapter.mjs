@@ -9,14 +9,28 @@ function once(code, before, after, label) {
 // Runtime/gameplay ownership remains in the canonical native classes.
 export function adaptSixFollowup(rel, code) {
   if (rel === 'src/net/session.js') {
-    code = once(code,
-      "    return !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);",
-      "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);",
-      '#1003 canStart two-human Turf minimum');
-    code = once(code,
-      "    if (!this.isHost || this.state !== 'lobby' || !this.tr || this.startBlock()) return false;",
-      "    if (!this.isHost || this.state !== 'lobby' || !this.tr || this.startBlock() || (this.lobby.mode === 'turf' && this.lobby.players.length < 2)) return false;",
-      '#1003 start two-human Turf minimum');
+    // The host-team adapter may have already replaced both original native
+    // anchors. Compose the Turf minimum with its host-confirmation guard instead
+    // of requiring the now-absent pre-host-team return expression.
+    const withHostTeams = "    return !this.startBlock() && (this.lobby.mode === 'boss' || !!this.lobby.teamsConfirmed) &&\n      this.lobby.players.every(p=>p.ready || (p.id===this.myId && this.lobby.mode==='boss'));";
+    if (code.includes(withHostTeams)) {
+      code = once(code, withHostTeams,
+        "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) &&\n" +
+        withHostTeams.replace('    return ', '    '), '#1003 host-confirmed Turf minimum');
+      // Host-team start() delegates to canStart(), so the same new guard
+      // applies there without replacing the already-composed start() owner.
+      if (!code.includes("    if (!this.isHost || this.state !== 'lobby' || !this.tr || !this.canStart()) return false;"))
+        throw new Error('Six-followup adapter anchor mismatch: #1003 confirmed start owner');
+    } else {
+      code = once(code,
+        "    return !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);",
+        "    return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2) && !this.startBlock() && this.lobby.players.every((p) => p.ready || p.id === this.myId);",
+        '#1003 canStart two-human Turf minimum');
+      code = once(code,
+        "    if (!this.isHost || this.state !== 'lobby' || !this.tr || this.startBlock()) return false;",
+        "    if (!this.isHost || this.state !== 'lobby' || !this.tr || this.startBlock() || (this.lobby.mode === 'turf' && this.lobby.players.length < 2)) return false;",
+        '#1003 start two-human Turf minimum');
+    }
   }
   if (rel === 'src/main.js') {
     const judgeStart = code.indexOf('  async _judge() {');
