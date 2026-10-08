@@ -48,9 +48,23 @@ export function installSlosherIntermediatePaint(api, profile) {
   const point = new THREE.Vector3();
   const stretch = new THREE.Vector3();
   const hit = new Hit();
+  // Runtime source parameters are fixed for a spawned glob. The same projectile
+  // can run dozens of fixed ticks; avoid Combination.find, Array construction
+  // and Object.freeze on every tick, while respecting pooled projectile reuse.
+  const specs = new WeakMap();
+  const specFor = p => {
+    const prev = specs.get(p);
+    if (prev && prev.unit === p.fidelitySloshUnit &&
+        prev.index === p.fidelitySloshIndex && Object.is(prev.seed, p.seed))
+      return prev.spec;
+    const spec = slosherIntermediateSpec(p, scale);
+    specs.set(p, { unit: p.fidelitySloshUnit, index: p.fidelitySloshIndex,
+      seed: p.seed, spec });
+    return spec;
+  };
 
   Projectiles.prototype._step = function (p, dt) {
-    const spec = p?.type === 'slosh' && !p.ghost ? slosherIntermediateSpec(p, scale) : null;
+    const spec = p?.type === 'slosh' && !p.ghost ? specFor(p) : null;
     if (!spec) return step.call(this, p, dt);
 
     // #1002: this source-owned splash replaces, rather than supplements, the

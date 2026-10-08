@@ -70,6 +70,27 @@ export function deactivateDisconnectedActor(netmatch, actor) {
   return actor;
 }
 
+// A pending No Contest must outrank the ordinary Turf timeout/judge even if
+// the match timer reaches zero during its six-second notification interval.
+function fenceNoContestJudging(match) {
+  if (!match || match._s3NoContestJudgingFenced) return;
+  match._s3NoContestJudgingFenced = true;
+  if (typeof match.setState === 'function') {
+    const setState = match.setState;
+    match.setState = function (state, ...args) {
+      if (this.s3NoContest && (state === 'finish' || state === 'judge' || state === 'results')) return;
+      return setState.call(this, state, ...args);
+    };
+  }
+  if (typeof match._judge === 'function') {
+    const judge = match._judge;
+    match._judge = function (...args) {
+      if (this.s3NoContest) return;
+      return judge.apply(this, args);
+    };
+  }
+}
+
 function startNoContest(nm, seconds = NO_CONTEST_DELAY, announce = false) {
   if (!nm?.match || nm.s3NoContestEnded) return;
   nm.match.s3NoContest = true;
@@ -104,6 +125,8 @@ export function installDisconnectFidelity(api) {
   const bind = nm.bind;
   nm.bind = function (match, ...args) {
     const result = bind.call(this, match, ...args);
+    fenceNoContestJudging(match);
+    this.s3DisconnectedOwners = new Set();
     this.s3NoContestRemaining = 0;
     this.s3NoContestEnded = false;
 
@@ -143,6 +166,15 @@ export function installDisconnectFidelity(api) {
     if (!this.match) return;
     const affected = [...this.byNid.values()].filter(a => a.owner === id);
     const live = this.match.state === 'playing';
+    if (affected.length) {
+      this.s3DisconnectedOwners ||= new Set();
+      this.s3DisconnectedOwners.add(id);
+      // Events are queued by transport sender, not by Actor. In particular,
+      // 's' paint events carry no actor id: clearing only Actor.net.buf is not
+      // sufficient after a disconnect.
+      const peer = this.peers?.get?.(id);
+      if (peer?.events) peer.events.length = 0;
+    }
 
     // A loading/intro owner that vanished never becomes a dead remote slot.
     // It was not yet a live battle participant, so remove it from this match.
@@ -186,6 +218,23 @@ export function installDisconnectFidelity(api) {
     return shouldApplyHit.call(this, attacker, victim, ...args);
   };
 
+  // Reject delayed packets and playback from a departed owner, including
+  // paint events without an actor nid. Rejoining a match requires a new bind.
+  if (typeof nm._tick === 'function') {
+    const tick = nm._tick;
+    nm._tick = function (from, ...args) {
+      if (this.s3DisconnectedOwners?.has(from)) return;
+      return tick.call(this, from, ...args);
+    };
+  }
+  if (typeof nm._play === 'function') {
+    const play = nm._play;
+    nm._play = function (from, ...args) {
+      if (this.s3DisconnectedOwners?.has(from)) return;
+      return play.call(this, from, ...args);
+    };
+  }
+
   const onMessage = nm.onMessage;
   nm.onMessage = function (from, d) {
     if (d?.k === 'nc' && from === this.s?.hostId) {
@@ -196,6 +245,10 @@ export function installDisconnectFidelity(api) {
       finishNoContest(this, false);
       return;
     }
+    // An old host result cannot override a previously announced No Contest.
+    if (this.match?.s3NoContest && from === this.s?.hostId &&
+        (d?.k === 'res' || d?.k === 'end' ||
+         (d?.k === 'st' && (d.s === 'finish' || d.s === 'judge' || d.s === 'results')))) return;
     return onMessage.call(this, from, d);
   };
 
