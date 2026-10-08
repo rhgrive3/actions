@@ -16,8 +16,8 @@ function runnerTick(f, a, inp) {
 
 // Hold fire until the first swing has resolved and the roll is genuinely
 // established (same shape as the #626 helper, 60 focused ticks).
-async function establishedRoll() {
-  const f = await fixture();
+async function establishedRoll({ composeProductionAdapters = false } = {}) {
+  const f = await fixture({ composeProductionAdapters });
   const a = f.make('roller');
   a.grounded = true; a.intent.move.set(0, 0, 1);
   const r = a.weaponRunner;
@@ -93,6 +93,28 @@ test('#541 refilling mid-hold resumes the inked roll without duplicating state',
   assert.ok(r.rollT >= dryRollT, 'dash timing continues across the refill');
   assert.ok(r.lastRollPos.distanceTo(anchor) < 1e-9 || r.lastRollPos === anchor,
     'no stripe may bill the dry distance at once');
+});
+
+test('#541 dry travel is not charged by the #537 floor after refill in the full adapter composition', async () => {
+  const { f, a, r } = await establishedRoll({ composeProductionAdapters: true });
+  const speed = 1.2, step = speed * DT;
+  a.vel.set(0, 0, speed);
+  a.ink = 0;
+  for (let i = 0; i < 6; i++) {
+    a.pos.z += step;
+    runnerTick(f, a, { fire: true });
+  }
+  assert.equal(r.rolling, true, 'the established roll persists through dry travel');
+  assert.equal(a.ink, 0, 'dry travel does not spend ink');
+
+  a.ink = 100;
+  const before = a.ink;
+  a.pos.z += step;
+  runnerTick(f, a, { fire: true });
+  const charged = before - a.ink;
+  const expectedFloor = a.weapon.rollInkMinPerFrame * 100;
+  assert.ok(Math.abs(charged - expectedFloor) < 1e-10,
+    `first paid tick charges only its ${expectedFloor}% minimum-floor amount (got ${charged}%)`);
 });
 
 test('#541 ZR at zero ink never cold-starts a dry roll', async () => {

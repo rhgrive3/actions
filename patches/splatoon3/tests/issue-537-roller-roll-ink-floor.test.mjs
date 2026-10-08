@@ -132,7 +132,7 @@ test('Ink Saver (Main) scales the sourced floor and retained distance rate', asy
   assert.ok(Math.abs(drain(rig, MAX_SPEED, 3).rate - MAX_RATE * m) < 1e-3, 'drain scales with gear');
 });
 
-test('rolling ink stops at the existing dry-roll threshold without further drain', async () => {
+test('rolling ink enters the existing dry-roll threshold without further drain', async () => {
   const rig = await rollRig();
   const { a, r } = rig;
   a.ink = 0.55; a.vel.set(0, 0, MAX_SPEED);
@@ -143,6 +143,7 @@ test('rolling ink stops at the existing dry-roll threshold without further drain
   assert.ok(a.ink >= 0, 'rolling never makes the tank negative');
   assert.ok(Math.abs(a.ink - 0.45) < 1e-10, 'one maximum-speed tick consumes the sourced 0.1%');
   r.update(DT, { fire: true });
-  assert.equal(r.rolling, false, 'the native dry threshold ends rolling on the next tick');
-  assert.ok(a.ink >= 0, 'stopping at the dry threshold does not overdraw ink');
+  assert.equal(r.rolling, true, 'the integrated #541 dry hold preserves Roller-down at the native threshold');
+  assert.ok(Math.abs(a.ink - 0.45) < 1e-10, 'dry hold does not charge additional ink');
+  assert.ok(a.ink >= 0, 'the dry threshold does not overdraw ink');
 });
