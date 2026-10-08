@@ -27,6 +27,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue415 } from './runtime/issue-415-adapter.mjs';
+import { adaptIssueBatch1171 } from './issue-batch-1171-adapter.mjs';
 import { adaptTidalSlamGauge } from './tidal-slam-gauge-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
@@ -51,6 +52,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptIssueBatch1171(rel, code, replaceOnce);
   // The source-guided shooter-family InkFlightRuntime is the authority for
   // head integration and detached paint drops. It does not traverse the
   // patched generic Projectiles._step actor loop. Bridge its actor contact
