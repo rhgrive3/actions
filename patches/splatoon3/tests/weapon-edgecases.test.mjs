@@ -33,6 +33,26 @@ test('ordinary Dualies ticks reuse input without per-frame spread or Proxy, but 
   assert.ok(ownKeys > ownKeysAfterLock, 'sub-release edge must not take the fast path');
 });
 
+test('Dualies sub release on the post-shot unlock tick replays the buffered press exactly once', async () => {
+  const f = await setup('dualies'), a = f.a, runner = a.weaponRunner;
+  let thrown = 0;
+  f.G.projectiles.throwBomb = () => { thrown++; };
+  // A real Actor fixed step decrements the lock before WeaponRunner.update,
+  // so this crosses the 1F lock-to-release boundary on the second tick.
+  runner.s3DualiesPostShot = 2 / 60;
+  a.intent.sub = true;
+  f.tick(a);
+  assert.equal(thrown, 0, 'sub must not throw while the post-shot lock is positive');
+  assert.equal(runner.s3DualiesSubBuffered, true, 'press was buffered under the lock');
+  a.intent.sub = false;
+  f.tick(a);
+  assert.equal(thrown, 1, 'unlock-frame release must replay the buffered press and release');
+  assert.equal(runner.s3DualiesSubBuffered, false);
+  assert.equal(runner.s3DualiesSubReleaseBuffered, false);
+  f.tick(a, 4);
+  assert.equal(thrown, 1, 'the same release cannot throw again');
+});
+
 test('dualies stable human starts on recognized frame 3, then every 5F without early ink',async()=>{
  const f=await setup('dualies');f.tick(f.a,600);f.a.intent.fire=true;
  f.tick(f.a);assert.equal(f.shots.length,0);assert.equal(f.a.ink,100);f.tick(f.a);assert.equal(f.shots.length,0);assert.equal(f.a.ink,100);
