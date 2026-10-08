@@ -263,10 +263,13 @@ export function emit(name, payload) {
         }
       } else if (e[1] === 's') {
         // #365 F1: a pre-order (mixed-version) sender has no tick/seq tail and no
-        // match epoch. Accept it exactly like every other legacy event, but mark it
-        // unordered so it can never outrank an ordered record.
+        // match epoch. Replay known senders as best-effort legacy visuals; do not
+        // let them replace cells that already have an ordered owner.
+        if (d.r !== undefined && d.r !== null && d.r !== 1) continue;
+        if (!this._paintOwnerRanks?.has(from)) continue;
         if (!Number.isFinite(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4])
-          || !Number.isFinite(e[5]) || !Number.isFinite(e[6])) continue;
+          || !Number.isFinite(e[5]) || e[5] <= 0 || !Number.isInteger(e[6])
+          || (e[6] !== 0 && e[6] !== 1) || !Number.isFinite(e[7])) continue;
         e._netPaintLegacy = true;
         e._netPaintOrder = undefined;
       }
@@ -334,7 +337,7 @@ export function emit(name, payload) {
     if (e[1] === 's' && from === this.myId) return;
     if (e[1] === 's' && !e._netPaintLegacy) {
       const expectedOrder = paintOrderFor(this, from, e._netTick, e._netSeq);
-      if (expectedOrder === null || expectedOrder !== e._netPaintOrder
+      if (!samePaintOrder(expectedOrder, e._netPaintOrder)
         || e._netPaintMatch !== this.cfg?.id || !Number.isSafeInteger(e._netPacketTick)
         || e._netPacketTick < e._netTick || e._netPacketTick - e._netTick > 120) return;
     }
@@ -375,7 +378,7 @@ export function emit(name, payload) {
         break;
       }`,      `case 's': {
         const order = e._netPaintOrder;
-        const usable = Number.isSafeInteger(order) && order > 0;
+        const usable = !!order;
         // A record without a usable order only replays when it is the explicitly
         // accepted legacy/mixed-version form; an ordered record never degrades.
         if (!usable && !e._netPaintLegacy) break;
@@ -383,7 +386,7 @@ export function emit(name, payload) {
         this._currentPaintOrder = usable ? order : undefined; this.applying = true;
         try {
           const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
-          const opts = { seed: e[7], _netPaintOrder: this._currentPaintOrder };
+          const opts = { seed: e[7], _netPaintOrder: this._currentPaintOrder, _netPaintLegacy: !!e._netPaintLegacy };
           if (e[8]) opts.kind = e[8];
           if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
           G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
@@ -460,42 +463,29 @@ export function emit(name, payload) {
         break;
       }`, 'birth and terminal events');
     code += `
-const MAX_PAINT_TICK = 0x1fffff;      // 21 bits of owner simulation tick
-const MAX_PAINT_SEQUENCE = 0x3ffffff;  // 26 bits, also bounded by (tick+1)*256
-const PAINT_SLOT_MASK = 0x3f;          // 6 bits -> up to 64 owners addressed
-const PAINT_SLOT_SHIFT = 0x4000000;    // 2**26
-const PAINT_TICK_SHIFT = 0x100000000;  // 2**32  (21 + 6 + 26 = 53 bits, exactly safe)
+const MAX_PAINT_TICK = 0x1fffff;      // Existing 21-bit owner simulation tick
+const MAX_PAINT_SEQUENCE = 0x3ffffff;  // Existing 26-bit match event sequence
+const PAINT_SEQUENCE_SPACE = 0x4000000;
 function stablePaintOwnerRanks(session) {
+  // Snapshot every relay member, including observer ids; unknown senders never get a derived fallback rank.
   const ids = session?._members && typeof session._members.keys === 'function' ? [...session._members.keys()] : [];
   if (typeof session?.myId === 'string') ids.push(session.myId);
   const owners = [...new Set(ids.filter(id => typeof id === 'string' && id.length > 0))].sort();
+  if (owners.length > 0x100000000) throw new RangeError('Network paint owner roster exceeds the uint32 rank representation');
   return new Map(owners.map((id, rank) => [id, rank]));
 }
-// Deterministic 6-bit owner slot: every client derives it from the sender id
-// alone, so an oversized roster can never turn into a total paint drop.
-function stableOwnerSlot(owner) {
-  if (typeof owner !== 'string' || owner === '') return -1;
-  let h = 0x811c9dc5;
-  for (let i = 0; i < owner.length; i++) { h ^= owner.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
-  return h & PAINT_SLOT_MASK;
-}
-function paintOwnerSlot(match, owner) {
-  const ranks = match && match._paintOwnerRanks;
-  if (ranks && ranks.size <= PAINT_SLOT_MASK + 1) {
-    const rank = ranks.get(owner);
-    // A small authoritative roster still refuses an owner it does not know.
-    return Number.isSafeInteger(rank) && rank >= 0 && rank <= PAINT_SLOT_MASK ? rank : -1;
-  }
-  return stableOwnerSlot(owner);
-}
 function paintOrderFor(match, owner, tick, sequence) {
-  const slot = paintOwnerSlot(match, owner);
-  if (slot < 0
+  const ownerRank = match?._paintOwnerRanks?.get(owner);
+  if (!Number.isSafeInteger(ownerRank) || ownerRank < 0 || ownerRank > 0xffffffff
     || !Number.isSafeInteger(tick) || tick < 0 || tick > MAX_PAINT_TICK
     || !Number.isSafeInteger(sequence) || sequence < 1 || sequence > MAX_PAINT_SEQUENCE
     || sequence > (tick + 1) * 256) return null;
-  const order = tick * PAINT_TICK_SHIFT + slot * PAINT_SLOT_SHIFT + sequence;
-  return Number.isSafeInteger(order) && order > 0 ? order : null;
+  const key = tick * PAINT_SEQUENCE_SPACE + sequence;
+  return Number.isSafeInteger(key) && key > 0 ? { tick, ownerRank, sequence, key } : null;
+}
+function samePaintOrder(a, b) {
+  return !!a && !!b && a.tick === b.tick && a.ownerRank === b.ownerRank
+    && a.sequence === b.sequence && a.key === b.key;
 }
 function stormSnapshotAllows(actor, proof, from) {
   const latest = actor?.net?.buf?.at(-1);
@@ -536,9 +526,9 @@ function firstSplatStateFor(session,cfg) {
   }
   if (rel === 'src/world/paint.js') {
     patch('    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1',
-      '    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.gridOrder = new Float64Array(total); // last accepted network paint order per cell',
+      '    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.gridOrder = new Float64Array(total); // packed owner tick + event sequence per cell\n    this.gridOrderOwner = new Uint32Array(total); // stable match-roster rank per cell',
       'bounded per-cell canonical paint order');
-    patch('    this.grid.fill(0);', '    this.grid.fill(0);\n    this.gridOrder.fill(0);', 'paint order resets with the gameplay grid');
+    patch('    this.grid.fill(0);', '    this.grid.fill(0);\n    this.gridOrder.fill(0);\n    this.gridOrderOwner.fill(0);', 'paint order resets with the gameplay grid');
     patch(`    if (nm && !opts.cosmetic) {
       if (nm.mute > 0) return 0;
       if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }
@@ -550,16 +540,16 @@ function firstSplatStateFor(session,cfg) {
         try { nm.recSplat(center, radius, team, opts); } finally { nm._recordingPaint = false; }
         opts._netPaintOrder = nm._lastPaintOrder;
       } else opts._netPaintOrder = nm._currentPaintOrder;
-      if (!Number.isSafeInteger(opts._netPaintOrder) || opts._netPaintOrder <= 0) return 0;
+      if (!validNetworkPaintOrder(opts._netPaintOrder) && !opts._netPaintLegacy) return 0;
     }`, 'local prediction and remote replay require the same accepted order');
     patch('this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind)',
-      'this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, opts._netPaintOrder)', 'pass canonical paint order to CPU ownership');
+      'this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, opts._netPaintOrder, opts._netPaintLegacy)', 'pass canonical paint order to CPU ownership');
     if (code.includes('g.cx = center.x; g.cy = center.y; g.cz = center.z;')) {
       patch('g.cx = center.x; g.cy = center.y; g.cz = center.z;',
-        'g.cx = center.x; g.cy = center.y; g.cz = center.z; g.netOrder = opts._netPaintOrder;', 'retain canonical order for pooled GPU growth');
+        'g.cx = center.x; g.cy = center.y; g.cz = center.z; g.netOrder = opts._netPaintOrder; g.netLegacy = !!opts._netPaintLegacy;', 'retain canonical order for pooled GPU growth');
     } else {
       patch('        cx: center.x, cy: center.y, cz: center.z,',
-        '        cx: center.x, cy: center.y, cz: center.z, netOrder: opts._netPaintOrder,', 'retain canonical order for GPU growth');
+        '        cx: center.x, cy: center.y, cz: center.z, netOrder: opts._netPaintOrder, netLegacy: !!opts._netPaintLegacy,', 'retain canonical order for GPU growth');
     }
     patch('this._pushQuad(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);',
       'this._pushOrderedQuad(g, f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);', 'clip delayed drips to current cell owners');
@@ -567,7 +557,8 @@ function firstSplatStateFor(session,cfg) {
       'this._pushOrderedQuad(g, f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);', 'clip paint growth to current cell owners');
     patch('  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind) {', `  _pushOrderedQuad(g, f, u0, u1, v0, v1, ...draw) {
     const order = g.netOrder;
-    if (!Number.isSafeInteger(order) || order <= 0) return this._pushQuad(f,u0,u1,v0,v1,...draw);
+    const ordered = validNetworkPaintOrder(order), legacy = !!g.netLegacy;
+    if (!ordered && !legacy) return this._pushQuad(f,u0,u1,v0,v1,...draw);
     const i0 = Math.max(0, Math.floor(u0 / f.cu)), i1 = Math.min(f.nu - 1, Math.floor(u1 / f.cu));
     const j0 = Math.max(0, Math.floor(v0 / f.cv)), j1 = Math.min(f.nv - 1, Math.floor(v1 / f.cv));
     if (i1 < i0 || j1 < j0) return;
@@ -577,7 +568,10 @@ function firstSplatStateFor(session,cfg) {
       const row = f.grid + j * f.nu;
       let start = -1;
       for (let i = i0; i <= i1 + 1; i++) {
-        const ownsCell = i <= i1 && this.gridOrder[row + i] === order;
+        const k = row + i;
+        const ownsCell = i <= i1 && (ordered
+          ? this.gridOrder[k] === order.key && this.gridOrderOwner[k] === order.ownerRank
+          : this.gridOrder[k] === 0);
         if (ownsCell) { if (start < 0) start = i; }
         else if (start >= 0) {
           const cu0 = Math.max(u0, start * f.cu), cu1 = Math.min(u1, i * f.cu);
@@ -588,13 +582,33 @@ function firstSplatStateFor(session,cfg) {
     }
   }
 
-  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind, netOrder) {`, 'per-cell CPU order and bounded GPU ownership clipping');
+  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind, netOrder, netLegacy) {`, 'per-cell CPU order and bounded GPU ownership clipping');
     patch('        const k = f.grid + j * f.nu + i;\n        const prev = this.grid[k];', `        const k = f.grid + j * f.nu + i;
         if (netOrder !== undefined) {
-          if (!Number.isSafeInteger(netOrder) || netOrder <= this.gridOrder[k]) continue;
-          this.gridOrder[k] = netOrder;
-        }
+          if (!validNetworkPaintOrder(netOrder)
+            || !networkPaintOrderWins(netOrder, this.gridOrder[k], this.gridOrderOwner[k])) continue;
+          this.gridOrder[k] = netOrder.key;
+          this.gridOrderOwner[k] = netOrder.ownerRank;
+        } else if (netLegacy && this.gridOrder[k] > 0) continue;
         const prev = this.grid[k];`, 'last accepted order wins only when newer');
+    code += `
+const NETWORK_PAINT_SEQUENCE_SPACE = 0x4000000;
+function validNetworkPaintOrder(order) {
+  return !!order && Number.isSafeInteger(order.tick) && order.tick >= 0 && order.tick <= 0x1fffff
+    && Number.isSafeInteger(order.ownerRank) && order.ownerRank >= 0 && order.ownerRank <= 0xffffffff
+    && Number.isSafeInteger(order.sequence) && order.sequence > 0 && order.sequence <= 0x3ffffff
+    && order.sequence <= (order.tick + 1) * 256
+    && Number.isSafeInteger(order.key) && order.key === order.tick * NETWORK_PAINT_SEQUENCE_SPACE + order.sequence;
+}
+function networkPaintOrderWins(order, previousKey, previousOwnerRank) {
+  if (!Number.isSafeInteger(previousKey) || previousKey < 0) return false;
+  const previousTick = Math.floor(previousKey / NETWORK_PAINT_SEQUENCE_SPACE);
+  const previousSequence = previousKey - previousTick * NETWORK_PAINT_SEQUENCE_SPACE;
+  if (order.tick !== previousTick) return order.tick > previousTick;
+  if (order.ownerRank !== previousOwnerRank) return order.ownerRank > previousOwnerRank;
+  return order.sequence > previousSequence;
+}
+`;
     return code;
   }
   if (rel === 'src/fx/fxHooks.js') {

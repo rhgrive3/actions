@@ -74,7 +74,7 @@ function deliver(peer, from, event, { matchId = MATCH, version = 2, ownerTick, f
   const ts = Math.max(wire[0] + 0.01, previousTs + 0.01);
   peer.lastTs.set(from, ts);
   const packet = { k: 't', m: matchId, ts, u: ownerTick ?? tick, e: [wire] };
-  if (version === 2) packet.r = 2;
+  if (Number.isSafeInteger(version) && version > 0) packet.r = version;
   peer.nm.onMessage(from, packet);
   const playback = peer.nm.peers.get(from);
   if (playback) playback.tr = Infinity;
@@ -86,7 +86,8 @@ function hashPaint(paint) {
   let hash = 0x811c9dc5;
   for (let i = 0; i < paint.grid.length; i++) {
     hash = Math.imul(hash ^ paint.grid[i], 0x01000193) >>> 0;
-    hash = Math.imul(hash ^ Math.floor(paint.gridOrder[i] / 0x100000000), 0x01000193) >>> 0;
+    hash = Math.imul(hash ^ Math.floor(paint.gridOrder[i] / 0x4000000), 0x01000193) >>> 0;
+    hash = Math.imul(hash ^ paint.gridOrderOwner[i], 0x01000193) >>> 0;
     hash = Math.imul(hash ^ (paint.gridOrder[i] >>> 0), 0x01000193) >>> 0;
   }
   return hash;
@@ -135,9 +136,10 @@ async function runPermutation(observerOrder) {
   assert.equal(a.sent[0].m, MATCH); assert.equal(b.sent[0].m, MATCH);
   assert.equal(a.sent[0].r, 2); assert.equal(b.sent[0].r, 2);
   assert.deepEqual([a.sent[0].e[0].at(-2), a.sent[0].e[0].at(-1)], [60, 1]);
-  assert.ok(b.nm._lastPaintOrder > a.nm._lastPaintOrder, 'stable roster rank breaks same-tick, same-sequence ties');
+  assert.ok(b.nm._lastPaintOrder.ownerRank > a.nm._lastPaintOrder.ownerRank, 'stable roster rank breaks same-tick, same-sequence ties');
 
   const localCreditA = actorA.stats.turf, localCreditB = actorB.stats.turf;
+  const localSpecialA = actorA.special, localSpecialB = actorB.special;
   for (const owner of observerOrder) deliver(observer, owner, owner === 'a' ? aLocal.event : bLocal.event, { forge: true });
   deliver(a, 'b', bLocal.event);
   deliver(b, 'a', aLocal.event);
@@ -147,6 +149,8 @@ async function runPermutation(observerOrder) {
   assert.deepEqual(Array.from(a.paint.grid), predictedGrid, 'an owner echo must not apply local prediction twice');
   assert.equal(actorA.stats.turf, localCreditA, 'remote replay and a returned echo do not add turf credit again');
   assert.equal(actorB.stats.turf, localCreditB, 'remote replay does not add turf credit to the local owner');
+  assert.equal(actorA.special, localSpecialA, 'remote replay and owner echo do not charge the special gauge again');
+  assert.equal(actorB.special, localSpecialB, 'remote replay does not charge another owner special gauge');
   assert.deepEqual(Array.from(a.paint.grid), Array.from(b.paint.grid));
   assert.deepEqual(Array.from(a.paint.grid), Array.from(observer.paint.grid));
   assert.deepEqual([...a.paint.coverage()], [...b.paint.coverage()]);
@@ -159,6 +163,7 @@ async function runPermutation(observerOrder) {
   assertCpuAndSubmittedGpuOwnersMatch(observer);
   assert.equal(observer.nm._paintOwnerRanks.size, 3);
   assert.equal(observer.paint.gridOrder.length, observer.paint.grid.length);
+  assert.equal(observer.paint.gridOrderOwner.length, observer.paint.grid.length);
   assert.ok([...observer.nm.peers.values()].every(p => p.events.length === 0), 'drained event queues retain no paint history');
 
   return {
@@ -218,6 +223,7 @@ test('Range clear resets the bounded order grid and the next match rejects old-e
   a.paint.clear();
   assert.ok(a.paint.grid.every(owner => owner === 0));
   assert.ok(a.paint.gridOrder.every(order => order === 0));
+  assert.ok(a.paint.gridOrderOwner.every(rank => rank === 0));
   assert.equal(a.paint.growing.length, 0);
 
   const next = new a.f.NetMatch(a.session, { id: 'issue-365-next-match', map: 'paint-order-test' });
@@ -232,4 +238,110 @@ test('Range clear resets the bounded order grid and the next match rejects old-e
   assert.ok(a.paint.grid.some(owner => owner === 2), 'the first new-match event paints without prior ordering history');
   assert.ok(a.paint.gridOrder.some(order => order > 0));
   assert.equal(next.cfg.id, 'issue-365-next-match');
+});
+
+test('mixed r:1 and unversioned legacy paint packets still paint without duplicate owner credit', async () => {
+  const sender = await makePeer('a', ['a', 'b']);
+  const owner = makeActor(sender.f, 'A', 0);
+  const local = localSplat(sender, 0, owner);
+  assert.ok(local.area > 0);
+  const credited = [owner.stats.turf, owner.special];
+
+  // The pre-r:2 wire event retains the original paint payload and is delivered
+  // in both supported legacy tick envelopes.
+  const legacy = local.event.slice(0, -2);
+  for (const version of [1, 0]) {
+    const receiver = await makePeer('b', ['b', 'a']);
+    deliver(receiver, 'a', legacy, { version });
+
+    assert.ok(receiver.paint.grid.some(value => value === 1), `legacy r:${version || 'absent'} paint must reach the gameplay grid`);
+    assert.deepEqual([owner.stats.turf, owner.special], credited, 'remote replay must not charge turf or special gauge again');
+  }
+  const unsupported = await makePeer('b', ['b', 'a']);
+  deliver(unsupported, 'a', legacy, { version: 3 });
+  assert.ok(unsupported.paint.grid.every(value => value === 0), 'unknown wire revisions are not guessed as legacy');
+});
+
+test('legacy growth stays behind cells that already have a canonical paint owner', async () => {
+  const sender = await makePeer('a', ['a', 'b']);
+  const receiver = await makePeer('b', ['b', 'a']);
+  const owner = makeActor(receiver.f, 'B', 1);
+  const ordered = localSplat(receiver, 1, owner);
+  const beforeGrid = Array.from(receiver.paint.grid), beforeOrder = Array.from(receiver.paint.gridOrder);
+  const legacy = localSplat(sender, 0, null).event.slice(0, -2);
+
+  deliver(receiver, 'a', legacy, { version: 1 });
+
+  assert.deepEqual(Array.from(receiver.paint.grid), beforeGrid, 'legacy replay cannot replace ordered CPU ownership');
+  assert.deepEqual(Array.from(receiver.paint.gridOrder), beforeOrder);
+  assert.ok(ordered.area > 0);
+  assertCpuAndSubmittedGpuOwnersMatch(receiver);
+});
+
+test('eight players plus a spectator retain distinct bounded paint ranks and converge', async () => {
+  const players = Array.from({ length: 8 }, (_, i) => `player-${String(i).padStart(2, '0')}`);
+  const roster = [...players, 'spectator'];
+  const a = await makePeer(players[0], roster);
+  const h = await makePeer(players[7], roster);
+  const observer = await makePeer('spectator', roster);
+  const actorA = makeActor(a.f, 'A', 0), actorH = makeActor(h.f, 'H', 1);
+  const aLocal = localSplat(a, 0, actorA), hLocal = localSplat(h, 1, actorH);
+  assert.ok(aLocal.area > 0 && hLocal.area > 0, 'the ninth roster entry must not suppress local paint');
+  assert.equal(a.nm._paintOwnerRanks.size, 9);
+  assert.equal(observer.nm._paintOwnerRanks.size, 9);
+  assert.deepEqual([...observer.nm._paintOwnerRanks.values()].sort((x, y) => x - y), Array.from({ length: 9 }, (_, i) => i));
+
+  const localCredits = [actorA.stats.turf, actorH.stats.turf, actorA.special, actorH.special];
+  deliver(a, players[7], hLocal.event);
+  deliver(h, players[0], aLocal.event);
+  deliver(observer, players[7], hLocal.event);
+  deliver(observer, players[0], aLocal.event);
+
+  assert.deepEqual(Array.from(a.paint.grid), Array.from(h.paint.grid));
+  assert.deepEqual(Array.from(a.paint.grid), Array.from(observer.paint.grid));
+  assert.equal(a.paint.grid[centerCell(a)], 2, 'stable member ranks select the same same-tick paint owner');
+  assert.deepEqual([actorA.stats.turf, actorH.stats.turf, actorA.special, actorH.special], localCredits);
+  for (const peer of [a, h, observer]) {
+    assert.equal(peer.paint.size, 1024, 'roster size does not enlarge the supported paint atlas');
+    assert.equal(peer.paint.gridOrder.length, peer.paint.grid.length);
+    assert.equal(peer.paint.gridOrder.byteLength, peer.paint.grid.length * Float64Array.BYTES_PER_ELEMENT);
+    assert.equal(peer.paint.gridOrderOwner.byteLength, peer.paint.grid.length * Uint32Array.BYTES_PER_ELEMENT);
+    assert.equal(peer.paint.aPos.byteLength, a.paint.aPos.byteLength, 'GPU quad buffers stay fixed-size across roster sizes');
+    const gpuBytes = [peer.paint.aPos, peer.paint.aLocal, peer.paint.aSplat, peer.paint.aStretch,
+      peer.paint.aGrow, peer.paint.geo.getAttribute('position').array, peer.paint.geo.index.array]
+      .reduce((total, array) => total + array.byteLength, 0);
+    assert.ok(gpuBytes <= 2_100_000, 'submitted atlas geometry stays within the fixed 6000-quad design');
+    assert.ok(peer.paint.usedHeight <= peer.paint.size, 'the atlas packing remains inside its configured size');
+    assertCpuAndSubmittedGpuOwnersMatch(peer);
+  }
+});
+
+test('a sender absent from a larger supported roster cannot mint a paint owner rank', async () => {
+  const roster = Array.from({ length: 65 }, (_, i) => `player-${String(i).padStart(2, '0')}`);
+  const sender = await makePeer(roster[0], roster);
+  const receiver = await makePeer(roster[1], roster);
+  const event = localSplat(sender, 1, null).event;
+  const before = Array.from(receiver.paint.grid);
+
+  deliver(receiver, 'unlisted-sender', event);
+  deliver(receiver, 'unlisted-sender', event.slice(0, -2), { version: 0 });
+
+  assert.deepEqual(Array.from(receiver.paint.grid), before, 'unknown ids must not receive ordered or legacy fallback authority');
+  assert.equal(receiver.nm._paintOwnerRanks.size, roster.length);
+});
+
+test('a newer non-paint event does not advance the paint duplicate watermark', async () => {
+  const sender = await makePeer('a', ['a', 'b']);
+  const receiver = await makePeer('b', ['a', 'b']);
+  const paint = localSplat(sender, 1, null).event;
+  const laterNonPaint = [paint[0] + 0.001, 'noop', paint.at(-2), paint.at(-1) + 1];
+
+  deliver(receiver, 'a', laterNonPaint);
+  const peer = receiver.nm.peers.get('a');
+  assert.equal(peer._lastEventSeq, 2);
+  deliver(receiver, 'a', paint);
+
+  assert.ok(receiver.paint.grid.some(value => value === 2), 'the valid earlier paint survives an unrelated event sequence gap');
+  assert.equal(peer._lastPaintSeq, 1);
+  assert.equal(peer._lastEventSeq, 2);
 });
