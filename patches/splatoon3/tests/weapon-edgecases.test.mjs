@@ -98,6 +98,20 @@ test('terrain bands are normalized before half damage and 0.1HP floor, with LOS 
  e.hp=100;e.pos.set(w.splashRadius*rate+.001,0,0);ps._impact(p,{point:at,normal});ps.flushBlastImpacts();close(e.hp,100);
  e.pos.set(.1,0,0);f.G.physics.los=()=>false;ps._impact(p,{point:at,normal});ps.flushBlastImpacts();close(e.hp,100);
 });
+test('#911 player-direct Blaster collision shares reduced impact radius and damage, not timed airburst', async()=>{
+ const f=await setup('blaster'),ps=projectiles(f),direct=f.make(),near=f.make(),far=f.make();
+ for(const e of [direct,near,far]){e.team=1;e.invuln=0;e.hp=100;f.G.actors.push(e);}
+ const w=f.WEAPONS.blaster,p=blast(f,ps),at=new f.THREE.Vector3(0,.7,0);
+ direct.pos.set(0,0,0);near.pos.set(.2,0,0);
+ far.pos.set(w.splashRadius*(w.terrainSplashRadiusRate??1)+.05,0,0);
+ ps._blastBurst(p,at,direct);
+ close(direct.hp,100);close(near.hp,65);close(far.hp,100);
+ assert.equal(p.s3TerrainBurst,false,'temporary direct-hit impact cause must not leak');
+ near.hp=100;far.hp=100;
+ ps._blastBurst(p,at,null);
+ close(near.hp,30);assert.ok(far.hp<100,'ordinary timed burst retains full radius');
+ close(direct.hp,30,'direct victim is excluded only from its own collision burst');
+});
 test('terrain cause restored on exception and pooled reuse; paint/FX/boss dimensions stay native',async()=>{
  const f=await setup('blaster'),ps=projectiles(f),p=blast(f,ps),at=new f.THREE.Vector3(),normal=new f.THREE.Vector3(0,1,0);const paint=[],fx=[],boss=[];
  f.G.paint.splat=(_p,r)=>{paint.push(r);return 0;};f.G.fx={burst(){},explosion:(_p,_c,r)=>fx.push(r)};f.G.boss={splash:(...args)=>boss.push(args)};
