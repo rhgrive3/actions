@@ -115,7 +115,9 @@ export function updateSuperJumpMain(a, dt, firePressed) {
     fire: a.intent.fire || buffered,
     firePressed: firePressed || buffered,
     sub: !!a.intent.sub,
-    subReleased: false, // no projectile, no ink debit before landing
+    // If the authoritative Super Jump ended this tick, preserve a release
+    // from the previously staged hold exactly once at the landing boundary.
+    subReleased: !s && !a.intent.sub && !!a.weaponRunner.aimingSub,
   });
   a.fireBuffer = 0;
 }
