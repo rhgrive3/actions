@@ -435,6 +435,113 @@ def back_profile(cfg):
               round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def neck_join(cfg):
+    """The head (a closed shell, its two halves split at the midline) only dived into the neck: where the two
+    surfaces cross there was a line and the head's underside stood over the neck (2026-10-08, user: 繋げろ, the
+    usual way).  The usual way: one surface.  The head (halves welded) and the neck are merged with Blender's
+    Boolean (Union, Exact), the joint is smoothed (Smooth, weight by distance to the joint, back and sides only:
+    head z < cfg['z'][0], full behind cfg['z'][1]), then split again by material into HEAD_face and BODY_torso,
+    so the parts, their names and materials stay; both take the merged surface's normals (Data Transfer), so
+    the joint shades as one surface.  Meshes lying on the head or the neck there follow (cfg['follow'])."""
+    import bmesh
+    from mathutils.kdtree import KDTree
+    head, neck = bpy.data.objects[cfg['head']], bpy.data.objects[cfg['neck']]
+    sc = bpy.context.scene
+    me = head.data.copy()
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)       # the midline pairs
+    bm.to_mesh(me)
+    bm.free()
+    R = bpy.data.objects.new('INKWAVE_neck_join', me)
+    sc.collection.objects.link(R)
+    R.matrix_world = head.matrix_world.copy()
+    T = bpy.data.objects.new('INKWAVE_neck_join_operand', neck.data.copy())
+    sc.collection.objects.link(T)
+    T.matrix_world = neck.matrix_world.copy()
+    mod = R.modifiers.new('INKWAVE_neck_join', 'BOOLEAN')
+    mod.operation, mod.solver, mod.object = 'UNION', 'EXACT', T
+    mod.use_hole_tolerant = True
+    mod.material_mode = 'TRANSFER'
+    er.apply_modifier(R, mod)
+    tdata = T.data
+    bpy.data.objects.remove(T)
+    bpy.data.meshes.remove(tdata)
+    head_mats = {m.name for m in head.data.materials if m}
+    neck_mats = [m for m in neck.data.materials]
+    rm = [m.name if m else None for m in R.data.materials]
+    mi = np.zeros(len(R.data.polygons), int)
+    R.data.polygons.foreach_get('material_index', mi)
+    is_head = np.array([rm[i] in head_mats for i in mi])
+    # joint vertices: used by faces of both parts
+    nv = len(R.data.vertices)
+    vh, vn = np.zeros(nv, bool), np.zeros(nv, bool)
+    for f, h in zip(R.data.polygons, is_head):
+        (vh if h else vn)[list(f.vertices)] = True
+    joint = np.flatnonzero(vh & vn)
+    W = er.world(R)
+    kd = KDTree(len(joint))
+    for i, j in enumerate(joint):
+        kd.insert(Vector(W[j]), i)
+    kd.balance()
+    dist = np.array([kd.find(Vector(c))[2] for c in W]) * 1000
+    L = er.M.to_local(W) * 1000
+    w = (1 - smoothstep(dist / cfg['r_mm'])) * smoothstep((cfg['z'][0] - L[:, 2]) / (cfg['z'][0] - cfg['z'][1]))
+    print('BODY_SHAPE neck_join joint vertices', len(joint), 'smoothed', int((w > 1e-3).sum()))
+    # meshes on the head / neck there follow the smoothing (move of the nearest merged vertex)
+    W0 = W.copy()
+    er.apply_weighted_modifier(R, w, 'SMOOTH', factor=0.5, iterations=int(cfg['iters']))
+    W1 = er.world(R)
+    if cfg.get('follow'):
+        kd2 = KDTree(nv)
+        for i, c in enumerate(W0):
+            kd2.insert(Vector(c), i)
+        kd2.balance()
+        mv = W1 - W0
+        for n in cfg['follow']:
+            o = bpy.data.objects[n]
+            Wo = er.world(o)
+            near = [kd2.find(Vector(c)) for c in Wo]
+            idx = np.array([q[1] for q in near])
+            dd = np.array([q[2] for q in near]) * 1000
+            f = 1 - smoothstep((dd - 2.0) / 8.0)
+            set_local_mm(o, er.M.to_local(Wo + f[:, None] * mv[idx]) * 1000)
+    with_obj = er.with_object
+    R.data.normals_split_custom_set([])            # the merged surface's own normals
+    for obj, keep in ((head, is_head), (neck, ~is_head)):
+        bm = bmesh.new()
+        bm.from_mesh(R.data)
+        bm.faces.ensure_lookup_table()
+        bmesh.ops.delete(bm, geom=[bm.faces[i] for i in np.flatnonzero(~keep)], context='FACES_ONLY')
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+        new = bpy.data.meshes.new(obj.data.name + '_joined')
+        bm.to_mesh(new)
+        bm.free()
+        new.transform(obj.matrix_world.inverted() @ R.matrix_world)
+        own = list(obj.data.materials)
+        for m in own:
+            new.materials.append(m)
+        names = [m.name if m else None for m in own]
+        fm = np.zeros(len(new.polygons), int)
+        new.polygons.foreach_get('material_index', fm)
+        fm = np.array([names.index(rm[i]) if rm[i] in names else 0 for i in fm])
+        new.polygons.foreach_set('material_index', fm)
+        old, oldname = obj.data, obj.data.name
+        obj.data = new
+        if old.users == 0:
+            bpy.data.meshes.remove(old)
+        new.name = oldname
+        md = obj.modifiers.new('INKWAVE_join_normals', 'DATA_TRANSFER')
+        md.object, md.use_loop_data = R, True
+        md.data_types_loops = {'CUSTOM_NORMAL'}
+        md.loop_mapping = 'POLYINTERP_NEAREST'
+        er.apply_modifier(obj, md)
+        print('BODY_SHAPE neck_join', obj.name, 'vertices', len(new.vertices))
+    rdata = R.data
+    bpy.data.objects.remove(R)
+    bpy.data.meshes.remove(rdata)
+
+
 def seam_normals(cfg):
     """A line ran from under the ear to under the jaw in the side and 3/4 views where the face (laid on the neck by
     face_volume jaw_tuck) meets the neck: the shading jumped there (clay +5 brighter on the neck side).  The face
@@ -943,6 +1050,8 @@ def main():
     names += [n for n in p.get('back_profile', {}).get('meshes', []) if n not in names]
     for sm in p.get('smooth_regions', []):
         names += [n for n in [sm['mesh']] + sm.get('follow', []) if n not in names]
+    nj = p.get('neck_join', {})
+    names += [n for n in [nj.get('head'), nj.get('neck')] + nj.get('follow', []) if n and n not in names]
     names += [n for n in [p.get('seam_normals', {}).get('face')] if n and n not in names]
     remove_made()
     restore_legwear()
@@ -1039,7 +1148,9 @@ def main():
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:
                 nails(bpy.data.objects[hand], p['nails'], mat)
-        if p.get('seam_normals'):
+        if p.get('neck_join'):
+            neck_join(p['neck_join'])
+        elif p.get('seam_normals'):
             seam_normals(p['seam_normals'])
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)
