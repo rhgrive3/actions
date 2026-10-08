@@ -301,6 +301,35 @@ def neck_flare(cfg):
           round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def corner_fill(cfg):
+    """Behind and under the ears the skull's underside stood out over the neck like a shelf (head x 45 mm: z -23 ->
+    -55 mm between y -70 and -60), so the head read as a ball on a stick (2026-10-08, user: もっと滑らかに繋げろ).
+    The corner is filled like a fillet: each head vertex there is pulled toward the nearest neck point so that its
+    distance to the neck d becomes smin(d, o(y)), o rising smoothly from 0 at head y cfg['y'][0] to cfg['mm'] at
+    cfg['y'][1] (nothing above cfg['y'][2]); back and sides only (head z < cfg['z'][0], full behind cfg['z'][1]).
+    Blender's Shrinkwrap (nearest surface point, outside) with the per-vertex weight 1 - d'/d."""
+    from mathutils.bvhtree import BVHTree
+    face, neck = bpy.data.objects[cfg['mesh']], bpy.data.objects[cfg['target']]
+    tree = BVHTree.FromObject(neck, bpy.context.evaluated_depsgraph_get())
+    inv = neck.matrix_world.inverted()
+    W = er.world(face)
+    L = er.M.to_local(W) * 1000
+    y0, y1, y2 = cfg['y']
+    o = cfg['mm'] * smoothstep((L[:, 1] - y0) / (y1 - y0))
+    region = smoothstep((cfg['z'][0] - L[:, 2]) / (cfg['z'][0] - cfg['z'][1])) * smoothstep((y2 - L[:, 1]) / (y2 - y1))
+    idx = np.flatnonzero((region > 1e-4) & (L[:, 1] > y0 - 5))
+    d = np.full(len(W), 1e9)
+    d[idx] = [tree.find_nearest(inv @ Vector(W[i]))[3] * 1000 for i in idx]
+    k = cfg.get('k_mm', 4.0)
+    dn = -k * np.logaddexp(-d / k, -o / k)                  # smooth min(d, o)
+    w = np.where(d < 1e8, np.clip(1 - np.maximum(dn, 0) / np.maximum(d, 1e-6), 0, 1), 0.0) * region
+    before = er.world(face)
+    er.apply_weighted_modifier(face, w, 'SHRINKWRAP', target=neck, wrap_method='NEAREST_SURFACEPOINT',
+                               wrap_mode='OUTSIDE_SURFACE', offset=cfg.get('offset_mm', 0.3) / 1000)
+    print('BODY_SHAPE corner_fill vertices', int((w > 1e-3).sum()), 'max move mm',
+          round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 2))
+
+
 def nape_fillet(cfg):
     """The head's lower edge rode over the back of the neck as a thin lip (seen from behind and the back 3/4).
     Near the neck the head is laid onto it: Blender's Shrinkwrap (nearest surface point, outside, cfg['offset_mm'])
@@ -873,6 +902,7 @@ def main():
     names += [n for n in p.get('occiput_in', {}).get('meshes', []) if n not in names]
     names += [n for n in [p.get('nape_fillet', {}).get('mesh')] if n and n not in names]
     names += [n for n in [p.get('neck_flare', {}).get('mesh')] if n and n not in names]
+    names += [n for n in [p.get('corner_fill', {}).get('mesh')] if n and n not in names]
     names += [n for n in p.get('back_profile', {}).get('meshes', []) if n not in names]
     for sm in p.get('smooth_regions', []):
         names += [n for n in [sm['mesh']] + sm.get('follow', []) if n not in names]
@@ -961,6 +991,8 @@ def main():
             neck_flare(p['neck_flare'])
         if p.get('nape_fillet'):
             nape_fillet(p['nape_fillet'])
+        if p.get('corner_fill'):
+            corner_fill(p['corner_fill'])
         if p.get('smooth_regions'):
             smooth_regions(p['smooth_regions'])
         if p.get('back_profile'):
