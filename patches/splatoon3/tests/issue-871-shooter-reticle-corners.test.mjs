@@ -18,7 +18,7 @@ function reticle(kind) {
   assert.ok(start>=0 && end>start,'installed reticle method');
   const Hud=Function('return class { '+hud.slice(start,end)+' }')();
   const h=new Hud();
-  h.ret={className:'',innerHTML:'',style:{setProperty(){}},querySelector(){return null;}};
+  h.ret={className:'',innerHTML:'',style:{setProperty(){}},querySelector(){return {remove(){}};}};
   h._L={};
   h._buildReticle(kind);
   return h.ret.innerHTML;
