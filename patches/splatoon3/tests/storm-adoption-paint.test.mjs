@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
+import { deactivateDisconnectedActor } from '../runtime/disconnect-fidelity.mjs';
 
 // #905 native compatibility control: a replayed (ghost) Ink Storm paints nothing locally
 // while the owner's client authors turf. Raw upstream NetMatch can adopt an Actor, so
@@ -27,6 +28,24 @@ test('#905 control: ghost cloud of a still-remote owner never paints or scores',
   const s = await storm(); ticks(s, 30);
   assert.equal(s.paints.length, 0); assert.equal(s.boss.length, 0); assert.equal(s.owner.stats.turf, 0);
 });
+test('#905 actual Projectiles cloud is released on current S3 human disconnect, with no ghost damage/paint continuation', async () => {
+  const s = await storm(), g = s.f.G;
+  const nm = { __s3G: g, match: { duration: 180, time: 130 }, _stopLoops() {} };
+  ticks(s, 12);
+  assert.equal(s.p.clouds.length, 1);
+  const turf = s.owner.stats.turf;
+  deactivateDisconnectedActor(nm, s.owner);
+  assert.equal(s.owner.s3.disconnected, true);
+  assert.equal(s.p.clouds.length, 0, 'owned live cloud is retired from the real projectile manager');
+  assert.equal(s.c._released, true, 'real Three.js cloud release path executes');
+  ticks(s, 120);
+  assert.equal(s.paints.length, 0);
+  assert.equal(s.boss.length, 0);
+  assert.equal(s.owner.stats.turf, turf);
+  deactivateDisconnectedActor(nm, s.owner);
+  assert.equal(s.p.clouds.length, 0, 'repeat leave cannot resurrect an orphan Storm');
+});
+
 test('#905 after the owner is adopted (remote=false) the same live ghost cloud paints, scores and rains for the adopted Actor', async () => {
   const s = await storm(); ticks(s, 10); assert.equal(s.paints.length, 0);
   s.owner.remote = false; // NetMatch._adopt
