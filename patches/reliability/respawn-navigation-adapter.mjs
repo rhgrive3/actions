@@ -90,10 +90,12 @@ const METHODS = `  canRequestMapJump() {
     // point path (the receiver identity is re-checked on the charge frame).
     if (target?.bubblerTarget === true) {
       if (this.a.alive) return this.a.superJump(target);
-      const ground = target.dome?.pos;
-      if (!ground) return false;
+      // Queue the RECEIVER IDENTITY (not a copied ground vector), so a collapse /
+      // expiry during the wait is re-validated through validMapJumpTarget() and
+      // the execution below, and no stale vector can bypass the live check.
+      if (!target.dome?.pos) return false;
       this._respawnNavigationOwner = this.input.navigationDevice ?? this.input.lastDevice;
-      this.pendingRespawnJump = { point: ground.clone() };
+      this.pendingRespawnJump = { receiver: target };
       return true;
     }
     if (!this.a.alive || (this._respawnNavigationActive && !this.a.grounded)) {
@@ -139,7 +141,7 @@ const METHODS = `  canRequestMapJump() {
         else if (a.grounded) {
           const pending = this.pendingRespawnJump;
           this.clearRespawnNavigation();
-          const target = pending?.actor || pending?.point;
+          const target = pending?.receiver || pending?.actor || pending?.point;
           if (target && this.requestMapJump(target)) {
             this.padMapOpen = this.mapHeld = false; inp.mobile?.setMap?.(false);
             a.intent.move.set(0, 0, 0);
@@ -167,7 +169,7 @@ const METHODS = `  canRequestMapJump() {
     if (touch) for (const id of ['fire','jump','sub','special','squid']) touch.pressed.delete(id);
     this.mapHeld = this.respawnMapOpen();
     if (!this.mapHeld) { this.pendingRespawnJump = null; this.padJumpTarget = null; this.padJumpIndex = -1; return true; }
-    if (this.pendingRespawnJump && !this.validMapJumpTarget(this.pendingRespawnJump.actor || this.pendingRespawnJump.point)) this.pendingRespawnJump = null;
+    if (this.pendingRespawnJump && !this.validMapJumpTarget(this.pendingRespawnJump.receiver || this.pendingRespawnJump.actor || this.pendingRespawnJump.point)) this.pendingRespawnJump = null;
     this.updatePadMapSelection(standard);
     const allies = G.actors.filter(o => o.team === a.team && o !== a);
     // Mobile's normal consume method closes the map. A deferred choice stays visible/cancellable.

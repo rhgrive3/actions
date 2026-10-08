@@ -52,10 +52,15 @@ export function adaptBubblerJumpTarget(rel, code, once) {
       "  // point as an ally, so controller/touch confirm is unchanged.\n" +
       "  _updBubblerBeacons(bw, bh, tg, canJump) {\n" +
       "    const M = this._map;\n" +
-      "    for (let i = 4; i < tg.length; i++) {\n" +
+      "    // Iterate the UNION of the current receiver slots and every slot that has\n" +
+      "    // ever been built: a SHRINKING receiver list must hide the now-unused\n" +
+      "    // higher-index icons instead of leaving them visible and clickable.\n" +
+      "    const span = Math.max(tg.length, this._bcnExtra ? this._bcnExtra.length : 0);\n" +
+      "    for (let i = 4; i < span; i++) {\n" +
       "      const b = tg[i];\n" +
-      "      const el = this._bcnExtra?.[i] || ((this._bcnExtra || (this._bcnExtra = []))[i] = this._mkBubblerBeacon(i));\n" +
-      "      if (!b) { if (el._bkey !== 'x') { el._bkey = 'x'; el.style.display = 'none'; } continue; }\n" +
+      "      let el = this._bcnExtra?.[i];\n" +
+      "      if (!b) { if (el && el._bkey !== 'x') { el._bkey = 'x'; el.style.display = 'none'; el.classList.remove('is-hover'); } continue; }\n" +
+      "      if (!el) el = (this._bcnExtra || (this._bcnExtra = []))[i] = this._mkBubblerBeacon(i);\n" +
       "      const x = clamp(+b.x || 0) * bw, y = clamp(+b.y || 0) * bh;\n" +
       "      const key = `${x.toFixed(0)}|${y.toFixed(0)}|${b.ok ? 1 : 0}|${M.hover === i ? 1 : 0}|${canJump ? 1 : 0}|${b.domeId}`;\n" +
       "      if (el._bkey === key) continue;\n" +
@@ -194,6 +199,13 @@ export function adaptBubblerJumpTarget(rel, code, once) {
       "    const receiver = target && target.bubblerTarget === true ? target : null;\n" +
       '    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();',
       'Super Jump receiver capture');
+    // Carry the ACTUAL jumper into the native destination admission, so an
+    // enemy/invalid receiver is refused at admission (team is verified against
+    // this actor) instead of only later on the charge-completion frame.
+    patch(
+      '    if (!superJumpTarget(target, destination)) return false;',
+      '    if (!superJumpTarget(target, destination, this)) return false;',
+      'Super Jump receiver actor admission');
     patch(
       "this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,",
       "this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form, receiver,",

@@ -9,8 +9,9 @@ import { fixture } from './source-fixture.mjs';
 const f = await fixture({
   productionComposition: true, fullRuntime: true, realProjectiles: true,
   extraExports: "export { HUD } from './inkwave-public/src/ui/hud.js';\n"
-    + "export { bigBubblerDomes, bigBubblerRemoteDomes } from './patches/splatoon3/runtime/kit-big-bubbler.mjs';\n"
-    + "export { bubblerJumpTargets, bubblerTargetLive, bubblerTargetGround } from './patches/splatoon3/runtime/bubbler-jump-target.mjs';\n",
+    + "export { PlayerController } from './inkwave-public/src/game/player.js';\n"
+    + "export { bigBubblerDomes, bigBubblerRemoteDomes, replayBigBubbler, resetBigBubblerReplay } from './patches/splatoon3/runtime/kit-big-bubbler.mjs';\n"
+    + "export { bubblerJumpTargets, bubblerTargetLive, bubblerTargetGround, bubblerTargetDescriptor } from './patches/splatoon3/runtime/bubbler-jump-target.mjs';\n",
 });
 
 const V = f.THREE.Vector3;
@@ -125,4 +126,83 @@ assert.equal(f.bubblerTargetLive(model[0], me), false, 'a collapsed dome is no l
 const after = f.HUD.prototype._beaconTargets.call({ _local: () => me, lab: null }).filter(Boolean);
 assert.equal(after.some((t) => t.domeId === dome.id), false, 'a collapsed dome leaves the HUD target list');
 
-console.log(JSON.stringify({ result: 'friendly live deployed Bubbler is an independent HUD/diorama Super Jump receiver; enemy/collapsed excluded; repeat selection spends nothing', domeId: dome.id }));
+// ================= defect regressions (parent review) =================
+
+// ---- Bug 1: a shrinking receiver list must HIDE the stale higher-index icons
+const stubEl = () => ({ style: {}, classList: { _s: new Set(), remove(c) { this._s.delete(c); }, toggle(c, v) { if (v) this._s.add(c); else this._s.delete(c); } }, querySelector: () => ({ textContent: '' }) });
+const hudStub = { _map: { hover: -1 }, _bcnExtra: [], _mkBubblerBeacon() { return stubEl(); } };
+const twoRecv = [null, null, null, null, { x: 0.1, y: 0.1, ok: true, domeId: 'A' }, { x: 0.2, y: 0.2, ok: true, domeId: 'B' }];
+f.HUD.prototype._updBubblerBeacons.call(hudStub, 100, 100, twoRecv, true);
+assert.equal(hudStub._bcnExtra.length, 6, 'two receiver icons were built');
+assert.notEqual(hudStub._bcnExtra[5].style.display, 'none', 'the second receiver icon is visible');
+const oneRecv = [null, null, null, null, { x: 0.1, y: 0.1, ok: true, domeId: 'A' }];
+f.HUD.prototype._updBubblerBeacons.call(hudStub, 100, 100, oneRecv, true);
+assert.equal(hudStub._bcnExtra[5].style.display, 'none', 'a shrunk receiver list hides the stale higher-index icon');
+assert.equal(hudStub._bcnExtra[4].style.display, '', 'the remaining receiver stays visible');
+
+// ---- Bug 4: an ACTUAL replicated remote friendly dome is a receiver
+const remoteDep = f.replayBigBubbler('deploy', null, { domeId: '0:n9:4', team: 0, pos: [30, 0, 0], t: 0, hp: 30720, fieldHp: 15360, serial: 4 });
+assert.equal(remoteDep.ok, true, 'the real runtime ingests a replicated friendly dome');
+assert.equal(f.bigBubblerRemoteDomes().length, 1);
+const remoteTargets = f.bubblerJumpTargets(me);
+const rt = remoteTargets.find((t) => t.domeId === '0:n9:4');
+assert.ok(rt, 'the replicated friendly dome is a Super Jump receiver');
+assert.equal(f.bubblerTargetLive(rt, me), true);
+assert.ok(Math.abs(rt.pos.x - 30) < 1e-6, 'the receiver location is the replicated dome position');
+assert.ok(f.HUD.prototype._beaconTargets.call({ _local: () => me, lab: null }).filter(Boolean).some((t) => t.domeId === '0:n9:4'),
+  'the replicated receiver reaches the composed HUD target list');
+
+// enemy replicated dome is never a receiver
+f.replayBigBubbler('deploy', null, { domeId: '1:n9:5', team: 1, pos: [40, 0, 0], t: 0, hp: 30720, fieldHp: 15360, serial: 5 });
+assert.equal(f.bubblerJumpTargets(me).some((t) => t.domeId === '1:n9:5'), false, 'an enemy replicated dome is not a receiver');
+
+// exact activation identity + finite coords
+assert.equal(f.bubblerTargetLive({ ...rt, domeId: '0:n9:999' }, me), false, 'a stale activation id is not live');
+assert.equal(f.bubblerTargetLive({ ...rt, serial: 999 }, me), false, 'a stale serial is not live');
+assert.equal(f.bubblerTargetLive({ ...rt, team: 1 }, me), false, 'a stale team is not live');
+const savedX = rt.dome.pos.x;
+rt.dome.pos.x = NaN;
+assert.equal(f.bubblerTargetLive(rt, me), false, 'non-finite coordinates are not live');
+rt.dome.pos.x = savedX;
+assert.equal(f.bubblerTargetLive(rt, me), true, 'restoring the coordinates makes it live again');
+
+// disposal clears the receiver
+f.resetBigBubblerReplay('test-dispose');
+assert.equal(f.bubblerTargetLive(rt, me), false, 'a disposed activation is no longer live');
+assert.equal(f.bubblerJumpTargets(me).some((t) => t.domeId === '0:n9:4'), false, 'a disposed receiver leaves the target list');
+
+// dedupe: the SAME activation in both pools is exactly one receiver, local wins
+const synthDome = (id, serial, team) => ({ id, serial, team, dead: false, pos: { x: 0, y: 0, z: 0 }, owner: null });
+const localDome = synthDome('0:x:1', 1, 0), replicateDome = synthDome('0:x:1', 1, 0);
+const deduped = f.bubblerJumpTargets(me, { local: [localDome], remote: [replicateDome] });
+assert.equal(deduped.length, 1, 'one activation is one receiver even when replicated into both pools');
+assert.equal(deduped[0].dome, localDome, 'the authoritative local structure wins the dedupe');
+
+// ---- Bug 3: admission rejects an enemy/invalid receiver immediately
+const a3 = f.make('shooter'); a3.team = 0; a3.pos.set(0, 0, -10); a3.grounded = true; a3.ground.hit = true;
+const enemyLocal = f.bigBubblerDomes().find((d) => d.team === 1 && !d.dead);
+assert.ok(enemyLocal, 'the enemy dome is still deployed');
+assert.equal(a3.superJump(f.bubblerTargetDescriptor(enemyLocal)), false, 'an enemy receiver is refused at direct admission');
+assert.equal(a3.superJumpState, null, 'and no jump state is created');
+assert.equal(f.bubblerTargetDescriptor(enemyLocal).pos.isVector3, true, 'the rejected descriptor carried a real Vector3 position');
+// The actor must also be carried INTO superJumpTarget: with a non-Vector3 position the
+// earlier guard is bypassed, so only the actor-aware liveness check can refuse it.
+const enemyNoVec = { bubblerTarget: true, dome: enemyLocal, domeId: enemyLocal.id, serial: enemyLocal.serial, team: 1, home: false, name: 'x', pos: { x: 5, y: 0, z: 0 } };
+assert.equal(a3.superJump(enemyNoVec), false, 'an enemy receiver is refused even when its position bypasses the Vector3 guard');
+assert.equal(a3.superJumpState, null, 'and still no jump state is created');
+
+// ---- Bug 2: the dead/respawn queue preserves the receiver identity
+const deadA = f.make('shooter'); deadA.team = 0; deadA.pos.set(0, 0, -10); deadA.alive = false; deadA.grounded = false;
+const ctrl = Object.assign(Object.create(f.PlayerController.prototype),
+  { a: deadA, input: { navigationDevice: 'pad', lastDevice: 'pad' }, menuBlocked: false, navigationEnabled: true, mapHeld: true, pendingRespawnJump: null });
+const recvQ = f.bubblerJumpTargets(me)[0];
+assert.ok(recvQ, 'a live friendly receiver is available to queue');
+assert.equal(ctrl.validMapJumpTarget(recvQ), true, 'the receiver is a valid queued target');
+assert.equal(ctrl.requestMapJump(recvQ), true, 'the dead/respawn path accepts the receiver');
+assert.equal(ctrl.pendingRespawnJump?.receiver, recvQ, 'the queued respawn keeps the receiver IDENTITY, not a stale ground vector');
+recvQ.dome.dead = true;
+assert.equal(ctrl.validMapJumpTarget(ctrl.pendingRespawnJump.receiver), false, 'a collapse during the wait invalidates the queued receiver');
+recvQ.dome.dead = false;
+assert.equal(ctrl.validMapJumpTarget(ctrl.pendingRespawnJump.receiver), true, 'and it is valid again once the structure lives');
+
+console.log(JSON.stringify({ result: 'friendly live deployed Bubbler is an independent HUD/diorama Super Jump receiver; enemy/collapsed/stale/disposed excluded; stale icons hidden; respawn queue keeps identity; repeat selection spends nothing', domeId: dome.id }));

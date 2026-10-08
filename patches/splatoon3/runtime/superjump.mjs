@@ -89,12 +89,14 @@ export function prepareSuperJump(a, dt) {
   return a.grounded;
 }
 
-export function superJumpTarget(target, out) {
+export function superJumpTarget(target, out, actor = null) {
   // #1153: a deployed Big Bubbler is a FIXED receiver, not an actor. Its
   // committed landing point is the dome's own base (never the owner's live
-  // position), and it must still be a live friendly dome at admission.
+  // position), and it must still be a live FRIENDLY dome of the actual jumper at
+  // admission. `actor` is an optional third argument so the vector/ally API is
+  // unchanged for every existing caller.
   if (target?.bubblerTarget === true) {
-    if (!bubblerTargetLive(target)) return false;
+    if (!bubblerTargetLive(target, actor)) return false;
     const ground = bubblerTargetGround(target);
     if (!ground || !Number.isFinite(ground.x + ground.y + ground.z)) return false;
     out.copy(ground);
