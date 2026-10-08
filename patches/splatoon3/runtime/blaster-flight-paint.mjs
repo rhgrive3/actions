@@ -5,15 +5,29 @@
 const EPS = 1e-9;
 export function blasterFlightPaintSpec(source, scale = 1) {
   const spawn = source?.SplashSpawnParam, paint = source?.SplashPaintParam;
-  if (!spawn || !paint || ![scale, spawn.SpawnBetweenLength, paint.WidthHalf, paint.WidthHalfNearest]
-      .every(n => Number.isFinite(n) && n > 0) ||
+  if (!spawn || !paint || ![scale, spawn.SpawnBetweenLength, paint.WidthHalf, paint.WidthHalfNearest,
+        paint.DepthMaxDropHeight, paint.DepthMinDropHeight]
+      .every(n => Number.isFinite(n) && n > 0) || paint.DepthMinDropHeight < paint.DepthMaxDropHeight ||
       !Number.isFinite(spawn.SpawnNearestLength) || spawn.SpawnNearestLength < 0 ||
       !Number.isInteger(spawn.SpawnNum) || spawn.SpawnNum < 0 || spawn.SpawnNum > 256 ||
       spawn.SplitNum !== 1 || (spawn.ForceSpawnNearestAddNumArray?.length ?? 0) !== 0)
     throw new RangeError('Unsupported Blaster flight-splash source');
   return Object.freeze({ first: spawn.SpawnNearestLength * scale,
     spacing: spawn.SpawnBetweenLength * scale, count: spawn.SpawnNum,
-    width: paint.WidthHalf * scale, nearestWidth: paint.WidthHalfNearest * scale });
+    width: paint.WidthHalf * scale, nearestWidth: paint.WidthHalfNearest * scale,
+    dropMaxDepth: paint.DepthMaxDropHeight * scale,
+    dropMinDepth: paint.DepthMinDropHeight * scale });
+}
+// The source names the <=DepthMaxDropHeight region as maximum depth/stretch
+// and DepthMinDropHeight as the minimum end of the validated regime. Nintendo's
+// exact interpolation between them is unpublished, so expose the band without
+// inventing scale math; the live fix only prevents valid scheduled paint from
+// disappearing because of the unrelated legacy 4u probe.
+export function blasterDropHeightBand(spec, dropHeight) {
+  if (!spec || !Number.isFinite(dropHeight) || dropHeight < 0) return 'outside';
+  if (dropHeight <= spec.dropMaxDepth + EPS) return 'max-depth';
+  if (dropHeight <= spec.dropMinDepth + EPS) return 'validated-transition';
+  return 'outside';
 }
 export function configureBlasterFlightPaint(projectile, source, scale) {
   const spec = blasterFlightPaintSpec(source, scale);
@@ -46,8 +60,12 @@ export function paintDistanceFlight(game, projectile, state, end = projectile?.p
     if (at > limit + EPS) break;
     const index = state.index++;
     state.sample.copy(state.last).lerp(end, Math.max(0, Math.min(1, (at - state.distance) / distance)));
-    const hit = game.physics.raycast(state.sample, state.down, 4, state.hit, true);
+    const hit = game.physics.raycast(state.sample, state.down, spec.dropMinDepth + EPS, state.hit, true);
     if (!hit?.hit) continue;
+    const dropHeight = Number.isFinite(hit.dist) ? hit.dist : Math.max(0, state.sample.y - hit.point.y);
+    const dropBand = blasterDropHeightBand(spec, dropHeight);
+    if (dropBand === 'outside') continue;
+    state.lastDropHeight = dropHeight; state.lastDropBand = dropBand;
     state.sample.copy(hit.point).addScaledVector(hit.normal, .1);
     const opts = { seed: seedFor(projectile.seed, index), kind: 'drop' };
     if (Number.isFinite(spec.depth)) {
