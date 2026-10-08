@@ -2,6 +2,7 @@ const EPS = 1e-10;
 const NO_CONTEST_WINDOW = 60;
 const NO_CONTEST_DELAY = 6;
 const INSTALLED = Symbol.for('inkwave.s3.disconnect-fidelity.v1');
+let world = null;
 
 export function matchElapsed(match) {
   return Math.max(0, (match?.duration || 0) - (match?.time || 0));
@@ -55,7 +56,7 @@ function finishNoContest(nm, announce = false) {
   nm.match.s3NoContestFinished = true;
   nm.match.paused = true; // never fall through to the normal turf judge / XP path
   if (announce && nm.isHost) nm._sendNow?.({ k: 'ncend' });
-  const game = nm.__s3G?.game || null;
+  const game = world?.game || null;
   game?.hud?.banner?.('NO CONTEST');
   game?.netMatchEnd?.();
 }
