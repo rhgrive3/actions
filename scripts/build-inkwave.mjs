@@ -1,5 +1,5 @@
-import { adaptBuildSource } from './inkwave-source-composition.mjs';
 #!/usr/bin/env node
+import { adaptBuildSource } from './inkwave-source-composition.mjs';
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
 // Keep inkwave-public/ unchanged, then minify every JS and CSS file
 // (esbuild, per file — the ES-module layout, import.meta.url asset URLs and the import map stay exactly as they are)
