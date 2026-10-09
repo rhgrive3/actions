@@ -501,6 +501,16 @@ export function emit(name, payload) {
     patch('    const drop = mapNoBots(this.cfg.map);',
       "    const drop = this.cfg.map === 'range' || mapNoBots(this.cfg.map);", 'Practice Range remains humans-only on disconnect');
     patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a);\n    clearRemoteSquidroll(a);\n    clearRemoteRollerPresentation(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
+    patch('    if (a.alive && a.net.spawnPending) { a.net.spawnPending = false; a.respawn(); }   // mid-respawn: finish it here',
+      `    if (a.alive && a.net.spawnPending) {
+      a.net.spawnPending = false;
+      // _remoteRespawn has already made this proxy alive. Let the installed
+      // post-death respawn wrapper see the pending Turf event as a death-to-life
+      // transition so an adopted bot enters Squid Spawn and keeps its final gauge.
+      if (G.match?.mode === 'turf' && !G.match?.opts?.range) a.alive = false;
+      a.respawn();
+    }`,
+      'pending Turf respawn enters the installed Squid Spawn lifecycle');
     patch('    a.superJumpState = null; a.specialActive = null;',
       '    a.superJumpState = null; a.specialActive = null;\n    restoreAdoptionState(this, a, adoptionTransfer);',
       'restore authoritative actor state after ordinary runner reset');
