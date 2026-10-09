@@ -2,7 +2,7 @@
 // Avoid allocating and pinning their canvas atlases in an offline-only session.
 // LOW is also the native touch LobbySet profile (#472), so cap retained mobile
 // atlas sources at one quarter of the desktop pixel count.
-export const LOBBY_LOW_ATLAS_SCALE = 0.5;
+const LOBBY_LOW_ATLAS_SCALE = 0.5;
 
 function replaceOnce(code, before, after, label) {
   const at = code.indexOf(before);

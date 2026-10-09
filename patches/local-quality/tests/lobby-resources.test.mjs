@@ -6,7 +6,9 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../adapter.mjs';
-import { adaptLobbyResources, LOBBY_LOW_ATLAS_SCALE } from '../lobby-resource-adapter.mjs';
+import { adaptLobbyResources } from '../lobby-resource-adapter.mjs';
+
+const LOBBY_LOW_ATLAS_SCALE = 0.5;
 
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 const raw = read('src/main.js');
