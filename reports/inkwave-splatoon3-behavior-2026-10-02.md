@@ -2360,6 +2360,35 @@ The build overlay now gives authoritative ancillary ownership and GLSL rays/sate
 
 The combined canonical diagnostic now covers more than 3,500 tests and required about 23 minutes locally before the remaining network, quality, reference and built-weapon gates. The validate job deadline is extended from 30 to 45 minutes so the complete enlarged sequence can finish. No test is removed, skipped or made conditional by this change, and no gameplay, visual, numeric, worker, startup or performance acceptance threshold changes.
 
+## 2026-10-09 — #272 Stealth Jump shoes-main gear-panel residual
+
+### 本家の根拠
+
+- Splatoon 3 Ver. 11.3.0 pinned `spl__GearSkillTraitsParam` at Leanny `splat3@7280ff9cde8bb1c5dcef46c700c326471584d2e6`: `Traits.SuperJumpSign_Hide.KindLimit` is `Shoes`. The recovered JSON is retained with SHA-256 `853f8eb25077ec5d7017a7ec1da3b9cddf4b0ddba5f7c361f2fd51f7a12d0a57` in the task evidence.
+- The same pinned set's `SplPlayer.game__GameParameterTable.json` records the existing Ver. 11.0.0 Stealth Jump flight extension parameters. It does not specify an INKWAVE map's anchors or conversion into the S3 front/back distance coordinate; the mapping remains unknown.
+
+### INKWAVE の実装箇所
+
+`patches/splatoon3/runtime/gear.mjs` already restricts `stealthJump` to shoes main in `abilityAllowed`, normalizes that slot, and sets the equipped modifier. `gearPanel()` then filtered out abilities without an AP curve in `tuning.gear`; Stealth Jump is a fixed ability without that curve, so it was missing even from shoes main. The panel now gives it the same fixed-main exemption as `ninjaSquid`. It keeps the existing shoes-main-only predicate. No `inkwave-public/`, flight, charge, network, owner/remote presentation, or Practice Range source was changed.
+
+### 再現操作と結果
+
+The focused panel test invokes the production `gearPanel()` function with bounded DOM/storage stand-ins. It checks all 12 controls, confirms Stealth Jump appears only in `クツ メイン`, selects it, and observes the existing loadout storage handler persist that choice. The gear regression also checks the non-local Actor retains its shoes-main loadout and modifier. The separate #272 test confirms all head/clothing mains and secondary slots remain rejected, while the existing no-foci gate still returns zero when ordinary spawn/home points are supplied. A static scan of `patches/practice-range/` finds no Stealth Jump or Super Jump penalty hook; no Range path is part of this change.
+
+### プレイへの影響と未確認事項
+
+Players can now equip Stealth Jump from the production loadout panel, only in the shoes primary slot. The flight modifier remains governed by the existing explicit `level.stealthJumpFoci` gate. No shipped-level anchor or coordinate conversion was inferred from `spawnPads` or `homeSuperJumpPoints`; the flight penalty therefore still fails closed where calibrated foci are absent. No Switch measurement or cross-device browser network check was performed. This is the gear-panel residual only; #272's flight-coordinate mapping remains open.
+
+The owner/remote arrival-cue concealment gap recorded in the recovered prior result remains separate and unchanged: this panel edit adds no stealth field to the remote `superjump` event and changes neither flight branch's cue behavior. Range behavior is likewise outside the changed paths; these are source-scope checks, not new cross-device or Range browser acceptance.
+
+### 確認状態
+
+- `node --test patches/local-quality/tests/continuation-gear-flow.test.mjs` — 4/4, including the actual production-panel slot/persistence case.
+- `node --experimental-vm-modules --test patches/splatoon3/tests/gear-sub-batch.test.mjs` — 16/16, including the #272 non-local Actor gear case.
+- `node --experimental-vm-modules --test patches/splatoon3/tests/issue-272-stealth-jump.test.mjs` — 4/4, including shoes-only normalization and fail-closed uncalibrated foci.
+- A first `gear-sub-batch` invocation without `--experimental-vm-modules` failed before assertions because `vm.SourceTextModule` was unavailable; the flagged rerun passed.
+- Physical Ver. 11.3.0 behavior and live-browser/cross-device acceptance remain unverified.
+
 ## 2026-10-09 — Roller depleted collision radius (#305 residual)
 
 Reference: Splatoon 3 Ver. 11.3.0 Splat Roller, using the pinned `WeaponRollerNormal` table at Leanny `splat3@7280ff9` linked in the issue. Every one of the five Splat Roller units (2 wide + 3 vertical) carries `UnitParam.CollisionParam.DepletionRate = 0.5` alongside its own `InitRadiusFor{Player,Field}`, `EndRadiusFor{Player,Field}`, `ChangeFrameFor{Player,Field}` and `FriendThroughFrameForPlayer`. The field scales the depleted round's hit magnitudes; it does not replace the growth chronology, the teammate window, or the sourced damage/speed/paint parameters. Units: wide init 0.12/0.1 → end 1.02/0.6 over 4F/2F; vertical unit 0/1 init 0.116/0.1 → end 0.87/0.75 over 4F/3F; vertical unit 2 init 0.116/0.1 → end 0.82/0.55 over 4F/2F; friend-through 3F on all five. Per-frame native radius behavior on hardware remains unmeasured.
@@ -2370,4 +2399,4 @@ INKWAVE change: `setCollision` takes an explicit `depleted` flag and, only when 
 
 Reproduction and confirmation: `patches/splatoon3/tests/issue-305-depletion-collision.test.mjs` runs the real composed source graph with real `Projectiles`. With the fix it is 4/4 (`logs/residual-test-green.log`): horizontal 3-drop and vertical 3-drop depletion-marked volleys carry 0.5-scaled player/field magnitudes with unchanged chronology and teammate window; full volleys through the real windup at 30/60/120 Hz stay exactly at the sourced radii and pay the unchanged 8.5 cost; the scaled radius at a given age is identical across cadence grids; an unmarked reduced-count volley and the zero-ink no-volley boundary are untouched. Adjacent suites stay green: `roller.test.mjs` + `weapons-fidelity-source.test.mjs` + `roller-flick-movement.test.mjs` 30/30 (`logs/neighbor-tests.log`); `roller-unit-replication.test.mjs` + `composed-hit-unit-packet.test.mjs` 12/12 (`logs/network-tests.log`).
 
-Player impact and limits: a depleted Roller round's hit volume (owner capsule via `fidelityPlayerCollision` and world sweep via `fidelityFieldCollision`) now matches the sourced 0.5 scale instead of the full volley's, while its growth timing stays the existing sourced chronology. Normal swings are byte-identical. Remaining limits are recorded, not guessed: the exact per-frame native radius chronology on hardware is unverified; the appended near unit scales only where a composition supplies its birth mark; packet-reconstructed remote rounds without the mark keep the sourced record — remote globs are presentation and the network authority path is unchanged. No browser rendering, two-device network run or Switch capture was performed for this residual.
+Player impact and limits: a depleted Roller round's hit volume (owner capsule via `fidelityPlayerCollision` and world sweep via `fidelityFieldCollision`) now matches the sourced 0.5 scale instead of the full volley’s, while its growth timing stays the existing sourced chronology. Normal swings are byte-identical. Remaining limits are recorded, not guessed: the exact per-frame native radius chronology on hardware is unverified; the appended near unit scales only where a composition supplies its birth mark; packet-reconstructed remote rounds without the mark keep the sourced record — remote globs are presentation and the network authority path is unchanged. No browser rendering, two-device network run or Switch capture was performed for this residual.
