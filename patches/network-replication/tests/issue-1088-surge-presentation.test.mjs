@@ -44,7 +44,6 @@ const PRESENTATION_EXPORTS = `
 
 async function makePair() {
   let nowMs = 1000;
-  let latestOwnerTick = -1;
   const f = await sourceFixture({
     fullRuntime: true,
     productionComposition: true,
@@ -91,16 +90,6 @@ async function makePair() {
     net.applyRemote(actor, dt);
   };
 
-  const advanceOwnerSnapshotTick = packet => {
-    const adoption = packet.a?.[0]?.[ADOPTION_STATE_SLOT];
-    assert.ok(Array.isArray(adoption) && Number.isSafeInteger(adoption[3]),
-      'full actor snapshots carry their tagged adoption state');
-    const ownerTick = Math.max(Math.round(G.time * 60), latestOwnerTick + 1);
-    packet.u = ownerTick;
-    adoption[3] = ownerTick;
-    latestOwnerTick = ownerTick;
-  };
-
   const step = (dt, jumpHeld = true, mode = 'wall') => {
     nowMs += dt * 1000;
     G.time += dt;
@@ -117,12 +106,16 @@ async function makePair() {
     owner._finishFrame(dt);
     sender._sendTick();
     const packet = packets.at(-1);
-    advanceOwnerSnapshotTick(packet);
+    const ownerTick = Math.round(G.time * 60);
+    assert.equal(packet.u, ownerTick,
+      'the real owner snapshot tick matches the current simulation time');
+    assert.equal(packet.a[0][ADOPTION_STATE_SLOT]?.[3], packet.u,
+      'the adoption snapshot keeps the real owner tick');
     deliver(remote, receiver, packet, dt);
     return packet;
   };
 
-  return { f, G, owner, remote, sender, receiver, step, deliver, packets, advanceOwnerSnapshotTick,
+  return { f, G, owner, remote, sender, receiver, step, deliver, packets,
     advanceWireClock: milliseconds => { nowMs += milliseconds; }, wireTime: () => nowMs / 1000,
     makeActor };
 }
@@ -178,7 +171,7 @@ test('C1088 preserves the current actor row and retains explicit Surge end/life 
 
 test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycle controls', async () => {
   const pair = await makePair();
-  const { f, G, owner, remote, sender, receiver, step, deliver, packets, advanceOwnerSnapshotTick } = pair;
+  const { f, G, owner, remote, sender, receiver, step, deliver, packets } = pair;
   let currentChargePacket = null;
   let firstBurstPacket = null;
   let reconnectChecked = false;
@@ -186,13 +179,24 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
   let life = 0;
 
   const inject = payload => {
-    // Send the owner's unchanged gameplay state as a newer snapshot, then alter
-    // only its optional Surge sidecar. Keep NetMatch's ordered owner/adoption
-    // ticks valid so malformed cases reach the presentation parser.
+    // Send a real owner snapshot at the current simulation tick, then alter
+    // only its optional Surge sidecar. A newer adoption sequence on this same
+    // tick must pass the public runtime's strict freshness checks.
+    const previous = packets.at(-1);
+    const previousAdoption = previous.a[0][ADOPTION_STATE_SLOT];
     pair.advanceWireClock(2);
     sender._sendTick();
     const packet = packets.at(-1);
-    advanceOwnerSnapshotTick(packet);
+    const adoption = packet.a[0][ADOPTION_STATE_SLOT];
+    const ownerTick = Math.round(G.time * 60);
+    assert.equal(packet.u, ownerTick,
+      'injected packet keeps the actual owner simulation tick');
+    assert.equal(packet.u, previous.u,
+      'injected packet stays on the previous snapshot owner tick');
+    assert.equal(adoption[3], packet.u,
+      'injected adoption state keeps the actual packet tick');
+    assert.ok(adoption[2] > previousAdoption[2],
+      'same-tick injection carries a strictly newer adoption sequence');
     packet.a[0][SURGE_PRESENTATION_SLOT] = JSON.parse(JSON.stringify(payload));
     deliver(remote, receiver, packet, 1 / 60);
     assert.equal(remote.net.buf.at(-1)?.t, packet.ts,
