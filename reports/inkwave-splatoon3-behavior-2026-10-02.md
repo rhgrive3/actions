@@ -2510,3 +2510,19 @@ The newly integrated runtime pushed precache bytes to5,258,543, beyond the exist
 Independent production-composition review of9224ee65 found a new-owner ACK could settle one real10HP hit while losing the attacker-private Thermal Ink mark. Send-time owner identity is not the receipt's authority after routing. The tracking wrapper now scopes the actual receipt sender around the existing validated `_hitAck` callback: current-owner receipts may stamp after actor/life/match checks, while delayed superseded-owner receipts settle their accepted damage without creating a mark. No private tracking field is transmitted. Two permanent tests execute production send/NACK rerouting, owner `_hit`/Actor.damage, generated ACK and duplicate receipt handling for both owners. This is INKWAVE protocol regression evidence; Nintendo's multiplayer protocol and physical two-device timing remain unpublished/unmeasured.
 
 The #1161/#272 combined production gear panel retains both fixed shoes-main abilities. Its isolated DOM/storage fixture now supplies the actual exported shoes-ability list used by the production panel; no assertions or controls are removed.
+## #203: ユノハナ大渓谷（Scorch Gorge）ステージ実装（2026年10月9日）
+
+- 本家参照版：スプラトゥーン3 Ver.11.3.0（Ver.8.0.0改修後のナワバリバトル地形）。Inkipediaのコミュニティマップ画像（`wiki-scorch-gorge-turf-war-8.0.jpg`、1280x720）および俯瞰参照（`scorch-overhead.jpg`）を参照。Inkipediaのステージメタデータは2,145p。ただし本家の実機抽出ポリゴンメッシュや正確なCAD座標を本作業では取得していないため、寸法・座標の完全一致は主張しない。
+- 比較条件：INKWAVE 座標系における180度点対称ブロックアウト（幅52m × 全長100m、バウンディングボックス [-26, 26] × [-50, 50]）。リスポーン高台（y=3.2）、リスポーンバリア（y=4.2）、自陣広場（y=1.8）、左低地ルート（y=0.0）、右高台・狙撃台（y=2.6）、中央谷底（y=0.0）、中央タワー（y=2.6、塗れる側面と障害物ブロック）、金網キャットウォーク（y=3.2、grate: true）、谷底側面の落下死境界（既存 PLAYER.fallDeathY=-1.45、変更なし）。
+- INKWAVE の変更前：公開版 INKWAVE（`inkwave-public/`）には `tidewater`、`kelpline`、`halyard`、`cargo` の4ステージのみ存在し、`scorch`（ユノハナ大渓谷）は未実装でステージ選択やロジック上に存在しなかった。
+- INKWAVE の変更：
+  - `patches/splatoon3/stage/scorch-layout.mjs`：Ver.8.0.0改修地形を反映した点対称ステージブロックアウトを新規作成。足場、坂道、金網（`grate: true`、`paint: false`）、障害物、リスポーン安全バリアを定義。
+  - `patches/splatoon3/scorch-gorge-adapter.mjs`：ビルド時に `src/world/maps.js` へ `MAP_LAYOUTS.scorch` を追加し（Practice Range アダプタ `adaptRange` の検索フック文字列を壊さないよう追記形式を採用）、`src/config.js` の `MAPS` / `OFFLINE_MAPS` および `src/i18n.js` の日本語ステージ名（`ユノハナ大渓谷`）を登録。
+  - `patches/splatoon3/adapter.mjs`：`adaptSource` パイプラインに `adaptScorchGorge` を統合。
+  - `scripts/lib/inkwave-build-only-modules.mjs`：ビルドアダプタをランタイム配布から除外するよう設定。
+- 再現と確認：
+  - `patches/splatoon3/tests/scorch-gorge-stage.test.mjs` により 8 項目（ビルドアダプタ冪等性・upstream lock 保護、ステージ・UI 登録、リスポーン座標安全率、Level 地形・標高生成、谷底落下死判定、金網の非塗装性・インク透過性、ナワバリ面積スコア計算、Practice Range 隔離維持）を検証し、全8件パス。
+  - `patches/practice-range/tests/isolation.test.mjs`（7/7 パス）により Practice Range の排他性・非公開性が損なわれていないことを確認。
+  - `scripts/check-inkwave-patches.mjs --quick`（パス）により `inkwave-public/` 凍結と upstream 互換性を確認。
+- 遊びへの影響と状態：ステージ選択画面およびローカル/ネットワーク対戦で「ユノハナ大渓谷」が選択可能になり、Ver.8.0.0改修後の高低差・中央タワー・金網ルート・低地迂回路を活用した立ち回りが可能となった。金網上のインク透過や谷底への落下死など基本ルールが機能する。本家の実機 CAD 寸法や細部の装飾メッシュとの完全同一性は未確認（ローカル座標系による誠実なブロックアウト実装）として残す。
+
