@@ -57,7 +57,10 @@ export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'hit-spawn-reset', kind: 'shooter', frames: 300, probes: [20, 246, 250, 280] },
   { name: 'quiet-idle-held-sub', kind: 'shooter', frames: 180, probes: [55, 100] },
   ...[0, 1, 2].map(variant => ({ name: 'victory-fade-lobby-' + variant, kind: 'shooter', frames: 360, variant, probes: [240, 279, 280, 290, 310] })),
-  { name: 'native-slam-phases', kind: 'shooter', nativeSpecial: 'slam', frames: 180, probes: [33, 49, 54, 79, 133] },
+  // The source native 0.55s rise plus the S3 #966 extended 0.5s hang puts
+  // the short fall between the old 54F and 79F probes. Actually render and
+  // shader-check that transition; do not weaken the RGB phase coverage gate.
+  { name: 'native-slam-phases', kind: 'shooter', nativeSpecial: 'slam', frames: 180, probes: [33, 49, 54, 64, 65, 66, 67, 68, 69, 79, 133] },
   { name: 'native-storm-deploy', kind: 'charger', nativeSpecial: 'storm', frames: 120 },
   { name: 'gaze-face-actions', kind: 'shooter', frames: 180 },
   { name: 'lifecycle-interruptions', kind: 'shooter', frames: 180, probes: [105, 119, 135, 140, 145, 150, 165] },
