@@ -47,6 +47,8 @@ test('native source and already-adapted source both retain the original jump adm
   const nativeFixed = adaptUiActorLifetime(rel, raw, once);
   assert.match(nativeFixed, /if \(!me \|\| !me\.canSuperJump \|\| !me\.canSuperJump\(\)\)/);
   assert.ok(fixed.includes('G.match.controller.canRequestMapJump()'));
-  assert.ok(fixed.includes('G.match.controller.requestMapJump(target)'));
+  assert.ok(fixed.includes('G.match.controller.requestMapJump(p.target)'));
+  assert.ok(fixed.includes('G.match.controller.requestMapJump(pad.clone())'));
+  assert.ok(fixed.includes('G.match.controller.requestMapBubblerJump(p.bubblerTarget)'));
   assert.throws(() => adaptUiActorLifetime(rel, fixed, once));
 });
