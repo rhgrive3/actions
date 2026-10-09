@@ -215,3 +215,15 @@ test('touch screenshot acceptance checks rendered ownership before and after cap
   assert.match(stages,/Splatling second stage is not a distinct outer ring/);
   assert.match(stages,/Splatling rendered ring has not reached expected progress/);
  });
+
+ test('settled reticle stage awaits actual finite native animations, not a fixed delay',()=>{
+  const checks=fs.readFileSync(new URL('scripts/check-inkwave-hud-authority.mjs',root),'utf8');
+  const start=checks.indexOf('// #508 display-only reticle fixture');assert.ok(start>=0);
+  const block=checks.slice(start,checks.indexOf('result.splatlingNegatives=[]'));
+  assert.doesNotMatch(block,/waitForTimeout/);
+  assert.match(block,/getAnimations\(\{subtree:true\}\)\.filter\(a=>a\.effect\?\.getTiming\(\)\.iterations!==Infinity\)/);
+  assert.match(block,/settled:true/);
+  const inspector=checks.slice(checks.indexOf('export function inspectSplatlingStages'),checks.indexOf('export async function checkHudAuthority'));
+  assert.match(inspector,/\.001/);
+  assert.match(inspector,/Splatling rendered ring has not reached expected progress/);
+ });

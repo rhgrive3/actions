@@ -241,7 +241,7 @@ test('#561: every assist-presentation connection is present upstream and fails c
     assert.throws(() => adaptSource('src/ui/hud.js', raw.replace(before, '')), /patch conflict/i, label);
     assert.throws(() => adaptSource('src/ui/hud.js', raw + before), /patch conflict/i, label);
   }
-  assert.equal(adaptSource('src/game/physics.js', 'UNRELATED'), 'UNRELATED', 'unrelated sources stay untouched');
+  assert.equal(adaptSource('src/unused-assist-probe.js', 'UNRELATED'), 'UNRELATED', 'unrelated sources stay untouched');
   assert.equal(adaptAssistPresentation('src/game/actor.js', 'UNRELATED', () => { throw Error('must not be called'); }), 'UNRELATED');
 });
 

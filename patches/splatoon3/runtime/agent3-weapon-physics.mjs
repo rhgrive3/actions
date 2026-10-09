@@ -74,19 +74,21 @@ export function slosherWallDropPlan(unit, order = 0, seed = 0, scale = 1) {
   return { main, wallHits };
 }
 
-export function rollerBodyOverlap(fwd, lat, dy, horizontalSpeed, body, playerRadius, scale = 1) {
+export function rollerBodyOverlap(fwd, lat, dy, horizontalSpeed, body, playerRadius, scale = 1, intentAdmitted = false) {
   scale = Number.isFinite(scale) && scale > 0 ? scale : 1;
   const radius = Number(body?.Radius) * scale;
   const widthHalf = Number(body?.WidthHalf) * scale;
   const targetRadius = Number(playerRadius);
   if (![radius, widthHalf, targetRadius].every(Number.isFinite) || radius < 0 || widthHalf < radius || targetRadius < 0) return false;
-  if (!(horizontalSpeed > 1 && fwd > -0.2 && fwd < 1.35 && Math.abs(dy) < 1.2)) return false;
+  // A valid #1109 stick-driven roll can be almost stationary. The old
+  // direct callers still require the original 1-unit/s speed threshold.
+  if (!((intentAdmitted || horizontalSpeed > 1) && fwd > -0.2 && fwd < 1.35 && Math.abs(dy) < 1.2)) return false;
   const coreHalf = widthHalf - radius;
   const lateralFromCore = Math.max(0, Math.abs(lat) - coreHalf);
   return lateralFromCore <= radius + targetRadius + EPSILON;
 }
 
-export function agent3RollerBodyContact(actor, target, horizontalSpeed) {
+export function agent3RollerBodyContact(actor, target, horizontalSpeed, intentAdmitted = false) {
   const body = completion?.weapons?.roller?.BodyParam?.CollisionParam;
   if (!api || !body || !actor || !target) return false;
   const fx = Math.sin(actor.yaw);
@@ -102,6 +104,7 @@ export function agent3RollerBodyContact(actor, target, horizontalSpeed) {
     body,
     api.PLAYER.radius,
     completion.worldUnitsPerSourceUnit,
+    intentAdmitted,
   );
 }
 
@@ -150,6 +153,7 @@ function paintWallDrop(p, track, radius) {
   const area = api.G.paint.splat(track.pos, radius, p.team, {
     seed: hashUnit(p.seed, track.salt * 4096 + track.paintIndex++),
     kind: 'drop',
+    claimOwner: p.owner,
   });
   if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   return Number.isFinite(area) ? area : 0;

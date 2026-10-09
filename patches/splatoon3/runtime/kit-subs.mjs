@@ -77,10 +77,11 @@ export const SUCTION = {
   // MoveParam.BurstFrame is omitted for Suction in 11.3.0.
   fuse: null,
   fuseStatus: 'unknown-omitted',
-  // Functional calibration: a stuck bomb needs a finite countdown or it never
-  // detonates. Matches the existing INKWAVE bomb fuse; NOT a Nintendo figure.
-  fuseFallback: 1.0,
-  fuseFallbackStatus: 'calibrated',
+  // #1028: attached Suction Bombs use the verified 120F / 2.0 s countdown.
+  // The 11.3.0 parameter mirror omits BurstFrame for this weapon, so provenance
+  // remains community-measured rather than invented from the Splat Bomb.
+  fuseFallback: 2.0,
+  fuseFallbackStatus: 'community-verified',
   warningRestFrame: frames(60),  // MoveParam.WarningSERestFrame
   guideHitCollision: 'EnemyOffFenceOn',   // MoveParam.GuideHitCollisionType
   geyserAddSpeedPerImpact: 0.15,          // spl__BulletInformImpactControlForGeyserParam
@@ -248,6 +249,8 @@ export function curlingBlastParams(charge, spec = CURLING) {
     radius: a.radius + (b.radius - a.radius) * c,
     damageInnerDistance: a.damageInnerDistance + (b.damageInnerDistance - a.damageInnerDistance) * c,
     damageOuterDistance: a.damageOuterDistance + (b.damageOuterDistance - a.damageOuterDistance) * c,
+    splashSatellites: Math.round(a.splashSatellites + (b.splashSatellites - a.splashSatellites) * c),
+    splashSatelliteRadius: a.splashSatelliteRadius + (b.splashSatelliteRadius - a.splashSatelliteRadius) * c,
     trailRadius: spec.paintRadiusMinCharge + (spec.paintRadiusMaxCharge - spec.paintRadiusMinCharge) * c,
   };
 }
@@ -260,17 +263,23 @@ export function resolveSubAtCharge(sub, charge) {
   const c = sub.chargeable ? clamp01(Number.isFinite(charge) ? charge : 0) : 0;
   const tpl = kitTemplate(sub);
   const blast = sub.chargeable ? curlingBlastParams(c, sub) : sub;
-  const fuse = sub.fuse ?? sub.fuseFallback ?? sub.burstFrame ?? null;
+  const fuse = sub.chargeable && sub.mode === 'roll' &&
+    Number.isFinite(sub.burstFrame) && Number.isFinite(sub.maxChargeTime) && Number.isFinite(sub.chargeFrameBlastRate)
+    ? Math.max(0, sub.burstFrame - c * sub.maxChargeTime * sub.chargeFrameBlastRate)
+    : sub.fuse ?? sub.fuseFallback ?? sub.burstFrame ?? null;
   return {
     spec: sub,
     charge: c,
     fuse,
     fuseStatus: sub.fuse != null ? sub.fuseStatus
-      : sub.fuseFallback != null ? 'calibrated'
+      : sub.fuseFallback != null ? (sub.fuseFallbackStatus || 'calibrated')
       : sub.burstFrame != null ? 'extracted' : 'unknown-omitted',
     inkCost: sub.inkCost ?? sub.inkCostFallback ?? null,
     inkCostStatus: tpl?.inkCost != null ? sub.inkCostStatus : 'calibrated',
     paintRadius: blast.paintRadius,
+    crossPaintRadius: blast.crossPaintRadius ?? sub.crossPaintRadius ?? null,
+    splashSatellites: blast.splashSatellites ?? sub.splashSatellites ?? 0,
+    splashSatelliteRadius: blast.splashSatelliteRadius ?? sub.splashSatelliteRadius ?? null,
     radius: blast.radius,
     damageMax: sub.damageMax,
     damageMin: sub.damageMin,
@@ -404,6 +413,9 @@ export function kitBombAttach(SUB, projectiles, actor, release) {
   b.s3Bounces = 0;
   b.s3TrailPoint = null;                 // allocated lazily, reused for the roll
   b.s3FuseTotal = resolved.fuse;         // denominator for the native beep curve
+  // #1099: Curling's source-backed lifetime starts at release, not at first
+  // floor contact. Suction/Splat Bomb keep their own contact arming.
+  if (sub.mode === 'roll' && Number.isFinite(resolved.fuse)) b.fuse = resolved.fuse;
   // Held charge re-aims through the native throwVelocity, so aim pitch and
   // player-velocity carry stay with the native implementation.
   if (resolved.throwSpeed != null) {
@@ -460,6 +472,8 @@ export function kitBombContact(SUB, b, hit, dt) {
     // would reset the countdown each tick and the bomb would never detonate.
     if (b.fuse < 0) { b.fuse = r.fuse; b.s3FuseTotal = r.fuse; }
     b.s3Mode = 'stuck';
+    b.s3SurfaceNormal ||= new b.pos.constructor();
+    b.s3SurfaceNormal.copy(n);
     b.s3StuckOn = onCeiling ? 'ceiling' : onWall ? 'wall' : 'floor';
     return true;                       // native bounce is skipped for a stuck bomb
   }
@@ -470,6 +484,8 @@ export function kitBombContact(SUB, b, hit, dt) {
       // floor: clamp to the contact surface so the bomb cannot sink through it and
       // the trail paints the surface it actually rests on.
       b.s3Mode = 'rolling';
+      b.s3SurfaceNormal ||= new b.pos.constructor();
+      b.s3SurfaceNormal.copy(n);
       b.pos.copy(hit.point);
       b.pos.addScaledVector(n, CONTACT_BIAS);
       b.vel.y = 0;
@@ -528,7 +544,7 @@ export function kitBombTrail(SUB, b, paint, projectiles) {
   // and no per-frame allocation.
   if (!b.s3TrailPoint) b.s3TrailPoint = new b.pos.constructor();
   b.s3TrailPoint.copy(b.pos);
-  const area = paint.splat(b.s3TrailPoint, radius, b.team, { seed: Math.random() });
+  const area = paint.splat(b.s3TrailPoint, radius, b.team, { seed: Math.random(), claimOwner: b.owner });
   if (area > 0) b.owner?.addTurf?.(area);
   return area;
 }
@@ -559,6 +575,44 @@ export function kitBombFuseTotal(SUB, b) {
 export function kitBombPaintRadius(SUB, b, fallback) {
   const r = resolvedOf(b);
   return Number.isFinite(r?.paintRadius) ? r.paintRadius : fallback;
+}
+
+// #1123: Suction/Curling explosion paint is authored once from that sub's own
+// resolved blast record. Returning null deliberately leaves the native Splat Bomb
+// footprint untouched. Satellites live in the contacted surface plane, so a
+// Suction Bomb stuck to a wall/ceiling does not stamp an unrelated XZ flower.
+export function kitBombExplosionPaint(SUB, b, paint) {
+  const r = resolvedOf(b);
+  if (!r || r.spec?.id === 'bomb' || !paint?.splat || !Number.isFinite(r.paintRadius)) return null;
+  const count = Math.max(0, Math.floor(r.splashSatellites || 0));
+  const satelliteRadius = Number.isFinite(r.splashSatelliteRadius) ? r.splashSatelliteRadius : 0;
+  const ring = Number.isFinite(r.crossPaintRadius) ? Math.max(0, r.crossPaintRadius) : 0;
+  b.s3PaintN ||= new b.pos.constructor();
+  b.s3PaintT ||= new b.pos.constructor();
+  b.s3PaintB ||= new b.pos.constructor();
+  b.s3PaintPoint ||= new b.pos.constructor();
+  const n = b.s3PaintN;
+  if (b.s3SurfaceNormal?.lengthSq?.() > 1e-10) n.copy(b.s3SurfaceNormal).normalize();
+  else n.set(0, 1, 0);
+  const t = b.s3PaintT;
+  if (Math.abs(n.y) < 0.9) t.set(0, 1, 0).cross(n).normalize();
+  else t.set(1, 0, 0);
+  const bit = b.s3PaintB.copy(n).cross(t).normalize();
+  const center = b.s3PaintPoint.copy(b.pos).addScaledVector(n, 0.1);
+  const baseSeed = Number.isFinite(b.s3ExplosionPaintSeed) ? b.s3ExplosionPaintSeed
+    : (b.s3ExplosionPaintSeed = Math.random());
+  let area = paint.splat(center, r.paintRadius, b.team, { seed: baseSeed, claimOwner: b.owner });
+  if (satelliteRadius > 0 && ring > 0) {
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2;
+      center.copy(b.pos).addScaledVector(n, 0.1)
+        .addScaledVector(t, Math.cos(angle) * ring)
+        .addScaledVector(bit, Math.sin(angle) * ring);
+      area += paint.splat(center, satelliteRadius, b.team,
+        { seed: (baseSeed + (i + 1) * 0.6180339887498949) % 1, claimOwner: b.owner });
+    }
+  }
+  return area;
 }
 
 export function kitBombRadius(SUB, b, fallback) {
@@ -624,7 +678,7 @@ export function kitBombPacket(b) {
   if (ghostBombSpawning() || b?.ghost) return null;
   const id = b?.s3Sub ? packetSubId(b.s3Sub.id) : null;
   if (!id) return ['', 0];
-  const charge = id && Number.isFinite(b.s3Charge) ? Math.round(clamp01(b.s3Charge) * 1000) / 1000 : 0;
+  const charge = id && Number.isFinite(b.s3Charge) ? clamp01(b.s3Charge) : 0;
   return [id, charge];
 }
 
@@ -650,6 +704,7 @@ export function kitGhostBombAttach(SUB, projectiles, b, rawId, rawCharge) {
   b.s3Mode = 'flight';
   b.s3Bounces = 0;
   b.s3FuseTotal = resolved.fuse;
+  if (spec.mode === 'roll' && Number.isFinite(resolved.fuse)) b.fuse = resolved.fuse;
   return b;
 }
 

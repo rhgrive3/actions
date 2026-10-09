@@ -23,7 +23,8 @@ for(const hz of [30,60,120])for(const full of [false,true])test(`${hz}Hz ${full?
   if(age===15){assert.equal(h.r.s3SubReady.age,0);assert.ok(h.r.s3ChargerPostShot>0);}
   if(age===16)assert.ok(h.r.s3ChargerPostShot<1e-9,'squid clock stays16F');
  });
- assert.equal(aim,15);assert.deepEqual(h.throws,[15+Math.round(h.profile.bomb.readyTimeKid/STEP)]);
+ // #1037 adds the separate release-to-device 1F use-startup after normal sub preparation.
+ assert.equal(aim,15);assert.deepEqual(h.throws,[16+Math.round(h.profile.bomb.readyTimeKid/STEP)]);
  assert.equal(h.projectiles._fidelityChargerFlights.length,1,'sub input never produces another shot');
  assert.ok(h.a.ink<initialInk,'one actual bomb paid its normal cost');
 });

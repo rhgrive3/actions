@@ -3,7 +3,7 @@
 // supplies the socket-free platform, the scene, and physics/paint/audio stubs.
 //
 // Composition order matches scripts/build-inkwave.mjs exactly:
-//   adaptNetworkSource(adaptQualitySource(adaptReliability(adaptTouchLayout(adaptSource(...)))))
+//   adaptRange(adaptNetworkSource(adaptQualitySource(adaptReliability(adaptTouchLayout(adaptSource(...))))))
 // Passing { network: false } omits ONLY the newest adapter so a test can reproduce
 // the pre-fix baseline on the same sources.
 import fs from 'node:fs';
@@ -15,6 +15,7 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 
 export const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -31,14 +32,14 @@ function relFor(file) {
 }
 
 // One module environment. `network` selects whether the newest adapter participates.
-export async function fixture({ network = true, flow = false } = {}) {
+export async function fixture({ network = true, flow = false, fullRuntime = false } = {}) {
   let seconds = 1000;
   const context = vm.createContext({ console, performance: { now: () => seconds * 1000 } });
   const modules = new Map();
 
   const compose = network
-    ? (rel, code) => adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))))
-    : (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+    ? (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))))
+    : (rel, code) => adaptRange(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))));
 
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
@@ -64,6 +65,7 @@ export async function fixture({ network = true, flow = false } = {}) {
   const root = new vm.SourceTextModule(`
     export * from './inkwave-public/src/core/ctx.js';
     export * from './inkwave-public/src/config.js';
+    export { PaintSystem } from './inkwave-public/src/world/paint.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/actor.js';
     export * from './inkwave-public/src/game/weapons.js';
@@ -71,6 +73,11 @@ export async function fixture({ network = true, flow = false } = {}) {
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
+    export * from './patches/splatoon3/runtime/resources.mjs';
+    export * from './patches/splatoon3/runtime/damage-timing.mjs';
+    export * from './patches/splatoon3/runtime/splatling.mjs';
+    export * from './patches/splatoon3/runtime/movement.mjs';
+    export * from './patches/splatoon3/runtime/gear.mjs';
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/local-quality/roller-visual.mjs';
     export * as THREE from 'three';
@@ -89,13 +96,18 @@ export async function fixture({ network = true, flow = false } = {}) {
   api.installWeapons(api, profile);
   api.installWeaponsFidelity(api, profile);
   api.installRollerVisualQuality(api);
-  if (flow) api.installFlow(api, profile);
+  if (fullRuntime) {
+    api.installMovement(api, profile);
+    api.installGear(api, profile);
+    if (flow) api.installFlow(api, profile);
+    api.installResources(api, profile);
+  } else if (flow) api.installFlow(api, profile);
 
   // ---- world stubs: physics only reports a flat floor at y = 0, no actors, no boss
   const floorHit = (a, b, hit) => {
     if (b.y <= 0 && a.y > 0) {
       const t = a.y / Math.max(1e-6, a.y - b.y);
-      hit.hit = true;
+      hit.hit = true; hit.face = 0;
       hit.point = a.clone().lerp(b, t);
       hit.normal = new THREE.Vector3(0, 1, 0);
       return hit;
@@ -154,7 +166,7 @@ export async function fixture({ network = true, flow = false } = {}) {
 
   function bind(nm, actors) {
     nm.match = {
-      actors, state: 'playing', time: 0, follower: false,
+      actors, state: 'playing', time: 180, follower: false,
       removeActor(a) { this.actors = this.actors.filter((x) => x !== a); },
     };
     for (const a of actors) { nm.byNid.set(a.nid, a); nm._setupActor(a); }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fixture } from './weapons-fixture.mjs';
-import { CASES, reset, launch, measure } from './measure-weapons-fidelity.mjs';
+import { CASES, reset, launch, finish, paintMetrics, measure } from './measure-weapons-fidelity.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const at = process.argv.indexOf('--site');
@@ -11,27 +11,50 @@ const site = path.resolve(at >= 0 ? process.argv[at + 1] : path.join(root, '_sit
 const near = (a,b,t=1e-7) => assert.ok(Math.abs(a-b) <= t, `${a} != ${b} ±${t}`);
 
 const data = await measure({ site, fidelity: true, detail: false });
+// Deterministic integrated-world receipts, not Nintendo meter measurements.
+// PR1083 composes native InkFlight hurtboxes with the sourced trailing/nearest
+// paint owners (Shooter/Dualies/Splatling), Roller maximum/impact paint and
+// Slosher intermediate drops. These replace the prior pre-integration receipts.
+// PR1168's reconciled Charger range maps the first legal linear charge (8/60)
+// to DistanceMinCharge. Re-measured composed source and emitted-build receipts
+// below retain that legal-minimum band and the canonical scoring-paint owner.
+// Keep the .1-unit collision sweep and .25-unit scoring grid exact.
 const golden = {
-  shooter:[12.6,12.2,13.125,1],
-  'dualies-normal':[12.3,11.5,12.625,1],
-  'dualies-post':[12.3,11.5,12.625,1],
-  blaster:[13.5,10.8,11.875,1],
-  'splatling-partial':[14.8,14.1,15.625,1],
-  'splatling-first':[20.2,19.4,21.125,1],
-  'splatling-full':[20.2,19.4,21.125,1],
+  shooter:[12.6,12.2,14.375,1],
+  'dualies-normal':[12.2,11.5,14.375,1],
+  'dualies-post':[12.3,11.5,14.375,1],
+  blaster:[13.5,10.7,11.875,1],
+  'splatling-partial':[14.7,14,16.875,1],
+  'splatling-first':[20.1,19.4,22.375,1],
+  'splatling-full':[20.1,19.4,22.375,1],
   'charger-0':[9.8,9.8,13.375,0],
-  'charger-0.25':[13.5,13.5,16.625,0],
-  'charger-0.5':[17.3,17.3,20.125,0],
-  'charger-0.75':[21.0,21.0,23.625,0],
-  'charger-1':[24.8,24.8,26.625,0],
-  'roller-horizontal':[11.2,6.1,13.375,13],
-  'roller-vertical':[16.4,6.8,15.875,5],
-  slosher:[13.9,13.9,15.375,9],
+  'charger-0.25':[11.8,11.8,14.875,0],
+  'charger-0.5':[16.1,16.1,18.875,0],
+  'charger-0.75':[20.4,20.4,23.375,0],
+  'charger-1':[24.8,24.8,26.875,0],
+  'roller-horizontal':[11.2,6.1,14.125,13],
+  'roller-vertical':[16.3,6.9,19.125,5],
+  slosher:[13.5,13.5,13.625,9],
 };
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
   const c = data.cases[key];
   near(c.practicalHitRange,hit); near(c.fullDamageRange,full);
   near(c.paint.bounds.maxZ,paint,.001); assert.equal(c.projectileCount,count,key);
+}
+// Independently execute the current unminified six-adapter source graph at the
+// measured hit boundary and on the real paint grid. The built receipt cannot
+// become a replacement for source/build equivalence.
+const sourceFixture = await fixture({ site:path.join(root,'.ci-scratch/unbuilt-weapons-source'), fidelity:true });
+for (const c of CASES) {
+  const expected=data.cases[c.key];
+  let actor=reset(sourceFixture,c);launch(sourceFixture,actor,c);finish(sourceFixture,actor);
+  assert.deepEqual(paintMetrics(sourceFixture).bounds,expected.paint.bounds,c.key+' source/build paint bounds');
+  for(const z of [expected.practicalHitRange,Math.round((expected.practicalHitRange+.1)*10)/10]){
+    actor=reset(sourceFixture,c,z);launch(sourceFixture,actor,c);finish(sourceFixture,actor);
+    const damage=sourceFixture.hits.reduce((sum,hit)=>sum+hit.damage,0);
+    const recorded=expected.hitSamples.find(sample=>sample.z===z);
+    near(damage,recorded.damage,1e-7);
+  }
 }
 assert.equal(data.runner.blaster.shots,4);
 for (const interval of data.runner.blaster.intervals) near(interval,50/60,1e-7);
@@ -41,27 +64,29 @@ near(data.runner['charger-1'].inkSpent,18);
 
 // Exercise the installed packet recorder, including the existing replication
 // mode/seed/identity prefix and owner-tick/sequence footer. The unit is inserted
-// between that unchanged prefix and footer, without renumbering the first30 fields.
+// between that unchanged prefix and footer, after the native ink-flight metadata and kit columns.
 for (const key of ['shooter','roller-horizontal','roller-vertical']) {
   const c = CASES.find(x => x.key === key);
   const f = await fixture({ site, fidelity:true, floor:false, network:true });
   const a = reset(f,c); a.nid=42;
   // Use the installed recorder, including the existing birth metadata and
   // owner-tick/sequence footer. This adds no protocol fields or runtime changes.
-  const network={mute:0,out:[],_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  const network={s:{_inkwaveEventSeq:0},mute:0,out:[],_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
   f.G.netm=network; launch(f,a,c); const locals=[...f.projectiles.list], packets=network.out;
   assert.equal(packets.length,locals.length,key);
   for (const [i,p] of packets.entries()) {
-    assert.equal(p.length,35,key+' complete packet shape');
-    assert.equal(p[27],0,key+' ordinary projectile volley index');
-    assert.equal(p[28],0,key+' ordinary projectile action index');
-    assert.equal(p[29],locals[i].s3Vertical?1:0,key+' birth mode');
-    assert.equal(p[30],locals[i].seed,key+' appearance seed');
-    assert.equal(p[31],locals[i]._netId,key+' projectile identity');
-    assert.equal(p[32],locals[i].fidelityRollerUnitIndex ?? -1,key+' immutable roller unit');
-    assert.equal(p[33],Math.round((f.G.time||0)*60),key+' owner tick');
-    assert.equal(p[34],i+1,key+' event sequence');
+    assert.equal(p.length,36,key+' complete packet shape');
+    assert.deepEqual(p[27],locals[i].inkMeta||null,key+' native ink-flight metadata slot');
+    assert.equal(p[28],0,key+' ordinary projectile volley index');
+    assert.equal(p[29],0,key+' ordinary projectile action index');
+    assert.equal(p[30],locals[i].s3Vertical?1:0,key+' birth mode');
+    assert.equal(p[31],locals[i].seed,key+' appearance seed');
+    assert.equal(p[32],locals[i]._netId,key+' projectile identity');
+    assert.equal(p[33],locals[i].fidelityRollerUnitIndex ?? -1,key+' immutable roller unit');
+    assert.equal(p[34],Math.round((f.G.time||0)*60),key+' owner tick');
+    assert.equal(p[35],i+1,key+' event sequence');
   }
+  assert.equal(network.s._inkwaveEventSeq,packets.length,key+' session event sequence');
   const ghost=f.make(c.id,{name:'remote'}); ghost.remote=true; f.projectiles.list.length=0;
   packets.forEach(e=>f.projectiles.ghostProjectile(ghost,e)); const ghosts=[...f.projectiles.list];
   assert.equal(ghosts.length,locals.length,key);
@@ -261,7 +286,7 @@ assert.equal(ghostDualies.f.paints.length,0,'ghost Dualies wall-drop cannot muta
   f.wall(4,{height:8});
   const a=f.make('blaster'); a.nid=42; a.aimPoint.set(0,1.05,20);
   const packets=[];
-  const recorder={mute:0,out:packets,_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  const recorder={s:{_inkwaveEventSeq:0},mute:0,out:packets,_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
   f.G.netm=recorder;
   f.projectiles.fireBlaster(a,a.weapon,0);
   assert.equal(packets.length,1,'Blaster birth packet recorded');

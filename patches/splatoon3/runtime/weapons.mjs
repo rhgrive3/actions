@@ -1,6 +1,9 @@
+import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
+import { ShooterAccuracy } from './shooter-accuracy.mjs';
+import { shooterMovementRemaining, shooterMovementSpeed } from './shooter-movement.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
-import { installFinalDamage, damageGroupId } from './final-damage.mjs';
+import { installFinalDamage, damageGroupId, withFinalDamageGroup } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installSplatling } from './splatling.mjs';
@@ -8,6 +11,8 @@ import { installSplatlingStartupCompat } from './splatling-startup-compat.mjs';
 import { installWeaponGates } from './weapon-gates.mjs';
 import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 import { installRollerLogic } from './roller.mjs';
+import { installSplatlingJumpSpread } from './splatling-jump-spread.mjs';
+import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 let api;
 const dualiesLockConfigs = new WeakMap();
 const splatlingStreamConfigs = new WeakMap();
@@ -99,6 +104,16 @@ export function splatlingChargeCap(ink, w) {
   const fraction = Math.max(0, Math.min(1, ink / w.inkFull)), first = w.burstFirst / w.burstMax, boundary = w.firstChargeTime / w.chargeTime;
   return fraction <= first ? fraction / first * boundary : boundary + (fraction - first) / (1 - first) * (1 - boundary);
 }
+// Single authoritative full-charge predicate (#840). The base Charger ding
+// fires only at `charge >= 1` (inkwave-public/src/game/weapons.js:157), so
+// every discrete full-only effect (160 damage, opponent piercing, squid
+// charge-keep storage, exact full range/speed/paint endpoints) must key off
+// the same state. A near-full partial (e.g. q=0.999, reachable via the
+// low-ink progress cap) stays partial. Match the native ding without an
+// epsilon: every finite value below 1 remains a partial charge.
+export function isChargerFullCharge(charge) {
+  return Number.isFinite(charge) && charge >= 1;
+}
 export function chargerDamage(actor, weapon, charge) {
   const legacy = weapon.damageMin + (weapon.damagePartialMax - weapon.damageMin) * charge;
   const minimum = weapon.damageMinChargeTime, rate = weapon.partialDamagePerSecond;
@@ -111,11 +126,56 @@ export function chargerDamage(actor, weapon, charge) {
   return Math.min(weapon.damagePartialMax, weapon.damageMin + (elapsed - minimum) * rate);
 }
 export const SPLATLING_INTERRUPT = 6 / 60;
+// Splatling R cancellation is a separate destination from its 6F squid
+// interruption window. The sub-ready owner consumes this delay before aiming.
+export const SPLATLING_SUB_INTERRUPT = 5 / 60;
 const INTERRUPT_EPS = 1e-10;
 const INTERRUPT_SLOTS = {
   charge: { time: 's3ChargeInterruptT', press: 's3ChargeInterruptPressT', live: r => r.charging },
   stream: { time: 's3StreamInterrupt', press: 's3StreamInterruptPressT', live: r => r.streaming },
 };
+export function clearSplatlingSubInterrupt(runner) {
+  runner.s3SplatlingSubInterruptPending = false;
+  runner.s3SplatlingSubInterruptRemaining = 0;
+  runner.s3SplatlingSubInterruptReleased = false;
+  runner.s3SplatlingSubInterruptReady = false;
+}
+export function splatlingSubInterrupt(runner, actor, dt, input) {
+  if (actor?.weapon?.kind !== 'splatling') {
+    clearSplatlingSubInterrupt(runner);
+    return null;
+  }
+  if (runner.s3SplatlingSubInterruptPending) {
+    if (actor.form === 'squid') {
+      clearSplatlingSubInterrupt(runner);
+      return 'cancelled';
+    }
+    if (!input?.sub) {
+      if (input?.subReleased || actor.intent?.sub) runner.s3SplatlingSubInterruptReleased = true;
+      else if (!runner.s3SplatlingSubInterruptReleased) {
+        clearSplatlingSubInterrupt(runner);
+        return 'cancelled';
+      }
+    }
+    runner.s3SplatlingSubInterruptRemaining = Math.max(0,
+      runner.s3SplatlingSubInterruptRemaining - Math.max(0, dt));
+    if (runner.s3SplatlingSubInterruptRemaining > INTERRUPT_EPS) return 'wait';
+    runner.s3SplatlingSubInterruptPending = false;
+    runner.s3SplatlingSubInterruptReady = true;
+    return 'ready';
+  }
+  if (!input?.sub || !(runner.charging || runner.streaming)) return null;
+  runner.s3SplatlingSubInterruptPending = true;
+  // The input update is the first fixed frame of the interruption window.
+  // Consume its dt here so the native sub-ready handoff lands on frame five,
+  // rather than waiting five more updates after the R edge.
+  runner.s3SplatlingSubInterruptRemaining = Math.max(0,
+    SPLATLING_SUB_INTERRUPT - Math.max(0, dt));
+  if (runner.s3SplatlingSubInterruptRemaining > INTERRUPT_EPS) return 'wait';
+  runner.s3SplatlingSubInterruptPending = false;
+  runner.s3SplatlingSubInterruptReady = true;
+  return 'ready';
+}
 export function splatlingInterrupt(runner, actor, slot) {
   const x = INTERRUPT_SLOTS[slot];
   if (actor.weapon.kind !== 'splatling') return false;
@@ -166,13 +226,57 @@ export function applySlosherVolleyHit(system, owner, victim, group, groupId, amo
   if (!(delta > 0)) return;
   if (!group) return system.applyHit(owner, victim, delta, weaponId);
   const hpBefore = victim.hp, aliveBefore = victim.alive;
-  const result = system.applyHit(owner, victim, delta, weaponId);
+  const result = withFinalDamageGroup(victim, groupId ?? damageGroupId(group),
+    () => system.applyHit(owner, victim, delta, weaponId));
   if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
   return result;
 }
-function volleyOwnerKey(owner, groupId) {
-  return JSON.stringify([owner.owner ?? null, owner.nid ?? owner.name ?? 'actor', String(groupId)]);
+// Preserve in-flight volley dedupe without retaining every historical wire id
+// for an entire match. Reject malformed wire identities before key creation.
+const SLOSHER_LEDGER_LIMIT = 512;
+const SLOSHER_LEDGER_TTL = 8; // seconds of simulation time; exceeds projectile lifetime
+const SLOSHER_ID_LIMIT = 128;
+export function volleyOwnerKey(owner, groupId) {
+  const validPart = v => v == null || (typeof v === 'string' && v.length <= SLOSHER_ID_LIMIT)
+    || (typeof v === 'number' && Number.isSafeInteger(v));
+  const peer = owner?.owner ?? null, actorId = owner?.nid ?? owner?.name ?? 'actor';
+  if (!owner || !validPart(peer) || !validPart(actorId) || !validPart(groupId)) return null;
+  const id = String(groupId);
+  if (!id.length || id.length > SLOSHER_ID_LIMIT) return null;
+  return JSON.stringify([peer, actorId, id]);
 }
+// Map insertion order is the birth order: pruning is amortized O(1) per
+// admitted volley, and over-capacity traffic fails closed rather than evicting
+// a still-live group's duplicate-damage protection.
+export function trackedSlosherVolley(groups, key, now) {
+  if (!(groups instanceof Map) || typeof key !== 'string' || key.length > 420 || !Number.isFinite(now)) return null;
+  const existing = groups.get(key);
+  if (existing) return existing.hits;
+  for (let first = groups.keys().next(); !first.done; first = groups.keys().next()) {
+    const created = groups.get(first.value).at;
+    if (now >= created && now - created <= SLOSHER_LEDGER_TTL) break;
+    groups.delete(first.value);
+  }
+  if (groups.size >= SLOSHER_LEDGER_LIMIT) return null;
+  const hits = new WeakMap();
+  groups.set(key, { at: now, hits });
+  return hits;
+}
+// Retain enough concurrent/delayed volleys for a full match, but never let
+// peer-provided group IDs grow the victim-owner ledger without bound. Evicted
+// numeric sequences are tombstoned by authenticated owner+actor identity so
+// replay cannot re-open the damage budget after eviction.
+export const SLOSHER_OWNER_GROUP_LIMIT = 2048;
+const SLOSHER_GROUP_ID_LIMIT = 96;
+function slosherSequence(groupId) {
+  if (typeof groupId !== 'string' || groupId.length === 0 || groupId.length > SLOSHER_GROUP_ID_LIMIT) return null;
+  const match = /:([1-9][0-9]{0,14})$/.exec(groupId);
+  return match ? Number(match[1]) : null;
+}
+function volleySourceKey(owner) {
+  return JSON.stringify([owner.owner ?? null, owner.nid ?? owner.name ?? 'actor']);
+}
+
 export function distanceDamage(bands, distance, linear = true) {
   if (!bands?.length) return 0;
   if (distance <= bands[0][0]) return bands[0][1];
@@ -190,15 +294,21 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
   if (['shooter', 'dualies', 'splatling'].includes(weapon.kind)) amount = ageDamage(weapon, projectile.age, amount);
   if (weapon.kind === 'roller' && point) amount = distanceDamage(projectile.s3Vertical ? weapon.verticalDamageBands : weapon.flickDamageBands, projectile.start.distanceTo(point));
   if (weapon.kind === 'slosher' && projectile.s3DamageGroup) {
-    return applySlosherVolleyHit(system, projectile.owner, victim, projectile.s3DamageGroup,
-      projectile.s3DamageGroupId, amount, projectile.wid || projectile.type || 'slosher');
+    return withMainDirectDamage(projectile.owner, victim, () => applySlosherVolleyHit(system, projectile.owner, victim, projectile.s3DamageGroup,
+      projectile.s3DamageGroupId, amount, projectile.wid || projectile.type || 'slosher'));
   }
   amount = groupDamage(projectile.s3DamageGroup, victim, amount);
-  if (amount > 0) system.applyHit(projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
+  if (amount > 0) applyMainDirectHit(system, projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
 }
 export function installWeapons(context, profile) {
   api = context;
-  const { WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  WeaponRunner.prototype.s3StepSplatlingSubInterrupt = function (dt, input) {
+    return splatlingSubInterrupt(this, this.a, dt, input);
+  };
+  WeaponRunner.prototype.s3ClearSplatlingSubInterrupt = function () {
+    clearSplatlingSubInterrupt(this);
+  };
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
   Projectiles.prototype._new = function (...args) {
     const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3DamageGroupId = null; p.s3Weapon = null; p.s3SpecialWeapon = null; p.s3Vertical = false; return p;
@@ -212,11 +322,19 @@ export function installWeapons(context, profile) {
   // camera target. Use the launch ray as aimed; gravity acts on the bullet.
   Projectiles.prototype._ballistic = function (_from, direction) { return direction; };
   const reset = WeaponRunner.prototype.reset, busy = WeaponRunner.prototype.busy;
+  const nativeMoveSpeed = WeaponRunner.prototype.moveSpeed;
+  WeaponRunner.prototype.moveSpeed = function () {
+    if (this.a?.weapon?.kind === 'shooter')
+      return shooterMovementSpeed(this.s3ShooterMoveRemaining, PLAYER.runSpeed, this.a.weapon.moveSpeedFiring);
+    return nativeMoveSpeed.call(this);
+  };
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
-    this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
-    this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false;
-    this.s3SloshRecovery = false;
+    clearSplatlingSubInterrupt(this);
+    this.s3Stored = null; this.s3KeepMuzzlePending = false; this.s3KeepMuzzleFiring = false; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
+    this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false; this.s3BlasterMoveRemaining = 0;
+    this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
+    this.s3SloshRecovery = false; this.s3SloshPrevYaw = null; this.s3SloshTurnDelta = 0;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0;
     this.s3SplatlingHeld = false;
     // #726 fresh-start state: pending humanoid startup seconds, the
@@ -224,26 +342,85 @@ export function installWeapons(context, profile) {
     // marker that suppresses the pre-gap after a shot.
     this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
     this.s3ChargerSpent = 0; this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
+    this.s3ChargerElapsed = null; this.s3ChargerElapsedCompensation = 0;
     this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0;
     releaseSplatlingInterrupt(this, -1);
-    this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
+    this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
+    this.s3ChargerCancelSwimRemaining = 0; // #416 partial-charge squid cancel recovery
+    this.s3ChargerCancelRefillPending = false;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
+    this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
+    this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
+    this.s3ShooterMoveRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
     return result;
+  };
+  const shooterActorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (dt, ...args) {
+    const r = this.weaponRunner;
+    if (r && this.weapon?.kind === 'charger') {
+      // #416: the partial-charge -> squid edge cancels the paid charge
+      // immediately, but cannot enter swim movement until six fixed frames.
+      const interrupted = !this.alive || this.specialActive || this.superJumpState ||
+        (this.intent?.special && this.specialReady?.());
+      const cancelEdge = this.intent?.squid && !this._prevIntent?.squid &&
+        !this.intent?.sub && (!this.intent?.fire || this._prevIntent?.fire) &&
+        r.charging && !r.s3Stored && r.charge > 0 && !isChargerFullCharge(r.charge);
+      // Match native form admission against the current ground paint. A denied
+      // enemy-ground dive or a same-tick newer Fire press must keep the charge.
+      if (cancelEdge && !interrupted) this._surface?.();
+      const enemyGrounded = this.grounded && this.groundTeam === 2 && !this.climbing;
+      if (interrupted) { r.s3ChargerCancelSwimRemaining = 0; r.s3ChargerCancelRefillPending = false; }
+      else if (cancelEdge && !enemyGrounded) {
+        cancelStored(r); // already committed ink is not refunded
+        r.s3ChargerStartupT = 0; r.s3ChargerHeldGate = false; r.s3ChargerRepeat = false;
+        r.s3ReleaseHold = false; r.s3HeldCharge = r.s3HeldChargeT = r.s3ReleaseAt = 0;
+        r.s3ChargerProgressiveSpend = false;
+        r.s3ChargerCancelSwimRemaining = 6 / 60;
+        // #737 must observe this cancellation even though the 6F form gate
+        // clears charging before the native resource pass can see squid form.
+        r.s3ChargerCancelRefillPending = true;
+      } else if (r.s3ChargerCancelSwimRemaining > 0) {
+        const remaining = r.s3ChargerCancelSwimRemaining - dt;
+        r.s3ChargerCancelSwimRemaining = remaining > 1e-10 ? remaining : 0;
+      }
+    }
+    if (r && this.weapon?.kind === 'shooter') {
+      if (r.s3ShooterInterruptSub > 0) r.s3ShooterInterruptSub = Math.max(0, r.s3ShooterInterruptSub - dt);
+      if (r.s3ShooterInterruptSquid > 0) r.s3ShooterInterruptSquid = Math.max(0, r.s3ShooterInterruptSquid - dt);
+      const hardCancel = !this.alive || this.specialActive || this.superJumpState ||
+        (this.intent?.special && this.specialReady?.());
+      if (hardCancel) {
+        r.s3ShooterInterruptSub = r.s3ShooterInterruptSquid = 0;
+        r.s3ShooterInterruptJustArmed = false; r.s3ShooterCancelMain = false;
+        r.s3ShooterStreamActive = false; r.s3ShooterHeld = false;
+      } else {
+        const cancelEdge = r.s3ShooterHeld && r.s3ShooterStreamActive &&
+          (!this.intent?.fire || !!this.intent?.sub || !!this.intent?.squid);
+        if (cancelEdge && !r.s3ShooterInterruptJustArmed && !r.s3ShooterCancelMain) {
+          r.s3ShooterInterruptSub = 3 / 60;
+          r.s3ShooterInterruptSquid = 4 / 60;
+          r.s3ShooterInterruptJustArmed = true;
+        }
+        if (r.s3ShooterCancelMain && !this.intent?.fire) r.s3ShooterCancelMain = false;
+      }
+    }
+    return shooterActorUpdate.call(this, dt, ...args);
   };
   WeaponRunner.prototype.busy = function () {
     const kind = this.a.weapon.kind;
     if (kind === 'roller' && this.s3FlickPostSquid > 0) return true;
     if (kind === 'shooter') {
-      if (this.s3ShooterPendingFirst) return true;
+      if (this.s3ShooterPendingFirst || this.s3ShooterInterruptSquid > 1e-10) return true;
       if (this.s3PostFireLockActive) {
         if (this.a.lastFire + 1e-10 < (this.a.weapon.postFireSwimLock || 0)) return true;
         this.s3PostFireLockActive = false;
       }
     }
-    if (kind === 'charger' && this.s3ChargerPostShot > 1e-10) return true;
+    if (kind === 'charger' && (this.s3ChargerCancelSwimRemaining > 1e-10 || this.s3ChargerPostShot > 1e-10)) return true;
     if (kind === 'dualies' && this.s3DualiesPostShot > 1e-10) return true;
+    if (kind === 'slosher' && this.s3SloshPostShot > 1e-10) return true;
     if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
@@ -269,15 +446,21 @@ export function installWeapons(context, profile) {
   const runnerUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const weapon = this.a.weapon;
+    if (weapon.kind === 'shooter') this.s3ShooterMoveRemaining = shooterMovementRemaining(this.s3ShooterMoveRemaining, dt);
+    if (weapon?.kind === 'blaster') this.s3BlasterMoveRemaining = Math.max(0, (this.s3BlasterMoveRemaining || 0) - dt);
+    else this.s3BlasterMoveRemaining = 0;
     if (blasterJumpSupported() && weapon?.kind === 'blaster') {
       const grounded = !!this.a.grounded;
-      if (this.s3BlasterWasGrounded === true && !grounded) this.s3BlasterJumpT = 0;
+      const jumpSerial = this.a.s3JumpSerial || 0;
+      if (jumpSerial !== this.s3BlasterJumpSeen) this.s3BlasterJumpT = 0;
       else if (this.s3BlasterJumpT != null) this.s3BlasterJumpT += dt;
+      this.s3BlasterJumpSeen = jumpSerial;
       this.s3BlasterWasGrounded = grounded;
       if (this.s3BlasterJumpT != null && grounded && this.s3BlasterJumpT >= BLASTER_END) this.s3BlasterJumpT = null;
     } else {
       this.s3BlasterJumpT = null;
       this.s3BlasterWasGrounded = false;
+      this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
     }
     if (weapon.kind === 'shooter') {
       if (this.s3WasGrounded && !this.a.grounded) this.s3JumpSpreadAge = 0;
@@ -300,10 +483,27 @@ export function installWeapons(context, profile) {
       }
       const locked = this.s3PostFireLockActive && this.a.lastFire + 1e-10 < (weapon.postFireSwimLock || 0);
       if (!locked && this.s3PostFireLockActive) this.s3PostFireLockActive = false;
-      if (locked || this.s3ShooterPendingFirst) next = { ...next, sub: false, subReleased: false };
+      // A stream cancellation owns its separate 3F sub gate. A due shot on
+      // that edge must not replace it with the 4F squid/post-shot form gate.
+      if ((locked && !this.s3ShooterCancelMain) || this.s3ShooterPendingFirst || this.s3ShooterInterruptSub > 1e-10)
+        next = { ...next, sub: false, subReleased: false };
+      if (this.s3ShooterCancelMain && !this.s3ShooterInterruptJustArmed)
+        next = { ...next, fire: false, firePressed: false };
       input = next;
     }
-    return runnerUpdate.call(this, dt, input);
+    if (weapon.kind === 'shooter' && !input.fire) this.s3Accuracy?.advance(dt);
+    const result = runnerUpdate.call(this, dt, input);
+    if (weapon.kind === 'shooter' && this.s3ShooterInterruptJustArmed) {
+      // R/ZL cancellation may coincide with a due repeat; the native owner above
+      // gets that cancellation-frame shot once, then the stream is retired.
+      this.s3ShooterInterruptJustArmed = false;
+      this.s3ShooterCancelMain = true;
+      this.s3ShooterHeld = false;
+      this.s3ShooterPendingFirst = false;
+      this.s3ShooterFirstRemaining = 0;
+      this.s3ShooterStreamActive = false;
+    }
+    return result;
   };
   const busyBeforeSplatlingInterrupt = WeaponRunner.prototype.busy;
   WeaponRunner.prototype.busy = function () {
@@ -321,22 +521,36 @@ export function installWeapons(context, profile) {
     if (value <= w.inkMin) return minT * value / Math.max(1e-10, w.inkMin);
     return Math.min(1, minT + (1 - minT) * (value - w.inkMin) / Math.max(1e-10, w.inkFull - w.inkMin));
   };
+  const accumulateChargerElapsed = (r, seconds) => {
+    const elapsed = Number.isFinite(r.s3ChargerElapsed) ? r.s3ChargerElapsed : 0;
+    if (!(seconds > 0)) return elapsed;
+    const compensation = Number.isFinite(r.s3ChargerElapsedCompensation) ? r.s3ChargerElapsedCompensation : 0;
+    const adjusted = seconds - compensation;
+    const total = elapsed + adjusted;
+    r.s3ChargerElapsedCompensation = (total - elapsed) - adjusted;
+    r.s3ChargerElapsed = total;
+    return total;
+  };
   // Stored-charge lifetime/startup ownership from C22 is composed with #775's
   // progressive ink commitment. Paid ink is never refunded by cancel/keep.
   const cancelStored = r => {
-    r.s3Stored = null; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
+    r.s3Stored = null; r.s3KeepMuzzlePending = false; r.s3KeepMuzzleFiring = false; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
     r.s3ChargerSpent = 0;
+    r.s3ChargerElapsed = null; r.s3ChargerElapsedCompensation = 0;
     r.chargeLoop?.stop(.05); r.chargeLoop = null;
   };
   // Input suppression is not a life/weapon reset: recovery, Dodge and hit history continue.
   WeaponRunner.prototype.cancelPendingInput = function () {
     if (this.a.weapon.kind === 'charger') {
       cancelStored(this);
+      this.s3ChargerCancelSwimRemaining = 0; this.s3ChargerCancelRefillPending = false;
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
       this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
       this.s3ReleaseHold = false; this.s3HeldCharge = this.s3HeldChargeT = this.s3ReleaseAt = 0;
     }
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
+    this.s3ShooterStreamActive = false; this.s3ShooterInterruptSub = 0; this.s3ShooterInterruptSquid = 0;
+    this.s3ShooterInterruptJustArmed = false; this.s3ShooterCancelMain = false;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0;
     this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0; this.s3SplatlingHeld = false;
@@ -345,6 +559,8 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
     const a = this.a, held = !!a.intent.fire, epsilon = 1e-10;
+    // A held ZR must not reopen a new charge during the 6F ZL-cancel recovery.
+    if (this.s3ChargerCancelSwimRemaining > epsilon) return;
     // #680: retain the already-paid charge across the one fixed release frame.
     // The current progressive-payment and finite-flight owners still perform release.
     let releaseDue = false;
@@ -359,7 +575,15 @@ export function installWeapons(context, profile) {
       inp = { ...inp, fire: false };
     }
 
-    if (this.s3Stored && !held) {
+    // #291: the keep pre-delay belongs to resurfacing, not time spent hidden.
+    // A release before readiness cancels (#390). At the ready boundary it may
+    // enter the ordinary one-fixed-frame release owner (#680), never bypass it.
+    const storedReleaseReady = this.s3Stored && a.form !== 'squid' && !this.s3WasSquid &&
+      (this.s3Stored.fireDelay || 0) <= dt + epsilon;
+    if (this.s3Stored && !held && !storedReleaseReady) {
+      // #1070: cancelling a live charge keep owns S3's separate 3F ink-recovery delay.
+      a.s3 ||= {};
+      a.s3.chargerKeepRecover = 3 / 60;
       cancelStored(this); this.s3WasSquid = a.form === 'squid';
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false;
       return;
@@ -373,9 +597,10 @@ export function installWeapons(context, profile) {
     if (a.form === 'squid') {
       this.s3WasSquid = true;
       if (this.charging) {
-        if (this.charge >= .999 && held && a.submerged === true) this.s3Stored = {
+        if (isChargerFullCharge(this.charge) && held && a.submerged === true) this.s3Stored = {
           charge: 1, remaining: w.keepChargeTime,
-          fireDelay: Math.max(0, (w.storedFireDelay || 0) - dt),
+          fireDelay: w.storedFireDelay || 0, laserDelay: w.storedLaserDelay || 0,
+          resurfaced: false,
           paid: Math.max(this.s3ChargerSpent || 0, w.inkFull)
         };
         this.charging = false; this.charge = 0; this.chargeT = 0; this.s3ChargerHeldTime = 0;
@@ -384,8 +609,8 @@ export function installWeapons(context, profile) {
       }
       if (this.s3Stored) {
         this.s3Stored.remaining -= dt;
-        this.s3Stored.fireDelay = Math.max(0, (this.s3Stored.fireDelay || 0) - dt);
-        if (this.s3Stored.remaining <= epsilon) { this.s3Stored = null; this.s3ChargerSpent = 0; }
+        this.s3Stored.resurfaced = false;
+        if (this.s3Stored.remaining <= epsilon) { this.s3Stored = null; this.s3KeepMuzzlePending = false; this.s3ChargerSpent = 0; }
       }
       return;
     }
@@ -394,15 +619,25 @@ export function installWeapons(context, profile) {
     if (!this.charging && !this.s3Stored && a.kidT + 1e-10 < (w.swimChargeStartDelay || 0)) return;
 
     // #810: a held squid→humanoid edge refreshes only an existing keep record.
-    if (this.s3Stored && this.s3WasSquid) this.s3Stored.remaining = w.keepChargeTime;
+    if (this.s3Stored && this.s3WasSquid) {
+      this.s3Stored.remaining = w.keepChargeTime;
+      this.s3Stored.fireDelay = w.storedFireDelay || 0;
+      this.s3Stored.laserDelay = w.storedLaserDelay || 0;
+      this.s3Stored.resurfaced = true;
+    }
     this.s3WasSquid = false;
     if (this.s3Stored) {
       this.charge = this.s3Stored.charge;
       this.s3Stored.fireDelay = Math.max(0, (this.s3Stored.fireDelay || 0) - dt);
-      if ((this.s3Stored.fireDelay || 0) > epsilon || !held || !inp.fire) return;
+      this.s3Stored.laserDelay = Math.max(0, (this.s3Stored.laserDelay || 0) - dt);
+      if (this.s3Stored.fireDelay > epsilon || (held && !inp.fire)) return;
+      if (!held) inp = { ...inp, fire: false };
       this.chargeT = 1; this.charging = true;
+      this.s3ChargerElapsed = w.chargeTime; this.s3ChargerElapsedCompensation = 0;
       this.s3ChargerSpent = this.s3Stored.paid ?? w.inkFull;
       this.s3ChargerHeldTime = w.minReleaseTime || 0;
+      // Keep-shot identity survives the ordinary 1F deferred release.
+      this.s3KeepMuzzlePending = true;
       this.s3Stored = null;
     }
 
@@ -411,6 +646,19 @@ export function installWeapons(context, profile) {
       cancelStored(this); this.s3ChargerHeldTime = 0; return;
     }
     if (!this.charging && !this.s3Stored) this.s3ChargerHeldTime = 0;
+
+    // #823 follow-up: zero/underfunded low-ink charge can be armed with a
+    // temporary full native tank, but must never enter native release. Native
+    // release clamps progress to a minimum 0.12 projectile even when no ink was
+    // committed. Wait for the *paid* sourced minimum, not just held elapsed time.
+    if (this.charging && !inp.fire && (this.s3ChargerSpent || 0) + epsilon < w.inkMin) {
+      cancelStored(this);
+      this.s3ChargerHeldTime = 0;
+      this.s3ChargerRepeat = false;
+      this.s3ReleaseHold = false;
+      this.s3HeldCharge = this.s3HeldChargeT = 0;
+      return;
+    }
 
     // A release from a live charge enters the repeat cycle. Release handling
     // below neutralizes only the legacy debit, not the shot/recovery clocks.
@@ -430,14 +678,43 @@ export function installWeapons(context, profile) {
     }
 
     if (inp.fire && this.cooldown <= 0) {
-      if (!this.charging) this.s3ChargerSpent = 0;
+      if (!this.charging) {
+        this.s3ChargerSpent = 0;
+        this.s3KeepMuzzlePending = false; // fresh charge must not inherit an old keep origin
+        this.s3ChargerElapsed = 0; this.s3ChargerElapsedCompensation = 0;
+      }
       const beforeT = this.chargeT || 0, realInk = a.ink;
       const fundedInk = (this.s3ChargerSpent || 0) + realInk;
       const low = fundedInk + epsilon < w.inkMin;
-      const rate = !a.grounded ? (w.airChargeRate ?? 1 / 3) : low ? (w.emptyChargeRate ?? 1 / 3) : 1;
-      let targetT = Math.min(1, beforeT + dt / Math.max(epsilon, w.chargeTime) * rate);
-      targetT = Math.min(targetT, chargerProgressForInk(w, fundedInk));
+      const chargeDuration = Math.max(epsilon, w.chargeTime);
+      // #971: air slowdown starts only beyond the minimum charge. Split a
+      // crossing step; low-ink slowdown is independent and still applies first.
+      const fundedRate = low ? (w.emptyChargeRate ?? 1 / 3) : 1;
+      const airRate = a.grounded ? 1 : (w.airChargeRate ?? 1 / 3);
+      const minimum = w.minimumChargeTime ?? 8 / 60;
+      const earlyDt = Math.min(dt, Math.max(0, minimum - beforeT * chargeDuration) / fundedRate);
+      const progressDt = earlyDt * fundedRate + (dt - earlyDt) * Math.min(fundedRate, airRate);
+      if (!Number.isFinite(this.s3ChargerElapsed)) {
+        this.s3ChargerElapsed = beforeT * chargeDuration;
+        this.s3ChargerElapsedCompensation = 0;
+      }
+      const requestedT = Math.min(1, beforeT + progressDt / chargeDuration);
+      const inkLimitT = chargerProgressForInk(w, fundedInk);
+      const targetT = Math.min(requestedT, inkLimitT);
+      const inkLimited = inkLimitT < requestedT;
+      const elapsedStep = inkLimited
+        ? Math.max(0, targetT - beforeT) * chargeDuration
+        : Math.min(progressDt, Math.max(0, (1 - beforeT) * chargeDuration));
+      const elapsed = accumulateChargerElapsed(this, elapsedStep);
       const scaledDt = Math.max(0, targetT - beforeT) * w.chargeTime;
+      // Normalized progress can land one ULP below 1 after repeated fractional
+      // frame durations (30 × 1/30). The compensated elapsed clock reaches the
+      // native full endpoint on its completion tick. It does not soften
+      // isChargerFullCharge: q<1 presentation/packets remain partial, and
+      // ink-limited progress cannot complete the clock.
+      // The 1/3 airborne rate can finish one representable double below 1s.
+      // Only normalize clock roundoff, never partial packet/ink-limited charge.
+      if (!inkLimited && elapsed + Number.EPSILON * Math.max(1, w.chargeTime) >= w.chargeTime) this.chargeT = 1;
 
       // Advance the native charge owner with a temporary admissible tank, then
       // debit the real tank from the sourced min/full endpoints.
@@ -470,20 +747,45 @@ export function installWeapons(context, profile) {
       const realInk = a.ink, c = Math.max(0, this.charge || 0);
       const legacyDebit = Math.max(w.inkMin, w.inkFull * c);
       a.ink = realInk + legacyDebit;
-      const result = charger.call(this, dt, inp, w);
-      a.ink = realInk;
-      this.s3ChargerSpent = 0;
-      return result;
+      // The projectile engine reads this ONLY within the synchronous native shot.
+      this.s3KeepMuzzleFiring = !!this.s3KeepMuzzlePending;
+      try { return charger.call(this, dt, inp, w); }
+      finally {
+        a.ink = realInk;
+        this.s3ChargerSpent = 0;
+        this.s3KeepMuzzlePending = false;
+        this.s3KeepMuzzleFiring = false;
+      }
     }
     return charger.call(this, dt, inp, w);
   };
   WeaponRunner.prototype._slosher = function (dt, inp, w) {
     const a = this.a, epsilon = 1e-10;
+    // #258: sample consecutive fixed-simulation aim headings during the
+    // committed windup. A stationary aim or first sample must have zero sweep.
+    if (this.slosh >= 0) {
+      const aim = a.aimDir;
+      const yaw = aim && Number.isFinite(aim.x) && Number.isFinite(aim.z)
+        ? Math.atan2(aim.x, aim.z) : Number.isFinite(a.aimYaw) ? a.aimYaw : null;
+      if (yaw !== null) {
+        const prior = this.s3SloshPrevYaw;
+        const delta = Number.isFinite(prior)
+          ? Math.atan2(Math.sin(yaw - prior), Math.cos(yaw - prior)) : 0;
+        // Current S3 verification: a maximum ten degrees of sweep per 60 Hz step.
+        this.s3SloshTurnDelta = Math.max(-Math.PI / 18, Math.min(Math.PI / 18, delta));
+      } else this.s3SloshTurnDelta = 0;
+      this.s3SloshPrevYaw = yaw;
+    } else {
+      this.s3SloshPrevYaw = null;
+      this.s3SloshTurnDelta = 0;
+    }
     const release = () => {
       // Preserve fractional seconds at both boundaries. Without the epsilon,
       // 12 * (1/60) misses .2 and the 17F recovery also gains an extra tick.
       const carry = Math.max(0, this.slosh - w.windup);
       this.slosh = -1; G.projectiles.fireSlosh(a, w);
+      this.s3SloshTurnDelta = 0; this.s3SloshPrevYaw = null;
+      this.s3SloshPostShot = w.postShotLock ?? 0;
       a.lastFire = 0;
       this.s3PostShotRemaining = w.postShotDelay;
       this.cooldown = w.fireInterval - w.windup - carry;
@@ -515,7 +817,9 @@ export function installWeapons(context, profile) {
     Projectiles.prototype[method] = function (a, weapon) {
       let w = weapon;
       if (method === 'fireFlick' && a.weaponRunner.s3FlickVertical) w = { ...weapon,
-        flickDrops: weapon.verticalDrops, flickSpreadDeg: weapon.verticalSpreadDeg, flickSpeed: weapon.verticalSpeed,
+        // #305: a depleted vertical swing keeps its sourced per-unit count from
+        // the depletion plan; a full swing keeps the pinned vertical total.
+        flickDrops: weapon.s3DepletionDrops ?? weapon.verticalDrops, flickSpreadDeg: weapon.verticalSpreadDeg, flickSpeed: weapon.verticalSpeed,
         flickDamageNear: weapon.verticalDamageNear, flickDamageFar: weapon.verticalDamageFar,
       };
       const before = new Set(this.list); const result = original.call(this, a, w); const group = new Map();
@@ -537,7 +841,10 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype._dualies = function (dt, inp, w) {
     const dodging = !!this.dodge;
     if (this.s3DodgeShotPending > 1e-10 && (!inp.fire || inp.sub || this.a.form === 'squid')) this.s3DodgeShotPending = 0;
-    if (this.s3Turret && (!inp.fire || Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 && this.lockT <= 0 || this.a.form === 'squid' || inp.sub)) this.s3Turret = false;
+    // #1020: an empty click cannot preserve post-roll turret accuracy/cadence.
+    // Exactly enough ink remains legal; the state drops only when the next
+    // requested shot is unaffordable.
+    if (this.s3Turret && (!inp.fire || Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 && this.lockT <= 0 || this.a.form === 'squid' || inp.sub || this.a.ink + 1e-10 < w.inkPerShot)) this.s3Turret = false;
     if (this.s3DodgeShotPending > 1e-10) {
       this.s3DodgeShotPending = Math.max(0, this.s3DodgeShotPending - dt);
       if (this.s3DodgeShotPending > 1e-10) {
@@ -574,9 +881,9 @@ export function installWeapons(context, profile) {
       if (age <= hold + 1e-10) base = w.spreadAir;
       else if (age < end - 1e-10) base = w.spreadAir + (w.spreadGround - w.spreadAir) * ((age - hold) / (end - hold));
       else { base = w.spreadGround; this.s3JumpSpreadAge = null; }
-      const first = w.spreadFirst ?? .45;
-      return base * (first + (1 - first) * this.bloom);
+      return base; // S3 maximum outer envelope; selection happens on each admitted shot
     }
+    if (w.kind === 'shooter') return w.spreadGround;
     return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
@@ -587,16 +894,58 @@ export function installWeapons(context, profile) {
     return fireBlaster.call(this, a, w, spreadDeg);
   };
   const fireShooter = Projectiles.prototype.fireShooter;
+  const shooterSource = profile.weaponsFidelityCompletion?.weapons?.shooter;
+  const shooterSpawn = shooterSource?.SplashSpawnParam;
+  const shooterPaint = shooterSource?.SplashPaintParam;
+  const shooterScale = profile.weaponsFidelityCompletion?.worldUnitsPerSourceUnit;
+  const nearDown = new THREE.Vector3(0, -1, 0), nearOrigin = new THREE.Vector3(), nearHit = new Hit();
   Projectiles.prototype.fireShooter = function (a, weapon, spreadDeg) {
-    const result = fireShooter.call(this, a, weapon, spreadDeg);
-    if (a.weaponRunner && weapon.kind === 'shooter') a.weaponRunner.s3PostFireLockActive = true;
+    const accuracy = a.weaponRunner?.s3Accuracy;
+    const outerChance = accuracy?.shot(!!a.grounded, a.weaponRunner?.s3JumpSpreadAge);
+    // The sourced probability is independent of the native generic cone bloom.
+    // Inner angular kernel remains a provisional narrow cone pending Nintendo validation.
+    const maxDeviation = Number.isFinite(spreadDeg) ? spreadDeg : (a.grounded ? weapon.spreadGround : weapon.spreadAir);
+    const deviation = outerChance == null ? maxDeviation :
+      (Math.random() < outerChance ? maxDeviation : maxDeviation * (weapon.spreadFirst ?? 0.45));
+    const result = fireShooter.call(this, a, weapon, deviation);
+    if (a.weaponRunner && weapon.kind === 'shooter') {
+      const runner = a.weaponRunner;
+      runner.s3PostFireLockActive = true;
+      runner.s3ShooterStreamActive = true;
+      // #507: count only accepted, emitted main rounds. Remote visual ghosts
+      // must not claim turf or move the authoritative nearest-splash cadence.
+      if (!a.remote && shooterSpawn && shooterPaint &&
+          Number.isFinite(shooterScale) && shooterScale > 0 &&
+          Number.isFinite(shooterSpawn.SpawnNearestLength) &&
+          Number.isFinite(shooterPaint.WidthHalfNearest) &&
+          advanceShooterNearestSlot(runner, shooterSpawn) &&
+          G.physics?.raycast && G.paint?.splat) {
+        const heading = Number.isFinite(a.aimYaw) ? a.aimYaw : a.yaw;
+        const dist = shooterSpawn.SpawnNearestLength * shooterScale;
+        nearOrigin.copy(a.pos);
+        nearOrigin.x += Math.sin(heading) * dist;
+        nearOrigin.z += Math.cos(heading) * dist;
+        nearOrigin.y += 0.4;
+        const contact = G.physics.raycast(nearOrigin, nearDown, 10 * shooterScale, nearHit, true);
+        if (contact.hit && contact.normal.y >= 0.4) {
+          const radius = shooterPaint.WidthHalfNearest * shooterScale;
+          const seed = ((runner.s3ShooterNearestSlot * 2654435761) >>> 0) / 4294967296;
+          a.addTurf(G.paint.splat(nearOrigin.copy(contact.point).addScaledVector(contact.normal, 0.05), radius, a.team, { seed, claimOwner: a }));
+        }
+      }
+      // An emitted round, not cosmetic firing pose, opens the sourced 4F movement window.
+      a.weaponRunner.s3ShooterMoveRemaining = weapon.postFireSwimLock ?? 4 / 60;
+    }
     return result;
   };
   const fireCharger = Projectiles.prototype.fireCharger;
   Projectiles.prototype.fireCharger = function (a, w, charge) {
-    if (charge < .999) return fireCharger.call(this, a, w, charge);
+    if (!isChargerFullCharge(charge)) return fireCharger.call(this, a, w, charge);
     const muzzle = this._muzzle(a, new THREE.Vector3()).clone(), dir = this._aimFrom(a, muzzle, new THREE.Vector3()).clone();
-    const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
+    const fieldRadius = Math.max(0, +w.fieldCollisionRadius || 0);
+    const hit = fieldRadius && this.inkFlight?.world && G.physics.level
+      ? this.inkFlight.world(muzzle, muzzle.clone().addScaledVector(dir, w.rangeMax), fieldRadius, new Hit())
+      : G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
     let length = hit.hit ? hit.dist : w.rangeMax;
     if (G.boss) { const bh = G.boss.segHit(muzzle, muzzle.clone().addScaledVector(dir, length), .1); if (bh) length = Math.min(length, bh.dist); }
     const end = muzzle.clone().addScaledVector(dir, length), result = { t: 0, dist: 0 }, victims = [];
@@ -615,7 +964,9 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype._auto = function (dt, input, w) {
     if (w.kind === 'shooter') {
       if (this.cooldown <= 1e-10) this.cooldown = 0;
-      const pressed = !!input.fire && !this.s3ShooterHeld;
+      if (input.fire && this.cooldown <= 1e-10 && this.a.ink + 1e-10 < w.inkPerShot)
+        this.s3ShooterStreamActive = false;
+      const pressed = !!input.fire && !this.s3ShooterHeld && !this.s3ShooterCancelMain;
       if (!input.fire) this.s3ShooterHeld = false;
       else if (pressed && !this.s3ShooterPendingFirst) {
         this.s3ShooterHeld = true;
@@ -651,7 +1002,12 @@ export function installWeapons(context, profile) {
       this.s3BlasterWindup = 0;
       const beforeInk = this.a.ink;
       const result = auto.call(this, dt, { ...input, fire: true }, { ...w, fireInterval: w.fireInterval - w.preDelay });
-      if (this.a.ink < beforeInk) this.s3PostShotRemaining = w.postShotDelay;
+      if (this.a.ink < beforeInk) {
+        this.s3PostShotRemaining = w.postShotDelay;
+        this.s3BlasterMoveRemaining = w.postShotDelay;
+        this.s3InkRecoverRemaining = w.inkRecoverStop;
+        this.s3BlasterHeldRepeat = !!input.fire;
+      }
       return result;
     }
     if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) { this.s3BlasterWindup = blasterStartupWindup(this.a, input.firePressed, dt, PLAYER.emergeDelay, w.preDelay); this.s3BlasterFromSwim = false; this.firingT = .35; return; }
@@ -665,6 +1021,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.moveSpeed = function () {
     const w = this.a.weapon;
     if (this.lockT > 0) return moveSpeed.call(this);
+    if (w.kind === 'blaster' && this.s3BlasterMoveRemaining > 1e-10 && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     return moveSpeed.call(this);
   };
@@ -674,6 +1031,7 @@ export function installWeapons(context, profile) {
   installFinalDamage(api);
   installContactRecovery(api);
   installWeaponEdgecases(api);
+  installSplatlingJumpSpread(api);
   const applyHit = Projectiles.prototype.applyHit;
   Projectiles.prototype.applyHit = function (attacker, victim, damage, weaponId, groupId) {
     // Only Slosher wire hits carry a cumulative volley maximum. Other families
@@ -682,20 +1040,43 @@ export function installWeapons(context, profile) {
       return applyHit.call(this, attacker, victim, damage, weaponId, groupId);
     const route = G.netm?.shouldApplyHit?.(attacker, victim);
     if (route === 'send' || route === 'drop') return applyHit.call(this, attacker, victim, damage, weaponId, groupId);
+    // Reject unbounded/malformed remote IDs before allocating a wire ledger.
+    const sequence = slosherSequence(groupId);
+    if (sequence === null) return 'rejected';
     const groups = this._s3SlosherOwnerGroups || (this._s3SlosherOwnerGroups = new Map());
+    const floors = this._s3SlosherOwnerFloors || (this._s3SlosherOwnerFloors = new Map());
+    const source = volleySourceKey(attacker);
     const key = volleyOwnerKey(attacker, groupId);
     let group = groups.get(key);
-    if (!group) { group = new WeakMap(); groups.set(key, group); }
+    // Already-admitted groups retain their own committed damage maximum even
+    // when an out-of-order newer volley advances the eviction watermark.
+    if (!group) {
+      if (sequence <= (floors.get(source) || 0)) return 'rejected';
+      if (groups.size >= SLOSHER_OWNER_GROUP_LIMIT) {
+        const retired = groups.keys().next().value;
+        const [owner, actorId, retiredId] = JSON.parse(retired);
+        const retiredSequence = slosherSequence(retiredId);
+        if (retiredSequence === null) return 'rejected'; // preserve fail-closed replay safety
+        const retiredSource = JSON.stringify([owner, actorId]);
+        const nextFloor = Math.max(floors.get(retiredSource) || 0, retiredSequence);
+        // A rejected late/alias packet must not evict a healthy live ledger.
+        if (retiredSource === source && sequence <= nextFloor) return 'rejected';
+        floors.set(retiredSource, nextFloor);
+        groups.delete(retired);
+      }
+      group = new WeakMap(); groups.set(key, group);
+    }
     const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
     if (!(delta > 0)) return 'accepted';
     const hpBefore = victim.hp, aliveBefore = victim.alive;
-    const result = applyHit.call(this, attacker, victim, delta, weaponId);
+    const result = applyHit.call(this, attacker, victim, delta, weaponId, groupId);
     if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
     return result;
   };
   const clearProjectiles = Projectiles.prototype.clear;
   Projectiles.prototype.clear = function (...args) {
     this._s3SlosherOwnerGroups?.clear();
+    this._s3SlosherOwnerFloors?.clear();
     return clearProjectiles.apply(this, args);
   };
   installContactRecovery(api);

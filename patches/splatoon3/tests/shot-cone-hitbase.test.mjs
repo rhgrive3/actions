@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {adaptSource} from '../adapter.mjs';
 import {FixedClock} from '../runtime/clock.mjs';
 import {fixture} from './weapon-edgecases-fixture.mjs';
+import {hurtboxHeight} from '../runtime/player-hurtbox.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`);
 async function setup(){
  const f=await fixture(),{G,THREE}=f;G.scene=new THREE.Scene();G.camera=new THREE.PerspectiveCamera();G.actors=[];G.boss=null;G.netm=null;
@@ -15,10 +16,16 @@ test('#607/#677 actual Shooter and Blaster have azimuth-independent scalar devia
  const {f,ps}=await setup();
  for(const [kind,grounded,deg] of [['shooter',true,4.86],['shooter',false,11.66],['blaster',false,10]]){
   const a=f.make(kind);a.grounded=grounded;a.aimPoint.set(0,1.05,100);a.aimDir.set(0,0,1);
-  for(const radius of [.2,.6,1])for(const azimuth of [0,.125,.25,.375,.5,.75]){
-   const draws=[radius*radius,azimuth];f.setRandom(()=>draws.length?draws.shift():.5);
+  // Shooter accuracy chooses its outer/inner envelope before the native two-
+  // draw scalar cone. Keep that probability draw separate from radius/azimuth.
+  const envelopes=kind==='shooter'?[[0,1],[.999999,a.weapon.spreadFirst??.45]]:[[null,1]];
+  for(const [probability,scale] of envelopes)for(const radius of [.2,.6,1])for(const azimuth of [0,.125,.25,.375,.5,.75]){
+   const draws=[...(probability===null?[]:[probability]),radius*radius,azimuth];let calls=0;
+   f.setRandom(()=>{calls++;return draws.length?draws.shift():.5;});
    ps[kind==='shooter'?'fireShooter':'fireBlaster'](a,a.weapon,deg);const p=ps.list.at(-1),dir=p.vel.clone().normalize();
-   near(Math.acos(Math.min(1,Math.max(-1,dir.z)))*180/Math.PI,deg*radius);
+   near(Math.acos(Math.min(1,Math.max(-1,dir.z)))*180/Math.PI,deg*scale*radius);
+   assert.equal(draws.length,0,'the native cone consumes both scalar draws');
+   assert.equal(calls,kind==='shooter'?5:3,'native seed and Shooter visual-size draws follow the accuracy/cone draws');
    near(p.vel.length(),a.weapon.projSpeed);assert.equal(p.wid,kind);ps.clear();
   }
  }
@@ -36,7 +43,9 @@ test('#607/#677 zero spread consumes no radial RNG; other families retain their 
 
 test('#639/#640 authoritative capsule admission ignores render smoothing but follows actual position/form',async()=>{
  const {f,ps}=await setup(),a=f.make(),e=f.make();e.team=1;e.pos.set(0,0,2);f.G.actors=[e];
- const p=ps._new();Object.assign(p,{owner:a,team:0,size:.285,age:0});p.prev.set(0,1.8,0);p.pos.set(0,1.8,4);
+ // #430 owns body dimensions; place this smoothing probe above the actual hurtbox.
+ const shotY=hurtboxHeight(e,f.PLAYER)+.35;
+ const p=ps._new();Object.assign(p,{owner:a,team:0,size:.285,age:0});p.prev.set(0,shotY,0);p.pos.set(0,shotY,4);
  for(const form of ['kid','squid']){
   e.form=form;e.smoothY=0;const base=f.fidelityProjectileTargets(ps,p).length;
   for(const y of [-.7,-.45,.45,.7]){e.smoothY=y;assert.equal(f.fidelityProjectileTargets(ps,p).length,base,`${form} ${y}`);assert.equal(e.smoothY,y);}
@@ -50,7 +59,8 @@ test('#639/#640 finite Charger uses the same gameplay body base',async()=>{
  const outcomes=[];
  for(const [smoothY,bodyY] of [[0,0],[-.7,0],[.7,0],[0,.45]]){
   const {f,ps}=await setup(),a=f.make('charger'),e=f.make();e.team=1;e.pos.set(0,bodyY,2);e.smoothY=smoothY;f.G.actors=[e];
-  a.character.root.position.y=.75;a.aimPoint.set(0,1.8,100);a.aimDir.set(0,0,1);
+  const shotY=hurtboxHeight(e,f.PLAYER)+.35;
+  a.character.root.position.y=shotY-1.05;a.aimPoint.set(0,shotY,100);a.aimDir.set(0,0,1);
   const hits=[];ps.applyHit=(_a,e,amount)=>hits.push(amount);ps.fireCharger(a,a.weapon,.5);
   for(let i=0;i<4;i++)ps.update(1/60);outcomes.push(hits);assert.equal(e.smoothY,smoothY);
  }
@@ -61,7 +71,8 @@ test('#639/#640 actual Shooter HP is independent of smoothing, and world cover s
  const results=[];
  for(const [smoothY,y,wall] of [[0,0,false],[-.7,0,false],[.7,0,false],[0,.45,false],[.7,.45,true]]){
   const {f,ps}=await setup(),a=f.make(),e=f.make();e.team=1;e.invuln=0;e.hp=100;e.pos.set(0,y,2);e.smoothY=smoothY;f.G.actors=[e];
-  a.character.root.position.y=.75;a.aimPoint.set(0,1.8,100);a.aimDir.set(0,0,1);
+  const shotY=hurtboxHeight(e,f.PLAYER)+.35;
+  a.character.root.position.y=shotY-1.05;a.aimPoint.set(0,shotY,100);a.aimDir.set(0,0,1);
   if(wall){const V=(...v)=>new f.THREE.Vector3(...v);f.G.level.blocks.push({solid:true,grate:false,center:V(0,1,1),half:V(2,2,.05),axes:[V(1,0,0),V(0,1,0),V(0,0,1)],faces:[]});f.G.level.queryBlocks=(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;};}
   ps.fireShooter(a,a.weapon,0);for(let i=0;i<3;i++)ps.update(1/60);results.push(e.hp);
  }
@@ -106,7 +117,7 @@ test('#607/#677 ghosts preserve transmitted launch vectors without applying spre
  }
 });
 
-test('current35-field recorder preserves scalar launch vectors through the full network composition',async()=>{
+test('current36-field recorder preserves scalar launch vectors through the full network composition',async()=>{
  const {fixture:composed}=await import('../../../scripts/weapons-fixture.mjs');
  for(const kind of ['shooter','blaster']){
   const f=await composed({site:new URL('../../../.cone-network-source',import.meta.url).pathname,fidelity:true,network:true});
@@ -115,7 +126,7 @@ test('current35-field recorder preserves scalar launch vectors through the full 
   const nm=f.G.netm=new f.NetMatch({myId:7},{});
   f.projectiles[kind==='shooter'?'fireShooter':'fireBlaster'](a,a.weapon,10);
   const p=f.projectiles.list[0],velocity=Array.from(p.vel.toArray()),packet=nm.out.find(e=>e[1]==='p');
-  assert.equal(packet.length,35);assert.equal(packet[4],kind);
+  assert.equal(packet.length,36);assert.equal(packet[4],kind);
   const peer=f.make(kind);peer.remote=true;peer.aimPoint.set(20,5,-20);peer.grounded=true;
   f.projectiles.list.length=0;let draws=0;f.context.Math.random=()=>{draws++;return .9;};
   f.projectiles.ghostProjectile(peer,packet);const q=f.projectiles.list[0];

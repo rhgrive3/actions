@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture, emitMainShot } from './source-fixture.mjs';
 test('actual Actor stores a full charger charge and expires it without firing underwater', async () => {
   const f = await fixture(), a = f.make('charger'); a.intent.fire = true;
   f.tick(a, 61); assert.ok(a.weaponRunner.charge >= .999);
@@ -25,8 +25,10 @@ test('actual stationary post-dodge state persists after lock and cancels on move
 test('jump initiation selects vertical roller windup, retaining it after landing', async () => {
   const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
   a.grounded = false; r.update(1 / 60, { fire: true, firePressed: true });
-  assert.equal(r.s3FlickVertical, true); a.grounded = true;
-  for (let i = 0; i < 31; i++) r.update(1 / 60, { fire: true });
+  assert.equal(r.s3FlickVertical, true);
+  for (let i = 0; i < 6; i++) r.update(1 / 60, { fire: true });
+  a.grounded = true;
+  for (let i = 0; i < 25; i++) r.update(1 / 60, { fire: true });
   assert.equal(f.shots.length, 1); assert.equal(f.shots[0].windup, 31 / 60);
 });
 test('actual roll consumes one jump edge and routes armor overflow through damage', async () => {
@@ -106,11 +108,11 @@ test('a released short keyboard/mouse tap reaches the actual controller once', a
   assert.equal(a.intent.jump, false); assert.equal(a.intent.fire, false);
 });
 test('gear uses distinct walk and firing curves, and does not speed up roller rolling', async () => {
-  const f = await fixture(), a = f.make(), b = f.make('roller');
+  const f = await fixture({ realProjectiles: true }), a = f.make(), b = f.make('roller');
   a.s3.loadout = b.s3.loadout = Array.from({length:3}, () => ({main:'runSpeed',subs:['runSpeed','runSpeed','runSpeed']}));
   a.setWeapon('shooter'); b.setWeapon('roller');
   assert.ok(Math.abs(a.weaponRunner.moveSpeed()-f.PLAYER.runSpeed*1.5)<1e-9);
-  a.weaponRunner.firingT = 1; assert.ok(Math.abs(a.weaponRunner.moveSpeed()-a.weapon.moveSpeedFiring*1.25)<1e-9);
+  emitMainShot(f, a); assert.ok(Math.abs(a.weaponRunner.moveSpeed()-a.weapon.moveSpeedFiring*1.25)<1e-9);
   b.weaponRunner.rolling = true; b.weaponRunner.rollT = 2; assert.equal(b.weaponRunner.moveSpeed(), b.weapon.rollSpeed);
 });
 test('splatling first stage yields its 80-frame stream, conserving the prepaid ink', async () => {
@@ -130,7 +132,8 @@ test('bomb sub power normalizes the low base once and reaches the raw high value
   const velocity = ps.throwVelocity.bind(ps);
   ps.throwVelocity = (actor, speed, out) => { thrown = speed; return velocity(actor, speed, out); };
   for (let i = 0; i < 6; i++) r.update(1/60,{sub:true});
-  r.update(1/60,{subReleased:true}); assert.equal(ps.bombs.length,1);
+  r.update(1/60,{subReleased:true}); assert.equal(ps.bombs.length,0);
+  r.update(1/60,{}); assert.equal(ps.bombs.length,1);
   assert.ok(Math.abs(thrown-1.68*60)<1e-9);assert.ok(Math.abs(f.SUB.bomb.throwSpeed-1.12*60)<1e-9);
 });
 test('splatling diving cancels both charging and an active stream', async () => {
@@ -161,14 +164,16 @@ test('an 8F legal Charger charge has already spent the 2.25 percent minimum befo
   assert.equal(f.shots.length,1);assert.equal(f.shots[0].charge,charge);
   assert.ok(a.ink<1e-9,'release does not debit the already-paid charge again');
 });
-test('airborne Charger charge advances at one third rate without resetting across landing', async () => {
+test('airborne Charger charge slows after the 8F minimum without resetting across landing', async () => {
   const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=100;a.intent.fire=true;a.grounded=false;
   r.update(1/60,{fire:true}); // 1F humanoid startup
   for(let i=0;i<60;i++)r.update(1/60,{fire:true});
-  assert.ok(Math.abs(r.chargeT-1/3)<1e-9);assert.ok(r.charge<.999);
+  assert.ok(Math.abs(r.chargeT-(8+52/3)/60)<1e-9);assert.ok(r.charge<1);
   a.grounded=true;
-  for(let i=0;i<40;i++)r.update(1/60,{fire:true});
-  assert.ok(Math.abs(r.chargeT-1)<1e-9);assert.ok(r.charge>=.999);
+  for(let i=0;i<34;i++)r.update(1/60,{fire:true});
+  assert.ok(r.chargeT<1,'retained partial needs the final grounded tick');
+  r.update(1/60,{fire:true});
+  assert.equal(r.chargeT,1);assert.equal(r.charge,1);
 });
 test('global menu time cannot skip an actor ink recovery wait', async () => {
   const f=await fixture(),a=f.make();a.form='squid';a.intent.squid=true;a.ink=0;a.lastFire=2;a.s3.recoverStopRemaining=.5;

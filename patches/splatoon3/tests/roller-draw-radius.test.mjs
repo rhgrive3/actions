@@ -220,7 +220,7 @@ test('#750: a recycled projectile never leaks a previous swing draw radius', asy
 
 test('#750: the sourced draw radius survives the owner-to-remote projectile packet', async () => {
   for (const [vertical, expected] of [[false, S3_HORIZONTAL_RADIUS], [true, S3_VERTICAL_RADIUS]]) {
-    // Full production adapter order is required for the current35-field
+    // Full production adapter order is required for the current36-field
     // recorder, immutable Roller unit validation and owner tick/sequence footer.
     const f = await composedFixture({site:process.env.INKWAVE_ROLL_DRAW_SITE || ROOT + '.roller-draw-source',fidelity:true,network:true}), { G, THREE } = f;
     G.actors = []; G.boss = null;
@@ -236,7 +236,7 @@ test('#750: the sourced draw radius survives the owner-to-remote projectile pack
     const events = nm.out.filter(e => e[1] === 'p');
     assert.equal(events.length, p.list.length, `vertical=${vertical}: every glob is recorded`);
     for (const e of events) {
-      assert.equal(e.length,35,'complete installed recorder envelope');
+      assert.equal(e.length,36,'complete installed recorder envelope');
       assert.equal(e[20],expected,`vertical=${vertical}: packet carries the sourced radius`);
     }
     // Replay the recorded packets into a peer's projectile list.

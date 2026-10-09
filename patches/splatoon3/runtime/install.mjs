@@ -1,21 +1,24 @@
+import { installTurfCombatGate } from './turf-combat.mjs';
 import { installSplatGhostReturn } from '../issue-284-adapter.mjs';
 import { installIssue196SpecialChargeCancel } from '../issue-196-adapter.mjs';
 import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
 import { PLAYER, WEAPONS, SUB, SPECIALS, DEFAULT_SETTINGS } from '../../../src/config.js';
 import { Actor } from '../../../src/game/actor.js';
-import { NetMatch } from '../../../src/net/netmatch.js';
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
+import { NetMatch } from '../../../src/net/netmatch.js';
 import { PaintSystem } from '../../../src/world/paint.js';
 import { Minimap } from '../../../src/game/minimap.js';
 import { PlayerController } from '../../../src/game/player.js';
+import { Input } from '../../../src/core/input.js';
 import { Physics, Hit } from '../../../src/game/physics.js';
 import { Menus } from '../../../src/ui/menus.js';
 import { HUD } from '../../../src/ui/hud.js';
 import { SUB_ICONS, SPECIAL_ICONS } from '../../../src/ui/ui-icons.js';
 import { ShadowCache } from '../../../src/core/shadowcache.js';
 import { installMovement } from './movement.mjs';
+import { installNormalJumpHold } from './normal-jump-hold.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
 import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
@@ -50,17 +53,21 @@ import { installSwimMotion } from './swim-motion.mjs';
 import { installWallMotion } from './wall-motion.mjs';
 import { installFormMotion } from './form-motion.mjs';
 import { installDualiesMotion } from './dualies-motion.mjs';
+import { installDualiesNetwork } from './dualies-network.mjs';
 import { installRollerDetailMotion } from './roller-detail-motion.mjs';
+import { installRollerFold } from './roller-fold.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSuperJumpTargetNotification } from './superjump-target-notification.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
+import { installSpawnPoseMotion } from './spawn-pose-motion.mjs';
 import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
 import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
+import { installControllerMotion } from './controller-motion.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -86,6 +93,7 @@ export function install(profile) {
   installKitNetwork(api);
   installRollerMotion(api, profile);
   installMovement(api, profile);
+  installNormalJumpHold(api, profile);
   installMovementMotion(api, profile);
   installGear(api, profile);
   installFlow(api, profile);
@@ -96,7 +104,6 @@ export function install(profile) {
   installRendering(api);
   installWeaponMotion(api, profile);
   installBombMotion(api);
-  installWeaponDetailMotion(api, profile);
   installDualiesMotion(api, profile);
   installCarryMotion(api);
   installWalkMotion(api, profile);
@@ -106,9 +113,13 @@ export function install(profile) {
   installWallMotion(api, profile);
   installFormMotion(api, profile);
   installRollerDetailMotion(api, profile);
+  // Presentation only: the Roller's articulated middle hinge reads the attack state
+  // installRollerMotion/roller logic already own and never writes gameplay back.
+  installRollerFold(api, profile);
   installSuperjumpMotion(api, profile);
   installSquidrollMotion(api, profile);
   installHitSpawnMotion(api, profile);
+  installSpawnPoseMotion(api);
   installDeathCamera(api);
   installIdleMotion(api, profile);
   installEmotesMotion(api, profile);
@@ -116,6 +127,7 @@ export function install(profile) {
   installFlowMotion(api);
   installFaceMotion(api, profile);
   installRespawnLifecycle(api, profile);
+  installControllerMotion({ Input, PlayerController, G });
   // Issue #798: the arc guide is presentation-only. Throttle its native
   // collision-query cadence without touching actual bomb physics.
   installArcPreviewPerformance(api);
@@ -125,6 +137,7 @@ export function install(profile) {
   installSuperJumpTargetNotification(api);
   installMuzzleFeedback(api);
   installMinimapDirty(api);
+  installWeaponDetailMotion(api, profile);
   installChargerSurface(api);
   // The S3 ShotGuideFrame guide reads the installed projectile motion records, so
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.
@@ -137,5 +150,7 @@ export function install(profile) {
   installed = true;
   installIssue196SpecialChargeCancel(api);
   installSplatGhostReturn(api);
+  installTurfCombatGate(api);
+  installDualiesNetwork(api);
   return api;
 }

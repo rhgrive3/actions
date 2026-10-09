@@ -198,20 +198,21 @@ test('Storm throwlock does not grant armor against weapon hits', async () => {
   close(a.hp, 60, 'Storm user takes full weapon damage without armor reduction');
 });
 
-// #624 admits only Storm, preserving Slam activation and rise resource gates.
-test('#624 Storm-only resource admission preserves HP and ink gates during Slam activation and rise', async () => {
+// #624 remains Storm-only for ink/resource admission; #924 independently keeps natural HP recovery alive during Slam.
+test('#624 composes with #924: Slam gets HP-only recovery, never Storm ink processing', async () => {
   const f = await fixture();
   const a = setupActor(f, { special: 'slam', grounded: false, onEnemy: false });
   a.hp = 80; a.ink = 50; a.lastDamage = 10; a.lastFire = 10;
   a.intent.special = true;
   f.tick(a);
   assert.equal(a.specialActive?.id, 'slam');
-  close(a.hp, 80, 'Slam activation does not run Storm resource processing');
-  close(a.ink, 50);
+  assert.ok(a.hp > 80, 'Slam activation keeps #924 natural HP recovery');
+  const hpAfterActivation = a.hp;
+  close(a.ink, 50, 'Slam activation does not run Storm ink processing');
   f.tick(a);
   assert.equal(a.specialActive?.id, 'slam');
-  close(a.hp, 80, 'unrelated Slam HP recovery remains unchanged');
-  close(a.ink, 50, 'unrelated Slam ink refill remains unchanged');
+  assert.ok(a.hp > hpAfterActivation, 'Slam rise keeps natural HP recovery');
+  close(a.ink, 50, 'Slam rise still does not run Storm ink refill');
 });
 
 test('Storm activation uses the existing enemy-ink damage cap', async () => {

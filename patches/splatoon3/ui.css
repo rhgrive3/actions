@@ -25,6 +25,23 @@
 /* #594: Splatoon 3 shows no charge-reticle cluster on a charging weapon while it is idle. */
 .iw-ret--charger.is-idle, .iw-ret--splatling.is-idle { visibility: hidden; }
 
+/* #1058: S3 Charger exposes two distinct reach endpoints while the charge reticle is live.
+   Current reach is the solid inner mark; full-charge reach stays as the lighter dashed outer mark. */
+.iw-ret--charger::before, .iw-ret--charger::after {
+  content: ''; position: absolute; pointer-events: none; box-sizing: border-box; border-radius: 50%;
+  opacity: 0; transition: opacity .08s linear;
+}
+.iw-ret--charger::before {
+  left: var(--crx, 0px); top: var(--cry, 0px); width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px;
+  border: 2.5px solid var(--self-light); box-shadow: 0 0 0 1px rgba(0,0,0,.7), 0 0 4px rgba(255,255,255,.45);
+}
+.iw-ret--charger::after {
+  left: var(--cfx, 0px); top: var(--cfy, 0px); width: 17px; height: 17px; margin: -8.5px 0 0 -8.5px;
+  border: 2px dashed rgba(255,255,255,.88); box-shadow: 0 0 0 1px rgba(0,0,0,.55);
+}
+.iw-ret--charger.has-reach::before { opacity: 1; }
+.iw-ret--charger.has-reach::after { opacity: .72; }
+
 /* Turf's fourth statistic; Boss keeps its separate native columns. */
 .iw-ttable--turf .iw-ttable__head, .iw-ttable--turf .iw-prow { grid-template-columns: calc(var(--u) * 2.7) minmax(0, 1fr) calc(var(--u) * 8) repeat(3, calc(var(--u) * 3.3)); }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-ttable__head,
@@ -262,4 +279,17 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, .9);
   transform: translate(-50%, -50%);
   pointer-events: none;
+}
+
+/* #1158: the post-dodge Splat Dualies aim guide becomes ONE true centered
+   reticle. Normal two-hand guides and their shot kick remain independent. */
+.iw-ret--dualies .iw-ret__merged {
+  opacity: 0;
+  transition: opacity .18s var(--spring);
+}
+.iw-ret--dualies.is-lock .iw-ret__merged { opacity: 1; }
+.iw-ret--dualies.is-lock .iw-ret__twin,
+.iw-ret--dualies.is-lock .iw-ret__lock {
+  visibility: hidden;
+  opacity: 0;
 }

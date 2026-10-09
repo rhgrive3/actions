@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatWorld } from '../../reliability/tests/combat-integration-fixture.mjs';
 
-test('negative legacy four-argument forwarding loses the Slosher wire budget identity', async () => {
+test('#1150 broken four-argument forwarding fails closed instead of sending ungrouped Slosher damage', async () => {
   const sender=await combatWorld('A',{network:true});
   const receiver=await combatWorld('B',{network:true});
   try {
@@ -14,11 +14,11 @@ test('negative legacy four-argument forwarding loses the Slosher wire budget ide
     receiver.victim.invuln=0; receiver.victim.hp=100; receiver.victim.alive=true;
     for(let i=0;i<2;i++){
       sender.applyProjectileHit(G.projectiles,p,victim,70,victim.pos);
-      const packet=sender.wire.at(-1).data;
-      assert.equal(packet.k,'hit'); assert.equal(packet.g,undefined);
-      receiver.net.onMessage('A',packet);
+      assert.equal(sender.wire.length,0,'no ungrouped hit may leave the sender');
+      receiver.net.onMessage('A',{k:'hit',a:attacker.nid,v:victim.nid,d:70,w:'slosher'});
     }
     assert.equal(receiver.G.projectiles._s3SlosherOwnerGroups,undefined,
       'the receiving owner cannot maintain the per-volley maximum without its identity');
+    assert.equal(receiver.victim.hp,100);assert.equal(sender.net.hitPending.size,0);
   } finally {sender.dispose();receiver.dispose();}
 });

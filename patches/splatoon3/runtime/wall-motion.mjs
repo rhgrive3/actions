@@ -139,7 +139,7 @@ export function installWallMotion(api, profile) {
     restore(this, m);
     const owner = this._owner(), frame = s.movementMotion;
     const actions = frame?.actions ?? owner?.s3?.actions;
-    const action = actions?.surge;
+    const action = frame?.surgePresentationC1088 ?? owner?.s3?.c1088SurgePresentation ?? actions?.surge;
     const allowed = this.s3WallMotionEnabled !== false &&
       (s.form === 'climb' || s.form === 'squid') && !this.dance &&
       owner?.alive !== false && frame?.alive !== false && !owner?.specialActive &&
@@ -163,13 +163,23 @@ export function installWallMotion(api, profile) {
         m.glow = ready ? visual.readyEmission * (1 - ease(m.readyAge / visual.readyFlashTime)) : 0;
         m.shape = 1 - visual.compress * ease(m.charge);
       } else {
+        const remoteBurst = action?.tag === 'inkwave.s3.surge.v1' && action.phase === 'burst';
+        if (remoteBurst) {
+          const duration = Math.max(EPS, cfg.duration * clamp(action.charge));
+          const age = Math.min(duration, Math.max(0, duration - action.time + action.sampleAge));
+          if (!m.burst || m.burst.c1088Epoch !== action.epoch) {
+            m.burst = { age, duration, charge: clamp(action.charge), from: m.shape, c1088Epoch: action.epoch };
+          } else {
+            m.burst.age = age; m.burst.duration = duration; m.burst.charge = clamp(action.charge);
+          }
+        } else if (m.burst?.c1088Epoch !== undefined) m.burst = null;
         m.ready = false; m.readyAge = 0;
         if (m.crest) {
           m.crest.age += step;
           if (s.grounded || s.form === 'climb' || m.crest.age + EPS >= m.crest.duration) m.crest = null;
         }
         if (m.burst) {
-          m.burst.age += step;
+          if (!(remoteBurst && m.burst.c1088Epoch === action.epoch)) m.burst.age += step;
           if (s.form !== 'climb' || m.burst.age + EPS >= m.burst.duration || actions && action?.phase !== 'burst') m.burst = null;
         }
         if (m.crest) { m.phase = 'crest'; m.charge = m.crest.charge; }

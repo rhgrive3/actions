@@ -26,10 +26,13 @@ function simulate(f, init, {dt=SIM_DT,steps=120}={}) {
 
 // Wire packet -> the plain state a ghost would integrate (mirrors ghostProjectile).
 function fromPacket(e) {
+  const inkMetaOffset = e[27] === null || typeof e[27] === 'object' ? 1 : 0;
+  const kitOffset = e.length === 35 || e.length === 36 || e.length === 37 ? 2 : 0;
+  const birth = 27 + inkMetaOffset + kitOffset;
   return {
     type: e[3], pos: { x: e[5], y: e[6], z: e[7] }, vel: { x: e[8], y: e[9], z: e[10] },
     delay: e[11], life: e[12], straight: e[13], grav: e[16], drag: e[17],
-    vertical: e[e.length===35?29:27], seed: e[e.length===35?30:28], netId: e[e.length===35?31:29],
+    vertical: e[birth], seed: e[birth + 1], netId: e[birth + 2],
   };
 }
 
@@ -85,7 +88,7 @@ test('vertical roller: remote ink no longer flies too far on the wire', async ()
 
   // The shooter's own drop is identical in both runs (profile physics unchanged).
   assert.equal(bLocal.grav, 144); assert.equal(fLocal.grav, 144);
-  assert.equal(fPacket[29], 1, 'vertical birth mode replicated explicitly');
+  assert.equal(fPacket[30], 1, 'vertical birth mode replicated explicitly');
 
   const localTraj = simulate(fixed.f, localState(fLocal));
   const wireBaseline = simulate(baseline.f, packetState(baseline.f, bPacket));
@@ -222,7 +225,7 @@ test('visual envelope: curtain follows immutable birth mode, not mutable actor m
   }
 });
 
-test('slosher: per-drop delay and lifetime survive the wire exactly', async () => {
+test('slosher: true-birth unit and lifetime survive the wire exactly', async () => {
   const f = await fixture({ network: true });
   const nm = f.makeNetMatch(f.makeSession());
   const a = f.makeActor({ nid: 0, owner: 'me', roller: false });
@@ -239,8 +242,9 @@ test('slosher: per-drop delay and lifetime survive the wire exactly', async () =
   const packets = nm.out.filter(e => e[1] === 'p');
   assert(local.length > 1 && packets.length === local.length);
   for (let i = 0; i < local.length; i++) {
-    assert.equal(packets[i][11], local[i]._s3SloshBirthDelay, `drop ${i} source delay`);
-    assert.equal(packets[i][12], local[i].life, `drop ${i} life`);
-    assert.equal(packets[i][13], local[i].straight, `drop ${i} straight`);
+    const born=local[packets[i][33]];
+    assert.equal(packets[i][11], 0, `drop ${i} remaining delay`);
+    assert.equal(packets[i][12], born.life, `drop ${i} life`);
+    assert.equal(packets[i][13], born.straight, `drop ${i} straight`);
   }
 });

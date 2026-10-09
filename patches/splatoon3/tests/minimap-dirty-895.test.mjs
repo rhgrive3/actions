@@ -1,6 +1,7 @@
 // Issue #895: the live minimap must not rescan/copy the whole W*H raster for a
 // localized paint change. Adapter patches/splatoon3/minimap-dirty-adapter.mjs +
 // owned helper runtime/minimap-dirty.mjs; inkwave-public is immutable.
+// The source under test runs through the full six-adapter production stack.
 //
 // The strongest claim here is equivalence: the partial path and a forced
 // whole-map refresh are compared byte-for-byte on the real Minimap class for all
@@ -15,12 +16,14 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptMinimapDirty } from '../minimap-dirty-adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 import { installMinimapDirty } from '../runtime/minimap-dirty.mjs';
 
 const ROOT = new URL('../../../', import.meta.url);
 const read = rel => fs.readFileSync(new URL(rel, ROOT), 'utf8');
 const compose = (rel, code = read('inkwave-public/' + rel)) =>
-  adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+  adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 
 // Real stage layouts from the Issue (metres), mapped at the default 7 px/m.
 const STAGES = {
@@ -168,9 +171,8 @@ test('#895 adapter anchors are exact, unique and fail-closed; #419 anchors survi
   assert.notEqual(out, raw);
   assert.match(out, /this\.grid\[k\] = val;\n        changed = true;\n        if \(this\._inkMark\) this\._inkMark\(f, i, j\);/);
   assert.match(out, /this\.version\+\+;\n    if \(this\.inkDirty\) this\.inkDirty\.full = true;/);
-  // The public adapter remains fail-closed when a completed BUILD tree is
-  // accidentally passed through it again; only the narrow #895 sub-adapter is
-  // allowed to recognize its own complete hooks.
+  // The build-only public adapter rejects a completed or partial BUILD tree.
+  // Only the narrow #895 sub-adapter recognizes its own complete hooks.
   assert.throws(() => adaptSource('src/world/paint.js', out), /conflict/);
   // A genuine upstream drift to the write site also fails closed.
   const paintDrift = raw.replace('        this.grid[k] = val;\n        claimed += cellA;', '        this.grid[k] = val; claimed += cellA;');

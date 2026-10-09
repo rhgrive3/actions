@@ -33,7 +33,8 @@ test('suction spec keeps 11.3.0 omissions explicitly unknown', () => {
   assert.equal(SUCTION.fuseStatus, 'unknown-omitted');
   assert.equal(SUCTION.inkCost, null);
   assert.equal(SUCTION.gravity, null);
-  assert.equal(SUCTION.fuseFallbackStatus, 'calibrated');
+  assert.equal(SUCTION.fuseFallback, 2, '#1028 attached fuse is 120F / 2s');
+  assert.equal(SUCTION.fuseFallbackStatus, 'community-verified');
 });
 
 test('curling charge uses SpawnSpeedZMaxCharge, never the gear tiers', () => {
@@ -372,14 +373,17 @@ test('native release charges suction ink 70 and rejects a 69 tank', async () => 
   const before = ok.actor.ink;
   for(let i=0;i<6;i++)ok.runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
   ok.runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: true });
-  assert.equal(ok.projectiles.bombs.length, 1, 'a real native release created the bomb');
+  assert.equal(ok.projectiles.bombs.length, 0, '#1037 release tick is the 1F use-startup');
+  ok.runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: false });
+  assert.equal(ok.projectiles.bombs.length, 1, 'a real native release created the bomb on the +1F use boundary');
   assert.equal(before - ok.actor.ink, 70, 'ink charged exactly the resolved cost');
 
   // one point short: the native ink check must refuse and create nothing
   const short = releaseWith(api, 'suction', 69);
   for(let i=0;i<6;i++)short.runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
   short.runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: true });
-  assert.equal(short.projectiles.bombs.length, 0, 'a 69 tank cannot afford the release');
+  short.runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: false });
+  assert.equal(short.projectiles.bombs.length, 0, 'a 69 tank cannot afford the release even after the +1F use boundary');
   assert.equal(short.actor.ink, 69, 'a refused release costs nothing');
 });
 
@@ -506,7 +510,9 @@ function recordBomb(api, nm, weaponSub, hold) {
   api.G.actors = [actor];
   for (let i = 0; i < Math.max(6, Math.round(hold * 60)); i++) runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
   runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: true });
-  assert.equal(projectiles.bombs.length, 1, 'the release produced exactly one bomb to record');
+  assert.equal(projectiles.bombs.length, 0, '#1037 does not record a bomb on the physical release tick');
+  runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: false });
+  assert.equal(projectiles.bombs.length, 1, 'the +1F use boundary produced exactly one bomb to record');
   const events = nm.out.filter(e => e[1] === 'b');
   assert.equal(events.length, 1, 'the native recBomb recorded one b event');
   // The owner's own bomb has done its job: leaving it in the list would put a second,
@@ -579,8 +585,8 @@ test('the real _play hands a curling ghost its identity, charge and rolling beha
   assert.equal(ghost.s3Sub, undefined, 'and no authoritative kit identity');
 
   // Presentation follows the sub: it arcs on FlyGravity, lands on GroundGravity and
-  // bursts on Curling's BurstFrame rather than the generic fuse. The flight is driven
-  // from a height the water guard cannot end early, so every phase is actually run.
+  // uses the owner-resolved full-charge lifetime (90F here) from release. The flight
+  // is driven from a height the water guard cannot end early, so every phase is run.
   api.G.physics.segment = (a, b, out) => { out.hit = false; return out; };
   const g0 = kitBombGravity(api.SUB, ghost);
   assert.equal(g0, CURLING.flyGravity, 'a ghost in flight uses the kit FlyGravity');
@@ -594,8 +600,8 @@ test('the real _play hands a curling ghost its identity, charge and rolling beha
   tick(api, api.G.projectiles, 1 / 60);
   assert.equal(ghost.s3Mode, 'rolling', 'a remote Curling Bomb rolls instead of bouncing');
   assert.equal(kitBombGravity(api.SUB, ghost), CURLING.groundGravity, 'and rolls on GroundGravity');
-  assert.ok(ghost.fuse > 0 && ghost.fuse <= CURLING.burstFrame, 'it is armed on the Curling burst window');
-  assert.equal(kitBombFuseTotal(api.SUB, ghost), CURLING.burstFrame, 'and its beep curve uses that window');
+  assert.ok(ghost.fuse > 0 && ghost.fuse < ghost.s3GhostResolved.fuse, 'the release-started fuse consumed the airborne interval');
+  near(kitBombFuseTotal(api.SUB, ghost), 90 / 60, 'and its beep curve uses the full-charge 90F window');
 });
 
 test('a remote Suction Bomb sticks where the owner stuck it', async () => {

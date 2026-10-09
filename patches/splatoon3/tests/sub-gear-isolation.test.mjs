@@ -22,15 +22,15 @@ async function rig(){
 test('full installed Kit releases keep nested same-sub cost actor-local',async()=>{
  for(const kind of ['charger','shooter','roller']){
   const f=await rig(),a=f.make(kind,'inkSaverSub',57),b=f.make(kind,'inkSaverSub',0),base=f.SUB[a.weapon.sub],before=JSON.stringify(base);let nested=false;
-  f.G.netm={recBomb(){if(nested)return;nested=true;f.step(b,{sub:true},8);f.step(b,{subReleased:true});}};
-  f.step(a,{sub:true},8);f.step(a,{subReleased:true});assert.equal(f.G.projectiles.bombs.length,2);
+  f.G.netm={recBomb(){if(nested)return;nested=true;f.step(b,{sub:true},8);f.step(b,{subReleased:true});f.step(b,{});}};
+  f.step(a,{sub:true},8);f.step(a,{subReleased:true});f.step(a,{});assert.equal(f.G.projectiles.bombs.length,2);
   const cost=base.inkCost??base.inkCostFallback;assert.ok(Math.abs((100-a.ink)-cost*a.s3.modifiers.inkSaverSub)<1e-8);assert.ok(Math.abs((100-b.ink)-cost)<1e-8);assert.equal(JSON.stringify(base),before);
  }
 });
 test('full installed Kit preview and nested throw share actor-local power and restore preview context on error',async()=>{
  const f=await rig(),a=f.make('charger','subPower',57),b=f.make('charger','subPower',0),ps=f.G.projectiles,base=f.SUB.bomb.throwSpeed;let nested=false,preview;
- f.G.netm={recBomb(){if(nested)return;nested=true;ps.updateArc(b,true);preview=new f.THREE.Vector3(ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz);f.step(b,{sub:true},8);f.step(b,{subReleased:true});}};
- f.step(a,{sub:true},8);f.step(a,{subReleased:true});assert.equal(ps.bombs.length,2);assert.ok(ps.bombs[1].vel.distanceTo(preview)<1e-8);
+ f.G.netm={recBomb(){if(nested)return;nested=true;ps.updateArc(b,true);preview=new f.THREE.Vector3(ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz);f.step(b,{sub:true},8);f.step(b,{subReleased:true});f.step(b,{});}};
+ f.step(a,{sub:true},8);f.step(a,{subReleased:true});f.step(a,{});assert.equal(ps.bombs.length,2);assert.ok(ps.bombs[1].vel.distanceTo(preview)<1e-8);
  const inherited=ps.throwVelocity(a,0,new f.THREE.Vector3());const ratio=ps.bombs[0].vel.clone().sub(inherited).length()/ps.bombs[1].vel.clone().sub(ps.throwVelocity(b,0,new f.THREE.Vector3())).length();assert.ok(Math.abs(ratio-a.s3.modifiers.subPower)<1e-8,JSON.stringify({ratio,wanted:a.s3.modifiers.subPower,a:ps.bombs[0].vel.toArray(),b:ps.bombs[1].vel.toArray(),inherited:inherited.toArray()}));assert.equal(f.SUB.bomb.throwSpeed,base);
  ps.updateArc(a,false);f.G.physics.segment=()=>{throw Error('arc collision failed');};assert.throws(()=>ps.updateArc(a,true),/arc collision failed/);assert.equal(ps.s3PreviewSubSpeed,undefined);assert.equal(f.SUB.bomb.throwSpeed,base);
 });
@@ -52,10 +52,43 @@ test('full dispatcher preserves explicit Kit power once and implicit Storm snaps
  const replace=(s,a,b)=>{assert.equal(s.split(a).length-1,1);return s.replace(a,b);};
  const oldZ='  const horizontal = p.spawnSpeedZ * cp - p.spawnSpeedY * sp;';
  assert.throws(()=>replace(raw,oldZ,'unused'),/0 !== 1/,'old dispatcher anchor cannot transform the explicit-speed module');
- const legacy=raw.replace('  const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;\n','').replace('speed * cp','p.spawnSpeedZ * cp').replace('speed * sp','p.spawnSpeedZ * sp');
+ const legacy=raw.replace('  const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;\n','').replaceAll('speed * cp','p.spawnSpeedZ * cp').replaceAll('speed * sp','p.spawnSpeedZ * sp');
  const legacyCompiled=adaptGearSub(rel,legacy,replace), old=await import('data:text/javascript;base64,'+Buffer.from(legacyCompiled).toString('base64'));
  for(const kind of ['bomb','storm']){const x=old.fidelityThrowVelocity(a,kind,vector()),y=f.fidelityThrowVelocity(a,kind,vector());assert.deepEqual([x.x,x.y,x.z],[y.x,y.y,y.z]);}
  assert.throws(()=>adaptGearSub(rel,compiled,replace),/expected one fidelity launch-speed owner/);
  assert.throws(()=>adaptGearSub(rel,raw+raw,replace),/expected one fidelity launch-speed owner/);
  assert.throws(()=>adaptGearSub(rel,raw.replace('Number.isFinite(forwardSpeed)','forwardSpeed !== undefined'),replace),/expected one fidelity launch-speed owner/);
+});
+
+// #968: the real loadout/kit path, not a manually supplied generic multiplier.
+import { gearCurve } from '../runtime/gear.mjs';
+function powerLoadout(ap) {
+ const out=Array.from({length:3},()=>({main:'none',subs:['none','none','none']}));
+ for(const p of out) if(ap>=10){p.main='subPower';ap-=10;}
+ for(const p of out) for(let i=0;i<3&&ap>=3;i++,ap-=3)p.subs[i]='subPower';
+ assert.equal(ap,0);return out;
+}
+test('#968 Curling and Suction use their own extracted AP curves through real gear equip',async()=>{
+ const f=await rig();
+ for(const kind of ['roller','shooter']) for(const ap of [0,3,10,30,57]){
+  const a=f.make(kind,'subPower',0);a.s3.loadout=powerLoadout(ap);a.setWeapon(kind);
+  const sub=f.SUB[a.weapon.sub], t=sub.throwSpeedTiers;
+  const expected=gearCurve(ap,t.low,t.mid,t.high);
+  assert.ok(Math.abs(resolveSubForThrow(a,0,f.SUB).throwSpeed-expected)<1e-9,`${kind}/${ap}`);
+  assert.ok(Math.abs(a.s3.modifiers.subPower-expected/t.low)<1e-9);
+ }
+ const a=f.make('roller','subPower',57);
+ assert.ok(Math.abs(resolveSubForThrow(a,0,f.SUB).throwSpeed-31.2)<1e-9);
+ const baseline=f.SUB.curling.throwSpeedMaxCharge/f.SUB.curling.throwSpeed;
+ assert.ok(Math.abs(resolveSubForThrow(a,1,f.SUB).throwSpeed/resolveSubForThrow(a,0,f.SUB).throwSpeed-baseline)<1e-9,'existing charge mapping is independent');
+});
+test('#968 kit swaps and actual authoritative Curling throws do not accumulate power or leak it',async()=>{
+ const f=await rig(),a=f.make('roller','subPower',57),b=f.make('roller','subPower',0);
+ const originals=JSON.stringify(f.SUB),packets=[];f.G.netm={recBomb(owner,bomb){packets.push([owner,bomb]);}};
+ for(const kind of ['shooter','roller','shooter','roller'])a.setWeapon(kind);
+ for(const actor of [a,b]){f.step(actor,{sub:true},8);f.step(actor,{subReleased:true});f.step(actor,{});}
+ assert.equal(f.G.projectiles.bombs.length,2);assert.equal(packets.length,2);
+ const [first,second]=f.G.projectiles.bombs;
+ assert.ok(Math.abs(first.s3Resolved.throwSpeed/second.s3Resolved.throwSpeed-1.3)<1e-9);
+ assert.equal(JSON.stringify(f.SUB),originals);assert.equal(b.s3.modifiers.subPower,1);
 });

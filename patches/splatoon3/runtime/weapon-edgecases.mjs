@@ -1,7 +1,63 @@
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
+
 const EPS = 1e-10, DEG = Math.PI / 180;
+const EMPTY_SUB_GATE_INPUT = Object.freeze({});
+function subGateLocked(runner, kind, dt) {
+  const postShot = kind === 'slosher'
+    ? Math.max(0, (runner.s3SloshPostShot || 0) - (runner.s3GateInActor ? 0 : dt))
+    : runner.s3DualiesPostShot;
+  return postShot > EPS || (kind === 'dualies' && (runner.s3DualiesInterruptSub || 0) > EPS);
+}
+function makeSubGateInput(runner) {
+  const state = { runner, source: EMPTY_SUB_GATE_INPUT, kind: '', dt: 0,
+    sub: false, subReleased: false, cancelMain: false };
+  const read = prop => {
+    if (prop === 'sub' || prop === 'subReleased')
+      return subGateLocked(runner, state.kind, state.dt) ? false : state[prop];
+    if (state.cancelMain && (prop === 'fire' || prop === 'firePressed')) return false;
+    return state.source[prop];
+  };
+  const view = new Proxy({}, {
+    get: (_, prop) => read(prop),
+    has: (_, prop) => prop === 'sub' || prop === 'subReleased' || Reflect.has(state.source, prop),
+    ownKeys: () => {
+      const keys = Reflect.ownKeys(state.source);
+      for (const prop of ['sub', 'subReleased'])
+        if (!keys.includes(prop)) keys.push(prop);
+      return keys;
+    },
+    getOwnPropertyDescriptor: (_, prop) => {
+      const descriptor = Object.getOwnPropertyDescriptor(state.source, prop);
+      if (!descriptor && prop !== 'sub' && prop !== 'subReleased') return undefined;
+      return { configurable: true, enumerable: descriptor?.enumerable ?? true,
+        writable: true, value: read(prop) };
+    },
+  });
+  return { state, view };
+}
+
+// Reuse one late-bound input view per runner instead of creating a Proxy
+// on every 60 Hz update. The visible keys and descriptors still come from
+// the *current* spread snapshot, including when native code enumerates it.
+// The owner pointer is temporarily restored by the call site for reentry.
+export function dualiesInputGate(runner) {
+  const current = () => runner._s3DualiesPreparedInput || {};
+  return new Proxy({}, {
+    get(_target, prop) {
+      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
+      return current()[prop];
+    },
+    has(_target, prop) { return prop in current(); },
+    set(_target, prop, value) { current()[prop] = value; return true; },
+    deleteProperty(_target, prop) { return delete current()[prop]; },
+    ownKeys() { return Reflect.ownKeys(current()); },
+    getOwnPropertyDescriptor(_target, prop) { return Object.getOwnPropertyDescriptor(current(), prop); },
+    defineProperty(_target, prop, descriptor) { return Reflect.defineProperty(current(), prop, descriptor); },
+  });
+}
+
 
 // #729 — S3 Ver.11.3.0 resolves an impact-triggered blast one fixed frame after the
 // contact (tick N impact -> tick N+1 burst), so a target can move between the two
@@ -10,8 +66,7 @@ const EPS = 1e-10, DEG = Math.PI / 180;
 let flushing = 0;
 
 // This retains the existing two-draw radial sampler, not a claimed S3 PDF.
-// Ground pitch has its own angular envelope; neither bloom nor the horizontal
-// scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
+// #1045: PitchDegSwerve is independent of the horizontal jump/recovery envelope.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
   // #883: Dualies expose one scalar spread envelope, so do not inherit the
@@ -40,14 +95,20 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
     return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
       .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
   }
-  if (w.kind !== 'splatling' || !a.grounded || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, horizontal);
+  if (w.kind !== 'splatling' || !Number.isFinite(w.spreadPitchGround)) {
+    return system._spread(dir, horizontal);
+  }
+  // Keep both Splatling spread draws when the horizontal cone is zero. The
+  // projectile seed and later paint effects share this gameplay RNG stream.
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
+  const horizontalAngle = Math.max(0, horizontal) * DEG * radius;
+  const pitchAngle = w.spreadPitchGround * DEG * radius;
   const right = dir.clone().set(-dir.z, 0, dir.x);
   if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
   right.normalize();
   const up = dir.clone().cross(right);
-  return dir.addScaledVector(right, Math.cos(angle) * Math.tan(Math.max(0, horizontal) * DEG * radius))
-    .addScaledVector(up, Math.sin(angle) * Math.tan(w.spreadPitchGround * DEG * radius)).normalize();
+  return dir.addScaledVector(right, Math.cos(angle) * Math.tan(horizontalAngle))
+    .addScaledVector(up, Math.sin(angle) * Math.tan(pitchAngle)).normalize();
 }
 
 export function blasterBurstDamage(p, w, distance, distanceDamage) {
@@ -64,7 +125,9 @@ export function appendRollerNearUnit(system, a, w) {
   const u = w.nearFlickUnit;
   if (!u || a.weaponRunner.s3FlickVertical || a.remote) return;
   const angle = a.yaw + (Math.random() * 2 - 1) * u.halfAngleDegrees * DEG;
-  const speed = w.flickSpeed * (u.speedBase + (Math.random() * 2 - 1) * u.speedRandom) / u.mainSpeedBase;
+  // #305: the near unit keeps its own sourced DepletionSpeedRate in a depleted swing.
+  const depleted = !!w.s3Depletion, speedRate = depleted ? (u.depletionSpeedRate ?? 1) : 1;
+  const speed = w.flickSpeed * (u.speedBase + (Math.random() * 2 - 1) * u.speedRandom) / u.mainSpeedBase * speedRate;
   // Width is a full-width local span in this provisional mapping. A future
   // main-unit width calibration can supply flickSpawnWidth without changing
   // the sourced 0.4 / 0.8 ratio. No exact S3 position/PDF claim is made.
@@ -74,14 +137,35 @@ export function appendRollerNearUnit(system, a, w) {
   const p = system._new();
   Object.assign(p, { type: 'drop', owner: a, team: a.team, age: 0, life: 1.4, straight: w.ballistics?.horizontalStraightTime ?? 0,
     radius: 1, damage: w.flickDamageNear, dmgFar: w.flickDamageFar, size: .15, trail: 0, trailEvery: 1.8, trailRadius: .45,
-    grav: w.flickGravity ?? 26, drag: w.flickDrag ?? .4, seed: Math.random(), vis: rollerFlickDrawRadius(w, false, Math.max(0, (w.flickDrops ?? 2) - 1), 0, .185), tail0: .4, tailK: 1, wob: .1, wobF: 19, nose: 0, sats: 2,
-    s3FlickUnit: 1, fidelityMode: 'horizontal', fidelityYaw: angle - a.yaw, fidelitySectorYaw: a.yaw });
+    grav: w.flickGravity ?? 26, drag: w.flickDrag ?? .4, seed: Math.random(), vis: rollerFlickDrawRadius(w, false, Math.max(0, (w.flickDrops ?? 2) - 1), 0, .185, depleted), tail0: .4, tailK: 1, wob: .1, wobF: 19, nose: 0, sats: 2,
+    s3FlickUnit: 1, s3DepletionRound: depleted, fidelityMode: 'horizontal', fidelityYaw: angle - a.yaw, fidelitySectorYaw: a.yaw });
   p.pos.set(a.pos.x + fx * .6 + fz * lateral, a.pos.y + 1.3, a.pos.z + fz * .6 - fx * lateral);
   p.prev.copy(p.pos); p.start.copy(p.pos);
   p.vel.set(Math.sin(angle) * cp * speed, Math.sin(pitch) * speed, Math.cos(angle) * cp * speed);
   // The existing enclosing fireFlick wrapper assigns one shared damage group
   // to all 13 bullets. _push publishes this actual velocity once to NetMatch.
   system._push(p);
+}
+
+export function paintRollerReleaseFootprint(system, a, w, { G, PLAYER, Hit, WALKABLE }) {
+  const mode = a?.weaponRunner?.s3FlickVertical ? 'vertical' : 'horizontal';
+  const shape = w?.releaseFootPaint?.[mode];
+  if (!shape || a.remote || a.alive === false || w.kind !== 'roller' || !G.paint?.splat || !G.physics?.groundProbe) return 0;
+  const forwardX = Math.sin(a.yaw), forwardZ = Math.cos(a.yaw);
+  const rightX = Math.cos(a.yaw), rightZ = -Math.sin(a.yaw);
+  const x = a.pos.x + rightX * shape.offset.x + forwardX * shape.offset.z;
+  const z = a.pos.z + rightZ * shape.offset.x + forwardZ * shape.offset.z;
+  const ground = new Hit();
+  // SplashNearest's downward offset and MaxHeight bound the real ground query;
+  // this lets an airborne vertical swing paint only when walkable ground is in range.
+  G.physics.groundProbe(x, a.pos.y, z, shape.maxHeight, Math.abs(shape.offset.y), PLAYER.footRadius, ground, false);
+  if (!ground.hit || ground.normal.y < WALKABLE || !Number.isFinite(ground.y)) return 0;
+  const p = system.list[system.list.length - 1];
+  if (!p || p.owner !== a || !Number.isFinite(p.seed)) return 0;
+  const center = a.pos.clone().set(x, ground.y, z).addScaledVector(ground.normal, 0.1);
+  const area = G.paint.splat(center, shape.paintWidthHalf, a.team, { seed: p.seed, claimOwner: a });
+  if (area > 0) a.addTurf?.(area);
+  return area;
 }
 
 export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER, G, THREE, Hit }) {
@@ -109,13 +193,20 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   };
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
   const clearDualiesLocks = r => {
-    r.s3DualiesPostShot = 0; r.s3DodgeShotPending = 0;
+    r.s3DualiesPostShot = 0; r.s3SloshPostShot = 0; r.s3DodgeShotPending = 0;
+    r.s3DualiesInterruptSub = 0; r.s3DualiesInterruptSquid = 0; r.s3DualiesInterruptCancelMain = false;
     r.s3DualiesSubBuffered = false; r.s3DualiesSubReleaseBuffered = false;
   };
   const reset = WeaponRunner.prototype.reset;
   WeaponRunner.prototype.reset = function (...args) {
     const out = reset.apply(this, args);
     clear(this); clearDualiesLocks(this); this.s3DualiesEmerging = false; this.s3ChargerPostShot = 0; this.s3DualiesSwimStart = null;
+    // Keep the reusable gate, but do not retain the previous life/input source.
+    if (this.s3SubGateInput) {
+      const gate = this.s3SubGateInput.state;
+      gate.source = EMPTY_SUB_GATE_INPUT; gate.sub = false; gate.subReleased = false;
+      gate.cancelMain = false; gate.kind = ''; gate.dt = 0;
+    }
     return out;
   };
   // #874: dodge admission uses current fire intent, not the recent-fire presentation timer.
@@ -130,6 +221,9 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     if (r) {
       if (r.s3ChargerPostShot > 0) r.s3ChargerPostShot = Math.max(0, r.s3ChargerPostShot - dt);
       if (r.s3DualiesPostShot > 0) r.s3DualiesPostShot = Math.max(0, r.s3DualiesPostShot - dt);
+      if (r.s3DualiesInterruptSub > 0) r.s3DualiesInterruptSub = Math.max(0, r.s3DualiesInterruptSub - dt);
+      if (r.s3DualiesInterruptSquid > 0) r.s3DualiesInterruptSquid = Math.max(0, r.s3DualiesInterruptSquid - dt);
+      if (r.s3DualiesInterruptSub <= EPS && r.s3DualiesInterruptSquid <= EPS) r.s3DualiesInterruptCancelMain = false;
       const cancelAction = !this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady();
       if (cancelAction) {
         r.s3ChargerPostShot = 0;
@@ -137,10 +231,20 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       }
     }
     if (r && this.weapon.kind === 'dualies') {
+      // #1047: a real cancellation of an active held-fire sequence owns its own
+      // action recovery, independent of the previous shot's 4F post-shot clock.
+      const postRoll = !!r.dodge || r.lockT > 0 || r.s3Turret || r.s3DodgeShotPending;
+      const cancelEdge = r.s3DualiesHeld && this._prevIntent.fire && !postRoll &&
+        (!this.intent.fire || this.intent.sub || (this.intent.squid && !this._prevIntent.squid));
+      if (cancelEdge) {
+        r.s3DualiesInterruptSub = Math.max(r.s3DualiesInterruptSub || 0, 5 / 60);
+        r.s3DualiesInterruptSquid = Math.max(r.s3DualiesInterruptSquid || 0, 6 / 60);
+        r.s3DualiesInterruptCancelMain = true;
+      }
       if (this.form === 'squid') { clear(r); clearDualiesLocks(r); r.s3DualiesEmerging = true; }
       else if (this.kidT > PLAYER.emergeDelay && !this.intent.fire) r.s3DualiesEmerging = false;
       const canceled = !this.alive || !this.intent.fire || this.intent.sub || this.specialActive || this.superJumpState ||
-        this.intent.special && this.specialReady() || r.dodge || r.lockT > 0 ||
+        this.intent.special && this.specialReady() || postRoll ||
         r.s3DualiesSwimStart != null && this._prevIntent.fire && (this.form === 'squid' || this.intent.squid && !this._prevIntent.squid);
       if (canceled) {
         if (r.s3DualiesSwimStart != null) { this.fireBuffer = 0; r.s3DualiesEmerging = false; }
@@ -151,8 +255,19 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
         r.s3DualiesSwimStart = Math.max(0, r.s3DualiesSwimStart - dt);
       }
       if (!this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady()) clear(r);
+      if (r.s3DualiesInterruptSquid > EPS && this.intent.squid) {
+        const heldSquid = this.intent.squid;
+        this.intent.squid = false;
+        try { return update.call(this, dt); }
+        finally { this.intent.squid = heldSquid; }
+      }
     }
     return update.call(this, dt);
+  };
+  const interruptBusy = WeaponRunner.prototype.busy;
+  WeaponRunner.prototype.busy = function (...args) {
+    if (this.a?.weapon?.kind === 'dualies' && this.s3DualiesInterruptSquid > EPS) return true;
+    return interruptBusy.apply(this, args);
   };
   const weaponUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
@@ -163,26 +278,41 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
         get subReleased() { return chargerPostShotBlocksSub(runner) ? false : source.subReleased; },
       });
     }
-    if (this.a.weapon.kind !== 'dualies') return weaponUpdate.call(this, dt, input);
-    const source = input || {}, locked = this.s3DualiesPostShot > EPS;
-    if (locked) {
+    const kind = this.a.weapon.kind;
+    if (kind !== 'dualies' && kind !== 'slosher') return weaponUpdate.call(this, dt, input);
+    const source = input || EMPTY_SUB_GATE_INPUT;
+    const lockedAtStart = subGateLocked(this, kind, dt);
+    if (lockedAtStart) {
       if (source.sub) this.s3DualiesSubBuffered = true;
       if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
-    let prepared = locked ? { ...source, sub: false, subReleased: false } : { ...source };
-    if (!locked && this.s3DualiesSubReleaseBuffered) {
-      prepared.sub = true; prepared.subReleased = true;
+    // #819: no input gating or buffered edges on steady-state Dualies ticks.
+    // Keep the original input identity and skip the wrapper's dispatch.
+    if (kind === 'dualies' && input && !lockedAtStart &&
+        !this.s3DualiesSubBuffered && !this.s3DualiesSubReleaseBuffered &&
+        !source.sub && !source.subReleased) {
+      return weaponUpdate.call(this, dt, input);
+    }
+    let sub = lockedAtStart ? false : source.sub;
+    let subReleased = lockedAtStart ? false : source.subReleased;
+    if (!lockedAtStart && (this.s3DualiesSubReleaseBuffered ||
+        (kind === 'dualies' && this.s3DualiesSubBuffered && source.subReleased))) {
+      sub = true; subReleased = true;
       this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
     }
-    const runner = this;
-    const gated = new Proxy(prepared, { get(target, prop) {
-      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
-      return target[prop];
-    }});
-    const out = weaponUpdate.call(this, dt, gated);
-    if (this.s3DualiesPostShot > EPS) {
-      if (prepared.sub) this.s3DualiesSubBuffered = true;
-      if (prepared.subReleased) this.s3DualiesSubReleaseBuffered = true;
+    // The native runner checks sub both before and after weapon processing;
+    // post-shot lock may become active between those reads. Retain the dynamic
+    // gate but allocate its Proxy only once per runner, not on every fixed tick.
+    let gate = this.s3SubGateInput;
+    if (!gate) gate = this.s3SubGateInput = makeSubGateInput(this);
+    const state = gate.state;
+    state.source = source; state.kind = kind; state.dt = dt;
+    state.sub = sub; state.subReleased = subReleased;
+    state.cancelMain = kind === 'dualies' && !!this.s3DualiesInterruptCancelMain;
+    const out = weaponUpdate.call(this, dt, gate.view);
+    if (subGateLocked(this, kind, dt)) {
+      if (sub) this.s3DualiesSubBuffered = true;
+      if (subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
     return out;
   };
@@ -259,6 +389,9 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     return queue.length;
   };
   Projectiles.prototype._blastBurst = function (p, point, victim) {
+    // #911: a player-direct Blaster contact uses the reduced impact burst just like terrain.
+    // Keep the latest fixed-tick queue owner: mark the queued snapshot, not the live pooled round.
+    const reducedDirect = !!victim && victim !== 'boss';
     if (!flushing && p.s3TerrainBurst) {
       (this.s3BlastQueue ??= []).push({
         point: point.clone(), victim,
@@ -267,7 +400,10 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       });
       return;
     }
-    return terrainBurst.call(this, p, point, victim);
+    const before = p.s3TerrainBurst;
+    if (reducedDirect) p.s3TerrainBurst = true;
+    try { return terrainBurst.call(this, p, point, victim); }
+    finally { p.s3TerrainBurst = before; }
   };
   // Fixed-tick entry: the queued terrain burst of tick N resolves before anything moves
   // in tick N+1, so render cadence cannot change the ordering.

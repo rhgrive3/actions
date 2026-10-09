@@ -9,6 +9,7 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 import { realCharacter } from './real-character-fixture.mjs';
 function start(f, a, vertical, dt = 1 / 60) {
   a.grounded = !vertical;
+  a.intent.move.set(0, 0, 1); // held-roll transitions require actual stick input (#847)
   a.weaponRunner.update(dt, { fire: true, firePressed: true });
 }
 
@@ -47,8 +48,9 @@ test('simultaneous jump and fire go through actual Actor and retain vertical mod
   a.intent.jump = true; a.intent.fire = true; f.tick(a);
   assert.equal(a.weaponRunner.s3FlickVertical, true);
   assert.equal(a.weaponRunner.s3RollerAttack.elapsed, 0);
+  f.tick(a, 6); // pass the independent #1056 early-landing conversion window
   a.grounded = true; a.intent.jump = false;
-  f.tick(a, 30); assert.equal(f.shots.length, 0);
+  f.tick(a, 24); assert.equal(f.shots.length, 0);
   f.tick(a); assert.equal(f.shots.length, 1);
   assert.equal(f.shots[0].windup, 31 / 60);
   assert.equal(a.weaponRunner.s3RollerAttack.vertical, true);
@@ -79,6 +81,7 @@ test('jump after starting a horizontal attack keeps its selected mode; the next 
 });
 test('a new flick lifts the rolling drum, a held trigger resumes rolling, release stops it', async () => {
   const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
+  a.intent.move.set(0, 0, 1);
   r.rolling = true; r.rollT = 2; start(f, a, false);
   assert.equal(r.rolling, false); assert.equal(r.rollT, 0);
   for (let i = 0; i < 21; i++) r.update(1 / 60, { fire: true });
@@ -89,9 +92,11 @@ test('a new flick lifts the rolling drum, a held trigger resumes rolling, releas
   r.reset(); assert.equal(r.s3RollerAttack, null); assert.equal(a.character.s3RollerFlick, null);
 });
 test('dry input does not create a phantom pose or spend ink', async () => {
-  const f = await fixture(), a = f.make('roller'); a.ink = 2; start(f, a, true);
+  // #305: only a truly empty tank is dry; a positive tank below the swing cost
+  // now runs the depletion attack (covered by the issue-305 test).
+  const f = await fixture(), a = f.make('roller'); a.ink = 0; start(f, a, true);
   assert.equal(a.weaponRunner.flick, -1); assert.equal(a.weaponRunner.s3RollerAttack, null);
-  assert.equal(a.character.s3RollerFlick, null); assert.equal(a.ink, 2);
+  assert.equal(a.character.s3RollerFlick, null); assert.equal(a.ink, 0);
 });
 test('actual projectile path retains narrow vertical paint flight and one-attack damage aggregation', async () => {
   const f = await fixture(), a = f.make('roller'), system = new f.Projectiles(new f.THREE.Scene());
@@ -139,6 +144,7 @@ test('actual moving roller geometry and both grips stay synchronized through lif
   const f = await fixture(), { Character, THREE, CHARACTER_CHANNELS: C } = await realCharacter();
   const a = new f.Actor({ team: 0, name: 'moving roller rig', weapon: 'roller', CharacterClass: Character });
   const c = a.character, r = a.weaponRunner; c.actor = a;
+  a.intent.move.set(0, 0, 1);
   for (const hz of [30, 60, 120]) for (const vertical of [false, true]) for (const held of [false, true]) for (const landAt of vertical ? [20 / 60, 40 / 60] : [Infinity]) {
     const dt = 1 / hz, s = settle(a, c, dt), rows = [];
     c.root.updateMatrixWorld(true);
@@ -162,7 +168,7 @@ test('actual moving roller geometry and both grips stay synchronized through lif
       if (t + 1e-10 < (vertical ? 31 : 21) / 60) assert.equal(c.weapon.drumW, 0, 'lift does not spin the drum before release');
     }
     const label = `${hz}Hz ${vertical ? `vertical land ${landAt}s` : 'horizontal'} ${held ? 'held/restart' : 'released'}`;
-    assert.ok(rows.every(x => x.bottom >= -.006), `${label}: actual vertices clear the floor (${Math.min(...rows.map(x => x.bottom))})`);
+    assert.ok(rows.every(x => x.bottom >= -.006), `${label}: actual vertices clear the floor (${JSON.stringify(rows.reduce((a,b)=>a.bottom<b.bottom?a:b))})`);
     assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002), `${label}: arms reach the weapon grips (${Math.max(...rows.map(x => x.gripL))})`);
     if (held) {
       // Allow the late landing at 40F and the lowering spring to finish before

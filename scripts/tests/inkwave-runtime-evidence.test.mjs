@@ -15,17 +15,23 @@ test('combined runtime evidence recognizes loading/cache and practice-range sour
  const source=fs.readFileSync(new URL('../lib/inkwave-runtime-evidence.mjs',import.meta.url),'utf8');
  assert(source.includes("'loading-cache/':'patches/loading-cache/'"));
  assert(source.includes("'practice-range/':'patches/practice-range/'"));
+ assert(source.includes("'build-script/':'scripts/'"));
 });
 test('valid artifacts cannot forge their source SHA by changing a build input',()=>{
  const repo=path.join(root,'repo'),site=path.join(root,'site');fs.mkdirSync(repo,{recursive:true});fs.mkdirSync(site,{recursive:true});
  fs.mkdirSync(path.join(repo,'inkwave-public'),{recursive:true});fs.mkdirSync(path.join(repo,'scripts'),{recursive:true});
+ const helpers=['inkwave-source-composition.mjs','lib/inkwave-build-only-modules.mjs','lib/inkwave-worker-compaction.mjs'];
+ for(const file of helpers){const target=path.join(repo,'scripts',file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,'// committed helper '+file);}
  fs.writeFileSync(path.join(repo,'inkwave-public/source.js'),'export const source=1;');fs.writeFileSync(path.join(repo,'scripts/build-inkwave.mjs'),'// builder');
  const git=(...args)=>execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();git('init','--quiet');git('add','.');git('-c','user.name=Runtime test','-c','user.email=runtime-test@example.invalid','commit','--quiet','-m','fixture');const sha=git('rev-parse','HEAD');
  fs.writeFileSync(path.join(site,'source.js'),'export const source=1;');
  const artifacts={'source.js':hash(fs.readFileSync(path.join(site,'source.js')))};
  const m={artifacts,contentHash:hash(JSON.stringify(artifacts)),files:{'upstream/source.js':artifacts['source.js']},build:{script:hash('// builder')}};
+ for(const file of helpers)m.files['build-script/'+file]=hash(fs.readFileSync(path.join(repo,'scripts',file)));
+ const good=structuredClone(m.files);
  const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(m));save();assert.equal(verifyRuntimeBuild(site,repo,sha).contentHash,m.contentHash);
  m.files['upstream/source.js']=hash('forged source');save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA/);
+ for(const file of helpers){const target=path.join(repo,'scripts',file);fs.appendFileSync(target,'\n// uncommitted helper change');m.files={...good,['build-script/'+file]:hash(fs.readFileSync(target))};save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),error=>error.message==='Build differs from source SHA: scripts/'+file);}
 });
 test('comparison cannot pass empty scenarios despite superficially passing reports',()=>{
  const before={status:'passed',sourceSha:'a'.repeat(40),verifiedRuntimeFiles:['src/core/renderer.js'],environment:{},scenarios:[],input:[]};

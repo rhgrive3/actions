@@ -15,8 +15,8 @@ for (const [label, velocity] of [['forward',2.7],['backward',-2.7],['stationary'
       assert.ok(Math.abs(expected[2]-(a.weapon.projSpeed+velocity*2))<1e-9);
       const packet=JSON.parse(JSON.stringify(nm.out.find(e=>e[1]==='p')));
       assert.deepEqual(packet.slice(8,11),expected,'real recorder publishes post-inheritance velocity');
-      assert.equal(packet.length,35,'current Kit slots, Roller unit and owner tick/sequence remain in the wire envelope');
-      assert.equal(packet[32],-1,'a Blaster carries no Roller unit');
+      assert.equal(packet.length,36,'current Kit slots, Roller unit and owner tick/sequence remain in the wire envelope');
+      assert.equal(packet[33],-1,'a Blaster carries no Roller unit');
       f.projectiles.clear();a.remote=true;a.owner='p2';a.vel.set(0,0,velocity*3);
       nm.peers.set('p2',{tr:packet[0]});
       nm._play('p2',packet);nm._play('p2',packet);

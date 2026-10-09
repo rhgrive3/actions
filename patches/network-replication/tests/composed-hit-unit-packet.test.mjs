@@ -1,4 +1,7 @@
+import {validDamageGroup} from '../../splatoon3/runtime/final-damage.mjs';
 import {respawnPunisherEquipped,withHitPunisher} from '../../splatoon3/runtime/clothing-gear.mjs';
+import { C1088_SURGE_TAG, clearRemoteC1088Surge } from '../issue-1088-surge-presentation.mjs';
+import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -29,11 +32,12 @@ function hitWorld() {
   const G = { projectiles: { applyHit(a, v, damage, weapon, group) {
     calls.push({ a, v, damage, weapon, group, punisher:respawnPunisherEquipped(a) }); emit('damage', { victim: v, attacker: a, amount: damage });
   } } };
-  const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher',
-    'return class {' + ['sendHit', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
-    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher);
+  const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
+    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation',
+    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + 'return class {' + ['sendHit', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
+    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation);
   const n = new C();
-  Object.assign(n, { myId: 'A', byNid: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); } } },
+  Object.assign(n, { myId: 'A', byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); } } },
     peers: new Map(), _peer(id) { if (!this.peers.has(id)) this.peers.set(id, {}); return this.peers.get(id); } });
   return { n, sent, events, calls, G, listeners };
 }
@@ -77,12 +81,24 @@ test('composed respawn preserves all current retirements and clears only this vi
   const f = hitWorld(), a = { nid: 2, alive: false, hp: 0, invuln: 0, respawnTimer: 4, lastDamage: 0,
     superJumpGround: {}, net: { _stormBirthAuth: {} }, s3: { revealedUntil: 99 }, s3SpecialCost: 100,
     s3SpecialReady: true, lastAttacker: {}, lastAttackerHitAge: 0 };
+  a.remote = true; a.owner = 'B';
+  a.character = { s3RollerFlick: { networkRemote: true, owner: 'B', life: 1, epoch: 1, vertical: true } };
+  a.weaponRunner = { s3RollerAttack: { networkRemote: true }, s3FlickVertical: true };
+  a.net._rollerPresentationState = { owner: 'B', life: 1, epoch: 1, tick: 60, active: true };
+  a.s3.c1088SurgePresentation = { tag: C1088_SURGE_TAG, life: 1, epoch: 1, phase: 'burst', charge: .8, time: .25, sampleAge: 0 };
   f.n._pendingHits = new Map([[1, { v: 2 }], [2, { v: 9 }]]);
+  assert.equal(a.s3.c1088SurgePresentation.tag, C1088_SURGE_TAG, 'a live remote Surge presentation exists before respawn');
   f.n._remoteRespawn(a);
   assert.equal(a.alive, true); assert.equal(a.hp, 100); assert.equal(a.superJumpGround, null);
   assert.equal(a.net._stormBirthAuth, null); assert.equal(a.net.spawnPending, true);
   assert.equal(a.lastDamage, 99); assert.equal(a.lastAttacker, null); assert.equal(a.lastAttackerHitAge, 99);
   assert.equal(a.s3.revealedUntil, undefined); assert.equal(a.s3SpecialCost, undefined); assert.equal(a.s3SpecialReady, false);
+  assert.equal(a.s3.c1088SurgePresentation, undefined, 'respawn retires the actual remote Surge presentation state');
+  assert.equal(a.character.s3RollerFlick, null, 'respawn retires the real remote Roller pose');
+  assert.equal(a.weaponRunner.s3RollerAttack, null, 'legacy network-owned Roller actions are retired');
+  assert.equal(a.weaponRunner.s3FlickVertical, false);
+  assert.deepEqual(a.net._rollerPresentationState, { owner: 'B', life: 1, epoch: 1, tick: 60, active: false },
+    'retirement retains the Roller epoch watermark so stale packets cannot revive it');
   assert.deepEqual([...f.n._pendingHits.keys()], [2]);
   assert.equal(f.events.filter(e => e.type === 'combat:respawn').length, 1);
 });
@@ -104,7 +120,7 @@ test('current QR splat history shares the existing local/enemy guards with confi
   assert.equal(attacker.s3.splatsThisLife, 2); assert.equal(attacker.s3.quickRespawnHistory.splats, 2);
 });
 
-test('current 35-field projectile layout validates units without dropping legacy33 or accepting malformed units', async () => {
+test('current 36-field projectile layout validates units without dropping legacy33 or accepting malformed units', async () => {
   const f = await fixture(), nm = f.makeNetMatch(f.makeSession());
   const a = f.makeActor({ nid: 0, owner: 'me', roller: true });
   a.character.getMuzzle = out => out.copy(a.pos).add(new f.THREE.Vector3(0, 1.05, .3));
@@ -113,17 +129,17 @@ test('current 35-field projectile layout validates units without dropping legacy
     f.projectiles.fireFlick(a, a.weapon, false);
     const packets = JSON.parse(JSON.stringify(nm.out.filter(e => e[1] === 'p')));
     assert.ok(packets.length > 0);
-    const packet = packets[0], unit = packet[32];
-    assert.equal(packet.length, 35); assert.ok(Number.isSafeInteger(unit) && unit >= 0);
+    const packet = packets[0], unit = packet[33];
+    assert.equal(packet.length, 36); assert.ok(Number.isSafeInteger(unit) && unit >= 0);
     f.projectiles.clear(); a.remote = true; a.owner = 'B'; nm.peers.set('B', { tr: packet[0] });
-    const invalid = [...packet]; invalid[32] = 999;
+    const invalid = [...packet]; invalid[33] = 999;
     nm._play('B', invalid); assert.equal(f.projectiles.list.length, 0);
-    const wrongMode = [...packet]; wrongMode[29] = 2;
+    const wrongMode = [...packet]; wrongMode[30] = 2;
     nm._play('B', wrongMode); assert.equal(f.projectiles.list.length, 0);
     nm._play('B', packet); assert.equal(f.projectiles.list.length, 1);
     assert.equal(f.projectiles.list[0].fidelityRollerUnitIndex, unit);
     f.projectiles.clear(); nm.peers.set('B', { tr: packet[0] });
-    const legacy = [...packet.slice(0, 27), ...packet.slice(29)];
+    const legacy = [...packet.slice(0, 27), ...packet.slice(30)];
     assert.equal(legacy.length, 33);
     const result = f.projectiles.ghostProjectile(a, legacy);
     assert.ok(result); assert.equal(f.projectiles.list[0].fidelityRollerUnitIndex, unit);

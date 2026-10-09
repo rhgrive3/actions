@@ -3,10 +3,47 @@
 import * as THREE from 'three';
 import { G } from '../../../src/core/ctx.js';
 import { PLAYER } from '../../../src/config.js';
+import { SUPERJUMP_MAIN_PROGRESS } from './weapon-gates.mjs';
 
 // Preserve the public game's existing human-form boundary, NOT a measured S3
 // frame value. Nintendo confirms pre-landing attacks but not their exact gate.
-export const SUPERJUMP_MAIN_PROGRESS = 0.82;
+export { SUPERJUMP_MAIN_PROGRESS };
+
+// Splatoon 3 Ver. 11.0.0 Stealth Jump flight-only penalty (#272).
+// Current public measurement resolves the stage-forward travel coordinate from
+// the difference of XZ distances to two stage-specific reference foci. Their
+// exact placement is not published and is not equivalent to ordinary spawn pads,
+// so only an explicitly calibrated level.stealthJumpFoci pair is accepted. This
+// deliberately fails closed rather than guessing anchors for INKWAVE stages.
+// The verified curve is 0F through 60 units, linear to +60F at 100 units, then
+// capped. Vertical displacement is intentionally excluded.
+export const STEALTH_JUMP_DISTANCE_MIN = 60;
+export const STEALTH_JUMP_DISTANCE_MAX = 100;
+export const STEALTH_JUMP_EXTRA_FRAMES_MAX = 60;
+
+function xzDistance(a, b) {
+  return Math.hypot((a?.x || 0) - (b?.x || 0), (a?.z || 0) - (b?.z || 0));
+}
+
+export function stealthJumpLongitudinalDistance(from, to, level = G.level) {
+  const refs = level?.stealthJumpFoci;
+  if (!from || !to || !refs?.[0] || !refs?.[1]) return 0;
+  const axis = p => (xzDistance(p, refs[0]) - xzDistance(p, refs[1])) * 0.5;
+  return Math.abs(axis(to) - axis(from));
+}
+
+export function stealthJumpExtraFrames(a, from, to, level = G.level) {
+  if (!a?.s3?.modifiers?.stealthJump) return 0;
+  const d = stealthJumpLongitudinalDistance(from, to, level);
+  if (d <= STEALTH_JUMP_DISTANCE_MIN) return 0;
+  if (d >= STEALTH_JUMP_DISTANCE_MAX) return STEALTH_JUMP_EXTRA_FRAMES_MAX;
+  return (d - STEALTH_JUMP_DISTANCE_MIN) /
+    (STEALTH_JUMP_DISTANCE_MAX - STEALTH_JUMP_DISTANCE_MIN) * STEALTH_JUMP_EXTRA_FRAMES_MAX;
+}
+
+export function stealthJumpExtraTime(a, from, to, level = G.level) {
+  return stealthJumpExtraFrames(a, from, to, level) / 60;
+}
 
 // S3 starts the Super Jump clock from the form the destination was confirmed
 // in: a 1F term while already swimming, 22F from humanoid form. It sits in
@@ -68,9 +105,20 @@ export function superJumpTarget(target, out) {
 
 export function updateSuperJumpMain(a, dt, firePressed) {
   const s = a.superJumpState;
-  if (!a.alive || s && (s.phase !== 'flight' || s.t / s.dur <= SUPERJUMP_MAIN_PROGRESS)) return;
-  if (a.form !== 'kid') return;
+  // #528: sub aim is a presentation/hold state, never throw authority in flight.
+  // Early flight stays disarmed until the existing humanoid descent window.
+  if (!a.alive || (s && (s.phase !== 'flight' || s.t / s.dur <= SUPERJUMP_MAIN_PROGRESS)) || a.form !== 'kid') {
+    if (s && a.weaponRunner) a.weaponRunner.aimingSub = false;
+    return;
+  }
   const buffered = a.fireBuffer > 0;
-  a.weaponRunner.update(dt, { fire: a.intent.fire || buffered, firePressed: firePressed || buffered, sub: false, subReleased: false });
+  a.weaponRunner.update(dt, {
+    fire: a.intent.fire || buffered,
+    firePressed: firePressed || buffered,
+    sub: !!a.intent.sub,
+    // If the authoritative Super Jump ended this tick, preserve a release
+    // from the previously staged hold exactly once at the landing boundary.
+    subReleased: !s && !a.intent.sub && !!a.weaponRunner.aimingSub,
+  });
   a.fireBuffer = 0;
 }

@@ -16,7 +16,7 @@ test('#524 actual30-sample calibration integrates each interval once for both ma
  for(const hz of [30,60,90,120])for(const phase of [0,.125,.5,.875])for(const order of ['ori','raw'])for(const map of ['rrA','rrB']){
   const {g}=await setup(),samples=replay(g,events(hz,phase,order,100,2,map));assert.equal(g._src,map);assert.ok(samples.some(s=>s.source===map));
   for(let i=1;i<samples.length;i++)assert.ok(Math.abs(samples[i].start-samples[i-1].end)<1e-6,JSON.stringify({hz,phase,order,map,prior:samples[i-1],sample:samples[i]}));
-  const duration=(samples.at(-1).end-samples[0].start)/1000,expected=duration*120*Math.PI/180*(360/132);assert.ok(Math.abs(g.dPitch-expected)<1e-7,JSON.stringify({hz,phase,order,map,pitch:g.dPitch,expected}));
+  const duration=(samples.at(-1).end-samples[0].start)/1000,expected=duration*120*Math.PI/180*(360/200);assert.ok(Math.abs(g.dPitch-expected)<1e-7,JSON.stringify({hz,phase,order,map,pitch:g.dPitch,expected}));
  }
 });
 test('#524 equal/tiny first raw samples retain boundary until a meaningful interval, without changing raw timestamps',async()=>{
@@ -43,7 +43,7 @@ test('#524 rejected admission calls are not adopted intervals, while final displ
  const committed=replay(g,events(60,0,'ori',100,2,'rrA'));
  const duration=(committed.at(-1).end-committed[0].start)/1000;
  assert.ok(attempted>duration,'old pre-admission observer counts the handoff overlap');
- const gain=120*Math.PI/180*(360/132);
+ const gain=120*Math.PI/180*(360/200);
  assert.ok(Math.abs(g.dPitch-duration*gain)<1e-7,'actual total displacement remains exact');
  assert.ok(Math.abs(g.dPitch-attempted*gain)>1e-7,'double integration cannot pass the same displacement oracle');
 });

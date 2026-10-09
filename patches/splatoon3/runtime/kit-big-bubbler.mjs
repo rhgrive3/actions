@@ -1,3 +1,5 @@
+import { gearCurve } from './gear.mjs';
+
 // Big Bubbler (Splat Roller special; internal id SpGreatBarrier) for the
 // composed public INKWAVE runtime.
 //
@@ -56,6 +58,8 @@
 // Everything in BIG_BUBBLER_CALIBRATION is a DECLARED mapping, not a source.
 // The 11.3.0 tables pin raw internal numbers whose engine scale is not publicly
 // documented; see reports/public-kit-big-bubbler-20261004.md.
+
+import { fidelityDamage } from './weapons-fidelity.mjs';
 
 const BUBBLER_ID = 'bubbler';
 const INSTALL = Symbol.for('inkwave.s3.kit-big-bubbler.install.v1');
@@ -156,6 +160,19 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 // constant in weapons.js, not a new calibration.
 const DROP_FALLOFF_RANGE = 7;
 
+// #1161: source-side DIMENSIONLESS object multiplier the stock Hot Blaster
+// (Japanese ホットブラスター, the one `kind: 'blaster'` main weapon) applies to its
+// DIRECT projectile against the Big Bubbler. It is a SOURCE property, applied
+// once before the target-side DamgeRatio, exactly like the Roller 1.8 below.
+//
+// Provenance: community measurement on wikiwiki (version provenance 11.2.0 /
+// 3.1.1 marked); direct 125 -> 237.5 (x1.9), Object Shredder x2.09 (1.9 x 1.1)
+// applied once. No Nintendo 11.3 capture is claimed, and the generic separate
+// ブラスター entry is 2.1x, so this is NOT blanket-applied to every blaster
+// variant: only the stock Blaster's own direct round is scaled, the burst splash
+// never reaches this query, and no unlisted variant is guessed.
+export const BLASTER_OBJECT_MULTIPLIER = 1.9;
+
 // The damage this projectile would deal to a target at `hitPoint`, using the SAME
 // rule the native pipeline already applies to actors (`_step`) and to the boss
 // (`_bossImpact`):
@@ -174,8 +191,23 @@ const DROP_FALLOFF_RANGE = 7;
 //   * only `type === "drop"` is scaled, so ordinary shots and every other gun are
 //     untouched. This is a pure computation: it mutates nothing and returns a
 //     number, so the query stays inert.
-function damageAtContact(p, hitPoint) {
+function damageAtContact(p, hitPoint, impactT = 1) {
+  const weapon = p?.s3Weapon || p?.owner?.weapon;
+  // #1046: current Splat Roller flicks use the same S3 distance/angle/airtime
+  // damage law as actor hits, then the verified Big Bubbler object modifier.
+  // Rolling/body contact is a different path and intentionally remains 1.0x.
+  if (p?.type === 'drop' && weapon?.kind === 'roller' && p?.fidelityRollerUnit) {
+    return fidelityDamage(p, hitPoint, impactT) * 1.8;
+  }
   const near = p?.damage;
+  // #1161: the stock Hot Blaster's DIRECT projectile carries the 1.9x
+  // source-side object modifier. `type === 'blast'` is the direct round only
+  // (the burst splash never enters this query), and `kind === 'blaster'` is the
+  // one stock main weapon, so no shooter, Roller, Trizooka or unlisted variant
+  // is amplified.
+  if (p?.type === 'blast' && weapon?.kind === 'blaster') {
+    return Number.isFinite(near) ? near * BLASTER_OBJECT_MULTIPLIER : 0;
+  }
   if (p?.type !== 'drop' || !Number.isFinite(near)) return Number.isFinite(near) ? near : 0;
   const far = p.dmgFar;
   if (!Number.isFinite(far)) return near;
@@ -315,12 +347,24 @@ function removeDome(dome, reason) {
   return true;
 }
 
-function makeDome({ id, serial, owner, team, pos, remote }) {
+// Historical #1013 API name retained. Under #1051's corrected mapping this
+// curve belongs to the MaxHP-backed weak/device target (fieldHp), while the
+// outer barrier remains MaxFieldHP.
+export function bigBubblerCanopyHp(owner) {
+  const ap = owner?.s3?.modifiers?.specialPowerAP || 0;
+  return gearCurve(ap, raw.maxHp, raw.maxHpMid, raw.maxHpHigh);
+}
+
+function makeDome({ id, serial, owner, team, pos, remote, hpMax = raw.maxFieldHp, fieldHpMax = raw.maxHp }) {
   return {
     id, serial, owner, team, pos, t: 0, remote: !!remote,
     color: new api.THREE.Color(api.G.teamColors?.[team] ?? 0xffffff),
-    hp: raw.maxHp, hpMax: raw.maxHp,
-    fieldHp: raw.maxFieldHp, fieldHpMax: raw.maxFieldHp,
+    // #1051 wire compatibility keeps the historical property names, but the
+    // semantics are corrected: hp = outer barrier (MaxFieldHP), fieldHp =
+    // exposed weak/device target (MaxHP). Both feed one destruction progress.
+    hp: hpMax, hpMax,
+    fieldHp: fieldHpMax, fieldHpMax,
+    damageProgress: 0,
     radius: raw.minRadius, emitterY: 0, ignited: false,
     burnAccum: 0, overlapAccum: 0, dead: false,
   };
@@ -337,7 +381,7 @@ function deploy(owner) {
   const serial = ++deploySerial;
   const dome = makeDome({
     id: `${owner.team}:${bigBubblerOwnerId(owner) ?? 'unknown'}:${serial}`,
-    serial, owner, team: owner.team, pos, remote: false,
+    serial, owner, team: owner.team, pos, remote: false, fieldHpMax: bigBubblerCanopyHp(owner),
   });
   buildVisual(dome);
   domes.push(dome);
@@ -372,14 +416,20 @@ function syncVisual(dome) {
 // confused with the internal TimeDamage burn or the optional overlap tick.
 function damageDome(dome, target, amount, cause = 'shot') {
   if (dome.dead || !(amount > 0)) return 0;
-  if (target === 'field') dome.fieldHp = Math.max(0, dome.fieldHp - amount);
+  const weak = target === 'field'; // historical wire name: exposed launcher/device
+  const max = weak ? dome.fieldHpMax : dome.hpMax;
+  if (weak) dome.fieldHp = Math.max(0, dome.fieldHp - amount);
   else dome.hp = Math.max(0, dome.hp - amount);
+  // #1051: shell and weak-point damage are alternate ways to advance one
+  // authoritative destruction state, not two independent full life bars.
+  dome.damageProgress = clamp((dome.damageProgress || 0) + amount / Math.max(1e-10, max), 0, 1);
   api.emit?.(cause === 'shot' ? 'kit:bubbler:hit' : `kit:bubbler:${cause}`, {
     actor: dome.owner, owner: dome.owner, domeId: dome.id, serial: dome.serial,
     eventId: dome.hitSerial = (dome.hitSerial || 0) + 1, team: dome.team, target, amount, cause,
-    hp: dome.hp, fieldHp: dome.fieldHp,
+    hp: dome.hp, fieldHp: dome.fieldHp, damageProgress: dome.damageProgress,
   });
-  if (dome.hp <= 0 || dome.fieldHp <= 0) removeDome(dome, target === 'field' ? 'emitter-destroyed' : 'canopy-destroyed');
+  if (dome.damageProgress >= 1 - 1e-10 || dome.hp <= 0 || dome.fieldHp <= 0)
+    removeDome(dome, weak ? 'emitter-destroyed' : 'canopy-destroyed');
   return amount;
 }
 
@@ -484,7 +534,10 @@ export function kitBarrierCandidate(p, start, end) {
   // A remote dome has no authoritative HP on this client, so a local round can
   // only ever PROPOSE damage. The parent adjudicates; nothing is mutated here.
   candidate.ownership = candidate.remote ? 'remote-presentation' : 'authoritative';
-  candidate.damage = damageAtContact(p, candidate.point) * tuning.rawPerDamageUnit;
+  const sourceDamage = damageAtContact(p, candidate.point, candidate.t) * tuning.rawPerDamageUnit;
+  // #1051 DamgeRatio belongs to the outer barrier only. Proposals carry the
+  // post-ratio amount so the remote authority must not apply it a second time.
+  candidate.damage = sourceDamage * (candidate.target === 'canopy' ? raw.damageRatio : 1);
   candidate.settled = false;
   candidate.proposal = null;
   // One monotonic identity per SETTLED hit on this client, independent of the
@@ -554,6 +607,74 @@ export function kitBarrierCandidate(p, start, end) {
     return applied;
   };
   return candidate;
+}
+
+// #1036: Roller-body contact uses only the Bubbler's damageable hardware,
+// never the spherical barrier shell. Base contact spends canopy/body HP; the
+// raised emitter spends field/weak-point HP.
+export function rollerBubblerCandidate(actor, forwardX, forwardZ, rollWidth) {
+  if (!api || !actor?.pos || actor.remote || !Number.isInteger(actor.team) || !(rollWidth > 0)) return null;
+  const fl = Math.hypot(forwardX, forwardZ);
+  if (fl < 1e-8) return null;
+  const fx = forwardX / fl, fz = forwardZ / fl;
+  let best = null, bestMetric = Infinity;
+  const consider = (dome, target, x, y, z, radius) => {
+    if (!dome || dome.dead || dome.team === actor.team) return;
+    const dx = x - actor.pos.x, dz = z - actor.pos.z;
+    const along = dx * fx + dz * fz;
+    const lateral = Math.abs(dx * fz - dz * fx);
+    if (along <= -0.2 - radius || along >= 1.35 + radius) return;
+    if (lateral >= rollWidth / 2 + radius) return;
+    if (Math.abs(y - actor.pos.y) >= 1.2 + radius) return;
+    const metric = Math.max(0, along) + lateral * 0.25 + Math.abs(y - actor.pos.y) * 0.05;
+    if (metric >= bestMetric) return;
+    const point = new api.THREE.Vector3(x, y, z);
+    const normal = new api.THREE.Vector3(actor.pos.x - x, Math.max(0.05, actor.pos.y + 0.35 - y), actor.pos.z - z);
+    if (normal.lengthSq() < 1e-8) normal.set(0, 1, 0); else normal.normalize();
+    bestMetric = metric;
+    best = {
+      dome, domeId: dome.id, serial: dome.serial, team: dome.team, target,
+      remote: !!dome.remote, point, normal, domeOwner: dome.owner ?? null, settled: false,
+      domeOwnerId: bigBubblerOwnerId(dome.owner), shooterId: bigBubblerOwnerId(actor),
+    };
+  };
+  for (const pool of [domes, remoteDomes]) for (const dome of pool) {
+    const r = raw.fieldCollisionRadius;
+    consider(dome, 'canopy', dome.pos.x, dome.pos.y + r, dome.pos.z, r);
+    if (dome.ignited) consider(dome, 'field', dome.pos.x, dome.pos.y + dome.emitterY, dome.pos.z, r);
+  }
+  return best;
+}
+
+export function applyRollerBubblerHit(candidate, actor, damage) {
+  if (!candidate || candidate.settled || !actor || actor.remote || !(damage > 0) || !Number.isInteger(actor.team)) return 0;
+  const dome = candidate.dome;
+  if (!dome || dome.dead || dome.team === actor.team || dome.id !== candidate.domeId || dome.serial !== candidate.serial) return 0;
+  if (!listOf(dome).includes(dome)) return 0;
+  candidate.settled = true;
+  // Splat Roller's object contact modifier is 1.0x. This is only the existing
+  // raw-damage-unit conversion used by other Bubbler damage inputs.
+  const amount = damage * tuning.rawPerDamageUnit;
+  if (candidate.remote) {
+    const eventId = ++proposalSerial;
+    const payload = {
+      e: 'damage-proposal', domeId: candidate.domeId, serial: candidate.serial,
+      team: candidate.team, target: candidate.target, amount, eventId,
+      pointX: candidate.point.x, pointY: candidate.point.y, pointZ: candidate.point.z,
+      normalX: candidate.normal.x, normalY: candidate.normal.y, normalZ: candidate.normal.z,
+    };
+    if (candidate.shooterId !== null) { payload.shooter = candidate.shooterId; payload.shooterTeam = actor.team; }
+    if (candidate.domeOwnerId !== null) payload.domeOwner = candidate.domeOwnerId;
+    api.emit?.('kit:bubbler:damage-proposal', { ...payload, actor });
+    return 0;
+  }
+  const applied = damageDome(dome, candidate.target, amount);
+  if (applied > 0) {
+    api.G.fx?.burst?.(candidate.point, candidate.normal, dome.color, { count: 6, speed: 3, size: 0.07 });
+    api.emit?.('weapon:impact', { pos: candidate.point.clone(), normal: candidate.normal.clone(),
+      team: actor.team, kind: 'roll', radius: raw.fieldCollisionRadius });
+  }
+  return applied;
 }
 
 /**
@@ -626,7 +747,7 @@ export function tickBigBubblers(dt) {
       dome.ignited = true;
       if (tuning.paintAtIgnition) {
         const area = api.G.paint?.splat?.(dome.pos.clone().setY(dome.pos.y + raw.paintRadius * 0.35),
-          raw.paintRadius, dome.team, { seed: Math.random() }) || 0;
+          raw.paintRadius, dome.team, { seed: Math.random(), claimOwner: dome.owner, claimMode: 'no-special' }) || 0;
         dome.owner.addTurfNoSpecial?.(area);
       }
       api.emit?.('kit:bubbler:ignite', {
@@ -638,7 +759,9 @@ export function tickBigBubblers(dt) {
       dome.burnAccum += dt;
       while (dome.burnAccum + 1e-10 >= interval && !dome.dead) {
         dome.burnAccum -= interval;
-        damageDome(dome, 'canopy', raw.timeDamage, 'burn');
+        // MaxFieldHP is 2x the old swapped canopy budget. Scale the internal
+        // TimeDamage delta by the same ratio so passive lifetime is unchanged.
+        damageDome(dome, 'canopy', raw.timeDamage * raw.maxFieldHp / raw.maxHp, 'burn');
       }
       if (tuning.overlapFieldDamage && !dome.dead) {
         const tickSeconds = raw.overlapFieldDamageInterval / 60;
@@ -836,12 +959,13 @@ function replayDeploy(owner, payload) {
   if (!remember(key)) return ok('duplicate', { domeId: v.domeId });
   const dome = makeDome({
     id: v.domeId, serial: v.serial, owner: owner ?? null, team: v.team,
-    pos: new api.THREE.Vector3(v.pos[0], v.pos[1], v.pos[2]), remote: true,
+    pos: new api.THREE.Vector3(v.pos[0], v.pos[1], v.pos[2]), remote: true, hpMax: Math.max(raw.maxFieldHp, v.hp), fieldHpMax: Math.max(raw.maxHp, v.fieldHp),
   });
   // The transmitted state is authoritative for the IMAGE only.
   dome.t = v.t;
   dome.hp = Math.min(v.hp, dome.hpMax);
   dome.fieldHp = Math.min(v.fieldHp, dome.fieldHpMax);
+  dome.damageProgress = clamp((1 - dome.hp / dome.hpMax) + (1 - dome.fieldHp / dome.fieldHpMax), 0, 1);
   dome.radius = radiusAt(v.t);
   const ascend = clamp(v.t / (raw.ascendFrames / 60), 0, 1);
   dome.emitterY = raw.ascendHeight * hermite2d(raw.ascendCurve, ascend);
@@ -884,9 +1008,13 @@ function replayHit(owner, payload) {
   }
   // Displayed HP only. The host decides whether this damage is real; nothing
   // here becomes authoritative, and an expire packet still removes the dome.
-  if (v.target === 'field') dome.fieldHp = Math.max(0, dome.fieldHp - v.amount);
+  const weak = v.target === 'field';
+  if (weak) dome.fieldHp = Math.max(0, dome.fieldHp - v.amount);
   else dome.hp = Math.max(0, dome.hp - v.amount);
-  return ok('displayed', { domeId: v.domeId, eventId: v.eventId, hp: dome.hp, fieldHp: dome.fieldHp });
+  dome.damageProgress = clamp((dome.damageProgress || 0) +
+    v.amount / Math.max(1e-10, weak ? dome.fieldHpMax : dome.hpMax), 0, 1);
+  return ok('displayed', { domeId: v.domeId, eventId: v.eventId,
+    hp: dome.hp, fieldHp: dome.fieldHp, damageProgress: dome.damageProgress });
 }
 
 function replayExpire(owner, payload) {

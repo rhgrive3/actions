@@ -21,13 +21,17 @@ import {
   clearBigBubblers, kitBarrierCandidate,
 } from '../runtime/kit-big-bubbler.mjs';
 import { installKitDefense } from '../runtime/kit-defense.mjs';
+import { fidelityDamage, installWeaponsFidelity } from '../runtime/weapons-fidelity.mjs';
 
 const RAW_PER_DAMAGE_UNIT = 100;   // BIG_BUBBLER_CALIBRATION.rawPerDamageUnit
 const FALLOFF_RANGE = 7;           // the native constant in weapons.js
-const FAR_CASE_HP = 12597;         // the previously-measured dome HP before the far flick
+const FAR_CASE_HP = 20000;         // pinned test budget, above one far contact
 
 async function composed() {
   const f = await fixture();
+  // Host-realm Kit helpers consume the same pinned source table as the VM.
+  // Register them on unused derived prototypes, leaving the native VM owners intact.
+  installWeaponsFidelity({...f,Projectiles:class extends f.Projectiles {},WeaponRunner:class extends f.WeaponRunner {}},f.profile);
   const scene = new f.THREE.Scene();
   f.G.scene = scene;f.G.camera={position:new f.THREE.Vector3(0,20,0)};
   f.G.projectiles = new f.Projectiles(scene);
@@ -74,7 +78,7 @@ async function withDome(f, hp = FAR_CASE_HP) {
 
 // The exact field set native fireFlick assigns to one glob, so the adapted _step
 // treats it as a real drop. Sheet spread is the only thing replaced.
-function spawnFlick(f, owner, from, aim, { damage, dmgFar, speed = 20 }) {
+function spawnFlick(f, owner, from, aim, { damage, dmgFar, speed = 20, legacy = false }) {
   const p = f.G.projectiles._new();
   Object.assign(p, { type: 'drop', owner, team: owner.team, age: 0, life: 6, straight: 999,
     radius: 0.85, damage, dmgFar, size: 0.15, trail: 0, trailEvery: 0, grav: 0, drag: 0,
@@ -82,6 +86,7 @@ function spawnFlick(f, owner, from, aim, { damage, dmgFar, speed = 20 }) {
   p.pos.copy(from); p.prev.copy(from); p.start.copy(from);
   p.vel.copy(aim).normalize().multiplyScalar(speed);
   f.G.projectiles._push(p);
+  if (legacy) p.fidelityRollerUnit = null;
   // Controlled straight drop isolates barrier falloff from the current Roller gravity/phase owner.
   p.straight=999;p.grav=0;p.drag=0;p.fidelityMove=null;p.life=6;
   return p;
@@ -126,11 +131,10 @@ test('BB-04: a far roller flick leaves the dome standing at the native-model HP 
   enemy.weapon = { ...enemy.weapon, sub: 'curling' };
   enemy.team = 1;
   const start = new f.THREE.Vector3(dome.pos.x, 1.2, dome.pos.z - 40);
-  const p = spawnFlick(f, enemy, start, new f.THREE.Vector3(0, 0, 1), { damage: near, dmgFar: far });
+  const p = spawnFlick(f, enemy, start, new f.THREE.Vector3(0, 0, 1), { damage: near, dmgFar: far, legacy: true });
   assert.ok(runPinningBeforeContact(f, p, dome, FAR_CASE_HP), 'the round must be consumed by the dome');
 
-  const expected = FAR_CASE_HP - far * RAW_PER_DAMAGE_UNIT;
-  assert.equal(expected, 9097, 'the previously-measured 9097 case');
+  const expected = FAR_CASE_HP - far * RAW_PER_DAMAGE_UNIT * 0.64;
   assert.equal(dome.hp, expected,
     `far flick must spend flickDamageFar (${far}), not flickDamageNear (${near}); dome hp = ${dome.hp}`);
   assert.ok(dome.hp > 0, 'the dome must survive a far flick');
@@ -150,16 +154,17 @@ test('BB-04: a flick at zero range still spends essentially the full near amount
   const a = f.make('roller');
   a.pos.set(dome.pos.x, 0, dome.pos.z - 40); a.yaw = 0; a.aimYaw = 0;
   a.team = 1;
-  const p = spawnFlick(f, a, start, new f.THREE.Vector3(0, 0, 1), { damage: near, dmgFar: far });
+  const p = spawnFlick(f, a, start, new f.THREE.Vector3(0, 0, 1), { damage: near, dmgFar: far, legacy: true });
   assert.ok(runPinningBeforeContact(f, p, dome, 40000));
   const spent = 40000 - dome.hp;
+  const scaledNear = near * RAW_PER_DAMAGE_UNIT * 0.64;
   // 97% rather than 100%: the round is launched 1.2u above the dome centre, so
   // the sphere solve puts the contact ~0.14u further along than a perfectly
   // head-on shot. That ~2-3% is REAL native falloff, not a defect, so the guard
   // asserts "essentially the near amount, never more than it".
-  assert.ok(spent >= near * RAW_PER_DAMAGE_UNIT * 0.97,
-    `a near-zero-range flick must spend ~flickDamageNear (${near * RAW_PER_DAMAGE_UNIT}); spent ${spent}`);
-  assert.ok(spent <= near * RAW_PER_DAMAGE_UNIT,
+  assert.ok(spent >= scaledNear * 0.97,
+    `a near-zero-range flick must spend the 0.64-scaled near amount (~${scaledNear}); spent ${spent}`);
+  assert.ok(spent <= scaledNear,
     'and can never exceed the near amount');
 });
 
@@ -179,7 +184,7 @@ test('BB-04: an ordinary (non-drop) round is NOT distance-scaled', async () => {
   p.vel.set(0, 0, 20);
   f.G.projectiles._push(p);p.straight=999;p.grav=0;p.drag=0;p.fidelityMove=null;p.life=6;
   assert.ok(runPinningBeforeContact(f, p, dome, 40000));
-  assert.equal(dome.hp, 40000 - 36 * RAW_PER_DAMAGE_UNIT,
+  assert.equal(dome.hp, 40000 - 36 * RAW_PER_DAMAGE_UNIT * 0.64,
     'a normal shot spends its own damage regardless of travel');
 });
 
@@ -207,7 +212,7 @@ test('BB-04: the falloff uses the native contact-point distance, not travel dist
     `contact distance ${nativeDistance.toFixed(3)} must exceed per-step travel ${travelDistance.toFixed(3)}`);
 
   const expected = (near + (far - near) * Math.min(1, Math.max(0, nativeDistance / FALLOFF_RANGE)))
-    * RAW_PER_DAMAGE_UNIT;
+    * RAW_PER_DAMAGE_UNIT * 0.64;
   assert.equal(c.damage, expected,
     `dome damage must equal the native lerp at the contact point (${expected})`);
   assert.ok(c.damage < near * RAW_PER_DAMAGE_UNIT, 'a partially-scaled hit sits below the near amount');
@@ -234,7 +239,7 @@ test('BB-04: the owner adjudication receives the same scaled amount', async () =
   const c = kitBarrierCandidate(p, prev, end);
   assert.ok(c && c.remote, 'a local round against a remote dome must only propose');
   const expected = (near + (far - near) * Math.min(1, Math.max(0, start.distanceTo(c.point) / FALLOFF_RANGE)))
-    * RAW_PER_DAMAGE_UNIT;
+    * RAW_PER_DAMAGE_UNIT * 0.64;
   const settled = c.onHit();
   assert.equal(settled, 0, 'a proposal spends nothing on the proposing client');
   assert.ok(c.proposal, 'onHit must hand the parent a flat proposal');
@@ -243,4 +248,23 @@ test('BB-04: the owner adjudication receives the same scaled amount', async () =
   assert.equal(remote.hp, 40000, 'the remote dome must be untouched here');
 
   bigBubblerRemoteDomes().length = 0;
+});
+
+test('#1046 current Roller flick uses S3 fidelity damage, then 1.8x object and 0.64 barrier modifiers', async () => {
+  const { f } = await composed();
+  const { dome } = await withDome(f, 50000);
+  dome.ignited = false;
+  const enemy = f.make('roller');
+  enemy.pos.set(dome.pos.x, 0, dome.pos.z - 12); enemy.yaw = 0; enemy.aimYaw = 0; enemy.team = 1;
+  const start = new f.THREE.Vector3(dome.pos.x, 1.2, dome.pos.z - 12);
+  const p = spawnFlick(f, enemy, start, new f.THREE.Vector3(0, 0, 1),
+    { damage: enemy.weapon.flickDamageNear, dmgFar: enemy.weapon.flickDamageFar });
+  assert.ok(p.fidelityRollerUnit, 'adapted current Roller unit identity is available');
+  const end = new f.THREE.Vector3(dome.pos.x, 1.2, dome.pos.z + 2);
+  const candidate = kitBarrierCandidate(p, start, end);
+  assert.ok(candidate && candidate.target === 'canopy');
+  const base = fidelityDamage(p, candidate.point, candidate.t);
+  const expected = base * 1.8 * RAW_PER_DAMAGE_UNIT * 0.64;
+  assert.ok(Math.abs(candidate.damage - expected) < 1e-9,
+    `expected fidelity ${base} * 1.8 * 0.64, got raw delta ${candidate.damage}`);
 });

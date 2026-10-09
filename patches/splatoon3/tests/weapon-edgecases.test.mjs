@@ -10,6 +10,51 @@ async function setup(kind) {
 }
 function projectiles(f){const ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;return ps;}
 function trace(f,frames){const out=[];for(let i=1;i<=frames;i++){const n=f.shots.length;f.tick(f.a);if(n!==f.shots.length)out.push([i,f.shots.length-n]);}return out;}
+test('ordinary Dualies ticks reuse input without per-frame spread or Proxy, but locks retain gate', async () => {
+  const f = await setup('dualies');
+  const runner = f.a.weaponRunner;
+  let ownKeys = 0;
+  const input = new Proxy({ fire: false, sub: false, subReleased: false }, {
+    ownKeys(target) { ownKeys++; return Reflect.ownKeys(target); },
+  });
+  // This verifies the live WeaponRunner wrapper, not a synthetic allocation model.
+  for (let i = 0; i < 120; i++) runner.update(1 / 60, input);
+  assert.equal(ownKeys, 0, 'normal fixed ticks must not spread input to allocate a new Proxy');
+  assert.equal(runner.s3DualiesSubBuffered, false);
+  runner.s3DualiesPostShot = 4 / 60;
+  runner.update(1 / 60, input);
+  assert.ok(runner.s3SubGateInput?.view, 'post-shot lock retains its dynamically gated input');
+  const ownKeysAfterLock = ownKeys;
+  runner.s3DualiesPostShot = 0;
+  const released = new Proxy({ fire: false, sub: false, subReleased: true }, {
+    ownKeys(target) { ownKeys++; return Reflect.ownKeys(target); },
+  });
+  runner.update(1 / 60, released);
+  assert.ok(runner.s3SubGateInput?.view, 'sub-release edge retains the reusable gate');
+});
+
+test('Dualies sub release on the post-shot unlock tick replays the buffered press exactly once', async () => {
+  const f = await setup('dualies'), a = f.a, runner = a.weaponRunner;
+  let thrown = 0;
+  f.G.projectiles.throwBomb = () => { thrown++; };
+  // A real Actor fixed step decrements the lock before WeaponRunner.update,
+  // so this crosses the 1F lock-to-release boundary on the second tick.
+  runner.s3DualiesPostShot = 2 / 60;
+  a.intent.sub = true;
+  f.tick(a);
+  assert.equal(thrown, 0, 'sub must not throw while the post-shot lock is positive');
+  assert.equal(runner.s3DualiesSubBuffered, true, 'press was buffered under the lock');
+  a.intent.sub = false;
+  f.tick(a);
+  assert.equal(thrown, 0, 'unlock replays release into normal preparation');
+  f.tick(a, 4); assert.equal(thrown, 0, '5F preparation precedes the separate use-startup');
+  f.tick(a); assert.equal(thrown, 1, 'prepared buffered release emits after 1F use-startup');
+  assert.equal(runner.s3DualiesSubBuffered, false);
+  assert.equal(runner.s3DualiesSubReleaseBuffered, false);
+  f.tick(a, 4);
+  assert.equal(thrown, 1, 'the same release cannot throw again');
+});
+
 test('dualies stable human starts on recognized frame 3, then every 5F without early ink',async()=>{
  const f=await setup('dualies');f.tick(f.a,600);f.a.intent.fire=true;
  f.tick(f.a);assert.equal(f.shots.length,0);assert.equal(f.a.ink,100);f.tick(f.a);assert.equal(f.shots.length,0);assert.equal(f.a.ink,100);
@@ -75,9 +120,9 @@ test('splatling yaw and pitch have independent signed ground boundaries on arbit
   const side=Math.atan2(v.dot(axis==='yaw'?right:up),v.dot(dir))*180/Math.PI;close(side,limit);close(v.dot(axis==='yaw'?up:right),0);
  }
 });
-test('splatling retained horizontal scalar does not infer or rescale vertical1.6; air stays unchanged',async()=>{
+test('splatling retained horizontal scalar does not infer or rescale vertical1.6 in ground and air',async()=>{
  const f=await setup('splatling'),ps=projectiles(f),a=f.a;a.aimPoint.set(0,1.05,100);a.aimDir.set(0,0,1);
- for(const [ground,spread,expected] of [[true,1.98,1.6],[true,3.3,1.6],[false,7,Math.atan(.55*Math.tan(7*Math.PI/180))*180/Math.PI]]){
+ for(const [ground,spread,expected] of [[true,1.98,1.6],[true,3.3,1.6],[false,7,1.6]]){
   a.grounded=ground;let n=0;const draws=[.5,1-1e-12,.25]; // isolate pitch boundary from independent speed randomness
   f.setRandom(()=>draws[n++]??.5);ps.fireSplatling(a,a.weapon,spread);const p=ps.list.at(-1),v=p.vel.clone();close(Math.abs(Math.atan2(v.y,Math.hypot(v.x,v.z))*180/Math.PI),expected);
   a.grounded=!ground;a.weapon.spreadPitchGround=1.6;assert.ok(p.vel.equals(v));
@@ -97,6 +142,20 @@ test('terrain bands are normalized before half damage and 0.1HP floor, with LOS 
  for(const [d,want] of [[0,35],[1.025,35],[2.205,30],[3.385,25]]){e.hp=100;e.pos.set(d*rate,0,0);ps._impact(p,{point:at,normal});ps.flushBlastImpacts();close(100-e.hp,want);}
  e.hp=100;e.pos.set(w.splashRadius*rate+.001,0,0);ps._impact(p,{point:at,normal});ps.flushBlastImpacts();close(e.hp,100);
  e.pos.set(.1,0,0);f.G.physics.los=()=>false;ps._impact(p,{point:at,normal});ps.flushBlastImpacts();close(e.hp,100);
+});
+test('#911 player-direct Blaster collision shares reduced impact radius and damage, not timed airburst', async()=>{
+ const f=await setup('blaster'),ps=projectiles(f),direct=f.make(),near=f.make(),far=f.make();
+ for(const e of [direct,near,far]){e.team=1;e.invuln=0;e.hp=100;f.G.actors.push(e);}
+ const w=f.WEAPONS.blaster,p=blast(f,ps),at=new f.THREE.Vector3(0,.7,0);
+ direct.pos.set(0,0,0);near.pos.set(.2,0,0);
+ far.pos.set(w.splashRadius*(w.terrainSplashRadiusRate??1)+.05,0,0);
+ ps._blastBurst(p,at,direct);
+ close(direct.hp,100);close(near.hp,65);close(far.hp,100);
+ assert.equal(p.s3TerrainBurst,false,'temporary direct-hit impact cause must not leak');
+ near.hp=100;far.hp=100;
+ ps._blastBurst(p,at,null);
+ close(near.hp,30);assert.ok(far.hp<100,'ordinary timed burst retains full radius');
+ assert.equal(direct.hp,30,'direct victim is excluded only from its own collision burst');
 });
 test('terrain cause restored on exception and pooled reuse; paint/FX/boss dimensions stay native',async()=>{
  const f=await setup('blaster'),ps=projectiles(f),p=blast(f,ps),at=new f.THREE.Vector3(),normal=new f.THREE.Vector3(0,1,0);const paint=[],fx=[],boss=[];
@@ -121,10 +180,10 @@ test('roller near unit signed angle/width/speed envelopes; main12 seed sequence 
 });
 test('launch packets include13 once; ghosts use transmitted velocity without resampling spread/unit',async()=>{
  for(const kind of ['roller','splatling']){
-  const f=await wireFixture({site:`${ROOT}.edge-wire-source`,fidelity:true,network:true}),a=f.make(kind),ps=f.projectiles;a.isLocal=true;a.nid=1;const nm=Object.create(f.NetMatch.prototype);nm.mute=0;nm.out=[];nm.eventSeq=0;nm.isMine=()=>true;f.G.netm=nm;
+  const f=await wireFixture({site:`${ROOT}.edge-wire-source`,fidelity:true,network:true}),a=f.make(kind),ps=f.projectiles;a.isLocal=true;a.nid=1;const nm=new f.NetMatch({myId:'owner',isHost:true,_members:new Map([['owner','Owner']])},{});nm.mute=0;nm.out=[];nm.eventSeq=0;nm.isMine=()=>true;f.G.netm=nm;
   if(kind==='roller')ps.fireFlick(a,a.weapon);else ps.fireSplatling(a,a.weapon,3.3);
-  const packets=nm.out.filter(e=>e[1]==='p');assert.equal(packets.length,kind==='roller'?13:1);const initial=packets.map(e=>new f.THREE.Vector3(e[8],e[9],e[10]));ps.clear();
-  for(const packet of packets)ps.ghostProjectile(a,packet);assert.equal(ps.list.length,packets.length);ps.list.forEach((p,i)=>{assert.ok(p.ghost);for(const axis of ['x','y','z'])close(p.vel[axis],initial[i][axis],.011);});assert.equal(nm.out.length,packets.length);
+  const packets=nm.out.filter(e=>e[1]==='p');assert.equal(packets.length,kind==='roller'?13:1);assert.equal(nm.out.filter(e=>e[1]==='s').length,kind==='roller'?1:0);const ownerEventCount=nm.out.length;const initial=packets.map(e=>new f.THREE.Vector3(e[8],e[9],e[10]));ps.clear();
+  for(const packet of packets)ps.ghostProjectile(a,packet);assert.equal(ps.list.length,packets.length);ps.list.forEach((p,i)=>{assert.ok(p.ghost);for(const axis of ['x','y','z'])close(p.vel[axis],initial[i][axis],.011);});assert.equal(nm.out.length,ownerEventCount,'ghost replay emits no duplicate owner events');
  }
 });
 test('near-unit real native integration hits nearby floor and wall through actual OBB segment queries',async()=>{
@@ -157,12 +216,14 @@ async function shooterWallDrop({floor=true,dt=1/60,ghost=false}={}){
  const axes=[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces=[-1,-1,-1,-1,-1,-1];
  const blocks=[{id:0,solid:true,center:new V(0,1,4),half:new V(10,4,.1),axes,faces}];
  if(floor)blocks.push({id:1,solid:true,center:new V(0,-.1,0),half:new V(100,.1,100),axes,faces});
- const level={blocks,queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;for(const b of blocks)out.push(b.id);return out;}};
+ blocks[0].faces[2]=0;
+  const level={blocks,faces:[{origin:new V(-100,0,-100),u:new V(1,0,0),v:new V(0,0,1)}],queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;for(const b of blocks)out.push(b.id);return out;}};
  f.G.level=level;f.G.physics=new f.Physics(level);
  const paints=[],owned=[];
  f.G.paint.splat=(point,radius)=>{paints.push({radius,y:point.y});return 1;};
  f.a.addTurf=area=>{owned.push(area);};
  let impacts=0;const impact=ps._impact;ps._impact=function(p,h){impacts++;return impact.call(this,p,h);};
+  const inkImpact=ps.inkFlight.impact;ps.inkFlight.impact=function(p,h){impacts++;return inkImpact.call(this,p,h);};
  ps.fireShooter(f.a,f.a.weapon,0);
  const p=ps.list[0];if(ghost)p.ghost=true;
  let state=null,contact=null;
@@ -243,10 +304,12 @@ test('ordinary floor contact stays a single generic impact for every family',asy
   f.a.aimPoint.set(0,0.02,20);f.setRandom(()=>.5);
   const axes=[new V(1,0,0),new V(0,1,0),new V(0,0,1)];
   const blocks=[{id:0,solid:true,center:new V(0,-.1,0),half:new V(100,.1,100),axes,faces:[-1,-1,-1,-1,-1,-1]}];
-  const level={blocks,queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;out.push(0);return out;}};
+  blocks[0].faces[2]=0;
+  const level={blocks,faces:[{origin:new V(-100,0,-100),u:new V(1,0,0),v:new V(0,0,1)}],queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;out.push(0);return out;}};
   f.G.level=level;f.G.physics=new f.Physics(level);
   let paint=0;f.G.paint.splat=()=>{paint++;return 0;};
   let impacts=0;const impact=ps._impact;ps._impact=function(p,h){impacts++;return impact.call(this,p,h);};
+  const inkImpact=ps.inkFlight.impact;ps.inkFlight.impact=function(p,h){impacts++;return inkImpact.call(this,p,h);};
   if(kind==='shooter')ps.fireShooter(f.a,f.a.weapon,0);
   else if(kind==='blaster')ps.fireBlaster(f.a,f.a.weapon,0);
   else if(kind==='splatling'){f.a.weaponRunner.fidelitySplatlingCharge=1;ps.fireSplatling(f.a,f.a.weapon,0);}

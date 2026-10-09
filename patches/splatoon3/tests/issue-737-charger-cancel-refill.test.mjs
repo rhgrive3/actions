@@ -37,7 +37,7 @@ test('partial-charge cancel into own ink cannot refill for the verified 19F inte
   const before = a.ink;
   a.intent.squid = true;              // ZL after ZR: the deliberate cancel
   f.tick(a);                          // cancel tick C
-  assert.equal(a.form, 'squid', '#416 form transition stays immediate (independent)');
+  assert.equal(a.form, 'kid', '#416 holds form independently for six frames');
   assert.equal(r.charging, false, 'the wrapper cleared the charge');
   assert.ok(lock(a) > 0, 'the charge interruption starts a dedicated ink-recovery lock');
   assert.equal(a.ink, before, 'no refill on the cancellation update');
@@ -45,6 +45,7 @@ test('partial-charge cancel into own ink cannot refill for the verified 19F inte
   for (let i = 1; i <= 18; i++) {
     f.tick(a);
     assert.equal(a.ink, before, `no refill at cancel+${i}F`);
+    assert.equal(a.form, i < 6 ? 'kid' : 'squid', `independent swim boundary at cancel+${i}F`);
   }
   f.tick(a);                          // C+19: the boundary opens
   assert.ok(a.ink > before, 'ink recovery becomes eligible at the 19F boundary');
@@ -57,7 +58,7 @@ test('a fresh charge that is cancelled immediately also locks for 19F', async ()
   const before = a.ink;
   a.intent.squid = true;
   f.tick(a);
-  assert.equal(a.form, 'squid');
+  assert.equal(a.form, 'kid', 'fresh cancellation also retains the 6F form gate');
   assert.ok(lock(a) > 0, 'fresh cancels take the same interruption path');
   assert.equal(a.ink, before, 'no refill on the fresh-cancellation update');
   for (let i = 1; i <= 18; i++) { f.tick(a); assert.equal(a.ink, before, `locked at +${i}F`); }
@@ -82,7 +83,7 @@ test('input order decides whether an interruption exists at all', async () => {
     assert.ok(a._firePressT <= f.G.time, 'fire was pressed before ZL');
     a.intent.squid = true;
     f.tick(a);
-    assert.equal(a.form, 'squid');
+    assert.equal(a.form, 'kid', 'newer squid press cancels before form recovery');
     assert.ok(lock(a) > 0, 'the newer squid press cancels the charge');
   }
   // ZL first, ZR later: the charge starts as a squid-origin start; no cancel
@@ -129,9 +130,9 @@ test('full-charge storage and the normal fired-shot path never take the partial-
     assert.equal(f.shots.length, 1);
     assert.ok(lock(a) <= 1e-10, 'a normal shot does not arm the interruption lock');
     a.ink = 50;
-    for (let i = 0; i < 19; i++) { f.tick(a); assert.equal(a.ink, 50, `post-shot delay holds at +${i}F`); }
-    f.tick(a);                          // lastFire reaches the ordinary 20F delay
-    assert.ok(a.ink > 50, 'ordinary post-shot recovery still opens at its own boundary');
+    for (let i = 1; i <= 18; i++) { f.tick(a); assert.equal(a.ink, 50, `post-shot delay holds at +${i}F`); }
+    f.tick(a);                          // +19F: S3 measured refill boundary
+    assert.ok(a.ink > 50, 'ordinary post-shot recovery opens at the 19F boundary');
   }
 });
 
@@ -143,7 +144,7 @@ test('dry cancellation and enemy-ink rejected form entry cannot gain refill', as
     const before = a.ink;
     a.intent.squid = true;
     f.tick(a);                          // cancel tick
-    assert.equal(a.form, surface === 'enemy' ? 'kid' : 'squid', 'enemy ink keeps the current form admission gate');
+    assert.equal(a.form, 'kid', 'enemy admission and dry cancel recovery both retain kid on this tick');
     if (surface === 'enemy') {
       assert.equal(a.weaponRunner.charging, true, 'rejected squid entry does not cancel the charge');
       assert.equal(lock(a), 0, 'no interruption timer without accepted cancellation');
@@ -194,7 +195,7 @@ test('fixed 30/60/120 Hz render cadences yield the same 19F fixed-tick boundary'
     const before = a.ink;
     a.intent.squid = true;
     f.tick(a);                          // the cancel pass C happens here, before the clock loop
-    assert.equal(a.form, 'squid', 'the cancel lands on this tick');
+    assert.equal(a.form, 'kid', 'the charge cancels now, before the separate 6F form boundary');
     assert.equal(a.ink, before, 'no refill on the cancel pass');
     // Loop index 0 below is therefore tick C+1; index k is tick C+1+k, so the
     // 19F boundary (refill at C+19) must land at index 18 on every cadence.

@@ -174,7 +174,8 @@ test('#717/#656 composed family windows: Shooter blocks from birth while Slosher
 
   // 3. Families without a sourced teammate-block window remain pass-through.
   // Heavy Splatling is covered by #929 and correctly uses its pinned 0F window.
-  for (const kind of ['dualies', 'blaster']) {
+  // Dualies are no longer an unrelated family: #939 pins their own 0F teammate-block window.
+  for (const kind of ['blaster']) {
     const { ps, shooter, ally, enemy } = await setup(kind);
     ally.pos.set(0, 0, 4.5);
     enemy.pos.set(0, 0, 6.0);

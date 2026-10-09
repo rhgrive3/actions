@@ -63,20 +63,23 @@ async function boot({ main = false } = {}) {
   }
   // Camera at the actor's eye line looking down +X; the ray is stubbed to hit exactly `distance` metres of aim-point offset.
   function inRange(actor, charge, planar, projectiles = G.projectiles) {
-    G.projectiles = projectiles;
-    G.camera.position.set(0, 1.3, 0); G.camera.lookAt(10, 1.3, 0); G.camera.updateMatrixWorld(true);
-    G.physics.raycast = (_s, _d, _m, hit) => { hit.hit = true; hit.dist = Math.sqrt(planar * planar - 1.3 * 1.3); return hit; };
-    actor.weaponRunner.charge = charge;
-    const controller = new api.PlayerController(actor, null, null);
-    controller.computeAim();
-    assert.ok(Math.abs(actor.aimPoint.distanceTo(actor.pos) - planar) < 1e-9, 'aim point sits exactly at the requested distance');
-    return controller.inRange;
+    const previousProjectiles = G.projectiles;
+    try {
+      G.projectiles = projectiles;
+      G.camera.position.set(0, 1.3, 0); G.camera.lookAt(10, 1.3, 0); G.camera.updateMatrixWorld(true);
+      G.physics.raycast = (_s, _d, _m, hit) => { hit.hit = true; hit.dist = Math.sqrt(planar * planar - 1.3 * 1.3); return hit; };
+      actor.weaponRunner.charge = charge;
+      const controller = new api.PlayerController(actor, null, null);
+      controller.computeAim();
+      assert.ok(Math.abs(actor.aimPoint.distanceTo(actor.pos) - planar) < 1e-9, 'aim point sits exactly at the requested distance');
+      return controller.inRange;
+    } finally { G.projectiles = previousProjectiles; }
   }
   const close = () => { for (const a of G.actors) a.character.dispose(); real.clear(); };
   return { ...api, make, inRange, close, composed, real, math };
 }
 
-const CHARGES = [0, .5, .998, 1];
+const CHARGES = [0, .5, .998, .9999999995, 1];
 // One VM boot per composition (boot is the slow part); tests clear projectiles and read charge explicitly.
 const booted = [];
 const shared = {};
@@ -114,7 +117,8 @@ test('#711 reach is monotonic, clamps out-of-range input and spans min to full r
   assert.equal(P.chargerReach(-3), P.chargerReach(0));
   assert.equal(P.chargerReach(7), P.chargerReach(1));
   assert.equal(P.chargerReach(NaN), P.chargerReach(0));
-  assert.equal(P.chargerReach(.999), P.chargerReach(1), 'full-charge branch starts at .999 exactly like begin()');
+  assert.equal(P.chargerReach(.999) < P.chargerReach(1), true, 'near-full partial reach stays below the exact full endpoint');
+  assert.equal(P.chargerReach(.9999) < P.chargerReach(1), true, 'near-full partial reach stays below the exact full endpoint');
 });
 
 test('#711 begin() keeps its maxDistance override for networked ghost shots', async () => {
@@ -154,13 +158,14 @@ test('#711 a squid-form charge keep reports the stored full-charge reach', async
   assert.equal(f.inRange(a, 0, mid), false, 'no store: live charge 0 is minimum reach');
 });
 
-test('#711 non-charger ranges are unchanged and ignore charge', async () => {
+test('#711 non-charger ranges retain their own range owner and ignore charge', async () => {
   const f = await fixedBoot();
   for (const [id, range] of [['shooter', null], ['roller', 6], ['blaster', null]]) {
-    const a = f.make(id), r = range ?? (a.weapon.range || 12);
+    const a = f.make(id), r = id === 'shooter' ? a.weapon.combatRange : (range ?? (a.weapon.range || 12));
+    const margin = id === 'shooter' ? 0 : .5;
     for (const charge of [0, .6, 1]) {
-      assert.equal(f.inRange(a, charge, r + .5 - 1e-6), true, `${id} charge ${charge}`);
-      assert.equal(f.inRange(a, charge, r + .5 + 1e-6), false, `${id} charge ${charge}`);
+      assert.equal(f.inRange(a, charge, r + margin - 1e-6), true, `${id} charge ${charge}`);
+      assert.equal(f.inRange(a, charge, r + margin + 1e-6), false, `${id} charge ${charge}`);
     }
   }
 });
@@ -180,14 +185,14 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
       f.real.fireSplatling(a, a.weapon, 0);
       assert.equal(f.real.list.length, before + 1, 'the production fire path emits one real reference projectile');
       const p = f.real.list.at(-1), start = p.pos.clone();
-      assert.equal(p.life, 1.2, 'public _fireRound lifetime is copied without changing its owner');
+      assert.equal(p.life, 3, 'installed main-shot lifetime is copied without changing its owner');
       assert.equal(p.straight, a.weapon.straightTime, 'production uses the configured straight phase');
       assert.equal(p.fidelityMove.endSpeed, a.weapon.ballistics.endSpeed, 'production uses the configured brake speed cap');
       assert.ok(Math.abs(p.vel.length() - splatlingLaunchSpeed(a.weapon, charge)) < 1e-9,
         'the production launch uses the same deterministic no-random speed');
       while (p.age < p.life - 1e-10) {
         const step = Math.min(STEP, p.life - p.age);
-        advanceFidelityProjectile(p, step);
+        if(p.inkProfile)f.real._advanceInkGuide(p);else advanceFidelityProjectile(p, step);
       }
       return Math.hypot(p.pos.x - start.x, p.pos.z - start.z);
     } finally {
@@ -205,9 +210,9 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
   assert.ok(Math.abs(firstReach - higherFlight) < 1e-9, 'higher charge keeps the first-circle launch-speed cap');
   assert.equal(P.splatlingReach(a.weapon, NaN), lowReach, 'invalid charge uses the deterministic minimum');
 
-  const guideProjectile=P._s3SplatlingReachProjectile, advance=guideProjectile.pos.addScaledVector;
+  const guideProjectile=P._inkReachProbe, advance=guideProjectile.pos.set;
   let guideSteps=0;
-  guideProjectile.pos.addScaledVector=function(...args){guideSteps++;return advance.apply(this,args);};
+  guideProjectile.pos.set=function(...args){guideSteps++;return advance.apply(this,args);};
   try {
     const births=P.list.length;
     for(let i=0;i<60;i++)assert.equal(P.splatlingReach(a.weapon,0),lowReach);
@@ -218,8 +223,8 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
     guideSteps=0;
     const changed={...a.weapon,straightTime:a.weapon.straightTime+STEP};
     assert.ok(Number.isFinite(P.splatlingReach(changed,circle)));
-    assert.ok(guideSteps>0,'changed flight inputs invalidate the memoized result');
-  } finally {guideProjectile.pos.addScaledVector=advance;}
+    assert.equal(guideSteps,0,'legacy straightTime copies cannot override the canonical source flight profile');
+  } finally {guideProjectile.pos.set=advance;}
 
   const main = await mainBoot(), baseline = main.make('splatling');
   assert.equal(main.inRange(baseline, 0, mid), true, 'baseline fixed w.range reports this target in range at low charge');
@@ -254,7 +259,9 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
   assert.equal(f.inRange(a, 0, mid), false, 'completed stream ignores its retained snapshot');
 
   const shooter = f.make('shooter');
-  assert.equal(f.inRange(shooter, 1, shooter.weapon.range), true, 'Shooter keeps its configured range');
+  assert.equal(f.inRange(shooter, 1, shooter.weapon.combatRange), true, 'Shooter keeps its explicit combat reach');
+  assert.equal(f.inRange(shooter, 1, shooter.weapon.combatRange + 1e-6), false, 'Shooter has no inherited half-unit range margin');
+  assert.equal(f.inRange(shooter, 1, shooter.weapon.range), false, 'matchmaking range does not extend combat reach');
   const charger = f.make('charger'), chargerMid = (P.chargerReach(0) + P.chargerReach(1)) / 2;
   assert.equal(f.inRange(charger, 0, chargerMid), false, 'Charger still uses its installed minimum-charge flight reach');
   assert.equal(f.inRange(charger, 1, chargerMid), true, 'Charger still uses its installed full-charge flight reach');
@@ -279,4 +286,41 @@ test('negative control: main\'s composition reports inRange=true at charge 0 for
   assert.equal(f.inRange(a, 0, mid), true, 'full-charge reach is used for every charge on main');
   const fixed = await fixedBoot();
   assert.equal(fixed.inRange(fixed.make('charger'), 0, mid), false);
+});
+
+
+test('#937 Slosher reticle range is shorter airborne than grounded', async () => {
+  const f = await fixedBoot();
+  const a = f.make('slosher'), r = a.weapon.reticleRange;
+  assert.deepEqual(r, { ground: 14.24, air: 13.67 });
+  assert.ok(r.air < r.ground);
+  const at = (grounded, planar) => { a.grounded = grounded; return f.inRange(a, 0, planar); };
+  for (const g of [true, false]) {
+    assert.equal(at(g, 10), true, `inside both (grounded ${g})`);
+    assert.equal(at(g, 20), false, `outside both (grounded ${g})`);
+  }
+  assert.equal(at(true, r.ground + .5 - 1e-6), true);
+  assert.equal(at(true, r.ground + .5 + 1e-6), false);
+  assert.equal(at(false, r.air + .5 - 1e-6), true);
+  assert.equal(at(false, r.air + .5 + 1e-6), false);
+  const band = (r.air + r.ground) / 2 + .5;
+  assert.equal(at(true, band), true, 'band target in range while grounded');
+  assert.equal(at(false, band), false, 'same target out of range while airborne');
+  assert.equal(at(true, band), true, 'landing restores the grounded threshold');
+});
+
+test('#937 airborne reticle range is scoped to Slosher and leaves projectile/weapon range data untouched', async () => {
+  const f = await fixedBoot();
+  const s = f.make('slosher');
+  assert.equal(s.weapon.range, 14.5, 'projectile/bot/aim-assist range is unchanged');
+  for (const id of ['shooter', 'roller', 'blaster']) {
+    const a = f.make(id), r = id === 'shooter' ? a.weapon.combatRange : id === 'roller' ? 6 : (a.weapon.range || 12);
+    const margin = id === 'shooter' ? 0 : .5;
+    assert.equal(a.weapon.reticleRange, undefined, id);
+    for (const grounded of [true, false]) {
+      a.grounded = grounded;
+      assert.equal(f.inRange(a, 0, r + margin - 1e-6), true, `${id} grounded ${grounded}`);
+      assert.equal(f.inRange(a, 0, r + margin + 1e-6), false, `${id} grounded ${grounded}`);
+    }
+  }
 });

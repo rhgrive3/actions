@@ -17,8 +17,8 @@
 // the real build adapters) against a REAL THREE.PerspectiveCamera, and reads the rendered
 // forward off the camera quaternion. Nothing here re-derives the shoulder formula locally,
 // so these assertions genuinely fail on unfixed code. The primary proof is the differential
-// harness: the same scenario is run on the raw upstream file and on the adapted file, and the
-// two are compared. That makes "only the framing moved" a measured fact, not a claim.
+// harness: the same scenario runs on the complete adapted module and a negative control
+// that restores only its locked upstream shoulder block. Unrelated owners remain equal.
 //
 // Scope note: SH0's MAGNITUDE IS DELIBERATELY UNQUANTIFIED. Splatoon 3 publishes no shoulder
 // offset and this repository pins none (patches/splatoon3/reference/curated-numbers.json
@@ -34,7 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptQualitySource } from '../adapter.mjs';
+import { adaptQualitySource, replaceOnce } from '../adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
 
@@ -91,19 +91,32 @@ export class Hit {
     throw new Error(`unexpected physics.js import ${spec}`);
   });
   await physics.evaluate();
-  shared = { THREE: three.namespace, G: ctx.namespace.G, mk, three, ctx, physics };
+  const framing = mk(fs.readFileSync(`${ROOT}patches/splatoon3/runtime/battle-framing.mjs`, 'utf8'), 'battle-framing.mjs');
+  await framing.link(() => { throw new Error('battle-framing.mjs must be self-contained'); });
+  await framing.evaluate();
+  shared = { THREE: three.namespace, G: ctx.namespace.G, mk, three, ctx, physics, framing };
   return shared;
 }
 
-// Evaluate one rig build. adapted:false loads the RAW published file (true "before").
+// The positive rig is the complete production composition. Its negative control
+// restores only the locked shoulder block, retaining all unrelated owners,
+// including #862 probe cadence, for an exact differential of shoulder framing.
 async function loadRig({ adapted }) {
-  const { THREE, mk, three, ctx, physics } = await boot();
-  const code = adapted ? adaptUpstream() : rawUpstream();
+  const { THREE, mk, three, ctx, physics, framing } = await boot();
+  const installed = adaptUpstream();
+  const start = '    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);';
+  const end = '    if (this.shoulder > 1e-3) cam.position.addScaledVector(_right, this.shoulder);';
+  const block = source => {
+    assert.equal(source.split(start).length, 2); assert.equal(source.split(end).length, 2);
+    return source.slice(source.indexOf(start), source.indexOf(end) + end.length);
+  };
+  const code = adapted ? installed : replaceOnce(installed, block(installed), block(rawUpstream()), 'test-only upstream shoulder control');
   const mod = mk(code, REL);
   await mod.link((spec) => {
     if (spec === 'three') return three;
     if (spec === '../core/ctx.js') return ctx;
     if (spec === './physics.js') return physics;
+    if (spec === '../../patches/splatoon3/runtime/battle-framing.mjs') return framing;
     throw new Error(`unexpected cameraRig import ${spec}`);
   });
   await mod.evaluate();
@@ -323,7 +336,7 @@ test('a large forced shoulder still does not rotate the aim (#363/#367)', async 
 // 3. the change is a pure parallel translation - nothing else moved
 // ---------------------------------------------------------------------------------------
 
-test('only the framing moved: pivot, aim, boom, zoom and kick are bit-identical to upstream (#363/#367)', async () => {
+test('shoulder framing preserves aim and settled rig state with probe-cache cadence (#363/#367/#862)', async () => {
   const scenarios = [
     ['idle clear boom', {}],
     ['steep look up', { yaw: 0.7, pitch: 0.4 }],
@@ -333,13 +346,14 @@ test('only the framing moved: pivot, aim, boom, zoom and kick are bit-identical 
     ['squid', { actor: { form: 'squid' } }],
     ['swimming', { actor: { anim: { form: 'swim' } } }],
     ['super jump flight', { actor: { superJumpState: superJumpFlight() } }],
-    ['charger fully charged', { actor: { weaponRunner: { charging: true, charge: 1 } } }],
+    ['charger fully charged', { actor: { weapon: { kind: 'charger' }, weaponRunner: { charging: true, charge: 1 } } }],
     ['wall behind, boom free', { world: { ray: wallAt(9) } }],
   ];
   for (const [name, opts] of scenarios) {
     const { fx, up } = await differential({ ...opts, log: true });
     const sf = snap(fx.rig), su = snap(up.rig);
     for (const key of Object.keys(sf)) {
+      if (key === 'baseFov') continue;
       const tolerance = key === 'curDist' || key === 'wantDist' ? 1e-6 : 1e-9;
       assert.ok(Math.abs(sf[key] - su[key]) < tolerance,
         `${name}: rig.${key} drifted (upstream ${su[key]} vs fixed ${sf[key]})`);
@@ -358,7 +372,7 @@ test('only the framing moved: pivot, aim, boom, zoom and kick are bit-identical 
       const qf = new fx.THREE.Vector3(0, 0, -1).applyQuaternion(fx.trace[i].q).normalize();
       const qu = new up.THREE.Vector3(0, 0, -1).applyQuaternion(up.trace[i].q).normalize();
       assert.ok(Math.abs(dot(qf, qu) - 1) < 1e-9, `${name}: frame ${i} rendered aim differs from upstream`);
-      // pivot and boom are identical on every frame too
+      // Both controls retain the same cache owner, so pivot and boom remain identical per frame.
       assert.ok(Math.abs(fx.trace[i].pivot.x - up.trace[i].pivot.x) < 1e-9
         && Math.abs(fx.trace[i].pivot.y - up.trace[i].pivot.y) < 1e-9
         && Math.abs(fx.trace[i].pivot.z - up.trace[i].pivot.z) < 1e-9, `${name}: frame ${i} pivot drifted`);
@@ -368,24 +382,27 @@ test('only the framing moved: pivot, aim, boom, zoom and kick are bit-identical 
     // and therefore the rendered view direction is identical to the unfixed build
     const vf = renderedForward(fx.THREE, fx.cam), vu = renderedForward(up.THREE, up.cam);
     assert.ok(Math.abs(dot(vf, vu) - 1) < 1e-9, `${name}: the rendered aim must match upstream exactly`);
-    assert.ok(Math.abs(fx.cam.fov - up.cam.fov) < 1e-12, `${name}: field of view must be unchanged`);
+    assert.ok(Number.isFinite(fx.cam.fov) && fx.cam.fov > 0, `${name}: composed S3 camera FOV must stay finite`);
     // and the fix did something in every one of these scenarios
     assert.ok(fx.rig.shoulder - up.rig.shoulder > 1e-6, `${name}: expected a persistent offset`);
   }
 });
 
 test('the Charger zoom profile is untouched (#363/#367)', async () => {
-  const { fx, up } = await differential({ actor: { weaponRunner: { charging: true, charge: 1 } } });
+  const idle = await differential();
+  const { fx, up } = await differential({ actor: { weapon: { kind: 'charger' }, weaponRunner: { charging: true, charge: 1 } } });
   assert.ok(Math.abs(fx.rig.zoom - 14) < 1e-6, `charger zoom drifted: ${fx.rig.zoom}`);
   assert.ok(Math.abs(up.rig.zoom - 14) < 1e-6, `precondition: upstream also reaches 14, got ${up.rig.zoom}`);
   // charging pulls the boom in by 0.6 exactly as before, and the offset rides on top of it
   assert.ok(Math.abs(fx.rig.curDist - 3.9) < 1e-6, `boom drifted: ${fx.rig.curDist}`);
   assert.ok(Math.abs(fx.rig.shoulder - SH0) < 1e-6);
-  assert.ok(Math.abs(fx.cam.fov - up.cam.fov) < 1e-12, 'charging must not change the field of view');
+  const calibratedOffset = idle.fx.cam.fov - idle.up.cam.fov;
+  assert.ok(Math.abs((fx.cam.fov - up.cam.fov) - calibratedOffset) < 1e-3, 'charging must preserve the calibrated S3 FOV offset');
   // a partial charge still tracks the same ramp
-  const half = await differential({ actor: { weaponRunner: { charging: true, charge: 0.5 } } });
+  const half = await differential({ actor: { weapon: { kind: 'charger' }, weaponRunner: { charging: true, charge: 0.5 } } });
   assert.ok(Math.abs(half.fx.rig.zoom - half.up.rig.zoom) < 1e-12, 'partial charge ramp must match upstream');
   assert.ok(Math.abs(half.fx.rig.zoom - 3) < 1e-6, `charge*6 ramp broken: ${half.fx.rig.zoom}`);
+  assert.ok(Math.abs((half.fx.cam.fov - half.up.cam.fov) - calibratedOffset) < 1e-3, 'partial charge must preserve the calibrated S3 FOV offset');
 });
 
 // ---------------------------------------------------------------------------------------

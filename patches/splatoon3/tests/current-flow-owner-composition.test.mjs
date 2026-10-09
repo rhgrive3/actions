@@ -14,7 +14,7 @@ test('terminal-before-ACK and ACK-before-terminal award a local helper once and 
  for(const order of ['terminal-first','ack-first']){
   const f=await ready(),{a,v,h}=actors(f);f.emit('damage',{victim:v,attacker:h,amount:5,source:'shooter'});
   const terminal=()=>f.emit('combat:terminal',{victim:v,attacker:a,victimLife:3});
-  if(order==='terminal-first')terminal();ack(f,a,v);v.stats.deaths++;terminal();ack(f,a,v);
+  if(order==='terminal-first')terminal();ack(f,a,v);v.alive=false;v.stats.deaths++;terminal();ack(f,a,v);
   assert.equal(h.stats.assists,1,order);assert.equal(h.s3.flow.score,f.profile.flow.weights.assist,order);assert.equal(a.s3.flow.score,f.profile.flow.weights.splat,order);
  }
 });

@@ -64,7 +64,7 @@ async function production() {
     scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(), settings: { quality: 'high' },
     actors: [], time: 0, level, physics: new Physics(level), mode: 'match',
     teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')],
-    match: { playing: () => true, canRespawn: () => false, time: 0, state: 'battle', boss: null },
+    match: { playing: () => true, canRespawn: () => false, time: 180, state: 'playing', boss: null },
   });
   let paintSample = 1;
   G.paint = { sample: () => paintSample, splat: () => 0 };
@@ -75,7 +75,7 @@ async function production() {
 
 async function fixture({ paint = 1 } = {}) {
   const f = await production(), { G, THREE, Actor, Character } = f;
-  G.time = 0; G.actors.length = 0; G.netm = null; G.match.time = 0; G.match.state = 'battle';
+  G.time = 0; G.actors.length = 0; G.netm = null; G.match.time = 180; G.match.state = 'playing';
   G.projectiles.clear(); f.setPaintSample(paint);
   const actors = [], nets = [];
   function make({ airborne = false, owner = undefined, nid = undefined, name = 'issue 359 actor' } = {}) {
@@ -96,8 +96,16 @@ async function fixture({ paint = 1 } = {}) {
   }
   function chargeFully(a, hz = 60) {
     a.intent.fire = true;
-    for (let i = 0; i < hz * 8 && a.weaponRunner.charge < .999; i++) step(a, hz);
-    assert.ok(a.weaponRunner.charge >= .999, `native runner reached full charge at ${hz} Hz`);
+    for (let i = 0; i < hz * 8 && a.weaponRunner.chargeT < 1; i++) step(a, hz);
+    assert.equal(a.weaponRunner.chargeT, 1, `native runner elapsed a full charge at ${hz} Hz`);
+    assert.equal(a.weaponRunner.charge, 1, `native runner emitted canonical full charge at ${hz} Hz`);
+  }
+  function chargeAtExactClock(a, hz = 60) {
+    a.intent.fire = true;
+    const startupFrames = Math.ceil(hz / 60); // #726's 1/60 s startup spans render frames at 120 Hz
+    const frames = startupFrames + Math.ceil(a.weapon.chargeTime * hz);
+    for (let i = 0; i < frames; i++) step(a, hz);
+    return frames;
   }
   function enterSquid(a, hz = 60) {
     a.intent.squid = true;
@@ -110,7 +118,7 @@ async function fixture({ paint = 1 } = {}) {
     for (const a of actors) { G.scene.remove(a.character.root); a.character.dispose(); }
     G.projectiles.clear(); G.netm = null; G.actors.length = 0;
   }
-  return { ...f, G, make, step, chargeFully, enterSquid, bindNet, close };
+  return { ...f, G, make, step, chargeFully, chargeAtExactClock, enterSquid, bindNet, close };
 }
 
 test('dry, enemy-ink and airborne squid form cannot create a new stored charge', async () => {
@@ -158,7 +166,17 @@ test('partial charge is rejected; release, death, reset and weapon replacement c
     const partial = f.make(); partial.intent.fire = true;
     for (let i = 0; i < 60 && partial.weaponRunner.charge < .35; i++) f.step(partial);
     assert.ok(partial.weaponRunner.charge > 0 && partial.weaponRunner.charge < .999);
-    f.enterSquid(partial);
+    partial.intent.squid = true; f.step(partial);
+    assert.equal(partial.form, 'kid', '#416 keeps the partial-cancel recovery in kid form');
+    assert.equal(partial.weaponRunner.charging, false, 'partial charge cancels immediately');
+    assert.equal(partial.weaponRunner.s3Stored, null, 'the cancellation never creates a keep');
+    for (let i = 1; i < 6; i++) {
+      f.step(partial);
+      assert.equal(partial.form, 'kid', `partial cancel stays gated at ${i}F`);
+      assert.equal(partial.weaponRunner.s3Stored, null);
+    }
+    f.step(partial);
+    assert.equal(partial.form, 'squid', 'partial cancellation opens swim at exactly 6F');
     assert.equal(partial.weaponRunner.s3Stored, null);
 
     for (const teardown of ['release', 'death', 'reset', 'swap']) {
@@ -172,6 +190,34 @@ test('partial charge is rejected; release, death, reset and weapon replacement c
       assert.equal(a.weaponRunner.charge, 0, `${teardown} does not leave a full-charge presentation`);
     }
   } finally { f.close(); }
+});
+
+test('partial cancel preserves independent 6F form and 19F refill clocks at 30, 60 and 120 Hz', async () => {
+  for (const hz of [30, 60, 120]) {
+    const f = await fixture({ paint: 1 });
+    try {
+      const a = f.make({ name: `partial cancellation ${hz} Hz` }), r = a.weaponRunner;
+      a.intent.fire = true;
+      for (let i = 0; i < hz && r.charge < .35; i++) f.step(a, hz);
+      assert.ok(r.charge > 0 && r.charge < 1, 'a paid partial charge precedes ZL');
+      const ink = a.ink;
+      a.intent.squid = true; f.step(a, hz);
+      assert.equal(a.form, 'kid');
+      assert.equal(r.charging, false);
+      assert.equal(r.s3Stored, null);
+      assert.equal(a.s3.chargerInterruptRecover, 19 / 60, 'resource owner consumes the cancel event once');
+      assert.equal(a.ink, ink, 'no cancellation-frame refund or refill');
+      for (let step = 1; step <= Math.ceil(19 * hz / 60); step++) {
+        f.step(a, hz);
+        const elapsed = step / hz;
+        assert.equal(a.form, elapsed + 1e-10 < 6 / 60 ? 'kid' : 'squid', `form boundary at ${hz} Hz step ${step}`);
+        assert.equal(r.s3Stored, null, 'held ZR cannot reopen or keep the cancelled charge');
+        assert.equal(r.charging, false);
+        if (elapsed + 1e-10 < 19 / 60) assert.equal(a.ink, ink, `refill remains locked at ${hz} Hz step ${step}`);
+        else assert.ok(a.ink > ink, `refill opens on the first tick at/after 19F (${hz} Hz)`);
+      }
+    } finally { f.close(); }
+  }
 });
 
 test('store eligibility and same-tick ZR cancellation hold at 30, 60 and 120 Hz', async () => {
@@ -192,6 +238,22 @@ test('store eligibility and same-tick ZR cancellation hold at 30, 60 and 120 Hz'
   }
 });
 
+test('#840 the completed native charge clock emits exact full charge before storing at 30, 60 and 120 Hz', async () => {
+  for (const hz of [30, 60, 120]) {
+    const f = await fixture({ paint: 1 });
+    try {
+      const a = f.make({ name: `#840 exact full clock ${hz} Hz` });
+      const frames = f.chargeAtExactClock(a, hz);
+      assert.equal(frames, Math.ceil(hz / 60) + Math.ceil(a.weapon.chargeTime * hz), 'the existing 1/60 s startup precedes the full charge clock');
+      assert.equal(a.weaponRunner.chargeT, 1, `authoritative charge clock completes at ${hz} Hz`);
+      assert.equal(a.weaponRunner.charge, 1, `only completed clock emits q=1 at ${hz} Hz`);
+      f.enterSquid(a, hz);
+      assert.equal(a.submerged, true, `own-ink squid state at ${hz} Hz`);
+      assert.equal(a.weaponRunner.s3Stored?.charge, 1, `completed full charge stores at ${hz} Hz`);
+    } finally { f.close(); }
+  }
+});
+
 test('owned wirepack carries only remote swim visuals; the owner fires the restored charge once', async () => {
   const f = await fixture({ paint: 1 }), fires = [], ownerPackets = [], remoteFires = [];
   const offFire = f.on('weapon:fire', event => fires.push(event));
@@ -200,7 +262,7 @@ test('owned wirepack carries only remote swim visuals; the owner fires the resto
     const ownerSession = { myId: 'owner', isHost: false, hostId: 'host', _members: new Set(['owner', 'observer']),
       tr: { broadcast: packet => ownerPackets.push(packet) } };
     const ownerNet = new f.NetMatch(ownerSession, { map: 'Scorch Gorge' });
-    f.bindNet(ownerNet, { actors: [owner], state: 'battle', time: 0, boss: null });
+    f.bindNet(ownerNet, { actors: [owner], state: 'playing', time: 0, boss: null });
     f.chargeFully(owner); f.enterSquid(owner);
     assert.ok(owner.weaponRunner.s3Stored);
     ownerNet._sendTick();
@@ -218,7 +280,7 @@ test('owned wirepack carries only remote swim visuals; the owner fires the resto
     const observerSession = { myId: 'observer', isHost: false, hostId: 'host', _members: new Set(['owner', 'observer']),
       tr: { broadcast() {} } };
     const observerNet = new f.NetMatch(observerSession, { map: 'Scorch Gorge' });
-    f.bindNet(observerNet, { actors: [remote], state: 'battle', time: 0, boss: null });
+    f.bindNet(observerNet, { actors: [remote], state: 'playing', time: 0, boss: null });
     observerNet.onMessage('owner', packet);
     const peer = observerNet._peer('owner');
     observerNet._advance(peer, 1 / 60);

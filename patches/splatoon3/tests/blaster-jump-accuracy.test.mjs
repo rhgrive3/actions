@@ -27,7 +27,10 @@ const state = (a) => a.weaponRunner.s3BlasterJumpState(a.weapon);
 function jump(f, a) {
   f.tick(a, 2);
   a.grounded = true; f.tick(a, 2);
-  a.grounded = false; f.tick(a);          // leave-ground edge frame
+  // #1102: leaving a ledge must NOT activate Blaster jump accuracy. The
+  // native jump owner increments s3JumpSerial only for an actual jump.
+  a.grounded = false; a.s3JumpSerial = (a.s3JumpSerial || 0) + 1;
+  f.tick(a); // explicit jump edge frame
   return a;
 }
 function airborne(f, a, frames) { for (let i = 0; i < frames; i++) f.tick(a); return a; }
@@ -50,7 +53,8 @@ test('#684 grounded endpoint stays 0 and the jump edge starts the bias state at 
   assert.equal(a.weaponRunner._spreadDeg(a.weapon), 0, 'grounded cone');
   assert.equal(state(a).active, false, 'no jump-accuracy state while grounded');
 
-  a.grounded = false; f.tick(a);
+  a.grounded = false; a.s3JumpSerial = (a.s3JumpSerial || 0) + 1;
+  f.tick(a);
   const s = state(a);
   assert.equal(s.active, true, 'a live jump-accuracy state after leaving the ground');
   assert.equal(s.frames, 0, 'state starts on the jump edge');
@@ -159,33 +163,41 @@ test('#684 HUD renders the 10-degree outer envelope and a separate bias cue from
   ps._muzzle = (actor, out) => out.set(0, 0, 0);
   ps._aimFrom = (actor, muzzle, out) => out.set(0, 0, 1);
   ps._new = () => ({ pos: new THREE.Vector3(), prev: new THREE.Vector3(), start: new THREE.Vector3(), vel: new THREE.Vector3() });
-  const owners = [], fired = [];
-  ps._push = p => { owners.push(p.owner); fired.push(p); };
-  const shotAngle = p => Math.acos(Math.max(-1, Math.min(1, p.vel.z / p.vel.length()))) * 180 / Math.PI;
+  const owners = [], deviations = [];
+  ps._push = p => {
+    owners.push(p.owner);
+    const v = p.vel.clone().normalize();
+    deviations.push(Math.acos(Math.max(-1, Math.min(1, v.z))) * 180 / Math.PI);
+  };
   a._nearCamera = () => false;
   const remote = f.make('blaster'); remote.isLocal = false; remote._nearCamera = () => false;
   jump(f, remote); airborne(f, remote, 30);
+  const randomSequence = values => {
+    let i = 0;
+    f.setRandom(() => values[Math.min(i++, values.length - 1)]);
+  };
 
-  let draws = [0.1, 1, 0];                 // outer choice, full-radius sample, zero azimuth
-  f.setRandom(() => draws.shift() ?? 0);
+  // First draw chooses outer/inner. The composed family spread owner then gets
+  // radius=1 and azimuth=0, so the actual projectile deviation equals the chosen envelope.
+  randomSequence([0.1, 1, 0]);             // 0.1 < bias -> outer reticle
   ps.fireBlaster(a, a.weapon, 999);
-  close(shotAngle(fired.at(-1)), s.envelope, 'outer draw uses the full airborne envelope');
-  draws = [0.1, 1, 0];
+  close(deviations.at(-1), s.envelope, 'outer draw uses the full airborne envelope', 1e-6);
+  randomSequence([0.1, 1, 0]);
   ps.fireBlaster(remote, remote.weapon, 999);
-  close(shotAngle(fired.at(-1)), state(remote).envelope, 'remote owner also uses its own full outer envelope');
+  close(deviations.at(-1), state(remote).envelope, 'remote owner also uses its own full outer envelope', 1e-6);
   assert.equal(owners[0], a, 'native projectile keeps its local owner');
   assert.equal(owners[1], remote, 'native projectile keeps its remote owner');
-  f.setRandom(() => 0.9);                  // 0.9 >= bias -> inner reticle
+  randomSequence([0.9, 1, 0]);             // 0.9 >= bias -> grounded endpoint
   ps.fireBlaster(a, a.weapon, 999);
-  close(shotAngle(fired.at(-1)), s.ground, 'inner draw stays on the grounded endpoint');
+  close(deviations.at(-1), s.ground, 'inner draw stays on the grounded endpoint', 1e-6);
   f.restoreRandom();
   assert.notEqual(s.bias, 0.5, 'mid-recovery bias is below the initial maximum');
 
   // Past the endpoint the bias is 0, so no draw can reach the outer envelope.
   airborne(f, a, END_F - 30);
-  f.setRandom(() => 0);
+  randomSequence([0, 1, 0]);
   ps.fireBlaster(a, a.weapon, 999);
-  close(shotAngle(fired.at(-1)), a.weapon.spreadGround, 'recovered state always uses the grounded endpoint');
+  close(deviations.at(-1), a.weapon.spreadGround, 'recovered state always uses the grounded endpoint', 1e-6);
   f.restoreRandom();
 });
 
@@ -210,26 +222,27 @@ test('#684 equipped Intensify Action scales the jump envelope without changing b
   close(state(jumping).bias, 0, 'recovery still ends at 70F');
 });
 
-test('#684 Blaster update/reset owns only Blaster jump fields and cannot clear Shooter state', async () => {
+test('#684 Blaster fields stay namespaced beside the existing Shooter update/reset owner', async () => {
   const f = await fixture();
   const a = jump(f, f.make('blaster'));
   const r = a.weaponRunner;
   r.s3WasGrounded = true;        // Shooter #98 state owner
-  r.s3JumpSpreadAge = null;      // Shooter #98 recovery clock
+  r.s3JumpSpreadAge = 0.4;       // Shooter #98 recovery clock
   r.s3BlasterJumpT = 12 / HZ;
-  a.weapon = f.WEAPONS.shooter;  // exercise the composed Shooter owner after the Blaster wrapper
+  a.grounded = true;
+  a.weapon = f.WEAPONS.shooter;  // exercise the non-Blaster branch without setWeapon/reset
   f.tick(a);
-  assert.equal(r.s3WasGrounded, false, 'Shooter owner records the actual airborne state');
-  close(r.s3JumpSpreadAge, 1 / HZ, 'Shooter owner starts its own jump-spread clock on the edge');
+  assert.equal(r.s3WasGrounded, true, 'Shooter keeps ownership of its grounded marker');
+  close(r.s3JumpSpreadAge, 0.4 + STEP, 'Shooter advances its own recovery clock');
   assert.equal(r.s3BlasterJumpT, null, 'leaving Blaster clears only Blaster elapsed state');
   assert.equal(r.s3BlasterWasGrounded, false, 'Blaster edge marker has its own namespace');
 
-  r.s3WasGrounded = true;
+  r.s3WasGrounded = false;
   r.s3JumpSpreadAge = 0.4;
   r.reset();
-  assert.equal(r.s3WasGrounded, !!a.grounded, 'shared reset lets Shooter reinitialize its own edge marker');
-  assert.equal(r.s3JumpSpreadAge, null, 'shared reset lets Shooter clear its own recovery clock');
-  assert.equal(r.s3BlasterWasGrounded, false, 'Blaster reset clears its own edge marker');
+  assert.equal(r.s3WasGrounded, true, 'shared reset restores the current Shooter grounded marker');
+  assert.equal(r.s3JumpSpreadAge, null, 'shared reset clears the Shooter recovery clock through its existing owner');
+  assert.equal(r.s3BlasterWasGrounded, false, 'shared reset also clears the separate Blaster edge marker');
 });
 
 test('#684 the accuracy timeline follows the fixed simulation clock, not the render cadence', async () => {
@@ -238,7 +251,8 @@ test('#684 the accuracy timeline follows the fixed simulation clock, not the ren
   // step sizes: the state must be a function of simulated time, not of frames.
   const run = (steps, dt) => {
     const a = f.make('blaster'); a.grounded = true; a.weaponRunner.update(STEP, { fire: false });
-    a.grounded = false; a.weaponRunner.update(STEP, { fire: false });
+    a.grounded = false; a.s3JumpSerial = (a.s3JumpSerial || 0) + 1;
+    a.weaponRunner.update(STEP, { fire: false });
     for (let i = 0; i < steps; i++) a.weaponRunner.update(dt, { fire: false });
     return a;
   };

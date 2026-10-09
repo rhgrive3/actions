@@ -9,3 +9,14 @@ test('native27 baseline removes only the known two empty Kit fields before times
  const action=[...e];action[27]=.5;assert.throws(()=>nativeBaselineProjectileEvent(action));
  for(const bad of [e.slice(0,27),[...e,0],['b',...e.slice(1)]])assert.throws(()=>nativeBaselineProjectileEvent(bad));
 });
+
+
+test('current native baseline validates InkFlight metadata before constructing the frozen native27 control',()=>{
+ const fields=['p',...Array(25).fill(0)];
+ for(const meta of [null,['iw-ink-flight-1','shooter',2,.25,false]]){
+  const current=[...fields,meta,0,0],native=nativeBaselineProjectileEvent(current);
+  assert.equal(native.length,26);assert.deepEqual(native,fields);assert.equal(current[26],meta);
+ }
+ for(const meta of [0,{},['iw-ink-flight-1','foreign',0,.5,false],['iw-ink-flight-1','shooter',-1,.5,false]])
+  assert.throws(()=>nativeBaselineProjectileEvent([...fields,meta,0,0]));
+});

@@ -8,6 +8,7 @@ function placeRoller(world) {
   attacker.setWeapon('roller');
   attacker.isLocal = !attacker.remote;
   attacker.pos.set(0, 0, 0); attacker.vel.set(0, 0, 2); attacker.yaw = 0; attacker.grounded = true;
+  attacker.intent.move.set(0, 0, 1);
   victim.pos.set(0, 0, .8); victim.grounded = true;
   G.actors = [attacker, victim];
   return attacker.weaponRunner;
@@ -18,7 +19,8 @@ test('invulnerability rejection emits no generic feedback or Roller success debo
   const attacker = f.make('roller'), victim = f.make('shooter');
   attacker.isLocal = true; attacker._nearCamera = () => false;
   victim.team = 1; victim.isLocal = true; victim._nearCamera = () => false;
-  attacker.pos.set(0, 0, 0); attacker.vel.set(0, 0, 2); attacker.yaw = 0;
+  attacker.pos.set(0, 0, 0); attacker.vel.set(0, 0, 2); attacker.yaw = 0; attacker.grounded = true;
+  attacker.intent.move.set(0, 0, 1);
   victim.pos.set(0, 0, .8); victim.invuln = .01; G.paint.sample = () => 0;
   G.actors = [attacker, victim]; G.time = 1;
   const feedback = [], hits = [];
@@ -39,7 +41,7 @@ test('invulnerability rejection emits no generic feedback or Roller success debo
   runner._roller(1 / 60, { fire: true, firePressed: false }, WEAPONS.roller);
   assert.ok(victim.hp <= 0, 'lethal damage has been recorded before the deferred splat');
   assert.equal(victim.alive, true, 'current damage owner schedules lethal for the next Actor tick');
-  victim.update(1 / 60);
+  G.time += 1 / 60; victim.update(1 / 60);
   assert.equal(victim.alive, false);
   assert.equal(victim.hp, 0);
   assert.equal(runner.rollHits.has(victim), true);
@@ -55,7 +57,8 @@ test('real victim update order around expiry does not leave failed-contact immun
     attacker._nearCamera = victim._nearCamera = () => false;
     G.paint.sample = () => 0;
     victim.team = 1; victim.invuln = .01; victim.hp = 200;
-    attacker.pos.set(0, 0, 0); attacker.vel.set(0, 0, 2); attacker.yaw = 0;
+    attacker.pos.set(0, 0, 0); attacker.vel.set(0, 0, 2); attacker.yaw = 0; attacker.grounded = true;
+    attacker.intent.move.set(0, 0, 1);
     victim.pos.set(0, 0, .8); G.actors = [attacker, victim]; G.time = 1;
     G.projectiles = { applyHit: Projectiles.prototype.applyHit };
     const runner = attacker.weaponRunner, dt = 1 / 60;
@@ -204,7 +207,7 @@ test('remote Roller contact waits for owner acceptance, retries after rejection,
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
     assert.equal(sender.wire.length, 2, 'the rejection acknowledgement admits a retry without starting the configured 0.4-second debounce');
     assert.equal(runner.rollHits.get(victim), sender.G.time);
-    assert.deepEqual(Object.keys(sender.wire[1].data).sort(), ['a', 'd', 'h', 'k', 'l', 'rp', 'v', 'w']);
+    assert.deepEqual(Object.keys(sender.wire[1].data).sort(), ['a', 'd', 'h', 'k', 'l', 'rp', 'seq', 'v', 'w']);
     assert.equal(sender.wire[1].data.rp, false, 'ordinary contact carries the accepted equipment flag without inventing Punisher');
 
     receiver.victim.invuln = 0;

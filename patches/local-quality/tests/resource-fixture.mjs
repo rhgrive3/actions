@@ -28,6 +28,7 @@ export async function resourceFixture({ baseline = false, globals = {} } = {}) {
     export * from './inkwave-public/src/config.js';
     export * from './inkwave-public/src/game/match.js';
     export * from './inkwave-public/src/game/showcase.js';
+    export { Character } from './inkwave-public/src/game/character.js';
     export * from './inkwave-public/src/world/environment.js';
     export * from './inkwave-public/src/core/shadowcache.js';
     export * from './patches/local-quality/depth-cache.mjs';

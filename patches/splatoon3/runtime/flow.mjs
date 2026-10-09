@@ -42,7 +42,7 @@ export function awardFlow(state, action, value, cfg, capProgress = true, bonusFp
   state.active = true; state.remaining = cfg.duration; state.score = 0; return true;
 }
 // Shared across repeated installs so an authoritative Match transition is awarded once.
-const wipeoutSequences = new WeakMap();
+const wipeoutSequences = new WeakMap(), confirmedWipes = new WeakMap();
 export function awardWipeoutFlow(flow, cfg) {
   if (flow.active) return;
   const gain = (cfg.progress?.wipeoutBonus || 0) * cfg.threshold / cfg.progress?.referenceThreshold;
@@ -167,8 +167,8 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     if (match && phase === 'intro') wipeoutSequences.delete(match);
   });
   on('team:wipeout', ({ match, team, sequence } = {}) => {
-    // Client roster inference is not an authoritative online team event.
-    // Delay this new bonus online until confirmed ownership/timeline transport exists.
+    // Proxy roster inference remains offline-only. Online awards arrive through
+    // the host-confirmed owner-history transport below.
     if (G.netm) return;
     if (!match || match !== G.match || match.mode !== 'turf' || match.attract ||
         match.state !== 'playing' || match.paused || !(match.time > 0) ||
@@ -183,7 +183,34 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     // It is not a splat/assist: do not activate or extend Flow or paint a burst.
     for (const actor of teammates) if (!(actor.isBot && cfg.bots === false)) awardWipeoutFlow(state(actor), cfg);
   });
+  on('flow:wipeout-confirmed', ({ netmatch, match, team, key } = {}) => {
+    if (!netmatch || netmatch !== G.netm || netmatch.match !== match || G.match !== match ||
+        match.mode !== 'turf' || match.attract || match.state !== 'playing' || match.paused || !(match.time > 0) ||
+        (team !== 0 && team !== 1) || typeof key !== 'string') return;
+    const seen = confirmedWipes.get(match) || new Set();
+    if (seen.has(key)) return;
+    seen.add(key); confirmedWipes.set(match, seen);
+    for (const actor of match.actors) if (actor.team === 1-team && !(actor.isBot && cfg.bots === false)) awardWipeoutFlow(state(actor), cfg);
+  });
   on('turf', ({ actor, area }) => award(actor, 'turf', area));
+  on('assist:mark', ({ helper, victim, source, accepted, victimLife, helperLife } = {}) => {
+    if (accepted !== true || !helper?.alive || !victim?.alive || helper === victim ||
+        helper.team === victim.team || G.match?.attract ||
+        !cfg.assistPoints?.sources?.includes(source) ||
+        victimLife !== (victim.netLife ?? 0) || helperLife !== (helper.netLife ?? 0)) return;
+    const map = credits.get(victim) || new Map(), prior = map.get(helper);
+    const time = typeof prior === 'number' ? prior : prior?.time;
+    const damage = prior != null && (typeof prior === 'number' || prior.kind !== 'marking') &&
+      G.time >= time && G.time - time <= cfg.assistWindow &&
+      (typeof prior === 'number' || (prior.victimLife === victimLife && prior.helperLife === helperLife));
+    if (!damage) map.set(helper, { time: G.time, victimLife, helperLife, kind: 'marking', source });
+    credits.set(victim, map);
+  });
+  function assistValue(helper, victim) {
+    const credit = credits.get(victim)?.get(helper), points = cfg.assistPoints;
+    if (credit?.kind !== 'marking' || !points || !(points.damage > 0)) return 1;
+    return points.marking / points.damage;
+  }
   on('damage', ({ victim, attacker, amount, source }) => {
     if (!attacker || attacker === victim || source === 'ink' || victim.team === attacker.team) return;
     const map = credits.get(victim) || new Map(); map.set(attacker, G.time); credits.set(victim, map);
@@ -195,13 +222,13 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     // One victim-authoritative assist list feeds stats, Flow and conditional gear
     // while the current-main death-progress policy remains authoritative.
     const candidates = Array.isArray(event.assists) ? event.assists :
-      [...(credits.get(victim) || [])].filter(([, time]) => G.time - time <= cfg.assistWindow).map(([helper]) => helper);
+      [...(credits.get(victim) || [])].filter(([, credit]) => G.time - (typeof credit === 'number' ? credit : credit.time) <= cfg.assistWindow).map(([helper]) => helper);
     const helpers = attacker && attacker !== victim && attacker.team !== victim.team
       ? [...new Set(candidates)].filter(helper => helper !== attacker && helper !== victim && helper.team === attacker.team) : [];
     event.assists = helpers;
     for (const helper of helpers) {
       helper.stats.assists = (helper.stats.assists || 0) + 1;
-      award(helper, 'assist', 1);
+      award(helper, 'assist', assistValue(helper, victim));
       emit('actor:assist', { actor: helper, victim, attacker });
     }
     credits.delete(victim);

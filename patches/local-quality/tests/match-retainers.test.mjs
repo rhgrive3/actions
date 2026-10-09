@@ -1,3 +1,4 @@
+import {configDependency} from './config-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -24,7 +25,7 @@ async function realm({ baseline = false } = {}) {
   const on = (n, fn) => { let v = bus.get(n); if (!v) bus.set(n, v = new Set()); v.add(fn); return () => v.delete(fn); };
   const context = vm.createContext({ console, performance, Math, Map, Set });
   const config = new vm.SourceTextModule(raw('src/config.js'), { context });
-  await config.link(() => { throw Error('config dependency'); }); await config.evaluate();
+  await config.link(spec=>configDependency(spec,context)); await config.evaluate();
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const util = { G, on, emit, clamp, lerp: (a, b, t) => a + (b - a) * t, damp: (a, b) => b, dampAngle: (a, b) => b,
     smoothstep: (a, b, x) => x, ...config.namespace, ...THREE };
@@ -67,7 +68,7 @@ function hudBoss(f) {
 function projectiles(f) {
   const removed = [];
   const p = Object.create(f.Projectiles.prototype);
-  Object.assign(p, { scene: { remove: m => removed.push(m) }, sights: new Map(), vols: Array.from({ length: 32 }, () => ({ hits: [] })), volI: 0,
+  Object.assign(p, { inkFlight:{clear(){}}, scene: { remove: m => removed.push(m) }, sights: new Map(), vols: Array.from({ length: 32 }, () => ({ hits: [] })), volI: 0,
     list: [], pool: [], bombs: [], clouds: [], beams: [], beamPool: [], blobs: { count: 5 }, ribbonGeo: { disposed: 0, dispose() { this.disposed++; } } });
   p._releaseBomb = p._releaseCloud = () => {};
   return Object.assign(p, { removed });
@@ -192,5 +193,5 @@ test('verbatim anchors other adapters patch are preserved after the transform', 
   const m = adaptQualitySource('src/game/match.js', upToReliability('src/game/match.js'));
   const w = adaptQualitySource('src/game/weapons.js', upToReliability('src/game/weapons.js'));
   assert(m.includes('  dispose() {\n') && m.includes('    this.bossMode?.dispose(); this.bossMode = null; this.boss = null;'));
-  assert(w.includes('  clear() {\n    for (const p of this.list) this._recycle(p);') && w.split('  clear() {').length === 2, 'current native recycling retains one clear owner');
+  assert(w.includes('  clear() {\n    this.inkFlight.clear();\n    for (const p of this.list) this._recycle(p);') && w.split('  clear() {').length === 2, 'current native recycling retains one clear owner');
 });

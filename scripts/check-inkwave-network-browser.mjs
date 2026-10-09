@@ -26,7 +26,7 @@ let sourceSha=null;
 if(process.argv.includes('--exact-source')){
  sourceSha=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
  const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:ROOT,encoding:'utf8'}).split('\0').filter(Boolean).map(r=>{const [m,f]=r.split('\t');return[f,m.split(' ')[2]];}));
- const roots={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/'};
+ const roots={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','build-script/':'scripts/'};
  const files=Object.entries(build.files).map(([k,h])=>{const prefix=Object.keys(roots).find(p=>k.startsWith(p));assert(prefix,k);const f=roots[prefix]+k.slice(prefix.length);assert.equal(hash(fs.readFileSync(path.join(ROOT,f))),h,f);return f;});
  assert.equal(hash(fs.readFileSync(path.join(ROOT,'scripts/build-inkwave.mjs'))),build.build.script);files.push('scripts/build-inkwave.mjs','scripts/check-inkwave-network-browser.mjs','patches/network-replication/tests/browser-fixture.mjs','server/src/index.js');
  const blobs=execFileSync('git',['hash-object','--',...files],{cwd:ROOT,encoding:'utf8'}).trim().split('\n');files.forEach((f,i)=>assert.equal(blobs[i],tree.get(f),f+' must match commit'));
@@ -64,8 +64,22 @@ try{
  await pages[1].evaluate(c=>NG.net.join(c,'Network Guest'),code);
  await pages[0].waitForFunction(()=>NG.net.lobby.players.length===2);
  await pages[1].waitForFunction(()=>NG.net.lobby.players.length===2);
- await pages[1].evaluate(()=>NG.net.setMe({weapon:'roller',ready:true}));
- await pages[0].evaluate(()=>{NG.net.setMe({weapon:'roller',ready:true});NG.net.setSettings({bots:false});NG.net.start();});
+ // #1039/#1103: setting weapons and room rules invalidates readiness. The
+ // host must confirm assignments, then BOTH participants ready up before Turf.
+ await pages[1].evaluate(()=>NG.net.setMe({weapon:'roller'}));
+ await pages[0].evaluate(()=>{NG.net.setMe({weapon:'roller'});NG.net.setSettings({bots:false});});
+ await pages[0].waitForFunction(()=>NG.net.lobby.players.length===2 &&
+   NG.net.lobby.players.every(p=>p.weapon==='roller'),null,{timeout:30000});
+ await pages[0].evaluate(()=>{
+   if(!NG.net.confirmTeams())throw Error('Network host could not confirm Turf teams');
+ });
+ await pages[1].waitForFunction(()=>NG.net.lobby.teamsConfirmed===true,null,{timeout:30000});
+ await pages[1].evaluate(()=>NG.net.setMe({ready:true}));
+ await pages[0].evaluate(()=>NG.net.setMe({ready:true}));
+ await pages[0].waitForFunction(()=>NG.net.canStart(),null,{timeout:30000});
+ await pages[0].evaluate(()=>{
+   if(!NG.net.start())throw Error('Confirmed and ready Turf match did not start');
+ });
  await Promise.all(pages.map(p=>p.waitForFunction(()=>NG.game.match?.state==='playing'&&NG.net.active,null,{timeout:180000})));
  console.log('network browser match ready');for(const page of pages)await page.evaluate(baseline=>{
   globalThis.isBaseline=baseline;

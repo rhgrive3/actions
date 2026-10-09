@@ -315,21 +315,19 @@ kitTrizookaClearPooled(ghost);
 assert.ok(!ghost.s3SpecialWeapon, 'and it can be cleared like any pooled round');
 });
 
-// ---- side lobes are visual only --------------------------------------------
+// ---- per-glob authority ------------------------------------------------------
 
-test('only the damage carrier may damage, paint or turf', async () => {
+test('all three live globs may damage and paint, while ghosts remain presentation-only', async () => {
   const api = await production();
   const projectiles = world(api, { blockAt: [999, 0, 0] });
   const a = shooter(api);
   const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
-  const carriers = fired.filter((p) => isDamageCarrier(p));
-  assert.equal(carriers.length, 1, 'exactly one authoritative lobe');
-  for (const p of fired.filter((x) => !isDamageCarrier(x))) {
-    assert.equal(p.damage, 0, 'a side lobe carries no damage');
-    assert.notEqual(p.type, 'blast', 'a side lobe never enters the blast path');
-    assert.equal(p.trailEvery, 0, 'and it paints no trail');
+  assert.equal(fired.filter((p) => isDamageCarrier(p)).length, 3, 'every local glob is authoritative');
+  for (const p of fired) {
+    assert.equal(p.damage, 220);
+    assert.equal(p.type, 'blast');
+    assert.equal(p.trailEvery, 1.1);
   }
-  // a ghost carrier is never authoritative even though it looks like one
   const g = fired[0];
   g.ghost = true;
   assert.equal(isDamageCarrier(g), false, 'ghosts have no authority even when the transport is disposed');

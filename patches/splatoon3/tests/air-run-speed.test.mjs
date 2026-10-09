@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture, emitMainShot } from './source-fixture.mjs';
 import { emptyLoadout } from '../runtime/gear.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-10,`${a} != ${b}`);
@@ -48,8 +48,8 @@ test('#467 ground speed and inherited takeoff momentum are retained',async()=>{
  const x=jumpTrace(a,60,va),y=jumpTrace(b,60,vb);assert.notEqual(x[0][3],y[0][3]);assert.ok(b.pos.x>a.pos.x,'ground-created momentum is not overwritten');
 });
 test('#467 attack, ready, special, squid, and action-specific owners keep prior multipliers',async()=>{
- const f=await fixture();
- const cases=[['shooter',r=>r.firingT=1],['charger',r=>r.charging=true],['splatling',r=>r.charging=true],['splatling',r=>r.streaming=true],['roller',r=>r.flick=.1],['roller',r=>r.flickRecover=.1],['slosher',r=>r.slosh=.1],['shooter',r=>r.a.specialActive={id:'storm'}],['shooter',r=>r.a.superJumpState={phase:'flight'}],['shooter',r=>r.a.form='squid']];
+ const f=await fixture({realProjectiles:true});
+ const cases=[['shooter',r=>emitMainShot(f,r.a)],['charger',r=>r.charging=true],['splatling',r=>r.charging=true],['splatling',r=>r.streaming=true],['roller',r=>r.flick=.1],['roller',r=>r.flickRecover=.1],['slosher',r=>r.slosh=.1],['shooter',r=>r.a.specialActive={id:'storm'}],['shooter',r=>r.a.superJumpState={phase:'flight'}],['shooter',r=>r.a.form='squid']];
  for(const[kind,configure]of cases){const a=equip(f,kind,57),r=a.weaponRunner;configure(r);const grounded=r.moveSpeed();a.grounded=false;assert.ok(Math.abs(r.moveSpeed()-grounded)<1e-10,kind+String(configure)+`: ${r.moveSpeed()} != ${grounded}`);}
 });
 test('#467 ordinary air leaves the existing independent Flow multiplier unchanged',async()=>{

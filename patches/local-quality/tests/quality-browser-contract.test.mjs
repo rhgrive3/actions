@@ -1,3 +1,4 @@
+import {configDependency} from './config-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -9,7 +10,7 @@ async function fixture({touch=false,fault=null,cleanupFails=false}={}) {
   const game=G.game={settings:{quality:'medium',gyroSens:1.7},mobile:{touch},props:{quality:'medium'},mapDef:{id:'same'}};
   const context=vm.createContext({s3ProbeG:G,URL,document:{baseURI:'https://inkwave.test/'},AggregateError});
   const config=new vm.SourceTextModule(fs.readFileSync(new URL('../../../inkwave-public/src/config.js',import.meta.url),'utf8'),{context});
-  await config.link(()=>{throw Error('unexpected import');});await config.evaluate();
+  await config.link(spec=>configDependency(spec,context));await config.evaluate();
   const apply=()=>{const q=config.namespace.effectiveQuality(game.settings,game.mobile);G.paint.size=q.paintAtlas;G.env.shadowSize=q.shadowSize;game.props.quality=game.settings.quality;game._builtQuality=game.settings.quality;};apply();
   const calls=[];
   game._setSettings=s=>{calls.push(s.quality);if(cleanupFails&&s.quality==='medium')throw Error('cleanup failed');Object.assign(game.settings,s);apply();if(s.quality==='high'&&fault==='budget')G.paint.size=123;if(s.quality==='high'&&fault==='cpu')G.physics={};};

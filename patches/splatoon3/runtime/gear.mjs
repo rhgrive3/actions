@@ -1,3 +1,6 @@
+import { installThermalTracking } from './private-tracking.mjs';
+import { installHaunt } from './haunt.mjs';
+import { installDryInk } from './dry-ink.mjs';
 import { CLOTHING_ABILITIES, SPLATFEST_TEE, clothingAbilityAllowed, deathGearPenalty } from './clothing-gear.mjs';
 import { selectedSub } from './kit-composition.mjs';
 import { installSubReady } from './sub-ready.mjs';
@@ -8,7 +11,7 @@ import { HEAD_ABILITIES, conditionalPoints, conditionalKey, installConditionalGe
 import { installSubResistance } from './sub-resistance.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
-  respawnPunisher: '復活ペナルティアップ', abilityDoubler: 'フェスT：追加ギアパワー倍化',
+  haunt: 'リベンジ', thermalInk: 'サーマルインク', respawnPunisher: '復活ペナルティアップ', abilityDoubler: 'フェスT：追加ギアパワー倍化',
   ninjaSquid: 'イカニンジャ',
   lastDitchEffort: 'ラストスパート', comeback: 'カムバック', openingGambit: 'スタートダッシュ', subResistance: 'サブ影響軽減',
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
@@ -17,10 +20,10 @@ export const ABILITIES = Object.freeze({
   actionIntensify: 'アクション強化', specialCharge: 'スペシャル増加量アップ',
   specialPower: 'スペシャル性能アップ',
   specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
-  quickSuperJump: 'スーパージャンプ時間短縮', subPower: 'サブ性能アップ',
+  quickSuperJump: 'スーパージャンプ時間短縮', stealthJump: 'ステルスジャンプ', subPower: 'cµブ性能アップ',
 });
 export function abilityAllowed(id, piece, slot, item) {
-  return Object.hasOwn(ABILITIES, id) && clothingAbilityAllowed(id, piece, slot, item) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0) && (id !== 'ninjaSquid' || piece === 1 && slot === 0);
+  return Object.hasOwn(ABILITIES, id) && clothingAbilityAllowed(id, piece, slot, item) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0) && (id !== 'ninjaSquid' || piece === 1 && slot === 0) && (id !== 'stealthJump' || piece === 2 && slot === 0);
 }
 export const emptyLoadout = () => Array.from({ length: 3 }, () => ({ main: 'none', subs: ['none', 'none', 'none'] }));
 export function normalizeLoadout(value) {
@@ -90,10 +93,16 @@ export function installGear(api, tuning) {
     const beforeCost = a.weapon?.specialCost, beforeSpecial = a.special;
     a.s3.loadout = loadout;
     const points = conditionalPoints(a, abilityPoints(loadout), G.match, tuning.conditionalGear);
+    a.s3.abilityPoints = Object.freeze({ ...points }); // actor-local canonical effective AP
     a.s3.modifiers = modifiersFor(loadout, tuning.gear, points);
     const m = a.s3.modifiers;
     m.ninjaSquid = loadout[1].main === 'ninjaSquid';
+    // #272: Stealth Jump is a shoes-only primary ability in Splatoon 3.
+    // Its Ver. 11.0.0 movement penalty is consumed by the Super Jump flight
+    // state and deliberately does not alter Quick Super Jump AP curves.
+    m.stealthJump = loadout[2].main === 'stealthJump';
     const ap = points, extra = tuning.gearExtra;
+    m.specialPowerAP = ap.specialPower || 0;
     const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
     const around = Math.floor(gearCurve(ap.quickRespawn || 0, ...extra.quickRespawnAroundFrames) + 1e-10);
     const chase = Math.floor(chaseBase * (m.quickRespawn ?? 1) + 1e-10);
@@ -118,7 +127,7 @@ export function installGear(api, tuning) {
     // Actor-local copy. An opponent's equipment never changes shared stats.
     const base = api.WEAPONS[a.weaponId];
     if (!transient) a.weapon = { ...base };
-    else for (const field of ['spreadAir', 'specialCost', 'inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter']) {
+    else for (const field of ['spreadAir', 'specialCost', 'inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter', 'rollInkMinPerFrame', 'rollInkMaxPerFrame']) {
       if (field in base) a.weapon[field] = base[field];
     }
     // MainWeaponSetting and ActionSpecUp overrides belong to the equipped
@@ -126,8 +135,11 @@ export function installGear(api, tuning) {
     m.runSpeedFiring = gearCurve(ap.runSpeed || 0, ...(a.weapon.runSpeedFiringCurve || extra.runSpeedFiring));
     m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...(a.weapon.actionAirSpreadCurve || extra.actionAirSpread));
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
-    for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
+    for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter', 'rollInkMinPerFrame', 'rollInkMaxPerFrame']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
     const sub = api.SUB[a.weapon.sub || 'bomb'];
+    const tiers = sub?.throwSpeedTiers;
+    if (tiers && [tiers.low, tiers.mid, tiers.high].every(Number.isFinite) && tiers.low > 0)
+      m.subPower = gearCurve(ap.subPower || 0, tiers.low, tiers.mid, tiers.high) / tiers.low;
     m.inkSaverSub = sub?.inkSaverCurve ? gearCurve(ap.inkSaverSub || 0, ...sub.inkSaverCurve) : 1;
     m.stormDuration = Math.floor(gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormDurationFrames) + 1e-10) / 60;
     m.stormThrowScale = gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormThrowScale);
@@ -165,13 +177,13 @@ export function installGear(api, tuning) {
     const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
     if (this.a.grounded && (this.aimingSub || throwingStorm)) return tuning.bomb.holdMoveSpeed;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger' && this.a.onEnemy;
-    const attacking = this.firingT > 0 || this.flick >= 0 || this.charging || this.streaming;
+    const attacking = (w.kind === 'shooter' ? this.s3ShooterMoveRemaining > 1e-10 : this.firingT > 0) || this.flick >= 0 || this.charging || this.streaming;
     // Ordinary airborne steering must not acquire extra reach from the ground
     // run-speed ability. Keep attack/ready/action-specific speed owners separate;
     // this only changes the target multiplier, never the velocity at takeoff.
     const ordinaryAir = !this.a.grounded && this.a.form === 'kid' &&
       !this.a.specialActive && !this.a.superJumpState && !this.a.s3?.roll && !this.a.s3?.surge &&
-      !this.busy() && !this.firingPose() && !this.aimingSub && !(this.flickRecover > 0);
+      !this.busy() && !(w.kind === 'shooter' ? this.s3ShooterMoveRemaining > 1e-10 : this.firingPose()) && !this.aimingSub && !(this.flickRecover > 0);
     const gear = lockedMode || ordinaryAir ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear;
   };
@@ -184,8 +196,20 @@ export function installGear(api, tuning) {
     const m = this.s3?.modifiers || {};
     api.PLAYER.swimSpeed *= swimSpeedMultiplier(this);
     const runner = this.weaponRunner, kind = this.weapon.kind;
-    const firing = runner.firingT > 0 || runner.s3BlasterWindup > 0;
-    const fixedShot = ['shooter', 'dualies', 'blaster'].includes(kind) && firing;
+    const pendingFirst = kind === 'shooter' ? !!runner.s3ShooterPendingFirst : kind === 'dualies' && runner.s3DualiesStart > 1e-10;
+    const firing = (kind === 'shooter' ? (!pendingFirst && runner.s3ShooterMoveRemaining > 1e-10) : (!pendingFirst && runner.firingT > 0)) || runner.s3BlasterWindup > 0;
+    // Actor._horizontal runs before WeaponRunner.update. Predict only the same-tick
+    // Shooter/Dualies emission that update() will actually admit; raw held ZR, cooldown,
+    // empty ink and emerge-delay attempts must not select the shot curve early.
+    const firstReady = kind === 'shooter'
+      ? !runner.s3ShooterCancelMain && (runner.s3ShooterPendingFirst ? runner.s3ShooterFirstRemaining <= dt + 1e-10
+        : runner.s3ShooterHeld || (this.weapon.firstShotDelay || 0) <= dt + 1e-10)
+      : kind === 'dualies' && !runner.dodge && (runner.s3DualiesHeld
+        ? (runner.s3DualiesStart || 0) <= dt + 1e-10 : !(this.weapon.humanoidFirstShotDelay > 1e-10));
+    const sameTickShot = firstReady && (kind === 'shooter' || kind === 'dualies') && !squid &&
+      (this.intent.fire || this.fireBuffer > 0) && this.kidT >= api.PLAYER.emergeDelay &&
+      runner.cooldown <= dt + 1e-10 && this.ink + 1e-10 >= this.weapon.inkPerShot;
+    const fixedShot = ['shooter', 'dualies', 'blaster'].includes(kind) && (firing || sameTickShot);
     const scaledAction = kind === 'charger' && runner.charging ||
       kind === 'splatling' && (runner.charging || runner.streaming || firing) ||
       kind === 'slosher' && (runner.slosh >= 0 || firing);
@@ -265,6 +289,9 @@ export function installGear(api, tuning) {
   installStormPower(api);
   installConditionalGear(api, tuning, refresh);
   installSubResistance(api);
+  installThermalTracking(api, tuning);
+  installHaunt(api, tuning, { gearCurve });
+  installDryInk(api);
   if (api.Menus) {
     const render = api.Menus.prototype._scr_loadout;
     api.Menus.prototype._scr_loadout = function (...args) {

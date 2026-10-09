@@ -95,3 +95,17 @@ test('touch-to-keyboard/pad navigation first reveals the ring at the newly selec
   assert.equal(m._cur.x.x,93);assert.equal(m._cur.y.x,113);
  }
 });
+
+test('touch main-menu buttons keep the native ring across keyboard handoff and repeated menu returns',()=>{
+ for(const patched of [false,true]){
+  const {m,el,time}=fixture(patched);
+  for(let round=0;round<3;round++){
+   time(round*100);m.setInputMode('touch');m._setFocus(null);m._updateCursor(1/60);
+   const button=el(30+round,150,'button');m._setFocus(button,{snap:true});m._updateCursor(1/60);
+   assert.equal(m._input,'touch');assert.equal(m._focus,button);assert.equal(m._cur.on,true);
+   assert.equal(m.cursorEl.classList.contains('is-on'),true);
+   m.setInputMode('kbm');m._setFocus(el(300,250,'button'));m._updateCursor(1/60);
+   assert.equal(m._cur.on,true);
+  }
+ }
+});

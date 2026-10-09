@@ -35,6 +35,7 @@ if(process.argv.includes('--exact-source')) {
     if(key.startsWith('network-replication/')) return 'patches/network-replication/'+key.slice(20);
     if(key.startsWith('loading-cache/')) return 'patches/loading-cache/'+key.slice(14);
     if(key.startsWith('practice-range/')) return 'patches/practice-range/'+key.slice(15);
+    if(key.startsWith('build-script/')) return 'scripts/'+key.slice(13);
     throw new Error('Unknown build input namespace: '+key);
   });
   Object.entries(manifest.files).forEach(([key,expected],i)=>{if(hash(fs.readFileSync(path.join(ROOT,files[i])))!==expected)throw new Error('Build input differs from manifest: '+key);});
@@ -144,10 +145,49 @@ try {
   result.gameplay = await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game; g.debug.freezeBots(); g._skipRender = true;
     for (let i=0;i<270;i++) g._frame(1/60);
+    const actor = g.match.local;
+    // The actual #512 Squid Spawn has a deliberate aim phase: moving the
+    // stick before launching cannot move the actor. Admit a real ZR edge,
+    // then finish the native one-second flight before asserting locomotion.
+    if (actor.s3?.squidSpawn?.phase === 'aim') {
+      g.debug.fire(false); g._frame(1/60);
+      g.debug.fire(true); g._frame(1/60);
+      g.debug.fire(false);
+      if (actor.s3.squidSpawn?.phase !== 'flight') throw Error('Actual Squid Spawn did not accept ZR launch');
+      for (let i=0;i<65;i++) g._frame(1/60);
+      if (actor.s3?.squidSpawn) throw Error('Actual Squid Spawn flight did not end');
+    }
     const initial = g.match.time;
     for (let i=0;i<60;i++) g._frame(1/20);
-    const actor = g.match.local; const before = actor.pos.clone();
-    g.debug.key('KeyW',true); for(let i=0;i<30;i++)g._frame(1/60);g.debug.key('KeyW',false);
+    const elapsedAt20Hz = initial - g.match.time;
+    const before = actor.pos.clone();
+    // Movement is the contract, not one spawn-facing direction. Correct spawn
+    // orientation/barriers can legitimately block W on a given map, so probe
+    // all four keyboard directions and retain the maximum real displacement.
+    let movement = 0;
+    const movementProbe = {
+      state: g.match.state, paused: g.match.paused, alive: actor.alive,
+      form: actor.form, grounded: actor.grounded,
+      controller: !!g.match.controller, enabled: g.match.controller?.enabled,
+      menuBlocked: !!g.match.controller?.menuBlocked, samples: [],
+    };
+    for (const key of ['KeyW','KeyD','KeyS','KeyA']) {
+      const start = actor.pos.clone();
+      g.debug.key(key,true);
+      const keyPresent = g.input.keys.has(key);
+      g._frame(1/60);
+      movementProbe.samples.push({
+        key, keyPresent, enabled: g.match.controller?.enabled,
+        menuBlocked: !!g.match.controller?.menuBlocked,
+        intent: [actor.intent.move.x, actor.intent.move.y, actor.intent.move.z],
+        vel: [actor.vel.x, actor.vel.y, actor.vel.z],
+        deltaAfterFirstTick: actor.pos.distanceTo(start),
+      });
+      for(let i=1;i<30;i++)g._frame(1/60);
+      g.debug.key(key,false);
+      movement = Math.max(movement, actor.pos.distanceTo(start), actor.pos.distanceTo(before));
+      if (movement > 1e-6) break;
+    }
     let paintedFloorArea=0;
     for(const face of G.paint.paintFaces) {
       if(!face.turf)continue;
@@ -157,7 +197,7 @@ try {
       paintedFloorArea=G.paint.splat(point,.7,0,{seed:1}); if(paintedFloorArea>0)break;
     }
     g._skipRender = false;
-    return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement:actor.pos.distanceTo(before), hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
+    return {state:g.match.state, elapsedAt20Hz, movement, movementProbe, hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
   result.turfLead = await probeTurfLead(page, evidence);

@@ -54,7 +54,12 @@ test('loading identity binds runtime, shell, worker, adapter and exact Acorn; ex
  const files=loadingIdentity();for(const k of ['adapter.mjs','runtime/startup.mjs','sw.js','shell.html','vendor/acorn.mjs','vendor/ACORN-LICENSE'])assert.match(files[k],/^[a-f0-9]{64}$/);
  assert(!Object.keys(files).some(k=>k.startsWith('tests/')));
 });
-test('exact-source checker rejects forged loading input despite self-consistent manifest',()=>{
+for (const [inputKey, relativeInput] of [
+ ['loading-cache/runtime/startup.mjs', 'patches/loading-cache/runtime/startup.mjs'],
+ ['build-script/inkwave-source-composition.mjs', 'scripts/inkwave-source-composition.mjs'],
+ ['build-script/lib/inkwave-build-only-modules.mjs', 'scripts/lib/inkwave-build-only-modules.mjs'],
+ ['build-script/lib/inkwave-worker-compaction.mjs', 'scripts/lib/inkwave-worker-compaction.mjs'],
+]) test('exact-source checker rejects forged ' + inputKey + ' despite self-consistent manifest',()=>{
  const root=path.resolve(new URL('../../../',import.meta.url).pathname);
  const dir=fs.mkdtempSync(path.join(TEST_TMP,'iw-identity-'));
  try{
@@ -74,16 +79,16 @@ test('exact-source checker rejects forged loading input despite self-consistent 
  }
  copyModule('scripts/check-inkwave-browser.mjs');
  for(const dep of ['scripts/check-inkwave-hud-authority.mjs','patches/local-quality/quality-probe.mjs','patches/local-quality/paint-mipmap-probe.mjs'])assert(copied.has(dep),dep);
- fs.writeFileSync(path.join(fixture,'scripts/build-inkwave.mjs'),'// committed builder\n');const target=path.join(fixture,'patches/loading-cache/runtime/startup.mjs');fs.writeFileSync(target,'// committed startup\n');
+ fs.writeFileSync(path.join(fixture,'scripts/build-inkwave.mjs'),'// committed builder\n');const target=path.join(fixture,relativeInput);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,'// committed source\n');
  const git=(...args)=>execFileSync('git',args,{cwd:fixture,stdio:'pipe'});
  git('init','-q');git('add','.');git('-c','user.name=Identity Fixture','-c','user.email=fixture@example.invalid','commit','-qm','fixture');
  fs.appendFileSync(target,'// UNCOMMITTED\n');const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
- const identity={artifacts:{},contentHash:hash(JSON.stringify({})),files:{'loading-cache/runtime/startup.mjs':hash(fs.readFileSync(target))},build:{script:hash(fs.readFileSync(path.join(fixture,'scripts/build-inkwave.mjs')))}};
+ const identity={artifacts:{},contentHash:hash(JSON.stringify({})),files:{[inputKey]:hash(fs.readFileSync(target))},build:{script:hash(fs.readFileSync(path.join(fixture,'scripts/build-inkwave.mjs')))}};
  fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(identity));
  // The checker rejects /tmp for browser outputs. This check exits before browser use.
  const outputs=path.join(TEST_TMP,'iw-identity-outputs-'+path.basename(dir));fs.mkdirSync(outputs,{recursive:true});
  try{const check=spawnSync(process.execPath,[path.join(fixture,'scripts/check-inkwave-browser.mjs'),'--site',site,'--evidence-dir',path.join(outputs,'evidence'),'--profile-dir',path.join(outputs,'profile'),'--exact-source'],{encoding:'utf8',timeout:15000});
- assert.notEqual(check.status,0);assert(check.stderr.includes('Build input differs from commit: patches/loading-cache/runtime/startup.mjs'),check.stderr);
+ assert.notEqual(check.status,0);assert(check.stderr.includes('Build input differs from commit: '+relativeInput),check.stderr);
  }finally{fs.rmSync(outputs,{recursive:true,force:true});}
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
@@ -99,4 +104,35 @@ test('all source-attesting browser verifiers recognize the loading-cache namespa
   ['scripts/check-inkwave-wall-render.mjs',/key\.startsWith\('loading-cache\/'\)/],
  ];
  for(const[file,pattern]of checks)assert.match(fs.readFileSync(path.join(root,file),'utf8'),pattern,file);
+});
+
+
+test('startup verifier bounds a failed natural worker install before controller acquisition',async()=>{
+ const code=fs.readFileSync('scripts/check-inkwave-startup-browser.mjs','utf8');
+ const start=code.indexOf('const naturalController=async page=>{'),end=code.indexOf('\n};',start)+3;
+ assert(start>=0&&end>start);
+ const run=vm.runInNewContext(code.slice(start,end)+';naturalController',{timeout:25});
+ let timeoutCallback,removed=0;
+ const sw={ready:new Promise(()=>{}),controller:null,addEventListener(){},removeEventListener(){removed++;}};
+ const page={waitForFunction:async()=>{},evaluate:async(fn,ms)=>{
+  const context={navigator:{serviceWorker:sw},setTimeout:fn=>{timeoutCallback=fn;return 1;},clearTimeout(){}};
+  const promise=vm.runInNewContext('('+fn.toString()+')('+ms+')',context);
+  timeoutCallback();return promise;
+ }};
+ await assert.rejects(run(page),/activation\/controllerchange timeout/);assert.equal(removed,1);
+});
+test('startup verifier requires both ready and a controller and cleans up its listener',async()=>{
+ const code=fs.readFileSync('scripts/check-inkwave-startup-browser.mjs','utf8');
+ const start=code.indexOf('const naturalController=async page=>{'),end=code.indexOf('\n};',start)+3;
+ const run=vm.runInNewContext(code.slice(start,end)+';naturalController',{timeout:25});
+ for(const initiallyControlled of [false,true]){
+  let changed,removed=0,cleared=0;
+  const sw={ready:Promise.resolve({}),controller:initiallyControlled?{}:null,addEventListener(_n,fn){changed=fn;},removeEventListener(){removed++;}};
+  const page={waitForFunction:async()=>{},evaluate:async(fn,ms)=>{
+   const context={navigator:{serviceWorker:sw},setTimeout:()=>1,clearTimeout(){cleared++;}};
+   const promise=vm.runInNewContext('('+fn.toString()+')('+ms+')',context);
+   await Promise.resolve();if(!initiallyControlled){assert.equal(removed,0);sw.controller={};changed();}return promise;
+  }};
+  await run(page);assert.equal(removed,1);assert.equal(cleared,1);
+ }
 });

@@ -143,24 +143,20 @@ export function adaptAimProfiles(rel, code) {
     // a global padInvertX multiplier, and map ownership may already suppress the
     // camera output while keeping the stick filter live. Compose with every
     // accepted predecessor shape without dropping either owner.
-    code = replaceVariantOnce(code, [
-      {
-        before: "      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);",
-        after: "      const invX = s.invertX ? -1 : 1;\n      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1) * invX;",
-      },
-      {
-        before: "      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);",
-        after: "      const invX = s.invertX ? -1 : 1;\n      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1) * invX;",
-      },
-      {
-        before: "      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;",
-        after: "      const invX = s.invertX ? -1 : 1;\n      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * invX;",
-      },
-      {
-        before: "      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;",
-        after: "      const invX = s.invertX ? -1 : 1;\n      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * invX;",
-      },
-    ], 'player pad invertX');
+    if (!code.includes('const invX = s.invertX ? -1 : 1;')) {
+      const yawPattern = /^([ \t]*)(?:if \(!mapUp\) )?rig\.yaw -= this\.padLook\.x[^;]*;$/gm;
+      const matches = [...code.matchAll(yawPattern)];
+      if (matches.length !== 1) {
+        throw new Error(`INKWAVE quality patch conflict (aim profile: player pad invertX): expected exactly one padLook yaw line (${matches.length})`);
+      }
+      code = code.replace(yawPattern, (line, indent) => {
+        const body = line.trimStart();
+        const guarded = body.startsWith('if (!mapUp) ');
+        const expr = guarded ? body.slice('if (!mapUp) '.length) : body;
+        const rewritten = expr.replace(/;$/, ' * invX;');
+        return indent + 'const invX = s.invertX ? -1 : 1;\n' + indent + (guarded ? 'if (!mapUp) ' : '') + rewritten;
+      });
+    }
 
     return code;
   }
@@ -238,7 +234,7 @@ export function adaptAimProfiles(rel, code) {
     const controlsNewRows = "    { key: 'aimProfile', label: 'Aim control mode', type: 'seg', options: [['tv', 'TV / Tabletop'], ['handheld', 'Handheld']], help: 'Splatoon 3 stores independent aim settings for TV/Tabletop and Handheld modes. Select which profile is active.' },\n" +
       "    { key: 'gyro', label: 'Motion controls', type: 'toggle', help: 'Tilt and turn to aim with motion gyro. Stored per profile.' },\n" +
       "    { key: 'gyroSens', label: 'Motion sensitivity', type: 'slider', min: -5, max: 5, step: 0.5, fmt: sgnFmt, help: 'Motion-control aiming sensitivity for the selected profile.' },\n" +
-      "    { key: 'padSensitivity', label: 'Right stick sensitivity', type: 'slider', min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×', help: 'Camera turn speed with the right stick. Stored per profile.' },\n" +
+      "    { key: 'padSensitivity', label: 'Right stick sensitivity', type: 'slider', min: -5, max: 5, step: 0.5, fmt: sgnFmt, help: 'S3 stick scale from −5 to +5; current INKWAVE speed curve is provisional. Stored per profile.' },\n" +
       "    { key: 'invertY', label: 'Right stick up/down', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Push stick up to look down. Stored per profile.' },\n" +
       "    { key: 'invertX', label: 'Right stick left/right', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Push stick left to look right. Stored per profile.' },";
 

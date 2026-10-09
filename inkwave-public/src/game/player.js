@@ -132,7 +132,10 @@ export class PlayerController {
     }
 
     // ---- aim point from the camera centre ray
-    this.computeAim();
+    // #1008: the live Game owns the single authoritative query after
+    // CameraRig.update(), so the expensive world/enemy scan is not repeated.
+    // Standalone/test controllers without a gameplay camera retain this fallback.
+    if (!G.rig?.gameCam) this.computeAim();
   }
 
   // Best enemy near the crosshair for aim assist (angular cone scaled so it covers ~a body width at any range).

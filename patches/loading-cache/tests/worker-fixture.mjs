@@ -5,8 +5,8 @@ export const template = fs.readFileSync(new URL('../sw.js',import.meta.url),'utf
 export const REV_A='a'.repeat(64), REV_B='b'.repeat(64), REV_C='c'.repeat(64);
 export function makeBuild(revision=REV_A, bodies={'src/main.js':'export const v=1;','profile.json':'{"v":1}'}) {
  const index=Buffer.from(`<!doctype html><head><base href="./_versions/${revision}/"></head><body>INKWAVE</body>`);
- const assets=Object.fromEntries(Object.entries(bodies).map(([key,value])=>[key,{bytes:Buffer.byteLength(value),sha256:sha(value)}]));
- return {config:{schema:1,revision,index:{bytes:index.length,sha256:sha(index)},declaredBytes:index.length+Object.values(assets).reduce((n,x)=>n+x.bytes,0),precache:Object.keys(assets),assets},index,bodies};
+ const assets=Object.fromEntries(Object.entries(bodies).map(([key,value])=>[key,[Buffer.byteLength(value),sha(value)]]));
+ return {config:{schema:1,revision,index:{bytes:index.length,sha256:sha(index)},declaredBytes:index.length+Object.values(assets).reduce((n,x)=>n+x[0],0),precache:Object.keys(assets),assets},index,bodies};
 }
 export class World {
  constructor(scope='https://fixture.invalid/actions/') {

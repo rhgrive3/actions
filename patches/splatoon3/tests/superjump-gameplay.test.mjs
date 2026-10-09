@@ -151,9 +151,12 @@ for (const frames of [138, 96]) for (const distance of [2, 70]) test(`#255 fligh
   hit('shooter'); assert.equal(a.hp, 64);
 });
 
-for (const weapon of ['shooter', 'blaster']) test(`#218 ${weapon} fires before landing, respects windup, ink and main-only admission`, async t => {
+for (const weapon of ['shooter', 'blaster']) test(`#218 ${weapon} fires before landing, respects windup, ink and special exclusion`, async t => {
   const f = await boot(); t.after(f.close); const a = f.make({ weapon });
-  a.s3.jumpChargeTime = STEP; a.intent.fire = a.intent.sub = a.intent.special = true; a.special = a.specialCost();
+  // #528 now admits the native sub hold in humanoid descent. Its normal R
+  // priority would intentionally suppress these main shots; exercise main
+  // timing independently, with R-over-ZR covered by the handoff regressions.
+  a.s3.jumpChargeTime = STEP; a.intent.fire = a.intent.special = true; a.special = a.specialCost();
   const shots = []; const native = f.G.projectiles[weapon === 'shooter' ? 'fireShooter' : 'fireBlaster'];
   f.G.projectiles[weapon === 'shooter' ? 'fireShooter' : 'fireBlaster'] = function (...args) { shots.push({ tick: a.superJumpState?.t / STEP, pos: plain(a.pos.toArray()), phase: a.superJumpState?.phase }); return native.apply(this, args); };
   let bombs = 0; f.G.projectiles.throwBomb = () => bombs++;

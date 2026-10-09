@@ -60,6 +60,25 @@ async function boot({ wall = false, omitPostShot = false } = {}) {
 
 
 
+test('#1007/#1052 finite Charger keeps feet paint and forward trajectory widths separate', async t => {
+  const f = await boot(); t.after(f.close);
+  const a = f.make({ weapon: 'charger' });
+  f.tick(a);
+  const ps = f.G.projectiles;
+  for (const [charge, forwardWidth] of [[8 / 60, .78], [1, 1.56]]) {
+    ps.clear(); f.painted.length = 0;
+    ps.fireCharger(a, a.weapon, charge);
+    assert.equal(f.painted.length, 1, 'accepted shot creates exactly one immediate feet splat');
+    close(f.painted[0].radius, 1.2, 'feet splat uses RadiusSpawnNearest');
+    ps.update(STEP);
+    assert.ok(f.painted.length >= 2, 'flight creates a forward trajectory stamp');
+    close(f.painted[1].radius, 1.2, 'first forward stamp consumes sourced RadiusSpawnNearest');
+    for(let frame=0;frame<8 && f.painted.length<3;frame++) ps.update(STEP);
+    assert.ok(f.painted.length>=3, 'the following paint stamp uses the charge-dependent width');
+    close(f.painted[2].radius, forwardWidth, 'later trajectory stamp uses charge-dependent WidthHalf');
+  }
+});
+
 for(const charge of [.5,1])test(`actual finite Charger ${charge} shot holds squid for 16F`,async t=>{const f=await boot();t.after(f.close);const a=f.make({weapon:'charger'});f.tick(a);f.G.projectiles.fireCharger(a,a.weapon,charge);assert.equal(f.G.projectiles._fidelityChargerFlights.length,1);close(a.weaponRunner.s3ChargerPostShot,16/60,'accepted shot');a.intent.squid=true;for(let i=1;i<=16;i++){f.tick(a);assert.equal(a.form,i<16?'kid':'squid',`${i}F`);}assert.equal(f.G.projectiles._fidelityChargerFlights.length<=1,true);});
 test('ghost and rejected finite Charger launch do not arm local recovery; sub/reset retain their own owners',async t=>{const f=await boot();t.after(f.close);const a=f.make({weapon:'charger'});f.tick(a);const ps=f.G.projectiles;ps.ghostFire(a,{weapon:a.weapon.id,charge:.5,muzzle:a.pos,dir:new f.THREE.Vector3(0,0,1)});assert.equal(a.weaponRunner.s3ChargerPostShot,0);const n=ps._fidelityChargerFlights.length;const aim=ps._aimFrom;ps._aimFrom=(_a,_o,out)=>out.set(0,0,0);ps.fireCharger(a,a.weapon,.5);assert.equal(ps._fidelityChargerFlights.length,n);assert.equal(a.weaponRunner.s3ChargerPostShot,0);ps._aimFrom=aim;ps.fireCharger(a,a.weapon,.5);a.intent.sub=true;for(let frame=1;frame<=15;frame++){f.tick(a);assert.equal(a.weaponRunner.aimingSub,frame===15,'#837 reuses actual-shot recovery until15F');}a.weaponRunner.reset();assert.equal(a.weaponRunner.s3ChargerPostShot,0);});
 

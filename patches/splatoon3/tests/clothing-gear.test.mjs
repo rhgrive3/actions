@@ -44,7 +44,7 @@ test('RP final-killer/self/both branches add45/68/113F and15/22.5/37.5 percent o
 test('RP excludes water/fall with stale enemy attribution, no attacker, self and allies; no penalty carries to another death',async()=>{
  for(const cause of ['water','fall','out','bounds','void','no-attacker','self','ally']){
   const f=await setup(),a=f.make(),e=f.make();dress(a,'respawnPunisher');dress(e,'respawnPunisher');e.team=cause==='ally'?0:1;a.special=80;
-  a.splat(cause==='no-attacker'?null:cause==='self'?a:e,cause);near(a.special,40);near(a.s3.lastDeathGear.frames,0);
+  a.splat(cause==='no-attacker'?null:cause==='self'?a:e,cause);near(a.special,['water','fall','out','bounds','void'].includes(cause)?22:40);near(a.s3.lastDeathGear.frames,0);
  }
  const f=await setup(),a=f.make(),e=f.make();e.team=1;dress(e,'respawnPunisher');a.splat(e);a.reset();a.special=80;a.splat(e,'water');near(a.special,40);near(a.s3.lastDeathGear.frames,0);
 });
@@ -65,16 +65,16 @@ test('RP assist-only contributors do not penalize a victim killed by someone els
  const f=await setup(),a=f.make(),e=f.make(),helper=f.make();e.team=1;dress(helper,'respawnPunisher');e.special=80;
  f.emit('damage',{attacker:helper,victim:e,amount:20,source:'shooter'});e.splat(a);near(e.special,40);near(e.respawnTimer,f.PLAYER.respawnTime);
 });
-test('real NetMatch sends distinct bit25 without changing current22 columns and rejects foreign/stale snapshots',async()=>{
+test('real NetMatch sends distinct bit25 without changing current24 columns and rejects foreign/stale snapshots',async()=>{
  const f=await setup(),a=f.make();a.nid=1;a.owner='owner';dress(a,'respawnPunisher');
  let packet;const n=new f.NetMatch({myId:'owner',hostId:'owner',isHost:true,tr:{broadcast:d=>{packet=JSON.parse(JSON.stringify(d));}}},{id:'clothing'});n.bind({actors:[a],state:'playing',time:180});n._sendTick();
- const row=packet.a[0];assert.equal(row.length,22);assert.ok(row[10]&f.RESPAWN_PUNISHER_FLAG);
+ const row=packet.a[0];assert.equal(row.length,24);assert.ok(row[10]&f.RESPAWN_PUNISHER_FLAG);
  const remote=f.make();remote.owner='owner';remote.nid=1;
  const receiver=new f.NetMatch({myId:'viewer',hostId:'owner',isHost:false},{id:'clothing'});receiver.bind({actors:[remote],state:'playing',time:180});
  receiver._tick('foreign',{...packet,ts:1});assert.equal(f.respawnPunisherEquipped(remote),false);
  receiver._tick('owner',{...packet,ts:2});assert.equal(f.respawnPunisherEquipped(remote),true);
  const clear=[...row];clear[10]&=~f.RESPAWN_PUNISHER_FLAG;receiver._tick('owner',{...packet,ts:1,a:[clear]});assert.equal(f.respawnPunisherEquipped(remote),true);
- receiver._tick('owner',{...packet,ts:3,a:[clear]});assert.equal(f.respawnPunisherEquipped(remote),false);remote.owner='new-owner';assert.equal(f.respawnPunisherEquipped(remote),false);
+ clear[23][2]=++a._adoptionSequence;receiver._tick('owner',{...packet,ts:3,a:[clear]});assert.equal(f.respawnPunisherEquipped(remote),false);remote.owner='new-owner';assert.equal(f.respawnPunisherEquipped(remote),false);
 });
 for(const legacyClothingHit of [true,false]) test(`real NetMatch hit-local RP next-tick ${legacyClothingHit?'old loss negative':'preservation positive'}`,async()=>{
  const f=await setup({legacyClothingHit}),a=f.make(),v=f.make();a.team=1;a.nid=2;a.owner='attacker';v.nid=1;v.owner='victim';a.netLife=v.netLife=0;dress(a,'respawnPunisher');
@@ -94,12 +94,14 @@ test('actual snapshot flags keep clothing and vertical Roller state independent 
  const f=await setup();
  for(const punisher of [false,true])for(const vertical of [false,true]){
   const a=f.make('roller'),remote=f.make('roller');Object.assign(a,{nid:1,owner:'owner'});Object.assign(remote,{nid:1,owner:'owner'});dress(a,punisher?'respawnPunisher':'none');
-  a.weaponRunner.flick=0;a.weaponRunner.s3RollerAttack=vertical?{vertical:true}:null;
+  a.grounded=!vertical;if(vertical)f.emit('actor:jump',{actor:a});
+  a.intent.fire=true;f.G.time+=1/60;a.weaponRunner.update(1/60,{fire:true,firePressed:true});
+  assert.equal(a.weaponRunner.s3RollerAttack?.vertical,vertical,'native admission selects the complete owner action');
   let packet;const sender=new f.NetMatch({myId:'owner',hostId:'owner',isHost:true,tr:{broadcast:d=>{packet=JSON.parse(JSON.stringify(d));}}},{id:'flags'});sender.bind({actors:[a],state:'playing',time:180});sender._sendTick();
   const flags=packet.a[0][10],roller=f.NET_FLAGS.flickVertical;assert.equal(roller,16777216);assert.equal(f.RESPAWN_PUNISHER_FLAG,33554432);assert.equal(roller&f.RESPAWN_PUNISHER_FLAG,0);assert.equal(!!(flags&roller),vertical);assert.equal(!!(flags&f.RESPAWN_PUNISHER_FLAG),punisher);
   const receiver=new f.NetMatch({myId:'viewer',hostId:'owner',isHost:false},{id:'flags'});receiver.bind({actors:[remote],state:'playing',time:180});receiver.onMessage('owner',packet);receiver._peer('owner').tr=packet.ts;receiver._sample(remote,packet.ts,0);receiver.applyRemote(remote,1/60);
-  assert.equal(f.respawnPunisherEquipped(remote),punisher);assert.equal(!!remote.weaponRunner.s3FlickVertical,vertical);
-  if(punisher&&!vertical){const alias=JSON.parse(JSON.stringify(packet));alias.ts+=1;alias.a[0][10]=(flags&~f.RESPAWN_PUNISHER_FLAG)|roller;receiver.onMessage('owner',alias);receiver._peer('owner').tr=alias.ts;receiver._sample(remote,alias.ts,0);receiver.applyRemote(remote,1/60);assert.equal(f.respawnPunisherEquipped(remote),false,'legacy shared-bit encoding cannot carry clothing');assert.equal(remote.weaponRunner.s3FlickVertical,true,'legacy shared-bit encoding incorrectly selects vertical pose');}
+  assert.equal(f.respawnPunisherEquipped(remote),punisher);assert.equal(remote.weaponRunner.s3FlickVertical,false,'wire pose never becomes a simulated remote attack');assert.equal(remote.weaponRunner.s3RollerAttack,null);assert.equal(remote.character.s3RollerFlick?.vertical,vertical);
+  if(punisher&&!vertical){const alias=JSON.parse(JSON.stringify(packet));alias.ts+=1;alias.a[0][23][2]=++a._adoptionSequence;alias.a[0][10]=(flags&~f.RESPAWN_PUNISHER_FLAG)|roller;receiver.onMessage('owner',alias);receiver._peer('owner').tr=alias.ts;receiver._sample(remote,alias.ts,0);receiver.applyRemote(remote,1/60);assert.equal(f.respawnPunisherEquipped(remote),false,'legacy shared-bit encoding cannot carry clothing');assert.equal(remote.weaponRunner.s3FlickVertical,false,'legacy shared-bit encoding cannot grant remote attack authority');assert.equal(remote.character.s3RollerFlick?.vertical,false,'accepted horizontal sidecar owns pose despite a conflicting legacy flag');}
  }
 });
 test('Tee subtotal combines once with current Last Ditch and Comeback AP without losing head ownership',async()=>{

@@ -314,8 +314,13 @@ async function hudHarness() {
   }, { context });
   const util = new vm.SourceTextModule(fs.readFileSync(path.join(SRC, 'src/ui/ui-util.js'), 'utf8'), { context });
   await util.link(() => i18n); await util.evaluate();
+  const inkFlight = new vm.SourceTextModule(fs.readFileSync(path.join(SRC, 'src/game/inkFlight.js'), 'utf8'), { context });
+  await inkFlight.link(() => { throw new Error('inkFlight must stay dependency free'); });
   const config = new vm.SourceTextModule(fs.readFileSync(path.join(SRC, 'src/config.js'), 'utf8'), { context });
-  await config.link(() => { throw new Error('config must stay dependency free'); }); await config.evaluate();
+  await config.link(spec => {
+    if (spec === './game/inkFlight.js') return inkFlight;
+    throw new Error('Unexpected config dependency: ' + spec);
+  }); await config.evaluate();
   const values = {
     G: { match: null }, on: () => () => {}, t: v => v, tx: v => v, isJa: () => false,
     ...config.namespace,

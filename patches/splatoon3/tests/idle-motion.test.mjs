@@ -65,8 +65,9 @@ function rig(api, kind = 'shooter', enabled = true) {
   G.scene.add(ch.root); G.actors = [a]; a.grounded = a.ground.hit = true;
   const step = (dt = 1 / 60, input = {}) => {
     a.intent.fire = !!input.fire; a.intent.sub = !!input.sub;
+    if (input.move) a.intent.move.set(input.move.x, 0, input.move.z);
     G.time += dt; a.weaponRunner.update(dt, { fire: !!input.fire, sub: !!input.sub,
-      subReleased: !!input.subReleased });
+      firePressed: !!input.firePressed, subReleased: !!input.subReleased });
     a._finishFrame(dt); ch.root.updateMatrixWorld(true);
     assert.ok(Array.from(ch.P).every(Number.isFinite));
   };
@@ -285,7 +286,8 @@ test('idle releases to native walk and action layers without changing gameplay, 
           if (scenario === 'special') r.a.specialActive = { id: 'leap', t: .2 };
           if (scenario === 'hit' && i === 0) { r.ch.trigger('hit', { x: 1, z: 0, amp: 1 }); r.a.hurtFlash = 1; }
           if (scenario === 'superjump') r.a.superJumpState = { t: .2, phase: 'charge' };
-          r.step(1 / 60, { fire: ['fire', 'charge', 'roller'].includes(scenario), sub: scenario === 'sub' });
+          r.step(1 / 60, { fire: ['fire', 'charge', 'roller'].includes(scenario), sub: scenario === 'sub',
+            ...(scenario === 'roller' ? { move: { x: 0, z: 1 }, firePressed: i === 0 } : {}) });
           const g = gameplay(r); delete g.time;
           rows.push({ pose: Array.from(r.ch.P), nativeIK: Array.from(r.ch.ikErr), gameplay: g,
             hand: r.ch.bones.handR.getWorldPosition(new api.THREE.Vector3()).toArray() });

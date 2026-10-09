@@ -1,5 +1,28 @@
 // Per-weapon action clocks. The native runner still owns shots/ink/projectiles.
 const EPS = 1e-10;
+// Existing native humanoid descent boundary, not a measured Nintendo frame.
+export const SUPERJUMP_MAIN_PROGRESS = 0.82;
+export function canStageSuperJumpSub(actor) {
+  const jump = actor?.superJumpState;
+  return !!actor?.alive && !actor.specialActive && actor.form === 'kid' &&
+    jump?.phase === 'flight' && Number.isFinite(jump.t) && Number.isFinite(jump.dur) &&
+    jump.dur > 0 && jump.t / jump.dur > SUPERJUMP_MAIN_PROGRESS && jump.t < jump.dur;
+}
+export const BLASTER_INTERRUPT_SUB = 3 / 60;
+export const BLASTER_INTERRUPT_SQUID = 4 / 60;
+export function blasterCancellationEdge(actor, runner) {
+  if (actor?.weapon?.kind !== 'blaster' || !runner?.s3BlasterHeldRepeat) return null;
+  const intent = actor.intent || {}, prev = actor._prevIntent || {};
+  const released = !!prev.fire && !intent.fire;
+  const subEdge = !!intent.sub && !prev.sub;
+  const squidEdge = !!intent.squid && !prev.squid;
+  if (!released && !subEdge && !squidEdge) return null;
+  return {
+    sub: BLASTER_INTERRUPT_SUB,
+    squid: BLASTER_INTERRUPT_SQUID,
+    latch: !!intent.fire && (subEdge || squidEdge),
+  };
+}
 const INSTALLED = Symbol.for('inkwave.s3.weapon-gates.v1');
 const elapsed = (value, dt) => value - dt <= EPS ? 0 : value - dt;
 // The existing actual-shot clock is16F for squid admission. Sub preparation
@@ -14,6 +37,11 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   Object.defineProperty(wr, INSTALLED, { value: true });
   const advance = (r, dt) => {
     r.s3PostShotRemaining = elapsed(r.s3PostShotRemaining || 0, dt);
+    r.s3InkRecoverRemaining = elapsed(r.s3InkRecoverRemaining || 0, dt);
+    r.s3BlasterInterruptSub = elapsed(r.s3BlasterInterruptSub || 0, dt);
+    r.s3BlasterInterruptSquid = elapsed(r.s3BlasterInterruptSquid || 0, dt);
+    // Slosher's dedicated 16F form/sub clock must advance in the same pre-admission phase.
+    r.s3SloshPostShot = elapsed(r.s3SloshPostShot || 0, dt);
     r.s3DodgeInkRemaining = elapsed(r.s3DodgeInkRemaining || 0, dt);
     r.s3DodgeShotRemaining = elapsed(r.s3DodgeShotRemaining || 0, dt);
   };
@@ -22,26 +50,43 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   const actorUpdate = Actor.prototype.update;
   Actor.prototype.update = function (dt, ...args) {
     const r = this.weaponRunner, nested = r.s3GateInActor;
-    if (!nested) advance(r, dt);
+    if (!nested) {
+      advance(r, dt);
+      const cancel = blasterCancellationEdge(this, r);
+      if (cancel) {
+        r.s3BlasterInterruptSub = Math.max(r.s3BlasterInterruptSub || 0, cancel.sub);
+        r.s3BlasterInterruptSquid = Math.max(r.s3BlasterInterruptSquid || 0, cancel.squid);
+        r.s3BlasterCancelLatch = cancel.latch;
+        r.s3BlasterHeldRepeat = false;
+      }
+    }
     r.s3GateInActor = true;
     try { return actorUpdate.call(this, dt, ...args); }
     finally { r.s3GateInActor = nested; }
   };
   const reset = wr.reset, busy = wr.busy, update = wr.update;
   wr.reset = function (...args) {
-    this.s3PostShotRemaining = this.s3DodgeInkRemaining = this.s3DodgeShotRemaining = 0;
+    this.s3PostShotRemaining = this.s3InkRecoverRemaining = this.s3DodgeInkRemaining = this.s3DodgeShotRemaining = 0;
+    this.s3BlasterInterruptSub = this.s3BlasterInterruptSquid = 0;
+    this.s3BlasterHeldRepeat = false; this.s3BlasterCancelLatch = false;
     this.s3GateInActor = false; this.s3GateDodgeShotPending = false;
     return reset.apply(this, args);
   };
-  wr.busy = function () { return this.s3PostShotRemaining > EPS || busy.call(this); };
+  wr.busy = function () { return this.s3PostShotRemaining > EPS || this.s3BlasterInterruptSquid > EPS || busy.call(this); };
   wr.update = function (dt, input) {
     if (!this.s3GateInActor) advance(this, dt);
     const r = this;
-    // Read dynamically: a main release within update() starts the lock BEFORE
-    // the subsequent native sub block reads sub/subReleased. No queued throw.
+    if (!this.a?.intent?.fire) r.s3BlasterCancelLatch = false;
+    // The actual-shot lock and cancellation-edge lock advance in parallel.
+    const subBlocked = r.s3PostShotRemaining > EPS || r.s3BlasterInterruptSub > EPS;
+    // No channel changes are needed in steady state. Preserve the caller's
+    // input identity so the independent Dualies/Slosher gate stays allocation-free.
+    if (!subBlocked && !r.s3BlasterCancelLatch) return update.call(this, dt, input);
     const admitted = { ...input,
-      get sub() { return r.s3PostShotRemaining > EPS ? false : input.sub; },
-      get subReleased() { return r.s3PostShotRemaining > EPS ? false : input.subReleased; },
+      get fire() { return r.s3BlasterCancelLatch ? false : input.fire; },
+      get firePressed() { return r.s3BlasterCancelLatch ? false : input.firePressed; },
+      get sub() { return subBlocked ? false : input.sub; },
+      get subReleased() { return subBlocked ? false : input.subReleased; },
     };
     return update.call(this, dt, admitted);
   };

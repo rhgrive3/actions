@@ -4,6 +4,15 @@ export function portraitBlocked(mobile,env=globalThis){
  const portrait=env.matchMedia?env.matchMedia('(orientation: portrait)').matches:env.innerWidth>0&&env.innerHeight>=env.innerWidth;
  return !!portrait;
 }
+export function cancelPortraitWeaponInput(actor){
+ const runner=actor?.weaponRunner;if(!runner)return false;
+ runner.cancelPendingInput?.();
+ runner.aimingSub=false;
+ if(actor._prevIntent){actor._prevIntent.fire=false;actor._prevIntent.sub=false;}
+ if(actor.intent){actor.intent.fire=false;actor.intent.sub=false;}
+ actor.fireBuffer=0;
+ return true;
+}
 function neutral(input){
  if(!input)return;
  input.mobile?.reset();input.mobile?.pressed?.clear();input.mobile?.gyro?.discard();
@@ -23,7 +32,7 @@ export function syncPortraitFrame(game,G,env=globalThis){
  const changed=s.match!==m||s.blocked!==blocked;
  s.released=s.blocked&&!blocked;
  if(s.match!==m&&s.match?.controller)s.match.controller.orientationBlocked=false;
- if(changed&&(s.blocked||blocked)){neutral(game.input);game.s3Clock?.reset();}
+ if(changed&&(s.blocked||blocked)){if(blocked)cancelPortraitWeaponInput(m?.local);neutral(game.input);game.s3Clock?.reset();}
  s.match=m;s.blocked=blocked;s.offline=blocked&&!G.netm;
  if(m?.controller){m.controller.orientationBlocked=blocked;if(blocked||s.released)m.controller.clearMapGyro?.();if(blocked){m.controller.navigationEnabled=false;m.controller.enabled=false;const it=m.local?.intent;if(it){it.move?.set(0,0,0);it.fire=it.jump=it.sub=it.special=it.squid=false;}}}
  if(blocked){neutral(game.input);game._s3Ticked=0;if(s.offline)game.s3Clock?.reset();}

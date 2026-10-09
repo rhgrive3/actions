@@ -286,6 +286,8 @@ export class Actor {
       this.vel.y = jv;
       this.grounded = false; this.coyote = 0; this.jumpBuffer = 0;
       jumped = true;
+      // Successful jump admission, not generic loss of ground contact.
+      this.s3JumpSerial = (this.s3JumpSerial || 0) + 1;
       this.character.trigger('jump');
       if (this.submerged) G.fx?.burst(_v.copy(this.pos), _v2.set(0, 1, 0), this.color, { count: 10, speed: 3.5, size: 0.08 });
       if (this.isLocal || this._nearCamera()) G.audio?.play(this.submerged ? 'swim_splash' : 'jump', { pos: this.pos, volume: 0.6 });

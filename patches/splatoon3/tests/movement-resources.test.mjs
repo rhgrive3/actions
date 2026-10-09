@@ -3,8 +3,22 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 import { rollLaunchSpeed } from '../runtime/movement.mjs';
+import { resourceSurface } from '../runtime/resources.mjs';
 
 const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-8, `${actual} != ${expected}`);
+
+test('#1069 resource surface sampling returns a scalar and performs one post-movement sample', async () => {
+  const f = await fixture(), a = f.make();
+  let samples = 0;
+  a.form = 'squid';
+  a._surface = () => { samples++; a.grounded = true; a.groundTeam = 1; };
+  const isSquid = resourceSurface(a);
+  assert.equal(typeof isSquid, 'boolean');
+  assert.equal(isSquid, true);
+  assert.equal(samples, 1);
+  assert.equal(a.submerged, true);
+  assert.equal(a.onEnemy, false);
+});
 
 test('contact resources use the newly resolved paint surface on both sides of a boundary', async () => {
   const f = await fixture(), a = f.make();
@@ -158,7 +172,10 @@ test('the extracted 45-frame no-gear surge charge reaches full exactly on frame 
   a.form = 'squid'; a.intent.squid = true; a.intent.jump = true; a.climbing = true; a._updateClimb = () => {};
   f.tick(a, 44); assert.ok(a.s3.surge.charge < 1); close(a.anim.surgeCharge, 44 / 45);
   f.tick(a); assert.equal(a.s3.surge.charge, 1);
-  a.intent.jump = false; f.tick(a); assert.equal(a.s3.surge.phase, 'burst'); assert.ok(a.s3.surge.armorTime > 0);
+  a.intent.jump = false; f.tick(a); assert.equal(a.s3.surge.phase, 'burst');
+  assert.equal(a.s3.surge.armorTime, 0); assert.equal(a.s3.surge.armorPending, true);
+  a._ledgePop(new f.THREE.Vector3(0, 0, -1));
+  close(a.s3.actions.armor.armorTime, f.profile.movement.surge.armorTime);
 });
 
 test('charge visuals and active actions clear on form switch, jump takeover and reset', async () => {

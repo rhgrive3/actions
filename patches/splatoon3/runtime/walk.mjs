@@ -1,7 +1,10 @@
 import { dualiesMotionAllowsFootPlant } from './action-admission.mjs';
 import { specialMotionAllowsFootPlant } from './special-motion.mjs';
+import { sampleLegacyGait, LEGACY_GAIT_CHANNELS as REF, LEGACY_GAIT_INFO } from './legacy-walk-curves.mjs';
 // Walking is an animation layer. It never writes actor speed or collision state.
-// The numbers in walkMotion are visual calibration, not measured Nintendo clips.
+// Body/foot motion is guided by compact relative FSKA channels from Splatoon 1.
+// Clip frame counts are source frames, NOT proven Splatoon 3 animation runtime rates.
+// All root speeds, combat actions, surface probing and planted-foot IK remain native.
 let api, tuning;
 const states = new WeakMap();
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -11,7 +14,7 @@ const ease=x=>{const u=clamp(x,0,1);return u*u*u*(10+u*(6*u-15));};
 const damp=(a,b,rate,dt)=>mix(a,b,1-Math.exp(-rate*dt));
 const angle=x=>Math.atan2(Math.sin(x),Math.cos(x));
 const cycle=x=>x-Math.floor(x+.5);
-const state=ch=>{let s=states.get(ch);if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3(),support:new api.THREE.Vector3(),supportParent:new api.THREE.Vector3(),supportQ:new api.THREE.Quaternion()};states.set(ch,s);}return s;};
+const state=ch=>{let s=states.get(ch);if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3(),support:new api.THREE.Vector3(),supportParent:new api.THREE.Vector3(),supportQ:new api.THREE.Quaternion(),reference:new Float32Array(14)};states.set(ch,s);}return s;};
 function eligible(ch){
   const T=api.CHARACTER_TIMERS, tr=ch.tr;
   return ch.kidForm&&ch.grounded&&!ch.dance&&ch.kidScale>.5&&specialMotionAllowsFootPlant(ch,tr[T.T_LEAP]>1.9&&tr[T.T_SLAM]>1.4)&&dualiesMotionAllowsFootPlant(ch,tr[T.T_DODGE]>ch.dodgeDur*.86)&&tr[T.T_SPAWN]>1.4;
@@ -104,7 +107,14 @@ function updateFeet(ch,dt){
       const f=F[i];let elapsed=dt;
       if(f.planted){
         f.stT+=dt;f.stU+=dt*ch.cad/ch.duty;
-        const rootDist=Math.hypot(f.pw.x-R.x,f.pw.z-R.z),far=rootDist>tuning.catchDistance;
+        // Measure the horizontal extension from this leg's stance, rather than
+        // charging its lateral stance width against the travel allowance. Keep
+        // the original catch distance: the full leg length also has to support
+        // the pelvis vertically, so it is not a safe horizontal catch limit.
+        const yaw=ch.yaw+ch.hipTwist,stance=ch.stance[f.i===0?0:3];
+        const rootDist=Math.hypot(f.pw.x-R.x,f.pw.z-R.z);
+        const extension=Math.hypot(f.pw.x-R.x-stance*Math.cos(yaw),f.pw.z-R.z+stance*Math.sin(yaw));
+        const far=extension>tuning.catchDistance;
         // A freshly landed foot normally owns at least 60 ms of stance to avoid
         // chatter. Do not keep that hold once the gameplay root has moved farther
         // than the whole leg can possibly span (common on a sharp reversal).
@@ -140,11 +150,15 @@ function updateFeet(ch,dt){
     ch.settleCd-=dt;
     if(!swinging&&ch.settleCd<=0){const left=ch._footErr(F[0]),right=ch._footErr(F[1]),i=left>=right?0:1;if(Math.max(left,right)>tuning.settleThreshold)startSwing(ch,F[i],true,tuning.settleTime);}
   }
+  // Advance the sole reference pose AFTER the native gait clock and both feet
+  // have processed their current tick. No additional phase clocks may drift.
+  sampleLegacyGait(state(ch).reference,ch.phase,ch.mdx,ch.mdz,ch.wAim,ch.runW);
   ch._footPose(F[0]);ch._footPose(F[1]);
   const twist=(angle(F[0].cyaw-ch.yaw-ch.stance[2])+angle(F[1].cyaw-ch.yaw-ch.stance[5]))*.5;
   ch.footTwist=damp(ch.footTwist,clamp(twist,-1.2,1.2),20,dt);
 }
 function footPose(ch,f){
+  const M=api.CHARACTER_FOOT_MODES;
   if(f.planted||!f.sw){
     f.cw.copy(f.pw);f.cyaw=f.yaw;f.cn.copy(f.n);
     const desired=ch.moving?-f.land*(1-smooth(0,.28,f.stU))+f.toe*smooth(.42,1,f.stU):0;
@@ -162,6 +176,19 @@ function footPose(ch,f){
   if(need>0){f.cw.x+=need*f.side*ax;f.cw.z+=need*f.side*az;}
   f.cyaw=f.fromYaw+angle(f.toYaw-f.fromYaw)*e;f.cn.copy(f.n).lerp(f.tn,e).normalize();
   f.pitch=mix(f.startPitch??f.toe,0,smooth(0,.5,u))+(f.fold??0)*smooth(0,.22,u)*(1-smooth(.38,.78,u))-f.land*smooth(.55,.96,u);
+  // Retarget source thigh/shin/ankle motion ONLY to a swinging foot. Planted
+  // contacts keep exact world position/orientation; all offsets vanish at both
+  // ends of each step, so switching direction cannot teleport an ankle.
+  if (f.mode===M.M_GAIT && ch.moving) {
+    const ref=state(ch).reference,side=f.i===0,gate=smooth(.04,.25,u)*(1-smooth(.76,.98,u));
+    const excursion=Math.sin(Math.PI*u);
+    const thigh=ref[side?REF.thighL:REF.thighR],shin=ref[side?REF.shinL:REF.shinR];
+    const along=clamp(thigh*.017,-.018,.018)*gate*excursion;
+    const yaw=ch.yaw+ch.hipTwist;
+    f.cw.x+=Math.sin(yaw)*along;f.cw.z+=Math.cos(yaw)*along;
+    f.cw.y+=Math.max(0,clamp(shin*.014,-.012,.018))*gate*excursion;
+    f.pitch+=clamp(ref[side?REF.footL:REF.footR]*.29,-.15,.15)*gate;
+  }
 }
 export function installWalkMotion(context,profile){
   api=context;tuning=profile.walkMotion;
@@ -184,10 +211,12 @@ export function installWalkMotion(context,profile){
     if(!eligible(this))return;
     const v=this.gv,rw=smooth(tuning.runStart,tuning.runFull,v);this.runW=rw;
     this.duty=mix(tuning.walkDuty,tuning.runDuty,rw)+.06*this.wGoo;
-    // Sideways across the pelvis a leg can only step out and close, so the
-    // steps shorten and quicken; the travel speed is unchanged.
-    const side=this.mdx*Math.cos(this.hipTwist)-this.mdz*Math.sin(this.hipTwist);
-    const half=mix(tuning.walkHalfStride,tuning.runHalfStride,rw)*(1-.18*this.wGoo)*(1-tuning.sideStrideCut*side*side);
+    // One clock per travel speed, independently of stick direction. The old
+    // sideStrideCut multiplied this cadence by up to 1.82x at a weak diagonal,
+    // causing rapidly chattering steps while the character hardly moved.
+    // Directional shape now comes from the distinct sampled side/back clips;
+    // foot reach/landing still belongs to the original grounded IK solver.
+    const half=mix(tuning.walkHalfStride,tuning.runHalfStride,rw)*(1-.18*this.wGoo);
     this.cad=clamp(Math.max(v,tuning.startSpeed)*this.duty/(2*half),tuning.minCadence,tuning.maxCadence);
     this.liftH=mix(tuning.walkLift,tuning.runLift,rw)*(1+.6*this.wGoo);
     this.gaitW=damp(weight,v>(this.moving?tuning.stopSpeed:tuning.startSpeed)?1:0,v>tuning.startSpeed?12:8,dt);
@@ -214,12 +243,27 @@ export function applyWalkLocomotion(ch,P){
   if(!api)throw Error('Walking motion not installed');
   const C=api.CHARACTER_CHANNELS,gw=ch.gaitW,rn=ch.runW,ph=ch.phase,tau=Math.PI*2;
   if(gw<=.001)return;
-  const bk=smooth(.1,-.7,ch.mdz),yawOsc=-mix(tuning.walkYaw,tuning.runYaw,rn)*Math.cos(tau*ph)*gw*(1-bk*.5),roll=mix(tuning.walkRoll,tuning.runRoll,rn)*Math.cos(tau*(ph-ch.duty*.5))*gw;
+  const bk=smooth(.1,-.7,ch.mdz),ref=state(ch).reference;
+  // Centered source-relative Euler curves: bounded retarget, never directly
+  // assign the Wii U joint rotations to the INKWAVE procedural rest skeleton.
+  const proceduralYaw=-mix(tuning.walkYaw,tuning.runYaw,rn)*Math.cos(tau*ph)*(1-bk*.5);
+  const referenceYaw=clamp(ref[REF.rootY]*.46+ref[REF.hipY]*.2,-.085,.085);
+  const yawOsc=mix(proceduralYaw,referenceYaw,.72)*gw;
+  const proceduralRoll=mix(tuning.walkRoll,tuning.runRoll,rn)*Math.cos(tau*(ph-ch.duty*.5));
+  const referenceRoll=clamp(ref[REF.hipZ]*.35,-.085,.085);
+  const roll=mix(proceduralRoll,referenceRoll,.68)*gw;
   const c2=Math.cos(tau*2*(ph-ch.duty*.45));
   P[C.HIPS_P+1]+=gw*mix(tuning.walkDrop,tuning.runDrop,rn)*(1+.5*ch.wGoo)+mix(tuning.walkBob,tuning.runBob,rn)*c2*gw*smooth(.1,2,ch.gs);
   P[C.HIPS_P]+=mix(.014,.01,rn)*Math.cos(tau*(ph-ch.duty*.5-.06))*gw;
   P[C.HIPS+1]+=ch.hipTwist+yawOsc;P[C.SPINE+1]-=ch.hipTwist*.45+yawOsc*.45;P[C.CHEST+1]-=ch.hipTwist*.55+yawOsc*.55;
   P[C.HIPS+2]+=roll;P[C.SPINE+2]-=roll*.6;P[C.CHEST+2]-=roll*.35;
+  const sourcePitch=clamp(ref[REF.hipX]*.27+ref[REF.rootX]*.12,-.09,.09)*gw;
+  P[C.HIPS]+=sourcePitch*.65;P[C.SPINE]-=sourcePitch*.45;P[C.CHEST]-=sourcePitch*.2;
+  // The gun hand remains IK-owned; only the free-arm/shoulder cadence gets a
+  // small source-guided counter-swing, faded while actively aiming.
+  const freeArm=(1-ch.wAim)*(1-ch.wTwo),armSwing=clamp((ref[REF.thighR]-ref[REF.thighL])*.08,-.085,.085)*gw;
+  P[C.UARML]+=armSwing*freeArm;P[C.CLAVL+1]+=ref[REF.armL]*.11*freeArm*gw;
+  P[C.CLAVR+1]+=ref[REF.armR]*.06*(1-ch.wAim)*gw;
   const lean=gw*(mix(.025,.17,rn)*(1-bk*1.3)*(1-.55*ch.wAim)+.1*ch.wGoo);
   P[C.HIPS]+=lean*.3;P[C.SPINE]+=lean*.45;P[C.CHEST]+=lean*.25;
   const lat=clamp(ch.kgx/6,-1,1)*gw*(1-.3*ch.wGoo);P[C.SPINE+2]-=.05*lat;P[C.CHEST+2]-=.025*lat;P[C.HIPS+2]-=.02*lat;
@@ -269,6 +313,20 @@ export function walkPelvisDrop(ch,nativeDrop){
   return drop;
 }
 
+// #997: repeatable weak-diagonal trace of the ACTUAL composed gait clock and
+// first-generation sampled pose. This is diagnostic only: the Splatoon 1
+// source does not prove the current Splatoon 3 directional blend/phase.
+export function weakDiagonalWalkTrace(ch) {
+  if (!ch) return null;
+  const speed=Number.isFinite(ch.gv)?ch.gv:0;
+  const x=Number.isFinite(ch.mdx)?ch.mdx:0,z=Number.isFinite(ch.mdz)?ch.mdz:1;
+  const phase=Number.isFinite(ch.phase)?ch.phase:0;
+  const sampled=sampleLegacyGait(new Float32Array(14),phase,x,z,0,Math.max(0,Math.min(1,ch.runW||0)));
+  return { active:walkActive(ch),speed,travelX:x,travelZ:z,phase,
+    cadence:ch.cad,duty:ch.duty,hipTwist:ch.hipTwist,
+    legacyWalkFrames:LEGACY_GAIT_INFO.walkFrames,legacyRunFrames:LEGACY_GAIT_INFO.runFrames,
+    referenceGame:LEGACY_GAIT_INFO.game,s3CurveVerified:false,pose:Array.from(sampled) };
+}
 export function walkActive(ch){return !!states.get(ch)?.active;}
 
 // A reversing filtered velocity can pass through zero while the real root

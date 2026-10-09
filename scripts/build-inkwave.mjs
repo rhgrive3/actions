@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { adaptBuildSource } from './inkwave-source-composition.mjs';
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
 // Keep inkwave-public/ unchanged, then minify every JS and CSS file
 // (esbuild, per file — the ES-module layout, import.meta.url asset URLs and the import map stay exactly as they are)
@@ -11,15 +12,15 @@ import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
 import { pathToFileURL } from 'url';
-import { PATCH_ROOT, checkCompatibility, adaptSource, writeBuildIdentity, sha256 } from '../patches/splatoon3/adapter.mjs';
-import { adaptTouchLayout, touchLayoutIdentity } from '../patches/touch-layout/adapter.mjs';
-import { adaptReliability, reliabilityIdentity, RELIABILITY_ROOT } from '../patches/reliability/adapter.mjs';
-import { adaptQualitySource, qualityIdentity, QUALITY_ROOT } from '../patches/local-quality/adapter.mjs';
-import { adaptNetworkSource, networkIdentity, NETWORK_ROOT } from '../patches/network-replication/adapter.mjs';
+import { PATCH_ROOT, checkCompatibility, writeBuildIdentity, sha256 } from '../patches/splatoon3/adapter.mjs';
+import { touchLayoutIdentity } from '../patches/touch-layout/adapter.mjs';
+import { reliabilityIdentity, RELIABILITY_ROOT } from '../patches/reliability/adapter.mjs';
+import { qualityIdentity, QUALITY_ROOT } from '../patches/local-quality/adapter.mjs';
+import { networkIdentity, NETWORK_ROOT } from '../patches/network-replication/adapter.mjs';
 import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity } from '../patches/loading-cache/adapter.mjs';
+import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
+import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
-
-const adaptBuildSource = (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
 const SRC = physicalLocation(path.resolve(process.argv[2] || 'inkwave-public'));
@@ -62,7 +63,7 @@ for (const file of walk(SRC)) {
 }
 for (const file of walk(PATCH_ROOT)) {
   const rel = path.relative(PATCH_ROOT, file);
-  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json') continue;
+  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json' || BUILD_ONLY_PATCH_MODULES.has('patches/splatoon3/' + rel.split(path.sep).join('/'))) continue;
   const dst = path.join(BUILD, 'patches/splatoon3', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
@@ -74,13 +75,40 @@ for (const file of walk(PATCH_ROOT)) {
 }
 for (const file of walk(QUALITY_ROOT)) {
   const rel = path.relative(QUALITY_ROOT, file);
-  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs') continue;
+  // Exclude only audited transformers; mixed runtime/adapter helpers remain shipped.
+  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/' + rel.split(path.sep).join('/'))) continue;
   const dst = path.join(BUILD, 'patches/local-quality', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
     const res = await esbuild.transform(adaptBuildSource('patches/local-quality/' + rel.split(path.sep).join('/'), fs.readFileSync(file, 'utf8')), { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/local-quality/' + rel.split(path.sep).join('/') });
     fs.writeFileSync(dst, res.code);
   } else fs.copyFileSync(file, dst);
+}
+
+// The reliability/network overlays are independent from splatoon3 and local-quality.
+// The production adapters import their runtime modules at those exact public paths
+// (e.g. patches/reliability/menu-takeover.mjs). Stage the shipped helpers BEFORE
+// computing the static module graph and content-addressed revision. Otherwise
+// every browser fails to import runtime/install.mjs despite passing the build step.
+// Adapter/test sources remain build-only; never publish those as executable assets.
+for (const [root, prefix] of [
+  [RELIABILITY_ROOT, 'patches/reliability'],
+  [NETWORK_ROOT, 'patches/network-replication'],
+]) {
+  for (const file of walk(root)) {
+    const rel = path.relative(root, file).split(path.sep).join('/');
+    if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs')) continue;
+    const dst = path.join(BUILD, prefix, rel);
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    if (/\.(?:m?js|css)$/.test(rel)) {
+      const sourcefile = prefix + '/' + rel;
+      const result = await esbuild.transform(adaptBuildSource(sourcefile, fs.readFileSync(file, 'utf8')), {
+        loader: rel.endsWith('.css') ? 'css' : 'js',
+        minify: true, charset: 'utf8', legalComments: 'inline', sourcefile,
+      });
+      fs.writeFileSync(dst, result.code);
+    } else fs.copyFileSync(file, dst);
+  }
 }
 
 // Practice Range layer: runtime modules + stylesheet under patches/practice-range/ (tests, docs, the adapter and the
@@ -113,7 +141,7 @@ if (fs.existsSync(pwaWorker)) fs.copyFileSync(pwaWorker, path.join(BUILD, 'sw.js
 // access in the sources is static (verified: no computed THREE[...] lookups), so the namespace keeps what it needs.
 const THREE_DIR = path.join(SRC, 'vendor/three/build');
 if (fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && process.env.INKWAVE_NO_THREE_SHAKE !== '1') {
-  const srcFiles = [...walk(path.join(SRC, 'src')), ...walk(path.join(SRC, 'vendor/three/jsm')), ...walk(PATCH_ROOT), ...walk(QUALITY_ROOT), ...walk(RANGE_ROOT)].filter((f) => /\.m?js$/.test(f) && !f.includes('/tests/'));
+  const srcFiles = [...walk(path.join(SRC, 'src')), ...walk(path.join(SRC, 'vendor/three/jsm')), ...walk(PATCH_ROOT), ...walk(QUALITY_ROOT), ...walk(RELIABILITY_ROOT), ...walk(NETWORK_ROOT), ...walk(RANGE_ROOT)].filter((f) => /\.m?js$/.test(f) && !f.includes('/tests/'));
   const used = new Set();
   for (const f of srcFiles) {
     const s = fs.readFileSync(f, 'utf8');
@@ -150,10 +178,11 @@ const seen = new Set();
 const order = [];
 const visit = (rel) => {
   if (!rel || seen.has(rel) || rel.includes('/dev/')) return;
+  if (BUILD_ONLY_PATCH_MODULES.has(rel)) throw new Error('Runtime imports build-only source transformer: ' + rel);
   const abs = path.join(BUILD, rel);
   if (!fs.existsSync(abs)) return;
   seen.add(rel);
-  const original = rel.startsWith('patches/splatoon3/') ? path.join(PATCH_ROOT, rel.slice('patches/splatoon3/'.length)) : rel.startsWith('patches/local-quality/') ? path.join(QUALITY_ROOT, rel.slice('patches/local-quality/'.length)) : rel.startsWith('patches/practice-range/') ? path.join(RANGE_ROOT, rel.slice('patches/practice-range/'.length)) : path.join(SRC, rel);
+  const original = rel.startsWith('patches/splatoon3/') ? path.join(PATCH_ROOT, rel.slice('patches/splatoon3/'.length)) : rel.startsWith('patches/local-quality/') ? path.join(QUALITY_ROOT, rel.slice('patches/local-quality/'.length)) : rel.startsWith('patches/reliability/') ? path.join(RELIABILITY_ROOT, rel.slice('patches/reliability/'.length)) : rel.startsWith('patches/network-replication/') ? path.join(NETWORK_ROOT, rel.slice('patches/network-replication/'.length)) : rel.startsWith('patches/practice-range/') ? path.join(RANGE_ROOT, rel.slice('patches/practice-range/'.length)) : path.join(SRC, rel);
   const s = fs.existsSync(original) ? adaptBuildSource(rel, fs.readFileSync(original, 'utf8')) : fs.readFileSync(abs, 'utf8');
   const specs = [];
   for (const m of s.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
@@ -170,6 +199,58 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  // PR1083 adds these 29 modules beyond main c2c938b9. Keep all static imports
+  // and immutable precache entries, preserving the existing 131-core hint budget.
+  'src/game/inkFlight.js',
+  'patches/splatoon3/runtime/haunt.mjs',
+  'patches/splatoon3/runtime/private-tracking-render.mjs',
+  'patches/splatoon3/runtime/private-tracking.mjs',
+  'patches/splatoon3/runtime/dry-ink.mjs',
+  'patches/splatoon3/runtime/blaster-flight-paint.mjs',
+  'patches/splatoon3/runtime/roller-vertical-paint.mjs',
+  'patches/splatoon3/runtime/roller-max-paint.mjs',
+  'patches/splatoon3/runtime/dualies-guide-cache.mjs',
+  'patches/splatoon3/runtime/dualies-slide-paint.mjs',
+  'patches/splatoon3/runtime/slosher-nearest-paint.mjs',
+  'patches/splatoon3/runtime/roller-impact-paint.mjs',
+  'patches/splatoon3/runtime/player-hurtbox.mjs',
+  'patches/splatoon3/runtime/turf-combat.mjs',
+  'patches/splatoon3/runtime/blast-occlusion.mjs',
+  'src/game/inkCollision.js',
+  'src/game/inkFlightRuntime.js',
+  'patches/reliability/menu-takeover.mjs',
+  'patches/splatoon3/runtime/battle-framing.mjs',
+  'patches/splatoon3/runtime/legacy-walk-curves.mjs',
+  'patches/splatoon3/runtime/normal-jump-hold.mjs',
+  'patches/splatoon3/runtime/spawn-pose-motion.mjs',
+  'patches/splatoon3/runtime/controller-motion.mjs',
+  'patches/splatoon3/runtime/issue-five-hotfix-a.mjs',
+  'patches/splatoon3/runtime/issue-five-hotfix-b.mjs',
+  'patches/splatoon3/runtime/issue-five-hotfix-c.mjs',
+  'patches/splatoon3/runtime/disconnect-fidelity.mjs',
+  'patches/splatoon3/runtime/slosher-intermediate-paint.mjs',
+  'patches/splatoon3/runtime/issue-eight-followup.mjs',
+  // Update-news cards are not shown on the title screen. Their ordinary static
+  // import and offline cache remain, but no extra critical-HTML fetch priority is needed.
+  'src/ui/news.js',
+  // #1088 remains precached but is not a new eager preload hint.
+  'patches/network-replication/issue-1088-surge-presentation.mjs',
+  // C30-C39 helpers keep static imports and full precache without four new eager hints.
+  'patches/splatoon3/runtime/charger-sight-cache.mjs',
+  'patches/splatoon3/runtime/minimap-dirty.mjs',
+  'patches/splatoon3/runtime/muzzle-feedback.mjs',
+  'patches/splatoon3/runtime/superjump-target-notification.mjs',
+
+  // C42: retain the new static runtime dependencies and full precache; defer their extra eager hints.
+  'patches/local-quality/portrait-work.mjs',
+  'patches/local-quality/runtime/audio-listener.mjs',
+  'patches/splatoon3/runtime/splatling-jump-spread.mjs',
+  // C40: retain the new static runtime dependencies and full precache; defer their extra eager hints.
+  'patches/splatoon3/runtime/blaster-mechanism-model.mjs',
+  'patches/splatoon3/runtime/blaster-mechanism.mjs',
+  'patches/splatoon3/runtime/tidal-slam-gauge.mjs',
+  // C41: retain the new static runtime dependencies and full precache; defer their extra eager hints.
+  'patches/splatoon3/runtime/roller-fold.mjs',
   'patches/splatoon3/runtime/clothing-gear.mjs', // Static import and full precache are retained.
   // Remaining PR786 helpers keep their static-import and full-precache owners.
   'patches/local-quality/world-quality.mjs',
@@ -213,6 +294,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/screen-angle.mjs',
   'patches/local-quality/touch-relayout.mjs',
   'patches/splatoon3/runtime/death-camera.mjs', // Match/death hooks stay statically imported and precached.
+  'patches/splatoon3/runtime/death-card.mjs',
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
   'patches/splatoon3/runtime/map-reveal.mjs',
   'patches/splatoon3/runtime/movement-physics.mjs',
@@ -223,6 +305,8 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/weapon-edgecases.mjs',
   // PR587 dependencies: defer only eager hints; retain the complete precache graph.
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
+  // #1040 pose capture runs inside fixed simulation ticks; retain its static imports and full precache.
+  'patches/splatoon3/runtime/actor-motion.mjs',
   'patches/splatoon3/runtime/weapons-collision.mjs',
   'patches/splatoon3/runtime/weapons-charger-flight.mjs',
   // PR868 combat and Actor rules; the importing runtime still requests these dependencies.
@@ -255,13 +339,29 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/depth-cache.mjs',
   'patches/local-quality/resource-budget.mjs',
 ]);
-const preloadOrder = order.filter((f) => !deferredIntegrationPreloads.has(f));
-const preload = preloadOrder.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');
-const html = html0.replace('</head>', `<!-- build: module graph preloaded (${preloadOrder.length} modules) -->\n${preload}\n</head>`);
-fs.writeFileSync(path.join(BUILD, 'index.html'), html);
-fs.writeFileSync(path.join(BUILD, '.nojekyll'), '');
+// Apply loading instrumentation first, so hint selection measures final bytes.
+// All modules in order still enter the complete offline dependency graph.
 const loadingPlan = prepareLoading(BUILD, order);
-const loadingHTML = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
+const loadingHTML0 = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
+const isRange = file => file.startsWith('patches/practice-range/');
+const bytes = file => fs.statSync(path.join(BUILD, file)).size;
+// Reserve the startup entry and all existing range hints before choosing core
+// hints in deterministic graph order. Omitted hints keep their static imports.
+let initialHintBytes = bytes('patches/loading-cache/runtime/startup.mjs') +
+  order.filter(file => isRange(file) && !deferredIntegrationPreloads.has(file)).reduce((sum, file) => sum + bytes(file), 0);
+let corePreloadCount = 0;
+const preloadOrder = order.filter((file) => {
+  if (deferredIntegrationPreloads.has(file)) return false;
+  if (isRange(file)) return true;
+  const size = bytes(file);
+  if (corePreloadCount >= 131 || initialHintBytes + size > 3.2 * 1024 * 1024) return false;
+  corePreloadCount++; initialHintBytes += size;
+  return true;
+});
+const preload = preloadOrder.map((file) => `<link rel="modulepreload" href="./${file}">`).join('\n');
+const loadingHTML = loadingHTML0.replace('</head>', `<!-- build: module graph preloaded (${preloadOrder.length} modules) -->\n${preload}\n</head>`);
+fs.writeFileSync(path.join(BUILD, 'index.html'), loadingHTML);
+fs.writeFileSync(path.join(BUILD, '.nojekyll'), '');
 // Give the entire module/asset tree an immutable URL. A cached old module must
 // never import a newer profile or dependency after the next OSS update.
 const revision = sha256(JSON.stringify(walk(BUILD).sort().map(file => [path.relative(BUILD,file),sha256(fs.readFileSync(file))])));
@@ -275,7 +375,7 @@ for (const file of versionFiles) {
 // stylesheet URLs and runtime fetches resolve within the same revision.
 fs.writeFileSync(path.join(BUILD,'index.html'), loadingHTML.replace('<head>', `<head>\n<base href="./_versions/${revision}/">`));
 const loadingSummary = finalizeLoadingWorker(BUILD, revision, loadingPlan,
-  source => esbuild.transformSync(source, { loader: 'js', minifyWhitespace: true, minifyIdentifiers: false, minifySyntax: false, legalComments: 'inline' }).code);
+  source => compactLoadingWorkerTemplate(source, esbuild.transformSync));
 const identity = writeBuildIdentity(SRC, BUILD, PATCH_ROOT, { esbuild:esbuild.version, revision, script:sha256(fs.readFileSync(new URL(import.meta.url))), touchLayout:touchLayoutIdentity(), reliability:reliabilityIdentity(), quality:qualityIdentity(), network:networkIdentity(), range:rangeIdentity(), loadingCache:{ source:loadingIdentity(), ...loadingSummary } });
 // Include the independent editor in exact-source verification, not only artifact hashing.
 for (const [file, hash] of Object.entries(identity.build.touchLayout)) identity.files['touch-layout/' + file] = hash;
@@ -284,6 +384,11 @@ for (const [file, hash] of Object.entries(identity.build.quality)) identity.file
 for (const [file, hash] of Object.entries(identity.build.network)) identity.files['network-replication/' + file] = hash;
 for (const [file, hash] of Object.entries(identity.build.range)) identity.files['practice-range/' + file] = hash;
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
+// Direct script helpers also control composition, packaging and worker output.
+// Include them in the same input hash and committed-source checks as overlays.
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs']) {
+  identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
+}
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');
 fs.rmSync(OUT, { recursive: true, force: true });
