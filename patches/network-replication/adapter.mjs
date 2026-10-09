@@ -336,9 +336,49 @@ export function emit(name, payload) {
       if (typeof message.g !== 'string' || !validDamageGroup(message.g)) { this.hitPending.delete(message.seq); this._pendingHits?.delete(message.h); return false; }
     }
     this.s.tr?.sendTo(victim.owner, message);`, 'Slosher required volley identity');
+    patch('    this.hitPending.set(message.seq, { message, oldOwner: victim.owner });',
+      `    const deliveryOwners = new Set([victim.owner]);
+    const receipt = this._pendingHits?.get(message.h);
+    if (receipt) { receipt.deliveryOwners = deliveryOwners; receipt.deliverySeq = message.seq; }
+    this.hitPending.set(message.seq, {
+      message, oldOwner: victim.owner, destination: victim.owner, nackTo: null, retries: 0, deliveryOwners,
+    });`, 'track each admitted hit destination and ACK authority');
+    patch('    while (this.hitPending.size > 64) this.hitPending.delete(this.hitPending.keys().next().value);',
+      '    while (this.hitPending.size > 64) this._retirePendingSequence(this.hitPending.keys().next().value);',
+      'bounded hit queue retires paired confirmation');
+    patch('    if (this._pendingHits.size > 120) this._pendingHits.delete(this._pendingHits.keys().next().value);',
+      '    if (this._pendingHits.size > 120) this._retirePendingHit(this._pendingHits.keys().next().value);',
+      'bounded confirmation queue retires paired delivery');
+    patch("if (typeof message.g !== 'string' || !validDamageGroup(message.g)) { this.hitPending.delete(message.seq); this._pendingHits?.delete(message.h); return false; }",
+      "if (typeof message.g !== 'string' || !validDamageGroup(message.g)) { this._retirePendingHit(message.h); return false; }",
+      'invalid Slosher hit retires both records');
     patch('    this._applyingHit = true;', `    if (WEAPONS[d.w]?.kind === 'slosher' &&
       (typeof d.g !== 'string' || !validDamageGroup(d.g))) return;
     this._applyingHit = true;`, 'Slosher owner identity admission');
+    patch(`    const hitPeer = this._peer(from ?? atk.owner);
+    if (!Number.isSafeInteger(d.h) || d.h < 1 || d.h <= (hitPeer.lastHit ?? 0)) return;
+    hitPeer.lastHit = d.h;`,
+      `    const hitPeer = this._peer(from ?? atk.owner);
+    if (!Number.isSafeInteger(d.h) || d.h < 1) return;`, 'validate hit receipt identity');
+    patch(`    if (WEAPONS[d.w]?.kind === 'slosher' &&
+      (typeof d.g !== 'string' || !validDamageGroup(d.g))) return;
+    this._applyingHit = true;`,
+      `    if (WEAPONS[d.w]?.kind === 'slosher' &&
+      (typeof d.g !== 'string' || !validDamageGroup(d.g))) return;
+    const seenHits = hitPeer.hitSequences || (hitPeer.hitSequences = new Set());
+    // Handoff retries may arrive after later hits. Retain exact IDs for this
+    // sender's recent sequence window, so reordering is safe and an evicted
+    // identity cannot become new damage.
+    const highHit = hitPeer.lastHit ?? 0;
+    const hitFloor = Math.max(0, highHit - 65536);
+    if (d.h <= hitFloor || seenHits.has(d.h)) return;
+    seenHits.add(d.h);
+    hitPeer.lastHit = Math.max(highHit, d.h);
+    if (d.h > highHit) {
+      const newFloor = Math.max(0, d.h - 65536);
+      if (newFloor > hitFloor) for (const seq of seenHits) if (seq <= newFloor) seenHits.delete(seq);
+    }
+    this._applyingHit = true;`, 'deduplicate validated reordered hit retries');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     for (const a of this.byNid.values()) { clearRemoteSquidroll(a); clearRemoteRollerPresentation(a); }
     retireNetworkGhosts();
@@ -1104,6 +1144,155 @@ function firstSplatStateFor(session,cfg) {
 }
 `;
   }
+  if (rel === 'src/net/netmatch.js') {
+    patch('  bind(match) {\n    this._pendingHits?.clear();\n    this.match = match;',
+      '  bind(match) {\n    this._pendingHits?.clear();\n    this.hitPending?.clear();\n    this.match = match;', 'clear hit transactions on match rebinding');
+    patch('      if (drop) { this._remove(a); continue; }',
+      '      if (drop) { this._remove(a); this._retirePendingHitsForVictim(a.nid); continue; }',
+      'retire hits when noBots removes the victim');
+    patch('      else { a.net.buf.length = 0; a.net.handoff = true; }   // same squidkid, new sender: glide onto its new path',
+      '      else { a.net.buf.length = 0; a.net.handoff = true; }   // same squidkid, new sender: glide onto its new path\n      this._retryPendingHitsForLeave(a, id);',
+      'retry relay-confirmed hit after owner transfer');
+    patch("    emit('combat:respawn', { actor: a });",
+      "    this._retirePendingHitsForVictim(a.nid);\n    emit('combat:respawn', { actor: a });",
+      'retire old-life routes after remote respawn');
+    patch('  _hitNack(d) {', `  _retirePendingSequence(seq) {
+    const pending = this.hitPending?.get(seq);
+    if (!pending) return false;
+    this.hitPending.delete(seq);
+    if (Number.isSafeInteger(pending.message?.h)) this._pendingHits?.delete(pending.message.h);
+    return true;
+  }
+
+  _retirePendingHit(h) {
+    if (!Number.isSafeInteger(h) || h < 1) return false;
+    const receipt = this._pendingHits?.get(h);
+    this._pendingHits?.delete(h);
+    let retired = false;
+    const seq = receipt?.deliverySeq;
+    if (Number.isSafeInteger(seq) && this.hitPending?.has(seq)) {
+      this.hitPending.delete(seq);
+      retired = true;
+    } else {
+      for (const [key, pending] of [...(this.hitPending || [])]) if (pending.message?.h === h) {
+        this.hitPending.delete(key);
+        retired = true;
+      }
+    }
+    return retired || !!receipt;
+  }
+
+  _retirePendingHitsForVictim(nid) {
+    for (const [seq, pending] of [...(this.hitPending || [])])
+      if (pending.message?.v === nid) this._retirePendingSequence(seq);
+    for (const [h, receipt] of [...(this._pendingHits || [])]) if (receipt.v === nid) {
+      this._pendingHits.delete(h);
+      if (Number.isSafeInteger(receipt.deliverySeq)) this.hitPending?.delete(receipt.deliverySeq);
+    }
+  }
+
+  _retryNackedHit(pending) {
+    if (!pending || pending.nackTo !== pending.destination || !pending.message) return false;
+    const message = pending.message;
+    const victim = this.byNid.get(message.v), attacker = this.byNid.get(message.a);
+    const life = Number.isSafeInteger(victim?.netLife) ? victim.netLife : 0;
+    if (!victim?.alive || !Number.isSafeInteger(message.l) || message.l < 0 || life !== message.l
+      || !attacker || attacker.remote || attacker.owner !== this.myId || attacker.nid !== message.a
+      || attacker.team === victim.team) {
+      this._retirePendingHit(message.h);
+      return false;
+    }
+    const owner = victim.owner;
+    if (typeof owner !== 'string' || !owner) {
+      this._retirePendingHit(message.h);
+      return false;
+    }
+    if (owner === pending.destination || (victim.remote === (owner === this.myId))) return false;
+
+    pending.deliveryOwners ||= new Set([pending.oldOwner]);
+    pending.deliveryOwners.add(owner);
+    pending.destination = owner;
+    pending.nackTo = null;
+    pending.retries = (pending.retries || 0) + 1;
+    const receipt = this._pendingHits?.get(message.h);
+    if (receipt) { receipt.deliveryOwners = pending.deliveryOwners; receipt.deliverySeq = message.seq; }
+    // The shooter remains the authenticated sender. A new victim owner never
+    // turns a proxy into authority or receives a newly synthesized hit.
+    if (owner === this.myId) this._hit(message, attacker.owner);
+    else this.s.tr?.sendTo(owner, message);
+    return true;
+  }
+
+  _retryPendingHitsForLeave(actor, departed) {
+    for (const pending of this.hitPending?.values() || [])
+      if (pending.message?.v === actor.nid && pending.nackTo === departed) this._retryNackedHit(pending);
+  }
+
+  _hitNack(d) {`, 'retire and follow exact hit identities through owner changes');
+
+    const replaceMethod = (name, body, label) => {
+      const start = code.indexOf(`  ${name}(`);
+      const end = code.indexOf('\n  }\n', start);
+      if (start < 0 || end < start || code.indexOf(`  ${name}(`, start + 1) >= 0)
+        throw Error('Network replication anchor mismatch: ' + rel + ': ' + label);
+      code = once(code, code.slice(start, end + 4), body, rel + ': ' + label);
+    };
+    {
+      const start = code.indexOf('  _onLocalEvent(name, e) {');
+      const end = code.indexOf('\n  }\n', start);
+      if (start < 0 || end < start) throw Error('Network replication anchor mismatch: ' + rel + ': local hit retirement');
+      const original = code.slice(start, end + 4);
+      const anchor = "    this._rec(['ev'";
+      const at = original.indexOf(anchor);
+      if (at < 0 || original.indexOf(anchor, at + anchor.length) >= 0)
+        throw Error('Network replication anchor mismatch: ' + rel + ': local hit retirement point');
+      const replacement = original.slice(0, at)
+        + "    if (name === 'splatted' || name === 'respawn') this._retirePendingHitsForVictim(a.nid);\n"
+        + original.slice(at);
+      code = once(code, original, replacement, rel + ': local hit retirement');
+    }
+    replaceMethod('_hitNack', `  _hitNack(d) {
+    if (!d || !Number.isSafeInteger(d.seq) || d.seq < 1 || typeof d.to !== 'string' || !d.to) return;
+    const pending = this.hitPending?.get(d.seq);
+    if (!pending || pending.destination !== d.to || pending.nackTo === d.to) return;
+    pending.nackTo = d.to;
+    this._retryNackedHit(pending);
+  }`, 'relay NACK must match latest destination');
+    replaceMethod('_hitAck', `  _hitAck(d, from) {
+    if (!d || typeof d !== 'object') return;
+    const h = d.h;
+    if (!Number.isSafeInteger(h) || h < 1) return;
+    const receipt = this._pendingHits?.get(h);
+    let seq = receipt?.deliverySeq, delivery = Number.isSafeInteger(seq) ? this.hitPending?.get(seq) : null;
+    if (!delivery && this.hitPending) for (const [key, pending] of this.hitPending)
+      if (pending.message?.h === h) { seq = key; delivery = pending; break; }
+    const message = delivery?.message;
+    const owners = delivery?.deliveryOwners || receipt?.deliveryOwners || (receipt?.vo ? new Set([receipt.vo]) : null);
+    const victimNid = receipt?.v ?? message?.v, attackerNid = receipt?.a ?? message?.a;
+    const life = receipt?.vl ?? message?.l;
+    if (!owners?.has(from) || !Number.isSafeInteger(victimNid) || !Number.isSafeInteger(attackerNid)
+      || !Number.isSafeInteger(life) || life < 0 || d.v !== victimNid || d.a !== attackerNid
+      || !Number.isSafeInteger(d.vl) || d.vl !== life
+      || typeof d.d !== 'number' || !Number.isFinite(d.d) || d.d < 0
+      || (d.kld !== 0 && d.kld !== 1)) return;
+    const victim = this.byNid.get(victimNid);
+    const currentLife = Number.isSafeInteger(victim?.netLife) ? victim.netLife : 0;
+    if (!victim || currentLife !== life) {
+      this._retirePendingHit(h);
+      return;
+    }
+    this._retirePendingHit(h);
+    if (!receipt) return; // delivery is settled; attacker progression already retired
+    const attacker = this.byNid.get(attackerNid);
+    if (!attacker || attacker.remote || attacker.owner !== this.myId || attacker.owner !== receipt.ao
+      || attacker.netLife !== receipt.al || !attacker.alive) return;
+    if (d.d === 0 && d.kld === 0) return;
+    emit('combat:confirmed', { attacker, victim, damage: d.d, killed: d.kld === 1,
+      weaponId: receipt.w, victimLife: life, helperLife: receipt.al });
+  }`, 'settle ACK from any owner that received this exact life-bound hit');
+
+  }
+
   if (rel === 'src/fx/fxHooks.js') {
     patch("import { on } from '../core/ctx.js';", "import { on, copyEventVector, hasEventVector } from '../core/ctx.js';", 'consume vector snapshots without materialization');
     patch('    this._sp = new THREE.Vector3();', '    this._sp = new THREE.Vector3();\n    this._eventVectorPool = []; this._eventVectorDepth = 0;', 'owned nested event scratch pool');
