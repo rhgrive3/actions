@@ -1,6 +1,7 @@
 import { simulateMatchInterval } from './turf-finish.mjs';
 // Render cadence is independent of the 60 Hz gameplay clock.
 import { idleAttractMenuBudget, MENU_ATTRACT_STEP } from '../../local-quality/idle-resources.mjs';
+import { beginActorMotionTick } from './actor-motion.mjs';
 
 export const STEP = 1 / 60;
 export class FixedClock {
@@ -50,6 +51,7 @@ export function runSimulation(game, dt) {
   game._menuAttractFrame = false;
   game._menuAttractFrameDelta = 0;
   if (!menuAttractBudget) game._menuAttractSimulationElapsed = 0;
+  G.paint?.useFixedPaintClock?.();
   game._s3Ticked = clock.advance(dt, step => {
     // Offline pause must freeze the same gameplay clock as actors/projectiles (#707).
     if (!(m && m.paused && !m.attract)) G.time += step;
@@ -65,6 +67,10 @@ export function runSimulation(game, dt) {
         }
       }
       if (simDt > 0) {
+        // #1040: capture every actor's start-of-tick pose BEFORE any of them
+        // moves this tick. The projectile sweep below runs after m.update, so
+        // round segment and actor interval then cover the SAME fixed step.
+        beginActorMotionTick(G.actors);
         // Results keep input/presentation/network cadence without advancing local
         // authoritative actor/projectile simulation. Menu attract budgeting remains
         // independent and applies only when that attract match owns the menu backdrop.
@@ -78,6 +84,7 @@ export function runSimulation(game, dt) {
         else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);
       }
     }
+    G.paint?.advanceSimulation?.(step);
     game.input.endFrame();
     // Mouse and touch deltas are displacements, not velocities: consume once.
     if (game.input.mobile) game.input.mobile.lookDX = game.input.mobile.lookDY = 0;

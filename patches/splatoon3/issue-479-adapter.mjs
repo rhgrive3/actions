@@ -34,31 +34,50 @@ export function adaptIssue479(rel, code) {
     'roller installRollerLogic actor hook connection'
   );
 
-  // Select the sourced free-fall mode without removing C37's grounded
-  // full-cancel override or C43's intervening drum-support admission.
-  const fullCancelStart =
+  // Select the sourced free-fall mode while composing the #305 depleted admission.
+  const depletionShape =
     '    const fullCancelGroundAttack = hasFullCancelGroundAttack(a);\n' +
+    '    const flickCost = fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk;\n' +
+    '    const depleted = DEPLETION_ENABLED && this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&\n' +
+    '      a.ink > EPS && a.ink + EPS < flickCost;\n' +
     '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&\n' +
-    '      a.ink >= (fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk);';
-  if (code.includes(fullCancelStart)) {
-    code = replaceOnce(code, fullCancelStart,
+    '      (a.ink + EPS >= flickCost || depleted);\n' +
+    '    if (starting) {\n' +
+    '      this.cooldown = Math.min(0, this.cooldown);\n' +
+    '      const groundedCancel = takeFullCancelGroundAttack(a);\n' +
+    '      this.s3FlickVertical = !groundedCancel && !a.grounded;';
+  if (code.includes(depletionShape)) {
+    code = replaceOnce(code, depletionShape,
       '    const fullCancelGroundAttack = hasFullCancelGroundAttack(a);\n' +
       '    const isVertical = !fullCancelGroundAttack && selectRollerFlickVertical(a, this);\n' +
+      '    const flickCost = fullCancelGroundAttack ? w.flickInk : isVertical ? w.verticalInk : w.flickInk;\n' +
+      '    const depleted = DEPLETION_ENABLED && this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&\n' +
+      '      a.ink > EPS && a.ink + EPS < flickCost;\n' +
       '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&\n' +
-      '      a.ink >= (isVertical ? w.verticalInk : w.flickInk);',
-      'roller free-fall mode with grounded full-cancel and drum support');
-    code = replaceOnce(code, '      this.s3FlickVertical = !groundedCancel && !a.grounded;',
+      '      (a.ink + EPS >= flickCost || depleted);\n' +
+      '    if (starting) {\n' +
+      '      this.cooldown = Math.min(0, this.cooldown);\n' +
+      '      const groundedCancel = takeFullCancelGroundAttack(a);\n' +
       '      this.s3FlickVertical = groundedCancel ? false : isVertical;',
-      'roller grounded cancel retains horizontal mode');
-  } else {
+      'roller free-fall selector with depleted admission');
+  } else if (code.includes('const depleted = DEPLETION_ENABLED') &&
+      code.includes('      this.s3FlickVertical = !groundedCancel && !a.grounded;')) {
+    // Current #1041/#1056 and contact wrappers add lines around the same
+    // admission block. Keep those owners and replace only its mode selector.
+    code = replaceOnce(code,
+      '      this.s3FlickVertical = !groundedCancel && !a.grounded;',
+      '      this.s3FlickVertical = groundedCancel ? false : selectRollerFlickVertical(a, this);',
+      'roller free-fall selector composed with depletion');
+  } else if (code.includes('    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);')) {
     code = replaceOnce(code,
       '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);',
       '    const isVertical = selectRollerFlickVertical(a, this);\n' +
       '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (isVertical ? w.verticalInk : w.flickInk);',
       'roller selectRollerFlickVertical 25F grace and latching');
     code = replaceOnce(code, '      this.s3FlickVertical = !a.grounded;',
-      '      this.s3FlickVertical = isVertical;',
-      'roller selected free-fall mode owns attack');
+      '      this.s3FlickVertical = isVertical;', 'roller selected free-fall mode owns attack');
+  } else {
+    throw new Error('INKWAVE issue-479 patch conflict (depletion selector shape): expected known admission block');
   }
 
   if (!code.includes('./roller-freefall.mjs')) {
