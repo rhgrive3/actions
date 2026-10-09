@@ -28,6 +28,7 @@ const PRESENTATION_EXPORTS = `
 
 async function makePair() {
   let nowMs = 1000;
+  let latestOwnerTick = -1;
   const f = await sourceFixture({
     fullRuntime: true,
     productionComposition: true,
@@ -74,6 +75,16 @@ async function makePair() {
     net.applyRemote(actor, dt);
   };
 
+  const advanceOwnerSnapshotTick = packet => {
+    const adoption = packet.a?.[0]?.[ADOPTION_STATE_SLOT];
+    assert.ok(Array.isArray(adoption) && Number.isSafeInteger(adoption[3]),
+      'full actor snapshots carry their tagged adoption state');
+    const ownerTick = Math.max(Math.round(G.time * 60), latestOwnerTick + 1);
+    packet.u = ownerTick;
+    adoption[3] = ownerTick;
+    latestOwnerTick = ownerTick;
+  };
+
   const step = (dt, jumpHeld = true, mode = 'wall') => {
     nowMs += dt * 1000;
     G.time += dt;
@@ -90,11 +101,12 @@ async function makePair() {
     owner._finishFrame(dt);
     sender._sendTick();
     const packet = packets.at(-1);
+    advanceOwnerSnapshotTick(packet);
     deliver(remote, receiver, packet, dt);
     return packet;
   };
 
-  return { f, G, owner, remote, sender, receiver, step, deliver,
+  return { f, G, owner, remote, sender, receiver, step, deliver, packets, advanceOwnerSnapshotTick,
     advanceWireClock: milliseconds => { nowMs += milliseconds; }, wireTime: () => nowMs / 1000,
     makeActor };
 }
@@ -147,29 +159,25 @@ test('C1088 preserves the current actor row and retains explicit Surge end/life 
 
 test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycle controls', async () => {
   const pair = await makePair();
-  const { f, G, owner, remote, sender, receiver, step, deliver } = pair;
+  const { f, G, owner, remote, sender, receiver, step, deliver, packets, advanceOwnerSnapshotTick } = pair;
   let currentChargePacket = null;
   let firstBurstPacket = null;
   let reconnectChecked = false;
   let malformedAndLegacyChecked = false;
   let life = 0;
 
-  const inject = (source, payload, omitSidecar = false) => {
+  const inject = payload => {
+    // Send the owner's unchanged gameplay state as a newer snapshot, then alter
+    // only its optional Surge sidecar. Keep NetMatch's ordered owner/adoption
+    // ticks valid so malformed cases reach the presentation parser.
     pair.advanceWireClock(2);
-    const packet = packetCopy(source);
-    packet.ts = Math.round(pair.wireTime() * 1000) / 1000;
-    delete packet.e;
-    const adoption = packet.a[0][ADOPTION_STATE_SLOT];
-    if (Array.isArray(adoption) && Number.isSafeInteger(adoption[2])) {
-      // Each injected presentation variant represents a new owner snapshot, not a replay.
-      const sequence = Math.max(adoption[2], remote.net?._adoptionSeq || 0,
-        owner._adoptionSequence || 0) + 1;
-      adoption[2] = sequence;
-      owner._adoptionSequence = sequence;
-    }
-    if (omitSidecar) delete packet.a[0][SURGE_PRESENTATION_SLOT];
-    else packet.a[0][SURGE_PRESENTATION_SLOT] = JSON.parse(JSON.stringify(payload));
+    sender._sendTick();
+    const packet = packets.at(-1);
+    advanceOwnerSnapshotTick(packet);
+    packet.a[0][SURGE_PRESENTATION_SLOT] = JSON.parse(JSON.stringify(payload));
     deliver(remote, receiver, packet, 1 / 60);
+    assert.equal(remote.net.buf.at(-1)?.t, packet.ts,
+      'injected actor snapshot must pass the existing owner-tick/adoption admission gate');
     return packet;
   };
 
@@ -212,7 +220,7 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
       const active = remote.s3.c1088SurgePresentation;
       const oldEpoch = { ...currentChargePacket.a[0][SURGE_PRESENTATION_SLOT], epoch: active.epoch - 1,
         phase: 'end', charge: 0, time: 0 };
-      inject(currentChargePacket, oldEpoch);
+      inject(oldEpoch);
       assert.equal(remote.s3.c1088SurgePresentation?.epoch, active.epoch,
         'a newer packet carrying a stale action epoch cannot rewind the pose');
 
@@ -222,7 +230,7 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
       assert.equal(currentChargePacket.a[0][SURGE_PRESENTATION_SLOT].life, 1);
       assert.equal(remote.s3.c1088SurgePresentation?.life, 1,
         'owner life change retires the previous presentation before accepting the new life');
-      inject(currentChargePacket, oldLife);
+      inject(oldLife);
       assert.equal(remote.s3.c1088SurgePresentation?.life, 1,
         'a delayed sample from the prior actor life cannot restore its pose');
       assertPoseParity(f, owner, remote, 'life change');
@@ -261,18 +269,26 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
           reconnectChecked = true;
 
           const stalePhase = { ...wire, phase: 'charge', time: 0 };
-          inject(packet, stalePhase);
+          inject(stalePhase);
           assert.equal(remote.s3.c1088SurgePresentation?.phase, 'burst',
             'a same-epoch charge packet cannot roll a burst backward');
 
           const malformed = { ...wire, charge: null };
-          inject(packet, malformed);
+          inject(malformed);
           assert.equal(remote.s3?.c1088SurgePresentation, undefined,
             'malformed finite-state fields clear the remote presentation');
+          assert.equal(remote.s3?.actions?.surge ?? null, null,
+            'malformed presentation fields cannot create a gameplay Surge action');
+          assert.equal(remote.s3?.actions?.armor ?? null, null,
+            'malformed presentation fields cannot grant gameplay armor');
           const malformedPhase = { ...wire, phase: 'toString' };
-          inject(packet, malformedPhase);
+          inject(malformedPhase);
           assert.equal(remote.s3?.c1088SurgePresentation, undefined,
             'unknown phase names inherited from object prototypes cannot create a remote pose');
+          assert.equal(remote.s3?.actions?.surge ?? null, null,
+            'unknown phase names cannot create a gameplay Surge action');
+          assert.equal(remote.s3?.actions?.armor ?? null, null,
+            'unknown phase names cannot grant gameplay armor');
           const legacy = packetCopy(packet);
           pair.advanceWireClock(2);
           legacy.ts = Math.round(pair.wireTime() * 1000) / 1000;
