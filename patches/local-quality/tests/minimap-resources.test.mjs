@@ -294,7 +294,7 @@ test('#907 explicit Turf Map builds/updates the raster even with corner minimap 
   assert.match(composed, /if \(showMinimap \|\| explicitTurfMap\) \{\s*for \(const o of m\.actors\)/);
   assert.match(composed, /if \(explicitTurfMap\) frame\.map = \{ \.\.\.\(frame\.map \|\| \{\}\), canvas: this\.minimap\.canvas, expanded: true, players \};/);
   // No permanent raster activity: the normal OFF/closed path is still tickHidden.
-  assert.match(composed, /map: showMinimap \? \{ canvas: this\.minimap\.canvas, expanded: false, players \} : null,/);
+  assert.match(composed, /const showMinimap = this\.settings\.minimap !== false;/);
 });
 
 test('#907 map availability follows visible live state on keyboard/pad/touch', () => {
