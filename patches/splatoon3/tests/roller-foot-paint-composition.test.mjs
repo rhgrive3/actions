@@ -134,7 +134,7 @@ async function setup({ remote = false, y = 0, grounded = true, vertical = false,
   api.G.paint = paint;
   api.G.netm = null;
   const actor = makeActor(api, { remote, y, grounded, vertical, yaw });
-  const net = new api.NetMatch({ myId: remote ? 'remote' : 'owner', isHost: true,
+  const net = new api.NetMatch({ myId: remote ? 'remote' : 'owner', hostId: 'owner', isHost: !remote,
     _members: new Map([['owner', 'Owner'], ['remote', 'Remote']]) }, {});
   net.byNid.set(actor.nid, actor);
   api.G.netm = net;
@@ -288,23 +288,39 @@ test('airborne vertical release paints only when source-bounded walkable ground 
 
 test('NetMatch replays owner paint once and remote projectile visuals never paint again', async t => {
   for (const [mode, y, grounded] of [['horizontal', 0, true], ['vertical', 1.8, false]]) {
-    await t.test(mode, async () => {
-      const owner = await assertReleaseShape(mode, y, grounded);
-      const { f, paintEvent, projectileEvents } = owner;
-      const { G, net, paintCalls } = f;
-      const remote = makeActor(f, { remote: true, y, grounded, vertical: mode === 'vertical' });
+    await t.test(mode, async subtest => {
+      const { f, projectileEvents } = await assertReleaseShape(mode, y, grounded);
+      let packet;
+      f.net.s.tr = { broadcast: value => { packet = JSON.parse(JSON.stringify(value)); } };
+      f.net._sendTick();
+      assert.equal(packet.e.filter(event => event[1] === 's').length, 1);
+      assert.equal(packet.e.filter(event => event[1] === 'p').length, projectileEvents.length);
+
+      // The owner has already applied this paint sequence. Receive through a
+      // distinct session and world, as another authenticated client would.
+      const receiver = await setup({ remote: true, y, grounded, vertical: mode === 'vertical' });
+      const { G, net, paintCalls, actor: remote } = receiver;
+      subtest.after(() => { net.dispose(); f.net.dispose(); });
+      assert.notEqual(net, f.net);
+      assert.notEqual(net.s, f.net.s);
+      assert.equal(net.s._members.has('owner'), true);
       remote.owner = 'owner'; // production admission requires the actual sender owner
-      net.byNid.set(remote.nid, remote);
-      G.actors = [remote];
-      G.projectiles = new f.Projectiles(G.scene);
-      paintCalls.length = 0;
-      net.out.length = 0;
-      net._play('owner', paintEvent);
-      for (const event of projectileEvents) net._play('owner', event);
+      net.bind({ actors: [remote], state: 'playing', time: 180 });
+      const deliver = value => {
+        net.onMessage('owner', JSON.parse(JSON.stringify(value)));
+        net.peers.get('owner').tr = value.ts;
+        net._playEvents();
+      };
+      deliver(packet);
       assert.equal(paintCalls.length, 1, 'the replicated splat is the only remote turf mutation');
       assert.equal(G.projectiles.list.length, projectileEvents.length);
       assert.ok(G.projectiles.list.every(p => p.ghost), 'remote projectile events remain visual ghosts');
       assert.equal(net.out.length, 0, 'remote replay does not re-record paint or projectile packets');
+      deliver(packet);
+      deliver({ ...packet, ts: packet.ts + 1 / 60 });
+      assert.equal(paintCalls.length, 1, 'duplicate packets and repeated paint sequences never repaint');
+      assert.equal(G.projectiles.list.length, projectileEvents.length, 'duplicate births never create extra ghosts');
+      assert.equal(net.out.length, 0, 'duplicate replay never emits new packets');
       G.projectiles.clear();
       G.projectiles.fireFlick(remote, remote.weapon);
       assert.equal(paintCalls.length, 1, 'remote fireFlick cannot apply the owner footprint a second time');
