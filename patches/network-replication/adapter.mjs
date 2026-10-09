@@ -16,7 +16,7 @@ function replaceAllExpected(code, before, after, expected, label) {
   return code.split(before).join(after);
 }
 export function networkIdentity() {
-  return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs']
+  return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs', 'superjump-epoch.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -470,7 +470,7 @@ export function emit(name, payload) {
       a.net.lastLife = snap.life;`, 'strict life/sequence-bound adoption packet');
     patch('    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
       '    applyAdoptionSample(this, a, S);\n    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
-      'restore adoption sample after authoritative age-based Super Jump phase');
+      'restore adoption sample before remote presentation reconciliation');
     patch('    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;',
       "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;\n    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }",
       'remote Tidal Slam phase clock');
@@ -669,8 +669,8 @@ export function emit(name, payload) {
         for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
         break;
       }`, 'beam birth clock');
-    patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
-    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    clearRemoteSquidroll(a);\n    clearRemoteRollerPresentation(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
+    patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; endRemoteSuperJumpEpoch(victim);', 'death invalidates storm admission and Super Jump epoch');
+    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    endRemoteSuperJumpEpoch(a);\n    clearRemoteSquidroll(a);\n    clearRemoteRollerPresentation(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates remote action epochs');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
@@ -1380,6 +1380,9 @@ ${bombHit}`;
     patch('    this.netLife = (this.netLife ?? 0) + 1;',
       '    this.netLife = (this.netLife ?? 0) + 1;\n    this._netLifeStartedAt = performance.now() / 1000;',
       'record recipient life start for late bomb replay');
+    patch("    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form, t: 0, target, from: new THREE.Vector3(), to: destination, marker: 0 };",
+      "    this._s3SuperJumpEpoch = Number.isSafeInteger(this._s3SuperJumpEpoch) && this._s3SuperJumpEpoch >= 0 && this._s3SuperJumpEpoch < Number.MAX_SAFE_INTEGER ? this._s3SuperJumpEpoch + 1 : 1;\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form, t: 0, target, from: new THREE.Vector3(), to: destination, marker: 0, sjEpoch: this._s3SuperJumpEpoch };",
+      'owner Super Jump action epoch');
   }
   if (rel === 'patches/splatoon3/runtime/weapons-fidelity.mjs') {
     patch('api=context;completion=profile.weaponsFidelityCompletion;', 'api=context;completion=profile.weaponsFidelityCompletion;\n  const eventImpactNormal = new context.THREE.Vector3();', 'reuse fidelity impact normal scratch');
@@ -1442,6 +1445,22 @@ ${bombHit}`;
   if (rel === 'src/net/netmatch.js') {
     code = adaptIssue1088SurgePresentation(code);
     patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
+    code = "import { applyRemoteSuperJumpEpoch, endRemoteSuperJumpEpoch } from '../../patches/network-replication/superjump-epoch.mjs';\n" + code;
+    patch('    this.stats.out++;\n    this.s.tr?.broadcast(msg);',
+      '    msg.sjEpochs = Object.create(null);\n    for (const actor of this.byNid.values()) if (!actor.remote && Number.isSafeInteger(actor.nid)) {\n      const epoch = actor._s3SuperJumpEpoch;\n      msg.sjEpochs[actor.nid] = Number.isSafeInteger(epoch) && epoch >= 0 ? epoch : 0;\n    }\n    this.stats.out++;\n    this.s.tr?.broadcast(msg);',
+      'optional Super Jump sender epoch sidecar');
+    patch('      const snap = unpackActor(s, d.ts);\n      snap.surgeOwner = from;',
+      '      const snap = unpackActor(s, d.ts);\n      snap.surgeOwner = from;\n      const sjEpoch = d.sjEpochs?.[s[0]];\n      snap.sjEpoch = Number.isSafeInteger(sjEpoch) && sjEpoch >= 0 ? sjEpoch : null;',
+      'associate epoch with its accepted sender sample');
+    patch('  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);',
+      '  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  const sameJumpEpoch = sameJumpPhase && a.sjEpoch === b.sjEpoch;\n  o.sjT = sameJumpEpoch ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);',
+      'interpolate Super Jump age only within its sender epoch');
+    patch("    const jumpPhase = f & F.sjFlight ? 'flight' : 'charge';\n    if (f & (F.sjCharge | F.sjFlight)) {\n      const age = Number.isFinite(S.sjT) ? Math.max(0, S.sjT) : 0;\n      if (!a.superJumpState || !a.superJumpState.net || a.superJumpState.phase !== jumpPhase)\n        a.superJumpState = { phase: jumpPhase, net: true, t: age };\n      else a.superJumpState.t = Math.max(Number.isFinite(a.superJumpState.t) ? a.superJumpState.t : 0, age);\n    } else a.superJumpState = null;",
+      "    const jumpPhase = f & (F.sjCharge | F.sjFlight) ? f & F.sjFlight ? 'flight' : 'charge' : null;",
+      'derive remote Super Jump phase before adoption reconciliation');
+    patch('    applyAdoptionSample(this, a, S);',
+      '    applyAdoptionSample(this, a, S);\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase);',
+      'remote Super Jump phase age after adoption state restore');
   }
   return code;
 }
