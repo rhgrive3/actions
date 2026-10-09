@@ -275,13 +275,19 @@ test('#1050 late-flight crossing of the lethal boundary commits one owner water 
 });
 
 test('#1050 dry low terrain below sea level and a normal jump stay unchanged', async t => {
-  const f = await boot({ extra: [{ kind: 'box', min: [8, -2, 8], max: [20, -1.5, 20] }] }); t.after(f.close);
+  // Keep the dry trench open above the native player capsule; the default
+  // full-area solid slab otherwise roofs it and blocks charge support.
+  const f = await boot({ floor: false, extra: [
+    { kind: 'box', min: [-5, -0.5, -5], max: [15, 0, 5] },
+    { kind: 'box', min: [8, -2, 8], max: [20, -1.5, 20] },
+  ] }); t.after(f.close);
   const deaths = track(f);
   // Dry trench: y < fallDeathY but groundHeight(...) !== -Infinity → safe.
   const a = f.make({ pos: [14, -1.46, 14] });
   assert.equal(a.superJump(new f.THREE.Vector3(0, 0, 0)), true, 'a dry position below sea level may start a jump');
   let guard = 0, sawLethalY = false;
   while (a.superJumpState && guard++ < 1200) { f.tick(a); if (a.alive && a.pos.y < LETHAL_Y) sawLethalY = true; }
+  assert.equal(a.superJumpState, null, 'the dry-terrain jump completes within the unchanged guard');
   assert.equal(a.alive, true, 'dry low terrain is never splatted');
   assert.equal(a.stats.deaths, 0);
   assert.equal(deaths.length, 0);
