@@ -14,7 +14,11 @@ import { adaptMinimapDirty } from './minimap-dirty-adapter.mjs';
 import { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';
 import { adaptStormEffects } from './storm-effects-adapter.mjs';
 import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
+import { adaptPadSensitivity } from './pad-sensitivity-adapter.mjs';
+import { adaptCombatRange } from './combat-range-adapter.mjs';
+import { adaptChargerFieldCollision } from './charger-field-adapter.mjs';
 import { adaptKitRescue } from './kit-rescue-adapter.mjs';
+import { adaptRollerDepletion } from './roller-depletion-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
@@ -23,11 +27,13 @@ import { adaptChargerSightCache } from './charger-sight-cache-adapter.mjs';
 import { adaptJuddResult } from './judd-result-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
 import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
+import { adaptPaintOwnership } from './paint-ownership-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue415 } from './runtime/issue-415-adapter.mjs';
+import { adaptIssueBatch1171 } from './issue-batch-1171-adapter.mjs';
 import { adaptTidalSlamGauge } from './tidal-slam-gauge-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
@@ -53,28 +59,23 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 
 export function adaptSource(rel, code) {
   code = adaptBubblerMap(rel, code);
+  code = adaptIssueBatch1171(rel, code, replaceOnce);
   // The source-guided shooter-family InkFlightRuntime is the authority for
   // head integration and detached paint drops. It does not traverse the
   // patched generic Projectiles._step actor loop. Bridge its actor contact
   // with the SAME sourced teammate-through window installed on each main
   // projectile, rather than silently letting bullets cross an ally.
   if (rel === 'src/game/inkFlightRuntime.js') {
+    // Native shooter-family heads and detached drops bypass the generic
+    // projectile impact path, but retain its local late-paint credit owner.
+    code = replaceOnce(code,
+      'const options = { seed: p.seed, kind, face: hit.face,',
+      'const options = { seed: p.seed, kind, face: hit.face, claimOwner: p.owner,',
+      'native ink-flight temporal paint owner');
     code = replaceOnce(code,
       'this.base.set(actor.pos.x, actor.pos.y + (actor.smoothY || 0), actor.pos.z);',
       'this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);',
       'ink flight contact ignores render-only smoothing');
-    code = replaceOnce(code,
-      "actor.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, p.inkPlayerRadius);",
-      'hurtboxHeight(actor, PLAYER), p.inkPlayerRadius);',
-      'ink flight shared capsule height');
-    code = replaceOnce(code,
-      'capsuleEntry(p.prev, p.pos, this.base, PLAYER.radius,',
-      'capsuleEntry(p.prev, p.pos, this.base, hurtboxRadius(actor, PLAYER),',
-      'ink flight uses the current shared player hurtbox');
-    code = replaceOnce(code,
-      "import { PLAYER } from '../config.js';",
-      "import { PLAYER } from '../config.js';\nimport { hurtboxRadius, hurtboxHeight } from '../../patches/splatoon3/runtime/player-hurtbox.mjs';",
-      'ink flight shared hurtbox import');
     // #385/#604/#597: Source-guided head motion and sourced S3 wall-drop
     // share one collision authority. A wall impact must retain the falling
     // droplet state instead of treating every wall as a terminal head hit.
@@ -86,12 +87,27 @@ export function adaptSource(rel, code) {
       '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);',
       '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);\n        if (!target && !boss && world.hit && beginFidelityWallDrop(this.system, p, world)) return false;',
       'ink flight first wall contact admits sourced WallDrop phase');
-    code = "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    code = "import { coherentMotionStart } from '../../patches/splatoon3/runtime/actor-motion.mjs';\n" +
+      "import { hurtboxRadius, hurtboxHeight } from '../../patches/splatoon3/runtime/player-hurtbox.mjs';\n" +
+      "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     code = replaceOnce(code,
       '        if (!actor.alive || actor.team === p.team) continue;',
       '        const friendly = actor.team === p.team;\n' +
       '        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;',
       'ink flight S3 team contact eligibility');
+    code = replaceOnce(code,
+      '        const t = capsuleEntry(p.prev, p.pos, this.base, PLAYER.radius,\n' +
+      '          actor.form === \'squid\' ? PLAYER.squidHeight : PLAYER.height, p.inkPlayerRadius);',
+      '        const motion = coherentMotionStart(actor);\n' +
+      '        const bodyRadius = hurtboxRadius(actor, PLAYER), bodyHeight = hurtboxHeight(actor, PLAYER);\n' +
+      '        let t;\n' +
+      '        if (motion) {\n' +
+      '          this.base.set(motion.x0, motion.y0, motion.z0);\n' +
+      '          this.point.set(p.pos.x - (actor.pos.x - motion.x0), p.pos.y - (actor.pos.y - motion.y0),\n' +
+      '            p.pos.z - (actor.pos.z - motion.z0));\n' +
+      '          t = capsuleEntry(p.prev, this.point, this.base, bodyRadius, bodyHeight, p.inkPlayerRadius);\n' +
+      '        } else t = capsuleEntry(p.prev, p.pos, this.base, bodyRadius, bodyHeight, p.inkPlayerRadius);',
+      'ink flight same-tick actor motion and current per-form hurtbox');
     code = replaceOnce(code,
       '        // World wins ties: no wall-through damage, independent of actors order.',
       '        if (friendly && Number.isFinite(t) && (previousAge + INK_DT * t) * INK_HZ + EPS < p.fidelityFriendThrough) continue;\n' +
@@ -111,6 +127,8 @@ export function adaptSource(rel, code) {
       'ink flight friendly contact has no hostile-hit packet');
     return code;
   }
+  code = adaptPadSensitivity(rel, code, replaceOnce);
+  code = adaptChargerFieldCollision(rel, code, replaceOnce);
   code = adaptHostTeams(rel, code, replaceOnce);
   code = adaptLocalBatch01(rel, code, replaceOnce);
   code = adaptRollerMaxPaint(rel,code,replaceOnce);
@@ -214,8 +232,9 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/game/actor.js' && !code.includes('_s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1')) {
     code = replaceOnce(code, '  reset() {',
-      '  reset() {\n    this._s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1;',
+      '  reset() {\n    markActorMotionDiscontinuity(this);\n    this._s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1;',
       'cancel pending Slosher births when an actor resets');
+    code = "import { markActorMotionDiscontinuity } from '../../patches/splatoon3/runtime/actor-motion.mjs';\n" + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code,
@@ -299,6 +318,27 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, near: true, pump: 0, trig: 0, left: null, hidden: 0 };',
       'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
     return "import { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
+  }
+  if (rel === 'styles/hud.css') {
+    // Shooter-only placement; preserve the native spread signal and all other reticles.
+    code = replaceOnce(code,
+      '/* Four outward-facing spread brackets, separate from the eight charge segments. */',
+      `/* #871: diagonal strokes at four rectangular corners. Nintendo's 1280x720
+   reference images 01/005.jpg and 01/021.jpg measure a ~48px vertical span,
+   ~3px stroke and ~14px diagonal length. Horizontal separation alone follows
+   the existing projected spread. See shooter-reticle-reference.json. */
+.iw-ret--shooter .iw-ret__tick {
+  --iw-corner-x: calc(24px + var(--sp, 0) * 1px);
+  left: -1.5px; top: -7px; width: 3px; height: 14px;
+  background: currentColor; border: 0; border-radius: 2px;
+  transform: translate(var(--iw-cx), var(--iw-cy)) rotate(var(--iw-angle));
+}
+.iw-ret--shooter .iw-ret__tick:nth-child(3) { --iw-cx: calc(0px - var(--iw-corner-x)); --iw-cy: -24px; --iw-angle: 45deg; }
+.iw-ret--shooter .iw-ret__tick:nth-child(4) { --iw-cx: var(--iw-corner-x); --iw-cy: -24px; --iw-angle: -45deg; }
+.iw-ret--shooter .iw-ret__tick:nth-child(5) { --iw-cx: calc(0px - var(--iw-corner-x)); --iw-cy: 24px; --iw-angle: -45deg; }
+.iw-ret--shooter .iw-ret__tick:nth-child(6) { --iw-cx: var(--iw-corner-x); --iw-cy: 24px; --iw-angle: 45deg; }
+/* Four outward-facing spread brackets, separate from the eight charge segments. */`,
+      'Shooter measured four-corner spread strokes');
   }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
@@ -772,6 +812,7 @@ export function adaptSource(rel, code) {
       }
     };`,
       'player map Super Jump target selection cue');
+    code = adaptCombatRange(rel, code, replaceOnce);
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
@@ -797,9 +838,39 @@ export function adaptSource(rel, code) {
       'let tail = p.fidelitySloshDraw ? fidelitySlosherDrawTail(p, sp) : (p.tail0 ?? 1) + Math.min(p.tailK ?? 1.2, sp * 0.04) * g;', 'slosher source tail window');
     code = replaceOnce(code, 'const r0 = p.vis || p.size, spk =',
       'const r0 = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : p.vis || p.size, spk =', 'slosher satellite source radius');
+    code = adaptRollerDepletion(rel, code, replaceOnce);
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
     code = replaceOnce(code, 'if (g.hit && !c.ghost) c.owner.addTurf(', 'if (g.hit && (!c.ghost || !c.owner.remote)) c.owner.addTurf(', 'adopted Storm owns its remaining paint');
     code = replaceOnce(code, '        if (!c.ghost) G.boss?.rain(', '        if (!c.ghost || !c.owner.remote) G.boss?.rain(', 'adopted Storm owns its remaining Boss rain');
+    // #537: preserve INKWAVE's distance rate and apply only the sourced minimum
+    // floor from SpeedInkConsumeMin upward, independently of the paint batch.
+    code = replaceOnce(code,
+      '      if (canRoll) { this.lastRollPos = a.pos.clone(); this.rollDist = 0; }',
+      '      if (canRoll) { this.lastRollPos = a.pos.clone(); this.lastRollInkPos = a.pos.clone(); this.rollInkChargedDistance = 0; this.rollDist = 0; }',
+      'roller per-update ink distance origin');
+    code = replaceOnce(code,
+      '    if (moved < 0.28) return;\n    this.lastRollPos.copy(a.pos);\n    a.ink = Math.max(0, a.ink - w.rollInkPerMeter * moved);',
+      '    const minS = w.rollInkMinSpeed;\n' +
+      '    const hasRollInkFloor = Number.isFinite(w.rollInkMinPerFrame) && Number.isFinite(minS);\n' +
+      '    const inkMoved = a.pos.distanceTo(this.lastRollInkPos || this.lastRollPos);\n' +
+      '    if (this.lastRollInkPos) this.lastRollInkPos.copy(a.pos); else this.lastRollInkPos = a.pos.clone();\n' +
+      '    if (hasRollInkFloor && hs >= minS) {\n' +
+      // The sourced value is tank fraction per 60 Hz frame; a.ink is percent.
+      // Keep the existing distance charge and raise it only to that minimum.
+      '      const floorInk = w.rollInkMinPerFrame * 100 * 60 * dt;\n' +
+      '      const distanceInk = w.rollInkPerMeter * inkMoved;\n' +
+      '      a.ink = Math.max(0, a.ink - Math.max(distanceInk, floorInk));\n' +
+      '      this.rollInkChargedDistance = (this.rollInkChargedDistance || 0) + inkMoved;\n' +
+      '    }\n' +
+      '    if (moved < 0.28) return;\n' +
+      '    this.lastRollPos.copy(a.pos);\n' +
+      '    if (!hasRollInkFloor) a.ink = Math.max(0, a.ink - w.rollInkPerMeter * moved);\n' +
+      '    else {\n' +
+      '      const unchargedDistance = Math.max(0, moved - (this.rollInkChargedDistance || 0));\n' +
+      '      if (unchargedDistance > 0) a.ink = Math.max(0, a.ink - w.rollInkPerMeter * unchargedDistance);\n' +
+      '      this.rollInkChargedDistance = 0;\n' +
+      '    }',
+      'roller rolling ink floor and paint batch');
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
     code = replaceOnce(code, 'Math.max(this.cooldown, 0.22)', 'Math.max(this.cooldown, w.postStreamDelay)', 'splatling sourced post-stream delay');
@@ -936,6 +1007,15 @@ export function adaptSource(rel, code) {
       '    if (G.boss && hs > 1.0) {',
       '    if (G.boss && rollerStickActive(a)) {',
       'Roller micro-speed boss contact admission');
+    // #498: only the gameplay Roller trail stamp consumes the sourced
+    // 20/30F->50F width window. The separate #411 unit/near-far impact owner
+    // computes its own age-scaled radius in roller-impact-paint.mjs.
+    code = replaceOnce(code,
+      'fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }',
+      'rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random() }',
+      'Roller native trail age width');
+    code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\n" + code;
+    code = adaptPaintOwnership(rel, code, replaceOnce);
     return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
@@ -1002,7 +1082,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this.hp -= amount;', "    amount = finalWeaponDamage(this, amount, attacker, source);\n    if (amount <= 0) return false;\n    this.hp -= amount;\n    if (Math.abs(this.hp) < 1e-9) this.hp = 0;", 'final weapon HP quantization');
     code = replaceOnce(code, '    this.superJumpState = null;\n    this.yawVel', '    this.superJumpState = null; this.superJumpGround = null;\n    clearPendingLethal(this);\n    this.yawVel', 'reset super jump ground');
     code = replaceOnce(code, '    this.alive = false;\n    this.hp = 0;', '    this.alive = false;\n    clearPendingLethal(this);\n    this.superJumpState = null; this.superJumpGround = null;\n    this.hp = 0;', 'clear dead super jump');
-    code = replaceOnce(code, '    if (this.invuln > 0) return false;', "    if (this.invuln > 0 || this.superJumpState?.phase === 'flight') return false;", 'super jump flight damage admission');
+    code = replaceOnce(code, '    if (this.invuln > 0) return false;', "    if (this.invuln > 0 || slamProtected(this) || this.superJumpState?.phase === 'flight') return false;", 'super jump flight damage admission');
     code = replaceOnce(code, '    if (!this.alive || amount <= 0) return false;',
       '    if (!this.alive || amount <= 0) return false;\n    if (hasPendingLethal(this)) return false;', 'pending lethal damage admission');
     code = replaceOnce(code, '    if (this.hp <= 0) { this.splat(attacker, source); return true; }',
@@ -1033,15 +1113,15 @@ export function adaptSource(rel, code) {
       ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }"
       : "    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }";
     const specialActiveTarget = specialActiveHead.includes('stormHolding')
-      ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { clearFullCancelCandidate(this); const activeSpecial = this.specialActive.id, stormResources = activeSpecial === 'storm', slamRecovery = activeSpecial === 'slam', trizookaHealth = activeSpecial === 'trizooka' && !this.remote; this._updateSpecial(dt); if (this.alive) { if (stormResources) updateResources(this, dt); else if (slamRecovery) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (trizookaHealth) updateSpecialHealthRecovery(this, dt); } if (this.alive) this._finishFrame(dt); return; }"
-      : "    if (this.specialActive) { clearFullCancelCandidate(this); const activeSpecial = this.specialActive.id, stormResources = activeSpecial === 'storm', slamRecovery = activeSpecial === 'slam', trizookaHealth = activeSpecial === 'trizooka' && !this.remote; this._updateSpecial(dt); if (this.alive) { if (stormResources) updateResources(this, dt); else if (slamRecovery) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (trizookaHealth) updateSpecialHealthRecovery(this, dt); } if (this.alive) this._finishFrame(dt); return; }";
+      ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { clearFullCancelCandidate(this); const activeSpecial = this.specialActive.id, stormResources = activeSpecial === 'storm', slamRecovery = activeSpecial === 'slam', trizookaHealth = activeSpecial === 'trizooka' && !this.remote; this._updateSpecial(dt); if (this.alive) { if (stormResources) updateResources(this, dt); else if (slamRecovery) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (trizookaHealth) updateResources(this, dt); } if (this.alive) this._finishFrame(dt); return; }"
+      : "    if (this.specialActive) { clearFullCancelCandidate(this); const activeSpecial = this.specialActive.id, stormResources = activeSpecial === 'storm', slamRecovery = activeSpecial === 'slam', trizookaHealth = activeSpecial === 'trizooka' && !this.remote; this._updateSpecial(dt); if (this.alive) { if (stormResources) updateResources(this, dt); else if (slamRecovery) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (trizookaHealth) updateResources(this, dt); } if (this.alive) this._finishFrame(dt); return; }";
     code = replaceOnce(code, specialActiveHead, specialActiveTarget, 'special active resources');
     // Issue #624 residual: activation also returns before ordinary resources.
     // Admit only a live Storm user; other specials retain their resource gates.
     code = replaceOnce(code, "    if (specialPressed && this.specialReady()) { this._startSpecial(); this._finishFrame(dt); return; }",
-      "    if (specialPressed && this.specialReady()) { clearFullCancelCandidate(this); this._startSpecial(); if (this.alive) { if (this.specialActive?.id === 'storm') updateResources(this, dt); else if (this.specialActive?.id === 'slam') updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (this.specialActive?.id === 'trizooka' && !this.remote) updateSpecialHealthRecovery(this, dt); } this._finishFrame(dt); return; }",
+      "    if (specialPressed && this.specialReady()) { clearFullCancelCandidate(this); this._startSpecial(); if (this.alive) { if (this.specialActive?.id === 'storm') updateResources(this, dt); else if (this.specialActive?.id === 'slam') updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (this.specialActive?.id === 'trizooka' && !this.remote) updateResources(this, dt); } this._finishFrame(dt); return; }",
       'storm/slam/trizooka activation resources');
-    code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    if (this._checkFallDeath()) return false;\n    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,", 'super jump wall support and destination admission');
+    code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    this._checkWaterHazard();\n    if (!this.alive) return false;\n    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,", 'lethal water admission, super jump wall support and destination admission');
     code = replaceOnce(code, 'target, from: new THREE.Vector3(), to: new THREE.Vector3(), marker: 0', 'target, from: new THREE.Vector3(), to: destination, marker: 0', 'super jump committed destination');
     code = replaceOnce(code, "      this.vel.set(0, 0, 0);\n      this.form = 'squid';\n      this._probeGround();", '      const supported = prepareSuperJump(this, dt);\n      if (!this.alive) return;', 'super jump preparation physics');
     const targetStart = code.indexOf('        const tgt = s.target;'), targetEnd = code.indexOf("        s.phase = 'flight';", targetStart);
@@ -1113,8 +1193,11 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this._spawnBarrier();',
       '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
       'S3 universal spawn barrier removal');
+    code = replaceOnce(code, "phase: 'rise', armor: true, startY: this.pos.y", "phase: 'rise', armor: false, startY: this.pos.y", 'Slam early action remains damageable');
+    code = replaceOnce(code, '      this.invuln = 0.3;', '      // #573: protection ends with the action/landing owner.', 'Slam has no detached post-impact invulnerability');
     code = adaptTidalSlamGauge(rel, code, replaceOnce);
-    return `import { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, stealthJumpExtraTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery, updateSpecialHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
+    code = adaptPaintOwnership(rel, code, replaceOnce);
+    return `import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, stealthJumpExtraTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery, updateSpecialHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
@@ -1401,10 +1484,15 @@ export function adaptSource(rel, code) {
       'stage-root static release');
   }
 
+
   if (rel === 'src/world/paint.js') {
+    code = adaptPaintOwnership(rel, code, replaceOnce);
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
-      code + '\ninstallIssue570PaintPresentation(PaintSystem);\n';
+      "import { installIssue264PaintOwnership } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" +
+      code + '\ninstallIssue570PaintPresentation(PaintSystem);\n' +
+      'installIssue264PaintOwnership(PaintSystem, { kind: K, reach: REACH, dripReach: DRIP_REACH, shapes: [[5, 7, 8, 3], [3, 4, 5, 2], [7, 9, 10, 4], [10, 12, 14, 5], [3, 4, 4, 2], [2, 2, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]] });\n';
   }
+  code = adaptPaintOwnership(rel, code, replaceOnce);
   return code;
 }
 

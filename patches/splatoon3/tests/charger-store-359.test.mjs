@@ -166,7 +166,17 @@ test('partial charge is rejected; release, death, reset and weapon replacement c
     const partial = f.make(); partial.intent.fire = true;
     for (let i = 0; i < 60 && partial.weaponRunner.charge < .35; i++) f.step(partial);
     assert.ok(partial.weaponRunner.charge > 0 && partial.weaponRunner.charge < .999);
-    f.enterSquid(partial);
+    partial.intent.squid = true; f.step(partial);
+    assert.equal(partial.form, 'kid', '#416 keeps the partial-cancel recovery in kid form');
+    assert.equal(partial.weaponRunner.charging, false, 'partial charge cancels immediately');
+    assert.equal(partial.weaponRunner.s3Stored, null, 'the cancellation never creates a keep');
+    for (let i = 1; i < 6; i++) {
+      f.step(partial);
+      assert.equal(partial.form, 'kid', `partial cancel stays gated at ${i}F`);
+      assert.equal(partial.weaponRunner.s3Stored, null);
+    }
+    f.step(partial);
+    assert.equal(partial.form, 'squid', 'partial cancellation opens swim at exactly 6F');
     assert.equal(partial.weaponRunner.s3Stored, null);
 
     for (const teardown of ['release', 'death', 'reset', 'swap']) {
@@ -180,6 +190,34 @@ test('partial charge is rejected; release, death, reset and weapon replacement c
       assert.equal(a.weaponRunner.charge, 0, `${teardown} does not leave a full-charge presentation`);
     }
   } finally { f.close(); }
+});
+
+test('partial cancel preserves independent 6F form and 19F refill clocks at 30, 60 and 120 Hz', async () => {
+  for (const hz of [30, 60, 120]) {
+    const f = await fixture({ paint: 1 });
+    try {
+      const a = f.make({ name: `partial cancellation ${hz} Hz` }), r = a.weaponRunner;
+      a.intent.fire = true;
+      for (let i = 0; i < hz && r.charge < .35; i++) f.step(a, hz);
+      assert.ok(r.charge > 0 && r.charge < 1, 'a paid partial charge precedes ZL');
+      const ink = a.ink;
+      a.intent.squid = true; f.step(a, hz);
+      assert.equal(a.form, 'kid');
+      assert.equal(r.charging, false);
+      assert.equal(r.s3Stored, null);
+      assert.equal(a.s3.chargerInterruptRecover, 19 / 60, 'resource owner consumes the cancel event once');
+      assert.equal(a.ink, ink, 'no cancellation-frame refund or refill');
+      for (let step = 1; step <= Math.ceil(19 * hz / 60); step++) {
+        f.step(a, hz);
+        const elapsed = step / hz;
+        assert.equal(a.form, elapsed + 1e-10 < 6 / 60 ? 'kid' : 'squid', `form boundary at ${hz} Hz step ${step}`);
+        assert.equal(r.s3Stored, null, 'held ZR cannot reopen or keep the cancelled charge');
+        assert.equal(r.charging, false);
+        if (elapsed + 1e-10 < 19 / 60) assert.equal(a.ink, ink, `refill remains locked at ${hz} Hz step ${step}`);
+        else assert.ok(a.ink > ink, `refill opens on the first tick at/after 19F (${hz} Hz)`);
+      }
+    } finally { f.close(); }
+  }
 });
 
 test('store eligibility and same-tick ZR cancellation hold at 30, 60 and 120 Hz', async () => {

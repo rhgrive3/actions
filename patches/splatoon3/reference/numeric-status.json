@@ -99,6 +99,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "player.s3SwimHurtRadius": {
+    "value": 0.675,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "player.s3HumanoidHurtHeight": {
     "value": 1.65,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -281,6 +286,16 @@
   },
   "weapons.shooter.jumpSpreadRecoverEnd": {
     "value": 1.1666666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.combatRange": {
+    "value": 11.56,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.matchmakingRange": {
+    "value": 12.9,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1242,6 +1257,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.roller.rollContactInterval": {
+    "value": 0.4,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.rollSpeed": {
     "value": 7.92,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1259,6 +1279,26 @@
   },
   "weapons.roller.rollInkPerMeter": {
     "value": 0.7575757575757576,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.rollInkMinPerFrame": {
+    "value": 0.0002,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.rollInkMaxPerFrame": {
+    "value": 0.001,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.rollInkMinSpeed": {
+    "value": 1.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.rollInkMaxSpeed": {
+    "value": 7.92,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1299,6 +1339,26 @@
   },
   "weapons.roller.flickDamageFar": {
     "value": 35,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.depletionInkRate": {
+    "value": 0.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.flickDepletionDrops": {
+    "value": 3,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalDepletionDrops": {
+    "value": 3,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.depletionDamageRate": {
+    "value": 0.25,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1503,6 +1563,11 @@
     }
   },
   "weapons.roller.nearFlickUnit.widthRatio": {
+    "value": 0.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.nearFlickUnit.depletionSpeedRate": {
     "value": 0.5,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
@@ -1740,11 +1805,6 @@
       "factor": 0.016666666666666666,
       "rawValue": 20
     }
-  },
-  "weapons.roller.rollContactInterval": {
-    "value": 0.4,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
   },
   "weapons.slosher.inkPerShot": {
     "value": 7.6,

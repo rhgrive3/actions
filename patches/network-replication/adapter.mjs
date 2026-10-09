@@ -32,6 +32,41 @@ export function adaptNetworkSource(rel, code) {
       'source-guided head terminal identity');
     return code;
   }
+  if (rel === 'src/world/paint.js') {
+    patch('    const nm = G.netm;', '    const nm = G.netm;\n    let paintOrder = opts.__netOrder || null;', 'paint event identity enters shared owner');
+    patch('if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }',
+      'if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); paintOrder = nm.recSplat(center, radius, team, opts) || null; }',
+      'local paint captures canonical network identity');
+    patch('    const cosmetic = !!opts.cosmetic;',
+      '    const cosmetic = !!opts.cosmetic;\n    const netOrderId = !cosmetic && paintOrder ? this._paintOrderId(paintOrder) : 0;\n    const ownerOrder = netOrderId || this._paintCurrentOrder || 0;\n    const orderState = ownerOrder && !cosmetic ? { accepted: false } : null;',
+      'shared local and network cell owner');
+    patch('if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n          entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      'if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);\n          if (netOrderId || !orderState || orderState.accepted) entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      'retain ordered ancillary growth while masking rejected body cells');
+    patch('          if (g.team === team || g.kind === K_SPECK) continue;',
+      '          if (g.netOrderId || netOrderId || g.team === team || g.kind === K_SPECK) continue;',
+      'network growth cannot finish by packet arrival order');
+    patch('        g.cx = center.x; g.cy = center.y; g.cz = center.z;\n        g.paintOwner = this._paintOwnerContext?.owner || null;\n        g.paintCreditMode = this._paintOwnerContext?.mode || 0;\n        g.paintOrder = this._paintCurrentOrder || 0;',
+      '        g.cx = center.x; g.cy = center.y; g.cz = center.z;\n        g.paintOwner = this._paintOwnerContext?.owner || null;\n        g.paintCreditMode = this._paintOwnerContext?.mode || 0;\n        g.paintOrder = ownerOrder; g.netOrderId = netOrderId;',
+      'growth keeps the shared canonical owner');
+    patch('  _emitGrowth(g, tn, dT, dripOnly) {', `  _emitGrowth(g, tn, dT, dripOnly) {
+    const draw = (f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode) => {
+      if (!g.netOrderId) { this._pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode); return; }
+      const count = this._paintOrderRuns(f, g.netOrderId, u0, u1, v0, v1), runs = this._paintOrderRunScratch;
+      for (let i = 0; i < count; i++) { const at = i * 4;
+        this._pushQuad(f, runs[at], runs[at + 1], runs[at + 2], runs[at + 3], lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode);
+      }
+    };`, 'GPU growth uses the CPU owner mask');
+    patch('this._pushQuad(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);',
+      'draw(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);',
+      'wall drips respect the shared CPU mask');
+    patch('this._pushQuad(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);',
+      'draw(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);',
+      'body growth respects the shared CPU mask');
+    patch('    if (r <= 0.02) return 0;',
+      '    if (r <= 0.02) { if (orderState) orderState.accepted = true; return 0; }',
+      'keep existing fine paint presentation');
+  }
   if (rel === 'src/core/ctx.js') {
     patch('export function emit(name, payload) {\n  const set = listeners.get(name);\n  if (!set) return;\n  for (const fn of set) fn(payload);\n}', `const EVENT_VECTOR_FIELDS = Object.freeze({
   muzzle: eventVectorField('weapon-fire-muzzle', readMuzzle, writeMuzzle),
@@ -143,7 +178,18 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
-    patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
+    code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
+    patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
+    code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
+    code = "import { recordWipeoutLife, packWipeoutTimeline, acceptWipeoutTimeline, acceptWipeoutConfirmation, replayWipeoutConfirmations } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
+    patch("    this._rec(['ev', name, packEvent(e)]);", "    recordWipeoutLife(this, name, e);\n    this._rec(['ev', name, packEvent(e)]);", 'owner wipeout transitions');
+    patch('    if (this.out.length) { msg.e = this.out; this.out = []; }', '    const wf = packWipeoutTimeline(this); if (wf) msg.wf = wf;\n    replayWipeoutConfirmations(this);\n    if (this.out.length) { msg.e = this.out; this.out = []; }', 'owner wipeout history and watermark');
+    patch("      case 't': this._tick(from, d); break;", "      case 't': if (d.wf) acceptWipeoutTimeline(this, from, d.wf); this._tick(from, d); break;\n      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", 'authenticated wipeout protocol');
+    code = "import { acceptOnlineContinuation, tickOnlineContinuation } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
+    patch('  _sendTick() {', '  _sendTick() {\n    tickOnlineContinuation(this);', 'per-player result continuation');
+    patch("      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", "      case 'wc': acceptWipeoutConfirmation(this, from, d); break;\n      case 'rc': acceptOnlineContinuation(this, from, d); break;", 'continuation sender and match identity');
+    patch('    this.myId = session.myId;', '    this.myId = session.myId;\n    this._matchStateAPI = { G, emit };', 'native match-state protocol context');
+    patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this._paintClockState = paintClockStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
     patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
     patch("    this.unsubs.push(on('match:state', ({ state, match: m }) => { if (m === this.match && this.isHost) this._sendNow({ k: 'st', s: state, t: r2(m.time) }); }));",
       "    this.unsubs.push(on('match:state', ({ state, match: m }) => { if (m === this.match && this.isHost) { const d={ k:'st', s:state, t:r2(m.time) }; if (state==='finish' && validFinishCoverage(m.s3FinishCoverage)) d.fc=[...m.s3FinishCoverage]; if (state==='finish' && validFinishMapDataUrl(m.s3FinishMapDataUrl)) d.fm=m.s3FinishMapDataUrl; this._sendNow(d); } }));",
@@ -211,10 +257,26 @@ export function emit(name, payload) {
   }
 
   _remoteSplat(victim, attacker, cause) {`, 'host-authoritative first-splat protocol');
-    patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    clearRemoteSquidroll(victim);\n    victim.alive = false;", 'Flow observes only accepted remote splats');
+    patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    clearRemoteSquidroll(victim);\n    clearRemoteRollerPresentation(victim);\n    victim.alive = false;", 'Flow observes only accepted remote splats');
     patch("import { G, emit, on } from '../core/ctx.js'",
       "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js';\nimport { exportPendingLethal, restorePendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\nimport { exportSplatlingReservation, isValidSplatlingReservation, refundSplatlingReservation } from '../../patches/splatoon3/runtime/splatling.mjs';\nimport { validFinishCoverage, validFinishMapDataUrl } from '../../patches/splatoon3/runtime/turf-finish.mjs'",
       'read numeric event and adoption snapshots');
+    patch(`    if (a.weapon.kind === 'roller' && (f & F.flickVertical)) {
+      const w = a.weapon;
+      if (!wr.s3RollerAttack?.networkRemote) wr.s3RollerAttack = {
+        networkRemote: true, vertical: true, windup: w.verticalWindup,
+        interval: w.verticalInterval ?? w.flickInterval, elapsed: 0, released: false, rolling: false,
+      };
+      const attack = wr.s3RollerAttack;
+      attack.elapsed = Math.min(attack.interval, attack.elapsed + Math.max(0, dt));
+      attack.released = !(f & F.flick); attack.rolling = wr.rolling;
+      wr.s3FlickVertical = true;
+      a.character.s3RollerFlick = attack;
+    } else if (wr.s3RollerAttack?.networkRemote) {
+      wr.s3RollerAttack = null; wr.s3FlickVertical = false;
+      a.character.s3RollerFlick = null;
+    }
+`, '', 'remote Roller mode remains Character presentation only');
     patch('invuln: 262144, enemy: 524288,',
       'invuln: 262144, enemy: 524288, rollerFoldAttack: 1048576, rollerFoldVertical: 2097152,',
       'roller fold mode snapshot flags');
@@ -222,7 +284,7 @@ export function emit(name, payload) {
       'if (wr.slosh >= 0) f |= F.slosh;\n  if (wr.s3RollerAttack) f |= F.rollerFoldAttack;\n  if (wr.s3RollerAttack?.vertical) f |= F.rollerFoldVertical;',
       'pack owner Roller fold mode');
     patch('wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
-      'wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;\n    wr.s3RollerFoldAttack = f & F.rollerFoldAttack ? { vertical: !!(f & F.rollerFoldVertical) } : null;',
+      'wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;\n    wr.s3RollerFoldAttack = f & F.rollerFoldAttack ? { vertical: !!(f & F.rollerFoldVertical) } : null;\n    applyRemoteRollerPresentation(a, S.rollerFlick, dt, !!(S.f & F.alive));',
       'apply remote Roller fold mode');
     patch('const FORWARD = [', "const FORWARD = ['hit', 'hit:rejected', ",
       'authoritative hit admission feedback');
@@ -240,7 +302,7 @@ export function emit(name, payload) {
         `const hitAdmission = ${hitCall.slice(0, -1)};\n    if (hitAdmission === 'rejected-invulnerable') emit('hit:rejected', { attacker: atk, victim: v, damage: d.d, weaponId: d.w });`,
         'owner confirms invulnerability rejection');
     }
-    code = "import { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    code = "import { packRollerPresentation, readRollerPresentation, applyRemoteRollerPresentation, clearRemoteRollerPresentation } from '../../patches/network-replication/roller-presentation.mjs';\nimport { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     patch('  sendHit(attacker, victim, dmg, wid) {',
       '  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {', 'Slosher volley identity send');
     {
@@ -263,12 +325,24 @@ export function emit(name, payload) {
     const groupedHit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
     patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
       groupedHit, 'Slosher volley identity owner admission');
+    // #1150: a missing/invalid volley cannot downgrade an online maximum to
+    // ungrouped damage. Existing combat-life admission owns respawn isolation.
+    code = "import { validDamageGroup } from '../../patches/splatoon3/runtime/final-damage.mjs';\n" + code;
+    patch('    this.s.tr?.sendTo(victim.owner, message);',
+      `    if (WEAPONS[wid]?.kind === 'slosher') {
+      if (typeof message.g !== 'string' || !validDamageGroup(message.g)) { this.hitPending.delete(message.seq); this._pendingHits?.delete(message.h); return false; }
+    }
+    this.s.tr?.sendTo(victim.owner, message);`, 'Slosher required volley identity');
+    patch('    this._applyingHit = true;', `    if (WEAPONS[d.w]?.kind === 'slosher' &&
+      (typeof d.g !== 'string' || !validDamageGroup(d.g))) return;
+    this._applyingHit = true;`, 'Slosher owner identity admission');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
-    for (const a of this.byNid.values()) clearRemoteSquidroll(a);
+    for (const a of this.byNid.values()) { clearRemoteSquidroll(a); clearRemoteRollerPresentation(a); }
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
     patch('  _remove(a) {\n    this.byNid.delete(a.nid);', `  _remove(a) {
     clearRemoteSquidroll(a);
+    clearRemoteRollerPresentation(a);
     retireNetworkGhosts(a);
     this.byNid.delete(a.nid);`, 'departed owner retirement');
 
@@ -283,16 +357,19 @@ export function emit(name, payload) {
     if (this._applyingHit) return 'local';
     if (weaponId === 'bomb' || weaponId === 'splat-bomb-far') return victim.remote ? 'drop' : 'local';`, 'bomb recipient authority');
 
+    patch('  onLeave(id, hostChanged) {', '  onLeave(id, hostChanged) {\n    this.s._members?.delete(id);\n    this.peers.delete(id);', 'retire departed paint sender before replay');
     patch('  _rec(e) { this.out.push([r3(now()), ...e]); }', `  _rec(e) {
-    const seq = this._eventSeq = (this._eventSeq || 0) + 1;
+    const seq = this._eventSeq = Math.max(this._eventSeq || 0, this.s._inkwaveEventSeq || 0) + 1;
+    if (!Number.isSafeInteger(seq)) throw new Error('Network event sequence exhausted');
+    this.s._inkwaveEventSeq = seq;
     const tick = Math.round((G.time || 0)*60);
-    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event);
+    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event); return event;
   }`, 'ordered event identity');
     patch("const msg = { k: 't', ts: r3(now()), a",
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
       'owner simulation tick preserving existing sidecars');
     patch('    const a = [];\n    for (const x of this.byNid.values()) if (!x.remote) a.push(packActor(x));',
-      '    const a = [], sq = Object.create(null), wp = Object.create(null), bw = Object.create(null);\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const wr = x.weaponRunner, slosh = x.weapon?.kind === \'slosher\' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n      const sp = x.specialActive, phase = sp?.id === \'slam\' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n      const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n      if (slosh >= 0 || phase) wp[x.nid] = [slosh, phase, slamT];\n      const windup = x.weapon?.kind === \'blaster\' ? x.weaponRunner?.s3BlasterWindup : 0;\n      if (Number.isFinite(windup) && windup > 0) bw[x.nid] = Math.min(1, windup);\n    }',
+      '    const a = [], sq = Object.create(null), wp = Object.create(null), bw = Object.create(null), rf = Object.create(null);\n    const simulationTick = Math.max(0, Math.round((G.time || 0) * 60));\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const flick = packRollerPresentation(x, this, simulationTick);\n      if (flick) rf[x.nid] = flick;\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const wr = x.weaponRunner, slosh = x.weapon?.kind === \'slosher\' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n      const sp = x.specialActive, phase = sp?.id === \'slam\' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n      const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n      if (slosh >= 0 || phase) wp[x.nid] = [slosh, phase, slamT];\n      const windup = x.weapon?.kind === \'blaster\' ? x.weaponRunner?.s3BlasterWindup : 0;\n      if (Number.isFinite(windup) && windup > 0) bw[x.nid] = Math.min(1, windup);\n    }',
       'append optional Squid Roll and weapon/special motion sidecars');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
@@ -301,15 +378,16 @@ export function emit(name, payload) {
     }
     // actors
     if (d.a)`, 'snapshot physics tick pair');
-    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (Object.keys(rf).length) msg.rf = rf;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
-      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const a = this.byNid.get(s[0]);',
+      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
       'strict optional Squid Roll and motion metadata validation');
     patch('      const snap = unpackActor(s, d.ts);\n      snap.spCost = d.sc?.[a.nid];',
-      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.sloshElapsed = pose ? pose[0] : -1; snap.slamPhase = pose ? pose[1] : 0; snap.slamT = pose ? pose[2] : 0;\n      snap.blasterWindup = windup;\n      snap.spCost = d.sc?.[a.nid];',
+      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.sloshElapsed = pose ? pose[0] : -1; snap.slamPhase = pose ? pose[1] : 0; snap.slamT = pose ? pose[2] : 0;\n      snap.blasterWindup = windup; snap.rollerFlick = flick;\n      snap.spCost = d.sc?.[a.nid];',
       'attach validated presentation-only action clocks');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
+      e._netPeer = from;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
@@ -326,6 +404,11 @@ export function emit(name, payload) {
         && Number.isSafeInteger(d.u) && Number.isSafeInteger(e._netTick) && e._netTick >= 0
         && e._netTick >= (p.physicsPoints?.at(-3) ?? 0) && e._netTick <= d.u && e[0] <= d.ts) {
         e._stormSnapshot = { owner: from, life: snap.life, at: snap.t, tick: d.u };
+      }
+      if (e[1] === 's') {
+        if (e._netSeq !== undefined && e._netSeq <= Math.max(p._lastEventSeq || 0, p._lastPaintSeq || 0, this._paintClockState.applied.get(from) || 0)) continue;
+        if (receivePaintOrder(this, from, e) === false) continue;
+        if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
       }
       p.events.push(e);
     }`, 'receive event identity');
@@ -357,10 +440,10 @@ export function emit(name, payload) {
       "        if (e[3] === 'movement_cancel' || e[3] === 'land' || e[3] === 'spawn') clearRemoteSquidroll(a, true);\n        a.character._netTrig?.(e[3], unpackTrig(e[4]));",
       'remote cancellation event invalidates current visual Roll');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
+      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      clearRemoteRollerPresentation(a);\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
     patch('    const drop = mapNoBots(this.cfg.map);',
       "    const drop = this.cfg.map === 'range' || mapNoBots(this.cfg.map);", 'Practice Range remains humans-only on disconnect');
-    patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a);\n    clearRemoteSquidroll(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
+    patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a);\n    clearRemoteSquidroll(a);\n    clearRemoteRollerPresentation(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
     patch('    a.superJumpState = null; a.specialActive = null;',
       '    a.superJumpState = null; a.specialActive = null;\n    restoreAdoptionState(this, a, adoptionTransfer);',
       'restore authoritative actor state after ordinary runner reset');
@@ -381,7 +464,7 @@ export function emit(name, payload) {
       'sample adoption state on the sender timeline');
     patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23 && s.length !== 24 && s.length !== 25) continue;
       const adoption = s.length >= 24
-        ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq)
+        ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq, a.weapon?.special)
         : null;
       if (s.length >= 24 && !adoption) continue;
       if (adoption) { snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence; }
@@ -409,6 +492,12 @@ export function emit(name, payload) {
     patch('st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0',
       'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0',
       'full-precision paint stretch');
+    patch("this._rec(['s', c.x, c.y, c.z, radius, team, o.seed ?? Math.random(), o.kind ?? 0,",
+      "const event = this._rec(['s', c.x, c.y, c.z, radius, team, o.seed ?? Math.random(), o.kind ?? 0,",
+      'return local paint order identity');
+    patch('st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1]);',
+      'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1, nextPaintOrder(this, !!o.instant)]);\n    this._paintClockState.applied.set(this.s.myId, event._netSeq);\n    return { clock: event[14][2], epoch: event[14][1], peer: this.s.myId, seq: event._netSeq };',
+      'return local paint order identity');
 
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     const inkMetaBase = 'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null]);';
@@ -417,22 +506,22 @@ export function emit(name, payload) {
     const kitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
     const poweredKitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);';
     if (code.includes(poweredInkMetaKitBirth)) patch(poweredInkMetaKitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
       'append immutable special power after ink metadata and stable birth fields');
     else if (code.includes(inkMetaKitBirth)) patch(inkMetaKitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth fields after ink metadata and kit fields');
     else if (code.includes(poweredKitBirth)) patch(poweredKitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
       'append immutable special power after stable birth fields');
     else if (code.includes(kitBirth)) patch(kitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth mode, appearance seed, identity, roller unit after kit fields');
     else if (code.includes(inkMetaBase)) patch(inkMetaBase,
-      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth fields after ink metadata');
     else patch('p.nose ?? 0.3, p.sats ?? 3]);',
-      'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth mode, appearance seed, identity, roller unit');
     {
       const combatLifeTick = '  _tick(from, d) {\n    this.stats.in++;\n    // Ordered WebSocket ticks cannot replay paint or terminal events.\n    if (!Number.isFinite(d.ts) || d.ts <= (this.peers.get(from)?.lastTs ?? -Infinity)) return;\n    const p = this._peer(from);';
@@ -452,14 +541,25 @@ export function emit(name, payload) {
     this.stats.in++;`, 'ordered tick replay guard');
     }
     patch('  _playEvents() {', `  _applyRemoteSplatEvent(e) {
+    const order = readPaintOrder(this, e._netPeer, e);
+    if (order === false) return false;
+    const state = this._paintClockState;
+    if (e._netSeq !== undefined) {
+      if (e._netSeq <= (state.applied.get(e._netPeer) || 0)) return false;
+      state.applied.set(e._netPeer, e._netSeq);
+    }
+    receivePaintOrder(this, e._netPeer, e);
     this.applying = true;
     try {
       const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
       const opts = { seed: e[7] };
+      if (order) opts.__netOrder = order;
+      if (Array.isArray(e[14])) opts.instant = e[14][3] === 1;
       if (e[8]) opts.kind = e[8];
       if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
       if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
       G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
+      return true;
     } finally { this.applying = false; }
   }
 
@@ -468,7 +568,7 @@ export function emit(name, payload) {
     let committed = 0;
     for (const p of this.peers.values()) for (const e of p.events) {
       if (e[1] !== 's' || !e._deadlineEligible || e._finishPaintApplied) continue;
-      this._applyRemoteSplatEvent(e);
+      if (!this._applyRemoteSplatEvent(e)) continue;
       e._finishPaintApplied = true;
       committed++;
     }
@@ -491,6 +591,13 @@ export function emit(name, payload) {
         break;
       }`, 'deadline paint is never double-applied');
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
+    if (e[1] === 's') e._netPeer = from;
+    if (e[1] === 's') {
+      const hasTick = e._netTick !== undefined, hasSeq = e._netSeq !== undefined;
+      if (!this.s._members?.has(from) || hasTick !== hasSeq
+        || hasTick && (!Number.isSafeInteger(e._netTick) || e._netTick < 0 || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)
+        || readPaintOrder(this, from, e) === false) return;
+    }
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
     const eventPeer = this.peers.get(from);
     if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
@@ -565,7 +672,7 @@ export function emit(name, payload) {
         break;
       }`, 'beam birth clock');
     patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
-    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    clearRemoteSquidroll(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
+    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    clearRemoteSquidroll(a);\n    clearRemoteRollerPresentation(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
@@ -645,6 +752,38 @@ function validLethalState(row, life, flags, hp) {
     || typeof punisher !== 'boolean' || typeof cause !== 'string' || !cause.length || cause.length > 48 || /[\\u0000-\\u001f\\u007f]/.test(cause)) return undefined;
   return [hitLife, sequence, attackerNid, cause, punisher];
 }
+// #958: versioned protection payload inside the existing recovery-age slot.
+// The outer adoption row and its extension slots remain unchanged (#1169 owns
+// the separate Slam extension). Old numeric recovery ages remain readable.
+const PROTECTION_TAG = 'inkwave-protection-v1';
+function packProtectionAge(actor) {
+  const armor = actor.s3?.spawnArmor;
+  return [PROTECTION_TAG, clampAdoptionAge(actor.lastDamage),
+    Number.isFinite(actor.invuln) ? Math.max(0, Math.min(10, actor.invuln)) : 0,
+    !!actor.s3?.spawnArmorManaged,
+    armor ? [armor.hp, armor.remaining, armor.breakRemaining] : null];
+}
+function readProtectionAge(row) {
+  if (!Array.isArray(row) || row.length !== 5 || row[0] !== PROTECTION_TAG
+    || !Number.isFinite(row[1]) || row[1] < 0 || row[1] > ADOPTION_AGE_MAX
+    || !Number.isFinite(row[2]) || row[2] < 0 || row[2] > 10 || typeof row[3] !== 'boolean') return null;
+  const armor = row[4];
+  if (armor !== null && (!row[3] || !Array.isArray(armor) || armor.length !== 3
+    || !Number.isFinite(armor[0]) || armor[0] < 0 || armor[0] > 30
+    || !Number.isFinite(armor[1]) || armor[1] < 0 || armor[1] > 235 / 60
+    || armor[2] !== null && (!Number.isFinite(armor[2]) || armor[2] < 0 || armor[2] > 20 / 60))) return null;
+  return { invuln: row[2], managed: row[3], armor: armor?.slice() || null };
+}
+function restoreProtection(actor, state) {
+  const p = state.protection;
+  if (!p || !actor.alive) return;
+  actor.invuln = p.invuln;
+  actor.s3 ||= {};
+  actor.s3.spawnArmorManaged = p.managed;
+  actor.s3.spawnArmorRemote = false;
+  actor.s3.spawnArmor = p.armor && p.armor[1] > 0
+    ? { hp: p.armor[0], remaining: p.armor[1], breakRemaining: p.armor[2] } : null;
+}
 function packAdoptionState(actor) {
   const life = Number.isSafeInteger(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
   const previous = Number.isSafeInteger(actor._adoptionSequence) && actor._adoptionSequence >= 0 ? actor._adoptionSequence : 0;
@@ -655,13 +794,16 @@ function packAdoptionState(actor) {
   const spin = exportSplatlingReservation(actor.weaponRunner);
   const cooldown = Number.isFinite(actor.weaponRunner?.cooldown)
     ? Math.min(ADOPTION_COOLDOWN_MAX, Math.max(0, actor.weaponRunner.cooldown)) : 0;
-  return [ADOPTION_STATE_TAG, life, sequence, tick, clampAdoptionAge(actor.lastDamage),
-    packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin, cooldown];
+  return [ADOPTION_STATE_TAG, life, sequence, tick, packProtectionAge(actor),
+    packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin, cooldown, packSlamState(actor)];
 }
-function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
-  if (!Array.isArray(row) || (row.length !== 8 && row.length !== 9) || row[0] !== ADOPTION_STATE_TAG) return null;
-  const [tag, rowLife, sequence, tick, recoveryAge, jumpRow, lethalRow, spinRow] = row;
-  const cooldown = row.length === 9 ? row[8] : 0;
+function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence, weaponSpecial) {
+  if (!Array.isArray(row) || ![8,9,10].includes(row.length) || row[0] !== ADOPTION_STATE_TAG) return null;
+  const [tag, rowLife, sequence, tick, ageRow, jumpRow, lethalRow, spinRow] = row;
+  const protection = Array.isArray(ageRow) ? readProtectionAge(ageRow) : null;
+  if (Array.isArray(ageRow) && !protection) return null;
+  const recoveryAge = Array.isArray(ageRow) ? ageRow[1] : ageRow;
+  const cooldown = row.length >= 9 ? row[8] : 0;
   if (!Number.isSafeInteger(rowLife) || rowLife < 0 || rowLife !== life
     || !Number.isSafeInteger(sequence) || sequence < 1 || sequence <= (previousSequence || 0)
     || !Number.isSafeInteger(tick) || tick < 0 || !Number.isFinite(recoveryAge)
@@ -673,7 +815,35 @@ function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
   if (lethal === undefined) return null;
   const streaming = !!(flags & F.streaming);
   if (spinRow === null ? streaming : (!streaming || weaponKind !== 'splatling' || !isValidSplatlingReservation(spinRow, PLAYER.inkMax))) return null;
-  return { life: rowLife, sequence, tick, recoveryAge, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown };
+  const slam = row.length === 10 ? readSlamState(row[9], !!(flags & F.alive) && !!(flags & F.special) && weaponSpecial === 'slam') : null;
+  if (slam === undefined) return null;
+  return { life: rowLife, sequence, tick, recoveryAge, protection, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown, slam };
+}
+// Transfer the latest accepted native action, not an interpolated presentation
+// phase. Its exact pose/velocity and gauge reservation continue on one host.
+function packSlamState(actor) {
+  const s = actor.specialActive;
+  if (!actor.alive || s?.id !== 'slam' || s.net) return null;
+  return [['rise','hang','fall'].indexOf(s.phase), s.t, s.startY, !!s.armor,
+    s.gaugeStart, s.gaugeCost, s.gaugeElapsed, actor.special,
+    actor.pos.x, actor.pos.y, actor.pos.z, actor.vel.x, actor.vel.y, actor.vel.z];
+}
+function readSlamState(row, active) {
+  if (row === null) return active ? undefined : null;
+  if (!active || !Array.isArray(row) || row.length !== 14 || !Number.isInteger(row[0]) || row[0] < 0 || row[0] > 2
+    || typeof row[3] !== 'boolean' || !row.every((v,i) => i === 3 || Number.isFinite(v) && Math.abs(v) <= ADOPTION_WORLD_MAX)
+    || row[1] < 0 || row[1] > 60 || row[4] < 0 || row[5] <= 0 || row[6] < 0 || row[6] > 60
+    || row[7] < 0 || row[7] > row[4] || row[4] > row[5]) return undefined;
+  return row.slice();
+}
+function restoreSlamState(actor, row) {
+  if (!row || !actor.alive) return;
+  const [phase,t,startY,armor,gaugeStart,gaugeCost,gaugeElapsed,special] = row;
+  actor.specialActive = {id:'slam',phase:['rise','hang','fall'][phase],t,startY,armor,gaugeStart,gaugeCost,gaugeElapsed,gaugeMismatch:null};
+  actor.special = special;
+  actor.pos.set(row[8],row[9],row[10]); actor.vel.set(row[11],row[12],row[13]);
+  actor.grounded = false; actor.climbing = false; actor.form = 'kid';
+  actor.character.root.position.copy(actor.pos);
 }
 function copyAdoptionState(state) {
   if (!state) return null;
@@ -751,8 +921,14 @@ function restoreAdoptionState(match, actor, transfer) {
   const latest = transfer.latest, current = transfer.current;
   const life = actor.net?.lastLife ?? actor.netLife ?? 0;
   if (latest.life !== life) return;
+  // A later completed/dead snapshot has slam=null and cannot revive an older
+  // sampled action. onLeave transfers ownership before any future impact.
+  restoreSlamState(actor, latest.slam);
   actor._adoptionSequence = Math.max(Number.isSafeInteger(actor._adoptionSequence) ? actor._adoptionSequence : 0, latest.sequence);
   actor.net._adoptionSeq = Math.max(Number.isSafeInteger(actor.net._adoptionSeq) ? actor.net._adoptionSeq : 0, latest.sequence);
+  // Resume from the newest accepted owner state, not the delayed visual
+  // sample (which would extend protection or undo an already broken armor).
+  restoreProtection(actor, latest);
   actor.lastDamage = clampAdoptionAge(current.recoveryAge);
   actor.weaponRunner.cooldown = Math.max(actor.weaponRunner.cooldown || 0, current.cooldown || 0);
   if (current.jump) {
@@ -789,6 +965,7 @@ function sampleOwnerSimulation(peer) {
 }
 function retireNetworkGhosts(owner = null) {
   const P = G.projectiles; if (!P) return;
+  retireDisconnectedMainProjectiles(P, owner, {ghostOnly:true});
   const owns = p => !owner || p.owner === owner;
   for (const p of P.list) if (p.ghost && owns(p)) { p._netEnded = true; p._qualityDead = true; p._netEndStep = p._netSteps; }
   for (let i = P.bombs.length-1; i >= 0; i--) if (P.bombs[i].ghost && owns(P.bombs[i])) { P._releaseBomb(P.bombs[i]); P.bombs.splice(i,1); }
@@ -854,6 +1031,58 @@ function syncRemoteSquidroll(actor, sample, peer) {
     visual.remaining = Math.min(visual.remaining, remaining);
     visual.vx = sample.rollVx; visual.vz = sample.rollVz;
   }
+}
+// Sender simulation ticks only schedule playback. They are application uptimes,
+// never a clock that can order paint from two different owners.
+const PAINT_ORDER_TAG = 'inkwave-paint-order-v1';
+const paintClockSessions = new WeakMap();
+function paintClockStateFor(session, cfg) {
+  const matchId = typeof cfg?.id === 'string' ? cfg.id : '';
+  let matches = paintClockSessions.get(session);
+  if (!matches) { matches = new Map(); paintClockSessions.set(session, matches); }
+  let state = matches.get(matchId);
+  if (state) matches.delete(matchId);
+  else state = { matchId, clock: 0, applied: new Map() };
+  matches.set(matchId, state);
+  if (matches.size > 8) matches.delete(matches.keys().next().value);
+  return state;
+}
+function nextPaintOrder(nm, instant) {
+  const state = nm._paintClockState || (nm._paintClockState = paintClockStateFor(nm.s, nm.cfg));
+  const clock = nextPaintOrderClock(state.clock);
+  state.clock = clock;
+  return [PAINT_ORDER_TAG, state.matchId, clock, instant ? 1 : 0];
+}
+function readPaintOrder(nm, from, e) {
+  if (typeof from !== 'string' || !nm.s._members?.has(from)) return false;
+  // Victim-owned splat bursts and host-owned Boss ink can paint the other team.
+  // Membership, the match epoch and sender sequence own admission, not team color.
+  for (let i = 2; i <= 7; i++) if (!Number.isFinite(e[i])) return false;
+  for (let i = 9; i <= 12; i++) if (e[i] !== undefined && !Number.isFinite(e[i])) return false;
+  if (e[5] <= 0 || (e[6] !== 0 && e[6] !== 1)) return false;
+  const hasTick = e._netTick !== undefined, hasSeq = e._netSeq !== undefined;
+  if (hasTick !== hasSeq || hasTick && (!Number.isSafeInteger(e._netTick) || e._netTick < 0
+    || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)) return false;
+  const row = e[14];
+  if (Array.isArray(row)) {
+    if (!hasSeq || row.length !== 4 || row[0] !== PAINT_ORDER_TAG
+      || row[1] !== (typeof nm.cfg?.id === 'string' ? nm.cfg.id : '')
+      || !isPaintOrderClock(row[2]) || row[2] === 0
+      || (row[3] !== 0 && row[3] !== 1)) return false;
+    return { clock: row[2], epoch: row[1], peer: from, seq: e._netSeq };
+  }
+  if (e.length > 16) return false;
+  // Older rows remain paint-compatible, but cannot outrank causal records.
+  // Their owner-local sequence is deterministic; their uptime is irrelevant.
+  return hasSeq ? { clock: e._netSeq, peer: from, seq: e._netSeq, legacy: true } : null;
+}
+function receivePaintOrder(nm, from, e) {
+  const order = readPaintOrder(nm, from, e);
+  if (order && !order.legacy) {
+    const state = nm._paintClockState || (nm._paintClockState = paintClockStateFor(nm.s, nm.cfg));
+    if (paintClockComesAfter(order.clock, state.clock)) state.clock = order.clock;
+  }
+  return order;
 }
 const firstSplatSessions = new WeakMap();
 // #529: retain reconnect decisions for the eight most recent match IDs.
@@ -1215,6 +1444,7 @@ ${bombHit}`;
   if (rel === 'src/net/netmatch.js') {
     code = adaptIssue1088SurgePresentation(code);
     code = adaptIssue1163RemoteDodgeClock(code);
+    patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
   }
   return code;
 }

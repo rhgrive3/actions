@@ -1,0 +1,152 @@
+{
+  "issue": 871,
+  "sourcePage": "https://www.nintendo.com/jp/ichikara/av5ja/index.html",
+  "pageReferenceDate": "2024-04-01",
+  "measuredAt": "2026-10-08",
+  "method": "Original JPEG RGB pixels. Crop to ROI, select min(R,G,B)>215 and max-min<28; 4-connected components with >8 core pixels. Measure component centroids and bounds. No image rescale. JPEG anti-aliasing introduces about one pixel uncertainty.",
+  "samples": [
+    {
+      "url": "https://www.nintendo.com/jp/ichikara/av5ja/photo/01/021.jpg",
+      "sha256": "a3747ec2a11005a16c734e7e028b63c314ee52d88c6f739081a6bde1c9d7c3cb",
+      "imageSize": [
+        1280,
+        720
+      ],
+      "roi": [
+        580,
+        285,
+        720,
+        370
+      ],
+      "corners": [
+        {
+          "bounds": [
+            596,
+            298,
+            606,
+            308
+          ],
+          "center": [
+            601.1860465116279,
+            303.04651162790697
+          ],
+          "pixels": 43
+        },
+        {
+          "bounds": [
+            693,
+            298,
+            704,
+            308
+          ],
+          "center": [
+            698.5,
+            303.0
+          ],
+          "pixels": 40
+        },
+        {
+          "bounds": [
+            596,
+            346,
+            606,
+            356
+          ],
+          "center": [
+            601.2093023255813,
+            351.34883720930236
+          ],
+          "pixels": 43
+        },
+        {
+          "bounds": [
+            694,
+            347,
+            703,
+            356
+          ],
+          "center": [
+            698.3421052631579,
+            351.3421052631579
+          ],
+          "pixels": 38
+        }
+      ]
+    },
+    {
+      "url": "https://www.nintendo.com/jp/ichikara/av5ja/photo/01/005.jpg",
+      "sha256": "eef83e9e73d3a7a09d8bce2a587f7bb6ec9f8f251ebc60fdbcc571e50cee29b2",
+      "imageSize": [
+        1280,
+        720
+      ],
+      "roi": [
+        555,
+        309,
+        742,
+        386
+      ],
+      "corners": [
+        {
+          "bounds": [
+            568,
+            319,
+            578,
+            329
+          ],
+          "center": [
+            572.952380952381,
+            323.9047619047619
+          ],
+          "pixels": 42
+        },
+        {
+          "bounds": [
+            721,
+            319,
+            731,
+            329
+          ],
+          "center": [
+            726.0681818181818,
+            324.1136363636364
+          ],
+          "pixels": 44
+        },
+        {
+          "bounds": [
+            569,
+            368,
+            577,
+            377
+          ],
+          "center": [
+            573.1578947368421,
+            372.7368421052632
+          ],
+          "pixels": 19
+        },
+        {
+          "bounds": [
+            723,
+            368,
+            730,
+            376
+          ],
+          "center": [
+            726.4,
+            371.95
+          ],
+          "pixels": 20
+        }
+      ]
+    }
+  ],
+  "cssAtReferenceResolution": {
+    "verticalHalfSpan": 24,
+    "strokeWidth": 3,
+    "strokeLength": 14,
+    "zeroSpreadHorizontalHalfSpan": 24
+  },
+  "limits": "Historical official screenshots, not a new Switch capture or a measurement of 11.3.0 spread angles. Horizontal expansion retains the existing projected gameplay spread (#198/#459/#560). Center/inner feedback and other weapon reticles unchanged."
+}

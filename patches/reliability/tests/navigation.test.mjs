@@ -20,7 +20,7 @@ for(const [button,index]of [[14,0],[12,1],[15,2],[13,3]])test(`#391 D-pad ${butt
  assert.equal(h.c.padJumpIndex,-1);assert.equal(h.c.mapHeld,false);
 });
 test('#391 held A plus fresh direction confirms once; bottom-face B does not',async()=>{
- const h=await rig();h.frame([3]);h.frame([14,0]);assert.equal(h.a.superJumpState,null);h.frame([1]);assert.ok(h.a.superJumpState);
+ const h=await rig();h.frame([3]);h.frame([14,0]);assert.equal(h.a.superJumpState,null);assert.equal(h.c.mapHeld,false);h.frame([3]);h.frame([14]);h.frame([1]);assert.ok(h.a.superJumpState);
  const q=await rig();q.frame([3,1]);assert.equal(q.a.superJumpState,null);q.frame([1,13]);assert.ok(q.a.superJumpState);
 });
 test('#391 close, disabled, owner switch and missing/dead targets never jump to a replacement',async()=>{
@@ -37,8 +37,8 @@ test('#391 close, disabled, owner switch and missing/dead targets never jump to 
 test('#391 selection tracks the same actor across roster reorder; raw/keyboard/touch direct paths remain',async()=>{
  const h=await rig();h.frame([3]);h.frame([14]);h.G.actors=[h.a,h.allies[1],h.allies[0],h.allies[2]];h.frame();assert.equal(h.c.padJumpIndex,1);h.frame([1]);assert.ok(h.a.superJumpState.target.equals(h.allies[0].pos));
  const raw=await rig();raw.frame([8,14],'');assert.ok(raw.a.superJumpState.target.equals(raw.allies[0].pos));
- const key=await rig();key.input.keys.add('Tab');key.input.pressed.add('Digit2');key.frame();assert.ok(key.a.superJumpState.target.equals(key.allies[1].pos));
- const mobile=await rig(),m=touch(mobile);m.mapOpen=true;m.jumpTarget=2;mobile.c.update(STEP);assert.ok(mobile.a.superJumpState.target.equals(mobile.allies[2].pos));
+ const key=await rig();key.input.keys.add('Tab');key.input.pressed.add('Tab');key.input.pressed.add('Digit2');key.frame();assert.ok(key.a.superJumpState.target.equals(key.allies[1].pos));
+ const mobile=await rig(),m=touch(mobile);m.setMap(true);m.jumpTarget=2;mobile.c.update(STEP);assert.ok(mobile.a.superJumpState.target.equals(mobile.allies[2].pos));
  const out=await rig();out.frame([14,1]);assert.equal(out.a.superJumpState,null);
 });
 test('#391 menu-owned confirm hold cannot leak into map confirmation',async()=>{

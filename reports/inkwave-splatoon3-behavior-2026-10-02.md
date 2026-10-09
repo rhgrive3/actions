@@ -72,6 +72,23 @@
 | P11 | サブとスペシャル | ボムは面の法線yが0.6を超える接触時に0.95秒の導火線を開始する。その条件を満たす接触がなければ開始しない（`src/game/weapons.js:1302`）。飛び上がって落下爆発するスペシャルには被ダメージを25%にする装甲があり、着地後にも0.3秒の無敵がある（`src/game/actor.js:162`、`:774`、`:819`）。 | 斜面・壁でのボム、発動前後の被弾、爆発の遮蔽・範囲・段差。見た目の似た本家スペシャルを、対応確認なしに同一仕様と扱わない。 |
 | P12 | 金網と細い足場 | ヒトは金網に接地するが、イカ状態の接地・身体衝突では金網を除外する（`src/game/physics.js:207`、`src/game/actor.js:536`、`:548`、`:561`）。細い手すりにはヒト用の足位置補正もある。 | 金網上で変身する、ジャンプ中に変身する、手すりを歩く。各状態の通過・接地・塗りを実機と照合する。 |
 
+## #845: 画面外 Actor の presentation work（2026年10月8日）
+
+- 本家参照版：スプラトゥーン3 Ver.11.3.0。[任天堂の更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/kw/Splatoon%203)には武器追加・調整などが公開されているが、画面外キャラクターのポーズ、足 IK、髪の更新頻度や CPU 予算は記載されていない。Switch 上の該当挙動は未確認。
+- 比較条件：ブキ・ギア・操作入力の変更ではなく表示専用 CPU 作業を対象にするため、ブキ・ギア条件は該当しない。INKWAVE では遠隔 Actor をカメラ外に置き、描画フレームを進めず native Actor frame を120回実行した。
+- INKWAVE の変更前：`Actor._finishFrame` から `Character.update` に入り、`root.visible` だけで姿勢更新を判断していた。実際の frustum 外でも120回の足・姿勢構築・姿勢適用、129回の足 IK raycast、110回の髪更新が続いた。これは6層の build adapter と本番 runtime installer を通したロジック測定で、ブラウザや端末のプロファイル値ではない。
+- INKWAVE の変更：`patches/local-quality/offscreen-visual-budget.mjs` を bootstrap の `installQuality` から接続。native `_camHook` の実描画フレームを使い、保守的な perspective-camera 判定で画面外が続く遠隔 Character のみ表示更新を抑える。判定でモデル化していない shifted/zoom/filmOffset/parented/custom camera は通常更新に戻す。カメラ更新が Actor update の後になる場合に備え、最初の mesh `onBeforeRender` で既存 `_camHook` の前に保留 pose を反映する。ローカル Actor、Practice Range、未知カメラは抑制しない。
+- ゲームへの影響：足 IK と装飾 pose/hair の表示用作業を、画面外の遠隔 Character に限って減らす。Actor の移動、衝突、武器、ダメージ、通信、AI、シミュレーション時計は変更しない。30/60/120 Hz のロジック確認と初回可視描画順の native regression は通過したが、端末 CPU 時間、FPS、電力、Switch との同等性は未計測・未確認。
+
+## #1160: 頭上クリアランスのない段差上り（2026年10月9日）
+
+- 本家参照版：スプラトゥーン3 Ver.11.3.0。任天堂の更新履歴で版を確認した。公式の基本説明はイカ状態で自分の色のインクを泳ぎ、壁やフェンスを通ることを説明するが、段差・天井の当たり判定寸法や歩行時のステップ許可条件は公開していない。[更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/kw/Splatoon%203)、[公式ゲーム説明](https://splatoon.nintendo.com/ca/gameplay/)。この条件の Switch 実機確認は未実施で、本家と同じ挙動とは判定しない。
+- 比較条件：本家は実機未計測のため、ステージ・ブキ・ギアの条件は未確定。INKWAVE fixture は weapon=`shooter`、ヒト状態、ギア効果なし、前方移動、射撃・サブ・スペシャルなし。歩行ケースはジャンプなし。追加のジャンプ着地ケースは z=-1.20 m から固定 simulation 18 tick 前進後にジャンプ入力を行う。地形は高さ 0.30 m の curb、上面の下面が y=1.50 m の天井。現行設定の `stepUp=0.35 m`、`height=1.45 m` では curb 上の candidate は頭部が天井へ 0.25 m 入る。数値は INKWAVE fixture 値であり、本家の寸法値ではない。
+- 変更前の最初の差：歩行では full production adapter composition と全 runtime installer の Actor/Level/Physics で、z=0.402 m の固定 tick に足プローブが y=0.30 m の curb を選び、Actor の y が 0 から 0.30 m へ上がった。さらにこの修正の read-only review で、着地側に fit gate がない経路を確認した。18 tick 前進後のジャンプでは tick 19 に y=0.0499、z=0.306 m、grounded=false、tick 20 に y=0.3000、z=0.402 m、grounded=true となり、tick 21 には y=0、z=0.2078 m へ押し戻された。レビュー receipt `codex4-review-r781.json` に記録済み。この一 tick の snap も candidate の全身 fit を確認していなかった。
+- INKWAVE の変更：`patches/splatoon3/movement-physics-adapter.mjs` が build 時の `Actor._resolve` で、上方の足支持 candidate を form 別 terrain radius・lift・height・grate 除外条件で `Physics.bodyFits` に照会する。歩行中は不適合 candidate へ snap せず、lift を足元まで下げた `collideBody` で curb 側を押し戻す。着地時も同じ fit を確認し、不適合なら candidate より下で横方向 `collideBody` を適用して側面速度を除き、足元を再 probe してから接地を判定する。比較対象の `inkwave-public/src/game/actor.js` は変更していない。実機由来でない寸法や補正量は追加していない。
+- 再現と確認：`patches/splatoon3/tests/issue-1160-step-clearance.test.mjs` は `source-fixture` の全 production adapter chain と `fullRuntime` installer を使い、実 Actor/Level/Physics と `FixedClock` の 30/60/120 Hz 描画刻みで確認する。変更後、roof 下の jump は y=0.30 m へ grounded snap せず curb 側面に当たり、open curb の jump は上面に着地する。既存の歩行 clearance、open curb、ramp、step-down、kid の grate 接地、squid の grate 通過も維持される。これはロジック fixture の結果であり、ブラウザ描画・Character の足運び・端末実測・本家実機比較ではない。
+- 遊びへの影響と状態：変更前は低い天井の下へ歩行またはジャンプ着地で足だけが先に乗り、身体が地形へ食い込む可能性があった。変更後、適合しない上方 support は接地に使わず curb 側面で止まり、open curb のジャンプ着地は維持される。INKWAVE の full production composition 回帰は確認済み。本家での同一操作、足運び、頭部接触、ブキ・ギア別条件は未確認のまま残す。
+
 ## 継続比較の手順
 
 1. 変更に関係する挙動を選び、本家の参照版・ブキ・ギア・入力・地形を固定する。
@@ -217,6 +234,14 @@ emitted-graph cases. See [sources, reproduction, limits and merge resolutions](i
 
 ローラー横／縦振りの owner physics を packet 化する順序を修正し、remote の trajectory と projectile に紐付く curtain の時間軸を一致させた。基準射程・威力・spread・local physics・animation pose の変更はない。全武器の native replay、二人の WebSocket arena、遅延／重複／退出回帰の詳細は [Network replication report](network-replication-report.md) に記録する。これは INKWAVE 内の同期比較であり、本家の実機比較、原作の射程校正、physical iOS 検証の未確認項目を解消したという意味ではない。
 
+## Remote Dualies 固定姿勢の同期（#1156、2026-10-09）
+
+対象は Splatoon 3 Ver.11.3.0 を比較基準とする公開版 INKWAVE の owner / remote 表示整合。任天堂の [ブキの基本説明](https://splatoon.nintendo.com/en/news/beginner-basics-for-splatoon-3-choosing-the-right-weapons/) は Dualies の dodge roll を案内しているが、remote pose protocol と正確な切替フレームは示していない。今回の修正は INKWAVE owner がすでに持つ受理済み姿勢を remote に渡す。Nintendo の joint curve、姿勢切替フレーム、実機通信挙動を校正・検証したという主張はしない。
+
+公開版 INKWAVE では owner の `WeaponRunner.s3Turret` が固定射撃姿勢を所有し、既存 `Character` pose adapter がこれを描く一方、`NetMatch.packActor` の 20 Hz snapshot は `lockT` などを送っても `s3Turret` を含めず、`applyRemote` も再構成していなかった。Issue [#1156](https://github.com/rhgrive3/actions/issues/1156) の修正は既存 snapshot flag の予約 bit に Dualies 姿勢を載せ、remote 側では受理済み sample の既存 sender playback clock から Character 限定の pose view を復元する。remote の `WeaponRunner` は変更せず、射撃、ink、damage、collision、cadence に姿勢 bit を使わない。death、respawn 待機、weapon switch、ownership adoption では古い姿勢を解除する。旧 tuple 長は維持し、bit がない旧 sender は解除状態として読む。bit27 を使用し、bit20–26 の泳ぎ・Roller・復活 armor・gear・special readiness と衝突しないことを全 adapter 構成で検証する。
+
+再現は現行 production `install(profile)`、native `Actor` / `Character` / `NetMatch` を読み込む VM fixture と、全 source adapter を重ねる別の native composition 回帰 で、Dualies roll 後 90 frame fire、20 Hz 送信、受信側 playback sample、実 skeleton と indexed geometry を通す。修正前は owner が `s3Turret=true` のままでも remote は false で、turret pose の geometry 差が出なかった。修正後は remote の plant channel と実 geometry が切り替わり、30/60/120 Hz sample、初期 playback delay、duplicate/out-of-order/stale snapshot、旧 tuple、death/respawn、weapon switch、ownership handoff の回帰が通る。これは source VM の engine regression であり、ブラウザ上の実通信と Splatoon 3 実機の同期挙動は未確認。
+
 ## 遅延した remote splat と復活 life（#599、2026-10-06）
 
 比較条件は Splatoon 3 Ver.11.3.0、オンラインの Regular Battle / Turf War、シューター、標準ギア、相手の splat 後に復活する状態。任天堂の [オンライン対戦案内](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59459/p/897) と [公式ゲーム紹介](https://splatoon.nintendo.com/en/gameplay/) はオンライン対戦と Turf War を案内しているが、remote death event の順序・送信者権限・life epoch は説明していない。この内部同期の本家比較は未確認であり、Switch 実機や稼働中のオンライン対戦での再現はしていない。
@@ -240,6 +265,8 @@ INKWAVE の `patches/reliability/combat-credit-adapter.mjs` は owner と event 
 INKWAVE の差分は、成功した異ブキ切替後も `installKitInkVac()` が所有する旧吸入状態が残り、次の射撃入力を取り込み続けることだった。`patches/practice-range/runtime/session.mjs` は `Actor.setWeapon()` の成功と実際の ID 変更を確認してから既存 `disposeInkVac()` を呼ぶ。同ブキ選択、無効 ID、例外で失敗した切替では保持状態を変えない。既存の dispose イベントがネットワーク複製へ送られ、既発射 blast、消費済みゲージ、通常対戦の `Actor.setWeapon()` は変更しない。影響は練習場の異ブキ選択後も旧スペシャルが入力を所有する点の解消。
 
 確認状態：完全な6層アダプター合成でインストールした実 Actor と実 `RangeSession.setWeapon()` を使用する focused lifecycle 7/7。これはロジック確認であり、ブラウザ実動作・本家実機比較ではない。Nintendo の新しい数値は追加していない。
+2026-10-08 追記（cl5 r635）: 統合基準（main `9271e6c2`、完全な6層アダプター合成）で上記 focused の `a released blast and spent gauge survive a later weapon change` のみが `the real native projectile path launched its blast` で失敗することを、同一 worktree でのベース再現と parent 基準ログの双方で確認した（他6サブテストは成功）。原因はテスト装備のライフサイクル仮定で、旧装備は `tick(30)`（0.5 秒）後に一度 ZR を押すだけで終えていた。実キットは設定どおり 360F/6.0 秒の吸入を保持してから `exhale` に入り、そこで初めて ZR 押し→離しのエッジ（または 150F の exhale タイムアウト）が release を発火して blast を実発射する（`kit-ink-vac.mjs` の `beginExhale`/`release`、`#1120` のアーム規則どおり）。つまり session.mjs の所有権処理ではなく装備側の birth 前提が誤りだった。装備は `INK_VAC_CALIBRATION.inhaleDurationSeconds` から算出した既知の設定タイミング内で `exhale` 到達フレームを測定し、独立した実入力エッジ（1押し1離し）で release を1回、`authored` の実発射をちょうど1 blastとして検証したうえで、後続の異ブキ切替後も blast と消費済みゲージの保持を確認する。武器の値・ワールド権限・スペシャル調整は変更していない。装備の修正であり挙動変更ではない。これはソース VM のロジック確認であり、ブラウザ実動作・本家実機比較は未確認。
+
 
 ## Batch C の着地と通信状態の確認（2026-10-04）
 
@@ -1278,7 +1305,7 @@ An explicit roll-stop interruption now arms on the authoritative `rolling` true-
 
 **Endpoint convention, documented as the acceptance criteria require:** the roll-end tick is frame 0; frame N is the Nth fixed tick after it; the action is first admitted on frame N. So main is admitted on frame 16, sub on frame 5 and squid on frame 6.
 
-**What deliberately does not arm.** A dry roll (ink exhausted, #541) does not arm it, because #626's own acceptance requires dry-roll behaviour to stay unchanged. A roll released directly into a flick does not arm it either, because that is the existing roll-to-swing transition rather than a roll stop. A roll that ends because the actor left the ground also does not arm it; that transition has no source in this record and is listed as unconfirmed below.
+**What deliberately does not arm.** A dry roll (ink exhausted, #541) does not arm it: since the #541 correction the established roll persists with no ink, so there is no roll stop at depletion at all, and a later dry release still carries no ink-gated stop. A roll released directly into a flick does not arm it either, because that is the existing roll-to-swing transition rather than a roll stop. A roll that ends because the actor left the ground also does not arm it; that transition has no source in this record and is listed as unconfirmed below.
 
 Verified by dedicated 9/9 over the real composed modules. The sourced windows are asserted as three distinct constants and the pure predicate is checked directly at 0, 5F, 6F and 16F. The roll-end tick arms exactly one interruption with all three deadlines one `/60` unit apart from their own tick. A buffered press held through the window starts no swing and restarts no roll before frame 16 and starts the swing exactly on frame 16; the sub does not arm before frame 5; squid is not entered before frame 6. A dry roll and a roll released into a flick arm nothing. Roll speed, dash timing, both swing winds and intervals, both swing ink costs, roll ink per meter, near-swing damage bands and vertical damage bands are all unchanged while gated, and `reset()` clears the interruption. Ownership is per runner: a remote opponent on the same path gates its own actions on the same 5F sub window, the gate does not reassign or re-team the actor, and a gated remote actor neither arms nor blocks the local one. 30/60/120 Hz render schedules produce the same trace, and the boundary is asserted to be the sourced 16 fixed ticks at each rate rather than merely self-consistent between them.
 
@@ -1517,6 +1544,20 @@ The focused regression constructs the actual public `Character` and uses the ins
 
 **Verification.** `patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs` applies all six production adapters to native public/runtime modules and uses the real `Actor`, `Character`, `WeaponRunner`, `Projectiles`, `Physics`, `NetMatch`, and fidelity integrator. Grounded and airborne normal shots have symmetric nonzero target-plane separation; guides consume no RNG and match their own fired trajectories at `ShotGuideFrame`. A native `tryDodge()` plus fixed `WeaponRunner.update()` ticks enters the actual post-roll state, where launch hits share one target and the merged guide equals the center of both real flight predictions; releasing fire restores split guides. The test also checks alternating hand order, normal cadence, existing per-shot RNG draw counts, projectile wire IDs/field count, owner `weapon:fire` payload shape, and remote ghost/event playback without duplicate projectile creation. Results: #575 native regression 2/2; #608 fidelity aim baseline 5/5; Dualies gate-owner composition 3/3; existing muzzle/grate safety and cadence 7/7. These are native logic and adapter-composition checks, not browser reticle-pixel or Nintendo-device comparisons.
 
+### 2026-10-08 current-main correction: Dualies guide launch plan
+
+At correction base `fa97541870507744bb81badded4cf7e71d685f5d`, the complete six-adapter native fixture reproduced a remaining presentation mismatch: emitted per-hand rounds already used `profileFor` / `launchSpeed` / `correctInkAim` and the installed fidelity integrator, while `s3DualiesGuides()` still used `fidelityAimConvergence()` with `w.projSpeed`. The normal-fire test first failed at grounded hand 1 before reaching its airborne iteration; the separate post-roll merged-guide assertion also failed. An off-path guide could mislead a player about the predicted flight, while the emitted shot path and independent hand-target geometry were already present.
+
+`fidelityDualiesLaunchPlan()` now supplies the same public `inkFlight.js` profile lookup, speed, and correction to both the adapted live `_fireRound()` path and each guide hand. The guide still advances through `advanceFidelityProjectile()` at its existing fixed step, preserves two normal hand targets and the actual post-roll `s3Turret` merged target, and returns no guide if a production ink profile is unavailable. The live launch values and draw order remain unchanged; projectile integration, collision, damage, timing, ink/RNG, ownership, fire-event order, and the current 36-field birth packet with net ID at index 32 are covered by the native regression.
+
+The full Issue 575 file now passes 2/2, including grounded/airborne guide-to-round equality, hand separation, turret merge/restore, unchanged RNG draw counts, and remote wire/event playback. The focused shot-guide and source-adapter files pass 25/25. A nearby #608 run in this worktree produced three failures (Splatling 30 Hz centerline, copied speed-cap control, and Shooter guide parity); those non-Dualies cases were not baseline-run here and are not claimed as caused or fixed by this correction. The Nintendo comparison remains Splatoon 3 Ver. 11.3.0; official/public material and this logic test do not establish Switch guide pixels, numeric hand spacing, or device-level parity, so those remain unconfirmed. The public Issue #575 duty comment at https://github.com/rhgrive3/actions/issues/575#issuecomment-6031509984 remains the shared claim.
+
+### 2026-10-08 deployment and allocation closure
+
+The production build emits upstream modules under `_site/src/game`, not `_site/inkwave-public/src/game`. The earlier source-tree import therefore did not resolve in the deployed module graph. The native source adapter now injects its existing `profileFor`, `launchSpeed`, `correctInkAim`, and `referenceReach` helpers once into each `Projectiles` instance; the fidelity runtime has no source-layout-dependent InkFlight import. The #575 native fixture accepts `INKWAVE_BUILT_SITE` and resolves its `Character` and `NetMatch` exports from that same emitted tree. `fidelityDualiesLaunchPlan()` now reuses a single mutable launch-plan record owned by the existing `Projectiles` instance across both guide hands and live shots. This removes the added per-hand result-object allocation after first use without changing the source profile lookup, charge calculation, speed, correction, trajectory, RNG, or packet behavior.
+
+The production build and installed-site #575 fixture were run after this correction; the latter exercises the same native grounded/airborne, post-roll, RNG, and network assertions through the emitted modules. A direct built-path check confirms that emitted `src/game/weapons.js` owns the native `./inkFlight.js` import and installs the shared helpers used by the fidelity runtime. The source VM fixture remains useful for source adapter baselines but is not a substitute for this installed-site route check. This closes deployment and allocation issues only; no Nintendo device or browser pixel comparison was made, so the report's hardware comparison limitations above still apply. The shared claim and public duty comment URL remain unchanged.
+
 ## 2026-10-07 — Steady form snapshots and stationary audio listener (#954, #962)
 
 Current-main control is `b34a8aaf606594be61cfbd4c21e9f09afd685ad7`. All six production adapters and the real Actor/Character form update observed five shape-snapshot allocations across five steady updates. The wrapper now keeps distinct reusable previous, reversal-start and blend records. Native form/pose, actor/timer and zero-dt/reversal/disabled-state traces are compared with the byte-verified frozen b34 subject. The frozen source is a tracked test fixture, so a shallow checkout does not need unavailable historical Git objects. No movement, animation calibration, combat or random distribution is changed.
@@ -1569,6 +1610,12 @@ Baseline main `c2c938b9af5b6cce2a7bdbecf0415c7c3836cadb` already contains the C3
 The local combined native/network/Practice Range check passed 121 tests on `eae787ce8a2708202dd3c4c5d0a922f54def0d71`. That source separately failed canonical build because moving-main composition reintroduced the Charger FX cache adapter twice. The existing sight-cache regression reproduced the same error before this correction; the FX transform is restored to one application. This is a build-layer composition correction and changes no Nintendo-derived timing or gameplay tuning. Final source build and exact browser CI are recorded in PR #988; earlier component/head receipts retain their own scope.
 
 The combined asset manifest also exceeded the existing 64 KiB worker ceiling after whitespace-only compaction. Build-only local identifier compaction preserves top-level worker bindings and stamps the complete JSON manifest afterward. An integration-sized manifest negative control exceeds the unchanged ceiling before compaction and fits afterward; the real compacted worker retains offline revision replay and rejects corrupted assets. No cache member, digest, runtime protocol, gameplay value or budget is removed or relaxed.
+
+## 2026-10-08 — #915 motion-detail bomb capture timing reconciliation
+
+Reference conditions: Splatoon 3 Ver. 11.3.0; bomb, gear and controller timing for this capture are not established. The correction measures INKWAVE's installed native runtime only: a Shooter configured with the selected Suction sub, SUB held on frames 0–29, release input on frame 30, fixed 1/60 s ticks, and the complete six-adapter composition. Both the native `WeaponRunner.update` control and the actual `Actor.update` owner path allocate the real Three `Group` on frame 31 after the runtime's measured `useStartup=1/60 s`.
+
+The motion-detail probe retains frame 30 for the release-input pose and adds the first observed native `throwBomb` birth frame to its render denominator. It requires exactly one native throw/release record, the measured frame delay to match the configured startup, the actual owner and mesh group to exist, and the released-bomb geometry to be captured at that birth frame. Existing grip, origin, velocity, and geometry thresholds remain in force. This changes capture timing only; no game runtime values or Nintendo timing are inferred. Browser rendering remains with parent CI, and Switch comparison is 未確認.
 
 
 ## 2026-10-07: Input-boundary cancellation of deferred shots and touch holds (#991, #990)
@@ -1645,9 +1692,9 @@ Pinned Chromium primary sources: [Windows product mapping at revision 413fd160](
 | --- | --- |
 | 本家参照 | Splatoon 3 Ver. 11.3.0。条件は Inkling、Shooter、ギア能力補正なし、インク中の壁をイカで登り、ジャンプを押してチャージ後に離す操作。[Nintendo の公式 gameplay guide](https://splatoon.nintendo.com/en/gameplay/) はイカノボリを壁上でチャージして上へ飛び出す操作として説明する。[公式 Ver.11.3.0 更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/p/1076/c/950)。公開資料は Nintendo の正確な pose 曲線・frame 値を示さない。 |
 | INKWAVE の基準・再現 | 対象 main は `c2c938b9af5b6cce2a7bdbecf0415c7c3836cadb`。修正前に production composition の全6 adapter と実 NetMatch / Actor / Character を使い、owner Character が `surge-charge`、remote Character が pose なしとなる状態を再現した。修正前の送信 row に C1088 presentation tag がないことは [`baseline-before-fix.log`](/mnt/workspace/inkwave-batch-c/evidence/additional-100/codex5-c1088-r444/baseline-before-fix.log) に保存。raw `inkwave-public/` 単独や adapter 単体の結果ではない。 |
-| 実装箇所・変更 | `patches/network-replication/issue-1088-surge-presentation.mjs` と `issue-1088-surge-adapter.mjs` が tag `inkwave.s3.surge.v1` と optional sidecar を追加する。既存 `stats.specials` の次の row slot に owner の actor life、action epoch、phase、有限 charge/time と sample age を載せ、現在の NetMatch sample timestamp / playback cursor から remote pose の経過を復元する。remote state は `Actor.s3.actions` から分離し、`movement-motion.mjs` / `wall-motion.mjs` は presentation だけを読む。現行 authoritative profile の値を再利用する。移動、armor、collision、speed、ink、damage、credit、既存 event 順序と gameplay field は変更せず、optional sidecar の追加に限定する。paint ordering の経路も変更しない。 |
+| 実装箇所・変更 | `patches/network-replication/issue-1088-surge-presentation.mjs` と `issue-1088-surge-adapter.mjs` が tag `inkwave.s3.surge.v1` と optional sidecar を追加する。owner の actor life、action epoch、phase、有限 charge/time と sample age を載せ、現在の NetMatch sample timestamp / playback cursor から remote pose の経過を復元する。現行 main `4a3cc811` の24列 actor rowでは既存 `stats.specials` slot 22 と `inkwave-adoption-v1` slot 23 を保ち、C1088 sidecar を slot 24 に追加する。remote state は `Actor.s3.actions` から分離し、`movement-motion.mjs` / `wall-motion.mjs` は presentation だけを読む。現行 authoritative profile の値を再利用する。移動、armor、collision、speed、ink、damage、credit、既存 event 順序と gameplay field は変更せず、optional sidecar の追加に限定する。paint ordering の経路も変更しない。 |
 | 再現操作・影響 | 二つの実 NetMatch と実 Character を production composition で接続し、owner の壁登り charge → burst → end を送り、各 pose sample を remote 側で再生する。owner action / remote snapshot の間隔を 30/60/120 Hz で進める。修正前は local だけがチャージ・バースト pose を持ち、remote では動きの連続性が失われる。修正後は charge / burst 中の movement・wall pose と進捗が一致し、end で消える。再接続時の途中 burst reconstruction、重複・古い snapshot、古い epoch / life、malformed・legacy row、未認可 sender、respawn と ownership adoption の cleanup も確認する。remote sidecar は action / armor state を作らない。 |
-| 確認状態・限界 | [`issue-1088-surge-presentation.test.mjs`](../patches/network-replication/tests/issue-1088-surge-presentation.test.mjs) は full-six composition / 実 NetMatch / 実 Character を使い、30/60/120 Hz の state sequence と lifecycle controls を検証（1/1）。Practice Range の isolation / wall recovery controls は `isolation.test.mjs` と `issue-179-wall-recovery.test.mjs` が 8/8（[receipt](/mnt/workspace/inkwave-batch-c/evidence/additional-100/codex5-c1088-r444/range-controls.log)）。pose 曲線は既存 profile の内部 calibration であり、Nintendo 完全一致の主張ではない。ブラウザ描画、二台の実機通信、Nintendo Switch 実機比較は未実施。Nintendo が公開していない frame 値・速度は推定していない。 |
+| 確認状態・限界 | 当初修正の確認は [`issue-1088-surge-presentation.test.mjs`](../patches/network-replication/tests/issue-1088-surge-presentation.test.mjs) の full-six composition / 実 NetMatch / 実 Character による 30/60/120 Hz state sequence と lifecycle controls（1/1）。現行 main `4a3cc811` で同じ full-six test を再確認し、24列 core row、slot 22/23 の既存値・tag、slot 24 の C1088 sidecar、22列 legacy row の受け入れを含む 2/2 が成功した。テスト用の合成 snapshot は新しい adoption sequence を使い、once-only gate を維持する。Practice Range の isolation / wall recovery controls は `isolation.test.mjs` と `issue-179-wall-recovery.test.mjs` が 8/8（[receipt](/mnt/workspace/inkwave-batch-c/evidence/additional-100/codex5-c1088-r444/range-controls.log)）。pose 曲線は既存 profile の内部 calibration であり、Nintendo 完全一致の主張ではない。ブラウザ描画、二台の実機通信、Nintendo Switch 実機比較は未実施。Nintendo が公開していない frame 値・速度は推定していない。 |
 
 ## 2026-10-08 — Super Jump cannot bypass lethal-water ownership (#1050)
 
@@ -1658,6 +1705,128 @@ Pinned Chromium primary sources: [Windows product mapping at revision 413fd160](
 **Reproduction and impact.** The native main differential had two passing controls and six failures; a live actor below the lethal boundary could start/continue jumping instead of committing water death. The permanent wall fixture now splats at admission before a wall-supported jump is entered. In the full six-adapter Actor/NetMatch test, an owner below the water boundary cannot admit a jump; the receiver consumes its accepted death once, ignores duplicate/late alive packets and emits no echoed gameplay death. This prevents jump rescue of an already-lethal position without making remote visual playback authoritative.
 
 **Verification and limits.** `patches/splatoon3/tests/issue-1050-superjump-water.test.mjs` passes nine cases; the final product source `3132ec1` passes 52 combined network/Range/kit tests, production build and the unchanged startup budgets. The later final-review UI diagnostics change only the verifier and preserve product/build/startup Git identity. Controlled native logic and peer playback are verified; rendered browser, two physical clients and Nintendo Switch fidelity/timing are not. Native batch CI remains pending, and the earlier third-round UI ring failure remains unclassified. See [the updated water record](inkwave-special-water-hazard-592.md).
+## 2026-10-08: time-coherent flight projectile hits (#1040)
+
+**Reference and conditions.** Splatoon 3 Ver. 11.3.0, Turf War, Shooter / Dualies / Splatling / Blaster flight projectiles, ordinary actor movement and no gear modifiers. Nintendo's [official update history](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html) identifies the reference release; its [official weapon guide](https://splatoon.nintendo.com/en/news/beginner-basics-for-splatoon-3-choosing-the-right-weapons/) identifies the weapon classes, but public materials do not specify moving-target collision timing, network teleport sample semantics, or per-frame collision values. The control procedure for this INKWAVE check is local movement and a remote NetMatch sample applied during the fixed simulation tick. No Switch hardware comparison was performed, so Splatoon 3 parity for this internal collision detail remains unconfirmed.
+
+**INKWAVE implementation and reproduction.** `patches/splatoon3/runtime/clock.mjs` captures actor position and form before the composed actor update. Generic fidelity projectiles use `weapons-fidelity.mjs::fidelityProjectileTargets()`; source-guided Shooter / Dualies / Splatling rounds instead use native `InkFlightRuntime.stepHead()`, which is connected by `patches/splatoon3/adapter.mjs` to the same-tick relative-motion sweep. That path keeps InkFlight's per-weapon round radius and uses `player-hurtbox.mjs::hurtboxRadius()` / `hurtboxHeight()` for the current actor form. `actor-motion.mjs` rejects intervals when actor form, lifecycle epoch, or the real remote sample's `tp` identity changes, then retains the current-pose collision fallback. There is no distance threshold. Reproduce with `node --experimental-vm-modules --test patches/splatoon3/tests/issue-1040-time-coherent-projectiles.test.mjs`: the tests exercise the installed six-adapter composition through `runSimulation`, real local `Actor.update` for Dualies dodge and Splatling movement, all four admitted round families, and continuous remote samples at 24/30/60/120 Hz plus a simulated render hitch. The shot fixture starts outside the native capsule; its internal velocity and position only define test geometry. The short remote teleport is a test fixture identity change, not a Nintendo movement value.
+
+**Player impact and confirmation.** Continuous actor motion is tested at its contact time so a target that enters the path after a round passes is not hit and a target that occupies the path at pass time is not missed. A marked spawn or NetMatch teleport is not swept through intermediate positions; the target's current pose keeps the legacy static fallback. Focused full-composition confirmation: 11/11 pass, including once-only damage, nearest-target selection, terrain ordering, local and remote cases, four render cadences, and the hitch control. Charger hitscan, bombs, special blasts, and reticle targeting remain separate collision roots and are not covered by this flight-projectile comparison. Fixture velocities and relocation distances are internal test data only; they do not assert Splatoon 3 numeric values.
+
+## 2026-10-08 — #358 roller foot-paint current reconciliation (test-only)
+
+Reference: Splatoon 3 Ver. 11.3.0 Splat Roller, no gear effects. INKWAVE scope is
+`patches/splatoon3/tests/roller-foot-paint-composition.test.mjs` through the complete
+six-adapter production composition plus installed native runtime. Raw `inkwave-public`
+alone is not a reproduction. Parent evidence `EV/C358-current-native-root-cl3-r576.json`
+accepts the actual root: only the vertical projectile-physics hash differs
+(`647ddc60...` vs stale `e0845aaa...`); grounded and airborne payloads stay invariant,
+horizontal golden unchanged, height 2.21 source bound still yields no paint.
+
+Change (test-only, no Roller runtime tuning): the vertical assertion no longer compares
+against the stale a628-tuned golden. It runs one independent SAME current-production
+grounded control (`y=0`, grounded) and requires airborne `y=1.8` physics to equal that
+control field-for-field, with height-origin normalization `[1.8, 1.3, 1.3, 0.3, 0.3]`,
+unchanged seed/counts/RNG (`30` draws)/life/velocity/damage/radii, and intentional
+`trailEvery=0` primary-trail-owner expectation (`roller-vertical-paint.mjs:23`, #423;
+legacy `1.8` stays disabled to prevent double paint). Stale hashes remain only as
+provenance comments. Owner/proxy release-paint replay still runs once. Neighboring
+`issue-423` (4 fail) and `issue-847` final b34 case (missing `rollerContactCandidate`
+export) fail identically before this edit and are out of scope.
+
+## 2026-10-08 — Empty-ink Roller keeps Roller-down as a dry roll (#541)
+
+**本家参照:** Splatoon 3 Ver. 11.3.0, Splat Roller. The current Splat Roller reference notes a mechanical clunking sound while rolling when out of ink, applying to all rollers — i.e. running out of ink does not immediately cease the Roller-down/rolling state itself. Source-primary verification limits (2026-10-08): both splatoonwiki.org fetches (Splat Roller page, Version 11.3.0 page) returned HTTP 403 and the Nintendo support answer returned HTTP 406, so no dry-roll passage was independently re-verified in this lane; the structural persistence point is carried from the issue's recorded reference and the earlier root audit. The pinned Leanny/splat3 extraction `7280ff9` contains no dry/clunk parameters, and the comparison-record measurement-version limitation stands: exact S3 dry-roll movement speed/acceleration and the clunk audio are **unconfirmed**, and no values for them are invented here.
+
+**INKWAVE root and correction:** `inkwave-public/src/game/weapons.js::_roller()` gated the rolling state itself on ink (`canRoll = inp.fire && a.grounded && a.ink > 0.5 && ...`), so the first update at `ink <= 0.5` forced `rolling=false`, `rollT=0`, stopped the roll loop, and dropped out of the rolling branch of `moveSpeed()` even with ZR held. The owned S3 overlay `patches/splatoon3/runtime/roller.mjs::installRollerLogic` now snapshots the hold before the native call and, only for an already-Roller-down roll with ZR held, grounded, no flick in flight, and paid-ink history (`s3RollerWasDry` or pre-tick ink above the threshold), restores `rolling=true` after the native teardown and continues `rollT` from its entry value (dash timing stays continuous). It re-anchors both `lastRollPos` and the #537 `lastRollInkPos`, then resets `rollInkChargedDistance` with the fresh paint interval so refill cannot bill dry travel. This keeps the existing grounded/native admission guard: it does not cold-start at zero ink or broaden restoration to an airborne, unadmitted roll. Paint, contact damage, and further ink spend stay native-gated on the zeroed tank (verified zero new hits/paints in the focused suite). Dry audio stays as the native teardown leaves it (loop stopped); the S3 dry clunk is explicitly unmodelled. The existing #626 interruption still requires ink (`armsInterruption` unchanged), so depletion arms nothing and a later dry release arms nothing either.
+
+**Reproduction and acceptance:** Before the original fix, the composed fixture (`fixture()` + production `installRollerLogic`) showed `rolling true→false, rollT 2.883→0` on the zero-ink tick and natural depletion (`ink 0.335`) clearing the roll on the next tick. The later #537 integration exposed a refill gap: with six dry steps of 0.02 units at 1.2 units/s, the first paid tick charged 0.10606% instead of its 0.02% minimum-floor charge because `lastRollInkPos` remained behind. After re-anchoring both positions and resetting the interval ledger, the complete six-adapter composition charges only that paid tick's floor amount. Dry holds still paint/hit/spend nothing; ZR release exits with `rollT=0` and no #626 arm; mid-hold refill resumes with continuous dash timing; cold start at zero ink stays down. Regression: `patches/splatoon3/tests/issue-541-roller-dry-roll.test.mjs` (7/7), `issue-537-roller-roll-ink-floor.test.mjs` (7/7), and `issue-626-roller-stop-interruption.test.mjs` (13/13). These are deterministic VM/native-composition checks; no browser session or Switch re-measurement was performed.
+
+**Player impact and confirmation.** Continuous actor motion is tested at its contact time so a target that enters the path after a round passes is not hit and a target that occupies the path at pass time is not missed. A marked spawn, form change, or NetMatch teleport is not swept through intermediate positions; the target's current pose keeps the legacy static fallback. Focused full-composition confirmation: 11/11 pass, including once-only damage, nearest-target selection, terrain ordering, local and remote cases, four render cadences, form-change invalidation, and the hitch control. Charger hitscan, bombs, special blasts, and reticle targeting remain separate collision roots and are not covered by this flight-projectile comparison. Fixture velocities and relocation distances are internal test data only; they do not assert Splatoon 3 numeric values.
+## 2026-10-08 — Roller rolling ink minimum floor (#537)
+
+Reference: Splatoon 3 Ver. 11.3.0, Splat Roller, with no gear for the baseline. The pinned `WeaponRollParam` data gives `InkConsumeMinPerFrame=0.0002`, `InkConsumeMaxPerFrame=0.001`, `SpeedInkConsumeMin=0.02`, and `SpeedInkConsumeMax=0.132`; the linked parameter glossary converts the rate values to percent per second with `value × 6000`. The existing INKWAVE world-speed conversion multiplies source speeds by 60, so the endpoints map to 1.2 and 7.92 world units/second, and the rates map to 1.2%/s and 6.0%/s. Sources: [pinned Ver. 11.3.0 Roller parameters](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json), [parameter glossary](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%91%E3%83%A9%E3%83%A1%E3%83%BC%E3%82%BF%E3%83%BC%E6%83%85%E5%A0%B1/%E3%83%A1%E3%82%A4%E3%83%B3).
+
+On main `c2c938b9`, the S3 adapter composed through touch layout, reliability, local quality, network replication, and practice range still left the public `WeaponRunner` drain in the 0.28-unit paint batch: it deducted `rollInkPerMeter × moved`. At 1.2 units/second that yields about 0.9091%/s and delays each tank update until a paint batch is committed, although the full-speed distance rule reaches 6%/s. The adapter now charges ink each simulation update independently of the paint batch. At and above the sourced minimum speed it retains the existing per-distance rate and raises that update's charge only when needed to meet the sourced 1.2%/s minimum; it does not infer an intermediate rate curve from the endpoint fields. At the 7.92 units/second cap, the unchanged distance rule still gives 6%/s. Ink Saver (Main) scales both the distance rule and minimum floor through the existing gear modifier. Existing 6.48/7.92 roll caps and the 90-frame dash transition are unchanged.
+
+Below `SpeedInkConsumeMin` and while stationary, the extracted fields do not establish native behavior. Those cases retain the previous distance-based rule and are not claimed as a Splatoon 3 match. Focused tests exercise the six-adapter source composition at the minimum and maximum, verify the preexisting distance policy at an interior speed above the floor, and preserve below-threshold, stationary, gear-scaled, paint-batch-independent, and 30/60/120 Hz behavior; an existing full-composition Roller baseline also passed. The #541 refill integration also runs that composition through six dry steps at the minimum speed and verifies that the first paid tick charges one floor tick instead of retroactively charging dry distance; it does not alter the sourced floor values. The intermediate-speed policy is retained from INKWAVE and remains unverified against Nintendo hardware. This verifies the INKWAVE composition and deterministic rate model, not a Switch capture or the exact native intermediate curve.
+## 2026-10-08 — Current integration lobby adapter reconciliation
+
+Current integration `4a3cc811` introduced host-owned team confirmation (#1039)
+before reliability source adapters. This invalidated three exact source anchors
+used by the existing #1003 minimum-human and #1103 ready-invalidation gates;
+the production build stopped before generating a deployable site. The adapters
+now preserve the host-confirmation predicate and method-local lobby revisions
+while still requiring two human players for Turf and invalidating ready after
+weapon or launch-critical settings change. Boss solo admission remains distinct.
+`host-teams-start-composition.test.mjs` exercises the complete production source
+composition and the actual native method bodies for both admission and mutation.
+This is an INKWAVE integration repair; no Nintendo balance value or protocol is
+changed. Existing upstream claims remain with their owners.
+
+The current merged module graph also produced 160 eager core HTML hints, above
+its unchanged 131-request gate. The build now bounds only those eager hints in
+existing deterministic graph order. It preserves every runtime import and the
+complete immutable service-worker graph; the unchanged startup gate checks all
+transitive imports, cache bytes, digests, and artifact identity. This is file and
+dependency evidence, not a measured browser startup-time improvement.
+
+Current master encodes cache assets as `[bytes, sha256]`, while navigation index
+metadata remains `{bytes, sha256}`. The worker rejected that index during every
+cold install; the existing exact worker-install test reproduced the rejection.
+Integrity verification now validates both encodings strictly. Artifact gates
+normalize descriptors before applying their original byte/digest/closure checks;
+all budget limits remain unchanged. Negative descriptor tests reject missing,
+malformed, non-finite and incorrectly typed metadata instead of allowing `NaN`
+to mask budget evidence. This compatibility repair does not claim a new Issue.
+
+## 2026-10-08 — #642 lazy HDR composer target lifetime
+
+**本家参照と条件。** 比較対象は Splatoon 3 Ver. 11.3.0（[公式更新履歴](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)）。この変更はブラウザ側の描画リソース寿命だけを扱い、武器、ギア、プレイヤー状態、操作入力、ゲームロジックを変えないため、個別の武器・ギア・操作条件は該当しない。Nintendo の公開資料は post-processing composer のターゲット形式・確保時期・破棄時期を示しておらず、Switch の GPU メモリや描画同等性は未確認。
+
+**INKWAVE の根拠と変更。** exact base `4206a4b7` の `inkwave-public/src/core/renderer.js` は、pass stack を作る前に full-size `THREE.HalfFloatType` ターゲットを作り、vendored Three.js r186 `EffectComposer` がそのターゲットを直ちに clone する。full-six production composition でも同じ順序を確認した。`patches/local-quality/composer-target-adapter.mjs` は composer と ping-pong pair の生成を最初の実 render まで遅らせ、同じ HalfFloat/sample/size 設定を使う。ページが hidden になったときは screen composer を破棄し、visible 後の最初の frame で再生成する。`renderToScreen=false` の明示的な offscreen render は hidden 状態でも通す。resize と動的 pixel ratio は lazy state に反映し、quality rebuild は既存 pair を破棄して新しい quality の設定で遅延生成する。WebGL context loss/restore は既存 Three renderer の管理に任せ、この adapter から listener を追加しない。
+
+**再現と確認。** `node --experimental-vm-modules scripts/check-inkwave-composer-target.mjs` は現在の six-adapter composition を通し、pre-change target ordering、HalfFloat policy、source parse、変換の round-trip を確認する。`node --test patches/local-quality/tests/composer-target-adapter.test.mjs` は vendored Three r186 の実 `WebGLRenderTarget` / `EffectComposer` object を使う 4 cases で、baseline clone、lazy creation、resize、visibility disposal/recreation、offscreen output、quality/sample rebuild、final disposal を確認する。これは native Three object lifecycle check で、WebGL driver allocation・GPU memory・pixel output の測定ではない。
+
+**プレイへの影響と限界。** 可視状態で通常描画中の二つの HalfFloat target と pass order は維持されるため、ゲーム操作・simulation・tone/color shader を変えず、出力 pixel parity も推定しない。削減対象は初回 render 前と document hidden 中の composer pair 寿命であり、可視状態の target memory は従来どおり残る。今回の環境には Chromium/Firefox、Playwright/Puppeteer、headless-gl がなく、小さな GPU probe を実行できなかった。Switch 実機比較、driver が実際に確保する bytes、tone mapping/ScreenFX/FXAA の pixel diff は未確認。
+
+## 2026-10-08 — Roller depleted paint footprint (#305)
+
+Reference: Splatoon 3 Ver. 11.3.0 Splat Roller, using the pinned `WeaponRollerNormal` table linked in the issue context. Its horizontal and vertical per-unit `PaintParam.DepletionDepthWidthRate` values are 0.5. The field describes the depleted projectile paint footprint; it does not replace collision radius, damage reach, or the sourced damage/speed parameters. The reduced fan's angular distribution is not specified by the available fields and remains unknown.
+
+INKWAVE's production adapter composition now carries the paid depletion state at projectile birth and applies the mapped 0.5 scale only to depleted Roller paint footprints along flight and at impact. Missing per-unit paint data keeps the native default; normal swings use scale 1. This comparison is limited to deterministic installed-runtime tests, not Switch hardware or browser rendering.
+
+PR1175 integration follow-up (2026-10-09): the native 4-ink horizontal swing emitted three main globs at paint scale 0.5 but left the appended nearest glob at the projectile pool's scale 1, even though its own pinned PaintParam also specifies 0.5. Shared Roller projectile initialization now reads DepletionDepthWidthRate after resolving the actual unit, covering the separate near-glob birth path. The native-composition regression checks every emitted depleted unit at 30/60/120 Hz, full-ink controls, each horizontal unit's impact width/depth, and depleted/full/depleted pool reuse. Synthetic per-unit rate and missing/invalid-field probes verify source ownership and fallback without changing the production profile. Release timing, ink spend, collision, speed, damage, and the full-ink footprint remain covered by their existing controls. No Switch measurement or browser pixel equivalence is claimed.
+
+## 2026-10-08 — Paint-mask ownership and canonical ordering integration (#264)
+
+**Reference and operating condition.** Comparison target: Splatoon 3 Ver. 11.3.0, ordinary match turf painting, with the ancillary splat and wall-paint ownership context from duty #264; no gear modifier or weapon-stat value is changed by this integration. Nintendo’s [official update notes](https://support.nintendo.com/jp/switch/software_support/av5ja/index.html) identify Ver. 11.3.0 (2026-08-20), but do not publish the GPU mask, per-cell ownership, or exact wall-paint pixel rules. The reference version is recorded; native frame timing, mask values, and hardware pixel output remain unmeasured.
+
+**INKWAVE root and correction.** In the complete production adapter composition, a splat’s body cells are applied immediately while its shader growth contributes later. Local late growth and network replay previously had no single per-cell owner/order authority. Separate paint paths could therefore credit a delayed event after newer turf had claimed the same cell. patches/splatoon3/runtime/paint-ownership.mjs now keeps one persistent CPU cell-order mask and one compact event-order registry. The native CPU splat and late ancillary-mask path arbitrate through the same canonical local/network order; network records use the existing tick, sender, and event-sequence metadata while legacy-width records remain accepted. Shader submissions are clipped to contiguous runs of cells still owned by that event. Fixed simulation ticks advance ownership with the paint growth clock. Cosmetic remote splats still render through native GPU growth and do not alter local CPU turf or credit.
+
+**Reproduction and confirmation.** Both focused tests use the real inkwave-public PaintSystem/weapon/projectile sources through all six active production adapters. The focused issue-264 test passes 7/7, including a contract fixture that parses the GLSL kindShape rows, checks the CPU table and zero-shaped fallback, and verifies owned CPU cells remain within submitted shader runs. It also exercises actual local weapon-origin credit, late growth, and 30/60/120 Hz render delivery. The canonical-order test passes 5/5 for opposing owner predictions, reverse delivery, delayed/duplicate and legacy records, mixed-event sequence handling, recreated sessions, and former-owner handoff. The offline practice range remains unowned. These are deterministic native-composition and CPU-contract checks; they do not measure a real GPU driver or a Switch capture.
+
+**Player impact and status.** Overlapping growth events now converge on one canonical cell owner, so late delivery cannot transfer already-newer cells or award stale turf credit. Existing source-width units, packet layout, and gameplay timing values are unchanged. This comparison does not establish Splatoon 3 pixel parity: exact GPU-driver pixels, Switch wall-contact paint behavior, and native per-frame ownership are **UNKNOWN / unverified**. No claim that the charger's native wall-drop timing or pixel footprint was measured or resolved is made here.
+
+## 2026-10-08 — Charger初弾8F射程の下端アンカー (#514, requalified on 03cf)
+
+**本家比較条件:** Splatoon 3 Ver. 11.3.0、Splat Charger、ギア効果なし、通常フィールド上の地上射撃。pinned primary 11.3.0パラメータ `WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/MoveParam`（commit `7280ff9`、2026-10-08に一次URLを再取得して確認）は `DistanceMinCharge=9.033`、`DistanceMaxCharge/DistanceFullCharge=24.037` の両端点のみを示し、charge-frame→distanceの中間写像フィールドを含まない。単位解釈・エンジンスケール・中間曲線は **UNKNOWN** のまま残す。
+
+**INKWAVEの差分:** base `03cf55db` の `patches/splatoon3/runtime/weapons-charger-flight.mjs` の `reachFor` は `DistanceMinCharge+(DistanceMaxCharge-DistanceMinCharge)*charge` と汎用eased chargeを直結していた。native runner（`inkwave-public/src/game/weapons.js` のS-curve＋`chargeTime=1.0`）は最初の法的8Fで `chargeT=8/60`、`charge=1/6` となるため、完全なproduction adapter composition＋installed native runtimeで再現した初弾の法的射程は `lerp(9.033,24.037,1/6)=11.5337` だった。本修正は `reachFor` の生charge入力を `chargerRangeCharge`（既存 `chargerPartialCharge` の[1/6,1]->[0,1] bandのalias、`<=1/6` は下端clamp、fullは現行mainの `isChargerFullCharge`＝exact-1 gateを維持）に置き換え、初弾8Fを `9.033`、フルを `24.037` に固定する。HUD `chargerReach` とflight jobは同一の `reachFor` を共有するため同時に揃う。1–7F発射gate（#304）、chargeTime、damage（#506）、launch speed、ink、laser sight、paint律、中間区間の線形remap（本家未確定のため既存律を温存）は変更していない。公開版 `inkwave-public/` は変更していない。
+
+**確認状態:** `charger-min-range.test.mjs` 7/7（band unit、native 8F birth、flight job min/full、HUD共有、単調性、非charger、ghost wire-len override）を実行し、修正前はRED（export欠落＋11.5337再現）、修正後GREENを確認。回帰として `charger-damage-curve` 4/4、`charger-launch-speed` 3/3、`issue-620 paint` 3/3＋`charger-keep-cancel` 12/12、`charger-hud-reach`（#711 8/8含む；#858 Splatlingのみbase既存失敗で別rootのため不変）を実行。これはlogic/runtime測定であり、ブラウザ描画やSwitch実機との一致証拠ではない。
+
+## 2026-10-08 — Hot Blaster direct projectile vs Big Bubbler source-side object multiplier (#1161)
+
+**本家比較条件:** Splatoon 3、ブキ=ホットブラスター（英語名 Blaster、この公開版では唯一の `kind:'blaster'` メインウェポン、直撃125/爆風70→50）。スペシャル=グレートバリア。ギア=なし、および（参考値として）ギアパワー「オブジェクトシェイカー」あり。参照はコミュニティ計測（wikiwiki ブキ/ホットブラスター および ブキ/スペシャルウェポン/グレートバリア、版数来歴 11.2.0 / 3.1.1 が明記）。Nintendo 11.3.0 での実機計測ではなく、11.3.0 でこの表が変化した証拠もない。
+
+**本家の値:** 直撃弾のグレートバリアに対するソース側倍率は **1.9×**（pre-target 換算 125 → 237.5、相対 52.63% → 100%）。オブジェクトシェイカー装着時は同ソース倍率が **2.09×**（1.9×1.1）で、これは一度だけ適用される。汎用の別エントリ「ブラスター」は 2.1× であり、1.9× を全ブラスター亜種へ一律適用してはならない。INKWAVE の `tuning.rawPerDamageUnit = 100` は宣言済み・未校正（#1051）であり、これから割れる数や絶対バリア HP を導出しない。
+
+**INKWAVE の実装箇所と変更:** base `0af3b959` の `patches/splatoon3/runtime/kit-big-bubbler.mjs` は `kitBarrierCandidate()` で `damageAtContact(p, point, t) * tuning.rawPerDamageUnit` を計算し、その後 outer barrier にのみ `raw.damageRatio` (0.64) を掛ける。`damageAtContact` は Roller 直撃に 1.8× を持つ一方、Blaster 直撃は `p.damage` をそのまま返し、1.9× が欠けていた。本修正は `damageAtContact` に、`p.type === 'blast' && weapon.kind === 'blaster'` のときだけ効くソース側倍率 `BLASTER_OBJECT_MULTIPLIER = 1.9` を追加する。これは `type:'blast'` の直撃弾のみ（爆風 `_blastBurst` はこのクエリに来ない）、かつ唯一の stock `kind:'blaster'` のみを対象とし、shooter・Roller・Trizooka（`kind:'trizooka'` で `type:'blast'`）・未掲載亜種を増幅しない。倍率はソース側で一度だけ掛かり、リモート提案は乗算後・ratio 後の量を運び、ホストの `adjudicateBigBubblerDamage` は再乗算しない。#1051 の canopy 0.64、#1046 の Roller 1.8、直撃125・爆風70→50 は不変。`inkwave-public/` は変更していない。
+
+**再現と確認:** `node --experimental-vm-modules --test patches/splatoon3/tests/kit-big-bubbler-blaster-contact.test.mjs` は実 production composition（`kit-composed-fixture` の adapted inkwave-public + `installKitBigBubbler` + `installKitDefense`）で 4/4 通過。修正前は full-adapter 実測で dome delta が 8000（=125×100×0.64）となり RED、修正後 15200（=125×1.9×100×0.64）で GREEN。テストは (1) 実際の `Projectiles.update → fidelity _step → kitDefenseCandidate` 経路で耐久減少量、(2) source damage 125・object 1.9・rawUnit 100・target ratio 0.64 の分離、(3) shooter/非stock blast が 1.00× のまま、(4) authoritative local spend 1回・remote proposal が同一 canonical 量・host adjudication が一度だけ適用（再送は duplicate）を確認する。回帰: `kit-big-bubbler.test.mjs` 47中46、`kit-big-bubbler-drop-falloff.test.mjs` 6中5、`kit-defense.test.mjs` 8中6、`blaster-*` は全通過。
+
+**プレイへの影響と限界:** ホットブラスター直撃がグレートバリアの耐久へ与えるダメージが本家のソース倍率どおり約1.9倍になる。**対物攻撃力アップ（Object Shredder）はこの公開版に実装が存在しないため、2.09× の受入条件は未充足のまま。** `kit-defense.test.mjs` の2件（"actual Bubbler mechanics…", "native blast shielding…"）と `kit-big-bubbler.test.mjs` の #1013 Special Power、`kit-big-bubbler-drop-falloff.test.mjs` の #1046 Roller は exact base `0af3b959` で本修正の有無にかかわらず同一値で失敗する既存失敗であり、#1161 の回帰ではない。実機/Nintendo 11.3.0 比較、絶対バリア HP、割れる弾数は **UNKNOWN / unverified**。
 
 ### 2026-10-08 PR1083 CI composition repair
 
@@ -1758,3 +1927,413 @@ Parent review corrected #1163 recovery-phase comparisons to use absolute sender 
 `patches/splatoon3/tests/splatling-jump-spread-native.test.mjs`（#1045）はチャージ中に2回ジャンプして滞空回復を調べるが、#888 でチャージ中ジャンプの滞空が約37F→約19Fに短くなったため、2回目の着地が25Fホールド内になり、シナリオ前提の2つのアサーション（最終フレームが partial、着地 age>25）を新しい弾道に合わせて更新した。25F ホールド自体は frame 25 で引き続き直接検査しており、frame-by-frame の合成一致・spread 値の検査はそのまま。他のスイート（armor-charger-batch, splatling-startup-phases, issue-679, splatling-post-stream, splatling-batch, movement-resources, air-run-speed, enemy-ink-batch, splatling-owner-composition, issue-890-jump-hold, dualies-jump-lock, adapter, movement-motion, issue-160-enemy-ink-form, weapon-edgecases）は 197/197 成功。`scripts/check-inkwave-patches.mjs --quick` 成功。
 
 **未確認の限界。** 0.7 DU/f はコミュニティ検証 Wiki の値で、Switch 実機での再計測はしていない。ピン留めの 11.3.0 `WeaponSpinnerStandard` は `JumpGnd_Charge = 0.08` を持ち、Wiki の 0.7 と 0.1 差があるが、このフィールドがジャンプ初速そのものかは確定していない（Inkipedia の S2 テンプレートは「フルチャージ時のジャンプ値」と説明する）。差の根拠を推測で確定しない。`weapons.splatling.chargeJumpVelocity` は校正値であって抽出値ではない。実機の操作感・0.7/1.1 の相対比が INKWAVE の 4.2/8.4 と一致するかは未測定。例外スピナー（1.0 DU/f）はブキ自体が未実装のため値のみデータ対応。
+**#1161 final composition follow-up:** The parent added a fifth test using `source-fixture` with `productionComposition: true`, `fullRuntime: true`, and real `Projectiles`. The installed runtime deploys the actual dome and consumes a direct round through its update path with the one source multiplier. All five contact tests pass. Projectile flight is pinned after native `_push` to isolate contact damage; this is not a fireBlaster, browser, or Switch flight-fidelity claim. Object Shredder and absolute barrier HP remain unverified/open.
+
+## 2026-10-09 — Remote Roller horizontal/vertical swing presentation replication (#1155)
+
+**本家参照と条件:** Splatoon 3 Ver. 11.3.0、Splat Roller、通常フィールド。地上ZR=水平スイング（コイル→振り→戻り）、空中ZR=垂直スイングという入力依存の姿勢分岐が本家の公開資料（Inkipedia Roller、Nintendo weapon basics）で支持される。Nintendo の正確な姿勢曲線・関節フレーム値は公開されておらず未確認であり、INKWAVE の姿勢カーブは視覚校正であって本家の数値一致を主張しない。ローカル視点とオンライン観測者は送信者タイムライン上の同じ視覚アクション段階を選ぶべき、という点だけを比較対象とする。
+
+**INKWAVE の差分:** 公開版は所有者側で `WeaponRunner.s3RollerAttack` と `Character.s3RollerFlick` を作るが、リモート代理アクターは承認済みスイングの状態を持たず、後段の detail wrapper で姿勢チャンネルが抑止されていた。既存の splatoon3 adapter は垂直モードのみ `flickVertical` フラグで複製していたため、真の残差は水平の姿勢提示とアクション epoch の伝搬だった。`patches/network-replication/roller-presentation.mjs` がプレゼンテーション専用 sidecar（tag/life/epoch/active/vertical/elapsed/windup/interval/released/rolling/tick）を `rf` に詰め、`applyRemoteRollerPresentation()` が送信者タイムライン上で visual-only な `character.s3RollerFlick` を構築する。authoritative な `WeaponRunner.s3RollerAttack` は生成しない。elapsed は 1 フレーム 1 回だけ適用し、同一 epoch/life の再受信は進展のみ、古い epoch/tick/life は巻き戻さない。life 変化（splat/respawn）、owner 交代、adopt/remove/dispose、武器スワップ、死亡で提示状態をクリアする。
+
+**再現と確認:** `node --experimental-vm-modules --test patches/network-replication/tests/roller-presentation.test.mjs` は実 production composition（fullRuntime + productionComposition、実 NetMatch/Actor/Character）で 1/1。水平・垂直の両モード、epoch 前進、20Hz スナップショット中の elapsed 単調増加、重複・古い epoch/不正送信者の拒否、死亡/リスポーン/武器スワップでのクリアを確認する。`roller-vertical-state.test.mjs` は 2/2 で、実際の jump からの垂直選択がランディング後も維持されること（`#1056` の 5F 変換ウィンドウ通過後）、および復帰まで垂直が保持されることを確認する。owner 側の `#1056` ルールは不変である（`issues-1056-1075-1105-1111.test.mjs` の該当 2 ケースは通過）。
+
+**プレイへの影響と限界:** 観測者側で水平/垂直のスイング姿勢が本家と同じアクション段階で提示される。ゲームプレイ上の速度・衝突・インク・弾道・ダメージ・ネット権限は変更しない。Nintendo の正確な関節フレーム、実機/二クライアントの 60fps 目視比較、ブラウザ描画は未確認。既存の network-replication テストの pre-existing 失敗は本変更の前後で不変。
+
+
+## 2026-10-08 — PR1171 CI and seven-issue completion pass
+
+The existing batch is #1098, #982, #1158, #1159, #1162, #1165 and #1166.
+All seven have existing ownership comments; this continuation does not claim
+other active work. Changes are on `fix/1098-stored-charge-muzzle-local-pos`.
+
+- **#982:** the 50% firing-vibration gate now uses normalized `chargeT`.
+  The native presentation/range curve reaches 0.5 at only 7/15 actual progress;
+  using that curve admitted vibration early. Tests cover the legal minimum,
+  25%, 7/15, just below 50%, 50%, full, missing progress and remote/ghost paths.
+  Exact Nintendo vibration amplitudes remain uncalibrated.
+- **#1158:** actual built HUD/CSS presents two ordinary rings, one centered
+  post-roll ring, then restores two; the old diamond remains hidden.
+- **#1159:** reliability owns room generation, transport identity and the GO
+  deadline together. Leave, failure, socket closure, round replacement and end
+  retire the timer. Queued old callbacks cannot launch or clear a new timer.
+  A new round gets its full native 12-second fallback; this is an INKWAVE value.
+- **#1162:** 500 marina/non-marina samples remain bit-identical, without the
+  per-call footprint wrapper Array. No device FPS/GC improvement is claimed.
+- **#1165:** built native PaintSystem/WebGL tests compare 4,000 cell samples,
+  five seeds, four directions and both paint teams over enemy ink. The published
+  pi/60 witness is corrected; two near-edge samples fall within the explicit
+  two-atlas-texel AA tolerance. Coverage agrees with CPU ownership counts.
+- **#1166:** the visual gate composes with offline pause and menu cadence.
+  Actual hidden atlas overflow queues 6,100 strokes with zero render calls,
+  updates CPU ownership immediately, and replays in order on visibility return.
+  Clear/dispose retire deferred commands. Fixed online clock/network work is
+  preserved in the composed frame regression. Physical battery savings and
+  browser-specific hidden-RAF scheduling are not inferred from these tests.
+- **#1098:** kept-shot identity, ordinary-shot isolation, obstruction fallback
+  and owner/network/ghost origin agreement pass. The existing barrel-tip-based
+  source-to-procedural-model scale is still provisional. Nintendo skeleton-space
+  calibration is not established, so this issue must not be declared fully
+  fidelity-complete or auto-closed on the strength of these tests.
+
+CI run 37797422797 failed before these tests on an idle composition anchor and
+a gait assertion comparing phase .21 against phase .28. The former now retains
+both visibility and pause predicates; the latter compares equal phases across
+both signs of all four directions. Subsequent production-build conflicts in
+room timer/team-ready adapters were composed while preserving their behaviors.
+Native `inkwave-public/` stays unchanged. Broader integration regressions remain
+separate from this focused acceptance; a passing focused suite is not a claim
+that the entire integration workflow or Nintendo hardware comparison is green.
+
+
+### PR1171 integration-base differential and slide-width follow-up
+
+Rebased only PR1171 onto `69add0203d127b790f009e3502f7110212262066`.
+The unchanged full patch gate produced 128 failing tests on that base and
+133 at `3c207b20`; comparison of the full failure-name sets found exactly five
+new failures. The shared Roller outline widened Dualies slide paint because
+its radius conversion still used the removed CPU-only inset. It now accounts
+for the band, corner rounding and maximum two-wave displacement, preserving
+the pinned 1.8 half-width. Native grid tests cover nine seed/heading cases;
+the built WebGL check covers twelve and keeps the same two-texel AA bound.
+The three RESULT-frame harness failures now supply a visible document fixture,
+and the first-frame paint-presentation A/B uses the same #1165 ownership
+geometry on both sides while preserving its original delayed-draw negative
+control. All five new failure cases pass after these corrections (11/11 in
+their three complete files); the earlier focused selection is 95/95.
+The base's 128 failures remain unresolved. No integration-base, #1083 or #401
+branch was modified and no PR was merged. CI run 37833984659 passed the original
+idle/build and gait failure points plus the new focused and rendered checks,
+but its later weapon-detail browser gate failed; full CI is not claimed green.
+
+
+### PR1171 / #1098 independent model-anchor calibration and exact-head CI
+
+The old `modelMuzzle.z / keepAnchor.Z` scale normalized the subject coordinate
+against itself: changing only source Z could not change the resolved Z. Replace
+it with an independently extracted ordinary-model muzzle reference. Source:
+[Splatoon 3 Splat Charger, Models Resource asset 342258](https://models.spriters-resource.com/nintendo_switch/splatoon3/asset/342258/),
+Centrixe the Dodo extraction, published 2023-02-27. Both included Collada exports
+have `Root` → `Muzzle` joint-local translation `(0, 0.1781852, 1.717447)`.
+The current `Wmn_Charger_NormalT.dae` SHA-256 is
+`7914851c0cd0c1cf30970774b22362ae7e01969ed084c95d94ad87605c951626`;
+the Previous Ver. file is
+`9d1167de7d734f79cad6bd234eca937bc8b2f6404553d178b292517094730e3a`.
+`python scripts/check-inkwave-charger-calibration.py /path/to/342258.zip`
+reproduces the extraction and rejects unknown file revisions. No model or
+texture is redistributed in this repository.
+
+This is a documented **INKWAVE model retarget**, with the following explicit
+conventions: retain joint-local +Y up / +Z barrel forward, match the ordinary
+muzzle anchors, and scale offsets uniformly by the ratio of forward barrel
+coordinates. The exporter's scene-root 90-degree rotation and declared inches
+are not Nintendo game-unit evidence and are not applied to game parameters.
+Let `r=(0,.1781852,1.717447)`, live INKWAVE model muzzle `m=(0,.058,.686)`,
+and pinned S3 11.3.0 keep parameter `k=(-.314,.2105,2.0176)`. Then
+`s=m.z/r.z=0.39943008430536725`, and `local=m+s*(k-r)` yields
+`(-.12542104647188532,.07090750328831108,.8058901380945089)`.
+The live native `weapon.off.localToWorld` transform carries this point through
+the hand and character hierarchy. Each source-axis perturbation now has an
+independent nonzero effect, and the source ordinary anchor maps exactly to the
+INKWAVE ordinary anchor. Existing native finite/distance/LOS guards retain the
+safe generic fallback. Fresh shots, charge-keep lifetime and release gates are
+unchanged; `weapon:fire.muzzle` and remote ghosts use the authoritative point.
+
+**Validation:** source extraction agrees in both included exports; native
+regressions cover all three independent axes, invalid inputs, full-charge →
+store → surface → native 1F release identity and reset, ordinary isolation,
+packet/ghost agreement and obstruction fallback. The production-build browser
+probe uses real Character weapon nodes, Projectiles beam meshes and Physics /
+swept-world collision in six yaw/pitch poses. A close-cover edge hits from the
+stored origin and misses from the ordinary origin; moving cover across the
+chest-to-anchor segment forces the safe fallback. The existing rendered
+reticle, 4,000-cell Roller parity, 12 Dualies widths and 6,100-hidden-stroke
+checks also pass.
+
+**Remaining evidence limit:** the 2023 extracted model is not proven unchanged
+in 11.3.0, and a weapon model does not establish which Nintendo runtime frame
+owns `WeaponKeepChargeParam.MuzzleLocalPos`. The supplied Drive research bundle
+explicitly excludes Splatoon 3 RomFS; its S1 rig cannot establish S3 charge-keep
+behavior. Thus model-derived retargeting and INKWAVE regression acceptance are
+measured, but Nintendo keep-frame binding / console spatial equivalence remain
+unverified. Do not auto-close #1098 or represent this as recovered Nintendo
+engine calibration. Required closing evidence is the S3 keep-charge coordinate
+frame/binding (or a measured stored/fresh muzzle comparison with known scale,
+weapon, version, pose and cover). This supersedes only the old self-normalized
+barrel calibration above, not that outstanding fidelity requirement.
+
+The integration workflow now chooses explicit dispatch SHA, otherwise immutable
+PR head SHA, otherwise push SHA. Every checkout and artifact name uses the same
+`SOURCE_SHA`; existing checkout, rebuilt-site and browser report identity gates
+remain active, and the workflow regression itself joins the focused CI step.
+No inherited acceptance gate is removed or marked allowed-to-fail. The base
+failures remain owned by #1083; neither #1083 nor #401 is changed or merged.
+
+## 2026-10-08 — next seven claims; room startup and gyro recovery PR
+
+Ownership was checked against open issue assignees/comments and open/closed PR
+coverage immediately before posting claims on #1167, #1157, #1154, #1152, #1151,
+#1150 and #1149. This first new PR finishes the room/gyro implementation below;
+claiming the seven does not mean all seven are resolved. It is stacked on
+#1171 at `04e4547c053f99ed9db0019c4bc98003d19b108e`, preserving the integration
+composition and its existing fixes. #1083 and #401 are untouched; no merge.
+
+| Issue | Change / status | Executed evidence or remaining work |
+| --- | --- | --- |
+| #1167 | Reuse existing connection-generation cancellation and timer cleanup; add acceptance coverage, no duplicate runtime fix. | Four create/join cancellation/retry combinations, a queued obsolete deadline, repeated cancellation, and browser retry after withheld welcome and the original 8-second deadline. |
+| #1157 | Permanently reject binding a disposed NetMatch; make duplicate bind/dispose inert. Preserve existing Game startup cancellation guards. | Native composed NetMatch subscription ownership; 77 selected real startup-method deferred-boundary/reentry tests; browser socket closure during controlled warmup followed by reconnect and late completion. |
+| #1154 | Queue authenticated GO for the exact cfg.id until local setup completes; consume once and invalidate on room termination/rematch. | Deferred lobby/world/warmup, obsolete/duplicate GO, canceled queued GO; native browser NetSession/Transport/NetMatch and production relay, one READY packet per successful round. |
+| #1151 | Separate stale sensor health from permission and saved preference; revalidate focus/visibility/screen transitions and explicit retry. | 30/60/120 Hz streams, repeated silence/recovery, zero first-sample aim spike, single listener/permission ownership, existing initial no-data behavior. Synthetic orientation events in built Chromium modules also pass. |
+| #1152 | Claimed follow-up; existing allocation suppression is retained. | Remaining true-birth packet delay and complete multi-peer emission acceptance are not implemented in this PR. |
+| #1150 | Claimed follow-up; existing explicit string volley-ID transport is retained. | Complete native emitter-to-victim-owner acceptance and fractional cumulative-damage quantization audit remain; no new damage fix is claimed here. |
+| #1149 | Claimed follow-up; no speculative drain/slow constants added. | Pinned 11.3.0 InhaleParam has ReceiveDamageForPlayer=15 and PoisonMistForPlayer, but sparse parameter tables omit the inherited drain/speed defaults. Actor suppression implementation and measured drain/slow calibration remain. |
+
+The #1151 watchdog uses a conservative **15-second engineering threshold** on
+monotonic receipt time. A silent stream becomes `supported-stale`, shows a retry
+message, and retains permission, saved ON preference and its listener. Silence
+alone cannot distinguish a stationary change-only provider from sensor failure.
+A resumed sample recovers the health state and rebases the existing quaternion
+path before motion is integrated. Focus, visibility and actual screen-angle
+changes rearm the existing 2-second probe; after prior successful data this is
+also a soft warning. Initial activation with no valid data still takes the
+existing unavailable/OFF path. No Android drift calibration constants change.
+
+Reproduction: delay guest lobby launch or setup; send host GO while the promise
+is pending, then resolve it. Session remains starting until setup is complete
+and begins once. Close the guest socket during warmup, reconnect, and resolve
+the old promise: the new lobby/menu and disposed network object remain intact.
+For gyro, enable, send valid orientation, stop events beyond 15 seconds, then
+resume from a different pose: warning clears, first sample produces no turn,
+and the next sample produces normal movement.
+
+Comparison scope remains the issue-reported Splatoon 3 11.3.0 interaction
+baseline: communication recovery must not revive abandoned play, and motion
+input should resume without an old-pose jump. Browser GO sequencing, 12-second
+host wait, 2-second initial probe and 15-second stale warning are INKWAVE
+engineering behavior, not Nintendo engine measurements. No gear/weapon damage
+or movement values change in this PR. No console/Android/iOS hardware or full
+three-minute round comparison is claimed; device-specific sensor delivery and
+retail timing remain unverified.
+
+Validation commands: the focused workflow room/gyro set plus workflow contracts
+passes 77/77; the selected startup ownership set passes 77/77. Production build
+content hash is `7672846b9918ec84c604cc8f251d43e464fad2db0f054cbcbc9fbedc9e321a69`.
+`node scripts/check-inkwave-room-gyro.mjs <built-site>` passes in Chromium using
+real WebSocket transport and `RoomDurableObject.handleSession`; scene setup is
+controlled, sensors are synthetic. CI runs this same probe with Chromium and
+WebKit before the existing UI gates, at the immutable PR head. All inherited
+full gates remain enabled. The broader gyro matrix has the same 11 failures on
+base and candidate (base 83/94; candidate plus room/new tests 131/142), including
+#524/#615/#678; those inherited failures are not repaired or hidden here.
+
+## PR #1172 remaining claims: #1152, #1150, #1149 (2026-10-08)
+
+This section supersedes the earlier pending-implementation status for these three claims. Stacked base remains `04e4547c053f99ed9db0019c4bc98003d19b108e` / #1171; inherited base and Bucket repeat work belongs to #1083. #401 is outside this work. No merge.
+
+### #1152 — Slosher birth replication
+
+Splatoon 3 reference: 11.3.0 Bucket Slosher, no gear, grounded/airborne transitions and moving muzzle. Existing source schedule remains 0,1,2,3,4,6,8,10,12 frames. Existing allocation suppression is reused. The one record at true birth now carries zero remaining delay and the flattened source-unit index in the existing family-unit slot. Receivers reconstruct collision/movement/draw parameters from that index; legacy packets retain the delay inference fallback. Pool allocation clears the new field. No Bucket repeat/cooldown change.
+
+Tests drive real emission/recorder/replay at 30/60/120 Hz, two/three clients, moving muzzle, ground/air transitions, duplicate/late packets and invalidated owner epochs. Exactly nine births, no allocation records and no ghost records. Existing timing contracts were updated to assert the birth tick plus zero remaining delay, not reapply the elapsed source delay.
+
+### #1150 — one Slosher damage maximum per victim/volley
+
+Existing authenticated native hit forwarding, victim life, retry, adoption and bounded volley admission remain the owners of those concerns. A missing or invalid Slosher group now fails closed. The emitted string volley identity reaches final post-defense quantization; local incremental admission uses a scoped rounding group, and remote maximum admission forwards that same group. This avoids quantizing each fractional increment separately.
+
+Actual emitted native volleys through Projectiles → NetMatch → victim Actor produce identical local/online results for 70/70, 50/70, 70/50 and 30.39/34.31 (34.3 total). Duplicate, reordered, forged sender, rejected invulnerability, fresh volley, respawn and reset paths are covered. The existing combat-life protocol is reused, not duplicated.
+
+### #1149 — hostile actor contact with Ink Vac
+
+Reference: S3 11.3.0 Splat Charger / Ink Vac, no gear, live non-firing enemy in the existing 3D vortex, unobstructed LOS. Pinned primary extraction: [WeaponSpBlower, Leanny/splat3 @7280ff9c](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json). `GameParameters.InhaleParam.ReceiveDamageForPlayer=15`: repository raw /10 conversion gives 1.5 damage-equivalent per 60 Hz frame, 90/s. Thirty eligible ticks add 45/1100 charge, separately from projectile count. Enemy HP is not touched.
+
+The Vac owner scans live hostile actors, deduplicates actor identities and authors only its gauge. Each local victim uses authenticated replica/local cone geometry plus solid LOS to author its own tank and movement. Ghosts never drain a remote tank or author gauge. Allies, dead actors, behind/outside/elevated targets and occluded targets are excluded. Exit, release, death and reset clear eligibility immediately; there is no persistent debuff field. Native movement is capped after acceleration and at the movement collision entry, while refill cannot cancel eligible tank drain.
+
+**Calibration still unverified:** the sparse extraction's `PoisonMistForPlayer` lists EffectFrame/Level/SideStepInkConsumeRate but omits ordinary tank-drain and movement defaults. The implementation explicitly labels **12% tank/s and 60% movement-speed cap as INKWAVE engineering calibration**, not extracted Nintendo values. Progressive Toxic Mist levels, post-contact linger and exact retail magnitudes are not claimed matched. Existing frustum field interpretation remains calibration too. These limits are not marked resolved by automated tests.
+
+### Verification and remaining base failures
+
+- Focused native acceptance: 72/72 pass, plus 3/3 updated wire contracts. Existing Ink Vac projectile/LOS/replay/tombstone coverage and final-damage regression coverage remain enabled.
+- Built Chromium, three isolated clients using real Actor, Projectiles, NetSession, NetMatch, WebSocket Transport and production RoomDurableObject: nine true births with explicit units and zero delay; 34.3 cumulative damage on victim owner; 45 contact charge, tank 100→94 in 30 ticks, HP 100, slowdown/exit and zero replica authority. Display/audio/collision surfaces are controlled; no retail or physical device claim.
+- Workflow adds the same native gates and the built three-client probe in Chromium/WebKit on the immutable PR source SHA. Existing full gates remain enabled.
+- Broader network source suite: 31 failures reproduce on immutable base `04e4547`; no repairs here. The initial candidate additionally exposed two intentionally changed Slosher-delay expectations and a newly required dependency in the extracted-method test harness; those three contract updates pass. Base fixture/protocol-layout/movement failures stay with #1083.
+- Exact pushed SHA and CI results are recorded on PR #1172 after the remote run, rather than claiming the pre-push tree was CI-green.
+
+## Seven-issue follow-up — 2026-10-08 (#1045, #1065, #971, #961, #958, #534, #202)
+
+Ownership: issue state, assignees, comments, all eight open PR descriptions and
+relevant implementation diffs were checked before posting takeover claims. These
+seven reports had only abandoned claims older than 24 hours and retained concrete
+unfixed paths. Work is stacked on PR1172 `5e0af85cec522de53b128587a2fd7d2e961cf748`.
+The integration/base and bucket-repeat work, PR1169 and PR401 are excluded.
+
+Reference conditions: Splatoon 3 Ver.11.3.0, Splat Charger / Heavy Splatling /
+Bucket Slosher, no gear unless a control explicitly adds it, ordinary human or
+swim form, fixed 60 Hz simulation with 30/60/120 Hz outer rendering. The pinned
+parameter source remains Leanny/splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6`
+(`data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json`,
+`WeaponSpinnerStandard.game__GameParameterTable.json`,
+`WeaponSlosherStrong.game__GameParameterTable.json`). Behavioral interpretation
+and form-size measurements are the evidence linked in the corresponding issues;
+this work does not turn extracted endpoints or engine tests into retail footage.
+
+| Issue | Remaining cause and correction | Reproduction / acceptance evidence |
+| --- | --- | --- |
+| #971 | The Charger applied airborne 1/3 speed from charge entry. A crossing update now splits at the sourced 8F minimum; low-ink slowdown remains independent. | Funded air charge reaches minimum in 8 charge frames and full in 164, excluding the existing 1F fresh-start admission. Ground/air transition, a 2F crossing update, dry tank and 30/60/120 Hz agree. Only one-ULP clock completion error is normalized; the strict full-charge predicate for received/ink-limited partial states is unchanged. |
+| #961 | Native `_charger` still transformed chargeT through an early-boost curve before audio, presentation and release. The build overlay now uses linear progress. Paint and launch-speed minimum coordinates move from the obsolete 1/6 to 8/60. | Real native charge, loop pitch and full ding agree at every frame; 8F spends 2.25% and full spends 18%. Actual finite-flight tests retain minimum/full speed and paint endpoints, sourced damage, stored-charge origin and release gaps. No range-calibration formula from another PR is duplicated. |
+| #1045 | Air and jump recovery routed Splatling pitch through `horizontal * .55`. The independent 1.6-degree pitch axis now remains active in all those states. | Actual emitted edge samples at air/ground and jump ages 0/25/40/70 stay at 1.6 degrees while horizontal spread retains its own state. Existing two-draw radial sampler/RNG order remains. The full Nintendo PDF, inner/outer bias and IA correlation are still unverified. |
+| #1065 | Slosher fall damage charged initially downward 2F straight descent against the falloff budget. The true-birth velocity selects a separate phase-aware fall anchor. | A steep shot dropping over 2 units during straight flight stays at 70 HP. After that phase, descent starts at the sourced 1.5 baseline and reaches 50 over the remaining 6.125 units. Upward/horizontal controls, unit envelopes, pooled reuse and fixed-clock cadence are covered. This does not change bucket repeat, birth delays, movement integration or volley accounting. |
+| #958 | Adoption converted the visual binary invulnerability/armor indicators into gameplay state. A tagged protection payload now accompanies the already life/sequence-validated adoption state. | Actual NetMatch send/receive/adopt retains 1.6s finite invulnerability, then expires on native ticks. Breakable armor HP, remaining duration and existing break delay resume from the newest accepted owner state; an old interpolated sample cannot restore expired armor. Invalid, stale and foreign rows are rejected. Old numeric recovery-age payloads remain readable but cannot supply missing protection clocks. The payload uses the recovery-age slot, leaving the outer row and the separate Slam extension slot untouched. It transfers finite protection; it does not reconstruct an absent infinite Squid Spawn aim phase. |
+| #534 | A full 2048-square mural atlas and Halyard fallback were allocated even for stages using only shared strips. Shared-only layouts now use 2048x1024; Halyard/Cargo/Range stage rows allocate on demand. | Built Chromium uses actual Canvas2D and WebGL texture upload across nine stage changes. Shared pixels survive resize exactly; original stage pixels and UV/placement tables compare exactly with the same canvas raster backend. Exactly one GPU texture remains allocated across changes and zero after disposal. Canvas backing falls from 16 to 8 MiB; nominal RGBA8 mip storage falls from 21.33 to 10.67 MiB (about 18.67 MiB total reduction). Byte figures are dimension/format accounting, not driver process-memory measurements. Mobile device thermals/long-session eviction remain unmeasured. |
+| #202 | The common weapon hurtbox helper still returned legacy terrain radius .38 in swim form, despite the separate .35 humanoid hurt radius. A separate .675 swim hurt radius now feeds the same helper. | Real continuous main-projectile and finite Charger graze tests resolve .35 versus .675, retaining the referenced 1.9286 form ratio in the existing project scale. Terrain radius, body dimensions, grate behavior and projectile radii are unchanged. Exact Nintendo-to-project world scaling remains the pre-existing calibration. |
+
+Validation distinguishes native engine logic, emitted Chromium/WebKit browser
+execution, and retail/device measurement. The added `seven_claims` CI job checks
+out and verifies `SOURCE_SHA`, runs the focused native regressions, builds that
+checkout, checks every emitted artifact hash, then tests Chromium and WebKit.
+The older broad suite remains enabled. Seven unrelated failures reproduced on
+the unchanged PR1172 base: Splatling HUD lifetime, Charger sight-cache source
+anchor, Splatling jump-test lifetime/range fixtures, Dualies allocation/sub gate,
+and generic floor-impact expectation. Existing adoption tests also assert an
+obsolete outer packet index; this change adds current-wire round-trip tests
+instead of repairing that inherited base work here. No merge is performed.
+
+
+## 2026-10-08 — PR #1173 Charger regression follow-up
+
+Compared exact heads `5e0af85cec522de53b128587a2fd7d2e961cf748` (#1172, run 37846910846) and `cad164b97b40ddbd48a9955cb4d0b330d1f0211f` (#1173, run 37851118110). The validate failure-name delta is exactly four tests: #1007/#1052 feet-versus-line paint, airborne Charger charge, #407 impact paint, and #420 line paint. No inherited failures were edited.
+
+The #961 linear charge owner moves the first legal release coordinate from the retired 1/6 to 8/60. Three native-projectile fixtures still passed 1/6 while expecting minimum-charge paint. They now sample 8/60 and the same independent min/mid/near-full/full endpoint fractions, retaining exact radius/spacing/nearest-footprint assertions. #971 preserves the first eight airborne charge frames at normal rate; the landing-continuation test now verifies (8 + 52/3)/60 progress after 60 charge frames, the remaining partial state after 34 grounded frames, and full charge on the 35th.
+
+Validation: all four targeted tests passed on #1172 before this change and on the corrected #1173 tree. The #1173 focused seven_claims CI job now explicitly runs all four. These are native/composed JavaScript checks, not new Nintendo hardware measurements. Sources, gear-free Splat Charger assumptions, full-charge threshold, and production damage/paint implementations are unchanged. Exact-head CI for the pushed follow-up is required; #1083/#1169/#401 remain untouched and no merge is authorized.
+
+## 2026-10-08 — Next seven: resources, projectile retirement, online continuation and wall launch
+
+Scope: #1054, #955, #505, #478, #568, #625, #573. Ownership/assignees, issue comments/timelines and all nine open/draft PR scopes were checked before claiming and refreshed before publication. Claims are posted on every selected issue. #289 was withdrawn after finding its physical-drop behavior already implemented; #568 replaces it. This branch is stacked on PR1173 `e20bc772e4257c94401bd83543e9a6454b89b696`. No changes to PR1083, PR1169 or PR401, no merges, and no duplicated base/bucket-repeat repairs.
+
+Reference remains Splatoon 3 Ver. 11.3.0. Native/composed tests and Chromium measurements below are INKWAVE evidence, not Switch captures. Equipped modifiers, charge, surface and action state are explicit in the regressions.
+
+| Issue | Reproduction and changed owner | Result and evidence limits |
+| --- | --- | --- |
+| #1054 | Splattershot/Trizooka activation, active ticks and expiration while standing in enemy ink; zero AP and 3 AP Ink Resistance controls. Actor adapter now calls the ordinary resource update once, with matching special-water composition anchors. | Ordinary .3 HP/F contact progression and 40 HP cap, equipped grace/rate/cap, surface reset, invulnerability, and off-ink recovery pass; 30/60/120 Hz schedules agree. Resource values are reused, not rederived. |
+| #955 | Fire every one of the seven main families, then disconnect its owner while rounds remain alive. `disconnect-fidelity.mjs` retires main heads, independent InkFlight droplets, finite Charger jobs/beams, detached/timed/Charger wall paint, and queued Blaster impacts. Network ghost retirement uses the same helper. | Implements the issue's explicitly permitted cancellation policy, consistent with the existing no-bot human-disconnect rule. Does not promote ghosts to damage authority. Other owners survive; duplicate leave cannot double-release; stale birth/paint messages stay rejected. This is a deterministic reconciliation policy, not a claim about Nintendo's network implementation. |
+| #505 | Four enemy deaths, including death/respawn transitions coalesced into one packet. NetMatch reports owner-authenticated life histories and frame watermarks; the host confirms disjoint wipe transitions once. Flow receives a separate confirmed event. | +10 fp uses the existing profile conversion and cap for every teammate, including dead teammates; active Flow is neither activated nor extended. Replays, outsider/stale packets, delayed owner reports, non-overlapping death intervals, later wipes, duplicate listeners and host migration are covered. Histories use monotonic owner-reported match-countdown frames; transport timing is INKWAVE's protocol, not retail network parity. |
+| #478 | Online Turf results → Change Gear → native loadout/gear panel → Back or Keep Going. Existing offline continuation remains. | Removes only Turf's forced 12-second return. Authenticated per-player keep/change choices survive host election; the host returns the room only once all remaining human participants choose keep. Existing setMe/save paths retain equipment; endMatch carries explicit readiness. The existing room still owns host start/team confirmation. Stop uses the existing Leave Room confirmation. This does not implement Nintendo matchmaking. |
+| #568 | Charge Surge for 1/15/45F; release B on the inked wall, delay exit by 2/8/12/40F, then take the native ledge or accepted ink-gap launch. | B release reserves eligibility; the native wall launch starts the existing .75s/30 HP armor exactly once. Damage on the wall remains ordinary. Launch tick is not prematurely deducted; cancellation/death/form/reset cannot revive a pending shield. Existing partial eligibility and movement values remain. Fixed 30/60/120 Hz traces agree. No PR1169 adoption-row changes. |
+| #625 | Minimum 8/60, intermediate and full-charge Splat Charger shots into a high wall. Finite contact now creates charge-dependent shock plus descending gameplay paint, with a distinct splash-wall record. | Main shock radii 1.2→1.8 and fall .8→1.2; splash shock .6→.9, fall .45→.675 and explicit ground .4 use the pinned records. Source defaults resolve first/last bounds and gravity. Full-charge ground-impact #407 and line-spacing #420 remain separately tested. Seed selection, interpolation/integration and stamp spacing are local calibration. The omitted main ground radius and exact retail intermediate-charge wall silhouette are still unverified; no fabricated fallback ground radius is used. |
+| #573 | Ordinary Tidal Slam at 0/10/30/49F, then 50/51F, landing recovery and a separately owned invulnerability timer. | Removes immediate quarter-damage armor. Player protection begins at the pinned 50F player field and rejects damage rather than reducing it. Native damage admission, owner hit rejection and outgoing invulnerability flag agree. Existing body/gauge landing completion ends this protection; independent invulnerability survives. Exact retail post-landing duration remains a capture gap; PR1169 Slam adoption is untouched. |
+
+Source details:
+
+- [Nintendo Flow overview](https://www.nintendo.com/au/news-and-articles/whats-new-in-the-splatoon-3-version-11-update/) describes activation/extension; the existing +10 fp value is retained from the issue's [original Flow verification](https://wikiwiki.jp/splatoon3mix/検証/イカフロー) and current profile, not attributed to the Nintendo overview. This change repairs online delivery rather than recalibrating Flow.
+- [Nintendo update history](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/) documents Keep Going / Change Gear, Then Go and a bug where changed gear incorrectly appeared on the previous battle's result screen. Native result identity and old roster data remain unchanged across preview/back.
+- [Original current controls verification](https://wikiwiki.jp/splatoon3mix/操作方法) is the Surge wall-launch reference. No new armor HP/duration claim is introduced.
+- Pinned extraction revision `7280ff9cde8bb1c5dcef46c700c326471584d2e6`: [WeaponChargerNormal](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json), blob `176e465690d25219a8df12ae594d3d8d536abef2`; missing wall-movement type defaults are from [XarrotD's original parameter table](https://splatoonwiki.org/wiki/User%3AXarrotD/paramtable). Explicit main first min 15/last max 30, resolved first max 30/last min 15/second 10, speeds .04/.05 and gravity .008 are recorded separately from unverified calibration.
+- [WeaponSpPogo](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json), blob `f8e210da97f8f1bf4fca07dba015b74a5439d5ef`: `spl__WeaponSpPogoParam.Rise_NoDamageStartFrame=50`. The fist's `BulletParam.StartInvincibleFrame=55` and the older SuperLanding file are not the player's timing source.
+
+Validation before publication:
+
+- Focused source: 92 passes, 0 failures; one emitted-only optional test skipped there and explicitly run below. Includes prior partial-Surge, automatic continuation, offline continuation and roll/surge controls.
+- Emitted/composed verification: 61 passes, 0 failures, 0 skips. The seven claimed roots are covered by focused regressions; owner-wire tests use the complete adapter composition.
+- Production build succeeds with immutable artifact checks; cache worker 65,461 bytes, under the unchanged 65,536-byte limit. New helpers are kept in their existing lifecycle/flight modules to avoid extra precache manifest entries.
+- `scripts/check-inkwave-batch4.mjs`: isolated native NetSession/NetMatch and Menus contexts exchange controlled packets in Chromium, for both desktop clicks and touch (390×844). Both peers receive one wipe bonus, Change Gear blocks the host's early keep, Roller + Swim Speed persist across Back, old results remain unchanged, and both players become ready after exactly one room return. No page errors. This is browser evidence with controlled transport, not a physical-device or public-relay test. Chromium/WebKit is required by the new exact-head CI job.
+- The four PR1173 regression tests also pass on this branch. PR1173's exact-head follow-up run `37854570747` has 128 native failures, identical by name to PR1172 run `37846910846` (zero added/removed), and its `seven_claims` job is green. Its overall CI remains red: active/browser and UI failures are reported separately; the UI selection-ring failure is not assumed to belong to a base owner without evidence.
+
+Full Switch captures remain outstanding for wall-paint shape/default ground behavior, post-Slam landing timing and network latency equivalence. The implementation and tests do not mark those measurement gaps as verified.
+
+### Same-batch CI compatibility follow-up
+
+The first PR1174 head `c5eb685f17a3cd077fed511afcee0f21e9479372`, run `37857488610`, passes both focused jobs, including 61 emitted/composed tests and all four Chromium/WebKit × desktop/touch browser cases. Runtime build revision is `ac4a8bfb83af0c67f28b56499bbaed85747950882db984bb2079c2b069145820`.
+
+A targeted scan of the existing Surge suite found five passing-on-parent tests whose fixtures still started armor on B release. These are this batch's compatibility regressions, not base failures. `movement-resources`, `movement-motion` (two cases), `armor-charger-batch` and `roller-freefall` now assert reserved eligibility on the wall and use the native ledge launch before shield assertions. The independent 45F test advances the game clock for its direct action updates. Existing charge, pose, timer, damage and Roller mode assertions remain. All five corrected cases pass and are added to the exact-head focused CI job. This follow-up changes tests/workflow/report only; production runtime and build bytes are unchanged. The inherited #208 ceiling-contact failure is outside this follow-up and remains with the base owner.
+
+The next exact-head run `37858171962` (`6f7fe087f9365bf0ff8021fea4ac6d6f5335938d`) completed the full native gate with 130 failures versus the parent's 128. The only two added failures were the production wall opt-out and 30/60/120 Hz wall-geometry comparisons: the new absolute armor-birth timestamp leaked into serialized actor state. Armor scheduling now stores this marker in a private WeakMap, retaining launch-tick protection without adding clock-dependent actor/adoption state. The original wall comparisons are unchanged and all 33 wall-motion, Surge-launch, partial-armor and timer-allocation tests pass locally. The full wall-motion suite is now also an explicit focused CI step. Exact-head CI results for this correction are recorded on PR1174 after publication.
+
+### 2026-10-08 PR1169: Roller contact, paint-age endpoints and Shooter corners
+
+**Reference and scope.** The parameter profile remains pinned to Splatoon 3 Ver. 11.3.0. Comparison conditions are ordinary Splat Roller body contact, horizontal/vertical flick projectiles and default Shooter spread markers, with no gear modifiers in the native fixtures. Issues [#839](https://github.com/rhgrive3/actions/issues/839), [#498](https://github.com/rhgrive3/actions/issues/498) and [#871](https://github.com/rhgrive3/actions/issues/871) provide the requirements. No new console capture or Nintendo pixel/curve measurement was made. Per the requested branch ownership, broader CI repairs from this work were withdrawn; the pending base publication owns that work.
+
+**Contact cadence (#839).** The build adapter and `runtime/roller.mjs` use the existing sourced `rollContactInterval = 0.4` seconds (24 fixed updates) for ordinary actor, Boss and special-object contact. Nullish ledger fallback preserves a valid first-contact timestamp of zero. The actor/Boss regressions produce accepted-contact sequences `[0,24,48,72,96]` at 30/60/120 Hz render schedules and retain the 125 damage value. A custom 12F interval controls both paths without delaying the first hit. These are native logic checks, not Switch timing measurements.
+
+**Paint endpoints (#498).** `runtime/roller-impact-paint.mjs` reads each emitted unit's own `UnitParam.PaintParam` and scales only paint width. Horizontal units remain at full width through 20F, vertical units through 30F, and both reach the recorded 0.6 multiplier at 50F. The installed native `_impact` path is now checked for all 13 horizontal and 5 vertical units at 30/60/120 Hz, sampling 19/20/49/50F or 29/30/49/50F while holding geometry fixed. Each sample makes one authoritative landing-paint call and leaves stored collision, size, velocity and damage fields unchanged. Existing controls cover each unit's near/far anchor, ghost and other-weapon exclusion, trail composition, and #402 collision-radius boundaries. The separate vertical intermediate-paint owner remains separate. The 49F assertion only bounds the current provisional transition: it does **not** establish the original game's interpolation curve or frame rounding. Linear interpolation remains explicitly provisional, so #498 is not complete and must not be closed on this evidence.
+
+**Shooter corners (#871).** Shooter-only build CSS places the four existing outer ticks at rectangular corners using the existing `--sp` spread signal. Inner dot/ring and the other weapon reticle paths remain present. The test DOM now implements the insertion operation used by the composed HUD, so the regression exercises that method without failing on an incomplete fixture. The diagonal 12px base and 0.707 spread factor preserve the project's approximate prior radial envelope; the bracket dimensions reuse project styling. These are not Nintendo-measured final pixel dimensions. Exact visual calibration and #871 acceptance remain open.
+
+**Verification.** The four focused files (`roller-contact-cadence`, `issue-498-roller-paint-age-endpoints`, `issue-871-shooter-reticle-corners`, `issue-402-roller-radius-checkpoints`) pass 18/18 tests under `node --experimental-vm-modules --test`. The production build and quick upstream/numeric-provenance gate also pass. Public upstream files remain unchanged. Full branch CI still depends on the base repair publication; this focused receipt does not certify the whole workflow, a rendered browser comparison, or Nintendo hardware parity.
+
+**Branch-owned CI fixture correction.** CI at `17b8bb2` exposed older #1169 Ink Vac test edits that incorrectly treated a fresh exhale press as a suction-held ZR. The fixture now carries ZR through suction for held-release tests and retains a separate fresh-press immediate-fire control, matching the existing runtime. Its absorption expectation also preserves the authenticated weapon cap on partial incoming damage. No Ink Vac runtime or base-branch repair was changed. The complete failing CI selection (`kit-ink-vac`, `kit-subs`, `issue-1008-1020-1037-1053`) passes 82/82 locally after this fixture correction. Combined with the 18 own-scope checks above, 100 focused tests pass; full workflow acceptance remains pending.
+
+### 2026-10-08 PR1169 follow-up: four claimed issues, measured Shooter corners and Range diagnosis
+
+**Ownership.** #960, #963, #964 and #953 have no assignee and no implementation PR; each had only the Local Batch 4/5 claim from 2026-10-07 06:25 UTC. After rechecking their threads and PR search, this branch posted takeover comments on all four. This makes the seven-issue scope #839/#498/#871/#960/#963/#964/#953. No changes to #1083, #401 or the pending base repair are included, and no merge is performed.
+
+**Map and pause (#960/#963/#964).** `reliability/map-toggle-adapter.mjs` gives keyboard Tab/M, standard-pad X, raw-pad View and touch one controller-owned map latch. Release keeps it open; another map press, Nintendo B, Escape or a successful jump closes it. Touch-owner handoff still closes a touch-origin map on deliberate unrelated keyboard/pad input, but an explicit map edge toggles only once. Navigation while dead, deferred jump selection and the gyro cursor read the same latch. The guide and native browser fixtures now use press-to-toggle semantics. The issue's explicit FIRE/SUB suppression supersedes the older #265 test that allowed held ZR to continue through the map; cancellation never becomes a release shot and fresh physical input rearms normally. Movement/navigation retain their existing owners.
+
+Offline pause now cancels the interrupted runner before freezing Match. Both pause and map cancel charge/sub holds as well as pending one-frame Charger releases; the native Splatling cancellation owner retains its existing reservation/refund rules. The touch callback runs before pointer neutralization, covering an open/close within one simulation tick. Native Charger, Splatling and SUB cases cover 30/60/120Hz hold → takeover → release → resume, then a deliberate fresh action. This is an INKWAVE UI lifecycle contract, not a claim about Switch HOME-menu behavior or a Nintendo frame constant.
+
+**Slam adoption (#953).** The existing life/sequence-validated adoption tuple gains an optional tenth field for the native Slam phase/time, exact pose/velocity, armor flag and gauge reservation. Eight/nine-field legacy tuples still decode without inventing missing authority. The host resumes the latest accepted live action, not an older interpolated presentation state; a later completed/dead sample cannot resurrect it. This preserves the existing INKWAVE trajectory, impact damage/paint and gauge law rather than asserting new Triple Splashdown timings. Native owner/host tests cover rise/hang/fall at 30/60/120Hz, repeated leave, malformed/wrong-life payloads and later completion. Each transfer follows the uninterrupted native trajectory/gauge and produces exactly one damage/paint impact. Legacy clients lacking the new state cannot recover an unknown old Slam; no cross-version guarantee is claimed.
+
+**Measured geometry (#871).** The prior provisional L-shaped square brackets are replaced by diagonal strokes at rectangular corners. Primary reference: Nintendo's [weapon-selection guide](https://www.nintendo.com/jp/ichikara/av5ja/index.html), explicitly dated 2024-04-01, and its original 1280×720 images [005](https://www.nintendo.com/jp/ichikara/av5ja/photo/01/005.jpg) and [021](https://www.nintendo.com/jp/ichikara/av5ja/photo/01/021.jpg). Original JPEG hashes, ROIs, threshold/connected-component method, centroids and pixel bounds are recorded in `patches/splatoon3/reference/shooter-reticle-reference.json`. Image 021 has corner core centroids near (601.19,303.05), (698.50,303.00), (601.21,351.35), (698.34,351.34): about 48.3px vertical span. Image 005 retains about 48px vertical span with a larger horizontal span. Measured diagonal stroke bounds support a 14px length and 3px width (roughly one-pixel JPEG/edge uncertainty). CSS uses ±24px vertically and ±(24px + existing projected spread) horizontally, with opposite ±45° strokes. The zero-spread square and horizontal expansion retain the existing accuracy/ShotGuide owners; inner feedback and other weapon reticles are unchanged. These are measurements of historical official material, not a new Ver.11.3.0 hardware capture or proof of current spread-angle calibration. A new Chromium/WebKit native HUD probe checks actual computed corner transforms at spread 0 → 20 → 0.
+
+**Recheck of #498.** All 13 horizontal and five vertical native emitted units retain verified 20F/30F start, 50F end and 0.6 width endpoints against the pinned 11.3.0 extraction. An additional source search found the original parameter research table still labels the `ChangeFrameWidthRate`/`ChangeWidthStartFrame` semantics unknown. No evidence established intermediate interpolation or frame rounding. The linear transition therefore remains provisional and #498 must remain open; endpoint tests are not represented as full acceptance.
+
+**Range CI.** Run 37839169267 hit the actual target for 36 damage in all three browsers but reported 11.271202242884296m. That equals sqrt(10² + 5.2²): `travel('gallery')` uses x=-6.8 while the 10m target is at x=-12. The verifier now enters via native travel, aligns with the target's actual firing-line column, synchronizes the character/root/rig and waits for real physics. A new 10m±0.05 setup check detects displacement before firing; the existing hit distance tolerance remains 10m±0.6. Projectile collision, damage, stage geometry and Range runtime are unchanged.
+
+**Local receipts.** 81/81 focused tests pass (new input and Slam cases, existing pause/cooldown controls and all prior Roller/Shooter checks). The adjacent source input/navigation selection passes 123 with two emitted-only cases skipped; all 75 tests in its actual minified build mode pass with zero skips. Production build `fd9920f952e7` succeeds, and the quick raw-upstream/numeric 11.3.0 gate passes. Locked `inkwave-public/` is unchanged. Exact-head GitHub browser CI remains the next gate; base-owned full-suite failures are deliberately not repaired here. Physical hardware equivalence remains unmeasured.
+
+**Own CI follow-up at 72bfcd8.** Run 37847528611 passed both network browser lanes (ordinary and 100ms ordered delay). Its validate failure was the prior 8/9-field adoption source assertion, now updated to require the backward-compatible 8/9/10-field decoder. Its UI failure was the hybrid touch-map fixture after temporary controller probes: the fixture had replaced `G.match` with a stub lacking its active controller, so MobileInput could target the last temporary controller. The browser fixture now retains production's active Match/controller relation. A new composed native regression constructs a temporary controller and proves touch map changes still reach only the active Match controller. The adjacent map tests now supply actual press edges, the shared latch API and complete standard-pad button arrays; the Joy-Con module fixture includes the new cancellation import. All 42 tests in this follow-up selection pass. These are fixture corrections and one added ownership regression, not changes to base runtime repairs. The prior Chromium job reached and passed the computed Shooter-corner probe before its later map fixture failure; complete Chromium/WebKit and Range receipts remain pending.
+
+**Broad-CI separation and final map corrections.** Run 37848542367 at `4fdc9b9` passed Range in Chromium desktop/phone and WebKit tablet, plus UI, network, motion-catalog, active-renderer and responsive browser shards. The input/HUD probe passed 74 checks across Chromium and WebKit, with content hash `fd9920f952e7`. Broad native validation reported 146 failures; its long-standing base failures remain outside this branch. Comparing failure names and stacks exposed two additional branch regressions: a new map callback dereferenced null input in aim-only controllers, and map cancellation erased an already-paid Slosher heave. The callback now tolerates absent input, and map cancellation preserves that admitted native Slosher windup while still cancelling pending release-triggered holds. The existing paid-heave regression passes. The 49-case map/aim selection now passes 46 with only its three previously recorded base failures (#858 reach and two #94 presentation/cache checks). The existing 8/9-field adoption packet compatibility was also exercised without granting missing Slam authority, and those two cases join the #953 regression file. These follow-up results do not claim that the pending base CI repair is published or that all native tests pass.
+
+
+### PR1175 reconciliation of PR1168 against current main (2026-10-09)
+
+- PR1168 source `eadc3fdf5a063bd492587ac8f7cfb9ba2cd083d9` was compared with its original base `69add0203d127b790f009e3502f7110212262066` and PR1175 `20d49d2d807a8d1d595b5278b039f33e005f2281`. The 52 independently staged paths remain in place; shared gameplay, network and diagnostic paths are three-way composed rather than replaced with the older source branch. PR1171–PR1174/PR1169 report appendices dropped by the final main merge are restored from `92fb642e1ce856abdfcea819a7b5c1f34ebde521`, alongside current main's exact-tree browser follow-up.
+- Charger minimum-range mapping retains the newer #961 linear first-legal coordinate of 8/60. The PR1168 report and source fixture's historical eased 1/6 coordinate are superseded by that current shared law; the sourced minimum/full distance endpoints are unchanged. Paint ownership also composes with the retained Charger wall-drop owner.
+- The new Dualies native launch helper composes with the existing one-sample Splatling speed owner. Time-coherent actor sweeps retain the shared per-form hurtbox and omit render-only smoothing. Roller depletion, dry-roll continuity, ink-floor charging and temporal/canonical paint ownership retain current unit paint, trail width, Slosher reset and projectile authority behavior.
+- Network Roller transport remains visual-only and preserves the current 24-field actor and 36-field projectile protocols, including tagged protection/adoption fields, Slosher authority and source-guided terminal events. Fixture adaptations exercise actual native start rejection, tagged recovery values, real Roller reset retirement and recycled disconnected ghosts; no admission gate is weakened.
+- Bomb detail diagnostics capture the actual native release event and mesh while preserving all current pixel/contact and frozen-state guards. Range positioning uses native spawn/reset to clear interpolation while retaining controller-owned aim and the exact 10-unit target-distance guard.
+- #416 partial Charger ZL cancellation now publishes an explicit one-shot event to the #737 resource owner before it clears charging, retaining independent 6F swim and 19F refill boundaries. Cancellation matches native enemy-ground and simultaneous newer Fire/sub admission; exact charge >= 1 full predicate keeps near-full partial values partial. Full production Actor/WeaponRunner regression verifies 30/60/120Hz, no paid-ink refund, no new keep/charge during recovery, and the exact refill boundary; native edge controls cover near-full, enemy paint changed this tick, Fire tie, and full keep/reset. Community timing provenance is unchanged; no new Nintendo hardware claim. This repair is delivered separately from the PR1168 source reconciliation.
+- Acceptance remains partial: these are source-composition and deterministic CPU/geometry regressions. Exact-head aggregate CI, emitted browser behavior and physical Splatoon 3 Ver.11.3.0 comparison remain separate requirements. Neither incomplete retail measurements nor unmeasured pose/frame values are reclassified as verified. No `inkwave-public/` source or PR401 change is included.
+
+- Separate PR1175 build reconciliation: the unchanged 64 KiB worker failure came from build-only source transformers being packaged as runtime assets. An explicit audited 64-transformer exclusion retains mixed runtime helpers, every static import, all 293 runtime precache entries, and existing hash/integrity/offline checks. Hint selection enforces the unchanged 131-core-request and 3.2 MiB initial-byte ceilings against final instrumented bytes without deleting runtime modules. Numeric status covers the final 551-field profile, retaining the current Shooter fields and PR1168 Roller additions. Pre-combination build/worker-contract checks pass; this is deterministic packaging validation, not native-browser performance proof.
+
+- PR1168 reconciliation receipts: source-feature suites 159/159, full network 176/176, and final complete affected fixture/roller-depletion group 57/57 pass with no skipped cases. All 402 composed native and non-test patch modules parse. These scoped local results do not replace the required final combined-branch aggregate/browser CI or physical reference comparison. The separately delivered #416/#737 Charger repair also passes its parent-owned 19-case focused run.
+
+### PR1175 final integration fixture ownership (2026-10-09)
+
+- #914's hold-to-fire control now accounts for the independently introduced #305 depleted Roller swing. A positive low tank admits and pays the native swing once; crossing the existing bot 3% fallback threshold drops Fire while the latched 21F swing still releases. The regression retains baseline/subject input equivalence, checks payment and absence of a second debit, and follows the real WeaponRunner emission through the fixture's paint/refill model until refill mode exits. The 17-case bot-refill suite passes, including existing Charger/Splatling negative controls and 30/60/120 Hz release checks. No bot or gameplay implementation was changed; this does not measure retail bot skill or browser paint rendering.
+- #528 integration: the later sub-ready owner cancelled every Super Jump state, suppressing PR1170's imported late-descent hold. Only the existing native humanoid window (>0.82 flight progress, not a Nintendo-measured frame) now permits staging. Flight releases cancel and never queue an airborne throw; actual landing releases retain the existing 5F humanoid preparation and separate 1F use-startup, debit ink once, and clear on death/reset/input cancellation. Native composed regressions cover 30/60/120 Hz fixed-clock cadence, short holds, early release, and malformed/early phases. No new retail/hardware parity or timing measurement is claimed. This production repair is delivered separately by the integration owner. Its 14-case focused run passes, including native main-only #218 and explicit R-over-ZR priority controls; two legacy simultaneous-input expectations were corrected and pass independently.
+- The portrait-map negative control now sends an actual fresh Tab pressed edge and ends the frame. Its former held-only input never opened the current map; comparing undefined with zero incorrectly admitted that setup. The fixture now requires the exact queued yaw/pitch and confirms removal of the subject hook before testing native offline/online and alive/dead controls. All five cases pass without a production change.
+- The built-weapons receipt is reconciled with an independent unminified six-adapter source measurement after the #514/#961 Charger range composition. The 15F/30F/45F sampled hit boundaries are 11.8/16.1/20.4; corresponding paint maxZ is 14.875/18.875/23.375, and full-charge paint maxZ is 26.875. Source and emitted rows match exactly. These are deterministic 0.1-unit hit-grid and 0.25-unit paint-cell receipts, not revised Nintendo measurements. The strict 1e-7 expected-value tolerance, source/build equivalence, native wire shape and duplicate-burst negative controls are retained; recorder fixtures initialize the current session-owned sequence state.
+
+### PR1175 native temporal paint authority (2026-10-09)
+
+- The native source-guided `InkFlightRuntime.paint` path used by Shooter, Dualies and Splatling previously credited only the immediate body, while later ray/drop cells grew turf without crediting their emitter. The build-only adapter now passes the originating Actor into the existing temporal paint owner, including native head, detached-drop and feet-trail kinds. The independent Shooter nearest-foot stamp also carries its actual owner. Existing immediate credit, remote/ghost exclusion, network metadata stripping and chronological ownership remain unchanged.
+- The fixed paint clock previously advanced during an offline pause even though gameplay time and projectiles were stopped. It now uses the same offline-pause predicate as gameplay time, consumes paused fixed-clock ticks without paint catch-up debt, and continues normal online-menu and attract simulation. Resume and zero-tick render behavior are verified at 30/60/120 Hz.
+- Production-composed native regressions fire all three real weapon paths and verify actual head/drop contacts, local ownership metadata, immediate-plus-late cell-area credit exactly once, special credit, remote/adopted ownership boundaries, and paused grid/order/growth/credit stability. These are deterministic native JavaScript/CPU observations against the existing Ver.11.3.0 reference scope, not a new retail timing or GPU-mask parity measurement; physical Splatoon 3 comparison remains unverified. Locked `inkwave-public/` is unchanged.
+
+### PR1175 composed regression follow-up (2026-10-09)
+
+- #189 maximum-speed Roller side bands now derive their radius from the actual #979 CPU/GLSL visible-edge envelope (`BAND_W + BAND_R + .03 + .018`), preserving the pinned 5.6 world-unit maximum width. The obsolete .69-radius inset overstated the width after wavy CPU/GPU parity was integrated. Native grid tests retain the existing bound, seams, floor-only projection and low-speed controls, and add 12 seeded phases in both axes. This is source/composition verification, not a new retail measurement or an inferred interior speed-width curve.
+- Older Charger keep and clothing-wire fixtures now exercise the composed 6F cancellation and accepted native Roller sidecar, retaining strict no-shot, no remote gameplay authority and independent clothing-mask assertions (28 checks pass). The #1050 dry trench control now contains an actual exposed low platform instead of overlapping it with the default full-width upper floor; real capsule/landing geometry and water-death controls remain active.
+- The subsequent emitter audit connects the previously bypassed Actor/weapons ownership adapter before their early returns and reconciles its final composed anchors. All identified scoring emissions in the active Roller release/trail, Slosher nearest/intermediate, Charger wall-drop, Suction/Curling and Blaster flight/timed/collision/detached paths now retain the emitting owner. Native death bursts preserve the attacker through the reliability adapter. Slam and Big Bubbler ignition retain the explicit no-special ledger; intentionally unowned Flow/Range paint is unchanged.
+- Follow-up receipts: the 106-case native authority/clock/canonical-order/kit/weapon/Slam selection and 55-case wall/Bubbler/Slosher-flight/Blaster-flight selection pass without skips. Nine added production-composed audit cases include real Charger and Blaster wall contacts, native falling paint, and an actual charged Big Bubbler ignition. Removing the follow-up production metadata repair causes those nine new cases to fail. These results verify local ownership/credit integration, not retail parameter parity or the separately reviewed GPU-mask contract.
+### PR1175 ancillary CPU/GPU paint identity repair (2026-10-09)
+
+The build overlay now gives authoritative ancillary ownership and GLSL rays/satellites/spatter/drips one exact bounded-integer hash, with the CPU-packed seed transported in the unused growth attribute. The earlier polynomial CPU/sine GPU mismatch is removed without changing native body paint, cosmetic tone, sourced calibration, or locked upstream. Exhaustive seed/float32 and native quad regressions accompany a mandatory exact-head source/emitted WebGL mask probe with reverted-sine negative controls. Local Chromium is socket-permission blocked, so browser acceptance remains pending CI; no retail Ver.11.3.0 shape/timing parity is inferred. Detailed scope and evidence are in `reports/pr1175-ancillary-paint-hash-2026-10-09.md`.
+### PR1175 network paint chronology integration (2026-10-09)
+
+- Full production composition reproduced two INKWAVE defects: paint from a client open for 120 seconds incorrectly outranked a causally later repaint by a 10-second-old client, and reversing two opposing paint deliveries produced different final turf after growth. Application uptime remains an owner-local playback/physics clock; a match-scoped Lamport paint stamp now advances on authenticated reception and each local emission. Concurrent stamps use a stable peer/sequence tie-break. The tagged wire record carries match identity and instant-growth policy; same-match recreation retains observed time and applied sender watermarks, while a new match starts a separate clock. Legacy-width rows remain readable below current causal stamps and do not provide the new protocol's cross-version causality guarantees.
+- Online splats no longer force-finish one another according to arrival order. Each stamp retains its fixed-step ancillary growth history, including an older stamp whose entire immediate body is already covered but whose peripheral ink remains visible. CPU ownership and the existing GPU cell-owner mask still reject older paint on newer-owned cells. Offline paint retains its previous completion behavior. Native victim-owned attacker-color death bursts and host-owned enemy Boss paint remain legal; sender team color is not treated as actor authority.
+- New native regressions cover 120/10-second and 1e9/0-second uptime differences, bidirectional observed repaint, queued-before-presentation causality, concurrent/reverse/fully-settled-late deliveries, 30/60/120 Hz render schedules, floor ancillary paint and wall drips, duplicate deadline application, recreation, wrong-match/malformed records, departed owners and instant paint. The original aa813d43 source fails the observed-repaint and arrival-order growth negative controls. These are deterministic INKWAVE network/paint integration checks against the existing Splatoon 3 Ver.11.3.0 comparison scope; no Nintendo networking algorithm, hardware frame timing or rendered pixel parity is inferred from them.
+
+### PR1175 temporal scoring boundary correction (2026-10-09)
+
+- On combined head `061f2b95`, the temporal mask credited wall and occluded-floor cells even though the composed native body scorer correctly excluded them. A native wall-only impact accumulated 11.75 points and a fully occluded floor impact 2.25 points over their first 120 growth ticks, with no eligible Turf coverage. Ancillary scoring now shares the body's `face.turf && !dead` gate. Grid ownership and chronological records still grow on excluded surfaces, and a separate mutation flag advances the paint version even when no points are awarded.
+- Native regressions cover wall-only and initialized occlusion masks through the complete body/drip lifetime, verify zero turf/special credit, preserve positive actual grid/order mutation and cache invalidation, and reject further version changes after growth finishes. Charger/Blaster wall-contact checks now compare credit to newly claimed eligible floor area rather than treating wall growth as scorable.
+- With the shared deterministic CPU/GPU hash, the three sampled native Slosher volleys produce no fresh ancillary cells on the 0.25-unit grid after overlapping bodies. The owner-metadata checks remain strict and zero late credit is checked against the actual grid delta. A separate real Slosher release/flight scenario at the supported 0.125-unit grid interleaves native projectile and paint clocks, produces positive late floor coverage, and checks exact per-step cell-area credit. This corrects a coarse-sampling fixture assumption without changing weapon parameters or claiming additional retail/GPU parity.
+- Counter-boundary follow-up: a valid remote clock at `Number.MAX_SAFE_INTEGER - 1` could formerly make the next local clock unreceivable and the following emission throw. Paint clocks now retain numeric encoding through the safe-integer boundary and carry larger values as canonical decimal strings, using exact comparison/increment. Native JSON replay checks both that boundary and a 50-digit carry, successful subsequent repaints, unchanged concurrent peer tie-breaking, and rejection of unsafe numeric/ambiguous string encodings. This does not clamp an accepted clock or impose an arrival-dependent reset, and ordinary wire values remain numeric.
+
+
+### PR1175 complete validation scheduling (2026-10-09)
+
+The combined canonical diagnostic now covers more than 3,500 tests and required about 23 minutes locally before the remaining network, quality, reference and built-weapon gates. The validate job deadline is extended from 30 to 45 minutes so the complete enlarged sequence can finish. No test is removed, skipped or made conditional by this change, and no gameplay, visual, numeric, worker, startup or performance acceptance threshold changes.

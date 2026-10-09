@@ -42,7 +42,7 @@ export function awardFlow(state, action, value, cfg, capProgress = true, bonusFp
   state.active = true; state.remaining = cfg.duration; state.score = 0; return true;
 }
 // Shared across repeated installs so an authoritative Match transition is awarded once.
-const wipeoutSequences = new WeakMap();
+const wipeoutSequences = new WeakMap(), confirmedWipes = new WeakMap();
 export function awardWipeoutFlow(flow, cfg) {
   if (flow.active) return;
   const gain = (cfg.progress?.wipeoutBonus || 0) * cfg.threshold / cfg.progress?.referenceThreshold;
@@ -167,8 +167,8 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     if (match && phase === 'intro') wipeoutSequences.delete(match);
   });
   on('team:wipeout', ({ match, team, sequence } = {}) => {
-    // Client roster inference is not an authoritative online team event.
-    // Delay this new bonus online until confirmed ownership/timeline transport exists.
+    // Proxy roster inference remains offline-only. Online awards arrive through
+    // the host-confirmed owner-history transport below.
     if (G.netm) return;
     if (!match || match !== G.match || match.mode !== 'turf' || match.attract ||
         match.state !== 'playing' || match.paused || !(match.time > 0) ||
@@ -182,6 +182,15 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     // The verified bonus is team-wide, including a teammate waiting to respawn.
     // It is not a splat/assist: do not activate or extend Flow or paint a burst.
     for (const actor of teammates) if (!(actor.isBot && cfg.bots === false)) awardWipeoutFlow(state(actor), cfg);
+  });
+  on('flow:wipeout-confirmed', ({ netmatch, match, team, key } = {}) => {
+    if (!netmatch || netmatch !== G.netm || netmatch.match !== match || G.match !== match ||
+        match.mode !== 'turf' || match.attract || match.state !== 'playing' || match.paused || !(match.time > 0) ||
+        (team !== 0 && team !== 1) || typeof key !== 'string') return;
+    const seen = confirmedWipes.get(match) || new Set();
+    if (seen.has(key)) return;
+    seen.add(key); confirmedWipes.set(match, seen);
+    for (const actor of match.actors) if (actor.team === 1-team && !(actor.isBot && cfg.bots === false)) awardWipeoutFlow(state(actor), cfg);
   });
   on('turf', ({ actor, area }) => award(actor, 'turf', area));
   on('assist:mark', ({ helper, victim, source, accepted, victimLife, helperLife } = {}) => {

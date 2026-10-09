@@ -31,7 +31,11 @@ test('#373 hold-to-roll transition, dash, lock, reset and dry admission retain n
  const f=await setup(),{a,r}=f;a.intent.move.set(0,0,1);r.update(dt,{fire:true,firePressed:true});for(let i=0;i<42;i++)r.update(dt,{fire:true});assert.ok(r.rolling);near(r.moveSpeed(),a.weapon.rollBaseSpeed);
  r.rollT=2;near(r.moveSpeed(),a.weapon.rollSpeed);r.update(dt,{fire:false});assert.equal(r.rolling,false);r.reset();near(r.moveSpeed(),f.PLAYER.runSpeed);
  a.ink=0;r.update(dt,{fire:true,firePressed:true});assert.equal(r.flick,-1);near(r.moveSpeed(),f.PLAYER.runSpeed);r.reset();r.flick=.1;r.lockT=.1;near(r.moveSpeed(),0);
- a.setWeapon('shooter');r.reset();r.firingT=.2;near(r.moveSpeed(),a.weapon.moveSpeedFiring);
+ a.setWeapon('shooter');r.reset();r.firingT=.2;near(r.moveSpeed(),f.PLAYER.runSpeed);
+ // Current Shooter movement is owned by actual shot emission, not presentation firingT.
+ a.ink=100;a.intent.fire=true;const projectiles=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=projectiles;
+ for(let i=0;i<8&&projectiles.list.length===0;i++)f.tick(a);
+ assert.ok(projectiles.list.length>0);near(r.moveSpeed(),a.weapon.moveSpeedFiring);
 });
 test('#373 fixed 60Hz traces are equal at 30/60/120 render schedules',async()=>{
  const traces=[];

@@ -18,6 +18,8 @@ export function adaptPause(rel, code) {
     code = replaceOnce(code, '  padValue(i) { return this.pad && this.pad.buttons[i] ? this.pad.buttons[i].value : 0; }',
       '  padValue(i) { return !this.padMenuBlocked.has(i) && this.pad && this.pad.buttons[i] ? this.pad.buttons[i].value : 0; }', 'mask menu-owned pad values');
   } else if (rel === 'src/main.js') {
+    code = replaceOnce(code, '    this.match.paused = true;',
+      '    this.match.controller?.cancelForMenuTakeover?.();\n    this.match.paused = true;', 'offline pause cancels interrupted actions before simulation freezes');
     code = replaceOnce(code, '      if (this.match.controller) this.match.controller.enabled = false;',
       '      if (this.match.controller) { this.match.controller.cancelForMenuTakeover?.(); this.match.controller.menuBlocked = true; this.match.controller.enabled = false; }', 'online pause input ownership');
     code = replaceOnce(code, '    if (this.match.controller) this.match.controller.enabled = true;',

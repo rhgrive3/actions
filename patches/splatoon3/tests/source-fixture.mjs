@@ -1,5 +1,6 @@
 // Actual public modules plus the build adapter. No renderer, fake game model,
 // or second gameplay engine is used. Tests stub only display/audio/collisions.
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -7,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptSpecialWater } from '../../reliability/special-water-adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
@@ -15,9 +17,12 @@ const BUILT = process.env.INKWAVE_BUILT_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 const adaptProduction = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
+// Super Jump admission calls the same native water predicate as ordinary and
+// special movement. Include its real production adapter in constrained boots.
+export const adaptConstrainedSource = (rel, code) => adaptSpecialWater(rel, adaptSource(rel, code));
 export async function fixture(options = {}) {
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
-  const { adapt = adaptSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
+  const { adapt = adaptConstrainedSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
     fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false, vmPerformance = performance } = typeof options === 'string' ? {} : options;
   const context = vm.createContext({ console, performance: vmPerformance, URL, URLSearchParams, TextEncoder, TextDecoder,
     setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
@@ -118,4 +123,21 @@ export async function fixture(options = {}) {
   }
   function restoreRandom() { setRandom(originalRandom); }
   return { ...api, profile, make, tick, shots, context, setRandom, restoreRandom };
+}
+
+// Exercise the installed Actor -> WeaponRunner -> Projectiles admission path.
+// Movement/resource tests must observe a real emitted round, not manufacture
+// a visual firing pose or call the projectile hook outside weapon admission.
+export function emitMainShot(f, actor) {
+  assert.ok(f.G.projectiles instanceof f.Projectiles, 'native emission requires realProjectiles');
+  const before = f.G.projectiles.list.length;
+  actor.intent.fire = true;
+  let frames = 0;
+  while (f.G.projectiles.list.length === before && frames < 120) {
+    f.tick(actor);
+    frames++;
+  }
+  actor.intent.fire = false;
+  assert.equal(f.G.projectiles.list.length, before + 1, 'native admission emits exactly one first round');
+  return frames;
 }

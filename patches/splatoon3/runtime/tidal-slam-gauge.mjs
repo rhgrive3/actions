@@ -160,3 +160,16 @@ export function finishTidalSlamGauge(actor) {
 export function clearTidalSlamGaugeFinish(actor) {
   actor.s3TidalSlamGaugeFinish = null;
 }
+
+// #573. Pinned 11.3.0 WeaponSpPogo.spl__WeaponSpPogoParam:
+// Rise_NoDamageStartFrame = 50 (not the fist BulletParam's 55F).
+// Gauge elapsed is the existing authoritative action clock. Landing completion
+// is owned by the existing native body/gauge state, not a detached 0.3s timer.
+// The exact retail post-landing duration remains a capture gap (wiki says 30F?).
+export const SLAM_NO_DAMAGE_FRAME = 50;
+export function slamProtected(actor) {
+  if (!actor?.alive) return false;
+  const s = actor.specialActive?.id === 'slam' ? actor.specialActive : actor.s3TidalSlamGaugeFinish;
+  return s?.id === 'slam' && Number.isFinite(s.gaugeElapsed) &&
+    s.gaugeElapsed * 60 + 1e-8 >= SLAM_NO_DAMAGE_FRAME;
+}

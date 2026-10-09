@@ -132,16 +132,28 @@ for (const run of RUNS) {
     // a hit on the 10 m gallery target from its stand mark
     out.checks.hit = await page.evaluate(async () => {
       const G = window.__G, g = window.__inkwave, s = G.match.range, a = G.local;
+      // Admit through native travel, then use the 10 m column's firing mark.
+      // The gallery travel point is x=-6.8 (the 20 m column); aiming diagonally
+      // from there makes this shot sqrt(10^2 + 5.2^2) = 11.2712 m.
       s.travel('gallery');
-      // Let the travel and camera transition settle BEFORE positioning the
-      // projectile probe. Otherwise a pending teleport/match tick restores the
-      // spawn location and the real rounds miss the gallery lane altogether.
-      await new Promise((r) => setTimeout(r, 2500));
       const target = s.targets.find((x) => x.rangeTarget?.dist === 10);
-      if (!target) throw new Error('10 m gallery target is missing');
-      a.pos.set(target.pos.x, 0.05, target.pos.z - target.rangeTarget.dist);
-      a.vel.set(0, 0, 0); a.yaw = a.aimYaw = 0; a.aimPitch = -0.02;
-      g.rig.yaw = 0; g.rig.pitch = -0.02; g.rig.follow(a, true);
+      if (!target) throw new Error('Missing actual 10 m gallery target');
+      // Native spawn/reset also resets fixed-clock interpolation before firing.
+      a.spawnAt(a.pos.clone().set(target.pos.x, 0.05, target.pos.z - target.rangeTarget.dist), 0);
+      a.intent.move.set(0, 0, 0);
+      a.character.root.position.copy(a.pos);
+      a.netTp = (a.netTp || 0) + 1;
+      g.rig.follow(a, true);
+      await new Promise((r) => setTimeout(r, 2500));
+      const standDistance = Math.hypot(target.pos.x - a.pos.x, target.pos.z - a.pos.z);
+      if (Math.abs(standDistance - 10) > 0.05) throw new Error('10 m firing mark displaced: ' + JSON.stringify({ actor:a.pos.toArray(), target:target.pos.toArray(), standDistance }));
+      // Aim through the controller, preserving real spread and ballistics.
+      const yaw = Math.atan2(target.pos.x - a.pos.x, target.pos.z - a.pos.z);
+      g.rig.yaw = yaw; g.rig.pitch = -0.02;
+      a.yaw = a.aimYaw = yaw;
+      // PlayerController reads its *rig* each frame (player.js), not a
+      // `controller.yaw` field. Aim through that real input owner.
+      if (s.m.controller?.rig) { s.m.controller.rig.yaw = yaw; s.m.controller.rig.pitch = -0.02; }
       const births = [];
       const push = G.projectiles?._push;
       if (push) G.projectiles._push = function (p) {

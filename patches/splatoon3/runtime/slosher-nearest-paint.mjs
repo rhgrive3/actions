@@ -57,7 +57,7 @@ export function paintSlosherNearest(game, actor, source, scale = 1, sequence = 1
   if (len > EPS) dir.multiplyScalar(1 / len); else dir.set(0, 0, 1);
 
   const area = game.paint.splat(point, spec.width, actor.team, {
-    kind: 'drop',
+    kind: 'drop', claimOwner: actor,
     seed: seedFor(actor, sequence),
     stretch: dir,
     stretchAmt: Math.max(0, spec.depthScale - 1),

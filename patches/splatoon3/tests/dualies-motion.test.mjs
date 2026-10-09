@@ -387,3 +387,142 @@ test('admission managed Slam relinquishment allows a fresh Runner roll before le
     assert.ok(r.ch.ikErr.slice(0, 2).every(v => v < .001));
   } finally { r.close(); }
 });
+
+test('#1156 NetMatch turret state follows accepted snapshots and clears on interruptions', async () => {
+  const api = await production(), owner = rig(api), remote = rig(api), sent = [];
+  api.G.level.spawnPads = [{ y: 0 }, { y: 0 }];
+  owner.a.nid = remote.a.nid = 1156;
+  owner.a.owner = remote.a.owner = 'owner';
+  const sender = new api.NetMatch({ myId: 'owner', isHost: false, tr: { broadcast: message => sent.push(message) } }, {});
+  const receiver = new api.NetMatch({ myId: 'viewer', isHost: false, hostId: 'owner', _members: new Set(), tr: { broadcast() {} } }, {});
+  sender.bind({ actors: [owner.a] }); receiver.bind({ actors: [remote.a] });
+  let remoteWeaponTicks = 0;
+  const remoteWeaponUpdate = remote.a.weaponRunner.update;
+  remote.a.weaponRunner.update = function (...args) { remoteWeaponTicks++; return remoteWeaponUpdate.apply(this, args); };
+  try {
+    owner.roll();
+    for (let i = 0; i < 90; i++) owner.step(1 / 60, { fire: true });
+    assert.equal(owner.a.weaponRunner.s3Turret, true, 'owner has sustained native post-roll turret');
+    sender.update(1 / 20);
+    assert.equal(sent.length, 1, 'production sender emits at 20 Hz');
+    const packet = sent[0];
+    assert.ok(packet.a[0][10] & (1 << 27), 'owner packs the bounded turret flag');
+    receiver.debug = true;
+    receiver.onMessage('owner', packet);
+    receiver.onMessage('impostor', packet);
+    const peer = receiver._peer('owner');
+    assert.equal(remote.a.net.buf.length, 1, 'native owner filtering rejects another sender');
+    receiver.update(1 / 60);
+    assert.ok(peer.tr < packet.ts, 'remote clock honors the configured playback delay');
+    assert.equal(remote.a.net.cur.t, packet.ts);
+    assert.equal(remote.a.net.dbg[0], 3, 'remote sample uses the existing pre-buffer playback mode');
+    remote.visual(0);
+    const before = posed(remote);
+    receiver.applyRemote(remote.a, 1 / 60);
+    const after = posed(remote);
+    assert.equal(remote.a.weaponRunner.s3Turret, false, 'remote gameplay runner stays untouched');
+    assert.equal(remote.ch.s3RemoteTurretPose, true, 'accepted sample feeds the Character-only pose view');
+    assert.equal(api.dualiesMotionSnapshot(remote.ch).phase, 'plant');
+    assert.notDeepEqual(after.geometry, before.geometry, 'remote rendered geometry enters the native turret pose');
+    assert.equal(remoteWeaponTicks, 0, 'remote proxy never runs authoritative weapon logic');
+    for (const hz of [30, 60, 120]) {
+      peer.tr = packet.ts;
+      receiver._sample(remote.a, peer.tr, 1 / hz);
+      receiver.applyRemote(remote.a, 1 / hz);
+      assert.equal(remote.a.weaponRunner.s3Turret, false, `${hz} Hz render leaves remote gameplay state untouched`);
+      assert.equal(remote.ch.s3RemoteTurretPose, true, `${hz} Hz render keeps the sampled pose state`);
+      assert.equal(api.dualiesMotionSnapshot(remote.ch).phase, 'plant');
+    }
+    assert.equal(remoteWeaponTicks, 0);
+
+    // Duplicate and late snapshots cannot move the accepted per-owner cursor backward.
+    receiver.onMessage('owner', packet);
+    receiver.onMessage('owner', { ...packet, ts: packet.ts - 0.05 });
+    assert.equal(remote.a.net.buf.length, 1);
+    assert.equal(peer.lastTs, packet.ts);
+
+    // Death clears the stance. A delayed pre-death snapshot can be reaccepted after the
+    // native death path empties its buffer, but must not restore a dead or pending proxy.
+    receiver._remoteSplat(remote.a, null, 'test');
+    assert.equal(remote.ch.s3RemoteTurretPose, false);
+    receiver._tick('owner', packet);
+    peer.tr = packet.ts;
+    receiver._sample(remote.a, peer.tr, 1 / 60);
+    receiver.applyRemote(remote.a, 1 / 60);
+    assert.equal(remote.ch.s3RemoteTurretPose, false, 'late turret data cannot revive a dead proxy');
+    receiver._remoteRespawn(remote.a);
+    receiver.applyRemote(remote.a, 1 / 60);
+    assert.equal(remote.ch.s3RemoteTurretPose, false, 'old-life turret data stays clear while respawn is pending');
+
+    owner.a.weaponRunner.reset(); owner.a.netTp = 1;
+    sender.update(1 / 20);
+    assert.equal(sent.length, 2);
+    const respawn = sent[1];
+    assert.equal(respawn.a[0][10] & (1 << 27), 0, 'post-interrupt owner snapshot clears the flag');
+    receiver.onMessage('owner', respawn);
+    peer.tr = respawn.ts;
+    receiver._sample(remote.a, peer.tr, 1 / 60);
+    receiver.applyRemote(remote.a, 1 / 60);
+    assert.equal(remote.a.alive, true);
+    assert.equal(remote.ch.s3RemoteTurretPose, false);
+
+    // A pre-upgrade sender has no turret bit and clears the pose on the same
+    // accepted playback timeline, while retaining the old tuple shape.
+    const legacy = { ...respawn, ts: respawn.ts + 0.025,
+      a: respawn.a.map(sample => { const copy = sample.slice(); copy[10] &= ~(1 << 27); return copy; }) };
+    receiver.onMessage('owner', legacy);
+    peer.tr = legacy.ts;
+    receiver._sample(remote.a, peer.tr, 1 / 60);
+    receiver.applyRemote(remote.a, 1 / 60);
+    assert.equal(remote.ch.s3RemoteTurretPose, false, 'older protocol flags default to clear');
+    assert.equal(legacy.a[0].length, respawn.a[0].length, 'snapshot tuple length remains backward compatible');
+
+    // Old snapshots stay stale after the new-life sample. Re-enter the planted
+    // pose, then verify a remote weapon switch retires it immediately.
+    receiver.onMessage('owner', packet);
+    owner.roll();
+    for (let i = 0; i < 90; i++) owner.step(1 / 60, { fire: true });
+    sender.update(1 / 20);
+    const turretAgain = sent[2];
+    receiver.onMessage('owner', turretAgain);
+    peer.tr = turretAgain.ts;
+    receiver._sample(remote.a, peer.tr, 1 / 60);
+    receiver.applyRemote(remote.a, 1 / 60);
+
+    owner.a.setWeapon('shooter'); remote.a.setWeapon('shooter');
+    assert.equal(remote.ch.s3RemoteTurretPose, false);
+    remote.a.setWeapon('dualies');
+    receiver.applyRemote(remote.a, 1 / 60);
+    assert.equal(remote.ch.s3RemoteTurretPose, false, 'switching back cannot revive the prior accepted turret sample');
+    remote.a.setWeapon('shooter');
+    sender.update(1 / 20);
+    const switched = sent[3];
+    assert.equal(switched.a[0][10] & (1 << 27), 0);
+    receiver.onMessage('owner', switched);
+    peer.tr = switched.ts;
+    receiver._sample(remote.a, peer.tr, 1 / 60);
+    receiver.applyRemote(remote.a, 1 / 60);
+    assert.equal(remote.ch.s3RemoteTurretPose, false);
+
+    // A fresh native roll proves ownership handoff resets the copied pose state.
+    owner.a.setWeapon('dualies'); remote.a.setWeapon('dualies');
+    owner.roll();
+    for (let i = 0; i < 90; i++) owner.step(1 / 60, { fire: true });
+    sender.update(1 / 20);
+    const turretHandoff = sent[4];
+    receiver.onMessage('owner', turretHandoff);
+    peer.tr = turretHandoff.ts;
+    receiver._sample(remote.a, peer.tr, 1 / 60);
+    receiver.applyRemote(remote.a, 1 / 60);
+    assert.equal(remote.ch.s3RemoteTurretPose, true);
+    receiver.s.hostId = 'new-owner';
+    receiver.onLeave('owner', true);
+    assert.equal(remote.a.remote, true);
+    assert.equal(remote.ch.s3RemoteTurretPose, false, 'remote owner change retires the old sender pose');
+    receiver.s.hostId = 'viewer';
+    receiver.onLeave('new-owner', true);
+    assert.equal(remote.a.remote, false);
+    assert.equal(remote.ch.s3RemoteTurretPose, false, 'ownership adoption resets the copied stance');
+    assert.equal(remoteWeaponTicks, 0);
+  } finally { receiver.dispose(); sender.dispose(); owner.close(); remote.close(); }
+});

@@ -16,10 +16,16 @@ test('#607/#677 actual Shooter and Blaster have azimuth-independent scalar devia
  const {f,ps}=await setup();
  for(const [kind,grounded,deg] of [['shooter',true,4.86],['shooter',false,11.66],['blaster',false,10]]){
   const a=f.make(kind);a.grounded=grounded;a.aimPoint.set(0,1.05,100);a.aimDir.set(0,0,1);
-  for(const radius of [.2,.6,1])for(const azimuth of [0,.125,.25,.375,.5,.75]){
-   const draws=[radius*radius,azimuth];f.setRandom(()=>draws.length?draws.shift():.5);
+  // Shooter accuracy chooses its outer/inner envelope before the native two-
+  // draw scalar cone. Keep that probability draw separate from radius/azimuth.
+  const envelopes=kind==='shooter'?[[0,1],[.999999,a.weapon.spreadFirst??.45]]:[[null,1]];
+  for(const [probability,scale] of envelopes)for(const radius of [.2,.6,1])for(const azimuth of [0,.125,.25,.375,.5,.75]){
+   const draws=[...(probability===null?[]:[probability]),radius*radius,azimuth];let calls=0;
+   f.setRandom(()=>{calls++;return draws.length?draws.shift():.5;});
    ps[kind==='shooter'?'fireShooter':'fireBlaster'](a,a.weapon,deg);const p=ps.list.at(-1),dir=p.vel.clone().normalize();
-   near(Math.acos(Math.min(1,Math.max(-1,dir.z)))*180/Math.PI,deg*radius);
+   near(Math.acos(Math.min(1,Math.max(-1,dir.z)))*180/Math.PI,deg*scale*radius);
+   assert.equal(draws.length,0,'the native cone consumes both scalar draws');
+   assert.equal(calls,kind==='shooter'?5:3,'native seed and Shooter visual-size draws follow the accuracy/cone draws');
    near(p.vel.length(),a.weapon.projSpeed);assert.equal(p.wid,kind);ps.clear();
   }
  }

@@ -153,6 +153,7 @@ function paintWallDrop(p, track, radius) {
   const area = api.G.paint.splat(track.pos, radius, p.team, {
     seed: hashUnit(p.seed, track.salt * 4096 + track.paintIndex++),
     kind: 'drop',
+    claimOwner: p.owner,
   });
   if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   return Number.isFinite(area) ? area : 0;
