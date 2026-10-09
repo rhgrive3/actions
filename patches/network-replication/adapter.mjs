@@ -17,8 +17,11 @@ function replaceAllExpected(code, before, after, expected, label) {
   return code.split(before).join(after);
 }
 export function networkIdentity() {
+  // S3 runtime dependencies are already tracked under canonical patch/runtime/
+  // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
+  // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'dodge-clock-adapter.mjs', '../splatoon3/runtime/remote-dodge-clock.mjs', '../splatoon3/runtime/dualies-motion.mjs']
+    'dodge-clock-adapter.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {

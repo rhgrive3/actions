@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { networkIdentity } from '../../patches/network-replication/adapter.mjs';
 import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../lib/inkwave-build-only-modules.mjs';
 import { World } from '../../patches/loading-cache/tests/worker-fixture.mjs';
@@ -35,6 +38,45 @@ test('excluded modules have audited build-only exports; mixed runtime adapters r
 });
 
 const site = process.env.INKWAVE_BUILT_SITE && path.resolve(process.env.INKWAVE_BUILT_SITE);
+test('network identity contains only exact paths owned by its namespace', () => {
+  const files = networkIdentity();
+  assert(Object.hasOwn(files, 'dodge-clock-adapter.mjs'));
+  for (const [file, expected] of Object.entries(files)) {
+    assert(!path.posix.isAbsolute(file) && !file.split('/').some(part => part === '..' || part === '.'), file);
+    const bytes = fs.readFileSync(new URL('patches/network-replication/' + file, root));
+    assert.equal(expected, crypto.createHash('sha256').update(bytes).digest('hex'), file);
+  }
+});
+
+test('emitted identity binds every input to one canonical tracked path including S3 dodge dependencies', { skip: !site }, () => {
+  const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
+  const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+  const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3',
+    'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability',
+    'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication',
+    'practice-range': 'patches/practice-range', 'loading-cache': 'patches/loading-cache', 'build-script': 'scripts' };
+  const tracked = new Map(execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], { cwd: fileURLToPath(root), encoding: 'utf8' })
+    .split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
+  const mapped = [];
+  for (const [key, expected] of Object.entries(identity.files)) {
+    assert(!key.split('/').some(part => part === '..' || part === '.' || part === ''), key);
+    const slash = key.indexOf('/'), namespace = key.slice(0, slash);
+    assert(Object.hasOwn(roots, namespace), key);
+    const file = roots[namespace] + '/' + key.slice(slash + 1);
+    assert(tracked.has(file), 'untracked build input: ' + file);
+    assert.equal(expected, hash(fs.readFileSync(new URL(file, root))), key);
+    mapped.push(file);
+  }
+  assert.equal(new Set(mapped).size, mapped.length, 'each source has one canonical identity key');
+  const blobs = execFileSync('git', ['hash-object', '--', ...mapped], { cwd: fileURLToPath(root), encoding: 'utf8' }).trim().split('\n');
+  mapped.forEach((file, i) => assert.equal(blobs[i], tracked.get(file), 'exact commit input: ' + file));
+  for (const file of ['remote-dodge-clock.mjs', 'dualies-motion.mjs']) {
+    const key = 'patch/runtime/' + file;
+    assert.equal(identity.files[key], hash(fs.readFileSync(new URL('patches/splatoon3/runtime/' + file, root))), key);
+  }
+  assert.equal(identity.inputHash, hash(JSON.stringify(identity.files)));
+});
+
 test('emitted worker keeps the complete runtime graph, installs, and replays verified offline bytes', { skip: !site }, async () => {
   const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
   const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
