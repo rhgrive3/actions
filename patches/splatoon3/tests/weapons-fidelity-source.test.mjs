@@ -19,6 +19,8 @@ test('weapons fidelity composes through the real gameplay adapter order', () => 
   assert.match(out, /applyFidelitySlosherSplash/);
   assert.match(out, /e\.team !== p\.team\) this\._sloshSplash\(p, _v, e\)/, 'an ally-consumed glob must not splash enemies behind the blocker');
   assert.match(out, /WEAPONS_FIDELITY_EPSILON/);
+  assert.match(out, /configureFidelityInkFlight\(this, \{ profileFor, launchSpeed, correctInkAim, referenceReach \}\)/,
+    'native InkFlight helpers are injected once by the real Projectiles constructor');
 });
 
 test('critical native anchor changes fail closed through the full adapter', () => {
@@ -29,6 +31,7 @@ test('critical native anchor changes fail closed through the full adapter', () =
       if (p.drag) p.vel.multiplyScalar(1 - p.drag * dt * (p.age > p.straight ? 1 : 0));
       p.pos.addScaledVector(p.vel, dt);`,
     '      // actors\n      for (const e of G.actors) {',
+    '  constructor(scene) {\n    this.scene = scene;',
     '        if (e.team === p.team || !e.alive) continue;\n        const h = e.form === \'squid\' ? PLAYER.squidHeight : PLAYER.height;',
     '      if (!dead && p.age > p.life) {',
   ]) {

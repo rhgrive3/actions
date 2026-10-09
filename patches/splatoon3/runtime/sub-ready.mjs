@@ -1,4 +1,4 @@
-import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
+import { canStageSuperJumpSub, chargerPostShotBlocksSub } from './weapon-gates.mjs';
 export function subThrowSpec(a, base) { return { ...base, throwSpeed: base.throwSpeed * (a.s3?.modifiers?.subPower ?? 1) }; }
 export function subInkSpec(a, base) { return { ...base, inkCost: base.inkCost * (a.s3?.modifiers?.inkSaverSub ?? 1) }; }
 export function selectedSubReadyCost(a, SUB) {
@@ -22,12 +22,12 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
  const actorUpdate=Actor.prototype.update,start=Actor.prototype._startSpecial;
  Actor.prototype.update=function(dt,...args){
   const r=this.weaponRunner;
-  if(!this.alive||this.specialActive||this.superJumpState){r.s3ChargerCancelSubRemaining=0;cancel(r);}
+  if(!this.alive||this.specialActive||this.superJumpState&&!canStageSuperJumpSub(this)){r.s3ChargerCancelSubRemaining=0;cancel(r);}
   else {
-   if(!r.s3SubReady&&this.intent.sub&&this.form==='squid')r.s3SubFromSquid=true;
+   if(!this.superJumpState&&!r.s3SubReady&&this.intent.sub&&this.form==='squid')r.s3SubFromSquid=true;
    if(r.s3SubReady&&this._prevIntent.sub&&!this.intent.sub){
     if(this.intent.squid)cancel(r);
-    else r.s3SubReady.pending=true;
+    else if(!this.superJumpState)r.s3SubReady.pending=true;
    }
   }
   return actorUpdate.call(this,dt,...args);
@@ -35,7 +35,15 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
  Actor.prototype._startSpecial=function(...args){this.weaponRunner.s3ChargerCancelSubRemaining=0;cancel(this.weaponRunner);return start.apply(this,args);};
  wr.update=function(dt,input){
   const a=this.a;
-  if(!a.alive||a.specialActive||a.superJumpState){this.s3ChargerCancelSubRemaining=0;cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});}
+  if(!a.alive||a.specialActive||a.superJumpState&&!canStageSuperJumpSub(a)){this.s3ChargerCancelSubRemaining=0;cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});}
+  if(a.superJumpState){
+   // #528 may prepare/aim in humanoid descent, never release a projectile.
+   // Evaluate after native trajectory advancement: a release on the actual
+   // landing tick reaches the unchanged preparation + 1F use-startup below.
+   // Earlier releases cancel rather than becoming deferred airborne throws.
+   if(!input.sub){cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});}
+   if(input.subReleased)input={...input,subReleased:false};
+  }
   this.s3ChargerCancelSubRemaining=Math.max(0,(this.s3ChargerCancelSubRemaining||0)-Math.max(0,dt));
   const splatlingSub=this.s3StepSplatlingSubInterrupt?.(dt,input);
   if(splatlingSub==='wait'){

@@ -81,14 +81,15 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   owner.emit('actor:jump', { actor: local });
   ownerStep({ owner, local }, dt, { fire: true, firePressed: true });
   const airborne = snapshot(sender);
-  assert.equal(airborne.a[0].length, 24, 'the existing packed actor row shape is unchanged');
+  assert.equal(airborne.a[0].length, 24, 'the existing current actor row shape is unchanged');
   assert.ok(airborne.a[0][10] & FLICK, 'the existing flick bit is retained');
   assert.ok(airborne.a[0][10] & FLICK_VERTICAL, 'airborne owner selection reaches the packet flags');
   assert.equal(local.weaponRunner.s3RollerAttack?.vertical, true);
   assert.equal(local.character.s3RollerFlick?.vertical, true);
   receive({ receiver, remote }, airborne);
-  assert.equal(remote.weaponRunner.s3FlickVertical, true);
-  assert.equal(remote.weaponRunner.s3RollerAttack.vertical, true);
+  assert.equal(remote.weaponRunner.s3FlickVertical, false,
+    'remote vertical mode stays out of the simulated WeaponRunner');
+  assert.equal(remote.weaponRunner.s3RollerAttack, null);
   assert.equal(remote.character.s3RollerFlick.vertical, true);
   assert.deepEqual(remoteTriggers.filter(name => name === 'flick'), ['flick']);
 
@@ -107,8 +108,11 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   receiver.applyRemote(remote, dt);
   assert.deepEqual(remoteTriggers.filter(name => name === 'flick'), ['flick']);
 
-  // #1056 owns landings in the first 5F; test the retained selection after that window.
-  for(let i=0;i<6;i++) ownerStep({ owner, local }, dt, { fire: true });
+  // #1056: an air-started vertical flick deliberately converts to horizontal
+  // when the owner touches down within the first five fixed frames. Advance the
+  // accepted swing past that window so this asserts the post-window latch rather
+  // than re-testing the documented early-landing conversion.
+  for (let i = 0; i < 6; i++) ownerStep({ owner, local }, dt, { fire: true });
   local.grounded = true;
   ownerStep({ owner, local }, dt, { fire: true });
   const landed = snapshot(sender);
@@ -125,8 +129,9 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   assert.equal(recovery.a[0][10] & FLICK, 0, 'the windup bit ends at release');
   assert.ok(recovery.a[0][10] & FLICK_VERTICAL, 'the vertical selection remains through recovery');
   receive({ receiver, remote }, recovery);
-  assert.equal(remote.weaponRunner.s3RollerAttack?.released, true);
+  assert.equal(remote.weaponRunner.s3RollerAttack, null);
   assert.equal(remote.character.s3RollerFlick.vertical, true);
+  assert.equal(remote.character.s3RollerFlick.released, true);
 
   const stale = clone(recovery);
   stale.ts -= 0.01;
@@ -137,7 +142,8 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   receiver.peers.get('owner').tr = recovery.ts;
   receiver._sample(remote, recovery.ts, 0);
   receiver.applyRemote(remote, dt);
-  assert.equal(remote.weaponRunner.s3FlickVertical, true);
+  assert.equal(remote.weaponRunner.s3FlickVertical, false);
+  assert.equal(remote.character.s3RollerFlick.vertical, true);
 
   // A new grounded flick uses the existing horizontal path and clears only the
   // network-owned vertical presentation state on the proxy.
@@ -153,7 +159,7 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   assert.equal(remote.weaponRunner.flick, 0);
   assert.equal(remote.weaponRunner.s3FlickVertical, false);
   assert.equal(remote.weaponRunner.s3RollerAttack, null);
-  assert.equal(remote.character.s3RollerFlick, null);
+  assert.equal(remote.character.s3RollerFlick?.vertical, false);
 
   local.weaponRunner.reset();
   assert.equal(local.weaponRunner.s3RollerAttack, null, 'owner reset drops its attack selection');

@@ -74,39 +74,36 @@ test('#309 native defaults, setting descriptor and existing save/load retain ind
  assert.equal(loaded.padInvertX,true);assert.equal(loaded.invertY,false);
 });
 
-for(const weapon of ['charger','shooter']) test(`#265 ${weapon} keeps physical ZR through map open/close and only releases on actual trigger release`,async()=>{
+for(const weapon of ['charger','shooter']) for(const via of ['pad','keyboard']) test(`#960/#265 ${weapon} ${via} map cancels ZR without synthesizing release`,async()=>{
  const h=await rig(weapon);for(let i=0;i<30;i++)h.frame({held:[7],simulate:true});const before=h.shots.length;
- h.frame({held:[3,7],simulate:true});assert.equal(h.c.mapHeld,true);for(let i=0;i<10;i++)h.frame({held:[7],simulate:true});
- assert.equal(h.a.intent.fire,true);if(weapon==='charger')assert.equal(h.shots.length,0);else assert.ok(h.shots.length>before);
- h.frame({held:[3,7],simulate:true});assert.equal(h.c.mapHeld,false);if(weapon==='charger')assert.equal(h.shots.length,0);
- h.frame({simulate:true});if(weapon==='charger'){assert.equal(h.shots.length,0,'existing one fixed release frame');h.frame({simulate:true});assert.equal(h.shots.filter(x=>x.kind==='charger').length,1);}
+ if(via==='keyboard'){h.input.keys.add('Tab');h.input.pressed.add('Tab');}
+ h.frame({held:via==='pad'?[3,7]:[7],simulate:true});assert.equal(h.c.mapHeld,true);
+ h.input.keys.clear();for(let i=0;i<10;i++)h.frame({held:[7],simulate:true});
+ assert.equal(h.a.intent.fire,false);assert.equal(h.shots.length,before);
+ if(via==='keyboard')h.input.pressed.add('KeyM');
+ h.frame({held:via==='pad'?[3,7]:[7],simulate:true});assert.equal(h.c.mapHeld,false);
+ for(let i=0;i<10;i++)h.frame({held:[7],simulate:true});assert.equal(h.shots.length,before);
+ h.frame({simulate:true});for(let i=0;i<30;i++)h.frame({held:[7],simulate:true});
+ h.frame({simulate:true});h.frame({simulate:true});assert.ok(h.shots.length>before,'fresh release fires normally');
 });
 
-for(const weapon of ['charger','shooter']) test(`#265 keyboard map plus independent ZR does not synthesize a weapon release (${weapon})`,async()=>{
- const h=await rig(weapon);for(let i=0;i<30;i++)h.frame({held:[7],simulate:true});const before=h.shots.length;
- h.input.keys.add('Tab');for(let i=0;i<12;i++)h.frame({held:[7],simulate:true});
- assert.equal(h.c.mapHeld,true);assert.equal(h.a.intent.fire,true);
- if(weapon==='charger')assert.equal(h.shots.length,0);else assert.ok(h.shots.length>before);
- h.input.keys.clear();h.frame({held:[7],simulate:true});if(weapon==='charger')assert.equal(h.shots.length,0);
- h.frame({simulate:true});if(weapon==='charger'){assert.equal(h.shots.length,0,'existing one fixed release frame');h.frame({simulate:true});assert.equal(h.shots.length,1);}
-});
-
-test('#265 map selection mouse clicks stay suppressed and normal touch/keyboard input remains admitted outside map',async()=>{
+test('#960 map mouse clicks remain suppressed until release, while unrelated controls stay live',async()=>{
  const h=await rig();h.input.mouse.left=h.input.mouse.leftPressed=true;h.frame({held:[3]});assert.equal(h.a.intent.fire,false);
- h.frame();h.frame({held:[3,7]});assert.equal(h.a.intent.fire,true);assert.equal(h.c.mapHeld,false);
+ h.frame();h.frame({held:[3,7]});assert.equal(h.a.intent.fire,false);assert.equal(h.c.mapHeld,false);
+ h.input.mouse.left=false;h.frame();h.frame({held:[7]});assert.equal(h.a.intent.fire,true);
  h.input.keys.add('KeyF');h.frame();assert.equal(h.a.intent.special,true);h.input.keys.clear();
- h.input.keys.add('Tab');h.frame({held:[7]});assert.equal(h.c.mapHeld,true);assert.equal(h.a.intent.fire,true);
+ h.input.pressed.add('Tab');h.frame({held:[7]});assert.equal(h.c.mapHeld,true);assert.equal(h.a.intent.fire,false);
  h.c.enabled=false;h.frame({held:[7]});assert.equal(h.a.intent.fire,false);assert.equal(h.c.padMapOpen,false);
 });
 
-test('30/60/120Hz render input schedules preserve identical map toggles and real Charger release ticks',async()=>{
+test('30/60/120Hz render schedules preserve map toggles, cancellation and a fresh Charger release',async()=>{
  let expected;
  for(const hz of [30,60,120]) {
   const h=await rig('charger');h.installClock(h);h.camera.mode='follow';h.camera.target=h.a;
   const rows=[],m={state:'playing',paused:false,local:h.a,controller:h.c,playing:()=>true,
     updateController:dt=>h.c.update(dt),update(dt){h.a.update(dt);rows.push([h.c.mapHeld,h.a.intent.fire,h.a.weaponRunner.charge,h.shots.length]);}};
   h.G.match=m;h.G.projectiles.update=()=>{};const game={input:h.input,rig:h.camera,match:m,_padMenus(){}};
-  for(let frame=0;frame<hz*2;frame++) {const t=frame/hz,held=t<1?[7]:[];if(t<.1||t>=.5&&t<.6)held.push(3);h.setPads(pad(held));h.runSimulation(game,1/hz);}
+  for(let frame=0;frame<hz*2;frame++) {const t=frame/hz,held=t<.75||t>=1&&t<1.5?[7]:[];if(t<.1||t>=.5&&t<.6)held.push(3);h.setPads(pad(held));h.runSimulation(game,1/hz);}
   assert.equal(h.shots.filter(x=>x.kind==='charger').length,1);assert.equal(rows.length,120);
   if(expected)assert.deepEqual(rows,expected);else expected=rows;
  }

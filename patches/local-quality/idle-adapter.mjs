@@ -26,7 +26,11 @@ export function adaptIdleSource(rel, code, replace) {
     patch('G.audio?.init?.(); this._applyAudioVolumes();', 'this._applyAudioVolumes(); G.audio?.init?.();', 'persisted mute before unlock');
     patch("    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);",
       "    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);\n    if ('quality' in partial) refreshEnvironmentBudget(G.env, this.settings, this.mobile);", 'resource quality refresh');
-    patch('    const worldHidden = setUp;', '    const pausedFrame = pausedWorldFrame(this, G);\n    const menuAttractBudget = idleAttractMenuBudget(this, G);\n    const worldHidden = setUp || pausedFrame.paused || (menuAttractBudget && !this._menuAttractFrame);\n    const worldDt = menuAttractBudget ? this._menuAttractFrameDelta : dt;', 'offline pause and idle attract budget');
+    // The gameplay layer may already own the page-visibility gate (#1166).
+    // Compose it with pause/attract budgeting without dropping either owner.
+    const worldGate = code.includes('    const worldHidden = setUp || document.hidden;')
+      ? 'setUp || document.hidden' : 'setUp';
+    patch(`    const worldHidden = ${worldGate};`, `    const pausedFrame = pausedWorldFrame(this, G);\n    const menuAttractBudget = idleAttractMenuBudget(this, G);\n    const worldHidden = ${worldGate} || pausedFrame.paused || (menuAttractBudget && !this._menuAttractFrame);\n    const worldDt = menuAttractBudget ? this._menuAttractFrameDelta : dt;`, 'offline pause and idle attract budget');
     patch('G.fx.update(dt, G.camera);', 'G.fx.update(worldDt, G.camera);', 'attract FX cadence');
     patch('this.fxHooks?.update?.(dt);', 'this.fxHooks?.update?.(worldDt);', 'attract FX hooks cadence');
     patch('this.screenfx?.update?.(dt, this);', 'this.screenfx?.update?.(worldDt, this);', 'attract screen FX cadence');

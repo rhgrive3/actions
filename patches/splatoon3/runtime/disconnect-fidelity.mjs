@@ -42,6 +42,7 @@ export function retireDisconnectedStorms(netmatch, actor) {
 export function deactivateDisconnectedActor(netmatch, actor) {
   if (!actor || actor.s3?.disconnected) return actor;
   retireDisconnectedStorms(netmatch, actor);
+  retireDisconnectedMainProjectiles((netmatch?.__s3G || world)?.projectiles, actor);
   actor.s3 ||= {};
   actor.s3.disconnected = true;
   actor.s3.disconnectedAt = netmatch.match ? matchElapsed(netmatch.match) : 0;
@@ -183,6 +184,7 @@ export function installDisconnectFidelity(api) {
         // An owner may leave during finish/judge while an old Storm is still
         // animated. The roster removal must not strand its projectile objects.
         retireDisconnectedStorms(this, a);
+        retireDisconnectedMainProjectiles(this.__s3G?.projectiles, a);
         this._remove(a);
       }
     } else {
@@ -264,3 +266,190 @@ export function installDisconnectFidelity(api) {
 }
 
 export { NO_CONTEST_WINDOW, NO_CONTEST_DELAY };
+
+// #955 chooses the issue's explicit cancellation policy. No ghost is promoted
+// into damage authority; every peer retires the departed sender's main rounds.
+const mainKinds=new Set(['shooter','dualies','splatling','roller','slosher','blaster','charger']);
+export function retireDisconnectedMainProjectiles(system,owner,{ghostOnly=false}={}){
+ if(!system)return 0;
+ let count=0;
+ const owns=p=>(!owner||p.owner===owner)&&(!ghostOnly||p.ghost);
+ const remove=(list,predicate,release)=>{if(!Array.isArray(list))return;for(let i=list.length-1;i>=0;i--)if(predicate(list[i])){const p=list[i];list.splice(i,1);release?.(p);count++;}};
+ remove(system.list,p=>owns(p)&&!p.s3SpecialWeapon&&!p.s3Kit&&mainKinds.has(p.s3Weapon?.kind||p.owner?.weapon?.kind),p=>{
+  p._netEnded=true;p._qualityDead=true;p._netEndStep=p._netSteps;
+  if(system._recycle)system._recycle(p);else system.pool?.push(p);
+ });
+ remove(system.inkFlight?.drops,owns,p=>system.inkFlight.pool?.push(p));
+ const retiredBeams=new Set();
+ remove(system._fidelityChargerFlights,owns,p=>{if(p.beam)retiredBeams.add(p.beam);});
+ remove(system.beams,b=>retiredBeams.has(b)||(!owner||b._netOwner===owner)&&!!b._netPeer,b=>{
+  if(b.mesh){b.mesh.visible=false;system.beamPool?.push(b.mesh);}
+ });
+ for(const key of ['_s3DetachedWallDrops','_s3TimedBlasterDrops','_s3ChargerWallDrops'])remove(system[key],owns);
+ remove(system.s3BlastQueue,entry=>owns(entry.p));
+ return count;
+}
+
+// #505: owner life histories, not interpolated proxy alive flags, determine
+// online WIPEOUT. Finalize only frames all four owners have reported past.
+const MAX_EVENTS = 2048, MAX_FRAME = 60 * 60 * 60;
+const integer = n => Number.isSafeInteger(n) && n >= 0;
+function valid(nm) {
+  const m = nm.match;
+  return nm._matchStateAPI?.G.netm === nm && nm._matchStateAPI?.G.match === m && typeof nm.cfg?.id === 'string' && nm.cfg.id &&
+    m?.mode === 'turf' && !m.attract && !m.range && !m.opts?.range && !m.paused &&
+    m.actors?.length === 8 && [0, 1].every(t => m.actors.filter(a => a.team === t).length === 4) &&
+    m.actors.every(a => !a.s3?.disconnected && nm.byNid.get(a.nid) === a);
+}
+function state(nm) {
+  return nm._wipeoutLedger ||= { rows: new Map(), own: new Map(), confirmed: new Map(), applied: new Set() };
+}
+function frame(nm) {
+  return Math.max(0, Math.min(MAX_FRAME, Math.round((nm.match.duration - nm.match.time) * 60)));
+}
+function ownRow(nm, a) {
+  const s = state(nm); let row = s.own.get(a.nid);
+  if (!row) {
+    row = { n: a.nid, q: 0, w: 0, h: [[0, a.netLife ?? 0, 1]] };
+    s.own.set(a.nid, row);
+  }
+  return row;
+}
+function observe(nm, a, alive = a.alive) {
+  const row = ownRow(nm, a), last = row.h.at(-1), life = a.netLife ?? 0;
+  if (last[1] === life && last[2] === +!!alive) return;
+  // A host clock correction cannot move an owner transition behind an already
+  // published watermark. Equal-frame transitions keep their owner event order.
+  const t = Math.max(frame(nm), row.w, last[0]);
+  row.h.push([t, life, +!!alive]);
+}
+export function recordWipeoutLife(nm, name, event) {
+  if (!valid(nm) || nm.match.state !== 'playing' || !['splatted', 'respawn'].includes(name)) return;
+  const a = event.actor || event.victim;
+  if (!a || a.remote || a.owner !== nm.myId || nm.byNid.get(a.nid) !== a) return;
+  observe(nm, a, name === 'respawn');
+}
+export function packWipeoutTimeline(nm) {
+  if (!valid(nm) || nm.match.state !== 'playing' || !(nm.match.time > 0)) return null;
+  const rows = [];
+  for (const a of nm.match.actors) if (!a.remote && a.owner === nm.myId) {
+    const row = ownRow(nm, a); observe(nm, a);
+    row.w = Math.max(row.w, frame(nm)); row.q++;
+    if (row.h.length <= MAX_EVENTS) rows.push({ n: row.n, q: row.q, w: row.w, h: row.h.map(x => [...x]) });
+  }
+  const packet = { m: nm.cfg.id, rows };
+  acceptWipeoutTimeline(nm, nm.myId, packet);
+  return packet;
+}
+function validHistory(h, watermark) {
+  if (!Array.isArray(h) || !h.length || h.length > MAX_EVENTS || h[0]?.[0] !== 0) return false;
+  return h.every((e, i) => Array.isArray(e) && e.length === 3 && integer(e[0]) && e[0] <= watermark &&
+    integer(e[1]) && (e[2] === 0 || e[2] === 1) && (!i || e[0] >= h[i-1][0] && e[1] >= h[i-1][1] &&
+      (e[2] !== h[i-1][2] || e[1] > h[i-1][1]) && (e[2] !== 1 || e[1] > h[i-1][1])));
+}
+export function acceptWipeoutTimeline(nm, from, packet) {
+  if (!valid(nm) || packet?.m !== nm.cfg.id || from !== nm.myId && !nm.s._members?.has(from) ||
+      !Array.isArray(packet.rows) || packet.rows.length > 8) return false;
+  const s = state(nm);
+  for (const row of packet.rows) {
+    const actor = nm.byNid.get(row?.n), prev = s.rows.get(row?.n);
+    if (!actor || actor.owner !== from || !integer(row.q) || !row.q || !integer(row.w) || row.w > MAX_FRAME ||
+        !validHistory(row.h, row.w) || prev && (row.q <= prev.q || row.w < prev.w || row.h.length < prev.h.length ||
+          prev.h.some((e, i) => e.some((v, j) => row.h[i][j] !== v)) || row.h.slice(prev.h.length).some(e => e[0] < prev.w))) continue;
+    s.rows.set(row.n, { ...row, h: row.h.map(e => [...e]) });
+  }
+  if (nm.isHost) confirmAvailable(nm);
+  return true;
+}
+function confirmAvailable(nm) {
+  if (nm.match.state !== 'playing' || !(nm.match.time > 0)) return;
+  const s = state(nm);
+  for (const team of [0, 1]) {
+    const actors = nm.match.actors.filter(a => a.team === team).sort((a,b) => a.nid-b.nid);
+    const rows = actors.map(a => s.rows.get(a.nid));
+    if (rows.some(r => !r)) continue;
+    const cutoff = Math.min(...rows.map(r => r.w));
+    const times = [...new Set(rows.flatMap(r => r.h.map(e => e[0])))].filter(t => t < cutoff).sort((a,b) => a-b);
+    let wiped = false;
+    for (const t of times) {
+      const lives = rows.map(r => r.h.findLast(e => e[0] <= t));
+      const dead = lives.every(e => !e[2]);
+      if (dead && !wiped && t > 0) {
+        const key = `${team}:${actors.map((a,i) => `${a.nid}/${lives[i][1]}/${lives[i][0]}`).join(',')}`;
+        if (!s.confirmed.has(key)) {
+          const decision = { k:'wc', m:nm.cfg.id, team, key };
+          s.confirmed.set(key, decision); apply(nm, decision); nm._sendNow(decision);
+        }
+      }
+      wiped = dead;
+    }
+  }
+}
+function apply(nm, d) {
+  const s = state(nm);
+  if (s.applied.has(d.key)) return;
+  s.applied.add(d.key);
+  nm._matchStateAPI.emit('flow:wipeout-confirmed', { netmatch:nm, match:nm.match, team:d.team, key:d.key });
+}
+export function acceptWipeoutConfirmation(nm, from, d) {
+  if (!valid(nm) || from !== nm.s.hostId || d?.m !== nm.cfg.id || (d.team !== 0 && d.team !== 1) ||
+      typeof d.key !== 'string' || d.key.length > 200 || !d.key.startsWith(`${d.team}:`) ||
+      !/^[01]:(?:\d+\/\d+\/\d+,){3}\d+\/\d+\/\d+$/.test(d.key)) return false;
+  const s = state(nm); s.confirmed.set(d.key, {k:'wc',m:d.m,team:d.team,key:d.key}); apply(nm,d); return true;
+}
+export function replayWipeoutConfirmations(nm) {
+  // Repeated host confirmations recover a missed packet; applied keys survive
+  // host migration on this match object and cannot award twice.
+  if (nm.isHost && valid(nm)) for (const d of state(nm).confirmed.values()) nm._sendNow(d);
+}
+
+// #478: each connected human chooses keep/change/leave. The existing room
+// remains the next-battle queue; only the host can start its next match.
+const choices = new Set(['keep', 'change']);
+function current(nm) {
+  return nm && nm._matchStateAPI?.G.netm === nm && nm._matchStateAPI?.G.match === nm.match && nm.match?.mode === 'turf' &&
+    nm.match.state === 'results' && typeof nm.cfg?.id === 'string' && !!nm.cfg.id;
+}
+function participants(nm) {
+  return [...new Set(nm.match.actors.filter(a => !a.isBot && !a.s3?.disconnected &&
+    (a.owner === nm.myId || nm.s._members?.has(a.owner))).map(a => a.owner))];
+}
+function choiceState(nm) { return nm._resultChoices ||= { rows:new Map(), sequence:0, ended:false }; }
+export function chooseOnlineContinuation(nm, choice) {
+  if (!current(nm) || !choices.has(choice) || !participants(nm).includes(nm.myId)) return false;
+  const s = choiceState(nm);
+  if (s.ended) return false;
+  const d = {k:'rc', m:nm.cfg.id, q:++s.sequence, choice};
+  // Broadcast before the host can emit end; reliable sender order preserves the
+  // intent on a successor host, including a peer still changing its equipment.
+  s.local = d; nm._sendNow(d); acceptOnlineContinuation(nm,nm.myId,d);
+  return true;
+}
+export function acceptOnlineContinuation(nm, from, d) {
+  if (!nm || nm._matchStateAPI?.G.netm !== nm || d?.m !== nm.cfg?.id || nm.match?.mode !== 'turf' ||
+      !participants(nm).includes(from) || !choices.has(d.choice) ||
+      !Number.isSafeInteger(d.q) || d.q < 1) return false;
+  const s = choiceState(nm), prev = s.rows.get(from);
+  if (s.ended || prev && d.q <= prev.q) return false;
+  s.rows.set(from, {q:d.q, choice:d.choice}); finishIfReady(nm); return true;
+}
+function finishIfReady(nm) {
+  if (!current(nm) || !nm.isHost) return;
+  const s = choiceState(nm), ids = participants(nm);
+  if (s.ended || !ids.length || !ids.every(id => s.rows.get(id)?.choice === 'keep')) return;
+  s.ended = true;
+  // endMatch consumes this once after disposing the old NetMatch. Gear changes
+  // already passed through the existing setMe/loadout persistence paths.
+  nm.s._resultReady = {matchId:nm.cfg.id, ids};
+  nm.sendEnd(); nm._matchStateAPI?.G.game?.netMatchEnd?.();
+}
+export function tickOnlineContinuation(nm) {
+  if (!current(nm)) return;
+  const s = choiceState(nm);
+  if (s.local && !s.ended) nm._sendNow(s.local);
+  finishIfReady(nm);
+}
+export function continuationReadyPlayers(session) {
+  const ready = session._resultReady; session._resultReady = null;
+  return ready?.matchId === session.match?.cfg?.id ? new Set(ready.ids) : new Set();
+}

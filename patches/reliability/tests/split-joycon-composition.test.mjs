@@ -68,7 +68,8 @@ async function boot() {
   const playerDepsCache = new Map();
   const playerModule = new vm.SourceTextModule(playerSource, { context: playerContext, identifier: path.join(ROOT, 'inkwave-public', PLAYER_REL) });
   await playerModule.link(spec => {
-    if (spec === '../../patches/splatoon3/runtime/player-hurtbox.mjs') return fileModule(playerContext, playerDepsCache, path.join(ROOT, 'patches/splatoon3/runtime/player-hurtbox.mjs'));
+    if (['../../patches/splatoon3/runtime/player-hurtbox.mjs', '../../patches/splatoon3/runtime/pad-sensitivity.mjs'].includes(spec))
+      return fileModule(playerContext, playerDepsCache, path.join(ROOT, 'patches', spec.slice('../../patches/'.length)));
     if (spec === '../../patches/splatoon3/runtime/weapons-fidelity.mjs') {
       return stubModule(playerContext, playerDepsCache, spec, 'export function updateShotGuide() {} export function projectShotGuide() {}');
     }
@@ -76,7 +77,7 @@ async function boot() {
     // menu takeover hooks, which belong to their separately tested lifecycle.
     if (spec === '../../patches/reliability/menu-takeover.mjs') {
       return stubModule(playerContext, playerDepsCache, spec,
-        'export function cancelMenuGameplay() {} export function rearmMenuGameplay() {}');
+        'export function cancelMenuGameplay() {} export function cancelMapGameplay() {} export function rearmMenuGameplay() {}');
     }
     if (!(spec in playerDeps)) throw new Error(`unexpected player dependency: ${spec}`);
     return stubModule(playerContext, playerDepsCache, spec, playerDeps[spec]);

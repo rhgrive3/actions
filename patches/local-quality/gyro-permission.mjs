@@ -24,6 +24,9 @@ export function initialGyroDefaults(defaults, profile, env = globalThis) {
   return { ...defaults, gyro: !!profile?.touch && gyroCapability(env).supported };
 }
 
+// Absence alone is ambiguous on change-only sensor streams: warn softly, never
+// revoke permission, switch off user preference or remove a working listener.
+export const GYRO_STALE_MS = 15000;
 export class GyroPermission {
   constructor(env = globalThis, lifecycle) {
     this.env = env; this.lifecycle = lifecycle;
@@ -35,7 +38,7 @@ export class GyroPermission {
     this.pending = null;
     this.probe = null;
     this.generation = 0;
-    this.received = false;
+    this.received = false; this.hasSample = false; this.healthProbe = null; this.healthAt = null;
     this.lastSampleAt = null;
     this.lastRequest = { generation: 0, result: null, error: null };
     this.disposed = false;
@@ -50,6 +53,7 @@ export class GyroPermission {
     if (this.permission === 'denied') return 'supported-denied';
     if (this.permission === 'error') return 'unknown-error';
     if (this.availability === 'unavailable' || this.availability === 'suspended') return 'temporarily-unavailable';
+    if (this.availability === 'stale') return 'supported-stale';
     if (this.needsPermission) return 'supported-permission-needed';
     return 'supported-granted';
   }
@@ -66,7 +70,7 @@ export class GyroPermission {
     if (this.disposed || !this.capability.supported) return Promise.resolve(false);
     // A new explicit attempt must not replay the prior no-data notification
     // into MobileInput's current intent before its promise can finish.
-    if (this.reason === 'no-sensor-data') { this.availability = 'idle'; this.reason = null; }
+    if (this.reason === 'no-sensor-data' || this.reason === 'sensor-data-stale') { this.availability = 'idle'; this.reason = null; }
     this.wanted = true;
     if (!this.needsPermission) { this.notify(); return Promise.resolve(this.allowed); }
     // A fresh user activation owns a fresh permission attempt. Never coalesce it
@@ -121,22 +125,44 @@ export class GyroPermission {
     this.probe = this.env.setTimeout(() => {
       this.probe = null;
       if (this.disposed || !this.lifecycle.active || generation !== this.generation || this.received) return;
-      this.availability = 'unavailable'; this.reason = 'no-sensor-data'; this.wanted = false;
-      this.onUnavailable?.(); this.notify();
+      if (this.hasSample) { this.availability = 'stale'; this.reason = 'sensor-data-stale'; }
+      else {
+        this.availability = 'unavailable'; this.reason = 'no-sensor-data'; this.wanted = false;
+        this.onUnavailable?.();
+      }
+      this.notify();
     }, 2000);
     this.notify();
   }
   sample(time = this.env.performance?.now?.() ?? Date.now()) {
     if (!this.lifecycle.active || this.disposed) return;
     if (Number.isFinite(time)) this.lastSampleAt = time;
+    this.healthAt = this.env.performance?.now?.() ?? Date.now();
     if (this.received && this.availability === 'active') return;
-    this.received = true; this.stopProbe(); this.availability = 'active'; this.reason = null; this.notify();
+    this.received = this.hasSample = true; this.stopProbe(); this.availability = 'active'; this.reason = null;
+    this.startHealthProbe(); this.notify();
   }
-  stopProbe() { if (this.probe !== null) this.env.clearTimeout(this.probe); this.probe = null; }
+  startHealthProbe(delay = GYRO_STALE_MS) {
+    if (this.healthProbe !== null) this.env.clearTimeout(this.healthProbe);
+    const generation = this.generation;
+    this.healthProbe = this.env.setTimeout(() => {
+      this.healthProbe = null;
+      if (this.disposed || generation !== this.generation || !this.lifecycle.active || this.lifecycle.focused === false || !this.wanted) return;
+      const age = (this.env.performance?.now?.() ?? Date.now()) - this.healthAt;
+      if (age < GYRO_STALE_MS) { this.startHealthProbe(GYRO_STALE_MS - age); return; }
+      this.availability = 'stale'; this.reason = 'sensor-data-stale'; this.notify();
+    }, delay);
+    // A background health check must not keep a non-browser harness alive.
+    this.healthProbe?.unref?.();
+  }
+  stopProbe() {
+    if (this.probe !== null) this.env.clearTimeout(this.probe); this.probe = null;
+    if (this.healthProbe !== null) this.env.clearTimeout(this.healthProbe); this.healthProbe = null;
+  }
   stopListening(reason = 'off') {
     this.stopProbe(); this.received = false;
     this.availability = reason === 'suspend' ? 'suspended' : 'idle';
-    if (this.reason === 'no-sensor-data') this.reason = null;
+    if (this.reason === 'no-sensor-data' || this.reason === 'sensor-data-stale') this.reason = null;
     this.notify();
   }
   dispose() {
@@ -153,6 +179,7 @@ export function gyroStatusMessage(status, lang = 'en') {
       if (status.reason === 'insecure-context') return text('このページではジャイロを利用できません。HTTPSで開いてください。', 'Gyro is unavailable on this page. Open it over HTTPS.');
       if (status.reason === 'permissions-policy') return text('このページの権限ポリシーでセンサーが制限されています。', 'This page’s permissions policy blocks the sensors.');
       return text('この実行環境では必要な姿勢センサーAPIを利用できません。タッチ操作を使用してください。', 'The required orientation API is unavailable in this environment. Use touch controls.');
+    case 'supported-stale': return text('ジャイロの値がしばらく届いていません。端末を動かすかGYROから再試行してください。設定と許可は保持しています。', 'No recent gyro samples. Move the device or retry with GYRO. Your setting and permission are retained.');
     case 'supported-permission-needed': return text('ジャイロの許可が必要です。GYROボタンをタップして許可を要求してください。', 'Motion permission is needed. Tap GYRO to request it.');
     case 'permission-pending': return text('ジャイロの許可を確認しています。', 'Waiting for the motion permission response.');
     case 'supported-denied': return text('この実行環境ではセンサーの許可が拒否されています。GYROから再試行できますが、再確認が表示されるかはブラウザ次第です。', 'Motion permission is denied in this environment. You may retry with GYRO; the browser decides whether to ask again.');

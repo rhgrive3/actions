@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture, emitMainShot } from './source-fixture.mjs';
 import { gearCurve } from '../runtime/gear.mjs';
 
 const loadout = (ability, points = 57) => {
@@ -11,8 +11,10 @@ const loadout = (ability, points = 57) => {
 };
 
 test('actual equipped Splatling uses its 1.35 firing override without altering another actor', async () => {
-  const f = await fixture(), spinner = f.make('splatling'), shooter = f.make('shooter');
-  for (const a of [spinner, shooter]) { a.s3.loadout = loadout('runSpeed'); a.setWeapon(a.weaponId); a.weaponRunner.firingT = 1; }
+  const f = await fixture({ realProjectiles: true }), spinner = f.make('splatling'), shooter = f.make('shooter');
+  for (const a of [spinner, shooter]) { a.s3.loadout = loadout('runSpeed'); a.setWeapon(a.weaponId); }
+  spinner.weaponRunner.firingT = 1;
+  emitMainShot(f, shooter);
   assert.ok(Math.abs(spinner.weaponRunner.moveSpeed() - spinner.weapon.moveSpeedFiring * 1.35) < 1e-9);
   assert.ok(Math.abs(shooter.weaponRunner.moveSpeed() - shooter.weapon.moveSpeedFiring * 1.25) < 1e-9);
   spinner.s3.loadout = loadout('runSpeed', 10); spinner.setWeapon('splatling'); spinner.weaponRunner.firingT = 1;

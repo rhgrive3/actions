@@ -17,6 +17,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { boundedDiagnostic, createOperationTrace } from './lib/inkwave-rematch-diagnostics.mjs';
 
 const option = (name, fallback) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) { if (fallback !== undefined) return fallback; throw new Error('Required ' + name); } return process.argv[i + 1]; };
 const site = path.resolve(option('--site')), evidence = path.resolve(option('--evidence-dir')), profile = path.resolve(option('--profile-dir'));
@@ -50,6 +51,8 @@ const ctx = await pw.chromium.launchPersistentContext(path.join(profile, 'rematc
 });
 const page = await ctx.newPage();
 const errors = [], missing = [], failures = [], rounds = [];
+const operationTrace = createOperationTrace();
+let activeRound = null, failureDiagnostics = null;
 page.on('pageerror', (e) => errors.push(String(e.message).slice(0, 400)));
 page.on('response', (r) => { if (r.status() >= 400) missing.push(r.status() + ' ' + r.url()); });
 // Count live listeners on window / document / screen.orientation / visualViewport and live intervals: anything that
@@ -84,14 +87,14 @@ await page.addInitScript(() => {
   window.__lifecycleIntervals = () => intervals.size;
 });
 
-const until = async (fn, arg, ms = 300000, what = fn.toString().slice(0, 140)) => {
+const until = async (fn, arg, ms = 300000, what = fn.toString().slice(0, 140)) => operationTrace.run('wait: ' + what, async () => {
   const t0 = Date.now();
   for (;;) {
     if (await page.evaluate(fn, arg)) return;
     if (Date.now() - t0 > ms) throw new Error('timed out waiting for ' + what);
     await page.waitForTimeout(200);
   }
-};
+});
 const tap = async (id) => {
   const sel = `.iw-ui [data-id="${id}"]`;
   // what a player can actually press: laid out, not leaving/inert, pointer events on, and visible through every
@@ -102,7 +105,7 @@ const tap = async (id) => {
     let k = 1; for (let n = e; n && n !== document.body; n = n.parentElement) k *= +getComputedStyle(n).opacity;
     return e.getBoundingClientRect().width > 0 && k > 0.6;
   }, sel, 300000, 'tappable ' + id);
-  await page.tap(sel, { timeout: 30000 });
+  await operationTrace.run('tap: ' + id, () => page.tap(sel, { timeout: 30000 }));
 };
 const menuIs = (name) => until((n) => window.__inkwave?.menus?.current === n, name, 300000, 'menu ' + name);
 // Native touch rows/tabs own their highlight; ordinary main-menu buttons use
@@ -167,11 +170,26 @@ const snap = () => page.evaluate(() => {
     rigFollowsLocal: g.rig?.mode === 'follow' && g.rig?.target === m?.local, actors: G.actors?.length, sights: G.projectiles?.sights?.size,
     sceneChildren: G.scene?.children.length, listeners: Object.fromEntries([...window.__lifecycleListeners].filter(([, n]) => n > 0).sort()), intervals: window.__lifecycleIntervals(),
     fade: g.fadeEl ? +getComputedStyle(g.fadeEl).opacity : null, range: !!m?.range, time: Number.isFinite(m?.time) ? m.time : String(m?.time),
+    resources: {
+      paint: G.paint ? { cells: G.paint.grid?.length ?? null, growing: G.paint.growing?.length ?? null,
+        quads: G.paint.quads ?? null, orderRecords: G.paint._paintOrderRecords?.length ?? null,
+        orderIds: G.paint._paintOrderIds?.size ?? null, fixedClock: !!G.paint._paintUsesFixedClock,
+        simulationAccumulator: n(G.paint._paintSimulationAccumulator) } : null,
+      renderer: G.renderer?.info ? { memory: { ...G.renderer.info.memory }, programs: G.renderer.info.programs?.length ?? null,
+        render: { ...G.renderer.info.render } } : null,
+      heap: performance.memory ? { used: performance.memory.usedJSHeapSize, total: performance.memory.totalJSHeapSize,
+        limit: performance.memory.jsHeapSizeLimit } : null,
+    },
   };
 });
 const check = (round, phase, cond, message, detail) => { if (!cond) failures.push({ round, phase, message, detail }); };
 
 let status = 'failed';
+const writeResult = () => {
+  const result = { status, contentHash: manifest.contentHash, cycles, failures, errors, missing, rounds,
+    activeRound: status === 'failed' ? activeRound : null, operations: operationTrace.entries, failureDiagnostics };
+  fs.writeFileSync(path.join(evidence, 'rematch-lifecycle-result.json'), JSON.stringify(result, null, 2) + '\n');
+};
 try {
   await page.goto(base + '?skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await until(() => window.__inkwave?.menus?.current === 'main' || document.getElementById('boot-error')?.textContent, null, 420000, 'boot');
@@ -180,6 +198,7 @@ try {
   let baseline = null, previousMatch = null;
   for (let i = 0; i < cycles; i++) {
     const round = { round: i + 1 };
+    activeRound = round;
     await tap('play'); await menuIs('mode');
     await tap('mode-turf'); await menuIs('setup');
     await tap('start');
@@ -245,17 +264,18 @@ try {
 
   // Practice Range: untimed, and it does not leak into the next Turf War.
   const rangeRound = { round: 'range' };
-  await page.evaluate(() => window.__inkwave.startRange());
+  activeRound = rangeRound;
+  await operationTrace.run('range: start', () => page.evaluate(() => window.__inkwave.startRange()));
   await until(() => { const m = window.__G.match; return m && m.range && m.state === 'playing'; }, null, 300000, 'range playing');
   const range = (rangeRound.start = await snap());
   check('range', 'start', range.time === 'Infinity' && range.hudRange === true, 'range match has no clock and its own HUD', range);
-  rangeRound.simulated = await page.evaluate(() => {
+  rangeRound.simulated = await operationTrace.run('range: simulate 95 seconds', () => page.evaluate(() => {
     const m = window.__G.match;
     for (let i = 0; i < 95 * 60; i++) m.update(1 / 60);
     return { state: m.state, result: !!m.result, time: String(m.time), menu: window.__inkwave.menus.current, range: !!m.range };
-  });
+  }));
   check('range', 'simulated', rangeRound.simulated.state === 'playing' && !rangeRound.simulated.result && rangeRound.simulated.menu === null, 'range still playing after 95 simulated seconds', rangeRound.simulated);
-  await page.evaluate(() => window.__inkwave.api.quitMatch());
+  await operationTrace.run('range: quit', () => page.evaluate(() => window.__inkwave.api.quitMatch()));
   await until(() => window.__inkwave.menus?.current === 'main' && window.__G.mode === 'menu', null, 300000, 'menu after range');
   await tap('play'); await menuIs('mode');
   await tap('mode-turf'); await menuIs('setup');
@@ -268,9 +288,20 @@ try {
   status = failures.length || errors.length ? 'failed' : 'passed';
 } catch (e) {
   failures.push({ round: 'fatal', message: String(e?.stack || e).slice(0, 2000) });
+  // Save the original failure and partial range/round evidence before asking
+  // a possibly stalled browser for anything else. Neither probe retries input.
+  writeResult();
+  const [snapshot, screenshot] = await Promise.all([
+    boundedDiagnostic(snap),
+    boundedDiagnostic(async () => {
+      const filename = 'rematch-lifecycle-failure.png';
+      await page.screenshot({ path: path.join(evidence, filename), timeout: 8000 });
+      return filename;
+    }),
+  ]);
+  failureDiagnostics = { snapshot, screenshot };
 } finally {
-  const result = { status, contentHash: manifest.contentHash, cycles, failures, errors, missing, rounds };
-  fs.writeFileSync(path.join(evidence, 'rematch-lifecycle-result.json'), JSON.stringify(result, null, 2) + '\n');
+  writeResult();
   await ctx.close().catch(() => {}); server.close();
   console.log(JSON.stringify({ status, failures: failures.slice(0, 20), errors: errors.slice(0, 10) }, null, 1));
   process.exitCode = status === 'passed' ? 0 : 1;

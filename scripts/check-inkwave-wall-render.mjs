@@ -99,7 +99,8 @@ export function verifyWallBuild(site, exactSource = false) {
             : key.startsWith('local-quality/') ? 'patches/local-quality/' + key.slice(14)
               : key.startsWith('network-replication/') ? 'patches/network-replication/' + key.slice(20)
                 : key.startsWith('loading-cache/') ? 'patches/loading-cache/' + key.slice(14)
-                  : key.startsWith('practice-range/') ? 'patches/practice-range/' + key.slice(15) : null;
+                  : key.startsWith('practice-range/') ? 'patches/practice-range/' + key.slice(15)
+                    : key.startsWith('build-script/') ? 'scripts/' + key.slice(13) : null;
     if (!file || !inside(ROOT.replace(/\/$/, ''), fs.realpathSync(path.resolve(ROOT, file)))
         || hash(fs.readFileSync(path.join(ROOT, file))) !== digest) throw Error('Wall build input differs from source: ' + key);
     return file;

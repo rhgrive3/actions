@@ -33,14 +33,14 @@ function spyCap(f) {
 // Drives the real Actor.update, so intent.fire/sub, form and onEnemy all come
 // from production code. Returns the per-tick cap the movement model applied.
 async function trace({ points = 0, mode, ticks = 90, hz = 60, weapon = 'shooter', hold = Infinity, isLocal = false, resetAt = -1, legacyReady = false }) {
-  const f = await fixture({adaptRuntime:(rel,code)=>legacyReady&&rel==='patches/splatoon3/runtime/gear.mjs'?code.replace('    if (runner.aimingSub && !squid) api.PLAYER.enemyInkSpeed = m.enemyShotSpeed ?? walk;\n    else if (scaledAction', '    if (scaledAction'):code});
+  const f = await fixture({realProjectiles:mode==='fire',adaptRuntime:(rel,code)=>legacyReady&&rel==='patches/splatoon3/runtime/gear.mjs'?code.replace('    if (runner.aimingSub && !squid) api.PLAYER.enemyInkSpeed = m.enemyShotSpeed ?? walk;\n    else if (scaledAction', '    if (scaledAction'):code});
   f.G.paint.sample = () => 2;                      // enemy ink under the feet
   f.G.projectiles.throwBomb = () => 0;
   const a = f.make(weapon);
   a.isLocal = isLocal;
   if (points !== 0) { a.s3.loadout = loadout('inkResistance', points); a.setWeapon(weapon); }
   a.intent.move.set(0, 0, 1); a.vel.set(0, 0, 0);
-  const log = spyCap(f);
+  const log = spyCap(f), emissions = [];
   const step = dt => {
     if(a.ticks===resetAt){a.reset();a.grounded=true;a.intent.move.set(0,0,1);}
 
@@ -51,7 +51,10 @@ async function trace({ points = 0, mode, ticks = 90, hz = 60, weapon = 'shooter'
     // update i and a reset at resetAt lands on caps[resetAt].
 
     a.ticks++;
+    const before = f.G.projectiles.list?.length || 0;
+    f.G.time += dt;
     a.update(dt);
+    emissions.push((f.G.projectiles.list?.length || 0) - before);
     log.onTick();
   };
   a.ticks = 0;
@@ -69,7 +72,7 @@ async function trace({ points = 0, mode, ticks = 90, hz = 60, weapon = 'shooter'
     assert.equal(entries[3][1],entries[0][1],'shared cap restored after each actor');
     return entries[1][1];
   });
-  return { f, a, caps, ticks: a.ticks, settled: a.vel.length() };
+  return { f, a, caps, emissions, ticks: a.ticks, settled: a.vel.length() };
 }
 
 // Sourced expectations straight from the pinned 11.3.0 profile curves, so the
@@ -97,7 +100,17 @@ test('#731 a held sub selects the attack/ready curve while walking and firing ke
     const walk = await trace({ points: ap, mode: 'walk' });
     near(walk.caps.at(-1), walkCap(f, ap), `AP ${ap} walk`);
     const fire = await trace({ points: ap, mode: 'fire' });
-    near(fire.caps.at(-1), shotCap(f, ap), `AP ${ap} fire`);
+    assert.ok(fire.emissions.some(Boolean), 'the firing comparison emits real native rounds');
+    const windowFrames = Math.round(fire.a.weapon.postFireSwimLock / DT);
+    let lastEmission = -Infinity;
+    for (let i = 0; i < fire.caps.length; i++) {
+      if (fire.emissions[i]) lastEmission = i;
+      // Actor movement precedes WeaponRunner's timer step. The emitting tick
+      // and the subsequent live 4F window use attack speed; the gap between
+      // six-frame rounds returns to walking even while the visual pose stays.
+      const inWindow = i - lastEmission <= windowFrames;
+      near(fire.caps[i], inWindow ? shotCap(f, ap) : walkCap(f, ap), `AP ${ap} fire tick ${i}`);
+    }
     const sub = await trace({ points: ap, mode: 'sub' });
     near(sub.caps.at(-1), shotCap(f, ap), `AP ${ap} held sub`);
     assert.equal(sub.a.weaponRunner.aimingSub, true);
@@ -153,15 +166,18 @@ test('#731 readiness is read from weapon state, not the raw button', () => {
 
 test('#731 30/60/120 Hz render schedules make the same fixed-tick state selection', async () => {
   const f = await fixture();
-  const traces = [];
-  for (const hz of [30, 60, 120]) {
-    const run = await trace({ points: 57, mode: 'sub', ticks: 120, hz });
-    assert.equal(run.ticks, 120, `${hz} Hz tick count`);
-    traces.push(run.caps.slice(0, 120));
+  for (const mode of ['sub', 'fire']) {
+    const traces = [];
+    for (const hz of [30, 60, 120]) {
+      const run = await trace({ points: 57, mode, ticks: 120, hz });
+      assert.equal(run.ticks, 120, `${mode} ${hz} Hz tick count`);
+      traces.push({ caps: run.caps.slice(0, 120), emissions: run.emissions.slice(0, 120) });
+    }
+    assert.deepEqual(traces[1], traces[0]);
+    assert.deepEqual(traces[2], traces[0]);
+    if (mode === 'sub') assert.equal(traces[0].caps.at(-1), shotCap(f, 57));
+    else assert.ok(traces[0].emissions.some(Boolean), 'all render schedules reach real emissions');
   }
-  assert.deepEqual(traces[1], traces[0]);
-  assert.deepEqual(traces[2], traces[0]);
-  assert.equal(traces[0].at(-1), shotCap(f, 57));
 });
 
 test('#731 a reset clears the sub ready state before the weapon re-arms', async () => {

@@ -49,7 +49,7 @@ export function paintDistanceFlight(game, projectile, state, end = projectile?.p
     const hit = game.physics.raycast(state.sample, state.down, 4, state.hit, true);
     if (!hit?.hit) continue;
     state.sample.copy(hit.point).addScaledVector(hit.normal, .1);
-    const opts = { seed: seedFor(projectile.seed, index), kind: 'drop' };
+    const opts = { seed: seedFor(projectile.seed, index), kind: 'drop', claimOwner: projectile.owner };
     if (Number.isFinite(spec.depth)) {
       state.direction.set(end.x-state.last.x,0,end.z-state.last.z).normalize();
       opts.stretch=state.direction;opts.stretchAmt=spec.depth-1;

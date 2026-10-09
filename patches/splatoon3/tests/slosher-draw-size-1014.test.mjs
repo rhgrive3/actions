@@ -71,8 +71,9 @@ test('#1014 nonzero ChangeFrame controls real head matrices and TailSolidFrame c
     const length=(head.tail-1)*radius;close(length,Math.max(.5,Math.min(4,60*Math.min(age,2/60))),2e-6);
   }
 });
-test('#1014 actual birth packets reconstruct all nine ghost unit/index sizes at matching age without additional protocol fields',async()=>{
-  const {f,a,ps}=await volley();const nm=Object.create(f.NetMatch.prototype);nm.out=[];nm._eventSeq=0;nm._simTick=0;f.G.netm=nm;
+test('#1014 actual birth packets reconstruct all nine ghost unit/index sizes at matching age without additional protocol fields',async t=>{
+  const {f,a,ps}=await volley();
+  const nm=f.G.netm=new f.NetMatch({myId:'local'},{});t.after(()=>nm.dispose());
   for(let frame=0;frame<16;frame++){f.G.time+=DT;ps.update(DT);}
   const owner=ps.list.slice();const events=nm.out.filter(e=>e[1]==='p');assert.equal(events.length,9,'one existing birth packet per glob');
   f.G.netm=null;const remote=f.make('slosher');remote.remote=true;remote.nid=a.nid;remote.owner='remote';

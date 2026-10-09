@@ -5,7 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
+import { adaptConstrainedSource } from './source-fixture.mjs';
 import { installSuperjumpMotion as secondRealmInstall, superjumpMotionSnapshot as secondRealmSnapshot } from '../runtime/superjump-motion.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -21,7 +21,7 @@ async function production() {
     if (modules.has(file)) return modules.get(file);
     const source = fs.readFileSync(file, 'utf8');
     const module = new vm.SourceTextModule(file.startsWith(SRC + path.sep)
-      ? adaptSource(path.relative(SRC, file), source) : source,
+      ? adaptConstrainedSource(path.relative(SRC, file), source) : source,
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, module); return module;
   };

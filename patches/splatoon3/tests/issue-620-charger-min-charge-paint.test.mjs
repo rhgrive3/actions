@@ -6,14 +6,14 @@ import { fixture } from './weapon-edgecases-fixture.mjs';
 import { chargerPaintParameters } from '../runtime/weapons-charger-flight.mjs';
 
 // Issue #620: at the first legal 8f Splat Charger release (chargeT = 8/60 on
-// the installed 60f charge progression, charge = 1/6) the pinned S3 11.3.0
+// the installed 60f charge progression, charge = 8/60) the pinned S3 11.3.0
 // MinCharge paint endpoints must resolve exactly: Radius 0.906, WidthHalf
 // 0.78, DepthHalf 2.73, OnTopRate 0.125 (line interval 4.7775). Full 60f
 // keeps the FullCharge endpoints. Charge-rate modifiers and sub-boundary
 // releases may not shift the legal minimum endpoint.
 
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} != ${b}`);
-const MIN_CHARGE = 1 / 6; // first legal release: S-curve 1.25 * (8/60)
+const MIN_CHARGE = 8 / 60; // #961: linear first legal release
 
 const chargerRecord = () => {
   const profile = JSON.parse(fs.readFileSync(fileURLToPath(new URL('../profile.json', import.meta.url)), 'utf8'));
@@ -45,7 +45,7 @@ async function releasedPaint(frames) {
 // Current Charger admission spends one initial frame before the eight charge frames.
 test('first legal 8f release resolves the pinned S3 MinCharge paint endpoints', async () => {
   const { runnerCharge, job } = await releasedPaint(9);
-  near(runnerCharge, MIN_CHARGE);       // installed S-curve at chargeT = 8/60
+  near(runnerCharge, MIN_CHARGE);       // installed linear charge at chargeT = 8/60
   near(job.charge, MIN_CHARGE);         // release gate passes the 8f charge
   near(job.paint.impact, 0.906);        // PaintParam.RadiusMinCharge
   near(job.paint.width, 0.78);          // SplashPaintParam.WidthHalfMinCharge
