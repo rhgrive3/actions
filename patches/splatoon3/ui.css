@@ -293,3 +293,11 @@
   visibility: hidden;
   opacity: 0;
 }
+.iw-ret--dualies .iw-ret__bias[hidden] { display: none; }
+.iw-ret--dualies .iw-ret__bias:not([hidden]) {
+  position: absolute; left: 50%; top: 29px; translate: -50% 0; z-index: 1;
+  padding: 3px 5px 4px; border: 1px solid rgba(255,255,255,.82); border-radius: 999px;
+  background: rgba(10,12,18,.88); color: #fff; font: 700 9px/1 ui-monospace, monospace;
+  letter-spacing: .035em; white-space: nowrap; pointer-events: none;
+}
+.iw-ret--dualies .iw-ret__bias[data-phase='recovering'] { border-color: #ffe08a; color: #ffe08a; }

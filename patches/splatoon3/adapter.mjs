@@ -397,6 +397,27 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'const lock = !!(lr && lr.lockT > 0), roll = !!(lr && lr.dodge);',
       'const lock = !!(lr && lr.s3Turret), roll = !!(lr && lr.dodge);', 'Dualies HUD authoritative turret lifetime');
     code = replaceOnce(code,
+      '<path class="iw-ret__lock" d="M0 -19 L19 0 L0 19 L-19 0 Z"/></svg>',
+      '<path class="iw-ret__lock" d="M0 -19 L19 0 L0 19 L-19 0 Z"/></svg><span class="iw-ret__bias" hidden aria-hidden="true"></span>',
+      'Dualies sourced outer-bias HUD readout');
+    code = replaceOnce(code,
+      "      this._twin = [r.querySelector('.iw-ret__twin.r'), r.querySelector('.iw-ret__twin.l')];",
+      "      this._twin = [r.querySelector('.iw-ret__twin.r'), r.querySelector('.iw-ret__twin.l')];\n      this._dualiesBiasEl = r.querySelector('.iw-ret__bias');",
+      'Dualies outer-bias HUD element');
+    code = replaceOnce(code,
+      "      if (roll !== L.roll) { L.roll = roll; this.ret.classList.toggle('is-roll', roll); }\n",
+      "      if (roll !== L.roll) { L.roll = roll; this.ret.classList.toggle('is-roll', roll); }\n" +
+      "      const biasState = lr?.s3DualiesBiasState?.(WEAPONS[w]);\n" +
+      "      const showBias = biasState?.supported === true && !biasState.turret && !lock && !roll && Number.isFinite(biasState.bias);\n" +
+      "      const biasText = showBias ? `OUT ${Number((biasState.bias * 100).toFixed(1))}%` : '';\n" +
+      "      if (this._dualiesBiasEl) {\n" +
+      "        if (this._dualiesBiasEl.textContent !== biasText) this._dualiesBiasEl.textContent = biasText;\n" +
+      "        this._dualiesBiasEl.hidden = !showBias;\n" +
+      "        if (showBias) this._dualiesBiasEl.dataset.phase = biasState.recovering ? 'recovering' : biasState.inHold ? 'holding' : 'steady';\n" +
+      "      }\n" +
+      "      this.ret.classList.toggle('has-bias', showBias);\n",
+      'Dualies HUD reads authoritative outer-bias state');
+    code = replaceOnce(code,
       `    } else if (kind === 'slosher') {
       // the lob: an arch over the aim point and a landing "bucket" bracket under it
       r.innerHTML = \`<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true">
