@@ -197,11 +197,8 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   const radialYaw = Math.cos(Math.PI / 4) * Math.tan(spread * Math.PI / 180 * Math.sqrt(1 - 1e-12));
   close(measuredYaw, Math.atan(radialYaw) * 180 / Math.PI, 1e-6);
 
-  const recovery = splatlingJumpRecoveryAt(a.s3SplatlingJumpAgeFrames);
-  const radius = Math.sqrt(1 - 1e-12), horizontalAngle = spread * Math.PI / 180 * radius;
-  const airPitch = Math.atan(0.55 * Math.tan(horizontalAngle));
-  const groundPitch = a.weapon.spreadPitchGround * Math.PI / 180 * radius;
-  const expectedPitch = airPitch + (groundPitch - airPitch) * recovery;
+  // #1045: pitch stays independent while the horizontal envelope recovers.
+  const expectedPitch = a.weapon.spreadPitchGround * Math.PI / 180 * Math.sqrt(1 - 1e-12);
   const measuredPitch = Math.atan2(Math.abs(owner.vel.y), Math.hypot(owner.vel.x, owner.vel.z));
   const radialPitch = Math.sin(Math.PI / 4) * Math.tan(expectedPitch);
   close(measuredPitch, Math.atan2(radialPitch, Math.sqrt(1 + radialYaw * radialYaw)), 1e-8);

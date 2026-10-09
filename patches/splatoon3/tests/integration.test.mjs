@@ -164,14 +164,16 @@ test('an 8F legal Charger charge has already spent the 2.25 percent minimum befo
   assert.equal(f.shots.length,1);assert.equal(f.shots[0].charge,charge);
   assert.ok(a.ink<1e-9,'release does not debit the already-paid charge again');
 });
-test('airborne Charger charge advances at one third rate without resetting across landing', async () => {
+test('airborne Charger charge slows after the 8F minimum without resetting across landing', async () => {
   const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=100;a.intent.fire=true;a.grounded=false;
   r.update(1/60,{fire:true}); // 1F humanoid startup
   for(let i=0;i<60;i++)r.update(1/60,{fire:true});
-  assert.ok(Math.abs(r.chargeT-1/3)<1e-9);assert.ok(r.charge<.999);
+  assert.ok(Math.abs(r.chargeT-(8+52/3)/60)<1e-9);assert.ok(r.charge<1);
   a.grounded=true;
-  for(let i=0;i<40;i++)r.update(1/60,{fire:true});
-  assert.ok(Math.abs(r.chargeT-1)<1e-9);assert.ok(r.charge>=.999);
+  for(let i=0;i<34;i++)r.update(1/60,{fire:true});
+  assert.ok(r.chargeT<1,'retained partial needs the final grounded tick');
+  r.update(1/60,{fire:true});
+  assert.equal(r.chargeT,1);assert.equal(r.charge,1);
 });
 test('global menu time cannot skip an actor ink recovery wait', async () => {
   const f=await fixture(),a=f.make();a.form='squid';a.intent.squid=true;a.ink=0;a.lastFire=2;a.s3.recoverStopRemaining=.5;
