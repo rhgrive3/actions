@@ -1,10 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   comparableStormRun,
   measureStormRainCalibration,
   stringifyCalibrationJson,
 } from './storm-rain-calibration-harness.mjs';
+
+const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+const EXPORTER = path.join(ROOT, 'scripts/measure-inkwave-storm-rain.mjs');
+const REPORTS = [
+  'reports/inkwave-storm-rain-calibration-2026-10-09.csv',
+  'reports/inkwave-storm-rain-calibration-2026-10-09.json',
+  'reports/inkwave-storm-rain-calibration-2026-10-09.md',
+];
+
+function reportHashes() {
+  return Object.fromEntries(REPORTS.map((file) => [file,
+    createHash('sha256').update(fs.readFileSync(path.join(ROOT, file))).digest('hex')]));
+}
 
 test('#226 compact JSON keeps leaf records on one line without changing parsed data', () => {
   const source = {
@@ -55,5 +73,20 @@ test('#226 production-composed Storm accounting is deterministic at 30/60/120Hz 
     assert.ok(events.some((event) => event.kind === 'ray_ground_hit'));
     assert.ok(events.some((event) => event.kind === 'paint_splat_write' && Number.isFinite(event.claimedWorldUnitsSquared)));
     assert.ok(events.some((event) => event.kind === 'cosmetic_fx_rain_batch' && Number.isInteger(event.emittedCosmeticParticles)));
+  }
+});
+
+test('#226 exporter rejects alternate fixture roots before measuring or writing artifacts', () => {
+  const before = reportHashes();
+  for (const override of ['INKWAVE_BUILT_SITE', 'INKWAVE_UPSTREAM_SOURCE']) {
+    const env = { ...process.env };
+    delete env.INKWAVE_BUILT_SITE;
+    delete env.INKWAVE_UPSTREAM_SOURCE;
+    env[override] = path.join(ROOT, 'alternate-fixture-root');
+    const result = spawnSync(process.execPath, [EXPORTER], { cwd: ROOT, env, encoding: 'utf8' });
+    assert.ifError(result.error);
+    assert.equal(result.status, 1, result.stderr);
+    assert.match(result.stderr, new RegExp(`unset ${override}`));
+    assert.deepEqual(reportHashes(), before);
   }
 });

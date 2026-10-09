@@ -5,6 +5,12 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { measureStormRainCalibration, stringifyCalibrationJson } from '../patches/splatoon3/tests/storm-rain-calibration-harness.mjs';
 
+const alternateFixtureRoots = ['INKWAVE_BUILT_SITE', 'INKWAVE_UPSTREAM_SOURCE']
+  .filter((name) => process.env[name]);
+if (alternateFixtureRoots.length) {
+  throw new Error(`Storm calibration export requires the checkout fixture root; unset ${alternateFixtureRoots.join(' and ')} before measuring`);
+}
+
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const REPORT_STEM = 'inkwave-storm-rain-calibration-2026-10-09';
 const OUTPUTS = {
@@ -16,6 +22,7 @@ const SOURCE_FILES = [
   'inkwave-public/src/game/weapons.js',
   'inkwave-public/src/game/physics.js',
   'inkwave-public/src/game/inkFlight.js',
+  'inkwave-public/src/world/level.js',
   'inkwave-public/src/world/paint.js',
   'inkwave-public/src/fx/fx.js',
   'patches/splatoon3/adapter.mjs',
