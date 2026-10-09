@@ -9,6 +9,7 @@ import { World } from '../../patches/loading-cache/tests/worker-fixture.mjs';
 
 const root = new URL('../../', import.meta.url);
 const composer = 'patches/local-quality/composer-target-adapter.mjs';
+const composerFormat = 'patches/local-quality/composer-format-adapter.mjs';
 const runtimeHelpers = [
   'patches/splatoon3/issue-196-adapter.mjs',
   'patches/splatoon3/issue-284-adapter.mjs',
@@ -25,7 +26,8 @@ test('excluded modules have audited build-only exports; mixed runtime adapters r
     const exports = ast.body.filter(n => n.type.startsWith('Export')).flatMap(n =>
       n.declaration?.id?.name || n.declaration?.declarations?.map(d => d.id.name) || n.specifiers?.map(s => s.exported.name) || '?');
     assert(exports.length > 0, file);
-    const expected = file === composer ? ['createLazyComposerTarget', 'adaptComposerTarget', 'revertComposerTarget'] : [];
+    const expected = file === composer ? ['createLazyComposerTarget', 'adaptComposerTarget', 'revertComposerTarget']
+      : file === composerFormat ? ['composerGradeKeepsPackedTargetNonnegative', 'selectComposerTargetFormat', 'configureComposerColorTargets'] : [];
     assert(exports.every(name => /^adapt[A-Z]/.test(name) || expected.includes(name)),
       `New runtime export requires removing ${file} from the build-only list: ${exports}`);
   }

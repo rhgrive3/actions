@@ -10,6 +10,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/bot-edge-guard-adapter.mjs',
   'patches/local-quality/bot-paint-observation-adapter.mjs',
   'patches/local-quality/bot-refill-release-adapter.mjs',
+  'patches/local-quality/composer-format-adapter.mjs',
   'patches/local-quality/composer-target-adapter.mjs',
   'patches/local-quality/final-count-adapter.mjs',
   'patches/local-quality/final-minute-music-adapter.mjs',
