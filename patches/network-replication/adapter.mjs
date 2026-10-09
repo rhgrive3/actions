@@ -141,6 +141,16 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
+    patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
+    code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
+    code = "import { recordWipeoutLife, packWipeoutTimeline, acceptWipeoutTimeline, acceptWipeoutConfirmation, replayWipeoutConfirmations } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
+    patch("    this._rec(['ev', name, packEvent(e)]);", "    recordWipeoutLife(this, name, e);\n    this._rec(['ev', name, packEvent(e)]);", 'owner wipeout transitions');
+    patch('    if (this.out.length) { msg.e = this.out; this.out = []; }', '    const wf = packWipeoutTimeline(this); if (wf) msg.wf = wf;\n    replayWipeoutConfirmations(this);\n    if (this.out.length) { msg.e = this.out; this.out = []; }', 'owner wipeout history and watermark');
+    patch("      case 't': this._tick(from, d); break;", "      case 't': if (d.wf) acceptWipeoutTimeline(this, from, d.wf); this._tick(from, d); break;\n      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", 'authenticated wipeout protocol');
+    code = "import { acceptOnlineContinuation, tickOnlineContinuation } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
+    patch('  _sendTick() {', '  _sendTick() {\n    tickOnlineContinuation(this);', 'per-player result continuation');
+    patch("      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", "      case 'wc': acceptWipeoutConfirmation(this, from, d); break;\n      case 'rc': acceptOnlineContinuation(this, from, d); break;", 'continuation sender and match identity');
+    patch('    this.myId = session.myId;', '    this.myId = session.myId;\n    this._matchStateAPI = { G, emit };', 'native match-state protocol context');
     patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
     patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
     patch("    this.unsubs.push(on('match:state', ({ state, match: m }) => { if (m === this.match && this.isHost) this._sendNow({ k: 'st', s: state, t: r2(m.time) }); }));",
@@ -261,6 +271,17 @@ export function emit(name, payload) {
     const groupedHit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
     patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
       groupedHit, 'Slosher volley identity owner admission');
+    // #1150: a missing/invalid volley cannot downgrade an online maximum to
+    // ungrouped damage. Existing combat-life admission owns respawn isolation.
+    code = "import { validDamageGroup } from '../../patches/splatoon3/runtime/final-damage.mjs';\n" + code;
+    patch('    this.s.tr?.sendTo(victim.owner, message);',
+      `    if (WEAPONS[wid]?.kind === 'slosher') {
+      if (typeof message.g !== 'string' || !validDamageGroup(message.g)) { this.hitPending.delete(message.seq); this._pendingHits?.delete(message.h); return false; }
+    }
+    this.s.tr?.sendTo(victim.owner, message);`, 'Slosher required volley identity');
+    patch('    this._applyingHit = true;', `    if (WEAPONS[d.w]?.kind === 'slosher' &&
+      (typeof d.g !== 'string' || !validDamageGroup(d.g))) return;
+    this._applyingHit = true;`, 'Slosher owner identity admission');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     for (const a of this.byNid.values()) clearRemoteSquidroll(a);
     retireNetworkGhosts();
@@ -415,22 +436,22 @@ export function emit(name, payload) {
     const kitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
     const poweredKitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);';
     if (code.includes(poweredInkMetaKitBirth)) patch(poweredInkMetaKitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
       'append immutable special power after ink metadata and stable birth fields');
     else if (code.includes(inkMetaKitBirth)) patch(inkMetaKitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth fields after ink metadata and kit fields');
     else if (code.includes(poweredKitBirth)) patch(poweredKitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
       'append immutable special power after stable birth fields');
     else if (code.includes(kitBirth)) patch(kitBirth,
-      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth mode, appearance seed, identity, roller unit after kit fields');
     else if (code.includes(inkMetaBase)) patch(inkMetaBase,
-      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth fields after ink metadata');
     else patch('p.nose ?? 0.3, p.sats ?? 3]);',
-      'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelitySloshPacketIndex ?? p.fidelityRollerUnitIndex ?? -1]);',
       'append birth mode, appearance seed, identity, roller unit');
     {
       const combatLifeTick = '  _tick(from, d) {\n    this.stats.in++;\n    // Ordered WebSocket ticks cannot replay paint or terminal events.\n    if (!Number.isFinite(d.ts) || d.ts <= (this.peers.get(from)?.lastTs ?? -Infinity)) return;\n    const p = this._peer(from);';
@@ -643,6 +664,38 @@ function validLethalState(row, life, flags, hp) {
     || typeof punisher !== 'boolean' || typeof cause !== 'string' || !cause.length || cause.length > 48 || /[\\u0000-\\u001f\\u007f]/.test(cause)) return undefined;
   return [hitLife, sequence, attackerNid, cause, punisher];
 }
+// #958: versioned protection payload inside the existing recovery-age slot.
+// The outer adoption row and its extension slots remain unchanged (#1169 owns
+// the separate Slam extension). Old numeric recovery ages remain readable.
+const PROTECTION_TAG = 'inkwave-protection-v1';
+function packProtectionAge(actor) {
+  const armor = actor.s3?.spawnArmor;
+  return [PROTECTION_TAG, clampAdoptionAge(actor.lastDamage),
+    Number.isFinite(actor.invuln) ? Math.max(0, Math.min(10, actor.invuln)) : 0,
+    !!actor.s3?.spawnArmorManaged,
+    armor ? [armor.hp, armor.remaining, armor.breakRemaining] : null];
+}
+function readProtectionAge(row) {
+  if (!Array.isArray(row) || row.length !== 5 || row[0] !== PROTECTION_TAG
+    || !Number.isFinite(row[1]) || row[1] < 0 || row[1] > ADOPTION_AGE_MAX
+    || !Number.isFinite(row[2]) || row[2] < 0 || row[2] > 10 || typeof row[3] !== 'boolean') return null;
+  const armor = row[4];
+  if (armor !== null && (!row[3] || !Array.isArray(armor) || armor.length !== 3
+    || !Number.isFinite(armor[0]) || armor[0] < 0 || armor[0] > 30
+    || !Number.isFinite(armor[1]) || armor[1] < 0 || armor[1] > 235 / 60
+    || armor[2] !== null && (!Number.isFinite(armor[2]) || armor[2] < 0 || armor[2] > 20 / 60))) return null;
+  return { invuln: row[2], managed: row[3], armor: armor?.slice() || null };
+}
+function restoreProtection(actor, state) {
+  const p = state.protection;
+  if (!p || !actor.alive) return;
+  actor.invuln = p.invuln;
+  actor.s3 ||= {};
+  actor.s3.spawnArmorManaged = p.managed;
+  actor.s3.spawnArmorRemote = false;
+  actor.s3.spawnArmor = p.armor && p.armor[1] > 0
+    ? { hp: p.armor[0], remaining: p.armor[1], breakRemaining: p.armor[2] } : null;
+}
 function packAdoptionState(actor) {
   const life = Number.isSafeInteger(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
   const previous = Number.isSafeInteger(actor._adoptionSequence) && actor._adoptionSequence >= 0 ? actor._adoptionSequence : 0;
@@ -653,12 +706,15 @@ function packAdoptionState(actor) {
   const spin = exportSplatlingReservation(actor.weaponRunner);
   const cooldown = Number.isFinite(actor.weaponRunner?.cooldown)
     ? Math.min(ADOPTION_COOLDOWN_MAX, Math.max(0, actor.weaponRunner.cooldown)) : 0;
-  return [ADOPTION_STATE_TAG, life, sequence, tick, clampAdoptionAge(actor.lastDamage),
+  return [ADOPTION_STATE_TAG, life, sequence, tick, packProtectionAge(actor),
     packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin, cooldown];
 }
 function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
   if (!Array.isArray(row) || (row.length !== 8 && row.length !== 9) || row[0] !== ADOPTION_STATE_TAG) return null;
-  const [tag, rowLife, sequence, tick, recoveryAge, jumpRow, lethalRow, spinRow] = row;
+  const [tag, rowLife, sequence, tick, ageRow, jumpRow, lethalRow, spinRow] = row;
+  const protection = Array.isArray(ageRow) ? readProtectionAge(ageRow) : null;
+  if (Array.isArray(ageRow) && !protection) return null;
+  const recoveryAge = Array.isArray(ageRow) ? ageRow[1] : ageRow;
   const cooldown = row.length === 9 ? row[8] : 0;
   if (!Number.isSafeInteger(rowLife) || rowLife < 0 || rowLife !== life
     || !Number.isSafeInteger(sequence) || sequence < 1 || sequence <= (previousSequence || 0)
@@ -671,7 +727,7 @@ function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
   if (lethal === undefined) return null;
   const streaming = !!(flags & F.streaming);
   if (spinRow === null ? streaming : (!streaming || weaponKind !== 'splatling' || !isValidSplatlingReservation(spinRow, PLAYER.inkMax))) return null;
-  return { life: rowLife, sequence, tick, recoveryAge, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown };
+  return { life: rowLife, sequence, tick, recoveryAge, protection, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown };
 }
 function copyAdoptionState(state) {
   if (!state) return null;
@@ -751,6 +807,9 @@ function restoreAdoptionState(match, actor, transfer) {
   if (latest.life !== life) return;
   actor._adoptionSequence = Math.max(Number.isSafeInteger(actor._adoptionSequence) ? actor._adoptionSequence : 0, latest.sequence);
   actor.net._adoptionSeq = Math.max(Number.isSafeInteger(actor.net._adoptionSeq) ? actor.net._adoptionSeq : 0, latest.sequence);
+  // Resume from the newest accepted owner state, not the delayed visual
+  // sample (which would extend protection or undo an already broken armor).
+  restoreProtection(actor, latest);
   actor.lastDamage = clampAdoptionAge(current.recoveryAge);
   actor.weaponRunner.cooldown = Math.max(actor.weaponRunner.cooldown || 0, current.cooldown || 0);
   if (current.jump) {
@@ -787,6 +846,7 @@ function sampleOwnerSimulation(peer) {
 }
 function retireNetworkGhosts(owner = null) {
   const P = G.projectiles; if (!P) return;
+  retireDisconnectedMainProjectiles(P, owner, {ghostOnly:true});
   const owns = p => !owner || p.owner === owner;
   for (const p of P.list) if (p.ghost && owns(p)) { p._netEnded = true; p._qualityDead = true; p._netEndStep = p._netSteps; }
   for (let i = P.bombs.length-1; i >= 0; i--) if (P.bombs[i].ghost && owns(P.bombs[i])) { P._releaseBomb(P.bombs[i]); P.bombs.splice(i,1); }
