@@ -8,7 +8,6 @@ import { adaptQualityIssue418 } from './issue-418-adapter.mjs';
 import { adaptTexlibSource } from './texlib-adapter.mjs';
 import { adaptIssue477Source } from '../splatoon3/issue-477-adapter.mjs';
 import { adaptBossHit } from './boss-hit-adapter.mjs';
-import { adaptMapReveal } from './map-reveal.mjs';
 import { adaptIssue483 } from '../splatoon3/issue-483-adapter.mjs';
 import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
 import { patchLobbySetShowcase } from './issue-472-adapter.mjs';
@@ -139,7 +138,6 @@ function adaptQualityLayer(rel, code) {
   code = adaptIssue427(rel, code);
   code = adaptClothingGear(rel, code, replaceOnce);
   code = adaptBossHit(rel, code);
-  code = adaptMapReveal(rel, code);
   code = adaptIssue460Source(rel, code);
   code = adaptIssue461Source(rel, code);
   code = adaptAudioListener(rel, code);
