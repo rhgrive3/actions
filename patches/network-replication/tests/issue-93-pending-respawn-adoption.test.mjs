@@ -48,6 +48,7 @@ function reproducePendingRespawn({ actor, nm }) {
 
 test('#93 pending remote respawn adopted before its first snapshot enters the real Turf Squid Spawn path once', async () => {
   const r = await rig(), { actor, nm, f } = r;
+  const priorLife = actor.netLife ?? 0;
   reproducePendingRespawn(r);
   const finalizedSpecial = actor.special, deaths = actor.stats.deaths, oldTp = actor.net.tp;
 
@@ -61,6 +62,7 @@ test('#93 pending remote respawn adopted before its first snapshot enters the re
   assert.equal(actor.s3.spawnArmor.remaining, f.profile.spawnArmor.duration);
   assert.equal(actor.s3.spawnArmor.breakRemaining, null);
   assert.equal(actor.special, finalizedSpecial, 'the already-finalized special gauge survives spawnAt reset');
+  assert.equal(actor.netLife, priorLife + 1, 'finishing the pending respawn advances exactly one combat life');
   assert.equal(actor.netTp, oldTp + 1, 'the completed respawn advances the existing teleport counter once');
   assert.equal(actor.stats.deaths, deaths, 'ownership adoption cannot splat the same life again');
   assert.deepEqual(r.counts(), { respawns: 1, splats: 0 }, 'one new-owner respawn event and no duplicate splat event');

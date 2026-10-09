@@ -282,7 +282,7 @@ for (const hz of HZ) {
   });
 }
 
-test('#93 rejects stale, malformed, and unsupported Squid Spawn snapshots without advancing life or sequence', async () => {
+test('#93 rejects duplicate, stale, malformed, and unsupported Squid Spawn snapshots without advancing life or sequence', async () => {
   const r = await rig(60), dt = 1 / 60;
   r.actor.aimPoint.set(4, 0, 7);
   r.actor.splat(null, 'shooter'); r.actor.respawn(); step(r.f, r.actor, dt);
@@ -293,9 +293,10 @@ test('#93 rejects stale, malformed, and unsupported Squid Spawn snapshots withou
   const acceptedSequence = r.remote.net._adoptionSeq;
 
   const stale = structuredClone(first);
-  stale.a[0][23][2]++;
+  stale.ts += 0.025;
+  stale.a[0][23][2] = acceptedSequence;
   r.receiver.onMessage('p2', stale);
-  assert.equal(r.remote.net.buf.length, 1, 'nonincreasing owner timestamp rejects a replay even with a higher sidecar sequence');
+  assert.equal(r.remote.net.buf.length, 1, 'a replay with a duplicate sequence rejects even with a newer packet timestamp');
 
   for (const [index, length] of [8, 9, 10, 11].entries()) {
     const late = structuredClone(first);
@@ -342,6 +343,69 @@ test('#93 rejects stale, malformed, and unsupported Squid Spawn snapshots withou
   assert.equal(r.remote.net.buf.length, 1, 'native Actor._resolve rejects a target whose encoded height is unsupported');
   assert.equal(r.remote.net.lastLife, acceptedLife);
   assert.equal(r.remote.net._adoptionSeq, acceptedSequence);
+});
+
+test('#93 accepts a newer sequence at the same owner tick, while duplicate sequence, older tick, wrong life, and wrong owner stay rejected', async () => {
+  const r = await rig(60), dt = 1 / 60;
+  r.actor.aimPoint.set(4, 0, 7);
+  r.actor.splat(null, 'shooter'); r.actor.respawn(); step(r.f, r.actor, dt);
+  const first = publish(r);
+  receive(r, first);
+  const life = r.remote.net.lastLife;
+  const sequence = r.remote.net._adoptionSeq;
+  const tick = r.remote.net._adoptionTick;
+
+  const sameTick = publish(r);
+  assert.equal(sameTick.u, first.u, 'the actual owner publishes again without advancing its simulation tick');
+  assert.equal(sameTick.a[0][23][3], tick);
+  assert.ok(sameTick.a[0][23][2] > sequence, 'the actual owner sequence advances for the same-tick snapshot');
+  r.receiver.onMessage('p2', sameTick);
+  assert.equal(r.remote.net._adoptionSeq, sameTick.a[0][23][2], 'same-tick snapshot with a strictly newer sequence is accepted');
+  assert.equal(r.remote.net._adoptionTick, tick);
+  assert.equal(r.remote.net._adoptionTickOwner, 'p2');
+  assert.equal(r.remote.net.lastLife, life, 'same-tick freshness does not change the current life');
+
+  const acceptedSequence = r.remote.net._adoptionSeq;
+  const acceptedTick = r.remote.net._adoptionTick;
+  const acceptedCount = r.remote.net.buf.length;
+  const duplicate = structuredClone(sameTick);
+  duplicate.ts += 0.05;
+  r.receiver.onMessage('p2', duplicate);
+  assert.equal(r.remote.net.buf.length, acceptedCount, 'a duplicate same-tick sequence is rejected');
+
+  const lowerSequence = structuredClone(sameTick);
+  lowerSequence.ts += 0.075;
+  lowerSequence.a[0][23][2] = acceptedSequence - 1;
+  r.receiver.onMessage('p2', lowerSequence);
+  assert.equal(r.remote.net.buf.length, acceptedCount, 'a lower same-tick sequence is rejected');
+
+  const olderTick = structuredClone(sameTick);
+  olderTick.ts += 0.1;
+  olderTick.u = acceptedTick - 1;
+  olderTick.a[0][23][2] = acceptedSequence + 1;
+  olderTick.a[0][23][3] = olderTick.u;
+  r.receiver.onMessage('p2', olderTick);
+  assert.equal(r.remote.net.buf.length, acceptedCount, 'a strictly newer sequence cannot lower the same-owner tick');
+
+  const wrongLife = structuredClone(sameTick);
+  wrongLife.ts += 0.15;
+  wrongLife.u = acceptedTick + 1;
+  wrongLife.a[0][23][1] = life + 1;
+  wrongLife.a[0][23][2] = acceptedSequence + 1;
+  wrongLife.a[0][23][3] = wrongLife.u;
+  r.receiver.onMessage('p2', wrongLife);
+  assert.equal(r.remote.net.buf.length, acceptedCount, 'a fresh sequence cannot adopt state tagged for a different life');
+
+  const wrongOwner = structuredClone(sameTick);
+  wrongOwner.ts += 0.2;
+  wrongOwner.u = acceptedTick + 1;
+  wrongOwner.a[0][23][2] = acceptedSequence + 1;
+  wrongOwner.a[0][23][3] = wrongOwner.u;
+  r.receiver.onMessage('new-owner', wrongOwner);
+  assert.equal(r.remote.net.buf.length, acceptedCount, 'a different owner cannot reuse the current owner freshness epoch');
+  assert.equal(r.remote.net._adoptionSeq, acceptedSequence);
+  assert.equal(r.remote.net._adoptionTick, acceptedTick);
+  assert.equal(r.remote.net.lastLife, life);
 });
 
 test('#93 rejects flight clocks beyond the installed Squid Spawn lifecycle', async () => {
