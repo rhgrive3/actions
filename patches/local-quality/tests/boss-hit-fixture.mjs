@@ -29,9 +29,9 @@ export async function bossWorld(patched = true) {
     const rel=path.relative(file.startsWith(SRC+path.sep)?SRC:ROOT,file);
     let code=compose(rel,fs.readFileSync(file,'utf8'));
     if(!patched && rel==='src/net/netmatch.js') {
-      const guarded="case 'bhit': if (this.isHost && this._acceptBossHit(from, d)) this.match.boss.remoteHit(d); break;";
+      const guarded="case 'bhit': if (this.isHost && this._acceptBossHit(from, d)) this.match.boss.remoteHit(d, from); break;";
       if(!code.includes(guarded)) throw Error('Boss negative-control admission boundary changed');
-      code=code.replace(guarded,"case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d); break;");
+      code=code.replace(guarded,"case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d, from); break;");
     }
     const module=new vm.SourceTextModule(code,{context,identifier:file});modules.set(file,module);return module;
   }
