@@ -21,8 +21,8 @@ const hitStateStart = source.indexOf("const HIT_AUTHORITY_TAG = '");
 const hitStateEnd = source.indexOf('\nconst ADOPTION_STATE_TAG', hitStateStart);
 assert.ok(hitStateStart >= 0 && hitStateEnd > hitStateStart, 'production hit-state snapshot helpers are composed');
 const { packHitAuthorityState, readHitAuthorityState } = new Function(
-  `${source.slice(hitStateStart, hitStateEnd)}\nreturn { packHitAuthorityState, readHitAuthorityState };`,
-)();
+  'PLAYER', `${source.slice(hitStateStart, hitStateEnd)}\nreturn { packHitAuthorityState, readHitAuthorityState };`,
+)({ hp: 100 });
 
 function methodFrom(code, name, optional = false) {
   const start = code.indexOf('  ' + name + '(');
@@ -76,7 +76,8 @@ function makeWorld(id) {
   const dropCleanup = source.slice(dropStart, dropEnd);
   const methodNames = [
     'sendHit', 'shouldApplyHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_retryPendingHitsForLeave',
-    '_retryNackedHit', '_hitNack', '_hit', '_hitAck', '_acceptHitAuthorityAck', '_acceptHitAuthoritySnapshot', '_hitAuthorityHp',
+    '_retryNackedHit', '_hitNack', '_hit', '_hitAck', '_hitHandoffPacket', '_readHitHandoffPacket', '_validHitAuthorityMetadata',
+    '_mergeHitAuthorityParent', '_acceptHitAuthorityAck', '_acceptHitAuthoritySnapshot', '_hitAuthorityHp',
     'onMessage', 'onLeave', '_onLocalEvent', 'bind', 'dispose', '_requestFirstSplat',
   ];
   const forwardStart = source.indexOf('const FORWARD = '), forwardEnd = source.indexOf(';', forwardStart);
@@ -253,6 +254,103 @@ test('composed wrong-owner and malformed receipts cannot transfer HP state', () 
   assert.equal(f.H.victim.hp, 64, 'the accepted receipt is duplicate-safe');
 });
 
+test('composed owner handoff preserves HP recovery newer than its accepted-hit watermark', () => {
+  const f = room();
+  assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
+  deliver(f.S, f.V, f.S.sent.at(-1).data);
+  const receipt = ack(f.V);
+  deliver(f.V, f.H, receipt);
+  assert.equal(f.H.victim.hp, 64);
+
+  f.H.victim.hp = 80; // owner-side recovery after the accepted hit
+  leave(f.H, 'V', 'H');
+  assert.equal(f.H.victim.hp, 80, 'adoption checkpoints current HP instead of the older hit ACK HP');
+  assert.deepEqual(f.H.victim.net._hitHandoff, {
+    owner: 'V', life: 5, sequence: receipt.hr, ts: receipt.ht, hp: 80,
+  });
+
+  deliver(f.V, f.H, receipt);
+  assert.equal(f.H.victim.hp, 80, 'a duplicate old-owner receipt cannot undo the recovery');
+  const adoptedState = readHitAuthorityState(packHitAuthorityState(f.H.victim), 5);
+  assert.equal(adoptedState.parent.hp, 80, 'the next snapshot carries the recovered HP checkpoint');
+});
+
+test('composed same-life owner epochs merge concurrent hits regardless of ACK delivery order', () => {
+  const run = (oldAckFirst) => {
+    const f = room();
+    assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
+    const oldHit = f.S.sent.at(-1).data;
+    deliver(f.S, f.V, oldHit);
+    const oldAck = ack(f.V);
+    assert.equal(oldAck.hr, 1);
+    assert.equal(oldAck.hp, 64);
+
+    leave(f.S, 'V', 'H');
+    leave(f.H, 'V', 'H');
+    assert.equal(f.H.victim.hp, 100, 'the new owner adopted the stale pre-hit snapshot');
+    assert.deepEqual(f.H.victim.net._hitHandoff, { owner: 'V', life: 5, sequence: 0, ts: 0, hp: 100 });
+
+    assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
+    const newHit = f.S.sent.at(-1).data;
+    assert.equal(f.S.sent.at(-1).to, 'H');
+    deliver(f.S, f.H, newHit);
+    const newAck = ack(f.H);
+    assert.equal(newAck.hr, 1, 'the adopted owner starts its own revision sequence');
+    assert.equal(newAck.hp, 64);
+    assert.deepEqual(newAck.he, ['V', 5, 0, 0, 100], 'the ACK identifies its prior-owner checkpoint');
+
+    deliver(f.V, f.H, oldAck);
+    assert.equal(f.H.victim.hp, 28, 'the delayed prior-owner ACK contributes its unmerged 36 damage');
+    assert.equal(f.H.victim.net._hitAuthority.owner, 'H');
+    assert.equal(f.H.victim.net._hitAuthority.sequence, 1, 'the prior epoch cannot advance or replace H revision 1');
+    const row = packHitAuthorityState(f.H.victim);
+    assert.deepEqual(readHitAuthorityState(row, 5), {
+      life: 5, sequence: 1, parent: { owner: 'V', life: 5, sequence: 1, ts: oldAck.ht, hp: 64 },
+    });
+    const staleNewOwnerSample = { t: newAck.ht + 1, life: 5, hitLife: 5, hitSeq: 1, hp: 64,
+      hitParent: { owner: 'V', life: 5, sequence: 0, ts: 0, hp: 100 } };
+    assert.equal(f.H.net._hitAuthorityHp(f.H.victim, staleNewOwnerSample, 'H'), 28,
+      'a delayed snapshot from H cannot roll back V damage already merged after H emitted it');
+    const recoveredSample = { t: newAck.ht + 2, life: 5, hitLife: 5, hitSeq: 1, hp: 32,
+      hitParent: { owner: 'V', life: 5, sequence: 1, ts: oldAck.ht, hp: 64 } };
+    assert.equal(f.H.net._hitAuthorityHp(f.H.victim, recoveredSample, 'H'), 32,
+      'a newer same-owner sample still carries HP recovery');
+
+    if (oldAckFirst) {
+      deliver(f.V, f.S, oldAck);
+      deliver(f.H, f.S, newAck);
+    } else {
+      deliver(f.H, f.S, newAck);
+      deliver(f.V, f.S, oldAck);
+    }
+    assert.equal(f.S.victim.hp, 28, 'both valid owner epochs remain represented at the shooter');
+    return { f, oldAck, newAck };
+  };
+  run(false);
+  run(true);
+});
+
+test('composed malformed authority ACK leaves the exact hit receipt pending for a valid ACK', () => {
+  const f = room();
+  assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
+  const hit = f.S.sent.at(-1).data;
+  deliver(f.S, f.V, hit);
+  const receipt = ack(f.V);
+  assert.equal(f.S.net.hitPending.size, 1);
+  assert.equal(f.S.net._pendingHits.size, 1);
+
+  deliver(f.V, f.S, { ...receipt, hp: 101 });
+  assert.equal(f.S.net.hitPending.size, 1, 'malformed HP cannot retire delivery retry state');
+  assert.equal(f.S.net._pendingHits.size, 1, 'malformed HP cannot retire combat confirmation state');
+  assert.equal(f.S.events.filter((event) => event.name === 'combat:confirmed').length, 0);
+
+  deliver(f.V, f.S, receipt);
+  assert.equal(f.S.net.hitPending.size, 0);
+  assert.equal(f.S.net._pendingHits.size, 0);
+  assert.equal(f.S.events.filter((event) => event.name === 'combat:confirmed').length, 1,
+    'the still-pending exact hit settles from its valid ACK');
+});
+
 test('composed multiple owner ACKs reconcile by life revision when they arrive out of order', () => {
   const f = room();
   f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter');
@@ -296,12 +394,12 @@ test('composed victim respawn retires a previous-life ACK while attacker respawn
 
 test('composed actor snapshot hit revision is life-bound and preserves the current owner sequence', () => {
   const a = actor(4, 'H', 'H', 1, 5);
-  a.net._hitAuthority = { life: 5, sequence: 2, ts: 3, hp: 54, alive: true };
+  a.net._hitAuthority = { owner: 'H', life: 5, sequence: 2, ts: 3, hp: 54, alive: true };
   const row = packHitAuthorityState(a);
-  assert.deepEqual(readHitAuthorityState(row, 5), { life: 5, sequence: 2 });
+  assert.deepEqual(readHitAuthorityState(row, 5), { life: 5, sequence: 2, parent: null });
   assert.equal(readHitAuthorityState(row, 6), null, 'another life cannot reuse the previous revision');
   a.netLife = 6;
-  assert.deepEqual(readHitAuthorityState(packHitAuthorityState(a), 6), { life: 6, sequence: 0 });
+  assert.deepEqual(readHitAuthorityState(packHitAuthorityState(a), 6), { life: 6, sequence: 0, parent: null });
 });
 
 test('composed ordinary hit to a host-owned victim is acknowledged and deduplicated', () => {
