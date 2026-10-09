@@ -8,8 +8,15 @@ test('#189 real rolling emission scores a continuous 5.6-wide maximum-speed CPU 
   assert.equal(f.a.weapon.rollWidth,1.9,'damage width unchanged');assert.equal(f.a.weapon.rollSpeed,7.92);assert.equal(f.a.weapon.rollDashTime,1.5);
  }
 });
-test('#189 low/normal rolling retains existing body paint; no unverified #650 curve is invented',async()=>{
- for(const speed of [1,6.48,7.8]){const f=await draw(speed);assert.equal(f.paint.length,3);assert.ok(f.paint.every(e=>e.radius===.62));}
+test('#189 low/normal rolling retains the native body paint; #649 side bands stay below the maximum',async()=>{
+ const max=await draw(7.92),maxRadius=Math.max(...max.paint.slice(3).map(e=>e.radius));
+ for(const speed of [1,6.48,7.8]){const f=await draw(speed);
+  assert.equal(f.paint.length,5,'3 native body bands + 2 speed-scaled floor bands');
+  assert.ok(f.paint.slice(0,3).every(e=>e.radius===.62&&e.opts.kind==='roll'),'body contact paint unchanged');
+  const side=f.paint.slice(3);assert.ok(side.every(e=>e.opts.kind==='rollFloor'));
+  assert.ok(side.every(e=>e.radius<maxRadius),`speed ${speed} side band narrower than the #189 maximum`);
+  const floor=cpuFloor(f,20,.025);f.paint.forEach(e=>floor.splat(e.point,e.radius,e.team,e.opts));
+  assert.ok(floor.extent('x').width<5.6-1e-6,`speed ${speed} narrower than the #189 maximum`);}
  const f=await draw();assert.ok(f.paint.slice(3).every(e=>e.opts.kind==='rollFloor'));
 });
 test('#189 floor alias filters only side paint on real PaintSystem surface projection; existing body walls remain',async()=>{
