@@ -7,10 +7,10 @@
 // selection at all: every humanoid class received the same universal hit
 // springs and only the ordinary hold differed afterwards.
 //
-// This module adds that missing selection and an additive class/state damage
-// shaping on top of the untouched native hit window. It writes pose channels
-// (`Character.P`) and its own per-character state only: no spring impulse, no
-// timer, no HP/ink/knockback, no collision, no weapon cadence, no networking.
+// This module adds that missing selection and additive class/state shaping on
+// top of the untouched native hit window. It changes render pose channels and
+// keeps an ordinary-pose muzzle snapshot for gameplay readers: no spring
+// impulse, timer, HP/ink/knockback, collision, weapon cadence or networking.
 //
 // What the public names do NOT prove: the retail 11.3.0 skeletal curves, the
 // runtime chooser/blend law, per-family onset/peak/recovery frame counts and
@@ -109,7 +109,15 @@ function stateFor(ch) {
   let s = hooks.states.get(ch);
   if (!s) {
     s = { kind: null, motion: null, base: null, stateFamily: null, moving: false, amp: 1,
-      dirX: 0, dirZ: 1, age: Infinity, envelope: 0, hold: 0, applied: false, preHold: null };
+      dirX: 0, dirZ: 1, age: Infinity, envelope: 0, hold: 0, applied: false,
+      preHold: null,
+      basePose: new Float32Array(ch.P.length), renderPose: new Float32Array(ch.P.length),
+      gameplayMuzzle: ch.root.position.clone(), gameplayLeftMuzzle: ch.root.position.clone(),
+      gameplayKidPosition: ch.kid.position.clone(), gameplayKidQuaternion: ch.kid.quaternion.clone(),
+      gameplayKidScale: ch.kid.scale.clone(), renderKidPosition: ch.kid.position.clone(),
+      renderKidQuaternion: ch.kid.quaternion.clone(), renderKidScale: ch.kid.scale.clone(),
+      renderFeedback: null,
+      muzzleVersion: -1, poseVersion: 0, mainMuzzleValid: false, leftMuzzleValid: false, sampling: false };
     hooks.states.set(ch, s);
   }
   return s;
@@ -215,9 +223,11 @@ export function installWeaponHitReaction(api, _profile) {
   const proto = Character.prototype;
   if (Object.hasOwn(proto, INSTALL)) return; // another module realm already installed it
   const states = new WeakMap();
-  Object.defineProperty(proto, INSTALL, { value: { states } });
-  const trigger = proto.trigger, buildPose = proto._buildPose, poseWeapon = proto._poseWeapon,
+  const applyPose = proto._applyPose, trigger = proto.trigger, buildPose = proto._buildPose,
+    poseWeapon = proto._poseWeapon,
+    getMuzzle = proto.getMuzzle, getMuzzleHand = proto.getMuzzleHand, getAimMuzzle = proto.getAimMuzzle,
     setWeapon = proto.setWeapon, setVisible = proto.setVisible, dispose = proto.dispose;
+  Object.defineProperty(proto, INSTALL, { value: { states, applyPose } });
   proto.trigger = function (name, ...args) {
     const result = trigger.call(this, name, ...args);
     // Selection happens once, at the hit, from the weapon class and locomotion
@@ -235,7 +245,115 @@ export function installWeaponHitReaction(api, _profile) {
   };
   proto._buildPose = function (dt, s) {
     const result = buildPose.call(this, dt, s);
+    const value = stateFor(this);
+    // Keep the complete composed gameplay pose before adding the render-only
+    // damage layer. The installer runs after the other pose adapters so this
+    // snapshot includes their ordinary weapon, action and locomotion layers.
+    value.basePose.set(this.P);
+    value.poseVersion++;
+    value.muzzleVersion = -1;
     applyPresentation(this, T, C);
+    return result;
+  };
+  proto._applyPose = function (dt, s) {
+    const value = stateOf(this);
+    if (!value?.applied || value.sampling || value.basePose.length !== this.P.length)
+      return applyPose.call(this, dt, s);
+
+    // Build the ordinary composed pose first and retain its actual main and
+    // left-hand world muzzles. Then restore the hit pose for drawing. Gameplay
+    // muzzle readers use the retained positions while the render layer is live.
+    value.renderPose.set(this.P);
+    value.sampling = true;
+    let visualResult;
+    try {
+      this.P.set(value.basePose);
+      applyPose.call(this, dt, s);
+      this.root.updateMatrixWorld(true);
+      value.gameplayKidPosition.copy(this.kid.position);
+      value.gameplayKidQuaternion.copy(this.kid.quaternion);
+      value.gameplayKidScale.copy(this.kid.scale);
+      const main = this.weapon?.muzzle;
+      value.mainMuzzleValid = !!main;
+      if (main) main.getWorldPosition(value.gameplayMuzzle);
+      const left = this.dual && this.weapon?.left?.muzzle;
+      value.leftMuzzleValid = !!left;
+      if (left) left.getWorldPosition(value.gameplayLeftMuzzle);
+      value.renderFeedback = {
+        hipDrop: this.hipDrop, ikErr: this.ikErr.slice(), ikErrPre: this.ikErrPre, toeUp: this._toeUp,
+        fL: this._fL.clone(), fR: this._fR.clone(), fLq: this._fLq.clone(), fRq: this._fRq.clone(),
+        headQW: this._headQW.clone(), headSet: this._headSet, hairOdd: this._hairOdd, hairAcc: this._hairAcc,
+        feet: this.feet.map(foot => ({ disp: foot.disp.clone(), dispYaw: foot.dispYaw, dispOK: foot.dispOK })),
+      };
+
+      this.P.set(value.renderPose);
+      // These are render details, not part of the weapon transform. The base
+      // pass already advanced them once for this tick; a zero-dt visual pass
+      // must not consume extra random values or reset spring/hair state.
+      const detailMethods = ['_applyFace', '_updateHair', '_applyJiggle', '_applyFingers'];
+      const saved = detailMethods.map(name => ({ name, own: Object.hasOwn(this, name), value: this[name] }));
+      for (const item of saved) this[item.name] = () => {};
+      try { visualResult = applyPose.call(this, 0, s); }
+      finally {
+        for (const item of saved) {
+          if (item.own) this[item.name] = item.value;
+          else delete this[item.name];
+        }
+        const feedback = value.renderFeedback;
+        this.hipDrop = feedback.hipDrop; this.ikErr.splice(0, this.ikErr.length, ...feedback.ikErr);
+        this.ikErrPre = feedback.ikErrPre; this._toeUp = feedback.toeUp;
+        this._fL.copy(feedback.fL); this._fR.copy(feedback.fR);
+        this._fLq.copy(feedback.fLq); this._fRq.copy(feedback.fRq);
+        this._headQW.copy(feedback.headQW); this._headSet = feedback.headSet;
+        this._hairOdd = feedback.hairOdd; this._hairAcc = feedback.hairAcc;
+        for (let i = 0; i < this.feet.length; i++) {
+          const source = feedback.feet[i], foot = this.feet[i];
+          foot.disp.copy(source.disp); foot.dispYaw = source.dispYaw; foot.dispOK = source.dispOK;
+        }
+      }
+      value.muzzleVersion = value.poseVersion;
+    } finally {
+      // Preserve a drawable hit pose even if a source transform throws while
+      // sampling the base pose; stale muzzle data is then ignored.
+      this.P.set(value.renderPose);
+      value.sampling = false;
+    }
+    return visualResult;
+  };
+  proto.getMuzzle = function (out) {
+    const value = stateOf(this);
+    if (value?.applied && !value.sampling && value.mainMuzzleValid && value.muzzleVersion >= 0)
+      return out.copy(value.gameplayMuzzle);
+    return getMuzzle.call(this, out);
+  };
+  proto.getMuzzleHand = function (out, hand = 0) {
+    const value = stateOf(this);
+    if (value?.applied && !value.sampling && value.mainMuzzleValid && value.muzzleVersion >= 0) {
+      if (hand === 1 && this.form === 'kid' && this.dual && this.weapon?.left && value.leftMuzzleValid)
+        return out.copy(value.gameplayLeftMuzzle);
+      return out.copy(value.gameplayMuzzle);
+    }
+    return getMuzzleHand.call(this, out, hand);
+  };
+  proto.getAimMuzzle = function (out, pitch) {
+    const value = stateOf(this);
+    if (!value?.applied || value.sampling || value.muzzleVersion < 0 || !this.kid)
+      return getAimMuzzle.call(this, out, pitch);
+    value.renderKidPosition.copy(this.kid.position);
+    value.renderKidQuaternion.copy(this.kid.quaternion);
+    value.renderKidScale.copy(this.kid.scale);
+    this.kid.position.copy(value.gameplayKidPosition);
+    this.kid.quaternion.copy(value.gameplayKidQuaternion);
+    this.kid.scale.copy(value.gameplayKidScale);
+    this.kid.updateWorldMatrix(true, false);
+    let result;
+    try { result = getAimMuzzle.call(this, out, pitch); }
+    finally {
+      this.kid.position.copy(value.renderKidPosition);
+      this.kid.quaternion.copy(value.renderKidQuaternion);
+      this.kid.scale.copy(value.renderKidScale);
+      this.kid.updateWorldMatrix(true, false);
+    }
     return result;
   };
   proto.setWeapon = function (...args) {
@@ -246,13 +364,12 @@ export function installWeaponHitReaction(api, _profile) {
     return result;
   };
   proto.setVisible = function (value) {
-    if (!value) { const s = stateOf(this); if (s) { s.motion = null; s.applied = false; s.hold = 0; s.preHold = null; } }
+    if (!value) { const s = stateOf(this); if (s) { s.motion = null; s.applied = false; s.hold = 0; s.preHold = null; s.muzzleVersion = -1; } }
     return setVisible.call(this, value);
   };
   proto.dispose = function (...args) {
     const s = stateOf(this);
-    if (s) { s.motion = null; s.applied = false; s.hold = 0; s.preHold = null; }
+    if (s) { s.motion = null; s.applied = false; s.hold = 0; s.preHold = null; s.muzzleVersion = -1; }
     return dispose.apply(this, args);
   };
 }
-

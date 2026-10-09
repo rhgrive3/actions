@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { production, rig, grip, gameplay } from './spawn-pose-fixture.mjs';
+import { fixture as composedFixture } from './source-fixture.mjs';
 import {
   installWeaponHitReaction, weaponHitReactionSnapshot, selectWeaponHitMotion,
   S3_DAMAGE_MOTIONS, S3_CLASS_SUFFIX_INFERENCE, WEAPON_HIT_REACTION_CALIBRATION, WEAPON_HIT_REACTION_SOURCE,
@@ -231,4 +232,182 @@ test('reaction state retires with hide/dispose and the module stays presentation
   for (const forbidden of ['.hp', '.ink ', '.vel.', 'invuln', 'damage(', '.splat', 'sp[', 'collide', 'netmatch'])
     assert.ok(!source.includes(forbidden), `presentation module never touches ${forbidden}`);
   assert.ok(source.includes('T_HIT'), 'the reaction rides the native hit window');
+});
+
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 0x100000000; };
+}
+
+test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan parity under hit presentation', async () => {
+  const f = await composedFixture({ fullRuntime: true, productionComposition: true, realProjectiles: true,
+    extraExports: `
+      export { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS } from './inkwave-public/src/game/character.js';
+      export { weaponHitReactionSnapshot } from './patches/splatoon3/runtime/weapon-hit-reaction.mjs';
+    ` });
+  const { G, Actor, Character, Projectiles, PLAYER, WEAPONS, THREE } = f;
+  G.scene = new THREE.Scene(); G.camera = null; G.actors = []; G.time = 0;
+  G.level = { blocks: [], spawnPads: [new THREE.Vector3(), new THREE.Vector3(0, 0, 40)], groundHeight: () => 0 };
+  G.match = { playing: () => true, canRespawn: () => false };
+  G.paint = { sample: () => 1, splat: () => 0 };
+  G.physics.los = () => true;
+  G.physics.groundProbe = (_x, _y, _z, _up, _down, _radius, hit) => { hit.hit = false; return hit; };
+  let current = null;
+  G.physics.raycast = (origin, direction, distance, hit) => {
+    if (current) current.trace.rays.push({ origin: origin.toArray(), direction: direction.toArray(), distance });
+    hit.hit = false; // no world contact and no enemy actor: explicit miss control
+    return hit;
+  };
+  G.projectiles = new Projectiles(G.scene);
+  // Warm the real beam pool before seeded A/B runs so first-use Three.js UUID
+  // allocations cannot shift one side's gameplay random stream.
+  const warmBeam = G.projectiles._beamMesh();
+  warmBeam.visible = false; G.projectiles.beamPool.push(warmBeam);
+
+  const wrapped = [];
+  const wrap = (proto, name, make) => {
+    const original = proto[name];
+    proto[name] = make(original);
+    wrapped.push(() => { proto[name] = original; });
+  };
+  for (const name of ['getMuzzle', 'getMuzzleHand', 'getAimMuzzle']) {
+    wrap(Character.prototype, name, original => function (out, ...args) {
+      const result = original.call(this, out, ...args);
+      if (current?.actor?.character === this) current.trace.calls.push({ method: `Character.${name}`,
+        frame: current.frame, hand: name === 'getMuzzleHand' ? (args[0] ?? 0) : null,
+        result: typeof result === 'boolean' ? result : null, value: out.toArray() });
+      return result;
+    });
+  }
+  for (const name of ['_muzzle', '_muzzleHand']) {
+    wrap(Projectiles.prototype, name, original => function (actor, ...args) {
+      const result = original.call(this, actor, ...args);
+      if (current?.actor === actor) current.trace.calls.push({ method: `Projectiles.${name}`,
+        frame: current.frame, hand: name === '_muzzleHand' ? args[0] : null, value: result.toArray() });
+      return result;
+    });
+  }
+  const removeListener = f.on('weapon:fire', event => {
+    if (current?.actor !== event.actor) return;
+    current.trace.events.push({ frame: current.frame, weapon: event.weapon,
+      hand: Number.isInteger(event.hand) ? event.hand : null, muzzle: event.muzzle.toArray(), direction: event.dir.toArray(),
+      active: f.weaponHitReactionSnapshot(event.actor.character)?.active === true });
+  });
+
+  const kinds = ['shooter', 'charger', 'roller', 'dualies', 'slosher', 'splatling', 'blaster'];
+  const dtFor = hz => 1 / hz;
+  function createActor(kind, enabled, remote) {
+    const a = new Actor({ team: 0, name: `#1097-${kind}-same-seed`, weapon: kind, CharacterClass: Character,
+      style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+    a.character.actor = a; a.character.s3WeaponHitReactionEnabled = enabled;
+    a.pos.set(0, 0, 0); a.vel.set(0, 0, 0); a.yaw = a.aimYaw = 0; a.aimPitch = 0.22;
+    a.aimDir.set(0, Math.sin(a.aimPitch), Math.cos(a.aimPitch)); a.aimPoint.set(0, 1.6, 40);
+    a.form = 'kid'; a.kidT = 10; a.grounded = true; a.ground.hit = true; a.ground.face = 0;
+    a.ink = PLAYER.inkMax; a.lastFire = 99; a.lastDamage = 99; a.invuln = 0; a.remote = remote; a.netTurnRate = 0;
+    a._integrate = () => {}; a._spawnBarrier = () => {}; a._updateClimb = () => {};
+    a.character.root.position.copy(a.pos); a.character.root.updateMatrixWorld(true);
+    G.scene.add(a.character.root); G.actors.push(a);
+    return a;
+  }
+
+  function run(kind, hz, { enabled, hit = true, remote = false }) {
+    const dt = dtFor(hz), w = WEAPONS[kind], ps = G.projectiles;
+    ps.clear(); G.actors.length = 0; G.time = 0; current = null;
+    const a = createActor(kind, enabled, remote);
+    // Character/three.js construction uses Math.random for non-gameplay IDs.
+    // Reset after construction so both A/B runs give the real weapon path the
+    // same gameplay random stream even when shared asset caches are warm.
+    const random = seededRandom(0x1097);
+    f.setRandom(random);
+    const trace = { events: [], calls: [], rounds: [], rays: [], hp: null, state: [] };
+    let frame = 0;
+    const step = fire => {
+      a.intent.fire = fire;
+      G.time += dt;
+      const before = new Set(ps.list);
+      current = { actor: a, trace, frame };
+      a.update(dt);
+      a.character.root.updateMatrixWorld(true); a.character.skeleton.update();
+      for (const p of ps.list) if (!before.has(p) && p.owner === a)
+        trace.rounds.push({ frame, type: p.type, pos: p.pos.toArray(), velocity: p.vel.toArray(), seed: p.seed });
+      const hooks = Character.prototype[Symbol.for('inkwave.s3.weapon-hit-reaction.install.v1')];
+      const reactionState = hooks?.states.get(a.character);
+      trace.state.push({ hp: a.hp, ink: a.ink, pos: a.pos.toArray(), velocity: a.vel.toArray(),
+        cooldown: a.weaponRunner.cooldown, charge: a.weaponRunner.charge, hand: a.weaponRunner.hand,
+        randomCalls: random.calls, basePose: Array.from(reactionState?.basePose || []),
+        hipDrop: a.character.hipDrop, ikErr: [...a.character.ikErr], ikErrPre: a.character.ikErrPre,
+        feetDisp: a.character.feet.map(foot => foot.disp.toArray().map(value => +value.toFixed(12))) });
+      current = null; frame++;
+    };
+    const damage = () => { if (hit) a.damage(12, null, 'weapon'); };
+    try {
+      for (let i = 0; i < 30; i++) step(false);
+      if (kind === 'charger' || kind === 'splatling') {
+        while (a.weaponRunner.charge < 0.88 && frame < 150) step(true);
+        damage(); step(true); step(true);
+        step(false); // Charger releases its hitscan; Splatling starts its real stream.
+        if (kind === 'splatling' && trace.events.length === 0) step(false);
+      } else if (kind === 'roller') {
+        step(true); // admit the real Runner flick
+        while (a.weaponRunner.flick >= 0 && a.weaponRunner.flick < w.flickWindup - dt * 2 && frame < 150) step(false);
+        damage(); step(false); step(false);
+      } else if (kind === 'slosher') {
+        step(true); // start the real Runner heave
+        damage(); step(true); step(true);
+      } else {
+        damage(); step(false); step(false);
+      }
+      const wanted = kind === 'dualies' ? 2 : 1;
+      while (trace.events.length < wanted && frame < 220)
+        step(kind === 'charger' || kind === 'roller' ? false : true);
+      trace.hp = a.hp;
+      trace.randomCalls = random.calls;
+      trace.reaction = f.weaponHitReactionSnapshot(a.character);
+      assert.equal(trace.events.length >= wanted, true, `${kind} Runner emitted real fire through Projectiles at ${hz}Hz`);
+      if (hit) {
+        assert.ok(trace.hp < PLAYER.hp, `${kind} receives the real nonlethal damage at ${hz}Hz`);
+        if (enabled) assert.ok(trace.events.some(e => e.active),
+          `${kind} fire overlaps an active hit presentation at ${hz}Hz: ${JSON.stringify(trace.reaction)}`);
+        else assert.ok(trace.events.every(e => !e.active), `${kind} control keeps the class layer disabled`);
+      }
+      else assert.equal(trace.reaction.active, false, `${kind} miss control never creates a hit reaction`);
+      if (kind === 'dualies') assert.deepEqual(new Set(trace.events.slice(0, wanted).map(e => e.hand)), new Set([0, 1]),
+        'the composed Dualies case emits both native hands');
+      if (kind === 'charger') assert.ok(trace.rays.length > 0, 'the real Charger hitscan raycast runs');
+      return trace;
+    } finally {
+      current = null; G.actors.length = 0; ps.clear(); a.character.dispose(); G.scene.remove(a.character.root);
+    }
+  }
+
+  function gameplayOnly(trace) {
+    return { events: trace.events.map(({ active, ...event }) => event), calls: trace.calls, rounds: trace.rounds,
+      rays: trace.rays, hp: trace.hp, state: trace.state.map(({ randomCalls, ...state }) => state) };
+  }
+  try {
+    // All seven families at every requested input/render interval. The same
+    // name, style, and deterministic random stream make these real A/B traces.
+    for (const hz of [30, 60, 120]) for (const kind of kinds) {
+      const base = run(kind, hz, { enabled: false, hit: true });
+      const posed = run(kind, hz, { enabled: true, hit: true });
+      assert.deepEqual(gameplayOnly(posed), gameplayOnly(base), `${kind} gameplay muzzle/projectile parity at ${hz}Hz`);
+      assert.equal(posed.randomCalls, base.randomCalls, `${kind} random stream parity at ${hz}Hz`);
+    }
+    // Remote pose and no-hit/miss controls exercise the distinct hitscan and
+    // both-hand accessors without multiplying the exhaustive family matrix.
+    for (const kind of ['shooter', 'charger', 'dualies']) {
+      const remoteBase = run(kind, 60, { enabled: false, hit: true, remote: true });
+      const remotePosed = run(kind, 60, { enabled: true, hit: true, remote: true });
+      assert.deepEqual(gameplayOnly(remotePosed), gameplayOnly(remoteBase), `${kind} remote gameplay parity`);
+    }
+    for (const kind of ['charger', 'dualies']) {
+      const missBase = run(kind, 60, { enabled: false, hit: false });
+      const missPosed = run(kind, 60, { enabled: true, hit: false });
+      assert.deepEqual(gameplayOnly(missPosed), gameplayOnly(missBase), `${kind} no-hit/miss control`);
+    }
+  } finally {
+    removeListener?.();
+    for (const restore of wrapped.reverse()) restore();
+    f.restoreRandom();
+  }
 });

@@ -120,9 +120,6 @@ export function install(profile) {
   installSuperjumpMotion(api, profile);
   installSquidrollMotion(api, profile);
   installHitSpawnMotion(api, profile);
-  // #1097: weapon-class/state damage presentation. Render layer only; it reads
-  // the native T_HIT window and writes pose channels after the native build.
-  installWeaponHitReaction(api, profile);
   installSpawnPoseMotion(api);
   installDeathCamera(api);
   installIdleMotion(api, profile);
@@ -146,7 +143,10 @@ export function install(profile) {
   // The S3 ShotGuideFrame guide reads the installed projectile motion records, so
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.
   installShotGuide(api, profile);
-  installChargerSurface(api);
+  // #1097: install after pose and muzzle adapters so the base-pose snapshot
+  // contains the complete ordinary weapon pose and its accessors wrap the
+  // final composed muzzle paths. The hit layer stays render-only.
+  installWeaponHitReaction(api, profile);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;
