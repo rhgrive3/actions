@@ -144,13 +144,44 @@ test('#93 human post-death Squid Spawn selects different legal targets from aim 
     const a=f.make();a.slot=0;a.aimPoint.set(x,0,7);a.splat(null);
     a.respawn();assert.equal(a.s3.squidSpawn.phase,'aim');
     assert.equal(a.s3.squidSpawn.initial,false);
+    // Spawn protection begins at landing, not at launch or aim.
+    assert.equal(a.s3.spawnArmor,null);
+    assert.equal(a.invuln,Infinity);
     const target=a.s3.squidSpawn.target;
     assert.ok(Math.hypot(target.x,target.z)<=12+1e-9,'landing selection remains inside base region');
     a.intent.fire=true;a.update(1/60);
     assert.equal(a.s3.squidSpawn.phase,'flight');
+    assert.equal(a.s3.spawnArmor,null,'flight keeps native invulnerability without starting the armor clock');
     samples.push({...a.s3.squidSpawn.to});
   }
   assert.ok(samples[0].x>0&&samples[1].x<0,'ordinary respawns are not fixed slot positions');
+});
+
+
+test('#93 Squid Spawn landing resolves ground, paints, and starts armor at touchdown',async()=>{
+  const f=await setup();f.G.match.mode='turf';
+  const seen=[];
+  f.on('squidspawn:land',({actor})=>seen.push(actor));
+  for(const hz of [30,60,120]){
+    const a=f.make();a.slot=0;a.aimPoint.set(4,0,7);a.splat(null);a.respawn();
+    a.intent.fire=true;a.update(1/60);
+    assert.equal(a.s3.squidSpawn.phase,'flight');
+    const dt=1/hz,frames=Math.ceil(1/dt)+2;
+    for(let i=0;i<frames&&a.s3.squidSpawn;i++)a.update(dt);
+    assert.equal(a.s3.squidSpawn,undefined,'flight ends at the same landing on every schedule');
+    assert.equal(a.grounded,true);
+    assert.equal(a.invuln,0);
+    assert.ok(a.s3.spawnArmor&&a.s3.spawnArmor.remaining>0,'finite armor starts at landing');
+    assert.ok(a.landT<1,'native land timer restarts at touchdown');
+    assert.ok(seen.includes(a),'landing emits exactly once per flight');
+  }
+  assert.equal(seen.length,3);
+  // Remote/bot landings keep owner authority: local simulation owns ground and
+  // armor, proxies only mirror the owner's snapshot through NetMatch.
+  const owner=f.make();owner.slot=0;owner.aimPoint.set(-4,0,7);owner.splat(null);owner.respawn();
+  assert.equal(owner.s3.squidSpawn.phase,'aim');
+  owner.isBot=true;owner.update(1/60);
+  assert.equal(owner.s3.squidSpawn.phase,'flight','bots launch deterministically without FIRE');
 });
 
 

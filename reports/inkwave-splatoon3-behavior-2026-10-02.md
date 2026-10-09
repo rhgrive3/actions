@@ -2283,3 +2283,15 @@ The build overlay now gives authoritative ancillary ownership and GLSL rays/sate
 ### PR1175 complete validation scheduling (2026-10-09)
 
 The combined canonical diagnostic now covers more than 3,500 tests and required about 23 minutes locally before the remaining network, quality, reference and built-weapon gates. The validate job deadline is extended from 30 to 45 minutes so the complete enlarged sequence can finish. No test is removed, skipped or made conditional by this change, and no gameplay, visual, numeric, worker, startup or performance acceptance threshold changes.
+
+### #93 Squid Spawn landing completion (2026-10-09, cl7)
+
+**本家の根拠:** 公開Issue #93 が参照する [Nintendo gameplay](https://splatoon.nintendo.com/en/gameplay/) と [Spawner drone](https://splatoonwiki.org/wiki/Spawner_drone) は、復活時に基地付近の合法着地点をプレイヤーが選んで出撃する Squid Spawn を説明する。直接取得は証明書検証失敗/タイムアウトで未取得のため、本家フレーム値・距離・無敵秒数の確定には使わない。参照版は Ver.11.3.0、抽出パラメーターは Leanny/splat3 `7280ff9c` 固定であり、Squid Spawn の飛行時間・操舵速度・着地範囲は既存 adapter の暫定値のまま Nintendo 値として扱わない。
+
+**INKWAVE の実装箇所:** `patches/splatoon3/runtime/respawn-lifecycle.mjs` の Turf 専用 Squid Spawn（`begin`/`launch`/aim/flight）は既存。今回の不足分は着地相のみ: 従来は選択点へ直接 `pos.set` し `grounded=true`/`invuln=0`/armor 即時生成で終え、native の壁/足元解決・`_surface`・land ライフサイクル・塗り・FX を経由せず、有限 armor の時計も launch 時点で進み始めていた。修正後は着地で native `_resolve`（壁/足元、利用可能な場合）→ `_surface`/`_probeGround` → land タイマー/trigger → 有限 spawn armor を touchdown 開始に変更し、flight 中は native invulnerability のみ残す。`inkwave-public/` は不変で adapter のみ。
+
+**再現操作:** Turf で死亡 → aim 相で aimPoint を変えて合法範囲内 target が変わる → FIRE edge で flight → 60F で着地。`node --experimental-vm-modules --test patches/splatoon3/tests/respawn-lifecycle.test.mjs` で 14/14。追加の着地回帰は 30/60/120Hz で同一着地・`squidspawn:land` 単発・armor touchdown 開始・bot 自動 launch を確認する。
+
+**プレイへの影響:** プレイヤー選択の着地点が壁/段差解決と足元塗りを経て着地するようになり、spawn 保護の開始相が着地に一致する。aim/flight の入力 owner（human=FIRE edge、bot/remote=自動）、respawn rearm、NetMatch の owner 権威/proxy 分離、Practice Range 除外は不変。
+
+**確認状態:** ロジック単独の測定であり、ブラウザ実動作・Switch 実機比較は未確認。飛行 60F・操舵 4.5・最小 2.5/最大 12・arc 2.2・着地塗り半径 1.4 は Nintendo 実測ではなく既存暫定値のまま。物理デバイス・小規模网络の等価性も未確認として残す。

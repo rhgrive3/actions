@@ -88,7 +88,10 @@ export function installRespawnLifecycle(api, profile) {
   function launch(actor) {
     const s = actor.s3?.squidSpawn; if (!s || s.phase !== 'aim') return false;
     s.phase = 'flight'; s.t = 0; s.duration = flightDuration; s.from = { x: actor.pos.x, y: actor.pos.y, z: actor.pos.z }; s.to = targetFor(actor);
-    actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
+    // Spawn protection begins at landing, not launch: keep only the native
+    // flight invulnerability here so the flight itself stays unhittable while
+    // the finite 235F armor clock starts when ground is reached.
+    actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = null;
     actor.invuln = flightDuration + 1e-6; actor.grounded = false; actor.vel.set(0,0,0); actor.character.trigger('spawn');
     emit?.('squidspawn:launch', { actor, initial: s.initial, target: { ...s.to } });
     return true;
@@ -171,7 +174,41 @@ export function installRespawnLifecycle(api, profile) {
         this.pos.set(spawn.from.x+(spawn.to.x-spawn.from.x)*u, spawn.from.y+(spawn.to.y-spawn.from.y)*u+arc, spawn.from.z+(spawn.to.z-spawn.from.z)*u);
         this.character.root.position.copy(this.pos); if(dt>0)this.vel.set((this.pos.x-oldX)/dt,(this.pos.y-oldY)/dt,(this.pos.z-oldZ)/dt);
         this._prevIntent.fire = this.intent.fire;
-        if (u >= 1-1e-10) { this.pos.set(spawn.to.x,spawn.to.y,spawn.to.z); this.character.root.position.copy(this.pos); this.vel.set(0,0,0); this.grounded=true; this.invuln=0; delete this.s3.squidSpawn; emit?.('squidspawn:land',{actor:this}); }
+        if (u >= 1-1e-10) {
+          // Landing reuses the native ground/collision route: resolve walls and
+          // feet at the selected point exactly like Super Jump landing, refresh
+          // the surface, then start the finite spawn armor at touchdown.
+          const prevY = this.pos.y;
+          this.pos.set(spawn.to.x,spawn.to.y,spawn.to.z);
+          this.vel.set(0,-4,0);
+          let resolved = false;
+          try {
+            if (typeof this._resolve === 'function' && typeof G.physics?.collideBody === 'function') {
+              this._resolve(false, prevY, false);
+              resolved = this.grounded;
+            }
+          } catch { resolved = false; }
+          if (!resolved) {
+            // Minimal physics contexts without the body collider: settle feet
+            // with the native ground probe at the selected point.
+            this.pos.set(spawn.to.x,spawn.to.y,spawn.to.z);
+            try { this._probeGround?.(); } catch { /* keep selected point */ }
+            if (this.ground?.hit) this.pos.y = this.ground.y;
+            this.vel.set(0,0,0); this.grounded = true;
+            this._surface?.();
+            this.landSpeed = 4; this.landT = 0;
+            this.character.trigger?.('land', 4);
+          } else this._surface?.();
+          this._probeGround?.();
+          this.vel.set(0,0,0); this.grounded = true;
+          this.invuln = 0;
+          this.s3.spawnArmorManaged = true;
+          this.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
+          this.character.root.position.copy(this.pos);
+          try { this.addTurf?.(G.paint?.splat?.(this.pos.clone?.().setY(this.pos.y + 0.3) ?? this.pos, 1.4, this.team, { seed: Math.random() }) ?? 0); } catch { /* paint stays optional in fixtures */ }
+          G.fx?.burst?.(this.pos, { x: 0, y: 1, z: 0 }, this.color, { count: 14, speed: 5, size: 0.09 });
+          delete this.s3.squidSpawn; emit?.('squidspawn:land',{actor:this});
+        }
         return;
       }
     }
