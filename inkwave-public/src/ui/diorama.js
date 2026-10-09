@@ -17,28 +17,23 @@ import * as THREE from 'three';
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3();
 const K = '#15121c';
 const HOME_ICON = `<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="46" rx="22" ry="8.5" fill="none" stroke="${K}" stroke-width="8"/><ellipse cx="32" cy="46" rx="22" ry="8.5" fill="none" stroke="#fff" stroke-width="4"/><path d="M32 8 L32 34 M21 24 L32 36 L43 24" fill="none" stroke="${K}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 8 L32 34 M21 24 L32 36 L43 24" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const BUBBLER_ICON = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 42a22 22 0 0 1 44 0" fill="none" stroke="currentColor" stroke-width="6"/><path d="M32 8v18m-9-5 9 5 9-5" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 47h26" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg>';
 const ARROW = `<svg viewBox="-16 -16 32 32" aria-hidden="true"><path d="M0 -12 L10 10 L0 5 L-10 10 Z" fill="${K}" stroke="${K}" stroke-width="5" stroke-linejoin="round"/><path d="M0 -12 L10 10 L0 5 L-10 10 Z" fill="#fff"/></svg>`;
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 
 export class DioramaOverlay {
   constructor(root) {
-    this.basePins = [0, 1, 2, 3].map((i) => this._pin(i, i === 3 ? 'home' : 'ally'));
-    this.bubblerPins = [];
-    this.selfPin = this._pin(-1, 'self');
-    this.pins = [...this.basePins, this.selfPin];                  // 0–2 allies, 3 base, live Bubblers, you
+    this.pins = [0, 1, 2, 3, 4].map((i) => this._pin(i));        // 0–2 allies, 3 base, 4 you
     this.arc = h('svg', { class: 'iw-dio__arc', 'aria-hidden': 'true' });
     this.arc.innerHTML = '<path class="o"/><path class="i"/>';
     this.cursor = h('div', { class: 'iw-dio__cur' }, h('i'));
     this.title = h('b', { class: 'iw-dio__name iw-display' }, '');
     this.when = h('small', { class: 'iw-dio__when' }, '');
     this.foot = h('div', { class: 'iw-dio__foot' });
-    this.pinLayer = h('div', { class: 'iw-dio__pins' }, this.pins.map((p) => p.el));
     this.el = h('div', { class: 'iw-dio', 'aria-hidden': 'true' },
       h('div', { class: 'iw-dio__tilt iw-dio__tilt--top' }), h('div', { class: 'iw-dio__tilt iw-dio__tilt--bot' }),
       h('div', { class: 'iw-dio__vig' }),
       this.arc,
-      this.pinLayer,
+      h('div', { class: 'iw-dio__pins' }, this.pins.map((p) => p.el)),
       this.cursor,
       h('div', { class: 'iw-dio__head' }, h('small', { class: 'iw-dio__kicker' }, 'STAGE MAP'), this.title, this.when),
       this.foot);
@@ -48,18 +43,15 @@ export class DioramaOverlay {
     this._last = {};
   }
 
-  _pin(i, role = 'ally') {
-    const self = role === 'self', home = role === 'home', bubbler = role === 'bubbler';
-    const icon = h('span', { class: 'iw-pin__icon', html: self ? ARROW : home ? HOME_ICON : bubbler ? BUBBLER_ICON : '' });
+  _pin(i) {
+    const self = i === 4, home = i === 3;
+    const icon = h('span', { class: 'iw-pin__icon', html: self ? ARROW : home ? HOME_ICON : '' });
     const name = h('span', { class: 'iw-pin__name' }, self ? 'YOU' : home ? 'BASE' : '');
     const state = h('span', { class: 'iw-pin__state' });
-    const keyText = home ? '4' : bubbler ? (i < 9 ? String(i + 1) : '') : String(i + 1);
-    const key = self ? null : h('span', { class: 'iw-pin__key', html: keyText ? keycap(keyText) : '' });
-    if (key && !keyText) key.style.display = 'none';
-    const el = h('div', { class: 'iw-pin' + (self ? ' iw-pin--self' : '') + (home ? ' iw-pin--home' : '') + (bubbler ? ' iw-pin--bubbler' : '') },
+    const el = h('div', { class: 'iw-pin' + (self ? ' iw-pin--self' : '') + (home ? ' iw-pin--home' : '') },
       h('span', { class: 'iw-pin__ground' }), h('span', { class: 'iw-pin__stem' }),
       h('span', { class: 'iw-pin__badge' }, icon, h('span', { class: 'iw-pin__pulse' })),
-      key,
+      self ? null : h('span', { class: 'iw-pin__key', html: keycap(String(i + 1)) }),
       name, state);
     // touch: tap a teammate / base pin to Super Jump (mouse and pad use the snapping cursor below)
     if (!self) {
@@ -70,31 +62,7 @@ export class DioramaOverlay {
         this._jump(i, G.match?.local);
       });
     }
-    return { el, icon, name, state, keyEl: key, x: 0, y: 0, vis: false, key: '', weapon: null, target: null, bubblerTarget: null, ok: false };
-  }
-
-  _ensureBubblerPins(targets) {
-    const count = targets.length;
-    while (this.bubblerPins.length < count) {
-      const index = this.bubblerPins.length;
-      const pin = this._pin(index + 4, 'bubbler');
-      this.bubblerPins.push(pin);
-      this.pinLayer.insertBefore(pin.el, this.selfPin.el);
-    }
-    const prior = this.hover >= 4 ? this.pins[this.hover]?.bubblerTarget : null;
-    const next = this.hover >= 4 ? targets[this.hover - 4] : null;
-    if (prior && (!next || prior.id !== next.id || prior.serial !== next.serial)) this.hover = -1;
-    for (let i = 0; i < this.bubblerPins.length; i++) {
-      const pin = this.bubblerPins[i];
-      pin.bubblerTarget = targets[i] || null;
-      pin.el.style.display = i < count ? '' : 'none';
-      if (pin.keyEl) {
-        const number = i < 5 ? String(i + 5) : '';
-        pin.keyEl.style.display = number ? '' : 'none';
-        pin.keyEl.innerHTML = number ? keycap(number) : '';
-      }
-    }
-    this.pins = [...this.basePins, ...this.bubblerPins.slice(0, count), this.selfPin];
+    return { el, icon, name, state, x: 0, y: 0, vis: false, key: '', weapon: null, target: null, ok: false };
   }
 
   update(dt, k) {
@@ -113,15 +81,12 @@ export class DioramaOverlay {
     const me = G.match?.local;
     const cam = G.camera, W = innerWidth, H = innerHeight;
     if (!me || !cam) return;
-    const bubblerTargets = G.bigBubblerJumpTargets?.(me.team) || [];
-    this._ensureBubblerPins(bubblerTargets);
     const allies = (G.actors || []).filter((o) => o.team === me.team && o !== me);
     const col = G.teamHex?.[me.team] || '#ff8a14';
     if (col !== this._last.col) { this._last.col = col; this.el.style.setProperty('--c', col); }
     const canJump = !!(me.alive && me.canSuperJump && me.canSuperJump());
     // ---- pins
-    const selfIndex = this.pins.length - 1;
-    for (let i = 0; i < this.pins.length; i++) {
+    for (let i = 0; i < 5; i++) {
       const p = this.pins[i];
       let tgt = null, ok = false, label = '', st = '', dead = false, weapon = null;
       if (i < 3) {
@@ -132,13 +97,8 @@ export class DioramaOverlay {
           else if (o.superJumpState) st = '↑';
         }
       } else if (i === 3) { tgt = G.level?.spawnPads?.[me.team] || null; ok = !!tgt; }
-      else if (i === selfIndex) { tgt = me.visualPos ? me.visualPos(_v2) : me.pos; ok = true; dead = !me.alive; }
-      else {
-        const target = bubblerTargets[i - 4];
-        if (target) { tgt = target.pos; ok = true; label = `Bubbler ${i - 3}`; weapon = 'bubbler'; p.bubblerTarget = target; }
-        else p.bubblerTarget = null;
-      }
-      p.target = i < 3 ? allies[i] || null : null; p.ok = ok && canJump && i !== selfIndex;
+      else { tgt = me.visualPos ? me.visualPos(_v2) : me.pos; ok = true; dead = !me.alive; }
+      p.target = i < 3 ? allies[i] || null : null; p.ok = ok && canJump && i !== 4;
       if (!tgt) { if (p.vis) { p.vis = false; p.el.style.display = 'none'; } continue; }
       _v.set(tgt.x, tgt.y + 0.1, tgt.z).project(cam);
       const behind = _v.z > 1;
@@ -147,7 +107,7 @@ export class DioramaOverlay {
       if (behind) { if (p.vis) { p.vis = false; p.el.style.display = 'none'; } continue; }
       if (!p.vis) { p.vis = true; p.el.style.display = ''; }
       p.el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;
-      if (i === selfIndex) {
+      if (i === 4) {
         // facing arrow: screen-space direction of the player's forward
         const f = me.yaw || 0;
         _v2.set(tgt.x + Math.sin(f) * 3, tgt.y + 0.1, tgt.z + Math.cos(f) * 3).project(cam);
@@ -160,14 +120,6 @@ export class DioramaOverlay {
         if (i < 3) {
           p.name.textContent = label;
           if (weapon !== p.weapon) { p.weapon = weapon; p.icon.innerHTML = weaponIcon(weapon); }
-        } else if (i >= 4 && i !== selfIndex) {
-          p.name.textContent = label;
-          p.icon.innerHTML = BUBBLER_ICON;
-          if (p.keyEl) {
-            const number = i < 9 ? String(i + 1) : '';
-            p.keyEl.style.display = number ? '' : 'none';
-            p.keyEl.innerHTML = number ? keycap(number) : '';
-          }
         }
         p.state.textContent = st;
         p.el.classList.toggle('is-dead', dead);
@@ -190,7 +142,7 @@ export class DioramaOverlay {
     }
     // snap: nearest jumpable pin within reach
     let best = -1, bd = 72;
-    for (let i = 0; i < selfIndex; i++) {
+    for (let i = 0; i < 4; i++) {
       const p = this.pins[i];
       if (!p.vis) continue;
       const d = Math.hypot(p.x - this.cx * W, p.y - 34 - this.cy * H);
@@ -210,10 +162,10 @@ export class DioramaOverlay {
     if (inp && this.k > 0.7) {
       const click = (inp.locked && inp.mouse.leftPressed) || inp.padPressed?.has?.(0);
       if (click && this.hover >= 0) this._jump(this.hover, me);
-      for (let i = 0; i < Math.min(selfIndex, 9); i++) if (inp.wasPressed?.('Digit' + (i + 1))) this._flash(i);
+      for (let i = 0; i < 4; i++) if (inp.wasPressed?.('Digit' + (i + 1))) this._flash(i);
     }
     // ---- jump arc preview
-    const sp = this.selfPin, hp = this.hover >= 0 ? this.pins[this.hover] : null;
+    const sp = this.pins[4], hp = this.hover >= 0 ? this.pins[this.hover] : null;
     const showArc = !!(hp && hp.vis && sp.vis && canJump && (this.hover === 3 || hp.ok));
     if (showArc !== this._last.arc) { this._last.arc = showArc; this.arc.classList.toggle('is-on', showArc); }
     if (showArc) {
@@ -230,7 +182,6 @@ export class DioramaOverlay {
     if (!me || !me.canSuperJump || !me.canSuperJump()) { G.audio?.play?.('ui_error', { volume: 0.5 }); return; }
     let ok = false;
     if (i === 3) { const pad = G.level?.spawnPads?.[me.team]; ok = pad ? me.superJump(pad.clone()) : false; }
-    else if (i >= 4 && i < this.pins.length - 1) ok = p.bubblerTarget ? !!me.superJumpToBubbler?.(p.bubblerTarget) : false;
     else if (p.target && p.target.alive && !p.target.superJumpState) ok = me.superJump(p.target);
     this._flash(i);
     G.audio?.play?.(ok ? 'ui_confirm' : 'ui_error', { volume: 0.55 });
@@ -248,9 +199,9 @@ export class DioramaOverlay {
     const dev = G.input?.lastDevice;
     const S = (x) => `<span>${esc(t(x))}</span>`;
     this.foot.innerHTML = dev === 'pad'
-      ? richText('Right stick to point · D-pad selects allies/base · LB/RB cycle Bubblers · A confirms · release VIEW to close')
+      ? richText('Right stick to point · A or D-pad to Super Jump · release VIEW to close')
       : dev === 'touch'
         ? S('Tap a pin to Super Jump · tap MAP to close')
-      : `${keycap('1')}${keycap('2')}${keycap('3')} ${S('Super Jump to a teammate')} ${keycap('4')} ${S('Base')} ${keycap('5')}–${keycap('9')} ${S('Bubbler')} <em>·</em> ${S('Point + click a pin')} <em>·</em> ${S('release')} ${keycap('TAB')}`;
+        : `${keycap('1')}${keycap('2')}${keycap('3')} ${S('Super Jump to a teammate')} ${keycap('4')} ${S('Base')} <em>·</em> ${S('Point + click a pin')} <em>·</em> ${S('release')} ${keycap('TAB')}`;
   }
 }

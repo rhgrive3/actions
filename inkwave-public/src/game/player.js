@@ -120,20 +120,15 @@ export class PlayerController {
     this.mapHeld = inp.down('Tab') || inp.down('KeyM') || inp.padButton(8) || !!touch?.mapOpen;
     // the TAB map is a targeting UI (clicking a teammate beacon super jumps) — never fire or throw through it
     if (this.mapHeld) { it.fire = false; it.sub = false; }
-    // super jump: 1-3 / d-pad directions retain teammate targeting, 4 / d-pad down is home;
-    // 5-9 address the first five live friendly deployables (the map cursor can select all of them).
+    // super jump: while the map is open, 1-3 (or d-pad left/up/right) jumps to that teammate, 4 / d-pad down to spawn
     if (this.mapHeld && a.canSuperJump()) {
       const allies = G.actors.filter((o) => o.team === a.team && o !== a);
       const pick = (i) => { const o = allies[i]; if (o && o.alive && !o.superJumpState) a.superJump(o); };
-      const bubblers = G.bigBubblerJumpTargets?.(a.team) || [];
       const tj = touch?.consumeJumpTarget?.() ?? -1;
       if (inp.wasPressed('Digit1') || inp.padPressed.has(14) || tj === 0) pick(0);
       if (inp.wasPressed('Digit2') || inp.padPressed.has(12) || tj === 1) pick(1);
       if (inp.wasPressed('Digit3') || inp.padPressed.has(15) || tj === 2) pick(2);
       if (inp.wasPressed('Digit4') || inp.padPressed.has(13) || tj === 3) { const p = G.level.spawnPads[a.team]; a.superJump(p.clone()); }
-      for (let i = 0; i < Math.min(5, bubblers.length); i++) {
-        if (inp.wasPressed('Digit' + (i + 5))) a.superJumpToBubbler?.(bubblers[i]);
-      }
     }
 
     // ---- aim point from the camera centre ray

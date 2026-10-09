@@ -42,7 +42,6 @@ const kindOf = (w) => (WEAPONS[w] && WEAPONS[w].kind) || w || 'shooter';
 // ------------------------------------------------------------------ HUD-only art
 const K = '#15121c';
 const SPAWN_ICON = `<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="48" rx="24" ry="9" fill="none" stroke="${K}" stroke-width="8"/><ellipse cx="32" cy="48" rx="24" ry="9" fill="none" stroke="currentColor" stroke-width="4"/><path d="M32 6 L32 36 M20 25 L32 38 L44 25" fill="none" stroke="${K}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 6 L32 36 M20 25 L32 38 L44 25" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const BUBBLER_ICON = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 42a22 22 0 0 1 44 0" fill="none" stroke="currentColor" stroke-width="6"/><path d="M32 8v18m-9-5 9 5 9-5" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 47h26" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg>';
 const DROP_ICON = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 5 C32 5 51 28 51 41 C51 52 42.5 59 32 59 C21.5 59 13 52 13 41 C13 28 32 5 32 5 Z" fill="currentColor" stroke="${K}" stroke-width="4"/><path d="M24 37 Q24 30 29 26" stroke="#fff" stroke-opacity=".7" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
 // squid-head badge silhouette (roster)
 const BADGE_PATH = 'M32 2.5 C35.5 2.5 43 9 47.5 14.5 C50 14 55 15.5 57 18.5 C58.6 21 57.4 23.6 55.2 24.8 A24.5 24.5 0 1 1 8.8 24.8 C6.6 23.6 5.4 21 7 18.5 C9 15.5 14 14 16.5 14.5 C21 9 28.5 2.5 32 2.5 Z';
@@ -162,18 +161,37 @@ export class HUD {
     this.mapDots = Array.from({ length: 8 }, () => h('i', { class: 'iw-mdot', html: '<b></b>' + arrow }));
     this.mapFrame = h('div', { class: 'iw-map__frame' }, this.mapSlot, h('div', { class: 'iw-map__dots' }, this.mapDots), h('i', { class: 'iw-map__gloss' }));
     this.mapLabel = h('div', { class: 'iw-map__label' }, h('span', { html: keycap('TAB') }), h('span', null, 'MAP'));
-    this.beacons = Array.from({ length: 4 }, (_, i) => this._makeJumpBeacon(i));
-    this.beaconLayer = h('div', { class: 'iw-map__bcns' }, this.beacons);
+    this.beacons = Array.from({ length: 4 }, (_, i) => {
+      const b = h('div', { class: 'iw-bcn' + (i === 3 ? ' iw-bcn--home' : '') },
+        h('span', { class: 'iw-bcn__stem' }, h('i')),
+        h('span', { class: 'iw-bcn__pulse' }),
+        h('span', { class: 'iw-bcn__disc' }, h('span', { class: 'iw-bcn__icon', html: i === 3 ? SPAWN_ICON : '' })),
+        h('span', { class: 'iw-bcn__key' }, String(i + 1)),
+        h('span', { class: 'iw-bcn__label' }, h('small', null, 'SUPER JUMP'), h('b', null, i === 3 ? 'Base' : '')));
+      b.addEventListener('pointerenter', () => { if (this._map.open) this._map.hover = i; });
+      b.addEventListener('pointerleave', () => { if (this._map.hover === i) this._map.hover = -1; });
+      b.addEventListener('click', (e) => { e.stopPropagation(); this._jumpTo(i); });
+      return b;
+    });
     this.mapCursor = h('div', { class: 'iw-mcur' }, h('i'));
     this.mapJumpLine = h('div', { class: 'iw-map__jline', html: '<svg aria-hidden="true"><path/></svg>' });
-    this.legendRows = Array.from({ length: 4 }, (_, i) => this._makeJumpLegendRow(i));
-    this.legendList = h('div', { class: 'iw-lg__rows' }, this.legendRows);
+    this.legendRows = Array.from({ length: 4 }, (_, i) => {
+      const row = h('div', { class: 'iw-lg__row' + (i === 3 ? ' is-home' : '') },
+        h('span', { class: 'iw-lg__key', html: keycap(String(i + 1)) }),
+        h('span', { class: 'iw-lg__w', html: i === 3 ? SPAWN_ICON : '' }),
+        h('span', { class: 'iw-lg__name' }, i === 3 ? 'Base' : '—'),
+        h('span', { class: 'iw-lg__st' }));
+      row.addEventListener('pointerenter', () => { if (this._map.open) this._map.hover = i; });
+      row.addEventListener('pointerleave', () => { if (this._map.hover === i) this._map.hover = -1; });
+      row.addEventListener('click', (e) => { e.stopPropagation(); this._jumpTo(i); });
+      return row;
+    });
     this.mapLegend = h('div', { class: 'iw-map__legend' },
       h('div', { class: 'iw-lg__title iw-display' }, 'SUPER JUMP'),
       h('div', { class: 'iw-lg__sub' }, 'Pick a landing spot'),
-      this.legendList,
-      h('div', { class: 'iw-lg__foot', html: richText('Press [1] – [4] · [5] – [9] or click · release [TAB] to cancel') }));
-    this.map = h('div', { class: 'iw-map' }, this.mapFrame, this.mapJumpLine, this.beaconLayer, this.mapCursor, this.mapLabel, this.mapLegend);
+      h('div', { class: 'iw-lg__rows' }, this.legendRows),
+      h('div', { class: 'iw-lg__foot', html: richText('Press [1] – [4] or click · release [TAB] to cancel') }));
+    this.map = h('div', { class: 'iw-map' }, this.mapFrame, this.mapJumpLine, h('div', { class: 'iw-map__bcns' }, this.beacons), this.mapCursor, this.mapLabel, this.mapLegend);
     this.mapDim = h('div', { class: 'iw-map-dim' });
     // touch: tapping outside the big map closes it (keyboard players release TAB)
     this.mapDim.addEventListener('click', () => G.input?.mobile?.setMap(false));
@@ -201,41 +219,6 @@ export class HUD {
     colorVars(this.overLayer, 'enemy', '#2f5bff');
     this.root.appendChild(this.overLayer);
     this._resizeCanvas();
-  }
-
-  _makeJumpBeacon(i) {
-    const b = h('div', { class: 'iw-bcn' + (i === 3 ? ' iw-bcn--home' : '') },
-      h('span', { class: 'iw-bcn__stem' }, h('i')),
-      h('span', { class: 'iw-bcn__pulse' }),
-      h('span', { class: 'iw-bcn__disc' }, h('span', { class: 'iw-bcn__icon', html: i === 3 ? SPAWN_ICON : '' })),
-      h('span', { class: 'iw-bcn__key' }, i < 9 ? String(i + 1) : ''),
-      h('span', { class: 'iw-bcn__label' }, h('small', null, 'SUPER JUMP'), h('b', null, i === 3 ? 'Base' : '')));
-    b.addEventListener('pointerenter', () => { if (this._map.open) this._map.hover = i; });
-    b.addEventListener('pointerleave', () => { if (this._map.hover === i) this._map.hover = -1; });
-    b.addEventListener('click', (e) => { e.stopPropagation(); this._jumpTo(i); });
-    return b;
-  }
-
-  _makeJumpLegendRow(i) {
-    const row = h('div', { class: 'iw-lg__row' + (i === 3 ? ' is-home' : '') },
-      h('span', { class: 'iw-lg__key', html: i < 9 ? keycap(String(i + 1)) : '' }),
-      h('span', { class: 'iw-lg__w', html: i === 3 ? SPAWN_ICON : '' }),
-      h('span', { class: 'iw-lg__name' }, i === 3 ? 'Base' : '—'),
-      h('span', { class: 'iw-lg__st' }));
-    row.addEventListener('pointerenter', () => { if (this._map.open) this._map.hover = i; });
-    row.addEventListener('pointerleave', () => { if (this._map.hover === i) this._map.hover = -1; });
-    row.addEventListener('click', (e) => { e.stopPropagation(); this._jumpTo(i); });
-    return row;
-  }
-
-  _ensureJumpSlots(count) {
-    while (this.beacons.length < count) {
-      const i = this.beacons.length;
-      const beacon = this._makeJumpBeacon(i);
-      const row = this._makeJumpLegendRow(i);
-      this.beacons.push(beacon); this.legendRows.push(row);
-      this.beaconLayer.appendChild(beacon); this.legendList.appendChild(row);
-    }
   }
 
   // ================================================================ public
@@ -1183,7 +1166,7 @@ export class HUD {
     this._updBeacons(bw, bh, dt, u);
   }
 
-  // jump targets: allies in actor order, base pad at index 3, then independent live friendly Bubblers
+  // beacon targets: allies in actor order (same numbering as the player controller), then the base spawn pad
   _beaconTargets() {
     const me = this._local();
     const out = [null, null, null, null];
@@ -1200,16 +1183,6 @@ export class HUD {
     }
     const pad = G.level && G.level.spawnPads && G.level.spawnPads[me.team];
     if (pad && mm) { mm.toCanvas(pad.x, pad.z, tc); out[3] = { x: tc.x / mm.w, y: tc.y / mm.h, name: tr('Base'), ok: true, home: true, pad }; }
-    if (mm) {
-      const bubblers = G.bigBubblerJumpTargets?.(me.team) || [];
-      for (let i = 0; i < bubblers.length; i++) {
-        const target = bubblers[i];
-        if (!target?.pos || !Number.isFinite(target.pos.x + target.pos.y + target.pos.z)) continue;
-        mm.toCanvas(target.pos.x, target.pos.z, tc);
-        out.push({ kind: 'bubbler', domeId: target.id, serial: target.serial, team: target.team,
-          x: tc.x / mm.w, y: tc.y / mm.h, name: `Bubbler ${i + 1}`, weapon: 'bubbler', ok: true });
-      }
-    }
     return out;
   }
 
@@ -1219,13 +1192,6 @@ export class HUD {
     if (vis !== L.bcnVis) { L.bcnVis = vis; this.map.classList.toggle('has-beacons', vis); }
     if (!vis) return;
     const tg = this._beaconTargets();
-    this._ensureJumpSlots(tg.length);
-    M.targetKeys = tg.map((b) => b?.kind === 'bubbler'
-      ? { kind: 'bubbler', id: b.domeId, serial: b.serial, team: b.team } : null);
-    for (let i = tg.length; i < this.beacons.length; i++) {
-      this.beacons[i].style.display = 'none';
-      this._updLegendRow(i, null, false);
-    }
     const me = this._local();
     const canJump = this.lab ? true : !!(me && me.canSuperJump && me.canSuperJump());
     // virtual cursor (pointer is locked in-game: steer with mouse deltas; magnet toward beacons)
@@ -1234,7 +1200,7 @@ export class HUD {
       M.cx = clamp(M.cx + (inp.mouse.dx || 0) / Math.max(80, bw), 0.02, 0.98);
       M.cy = clamp(M.cy + (inp.mouse.dy || 0) / Math.max(80, bh), 0.02, 0.98);
       let best = -1, bd = 0.09;
-      for (let i = 0; i < tg.length; i++) {
+      for (let i = 0; i < 4; i++) {
         const b = tg[i]; if (!b) continue;
         const d = Math.hypot((b.x - M.cx) * bw, (b.y - M.cy) * bh) / Math.max(bw, bh);
         if (d < bd) { bd = d; best = i; }
@@ -1246,15 +1212,14 @@ export class HUD {
     }
     if (M.open !== L.curOn) { L.curOn = M.open; this.mapCursor.classList.toggle('is-on', !!(M.open && inp && inp.locked)); }
     // number keys pressed this frame → flash the matching beacon (the controller performs the jump)
-    if (M.open && inp) for (let i = 0; i < Math.min(tg.length, 9); i++) if (inp.wasPressed && inp.wasPressed('Digit' + (i + 1))) { M.pressed = i; M.pressT = 0.5; this._restart(this.beacons[i], 'is-press'); }
+    if (M.open && inp) for (let i = 0; i < 4; i++) if (inp.wasPressed && inp.wasPressed('Digit' + (i + 1))) { M.pressed = i; M.pressT = 0.5; this._restart(this.beacons[i], 'is-press'); }
     M.pressT = Math.max(0, M.pressT - dt);
     // spread overlapping beacons apart (allies often stand together at spawn); stems point at the true spots
-    const P = this._bcnP || (this._bcnP = []);
-    while (P.length < tg.length) P.push({ x: 0, y: 0, ox: 0, oy: 0, on: false });
+    const P = this._bcnP || (this._bcnP = [0, 1, 2, 3].map(() => ({ x: 0, y: 0, ox: 0, oy: 0, on: false })));
     const minD = u * 3.4 * 1.3 * (this._mapT > 0.5 ? 1 : 0.6);
-    for (let i = 0; i < tg.length; i++) { const b = tg[i], p = P[i]; p.on = !!b; if (b) { p.x = p.ox = b.x * bw; p.y = p.oy = b.y * bh; } }
+    for (let i = 0; i < 4; i++) { const b = tg[i], p = P[i]; p.on = !!b; if (b) { p.x = p.ox = b.x * bw; p.y = p.oy = b.y * bh; } }
     for (let it = 0; it < 6; it++) {
-      for (let i = 0; i < tg.length; i++) for (let j = i + 1; j < tg.length; j++) {
+      for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) {
         const a = P[i], c = P[j]; if (!a.on || !c.on) continue;
         let dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy);
         if (d >= minD) continue;
@@ -1263,7 +1228,7 @@ export class HUD {
         a.x -= (dx / d) * push; a.y -= (dy / d) * push; c.x += (dx / d) * push; c.y += (dy / d) * push;
       }
     }
-    for (let i = 0; i < tg.length; i++) {
+    for (let i = 0; i < 4; i++) {
       const el = this.beacons[i], b = tg[i], p = P[i];
       const key = b ? `${p.x.toFixed(0)}|${p.y.toFixed(0)}|${p.ox.toFixed(0)}|${p.oy.toFixed(0)}|${b.ok ? 1 : 0}|${b.respawn || 0}|${M.hover === i ? 1 : 0}|${canJump ? 1 : 0}|${b.name}` : 'x';
       this._updLegendRow(i, b, canJump);
@@ -1278,15 +1243,8 @@ export class HUD {
       else stem.style.display = 'none';
       el.classList.toggle('is-off', !b.ok || !canJump);
       el.classList.toggle('is-hover', M.hover === i && b.ok && canJump);
-      el.classList.toggle('iw-bcn--bubbler', b.kind === 'bubbler');
       if (!b.home) {
-        if (el._w !== b.weapon || el._kind !== b.kind) {
-          el._w = b.weapon; el._kind = b.kind;
-          el.querySelector('.iw-bcn__icon').innerHTML = b.kind === 'bubbler' ? BUBBLER_ICON : weaponIcon(kindOf(b.weapon));
-        }
-        const keyEl = el.querySelector('.iw-bcn__key');
-        const key = i < 9 ? String(i + 1) : '';
-        keyEl.textContent = key; keyEl.style.display = key ? '' : 'none';
+        if (el._w !== b.weapon) { el._w = b.weapon; el.querySelector('.iw-bcn__icon').innerHTML = weaponIcon(kindOf(b.weapon)); }
         el.querySelector('.iw-bcn__label b').textContent = b.ok ? b.name : `${b.name} · ${b.respawn || '…'}`;
       }
     }
@@ -1308,12 +1266,8 @@ export class HUD {
     if (row._key === key) return;
     row._key = key;
     row.classList.toggle('is-empty', !b);
-    row.classList.toggle('is-bubbler', b?.kind === 'bubbler');
     if (!b) return;
-    if (!b.home && (row._w !== b.weapon || row._kind !== b.kind)) {
-      row._w = b.weapon; row._kind = b.kind;
-      row.querySelector('.iw-lg__w').innerHTML = b.kind === 'bubbler' ? BUBBLER_ICON : weaponIcon(kindOf(b.weapon));
-    }
+    if (!b.home && row._w !== b.weapon) { row._w = b.weapon; row.querySelector('.iw-lg__w').innerHTML = weaponIcon(kindOf(b.weapon)); }
     row.querySelector('.iw-lg__name').textContent = b.name;
     const st = !canJump ? '—' : b.ok ? tr('READY') : b.respawn ? `${b.respawn}s` : tr('BUSY');
     row.querySelector('.iw-lg__st').textContent = st;
@@ -1328,13 +1282,7 @@ export class HUD {
     if (this.lab) { this.lab.onJump?.(i); this._snd('ui_confirm'); return; }
     const me = this._local();
     if (!me || !me.canSuperJump || !me.canSuperJump()) { this._snd('ui_error', { volume: 0.5 }); return; }
-    let ok = false;
-    if (tg.home) ok = me.superJump(tg.pad.clone());
-    else if (tg.kind === 'bubbler') {
-      const selected = this._map.targetKeys?.[i];
-      if (selected && selected.kind === 'bubbler' && selected.id === tg.domeId &&
-          selected.serial === tg.serial && selected.team === tg.team) ok = !!me.superJumpToBubbler?.(selected);
-    } else ok = me.superJump(tg.actor);
+    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor);
     if (!ok) this._snd('ui_error', { volume: 0.5 });
   }
 

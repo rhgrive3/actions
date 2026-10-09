@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
+import { fileURLToPath } from 'node:url';
+import { checkCompatibility } from '../adapter.mjs';
 
 const EXTRA = `
   export { HUD } from './inkwave-public/src/ui/hud.js';
@@ -120,6 +122,8 @@ function installDom(f) {
 }
 
 test('#1153 HUD, diorama and Digit5 select separate live friendly domes at their static structure positions', async t => {
+  // Native probes must also reject edits to the pinned imported source.
+  checkCompatibility(process.env.INKWAVE_UPSTREAM_SOURCE || fileURLToPath(new URL('../../../inkwave-public/', import.meta.url)));
   const f = await boot(); t.after(f.close);
   const ownerA = f.make('roller', 0, 'BubbleA', [0, 0, 0], 0, 10);
   const ownerB = f.make('roller', 0, 'BubbleB', [12, 0, 6], Math.PI / 2, 11);

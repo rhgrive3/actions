@@ -1,3 +1,4 @@
+import { adaptBubblerMap } from './bubbler-map-adapter.mjs';
 import { adaptRollerMaxPaint } from './roller-max-paint-adapter.mjs';
 import { adaptHostTeams } from './lobby-host-team-adapter.mjs';
 import { adaptLocalBatch01 } from './local-batch-01-adapter.mjs';
@@ -51,6 +52,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptBubblerMap(rel, code);
   // The source-guided shooter-family InkFlightRuntime is the authority for
   // head integration and detached paint drops. It does not traverse the
   // patched generic Projectiles._step actor loop. Bridge its actor contact
