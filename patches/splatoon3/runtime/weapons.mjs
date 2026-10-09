@@ -334,6 +334,7 @@ export function installWeapons(context, profile) {
     this.s3Stored = null; this.s3KeepMuzzlePending = false; this.s3KeepMuzzleFiring = false; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false; this.s3BlasterMoveRemaining = 0;
     this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
+    this.s3DualiesJumpT = null; this.s3DualiesJumpSeen = this.a?.s3JumpSerial || 0;
     this.s3SloshRecovery = false; this.s3SloshPrevYaw = null; this.s3SloshTurnDelta = 0;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0;
     this.s3SplatlingHeld = false;
@@ -443,6 +444,33 @@ export function installWeapons(context, profile) {
     return { supported: true, active, age: active ? this.s3BlasterJumpT : null,
       frames, bias, envelope, ground, phase, recovering: phase === 'recovering' };
   };
+  // #887: pinned WeaponManeuverNormal names Jump_DegBiasDecreaseStartFrame=25 /
+  // Jump_DegBiasEndFrame=70 / Jump_DegBiasMax=0.4. Per Inkipedia's data
+  // explanation these DegBias fields describe the hidden OUTER-RETICLE
+  // PROBABILITY ("bias"), while Stand/Jump_DegSwerve=2/7.5 are the deviation
+  // angles. The same 25F/70F window therefore drives a per-shot selection, not
+  // an angle lerp. Mirror the already-sourced Blaster jump-bias owner: publish
+  // the outer envelope, sample the probability bias at fire time, and keep the
+  // LapOver post-roll cone independent. The exact 25F->70F curve shape is not
+  // published; this uses the same monotone linear recovery as the Blaster owner.
+  const dualiesParam = profile.weaponsFidelityCompletion?.weapons?.dualies?.WeaponParam;
+  const DUALIES_START = Number.isFinite(dualiesParam?.Jump_DegBiasDecreaseStartFrame) ? dualiesParam.Jump_DegBiasDecreaseStartFrame / BLASTER_REF_HZ : null;
+  const DUALIES_END = Number.isFinite(dualiesParam?.Jump_DegBiasEndFrame) ? dualiesParam.Jump_DegBiasEndFrame / BLASTER_REF_HZ : null;
+  const DUALIES_BIAS_MAX = Number.isFinite(dualiesParam?.Jump_DegBiasMax) ? dualiesParam.Jump_DegBiasMax : null;
+  const dualiesJumpSupported = () => Number.isFinite(DUALIES_START) && Number.isFinite(DUALIES_END) && DUALIES_END > DUALIES_START && DUALIES_BIAS_MAX > 0;
+  const dualiesJumpBias = age => age <= DUALIES_START ? DUALIES_BIAS_MAX
+    : age >= DUALIES_END ? 0 : DUALIES_BIAS_MAX * (DUALIES_END - age) / (DUALIES_END - DUALIES_START);
+  WeaponRunner.prototype.s3DualiesJumpState = function (w) {
+    if (!w || w.kind !== 'dualies' || !dualiesJumpSupported())
+      return { supported: false, active: false, age: null, frames: null, bias: 0, envelope: 0, ground: 0, phase: 'idle', recovering: false };
+    const active = this.s3DualiesJumpT != null, bias = active ? dualiesJumpBias(this.s3DualiesJumpT) : 0;
+    const envelope = w.spreadAir, ground = w.spreadGround;
+    const frames = active ? this.s3DualiesJumpT * BLASTER_REF_HZ : null;
+    const phase = !active ? 'idle' : frames <= DUALIES_START * BLASTER_REF_HZ ? 'held'
+      : frames < DUALIES_END * BLASTER_REF_HZ ? 'recovering' : 'recovered';
+    return { supported: true, active, age: active ? this.s3DualiesJumpT : null,
+      frames, bias, envelope, ground, phase, recovering: phase === 'recovering' };
+  };
   const runnerUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const weapon = this.a.weapon;
@@ -461,6 +489,17 @@ export function installWeapons(context, profile) {
       this.s3BlasterJumpT = null;
       this.s3BlasterWasGrounded = false;
       this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
+    }
+    if (dualiesJumpSupported() && weapon?.kind === 'dualies') {
+      const grounded = !!this.a.grounded;
+      const jumpSerial = this.a.s3JumpSerial || 0;
+      if (jumpSerial !== this.s3DualiesJumpSeen) this.s3DualiesJumpT = 0;
+      else if (this.s3DualiesJumpT != null) this.s3DualiesJumpT += dt;
+      this.s3DualiesJumpSeen = jumpSerial;
+      if (this.s3DualiesJumpT != null && grounded && this.s3DualiesJumpT >= DUALIES_END) this.s3DualiesJumpT = null;
+    } else {
+      this.s3DualiesJumpT = null;
+      this.s3DualiesJumpSeen = this.a?.s3JumpSerial || 0;
     }
     if (weapon.kind === 'shooter') {
       if (this.s3WasGrounded && !this.a.grounded) this.s3JumpSpreadAge = 0;
@@ -833,7 +872,20 @@ export function installWeapons(context, profile) {
   }
   const fireDualies = Projectiles.prototype.fireDualies;
   Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
-    const result = fireDualies.call(this, a, w, spreadDeg, hand);
+    // #887: while the Dualies jump-accuracy bias clock is active, sample the
+    // published outer-reticle probability and fire at the chosen sourced
+    // endpoint (Jump_DegSwerve vs Stand_DegSwerve). Same model as the Blaster
+    // jump bias; the LapOver turret cone is already handled by _spreadDeg.
+    const state = a?.weaponRunner?.s3DualiesJumpState?.(w);
+    let effective = spreadDeg;
+    // The legal post-roll LapOver turret cone (spreadLock) is a separate owner
+    // and must not be replaced by a jump-bias selection.
+    if (state?.active && !(a.weaponRunner.s3Turret || a.weaponRunner.lockT > 0)) {
+      const first = w.spreadFirst ?? .45;
+      const bloom = first + (1 - first) * (a.weaponRunner.bloom || 0);
+      effective = (Math.random() < state.bias ? state.envelope : state.ground) * bloom;
+    }
+    const result = fireDualies.call(this, a, w, effective, hand);
     if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
     return result;
   };
@@ -883,8 +935,18 @@ export function installWeapons(context, profile) {
       else { base = w.spreadGround; this.s3JumpSpreadAge = null; }
       return base; // S3 maximum outer envelope; selection happens on each admitted shot
     }
+    if (w.kind === 'dualies') {
+      // #887: publish the jump-derived outer envelope while the biased recovery
+      // clock is active; the per-shot probability is sampled at fire time. The
+      // LapOver post-roll turret cone stays a separate owner.
+      if (this.s3Turret || this.lockT > 0) return w.spreadLock;
+      const state = this.s3DualiesJumpState(w);
+      const base = state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
+      const first = w.spreadFirst ?? .45;
+      return base * (first + (1 - first) * this.bloom);
+    }
     if (w.kind === 'shooter') return w.spreadGround;
-    return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
+    return spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
   Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {
