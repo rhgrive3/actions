@@ -396,7 +396,8 @@ export function emit(name, payload) {
     hitPeer.lastHit = nextHighHit;
     const hitLife = v.netLife ?? 0;
     const previousHitAuthority = v.net?._hitAuthority;
-    const hitRevision = previousHitAuthority?.life === hitLife ? previousHitAuthority.sequence + 1 : 1;
+    const hitRevision = previousHitAuthority?.life === hitLife && previousHitAuthority.owner === this.myId
+      ? previousHitAuthority.sequence + 1 : 1;
     if (!Number.isSafeInteger(hitRevision) || hitRevision < 1) return;
     this._applyingHit = true;`, 'deduplicate validated reordered hit retries');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
@@ -416,9 +417,11 @@ export function emit(name, payload) {
     if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject shooter bomb hit');
     patch("    this.s.tr?.sendTo(from ?? atk.owner, { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0, vl: v.netLife ?? 0 });",
       `    const hitState = { owner: this.myId, life: hitLife, sequence: hitRevision, ts: now(), hp: v.hp, alive: !!v.alive };
-    if (v.net) v.net._hitAuthority = hitState;
+    v.net ||= {};
+    v.net._hitAuthority = hitState;
     const ack = { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0,
-      vl: hitLife, hp: hitState.hp, hr: hitRevision, ht: hitState.ts, la: hitState.alive ? 1 : 0 };
+      vl: hitLife, hp: hitState.hp, hr: hitRevision, ht: hitState.ts, la: hitState.alive ? 1 : 0,
+      he: this._hitHandoffPacket(v) };
     if (typeof this.s.tr?.broadcast === 'function') this.s.tr.broadcast(ack);
     else {
       const recipients = new Set([from ?? atk.owner, this.s.hostId]);
@@ -514,7 +517,7 @@ export function emit(name, payload) {
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
     patch('  o.lock = a.lock + (b.lock - a.lock) * u;\n  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  o.spCost = a.spCost;\n  return o;',
-      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);\n  o.hp = u < 0.5 ? a.hp : b.hp; o.hitLife = u < 0.5 ? a.hitLife : b.hitLife; o.hitSeq = u < 0.5 ? a.hitSeq : b.hitSeq; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.sloshElapsed >= 0 && b.sloshElapsed >= 0) o.sloshElapsed = a.sloshElapsed + (b.sloshElapsed - a.sloshElapsed) * u;\n  if (a.slamPhase && a.slamPhase === b.slamPhase) o.slamT = a.slamT + (b.slamT - a.slamT) * u;\n  o.blasterWindup = (a.blasterWindup || 0) + ((b.blasterWindup || 0) - (a.blasterWindup || 0)) * u;\n  o.spCost = a.spCost;\n  return o;',
+      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);\n  o.hp = u < 0.5 ? a.hp : b.hp; o.hitLife = u < 0.5 ? a.hitLife : b.hitLife; o.hitSeq = u < 0.5 ? a.hitSeq : b.hitSeq; o.hitParent = u < 0.5 ? a.hitParent : b.hitParent; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.sloshElapsed >= 0 && b.sloshElapsed >= 0) o.sloshElapsed = a.sloshElapsed + (b.sloshElapsed - a.sloshElapsed) * u;\n  if (a.slamPhase && a.slamPhase === b.slamPhase) o.slamT = a.slamT + (b.slamT - a.slamT) * u;\n  o.blasterWindup = (a.blasterWindup || 0) + ((b.blasterWindup || 0) - (a.blasterWindup || 0)) * u;\n  o.spCost = a.spCost;\n  return o;',
       'interpolate matching presentation action clocks');
     patch('  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;',
       '  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.dropRollId && a.dropRollId === b.dropRollId) o.dropRollRemaining = a.dropRollRemaining + (b.dropRollRemaining - a.dropRollRemaining) * u;',
@@ -532,7 +535,24 @@ export function emit(name, payload) {
       "        if (e[3] === 'movement_cancel' || e[3] === 'land' || e[3] === 'spawn') clearRemoteSquidroll(a, true);\n        a.character._netTrig?.(e[3], unpackTrig(e[4]));",
       'remote cancellation event invalidates current visual Roll');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      clearRemoteDropRoll(a);\n      clearRemoteRollerPresentation(a);\n      retireNetworkGhosts(a);\n      if (a.net) {\n        a.net._stormBirthAuth = null;\n        a.net._hitHandoff = { owner: id, life: Number.isSafeInteger(a.netLife) ? a.netLife : (a.net.lastLife ?? 0) };\n      }\n      a.owner = this.s.hostId;', 'retain prior snapshot clock and hit authority on adoption');
+      `      if (drop) { this._remove(a); continue; }
+      clearRemoteSquidroll(a);
+      clearRemoteDropRoll(a);
+      clearRemoteRollerPresentation(a);
+      retireNetworkGhosts(a);
+      if (a.net) {
+        a.net._stormBirthAuth = null;
+        const life = Number.isSafeInteger(a.netLife) ? a.netLife : (a.net.lastLife ?? 0);
+        const oldHit = a.net._hitAuthority;
+        const prior = oldHit?.life === life && oldHit.owner === id ? oldHit : null;
+        const checkpointHp = Number.isFinite(a.hp) ? Math.max(0, Math.min(PLAYER.hp, a.hp))
+          : Number.isFinite(prior?.hp) ? Math.max(0, Math.min(PLAYER.hp, prior.hp)) : PLAYER.hp;
+        const parent = { owner: id, life, sequence: Number.isSafeInteger(prior?.sequence) ? prior.sequence : 0,
+          ts: Number.isFinite(prior?.ts) ? prior.ts : 0, hp: checkpointHp };
+        a.net._hitHandoff = parent;
+        a.owner = this.s.hostId;
+        a.net._hitAuthority = { owner: a.owner, life, sequence: 0, ts: 0, hp: a.hp, alive: !!a.alive };
+      } else a.owner = this.s.hostId;`, 'retain prior snapshot clock and begin a distinct hit-owner epoch');
     patch('    const drop = mapNoBots(this.cfg.map);',
       "    const drop = this.cfg.map === 'range' || mapNoBots(this.cfg.map);", 'Practice Range remains humans-only on disconnect');
     patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a);\n    clearRemoteSquidroll(a);\n    clearRemoteDropRoll(a);\n    clearRemoteRollerPresentation(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
@@ -579,6 +599,7 @@ export function emit(name, payload) {
       if (s.length >= 26 && !hitAuthority) continue;
       snap.hitLife = hitAuthority?.life ?? snap.life;
       snap.hitSeq = hitAuthority?.sequence ?? 0;
+      snap.hitParent = hitAuthority?.parent ?? null;
       if (adoption) {
         snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence;
         a.net._adoptionTick = adoption.tick; a.net._adoptionTickOwner = from;
@@ -814,20 +835,34 @@ export function emit(name, payload) {
       }`, 'birth and terminal events');
     code += `
 const HIT_AUTHORITY_TAG = 'inkwave-hit-authority-v1';
+function readHitHandoffState(row) {
+  if (!Array.isArray(row) || row.length !== 5 || typeof row[0] !== 'string' || !row[0]
+    || !Number.isSafeInteger(row[1]) || row[1] < 0 || !Number.isSafeInteger(row[2]) || row[2] < 0
+    || !Number.isFinite(row[3]) || row[3] < 0 || !Number.isFinite(row[4]) || row[4] < 0 || row[4] > PLAYER.hp) return null;
+  return { owner: row[0], life: row[1], sequence: row[2], ts: row[3], hp: row[4] };
+}
 function packHitAuthorityState(actor) {
   const life = Number.isSafeInteger(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
   const previous = actor.net?._hitAuthority;
-  const sequence = previous?.life === life && Number.isSafeInteger(previous.sequence) && previous.sequence >= 0
+  const sameOwnerEpoch = previous?.life === life && previous.owner === actor.owner;
+  const sequence = sameOwnerEpoch && Number.isSafeInteger(previous.sequence) && previous.sequence >= 0
     ? previous.sequence : 0;
-  if (actor.net) actor.net._hitAuthority = { owner: actor.owner, life, sequence,
-    ts: Number.isFinite(previous?.ts) ? previous.ts : 0, hp: actor.hp, alive: !!actor.alive };
-  return [HIT_AUTHORITY_TAG, life, sequence];
+  const ts = sameOwnerEpoch && Number.isFinite(previous?.ts) ? previous.ts : 0;
+  const handoff = actor.net?._hitHandoff;
+  const parent = handoff ? [handoff.owner, handoff.life, handoff.sequence, handoff.ts, handoff.hp] : null;
+  const validParent = parent === null || readHitHandoffState(parent) !== null;
+  if (actor.net) actor.net._hitAuthority = { ...previous, owner: actor.owner, life, sequence, ts, hp: actor.hp, alive: !!actor.alive };
+  return validParent && parent
+    ? [HIT_AUTHORITY_TAG, life, sequence, parent]
+    : [HIT_AUTHORITY_TAG, life, sequence];
 }
 function readHitAuthorityState(row, life) {
-  if (!Array.isArray(row) || row.length !== 3 || row[0] !== HIT_AUTHORITY_TAG
+  if (!Array.isArray(row) || (row.length !== 3 && row.length !== 4) || row[0] !== HIT_AUTHORITY_TAG
     || !Number.isSafeInteger(row[1]) || row[1] < 0 || row[1] !== life
     || !Number.isSafeInteger(row[2]) || row[2] < 0) return null;
-  return { life: row[1], sequence: row[2] };
+  const parent = row.length === 4 && row[3] !== null ? readHitHandoffState(row[3]) : null;
+  if (row.length === 4 && row[3] !== null && !parent) return null;
+  return { life: row[1], sequence: row[2], parent };
 }
 
 const ADOPTION_STATE_TAG = 'inkwave-adoption-v1';
@@ -1441,32 +1476,98 @@ function firstSplatStateFor(session,cfg) {
     }
   }
 
-  _acceptHitAuthorityAck(d, from) {
-    const victim = this.byNid.get(d?.v), life = d?.vl;
-    if (!victim || typeof from !== 'string' || !from || !Number.isSafeInteger(d.h) || d.h < 1
-      || !Number.isSafeInteger(d.a) || d.a < 0 || !Number.isSafeInteger(life) || life < 0
-      || typeof d.d !== 'number' || !Number.isFinite(d.d) || d.d < 0
+  _hitHandoffPacket(actor) {
+    const state = actor?.net?._hitHandoff;
+    if (!state || typeof state.owner !== 'string' || !state.owner || !Number.isSafeInteger(state.life) || state.life < 0
+      || !Number.isSafeInteger(state.sequence) || state.sequence < 0 || !Number.isFinite(state.ts) || state.ts < 0
+      || !Number.isFinite(state.hp) || state.hp < 0 || state.hp > PLAYER.hp) return null;
+    return [state.owner, state.life, state.sequence, state.ts, state.hp];
+  }
+
+  _readHitHandoffPacket(row) {
+    if (row === null || row === undefined) return null;
+    const state = Array.isArray(row) && row.length === 5
+      ? { owner: row[0], life: row[1], sequence: row[2], ts: row[3], hp: row[4] } : row;
+    if (!state || typeof state.owner !== 'string' || !state.owner || !Number.isSafeInteger(state.life) || state.life < 0
+      || !Number.isSafeInteger(state.sequence) || state.sequence < 0 || !Number.isFinite(state.ts) || state.ts < 0
+      || !Number.isFinite(state.hp) || state.hp < 0 || state.hp > PLAYER.hp) return false;
+    return { owner: state.owner, life: state.life, sequence: state.sequence, ts: state.ts, hp: state.hp };
+  }
+
+  _validHitAuthorityMetadata(d) {
+    const fields = ['hp', 'hr', 'ht', 'la'];
+    const present = fields.filter((key) => d?.[key] !== undefined).length;
+    if (present === 0) return d?.he === undefined;
+    if (present !== fields.length || !Number.isSafeInteger(d.h) || d.h < 1
+      || !Number.isSafeInteger(d.v) || d.v < 0 || !Number.isSafeInteger(d.a) || d.a < 0
+      || !Number.isSafeInteger(d.vl) || d.vl < 0 || typeof d.d !== 'number' || !Number.isFinite(d.d) || d.d < 0
       || (d.kld !== 0 && d.kld !== 1) || typeof d.hp !== 'number' || !Number.isFinite(d.hp)
       || d.hp < 0 || d.hp > PLAYER.hp || !Number.isSafeInteger(d.hr) || d.hr < 1
       || typeof d.ht !== 'number' || !Number.isFinite(d.ht) || d.ht < 0
       || (d.la !== 0 && d.la !== 1) || (d.kld === 1 && (d.hp !== 0 || d.la !== 0))
       || (d.kld === 0 && d.la !== 1)) return false;
+    return d.he === undefined || d.he === null || this._readHitHandoffPacket(d.he) !== false;
+  }
+
+  _mergeHitAuthorityParent(actor, parent) {
+    if (!parent) return true;
+    const handoff = actor?.net?._hitHandoff;
+    if (!handoff || handoff.owner !== parent.owner || handoff.life !== parent.life) return false;
+    if (parent.sequence < handoff.sequence || parent.sequence === handoff.sequence && parent.ts <= handoff.ts) return true;
+    const hpBefore = actor.hp;
+    const nextHp = Math.max(0, Math.min(PLAYER.hp, hpBefore - (handoff.hp - parent.hp)));
+    handoff.sequence = parent.sequence; handoff.ts = parent.ts; handoff.hp = parent.hp;
+    if (actor.alive) actor.hp = nextHp;
+    else actor.hp = 0;
+    if (actor.net?._hitAuthority?.life === handoff.life && actor.net._hitAuthority.owner === actor.owner) {
+      actor.net._hitAuthority.hp = actor.hp;
+      actor.net._hitAuthority.alive = !!actor.alive;
+    }
+    if ((parent.hp <= 0 || actor.hp <= 0) && actor.alive) this._remoteSplat?.(actor, null, 'shooter');
+    if (actor.hp < hpBefore) actor.lastDamage = 0;
+    return true;
+  }
+
+  _acceptHitAuthorityAck(d, from) {
+    const victim = this.byNid.get(d?.v), life = d?.vl;
+    if (!victim || typeof from !== 'string' || !from || !this._validHitAuthorityMetadata(d) || d.hr === undefined) return false;
     const currentLife = Math.max(Number.isSafeInteger(victim.netLife) ? victim.netLife : 0,
       Number.isSafeInteger(victim.net?.lastLife) ? victim.net.lastLife : 0);
     const handoff = victim.net?._hitHandoff;
     if (life !== currentLife || (victim.owner !== from && !(handoff?.owner === from && handoff.life === life))) return false;
     const current = victim.net?._hitAuthority;
-    if (current?.life === life) {
-      if (current.owner === from) {
-        if (d.hr < current.sequence || d.hr === current.sequence && d.ht <= current.ts) return false;
-      } else if (d.hr <= current.sequence) return false;
-    }
     victim.net ||= {};
-    victim.net._hitAuthority = { owner: from, life, sequence: d.hr, ts: d.ht, hp: d.hp, alive: d.la === 1 };
-    if (d.la === 0) {
-      if (victim.alive) this._remoteSplat?.(victim, null, 'shooter');
-      victim.hp = 0;
-    } else if (victim.alive) victim.hp = d.hp;
+    if (victim.owner !== from) {
+      if (!handoff || handoff.owner !== from || handoff.life !== life
+        || d.hr < handoff.sequence || d.hr === handoff.sequence && d.ht <= handoff.ts) return false;
+      const hpBefore = victim.hp;
+      const nextHp = Math.max(0, Math.min(PLAYER.hp, hpBefore - (handoff.hp - d.hp)));
+      handoff.sequence = d.hr; handoff.ts = d.ht; handoff.hp = d.hp;
+      if (victim.alive) victim.hp = nextHp;
+      else victim.hp = 0;
+      if (victim.alive && (d.la === 0 || victim.hp <= 0)) this._remoteSplat?.(victim, null, 'shooter');
+      if (current?.life === life && current.owner === victim.owner) {
+        current.hp = victim.hp; current.alive = !!victim.alive;
+      }
+      if (victim.hp < hpBefore) victim.lastDamage = 0;
+      return true;
+    }
+
+    const parent = d.he === undefined || d.he === null ? null : this._readHitHandoffPacket(d.he);
+    if (parent === false || !this._mergeHitAuthorityParent(victim, parent)) return false;
+    const sameEpoch = current?.life === life && current.owner === from;
+    if (sameEpoch && (d.hr < current.sequence || d.hr === current.sequence && d.ht <= current.ts)) return false;
+    const hpBefore = victim.hp;
+    if (victim.alive) {
+      let reportedHp = d.hp;
+      if (parent && handoff?.owner === parent.owner && handoff.life === parent.life)
+        reportedHp -= parent.hp - handoff.hp;
+      else if (handoff?.life === life) reportedHp = victim.hp - d.d;
+      victim.hp = Math.max(0, Math.min(PLAYER.hp, reportedHp));
+    } else victim.hp = 0;
+    if (victim.alive && (d.la === 0 || victim.hp <= 0)) this._remoteSplat?.(victim, null, 'shooter');
+    victim.net._hitAuthority = { owner: from, life, sequence: d.hr, ts: d.ht, hp: victim.hp, alive: !!victim.alive };
+    if (victim.hp < hpBefore) victim.lastDamage = 0;
     return true;
   }
 
@@ -1477,13 +1578,16 @@ function firstSplatStateFor(session,cfg) {
     const life = snap.hitLife;
     if (life !== snap.life) return false;
     const current = actor.net?._hitAuthority;
-    if (current?.life === life) {
-      if (current.owner === from) {
-        if (snap.hitSeq < current.sequence || snap.hitSeq === current.sequence && snap.t <= current.ts) return false;
-      } else if (snap.hitSeq < current.sequence) return false;
-    }
+    const sameEpoch = current?.life === life && current.owner === from;
+    if (sameEpoch && (snap.hitSeq < current.sequence || snap.hitSeq === current.sequence && snap.t <= current.ts)) return false;
+    const parent = snap.hitParent === undefined || snap.hitParent === null ? null : this._readHitHandoffPacket(snap.hitParent);
+    if (parent === false || !this._mergeHitAuthorityParent(actor, parent)) return false;
+    let hp = snap.hp;
+    const handoff = actor.net?._hitHandoff;
+    if (parent && handoff?.owner === parent.owner && handoff.life === parent.life) hp -= parent.hp - handoff.hp;
+    hp = Math.max(0, Math.min(PLAYER.hp, hp));
     actor.net ||= {};
-    actor.net._hitAuthority = { owner: from, life, sequence: snap.hitSeq, ts: snap.t, hp: snap.hp };
+    actor.net._hitAuthority = { ...current, owner: from, life, sequence: snap.hitSeq, ts: snap.t, hp, alive: hp > 0 };
     return true;
   }
 
@@ -1491,9 +1595,8 @@ function firstSplatStateFor(session,cfg) {
     if (!Number.isSafeInteger(sample?.hitLife) || !Number.isSafeInteger(sample?.hitSeq)) return sample.hp;
     this._acceptHitAuthoritySnapshot(actor, sample, owner);
     const state = actor.net?._hitAuthority;
-    if (!state || state.life !== sample.hitLife) return sample.hp;
-    if (sample.hitSeq < state.sequence || sample.hitSeq === state.sequence && sample.t <= state.ts) return state.hp;
-    return sample.hp;
+    if (!state || state.life !== sample.hitLife || state.owner !== owner) return sample.hp;
+    return state.hp;
   }
 
   _retryNackedHit(pending) {
@@ -1564,8 +1667,9 @@ function firstSplatStateFor(session,cfg) {
     this._retryNackedHit(pending);
   }`, 'relay NACK must match latest destination');
     replaceMethod('_hitAck', `  _hitAck(d, from) {
-    if (!d || typeof d !== 'object') return;
-    this._acceptHitAuthorityAck(d, from);
+    if (!d || typeof d !== 'object' || !this._validHitAuthorityMetadata(d)) return;
+    const hasAuthority = ['hp', 'hr', 'ht', 'la'].some((key) => d[key] !== undefined);
+    if (hasAuthority) this._acceptHitAuthorityAck(d, from);
     const h = d.h;
     if (!Number.isSafeInteger(h) || h < 1) return;
     const receipt = this._pendingHits?.get(h);
@@ -1945,7 +2049,7 @@ ${bombHit}`;
       'c1088Row.push(c1088Surge || null, packHitAuthorityState(a));\n  return c1088Row;',
       rel + ': append life-bound accepted-hit state');
     code = once(code, 'surgePresentation: s[24] ?? null, surgeSampleTime: ts };',
-      'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2] };',
+      'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2], hitParent: readHitAuthorityState(s[25], s[25]?.[1])?.parent ?? null };',
       rel + ': unpack accepted-hit revision');
     code = adaptIssue1163RemoteDodgeClock(code);
     patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
