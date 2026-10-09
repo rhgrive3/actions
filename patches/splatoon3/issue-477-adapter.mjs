@@ -133,7 +133,7 @@ export function adaptIssue477Actor(code) {
   code = replaceOnce(
     code,
     '    this.weaponRunner?.reset();',
-    '    this.weaponRunner?.reset();\n    if (this.net) { delete this.net.lastRollToken; delete this.net.rollOwner; delete this.net.rollLife; }',
+    '    this.weaponRunner?.reset();\n    if (this.net) { delete this.net.lastRollToken; delete this.net.rollOwner; delete this.net.rollLife; delete this.net.rollEventEpoch; }',
     'actor reset roll admission reset'
   );
 
@@ -205,7 +205,8 @@ export function adaptIssue477Net(code) {
       if (snap.roll && a.net.rollEventEpoch && (snap.f & F.dodge)) {
         a.net.rollEventEpoch = calibrateDodgeEpoch(a.net.rollEventEpoch, {
           owner: from, life: snap.life ?? a.net.lastLife ?? 0, token: snap.roll.token,
-          teleport: snap.tp, sampleTime: snap.t, phase: snap.roll.phase, time: snap.roll.time
+          teleport: snap.tp, sampleTime: snap.t, phase: snap.roll.phase,
+          time: snap.roll.time, dur: snap.roll.dur
         });
       }
 `,
@@ -286,10 +287,20 @@ export function adaptIssue477Net(code) {
           }
         }
       } else {
-        a.net.rollEventEpoch = null;
-        if (!wr.dodge) wr.dodge = { token: 0, t: 0, dur: a.weapon?.rollTime || 0.2 };
-        wr.dodge.startup = 0; wr.dodge.startupDur = 0;
-        wr.dodge.t = Math.min(wr.dodge.dur, wr.dodge.t + dt);
+        const epoch = a.net.rollEventEpoch;
+        const peer = this._peer(a.owner);
+        const tr = (peer && Number.isFinite(peer.tr)) ? peer.tr : S.t;
+        const epochMatches = a.weapon?.kind === 'dualies' && epoch
+          && epoch.owner === a.owner && epoch.life === currentLife
+          && epoch.teleport === S.tp;
+        if (epoch && !epochMatches) a.net.rollEventEpoch = null;
+        if (epochMatches && tr >= epoch.epoch - 0.001 && tr < epoch.sampleTime) {
+          const clock = dodgeClockAt(epoch, tr, epoch.duration);
+          wr.dodge = clock ? { token: epoch.token, ...clock } : null;
+        } else {
+          if (epoch) a.net.rollEventEpoch = null;
+          wr.dodge = null;
+        }
       }
     } else {
       a.net.rollEventEpoch = null;

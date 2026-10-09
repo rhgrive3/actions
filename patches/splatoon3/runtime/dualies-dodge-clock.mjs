@@ -11,6 +11,7 @@ function validIdentity(value) {
     && Number.isSafeInteger(value.token) && value.token > 0
     && Number.isFinite(value.teleport) && value.teleport >= 0
     && Number.isFinite(value.epoch) && Number.isFinite(value.sampleTime)
+    && Number.isFinite(value.duration) && value.duration > 0
     && Number.isFinite(value.offset);
 }
 
@@ -27,6 +28,7 @@ function validSample(sample) {
     && Number.isSafeInteger(sample.token) && sample.token > 0
     && Number.isFinite(sample.teleport) && sample.teleport >= 0
     && Number.isFinite(sample.sampleTime) && Number.isFinite(sample.time)
+    && Number.isFinite(sample.dur) && sample.dur > 0
     && phaseAge(sample.phase, sample.time) !== null;
 }
 
@@ -50,9 +52,12 @@ export function acceptDodgeEpoch(previous, incoming) {
     || !Number.isSafeInteger(incoming.token) || incoming.token < 1
     || !Number.isFinite(incoming.teleport) || incoming.teleport < 0
     || !Number.isFinite(incoming.epoch) || !Number.isFinite(incoming.sampleTime)
+    || !Number.isFinite(incoming.duration) || incoming.duration <= 0
     || !Number.isFinite(incoming.time) || incoming.time < 0) return previous || null;
   const age = phaseAge(incoming.phase, incoming.time);
   if (age === null || incoming.epoch > incoming.sampleTime + 0.001) return previous || null;
+  if (validIdentity(previous) && previous.owner === incoming.owner
+    && incoming.epoch < previous.epoch) return previous;
   if (validIdentity(previous)
     && previous.owner === incoming.owner
     && previous.life === incoming.life
@@ -61,7 +66,8 @@ export function acceptDodgeEpoch(previous, incoming) {
   }
   return { owner: incoming.owner, life: incoming.life, token: incoming.token,
     teleport: incoming.teleport, epoch: incoming.epoch, sampleTime: incoming.sampleTime,
-    phase: incoming.phase, offset: age - (incoming.sampleTime - incoming.epoch) };
+    phase: incoming.phase, duration: incoming.duration,
+    offset: age - (incoming.sampleTime - incoming.epoch) };
 }
 
 // Recalibrate only from a newer accepted owner sample for this exact action.
@@ -72,11 +78,13 @@ export function calibrateDodgeEpoch(previous, sample) {
     || sample.teleport !== previous.teleport || sample.token !== previous.token) return null;
   if (sample.sampleTime <= previous.sampleTime) return previous;
   const age = phaseAge(sample.phase, sample.time);
+  const previousAge = previous.sampleTime - previous.epoch + previous.offset;
+  if (age + 1e-10 < previousAge || Math.abs(sample.dur - previous.duration) > 0.001) return previous;
   return { ...previous, sampleTime: sample.sampleTime, phase: sample.phase,
     offset: age - (sample.sampleTime - previous.epoch) };
 }
 
-export function dodgeClockAt(epoch, playbackTime, duration) {
+export function dodgeClockAt(epoch, playbackTime, duration = epoch?.duration) {
   if (!validIdentity(epoch) || !Number.isFinite(playbackTime)
     || !Number.isFinite(duration) || duration <= 0) return null;
   const elapsed = Math.max(0, playbackTime - epoch.epoch + epoch.offset);
