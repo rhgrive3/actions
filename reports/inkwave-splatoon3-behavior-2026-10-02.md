@@ -2283,3 +2283,22 @@ The build overlay now gives authoritative ancillary ownership and GLSL rays/sate
 ### PR1175 complete validation scheduling (2026-10-09)
 
 The combined canonical diagnostic now covers more than 3,500 tests and required about 23 minutes locally before the remaining network, quality, reference and built-weapon gates. The validate job deadline is extended from 30 to 45 minutes so the complete enlarged sequence can finish. No test is removed, skipped or made conditional by this change, and no gameplay, visual, numeric, worker, startup or performance acceptance threshold changes.
+
+### #226: アメフラシ RainNum=72 と雨粒・地面接触・塗り呼出セマンティクス（2026-10-09）
+
+- 本家参照版：スプラトゥーン3 Ver.11.3.0。[任天堂公式更新履歴](https://www.nintendo.com/en-gb/Support/Nintendo-Switch/Game-Updates/How-to-Update-Splatoon-3-2266003.html)、固定抽出一次資料 `WeaponSpInkStorm.game__GameParameterTable.json`（`CloudParam.RainNum=72`、`RainyFrame.Low=480`、`NoPaintRainNum=0`、`WithNoPaintRainNum=120`、`RainParam.CollisionParam.EndRadiusForField=0.25`、`RainParam.MoveParam.FreeAirResist=0.07`、`RainParam.MoveParam.FreeGravity=0.02`）、およびS3検証Wiki「アメフラシ」（雨粒発生数72個、効果時間480F/8.0秒、雨粒塗り半径約0.1）。
+- 比較条件：スペシャル性能アップなし、自チーム雲1個、duration=8.0秒（480フレーム）。平坦地面（raycast命中）、高所・奈落（raycast非命中）、ローカル所有およびリモート/ゴースト雲。FixedClock 30Hz/60Hz/120Hz。
+- 構造の相違と根拠のない72制限の棄却：
+  - 本家スプラトゥーン3では、雲から重力と空気抵抗を持つ物理雨粒エンティティ（`RainParam`）が投下され、フィールドとの衝突判定（`EndRadiusForField`）を経て初めて地面の塗りが生成される。`RainNum=72` は480Fの間における雨粒エンティティの生成総数パラメータであり、ゲーム描画やセル塗り関数の呼出回数を直接72回に固定するものではない。
+  - 公開版 INKWAVE（`inkwave-public/src/game/weapons.js:1375`）では独立した落下雨粒エンティティを持たず、雲の更新タイマー `c.rainT` が0.045秒ごとに雲下から12ユニットの下向きレイキャストを行い、命中時に `G.paint.splat` を呼ぶ。8秒の有効期間全体で178回（未パッチ版の `c.t < c.dur - 0.3` では172回）の候補レイキャストが実行される。
+  - セマンティクスの根拠なく INKWAVE の `paint.splat` 呼出総数を72回へ強制制限すると、約3.24秒（72×0.045秒）で塗りが途絶えるか、発生間隔を間引いた場合に雨の密度・塗り広がりが著しく劣化する。Issue #226 の訂正通知にもある通り、172回対72個を2.39倍の不具合とみなして72回へ強制する受入条件は無効である。
+- 独立したセマンティクス監査（`patches/splatoon3/adapter.mjs`）：
+  - 雲インスタンス `c.s3RainAudit` にて、雨粒生成候補 (`candidateDrops`)、物理地面接触 (`groundHits`)、自クライアント正規塗り (`paintEvents`) を独立して集計する。
+  - 平坦地面では 8 秒完走で `candidateDrops=178`, `groundHits=178`, `paintEvents=178`（30Hz/60Hz/120Hz 完全一致）。
+  - レイキャストが届かない高所や穴では `candidateDrops=178` だが `groundHits=0`, `paintEvents=0` となり、候補と接地が分離される。
+  - リモート／ゴースト雲では `candidateDrops=178`, `groundHits=178` だが `paintEvents=0` となり、描画・接触のシミュレーションと自チームのナワバリ権限が分離される。
+  - `SPECIALS.storm.rainNumReference = 72` および `sub-special-fidelity-reference.json` にて 72 は参照メタデータとしてのみ保持し、ゲーム内塗り呼出と混同しない。
+- 未確認事項と受入状態：
+  - Switch Ver.11.3.0 実機における1雨粒あたりの実接地面積・塗りの重なり率・落下ライフサイクルは未計測。
+  - 本件は「雨粒生成候補数・地面接触数・自チーム塗りイベント数の独立集計」および「根拠のない72回制限の排除」を確定仕様として整理し、実機未確認事項を維持するため自動クローズは行わない。
+

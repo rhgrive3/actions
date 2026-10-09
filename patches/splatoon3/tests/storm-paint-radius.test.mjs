@@ -6,14 +6,21 @@ import { FixedClock } from '../runtime/clock.mjs';
 
 // #757: authoritative Ink Storm rain paint must sample from the same active
 // (growth/fade-scaled) radius as the visible rain and Boss rain of that tick.
-async function storm({ t = 0, ghost = false, adapt } = {}) {
+async function storm({ t = 0, ghost = false, remote = false, raycastHit = true, adapt } = {}) {
   const f = await fixture(adapt ? { adapt } : {});
   f.installSubSpecialFidelity?.(f, f.profile);
   const { G, THREE } = f; G.scene = new THREE.Scene(); G.netm = null; G.actors = [];
   const p = G.projectiles = new f.Projectiles(G.scene), owner = f.make(); owner.team = 0;
+  owner.remote = remote;
   const visual = [], boss = [], paints = [];
   G.fx = { rain: (_pos, r) => visual.push(r) }; G.boss = { rain: (_a, _x, _z, r) => boss.push(r) };
-  G.physics.raycast = (origin, _dir, _len, hit) => { hit.hit = true; hit.point.copy(origin).setY(0); hit.normal.set(0, 1, 0); hit.dist = origin.y; return hit; };
+  G.physics.raycast = (origin, _dir, _len, hit) => {
+    hit.hit = raycastHit;
+    if (raycastHit) {
+      hit.point.copy(origin).setY(0); hit.normal.set(0, 1, 0); hit.dist = origin.y;
+    }
+    return hit;
+  };
   G.paint.splat = (pos, size) => { paints.push(Math.hypot(pos.x, pos.z)); return size; };
   const c = { t, dur: 8, team: 0, ghost, owner, dir: new THREE.Vector3(), rainT: 0, group: new THREE.Group() };
   c.group.position.set(0, 5, 0); p.clouds.push(c);
@@ -89,6 +96,40 @@ test('#226 rain audit counts sampled candidate, ground contacts and actual paint
   assert.equal(audit.candidateDrops,audit.groundHits);
   assert.equal(audit.paintEvents,s.paints.length);
   assert.ok(audit.candidateDrops!==72,'source RainNum is not silently substituted for native per-tick paint calls');
+});
+
+test('#226 full lifetime rain audit decouples candidates, ground hits and paint across 30/60/120Hz without forcing RainNum=72', async () => {
+  for (const hz of [30, 60, 120]) {
+    const s = await storm();
+    const clock = new FixedClock();
+    for (let i = 0; i < hz * 8; i++) clock.advance(1 / hz, dt => s.p._updateClouds(dt));
+    const audit = s.c.s3RainAudit;
+    assert.equal(audit.candidateDrops, 178);
+    assert.equal(audit.groundHits, 178);
+    assert.equal(audit.paintEvents, 178);
+    assert.equal(s.paints.length, 178);
+    assert.notEqual(audit.candidateDrops, 72, 'full-duration candidate count is not forced to 72 without semantic proof');
+  }
+});
+
+test('#226 rain audit decouples candidate generation from ground contact when raycast misses', async () => {
+  const s = await storm({ raycastHit: false });
+  for (let i = 0; i < 480; i++) s.p._updateClouds(1 / 60);
+  const audit = s.c.s3RainAudit;
+  assert.equal(audit.candidateDrops, 178);
+  assert.equal(audit.groundHits, 0, 'no ground contact recorded on raycast miss');
+  assert.equal(audit.paintEvents, 0, 'no paint event emitted on raycast miss');
+  assert.equal(s.paints.length, 0);
+});
+
+test('#226 rain audit decouples ground contact from authoritative paint for ghost/remote cloud', async () => {
+  const s = await storm({ ghost: true, remote: true });
+  for (let i = 0; i < 480; i++) s.p._updateClouds(1 / 60);
+  const audit = s.c.s3RainAudit;
+  assert.equal(audit.candidateDrops, 178);
+  assert.equal(audit.groundHits, 178, 'ground contact is still simulated for remote cloud');
+  assert.equal(audit.paintEvents, 0, 'remote/ghost cloud emits zero authoritative paint events');
+  assert.equal(s.paints.length, 0);
 });
 
 test('#735 actors far below rain trace cannot receive infinite-cylinder damage',async()=>{
