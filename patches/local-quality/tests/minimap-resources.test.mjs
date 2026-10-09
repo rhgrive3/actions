@@ -108,7 +108,7 @@ test('adapter: exact unique fail-closed anchors on minimap.js', () => {
   assert.throws(() => compose('src/game/minimap.js', out), /minimap patch conflict/);
   assert.throws(() => replaceOnceMinimap(out, '.__never_present_anchor__', 'x', 'probe'), /minimap patch conflict/);
   // non-minimap rel untouched; other adapters in chain unaffected for this rel
-  assert.equal(adaptMinimapResources('src/main.js', 'x'), 'x');
+  assert.equal(adaptMinimapResources('src/game/weapons.js', 'x'), 'x');
 });
 
 test('OFF constructor: bounded 1x1 placeholders, no full buffers; w/h + toCanvas preserved', () => {
@@ -283,4 +283,40 @@ test('call sites + paint/gameplay state unchanged by this adapter', () => {
   assert.match(main, /map: showMinimap \? \{ canvas: this\.minimap\.canvas, expanded: false, players \} : null,/);
   assert.match(out, /this\.owner = new Uint8Array\(N\);/);         // native raster tail intact
   assert.match(out, /this\._built = true;/);
+});
+
+
+test('#907 explicit Turf Map builds/updates the raster even with corner minimap OFF', () => {
+  const composed = compose('src/main.js');
+  assert.match(composed, /const explicitTurfMap = !!\(m && !m\.attract && !m\.paused && m\.state === 'playing' && m\.controller\?\.mapHeld && !this\.menus\?\.current\);/);
+  assert.match(composed, /if \(showMinimap \|\| explicitTurfMap\) this\.minimap\.update\(dt\);/);
+  assert.match(composed, /else this\.minimap\.tickHidden\?\.\(dt\);/);
+  assert.match(composed, /if \(showMinimap \|\| explicitTurfMap\) \{\s*for \(const o of m\.actors\)/);
+  assert.match(composed, /map: showMinimap \|\| explicitTurfMap \? \{ canvas: this\.minimap\.canvas, expanded: explicitTurfMap, players \} : null,/);
+  // No permanent raster activity: the normal OFF/closed path is still tickHidden.
+  assert.doesNotMatch(composed, /map: showMinimap \? \{ canvas: this\.minimap\.canvas, expanded: false, players \} : null,/);
+});
+
+test('#907 map availability follows visible live state on keyboard/pad/touch', () => {
+  const code = compose('src/main.js');
+  const match = code.match(/const explicitTurfMap = ([^\n;]+);/);
+  assert.ok(match, 'one shared controller state drives explicit map presentation');
+  const isOpen = new Function('m', 'return ' + match[1]);
+  const playing = { state: 'playing', attract: false, paused: false, controller: { mapHeld: true } };
+  const game = { menus: { current: null } };
+  for (const owner of ['keyboard', 'gamepad', 'touch']) {
+    playing.controller.mapHeld = true;
+    assert.equal(isOpen.call(game, playing), true, owner);
+    playing.controller.mapHeld = false;
+    assert.equal(isOpen.call(game, playing), false, owner + ' closed');
+  }
+  playing.controller.mapHeld = true;
+  for (const [field, value] of [['state', 'intro'], ['state', 'finish'], ['state', 'results'], ['paused', true], ['attract', true]]) {
+    const original = playing[field]; playing[field] = value;
+    assert.equal(isOpen.call(game, playing), false, field + '=' + value);
+    playing[field] = original;
+  }
+  game.menus.current = 'settings';
+  assert.equal(isOpen.call(game, playing), false, 'menu owns presentation');
+  assert.equal(isOpen.call({ menus: null }, null), false);
 });
