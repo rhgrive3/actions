@@ -47,6 +47,18 @@ test('ordinary loadout keeps the gear owner untouched; mirrors without gear reta
  const f=rig({active:false});continuation.augmentContinuationLoadout(f.menus,f.screen);assert.equal(f.details.parentNode,f.el);assert.deepEqual(f.box.children,[f.look]);
  const plain=rig({gear:false});continuation.augmentContinuationLoadout(plain.menus,plain.screen);assert.equal(plain.box.children.length,2);plain.box.children[1].opts.accept();assert.deepEqual(plain.calls,['prepare','rematch']);
 });
+test('#272 actual gear panel offers Stealth Jump only in shoes main and saves that choice',()=>{
+ const f=rig(),selects=f.details.querySelectorAll('select');
+ assert.equal(selects.length,12);
+ for(const select of selects){
+  const visible=select.children.some(option=>option.value==='stealthJump');
+  assert.equal(visible,select['aria-label']==='クツ メイン',select['aria-label']);
+ }
+ const shoesMain=selects.find(select=>select['aria-label']==='クツ メイン');
+ shoesMain.value='stealthJump';shoesMain.listeners.get('change')();
+ assert.equal(f.saved.length,1);
+ assert.equal(f.saved[0][1][2].main,'stealthJump');
+});
 test('old continuation leaves the absolute gear sibling outside its action flow as a negative control',()=>{
  const current=read('../result-continuation.mjs'),needle="  const gear = screen.el.querySelector('.s3-gear');\n  if (gear) box.appendChild(gear);";assert(current.includes(needle));
  const old=vm.runInNewContext(current.replace(needle,'').replaceAll('export ','')+';({augmentContinuationLoadout})');const f=rig();old.augmentContinuationLoadout(f.menus,f.screen);

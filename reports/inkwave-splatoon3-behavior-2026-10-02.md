@@ -2368,6 +2368,34 @@ The combined canonical diagnostic now covers more than 3,500 tests and required 
 - 資源計算: decal 2048²、lit 2048×1024、skyline 2048×1024、ground mask 1024×2048 は計10,485,760 px / RGBA換算40 MiB、full mip chain 約53.34 MiB。LOW はそれぞれ1024²、1024×512、1024×512、512×1024で計2,621,440 px / 10 MiB、mip chain は14 MiB未満。これは4 atlasに限った寸法/format計算で、Canvas/GPU driver overhead、他のscene資源、端末常駐量を含まない。
 - `patches/local-quality/tests/lobby-resources.test.mjs` と `issue-472-lobby.test.mjs` は10/10。テストは native atlas builder source を Canvas2D stub で実行して backing寸法/pixel countを数え、native release/dispose owner pathを30/60/120 Hzで2周期ずつ実行する。これは source/lifecycle call evidence であり、実 browser upload、Safari/WebKit、iOS/Android GPU reclaim、Switch parity の代用ではない。
 - プレイへの影響は LOW LobbySet の atlas raster detail の低下に限る。UV、geometry、menu/Online lifecycle、input、gameplay logic は変更しない。実機画面の可読性レビューと browser/GPU profiling は未確認のまま残す。
+## 2026-10-09 — #272 Stealth Jump shoes-main gear-panel residual
+
+### 本家の根拠
+
+- Splatoon 3 Ver. 11.3.0 pinned `spl__GearSkillTraitsParam` at Leanny `splat3@7280ff9cde8bb1c5dcef46c700c326471584d2e6`: `Traits.SuperJumpSign_Hide.KindLimit` is `Shoes`. The recovered JSON is retained with SHA-256 `853f8eb25077ec5d7017a7ec1da3b9cddf4b0ddba5f7c361f2fd51f7a12d0a57` in the task evidence.
+- The same pinned set's `SplPlayer.game__GameParameterTable.json` records the existing Ver. 11.0.0 Stealth Jump flight extension parameters. It does not specify an INKWAVE map's anchors or conversion into the S3 front/back distance coordinate; the mapping remains unknown.
+
+### INKWAVE の実装箇所
+
+`patches/splatoon3/runtime/gear.mjs` already restricts `stealthJump` to shoes main in `abilityAllowed`, normalizes that slot, and sets the equipped modifier. `gearPanel()` then filtered out abilities without an AP curve in `tuning.gear`; Stealth Jump is a fixed ability without that curve, so it was missing even from shoes main. The panel now gives it the same fixed-main exemption as `ninjaSquid`. It keeps the existing shoes-main-only predicate. No `inkwave-public/`, flight, charge, network, owner/remote presentation, or Practice Range source was changed.
+
+### 再現操作と結果
+
+The focused panel test invokes the production `gearPanel()` function with bounded DOM/storage stand-ins. It checks all 12 controls, confirms Stealth Jump appears only in `クツ メイン`, selects it, and observes the existing loadout storage handler persist that choice. The gear regression also checks the non-local Actor retains its shoes-main loadout and modifier. The separate #272 test confirms all head/clothing mains and secondary slots remain rejected, while the existing no-foci gate still returns zero when ordinary spawn/home points are supplied. A static scan of `patches/practice-range/` finds no Stealth Jump or Super Jump penalty hook; no Range path is part of this change.
+
+### プレイへの影響と未確認事項
+
+Players can now equip Stealth Jump from the production loadout panel, only in the shoes primary slot. The flight modifier remains governed by the existing explicit `level.stealthJumpFoci` gate. No shipped-level anchor or coordinate conversion was inferred from `spawnPads` or `homeSuperJumpPoints`; the flight penalty therefore still fails closed where calibrated foci are absent. No Switch measurement or cross-device browser network check was performed. This is the gear-panel residual only; #272's flight-coordinate mapping remains open.
+
+The owner/remote arrival-cue concealment gap recorded in the recovered prior result remains separate and unchanged: this panel edit adds no stealth field to the remote `superjump` event and changes neither flight branch's cue behavior. Range behavior is likewise outside the changed paths; these are source-scope checks, not new cross-device or Range browser acceptance.
+
+### 確認状態
+
+- `node --test patches/local-quality/tests/continuation-gear-flow.test.mjs` — 4/4, including the actual production-panel slot/persistence case.
+- `node --experimental-vm-modules --test patches/splatoon3/tests/gear-sub-batch.test.mjs` — 16/16, including the #272 non-local Actor gear case.
+- `node --experimental-vm-modules --test patches/splatoon3/tests/issue-272-stealth-jump.test.mjs` — 4/4, including shoes-only normalization and fail-closed uncalibrated foci.
+- A first `gear-sub-batch` invocation without `--experimental-vm-modules` failed before assertions because `vm.SourceTextModule` was unavailable; the flagged rerun passed.
+- Physical Ver. 11.3.0 behavior and live-browser/cross-device acceptance remain unverified.
 
 ## 2026-10-09 — Roller depleted collision radius (#305 residual)
 
