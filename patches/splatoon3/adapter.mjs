@@ -13,6 +13,9 @@ import { adaptMinimapDirty } from './minimap-dirty-adapter.mjs';
 import { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';
 import { adaptStormEffects } from './storm-effects-adapter.mjs';
 import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
+import { adaptPadSensitivity } from './pad-sensitivity-adapter.mjs';
+import { adaptCombatRange } from './combat-range-adapter.mjs';
+import { adaptChargerFieldCollision } from './charger-field-adapter.mjs';
 import { adaptKitRescue } from './kit-rescue-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
@@ -111,6 +114,8 @@ export function adaptSource(rel, code) {
       'ink flight friendly contact has no hostile-hit packet');
     return code;
   }
+  code = adaptPadSensitivity(rel, code, replaceOnce);
+  code = adaptChargerFieldCollision(rel, code, replaceOnce);
   code = adaptHostTeams(rel, code, replaceOnce);
   code = adaptLocalBatch01(rel, code, replaceOnce);
   code = adaptRollerMaxPaint(rel,code,replaceOnce);
@@ -769,6 +774,7 @@ export function adaptSource(rel, code) {
       }
     };`,
       'player map Super Jump target selection cue');
+    code = adaptCombatRange(rel, code, replaceOnce);
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
