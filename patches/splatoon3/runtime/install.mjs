@@ -60,7 +60,6 @@ import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSuperJumpTargetNotification } from './superjump-target-notification.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
-import { installWeaponHitReaction } from './weapon-hit-reaction.mjs';
 import { installSpawnPoseMotion } from './spawn-pose-motion.mjs';
 import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
@@ -120,9 +119,6 @@ export function install(profile) {
   installSuperjumpMotion(api, profile);
   installSquidrollMotion(api, profile);
   installHitSpawnMotion(api, profile);
-  // #1097: weapon-class/state damage presentation. Render layer only; it reads
-  // the native T_HIT window and writes pose channels after the native build.
-  installWeaponHitReaction(api, profile);
   installSpawnPoseMotion(api);
   installDeathCamera(api);
   installIdleMotion(api, profile);
