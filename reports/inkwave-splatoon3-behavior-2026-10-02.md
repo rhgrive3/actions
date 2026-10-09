@@ -3086,3 +3086,10 @@ Complete-bootstrap two-context native JSON replay exposed ordinary post-respawn 
 ## 2026-10-09 — Boss move consumer admission (#1178)
 
 At PR #1182 `46e12a85`, malformed host moves could satisfy the finite-only schema yet generate nonfinite native barrage geometry, throw on an empty target list, or divide by zero during sweep/telegraph phases. Admission now consumes the existing r3 safe-integer wire representation, requires a nonempty barrage, and preserves the native positive durations required by those consumers. JSON event/snapshot recovery, owner/replay guards, real hazard geometry, 30/60/120Hz traces, signed representation boundaries and all 18 canonical move-generation combinations are covered. This original INKWAVE Boss repair changes no Nintendo/gameplay parameters; broad resource-exhaustion limits remain separate. See [the focused evidence report](inkwave-boss-move-consumer-1178-2026-10-09.md).
+
+### 2026-10-09: 公開 head `70d2c9e` の CI 回帰修復
+
+- CI run `37960545772` / job `113922505236` の3件を再現。Match の Alpha 同点判定接続を shared finish-delay 接続より先に検証し、既存の欠落・重複・二重適用に対する fail-closed 診断を維持した。finish-delay 自体の欠落・重複と accessor 欠落も別途拒否を検証した。正常入力の変換内容・Turf/hidden-host の結果時刻は変更していない。
+- Slosher は source-scaled impact paint 修正 `ba9575b` により 0.25-unit grid でも新規 ancillary cells が生じるため、「元の1 volley は全て重複」という旧試験前提を廃止。新規セル面積と実 owner の加点一致・正の late credit を要求し、実 native emission の位置・形状・seed を記録、完全成熟後に同一 stamp を再適用して late credit が厳密に0、grid count も不変であることを追加検証した。新 volley は nearest-paint の sequence seed が変わるので、単なる再発射を完全重複とは扱わない。
+- 参照条件は既存の S3 Ver.11.3.0 source parameter と公開版 native runtime。今回は接続診断・内部回帰試験の修復のみで、source scale、group-boundary sweep、実ゲームの paint ownership は変更していない。Switch 実機の見た目・操作感一致を追加認定しない。
+- 修復後検証: 関連15ファイル（build 出力指定）104/104 pass、skip 0。内訳に hidden-host/lifecycle 29/29 を含む。upstream/numeric quick check とサイトビルド成功（build ID `8e981842339a`）、emitted Match 判定を含む Alpha 試験11/11 pass。CI の全体回帰スイートはこのローカル修復では未実行で、次の公開 head に対するCI結果を別途確認する。

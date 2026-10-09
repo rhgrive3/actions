@@ -205,18 +205,18 @@ export function adaptSource(rel, code) {
     "  'Corner map (non-S3 aid)': '画面端マップ（本家外の補助）', 'Optional aid outside the S3 baseline. The full Turf Map remains available.': '本家の標準とは異なる任意の補助です。全体マップは引き続き使用できます。',\n  'Minimap': 'ミニマップ',",
     'optional corner map Japanese explanation');
   if (rel === 'src/game/match.js') {
-    // One native presentation-delay owner for RAF and hidden-host completion.
-    const finishDelay = '(this.bossMode ? (this.bossMode.boss.dead ? this.bossCfg.finishWin : this.bossCfg.finishLose) : 2.6)';
-    code = replaceOnce(code, 'this.stateT > ' + finishDelay,
-      'this.stateT > this.finishDelay()', 'shared native finish delay');
-    code = replaceOnce(code, '  _judge() {',
-      '  finishDelay() { return ' + finishDelay + '; }\n\n  _judge() {', 'native finish-delay accessor');
     // The lobby/roster protocol assigns team 0 to Alpha and team 1 to Bravo.
     // Preserve that match-side assignment; never redraw a winner at judgment.
     code = replaceOnce(code,
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',
       'const win = cov[0] >= cov[1] ? 0 : 1; // Exact tie belongs to the assigned Alpha side.',
       'deterministic Alpha turf tie');
+    // One native presentation-delay owner for RAF and hidden-host completion.
+    const finishDelay = '(this.bossMode ? (this.bossMode.boss.dead ? this.bossCfg.finishWin : this.bossCfg.finishLose) : 2.6)';
+    code = replaceOnce(code, 'this.stateT > ' + finishDelay,
+      'this.stateT > this.finishDelay()', 'shared native finish delay');
+    code = replaceOnce(code, '  _judge() {',
+      '  finishDelay() { return ' + finishDelay + '; }\n\n  _judge() {', 'native finish-delay accessor');
     code = replaceOnce(code, '  setState(s) {',
       '  setState(s) {\n    captureTurfFinish(this, s, G.paint, G.netm, G.game?.minimap);', 'Turf deadline snapshot before state listeners');
     code = replaceOnce(code, '    const cov = G.paint.coverage();',

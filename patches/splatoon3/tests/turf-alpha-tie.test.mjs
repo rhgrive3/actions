@@ -83,6 +83,15 @@ test('#158: missing or duplicate native judge hook fails closed',()=>{
   new vm.SourceTextModule(compose('src/game/match.js'));
 });
 
+test('native shared finish-delay hooks still fail closed after the Alpha judge preflight',()=>{
+  const raw=read('src/game/match.js');
+  const delay='this.stateT > (this.bossMode ? (this.bossMode.boss.dead ? this.bossCfg.finishWin : this.bossCfg.finishLose) : 2.6)';
+  assert(raw.includes(delay));
+  assert.throws(()=>adaptSource('src/game/match.js',raw.replace(delay,'this.stateT > 7')),/shared native finish delay/);
+  assert.throws(()=>adaptSource('src/game/match.js',raw.replace(delay,`${delay} || ${delay}`)),/shared native finish delay/);
+  assert.throws(()=>adaptSource('src/game/match.js',raw.replace('  _judge() {','  _judgeRenamed() {')),/native finish-delay accessor/);
+});
+
 test('#158: native roster keeps Alpha identity when the host/local player is on Bravo',()=>{
   const r=matchRig();
   class Actor { constructor(o){Object.assign(this,o);this.character={root:{}};}spawnAt(p,yaw){this.spawn={x:p.x,y:p.y,z:p.z,yaw};} }
