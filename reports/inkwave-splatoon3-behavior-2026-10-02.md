@@ -1507,6 +1507,24 @@ age は actor に保持する。再ジャンプは age を再開し、death/rese
 
 未確認: Switch 実機の同条件 spread・pitch と gear 条件、非公開の25–70F中間曲線、`Jump_DegBiasMax` の実際の shot-selection 挙動。これらを本変更で解決済みにしない。全体 build / batch / CI は親側の検証に委ねる。
 
+## 2026-10-09 — Splat Dualies jump spread (#887)
+
+比較対象は Splatoon 3 Ver. 11.3.0 の Splat Dualies (`WeaponManeuverNormal`)。根拠は [Nintendo の更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/) と、固定した [Leanny 11.3.0 raw parameter table](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json) (`7280ff9cde8bb1c5dcef46c700c326471584d2e6`)。2026-10-09 に同 raw を再取得し、`WeaponParam` が `Stand_DegSwerve=2`、`Jump_DegSwerve=7.5`、`Jump_DegBiasDecreaseStartFrame=25`、`Jump_DegBiasEndFrame=70`、`Jump_DegBiasMax=0.4`、`LapOver_DegSwerve=0`、`RepeatFrame=5` であることを確認した。frame 値は既存の単位変換 `/60` で秒に直し、`25/60=0.4166…s`、`70/60=1.1666…s` とする。角度は profile が既に同じ raw 由来の度で保持している。`Jump_DegBiasMax` は角度加算・角度スケールに変換していない。
+
+条件は通常のヒト形態、追加ギアなし。ジャンプ入力は射撃方向移動なし（射撃中でも `tryDodge` は移動入力が無ければ成立しない）ので通常ジャンプになり、`s3JumpSerial` と `actor:jump` が発生する。本家 Switch 実機での同一ギア・入力フレーム計測は今回行っていない。
+
+開始 main `2195d5244408a9632bfbbb3b106f2cfdf1fa6d77` では `inkwave-public/src/game/weapons.js::WeaponRunner._spreadDeg()` の dualies 分岐が `a.grounded ? spreadGround : spreadAir` を選び、ジャンプ経過時間を読まない。complete production adapter composition の repro は、空中 frame 36 の runner spread `3.75`（=7.5×`spreadFirst`0.5）が、着地した frame 37 で `1.0`（=2×0.5）へ即座に落ちることを確認した。この値は HUD 表示 (`main.js` が `a.weaponRunner.spread` を投影)・`_dualies()` から投射物へ渡す cone の両方に現れる。post-roll の `LapOver_DegSwerve=0` turret cone は別状態であり本件の対象外。
+
+再起動時に current main `5d0be6b7fdebfd07e696e75497aaa97aa5ff5648` を再確認した。公開 source と production adapter に同じ grounded 二択が残り、jump recovery clock はなかったため issue root は main で未修正だった。今回の修正は公開 source を変えず `patches/splatoon3/runtime/weapons.mjs` に current jump-bias owner を接続した。
+
+実装は `runtime/splatling-jump-spread.mjs`（#850 の Splatling 専用のまま）ではなく、`patches/splatoon3/runtime/weapons.mjs` 内で、既に sourced として導入済みの Blaster jump-bias owner（`s3BlasterJumpState`）と同じ形にした。Inkipedia の [Data Explanation](https://splatoonwiki.org/wiki/User:XarrotD/Data_Explanation) は `DegSwerve` を「弾が中心から外れうる最大角」、`DegBias` を「弾がどれだけ外れるかを決める隠れ確率変数」と説明し、偏差を `y = s · x^(log_0.5 b)`（`s`=swerve、`b`=bias）とする。したがって `Jump_DegBiasDecreaseStartFrame`/`Jump_DegBiasEndFrame` は angle lerp ではなく **outer-reticle 確率（bias）の回復窓** である。`_spreadDeg()` は jump clock が有効な間 `spreadAir=7.5` の outer envelope を publish し、fire 時に `Jump_DegBiasMax=0.4` から 25F–70F で 0 へ下がる bias を `Math.random()` でサンプルして `Jump_DegSwerve=7.5` か `Stand_DegSwerve=2` のどちらかへ撃ち分ける。角度は補間しない。
+
+raw table は開始・終了 frame のみを公開し、25F–70F の正確な確率回復カーブ形状は未公開である。本実装は Blaster/shooter と同じ既存の単調線形回復をそのまま用いる **INKWAVE 内部の近似であり、Nintendo の正確なカーブとは呼ばない**。着地しても clock は続くので初回 grounded tick で ground endpoint に snap しない。70F 以降は grounded で clock を消去する。再ジャンプは clock を再開、death/reset は消去、`dt=0` は進めない。post-roll `LapOver_DegSwerve=0` turret cone は独立。`RepeatFrame=5`（`fireInterval=5/60`）、ink、damage、wire、owner/remote authority は変更していない。bloom は独立層として `spreadFirst` factor に残した。HUD (`a.weaponRunner.spread`, outer envelope) と `spreadWeaponRound` の投射物 cone は同じ `s3DualiesJumpState` を読む。
+
+確認は complete production adapter composition (`adaptSource` → `adaptTouchLayout` → `adaptReliability` → `adaptQualitySource` → `adaptNetworkSource` → `adaptRange`) と native `Actor`・`WeaponRunner` で行った。再起動後の focused run は `patches/splatoon3/tests/dualies-jump-spread-native.test.mjs` が 10/10、隣接する `splatling-jump-spread-native.test.mjs` が 4/4 pass。sourced 境界（25F/70F/`Jump_DegBiasMax`0.4/7.5/2/`spreadLock`0/5F）、stable grounded の 2 endpoint と非ジャンプ落下の 7.5 envelope、`Jump_DegBiasMax` 0.4 hold → 25F 非回復 → 70F で 0 到達、landing 非 snap、fire 時 bias が deviation 比 `7.5:2` を再現すること、HUD scalar と projectile cone の一致、turret cone の独立、reset/death/`dt=0` lifecycle、5F cadence・ink・emission frame 不変、30/60/120Hz render が同一の fixed 60Hz trace になることを確認する。
+
+未確認 / blocker: 非公開の 25F–70F 確率回復カーブ形状、`Stand_DegBiasKf`/`Stand_DegBiasDecrease`/`Stand_DegBiasMin` による standing bias の連射蓄積（Dualies には `Stand_DegBiasMax` が published されないためモデル化せず）、jump bias と standing bias の合成則（wiki は "needs verification"）、Action Intensify の `ReduceJumpSwerveRate` による jump 増分そのものの低減、Switch 実機の同条件計測。これらを本変更で解決済みにしない。全体 build / batch / CI は親側の検証に委ねる。
+
 ## 2026-10-07: Locker portrait queue staging and character reuse (#834)
 
 ### Splatoon 3 reference conditions
