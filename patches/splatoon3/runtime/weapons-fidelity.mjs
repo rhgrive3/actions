@@ -865,9 +865,18 @@ export function slosherYawOffset(u,index,rng=Math.random) {
   const centered=Math.sign(sample)*Math.pow(Math.abs(sample),1+bias);
   return radians(angle*centered);
 }
-function setCollision(p,c,offset=0) {
-  p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
-  p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
+function setCollision(p,c,offset=0,depleted=false) {
+  // #305 residual: a Roller round born from a depletion swing applies its
+  // unit's pinned CollisionParam.DepletionRate (0.5 for every Splat Roller
+  // unit in the 11.3.0 table) to the hit-radius magnitudes only. The growth
+  // chronology (ChangeFrameForField / ChangeFrameForPlayer) and the
+  // teammate-through window stay exactly as sourced. Rounds not flagged
+  // depleted, records without the sourced field, and every other weapon
+  // family keep the original values, so full volleys are unchanged.
+  const rate=depleted&&Number.isFinite(c?.DepletionRate)&&c.DepletionRate>0&&c.DepletionRate<=1?c.DepletionRate:1;
+  const scale=r=>rate===1?r:{...r,initRadius:r.initRadius*rate,endRadius:r.endRadius*rate};
+  p.fidelityPlayerCollision=scale(collisionRecord(c,'Player',offset));
+  p.fidelityFieldCollision=scale(collisionRecord(c,'Field',offset));
   // Restore the pinned family-specific window consumed by the existing solver.
   p.fidelityFriendThrough=['shooter','slosher','roller','splatling','dualies'].includes(p.s3Weapon?.kind) ? p.fidelityPlayerCollision.FriendThroughFrameForPlayer : null;
   // Existing size carries initial radius; Roller unit identity is transmitted separately.
@@ -1021,7 +1030,9 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
   p.fidelitySectorYaw=vertical?null:actor.yaw;
   p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;p.fidelityRollerUnitIndex=group.Unit.indexOf(unit);
-  setCollision(p,unit.UnitParam.CollisionParam);
+  // #305: the depletion-marked attack mode carries the sourced DepletionRate
+  // into the round's collision record; a full swing never sets the mark.
+  setCollision(p,unit.UnitParam.CollisionParam,0,!!weapon.s3Depletion);
   setDrawRadius(p,unit);
   const depletionPaintRate=unit.UnitParam?.PaintParam?.DepletionDepthWidthRate;
   p.s3DepletionPaintScale=depleted && Number.isFinite(depletionPaintRate) && depletionPaintRate>0 ? depletionPaintRate : 1;
@@ -1447,7 +1458,11 @@ export function installWeaponsFidelity(context,profile) {
             if(d<best){best=d;p.fidelityRollerUnit=u;}
           }
         }
-        setCollision(p,p.fidelityRollerUnit.UnitParam.CollisionParam);
+        // #305: a rebuilt round keeps its birth depletion mark when the
+        // composition provided one (the appended near unit is rebuilt here);
+        // a packet-reconstructed round without the mark keeps the sourced
+        // record rather than guessing depletion from velocity.
+        setCollision(p,p.fidelityRollerUnit.UnitParam.CollisionParam,0,p.s3DepletionRound===true);
       }
       p.fidelityRollerUnitIndex=units.indexOf(p.fidelityRollerUnit);
       // The appended nearest glob bypasses configureFidelityFlick. Initialize
