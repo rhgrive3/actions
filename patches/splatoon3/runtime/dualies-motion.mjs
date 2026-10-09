@@ -57,7 +57,10 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
         const active = s.blockedRoll !== clock;
         s.phase = active ? presentation.phase : null;
         s.progress = active ? presentation.progress : 0;
-        s.managed = false;
+        // A validated sender epoch owns visual admission even when the local
+        // Character timer has expired (or the proxy Runner has not caught up).
+        // A bare F.dodge bit never reaches this branch without a clock.
+        s.managed = active;
         s.runner = runner;
         s.nativeFallback = false;
         s.remoteClock = active ? clock : null;
@@ -96,7 +99,8 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
   }
   function admission(ch, runner) {
     const s = states.get(ch);
-    if (!s?.managed || !s.runner || runner !== undefined && s.runner !== runner) return null;
+    const source = s?.runner || s?.remoteClock;
+    if (!s?.managed || !source || runner !== undefined && s.runner && s.runner !== runner) return null;
     // State is prepared before calling the earlier/native hooks, then refreshed
     // after them. Helpers never allocate state or advance either action clock.
     return { lock: s.phase === 'plant' || s.phase === 'roll' && s.progress > .55,

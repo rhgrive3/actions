@@ -30,6 +30,7 @@ import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import {
   adaptIssue477Source,
   adaptIssue477Weapons,
@@ -47,11 +48,11 @@ import {
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 
-let cachedPatchedFixture = null;
-let cachedUnpatchedFixture = null;
+const cachedFixtures = new Map();
 
-async function buildFixture({ apply477 = true } = {}) {
-  const context = vm.createContext({ console, performance, URL });
+async function buildFixture({ apply477 = true, applyNetwork = apply477 } = {}) {
+  const clock = { seconds: 0, set(seconds) { this.seconds = seconds; }, now() { return this.seconds * 1000; } };
+  const context = vm.createContext({ console, performance: { now: () => clock.now() }, URL });
   const modules = new Map();
 
   const load = requested => {
@@ -68,6 +69,7 @@ async function buildFixture({ apply477 = true } = {}) {
       const rel = path.relative(UPSTREAM, file);
       adapted = adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source)));
       if (apply477) adapted = adaptQualitySource(rel, adapted);
+      if (applyNetwork) adapted = adaptNetworkSource(rel, adapted);
     } else if (apply477) {
       const rel = path.relative(ROOT, file);
       adapted = adaptQualitySource(rel, adapted);
@@ -126,13 +128,13 @@ async function buildFixture({ apply477 = true } = {}) {
   G.time = 0;
 
   const shots = [];
-  G.projectiles = Object.fromEntries([
+  G.projectiles = { list: [], bombs: [], clouds: [], beams: [], sights: new Map(), ...Object.fromEntries([
     'fireShooter', 'fireDualies', 'fireCharger', 'fireSplatling',
     'fireBlaster', 'fireSlosh', 'throwBomb', 'fireFlick',
   ].map(name => [name, (...args) => {
     if (name === 'fireDualies') shots.push({ time: G.time, hand: args[3], spread: args[2] });
     else shots.push({ time: G.time, kind: name });
-  }]));
+  }])) };
 
   function createDualiesActor({ name = 'dualies-tester', kind = 'dualies' } = {}) {
     const a = new Actor({
@@ -146,6 +148,9 @@ async function buildFixture({ apply477 = true } = {}) {
     ch.actor = a;
     ch.onEvent = null;
     ch.s3DualiesMotionEnabled = true;
+    // The native transport only stamps #1163 actions for an observed owner
+    // life epoch; these standalone owners start in life/teleport epoch zero.
+    a.netLife = 0; a.netTp = 0;
     if (CHARACTER_TIMERS) {
       for (const tname of ['T_SPAWN', 'T_LEAP', 'T_SLAM', 'T_THROW']) {
         if (CHARACTER_TIMERS[tname] !== undefined) ch.tr[CHARACTER_TIMERS[tname]] = 99;
@@ -171,21 +176,18 @@ async function buildFixture({ apply477 = true } = {}) {
     };
   }
 
-  return { api, G, THREE, createDualiesActor, shots, profile };
+  return { api, G, THREE, createDualiesActor, shots, profile, clock,
+    setSenderTime(seconds) { clock.set(seconds); G.time = seconds; } };
 }
 
-async function getFixture({ apply477 = true } = {}) {
-  if (apply477) {
-    if (!cachedPatchedFixture) cachedPatchedFixture = await buildFixture({ apply477: true });
-    cachedPatchedFixture.shots.length = 0;
-    cachedPatchedFixture.G.time = 0;
-    return cachedPatchedFixture;
-  } else {
-    if (!cachedUnpatchedFixture) cachedUnpatchedFixture = await buildFixture({ apply477: false });
-    cachedUnpatchedFixture.shots.length = 0;
-    cachedUnpatchedFixture.G.time = 0;
-    return cachedUnpatchedFixture;
-  }
+async function getFixture({ apply477 = true, applyNetwork = apply477 } = {}) {
+  const key = `${apply477}:${applyNetwork}`;
+  if (!cachedFixtures.has(key)) cachedFixtures.set(key, await buildFixture({ apply477, applyNetwork }));
+  const fixture = cachedFixtures.get(key);
+  fixture.shots.length = 0;
+  fixture.G.time = 0;
+  fixture.clock.set(0);
+  return fixture;
 }
 
 test('Negative Control: unpatched baseline lacks 4F startup and immediately imparts roll velocity', async () => {
@@ -548,8 +550,19 @@ test('Remote presentation parity: actual native NetMatch transport (late-start, 
 
   try {
     let currentTs = 100.0;
+    const setTime = seconds => { currentTs = seconds; f.setSenderTime(seconds); };
+    const advanceOwner = frames => {
+      for (let i = 0; i < frames; i++) {
+        ownerActor.weaponRunner.update(1 / 60, { fire: true });
+        ownerActor._finishFrame(1 / 60);
+        currentTs += 1 / 60;
+        f.setSenderTime(currentTs);
+      }
+    };
 
     // 1. Roll 1 initiation on owner
+    setTime(currentTs);
+    f.api.G.netm = netA;
     ownerActor.intent.fire = true;
     ownerActor.intent.move.set(1, 0, 0);
     assert.equal(ownerActor.weaponRunner.tryDodge(ownerActor.intent.move), true);
@@ -560,10 +573,17 @@ test('Remote presentation parity: actual native NetMatch transport (late-start, 
     wireA.length = 0;
     netA._sendTick();
     const msgStartup = wireA.at(-1);
-    msgStartup.ts = currentTs;
     assert.ok(msgStartup.rl?.[10], 'Tick contains optional named rl roll sidecar');
     assert.equal(msgStartup.rl[10].token, 1);
     assert.equal(msgStartup.rl[10].phase, 'startup');
+    const dodgeEvent1 = msgStartup.e.find(event => event[1] === 'tr' && event[2] === 10 && event[3] === 'dodge');
+    assert.ok(dodgeEvent1, 'The local sender records the accepted dodge trigger');
+    assert.ok(ownerActor.net._remoteDodge, 'The native sender stamps accepted action metadata before tick packing: '
+      + JSON.stringify({ remote: ownerActor.remote, owner: ownerActor.owner, myId: netA.myId,
+        life: ownerActor.netLife, tp: ownerActor.netTp, action: ownerActor.weaponRunner.dodge,
+        lockDur: ownerActor.weapon?.lockTime }));
+    assert.equal(ownerActor.net._remoteDodge.token, ownerActor.weaponRunner.dodge.token);
+    assert.equal(msgStartup.rl[10].start, dodgeEvent1[0], 'Snapshot sidecar uses the accepted trigger epoch');
     assert.ok(typeof msgStartup.l?.[10] === 'number', 'Tick preserves mandatory named l life metadata');
 
     // Deliver to remote and apply
@@ -579,50 +599,43 @@ test('Remote presentation parity: actual native NetMatch transport (late-start, 
     assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.phase, 'startup', 'Remote Character displays startup phase');
     assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.tumble, 0, 'Remote tumble is 0 during startup');
 
-    // 2. Late-start test: packet arrives when owner is ALREADY moving
-    // Remote client receives packet indicating phase 'roll' at t = 0.08s
-    currentTs += 0.1;
-    const lateMovingMsg = JSON.parse(JSON.stringify(msgStartup));
-    lateMovingMsg.ts = currentTs;
-    lateMovingMsg.rl[10] = { token: 1, phase: 'roll', time: 0.08, dur: 0.2 };
-
-    // Reset remote dodge to null to test late packet arriving with no prior active dodge
-    remoteActor.weaponRunner.dodge = null;
-    netB.onMessage('A', lateMovingMsg);
-    peer.tr = lateMovingMsg.ts;
-    netB._sample(remoteActor, peer.tr, 1 / 60);
-    netB.applyRemote(remoteActor, 1 / 60);
-
-    assert.ok(remoteActor.weaponRunner.dodge, 'Late packet created remote dodge');
-    assert.equal(remoteActor.weaponRunner.dodge.startup, 0, 'Late packet must NOT initialize fresh 4F startup');
-    assert.ok(remoteActor.weaponRunner.dodge.t >= 0.08, 'Late packet directly displays current moving progress');
-    assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.phase, 'roll', 'Late packet directly displays moving roll');
-
-    // 3. Moving roll progression
-    currentTs += 0.05;
-    const movingMsg = JSON.parse(JSON.stringify(lateMovingMsg));
-    movingMsg.ts = currentTs;
-    movingMsg.rl[10] = { token: 1, phase: 'roll', time: 0.13, dur: 0.2 };
+    // 2. Advance the owner and sender clock together. The accepted event epoch
+    // remains fixed while the real sidecar reports the owner's moving phase.
+    advanceOwner(9);
+    wireA.length = 0;
+    netA._sendTick();
+    const movingMsg = wireA.at(-1);
+    assert.equal(movingMsg.rl[10].start, dodgeEvent1[0]);
+    assert.equal(movingMsg.rl[10].phase, 'roll');
     netB.onMessage('A', movingMsg);
     peer.tr = movingMsg.ts;
     netB._sample(remoteActor, peer.tr, 1 / 60);
     netB.applyRemote(remoteActor, 1 / 60);
-    assert.equal(remoteActor.weaponRunner.dodge.startup, 0);
-    assert.ok(remoteActor.weaponRunner.dodge.t >= 0.13);
 
-    // 4. Chained roll: owner initiates roll 2
-    ownerActor.weaponRunner.dodge = null; // complete roll 1
+    assert.ok(remoteActor.weaponRunner.dodge, 'Remote received the owner roll through its accepted sidecar');
+    assert.equal(remoteActor.weaponRunner.dodge.startup, 0);
+    assert.ok(remoteActor.weaponRunner.dodge.t > 0, 'Owner-reported movement progress is visible');
+    assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.phase, 'roll');
+
+    // Complete roll 1 and its native lock before accepting a chained action.
+    advanceOwner(39);
+    assert.equal(ownerActor.weaponRunner.dodge, null);
+    assert.equal(ownerActor.weaponRunner.lockT, 0);
+
+    // 3. Chained roll gets a fresh accepted action epoch and 4F startup.
+    f.api.G.netm = netA;
     assert.equal(ownerActor.weaponRunner.tryDodge(ownerActor.intent.move), true);
     const token2 = ownerActor.weaponRunner.dodge.token;
     assert.equal(token2, 2, 'Owner chained roll 2 has genuine new token 2');
 
-    currentTs += 0.15;
     wireA.length = 0;
     netA._sendTick();
     const msgRoll2 = wireA.at(-1);
-    msgRoll2.ts = currentTs;
     assert.equal(msgRoll2.rl[10].token, 2);
     assert.equal(msgRoll2.rl[10].phase, 'startup');
+    const dodgeEvent2 = msgRoll2.e.find(event => event[1] === 'tr' && event[2] === 10 && event[3] === 'dodge');
+    assert.ok(dodgeEvent2);
+    assert.equal(msgRoll2.rl[10].start, dodgeEvent2[0]);
 
     netB.onMessage('A', msgRoll2);
     peer.tr = msgRoll2.ts;
@@ -633,38 +646,35 @@ test('Remote presentation parity: actual native NetMatch transport (late-start, 
     assert.ok(remoteActor.weaponRunner.dodge.startup > 0, 'Chained roll 2 has its own genuine startup phase');
     assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.phase, 'startup');
 
-    // 5. Stale packet rejection: old packet with token 1 arrives after token 2
-    currentTs += 0.01;
-    const staleMsg = JSON.parse(JSON.stringify(msgRoll2));
-    staleMsg.ts = currentTs;
-    staleMsg.rl[10] = { token: 1, phase: 'startup', time: 0, dur: 0.2 };
+    // 4. The actual older owner packet cannot replace the chained token.
+    const staleMsg = JSON.parse(JSON.stringify(msgStartup));
     netB.onMessage('A', staleMsg);
-    peer.tr = staleMsg.ts;
+    peer.tr = msgRoll2.ts;
     netB._sample(remoteActor, peer.tr, 1 / 60);
     netB.applyRemote(remoteActor, 1 / 60);
 
     assert.equal(remoteActor.weaponRunner.dodge.token, 2, 'Stale packet cannot revert or restart phase');
 
-    // 6. Legacy snapshot fallback: packet without sidecar
-    currentTs += 0.05;
+    // 5. A legacy snapshot without the optional sidecar remains harmless and
+    // cannot erase the already accepted presentation epoch.
     const legacyMsg = JSON.parse(JSON.stringify(msgRoll2));
-    legacyMsg.ts = currentTs;
     delete legacyMsg.rl;
     delete legacyMsg.roll;
     netB.onMessage('A', legacyMsg);
-    peer.tr = legacyMsg.ts;
+    peer.tr = msgRoll2.ts;
     netB._sample(remoteActor, peer.tr, 1 / 60);
     netB.applyRemote(remoteActor, 1 / 60);
     assert.doesNotThrow(() => netB.applyRemote(remoteActor, 1 / 60), 'Legacy packet admitted without error');
+    assert.equal(remoteActor.remoteDodgeClock?.token, 2, 'Legacy snapshot cannot replace the accepted sender epoch');
 
-    // 7. Lifecycle completion: roll ends, lockT engaged, remote enters plant
-    ownerActor.weaponRunner.dodge = null;
-    ownerActor.weaponRunner.lockT = 0.5;
-    currentTs += 0.15;
+    // 6. Complete token 2 through the owner's real startup/roll timers; the
+    // accepted presentation then enters its timed plant phase.
+    advanceOwner(16);
+    assert.equal(ownerActor.weaponRunner.dodge, null);
+    assert.ok(ownerActor.weaponRunner.lockT > 0);
     wireA.length = 0;
     netA._sendTick();
     const msgPlant = wireA.at(-1);
-    msgPlant.ts = currentTs;
 
     netB.onMessage('A', msgPlant);
     peer.tr = msgPlant.ts;
@@ -708,8 +718,20 @@ test('Gap A: Playback time advancement on NetMatch (Hermite halfway, dry buffer 
   netB.bind({ actors: [remoteActor], boss: null, state: 'playing', time: 180 });
 
   try {
+    let senderTime = 100;
+    const setTime = seconds => { senderTime = seconds; f.setSenderTime(seconds); };
+    const advanceOwner = frames => {
+      for (let i = 0; i < frames; i++) {
+        ownerActor.weaponRunner.update(1 / 60, { fire: true });
+        ownerActor._finishFrame(1 / 60);
+        senderTime += 1 / 60;
+        f.setSenderTime(senderTime);
+      }
+    };
     // A1: Two buffered snapshots with Hermite halfway playback
     // Snapshot 0 at t = 100.000: owner in startup, time = 0
+    setTime(senderTime);
+    f.api.G.netm = netA;
     ownerActor.intent.fire = true;
     ownerActor.intent.move.set(1, 0, 0);
     assert.equal(ownerActor.weaponRunner.tryDodge(ownerActor.intent.move), true);
@@ -717,17 +739,13 @@ test('Gap A: Playback time advancement on NetMatch (Hermite halfway, dry buffer 
     wireA.length = 0;
     netA._sendTick();
     const msg0 = wireA.at(-1);
-    msg0.ts = 100.000;
     netB.onMessage('A', msg0);
 
     // Snapshot 1 at t = 100.050: owner 3 ticks (0.050s) into startup
-    for (let i = 0; i < 3; i++) {
-      ownerActor.weaponRunner.update(1 / 60, { fire: true });
-    }
+    advanceOwner(3);
     wireA.length = 0;
     netA._sendTick();
     const msg1 = wireA.at(-1);
-    msg1.ts = 100.050;
     netB.onMessage('A', msg1);
 
     const peer = netB.peers.get('A');
@@ -787,37 +805,37 @@ test('Gap A: Playback time advancement on NetMatch (Hermite halfway, dry buffer 
       `Extrapolation phase age is strictly bounded by 0.18s (got ${remoteActor.weaponRunner.dodge.t}, max ${maxAllowedT})`
     );
 
-    // A4: Next new roll does NOT reveal future token early in Hermite interpolation
-    // Buffer has msgNoRoll at 101.000 (no dodge) and msgNewRoll at 101.050 (new roll token 2)
-    ownerActor.weaponRunner.dodge = null;
-    ownerActor.weaponRunner.lockT = 0;
-    remoteActor.weaponRunner.dodge = null;
+    // A4: After the real startup, roll and lock clocks finish, the next roll
+    // does NOT reveal its future token early in Hermite interpolation.
+    advanceOwner(13); // finish token 1 movement after its 3 startup frames
+    assert.equal(ownerActor.weaponRunner.dodge, null);
+    advanceOwner(32); // retire the owner's existing post-roll lock
     remoteActor.net.buf.length = 0;
 
     wireA.length = 0;
     netA._sendTick();
     const msgNoRoll = wireA.at(-1);
-    msgNoRoll.ts = 101.000;
     netB.onMessage('A', msgNoRoll);
 
-    // Owner starts roll 2 at 101.050
+    // Owner starts roll 2 three fixed ticks after the no-roll snapshot.
+    advanceOwner(3);
+    f.api.G.netm = netA;
     assert.equal(ownerActor.weaponRunner.tryDodge(ownerActor.intent.move), true);
     assert.equal(ownerActor.weaponRunner.dodge.token, 2);
 
     wireA.length = 0;
     netA._sendTick();
     const msgNewRoll = wireA.at(-1);
-    msgNewRoll.ts = 101.050;
     netB.onMessage('A', msgNewRoll);
 
-    // Sample halfway (tr = 101.025): discrete roll state must come from msgNoRoll (earlier snapshot)
-    peer.tr = 101.025;
+    // Sample halfway: discrete roll state must come from msgNoRoll (earlier snapshot).
+    peer.tr = (msgNoRoll.ts + msgNewRoll.ts) / 2;
     netB._sample(remoteActor, peer.tr, 1 / 60);
     netB.applyRemote(remoteActor, 1 / 60);
     assert.equal(remoteActor.weaponRunner.dodge, null, 'Halfway interpolation does NOT reveal future roll token 2 early');
 
-    // When tr reaches 101.050, token 2 is now revealed
-    peer.tr = 101.050;
+    // When playback reaches the new snapshot, token 2 is revealed.
+    peer.tr = msgNewRoll.ts;
     netB._sample(remoteActor, peer.tr, 1 / 60);
     netB.applyRemote(remoteActor, 1 / 60);
     assert.ok(remoteActor.weaponRunner.dodge, 'Roll 2 active at snapshot timestamp');
@@ -831,7 +849,10 @@ test('Gap A: Playback time advancement on NetMatch (Hermite halfway, dry buffer 
 });
 
 test('Gap B: Token admission scoped to owner and accepted life epoch (handoff, new life, stale rejection, reset/adopt cleanup, invalid scalar fallback)', async () => {
-  const f = await getFixture({ apply477: true });
+  // This retained #477 token-sidecar control directly transfers a local test
+  // actor between owners. Real wire ownership transfer and accepted #1163
+  // event epochs are covered by issue-1163-remote-dodge-clock.test.mjs.
+  const f = await getFixture({ apply477: true, applyNetwork: false });
   const { NetMatch } = f.api;
 
   const wireA = [], wireC = [];
@@ -861,6 +882,8 @@ test('Gap B: Token admission scoped to owner and accepted life epoch (handoff, n
 
   try {
     let ts = 200.0;
+    f.setSenderTime(ts);
+    f.api.G.netm = netA;
 
     // B1: Owner A performs rolls up to token 3
     actorA.weaponRunner._rollToken = 2; // will dodge as token 3
@@ -872,7 +895,6 @@ test('Gap B: Token admission scoped to owner and accepted life epoch (handoff, n
     wireA.length = 0;
     netA._sendTick();
     const msgA3 = wireA.at(-1);
-    msgA3.ts = ts;
     netB.onMessage('A', msgA3);
     let peerA = netB.peers.get('A');
     peerA.tr = ts;
@@ -890,17 +912,18 @@ test('Gap B: Token admission scoped to owner and accepted life epoch (handoff, n
     remoteActor.net.buf.length = 0;
     remoteActor.weaponRunner.dodge = null;
 
+    ts += 0.1;
+    f.setSenderTime(ts);
+    f.api.G.netm = netC;
     actorC.weaponRunner._rollToken = 0;
     actorC.intent.fire = true;
     actorC.intent.move.set(1, 0, 0);
     assert.equal(actorC.weaponRunner.tryDodge(actorC.intent.move), true);
     assert.equal(actorC.weaponRunner.dodge.token, 1, 'Owner C initiates roll 1');
 
-    ts += 0.1;
     wireC.length = 0;
     netC._sendTick();
     const msgC1 = wireC.at(-1);
-    msgC1.ts = ts;
     netB.onMessage('C', msgC1);
     let peerC = netB.peers.get('C');
     peerC.tr = ts;
@@ -913,9 +936,7 @@ test('Gap B: Token admission scoped to owner and accepted life epoch (handoff, n
     assert.equal(remoteActor.net.rollOwner, 'C');
 
     // B3: Late packet from old owner A is rejected by existing network admission
-    ts += 0.02;
     const staleMsgOldOwner = JSON.parse(JSON.stringify(msgA3));
-    staleMsgOldOwner.ts = ts;
     const bufLenBefore = remoteActor.net.buf.length;
     netB.onMessage('A', staleMsgOldOwner);
     assert.equal(remoteActor.net.buf.length, bufLenBefore, 'Packet from old owner A rejected by network admission');
@@ -923,6 +944,7 @@ test('Gap B: Token admission scoped to owner and accepted life epoch (handoff, n
     // B4: Same actor new life epoch
     // Remote actor is splatted and respawns: life increments to 2
     ts += 0.1;
+    f.setSenderTime(ts);
     remoteActor.net.lastRollToken = 2; // reached token 2 in life 1
     remoteActor.net.rollLife = 1;
     remoteActor.net.lastLife = 1;
@@ -932,13 +954,13 @@ test('Gap B: Token admission scoped to owner and accepted life epoch (handoff, n
     actorC.grounded = true;
     actorC.netLife = 2;
     actorC.weaponRunner._rollToken = 0;
+    f.api.G.netm = netC;
     assert.equal(actorC.weaponRunner.tryDodge(actorC.intent.move), true);
     assert.equal(actorC.weaponRunner.dodge.token, 1);
 
     wireC.length = 0;
     netC._sendTick();
     const msgCNewLife = wireC.at(-1);
-    msgCNewLife.ts = ts;
     netB.onMessage('C', msgCNewLife);
     peerC.tr = ts;
     netB._sample(remoteActor, peerC.tr, 1 / 60);
@@ -949,9 +971,7 @@ test('Gap B: Token admission scoped to owner and accepted life epoch (handoff, n
     assert.equal(remoteActor.net.lastRollToken, 1);
 
     // B5: Stale packet from old life epoch rejected by combat life admission
-    ts += 0.02;
     const staleLifeMsg = JSON.parse(JSON.stringify(msgCNewLife));
-    staleLifeMsg.ts = ts;
     staleLifeMsg.l = { 30: 1 }; // old life 1 < current lastLife 2
     const bufLenBeforeLife = remoteActor.net.buf.length;
     netB.onMessage('C', staleLifeMsg);
@@ -1043,7 +1063,19 @@ test('Gap C: current production #484 cost/life sidecars coexist with startup thr
     netClient.bind({ actors: [remoteActor], boss: null, state: 'playing', time: 180 });
 
     try {
+      let senderTime = 100;
+      const setTime = seconds => { senderTime = seconds; f.setSenderTime(seconds); };
+      const advanceOwner = frames => {
+        for (let i = 0; i < frames; i++) {
+          ownerActor.weaponRunner.update(1 / 60, { fire: true });
+          ownerActor._finishFrame(1 / 60);
+          senderTime += 1 / 60;
+          f.setSenderTime(senderTime);
+        }
+      };
       // 1. Owner initiates roll and has special charge
+      setTime(senderTime);
+      f.api.G.netm = netHost;
       ownerActor.weapon.specialCost = 180;
       ownerActor.special = 180;
       ownerActor.intent.fire = true;
@@ -1070,19 +1102,25 @@ test('Gap C: current production #484 cost/life sidecars coexist with startup thr
       assert.ok(remoteActor.weaponRunner.dodge, `${order}: Remote actor received roll`);
       assert.equal(remoteActor.weaponRunner.dodge.token, 1, `${order}: Remote roll token is 1`);
       assert.equal(remoteActor.s3SpecialCost, 180, `${order}: Remote actor received gear-adjusted specialCost`);
-      // The owner still shows startup at the end of its fourth simulation tick.
-      // Snapshot quantization must not turn that exact boundary into an early roll.
-      for (let i=0;i<4;i++) { ownerActor.weaponRunner.update(1/60, {fire:true}); ownerActor._finishFrame(1/60); }
-      netHost._sendTick(); const boundary = wire.at(-1); boundary.ts = msg.ts + .2;
+      // The accepted startup consumes four complete owner simulation ticks;
+      // tick five starts movement on both the owner and sender-time presentation.
+      advanceOwner(5);
+      netHost._sendTick(); const boundary = wire.at(-1);
       netClient.onMessage('A', boundary); peer.tr = boundary.ts;
       netClient._sample(remoteActor, peer.tr, 1/60); netClient.applyRemote(remoteActor, 1/60);
-      assert.equal(f.api.dualiesMotionSnapshot(ownerRig.ch).phase, 'startup');
-      assert.equal(f.api.dualiesMotionSnapshot(remoteRig.ch).phase, 'startup', 'fourth-tick owner/remote phase parity');
-      const legacy = JSON.parse(JSON.stringify(boundary)); legacy.ts += .05; delete legacy.rl;
+      const ownerPhase = f.api.dualiesMotionSnapshot(ownerRig.ch);
+      const remotePhase = f.api.dualiesMotionSnapshot(remoteRig.ch);
+      assert.equal(ownerPhase.phase, 'roll', 'fifth simulation tick starts the owner moving roll');
+      assert.equal(remotePhase.phase, 'roll', 'accepted sender time starts the matching remote roll');
+      const wireProgressError = 0.0005 / ownerActor.weaponRunner.dodge.dur + 1e-5;
+      assert.ok(Math.abs(ownerPhase.progress - remotePhase.progress) <= wireProgressError,
+        'owner/remote movement progress agrees within the sender timestamp rounding bound');
+      const acceptedEpoch = remoteActor.remoteDodgeClock?.epoch;
+      const legacy = JSON.parse(JSON.stringify(boundary)); delete legacy.rl;
       netClient.onMessage('A', legacy); peer.tr=legacy.ts;
       netClient._sample(remoteActor,peer.tr,1/60);netClient.applyRemote(remoteActor,1/60);
-      assert.equal(remoteActor.weaponRunner.dodge.startup,0,'legacy sample cannot retain a stale modern startup');
-      assert.equal(f.api.dualiesMotionSnapshot(remoteRig.ch).phase,'roll');
+      assert.equal(remoteActor.remoteDodgeClock?.epoch, acceptedEpoch, 'legacy sample cannot replace the accepted event epoch');
+      assert.equal(f.api.dualiesMotionSnapshot(remoteRig.ch).phase, 'roll', 'legacy sample keeps the same sender-time phase');
     } finally {
       netHost.dispose?.();
       netClient.dispose?.();
