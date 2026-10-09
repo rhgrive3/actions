@@ -235,6 +235,105 @@ export function hermite2d(curve, x) {
 export const bigBubblerDomes = () => domes;
 export const bigBubblerRemoteDomes = () => remoteDomes;
 
+function liveBubblerTarget(dome, team) {
+  return !!(dome && !dome.dead && dome.team === team && typeof dome.id === 'string' &&
+    Number.isSafeInteger(dome.serial) && dome.pos?.isVector3 &&
+    [dome.pos.x, dome.pos.y, dome.pos.z].every(Number.isFinite));
+}
+
+/**
+ * Current friendly deployable destinations for the two map surfaces and the
+ * controller's numeric shortcuts. The structure's own position and activation
+ * identity are used; owner position is never consulted. Local authority wins if
+ * a duplicated lifecycle packet briefly exposes the same activation twice.
+ */
+export function bigBubblerJumpTargets(team) {
+  if (!Number.isInteger(team)) return [];
+  const unique = new Map();
+  for (const dome of [...domes, ...remoteDomes]) {
+    if (!liveBubblerTarget(dome, team)) continue;
+    const key = `${dome.id}\u0000${dome.serial}`;
+    const prior = unique.get(key);
+    if (!prior || prior.remote && !dome.remote) unique.set(key, dome);
+  }
+  return [...unique.values()].sort((a, b) => a.id.localeCompare(b.id) || a.serial - b.serial)
+    .map(dome => ({ kind: 'bubbler', id: dome.id, serial: dome.serial, team: dome.team, pos: dome.pos }));
+}
+
+function resolveBubblerJumpDome(target, team) {
+  if (!target || target.kind !== 'bubbler' || typeof target.id !== 'string' ||
+      !Number.isSafeInteger(target.serial) || target.team !== team) return null;
+  for (const dome of [...domes, ...remoteDomes]) {
+    if (dome.id === target.id && dome.serial === target.serial && liveBubblerTarget(dome, team)) return dome;
+  }
+  return null;
+}
+
+function bubblerLandingPoint(actor, dome) {
+  const { G, THREE, PLAYER } = api;
+  if (!G.physics?.groundProbe || !dome?.pos?.isVector3) return null;
+  const ground = actor._bubblerJumpGround || (actor._bubblerJumpGround = {
+    hit: false, y: 0, normal: new THREE.Vector3(0, 1, 0), block: -1, face: -1,
+    u: 0, v: 0, center: false, grate: false,
+  });
+  ground.hit = false;
+  G.physics.groundProbe(dome.pos.x, dome.pos.y, dome.pos.z, 0.4, 0.35,
+    PLAYER.footRadius, ground, false);
+  if (!ground.hit || ground.normal.y < 0.6) return null;
+  const landing = new THREE.Vector3(dome.pos.x, ground.y, dome.pos.z);
+  const body = new THREE.Vector3(dome.pos.x, ground.y + 0.5, dome.pos.z);
+  if (G.level?.pointInside?.(body, 0.3)) return null;
+  return landing;
+}
+
+const BUBBLER_JUMP_INSTALL = Symbol.for('inkwave.s3.kit-big-bubbler.jump-target.v1');
+function installBubblerJumpTargets(context) {
+  const proto = context.Actor.prototype;
+  if (Object.hasOwn(proto, BUBBLER_JUMP_INSTALL)) return;
+  Object.defineProperty(context.G, 'bigBubblerJumpTargets', {
+    configurable: true, enumerable: false, value: bigBubblerJumpTargets,
+  });
+  Object.defineProperty(proto, 'superJumpToBubbler', {
+    configurable: true, enumerable: false,
+    value(target) {
+      if (!this.isLocal || this.remote || typeof this.canSuperJump !== 'function' || !this.canSuperJump()) return false;
+      const dome = resolveBubblerJumpDome(target, this.team);
+      const landing = dome && bubblerLandingPoint(this, dome);
+      if (!dome || !landing) return false;
+      const startForm = this.form;
+      if (!this.superJump(landing)) return false;
+      this.superJumpState.bigBubblerTarget = { kind: 'bubbler', id: dome.id, serial: dome.serial, team: dome.team };
+      this.superJumpState.bigBubblerStartForm = startForm;
+      return true;
+    },
+  });
+  const update = proto._updateSuperJump;
+  proto._updateSuperJump = function (...args) {
+    const state = this.superJumpState;
+    const target = state?.bigBubblerTarget;
+    if (target && state.phase === 'charge') {
+      const dome = resolveBubblerJumpDome(target, this.team);
+      const landing = dome && bubblerLandingPoint(this, dome);
+      if (!landing) {
+        this.superJumpState = null;
+        this.form = state.bigBubblerStartForm || 'kid';
+        return;
+      }
+      state.target.copy(landing);
+    }
+    const value = update.apply(this, args);
+    // Flight is a normal committed Super Jump from here onward. It retains the
+    // legal static point already captured in `state.to`, even if the dome then
+    // expires; it never follows the owner's later position.
+    if (this.superJumpState?.bigBubblerTarget && this.superJumpState.phase === 'flight') {
+      delete this.superJumpState.bigBubblerTarget;
+      delete this.superJumpState.bigBubblerStartForm;
+    }
+    return value;
+  };
+  Object.defineProperty(proto, BUBBLER_JUMP_INSTALL, { value: true });
+}
+
 /**
  * The real network identity of an actor, used to stamp dome ids.
  *
@@ -1156,6 +1255,7 @@ export function installKitBigBubbler(context, profile) {
   if (!context?.Actor || !context?.Projectiles) throw new Error('Big Bubbler needs the composed Actor and Projectiles');
   context.SPECIALS.bubbler = { ...context.SPECIALS.bubbler, id: 'bubbler', name: 'Big Bubbler', cost: 180, mechanicsInstalled: true };
   api = context;
+  installBubblerJumpTargets(context);
   raw = { ...BIG_BUBBLER_RAW, ...(profile?.kits?.bigBubbler?.raw || {}) };
   tuning = { ...BIG_BUBBLER_CALIBRATION, ...(profile?.kits?.bigBubbler || {}) };
   for (const dome of [...domes]) { domes.splice(domes.indexOf(dome), 1); releaseVisual(dome); }

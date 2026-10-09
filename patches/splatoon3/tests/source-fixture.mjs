@@ -94,7 +94,7 @@ export async function fixture(options = {}) {
     fireFlick: (actor, weapon) => shots.push({ kind: 'roller', windup: weapon.flickWindup }), fireBlaster: () => shots.push({ kind: 'blaster' }),
     fireSplatling: () => shots.push({ kind: 'splatling' }) };
   class Character {
-    constructor(actor) { this.actor = actor; this.root = { position: new THREE.Vector3(), rotation: {} }; this.events = []; }
+    constructor(actor) { this.actor = actor; this.color = new THREE.Color('#ffffff'); this.root = { position: new THREE.Vector3(), rotation: {} }; this.events = []; }
     _owner() { return this.actor; }
     _runner() { return this.actor?.weaponRunner; }
     trigger(...args) { this.events.push(args); }
@@ -117,5 +117,5 @@ export async function fixture(options = {}) {
     delete context.__inkwaveTestRandom;
   }
   function restoreRandom() { setRandom(originalRandom); }
-  return { ...api, profile, make, tick, shots, setRandom, restoreRandom };
+  return { ...api, profile, make, tick, shots, context, setRandom, restoreRandom };
 }

@@ -561,8 +561,11 @@ export function adaptSource(rel, code) {
   _bindBus() {`,
       'Super Jump target notification HUD cue');
     code = replaceOnce(code,
-      "    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor);",
-      "    const ticket = tg.home ? null : me.selectSuperJumpTarget(tg.actor);\n    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor, ticket);",
+      'else ok = me.superJump(tg.actor);',
+      `else {
+      const ticket = me.selectSuperJumpTarget?.(tg.actor);
+      ok = me.superJump(tg.actor, ticket);
+    }`,
       'MapRoster Super Jump target selection cue');
     code = replaceOnce(code,
       "    on('superjump', ({ actor, phase, to }) => { if (actor === this._local() && phase === 'charge' && this._live()) this._snd('ui_confirm', { volume: 0.6 }); void to; }),",
