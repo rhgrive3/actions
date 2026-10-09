@@ -71,7 +71,10 @@ test('#291 native network packet carries the25F warning without granting owner f
  for(let frame=1;frame<=31;frame++){
   step();f.NetMatch.prototype._sendTick.call(sender);
   const flags=packet.a[0][10];assert.equal(!!(flags&f.NET_FLAGS.charging),frame>=25,`packet frame${frame}`);
-  remote.net.cur.f=flags;f.NetMatch.prototype.applyRemote.call({_peer:()=>({})},remote,DT);
+  // This presentation-only receiver fixture bypasses the independently tested
+  // hit-authority handoff ledger; the composed applyRemote now requires its HP
+  // projection helper even while only verifying the Charger warning flag.
+  remote.net.cur.f=flags;f.NetMatch.prototype.applyRemote.call({_peer:()=>({}),_hitAuthorityHp:(_actor,sample)=>sample.hp},remote,DT);
   assert.equal(remote.weaponRunner.charging,frame>=25,'remote presentation follows owner warning');
   if(frame<31)assert.equal(r.charging,false,'local release authority remains gated');
  }
