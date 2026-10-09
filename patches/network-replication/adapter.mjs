@@ -394,6 +394,10 @@ export function emit(name, payload) {
     hitSlots.set(slot, d.h);
     seenHits.add(d.h);
     hitPeer.lastHit = nextHighHit;
+    const hitLife = v.netLife ?? 0;
+    const previousHitAuthority = v.net?._hitAuthority;
+    const hitRevision = previousHitAuthority?.life === hitLife ? previousHitAuthority.sequence + 1 : 1;
+    if (!Number.isSafeInteger(hitRevision) || hitRevision < 1) return;
     this._applyingHit = true;`, 'deduplicate validated reordered hit retries');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     for (const a of this.byNid.values()) { clearRemoteSquidroll(a); clearRemoteDropRoll(a); clearRemoteRollerPresentation(a); }
@@ -410,6 +414,16 @@ export function emit(name, payload) {
     // Bomb damage is victim-owned. Ignore attack-side guesses, including packets
     // from older clients; the ordered bomb event is replayed on the victim owner.
     if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject shooter bomb hit');
+    patch("    this.s.tr?.sendTo(from ?? atk.owner, { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0, vl: v.netLife ?? 0 });",
+      `    const hitState = { owner: this.myId, life: hitLife, sequence: hitRevision, ts: now(), hp: v.hp, alive: !!v.alive };
+    if (v.net) v.net._hitAuthority = hitState;
+    const ack = { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0,
+      vl: hitLife, hp: hitState.hp, hr: hitRevision, ht: hitState.ts, la: hitState.alive ? 1 : 0 };
+    if (typeof this.s.tr?.broadcast === 'function') this.s.tr.broadcast(ack);
+    else {
+      const recipients = new Set([from ?? atk.owner, this.s.hostId]);
+      for (const recipient of recipients) if (typeof recipient === 'string' && recipient) this.s.tr?.sendTo(recipient, ack);
+    }`, 'broadcast life-bound authoritative hit confirmation');
     patch("  shouldApplyHit(attacker, victim) {\n    // ghosts never hurt anyone; the shooter's client decides, the victim's owner applies\n    if (this._applyingHit) return 'local';",
       `  shouldApplyHit(attacker, victim, weaponId) {
     // A bomb ghost tests local actors using their owner's position and LOS.
@@ -500,7 +514,7 @@ export function emit(name, payload) {
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
     patch('  o.lock = a.lock + (b.lock - a.lock) * u;\n  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  o.spCost = a.spCost;\n  return o;',
-      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);\n  o.hp = u < 0.5 ? a.hp : b.hp; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.sloshElapsed >= 0 && b.sloshElapsed >= 0) o.sloshElapsed = a.sloshElapsed + (b.sloshElapsed - a.sloshElapsed) * u;\n  if (a.slamPhase && a.slamPhase === b.slamPhase) o.slamT = a.slamT + (b.slamT - a.slamT) * u;\n  o.blasterWindup = (a.blasterWindup || 0) + ((b.blasterWindup || 0) - (a.blasterWindup || 0)) * u;\n  o.spCost = a.spCost;\n  return o;',
+      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);\n  o.hp = u < 0.5 ? a.hp : b.hp; o.hitLife = u < 0.5 ? a.hitLife : b.hitLife; o.hitSeq = u < 0.5 ? a.hitSeq : b.hitSeq; o.ink = a.ink + (b.ink - a.ink) * u;\n  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.sloshElapsed >= 0 && b.sloshElapsed >= 0) o.sloshElapsed = a.sloshElapsed + (b.sloshElapsed - a.sloshElapsed) * u;\n  if (a.slamPhase && a.slamPhase === b.slamPhase) o.slamT = a.slamT + (b.slamT - a.slamT) * u;\n  o.blasterWindup = (a.blasterWindup || 0) + ((b.blasterWindup || 0) - (a.blasterWindup || 0)) * u;\n  o.spCost = a.spCost;\n  return o;',
       'interpolate matching presentation action clocks');
     patch('  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;',
       '  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.dropRollId && a.dropRollId === b.dropRollId) o.dropRollRemaining = a.dropRollRemaining + (b.dropRollRemaining - a.dropRollRemaining) * u;',
@@ -518,7 +532,7 @@ export function emit(name, payload) {
       "        if (e[3] === 'movement_cancel' || e[3] === 'land' || e[3] === 'spawn') clearRemoteSquidroll(a, true);\n        a.character._netTrig?.(e[3], unpackTrig(e[4]));",
       'remote cancellation event invalidates current visual Roll');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      clearRemoteDropRoll(a);\n      clearRemoteRollerPresentation(a);\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retain prior snapshot clock for adoption');
+      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      clearRemoteDropRoll(a);\n      clearRemoteRollerPresentation(a);\n      retireNetworkGhosts(a);\n      if (a.net) {\n        a.net._stormBirthAuth = null;\n        a.net._hitHandoff = { owner: id, life: Number.isSafeInteger(a.netLife) ? a.netLife : (a.net.lastLife ?? 0) };\n      }\n      a.owner = this.s.hostId;', 'retain prior snapshot clock and hit authority on adoption');
     patch('    const drop = mapNoBots(this.cfg.map);',
       "    const drop = this.cfg.map === 'range' || mapNoBots(this.cfg.map);", 'Practice Range remains humans-only on disconnect');
     patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a);\n    clearRemoteSquidroll(a);\n    clearRemoteDropRoll(a);\n    clearRemoteRollerPresentation(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
@@ -555,21 +569,29 @@ export function emit(name, payload) {
     patch('const mode = this._pathAt(buf, tr, S);',
       'const mode = this._pathAt(buf, tr, S);\n    S.adoption = sampleAdoptionState(buf, tr, mode, peer.sim);',
       'sample adoption state on the sender timeline');
-    patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23 && s.length !== 24 && s.length !== 25) continue;
+    patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23 && s.length !== 24 && s.length !== 25 && s.length !== 26 && s.length !== 27) continue;
       const adoption = s.length >= 24
         ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq, a.weapon?.special, d.u, a,
           a.net._adoptionTickOwner === from ? a.net._adoptionTick : undefined)
         : null;
       if (s.length >= 24 && !adoption) continue;
+      const hitAuthority = s.length >= 26 ? readHitAuthorityState(s[25], snap.life) : null;
+      if (s.length >= 26 && !hitAuthority) continue;
+      snap.hitLife = hitAuthority?.life ?? snap.life;
+      snap.hitSeq = hitAuthority?.sequence ?? 0;
       if (adoption) {
         snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence;
         a.net._adoptionTick = adoption.tick; a.net._adoptionTickOwner = from;
       }
       else delete snap.adoption;
-      a.net.lastLife = snap.life;`, 'strict life/sequence-bound adoption packet');
+      a.net.lastLife = snap.life;
+      this._acceptHitAuthoritySnapshot(a, snap, from);`, 'strict life/sequence-bound adoption packet');
     patch('    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
       '    applyAdoptionSample(this, a, S);\n    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
       'restore adoption sample after authoritative age-based Super Jump phase');
+    patch('    a.hp = S.hp; a.ink = S.ink; a.special = S.sp;',
+      '    const hitHp = this._hitAuthorityHp(a, S, a.owner);\n    if (hitHp < a.hp) a.lastDamage = 0;\n    a.hp = hitHp; a.ink = S.ink; a.special = S.sp;',
+      'prevent stale owner samples from undoing confirmed hit state');
     patch('    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;',
       "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;\n    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }",
       'remote Tidal Slam phase clock');
@@ -791,6 +813,23 @@ export function emit(name, payload) {
         break;
       }`, 'birth and terminal events');
     code += `
+const HIT_AUTHORITY_TAG = 'inkwave-hit-authority-v1';
+function packHitAuthorityState(actor) {
+  const life = Number.isSafeInteger(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
+  const previous = actor.net?._hitAuthority;
+  const sequence = previous?.life === life && Number.isSafeInteger(previous.sequence) && previous.sequence >= 0
+    ? previous.sequence : 0;
+  if (actor.net) actor.net._hitAuthority = { owner: actor.owner, life, sequence,
+    ts: Number.isFinite(previous?.ts) ? previous.ts : 0, hp: actor.hp, alive: !!actor.alive };
+  return [HIT_AUTHORITY_TAG, life, sequence];
+}
+function readHitAuthorityState(row, life) {
+  if (!Array.isArray(row) || row.length !== 3 || row[0] !== HIT_AUTHORITY_TAG
+    || !Number.isSafeInteger(row[1]) || row[1] < 0 || row[1] !== life
+    || !Number.isSafeInteger(row[2]) || row[2] < 0) return null;
+  return { life: row[1], sequence: row[2] };
+}
+
 const ADOPTION_STATE_TAG = 'inkwave-adoption-v1';
 const ADOPTION_AGE_MAX = 60, ADOPTION_COOLDOWN_MAX = 10, ADOPTION_WORLD_MAX = 100000;
 const SQUID_SPAWN_FLIGHT_DURATION = ${JSON.stringify(SQUID_SPAWN_FLIGHT_DURATION)};
@@ -1402,6 +1441,61 @@ function firstSplatStateFor(session,cfg) {
     }
   }
 
+  _acceptHitAuthorityAck(d, from) {
+    const victim = this.byNid.get(d?.v), life = d?.vl;
+    if (!victim || typeof from !== 'string' || !from || !Number.isSafeInteger(d.h) || d.h < 1
+      || !Number.isSafeInteger(d.a) || d.a < 0 || !Number.isSafeInteger(life) || life < 0
+      || typeof d.d !== 'number' || !Number.isFinite(d.d) || d.d < 0
+      || (d.kld !== 0 && d.kld !== 1) || typeof d.hp !== 'number' || !Number.isFinite(d.hp)
+      || d.hp < 0 || d.hp > PLAYER.hp || !Number.isSafeInteger(d.hr) || d.hr < 1
+      || typeof d.ht !== 'number' || !Number.isFinite(d.ht) || d.ht < 0
+      || (d.la !== 0 && d.la !== 1) || (d.kld === 1 && (d.hp !== 0 || d.la !== 0))
+      || (d.kld === 0 && d.la !== 1)) return false;
+    const currentLife = Math.max(Number.isSafeInteger(victim.netLife) ? victim.netLife : 0,
+      Number.isSafeInteger(victim.net?.lastLife) ? victim.net.lastLife : 0);
+    const handoff = victim.net?._hitHandoff;
+    if (life !== currentLife || (victim.owner !== from && !(handoff?.owner === from && handoff.life === life))) return false;
+    const current = victim.net?._hitAuthority;
+    if (current?.life === life) {
+      if (current.owner === from) {
+        if (d.hr < current.sequence || d.hr === current.sequence && d.ht <= current.ts) return false;
+      } else if (d.hr <= current.sequence) return false;
+    }
+    victim.net ||= {};
+    victim.net._hitAuthority = { owner: from, life, sequence: d.hr, ts: d.ht, hp: d.hp, alive: d.la === 1 };
+    if (d.la === 0) {
+      if (victim.alive) this._remoteSplat?.(victim, null, 'shooter');
+      victim.hp = 0;
+    } else if (victim.alive) victim.hp = d.hp;
+    return true;
+  }
+
+  _acceptHitAuthoritySnapshot(actor, snap, from) {
+    if (!actor || actor.owner !== from || !Number.isSafeInteger(snap?.hitLife)
+      || !Number.isSafeInteger(snap?.hitSeq) || snap.hitSeq < 0 || !Number.isFinite(snap?.t)
+      || !Number.isFinite(snap?.hp)) return false;
+    const life = snap.hitLife;
+    if (life !== snap.life) return false;
+    const current = actor.net?._hitAuthority;
+    if (current?.life === life) {
+      if (current.owner === from) {
+        if (snap.hitSeq < current.sequence || snap.hitSeq === current.sequence && snap.t <= current.ts) return false;
+      } else if (snap.hitSeq < current.sequence) return false;
+    }
+    actor.net ||= {};
+    actor.net._hitAuthority = { owner: from, life, sequence: snap.hitSeq, ts: snap.t, hp: snap.hp };
+    return true;
+  }
+
+  _hitAuthorityHp(actor, sample, owner) {
+    if (!Number.isSafeInteger(sample?.hitLife) || !Number.isSafeInteger(sample?.hitSeq)) return sample.hp;
+    this._acceptHitAuthoritySnapshot(actor, sample, owner);
+    const state = actor.net?._hitAuthority;
+    if (!state || state.life !== sample.hitLife) return sample.hp;
+    if (sample.hitSeq < state.sequence || sample.hitSeq === state.sequence && sample.t <= state.ts) return state.hp;
+    return sample.hp;
+  }
+
   _retryNackedHit(pending) {
     if (!pending || pending.nackTo !== pending.destination || !pending.message) return false;
     const message = pending.message;
@@ -1471,6 +1565,7 @@ function firstSplatStateFor(session,cfg) {
   }`, 'relay NACK must match latest destination');
     replaceMethod('_hitAck', `  _hitAck(d, from) {
     if (!d || typeof d !== 'object') return;
+    this._acceptHitAuthorityAck(d, from);
     const h = d.h;
     if (!Number.isSafeInteger(h) || h < 1) return;
     const receipt = this._pendingHits?.get(h);
@@ -1846,6 +1941,12 @@ ${bombHit}`;
   }
   if (rel === 'src/net/netmatch.js') {
     code = adaptIssue1088SurgePresentation(code);
+    code = once(code, 'if (c1088Surge) c1088Row.push(c1088Surge);\n  return c1088Row;',
+      'c1088Row.push(c1088Surge || null, packHitAuthorityState(a));\n  return c1088Row;',
+      rel + ': append life-bound accepted-hit state');
+    code = once(code, 'surgePresentation: s[24] ?? null, surgeSampleTime: ts };',
+      'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2] };',
+      rel + ': unpack accepted-hit revision');
     code = adaptIssue1163RemoteDodgeClock(code);
     patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
   }
