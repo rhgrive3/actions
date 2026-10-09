@@ -15,6 +15,14 @@ async function pair({vertical=true,speed=4,yaw=0,depleted=false}={}){
  return {local,remote,sender,receiver,actor,ghost,births,packets};
 }
 function replay(f,packets=f.packets){f.receiver.onMessage('p2',{k:'t',ts:1000,u:60,r:packets[0]?.length>=32?2:undefined,e:plain(packets)});const peer=f.receiver.peers.get('p2');for(const e of peer.events)f.receiver._play('p2',e);return f.remote.projectiles.list;}
+function packetLayout(event,{inkMeta,kit}){
+ const packet=[...event],marker=[31,32,33,34,35].find(index=>packet[index]===true);
+ if(marker!==undefined)packet.splice(marker,1);
+ if(!kit)packet.splice(28,2);
+ if(!inkMeta)packet.splice(27,1);
+ return packet;
+}
+function withDepletionMarker(packet){const marked=[...packet];marked.splice(marked.length-2,0,true);return marked;}
 test('new birth unit preserves all Roller collider records across forward/backward motion and later owner changes',async()=>{
  for(const vertical of [false,true])for(const speed of [-6,0,4,6])for(const yaw of [0,.7]){
   const f=await pair({vertical,speed,yaw}),ghosts=replay(f);assert.equal(ghosts.length,f.births.length);
@@ -46,6 +54,62 @@ test('#305 depleted Roller births preserve owner collision radii on the remote p
    let applied=0;
    f.remote.applyFidelityProjectileHit(f.remote.projectiles,q,{team:1,damage:n=>{applied+=n;}},999,new f.remote.THREE.Vector3());
    assert.equal(applied,0,'remote ghost never gains hit authority');
+  }
+ }
+});
+test('#305 normalizes depleted Roller flags across every base/inkMeta/kit birth shape before replay',async()=>{
+ const layouts=[
+  {name:'base',inkMeta:false,kit:false,length:33},
+  {name:'inkMeta',inkMeta:true,kit:false,length:34},
+  {name:'kit',inkMeta:false,kit:true,length:35},
+  {name:'inkMeta+kit',inkMeta:true,kit:true,length:36},
+ ];
+ for(const depleted of [false,true])for(let index=0;index<layouts.length;index++){
+  const layout=layouts[index],vertical=index%2===1,f=await pair({vertical,depleted}),owner=f.births[0];
+  const base=packetLayout(f.packets[0],layout),event=depleted?withDepletionMarker(base):base;
+  assert.equal(base.length,layout.length,`${layout.name} base length`);
+  assert.equal(event.length,layout.length+(depleted?1:0),`${layout.name} wire length`);
+  assert.equal(event.at(-2),f.packets[0].at(-2),'owner tick survives normalization');
+  assert.equal(event.at(-1),f.packets[0].at(-1),'owner sequence survives normalization');
+  const ghosts=replay(f,[event]),ghost=ghosts[0];
+  assert.equal(ghosts.length,1,`${layout.name} birth is accepted once`);
+  assert.equal(ghost._netBornTick,60,`${layout.name} tick survives native ghost parsing`);
+  assert.equal(ghost._netId,owner._netId,`${layout.name} birth identity survives native ghost parsing`);
+  assert.equal(ghost.seed,owner.seed,`${layout.name} appearance seed survives native ghost parsing`);
+  assert.equal(ghost.fidelityMode,owner.fidelityMode,`${layout.name} attack mode survives native ghost parsing`);
+  assert.equal(ghost.fidelityRollerUnitIndex,owner.fidelityRollerUnitIndex,`${layout.name} unit survives native ghost parsing`);
+  assert.equal(ghost.s3DepletionRound,depleted,`${layout.name} depletion state is exact`);
+  assert.deepEqual(plain(ghost.fidelityPlayerCollision),plain(owner.fidelityPlayerCollision),`${layout.name} player collision matches owner`);
+  assert.deepEqual(plain(ghost.fidelityFieldCollision),plain(owner.fidelityFieldCollision),`${layout.name} field collision matches owner`);
+  assert.equal(ghost.ghost,true,'remote replay remains presentation-only');
+  const peer=f.receiver.peers.get('p2');
+  f.receiver._play('p2',peer.events[0]);
+  assert.equal(ghosts.length,1,`${layout.name} duplicate identity is still rejected`);
+
+  if(depleted){
+   // Measure the real target-capsule boundary. It must match for owner and
+   // ghost, and an unscaled control must reach farther than the depleted one.
+   const rate=owner.fidelityRollerUnit.UnitParam.CollisionParam.DepletionRate;
+   const localTarget=f.local.makeActor({nid:90,owner:'target',remote:true,team:1,roller:false});
+   const remoteTarget=f.remote.makeActor({nid:90,owner:'target',remote:true,team:1,roller:false});
+   localTarget.pos.set(0,0,0);remoteTarget.pos.set(0,0,0);
+   f.local.G.actors=[localTarget];f.remote.G.actors=[remoteTarget];
+   const boundary=(world,p,target)=>{
+    p.age=.01;p.fidelityPrevAge=.01;
+    let low=0,high=1.5;
+    for(let step=0;step<32;step++){
+     const z=(low+high)/2;p.prev.set(-1,.725,z);p.pos.set(1,.725,z);
+     if(world.fidelityProjectileTargets(world.projectiles,p).includes(target))low=z;else high=z;
+    }
+    return(low+high)/2;
+   };
+   const ownerBoundary=boundary(f.local,owner,localTarget),ghostBoundary=boundary(f.remote,ghost,remoteTarget);
+   assert.ok(Math.abs(ownerBoundary-ghostBoundary)<1e-6,`${layout.name} real target-collision boundary matches (${ownerBoundary} vs ${ghostBoundary})`);
+   const depletedCollision=owner.fidelityPlayerCollision;
+   owner.fidelityPlayerCollision={...depletedCollision,initRadius:depletedCollision.initRadius/rate,endRadius:depletedCollision.endRadius/rate};
+   const fullBoundary=boundary(f.local,owner,localTarget);
+   owner.fidelityPlayerCollision=depletedCollision;
+   assert.ok(fullBoundary>ownerBoundary+1e-3,'real collision query distinguishes the depleted envelope from a full-radius control');
   }
  }
 });
@@ -83,6 +147,32 @@ test('non-Roller uses sentinel and pooled Roller unit cannot leak into another f
  f.actor.weapon=f.local.WEAPONS.shooter;f.actor.character.getMuzzle=o=>o.copy(f.actor.pos);f.sender.out.length=0;f.local.projectiles.fireShooter(f.actor,f.actor.weapon,0);const e=f.sender.out.find(e=>e[1]==='p');assert.equal(e.length,36);assert.equal(e[33],-1);
  assert.notEqual(f.remote.projectiles.ghostProjectile(f.ghost,e),null);const bad=[...e];bad[33]=0;assert.equal(f.remote.projectiles.ghostProjectile(f.ghost,bad),null);
  const forged=[...e];forged.splice(34,0,true);assert.equal(f.remote.validFidelityRollerUnitPacket(forged),false,'a non-Roller cannot request depleted Roller radii');
+ f.remote.projectiles.list.length=0;f.receiver.peers.set('p2',{tr:1000});f.receiver._play('p2',forged);
+ assert.equal(f.remote.projectiles.list.length,0,'the actual receiver denies a depletion marker on a non-Roller');
+ assert.equal(f.receiver.peers.get('p2')._lastProjectileId,undefined,'denial happens before birth identity advances');
+});
+
+test('#305 rejects a depletion marker inserted before the Roller unit',async()=>{
+ const f=await pair({depleted:true}),valid=[...f.packets[0]],marker=valid.findIndex((v,index)=>index>=31&&index<=35&&v===true);
+ assert.ok(marker>=0);
+ valid.splice(marker,1);valid.splice(marker-1,0,true);
+ assert.equal(f.remote.validFidelityRollerUnitPacket(valid),false,'the marker must follow the Roller unit');
+ f.receiver.peers.set('p2',{tr:1000});f.receiver._play('p2',valid);
+ assert.equal(f.remote.projectiles.list.length,0,'malformed placement never allocates a ghost');
+ assert.equal(f.receiver.peers.get('p2')._lastProjectileId,undefined,'malformed placement cannot consume an identity');
+});
+
+test('ordinary powered kit packet layouts remain valid and cannot claim Roller depletion',async()=>{
+ const f=await pair();f.remote.SPECIALS.trizooka={projectileDescriptor:()=>f.remote.WEAPONS.shooter};
+ const metaKit=packetLayout(f.packets[0],{inkMeta:true,kit:true});
+ const poweredMeta=[...metaKit];poweredMeta[4]='trizooka';poweredMeta[33]=-1;poweredMeta.splice(poweredMeta.length-2,0,{s3SpecialPowerAP:18});
+ const poweredBase=[...poweredMeta];poweredBase.splice(27,1);poweredBase[32]=-1;
+ assert.equal(poweredMeta.length,37);assert.equal(f.remote.validFidelityRollerUnitPacket(poweredMeta),true,'inkMeta plus powered kit remains supported');
+ assert.equal(poweredBase.length,36);assert.equal(f.remote.validFidelityRollerUnitPacket(poweredBase),true,'base plus powered kit remains supported');
+ for(const packet of [poweredMeta,poweredBase]){
+  const forged=[...packet];forged.splice(forged.length-2,0,true);
+  assert.equal(f.remote.validFidelityRollerUnitPacket(forged),false,'powered non-Roller packets cannot use the depletion marker');
+ }
 });
 
 test('unsupported packet lengths never allocate a ghost',async()=>{

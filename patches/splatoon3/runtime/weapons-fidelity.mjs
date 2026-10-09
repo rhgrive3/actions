@@ -19,6 +19,7 @@ import { coherentMotionStart } from './actor-motion.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
+const NORMALIZED_PROJECTILE_PACKET = Symbol('inkwave.normalizedProjectilePacket');
 const inkFlightHelpers = new WeakMap();
 const SPLATLING_NOMINAL_LIFETIME = 1.2;
 let api, completion, moves, slosherVolleySequence = 0;
@@ -884,32 +885,31 @@ function setCollision(p,c,offset=0,depleted=false) {
 }
 // Legacy projectile packets have no unit discriminator. New packets preserve
 // their first30 entries, then carry unit before the existing owner tick/sequence.
-function depletionPacketFlagIndex(event) {
-  for (const index of [31, 32, 33, 34]) if (event?.[index] === true) return index;
-  return -1;
+function copyProjectilePacketProperties(from, to) {
+  for (const key of Reflect.ownKeys(from)) {
+    if (key === 'length' || typeof key === 'symbol' || /^(?:0|[1-9]\d*)$/.test(key)) continue;
+    Object.defineProperty(to, key, Object.getOwnPropertyDescriptor(from, key));
+  }
 }
-export function validFidelityRollerUnitPacket(event) {
-  if (!Array.isArray(event)) return false;
-  const markerIndex = depletionPacketFlagIndex(event);
-  if ([27, 30, 32].includes(event.length)) return markerIndex < 0; // legacy pre-birth layouts
-  // A depleted Roller birth inserts one optional boolean after its unit and
-  // before the owner tick/sequence suffix. Remove it while validating the
-  // established schema; ordinary and older packets keep their exact layout.
-  const depletedRoller = markerIndex >= 0;
-  const packet = depletedRoller ? [...event.slice(0, markerIndex), ...event.slice(markerIndex + 1)] : event;
+function projectilePacketShape(packet) {
+  if (!Array.isArray(packet)) return null;
+  if ([27, 30, 32].includes(packet.length)) return { legacy: true, depleted: false, birthOffset: 0 };
   const hasInkMeta = packet[27] === null || typeof packet[27] === 'object';
-  const markerKitOffset = packet.length === 35 || packet.length === 36 || packet.length === 37 ? 2 : 0;
-  const expectedMarkerIndex = 31 + (hasInkMeta ? 1 : 0) + markerKitOffset;
-  if (depletedRoller && (markerIndex !== expectedMarkerIndex || api?.WEAPONS?.[packet[4]]?.kind !== 'roller')) return false;
   const accepted = hasInkMeta
     ? packet.length === 34 || packet.length === 36 || packet.length === 37
     : packet.length === 33 || packet.length === 35 || packet.length === 36;
-  if (!accepted) return false;
+  if (!accepted) return null;
   const inkMetaOffset = hasInkMeta ? 1 : 0;
   const kitOffset = packet.length === 35 || packet.length === 36 || packet.length === 37 ? 2 : 0;
   const birthOffset = inkMetaOffset + kitOffset;
-  const powerIndex = 27 + birthOffset + 4;
   const hasPower = hasInkMeta ? packet.length === 37 : packet.length === 36;
+  return { legacy: false, hasInkMeta, kitOffset, birthOffset, hasPower };
+}
+function normalizedProjectilePacketValid(packet, shape, depleted) {
+  if (!shape) return false;
+  if (shape.legacy) return !depleted;
+  const { birthOffset, hasPower } = shape;
+  const powerIndex = 31 + birthOffset;
   if (hasPower) {
     const power = packet[powerIndex]?.s3SpecialPowerAP;
     const entry = api?.SPECIALS && Object.hasOwn(api.SPECIALS, packet[4]) ? api.SPECIALS[packet[4]] : null;
@@ -920,16 +920,45 @@ export function validFidelityRollerUnitPacket(event) {
   const unit = packet[30 + birthOffset];
   if (!weapon) {
     const specials=api?.SPECIALS,entry=specials&&Object.hasOwn(specials,packet[4])?specials[packet[4]]:null;
-    return typeof entry?.projectileDescriptor==='function' && unit===-1;
+    return typeof entry?.projectileDescriptor==='function' && unit===-1 && !depleted;
   }
   if (weapon.kind === 'slosher') {
     const count = rawWeapon(weapon)?.UnitGroupParam?.Unit?.reduce((n,u)=>n+(u.BulletNum??1),0);
-    return unit === -1 || Number.isSafeInteger(unit) && unit >= 0 && unit < count;
+    return !depleted && (unit === -1 || Number.isSafeInteger(unit) && unit >= 0 && unit < count);
   }
-  if (weapon.kind !== 'roller') return unit === -1;
+  if (weapon.kind !== 'roller') return !depleted && unit === -1;
   if (packet[27 + birthOffset] !== 0 && packet[27 + birthOffset] !== 1) return false;
   const units = rawWeapon(weapon)?.[packet[27 + birthOffset] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
   return Number.isSafeInteger(unit) && unit >= 0 && !!units && unit < units.length;
+}
+function prepareFidelityProjectilePacket(event) {
+  if (!Array.isArray(event)) return null;
+  const prepared = event[NORMALIZED_PROJECTILE_PACKET];
+  if (prepared) {
+    const shape = projectilePacketShape(event);
+    return normalizedProjectilePacketValid(event, shape, prepared.depleted) ? event : null;
+  }
+  const flagIndices = [];
+  for (let index = 31; index <= 35; index++) if (event[index] === true) flagIndices.push(index);
+  if (flagIndices.length > 1) return null;
+  const markerIndex = flagIndices[0] ?? -1;
+  const depleted = markerIndex >= 0;
+  const packet = event.slice();
+  if (depleted) packet.splice(markerIndex, 1);
+  copyProjectilePacketProperties(event, packet);
+  const shape = projectilePacketShape(packet);
+  if (depleted) {
+    const expectedMarkerIndex = shape && !shape.legacy
+      ? 31 + shape.birthOffset + (shape.hasPower ? 1 : 0)
+      : -1;
+    if (markerIndex !== expectedMarkerIndex || api?.WEAPONS?.[packet[4]]?.kind !== 'roller') return null;
+  }
+  if (!normalizedProjectilePacketValid(packet, shape, depleted)) return null;
+  Object.defineProperty(packet, NORMALIZED_PROJECTILE_PACKET, { value: { depleted } });
+  return packet;
+}
+export function validFidelityRollerUnitPacket(event) {
+  return !!prepareFidelityProjectilePacket(event);
 }
 // #750: the swing unit declares the head's *rendered* size in
 // UnitParam.DrawSizeParam, separately from CollisionParam and from paint.
@@ -1576,15 +1605,17 @@ export function installWeaponsFidelity(context,profile) {
     }
     return step.call(this,p,dt);
   };
+  Projectiles.prototype.prepareFidelityProjectilePacket=prepareFidelityProjectilePacket;
   Projectiles.prototype.ghostProjectile=function(actor,event){
-    if(!validFidelityRollerUnitPacket(event))return null;
-    const before=this.list.length;const result=ghost.call(this,actor,event);
+    const packet=prepareFidelityProjectilePacket(event);
+    if(!packet)return null;
+    const before=this.list.length;const result=ghost.call(this,actor,packet);
     if(this.list.length>before){const p=this.list.at(-1);const special=api.SPECIALS&&Object.hasOwn(api.SPECIALS,p.wid)?api.SPECIALS[p.wid]:null;
       // #305: preserve the owner's explicit depleted-attack identity before
       // initialize() rebuilds the remote presentation collision record.
-      p.s3DepletionRound=depletionPacketFlagIndex(event)>=0;
+      p.s3DepletionRound=packet[NORMALIZED_PROJECTILE_PACKET].depleted;
       if(!p.s3SpecialWeapon&&typeof special?.projectileDescriptor==='function'){p.s3SpecialWeapon=special.projectileDescriptor(p);p.s3Weapon=p.s3SpecialWeapon;}
-      const inkMetaOffset=event[27]===null||typeof event[27]==='object'?1:0,kitOffset=(event.length===35||event.length===36||event.length===37)?2:0,birthOffset=inkMetaOffset+kitOffset;if([33,34,35,36,37].includes(event.length)&&event[30+birthOffset]>=0){p.fidelitySloshPacketIndex=event[30+birthOffset];p.fidelityRollerUnitIndex=event[30+birthOffset];p.fidelityMode=event[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
+      const shape=projectilePacketShape(packet),birthOffset=shape?.birthOffset??0;if(!shape?.legacy&&packet[30+birthOffset]>=0){p.fidelitySloshPacketIndex=packet[30+birthOffset];p.fidelityRollerUnitIndex=packet[30+birthOffset];p.fidelityMode=packet[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;

@@ -763,12 +763,15 @@ export function emit(name, payload) {
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
+        const prepareProjectile = G.projectiles?.prepareFidelityProjectilePacket;
+        const packet = typeof prepareProjectile === 'function' ? prepareProjectile.call(G.projectiles, e) : e;
+        if (typeof prepareProjectile === 'function' && !packet) return;
         const peer = this.peers.get(from);
-        const inkMetaOffset = e[27] === null || typeof e[27] === 'object' ? 1 : 0;
-        const kitOffset = e.length === 35 || e.length === 36 || e.length === 37 ? 2 : 0;
-        const birthId = e[29 + inkMetaOffset + kitOffset];
+        const inkMetaOffset = packet[27] === null || typeof packet[27] === 'object' ? 1 : 0;
+        const kitOffset = packet.length === 35 || packet.length === 36 || packet.length === 37 ? 2 : 0;
+        const birthId = packet[29 + inkMetaOffset + kitOffset];
         if (Number.isFinite(birthId) && peer) { if (birthId <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = birthId; }
-        const a = this.byNid.get(e[2]), p = a && G.projectiles?.ghostProjectile(a, e);
+        const a = this.byNid.get(packet[2]), p = a && G.projectiles?.ghostProjectile(a, packet);
         if (p) { p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0; p._netMaxSteps = Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2; }
         break;
       }
