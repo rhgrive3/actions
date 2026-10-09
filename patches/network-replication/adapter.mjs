@@ -1079,6 +1079,9 @@ function readPaintOrder(nm, from, e) {
   // _kind uses a plain object table. Names inherited from Object.prototype
   // must not become a shader kind/flags value or poison footprint arithmetic.
   if (e[8] !== undefined && e[8] !== 0 && !PAINT_EVENT_KINDS.has(e[8])) return false;
+  // -1 (or an omitted legacy field) means no face restriction. A malformed
+  // selector must not silently widen a face-specific stamp to every face.
+  if (e[13] !== undefined && (!Number.isSafeInteger(e[13]) || e[13] < -1)) return false;
   // PaintSystem squares radius/local distances and projects the stretch vector.
   // Ray angles also contain seed*6.2831 before entering wob(): the largest
   // composed seed factor is 73+11*6.2831 < 144 (with bounded phase terms).

@@ -78,6 +78,7 @@ test('#522 malformed finite paint values cannot reserve clocks, mutate CPU turf 
     [9,1e308],[10,-1e308],[11,1e308],[12,1e308],
     [2,1e20],[5,1e20],[7,1e38],[7,3.40282355e38/73],[7,3e36],[12,1e20],[5,1e-308],
     [8,'__proto__'],[8,'constructor'],[8,'toString'],[8,{}],
+    [13,1.5],[13,-2],[13,null],[13,'0'],[13,{}],[13,1e308],
   ];
   for(const [index,value] of malformed){
     const event=received(valid);event[index]=value;
@@ -114,7 +115,7 @@ test('#522 valid built-in paint kinds and same-sequence corrected payload stay c
   const sender=await client('a'), observer=await client('c');
   for(const kind of ['shot','line','blast','bomb','trail','drop','roll','rollFloor','speck']){
     sender.paint.splat(new sender.f.THREE.Vector3(1,0,1),.42,0,
-      {seed:.31,kind,stretch:new sender.f.THREE.Vector3(1,0,0),stretchAmt:.7});
+      {seed:.31,kind,face:0,stretch:new sender.f.THREE.Vector3(1,0,0),stretchAmt:.7});
     const event=sender.nm.out.at(-1),peer=observer.nm._peer('a'),before=peer._lastEventSeq??0;
     const bad=received(event);bad[8]='__proto__';observer.nm._play('a',bad);
     assert.equal(peer._lastEventSeq??0,before);

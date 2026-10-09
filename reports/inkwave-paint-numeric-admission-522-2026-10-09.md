@@ -27,9 +27,13 @@ This is an overflow and malformed-kind repair, not proof that every representabl
 
 The corresponding after-fix reproduction reports no accepted event, zero changed ownership cells, zero growth/quads/non-finite attributes, and no paint receipt.
 
+## Face-selector follow-through
+
+A further actual NetMatch regression found that malformed face selectors in field 13 (fraction, negative non-sentinel, null, string, object or oversized number) were ignored by `_applyRemoteSplatEvent`, turning them into unrestricted-face paint and consuming the sender sequence. `readPaintOrder` now accepts only the established omitted legacy field, the emitter's `-1` sentinel, or a nonnegative safe-integer face index. This does not add a claim that the sender owns the selected face; it prevents invalid selector types from silently widening the footprint. The valid-kind regression now explicitly sends face 0, alongside the existing unrestricted and omitted-legacy controls.
+
 ## Validation and remaining work
 
-- `issue-522-paint-numeric-admission.test.mjs` (4 passed): unsafe required/optional fields, shader-intermediate overflow, subnormal radius, invalid kinds, direct deadline application, all nine valid kinds, corrected same-sequence payload and finite GPU attributes.
+- `issue-522-paint-numeric-admission.test.mjs` (4 passed): unsafe required/optional fields, shader-intermediate overflow, subnormal radius, invalid kinds and face selectors, direct deadline application, all nine valid kinds, corrected same-sequence payload and finite GPU attributes.
 - Existing `paint-canonical-order.test.mjs` (15 passed): normal opposing paint, legacy compatibility, duplicate/stale handling, same-match recreation, ownership handoff, causal and deadline ordering, wall drips and 30/60/120 Hz convergence.
 - Existing `issue-189-roller-max-width.test.mjs` (6 passed): native and composed roller paint, source units and wavy footprint compatibility. The three files above pass together: 25 tests, 0 failures.
 - Quick upstream/profile compatibility check passes. Full integration CI/build/browser execution remains with the integration owner.
