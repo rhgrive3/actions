@@ -2403,7 +2403,7 @@ A paired in-page same-state microbenchmark isolates the visual path: two identic
 - **S3比較条件と既知範囲:** 対象プロファイルは `patches/splatoon3/profile.json` の Ver. 11.3.0。任天堂の公開Q&Aは、ジャイロ感度を下げると画面の動きが抑えられること、ジャイロをOFFにするとRスティックだけで照準を合わせる操作になることを説明している。公開資料で確認できたのはこの設定上の挙動まで。S3の数値応答曲線、コントローラーごとのセンサー軸・符号・融合方法、入力失効時間は未公開または未確認であり、本実装の一致を主張しない。
 - **プロトコル根拠:**
   1. [WICG WebHID](https://wicg.github.io/webhid/index.html): `HIDInputReportEvent.reportId` はレポートID、`data` はIDバイトを除いた `DataView`。`requestDevice()` は transient activation がない場合に拒否される。
--  2. [dekuNukem IMU notes](https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/imu_sensor_notes.md): IMU frame、LSM6DS3の公称 `0.070 dps/LSB` と `936 / (cal_gyro_coeff - signed(cal_gyro_offset))` の個体別変換式を記載する。
+  2. [dekuNukem IMU notes](https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/imu_sensor_notes.md): IMU frame、LSM6DS3の公称 `0.070 dps/LSB` と `936 / (cal_gyro_coeff - signed(cal_gyro_offset))` の個体別変換式を記載する。
   3. [dekuNukem SPI flash notes](https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/spi_flash_notes.md): factory IMU recordは `0x6020..0x6037`、user recordはmagic `B2 A1` が `0x8026..0x8027`、校正値が `0x8028..0x803F`。各24-byte recordのgyro offsetはbyte 12..17、gyro coefficientはbyte 18..23。
   4. [Linux hid-nintendo.c](https://github.com/torvalds/linux/blob/master/drivers/hid/hid-nintendo.c): `0x8026` magicでuser校正を選び、`0x10` SPI read replyからrecordを読み、offsetを引き、scale-offset divisorが0の時は保護する実装を確認した。deku notesの係数式でrad/sへ変換する。
   5. [dekuNukem subcommand notes](https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/bluetooth_hid_subcommands_notes.md): output report `0x01` のサブコマンド `0x40` + `[0x01]` でIMU有効化、`0x03` + `[0x30]` で標準フル入力モードを指定。
@@ -2424,3 +2424,11 @@ A paired in-page same-state microbenchmark isolates the visual path: two identic
 **プレイへの影響:** native足元resolverが支持しない地点への照準や、stale endpointによってlanding扱いになる経路を抑える。launch起点armorの量・残り時間・break条件とpaint/turf creditはこの変更では変わらない。
 
 **確認状態:** 現行main sourceおよびissue #1005の最新コメントを確認し、launch起点のprofile armorを維持する。ロジックとnetwork snapshotのテストはブラウザ描画・Switch実機挙動・オンライン端末間の実測の代用ではない。現行Ver.11.3.0の正確なlanding timing/steering/range、armorの実機数値、Squid Spawn着地paint footprint、full acceptanceは未確認のまま残す。
+
+## 2026-10-09 — Integrated bilateral walking foot clearance (#1176)
+
+Reference conditions: Splatoon 3 Ver.11.3.0 ordinary humanoid walking, weak diagonal input and direction reversals. Nintendo's public update history does not specify joint clearance, shoe-spacing curves or the pairwise solver; these INKWAVE rig calibrations remain unverified against retail hardware. The externally appended #1176 source computes both current-frame feet before one symmetric clearance solve (`runtime/walk-foot-clearance.mjs`, called from `runtime/walk.mjs`). The previous sequential solve could read one foot from the previous frame, causing order-dependent lateral jitter when the shoes crossed. Reproduce through ordinary weak diagonals and reversals with the installed rig; the focused test compares swapped foot order and reflected poses. The correction changes rendered shoe separation only and writes no movement, collision, projectile, ink or weapon clocks. Native rig tests do not establish S3 gait/pose parity or physical-device rendering.
+
+## 2026-10-09 — Combined profile packaging
+
+The newly integrated runtime pushed precache bytes to5,258,543, beyond the existing5,242,880-byte ceiling. The builder now serializes the same parsed `profile.json` without source indentation. All parameters, metadata and source hashes are preserved; emitted assets are independently content-hashed, and the entire profile and runtime graph remain precached. The emitted regression compares every source/emitted JSON field and retains the existing5MiB precache and64KiB worker limits. This is packaging only, with no S3 tuning or gameplay change.

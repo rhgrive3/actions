@@ -71,6 +71,10 @@ for (const file of walk(PATCH_ROOT)) {
     const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
     const res = await esbuild.transform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
     fs.writeFileSync(dst, res.code);
+  } else if (rel === 'profile.json') {
+    // Serialize the same parsed tuning data without source indentation. Keep
+    // every field and the source hash; the emitted bytes get their own hash.
+    fs.writeFileSync(dst, JSON.stringify(JSON.parse(fs.readFileSync(file, 'utf8'))));
   } else fs.copyFileSync(file, dst);
 }
 for (const file of walk(QUALITY_ROOT)) {
