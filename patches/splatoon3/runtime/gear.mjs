@@ -21,13 +21,14 @@ export const ABILITIES = Object.freeze({
   actionIntensify: 'アクション強化', specialCharge: 'スペシャル増加量アップ',
   specialPower: 'スペシャル性能アップ',
   specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
-  quickSuperJump: 'スーパージャンプ時間短縮', stealthJump: 'ステルスジャンプ', subPower: 'cµブ性能アップ',
+  quickSuperJump: 'スーパージャンプ時間短縮', stealthJump: 'ステルスジャンプ',
+  dropRoller: '受け身術', subPower: 'cµブ性能アップ',
 });
 // Pinned 11.3.0 Leanny gear traits identify Object Shredder as shoes-only.
 // It is a fixed primary ability, not a stackable AP curve.
 export const SHOES_ABILITIES = Object.freeze(['objectShredder']);
 export function abilityAllowed(id, piece, slot, item) {
-  return Object.hasOwn(ABILITIES, id) && clothingAbilityAllowed(id, piece, slot, item) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0) && (!SHOES_ABILITIES.includes(id) || piece === 2 && slot === 0) && (id !== 'ninjaSquid' || piece === 1 && slot === 0) && (id !== 'stealthJump' || piece === 2 && slot === 0);
+  return Object.hasOwn(ABILITIES, id) && clothingAbilityAllowed(id, piece, slot, item) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0) && (!SHOES_ABILITIES.includes(id) || piece === 2 && slot === 0) && (id !== 'ninjaSquid' || piece === 1 && slot === 0) && (id !== 'stealthJump' || piece === 2 && slot === 0) && (id !== 'dropRoller' || piece === 2 && slot === 0);
 }
 export const emptyLoadout = () => Array.from({ length: 3 }, () => ({ main: 'none', subs: ['none', 'none', 'none'] }));
 export function normalizeLoadout(value) {
@@ -41,7 +42,7 @@ export function normalizeLoadout(value) {
 export function abilityPoints(loadout) {
   const ap = {};
   for (const part of normalizeLoadout(loadout)) {
-    if (part.main !== 'none' && part.main !== 'abilityDoubler') ap[part.main] = (ap[part.main] || 0) + 10;
+    if (part.main !== 'none' && part.main !== 'abilityDoubler' && part.main !== 'dropRoller') ap[part.main] = (ap[part.main] || 0) + 10;
     for (const sub of part.subs) if (sub !== 'none') ap[sub] = (ap[sub] || 0) + (part.item === SPLATFEST_TEE && part.main === 'abilityDoubler' ? 6 : 3);
   }
   return ap;
@@ -78,12 +79,57 @@ export function modifiersFor(loadout, curves, points = abilityPoints(loadout)) {
   return result;
 }
 const STORAGE = 'inkwave.splatoon3.gear.v1';
+const DROP_ROLLER_BUFF_SECONDS = 3;
+const DROP_ROLLER_CONTROL_SECONDS = 0.3;
+const DROP_ROLLER_BUFFS = Object.freeze(['runSpeed', 'swimSpeed', 'inkResistance']);
+let dropRollerApi = null;
+const dropRollerSequences = new WeakMap();
+
+// The owner samples the live stick at the Super Jump landing boundary. This is
+// a separate landing action; it never creates or advances a Squid Roll state.
+export function startDropRoller(actor, input) {
+  const api = dropRollerApi, match = api?.G?.match;
+  if (!api || !actor?.alive || actor.remote || !actor.grounded || actor.form !== 'kid' ||
+      actor.specialActive || actor.superJumpState || match?.attract || match?.range || match?.opts?.range ||
+      !match || typeof match.playing !== 'function' || !match.playing() ||
+      actor.s3?.loadout?.[2]?.main !== 'dropRoller') return false;
+  const x = Number(input?.x), z = Number(input?.z), length = Math.hypot(x, z);
+  if (!Number.isFinite(length) || length <= 1e-8) return false;
+  const dx = x / length, dz = z / length;
+  const character = actor.character;
+  // This INKWAVE control/pose window is not a Nintendo travel measurement.
+  // The Drop Roller distance and velocity remain unverified; do not infer them
+  // from the separate Squid Roll tuning or a dualie roll's current state.
+  const duration = DROP_ROLLER_CONTROL_SECONDS;
+  const sequence = (dropRollerSequences.get(actor) || 0) % 0x7fffffff + 1;
+  dropRollerSequences.set(actor, sequence);
+  actor.s3 ||= {};
+  actor.s3.dropRoller = { id: sequence, x: dx, z: dz, remaining: duration, duration, bornAt: api.G.time || 0 };
+  const yaw = Number.isFinite(character?.root?.rotation?.y) ? character.root.rotation.y : (actor.yaw || 0);
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const play = character?._netTrig || character?.trigger;
+  play?.call(character, 'dodge', { x: dx * cy - dz * sy, z: dx * sy + dz * cy, t: duration });
+  return true;
+}
+
+function cancelDropRoller(actor) {
+  if (actor?.s3) delete actor.s3.dropRoller;
+}
+
+function clearDropRollerLife(actor) {
+  if (!actor?.s3) return;
+  delete actor.s3.dropRoller;
+  actor.s3.dropRollerBuffRemaining = 0;
+  delete actor.s3.dropRollerBuffBornAt;
+}
+
 export function readLoadout() {
   try { return normalizeLoadout(JSON.parse(globalThis.localStorage?.getItem(STORAGE) || 'null')); }
   catch { return emptyLoadout(); }
 }
 export function installGear(api, tuning) {
   const { Actor, WeaponRunner, G } = api;
+  dropRollerApi = api;
   configureSwimStealth(api, tuning);
   const reset = Actor.prototype.reset, setWeapon = Actor.prototype.setWeapon;
   const refreshFlow = actor => refreshFlowEffects(actor, api, tuning, abilityPoints, gearCurve);
@@ -96,9 +142,12 @@ export function installGear(api, tuning) {
     const loadout = a.isLocal && !transient ? readLoadout() : normalizeLoadout(a.s3.loadout);
     const beforeCost = a.weapon?.specialCost, beforeSpecial = a.special;
     a.s3.loadout = loadout;
-    const points = conditionalPoints(a, abilityPoints(loadout), G.match, tuning.conditionalGear);
-    a.s3.abilityPoints = Object.freeze({ ...points }); // actor-local canonical effective AP
-    a.s3.modifiers = modifiersFor(loadout, tuning.gear, points);
+    const points = { ...conditionalPoints(a, abilityPoints(loadout), G.match, tuning.conditionalGear) };
+    const effectivePoints = { ...points };
+    if (!a.remote && (a.s3.dropRollerBuffRemaining || 0) > 1e-10)
+      for (const id of DROP_ROLLER_BUFFS) effectivePoints[id] = (effectivePoints[id] || 0) + 30;
+    a.s3.abilityPoints = Object.freeze({ ...points }); // permanent/equipment AP stays canonical
+    a.s3.modifiers = modifiersFor(loadout, tuning.gear, effectivePoints);
     const m = a.s3.modifiers;
     m.ninjaSquid = loadout[1].main === 'ninjaSquid';
     m.objectShredder = loadout[2].main === 'objectShredder';
@@ -106,6 +155,7 @@ export function installGear(api, tuning) {
     // Its Ver. 11.0.0 movement penalty is consumed by the Super Jump flight
     // state and deliberately does not alter Quick Super Jump AP curves.
     m.stealthJump = loadout[2].main === 'stealthJump';
+    m.dropRoller = loadout[2].main === 'dropRoller';
     const ap = points, extra = tuning.gearExtra;
     m.specialPowerAP = ap.specialPower || 0;
     const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
@@ -155,7 +205,7 @@ export function installGear(api, tuning) {
     refreshFlow(a);
   }
   Actor.prototype.reset = function (...args) {
-    const result = reset.apply(this, args); equip(this);
+    const result = reset.apply(this, args); clearDropRollerLife(this); equip(this);
     if (this.remote) delete this.s3.clothingRemote;
     this.s3.recoverStopRemaining = 0; this.s3.rollerRefillMode = false; this.s3.enemyInkTime = 0; this.s3.enemyInkAwayTime = 0;
     this.s3.swimStealth = null; this.s3.netSwimVisibility = null;
@@ -164,14 +214,57 @@ export function installGear(api, tuning) {
     this.s3.chargerInterruptRecover = 0;   // #737: a new life never inherits a charge-interruption lock
     return result;
   };
-  const respawn = Actor.prototype.respawn, finishFrame = Actor.prototype._finishFrame;
+  const respawn = Actor.prototype.respawn, finishFrame = Actor.prototype._finishFrame, actorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (...args) {
+    const state = this.remote ? null : this.s3?.dropRoller;
+    const move = this.intent?.move;
+    if (!state || !move) return actorUpdate.apply(this, args);
+    if (!this.alive || this.specialActive || this.superJumpState || this.form !== 'kid' || !this.grounded ||
+        this.climbing || this.intent.jump || this.intent.special || this.intent.squid) {
+      cancelDropRoller(this);
+      return actorUpdate.apply(this, args);
+    }
+    const x = move.x, z = move.z;
+    move.x = state.x; move.z = state.z;
+    try { return actorUpdate.apply(this, args); }
+    finally { move.x = x; move.z = z; }
+  };
+  function tickDropRoller(actor, dt) {
+    if (actor.remote || !Number.isFinite(dt) || dt <= 0) return;
+    let bornBuff = false;
+    const action = actor.s3?.dropRoller;
+    if (action) {
+      if (!actor.alive || actor.specialActive || actor.superJumpState || actor.form !== 'kid' ||
+          !actor.grounded || actor.climbing) cancelDropRoller(actor);
+      else if ((G.time || 0) !== action.bornAt) {
+        action.remaining = Math.max(0, action.remaining - dt);
+        if (action.remaining <= 1e-10) {
+          cancelDropRoller(actor);
+          actor.s3.dropRollerBuffRemaining = DROP_ROLLER_BUFF_SECONDS;
+          actor.s3.dropRollerBuffBornAt = G.time || 0;
+          equip(actor, true);
+          bornBuff = true;
+        }
+      }
+    }
+    const buff = actor.s3?.dropRollerBuffRemaining || 0;
+    if (!bornBuff && buff > 0 && (G.time || 0) !== actor.s3.dropRollerBuffBornAt) {
+      actor.s3.dropRollerBuffRemaining = Math.max(0, buff - dt);
+      if (actor.s3.dropRollerBuffRemaining <= 1e-10) {
+        actor.s3.dropRollerBuffRemaining = 0;
+        delete actor.s3.dropRollerBuffBornAt;
+        equip(actor, true);
+      }
+    }
+  }
   Actor.prototype.respawn = function (...args) {
     const history = this.s3?.quickRespawnHistory, splats = this.s3?.splatsThisLife;
-    const result = respawn.apply(this, args);
+    const result = respawn.apply(this, args); clearDropRollerLife(this); equip(this, true);
     if (history) { this.s3.quickRespawnHistory = history; this.s3.splatsThisLife = splats || 0; }
     return result;
   };
   Actor.prototype._finishFrame = function (...args) {
+    tickDropRoller(this, args[0]);
     updateSwimStealth(this); return finishFrame.apply(this, args);
   };
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };
@@ -238,6 +331,7 @@ export function installGear(api, tuning) {
       !['water', 'fall', 'out', 'bounds', 'void'].includes(cause);
     const result = splat.apply(this, args);
     if (alive && !this.alive) {
+      clearDropRollerLife(this); equip(this, true);
       this.special = before * Math.max(0, (penalty.incoming ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
       const history = this.s3.quickRespawnHistory;
       if (enemyDeath) {
@@ -248,6 +342,17 @@ export function installGear(api, tuning) {
       this.respawnTimer += penalty.frames / 60;
       this.s3.lastDeathGear = penalty;
     }
+    return result;
+  };
+  const superJump = Actor.prototype.superJump, startSpecial = Actor.prototype._startSpecial;
+  Actor.prototype.superJump = function (...args) {
+    const result = superJump.apply(this, args);
+    if (result) cancelDropRoller(this);
+    return result;
+  };
+  Actor.prototype._startSpecial = function (...args) {
+    const result = startSpecial.apply(this, args);
+    if (this.specialActive) cancelDropRoller(this);
     return result;
   };
   api.on('splatted', ({ attacker, victim }) => {
@@ -315,7 +420,7 @@ export function installGear(api, tuning) {
         const row = document.createElement('label'); const labelText = document.createElement('span'); labelText.dataset.slot = String(slot); row.append(labelText);
         const select = document.createElement('select'); select.setAttribute('aria-label', `${label} ${slot === 0 ? 'メイン' : '追加' + slot}`);
         for (const [id, name] of Object.entries(ABILITIES)) {
-          if (!abilityAllowed(id, piece, slot, id === 'abilityDoubler' ? SPLATFEST_TEE : loadout[piece].item) || id !== 'none' && !CLOTHING_ABILITIES.includes(id) && !HEAD_ABILITIES.includes(id) && !SHOES_ABILITIES.includes(id) && id !== 'ninjaSquid' && id !== 'stealthJump' && !tuning.gear[id]) continue;
+          if (!abilityAllowed(id, piece, slot, id === 'abilityDoubler' ? SPLATFEST_TEE : loadout[piece].item) || id !== 'none' && !CLOTHING_ABILITIES.includes(id) && !HEAD_ABILITIES.includes(id) && !SHOES_ABILITIES.includes(id) && id !== 'ninjaSquid' && id !== 'stealthJump' && id !== 'dropRoller' && !tuning.gear[id]) continue;
           const option = document.createElement('option'); option.value = id; option.textContent = name; select.append(option);
         }
         select.value = slot === 0 ? loadout[piece].main : loadout[piece].subs[slot - 1];
