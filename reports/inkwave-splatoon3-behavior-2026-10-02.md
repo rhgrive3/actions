@@ -2371,3 +2371,124 @@ INKWAVE change: `setCollision` takes an explicit `depleted` flag and, only when 
 Reproduction and confirmation: `patches/splatoon3/tests/issue-305-depletion-collision.test.mjs` runs the real composed source graph with real `Projectiles`. With the fix it is 4/4 (`logs/residual-test-green.log`): horizontal 3-drop and vertical 3-drop depletion-marked volleys carry 0.5-scaled player/field magnitudes with unchanged chronology and teammate window; full volleys through the real windup at 30/60/120 Hz stay exactly at the sourced radii and pay the unchanged 8.5 cost; the scaled radius at a given age is identical across cadence grids; an unmarked reduced-count volley and the zero-ink no-volley boundary are untouched. Adjacent suites stay green: `roller.test.mjs` + `weapons-fidelity-source.test.mjs` + `roller-flick-movement.test.mjs` 30/30 (`logs/neighbor-tests.log`); `roller-unit-replication.test.mjs` + `composed-hit-unit-packet.test.mjs` 12/12 (`logs/network-tests.log`).
 
 Player impact and limits: a depleted Roller round's hit volume (owner capsule via `fidelityPlayerCollision` and world sweep via `fidelityFieldCollision`) now matches the sourced 0.5 scale instead of the full volley's, while its growth timing stays the existing sourced chronology. Normal swings are byte-identical. Remaining limits are recorded, not guessed: the exact per-frame native radius chronology on hardware is unverified; the appended near unit scales only where a composition supplies its birth mark; packet-reconstructed remote rounds without the mark keep the sourced record — remote globs are presentation and the network authority path is unchanged. No browser rendering, two-device network run or Switch capture was performed for this residual.
+
+## 2026-10-09 — Special retires the old Dualies post-roll stance (#1089)
+
+At `main@5d0be6b7`, holding ZR through a successfully activated Special froze `s3Turret` while Actor bypassed WeaponRunner, then resumed the old 4F/zero-spread firing state. The existing committed `special:use` boundary now retires that stance and both post-roll deferred-shot owners for the authoritative Dualies actor. Failed activation, roll count, ink and recovery/movement clocks retain their existing owners. A same-composition negative control reproduces the old resumption; actual Dodge → native Special completion → actual projectile births now resume normal 5F/nonzero spread, while a new Dodge restores turret normally. Fixed 30/60/120 Hz schedules agree. This is a state-interruption repair against the existing S3 11.3.0 comparison contract; the INKWAVE Tidal Slam kit and Nintendo hardware parity remain unverified. See [the #1089 report](inkwave-dualies-special-interruption-1089.md).
+
+## 2026-10-09 — Heavy Splatling maximum envelope / bloom separation (#940, partial)
+
+Reference: Splatoon 3 Ver.11.3.0 Heavy Splatling, no accuracy-changing gear. The [pinned Spinner table](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json) gives standing/air deviation envelopes 3.3/7 degrees, independent pitch 1.6 degrees, and jump-recovery endpoints 25/70F. It has no Shooter-style standing per-shot bias build/recovery fields.
+
+Current main 5d0be6b7 already removed stream bloom buildup, but `runtime/splatling.mjs::_spreadDeg` still multiplies every grounded envelope by the inherited `spreadFirst=.6` (1.98 degrees). The jump wrapper separately reapplies generic bloom to its 7→3.3-degree envelope. Charge for 72F after startup, release ZR and inspect the first, second, fifteenth and final emitted shot: the same unexplained envelope shrink applies throughout.
+
+Scoped correction: normal and jump `_spreadDeg` now publish the full sourced envelope to both gameplay and the existing HUD projection without multiplying by generic `spreadFirst`/bloom. The build adapter excludes Splatling from Shooter trigger-release bloom recovery. The inherited radial sampler, independent pitch, native charge/ink reservation, 4F stream schedule, owner wire vectors and ghost reconstruction stay in place. No change is made under `inkwave-public/`.
+
+Evidence conflict / remaining work: the [Heavy Splatling page](https://splatoonwiki.org/wiki/Heavy_Splatling#Splatoon_3) describes 30% outer shots, while the [detailed deviation explanation](https://splatoonwiki.org/wiki/User:XarrotD/Data_Explanation#Deviation_Calculations) describes a continuous power-law distribution using bias. The raw value `Stand_DegBiasMax=.3` alone does not prove a Bernoulli selection. A proposed two-kernel implementation was therefore withdrawn before publication. This commit does **not** introduce that probability model or invent an inner-reticle angle. The existing uniform-area radial PDF and the intermediate linear jump-recovery curve remain unverified approximations, so #940 stays open. Maximum-envelope correction is not a claim of complete S3 shot-distribution fidelity.
+
+Verification: the five new regressions fail against unmodified main (0/5) and pass against composed source and the emitted/minified build (5/5 each). The focused Splatling, native jump, weapon-edgecase and seven-claims Node group passes 56/56. Coverage includes real projectile envelope/pitch endpoints, unchanged four-draw RNG ownership, no bloom/first-shot dependency, source-anchor fail-closed guards, 40 bullets with identical seeded vectors at 30/60/120Hz rendering, released/reheld ZR, and existing native two-jump/landing/reset/ghost regressions. `scripts/check-inkwave-patches.mjs --quick`, build and diff checks pass. No full CI, physical mobile, or Switch comparison is claimed. Headless Chromium verification remains unavailable here because its required process-singleton socket is denied even after the supported escalation retry.
+
+## 2026-10-09 — Blaster no-jump ledge-fall scalar residual (#1102)
+
+Reference: Splatoon 3 Ver.11.3.0 standard Blaster, no gear or 10/57 AP Intensify Action. The [deviation explanation's Swerve section](https://splatoonwiki.org/wiki/User:XarrotD/Data_Explanation#Swerve) distinguishes an admitted jump from walking off a ledge: falling alone retains normal swerve. The pinned `WeaponBlasterMiddle` fields already bound to the profile are `Stand_DegSwerve=0` and `Jump_DegSwerve=10`.
+
+Current-main residual: #1142 already changed jump-state admission to the native `s3JumpSerial`; this work preserves it. Nevertheless, `runtime/weapons.mjs::_spreadDeg` chose `spreadAir` whenever the state was inactive and `grounded=false`. Reproduction on composed main 5d0be6b7: `jumpSerial=0`, state inactive with null age/zero bias, but HUD/gameplay spread=10; a deterministic emitted round deviated 5 degrees. Thus the earlier state-admission fix alone did not prevent inaccurate ledge shots.
+
+Correction: when the sourced Blaster jump state is supported, an inactive state returns its normal/ground endpoint regardless of airborne status. Only an active admitted-jump state returns the jump envelope. Unsupported-profile fallback is unchanged. The existing jump owner, timing/bias curve, gear scaling, projectile damage/movement, and network protocol are untouched. Two older tests that incorrectly treated every airborne frame as a jump now distinguish a ledge fall from an explicitly admitted jump.
+
+Verification: the new fixture runs full production composition, real native Actor/Physics/Level and real projectiles. Actors walk or jump off an actual 4-unit-high platform and land on a lower floor; no grounded transition is fabricated for the ledge scenario. At 0/10/57 AP, falling without jumping keeps a null timer/zero scalar and emits straight native rounds. Real jumps retain the existing 10-degree envelope/initial 0.5 bias state, 25F hold, recovery across landing, and grounded 70F completion. Fixed 60Hz traces and seeded launch vectors are identical under 30/60/120Hz rendering. Reset/death/weapon changes do not manufacture a penalty; the network recorder preserves the straight owner vector and the ghost cannot resample local jump spread. Five regressions pass on composed source and on the minified build. The pre-fix three-case fixture fails its real-ledge case (10 != 0), with the actual-jump and cadence controls still passing. Build, quick checks and diff checks pass.
+
+Limits: this corrects the no-jump path only; it does not assert new fidelity for the pre-existing actual-jump intermediate bias/PDF. Full physical Switch/mobile and browser rendering comparisons have not been performed for this change. The available cloud headless Chromium cannot launch because its process-singleton socket is denied. No aggregate CI result is claimed by these focused tests.
+
+## 2026-10-09 — #412 Super Jump chain destinations
+
+Current main `5d0be6b7` already commits ordinary teammate destinations (#362) but
+still rejects a living target in Super Jump charge/flight. Actor and all composed
+Map confirmation paths now admit a finite committed destination and copy it;
+transient position, old grounded position and unvalidated remote flight hints
+are never fallback destinations. Owner-validated remote snapshots use their
+existing restored state; no packet or motion parameter changes are needed.
+Charge/flight chains, deferred respawn, input/UI paths and actual native landing
+have focused coverage, with identical 30/60/120 Hz fixed-step traces. Browser,
+two-device and Switch comparisons remain unverified. See
+[the scoped report](inkwave-superjump-chain-412-2026-10-09.md).
+
+## 2026-10-09: #574 Blaster air-burst knockback (partial)
+
+Standard Blaster's pinned Ver.11.3.0 `BlastParam.KnockBackParam` (700/.8/3.5) now drives an explicit INKWAVE-calibrated air-burst response, separately from 70..50 HP damage. Native input braking no longer deletes the new horizontal impulse before its first collision-resolved step. Existing authenticated/life-scoped/deduplicated hit delivery applies it once on the victim owner; ghosts do not apply it. New composed gameplay, real Level/Physics, 30/60/120 fixed-step and two-owner network tests pass 10/10. See [the source, reproduction, implementation and remaining gaps](inkwave-blaster-knockback-574-2026-10-09.md).
+
+This reuses #535's documented calibration, not a verified Nintendo acceleration/Bias formula. Direct/terrain knockback and Switch/body-state parity are still unverified; **Refs #574 only, do not auto-close**.
+
+### Issue #949 / PR #1182: retain Boss blocked-hit feedback without spending volley budget
+
+PR #1182's admission gate fixes known rejected Slosher volley spending, including guest-local rejection, but suppresses the existing native `boss:hit blocked` event and grey `IMMUNE` HUD popup. The follow-up preserves that implementation and passes only invulnerable/hidden live-body rejections through native `Boss.hit` with the unspent delta; the rejected maximum is never committed. Real production-composed Projectiles/Boss/HUD tests show the missing popup with the fallback removed, then local/host/guest feedback, no rejected guest send, a single later accepted maximum, independent crablets, native popup throttling, and identical fixed-step results at 30/60/120 Hz. New plus existing admission tests pass 9/9. The wider 38-test set has two independently reproducible pre-existing Boss numeric-contract failures; quick validation also exposes two existing PR profile/status omissions. Details: `reports/inkwave-boss-blocked-feedback-949.md`.
+
+Reference remains Splatoon 3 11.3.0, Slosher without gear; INKWAVE's original Boss mode and text are not asserted equivalent to a retail Boss encounter. No tuning value changed. These are native logic/event results, not browser, two-device network, or Nintendo hardware measurements.
+
+## 2026-10-09 — #1178 snapshot guard preserves pending-lethal HP
+
+PR #1182 head `1d669600` added scalar validation for owner snapshots, but its
+nonnegative HP check rejected a legitimate INKWAVE state: an accepted lethal hit
+leaves the actor alive with finite negative HP until the next fixed simulation
+tick commits the splat. The existing native adoption regression fails on that
+unaltered head, before any #412 integration. Losing the snapshot can lose the
+pending hit's ownership/attribution when the original owner leaves.
+
+The correction permits signed HP within the guard's existing finite magnitude
+bound. Ink, special gauge and charge remain nonnegative; NaN, infinities,
+strings, null and out-of-range HP remain rejected. Owner/life/sequence checks,
+pending-hit restoration and splat timing are unchanged. This is an INKWAVE
+network-validation compatibility correction under the existing Splatoon 3
+Ver.11.3.0 comparison scope; the safety magnitude is not a Nintendo HP or damage
+parameter, and no retail networking or hardware timing claim is made.
+
+The six existing native adoption cases and four snapshot-schema cases pass
+10/10 after the correction, including the originally failing lethal transfer.
+With #412 integrated, the chain-jump, owner snapshot/adoption, snapshot-schema,
+respawn-navigation and pin-tap subset passes 70/70, zero skipped. These are Node
+integration checks, not a two-device/browser/Switch session or full CI gate.
+
+## 2026-10-09 — #950 delayed title/Mode navigation lifetime on PR #1182
+
+PR #1182 `1d669600` already protects ordinary title interruption and disposal.
+This update makes transformed native Menus the single title/Mode timer owner,
+retiring the parallel runtime title override while preserving its accepted
+behavior. Four additional public-state failures on that exact baseline are
+covered: invalid navigation swallowing title confirmation, queued old title
+callback admitting repeated confirmation, old Mode selection advancing a later
+visit to Setup, and queued wipe resurrecting a disposed screen. Exact-baseline
+counterfactuals fail 4/4; corrected title/navigation acceptance passes 26/26.
+Related tests pass 52 with 3 emitted-only skips. Whole quality has four
+baseline-reproduced failures plus one file-level failure (isolated rerun passes
+10/10), and quick validation reports pre-existing stale numeric status;
+neither is presented as full acceptance. Production build succeeds. Menu delays,
+wipe/settings behavior and gameplay values are unchanged; no new Nintendo or
+physical-device calibration is claimed. See [the full comparison and limits](inkwave-menu-navigation-950-2026-10-09.md).
+
+### Issue #1179 / PR #1182: dead-attacker rejection before replay admission
+
+Latest head `f23549b0` already rejects over-limit Boss wire packets before sequence reservation; that implementation is preserved. One remaining clause now refuses a dead attacker before `lastBossHit` advances, instead of relying on the later authoritative rejection. The same production composition with only the new clause removed reproduces a spent sequence and suppressed valid retry. Real body/crablet ingress, numeric bounds, owner/life/match checks and valid internal finite damage beyond the existing wire cap are tested separately; an incorrect global-cap test assumption is removed without imposing new gameplay limits. Nine Boss-hit tests plus adjacent suites pass 34/34; syntax, whitespace and latest-base quick checks pass. Details: `reports/inkwave-boss-ingress-1179.md`.
+
+Splatoon 3 reference remains 11.3.0. This original INKWAVE Boss protocol correction has no asserted retail numeric equivalence or new balance number. Native-source results do not substitute for browser/relay/hardware validation or aggregate CI.
+
+### PR #1182: preserve the offline budget by separating build-time transforms
+
+The initial failed combined staging tree exceeded the unchanged 5 MiB precache
+ceiling by 3,504 bytes (5,246,384 bytes); its total asset payload was below the
+separate 12 MiB revision ceiling. The final base `2d4121cf` adds another 14 bytes
+to netmatch, making the removal below a net saving of 3,777 bytes against that base. Four existing runtime modules carried source-rewrite
+functions and anchor strings that only the build dispatcher calls. Those
+transforms now live in explicitly excluded build-only files. The existing
+runtime URLs, gameplay/pointer/layout/lobby helpers and helper bodies remain
+unchanged. The transformed mobile, showcase and resource source files are
+byte-identical to the pre-separation composition.
+
+The production build now precaches 5,242,621 bytes, leaving 259 bytes at the
+same ceiling; all 300 precache entries remain. Worker size is 59,941 bytes,
+and declared revision bytes are 9,207,920. Native-source checks pass 51/51
+(two emitted-site checks require the built-site environment). The emitted-site
+subset passes 51/51 with no skips, including exact-commit input identity and
+verified offline replay of all 300 precache entries. The #415 negative control
+intentionally remains source-only because it needs the unpatched clamp. Startup
+payload and dependency gates pass. No gameplay values or Splatoon 3 11.3.0 comparison
+claims change. File/VM checks are not physical-device or browser measurements.

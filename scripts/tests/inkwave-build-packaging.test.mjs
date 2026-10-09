@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { networkIdentity } from '../../patches/network-replication/adapter.mjs';
+import { qualityIdentity } from '../../patches/local-quality/adapter.mjs';
 import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../lib/inkwave-build-only-modules.mjs';
 import { World } from '../../patches/loading-cache/tests/worker-fixture.mjs';
@@ -19,6 +20,7 @@ const runtimeHelpers = [
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
   'patches/local-quality/first-touch-adapter.mjs',
   'patches/local-quality/issue-472-adapter.mjs',
+  'patches/local-quality/touch-relayout.mjs',
 ];
 
 test('excluded modules have audited build-only exports; mixed runtime adapters remain shipped', () => {
@@ -30,11 +32,40 @@ test('excluded modules have audited build-only exports; mixed runtime adapters r
       n.declaration?.id?.name || n.declaration?.declarations?.map(d => d.id.name) || n.specifiers?.map(s => s.exported.name) || '?');
     assert(exports.length > 0, file);
     const expected = file === composer ? ['createLazyComposerTarget', 'adaptComposerTarget', 'revertComposerTarget']
-      : file === composerFormat ? ['composerGradeKeepsPackedTargetNonnegative', 'selectComposerTargetFormat', 'configureComposerColorTargets'] : [];
+      : file === composerFormat ? ['composerGradeKeepsPackedTargetNonnegative', 'selectComposerTargetFormat', 'configureComposerColorTargets']
+      : file === 'patches/local-quality/lobby-quality-adapter.mjs' ? ['patchLobbySetShowcase'] : [];
     assert(exports.every(name => /^adapt[A-Z]/.test(name) || expected.includes(name)),
       `New runtime export requires removing ${file} from the build-only list: ${exports}`);
   }
   for (const file of runtimeHelpers) assert(!BUILD_ONLY_PATCH_MODULES.has(file), file);
+});
+
+const extractedTransforms = [
+  ['patches/local-quality/first-touch-adapter.mjs', 'patches/local-quality/first-touch-source-adapter.mjs', 'adaptFirstTouch', ['isMobilePointer', 'adoptCanvasTouch', 'continueCanvasTouch']],
+  ['patches/local-quality/touch-relayout.mjs', 'patches/local-quality/touch-relayout-adapter.mjs', 'adaptTouchRelayout', ['physicalOrientation', 'createTouchRelayout']],
+  ['patches/local-quality/issue-472-adapter.mjs', 'patches/local-quality/lobby-quality-adapter.mjs', 'patchLobbySetShowcase', ['ISSUE_472_ROOT', 'ISSUE_472_BASELINE', 'LOBBY_SHADOW_INTERVAL_LOW', 'isTouchMobile', 'resolveLobbyQualityName', 'lobbyShadowDue']],
+  ['patches/splatoon3/runtime/issue-415-adapter.mjs', 'patches/splatoon3/enemy-ink-recovery-adapter.mjs', 'adaptIssue415', ['resetEnemyInkRecovery']],
+];
+
+test('runtime helper URLs retain their exports without carrying build-time source transforms', async () => {
+  const quality = qualityIdentity();
+  for (const [runtime, transformer, transformName, runtimeExports] of extractedTransforms) {
+    assert(!BUILD_ONLY_PATCH_MODULES.has(runtime), runtime);
+    assert(BUILD_ONLY_PATCH_MODULES.has(transformer), transformer);
+    const mod = await import(new URL(runtime, root));
+    assert.deepEqual(Object.keys(mod).sort(), [...runtimeExports].sort(), runtime);
+    assert.equal(typeof (await import(new URL(transformer, root)))[transformName], 'function');
+    const source = fs.readFileSync(new URL(runtime, root), 'utf8');
+    const tokens = [];
+    parse(source, { ecmaVersion: 'latest', sourceType: 'module', onToken: tokens });
+    assert(!tokens.some(token => token.type.label === 'name' && token.value === transformName),
+      'runtime must not import/re-export its build-time transform: ' + runtime);
+    if (transformer.startsWith('patches/local-quality/')) {
+      const relative = transformer.slice('patches/local-quality/'.length);
+      const hash = crypto.createHash('sha256').update(fs.readFileSync(new URL(transformer, root))).digest('hex');
+      assert.equal(quality[relative], hash, transformer);
+    }
+  }
 });
 
 const site = process.env.INKWAVE_BUILT_SITE && path.resolve(process.env.INKWAVE_BUILT_SITE);

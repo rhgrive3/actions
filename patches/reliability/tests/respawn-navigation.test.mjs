@@ -79,7 +79,7 @@ test('#409 same-frame X cancellation wins over queued respawn admission and rost
  const q=await rig();q.dead();q.frame([3]);q.frame([14]);q.frame([1]);q.G.actors=[q.a,q.allies[1],q.allies[0],q.allies[2]];
  q.a.respawn();q.a.grounded=true;q.m.updateController(STEP);assert.ok(q.a.superJumpState.target.equals(q.allies[0].pos));
 });
-test('#409 direct request rejects hidden, stale, enemy and already-jumping targets',async()=>{
+test('#409 direct request rejects hidden, stale, enemy and unconfirmed jumping targets',async()=>{
  const h=await rig();h.dead();h.m.updateController(STEP);assert.equal(h.c.requestMapJump(h.allies[0]),false);
  h.input.keys.add('Tab');h.input.pressed.add('Tab');h.m.updateController(STEP);const stranger=h.make();stranger.team=1;
  for(const target of [null,{},stranger,h.a,new h.THREE.Vector3(NaN,0,0)])assert.equal(h.c.requestMapJump(target),false);
@@ -156,4 +156,28 @@ for (const action of ['button','neutral-axis','keyboard','disconnect-axis','repl
   const p=pad();if(action==='replacement-axis')p[0].id='new-pad';p[0].axes=[0,0,0,0];h.setPads(p);h.input.pollPad();h.input.endFrame();p[0].axes=[.9,-.5,.8,.7];h.input.pollPad();
  }
  h.m.updateController(STEP);assert.equal(h.c.pendingRespawnJump,null);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);assert.equal(h.a.superJumpState,null);
+});
+
+for (const phase of ['charge', 'flight']) test(`#412 deferred respawn revalidates a ${phase} teammate destination on confirmation`, async () => {
+  const h = await rig(), ally = h.allies[0], destination = new h.THREE.Vector3(18, 0, 6);
+  assert.equal(ally.superJump(destination), true);
+  // This controller fixture does not integrate the ally's flight; admission
+  // already owns the same immutable destination in both supported phases.
+  ally.superJumpState.phase = phase;
+  h.dead(); h.frame([3]); h.frame([14]); h.frame([1]);
+  assert.equal(h.c.pendingRespawnJump.actor, ally);
+  assert.equal(h.a.superJumpState, null);
+  h.a.respawn(); h.a.grounded = true; h.m.updateController(STEP);
+  assert.ok(h.a.superJumpState.to.equals(destination));
+  assert.notEqual(h.a.superJumpState.to, ally.superJumpState.to);
+  assert.equal(h.c.pendingRespawnJump, null);
+
+  const q = await rig(), changed = q.allies[0];
+  assert.equal(changed.superJump(new q.THREE.Vector3(18, 0, 6)), true);
+  q.dead(); q.frame([3]); q.frame([14]); q.frame([1]);
+  assert.equal(q.c.pendingRespawnJump.actor, changed);
+  changed.superJumpState = { phase };
+  q.a.respawn(); q.a.grounded = true; q.m.updateController(STEP);
+  assert.equal(q.a.superJumpState, null, 'lost destination is rejected again after respawn');
+  assert.equal(q.c.pendingRespawnJump, null);
 });

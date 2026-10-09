@@ -1,3 +1,4 @@
+import { adaptSuperJumpChain } from './superjump-chain-adapter.mjs';
 import { adaptNetHitPayload } from './net-hit-payload-adapter.mjs';
 import { adaptIssue464 } from './issue-464-adapter.mjs';
 // Build-only reliability corrections, after gameplay and touch-layout adaptation.
@@ -39,12 +40,12 @@ import { adaptMapToggle } from './map-toggle-adapter.mjs';
 
 export const RELIABILITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 // adaptMapLook runs after the shared reliability stack so mapUp ownership composes with input/pause adapters.
-const adapters = [adaptInput, adaptJoyConPair, adaptNet, adaptResults, adaptMobile, adaptTouchEdges, adaptIntro, adaptStart, adaptAttract, adaptHud, adaptGyro, adaptGyroInvert, adaptPause, adaptCombatLife, adaptCombatCredit, adaptInputOwnership, adaptControls, adaptNavigation, adaptRespawnNavigation, adaptMapGyro, adaptSubAction, adaptSpecialBarrier, adaptSpecialWater, adaptTouchPointerLock, adaptTouchGyroOwner, adaptPadHandoff, adaptIssue464, adaptNetHitPayload, adaptHoldCancel, adaptPinTap, adaptMapLook, adaptSixFollowup, adaptEightFollowup, adaptMapToggle];
+const adapters = [adaptInput, adaptJoyConPair, adaptNet, adaptResults, adaptMobile, adaptTouchEdges, adaptIntro, adaptStart, adaptAttract, adaptHud, adaptGyro, adaptGyroInvert, adaptPause, adaptCombatLife, adaptCombatCredit, adaptInputOwnership, adaptControls, adaptNavigation, adaptRespawnNavigation, adaptMapGyro, adaptSubAction, adaptSpecialBarrier, adaptSpecialWater, adaptTouchPointerLock, adaptTouchGyroOwner, adaptPadHandoff, adaptIssue464, adaptNetHitPayload, adaptHoldCancel, adaptPinTap, adaptMapLook, adaptSixFollowup, adaptEightFollowup, adaptMapToggle, adaptSuperJumpChain];
 export function adaptReliability(rel, code) {
   for (const adapt of adapters) code = adapt(rel, code);
   return code;
 }
 export function reliabilityIdentity() {
-  const files = ['map-toggle-adapter.mjs', 'menu-takeover.mjs', 'net-hit-payload-adapter.mjs', 'issue-464-adapter.mjs', 'adapter.mjs', 'special-water-adapter.mjs', 'special-barrier-adapter.mjs', 'sub-action-adapter.mjs', 'input-ownership-adapter.mjs', 'controls-adapter.mjs', 'navigation-adapter.mjs', 'respawn-navigation-adapter.mjs', 'map-gyro-adapter.mjs', 'touch-pointerlock-adapter.mjs', 'input-adapter.mjs', 'joycon-pair-adapter.mjs', 'net-adapter.mjs', 'results-adapter.mjs', 'mobile-adapter.mjs', 'touch-edge-adapter.mjs', 'intro-adapter.mjs', 'start-adapter.mjs', 'attract-adapter.mjs', 'hud-adapter.mjs', 'gyro-adapter.mjs', 'gyro-invert-adapter.mjs', 'pause-adapter.mjs', 'combat-life-adapter.mjs', 'combat-credit-adapter.mjs', 'touch-gyro-owner-adapter.mjs', 'pad-handoff-adapter.mjs', 'hold-cancel-adapter.mjs', 'pin-tap-adapter.mjs', 'map-look.mjs', 'inkwave-six-followup-adapter.mjs', 'inkwave-eight-followup-adapter.mjs'];
+  const files = ['superjump-chain-adapter.mjs', 'map-toggle-adapter.mjs', 'menu-takeover.mjs', 'net-hit-payload-adapter.mjs', 'issue-464-adapter.mjs', 'adapter.mjs', 'special-water-adapter.mjs', 'special-barrier-adapter.mjs', 'sub-action-adapter.mjs', 'input-ownership-adapter.mjs', 'controls-adapter.mjs', 'navigation-adapter.mjs', 'respawn-navigation-adapter.mjs', 'map-gyro-adapter.mjs', 'touch-pointerlock-adapter.mjs', 'input-adapter.mjs', 'joycon-pair-adapter.mjs', 'net-adapter.mjs', 'results-adapter.mjs', 'mobile-adapter.mjs', 'touch-edge-adapter.mjs', 'intro-adapter.mjs', 'start-adapter.mjs', 'attract-adapter.mjs', 'hud-adapter.mjs', 'gyro-adapter.mjs', 'gyro-invert-adapter.mjs', 'pause-adapter.mjs', 'combat-life-adapter.mjs', 'combat-credit-adapter.mjs', 'touch-gyro-owner-adapter.mjs', 'pad-handoff-adapter.mjs', 'hold-cancel-adapter.mjs', 'pin-tap-adapter.mjs', 'map-look.mjs', 'inkwave-six-followup-adapter.mjs', 'inkwave-eight-followup-adapter.mjs'];
   return Object.fromEntries(files.map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(new URL(file, import.meta.url))).digest('hex')]));
 }

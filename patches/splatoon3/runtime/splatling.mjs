@@ -127,9 +127,10 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   const spread = WeaponRunner.prototype._spreadDeg;
   WeaponRunner.prototype._spreadDeg = function (w) {
     if (w.kind !== 'splatling') return spread.call(this, w);
-    // Preserve the current release-held cone, but remove shooter-style bloom.
-    // This is not a claim that the inherited cone is S3's exact PDF.
-    return (this.a.grounded ? w.spreadGround : w.spreadAir) * (w.spreadFirst ?? .6);
+    // #940: publish the sourced maximum envelope independently of generic
+    // bloom. The inherited radial PDF remains unverified; do not turn the
+    // raw bias into an unsupported inner/outer Bernoulli selection.
+    return this.a.grounded ? w.spreadGround : w.spreadAir;
   };
 
   WeaponRunner.prototype._splatling = function (dt, input, w) {

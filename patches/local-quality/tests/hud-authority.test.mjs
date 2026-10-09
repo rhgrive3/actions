@@ -8,11 +8,12 @@ import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource, qualityIdentity } from '../adapter.mjs';
 import { adaptHudAuthority, SPECIAL_SEGMENTS, specialGaugeSVG } from '../hud-authority-adapter.mjs';
 import { turfExperience } from '../../splatoon3/runtime/results-scoring.mjs';
+import { resetTeamWipeHud } from '../team-wipeout.mjs';
 import { fixture, readSource } from '../../reliability/tests/hud-fixture.mjs';
 const root = new URL('../../../', import.meta.url);
 const compose = (rel, input = readSource(rel)) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, input))));
 const hudCode = compose('src/ui/hud.js'), gameCode = compose('src/main.js');
-const fixed = () => fixture({ hudSource: hudCode, gameSource: gameCode, globals:{turfExperience} });
+const fixed = () => fixture({ hudSource: hudCode, gameSource: gameCode, globals:{turfExperience, resetTeamWipeHud} });
 function specialRig(code = hudCode) {
   const a = code.indexOf('  _updSpecial(f, dt) {'), b = code.indexOf('  // ---------------------------------------------------------------- turf ticker', a);
   const Hud = vm.runInNewContext(`class Hud { ${code.slice(a,b)} }; Hud`, { clamp: v => Math.min(1,Math.max(0,v)) });
@@ -103,6 +104,27 @@ test('#381: reliability cancellation/replacement cannot show an old authoritativ
   const r=await fixed();const first=r.hud.judge({winner:0});await r.advance(200);const second=r.hud.judge({winner:1});
   assert.equal((await first).cancelled,true);assert.equal(r.judges().length,1);await r.advance(5300);assert.equal((await second).winner,1);
   const pending=r.game._judge();await r.advance(200);await r.game.quitToMenu();await r.advance(6000);await pending;assert.equal(r.count('results'),0);assert.equal(r.judges().length,0);
+});
+
+test('#919: Judd lifecycle fixture executes actual team-special cleanup on hide and dispose', async () => {
+  for (const retire of [hud => hud.setVisible(false), hud => hud.dispose()]) {
+    const r = await fixed();
+    const ordinary = r.document.createElement('div');
+    r.hud.feedEl.append(ordinary);
+    for (const [index, id] of ['storm', 'bubbler'].entries()) {
+      const signal = r.document.createElement('div'), timer = 1_000_000 + index;
+      signal.dataset.teamSpecial = id;
+      signal._t = timer;
+      r.timers.set(timer, { due: 4200, ms: 4200, fn() { assert.fail('retired signal timer fired'); } });
+      r.hud.feedEl.append(signal);
+    }
+    assert.equal(r.hud.feedEl.querySelectorAll('[data-team-special]').length, 2);
+    retire(r.hud);
+    assert.equal(r.hud.feedEl.querySelectorAll('[data-team-special]').length, 0);
+    assert.equal(r.timers.has(1_000_000), false);
+    assert.equal(r.timers.has(1_000_001), false);
+    assert.equal(ordinary.parentNode, r.hud.feedEl, 'special cleanup preserves ordinary feed items');
+  }
 });
 
 test('HUD adapters compile in production order and preserve an existing authoritative winner owner', () => {

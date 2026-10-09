@@ -27,3 +27,19 @@ test('#1178 render guard keeps poison out of actor and allows next valid snapsho
   assert.equal(validRemoteActorPose(sample, {...err,x:Infinity}), false);
   assert.equal(validRemoteActorPose(sample, err), true);
 });
+
+// Pending lethal HP is not an ink/gauge resource and must survive owner transfer.
+test('#1178 valid pending-lethal HP stays receivable without allowing poisoned scalars', () => {
+  for (const hp of [-.01, -20, -300, 0, 100]) {
+    const value = row(); value[11] = hp;
+    assert.equal(validActorSnapshotRow(value, 2.5), true, `finite pending HP ${hp}`);
+  }
+  for (const hp of [NaN, Infinity, -Infinity, '-20', null, -1e5 - 1, 1e5 + 1]) {
+    const value = row(); value[11] = hp;
+    assert.equal(validActorSnapshotRow(value, 2.5), false, `invalid HP ${String(hp)}`);
+  }
+  for (const resource of [12, 13, 14]) {
+    const value = row(); value[resource] = -1;
+    assert.equal(validActorSnapshotRow(value, 2.5), false, `negative resource ${resource}`);
+  }
+});

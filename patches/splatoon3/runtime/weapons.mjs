@@ -302,7 +302,19 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
 }
 export function installWeapons(context, profile) {
   api = context;
-  const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER, on } = api;
+  // #1089: use the committed activation event, not the physical Special input.
+  // Some kit owners bypass native _startSpecial; all successful starts publish
+  // this boundary. A rejected activation never interrupts the retained stance.
+  on?.('special:use', event => {
+    const actor = event?.actor, runner = actor?.weaponRunner;
+    if (!runner || actor.remote || actor.weapon?.kind !== 'dualies') return;
+    runner.s3Turret = false;
+    runner.s3DodgeShotPending = 0;
+    runner.s3GateDodgeShotPending = false;
+    runner.s3DodgeShotRemaining = 0;
+    // Keep paid ink, roll count, movement/recovery clocks and shot cooldown.
+  });
   WeaponRunner.prototype.s3StepSplatlingSubInterrupt = function (dt, input) {
     return splatlingSubInterrupt(this, this.a, dt, input);
   };
@@ -873,7 +885,11 @@ export function installWeapons(context, profile) {
     // publish the outer envelope; the probability bias is sampled at fire time.
     if (w.kind === 'blaster') {
       const state = this.s3BlasterJumpState(w);
-      return state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
+      // #1102: an admitted jump owns this penalty. The serial gate above
+      // already distinguishes a jump from a ledge fall; do not reintroduce
+      // the airborne penalty through the inactive-state scalar fallback.
+      if (state.supported) return state.active ? state.envelope : state.ground;
+      return this.a.grounded ? w.spreadGround : w.spreadAir;
     }
     if (w.kind === 'shooter' && this.s3JumpSpreadAge != null) {
       const age = this.s3JumpSpreadAge, hold = w.jumpSpreadHold ?? 0, end = Math.max(hold + 1e-10, w.jumpSpreadRecoverEnd ?? hold);

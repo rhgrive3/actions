@@ -50,28 +50,11 @@ export function installMenuQuality(Menus, env=globalThis){
   // click needs a press that began on the same live screen, on a visible item.
   const pending=m=>!!(m._scr&&m.current!==m._scr.name);
   const closing=m=>{const el=m._scr?.el;if(!el||!pending(m))return;el.inert=true;el.style.pointerEvents='none';el.classList.add('is-closing');};
-  // #950: the title confirmation timeout belongs to the specific title screen.
-  // Never allow a previous title visit to replace later navigation or revive a retired menu.
-  const cancelTitle=m=>{
-    const r=records.get(m);
-    if(r?.titleTimer!=null){env.clearTimeout(r.titleTimer);r.titleTimer=null;}
-    m._leavingTitle=false;
-  };
-  if(P._titleGo)P._titleGo=function(){
-    if(retired.has(this)||this.current!=='title'||this._leavingTitle||env.performance.now()-this._shownAt<350)return;
-    this._leavingTitle=true;this._sfx('ui_confirm');this._sfx('splat_small');
-    if(this._scr)this._scr.el.classList.add('is-go');
-    const r=ensure(this),token=this._swapToken,owner=this._scr;
-    r.titleTimer=env.setTimeout(()=>{
-      r.titleTimer=null;this._leavingTitle=false;
-      if(retired.has(this)||this.current!=='title'||this._swapToken!==token||this._scr!==owner)return;
-      this.show('main',{wipe:true});
-    },200);
-  };
+  // Delayed title/Mode transitions are owned by the transformed native Menus
+  // methods. Do not override _titleGo here: that would create a second timer
+  // owner and bypass their screen-generation and timer-identity checks.
   if(show)P.show=function(...args){
     if(retired.has(this))return;
-    const next=args[0]===undefined?null:args[0];
-    if(next!==this.current)cancelTitle(this);
     const result=show.apply(this,args);closing(this);return result;
   };
   if(nav)P._nav=function(dir){if(pending(this))return true;return nav.call(this,dir);};
@@ -145,7 +128,7 @@ export function installMenuQuality(Menus, env=globalThis){
     const result=update.call(this,dt);r.arm();return result;
   };
   P.dispose=function(...args){
-    retired.add(this);cancelTitle(this);clearPreviewRoot(this.el,true);const r=records.get(this);
+    retired.add(this);clearPreviewRoot(this.el,true);const r=records.get(this);
     if(r){stop(this,r);r.off?.();records.delete(this);}
     return dispose.apply(this,args);
   };

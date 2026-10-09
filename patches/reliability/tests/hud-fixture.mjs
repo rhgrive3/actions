@@ -42,7 +42,13 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
     append(...nodes) { for (const n of nodes) this.appendChild(n); }
     remove() { if (this.parentNode) this.parentNode.children.splice(this.parentNode.children.indexOf(this),1); this.parentNode = null; }
     setAttribute() {} addEventListener() {}
-    querySelectorAll(selector) { const names = selector.split('.').filter(Boolean); return this.children.flatMap(n => [...(names.every(c=>n.classList.contains(c)) ? [n] : []), ...n.querySelectorAll(selector)]); }
+    querySelectorAll(selector) {
+      const names = selector.split('.').filter(Boolean);
+      const matches = node => selector === '[data-team-special]'
+        ? node.dataset.teamSpecial !== undefined
+        : names.every(name => node.classList.contains(name));
+      return this.children.flatMap(node => [...(matches(node) ? [node] : []), ...node.querySelectorAll(selector)]);
+    }
     querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
   }
   const body = new Node('body');
@@ -71,15 +77,21 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
   await config.evaluate();
   Object.assign(context, util.namespace, config.namespace);
   const hudMethods = [
+    // Quality composition adds this dependency to setVisible/dispose. Extract
+    // the real cleanup method as well; a no-op fixture would hide stale signals.
+    ...(hudSource.includes('this._clearTeamSpecialSignals()')
+      ? [section(hudSource, '  _clearTeamSpecialSignals() {', '\n  _bindBus() {')]
+      : []),
     section(hudSource, '  setVisible(v) {', '\n  /** ScreenFX'),
     section(hudSource, '  judge(', '\n  _live()'),
     section(hudSource, '  _addFx(name, fn) {', '\n  _restart(el, cls)'),
   ].join('\n');
   const Hud = vm.runInContext(`class Hud { ${hudMethods} }; Hud`,context);
   const hud = new Hud();
-  Object.assign(hud, { el: new Node(), overLayer: new Node(), timeScale:1, paused:false, _fxTime:0, _lastFx:0, _rafId:0, _visible:false, _unsubs:[], boss:{dispose(){calls.push(['bossDispose']);}},
+  Object.assign(hud, { el: new Node(), overLayer: new Node(), feedEl: new Node(), timeScale:1, paused:false, _fxTime:0, _lastFx:0, _rafId:0, _visible:false, _unsubs:[], boss:{dispose(){calls.push(['bossDispose']);}},
     hideSplatted() {}, playSound(name) { const v = { name, stopped:0, v:{ dispose() { v.stopped++; } } }; voices.push(v); calls.push(['hudSound',name,now]); hook?.(name); return v; },
   });
+  hud.el.append(hud.feedEl);
   body.append(hud.el,hud.overLayer); hud._fxLoop = hud._fxLoop.bind(hud);
   const gameMethods = [
     section(gameSource,'  _beginMatchFlow() {','\n  async startMatch('),
@@ -107,7 +119,7 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
       await flush();
     }
   };
-  return { hud,game,match,G,calls,voices,rafs,timers,body,advance,
+  return { hud,game,match,G,calls,voices,rafs,timers,body,document,advance,
     hookSound(fn){hook=fn;}, now:()=>now,
     count(kind){return calls.filter(row=>row[0]===kind).length;},
     judges:()=>hud.overLayer.querySelectorAll('.iw-jd'),

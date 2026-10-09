@@ -57,7 +57,7 @@ test('#1179 direct Boss methods reject nonnumeric, negative, nonfinite and unaut
   const crab = { id: 7, hp: 40, dead: false };
   f.boss.crabs.set(7, crab);
   const start = {hp:f.boss.hp, crab:crab.hp, recv:f.boss.log.recv};
-  const bad = [-20, 0, '-Infinity', '30', Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, NaN, null, {}, [], 2001];
+  const bad = [-20, 0, '-Infinity', '30', Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, NaN, null, {}, []];
   for (const d of bad) {
     f.boss.remoteHit(f.hit({ d }));
     f.boss.remoteHit(f.hit({ d, c: 7 }));
@@ -77,4 +77,52 @@ test('#1179 direct Boss methods reject nonnumeric, negative, nonfinite and unaut
   f.boss.remoteHit(f.hit({d:40,c:7}));
   assert.equal(crab.hp, 0);
   assert.equal(Number.isFinite(crab.hp) && Number.isFinite(f.boss.hp), true);
+});
+
+test('#1179 rejected over-limit and dead-attacker packets leave HP, credit, log and replay sequence unspent', async () => {
+  const f = await bossWorld();
+  const crab = { id:7, hp:40, dead:false }; f.boss.crabs.set(crab.id, crab);
+  f.nm.onMessage('guest', f.hit());
+  const before = { hp:f.boss.hp, credit:f.actor.stats.bossDmg, recv:f.boss.log.recv, seq:f.nm._peer('guest').lastBossHit };
+  for (const c of [-1, crab.id]) {
+    for (const d of [-1,0,NaN,Infinity,-Infinity,'30','-Infinity',null,{},[],2000.01,2001,2500]) {
+      f.nm.onMessage('guest', f.hit({ q:2, d, c }));
+      assert.deepEqual({ hp:f.boss.hp, credit:f.actor.stats.bossDmg, recv:f.boss.log.recv, seq:f.nm._peer('guest').lastBossHit }, before);
+      assert.equal(crab.hp, 40);
+    }
+    f.actor.alive = false; f.nm.onMessage('guest', f.hit({ q:2, c }));
+    assert.deepEqual({ hp:f.boss.hp, credit:f.actor.stats.bossDmg, recv:f.boss.log.recv, seq:f.nm._peer('guest').lastBossHit }, before);
+    assert.equal(crab.hp, 40); f.actor.alive = true;
+  }
+  f.nm.onMessage('guest', f.hit({ q:2 }));
+  assert.equal(f.boss.hp, 9940); assert.equal(f.nm._peer('guest').lastBossHit, 2);
+});
+
+test('#1179 same-composition negative control spends replay sequence on dead-attacker packets', async () => {
+  const f = await bossWorld(true, { adapt(rel, code) {
+    if (rel !== 'src/net/netmatch.js') return code;
+    const actorGuard = ' || actor.alive === false';
+    assert.equal(code.split(actorGuard).length, 2);
+    return code.replace(actorGuard, '');
+  } });
+  f.nm.onMessage('guest', f.hit());
+  assert.equal(f.boss.hp, 9970);
+  f.actor.alive = false; f.nm.onMessage('guest', f.hit({ q:2 }));
+  assert.equal(f.boss.hp, 9970); assert.equal(f.boss.log.recv, 1);
+  assert.equal(f.nm._peer('guest').lastBossHit, 2, 'old ingress reserves a dead-attacker sequence');
+  f.actor.alive = true; f.nm.onMessage('guest', f.hit({ q:2 }));
+  assert.equal(f.boss.hp, 9970, 'subsequent legitimate retry is discarded by that stale reservation');
+});
+
+test('#1179 wire maximum is not a new cap on positive finite internal Boss damage', async () => {
+  const f = await bossWorld(), crab = { id:7, hp:40, dead:false };
+  f.boss.crabs.set(crab.id, crab);
+  f.boss.remoteHit(f.hit({ d:2001 }));
+  f.boss.remoteHit(f.hit({ d:2001, c:crab.id }));
+  assert.equal(f.boss.hp, 10000); assert.equal(crab.hp, 40); assert.equal(f.boss.log.recv, 0);
+  assert.equal(f.boss.applyDamage(f.actor, 2001, false, null), 2001);
+  assert.equal(f.boss.hp, 7999);
+  f.boss._hitCrab(f.actor, crab, 2001, true);
+  assert.equal(crab.hp, 0); assert.equal(crab.dead, true);
+  assert.equal(Number.isFinite(f.boss.hp) && Number.isFinite(crab.hp), true);
 });

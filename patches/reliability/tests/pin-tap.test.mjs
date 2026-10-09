@@ -9,6 +9,7 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../adapter.mjs';
 import { adaptPinTap } from '../pin-tap-adapter.mjs';
+import { hasCommittedSuperJumpDestination } from '../../splatoon3/runtime/superjump-destination.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 
@@ -29,7 +30,7 @@ async function boot(source = composed()) {
   const jumps = [], G = { actors: [], audio: { play() {} }, teamHex: ['#f80', '#08f'], level: { spawnPads: [new THREE.Vector3(1, 0, 2), new THREE.Vector3(-1, 0, -2)] } };
   const context = vm.createContext({ console, Math, innerWidth: 1000, innerHeight: 700, document: { body: new El() } });
   const values = {
-    three: THREE, './ui-util.js': { h: (_tag, _attrs, ...kids) => { const el = new El(); el.children.push(...kids.flat(Infinity).filter(k => k && typeof k === 'object')); return el; }, clamp: (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)), esc: x => x },
+    three: THREE, '../../patches/splatoon3/runtime/superjump-destination.mjs': { hasCommittedSuperJumpDestination }, './ui-util.js': { h: (_tag, _attrs, ...kids) => { const el = new El(); el.children.push(...kids.flat(Infinity).filter(k => k && typeof k === 'object')); return el; }, clamp: (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)), esc: x => x },
     './ui-icons.js': { keycap: x => x, weaponIcon: x => x, richText: x => x }, '../i18n.js': { t: x => x }, '../core/ctx.js': { G },
   };
   const mod = new vm.SourceTextModule(source, { context });

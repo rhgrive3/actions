@@ -309,3 +309,35 @@ test('adoption sampling after newest packet retains its new-hit recovery age', a
   close(remote.lastDamage, .1);
   receiver.onLeave('p2', false); close(remote.lastDamage, .1);
 });
+
+for (const phase of ['charge', 'flight']) test(`#412 owner-validated ${phase} snapshot supplies the inherited chain-jump destination`, async () => {
+  const owner = await runtimeFixture();
+  const source = makeActor(owner, { nid: 7, owner: 'p2', team: 0 });
+  const sender = owner.makeNetMatch(owner.makeSession('p2', 'p2', [['p2', 'Owner'], ['host', 'Host']]));
+  bindActors(owner, sender, [source]);
+  const destination = new owner.THREE.Vector3(14.25, 0, -3.5);
+  assert.equal(source.superJump(destination), true);
+  if (phase === 'flight') {
+    let guard = 0;
+    while (source.superJumpState?.phase === 'charge' && guard++ < 240) tick(owner, source);
+    tick(owner, source);
+  }
+  assert.equal(source.superJumpState.phase, phase);
+  const packet = sendTick(sender); delete packet.e;
+  const host = await runtimeFixture();
+  const local = makeActor(host, { nid: 8, owner: 'host', team: 0 });
+  const remote = makeActor(host, { nid: 7, owner: 'p2', remote: true, team: 0 });
+  const receiver = host.makeNetMatch(host.makeSession('host', 'host', [['host', 'Host'], ['p2', 'Owner']]));
+  bindActors(host, receiver, [local, remote]);
+  receiveTick(host, receiver, [remote], packet);
+  assert.equal(remote.superJumpState?.phase, phase);
+  assert.equal(local.superJump(remote), true, 'accepted snapshot destination permits the teammate target');
+  assert.deepEqual(Array.from(local.superJumpState.to.toArray()), Array.from(destination.toArray()));
+  assert.notEqual(local.superJumpState.to, remote.superJumpState.to);
+  remote.superJumpState.to.set(80, 0, 80);
+  assert.deepEqual(Array.from(local.superJumpState.to.toArray()), Array.from(destination.toArray()));
+  local.superJumpState = null;
+  remote.superJumpState = { phase, net: true, t: 0 };
+  remote.net.sjTo = new host.THREE.Vector3(77, 0, 77);
+  assert.equal(local.superJump(remote), false, 'legacy phase and a stale flight hint cannot manufacture a destination');
+});

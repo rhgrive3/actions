@@ -13,15 +13,11 @@ const upstream = rel => fs.readFileSync(`${ROOT}/inkwave-public/${rel}`, 'utf8')
 
 const close = (actual, expected, epsilon = 1e-8) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
-const bloomScale = runner => {
-  const first = runner.a.weapon.spreadFirst ?? 0.45;
-  return first + (1 - first) * runner.bloom;
-};
 const expectedHorizontal = runner => {
   const w = runner.a.weapon;
   const recovery = splatlingJumpRecoveryAt(runner.a.s3SplatlingJumpAgeFrames);
-  if (recovery === null) return (runner.a.grounded ? w.spreadGround : w.spreadAir) * bloomScale(runner);
-  return (w.spreadAir + (w.spreadGround - w.spreadAir) * recovery) * bloomScale(runner);
+  if (recovery === null) return (runner.a.grounded ? w.spreadGround : w.spreadAir);
+  return (w.spreadAir + (w.spreadGround - w.spreadAir) * recovery);
 };
 
 async function nativeFloorFixture({ jumpSpreadControl = false } = {}) {
@@ -83,15 +79,15 @@ test('production six-adapter native jump age holds 25F, recovers by 70F, and nev
       if (!wasGrounded && a.grounded) landings.push({ frame, age, spread: a.weaponRunner.spread });
       if (frame === 0 || frame === 45) {
         assert.equal(age, 0, `jump frame ${frame} starts a fresh age`);
-        close(a.weaponRunner.spread, a.weapon.spreadAir * bloomScale(a.weaponRunner));
+        close(a.weaponRunner.spread, a.weapon.spreadAir);
       }
       if (frame === 25) {
         assert.equal(age, 25);
-        close(a.weaponRunner.spread, a.weapon.spreadAir * bloomScale(a.weaponRunner));
+        close(a.weaponRunner.spread, a.weapon.spreadAir);
       }
       if (frame === 115) {
         assert.equal(age, null, 'recovery state clears after the endpoint on ground');
-        close(a.weaponRunner.spread, a.weapon.spreadGround * bloomScale(a.weaponRunner));
+        close(a.weaponRunner.spread, a.weapon.spreadGround);
       }
       wasGrounded = a.grounded;
       frame++;
@@ -104,8 +100,8 @@ test('production six-adapter native jump age holds 25F, recovers by 70F, and nev
       // is asserted directly at frame 25.
       assert.ok(landing.age > 0 && landing.age < 70, `landing remains in jump spread: ${landing.age}`);
       assert.ok(index === 0 ? landing.age > 25 : landing.age < 25, `uncharged/charging takeoff retains its distinct landing boundary: ${index}, ${landing.age}`);
-      close(landing.spread, expectedHorizontalAtLanding(a.weapon, a.weaponRunner.bloom, landing.age));
-      assert.ok(landing.spread > a.weapon.spreadGround * bloomScale(a.weaponRunner), 'first grounded frame retains jump spread');
+      close(landing.spread, expectedHorizontalAtLanding(a.weapon, landing.age));
+      assert.ok(landing.spread > a.weapon.spreadGround, 'first grounded frame retains jump spread');
     }
     assert.equal(a.ink, 100, 'held charge does not pay ink before its existing release');
     assert.equal(f.G.projectiles.list.length, 0, 'held charge does not change firing cadence');
@@ -116,11 +112,9 @@ test('production six-adapter native jump age holds 25F, recovers by 70F, and nev
   assert.deepEqual(runs[1], runs[2]);
 });
 
-function expectedHorizontalAtLanding(weapon, bloom, age) {
+function expectedHorizontalAtLanding(weapon, age) {
   const recovery = splatlingJumpRecoveryAt(age);
-  const first = weapon.spreadFirst ?? 0.45;
-  const factor = first + (1 - first) * bloom;
-  return (weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery) * factor;
+  return (weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery);
 }
 
 test('zero-time pause, form and weapon switches preserve jump age; repeat jump, death and reset own their lifecycle', async () => {
@@ -190,7 +184,7 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
     return result;
   };
   const priorAge = landingAge - 1;
-  const priorSpread = expectedHorizontalAtLanding(a.weapon, a.weaponRunner.bloom, priorAge);
+  const priorSpread = expectedHorizontalAtLanding(a.weapon, priorAge);
   const pitchBeforeLanding = samplePitch(priorAge, false, priorSpread);
   const pitchAtLanding = samplePitch(landingAge, true, landingSpread);
   assert.ok(Math.abs(pitchAtLanding - pitchBeforeLanding) < 0.2 * Math.PI / 180,
@@ -219,7 +213,7 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   const controlOwner = control.G.projectiles.list.at(-1), controlPacket = controlNm.out.find(event => event[1] === 'p');
   assert.ok(packet, 'owner publishes exactly one projectile event');
   assert.equal(nm.out.filter(event => event[1] === 'p').length, 1);
-  assert.equal(ownerDrawCount, 4, 'the speed, two spread samples, and seed retain their existing draw count');
+  assert.equal(ownerDrawCount, 4, 'speed, two spread samples, and seed retain the existing draw count');
   assert.ok(controlPacket, 'the same-composition control publishes its owner projectile event');
   assert.equal(controlNm.out.filter(event => event[1] === 'p').length, 1);
   assert.equal(controlDrawCount, 4, 'the jump correction does not change projectile RNG consumption');

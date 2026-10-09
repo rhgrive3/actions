@@ -2015,10 +2015,15 @@ export function installWeaponsFidelity(context,profile) {
     if(!['roller','slosher','shooter','dualies','splatling'].includes(w.kind))return bossImpact.call(this,p,hit);
     const boss=context.G.boss;
     const victim=hit.target?.hp!==undefined&&hit.target?.id!==undefined?hit.target:boss;
-    if (bossVolleyAdmission(boss,p.owner,hit.target)) {
-      const raw=fidelityDamage(p,hit.point);
-      if (Number.isFinite(raw) && raw>0) {
+    const raw=fidelityDamage(p,hit.point);
+    if (Number.isFinite(raw) && raw>0) {
+      if (bossVolleyAdmission(boss,p.owner,hit.target)) {
         const damage=groupDamage(p.s3DamageGroup,victim,raw);
+        if(damage>0)boss.hit(p.owner,damage,hit.target,w.id,hit.point.clone());
+      } else if (boss && victim===boss && p.owner && !p.owner.remote && !boss.dead && (boss.invuln || !boss.visible)) {
+        // Preserve native blocked FX / HUD IMMUNE feedback without reserving
+        // the rejected volley maximum or letting guests send a rejected hit.
+        const damage=Math.max(0,raw-(p.s3DamageGroup?.get(victim)||0));
         if(damage>0)boss.hit(p.owner,damage,hit.target,w.id,hit.point.clone());
       }
     }

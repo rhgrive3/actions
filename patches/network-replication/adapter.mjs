@@ -1449,6 +1449,22 @@ ${bombHit}`;
   }
   if (rel === 'src/net/netmatch.js') {
     code = "import { validActorSnapshotRow, validRemoteActorPose } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    // #574: use the established authenticated, life-scoped, deduplicated hit
+    // transaction. A zero-damage Blaster contact is admitted only with bounded
+    // geometry; no other cause gains a zero/negative-damage exception.
+    code = "import { validBlasterKnockback, applyBlasterKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\n" + code;
+    patch('    this.s.tr?.sendTo(victim.owner, message);',
+      "    const blast = this._s3BlasterKnockback;\n    if (wid === 'blaster' && blast?.attacker === attacker && blast.victim === victim && validBlasterKnockback(blast.offset)) message.kb = blast.offset.slice();\n    this.s.tr?.sendTo(victim.owner, message);",
+      'Blaster knockback geometry on retryable hit');
+    patch('    if (!Number.isFinite(d.d) || d.d <= 0 || d.d > IW_HIT_MAX_DAMAGE) return;',
+      "    const blastKnockback = d.w === 'blaster' && validBlasterKnockback(d.kb);\n    if (d.kb !== undefined && !blastKnockback) return;\n    if (!Number.isFinite(d.d) || d.d < 0 || (d.d === 0 && !blastKnockback) || d.d > IW_HIT_MAX_DAMAGE) return;",
+      'Blaster bounded knockback-only admission');
+    patch('    if (atk.owner !== from || !Number.isFinite(d.d) || d.d <= 0 || d.d > 10000) return;',
+      '    if (atk.owner !== from || !Number.isFinite(d.d) || d.d < 0 || (d.d === 0 && !blastKnockback) || d.d > 10000) return;',
+      'Blaster knockback preserves authenticated owner admission');
+    patch('const hitAdmission = G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);',
+      "const hitAdmission = d.d > 0 ? G.projectiles?.applyHit(atk, v, d.d, d.w, d.g) : 'accepted';\n    if (blastKnockback && hitAdmission === 'accepted') applyBlasterKnockback(v, d.kb);",
+      'Blaster applies once after recipient hit admission');
     code = adaptIssue1088SurgePresentation(code);
     code = adaptIssue1163RemoteDodgeClock(code);
     patch('if (d.a) for (const s of d.a) {\n      const rawRoll',

@@ -12,7 +12,10 @@ export function validActorSnapshotRow(row, timestamp) {
   for (const i of [4, 5, 6]) if (!bounded(row[i], -1e4, 1e4)) return false;
   for (const i of [7, 8, 9]) if (!bounded(row[i], -1e5, 1e5)) return false;
   if (!integer(row[10], 0, 0x7fffffff)) return false; // flag bitmask
-  for (const i of [11, 12, 13, 14]) if (!bounded(row[i], 0, 1e5)) return false;
+  // A legitimate lethal hit leaves finite negative HP until the next fixed
+  // tick commits the splat. Preserve that snapshot for pending-hit adoption.
+  if (!bounded(row[11], -1e5, 1e5)) return false;
+  for (const i of [12, 13, 14]) if (!bounded(row[i], 0, 1e5)) return false;
   if (!bounded(row[15], 0, 1e9) || !integer(row[16], 0, 0x7fffffff)) return false;
   for (const i of [17, 18, 19]) if (!bounded(row[i], -1.01, 1.01)) return false;
   if (!bounded(row[20], 0, 1e5)) return false;
