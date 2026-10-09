@@ -526,6 +526,35 @@ def neck_side_sculpt(R, steps):
             print('BODY_SHAPE neck sculpt', st['name'], 'vertices', int(((amt * w) > 0.05).sum()), 'max move mm',
                   round(float(np.linalg.norm(er.world(R) - before, axis=1).max() * 1000), 2))
             continue
+        elif st['kind'] == 'outside_line':
+            # the jaw as a side-view shape: st['line'] = [[z, y], ...] from under the ear lobe straight down the
+            # back edge of the ramus, round the jaw angle and along the lower border to the chin (2026-10-08, the
+            # user drew it on the side reference).  Outside that line (behind the ramus, under the lower border)
+            # the skin goes in towards the neck, so it turns away and lies in shadow; inside it stays.  d = signed
+            # side-view distance, outside > 0 (the outside is to the right walking down the line)
+            ln = np.array(st['line'], float)
+            P2 = A[:, [2, 1]]
+            best = np.full(len(A), 1e9)
+            sgn = np.zeros(len(A))
+            for q0, q1 in zip(ln[:-1], ln[1:]):
+                t = q1 - q0
+                u = np.clip(((P2 - q0) @ t) / (t @ t), 0, 1)
+                foot = q0 + u[:, None] * t
+                dist = np.linalg.norm(P2 - foot, axis=1)
+                nout = np.array([t[1], -t[0]]) / np.linalg.norm(t)
+                upd = dist < best
+                best[upd] = dist[upd]
+                sgn[upd] = np.sign((P2[upd] - foot[upd]) @ nout)
+            d = best * sgn
+            b0, b1, b2 = st['outside']
+            w = smoothstep((d - b0) / (b1 - b0)) * smoothstep((b2 - d) / (b2 - b1))
+            w *= smoothstep((ln[0, 1] + 2.0 - A[:, 1]) / 6.0)          # nothing above the top of the line
+            w *= smoothstep((ln[-1, 0] - A[:, 2]) / 8.0)               # nor in front of the chin end
+            if st.get('z_fade'):                                       # weaker towards the chin (no fold there)
+                fz0, fz1 = st['z_fade']
+                w *= 1 - smoothstep((A[:, 2] - fz0) / (fz1 - fz0))
+            w *= smoothstep((A[:, 0] - st.get('x_min', 8.0)) / 6.0)
+            w *= smoothstep((A[:, 2] - st.get('z_min', -1e9)) / 8.0)
         elif st['kind'] == 'blob':
             dd = np.linalg.norm((A - np.array(st['centre'], float)) / np.array(st['r'], float), axis=1)
             w = np.where(dd < 1, np.cos(np.clip(dd, 0, 1) * np.pi / 2) ** 2, 0.0)
@@ -552,6 +581,17 @@ def neck_side_sculpt(R, steps):
         sign = 1.0 if st['mm'] > 0 else -1.0
         er.apply_weighted_modifier(R, w, 'DISPLACE', direction='NORMAL', strength=sign * abs(st['mm']) / 1000,
                                    mid_level=0.0)
+        if st['kind'] == 'outside_line' and st.get('inside_mm'):
+            # just inside the line the skin goes out a little: the jaw edge is a rounded corner, not a groove
+            i0, i1, i2 = st['inside']
+            wi = smoothstep((d - i0) / (i1 - i0)) * smoothstep((i2 - d) / (i2 - i1))
+            wi *= smoothstep((ln[0, 1] + 2.0 - A[:, 1]) / 6.0) * smoothstep((ln[-1, 0] - A[:, 2]) / 8.0)
+            wi *= smoothstep((A[:, 0] - st.get('x_min', 8.0)) / 6.0)
+            if st.get('z_fade'):
+                wi *= 1 - smoothstep((A[:, 2] - st['z_fade'][0]) / (st['z_fade'][1] - st['z_fade'][0]))
+            er.apply_weighted_modifier(R, wi, 'DISPLACE', direction='NORMAL', strength=st['inside_mm'] / 1000,
+                                       mid_level=0.0)
+            w = np.maximum(w, wi)
         if st.get('smooth'):
             er.apply_weighted_modifier(R, np.clip(w * 2, 0, 1), 'SMOOTH', factor=0.5, iterations=int(st['smooth']))
         print('BODY_SHAPE neck sculpt', st['name'], 'vertices', int((w > 1e-3).sum()), 'max move mm',
