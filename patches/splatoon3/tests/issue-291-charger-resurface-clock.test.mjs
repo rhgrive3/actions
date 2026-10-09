@@ -65,15 +65,28 @@ test('#291 re-submerge resets both surface clocks but retains the75F keep owner'
 });
 test('#291 native network packet carries the25F warning without granting owner fire authority',async()=>{
  const {f,a,r,step}=await setup(60);a.nid=1;a.intent.squid=false;let packet;
- const sender={_peer:()=>({}),byNid:new Map([[1,a]]),out:[],stats:{out:0},s:{tr:{broadcast:m=>{packet=m;}}}};
- const remote=f.make('charger');remote.remote=true;
- remote.net={ready:true,err:new f.THREE.Vector3(),prevGrounded:true,prevVy:0,cur:{x:0,y:0,z:0,vx:0,vy:0,vz:0,yaw:0,aimYaw:0,aimPitch:0,f:0,hp:100,ink:100,sp:0,turf:0,ch:1,lock:0}};
- for(let frame=1;frame<=31;frame++){
-  step();f.NetMatch.prototype._sendTick.call(sender);
-  const flags=packet.a[0][10];assert.equal(!!(flags&f.NET_FLAGS.charging),frame>=25,`packet frame${frame}`);
-  remote.net.cur.f=flags;f.NetMatch.prototype.applyRemote.call({_peer:()=>({})},remote,DT);
-  assert.equal(remote.weaponRunner.charging,frame>=25,'remote presentation follows owner warning');
-  if(frame<31)assert.equal(r.charging,false,'local release authority remains gated');
- }
- assert.equal(f.fires.length,0);f.projectiles.clear();
+ a.owner='owner';
+ const remote=f.make('charger');remote.nid=1;remote.owner='owner';
+ const members=new Map([['host','Host'],['owner','Owner'],['viewer','Viewer']]);
+ const sender=new f.NetMatch({myId:'owner',hostId:'host',isHost:false,_members:members,
+  tr:{broadcast:m=>{packet=JSON.parse(JSON.stringify(m));},sendTo(){}}},{id:'issue-291-resurface-clock',map:'map',difficulty:'normal'});
+ const receiver=new f.NetMatch({myId:'viewer',hostId:'host',isHost:false,_members:members,
+  tr:{broadcast(){},sendTo(){}}},{id:'issue-291-resurface-clock',map:'map',difficulty:'normal'});
+ sender.bind({actors:[a],state:'playing',time:180});
+ receiver.bind({actors:[remote],state:'playing',time:180});
+ try{
+  for(let frame=1;frame<=31;frame++){
+   step();sender._sendTick();
+   // This fixture can run several simulated frames inside one timer quantum.
+   // Keep each production-shaped owner packet on a distinct simulated tick.
+   packet.ts=1000+frame*DT;
+   const flags=packet.a[0][10];assert.equal(!!(flags&f.NET_FLAGS.charging),frame>=25,`packet frame${frame}`);
+   receiver.onMessage('owner',packet);
+   const peer=receiver._peer('owner');peer.tr=packet.ts;
+   receiver._sample(remote,packet.ts,0);receiver.applyRemote(remote,DT);
+   assert.equal(remote.weaponRunner.charging,frame>=25,`remote presentation follows owner warning at frame${frame}`);
+   if(frame<31)assert.equal(r.charging,false,'local release authority remains gated');
+  }
+  assert.equal(f.fires.length,0);
+ } finally {receiver.dispose();sender.dispose();f.projectiles.clear();}
 });
