@@ -79,7 +79,10 @@ export function adaptWireSecurity(rel, code) {
 // S3/network adapters extend the packet after these. Never coerce wire types.
 // Derive the flags mask from the composed F (includes extension flags above
 // 0xFFFFF); otherwise valid owner ticks are silently dropped during handoff.
-const WIRE_ACTOR_ALLOWED_FLAGS = Object.values(F).reduce((bits, flag) => bits | flag, 0);
+// Bit 25 is owned by the independent S3 clothing protocol (#1130), not F.
+// Its source constant is RESPAWN_PUNISHER_FLAG = 33554432; preserve this
+// known extension while continuing to reject all other unknown flag bits.
+const WIRE_ACTOR_ALLOWED_FLAGS = Object.values(F).reduce((bits, flag) => bits | flag, 0) | 33554432;
 function validWireActorSnapshot(s) {
   if (!Array.isArray(s) || s.length < 21 || s.length > 64 ||
       !Number.isSafeInteger(s[0]) || s[0] < 0) return false;
