@@ -1780,15 +1780,35 @@ all budget limits remain unchanged. Negative descriptor tests reject missing,
 malformed, non-finite and incorrectly typed metadata instead of allowing `NaN`
 to mask budget evidence. This compatibility repair does not claim a new Issue.
 
-## 2026-10-08 — #642 lazy HDR composer target lifetime
+## 2026-10-09 — #642 mobile HDR composer storage and lifecycle
 
-**本家参照と条件。** 比較対象は Splatoon 3 Ver. 11.3.0（[公式更新履歴](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)）。この変更はブラウザ側の描画リソース寿命だけを扱い、武器、ギア、プレイヤー状態、操作入力、ゲームロジックを変えないため、個別の武器・ギア・操作条件は該当しない。Nintendo の公開資料は post-processing composer のターゲット形式・確保時期・破棄時期を示しておらず、Switch の GPU メモリや描画同等性は未確認。
+**本家参照と条件。** 比較対象は Splatoon 3 Ver. 11.3.0（[任天堂の公式更新履歴](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)）。この作業は post-processing target の形式・寿命・解像度だけを変え、ブキ、ギア、移動、被弾、インク、入力、simulation とゲーム内状態を変更しない。武器・ギア・操作条件が関係する変更ではない。任天堂の公開資料にブラウザ post-processing の形式や GPU 確保量はなく、この作業では Splatoon 3 の Switch 出力を新たに撮影・比較していない。よって S3 の視覚的一致、GPU メモリ、frame timing は未確認。
 
-**INKWAVE の根拠と変更。** exact base `4206a4b7` の `inkwave-public/src/core/renderer.js` は、pass stack を作る前に full-size `THREE.HalfFloatType` ターゲットを作り、vendored Three.js r186 `EffectComposer` がそのターゲットを直ちに clone する。full-six production composition でも同じ順序を確認した。`patches/local-quality/composer-target-adapter.mjs` は composer と ping-pong pair の生成を最初の実 render まで遅らせ、同じ HalfFloat/sample/size 設定を使う。ページが hidden になったときは screen composer を破棄し、visible 後の最初の frame で再生成する。`renderToScreen=false` の明示的な offscreen render は hidden 状態でも通す。resize と動的 pixel ratio は lazy state に反映し、quality rebuild は既存 pair を破棄して新しい quality の設定で遅延生成する。WebGL context loss/restore は既存 Three renderer の管理に任せ、この adapter から listener を追加しない。
+**INKWAVE の対象と変更。** `inkwave-public/src/core/renderer.js:15-89,145-192` の shipped Grade shader と FXAA shader、pass order（Render → Grade → ScreenFX → Output → FXAA）、`:213-236` の dynamic-scale/resize を対象にした。`inkwave-public/src/fx/screenfx.js:32-235,361-396,541-575` の ScreenFX shader と 64×72 LensInk field も実行した。Three r186 `inkwave-public/vendor/three/jsm/postprocessing/EffectComposer.js:52-81,317-348` は constructor 中に renderTarget を clone し、pixel ratio と logical size から二枚を resize する。Build adapter は composer pair の作成を最初の visible render まで遅らせ、hidden 時の on-screen pair を release し、再表示時に同じ HalfFloat/sample/size 条件で作り直す。hidden 中の明示的 offscreen render は維持する。実動的 scale で `1.2 × 0.75` の浮動小数点積が物理 target 寸法を整数の直前にするケースがあったため、adapter は pixel ratio を 1e-6 単位へ正規化して整数 backing size を保つ。これは表示密度に最大 0.0000005 の差を許す処理で、ゲーム値には触れない。
 
-**再現と確認。** `node --experimental-vm-modules scripts/check-inkwave-composer-target.mjs` は現在の six-adapter composition を通し、pre-change target ordering、HalfFloat policy、source parse、変換の round-trip を確認する。`node --test patches/local-quality/tests/composer-target-adapter.test.mjs` は vendored Three r186 の実 `WebGLRenderTarget` / `EffectComposer` object を使う 4 cases で、baseline clone、lazy creation、resize、visibility disposal/recreation、offscreen output、quality/sample rebuild、final disposal を確認する。これは native Three object lifecycle check で、WebGL driver allocation・GPU memory・pixel output の測定ではない。
+`patches/local-quality/composer-format-adapter.mjs:36-160` は WebGL2、`EXT_color_buffer_float`、実際に作成・bind した 1×1 FBO の complete 状態、Grade が負の RGB を出さない条件をすべて満たす mobile profile だけで Grade 出力を `THREE.RGBFormat + THREE.UnsignedInt101111Type`（R11F_G11F_B10F）にする。scene/read target、ScreenFX の書き戻し target、LensInk field は `RGBAFormat + HalfFloatType`（RGBA16F）のまま。WebGL2/extension/FBO/Grade 条件を満たさない場合、MSAA/AO/bloom が有効な場合、または desktop では RGBA16F に fallback する。desktop High は要求 MSAA 4、RGBA16F HDR を保持する。`patches/local-quality/composer-target-adapter.mjs:7-80,130-168` が遅延生成と一回ずつの resize/dispose を実装する。
 
-**プレイへの影響と限界。** 可視状態で通常描画中の二つの HalfFloat target と pass order は維持されるため、ゲーム操作・simulation・tone/color shader を変えず、出力 pixel parity も推定しない。削減対象は初回 render 前と document hidden 中の composer pair 寿命であり、可視状態の target memory は従来どおり残る。今回の環境には Chromium/Firefox、Playwright/Puppeteer、headless-gl がなく、小さな GPU probe を実行できなかった。Switch 実機比較、driver が実際に確保する bytes、tone mapping/ScreenFX/FXAA の pixel diff は未確認。
+**実 WebGL format と allocation。** Chromium/Chrome for Testing 153.0.8010.12、WebGL 2.0 / GLSL ES 3.00、`EXT_color_buffer_float=true`、renderer `ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)` で実行した。これは実際に WebGL context と FBO を使う browser/software GPU 検証であり、物理 GPU ではない。CSS viewport 320×180、DPR 1.2 の出力は 384×216。両 reference target は RGBA16F、16/16/16/16 attachment bits、8 B/texel、complete FBO。選択時 target 1 は R11F_G11F_B10F、11/11/10/0 bits、4 B/texel、complete FBO。target 2 は RGBA16F、16/16/16/16 bits、8 B/texel、complete FBO。二枚の color attachment 合計は 16→12 B/pixel、25%減（384×216 で 1.265625→0.94921875 MiB）。これは attachment bits から算出した color-only 値で、depth/stencil、driver padding、resident process/GPU overhead を含まない。LensInk field は RGBA16F 64×72 のまま。Desktop High selection は RGBA16F。negative Grade input は RGBA16F fallback となった。
+
+**実画像比較。** Harness は shipped Three r186 EffectComposer、RenderPass、GradeShader、実 ScreenFX class/shaders、OutputPass、FXAAShader を同一 source image・同一 effect state で reference RGBA16F と選択 target に通し、384×216 final framebuffer の RGB8 readback を比較した。各ケース 82,944 pixels / 248,832 RGB channel samples。許容値は channel code 0–255 の mean absolute difference ≤1.25、P99 ≤3、alpha mismatch pixels = 0。全9ケースがこの基準を通過した。`max` は別途全チャンネルの最大差として記録し、3 code の許容値と混同していない。
+
+| shipped path | mean | P99 | P99.99 | max |
+| --- | ---: | ---: | ---: | ---: |
+| Grade + FXAA | 0.522 | 2 | 11 | 36 |
+| Damage ScreenFX + FXAA | 1.067 | 3 | 6 | 13 |
+| Lens splat ScreenFX + FXAA | 1.069 | 3 | 12 | 36 |
+| Low-health damage ScreenFX + FXAA | 1.010 | 3 | 10 | 21 |
+| Swim ScreenFX + FXAA | 1.056 | 3 | 5 | 14 |
+| Special aura ScreenFX + FXAA | 1.072 | 3 | 14 | 36 |
+| Flood ScreenFX + FXAA | 0.476 | 2 | 3 | 3 |
+| Respawn reveal ScreenFX + FXAA | 0.725 | 3 | 8 | 12 |
+| Combined damage/swim/aura/flood + FXAA | 0.477 | 2 | 3 | 3 |
+
+全ケースで alpha mismatch は 0。差 16 code 超は 38 RGB samples、差 32 code 超は 14 samples、最大差は 36 code（Grade 3、lens 4、special aura 7 samples）だった。これらは 248,832 RGB samples 中の tail values であり、最大差をゼロや閾値内とは扱わない。PNG reference/selected pairs と per-case histograms は `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-c-resume-20261009/codex2-642-currentmain/webgl-acceptance/` に保存した。
+
+**resize/dynamic-resolution lifecycle と確認。** Initial CSS 320×180 / PR 1.2 では両 target 384×216。production `setDynamicScale(0.75)` 相当、normalized PR 0.9 では両 target 288×162。orientation resize 180×320 では両 target 162×288。各 scale/resize で前 pair の dispose event は正確に2件、generation は1のまま、final dispose は残る2件を一度だけ破棄し、各 FBO は complete。8 focused native tests (`composer-residual-642.test.mjs`, `composer-target-adapter.test.mjs`) pass。Browser comparison JSON の `failures=[]`、context error 0、context loss false、page errors 0。`node scripts/build-inkwave.mjs` は build identity `714afd2ed4b8` で成功し、JS/CSS minification と 139-module preload composition を完了した。actual run command/log, target bit probes, and all 18 PNGs are under `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-c-resume-20261009/codex2-642-currentmain/webgl-acceptance/`。
+
+**プレイへの影響と未完了 acceptance。** Gameplay behavior, post shader source, target pass order, desktop HDR, and unsupported-device fallback stay intact; this only reduces the mobile Grade-output target from RGBA16F to the tested packed HDR format while retaining the RGBA16F scene target. The real-browser comparison demonstrates this checkout's SwiftShader result only. Physical iOS/Android GPUs and Switch are not measured; vendor-specific FBO support, actual resident allocation including driver padding/depth, device performance, and hardware image parity remain unverified. Nintendo source evidence does not specify post-stack color storage or comparable pixel tolerances, so no Splatoon 3 pixel-parity claim is made.
 
 ## 2026-10-08 — Roller depleted paint footprint (#305)
 

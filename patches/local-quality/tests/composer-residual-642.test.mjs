@@ -330,7 +330,8 @@ test('#642 adapter composes with the existing renderer and the latest PR #1175 l
   assert.ok(raw.includes(BASELINE_TARGET), 'the locked public renderer remains unchanged');
   const composed = compose(REL);
   assert.ok(composed.includes('selectComposerTargetFormat(THREE, r'));
-  assert.ok(composed.includes('configureComposerColorTargets(THREE, comp, composerColorTarget)'));
+  assert.ok(composed.includes('createLazyComposerTarget((state) => {'));
+  assert.ok(composed.includes('configureComposerColorTargets(THREE, composer, composerColorTarget)'));
   assert.ok(composed.includes('this._composerPackedCapable && this._composerUsesPackedTarget !== gradeCanUsePackedTarget'));
   assert.ok(composed.includes('type: THREE.UnsignedInt101111Type'));
   assert.ok(qualityIdentity()['composer-format-adapter.mjs']);
