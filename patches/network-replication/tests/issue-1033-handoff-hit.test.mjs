@@ -64,6 +64,10 @@ function makeWorld(id) {
   const ghostsEnd = source.indexOf('\n}\n', ghostsAt);
   assert.ok(helpers.length > 0 && ghostsAt >= 0 && ghostsEnd > ghostsAt, 'handoff cleanup helpers are composed');
   const ghostHelper = source.slice(ghostsAt, ghostsEnd + 3);
+  const dropStart = source.indexOf('function clearRemoteDropRoll(');
+  const dropEnd = source.indexOf('function syncRemoteDropRoll(', dropStart);
+  assert.ok(dropStart >= 0 && dropEnd > dropStart, 'production Drop Roller cleanup is composed');
+  const dropCleanup = source.slice(dropStart, dropEnd);
   const methodNames = [
     'sendHit', 'shouldApplyHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_retryPendingHitsForLeave',
     '_retryNackedHit', '_hitNack', '_hit', '_hitAck', 'onMessage', 'onLeave', '_onLocalEvent', 'bind', 'dispose', '_requestFirstSplat',
@@ -80,7 +84,7 @@ function makeWorld(id) {
     'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'C1088_SURGE_TAG',
     'retireDisconnectedMainProjectiles', 'clearRemoteDodgeClock', 'KIT_FORWARD',
-    `${helpers}\n${ghostHelper}\n${hitLimits}\n${forwardList}\nreturn class NetMatchHarness {
+    `${helpers}\n${ghostHelper}\n${dropCleanup}\n${hitLimits}\n${forwardList}\nreturn class NetMatchHarness {
 ${methods}
   _setupActor() {}
   _adopt(actor) { actor.remote = false; actor.isBot = true; actor.net.buf.length = 0; }
