@@ -113,6 +113,10 @@ const tap = async (id) => {
   // Never invoke the DOM click handler or skip the resulting battle/menu checks.
   if (id === 'start') {
     await operationTrace.run('touch: start', async () => {
+      // Locator.tap performs this scroll before dispatch. The START button
+      // can be below the first iPad viewport: keep that real user step while
+      // avoiding the costly post-scroll tap actionability synchronization.
+      await page.locator(sel).scrollIntoViewIfNeeded({ timeout: 30000 });
       const point = await page.evaluate((selector) => {
         const button = document.querySelector(selector);
         if (!button) throw Error('Turf START disappeared before touch');
@@ -120,7 +124,8 @@ const tap = async (id) => {
         const x = b.left + b.width * .5, y = b.top + b.height * .5;
         const hit = document.elementFromPoint(x, y);
         if (!(button === hit || button.contains(hit))) {
-          throw Error('Turf START touch blocked by ' + (hit?.outerHTML?.slice(0, 160) || 'no hit element'));
+          throw Error('Turf START touch blocked by ' + (hit?.outerHTML?.slice(0, 160) || 'no hit element') +
+            ' at ' + JSON.stringify({x,y,rect:{left:b.left,top:b.top,width:b.width,height:b.height},viewport:[innerWidth,innerHeight]}));
         }
         return { x, y };
       }, sel);
