@@ -18,6 +18,11 @@ const data = await measure({ site, fidelity: true, detail: false });
 // PR1168's reconciled Charger range maps the first legal linear charge (8/60)
 // to DistanceMinCharge. Re-measured composed source and emitted-build receipts
 // below retain that legal-minimum band and the canonical scoring-paint owner.
+// PR1182 removes a second Slosher impact wrapper that incorrectly used 0.2
+// range-line units instead of the configured 1 WU/source-unit scale. The
+// source-owned nine landing stamps now yield maxZ 20.875 (area 102.9375).
+// inkwave-slosher-paint-golden.test.mjs independently checks every source
+// radius/owner and reproduces the old 13.625 with the legacy wrapper control.
 // Keep the .1-unit collision sweep and .25-unit scoring grid exact.
 const golden = {
   shooter:[12.6,12.2,14.375,1],
@@ -34,7 +39,7 @@ const golden = {
   'charger-1':[24.8,24.8,26.875,0],
   'roller-horizontal':[11.2,6.1,14.125,13],
   'roller-vertical':[16.3,6.9,19.125,5],
-  slosher:[13.5,13.5,13.625,9],
+  slosher:[13.5,13.5,20.875,9],
 };
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
   const c = data.cases[key];

@@ -3093,3 +3093,11 @@ At PR #1182 `46e12a85`, malformed host moves could satisfy the finite-only schem
 - Slosher は source-scaled impact paint 修正 `ba9575b` により 0.25-unit grid でも新規 ancillary cells が生じるため、「元の1 volley は全て重複」という旧試験前提を廃止。新規セル面積と実 owner の加点一致・正の late credit を要求し、実 native emission の位置・形状・seed を記録、完全成熟後に同一 stamp を再適用して late credit が厳密に0、grid count も不変であることを追加検証した。新 volley は nearest-paint の sequence seed が変わるので、単なる再発射を完全重複とは扱わない。
 - 参照条件は既存の S3 Ver.11.3.0 source parameter と公開版 native runtime。今回は接続診断・内部回帰試験の修復のみで、source scale、group-boundary sweep、実ゲームの paint ownership は変更していない。Switch 実機の見た目・操作感一致を追加認定しない。
 - 修復後検証: 関連15ファイル（build 出力指定）104/104 pass、skip 0。内訳に hidden-host/lifecycle 29/29 を含む。upstream/numeric quick check とサイトビルド成功（build ID `8e981842339a`）、emitted Match 判定を含む Alpha 試験11/11 pass。CI の全体回帰スイートはこのローカル修復では未実行で、次の公開 head に対するCI結果を別途確認する。
+
+### 2026-10-09: Slosher emitted fidelity の旧測定値を修復
+
+- 公開 head `10bbd7f` の run `37963958139` / validate job `113933499784` は emitted weapons fidelity の Slosher paint maxZ が `20.875`、旧 golden が `13.625` で停止した。これは `ba9575b` の source-scaled impact 修正前の測定値の取り残しだった。
+- `scripts/tests/inkwave-slosher-paint-golden.test.mjs` で worldUnitsPerSourceUnit=`1` を確認し、全9発の実着地について source の near/far distance と WidthHalf、DepthScale、落下縮小から独立に期待半径・depthを計算。native stamp がその値と実 actor owner を維持することを確認した。
+- 負の対照として、撤去済みの二重wrapperだけを試験内で再現し（source range-line `0.2` を world scale と誤用）、旧値 `13.625` を正確に再現した。正常経路は `20.875`、塗り面積 `102.9375`。両ケースの上流native impact記録は同一であり、差を生むのが旧wrapperであることを確認した。正常sourceとemitted buildは全scoring cells・impact記録が一致した。
+- 上記根拠に沿って exact golden の paint maxZ のみ更新。命中距離13.5、full damage距離13.5、9発、距離許容差、source/build一致検証は維持した。CIのbuilt fidelity工程にもsource/emitted・negative control試験を追加した。S3 Ver.11.3.0の既存source根拠に対する内部測定であり、Nintendo実機の射程・塗り形状一致の追加認定ではない。
+- 検証結果: source/emitted golden＋source impact試験6/6、built weapons fidelity全15ケース・network3 modes・wall-drop6ケース、startup budget、packaging6/6、workflow構造15/15すべてpass。runtimeの出力build hash `8e981842339afe220578f37a94c5be5cda4697611d13d7ffad2c7bf61806d476` は不変。
