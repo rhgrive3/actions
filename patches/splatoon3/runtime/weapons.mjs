@@ -1,4 +1,6 @@
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
+import { ShooterAccuracy } from './shooter-accuracy.mjs';
+import { shooterMovementRemaining, shooterMovementSpeed } from './shooter-movement.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
 import { installFinalDamage, damageGroupId, withFinalDamageGroup } from './final-damage.mjs';
@@ -320,6 +322,12 @@ export function installWeapons(context, profile) {
   // camera target. Use the launch ray as aimed; gravity acts on the bullet.
   Projectiles.prototype._ballistic = function (_from, direction) { return direction; };
   const reset = WeaponRunner.prototype.reset, busy = WeaponRunner.prototype.busy;
+  const nativeMoveSpeed = WeaponRunner.prototype.moveSpeed;
+  WeaponRunner.prototype.moveSpeed = function () {
+    if (this.a?.weapon?.kind === 'shooter')
+      return shooterMovementSpeed(this.s3ShooterMoveRemaining, PLAYER.runSpeed, this.a.weapon.moveSpeedFiring);
+    return nativeMoveSpeed.call(this);
+  };
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     clearSplatlingSubInterrupt(this);
@@ -341,6 +349,8 @@ export function installWeapons(context, profile) {
     this.s3ChargerCancelSwimRemaining = 0; // #416 partial-charge squid cancel recovery
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
+    this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
+    this.s3ShooterMoveRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
     return result;
@@ -426,6 +436,7 @@ export function installWeapons(context, profile) {
   const runnerUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const weapon = this.a.weapon;
+    if (weapon.kind === 'shooter') this.s3ShooterMoveRemaining = shooterMovementRemaining(this.s3ShooterMoveRemaining, dt);
     if (weapon?.kind === 'blaster') this.s3BlasterMoveRemaining = Math.max(0, (this.s3BlasterMoveRemaining || 0) - dt);
     else this.s3BlasterMoveRemaining = 0;
     if (blasterJumpSupported() && weapon?.kind === 'blaster') {
@@ -470,6 +481,7 @@ export function installWeapons(context, profile) {
         next = { ...next, fire: false, firePressed: false };
       input = next;
     }
+    if (weapon.kind === 'shooter' && !input.fire) this.s3Accuracy?.advance(dt);
     const result = runnerUpdate.call(this, dt, input);
     if (weapon.kind === 'shooter' && this.s3ShooterInterruptJustArmed) {
       // R/ZL cancellation may coincide with a due repeat; the native owner above
@@ -857,9 +869,9 @@ export function installWeapons(context, profile) {
       if (age <= hold + 1e-10) base = w.spreadAir;
       else if (age < end - 1e-10) base = w.spreadAir + (w.spreadGround - w.spreadAir) * ((age - hold) / (end - hold));
       else { base = w.spreadGround; this.s3JumpSpreadAge = null; }
-      const first = w.spreadFirst ?? .45;
-      return base * (first + (1 - first) * this.bloom);
+      return base; // S3 maximum outer envelope; selection happens on each admitted shot
     }
+    if (w.kind === 'shooter') return w.spreadGround;
     return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
@@ -876,7 +888,14 @@ export function installWeapons(context, profile) {
   const shooterScale = profile.weaponsFidelityCompletion?.worldUnitsPerSourceUnit;
   const nearDown = new THREE.Vector3(0, -1, 0), nearOrigin = new THREE.Vector3(), nearHit = new Hit();
   Projectiles.prototype.fireShooter = function (a, weapon, spreadDeg) {
-    const result = fireShooter.call(this, a, weapon, spreadDeg);
+    const accuracy = a.weaponRunner?.s3Accuracy;
+    const outerChance = accuracy?.shot(!!a.grounded, a.weaponRunner?.s3JumpSpreadAge);
+    // The sourced probability is independent of the native generic cone bloom.
+    // Inner angular kernel remains a provisional narrow cone pending Nintendo validation.
+    const maxDeviation = Number.isFinite(spreadDeg) ? spreadDeg : (a.grounded ? weapon.spreadGround : weapon.spreadAir);
+    const deviation = outerChance == null ? maxDeviation :
+      (Math.random() < outerChance ? maxDeviation : maxDeviation * (weapon.spreadFirst ?? 0.45));
+    const result = fireShooter.call(this, a, weapon, deviation);
     if (a.weaponRunner && weapon.kind === 'shooter') {
       const runner = a.weaponRunner;
       runner.s3PostFireLockActive = true;
@@ -902,6 +921,8 @@ export function installWeapons(context, profile) {
           a.addTurf(G.paint.splat(nearOrigin.copy(contact.point).addScaledVector(contact.normal, 0.05), radius, a.team, { seed }));
         }
       }
+      // An emitted round, not cosmetic firing pose, opens the sourced 4F movement window.
+      a.weaponRunner.s3ShooterMoveRemaining = weapon.postFireSwimLock ?? 4 / 60;
     }
     return result;
   };
@@ -909,7 +930,10 @@ export function installWeapons(context, profile) {
   Projectiles.prototype.fireCharger = function (a, w, charge) {
     if (!isChargerFullCharge(charge)) return fireCharger.call(this, a, w, charge);
     const muzzle = this._muzzle(a, new THREE.Vector3()).clone(), dir = this._aimFrom(a, muzzle, new THREE.Vector3()).clone();
-    const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
+    const fieldRadius = Math.max(0, +w.fieldCollisionRadius || 0);
+    const hit = fieldRadius && this.inkFlight?.world && G.physics.level
+      ? this.inkFlight.world(muzzle, muzzle.clone().addScaledVector(dir, w.rangeMax), fieldRadius, new Hit())
+      : G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
     let length = hit.hit ? hit.dist : w.rangeMax;
     if (G.boss) { const bh = G.boss.segHit(muzzle, muzzle.clone().addScaledVector(dir, length), .1); if (bh) length = Math.min(length, bh.dist); }
     const end = muzzle.clone().addScaledVector(dir, length), result = { t: 0, dist: 0 }, victims = [];
