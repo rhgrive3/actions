@@ -113,13 +113,14 @@ const tap = async (id) => {
   // Never invoke the DOM click handler or skip the resulting battle/menu checks.
   if (id === 'start') {
     await operationTrace.run('touch: start', async () => {
-      // Locator.tap performs this scroll before dispatch. The START button
-      // can be below the first iPad viewport: keep that real user step while
-      // avoiding the costly post-scroll tap actionability synchronization.
-      await page.locator(sel).scrollIntoViewIfNeeded({ timeout: 30000 });
+      // Playwright's scrollIntoViewIfNeeded waits for stable animation frames
+      // and can time out on a continuously moving menu under software GL.
+      // Native instant scrolling plus the real hit-test/touch below retains
+      // the player's viewport and touch path without that actionability wait.
       const point = await page.evaluate((selector) => {
         const button = document.querySelector(selector);
         if (!button) throw Error('Turf START disappeared before touch');
+        button.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' });
         const b = button.getBoundingClientRect();
         const x = b.left + b.width * .5, y = b.top + b.height * .5;
         const hit = document.elementFromPoint(x, y);
