@@ -2638,8 +2638,92 @@ Correction: the two Slosher maximum owners also compare the exact victim/attacke
 
 Verification: the initial nine-case regression fails three cases without the correction. The final twelve-case production suite passes 12/12, including real Actor/Projectiles, cumulative retries/order, a later larger maximum, independent actor/victim/group/host-generation keys, native invulnerability, pending/drop/send failure, anonymous local groups, real sender-to-victim-owner NetMatch packets, and real `fireSlosh` units through the source-guided fractional falloff/contact path at 30/60/120Hz. The ten-case intermediate suite plus existing #627 admission, #1150 transport, final-quantization and #999 Roller tests passes 24/24. These are CPU/native-source integration checks; the contact test selects points on the existing falloff curve rather than claiming a measured retail trajectory. Browser, relay latency and Switch captures remain unverified. The defect has no separate Issue number in this batch.
 
-### Issue #469: preserve the post-throw Storm recharge lock during adoption
 
-Real owner snapshots previously omitted the remaining Storm lock, so an adopted bot could recharge immediately while the departed owner still had six seconds of used gauge remaining. An optional life/sequence-bound tick sidecar now transfers that existing clock and its captured duration without changing the 24-field actor or 10-field adoption rows. The latest accepted snapshot and existing owner-clock extrapolation prevent restart or resurrection after expiry; death/reset preserve the lock. No throw, cloud, charge or new gameplay timer is created. New native two-world tests pass 5/5 and neighboring adoption/Slam/cooldown/protection tests pass 27/27. An exact pre-change receiver accepts the new packet while ignoring its optional sidecar. Syntax/whitespace/quick checks pass. Details: `reports/inkwave-storm-lock-adoption-469.md`.
 
-Splatoon 3 comparison remains 11.3.0, Ink Storm with no gear and the existing Special Power path. This preserves established INKWAVE state on ownership transfer; exact retail gauge timing/curve, browser pixels and live relay/hardware parity remain unverified.
+## 2026-10-09: #287 live Settings reset retains the migrated stick scale
+
+PR #1182 local base `4c90da98` still reset the active TV right-stick profile to legacy `1.0` after boot had migrated the same default to S3 setting `0`. The S3 marker prevented correction on reload. The native menu-reset boundary now converts the legacy default with the existing migration helper and saves an explicit S3 marker; both profiles reset to the existing centered value without changing the provisional response curve. Native composed boot → armed UI reset → Game settings → storage/reload regressions plus aim-profile neighbors pass 23/23; the two new cases fail on the pre-fix source. Nintendo gain calibration and browser/physical-device comparison remain unverified, so this is Refs #287 only. Details: `reports/inkwave-stick-reset-287-2026-10-09.md`.
+
+## 2026-10-09 — #461 effective SFX mute and deferred-loop updates
+
+The original closed SFX=0 issue remains fixed. Its residual Master=0 boundary
+still synthesized inaudible effects, and the composed loop-deduplication wrapper
+dropped parameter changes made while a handle was temporarily muted. Effective
+mute now includes Master; deferred requests retain updates and join the normal
+deduplication path on resume, while stopped/dead handles stay retired. Focused
+native audio composition passes 36/36 with no skips. No gameplay/retail numeric
+values change and no device power/audio measurement is claimed. See
+[the scoped report](inkwave-sfx-master-mute-461-2026-10-09.md).
+
+## 2026-10-09 — #920 map-pin out-and-back drag cancellation
+
+The original closed pointerdown-commit defect remains fixed. The residual
+endpoint-only slop check still accepted an out-and-back touch/pen drag as a tap,
+forcing Super Jump. Pointermove now cancels the owning request once the existing
+24px slop is exceeded; returning inside cannot resurrect it. The boundary,
+other pointers, later fresh taps, mouse/pad and jump authority remain unchanged.
+Three new failing regressions now pass and the focused total is 81/81 with no
+skips. Synthetic DOM/pointer checks are distinct from hardware or Switch tests;
+no Splatoon 3 11.3.0 gameplay values change. See
+[the scoped report](inkwave-map-pin-drag-cancel-920-2026-10-09.md).
+
+## 2026-10-09: #384 one-off paused shadow invalidation
+
+A true offline pause already suppresses continuous scene/shadow updates. Its Quality-change redraw nevertheless left the newly disposed sun shadow unallocated: the light flag was true but the global Three shadow gate was false. The necessary paused redraw now refreshes enabled shadows once and returns to idle. A regression using the actual bundled Three shadow code, native quality owner and production Game frame fails before the fix; after it, 19/19 focused/neighbor tests pass, including 30/60/120 Hz, native ShadowCache fallback, hidden/skipped frames and disable/re-enable. Native allocation/gate assertions are not WebGL pixels, browser/device or Nintendo measurements. No gameplay/reference values change; Refs #384 remains open. Details: `reports/inkwave-paused-shadow-384-2026-10-09.md`.
+
+### #920 same-frame map-lifetime follow-up
+
+Native controller close/close-reopen can precede the next Diorama render, leaving
+old pin contacts eligible under stale presentation state. A controller-owned
+map epoch and captured match/viewer/controller identities now cancel those
+contacts before pointerup. Five extra negative controls pass after correction;
+134 native tests pass across the bounded suites, with two emitted-site checks
+explicitly unrun because no built-site fixture was provided. See the #920 report
+above; no gameplay, network or Nintendo-calibration values change.
+
+### Scope correction: withdraw unproven Storm adoption sidecar
+
+The earlier Storm-lock adoption sidecar was tested through a partial NetMatch fixture that did not install production disconnect fidelity. In the production human-disconnect route, installDisconnectFidelity marks the departing player dead/disconnected and does not execute the tested bot-adoption path. The sidecar, its scoped test, and its standalone report are therefore withdrawn rather than presented as a production bug fix. The independently reproduced local Storm HUD lock display (#469) and landing-gauge admission fix remain unchanged. The analogous unpublished Slam adoption candidate is not included.
+
+## 2026-10-09 — Withdraw unproven Roller ownership-generation candidate
+
+The owner-generation candidate was not published. Its fixture omitted installDisconnectFidelity. With the production wrapper, departed human actors are disconnected, ownerless and dead; the alleged adoption does not occur. The candidate runtime change and its test are withdrawn. Existing rejected-hit armor and Slosher quantization repairs are independent.
+
+### 2026-10-09 #890 follow-on: own the actual humanoid jump after same-tick emergence
+
+- Verified residual: the hold wrapper captured `ordinary` before native Actor
+  update. Releasing ZL and pressing B in one tick emerged to humanoid and admitted
+  a real normal jump, but never started its hold state. Full production install
+  with actual Actor/Physics measured both 1F tap and held trajectories at
+  1.3491667 WU apex; an already-humanoid 1F tap used the existing 0.7203333 WU arc.
+  These are INKWAVE measurements, not Nintendo heights.
+- New hold-state admission now checks a changed native jump serial and the actual
+  post-update humanoid/alive/non-special/non-climbing state. Absent serial and
+  serial zero are equivalent, preventing grounded idle from manufacturing a
+  never-launched hold epoch. Pre-existing airborne release processing is unchanged.
+- Source/profile tuning is unchanged: existing 5F/.7 remains the explicitly
+  provisional S1-informed INKWAVE feel prototype. No Nintendo jump cutoff,
+  gravity curve, swim-form trajectory, or motion data is inferred or retuned.
+- Native regressions retain the old-gate counterexample and compare same-tick
+  emergence against existing humanoid tap/hold trajectories through real floor
+  collisions. Their complete fixed-step traces match at 30/60/120 Hz; tap remains
+  lower than held, and both land normally. Idle/swim-form launches create no
+  humanoid hold state; reset retires the accepted epoch. Browser and Switch
+  capture, and the source calibration acceptance for #890, remain unverified.
+- Verification: the new/previous #890 cases passed 9/9. Adjacent grouped checks
+  passed 43 assertions; the Super Jump file's worker ended without an assertion
+  diagnostic under file concurrency 2. Its unchanged code then passed 30/30
+  when run alone. The grouped worker interruption is not reported as a clean
+  aggregate pass or proven runtime regression; resource contention is possible.
+
+## 2026-10-09: #1184 offline start failure returns to usable navigation
+
+The native menu API lacked a consumer for current asynchronous Boss/world/warmup startup failures after hiding menus and requesting the opaque fade. Its UI boundary now owns recovery through existing quitToMenu while core/online exception semantics stay intact. Explicit flow ownership rejects stale failures, and failed Boss import application-cache entries are cleared for another attempt. Actual production-composed menu API/start/return methods and native Boss-loader tests pass with the existing flow neighbors: 138/138 (concurrency 1); old menu entry/cache negative controls retain the failure. Browser/network/WebGL and Switch behavior are unmeasured, and no Nintendo constants change. Refs #1184, details `reports/inkwave-menu-start-failure-1184-2026-10-09.md`.
+
+#1184 handoff follow-up: preserve the complete native `startMatch` body and pass the UI-owned flow as an optional argument, so the final loading-cache AST instrumentation remains reachable. Its real transformed method now has a dedicated regression (request count per attempt, ready only on success). Final targeted result: 139/139, concurrency 1; browser/WebGL status remains unverified.
+
+### 2026-10-09 — #469/#647 complete-bootstrap scope correction
+
+The replication fixture's `fullRuntime` does not install production `installDisconnectFidelity`; its native human-adoption path is compatibility behavior, not the installed S3 disconnect policy. Storm adoption sidecar 307d15fc/9302b381 is withdrawn and Slam landing-transfer prototype 56814527 is not selected. They are not counted as production human-disconnect fixes. The independent personal Storm HUD and pending Slam recharge/readiness fixes are retained after five new checks applying build transforms to upstream/runtime, real runtime install and every extra bootstrap installer in source-verified order. Current Splatling/Storm and Dualies/Slam kits pass, removed-fix negative controls reproduce both defects, and installed onLeave retires the human with zero adoption calls. See `reports/inkwave-gauge-bootstrap-scope-correction-2026-10-09.md`.
+
+This corrects the scope of earlier native-composition evidence rather than asserting browser, relay or Nintendo hardware results. Splatoon 3 remains 11.3.0; unmeasured gauge curves/segments/landing timing remain unresolved.

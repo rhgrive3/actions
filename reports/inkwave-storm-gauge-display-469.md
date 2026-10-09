@@ -25,3 +25,7 @@ The visual fraction is a proportional projection of INKWAVE's established lock. 
 - Fixed 30/60/120 Hz render schedules produce identical 480-tick authoritative display traces.
 
 Final new tests: **5/5 pass**. Adjacent existing Storm effects, Special Power/sub, HUD snapshot and HUD-authority tests: **55 pass, 2 emitted-site-only tests skipped**. Syntax, whitespace and quick upstream/numeric checks pass. No full CI wait or browser/relay/Nintendo hardware validation was performed for this scoped change.
+
+## Complete-bootstrap follow-up and scope correction
+
+The focused tests above compose native source transforms but do not apply every production bootstrap installer. A subsequent complete-wrapper test calls the real runtime installer and all eight additional bootstrap installers, with runtime modules also transformed. It uses the current original Splatling/Storm kit, rather than the focused fixture's pre-kit Charger mapping. The personal HUD correction and its removed-projection negative control both remain valid. The separate Storm adoption follow-up was withdrawn because production disconnect policy retires humans instead of taking native bot adoption. See `inkwave-gauge-bootstrap-scope-correction-2026-10-09.md`; its five checks pass without claiming browser/hardware parity.

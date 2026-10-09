@@ -109,3 +109,57 @@ test('#920 the pin connections fail closed on upstream drift and double applicat
   assert.throws(() => adaptPinTap(REL, raw.replace('this.hover = i;\n        this._jump(i, G.match?.local);', 'this.hover = i;\n        this._jump(i, G.match?.local, 1);')), /conflict/);
   assert.equal(adaptPinTap('src/ui/hud.js', 'unchanged'), 'unchanged');
 });
+
+for (const pointerType of ['touch', 'pen']) test(`#920 ${pointerType}: leaving the tap slop cancels even when the pointer returns before release`, async () => {
+  const h = await boot(), e = h.down(0, { pointerType });
+  h.send(0, 'pointermove', e, { clientX: e.clientX + 60 });
+  h.send(0, 'pointermove', e);
+  h.send(0, 'pointerup', e);
+  assert.equal(h.jumps.length, 0, 'an out-and-back drag is not a completed tap');
+  assert.equal(h.dio._pinTaps.size, 0);
+});
+
+test('#920 move slop is inclusive, pointer-scoped and does not swallow a fresh later tap', async () => {
+  const h = await boot(), a = h.down(0), b = h.down(1);
+  h.send(0, 'pointermove', a, { clientX: a.clientX + 25 });
+  assert.equal(h.dio._pinTaps.has(a.pointerId), false);
+  assert.equal(h.dio._pinTaps.has(b.pointerId), true);
+  h.send(1, 'pointermove', b, { clientX: b.clientX + 24 });
+  h.send(1, 'pointerup', b, { clientX: b.clientX + 24 });
+  assert.deepEqual(h.jumps, [h.allies[1]], 'the untouched pointer remains a legal tap at the existing boundary');
+  h.send(0, 'pointerup', a); assert.equal(h.jumps.length, 1);
+  const next = h.down(0); h.send(0, 'pointerup', next);
+  assert.deepEqual(h.jumps, [h.allies[1], h.allies[0]]);
+});
+
+function attachMapController(h) {
+  const rel = 'src/game/player.js';
+  const source = adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, read(rel)))));
+  const start = source.indexOf('  setTurfMap('), end = source.indexOf('  updateMapInput()', start);
+  assert.ok(start >= 0 && end > start);
+  // Execute the production latch method; only unrelated gameplay cancellation
+  // is a spy. Diorama state is intentionally not rendered between events.
+  const Controller = new Function('cancelMapGameplay', `return class { cancelForMapTakeover() { cancelMapGameplay(this); } ${source.slice(start, end)} }`)(() => {});
+  const c = new Controller(); c.input = { navigationDevice: 'touch' }; c.mapHeld = false;
+  c.setTurfMap(true); h.G.match.controller = c;
+  return c;
+}
+
+for (const reopen of [false, true]) test(`#920 native map close${reopen ? '/reopen' : ''} cancels an old pin contact before the next rendered frame`, async () => {
+  const h = await boot(), c = attachMapController(h), e = h.down(0);
+  c.setTurfMap(false); if (reopen) c.setTurfMap(true);
+  assert.equal(h.dio.on, true, 'the previous rendered map is still on');
+  h.send(0, 'pointerup', e);
+  assert.equal(h.jumps.length, 0, 'controller lifetime owns cancellation before presentation catches up');
+  c.setTurfMap(true); const fresh = h.down(0); h.send(0, 'pointerup', fresh);
+  assert.equal(h.jumps.length, 1, 'a new map lifetime accepts fresh input');
+});
+
+for (const change of ['match', 'viewer', 'controller']) test(`#920 changing ${change} retires the old pointer intent even when the pin object is unchanged`, async () => {
+  const h = await boot(); attachMapController(h); const e = h.down(0);
+  if (change === 'match') h.G.match = { ...h.G.match };
+  if (change === 'viewer') h.G.match.local = { ...h.me };
+  if (change === 'controller') h.G.match.controller = { ...h.G.match.controller };
+  h.send(0, 'pointerup', e);
+  assert.equal(h.jumps.length, 0);
+});

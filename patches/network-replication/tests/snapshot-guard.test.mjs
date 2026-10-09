@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validActorSnapshotRow, validRemoteActorPose } from '../snapshot-guard.mjs';
+import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp } from '../snapshot-guard.mjs';
 const row = () => [17, 4, 2, 8, 3, 0, 1, 0, 0, 0, 1, 100, 100, 0, 0, 12, 0, 0, 0, 1, 0, 0, 0];
 test('#1178 full owner row accepts ordinary 20Hz packets and additional optional fields', () => {
   assert.equal(validActorSnapshotRow(row(), 2.5), true);
@@ -41,5 +41,17 @@ test('#1178 valid pending-lethal HP stays receivable without allowing poisoned s
   for (const resource of [12, 13, 14]) {
     const value = row(); value[resource] = -1;
     assert.equal(validActorSnapshotRow(value, 2.5), false, `negative resource ${resource}`);
+  }
+});
+
+
+test('#1178 snapshot clock uses the existing safe millisecond wire representation', () => {
+  for (const ts of [0, .001, 2.5, 1000.05, 86400 * 365, Number.MAX_SAFE_INTEGER / 1000]) {
+    assert.equal(validSnapshotTimestamp(ts), true, `representable time ${ts}`);
+    assert.equal(validActorSnapshotRow(row(), ts), true);
+  }
+  for (const ts of [-1, -.001, NaN, Infinity, -Infinity, null, '1000', {}, 1e308, Number.MAX_SAFE_INTEGER]) {
+    assert.equal(validSnapshotTimestamp(ts), false, `invalid clock ${String(ts)}`);
+    assert.equal(validActorSnapshotRow(row(), ts), false);
   }
 });

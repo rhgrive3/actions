@@ -3,8 +3,13 @@
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const bounded = (value, min, max) => finite(value) && value >= min && value <= max;
 const integer = (value, min, max) => Number.isSafeInteger(value) && value >= min && value <= max;
+// The wire encodes performance.now() seconds with r3(), i.e. rounded milliseconds.
+// Keep that integer representable before it can poison the peer replay watermark.
+export function validSnapshotTimestamp(timestamp) {
+  return finite(timestamp) && timestamp >= 0 && Number.isSafeInteger(Math.round(timestamp * 1000));
+}
 export function validActorSnapshotRow(row, timestamp) {
-  if (!Array.isArray(row) || row.length < 21 || row.length > 25 || !finite(timestamp)) return false;
+  if (!Array.isArray(row) || row.length < 21 || row.length > 25 || !validSnapshotTimestamp(timestamp)) return false;
   if (!integer(row[0], 0, 0x7fffffff)) return false; // nid
   // position, velocity, heading, aim and wall normal are never allowed to poison
   // interpolation, animation, collision, particles or the GPU.
