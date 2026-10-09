@@ -26,6 +26,8 @@ export function adaptEightFollowup(rel, code) {
       '#1103 capture player launch confirmation state',
     );
 
+    const hostTeams = code.includes('\n  assignTeam(id, team) {');
+    const end = hostTeams ? '  assignTeam(id, team) {' : '  setSettings(s = {}) {';
     // Scope to the native _applyMe method: host team assignment adds methods
     // before setSettings, so that distant boundary is no longer adjacent.
     const meStart = code.indexOf('  _applyMe(id, o) {');
