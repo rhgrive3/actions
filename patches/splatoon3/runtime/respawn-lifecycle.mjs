@@ -6,6 +6,8 @@ let beginInitialImpl = null;
 export function beginInitialSquidSpawn(actor) { return beginInitialImpl?.(actor) ?? false; }
 export function squidSpawnState(actor) { return actor?.s3?.squidSpawn || null; }
 export const SPAWN_ARMOR_FLAG = 8388608;
+export const SQUID_SPAWN_FLIGHT_DURATION = 60 / 60;
+export const SQUID_SPAWN_FLIGHT_INVULNERABILITY = SQUID_SPAWN_FLIGHT_DURATION + 1e-6;
 export function spawnProtectionRemaining(actor) {
   if (actor?.remote && actor.s3?.spawnArmorManaged) return actor.s3.spawnArmorRemote ? .1 : 0;
   if (!actor?.s3?.spawnArmorManaged) return actor?.invuln || 0; // legacy non-respawn preview/spawnAt
@@ -68,7 +70,7 @@ export function installRespawnLifecycle(api, profile) {
   if (Object.hasOwn(A, INSTALL)) return;
   Object.defineProperty(A, INSTALL, { value: true });
   const cfg = profile.spawnArmor, reset = A.reset, spawnAt = A.spawnAt, respawn = A.respawn, update = A.update, splat = A.splat;
-  const flightDuration = 60 / 60, steerSpeed = 4.5, minRange = 2.5, maxRange = 12;
+  const flightDuration = SQUID_SPAWN_FLIGHT_DURATION, steerSpeed = 4.5, minRange = 2.5, maxRange = 12;
   const slotPoint = actor => {
     const pad = G.level.spawnPads[actor.team], count = G.match?.mode === 'boss' ? (G.match?.bossCfg?.squad || 4) : 4;
     const ang = (actor.slot / count) * Math.PI * 2 + 0.6;
@@ -123,7 +125,7 @@ export function installRespawnLifecycle(api, profile) {
     // Preserve #1005's launch-owned finite armor clock; advanceSpawnProtection
     // consumes it during flight just as it does during other live actor time.
     actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
-    actor.invuln = flightDuration + 1e-6; actor.grounded = false; actor.vel.set(0,0,0); actor.character.trigger('spawn');
+    actor.invuln = SQUID_SPAWN_FLIGHT_INVULNERABILITY; actor.grounded = false; actor.vel.set(0,0,0); actor.character.trigger('spawn');
     emit?.('squidspawn:launch', { actor, initial: s.initial, target: { ...s.to } });
     return true;
   }
