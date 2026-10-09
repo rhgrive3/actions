@@ -113,6 +113,9 @@ export function advanceFidelityProjectile(p, dt) {
     }
   }
   p.pos.addScaledVector(p.vel, step);
+  // #713: remember the highest point of the arc so a break/free landing can be
+  // measured against the sourced HeightUseDepthScale*BreakFree anchors.
+  if (!Number.isFinite(p.fidelityMaxY) || p.pos.y > p.fidelityMaxY) p.fidelityMaxY = p.pos.y;
   if (isKitProjectile(p)) kitTrizookaOrbitDelta(null, p, step);
 }
 
@@ -947,7 +950,7 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   }
   // Only offsets are extracted. Native body +1.3 anchor is not claimed as Switch height.
   p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(unit.SpawnPositionHeight||0);
-  p.prev.copy(p.pos);p.start.copy(p.pos);
+  p.prev.copy(p.pos);p.start.copy(p.pos);p.fidelityMaxY=p.pos.y;
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
@@ -1313,7 +1316,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityMaxY=null;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
