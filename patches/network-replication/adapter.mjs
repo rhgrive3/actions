@@ -1141,7 +1141,7 @@ function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence, w
   const slam = row.length >= 10 ? readSlamState(row[9], !!(flags & F.alive) && !!(flags & F.special) && weaponSpecial === 'slam') : null;
   if (slam === undefined) return null;
   if (!Number.isSafeInteger(ownerTick) || tick !== ownerTick
-    || Number.isSafeInteger(previousTick) && tick <= previousTick) return null;
+    || Number.isSafeInteger(previousTick) && tick < previousTick) return null;
   const spawn = row.length === 11 ? readSquidSpawnState(row[10], actor, flags, tick, ownerTick, protection) : null;
   if (spawn === undefined || row.length === 11 && !spawn || spawn && (jump || slam)) return null;
   return { life: rowLife, sequence, tick, recoveryAge, protection, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown, slam, squidSpawn: spawn };
