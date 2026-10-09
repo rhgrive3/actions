@@ -127,9 +127,10 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   const spread = WeaponRunner.prototype._spreadDeg;
   WeaponRunner.prototype._spreadDeg = function (w) {
     if (w.kind !== 'splatling') return spread.call(this, w);
-    // Preserve the current release-held cone, but remove shooter-style bloom.
-    // This is not a claim that the inherited cone is S3's exact PDF.
-    return (this.a.grounded ? w.spreadGround : w.spreadAir) * (w.spreadFirst ?? .6);
+    // The guide exposes the sourced OUTER envelope. Actual admitted rounds
+    // choose their 30% wide component in weapon-accuracy.mjs, not a permanent
+    // 0.6 multiplier that prevents any shot from reaching the outer envelope.
+    return this.a.grounded ? w.spreadGround : w.spreadAir;
   };
 
   WeaponRunner.prototype._splatling = function (dt, input, w) {

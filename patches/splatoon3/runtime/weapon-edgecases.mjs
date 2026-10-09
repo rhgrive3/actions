@@ -1,3 +1,4 @@
+import { biasQuantile } from './weapon-accuracy.mjs';
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
@@ -65,15 +66,19 @@ export function dualiesInputGate(runner) {
 // a resolved burst from being captured and queued again.
 let flushing = 0;
 
-// This retains the existing two-draw radial sampler, not a claimed S3 PDF.
+// Two draws are retained. The optional shot bias applies a community gamma
+// calibration; the 2-D azimuth/pitch correlation is NOT a verified S3 PDF.
 // #1045: PitchDegSwerve is independent of the horizontal jump/recovery envelope.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
+  const bias = a.weaponRunner?.s3ShotBias;
+  const radiusSample = u => Number.isFinite(bias?.horizontal)
+    ? biasQuantile(u, bias.horizontal) : Math.sqrt(u);
   // #883: Dualies expose one scalar spread envelope, so do not inherit the
   // generic path's unsourced vertical compression.
   if (w.kind === 'dualies') {
     if (horizontal <= 0) return dir;
-    const radius = horizontal * DEG * Math.sqrt(Math.random());
+    const radius = horizontal * DEG * radiusSample(Math.random());
     const angle = Math.random() * Math.PI * 2;
     const aim = dir.clone().normalize();
     const right = aim.clone().set(-aim.z, 0, aim.x);
@@ -85,9 +90,9 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
   }
   if (w.kind === 'shooter' || w.kind === 'blaster') {
     if (horizontal <= 0) return dir;
-    // Keep the existing two-draw radial law; correct only the scalar cone
-    // geometry. This is not a new claim about Nintendo's bias/PDF.
-    const radius = horizontal * DEG * Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
+    // Keep two random draws and the scalar cone geometry. The launch
+    // context supplies an explicit, separately labelled angular calibration.
+    const radius = horizontal * DEG * radiusSample(Math.random()), angle = Math.random() * Math.PI * 2;
     const right = dir.clone().set(-dir.z, 0, dir.x);
     if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(dir, -dir.x);
     right.normalize();
@@ -100,9 +105,11 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
   }
   // Keep both Splatling spread draws when the horizontal cone is zero. The
   // projectile seed and later paint effects share this gameplay RNG stream.
-  const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
+  const u = Math.random(), angle = Math.random() * Math.PI * 2;
+  const radius = radiusSample(u);
+  const pitchRadius = Number.isFinite(bias?.pitch) ? biasQuantile(u, bias.pitch) : Math.sqrt(u);
   const horizontalAngle = Math.max(0, horizontal) * DEG * radius;
-  const pitchAngle = w.spreadPitchGround * DEG * radius;
+  const pitchAngle = w.spreadPitchGround * DEG * pitchRadius;
   const right = dir.clone().set(-dir.z, 0, dir.x);
   if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
   right.normalize();
