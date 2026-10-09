@@ -99,6 +99,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "player.s3SwimHurtRadius": {
+    "value": 0.675,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "player.s3HumanoidHurtHeight": {
     "value": 1.65,
     "status": "calibration or derived value; see reference raw table and unverified list",

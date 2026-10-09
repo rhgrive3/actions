@@ -89,7 +89,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
       focus: () => {
         g._platformSensorStart = env.performance.now();
         g.resync();
-        if (g.enabled && lifecycle.active && !access.received) access.beginListening();
+        if (g.enabled && lifecycle.active) access.beginListening();
       },
       screen: () => screenChanged(g),
     });
@@ -119,6 +119,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (s.screen === null) { s.screen = value; return false; }
     if (s.screen === value) return false;
     g.resync(); s.screen = value;
+    if (g.enabled && lifecycle.active && lifecycle.focused) accessFor(g).beginListening();
     return true;
   };
   P.discard = function () {
@@ -143,7 +144,10 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     access.wanted = true;
     if (!lifecycle.active || !access.allowed) return false;
     if (this._platformCanStart && !this._platformCanStart()) { access.stopListening(); return false; }
-    if (this.enabled) return true;
+    if (this.enabled) {
+      if (access.availability === 'stale' || access.availability === 'idle') { this.resync(); access.beginListening(); }
+      return true;
+    }
     this.supported = access.capability.supported;
     this.resync(); state(this).screen = Number(getScreenAngle()) || 0;
     this._platformSensorStart = env.performance.now();

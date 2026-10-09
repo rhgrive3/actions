@@ -48,7 +48,7 @@ test('first legal 8f shot launches at the pinned 144 u/s minimum endpoint', asyn
   const raw = rawMove(f);
   assert.equal(raw.SpawnSpeedMinCharge, 2.4, 'pinned minimum endpoint');
   const job = launch(f, 8);
-  close(job.charge, 1 / 6, 'runner charge after 8 frames stays on the upstream curve');
+  close(job.charge, 8 / 60, 'runner charge after 8 frames uses linear progress');
   close(job.speed, 60 * raw.SpawnSpeedMinCharge, '8f launch speed');
 });
 

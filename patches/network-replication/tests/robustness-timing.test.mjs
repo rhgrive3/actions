@@ -24,7 +24,7 @@ test('owner sends exact delay/life/straight without frame-boundary rounding', as
   assert.ok(e[13] === p.straight);
 });
 
-test('birth-time Slosher packets retain exact source delays and scheduled beats', async () => {
+test('birth-time Slosher packets have zero remaining delay and retain scheduled beats', async () => {
   const f = await fixture();
   const nm = f.makeNetMatch(f.makeSession('me', 'me', [['me', 'Me']]));
   const local = f.makeActor({ nid: 7, owner: 'me', remote: false, roller: false });
@@ -39,15 +39,10 @@ test('birth-time Slosher packets retain exact source delays and scheduled beats'
   }
   const events = nm.out.filter((e) => e[1] === 'p');
   assert.equal(events.length, 9, 'each scheduled Slosher glob publishes once at birth');
-  // #64 uses the pinned UnitDelayFrame/AfterOffsetDelayFrame source values.
-  // They are exact 60 Hz frame fractions and must round-trip without r3 ms loss.
-  const delays = events.map((e) => e[11]).filter((d) => d > 0);
-  assert.ok(delays.length > 0, 'no delayed globs were recorded');
-  for (const e of events) {
-    const d=e[11],tick=e.at(-2);
-    assert.ok(Math.abs(d * 60 - Math.round(d * 60)) < 1e-9, `delay lost source-frame precision: ${d}`);
-    assert.equal(tick,Math.round(d*60)+1,`birth packet missed its source schedule: delay=${d}, tick=${tick}`);
-  }
+  // #1152: scheduling belongs to birth tick, not a second receiver delay.
+  assert.deepEqual(Array.from(events,e=>e.at(-2)-1),[0,1,2,3,4,6,8,10,12]);
+  for (const e of events) assert.equal(e[11],0);
+
 });
 
 test('a ghost storm cloud advances on the owner clock and retires at its duration', async () => {

@@ -168,7 +168,7 @@ async function fireAt(runtime, frames, renderHz) {
   near(target.hp, hpBefore - Math.floor((hits[0].amount + 1e-10) * 10) / 10); // #261 quantizes final damage, not the curve input
 
   const progress = releaseAt / owner.weapon.chargeTime;
-  const charge = progress < .2 ? progress * 1.25 : .25 + (progress - .2) * .9375;
+  const charge = progress; // #961 linear presentation/release coordinate
   near(firedJob.charge, charge, 1e-10);
   const expectedRange = isChargerFullCharge(charge) ? profile.weapons.charger.rangeMax
     : profile.weapons.charger.rangeMin + (profile.weapons.charger.rangeMax - profile.weapons.charger.rangeMin) * charge;
@@ -200,8 +200,8 @@ test('#506 active-flight negative control rejects the former nonlinear charge da
   const eight = await fireAt(baseline, 8, 60);
   const thirty = await fireAt(baseline, 30, 60);
   const full = await fireAt(baseline, 60, 60);
-  near(eight.damage, 46.6666666667);
-  near(thirty.damage, 61.25);
+  near(eight.damage, 40 + 40 * 8 / 60);
+  near(thirty.damage, 60);
   near(full.damage, 160);
   assert.throws(() => acceptedDamage(eight.damage, 40), error => error?.code === 'ERR_ASSERTION');
   assert.throws(() => acceptedDamage(thirty.damage, 80), error => error?.code === 'ERR_ASSERTION');

@@ -4,7 +4,8 @@ import path from 'node:path';
 import test from 'node:test';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
+import { adaptSource, replaceOnce } from '../adapter.mjs';
+import { adaptIssueBatch1171 } from '../issue-batch-1171-adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = path.join(ROOT, 'inkwave-public');
@@ -31,6 +32,9 @@ async function loadPaint(adapt) {
   function load(file) {
     if (modules.has(file)) return modules.get(file);
     let source = fs.readFileSync(file, 'utf8');
+    // This A/B isolates first-frame presentation. Keep the separately fixed
+    // #1165 permanent ownership geometry equal on both sides of that control.
+    if (!adapt && file === PAINT_FILE) source = adaptIssueBatch1171('src/world/paint.js', source, replaceOnce);
     if (file.startsWith(UPSTREAM + path.sep) && adapt) source = adaptSource(path.relative(UPSTREAM, file), source);
     const module = new vm.SourceTextModule(source, { context, identifier: file });
     modules.set(file, module);

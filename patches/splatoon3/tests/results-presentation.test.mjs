@@ -136,9 +136,9 @@ function frameFixture() {
     projectiles: { updateArc: count('arc') }, paint: { flush: count('paint') },
     camera: { position: vector, up: vector },
   };
-  const Frame = new Function('G', 'runSimulation', 'pausedWorldFrame', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame', 'idleAttractMenuBudget', 'updateSplatGhosts', 'effectiveQuality',
+  const Frame = new Function('G', 'runSimulation', 'pausedWorldFrame', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame', 'idleAttractMenuBudget', 'updateSplatGhosts', 'effectiveQuality', 'document',
     'return class Frame {\n' + source.slice(start, end) + '\n}')
-    (G, count('simulation'), pausedWorldFrame, performance, (a, b) => b, x => x, {}, syncPortraitFrame, idleAttractMenuBudget, updateSplatGhosts, effectiveQuality);
+    (G, count('simulation'), pausedWorldFrame, performance, (a, b) => b, x => x, {}, syncPortraitFrame, idleAttractMenuBudget, updateSplatGhosts, effectiveQuality, { hidden: false });
   const f = new Frame();
   f.settings = { quality: 'high' };
   f.match = { paused: false, attract: false, state: 'playing', local: null, actors: [] };
