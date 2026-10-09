@@ -36,7 +36,8 @@ test('native crablet damage, storm batching and body cap preserve legitimate beh
   f.nm.onMessage('guest', f.hit({ c: 7, d: 40, w: 'crab' }));assert.equal(crab.hp, 0);assert.equal(f.actor.stats.splats, 1);
   f.nm.onMessage('guest', f.hit({ c: 7, d: 40, w: 'crab' }));assert.equal(f.actor.stats.splats, 1);
   f.nm.onMessage('guest', f.hit({ q: 2, d: 1.25, w: 'storm' }));assert.equal(f.boss.hp, 9998.75);
-  f.nm.onMessage('guest', f.hit({ q: 3, d: 2500 }));assert.equal(f.boss.hp, 7998.75);assert.equal(f.actor.stats.bossDmg, 2001.25);
+  f.nm.onMessage('guest', f.hit({ q: 3, d: 2500 }));assert.equal(f.boss.hp, 9998.75); // over-limit payload must not reserve admission
+  f.nm.onMessage('guest', f.hit({ q: 3, d: 2000 }));assert.equal(f.boss.hp, 7998.75);assert.equal(f.actor.stats.bossDmg, 2001.25);
 });
 test('native sender includes only boss metadata; normal player hit routing and authority remain separate', async () => {
   const f = await bossWorld();let received;

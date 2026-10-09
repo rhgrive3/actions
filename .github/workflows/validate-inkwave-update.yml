@@ -158,7 +158,7 @@ jobs:
       - name: Verify platform lifecycle smoke regressions
         run: node --test tests/platform-lifecycle/platform-smoke.test.mjs
       - name: Verify movement physics smoke regressions
-        run: node --test patches/movement-physics/tests/movement-smoke.test.mjs
+        run: node --test patches/movement-physics/tests/*.test.mjs
       - name: Verify practice range measurement, rules and battle isolation
         run: node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
       - name: Verify loading/cache regressions

@@ -36,7 +36,7 @@ export function adaptBossHit(rel, code) {
     const boss = this.match?.boss, actor = this.byNid.get(d.a);
     if (!boss?.sim || G.netm !== this || !actor?.remote || actor.owner !== from || from === this.myId) return false;
     if (typeof this.cfg.id !== 'string' || typeof d.m !== 'string' || d.m !== this.cfg.id) return false;
-    if (!Number.isFinite(d.d) || d.d <= 0 || (d.weak !== 0 && d.weak !== 1)) return false;
+    if (typeof d.d !== 'number' || !Number.isFinite(d.d) || d.d <= 0 || d.d > 2000 || (d.weak !== 0 && d.weak !== 1)) return false;
     if (!Number.isSafeInteger(d.c) || d.c < -1 || (d.c >= 0 && !boss.crabs.has(d.c))) return false;
     if (typeof d.w !== 'string' && !(typeof d.w === 'number' && Number.isFinite(d.w))) return false;
     const life = Math.max(actor.netLife ?? 0, actor.net?.lastLife ?? 0);
