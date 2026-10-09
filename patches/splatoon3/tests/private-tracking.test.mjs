@@ -72,7 +72,7 @@ test('#348 confirmed-hit transport stores no public mark and admits only a valid
  nm._hitAck(receipt,'enemy');assert.ok(f.thermalTrackingRecord(f.b,f.a));const end=f.thermalTrackingRecord(f.b,f.a).until;
  f.G.time=1;nm._hitAck(receipt,'enemy');assert.equal(f.thermalTrackingRecord(f.b,f.a).until,end,'replay cannot refresh');
  f.b.reset();f.b.remote=true;f.b.netLife=4;nm.sendHit(f.a,f.b,10,'shooter');nm._hitAck({h:nm._hitSeq,a:1,v:2,d:0,kld:0,vl:4},'enemy');assert.equal(f.thermalTrackingRecord(f.b,f.a),null,'armor-only receipt');
- nm.sendHit(f.a,f.b,10,'shooter');f.b.owner='replacement';nm._hitAck({h:nm._hitSeq,a:1,v:2,d:10,kld:0,vl:4},'enemy');assert.equal(f.thermalTrackingRecord(f.b,f.a),null,'reused ID with another owner');
+ nm.sendHit(f.a,f.b,10,'shooter');f.b.owner='replacement';f.b.netLife=5;nm._hitAck({h:nm._hitSeq,a:1,v:2,d:10,kld:0,vl:4},'enemy');assert.equal(f.thermalTrackingRecord(f.b,f.a),null,'reused ID after victim life advanced');
 });
 test('#348 a private second render pass shares real geometry, restores state, and retires only owned materials',async()=>{
  const f=await rig();const {THREE:T}=f;f.G.scene=new T.Scene();f.G.camera=new T.PerspectiveCamera();f.G.camera.position.set(0,1,0);f.G.physics.los=()=>false;
