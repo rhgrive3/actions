@@ -1,5 +1,5 @@
 // #71: Joy-Con / Pro Controller motion input path based on published
-// Nintendo Switch HID reverse-engineering protocol and ST LSM6DS3 IMU calibration.
+// Nintendo Switch HID protocol notes and nominal ST LSM6DS3 IMU scale.
 // Standard Gamepad API exposes sticks/buttons but no IMU data; this module provides
 // the report decoder, WebHID device bridge, platform detection, and PlayerController composition.
 
@@ -12,6 +12,9 @@ export const JOYCON_GRIP_PRODUCT_ID = 0x200e;
 // ST LSM6DS3 nominal sensitivity for ±2000 dps full-scale: 70 mdps/LSB = 0.070 dps/LSB.
 // Expressed in SI radians per second: 0.070 * (π / 180) ≈ 0.0012217304763960306 rad/s per LSB.
 export const DEFAULT_GYRO_SCALE = 0.070 * (Math.PI / 180);
+// deku's nominal ±2000 dps range is about 34.9 rad/s; allow rounding margin.
+// This is a sensor-range sanity bound, not an S3 gameplay value.
+export const MAX_GYRO_RATE_RAD_S = 35;
 
 // Subcommand & Report IDs per published dekuNukem and Linux hid-nintendo protocol
 export const OUTPUT_REPORT_SUBCMD = 0x01;
@@ -23,7 +26,7 @@ export const INPUT_REPORT_STANDARD_FULL = 0x30;
 // HF freq 320Hz at 0 amplitude, LF freq 160Hz at 0 amplitude
 export const NEUTRAL_RUMBLE = Object.freeze([0x00, 0x01, 0x40, 0x40, 0x00, 0x01, 0x40, 0x40]);
 
-// Default maximum arrival age for motion samples before drift expiry (100 ms ≈ 6.7 missed packets at 66.7 Hz)
+// Arrival-age safety bound chosen by this bridge; no Splatoon 3 timeout is published.
 export const DEFAULT_SAMPLE_MAX_AGE_MS = 100;
 
 const GUARD = Symbol.for('inkwave.s3.pad-motion.v1');
@@ -61,9 +64,8 @@ export async function sendSwitchSubcommand(device, subcmd, args = []) {
 export async function initializeSwitchHIDDevice(device) {
   if (!device) return { initialized: false, reason: 'no-device' };
   try {
-    if (typeof device.open === 'function' && !device.opened) {
-      await device.open();
-    }
+    if (typeof device.open !== 'function') throw new TypeError('Device must support open');
+    if (!device.opened) await device.open();
   } catch (err) {
     return { initialized: false, reason: 'open-failed', error: err };
   }
@@ -87,8 +89,7 @@ export async function initializeSwitchHIDDevice(device) {
 
 export const gainAt = s => {
   const x = Math.max(-5, Math.min(5, Number.isFinite(s) ? s : 0));
-  // Public controller-bridge measurements: -5 ~1x, 0 ~1.8x, +5 ~3x.
-  // Linear interim interpolation is NOT a Nintendo internal curve.
+  // Provisional INKWAVE controller mapping; this is not a published Nintendo response curve.
   return x <= 0 ? 1 + (x + 5) * 0.16 : 1.8 + x * 0.24;
 };
 
@@ -96,7 +97,7 @@ export function controllerMotionDelta(sample, dt, sensitivity = 0, invertY = fal
   if (!sample || !(dt > 0) || dt > 0.25 || !Number.isFinite(sample.yawRate) || !Number.isFinite(sample.pitchRate)) {
     return zero();
   }
-  if (Math.abs(sample.yawRate) > 25 || Math.abs(sample.pitchRate) > 25) return zero();
+  if (Math.abs(sample.yawRate) > MAX_GYRO_RATE_RAD_S || Math.abs(sample.pitchRate) > MAX_GYRO_RATE_RAD_S) return zero();
   const gain = gainAt(sensitivity);
   return {
     yaw: sample.yawRate * dt * gain * (invertX ? -1 : 1),
@@ -131,6 +132,9 @@ export function decodeSwitchMotionReport(data, options = {}) {
     offset = 0; // Faithful WebHID event: data starts at byte 0 (Timer)
   } else {
     // Raw wire buffer fallback where byte 0 contains the report ID
+    if (view.byteLength < 1) {
+      return { yawRate: 0, pitchRate: 0, available: false, reason: 'payload-too-short' };
+    }
     reportId = view.getUint8(0);
     offset = 1;
   }
@@ -147,7 +151,7 @@ export function decodeSwitchMotionReport(data, options = {}) {
   }
 
   const productId = options.productId ?? (options.device?.productId ?? null);
-  // In Splatoon 3 two-handed Joy-Con play, aim motion is sourced exclusively from Joy-Con (R).
+  // This bridge excludes an explicitly identified Joy-Con (L); S3 sensor fusion behavior is unverified.
   if (productId === JOYCON_L_PRODUCT_ID || options.side === 'left') {
     return { yawRate: 0, pitchRate: 0, available: false, ignoredSide: 'left', reportId };
   }
@@ -174,15 +178,13 @@ export function decodeSwitchMotionReport(data, options = {}) {
   const rateY = (rawG2 - biasY) * scale;
   const rateZ = (rawG3 - biasZ) * scale;
 
-  // Coordinate mapping for aim:
-  // For Right Joy-Con held upright in grip and Pro Controller:
-  // Gyro 1 (X) is pitch rate (+up/-down)
-  // Gyro 3 (Z) is yaw rate (around vertical axis, -rateZ for turn left = +yaw)
+  // Provisional bridge convention: Gyro 1 maps to pitch and inverted Gyro 3 to yaw.
+  // Controller mounting orientation/signs and Splatoon 3's mapping are unverified.
   const pitchRate = rateX;
   const yawRate = -rateZ;
 
   if (!Number.isFinite(yawRate) || !Number.isFinite(pitchRate) ||
-      Math.abs(yawRate) > 25 || Math.abs(pitchRate) > 25) {
+      Math.abs(yawRate) > MAX_GYRO_RATE_RAD_S || Math.abs(pitchRate) > MAX_GYRO_RATE_RAD_S) {
     return { yawRate: 0, pitchRate: 0, available: false, reason: 'rate-out-of-bounds' };
   }
 
@@ -203,7 +205,7 @@ export function decodeSwitchMotionReport(data, options = {}) {
 
 /**
  * Creates an HID motion reader from an HIDDevice or mock device.
- * Expiries stale drift after arrival age exceeded; invalid/truncated packet clears drift.
+ * Expires stale angle-rate samples; invalid/truncated packets clear the current sample.
  */
 export function createSwitchHIDReader(deviceOrOptions = {}) {
   let latestSample = null;
@@ -290,48 +292,121 @@ export function attachWebHIDControllerMotion(input, options = {}) {
     input.s3ControllerMotionPlatform = 'unsupported-platform';
     return { supported: false, status: 'unsupported-platform' };
   }
+  const priorSession = input._s3WebHIDSession;
+  if (priorSession?.active && priorSession.handle) return priorSession.handle;
   input.s3ControllerMotionPlatform = 'supported';
   const navHid = navigator.hid;
 
-  // Lifecycle session guards against pending getDevices() or reconnect race condition
-  const session = { active: true };
+  // Keep per-device generations so a disconnect invalidates any open/sendReport
+  // operation that is still pending when the device goes away.
+  const session = {
+    active: true,
+    status: 'listening',
+    reader: null,
+    epochs: new Map(),
+    pending: new Map(),
+    disconnectedDevices: new WeakSet()
+  };
   input._s3WebHIDSession = session;
+
+  const isCurrent = () => session.active && input._s3WebHIDSession === session;
+  const epochOf = device => session.epochs.get(device) || 0;
+  const bumpEpoch = device => {
+    const epoch = epochOf(device) + 1;
+    session.epochs.set(device, epoch);
+    return epoch;
+  };
+
+  const connectDevice = (device, epoch = epochOf(device), { replace = false } = {}) => {
+    if (!isCurrent() || !isSwitchDevice(device) || session.disconnectedDevices.has(device)) {
+      return Promise.resolve({ connected: false, status: 'stale-session' });
+    }
+    const activeReader = input.s3ControllerMotionReader;
+    if (activeReader?.device === device) {
+      session.reader = activeReader;
+      session.status = 'bridge-available';
+      return Promise.resolve({ connected: true, status: 'bridge-available', device, reader: activeReader,
+        initResult: activeReader.initResult || { initialized: true } });
+    }
+
+    const pending = session.pending.get(device);
+    if (pending?.epoch === epoch) {
+      if (replace) pending.replace = true;
+      return pending.promise;
+    }
+
+    const pendingState = { epoch, replace, promise: null };
+    session.status = 'initializing';
+    const promise = (async () => {
+      const initResult = await initializeSwitchHIDDevice(device);
+      if (!isCurrent() || epochOf(device) !== epoch || session.disconnectedDevices.has(device)) {
+        return { connected: false, status: 'stale-session', device, initResult };
+      }
+      if (!initResult.initialized) {
+        input.s3ControllerMotionInitError = initResult;
+        session.status = 'initialization-failed';
+        return { connected: false, status: 'initialization-failed', device, initResult };
+      }
+
+      const previousReader = input.s3ControllerMotionReader;
+      if (previousReader && previousReader.device !== device && !pendingState.replace) {
+        session.status = 'bridge-available';
+        return { connected: false, status: 'another-device-active', device, initResult };
+      }
+      if (previousReader && previousReader.device !== device) {
+        previousReader.detach?.();
+        if (input.s3ControllerMotionReader === previousReader) input.setControllerMotionReader(null);
+      }
+
+      const reader = createSwitchHIDReader({ device, productId: device.productId, ...options });
+      reader.initResult = initResult;
+      session.reader = reader;
+      input.s3ControllerMotionInitError = null;
+      input.setControllerMotionReader(reader);
+      session.status = 'bridge-available';
+      return { connected: true, status: 'bridge-available', device, reader, initResult };
+    })();
+    pendingState.promise = promise;
+    session.pending.set(device, pendingState);
+    promise.finally(() => {
+      if (session.pending.get(device) === pendingState) session.pending.delete(device);
+    }).catch(() => {});
+    return promise;
+  };
+  session.connectDevice = connectDevice;
+  session.epochOf = epochOf;
+  session.bumpEpoch = bumpEpoch;
 
   if (typeof navHid.getDevices === 'function') {
     navHid.getDevices().then(async devices => {
-      if (!session.active || input._s3WebHIDSession !== session) return;
+      if (!isCurrent()) return;
       if (input.s3ControllerMotionReader) return;
       const match = devices.find(d => isSwitchDevice(d));
-      if (match && session.active && !input.s3ControllerMotionReader) {
-        const initRes = await initializeSwitchHIDDevice(match);
-        if (!session.active || input._s3WebHIDSession !== session) return;
-        if (input.s3ControllerMotionReader) return;
-        const reader = createSwitchHIDReader({ device: match, productId: match.productId, ...options });
-        reader.initResult = initRes;
-        input.setControllerMotionReader(reader);
-      }
+      if (match && !input.s3ControllerMotionReader) await connectDevice(match, epochOf(match));
     }).catch(() => {});
   }
 
-  const onConnect = async (e) => {
+  const onConnect = (e) => {
     const d = e?.device;
-    if (session.active && input._s3WebHIDSession === session && isSwitchDevice(d)) {
-      if (!input.s3ControllerMotionReader) {
-        const initRes = await initializeSwitchHIDDevice(d);
-        if (!session.active || input._s3WebHIDSession !== session) return;
-        if (input.s3ControllerMotionReader) return;
-        const reader = createSwitchHIDReader({ device: d, productId: d.productId, ...options });
-        reader.initResult = initRes;
-        input.setControllerMotionReader(reader);
-      }
-    }
+    if (!isCurrent() || !isSwitchDevice(d)) return;
+      if (input.s3ControllerMotionReader && input.s3ControllerMotionReader.device !== d) return;
+    const pending = session.pending.get(d);
+    if (pending?.epoch === epochOf(d)) return pending.promise;
+    session.disconnectedDevices.delete(d);
+    return connectDevice(d, bumpEpoch(d));
   };
   const onDisconnect = (e) => {
     const d = e?.device;
-    if (d && input.s3ControllerMotionReader?.device === d) {
-      input.s3ControllerMotionReader.detach();
-      input.setControllerMotionReader(null);
+    if (!isCurrent() || !d) return;
+    session.disconnectedDevices.add(d);
+    bumpEpoch(d);
+    const reader = input.s3ControllerMotionReader;
+    if (reader?.device === d) {
+      reader.detach?.();
+      if (input.s3ControllerMotionReader === reader) input.setControllerMotionReader(null);
+      if (session.reader === reader) session.reader = null;
     }
+    session.status = 'disconnected';
   };
 
   if (typeof navHid.addEventListener === 'function') {
@@ -339,10 +414,10 @@ export function attachWebHIDControllerMotion(input, options = {}) {
     navHid.addEventListener('disconnect', onDisconnect);
   }
 
-  return {
+  const handle = {
     supported: true,
     session,
-    status: input.s3ControllerMotionReader ? 'bridge-available' : 'listening',
+    status: session.status,
     detach: () => {
       session.active = false;
       if (input._s3WebHIDSession === session) {
@@ -352,12 +427,15 @@ export function attachWebHIDControllerMotion(input, options = {}) {
         navHid.removeEventListener('connect', onConnect);
         navHid.removeEventListener('disconnect', onDisconnect);
       }
-      if (input.s3ControllerMotionReader) {
-        input.s3ControllerMotionReader.detach();
+      const reader = session.reader;
+      if (reader && input.s3ControllerMotionReader === reader) {
+        reader.detach?.();
         input.setControllerMotionReader(null);
       }
     }
   };
+  session.handle = handle;
+  return handle;
 }
 
 export async function requestWebHIDDevice(input, options = {}) {
@@ -382,25 +460,18 @@ export async function requestWebHIDDevice(input, options = {}) {
     if (!devices || devices.length === 0) {
       return { supported: true, connected: false, status: 'no-device-selected' };
     }
-    const device = devices[0];
+    const device = devices.find(isSwitchDevice);
+    if (!device) {
+      return { supported: true, connected: false, status: 'unsupported-device' };
+    }
     if (!input._s3WebHIDSession?.active) {
       attachWebHIDControllerMotion(input, options);
     }
-    if (input.s3ControllerMotionReader) {
-      input.s3ControllerMotionReader.detach();
-      input.setControllerMotionReader(null);
-    }
-    const initRes = await initializeSwitchHIDDevice(device);
-    const reader = createSwitchHIDReader({ device, productId: device.productId, ...options });
-    reader.initResult = initRes;
-    input.setControllerMotionReader(reader);
-    return {
-      supported: true,
-      connected: true,
-      device,
-      initResult: initRes,
-      status: 'bridge-available'
-    };
+    const session = input._s3WebHIDSession;
+    session.disconnectedDevices.delete(device);
+    const pending = session.pending.get(device);
+    const epoch = pending?.epoch ?? session.bumpEpoch(device);
+    return { supported: true, device, ...(await session.connectDevice(device, epoch, { replace: true })) };
   } catch (err) {
     return { supported: true, connected: false, error: err, status: 'request-error' };
   }
@@ -422,6 +493,7 @@ export function installControllerMotion({ Input, PlayerController, G }) {
   proto.controllerMotionPlatformStatus = function() {
     if (this.s3ControllerMotionReader) return 'bridge-available';
     if (!hasWebHIDSupport()) return 'unsupported-platform';
+    if (this.s3ControllerMotionInitError) return 'initialization-failed';
     return 'supported-disconnected';
   };
   proto.attachWebHID = function(options) {
@@ -474,10 +546,9 @@ export function installControllerMotion({ Input, PlayerController, G }) {
     }
     const gyroPitch = this.rig?.pitch;
     const res = prior.call(this, dt);
-    // In Splatoon 3 reference controller play, controller gyro owns vertical pitch,
-    // while right-stick provides coarse horizontal yaw only.
-    // Suppress right-stick vertical double-integration when controller gyro was applied,
-    // unless a recenter/reset occurred on this tick.
+    // For this INKWAVE composition, a valid controller gyro sample suppresses this
+    // tick's right-stick pitch contribution to avoid applying pitch twice. S3 parity
+    // for controller axis ownership has not been verified.
     if (gyroApplied && !this._s3RecenteredThisTick && gyroPitch !== undefined && this.rig) {
       this.rig.pitch = Math.max(-1.05, Math.min(1.15, gyroPitch));
       if (this.padLook) this.padLook.y = 0;
