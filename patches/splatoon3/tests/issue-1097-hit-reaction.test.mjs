@@ -5,16 +5,32 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { production, rig, grip, gameplay } from './spawn-pose-fixture.mjs';
 import { fixture as composedFixture } from './source-fixture.mjs';
-import {
-  installWeaponHitReaction, weaponHitReactionSnapshot, selectWeaponHitMotion,
-  S3_DAMAGE_MOTIONS, S3_CLASS_SUFFIX_INFERENCE, WEAPON_HIT_REACTION_CALIBRATION, WEAPON_HIT_REACTION_SOURCE,
-} from '../runtime/weapon-hit-reaction.mjs';
+import { installWeaponHitReaction } from '../runtime/weapon-hit-reaction.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const KINDS = ['shooter', 'charger', 'roller', 'dualies', 'slosher', 'splatling', 'blaster'];
+const SUFFIX = { shooter: 'Shtr', charger: 'Chrg', roller: 'Rllr', dualies: 'Mnvr', slosher: 'Slsh', splatling: 'Spnr', blaster: 'Blower' };
+const HOLD = { shooter: .25, charger: .50, roller: .45, dualies: .15, slosher: .30, splatling: .45, blaster: .35 };
+const SPINE = { shooter: -.10, charger: -.13, roller: .15, dualies: -.06, slosher: -.04, splatling: -.12, blaster: -.10 };
 // The pinned public corpus' ten WaitDamage_/WalkDamage_ class suffixes.
 const CORPUS_CLASS_SUFFIXES = ['Blower', 'Chrg', 'Mnvr', 'Rllr', 'Sber', 'Shlt', 'Shtr', 'Slsh', 'Spnr', 'Strn'];
 const WARMUP = 30;
+const HIT_INSTALL = Symbol.for('inkwave.s3.weapon-hit-reaction.install.v1');
+
+// Test-only view of installed state; diagnostics stay outside the cached module.
+function weaponHitReactionSnapshot(ch) {
+  const s = ch?.constructor?.prototype[HIT_INSTALL]?.states.get(ch);
+  const kind = s && s.k >= 0 ? ch.weaponKind : null, moving = !!s?.m;
+  return {
+    enabled: ch.s3WeaponHitReactionEnabled !== false, active: !!s?.on, kind,
+    motion: kind ? `${moving ? 'Walk' : 'Wait'}Damage_${SUFFIX[kind]}` : null,
+    base: kind && kind !== 'blaster' ? `Damage_${SUFFIX[kind]}` : null,
+    stateFamily: kind ? (moving ? 'walk' : 'wait') : null,
+    moving, amp: s?.a ?? 1, direction: { x: s?.x ?? 0, z: s?.z ?? 1 },
+    age: s?.t ?? Infinity, envelope: s?.e ?? 0, holdRelinquish: (s?.e ?? 0) * (HOLD[kind] ?? 0),
+    unknownCurves: true,
+  };
+}
 
 function stepFor(r, frames, dz = 0) {
   for (let i = 0; i < frames; i++) { if (dz) r.a.pos.z += dz; r.step(1 / 60); }
@@ -57,28 +73,39 @@ function spread(vectors) {
   return max;
 }
 
-test('selection uses the public S3 class/state families and keeps unknowns explicit', () => {
-  assert.deepEqual(Object.keys(S3_DAMAGE_MOTIONS).sort(), [...KINDS].sort());
+test('selection uses the public S3 class/state families and keeps unknowns explicit', async () => {
+  const api = await production();
   for (const kind of KINDS) {
-    const entry = S3_DAMAGE_MOTIONS[kind];
-    assert.equal(selectWeaponHitMotion(kind, false), entry.wait);
-    assert.equal(selectWeaponHitMotion(kind, true), entry.walk);
-    for (const name of [entry.wait, entry.walk]) {
-      assert.match(name, /^(Wait|Walk)Damage_/);
-      const suffix = name.split('_')[1];
-      assert.ok(CORPUS_CLASS_SUFFIXES.includes(suffix), `${name} uses a corpus class suffix`);
-      assert.equal(suffix, S3_CLASS_SUFFIX_INFERENCE[kind]);
-    }
-    assert.equal(entry.base, kind === 'blaster' ? null : `Damage_${entry.family}`,
-      'only the Blaster base entry is absent from the pinned corpus');
+    const r = rig(api, { kind }), control = rig(api, { kind });
+    control.ch.s3WeaponHitReactionEnabled = false;
+    try {
+      stepFor(r, WARMUP); stepFor(control, WARMUP);
+      r.ch.trigger('hit', { x: 0, z: 1, amp: 1 }); control.ch.trigger('hit', { x: 0, z: 1, amp: 1 });
+      stepFor(r, 1); stepFor(control, 1);
+      const snap = weaponHitReactionSnapshot(r.ch);
+      assert.equal(snap.motion, `WaitDamage_${SUFFIX[kind]}`);
+      assert.equal(snap.base, kind === 'blaster' ? null : `Damage_${SUFFIX[kind]}`,
+        'only the Blaster base entry is absent from the pinned corpus');
+      assert.equal(snap.active, true);
+      for (const name of [snap.motion, `WalkDamage_${SUFFIX[kind]}`]) {
+        assert.match(name, /^(Wait|Walk)Damage_/);
+        assert.ok(CORPUS_CLASS_SUFFIXES.includes(name.split('_')[1]), `${name} uses a corpus class suffix`);
+      }
+      assert.equal(snap.unknownCurves, true);
+      assert.ok(Array.from(r.ch.P).every(Number.isFinite), `${kind} hit pose channels stay finite`);
+      const delta = r.ch.P[api.CHARACTER_CHANNELS.SPINE] - control.ch.P[api.CHARACTER_CHANNELS.SPINE];
+      assert.ok(Math.abs(delta / snap.envelope - SPINE[kind]) < 0.002, `${kind} uses its class-specific spine profile`);
+    } finally { r.close(); control.close(); }
   }
-  assert.equal(S3_DAMAGE_MOTIONS.blaster.base, null);
-  assert.match(S3_DAMAGE_MOTIONS.blaster.baseStatus, /no Damage_Blower/);
-  assert.equal(selectWeaponHitMotion('not-a-weapon', false), null);
-  assert.equal(WEAPON_HIT_REACTION_CALIBRATION.unknownCurves, true);
-  assert.match(WEAPON_HIT_REACTION_CALIBRATION.status, /unknown/);
-  assert.match(WEAPON_HIT_REACTION_SOURCE.corpus, /7740d29fdded2899a7633e50647736e3723c5e9a/);
-  assert.ok(WEAPON_HIT_REACTION_SOURCE.dictionaries.every(url => /ParameterIlliterate|ParamHash/.test(url)));
+  const unknown = rig(api, { kind: 'shooter' });
+  try {
+    unknown.ch.weaponKind = 'not-a-weapon'; unknown.ch.trigger('hit', { x: 0, z: 1 }); stepFor(unknown, 1);
+    assert.equal(weaponHitReactionSnapshot(unknown.ch).motion, null);
+    assert.equal(weaponHitReactionSnapshot(unknown.ch).active, false);
+  } finally { unknown.close(); }
+  const reference = fs.readFileSync(path.join(ROOT, 'patches/splatoon3/reference/weapon-hit-reaction-comparison-2026-10-09.md'), 'utf8');
+  assert.match(reference, /7740d29fdded2899a7633e50647736e3723c5e9a/);
+  assert.ok(reference.includes('ParameterIlliterate') && reference.includes('ParamHash'));
 });
 
 test('a hit selects the state family from the live locomotion context', async () => {
@@ -243,7 +270,6 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
   const f = await composedFixture({ fullRuntime: true, productionComposition: true, realProjectiles: true,
     extraExports: `
       export { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS } from './inkwave-public/src/game/character.js';
-      export { weaponHitReactionSnapshot } from './patches/splatoon3/runtime/weapon-hit-reaction.mjs';
     ` });
   const { G, Actor, Character, Projectiles, PLAYER, WEAPONS, THREE } = f;
   G.scene = new THREE.Scene(); G.camera = null; G.actors = []; G.time = 0;
@@ -291,7 +317,7 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
     if (current?.actor !== event.actor) return;
     current.trace.events.push({ frame: current.frame, weapon: event.weapon,
       hand: Number.isInteger(event.hand) ? event.hand : null, muzzle: event.muzzle.toArray(), direction: event.dir.toArray(),
-      active: f.weaponHitReactionSnapshot(event.actor.character)?.active === true });
+      active: weaponHitReactionSnapshot(event.actor.character)?.active === true });
   });
 
   const kinds = ['shooter', 'charger', 'roller', 'dualies', 'slosher', 'splatling', 'blaster'];
@@ -362,7 +388,7 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
         step(kind === 'charger' || kind === 'roller' ? false : true);
       trace.hp = a.hp;
       trace.randomCalls = random.calls;
-      trace.reaction = f.weaponHitReactionSnapshot(a.character);
+      trace.reaction = weaponHitReactionSnapshot(a.character);
       assert.equal(trace.events.length >= wanted, true, `${kind} Runner emitted real fire through Projectiles at ${hz}Hz`);
       if (hit) {
         assert.ok(trace.hp < PLAYER.hp, `${kind} receives the real nonlethal damage at ${hz}Hz`);
