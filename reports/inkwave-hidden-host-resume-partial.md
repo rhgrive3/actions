@@ -17,3 +17,7 @@ Eight tests pass across0.1/5/20/120seconds, duplicate/repeated resume, old/finis
 ## Explicitly unresolved
 
 A permanently hidden host whose socket remains open can still strand a guest at0; this partial patch does not grant another peer finish/result authority. End-of-match paint is still sampled by the existing finish owner at resume, not reconstructed at an earlier wall-time boundary. OS/browser monotonic clocks that pause during sleep need separate device evidence. Boss/offline/guest/paused matches are intentionally outside this partial correction. Keep Refs878 only; no automatic closure or complete-S3-disconnect claim.
+
+## Follow-up (2026-10-09)
+
+The "permanently hidden host can strand a visible guest at 0" limitation is now addressed for the visible-follower case. The platform frame driver additionally lets a visible connected follower enter the native `finish` phase at its own existing clock zero (`finishVisibleFollowerAtZero`), independent of whether the hidden host's deadline timer fires or its finish packet arrives. Host authority over the finish event and result is unchanged, and no actor/projectile simulation is replayed. Coverage now includes 5/20/120 s host hiddens with the host deadline suppressed. A hidden host that is fully suspended/closed, a shared server end epoch/lease, and real browser/Switch timing remain unverified.

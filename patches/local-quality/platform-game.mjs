@@ -31,6 +31,24 @@ function resumeHiddenHostClock(saved, game, G, env) {
   match.time = Math.max(0, Math.min(match.time, remaining - (now - at) / 1000));
   if (match.time <= 0) match.setState('finish');
 }
+
+// A visible connected follower has already been advancing this native match
+// clock. At zero it may enter the local finish phase, while NetMatch keeps
+// host ownership of the authoritative finish event and result. This lets a
+// visible guest terminate at the authoritative end epoch even when the hidden
+// host page never delivers its own finish/deadline (throttled timers, frozen
+// RAF), so it is not stranded at local 0:00. No actor, projectile or global
+// simulation is advanced for the hidden interval.
+function finishVisibleFollowerAtZero(game, G) {
+  const match = game.match, session = G.net, net = G.netm;
+  if (G.mode !== 'match' || !match || match.mode !== 'turf' || match.attract || match.paused ||
+      match.state !== 'playing' || !Number.isFinite(match.time) || match.time > 0 || !match.follower ||
+      session?.state !== 'match' || session.isHost || session.match !== net ||
+      net?.s !== session || net.match !== match || net.isHost ||
+      typeof session.hostId !== 'string' || !session.hostId) return;
+  match.setState('finish');
+}
+
 function clearHiddenHostDeadline(r, env) {
   if (r.hiddenHostTimer == null && r.hiddenHostDeadline == null) return;
   const id = r.hiddenHostTimer;
@@ -149,6 +167,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
       game.fpsAcc += frameDt; game.fpsN++;
       if (game.fpsAcc > .5) { game.fps = Math.round(game.fpsN / game.fpsAcc); game.fpsAcc = game.fpsN = 0; }
       game._dynRes(frameDt); game._frame(frameDt);
+      finishVisibleFollowerAtZero(game, G);
     }, clear, frameRate);
     r.snapshot = () => ({ ...owner.snapshot(), frame: r.driver.snapshot(), rendererLost: r.rendererLost,
       gyro: game.input?.mobile?.gyro?.platformStatus,
