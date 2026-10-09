@@ -75,14 +75,18 @@ export function adaptWireSecurity(rel, code) {
       'applyRemote finite guard');
     code = once(code,
       'function unpackActor(s, ts) {',
-      `// 22 mandatory scalars in the owner packet. Optional adapter-side metadata is
-// separately authenticated by its own reader. Never allow coercion of wire types.
+      `// Core 21 scalars + optional native Super Jump phase age at index 21;
+// S3/network adapters extend the packet after these. Never coerce wire types.
+// Derive the flags mask from the composed F (includes extension flags above
+// 0xFFFFF); otherwise valid owner ticks are silently dropped during handoff.
+const WIRE_ACTOR_ALLOWED_FLAGS = Object.values(F).reduce((bits, flag) => bits | flag, 0);
 function validWireActorSnapshot(s) {
-  if (!Array.isArray(s) || s.length < 22 || s.length > 64 ||
+  if (!Array.isArray(s) || s.length < 21 || s.length > 64 ||
       !Number.isSafeInteger(s[0]) || s[0] < 0) return false;
-  for (let i = 1; i < 22; i++) if (typeof s[i] !== 'number' || !Number.isFinite(s[i])) return false;
+  for (let i = 1; i < 21; i++) if (typeof s[i] !== 'number' || !Number.isFinite(s[i])) return false;
+  if (s.length > 21 && (typeof s[21] !== 'number' || !Number.isFinite(s[21]))) return false;
   if (![10, 15, 16].every(i => Number.isSafeInteger(s[i]) && s[i] >= 0)) return false;
-  if (s[10] > 0xfffff || s[15] > 1e9 || s[16] > 0x7fffffff) return false;
+  if ((s[10] & ~WIRE_ACTOR_ALLOWED_FLAGS) !== 0 || s[15] > 1e9 || s[16] > 0x7fffffff) return false;
   for (let i = 1; i <= 3; i++) if (Math.abs(s[i]) > 1e5) return false;
   for (let i = 4; i <= 6; i++) if (Math.abs(s[i]) > 1e4) return false;
   for (let i = 7; i <= 8; i++) if (Math.abs(s[i]) > 1e7) return false;
@@ -90,7 +94,7 @@ function validWireActorSnapshot(s) {
   for (let i = 11; i <= 13; i++) if (s[i] < 0 || s[i] > 1e4) return false;
   if (s[14] < 0 || s[14] > 100) return false;
   for (let i = 17; i <= 19; i++) if (Math.abs(s[i]) > 2) return false;
-  if (s[20] < -1 || s[20] > 60 || s[21] < 0 || s[21] > 600) return false;
+  if (s[20] < -1 || s[20] > 60 || (s.length > 21 && (s[21] < 0 || s[21] > 600))) return false;
   return true;
 }
 
