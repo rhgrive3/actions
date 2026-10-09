@@ -4,11 +4,11 @@
   iw-s3-digits.woff2   original timer numerals: condensed, heavy, chamfered corners,
                        drawn here as polygons to follow the shape seen in the
                        2026-10-08 Splatoon 3 recording (no Nintendo glyph data).
-  iw-s3-jp.woff2       subset of M PLUS Rounded 1c Black (SIL OFL 1.1, see OFL.txt):
+  iw-s3-jp.woff2       subset of M PLUS Rounded 1c Black (SIL OFL 1.1, see OFL-RoundedMplus1c.txt):
                        kana, CJK punctuation, full-width forms and the kanji used by
                        the in-match UI strings.
 
-Usage: python3 build-hud-fonts.py <MPLUSRounded1c-Black.ttf> <out dir> [kanji source files...]
+Usage: python3 scripts/build-inkwave-hud-fonts.py <MPLUSRounded1c-Black.ttf> <out dir> [kanji source files...]
 Needs fonttools + brotli.
 """
 import sys, re, pathlib
