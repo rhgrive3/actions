@@ -107,6 +107,23 @@ export function installRespawnLifecycle(api, profile) {
     const { x, z } = slotPoint(actor);
     return supportedTarget(actor, x, z);
   };
+  // #512: each opening bot needs an independent legal landing, not the same
+  // default zero aim-point projected to the centre for all four slots.
+  // This is an explicit INKWAVE deterministic bot policy, not a claimed
+  // extracted Nintendo bot-angle curve. The native supportedTarget check
+  // still rejects void, steep tops and blocked collision geometry.
+  const initialBotTarget = actor => {
+    const { pad } = slotPoint(actor);
+    const slot = Number.isSafeInteger(actor.slot) ? ((actor.slot % 4) + 4) % 4 : 0;
+    const angle = (actor.team === 0 ? 0 : Math.PI) + (slot - 1.5) * 0.3;
+    for (const distance of [7.5, 5, 2.5]) {
+      const target = supportedTarget(actor,
+        pad.x + Math.sin(angle) * distance,
+        pad.z + Math.cos(angle) * distance);
+      if (target) return target;
+    }
+    return slotTarget(actor);
+  };
   const setPos = (actor, p) => { actor.pos.set(p.x,p.y,p.z); actor.character.root.position.copy(actor.pos); };
   function finishLanding(actor) {
     actor._surface?.();
@@ -149,7 +166,7 @@ export function installRespawnLifecycle(api, profile) {
     }
     setPos(actor, p); actor.yaw = actor.aimYaw = yaw; actor.invuln = Infinity; actor.grounded = false; actor.vel.set(0,0,0);
     actor.s3 ||= {}; actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = null;
-    actor.s3.squidSpawn = { phase:'aim', initial:!!initial, wait:0, fireArmed:!actor.intent.fire, target:targetFor(actor) ?? slotTarget(actor) };
+    actor.s3.squidSpawn = { phase:'aim', initial:!!initial, wait:0, fireArmed:!actor.intent.fire, target:(initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor) };
     actor.netTp = (actor.netTp || 0) + 1;
     if (wasDead && !actor.isBot && !actor.remote) actor.s3.respawnRearm = new Set(KEYS);
     emit?.('respawn', { actor }); emit?.('squidspawn:aim', { actor, initial:!!initial });
