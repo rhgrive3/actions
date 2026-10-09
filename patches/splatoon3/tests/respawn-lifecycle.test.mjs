@@ -336,3 +336,56 @@ test('Practice Range keeps immediate control and legacy respawn without Turf Squ
   assert.equal(a.s3.squidSpawn, undefined, 'range respawns never create a FIRE-owned launch');
   assert.ok(a.s3.spawnArmor?.remaining>0,'Range retains its existing native immediate protection path');
 });
+
+
+test('#512 opening bots choose different deterministic and collision-supported Squid Spawn landings',async()=>{
+  const f=await setup();
+  installLandingStage(f);
+  f.G.match.mode='turf';f.G.match.opts={};
+  const outcomes=[];
+  for (const team of [0,1]) {
+    for (const slot of [0,1,2,3]) {
+      const a=f.make();
+      a.team=team;a.slot=team*4+slot;a.isLocal=false;a.isBot=true;
+      a.aimPoint.set(0,0,0); // real default: previously every bot chose the same centre
+      assert.equal(beginInitialSquidSpawn(a),true);
+      assert.equal(a.s3.squidSpawn?.phase,'flight');
+      assert.equal(a.s3.squidSpawn.initial,true);
+      const target=a.s3.squidSpawn.to;
+      assert.ok(Number.isFinite(target.x)&&Number.isFinite(target.y)&&Number.isFinite(target.z));
+      assert.ok(Math.hypot(target.x-f.G.level.spawnPads[team].x,target.z-f.G.level.spawnPads[team].z)<=12+1e-9);
+      assert.ok(Number.isFinite(f.G.level.groundHeight(target.x,target.z)));
+      outcomes.push({team,slot,x:target.x,z:target.z});
+    }
+  }
+  for (const team of [0,1]) {
+    const rows=outcomes.filter(v=>v.team===team);
+    assert.equal(new Set(rows.map(v=>v.x.toFixed(4)+':'+v.z.toFixed(4))).size,4,
+      'four opening slots must not collapse to the same bot landing');
+  }
+  // Same slot, team and stage: reset/replay does not draw RNG or change target.
+  const again=f.make();again.team=0;again.slot=2;again.isBot=true;again.isLocal=false;
+  assert.equal(beginInitialSquidSpawn(again),true);
+  const want=outcomes.find(v=>v.team===0&&v.slot===2);
+  assert.equal(again.s3.squidSpawn.to.x,want.x);
+  assert.equal(again.s3.squidSpawn.to.z,want.z);
+});
+
+test('#512 human opening choice is still aim-owned and invalid bot landings fail closed',async()=>{
+  const f=await setup();installLandingStage(f);
+  f.G.match.mode='turf';f.G.match.opts={};
+  const human=f.make();human.team=0;human.slot=0;human.isBot=false;
+  human.aimPoint.set(4,0,7);
+  assert.equal(beginInitialSquidSpawn(human),true);
+  assert.equal(human.s3.squidSpawn?.phase,'aim','humans still choose launch moment');
+  assert.ok(human.s3.squidSpawn.target.x>0);
+  const other=f.make();other.team=0;other.slot=0;other.isBot=false;
+  other.aimPoint.set(-4,0,7);
+  assert.equal(beginInitialSquidSpawn(other),true);
+  assert.ok(other.s3.squidSpawn.target.x<0);
+  const bot=f.make();bot.team=0;bot.slot=1;bot.isLocal=false;bot.isBot=true;
+  f.G.level.groundHeight=()=>-Infinity;
+  assert.equal(beginInitialSquidSpawn(bot),true);
+  assert.equal(bot.s3.squidSpawn?.phase,'aim','no invalid launch into unsupported ground');
+  assert.equal(bot.s3.squidSpawn?.target,null);
+});
