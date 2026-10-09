@@ -174,7 +174,7 @@
       "damageMax": 160,
       "rangeMin": 9.033,
       "rangeMax": 24.037,
-      "moveSpeedFiring": 1.2,
+      "moveSpeedFiring": 1.2, "partialChargeMoveStart": 5.76, "partialChargeMoveEnd": 1.26,
       "keepChargeTime": 1.25,
       "chargeTime": 1,
       "inkRecoverStop": 0.31666666666666665,
