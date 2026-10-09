@@ -27,6 +27,14 @@ const splatlingSpeedViews = new WeakMap();
 const blasterPaintContracts = new WeakMap();
 const blasterAxisDirectionsCache = new WeakMap();
 const clamp01 = value => Math.max(0, Math.min(1, value));
+// #949: a volley budget represents admitted damage, not collision attempts.
+// Check the exact native Boss.hit entry gates before mutating the shared group.
+export function bossVolleyAdmission(boss, attacker, target) {
+  if (!boss || !attacker || attacker.remote || boss.dead || boss.match?.state !== 'playing') return false;
+  const crab = target?.hp !== undefined && target?.id !== undefined;
+  if (crab) return !target.dead && Number.isFinite(target.hp) && target.hp > 0;
+  return !boss.invuln && !!boss.visible && Number.isFinite(boss.hp) && boss.hp > 0;
+}
 const radians = degrees => degrees * Math.PI / 180;
 // Splatoon deviation law: magnitude = s * x^(log_0.5(bias)).
 // Reflect the same ONE existing uniform RNG draw around zero, keeping the
@@ -1991,9 +1999,17 @@ export function installWeaponsFidelity(context,profile) {
     if(p.ghost||!kitVolleyHitAuthority(p))return;
     const w=p.s3Weapon||p.owner.weapon;
     if(!['roller','slosher','shooter','dualies','splatling'].includes(w.kind))return bossImpact.call(this,p,hit);
-    const victim=hit.target?.hp!==undefined&&hit.target?.id!==undefined?hit.target:context.G.boss;
-    const damage=groupDamage(p.s3DamageGroup,victim,fidelityDamage(p,hit.point));
-    if(damage>0)context.G.boss.hit(p.owner,damage,hit.target,w.id,hit.point.clone());
+    const boss=context.G.boss;
+    const victim=hit.target?.hp!==undefined&&hit.target?.id!==undefined?hit.target:boss;
+    // Invulnerable/hidden/finished Boss and dead crablets cannot spend a volley.
+    // Preserve impact presentation; commit the group maximum only for an admitted route.
+    if (bossVolleyAdmission(boss,p.owner,hit.target)) {
+      const raw=fidelityDamage(p,hit.point);
+      if (Number.isFinite(raw) && raw>0) {
+        const damage=groupDamage(p.s3DamageGroup,victim,raw);
+        if(damage>0)boss.hit(p.owner,damage,hit.target,w.id,hit.point.clone());
+      }
+    }
     context.emit('weapon:impact',{pos:hit.point.clone(),normal:p.vel.clone().normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});
   };
   Projectiles.prototype._blastBurst=function(p,point,victim){
