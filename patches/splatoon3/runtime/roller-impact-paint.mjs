@@ -44,12 +44,21 @@ export function rollerImpactAngleDegrees(velocity, normal) {
  *
  * The pinned 11.3.0 record carries HeightUseDepthScaleMaxBreakFree (1.5) and
  * HeightUseDepthScaleMinBreakFree (10) next to DepthScaleMaxBreakFree /
- * DepthScaleMinBreakFree.  Nintendo does not document the exact "height"
- * quantity (the paramtable lists both fields as Unknown), so this project uses
- * the glob's arc height above the contacted surface at the impact and maps it
- * onto the two documented anchors: at/below the max height use the max depth
- * scale, at/above the min height use the min, linear in between (the same
- * provisional convention already used by the #674 incidence selector).
+ * DepthScaleMinBreakFree.
+ *
+ * VERIFIED (measurement): the Japanese verification wiki reports the measured
+ * behavior "弾が飛んだ高さが高いほど伸びが縮む" (the higher the bullet flew, the
+ * more the forward paint stretch shrinks) and lists it as an independent factor
+ * alongside the impact angle and the straight/brake-free speed.  That fixes the
+ * direction (low height -> DepthScaleMaxBreakFree, high height -> Min) and that
+ * the quantity is a flight height, not the impact clearance or launch height.
+ *
+ * NOT VERIFIED (blocker): neither wiki defines the exact height reference
+ * (absolute altitude vs. height above the landing surface vs. apex vs.
+ * break/free-entry height) and the wiki states the detailed stretch formula is
+ * still unknown.  This project therefore maps the glob's peak altitude above
+ * the contacted surface onto the two sourced anchors, linear in between, as a
+ * provisional calibration (same convention as the #674 incidence selector).
  */
 export function rollerBreakFreeHeightUnit(projectile, height) {
   const paint=rollerImpactPaintParam(projectile);
@@ -110,8 +119,12 @@ function rollerImpactDepthScaleForPhase(projectile, normal, straight, height) {
   let t=clamp01((angle-maxDegree)/(minDegree-maxDegree));
   if(!straight){
     // #713: break/free paint is additionally selected by the landing height.
-    // Compose as the stronger "rounder" condition (union) so the sourced #674
-    // incidence selector is preserved rather than replaced.
+    // The measured behavior treats height, angle and flight speed as separate
+    // "the more X, the more the stretch shrinks" factors, so the two selectors
+    // are composed as the stronger round condition (union: max of the two
+    // normalized reductions).  This preserves the #674 selector instead of
+    // replacing it.  NOTE: the exact engine combination is not publicly
+    // documented; see the rollerBreakFreeHeightUnit note above.
     const tHeight=rollerBreakFreeHeightUnit(projectile,height);
     if(tHeight!==null)t=Math.max(t,tHeight);
   }
