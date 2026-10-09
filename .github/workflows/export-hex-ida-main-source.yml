@@ -1,7 +1,9 @@
-name: Export hex-ida fix source
+name: Export pinned INKWAVE main source
 
 on:
   push:
+    branches:
+      - export/inkwave-main-5d0be6b7-20261009
     paths:
       - ".github/workflows/export-hex-ida-main-source.yml"
 
@@ -9,26 +11,36 @@ permissions:
   contents: read
 
 jobs:
-  export:
+  export-main:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
-      - name: Checkout exact hex-ida main
+      - name: Checkout immutable original main
         uses: actions/checkout@v4
         with:
-          repository: rhgrive3/hex-ida
-          ref: ec02ff8f640e71e38d82a9295bfd197c4744313c
-          path: hex-ida
+          repository: rhgrive3/actions
+          ref: 5d0be6b7fdebfd07e696e75497aaa97aa5ff5648
           fetch-depth: 1
-      - name: Verify HEAD
+          path: source
+          persist-credentials: false
+      - name: Verify full source identity and archive tracked files
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C hex-ida rev-parse HEAD)" = "ec02ff8f640e71e38d82a9295bfd197c4744313c"
-      - name: Upload source
+          test "$(git -C source rev-parse HEAD)" = "5d0be6b7fdebfd07e696e75497aaa97aa5ff5648"
+          mkdir -p snapshot
+          git -C source archive --format=tar HEAD | tar -xf - -C snapshot
+          printf 'repo=rhgrive3/actions\nsha=5d0be6b7fdebfd07e696e75497aaa97aa5ff5648\nsource=git archive HEAD (tracked files; no .git history)\n' > snapshot/SOURCE_IDENTITY.txt
+          test -f snapshot/inkwave-public/src/game/weapons.js
+          test -f snapshot/patches/splatoon3/profile.json
+          test -f snapshot/patches/splatoon3/runtime/weapons-fidelity.mjs
+          test -f snapshot/scripts/check-inkwave-weapons-fidelity.mjs
+          echo "archived file count: $(find snapshot -type f | wc -l)"
+      - name: Upload complete editable snapshot
         uses: actions/upload-artifact@v4
         with:
-          name: hex-ida-main-ec02ff8f
-          path: hex-ida
+          name: INKWAVE-main-5d0be6b7-full-source
+          path: snapshot/
           include-hidden-files: true
-          retention-days: 1
+          retention-days: 7
+          compression-level: 6
