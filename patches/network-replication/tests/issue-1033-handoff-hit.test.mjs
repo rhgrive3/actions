@@ -180,6 +180,93 @@ test('composed ACK from the departed owner can settle after the same-life actor 
   assert.equal(f.S.events.filter((event) => event.name === 'combat:confirmed').length, 1);
 });
 
+test('composed ordinary hit to a host-owned victim is acknowledged and deduplicated', () => {
+  const f = room();
+  for (const world of Object.values(f)) {
+    world.victim.owner = 'H';
+    world.victim.remote = world.id !== 'H';
+  }
+  assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
+  const packet = f.S.sent[0].data;
+  assert.equal(f.S.sent[0].to, 'H');
+  deliver(f.S, f.H, packet);
+  assert.equal(f.H.victim.hp, 64, 'the host owns and applies this ordinary cross-owner hit');
+  const ack = f.H.sent.find((item) => item.to === 'S' && item.data.k === 'hit_ack')?.data;
+  assert.ok(ack);
+  deliver(f.H, f.S, ack);
+  deliver(f.S, f.H, packet);
+  assert.equal(f.H.victim.hp, 64);
+  assert.equal(f.H.calls.length, 1);
+  assert.equal(f.S.net.hitPending.size, 0);
+  assert.equal(f.S.net._pendingHits.size, 0);
+});
+
+test('composed lethal hit survives guest handoff and produces one splat', () => {
+  const f = room();
+  f.S.victim.hp = 18;
+  f.H.victim.hp = 18;
+  assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
+  const packet = f.S.sent[0].data;
+  f.S.net.onMessage('__relay__', { k: 'hit_nack', seq: packet.seq, to: 'V' });
+  leave(f.S, 'V', 'H');
+  leave(f.H, 'V', 'H');
+  assert.equal(f.H.victim.remote, false, 'the host adopts the same victim life');
+  const retry = f.S.sent.at(-1);
+  assert.equal(retry.to, 'H');
+  assert.strictEqual(retry.data, packet, 'handoff retries the accepted lethal packet unchanged');
+  deliver(f.S, f.H, retry.data);
+  assert.equal(f.H.victim.hp, 0);
+  assert.equal(f.H.victim.alive, false);
+  assert.equal(f.H.calls.length, 1);
+  assert.equal(f.H.events.filter((event) => event.name === 'splatted').length, 1);
+  const ack = f.H.sent.find((item) => item.to === 'S' && item.data.k === 'hit_ack')?.data;
+  assert.ok(ack);
+  deliver(f.H, f.S, ack);
+  deliver(f.S, f.H, retry.data);
+  assert.equal(f.H.victim.hp, 0);
+  assert.equal(f.H.calls.length, 1);
+  assert.equal(f.H.events.filter((event) => event.name === 'splatted').length, 1);
+  assert.equal(f.S.net.hitPending.size, 0);
+  assert.equal(f.S.net._pendingHits.size, 0);
+});
+
+test('composed handoff outcome is invariant across 30/60/120 Hz render callback schedules', () => {
+  const run = (hz) => {
+    const f = room();
+    f.S.victim.hp = 18;
+    f.H.victim.hp = 18;
+    assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
+    const packet = f.S.sent[0].data;
+    const actions = [
+      { at: 0.017, run: () => f.S.net.onMessage('__relay__', { k: 'hit_nack', seq: packet.seq, to: 'V' }) },
+      { at: 0.034, run: () => { leave(f.S, 'V', 'H'); leave(f.H, 'V', 'H'); } },
+      { at: 0.067, run: () => deliver(f.S, f.H, f.S.sent.at(-1).data) },
+      { at: 0.084, run: () => deliver(f.H, f.S, f.H.sent.find((item) => item.to === 'S' && item.data.k === 'hit_ack').data) },
+    ];
+    let renderedFrames = 0;
+    for (const action of actions) {
+      const targetFrame = Math.ceil(action.at * hz - 1e-9);
+      while (renderedFrames < targetFrame) renderedFrames++;
+      action.run();
+    }
+    return {
+      hp: f.H.victim.hp,
+      alive: f.H.victim.alive,
+      splats: f.H.events.filter((event) => event.name === 'splatted').length,
+      applications: f.H.calls.length,
+      deliveryPending: f.S.net.hitPending.size,
+      receiptPending: f.S.net._pendingHits.size,
+      renderedFrames,
+    };
+  };
+  const results = [30, 60, 120].map(run);
+  assert.deepEqual(results, [
+    { hp: 0, alive: false, splats: 1, applications: 1, deliveryPending: 0, receiptPending: 0, renderedFrames: 3 },
+    { hp: 0, alive: false, splats: 1, applications: 1, deliveryPending: 0, receiptPending: 0, renderedFrames: 6 },
+    { hp: 0, alive: false, splats: 1, applications: 1, deliveryPending: 0, receiptPending: 0, renderedFrames: 11 },
+  ]);
+});
+
 test('bounded hit admission preserves all 64 accepted routes and rejects the next hit explicitly', () => {
   const f = room();
   for (let i = 0; i < 64; i++) assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 1, 'shooter'), true);
