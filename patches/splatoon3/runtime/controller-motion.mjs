@@ -13,8 +13,77 @@ export const JOYCON_GRIP_PRODUCT_ID = 0x200e;
 // Expressed in SI radians per second: 0.070 * (π / 180) ≈ 0.0012217304763960306 rad/s per LSB.
 export const DEFAULT_GYRO_SCALE = 0.070 * (Math.PI / 180);
 
+// Subcommand & Report IDs per published dekuNukem and Linux hid-nintendo protocol
+export const OUTPUT_REPORT_SUBCMD = 0x01;
+export const SUBCMD_SET_INPUT_REPORT_MODE = 0x03;
+export const SUBCMD_ENABLE_IMU = 0x40;
+export const INPUT_REPORT_STANDARD_FULL = 0x30;
+
+// Neutral rumble 8-byte packet as published in dekuNukem and hid-nintendo:
+// HF freq 320Hz at 0 amplitude, LF freq 160Hz at 0 amplitude
+export const NEUTRAL_RUMBLE = Object.freeze([0x00, 0x01, 0x40, 0x40, 0x00, 0x01, 0x40, 0x40]);
+
+// Default maximum arrival age for motion samples before drift expiry (100 ms ≈ 6.7 missed packets at 66.7 Hz)
+export const DEFAULT_SAMPLE_MAX_AGE_MS = 100;
+
 const GUARD = Symbol.for('inkwave.s3.pad-motion.v1');
 const zero = () => ({ yaw: 0, pitch: 0, available: false });
+
+export function isSwitchDevice(device) {
+  if (!device) return false;
+  return device.vendorId === NINTENDO_VENDOR_ID &&
+    (device.productId === JOYCON_R_PRODUCT_ID ||
+     device.productId === PRO_CONTROLLER_PRODUCT_ID ||
+     device.productId === JOYCON_GRIP_PRODUCT_ID);
+}
+
+let globalPacketNumber = 0;
+
+export function buildSubcommandPacket(subcmd, args = [], packetNum = null) {
+  const pNum = packetNum !== null ? (packetNum & 0x0f) : ((globalPacketNumber++) & 0x0f);
+  const buf = new Uint8Array(10 + args.length);
+  buf[0] = pNum;
+  for (let i = 0; i < 8; i++) buf[1 + i] = NEUTRAL_RUMBLE[i];
+  buf[9] = subcmd;
+  for (let i = 0; i < args.length; i++) buf[10 + i] = args[i];
+  return buf;
+}
+
+export async function sendSwitchSubcommand(device, subcmd, args = []) {
+  if (!device || typeof device.sendReport !== 'function') {
+    throw new TypeError('Device must support sendReport');
+  }
+  const payload = buildSubcommandPacket(subcmd, args);
+  // WebHID sendReport takes reportId as first argument and payload (excluding reportId) as second argument
+  return await device.sendReport(OUTPUT_REPORT_SUBCMD, payload);
+}
+
+export async function initializeSwitchHIDDevice(device) {
+  if (!device) return { initialized: false, reason: 'no-device' };
+  try {
+    if (typeof device.open === 'function' && !device.opened) {
+      await device.open();
+    }
+  } catch (err) {
+    return { initialized: false, reason: 'open-failed', error: err };
+  }
+
+  // 1. Enable 6-Axis IMU sensor (subcommand 0x40, argument 0x01 = enable)
+  try {
+    await sendSwitchSubcommand(device, SUBCMD_ENABLE_IMU, [0x01]);
+  } catch (err) {
+    return { initialized: false, reason: 'enable-imu-failed', error: err };
+  }
+
+  // 2. Set input report mode to Standard Full Mode (subcommand 0x03, argument 0x30)
+  try {
+    await sendSwitchSubcommand(device, SUBCMD_SET_INPUT_REPORT_MODE, [INPUT_REPORT_STANDARD_FULL]);
+  } catch (err) {
+    return { initialized: false, reason: 'set-report-mode-failed', error: err };
+  }
+
+  return { initialized: true };
+}
 
 export const gainAt = s => {
   const x = Math.max(-5, Math.min(5, Number.isFinite(s) ? s : 0));
@@ -37,37 +106,63 @@ export function controllerMotionDelta(sample, dt, sensitivity = 0, invertY = fal
 }
 
 /**
- * Decode Nintendo Switch HID input reports (0x30 standard full report, 0x21 subcommand reply with IMU,
- * or 0x31 NFC/IR report with IMU) into calibrated angular velocities (rad/s).
+ * Decode Nintendo Switch HID input reports (0x30 standard full report, 0x31 NFC/IR report with IMU,
+ * 0x32, 0x33) into calibrated angular velocities (rad/s).
+ *
+ * WebHID specification: event.data EXCLUDES the report ID byte. The report ID is supplied separately
+ * via event.reportId (or options.reportId). If options.reportId is provided, payload starts at index 0.
+ * If options.reportId is omitted, fallback checks payload[0] for raw wire captures.
+ *
+ * Primary specification (dekuNukem imu_sensor_notes.md): IMU reports are 0x30, 0x31, 0x32, 0x33.
+ * Report 0x21 is a subcommand reply and is NOT an IMU stream.
  */
 export function decodeSwitchMotionReport(data, options = {}) {
   const view = data instanceof DataView ? data :
     ArrayBuffer.isView(data) ? new DataView(data.buffer, data.byteOffset, data.byteLength) :
     data instanceof ArrayBuffer ? new DataView(data) : null;
-  if (!view || view.byteLength < 25) {
-    return { yawRate: 0, pitchRate: 0, available: false, reason: 'payload-too-short' };
+  if (!view) {
+    return { yawRate: 0, pitchRate: 0, available: false, reason: 'invalid-data-buffer' };
   }
-  const reportId = view.getUint8(0);
-  if (reportId !== 0x30 && reportId !== 0x21 && reportId !== 0x31) {
+
+  let reportId;
+  let offset;
+  if (options.reportId !== undefined && options.reportId !== null) {
+    reportId = Number(options.reportId);
+    offset = 0; // Faithful WebHID event: data starts at byte 0 (Timer)
+  } else {
+    // Raw wire buffer fallback where byte 0 contains the report ID
+    reportId = view.getUint8(0);
+    offset = 1;
+  }
+
+  // Published protocol: IMU stream reports are 0x30, 0x31, 0x32, 0x33.
+  // Subcommand reply 0x21 does not provide periodic IMU motion.
+  if (reportId !== 0x30 && reportId !== 0x31 && reportId !== 0x32 && reportId !== 0x33) {
     return { yawRate: 0, pitchRate: 0, available: false, reason: 'unsupported-report-id', reportId };
   }
+
+  // Minimum payload length: 12 bytes header + 12 bytes IMU frame 0 = 24 bytes (relative to offset)
+  if (view.byteLength < offset + 24) {
+    return { yawRate: 0, pitchRate: 0, available: false, reason: 'payload-too-short', reportId };
+  }
+
   const productId = options.productId ?? (options.device?.productId ?? null);
   // In Splatoon 3 two-handed Joy-Con play, aim motion is sourced exclusively from Joy-Con (R).
   if (productId === JOYCON_L_PRODUCT_ID || options.side === 'left') {
     return { yawRate: 0, pitchRate: 0, available: false, ignoredSide: 'left', reportId };
   }
 
-  // Frame 0 IMU data (bytes 13..24):
-  // Accel: bytes 13-14 (X), 15-16 (Y), 17-18 (Z) (int16 LE)
-  // Gyro:  bytes 19-20 (1), 21-22 (2), 23-24 (3) (int16 LE)
-  let rawG1 = view.getInt16(19, true);
-  let rawG2 = view.getInt16(21, true);
-  let rawG3 = view.getInt16(23, true);
+  // IMU Frame 0 (relative to offset):
+  // Accel: offset + 12..17: Accel X (12-13), Y (14-15), Z (16-17) (int16 LE)
+  // Gyro:  offset + 18..23: Gyro 1 (18-19), Gyro 2 (20-21), Gyro 3 (22-23) (int16 LE)
+  let rawG1 = view.getInt16(offset + 18, true);
+  let rawG2 = view.getInt16(offset + 20, true);
+  let rawG3 = view.getInt16(offset + 22, true);
 
-  if (options.averageFrames && view.byteLength >= 49) {
-    rawG1 = (rawG1 + view.getInt16(31, true) + view.getInt16(43, true)) / 3;
-    rawG2 = (rawG2 + view.getInt16(33, true) + view.getInt16(45, true)) / 3;
-    rawG3 = (rawG3 + view.getInt16(35, true) + view.getInt16(47, true)) / 3;
+  if (options.averageFrames && view.byteLength >= offset + 48) {
+    rawG1 = (rawG1 + view.getInt16(offset + 30, true) + view.getInt16(offset + 42, true)) / 3;
+    rawG2 = (rawG2 + view.getInt16(offset + 32, true) + view.getInt16(offset + 44, true)) / 3;
+    rawG3 = (rawG3 + view.getInt16(offset + 34, true) + view.getInt16(offset + 46, true)) / 3;
   }
 
   const scale = Number.isFinite(options.scale) ? options.scale : DEFAULT_GYRO_SCALE;
@@ -80,9 +175,9 @@ export function decodeSwitchMotionReport(data, options = {}) {
   const rateZ = (rawG3 - biasZ) * scale;
 
   // Coordinate mapping for aim:
-  // For Right Joy-Con held upright in grip / Pro Controller:
+  // For Right Joy-Con held upright in grip and Pro Controller:
   // Gyro 1 (X) is pitch rate (+up/-down)
-  // Gyro 3 (Z) is yaw rate (around vertical axis, -rateZ for turn left)
+  // Gyro 3 (Z) is yaw rate (around vertical axis, -rateZ for turn left = +yaw)
   const pitchRate = rateX;
   const yawRate = -rateZ;
 
@@ -91,29 +186,37 @@ export function decodeSwitchMotionReport(data, options = {}) {
     return { yawRate: 0, pitchRate: 0, available: false, reason: 'rate-out-of-bounds' };
   }
 
+  const timestamp = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+
   return {
     yawRate,
     pitchRate,
     rollRate: rateY,
     available: true,
     reportId,
-    timer: view.getUint8(1),
-    battery: view.getUint8(2) >> 4,
-    deviceType: productId === PRO_CONTROLLER_PRODUCT_ID ? 'pro-controller' : 'joycon-right'
+    timer: view.getUint8(offset + 0),
+    battery: view.getUint8(offset + 1) >> 4,
+    deviceType: productId === PRO_CONTROLLER_PRODUCT_ID ? 'pro-controller' : 'joycon-right',
+    timestamp
   };
 }
 
 /**
  * Creates an HID motion reader from an HIDDevice or mock device.
+ * Expiries stale drift after arrival age exceeded; invalid/truncated packet clears drift.
  */
 export function createSwitchHIDReader(deviceOrOptions = {}) {
   let latestSample = null;
   const options = typeof deviceOrOptions === 'object' && deviceOrOptions !== null ? deviceOrOptions : {};
   const device = options.device || (typeof options.addEventListener === 'function' ? options : null);
   const productId = options.productId ?? (device?.productId ?? PRO_CONTROLLER_PRODUCT_ID);
+  const maxAgeMs = options.maxAgeMs ?? DEFAULT_SAMPLE_MAX_AGE_MS;
 
   function handleInputReport(event) {
-    if (!event?.data) return;
+    if (!event?.data) {
+      latestSample = null;
+      return;
+    }
     const sample = decodeSwitchMotionReport(event.data, {
       ...options,
       productId,
@@ -121,6 +224,9 @@ export function createSwitchHIDReader(deviceOrOptions = {}) {
     });
     if (sample.available) {
       latestSample = sample;
+    } else {
+      // Invalid or truncated packet immediately clears active drift
+      latestSample = null;
     }
   }
 
@@ -134,6 +240,12 @@ export function createSwitchHIDReader(deviceOrOptions = {}) {
 
   const reader = function(pad, dt) {
     if (!latestSample || !latestSample.available) return null;
+    const now = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+    if (now - (latestSample.timestamp || 0) > maxAgeMs) {
+      // Sample expired: do not hold nonzero rate forever
+      latestSample = null;
+      return null;
+    }
     return {
       yawRate: latestSample.yawRate,
       pitchRate: latestSample.pitchRate,
@@ -144,9 +256,11 @@ export function createSwitchHIDReader(deviceOrOptions = {}) {
   reader.recenter = function() {
     latestSample = null;
   };
-  reader.feedReport = function(data) {
-    const sample = decodeSwitchMotionReport(data, { ...options, productId });
-    if (sample.available) latestSample = sample;
+  reader.feedReport = function(data, reportId = null) {
+    const opt = { ...options, productId };
+    if (reportId !== null) opt.reportId = reportId;
+    const sample = decodeSwitchMotionReport(data, opt);
+    latestSample = sample.available ? sample : null;
     return sample;
   };
   reader.detach = function() {
@@ -179,23 +293,35 @@ export function attachWebHIDControllerMotion(input, options = {}) {
   input.s3ControllerMotionPlatform = 'supported';
   const navHid = navigator.hid;
 
+  // Lifecycle session guards against pending getDevices() or reconnect race condition
+  const session = { active: true };
+  input._s3WebHIDSession = session;
+
   if (typeof navHid.getDevices === 'function') {
-    navHid.getDevices().then(devices => {
-      const match = devices.find(d => d.vendorId === NINTENDO_VENDOR_ID &&
-        (d.productId === JOYCON_R_PRODUCT_ID || d.productId === PRO_CONTROLLER_PRODUCT_ID || d.productId === JOYCON_GRIP_PRODUCT_ID));
-      if (match && !input.s3ControllerMotionReader) {
+    navHid.getDevices().then(async devices => {
+      if (!session.active || input._s3WebHIDSession !== session) return;
+      if (input.s3ControllerMotionReader) return;
+      const match = devices.find(d => isSwitchDevice(d));
+      if (match && session.active && !input.s3ControllerMotionReader) {
+        const initRes = await initializeSwitchHIDDevice(match);
+        if (!session.active || input._s3WebHIDSession !== session) return;
+        if (input.s3ControllerMotionReader) return;
         const reader = createSwitchHIDReader({ device: match, productId: match.productId, ...options });
+        reader.initResult = initRes;
         input.setControllerMotionReader(reader);
       }
     }).catch(() => {});
   }
 
-  const onConnect = (e) => {
+  const onConnect = async (e) => {
     const d = e?.device;
-    if (d && d.vendorId === NINTENDO_VENDOR_ID &&
-      (d.productId === JOYCON_R_PRODUCT_ID || d.productId === PRO_CONTROLLER_PRODUCT_ID || d.productId === JOYCON_GRIP_PRODUCT_ID)) {
+    if (session.active && input._s3WebHIDSession === session && isSwitchDevice(d)) {
       if (!input.s3ControllerMotionReader) {
+        const initRes = await initializeSwitchHIDDevice(d);
+        if (!session.active || input._s3WebHIDSession !== session) return;
+        if (input.s3ControllerMotionReader) return;
         const reader = createSwitchHIDReader({ device: d, productId: d.productId, ...options });
+        reader.initResult = initRes;
         input.setControllerMotionReader(reader);
       }
     }
@@ -215,8 +341,13 @@ export function attachWebHIDControllerMotion(input, options = {}) {
 
   return {
     supported: true,
+    session,
     status: input.s3ControllerMotionReader ? 'bridge-available' : 'listening',
     detach: () => {
+      session.active = false;
+      if (input._s3WebHIDSession === session) {
+        input._s3WebHIDSession = null;
+      }
       if (typeof navHid.removeEventListener === 'function') {
         navHid.removeEventListener('connect', onConnect);
         navHid.removeEventListener('disconnect', onDisconnect);
@@ -227,6 +358,52 @@ export function attachWebHIDControllerMotion(input, options = {}) {
       }
     }
   };
+}
+
+export async function requestWebHIDDevice(input, options = {}) {
+  if (!input) throw new TypeError('Input instance required');
+  if (!hasWebHIDSupport()) {
+    input.s3ControllerMotionPlatform = 'unsupported-platform';
+    return { supported: false, status: 'unsupported-platform' };
+  }
+  const navHid = navigator.hid;
+  if (typeof navHid.requestDevice !== 'function') {
+    return { supported: true, status: 'request-unsupported' };
+  }
+
+  try {
+    const devices = await navHid.requestDevice({
+      filters: [
+        { vendorId: NINTENDO_VENDOR_ID, productId: JOYCON_R_PRODUCT_ID },
+        { vendorId: NINTENDO_VENDOR_ID, productId: PRO_CONTROLLER_PRODUCT_ID },
+        { vendorId: NINTENDO_VENDOR_ID, productId: JOYCON_GRIP_PRODUCT_ID }
+      ]
+    });
+    if (!devices || devices.length === 0) {
+      return { supported: true, connected: false, status: 'no-device-selected' };
+    }
+    const device = devices[0];
+    if (!input._s3WebHIDSession?.active) {
+      attachWebHIDControllerMotion(input, options);
+    }
+    if (input.s3ControllerMotionReader) {
+      input.s3ControllerMotionReader.detach();
+      input.setControllerMotionReader(null);
+    }
+    const initRes = await initializeSwitchHIDDevice(device);
+    const reader = createSwitchHIDReader({ device, productId: device.productId, ...options });
+    reader.initResult = initRes;
+    input.setControllerMotionReader(reader);
+    return {
+      supported: true,
+      connected: true,
+      device,
+      initResult: initRes,
+      status: 'bridge-available'
+    };
+  } catch (err) {
+    return { supported: true, connected: false, error: err, status: 'request-error' };
+  }
 }
 
 export function installControllerMotion({ Input, PlayerController, G }) {
@@ -250,8 +427,13 @@ export function installControllerMotion({ Input, PlayerController, G }) {
   proto.attachWebHID = function(options) {
     return attachWebHIDControllerMotion(this, options);
   };
+  proto.requestWebHID = function(options) {
+    return requestWebHIDDevice(this, options);
+  };
   proto.decodeSwitchMotionReport = decodeSwitchMotionReport;
   proto.createSwitchHIDReader = createSwitchHIDReader;
+  proto.initializeSwitchHIDDevice = initializeSwitchHIDDevice;
+  proto.sendSwitchSubcommand = sendSwitchSubcommand;
 
   const priorReset = PlayerController.prototype.resetCamera;
   if (priorReset) {

@@ -2287,18 +2287,29 @@ The combined canonical diagnostic now covers more than 3,500 tests and required 
 ## 2026-10-09: Joy-Con / Pro Controller motion input path (#71)
 
 - **本家比較条件:** Splatoon 3 Ver. 11.3.0。コントローラー操作条件: Joy-Con 2本持ち（Gripまたは分割）および Nintendo Switch Pro コントローラー。公式操作体系（https://splatoon.nintendo.com/en/basics/）において、ジャイロ操作有効時、右スティックは水平カメラ旋回（粗調整、ヨー軸）のみを担当し、垂直カメラ操作（ピッチ軸）はジャイロ操作が排他的に担当する。照準・旋回はジャイロの角速度（ヨー・ピッチ）を積分して合成する。カメラリセット（Yボタン）押下時はカメラピッチを水平（0）に復元し、カメラヨーをプレイヤーキャラクターの向きに整列させる。
-- **本家の根拠:** 公開されている Nintendo Switch コントローラー HID リバースエンジニアリング仕様（Vendor ID `0x057e`、Joy-Con L `0x2006`、Joy-Con R `0x2007`、Pro Controller `0x2009`、Grip/Composite `0x200e`）。標準フル入力レポート `0x30` / サブコマンド応答レポート `0x21` / NFC・IRレポート `0x31` の 13〜48 バイトに格納される ST LSM6DS3 6軸IMUデータ。公称感度 ±2000 dps レンジで 70 mdps/LSB（0.070 dps/LSB = 約 0.00122173 rad/s per raw unit）。Joy-Con 2本持ち時は右Joy-Con（`0x2007`）のIMUのみが照準に寄与し、左Joy-ConのIMUは照準から除外される。Web環境では標準 Gamepad API は IMU データを公開しないため、WebHID API（`navigator.hid`）が実際のコントローラーモーション経路となる。
-- **INKWAVEの実装箇所:** `patches/splatoon3/runtime/controller-motion.mjs`。
-  1. HIDレポートデコーダー（`decodeSwitchMotionReport`）: `0x30`/`0x21`/`0x31` レポート検証、Joy-Con L（`0x2006`）照準除外、ST LSM6DS3 IMU公称感度による rad/s 変換、マルチフレーム平均化対応、異常値ガード（25 rad/s 超過および非数/無限大の除外）。
-  2. WebHID デバイスリーダー（`createSwitchHIDReader`）: `HIDDevice` およびモックデバイスの `inputreport` イベントを購読し最新角速度サンプルを保持、カメラリセット時のドリフト・キャッシュ破棄（`recenter`）を提供。
-  3. プラットフォーム検知・通知（`hasWebHIDSupport`、`getControllerMotionPlatformStatus`、`Input.prototype.controllerMotionPlatformStatus`）: `navigator.hid` 非対応環境（iOS/Safari/Firefox/ヘッドレス等）での明示的 `'unsupported-platform'` 通知とスティック単独操作への安全なフォールバック。
-  4. スティックとジャイロの二重積分防止と合成: `PlayerController.prototype.update` において、コントローラージャイロ適用時は右スティックの水平ヨー旋回とジャイロヨーを合成しつつ、右スティックの垂直ピッチ入力を抑制してジャイロピッチとの競合・二重積分を防止。カメラリセット（`resetCamera`）発生時はピッチ0復帰を優先し、リーダーの `recenter` を呼び出し。
+- **本家の根拠:**
+  1. 公開されている Nintendo Switch コントローラー HID リバースエンジニアリング仕様（dekuNukem、Linux `hid-nintendo`）: Vendor ID `0x057e`、Joy-Con L `0x2006`、Joy-Con R `0x2007`、Pro Controller `0x2009`、Grip `0x200e`。
+  2. WICG WebHID 仕様（https://wicg.github.io/webhid/）: `inputreport` イベントにおいて `event.reportId` がレポートID（8-bit uint）を提供し、`event.data` はレポートIDを含まないペイロード（DataView）である。ペイロード 0 バイト目は Timer、1 バイト目は Battery/Connection、12〜23 バイト目が IMU Frame 0（12〜17: Accel X/Y/Z、18〜23: Gyro 1/2/3）。
+  3. IMU レポートID仕様（dekuNukem `imu_sensor_notes.md`）: IMU データストリームを送信する入力レポートは `0x30`（標準フルモード）、`0x31`（NFC/IR付き）、`0x32`、`0x33` であり、サブコマンド応答レポート `0x21` は周期的な IMU ストリームではないため除外する。
+  4. 初期化プロトコル（サブコマンド送信）: 出力レポート `0x01` 経由でニュートラル振動データ（8バイト `00 01 40 40 00 01 40 40`）とともにサブコマンド `0x40`（6軸IMU有効化、引数 `0x01`）およびサブコマンド `0x03`（標準フルモード `0x30` 設定）を送信することで実機の IMU ストリームが開始される。単にイベントリスナーを追加するだけではデバイスはオープンされず IMU も送信されない。
+  5. ST LSM6DS3 公称感度: ±2000 dps レンジで 70 mdps/LSB（0.070 dps/LSB = 約 0.00122173 rad/s per raw unit）。Joy-Con 2本持ち時は右Joy-Con（`0x2007`）のIMUのみが照準に寄与し、左Joy-ConのIMUは照準から除外される。
+- **INKWAVEの実装箇所:** `patches/splatoon3/runtime/controller-motion.mjs`、`patches/splatoon3/adapter.mjs`。
+  1. HIDレポートデコーダー（`decodeSwitchMotionReport`）: WICG WebHID 準拠の `event.reportId`（`options.reportId`）と `event.data`（レポートID除外）のオフセット契約に対応。Wire形式（byte 0 が reportId）のフォールバックも維持。IMUレポート `0x30`/`0x31`/`0x32`/`0x33` のみを受理し、`0x21` は `unsupported-report-id` として安全に拒絶。Joy-Con L（`0x2006`）照準除外、ST LSM6DS3 IMU公称感度による rad/s 変換、マルチフレーム平均化対応、異常値ガード（25 rad/s 超過および非数/無限大の除外）。
+  2. WebHID デバイスリーダー（`createSwitchHIDReader`）: `inputreport` イベントを購読し、不正・切断パケット受信時は直ちに最新サンプルをクリアして残留ドリフトを防止。到着時間経過（デフォルト 100ms）によるサンプル失効（Expiry）を導入し、パケット停止時に回転が永続する不具合を解消。カメラリセット（`recenter`）によるドリフト破棄を提供。
+  3. デバイス初期化と非同期ライフサイクル（`initializeSwitchHIDDevice`、`attachWebHIDControllerMotion`）: `device.open()` を呼び出し、出力レポート `0x01` でサブコマンド `0x40`（IMU有効化）と `0x03`（標準フルモード `0x30`）を送信。初期化失敗時は明示的に `{ initialized: false, reason, error }` を返却（偽の完全初期化成功を主張しない）。セッショントークンによるライフサイクルガードを設け、保留中の `getDevices()` プロミス解決や遅延接続が新しいリーダーや detach 後の状態を上書きしないよう保護。切断イベント（`disconnect`）での確実なリーダー破棄。
+  4. 実UIアクティベーション（`requestWebHIDDevice`、`menus.js`、`main.js`）: ユーザー操作（ジェスチャー）から `navigator.hid.requestDevice` を起動可能にし、設定画面の Controls タブに `_connectMotion`（「Connect Joy-Con / Pro Controller」）リンクを追加。クリック時に `api.connectControllerMotion()` 経由で WebHID ペアリングダイアログを表示して初期化・接続。
+  5. スティックとジャイロの二重積分防止と合成: `PlayerController.prototype.update` において、コントローラージャイロ適用時は右スティックの水平ヨー旋回とジャイロヨーを合成しつつ、右スティックの垂直ピッチ入力を抑制してジャイロピッチとの競合・二重積分を防止。カメラリセット（`resetCamera`）発生時はピッチ0復帰を優先し、リーダーの `recenter` を呼び出し。
 - **再現操作:**
   1. WebHID 非対応環境での明示的ステータス取得と、通常スティック照準動作の確認。
-  2. 合成 HID `0x30`/`0x21` レポート入力による Pro Controller および Joy-Con R からの角速度抽出。
-  3. 右スティック同時入力時のヨー合成と垂直ピッチ抑制の検証。
-  4. Yボタン（カメラリセット）によるピッチ0復元およびリーダー状態クリアの検証。
-  5. 30 Hz / 60 Hz / 120 Hz での積分量同一性確認（1秒間の定常角速度における積分変位が完全一致）。
-- **プレイへの影響:** WebHID 対応ブラウザにおいて Nintendo Switch Joy-Con / Pro コントローラー接続時に本家スプラトゥーン3準拠のジャイロエイミングが可能となる。非対応環境やジャイロ未接続時は従来のスティック操作・マウス・タッチ入力が一切阻害されず維持される。
-- **確認状態:** 公開 HID 仕様に基づく合成テストパケットおよびモック WebHID イベントによるロジック確認（7/7 テスト GREEN）。本検証環境はヘッドレス Linux であり、物理的な Switch 実機コントローラーの Bluetooth/USB 接続による実機実測は行われていない（実機未確認項目として明記）。
+  2. 忠実な WebHID `inputreport`（`event.reportId = 0x30`、`event.data` はレポートID除外）による Pro Controller および Joy-Con R からの角速度抽出。
+  3. サブコマンド応答レポート `0x21` 受信時の除外とドリフトクリアの検証。
+  4. パケット到着停止時の 100ms 到着時間経過によるサンプル失効（永続旋回の抑止）。
+  5. デバイス初期化シーケンス（`open()`、サブコマンド `0x40` および `0x03` 送信、ニュートラル振動）と失敗時の明示的エラーハンドリング。
+  6. 設定UIの `_connectMotion` リンク押下によるペアリングおよびアダプター接続。
+  7. 右スティック同時入力時のヨー合成と垂直ピッチ抑制の検証。
+  8. Yボタン（カメラリセット）によるピッチ0復元およびリーダー状態クリアの検証。
+  9. 30 Hz / 60 Hz / 120 Hz での積分量同一性確認（1秒間の定常角速度における積分変位が完全一致）。
+- **プレイへの影響:** WebHID 対応ブラウザにおいて Nintendo Switch Joy-Con / Pro コントローラー接続時に本家スプラトゥーン3準拠のジャイロエイミングが可能となり、UI から直接ペアリングできる。パケット途絶時の回転暴走や切断時の残留ドリフトが排除され、非対応環境やジャイロ未接続時は従来のスティック操作・マウス・タッチ入力が一切阻害されず維持される。
+- **確認状態:** 公開 HID 仕様および ST LSM6DS3 仕様に基づく忠実な WebHID イベントとモック HID デバイスによるロジック確認（11/11 テスト GREEN）。本検証環境はヘッドレス Linux であり、物理的な Switch 実機コントローラーの Bluetooth/USB 接続による実機実測は行われていない（実機未確認項目として明記）。
+
 

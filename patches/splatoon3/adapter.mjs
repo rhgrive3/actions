@@ -166,6 +166,21 @@ export function adaptSource(rel, code) {
       'export const tagNum = (name) =>',
       'export tagNum');
     code = replaceOnce(code,
+      "    { key: '_howto', label: 'Controls reference', type: 'link', help: 'Every keyboard, mouse and controller binding in one place.' },",
+      "    { key: '_howto', label: 'Controls reference', type: 'link', help: 'Every keyboard, mouse and controller binding in one place.' },\n" +
+      "    { key: '_connectMotion', label: 'Connect Joy-Con / Pro Controller', type: 'link', linkLabel: 'CONNECT', help: 'Pair a Nintendo Switch Joy-Con (R) or Pro Controller via WebHID for motion gyro aiming.' },",
+      'menus _connectMotion link');
+    code = replaceOnce(code,
+      "          const go = r.key === '_layout'\n" +
+      "            ? () => { this._sfx('ui_click'); safeCall(() => this.api.editTouchLayout && this.api.editTouchLayout()); }\n" +
+      "            : () => { this._sfx('ui_click'); this._go('howto'); };",
+      "          const go = r.key === '_layout'\n" +
+      "            ? () => { this._sfx('ui_click'); safeCall(() => this.api.editTouchLayout && this.api.editTouchLayout()); }\n" +
+      "            : r.key === '_connectMotion'\n" +
+      "            ? () => { this._sfx('ui_click'); safeCall(() => (this.api.connectControllerMotion ? this.api.connectControllerMotion() : (typeof G !== 'undefined' && G.input?.requestWebHID ? G.input.requestWebHID() : null))); }\n" +
+      "            : () => { this._sfx('ui_click'); this._go('howto'); };",
+      'menus _connectMotion accept handler');
+    code = replaceOnce(code,
     "{ key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },",
     "{ key: 'minimap', label: 'Corner map (non-S3 aid)', type: 'toggle', help: 'Optional aid outside the S3 baseline. The full Turf Map remains available.' },",
     'optional corner map explanation');
@@ -187,7 +202,7 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",
-    "  'Corner map (non-S3 aid)': '画面端マップ（本家外の補助）', 'Optional aid outside the S3 baseline. The full Turf Map remains available.': '本家の標準とは異なる任意の補助です。全体マップは引き続き使用できます。',\n  'Minimap': 'ミニマップ',",
+    "  'Connect Joy-Con / Pro Controller': 'Joy-Con / Proコントローラー接続', 'Pair a Nintendo Switch Joy-Con (R) or Pro Controller via WebHID for motion gyro aiming.': 'WebHID経由でJoy-Con (R) または Proコントローラーを接続し、ジャイロ照準を使用します。',\n  'Corner map (non-S3 aid)': '画面端マップ（本家外の補助）', 'Optional aid outside the S3 baseline. The full Turf Map remains available.': '本家の標準とは異なる任意の補助です。全体マップは引き続き使用できます。',\n  'Minimap': 'ミニマップ',",
     'optional corner map Japanese explanation');
   if (rel === 'src/game/match.js') {
     // The lobby/roster protocol assigns team 0 to Alpha and team 1 to Bravo.
@@ -1285,6 +1300,14 @@ export function adaptSource(rel, code) {
       "      // Remote ally-on-enemy splats (#614) likewise add no text entry: the local\n" +
       "      // confirmation above is the only feed that names a remote player.",
       'splat feed remote-identity gate (#614)');
+    code = replaceOnce(code,
+      '  _menuApi() {\n    const self = this;\n    const api = (this.api = {\n',
+      '  _menuApi() {\n    const self = this;\n    const api = (this.api = {\n      connectControllerMotion: () => (self.input?.requestWebHID ? self.input.requestWebHID() : null),\n',
+      'menu api connectControllerMotion');
+    code = replaceOnce(code,
+      '    this.input = G.input = new Input(this.R.renderer.domElement);',
+      '    this.input = G.input = new Input(this.R.renderer.domElement);\n    this.input.attachWebHID?.();',
+      'auto attach WebHID on boot');
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
     const end = code.indexOf('    // A full-frame lobby/showcase completely covers', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: fixed simulation connection');

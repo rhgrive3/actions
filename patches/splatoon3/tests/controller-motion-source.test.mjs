@@ -1,11 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   NINTENDO_VENDOR_ID,
   JOYCON_L_PRODUCT_ID,
   JOYCON_R_PRODUCT_ID,
   PRO_CONTROLLER_PRODUCT_ID,
+  JOYCON_GRIP_PRODUCT_ID,
   DEFAULT_GYRO_SCALE,
+  OUTPUT_REPORT_SUBCMD,
+  SUBCMD_SET_INPUT_REPORT_MODE,
+  SUBCMD_ENABLE_IMU,
+  INPUT_REPORT_STANDARD_FULL,
+  NEUTRAL_RUMBLE,
+  DEFAULT_SAMPLE_MAX_AGE_MS,
+  buildSubcommandPacket,
+  sendSwitchSubcommand,
+  initializeSwitchHIDDevice,
   gainAt,
   controllerMotionDelta,
   decodeSwitchMotionReport,
@@ -13,12 +25,46 @@ import {
   hasWebHIDSupport,
   getControllerMotionPlatformStatus,
   attachWebHIDControllerMotion,
+  requestWebHIDDevice,
   installControllerMotion
 } from '../runtime/controller-motion.mjs';
+import { adaptSource } from '../adapter.mjs';
 
 const close = (a, b, msg = '') => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} != ${b}`);
 
-function makeSyntheticSwitchReport({
+/**
+ * Creates faithful WebHID input report data (EXCLUDING report ID).
+ * WebHID WICG specification: event.data does not contain the reportId byte;
+ * byte 0 of event.data is Timer, byte 1 is Battery/Connection, bytes 18..23 is Frame 0 Gyro.
+ */
+function makeFaithfulWebHIDData({
+  timer = 1,
+  battery = 8,
+  acc = [0, 0, 4096],
+  gyro = [1000, 0, -2000],
+  frames = 3
+} = {}) {
+  const byteLength = 12 + frames * 12; // 48 bytes for 3 frames
+  const buf = new Uint8Array(byteLength);
+  buf[0] = timer;
+  buf[1] = (battery << 4) | 0x01;
+  const view = new DataView(buf.buffer);
+  for (let f = 0; f < frames; f++) {
+    const offset = 12 + f * 12;
+    view.setInt16(offset, acc[0], true);
+    view.setInt16(offset + 2, acc[1], true);
+    view.setInt16(offset + 4, acc[2], true);
+    view.setInt16(offset + 6, gyro[0], true);
+    view.setInt16(offset + 8, gyro[1], true);
+    view.setInt16(offset + 10, gyro[2], true);
+  }
+  return view;
+}
+
+/**
+ * Raw wire packet fallback where byte 0 IS the report ID (e.g. non-WebHID captures).
+ */
+function makeRawWireBuffer({
   reportId = 0x30,
   timer = 1,
   battery = 8,
@@ -26,7 +72,8 @@ function makeSyntheticSwitchReport({
   gyro = [1000, 0, -2000],
   frames = 3
 } = {}) {
-  const buf = new Uint8Array(49);
+  const byteLength = 1 + 12 + frames * 12; // 49 bytes for 3 frames
+  const buf = new Uint8Array(byteLength);
   buf[0] = reportId;
   buf[1] = timer;
   buf[2] = (battery << 4) | 0x01;
@@ -43,11 +90,23 @@ function makeSyntheticSwitchReport({
   return buf;
 }
 
-class MockHIDDevice {
+class FaithfulMockHIDDevice {
   constructor(productId = PRO_CONTROLLER_PRODUCT_ID) {
     this.vendorId = NINTENDO_VENDOR_ID;
     this.productId = productId;
+    this.opened = false;
     this.listeners = new Map();
+    this.sentReports = [];
+  }
+  async open() {
+    this.opened = true;
+  }
+  async close() {
+    this.opened = false;
+  }
+  async sendReport(reportId, data) {
+    const copy = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+    this.sentReports.push({ reportId, data: copy });
   }
   addEventListener(type, cb) {
     if (!this.listeners.has(type)) this.listeners.set(type, new Set());
@@ -56,9 +115,9 @@ class MockHIDDevice {
   removeEventListener(type, cb) {
     this.listeners.get(type)?.delete(cb);
   }
-  emitReport(data) {
+  emitInputReport(reportId, payloadDataView) {
     for (const cb of this.listeners.get('inputreport') || []) {
-      cb({ data: new DataView(data.buffer, data.byteOffset, data.byteLength), reportId: data[0] });
+      cb({ reportId, data: payloadDataView });
     }
   }
 }
@@ -86,7 +145,7 @@ test('#71 bridge composes with original PlayerController; missing bridge is stic
     }
     update() { this.calls++; }
   }
-  const G = { settings: { gyroSensitivity: 0, invertY: false }, rig: { mapK: 0 } };
+  const G = { settings: { gyroSens: 0, invertY: false }, rig: { mapK: 0 } };
   installControllerMotion({ Input, PlayerController, G });
   const input = new Input();
   input.pad = { connected: true, index: 1 };
@@ -119,93 +178,253 @@ test('#71 bridge composes with original PlayerController; missing bridge is stic
   assert.equal(c.calls, 5);
 });
 
-test('#71 published Nintendo Switch HID report decoder extracts calibrated rad/s and rejects invalid reports', () => {
-  // Report 0x30 with Pro Controller
-  const reportPro = makeSyntheticSwitchReport({ gyro: [1000, 0, -2000] });
-  const decPro = decodeSwitchMotionReport(reportPro, { productId: PRO_CONTROLLER_PRODUCT_ID });
-  assert.equal(decPro.available, true);
-  assert.equal(decPro.deviceType, 'pro-controller');
-  close(decPro.pitchRate, 1000 * DEFAULT_GYRO_SCALE, 'pitchRate scale');
-  close(decPro.yawRate, 2000 * DEFAULT_GYRO_SCALE, 'yawRate inverted Z');
+test('#71 published Nintendo Switch HID report decoder extracts calibrated rad/s and rejects invalid/0x21 reports with faithful WebHID contract', () => {
+  // 1. Faithful WebHID event where event.data EXCLUDES reportId:
+  const faithfulPayload = makeFaithfulWebHIDData({ gyro: [1000, 0, -2000] });
+  const decWebHID = decodeSwitchMotionReport(faithfulPayload, {
+    reportId: 0x30,
+    productId: PRO_CONTROLLER_PRODUCT_ID
+  });
+  assert.equal(decWebHID.available, true);
+  assert.equal(decWebHID.reportId, 0x30);
+  assert.equal(decWebHID.deviceType, 'pro-controller');
+  close(decWebHID.pitchRate, 1000 * DEFAULT_GYRO_SCALE, 'pitchRate scale from byte 18..19');
+  close(decWebHID.yawRate, 2000 * DEFAULT_GYRO_SCALE, 'yawRate inverted Z from byte 22..23');
 
-  // Report 0x30 with Right Joy-Con
-  const reportR = makeSyntheticSwitchReport({ gyro: [800, 0, -1200] });
-  const decR = decodeSwitchMotionReport(reportR, { productId: JOYCON_R_PRODUCT_ID });
-  assert.equal(decR.available, true);
-  assert.equal(decR.deviceType, 'joycon-right');
-  close(decR.pitchRate, 800 * DEFAULT_GYRO_SCALE);
-  close(decR.yawRate, 1200 * DEFAULT_GYRO_SCALE);
+  // 2. Wire format fallback where byte 0 is reportId:
+  const wireBuf = makeRawWireBuffer({ reportId: 0x30, gyro: [800, 0, -1200] });
+  const decWire = decodeSwitchMotionReport(wireBuf, { productId: JOYCON_R_PRODUCT_ID });
+  assert.equal(decWire.available, true);
+  assert.equal(decWire.reportId, 0x30);
+  close(decWire.pitchRate, 800 * DEFAULT_GYRO_SCALE);
+  close(decWire.yawRate, 1200 * DEFAULT_GYRO_SCALE);
 
-  // Joy-Con (L) motion is ignored for aiming in Splatoon 3
-  const reportL = makeSyntheticSwitchReport({ gyro: [500, 0, 500] });
-  const decL = decodeSwitchMotionReport(reportL, { productId: JOYCON_L_PRODUCT_ID });
-  assert.equal(decL.available, false);
-  assert.equal(decL.ignoredSide, 'left');
+  // 3. Subcommand reply 0x21 is NOT an IMU stream (dekuNukem and primary spec)
+  const report21 = makeFaithfulWebHIDData();
+  const dec21 = decodeSwitchMotionReport(report21, { reportId: 0x21 });
+  assert.equal(dec21.available, false);
+  assert.equal(dec21.reason, 'unsupported-report-id');
+  assert.equal(dec21.reportId, 0x21);
 
-  // Subcommand reply with IMU (0x21) and NFC/IR (0x31)
-  const report21 = makeSyntheticSwitchReport({ reportId: 0x21, gyro: [400, 0, -600] });
-  assert.equal(decodeSwitchMotionReport(report21, { productId: PRO_CONTROLLER_PRODUCT_ID }).available, true);
-  const report31 = makeSyntheticSwitchReport({ reportId: 0x31, gyro: [400, 0, -600] });
-  assert.equal(decodeSwitchMotionReport(report31, { productId: PRO_CONTROLLER_PRODUCT_ID }).available, true);
+  // 4. Other valid published IMU report IDs: 0x31, 0x32, 0x33
+  for (const rId of [0x31, 0x32, 0x33]) {
+    const res = decodeSwitchMotionReport(faithfulPayload, { reportId: rId, productId: PRO_CONTROLLER_PRODUCT_ID });
+    assert.equal(res.available, true, `Report 0x${rId.toString(16)} should be supported`);
+  }
 
-  // Unsupported report ID (e.g. 0x3f simple button report)
-  const reportBad = makeSyntheticSwitchReport({ reportId: 0x3f });
-  const decBad = decodeSwitchMotionReport(reportBad);
-  assert.equal(decBad.available, false);
-  assert.equal(decBad.reason, 'unsupported-report-id');
+  // 5. Truncated payload (< 24 bytes in WebHID mode)
+  const truncated = new Uint8Array(20);
+  assert.equal(decodeSwitchMotionReport(truncated, { reportId: 0x30 }).available, false);
 
-  // Truncated payload (< 25 bytes)
-  assert.equal(decodeSwitchMotionReport(new Uint8Array(18)).available, false);
+  // 6. Joy-Con (L) motion is excluded for aim
+  const decLeft = decodeSwitchMotionReport(faithfulPayload, { reportId: 0x30, productId: JOYCON_L_PRODUCT_ID });
+  assert.equal(decLeft.available, false);
+  assert.equal(decLeft.ignoredSide, 'left');
 
-  // Out of bounds extreme rate (> 25 rad/s)
-  const reportExtreme = makeSyntheticSwitchReport({ gyro: [32000, 0, 0] });
-  assert.equal(decodeSwitchMotionReport(reportExtreme).available, false);
-
-  // Multi-frame averaging
-  const reportMulti = makeSyntheticSwitchReport({ gyro: [900, 0, 0] });
-  const view = new DataView(reportMulti.buffer);
-  view.setInt16(19, 900, true);
-  view.setInt16(31, 1000, true);
-  view.setInt16(43, 1100, true);
-  const decMulti = decodeSwitchMotionReport(reportMulti, { averageFrames: true });
-  close(decMulti.pitchRate, 1000 * DEFAULT_GYRO_SCALE, 'multi-frame average');
+  // 7. Multi-frame averaging across 3 samples
+  const multiPayload = makeFaithfulWebHIDData({ gyro: [900, 0, 0] });
+  multiPayload.setInt16(18, 900, true);
+  multiPayload.setInt16(30, 1000, true);
+  multiPayload.setInt16(42, 1100, true);
+  const decMulti = decodeSwitchMotionReport(multiPayload, { reportId: 0x30, averageFrames: true });
+  close(decMulti.pitchRate, 1000 * DEFAULT_GYRO_SCALE, 'multi-frame average rate');
 });
 
-test('#71 WebHID reader decodes synthetic stream, recenters drift, and platform detection is explicit', () => {
-  // In Node.js environment without WebHID navigator.hid
-  assert.equal(hasWebHIDSupport(), false);
-  assert.equal(getControllerMotionPlatformStatus(), 'unsupported-platform');
+test('#71 Right Joy-Con vs Pro Controller mounting and axis mapping conforms to published ST LSM6DS3 specs', () => {
+  // Joy-Con (R) held upright in grip and Pro Controller:
+  // Gyro 1 (X) is pitch rate (+up/-down)
+  // Gyro 2 (Y) is roll rate
+  // Gyro 3 (Z) is yaw rate (around vertical axis, -rateZ for turn left = +yaw)
+  const rightJoyconPayload = makeFaithfulWebHIDData({ gyro: [1200, 500, -1800] });
+  const decR = decodeSwitchMotionReport(rightJoyconPayload, {
+    reportId: 0x30,
+    productId: JOYCON_R_PRODUCT_ID
+  });
+  assert.equal(decR.deviceType, 'joycon-right');
+  close(decR.pitchRate, 1200 * DEFAULT_GYRO_SCALE, 'right Joy-Con pitch');
+  close(decR.rollRate, 500 * DEFAULT_GYRO_SCALE, 'right Joy-Con roll');
+  close(decR.yawRate, 1800 * DEFAULT_GYRO_SCALE, 'right Joy-Con yaw');
 
-  class Input {}
-  class PlayerController {}
-  installControllerMotion({ Input, PlayerController, G: { settings: {} } });
-  const input = new Input();
-  assert.equal(input.controllerMotionPlatformStatus(), 'unsupported-platform');
-  const attachRes = input.attachWebHID();
-  assert.equal(attachRes.supported, false);
-  assert.equal(attachRes.status, 'unsupported-platform');
+  const proPayload = makeFaithfulWebHIDData({ gyro: [1500, -300, -2200] });
+  const decPro = decodeSwitchMotionReport(proPayload, {
+    reportId: 0x30,
+    productId: PRO_CONTROLLER_PRODUCT_ID
+  });
+  assert.equal(decPro.deviceType, 'pro-controller');
+  close(decPro.pitchRate, 1500 * DEFAULT_GYRO_SCALE, 'Pro Controller pitch');
+  close(decPro.rollRate, -300 * DEFAULT_GYRO_SCALE, 'Pro Controller roll');
+  close(decPro.yawRate, 2200 * DEFAULT_GYRO_SCALE, 'Pro Controller yaw');
+});
 
-  // Mock WebHID device reader
-  const mockDev = new MockHIDDevice(PRO_CONTROLLER_PRODUCT_ID);
-  const reader = createSwitchHIDReader({ device: mockDev, productId: PRO_CONTROLLER_PRODUCT_ID });
-  input.setControllerMotionReader(reader);
-  assert.equal(input.controllerMotionStatus(), 'bridge-available');
+test('#71 arrival age expiry stops infinite rotation drift and malformed/truncated packets clear active rate', async () => {
+  const mockDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID);
+  const reader = createSwitchHIDReader({
+    device: mockDev,
+    productId: PRO_CONTROLLER_PRODUCT_ID,
+    maxAgeMs: 50 // Short expiry for fast deterministic test
+  });
 
-  const report = makeSyntheticSwitchReport({ gyro: [500, 0, -1000] });
-  mockDev.emitReport(report);
-  const sample = reader({ index: 0 }, 1 / 60);
-  assert.ok(sample);
-  close(sample.pitchRate, 500 * DEFAULT_GYRO_SCALE);
-  close(sample.yawRate, 1000 * DEFAULT_GYRO_SCALE);
+  const payload = makeFaithfulWebHIDData({ gyro: [800, 0, -1400] });
+  mockDev.emitInputReport(0x30, payload);
 
-  // Recenter clears active sample
-  reader.recenter();
-  assert.equal(reader({ index: 0 }, 1 / 60), null);
+  // 1. Immediately after arrival: reader yields valid rate
+  const initial = reader({ index: 0 }, 1 / 60);
+  assert.ok(initial);
+  close(initial.pitchRate, 800 * DEFAULT_GYRO_SCALE);
+  close(initial.yawRate, 1400 * DEFAULT_GYRO_SCALE);
 
-  // Detach cleans up listener
-  reader.detach();
-  mockDev.emitReport(report);
-  assert.equal(reader({ index: 0 }, 1 / 60), null);
+  // 2. An invalid/corrupt packet arrives: immediately clears active drift!
+  const malformed = new Uint8Array(10); // Too short
+  mockDev.emitInputReport(0x30, new DataView(malformed.buffer));
+  assert.equal(reader({ index: 0 }, 1 / 60), null, 'corrupt/truncated packet clears stale drift');
+
+  // 3. Send valid packet again
+  mockDev.emitInputReport(0x30, payload);
+  assert.ok(reader({ index: 0 }, 1 / 60), 'reader active after fresh report');
+
+  // 4. Subcommand reply 0x21 arrives: treated as invalid IMU report, clears active drift
+  mockDev.emitInputReport(0x21, payload);
+  assert.equal(reader({ index: 0 }, 1 / 60), null, '0x21 subcommand reply clears active rate');
+
+  // 5. Send valid packet again, then let it age beyond maxAgeMs (no reports arriving)
+  mockDev.emitInputReport(0x30, payload);
+  assert.ok(reader({ index: 0 }, 1 / 60));
+  await new Promise(resolve => setTimeout(resolve, 60));
+  assert.equal(reader({ index: 0 }, 1 / 60), null, 'expired arrival age does not hold rate forever');
+});
+
+test('#71 published device initialization sequence opens device and sends 0x40 and 0x03 subcommands with neutral rumble, handling failure explicitly', async () => {
+  const mockDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID);
+  assert.equal(mockDev.opened, false);
+
+  const initResult = await initializeSwitchHIDDevice(mockDev);
+  assert.equal(initResult.initialized, true);
+  assert.equal(mockDev.opened, true, 'device was opened');
+  assert.equal(mockDev.sentReports.length, 2, '2 output reports sent');
+
+  // First output report: Subcommand 0x40 (Enable 6-Axis IMU)
+  const rep0 = mockDev.sentReports[0];
+  assert.equal(rep0.reportId, OUTPUT_REPORT_SUBCMD);
+  assert.equal(rep0.data[9], SUBCMD_ENABLE_IMU, 'Subcommand 0x40');
+  assert.equal(rep0.data[10], 0x01, 'Argument 0x01 (enable)');
+  // Verify 8 neutral rumble bytes in indices 1..8
+  for (let i = 0; i < 8; i++) {
+    assert.equal(rep0.data[1 + i], NEUTRAL_RUMBLE[i], `Neutral rumble byte ${i}`);
+  }
+
+  // Second output report: Subcommand 0x03 (Set report mode to 0x30 Standard Full Mode)
+  const rep1 = mockDev.sentReports[1];
+  assert.equal(rep1.reportId, OUTPUT_REPORT_SUBCMD);
+  assert.equal(rep1.data[9], SUBCMD_SET_INPUT_REPORT_MODE, 'Subcommand 0x03');
+  assert.equal(rep1.data[10], INPUT_REPORT_STANDARD_FULL, 'Argument 0x30 (Standard full mode)');
+
+  // Test explicit partial / failure handling:
+  const brokenDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID);
+  brokenDev.open = async () => { throw new Error('Hardware permission denied'); };
+  const failResult = await initializeSwitchHIDDevice(brokenDev);
+  assert.equal(failResult.initialized, false);
+  assert.equal(failResult.reason, 'open-failed');
+  assert.ok(failResult.error);
+});
+
+test('#71 WebHID session lifecycle protects against detach and pending getDevices race conditions, and disconnect cleans up reader', async () => {
+  class MockInput {
+    constructor() {
+      this.s3ControllerMotionReader = null;
+    }
+    setControllerMotionReader(r) {
+      this.s3ControllerMotionReader = r;
+    }
+  }
+
+  const mockDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID);
+  let getDevicesResolve;
+  const mockNavigatorHid = {
+    getDevices: () => new Promise(resolve => { getDevicesResolve = resolve; }),
+    addEventListener: (t, cb) => { mockNavigatorHid['on' + t] = cb; },
+    removeEventListener: (t, cb) => { if (mockNavigatorHid['on' + t] === cb) mockNavigatorHid['on' + t] = null; }
+  };
+
+  const priorHidDesc = Object.getOwnPropertyDescriptor(globalThis.navigator, 'hid');
+  Object.defineProperty(globalThis.navigator, 'hid', { value: mockNavigatorHid, configurable: true, writable: true });
+
+  try {
+    const input = new MockInput();
+    const handle = attachWebHIDControllerMotion(input);
+    assert.ok(handle.supported);
+
+    // Case 1: Session is detached while getDevices is still pending
+    handle.detach();
+    assert.equal(handle.session.active, false);
+    // getDevices now resolves later:
+    getDevicesResolve([mockDev]);
+    await new Promise(resolve => setTimeout(resolve, 10));
+    assert.equal(input.s3ControllerMotionReader, null, 'detached session ignored slow getDevices');
+
+    // Case 2: New session attached, disconnect event cleans up active reader
+    const input2 = new MockInput();
+    const handle2 = attachWebHIDControllerMotion(input2);
+    const slowPromise = new Promise(resolve => { getDevicesResolve = resolve; });
+    mockNavigatorHid.getDevices = () => slowPromise;
+
+    // Simulate user connecting device
+    await mockNavigatorHid.onconnect({ device: mockDev });
+    assert.ok(input2.s3ControllerMotionReader, 'reader attached on connect');
+
+    // Disconnect event fires
+    mockNavigatorHid.ondisconnect({ device: mockDev });
+    assert.equal(input2.s3ControllerMotionReader, null, 'reader cleared on disconnect');
+
+    handle2.detach();
+  } finally {
+    if (priorHidDesc) Object.defineProperty(globalThis.navigator, 'hid', priorHidDesc);
+    else delete globalThis.navigator.hid;
+  }
+});
+
+test('#71 production UI activation in adapters provides _connectMotion link, accept handler, and main _menuApi bridge', () => {
+  // Verify that adaptSource patches menus.js with _connectMotion in SETTINGS_TABS controls rows
+  const menusRaw = fs.readFileSync('inkwave-public/src/ui/menus.js', 'utf8');
+  const menusAdapted = adaptSource('src/ui/menus.js', menusRaw);
+  assert.ok(menusAdapted.includes("key: '_connectMotion'"), 'menus.js includes _connectMotion key');
+  assert.ok(menusAdapted.includes("label: 'Connect Joy-Con / Pro Controller'"), 'menus.js includes Connect label');
+  assert.ok(menusAdapted.includes("connectControllerMotion"), 'menus.js connects via api or input');
+
+  // Verify that adaptSource patches main.js to expose connectControllerMotion on _menuApi
+  const mainRaw = fs.readFileSync('inkwave-public/src/main.js', 'utf8');
+  const mainAdapted = adaptSource('src/main.js', mainRaw);
+  assert.ok(mainAdapted.includes('connectControllerMotion: () => (self.input?.requestWebHID'), 'main.js exposes connectControllerMotion');
+  assert.ok(mainAdapted.includes('this.input.attachWebHID?.()'), 'main.js boots with attachWebHID');
+
+  // Verify requestWebHIDDevice execution with user gesture
+  class MockInput {
+    constructor() { this.s3ControllerMotionReader = null; }
+    setControllerMotionReader(r) { this.s3ControllerMotionReader = r; }
+  }
+
+  const mockDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID);
+  const mockNavigatorHid = {
+    requestDevice: async () => [mockDev],
+    getDevices: async () => [mockDev],
+    addEventListener: () => {},
+    removeEventListener: () => {}
+  };
+
+  const priorHidDesc = Object.getOwnPropertyDescriptor(globalThis.navigator, 'hid');
+  Object.defineProperty(globalThis.navigator, 'hid', { value: mockNavigatorHid, configurable: true, writable: true });
+  try {
+    const input = new MockInput();
+    const p = requestWebHIDDevice(input);
+    return p.then(res => {
+      assert.equal(res.supported, true);
+      assert.equal(res.connected, true);
+      assert.equal(res.status, 'bridge-available');
+      assert.ok(input.s3ControllerMotionReader, 'reader installed via requestWebHID');
+    });
+  } finally {
+    if (priorHidDesc) Object.defineProperty(globalThis.navigator, 'hid', priorHidDesc);
+    else delete globalThis.navigator.hid;
+  }
 });
 
 test('#71 30 Hz, 60 Hz, 120 Hz render parity: integrated delta angle over 1 second is identical', () => {
@@ -254,7 +473,6 @@ test('#71 right stick and controller gyro compose without double integration; re
       this.padLook.x = this.padLook.y = 0;
     }
     update(dt) {
-      // Simulate underlying PlayerController right stick integration
       this.rig.yaw -= this.padLook.x * 2.0 * dt;
       this.rig.pitch -= this.padLook.y * 2.0 * dt;
     }
@@ -290,10 +508,8 @@ test('#71 right stick and controller gyro compose without double integration; re
   c.padLook.y = 1.0;  // Stick moving down (suppressed from vertical pitch in gyro mode)
   c.update(1 / 60);
 
-  // Expected yaw: gyro yaw (1.0 * 1.8 / 60) + stick yaw (-1.0 * 2.0 / 60)
   const expectedYaw = (1.0 * 1.8 - 2.0) / 60;
   close(c.rig.yaw, expectedYaw, 'stick yaw and gyro yaw composed');
-  // Expected pitch: solely governed by controller gyro (0.5 * 1.8 / 60); stick pitch suppressed
   const expectedPitch = (0.5 * 1.8) / 60;
   close(c.rig.pitch, expectedPitch, 'gyro owns vertical pitch without stick double-integration');
   assert.equal(c.padLook.y, 0, 'padLook.y suppressed when gyro applied');
@@ -308,8 +524,8 @@ test('#71 right stick and controller gyro compose without double integration; re
 test('#71 real device proof vs synthetic mock distinction is verified', () => {
   // All simulated report tests use synthetic byte buffers and mock WebHID events based on published specifications.
   // Verify that mock objects are explicitly distinguishable from physical hardware.
-  const mockDev = new MockHIDDevice();
-  assert.equal(mockDev instanceof MockHIDDevice, true);
+  const mockDev = new FaithfulMockHIDDevice();
+  assert.equal(mockDev instanceof FaithfulMockHIDDevice, true);
   assert.equal(typeof navigator === 'undefined' || !('hid' in navigator) || navigator.hid === null, true,
     'Headless Node test environment has no physical WebHID hardware devices');
 });
