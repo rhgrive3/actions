@@ -2,6 +2,10 @@
 
 - Issue: https://github.com/rhgrive3/actions/issues/853 — [INKWAVE][Bug] Dualies can swallow Splat Bomb release on the exact 4F post-shot unlock tick
 - Base SHA: `5d0be6b7fdebfd07e696e75497aaa97aa5ff5648` (branch start, verified `rev-parse HEAD`)
+- Result commit: `f664d21e9759ef2bffae24615971c957121ed1d6` (evidence receipt, pushed nonforce to
+  `origin/inkwave/c-853-cl5-reboot5-20261009`; final branch head after this docs edit is
+  recorded in `claim.json` `completed_sha` and the issue comment below)
+- Result comment: https://github.com/rhgrive3/actions/issues/853#issuecomment-6079639583
 - Working Tree: `/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-c-resume-20261009/cl5-853-reboot5`
 - Branch: `inkwave/c-853-cl5-reboot5-20261009`
 - Persistent Evidence: `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-c-resume-20261009/cl5-853-reboot5`
