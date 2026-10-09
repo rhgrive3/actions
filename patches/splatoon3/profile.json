@@ -430,7 +430,8 @@
     },
     "slam": {
       "damageMax": 220,
-      "damageMin": 60
+      "damageMin": 60,
+      "hang": 0.5
     }
   },
   "gear": {
