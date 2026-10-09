@@ -49,6 +49,7 @@ async function loadRealm() {
     export { MAP_LAYOUTS } from './inkwave-public/src/world/maps.js';
     export { MAPS, OFFLINE_MAPS, mapById, mapNoBots, PLAYER } from './inkwave-public/src/config.js';
     export { Level } from './inkwave-public/src/world/level.js';
+    export { Decor } from './inkwave-public/src/world/decor.js';
     export { PATTERN } from './inkwave-public/src/world/mapkit.js';
   `, { context, identifier: path.join(ROOT, 'scorch-stage-test-entry.mjs') });
 
@@ -75,6 +76,13 @@ test('build/adapter: Scorch Gorge adapter connects cleanly, fails closed on re-a
   const adaptedI18n = adaptScorchGorge('src/i18n.js', i18nSrc, replaceOnce);
   assert.ok(adaptedI18n.includes("scorch: ['ユノハナ大渓谷'"));
   assert.throws(() => adaptScorchGorge('src/i18n.js', adaptedI18n, replaceOnce), /already connected/);
+});
+
+test('startup: native decor builds Scorch without requiring nonexistent palm anchors', async () => {
+  const R = await loadRealm();
+  const decor = { level: new R.Level(R.MAP_LAYOUTS.scorch), group: new R.THREE.Group() };
+  assert.doesNotThrow(() => R.Decor.prototype._buildPalms.call(decor));
+  assert.equal(decor.group.children.length, 0);
 });
 
 test('startup/registry: scorch stage registered in MAP_LAYOUTS, MAPS, OFFLINE_MAPS, and i18n', async () => {
