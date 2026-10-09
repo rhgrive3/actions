@@ -1,4 +1,4 @@
-name: Export pinned INKWAVE main source
+name: Export pinned INKWAVE main source (offline parts)
 
 on:
   push:
@@ -23,24 +23,70 @@ jobs:
           fetch-depth: 1
           path: source
           persist-credentials: false
-      - name: Verify full source identity and archive tracked files
+      - name: Split exact tracked main tree into offline ZIP artifacts
         shell: bash
         run: |
           set -euo pipefail
           test "$(git -C source rev-parse HEAD)" = "5d0be6b7fdebfd07e696e75497aaa97aa5ff5648"
-          mkdir -p snapshot
+          mkdir -p snapshot parts
           git -C source archive --format=tar HEAD | tar -xf - -C snapshot
-          printf 'repo=rhgrive3/actions\nsha=5d0be6b7fdebfd07e696e75497aaa97aa5ff5648\nsource=git archive HEAD (tracked files; no .git history)\n' > snapshot/SOURCE_IDENTITY.txt
-          test -f snapshot/inkwave-public/src/game/weapons.js
-          test -f snapshot/patches/splatoon3/profile.json
-          test -f snapshot/patches/splatoon3/runtime/weapons-fidelity.mjs
-          test -f snapshot/scripts/check-inkwave-weapons-fidelity.mjs
-          echo "archived file count: $(find snapshot -type f | wc -l)"
-      - name: Upload complete editable snapshot
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil, json
+          src=Path("snapshot")
+          dst=Path("parts")
+          all_files=sorted((p for p in src.rglob("*") if p.is_file()), key=lambda p:p.relative_to(src).as_posix())
+          main=[p for p in all_files if p.relative_to(src).parts[0]!="tools"]
+          tools=sorted((p for p in all_files if p.relative_to(src).parts[0]=="tools"),
+                       key=lambda p:(-p.stat().st_size,p.relative_to(src).as_posix()))
+          bins=[[],[],[]]
+          sizes=[0,0,0]
+          limit=68*1024*1024
+          for p in tools:
+              idx=next((i for i in range(3) if sizes[i]+p.stat().st_size<=limit),None)
+              if idx is None: raise SystemExit("tools snapshot exceeds three verified offline parts")
+              bins[idx].append(p);sizes[idx]+=p.stat().st_size
+          groups=[main,*bins]
+          for i,files in enumerate(groups):
+              base=dst/("core" if i==0 else f"tools{i}")
+              for p in files:
+                  out=base/p.relative_to(src)
+                  out.parent.mkdir(parents=True,exist_ok=True)
+                  shutil.copy2(p,out)
+          identity={"repo":"rhgrive3/actions","ref":"main","sha":"5d0be6b7fdebfd07e696e75497aaa97aa5ff5648",
+                    "tracked_files":len(all_files),"parts":4,
+                    "merge_rule":"extract core, tools1, tools2, tools3 into same directory"}
+          (dst/"core"/"SOURCE_IDENTITY.json").write_text(json.dumps(identity,indent=2)+"\n")
+          print(json.dumps({"core_files":len(main),"tool_bins":[len(b) for b in bins],
+                            "tool_raw_bytes":sizes,"source_total":len(all_files)}))
+          assert len(all_files)==2032
+          assert all(s<=limit for s in sizes)
+          PY
+      - name: Upload editable game/core snapshot
         uses: actions/upload-artifact@v4
         with:
-          name: INKWAVE-main-5d0be6b7-full-source
-          path: snapshot/
+          name: INKWAVE-main-5d0be6b7-core
+          path: parts/core/
           include-hidden-files: true
           retention-days: 7
-          compression-level: 6
+      - name: Upload editable tools part 1
+        uses: actions/upload-artifact@v4
+        with:
+          name: INKWAVE-main-5d0be6b7-tools1
+          path: parts/tools1/
+          include-hidden-files: true
+          retention-days: 7
+      - name: Upload editable tools part 2
+        uses: actions/upload-artifact@v4
+        with:
+          name: INKWAVE-main-5d0be6b7-tools2
+          path: parts/tools2/
+          include-hidden-files: true
+          retention-days: 7
+      - name: Upload editable tools part 3
+        uses: actions/upload-artifact@v4
+        with:
+          name: INKWAVE-main-5d0be6b7-tools3
+          path: parts/tools3/
+          include-hidden-files: true
+          retention-days: 7
