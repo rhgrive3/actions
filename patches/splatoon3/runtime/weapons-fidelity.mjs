@@ -1221,11 +1221,14 @@ export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
     const t=clamp01((fall-d.ReduceStartFallDistance)/(d.ReduceEndFallDistance-d.ReduceStartFallDistance));
     return (d.ValueMax+(d.ValueMin-d.ValueMax)*t)/10;
   }
-  const age=(p.fidelityPrevAge??p.age)+(p.age-(p.fidelityPrevAge??p.age))*impactT;
   if(['shooter','dualies','splatling'].includes(w.kind)){
-    const t=clamp01((age-w.damageReduceStart)/(w.damageReduceEnd-w.damageReduceStart));
-    return w.damage+(w.damageMin-w.damage)*t;
+    const startFrame = Math.round((w.damageReduceStart ?? 0) * 60);
+    const endFrame = Math.round((w.damageReduceEnd ?? 0) * 60);
+    const frame = Math.round((p.age ?? 0) * 60);
+    const t = endFrame > startFrame ? clamp01((frame - startFrame) / (endFrame - startFrame)) : 0;
+    return w.damage + (w.damageMin - w.damage) * t;
   }
+  const age=(p.fidelityPrevAge??p.age)+(p.age-(p.fidelityPrevAge??p.age))*impactT;
   return p.damage;
 }
 export function applyFidelityProjectileHit(system,p,victim,amount,point) {
