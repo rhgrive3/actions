@@ -519,7 +519,8 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
           if (admission === 'rejected') {
             if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);
             runner.s3PendingRollHits.delete(victim);
-            runner.rollHits.delete(victim);
+            // This is a local admission refusal, not an owner verdict. Keep
+            // the native contact timestamp; hit:rejected below owns that reset.
           } else if (admission === 'rejected-invulnerable') {
             if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);
             runner.s3PendingRollHits.delete(victim);

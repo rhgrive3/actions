@@ -83,7 +83,7 @@ export function installThermalTracking(api, tuning) {
       const before = this._hitSeq, result = send.call(this, attacker, victim, damage, source, ...rest);
       const pending = this._hitSeq !== before && this._pendingHits?.get(this._hitSeq);
       if (pending && qualified) pending.privateThermal = { attacker, victim, match: G.match,
-        ownerEpoch: epoch(attacker), victimEpoch: epoch(victim), source };
+        ownerEpoch: epoch(attacker), victimEpoch: epoch(victim), victimId: victim.owner, source };
       return result;
     };
     NetMatch.prototype._hitAck = function (receipt, ...args) {
@@ -93,7 +93,8 @@ export function installThermalTracking(api, tuning) {
     on('combat:confirmed', ({ attacker, victim, damage }) => {
       const r = ackContext;
       if (damage > 0 && r?.attacker === attacker && r.victim === victim && r.match === G.match &&
-          r.ownerEpoch === epoch(attacker) && r.victimEpoch === epoch(victim)) stamp(attacker, victim, G.time);
+          r.ownerEpoch === epoch(attacker) && r.victimEpoch === epoch(victim) &&
+          r.victimId === victim.owner) stamp(attacker, victim, G.time);
     });
   }
   ensureRenderer();
