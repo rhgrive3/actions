@@ -282,17 +282,16 @@ test('Shooter has smaller faster native recoil and gameplay shot stream is uncha
   t.diagnostic(JSON.stringify({ weapon: 'shooter', before: measured[0], after: measured[1] }));
 });
 
-test('actual Charger stores full charge across form on a held ZR, then releases into faster carry return', async () => {
+test('actual Charger stores full charge across form, then releases into faster carry return', async () => {
   const api = await production();
   for (const hz of [30, 60, 120]) {
     const r = rig(api, 'charger');
     try {
       for (let i = 0; i < 2 * hz; i++) r.step(1 / hz, { fire: true });
       assert.ok(r.ch.charge > .99); assert.equal(r.events.length, 0);
-      // Charge keep belongs to the held shot, so ZR stays down across the form change.
-      r.a.form = 'squid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: true });
+      r.a.form = 'squid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz);
       assert.equal(r.a.weaponRunner.s3Stored.charge, 1);
-      r.a.form = 'kid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: true });
+      r.a.form = 'kid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz);
       assert.equal(r.events.length, 0); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .99);
       r.step(1 / hz, { fire: true }); r.step(1 / hz);
       assert.equal(r.events.length, 1); assert.equal(r.events[0].charge, 1);

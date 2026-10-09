@@ -5,13 +5,13 @@ test('actual Actor stores a full charger charge and expires it without firing un
   const f = await fixture(), a = f.make('charger'); a.intent.fire = true;
   f.tick(a, 61); assert.ok(a.weaponRunner.charge >= .999);
   a.intent.squid = true; f.tick(a); assert.equal(a.form, 'squid'); assert.ok(a.weaponRunner.s3Stored);
-  // ZR stays held, so only the 75 frame window can end the keep, and it fires nothing.
-  f.tick(a, 74); assert.equal(f.shots.length, 0); assert.equal(a.weaponRunner.s3Stored, null);
+  a.intent.fire = false; f.tick(a, 74); assert.equal(f.shots.length, 0); assert.equal(a.weaponRunner.s3Stored, null);
 });
-test('stored charge survives emergence on a held ZR and fires on release; reset clears it', async () => {
+test('stored charge requires an emerged trigger press and then release; reset clears it', async () => {
   const f = await fixture(), a = f.make('charger'); a.intent.fire = true; f.tick(a, 61);
-  a.intent.squid = true; f.tick(a); a.intent.squid = false; f.tick(a, 6); assert.equal(f.shots.length, 0);
-  a.intent.fire = false; f.tick(a);
+  a.intent.squid = true; f.tick(a); a.intent.fire = false; f.tick(a);
+  a.intent.squid = false; f.tick(a, 5); assert.equal(f.shots.length, 0);
+  a.intent.fire = true; f.tick(a, 5); a.intent.fire = false; f.tick(a);
   assert.equal(f.shots.length, 1); assert.equal(f.shots[0].charge, 1);
   a.reset(); assert.equal(a.weaponRunner.s3Stored, null);
 });

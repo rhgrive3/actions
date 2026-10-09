@@ -97,16 +97,15 @@ test('Slosher heave follows real windup and completes recovery before the next a
   }
 });
 
-test('Charger holds its real charge through form return on a held ZR and releases into actual recoil/coil', async () => {
+test('Charger holds its real charge through form return and releases into actual recoil/coil', async () => {
   for (const hz of [30, 60, 120]) {
     const r = await rig('charger');
     try {
       for (let i = 0; i < 2 * hz; i++) r.step(1 / hz, { fire: true });
       assert.equal(r.a.weaponRunner.charge, 1); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .999);
-      // Charge keep belongs to the held shot, so ZR stays down across the form change.
-      r.a.form = 'squid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: true });
+      r.a.form = 'squid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: false });
       assert.equal(r.a.weaponRunner.s3Stored.charge, 1); assert.equal(r.f.shots.length, 0);
-      r.a.form = 'kid'; for (let i = 0; i < hz / 3; i++) r.step(1 / hz, { fire: true });
+      r.a.form = 'kid'; for (let i = 0; i < hz / 3; i++) r.step(1 / hz, { fire: false });
       assert.equal(r.f.shots.length, 0); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .999);
       r.step(1 / hz, { fire: true }); r.step(1 / hz, { fire: false });
       assert.equal(r.f.shots.length, 1); assert.equal(r.f.shots[0].charge, 1);

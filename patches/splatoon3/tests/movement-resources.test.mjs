@@ -61,7 +61,7 @@ test('refill predicates distinguish own ink, wall, dry/enemy squid, and stored c
   const f = await fixture(), a = f.make('charger'); a.form = 'squid'; a.intent.squid = true; a.ink = 0;
   f.G.paint.sample = () => 0; f.tick(a, 5); close(a.ink, 0);
   f.G.paint.sample = () => 2; f.tick(a, 5); close(a.ink, 0);
-  f.G.paint.sample = () => 1; a.intent.fire = true; a.weaponRunner.s3Stored = { charge: 1, remaining: 1 };
+  f.G.paint.sample = () => 1; a.weaponRunner.s3Stored = { charge: 1, remaining: 1 };
   f.tick(a, 5); close(a.ink, 0);
   a.weaponRunner.s3Stored = null; a.climbing = true; a._updateClimb = () => {}; a.grounded = false;
   f.tick(a); close(a.ink, f.profile.resources.inkRefillSwim / 60);
