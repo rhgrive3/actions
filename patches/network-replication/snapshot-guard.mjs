@@ -28,16 +28,20 @@ export function validBossSnapshotRow(row, timestamp) {
   }
   return row[18] == null || validBossMove(row[18]);
 }
+// BossBrain serializes move coordinates and phase times with r3(). Keep its
+// rounded integer units representable: finite-only input can still overflow
+// barrel interpolation and the resulting Float32 render coordinates.
+const wireScalar = value => finite(value) && Number.isSafeInteger(Math.round(value * 1000));
 export function validBossMove(move) {
   if (!move || typeof move !== 'object' || Array.isArray(move) || !validSnapshotTimestamp(move.t0)
     || !integer(move.s, 0, 0xffffffff) || !Array.isArray(move.d) || move.d.length !== 3
-    || !move.d.every(v => finite(v) && v >= 0) || !move.p || typeof move.p !== 'object' || Array.isArray(move.p)) return false;
-  const p = move.p, fields = keys => keys.every(key => finite(p[key]));
+    || !(move.d[0] > 0) || !move.d.every(v => wireScalar(v) && v >= 0) || !move.p || typeof move.p !== 'object' || Array.isArray(move.p)) return false;
+  const p = move.p, fields = keys => keys.every(key => wireScalar(p[key]));
   switch (move.id) {
-    case 'slam': return fields(['x', 'y', 'z']) && Array.isArray(p.rings) && p.rings.every(v => finite(v) && v >= 0);
-    case 'barrage': return fields(['sx', 'sy', 'sz']) && Array.isArray(p.b)
-      && p.b.every(b => Array.isArray(b) && b.length === 4 && b.every(finite));
-    case 'sweep': return fields(['ox', 'oy', 'oz', 'y', 'a0', 'a1', 'c']);
+    case 'slam': return fields(['x', 'y', 'z']) && Array.isArray(p.rings) && p.rings.every(v => wireScalar(v) && v >= 0);
+    case 'barrage': return fields(['sx', 'sy', 'sz']) && Array.isArray(p.b) && p.b.length > 0
+      && p.b.every(b => Array.isArray(b) && b.length === 4 && b.every(wireScalar));
+    case 'sweep': return move.d[1] > 0 && fields(['ox', 'oy', 'oz', 'y', 'a0', 'a1', 'c']);
     case 'charge': return fields(['x', 'y', 'z', 'yaw', 'L', 'v', 'wall', 'stun']) && p.L >= 0 && p.v > 0;
     case 'crablets': return integer(p.n, 0, Number.MAX_SAFE_INTEGER);
     case 'frenzy': return fields(['x', 'y', 'z', 'rot0', 'spin', 'stun']);
