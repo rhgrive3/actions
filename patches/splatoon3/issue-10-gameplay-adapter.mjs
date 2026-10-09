@@ -25,6 +25,15 @@ export function adaptIssue10Gameplay(rel, code, once) {
     }`,
       'airborne Dualies dodge action admission');
   }
+  if (rel === 'src/game/weapons.js') {
+    // #285/#278: each Roller main glob has its own sourced launch position.
+    // The native projectile creation path is the authority for owner/ghost
+    // networking. Offset BEFORE _push records an authoritative projectile.
+    patch('      p.pos.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6); p.prev.copy(p.pos); p.start.copy(p.pos);',
+      '      p.pos.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6); p.prev.copy(p.pos); p.start.copy(p.pos);\n      adjustFlickSpawnPosition(p, a, w, i);',
+      'Roller horizontal/vertical per-glob origin before network birth');
+    code = "import { adjustFlickSpawnPosition } from '../../patches/splatoon3/runtime/roller-flick-spawn.mjs';\n" + code;
+  }
   if (rel === 'src/game/actor.js') code = "import { cancelSurgeOnAway } from '../../patches/splatoon3/runtime/movement.mjs';\n" + code;
   return code;
 }
