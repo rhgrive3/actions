@@ -1049,6 +1049,17 @@ export function fidelityWorldHit(system,p) {
   }
   return s.world;
 }
+/** #949: local eligibility only; successful online damage authority remains
+ * with the host. Never claim to acknowledge guest hits here.
+ */
+export function bossBudgetEligible(boss, target, attacker) {
+  if (!boss || boss.dead || !attacker || attacker.remote || boss.match?.state !== 'playing') return false;
+  const crab=target?.hp!==undefined && target?.id!==undefined;
+  if (crab) return !target.dead && Number.isFinite(target.hp) && target.hp>0 &&
+    boss.crabs?.get(target.id)===target;
+  return !boss.invuln && boss.visible && Number.isFinite(boss.hp) && boss.hp>0;
+}
+
 export function fidelityBossHit(system,p) {
   const s=scratch(system);
   if(!s.bossReady){
@@ -1992,7 +2003,11 @@ export function installWeaponsFidelity(context,profile) {
     const w=p.s3Weapon||p.owner.weapon;
     if(!['roller','slosher','shooter','dualies','splatling'].includes(w.kind))return bossImpact.call(this,p,hit);
     const victim=hit.target?.hp!==undefined&&hit.target?.id!==undefined?hit.target:context.G.boss;
-    const damage=groupDamage(p.s3DamageGroup,victim,fidelityDamage(p,hit.point));
+    // #949: A rejected Boss/crablet contact must not consume the shared
+    // Slosher volley ceiling, or the next legitimate glob is under-damaged.
+    // The Boss itself remains the only authoritative damage recipient.
+    const eligible=w.kind!=='slosher'||bossBudgetEligible(context.G.boss,hit.target,p.owner);
+    const damage=eligible?groupDamage(p.s3DamageGroup,victim,fidelityDamage(p,hit.point)):0;
     if(damage>0)context.G.boss.hit(p.owner,damage,hit.target,w.id,hit.point.clone());
     context.emit('weapon:impact',{pos:hit.point.clone(),normal:p.vel.clone().normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});
   };
