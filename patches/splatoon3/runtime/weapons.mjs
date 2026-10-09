@@ -469,6 +469,9 @@ export function installWeapons(context, profile) {
         if (jumpSerial !== this.s3DualiesJumpSeen) this.s3DualiesAccuracy.jump();
         this.s3DualiesJumpSeen = jumpSerial;
         if (this.a.grounded) this.s3DualiesAccuracy.applyGroundedCap();
+        // A grounded transition does not retire a jump envelope until its
+        // independent source-frame clock reaches the 70F endpoint.
+        this.s3DualiesAccuracy.finishJumpIfLanded(!!this.a.grounded);
       }
     } else this.s3DualiesJumpSeen = this.a?.s3JumpSerial || 0;
     if (weapon.kind === 'shooter') this.s3ShooterMoveRemaining = shooterMovementRemaining(this.s3ShooterMoveRemaining, dt);
@@ -923,6 +926,8 @@ export function installWeapons(context, profile) {
     if (w.kind === 'shooter') return w.spreadGround;
     if (w.kind === 'dualies') {
       if (this.s3Turret || this.lockT > 0) return w.spreadLock;
+      if (this.s3DualiesAccuracy?.jumpAgeFrames != null)
+        return this.s3DualiesAccuracy.envelopeForJump(w.spreadGround, w.spreadAir);
       return this.a.grounded ? w.spreadGround : w.spreadAir;
     }
     return spread.call(this, w);

@@ -19,62 +19,125 @@ export class DualiesAccuracy {
     this.increment = sourceNumber(param, 'Stand_DegBiasKf');
     this.recoveryPerFrame = sourceNumber(param, 'Stand_DegBiasDecrease');
     this.jumpMaximum = sourceNumber(param, 'Jump_DegBiasMax');
+    this.jumpDecreaseStartFrame = sourceNumber(param, 'Jump_DegBiasDecreaseStartFrame');
+    this.jumpEndFrame = sourceNumber(param, 'Jump_DegBiasEndFrame');
+    this.groundedEnvelope = sourceNumber(param, 'Stand_DegSwerve');
+    this.jumpEnvelope = sourceNumber(param, 'Jump_DegSwerve');
     this.recoveryDelayFrames = DUALIES_ACCURACY_RECOVERY_DELAY_FRAMES;
     if (!Number.isFinite(referenceHz) || referenceHz <= 0 ||
         !Number.isFinite(groundedMaximum) || groundedMaximum < this.minimum ||
         this.increment <= 0 || this.recoveryPerFrame <= 0 ||
-        this.jumpMaximum < this.minimum) {
+        this.jumpMaximum < this.minimum || this.jumpDecreaseStartFrame < 0 ||
+        this.jumpEndFrame <= this.jumpDecreaseStartFrame ||
+        this.groundedEnvelope < 0 || this.jumpEnvelope < this.groundedEnvelope) {
       throw new Error('Dualies accuracy source values are invalid');
     }
     this.referenceHz = referenceHz;
     this.groundedMaximum = groundedMaximum;
-    this.bias = this.minimum;
+    this.groundedBias = this.minimum;
     this.framesSinceShot = 0;
+    this.jumpAgeFrames = null;
+  }
+
+  // While a native jump clock is active, expose one continuously sampled
+  // bias. Its only jump transition is the sourced maximum at 25F back toward
+  // the live grounded bias at 70F; no second inner/outer distribution is used.
+  get bias() {
+    if (this.jumpAgeFrames == null) return this.groundedBias;
+    const progress = this.jumpProgress();
+    // The table pins the 25F/70F bounds, not the intervening curve. This
+    // linear return toward the live grounded bias is an explicit INKWAVE
+    // approximation; it is not a measured Nintendo transition.
+    return this.jumpMaximum + (this.groundedBias - this.jumpMaximum) * progress;
+  }
+
+  set bias(value) {
+    this.groundedBias = value;
+  }
+
+  jumpProgress() {
+    if (this.jumpAgeFrames == null) return null;
+    return Math.min(1, Math.max(0,
+      (this.jumpAgeFrames - this.jumpDecreaseStartFrame) /
+        (this.jumpEndFrame - this.jumpDecreaseStartFrame)));
+  }
+
+  envelopeForJump(grounded = this.groundedEnvelope, airborne = this.jumpEnvelope) {
+    if (this.jumpAgeFrames == null) return null;
+    const progress = this.jumpProgress();
+    // Share that same provisional progress for the angle envelope so landing
+    // cannot clamp the jump bias and envelope on separate clocks.
+    return airborne + (grounded - airborne) * progress;
   }
 
   advance(dt) {
     if (!Number.isFinite(dt) || dt <= 0) return this.bias;
+    const elapsedFrames = dt * this.referenceHz;
     const before = this.framesSinceShot;
-    const after = before + dt * this.referenceHz;
+    const after = before + elapsedFrames;
     const recoveredBefore = before <= this.recoveryDelayFrames + FRAME_EPSILON
       ? 0 : before - this.recoveryDelayFrames;
     const recoveredAfter = after <= this.recoveryDelayFrames + FRAME_EPSILON
       ? 0 : after - this.recoveryDelayFrames;
     const recoveredFrames = Math.max(0, recoveredAfter - recoveredBefore);
     this.framesSinceShot = after;
-    if (recoveredFrames > 0 && this.bias > this.minimum)
-      this.bias = Math.max(this.minimum, this.bias - recoveredFrames * this.recoveryPerFrame);
+    if (this.jumpAgeFrames != null) this.jumpAgeFrames += elapsedFrames;
+    if (recoveredFrames > 0 && this.groundedBias > this.minimum)
+      this.groundedBias = Math.max(this.minimum,
+        this.groundedBias - recoveredFrames * this.recoveryPerFrame);
     return this.bias;
   }
 
   jump() {
-    this.bias = this.jumpMaximum;
-    return this.bias;
+    this.jumpAgeFrames = 0;
+    return this.jumpMaximum;
+  }
+
+  finishJumpIfLanded(grounded) {
+    if (grounded && this.jumpAgeFrames != null &&
+        this.jumpAgeFrames + FRAME_EPSILON >= this.jumpEndFrame) {
+      this.jumpAgeFrames = null;
+    }
+    return this.jumpAgeFrames != null;
   }
 
   applyGroundedCap() {
-    if (this.bias > this.groundedMaximum) this.bias = this.groundedMaximum;
+    if (this.groundedBias > this.groundedMaximum) this.groundedBias = this.groundedMaximum;
     return this.bias;
   }
 
   recordShot(grounded) {
     this.framesSinceShot = 0;
-    if (grounded && this.bias < this.groundedMaximum - FRAME_EPSILON)
-      this.bias = Math.min(this.groundedMaximum, this.bias + this.increment);
+    if (grounded && this.groundedBias < this.groundedMaximum - FRAME_EPSILON)
+      this.groundedBias = Math.min(this.groundedMaximum, this.groundedBias + this.increment);
     return this.bias;
   }
 
   snapshot() {
     const inHold = this.framesSinceShot <= this.recoveryDelayFrames + FRAME_EPSILON;
+    const jumpActive = this.jumpAgeFrames != null;
+    const jumpProgress = this.jumpProgress();
+    const jumpPhase = !jumpActive ? 'idle'
+      : this.jumpAgeFrames <= this.jumpDecreaseStartFrame ? 'held'
+        : this.jumpAgeFrames < this.jumpEndFrame ? 'recovering' : 'recovered';
     return {
       bias: this.bias,
+      groundedBias: this.groundedBias,
       minimum: this.minimum,
       groundedMaximum: this.groundedMaximum,
       jumpMaximum: this.jumpMaximum,
       framesSinceShot: this.framesSinceShot,
       recoveryDelayFrames: this.recoveryDelayFrames,
+      jumpActive,
+      jumpAgeFrames: jumpActive ? this.jumpAgeFrames : null,
+      jumpDecreaseStartFrame: this.jumpDecreaseStartFrame,
+      jumpEndFrame: this.jumpEndFrame,
+      jumpProgress,
+      jumpPhase,
+      envelope: jumpActive ? this.envelopeForJump() : null,
       inHold,
-      recovering: !inHold && this.bias > this.minimum + FRAME_EPSILON,
+      recovering: !inHold && this.groundedBias > this.minimum + FRAME_EPSILON,
+      jumpRecovering: jumpPhase === 'recovering',
     };
   }
 }

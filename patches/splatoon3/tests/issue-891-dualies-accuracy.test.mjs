@@ -17,8 +17,8 @@ const FRAME = 1 / REF_HZ;
 const read = rel => fs.readFileSync(path.join(PUBLIC, rel), 'utf8');
 const close = (actual, expected, message) => assert.ok(Math.abs(actual - expected) < 1e-12, `${message}: ${actual} !== ${expected}`);
 
-async function nativeFixture() {
-  const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true });
+async function nativeFixture(extraExports = '') {
+  const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true, extraExports });
   const a = f.make('dualies');
   a.ink = 100;
   a.form = 'kid';
@@ -29,6 +29,48 @@ async function nativeFixture() {
   a.yaw = 0;
   a.weaponRunner.cooldown = 0;
   return { f, a, r: a.weaponRunner, projectiles: f.G.projectiles };
+}
+
+async function nativeMovementFixture(extraExports = '', floorHalfWidth = 100) {
+  const world = await nativeFixture(extraExports), { f, a } = world;
+  const { THREE, G } = f;
+  const floor = {
+    id: 0, solid: true, center: new THREE.Vector3(0, -0.1, 0), half: new THREE.Vector3(floorHalfWidth, 0.1, 100),
+    aabbMin: new THREE.Vector3(-floorHalfWidth, -0.2, -100), aabbMax: new THREE.Vector3(floorHalfWidth, 0, 100),
+    axes: [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)],
+    faces: [-1, -1, -1, -1, -1, -1],
+  };
+  G.level = {
+    blocks: [floor], faces: [], groundHeight: () => 0, hasRails: false, spawnBarrier: 0.5,
+    spawnPads: [new THREE.Vector3(-1000, 0, 0), new THREE.Vector3(1000, 0, 0)],
+    queryBlocks: (_x, _z, _xx, _zz, out) => { out.length = 0; out.push(0); return out; },
+  };
+  G.physics = new f.Physics(G.level);
+  G.paint = { sample: () => 0, splat: () => 0 };
+  G.match = { playing: () => true, canRespawn: () => false };
+  G.time = 0;
+  G.scene = new THREE.Scene();
+  G.projectiles = new f.Projectiles(G.scene);
+  delete a._integrate;
+  a.pos.set(0, 0, 0); a.vel.set(0, 0, 0); a.grounded = true;
+  a.ground.hit = true; a.ground.y = 0; a.ground.block = 0; a.ground.face = -1;
+  a.groundN.set(0, 1, 0); a.kidT = 99; a.weaponRunner.cooldown = 0;
+  a.intent.move.set(0, 0, 0); a.intent.jump = false; a.intent.fire = false;
+  a.aimPoint.set(0, 1.05, 24); a.aimDir.set(0, 0, 1);
+  return { ...world, projectiles: G.projectiles };
+}
+
+function nativeActorTick(f, a, dt = FRAME) {
+  f.G.time += dt;
+  a.update(dt);
+}
+
+function admitNativeJump(f, a) {
+  const before = a.s3JumpSerial || 0;
+  a.intent.jump = true;
+  nativeActorTick(f, a);
+  a.intent.jump = false;
+  assert.equal(a.s3JumpSerial, before + 1, 'native Actor.update admitted a real jump');
 }
 
 function fireOne(f, a, randomValues = [0.99], observation = null) {
@@ -116,15 +158,16 @@ test('#891 grounded bias starts at 1%, reaches 25% after 24 shots, then recovers
   close(accuracy.bias, 0.01, '53 frames after the last shot reaches the minimum');
 });
 
-test('#891 jump sets 40% bias and keeps its 5F/0.5pp recovery state separate', () => {
+test('#891 reads the independent jump recovery fields without inventing a jump state', () => {
+  assert.equal(PARAM.Jump_DegBiasDecreaseStartFrame, 25);
+  assert.equal(PARAM.Jump_DegBiasEndFrame, 70);
   const accuracy = new DualiesAccuracy(PARAM, REF_HZ);
-  accuracy.jump();
-  assert.equal(accuracy.bias, 0.4);
-  accuracy.recordShot(false);
-  for (let i = 0; i < 5; i++) accuracy.advance(FRAME);
-  close(accuracy.bias, 0.4, 'five frames after a jump shot stay at 40%');
-  for (let i = 0; i < 78; i++) accuracy.advance(FRAME);
-  close(accuracy.bias, 0.01, '83 frames after a jump shot reaches the minimum');
+  const state = accuracy.snapshot();
+  assert.equal(state.jumpActive, false, 'construction alone does not start the native jump clock');
+  assert.equal(state.jumpAgeFrames, null);
+  assert.equal(state.envelope, null);
+  assert.equal(accuracy.jumpDecreaseStartFrame, 25);
+  assert.equal(accuracy.jumpEndFrame, 70);
 });
 
 test('#891 ordinary Dualies keep the sourced envelope and continuous bias sample at minimum bias', async () => {
@@ -163,11 +206,12 @@ test('#891 dry clicks and blocked Dualies updates do not advance bias', async ()
 });
 
 test('#891 jump bias, grounded/air envelopes and post-roll turret remain separate', async () => {
-  const { f, a, r } = await nativeFixture();
-  a.grounded = false;
-  a.s3JumpSerial = 1;
-  r.update(FRAME, { fire: false });
+  const { f, a, r } = await nativeMovementFixture();
+  for (let i = 0; i < 12; i++) nativeActorTick(f, a);
+  admitNativeJump(f, a);
   assert.equal(r.s3DualiesBiasState(a.weapon).bias, 0.4);
+  assert.equal(r.s3DualiesBiasState(a.weapon).jumpAgeFrames, 0,
+    'the independent clock starts on the admitted jump edge');
   assert.equal(r.spread, 7.5, 'air envelope stays at Jump_DegSwerve');
   const selected = [];
   const originalRound = f.Projectiles.prototype._fireRound;
@@ -211,32 +255,6 @@ test('#891 jump bias, grounded/air envelopes and post-roll turret remain separat
   close(r.s3DualiesBiasState(a.weapon).bias, beforeTurret, 'turret firing does not inherit or advance normal bias');
 });
 
-test('#891 landing applies the documented grounded cap before the next normal projectile', async () => {
-  const { f, a, r } = await nativeFixture();
-  a.grounded = false;
-  a.s3JumpSerial = 1;
-  r.update(FRAME, { fire: false });
-  assert.equal(r.s3DualiesBiasState(a.weapon).bias, 0.4);
-
-  const selected = [];
-  const originalRound = f.Projectiles.prototype._fireRound;
-  f.Projectiles.prototype._fireRound = function (actor, weapon, spread, ...rest) {
-    if (actor === a && weapon.kind === 'dualies') selected.push(spread);
-    return originalRound.call(this, actor, weapon, spread, ...rest);
-  };
-  a.grounded = true;
-  try {
-    const sample = {};
-    fireOne(f, a, [0.3, 0.99, 0.99], sample);
-    assert.equal(sample.randomCalls, 3, 'landing normal fire uses the existing radial sample without a bias coin flip');
-  } finally {
-    f.Projectiles.prototype._fireRound = originalRound;
-    f.restoreRandom();
-  }
-  assert.equal(selected[0], 2, 'landing uses the sourced grounded envelope after applying the grounded cap');
-  assert.equal(r.s3DualiesBiasState(a.weapon).bias, 0.25);
-});
-
 async function fixedClockTrace(renderHz) {
   const { f, a, r, projectiles } = await nativeFixture();
   const clock = new f.FixedClock(), shots = [];
@@ -256,6 +274,44 @@ async function fixedClockTrace(renderHz) {
   return { shots, bias: r.s3DualiesBiasState(a.weapon).bias, framesSinceShot: r.s3DualiesBiasState(a.weapon).framesSinceShot, ticks: clock.ticks };
 }
 
+async function idleJumpEmissionLandingTrace(renderHz) {
+  const { f, a, r, projectiles } = await nativeMovementFixture();
+  const clock = new f.FixedClock(), rows = [], emissions = [];
+  const originalRound = f.Projectiles.prototype._fireRound;
+  let randomCalls = 0, jumpTick = null, landingTick = null;
+  f.Projectiles.prototype._fireRound = function (actor, weapon, envelope, ...rest) {
+    const state = actor === a && weapon.kind === 'dualies' ? r.s3DualiesBiasState(weapon) : null;
+    const beforeDraws = randomCalls;
+    const direction = originalRound.call(this, actor, weapon, envelope, ...rest);
+    if (state) emissions.push({ tick: clock.ticks, bias: state.bias, groundedBias: state.groundedBias,
+      jumpAgeFrames: state.jumpAgeFrames, envelope, draws: randomCalls - beforeDraws,
+      direction: Array.from(direction.toArray()) });
+    return direction;
+  };
+  f.setRandom(() => { randomCalls++; return 0.375; });
+  try {
+    for (let rendered = 0; clock.ticks < 100 && rendered < renderHz * 3; rendered++) {
+      clock.advance(1 / renderHz, step => {
+        const tick = clock.ticks, serial = a.s3JumpSerial || 0, groundedBefore = a.grounded;
+        a.intent.jump = tick === 12;
+        a.intent.fire = tick >= 13 && emissions.length === 0;
+        f.G.time += step;
+        a.update(step);
+        if ((a.s3JumpSerial || 0) !== serial) jumpTick = tick;
+        if (!groundedBefore && a.grounded && landingTick == null) landingTick = tick;
+        const state = r.s3DualiesBiasState(a.weapon);
+        rows.push({ tick, grounded: a.grounded, jumpActive: state.jumpActive,
+          jumpAgeFrames: state.jumpAgeFrames, bias: state.bias, groundedBias: state.groundedBias,
+          envelope: r._spreadDeg(a.weapon), shots: projectiles.list.length });
+      });
+    }
+  } finally {
+    f.Projectiles.prototype._fireRound = originalRound;
+    f.restoreRandom();
+  }
+  return { rows, emissions, jumpTick, landingTick, randomCalls, ticks: clock.ticks };
+}
+
 test('#891 fixed-clock native shot and recovery boundaries match at 30/60/120 Hz render rates', async () => {
   const traces = [];
   for (const hz of [30, 60, 120]) traces.push(await fixedClockTrace(hz));
@@ -271,6 +327,99 @@ test('#891 fixed-clock native shot and recovery boundaries match at 30/60/120 Hz
   assert.equal(traces[0].ticks, 180);
 });
 
+test('#891 native idle→jump→emission→landing trace uses one 25F/70F clock at 30/60/120Hz', async () => {
+  const traces = [];
+  for (const hz of [30, 60, 120]) traces.push(await idleJumpEmissionLandingTrace(hz));
+  assert.deepEqual(traces[0], traces[1]);
+  assert.deepEqual(traces[1], traces[2]);
+  const trace = traces[0];
+  assert.equal(trace.ticks, 100);
+  assert.equal(trace.jumpTick, 12, 'the trace begins with twelve real idle Actor updates');
+  const nextFrame = trace.rows.find(row => row.tick === trace.jumpTick + 1);
+  assert.equal(nextFrame.jumpAgeFrames, 1);
+  assert.equal(nextFrame.bias, 0.4,
+    'the stale 12F shot clock cannot recover the new jump bias on the next frame');
+  assert.ok(trace.landingTick > trace.jumpTick && trace.landingTick - trace.jumpTick < 70,
+    'the native Actor physics path lands while the jump clock is still active');
+  assert.equal(trace.emissions.length, 1, 'the real Actor→WeaponRunner→Projectiles path emits one jump round');
+  assert.equal(trace.emissions[0].tick, 15, 'the shot follows native Actor input and Dualies startup');
+  assert.equal(trace.emissions[0].jumpAgeFrames, trace.emissions[0].tick - trace.jumpTick,
+    'emission observes actual jump age, including the native startup frames');
+  assert.equal(trace.emissions[0].bias, 0.4);
+  assert.equal(trace.emissions[0].envelope, 7.5);
+  assert.equal(trace.emissions[0].draws, 3, 'two spread draws and the existing projectile seed remain ordered');
+  assert.ok(trace.emissions[0].direction.every(Number.isFinite), 'the native emitted direction is finite');
+  assert.equal(trace.randomCalls, 3, 'the jump sample adds no random draw');
+
+  const age25 = trace.rows.find(row => row.jumpAgeFrames === 25);
+  assert.ok(age25?.jumpActive, 'the actual-jump clock reaches its sourced decrease-start frame');
+  close(age25.bias, 0.4, 'jump bias remains at its sourced maximum through 25F');
+  close(age25.envelope, 7.5, 'the matching angle envelope remains at Jump_DegSwerve through 25F');
+  const age50 = trace.rows.find(row => row.jumpAgeFrames === 50);
+  assert.ok(age50?.jumpActive && age50.bias > age50.groundedBias && age50.bias < 0.4,
+    'the explicit unmeasured transition moves continuously toward the live grounded bias');
+  assert.ok(age50.envelope > 2 && age50.envelope < 7.5,
+    'the angle envelope follows the same 25F→70F recovery progress');
+
+  const landed = trace.rows.find(row => row.tick === trace.landingTick);
+  assert.ok(landed.jumpActive, 'landing does not retire the jump-age or clamp its bias');
+  assert.ok(landed.bias > landed.groundedBias, 'landing retains the jump-derived bias');
+  assert.ok(landed.envelope > 2, 'landing retains the matching jump-angle envelope');
+  const recovered = trace.rows.find(row => row.jumpAgeFrames == null && row.tick > trace.landingTick);
+  assert.ok(recovered, 'the grounded runner retires the track at its 70F endpoint');
+  assert.equal(recovered.tick, trace.jumpTick + PARAM.Jump_DegBiasEndFrame,
+    'the actual-jump clock reaches the pinned 70F endpoint after landing');
+  assert.equal(recovered.bias, recovered.groundedBias, 'recovery returns to the live grounded firing state');
+  assert.equal(recovered.envelope, 2, 'the grounded envelope is restored only after jump recovery completes');
+});
+
+test('#891 a real walk off a ledge does not start the jump-accuracy clock', async () => {
+  const { f, a, r } = await nativeMovementFixture('', 0.45);
+  a.intent.move.set(1, 0, 0);
+  let walkedOff = false;
+  for (let i = 0; i < 90; i++) {
+    nativeActorTick(f, a);
+    if (!a.grounded) { walkedOff = true; break; }
+  }
+  assert.equal(walkedOff, true, 'native movement and ground probing carry the Actor off the platform');
+  assert.equal(a.s3JumpSerial || 0, 0, 'walking off does not increment the native jump serial');
+  const state = r.s3DualiesBiasState(a.weapon);
+  assert.equal(state.jumpActive, false);
+  assert.equal(state.jumpAgeFrames, null);
+  assert.equal(r._spreadDeg(a.weapon), 7.5, 'ordinary airborne envelope remains without a jump clock');
+});
+
+test('#891 Practice Range weapon changes and actor life reset retire the native jump track', async () => {
+  const rangeExports = "export { RangeSession } from './patches/practice-range/runtime/session.mjs';";
+  const { f, a, r } = await nativeMovementFixture(rangeExports);
+  a.isLocal = true;
+  const match = { actors: [a], local: a, state: 'playing', opts: { range: true }, canRespawn: () => true };
+  f.G.match = match; f.G.actors = match.actors; f.G.local = a;
+  const range = new f.RangeSession(match, { headless: true });
+
+  admitNativeJump(f, a);
+  assert.equal(r.s3DualiesBiasState(a.weapon).jumpActive, true);
+  range.setWeapon('shooter');
+  range.setWeapon('dualies');
+  assert.equal(r.s3DualiesBiasState(a.weapon).jumpActive, false,
+    'RangeSession.setWeapon retires the previous weapon clock through Actor.setWeapon');
+  assert.equal(r.s3DualiesBiasState(a.weapon).bias, 0.01,
+    'returning to Dualies starts from the normal grounded bias');
+
+  a.reset();
+  a.pos.set(0, 0, 0); a.vel.set(0, 0, 0); a.grounded = true;
+  a.ground.hit = true; a.ground.y = 0; a.ground.block = 0; a.ground.face = -1;
+  a.groundN.set(0, 1, 0);
+  nativeActorTick(f, a);
+  admitNativeJump(f, a);
+  assert.equal(r.s3DualiesBiasState(a.weapon).jumpActive, true,
+    'the next life can admit its own native jump');
+  a.splat(null);
+  assert.equal(r.s3DualiesBiasState(a.weapon).jumpActive, false,
+    'death clears the jump track before the next life reset');
+  range.dispose();
+});
+
 test('#891 keeps bias state out of custom reticle labels', () => {
   const source = adaptSource('src/ui/hud.js', read('src/ui/hud.js'));
   assert.doesNotMatch(source, /_dualiesBiasEl|s3DualiesBiasState|Dualies sourced outer-bias HUD/);
@@ -284,7 +433,8 @@ test('#891 seeded continuous samples follow y = s * x^(log_0.5 b)', () => {
       `the source transform maps x=${x}, b=${bias} continuously inside its angle envelope`);
   assert.equal(dualiesBiasRadius(0.75, envelope, 0.5), 1.5,
     'bias 0.5 gives a uniform angular deviation within the full envelope');
-  assert.equal(dualiesBiasRadius(0.75, envelope, 0), 0, 'zero bias collapses to the center');
+  assert.ok(dualiesBiasRadius(0.75, envelope, 0.01) > 0,
+    'the tracked grounded recovery endpoint remains above the unsupported perfect-center case');
   assert.equal(dualiesBiasRadius(0.75, envelope, 1), envelope, 'unit bias always reaches the maximum angle');
   assert.equal(dualiesBiasRadius(0.75, 0, 0.25), 0, 'zero envelope keeps the no-spread path');
   assert.equal(DUALIES_BIAS_UNAVAILABLE_FALLBACK, 0.5,
@@ -325,11 +475,10 @@ test('#891 native grounded fire samples the continuous bias law inside the 2° e
   assert.ok(fired.every(row => row.radius <= 2), 'all grounded shots stay inside Stand_DegSwerve');
 });
 
-test('#891 jump fire samples the 40% continuous bias law inside the 7.5° air envelope', async () => {
-  const { f, a, r } = await nativeFixture();
-  a.grounded = false;
-  a.s3JumpSerial = 1;
-  r.update(FRAME, { fire: false });
+test('#891 admitted native jump fire samples the continuous bias law inside the 7.5° envelope', async () => {
+  const { f, a, r } = await nativeMovementFixture();
+  for (let i = 0; i < 12; i++) nativeActorTick(f, a);
+  admitNativeJump(f, a);
   assert.equal(r.s3DualiesBiasState(a.weapon).bias, 0.4);
 
   const base = fireBaseline(f, a, 0);
@@ -360,6 +509,8 @@ test('#891 remote Dualies ghost replays the transmitted velocity without samplin
   assert.ok(packet, 'the live owner shot is recorded through NetMatch');
   const remote = f.make('dualies');
   remote.remote = true;
+  assert.equal(remote.weaponRunner.s3DualiesBiasState(remote.weapon).jumpActive, false,
+    'remote presentation does not create an owner-side jump clock');
   projectiles.list.length = 0;
   let randomCalls = 0;
   f.setRandom(() => { randomCalls++; return 0.9; });
