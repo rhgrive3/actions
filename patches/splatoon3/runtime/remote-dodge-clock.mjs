@@ -133,9 +133,9 @@ export function remoteDodgePresentation(actor) {
   const clock = actor?.remoteDodgeClock;
   if (!clock || !Number.isFinite(clock.playbackTime)) return null;
   const age = Math.max(0, clock.playbackTime - clock.epoch);
-  if (age < clock.startupDur) return { clock, phase: 'startup', progress: 0, duration: clock.duration };
-  if (age < clock.end) return { clock, phase: 'roll',
+  if (age < clock.startupDur - EPS) return { clock, phase: 'startup', progress: 0, duration: clock.duration };
+  if (clock.playbackTime < clock.end - EPS) return { clock, phase: 'roll',
     progress: Math.max(0, Math.min(1, (age - clock.startupDur) / clock.duration)), duration: clock.duration };
-  if (age < clock.expires) return { clock, phase: 'plant', progress: 1, duration: clock.duration };
+  if (clock.playbackTime < clock.expires - EPS) return { clock, phase: 'plant', progress: 1, duration: clock.duration };
   return null;
 }
