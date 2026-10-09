@@ -13,6 +13,15 @@ async function setup() {
   const make = (weapon='shooter') => { const a = f.make(weapon); a.isLocal = true; a.slot = 0; return a; };
   return { ...f, make };
 }
+function installLandingStage(f) {
+  const level = new f.Level({
+    bounds: { minX: -20, maxX: 20, minZ: -20, maxZ: 20 },
+    spawnPads: [[0, 2.2, 0], [0, 2.2, 18]], spawnBarrier: 4.2,
+    single: [{ kind: 'box', min: [-6, -1, -12], max: [6, 0, 12] }], half: [],
+  });
+  f.G.level = level; f.G.physics = new f.Physics(level);
+  return level;
+}
 test('post-splat gauge including Special Saver survives native respawn; initial spawn/reset still clears', async () => {
   const f = await setup(), a = f.make(), observed = [];
   f.on('respawn', ({ actor }) => { if (actor === a) observed.push(actor.special); });
@@ -115,17 +124,21 @@ test('source-connected HUD owns actual actor count/ring rather than the early sp
   assert.ok(Math.abs(Number(hud._splatted.ring.style.strokeDashoffset)/hud._splatted.circumference-.5)<1e-10);
 });
 
-test('native NetMatch snapshots carry armor separately from invulnerability and clear the proxy on expiry', async () => {
+test('native NetMatch mirrors only the owner landing armor state; proxy stays presentation-only', async () => {
   const f=await fixture("export { NetMatch } from './inkwave-public/src/net/netmatch.js';");if(patched)installRespawnLifecycle(f,f.profile);
-  f.G.level.spawnPads=[new f.THREE.Vector3(),new f.THREE.Vector3(0,0,20)];
-  f.G.physics.groundProbe=(_x,_y,_z,_u,_d,_r,h)=>{h.hit=false;return h;};
-  const a=f.make(),proxy=f.make();a.nid=1;a.slot=0;a.respawn();proxy.remote=true;proxy._finishFrame=()=>{};
+  installLandingStage(f); f.G.match.mode='turf';
+  const a=f.make(),proxy=f.make();a.nid=1;a.slot=0;a.aimPoint.set(4,0,7);a.splat(null);a.respawn();proxy.remote=true;proxy._finishFrame=()=>{};
+  assert.equal(a.s3.spawnArmor,null,'aim phase has no finite landing armor');
+  a.intent.fire=true;a.update(1/60);a.intent.fire=false;
+  assert.equal(a.s3.squidSpawn.phase,'flight');assert.equal(a.s3.spawnArmor,null,'flight remains invulnerable without starting landing armor');
+  for(let i=0;i<60&&a.s3.squidSpawn;i++)a.update(1/60);
+  assert.equal(a.s3.squidSpawn,undefined);assert.equal(a.s3.spawnArmor.remaining,f.profile.spawnArmor.duration);
   const out=[],nm=Object.create(f.NetMatch.prototype);Object.assign(nm,{byNid:new Map([[1,a]]),out:[],stats:{out:0},s:{tr:{broadcast:m=>out.push(m)}}});
-  nm._sendTick();const packet=out[0].a[0];assert.equal(packet.length,23);assert.equal(packet[21],0,'no Super Jump clock in this live spawn');assert.equal(packet[22],a.stats.specials||0,'current special-count sidecar');assert.ok(packet[10]&8388608);assert.equal(packet[10]&262144,0);
+  nm._sendTick();const packet=out[0].a[0];assert.equal(packet.length,23);assert.equal(packet[21],0,'no Super Jump clock in this live spawn');assert.equal(packet[22],a.stats.specials||0,'current special-count sidecar');assert.ok(packet[10]&8388608,'owner snapshot marks protection after touchdown');assert.equal(packet[10]&262144,0);
   const sample={x:packet[1],y:packet[2],z:packet[3],vx:0,vy:0,vz:0,yaw:0,aimYaw:0,aimPitch:0,f:packet[10],hp:100,ink:100,sp:80,turf:0,ch:0,lockT:0};
   proxy.net={ready:true,cur:sample,err:new f.THREE.Vector3(),prevGrounded:false,prevVy:0};nm.applyRemote(proxy,1/60);
   assert.ok(spawnProtectionRemaining(proxy)>0);assert.equal(proxy.invuln,0);assert.equal(proxy.s3.spawnArmor,undefined,'visual sample cannot create proxy damage authority');
-  a.s3.spawnArmor=null;nm._sendTick();sample.f=out[1].a[0][10];nm.applyRemote(proxy,1/60);assert.equal(spawnProtectionRemaining(proxy),0);
+  a.s3.spawnArmor=null;nm._sendTick();sample.f=out[1].a[0][10];nm.applyRemote(proxy,1/60);assert.equal(spawnProtectionRemaining(proxy),0,'expired owner protection clears the proxy marker');
   sample.f|=262144;nm.applyRemote(proxy,1/60);assert.equal(proxy.invuln,.1,'old generic invulnerability flag remains independent');
 });
 
@@ -137,31 +150,54 @@ test('a spawn hit has one armor owner even when roll/surge protection overlaps',
 });
 
 
-test('#93 human post-death Squid Spawn selects different legal targets from aim and confirms via FIRE',async()=>{
-  const f=await setup();f.G.match.mode='turf';
+test('#93 normal Turf battle human post-death Squid Spawn selects supported targets from camera aim and confirms via FIRE',async()=>{
+  const f=await setup();installLandingStage(f);f.G.match.mode='turf';
+  assert.equal(f.G.match.opts?.range,undefined,'standard Turf battle uses the landing-selection path');
   const samples=[];
+  const a=f.make();a.slot=0;
   for(const x of [4,-4]) {
-    const a=f.make();a.slot=0;a.aimPoint.set(x,0,7);a.splat(null);
+    a.splat(null);
     a.respawn();assert.equal(a.s3.squidSpawn.phase,'aim');
     assert.equal(a.s3.squidSpawn.initial,false);
+    const camera={position:new f.THREE.Vector3(),direction:new f.THREE.Vector3(),getWorldDirection(out){return out.copy(this.direction);}};
+    f.G.camera=camera;f.G.rig={gameCam:camera,mapK:0};f.G.settings={};
+    const input={mobile:null,pad:null,lastDevice:'keyboard',mouse:{dx:0,dy:0,left:false,right:false},padPressed:new Set(),
+      down:()=>false,padButton:()=>false,padValue:()=>0,wasPressed:()=>false};
+    const controller=new f.PlayerController(a,{yaw:0,pitch:0},input);
+    camera.position.set(a.pos.x,a.pos.y+1.3,a.pos.z);
+    const pointCameraAt=(x,z)=>{
+      camera.direction.set(x-camera.position.x,-camera.position.y,z-camera.position.z).normalize();
+      controller.computeAim();a.update(1/60);
+    };
+    pointCameraAt(x,7);
+    assert.ok(Number.isFinite(f.G.level.groundHeight(a.s3.squidSpawn.target.x,a.s3.squidSpawn.target.z)),'aim resolves only to supported stage ground');
+    const retained={...a.s3.squidSpawn.target};
+    camera.direction.set(1,0,0);controller.computeAim();a.update(1/60);
+    assert.deepEqual(a.s3.squidSpawn.target,retained,'unsupported aim retains the last legal target');
+    pointCameraAt(x,7);
     // Spawn protection begins at landing, not at launch or aim.
     assert.equal(a.s3.spawnArmor,null);
     assert.equal(a.invuln,Infinity);
     const target=a.s3.squidSpawn.target;
-    assert.ok(Math.hypot(target.x,target.z)<=12+1e-9,'landing selection remains inside base region');
-    a.intent.fire=true;a.update(1/60);
+    assert.ok(Math.hypot(target.x,target.z)<=12+1e-9,'landing selection remains inside calibrated base-region radius');
+    input.mouse.left=true;controller.update(1/60);a.update(1/60);
     assert.equal(a.s3.squidSpawn.phase,'flight');
     assert.equal(a.s3.spawnArmor,null,'flight keeps native invulnerability without starting the armor clock');
-    samples.push({...a.s3.squidSpawn.to});
+    samples.push({...a.s3.squidSpawn.to});input.mouse.left=false;a.intent.fire=false;
+    for(let i=0;i<60&&a.s3.squidSpawn;i++)a.update(1/60);
+    assert.equal(a.s3.squidSpawn,undefined,'each death/respawn completes before the next selection');
+    assert.equal(a.grounded,true);
   }
-  assert.ok(samples[0].x>0&&samples[1].x<0,'ordinary respawns are not fixed slot positions');
+  assert.ok(samples[0].x>0&&samples[1].x<0,'the same player can select different supported positions on repeated respawns');
 });
 
 
-test('#93 Squid Spawn landing resolves ground, paints, and starts armor at touchdown',async()=>{
-  const f=await setup();f.G.match.mode='turf';
-  const seen=[];
+test('#93 Squid Spawn lands through native collision and starts armor only after confirmed support',async()=>{
+  const f=await setup();installLandingStage(f);f.G.match.mode='turf';
+  const seen=[],nativeLands=[];let paintCalls=0;
+  f.G.paint.splat=()=>{paintCalls++;return 9;};
   f.on('squidspawn:land',({actor})=>seen.push(actor));
+  f.on('actor:land',({actor})=>nativeLands.push(actor));
   for(const hz of [30,60,120]){
     const a=f.make();a.slot=0;a.aimPoint.set(4,0,7);a.splat(null);a.respawn();
     a.intent.fire=true;a.update(1/60);
@@ -171,17 +207,45 @@ test('#93 Squid Spawn landing resolves ground, paints, and starts armor at touch
     assert.equal(a.s3.squidSpawn,undefined,'flight ends at the same landing on every schedule');
     assert.equal(a.grounded,true);
     assert.equal(a.invuln,0);
-    assert.ok(a.s3.spawnArmor&&a.s3.spawnArmor.remaining>0,'finite armor starts at landing');
-    assert.ok(a.landT<1,'native land timer restarts at touchdown');
+    assert.equal(a.s3.spawnArmor.remaining,f.profile.spawnArmor.duration,'the full configured duration begins at touchdown');
+    assert.equal(a.landT,0,'native collision resets the landing clock');
+    assert.ok(a.ground.hit,'landing retained the native ground contact');
     assert.ok(seen.includes(a),'landing emits exactly once per flight');
   }
   assert.equal(seen.length,3);
-  // Remote/bot landings keep owner authority: local simulation owns ground and
-  // armor, proxies only mirror the owner's snapshot through NetMatch.
-  const owner=f.make();owner.slot=0;owner.aimPoint.set(-4,0,7);owner.splat(null);owner.respawn();
-  assert.equal(owner.s3.squidSpawn.phase,'aim');
-  owner.isBot=true;owner.update(1/60);
-  assert.equal(owner.s3.squidSpawn.phase,'flight','bots launch deterministically without FIRE');
+  assert.equal(nativeLands.length,3,'native Actor._resolve owns land lifecycle events');
+  assert.equal(paintCalls,0,'Squid Spawn adds no unsourced turf mutation or special credit');
+  // Bots launch without FIRE and retain their deterministic selected target.
+  const botTargets=[];
+  for(let i=0;i<2;i++){
+    const bot=f.make();bot.isBot=true;bot.slot=2;bot.splat(null);bot.respawn();
+    assert.equal(bot.s3.squidSpawn.phase,'flight','bots launch deterministically without FIRE');
+    botTargets.push({...bot.s3.squidSpawn.to});
+    assert.ok(Number.isFinite(f.G.level.groundHeight(bot.s3.squidSpawn.to.x,bot.s3.squidSpawn.to.z)));
+  }
+  assert.deepEqual(botTargets[0],botTargets[1]);
+});
+
+
+test('#93 collision miss cannot award landing, armor, or paint; a later native hit can complete it',async()=>{
+  const f=await setup();installLandingStage(f);f.G.match.mode='turf';let landed=0,paintCalls=0;
+  f.on('squidspawn:land',()=>landed++);f.G.paint.splat=()=>{paintCalls++;return 4;};
+  const a=f.make();a.aimPoint.set(4,0,7);a.splat(null);a.respawn();a.intent.fire=true;a.update(1/60);a.intent.fire=false;
+  // This fixture normally stubs integration; the handoff under test must run
+  // the actual Actor gravity and collision path after the forced probe miss.
+  a._integrate=f.Actor.prototype._integrate;
+  for(let i=0;i<59;i++)a.update(1/60);
+  const probe=f.G.physics.groundProbe.bind(f.G.physics);
+  f.G.physics.groundProbe=(_x,_y,_z,_up,_down,_r,h)=>{h.hit=false;return h;};
+  a.update(1/60);
+  assert.equal(a.grounded,false,'native ground miss leaves the actor airborne');
+  assert.equal(a.s3.squidSpawn.phase,'landing','miss returns motion to native gravity instead of freezing at the endpoint');
+  assert.equal(a.s3.spawnArmor,null,'miss does not start finite protection');
+  assert.equal(landed,0);assert.equal(paintCalls,0);
+  f.G.physics.groundProbe=probe;a.update(1/60);
+  assert.equal(a.s3.squidSpawn,undefined);assert.equal(a.grounded,true);assert.ok(a.s3.spawnArmor.remaining>0);
+  assert.equal(landed,1,'only confirmed support emits one Squid Spawn landing');
+  assert.equal(paintCalls,0);
 });
 
 
@@ -195,4 +259,5 @@ test('Practice Range keeps immediate control and legacy respawn without Turf Squ
   a.splat(null); assert.equal(a.alive, false); a.respawn();
   assert.equal(a.alive, true);
   assert.equal(a.s3.squidSpawn, undefined, 'range respawns never create a FIRE-owned launch');
+  assert.ok(a.s3.spawnArmor?.remaining>0,'Range retains its existing native immediate protection path');
 });

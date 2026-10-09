@@ -74,20 +74,39 @@ export function installRespawnLifecycle(api, profile) {
     const ang = (actor.slot / count) * Math.PI * 2 + 0.6;
     return { pad, x: pad.x + Math.cos(ang) * 1.1, y: pad.y + 4.5, z: pad.z + Math.sin(ang) * 1.1 };
   };
+  const groundTarget = (x, z) => {
+    const y = G.level.groundHeight?.(x, z);
+    return Number.isFinite(y) ? { x, y, z } : null;
+  };
   const targetFor = actor => {
     const { pad } = slotPoint(actor), aim = actor.aimPoint;
     let dx = Number.isFinite(aim?.x) ? aim.x - pad.x : 0, dz = Number.isFinite(aim?.z) ? aim.z - pad.z : 0;
     let len = Math.hypot(dx, dz);
     if (len < minRange) { const yaw = Number.isFinite(actor.aimYaw) ? actor.aimYaw : (actor.team === 0 ? 0 : Math.PI); dx = Math.sin(yaw) * 7.5; dz = Math.cos(yaw) * 7.5; len = 7.5; }
     if (len > maxRange) { dx *= maxRange / len; dz *= maxRange / len; }
-    const x = pad.x + dx, z = pad.z + dz;
-    const y = Number.isFinite(G.level.groundHeight?.(x, z)) ? G.level.groundHeight(x, z) : pad.y;
-    return { x, y, z };
+    return groundTarget(pad.x + dx, pad.z + dz);
+  };
+  const slotTarget = actor => {
+    const { x, z } = slotPoint(actor);
+    return groundTarget(x, z);
   };
   const setPos = (actor, p) => { actor.pos.set(p.x,p.y,p.z); actor.character.root.position.copy(actor.pos); };
+  function finishLanding(actor) {
+    actor._surface?.();
+    actor.vel.set(0,0,0); actor.grounded = true;
+    actor.invuln = 0;
+    actor.s3.spawnArmorManaged = true;
+    actor.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
+    actor.character.root.position.copy(actor.pos);
+    delete actor.s3.squidSpawn;
+    emit?.('squidspawn:land',{actor});
+  }
   function launch(actor) {
     const s = actor.s3?.squidSpawn; if (!s || s.phase !== 'aim') return false;
-    s.phase = 'flight'; s.t = 0; s.duration = flightDuration; s.from = { x: actor.pos.x, y: actor.pos.y, z: actor.pos.z }; s.to = targetFor(actor);
+    const target = s.target && groundTarget(s.target.x, s.target.z);
+    if (!target) return false;
+    s.target = target;
+    s.phase = 'flight'; s.t = 0; s.duration = flightDuration; s.from = { x: actor.pos.x, y: actor.pos.y, z: actor.pos.z }; s.to = { ...target };
     // Spawn protection begins at landing, not launch: keep only the native
     // flight invulnerability here so the flight itself stays unhittable while
     // the finite 235F armor clock starts when ground is reached.
@@ -107,7 +126,7 @@ export function installRespawnLifecycle(api, profile) {
     if (wasDead) actor.special = special;
     setPos(actor, p); actor.yaw = actor.aimYaw = yaw; actor.invuln = Infinity; actor.grounded = false; actor.vel.set(0,0,0);
     actor.s3 ||= {}; actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = null;
-    actor.s3.squidSpawn = { phase:'aim', initial:!!initial, wait:0, fireArmed:!actor.intent.fire, target:targetFor(actor) };
+    actor.s3.squidSpawn = { phase:'aim', initial:!!initial, wait:0, fireArmed:!actor.intent.fire, target:targetFor(actor) ?? slotTarget(actor) };
     actor.netTp = (actor.netTp || 0) + 1;
     if (wasDead && !actor.isBot && !actor.remote) actor.s3.respawnRearm = new Set(KEYS);
     emit?.('respawn', { actor }); emit?.('squidspawn:aim', { actor, initial:!!initial });
@@ -154,7 +173,8 @@ export function installRespawnLifecycle(api, profile) {
     if (spawn) {
       if (spawn.phase === 'aim') {
         spawn.wait += Number.isFinite(dt) && dt > 0 ? dt : 0;
-        spawn.target = targetFor(this);
+        const target = targetFor(this);
+        if (target) spawn.target = target;
         if (!this.intent.fire) spawn.fireArmed = true;
         const pressed = spawn.fireArmed && this.intent.fire && !this._prevIntent.fire;
         const auto = this.isBot || this.remote;
@@ -162,52 +182,50 @@ export function installRespawnLifecycle(api, profile) {
         if (pressed || auto) launch(this);
         return;
       }
+      if (spawn.phase === 'landing') {
+        // A missed touchdown hands motion back to native gravity/collision with
+        // controls held until actual support, instead of freezing at an invalid
+        // endpoint or awarding armor while airborne.
+        const intent=this.intent, moveX=intent.move.x, moveY=intent.move.y, moveZ=intent.move.z;
+        const held={fire:intent.fire,jump:intent.jump,sub:intent.sub,special:intent.special,squid:intent.squid};
+        intent.move.set(0,0,0);intent.fire=intent.jump=intent.sub=intent.special=intent.squid=false;
+        try { update.call(this,dt); }
+        finally {
+          intent.move.set(moveX,moveY,moveZ);
+          Object.assign(intent,held);
+        }
+        if(!this.alive){delete this.s3.squidSpawn;return;}
+        if(this.grounded&&this.ground?.hit)finishLanding(this);
+        return;
+      }
       if (spawn.phase === 'flight') {
-        const oldX=this.pos.x,oldY=this.pos.y,oldZ=this.pos.z;
+        const oldX=this.pos.x,oldY=this.pos.y,oldZ=this.pos.z,oldT=spawn.t;
         if (this.intent.move?.lengthSq?.() > 1e-10) {
-          spawn.to.x += this.intent.move.x * steerSpeed * dt; spawn.to.z += this.intent.move.z * steerSpeed * dt;
-          const pad=G.level.spawnPads[this.team],dx=spawn.to.x-pad.x,dz=spawn.to.z-pad.z,len=Math.hypot(dx,dz);
-          if(len>maxRange){spawn.to.x=pad.x+dx*maxRange/len;spawn.to.z=pad.z+dz*maxRange/len;}
-          spawn.to.y = Number.isFinite(G.level.groundHeight?.(spawn.to.x,spawn.to.z)) ? G.level.groundHeight(spawn.to.x,spawn.to.z) : spawn.to.y;
+          let x=spawn.to.x+this.intent.move.x*steerSpeed*dt,z=spawn.to.z+this.intent.move.z*steerSpeed*dt;
+          const pad=G.level.spawnPads[this.team],dx=x-pad.x,dz=z-pad.z,len=Math.hypot(dx,dz);
+          if(len>maxRange){x=pad.x+dx*maxRange/len;z=pad.z+dz*maxRange/len;}
+          const y=G.level.groundHeight?.(x,z);
+          if(Number.isFinite(y)){spawn.to.x=x;spawn.to.y=y;spawn.to.z=z;}
         }
         spawn.t = Math.min(spawn.duration, spawn.t + dt); const u=Math.min(1,spawn.t/spawn.duration),arc=Math.sin(Math.PI*u)*2.2;
         this.pos.set(spawn.from.x+(spawn.to.x-spawn.from.x)*u, spawn.from.y+(spawn.to.y-spawn.from.y)*u+arc, spawn.from.z+(spawn.to.z-spawn.from.z)*u);
-        this.character.root.position.copy(this.pos); if(dt>0)this.vel.set((this.pos.x-oldX)/dt,(this.pos.y-oldY)/dt,(this.pos.z-oldZ)/dt);
+        this.character.root.position.copy(this.pos); if(dt>0&&oldT<spawn.duration)this.vel.set((this.pos.x-oldX)/dt,(this.pos.y-oldY)/dt,(this.pos.z-oldZ)/dt);
         this._prevIntent.fire = this.intent.fire;
         if (u >= 1-1e-10) {
-          // Landing reuses the native ground/collision route: resolve walls and
-          // feet at the selected point exactly like Super Jump landing, refresh
-          // the surface, then start the finite spawn armor at touchdown.
-          const prevY = this.pos.y;
-          this.pos.set(spawn.to.x,spawn.to.y,spawn.to.z);
-          this.vel.set(0,-4,0);
-          let resolved = false;
-          try {
-            if (typeof this._resolve === 'function' && typeof G.physics?.collideBody === 'function') {
-              this._resolve(false, prevY, false);
-              resolved = this.grounded;
-            }
-          } catch { resolved = false; }
-          if (!resolved) {
-            // Minimal physics contexts without the body collider: settle feet
-            // with the native ground probe at the selected point.
-            this.pos.set(spawn.to.x,spawn.to.y,spawn.to.z);
-            try { this._probeGround?.(); } catch { /* keep selected point */ }
-            if (this.ground?.hit) this.pos.y = this.ground.y;
-            this.vel.set(0,0,0); this.grounded = true;
-            this._surface?.();
-            this.landSpeed = 4; this.landT = 0;
-            this.character.trigger?.('land', 4);
-          } else this._surface?.();
-          this._probeGround?.();
-          this.vel.set(0,0,0); this.grounded = true;
-          this.invuln = 0;
-          this.s3.spawnArmorManaged = true;
-          this.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
+          // A selected point stays eligible only while the native stage still
+          // has support there. A ground-probe miss hands off to native gravity.
+          const y=G.level.groundHeight?.(spawn.to.x,spawn.to.z);
+          if(!Number.isFinite(y)||typeof this._resolve!=='function'||typeof G.physics?.collideBody!=='function'){
+            spawn.phase='landing';this.invuln=Infinity;return;
+          }
+          this.pos.set(spawn.to.x,y,spawn.to.z);
+          this._resolve(false,oldY,false);
           this.character.root.position.copy(this.pos);
-          try { this.addTurf?.(G.paint?.splat?.(this.pos.clone?.().setY(this.pos.y + 0.3) ?? this.pos, 1.4, this.team, { seed: Math.random() }) ?? 0); } catch { /* paint stays optional in fixtures */ }
-          G.fx?.burst?.(this.pos, { x: 0, y: 1, z: 0 }, this.color, { count: 14, speed: 5, size: 0.09 });
-          delete this.s3.squidSpawn; emit?.('squidspawn:land',{actor:this});
+          if(!this.grounded||!this.ground?.hit){
+            spawn.phase='landing';this.invuln=Infinity;
+            return;
+          }
+          finishLanding(this);
         }
         return;
       }
