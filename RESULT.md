@@ -9,7 +9,7 @@
 - Working Tree: `/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-c-resume-20261009/cl2-884-reboot5`
 - Branch: `inkwave/c-884-cl2-reboot5-20261009`
 - Persistent Evidence: `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-c-resume-20261009/cl2-884-reboot5`
-- C claim: `/mnt/workspace/inkwave-issue-claims/884/claim.json` (owner=C, lane=cl2, status=REBOOT5_ASSIGNED; resume comment https://github.com/rhgrive3/actions/issues/884#issuecomment-6079207233 retained)
+- C claim: `/mnt/workspace/inkwave-issue-claims/884/claim.json` (owner=C, lane=cl2, status=completed-covered-no-residual, final branch head recorded in its `completed_sha`; resume comment https://github.com/rhgrive3/actions/issues/884#issuecomment-6079207233 retained, result comment https://github.com/rhgrive3/actions/issues/884#issuecomment-6079493860)
 - Open/draft diffs checked: `pr-1180-diff-reboot5.patch`, `pr-1181-diff-reboot5.patch`, `pr-1182-diff-reboot5.patch`, `pr-401-diff-reboot5.patch`
 
 ## Status: Already solved on current main — no source change, no duplicate code
