@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { bossWorld } from './boss-hit-fixture.mjs';
 test('admission-disabled negative control permits spoof/healing; guarded native boss health and credit apply once', async () => {
   const raw = await bossWorld(false);raw.nm.onMessage('spoof', raw.hit());assert.equal(raw.boss.hp, 9970);
-  raw.nm.onMessage('spoof', raw.hit({ d: -50 }));assert.equal(raw.boss.hp, 10020);
+  raw.nm.onMessage('spoof', raw.hit({ d: -50 }));assert.equal(raw.boss.hp, 9970); // defense in depth still holds when transport is bypassed
   const f = await bossWorld();f.nm.onMessage('guest', f.hit());
   assert.equal(f.boss.hp, 9970);assert.equal(f.actor.stats.bossDmg, 30);assert.equal(f.boss.log.recv, 1);
   f.boss.hit(f.actor, 30, null, "shooter", null);assert.equal(f.boss.hp, 9970);
@@ -49,4 +49,31 @@ test('native sender includes only boss metadata; normal player hit routing and a
   f.actor.remote = true;f.nm._peer('guest').lastHit = 99;f.nm.onMessage('guest', sent[1]);
   assert.equal(f.boss.hp, 9987.5);assert.equal(f.nm._peer('guest').lastHit, 99);
   sent = null;guest.sendBossHit(f.actor, 12.5, false, 'shooter');assert.equal(sent, null);
+});
+
+test('#1179 direct Boss methods reject nonnumeric, negative, nonfinite and unauthorized damage without HP/credit mutation', async () => {
+  const f = await bossWorld();
+  const crab = { id: 7, hp: 40, dead: false };
+  f.boss.crabs.set(7, crab);
+  const start = {hp:f.boss.hp, crab:crab.hp, recv:f.boss.log.recv};
+  const bad = [-20, 0, '-Infinity', '30', Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, NaN, null, {}, [], 2001];
+  for (const d of bad) {
+    f.boss.remoteHit(f.hit({ d }));
+    f.boss.remoteHit(f.hit({ d, c: 7 }));
+    f.boss.applyDamage(f.actor, d, false, null);
+    f.boss._hitCrab(f.actor, crab, d, true);
+    assert.equal(f.boss.hp, start.hp, `Boss HP corrupted by ${String(d)}`);
+    assert.equal(crab.hp, start.crab, `Crab HP corrupted by ${String(d)}`);
+  }
+  f.boss.remoteHit(f.hit({d:30,c:99}));
+  f.actor.alive = false;f.boss.remoteHit(f.hit({d:30}));
+  assert.equal(f.boss.hp, start.hp);
+  assert.equal(f.boss.log.recv, start.recv);
+  f.actor.alive = true;
+  f.boss.remoteHit(f.hit({d:30}));
+  assert.equal(f.boss.hp, 9970);
+  assert.equal(f.actor.stats.bossDmg, 30);
+  f.boss.remoteHit(f.hit({d:40,c:7}));
+  assert.equal(crab.hp, 0);
+  assert.equal(Number.isFinite(crab.hp) && Number.isFinite(f.boss.hp), true);
 });
