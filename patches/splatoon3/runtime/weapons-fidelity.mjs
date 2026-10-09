@@ -984,6 +984,29 @@ export function rollerFlickDrawRadius(weapon,vertical,index,age=0,fallback=null,
   const record=drawRadiusRecord(picked.unit.UnitParam?.DrawSizeParam);
   return record?radiusAt(record,age,fallback):fallback;
 }
+// #771: Splatoon 3 Ver.11.3.0 Roller horizontal units carry a non-zero
+// SwerveRateBySpeed beside SpawnWideDegree and SpawnSpeedRandom (pinned
+// WeaponRollerNormal: main 0.05, near 0.1). The pinned table and the published
+// S3 parameter glossary document the fan angle and the speed error, but they do
+// not publish the engine's speed->swerve mapping, so this is an explicitly
+// labelled INKWAVE model, NOT a recovered Nintendo distribution. It makes a
+// horizontal glob's launch yaw a symmetric, bounded function of that glob's own
+// already-sampled speed: a glob sampled faster than SpawnSpeedBase swerves one
+// way and a slower one the other, at the unit's own sourced rate. The emitter's
+// single speed draw is untouched, so no RNG order/count moves and the launch
+// stays a fixed-step event independent of render cadence.
+export function rollerHorizontalSwerveRadians(unit, speedSample) {
+  const rate=unit?.SwerveRateBySpeed,base=unit?.SpawnSpeedBase;
+  if(!(rate>0)||!Number.isFinite(speedSample)||!Number.isFinite(base))return 0;
+  return rate*(speedSample-base);
+}
+// The appended nearest horizontal glob is the pinned Unit[1] record. The emitter
+// keeps its own provisional angle/speed sampling and only adds the same sourced
+// swerve, so the near unit's 0.1 value is consumed too.
+export function rollerNearUnitSource(weapon) {
+  const units=rawWeapon(weapon)?.WideSwingUnitGroupParam?.Unit;
+  return units?.[1]??null;
+}
 export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const b=weapon.ballistics, raw=rawWeapon(weapon);if(!b||!raw)return;
   // The attack argument owns this projectile's physics. Preserve it through
@@ -1014,8 +1037,11 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
     // same SpawnWideDegree; the exact angular distribution of the reduced set is
     // not recovered from the parameter table and is an INKWAVE model.
     const count=(depleted?(unit.DepletionBulletNum??unit.BulletNum):unit.BulletNum)??1,fan=count>1?offset/(count-1)*2-1:0;
-    speed=60*(unit.SpawnSpeedBase+(Math.random()*2-1)*(unit.SpawnSpeedRandom||0))*speedRate;
-    angle=actor.yaw+fan*radians(unit.SpawnWideDegree||0);
+    // #771: keep the existing single speed draw, then swerve the launch yaw by
+    // the sampled speed so each index is no longer a rigid fan slot.
+    const speedSampleRaw=unit.SpawnSpeedBase+(Math.random()*2-1)*(unit.SpawnSpeedRandom||0);
+    speed=60*speedSampleRaw*speedRate;
+    angle=actor.yaw+fan*radians(unit.SpawnWideDegree||0)+rollerHorizontalSwerveRadians(unit,speedSampleRaw);
     pitch+=radians(b.horizontalPitchDegrees); // retained calibrated launch angle, NOT extracted
     const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnPositionRandomCube||0;
     p.pos.x+=Math.cos(actor.yaw)*side+(Math.random()*2-1)*j;

@@ -1,6 +1,7 @@
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
-import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
+// #771: the nearest glob also consumes its pinned Unit[1] SwerveRateBySpeed.
+import { rollerFlickDrawRadius, rollerHorizontalSwerveRadians, rollerNearUnitSource } from './weapons-fidelity.mjs';
 
 const EPS = 1e-10, DEG = Math.PI / 180;
 const EMPTY_SUB_GATE_INPUT = Object.freeze({});
@@ -124,10 +125,17 @@ export function blasterBurstDamage(p, w, distance, distanceDamage) {
 export function appendRollerNearUnit(system, a, w) {
   const u = w.nearFlickUnit;
   if (!u || a.weaponRunner.s3FlickVertical || a.remote) return;
-  const angle = a.yaw + (Math.random() * 2 - 1) * u.halfAngleDegrees * DEG;
+  // Keep the existing two draws in place, then consume the pinned Unit[1]
+  // SwerveRateBySpeed so the near glob's yaw is also tied to its sampled speed.
+  const angleSample = Math.random() * 2 - 1;
+  const speedSample = Math.random() * 2 - 1;
+  const speedRaw = u.speedBase + speedSample * u.speedRandom;
+  const nearSource = rollerNearUnitSource(w);
+  const swerve = nearSource ? rollerHorizontalSwerveRadians(nearSource, speedRaw) : 0;
+  const angle = a.yaw + angleSample * u.halfAngleDegrees * DEG + swerve;
   // #305: the near unit keeps its own sourced DepletionSpeedRate in a depleted swing.
   const depleted = !!w.s3Depletion, speedRate = depleted ? (u.depletionSpeedRate ?? 1) : 1;
-  const speed = w.flickSpeed * (u.speedBase + (Math.random() * 2 - 1) * u.speedRandom) / u.mainSpeedBase * speedRate;
+  const speed = w.flickSpeed * speedRaw / u.mainSpeedBase * speedRate;
   // Width is a full-width local span in this provisional mapping. A future
   // main-unit width calibration can supply flickSpawnWidth without changing
   // the sourced 0.4 / 0.8 ratio. No exact S3 position/PDF claim is made.

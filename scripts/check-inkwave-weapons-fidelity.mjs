@@ -32,7 +32,11 @@ const golden = {
   'charger-0.5':[16.1,16.1,18.875,0],
   'charger-0.75':[20.4,20.4,23.375,0],
   'charger-1':[24.8,24.8,26.875,0],
-  'roller-horizontal':[11.2,6.1,14.125,13],
+  // #771: the horizontal Roller launch yaw now consumes the pinned
+  // SwerveRateBySpeed, so the fixed-seed practical hit boundary moves one
+  // 0.1-unit sample (11.2 -> 11.1). Paint bound, full-damage range and the
+  // 12+1 glob count are unchanged.
+  'roller-horizontal':[11.1,6.1,14.125,13],
   'roller-vertical':[16.3,6.9,19.125,5],
   slosher:[13.5,13.5,13.625,9],
 };
