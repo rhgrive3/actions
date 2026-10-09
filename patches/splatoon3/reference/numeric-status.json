@@ -982,6 +982,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.splatling.chargeJumpVelocity": {
+    "value": 4.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.charger.inkFull": {
     "value": 18,
     "status": "derived from pinned extracted data; physical scale unverified",

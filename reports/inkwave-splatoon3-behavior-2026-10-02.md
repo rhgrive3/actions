@@ -1703,3 +1703,34 @@ Pinned Chromium primary sources: [Windows product mapping at revision 413fd160](
 - Publication was reconciled against every tracked blob in the tested local commit, rather than only the prepared delta. This restores eleven omitted files from the earlier CI composition repair, including Range's immediate-control respawn exclusion and its test, lethal-water return ownership, remote clothing admission and current fixture dependencies. Source and test assertions are the same ones already validated locally. Only a fully matching remote tree and its fresh Actions results qualify for acceptance.
 
 - Latest exact-tree UI evidence (run 37865808562) exposed a verifier-only mismatch: native touch input hides the ring for rows/tabs, but ordinary main-menu buttons retain it. The earlier universal hidden-ring assertion incorrectly passed only before the next throttled UI frame. Rematch now waits for actual native placement plus computed CSS visibility/opacity and requires the same focus geometry for touch return and keyboard handoff. New native/patched repeated-return and negative visibility/geometry controls cover the distinction. No gameplay/UI behavior or numerical threshold is changed, and physical S3 interface equivalence is not claimed.
+
+### 2026-10-09 #888 Heavy Splatling のチャージ中ジャンプ初速
+
+**本家の根拠（Ver.11.3.0）。** [S3 Wiki ギア/ギアパワー/分割2 の「相手インク影響軽減」④ジャンプ初速](https://wikiwiki.jp/splatoon3mix/%E3%82%AE%E3%82%A2/%E3%82%AE%E3%82%A2%E3%83%91%E3%83%AF%E3%83%BC/%E5%88%86%E5%89%B22)（最終更新 2026-09-21、取得 2026-10-09。直接取得は Cloudflare 403 のため翻訳プロキシ経由）は次を明記する。
+
+- 通常ジャンプ初速は 1.100 DU/f。相手インク上は GP0 で 0.800 DU/f、GP57 で 1.100 DU/f。
+- スプラスピナー・クーゲルシュライバー・イグザミナー・R-PEN/5H のチャージ中ジャンプ初速は 1.0 DU/f。
+- **その他のスピナー属**（バレルスピナーを含む）とチャージャーのチャージ中（チャージャーは正確にはフルチャージ時）のジャンプ初速は **0.7 DU/f**。GP0 の敵インクの 0.8 DU/f より低いため、敵インク上でも常に 0.7 が採用され、このギアパワーは効果を発揮しない。
+
+文法上「チャージャーの場合は正確にはフルチャ時」とだけ限定されるので、スピナー属は**チャージ状態の全期間**で低い値を使う。
+
+**換算（独自校正）。** 既存の速度換算は raw×60（DU/f×6）で、`OpInk_JumpVel` 0.08 DU/f→4.8 WU/s、チャージャーのピン留め `JumpHeightFullCharge` 0.07→4.2 WU/s に使われている。同じ校正で 0.7 DU/f→**4.2 WU/s**。したがってバレルスピナーのチャージ中ジャンプは `weapons.splatling.chargeJumpVelocity = 4.2` とした（`profile.json.bindings` には入れず、`calibration.unverified` に校正として記録）。
+
+**実装箇所。** `patches/splatoon3/runtime/movement.mjs` の `normalJumpVelocity` を拡張し、`weapon.kind === 'splatling'` かつ `weaponRunner.charging` のとき `Math.min(velocity, weapon.chargeJumpVelocity)` を返す。`adapter.mjs` の `this.vel.y = normalJumpVelocity(this, jv)` の順序（敵インク／Ink Resistance の後）はそのままなので、武器のチャージ状態値が敵インク結果の上限として優先される。値は武器ごとのデータなので 1.0 DU/f の例外スピナーを後から追加できる。チャージャーの #251 ロジック（`charge >= 1` のときだけ `fullChargeJumpVelocity`）は変更していない。
+
+**実測（固定60Hz、`probe-888.mjs`、実 Actor/WeaponRunner）。**
+
+| 状態 | 変更前 | 変更後 |
+|---|---:|---:|
+| バレルスピナー 非チャージ | 8.4 | 8.4 |
+| バレルスピナー チャージ30F | 8.4 | 4.2 |
+| バレルスピナー チャージ72F | 8.4 | 4.2 |
+| 敵インク 非チャージ（GP0） | 4.8 | 4.8 |
+| 敵インク チャージ30F（GP0） | 4.8 | 4.2 |
+| シューター 非チャージ | 8.4 | 8.4 |
+
+**回帰。** `patches/splatoon3/tests/issue-888-splatling-charge-jump.test.mjs`（7件）を追加。早期チャージ／第1リング境界（`firstChargeTime/chargeTime`=0.8/1.2）／フルチャージがすべて同じ 4.2 になること、ストリーム解放後は通常 8.4 に戻ること、敵インク GP0/3/10/57 で 4.2 のままであること（同ギアで非チャージ敵インクは 6.6 まで上がるので上限が武器値であること）、例外スピナー値をデータで差し替えられること、通常ジャンプ／イカジャンプ／イカロール／チャージャー／マニューバーが不変であること、実 production 6-adapter 合成で 4.2 になること、30/60/120Hz の描画で同じ低い apex になることを確認する。修正前のこのファイルは 6件中5件が失敗し（`prefix-regression.log`）、修正後は全件成功。
+
+`patches/splatoon3/tests/splatling-jump-spread-native.test.mjs`（#1045）はチャージ中に2回ジャンプして滞空回復を調べるが、#888 でチャージ中ジャンプの滞空が約37F→約19Fに短くなったため、2回目の着地が25Fホールド内になり、シナリオ前提の2つのアサーション（最終フレームが partial、着地 age>25）を新しい弾道に合わせて更新した。25F ホールド自体は frame 25 で引き続き直接検査しており、frame-by-frame の合成一致・spread 値の検査はそのまま。他のスイート（armor-charger-batch, splatling-startup-phases, issue-679, splatling-post-stream, splatling-batch, movement-resources, air-run-speed, enemy-ink-batch, splatling-owner-composition, issue-890-jump-hold, dualies-jump-lock, adapter, movement-motion, issue-160-enemy-ink-form, weapon-edgecases）は 197/197 成功。`scripts/check-inkwave-patches.mjs --quick` 成功。
+
+**未確認の限界。** 0.7 DU/f はコミュニティ検証 Wiki の値で、Switch 実機での再計測はしていない。ピン留めの 11.3.0 `WeaponSpinnerStandard` は `JumpGnd_Charge = 0.08` を持ち、Wiki の 0.7 と 0.1 差があるが、このフィールドがジャンプ初速そのものかは確定していない（Inkipedia の S2 テンプレートは「フルチャージ時のジャンプ値」と説明する）。差の根拠を推測で確定しない。`weapons.splatling.chargeJumpVelocity` は校正値であって抽出値ではない。実機の操作感・0.7/1.1 の相対比が INKWAVE の 4.2/8.4 と一致するかは未測定。例外スピナー（1.0 DU/f）はブキ自体が未実装のため値のみデータ対応。
