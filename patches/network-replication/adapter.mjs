@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue1088SurgePresentation } from './issue-1088-surge-adapter.mjs';
-import { adaptIssue1163RemoteDodgeClock } from './issue-1163-remote-dodge-clock.mjs';
+import { adaptIssue1163RemoteDodgeClock } from './dodge-clock-adapter.mjs';
 export const NETWORK_ROOT = fileURLToPath(new URL('./', import.meta.url));
 function once(code, before, after, label) {
   const i = code.indexOf(before);
@@ -18,7 +18,7 @@ function replaceAllExpected(code, before, after, expected, label) {
 }
 export function networkIdentity() {
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'issue-1163-remote-dodge-clock.mjs', '../splatoon3/runtime/remote-dodge-clock.mjs', '../splatoon3/runtime/dualies-motion.mjs']
+    'dodge-clock-adapter.mjs', '../splatoon3/runtime/remote-dodge-clock.mjs', '../splatoon3/runtime/dualies-motion.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {

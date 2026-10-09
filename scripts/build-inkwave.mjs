@@ -63,6 +63,8 @@ for (const file of walk(SRC)) {
 for (const file of walk(PATCH_ROOT)) {
   const rel = path.relative(PATCH_ROOT, file);
   if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json') continue;
+  // The two hybrid helpers are imported by runtime/install; other root adapters only transform source during the build.
+  if (!rel.includes('/') && rel.endsWith('-adapter.mjs') && !['issue-284-adapter.mjs', 'issue-196-adapter.mjs'].includes(rel)) continue;
   const dst = path.join(BUILD, 'patches/splatoon3', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
