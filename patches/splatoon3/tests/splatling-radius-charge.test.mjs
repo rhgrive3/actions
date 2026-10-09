@@ -34,7 +34,7 @@ test('#403 charge cannot change the collider; pool reset clears canonical collis
  f.ps.list.splice(f.ps.list.indexOf(p),1);f.ps.pool.push(p);const reused=f.ps._new();assert.equal(reused,p);assert.equal(reused.fidelityPlayerCollision,null);reused.size=.77;near(radius(reused),.77);f.ps.clear();
 });
 test('#403 raw field radius is separate and ghost collider never grants damage or paint authority',async()=>{
- const f=await setup(),p=fire(f);near(p.fidelityFieldCollision.initRadius,.2);near(p.radius,f.a.weapon.impactRadius);near(p.trailRadius,f.a.weapon.trailRadius);
+ const f=await setup(),p=fire(f);near(p.fidelityFieldCollision.initRadius,.2);near(p.radius,p.inkProfile.paint.widthNear);near(p.trailRadius,f.a.weapon.trailRadius);
  f.ps.list.length=0;f.ps.pool.push(p);const event=[0,'p',0,'shot','splatling',0,1,0,0,0,10,0,1,.2,1,.15,28,.8,0,0,.1,.8,1,0,0,0,0];f.ps.ghostProjectile(f.a,event);const ghost=f.ps.list[0];assert.ok(ghost.ghost);near(radius(ghost),.225);
  let hits=0,paint=0;f.ps.applyHit=()=>hits++;f.G.paint.splat=()=>paint++;f.applyFidelityProjectileHit(f.ps,ghost,f.make(),28,ghost.pos);assert.equal(hits,0);assert.equal(paint,0);f.ps.clear();
 });

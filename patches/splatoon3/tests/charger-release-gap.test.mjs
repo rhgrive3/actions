@@ -151,8 +151,6 @@ test('reset retires a pending paid release and does not replay it', async () => 
 test('zero and under-minimum paid ink cannot synthesize a Charger shot on release', async () => {
   for (const ink of [0, 0.1, 1]) {
     const f = await fixture(), a = f.make('charger'), r = a.weaponRunner;
-    // Isolate paid ink from the source-owned low-ink charging refill.
-    f.profile.resources.inkRefillKid = f.profile.resources.inkRefillSwim = 0;
     a.ink = ink; a.intent.fire = true;
     for (let i = 0; i < 45; i++) {
       f.tick(a);

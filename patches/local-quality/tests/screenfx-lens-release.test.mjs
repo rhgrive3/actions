@@ -1,3 +1,4 @@
+import {configDependency} from './config-fixture.mjs';
 // #932: actual composed ScreenFX/LensInk with real THREE render targets; only the GPU draw is a fixture. Logic-only check
 // (dispose events and target sizes), not a GPU memory capture and not a Switch comparison.
 import test from 'node:test';
@@ -15,7 +16,7 @@ const source = (rel, baseline) => baseline ? read(rel) : adaptQualitySource(rel,
 async function fixture({ baseline = false, quality = 'high', drawing = [2880, 1620] } = {}) {
   const G = { mode: 'match', settings: { quality, cameraShake: 1 }, mobile: { touch: false }, teamColors: [new THREE.Color('#f80'), new THREE.Color('#08f')], net: null, netm: null };
   const context = vm.createContext({ console, Math, clearTimeout() {} });
-  const config = new vm.SourceTextModule(read('src/config.js'), { context }); await config.link(() => { throw Error('config deps'); }); await config.evaluate();
+  const config = new vm.SourceTextModule(read('src/config.js'), { context }); await config.link(spec=>configDependency(spec,context)); await config.evaluate();
   const values = { G, on: () => () => {}, clamp: (v, a, b) => Math.max(a, Math.min(b, v)), damp: (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt)), lerp: (a, b, t) => a + (b - a) * t };
   const synthetic = v => new vm.SyntheticModule(Object.keys(v), function () { for (const [k, x] of Object.entries(v)) this.setExport(k, x); }, { context });
   const mod = new vm.SourceTextModule(source('src/fx/screenfx.js', baseline), { context });

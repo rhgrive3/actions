@@ -1,3 +1,4 @@
+import {configDependency} from './config-fixture.mjs';
 // Actual composed HUD and native UI maths; display nodes and the FX clock are fixtures.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -34,7 +35,7 @@ class El {
 async function fixture({baseline=false}={}) {
   const G={settings:{},match:null},nodes=[];
   const context=vm.createContext({console,performance,Math,innerWidth:800,innerHeight:600,setTimeout:()=>0,tr:(s,p)=>p?s.replace('{team}',p.team):s,document:{createElement:tag=>{const e=new El(tag);nodes.push(e);return e;},createTextNode:text=>({textContent:text})}});
-  const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(()=>{throw Error('unexpected config dependency');});await config.evaluate();
+  const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(spec=>configDependency(spec,context));await config.evaluate();
   const translate=(s,p)=>p?s.replace('{team}',p.team):s;
   const i18n=new vm.SyntheticModule(['tx','isJa'],function(){this.setExport('tx',translate);this.setExport('isJa',()=>false);},{context});
   let utilCode=site&&!baseline?fs.readFileSync(path.join(site,'src/ui/ui-util.js'),'utf8'):read('src/ui/ui-util.js');

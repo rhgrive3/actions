@@ -48,8 +48,9 @@ test('simultaneous jump and fire go through actual Actor and retain vertical mod
   a.intent.jump = true; a.intent.fire = true; f.tick(a);
   assert.equal(a.weaponRunner.s3FlickVertical, true);
   assert.equal(a.weaponRunner.s3RollerAttack.elapsed, 0);
+  f.tick(a, 6); // pass the independent #1056 early-landing conversion window
   a.grounded = true; a.intent.jump = false;
-  f.tick(a, 30); assert.equal(f.shots.length, 0);
+  f.tick(a, 24); assert.equal(f.shots.length, 0);
   f.tick(a); assert.equal(f.shots.length, 1);
   assert.equal(f.shots[0].windup, 31 / 60);
   assert.equal(a.weaponRunner.s3RollerAttack.vertical, true);

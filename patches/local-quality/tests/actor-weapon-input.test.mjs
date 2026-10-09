@@ -17,7 +17,13 @@ const KINDS = ['shooter', 'blaster', 'charger', 'roller', 'dualies', 'slosher', 
 const script = i => ({ fire: (i % 150 < 60 && !(i >= 190 && i < 225)) || (i >= 300 && i % 7 < 3), sub: i >= 200 && i < 215, squid: i >= 240 && i < 270 });
 
 async function run(weapon, { baseline }) {
-  const f = await fixture({ adapt: baseline ? adaptSource : composed });
+  const f = await fixture({ adapt: (rel,source)=>{
+    const full=composed(rel,source);
+    if(!baseline||rel!=='src/game/actor.js')return full;
+    const call='this.weaponRunner.update(dt, this._weaponInput)';
+    assert.equal(full.split(call).length-1,1,'one allocation-only counterfactual hook');
+    return full.replace(call,'this.weaponRunner.update(dt, { ...this._weaponInput })');
+  } });
   f.setRandom(() => 0.5);
   const bombs = []; f.G.projectiles.throwBomb = actor => bombs.push(actor.ink);
   f.G.projectiles.fireSlosh = () => f.shots.push({ kind: 'slosher' });
@@ -25,6 +31,7 @@ async function run(weapon, { baseline }) {
   const update = r.update;
   r.update = function (dt, inp) { seen.add(inp); trace.push([inp.fire, inp.firePressed, inp.sub, inp.subReleased, Object.keys(inp).join()]); return update.call(this, dt, inp); };
   for (let i = 0; i < 420; i++) {
+    if(i===200)a.ink=100; // Exercise admitted sub use independently of each main weapon's sourced consumption.
     Object.assign(a.intent, script(i));
     f.tick(a);
     trace.push([a.ink, r.charge, r.charging, r.cooldown, r.streaming, r.rolling, a.fireBuffer, r.aimingSub]);

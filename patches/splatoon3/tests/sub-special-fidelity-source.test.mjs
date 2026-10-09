@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { adaptSource } from '../adapter.mjs';
+import { adaptSubSpecialFidelity } from '../sub-special-adapter.mjs';
+import { adaptSource, replaceOnce } from '../adapter.mjs';
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from '../runtime/sub-special-fidelity.mjs';
 
 const root = new URL('../../../', import.meta.url);
@@ -17,7 +18,7 @@ test('Splat Bomb arm condition is a fail-closed build-time source connection', (
 });
 
 test('sub/special adapter leaves unrelated source files untouched', () => {
-  assert.equal(adaptSource('src/game/physics.js', 'UNCHANGED'), 'UNCHANGED');
+  assert.equal(adaptSubSpecialFidelity('src/game/physics.js', 'UNCHANGED', replaceOnce), 'UNCHANGED');
 });
 
 test('pinned sub/special reference records all directly checked 11.3.0 fields', () => {

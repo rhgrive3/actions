@@ -48,7 +48,7 @@ async function production({ baselineRollerSource = null } = {}) {
     if (modules.has(file)) return modules.get(file);
     const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file);
     const raw = baselineRollerSource && rel === 'patches/splatoon3/runtime/roller.mjs'
-      ? baselineRollerSource : fs.readFileSync(file, 'utf8');
+      ? baselineRollerSource + '\n// Compatibility for later native imports: this frozen control intentionally has no new contact guard.\nexport const rollerContactCandidate=()=>true;export const rollerStickActive=()=>true;\n' : fs.readFileSync(file, 'utf8');
     const source = adaptProductionSource(rel.split(path.sep).join('/'), raw);
     const mod = new vm.SourceTextModule(source,
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
@@ -182,7 +182,7 @@ test('847 ledge drum void suppresses rolling while feet stay grounded', async ()
 
 test('847 support probe falls back to feet grounding without stage collision', () => {
   const stubG = { physics: {} };
-  const scratch = { ids: [], start: {}, delta: {} };
+  const scratch = { ids: [], start: {}, delta: {}, contactPoint:{}, wallPoint:{} };
   const a = { grounded: true, yaw: 0, pos: { x: 0, y: 0, z: 0 }, intent: { move: { x: 0, z: 0 } }, remote: false };
   const sup = rollerDrumSupport(a, stubG, scratch);
   assert.equal(sup.supported, true, 'stub physics keeps the previous feet-grounded admission');
@@ -200,8 +200,8 @@ test('847 owner and remote share native contact; NetMatch drops remote damage an
   owner.pos.set(0, 0, -5); remote.pos.copy(owner.pos); victim.pos.set(0, 0, -4.2);
   owner.yaw = remote.yaw = 0; owner.grounded = remote.grounded = true;
   remote.remote = true; remote.owner = 'peer-2';
-  const ownerContact = rollerDrumSupport(owner, f.G, { ids: [], start: {}, delta: {} });
-  const remoteContact = rollerDrumSupport(remote, f.G, { ids: [], start: {}, delta: {} });
+  const ownerContact = rollerDrumSupport(owner, f.G, { ids: [], start: {}, delta: {}, contactPoint:{}, wallPoint:{} });
+  const remoteContact = rollerDrumSupport(remote, f.G, { ids: [], start: {}, delta: {}, contactPoint:{}, wallPoint:{} });
   assert.deepEqual(ownerContact, remoteContact, 'stage contact depends only on the shared actor pose and stage collision');
   assert.equal(ownerContact.supported, true);
 

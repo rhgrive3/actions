@@ -140,7 +140,9 @@ test('Practice Range Ink Vac weapon-change lifecycle through the complete six-ad
 
     await t.test('a released blast and spent gauge survive a later weapon change', async () => {
       prepare(w);
-      activateInkVac(w); tick(30);
+      const state = activateInkVac(w);
+      for (let i = 0; i < 600 && state.phase === 'inhale'; i++) tick();
+      assert.equal(state.phase, 'exhale', 'the native inhale timer must admit the release before firing');
       local.intent.fire = true; tick(); local.intent.fire = false;
       const blast = projectiles.list.find(p => p.type === 'blast' && p.owner === local);
       assert.ok(blast, 'the real native projectile path launched its blast');

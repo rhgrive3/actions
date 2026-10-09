@@ -1,3 +1,18 @@
+import { parseExpressionAt } from '../loading-cache/vendor/acorn.mjs';
+
+function frameKeys(node, required, optional = []) {
+  const allowed = new Set([...required, ...optional]), seen = new Set();
+  if (node.type !== 'ObjectExpression') throw new Error('INKWAVE quality patch conflict (persistent Game HUD frame): expected object');
+  for (const prop of node.properties) {
+    const key = prop.key?.name ?? prop.key?.value;
+    if (prop.type !== 'Property' || prop.computed || prop.method || prop.kind !== 'init' || !allowed.has(key) || seen.has(key)) {
+      throw new Error('INKWAVE quality patch conflict (persistent Game HUD frame): unexpected or repeated owner ' + key);
+    }
+    seen.add(key);
+  }
+  if (required.some(key => !seen.has(key))) throw new Error('INKWAVE quality patch conflict (persistent Game HUD frame): missing owner');
+}
+
 export function adaptHudSnapshots(rel, code, once) {
   if (rel === 'src/core/mobile.js') {
     code = once(code, '  setHud({ special = 0,', '  setHud({ inkLow = false, special = 0,', 'touch shortage feedback input');
@@ -34,6 +49,12 @@ export function adaptHudSnapshots(rel, code, once) {
     }
     const frameEnd = code.lastIndexOf('    };', hudUpdate);
     if (frameEnd < frameStart) throw new Error('INKWAVE quality patch conflict (persistent Game HUD frame): frame boundary');
+    // Pooling replaces the literal, so reject unknown owners rather than silently dropping them.
+    const object = parseExpressionAt(code, code.indexOf('{', frameStart), { ecmaVersion: 'latest' });
+    if (object.end !== frameEnd + '    }'.length) throw new Error('INKWAVE quality patch conflict (persistent Game HUD frame): object boundary');
+    frameKeys(object, ['time', 'teams', 'ink', 'inkLow', 'subCost', 'special', 'specialReady', 'specialActive', 'hp', 'weapon', 'charge', 'crosshair', 'map', 'markers', 'prompt', 'fps'], ['subReady', 'healthMarkers']);
+    frameKeys(object.properties.find(prop => (prop.key.name ?? prop.key.value) === 'crosshair').value,
+      ['spread', 'onTarget', 'inRange'], ['guide', 'muzzleBlock', 'chargerCurrent', 'chargerFull']);
     const subValue = geared ? 'subCost' : 'SUB.bomb.inkCost';
     const guideValue = guided ? guide : 'undefined';
     const healthValue = healthMarked ? 'buildHealthMarkers(this, G, PLAYER, THREE)' : 'undefined';

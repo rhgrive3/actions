@@ -115,7 +115,7 @@ test('#1105 non-idle Roller retains authoritative hit-admission interception', a
   const f = await fixture();
   const a = f.make('roller');
   const p = f.G.projectiles;
-  const old = p.applyHit;
+  const old = p.applyHit = () => 'accepted'; // Explicit admission spy on the light fixture.
   let installs = 0;
   Object.defineProperty(p, 'applyHit', {
     configurable: true,

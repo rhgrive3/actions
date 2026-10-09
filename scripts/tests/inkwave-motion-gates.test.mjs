@@ -49,7 +49,7 @@ test('detail accepts valid semantic records and rejects original false-pass coun
   r=>row(r,'charger-return').events[0].frame=80, // old same-tick release
   r=>row(r,'charger-return').events[0].frame=82, // extra deferred tick
   r=>delete row(r,'charger-return').events[0].charge,
-  r=>row(r,'bomb-standing').renderMetrics.find(m=>m.frame===31).releasedBomb.nearestLeft=.3,
+  r=>row(r,'bomb-standing').renderMetrics.find(m=>m.frame===30).releasedBomb.nearestLeft=.3,
   r=>delete row(r,'bomb-standing').releaseFrames[0].meshOriginError,
   r=>delete row(r,'flow-kid').renderMetrics[0].renderClocksStable,
   r=>row(r,'flow-kid').renderMetrics[0].renderClocksStable=false,

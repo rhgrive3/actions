@@ -13,7 +13,7 @@ export function respawnPunisherEquipped(actor) {
   // A queued accepted hit keeps its equipment identity through owner handoff.
   if (typeof s?.clothingHitPunisher === 'boolean') return s.clothingHitPunisher;
   if (actor.remote) {
-    return !!s?.clothingRemote && s.clothingRemote.owner === actor.owner && s.clothingRemote.punisher === true;
+    return s?.clothingRemote?.owner === actor.owner && s.clothingRemote.punisher === true;
   }
   return actor.s3?.loadout?.[1]?.main === 'respawnPunisher';
 }

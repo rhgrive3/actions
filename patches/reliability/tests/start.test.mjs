@@ -14,7 +14,10 @@ const BEFORE = adaptIntro('src/main.js', adaptResults('src/main.js', adaptTouchL
 const AFTER = adaptStart('src/main.js', BEFORE);
 // Actual preceding results methods plus the current operation-aware start/quit
 // methods reproduce the confirmed composition gap without inventing a judge.
-const oldResults = section(BEFORE, '  async _bossResults() {', '\n  _fade(to, ms)');
+const oldResults = section(BEFORE, '  async _bossResults() {', '\n  _fade(to, ms)')
+  // The newer epoch guard independently closes part of this old race. Remove
+  // it only in the explicit negative control so the missing operation owner is exercised.
+  .replace("    if (this._s3JudgeEpoch !== judgeEpoch || this.match !== m || m.state !== 'judge') return;\n", '');
 const RESULT_FLOW_BEFORE = AFTER.replace(section(AFTER, '  async _bossResults() {', '\n  _fade(to, ms)'), oldResults);
 function section(source, start, end) {
   const at = source.indexOf(start), until = source.indexOf(end, at);
@@ -475,7 +478,7 @@ for (const boss of [false, true]) {
       const departure = beginDeparture(h, operation);
       assert.equal(h.game.match, originalMatch, 'fade has not replaced match');
       await h.resolveResults(pending);
-      assert.equal(h.count('saveProfile'), 1); assert.equal(h.count('resultData'), 1);
+      assert.equal(h.count('saveProfile'), Number(boss || !online)); assert.equal(h.count('resultData'), 1);
       assert.equal(h.game.menus.current, 'results');
       h.gates.fade.resolve(); await departure;
     });
@@ -500,7 +503,7 @@ for (const boss of [false, true]) {
       await before.resolveResults(before.game._judge()); await after.resolveResults(after.game._judge());
       assert.deepEqual(after.game.profile, before.game.profile);
       assert.deepEqual(JSON.parse(JSON.stringify(after.calls)), JSON.parse(JSON.stringify(before.calls)));
-      assert.equal(after.count('saveProfile'), 1); assert.equal(after.count('resultData'), 1);
+      assert.equal(after.count('saveProfile'), Number(boss)); assert.equal(after.count('resultData'), 1);
       let returning;
       const actualReturn = after.game.netMatchEnd;
       after.game.netMatchEnd = function () { return (returning = actualReturn.call(this)); };

@@ -44,8 +44,8 @@ const steady=[['forward',0,1,4.2],['backward',0,-1,4.2],['left strafe',1,0,4.2],
  ['forward left',.7071,.7071,4.2],['forward right',-.7071,.7071,4.2],['back left',.7071,-.7071,4.2],['back right',-.7071,-.7071,4.2],
  ['slow left strafe',1,0,.6],['walking right strafe',-1,0,1.5],['running left strafe',1,0,5.76],['slow forward',0,1,.35]];
 test('legs alternate in steady walking, running, strafing and diagonals on the actual rig',async t=>{
- const {api,ch,state}=await character();
- for(const [name,dx,dz,v] of steady)await t.test(name,()=>{
+ for(const [name,dx,dz,v] of steady)await t.test(name,async()=>{
+  const {api,ch,state}=await character();
   const rows=drive(api,ch,state,[[240,dx,dz,v]]),tail=rows.slice(90);
   const off=offsets(rows,90,240);
   assert.ok(off.length>=(v<1?1:4),`enough steps (${off.length})`);
@@ -68,8 +68,8 @@ const turns=[
  ['walking strafe flip',[[120,1,0,1.5],[180,-1,0,1.5]]],
 ];
 test('direction changes keep contacts planted, the pelvis continuous and the legs re-alternating',async t=>{
- const {api,ch,state}=await character();
- for(const [name,segments] of turns)await t.test(name,()=>{
+ for(const [name,segments] of turns)await t.test(name,async()=>{
+  const {api,ch,state}=await character();
   const rows=drive(api,ch,state,segments),change=segments[0][0],end=rows.length;
   assert.ok(rows.every(r=>r.slide<1e-8),'no planted shoe slides through the turn');
   for(let i=1;i<rows.length;i++){

@@ -22,10 +22,21 @@ if(process.argv.includes('--exact-source')){
 const DT=1/60,distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 const scenarios=['horizontal','vertical','shooter','dualies','blaster','splatling','slosher','bomb','storm','charger','charger_half','charger_full','charger_oblique_partial','charger_oblique_full'];
 export function nativeBaselineProjectileEvent(e){
- assert.equal(e.length,28,'known pre-timestamp native+emptyKit baseline only');
+ const ink=e.length===29;
+ assert(e.length===28||ink,'known pre-timestamp native+emptyKit baseline only');
  assert.equal(e[0],'p','only a projectile baseline event can be normalized');
- assert.equal(e[26],0,'baseline contains no Kit volley index');
- assert.equal(e[27],0,'baseline contains no Kit action index');
+ if(ink){
+  const meta=e[26];
+  assert(meta===null||Array.isArray(meta)&&meta.length===5&&meta[0]==='iw-ink-flight-1'&&
+    ['shooter','dualies','splatling'].includes(meta[1])&&Number.isSafeInteger(meta[2])&&meta[2]>=0&&
+    Number.isFinite(meta[3])&&meta[3]>=0&&meta[3]<1&&typeof meta[4]==='boolean',
+    'current native baseline retains only valid source-guided InkFlight metadata');
+ }
+ const offset=ink?1:0;
+ assert.equal(e[26+offset],0,'baseline contains no Kit volley index');
+ assert.equal(e[27+offset],0,'baseline contains no Kit action index');
+ // Reproduce the explicitly frozen native27 negative control, before both
+ // source-guided metadata and network birth footers. Production packets are unchanged.
  return e.slice(0,26);
 }
 export async function replay(network,kind,{seed=0x1badc0de,realFloor=false}={}){

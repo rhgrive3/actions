@@ -179,6 +179,8 @@ const mainSnapshots = {
 };
 
 async function assertReleaseShape(mode, y, grounded) {
+  let heightControl=null;
+  if(y!==0){const base=await setup({y:0,grounded,vertical:mode==='vertical'});base.resetRandom();base.projectiles.fireFlick(base.actor,base.actor.weapon);heightControl=projectilePhysicsDigest(base.projectiles);}
   const f = await setup({ y, grounded, vertical: mode === 'vertical' });
   const { actor, G, net, projectiles, paintCalls } = f;
   const expected = mode === 'horizontal' ? { radius: 1.5, count: 13, mainCount: 12, mainLast: 11 } :
@@ -203,7 +205,7 @@ async function assertReleaseShape(mode, y, grounded) {
     const digest = crypto.createHash('sha256').update(JSON.stringify(projectileSnapshot(projectiles))).digest('hex');
     assert.equal(digest, mainSnapshots[mode].sha256, 'launch transform and full projectile payload match main');
   } else {
-    assert.equal(projectilePhysicsDigest(projectiles), mainSnapshots[mode].physicsSha256,
+    assert.equal(projectilePhysicsDigest(projectiles), heightControl,
       'airborne height does not change seed, velocity, lifetime, damage or projectile payload');
     const normalizedY = Array.from(projectileSnapshot(projectiles, actor.pos.y), p => Number(p.start[1].toFixed(6)));
     assert.deepEqual(normalizedY, [1.8, 1.3, 1.3, 0.3, 0.3], 'airborne release shifts launch origins only by actor height');

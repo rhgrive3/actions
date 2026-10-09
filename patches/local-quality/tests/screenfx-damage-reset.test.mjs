@@ -1,3 +1,4 @@
+import {configDependency} from './config-fixture.mjs';
 // Actual complete ScreenFX, native Three math/lens state, and composed Game
 // pause/quit methods. GPU draw and menu/attract construction are fixtures.
 import test from 'node:test';
@@ -27,7 +28,7 @@ async function fixture({baseline=false}={}){
  G.camera=new THREE.PerspectiveCamera(60,1,.1,100);G.camera.updateMatrixWorld();
  const math=Object.create(Math);math.random=()=>.5;
  const context=vm.createContext({console,Math:math,clearTimeout(){}});
- const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(()=>{throw Error('config dependencies');});await config.evaluate();
+ const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(spec=>configDependency(spec,context));await config.evaluate();
  const values={G,on,clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),damp:(a,b,k,dt)=>a+(b-a)*(1-Math.exp(-k*dt)),lerp:(a,b,t)=>a+(b-a)*t};
  const synthetic=v=>new vm.SyntheticModule(Object.keys(v),function(){for(const [k,x]of Object.entries(v))this.setExport(k,x);},{context});
  const fxCode=source('src/fx/screenfx.js',{baseline}),mod=new vm.SourceTextModule(fxCode,{context});

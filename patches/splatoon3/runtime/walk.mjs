@@ -107,7 +107,9 @@ function updateFeet(ch,dt){
       const f=F[i];let elapsed=dt;
       if(f.planted){
         f.stT+=dt;f.stU+=dt*ch.cad/ch.duty;
-        const rootDist=Math.hypot(f.pw.x-R.x,f.pw.z-R.z),far=rootDist>tuning.catchDistance;
+        // Sideways stance width is not an overreach. Use the actual leg span
+        // before forcing an offbeat catch that would restart the shared gait.
+        const rootDist=Math.hypot(f.pw.x-R.x,f.pw.z-R.z),far=rootDist>Math.max(tuning.catchDistance,ch.legReach*.95);
         // A freshly landed foot normally owns at least 60 ms of stance to avoid
         // chatter. Do not keep that hold once the gameplay root has moved farther
         // than the whole leg can possibly span (common on a sharp reversal).

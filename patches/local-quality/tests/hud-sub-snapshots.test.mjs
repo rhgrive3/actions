@@ -127,6 +127,10 @@ test('old runtime helper still demonstrates fixed70 loss after anchor-only repai
 });
 test('unexpected frame changes and repeated adapters remain fail-closed',()=>{
  assert.throws(()=>snap(gear(raw).replace('time: m.time,','time: m.time, extraOwner: true,')),/persistent Game HUD frame/);
+ for (const extra of ['...unknownOwner,', '[dynamicOwner]: true,', 'time: m.time,']) {
+  assert.throws(()=>snap(raw.replace('time: m.time,','time: m.time, '+extra)),/persistent Game HUD frame/);
+ }
+ assert.throws(()=>snap(raw.replace('crosshair: { spread,','crosshair: { extraOwner: true, spread,')),/persistent Game HUD frame/);
  assert.throws(()=>snap(snap(raw)),/persistent Game HUD frame/);
  assert.throws(()=>gear(gear(snap(raw))),/equipped persistent HUD sub cost/);
 });

@@ -10,8 +10,9 @@ test('#873 native flight paint consumes sourced intermediate width, independent 
     const a = f.make('shooter');
     f.projectiles.fireShooter(a, a.weapon, 0);
     const p = f.projectiles.list[0];
-    p.trail = 10; // isolate a due intermediate drop, not scheduling or impact paint
-    assert.equal(f.projectiles._step(p, 1 / 60), false);
+    // Isolate a source-guided intermediate drop from head-impact/feet scheduling.
+    f.projectiles.list.length=0;f.projectiles.inkFlight.spawnDrop(p,p.pos,1,0);
+    for(let frame=0;frame<60&&f.projectiles.inkFlight.drops.length;frame++)f.projectiles.update(1/60);
     assert.equal(f.paints.length, 1);
     const raw = f.profile.weaponsFidelityCompletion.weapons.shooter.SplashPaintParam;
     near(f.paints[0].radius, raw.WidthHalf * f.profile.weaponsFidelityCompletion.worldUnitsPerSourceUnit);
@@ -37,9 +38,9 @@ test('#873 conversion and independent source fields remain explicit dependencies
 test('#873 projectile snapshot survives owner weapon changes and consumes the same RNG draw count', async () => {
   const f = await world({fidelity: true, seed: 5}), a = f.make('shooter');
   f.projectiles.fireShooter(a, a.weapon, 0);
-  const p = f.projectiles.list[0]; p.trail = 10;
+  const p = f.projectiles.list[0];f.projectiles.list.length=0;f.projectiles.inkFlight.spawnDrop(p,p.pos,1,0);
   a.setWeapon('dualies');
-  assert.equal(f.projectiles._step(p, 1 / 60), false);
+  for(let frame=0;frame<60&&f.projectiles.inkFlight.drops.length;frame++)f.projectiles.update(1/60);
   near(f.paints[0].radius, 1.472);
   f.projectiles.clear();
   // The legacy draw is consumed, not used for source-backed gameplay width.

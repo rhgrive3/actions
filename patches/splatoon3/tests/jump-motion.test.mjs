@@ -335,7 +335,7 @@ test('ordinary input-driven jump uses actual production Actor/Runner/Physics thr
         }
         assert.ok(airborne && landed, 'real jump input and Physics must take off and emit landing');
         assert.ok(maxWeight > .5 && changedGeometry, 'native trajectory reaches the calibrated indexed-geometry pose');
-        assert.equal(after.a.pos.y, 0); assert.equal(after.a.vel.y, 0);
+        assert.ok(Math.abs(after.a.pos.y)<1e-12, 'native floor contact is zero within floating-point precision'); assert.equal(after.a.vel.y, 0);
         assert.equal(api.jumpMotionSnapshot(after.ch).active, false);
       } finally { before.close(); after.close(); }
     }

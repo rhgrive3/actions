@@ -109,7 +109,7 @@ function targetPlaneHit(f, actor, round, basis) {
   let before = probe.pos.clone();
   let beforeDistance = before.clone().sub(target).dot(basis.normal);
   for (let frame = 1; frame <= 120; frame++) {
-    f.advanceFidelityProjectile(probe, STEP);
+    if(probe.inkProfile)f.G.projectiles._advanceInkGuide(probe);else f.advanceFidelityProjectile(probe, STEP);
     const after = probe.pos.clone();
     const afterDistance = after.clone().sub(target).dot(basis.normal);
     if (beforeDistance <= 0 && afterDistance >= 0 && afterDistance !== beforeDistance) {
@@ -128,7 +128,7 @@ function advanceToGuideFrame(f, round, frames) {
     pos: round.start.clone(), prev: round.start.clone(), vel: round.vel.clone(),
     age: 0, fidelityPhase: 0, fidelityPrevAge: 0,
   };
-  for (let frame = 0; frame < frames; frame++) f.advanceFidelityProjectile(probe, STEP);
+  for (let frame = 0; frame < frames; frame++) if(probe.inkProfile)f.G.projectiles._advanceInkGuide(probe);else f.advanceFidelityProjectile(probe, STEP);
   return probe.pos;
 }
 
@@ -196,8 +196,8 @@ test('native grounded and airborne Dualies keep two independent aim centers and 
       const fireRecords = netMatch.out.filter(record => record[1] === 'ev' && record[2] === 'weapon:fire');
       assert.equal(spawnRecords.length, 2, 'one owner projectile wire record per native launch');
       assert.equal(fireRecords.length, 2, 'one existing weapon:fire event per native launch');
-      assert.ok(spawnRecords.every(record => record.length === 35), 'the current projectile birth wire record keeps its field count');
-      assert.deepEqual(Array.from(spawnRecords, record => record[31]), [1, 2], 'native projectile wire IDs remain sequential');
+      assert.ok(spawnRecords.every(record => record.length === 36), 'the current projectile birth wire record keeps its field count');
+      assert.deepEqual(Array.from(spawnRecords, record => record[32]), [1, 2], 'native projectile wire IDs remain sequential');
       assert.deepEqual(shots.map(row => row.round._netId), [1, 2], 'owner births retain the IDs serialized for playback');
       assert.deepEqual(Array.from(netMatch.out.filter(record => record[1] === 'p' || record[1] === 'ev'), record => record[1]),
         ['p', 'ev', 'p', 'ev'], 'spawn/event ordering stays paired per alternating hand');

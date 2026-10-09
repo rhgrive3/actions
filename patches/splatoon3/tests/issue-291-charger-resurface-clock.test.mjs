@@ -65,13 +65,13 @@ test('#291 re-submerge resets both surface clocks but retains the75F keep owner'
 });
 test('#291 native network packet carries the25F warning without granting owner fire authority',async()=>{
  const {f,a,r,step}=await setup(60);a.nid=1;a.intent.squid=false;let packet;
- const sender={byNid:new Map([[1,a]]),out:[],stats:{out:0},s:{tr:{broadcast:m=>{packet=m;}}}};
+ const sender={_peer:()=>({}),byNid:new Map([[1,a]]),out:[],stats:{out:0},s:{tr:{broadcast:m=>{packet=m;}}}};
  const remote=f.make('charger');remote.remote=true;
  remote.net={ready:true,err:new f.THREE.Vector3(),prevGrounded:true,prevVy:0,cur:{x:0,y:0,z:0,vx:0,vy:0,vz:0,yaw:0,aimYaw:0,aimPitch:0,f:0,hp:100,ink:100,sp:0,turf:0,ch:1,lock:0}};
  for(let frame=1;frame<=31;frame++){
   step();f.NetMatch.prototype._sendTick.call(sender);
   const flags=packet.a[0][10];assert.equal(!!(flags&f.NET_FLAGS.charging),frame>=25,`packet frame${frame}`);
-  remote.net.cur.f=flags;f.NetMatch.prototype.applyRemote.call({},remote,DT);
+  remote.net.cur.f=flags;f.NetMatch.prototype.applyRemote.call({_peer:()=>({})},remote,DT);
   assert.equal(remote.weaponRunner.charging,frame>=25,'remote presentation follows owner warning');
   if(frame<31)assert.equal(r.charging,false,'local release authority remains gated');
  }

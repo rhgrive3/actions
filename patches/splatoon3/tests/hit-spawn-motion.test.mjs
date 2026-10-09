@@ -256,6 +256,7 @@ test('native directional hits and splat disappearance remain gameplay-identical'
     evidenceRows.push({ stage: 'native-hit-preserved', before: posed(before), after: posed(after) });
     for (const r of [before, after]) r.a.damage(100, null);
     assert.equal(after.a.alive, true, 'lethal damage remains pending for the rest of its fixed tick');
+    api.G.time += 1 / 60;
     for (const r of [before, after]) r.a.update(1 / 60);
     assert.deepEqual(gameplay(after), gameplay(before)); assert.equal(after.a.alive, false);
     assert.equal(after.ch.root.visible, false); assert.equal(after.snapshot().visible, false);

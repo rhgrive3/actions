@@ -13,7 +13,7 @@ async function round({turret=false,fidelity=true,oldRatio=false,target=null}={})
   team:1,z:target+hurtboxRadius({form:'kid'},f.PLAYER)-f.PLAYER.radius,name:'enemy'
  }));
  f.projectiles.fireDualies(a,a.weapon,0,0);const p=f.projectiles.list[0];
- if(oldRatio)p.s3PlayerRadius=p.size*(turret?a.weapon.playerRadiusAfterRoll/a.weapon.playerRadiusNormal:1);
+ if(oldRatio){p.s3PlayerRadius=p.size*(turret?a.weapon.playerRadiusAfterRoll/a.weapon.playerRadiusNormal:1);p.inkPlayerRadius=p.s3PlayerRadius;}
  return {f,a,p};
 }
 test('canonical Dualies normal and turret radii have exactly one owner',async()=>{

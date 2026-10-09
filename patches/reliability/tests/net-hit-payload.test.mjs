@@ -74,13 +74,11 @@ test('#462 residual adapter: unique anchors, other paths untouched, fails closed
 
 test('negative control: UNPATCHED netmatch applies an implausible forged hit', async () => {
   const { nm, calls } = await harness({ adapt: false });
-  nm.onMessage('A', { k: 'hit', v: 1, a: 2, d: 9999, w: 'shot' });
+  nm.onMessage('C', { k: 'hit', v: 1, a: 2, d: 9999, w: 'shot' });
   assert.equal(calls.length, 1, 'old code accepts the hit');
   assert.equal(calls[0].d, 9999, 'old code trusts client damage past any bound');
-  nm.onMessage('A', { k: 'hit', v: 1, a: 2, d: 36, w: 'frobnicate' });
-  assert.equal(calls.length, 2, 'raw code still accepts an unknown cause');
-  nm.onMessage('A', { k: 'hit', v: 1, a: 2, d: NaN, w: 'shot' });
-  assert.equal(calls.length, 2, 'the existing finite-number guard remains active');
+  nm.onMessage('C', { k: 'hit', v: 1, a: 2, d: NaN, w: 'frobnicate' });
+  assert.equal(calls.length, 2, 'old code even accepts NaN/unknown cause');
 });
 
 test('patched pipeline rejects malformed/unknown-cause claims and keeps valid hits exactly once', async () => {

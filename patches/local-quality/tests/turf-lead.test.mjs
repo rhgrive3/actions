@@ -1,3 +1,4 @@
+import {configDependency} from './config-fixture.mjs';
 import {teamHudSnapshot} from '../hud-snapshots.mjs';
 // Actual composed HUD and native UI maths; display nodes and the FX clock are fixtures.
 import test from 'node:test';
@@ -39,7 +40,7 @@ async function fixture({baseline=false}={}) {
   const bus=new Map();const on=(n,fn)=>{if(!bus.has(n))bus.set(n,new Set());bus.get(n).add(fn);return()=>bus.get(n).delete(fn);};const emit=(n,e)=>{for(const fn of bus.get(n)||[])fn(e);};
   const G={settings:{},match:null,actors:[],teamHex:['#f80','#08f'],audio:{play(){}},rig:{dioLook:{x:0,y:0}}};
   const context=vm.createContext({console,performance,Math,innerWidth:1000,innerHeight:700,setTimeout:()=>0,document:{body:new El(),createElement:tag=>new El(tag),createTextNode:text=>({textContent:text})}});
-  const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(()=>{throw Error('config dependency');});await config.evaluate();
+  const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(spec=>configDependency(spec,context));await config.evaluate();
   const translate=s=>s,i18n=new vm.SyntheticModule(['tx','isJa'],function(){this.setExport('tx',translate);this.setExport('isJa',()=>false);},{context});
   const util=new vm.SourceTextModule(site&&!baseline?fs.readFileSync(path.join(site,'src/ui/ui-util.js'),'utf8'):read('src/ui/ui-util.js'),{context});await util.link(()=>i18n);await util.evaluate();
   const values={G,on,teamHudSnapshot,t:translate,...config.namespace,...THREE,GLYPHS:{},SUB_ICONS:{},weaponIcon:x=>x,specialIcon:x=>x,keycap:x=>x,richText:x=>x};
@@ -110,7 +111,7 @@ test('presentation anchors fail closed, CSS has a bounded emphasis, and scoring 
 test('actual localisation renders Japanese and English Danger labels for keyboard and touch',async()=>{
  for(const lang of ['ja','en']){
   const context=vm.createContext({console,localStorage:{getItem:()=>JSON.stringify({lang})},document:{documentElement:{}}});
-  const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(()=>{throw Error('config dependency');});await config.evaluate();
+  const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(spec=>configDependency(spec,context));await config.evaluate();
   let code=site?fs.readFileSync(path.join(site,'src/i18n.js'),'utf8'):adaptQualitySource('src/i18n.js',adaptReliability('src/i18n.js',adaptTouchLayout('src/i18n.js',adaptSource('src/i18n.js',read('src/i18n.js')))));
   if(minify)code=transform(code,{loader:'js',format:'esm',minify:true}).code;
   const mod=new vm.SourceTextModule(code,{context});await mod.link(spec=>spec==='./config.js'?config:spec==='./core/device.js'?new vm.SyntheticModule(['touchPrimary'],function(){this.setExport('touchPrimary',false);},{context}):new vm.SyntheticModule([],()=>{},{context}));await mod.evaluate();

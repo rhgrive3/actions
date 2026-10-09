@@ -1285,6 +1285,8 @@ export function installWeaponsFidelity(context,profile) {
   }
   Object.defineProperty(Projectiles.prototype,INSTALLED,{value:true});
   Projectiles.prototype.splatlingReach=function(weapon,charge){
+    const canonical=this._nominalInkReach?.(weapon,charge);
+    if(canonical!=null)return canonical;
     const THREE=context.THREE;
     const p=this._s3SplatlingReachProjectile||(this._s3SplatlingReachProjectile={
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
@@ -1520,7 +1522,7 @@ export function installWeaponsFidelity(context,profile) {
     s.unitFreeVelocityY=unitMove?.BrakeToFreeVelocityY;s.unitFreeFrame=unitMove?.BrakeToFreeStateFrame;
     s.actorForm=actor.form;s.grounded=actor.grounded;s.climbing=actor.climbing;s.dancing=actor.dance;
     s.specialActive=actor.specialActive;s.superJumpState=actor.superJumpState;s.aimPitch=actor.aimPitch;
-    s.actorYaw=mode==='blaster'?actor.yaw:null;s.actorVelX=mode==='blaster'?actor.vel?.x:null;s.actorVelZ=mode==='blaster'?actor.vel?.z:null;
+    s.actorYaw=actor.yaw;s.actorVelX=actor.vel?.x;s.actorVelZ=actor.vel?.z;
     s.blasterZRate=mode==='blaster'?raw?.spl__SpawnBulletAdditionMovePlayerParam?.ZRate:null;
     s.aimDirX=dir.x;s.aimDirY=dir.y;s.aimDirZ=dir.z;s.aimPointX=target.x;s.aimPointY=target.y;s.aimPointZ=target.z;
     s.actorPosX=actor.pos.x;s.actorPosY=actor.pos.y;s.actorPosZ=actor.pos.z;
@@ -1660,7 +1662,7 @@ export function installWeaponsFidelity(context,profile) {
     const yaw=Math.atan2(aim.x,aim.z)+radians(unit.BaseRotateYDegree||0);
     const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
     p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(unit.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
-    p.s3Weapon={...w};p.s3SlosherMotionApplied=false;
+    p.s3Weapon=w;p.s3SlosherMotionApplied=false;
     applySlosherSpawnVelocity(p,{guide:true});
     initialize(p,w);
     let remaining=Math.max(0,guide.frame/60-p.delay);
@@ -1738,8 +1740,11 @@ export function installWeaponsFidelity(context,profile) {
       p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
       p.vel.copy(dir).multiplyScalar(w.projSpeed);
       initialize(p,w);
+      // Use the same canonical head solver as native Dualies, without creating drops or wire events.
+      this._aimFrom(actor,p.start,dir,targets[hand]);
+      const ink=this._nominalInkGuide?.(p,actor,w,p.start,dir,targets[hand],w.projSpeed);
       let remaining=Math.max(0,frame/60);
-      while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+      while(remaining>EPSILON){const step=Math.min(1/60,remaining);if(ink)this._advanceInkGuide(p);else advanceFidelityProjectile(p,step);remaining-=step;}
       out.copy(p.pos);
     }
     if(actor.weaponRunner?.s3Turret){
@@ -1883,40 +1888,9 @@ export function installWeaponsFidelity(context,profile) {
       context.G.audio?.play('blaster_boom',{pos:point,volume:.7});
       return;
     }
-    const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon;
-    const c=w?.kind==='blaster' ? blasterPaintContract(rawWeapon(w)) : null;
-    // Only the unobstructed terminal explosion owns this normal burst paint.
-    // Shot/actor/terrain collisions keep their separate collision paint
-    // contract; special burst weapons must never inherit Blaster defaults.
-    if(!c?.burst?.splashDropOn || victim!=null || p.s3BurstCollisionHit)
-      return blastBurst.call(this,p,point,victim);
-    const paint=context.G.paint;
-    if(!paint?.splat || !context.G.physics?.raycast)
-      return blastBurst.call(this,p,point,victim);
-    // The public native burst emits one obsolete generic floor stamp.
-    // Suppress only that direct stamp, preserving FX, sound and hit authority.
-    const nativeSplat=paint.splat;
-    let suppressed=0;
-    paint.splat=function(...args){
-      if(suppressed++===0)return 0;
-      return nativeSplat.apply(this,args);
-    };
-    try{blastBurst.call(this,p,point,victim);}
-    finally{paint.splat=nativeSplat;}
-    // Resolve dedicated type-default splash-drop paint from the actual burst
-    // world position. The precise Nintendo stochastic drop placement remains
-    // a calibration target, not an invented source emission distribution.
-    const down=this._s3BurstDown||(this._s3BurstDown=new context.THREE.Vector3(0,-1,0));
-    const start=this._s3BurstStart||(this._s3BurstStart=new context.THREE.Vector3());
-    start.copy(point); start.y+=0.2;
-    const hit=this._s3BurstPaintHit||(this._s3BurstPaintHit=new context.Hit());
-    const g=context.G.physics.raycast(start,down,3.5,hit);
-    if(g.hit && !p.ghost){
-      const stamp=this._s3BurstPaintPoint||(this._s3BurstPaintPoint=new context.THREE.Vector3());
-      stamp.copy(g.point).addScaledVector(g.normal,0.1);
-      const area=nativeSplat.call(paint,stamp,c.burst.splashDropPaintRadius,p.team,{seed:p.seed??0});
-      p.owner?.addTurf?.(area);
-    }
+    // The composed native burst already owns sourced paint and its deferred
+    // terrain queue. An outer legacy stamp would paint in the contact tick.
+    return blastBurst.call(this,p,point,victim);
   };
   const nativeImpact=Projectiles.prototype._impact;
   Projectiles.prototype._impact=function(p,hit){
@@ -2019,6 +1993,11 @@ function guideLaunchState(actor, weapon, out) {
   projectiles._aimFrom(actor, out.muzzle, out.dir);
   const speed = weapon.kind === 'splatling' ? splatlingLaunchSpeed(weapon, charge) : weapon.projSpeed;
   if (!Number.isFinite(speed) || speed <= 0) return null;
+  probe.owner=actor; probe.s3Weapon=weapon; probe.s3ShooterForwardApplied=false;
+  if (guideApi.G.projectiles._nominalInkGuide?.(probe,actor,weapon,out.muzzle,out.dir,actor.aimPoint,speed)) {
+    applyShooterSpawnVelocity(probe);
+    return probe;
+  }
   fidelityAimConvergence(out.muzzle, out.dir, actor.aimPoint, weapon, speed);
   const move = fidelityMoveFor(weapon);
   probe.pos.copy(out.muzzle); probe.prev.copy(out.muzzle);
@@ -2046,7 +2025,10 @@ export function computeShotGuide(actor) {
   s.state.frames = 0;
   const probe = guideLaunchState(actor, weapon, s);
   if (!probe) return null;
-  for (let i = 0; i < frames; i++) advanceFidelityProjectile(probe, 1 / GUIDE_HZ);
+  for (let i = 0; i < frames; i++) {
+    if(probe.inkProfile)guideApi.G.projectiles._advanceInkGuide(probe);
+    else advanceFidelityProjectile(probe, 1 / GUIDE_HZ);
+  }
   s.state.x = probe.pos.x; s.state.y = probe.pos.y; s.state.z = probe.pos.z; s.state.frames = frames;
   return s.state;
 }

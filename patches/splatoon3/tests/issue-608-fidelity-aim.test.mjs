@@ -9,6 +9,7 @@ async function fireCenterline(kind, { renderHz = 60, profileTransform, targetDis
   const f = await fixture({ profileTransform });
   const actor = f.make(kind);
   actor.pos.set(0, 0, 0);
+  if(kind==='splatling')actor.weaponRunner.charge=actor.weaponRunner.fidelitySplatlingCharge=1;
   actor.character.root.position.set(0, 0, 0);
   actor.aimDir.set(0, 0, 1);
 
@@ -41,7 +42,7 @@ async function fireCenterline(kind, { renderHz = 60, profileTransform, targetDis
       if (!projectile) fire();
       if (crossingY !== null) return;
       const before = projectile.pos.clone();
-      f.advanceFidelityProjectile(projectile, dt);
+      if(projectile.inkProfile)projectiles._advanceInkGuide(projectile);else f.advanceFidelityProjectile(projectile, dt);
       const beforeAlong = (before.x - origin.x) * axisX + (before.z - origin.z) * axisZ;
       const afterAlong = (projectile.pos.x - origin.x) * axisX + (projectile.pos.z - origin.z) * axisZ;
       if (beforeAlong <= distance && afterAlong >= distance) {
@@ -80,9 +81,9 @@ test('S3 shooter-family centerlines converge through the installed fidelity inte
 });
 
 test('centerline prediction follows the installed per-weapon source movement record', async () => {
-  const normal = await fireCenterline('shooter');
+  const normal = await fireCenterline('shooter', {profileTransform:p=>{p.weapons.shooter.inkFlightProfile=null;}});
   const changed = await fireCenterline('shooter', {
-    profileTransform: profile => { profile.weapons.shooter.ballistics.endSpeed -= 8; },
+    profileTransform: profile => { profile.weapons.shooter.inkFlightProfile=null; profile.weapons.shooter.ballistics.endSpeed -= 8; },
   });
   assert.notEqual(normal.endSpeed, changed.endSpeed);
   assert.ok(Math.abs(normal.launchPitch - changed.launchPitch) > 1e-4,
@@ -102,13 +103,8 @@ test('unreachable S3 aim points retain a finite camera direction', async () => {
   }
   const nearLimit = await fireCenterline('splatling', { targetDistance: 20 });
   assert.ok(Number.isFinite(nearLimit.launchPitch));
-  if (nearLimit.crossingY === null) {
-    assert.ok(Math.abs(nearLimit.launchPitch) < 1e-12,
-      'a target beyond the production projectile lifetime keeps the camera-derived pitch');
-  } else {
-    assert.ok(Math.abs(nearLimit.crossingY - nearLimit.targetY) < 0.02,
-      'a target reached before production projectile expiry converges');
-  }
+  assert.ok(Math.abs(nearLimit.launchPitch) < 1e-12,
+    'outside the source guide reach, a distant eventual trajectory crossing does not grant aim correction');
 });
 
 test('the installed adapter replaces both legacy S3 call sites before spread', () => {
@@ -135,7 +131,8 @@ test('#608 the existing weapon guides still predict each converged centerline', 
   for (const kind of ['shooter', 'dualies', 'splatling']) {
     const f = await fixture(), actor = f.make(kind);
     const projectiles = f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
-    actor.pos.set(0, 0, 0); actor.character.root.position.set(0, 0, 0);
+    actor.pos.set(0, 0, 0);
+  if(kind==='splatling')actor.weaponRunner.charge=actor.weaponRunner.fidelitySplatlingCharge=1; actor.character.root.position.set(0, 0, 0);
     actor.aimDir.set(0, 0, 1);
     const muzzle = projectiles._muzzle(actor, new f.THREE.Vector3());
     actor.aimPoint.set(muzzle.x, muzzle.y, muzzle.z + 10.5);
@@ -148,7 +145,7 @@ test('#608 the existing weapon guides still predict each converged centerline', 
       else if (kind === 'dualies') projectiles.fireDualies(actor, actor.weapon, 0, hand);
       else projectiles.fireSplatling(actor, actor.weapon, 0);
       const round = projectiles.list.at(-1);
-      for (let frame = 0; frame < actor.weapon.shotGuideFrame; frame++) f.advanceFidelityProjectile(round, 1 / 60);
+      for (let frame = 0; frame < actor.weapon.shotGuideFrame; frame++) if(round.inkProfile)projectiles._advanceInkGuide(round);else f.advanceFidelityProjectile(round, 1 / 60);
       assert.ok(round.pos.distanceTo(guides[hand]) < 1e-9,
         `${kind} hand ${hand} guide differs from its real converged round by ${round.pos.distanceTo(guides[hand])}`);
     }

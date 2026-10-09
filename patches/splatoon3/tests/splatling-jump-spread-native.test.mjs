@@ -207,7 +207,7 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   close(measuredPitch, Math.atan2(radialPitch, Math.sqrt(1 + radialYaw * radialYaw)), 1e-8);
 
   assert.equal(owner.damage, a.weapon.damage);
-  assert.equal(owner.life, 1.2);
+  assert.equal(owner.life, 3);
   assert.equal(owner.straight, a.weapon.straightTime);
   assert.equal(owner.grav, a.weapon.referenceGravity);
   assert.equal(owner.drag, owner.fidelityMove.freeDrag * 60);
@@ -235,5 +235,5 @@ test('zero-spread ground Splatling range probe preserves its native projectile a
   finishFidelity(f, a);
   const paint = paintMetrics(f);
   assert.deepEqual({ maxZ: paint.bounds?.maxZ, area: paint.area, cells: paint.cells },
-    { maxZ: 15.625, area: 7.8125, cells: 125 });
+    { maxZ: 16.875, area: 15.875, cells: 254 });
 });

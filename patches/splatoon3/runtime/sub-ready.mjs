@@ -58,6 +58,11 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
   if(chargerPostShotBlocksSub(this)){
    cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});
   }
+  // The Roller action owner discards presses/releases inside its post-flick
+  // lock. Do not let the outer preparation owner retain a rejected release.
+  if(a.weapon.kind==='roller'&&(this.s3FlickPostSub||0)>EPS){
+   cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});
+  }
   let s=this.s3SubReady;
   if(s)s.age+=Math.max(0,dt);
   if(!s&&input.sub&&!(this.s3PostShotRemaining>EPS)){
@@ -89,6 +94,13 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
   // A main shot can create a post-shot gate inside the nested update. Never
   // replay an R release that the action owner rejected on that same tick.
   if(this.s3PostShotRemaining>EPS||chargerPostShotBlocksSub(this))cancel(this);
+  else if(!this.s3SubReady&&this.aimingSub&&next.sub&&!next.subReleased){
+   // A nested action clock can expire during update and admit aim for the
+   // first time. Capture that admission so next tick's release cannot bypass
+   // the preparation/use owner merely because the outer precheck was locked.
+   this.s3SubReady={age:0,pending:false,minimum:this.s3SubFromSquid?profile.bomb.readyTimeSquid:profile.bomb.readyTimeKid,useStartup:null};
+   this.s3SubFromSquid=false;
+  }
   return result;
  };
 }

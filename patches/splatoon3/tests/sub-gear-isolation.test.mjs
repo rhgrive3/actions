@@ -52,7 +52,7 @@ test('full dispatcher preserves explicit Kit power once and implicit Storm snaps
  const replace=(s,a,b)=>{assert.equal(s.split(a).length-1,1);return s.replace(a,b);};
  const oldZ='  const horizontal = p.spawnSpeedZ * cp - p.spawnSpeedY * sp;';
  assert.throws(()=>replace(raw,oldZ,'unused'),/0 !== 1/,'old dispatcher anchor cannot transform the explicit-speed module');
- const legacy=raw.replace('  const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;\n','').replace('speed * cp','p.spawnSpeedZ * cp').replace('speed * sp','p.spawnSpeedZ * sp');
+ const legacy=raw.replace('  const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;\n','').replaceAll('speed * cp','p.spawnSpeedZ * cp').replaceAll('speed * sp','p.spawnSpeedZ * sp');
  const legacyCompiled=adaptGearSub(rel,legacy,replace), old=await import('data:text/javascript;base64,'+Buffer.from(legacyCompiled).toString('base64'));
  for(const kind of ['bomb','storm']){const x=old.fidelityThrowVelocity(a,kind,vector()),y=f.fidelityThrowVelocity(a,kind,vector());assert.deepEqual([x.x,x.y,x.z],[y.x,y.y,y.z]);}
  assert.throws(()=>adaptGearSub(rel,compiled,replace),/expected one fidelity launch-speed owner/);

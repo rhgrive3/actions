@@ -193,7 +193,10 @@ test('remote Slosher budget ledger is bounded and evicted volley IDs cannot be r
     assert.equal(G.projectiles.applyHit(attacker, victim, 70, 'slosher', 'x'.repeat(100)), 'rejected',
       'oversized untrusted group keys cannot enter the ledger');
     assert.equal(victim.hp, 100);
-    G.projectiles.clear();
+    const disposable = new w.Projectiles(new w.THREE.Scene());
+    disposable._s3SlosherOwnerGroups = ledger;
+    disposable._s3SlosherOwnerFloors = G.projectiles._s3SlosherOwnerFloors;
+    disposable.clear();
     assert.equal(ledger.size, 0, 'match cleanup empties the bounded ledger');
     assert.equal(G.projectiles._s3SlosherOwnerFloors.size, 0, 'match cleanup clears replay floors');
   } finally {

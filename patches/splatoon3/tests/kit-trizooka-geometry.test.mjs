@@ -732,9 +732,9 @@ test('the volley identity rides the main projectile packet, and old packets stil
   assert.equal(packets.length, VOLLEY_CONFIG.lobes);
   // the two appended fields are the last two, and they are the lobe index
   for (let i = 0; i < VOLLEY_CONFIG.lobes; i++) {
-    assert.equal(packets[i][27], i, `packet ${i} carries its own volley index`);
-    assert.equal(packets[i][28], 0, 'and the action index');
-    assert.equal(packets[i][33].s3SpecialPowerAP, 57, '#977 immutable AP follows stable metadata');
+    assert.equal(packets[i][28], i, `packet ${i} carries its own volley index`);
+    assert.equal(packets[i][29], 0, 'and the action index');
+    assert.equal(packets[i][34].s3SpecialPowerAP, 57, '#977 immutable AP follows stable metadata');
   }
 
   nm.out.length = 0;
@@ -771,8 +771,8 @@ test('the volley identity rides the main projectile packet, and old packets stil
   // a hostile or malformed value is bounded on the way in: the same packet the
   // real recorder produced, with only its two appended fields tampered with
   const evil = packets[0].slice();
-  evil[27] = 1e9;
-  evil[28] = -5;
+  evil[28] = 1e9;
+  evil[29] = -5;
   before = projectiles.list.length;
   api.NetMatch.prototype._play.call(nm, 'peer', evil);
   const bounded = projectiles.list.slice(before);

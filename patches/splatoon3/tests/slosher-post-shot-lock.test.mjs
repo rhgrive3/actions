@@ -45,12 +45,13 @@ test('#926 sub use is blocked for the post-shot window; a buffered sub resolves 
   assert.equal(r.log.bomb[0] - r.log.slosh[0], 16, 'throw lands on the 16th post-shot tick, not stale or duplicated');
 });
 
-test('#926 sub is legal again without delay once the gate has expired', async () => {
+test('#926 sub resumes its normal readiness and 1F use gate after the main lock expires', async () => {
   const r = await setup();
   shootOnce(r); r.step(20);
-  r.a.intent.sub = true; r.step(); r.a.intent.sub = false; r.step();
+  r.a.intent.sub = true; r.step(6); r.a.intent.sub = false; r.step();
+  assert.equal(r.log.bomb.length, 0, 'release owns one separate use-startup tick'); r.step();
   assert.equal(r.log.bomb.length, 1);
-  assert.equal(r.log.bomb[0], r.tick, 'immediate throw on the release tick');
+  assert.equal(r.log.bomb[0], r.tick, 'throw follows the normal 1F use-startup');
 });
 
 test('#926 the 29F repeat interval and the held-ZR carry are unchanged', async () => {

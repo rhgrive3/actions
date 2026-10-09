@@ -341,8 +341,8 @@ function makeDome({ id, serial, owner, team, pos, remote, hpMax = raw.maxFieldHp
     // #1051 wire compatibility keeps the historical property names, but the
     // semantics are corrected: hp = outer barrier (MaxFieldHP), fieldHp =
     // exposed weak/device target (MaxHP). Both feed one destruction progress.
-    hp: raw.maxFieldHp, hpMax: raw.maxFieldHp,
-    fieldHp: raw.maxHp, fieldHpMax: raw.maxHp,
+    hp: hpMax, hpMax,
+    fieldHp: fieldHpMax, fieldHpMax,
     damageProgress: 0,
     radius: raw.minRadius, emitterY: 0, ignited: false,
     burnAccum: 0, overlapAccum: 0, dead: false,

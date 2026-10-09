@@ -65,6 +65,7 @@ async function loadRig(adapted) {
     if (spec === 'three') return three;
     if (spec === '../core/ctx.js') return ctx;
     if (spec === './physics.js') return physics;
+    if(spec==='../../patches/splatoon3/runtime/battle-framing.mjs')return mk(fs.readFileSync(ROOT+'patches/splatoon3/runtime/battle-framing.mjs','utf8'),'battle-framing.mjs');
     throw new Error(`unexpected cameraRig import ${spec}`);
   });
   await mod.evaluate();

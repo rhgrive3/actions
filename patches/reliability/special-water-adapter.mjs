@@ -6,10 +6,7 @@ export function adaptSpecialWater(rel,code){
  const at=code.indexOf(start),end=code.indexOf('\n    }',at)+6;
  if(at<0||end<at)throw Error('Special water hazard anchor mismatch');
  const block=code.slice(at,end);
- // The composed _checkFallDeath helper is a boolean admission predicate.
- // Preserve its return value; the raw Actor.update block returns void.
- const handledReturn = /return true;/.test(block) ? 'true' : '';
- code=replaceOnce(code,block,`    if (this._checkWaterHazard()) return ${handledReturn};`,'ordinary water hazard owner');
+ code=replaceOnce(code,block,'    if (this._checkWaterHazard()) return;','ordinary water hazard owner');
  const method=block.replaceAll('P.fallDeathY','PLAYER.fallDeathY').replaceAll('P.waterY','PLAYER.waterY').replace('      return;','      return true;');
  code=replaceOnce(code,'  _nearCamera() {',`  _checkWaterHazard() {
     if (!this.alive) return true;

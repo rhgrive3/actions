@@ -96,6 +96,7 @@ test('#604 floor contact and the already-routed families keep their prior behavi
   const f = await boot(); t.after(f.close);
   const a = f.make({ weapon: 'dualies' }); f.tick(a); a.aimYaw = 0; a.aimPitch = -.6;
   const ps = f.G.projectiles; let impacts = 0; const impact = ps._impact; ps._impact = function (p, h) { impacts++; return impact.call(this, p, h); };
+  const inkImpact=ps.inkFlight.impact;ps.inkFlight.impact=function(p,h){impacts++;return inkImpact.call(this,p,h);};
   ps.fireDualies(a, a.weapon, 0, 0); const p = ps.list.at(-1);
   for (let i = 0; i < 90 && ps.list.includes(p); i++) ps.update(STEP);
   assert.equal(p.fidelityWallDrop ?? null, null, 'a floor hit is not a wall-drop');
@@ -149,7 +150,8 @@ for (const weapon of ['shooter', 'charger', 'roller']) test(`#644/#643 ${weapon}
   const f = await boot(); t.after(f.close);
   const a = f.make({ weapon }); f.tick(a); a.weapon={...a.weapon,sub:'bomb'}; a.ink = 100; // named Splat Bomb test, not the weapon's later verified Kit
   a.intent.sub = true; f.tick(a, 20); a.intent.sub = false; f.tick(a);
-  assert.equal(f.G.projectiles.bombs.length, 1, 'bomb thrown on release');
+  assert.equal(f.G.projectiles.bombs.length, 0, 'release starts the independent 1F use gate'); f.tick(a);
+  assert.equal(f.G.projectiles.bombs.length, 1, 'bomb thrown after the 1F use gate');
   const after = a.ink; let first = null;
   for (let i = 1; i <= 90 && first === null; i++) { f.tick(a); if (a.ink > after + 1e-9) first = i; }
   assert.equal(first, Math.round(f.SUB.bomb.inkRecoverStop * 60), 'refill begins at the bomb stop, not the main-weapon stop');

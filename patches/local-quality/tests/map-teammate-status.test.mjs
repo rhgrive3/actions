@@ -1,3 +1,4 @@
+import {configDependency} from './config-fixture.mjs';
 import {sampleRespawnCountdown} from '../../splatoon3/runtime/respawn-lifecycle.mjs';
 // Actual composed HUD and native UI maths; display nodes and the FX clock are fixtures.
 import test from 'node:test';
@@ -36,7 +37,7 @@ class El {
 async function fixture({baseline=false}={}) {
   const G={settings:{},match:null,actors:[],teamHex:['#f80','#08f'],audio:{play(){}},rig:{dioLook:{x:0,y:0}}};
   const context=vm.createContext({console,performance,Math,innerWidth:1000,innerHeight:700,setTimeout:()=>0,document:{body:new El(),createElement:tag=>new El(tag),createTextNode:text=>({textContent:text})}});
-  const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(()=>{throw Error('config dependency');});await config.evaluate();
+  const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(spec=>configDependency(spec,context));await config.evaluate();
   const translate=s=>s,i18n=new vm.SyntheticModule(['tx','isJa'],function(){this.setExport('tx',translate);this.setExport('isJa',()=>false);},{context});
   const util=new vm.SourceTextModule(site&&!baseline?fs.readFileSync(path.join(site,'src/ui/ui-util.js'),'utf8'):read('src/ui/ui-util.js'),{context});await util.link(()=>i18n);await util.evaluate();
   const values={G,sampleRespawnCountdown,on:()=>()=>{},t:translate,...config.namespace,...THREE,GLYPHS:{},SUB_ICONS:{},weaponIcon:x=>x,specialIcon:x=>x,keycap:x=>x,richText:x=>x};

@@ -21,7 +21,7 @@ import {
   clearBigBubblers, kitBarrierCandidate,
 } from '../runtime/kit-big-bubbler.mjs';
 import { installKitDefense } from '../runtime/kit-defense.mjs';
-import { fidelityDamage } from '../runtime/weapons-fidelity.mjs';
+import { fidelityDamage, installWeaponsFidelity } from '../runtime/weapons-fidelity.mjs';
 
 const RAW_PER_DAMAGE_UNIT = 100;   // BIG_BUBBLER_CALIBRATION.rawPerDamageUnit
 const FALLOFF_RANGE = 7;           // the native constant in weapons.js
@@ -29,6 +29,9 @@ const FAR_CASE_HP = 20000;         // pinned test budget, above one far contact
 
 async function composed() {
   const f = await fixture();
+  // Host-realm Kit helpers consume the same pinned source table as the VM.
+  // Register them on unused derived prototypes, leaving the native VM owners intact.
+  installWeaponsFidelity({...f,Projectiles:class extends f.Projectiles {},WeaponRunner:class extends f.WeaponRunner {}},f.profile);
   const scene = new f.THREE.Scene();
   f.G.scene = scene;f.G.camera={position:new f.THREE.Vector3(0,20,0)};
   f.G.projectiles = new f.Projectiles(scene);

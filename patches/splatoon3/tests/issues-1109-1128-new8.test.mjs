@@ -23,9 +23,9 @@ test('#1128 Roller flick launch uses legal actor aim pitch without the legacy pl
 
 test('#1109 adapted Roller contact uses nonzero stick admission rather than hs > 1.0', () => {
   const code = s3('src/game/weapons.js');
-  assert.ok(code.includes('Math.abs(dy) < 1.2 && rollerStickActive(a))'));
+  assert.ok(code.includes('rollerStickActive(a) && rollerContactCandidate(a, e, w, PLAYER)'));
   assert.ok(code.includes('if (G.boss && rollerStickActive(a))'));
-  assert.ok(code.includes("import { rollerStickActive } from '../../patches/splatoon3/runtime/roller.mjs';"));
+  assert.ok(code.includes("import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';"));
   assert.ok(!code.includes('Math.abs(dy) < 1.2 && hs > 1.0'));
   assert.ok(!code.includes('if (G.boss && hs > 1.0)'));
 });

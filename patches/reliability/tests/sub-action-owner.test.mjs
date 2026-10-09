@@ -56,16 +56,11 @@ for(const kind of ['roller','slosher','blaster'])test(`#530 ${kind}: committed a
   const pending=()=>h.r.flick>=0||h.r.slosh>=0||h.r.s3BlasterWindup>0;
   assert.ok(pending());let ticks=0;while(pending()&&ticks++<180){h.step({sub:true});assert.equal(h.r.aimingSub,false);}
   assert.ok(ticks<180);assert.deepEqual(h.shots.map(s=>s.kind),[kind]);const lock=Math.max(h.r.s3FlickPostSub||0,h.r.s3PostShotRemaining||0);assert.ok(lock>0,'current release owns its post-shot sub gate');for(let age=1;age<=Math.ceil((lock+1e-9)/STEP)+1&&!h.r.aimingSub;age++)h.step({sub:true});assert.equal(h.r.aimingSub,true);
+  // A rejected main-lock press cannot pre-age a fresh preparation owner.
+  const ready=h.r.s3SubReady,readySteps=ready?Math.ceil(Math.max(0,ready.minimum-ready.age)/STEP):0;
+  for(let frame=0;frame<readySteps;frame++)h.step({sub:true});
   h.step({subReleased:true,fire:true,firePressed:true});
-  const releaseKinds=h.shots.map(s=>s.kind);
-  // A long held Sub may have already completed its independent ready/use
-  // clocks. A freshly admitted release completes on the following tick.
-  // Either way, only one Bomb may be created and no main attack can replay.
-  assert.ok(
-    JSON.stringify(releaseKinds)===JSON.stringify([kind]) ||
-    JSON.stringify(releaseKinds)===JSON.stringify([kind,'bomb']),
-    'commit must not replay main or duplicate a Bomb',
-  );
+  assert.deepEqual(h.shots.map(s=>s.kind),[kind],'the separate 1F use-startup emits no main or bomb early');
   h.step();assert.deepEqual(h.shots.map(s=>s.kind),[kind,'bomb']);
 });
 test('#530 sub aim preserves elapsed cooldown/recovery and low-ink Bomb rejection',async()=>{

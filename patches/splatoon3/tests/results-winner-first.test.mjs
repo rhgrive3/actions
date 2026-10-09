@@ -97,6 +97,6 @@ test('#941: team ids, per-team player order (turf descending) and coverage pairi
 
 test('#941: the connection fails closed on upstream drift and double application', () => {
   const raw = read('src/ui/menus.js');
-  assert.throws(() => adaptSource('src/ui/menus.js', raw.replace('table(0), table(1)', 'table(0),table(1)')), /winner-first Turf results order|match HUD conflict/);
-  assert.throws(() => adaptSource('src/ui/menus.js', adaptSource('src/ui/menus.js', raw)), /winner-first Turf results order|match HUD conflict/);
+  assert.throws(() => adaptSource('src/ui/menus.js', raw.replace('table(0), table(1)', 'table(0),table(1)')), /winner-first Turf results order|match HUD conflict|patch conflict/);
+  assert.throws(() => adaptSource('src/ui/menus.js', adaptSource('src/ui/menus.js', raw)), /winner-first Turf results order|match HUD conflict|patch conflict/);
 });

@@ -1,3 +1,4 @@
+import {notePausedWorldChange} from '../idle-resources.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -379,7 +380,7 @@ function createComposedSettingsFixture({ gyroSupported = true, needsPermission =
   };
 
   const sandbox = {
-    applyAimSettingsChange, Promise, clearTimeout, G: { mode: 'match' }, t: value => value,
+    notePausedWorldChange, applyAimSettingsChange, Promise, clearTimeout, G: { mode: 'match' }, t: value => value,
     localStorage: { setItem(_key, value) { game.saved.push(JSON.parse(value)); } },
   };
   const save = compose('src/main.js').match(/^function saveJSON.*$/m)[0];

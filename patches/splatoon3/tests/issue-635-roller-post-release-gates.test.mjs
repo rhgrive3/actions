@@ -60,6 +60,7 @@ test('horizontal flick release holds sub for 14F and squid for 15F', async () =>
   f.tick(c, 7);
   c.intent.sub = false;
   f.tick(c);
+  assert.equal(thrown.length,0,'release still owns its independent 1F use-startup');f.tick(c);
   assert.equal(thrown.length, 1, 'legal release after the gate throws once');
 });
 
