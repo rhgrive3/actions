@@ -261,6 +261,22 @@ test('reaction state retires with hide/dispose and the module stays presentation
   assert.ok(source.includes('T_HIT'), 'the reaction rides the native hit window');
 });
 
+test('native solver feedback objects keep their identities during hit presentation', async () => {
+  const api = await production(), r = rig(api, { kind: 'dualies' });
+  try {
+    stepFor(r, WARMUP);
+    r.ch.trigger('hit', { x: 0.6, z: 0.8, amp: 1 });
+    stepFor(r, 1);
+    const refs = [r.ch.ikErr, r.ch._fL, r.ch._fR, r.ch._fLq, r.ch._fRq, r.ch._headQW,
+      ...r.ch.feet.map(f => f.disp)];
+    stepFor(r, 6);
+    assert.equal(weaponHitReactionSnapshot(r.ch).active, true);
+    const after = [r.ch.ikErr, r.ch._fL, r.ch._fR, r.ch._fLq, r.ch._fRq, r.ch._headQW,
+      ...r.ch.feet.map(f => f.disp)];
+    after.forEach((value, i) => assert.strictEqual(value, refs[i], 'render feedback object identity is stable'));
+  } finally { r.close(); }
+});
+
 function seededRandom(seed) {
   let state = seed >>> 0;
   return () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 0x100000000; };

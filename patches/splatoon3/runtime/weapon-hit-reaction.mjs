@@ -1,6 +1,13 @@
 // Issue #1097: class/state hit-pose presentation. Shape values are INKWAVE
 // calibration; public S3 names do not establish retail curves or timing.
 const INSTALL = Symbol.for('inkwave.s3.weapon-hit-reaction.install.v1');
+const FEEDBACK_FIELDS = [
+  ['lifeLv'],['hipDrop'],['ikErrPre'],['_toeUp'],['_headSet'],['_hairOdd'],['_hairAcc'],
+  ['ikErr','0123'],['_fL','xyz'],['_fR','xyz'],['_fLq','xyzw'],['_fRq','xyzw'],['_headQW','xyzw'],
+];
+const FOOT_FIELDS = [['disp','xyz'],['dispYaw'],['dispOK']];
+const fieldWidth = fields => fields.reduce((n,[,axes]) => n+(axes?.length||1),0);
+const FEEDBACK_WIDTH = fieldWidth(FEEDBACK_FIELDS), FOOT_WIDTH = fieldWidth(FOOT_FIELDS);
 const SHAPES = [
   -10,-12,-15,-5,6,5,-3,-1,5,-4,-6,-4,6,3,25,85,
   15,12,9,4,-5,-4,6,-2,6,10,12,-15,-10,-4,45,90,
@@ -18,6 +25,22 @@ const envelope = age => age < 0 || age >= RELEASE || !Number.isFinite(age) ? 0 :
   Math.min(1,age/ATTACK) * (1-smooth((age-HOLD)/(RELEASE-HOLD)));
 const stateOf = ch => ch?.[INSTALL]?.states.get(ch);
 
+function feedback(ch,s,restore) {
+  let n=0;
+  for(const [key,axes] of FEEDBACK_FIELDS) {
+    const o=ch[key];
+    if(axes) for(let i=0;i<axes.length;i++) {
+      const a=axes[i]; if(restore)o[a]=s.fb[n];else s.fb[n]=o[a]; n++;
+    } else if(restore) ch[key]=s.fb[n++]; else s.fb[n++]=ch[key];
+  }
+  for(const foot of ch.feet) for(const [key,axes] of FOOT_FIELDS) {
+    const o=foot[key];
+    if(axes) for(let i=0;i<axes.length;i++) {
+      const a=axes[i]; if(restore)o[a]=s.fb[n];else s.fb[n]=o[a]; n++;
+    } else if(restore) foot[key]=s.fb[n++]; else s.fb[n++]=foot[key];
+  }
+}
+
 function stateFor(ch) {
   const hooks=ch[INSTALL]; let s=hooks.states.get(ch);
   if(!s) {
@@ -25,6 +48,7 @@ function stateFor(ch) {
       basePose:new Float32Array(ch.P.length),gm:ch.root.position.clone(),gl:ch.root.position.clone(),
       kp:ch.kid.position.clone(),kq:ch.kid.quaternion.clone(),ks:ch.kid.scale.clone(),
       rp:ch.kid.position.clone(),rq:ch.kid.quaternion.clone(),rs:ch.kid.scale.clone(),
+      fb:new Array(FEEDBACK_WIDTH+ch.feet.length*FOOT_WIDTH),
       mv:false,mm:false,lm:false,q:false};
     hooks.states.set(ch,s);
   }
@@ -102,17 +126,10 @@ export function installWeaponHitReaction(api) {
       const main=this.weapon?.muzzle;v.mm=!!main;if(main)main.getWorldPosition(v.gm);
       const left=this.dual&&this.weapon?.left?.muzzle;v.lm=!!left;if(left)left.getWorldPosition(v.gl);
       this.P=render;
-      const f=[this.hipDrop,this.ikErr.slice(),this.ikErrPre,this._toeUp,this._fL.clone(),this._fR.clone(),
-        this._fLq.clone(),this._fRq.clone(),this._headQW.clone(),this._headSet,this._hairOdd,this._hairAcc,
-        this.feet.map(f=>[f.disp.clone(),f.dispYaw,f.dispOK])];
-      const life=this.lifeLv,odd=this._hairOdd;this.lifeLv=0;this._hairOdd=false;
+      feedback(this,v,false);this.lifeLv=0;this._hairOdd=false;
       try{result=applyPose.call(this,0,s);}
       finally {
-        this.lifeLv=life;this._hairOdd=odd;
-        this.hipDrop=f[0];this.ikErr=f[1];this.ikErrPre=f[2];this._toeUp=f[3];
-        this._fL=f[4];this._fR=f[5];this._fLq=f[6];this._fRq=f[7];this._headQW=f[8];
-        this._headSet=f[9];this._hairOdd=f[10];this._hairAcc=f[11];
-        for(let i=0;i<this.feet.length;i++){const a=f[12][i],b=this.feet[i];b.disp=a[0];b.dispYaw=a[1];b.dispOK=a[2];}
+        feedback(this,v,true);
       }
       v.mv=true;
     } finally {this.P=render;v.q=false;}
