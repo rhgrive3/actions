@@ -239,7 +239,7 @@ function seededRandom(seed) {
   return () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 0x100000000; };
 }
 
-test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan parity under hit presentation', async () => {
+test('composed Actor/WeaponRunner/Projectiles keep muzzle and Charger flight parity under hit presentation', async () => {
   const f = await composedFixture({ fullRuntime: true, productionComposition: true, realProjectiles: true,
     extraExports: `
       export { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS } from './inkwave-public/src/game/character.js';
@@ -254,7 +254,7 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
   G.physics.groundProbe = (_x, _y, _z, _up, _down, _radius, hit) => { hit.hit = false; return hit; };
   let current = null;
   G.physics.raycast = (origin, direction, distance, hit) => {
-    if (current) current.trace.rays.push({ origin: origin.toArray(), direction: direction.toArray(), distance });
+    if (current) current.trace.physicsQueries.push({ origin: origin.toArray(), direction: direction.toArray(), distance });
     hit.hit = false; // no world contact and no enemy actor: explicit miss control
     return hit;
   };
@@ -319,7 +319,7 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
     // same gameplay random stream even when shared asset caches are warm.
     const random = seededRandom(0x1097);
     f.setRandom(random);
-    const trace = { events: [], calls: [], rounds: [], rays: [], hp: null, state: [] };
+    const trace = { events: [], calls: [], rounds: [], physicsQueries: [], chargerFlight: null, hp: null, state: [] };
     let frame = 0;
     const step = fire => {
       a.intent.fire = fire;
@@ -345,7 +345,7 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
       if (kind === 'charger' || kind === 'splatling') {
         while (a.weaponRunner.charge < 0.88 && frame < 150) step(true);
         damage(); step(true); step(true);
-        step(false); // Charger releases its hitscan; Splatling starts its real stream.
+        step(false); // Charger creates its finite-flight job; Splatling starts its real stream.
         if (kind === 'splatling' && trace.events.length === 0) step(false);
       } else if (kind === 'roller') {
         step(true); // admit the real Runner flick
@@ -360,6 +360,16 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
       const wanted = kind === 'dualies' ? 2 : 1;
       while (trace.events.length < wanted && frame < 220)
         step(kind === 'charger' || kind === 'roller' ? false : true);
+      if (kind === 'charger') {
+        const job = ps._fidelityChargerFlights?.find(item => item.owner === a);
+        assert.ok(job, 'the composed Charger release creates a finite-flight Projectiles job');
+        const shot = trace.events.find(event => event.weapon === 'charger');
+        assert.ok(shot, 'the composed Charger job emits its native weapon:fire event');
+        trace.chargerFlight = { origin: job.origin.toArray(), direction: job.dir.toArray(), charge: job.charge,
+          range: job.range, speed: job.speed, seed: job.seed };
+        assert.deepEqual(trace.chargerFlight.origin, shot.muzzle, 'Charger flight and event share the selected muzzle origin');
+        assert.deepEqual(trace.chargerFlight.direction, shot.direction, 'Charger flight and event share the selected direction');
+      }
       trace.hp = a.hp;
       trace.randomCalls = random.calls;
       trace.reaction = f.weaponHitReactionSnapshot(a.character);
@@ -373,7 +383,6 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
       else assert.equal(trace.reaction.active, false, `${kind} miss control never creates a hit reaction`);
       if (kind === 'dualies') assert.deepEqual(new Set(trace.events.slice(0, wanted).map(e => e.hand)), new Set([0, 1]),
         'the composed Dualies case emits both native hands');
-      if (kind === 'charger') assert.ok(trace.rays.length > 0, 'the real Charger hitscan raycast runs');
       return trace;
     } finally {
       current = null; G.actors.length = 0; ps.clear(); a.character.dispose(); G.scene.remove(a.character.root);
@@ -382,7 +391,8 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
 
   function gameplayOnly(trace) {
     return { events: trace.events.map(({ active, ...event }) => event), calls: trace.calls, rounds: trace.rounds,
-      rays: trace.rays, hp: trace.hp, state: trace.state.map(({ randomCalls, ...state }) => state) };
+      physicsQueries: trace.physicsQueries, chargerFlight: trace.chargerFlight,
+      hp: trace.hp, state: trace.state.map(({ randomCalls, ...state }) => state) };
   }
   try {
     // All seven families at every requested input/render interval. The same
@@ -393,7 +403,7 @@ test('composed Actor/WeaponRunner/Projectiles keep gameplay muzzle and hitscan p
       assert.deepEqual(gameplayOnly(posed), gameplayOnly(base), `${kind} gameplay muzzle/projectile parity at ${hz}Hz`);
       assert.equal(posed.randomCalls, base.randomCalls, `${kind} random stream parity at ${hz}Hz`);
     }
-    // Remote pose and no-hit/miss controls exercise the distinct hitscan and
+    // Remote pose and no-hit/miss controls exercise the distinct Charger flight and
     // both-hand accessors without multiplying the exhaustive family matrix.
     for (const kind of ['shooter', 'charger', 'dualies']) {
       const remoteBase = run(kind, 60, { enabled: false, hit: true, remote: true });
