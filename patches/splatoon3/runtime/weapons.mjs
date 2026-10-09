@@ -1,7 +1,7 @@
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
-import { installFinalDamage, damageGroupId } from './final-damage.mjs';
+import { installFinalDamage, damageGroupId, withFinalDamageGroup } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installSplatling } from './splatling.mjs';
@@ -223,7 +223,8 @@ export function applySlosherVolleyHit(system, owner, victim, group, groupId, amo
   if (!(delta > 0)) return;
   if (!group) return system.applyHit(owner, victim, delta, weaponId);
   const hpBefore = victim.hp, aliveBefore = victim.alive;
-  const result = system.applyHit(owner, victim, delta, weaponId);
+  const result = withFinalDamageGroup(victim, groupId ?? damageGroupId(group),
+    () => system.applyHit(owner, victim, delta, weaponId));
   if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
   return result;
 }
@@ -321,7 +322,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     clearSplatlingSubInterrupt(this);
-    this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
+    this.s3Stored = null; this.s3KeepMuzzlePending = false; this.s3KeepMuzzleFiring = false; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false; this.s3BlasterMoveRemaining = 0;
     this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
     this.s3SloshRecovery = false; this.s3SloshPrevYaw = null; this.s3SloshTurnDelta = 0;
@@ -490,7 +491,7 @@ export function installWeapons(context, profile) {
   // Stored-charge lifetime/startup ownership from C22 is composed with #775's
   // progressive ink commitment. Paid ink is never refunded by cancel/keep.
   const cancelStored = r => {
-    r.s3Stored = null; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
+    r.s3Stored = null; r.s3KeepMuzzlePending = false; r.s3KeepMuzzleFiring = false; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
     r.s3ChargerSpent = 0;
     r.s3ChargerElapsed = null; r.s3ChargerElapsedCompensation = 0;
     r.chargeLoop?.stop(.05); r.chargeLoop = null;
@@ -563,7 +564,7 @@ export function installWeapons(context, profile) {
       if (this.s3Stored) {
         this.s3Stored.remaining -= dt;
         this.s3Stored.resurfaced = false;
-        if (this.s3Stored.remaining <= epsilon) { this.s3Stored = null; this.s3ChargerSpent = 0; }
+        if (this.s3Stored.remaining <= epsilon) { this.s3Stored = null; this.s3KeepMuzzlePending = false; this.s3ChargerSpent = 0; }
       }
       return;
     }
@@ -589,6 +590,8 @@ export function installWeapons(context, profile) {
       this.s3ChargerElapsed = w.chargeTime; this.s3ChargerElapsedCompensation = 0;
       this.s3ChargerSpent = this.s3Stored.paid ?? w.inkFull;
       this.s3ChargerHeldTime = w.minReleaseTime || 0;
+      // Keep-shot identity survives the ordinary 1F deferred release.
+      this.s3KeepMuzzlePending = true;
       this.s3Stored = null;
     }
 
@@ -631,24 +634,31 @@ export function installWeapons(context, profile) {
     if (inp.fire && this.cooldown <= 0) {
       if (!this.charging) {
         this.s3ChargerSpent = 0;
+        this.s3KeepMuzzlePending = false; // fresh charge must not inherit an old keep origin
         this.s3ChargerElapsed = 0; this.s3ChargerElapsedCompensation = 0;
       }
       const beforeT = this.chargeT || 0, realInk = a.ink;
       const fundedInk = (this.s3ChargerSpent || 0) + realInk;
       const low = fundedInk + epsilon < w.inkMin;
-      const rate = !a.grounded ? (w.airChargeRate ?? 1 / 3) : low ? (w.emptyChargeRate ?? 1 / 3) : 1;
       const chargeDuration = Math.max(epsilon, w.chargeTime);
+      // #971: air slowdown starts only beyond the minimum charge. Split a
+      // crossing step; low-ink slowdown is independent and still applies first.
+      const fundedRate = low ? (w.emptyChargeRate ?? 1 / 3) : 1;
+      const airRate = a.grounded ? 1 : (w.airChargeRate ?? 1 / 3);
+      const minimum = w.minimumChargeTime ?? 8 / 60;
+      const earlyDt = Math.min(dt, Math.max(0, minimum - beforeT * chargeDuration) / fundedRate);
+      const progressDt = earlyDt * fundedRate + (dt - earlyDt) * Math.min(fundedRate, airRate);
       if (!Number.isFinite(this.s3ChargerElapsed)) {
         this.s3ChargerElapsed = beforeT * chargeDuration;
         this.s3ChargerElapsedCompensation = 0;
       }
-      const requestedT = Math.min(1, beforeT + dt / chargeDuration * rate);
+      const requestedT = Math.min(1, beforeT + progressDt / chargeDuration);
       const inkLimitT = chargerProgressForInk(w, fundedInk);
       const targetT = Math.min(requestedT, inkLimitT);
       const inkLimited = inkLimitT < requestedT;
       const elapsedStep = inkLimited
         ? Math.max(0, targetT - beforeT) * chargeDuration
-        : Math.min(dt * rate, Math.max(0, (1 - beforeT) * chargeDuration));
+        : Math.min(progressDt, Math.max(0, (1 - beforeT) * chargeDuration));
       const elapsed = accumulateChargerElapsed(this, elapsedStep);
       const scaledDt = Math.max(0, targetT - beforeT) * w.chargeTime;
       // Normalized progress can land one ULP below 1 after repeated fractional
@@ -656,7 +666,9 @@ export function installWeapons(context, profile) {
       // native full endpoint on its completion tick. It does not soften
       // isChargerFullCharge: q<1 presentation/packets remain partial, and
       // ink-limited progress cannot complete the clock.
-      if (!inkLimited && elapsed >= w.chargeTime) this.chargeT = 1;
+      // The 1/3 airborne rate can finish one representable double below 1s.
+      // Only normalize clock roundoff, never partial packet/ink-limited charge.
+      if (!inkLimited && elapsed + Number.EPSILON * Math.max(1, w.chargeTime) >= w.chargeTime) this.chargeT = 1;
 
       // Advance the native charge owner with a temporary admissible tank, then
       // debit the real tank from the sourced min/full endpoints.
@@ -689,10 +701,15 @@ export function installWeapons(context, profile) {
       const realInk = a.ink, c = Math.max(0, this.charge || 0);
       const legacyDebit = Math.max(w.inkMin, w.inkFull * c);
       a.ink = realInk + legacyDebit;
-      const result = charger.call(this, dt, inp, w);
-      a.ink = realInk;
-      this.s3ChargerSpent = 0;
-      return result;
+      // The projectile engine reads this ONLY within the synchronous native shot.
+      this.s3KeepMuzzleFiring = !!this.s3KeepMuzzlePending;
+      try { return charger.call(this, dt, inp, w); }
+      finally {
+        a.ink = realInk;
+        this.s3ChargerSpent = 0;
+        this.s3KeepMuzzlePending = false;
+        this.s3KeepMuzzleFiring = false;
+      }
     }
     return charger.call(this, dt, inp, w);
   };
@@ -965,7 +982,7 @@ export function installWeapons(context, profile) {
     const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
     if (!(delta > 0)) return 'accepted';
     const hpBefore = victim.hp, aliveBefore = victim.alive;
-    const result = applyHit.call(this, attacker, victim, delta, weaponId);
+    const result = applyHit.call(this, attacker, victim, delta, weaponId, groupId);
     if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
     return result;
   };
