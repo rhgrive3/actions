@@ -18,7 +18,7 @@ test('#1178 malformed owner snapshots cannot poison interpolation or transforms'
     s => { s[2] = Infinity; },
     s => { s[7] = '9'; },
     s => { s[11] = -Infinity; },
-    s => { s[10] = 0x200000; },
+    s => { s[10] = 0x40000000; },
     s => { s.length = 11; },
     s => { s[16] = 1.25; },
     s => { s[6] = 100001; },
