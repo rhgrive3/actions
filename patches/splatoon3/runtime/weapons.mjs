@@ -1,5 +1,6 @@
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
+import { DualiesAccuracy } from './dualies-accuracy.mjs';
 import { shooterMovementRemaining, shooterMovementSpeed } from './shooter-movement.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
@@ -303,6 +304,8 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
 export function installWeapons(context, profile) {
   api = context;
   const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  const dualiesParam = profile.weaponsFidelityCompletion?.weapons?.dualies?.WeaponParam;
+  const dualiesReferenceHz = profile.weaponsFidelityCompletion?.referenceHz;
   WeaponRunner.prototype.s3StepSplatlingSubInterrupt = function (dt, input) {
     return splatlingSubInterrupt(this, this.a, dt, input);
   };
@@ -351,6 +354,8 @@ export function installWeapons(context, profile) {
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
     this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
+    this.s3DualiesAccuracy = new DualiesAccuracy(dualiesParam, dualiesReferenceHz);
+    this.s3DualiesJumpSeen = this.a?.s3JumpSerial || 0;
     this.s3ShooterMoveRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
@@ -443,9 +448,29 @@ export function installWeapons(context, profile) {
     return { supported: true, active, age: active ? this.s3BlasterJumpT : null,
       frames, bias, envelope, ground, phase, recovering: phase === 'recovering' };
   };
+  WeaponRunner.prototype.s3DualiesBiasState = function (w) {
+    if (!w || w.kind !== 'dualies' || !this.s3DualiesAccuracy)
+      return { supported: false, bias: null, inHold: false, recovering: false, turret: false };
+    return { supported: true, ...this.s3DualiesAccuracy.snapshot(),
+      turret: !!(this.s3Turret || this.lockT > 0) };
+  };
   const runnerUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const weapon = this.a.weapon;
+    if (weapon.kind === 'dualies') {
+      // #891: the sourced state is created in reset(); a runner constructed
+      // before this install gets it here instead, so normal Dualies play
+      // always owns an authoritative bias state.
+      if (!this.s3DualiesAccuracy && dualiesParam)
+        this.s3DualiesAccuracy = new DualiesAccuracy(dualiesParam, dualiesReferenceHz);
+      if (this.s3DualiesAccuracy) {
+        this.s3DualiesAccuracy.advance(dt);
+        const jumpSerial = this.a.s3JumpSerial || 0;
+        if (jumpSerial !== this.s3DualiesJumpSeen) this.s3DualiesAccuracy.jump();
+        this.s3DualiesJumpSeen = jumpSerial;
+        if (this.a.grounded) this.s3DualiesAccuracy.applyGroundedCap();
+      }
+    } else this.s3DualiesJumpSeen = this.a?.s3JumpSerial || 0;
     if (weapon.kind === 'shooter') this.s3ShooterMoveRemaining = shooterMovementRemaining(this.s3ShooterMoveRemaining, dt);
     if (weapon?.kind === 'blaster') this.s3BlasterMoveRemaining = Math.max(0, (this.s3BlasterMoveRemaining || 0) - dt);
     else this.s3BlasterMoveRemaining = 0;
@@ -831,9 +856,25 @@ export function installWeapons(context, profile) {
       return result;
     };
   }
+  // #891: the pinned table and the Wiki source the outer-reticle bias chance
+  // and the maximum deviation envelopes; the conditional inner/outer angular
+  // kernels are the documented local approximation in dualies-accuracy.mjs
+  // (real inner scatter, no invented 0° center, no retail PDF claim). This
+  // wrapper only owns the sourced bias state: it advances once per emitted
+  // normal projectile and stays out of post-roll/turret fire. Runners without
+  // the composed state — stub fixture actors that never step this update —
+  // keep the legacy full-envelope law and skip the bookkeeping.
   const fireDualies = Projectiles.prototype.fireDualies;
   Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
+    const runner = a?.weaponRunner;
+    const accuracy = runner?.s3DualiesAccuracy;
+    const normal = !!accuracy && w?.kind === 'dualies' && !runner.s3Turret && !(runner.lockT > 0);
+    const before = Array.isArray(this.list) ? this.list.length : null;
     const result = fireDualies.call(this, a, w, spreadDeg, hand);
+    const emitted = before !== null && Array.isArray(this.list) ? this.list.length - before : 0;
+    if (normal && emitted > 0) {
+      for (let i = 0; i < emitted; i++) accuracy.recordShot(!!a.grounded);
+    }
     if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
     return result;
   };
@@ -884,7 +925,11 @@ export function installWeapons(context, profile) {
       return base; // S3 maximum outer envelope; selection happens on each admitted shot
     }
     if (w.kind === 'shooter') return w.spreadGround;
-    return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
+    if (w.kind === 'dualies') {
+      if (this.s3Turret || this.lockT > 0) return w.spreadLock;
+      return this.a.grounded ? w.spreadGround : w.spreadAir;
+    }
+    return spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
   Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {
