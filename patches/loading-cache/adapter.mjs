@@ -84,7 +84,12 @@ export function adaptCompiledMain(source) {
 export function loadingIdentity() {
   return Object.fromEntries(filesIn(LOADING_ROOT).filter(file=>!file.includes(`${path.sep}tests${path.sep}`)&&!file.endsWith('.md')).map(file=>[path.relative(LOADING_ROOT,file).split(path.sep).join('/'),hash(fs.readFileSync(file))]));
 }
-export function prepareLoading(build, preloads) {
+export function prepareLoading(build, preloads, { diagnosticUnminified = false } = {}) {
+  // Production limits are unchanged. An explicitly selected local diagnostic
+  // build has no minifier/tree shaking, so declare its separate bounded budget.
+  const budget = diagnosticUnminified
+    ? { mode: 'diagnostic-unminified', precache: 12 * 1024 * 1024, revision: 24 * 1024 * 1024, worker: 128 * 1024 }
+    : { mode: 'production', precache: 5 * 1024 * 1024, revision: 12 * 1024 * 1024, worker: 64 * 1024 };
   let html=fs.readFileSync(path.join(build,'index.html'),'utf8');
   if(/<base\s/i.test(html)||html.includes('inkwave-startup-shell'))throw new Error('loading-cache requires one unversioned staging tree');
   if(preloads.length!==new Set(preloads).size)throw new Error('loading-cache: duplicate preload inputs');
@@ -114,20 +119,24 @@ export function prepareLoading(build, preloads) {
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
   const assetBytes=Object.values(assets).reduce((sum,a)=>sum+a[0],0);
-  if(precacheBytes>5*1024*1024||assetBytes+512*1024>12*1024*1024)throw new Error('loading-cache: payload budget exceeded');
-  return {assets,precache,assetBytes,precacheBytes,phases:adapted.phases};
+  if(precacheBytes>budget.precache||assetBytes+512*1024>budget.revision)throw new Error(`loading-cache: ${budget.mode} payload budget exceeded (${precacheBytes} precache, ${assetBytes} assets)`);
+  return {assets,precache,assetBytes,precacheBytes,phases:adapted.phases,budget};
 }
 export function finalizeLoadingWorker(build, revision, plan, compactTemplate = source => source) {
   if(!/^[a-f0-9]{64}$/.test(revision))throw new Error('loading-cache: invalid revision');
   const index=fs.readFileSync(path.join(build,'index.html'));
   const config={schema:1,revision,index:{bytes:index.length,sha256:hash(index)},declaredBytes:plan.assetBytes+index.length,precache:plan.precache,assets:plan.assets};
-  const template=fs.readFileSync(path.join(LOADING_ROOT,'sw.js'),'utf8');
+  let template=fs.readFileSync(path.join(LOADING_ROOT,'sw.js'),'utf8');
+  if(plan.budget?.mode === 'diagnostic-unminified')
+    template=countReplace(template,'const MAX_REVISION_BYTES = 12 * 1024 * 1024;',
+      `const MAX_REVISION_BYTES = ${plan.budget.revision}; // explicit unminified diagnostic budget`,
+      'diagnostic revision budget');
   // Compact executable whitespace before inserting JSON so its literal remains
   // directly auditable by the existing manifest/dependency gate.
   const marker='__INKWAVE_CACHE_CONFIG_VALUE__';
   const compact=compactTemplate(countReplace(template,'/*__INKWAVE_CACHE_BUILD__*/ null',marker,'worker template marker'));
   const worker=countReplace(compact,marker,JSON.stringify(config),'worker stamp');
-  if(Buffer.byteLength(worker)>64*1024)throw new Error(`loading-cache: worker exceeds 64 KiB budget (${Buffer.byteLength(worker)} bytes)`);
+  if(Buffer.byteLength(worker)>(plan.budget?.worker ?? 64*1024))throw new Error(`loading-cache: worker exceeds ${(plan.budget?.worker ?? 64*1024) / 1024} KiB declared budget (${Buffer.byteLength(worker)} bytes)`);
   fs.writeFileSync(path.join(build,'sw.js'),worker);
-  return {revision,precacheCount:plan.precache.length,precacheBytes:plan.precacheBytes,declaredBytes:config.declaredBytes,maxRevisions:2,workerBytes:Buffer.byteLength(worker)};
+  return {revision,precacheCount:plan.precache.length,precacheBytes:plan.precacheBytes,declaredBytes:config.declaredBytes,maxRevisions:2,workerBytes:Buffer.byteLength(worker),budget:plan.budget};
 }
