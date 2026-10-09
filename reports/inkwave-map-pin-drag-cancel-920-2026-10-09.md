@@ -66,3 +66,26 @@ six-suite command now gives **86 passed, 0 failed, 0 skipped**. Additional nativ
 map-toggle/pause/map-gyro/control regressions give **48 passed, 0 failed, 2
 skipped**; the two emitted-site checks require a built-site fixture and were not
 run. Together: 134 executed passes, two explicitly unrun emitted checks.
+
+## Follow-up: dynamic Bubbler pin identity and removal
+
+Production Bubbler pins use `bubblerTarget`, while their Actor `target` remains
+null. A touch/pen down on Bubbler A followed by a target-list update could
+therefore pass the old `target === tap.target` check and jump to Bubbler B.
+Removing a higher-index pin while it retained pointer capture instead made
+pointerup dereference an absent array entry and throw.
+
+Pending contacts now capture only the existing Bubbler id/activation serial/team
+scalars and require them to match at release. Re-created snapshots of the same
+live activation still work; another activation, changed team or removed pin
+cancels safely. No reference to the deployable object is retained by the tap.
+The same pointer-local consumption, map-lifetime, slop and input authority rules
+continue to apply.
+
+Six composed Diorama regressions fail before and pass after correction. The full
+pin suite passes 32/32. Pin/UI-lifetime/respawn-navigation tests pass 84/84,
+including forced-GC lifetime coverage, and adjacent native Bubbler Super Jump
+coverage passes 4/4 at 30/60/120 Hz. Total: **88 executed passes, zero failures or
+skips**, using test concurrency 1. Syntax and whitespace checks pass. Physical
+pointer capture, browser/WebGL rendering and Switch comparison remain untested;
+no new Nintendo value or game timing is introduced.

@@ -1450,7 +1450,7 @@ ${bombHit}`;
   if (rel === 'src/net/netmatch.js') {
     code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     patch('    if (!Number.isFinite(d.ts)) return;',
-      '    if (!validSnapshotTimestamp(d.ts)) return;',
+      '    if (!validSnapshotTimestamp(d.ts)) return;\n    if (d.e != null && !Array.isArray(d.e)) return;',
       'reject unsafe owner clock before replay watermark mutation');
     // #574: use the established authenticated, life-scoped, deduplicated hit
     // transaction. A zero-damage Blaster contact is admitted only with bounded

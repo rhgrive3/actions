@@ -2727,3 +2727,51 @@ The native menu API lacked a consumer for current asynchronous Boss/world/warmup
 The replication fixture's `fullRuntime` does not install production `installDisconnectFidelity`; its native human-adoption path is compatibility behavior, not the installed S3 disconnect policy. Storm adoption sidecar 307d15fc/9302b381 is withdrawn and Slam landing-transfer prototype 56814527 is not selected. They are not counted as production human-disconnect fixes. The independent personal Storm HUD and pending Slam recharge/readiness fixes are retained after five new checks applying build transforms to upstream/runtime, real runtime install and every extra bootstrap installer in source-verified order. Current Splatling/Storm and Dualies/Slam kits pass, removed-fix negative controls reproduce both defects, and installed onLeave retires the human with zero adoption calls. See `reports/inkwave-gauge-bootstrap-scope-correction-2026-10-09.md`.
 
 This corrects the scope of earlier native-composition evidence rather than asserting browser, relay or Nintendo hardware results. Splatoon 3 remains 11.3.0; unmeasured gauge curves/segments/landing timing remain unresolved.
+
+
+### #685 pending map contacts release retired Actors and Matches
+
+The existing visible-pin cleanup omitted touch/pen records in `_pinTaps`. Native pointerdown followed by native Match disposal retained those records, including Actor/Match/Controller owners, without another map frame. `releaseMatchActors` now retires matching contacts before the independent visible-map ownership guard; stale old-match cleanup preserves newer contacts/pins. Four before-fix counterexamples and five final regression cases cover touch/pen, empty roster, mixed match lifetimes, actor-only/absent-viewer cleanup and 25 repeated cycles. Bounded native validation: 19/19 pass, no skips, concurrency 1; syntax and whitespace checks pass. Details: `reports/inkwave-diorama-pending-tap-lifetime-685-2026-10-09.md`.
+
+This is a browser-application ownership fix around the existing Turf Map / Super Jump behavior, not a new Splatoon 3 value. Baseline remains 11.3.0; physical touch/pen events, browser heap profiling and Switch comparison were not performed.
+
+### #920 dynamic Bubbler target identity
+
+A pending map contact now retains the existing deployable id/serial/team scalars rather than relying on its always-null Actor target. A target-list replacement cannot redirect release to another Bubbler, and a removed captured higher-index pin cannot throw. Re-created snapshots of the same activation remain tappable. Six before-fix failures now pass; bounded pin/UI-lifetime/navigation/native Bubbler suites pass 88/88, zero skips, concurrency 1. No new gameplay/reference values; physical pointer capture and Switch comparison remain unverified. Details are appended to `reports/inkwave-map-pin-drag-cancel-920-2026-10-09.md`.
+
+### Issue #1178: reject malformed event envelopes before clock mutation
+
+After the existing safe timestamp/actor guards, an invalid `d.e` container still threw in the terminal-credit filter after updating peer clock and actor buffers. A null member of a real array failed before the later row validator. The tick ingress now rejects non-array event containers before mutation, and the credit filter checks array membership before dereferencing rows. Missing/null/empty lists, valid actors/events and authenticated victim-owned terminal credit retain their existing behavior. Four new cases run all build transforms and every production bootstrap installer, including removed-guard negative controls; new plus combat/life tests pass 25/25 and snapshot/timestamp tests 10/10. Syntax/whitespace/quick checks pass. Details: `reports/inkwave-event-envelope-1178.md`.
+
+Splatoon 3 remains 11.3.0. No network timeout, array-size limit, protocol version or Nintendo value is introduced. Complete-wrapper VM checks remain distinct from browser/live relay/hardware testing; older adjacent adoption tests are compatibility-only.
+
+### 2026-10-09 — #622 fidelity projectile pool Actor-reference residual
+
+The existing recycle helper cleared `owner`, but completed Slosher records still
+held their birth Actor (`_s3SloshBirthOwner`), collision victim
+(`fidelityImpactActor`) and shared victim-keyed damage ledger (`s3DamageGroup`).
+A complete production build composition plus every additional installer in
+`bootstrap.mjs` reproduces nine retained birth owners after immediate clear,
+and nine birth-owner/impact-victim/ledger retainers after natural hits followed
+by clear. The pool survives the match; `_new()` cleanup happens too late to
+remove those waiting retainers. This is a code-deterministic strong-reference
+finding, not a measured browser heap-size or forced-GC result.
+
+The existing `_recycle` boundary now also detaches those three fields and the
+native per-shot `vol` reference. It does not clear the shared ledger or hit
+array, so delayed active siblings retain the same single-volley damage budget.
+Active rounds, reusable vector storage and pool high-water behavior remain
+unchanged. The new regression applies all production bootstrap installers,
+keeps an old-cleanup counterfactual and covers pending clear, normal completion,
+shared-sibling accounting, canceled birth, owner-clock ghost completion and
+identical native damage/completion traces at 30/60/120 Hz.
+
+Verification: six new native cases and 55 adjacent projectile lifetime,
+weapon-edgecase, Slosher birth/wire and match-retainer cases pass with test
+concurrency 1; quick upstream compatibility, syntax and whitespace checks pass.
+The reference remains Splatoon 3 11.3.0; no Nintendo values or gameplay rules
+were changed. Browser heap profiling, mobile memory/FPS and Switch comparison
+remain unmeasured.
+# 2026-10-09: #1039 responsive fixture host-confirmation precondition
+
+PR #1182 responsive job 113810814039 reached guest Ready with pointer/click delivery and no page errors, but the legacy MockNet audit never supplied the host's `teamsConfirmed` state. The production rejection was correct. The fixture now explicitly verifies rejection before simulated host confirmation, emits that mock-only lobby update, and then requires the same Ready interaction to succeed. Production guards are unchanged. Focused native tests: 13/13, no skips; browser re-run and hardware comparison remain unverified. Details: [responsive fixture report](inkwave-responsive-fixture-1039-2026-10-09.md).

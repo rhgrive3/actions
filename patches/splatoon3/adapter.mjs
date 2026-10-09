@@ -923,6 +923,9 @@ export function adaptSource(rel, code) {
       '  // sever the Actor reference before the record is pooled (#622).\n' +
       '  _recycle(p) {\n' +
       '    p.owner = null;\n' +
+      '    // These per-shot references can also retain Actors while the pool waits.\n' +
+      '    // Detach shared ledgers; clearing them would change still-active sibling rounds.\n' +
+      '    p._s3SloshBirthOwner = p.fidelityImpactActor = p.s3DamageGroup = p.vol = null;\n' +
       '    this.pool.push(p);\n' +
       '  }\n\n' +
       '  clear() {', 'projectile owner-severing recycle helper');

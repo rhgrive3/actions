@@ -23,7 +23,7 @@ class El {
     this.classList = { add: (...n) => n.forEach(x => this.names.add(x)), remove: (...n) => n.forEach(x => this.names.delete(x)), toggle: (n, v) => v ? this.names.add(n) : this.names.delete(n) }; }
   addEventListener(type, fn) { const all = this.listeners.get(type) || []; all.push(fn); this.listeners.set(type, all); }
   dispatch(type, e) { for (const fn of this.listeners.get(type) || []) fn({ type, preventDefault() {}, stopPropagation() {}, ...e }); }
-  appendChild(c) { this.children.push(c); return c; } prepend(c) { this.children.unshift(c); } get offsetWidth() { return 1; }
+  appendChild(c) { this.children.push(c); return c; } insertBefore(c, before) { const i=this.children.indexOf(before); this.children.splice(i<0?this.children.length:i,0,c); return c; } prepend(c) { this.children.unshift(c); } get offsetWidth() { return 1; }
 }
 
 async function boot(source = composed()) {
@@ -162,4 +162,46 @@ for (const change of ['match', 'viewer', 'controller']) test(`#920 changing ${ch
   if (change === 'controller') h.G.match.controller = { ...h.G.match.controller };
   h.send(0, 'pointerup', e);
   assert.equal(h.jumps.length, 0);
+});
+
+
+const bubblerTarget = (id, serial = 1, team = 0) => ({ kind: 'bubbler', id, serial, team, pos: new THREE.Vector3(2, 0, 3) });
+function bubblerTapOwner(h) {
+  h.me.superJumpToBubbler = target => { h.jumps.push(target); return true; };
+}
+for (const pointerType of ['touch', 'pen']) {
+  test(`#920 ${pointerType} contact cannot retarget after the Bubbler pin is reassigned`, async () => {
+    const h=await boot(); bubblerTapOwner(h);
+    const first=bubblerTarget('A'), next=bubblerTarget('B');
+    h.dio._ensureBubblerPins([first,next]); const pin=h.pin(4), e=h.down(4,{pointerType});
+    h.dio._ensureBubblerPins([next]); pin.dispatch('pointerup',e);
+    assert.equal(h.jumps.length,0,'retiring A must not commit the same contact to B');
+    assert.equal(h.dio._pinTaps.size,0);
+    const fresh=h.down(4,{pointerType}); h.send(4,'pointerup',fresh); assert.deepEqual(h.jumps,[next]);
+  });
+}
+for (const change of ['serial','team']) {
+  test(`#920 Bubbler ${change} replacement cancels a pending contact despite the same ID`, async () => {
+    const h=await boot(); bubblerTapOwner(h); const first=bubblerTarget('A');
+    h.dio._ensureBubblerPins([first]); const e=h.down(4);
+    const next={...first,[change]:first[change]+1}; h.dio._ensureBubblerPins([next]); h.send(4,'pointerup',e);
+    assert.equal(h.jumps.length,0);
+  });
+}
+
+test('#920 captured pointerup from a removed higher-index Bubbler never dereferences a missing pin', async () => {
+  const h=await boot(); bubblerTapOwner(h);
+  h.dio._ensureBubblerPins(['A','B','C'].map(id=>bubblerTarget(id)));
+  const pin=h.pin(6), e=h.down(6,{pointerType:'pen'}); h.dio._ensureBubblerPins([]);
+  assert.doesNotThrow(()=>pin.dispatch('pointerup',e)); assert.equal(h.jumps.length,0); assert.equal(h.dio._pinTaps.size,0);
+});
+
+test('#920 refreshed snapshots of the same Bubbler remain tappable and cancellation remains pointer-local', async () => {
+  const h=await boot(); bubblerTapOwner(h);
+  h.dio._ensureBubblerPins([bubblerTarget('A'),bubblerTarget('B')]);
+  const first=h.down(4), second=h.down(5,{pointerType:'pen'}), same=bubblerTarget('A');
+  h.dio._ensureBubblerPins([same,bubblerTarget('B',2)]);
+  h.send(5,'pointerup',second); assert.equal(h.jumps.length,0); assert.equal(h.dio._pinTaps.size,1);
+  h.send(4,'pointerup',first); assert.deepEqual(h.jumps,[same]);
+  h.send(4,'pointerup',first); assert.equal(h.jumps.length,1);
 });

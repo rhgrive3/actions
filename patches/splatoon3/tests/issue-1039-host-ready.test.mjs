@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { fixture } from './source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { confirmResponsiveMockHostTeams } from '../../../scripts/inkwave-responsive-fixture.mjs';
 
 const menuSource = adaptBuildSource('src/ui/menus.js', fs.readFileSync(new URL('../../../inkwave-public/src/ui/menus.js', import.meta.url), 'utf8'));
 const section = (start, end) => {
@@ -45,6 +46,29 @@ function readyControl(net) {
   const ui = { _sfx(){}, _press(){}, _burstAt(){}, toast:message=>logs.push(message) };
   return { ...factory.call(ui), logs };
 }
+
+test('#1039 responsive MockNet fixture supplies host confirmation before native guest Ready', async () => {
+  const f = await fixture({ productionComposition: true,
+    extraExports: "export { MockNet } from './inkwave-public/src/net/mock.js';" });
+  const net = new f.MockNet(); net._auto = false; net._lat = 0; net._fill = 1; net._rtt = () => 0;
+  const updates = []; net.on('lobby', ({lobby}) => updates.push(lobby));
+  try {
+    await net.join('BC234', 'Guest'); net.mock.fill(7);
+    assert.equal(net.lobby.players.length, 8);
+    assert.equal(net.isHost, false);
+    const guest = net.lobby.players.find(p => p.you);
+    readyControl(net).toggleReady();
+    assert.equal(guest.ready, false, 'pre-fix audit times out here because the mock never confirms teams');
+    confirmResponsiveMockHostTeams(net);
+    assert.equal(updates.at(-1).teamsConfirmed, true, 'native MockNet emits a new cloned lobby for Menus');
+    assert.notEqual(updates.at(-1), net.lobby);
+    assert.ok(updates.at(-1).players.every(p => !p.ready));
+    readyControl(net).toggleReady();
+    await new Promise(resolve => setTimeout(resolve, 10));
+    assert.equal(guest.ready, true);
+    assert.equal(updates.at(-1).players.find(p => p.you).ready, true, 'normal mock setMe acknowledgement remains live');
+  } finally { net.leave(); }
+});
 
 test('#1039 composed host Ready is reachable after confirmation and starts the actual two-client roster', async () => {
   const r = await room();

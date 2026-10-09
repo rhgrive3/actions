@@ -9,12 +9,14 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { checkCoreMenus } from './check-inkwave-responsive-core.mjs';
+import { confirmResponsiveMockHostTeams } from './inkwave-responsive-fixture.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : null; };
 const source = path.resolve(arg('--source') || path.join(repo, 'inkwave-public'));
 const manifestPath = path.join(source, 'inkwave-build.json');
 const touchCameraReset = fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).build?.reliability?.['navigation-adapter.mjs'];
+const hostTeamConfirmation = fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).files?.['patch/lobby-host-team-adapter.mjs'];
 const evidence = path.resolve(arg('--evidence-dir') || '/mnt/workspace/.dev-state/agent-work/evidence/inkwave-responsive-ui-20261002');
 const cache = path.resolve(arg('--profile-dir') || '/mnt/workspace/.dev-state/agent-work/cache/inkwave-responsive-ui-20261002');
 const baseline = arg('--baseline');
@@ -88,7 +90,7 @@ const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.c
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));
 result.sourceHashes = sourceHashes();
-const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
+const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
 result.runnerHashes = runnerHashes();
 const configurations = [
   ['phone-portrait', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } }],
@@ -229,6 +231,13 @@ try {
         entry.screens.emotes = await geometry(page, '.iw-emowheel button', 'emotes');
         await tap(page, '.iw-emowheel .iw-touch-close');
         await page.waitForFunction(() => !menus._modal);
+        if (hostTeamConfirmation) {
+          await tap(page, '.iw-btn--ready');
+          assert.equal(await page.evaluate(() => G.net.lobby.players.find((p) => p.you).ready), false,
+            'guest Ready stays blocked until the host confirms teams');
+          await page.evaluate(confirmResponsiveMockHostTeams);
+          entry.mockHostTeamsConfirmed = true;
+        }
         await tap(page, '.iw-btn--ready');
         await page.waitForFunction(() => G.net.lobby.players.find((p) => p.you).ready);
         assert.equal(await page.evaluate(() => G.net.lobby.players.find((p) => p.you).ready), true);
@@ -275,6 +284,7 @@ try {
       } catch (error) {
         entry.status = 'failed'; entry.error = error.message;
         entry.interactionFailure = await page.evaluate(() => ({ events: window.responsiveEvents, inputMode: menus._input, newsPage: document.querySelector('.iw-news')?.dataset.page, newsBusy: menus._news._busy,
+          lobby: { state: G.net?.state, isMock: G.net?.isMock, isHost: G.net?.isHost, mode: G.net?.lobby?.mode, teamsConfirmed: G.net?.lobby?.teamsConfirmed, ready: G.net?.lobby?.players.find(p => p.you)?.ready },
           scroll: [...document.querySelectorAll('.iw-news__stage,.iw-news__go')].map((el) => { const r = el.getBoundingClientRect(); return { class: el.className, y: r.y, bottom: r.bottom, scrollTop: el.scrollTop, scrollHeight: el.scrollHeight, clientHeight: el.clientHeight }; }) }));
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-failure.png`) }).catch(() => {});
         if (!audit) throw error;
