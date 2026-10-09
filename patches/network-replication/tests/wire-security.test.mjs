@@ -109,3 +109,33 @@ test('#1179 invalid oversized Boss hit cannot burn sender sequence or affect sub
   assert.equal(f.boss.hp, 9970);
   assert.equal(peer.lastBossHit, 1);
 });
+
+
+test('#1178 accepts finite pending-lethal HP without admitting invalid resource values', async () => {
+  const f = await fixture();
+  const nm = f.makeNetMatch(f.makeSession('me', 'p2', [['me', 'Me'], ['p2', 'P2']]));
+  const a = f.makeActor({ nid: 37, owner: 'p2', remote: true });
+  f.bind(nm, [a]);
+  const lethal = f.packActor(a); lethal[11] = -20;
+  f.tick(nm, 'p2', 1000.05, { a: [lethal] });
+  assert.equal(a.net.buf.length, 1, 'valid native deferred lethal is buffered');
+  const badResource = f.packActor(a); badResource[12] = -1;
+  f.tick(nm, 'p2', 1000.10, { a: [badResource] });
+  assert.equal(a.net.buf.length, 1, 'negative ink is still rejected');
+  const badHp = f.packActor(a); badHp[11] = -100001;
+  f.tick(nm, 'p2', 1000.15, { a: [badHp] });
+  assert.equal(a.net.buf.length, 1, 'absurdly negative HP remains rejected');
+});
+
+test('#1156 owner Dualies turret presentation bit 27 is not rejected as an unknown flag', async () => {
+  const f = await fixture();
+  const nm = f.makeNetMatch(f.makeSession('me', 'p2', [['me', 'Me'], ['p2', 'P2']]));
+  const a = f.makeActor({ nid: 27, owner: 'p2', remote: true });
+  f.bind(nm, [a]);
+  const valid = f.packActor(a); valid[10] |= 1 << 27;
+  f.tick(nm, 'p2', 1000.05, { a: [valid] });
+  assert.equal(a.net.buf.length, 1, 'known presentation-only bit 27 survives the owner schema gate');
+  const unknown = f.packActor(a); unknown[10] |= 1 << 30;
+  f.tick(nm, 'p2', 1000.10, { a: [unknown] });
+  assert.equal(a.net.buf.length, 1, 'unregistered high bits are still rejected');
+});

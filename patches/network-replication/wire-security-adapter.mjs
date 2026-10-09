@@ -1,4 +1,5 @@
 import { SPAWN_ARMOR_FLAG } from '../splatoon3/runtime/respawn-lifecycle.mjs';
+import { DUALIES_TURRET_FLAG } from '../splatoon3/runtime/dualies-network.mjs';
 // #1178/#1179: validate untrusted owner snapshots and boss-hit packets only in the
 // disposable composed build. Never modify the locked inkwave-public mirror.
 function once(code, before, after, label) {
@@ -80,11 +81,11 @@ export function adaptWireSecurity(rel, code) {
 // S3/network adapters extend the packet after these. Never coerce wire types.
 // Derive the flags mask from the composed F (includes extension flags above
 // 0xFFFFF); otherwise valid owner ticks are silently dropped during handoff.
-// Spawn Armor (bit 23) and Respawn Punisher clothing (bit 25) are existing
-// independent wire extensions, not members of the native F object. Preserve
-// those two known bits while continuing to reject every other unknown flag.
+// Spawn Armor (bit 23), Respawn Punisher (bit 25) and remote Dualies turret
+// presentation (bit 27) are legitimate independently owned wire extensions.
+// Preserve these bits while continuing to reject unknown flags.
 const WIRE_ACTOR_ALLOWED_FLAGS = Object.values(F).reduce((bits, flag) => bits | flag, 0)
-  | ${SPAWN_ARMOR_FLAG} | 33554432;
+  | ${SPAWN_ARMOR_FLAG} | 33554432 | ${DUALIES_TURRET_FLAG};
 function validWireActorSnapshot(s) {
   if (!Array.isArray(s) || s.length < 21 || s.length > 64 ||
       !Number.isSafeInteger(s[0]) || s[0] < 0) return false;
@@ -98,7 +99,10 @@ function validWireActorSnapshot(s) {
   for (let i = 1; i <= 3; i++) if (Math.abs(s[i]) > 1e5) return false;
   for (let i = 4; i <= 6; i++) if (Math.abs(s[i]) > 1e4) return false;
   for (let i = 7; i <= 9; i++) if (Math.abs(s[i]) > 1e7) return false;
-  for (let i = 11; i <= 13; i++) if (s[i] < 0 || s[i] > 1e5) return false;
+  // HP may be negative during the native accepted-lethal pending interval.
+  // Ink/SP resources remain strictly nonnegative; bound HP on both sides.
+  if (s[11] < -1e5 || s[11] > 1e5) return false;
+  for (let i = 12; i <= 13; i++) if (s[i] < 0 || s[i] > 1e5) return false;
   // Optional new protocol extensions are checked at their own owner/life
   // fence; rejecting them here would erase valid adoption-protection state.
   return true;
