@@ -104,9 +104,20 @@ export function superJumpTarget(target, out) {
 
 export function updateSuperJumpMain(a, dt, firePressed) {
   const s = a.superJumpState;
-  if (!a.alive || s && (s.phase !== 'flight' || s.t / s.dur <= SUPERJUMP_MAIN_PROGRESS)) return;
-  if (a.form !== 'kid') return;
+  // #528: sub aim is a presentation/hold state, never throw authority in flight.
+  // Early flight stays disarmed until the existing humanoid descent window.
+  if (!a.alive || (s && (s.phase !== 'flight' || s.t / s.dur <= SUPERJUMP_MAIN_PROGRESS)) || a.form !== 'kid') {
+    if (s && a.weaponRunner) a.weaponRunner.aimingSub = false;
+    return;
+  }
   const buffered = a.fireBuffer > 0;
-  a.weaponRunner.update(dt, { fire: a.intent.fire || buffered, firePressed: firePressed || buffered, sub: false, subReleased: false });
+  a.weaponRunner.update(dt, {
+    fire: a.intent.fire || buffered,
+    firePressed: firePressed || buffered,
+    sub: !!a.intent.sub,
+    // If the authoritative Super Jump ended this tick, preserve a release
+    // from the previously staged hold exactly once at the landing boundary.
+    subReleased: !s && !a.intent.sub && !!a.weaponRunner.aimingSub,
+  });
   a.fireBuffer = 0;
 }
