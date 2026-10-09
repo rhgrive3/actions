@@ -3,10 +3,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptUiActorLifetime } from '../ui-actor-lifetime-adapter.mjs';
 import { adaptRespawnNavigation } from '../../reliability/respawn-navigation-adapter.mjs';
+import { adaptBubblerMap } from '../../splatoon3/bubbler-map-adapter.mjs';
 const rel = 'src/ui/diorama.js';
 const raw = fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 const once = (s, a, b) => { const i = s.indexOf(a); assert.ok(i >= 0 && s.indexOf(a, i + a.length) < 0); return s.slice(0, i) + b + s.slice(i + a.length); };
-const owned = adaptRespawnNavigation(rel, raw);
+// Match the production adapter order: source gameplay extends the map pins
+// before reliability rewrites its now-expanded target branches. Passing raw
+// directly to the latter must still fail closed on its missing Bubbler anchor.
+const expanded = adaptBubblerMap(rel, raw);
+const owned = adaptRespawnNavigation(rel, expanded);
 const fixed = adaptUiActorLifetime(rel, owned, once);
 function rig(source = fixed) {
   const calls = { eligibility: 0, requests: [], native: 0 };
@@ -36,6 +41,9 @@ test('retired or invalid pin is rejected before either controller or native elig
   assert.equal(old.calls.requests.length, 1, 'unprotected current navigation method still calls a retired pin owner');
 });
 test('native source and already-adapted source both retain the original jump admission body', () => {
+  assert.throws(() => adaptRespawnNavigation(rel, raw), /expected exactly one connection/);
+  assert.match(expanded, /p\.bubblerTarget/);
+  assert.match(owned, /requestMapBubblerJump/);
   const nativeFixed = adaptUiActorLifetime(rel, raw, once);
   assert.match(nativeFixed, /if \(!me \|\| !me\.canSuperJump \|\| !me\.canSuperJump\(\)\)/);
   assert.ok(fixed.includes('G.match.controller.canRequestMapJump()'));
