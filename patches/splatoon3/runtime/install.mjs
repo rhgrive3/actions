@@ -35,6 +35,7 @@ import { installKitNetwork } from './kit-network.mjs';
 import { installKitTrizooka } from './kit-trizooka.mjs';
 import { composeKits, registerKitMetadata } from './kit-composition.mjs';
 import { installGear } from './gear.mjs';
+import { installHealthBarHud } from './health-bars.mjs';
 import { installFlow } from './flow.mjs';
 import { installResources } from './resources.mjs';
 import { installClock } from './clock.mjs';
@@ -101,6 +102,7 @@ export function install(profile) {
   installScoring(api);
   installClock(api);
   installUi(api);
+  installHealthBarHud(api);
   installRendering(api);
   installWeaponMotion(api, profile);
   installBombMotion(api);
