@@ -29,3 +29,26 @@ test('the new readiness poll does not mask broken controller admission or a diff
  assert.equal(h.m.controller.enabled,false,'unchanged later owner assertion still rejects this state');
  h.m.state='results';assert.equal(h.ready(),false);h.m.state='playing';h.m.attract=true;assert.equal(h.ready(),false);
 });
+
+const ringCallback=source.match(/const focusRingSettled = (\(\) => \{[\s\S]+?\n\});/)?.[1];
+assert.ok(ringCallback,'actual lifecycle ring-settled predicate');
+function ringRig(){
+ const m={_cur:{on:true,x:{x:13},y:{x:23},w:{x:94}},_focus:{isConnected:true,dataset:{nav:'button'},getBoundingClientRect:()=>({left:20,top:30,width:80})},cursorEl:{}};
+ const style={visibility:'visible',display:'block',opacity:'1'};
+ const ready=vm.runInNewContext(ringCallback,{window:{__inkwave:{menus:m}},getComputedStyle:()=>style});
+ return {m,style,ready};
+}
+test('rematch waits for both native cursor placement and computed visible entrance',()=>{
+ const {m,style,ready}=ringRig();assert.equal(ready(),true);
+ m._cur.on=false;assert.equal(ready(),false);m._cur.on=true;
+ for(const [key,value] of [['visibility','hidden'],['display','none'],['opacity','0'],['opacity','0.6']]){
+  const old=style[key];style[key]=value;assert.equal(ready(),false,key+' '+value);style[key]=old;
+ }
+ for(const axis of ['x','y','w']){const old=m._cur[axis].x;m._cur[axis].x+=1;assert.equal(ready(),false,axis);m._cur[axis].x=old;}
+ m._focus.isConnected=false;assert.equal(ready(),false);
+});
+test('touch return and keyboard handoff retain the same strict ring acceptance',()=>{
+ assert.match(source,/until\(focusRingSettled, null, 30000, 'touch button selection aligned to focus'\)/);
+ assert.match(source,/until\(focusRingSettled, null, 30000, 'keyboard selection aligned to focus'\)/);
+ assert.match(source,/menu\.focusConnected === true && menu\.ringOn && menu\.ringVisible && menu\.ringOnFocus === true/);
+});
