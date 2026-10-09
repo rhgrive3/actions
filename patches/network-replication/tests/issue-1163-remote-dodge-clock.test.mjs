@@ -4,6 +4,7 @@ import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 
 const extraExports = `
   export { Character } from './inkwave-public/src/game/character.js';
+  export { CHARACTER_TIMERS } from './inkwave-public/src/game/character.js';
   export { dualiesMotionSnapshot } from './patches/splatoon3/runtime/dualies-motion.mjs';
 `;
 
@@ -157,6 +158,24 @@ test('remote Dualies pose uses the accepted sender epoch across snapshot boundar
     assert.equal(remoteById.get(79).remoteDodgeClock, undefined, 'a lost trigger waits for authoritative epoch metadata');
     assert.equal(world.dualiesMotionSnapshot(remoteById.get(79).character)?.phase, null);
     assert.equal(remoteById.get(82).remoteDodgeClock, undefined, 'F.dodge alone does not invent a presentation epoch');
+
+    // Two proxies receive real accepted event metadata at the same sender
+    // epoch, before either proxy has a reconstructed Runner dodge. Character's
+    // unrelated native T_DODGE ages must not split native stance/aim/feet.
+    const early = remoteById.get(77), stale = remoteById.get(80), T = world.CHARACTER_TIMERS;
+    assert.equal(early.weaponRunner.dodge, null);
+    assert.equal(stale.weaponRunner.dodge, null);
+    early.character.tr[T.T_DODGE] = .02;
+    stale.character.tr[T.T_DODGE] = 2;
+    early._finishFrame(1 / 60);
+    stale._finishFrame(1 / 60);
+    const admissionState = actor => ({ lockW: actor.character.lockW, wAim: actor.character.wAim,
+      stance: [...actor.character.stance], plantW: actor.character.plantW,
+      feet: actor.character.feet.map(foot => [foot.planted, foot.sw, foot.disp.toArray()]) });
+    assert.deepEqual(admissionState(early), admissionState(stale),
+      'accepted sender clock governs native admission independently of local Character timer age');
+    assert.equal(world.dualiesMotionSnapshot(early.character)?.phase, 'startup');
+    assert.equal(world.dualiesMotionSnapshot(stale.character)?.phase, 'startup');
 
     renderAt(receiver, remotes, start + 55 / 1000);
     assert.equal(remoteById.get(79).remoteDodgeClock.source, 'snapshot', 'lost trigger recovers from the exact start sidecar');
