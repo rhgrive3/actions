@@ -221,6 +221,16 @@
       "rollInkMaxPerFrame": 0.001,
       "rollInkMinSpeed": 1.2,
       "rollInkMaxSpeed": 7.92,
+      "horizontalSpawn": {
+        "width": 0.8, "randomCube": 0.1, "worldScale": 1
+      },
+      "verticalSpawn": {
+        "groups": [
+          { "count": 1, "height": 0.25, "offsetHeight": 0.5 },
+          { "count": 2, "height": 0.25, "offsetHeight": -0.25 },
+          { "count": 2, "height": 0.25, "offsetHeight": -1.25 }
+        ], "worldScale": 1
+      },
       "flickWindup": 0.35,
       "flickInk": 8.5,
       "moveSpeedFiring": 2.88,
