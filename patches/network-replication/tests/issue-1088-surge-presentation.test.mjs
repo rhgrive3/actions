@@ -2,17 +2,33 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture as sourceFixture } from '../../splatoon3/tests/source-fixture.mjs';
 
-const CURRENT_ACTOR_ROW_WIDTH = 24;
+const CURRENT_ACTOR_ROW_WIDTH = 26;
 const LEGACY_ACTOR_ROW_WIDTH = 22;
 const SPECIALS_COUNTER_SLOT = 22;
 const ADOPTION_STATE_SLOT = 23;
 const SURGE_PRESENTATION_SLOT = 24;
+const HIT_AUTHORITY_STATE_SLOT = 25;
 
 function assertCurrentActorSlots(row, actor) {
+  assert.equal(row.length, CURRENT_ACTOR_ROW_WIDTH,
+    'the composed actor row keeps its current 26-field wire shape');
   assert.equal(row[SPECIALS_COUNTER_SLOT], actor.stats.specials || 0,
     'the existing special-use counter retains its current slot');
   assert.equal(row[ADOPTION_STATE_SLOT]?.[0], 'inkwave-adoption-v1',
     'the tagged adoption state retains its current slot');
+  assert.ok(row[SURGE_PRESENTATION_SLOT] === null ||
+    row[SURGE_PRESENTATION_SLOT]?.tag === 'inkwave.s3.surge.v1',
+    'the optional tagged Surge presentation retains its current slot');
+  const hitAuthority = row[HIT_AUTHORITY_STATE_SLOT];
+  assert.ok(Array.isArray(hitAuthority),
+    'the appended tagged hit-authority state occupies its current slot');
+  assert.equal(hitAuthority[0], 'inkwave-hit-authority-v1');
+  assert.equal(hitAuthority[1], Number.isSafeInteger(actor.netLife) ? actor.netLife : 0,
+    'the hit-authority row is bound to the actor life');
+  assert.ok(Number.isSafeInteger(hitAuthority[2]) && hitAuthority[2] >= 0,
+    'the hit-authority row carries a nonnegative sequence');
+  assert.ok(hitAuthority.length === 3 || hitAuthority.length === 4,
+    'the hit-authority row keeps its tagged state and optional handoff parent');
 }
 
 function setOwnerLife(actor, life) {
@@ -137,15 +153,18 @@ test('C1088 preserves the current actor row and retains explicit Surge end/life 
   const w = await makePair();
   w.owner.stats.specials = 3;
   const untouched = w.step(1 / 60, false, 'normal');
-  assert.equal(untouched.a[0].length, CURRENT_ACTOR_ROW_WIDTH, 'ordinary snapshots keep the current wire shape');
+  assert.equal(untouched.a[0].length, CURRENT_ACTOR_ROW_WIDTH, 'ordinary snapshots keep the current composed wire shape');
   assertCurrentActorSlots(untouched.a[0], w.owner);
+  assert.equal(untouched.a[0][SURGE_PRESENTATION_SLOT], null,
+    'an untouched snapshot keeps the Surge slot without fabricating a presentation');
   const active = w.step(1 / 60, true);
-  assert.equal(active.a[0].length, CURRENT_ACTOR_ROW_WIDTH + 1);
+  assert.equal(active.a[0].length, CURRENT_ACTOR_ROW_WIDTH);
   assertCurrentActorSlots(active.a[0], w.owner);
+  assert.equal(active.a[0][SURGE_PRESENTATION_SLOT].tag, 'inkwave.s3.surge.v1');
   assert.equal(active.a[0][SURGE_PRESENTATION_SLOT].phase, 'charge');
   w.owner.s3.actions.surge = null;
   const ended = w.step(1 / 60, false, 'normal');
-  assert.equal(ended.a[0].length, CURRENT_ACTOR_ROW_WIDTH + 1, 'a used action still sends its retirement marker');
+  assert.equal(ended.a[0].length, CURRENT_ACTOR_ROW_WIDTH, 'a used action still sends its retirement marker');
   assertCurrentActorSlots(ended.a[0], w.owner);
   assert.equal(ended.a[0][SURGE_PRESENTATION_SLOT].phase, 'end');
   assert.equal(ended.a[0][SURGE_PRESENTATION_SLOT].epoch, active.a[0][SURGE_PRESENTATION_SLOT].epoch);
@@ -294,6 +313,8 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
           legacy.ts = Math.round(pair.wireTime() * 1000) / 1000;
           delete legacy.e;
           legacy.a[0] = legacy.a[0].slice(0, LEGACY_ACTOR_ROW_WIDTH);
+          assert.equal(legacy.a[0].length, LEGACY_ACTOR_ROW_WIDTH,
+            'the legacy compatibility case remains a 22-column actor row');
           deliver(remote, receiver, legacy, 1 / 60);
           assert.equal(remote.s3?.c1088SurgePresentation, undefined,
             'legacy 22-column snapshots remain accepted and clear stale remote poses');
