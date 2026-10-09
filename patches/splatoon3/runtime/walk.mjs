@@ -1,6 +1,7 @@
 import { dualiesMotionAllowsFootPlant } from './action-admission.mjs';
 import { specialMotionAllowsFootPlant } from './special-motion.mjs';
 import { sampleLegacyGait, LEGACY_GAIT_CHANNELS as REF, LEGACY_GAIT_INFO } from './legacy-walk-curves.mjs';
+import { resolveWalkFootClearance } from './walk-foot-clearance.mjs';
 // Walking is an animation layer. It never writes actor speed or collision state.
 // Body/foot motion is guided by compact relative FSKA channels from Splatoon 1.
 // Clip frame counts are source frames, NOT proven Splatoon 3 animation runtime rates.
@@ -154,6 +155,9 @@ function updateFeet(ch,dt){
   // have processed their current tick. No additional phase clocks may drift.
   sampleLegacyGait(state(ch).reference,ch.phase,ch.mdx,ch.mdz,ch.wAim,ch.runW);
   ch._footPose(F[0]);ch._footPose(F[1]);
+  // Both raw poses now belong to this tick.  Resolve bilateral clearance as a
+  // pair so foot 0 never sees last frame's foot 1 position (or vice versa).
+  resolveWalkFootClearance(F,ch.yaw+ch.hipTwist,tuning.minFootGap,tuning.footLength);
   const twist=(angle(F[0].cyaw-ch.yaw-ch.stance[2])+angle(F[1].cyaw-ch.yaw-ch.stance[5]))*.5;
   ch.footTwist=damp(ch.footTwist,clamp(twist,-1.2,1.2),20,dt);
 }
@@ -169,11 +173,6 @@ function footPose(ch,f){
   f.cw.copy(f.from).lerp(f.to,e);
   const peak=f.peak??.5,lift=u<peak?ease(u/peak):ease((1-u)/(1-peak));
   f.cw.y+=(f.lift+Math.max(0,f.to.y-f.from.y)*.35)*lift;
-  // The swing leg passes the support shoe on its own side of the pelvis. The
-  // end points are already apart; only mid-swing bows outward.
-  const o=ch.feet[1-f.i],hy=ch.yaw+ch.hipTwist,ax=Math.cos(hy),az=-Math.sin(hy),dx=f.cw.x-o.cw.x,dz=f.cw.z-o.cw.z;
-  const along=Math.abs(dx*Math.sin(hy)+dz*Math.cos(hy)),need=(tuning.minFootGap-(dx*ax+dz*az)*f.side)*(1-smooth(tuning.footLength*.5,tuning.footLength,along))*Math.sin(Math.PI*u);
-  if(need>0){f.cw.x+=need*f.side*ax;f.cw.z+=need*f.side*az;}
   f.cyaw=f.fromYaw+angle(f.toYaw-f.fromYaw)*e;f.cn.copy(f.n).lerp(f.tn,e).normalize();
   f.pitch=mix(f.startPitch??f.toe,0,smooth(0,.5,u))+(f.fold??0)*smooth(0,.22,u)*(1-smooth(.38,.78,u))-f.land*smooth(.55,.96,u);
   // Retarget source thigh/shin/ankle motion ONLY to a swinging foot. Planted

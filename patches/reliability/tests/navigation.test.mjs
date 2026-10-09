@@ -73,7 +73,9 @@ test('#421 disabled/reset lifecycle drops pending recenter and retains independe
 test('#391 actual HUD beacon/legend methods highlight the controller selection without virtual-mouse interference',async()=>{
  const h=await rig();h.frame([3]);h.frame([12]);h.input.locked=true;
  const code=composed('src/ui/hud.js',true),start=code.indexOf('  _updBeacons('),end=code.indexOf('\n  _jumpTo(',start);
- const HUD=vm.runInNewContext(`class HUD {${code.slice(start,end)}}; HUD`,{G:h.G,clamp:(n,a=0,b=1)=>Math.max(a,Math.min(b,n)),richText:x=>x,document:{documentElement:{lang:'en'}},weaponIcon:()=>'',kindOf:x=>x,tr:x=>x});
+ const slotStart=code.indexOf('  _ensureJumpSlots('),slotEnd=code.indexOf('\n  //',slotStart);
+ assert.ok(slotStart>=0&&slotEnd>slotStart,'production jump-slot method must exist');
+ const HUD=vm.runInNewContext(`class HUD {${code.slice(slotStart,slotEnd)}${code.slice(start,end)}}; HUD`,{G:h.G,clamp:(n,a=0,b=1)=>Math.max(a,Math.min(b,n)),richText:x=>x,document:{documentElement:{lang:'en'}},weaponIcon:()=>'',kindOf:x=>x,tr:x=>x});
  h.G.input=h.input;const hud=new HUD(),foot=node();
  const beacons=[0,1,2,3].map(()=>({...node(),firstChild:node()})),legendRows=[0,1,2,3].map(node);
  Object.assign(hud,{_map:{open:true,hover:-1,cx:.5,cy:.5,sx:.2,sy:.8,pressT:0},_L:{},_mapT:1,map:node(),mapCursor:node(),mapLegend:{querySelector:()=>foot},mapJumpLine:{...node(),firstChild:{...node(),firstChild:node()}},beacons,legendRows,_local:()=>h.a,_beaconTargets:()=>[0,1,2,3].map(i=>({x:.2+i*.2,y:.2,name:'ally'+i,weapon:'shooter',ok:true})),_snd(){},_restart(){}});
