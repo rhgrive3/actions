@@ -2,10 +2,11 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './robustness-fixture.mjs';
 const plain=x=>JSON.parse(JSON.stringify(x));
-async function pair({vertical=true,speed=4,yaw=0}={}){
+async function pair({vertical=true,speed=4,yaw=0,depleted=false}={}){
  const local=await fixture(),remote=await fixture();
  const sender=local.makeNetMatch(local.makeSession('p2','p2')),receiver=remote.makeNetMatch(remote.makeSession());
  const actor=local.makeActor({nid:7,owner:'p2',remote:false,vertical}),ghost=remote.makeActor({nid:7,owner:'p2',remote:true,vertical:!vertical});
+ if(depleted)actor.weapon={...actor.weapon,s3Depletion:true,s3DepletionDrops:3,flickDrops:3,verticalDrops:3};
  actor.yaw=yaw;actor.vel.set(Math.sin(yaw)*speed,0,Math.cos(yaw)*speed);actor.aimPitch=.05;local.bind(sender,[actor]);remote.bind(receiver,[ghost]);local.G.time=1;
  local.projectiles.fireFlick(actor,actor.weapon);
  const births=[...local.projectiles.list],packets=plain(sender.out.filter(e=>e[1]==='p'));
@@ -20,6 +21,31 @@ test('new birth unit preserves all Roller collider records across forward/backwa
   for(let i=0;i<ghosts.length;i++){
    const p=f.births[i],q=ghosts[i],e=f.packets[i];assert.equal(e.length,36);assert.equal(e[30],vertical?1:0);assert.equal(e[31],p.seed);assert.equal(e[32],p._netId);assert.equal(e[33],p.fidelityRollerUnitIndex);assert.equal(e[34],60);assert.equal(e[35],i+1);
    assert.equal(q._netBornTick,60);assert.equal(q.fidelityRollerUnitIndex,p.fidelityRollerUnitIndex);assert.deepEqual(plain(q.fidelityPlayerCollision),plain(p.fidelityPlayerCollision));assert.deepEqual(plain(q.fidelityFieldCollision),plain(p.fidelityFieldCollision));
+  }
+ }
+});
+test('#305 depleted Roller births preserve owner collision radii on the remote presentation ghost',async()=>{
+ for(const vertical of [false,true]){
+  const f=await pair({vertical,depleted:true}),ghosts=replay(f);
+  assert.equal(ghosts.length,vertical?3:4,'depletion count includes the horizontal nearest glob');
+  for(let i=0;i<ghosts.length;i++){
+   const p=f.births[i],q=ghosts[i],e=f.packets[i];
+   const source=p.fidelityRollerUnit.UnitParam.CollisionParam,rate=source.DepletionRate;
+   assert.equal(p.s3DepletionRound,true,'owner marks the actual depleted round');
+   assert.equal(e[34],true,'wire carries an explicit depleted birth marker before tick and sequence');
+   assert.equal(e.length,37);assert.equal(e[35],60);assert.equal(e[36],i+1);
+   assert.equal(q.s3DepletionRound,true,'receiver restores the owner attack mode before initialization');
+   assert.equal(q.ghost,true,'receiver copy remains presentation-only');
+   assert.equal(q.fidelityRollerUnitIndex,p.fidelityRollerUnitIndex,'nearest/main source unit survives replay');
+   assert.equal(q.fidelityPlayerCollision.initRadius,source.InitRadiusForPlayer*rate);
+   assert.equal(q.fidelityPlayerCollision.endRadius,source.EndRadiusForPlayer*rate);
+   assert.equal(q.fidelityFieldCollision.initRadius,source.InitRadiusForField*rate);
+   assert.equal(q.fidelityFieldCollision.endRadius,source.EndRadiusForField*rate);
+   assert.deepEqual(plain(q.fidelityPlayerCollision),plain(p.fidelityPlayerCollision));
+   assert.deepEqual(plain(q.fidelityFieldCollision),plain(p.fidelityFieldCollision));
+   let applied=0;
+   f.remote.applyFidelityProjectileHit(f.remote.projectiles,q,{team:1,damage:n=>{applied+=n;}},999,new f.remote.THREE.Vector3());
+   assert.equal(applied,0,'remote ghost never gains hit authority');
   }
  }
 });
@@ -56,6 +82,7 @@ test('non-Roller uses sentinel and pooled Roller unit cannot leak into another f
  const f=await pair(),p=f.births[3];f.local.projectiles.list.splice(f.local.projectiles.list.indexOf(p),1);f.local.projectiles.pool.push(p);const reused=f.local.projectiles._new();assert.equal(reused,p);assert.equal(reused.fidelityRollerUnitIndex,null);
  f.actor.weapon=f.local.WEAPONS.shooter;f.actor.character.getMuzzle=o=>o.copy(f.actor.pos);f.sender.out.length=0;f.local.projectiles.fireShooter(f.actor,f.actor.weapon,0);const e=f.sender.out.find(e=>e[1]==='p');assert.equal(e.length,36);assert.equal(e[33],-1);
  assert.notEqual(f.remote.projectiles.ghostProjectile(f.ghost,e),null);const bad=[...e];bad[33]=0;assert.equal(f.remote.projectiles.ghostProjectile(f.ghost,bad),null);
+ const forged=[...e];forged.splice(34,0,true);assert.equal(f.remote.validFidelityRollerUnitPacket(forged),false,'a non-Roller cannot request depleted Roller radii');
 });
 
 test('unsupported packet lengths never allocate a ghost',async()=>{
