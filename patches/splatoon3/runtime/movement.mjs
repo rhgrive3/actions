@@ -39,6 +39,19 @@ export function movementState(a) {
   return state;
 }
 function sync(a, state) { a.s3.roll = state.roll; a.s3.surge = state.surge; }
+/** #951: an ordinary away-input wall detach must cancel the active Surge,
+ * not leave a burst and its armor alive for the detached airborne interval.
+ * Wall Squid Roll is admitted separately before the ordinary detach branch.
+ */
+export function cancelSurgeOnAway(actor) {
+  const state = actor?.s3?.actions, surge = state?.surge;
+  if (!surge) return false;
+  if (state.armor === surge) state.armor = null;
+  state.surge = null;
+  actor.s3.surge = null;
+  if (actor.anim) actor.anim.surgeCharge = 0;
+  return true;
+}
 function advanceChainTimer(state, dt) {
   state.chainTimer = Math.max(0, state.chainTimer - dt);
   if (state.chainTimer <= EPSILON) { state.chain = 0; state.chainTimer = 0; state.chainSpeed = 0; }
