@@ -2283,3 +2283,36 @@ The build overlay now gives authoritative ancillary ownership and GLSL rays/sate
 ### PR1175 complete validation scheduling (2026-10-09)
 
 The combined canonical diagnostic now covers more than 3,500 tests and required about 23 minutes locally before the remaining network, quality, reference and built-weapon gates. The validate job deadline is extended from 30 to 45 minutes so the complete enlarged sequence can finish. No test is removed, skipped or made conditional by this change, and no gameplay, visual, numeric, worker, startup or performance acceptance threshold changes.
+
+## 2026-10-09 — #272 Stealth Jump production selection residual (shoes-main panel filter)
+
+Base main `590410494a3e041a403398e191b7d95183912ea2`.
+
+### 本家の根拠
+
+- [Inkipedia Stealth Jump](https://splatoonwiki.org/wiki/Stealth_Jump), checked 2026-10-09: Stealth Jump is a shoes-restricted primary ability; the Splatoon 3 section records the Ver. 11.0.0 long-distance flight penalty (flight only, up to ~1s, ramping from 60 units to the 100-unit maximum) and lists Stealth Jump among Shoes abilities.
+- [Leanny splat3 pinned Ver. 11.3.0 `SplPlayer.game__GameParameterTable.json`](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json), fetched 2026-10-09: `spl__PlayerGearSkillParam_SuperJumpSignHide` has `ExtraMove_DistXZMax: 100.0`, `ExtraMove_DistXZMax_Tcl: 100.0`, `ExtraMove_FrmMax: 60` (frames at the pinned 60 Hz reference). This matches the existing `STEALTH_JUMP_DISTANCE_MIN/MAX = 60/100` and `STEALTH_JUMP_EXTRA_FRAMES_MAX = 60` constants; no interpolation formula beyond the already-implemented linear ramp is assumed.
+- [Leanny pinned `spl__GearSkillTraitsParam`](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/spl__GearSkillTraitsParam.spl__GearSkillTraitsParam.json), fetched 2026-10-09: `SuperJumpSign_Hide` has `KindLimit: "Shoes"`, matching the existing `abilityAllowed('stealthJump', 2, 0)` shoes-main-only rule (piece 2 = クツ).
+
+### INKWAVE の実装箇所
+
+The existing model already accepts shoes-main Stealth Jump (`abilityAllowed` allows piece 2 slot 0, `normalizeLoadout` preserves it, `equip` sets `m.stealthJump`, the composed flight path adds `stealthJumpExtraTime` only to `s.dur`, and the fail-closed `stealthJumpFoci` gate refuses to guess level anchors). The production gear panel filter in `patches/splatoon3/runtime/gear.mjs` additionally excluded every ability without a `tuning.gear` AP curve except the other fixed main (`ninjaSquid`), so the already-accepted shoes-main Stealth Jump never appeared as a selectable クツ main. The one-token residual adds the same fixed-main exemption (`id !== 'stealthJump'`) to that panel filter only. No `inkwave-public/` file, no flight/charge formula, no level foci, no network/Range guard, and no map scale is changed or invented.
+
+### 再現操作と結果
+
+Issue #272 acceptance direction requires Stealth Jump to be selectable only where Splatoon 3 permits it. Before the fix, `abilityAllowed('stealthJump', 2, 0)` returned true while the composed `gearPanel()` select omitted `stealthJump` because `tuning.gear.stealthJump` is absent (binary ability, no AP curve). After the fix, the composed filter keeps the shoes-main option and still omits head/secondary slots. The new `gear-sub-batch` probe pins this: shoes-main visible, head-main and shoes-sub hidden, `ninjaSquid` clothing-main still visible, and a non-local loadout with shoes-main Stealth Jump normalizes and equips `modifiers.stealthJump = true`.
+
+### プレイへの影響
+
+With Stealth Jump equipped, qualifying long near-base ↔ farther-in flight remains the only path that can receive the already-implemented up-to-60F flight-only addition; without calibrated `level.stealthJumpFoci` the addition still fails closed at 0. Without this selection residual, players could never reach that equipped state through the production gear UI even on a calibrated stage. Charge timing, Quick Super Jump composition, landing marker visibility, and remote replication are unchanged by this edit.
+
+### 確認状態
+
+- `patches/splatoon3/tests/gear-sub-batch.test.mjs` #272 probe passes (16/16 with the file, including the pre-existing #193/#235/#245/#298/#267 cases).
+- `patches/splatoon3/tests/issue-272-stealth-jump.test.mjs` passes 4/4 (ability slot, XZ-only 60..100/0..60F curve, fail-closed foci, QSJ composition without prep change).
+- `patches/splatoon3/tests/issue-460-marker.test.mjs` + `issue-460-gauge.test.mjs` pass 10/10 (marker/gauge lifecycle, concealed hook).
+- `patches/splatoon3/tests/superjump-startup-form.test.mjs` passes 7/7 including the 30/60/120Hz wall-clock parity case (background log, ~162s; full file is slow but green).
+- `patches/local-quality/tests/continuation-gear-flow.test.mjs` passes 3/3 (production gear panel owner not cloned/broken).
+- **未確認（実機）** — no Switch measurement of the 60→100-unit distance curve on INKWAVE stage geometry; no calibrated `level.stealthJumpFoci` exists for any shipped stage, so production flight still adds 0 by design.
+- **未確認（描画/通信）** — owner/remote arrival-gauge marker concealment for equipped Stealth Jump is not wired (presentation-only `concealed` snapshots exist but neither flight branch passes them, and the remote flight event carries no stealth flag); remote opponents therefore still see the ordinary arrival cue. This is a separate protocol/presentation residual, not closed here.
+- Exact-head CI and browser acceptance for this branch remain outstanding; this local delta does not claim them.

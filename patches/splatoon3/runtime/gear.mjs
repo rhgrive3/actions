@@ -310,7 +310,7 @@ export function installGear(api, tuning) {
         const row = document.createElement('label'); const labelText = document.createElement('span'); labelText.dataset.slot = String(slot); row.append(labelText);
         const select = document.createElement('select'); select.setAttribute('aria-label', `${label} ${slot === 0 ? 'メイン' : '追加' + slot}`);
         for (const [id, name] of Object.entries(ABILITIES)) {
-          if (!abilityAllowed(id, piece, slot, id === 'abilityDoubler' ? SPLATFEST_TEE : loadout[piece].item) || id !== 'none' && !CLOTHING_ABILITIES.includes(id) && !HEAD_ABILITIES.includes(id) && id !== 'ninjaSquid' && !tuning.gear[id]) continue;
+          if (!abilityAllowed(id, piece, slot, id === 'abilityDoubler' ? SPLATFEST_TEE : loadout[piece].item) || id !== 'none' && !CLOTHING_ABILITIES.includes(id) && !HEAD_ABILITIES.includes(id) && id !== 'ninjaSquid' && id !== 'stealthJump' && !tuning.gear[id]) continue;
           const option = document.createElement('option'); option.value = id; option.textContent = name; select.append(option);
         }
         select.value = slot === 0 ? loadout[piece].main : loadout[piece].subs[slot - 1];
