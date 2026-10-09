@@ -136,10 +136,9 @@ test('pointer lock loss cancels pending mouse fire without replay', async () => 
 });
 
 test('illegal dodge conditions stay rejected without spending roll ink', async () => {
-  for (const state of ['air', 'ink', 'rolls', 'still', 'dead', 'special', 'sub']) {
+  for (const state of ['ink', 'rolls', 'still', 'dead', 'special', 'sub']) {
     const h = await boot(), set = device(h, 'keyboard');
     set('fire', true); set('jump', true);
-    if (state === 'air') { h.actor.grounded = false; h.actor.coyote = 0; }
     if (state === 'ink') h.actor.ink = h.actor.weapon.rollInk - 1e-5;
     if (state === 'rolls') h.actor.weaponRunner.rollsLeft = 0;
     if (state === 'still') h.event('keyup', key('KeyD'));
@@ -166,9 +165,11 @@ test('landing uses the existing bounded jump buffer, without extending its deadl
   const h = await boot(), set = device(h, 'keyboard');
   h.actor.grounded = false; h.actor.coyote = 0;
   h.actor._integrate = () => { h.actor.grounded = true; };
-  set('fire', true); set('jump', true); h.frame();
-  assert.equal(dodges(h), 0, 'airborne at admission');
-  set('jump', false); h.frame();
+  // #719 allows a legal airborne fire+jump dodge. Exercise the separate
+  // no-fire airborne path to keep the original bounded landing buffer covered.
+  set('fire', false); set('jump', true); h.frame();
+  assert.equal(dodges(h), 0, 'no-fire airborne jump cannot dodge');
+  set('fire', true); set('jump', false); h.frame();
   assert.equal(dodges(h), 1, 'landing next tick consumes existing jump buffer');
   h.frame(STEP * 10); assert.equal(dodges(h), 1);
 });
