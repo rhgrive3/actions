@@ -1,0 +1,1945 @@
+{
+  "schema_version": 1,
+  "repository": "rhgrive3/actions",
+  "scope": "PR-linked issues currently Open; Snapshot 2026-10-10 JST",
+  "open_issue_count": 127,
+  "linked_open_issue_count": 80,
+  "close_keyword_count": 20,
+  "reference_only_count": 60,
+  "source_rules": {
+    "original_issue_body": "authoritative acceptance; checklist may be partial; click issue_url for entire body",
+    "closing_keyword": "not proof of completion",
+    "source_evidence": "See SOURCES.md",
+    "prioritized_missing_tests": "See CLOSURE_GATES.md"
+  },
+  "pull_requests": [
+    {
+      "number": 1181,
+      "head_sha": "f160082b60b1ccc1f577e2a832407c1c8bacb236",
+      "base_branch": "main",
+      "branch": "fix/inkwave-10-issues-20261009",
+      "draft": true,
+      "evidence_index_file": "PR1181-1182.md",
+      "workflow_run_url": "https://github.com/rhgrive3/actions/pull/1181/checks"
+    },
+    {
+      "number": 1182,
+      "head_sha": "a8bead03d222deacf0d59d98d6a4945edf128fbf",
+      "base_branch": "main",
+      "branch": "fix/inkwave-ten-currentmain-20261009",
+      "draft": true,
+      "evidence_index_file": "PR1181-1182.md",
+      "workflow_run_url": "https://github.com/rhgrive3/actions/pull/1182/checks"
+    },
+    {
+      "number": 1183,
+      "head_sha": "f023c3c707ad6af3ee51cc92e4dbde94cdf73a3e",
+      "base_branch": "main",
+      "branch": "inkwave/c-next-integration-20261009",
+      "draft": false,
+      "evidence_index_file": "PR1183-1188.md",
+      "workflow_run_url": "https://github.com/rhgrive3/actions/pull/1183/checks"
+    },
+    {
+      "number": 1188,
+      "head_sha": "925713ddfd1d94145aff649f60204fe41cc8647e",
+      "base_branch": "main",
+      "branch": "wip/weapon-fidelity-1130-offline-20261009",
+      "draft": true,
+      "evidence_index_file": "PR1183-1188.md",
+      "workflow_run_url": "https://github.com/rhgrive3/actions/pull/1188/checks"
+    },
+    {
+      "number": 1189,
+      "head_sha": "b54cac08995ec751221776056f3288554235751f",
+      "base_branch": "main",
+      "branch": "fix/inkwave-five-issues-batch-20261009",
+      "draft": false,
+      "evidence_index_file": "PR1189-1190.md",
+      "workflow_run_url": "https://github.com/rhgrive3/actions/pull/1189/checks"
+    },
+    {
+      "number": 1190,
+      "head_sha": "b7d898eefdddfeffeb42239873e25ee43a8fb9fe",
+      "base_branch": "main",
+      "branch": "fix/inkwave-ten-verified-issues-20261009",
+      "draft": false,
+      "evidence_index_file": "PR1189-1190.md",
+      "workflow_run_url": "https://github.com/rhgrive3/actions/pull/1190/checks"
+    },
+    {
+      "number": 1191,
+      "head_sha": "c079b31cf9c020a490fb917d5e311b950943521b",
+      "base_branch": "main",
+      "branch": "fix/inkwave-partial-map-water-20261009",
+      "draft": false,
+      "evidence_index_file": "PR1191-1192.md",
+      "workflow_run_url": "https://github.com/rhgrive3/actions/pull/1191/checks"
+    },
+    {
+      "number": 1192,
+      "head_sha": "f3acb13561c2928a3d20ba0a51f4590a4934510e",
+      "base_branch": "inkwave/c-next-integration-20261009",
+      "branch": "fix/inkwave-512-bot-initial-targets-20261009",
+      "draft": false,
+      "evidence_index_file": "PR1191-1192.md",
+      "workflow_run_url": "https://github.com/rhgrive3/actions/pull/1192/checks"
+    }
+  ],
+  "issues": [
+    {
+      "issue_number": 71,
+      "title": "[INKWAVE][Aim] Gamepad support has no Joy-Con / Pro Controller motion-gyro input path",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/71",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1183
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Input layer has an optional controller-motion source separate from phone DeviceOrientation.",
+        "Available Joy-Con / Pro Controller gyro data can drive aim.",
+        "Right stick and controller gyro compose without double integration.",
+        "Gyro sensitivity/inversion/recenter behavior is deterministic.",
+        "Lack of a browser/controller motion API falls back cleanly to stick-only controls.",
+        "No regression to standard gamepad buttons, touch gyro or mouse aim."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 93,
+      "title": "[INKWAVE][Systems] Respawn uses a fixed spawn-pad slot instead of player-selected Squid Spawn landing",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/93",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1183
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Human respawn enters a landing-selection state.",
+        "Player can choose among legal base-region landing points and confirm launch.",
+        "Repeated respawns can select different valid positions.",
+        "Bots may use their own deterministic selection policy.",
+        "Spawn protection begins at the correct landing phase.",
+        "https://splatoon.nintendo.com/en/gameplay/",
+        "https://splatoonwiki.org/wiki/Spawner_drone"
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 129,
+      "title": "[INKWAVE][Shooter] Splattershot flight paint has no max-2 droplet cap and uses generic spacing",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/129",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1190
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "One Splattershot projectile creates at most two normal flight droplets.",
+        "Spacing comes from validated Splattershot-specific data, not inherited generic `trailEvery`.",
+        "Projectile speed changes do not silently alter the intended pattern.",
+        "Near-user/first-droplet behavior and pattern selection are independently modeled if required.",
+        "Final surface-impact paint remains independently covered by #79."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 198,
+      "title": "[INKWAVE][Shooter] Splattershot uses generic cone bloom instead of the 1%-25% outer-reticle probability model",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/198",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1188
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [],
+      "has_parsed_acceptance_list": false,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 203,
+      "title": "[INKWAVE][Stage] Published build has no Scorch Gorge layout",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/203",
+      "issue_state": null,
+      "pr_closing": [
+        1183
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "`MAP_LAYOUTS` (or the replacement stage registry) exposes a Scorch Gorge layout in the published target.",
+        "The layout is based on the **post-Ver. 8.0** Turf War topology, not the removed prototype.",
+        "Spawn → mid → enemy-side routes match the current reference topologically.",
+        "Grates, abyss edges, major cover and elevation landmarks are present.",
+        "Paintability and Turf-score eligibility are defined for the correct surfaces.",
+        "At least one deterministic regression verifies Scorch Gorge topology/selection in the published build.",
+        "Stage-specific comparison work can run against `inkwave-public/` without referencing the deleted `game/` tree."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 226,
+      "title": "[INKWAVE][Paint][要検証] アメフラシRainNum=72と公開版172回の塗り呼出の対応を校正する",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/226",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1183
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [],
+      "has_parsed_acceptance_list": false,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 253,
+      "title": "[INKWAVE][壁移動] 通常の壁泳ぎでスティックを離すと高度が完全固定され、無入力の下降がない",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/253",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1190
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "現行S3実機で、通常の無入力壁泳ぎの下降を確認し、速度曲線・開始遅延を計測してから設定する。",
+        "張り付きは維持したまま下降でき、ニュートラルで無条件に外向き跳躍させない。",
+        "ノボリ溜め/発動、壁ロール、上端越え、壁の塗り切れ/敵色化を別状態として保護する。",
+        "30/60/120Hz描画の固定tick入力で下降結果が一致する。"
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 258,
+      "title": "[INKWAVE][Slosher] 弾群が70×1＋50×7で本家4＋5弾と異なり、薙ぎ払いにも反応しない",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/258",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [],
+      "has_parsed_acceptance_list": false,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 264,
+      "title": "[INKWAVE][Bug] GPU splatter/drips render as team ink but never enter the CPU ownership grid",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/264",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182,
+        1188
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "For fixed `seed/kind/radius`, every visually opaque normal-ink region above the agreed coverage threshold maps to the same CPU team ownership, within explicit edge AA tolerance.",
+        "The fixed `seed=0.5`, `kind='bomb'` far-spatter point above is either owned by team 0 in the CPU grid or is no longer rendered as authoritative ink.",
+        "Wall drip regions shown as team ink have matching wall ownership for swim/climb queries, or are clearly cosmetic/non-authoritative.",
+        "`coverage()` and a GPU-derived ownership mask agree within the chosen rasterization tolerance across representative shot, bomb, blast, trail, drop, line and Roller samples.",
+        "Existing `speck(... cosmetic:true)` remains explicitly cosmetic and excluded from gameplay scoring.",
+        "Team-over-team repaint ordering remains identical between CPU and GPU."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 272,
+      "title": "[INKWAVE][Movement] Stealth Jump cannot apply Splatoon 3 Ver. 11.0.0's distance-based Super Jump flight penalty",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/272",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1183
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Stealth Jump is selectable only in a slot where Splatoon 3 permits it.",
+        "With Stealth Jump absent, existing AP0 / Quick Super Jump timing remains unchanged.",
+        "With Stealth Jump equipped, a qualifying long near-base ↔ farther-in jump has a longer **flight** than the same jump without Stealth Jump.",
+        "Ground preparation duration is identical with and without Stealth Jump when Quick Super Jump AP is held constant.",
+        "The additional flight duration never exceeds the verified **60-frame / ~1.0 s** maximum.",
+        "Short or non-qualifying jumps do not incorrectly receive the maximum penalty.",
+        "Quick Super Jump and Stealth Jump compose correctly rather than one replacing the other.",
+        "The exact distance curve is validated against current Ver. 11.3.0 behavior or a verified parameter interpretation before locking numeric intermediate thresholds."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 278,
+      "title": "[INKWAVE][Roller] Vertical flick launches all five globs from one origin instead of S3's tiered spawn offsets",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/278",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1181
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A fixed vertical flick no longer gives all five projectiles identical launch origins.",
+        "The three Ver. 11.3.0 vertical unit groups are represented with the correct multiplicities.",
+        "Group-specific spawn-position parameters are preserved with documented reference semantics.",
+        "Existing 26f release timing, 8.5% ink cost, vertical damage aggregation, damage bands, gravity/drag, and landing paint behavior are unchanged unless separately audited.",
+        "Add a deterministic regression test that records `p.start` before the first simulation integration and checks the expected group structure."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 281,
+      "title": "[INKWAVE][Physics] Neutral Splat Bomb launch collapses separate S3 Y/Z spawn speeds into one rotated scalar",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/281",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Stationary, 0 AP, neutral aim reproduces the configured S3 base vertical/forward component pair rather than `20.0711 / 64.5829`.",
+        "Changing player `vel.y` tests player-motion inheritance independently from #237.",
+        "Downward aim tests remain separate from #238.",
+        "0 / 10 / 57 AP verify Sub Power behavior without corrupting the base vertical component.",
+        "Actual projectile and trajectory preview use identical launch components.",
+        "Gravity remains the active S3 profile value `57.6`; do not regress the existing adapter patch.",
+        "Wall/floor collision, fuse, and damage behavior remain unchanged by this fix."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 285,
+      "title": "[INKWAVE][Roller] Horizontal flick collapses S3 spatial spawn width into one common projectile origin",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/285",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1181
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A deterministic horizontal flick no longer gives all 12 projectiles identical launch origins.",
+        "The 12-projectile wide-swing group preserves the reference nonzero spawn-width behavior.",
+        "Spawn-position randomness is controlled by a deterministic seeded test.",
+        "Existing 21f release timing, 8.5% ink cost, horizontal angular spread, gravity/drag, and damage aggregation remain unchanged unless separately audited.",
+        "Add a pre-integration regression test that inspects all 12 `p.start` vectors."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 287,
+      "title": "[INKWAVE][Aim] Controller sensitivity uses 0.2×–3.0× instead of Splatoon 3's −5…+5 right-stick scale",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/287",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "S3 fidelity mode exposes right-stick sensitivity on **−5…+5**, not 0.2×…3.0×.",
+        "Setting **0** uses a measured/calibrated S3-equivalent response rather than assuming INKWAVE 1.0× is equivalent.",
+        "At measured anchor settings (e.g. −5 / 0 / +5), a fixed full-stick trace matches the accepted S3 turn-rate tolerance.",
+        "Intermediate settings are produced by the documented/validated mapping.",
+        "Gyro sensitivity remains an independent setting.",
+        "With gyro enabled, right-stick vertical ownership follows the separate gyro-axis issue and is not changed accidentally.",
+        "Existing Standard Gamepad dead-zone handling and button bindings remain unchanged."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 289,
+      "title": "[INKWAVE][Shooter] Splattershot flight droplets vanish above a 4u drop instead of using S3 fall-height paint scaling",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/289",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1189
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A Splattershot flight droplet emitted 5u above an unobstructed paintable floor lands and paints; it is not discarded.",
+        "Tests below 3u, between 3u and 10u, at 10u, and above 10u verify the expected height-dependent footprint behavior.",
+        "No hard paint/no-paint discontinuity occurs at 4u solely because of a raycast limit.",
+        "Droplet footprint is no longer randomized independently of fall height for the S3 shooter path.",
+        "Existing #129 tests for max count/spacing and #79 tests for final impact paint remain separate and continue to pass."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 292,
+      "title": "[INKWAVE][Movement] Drop Roller is absent from Super Jump landing",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/292",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1183
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Drop Roller is selectable only as a legal shoes primary.",
+        "Without Drop Roller equipped, Super Jump landing behavior is unchanged.",
+        "With Drop Roller equipped and valid pre-landing direction input, a directional landing roll occurs.",
+        "Different stick directions produce corresponding roll directions.",
+        "No valid direction input => ordinary landing.",
+        "A successful roll grants temporary effective **30 AP** Run Speed Up / Swim Speed Up / Ink Resistance Up for about **3 s**, then cleanly expires.",
+        "Temporary AP does not permanently alter the gear loadout.",
+        "Normal Squid Roll state / chain logic is not reused in a way that changes its behavior.",
+        "Tests cover at least teammate Super Jump landing; Inkjet / Zipcaster returns should use the same validated mechanic once those return paths exist."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 305,
+      "title": "[INKWAVE][Roller] Low-ink flicks are rejected instead of using Splatoon 3 depletion attacks",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/305",
+      "issue_state": null,
+      "pr_closing": [
+        1183
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "A low-but-nonempty tank state that qualifies for the reference depletion attack no longer produces only `_empty()`.",
+        "Horizontal depletion mode emits the verified reduced S3 projectile set, including **3** projectiles instead of the normal **12**.",
+        "Horizontal depleted projectile speed applies the verified **0.5** rate.",
+        "Horizontal depleted damage applies the verified **0.25** rate before the existing distance/time falloff pipeline.",
+        "Depleted collision/paint scaling uses the corresponding S3 depletion fields.",
+        "Vertical depletion mode is configured from its own grouped S3 depletion parameters rather than reusing horizontal constants.",
+        "Normal swings at sufficient ink retain their current normal cost/timing path.",
+        "Add deterministic tests for:",
+        "sufficient ink normal horizontal;",
+        "insufficient-but-depletion-eligible horizontal;",
+        "sufficient ink normal vertical;",
+        "insufficient-but-depletion-eligible vertical;",
+        "true empty/non-fire boundary."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 351,
+      "title": "[INKWAVE][ギア/索敵] リベンジがなく、自分を倒した相手の死亡まで続く本人限定追跡を使えない",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/351",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "フクの基本枠限定で選択・保存でき、アタマ/クツ/追加枠では拒否。",
+        "「誰を誰が追跡しているか」を所有者別に保持。最後の1人のHUD文字列を追跡状態の代用にしない。",
+        "復活後の確実な発動ケースで本人限定の壁越しsilhouetteを表示し、味方へ漏らさない。潜伏/近距離抑制は校正条件付きで扱う。",
+        "対象生存中は16秒で失効させず、対象死亡で解除し、その対象の次の生存期間へ持ち越さない。",
+        "本人の攻撃による有効対象へのトドメが本人に帰属する基本ケースで+45F、SPの追加15パーセントポイントを適用。ここで本人による撃破とはメインの「直撃」限定という意味ではない。味方や環境による撃破ではリベンジの追加分を適用しない。相打ち/死後弾の発動境界は上記留保を維持する。",
+        "既存の#91基礎復活時間、#116、#348、PR #317の情報表示と合成し、加算重複やチーム全体へのrevealを防ぐ。",
+        "相打ち/死後弾の正確な開始時刻、特殊ギア/ドリンク併用、onlineのactor-ID再利用は、根拠と専用テストなしに完了扱いしない。",
+        "次試合への状態持ち越し、切断相手へのstale追跡を防ぐ。"
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 366,
+      "title": "[INKWAVE][Perf] Music volume 0 keeps the 25 ms procedural scheduler and note synthesis running",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/366",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [],
+      "has_parsed_acceptance_list": false,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 372,
+      "title": "[INKWAVE][Movement] Main-fire movement keeps 1× acceleration/deceleration instead of Splatoon 3's 2× attack rate",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/372",
+      "issue_state": null,
+      "pr_closing": [
+        1189
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "With identical current velocity and full movement input, sustained main-fire acceleration is **2.0×** normal-state acceleration before target-speed clamping.",
+        "With identical current velocity and neutral/reverse input, sustained main-fire deceleration is **2.0×** normal-state deceleration where the reference attack rule applies.",
+        "Final firing movement speed remains the validated weapon-specific target; doubling acceleration must not double top speed.",
+        "Normal non-attacking acceleration/deceleration remains unchanged by this issue.",
+        "Enemy-ink handling, airborne control, Squid Roll, Dualies dodge roll, hard-landing recovery and wall movement do not regress.",
+        "Add fixed-60-Hz regression cases for normal vs firing acceleration and normal vs firing braking at multiple equal starting speeds.",
+        "Validate the result by the dimensionless 2× state ratio; do not rely on self-referential Nintendo-to-INKWAVE world-scale conversion."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 382,
+      "title": "[INKWAVE][Movement] Comeback is absent, so its 20s 10-AP run/swim boost never applies",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/382",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "Comeback is selectable only in the headgear main slot; it is not a sub ability and cannot be put on clothing/shoes through normal loadout validation.",
+        "Opponent-caused splat + respawn activates Comeback for **20.0 s**.",
+        "During that window, Run Speed Up behavior is exactly equivalent to adding **10 AP** to the same loadout's existing Run Speed Up calculation.",
+        "During that window, Swim Speed Up behavior is exactly equivalent to adding **10 AP** to the same loadout's existing Swim Speed Up calculation.",
+        "At **20.0 s**, both temporary movement contributions expire cleanly without changing permanent AP.",
+        "Environmental/self death does not activate Comeback.",
+        "Repeated ordinary movement, firing movement, swim movement, enemy-ink handling, Squid Roll/Surge, and Super Jump do not gain a separate flat WU boost; they should only observe the relevant existing AP-derived modifiers.",
+        "Existing Flow Aura / Drop Roller / permanent gear stacking remains independent and follows the same AP cap/composition rules.",
+        "No acceptance value depends on assuming INKWAVE world units equal Nintendo DU/meters."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 384,
+      "title": "[INKWAVE][Perf] Offline pause keeps full scene/composer and shadow rendering at rAF cadence",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/384",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Offline `match.paused === true` freezes match time, actors, bots and projectiles as today.",
+        "After the initial pause presentation frame, repeated RAF callbacks do not cause full scene/composer renders at gameplay cadence unless the frozen world is explicitly invalidated.",
+        "Shadow maps do not refresh continuously during offline pause.",
+        "`G.paint.flush()` and world-only environment/decor/props/rig updates do not run continuously solely because RAF is alive.",
+        "Pause menu navigation/animation remains responsive.",
+        "Resume restores normal rendering immediately with no camera/input jump and no large-dt simulation step.",
+        "Online pause behavior remains intentionally live and is not accidentally frozen.",
+        "LOW/MEDIUM/HIGH/ULTRA and touch/desktop paths obey the same local-pause lifecycle contract.",
+        "Repeated pause/resume cycles do not create RAF/timer/listener leaks."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 387,
+      "title": "[INKWAVE][Roller] Rolling contact applies damage but omits S3 roller-body knockback responses",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/387",
+      "issue_state": null,
+      "pr_closing": [
+        1188
+      ],
+      "pr_reference_only": [
+        1189
+      ],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "A survivable rolling contact changes post-contact velocity according to the Roller-specific collision response rather than damage-only behavior.",
+        "Opponent contact uses the S3 opponent-response branch.",
+        "Roller-player response distinguishes damage-on vs damage-off behavior.",
+        "Existing roll damage remains independently configurable and is not double-applied.",
+        "Networked hits reproduce the same authoritative collision response as local hits.",
+        "Add deterministic tests covering victim and Roller velocity before/after contact."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 412,
+      "title": "[INKWAVE][Systems] Super Jump rejects teammates who are already Super Jumping instead of inheriting their destination",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/412",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "A living teammate already charging a Super Jump can be selected where Splatoon 3 permits it.",
+        "A living teammate already in Super Jump flight can be selected where Splatoon 3 permits it.",
+        "The new jump lands at the first jumper's committed destination, not at their transient `pos`.",
+        "A chain A -> B -> C resolves deterministically to the committed destination represented by B's jump.",
+        "Dead/otherwise invalid teammates remain unselectable.",
+        "The fix for #362's normal-target snapshot/cancel behavior does not regress this special-case destination inheritance.",
+        "Keyboard, controller, and touch teammate selection use the same rule.",
+        "Add deterministic regression coverage for selection during both target charge and target flight."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 433,
+      "title": "[INKWAVE][Perf] Main menu preloads and pins large LobbySet canvas atlases before Online is ever opened",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/433",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1183
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Staying in main/settings/loadout offline for more than 2.5 seconds without opening Online does not retain the complete LobbySet indefinitely.",
+        "Starting an offline match after menu idle releases or never allocates unused LobbySet resources.",
+        "No never-shown LobbySet can remain page-lifetime pinned solely because `L.preload === true`.",
+        "Opening Online still succeeds and does not show missing/deferred textures.",
+        "Repeated Online enter/leave cycles keep `renderer.info.memory.textures/geometries` bounded.",
+        "LOW/mobile has a documented bounded memory budget for any retained lobby atlases.",
+        "Canvas/JS memory after an unused preload is released returns near the pre-preload baseline after GC/browser reclamation.",
+        "Existing lobby cross-fade, character staging, reflection, team-color rebake and first-open behavior remain correct."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 434,
+      "title": "[INKWAVE][Mobile] Visibility-only backgrounding can leave hardware-keyboard input stuck on resume",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/434",
+      "issue_state": null,
+      "pr_closing": [
+        1189
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [],
+      "has_parsed_acceptance_list": false,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 466,
+      "title": "[INKWAVE][Roller] Dash turning never uses S3 SpeedDashTurnBreak and stays at 0.132/frame",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/466",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1181,
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Straight rolling before 90f targets 6.48 world-units/s.",
+        "Straight rolling from 90f onward targets 7.92 world-units/s.",
+        "A qualifying hard turn while dashing invokes the S3 turn-break path and no longer carves the turn at a 7.92 target.",
+        "The turn-break target corresponds to `SpeedDashTurnBreak = 0.108/frame` (6.48 world-units/s with the current scale).",
+        "Returning to a valid dash direction/state recovers according to S3 behavior rather than permanently disabling dash.",
+        "Normal humanoid turning, Squid Roll, flick movement, roll damage, and roll paint remain unchanged.",
+        "Add deterministic coverage for straight normal roll, straight dash, dash hard-turn, and dash recovery."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 469,
+      "title": "[INKWAVE][Systems] Ink Storm special gauge is emptied instantly instead of draining after use",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/469",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Activating the S3 Ink Storm mapping does **not** set the special gauge to zero on the activation tick.",
+        "After use, gauge state decreases monotonically through an explicit used-special depletion interval and reaches zero only at the end of that interval.",
+        "Normal special charging cannot begin again while the used Ink Storm gauge is still draining.",
+        "The HUD and gameplay read the same depletion state; there is no cosmetic-only drain layered over an already-zero authoritative gauge.",
+        "If the player is splatted during the Ink Storm post-use drain interval, the ordinary unused-gauge death reduction is not incorrectly applied.",
+        "A deterministic fixed-step test covers activation tick, an intermediate drain point, final zero, recharge unlock, and splat during drain.",
+        "Specials that are intended to deplete immediately retain their own semantics.",
+        "Existing Ink Storm cloud duration, radius, damage/movement behavior and projectile replication do not regress.",
+        "#76, #177 and #192 remain independently scoped."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 512,
+      "title": "[INKWAVE][Match] Battle start skips Splatoon 3 Squid Spawn and fixes players to spawn-pad positions",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/512",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1192
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Normal S3 Turf War no longer places players directly on `spawnPads[team]` before GO.",
+        "All four teammates have individual initial Spawner origins/slots.",
+        "The local player can choose a valid opening landing point in the team's spawn region.",
+        "Two different selected points produce measurably different initial landing coordinates and opening travel routes.",
+        "The start signal launches the player from the Spawner in squid/octopus form instead of simply enabling ground control.",
+        "Online peers see the same selected target and launch trajectory for each player.",
+        "Invalid/enemy-side landing points are clamped/rejected by the stage's allowed initial deployment region.",
+        "Bots choose valid, deterministic/reasonable initial landing points rather than all spawning on the current fixed ring.",
+        "Post-splat respawn behavior remains separately covered by #273.",
+        "Initial spawn protection remains separately covered by #308.",
+        "Boss mode is not accidentally forced into the Turf War Squid Spawn path."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 522,
+      "title": "[INKWAVE][Bug] Online paint events are unauthenticated and can alter authoritative turf and the winner",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/522",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Valid owner paint still applies exactly once.",
+        "Ownership-mismatched paint events do not mutate authoritative turf state.",
+        "Duplicate/stale events do not double-apply paint or score.",
+        "Host/adoption transitions invalidate old ownership safely.",
+        "Final coverage/winner calculation uses only admitted authoritative paint.",
+        "Existing network projectile/bomb/storm and paint-visual regressions stay green."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 532,
+      "title": "[INKWAVE][Motion] Splat Dualies dodge-roll targets 2.8 units instead of S3's 5.0 DU trajectory",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/532",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1181,
+        1188
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "On flat unobstructed ground, one Splat Dualies dodge covers **5.0 DU total** from roll start through its brief slide, within a small deterministic integration tolerance.",
+        "The displacement is direction-independent for forward/back/left/right inputs.",
+        "Two chained rolls cover approximately twice the single-roll displacement before collision corrections.",
+        "The movement-animation phase itself remains **12f**.",
+        "The separate **4f startup** remains independently testable and is not hidden by increasing `rollTime`.",
+        "Post-roll shot admission remains 4f after the roll animation and the 28f tail remains separate.",
+        "30/60/120 Hz rendering yields the same fixed-simulation endpoint.",
+        "Collision should truncate/resolve the path rather than increasing total displacement."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 538,
+      "title": "[INKWAVE][Movement] Squid Roll disables mid-air stick acceleration-steering for its 15F action window",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/538",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1190
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "During an active floor Squid Roll, changing only the stick after launch changes horizontal velocity **before the 15F action window ends**.",
+        "Full input in the current travel direction can increase horizontal speed during the roll when below the applicable S3 cap.",
+        "Neutral input during the roll produces natural horizontal deceleration instead of a 15F frozen velocity.",
+        "A 90° post-launch stick change creates measurable lateral velocity before roll-state expiry.",
+        "Opposite post-launch input begins redirecting/decelerating before roll-state expiry.",
+        "Vertical Squid Roll airtime/action duration remains unchanged by those horizontal stick cases.",
+        "Collision clipping remains authoritative and does not get overwritten by stored `vx/vz`.",
+        "Chain-retention, roll admission angle/min-speed, wall-roll admission, armor, and full-cancel behavior remain independently covered.",
+        "Fixed-step traces are identical at 30/60/120 Hz render rates.",
+        "Owner/network playback does not apply steering twice."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 539,
+      "title": "[INKWAVE][Charger] Partial-charge movement is pinned to full-charge speed instead of Splatoon 3's 0.96→0.21 curve",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/539",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1181,
+        1188
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "No-gear Splat Charger charging movement is not constant across all partial charges.",
+        "Minimum/no-charge endpoint maps to S3 **0.96** (profile-equivalent **5.76 u/s**).",
+        "Maximum-partial endpoint maps to S3 **0.21** (profile-equivalent **1.26 u/s**).",
+        "True full charge maps to S3 **0.20** (profile-equivalent **1.20 u/s**).",
+        "Minimum legal **8F** partial charging uses the minimum-side movement behavior rather than the full-charge endpoint.",
+        "The partial movement curve is deterministic at fixed simulation ticks and rendering at 30/60/120 Hz does not change the results.",
+        "Run Speed Up behavior remains independently covered by #243.",
+        "Full-charge jump behavior remains independently covered by #251.",
+        "Damage/range/ink/laser/charge-keep/paint behavior is unchanged."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 574,
+      "title": "[INKWAVE][Damage] Blaster explosions omit Splatoon 3 knockback and never push hit players",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/574",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182,
+        1188
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "The active Splatoon 3 Blaster profile/runtime preserves `KnockBackParam.Accel = 700`, `Bias = 0.8`, and `Distance = 3.5` (or an explicitly validated equivalent representation).",
+        "A deterministic non-direct blast hit inside the validated knockback region produces a nonzero authoritative victim displacement/velocity response.",
+        "A target outside the validated knockback region does not receive the response.",
+        "Friendly/dead/LOS-rejected targets remain unaffected.",
+        "Knockback direction is deterministic from explosion/target geometry.",
+        "70→50 damage calculation remains independently testable.",
+        "Direct-hit behavior is validated separately against the S3 priority semantics rather than guessed from the indirect-blast test.",
+        "Network ownership tests verify that one blast causes one authoritative knockback, not duplicate owner/remote impulses.",
+        "Existing damage, terrain collision, blast FX/audio, and hit-confirm behavior do not regress."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 647,
+      "title": "[INKWAVE][Systems] Tidal Slam empties the special gauge instantly instead of the Triple Splashdown through-landing drain",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/647",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Activating Tidal Slam at a full gauge does **not** set `actor.special` to zero on the activation tick.",
+        "During `rise/hang/fall`, `actor.special` decreases monotonically and deterministically.",
+        "At the landing instant, the gauge reaches the reference one-segment state rather than zero.",
+        "The final segment becomes zero when the player-body landing action completes.",
+        "A splat during a vulnerable Tidal Slam phase starts death preservation from the then-current nonzero gauge.",
+        "Special Saver modifies that remaining interrupted-use gauge through the existing actor-local S3 modifier path.",
+        "A normally completed Tidal Slam ends at zero gauge.",
+        "A nonzero in-action gauge cannot be used to start another special while `specialActive` is live.",
+        "HUD special fill follows the same `actor.special` progression; no visual-only duplicate timer.",
+        "Ink Storm's separately tracked gauge lifecycle (#469) is unchanged.",
+        "Tidal Slam protection timing (#573), Super Jump activation (#577), and spawn-barrier behavior (#582) remain separate.",
+        "Fixed-step results are identical under 30/60/120 Hz rendering."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 675,
+      "title": "[INKWAVE][Charger] Earliest legal 8f shot consumes 3.00% ink instead of Splatoon 3's 2.25%",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/675",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1190
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Releases before 8F remain governed by the separate minimum-release rule.",
+        "At exactly the first legal 8F release boundary, ink consumed is **2.25% ± test epsilon** with no Ink Saver gear.",
+        "Full 60F charge still consumes **18.0%**.",
+        "The consumption curve between 8F and 60F is monotonic and follows the verified S3 parameterization rather than the generic INKWAVE S-curve by accident.",
+        "Low-ink / empty-tank behavior remains independently testable and does not permit negative ink.",
+        "Ink Saver (Main) scales the corrected base values through the existing gear path without changing the 8F timing gate.",
+        "Fixed simulation produces the same result regardless of 30/60/120 Hz render cadence."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 716,
+      "title": "[INKWAVE][Match] Damaged players lack Splatoon 3 Ver. 11.0+ remaining-health bars",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/716",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A damaged visible opponent shows an approximate remaining-health bar above their head.",
+        "The opponent bar expires at approximately 3 seconds after the latest qualifying damage if no new damage arrives.",
+        "New damage refreshes the opponent display lifetime.",
+        "A normally hidden opponent behind terrain does not expose the bar.",
+        "A normally submerged opponent does not expose the bar.",
+        "A damaged teammate exposes an approximate remaining-health bar.",
+        "Full-health players do not retain stale damaged-state bars.",
+        "Splat/respawn clears stale health-bar state.",
+        "When a supported S3 reveal effect marks an opponent, that reveal can keep the health bar visible under the same conditions as the reference.",
+        "Offline and online behavior agree without leaking HP beyond the reference visibility rules."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 719,
+      "title": "[INKWAVE][Motion] Splat Dualies cannot dodge-roll in midair while Splatoon 3 allows airborne slides",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/719",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1181,
+        1188
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "With Splat Dualies, `grounded === false`, a valid firing state, valid movement direction, enough ink, and a roll remaining, fresh B/Jump starts a dodge.",
+        "The airborne dodge consumes exactly one roll and the normal dodge ink cost.",
+        "The airborne dodge produces a rapid downward/diagonal trajectory matching pinned current-S3 evidence.",
+        "The procedural Character enters the dodge/tumble presentation from the same authoritative runner state.",
+        "Landing during the air roll transitions exactly once into the intended post-roll/turret recovery.",
+        "Landing does not replay the roll or double-consume ink / roll count.",
+        "Without firing, without a valid direction, or with no rolls remaining, the same airborne B input does not start a Dualies dodge.",
+        "Grounded dodge behavior remains independently covered; #477's missing 4F startup is not hidden by this fix.",
+        "#532 trajectory/distance calibration remains independently testable.",
+        "Post-roll shooting, squid-form, ink-recovery, ordinary-Jump admission, and roll-count recovery remain independently testable.",
+        "30/60/120 Hz rendering produces identical fixed-simulation admission and landing-transition ticks.",
+        "Exact airborne vertical constants are backed by current Splatoon 3 parameter/capture evidence before being encoded."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 774,
+      "title": "[INKWAVE][Physics] Splat Roller roll contact can damage opponents through solid walls",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/774",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1190
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A roller and opponent separated by a thin solid wall cannot deal/receive roll-contact damage.",
+        "Rolling parallel to a solid wall cannot damage an opponent on the opposite side even when the opponent center lies inside the current `fwd/lat/dy` rectangle.",
+        "A solid corner between drum and opponent blocks the contact.",
+        "Removing the wall with identical transforms restores the 125-damage contact hit.",
+        "A target on the same unobstructed side at the same local distance is still hit.",
+        "Non-solid/pass-through grate semantics are preserved rather than globally treating every stage surface as opaque.",
+        "Existing roller collision-width calibration remains unchanged.",
+        "The result is deterministic at the authoritative fixed simulation rate and does not depend on render Hz."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 841,
+      "title": "[INKWAVE][Damage] Ink Storm throw animation freezes HP recovery during the special-active window",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/841",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1190
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A recovery-eligible, non-submerged player gains **0.21 HP/F = 12.6 HP/s** during Ink Storm throw at 60 Hz.",
+        "The normal **60F** post-hit wait still applies.",
+        "Allied Ink Storm recovery remains the separate **1.75 HP/F = 100 HP/s** path and does not stack with itself or submersion.",
+        "HP caps at 100.",
+        "Ink Storm movement/input behavior is unchanged.",
+        "No unrelated ink refill or enemy-ground contact damage is introduced.",
+        "Activation and exit boundary ticks do not double-apply recovery.",
+        "30/60/120 Hz fixed-step schedules are time-equivalent.",
+        "Existing #50/#195 normal-path recovery discrepancies remain separately testable."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 845,
+      "title": "[INKWAVE][Perf] Frustum-culled actors keep Character pose, foot-IK raycasts and hair simulation running every tick",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/845",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1183
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "In a 10 s camera-away test, frustum-culled non-local actors no longer execute `Character._ground()` at simulation cadence.",
+        "Long-offscreen actors show a material reduction in `Character.update/_buildPose/_applyPose/_updateHair` CPU time.",
+        "Authoritative Actor position, collision, weapons, damage, networking and AI remain unchanged.",
+        "Turning the camera back toward an actor produces no one-frame T-pose, stale weapon pose, foot teleport, or explosive hair motion.",
+        "Local player / death-camera / Super Jump destination characters that can become immediately visible are updated at an appropriate rate.",
+        "30/60/120 Hz tests preserve animation-state timing when an actor leaves and re-enters view.",
+        "Mobile Performance traces show lower CPU time in Character visual code in the same camera-away scene."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 846,
+      "title": "[INKWAVE][Movement] Squid Surge fast climb expires after 18F instead of continuing to wall top or ink edge",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/846",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Full-charge, 0 AP: on a continuous own-ink wall whose top is still unreached after 18 fixed ticks, Squid Surge remains in its automatic burst state after tick 18.",
+        "Full-charge: reaching the actual ledge/top transitions correctly into the launch/top behavior.",
+        "End of own ink before the top terminates/resolves the Surge according to wall-support rules.",
+        "Explicit downward-stick / action cancellation still exits the automatic climb immediately.",
+        "Partial-charge Surge remains valid and slower/weaker, but does not acquire an artificial `18F × charge` geometry-independent cutoff.",
+        "Action Intensify may change charge time, but must not make a valid wall route terminate early solely by a countdown.",
+        "Existing Squid Roll-from-wall interactions remain independently testable.",
+        "30/60/120 Hz rendering over the same fixed simulation yields the same wall-position/action-state result."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 875,
+      "title": "[INKWAVE][Damage] Projectile falloff interpolates within a 60 Hz frame instead of S3 frame-stepped damage",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/875",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1190
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Heavy Splatling retains the pinned **30 -> 15 HP** falloff over **11F -> 19F**.",
+        "Its falloff state changes by **1.875 HP only on the appropriate 60 Hz frame boundaries**.",
+        "Moving a target from `impactT=0.1` to `impactT=0.9` inside one projectile-age fixed step does not continuously change the damage state.",
+        "The same fixed-frame damage-age rule is used by the generic Splattershot / Splat Dualies / Heavy Splatling falloff path.",
+        "Continuous swept collision ordering and exact contact geometry remain intact.",
+        "#261 remains a separate final precision/truncation concern.",
+        "30/60/120 Hz outer-loop tests agree when they drive the same authoritative fixed 60 Hz simulation.",
+        "No Splatoon 1 / 2 falloff values are imported into the S3 profile."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 878,
+      "title": "[INKWAVE][Match] Hiding the host tab freezes the authoritative Turf War clock and strands guests at 0-00",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/878",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Hiding/backgrounding the online host for 5, 20, and 120 seconds does not extend the Turf War by that duration.",
+        "The authoritative three-minute end boundary remains based on elapsed battle time, not host render visibility.",
+        "A visible guest cannot remain indefinitely in `playing` at local 0:00 because the host page is hidden.",
+        "Host resume does not restore playable time that should have elapsed while hidden.",
+        "The fix does not reintroduce #802: slow foreground render frames still preserve elapsed time.",
+        "Hidden-tab handling does not run an unbounded physics/projectile catch-up burst.",
+        "Network/disconnect policy remains deterministic when the host is backgrounded long enough to be considered disconnected.",
+        "Add a regression covering host hidden before and across the 0:00 boundary."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 887,
+      "title": "[INKWAVE][Motion] Splat Dualies jump spread snaps to ground instead of S3 25F-70F recovery",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/887",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1188
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Stable grounded Splat Dualies retain the 2-degree endpoint.",
+        "Airborne Splat Dualies retain the 7.5-degree endpoint, subject only to separately documented firing bloom.",
+        "Landing does not collapse the jump-derived spread to the grounded endpoint on the first grounded tick.",
+        "Jump-accuracy recovery does not begin before the 25F boundary.",
+        "Recovery reaches the normal endpoint at the 70F boundary.",
+        "`spreadLock = 0` during a legal post-roll turret state remains independent from jump recovery.",
+        "Normal Dualies 5F firing cadence is unchanged.",
+        "Sustained-fire bloom remains independently testable.",
+        "Gameplay projectile cone and HUD/reticle consume the same recovery state.",
+        "30/60/120 Hz rendering over the same fixed simulation gives identical recovery boundaries."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 890,
+      "title": "[INKWAVE][Movement] Normal jumps ignore B hold duration so small and high jumps collapse to one arc",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/890",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A 1F B tap and a sustained B hold no longer produce identical normal-jump vertical traces.",
+        "Sustained hold produces the S3 high-jump class; early release produces the S3 small-jump class.",
+        "Exact current-S3 cutoff/curve is backed by current-version evidence before final tuning.",
+        "Clean ground, own ink, enemy ink, weapon-specific jump caps and swim-form jump are tested separately.",
+        "Existing 0.13 s jump buffer remains independently testable.",
+        "Existing 0.12 s coyote admission remains independently testable.",
+        "Squid Roll, Squid Surge and Dualies dodge admission remain unchanged.",
+        "30/60/120 Hz rendering over the same fixed simulation preserves the same authoritative jump trace."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 891,
+      "title": "[INKWAVE][Motion] Splat Dualies sustained-fire accuracy uses 4-shot cone bloom instead of S3 1%-25% outer-reticle bias",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/891",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1188
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Fresh grounded normal-fire Dualies start at a 0.01 outer-reticle bias state.",
+        "Each successful normal shot advances bias by exactly 0.01 until the 0.25 cap.",
+        "Reaching the grounded cap requires the documented 24 increments from the 0.01 minimum, not four generic bloom steps.",
+        "Empty clicks / blocked shots do not advance the bias state.",
+        "Releasing fire does not begin bias recovery during the first 5F after the last successful shot.",
+        "After that hold, recovery changes by 0.005 per fixed frame until the minimum state.",
+        "Jumping can enter the 0.40 jump-bias state without replacing the separate angular-envelope recovery clock.",
+        "Post-roll turret `spreadLock=0` remains independent and does not inherit normal-fire bloom.",
+        "Gameplay shot sampling and HUD reticle read the same authoritative state.",
+        "30/60/120Hz rendering over the same fixed simulation produces identical shot-count and recovery-frame boundaries."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 904,
+      "title": "[INKWAVE][Motion] Wall-start Super Jump charge loses the wall-cling pose",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/904",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "Starting Super Jump from an inked vertical wall keeps the squid visibly aligned to that wall for the entire supported charge.",
+        "The actor remains stationary during the supported charge; ordinary wall-climb movement does not resume.",
+        "Existing Super Jump charge compression layers on the wall-aligned base pose rather than replacing it.",
+        "Ground-start Super Jump charge remains unchanged.",
+        "If the supporting wall becomes invalid/repainted, support and wall-aligned presentation end together without a stale wall pose.",
+        "Charge -> flight releases the wall basis once, with no one-frame snap back to the old climb quaternion.",
+        "Ordinary wall swimming, Squid Surge, and wall Squid Roll presentation remain unchanged outside Super Jump.",
+        "Local and remote presentation consume the same authoritative wall-support phase/data.",
+        "30/60/120 Hz rendering produces the same fixed-simulation charge/launch boundary.",
+        "No Super Jump destination, vulnerability, charge-time, or flight-time gameplay value is changed by this visual fix."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 907,
+      "title": "[INKWAVE][Match] Turf Map open input never drives the rendered map-diorama state",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/907",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1191
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Holding the keyboard map control opens the explicit Turf Map presentation.",
+        "Holding the gamepad map control opens the same explicit Turf Map presentation.",
+        "Touch MAP opens the same shared map state rather than only changing `MobileInput.mapOpen`.",
+        "Releasing/closing the map returns to the combat camera and leaves `mapHeld === false` once no map input is active.",
+        "FIRE/SUB suppression occurs only while the visible explicit map state is actually active.",
+        "`minimap:false` disables only the persistent corner minimap; the explicit Turf Map still opens and has a current raster.",
+        "Super Jump teammate/base selection remains usable from the visible Turf Map.",
+        "Default persistent-minimap fidelity issue #523 remains independently testable.",
+        "Add a regression asserting that map input changes `CameraRig.mapOpen/mapK` and/or HUD `expanded`, not only controller gating."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 912,
+      "title": "[INKWAVE][Damage] Ground Tidal Slam omits Triple Splashdown's two fist explosions and overlap damage",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/912",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1181
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Normal ground Tidal Slam produces exactly **three independent explosion centers**: player + two fists.",
+        "The two fist centers use current S3 / Ver. 11.3.0 travel geometry.",
+        "A target outside the player explosion but inside a fist explosion takes fist damage instead of 0.",
+        "A target inside two valid explosion regions can receive stacked damage from both.",
+        "A deterministic fixture demonstrates a current-S3-style **100+ damage overlap** region.",
+        "Each explosion uses the current S3 220/60 per-explosion endpoints once the separate endpoint fix is applied.",
+        "Super-Jump Triple Splashdown remains a single player explosion with **no fists**.",
+        "No duplicate player-centered explosion is introduced.",
+        "Fixed-60-Hz regression tests produce deterministic fist travel, impact centers, and multi-hit results.",
+        "Existing #573 and #647/#648 remain independently testable."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 919,
+      "title": "[INKWAVE][Systems] Teammate special activations never show Splatoon 3's in-use HUD signal",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/919",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "A same-team non-local actor activating a special produces a visible teammate special-in-use HUD signal.",
+        "The displayed icon corresponds to the **activating actor's special id**.",
+        "A remote online teammate activation produces the same signal on the receiving client.",
+        "One activation produces exactly one signal; network replay does not double-display it.",
+        "Enemy special activations do not appear in the teammate signal channel.",
+        "Special-ready roster glow remains independent and unchanged.",
+        "Local-player special presentation remains correct and does not accidentally use a teammate's icon.",
+        "Simultaneous/overlapping teammate activations do not silently drop later qualifying activations.",
+        "The signal is suppressed in attract/menu/non-live states as appropriate.",
+        "No gameplay, gauge, damage, or special timing changes are made as part of this HUD/event fix."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 927,
+      "title": "[INKWAVE][Systems] Ink Storm omits the allied HP-recovery boost added in Splatoon 3 Ver. 6.1.0",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/927",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A damaged actor inside a **friendly** active Ink Storm recovers HP faster than the same actor in the same non-submerged state outside the Storm.",
+        "The recovery boost applies to the Storm owner and same-team allies, never enemies.",
+        "The effect ends when the actor leaves the effective rain area or the cloud expires.",
+        "Enemy Storm behavior remains damage-only for that actor; it does not grant the recovery boost.",
+        "Submerged and non-submerged recovery both compose deterministically with the Storm modifier rather than replacing the base S3 recovery rules.",
+        "Spatial eligibility follows the authoritative Storm area rather than visual-only particles.",
+        "Behavior is deterministic at 30 / 60 / 120 Hz simulation stepping.",
+        "Online ownership does not double-apply the heal/recovery modifier.",
+        "Existing Storm damage/paint behavior and tests remain intact.",
+        "No unrelated code or kit changes are bundled into the fix."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 940,
+      "title": "[INKWAVE][Motion] Heavy Splatling uses generic cone bloom instead of S3's fixed 30% outer-reticle shot distribution",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/940",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182,
+        1188
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Grounded Heavy Splatling does not use the generic `spreadFirst ?? 0.45` fallback.",
+        "Grounded Heavy Splatling models the S3 standing 30% outer-reticle shot distribution rather than a single continuously sampled generic cone.",
+        "Releasing ZR to begin a stream does not trigger generic accuracy recovery while bullets are still being emitted.",
+        "The 1st, 2nd, 15th, and final grounded bullets use the intended S3 standing distribution rather than resetting to a 1.485° first-shot cone.",
+        "S3's 3.3° standing and 7.0° airborne envelopes remain profile-driven.",
+        "#850's jump/landing 25F→70F recovery remains independently testable.",
+        "Gameplay shot distribution and HUD reticle consume the same Splatling accuracy state.",
+        "30/60/120 Hz rendering over the same fixed simulation produces identical authoritative shot-state boundaries and seeded shot directions."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 949,
+      "title": "[INKWAVE][Bug] Rejected Boss hits consume the Slosher volley damage budget",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/949",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [
+        1181
+      ],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [],
+      "has_parsed_acceptance_list": false,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 950,
+      "title": "[INKWAVE][UI] Delayed title transition overrides newer screens and revives disposed menus",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/950",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [],
+      "has_parsed_acceptance_list": false,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 951,
+      "title": "[INKWAVE][Movement] Away-input Squid Surge cancel leaves burst state alive for up to 16F",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/951",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [
+        1181
+      ],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "Full-charge Surge: release -> next-tick away input cancels `state.surge` on that cancellation tick.",
+        "Partial-charge Surge: same behavior at representative 25%, 50%, and 75% charge.",
+        "Cancelling during the charge phase remains correct.",
+        "After burst cancellation, `s3.actions.surge` / synced `s3.surge` are null and no Surge armor is accepted from that cancelled action.",
+        "Ordinary airborne steering resumes without a hidden Surge timer.",
+        "Reaching the wall top still preserves the intended top/ledge transition rather than being mistaken for a cancel.",
+        "Ink-edge/support-loss behavior stays covered separately from deliberate away-input cancel.",
+        "30/60/120 Hz render schedules produce the same fixed-simulation cancellation tick/state.",
+        "Existing #846/#568/#473 fixes can be applied independently without reintroducing this stale burst state."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 952,
+      "title": "[INKWAVE][Motion] Heavy Splatling charge entry ignores S3 dedicated ground-deceleration curve-delay",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/952",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1188
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A deterministic 60 Hz Heavy Splatling run -> ZR trace matches a captured S3 speed-vs-frame trace from charge admission to steady `MoveSpeed_Charge`.",
+        "The implementation demonstrably consumes the S3 charge-specific transition parameters rather than falling through to generic `PLAYER.runDecel` for the whole entry.",
+        "Fixing #470's target to 0.062/frame does not collapse the transition to an instantaneous target snap.",
+        "Standstill -> charge does not create horizontal velocity.",
+        "Charge started below the charge-speed cap does not create an artificial backward/slowdown impulse.",
+        "Releasing/cancelling charge exits the charge-transition state cleanly.",
+        "Firing-stream movement remains independently sourced from `MoveSpeed`.",
+        "Enemy-ink and airborne rules remain independently testable.",
+        "30/60/120 Hz rendering yields the same fixed-simulation transition.",
+        "No code change or PR is part of this report."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 966,
+      "title": "[INKWAVE][Damage] Tidal Slam impact resolves around 55F instead of S3 Triple Splashdown's 70F",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/966",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1181
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "At 60 Hz, impact resolves at the intended ~70F boundary instead of ~55F.",
+        "Damage, paint, VFX and action-state transition agree on the same impact tick.",
+        "Render rates do not change the fixed-simulation impact frame.",
+        "Existing fist/explosion behavior remains independently testable."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 967,
+      "title": "[INKWAVE][Perf] Menus keeps a redundant second RAF loop alive after engine takeover",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/967",
+      "issue_state": null,
+      "pr_closing": [
+        1183
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "Only one active RAF scheduling chain remains after engine takeover.",
+        "Returning to menus does not accumulate additional RAF loops.",
+        "Menu animations and transitions continue to work normally.",
+        "Repeated match/menu cycles keep a stable number of scheduled frames."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 992,
+      "title": "[INKWAVE][Dualies] Normal-shot turf paint ignores S3 distance-angle paint profile and uses fixed random blobs",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/992",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Dualies normal-shot paint no longer uses only `trailRadius=0.38` plus random 0.8–1.2 blobs for every flight condition.",
+        "Near vs far floor hits reproduce the sourced **1.71 vs 1.66** paint-width relationship after the project's explicit scale mapping.",
+        "Impact/fall geometry applies the sourced depth-scaling behavior rather than one fixed stretch.",
+        "The droplet path reproduces `SpawnBetweenLength=14`, nearest length 1, max one droplet per shot, and nearest-vs-normal **2.18155 vs 1.55825** radius relationship after explicit scale mapping.",
+        "Turf-score changes use the same authoritative CPU paint result.",
+        "Add deterministic regressions for near, far, steep/fallen, and droplet cases.",
+        "Existing wall-drop (#604) and dodge-roll paint (#979) tests remain independent and green."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 999,
+      "title": "[INKWAVE][Damage] Roller damage-group increments can erase Squid Spawn armor penetration",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/999",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "A 150-damage Splat Roller grouped hit against active Squid Spawn armor deals **50 HP damage**, regardless of whether lower-value units from that same group resolve first.",
+        "Reversing same-group unit/contact order does not change final HP.",
+        "A <=100 Roller grouped hit is fully absorbed as before.",
+        "A separate attack during the 20F break delay still follows S3 break-delay armor behavior.",
+        "Enemy-ink bypass remains unchanged.",
+        "Existing >100 single-hit armor penetration remains unchanged.",
+        "Local and network-authoritative hit paths produce the same result."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1011,
+      "title": "[INKWAVE][Slosher] Bucket Slosher impact paint ignores S3 per-unit near/far PaintParam",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1011",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Unit 1 bullet 0 consumes its `PaintParam`, preserving the source **4.44 near / 3.84 far** half-width relationship.",
+        "Unit 1 later bullets consume `AfterPaintParam`, preserving **1.44 near / 1.92 far**.",
+        "Unit 2 bullet 0 consumes `PaintParam`, preserving **1.2 / 1.2**.",
+        "Unit 2 later bullets consume `AfterPaintParam`, preserving **0.96 near / 1.14 far**.",
+        "The matching source depth-scale relationships are preserved.",
+        "Any near/far transition uses verified `DistanceXZ*` semantics rather than an invented mapping.",
+        "The legacy random `0.85–1.15×` Slosher impact-radius path cannot replace or double-paint the source footprint.",
+        "#978 foot paint remains separate.",
+        "The pending Unit-2 intermediate splash remains separate.",
+        "#554 wall-hit/wall-drop behavior remains separate.",
+        "Damage, collision and projectile timing are unchanged.",
+        "Fixed-seed tests cover Unit1-first, Unit1-later, Unit2-first and Unit2-later near/far fixtures."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1033,
+      "title": "[INKWAVE][Bug] Victim disconnect can silently drop hits during ownership handoff",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1033",
+      "issue_state": null,
+      "pr_closing": [
+        1183
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "If V disconnects at the relay before S receives the leave frame, a hit S accepts against V is not silently lost.",
+        "A lethal hit in that transition results in exactly one splat or the victim is explicitly made non-hittable before the hit can be accepted.",
+        "A hit successfully delivered/applied by the old owner is not applied again after handoff.",
+        "Ordinary cross-owner hits with no disconnect remain exactly-once.",
+        "Host and non-host victims are covered.",
+        "Ordinary guest leave and host migration are covered.",
+        "`noBots` maps preserve remove-on-leave behavior without applying damage to an Actor that is intentionally removed.",
+        "The same transport ordering produces the same authoritative result at 30/60/120 Hz rendering."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1039,
+      "title": "[INKWAVE][Match] Online Private Battle lets guests self-select teams instead of host assignment",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1039",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A non-host client cannot directly persist `team: 0`, `team: 1`, or `auto` as its own final Private Battle team assignment.",
+        "The host has an explicit phase/control to assign each connected player to a team before launch.",
+        "Host-confirmed team assignments are broadcast as authoritative lobby state.",
+        "Team-assignment changes invalidate/refresh final readiness as needed.",
+        "Every participant performs the final ready-up after team assignment is confirmed.",
+        "Match roster construction uses the host-confirmed assignments exactly.",
+        "Add a 2+ client regression proving a guest cannot self-move teams while the host can reassign that guest.",
+        "Boss/custom modes keep their intentionally separate squad rules unless explicitly routed through the same Private Battle flow."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1089,
+      "title": "[INKWAVE][Dualies] Special activation freezes post-roll turret state and resumes it afterward",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1089",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "Enter post-roll turret mode, hold ZR, activate Special, finish Special: first resumed Dualies fire is normal mode, not 4F / 0° turret mode.",
+        "Same scenario with ZR released during Special also returns to normal mode.",
+        "Activating Special during the 4F post-roll first-shot gate cannot resume the old pending turret shot after Special.",
+        "A new Dodge Roll after the Special can establish a fresh turret state normally.",
+        "Normal movement / ZR-release / squid / sub cancellation behavior remains unchanged.",
+        "Existing #518 / #741 / #814 / #1020 / #1047 regressions continue to pass.",
+        "Special activation does not refund Dodge Roll ink or invent additional roll charges."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1090,
+      "title": "[INKWAVE][Systems] Ink Vac fills by projectile count instead of absorbed damage",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1090",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Absorbing attacks with different damage values produces different gauge increments proportional to their verified absorption value.",
+        "Three ordinary 36-damage Splattershot shots do **not** fill the Vac.",
+        "A 36-damage control shot contributes approximately `36 / current full-capacity` of normalized charge before any verified source-specific correction.",
+        "A sequence totaling approximately the full verified capacity reaches 100% at the correct boundary.",
+        "Splitting the same total absorbed damage across many small projectiles vs fewer large projectiles produces equivalent gauge progress unless a verified S3 source-specific modifier says otherwise.",
+        "Duplicate/replayed online absorption proposals cannot double-credit the same attack.",
+        "Remote replay cannot invent arbitrary damage values to overfill the owner.",
+        "Reaching full charge transitions to the countershot exactly once.",
+        "Return-shot charge scaling consumes the corrected normalized absorption state.",
+        "#1010's Special Power Up suction-radius fix remains independent.",
+        "#1042's 6-second suction-duration fix remains independent.",
+        "Fixed-step behavior is deterministic at 30/60/120 Hz rendering."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1100,
+      "title": "[INKWAVE][Aim] Heavy Splatling outer accuracy reticle has two ticks instead of four corner markers",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1100",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1190
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Heavy Splatling renders **four** outer corner accuracy markers in the equivalent normal aiming state.",
+        "All four markers expand/contract coherently when the authoritative Splatling spread state changes.",
+        "Ground/air spread-state changes remain visually represented without dropping to a two-marker layout.",
+        "The two-stage charge display tracked/fixed by #508 remains independent and intact.",
+        "#850 remains responsible for Heavy Splatling's 25F→70F jump-accuracy recovery timing.",
+        "#940 remains responsible for the S3 inner/outer shot-distribution semantics.",
+        "#1045 remains responsible for airborne horizontal/vertical spread-axis limits.",
+        "#769 remains responsible for `ShotGuideFrame=11`.",
+        "#871 remains Shooter-specific and its corner-marker geometry change does not implicitly stand in for Splatling.",
+        "Final pixel dimensions/offsets are based on measured S3 reference material rather than guessed constants."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1102,
+      "title": "[INKWAVE][Blaster] Walking off a ledge incorrectly starts the jump-accuracy penalty",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1102",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "From a fully recovered grounded state, walking off a ledge **without jump input** does not create a Blaster jump-accuracy timer.",
+        "A no-jump ledge fall keeps the standard Blaster's normal **0°** swerve state.",
+        "An actual jump still initializes the **10°** outer envelope and **0.5** initial bias.",
+        "Actual-jump recovery still begins at the sourced **25F** boundary and reaches its endpoint at **70F**.",
+        "Landing during a legitimate existing jump-recovery state continues to follow #684's intended persistence behavior.",
+        "Intensify Action does not turn a non-jump ledge fall into an accuracy-penalty state.",
+        "Fixed-simulation behavior is identical at 30/60/120 Hz rendering.",
+        "Add a regression test that distinguishes **jumping off** a ledge from simply **walking/falling off** it."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1107,
+      "title": "[INKWAVE][Blaster] Timed airbursts lose S3 default burst-paint fields from the sparse parameter mirror",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1107",
+      "issue_state": null,
+      "pr_closing": [
+        1188
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "The live current-S3 standard-Blaster contract resolves the type default `SplashDropOn = true`.",
+        "It resolves normal `SplashDropPaintRadius = 3.2` rather than treating the sparse JSON omission as zero/absent.",
+        "It resolves normal `SplashPaintRadius = 2.0`.",
+        "A normal 13F timed airburst executes the dedicated burst splash/drop paint path; it does not rely on the generic `w.impactRadius = 1.5` downward stamp.",
+        "#1060 can remove/gate the false `BlastParam` floor stamp without deleting legitimate normal burst paint.",
+        "A projectile collision still uses the distinct sourced shot-collision paint contract tracked by #1001, including the explicit 2.5 radius.",
+        "Flight droplets remain owned by `SplashSpawnParam / SplashPaintParam` and are not double-counted.",
+        "Wall-hit / wall-drop paint remains separately parameterized.",
+        "Authoritative turf for the same fixed simulation is identical under 30/60/120 Hz rendering.",
+        "Add a regression proving that sparse omission of a field equal to the S3 parameter-type default does **not** erase that default from the live resolved weapon contract."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1116,
+      "title": "[INKWAVE][Motion] Non-shooter jumps reuse generic airborne pose despite Splatoon 3 weapon-class jump animations",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1116",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1183
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Document which `Jump_Nrml*`, `Jump_<class>*`, `JumpShoot_<class>*` resources **actually run** in current S3 no-fire and fire/charge scenarios; unused animation names do not count as parity evidence.",
+        "No-fire Shooter, Roller, Dualies, Slosher, Splatling jumps meet the project's chosen current-S3 visual tolerance for initiation, airborne peak and recovery, where unique poses are verified.",
+        "Non-shooter class-specific curves are selected when justified by 11.3.0 reference, instead of silently sharing one procedural base pose.",
+        "Starting from idle versus forward running produces correct takeoff pose/lead foot phase without abrupt jumps.",
+        "All hands/weapon anchors remain attached and reference-consistent during takeoff/apex/landing; ZR shooting/charge uses correct separate action priority.",
+        "On cancellation/landing, no stale pose, foot skating, snapping or weapon placement drift remains.",
+        "Simulated motion agrees at render 30/60/120 Hz; local and remote presentation are equivalent on the same playback timeline.",
+        "Jump physics/height, collision, ink, damage, weapon admission and cooldowns are unchanged."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1140,
+      "title": "[INKWAVE][Slosher] High-drop Bucket Slosher hitboxes never shrink with fall distance",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1140",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Low-drop Unit-1/Unit-2 projectile collision still reaches the current source-defined radius after 4F/5F.",
+        "A large downward drop produces a smaller player collision radius than the same unit at low drop.",
+        "Field collision shrinks correspondingly, so high-drop edge contacts match S3 captures.",
+        "Very large drops reproduce the observed reference disappearance/shrink behavior rather than preserving a full-size damaging glob until the generic lifetime expires.",
+        "Dedicated foot paint remains unaffected by high-drop shrink.",
+        "70→50 damage falloff remains independently correct.",
+        "Unit-specific initial collision radii and after-offset radii remain intact.",
+        "Fixed-step results are identical at 30/60/120 render FPS."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1149,
+      "title": "[INKWAVE][Systems] Ink Vac suction never drains or slows opponents inside the vortex",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1149",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Non-firing live enemy directly in the unobstructed suction cone loses tank ink, experiences slowdown, and receives **no HP damage** from proximity alone.",
+        "30 valid 60 Hz frames accumulate 45 absorption-equivalent charge (clamped to the real capacity, without floating drift).",
+        "Owner, allies, dead actors, outside/behind-cone actors, and actors occluded by solid walls are not affected.",
+        "No debuff persists after leaving the cone or after special release, death, respawn or match reset.",
+        "Deterministic fixed-step tests plus composed real `Actor` integration; network actor authority and no duplicate credit for remote ghosts.",
+        "Projectile suction regressions still pass and overlap charge combines correctly with projectile charge without double counting."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1151,
+      "title": "[INKWAVE][Mobile] Gyro stays ON indefinitely when orientation sensor stops after its first sample",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1151",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1189
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Real `GyroPermission`: waiting → first sample → silence cannot remain reported as definitively healthy forever without any way to revalidate or indicate stale data.",
+        "A first sample cancels only the initial timeout, while a safe subsequent-health mechanism continues as appropriate; no false OFF for a stationary handset or throttled event semantics.",
+        "Blur/focus and hide/show after an earlier sample revalidate missing sensor data and retain permission/user preference.",
+        "Returning sensor stream from a dead state can be admitted again and produces correct camera motion without stale yaw/pitch spike.",
+        "Repeated outages/recoveries never double-register listeners or duplicate permission prompts.",
+        "Initial no-data case still reports unavailable after existing ~2s probe.",
+        "Test Android Chrome/WebView and iOS Safari/PWA, 30/60/120 Hz regular streams plus after-first-sample permanent silence; cover screen change, focus, hidden/suspend.",
+        "No Android #187 gyro drift regression."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1161,
+      "title": "[INKWAVE][Blaster] Hot Blaster direct shots omit S3 1.9x Big Bubbler object damage",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1161",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1183
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A no-Object-Shredder Hot Blaster direct shot that actually reaches a Big Bubbler's main barrier or exposed weak point applies **1.90×** source-side object rate rather than 1.00×, before target-side scaling.",
+        "The proper Blaster weapon identity controls the modifier; a standard shooter control preserves its own 1.00× and other Blaster variants are not assigned Hot Blaster's factor.",
+        "Object Shredder control corresponds to **2.09× total** for Hot Blaster without double-application.",
+        "Bubbler barrier-only **0.64** target-side relation stays independent and combines correctly once #1051 is fixed; no HP budget mapping or shared-durability regression.",
+        "Direct hits on players remain 125 damage and near/far airburst damage remains 70/50.",
+        "Authoritative local Bubbler and remote host-owned Bubbler account for the same canonical damage once per projectile, with no owner handoff/replay duplicates.",
+        "Tests separately record source damage, object multiplier, target-side scale, raw-unit mapping, and resulting HP delta.",
+        "Controlled 11.3.0 S3 device capture or equivalent verified reference documents the object's current source-side coefficient if the 11.2.0 reference table has changed."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1164,
+      "title": "[INKWAVE][Damage] Trizooka remains alive below the lethal water boundary until Ultra Shot ends",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1164",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1191
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "A live Trizooka user crossing unsupported water below `fallDeathY` is splatted on the **first eligible fixed tick** for unfired, charging and active-firing Trizooka states.",
+        "Exactly one environmental death event, water respawn start, and special cancellation occur; no post-death Trizooka projectile damage is emitted.",
+        "Above-boundary and legitimate under-deck paths remain alive; terrain `groundHeight() === -Infinity` condition is preserved.",
+        "Same fixed-simulation outcomes at 30/60/120 Hz rendering and during occasional rendering hitch.",
+        "No regressions to normal actor water deaths, Ink Vac's native movement, Ink Storm, or separately reported Super Jump hazard behavior.",
+        "Check authoritative owner and ghost/remote visual paths for duplicate-splat and incorrect kill/assist credit."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1178,
+      "title": "[INKWAVE][Bug] Malformed owner snapshots inject NaN into remote actor positions",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1178",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1181,
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Normal 20 Hz owner snapshots interpolate correctly at 24/30/60/120/144 Hz.",
+        "Reject malformed values such as `vx: \"bad\"`, `x: null`, bad yaw/HP, truncated arrays, nonfinite/extreme values, impossible flags/counters and unknown NIDs.",
+        "No NaN reaches Actor, Character, FX, collision or rendering state.",
+        "The next valid snapshot recovers cleanly.",
+        "Spoofed actor IDs, replayed timestamps and stale life-epoch data remain rejected.",
+        "Add a two-client integration test for a malformed owner snapshot followed by a valid snapshot."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1179,
+      "title": "[INKWAVE][Bug] Negative online Boss-hit damage heals HULLBREAKER and can poison HP to Infinity",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1179",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1181,
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [
+        "Reject negative, zero, null, string, array/object, NaN, Infinity/-Infinity and over-limit values without changing HP/stats/state.",
+        "Valid positive boss/crablet hits still apply correct bounded damage.",
+        "Invalid attacker ownership, dead attacker, stale battle and nonexistent crablet IDs are rejected.",
+        "Malformed hit followed by legitimate hit leaves finite correct HP.",
+        "Add host/guest browser + relay integration coverage for boss and crablet branches.",
+        "Assert `Number.isFinite(boss.hp)` and crablet HP after every accepted hit."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1184,
+      "title": "[INKWAVE][UI] Failed offline match startup leaves the screen black with no usable menu",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1184",
+      "issue_state": null,
+      "pr_closing": [],
+      "pr_reference_only": [
+        1182
+      ],
+      "link_state": "reference_only_keep_open",
+      "acceptance_checklist": [],
+      "has_parsed_acceptance_list": false,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1186,
+      "title": "INKWAVE: same-name ally markers borrow another actor's weapon and Special readiness",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1186",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [],
+      "has_parsed_acceptance_list": false,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    },
+    {
+      "issue_number": 1187,
+      "title": "[INKWAVE][Mobile] Leaving gamepad input ownership synthesizes held FIRE/SUB releases",
+      "issue_url": "https://github.com/rhgrive3/actions/issues/1187",
+      "issue_state": null,
+      "pr_closing": [
+        1182
+      ],
+      "pr_reference_only": [],
+      "link_state": "closing_keyword_present_not_independent_acceptance",
+      "acceptance_checklist": [
+        "Connected old pad held FIRE/SUB cannot auto-release solely on owner change.",
+        "Normal real releases and fresh new-device presses remain functional.",
+        "If the new input source legitimately continues the same held action, it is not cancelled merely because the old source changed.",
+        "Fixed-step equivalence at 30/60/120 Hz; neighboring ownership/cancellation tests."
+      ],
+      "has_parsed_acceptance_list": true,
+      "issue_source_is_authoritative": true,
+      "require_independent_implementation_and_ci_check": true
+    }
+  ]
+}
