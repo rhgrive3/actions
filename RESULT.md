@@ -3,7 +3,7 @@
 - Issue: https://github.com/rhgrive3/actions/issues/272 — Stealth Jump Ver. 11.0.0 distance-based flight penalty.
 - Base SHA: `590410494a3e041a403398e191b7d95183912ea2` (origin/main, verified exact match; branch `inkwave/c-272-cl6-currentmain-20261009` has zero diff vs main before this work).
 - Claim: `/mnt/workspace/inkwave-issue-claims/272/claim.json` owner=C, lane=cl6, timestamp 2026-10-09T14:03Z; duty comment https://github.com/rhgrive3/actions/issues/272#issuecomment-6075313881.
-- HEAD after work: (filled at commit time; see commit log below).
+- HEAD after work: `35367ecb3625f686240d2a6679dcd441d6b9906a` (pushed, no force; see commit log).
 
 ## Changed files (scoped, no force)
 
