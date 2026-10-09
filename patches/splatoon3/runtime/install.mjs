@@ -68,6 +68,7 @@ import { installFaceMotion } from './face-motion.mjs';
 import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
 import { installControllerMotion } from './controller-motion.mjs';
+import { installTripleSlamFists } from './triple-slam-fists.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -152,5 +153,8 @@ export function install(profile) {
   installSplatGhostReturn(api);
   installTurfCombatGate(api);
   installDualiesNetwork(api);
+  // Install after native special/gear/net wrappers: one gameplay owner for
+  // player + two fist explosions and their fixed-step delayed impact.
+  installTripleSlamFists(api, profile);
   return api;
 }
