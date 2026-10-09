@@ -1907,7 +1907,7 @@ Parent review corrected #1163 recovery-phase comparisons to use absolute sender 
 
 文法上「チャージャーの場合は正確にはフルチャ時」とだけ限定されるので、スピナー属は**チャージ状態の全期間**で低い値を使う。
 
-**換算（独自校正）。** 既存の速度換算は raw×60（DU/f×6）で、`OpInk_JumpVel` 0.08 DU/f→4.8 WU/s、チャージャーのピン留め `JumpHeightFullCharge` 0.07→4.2 WU/s に使われている。同じ校正で 0.7 DU/f→**4.2 WU/s**。したがってバレルスピナーのチャージ中ジャンプは `weapons.splatling.chargeJumpVelocity = 4.2` とした（`profile.json.bindings` には入れず、`calibration.unverified` に校正として記録）。
+**換算（独自校正）。** 既存の速度換算は raw×60（DU/f×6）で、`OpInk_JumpVel` raw 0.08 m/F（0.8 DU/f）→4.8 WU/s、チャージャーのピン留め `JumpHeightFullCharge` 0.07→4.2 WU/s に使われている。同じ校正で 0.7 DU/f→**4.2 WU/s**。したがってバレルスピナーのチャージ中ジャンプは `weapons.splatling.chargeJumpVelocity = 4.2` とした（`profile.json.bindings` には入れず、`calibration.unverified` に校正として記録）。
 
 **実装箇所。** `patches/splatoon3/runtime/movement.mjs` の `normalJumpVelocity` を拡張し、`weapon.kind === 'splatling'` かつ `weaponRunner.charging` のとき `Math.min(velocity, weapon.chargeJumpVelocity)` を返す。`adapter.mjs` の `this.vel.y = normalJumpVelocity(this, jv)` の順序（敵インク／Ink Resistance の後）はそのままなので、武器のチャージ状態値が敵インク結果の上限として優先される。値は武器ごとのデータなので 1.0 DU/f の例外スピナーを後から追加できる。チャージャーの #251 ロジック（`charge >= 1` のときだけ `fullChargeJumpVelocity`）は変更していない。
 

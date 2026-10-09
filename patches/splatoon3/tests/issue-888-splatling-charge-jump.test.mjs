@@ -10,7 +10,7 @@ const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 // S3 reference: the gear-power verification table states that non-exception
 // splatlings and chargers use a 0.7 DU/f charging jump initial velocity, which
 // is lower than the 0.8 DU/f GP0 enemy-ink value, so the weapon state always
-// wins. INKWAVE maps it with the existing DU/f x6 calibration (0.08 DU/f
+// wins. INKWAVE maps it with the existing DU/f x6 calibration (0.8 DU/f (raw 0.08 m/F)
 // enemy ink -> 4.8), giving 4.2 world u/s — the same calibration the Charger's
 // fullChargeJumpVelocity already uses.
 
@@ -61,6 +61,11 @@ test('#888 early charge, first ring and full charge all use the flat pinned char
     assert.equal(a.weaponRunner.charging, true, `charge ${charge} must remain the authoritative charging state`);
     close(a.vel.y, 4.2);
   }
+  const releaseJump = make(f, 'splatling');
+  releaseJump.intent.fire = true; f.tick(releaseJump, 30);
+  releaseJump.intent.fire = false; releaseJump.intent.jump = true; f.tick(releaseJump);
+  close(releaseJump.vel.y, f.PLAYER.jumpVel);
+
   // A released stream is not "charging": the stream state keeps the ordinary impulse.
   const streaming = make(f, 'splatling');
   streaming.intent.fire = true; f.tick(streaming, 72);
@@ -111,7 +116,7 @@ test('#888 normal jump, squid jump, Squid Roll, Squid Surge and Dualies admissio
   // Squid-form swim/roll/surge launches never take this path.
   assert.equal(f.normalJumpVelocity({ form: 'squid', weapon: { kind: 'splatling' }, weaponRunner: runner }, f.PLAYER.swimJumpVel), f.PLAYER.swimJumpVel);
   // Non-charging Splatling and other weapons keep the generic impulse.
-  close(f.normalJumpVelocity({ form: 'kid', weapon: f.WEAPONS.splatling, weaponRunner: { charging: false, charge: 0 } }, f.PLAYER.jumpVel), f.PLAYER.jumpVel);
+  close(f.normalJumpVelocity({ form: 'kid', intent: { fire: false }, weapon: f.WEAPONS.splatling, weaponRunner: { charging: false, charge: 0 } }, f.PLAYER.jumpVel), f.PLAYER.jumpVel);
   close(f.normalJumpVelocity({ form: 'kid', weapon: f.WEAPONS.dualies, weaponRunner: runner }, f.PLAYER.jumpVel), f.PLAYER.jumpVel);
   // #251 Charger behavior is untouched.
   f.G.paint.sample = () => 1;

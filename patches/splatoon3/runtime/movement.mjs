@@ -251,7 +251,7 @@ export function normalJumpVelocity(a, velocity) {
   // value is per-weapon data so 1.0-DU/f exception Splatlings can be added later.
   if (a.weapon.kind === 'splatling') {
     const cap = a.weapon.chargeJumpVelocity;
-    if (r.charging && Number.isFinite(cap)) return Math.min(velocity, cap);
+    if (a.intent.fire && r.charging && Number.isFinite(cap)) return Math.min(velocity, cap);
   }
   return velocity;
 }

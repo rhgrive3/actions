@@ -159,10 +159,11 @@ test('#1153 HUD, diorama and Digit5 select separate live friendly domes at their
 
   const controllerInput = {
     mouse: { dx: 0, dy: 0, left: false, right: false }, pad: null, padPressed: new Set(),
-    down: key => key === 'Tab', wasPressed: key => key === 'Digit5', padButton: () => false, padValue: () => 0,
+    down: key => key === 'Tab', pressed: new Set(), wasPressed: key => key === 'Digit5', padButton: () => false, padValue: () => 0,
   };
   const controller = new f.PlayerController(padViewer, { yaw: 0, pitch: 0 }, controllerInput);
   f.G.rig = { gameCam: {} };
+  controller.setTurfMap(true);
   controller.update(STEP);
   assert.equal(padViewer.superJumpState.bigBubblerTarget.id, domeA.id, 'Digit5 uses the dome target route, not the base-pad route');
   assert.notDeepEqual(padViewer.superJumpState.target.toArray(), f.G.level.spawnPads[0].toArray());
@@ -209,7 +210,7 @@ test('#1153 dead-map Digit5 queues only a live Bubbler identity through respawn'
   const owner = f.make('roller', 0, 'Owner', [0, 0, 0], 0, 41);
   const jumper = f.make('shooter', 0, 'Queued jumper', [0, 0, 5], 0, 42);
   const dome = deploy(f, owner), target = f.G.bigBubblerJumpTargets(0)[0];
-  let pressed = new Set(['Digit5']);
+  let pressed = new Set(['Tab', 'Digit5']);
   const input = {
     mouse: { dx: 0, dy: 0, left: false, right: false }, pad: null, padPressed: new Set(), pressed,
     lastDevice: 'keyboard', navigationDevice: 'keyboard', down: key => key === 'Tab',
@@ -227,7 +228,8 @@ test('#1153 dead-map Digit5 queues only a live Bubbler identity through respawn'
   controller.updateRespawnNavigation();
   assert.equal(jumper.superJumpState.bigBubblerTarget.id, dome.id, 'respawn resolves the still-live activation through native admission');
   jumper.superJumpState = null; jumper.form = 'kid'; jumper.alive = false;
-  controller.update(STEP); // reopen dead-map navigation
+  controller.setTurfMap(true); // reopen through the current controller-owned latch
+  controller.update(STEP);
   pressed = new Set(['Digit5']); input.pressed = pressed;
   controller.update(STEP);
   assert.equal(controller.pendingRespawnJump.bubbler.id, dome.id);

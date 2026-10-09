@@ -11,15 +11,9 @@ export function adaptIssue1163RemoteDodgeClock(code) {
   code = "import { acceptRemoteDodgeClock, interruptRemoteDodgeClock, clearRemoteDodgeClock, syncRemoteDodgeClock } from '../../patches/splatoon3/runtime/remote-dodge-clock.mjs';\n" + code;
 
   code = replaceOnce(code,
-    `  _rec(e) {
-    const seq = this._eventSeq = (this._eventSeq || 0) + 1;
-    const tick = Math.round((G.time || 0)*60);
-    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event);
-  }`,
+    '  _rec(e) {',
     `  _rec(e) {
     const at = r3(now());
-    const seq = this._eventSeq = (this._eventSeq || 0) + 1;
-    const tick = Math.round((G.time || 0)*60);
     let payload = e;
     if (e[0] === 'tr' && e[2] === 'dodge') {
       const actor = this.byNid.get(e[1]), action = actor?.weaponRunner?.dodge;
@@ -44,8 +38,10 @@ export function adaptIssue1163RemoteDodgeClock(code) {
         payload[3] = { ...(e[3] && typeof e[3] === 'object' ? e[3] : {}), life, tp };
       }
     }
-    const event = [at, ...payload, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event);
-  }`, 'accepted dodge event timestamp');
+`, 'accepted dodge event metadata');
+  code = replaceOnce(code,
+    'const event = [r3(now()), ...e, tick, seq];',
+    'const event = [at, ...payload, tick, seq];', 'accepted dodge event timestamp');
 
   code = replaceOnce(code,
     `      dur: r3(x.weaponRunner.dodge.dur || 0.2),
@@ -123,23 +119,23 @@ export function adaptIssue1163RemoteDodgeClock(code) {
     'retire action on forwarded jump or special');
 
   code = replaceOnce(code,
-    '    clearRemoteSquidroll(victim);\n    victim.alive = false;',
-    '    clearRemoteSquidroll(victim);\n    clearRemoteDodgeClock(victim);\n    victim.alive = false;', 'death retires remote action epoch');
+    '    clearRemoteSquidroll(victim);',
+    '    clearRemoteSquidroll(victim);\n    clearRemoteDodgeClock(victim);', 'death retires remote action epoch');
   code = replaceOnce(code,
-    '  _remoteRespawn(a) {\n    clearRemoteC1088Surge(a);\n    clearRemoteSquidroll(a);',
-    '  _remoteRespawn(a) {\n    clearRemoteC1088Surge(a);\n    clearRemoteSquidroll(a);\n    clearRemoteDodgeClock(a);', 'respawn retires remote action epoch');
+    '  _remoteRespawn(a) {',
+    '  _remoteRespawn(a) {\n    clearRemoteDodgeClock(a);', 'respawn retires remote action epoch');
   code = replaceOnce(code,
-    '    for (const a of this.byNid.values()) clearRemoteSquidroll(a);',
-    '    for (const a of this.byNid.values()) { clearRemoteSquidroll(a); clearRemoteDodgeClock(a, true); }', 'dispose clears remote action epochs');
+    '  dispose() {',
+    '  dispose() {\n    for (const a of this.byNid.values()) clearRemoteDodgeClock(a, true);', 'dispose clears remote action epochs');
   code = replaceOnce(code,
-    '      if (a.owner !== id) continue;\n      if (drop)',
-    '      if (a.owner !== id) continue;\n      clearRemoteDodgeClock(a, true);\n      if (drop)', 'owner leave clears old action epoch');
+    '      if (a.owner !== id) continue;',
+    '      if (a.owner !== id) continue;\n      clearRemoteDodgeClock(a, true);', 'owner leave clears old action epoch');
   code = replaceOnce(code,
-    '  _remove(a) {\n    clearRemoteSquidroll(a);',
-    '  _remove(a) {\n    clearRemoteSquidroll(a);\n    clearRemoteDodgeClock(a, true);', 'actor removal clears remote action epoch');
+    '  _remove(a) {',
+    '  _remove(a) {\n    clearRemoteDodgeClock(a, true);', 'actor removal clears remote action epoch');
   code = replaceOnce(code,
-    '    a.remote = false;\n    this._stopLoops(a);',
-    '    a.remote = false;\n    clearRemoteDodgeClock(a, true);\n    this._stopLoops(a);', 'adoption clears remote action epoch');
+    '    a.remote = false;',
+    '    a.remote = false;\n    clearRemoteDodgeClock(a, true);', 'adoption clears remote action epoch');
 
   return code;
 }

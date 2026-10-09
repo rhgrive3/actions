@@ -237,7 +237,7 @@ test('remote Dualies pose uses the accepted sender epoch across snapshot boundar
     receiver.onLeave('owner', true);
     assert.equal(remote77.owner, 'successor');
     assert.equal(remote77.remoteDodgeClock, undefined, 'owner handoff clears the prior sender clock');
-    receiver.peers.get('owner').tr = laterEpoch + .02;
+    receiver._peer('owner').tr = laterEpoch + .02;
     const oldOwnerEvent = [...later]; oldOwnerEvent[oldOwnerEvent.length - 1] = nextSeq + 10; oldOwnerEvent._netSeq = nextSeq + 10;
     receiver._play('owner', oldOwnerEvent);
     assert.equal(remote77.remoteDodgeClock, undefined, 'the previous owner cannot restart a handed-off actor');
@@ -269,4 +269,21 @@ test('remote Dualies pose uses the accepted sender epoch across snapshot boundar
   } finally {
     sender.dispose(); receiver.dispose(); world.G.actors.forEach(a => a.character.dispose());
   }
+});
+
+
+test('#1163 metadata preserves canonical paint return values and shared event sequence', async () => {
+  const world = await makeWorld(10);
+  const owner = makeActor(world, 91, 'owner');
+  const sender = makeNet(world, 'owner', 'owner', [owner]);
+  try {
+    sender._eventSeq = 2;
+    sender.s._inkwaveEventSeq = 100;
+    const paint = sender.recSplat(new world.THREE.Vector3(0, 0, 0), 0.4, 0, { seed: 1 });
+    assert.equal(paint.seq, 101, 'paint uses the session watermark rather than restarting at the match-local counter');
+    assert.equal(sender.out.at(-1)._netSeq, paint.seq);
+    const next = sender._rec(['ev', 'actor:jump', {}]);
+    assert.equal(next, sender.out.at(-1), 'the recorder still returns its canonical event row');
+    assert.equal(next._netSeq, 102, 'non-dodge gameplay events retain one monotonic sequence owner');
+  } finally { sender.dispose(); owner.character.dispose(); }
 });
