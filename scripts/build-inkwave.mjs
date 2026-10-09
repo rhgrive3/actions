@@ -321,6 +321,9 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/conditional-gear.mjs',
   'patches/splatoon3/runtime/flow-effects.mjs',
   'patches/splatoon3/runtime/sub-resistance.mjs',
+  // Integrated weapon-state helpers load through their static imports rather than
+  // another eager title-screen hint; keep their complete revision/precache entries.
+  'patches/splatoon3/runtime/weapons.mjs',
   // Kit simulation, replication and metadata retain their static imports and precache entries.
   'patches/splatoon3/runtime/kit-trizooka.mjs',
   'patches/splatoon3/runtime/trizooka-collision.mjs',
