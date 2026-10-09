@@ -8,7 +8,7 @@ import {
 } from '../runtime/triple-slam-fists.mjs';
 
 function world({ wall = false } = {}) {
-  const blasts=[],hits=[],paint=[];
+  const blasts=[],hits=[],paint=[],events=[];
   class Vec {
     constructor(x=0,y=0,z=0){this.set(x,y,z);}
     set(x,y,z){this.x=x;this.y=y;this.z=z;return this;}
@@ -35,8 +35,8 @@ function world({ wall = false } = {}) {
     fx:{explosion(pos,color,scale){blasts.push([pos.x,pos.z,scale]);}},
   };
   const THREE={Vector3:Vec};
-  installTripleSlamFists({Actor,G,THREE},{weaponsFidelityCompletion:{worldUnitsPerSourceUnit:1}});
-  return { Actor,G,THREE,victim,blasts,hits,paint };
+  installTripleSlamFists({Actor,G,THREE,emit:(type,payload)=>events.push({type,payload})},{weaponsFidelityCompletion:{worldUnitsPerSourceUnit:1}});
+  return { Actor,G,THREE,victim,blasts,hits,paint,events };
 }
 
 test('#912 pinned 11.3.0 symmetric fist centers and near/far damage endpoints',()=>{
@@ -66,6 +66,8 @@ test('#912 native actor impact is separate from the two fists, delayed by exactl
   assert.equal(w.paint.length,2);
   assert.equal(a.turf,4,'fist paint accrues personal turf but never refills special');
   assert.equal(w.blasts.length,2);
+  assert.equal(w.events.length,2,'existing special:slam owner event is reused for remote fist presentation');
+  assert.ok(w.events.every(e=>e.type==='special:slam'&&e.payload.actor===a&&e.payload.fist===true));
   assert.equal(a._s3TripleSlamFists,null);
   a.update(1/60);assert.equal(w.hits.length,2,'no second impact on later ticks');
   assert.equal(FIST_TRAVEL,15/60);
