@@ -174,8 +174,8 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     // The dedicated Splatling wrapper has already resolved charge and sampled
     // the source speed envelope. Native InkFlight must consume that result.
     round = replaceOnce(round,
-      '    const inkSpeed = inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;',
-      "    const inkSpeed = w.kind === 'splatling' ? w.projSpeed : inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;",
+      '    const inkSpeed = dualiesLaunch?.speed ?? (inkProfile ? launchSpeed(inkProfile, chargeSeconds) : w.projSpeed);',
+      "    const inkSpeed = dualiesLaunch?.speed ?? (w.kind === 'splatling' ? w.projSpeed : inkProfile ? launchSpeed(inkProfile, chargeSeconds) : w.projSpeed);",
       'weapons fidelity: keep sampled Splatling source launch speed');
 
     round = replaceOnce(round,
