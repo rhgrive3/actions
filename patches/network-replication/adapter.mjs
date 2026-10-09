@@ -400,7 +400,7 @@ export function emit(name, payload) {
       'sample adoption state on the sender timeline');
     patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23 && s.length !== 24 && s.length !== 25) continue;
       const adoption = s.length >= 24
-        ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq)
+        ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq, a.weapon?.special)
         : null;
       if (s.length >= 24 && !adoption) continue;
       if (adoption) { snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence; }
@@ -707,15 +707,15 @@ function packAdoptionState(actor) {
   const cooldown = Number.isFinite(actor.weaponRunner?.cooldown)
     ? Math.min(ADOPTION_COOLDOWN_MAX, Math.max(0, actor.weaponRunner.cooldown)) : 0;
   return [ADOPTION_STATE_TAG, life, sequence, tick, packProtectionAge(actor),
-    packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin, cooldown];
+    packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin, cooldown, packSlamState(actor)];
 }
-function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
-  if (!Array.isArray(row) || (row.length !== 8 && row.length !== 9) || row[0] !== ADOPTION_STATE_TAG) return null;
+function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence, weaponSpecial) {
+  if (!Array.isArray(row) || ![8,9,10].includes(row.length) || row[0] !== ADOPTION_STATE_TAG) return null;
   const [tag, rowLife, sequence, tick, ageRow, jumpRow, lethalRow, spinRow] = row;
   const protection = Array.isArray(ageRow) ? readProtectionAge(ageRow) : null;
   if (Array.isArray(ageRow) && !protection) return null;
   const recoveryAge = Array.isArray(ageRow) ? ageRow[1] : ageRow;
-  const cooldown = row.length === 9 ? row[8] : 0;
+  const cooldown = row.length >= 9 ? row[8] : 0;
   if (!Number.isSafeInteger(rowLife) || rowLife < 0 || rowLife !== life
     || !Number.isSafeInteger(sequence) || sequence < 1 || sequence <= (previousSequence || 0)
     || !Number.isSafeInteger(tick) || tick < 0 || !Number.isFinite(recoveryAge)
@@ -727,7 +727,35 @@ function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence) {
   if (lethal === undefined) return null;
   const streaming = !!(flags & F.streaming);
   if (spinRow === null ? streaming : (!streaming || weaponKind !== 'splatling' || !isValidSplatlingReservation(spinRow, PLAYER.inkMax))) return null;
-  return { life: rowLife, sequence, tick, recoveryAge, protection, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown };
+  const slam = row.length === 10 ? readSlamState(row[9], !!(flags & F.alive) && !!(flags & F.special) && weaponSpecial === 'slam') : null;
+  if (slam === undefined) return null;
+  return { life: rowLife, sequence, tick, recoveryAge, protection, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown, slam };
+}
+// Transfer the latest accepted native action, not an interpolated presentation
+// phase. Its exact pose/velocity and gauge reservation continue on one host.
+function packSlamState(actor) {
+  const s = actor.specialActive;
+  if (!actor.alive || s?.id !== 'slam' || s.net) return null;
+  return [['rise','hang','fall'].indexOf(s.phase), s.t, s.startY, !!s.armor,
+    s.gaugeStart, s.gaugeCost, s.gaugeElapsed, actor.special,
+    actor.pos.x, actor.pos.y, actor.pos.z, actor.vel.x, actor.vel.y, actor.vel.z];
+}
+function readSlamState(row, active) {
+  if (row === null) return active ? undefined : null;
+  if (!active || !Array.isArray(row) || row.length !== 14 || !Number.isInteger(row[0]) || row[0] < 0 || row[0] > 2
+    || typeof row[3] !== 'boolean' || !row.every((v,i) => i === 3 || Number.isFinite(v) && Math.abs(v) <= ADOPTION_WORLD_MAX)
+    || row[1] < 0 || row[1] > 60 || row[4] < 0 || row[5] <= 0 || row[6] < 0 || row[6] > 60
+    || row[7] < 0 || row[7] > row[4] || row[4] > row[5]) return undefined;
+  return row.slice();
+}
+function restoreSlamState(actor, row) {
+  if (!row || !actor.alive) return;
+  const [phase,t,startY,armor,gaugeStart,gaugeCost,gaugeElapsed,special] = row;
+  actor.specialActive = {id:'slam',phase:['rise','hang','fall'][phase],t,startY,armor,gaugeStart,gaugeCost,gaugeElapsed,gaugeMismatch:null};
+  actor.special = special;
+  actor.pos.set(row[8],row[9],row[10]); actor.vel.set(row[11],row[12],row[13]);
+  actor.grounded = false; actor.climbing = false; actor.form = 'kid';
+  actor.character.root.position.copy(actor.pos);
 }
 function copyAdoptionState(state) {
   if (!state) return null;
@@ -805,6 +833,9 @@ function restoreAdoptionState(match, actor, transfer) {
   const latest = transfer.latest, current = transfer.current;
   const life = actor.net?.lastLife ?? actor.netLife ?? 0;
   if (latest.life !== life) return;
+  // A later completed/dead snapshot has slam=null and cannot revive an older
+  // sampled action. onLeave transfers ownership before any future impact.
+  restoreSlamState(actor, latest.slam);
   actor._adoptionSequence = Math.max(Number.isSafeInteger(actor._adoptionSequence) ? actor._adoptionSequence : 0, latest.sequence);
   actor.net._adoptionSeq = Math.max(Number.isSafeInteger(actor.net._adoptionSeq) ? actor.net._adoptionSeq : 0, latest.sequence);
   // Resume from the newest accepted owner state, not the delayed visual

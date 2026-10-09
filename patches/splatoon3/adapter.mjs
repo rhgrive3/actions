@@ -305,6 +305,27 @@ export function adaptSource(rel, code) {
       'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
     return "import { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
+  if (rel === 'styles/hud.css') {
+    // Shooter-only placement; preserve the native spread signal and all other reticles.
+    code = replaceOnce(code,
+      '/* Four outward-facing spread brackets, separate from the eight charge segments. */',
+      `/* #871: diagonal strokes at four rectangular corners. Nintendo's 1280x720
+   reference images 01/005.jpg and 01/021.jpg measure a ~48px vertical span,
+   ~3px stroke and ~14px diagonal length. Horizontal separation alone follows
+   the existing projected spread. See shooter-reticle-reference.json. */
+.iw-ret--shooter .iw-ret__tick {
+  --iw-corner-x: calc(24px + var(--sp, 0) * 1px);
+  left: -1.5px; top: -7px; width: 3px; height: 14px;
+  background: currentColor; border: 0; border-radius: 2px;
+  transform: translate(var(--iw-cx), var(--iw-cy)) rotate(var(--iw-angle));
+}
+.iw-ret--shooter .iw-ret__tick:nth-child(3) { --iw-cx: calc(0px - var(--iw-corner-x)); --iw-cy: -24px; --iw-angle: 45deg; }
+.iw-ret--shooter .iw-ret__tick:nth-child(4) { --iw-cx: var(--iw-corner-x); --iw-cy: -24px; --iw-angle: -45deg; }
+.iw-ret--shooter .iw-ret__tick:nth-child(5) { --iw-cx: calc(0px - var(--iw-corner-x)); --iw-cy: 24px; --iw-angle: -45deg; }
+.iw-ret--shooter .iw-ret__tick:nth-child(6) { --iw-cx: var(--iw-corner-x); --iw-cy: 24px; --iw-angle: 45deg; }
+/* Four outward-facing spread brackets, separate from the eight charge segments. */`,
+      'Shooter measured four-corner spread strokes');
+  }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg>`;',
@@ -939,6 +960,14 @@ export function adaptSource(rel, code) {
       '    if (G.boss && hs > 1.0) {',
       '    if (G.boss && rollerStickActive(a)) {',
       'Roller micro-speed boss contact admission');
+    // #498: only the gameplay Roller trail stamp consumes the sourced
+    // 20/30F->50F width window. The separate #411 unit/near-far impact owner
+    // computes its own age-scaled radius in roller-impact-paint.mjs.
+    code = replaceOnce(code,
+      'fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }',
+      'rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random() }',
+      'Roller native trail age width');
+    code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\n" + code;
     return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
@@ -1405,6 +1434,7 @@ export function adaptSource(rel, code) {
       '  setStaticRoots(roots) {\n    this.roots = roots.filter(Boolean);\n    this.static.length = 0; // #658: release the previous collected caster generation at the root handoff\n    this.dynamic = new WeakSet();\n    this.dirty = true;\n  }',
       'stage-root static release');
   }
+
 
   if (rel === 'src/world/paint.js') {
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
