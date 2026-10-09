@@ -1,0 +1,1 @@
+Orchestrator C encrypted storage backup. All parts were downloaded and byte verified before cleanup. See manifest.json. This is unfinished work and evidence, not a validated implementation batch. The encryption key is intentionally stored outside C cleanup roots and is required to restore. Do not merge this branch.
