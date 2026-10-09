@@ -102,3 +102,23 @@ ok 1037 - \#523 + \#533 emitted defaults hide corner map while dead gyro project
 最終診断ビルド: `build-last.log`。content hash `1b172cf51f4e9502da598ce4c47e08cef645548e9133c8d2a8244c663142d74a`。生成後の統合検査は `built-final.log`、測定は `measurements-delivery.json`、実ブラウザ失敗は `browser-delivery.json`。通常圧縮ビルド／GPU描画は成功扱いにしていない。
 
 ソースZIPとpatchには結果文書と再現用コードを含め、長いログそのものは検証ZIPへ分離している。
+
+## PR1188 最終コードでの検証（Claude, 2026-10-09, commit ed5b4fe 系列）
+
+この環境では esbuild 0.28.2 の本番ビルドと、Chromium（SwiftShader）の実WebGL2・実WebSocketが動作した。いずれもINKWAVEの検証で、任天堂実機の比較ではない。
+
+| 検査 | 結果 |
+|---|---|
+| `scripts/check-inkwave-patches.mjs`（splatoon3＋reliability 全件） | 3,602件：成功3,587・失敗0・skip15 |
+| local-quality＋idle gates | 743成功・失敗0 |
+| network-replication | 189成功・失敗0（途中で検出した Hit 未渡しの不具合を修正後） |
+| practice-range / loading-cache / scripts tests / platform・movement・ink-flight smoke | 41 / 36 / 33 / 29 成功・失敗0、Python harness OK |
+| 本番ビルド（esbuild minify）＋ `check-inkwave-startup-budget.mjs` | 合格：precache 5,209,167 B（上限5 MiB）、初期JS 3,355,384 B、コアpreload 125 |
+| `check-inkwave-weapons-fidelity.mjs --site _site` | 合格（15条件・3通信モード・壁落ち6条件、source/build一致） |
+| `check-inkwave-paint-mask.mjs`（実WebGL2） | 合格：付随形状108条件、本体81条件で CPUのみ0・GPUのみ0（零交差同値7セル） |
+| `check-inkwave-network-browser.mjs`（2ブラウザ・実WebSocket） | 遅延0F／6F とも合格（paired 130） |
+| `check-inkwave-network-comparison.mjs` | 合格（28条件） |
+| `check-inkwave-pr1171.mjs` | 合格 |
+| `scripts/measure-blaster-floor-paint.mjs` | `evidence/blaster-floor-paint-1188.json`（高さ・実弾・地形・起爆・30/60/120Hz一致） |
+
+本PRの新規テスト：`blaster-floor-paint-1188`（8）、`main-knockback-1188`（6）、`splatling-charge-decel-1188`（4）。GitHub Actions の結果はPR上のチェックを参照。
