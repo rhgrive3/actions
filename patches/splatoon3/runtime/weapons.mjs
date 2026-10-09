@@ -856,14 +856,10 @@ export function installWeapons(context, profile) {
       return result;
     };
   }
-  // #891: the pinned table and the Wiki source the outer-reticle bias chance
-  // and the maximum deviation envelopes; the conditional inner/outer angular
-  // kernels are the documented local approximation in dualies-accuracy.mjs
-  // (real inner scatter, no invented 0° center, no retail PDF claim). This
-  // wrapper only owns the sourced bias state: it advances once per emitted
-  // normal projectile and stays out of post-roll/turret fire. Runners without
-  // the composed state — stub fixture actors that never step this update —
-  // keep the legacy full-envelope law and skip the bookkeeping.
+  // #891: the pinned table owns the bias state/envelope values and the Wiki
+  // draft documents their continuous bias-to-angle transform. This wrapper
+  // advances only for emitted normal projectiles and stays out of post-roll
+  // turret fire. The exact retail RNG implementation remains unverified.
   const fireDualies = Projectiles.prototype.fireDualies;
   Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
     const runner = a?.weaponRunner;

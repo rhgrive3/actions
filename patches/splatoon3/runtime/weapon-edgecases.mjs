@@ -1,8 +1,8 @@
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
-// #891: the sourced Dualies outer-reticle bias selects the conditional
-// inner/outer angular kernels through the existing radial draw.
+// #891: the Wiki-documented Dualies bias transform maps the existing radial
+// uniform directly to its continuous maximum-angle distribution.
 import { dualiesBiasRadius } from './dualies-accuracy.mjs';
 
 const EPS = 1e-10, DEG = Math.PI / 180;
@@ -68,10 +68,9 @@ export function dualiesInputGate(runner) {
 // a resolved burst from being captured and queued again.
 let flushing = 0;
 
-// This retains the existing two-draw radial sampler, not a claimed S3 PDF.
-// #891: a Dualies shot draws its inner/outer reticle kernel from the runner's
-// sourced bias through the same radial draw — a documented local
-// approximation with real inner scatter, never an invented 0° center.
+// This retains the existing two-draw radial sampler, not a retail RNG claim.
+// #891 applies the Wiki-documented continuous bias-to-angle transform to the
+// first draw and keeps the existing independent azimuth draw.
 // #1045: PitchDegSwerve is independent of the horizontal jump/recovery envelope.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
@@ -79,8 +78,9 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
   // generic path's unsourced vertical compression.
   if (w.kind === 'dualies') {
     if (horizontal <= 0) return dir;
+    const bias = a.weaponRunner?.s3DualiesAccuracy?.bias;
     const radius = dualiesBiasRadius(Math.random(), horizontal,
-      a.weaponRunner?.s3DualiesAccuracy?.bias, w.spreadFirst ?? 0.45) * DEG;
+      Number.isFinite(bias) ? bias : undefined) * DEG;
     const angle = Math.random() * Math.PI * 2;
     const aim = dir.clone().normalize();
     const right = aim.clone().set(-aim.z, 0, aim.x);

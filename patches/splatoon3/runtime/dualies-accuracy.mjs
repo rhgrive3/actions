@@ -79,60 +79,26 @@ export class DualiesAccuracy {
   }
 }
 
-// #891 conditional inner/outer reticle distribution.
+// #891 source-backed bias transform. The pinned Leanny table supplies the
+// per-weapon bias states and maximum angle; the Inkipedia draft
+// User:XarrotD/Data Explanation documents y = s * x^(log_0.5 b), where x is
+// one uniform draw, s is the maximum deviation angle, and b is bias. That
+// write-up is marked draft/conjecture, so this is a documented model, not a
+// claim that Nintendo has published its runtime RNG implementation.
 //
-// Sourced: the pinned Ver.11.3.0 bias chance (`Stand_DegBiasMin`,
-// `Stand_DegBiasKf`, `Stand_DegBiasDecrease`, `Jump_DegBiasMax`), the maximum
-// deviation envelopes (`Stand_DegSwerve`, `Jump_DegSwerve`), and Inkipedia's
-// wording that the chance selects the outer rather than the inner reticle.
-// Not sourced: either reticle's angular kernel, the retail selection rule, and
-// the retail random seed. The #891 entry in
-// reports/inkwave-splatoon3-behavior-2026-10-02.md records that sampling
-// audit and keeps these limits unverified.
-//
-// Documented local approximation — INKWAVE behavior, not a retail PDF claim:
-// the existing radial draw doubles as the sourced selection chance. A draw
-// above `1 - bias` selects the outer-reticle kernel, drawn area-uniform over
-// the full sourced envelope; otherwise the inner-reticle kernel is drawn
-// area-uniform over `innerFraction * envelope`. The outer share of the draw
-// stream therefore equals the sourced chance exactly, while the other shots
-// keep a real scatter band instead of the perfect 0° center that an earlier
-// draft invented. Each kernel keeps the established `r = band * sqrt(u)`
-// radial law with its own conditional uniform, so one radial draw does both
-// jobs: the composed Dualies path keeps its two spread draws plus the
-// projectile-seed draw, in their existing order and count, and no extra bias
-// coin flip is consumed.
-export const DUALIES_INNER_ENVELOPE_FALLBACK = 0.45;
+// Values remain fractions (0.01 = 1%), envelopes remain degrees, and x uses
+// Math.random's [0, 1) range. The separate azimuth draw in spreadWeaponRound
+// supplies the radial direction without adding or reordering random draws.
+// A missing runner state uses the wiki model's b=0.5 flat-angle case as an
+// explicit neutral fallback for source-less fixtures only.
+export const DUALIES_BIAS_UNAVAILABLE_FALLBACK = 0.5;
 
-function innerScale(innerFraction) {
-  if (!Number.isFinite(innerFraction) || innerFraction <= 0)
-    return DUALIES_INNER_ENVELOPE_FALLBACK;
-  return Math.min(1, innerFraction);
-}
-
-function biasFraction(bias) {
-  // A runner without the composed state (for example a stub network fixture
-  // actor) falls back to bias 1, which reproduces the legacy full-envelope
-  // radial law exactly.
-  if (!Number.isFinite(bias)) return 1;
-  return Math.min(1, Math.max(0, bias));
-}
-
-// Radial draw above this boundary selects the outer reticle, so exactly
-// clamp01(bias) of the draw stream takes the outer kernel.
-export function dualiesOuterThreshold(bias) {
-  return 1 - biasFraction(bias);
-}
-
-// One-draw sample of the conditional mixture, in degrees.
-export function dualiesBiasRadius(draw, envelopeDeg, bias, innerFraction = DUALIES_INNER_ENVELOPE_FALLBACK) {
-  if (!(envelopeDeg > 0)) return 0;
-  const p = biasFraction(bias), k = innerScale(innerFraction);
-  const u = Number.isFinite(draw) ? Math.min(1, Math.max(0, draw)) : 0;
-  if (p >= 1 || u > 1 - p) {
-    // Outer kernel: area-uniform over the full sourced envelope.
-    return envelopeDeg * Math.sqrt(p >= 1 ? u : (u - (1 - p)) / p);
-  }
-  // Inner kernel: area-uniform over the inner band, never a 0° center.
-  return envelopeDeg * k * Math.sqrt(u / (1 - p));
+export function dualiesBiasRadius(draw, envelopeDeg, bias = DUALIES_BIAS_UNAVAILABLE_FALLBACK) {
+  if (!Number.isFinite(envelopeDeg) || envelopeDeg <= 0) return 0;
+  const b = Number.isFinite(bias) ? Math.min(1, Math.max(0, bias)) : DUALIES_BIAS_UNAVAILABLE_FALLBACK;
+  if (b === 0) return 0;
+  if (b === 1) return envelopeDeg;
+  const x = Number.isFinite(draw) ? Math.min(1, Math.max(0, draw)) : 0;
+  if (x === 0) return 0;
+  return envelopeDeg * Math.pow(x, Math.log(b) / Math.log(0.5));
 }

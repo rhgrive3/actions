@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fixture } from './source-fixture.mjs';
 import { DualiesAccuracy, DUALIES_GROUNDED_BIAS_MAX, DUALIES_ACCURACY_RECOVERY_DELAY_FRAMES,
-  dualiesBiasRadius, dualiesOuterThreshold, DUALIES_INNER_ENVELOPE_FALLBACK } from '../runtime/dualies-accuracy.mjs';
+  dualiesBiasRadius, DUALIES_BIAS_UNAVAILABLE_FALLBACK } from '../runtime/dualies-accuracy.mjs';
 import { adaptSource } from '../adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -127,7 +127,7 @@ test('#891 jump sets 40% bias and keeps its 5F/0.5pp recovery state separate', (
   close(accuracy.bias, 0.01, '83 frames after a jump shot reaches the minimum');
 });
 
-test('#891 ordinary Dualies keep the sourced envelope and existing radial sample at minimum bias', async () => {
+test('#891 ordinary Dualies keep the sourced envelope and continuous bias sample at minimum bias', async () => {
   const { f, a, r } = await nativeFixture();
   const selected = [];
   const originalRound = f.Projectiles.prototype._fireRound;
@@ -139,7 +139,7 @@ test('#891 ordinary Dualies keep the sourced envelope and existing radial sample
     const sample = {};
     fireOne(f, a, [0.25, 0, 0.99], sample);
     assert.equal(selected[0], 2, 'low bias does not collapse the sourced grounded envelope to a point');
-    assert.equal(sample.randomCalls, 3, 'the existing radial sampler consumes two draws plus the projectile seed');
+    assert.equal(sample.randomCalls, 3, 'the continuous sampler keeps two spread draws plus the projectile seed');
     close(r.s3DualiesBiasState(a.weapon).bias, 0.02, 'one admitted grounded round advances the next bias by 1pp');
     assert.equal(r.spread, 2, 'runner spread remains the sourced maximum envelope');
   } finally {
@@ -240,14 +240,16 @@ test('#891 landing applies the documented grounded cap before the next normal pr
 async function fixedClockTrace(renderHz) {
   const { f, a, r, projectiles } = await nativeFixture();
   const clock = new f.FixedClock(), shots = [];
-  f.setRandom(() => 0.99);
+  const random = mulberry32(0x8911130);
+  f.setRandom(() => random());
   try {
     for (let frame = 0; frame < renderHz * 3; frame++) {
       clock.advance(1 / renderHz, step => {
         const before = projectiles.list.length;
         r.update(step, { fire: clock.ticks < 120 });
-        if (projectiles.list.length > before)
-          shots.push({ tick: clock.ticks, bias: r.s3DualiesBiasState(a.weapon).bias });
+        for (let i = before; i < projectiles.list.length; i++)
+          shots.push({ tick: clock.ticks, bias: r.s3DualiesBiasState(a.weapon).bias,
+            velocity: Array.from(projectiles.list[i].vel.toArray()) });
       });
     }
   } finally { f.restoreRandom(); }
@@ -260,6 +262,8 @@ test('#891 fixed-clock native shot and recovery boundaries match at 30/60/120 Hz
   assert.deepEqual(traces[0], traces[1]);
   assert.deepEqual(traces[1], traces[2]);
   assert.deepEqual(traces[0].shots.map(s => s.tick), Array.from({ length: 24 }, (_, i) => 2 + i * 5));
+  assert.ok(traces[0].shots.every(s => s.velocity.every(Number.isFinite)),
+    'production emits a finite velocity for every fixed-clock shot');
   close(traces[0].shots[0].bias, 0.02, 'first emitted shot leaves 2% for the next shot');
   close(traces[0].shots[23].bias, 0.25, '24th emitted shot reaches the 25% cap');
   close(traces[0].bias, 0.01, 'recovery returns to the grounded minimum');
@@ -272,94 +276,56 @@ test('#891 keeps bias state out of custom reticle labels', () => {
   assert.doesNotMatch(source, /_dualiesBiasEl|s3DualiesBiasState|Dualies sourced outer-bias HUD/);
 });
 
-test('#891 seeded conditional sampling keeps real inner scatter and tracks the bias chance', () => {
-  const envelope = 2, inner = 0.5, count = 6000, rates = [], bandRates = [];
-  for (const bias of [0.01, 0.25, 0.4]) {
-    const random = mulberry32(0x89100 + Math.round(bias * 1000));
-    let outer = 0, band = 0, zeros = 0, innerMax = 0;
-    for (let i = 0; i < count; i++) {
-      const u = random();
-      const radius = dualiesBiasRadius(u, envelope, bias, inner);
-      const isOuter = u > dualiesOuterThreshold(bias);
-      assert.equal(isOuter, u > 1 - bias, `draw ${u} selects the outer kernel above 1 - ${bias}`);
-      assert.ok(radius >= 0 && radius <= envelope + 1e-12,
-        `sample ${radius} stays inside the sourced ${envelope}° envelope`);
-      if (!isOuter) assert.ok(radius <= envelope * inner + 1e-12,
-        `inner-kernel sample ${radius} stays inside the inner band`);
-      if (radius === 0) zeros++;
-      if (radius > envelope * inner) band++;
-      if (!isOuter) innerMax = Math.max(innerMax, radius);
-      if (isOuter) outer++;
-    }
-    assert.equal(zeros, 0, 'no radial draw collapses to a perfect 0° center shot');
-    assert.ok(innerMax > 0 && innerMax <= envelope * inner + 1e-12,
-      'inner shots carry real scatter inside the inner band');
-    const rate = outer / count;
-    const tolerance = 5 * Math.sqrt(bias * (1 - bias) / count) + 1 / count;
-    assert.ok(Math.abs(rate - bias) <= tolerance,
-      `${bias} bias yields outer-kernel rate ${rate} within ${tolerance}`);
-    const bandExpected = bias * (1 - inner * inner);
-    const bandTolerance = 5 * Math.sqrt(bandExpected * (1 - bandExpected) / count) + 1 / count;
-    assert.ok(Math.abs(band / count - bandExpected) <= bandTolerance,
-      `${bias} bias yields outer-band share ${band / count} within ${bandTolerance}`);
-    rates.push(rate);
-    bandRates.push(band / count);
-  }
-  assert.ok(rates[0] < rates[1] && rates[1] < rates[2],
-    'a higher sourced bias chance yields more outer-reticle samples');
-  assert.ok(bandRates[0] < bandRates[1] && bandRates[1] < bandRates[2],
-    'a higher sourced bias chance widens the sampled envelope share');
+test('#891 seeded continuous samples follow y = s * x^(log_0.5 b)', () => {
+  const envelope = 2;
+  const expected = (x, b) => envelope * Math.pow(x, Math.log(b) / Math.log(0.5));
+  for (const [x, bias] of [[0.25, 0.5], [0.25, 0.25], [0.37, 0.01], [0.83, 0.4]])
+    close(dualiesBiasRadius(x, envelope, bias), expected(x, bias),
+      `the source transform maps x=${x}, b=${bias} continuously inside its angle envelope`);
+  assert.equal(dualiesBiasRadius(0.75, envelope, 0.5), 1.5,
+    'bias 0.5 gives a uniform angular deviation within the full envelope');
+  assert.equal(dualiesBiasRadius(0.75, envelope, 0), 0, 'zero bias collapses to the center');
+  assert.equal(dualiesBiasRadius(0.75, envelope, 1), envelope, 'unit bias always reaches the maximum angle');
+  assert.equal(dualiesBiasRadius(0.75, 0, 0.25), 0, 'zero envelope keeps the no-spread path');
+  assert.equal(DUALIES_BIAS_UNAVAILABLE_FALLBACK, 0.5,
+    'runner-less fixtures use the explicit neutral model fallback');
 
-  // Bias 1 (a runner without the composed state) reproduces the legacy
-  // full-envelope radial law exactly; bias 0 stays inside the inner band.
-  for (const u of [1e-6, 0.25, 0.5, 0.999, 1])
-    close(dualiesBiasRadius(u, envelope, 1, inner), envelope * Math.sqrt(u),
-      'bias 1 keeps the legacy law');
-  close(dualiesBiasRadius(0.25, envelope, 0, inner), envelope * inner * Math.sqrt(0.25),
-    'bias 0 stays inner');
-  // Closed forms at the branch boundary keep both kernels continuous in law.
-  const threshold = dualiesOuterThreshold(0.25);
-  assert.equal(threshold, 0.75, 'the outer threshold is 1 - bias');
-  close(dualiesBiasRadius(threshold, envelope, 0.25, 0.5), envelope * 0.5,
-    'the threshold draw lands on the inner-band edge');
-  close(dualiesBiasRadius(1, envelope, 0.25, 0.5), envelope,
-    'draw 1 reaches the sourced envelope');
-  close(dualiesBiasRadius(1e-9, envelope, 0.25, 0.5), envelope * 0.5 * Math.sqrt(1e-9 / 0.75),
-    'a near-zero draw keeps nonzero inner scatter');
-  assert.equal(DUALIES_INNER_ENVELOPE_FALLBACK, 0.45, 'shared inner-band fallback stays documented');
-  assert.equal(dualiesBiasRadius(0.5, 0, 0.25, 0.5), 0, 'zero envelope keeps the zero-spread path');
+  const random = mulberry32(0x8911130), draws = Array.from({ length: 256 }, random);
+  const means = [0.01, 0.1, 0.25, 0.4].map(bias => {
+    const samples = draws.map(x => dualiesBiasRadius(x, envelope, bias));
+    assert.ok(samples.every(radius => radius >= 0 && radius <= envelope),
+      `bias ${bias} remains inside the sourced maximum angle`);
+    return samples.reduce((sum, radius) => sum + radius, 0) / samples.length;
+  });
+  assert.ok(means[0] < means[1] && means[1] < means[2] && means[2] < means[3],
+    'the same seeded uniform draws move farther from the center as bias rises');
 });
 
-test('#891 native grounded fire samples the inner and outer kernels inside the 2° envelope', async () => {
+test('#891 native grounded fire samples the continuous bias law inside the 2° envelope', async () => {
   const { f, a, r } = await nativeFixture();
   const base = fireBaseline(f, a, 0);
   close(r.s3DualiesBiasState(a.weapon).bias, 0.02, 'the baseline round advances the grounded bias by 1pp');
 
-  // Inner kernel at the current 2% state: draw 0.5 is below the 1 - bias
-  // boundary, so the shot lands on the predicted inner radius with real
-  // scatter — never the perfect center an earlier draft invented.
-  const innerBias = r.s3DualiesBiasState(a.weapon).bias;
-  const innerSample = {};
-  const innerRound = fireOne(f, a, [0.5, 0.25, 0.99], innerSample);
-  const expectedInner = dualiesBiasRadius(0.5, 2, innerBias, a.weapon.spreadFirst);
-  assert.ok(expectedInner > 0 && expectedInner <= 1, 'the inner band is a real nonzero band');
-  assert.ok(Math.abs(deviationDeg(base, innerRound) - expectedInner) < 1e-9,
-    `inner sample ${deviationDeg(base, innerRound)} follows the state-predicted ${expectedInner}`);
-  assert.equal(innerSample.randomCalls, 3,
-    'the conditional draw keeps two spread draws plus the projectile seed');
-  close(r.s3DualiesBiasState(a.weapon).bias, 0.03, 'the inner round still advances the sourced bias');
-
-  // Outer kernel: draw 0.999 is above the boundary at the 3% state.
-  const outerBias = r.s3DualiesBiasState(a.weapon).bias;
-  const outerRound = fireOne(f, a, [0.999, 0.75, 0.99], {});
-  const expectedOuter = dualiesBiasRadius(0.999, 2, outerBias, a.weapon.spreadFirst);
-  assert.ok(expectedOuter > 1 && expectedOuter <= 2, 'the outer kernel reaches the sourced envelope');
-  assert.ok(Math.abs(deviationDeg(base, outerRound) - expectedOuter) < 1e-9,
-    `outer sample ${deviationDeg(base, outerRound)} follows the state-predicted ${expectedOuter}`);
-  assert.ok(deviationDeg(base, outerRound) <= 2, 'outer shot stays inside Stand_DegSwerve');
+  const fired = [];
+  for (const x of [0.5, 0.5, 0.5]) {
+    const sampledBias = r.s3DualiesBiasState(a.weapon).bias;
+    const observation = {};
+    const round = fireOne(f, a, [x, 0, 0.99], observation);
+    const radius = dualiesBiasRadius(x, 2, sampledBias);
+    assert.ok(Math.abs(deviationDeg(base, round) - radius) < 1e-9,
+      `live shot at bias ${sampledBias} follows the continuous angular sample ${radius}`);
+    assert.equal(observation.randomCalls, 3,
+      'the live sample keeps radial uniform, azimuth and projectile-seed draws');
+    fired.push({ bias: sampledBias, radius });
+  }
+  assert.deepEqual(fired.map(row => row.bias), [0.02, 0.03, 0.04],
+    'only admitted grounded projectiles advance the source bias by 1pp');
+  assert.ok(fired[0].radius < fired[1].radius && fired[1].radius < fired[2].radius,
+    'fixed seeded samples widen continuously with sustained grounded fire');
+  assert.ok(fired.every(row => row.radius <= 2), 'all grounded shots stay inside Stand_DegSwerve');
 });
 
-test('#891 jump fire samples the 40% bias kernel inside the 7.5° air envelope', async () => {
+test('#891 jump fire samples the 40% continuous bias law inside the 7.5° air envelope', async () => {
   const { f, a, r } = await nativeFixture();
   a.grounded = false;
   a.s3JumpSerial = 1;
@@ -371,16 +337,37 @@ test('#891 jump fire samples the 40% bias kernel inside the 7.5° air envelope',
     'an airborne baseline round keeps the jump bias at 40%');
 
   const innerRound = fireOne(f, a, [0.5, 0.25, 0.99], {});
-  const expectedInner = dualiesBiasRadius(0.5, 7.5, 0.4, a.weapon.spreadFirst);
-  assert.ok(expectedInner > 0 && expectedInner <= 3.75, 'jump inner band stays under half the air envelope');
+  const expectedInner = dualiesBiasRadius(0.5, 7.5, 0.4);
+  assert.ok(expectedInner > 0 && expectedInner <= 7.5, 'jump bias samples within the full air envelope');
   assert.ok(Math.abs(deviationDeg(base, innerRound) - expectedInner) < 1e-9,
-    `jump inner sample ${deviationDeg(base, innerRound)} follows the 40% state`);
+    `jump sample ${deviationDeg(base, innerRound)} follows the 40% state`);
   close(r.s3DualiesBiasState(a.weapon).bias, 0.4, 'airborne fire never applies the grounded cap');
 
   const outerRound = fireOne(f, a, [0.999, 0.1, 0.99], {});
-  const expectedOuter = dualiesBiasRadius(0.999, 7.5, 0.4, a.weapon.spreadFirst);
-  assert.ok(expectedOuter > 3.75 && expectedOuter <= 7.5, 'jump outer kernel reaches Jump_DegSwerve');
+  const expectedOuter = dualiesBiasRadius(0.999, 7.5, 0.4);
+  assert.ok(expectedOuter > expectedInner && expectedOuter <= 7.5, 'larger jump draw reaches farther inside Jump_DegSwerve');
   assert.ok(Math.abs(deviationDeg(base, outerRound) - expectedOuter) < 1e-9,
-    `jump outer sample ${deviationDeg(base, outerRound)} follows the 40% state`);
+    `larger jump draw ${deviationDeg(base, outerRound)} follows the 40% state`);
   assert.ok(deviationDeg(base, outerRound) <= 7.5, 'airborne shot stays inside Jump_DegSwerve');
+});
+
+test('#891 remote Dualies ghost replays the transmitted velocity without sampling spread again', async () => {
+  const { f, a, projectiles } = await nativeFixture();
+  a.nid = 7;
+  const net = f.G.netm = new f.NetMatch({ myId: 7 }, {});
+  fireOne(f, a, [0.31, 0.77, 0.99]);
+  const packet = net.out.find(event => event[1] === 'p');
+  assert.ok(packet, 'the live owner shot is recorded through NetMatch');
+  const remote = f.make('dualies');
+  remote.remote = true;
+  projectiles.list.length = 0;
+  let randomCalls = 0;
+  f.setRandom(() => { randomCalls++; return 0.9; });
+  try { projectiles.ghostProjectile(remote, packet); }
+  finally { f.restoreRandom(); }
+  const ghost = projectiles.list.at(-1);
+  assert.ok(ghost.ghost);
+  assert.deepEqual(Array.from(ghost.vel.toArray()), Array.from(packet.slice(8, 11)),
+    "remote presentation keeps the owner's sampled launch velocity");
+  assert.equal(randomCalls, 1, 'ghost reconstruction uses only its placeholder seed draw');
 });
