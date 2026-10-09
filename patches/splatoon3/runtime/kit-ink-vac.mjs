@@ -113,7 +113,7 @@ export const INK_VAC_EVENTS = Object.freeze({
   activation: 'special:inkvac',
   // { actor: owner, kit, serial, charge }  owner-approved charge state
   charge: 'special:inkvac-charge',
-  // { actor: shooter, target: vac owner, kit, serial, key, damage, sub? } credit PROPOSAL
+  // { actor: shooter, target: vac owner, kit, serial, key, damage, sub?, special? } credit PROPOSAL
   absorb: 'special:inkvac-absorb',
   // { actor: owner, kit, serial, charge }  the countershot itself travels as a
   // native recProj/ghostProjectile packet, so this carries NO projectile.
@@ -328,6 +328,15 @@ function proposalWeaponDamage(weapon) {
 // Resolve the optional descriptor only against the receiver's authenticated kit
 // and live registry; a packet cannot supply a damage table or choose another sub.
 function proposalDamageLimit(actor, payload) {
+  if (Object.hasOwn(payload, 'special')) {
+    const id = payload.special;
+    if (Object.hasOwn(payload, 'sub') || (id !== 'trizooka' && id !== VAC_ID) || actor.weapon?.special !== id) return null;
+    // The installed local registry owns these descriptors. No projectile data
+    // or charge/radius supplied by the peer is used to construct the ceiling.
+    const descriptor = api.SPECIALS?.[id]?.projectileDescriptor?.({});
+    const damage = descriptor?.directDamage ?? descriptor?.splashDamageMax;
+    return Number.isFinite(damage) && damage > 0 ? Math.min(MAX_ACCEPTED_DAMAGE_HP, damage) : null;
+  }
   if (!Object.hasOwn(payload, 'sub')) return proposalWeaponDamage(actor.weapon);
   const id = payload.sub;
   if (id !== 'bomb' && id !== 'suction') return null;
@@ -369,6 +378,7 @@ function proposeAbsorption(state, projectile, damage) {
   const event = { actor: shooter, target: state.actor, kit: VAC_ID, serial: state.serial, key, damage };
   const bomb = projectile.s3InkVacBomb;
   if (bomb) event.sub = bomb.s3Sub?.id || bomb.s3Resolved?.spec?.id || 'bomb';
+  else if (projectile.s3SpecialWeapon) event.special = projectile.s3SpecialWeapon.id || projectile.s3SpecialWeapon.wid;
   api.emit?.(INK_VAC_EVENTS.absorb, event);
   return true;
 }
@@ -621,7 +631,7 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
       return drop('invalid-absorb-damage');
     }
     const limit = proposalDamageLimit(actor, payload);
-    if (limit === null) return drop('invalid-absorb-sub');
+    if (limit === null) return drop('invalid-absorb-attack');
     const ledger = proposalLedger(subject);
     if (ledger.set.has(key)) return drop('duplicate-proposal');
     ledger.set.add(key); ledger.order.push(key);

@@ -7,7 +7,7 @@ const ACTIVATE = 'special:inkvac';
 const json = value => JSON.parse(JSON.stringify(value));
 const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} != ${expected}`);
 
-async function setup(t, { sub = 'suction', legacy = false } = {}) {
+async function setup(t, { sub = 'suction', legacy = false, shooterWeapon = 'shooter' } = {}) {
   const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true,
     adaptRuntime: (rel, source) => {
       if (!legacy || rel !== 'patches/splatoon3/runtime/kit-ink-vac.mjs') return source;
@@ -18,7 +18,7 @@ async function setup(t, { sub = 'suction', legacy = false } = {}) {
   const api = f.installedRuntime;
   const make = (weapon, nid, owner, remote, team) => Object.assign(f.make(weapon), { nid, owner, remote, team });
   const vac = make('charger', 1, 'P', false, 0), proxy = make('charger', 1, 'P', true, 0);
-  const shooter = make('shooter', 2, 'Q', false, 1), remote = make('shooter', 2, 'Q', true, 1);
+  const shooter = make(shooterWeapon, 2, 'Q', false, 1), remote = make(shooterWeapon, 2, 'Q', true, 1);
   for (const a of [shooter, remote]) a.weapon = { ...a.weapon, sub };
   const session = myId => ({ myId, isHost: true, _members: new Map() });
   const ownerNet = new f.NetMatch(session('P'), {}), shooterNet = new f.NetMatch(session('Q'), {});
@@ -58,8 +58,31 @@ async function setup(t, { sub = 'suction', legacy = false } = {}) {
     const packet = shooterNet.out.slice(before).find(e => e[1] === 'ev' && e[2] === ABSORB);
     return { bomb, packet: packet ? json(packet) : null };
   }
+  function fireSpecial({ local = false } = {}) {
+    f.G.netm = shooterNet; f.G.actors = [proxy, shooter];
+    shooter._resolve = () => {}; // stage movement is outside the contact-credit scope
+    shooter.special = shooter.weapon.specialCost; shooter._startSpecial();
+    shooter.intent.fire = true;
+    for (let tick = 0; tick < 600 && system.list.length === 0; tick++) {
+      if (api.inkVacState(shooter)?.phase === 'exhale') shooter.intent.fire = false;
+      f.tick(shooter);
+    }
+    const projectile = system.list[0];
+    assert.ok(projectile?.s3SpecialWeapon, 'actual Special lifecycle emitted a native projectile');
+    assert.equal(projectile.damage, 220);
+    const before = shooterNet.out.length;
+    f.G.netm = local ? ownerNet : shooterNet;
+    f.G.actors = [local ? vac : proxy, shooter]; vac.pos.copy(proxy.pos); vac.aimDir.copy(proxy.aimDir);
+    projectile.prev.set(0, 1, 20); projectile.pos.set(0, 1, 10); projectile.vel.set(0, 0, -600);
+    const contact = system.kitDefenseCandidate(projectile);
+    assert.ok(contact, 'actual native Special round reaches the shared contact arbitration');
+    contact.onHit();
+    assert.equal(projectile.damage, 0);
+    const packet = shooterNet.out.slice(before).find(e => e[1] === 'ev' && e[2] === ABSORB);
+    return { projectile, packet: packet ? json(packet) : null };
+  }
   function receive(packet, from = 'Q') { f.G.netm = ownerNet; ownerNet._play(from, json(packet)); }
-  return { f, api, vac, proxy, shooter, remote, ownerNet, shooterNet, system, throwBomb, receive,
+  return { f, api, vac, proxy, shooter, remote, ownerNet, shooterNet, system, throwBomb, fireSpecial, receive,
     state: api.inkVacState(vac) };
 }
 
@@ -140,4 +163,36 @@ test('#1090 fixed-step bomb absorption is identical at 30/60/120 Hz presentation
     traces.push([packet[3].sub, packet[3].damage, bomb.age, r.state.absorbedDamage, r.state.charge]);
   }
   assert.deepEqual(traces[0], traces[1]); assert.deepEqual(traces[1], traces[2]);
+});
+
+
+test('#1090 actual Trizooka and Ink Vac return shots retain Special credit rather than main damage', async t => {
+  for (const [shooterWeapon, special] of [['shooter', 'trizooka'], ['charger', 'inkVac']]) {
+    const r = await setup(t, { shooterWeapon });
+    const { packet } = r.fireSpecial();
+    assert.equal(packet[3].special, special); assert.equal(Object.hasOwn(packet[3], 'sub'), false);
+    assert.equal(packet[3].damage, 220);
+    r.receive(packet); close(r.state.absorbedDamage, 220);
+    r.receive(packet); close(r.state.absorbedDamage, 220);
+    const local = await setup(t, { shooterWeapon });
+    assert.equal(local.fireSpecial({ local: true }).packet, null);
+    close(local.state.absorbedDamage, r.state.absorbedDamage);
+    const legacy = await setup(t, { shooterWeapon, legacy: true });
+    const old = legacy.fireSpecial().packet; legacy.receive(old);
+    assert.ok(legacy.state.absorbedDamage < 220, 'old receiver caps native Special damage at the main weapon');
+  }
+});
+
+test('#1090 Special descriptors require the equipped identity and cannot combine attack types', async t => {
+  const r = await setup(t);
+  const { packet } = r.fireSpecial();
+  for (const special of ['inkVac', 'bubbler', 'storm', '__proto__', null, 1, {}, []]) {
+    const invalid = json(packet); invalid[3].special = special; r.receive(invalid); close(r.state.charge, 0);
+  }
+  const both = json(packet); both[3].sub = 'suction'; r.receive(both); close(r.state.charge, 0);
+  const descriptor = r.f.SPECIALS.trizooka.projectileDescriptor;
+  r.f.SPECIALS.trizooka.projectileDescriptor = () => ({ directDamage: NaN });
+  r.receive(packet); close(r.state.charge, 0);
+  r.f.SPECIALS.trizooka.projectileDescriptor = descriptor;
+  r.receive(packet); close(r.state.absorbedDamage, 220);
 });

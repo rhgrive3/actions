@@ -2939,3 +2939,37 @@ mobile browser lifecycle and final aggregate CI were not tested here.
 On PR #1182 base `b1626ee8`, a real Suction Bomb carried 180 HP into the absorption proposal, but the receiver capped it at the shooter's main-weapon 36 HP. Native local absorption retained 180. The full production bootstrap, native bomb first-contact owner, event packing, JSON and authenticated playback reproduce this difference. A bomb-only scalar sub descriptor now selects the receiver's existing equipped-sub damage ceiling; ordinary/legacy main proposals retain their previous cap. Unknown/mismatched descriptors reject before consuming a valid proposal key. Existing sender, target, life, serial, amount, duplicate and ghost guards are preserved.
 
 This is an attack-identity/accounting repair using existing S3 11.3.0 comparison values, not a new balance or timing calibration. Native tests cover both bomb types, removed-fix reproduction, exactly-once local/remote equality, rejection/recovery, ghost behavior and fixed 30/60/120 Hz presentation schedules. Browser, live relay and Nintendo hardware remain unmeasured. See [the scoped report](inkwave-inkvac-bomb-credit-1090.md).
+
+### 2026-10-09 — #1187 preserve cancellation when leaving gamepad ownership
+
+This is separate from physical pad loss (#1024), mouse-to-touch (#903) and
+touch-to-pad (#990). A connected controller still holding RT/RB loses its input
+ownership through an actual keyboard keydown or touch pointerdown. The existing
+ownership wrapper correctly masks that inactive pad, but its false levels
+previously reached the runner as deliberate FIRE/SUB releases. With complete
+production composition and all bootstrap installers, each transition emitted
+one Charger shot, Splatling shot/stream or SUB bomb while the old physical
+button remained held and connected.
+
+Before changing `_dev`, the existing ownership adapter now records whether
+old-owner canonical FIRE/SUB reads are held, and forwards only those holds to
+the existing `_holdCancelled` set. The existing controller evaluates this after
+the new input source has produced its final intent. Thus a new mouse hold can
+continue the same charge/aim; cancellation occurs only if no source legitimately
+holds that action. A real pad release before the ownership change remains an
+intentional release. No runner reset, balance constant or device-selection rule
+was added; inactive axes remain masked and fresh pad reacquisition still works.
+
+Seven new native tests pass, including removed-guard old behavior at actual
+keydown/pointerdown entrypoints, all three actions, true release, simultaneous
+mouse continuation, fresh pad reacquisition, resource/projectile preservation
+and 30/60/120 Hz fixed-step equivalence. Existing ownership, hold-cancel and pad
+handoff groups pass 55/55 with concurrency 1. Quick compatibility, syntax and
+whitespace checks pass. Reference remains S3 11.3.0; this is an INKWAVE input
+consistency repair, not a Nintendo controller/hardware equivalence claim.
+Physical USB/Bluetooth, mobile browser and exact aggregate CI acceptance remain
+unverified by these VM checks.
+The #1090 continuation found the same main-only cap on actual Trizooka and Ink Vac return shots. Their existing 220-HP local absorption now matches native JSON remote credit by preserving the equipped Special identity and resolving the ceiling from the receiver's own installed registry descriptor. Unknown/mismatched Special and ambiguous sub+special descriptors fail before consuming the key. Native successful Special activation/fire/release produces the tested rounds; only the collision segment is controlled. No gameplay number or trajectory changes, and retail/browser/relay limitations remain as above.
+## 2026-10-09 — #382 Comeback and Turf Squid Spawn composition
+
+PR #1182 `b1626ee8` の全production変換＋全bootstrapで、敵死後のSquid Spawnが既存gear/Flow respawn wrapperを迂回し、Comebackが0秒/+0APに戻ることを再現した。Respawn Lifecycleのinstallを既存gear/Flow ownerの内側へ移し、既存20秒/+10APと同じ時計を復元した。根拠は既存#382が参照する[Comeback資料](https://splatoonwiki.org/wiki/Comeback)で、設定値・曲線・物理/モーション値は変更していない。新life/初期出撃/環境死/繰返し/Flow/Quick Respawn/Opening Gambit/ゲージと、30/60/120Hzの固定tick一致を限定検証。詳細は [#382比較記録](inkwave-comeback-squid-spawn-382.md)。実ブラウザ/実通信/Switchとretailの正確なaim/launch/landing発動境界は未確認のまま。
