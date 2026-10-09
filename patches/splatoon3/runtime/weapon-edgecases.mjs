@@ -163,7 +163,7 @@ export function paintRollerReleaseFootprint(system, a, w, { G, PLAYER, Hit, WALK
   const p = system.list[system.list.length - 1];
   if (!p || p.owner !== a || !Number.isFinite(p.seed)) return 0;
   const center = a.pos.clone().set(x, ground.y, z).addScaledVector(ground.normal, 0.1);
-  const area = G.paint.splat(center, shape.paintWidthHalf, a.team, { seed: p.seed });
+  const area = G.paint.splat(center, shape.paintWidthHalf, a.team, { seed: p.seed, claimOwner: a });
   if (area > 0) a.addTurf?.(area);
   return area;
 }

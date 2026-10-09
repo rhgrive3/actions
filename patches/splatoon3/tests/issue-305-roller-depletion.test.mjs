@@ -58,6 +58,12 @@ for (const hz of [30, 60, 120]) for (const vertical of [false, true]) {
     assert.equal(rel.tick, vertical ? 32 : 22, 'the swing keeps the full windup (21F/31F + 1)');
     assert.equal(rel.count, vertical ? 3 : 4, 'sourced DepletionBulletNum totals');
     assert.equal(rel.mode.s3Depletion, true);
+    for (const p of rel.globs) {
+      assert.equal(p.s3DepletionRound, true, 'every emitted unit preserves the depleted swing');
+      assert.equal(p.s3DepletionPaintScale, p.fidelityRollerUnit.UnitParam.PaintParam.DepletionDepthWidthRate,
+        `unit ${p.fidelityRollerUnitIndex} uses its own sourced depletion paint rate`);
+    }
+    if (!vertical) assert.equal(rel.globs.at(-1).fidelityRollerUnitIndex, 1, 'the appended nearest glob is covered');
     // 4.0 < 4.25, so the real remaining tank is spent exactly once.
     near(4.0 - inkAfterRelease(h), 4.0, 'paid the whole remaining tank');
     assert.equal(h.releases.length, 1, 'one press yields one depleted swing');
@@ -99,6 +105,10 @@ test('#305 tiny-positive, half-cost, exact-cost, zero and full tanks', async () 
       assert.equal(fullRun.releases[0].count, full, 'full volley count unchanged');
       assert.equal(fullRun.releases[0].mode.s3Depletion, undefined, 'full swing is not a depletion round');
       near(ink - inkAfterRelease(fullRun), COST);
+      for (const p of fullRun.releases[0].globs) {
+        assert.equal(p.s3DepletionRound, false, 'every full-ink unit stays undepleted');
+        assert.equal(p.s3DepletionPaintScale, 1, 'full-ink paint stays unscaled');
+      }
     }
   }
 });
@@ -151,9 +161,15 @@ test('#305 depletion paint rate scales actual vertical flight and impact paint o
     finally { h.G.paint.splat = native; }
     return stamp;
   };
-  const depStamp=captureImpact(depletedImpact), fullStamp=captureImpact(fullImpact);
-  near(depStamp.radius,fullStamp.radius*.5,'depleted impact width uses PaintParam.DepletionDepthWidthRate');
-  near(depStamp.stretchAmt,fullStamp.stretchAmt*.5,'depleted impact depth uses PaintParam.DepletionDepthWidthRate');
+  for (const p of depletedImpact.h.releases[0].globs) {
+    const full = fullImpact.h.releases[0].globs.find(q => q.fidelityRollerUnitIndex === p.fidelityRollerUnitIndex);
+    assert.ok(full, 'every depleted unit has a full-ink control');
+    const rate = p.fidelityRollerUnit.UnitParam.PaintParam.DepletionDepthWidthRate;
+    const depStamp = captureImpact({ h: depletedImpact.h, p });
+    const fullStamp = captureImpact({ h: fullImpact.h, p: full });
+    near(depStamp.radius, fullStamp.radius * rate, 'every depleted impact width uses its own PaintParam rate');
+    near(depStamp.stretchAmt, fullStamp.stretchAmt * rate, 'every depleted impact depth uses its own PaintParam rate');
+  }
 
   const [depletedFlight, fullFlight] = await Promise.all([release(true,4),release(true,48.5)]);
   const depSpec=depletedFlight.p.s3RollerFlightPaint?.spec, fullSpec=fullFlight.p.s3RollerFlightPaint?.spec;
@@ -163,4 +179,55 @@ test('#305 depletion paint rate scales actual vertical flight and impact paint o
   near(depSpec.depth-1,(fullSpec.depth-1)*.5,'depleted flight depth uses per-unit paint rate');
   assert.equal(depletedFlight.p.fidelityRollerUnit.UnitParam.CollisionParam.DepletionRate,.5,
     'the paint rate does not modify the separate collision record');
+});
+
+
+test('#305 pooled horizontal main and nearest units reset their depletion paint state', async () => {
+  const h = await runTo(false, 4);
+  const depleted = h.releases[0].mode;
+  const first = Array.from(h.releases[0].globs);
+  const assertPaint = (globs, isDepleted) => {
+    for (const p of globs) {
+      assert.equal(p.s3DepletionRound, isDepleted);
+      assert.equal(p.s3DepletionPaintScale, isDepleted ? p.fidelityRollerUnit.UnitParam.PaintParam.DepletionDepthWidthRate : 1);
+    }
+    assert.equal(globs.at(-1).fidelityRollerUnitIndex, 1, 'the last glob keeps the nearest unit source');
+  };
+  assertPaint(first, true);
+  h.projectiles.clear();
+  h.projectiles.fireFlick(h.a, h.a.weapon);
+  const full = Array.from(h.projectiles.list);
+  assert.equal(full.length, 13);
+  assert.ok(first.every(p => full.includes(p)), 'all depleted projectiles are recycled into the full swing');
+  assert.equal(full[0], first.at(-1), 'the depleted near glob is reused as a full-ink main glob');
+  assertPaint(full, false);
+  h.projectiles.clear();
+  h.projectiles.fireFlick(h.a, depleted);
+  const next = Array.from(h.projectiles.list);
+  assert.equal(next.length, 4);
+  assert.ok(next.every(p => full.includes(p)), 'every depleted projectile comes from the full-ink pool');
+  assert.equal(next[0], full.at(-1), 'the full-ink near glob is reused as a depleted main glob');
+  assertPaint(next, true);
+});
+
+test('#305 nearest paint follows its own unit source, including absent and invalid rates', async () => {
+  // Synthetic fixture values distinguish ownership; they are not retail tuning.
+  for (const nearestRate of [.25, undefined, 0]) {
+    const h = await setup(false, 4);
+    const units = h.profile.weaponsFidelityCompletion.weapons.roller.WideSwingUnitGroupParam.Unit;
+    units[0].UnitParam.PaintParam.DepletionDepthWidthRate = .75;
+    units[1].UnitParam.PaintParam.DepletionDepthWidthRate = nearestRate;
+    for (let i = 0; i < 40 && !h.releases.length; i++) h.step();
+    const globs = h.releases[0]?.globs;
+    assert.equal(globs?.length, 4);
+    for (const p of globs) {
+      const expected = p.fidelityRollerUnitIndex === 0 ? .75 : nearestRate > 0 ? nearestRate : 1;
+      assert.equal(p.s3DepletionPaintScale, expected, 'the actual unit owns the paint rate or native fallback');
+      assert.equal(p.fidelityRollerUnit.UnitParam.CollisionParam.DepletionRate, .5, 'paint scaling does not rewrite collision');
+    }
+    assert.equal(globs.at(-1).fidelityRollerUnitIndex, 1);
+    h.projectiles.clear();
+    h.projectiles.fireFlick(h.a, h.a.weapon);
+    assert.ok(h.projectiles.list.every(p => p.s3DepletionPaintScale === 1), 'full-ink control ignores every depletion-only rate');
+  }
 });

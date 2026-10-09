@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {batchFixture,cpuFloor} from './batch03-fixture.mjs';
+import {paintRollerMaximumWidth} from '../runtime/roller-max-paint.mjs';
 async function draw(speed=7.92,yaw=0){const f=await batchFixture(),a=f.make('roller'),r=a.weaponRunner;a.isLocal=true;a.yaw=yaw;a.intent.move.set(Math.sin(yaw),0,Math.cos(yaw));a.vel.set(Math.sin(yaw)*speed,0,Math.cos(yaw)*speed);r.rolling=true;r.rollT=1.5;r.lastRollPos=a.pos.clone().add(new f.THREE.Vector3(0,0,-1));r._roller(1/60,{fire:true},a.weapon);return {...f,a,r};}
 test('#189 real rolling emission scores a continuous 5.6-wide maximum-speed CPU footprint, in both axes',async()=>{
  for(const yaw of [0,Math.PI/2]){const f=await draw(7.92,yaw),floor=cpuFloor(f,20,.025);assert.equal(f.paint.length,5,'3 body bands + 2 floor-only edge bands');f.paint.forEach(e=>floor.splat(e.point,e.radius,e.team,e.opts));const ext=floor.extent(yaw===0?'x':'z');assert.ok(Math.abs(ext.width-5.6)<.06,JSON.stringify(ext));
@@ -14,7 +15,7 @@ test('#189 low/normal rolling retains existing body paint; no unverified #650 cu
 });
 test('#189 floor alias filters only side paint on real PaintSystem surface projection; existing body walls remain',async()=>{
  const f=await batchFixture(),V=f.THREE.Vector3;const faces=[{origin:new V(),n:new V(0,1,0),u:new V(1,0,0),v:new V(0,0,1),su:20,sv:20,atlas:{},wall:false},{origin:new V(),n:new V(1,0,0),u:new V(0,0,1),v:new V(0,1,0),su:20,sv:20,atlas:{},wall:true}];
- const touched=[],p=Object.create(f.PaintSystem.prototype);Object.assign(p,{level:{faces,blocks:[{faces:[0,1,-1,-1,-1,-1],aabbMin:new V(-2,-2,-2),aabbMax:new V(20,20,20)}],queryBlocks:()=>[0]},growing:[],clock:0,_wetUntil:0,_splatEntryPool:[],_splatGrowthPool:[],_splatPoolStats:{entryArraysCreated:0,growthRecordsCreated:0},_cpuSplat(face){touched.push(face.wall);return 1;},_emitGrowth(){},_rippledNear:()=>true});
+ const touched=[],p=Object.create(f.PaintSystem.prototype);Object.assign(p,{grid:new Uint8Array(0),level:{faces,blocks:[{faces:[0,1,-1,-1,-1,-1],aabbMin:new V(-2,-2,-2),aabbMax:new V(20,20,20)}],queryBlocks:()=>[0]},growing:[],clock:0,_wetUntil:0,_splatEntryPool:[],_splatGrowthPool:[],_splatPoolStats:{entryArraysCreated:0,growthRecordsCreated:0},_cpuSplat(face){touched.push(face.wall);return 1;},_emitGrowth(){},_rippledNear:()=>true});
  p.splat(new V(.1,.1,1),1,0,{seed:.5,kind:'rollFloor',stretch:new V(0,0,1)});assert.deepEqual(touched,[false]);touched.length=0;p.splat(new V(.1,.1,1),1,0,{seed:.5,kind:'roll',stretch:new V(0,0,1)});assert.deepEqual(touched,[false,true]);
 });
 test('#189 existing wire recorder/replayer preserves floor-only kind and avoids re-recording',async()=>{
@@ -27,4 +28,20 @@ test('#189 reduced source composition retains native body paint without a fideli
  const paints=[];f.G.actors=[];f.G.paint.splat=(point,radius,team,opts)=>{paints.push({radius,kind:opts.kind});return 0;};
  a.isLocal=true;a.intent.move.set(0,0,1);a.vel.set(0,0,7.92);r.rolling=true;r.rollT=1.5;r.lastRollPos=a.pos.clone().add(new f.THREE.Vector3(0,0,-1));
  r._roller(1/60,{fire:true},a.weapon);assert.equal(paints.length,3);assert.ok(paints.every(p=>p.radius===.62));
+});
+
+
+test('#189 maximum-width side bands respect the actual wavy shader envelope across seeds and axes', async () => {
+ for(const yaw of [0,Math.PI/2]) {
+  const f=await draw(7.92,yaw),source=f.profile.weaponsFidelityCompletion.weapons.roller.BodyParam.PaintParam;
+  const scale=f.profile.weaponsFidelityCompletion.worldUnitsPerSourceUnit,target=2*source.WidthHalfMax*scale;
+  for(let sequence=1;sequence<=12;sequence++) {
+   f.paint.length=0;f.r.s3MaxRollPaint.sequence=sequence;
+   paintRollerMaximumWidth(f.G,f.r,f.a.weapon,source,scale,Math.sin(yaw),Math.cos(yaw));
+   const floor=cpuFloor(f,20,.025);f.paint.forEach(e=>floor.splat(e.point,e.radius,e.team,e.opts));
+   const extent=floor.extent(yaw===0?'x':'z');
+   assert.ok(extent.width<=target+.025,`sourced boundary at sequence ${sequence}: ${extent.width}>${target}`);
+   assert.ok(extent.width>=target-.08,`maximum speed still reaches its sourced edge: ${extent.width}`);
+  }
+ }
 });

@@ -64,6 +64,12 @@ export function adaptSource(rel, code) {
   // with the SAME sourced teammate-through window installed on each main
   // projectile, rather than silently letting bullets cross an ally.
   if (rel === 'src/game/inkFlightRuntime.js') {
+    // Native shooter-family heads and detached drops bypass the generic
+    // projectile impact path, but retain its local late-paint credit owner.
+    code = replaceOnce(code,
+      'const options = { seed: p.seed, kind, face: hit.face,',
+      'const options = { seed: p.seed, kind, face: hit.face, claimOwner: p.owner,',
+      'native ink-flight temporal paint owner');
     code = replaceOnce(code,
       'this.base.set(actor.pos.x, actor.pos.y + (actor.smoothY || 0), actor.pos.z);',
       'this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);',
@@ -1004,22 +1010,7 @@ export function adaptSource(rel, code) {
       'rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random() }',
       'Roller native trail age width');
     code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\n" + code;
-    code = replaceOnce(code,
-      "seed: Math.random(), kind: 'roll', stretch: _fwd });",
-      "seed: Math.random(), kind: 'roll', stretch: _fwd, claimOwner: a });",
-      'roller body ownership credit');
-    code = replaceOnce(code,
-      '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25 });',
-      '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner });',
-      'slosher impact paint ownership credit');
-    code = replaceOnce(code,
-      'area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });',
-      'area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7, claimOwner: p.owner });',
-      'projectile impact paint ownership credit');
-    code = replaceOnce(code,
-      '0.45 + Math.random() * 0.35, c.team, { seed: Math.random() }));',
-      '0.45 + Math.random() * 0.35, c.team, { seed: Math.random(), claimOwner: c.owner }));',
-      'Storm rain paint ownership credit');
+    code = adaptPaintOwnership(rel, code, replaceOnce);
     return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
@@ -1200,6 +1191,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "phase: 'rise', armor: true, startY: this.pos.y", "phase: 'rise', armor: false, startY: this.pos.y", 'Slam early action remains damageable');
     code = replaceOnce(code, '      this.invuln = 0.3;', '      // #573: protection ends with the action/landing owner.', 'Slam has no detached post-impact invulnerability');
     code = adaptTidalSlamGauge(rel, code, replaceOnce);
+    code = adaptPaintOwnership(rel, code, replaceOnce);
     return `import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, stealthJumpExtraTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery, updateSpecialHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {

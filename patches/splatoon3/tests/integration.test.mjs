@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture, emitMainShot } from './source-fixture.mjs';
 test('actual Actor stores a full charger charge and expires it without firing underwater', async () => {
   const f = await fixture(), a = f.make('charger'); a.intent.fire = true;
   f.tick(a, 61); assert.ok(a.weaponRunner.charge >= .999);
@@ -108,11 +108,11 @@ test('a released short keyboard/mouse tap reaches the actual controller once', a
   assert.equal(a.intent.jump, false); assert.equal(a.intent.fire, false);
 });
 test('gear uses distinct walk and firing curves, and does not speed up roller rolling', async () => {
-  const f = await fixture(), a = f.make(), b = f.make('roller');
+  const f = await fixture({ realProjectiles: true }), a = f.make(), b = f.make('roller');
   a.s3.loadout = b.s3.loadout = Array.from({length:3}, () => ({main:'runSpeed',subs:['runSpeed','runSpeed','runSpeed']}));
   a.setWeapon('shooter'); b.setWeapon('roller');
   assert.ok(Math.abs(a.weaponRunner.moveSpeed()-f.PLAYER.runSpeed*1.5)<1e-9);
-  a.weaponRunner.firingT = 1; assert.ok(Math.abs(a.weaponRunner.moveSpeed()-a.weapon.moveSpeedFiring*1.25)<1e-9);
+  emitMainShot(f, a); assert.ok(Math.abs(a.weaponRunner.moveSpeed()-a.weapon.moveSpeedFiring*1.25)<1e-9);
   b.weaponRunner.rolling = true; b.weaponRunner.rollT = 2; assert.equal(b.weaponRunner.moveSpeed(), b.weapon.rollSpeed);
 });
 test('splatling first stage yields its 80-frame stream, conserving the prepaid ink', async () => {

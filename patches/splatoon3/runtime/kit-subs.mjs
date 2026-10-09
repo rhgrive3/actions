@@ -601,7 +601,7 @@ export function kitBombExplosionPaint(SUB, b, paint) {
   const center = b.s3PaintPoint.copy(b.pos).addScaledVector(n, 0.1);
   const baseSeed = Number.isFinite(b.s3ExplosionPaintSeed) ? b.s3ExplosionPaintSeed
     : (b.s3ExplosionPaintSeed = Math.random());
-  let area = paint.splat(center, r.paintRadius, b.team, { seed: baseSeed });
+  let area = paint.splat(center, r.paintRadius, b.team, { seed: baseSeed, claimOwner: b.owner });
   if (satelliteRadius > 0 && ring > 0) {
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2;
@@ -609,7 +609,7 @@ export function kitBombExplosionPaint(SUB, b, paint) {
         .addScaledVector(t, Math.cos(angle) * ring)
         .addScaledVector(bit, Math.sin(angle) * ring);
       area += paint.splat(center, satelliteRadius, b.team,
-        { seed: (baseSeed + (i + 1) * 0.6180339887498949) % 1 });
+        { seed: (baseSeed + (i + 1) * 0.6180339887498949) % 1, claimOwner: b.owner });
     }
   }
   return area;

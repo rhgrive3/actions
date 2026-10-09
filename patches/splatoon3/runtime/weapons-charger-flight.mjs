@@ -273,7 +273,7 @@ export function beginChargerWallDrop(system,job,hit,raw,api,splash=false){
 }
 function stamp(s,point,radius,api,face){
  if(s.ghost||!(radius>0))return;
- const opts={seed:unit(s.seed,++s.paintIndex),kind:'drop'};
+ const opts={seed:unit(s.seed,++s.paintIndex),kind:'drop',claimOwner:s.owner};
  if(Number.isInteger(face)&&face>=0)opts.face=face;
  const area=api.G.paint.splat(point,radius,s.team,opts);if(Number.isFinite(area))s.owner?.addTurf?.(area);
 }

@@ -2,6 +2,8 @@ import './inkwave-live-test-log.test.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
 
 test('integration retains immutable source and independently rebuilt artifact identity checks', () => {
@@ -25,7 +27,7 @@ test('parallel browser families retain every final integration acceptance surfac
   assert.ok(workflow.includes('npx playwright install --with-deps ${{ matrix.browsers }}'));
   assert.ok(!workflow.includes('needs: validate'));
   assert.ok(workflow.includes('cancel-in-progress: true'));
-  for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'responsive', 'network-browser', 'range', 'startup-browser', 'rematch-lifecycle'])
+  for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'responsive', 'network-browser', 'paint-mask', 'range', 'startup-browser', 'rematch-lifecycle'])
     assert.ok(workflow.includes(`node scripts/check-inkwave-${gate}.mjs`), gate);
   assert.ok(workflow.includes('scripts/check-inkwave-network-comparison.mjs'));
   assert.ok(workflow.includes('patches/network-replication/tests/*.test.mjs'));
@@ -55,6 +57,17 @@ test('successful browser artifacts require validated reports and source-bound su
   assert.ok(workflow.includes('name: inkwave-browser-${{ matrix.suite }}-${{ env.SOURCE_SHA }}'));
   assert.ok(workflow.includes("if suite=='network':"));
   assert.ok(workflow.includes("for name in checks: assert reports[name]['sourceSha']==os.environ['SOURCE_SHA']"));
+});
+
+test('ancillary paint WebGL source and emitted masks are mandatory exact-head network evidence', () => {
+  assert.ok(workflow.includes('node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site'));
+  assert.match(workflow, /check-inkwave-paint-mask\.mjs[^\n]+--exact-source/);
+  assert.ok(workflow.includes("'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json']"));
+  const probe = fs.readFileSync(new URL('../check-inkwave-paint-mask.mjs', import.meta.url), 'utf8');
+  assert.match(probe, /const ROOT = path\.resolve\(fileURLToPath\(new URL\('\.\.\/', import\.meta\.url\)\)\);/);
+  const root = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
+  for (const relative of ['patches/splatoon3/runtime/paint-ownership.mjs', 'patches/splatoon3/runtime/render.mjs'])
+    assert.ok(path.resolve(root, relative).startsWith(root + path.sep), 'source helper requests pass the actual root containment guard');
 });
 
 test('compatibility failure preserves its primary error without a missing diagnostic upload', () => {

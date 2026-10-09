@@ -2,6 +2,23 @@ const STEP = 1 / 60;
 const EPS = 1e-10;
 const INSTALLED = Symbol.for('inkwave.issue264.paint-ownership-installed');
 
+// Keep ordinary clocks numeric on the wire. Decimal strings carry only values
+// beyond the safe-integer range, so an accepted causal jump cannot exhaust the
+// next local emission or lose precision. Canonical encoding avoids alias IDs.
+export function isPaintOrderClock(value) {
+  return Number.isSafeInteger(value) && value >= 0
+    || typeof value === 'string' && /^[1-9][0-9]*$/.test(value)
+      && BigInt(value) > BigInt(Number.MAX_SAFE_INTEGER);
+}
+export function nextPaintOrderClock(value) {
+  if (!isPaintOrderClock(value)) throw new Error('Invalid network paint clock');
+  return typeof value === 'number' && value < Number.MAX_SAFE_INTEGER
+    ? value + 1 : (BigInt(value) + 1n).toString();
+}
+export function paintClockComesAfter(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? a > b : BigInt(a) > BigInt(b);
+}
+
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const fract = x => x - Math.floor(x);
 const f32 = Math.fround;
@@ -9,12 +26,27 @@ const smoothstep = (lo, hi, x) => {
   const t = clamp((x - lo) / (hi - lo), 0, 1);
   return t * t * (3 - 2 * t);
 };
-const hash = n => {
-  let x = fract(f32(f32(n) * f32(0.1031)));
-  x = f32(x * f32(x + f32(33.33)));
-  return fract(f32(x * f32(x + x)));
-};
-const shaderHash = (seed, seedScale, index, indexScale) => hash(f32(f32(f32(seed) * f32(seedScale)) + f32(f32(index) * f32(indexScale))));
+// The ancillary mask must not depend on driver-specific sin() or amplified
+// floating-point rounding. Quantize once on the CPU, then carry the exact 16-bit
+// word in aGrow.w. Every hash intermediate is an integer below 2^24, so highp
+// IEEE float arithmetic, including fused multiply/add, gives identical results.
+// The power-of-two modulus and byte swap are exact as well. The native body
+// wobble and cosmetic tone keep their existing source formulas.
+export function paintShapeSeed(seed) { return Math.floor(fract(f32(seed)) * 65536); }
+export function paintShapeHash(word, stream, index) {
+  let x = (word + stream * 4099 + index * 131) % 65536;
+  x = (x * 251 + 13849) % 65536;
+  x = (x % 256) * 256 + Math.floor(x / 256);
+  x = (x * 251 + 13849) % 65536;
+  return x / 65536;
+}
+export const PAINT_SHAPE_HASH_GLSL = `float paintShapeHash(float word, float stream, float index) {
+  float x = mod(word + stream * 4099.0 + index * 131.0, 65536.0);
+  x = mod(x * 251.0 + 13849.0, 65536.0);
+  x = mod(x, 256.0) * 256.0 + floor(x / 256.0);
+  x = mod(x * 251.0 + 13849.0, 65536.0);
+  return x / 65536.0;
+}`;
 const wobble = (a, s) => 1 + 0.12 * Math.sin(3 * a + s * 6.2831) + 0.08 * Math.sin(5 * a + s * 17.0) +
   0.05 * Math.sin(7 * a + s * 41.0) + 0.03 * Math.sin(11 * a + s * 73.0) +
   0.018 * Math.sin(17 * a + s * 29.0) + 0.17 * Math.pow(Math.max(Math.cos(a - s * 37.7), 0), 28) +
@@ -34,7 +66,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const r = Math.sqrt(r2), fall = clamp(r / Math.max(R, 1e-3), 0, 1);
   const kind = g.kind, [rayCount, satelliteCount, spatterCount, dripCount] = counts(kind, contract.shapes);
   if (rayCount + satelliteCount + spatterCount + dripCount === 0) return null;
-  const pieces = [], seed = f32(g.seed), pixel = 1 / Math.max(face.atlas?.ppm || 1, 1);
+  const pieces = [], seed = f32(g.seed), word = paintShapeSeed(seed), pixel = 1 / Math.max(face.atlas?.ppm || 1, 1);
   const dirAng = sa > 0 ? Math.atan2(sdv, sdu) : 0;
   const spread = 6.2831 + (2.5 - 6.2831) * clamp(sa * 1.2, 0, 1);
   const big = kind > 1.5 && kind < 3.5;
@@ -43,7 +75,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
 
   const tsp = 1 - Math.pow(1 - clamp(tn * 1.4, 0, 1), 3);
   for (let k = 0; k < rayCount; k++) {
-    const h1 = shaderHash(seed, 7.31, k, 1.93), h2 = shaderHash(seed, 3.17, k, 5.71), h3 = shaderHash(seed, 11.3, k, 2.39);
+    const h1 = paintShapeHash(word, 0, k), h2 = paintShapeHash(word, 1, k), h3 = paintShapeHash(word, 2, k);
     const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : (k + 0.35 + 0.6 * h1) / rayCount * 6.2831 + seed * 6.2831;
     const ux = Math.cos(a), uy = Math.sin(a), edge = bodyEdge(a);
     const len = r * (0.07 + (big ? 0.5 : 0.4) * h2 * h2 * h2) * tsp;
@@ -60,7 +92,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   }
 
   for (let k = 0; k < satelliteCount; k++) {
-    const h1 = shaderHash(seed, 13.1, k, 7.7), h2 = shaderHash(seed, 5.3, k, 3.1), h3 = shaderHash(seed, 9.9, k, 1.7);
+    const h1 = paintShapeHash(word, 3, k), h2 = paintShapeHash(word, 4, k), h3 = paintShapeHash(word, 5, k);
     const tl = 0.28 + 0.95 * h2, land = smoothstep(tl, tl + 0.2, tn);
     if (land <= 0) continue;
     const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : h1 * 6.2831;
@@ -75,7 +107,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   }
 
   for (let k = 0; k < spatterCount; k++) {
-    const h1 = shaderHash(seed, 17.9, k, 4.13), h2 = shaderHash(seed, 2.71, k, 8.09), h3 = shaderHash(seed, 6.47, k, 3.37);
+    const h1 = paintShapeHash(word, 6, k), h2 = paintShapeHash(word, 7, k), h3 = paintShapeHash(word, 8, k);
     if (tn < 0.45 + 0.95 * h2) continue;
     const a = sa > 0 ? dirAng + (h1 - 0.5) * spread * 1.15 : h1 * 6.2831;
     let ux = Math.cos(a), uy = Math.sin(a);
@@ -88,7 +120,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   if (face.wall && fall > 0.3 && dripCount > 0) {
     const nD = Math.min(6, dripCount + Math.floor(R * 1.2));
     for (let k = 0; k < nD; k++) {
-      const h1 = shaderHash(seed, 3.7, k, 11.3), h2 = shaderHash(seed, 8.1, k, 2.9), h3 = shaderHash(seed, 4.3, k, 5.9);
+      const h1 = paintShapeHash(word, 9, k), h2 = paintShapeHash(word, 10, k), h3 = paintShapeHash(word, 11, k);
       if (k > 1 && h3 < 0.3) continue;
       const x0 = (h1 * 2 - 1) * r * 0.72;
       const c = Math.sqrt(Math.max(1 - (x0 / r) * (x0 / r), 0));
@@ -162,14 +194,15 @@ function ensureOwnershipState(paint) {
 
 function paintOrderId(paint, order) {
   ensureOwnershipState(paint);
-  const validNetworkOrder = order && Number.isSafeInteger(order.tick) && order.tick >= 0
+  const clock = order?.clock ?? order?.tick;
+  const validNetworkOrder = order && isPaintOrderClock(clock)
     && typeof order.peer === 'string' && order.peer.length > 0
     && Number.isSafeInteger(order.seq) && order.seq >= 1;
   let key, record;
   if (validNetworkOrder) {
-    record = { tick: order.tick, peer: order.peer, seq: order.seq,
+    record = { clock, epoch: typeof order.epoch === 'string' ? order.epoch : '', peer: order.peer, seq: order.seq,
       tie: typeof order.tie === 'string' ? order.tie : '', legacy: order.legacy === true };
-    key = JSON.stringify([record.legacy, record.tick, record.peer, record.seq, record.tie]);
+    key = JSON.stringify([record.legacy, record.epoch, record.clock, record.peer, record.seq, record.tie]);
     const existing = paint._paintOrderIds.get(key);
     if (existing) return existing;
   } else {
@@ -194,7 +227,7 @@ function paintOrderComesAfter(paint, nextId, previousId) {
     return !a.local;
   }
   if (a.legacy !== b.legacy) return !a.legacy;
-  if (a.tick !== b.tick) return a.tick > b.tick;
+  if (a.clock !== b.clock) return paintClockComesAfter(a.clock, b.clock);
   if (a.peer !== b.peer) return a.peer > b.peer;
   if (a.seq !== b.seq) return a.seq > b.seq;
   return a.tie > b.tie;
@@ -214,7 +247,7 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
   const E = g.entries;
   if (g.R <= 0.02 || !Array.isArray(E) || !E.length || g.kind === contract.kind.speck) return 0;
   const value = g.team + 1, order = g.paintOrder || 0;
-  let claimed = 0;
+  let claimed = 0, changed = false;
   for (let n = 0; n < E.length; n += 7) {
     const face = E[n], lu = E[n + 1], lv = E[n + 2], dn = E[n + 3], sdu = E[n + 4], sdv = E[n + 5], sa = E[n + 6];
     if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0) continue;
@@ -246,15 +279,18 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
         }
         if (!claimPaintCell(paint, index, value, order)) continue;
         paint.grid[index] = value;
-        claimed += cellArea;
+        changed = true;
+        // Match the composed native body scorer: walls and occluded cells
+        // remain paintable, but never award turf points or special charge.
         if (face.turf && !paint.dead[index]) {
+          claimed += cellArea;
           if (previous) paint.counts[previous - 1]--;
           paint.counts[g.team]++;
         }
       }
     }
   }
-  if (claimed > 0) paint.version++;
+  if (changed) paint.version++;
   if (claimed > 0 && g.paintOwner && !g.paintOwner.remote) {
     if (g.paintCreditMode === 1) g.paintOwner.addTurfNoSpecial?.(claimed);
     else g.paintOwner.addTurf?.(claimed);

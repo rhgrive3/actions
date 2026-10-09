@@ -930,7 +930,7 @@ export function installWeapons(context, profile) {
         if (contact.hit && contact.normal.y >= 0.4) {
           const radius = shooterPaint.WidthHalfNearest * shooterScale;
           const seed = ((runner.s3ShooterNearestSlot * 2654435761) >>> 0) / 4294967296;
-          a.addTurf(G.paint.splat(nearOrigin.copy(contact.point).addScaledVector(contact.normal, 0.05), radius, a.team, { seed }));
+          a.addTurf(G.paint.splat(nearOrigin.copy(contact.point).addScaledVector(contact.normal, 0.05), radius, a.team, { seed, claimOwner: a }));
         }
       }
       // An emitted round, not cosmetic firing pose, opens the sourced 4F movement window.

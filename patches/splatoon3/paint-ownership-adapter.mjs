@@ -1,5 +1,25 @@
+import { PAINT_SHAPE_HASH_GLSL } from './runtime/paint-ownership.mjs';
+
 export function adaptPaintOwnership(rel, code, replaceOnce) {
   if (rel === 'src/world/paint.js') {
+    code = "import { paintShapeSeed } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
+    code = replaceOnce(code,
+      'float hsh(float n) { return fract(sin(n) * 43758.5453123); }',
+      'float hsh(float n) { return fract(sin(n) * 43758.5453123); }\n' + PAINT_SHAPE_HASH_GLSL,
+      'shared exact ancillary shape hash (native tone preserved)');
+    code = replaceOnce(code,
+      '  float R = vSplat.x, team = vSplat.y, seed = vSplat.z;',
+      '  float R = vSplat.x, team = vSplat.y, seed = vSplat.z;\n  float paintSeed = floor(vGrow.w + 0.5);',
+      'ancillary shader consumes the CPU packed seed word');
+    const streams = [[7.31, 1.93], [3.17, 5.71], [11.3, 2.39], [13.1, 7.7], [5.3, 3.1], [9.9, 1.7],
+      [17.9, 4.13], [2.71, 8.09], [6.47, 3.37], [3.7, 11.3], [8.1, 2.9], [4.3, 5.9]];
+    for (let stream = 0; stream < streams.length; stream++) {
+      const [seedScale, indexScale] = streams[stream];
+      code = replaceOnce(code, `hsh(seed * ${seedScale} + fk * ${indexScale})`,
+        `paintShapeHash(paintSeed, ${stream}.0, fk)`, `ancillary hash stream ${stream}`);
+    }
+    code = replaceOnce(code, 'this.aGrow[vi * 4 + 3] = 0;',
+      'this.aGrow[vi * 4 + 3] = paintShapeSeed(seed);', 'pack deterministic ancillary seed on every paint vertex');
     code = replaceOnce(code,
       '          if (dx * dx + dy * dy + dz * dz < rs * rs) { this._emitGrowth(g, 3, 1, false); this.growing.splice(i, 1); this._releaseSplatGrowth(g); }',
       '          if (dx * dx + dy * dy + dz * dz < rs * rs) { this._finishSplatOwnership(g); this._emitGrowth(g, 3, 1, false); this.growing.splice(i, 1); this._releaseSplatGrowth(g); }',
@@ -39,8 +59,8 @@ export function adaptPaintOwnership(rel, code, replaceOnce) {
       ['stretchAmt: 0.6 });', 'stretchAmt: 0.6, claimOwner: a });', 'charger impact ownership credit'],
       ['s.paintRadius, b.team, { seed: Math.random() });', 's.paintRadius, b.team, { seed: Math.random(), claimOwner: b.owner });', 'bomb core ownership credit'],
       ['0.7 + Math.random() * 0.5, b.team, { seed: Math.random() });', '0.7 + Math.random() * 0.5, b.team, { seed: Math.random(), claimOwner: b.owner });', 'bomb satellite ownership credit'],
-      ["p.trailRadius * (0.8 + Math.random() * 0.4), p.team, { seed: Math.random() }));", "p.trailRadius * (0.8 + Math.random() * 0.4), p.team, { seed: Math.random(), claimOwner: p.owner }));", 'projectile trail ownership credit'],
-      ['stretchAmt: 1.25 });', 'stretchAmt: 1.25, claimOwner: p.owner });', 'slosher impact ownership credit'],
+      ["rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random() }));", "rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random(), claimOwner: p.owner }));", 'projectile trail ownership credit'],
+      ['stretchAmt: paint?.stretchAmt ?? 1.25 });', 'stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner });', 'slosher impact ownership credit'],
       ['stretchAmt: 0.7 });', 'stretchAmt: 0.7, claimOwner: p.owner });', 'projectile impact ownership credit'],
       ['w.impactRadius, p.team, { seed: Math.random() }', 'w.impactRadius, p.team, { seed: Math.random(), claimOwner: p.owner }', 'blaster burst ownership credit'],
       ["c.team, { seed: Math.random() }));", "c.team, { seed: Math.random(), claimOwner: c.owner }));", 'special rain ownership credit'],

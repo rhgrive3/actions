@@ -747,7 +747,7 @@ export function tickBigBubblers(dt) {
       dome.ignited = true;
       if (tuning.paintAtIgnition) {
         const area = api.G.paint?.splat?.(dome.pos.clone().setY(dome.pos.y + raw.paintRadius * 0.35),
-          raw.paintRadius, dome.team, { seed: Math.random() }) || 0;
+          raw.paintRadius, dome.team, { seed: Math.random(), claimOwner: dome.owner, claimMode: 'no-special' }) || 0;
         dome.owner.addTurfNoSpecial?.(area);
       }
       api.emit?.('kit:bubbler:ignite', {

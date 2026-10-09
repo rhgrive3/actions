@@ -158,13 +158,14 @@ test('#711 a squid-form charge keep reports the stored full-charge reach', async
   assert.equal(f.inRange(a, 0, mid), false, 'no store: live charge 0 is minimum reach');
 });
 
-test('#711 non-charger ranges are unchanged and ignore charge', async () => {
+test('#711 non-charger ranges retain their own range owner and ignore charge', async () => {
   const f = await fixedBoot();
   for (const [id, range] of [['shooter', null], ['roller', 6], ['blaster', null]]) {
-    const a = f.make(id), r = range ?? (a.weapon.range || 12);
+    const a = f.make(id), r = id === 'shooter' ? a.weapon.combatRange : (range ?? (a.weapon.range || 12));
+    const margin = id === 'shooter' ? 0 : .5;
     for (const charge of [0, .6, 1]) {
-      assert.equal(f.inRange(a, charge, r + .5 - 1e-6), true, `${id} charge ${charge}`);
-      assert.equal(f.inRange(a, charge, r + .5 + 1e-6), false, `${id} charge ${charge}`);
+      assert.equal(f.inRange(a, charge, r + margin - 1e-6), true, `${id} charge ${charge}`);
+      assert.equal(f.inRange(a, charge, r + margin + 1e-6), false, `${id} charge ${charge}`);
     }
   }
 });
@@ -258,7 +259,9 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
   assert.equal(f.inRange(a, 0, mid), false, 'completed stream ignores its retained snapshot');
 
   const shooter = f.make('shooter');
-  assert.equal(f.inRange(shooter, 1, shooter.weapon.range), true, 'Shooter keeps its configured range');
+  assert.equal(f.inRange(shooter, 1, shooter.weapon.combatRange), true, 'Shooter keeps its explicit combat reach');
+  assert.equal(f.inRange(shooter, 1, shooter.weapon.combatRange + 1e-6), false, 'Shooter has no inherited half-unit range margin');
+  assert.equal(f.inRange(shooter, 1, shooter.weapon.range), false, 'matchmaking range does not extend combat reach');
   const charger = f.make('charger'), chargerMid = (P.chargerReach(0) + P.chargerReach(1)) / 2;
   assert.equal(f.inRange(charger, 0, chargerMid), false, 'Charger still uses its installed minimum-charge flight reach');
   assert.equal(f.inRange(charger, 1, chargerMid), true, 'Charger still uses its installed full-charge flight reach');
@@ -311,12 +314,13 @@ test('#937 airborne reticle range is scoped to Slosher and leaves projectile/wea
   const s = f.make('slosher');
   assert.equal(s.weapon.range, 14.5, 'projectile/bot/aim-assist range is unchanged');
   for (const id of ['shooter', 'roller', 'blaster']) {
-    const a = f.make(id), r = id === 'roller' ? 6 : (a.weapon.range || 12);
+    const a = f.make(id), r = id === 'shooter' ? a.weapon.combatRange : id === 'roller' ? 6 : (a.weapon.range || 12);
+    const margin = id === 'shooter' ? 0 : .5;
     assert.equal(a.weapon.reticleRange, undefined, id);
     for (const grounded of [true, false]) {
       a.grounded = grounded;
-      assert.equal(f.inRange(a, 0, r + .5 - 1e-6), true, `${id} grounded ${grounded}`);
-      assert.equal(f.inRange(a, 0, r + .5 + 1e-6), false, `${id} grounded ${grounded}`);
+      assert.equal(f.inRange(a, 0, r + margin - 1e-6), true, `${id} grounded ${grounded}`);
+      assert.equal(f.inRange(a, 0, r + margin + 1e-6), false, `${id} grounded ${grounded}`);
     }
   }
 });

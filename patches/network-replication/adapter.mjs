@@ -39,8 +39,11 @@ export function adaptNetworkSource(rel, code) {
       '    const cosmetic = !!opts.cosmetic;\n    const netOrderId = !cosmetic && paintOrder ? this._paintOrderId(paintOrder) : 0;\n    const ownerOrder = netOrderId || this._paintCurrentOrder || 0;\n    const orderState = ownerOrder && !cosmetic ? { accepted: false } : null;',
       'shared local and network cell owner');
     patch('if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n          entries.push(f, lu, lv, dn, sdu, sdv, sa);',
-      'if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);\n          if (!orderState || orderState.accepted) entries.push(f, lu, lv, dn, sdu, sdv, sa);',
-      'late or duplicate event cannot create unowned GPU growth');
+      'if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);\n          if (netOrderId || !orderState || orderState.accepted) entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      'retain ordered ancillary growth while masking rejected body cells');
+    patch('          if (g.team === team || g.kind === K_SPECK) continue;',
+      '          if (g.netOrderId || netOrderId || g.team === team || g.kind === K_SPECK) continue;',
+      'network growth cannot finish by packet arrival order');
     patch('        g.cx = center.x; g.cy = center.y; g.cz = center.z;\n        g.paintOwner = this._paintOwnerContext?.owner || null;\n        g.paintCreditMode = this._paintOwnerContext?.mode || 0;\n        g.paintOrder = this._paintCurrentOrder || 0;',
       '        g.cx = center.x; g.cy = center.y; g.cz = center.z;\n        g.paintOwner = this._paintOwnerContext?.owner || null;\n        g.paintCreditMode = this._paintOwnerContext?.mode || 0;\n        g.paintOrder = ownerOrder; g.netOrderId = netOrderId;',
       'growth keeps the shared canonical owner');
@@ -173,6 +176,7 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
+    code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
     code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
     code = "import { recordWipeoutLife, packWipeoutTimeline, acceptWipeoutTimeline, acceptWipeoutConfirmation, replayWipeoutConfirmations } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
@@ -183,7 +187,7 @@ export function emit(name, payload) {
     patch('  _sendTick() {', '  _sendTick() {\n    tickOnlineContinuation(this);', 'per-player result continuation');
     patch("      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", "      case 'wc': acceptWipeoutConfirmation(this, from, d); break;\n      case 'rc': acceptOnlineContinuation(this, from, d); break;", 'continuation sender and match identity');
     patch('    this.myId = session.myId;', '    this.myId = session.myId;\n    this._matchStateAPI = { G, emit };', 'native match-state protocol context');
-    patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
+    patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this._paintClockState = paintClockStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
     patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
     patch("    this.unsubs.push(on('match:state', ({ state, match: m }) => { if (m === this.match && this.isHost) this._sendNow({ k: 'st', s: state, t: r2(m.time) }); }));",
       "    this.unsubs.push(on('match:state', ({ state, match: m }) => { if (m === this.match && this.isHost) { const d={ k:'st', s:state, t:r2(m.time) }; if (state==='finish' && validFinishCoverage(m.s3FinishCoverage)) d.fc=[...m.s3FinishCoverage]; if (state==='finish' && validFinishMapDataUrl(m.s3FinishMapDataUrl)) d.fm=m.s3FinishMapDataUrl; this._sendNow(d); } }));",
@@ -399,6 +403,11 @@ export function emit(name, payload) {
         && e._netTick >= (p.physicsPoints?.at(-3) ?? 0) && e._netTick <= d.u && e[0] <= d.ts) {
         e._stormSnapshot = { owner: from, life: snap.life, at: snap.t, tick: d.u };
       }
+      if (e[1] === 's') {
+        if (e._netSeq !== undefined && e._netSeq <= Math.max(p._lastEventSeq || 0, p._lastPaintSeq || 0, this._paintClockState.applied.get(from) || 0)) continue;
+        if (receivePaintOrder(this, from, e) === false) continue;
+        if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
+      }
       p.events.push(e);
     }`, 'receive event identity');
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
@@ -485,7 +494,7 @@ export function emit(name, payload) {
       "const event = this._rec(['s', c.x, c.y, c.z, radius, team, o.seed ?? Math.random(), o.kind ?? 0,",
       'return local paint order identity');
     patch('st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1]);',
-      'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1]);\n    return { tick: event._netTick, peer: this.s.myId, seq: event._netSeq };',
+      'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1, nextPaintOrder(this, !!o.instant)]);\n    this._paintClockState.applied.set(this.s.myId, event._netSeq);\n    return { clock: event[14][2], epoch: event[14][1], peer: this.s.myId, seq: event._netSeq };',
       'return local paint order identity');
 
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
@@ -530,16 +539,25 @@ export function emit(name, payload) {
     this.stats.in++;`, 'ordered tick replay guard');
     }
     patch('  _playEvents() {', `  _applyRemoteSplatEvent(e) {
+    const order = readPaintOrder(this, e._netPeer, e);
+    if (order === false) return false;
+    const state = this._paintClockState;
+    if (e._netSeq !== undefined) {
+      if (e._netSeq <= (state.applied.get(e._netPeer) || 0)) return false;
+      state.applied.set(e._netPeer, e._netSeq);
+    }
+    receivePaintOrder(this, e._netPeer, e);
     this.applying = true;
     try {
       const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
       const opts = { seed: e[7] };
-      if (typeof e._netPeer === 'string' && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(e._netSeq))
-        opts.__netOrder = { tick: e._netTick, peer: e._netPeer, seq: e._netSeq };
+      if (order) opts.__netOrder = order;
+      if (Array.isArray(e[14])) opts.instant = e[14][3] === 1;
       if (e[8]) opts.kind = e[8];
       if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
       if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
       G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
+      return true;
     } finally { this.applying = false; }
   }
 
@@ -548,7 +566,7 @@ export function emit(name, payload) {
     let committed = 0;
     for (const p of this.peers.values()) for (const e of p.events) {
       if (e[1] !== 's' || !e._deadlineEligible || e._finishPaintApplied) continue;
-      this._applyRemoteSplatEvent(e);
+      if (!this._applyRemoteSplatEvent(e)) continue;
       e._finishPaintApplied = true;
       committed++;
     }
@@ -571,11 +589,12 @@ export function emit(name, payload) {
         break;
       }`, 'deadline paint is never double-applied');
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
-    if (e[1] === 's' && typeof e._netPeer !== 'string') e._netPeer = from;
+    if (e[1] === 's') e._netPeer = from;
     if (e[1] === 's') {
       const hasTick = e._netTick !== undefined, hasSeq = e._netSeq !== undefined;
       if (!this.s._members?.has(from) || hasTick !== hasSeq
-        || hasTick && (!Number.isSafeInteger(e._netTick) || e._netTick < 0 || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)) return;
+        || hasTick && (!Number.isSafeInteger(e._netTick) || e._netTick < 0 || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)
+        || readPaintOrder(this, from, e) === false) return;
     }
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
     const eventPeer = this.peers.get(from);
@@ -1010,6 +1029,58 @@ function syncRemoteSquidroll(actor, sample, peer) {
     visual.remaining = Math.min(visual.remaining, remaining);
     visual.vx = sample.rollVx; visual.vz = sample.rollVz;
   }
+}
+// Sender simulation ticks only schedule playback. They are application uptimes,
+// never a clock that can order paint from two different owners.
+const PAINT_ORDER_TAG = 'inkwave-paint-order-v1';
+const paintClockSessions = new WeakMap();
+function paintClockStateFor(session, cfg) {
+  const matchId = typeof cfg?.id === 'string' ? cfg.id : '';
+  let matches = paintClockSessions.get(session);
+  if (!matches) { matches = new Map(); paintClockSessions.set(session, matches); }
+  let state = matches.get(matchId);
+  if (state) matches.delete(matchId);
+  else state = { matchId, clock: 0, applied: new Map() };
+  matches.set(matchId, state);
+  if (matches.size > 8) matches.delete(matches.keys().next().value);
+  return state;
+}
+function nextPaintOrder(nm, instant) {
+  const state = nm._paintClockState || (nm._paintClockState = paintClockStateFor(nm.s, nm.cfg));
+  const clock = nextPaintOrderClock(state.clock);
+  state.clock = clock;
+  return [PAINT_ORDER_TAG, state.matchId, clock, instant ? 1 : 0];
+}
+function readPaintOrder(nm, from, e) {
+  if (typeof from !== 'string' || !nm.s._members?.has(from)) return false;
+  // Victim-owned splat bursts and host-owned Boss ink can paint the other team.
+  // Membership, the match epoch and sender sequence own admission, not team color.
+  for (let i = 2; i <= 7; i++) if (!Number.isFinite(e[i])) return false;
+  for (let i = 9; i <= 12; i++) if (e[i] !== undefined && !Number.isFinite(e[i])) return false;
+  if (e[5] <= 0 || (e[6] !== 0 && e[6] !== 1)) return false;
+  const hasTick = e._netTick !== undefined, hasSeq = e._netSeq !== undefined;
+  if (hasTick !== hasSeq || hasTick && (!Number.isSafeInteger(e._netTick) || e._netTick < 0
+    || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)) return false;
+  const row = e[14];
+  if (Array.isArray(row)) {
+    if (!hasSeq || row.length !== 4 || row[0] !== PAINT_ORDER_TAG
+      || row[1] !== (typeof nm.cfg?.id === 'string' ? nm.cfg.id : '')
+      || !isPaintOrderClock(row[2]) || row[2] === 0
+      || (row[3] !== 0 && row[3] !== 1)) return false;
+    return { clock: row[2], epoch: row[1], peer: from, seq: e._netSeq };
+  }
+  if (e.length > 16) return false;
+  // Older rows remain paint-compatible, but cannot outrank causal records.
+  // Their owner-local sequence is deterministic; their uptime is irrelevant.
+  return hasSeq ? { clock: e._netSeq, peer: from, seq: e._netSeq, legacy: true } : null;
+}
+function receivePaintOrder(nm, from, e) {
+  const order = readPaintOrder(nm, from, e);
+  if (order && !order.legacy) {
+    const state = nm._paintClockState || (nm._paintClockState = paintClockStateFor(nm.s, nm.cfg));
+    if (paintClockComesAfter(order.clock, state.clock)) state.clock = order.clock;
+  }
+  return order;
 }
 const firstSplatSessions = new WeakMap();
 // #529: retain reconnect decisions for the eight most recent match IDs.
