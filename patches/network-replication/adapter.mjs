@@ -21,7 +21,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'dodge-clock-adapter.mjs']
+    'dodge-clock-adapter.mjs', 'snapshot-guard.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -1445,9 +1445,15 @@ ${bombHit}`;
 
   }
   if (rel === 'src/net/netmatch.js') {
+    code = "import { validActorSnapshotRow, validRemoteActorPose } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     code = adaptIssue1088SurgePresentation(code);
     code = adaptIssue1163RemoteDodgeClock(code);
-    patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
+    patch('if (d.a) for (const s of d.a) {\n      const rawRoll',
+      'if (Array.isArray(d.a)) for (const s of d.a) {\n      if (!validActorSnapshotRow(s, d.ts)) continue;\n      const rawRoll',
+      'strict owner snapshot schema before Hermite buffering');
+    patch('    const S = n.cur;',
+      '    const S = n.cur;\n    if (!validRemoteActorPose(S, n.err)) { a.character.root.visible = false; return; }\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);',
+      'nonfinite remote pose guard');
   }
   return code;
 }

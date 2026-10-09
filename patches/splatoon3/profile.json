@@ -215,6 +215,7 @@
       "rollContactInterval": 0.4,
       "rollSpeed": 7.92,
       "rollBaseSpeed": 6.4799999999999995,
+      "rollDashTurnBreakSpeed": 6.4799999999999995,
       "rollDashTime": 1.5,
       "rollInkPerMeter": 0.7575757575757576,
       "rollInkMinPerFrame": 0.0002,
@@ -395,6 +396,7 @@
   "bomb": {
     "fuse": 1,
     "throwSpeed": 67.2,
+    "spawnSpeedY": 14.4,
     "gravity": 57.6,
     "radius": 7,
     "damageMax": 180,
