@@ -84,3 +84,14 @@ test('#1179 defense in depth also rejects invalid direct Boss damage calls', asy
   assert.equal(f.boss.applyDamage(attack, 25, false, null), 25);
   assert.equal(f.boss.hp, 9975);
 });
+
+test('#1179 invalid oversized Boss hit cannot burn sender sequence or affect subsequent valid hit', async () => {
+  const f = await bossWorld();
+  const peer = f.nm._peer('guest');
+  f.nm.onMessage('guest', f.hit({ q: 9000, d: 2001 }));
+  assert.equal(f.boss.hp, 10000);
+  assert.equal(peer.lastBossHit, undefined);
+  f.nm.onMessage('guest', f.hit({ q: 1, d: 30 }));
+  assert.equal(f.boss.hp, 9970);
+  assert.equal(peer.lastBossHit, 1);
+});
