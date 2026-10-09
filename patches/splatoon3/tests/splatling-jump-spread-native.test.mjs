@@ -13,10 +13,9 @@ const upstream = rel => fs.readFileSync(`${ROOT}/inkwave-public/${rel}`, 'utf8')
 
 const close = (actual, expected, epsilon = 1e-8) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
-const bloomScale = runner => {
-  const first = runner.a.weapon.spreadFirst ?? 0.45;
-  return first + (1 - first) * runner.bloom;
-};
+// The sourced outer envelope is independent of the old INKWAVE bloom
+// multiplier. Bias changes the distribution inside it, not the maximum angle.
+const bloomScale = () => 1;
 const expectedHorizontal = runner => {
   const w = runner.a.weapon;
   const recovery = splatlingJumpRecoveryAt(runner.a.s3SplatlingJumpAgeFrames);
@@ -118,8 +117,7 @@ test('production six-adapter native jump age holds 25F, recovers by 70F, and nev
 
 function expectedHorizontalAtLanding(weapon, bloom, age) {
   const recovery = splatlingJumpRecoveryAt(age);
-  const first = weapon.spreadFirst ?? 0.45;
-  const factor = first + (1 - first) * bloom;
+  const factor = 1; // raw Stand_DegSwerve / Jump_DegSwerve, no extra bloom
   return (weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery) * factor;
 }
 
