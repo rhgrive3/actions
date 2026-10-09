@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue1088SurgePresentation } from './issue-1088-surge-adapter.mjs';
+import { adaptIssue1163RemoteDodgeClock } from './issue-1163-remote-dodge-clock.mjs';
 export const NETWORK_ROOT = fileURLToPath(new URL('./', import.meta.url));
 function once(code, before, after, label) {
   const i = code.indexOf(before);
@@ -16,7 +17,8 @@ function replaceAllExpected(code, before, after, expected, label) {
   return code.split(before).join(after);
 }
 export function networkIdentity() {
-  return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs']
+  return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
+    'issue-1163-remote-dodge-clock.mjs', '../splatoon3/runtime/remote-dodge-clock.mjs', '../splatoon3/runtime/dualies-motion.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -1210,6 +1212,9 @@ ${bombHit}`;
       aC[i4] = C[i3]; aC[i4 + 1] = C[i3 + 1]; aC[i4 + 2] = C[i3 + 2]; aC[i4 + 3] = a;`, 'puff presentation belongs to source');
 
   }
-  if (rel === 'src/net/netmatch.js') code = adaptIssue1088SurgePresentation(code);
+  if (rel === 'src/net/netmatch.js') {
+    code = adaptIssue1088SurgePresentation(code);
+    code = adaptIssue1163RemoteDodgeClock(code);
+  }
   return code;
 }
