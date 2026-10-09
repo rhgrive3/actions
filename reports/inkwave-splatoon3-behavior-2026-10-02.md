@@ -2513,16 +2513,18 @@ The #1161/#272 combined production gear panel retains both fixed shoes-main abil
 ## #203: ユノハナ大渓谷（Scorch Gorge）ステージ実装（2026年10月9日）
 
 - 本家参照版：スプラトゥーン3 Ver.11.3.0（Ver.8.0.0改修後のナワバリバトル地形）。Inkipediaのコミュニティマップ画像（`wiki-scorch-gorge-turf-war-8.0.jpg`、1280x720）および俯瞰参照（`scorch-overhead.jpg`）を参照。Inkipediaのステージメタデータは2,145p。ただし本家の実機抽出ポリゴンメッシュや正確なCAD座標を本作業では取得していないため、寸法・座標の完全一致は主張しない。
-- 比較条件：INKWAVE 座標系における180度点対称ブロックアウト（幅52m × 全長100m、バウンディングボックス [-26, 26] × [-50, 50]）。リスポーン高台（y=3.2）、リスポーンバリア（y=4.2）、自陣広場（y=1.8）、左低地ルート（y=0.0）、右高台・狙撃台（y=2.6）、中央谷底（y=0.0）、中央タワー（y=2.6、塗れる側面と障害物ブロック）、金網キャットウォーク（y=3.2、grate: true）、谷底側面の落下死境界（既存 PLAYER.fallDeathY=-1.45、変更なし）。
+- 比較条件：INKWAVE 座標系における180度点対称ブロックアウト（幅52m × 全長100m、バウンディングボックス [-26, 26] × [-50, 50]）。リスポーン高台（y=3.2）、リスポーンバリア（y=4.2）、自陣広場（y=1.8）、自陣広場中央坂道（z=-22〜-16、y=1.8〜0.0）、左低地ルート（y=0.0）、右高台・狙撃台（y=2.6）、中央谷底床（z=-16〜16、x=-16〜16、y=0.0）、中央タワー（y=2.6、塗れる側面と障害物ブロック）、金網キャットウォーク（y=3.2、grate: true）、谷底側面の落下死境界（既存 PLAYER.fallDeathY=-1.45、変更なし）。
 - INKWAVE の変更前：公開版 INKWAVE（`inkwave-public/`）には `tidewater`、`kelpline`、`halyard`、`cargo` の4ステージのみ存在し、`scorch`（ユノハナ大渓谷）は未実装でステージ選択やロジック上に存在しなかった。
 - INKWAVE の変更：
-  - `patches/splatoon3/stage/scorch-layout.mjs`：Ver.8.0.0改修地形を反映した点対称ステージブロックアウトを新規作成。足場、坂道、金網（`grate: true`、`paint: false`）、障害物、リスポーン安全バリアを定義。
+  - `patches/splatoon3/stage/scorch-layout.mjs`：Ver.8.0.0改修地形を反映した点対称ステージブロックアウトを作成。足場、坂道、金網（`grate: true`、`paint: false`）、障害物、リスポーン安全バリアを定義。自陣広場中央坂道（z=-22〜-16）と中央谷底床（z=-16〜16、y=0.0）を連続接続し、段差や落下死の隙間が生じないよう構成。
   - `patches/splatoon3/scorch-gorge-adapter.mjs`：ビルド時に `src/world/maps.js` へ `MAP_LAYOUTS.scorch` を追加し（Practice Range アダプタ `adaptRange` の検索フック文字列を壊さないよう追記形式を採用）、`src/config.js` の `MAPS` / `OFFLINE_MAPS` および `src/i18n.js` の日本語ステージ名（`ユノハナ大渓谷`）を登録。
   - `patches/splatoon3/adapter.mjs`：`adaptSource` パイプラインに `adaptScorchGorge` を統合。
   - `scripts/lib/inkwave-build-only-modules.mjs`：ビルドアダプタをランタイム配布から除外するよう設定。
 - 再現と確認：
-  - `patches/splatoon3/tests/scorch-gorge-stage.test.mjs` により 8 項目（ビルドアダプタ冪等性・upstream lock 保護、ステージ・UI 登録、リスポーン座標安全率、Level 地形・標高生成、谷底落下死判定、金網の非塗装性・インク透過性、ナワバリ面積スコア計算、Practice Range 隔離維持）を検証し、全8件パス。
+  - 親候補 099a5e09 において、坂道下端（z=-16）と谷底床（z=-14〜14）の間に2単位の隙間があり、(0, 1.8, -24) から +Z 方向へ歩行した実 native Actor が中央谷底直前の (0, -1.4756, -14.3501) で奈落へ落下死する結合不備があった。谷底床を z=-16〜16 に修正して連続接続を確立。
+  - `source-fixture.make` のインスタンス自身が持つスタブ `_integrate`（プロトタイプの物理移動を隠蔽）を削除した上で、実 Actor / Physics によるリスポーン地点から中央手前までの全経路走行を Team Alpha（+Z）および Team Bravo（-Z）の双方で 30/60/120 Hz で検証。常時生存・常時接地・点対称性を確認する恒久回帰テストを追加。
+  - `patches/splatoon3/tests/scorch-gorge-stage.test.mjs` により 10 項目（ビルドアダプタ冪等性、ステージ・UI 登録、リスポーン安全率、Level 地形標高、谷底落下死、金網仕様、ナワバリ面積、Practice Range 隔離維持、坂道-谷底隙間落下死回帰、両陣営30/60/120Hz実走回帰）を検証し、全10件パス。
   - `patches/practice-range/tests/isolation.test.mjs`（7/7 パス）により Practice Range の排他性・非公開性が損なわれていないことを確認。
   - `scripts/check-inkwave-patches.mjs --quick`（パス）により `inkwave-public/` 凍結と upstream 互換性を確認。
-- 遊びへの影響と状態：ステージ選択画面およびローカル/ネットワーク対戦で「ユノハナ大渓谷」が選択可能になり、Ver.8.0.0改修後の高低差・中央タワー・金網ルート・低地迂回路を活用した立ち回りが可能となった。金網上のインク透過や谷底への落下死など基本ルールが機能する。本家の実機 CAD 寸法や細部の装飾メッシュとの完全同一性は未確認（ローカル座標系による誠実なブロックアウト実装）として残す。
+- 遊びへの影響と状態：ステージ選択画面およびローカル/ネットワーク対戦で「ユノハナ大渓谷」が選択可能になり、Ver.8.0.0改修後の高低差・中央タワー・金網ルート・低地迂回路を活用した立ち回りが可能となった。坂道から谷底への移動が途切れることなく安全に進行でき、金網上のインク透過や谷底側面への落下死など基本ルールが機能する。本家の実機 CAD 寸法や細部の装飾メッシュとの完全同一性は未確認（ローカル座標系による誠実なブロックアウト実装）として残す。
 

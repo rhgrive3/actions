@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource, checkCompatibility, replaceOnce, PATCH_ROOT } from '../adapter.mjs';
 import { adaptScorchGorge } from '../scorch-gorge-adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
+import { fixture } from './source-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
@@ -215,3 +216,100 @@ test('range isolation: Practice Range isolation and layout registry remain intac
   assert.ok(R.MAPS.some(m => m.id === 'scorch'));
   assert.ok(R.OFFLINE_MAPS.some(m => m.id === 'scorch'));
 });
+
+test('route/gap-defect: central ramp-to-basin transition at z=-16..-14 is continuous and prevents Actor fall death (#203)', async () => {
+  const f = await fixture({ fullRuntime: true, productionComposition: true, extraExports: "export { MAP_LAYOUTS } from './inkwave-public/src/world/maps.js';" });
+  const level = new f.Level(f.MAP_LAYOUTS.scorch);
+  f.G.level = level;
+  f.G.physics = new f.Physics(level);
+  f.G.paint = { sample: () => 0, splat: () => 0 };
+  f.G.match = { mode: 'turf', opts: {}, playing: () => true, canRespawn: () => false };
+
+  const a = f.make('shooter');
+  // CRITICAL: source-fixture.make assigns ownstub a._integrate = () => {};
+  // Delete ownstub to allow prototype Actor._integrate and Physics integration to execute.
+  delete a._integrate;
+
+  a.spawnAt(new f.THREE.Vector3(0, level.groundHeight(0, -24), -24), 0);
+  a.invuln = 0;
+  a.intent.move.set(0, 0, 1);
+
+  let lowest = Infinity;
+  for (let i = 0; i < 360 && a.alive; i++) {
+    f.G.time = i / 60;
+    a.update(1 / 60);
+    lowest = Math.min(lowest, a.pos.y);
+    if (a.pos.z > -10) break;
+  }
+
+  // Parent candidate 099a5e09 died at (0, -1.4756, -14.3501) due to a 2-unit gap between ramp (z=-16) and basin (z=-14).
+  assert.equal(a.alive, true, 'actor must remain alive across the continuous ramp-to-basin transition');
+  assert.ok(a.pos.z > -10, `actor must cross into basin past z=-10 (reached z=${a.pos.z})`);
+  assert.ok(lowest >= -1e-6, `lowest y reached (${lowest}) must not breach basin elevation 0.0`);
+  assert.equal(a.grounded, true, 'actor must maintain ground contact upon entering gorge basin');
+});
+
+test('route/spawn-to-mid: real Actor and Physics traversal from spawn pad to mid basin succeeds for both teams at 30, 60, and 120 Hz', async () => {
+  const f = await fixture({ fullRuntime: true, productionComposition: true, extraExports: "export { MAP_LAYOUTS } from './inkwave-public/src/world/maps.js';" });
+  const level = new f.Level(f.MAP_LAYOUTS.scorch);
+  f.G.level = level;
+  f.G.physics = new f.Physics(level);
+  f.G.paint = { sample: () => 0, splat: () => 0 };
+  f.G.match = { mode: 'turf', opts: {}, playing: () => true, canRespawn: () => false };
+
+  const frequencies = [30, 60, 120];
+
+  for (const hz of frequencies) {
+    const dt = 1 / hz;
+
+    // Team Alpha: spawn at [0, 3.2, -44], move +Z toward mid
+    const alpha = f.make('shooter');
+    alpha.team = 0;
+    delete alpha._integrate;
+    alpha.spawnAt(new f.THREE.Vector3(0, level.groundHeight(0, -44), -44), 0);
+    alpha.invuln = 0;
+    alpha.intent.move.set(0, 0, 1);
+
+    let alphaLowest = Infinity;
+    let alphaFrames = 0;
+    while (alpha.alive && alpha.pos.z < -4 && alphaFrames < 20 * hz) {
+      f.G.time += dt;
+      alpha.update(dt);
+      alphaLowest = Math.min(alphaLowest, alpha.pos.y);
+      alphaFrames++;
+    }
+
+    assert.equal(alpha.alive, true, `Alpha at ${hz}Hz must remain alive`);
+    assert.equal(alpha.grounded, true, `Alpha at ${hz}Hz must remain grounded at mid`);
+    assert.ok(alpha.pos.z >= -4, `Alpha at ${hz}Hz must reach mid-basin target (z=${alpha.pos.z})`);
+    assert.ok(alphaLowest >= -1e-6, `Alpha at ${hz}Hz lowest elevation (${alphaLowest}) must not breach 0.0`);
+
+    // Team Bravo: spawn at [0, 3.2, 44], move -Z toward mid
+    const bravo = f.make('shooter');
+    bravo.team = 1;
+    delete bravo._integrate;
+    bravo.spawnAt(new f.THREE.Vector3(0, level.groundHeight(0, 44), 44), Math.PI);
+    bravo.invuln = 0;
+    bravo.intent.move.set(0, 0, -1);
+
+    let bravoLowest = Infinity;
+    let bravoFrames = 0;
+    while (bravo.alive && bravo.pos.z > 4 && bravoFrames < 20 * hz) {
+      f.G.time += dt;
+      bravo.update(dt);
+      bravoLowest = Math.min(bravoLowest, bravo.pos.y);
+      bravoFrames++;
+    }
+
+    assert.equal(bravo.alive, true, `Bravo at ${hz}Hz must remain alive`);
+    assert.equal(bravo.grounded, true, `Bravo at ${hz}Hz must remain grounded at mid`);
+    assert.ok(bravo.pos.z <= 4, `Bravo at ${hz}Hz must reach mid-basin target (z=${bravo.pos.z})`);
+    assert.ok(bravoLowest >= -1e-6, `Bravo at ${hz}Hz lowest elevation (${bravoLowest}) must not breach 0.0`);
+
+    // Bilateral point-symmetry check
+    assert.equal(alphaFrames, bravoFrames, `Alpha and Bravo frame counts must match at ${hz}Hz`);
+    assert.ok(Math.abs(alpha.pos.z + bravo.pos.z) < 0.01, `Alpha z (${alpha.pos.z}) and Bravo z (${bravo.pos.z}) must be 180° symmetric`);
+    assert.ok(Math.abs(alpha.pos.y - bravo.pos.y) < 0.01, `Alpha y (${alpha.pos.y}) and Bravo y (${bravo.pos.y}) must match`);
+  }
+});
+

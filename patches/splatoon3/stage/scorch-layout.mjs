@@ -31,7 +31,7 @@ export const LAYOUT = {
   // Objects centered at origin (0, 0, 0)
   single: [
     // Central gorge basin floor (y = 0.0). Flanks beyond x = ±16 drop into open abyss.
-    B(-16, 16, -1.2, 0.0, -14, 14, { color: '#d5b998', pattern: PATTERN.concrete, tag: 'gorge-basin' }),
+    B(-16, 16, -1.2, 0.0, -16, 16, { color: '#d5b998', pattern: PATTERN.concrete, tag: 'gorge-basin' }),
 
     // Central tower / pillar: climbable on all sides, paintable top
     B(-3.5, 3.5, 0.0, 2.6, -3.5, 3.5, { color: '#c7a988', pattern: PATTERN.concrete, tag: 'mid-tower' }),
