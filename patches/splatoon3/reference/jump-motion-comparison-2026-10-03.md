@@ -156,3 +156,43 @@ a pose-envelope fixture only. Derived native head/tank spring feedback may
 change with the drawn pose; tests preserve gameplay state and verify that the
 air hook itself never writes spring/clock state. FixedClock tests still prove
 identical output per 60 Hz tick, not variable-dt trajectory equality.
+
+
+## Weapon-family admission — 2026-10-09 (#1116)
+
+Until now `interrupted()` rejected every non-shooter
+(`ch.weaponKind !== 'shooter'`), so Roller / Dualies / Slosher / Splatling /
+Charger / Blaster ordinary jumps kept the single native procedural base and the
+family catalog candidates were never consulted at presentation time. This
+records the #1116 residual fix; it does **not** retroactively change the
+shooter evidence above.
+
+Admission now follows the pinned public animation-name corpus
+[Flexlion animations.txt @7740d29](https://github.com/Flexlion/flexlion.github.io/blob/7740d29fdded2899a7633e50647736e3723c5e9a/assets/animations.txt),
+re-fetched on 2026-10-09 and retained in the run evidence
+(`cl8-1116-currentmain/animations-7740d29.txt`). Verified facts from that file:
+
+- family ordinary-jump names exist for `Shtr`, `Rllr`, `Mnvr`, `Slsh`, `Spnr`,
+  `Strn`, `Shlt`, `Sber`, with `Jump_Nrml00` as the shared name;
+- the corpus carries **no** family-specific ordinary-jump name for Charger or
+  Blaster, so those kinds resolve to the `Jump_Nrml00` fallback;
+- `JumpShoot_*` variants exist for `Shtr`, `Rllr`, `Chrg`, `Spnr`, `Strn` and
+  `Blower` — recorded as catalog names only, never as installed clips.
+
+`jumpFamilyAdmitted()` gates `interrupted()`; `jumpMotionSnapshot()` now also
+reports `familyKind` beside `catalogCandidate` and keeps
+`referenceCurveVerified: false`. The silhouette envelope itself stays **one
+shared visual calibration set for every family** — the aim-weight gate was
+removed so ordinary non-firing jumps present it as well — and it still is not a
+Nintendo joint curve. Which clip actually runs in Ver. 11.3.0, per-family joint
+differences, blend timings and thresholds remain **unverified**: they need a
+lawful current-game ROMFS inspection or synchronized capture, so no per-family
+numeric was invented.
+
+Presentation only: jump physics, timings, muzzles, ink/damage/cooldowns and the
+wire format are untouched. The focused native suite asserts gameplay-state
+equality against a disabled counterfactual through real takeoff/apex/landing at
+30/60/120 Hz for shooter and non-shooter kinds, drawn indexed leg geometry
+changes only under the presentation, and an unknown weapon kind keeps the
+native base. Browser/GPU rendering, remote-peer playback comparison and real
+hardware remain unmeasured here.

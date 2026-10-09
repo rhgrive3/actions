@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installJumpMotion as duplicateInstall, jumpReferenceCandidate, JUMP_REFERENCE_CANDIDATES } from '../runtime/jump-motion.mjs';
+import { installJumpMotion as duplicateInstall, jumpReferenceCandidate, jumpFamilyAdmitted, JUMP_REFERENCE_CANDIDATES } from '../runtime/jump-motion.mjs';
 
 // Actual production installer + native Character/Actor/Runner/THREE in one
 // realm. World collision is outside this pose test; no rig or IK test double.
@@ -202,23 +202,31 @@ test('aimed ordinary jump bends both knees with rearward shoes in actual native 
   saveTrace(traces);
 });
 
-test('production fixed clock composes jump at 30/60/120Hz; paused dt0 does not advance jump age', async () => {
-  const api = await production(), traces = [];
-  for (const hz of [30, 60, 120]) {
-    const r = rig(api), clock = new api.FixedClock(), rows = [];
-    try {
-      r.begin();
-      for (let frame = 0; frame < hz; frame++) clock.advance(1 / hz, dt => {
-        r.frame((clock.ticks + 1) / 60, dt);
-        rows.push({ pose: Array.from(r.ch.P), bones: r.ch.boneList.map(b => b.quaternion.toArray()), ik: Array.from(r.ch.ikErr), snapshot: api.jumpMotionSnapshot(r.ch) });
-      });
-      assert.equal(clock.ticks, 60); traces.push(rows);
-      const age = api.jumpMotionSnapshot(r.ch).age, timers = Array.from(r.ch.tr);
-      r.frame(1, 0); assert.equal(api.jumpMotionSnapshot(r.ch).age, age); assert.deepEqual(Array.from(r.ch.tr), timers);
-      const ticks = clock.ticks; clock.advance(0, () => assert.fail('paused frame must not tick')); assert.equal(clock.ticks, ticks);
-    } finally { r.close(); }
+test('production fixed clock composes jump at 30/60/120Hz for shooter and non-shooter families; paused dt0 does not advance jump age', async () => {
+  const api = await production(), traces = {};
+  // Shooter keeps its aimed-hop coverage; the non-shooter families run the
+  // ordinary non-firing jump (#1116) — a firing Roller would sit in T_FLICK.
+  for (const kind of ['shooter', 'dualies', 'roller']) {
+    traces[kind] = [];
+    for (const hz of [30, 60, 120]) {
+      const r = rig(api, true, kind, 0, kind === 'shooter'), clock = new api.FixedClock(), rows = [];
+      try {
+        r.begin();
+        for (let frame = 0; frame < hz; frame++) clock.advance(1 / hz, dt => {
+          r.frame((clock.ticks + 1) / 60, dt);
+          rows.push({ pose: Array.from(r.ch.P), bones: r.ch.boneList.map(b => b.quaternion.toArray()), ik: Array.from(r.ch.ikErr), snapshot: api.jumpMotionSnapshot(r.ch) });
+        });
+        assert.equal(clock.ticks, 60);
+        assert.ok(rows.some(row => (row.snapshot?.weight ?? 0) > .5), kind + ' presents inside the fixed-clock second');
+        traces[kind].push(rows);
+        const age = api.jumpMotionSnapshot(r.ch).age, timers = Array.from(r.ch.tr);
+        r.frame(1, 0); assert.equal(api.jumpMotionSnapshot(r.ch).age, age); assert.deepEqual(Array.from(r.ch.tr), timers);
+        const ticks = clock.ticks; clock.advance(0, () => assert.fail('paused frame must not tick')); assert.equal(clock.ticks, ticks);
+      } finally { r.close(); }
+    }
+    assert.deepEqual(traces[kind][0], traces[kind][1], kind + ' 30/60/120 parity');
+    assert.deepEqual(traces[kind][1], traces[kind][2], kind + ' 30/60/120 parity');
   }
-  assert.deepEqual(traces[0], traces[1]); assert.deepEqual(traces[1], traces[2]);
   // Direct native variable-dt preview is also checked qualitatively; native
   // spring/filter integration is not asserted numerically equal across dt.
   for (const hz of [30, 60, 120]) {
@@ -233,7 +241,7 @@ test('production fixed clock composes jump at 30/60/120Hz; paused dt0 does not a
   }
 });
 
-test('interruptions cannot resume an old jump; landing, carry, other weapons and off-ledge falls retain native pose', async () => {
+test('interruptions cannot resume an old jump; landing and off-ledge falls retain native pose', async () => {
   const api = await production();
   for (const interrupt of ['reset', 'death', 'form', 'sub', 'weapon', 'special', 'superjump', 'land', 'dodge', 'throw', 'spawn', 'hidden']) {
     const r = rig(api);
@@ -255,9 +263,8 @@ test('interruptions cannot resume an old jump; landing, carry, other weapons and
       r.frame(.4); assert.equal(api.jumpMotionSnapshot(r.ch).active, false, 'interrupted jump stays cancelled');
     } finally { r.close(); }
   }
-  for (const scenario of ['carry', 'fall', 'landing', 'dualies', 'charger', 'roller', 'slosher', 'splatling', 'blaster']) {
-    const kind = ['carry', 'fall', 'landing'].includes(scenario) ? 'shooter' : scenario;
-    const a = rig(api, true, kind, 0, scenario !== 'carry'), b = rig(api, scenario === 'landing', kind, 0, scenario !== 'carry');
+  for (const scenario of ['fall', 'landing']) {
+    const a = rig(api, true, 'shooter', 0, true), b = rig(api, scenario === 'landing', 'shooter', 0, true);
     try {
       if (scenario !== 'fall') { a.begin(); b.begin(); }
       for (let f = 1; f <= 40; f++) {
@@ -304,10 +311,12 @@ test('ordinary input-driven jump uses actual production Actor/Runner/Physics thr
   const rows = [];
   try {
     G.level = level; G.physics = new Physics(level);
-    for (const hz of [30, 60, 120]) {
-      const before = rig(api, false), after = rig(api, true);
+    // #1116: the residual family (non-firing Roller — it never raises wAim)
+    // must reach the same envelope on the real trajectory as the shooter.
+    for (const [kind, fire] of [['shooter', true], ['roller', false]]) for (const hz of [30, 60, 120]) {
+      const before = rig(api, false, kind, 0, fire), after = rig(api, true, kind, 0, fire);
       try {
-        for (const r of [before, after]) { r.a.pos.set(0, 0, 0); r.a.vel.set(0, 0, 0); r.a.intent.fire = true; }
+        for (const r of [before, after]) { r.a.pos.set(0, 0, 0); r.a.vel.set(0, 0, 0); r.a.intent.fire = fire; }
         let airborne = false, landed = false, maxWeight = 0, changedGeometry = false;
         const game = r => ({ pos: r.a.pos.toArray(), vel: r.a.vel.toArray(), ink: r.a.ink, hp: r.a.hp,
           grounded: r.a.grounded, form: r.a.form, landT: r.a.landT, hardLand: r.a.hardLand,
@@ -319,23 +328,23 @@ test('ordinary input-driven jump uses actual production Actor/Runner/Physics thr
             r.a.intent.jump = i === 0; r.a.update(1 / hz);
             r.ch.root.updateMatrixWorld(true); r.ch.skeleton.update();
           }
-          assert.deepEqual(game(after), game(before), 'presentation cannot change input-driven native trajectory or clocks');
+          assert.deepEqual(game(after), game(before), kind + ' presentation cannot change input-driven native trajectory or clocks');
           airborne ||= !after.a.grounded; landed ||= airborne && after.a.grounded;
           const weight = api.jumpMotionSnapshot(after.ch).weight;
           if (weight > maxWeight) {
             maxWeight = weight;
             if (weight > .5) {
-              const a = row(api, after, 'actual-physics-' + hz + '-' + i), b = row(api, before, 'native-counterfactual-' + hz + '-' + i);
-              assert.ok(a.nativeIK.every(x => x < .0005), 'actual native limb IK reaches its drawn endpoints');
+              const a = row(api, after, `actual-physics-${kind}-${hz}-${i}`), b = row(api, before, `native-counterfactual-${kind}-${hz}-${i}`);
+              assert.ok(a.nativeIK.every(x => x < .0005), kind + ' actual native limb IK reaches its drawn endpoints');
               assert.ok(a.bones.footL[2] < a.bones.hips[2] - .06 && a.bones.footR[2] < a.bones.hips[2] - .06);
               changedGeometry ||= a.geometry.vertices.some((v, k) => Math.hypot(...v.world.map((x, j) => x - b.geometry.vertices[k].world[j])) > .01);
               rows.push(b, a);
             }
           }
         }
-        assert.ok(airborne && landed, 'real jump input and Physics must take off and emit landing');
-        assert.ok(maxWeight > .5 && changedGeometry, 'native trajectory reaches the calibrated indexed-geometry pose');
-        assert.ok(Math.abs(after.a.pos.y)<1e-12, 'native floor contact is zero within floating-point precision'); assert.equal(after.a.vel.y, 0);
+        assert.ok(airborne && landed, kind + ' real jump input and Physics must take off and emit landing');
+        assert.ok(maxWeight > .5 && changedGeometry, kind + ' native trajectory reaches the calibrated indexed-geometry pose');
+        assert.ok(Math.abs(after.a.pos.y)<1e-12, kind + ' native floor contact is zero within floating-point precision'); assert.equal(after.a.vel.y, 0);
         assert.equal(api.jumpMotionSnapshot(after.ch).active, false);
       } finally { before.close(); after.close(); }
     }
@@ -361,6 +370,45 @@ test('fresh ordinary jump after cancelled Slam is not blocked by orphaned leap/s
 });
 
 
+test('#1116 every admitted weapon family presents the shared ordinary jump envelope while non-firing airborne', async () => {
+  const api = await production();
+  // Pinned corpus mapping: family ordinary-jump names where they exist, and
+  // the shared Jump_Nrml00 fallback where the corpus has no family name.
+  const expected = { shooter: 'Jump_Shtr00', roller: 'Jump_Rllr00', dualies: 'Jump_Mnvr00',
+    slosher: 'Jump_Slsh00', splatling: 'Jump_Spnr00', charger: 'Jump_Nrml00', blaster: 'Jump_Nrml00' };
+  for (const [kind, candidate] of Object.entries(expected)) {
+    const a = rig(api, true, kind, 0, false), b = rig(api, false, kind, 0, false);
+    try {
+      a.begin(); b.begin();
+      for (let f = 1; f <= 30; f++) { a.frame(f / 60); b.frame(f / 60); }
+      const snap = api.jumpMotionSnapshot(a.ch);
+      assert.equal(snap.active, true, kind + ' jump motion active');
+      assert.ok(snap.weight > .5, kind + ' family jump presents above half weight');
+      assert.equal(snap.familyKind, kind, kind + ' family kind reported');
+      assert.equal(snap.catalogCandidate, candidate, kind + ' catalog candidate selected');
+      assert.equal(snap.referenceCurveVerified, false, kind + ' per-family curves stay unverified');
+      assert.equal(api.jumpMotionSnapshot(b.ch).active, false, kind + ' disabled counterfactual stays native');
+      const x = row(api, a, `family-${kind}-apex`), y = row(api, b, `family-${kind}-native`);
+      assert.ok(x.nativeIK.every(v => v < .0005), kind + ' native limb IK reaches its drawn endpoints');
+      for (const side of ['L', 'R']) {
+        assert.ok(x.bones['foot' + side][2] < x.bones.hips[2] - .06, kind + ' ankle behind hips at apex');
+        assert.ok(x.bones['shin' + side][2] > x.bones['foot' + side][2] + .05, kind + ' knee bends ahead of rearward shoe');
+        assert.ok(x.bones['foot' + side][1] > .2, kind + ' legs flexed');
+      }
+      assert.ok(x.geometry.vertices.some((v, i) => Math.hypot(...v.world.map((c, j) => c - y.geometry.vertices[i].world[j])) > .01),
+        kind + ' drawn leg geometry differs from the native counterfactual');
+    } finally { a.close(); b.close(); }
+  }
+  // An unknown weapon kind keeps the native base: no invented family selection.
+  const r = rig(api, true, 'shooter', 0, false);
+  try {
+    r.ch.weaponKind = 'unknown-family';
+    r.begin(); for (let f = 1; f <= 24; f++) r.frame(f / 60);
+    assert.equal(api.jumpMotionSnapshot(r.ch).active, false, 'unknown family stays native');
+  } finally { r.close(); }
+});
+
+
 test('#1116 class jump clip names are reference candidates, not unverified installed pose curves', () => {
   assert.equal(jumpReferenceCandidate('shooter'),'Jump_Shtr00');
   assert.equal(jumpReferenceCandidate('roller'),'Jump_Rllr00');
@@ -368,4 +416,11 @@ test('#1116 class jump clip names are reference candidates, not unverified insta
   assert.equal(jumpReferenceCandidate('slosher'),'Jump_Slsh00');
   assert.equal(jumpReferenceCandidate('splatling'),'Jump_Spnr00');
   assert.equal(jumpReferenceCandidate('missing-class'),JUMP_REFERENCE_CANDIDATES.fallback);
+  assert.equal(jumpReferenceCandidate('charger'),'Jump_Nrml00');
+  assert.equal(jumpReferenceCandidate('blaster'),'Jump_Nrml00');
+  for (const kind of ['shooter', 'roller', 'dualies', 'slosher', 'splatling', 'charger', 'blaster'])
+    assert.ok(jumpFamilyAdmitted(kind), kind + ' admitted');
+  assert.equal(jumpFamilyAdmitted('unknown-class'), false);
+  assert.equal(jumpFamilyAdmitted(null), false);
+  assert.equal(jumpFamilyAdmitted(undefined), false);
 });

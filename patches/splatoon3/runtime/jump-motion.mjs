@@ -1,6 +1,9 @@
-// Ordinary shooter jump legs. Nintendo's public demonstration establishes the
-// bent-knee / rearward-shoe silhouette, not these joint curves or dimensions.
-// All values below are visual calibration in the native kid rig's space.
+// Ordinary kid jump legs for every admitted weapon family (#1116). Nintendo's
+// public shooter-hop demonstration establishes the bent-knee / rearward-shoe
+// silhouette, not these joint curves, dimensions or any per-family difference.
+// All values below are one shared visual calibration in the native kid rig's
+// space; no per-family Nintendo curve is invented while live clip selection
+// (which Jump_*/JumpShoot_* resource actually runs) stays unverified.
 import { specialMotionAllowsFootPlant } from './special-motion.mjs';
 const GUARD = Symbol.for('inkwave.splatoon3.jump-motion.v1');
 const clamp = x => Math.max(0, Math.min(1, x));
@@ -28,6 +31,21 @@ export const JUMP_REFERENCE_CANDIDATES = Object.freeze({
 export function jumpReferenceCandidate(weaponKind) {
   return JUMP_REFERENCE_CANDIDATES[weaponKind] || JUMP_REFERENCE_CANDIDATES.fallback;
 }
+// #1116: which weapon kinds may run the family jump presentation at all. The
+// pinned public corpus (Flexlion animations.txt @7740d29) carries family
+// ordinary-jump names for shooter/roller/dualies/slosher/splatling — plus
+// stringer/brella/splatana, which are not playable kinds here — and carries no
+// family-specific ordinary-jump name for Charger or Blaster, so those two
+// resolve to the shared Jump_Nrml00 fallback. Admission selects only that
+// catalog candidate for presentation bookkeeping; it never claims which clip
+// the game actually plays and never selects per-family joint curves.
+const JUMP_FAMILY_KINDS = Object.freeze(Object.fromEntries([
+  ...Object.keys(JUMP_REFERENCE_CANDIDATES).filter(k => k !== 'fallback'),
+  'charger', 'blaster',
+].map(kind => [kind, true])));
+export function jumpFamilyAdmitted(weaponKind) {
+  return JUMP_FAMILY_KINDS[weaponKind] === true;
+}
 export const JUMP_MOTION_CALIBRATION = Object.freeze({
   ankleWidth: .10, leftHeight: .35, rightHeight: .33,
   leftRear: -.20, rightRear: -.22, leftPitch: .95, rightPitch: 1.02,
@@ -36,7 +54,8 @@ export const JUMP_MOTION_CALIBRATION = Object.freeze({
 export function jumpMotionSnapshot(ch) {
   const s = ch?.[GUARD]?.states.get(ch);
   return s ? { active: s.started !== null, age: s.started === null ? null : Math.max(0, ch.t - s.started),
-    phase: s.phase, weight: s.weight, catalogCandidate: jumpReferenceCandidate(ch.weaponKind),
+    phase: s.phase, weight: s.weight, familyKind: ch.weaponKind ?? null,
+    catalogCandidate: jumpReferenceCandidate(ch.weaponKind),
     referenceCurveVerified: false } : null;
 }
 
@@ -70,7 +89,7 @@ export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
     const a = ch._owner(), runner = ch._runner(input);
     return ch.s3JumpMotionEnabled === false || (input?.form || 'kid') !== 'kid'
       || a?.alive === false || a?.specialActive || a?.superJumpState || input?.alive === false
-      || !shown(ch) || ch.dance || ch.wDance > .001 || ch.formT < .5 || ch.weaponKind !== 'shooter'
+      || !shown(ch) || ch.dance || ch.wDance > .001 || ch.formT < .5 || !jumpFamilyAdmitted(ch.weaponKind)
       || input?.subAim || runner?.aimingSub || runner?.dodge || runner?.s3Turret
       || ch.wSub > .001 || ch.bombHeld || timerBusy(ch);
   };
@@ -93,7 +112,10 @@ export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
   };
   proto._poseAir = function (P, dt, air) {
     const result = poseAir.call(this, P, dt, air), s = states.get(this);
-    if (!s?.allowed || !this.kidForm || this.grounded || this.wAim <= .001) return result;
+    // #1116: the family envelope presents on the ordinary airborne jump of any
+    // admitted weapon kind, firing or not; aim/carry/charge layering and every
+    // muzzle remain owned by _poseWeapon and the weapon runners untouched.
+    if (!s?.allowed || !this.kidForm || this.grounded) return result;
     const age = Math.max(0, this.t - s.started), vy = this.vyS;
     // Reuse the native launch, apex, ground reach and long-fall envelopes.
     // This keeps takeoff extension and pre-contact reach with their owners.
@@ -102,7 +124,7 @@ export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
     const reach = (1 - up) * smooth(.95, .15, this.gnd);
     const longFall = smooth(.4, 1, this.airT) * (1 - up) * (1 - reach);
     const tuck = Math.max(apex, up * .85);
-    const w = clamp(air) * clamp(this.wAim) * (1 - launch) * (1 - reach) * (1 - longFall);
+    const w = clamp(air) * (1 - launch) * (1 - reach) * (1 - longFall);
     s.weight = w; s.phase = launch > .5 ? 'takeoff' : vy > .6 ? 'rise' : vy < -.6 ? 'fall' : 'apex';
     const v = JUMP_MOTION_CALIBRATION;
     foot(P, C.FOOTL, C.FOOTLR, 1, v.leftHeight, v.leftRear, v.leftPitch, tuck, w);
