@@ -1,5 +1,5 @@
 // #71: Joy-Con / Pro Controller motion input path based on published
-// Nintendo Switch HID protocol notes and nominal ST LSM6DS3 IMU scale.
+// Nintendo Switch HID protocol notes, SPI gyro calibration and nominal fallback scale.
 // Standard Gamepad API exposes sticks/buttons but no IMU data; this module provides
 // the report decoder, WebHID device bridge, platform detection, and PlayerController composition.
 
@@ -20,7 +20,14 @@ export const MAX_GYRO_RATE_RAD_S = 35;
 export const OUTPUT_REPORT_SUBCMD = 0x01;
 export const SUBCMD_SET_INPUT_REPORT_MODE = 0x03;
 export const SUBCMD_ENABLE_IMU = 0x40;
+export const SUBCMD_SPI_FLASH_READ = 0x10;
 export const INPUT_REPORT_STANDARD_FULL = 0x30;
+export const IMU_FACTORY_CALIBRATION_ADDRESS = 0x6020;
+export const IMU_USER_CALIBRATION_ADDRESS = 0x8026;
+export const IMU_CALIBRATION_RECORD_SIZE = 24;
+export const IMU_USER_CALIBRATION_BLOCK_SIZE = 26;
+// Linux hid-nintendo waits up to one second for a synchronous SPI subcommand reply.
+export const SPI_CALIBRATION_TIMEOUT_MS = 1000;
 
 // Neutral rumble 8-byte packet as published in dekuNukem and hid-nintendo:
 // HF freq 320Hz at 0 amplitude, LF freq 160Hz at 0 amplitude
@@ -31,6 +38,155 @@ export const DEFAULT_SAMPLE_MAX_AGE_MS = 100;
 
 const GUARD = Symbol.for('inkwave.s3.pad-motion.v1');
 const zero = () => ({ yaw: 0, pitch: 0, available: false });
+const DEG_TO_RAD = Math.PI / 180;
+const USER_CAL_MAGIC = [0xb2, 0xa1];
+const DEFAULT_GYRO_DPS_PER_COUNT = 0.070;
+
+function dataViewOf(data) {
+  if (data instanceof DataView) return data;
+  if (ArrayBuffer.isView(data)) return new DataView(data.buffer, data.byteOffset, data.byteLength);
+  if (data instanceof ArrayBuffer) return new DataView(data);
+  return null;
+}
+
+function nominalGyroCalibration(reason) {
+  return {
+    status: 'nominal-fallback',
+    source: 'nominal',
+    reason,
+    gyroOffsets: [0, 0, 0],
+    gyroDpsPerCount: [DEFAULT_GYRO_DPS_PER_COUNT, DEFAULT_GYRO_DPS_PER_COUNT, DEFAULT_GYRO_DPS_PER_COUNT]
+  };
+}
+
+/**
+ * Parse the published 24-byte IMU calibration record. Acceleration data occupies
+ * bytes 0..11; gyro offset and sensitivity words occupy bytes 12..23.
+ */
+export function parseSwitchGyroCalibration(data, source = 'factory') {
+  const view = dataViewOf(data);
+  if (!view || view.byteLength < IMU_CALIBRATION_RECORD_SIZE) {
+    return { status: 'invalid', reason: 'calibration-record-too-short' };
+  }
+  const gyroOffsets = [];
+  const gyroDpsPerCount = [];
+  for (let axis = 0; axis < 3; axis++) {
+    const gyroOffset = view.getInt16(12 + axis * 2, true);
+    const gyroScale = view.getInt16(18 + axis * 2, true);
+    const divisor = gyroScale - gyroOffset;
+    if (gyroScale <= 0 || divisor <= 0) {
+      return { status: 'invalid', reason: 'invalid-calibration-coefficient' };
+    }
+    // dekuNukem's LSM6DS3 ±2000 dps conversion: 936 / (scale - offset).
+    const dpsPerCount = 936 / divisor;
+    if (!Number.isFinite(dpsPerCount) || !(dpsPerCount > 0)) {
+      return { status: 'invalid', reason: 'invalid-calibration-coefficient' };
+    }
+    gyroOffsets.push(gyroOffset);
+    gyroDpsPerCount.push(dpsPerCount);
+  }
+  return { status: 'calibrated', source, gyroOffsets, gyroDpsPerCount };
+}
+
+function calibrationIsUsable(calibration) {
+  return calibration?.status === 'calibrated' &&
+    Array.isArray(calibration.gyroOffsets) && calibration.gyroOffsets.length === 3 &&
+    Array.isArray(calibration.gyroDpsPerCount) && calibration.gyroDpsPerCount.length === 3 &&
+    calibration.gyroOffsets.every(Number.isFinite) &&
+    calibration.gyroDpsPerCount.every(value => Number.isFinite(value) && value > 0);
+}
+
+/** Read one SPI flash range through the published 0x10 subcommand / 0x21 reply. */
+function readSwitchSPIFlash(device, address, size, { signal, timeoutMs = SPI_CALIBRATION_TIMEOUT_MS } = {}) {
+  if (!device || typeof device.addEventListener !== 'function') {
+    return Promise.reject(new Error('SPI input-report listener unavailable'));
+  }
+  if (signal?.aborted) return Promise.reject(Object.assign(new Error('SPI read aborted'), { name: 'AbortError' }));
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (error, bytes) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      device.removeEventListener?.('inputreport', onReport);
+      signal?.removeEventListener?.('abort', onAbort);
+      if (error) reject(error);
+      else resolve(bytes);
+    };
+    const onAbort = () => finish(Object.assign(new Error('SPI read aborted'), { name: 'AbortError' }));
+    const onReport = event => {
+      if (event?.reportId !== 0x21) return;
+      const view = dataViewOf(event.data);
+      // WebHID omits reportId: timer/battery/buttons/sticks/vibrator are 0..11,
+      // then reply ack=12, subcommand=13 and SPI reply data begins at 14.
+      if (!view || view.byteLength < 14 || view.getUint8(13) !== SUBCMD_SPI_FLASH_READ) return;
+      if ((view.getUint8(12) & 0x80) === 0) {
+        finish(new Error('SPI read rejected by controller'));
+        return;
+      }
+      const dataStart = 19; // reply data[5], after echoed address (4) and size (1)
+      if (view.byteLength < dataStart + size) {
+        finish(new Error('SPI reply is truncated'));
+        return;
+      }
+      const echoedAddress = view.getUint32(14, true);
+      const echoedSize = view.getUint8(18);
+      if (echoedAddress !== address || echoedSize !== size) {
+        finish(new Error('SPI reply range did not match request'));
+        return;
+      }
+      const bytes = new Uint8Array(size);
+      for (let i = 0; i < size; i++) bytes[i] = view.getUint8(dataStart + i);
+      finish(null, bytes);
+    };
+    const timer = setTimeout(() => finish(new Error('SPI read timed out')), Math.max(1, timeoutMs));
+    device.addEventListener('inputreport', onReport);
+    signal?.addEventListener?.('abort', onAbort, { once: true });
+    const args = [
+      address & 0xff,
+      (address >>> 8) & 0xff,
+      (address >>> 16) & 0xff,
+      (address >>> 24) & 0xff,
+      size & 0xff
+    ];
+    sendSwitchSubcommand(device, SUBCMD_SPI_FLASH_READ, args).catch(error => finish(error));
+  });
+}
+
+/**
+ * Prefer user calibration when its B2 A1 marker is present, otherwise use factory
+ * calibration. Unsupported SPI, malformed records and timeouts keep a nominal
+ * zero-offset LSM6DS3 conversion and are returned as an explicit status.
+ */
+export async function loadSwitchGyroCalibration(device, options = {}) {
+  const { signal, timeoutMs = SPI_CALIBRATION_TIMEOUT_MS } = options;
+  let userBlock = null;
+  let userReadError = null;
+  try {
+    userBlock = await readSwitchSPIFlash(device, IMU_USER_CALIBRATION_ADDRESS,
+      IMU_USER_CALIBRATION_BLOCK_SIZE, { signal, timeoutMs });
+  } catch (error) {
+    userReadError = error;
+  }
+  if (signal?.aborted) return nominalGyroCalibration('aborted');
+
+  if (userBlock && userBlock[0] === USER_CAL_MAGIC[0] && userBlock[1] === USER_CAL_MAGIC[1]) {
+    const userCalibration = parseSwitchGyroCalibration(userBlock.subarray(2), 'user');
+    if (userCalibration.status === 'calibrated') return userCalibration;
+  }
+
+  try {
+    const factoryBytes = await readSwitchSPIFlash(device, IMU_FACTORY_CALIBRATION_ADDRESS,
+      IMU_CALIBRATION_RECORD_SIZE, { signal, timeoutMs });
+    const factoryCalibration = parseSwitchGyroCalibration(factoryBytes, 'factory');
+    if (factoryCalibration.status === 'calibrated') return factoryCalibration;
+    return nominalGyroCalibration(factoryCalibration.reason || 'invalid-calibration-data');
+  } catch (error) {
+    if (signal?.aborted || error?.name === 'AbortError') return nominalGyroCalibration('aborted');
+    return nominalGyroCalibration(userReadError || error ? 'spi-calibration-unavailable' : 'invalid-calibration-data');
+  }
+}
 
 export function isSwitchDevice(device) {
   if (!device) return false;
@@ -61,7 +217,7 @@ export async function sendSwitchSubcommand(device, subcmd, args = []) {
   return await device.sendReport(OUTPUT_REPORT_SUBCMD, payload);
 }
 
-export async function initializeSwitchHIDDevice(device) {
+export async function initializeSwitchHIDDevice(device, options = {}) {
   if (!device) return { initialized: false, reason: 'no-device' };
   try {
     if (typeof device.open !== 'function') throw new TypeError('Device must support open');
@@ -76,6 +232,7 @@ export async function initializeSwitchHIDDevice(device) {
   } catch (err) {
     return { initialized: false, reason: 'enable-imu-failed', error: err };
   }
+  if (options.signal?.aborted) return { initialized: false, reason: 'aborted' };
 
   // 2. Set input report mode to Standard Full Mode (subcommand 0x03, argument 0x30)
   try {
@@ -83,8 +240,10 @@ export async function initializeSwitchHIDDevice(device) {
   } catch (err) {
     return { initialized: false, reason: 'set-report-mode-failed', error: err };
   }
+  if (options.signal?.aborted) return { initialized: false, reason: 'aborted' };
 
-  return { initialized: true };
+  const calibration = await loadSwitchGyroCalibration(device, options);
+  return { initialized: true, calibration };
 }
 
 export const gainAt = s => {
@@ -108,7 +267,7 @@ export function controllerMotionDelta(sample, dt, sensitivity = 0, invertY = fal
 
 /**
  * Decode Nintendo Switch HID input reports (0x30 standard full report, 0x31 NFC/IR report with IMU,
- * 0x32, 0x33) into calibrated angular velocities (rad/s).
+ * 0x32, 0x33) into angular velocities (rad/s), using the per-device SPI record when supplied.
  *
  * WebHID specification: event.data EXCLUDES the report ID byte. The report ID is supplied separately
  * via event.reportId (or options.reportId). If options.reportId is provided, payload starts at index 0.
@@ -118,9 +277,7 @@ export function controllerMotionDelta(sample, dt, sensitivity = 0, invertY = fal
  * Report 0x21 is a subcommand reply and is NOT an IMU stream.
  */
 export function decodeSwitchMotionReport(data, options = {}) {
-  const view = data instanceof DataView ? data :
-    ArrayBuffer.isView(data) ? new DataView(data.buffer, data.byteOffset, data.byteLength) :
-    data instanceof ArrayBuffer ? new DataView(data) : null;
+  const view = dataViewOf(data);
   if (!view) {
     return { yawRate: 0, pitchRate: 0, available: false, reason: 'invalid-data-buffer' };
   }
@@ -169,14 +326,14 @@ export function decodeSwitchMotionReport(data, options = {}) {
     rawG3 = (rawG3 + view.getInt16(offset + 34, true) + view.getInt16(offset + 46, true)) / 3;
   }
 
-  const scale = Number.isFinite(options.scale) ? options.scale : DEFAULT_GYRO_SCALE;
-  const biasX = Number.isFinite(options.biasX) ? options.biasX : 0;
-  const biasY = Number.isFinite(options.biasY) ? options.biasY : 0;
-  const biasZ = Number.isFinite(options.biasZ) ? options.biasZ : 0;
-
-  const rateX = (rawG1 - biasX) * scale;
-  const rateY = (rawG2 - biasY) * scale;
-  const rateZ = (rawG3 - biasZ) * scale;
+  const gyroCalibration = calibrationIsUsable(options.gyroCalibration) ? options.gyroCalibration : null;
+  const nominalScale = Number.isFinite(options.scale) ? options.scale : DEFAULT_GYRO_SCALE;
+  const nominalBias = [options.biasX, options.biasY, options.biasZ].map(value => Number.isFinite(value) ? value : 0);
+  const rawGyro = [rawG1, rawG2, rawG3];
+  const rate = rawGyro.map((raw, axis) => gyroCalibration
+    ? (raw - gyroCalibration.gyroOffsets[axis]) * gyroCalibration.gyroDpsPerCount[axis] * DEG_TO_RAD
+    : (raw - nominalBias[axis]) * nominalScale);
+  const [rateX, rateY, rateZ] = rate;
 
   // Provisional bridge convention: Gyro 1 maps to pitch and inverted Gyro 3 to yaw.
   // Controller mounting orientation/signs and Splatoon 3's mapping are unverified.
@@ -196,6 +353,8 @@ export function decodeSwitchMotionReport(data, options = {}) {
     rollRate: rateY,
     available: true,
     reportId,
+    calibrationSource: gyroCalibration?.source || 'nominal',
+    calibrationStatus: gyroCalibration ? 'calibrated' : 'nominal-fallback',
     timer: view.getUint8(offset + 0),
     battery: view.getUint8(offset + 1) >> 4,
     deviceType: productId === PRO_CONTROLLER_PRODUCT_ID ? 'pro-controller' : 'joycon-right',
@@ -335,10 +494,10 @@ export function attachWebHIDControllerMotion(input, options = {}) {
       return pending.promise;
     }
 
-    const pendingState = { epoch, replace, promise: null };
+    const pendingState = { epoch, replace, controller: new AbortController(), promise: null };
     session.status = 'initializing';
     const promise = (async () => {
-      const initResult = await initializeSwitchHIDDevice(device);
+      const initResult = await initializeSwitchHIDDevice(device, { ...options, signal: pendingState.controller.signal });
       if (!isCurrent() || epochOf(device) !== epoch || session.disconnectedDevices.has(device)) {
         return { connected: false, status: 'stale-session', device, initResult };
       }
@@ -358,7 +517,8 @@ export function attachWebHIDControllerMotion(input, options = {}) {
         if (input.s3ControllerMotionReader === previousReader) input.setControllerMotionReader(null);
       }
 
-      const reader = createSwitchHIDReader({ device, productId: device.productId, ...options });
+      const reader = createSwitchHIDReader({ device, productId: device.productId, ...options,
+        gyroCalibration: initResult.calibration });
       reader.initResult = initResult;
       session.reader = reader;
       input.s3ControllerMotionInitError = null;
@@ -400,6 +560,7 @@ export function attachWebHIDControllerMotion(input, options = {}) {
     if (!isCurrent() || !d) return;
     session.disconnectedDevices.add(d);
     bumpEpoch(d);
+    session.pending.get(d)?.controller?.abort();
     const reader = input.s3ControllerMotionReader;
     if (reader?.device === d) {
       reader.detach?.();
@@ -427,6 +588,7 @@ export function attachWebHIDControllerMotion(input, options = {}) {
         navHid.removeEventListener('connect', onConnect);
         navHid.removeEventListener('disconnect', onDisconnect);
       }
+      for (const pending of session.pending.values()) pending.controller?.abort();
       const reader = session.reader;
       if (reader && input.s3ControllerMotionReader === reader) {
         reader.detach?.();

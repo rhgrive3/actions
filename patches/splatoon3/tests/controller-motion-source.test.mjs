@@ -13,12 +13,19 @@ import {
   OUTPUT_REPORT_SUBCMD,
   SUBCMD_SET_INPUT_REPORT_MODE,
   SUBCMD_ENABLE_IMU,
+  SUBCMD_SPI_FLASH_READ,
   INPUT_REPORT_STANDARD_FULL,
+  IMU_FACTORY_CALIBRATION_ADDRESS,
+  IMU_USER_CALIBRATION_ADDRESS,
+  IMU_CALIBRATION_RECORD_SIZE,
+  IMU_USER_CALIBRATION_BLOCK_SIZE,
   NEUTRAL_RUMBLE,
   DEFAULT_SAMPLE_MAX_AGE_MS,
   buildSubcommandPacket,
   sendSwitchSubcommand,
   initializeSwitchHIDDevice,
+  parseSwitchGyroCalibration,
+  loadSwitchGyroCalibration,
   gainAt,
   controllerMotionDelta,
   decodeSwitchMotionReport,
@@ -91,13 +98,57 @@ function makeRawWireBuffer({
   return buf;
 }
 
+function makeIMUCalibrationRecord({
+  accelOffset = [0, 0, 0],
+  accelScale = [16384, 16384, 16384],
+  gyroOffset = [0, 0, 0],
+  gyroScale = [13371, 13371, 13371]
+} = {}) {
+  const bytes = new Uint8Array(IMU_CALIBRATION_RECORD_SIZE);
+  const view = new DataView(bytes.buffer);
+  for (let axis = 0; axis < 3; axis++) {
+    view.setInt16(axis * 2, accelOffset[axis], true);
+    view.setInt16(6 + axis * 2, accelScale[axis], true);
+    view.setInt16(12 + axis * 2, gyroOffset[axis], true);
+    view.setInt16(18 + axis * 2, gyroScale[axis], true);
+  }
+  return bytes;
+}
+
+function makeSPIReply(address, size, bytes, { ack = true, replyId = SUBCMD_SPI_FLASH_READ, viewOffset = 0 } = {}) {
+  const payload = new Uint8Array(49); // WebHID 0x21 input payload, with report ID omitted
+  payload[12] = ack ? 0x80 : 0;
+  payload[13] = replyId;
+  const view = new DataView(payload.buffer);
+  view.setUint32(14, address, true);
+  payload[18] = size;
+  payload.set(bytes.subarray(0, size), 19);
+  if (viewOffset === 0) return new DataView(payload.buffer);
+  const padded = new Uint8Array(payload.byteLength + viewOffset + 3);
+  padded.set(payload, viewOffset);
+  return new DataView(padded.buffer, viewOffset, payload.byteLength);
+}
+
 class FaithfulMockHIDDevice {
-  constructor(productId = PRO_CONTROLLER_PRODUCT_ID) {
+  constructor(productId = PRO_CONTROLLER_PRODUCT_ID, {
+    userCalibration = null,
+    spiMode = 'ok',
+    spiReplyViewOffset = 0
+  } = {}) {
     this.vendorId = NINTENDO_VENDOR_ID;
     this.productId = productId;
     this.opened = false;
     this.listeners = new Map();
     this.sentReports = [];
+    this.spiMode = spiMode;
+    this.spiReplyViewOffset = spiReplyViewOffset;
+    this.spiMemory = new Uint8Array(0x8040);
+    this.spiMemory.fill(0xff);
+    this.spiMemory.set(makeIMUCalibrationRecord(), IMU_FACTORY_CALIBRATION_ADDRESS);
+    if (userCalibration) {
+      this.spiMemory.set([0xb2, 0xa1], IMU_USER_CALIBRATION_ADDRESS);
+      this.spiMemory.set(userCalibration, IMU_USER_CALIBRATION_ADDRESS + 2);
+    }
   }
   async open() {
     this.opened = true;
@@ -108,6 +159,15 @@ class FaithfulMockHIDDevice {
   async sendReport(reportId, data) {
     const copy = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
     this.sentReports.push({ reportId, data: copy });
+    if (copy[9] !== SUBCMD_SPI_FLASH_READ || this.spiMode === 'drop') return;
+    const address = copy[10] | (copy[11] << 8) | (copy[12] << 16) | (copy[13] << 24);
+    const size = copy[14];
+    const bytes = this.spiMemory.slice(address, address + size);
+    const reply = makeSPIReply(address, size, bytes, {
+      ack: this.spiMode !== 'nack',
+      viewOffset: this.spiReplyViewOffset
+    });
+    queueMicrotask(() => this.emitInputReport(0x21, reply));
   }
   addEventListener(type, cb) {
     if (!this.listeners.has(type)) this.listeners.set(type, new Set());
@@ -317,6 +377,99 @@ test('#71 Right Joy-Con and Pro Controller sensor channels decode with the nomin
   close(decPro.yawRate, 2200 * DEFAULT_GYRO_SCALE, 'Pro Controller yaw');
 });
 
+test('#71 published SPI IMU calibration parses signed offsets and per-axis coefficients into rad/s', () => {
+  const record = makeIMUCalibrationRecord({
+    gyroOffset: [100, -200, 300],
+    gyroScale: [13371, 13400, 13200]
+  });
+  const padded = new Uint8Array(record.length + 9);
+  padded.set(record, 4);
+  const calibration = parseSwitchGyroCalibration(new DataView(padded.buffer, 4, record.length), 'factory');
+  assert.equal(calibration.status, 'calibrated');
+  assert.equal(calibration.source, 'factory');
+  assert.deepEqual(calibration.gyroOffsets, [100, -200, 300]);
+  close(calibration.gyroDpsPerCount[0], 936 / (13371 - 100));
+  close(calibration.gyroDpsPerCount[1], 936 / (13400 - -200));
+  close(calibration.gyroDpsPerCount[2], 936 / (13200 - 300));
+
+  const decoded = decodeSwitchMotionReport(makeFaithfulWebHIDData({ gyro: [112, -190, 340] }), {
+    reportId: 0x30,
+    productId: PRO_CONTROLLER_PRODUCT_ID,
+    gyroCalibration: calibration
+  });
+  const dpsToRad = Math.PI / 180;
+  close(decoded.pitchRate, 12 * 936 / (13371 - 100) * dpsToRad, 'calibrated X gyro / pitch');
+  close(decoded.rollRate, 10 * 936 / (13400 + 200) * dpsToRad, 'calibrated Y gyro / roll');
+  close(decoded.yawRate, -40 * 936 / (13200 - 300) * dpsToRad, 'calibrated Z gyro / provisional yaw');
+  assert.equal(decoded.calibrationSource, 'factory');
+  assert.equal(decoded.calibrationStatus, 'calibrated');
+
+  const invalid = parseSwitchGyroCalibration(makeIMUCalibrationRecord({
+    gyroScale: [13371, 0, 13200]
+  }));
+  assert.equal(invalid.status, 'invalid', 'zero or nonpositive calibration divisor fails closed');
+});
+
+test('#71 WebHID SPI selection prefers marked user calibration, otherwise factory, with visible nominal fallback', async () => {
+  const userRecord = makeIMUCalibrationRecord({ gyroOffset: [-30, 40, -50] });
+  const userDevice = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID, {
+    userCalibration: userRecord,
+    spiReplyViewOffset: 5
+  });
+  const userInit = await initializeSwitchHIDDevice(userDevice);
+  assert.equal(userInit.initialized, true);
+  assert.equal(userInit.calibration.status, 'calibrated');
+  assert.equal(userInit.calibration.source, 'user');
+  const userReads = userDevice.sentReports.filter(report => report.data[9] === SUBCMD_SPI_FLASH_READ);
+  assert.equal(userReads.length, 1, 'marked user record avoids a second SPI request');
+  const userReadAddress = new DataView(userReads[0].data.buffer, userReads[0].data.byteOffset).getUint32(10, true);
+  assert.equal(userReadAddress, IMU_USER_CALIBRATION_ADDRESS);
+  assert.equal(userReads[0].data[14], IMU_USER_CALIBRATION_BLOCK_SIZE);
+
+  const factoryDevice = new FaithfulMockHIDDevice();
+  const factoryInit = await initializeSwitchHIDDevice(factoryDevice);
+  assert.equal(factoryInit.calibration.status, 'calibrated');
+  assert.equal(factoryInit.calibration.source, 'factory');
+  const factoryReads = factoryDevice.sentReports.filter(report => report.data[9] === SUBCMD_SPI_FLASH_READ);
+  assert.equal(factoryReads.length, 2, 'absent user marker falls through to factory data');
+  assert.equal(new DataView(factoryReads[1].data.buffer, factoryReads[1].data.byteOffset).getUint32(10, true),
+    IMU_FACTORY_CALIBRATION_ADDRESS);
+  assert.equal(factoryReads[1].data[14], IMU_CALIBRATION_RECORD_SIZE);
+
+  const invalidUserDevice = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID, {
+    userCalibration: makeIMUCalibrationRecord({ gyroScale: [0, 0, 0] })
+  });
+  const invalidUserInit = await initializeSwitchHIDDevice(invalidUserDevice);
+  assert.equal(invalidUserInit.calibration.source, 'factory', 'invalid user record falls back to factory');
+
+  const invalidFactoryDevice = new FaithfulMockHIDDevice();
+  invalidFactoryDevice.spiMemory.set(makeIMUCalibrationRecord({ gyroScale: [0, 0, 0] }),
+    IMU_FACTORY_CALIBRATION_ADDRESS);
+  const invalidFactoryInit = await initializeSwitchHIDDevice(invalidFactoryDevice);
+  assert.equal(invalidFactoryInit.initialized, true);
+  assert.equal(invalidFactoryInit.calibration.status, 'nominal-fallback');
+  assert.equal(invalidFactoryInit.calibration.reason, 'invalid-calibration-coefficient');
+
+  const unavailableDevice = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID, { spiMode: 'nack' });
+  const unavailableInit = await initializeSwitchHIDDevice(unavailableDevice);
+  assert.equal(unavailableInit.initialized, true, 'optional SPI calibration failure keeps gyro initialization usable');
+  assert.deepEqual(unavailableInit.calibration, {
+    status: 'nominal-fallback', source: 'nominal', reason: 'spi-calibration-unavailable',
+    gyroOffsets: [0, 0, 0], gyroDpsPerCount: [0.070, 0.070, 0.070]
+  });
+  const nominal = decodeSwitchMotionReport(makeFaithfulWebHIDData({ gyro: [10, 0, -20] }), {
+    reportId: 0x30, gyroCalibration: unavailableInit.calibration
+  });
+  close(nominal.pitchRate, 10 * DEFAULT_GYRO_SCALE, 'documented nominal fallback scale');
+  close(nominal.yawRate, 20 * DEFAULT_GYRO_SCALE, 'documented nominal fallback axis');
+  assert.equal(nominal.calibrationStatus, 'nominal-fallback');
+
+  const timeoutDevice = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID, { spiMode: 'drop' });
+  const timedOut = await loadSwitchGyroCalibration(timeoutDevice, { timeoutMs: 5 });
+  assert.equal(timedOut.status, 'nominal-fallback');
+  assert.equal(timedOut.reason, 'spi-calibration-unavailable');
+});
+
 test('#71 arrival age expiry stops infinite rotation drift and malformed/truncated packets clear active rate', async () => {
   const mockDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID);
   const reader = createSwitchHIDReader({
@@ -361,7 +514,7 @@ test('#71 published device initialization sequence opens device and sends 0x40 a
   const initResult = await initializeSwitchHIDDevice(mockDev);
   assert.equal(initResult.initialized, true);
   assert.equal(mockDev.opened, true, 'device was opened');
-  assert.equal(mockDev.sentReports.length, 2, '2 output reports sent');
+  assert.equal(mockDev.sentReports.length, 4, 'IMU, report mode and two calibration SPI requests sent');
 
   // First output report: Subcommand 0x40 (Enable 6-Axis IMU)
   const rep0 = mockDev.sentReports[0];
@@ -378,6 +531,9 @@ test('#71 published device initialization sequence opens device and sends 0x40 a
   assert.equal(rep1.reportId, OUTPUT_REPORT_SUBCMD);
   assert.equal(rep1.data[9], SUBCMD_SET_INPUT_REPORT_MODE, 'Subcommand 0x03');
   assert.equal(rep1.data[10], INPUT_REPORT_STANDARD_FULL, 'Argument 0x30 (Standard full mode)');
+  assert.equal(mockDev.sentReports[2].data[9], SUBCMD_SPI_FLASH_READ, 'SPI read subcommand follows IMU setup');
+  assert.equal(mockDev.sentReports[3].data[9], SUBCMD_SPI_FLASH_READ, 'factory SPI read follows absent user marker');
+  assert.equal(initResult.calibration.source, 'factory');
 
   // Test explicit partial / failure handling:
   const brokenDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID);
@@ -399,6 +555,18 @@ test('#71 published device initialization sequence opens device and sends 0x40 a
   const failedOutputResult = await initializeSwitchHIDDevice(failedOutput);
   assert.equal(failedOutputResult.initialized, false);
   assert.equal(failedOutputResult.reason, 'enable-imu-failed');
+
+  const failedReportMode = new FaithfulMockHIDDevice();
+  const attemptedReportModes = [];
+  failedReportMode.sendReport = async (reportId, data) => {
+    attemptedReportModes.push(data[9]);
+    if (data[9] === SUBCMD_SET_INPUT_REPORT_MODE) throw new Error('Report mode rejected');
+  };
+  const failedReportModeResult = await initializeSwitchHIDDevice(failedReportMode);
+  assert.equal(failedReportModeResult.initialized, false);
+  assert.equal(failedReportModeResult.reason, 'set-report-mode-failed');
+  assert.deepEqual(attemptedReportModes, [SUBCMD_ENABLE_IMU, SUBCMD_SET_INPUT_REPORT_MODE],
+    'no calibration is attempted after report-mode send failure');
 });
 
 test('#71 WebHID session lifecycle protects against detach and pending getDevices race conditions, and disconnect cleans up reader', async () => {
@@ -411,7 +579,7 @@ test('#71 WebHID session lifecycle protects against detach and pending getDevice
     }
   }
 
-  const mockDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID);
+  const mockDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID, { spiMode: 'nack' });
   let getDevicesResolve;
   const mockNavigatorHid = {
     getDevices: () => new Promise(resolve => { getDevicesResolve = resolve; }),
@@ -481,6 +649,28 @@ test('#71 WebHID session lifecycle protects against detach and pending getDevice
     await mockNavigatorHid.onconnect({ device: mockDev });
     assert.ok(input2.s3ControllerMotionReader, 'a fresh reconnect succeeds after stale initialization settles');
 
+    // A disconnect during an outstanding SPI reply aborts the calibration wait
+    // immediately and cannot publish a nominal-fallback reader for that device.
+    mockDev.spiMode = 'drop';
+    mockNavigatorHid.ondisconnect({ device: mockDev });
+    let notifySPIRead;
+    const spiReadStarted = new Promise(resolve => { notifySPIRead = resolve; });
+    const sendReportAgain = mockDev.sendReport.bind(mockDev);
+    mockDev.sendReport = async (reportId, data) => {
+      if (data[9] === SUBCMD_SPI_FLASH_READ) notifySPIRead();
+      return sendReportAgain(reportId, data);
+    };
+    const pendingSPIConnect = mockNavigatorHid.onconnect({ device: mockDev });
+    await spiReadStarted;
+    mockNavigatorHid.ondisconnect({ device: mockDev });
+    const staleSPIResult = await pendingSPIConnect;
+    assert.equal(staleSPIResult.status, 'stale-session');
+    assert.equal(input2.s3ControllerMotionReader, null, 'disconnect during SPI calibration clears the active reader');
+
+    mockDev.spiMode = 'nack';
+    await mockNavigatorHid.onconnect({ device: mockDev });
+    assert.ok(input2.s3ControllerMotionReader, 'reconnect after an aborted SPI read creates a fresh reader');
+
     handle2.detach();
   } finally {
     if (priorHidDesc) Object.defineProperty(globalThis.navigator, 'hid', priorHidDesc);
@@ -513,7 +703,7 @@ test('#71 production UI activation in adapters calls requestDevice during the ad
     }
   }
 
-  const mockDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID);
+  const mockDev = new FaithfulMockHIDDevice(PRO_CONTROLLER_PRODUCT_ID, { spiMode: 'nack' });
   let transientActivation = false;
   let activationObservedAtRequest = false;
   let requestCount = 0;
@@ -562,8 +752,10 @@ test('#71 production UI activation in adapters calls requestDevice during the ad
     assert.equal(res.connected, true);
     assert.equal(res.status, 'bridge-available');
     assert.ok(input.s3ControllerMotionReader, 'reader installed via production UI path');
-    assert.deepEqual(menu.toasts, [{ text: 'Controller motion connected.', options: { kind: 'good' } }],
-      'production UI reports the resolved connection state');
+    assert.deepEqual(menu.toasts, [{
+      text: 'Controller motion connected; nominal gyro calibration used (SPI unavailable).',
+      options: { kind: 'good' }
+    }], 'production UI visibly identifies the nominal calibration fallback');
   } finally {
     if (priorHidDesc) Object.defineProperty(globalThis.navigator, 'hid', priorHidDesc);
     else delete globalThis.navigator.hid;
