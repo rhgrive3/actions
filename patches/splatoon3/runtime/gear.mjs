@@ -81,6 +81,9 @@ export function modifiersFor(loadout, curves, points = abilityPoints(loadout)) {
 const STORAGE = 'inkwave.splatoon3.gear.v1';
 const DROP_ROLLER_BUFF_SECONDS = 3;
 const DROP_ROLLER_CONTROL_SECONDS = 0.3;
+// Keep landing admission aligned with Actor._horizontal's production movement
+// threshold (intent magnitudes <= 0.01 produce no grounded movement).
+const DROP_ROLLER_MOVE_DEADZONE = 0.01;
 const DROP_ROLLER_BUFFS = Object.freeze(['runSpeed', 'swimSpeed', 'inkResistance']);
 let dropRollerApi = null;
 const dropRollerSequences = new WeakMap();
@@ -94,7 +97,7 @@ export function startDropRoller(actor, input) {
       !match || typeof match.playing !== 'function' || !match.playing() ||
       actor.s3?.loadout?.[2]?.main !== 'dropRoller') return false;
   const x = Number(input?.x), z = Number(input?.z), length = Math.hypot(x, z);
-  if (!Number.isFinite(length) || length <= 1e-8) return false;
+  if (!Number.isFinite(length) || length <= DROP_ROLLER_MOVE_DEADZONE) return false;
   const dx = x / length, dz = z / length;
   const character = actor.character;
   // This INKWAVE control/pose window is not a Nintendo travel measurement.
@@ -215,7 +218,19 @@ export function installGear(api, tuning) {
     return result;
   };
   const respawn = Actor.prototype.respawn, finishFrame = Actor.prototype._finishFrame, actorUpdate = Actor.prototype.update;
+  function clearDropRollerInRange(actor) {
+    const match = G.match;
+    if (actor.remote || !(match?.range || match?.opts?.range)) return false;
+    if (actor.s3?.dropRoller || (actor.s3?.dropRollerBuffRemaining || 0) > 1e-10) {
+      clearDropRollerLife(actor);
+      equip(actor, true);
+    }
+    return true;
+  }
   Actor.prototype.update = function (...args) {
+    // A battle-earned temporary bonus must not survive into Practice Range.
+    // Clear before movement/weapon work so no Range frame consumes the bonus.
+    if (clearDropRollerInRange(this)) return actorUpdate.apply(this, args);
     const state = this.remote ? null : this.s3?.dropRoller;
     const move = this.intent?.move;
     if (!state || !move) return actorUpdate.apply(this, args);
