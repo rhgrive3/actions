@@ -114,6 +114,23 @@ export function splatlingChargeCap(ink, w) {
 export function isChargerFullCharge(charge) {
   return Number.isFinite(charge) && charge >= 1;
 }
+/** #539: the 8F legal partial release owns normal run speed; the
+ * max-partial/full-charge speed boundaries are separate verified S3 values.
+ * The interpolating interior is deterministic; its exact Nintendo easing is
+ * not asserted by the currently available endpoint data.
+ */
+export function chargerPartialMoveSpeed(w, charge, runSpeed) {
+  const full = Number.isFinite(w.moveSpeedFiring) ? w.moveSpeedFiring : Math.max(0, runSpeed);
+  const start = Number.isFinite(w.partialChargeMoveStart) ? w.partialChargeMoveStart : runSpeed;
+  const partial = Number.isFinite(w.partialChargeMoveEnd) ? w.partialChargeMoveEnd : full;
+  const c = Number.isFinite(charge) ? Math.max(0, Math.min(1, charge)) : 0;
+  if (c >= 1) return full;
+  const minT = Number.isFinite(w.minimumChargeTime) ? Math.max(0, Math.min(0.9, w.minimumChargeTime)) : 8 / 60;
+  if (c <= minT) return start;
+  const t = (c - minT) / (1 - minT);
+  return start + (partial - start) * t;
+}
+
 export function chargerDamage(actor, weapon, charge) {
   const legacy = weapon.damageMin + (weapon.damagePartialMax - weapon.damageMin) * charge;
   const minimum = weapon.damageMinChargeTime, rate = weapon.partialDamagePerSecond;
@@ -1022,7 +1039,7 @@ export function installWeapons(context, profile) {
     const w = this.a.weapon;
     if (this.lockT > 0) return moveSpeed.call(this);
     if (w.kind === 'blaster' && this.s3BlasterMoveRemaining > 1e-10 && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
-    if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
+    if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return chargerPartialMoveSpeed(w, this.charge, PLAYER.runSpeed);
     return moveSpeed.call(this);
   };
   installSplatlingRadiusCharge(api, profile);
