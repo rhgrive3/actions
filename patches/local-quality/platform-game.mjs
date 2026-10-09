@@ -29,7 +29,74 @@ function resumeHiddenHostClock(saved, game, G, env) {
       !Number.isFinite(now) || now < at || !Number.isFinite(match.time)) return;
   // A separate legitimate advance during suspension must never be rolled back.
   match.time = Math.max(0, Math.min(match.time, remaining - (now - at) / 1000));
-  if (match.time <= 0) match.setState('finish');
+  if (match.time <= 0) { match.setState('finish'); return true; }
+}
+
+function captureHiddenHostResult(game, G, env, startedAt = null) {
+  const match = game.match, session = G.net, net = G.netm, now = env.performance?.now?.();
+  const delay = match?.finishDelay?.();
+  if (G.mode !== 'match' || !match || match.mode !== 'turf' || match.attract || match.paused || match.follower ||
+      match.state !== 'finish' || match.result || !session?.isHost || session.state !== 'match' ||
+      !net?.isHost || net.match !== match || session.match !== net || !Number.isFinite(now) ||
+      !Number.isFinite(match.stateT) || match.stateT < 0 || !Number.isFinite(delay) || delay < 0) return null;
+  return { match, session, net, hostId: session.hostId,
+    at: Number.isFinite(startedAt) ? startedAt : now - match.stateT * 1000 };
+}
+function resultAfterHiddenDeadline(saved, game, G, env) {
+  if (!saved) return null;
+  const result = captureHiddenHostResult(game, G, env, saved.at + saved.remaining * 1000);
+  return result && result.match === saved.match && result.session === saved.session &&
+    result.net === saved.net && result.hostId === saved.hostId ? result : null;
+}
+function ownsPlatformRuntime(game, r) { return game.platform === r && !r.disposed; }
+function advanceHiddenHostResult(saved, game, G, env, r) {
+  if (!saved || !ownsPlatformRuntime(game, r)) return null;
+  const { match, session, net, hostId, at } = saved, now = env.performance?.now?.();
+  if (G.mode !== 'match' || game.match !== match || G.net !== session || G.netm !== net ||
+      session.match !== net || net.match !== match || session.hostId !== hostId || !session.isHost || !net.isHost ||
+      session.state !== 'match' || match.mode !== 'turf' || match.attract || match.paused || match.follower ||
+      match.state !== 'finish' || match.result || !Number.isFinite(now) || now < at ||
+      !Number.isFinite(match.stateT) || match.stateT < 0) return null;
+  const delay = match.finishDelay?.();
+  if (!Number.isFinite(delay) || delay < 0) return null;
+  // Advance the existing presentation clock only. _judge sends the frozen host
+  // result; no Actor, projectile, input or global simulation step is run here.
+  match.stateT = Math.max(match.stateT, (now - at) / 1000);
+  if (match.stateT > delay) { match._judge(); return null; }
+  return Math.max(0, (delay - match.stateT) * 1000);
+}
+function clearHiddenHostResult(r, env) {
+  const timer = r.hiddenHostResultTimer;
+  r.hiddenHostResultTimer = null; r.hiddenHostResult = null;
+  if (timer == null) return;
+  if (typeof env.clearTimeout === 'function') env.clearTimeout(timer);
+  else globalThis.clearTimeout?.(timer);
+}
+function scheduleHiddenHostResult(saved, game, G, env, r) {
+  clearHiddenHostResult(r, env);
+  if (!saved || !env.document?.hidden || !ownsPlatformRuntime(game, r)) return;
+  const remaining = advanceHiddenHostResult(saved, game, G, env, r);
+  if (remaining === null) return;
+  const set = typeof env.setTimeout === 'function' ? env.setTimeout.bind(env) : globalThis.setTimeout?.bind(globalThis);
+  if (typeof set !== 'function') return;
+  r.hiddenHostResult = saved;
+  // Native Match uses a strict > boundary; one timer millisecond avoids a
+  // zero-delay spin at exact equality without changing that gameplay rule.
+  const timer = r.hiddenHostResultTimer = set(() => {
+    if (!ownsPlatformRuntime(game, r) || r.hiddenHostResult !== saved || r.hiddenHostResultTimer !== timer) return;
+    r.hiddenHostResultTimer = null;
+    scheduleHiddenHostResult(saved, game, G, env, r);
+  }, remaining + 1);
+}
+function resumeHiddenHostDeadlines(game, G, env, r) {
+  if (!ownsPlatformRuntime(game, r)) return;
+  const saved = r.hiddenHostClock, result = r.hiddenHostResult;
+  r.hiddenHostClock = null;
+  clearHiddenHostDeadline(r, env); clearHiddenHostResult(r, env);
+  const finished = resumeHiddenHostClock(saved, game, G, env);
+  // setState emits synchronously: a listener can dispose or replace this runtime.
+  if (!ownsPlatformRuntime(game, r)) return;
+  advanceHiddenHostResult(result || (finished && resultAfterHiddenDeadline(saved, game, G, env)), game, G, env, r);
 }
 function clearHiddenHostDeadline(r, env) {
   if (r.hiddenHostTimer == null && r.hiddenHostDeadline == null) return;
@@ -43,7 +110,7 @@ function clearHiddenHostDeadline(r, env) {
 }
 function scheduleHiddenHostDeadline(saved, game, G, env, r) {
   clearHiddenHostDeadline(r, env);
-  if (!saved || !Number.isFinite(saved.remaining)) return;
+  if (!saved || !Number.isFinite(saved.remaining) || !ownsPlatformRuntime(game, r)) return;
   const set = typeof env.setTimeout === 'function' ? env.setTimeout.bind(env) : globalThis.setTimeout?.bind(globalThis);
   if (typeof set !== 'function') return;
   const now = env.performance?.now?.();
@@ -52,7 +119,7 @@ function scheduleHiddenHostDeadline(saved, game, G, env, r) {
   r.hiddenHostDeadline = saved;
   r.hiddenHostTimer = set(() => {
     r.hiddenHostTimer = null;
-    if (r.hiddenHostDeadline !== saved || r.hiddenHostClock !== saved) { r.hiddenHostDeadline = null; return; }
+    if (!ownsPlatformRuntime(game, r) || r.hiddenHostDeadline !== saved || r.hiddenHostClock !== saved) { r.hiddenHostDeadline = null; return; }
     r.hiddenHostDeadline = null;
     if (G.mode !== 'match' || !env.document?.hidden) return;
     const { match, session, net, hostId, at, remaining } = saved, now = env.performance?.now?.();
@@ -67,6 +134,7 @@ function scheduleHiddenHostDeadline(saved, game, G, env, r) {
     }
     match.time = 0;
     match.setState('finish');
+    scheduleHiddenHostResult(resultAfterHiddenDeadline(saved, game, G, env), game, G, env, r);
   }, delay);
 }
 
@@ -99,7 +167,11 @@ export function installPlatformGame(Game, G, env = globalThis) {
       rebasePlatformGame(game);
     };
     r.off = owner.subscribe({
-      suspend() { r.hiddenHostClock = captureHiddenHostClock(game, G, env); clear(); scheduleHiddenHostDeadline(r.hiddenHostClock, game, G, env, r); },
+      suspend() {
+        r.hiddenHostClock = captureHiddenHostClock(game, G, env); clear();
+        scheduleHiddenHostDeadline(r.hiddenHostClock, game, G, env, r);
+        scheduleHiddenHostResult(captureHiddenHostResult(game, G, env), game, G, env, r);
+      },
       visibility() {
         if (env.document?.hidden) {
           // A prior WebGL/freeze/pagehide blocker can own the suspend already.
@@ -108,19 +180,16 @@ export function installPlatformGame(Game, G, env = globalThis) {
             r.hiddenHostClock = captureHiddenHostClock(game, G, env);
             scheduleHiddenHostDeadline(r.hiddenHostClock, game, G, env, r);
           }
+          if (!r.hiddenHostResult) scheduleHiddenHostResult(captureHiddenHostResult(game, G, env), game, G, env, r);
         } else {
           // Showing need not resume the renderer. Settle only the actual hidden
           // interval, so later visibility cycles and renderer recovery cannot
           // lose it or subtract the same elapsed time again.
-          const saved = r.hiddenHostClock; r.hiddenHostClock = null;
-          clearHiddenHostDeadline(r, env);
-          resumeHiddenHostClock(saved, game, G, env);
+          resumeHiddenHostDeadlines(game, G, env, r);
         }
       },
       prepareResume() {
-        const saved = r.hiddenHostClock; r.hiddenHostClock = null;
-        clearHiddenHostDeadline(r, env);
-        clear(); resumeHiddenHostClock(saved, game, G, env); game.R?.resize?.();
+        clear(); resumeHiddenHostDeadlines(game, G, env, r); game.R?.resize?.();
       },
       blur() { resetPlatformInput(game.input, game.match?.controller); },
       screen() { resetPlatformInput(game.input, game.match?.controller); },
@@ -183,9 +252,10 @@ export function installPlatformGame(Game, G, env = globalThis) {
     return unlock?.apply(this, args);
   };
   P.disposePlatform = function () {
-    const r = this.platform; if (!r) return;
+    const r = this.platform; if (!r || r.disposed) return;
+    r.disposed = true;
     r.hiddenHostClock = null;
-    clearHiddenHostDeadline(r, env);
+    clearHiddenHostDeadline(r, env); clearHiddenHostResult(r, env);
     r.driver.dispose(); r.off(); r.notice?.remove(); for (const dispose of r.disposers) dispose();
     this.menus?.setPlatformDriven?.(false); this.input?.mobile?.destroy?.();
     G.audio?.disposePlatform?.();

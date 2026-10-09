@@ -3027,3 +3027,28 @@ This fixes the INKWAVE composition residual. The exact Nintendo high-drop collis
 ## #927 friendly Storm recovery-law source verification (2026-10-09)
 
 The retrieved [Ink Storm verification specification](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E3%82%A2%E3%83%A1%E3%83%95%E3%83%A9%E3%82%B7#ab7922ee) resolves the prior unknown recovery-rate relationship: humanoid friendly-rain recovery equals normal submerged recovery, while submerged rate and 60F delay are unchanged. Current implementation matches; new six-case complete-bootstrap suite passes, including 59/60F and 30/60/120Hz. This supersedes earlier statements that this relationship lacked evidence. Geometry/growth/fade and our own hardware comparison remain unverified. See [the five-issue evidence scope](inkwave-special-source-evidence-20261009.md).
+
+## 2026-10-09 — #878 hidden host sends the native Turf result
+
+After the hidden deadline, the stopped RAF previously left both host and guest
+at `finish` with no result even after 120 seconds. The native finish-delay
+expression now has one shared accessor, and a fenced hidden timer advances only
+the presentation clock before invoking the existing `_judge`/`sendResult` path.
+The strict boundary, frozen coverage and Boss delay expression are preserved;
+there is no gameplay/physics/global-time catch-up. New result tests fail 5/6
+before the change; all 26 hidden-host and 260 adjacent checks pass afterward.
+This completes INKWAVE result delivery under its existing policy, without
+claiming equivalence to Splatoon 3 Ver. 11.3.0 disconnect adjudication or physical
+background behavior. See [the result-deadline report](inkwave-hidden-host-result-878-2026-10-09.md).
+
+## 2026-10-09 — #522 malformed paint numeric boundary
+
+A finite JavaScript seed `1e308` was accepted by the actual composed NetMatch/PaintSystem, changed CPU turf cells and overflowed Float32 GPU attributes. The shared receive gate now rejects values and renderer intermediates that cannot be represented, plus unrecognized/inherited paint kind names, before reserving replay sequence, causal clock or paint receipts. Corrected same-sequence events, every normal paint kind and existing cross-team death/Boss paint remain eligible. This is INKWAVE defensive schema validation; #522 actor/action provenance remains incomplete and the Issue must not be auto-closed. See [reproduction, implementation and limits](inkwave-paint-numeric-admission-522-2026-10-09.md).
+### #878 synchronous platform-retirement review
+
+The hidden-result continuation is additionally fenced to its live platform
+runtime. Disposing or recreating the platform inside a synchronous `finish`
+listener cannot keep the retired timer alive or send its result. Three new
+regressions failed before this follow-up; all 29 hidden-host source/emitted and
+260 adjacent checks now pass. This is lifecycle ownership hardening, with no
+change to gameplay values or the Splatoon 3 comparison limits above.

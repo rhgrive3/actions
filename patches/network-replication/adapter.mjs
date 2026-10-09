@@ -1048,6 +1048,7 @@ function syncRemoteSquidroll(actor, sample, peer) {
 // Sender simulation ticks only schedule playback. They are application uptimes,
 // never a clock that can order paint from two different owners.
 const PAINT_ORDER_TAG = 'inkwave-paint-order-v1';
+const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck']);
 const paintClockSessions = new WeakMap();
 function paintClockStateFor(session, cfg) {
   const matchId = typeof cfg?.id === 'string' ? cfg.id : '';
@@ -1070,9 +1071,30 @@ function readPaintOrder(nm, from, e) {
   if (typeof from !== 'string' || !nm.s._members?.has(from)) return false;
   // Victim-owned splat bursts and host-owned Boss ink can paint the other team.
   // Membership, the match epoch and sender sequence own admission, not team color.
-  for (let i = 2; i <= 7; i++) if (!Number.isFinite(e[i])) return false;
-  for (let i = 9; i <= 12; i++) if (e[i] !== undefined && !Number.isFinite(e[i])) return false;
-  if (e[5] <= 0 || (e[6] !== 0 && e[6] !== 1)) return false;
+  // #522: JS-finite is insufficient for the Float32 atlas attributes/shader.
+  // Reject before either sender replay or causal paint clocks are reserved.
+  for (let i = 2; i <= 7; i++) if (!paintFloat(e[i])) return false;
+  for (let i = 9; i <= 12; i++) if (e[i] !== undefined && !paintFloat(e[i])) return false;
+  if (e[5] <= 0 || Math.fround(e[5]) === 0 || (e[6] !== 0 && e[6] !== 1)) return false;
+  // _kind uses a plain object table. Names inherited from Object.prototype
+  // must not become a shader kind/flags value or poison footprint arithmetic.
+  if (e[8] !== undefined && e[8] !== 0 && !PAINT_EVENT_KINDS.has(e[8])) return false;
+  // PaintSystem squares radius/local distances and projects the stretch vector.
+  // Ray angles also contain seed*6.2831 before entering wob(): the largest
+  // composed seed factor is 73+11*6.2831 < 144 (with bounded phase terms).
+  // These are representation limits of the existing renderer, not new weapon
+  // range/radius caps or a substitute for action-provenance validation.
+  // Round uploaded inputs FIRST: a double just below an overflow boundary can
+  // round upward in the Float32 buffer before the shader multiplies it.
+  const positionLength = Math.fround(Math.hypot(e[2], e[3], e[4]));
+  const radius = Math.fround(e[5]), seed = Math.fround(e[7]);
+  const hasStretch = !!(e[9] || e[10] || e[11]);
+  if (hasStretch && ![e[9], e[10], e[11]].every(paintFloat)) return false;
+  // Legacy rows may omit the amount; match PaintSystem's actual default (1).
+  const stretch = Math.fround(Math.hypot(e[9] ?? 0, e[10] ?? 0, e[11] ?? 0) * (e[12] ?? 1));
+  const reach = Math.fround(radius * (3.9 + 1.4 * Math.abs(stretch)));
+  if (!paintFloat(positionLength * positionLength) || !paintFloat(radius * radius) ||
+      !paintFloat(Math.abs(seed) * 144 + 256) || !paintFloat(stretch) || !paintFloat(reach * reach)) return false;
   const hasTick = e._netTick !== undefined, hasSeq = e._netSeq !== undefined;
   if (hasTick !== hasSeq || hasTick && (!Number.isSafeInteger(e._netTick) || e._netTick < 0
     || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)) return false;
@@ -1089,6 +1111,7 @@ function readPaintOrder(nm, from, e) {
   // Their owner-local sequence is deterministic; their uptime is irrelevant.
   return hasSeq ? { clock: e._netSeq, peer: from, seq: e._netSeq, legacy: true } : null;
 }
+function paintFloat(value) { return Number.isFinite(value) && Number.isFinite(Math.fround(value)); }
 function receivePaintOrder(nm, from, e) {
   const order = readPaintOrder(nm, from, e);
   if (order && !order.legacy) {
