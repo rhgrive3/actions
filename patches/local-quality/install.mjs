@@ -16,6 +16,7 @@ export function installQuality(profile){
   // Main #1175 path: presentation-only remote replicas can defer full visual pose.
   installOffscreenVisualBudget(api,G);
   // #845 residual: offline bots author shots from rig-bone muzzles, so retain pose
-  // and muzzle updates; defer only offscreen hair integration and foot-IK queries.
+  // and muzzle transforms; substitute exact level ground queries and defer only
+  // stable offscreen leg IK, pose tail, hair and material presentation work.
   installOfflineOffscreenBudget(api,G);
 }

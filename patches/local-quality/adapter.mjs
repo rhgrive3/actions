@@ -546,6 +546,20 @@ function adaptQualityLayer(rel, code) {
       'carry actor authority into Character presentation budget');
   }
 
+  if (rel === 'src/game/character.js') {
+    // Offline bot projectiles read weapon.muzzle from the live rig. Preserve
+    // the pelvis/torso/arm/weapon transform path every simulation tick, but
+    // skip leg joint IK and the decorative tail which cannot affect that rig.
+    code = replaceOnce(code,
+      '    const hyw = P[HIPS + 1];\n    for (let i = 0; i < 2; i++) {\n      const leg = i === 0 ? this.limbs.legL : this.limbs.legR, sd = i === 0 ? 1 : -1;',
+      '    const hyw = P[HIPS + 1];\n    if (!this._oobPoseTailSkip || this.replant || !this.feetValid) for (let i = 0; i < 2; i++) {\n      const leg = i === 0 ? this.limbs.legL : this.limbs.legR, sd = i === 0 ? 1 : -1;',
+      'skip stable offscreen leg-joint IK while retaining replant transitions');
+    code = replaceOnce(code,
+      '    const lv = this.lifeLv;\n    // ---- face',
+      '    if (this._oobPoseTailSkip && !this.replant && this.feetValid) {\n      this._headQW.copy(B.head.quaternion); this._headSet = true;\n      for (const f of this.feet) f.dispOK = false;\n      this._oobPoseTailSkipped = true;\n      return; // weapon rig is current; rebuild display-only state before the next replant.\n    }\n    const lv = this.lifeLv;\n    // ---- face',
+      'skip stable offscreen decorative pose tail after authoritative weapon rig');
+  }
+
   return code;
 }
 

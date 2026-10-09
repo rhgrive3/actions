@@ -1,7 +1,8 @@
-// #845 offline-bot residual: retain the native pose/gameplay clock while
-// suppressing only foot-IK physics samples and hair integration after long
-// absence from the renderer. The fixture composes the public source adapters
-// and both production runtime stacks; only rendering/physics sinks are stubbed.
+// #845 offline-bot residual: retain authoritative pose and gameplay clocks
+// while suppressing stable offscreen leg IK, foot-ray calls, hair and material
+// work after long absence from the renderer. The fixture composes the public
+// source adapters and both production runtime stacks; rendering/physics sinks
+// are stubbed for exact state and muzzle comparisons.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
@@ -35,6 +36,32 @@ camera.position.set(0, 1.5, 8);
 camera.lookAt(0, 1.5, 100);
 camera.updateMatrixWorld(true);
 const counters = { raycast: 0, groundProbe: [], bodyCollision: [] };
+
+function topBlock(y = 0, normal = new THREE.Vector3(0, 1, 0)) {
+  const up = normal.clone().normalize();
+  const side = new THREE.Vector3(1, 0, 0);
+  const along = new THREE.Vector3().crossVectors(side, up).normalize();
+  const halfY = 0.5;
+  return {
+    solid: true,
+    center: new THREE.Vector3(0, y, 0).addScaledVector(up, -halfY),
+    half: new THREE.Vector3(100, halfY, 100),
+    axes: [side, up, along],
+  };
+}
+
+function analyticLevel(blocks, choose = () => 0) {
+  return {
+    blocks,
+    groundHeight: () => 0,
+    queryBlocks(_minX, minZ, _maxX, maxZ, out) {
+      out.length = 0;
+      const id = choose((minZ + maxZ) * 0.5);
+      if (id >= 0) out.push(id);
+      return out;
+    },
+  };
+}
 
 function physicsStub() {
   return {
@@ -78,14 +105,14 @@ function resetWorld() {
   G.rig = null;
   G.match = { state: 'playing', attract: false, local: null, opts: { range: false } };
   G.physics = physicsStub();
-  G.level = { blocks: [], groundHeight: () => 0 };
+  G.level = analyticLevel([topBlock()]);
   G.paint = { sample: () => 2, splat: () => 0 };
   G.time = 0;
 }
 
-function makeBot({ name = 'offline-residual', isBot = true, isLocal = false } = {}) {
+function makeBot({ name = 'offline-residual', isBot = true, isLocal = false, weapon = 'shooter' } = {}) {
   const actor = new api.Actor({
-    team: 1, name, weapon: 'shooter', isLocal, isBot, CharacterClass: api.Character,
+    team: 1, name, weapon, isLocal, isBot, CharacterClass: api.Character,
   });
   const ch = actor.character;
   G.scene.add(ch.root);
@@ -149,6 +176,9 @@ test('long-undrawn offline bot: no foot-IK raycasts or hair integration, while p
   assert.equal(counters.raycast - rays0, 0, 'grounded foot-IK raycasts are suppressed');
   assert.ok(ch._oobRaycastsSkipped > 0, 'native Character._ground path was intercepted');
   assert.ok(ch._oobHairSkips > 0, 'native hair integration was suppressed');
+  assert.equal(ch._oobPoseCoreTicks, 59, 'the authoritative muzzle pose core still runs at simulation cadence');
+  assert.equal(ch._oobPoseDecorativeSkips, 59, 'offscreen leg joints and decorative pose tail are skipped');
+  assert.equal(ch._oobMaterialSkips, 59, 'offscreen character material updates are deferred');
   assert.equal(poseCalls, 59, 'native pose rebuild still runs every simulation tick');
   assert.ok(Math.abs(ch.t - t0 - 59 * DT) < 1e-9, 'Character pose clock advances normally');
   assert.ok(ch.tr[0] > timer0, 'animation state timers continue advancing');
@@ -190,6 +220,7 @@ test('first visible render after a camera turn replants feet and advances hair o
   assert.equal(ch._camFrame, 231, 'native draw hook records the returning render frame');
   assert.equal(ch.t, clockAtSubmit, 'render catch-up does not advance the native pose clock');
   assert.equal(ch._hairAcc, 0, 're-entry drops any hidden half-rate hair accumulator');
+  assert.equal(ch._oobMaterialCatchUps, 1, 'deferred material state is refreshed before first visible submission');
   assert.deepEqual([...ch.hx, ...ch.hv], hairSpringsBeforeSubmit,
     'zero-delta render re-entry does not integrate hidden-time hair debt');
 
@@ -201,8 +232,8 @@ test('first visible render after a camera turn replants feet and advances hair o
 });
 
 test('scope guards keep local, remote, non-bot, attract, Practice Range and unknown actors full-rate', () => {
-  const ch = { isLocal: false, inWorld: true, lod: { force: -1 }, _camFrame: 70 };
-  const state = { isBot: true };
+  const ch = { isLocal: false, inWorld: true, form: 'kid', kidScale: 1, lod: { force: -1 }, _camFrame: 70 };
+  const state = { isBot: true, form: 'kid' };
   const G2 = {
     match: { local: null, attract: false, opts: {} },
     renderer: { info: { render: { frame: 100 } } },
@@ -210,6 +241,8 @@ test('scope guards keep local, remote, non-bot, attract, Practice Range and unkn
   assert.equal(offlineBudgeted(ch, state, G2), true, 'eligible long-undrawn offline bot');
   assert.equal(offlineBudgeted(ch, { isBot: false }, G2), false, 'non-bot');
   assert.equal(offlineBudgeted(ch, { isBot: true, remote: true }, G2), false, 'remote actor owned by PR #1175');
+  assert.equal(offlineBudgeted(ch, { isBot: true, form: 'squid' }, G2), false, 'squid/head emitter stays full-rate');
+  assert.equal(offlineBudgeted(ch, { isBot: true, form: 'climb' }, G2), false, 'climb transition stays full-rate');
   assert.equal(offlineBudgeted({ ...ch, isLocal: true }, state, G2), false, 'local Character');
   assert.equal(offlineBudgeted({ ...ch, _camFrame: -1 }, state, G2), false, 'never-drawn Character');
   assert.equal(offlineBudgeted({ ...ch, inWorld: false }, state, G2), false, 'not in the live world');
@@ -279,6 +312,86 @@ test('offline firing retains the native bone muzzle while the bot is long-undraw
     'offline bot projectile origin matches the fully rendered native bone muzzle: ' + JSON.stringify(muzzleComparison));
   ch.dispose();
   renderedCh.dispose();
+});
+
+test('offline firing preserves the bone muzzle over sloped and stepped ground', () => {
+  const surfaces = [
+    ['slope', (z) => -0.12 * z, (_z, normal) => normal.set(0, 1, 0.12).normalize()],
+    ['step', (z) => z < -1.5 ? 0.35 : 0, (_z, normal) => normal.set(0, 1, 0)],
+  ];
+  for (const [surface, heightAt, normalAt] of surfaces) {
+    resetWorld();
+    if (surface === 'slope') {
+      G.level = analyticLevel([topBlock(0, new THREE.Vector3(0, 1, 0.12))]);
+    } else {
+      G.level = analyticLevel([topBlock(0), topBlock(0.35)], (z) => z < -1.5 ? 1 : 0);
+    }
+    const nativeRaycast = G.physics.raycast;
+    const sampledHeights = [];
+    const sampledNormals = [];
+    G.physics.raycast = (origin, direction, distance, hit) => {
+      if (distance === 1.25 && direction.y < -0.99) {
+        const y = heightAt(origin.z);
+        sampledHeights.push(y);
+        hit.hit = true;
+        hit.point.set(origin.x, y, origin.z);
+        normalAt(origin.z, hit.normal);
+        sampledNormals.push(hit.normal.clone());
+        hit.dist = 0.55 - y;
+        return hit;
+      }
+      return nativeRaycast(origin, direction, distance, hit);
+    };
+    G.projectiles = new api.Projectiles(G.scene);
+    const { actor, ch } = makeBot({ name: surface + '-offscreen-muzzle' });
+    const { actor: renderedActor, ch: renderedCh } = makeBot({ name: surface + '-offscreen-muzzle' });
+    actor._finishFrame(DT); renderedActor._finishFrame(DT);
+    submit(ch, 900); submit(renderedCh, 900);
+    for (let i = 0; i < 90; i++) {
+      const frame = 901 + i;
+      renderer.info.render.frame = frame;
+      actor.pos.z -= 0.04; actor._finishFrame(DT);
+      renderedActor.pos.z -= 0.04; renderedActor._finishFrame(DT);
+      submit(renderedCh, frame);
+    }
+    assert.equal(ch._oobWasBudgeted, true, surface);
+    assert.equal(renderedCh._oobWasBudgeted, false, surface);
+    assert.ok(Math.max(...sampledHeights) - Math.min(...sampledHeights) > 0.25,
+      surface + ' control actually traverses the changing terrain');
+    if (surface === 'slope') assert.ok(sampledNormals.some((n) => n.z > 0.1),
+      'slope control supplies a non-horizontal foot normal');
+    const firstShot = G.projectiles.list.length;
+    G.projectiles.fireShooter(actor, actor.weaponRunner.weapon || actor.weapon, 0);
+    G.projectiles.fireShooter(renderedActor, renderedActor.weaponRunner.weapon || renderedActor.weapon, 0);
+    const [budgetedShot, renderedShot] = G.projectiles.list.slice(firstShot);
+    const delta = budgetedShot.start.distanceTo(renderedShot.start);
+    assert.ok(delta < 1e-8, surface + ' must not shift an authoritative muzzle; delta=' + delta);
+    ch.dispose(); renderedCh.dispose();
+  }
+});
+
+test('offscreen Dualies retain the left-hand authoritative muzzle', () => {
+  resetWorld();
+  G.projectiles = new api.Projectiles(G.scene);
+  const { actor, ch } = makeBot({ name: 'offscreen-dualies', weapon: 'dualies' });
+  const { actor: renderedActor, ch: renderedCh } = makeBot({ name: 'offscreen-dualies', weapon: 'dualies' });
+  actor._finishFrame(DT); renderedActor._finishFrame(DT);
+  submit(ch, 1100); submit(renderedCh, 1100);
+  for (let i = 0; i < 60; i++) {
+    const frame = 1101 + i;
+    renderer.info.render.frame = frame;
+    actor.pos.z -= 0.04; actor._finishFrame(DT);
+    renderedActor.pos.z -= 0.04; renderedActor._finishFrame(DT);
+    submit(renderedCh, frame);
+  }
+  assert.equal(ch._oobWasBudgeted, true);
+  const firstShot = G.projectiles.list.length;
+  G.projectiles.fireDualies(actor, actor.weaponRunner.weapon || actor.weapon, 0, 1);
+  G.projectiles.fireDualies(renderedActor, renderedActor.weaponRunner.weapon || renderedActor.weapon, 0, 1);
+  const [budgetedShot, renderedShot] = G.projectiles.list.slice(firstShot);
+  assert.ok(budgetedShot.start.distanceTo(renderedShot.start) < 1e-8,
+    'offscreen left-hand muzzle matches the continuously posed rig');
+  ch.dispose(); renderedCh.dispose();
 });
 
 test('movement input and body/ground collision match a fully rendered offline bot', () => {
