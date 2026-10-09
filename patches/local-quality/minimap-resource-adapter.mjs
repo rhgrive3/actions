@@ -25,9 +25,11 @@ export function adaptMinimapResources(rel, code) {
       "    if (showMinimap) {\n      for (const o of m.actors) {",
       "    if (showMinimap || explicitTurfMap) {\n      for (const o of m.actors) {",
       'explicit-map actor markers');
+    // HUD frame map transport may carry extra fields from other quality
+    // adapters. Override only for the explicit map, retaining that metadata.
     code = replaceOnceMinimap(code,
-      'map: showMinimap ? { canvas: this.minimap.canvas, expanded: false, players } : null,',
-      'map: showMinimap || explicitTurfMap ? { canvas: this.minimap.canvas, expanded: explicitTurfMap, players } : null,',
+      '    this.hud.update(dt, frame);',
+      '    if (explicitTurfMap) frame.map = { ...(frame.map || {}), canvas: this.minimap.canvas, expanded: true, players };\n    this.hud.update(dt, frame);',
       'explicit-map HUD presentation');
     return code;
   }
