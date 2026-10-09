@@ -4,7 +4,7 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource, qualityIdentity } from '../adapter.mjs';
-import { adaptS3HudLook, S3_SQUID_BADGE, S3_TOOTH } from '../s3-hud-look-adapter.mjs';
+import { adaptS3HudLook, S3_SQUID_BADGE, S3_TOOTH, S3_BADGE_SVG } from '../s3-hud-look-adapter.mjs';
 import { SPECIAL_SEGMENTS, specialGaugeSVG } from '../hud-authority-adapter.mjs';
 import { readSource } from '../../reliability/tests/hud-fixture.mjs';
 
@@ -87,4 +87,13 @@ test('S3 look: a pinned squiggle joins the squid to the tank foot and beats whil
   assert.match(tube, /env = Math\.sin\(Math\.PI \* u\)/, 'both ends stay pinned');
   assert.match(tube, /const flowing = ink < 0\.995;/);
   assert.doesNotMatch(tube.split('if (!L.tubeGeo')[1].split('\n')[0], /offset(Height|Width|Left|Top)/, 'no per-frame layout read in the guard');
+});
+
+test('S3 look: the badge mask file matches the roster silhouette and stays out of the precached stylesheet', async () => {
+  const fs = await import('node:fs');
+  assert.equal(fs.readFileSync(new URL('../hud/s3-squid-badge.svg', import.meta.url), 'utf8'), S3_BADGE_SVG);
+  const css = compose('styles/hud.css');
+  assert.doesNotMatch(css, /data:image\/svg\+xml/, 'no inline SVG data URI in hud.css');
+  assert.match(css, /@supports \(mask-image: none\) \{\n\.iw-sq__badge::before \{[^}]*mask: url\('\.\.\/patches\/local-quality\/hud\/s3-squid-badge\.svg'\)/);
+  assert.ok(JSON.stringify(qualityIdentity()).includes('hud/s3-squid-badge.svg'));
 });

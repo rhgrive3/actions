@@ -17,37 +17,21 @@ function section(code, start, end, after, label) {
 // there), so the gauge is 23 teeth on a 23 x 11.9 deg arc, not a full ring.
 export const SPECIAL_SEGMENTS = 23;
 export const TOOTH_PITCH_DEG = 11.9;
-const point = (r, a) => `${(50 + r * Math.cos(a)).toFixed(3)} ${(50 + r * Math.sin(a)).toFixed(3)}`;
-// Radial teeth: tooth i is centred at (i + .5) pitches clockwise from 12 o'clock and the fill
-// runs clockwise from there. The footage shows ~46% duty and bars from 0.64R to 0.93R.
-function toothPaths(inner, outer, name, duty = .46) {
-  const step = TOOTH_PITCH_DEG * Math.PI / 180, half = step * duty / 2;
-  return Array.from({ length: SPECIAL_SEGMENTS }, (_, i) => {
-    const c = -Math.PI / 2 + (i + .5) * step, a = c - half, b = c + half;
-    return `<path class="${name}" d="M${point(inner,a)} L${point(outer,a)} A${outer} ${outer} 0 0 1 ${point(outer,b)} L${point(inner,b)} A${inner} ${inner} 0 0 0 ${point(inner,a)} Z"/>`;
-  }).join('');
-}
-// Touch SP: the same steps as one thin ring hugging the round button (arc segments separated
-// by hairline gaps), so a circular control reads as a clean full-circle meter.
-function ringPaths(inner, outer, name, gapDeg = 1.6) {
-  const step = 2 * Math.PI / SPECIAL_SEGMENTS, gap = gapDeg * Math.PI / 360;
-  return Array.from({ length: SPECIAL_SEGMENTS }, (_, i) => {
-    const a = -Math.PI / 2 + i * step + gap, b = a + step - 2 * gap;
-    return `<path class="${name}" d="M${point(outer,a)} A${outer} ${outer} 0 0 1 ${point(outer,b)} L${point(inner,b)} A${inner} ${inner} 0 0 0 ${point(inner,a)} Z"/>`;
-  }).join('');
-}
-// Team-ink burst behind the special icon (disc + eight short rays), as in the footage.
-function burst() {
-  const rays = Array.from({ length: 8 }, (_, i) => {
-    const a = -Math.PI / 2 + i * Math.PI / 4;
-    return `M${point(13.5, a)} L${point(19.5, a)}`;
-  }).join(' ');
-  return `<g class="iw-sp__burst"><path d="${rays}"/><circle cx="50" cy="50" r="9.5"/></g>`;
-}
-export function specialGaugeSVG() {
-  const segments = toothPaths(31, 45, 'iw-sp__segment');
-  return `<svg viewBox="0 0 100 100" aria-hidden="true"><circle class="iw-sp__bg" cx="50" cy="50" r="48.5"/>${burst()}${segments}<circle class="iw-sp__rim" cx="50" cy="50" r="48.5"/><circle class="iw-sp__spin" cx="50" cy="50" r="29" pathLength="100"/></svg>`;
-}
+// The gauge markup is generated at runtime by one compact function shipped in the module
+// (hud.js / mobile.js) rather than as ~23 inlined <path> strings each: the startup precache
+// budget counts both modules. The same source text also produces the build-side markup below,
+// so tests compare one implementation. One decimal in a 100-unit box (0.1 unit) is ample.
+//   tooth i: centred (i + .5) pitches clockwise from 12 o'clock, ~46% duty, bars 0.64R–0.93R;
+//   touch ring: the same steps around the full button with hairline gaps.
+export const GAUGE_GEN = `function s3SpPt(r,a){return (50+r*Math.cos(a)).toFixed(1)+' '+(50+r*Math.sin(a)).toFixed(1)}
+function s3SpArc(i0,r0,r1,cls,n,step,start){let s='';for(let i=0;i<n;i++){const a=start(i),b=a+step;s+='<path class="'+cls+'" d="M'+(i0?s3SpPt(r0,a)+' L':'')+s3SpPt(r1,a)+' A'+r1+' '+r1+' 0 0 1 '+s3SpPt(r1,b)+' L'+s3SpPt(r0,b)+' A'+r0+' '+r0+' 0 0 0 '+s3SpPt(r0,a)+' Z"/>'}return s}
+function s3SpecialGaugeSVG(){const P=${TOOTH_PITCH_DEG}*Math.PI/180,h=P*.23;let r='';for(let i=0;i<8;i++){const a=-Math.PI/2+i*Math.PI/4;r+=(i?' ':'')+'M'+s3SpPt(13.5,a)+' L'+s3SpPt(19.5,a)}
+return '<svg viewBox="0 0 100 100" aria-hidden="true"><circle class="iw-sp__bg" cx="50" cy="50" r="48.5"/><g class="iw-sp__burst"><path d="'+r+'"/><circle cx="50" cy="50" r="9.5"/></g>'+s3SpArc(1,31,45,'iw-sp__segment',${SPECIAL_SEGMENTS},2*h,i=>-Math.PI/2+(i+.5)*P-h)+'<circle class="iw-sp__rim" cx="50" cy="50" r="48.5"/><circle class="iw-sp__spin" cx="50" cy="50" r="29" pathLength="100"/></svg>'}
+function s3SpRingSVG(){const S=2*Math.PI/${SPECIAL_SEGMENTS},g=1.6*Math.PI/360;return '<svg class="iwm-b__gauge" viewBox="0 0 100 100" aria-hidden="true">'+s3SpArc(0,44.5,49.5,'iwm-sp-segment',${SPECIAL_SEGMENTS},S-2*g,i=>-Math.PI/2+i*S+g)+'</svg>'}
+`;
+const GEN = new Function(GAUGE_GEN + '\nreturn { gauge: s3SpecialGaugeSVG, ring: s3SpRingSVG };')();
+export const specialGaugeSVG = () => GEN.gauge();
+export const touchRingSVG = () => GEN.ring();
 
 const UPDATE_SPECIAL = `  _updSpecial(f, dt) {
     const L = this._L;
@@ -106,20 +90,22 @@ export function adaptHudAuthority(rel, code) {
     code = section(code, '    // ---- special gauge (liquid orb) + turf total\n', '    const rays =',
       `    // ---- special gauge (${SPECIAL_SEGMENTS} visible segments) + turf total\n`, 'remove continuous gauge construction');
     const from = "      h('div', { class: 'iw-sp__orb', html:", to = "      h('i', { class: 'iw-sp__ring' })";
-    code = section(code, from, to, `      h('div', { class: 'iw-sp__orb', html: ${JSON.stringify(specialGaugeSVG())} }),\n`, 'segmented gauge markup');
+    code = section(code, from, to, "      h('div', { class: 'iw-sp__orb', html: s3SpecialGaugeSVG() }),\n", 'segmented gauge markup');
     code = once(code, "this.sp = h('div', { class: 'iw-sp' },", `this.sp = h('div', { class: 'iw-sp', role: 'progressbar', 'aria-label': tr('Special'), 'aria-valuemin': '0', 'aria-valuemax': '${SPECIAL_SEGMENTS}', 'aria-valuenow': '0' },`, 'segment accessibility');
     code = once(code, "      h('span', { class: 'iw-sp__pct' }),\n", '', 'no precise percentage label');
     code = once(code, "    this.spLiquid = this.sp.querySelector('.iw-sp__liquid');", "    this.spSegments = this.sp.querySelectorAll('.iw-sp__segment');", 'segment elements');
     code = once(code, "    this.spPct = this.sp.querySelector('.iw-sp__pct');\n", '', 'remove percentage reference');
+    code = GAUGE_GEN + code;
     return section(code, '  _updSpecial(f, dt) {\n', '  // ---------------------------------------------------------------- turf ticker', UPDATE_SPECIAL, 'authoritative segment update');
   }
   if (rel === 'src/core/mobile.js') {
+    code = GAUGE_GEN + code;
     code = once(code, 'const sp = Math.round(clamp(special, 0, 1) * 100);',
       `const sp = Math.floor(clamp(+special || 0, 0, 1) * ${SPECIAL_SEGMENTS});`, 'touch gauge quantization');
     code = once(code, "if (sp !== L.sp) { L.sp = sp; E.special.style.setProperty('--g', (sp / 100).toFixed(2)); }",
       "if (sp !== L.sp) { L.sp = sp; E.special.querySelectorAll('.iwm-sp-segment').forEach((segment, i) => segment.classList.toggle('is-filled', i < sp)); }", 'touch gauge state');
     return once(code, '<svg class="iwm-b__gauge" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>',
-      '<svg class="iwm-b__gauge" viewBox="0 0 100 100" aria-hidden="true">' + ringPaths(44.5, 49.5, 'iwm-sp-segment') + '</svg>', 'touch gauge markup');
+      "' + s3SpRingSVG() + '", 'touch gauge markup');
   }
   if (rel === 'styles/mobile.css') return code + '\n/* #425: touch SP replaces the hidden desktop gauge with the same segment steps. */\n.iwm-b__gauge { transform: none; }\n.iwm-sp-segment { fill: rgba(255,255,255,.16); stroke: rgba(0,0,0,.65); stroke-width: .6; }\n.iwm-sp-segment.is-filled { fill: var(--iwm-c); }\n';
   if (rel === 'styles/hud.css') return code + '\n/* #425: discrete fill; no animated interpolation across segment boundaries. */\n.iw-sp__segment { fill: rgba(255,255,255,.16); stroke: rgba(0,0,0,.65); stroke-width: 1; }\n.iw-sp__segment.is-filled { fill: var(--self); }\n';

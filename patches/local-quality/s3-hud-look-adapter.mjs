@@ -10,7 +10,10 @@
 // Squid icon silhouette of the S3 roster (64 box): pointed mantle, side fins at ~48%
 // height, straight body and a wavy tentacle edge.
 export const S3_SQUID_BADGE = 'M32 2 C34 2 36 3.4 37.8 5.4 L59.6 28 C61.6 30.2 60.6 31.9 58 32.1 L53 32.6 L53 54.5 C53 60 47.4 61 45.4 57 C43.4 61.6 38.2 62 36.6 57.6 C35 62.2 29 62.2 27.4 57.6 C25.8 62 20.6 61.6 18.6 57 C16.6 61 11 60 11 54.5 L11 32.6 L6 32.1 C3.4 31.9 2.4 30.2 4.4 28 L26.2 5.4 C28 3.4 30 2 32 2 Z';
-const BADGE_MASK = `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='${S3_SQUID_BADGE}'/></svg>`)}")`;
+// The badge silhouette ships once as hud/s3-squid-badge.svg (loaded on demand, outside the startup precache)
+// instead of a data URI inside the precached HUD stylesheet.
+export const S3_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="${S3_SQUID_BADGE}"/></svg>\n`;
+const BADGE_MASK = "url('../patches/local-quality/hud/s3-squid-badge.svg')";
 const FONT_DIR = '../patches/local-quality/fonts';
 const OLD_BADGE = "const BADGE_PATH = 'M32 2.5 C35.5 2.5 43 9 47.5 14.5 C50 14 55 15.5 57 18.5 C58.6 21 57.4 23.6 55.2 24.8 A24.5 24.5 0 1 1 8.8 24.8 C6.6 23.6 5.4 21 7 18.5 C9 15.5 14 14 16.5 14.5 C21 9 28.5 2.5 32 2.5 Z';";
 
@@ -35,15 +38,14 @@ const HUD_CSS = `
 .iw-sq__shape .o { stroke: var(--tc); stroke-opacity: .45; stroke-width: 2.6; }   /* soft ink edge, no outline */
 .iw-sq__shape .f { fill: var(--tc); stroke: none; }
 .iw-sq__shape .g { display: none; }
-/* ink body: lighter crown, darker foot and a few faint blotches, clipped to the squid by a mask (static, no repaint) */
+/* ink body: lighter crown, darker foot and faint blotches, clipped to the squid by a mask (static, no repaint);
+   browsers without unprefixed masks keep the plain silhouette rather than a square overlay */
+@supports (mask-image: none) {
 .iw-sq__badge::before { content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(ellipse 58% 36% at 47% 15%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 72%),
-    radial-gradient(circle at 26% 57%, rgba(255, 255, 255, .13) 0 6%, rgba(255, 255, 255, 0) 7.5%),
-    radial-gradient(circle at 73% 45%, rgba(0, 0, 0, .1) 0 7%, rgba(0, 0, 0, 0) 8.5%),
-    radial-gradient(ellipse 13% 9% at 38% 79%, rgba(0, 0, 0, .13), rgba(0, 0, 0, 0) 100%),
-    radial-gradient(circle at 64% 70%, rgba(255, 255, 255, .09) 0 6%, rgba(255, 255, 255, 0) 7.5%),
-    linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, .2));
-  -webkit-mask: ${BADGE_MASK} center / 100% 100% no-repeat; mask: ${BADGE_MASK} center / 100% 100% no-repeat; }
+  background: radial-gradient(ellipse 58% 36% at 47% 15%, #ffffff57, #fff0 72%), radial-gradient(circle at 26% 57%, #ffffff21 0 6%, #fff0 7.5%),
+    radial-gradient(ellipse 13% 9% at 38% 79%, #00000021, #0000), linear-gradient(#fff0 50%, #0003);
+  mask: ${BADGE_MASK} center / 100% 100% no-repeat; }
+}
 .iw-sq:nth-child(even) .iw-sq__badge::before { transform: scaleX(-1); }
 .iw-sq.is-dead .iw-sq__badge::before { opacity: .3; }
 .iw-sq__w { left: -9%; right: -9%; top: 27%; bottom: 3%; }
@@ -137,7 +139,7 @@ function once(code, before, after, label) {
 }
 
 const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
-    // Splatoon 3 ink tank: a near-black bottle (stepped cap: shoulders, neck, nub; straight sides,
+    // Splatoon 3 ink tank (flat ink surface, as in the footage): a near-black bottle (stepped cap: shoulders, neck, nub; straight sides,
     // rounded foot) with a thick frame; the ink is flat team colour inside the frame with one bright
     // meniscus line, and a thin white line marks the sub-weapon cost. No gloss, no bubbles.
     const T = this._tank, c = this.tankCtx, cv = this.tankCanvas;
@@ -171,17 +173,8 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
     c.fillStyle = 'rgba(58,48,58,.55)';
     c.fill(T2.well);
     const lvl = T2.wy + T2.wh * (1 - T.level);
-    const amp = (0.25 + T.wobble * 1.2 + Math.abs(T.sloshV) * 0.8) * dpr, tilt = T.slosh * T2.ww * 0.35;
-    c.beginPath();
-    c.moveTo(T2.wx - 2, H + 2);
-    for (let i = 0; i <= 8; i++) {
-      const u = i / 8;
-      c.lineTo(T2.wx + u * T2.ww, lvl + (u - 0.5) * tilt + Math.sin(u * 6 + T.t * 7) * amp);
-    }
-    c.lineTo(T2.wx + T2.ww + 2, H + 2);
-    c.closePath();
     c.fillStyle = cInk;
-    c.fill();
+    c.fillRect(T2.wx, lvl, T2.ww, H - lvl);
     if (T.level > 0.01) { c.fillStyle = cLine; c.fillRect(T2.wx, lvl - 0.6 * dpr, T2.ww, 1.6 * dpr); }
     c.restore();
     if (sub > 0) {

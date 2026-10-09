@@ -6,7 +6,7 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource, qualityIdentity } from '../adapter.mjs';
-import { adaptHudAuthority, SPECIAL_SEGMENTS, specialGaugeSVG } from '../hud-authority-adapter.mjs';
+import { adaptHudAuthority, SPECIAL_SEGMENTS, GAUGE_GEN, specialGaugeSVG, touchRingSVG } from '../hud-authority-adapter.mjs';
 import { turfExperience } from '../../splatoon3/runtime/results-scoring.mjs';
 import { fixture, readSource } from '../../reliability/tests/hud-fixture.mjs';
 const root = new URL('../../../', import.meta.url);
@@ -27,7 +27,9 @@ test('#425: native markup has exactly one path per measured Splatoon 3 tooth and
   // 23 teeth measured from Splatoon 3 footage: 11.9 deg pitch, no teeth in the upper-left quarter.
   assert.equal(SPECIAL_SEGMENTS,23);
   assert.equal((specialGaugeSVG().match(/class="iw-sp__segment"/g)||[]).length,N);
-  assert.equal((hudCode.match(/class=\\?"iw-sp__segment\\?"/g)||[]).length,N);
+  // the module ships the generator once and calls it for the orb markup (same source as specialGaugeSVG)
+  assert.equal(hudCode.split(GAUGE_GEN).length,2,'generator shipped once');
+  assert.match(hudCode,/html: s3SpecialGaugeSVG\(\) \}/);
   assert.doesNotMatch(hudCode,/spLiquid|spPct|iw-sp__pct|iw-sp__liquid|Math.floor\(s \* 100\)/);
   assert.match(hudCode,new RegExp(`'aria-valuemax': '${N}'`));
   assert.match(compose('styles/hud.css'),/\.iw-sp__segment.is-filled/);
@@ -144,7 +146,9 @@ test('#425: emitted full HUD and touch modules retain quantization and authorita
 
 test('#425: touch SP replacement uses the measured tooth steps while preserving readiness/buzz and other controls',()=>{
   const code=compose('src/core/mobile.js');
-  assert.equal((code.match(/class="iwm-sp-segment"/g)||[]).length,N);
+  assert.equal(code.split(GAUGE_GEN).length,2,'generator shipped once');
+  assert.match(code,/' \+ s3SpRingSVG\(\) \+ '/);
+  assert.equal((touchRingSVG().match(/class="iwm-sp-segment"/g)||[]).length,N);
   assert.doesNotMatch(code,/E.special.style.setProperty\('--g'/);
   const start=code.indexOf('  setHud('),end=code.indexOf('\n  endFrame()',start);
   const Mobile=vm.runInNewContext(`class Mobile {${code.slice(start,end)}};Mobile`,{clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});

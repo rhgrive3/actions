@@ -49,6 +49,7 @@
 - `patches/local-quality/s3-hud-look-adapter.mjs`：イカアイコンの輪郭、やられ表示、タイマー、ゲージの色、たおした通知、SP ボタンの絵。表示のみ。
 - `patches/local-quality/fonts/`：`iw-s3-digits.woff2`（独自の数字）、`iw-s3-jp.woff2`（Rounded M+ 1c Black のサブセット）、`OFL-RoundedMplus1c.txt`（ライセンス）。生成手順は `scripts/build-inkwave-hud-fonts.py`。
 - `inkwave-public/` は変更しない。
+- 起動時の先読み容量（`patches/loading-cache` の上限 5 MiB、CSS と hud.js・mobile.js などを含む）を超えないよう、ゲージの歯（23 本の `<path>`）はモジュール内の小さな生成関数で実行時に作り、イカアイコンの輪郭は CSS に埋め込まず `patches/local-quality/hud/s3-squid-badge.svg` を 1 枚のマスクとして参照する。`main`（5d0be6b7）取り込み後のビルドで先読み 5,238,862 バイト（上限まで約 4.0KB）。見た目は変えていない。
 
 ## 再現と確認
 
