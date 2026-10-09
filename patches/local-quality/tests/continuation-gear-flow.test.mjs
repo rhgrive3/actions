@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import * as continuation from '../result-continuation.mjs';
 import {adaptResultContinuation} from '../result-continuation-adapter.mjs';
-import {ABILITIES,abilityAllowed,emptyLoadout} from '../../splatoon3/runtime/gear.mjs';
+import {ABILITIES,SHOES_ABILITIES,abilityAllowed,emptyLoadout} from '../../splatoon3/runtime/gear.mjs';
 import {CLOTHING_ABILITIES,SPLATFEST_TEE} from '../../splatoon3/runtime/clothing-gear.mjs';
 import {HEAD_ABILITIES} from '../../splatoon3/runtime/conditional-gear.mjs';
 const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
@@ -25,7 +25,7 @@ class Node {
 }
 function rig({active=true,gear=true}={}){
  const saved=[],tuning=JSON.parse(read('../../splatoon3/profile.json'));
- const create=vm.runInNewContext('('+source.slice(panel.start,panel.end)+')',{document:{createElement:tag=>new Node(tag)},readLoadout:()=>emptyLoadout(),ABILITIES,abilityAllowed,CLOTHING_ABILITIES,SPLATFEST_TEE,HEAD_ABILITIES,tuning,G:{},STORAGE:'inkwave.splatoon3.gear.v1',localStorage:{setItem:(key,value)=>saved.push([key,JSON.parse(value)])}});
+ const create=vm.runInNewContext('('+source.slice(panel.start,panel.end)+')',{document:{createElement:tag=>new Node(tag)},readLoadout:()=>emptyLoadout(),ABILITIES,SHOES_ABILITIES,abilityAllowed,CLOTHING_ABILITIES,SPLATFEST_TEE,HEAD_ABILITIES,tuning,G:{},STORAGE:'inkwave.splatoon3.gear.v1',localStorage:{setItem:(key,value)=>saved.push([key,JSON.parse(value)])}});
  const el=new Node('div'),box=new Node('div'),look=new Node('button');box.className='iw-loadout__look';box.append(look);el.append(box);const details=gear?create():null;if(details)el.append(details);
  const result={win:true,players:[]},screen={name:'loadout',el},calls=[],menus={current:'loadout',_results:result,_scr:screen,_resultContinuation:active?{result,committed:false}:null,_btn:opts=>Object.assign(new Node('button'),{opts}),api:{prepareMatch:()=>calls.push('prepare'),rematch:()=>calls.push('rematch')}};
  return {el,box,look,details,screen,menus,calls,saved};

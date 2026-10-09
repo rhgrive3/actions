@@ -83,18 +83,20 @@ export function installThermalTracking(api, tuning) {
       const before = this._hitSeq, result = send.call(this, attacker, victim, damage, source, ...rest);
       const pending = this._hitSeq !== before && this._pendingHits?.get(this._hitSeq);
       if (pending && qualified) pending.privateThermal = { attacker, victim, match: G.match,
-        ownerEpoch: epoch(attacker), victimEpoch: epoch(victim), victimId: victim.owner, source };
+        ownerEpoch: epoch(attacker), victimEpoch: epoch(victim), source };
       return result;
     };
     NetMatch.prototype._hitAck = function (receipt, ...args) {
-      const previous = ackContext; ackContext = this._pendingHits?.get(receipt?.h)?.privateThermal;
+      const previous = ackContext;
+      const metadata = this._pendingHits?.get(receipt?.h)?.privateThermal;
+      ackContext = metadata && { ...metadata, receiptOwner: args[0] };
       try { return ack.call(this, receipt, ...args); } finally { ackContext = previous; }
     };
     on('combat:confirmed', ({ attacker, victim, damage }) => {
       const r = ackContext;
       if (damage > 0 && r?.attacker === attacker && r.victim === victim && r.match === G.match &&
           r.ownerEpoch === epoch(attacker) && r.victimEpoch === epoch(victim) &&
-          r.victimId === victim.owner) stamp(attacker, victim, G.time);
+          r.receiptOwner === victim.owner) stamp(attacker, victim, G.time);
     });
   }
   ensureRenderer();
