@@ -37,10 +37,28 @@ export function adaptIssue479(rel, code) {
     'roller install owner');
 
   const oldMode = 'this.s3FlickVertical = !groundedCancel && !a.grounded;';
-  if (code.includes(oldMode)) {
+  const currentAdmission = '    const fullCancelGroundAttack = hasFullCancelGroundAttack(a);';
+  const legacyAdmission = '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);';
+  if (code.includes(currentAdmission)) {
+    // Payment and the admitted pose share one latched free-fall selection.
+    // Retain all current contact, full-cancel and depleted-volley branches.
+    code = replaceOnce(code, currentAdmission,
+      currentAdmission + '\n    const isVertical = !fullCancelGroundAttack && selectRollerFlickVertical(a, this);',
+      'roller current free-fall admission');
+    code = replaceOnce(code, '!a.grounded ? w.verticalInk : w.flickInk',
+      'isVertical ? w.verticalInk : w.flickInk', 'roller selected-mode payment');
     code = replaceOnce(code, oldMode,
-      'this.s3FlickVertical = groundedCancel ? false : selectRollerFlickVertical(a, this);',
+      'this.s3FlickVertical = groundedCancel ? false : isVertical;',
       'roller vertical selector');
+  } else if (code.includes(legacyAdmission)) {
+    code = replaceOnce(code, legacyAdmission,
+      '    const isVertical = selectRollerFlickVertical(a, this);\n' +
+      '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (isVertical ? w.verticalInk : w.flickInk);',
+      'roller legacy free-fall admission');
+    code = replaceOnce(code, 'this.s3FlickVertical = !a.grounded;',
+      'this.s3FlickVertical = isVertical;', 'roller legacy vertical selector');
+  } else {
+    throw new Error('INKWAVE issue-479 patch conflict (roller admission): expected one known shape');
   }
 
   return code;

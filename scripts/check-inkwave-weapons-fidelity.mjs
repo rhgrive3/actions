@@ -15,6 +15,9 @@ const data = await measure({ site, fidelity: true, detail: false });
 // PR1083 composes native InkFlight hurtboxes with the sourced trailing/nearest
 // paint owners (Shooter/Dualies/Splatling), Roller maximum/impact paint and
 // Slosher intermediate drops. These replace the prior pre-integration receipts.
+// PR1168's reconciled Charger range maps the first legal linear charge (8/60)
+// to DistanceMinCharge. Re-measured composed source and emitted-build receipts
+// below retain that legal-minimum band and the canonical scoring-paint owner.
 // Keep the .1-unit collision sweep and .25-unit scoring grid exact.
 const golden = {
   shooter:[12.6,12.2,14.375,1],
@@ -25,10 +28,10 @@ const golden = {
   'splatling-first':[20.1,19.4,22.375,1],
   'splatling-full':[20.1,19.4,22.375,1],
   'charger-0':[9.8,9.8,13.375,0],
-  'charger-0.25':[13.5,13.5,16.625,0],
-  'charger-0.5':[17.3,17.3,20.125,0],
-  'charger-0.75':[21.0,21.0,23.625,0],
-  'charger-1':[24.8,24.8,26.625,0],
+  'charger-0.25':[11.8,11.8,14.875,0],
+  'charger-0.5':[16.1,16.1,18.875,0],
+  'charger-0.75':[20.4,20.4,23.375,0],
+  'charger-1':[24.8,24.8,26.875,0],
   'roller-horizontal':[11.2,6.1,14.125,13],
   'roller-vertical':[16.3,6.9,19.125,5],
   slosher:[13.5,13.5,13.625,9],
@@ -68,7 +71,7 @@ for (const key of ['shooter','roller-horizontal','roller-vertical']) {
   const a = reset(f,c); a.nid=42;
   // Use the installed recorder, including the existing birth metadata and
   // owner-tick/sequence footer. This adds no protocol fields or runtime changes.
-  const network={mute:0,out:[],_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  const network={s:{_inkwaveEventSeq:0},mute:0,out:[],_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
   f.G.netm=network; launch(f,a,c); const locals=[...f.projectiles.list], packets=network.out;
   assert.equal(packets.length,locals.length,key);
   for (const [i,p] of packets.entries()) {
@@ -83,6 +86,7 @@ for (const key of ['shooter','roller-horizontal','roller-vertical']) {
     assert.equal(p[34],Math.round((f.G.time||0)*60),key+' owner tick');
     assert.equal(p[35],i+1,key+' event sequence');
   }
+  assert.equal(network.s._inkwaveEventSeq,packets.length,key+' session event sequence');
   const ghost=f.make(c.id,{name:'remote'}); ghost.remote=true; f.projectiles.list.length=0;
   packets.forEach(e=>f.projectiles.ghostProjectile(ghost,e)); const ghosts=[...f.projectiles.list];
   assert.equal(ghosts.length,locals.length,key);
@@ -282,7 +286,7 @@ assert.equal(ghostDualies.f.paints.length,0,'ghost Dualies wall-drop cannot muta
   f.wall(4,{height:8});
   const a=f.make('blaster'); a.nid=42; a.aimPoint.set(0,1.05,20);
   const packets=[];
-  const recorder={mute:0,out:packets,_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  const recorder={s:{_inkwaveEventSeq:0},mute:0,out:packets,_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
   f.G.netm=recorder;
   f.projectiles.fireBlaster(a,a.weapon,0);
   assert.equal(packets.length,1,'Blaster birth packet recorded');

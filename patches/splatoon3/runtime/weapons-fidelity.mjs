@@ -15,9 +15,11 @@ import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-coll
 import {distanceDamage, groupDamage, applyProjectileHit as legacyHit, applySlosherVolleyHit, cachedWeaponOverrideConfig, withWeaponScalarOverride} from './weapons.mjs';
 import {damageGroupId} from './final-damage.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
+import { coherentMotionStart } from './actor-motion.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
+const inkFlightHelpers = new WeakMap();
 const SPLATLING_NOMINAL_LIFETIME = 1.2;
 let api, completion, moves, slosherVolleySequence = 0;
 const slosherDropConfigs = new WeakMap();
@@ -267,6 +269,48 @@ export function fidelityDualiesAimTarget(projectiles, actor, muzzle, hand) {
   return fidelityDualiesAimTargets(projectiles, actor, scratch.muzzles[0], scratch.muzzles[1])[index];
 }
 
+// The guide and live Dualies fire path share this production launch correction
+// and speed. Direction already contains the per-hand aim ray and target.
+function dualiesLaunchScratch(projectiles) {
+  return projectiles._fidelityDualiesLaunchScratch || (projectiles._fidelityDualiesLaunchScratch = {
+    profile: null, speed: 0, chargeSeconds: 0,
+  });
+}
+
+export function fidelityDualiesLaunchPlan(projectiles, actor, weapon, muzzle, target, dir) {
+  const helpers = inkFlightHelpers.get(projectiles);
+  if (!helpers) throw new Error('InkFlight helpers were not injected by the adapted source weapons module');
+  const { profileFor, launchSpeed, correctInkAim, referenceReach } = helpers;
+  const profile = profileFor(weapon);
+  if (!profile) return null;
+  const chargeSeconds = (actor.weaponRunner?.charge || 0) * (weapon.chargeTime || 0);
+  const speed = launchSpeed(profile, chargeSeconds);
+  correctInkAim(profile, muzzle, dir, target, speed,
+    Math.min(weapon.range, referenceReach(profile, chargeSeconds)));
+  const plan = dualiesLaunchScratch(projectiles);
+  plan.profile = profile; plan.speed = speed; plan.chargeSeconds = chargeSeconds;
+  return plan;
+}
+
+// The adapted source Projectiles constructor supplies its own imported native
+// InkFlight helpers once per system. This keeps guide and live launches on the
+// same functions while allowing both flattened site builds and source-tree Node imports.
+export function configureFidelityInkFlight(projectiles, helpers) {
+  if (!projectiles || (typeof projectiles !== 'object' && typeof projectiles !== 'function'))
+    throw new TypeError('Projectiles instance required for InkFlight helper injection');
+  if (!helpers || !['profileFor', 'launchSpeed', 'correctInkAim', 'referenceReach']
+    .every(name => typeof helpers[name] === 'function'))
+    throw new TypeError('Complete native InkFlight helpers required');
+  const current = inkFlightHelpers.get(projectiles);
+  if (current) {
+    if (['profileFor', 'launchSpeed', 'correctInkAim', 'referenceReach']
+      .every(name => current[name] === helpers[name])) return projectiles;
+    throw new Error('Projectiles InkFlight helpers already configured');
+  }
+  inkFlightHelpers.set(projectiles, helpers);
+  return projectiles;
+}
+
 // Source records supply endpoints/counts. Added random draws are deterministic
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
 function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
@@ -367,7 +411,7 @@ function eligibleWallDropHit(hit) {
 }
 function wallDropPaint(p, point, radius, state, salt) {
   if (p.ghost || !(radius > 0) || !api.G.paint) return 0;
-  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++) });
+  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), claimOwner: p.owner });
   if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   return area || 0;
 }
@@ -915,16 +959,18 @@ export function fidelitySlosherDrawTail(p,speed) {
 }
 // One unit-selection rule, shared by the main volley and the appended
 // nearest-glob unit, so both read the same pinned DrawSizeParam.
-function flickUnitFor(weapon,vertical,index) {
+function flickUnitFor(weapon,vertical,index,depleted=false) {
   const raw=rawWeapon(weapon);
   const group=raw?raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam']:null;
   if(!group)return null;
   let offset=index;
-  for(const u of group.Unit){if(offset<(u.BulletNum??1))return {unit:u,offset};offset-=u.BulletNum??1;}
+  // #305: a depleted swing emits the sourced DepletionBulletNum per unit; an
+  // absent field falls back to that unit's own BulletNum, never a foreign unit.
+  for(const u of group.Unit){const count=depleted?(u.DepletionBulletNum??u.BulletNum??1):(u.BulletNum??1);if(offset<count)return {unit:u,offset};offset-=count;}
   return null;
 }
-export function rollerFlickDrawRadius(weapon,vertical,index,age=0,fallback=null) {
-  const picked=flickUnitFor(weapon,vertical,index);
+export function rollerFlickDrawRadius(weapon,vertical,index,age=0,fallback=null,depleted=false) {
+  const picked=flickUnitFor(weapon,vertical,index,depleted);
   if(!picked)return fallback;
   const record=drawRadiusRecord(picked.unit.UnitParam?.DrawSizeParam);
   return record?radiusAt(record,age,fallback):fallback;
@@ -935,21 +981,31 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   // _push so a later actor/profile mutation cannot rewrite an already-fired volley.
   p.s3Weapon=weapon; p.wid=weapon.id;
   const vertical=!!actor.weaponRunner.s3FlickVertical;
+  // #305: a depleted swing sends fewer, slower, weaker rounds whose per-unit
+  // rates come from the same pinned Depletion* records as the full volley.
+  const depleted=!!weapon.s3Depletion;
+  p.s3DepletionRound=depleted;
+  p.s3DepletionPaintScale=1;
   const group=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'];
-  const picked=flickUnitFor(weapon,vertical,index);
+  const picked=flickUnitFor(weapon,vertical,index,depleted);
   if(!picked)throw new RangeError('Roller index exceeds pinned units + labelled defaults');
   const {unit,offset}=picked;
   // #1128: camera aim already owns the legal gameplay pitch envelope. Do not
   // collapse Roller flicks onto the legacy [-0.2,+0.5] plateaus before applying
   // the extracted per-unit launch offsets.
+  const speedRate=depleted?(unit.DepletionSpeedRate??1):1;
   let pitch=Number.isFinite(actor.aimPitch)?actor.aimPitch:0;
+
   if(vertical){
-    speed=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0));
+    speed=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0))*speedRate;
     pitch+=radians((unit.SpawnRotateXDegreeBase||0)+offset*(unit.AfterOffsetSpawnRotateXDegree||0));
     angle=actor.yaw+radians(unit.SpawnRotateYDegree||0);
   }else{
-    const count=unit.BulletNum??1,fan=count>1?offset/(count-1)*2-1:0;
-    speed=60*(unit.SpawnSpeedBase+(Math.random()*2-1)*(unit.SpawnSpeedRandom||0));
+    // The depleted fan spreads the sourced DepletionBulletNum slots over the
+    // same SpawnWideDegree; the exact angular distribution of the reduced set is
+    // not recovered from the parameter table and is an INKWAVE model.
+    const count=(depleted?(unit.DepletionBulletNum??unit.BulletNum):unit.BulletNum)??1,fan=count>1?offset/(count-1)*2-1:0;
+    speed=60*(unit.SpawnSpeedBase+(Math.random()*2-1)*(unit.SpawnSpeedRandom||0))*speedRate;
     angle=actor.yaw+fan*radians(unit.SpawnWideDegree||0);
     pitch+=radians(b.horizontalPitchDegrees); // retained calibrated launch angle, NOT extracted
     const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnPositionRandomCube||0;
@@ -967,6 +1023,8 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;p.fidelityRollerUnitIndex=group.Unit.indexOf(unit);
   setCollision(p,unit.UnitParam.CollisionParam);
   setDrawRadius(p,unit);
+  const depletionPaintRate=unit.UnitParam?.PaintParam?.DepletionDepthWidthRate;
+  p.s3DepletionPaintScale=depleted && Number.isFinite(depletionPaintRate) && depletionPaintRate>0 ? depletionPaintRate : 1;
   p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;
   p.grav=weapon.flickGravity;p.drag=weapon.flickDrag;
 }
@@ -974,7 +1032,7 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
 function scratch(system) {
   return system._fidelityCollision || (system._fidelityCollision = {
     worldReady:false, bossReady:false, world:new api.Hit(), boss:null,
-    base:new api.THREE.Vector3(), res:{t:0,dist:0}, targets:[],
+    base:new api.THREE.Vector3(), moved:new api.THREE.Vector3(), res:{t:0,dist:0}, targets:[],
   });
 }
 export function fidelityWorldHit(system,p) {
@@ -1028,13 +1086,35 @@ export function fidelityProjectileTargets(system,p) {
     // FriendThroughFrameForPlayer window. A missing source record keeps the
     // native same-team skip instead of inventing one global collider rule.
     if(friendly&&!Number.isFinite(p.fidelityFriendThrough))continue;
+    // #1040: start-of-tick pose of this actor over the SAME fixed step the
+    // round segment spans; null (spawn/teleport/adoption/death/no-snapshot)
+    // falls back to the single current pose used before this issue.
+    const rec=coherentMotionStart(actor);
+    const x0=rec?rec.x0:actor.pos.x,y0=rec?rec.y0:actor.pos.y,z0=rec?rec.z0:actor.pos.z;
+    // Preserve current authoritative per-actor hurtbox dimensions.
     const bodyRadius=hurtboxRadius(actor,PLAYER),height=hurtboxHeight(actor,PLAYER);
     const radius=bodyRadius+Math.max(r0,r1);
-    if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
-       actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
-    s.base.copy(actor.pos); // render easing does not move the authoritative capsule
+    const segMinX=Math.min(p.prev.x,p.pos.x)-radius,segMaxX=Math.max(p.prev.x,p.pos.x)+radius;
+    const segMinZ=Math.min(p.prev.z,p.pos.z)-radius,segMaxZ=Math.max(p.prev.z,p.pos.z)+radius;
+    if(Math.min(x0,actor.pos.x)>segMaxX||Math.max(x0,actor.pos.x)<segMinX||
+       Math.min(z0,actor.pos.z)>segMaxZ||Math.max(z0,actor.pos.z)<segMinZ)continue;
     const kr=kitTrizookaActorRadius(system,p);
-    const t=kr==null?capsuleEntry(p.prev,p.pos,s.base,bodyRadius,height,r0,r1):kitSegmentCapsuleEntry(p.prev,p.pos,s.base,bodyRadius,height,kr);
+    let t;
+    if(rec){
+      // Time-coherent relative motion: solving the round segment shifted back
+      // by the actor's tick displacement against the START pose is exactly the
+      // contact of (round(t) - actor(t)) with the capsule, for linear motion
+      // of both over the tick. The returned parameter is the true shared-time
+      // contact, so age windows, impact point and world/boss distance ordering
+      // keep their original meaning (world tests remain against the static
+      // terrain segment, compared by the round's travelled distance).
+      s.base.set(x0,y0,z0);
+      s.moved.set(p.pos.x-(actor.pos.x-x0),p.pos.y-(actor.pos.y-y0),p.pos.z-(actor.pos.z-z0));
+      t=kr==null?capsuleEntry(p.prev,s.moved,s.base,bodyRadius,height,r0,r1):kitSegmentCapsuleEntry(p.prev,s.moved,s.base,bodyRadius,height,kr);
+    }else{
+      s.base.copy(actor.pos); // render easing does not move the authoritative capsule
+      t=kr==null?capsuleEntry(p.prev,p.pos,s.base,bodyRadius,height,r0,r1):kitSegmentCapsuleEntry(p.prev,p.pos,s.base,bodyRadius,height,kr);
+    }
     if(t===null)continue;
     if(friendly){
       // The window is measured in source frames at the contact point of this
@@ -1115,7 +1195,11 @@ export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
     const source=rawWeapon(w)[p.s3Vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].DamageParam;
     const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*impactT;
     const t=clamp01((age*60-source.DamageRejectStartFrame)/(source.DamageRejectEndFrame-source.DamageRejectStartFrame));
-    return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t);
+    // #305: the depleted round keeps the DepletionDamageRate of the exact table
+    // it hit (Inside/Outside); a family without that sourced field (vertical)
+    // keeps its full-table damage.
+    const depletionRate=p.s3DepletionRound?((outside?source.Outside:source.Inside)?.DepletionDamageRate??1):1;
+    return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t)*depletionRate;
   }
   if(w.kind==='slosher'&&p.fidelitySloshUnit){
     const d=p.fidelitySloshUnit.DamageParam;
@@ -1329,7 +1413,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshDownward=null;p.fidelitySloshFallAnchorY=null;p.fidelitySloshPacketIndex=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.s3DepletionPaintScale=1;p.s3DepletionRound=false;p.fidelitySloshUnit=null;p.fidelitySloshDownward=null;p.fidelitySloshFallAnchorY=null;p.fidelitySloshPacketIndex=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -1430,7 +1514,7 @@ export function installWeaponsFidelity(context,profile) {
     applySlosherSpawnVelocity(p);
     if(w?.kind==='blaster' && !p.s3SpecialWeapon && !p.ghost) configureBlasterFlightPaint(p,rawWeapon(w),completion.worldUnitsPerSourceUnit);
     if(w?.kind==='roller' && p.fidelityMode==='vertical' && p.fidelityRollerUnitIndex===0 && !p.ghost)
-      configureRollerVerticalPaint(p,rawWeapon(w).VerticalSwingUnitGroupParam,completion.worldUnitsPerSourceUnit);
+      configureRollerVerticalPaint(p,rawWeapon(w).VerticalSwingUnitGroupParam,completion.worldUnitsPerSourceUnit,p.s3DepletionPaintScale??1);
     const group=p.s3DamageGroup;const result=push.call(this,p);
     // The generic wrapper snapshots owner state too; retain a single per-volley owner.
     if(group)p.s3DamageGroup=group;
@@ -1760,11 +1844,12 @@ export function installWeaponsFidelity(context,profile) {
     for(let hand=0;hand<2;hand++){
       const p=shots[hand],out=points[hand],dir=dirs[hand];
       this._aimFrom(actor,p.pos,dir,targets[hand]);
-      fidelityAimConvergence(p.pos,dir,targets[hand],w,w.projSpeed);
+      const launch=fidelityDualiesLaunchPlan(this,actor,w,p.pos,targets[hand],dir);
+      if(!launch)return null;
       p.owner=actor;p.type='shot';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=1.2;p.straight=w.straightTime;
       p.delay=0;p.ghost=false;p.size=w.impactRadius??.15;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
       p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
-      p.vel.copy(dir).multiplyScalar(w.projSpeed);
+      p.vel.copy(dir).multiplyScalar(launch.speed);
       initialize(p,w);
       // Use the same canonical head solver as native Dualies, without creating drops or wire events.
       this._aimFrom(actor,p.start,dir,targets[hand]);

@@ -110,3 +110,20 @@ test('optional focused regressions preserve the canonical gate and publish only 
   assert.ok(workflow.includes('FOCUSED_BASELINES: ${{ inputs.focused_baselines }}'));
   assert.ok(workflow.includes('FOCUSED_EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/evidence/inkwave-focused-'));
 });
+
+
+test('worker source regressions have their pinned dependency and writable persistent storage before focused and canonical tests', () => {
+  const validate=workflow.slice(workflow.indexOf('  validate:'),workflow.indexOf('  browser:'));
+  const install=validate.indexOf('name: Install pinned source regression and build tool');
+  const prepare=validate.indexOf('name: Prepare persistent worker regression fixtures');
+  const focus=validate.indexOf('name: Run requested focused source regressions');
+  const canonical=validate.indexOf('name: Verify loading/cache regressions');
+  assert(install>=0 && install<focus && prepare>=0 && prepare<focus && prepare<canonical);
+  assert.equal((validate.match(/npm install --no-save --no-package-lock --silent esbuild@0\.28\.2/g)||[]).length,1);
+  const storage=validate.slice(prepare,validate.indexOf('name: Prepare persistent focused test evidence'));
+  assert(!storage.includes('if:'), 'storage is required even when focused_tests is empty');
+  assert(storage.indexOf('realpath -m')<storage.indexOf('sudo mkdir'));
+  assert(storage.includes('sudo chown "$(id -u):$(id -g)" "$INKWAVE_TEST_SCRATCH"'));
+  assert(storage.includes('test -w "$INKWAVE_TEST_SCRATCH"'));
+  assert(workflow.includes('INKWAVE_TEST_SCRATCH: /mnt/workspace/.dev-state/agent-work/scratch/inkwave-worker-${{ github.run_id }}-${{ github.run_attempt }}'));
+});

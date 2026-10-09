@@ -20,18 +20,18 @@ const heldFireControl = (rel, code) => {
   return code;
 };
 
-async function world(weapon, ink, { baseline, hz = 60 }) {
+async function world(weapon, ink, { baseline, hz = 60, paintRoller = false }) {
   const f = await fixture({ adapt: baseline ? heldFireControl : composed, extraExports: "export * from './inkwave-public/src/game/bots.js';" });
   const a = f.make(weapon); a.ink = ink; a.hp = f.PLAYER.hp; a.lastFire = 99; a.lastDamage = 99;
   let puddle = false;                                     // the paint a released shot / stream leaves under the bot
   f.G.paint.sample = () => puddle ? 1 : 0;                // team 0 owns "1" once painted; otherwise bare dry ground
   f.G.paint.regionStats = (_x, _y, _z, _r, _t, out) => Object.assign(out, { own: 0, enemy: 0, empty: 1, n: 1 });
-  for (const kind of ['fireCharger', 'fireSplatling']) { const orig = f.G.projectiles[kind]; f.G.projectiles[kind] = (...args) => { puddle = true; return orig(...args); }; }
+  for (const kind of ['fireCharger', 'fireSplatling', ...(paintRoller ? ['fireFlick'] : [])]) { const orig = f.G.projectiles[kind]; f.G.projectiles[kind] = (...args) => { puddle = true; return orig(...args); }; }
   f.G.projectiles.fireSlosh = () => f.shots.push({ kind: 'slosher' });
   const brain = new f.BotBrain(a, 'normal'); a.bot = brain;
   brain._perceive = () => {}; brain._pickRefill = () => { brain.path = null; brain.repath = 1; }; brain._steer = () => new f.THREE.Vector3(); brain._pickPaintGoal = () => { brain.path = null; brain.goalTimer = 1; };
   const dt = 1 / hz, log = [];
-  const step = () => { f.G.time += dt; brain.update(dt); a.update(dt); log.push({ mode: brain.mode, charging: a.weaponRunner.charging, streaming: a.weaponRunner.streaming, ink: a.ink, shots: f.shots.length, fire: a.intent.fire }); };
+  const step = () => { f.G.time += dt; brain.update(dt); a.update(dt); log.push({ mode: brain.mode, charging: a.weaponRunner.charging, streaming: a.weaponRunner.streaming, ink: a.ink, shots: f.shots.length, fire: a.intent.fire, flick: a.weaponRunner.flick, depleted: !!a.weaponRunner.s3RollerAttack?.depleted, depletionPayment: a.weaponRunner.s3RollerDepletion?.inkCost }); };
   return { f, a, brain, step, log, get puddle() { return puddle; } };
 }
 const longestRun = (log, pred) => { let best = 0, run = 0; for (const e of log) { run = pred(e) ? run + 1 : 0; best = Math.max(best, run); } return best; };
@@ -68,13 +68,36 @@ test('#914 starting below the charge-start threshold still progresses once kid r
   }
 });
 
-test('#914 shooter / blaster / slosher / roller keep holding Fire for the refill puddle (unchanged)', async () => {
+test('#914 hold-to-fire puddle policy is unchanged and Roller depletion finishes after low-ink release', async () => {
   for (const weapon of ['shooter', 'blaster', 'slosher', 'roller', 'dualies']) {
     const before = await world(weapon, 6, { baseline: true }), after = await world(weapon, 6, { baseline: false });
     for (let i = 0; i < 60; i++) { before.step(); after.step(); }
     assert.deepEqual(after.log.map(e => e.fire), before.log.map(e => e.fire), weapon);
-    assert.equal(after.log[10].fire, true, weapon);
+    if (weapon === 'roller') {
+      // #305 spends the positive low tank on admission. The bot then stops Fire
+      // below its unchanged 3% threshold, while the paid swing remains latched.
+      const admitted = after.log[0], release = after.log.find(e => e.shots > 0);
+      assert.equal(admitted.fire, true);
+      assert.equal(admitted.depleted, true);
+      assert.equal(admitted.depletionPayment, after.a.weapon.flickInk * after.f.profile.weapons.roller.depletionInkRate);
+      assert.ok(admitted.ink < 3);
+      assert.equal(after.log[10].fire, false);
+      assert.ok(after.log[10].flick >= 0, 'the admitted depleted windup survives Fire release');
+      assert.ok(release, 'native fireFlick still releases the paid puddle swing');
+      assert.equal(after.log.indexOf(release), 21, 'native horizontal windup remains 21F');
+      assert.equal(release.ink, admitted.ink, 'release does not pay for the same swing again');
+    } else assert.equal(after.log[10].fire, true, weapon);
   }
+});
+
+test('#914 admitted depleted Roller swing creates its refill puddle and leaves refill mode', async () => {
+  const w = await world('roller', 6, { baseline: false, paintRoller: true });
+  for (let i = 0; i < 60 * 25; i++) w.step();
+  assert.equal(w.log[0].depleted, true);
+  assert.ok(w.log.some(e => e.shots > 0), 'the actual native WeaponRunner releases its swing');
+  assert.equal(w.puddle, true, 'the fixture records the actual fireFlick emission as paint');
+  assert.ok(Math.max(...w.log.map(e => e.ink)) > 6, 'native kid/swim refill makes progress');
+  assert.notEqual(w.log.at(-1).mode, 'refill');
 });
 
 test('#914 own-ink refill path is untouched: standing in own ink never fires for the puddle', async () => {

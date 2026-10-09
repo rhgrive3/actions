@@ -216,6 +216,10 @@
       "rollBaseSpeed": 6.4799999999999995,
       "rollDashTime": 1.5,
       "rollInkPerMeter": 0.7575757575757576,
+      "rollInkMinPerFrame": 0.0002,
+      "rollInkMaxPerFrame": 0.001,
+      "rollInkMinSpeed": 1.2,
+      "rollInkMaxSpeed": 7.92,
       "flickWindup": 0.35,
       "flickInk": 8.5,
       "moveSpeedFiring": 2.88,
@@ -224,6 +228,10 @@
       "flickSpreadDeg": 36,
       "flickDamageNear": 150,
       "flickDamageFar": 35,
+      "depletionInkRate": 0.5,
+      "flickDepletionDrops": 3,
+      "verticalDepletionDrops": 3,
+      "depletionDamageRate": 0.25,
       "flickDamageBands": [
         [
           4.2,
@@ -280,7 +288,8 @@
         "mainSpeedBase": 1.05,
         "halfAngleDegrees": 4,
         "mainWidthReference": 0.8,
-        "widthRatio": 0.5
+        "widthRatio": 0.5,
+        "depletionSpeedRate": 0.5
       },
       "ballistics": {
         "endSpeed": null,

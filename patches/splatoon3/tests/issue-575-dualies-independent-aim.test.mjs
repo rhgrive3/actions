@@ -28,8 +28,8 @@ async function nativeFixture({ grounded = true, wire = false } = {}) {
     adaptNative,
     adaptRuntime,
     extraExports: `
-      export { Character } from './inkwave-public/src/game/character.js';
-      export { NetMatch } from './inkwave-public/src/net/netmatch.js';
+      export { Character } from './src/game/character.js';
+      export { NetMatch } from './src/net/netmatch.js';
       export { installSubSpecialFidelity } from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
       export { installWeaponsFidelity, installShotGuide, advanceFidelityProjectile } from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     `,
@@ -38,9 +38,11 @@ async function nativeFixture({ grounded = true, wire = false } = {}) {
   f.installWeaponsFidelity(f, f.profile);
   f.installShotGuide(f, f.profile);
   assert.equal(f.profile.referenceVersion, '11.3.0');
-  assert.ok(adaptedNative.has('src/game/weapons.js'));
-  assert.ok(adaptedRuntime.has('patches/splatoon3/runtime/weapons.mjs'));
-  assert.ok(adaptedRuntime.has('patches/splatoon3/runtime/weapons-fidelity.mjs'));
+  if (!process.env.INKWAVE_BUILT_SITE) {
+    assert.ok(adaptedNative.has('src/game/weapons.js'));
+    assert.ok(adaptedRuntime.has('patches/splatoon3/runtime/weapons.mjs'));
+    assert.ok(adaptedRuntime.has('patches/splatoon3/runtime/weapons-fidelity.mjs'));
+  }
 
   const V = f.THREE.Vector3;
   const level = {
@@ -164,6 +166,8 @@ test('native grounded and airborne Dualies keep two independent aim centers and 
     f.setRandom(() => { randomCalls.count++; return 0; });
     const guideBefore = randomCalls.count;
     const guides = projectiles.s3DualiesGuides(actor, actor.weapon).map(point => point.clone());
+    const launchScratch = projectiles._fidelityDualiesLaunchScratch;
+    assert.ok(launchScratch, 'guide uses the Projectiles-owned preallocated launch plan');
     assert.equal(randomCalls.count, guideBefore, 'installed guide predicts without consuming native RNG');
     assert.ok(distance(guides[0], guides[1]) > 1e-6,
       `${grounded ? 'grounded' : 'airborne'} normal-fire guide centers are distinct`);
@@ -171,6 +175,8 @@ test('native grounded and airborne Dualies keep two independent aim centers and 
     const runner = actor.weaponRunner;
     runner.reset(); runner.cooldown = 0; runner.hand = 0; runner.s3Turret = false;
     const shots = actualShots(fixture);
+    assert.equal(projectiles._fidelityDualiesLaunchScratch, launchScratch,
+      'both native live launches reuse the guide launch-plan object');
     assert.deepEqual(shots.map(row => row.hand), [1, 0], 'NativeRunner preserves alternating left/right hand order');
     assert.ok(shots.every(row => !row.turret), 'normal-fire launches remain outside the post-roll turret owner');
     assert.equal(shots[1].tick - shots[0].tick, Math.round(actor.weapon.fireInterval / STEP),
@@ -196,7 +202,8 @@ test('native grounded and airborne Dualies keep two independent aim centers and 
       const fireRecords = netMatch.out.filter(record => record[1] === 'ev' && record[2] === 'weapon:fire');
       assert.equal(spawnRecords.length, 2, 'one owner projectile wire record per native launch');
       assert.equal(fireRecords.length, 2, 'one existing weapon:fire event per native launch');
-      assert.ok(spawnRecords.every(record => record.length === 36), 'the current projectile birth wire record keeps its field count');
+      assert.ok(spawnRecords.every(record => record.length === 36),
+        `the current projectile birth wire record keeps its field count: ${spawnRecords.map(record => record.length).join(',')}`);
       assert.deepEqual(Array.from(spawnRecords, record => record[32]), [1, 2], 'native projectile wire IDs remain sequential');
       assert.deepEqual(shots.map(row => row.round._netId), [1, 2], 'owner births retain the IDs serialized for playback');
       assert.deepEqual(Array.from(netMatch.out.filter(record => record[1] === 'p' || record[1] === 'ev'), record => record[1]),

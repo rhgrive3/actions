@@ -30,6 +30,38 @@ export function adaptNetworkSource(rel, code) {
       'source-guided head terminal identity');
     return code;
   }
+  if (rel === 'src/world/paint.js') {
+    patch('    const nm = G.netm;', '    const nm = G.netm;\n    let paintOrder = opts.__netOrder || null;', 'paint event identity enters shared owner');
+    patch('if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }',
+      'if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); paintOrder = nm.recSplat(center, radius, team, opts) || null; }',
+      'local paint captures canonical network identity');
+    patch('    const cosmetic = !!opts.cosmetic;',
+      '    const cosmetic = !!opts.cosmetic;\n    const netOrderId = !cosmetic && paintOrder ? this._paintOrderId(paintOrder) : 0;\n    const ownerOrder = netOrderId || this._paintCurrentOrder || 0;\n    const orderState = ownerOrder && !cosmetic ? { accepted: false } : null;',
+      'shared local and network cell owner');
+    patch('if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n          entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      'if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, ownerOrder, orderState);\n          if (!orderState || orderState.accepted) entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      'late or duplicate event cannot create unowned GPU growth');
+    patch('        g.cx = center.x; g.cy = center.y; g.cz = center.z;\n        g.paintOwner = this._paintOwnerContext?.owner || null;\n        g.paintCreditMode = this._paintOwnerContext?.mode || 0;\n        g.paintOrder = this._paintCurrentOrder || 0;',
+      '        g.cx = center.x; g.cy = center.y; g.cz = center.z;\n        g.paintOwner = this._paintOwnerContext?.owner || null;\n        g.paintCreditMode = this._paintOwnerContext?.mode || 0;\n        g.paintOrder = ownerOrder; g.netOrderId = netOrderId;',
+      'growth keeps the shared canonical owner');
+    patch('  _emitGrowth(g, tn, dT, dripOnly) {', `  _emitGrowth(g, tn, dT, dripOnly) {
+    const draw = (f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode) => {
+      if (!g.netOrderId) { this._pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode); return; }
+      const count = this._paintOrderRuns(f, g.netOrderId, u0, u1, v0, v1), runs = this._paintOrderRunScratch;
+      for (let i = 0; i < count; i++) { const at = i * 4;
+        this._pushQuad(f, runs[at], runs[at + 1], runs[at + 2], runs[at + 3], lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode);
+      }
+    };`, 'GPU growth uses the CPU owner mask');
+    patch('this._pushQuad(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);',
+      'draw(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);',
+      'wall drips respect the shared CPU mask');
+    patch('this._pushQuad(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);',
+      'draw(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);',
+      'body growth respects the shared CPU mask');
+    patch('    if (r <= 0.02) return 0;',
+      '    if (r <= 0.02) { if (orderState) orderState.accepted = true; return 0; }',
+      'keep existing fine paint presentation');
+  }
   if (rel === 'src/core/ctx.js') {
     patch('export function emit(name, payload) {\n  const set = listeners.get(name);\n  if (!set) return;\n  for (const fn of set) fn(payload);\n}', `const EVENT_VECTOR_FIELDS = Object.freeze({
   muzzle: eventVectorField('weapon-fire-muzzle', readMuzzle, writeMuzzle),
@@ -219,10 +251,26 @@ export function emit(name, payload) {
   }
 
   _remoteSplat(victim, attacker, cause) {`, 'host-authoritative first-splat protocol');
-    patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    clearRemoteSquidroll(victim);\n    victim.alive = false;", 'Flow observes only accepted remote splats');
+    patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    clearRemoteSquidroll(victim);\n    clearRemoteRollerPresentation(victim);\n    victim.alive = false;", 'Flow observes only accepted remote splats');
     patch("import { G, emit, on } from '../core/ctx.js'",
       "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js';\nimport { exportPendingLethal, restorePendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\nimport { exportSplatlingReservation, isValidSplatlingReservation, refundSplatlingReservation } from '../../patches/splatoon3/runtime/splatling.mjs';\nimport { validFinishCoverage, validFinishMapDataUrl } from '../../patches/splatoon3/runtime/turf-finish.mjs'",
       'read numeric event and adoption snapshots');
+    patch(`    if (a.weapon.kind === 'roller' && (f & F.flickVertical)) {
+      const w = a.weapon;
+      if (!wr.s3RollerAttack?.networkRemote) wr.s3RollerAttack = {
+        networkRemote: true, vertical: true, windup: w.verticalWindup,
+        interval: w.verticalInterval ?? w.flickInterval, elapsed: 0, released: false, rolling: false,
+      };
+      const attack = wr.s3RollerAttack;
+      attack.elapsed = Math.min(attack.interval, attack.elapsed + Math.max(0, dt));
+      attack.released = !(f & F.flick); attack.rolling = wr.rolling;
+      wr.s3FlickVertical = true;
+      a.character.s3RollerFlick = attack;
+    } else if (wr.s3RollerAttack?.networkRemote) {
+      wr.s3RollerAttack = null; wr.s3FlickVertical = false;
+      a.character.s3RollerFlick = null;
+    }
+`, '', 'remote Roller mode remains Character presentation only');
     patch('invuln: 262144, enemy: 524288,',
       'invuln: 262144, enemy: 524288, rollerFoldAttack: 1048576, rollerFoldVertical: 2097152,',
       'roller fold mode snapshot flags');
@@ -230,7 +278,7 @@ export function emit(name, payload) {
       'if (wr.slosh >= 0) f |= F.slosh;\n  if (wr.s3RollerAttack) f |= F.rollerFoldAttack;\n  if (wr.s3RollerAttack?.vertical) f |= F.rollerFoldVertical;',
       'pack owner Roller fold mode');
     patch('wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
-      'wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;\n    wr.s3RollerFoldAttack = f & F.rollerFoldAttack ? { vertical: !!(f & F.rollerFoldVertical) } : null;',
+      'wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;\n    wr.s3RollerFoldAttack = f & F.rollerFoldAttack ? { vertical: !!(f & F.rollerFoldVertical) } : null;\n    applyRemoteRollerPresentation(a, S.rollerFlick, dt, !!(S.f & F.alive));',
       'apply remote Roller fold mode');
     patch('const FORWARD = [', "const FORWARD = ['hit', 'hit:rejected', ",
       'authoritative hit admission feedback');
@@ -248,7 +296,7 @@ export function emit(name, payload) {
         `const hitAdmission = ${hitCall.slice(0, -1)};\n    if (hitAdmission === 'rejected-invulnerable') emit('hit:rejected', { attacker: atk, victim: v, damage: d.d, weaponId: d.w });`,
         'owner confirms invulnerability rejection');
     }
-    code = "import { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    code = "import { packRollerPresentation, readRollerPresentation, applyRemoteRollerPresentation, clearRemoteRollerPresentation } from '../../patches/network-replication/roller-presentation.mjs';\nimport { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     patch('  sendHit(attacker, victim, dmg, wid) {',
       '  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {', 'Slosher volley identity send');
     {
@@ -283,11 +331,12 @@ export function emit(name, payload) {
       (typeof d.g !== 'string' || !validDamageGroup(d.g))) return;
     this._applyingHit = true;`, 'Slosher owner identity admission');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
-    for (const a of this.byNid.values()) clearRemoteSquidroll(a);
+    for (const a of this.byNid.values()) { clearRemoteSquidroll(a); clearRemoteRollerPresentation(a); }
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
     patch('  _remove(a) {\n    this.byNid.delete(a.nid);', `  _remove(a) {
     clearRemoteSquidroll(a);
+    clearRemoteRollerPresentation(a);
     retireNetworkGhosts(a);
     this.byNid.delete(a.nid);`, 'departed owner retirement');
 
@@ -302,16 +351,19 @@ export function emit(name, payload) {
     if (this._applyingHit) return 'local';
     if (weaponId === 'bomb' || weaponId === 'splat-bomb-far') return victim.remote ? 'drop' : 'local';`, 'bomb recipient authority');
 
+    patch('  onLeave(id, hostChanged) {', '  onLeave(id, hostChanged) {\n    this.s._members?.delete(id);\n    this.peers.delete(id);', 'retire departed paint sender before replay');
     patch('  _rec(e) { this.out.push([r3(now()), ...e]); }', `  _rec(e) {
-    const seq = this._eventSeq = (this._eventSeq || 0) + 1;
+    const seq = this._eventSeq = Math.max(this._eventSeq || 0, this.s._inkwaveEventSeq || 0) + 1;
+    if (!Number.isSafeInteger(seq)) throw new Error('Network event sequence exhausted');
+    this.s._inkwaveEventSeq = seq;
     const tick = Math.round((G.time || 0)*60);
-    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event);
+    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event); return event;
   }`, 'ordered event identity');
     patch("const msg = { k: 't', ts: r3(now()), a",
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
       'owner simulation tick preserving existing sidecars');
     patch('    const a = [];\n    for (const x of this.byNid.values()) if (!x.remote) a.push(packActor(x));',
-      '    const a = [], sq = Object.create(null), wp = Object.create(null), bw = Object.create(null);\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const wr = x.weaponRunner, slosh = x.weapon?.kind === \'slosher\' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n      const sp = x.specialActive, phase = sp?.id === \'slam\' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n      const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n      if (slosh >= 0 || phase) wp[x.nid] = [slosh, phase, slamT];\n      const windup = x.weapon?.kind === \'blaster\' ? x.weaponRunner?.s3BlasterWindup : 0;\n      if (Number.isFinite(windup) && windup > 0) bw[x.nid] = Math.min(1, windup);\n    }',
+      '    const a = [], sq = Object.create(null), wp = Object.create(null), bw = Object.create(null), rf = Object.create(null);\n    const simulationTick = Math.max(0, Math.round((G.time || 0) * 60));\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const flick = packRollerPresentation(x, this, simulationTick);\n      if (flick) rf[x.nid] = flick;\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const wr = x.weaponRunner, slosh = x.weapon?.kind === \'slosher\' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n      const sp = x.specialActive, phase = sp?.id === \'slam\' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n      const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n      if (slosh >= 0 || phase) wp[x.nid] = [slosh, phase, slamT];\n      const windup = x.weapon?.kind === \'blaster\' ? x.weaponRunner?.s3BlasterWindup : 0;\n      if (Number.isFinite(windup) && windup > 0) bw[x.nid] = Math.min(1, windup);\n    }',
       'append optional Squid Roll and weapon/special motion sidecars');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
@@ -320,15 +372,16 @@ export function emit(name, payload) {
     }
     // actors
     if (d.a)`, 'snapshot physics tick pair');
-    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (Object.keys(rf).length) msg.rf = rf;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
-      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const a = this.byNid.get(s[0]);',
+      'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
       'strict optional Squid Roll and motion metadata validation');
     patch('      const snap = unpackActor(s, d.ts);\n      snap.spCost = d.sc?.[a.nid];',
-      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.sloshElapsed = pose ? pose[0] : -1; snap.slamPhase = pose ? pose[1] : 0; snap.slamT = pose ? pose[2] : 0;\n      snap.blasterWindup = windup;\n      snap.spCost = d.sc?.[a.nid];',
+      '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.sloshElapsed = pose ? pose[0] : -1; snap.slamPhase = pose ? pose[1] : 0; snap.slamT = pose ? pose[2] : 0;\n      snap.blasterWindup = windup; snap.rollerFlick = flick;\n      snap.spCost = d.sc?.[a.nid];',
       'attach validated presentation-only action clocks');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
+      e._netPeer = from;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
@@ -376,10 +429,10 @@ export function emit(name, payload) {
       "        if (e[3] === 'movement_cancel' || e[3] === 'land' || e[3] === 'spawn') clearRemoteSquidroll(a, true);\n        a.character._netTrig?.(e[3], unpackTrig(e[4]));",
       'remote cancellation event invalidates current visual Roll');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
+      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      clearRemoteRollerPresentation(a);\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
     patch('    const drop = mapNoBots(this.cfg.map);',
       "    const drop = this.cfg.map === 'range' || mapNoBots(this.cfg.map);", 'Practice Range remains humans-only on disconnect');
-    patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a);\n    clearRemoteSquidroll(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
+    patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a);\n    clearRemoteSquidroll(a);\n    clearRemoteRollerPresentation(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
     patch('    a.superJumpState = null; a.specialActive = null;',
       '    a.superJumpState = null; a.specialActive = null;\n    restoreAdoptionState(this, a, adoptionTransfer);',
       'restore authoritative actor state after ordinary runner reset');
@@ -428,6 +481,12 @@ export function emit(name, payload) {
     patch('st ? r3(st.x) : 0, st ? r3(st.y) : 0, st ? r3(st.z) : 0, st ? r2(o.stretchAmt ?? 1) : 0',
       'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0',
       'full-precision paint stretch');
+    patch("this._rec(['s', c.x, c.y, c.z, radius, team, o.seed ?? Math.random(), o.kind ?? 0,",
+      "const event = this._rec(['s', c.x, c.y, c.z, radius, team, o.seed ?? Math.random(), o.kind ?? 0,",
+      'return local paint order identity');
+    patch('st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1]);',
+      'st ? st.x : 0, st ? st.y : 0, st ? st.z : 0, st ? (o.stretchAmt ?? 1) : 0, Number.isInteger(o.face) ? o.face : -1]);\n    return { tick: event._netTick, peer: this.s.myId, seq: event._netSeq };',
+      'return local paint order identity');
 
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     const inkMetaBase = 'p.nose ?? 0.3, p.sats ?? 3, p.inkMeta || null]);';
@@ -475,6 +534,8 @@ export function emit(name, payload) {
     try {
       const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
       const opts = { seed: e[7] };
+      if (typeof e._netPeer === 'string' && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(e._netSeq))
+        opts.__netOrder = { tick: e._netTick, peer: e._netPeer, seq: e._netSeq };
       if (e[8]) opts.kind = e[8];
       if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
       if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
@@ -510,6 +571,12 @@ export function emit(name, payload) {
         break;
       }`, 'deadline paint is never double-applied');
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
+    if (e[1] === 's' && typeof e._netPeer !== 'string') e._netPeer = from;
+    if (e[1] === 's') {
+      const hasTick = e._netTick !== undefined, hasSeq = e._netSeq !== undefined;
+      if (!this.s._members?.has(from) || hasTick !== hasSeq
+        || hasTick && (!Number.isSafeInteger(e._netTick) || e._netTick < 0 || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)) return;
+    }
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
     const eventPeer = this.peers.get(from);
     if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
@@ -584,7 +651,7 @@ export function emit(name, payload) {
         break;
       }`, 'beam birth clock');
     patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
-    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    clearRemoteSquidroll(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
+    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    clearRemoteSquidroll(a);\n    clearRemoteRollerPresentation(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
@@ -1301,6 +1368,9 @@ ${bombHit}`;
       aC[i4] = C[i3]; aC[i4 + 1] = C[i3 + 1]; aC[i4 + 2] = C[i3 + 2]; aC[i4 + 3] = a;`, 'puff presentation belongs to source');
 
   }
-  if (rel === 'src/net/netmatch.js') code = adaptIssue1088SurgePresentation(code);
+  if (rel === 'src/net/netmatch.js') {
+    code = adaptIssue1088SurgePresentation(code);
+    patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
+  }
   return code;
 }

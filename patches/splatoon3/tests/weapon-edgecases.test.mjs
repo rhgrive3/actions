@@ -180,7 +180,7 @@ test('roller near unit signed angle/width/speed envelopes; main12 seed sequence 
 });
 test('launch packets include13 once; ghosts use transmitted velocity without resampling spread/unit',async()=>{
  for(const kind of ['roller','splatling']){
-  const f=await wireFixture({site:`${ROOT}.edge-wire-source`,fidelity:true,network:true}),a=f.make(kind),ps=f.projectiles;a.isLocal=true;a.nid=1;const nm=Object.create(f.NetMatch.prototype);nm.mute=0;nm.out=[];nm.eventSeq=0;nm.isMine=()=>true;f.G.netm=nm;
+  const f=await wireFixture({site:`${ROOT}.edge-wire-source`,fidelity:true,network:true}),a=f.make(kind),ps=f.projectiles;a.isLocal=true;a.nid=1;const nm=new f.NetMatch({myId:'owner',isHost:true,_members:new Map([['owner','Owner']])},{});nm.mute=0;nm.out=[];nm.eventSeq=0;nm.isMine=()=>true;f.G.netm=nm;
   if(kind==='roller')ps.fireFlick(a,a.weapon);else ps.fireSplatling(a,a.weapon,3.3);
   const packets=nm.out.filter(e=>e[1]==='p');assert.equal(packets.length,kind==='roller'?13:1);assert.equal(nm.out.filter(e=>e[1]==='s').length,kind==='roller'?1:0);const ownerEventCount=nm.out.length;const initial=packets.map(e=>new f.THREE.Vector3(e[8],e[9],e[10]));ps.clear();
   for(const packet of packets)ps.ghostProjectile(a,packet);assert.equal(ps.list.length,packets.length);ps.list.forEach((p,i)=>{assert.ok(p.ghost);for(const axis of ['x','y','z'])close(p.vel[axis],initial[i][axis],.011);});assert.equal(nm.out.length,ownerEventCount,'ghost replay emits no duplicate owner events');

@@ -3,10 +3,11 @@
 import * as THREE from 'three';
 import { G } from '../../../src/core/ctx.js';
 import { PLAYER } from '../../../src/config.js';
+import { SUPERJUMP_MAIN_PROGRESS } from './weapon-gates.mjs';
 
 // Preserve the public game's existing human-form boundary, NOT a measured S3
 // frame value. Nintendo confirms pre-landing attacks but not their exact gate.
-export const SUPERJUMP_MAIN_PROGRESS = 0.82;
+export { SUPERJUMP_MAIN_PROGRESS };
 
 // Splatoon 3 Ver. 11.0.0 Stealth Jump flight-only penalty (#272).
 // Current public measurement resolves the stage-forward travel coordinate from

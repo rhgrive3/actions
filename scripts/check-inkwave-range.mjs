@@ -138,7 +138,9 @@ for (const run of RUNS) {
       s.travel('gallery');
       const target = s.targets.find((x) => x.rangeTarget?.dist === 10);
       if (!target) throw new Error('Missing actual 10 m gallery target');
-      a.pos.x = target.pos.x;
+      // Native spawn/reset also resets fixed-clock interpolation before firing.
+      a.spawnAt(a.pos.clone().set(target.pos.x, 0.05, target.pos.z - target.rangeTarget.dist), 0);
+      a.intent.move.set(0, 0, 0);
       a.character.root.position.copy(a.pos);
       a.netTp = (a.netTp || 0) + 1;
       g.rig.follow(a, true);

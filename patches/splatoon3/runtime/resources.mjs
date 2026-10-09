@@ -86,8 +86,9 @@ export function updateResources(a, dt) {
   // form change is a charge interruption. The S3 verification table gives
   // charge-interruption → ink recovery = 19F for the Splat Charger, separate
   // from #416's 6F cancel→squid form recovery and from the ordinary post-shot
-  // delay above. The resource pass runs before the weapon wrapper clears
-  // `charging`, so detection here locks the cancellation update itself; after
+  // delay above. The #416 pre-admission owner publishes the cancellation
+  // before clearing `charging`; the legacy form transition remains supported.
+  // Consume the event here to lock the cancellation update itself; after
   // this tick's decrement the lock is rewritten to exactly 19F, which blocks
   // 19 fixed ticks (cancel tick .. cancel+18F) and reopens eligibility at
   // cancel+19F. Full-charge keeps (isChargerFullCharge → s3Stored) never take this
@@ -97,7 +98,10 @@ export function updateResources(a, dt) {
     a.s3.chargerKeepRecover = Math.max(0, (a.s3.chargerKeepRecover || 0) - dt);
   }
   const runner = a.weaponRunner;
-  if (runner?.charging && isSquid && a.weapon.kind === 'charger' && !isChargerFullCharge(runner.charge)) {
+  const chargerCancelled = runner?.s3ChargerCancelRefillPending === true;
+  if (runner) runner.s3ChargerCancelRefillPending = false;
+  if (a.weapon.kind === 'charger' && (chargerCancelled ||
+      runner?.charging && isSquid && !isChargerFullCharge(runner.charge))) {
     a.s3 ||= {};
     a.s3.chargerInterruptRecover = 19 / 60;
   }

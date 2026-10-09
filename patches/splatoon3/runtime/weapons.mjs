@@ -347,6 +347,7 @@ export function installWeapons(context, profile) {
     releaseSplatlingInterrupt(this, -1);
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3ChargerCancelSwimRemaining = 0; // #416 partial-charge squid cancel recovery
+    this.s3ChargerCancelRefillPending = false;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
     this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
@@ -363,14 +364,23 @@ export function installWeapons(context, profile) {
       // immediately, but cannot enter swim movement until six fixed frames.
       const interrupted = !this.alive || this.specialActive || this.superJumpState ||
         (this.intent?.special && this.specialReady?.());
-      if (interrupted) r.s3ChargerCancelSwimRemaining = 0;
-      else if (this.intent?.squid && !this._prevIntent?.squid &&
-          r.charging && !r.s3Stored && r.charge > 0 && r.charge < .999) {
+      const cancelEdge = this.intent?.squid && !this._prevIntent?.squid &&
+        !this.intent?.sub && (!this.intent?.fire || this._prevIntent?.fire) &&
+        r.charging && !r.s3Stored && r.charge > 0 && !isChargerFullCharge(r.charge);
+      // Match native form admission against the current ground paint. A denied
+      // enemy-ground dive or a same-tick newer Fire press must keep the charge.
+      if (cancelEdge && !interrupted) this._surface?.();
+      const enemyGrounded = this.grounded && this.groundTeam === 2 && !this.climbing;
+      if (interrupted) { r.s3ChargerCancelSwimRemaining = 0; r.s3ChargerCancelRefillPending = false; }
+      else if (cancelEdge && !enemyGrounded) {
         cancelStored(r); // already committed ink is not refunded
         r.s3ChargerStartupT = 0; r.s3ChargerHeldGate = false; r.s3ChargerRepeat = false;
         r.s3ReleaseHold = false; r.s3HeldCharge = r.s3HeldChargeT = r.s3ReleaseAt = 0;
         r.s3ChargerProgressiveSpend = false;
         r.s3ChargerCancelSwimRemaining = 6 / 60;
+        // #737 must observe this cancellation even though the 6F form gate
+        // clears charging before the native resource pass can see squid form.
+        r.s3ChargerCancelRefillPending = true;
       } else if (r.s3ChargerCancelSwimRemaining > 0) {
         const remaining = r.s3ChargerCancelSwimRemaining - dt;
         r.s3ChargerCancelSwimRemaining = remaining > 1e-10 ? remaining : 0;
@@ -533,7 +543,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.cancelPendingInput = function () {
     if (this.a.weapon.kind === 'charger') {
       cancelStored(this);
-      this.s3ChargerCancelSwimRemaining = 0;
+      this.s3ChargerCancelSwimRemaining = 0; this.s3ChargerCancelRefillPending = false;
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
       this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
       this.s3ReleaseHold = false; this.s3HeldCharge = this.s3HeldChargeT = this.s3ReleaseAt = 0;
@@ -807,7 +817,9 @@ export function installWeapons(context, profile) {
     Projectiles.prototype[method] = function (a, weapon) {
       let w = weapon;
       if (method === 'fireFlick' && a.weaponRunner.s3FlickVertical) w = { ...weapon,
-        flickDrops: weapon.verticalDrops, flickSpreadDeg: weapon.verticalSpreadDeg, flickSpeed: weapon.verticalSpeed,
+        // #305: a depleted vertical swing keeps its sourced per-unit count from
+        // the depletion plan; a full swing keeps the pinned vertical total.
+        flickDrops: weapon.s3DepletionDrops ?? weapon.verticalDrops, flickSpreadDeg: weapon.verticalSpreadDeg, flickSpeed: weapon.verticalSpeed,
         flickDamageNear: weapon.verticalDamageNear, flickDamageFar: weapon.verticalDamageFar,
       };
       const before = new Set(this.list); const result = original.call(this, a, w); const group = new Map();

@@ -21,7 +21,17 @@ test('current full composition retains host team confirmation and two-human Turf
   assert.equal(canStart.call(host), false, 'Turf host also readies after confirmation');
   host.lobby.mode = 'boss'; host.lobby.players.pop();
   assert.equal(canStart.call(host), true, 'solo Boss retains its distinct start policy');
-  assert.match(built, /!this\.canStart\(\) \|\| \(this\.lobby\.mode === 'turf' && this\.lobby\.players\.length < 2\)/);
+  // Current composition keeps the independent solo-Turf guard before canStart.
+  // Execute the native start body so formatting and guard order cannot mask a bypass.
+  const startBody = built.match(/  start\(\) \{([\s\S]*?)\n  \}/)?.[1];
+  assert.ok(startBody);
+  const start = new Function(startBody);
+  host.lobby.mode = 'turf'; host.lobby.players[0].ready = true;
+  host.tr = {}; host.canStart = () => true;
+  assert.equal(start.call(host), false, 'start independently rejects solo Turf even with an optimistic canStart');
+  host.lobby.players.push({ id: 'guest', ready: true });
+  host.canStart = () => false;
+  assert.equal(start.call(host), false, 'start retains host confirmation/ready admission');
   assert.throws(() => adaptSixFollowup('src/net/session.js', built), /anchor mismatch/, 'double patching fails closed');
 });
 

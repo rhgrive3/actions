@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import * as THREE from 'three';
+import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 import { sweepLevelSphere } from '../../../inkwave-public/src/game/inkCollision.js';
 import { adaptChargerFieldCollision } from '../charger-field-adapter.mjs';
 const V = (x,y,z) => new THREE.Vector3(x,y,z);

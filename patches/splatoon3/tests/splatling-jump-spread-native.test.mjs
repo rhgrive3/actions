@@ -153,14 +153,24 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   const hud = productionComposition('src/ui/hud.js', upstream('src/ui/hud.js'));
   assert.match(main, /const coneDeg = a\.weaponRunner\.spread/);
   assert.match(hud, /\+ch\.spread/);
-  const f = await nativeFloorFixture(), { a, G, THREE } = f;
-  a.intent.jump = true; f.tick(a); a.intent.jump = false;
-  for (let i = 0; i < 60 && !a.grounded; i++) f.tick(a);
-  assert.ok(a.grounded);
+  const f = await nativeFloorFixture(), control = await nativeFloorFixture({ jumpSpreadControl: true });
+  const { a, G, THREE } = f, c = control.a;
+  for (const [env, actor] of [[f, a], [control, c]]) {
+    actor.intent.jump = true; env.tick(actor); actor.intent.jump = false;
+    for (let i = 0; i < 60 && !actor.grounded; i++) env.tick(actor);
+    assert.ok(actor.grounded);
+  }
+  assert.deepEqual(Array.from(c.pos.toArray()), Array.from(a.pos.toArray()), 'the same native jump gives both controls identical movement');
+  assert.deepEqual(Array.from(c.vel.toArray()), Array.from(a.vel.toArray()));
+  assert.equal(c.weaponRunner.charge, a.weaponRunner.charge);
+  assert.equal(c.ink, a.ink);
   assert.ok(a.s3SplatlingJumpAgeFrames > 25 && a.s3SplatlingJumpAgeFrames < 70);
-  a.aimYaw = 0; a.aimPitch = 0; a.aimDir.set(0, 0, 1); a.aimPoint.set(0, 1.05, 100);
-  a.isLocal = true; a.nid = 17;
+  a.aimYaw = c.aimYaw = 0; a.aimPitch = c.aimPitch = 0;
+  a.aimDir.set(0, 0, 1); c.aimDir.set(0, 0, 1); a.aimPoint.set(0, 1.05, 100); c.aimPoint.set(0, 1.05, 100);
+  a.isLocal = c.isLocal = true; a.nid = c.nid = 17;
   const landingAge = a.s3SplatlingJumpAgeFrames, landingSpread = a.weaponRunner.spread;
+  const controlSpread = c.weaponRunner.spread;
+  assert.notEqual(landingSpread, controlSpread, 'the control disables only the jump-specific spread correction');
   const samplePitch = (age, grounded, spread) => {
     a.s3SplatlingJumpAgeFrames = age; a.grounded = grounded;
     const draws = [0.5, 1 - 1e-12, 0.25, 0.5];
@@ -178,9 +188,12 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   assert.ok(Math.abs(pitchAtLanding - pitchBeforeLanding) < 0.2 * Math.PI / 180,
     'ground pitch advances through the same jump age instead of snapping on contact');
   a.s3SplatlingJumpAgeFrames = landingAge; a.grounded = true;
-  const nm = Object.create(f.NetMatch.prototype);
+  const nm = new f.NetMatch({ myId: 'owner', isHost: true, _members: new Map([['owner', 'Owner']]) }, {});
   nm.mute = 0; nm.out = []; nm.eventSeq = 0; nm.isMine = () => true;
   G.netm = nm;
+  const controlNm = new control.NetMatch({ myId: 'control', isHost: true, _members: new Map([['control', 'Control']]) }, {});
+  controlNm.mute = 0; controlNm.out = []; controlNm.eventSeq = 0; controlNm.isMine = () => true;
+  control.G.netm = controlNm;
 
   const runner = a.weaponRunner, spread = runner.spread;
   const before = { charge: runner.charge, cooldown: runner.cooldown, ink: a.ink, streaming: runner.streaming };
@@ -189,9 +202,19 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   f.setRandom(() => { ownerDrawCount++; return ownerDraws.shift() ?? 0.5; });
   G.projectiles.fireSplatling(a, a.weapon, spread);
   const owner = G.projectiles.list.at(-1), packet = nm.out.find(event => event[1] === 'p');
+  const controlRunner = c.weaponRunner;
+  const controlBefore = { charge: controlRunner.charge, cooldown: controlRunner.cooldown, ink: c.ink, streaming: controlRunner.streaming };
+  const controlDraws = [0.5, 1 - 1e-12, 0.125, 0.5];
+  let controlDrawCount = 0;
+  control.setRandom(() => { controlDrawCount++; return controlDraws.shift() ?? 0.5; });
+  control.G.projectiles.fireSplatling(c, c.weapon, controlSpread);
+  const controlOwner = control.G.projectiles.list.at(-1), controlPacket = controlNm.out.find(event => event[1] === 'p');
   assert.ok(packet, 'owner publishes exactly one projectile event');
   assert.equal(nm.out.filter(event => event[1] === 'p').length, 1);
   assert.equal(ownerDrawCount, 4, 'the speed, two spread samples, and seed retain their existing draw count');
+  assert.ok(controlPacket, 'the same-composition control publishes its owner projectile event');
+  assert.equal(controlNm.out.filter(event => event[1] === 'p').length, 1);
+  assert.equal(controlDrawCount, 4, 'the jump correction does not change projectile RNG consumption');
   assert.equal(runner.spread, spread, 'the live HUD spread is the scalar supplied to the projectile path');
   const measuredYaw = Math.abs(Math.atan2(owner.vel.x, owner.vel.z)) * 180 / Math.PI;
   const radialYaw = Math.cos(Math.PI / 4) * Math.tan(spread * Math.PI / 180 * Math.sqrt(1 - 1e-12));
@@ -208,7 +231,16 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   assert.equal(owner.straight, a.weapon.straightTime);
   assert.equal(owner.grav, a.weapon.referenceGravity);
   assert.equal(owner.drag, owner.fidelityMove.freeDrag * 60);
+  const flightPhysics = p => ({
+    type: p.type, damage: p.damage, life: p.life, straight: p.straight,
+    radius: p.radius, grav: p.grav, drag: p.drag, freeDrag: p.fidelityMove.freeDrag,
+  });
+  assert.deepEqual(flightPhysics(owner), flightPhysics(controlOwner),
+    'jump spread changes launch angles without retuning authoritative projectile physics');
+  close(owner.vel.length(), controlOwner.vel.length(), 1e-8);
+  assert.deepEqual(Array.from(owner.pos.toArray()), Array.from(controlOwner.pos.toArray()), 'both projectiles use the same native muzzle');
   assert.deepEqual({ charge: runner.charge, cooldown: runner.cooldown, ink: a.ink, streaming: runner.streaming }, before);
+  assert.deepEqual({ charge: controlRunner.charge, cooldown: controlRunner.cooldown, ink: c.ink, streaming: controlRunner.streaming }, controlBefore);
 
   const packetVelocity = new THREE.Vector3(packet[8], packet[9], packet[10]);
   const packetStart = new THREE.Vector3(packet[5], packet[6], packet[7]);
@@ -221,15 +253,33 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   assert.ok(ghost.vel.equals(packetVelocity));
   assert.ok(ghost.pos.equals(packetStart));
   assert.equal(nm.out.filter(event => event[1] === 'p').length, 1, 'remote reconstruction does not publish a duplicate shot');
+
+  const controlPacketVelocity = new control.THREE.Vector3(controlPacket[8], controlPacket[9], controlPacket[10]);
+  const controlPacketStart = new control.THREE.Vector3(controlPacket[5], controlPacket[6], controlPacket[7]);
+  assert.ok(controlPacketVelocity.equals(controlOwner.vel), 'control wire velocity is the owner velocity without rounding');
+  control.setRandom(() => 0.5);
+  control.G.projectiles.ghostProjectile(c, controlPacket);
+  const controlGhost = control.G.projectiles.list.at(-1);
+  assert.equal(controlGhost.ghost, true);
+  assert.equal(controlGhost.damage, 0, 'the control remote copy is visual and cannot apply gameplay damage');
+  assert.ok(controlGhost.vel.equals(controlPacketVelocity));
+  assert.ok(controlGhost.pos.equals(controlPacketStart));
+  assert.equal(controlNm.out.filter(event => event[1] === 'p').length, 1,
+    'the control remote reconstruction does not publish a duplicate shot');
 });
 
 test('zero-spread ground Splatling range probe preserves its native projectile and paint RNG sequence', async () => {
-  const f = await fidelityFixture({ fidelity: true });
+  const f = await fidelityFixture({ fidelity: true }), control = await fidelityFixture({ fidelity: true, jumpSpreadControl: true });
   const scenario = CASES.find(item => item.key === 'splatling-partial');
-  const a = resetFidelity(f, scenario);
+  const a = resetFidelity(f, scenario), c = resetFidelity(control, scenario);
   launchFidelity(f, a, scenario);
+  launchFidelity(control, c, scenario);
   assert.equal(f.draws(), 4, 'the zero-spread probe retains speed, both Splatling spread samples, and seed draws');
+  assert.equal(control.draws(), 4, 'the same-composition control retains the same projectile RNG sequence');
   finishFidelity(f, a);
+  finishFidelity(control, c);
+  assert.deepEqual(paintMetrics(f), paintMetrics(control),
+    'the jump-only control preserves production paint metrics and every painted footprint cell');
   const paint = paintMetrics(f);
   assert.deepEqual({ maxZ: paint.bounds?.maxZ, area: paint.area, cells: paint.cells },
     { maxZ: 16.875, area: 15.875, cells: 254 });

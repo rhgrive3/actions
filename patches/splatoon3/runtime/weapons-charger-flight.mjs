@@ -9,6 +9,16 @@ export function chargerPartialCharge(charge) {
   const c = Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0));
   return c <= CHARGER_FIRST_LEGAL_CHARGE ? 0 : (c - CHARGER_FIRST_LEGAL_CHARGE) / (1 - CHARGER_FIRST_LEGAL_CHARGE);
 }
+// #514: range uses the same legal-minimum band as the paint coordinate above.
+// The authoritative linear charge is 8/60 after the first legal 8F release, so that
+// value — not raw zero — anchors DistanceMinCharge: a legal 8F tap resolves to
+// 9.033 instead of the interior 11.5337 the raw-charge lerp produced. Sub-law
+// releases clamp to the lower endpoint and full charge keeps
+// DistanceFullCharge. Aliases keep one band law shared by paint and range;
+// damage (#506), launch speed, ink, laser sight and the 1-7F gate (#304) are
+// separate coordinates and stay unchanged.
+export const CHARGER_MIN_LEGAL_CHARGE = CHARGER_FIRST_LEGAL_CHARGE;
+export const chargerRangeCharge = chargerPartialCharge;
 // Linear interpolation of extracted endpoints; ellipse rasterization remains INKWAVE's.
 export function chargerPaintParameters(raw,charge){
   const full=isChargerFullCharge(charge),q=chargerPartialCharge(charge);
@@ -63,9 +73,13 @@ export function installChargerFlight(api,completion) {
   const raw=completion.weapons.charger.MoveParam,collision=completion.weapons.charger.CollisionParam;
   const nativeGhost=P.ghostFire,nativeUpdate=P.update,nativeClear=P.clear;
   // Single source of the finite flight distance (world units); begin() and the HUD reach query share it.
+  // #514: remap raw charge through the legal-minimum band so the first legal
+  // 8F release (authoritative linear charge 8/60) lands on DistanceMinCharge exactly.
   const reachFor=charge=>{
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
-    return isChargerFullCharge(charge)?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge;
+    if(isChargerFullCharge(charge))return raw.DistanceFullCharge;
+    const q=chargerRangeCharge(charge);
+    return raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*q;
   };
   P.chargerReach=function(charge){return reachFor(charge);};
   const feetDown=new THREE.Vector3(0,-1,0),feetFrom=new THREE.Vector3(),feetAt=new THREE.Vector3(),feetHit=new Hit();
@@ -75,7 +89,7 @@ export function installChargerFlight(api,completion) {
     feetFrom.set(actor.pos.x,actor.pos.y+.2,actor.pos.z);
     const h=G.physics.raycast(feetFrom,feetDown,3.5,feetHit,true);
     if(!h.hit)return;
-    const area=G.paint.splat(feetAt.copy(h.point).addScaledVector(h.normal,.1),radius,actor.team,{seed:0,kind:'trail'});
+    const area=G.paint.splat(feetAt.copy(h.point).addScaledVector(h.normal,.1),radius,actor.team,{seed:0,kind:'trail',claimOwner:actor});
     actor.addTurf(area);
   }
   function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
@@ -150,7 +164,7 @@ export function installChargerFlight(api,completion) {
       const h=G.physics.raycast(p,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
       if(h.hit && beginChargerWallDrop(system,job,h,completion.weapons.charger,api,true)) continue;
       if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),radius,job.team,
-        {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1)});
+        {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1),claimOwner:job.owner});
     }
     job.owner.addTurf(area);
   }
@@ -190,12 +204,12 @@ export function installChargerFlight(api,completion) {
       if(!job.ghost && target!=='defense' && !(world.hit && !target)){
         const h=G.physics.raycast(job.pos,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
         if(h.hit)job.owner.addTurf(G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),job.paint.width*job.paint.terminalRate,job.team,
-          {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/job.paint.width-1)}));
+          {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/job.paint.width-1),claimOwner:job.owner}));
       }
       if(world.hit&&!target&&!job.ghost){
         if (!beginChargerWallDrop(system,job,world,completion.weapons.charger,api)) {
           const area=G.paint.splat(world.point.clone().addScaledVector(world.normal,.12),job.paint.impact,job.team,
-            {seed:Math.random(),stretch:job.dir,stretchAmt:.6});job.owner.addTurf(area);
+            {seed:Math.random(),stretch:job.dir,stretchAmt:.6,claimOwner:job.owner});job.owner.addTurf(area);
         }
         G.fx?.burst(world.point,world.normal,job.owner.color,{count:10,speed:4,size:.09,paint:false});
       }

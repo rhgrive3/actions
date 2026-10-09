@@ -127,7 +127,7 @@ export function installGear(api, tuning) {
     // Actor-local copy. An opponent's equipment never changes shared stats.
     const base = api.WEAPONS[a.weaponId];
     if (!transient) a.weapon = { ...base };
-    else for (const field of ['spreadAir', 'specialCost', 'inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter']) {
+    else for (const field of ['spreadAir', 'specialCost', 'inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter', 'rollInkMinPerFrame', 'rollInkMaxPerFrame']) {
       if (field in base) a.weapon[field] = base[field];
     }
     // MainWeaponSetting and ActionSpecUp overrides belong to the equipped
@@ -135,7 +135,7 @@ export function installGear(api, tuning) {
     m.runSpeedFiring = gearCurve(ap.runSpeed || 0, ...(a.weapon.runSpeedFiringCurve || extra.runSpeedFiring));
     m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...(a.weapon.actionAirSpreadCurve || extra.actionAirSpread));
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
-    for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
+    for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter', 'rollInkMinPerFrame', 'rollInkMaxPerFrame']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
     const sub = api.SUB[a.weapon.sub || 'bomb'];
     const tiers = sub?.throwSpeedTiers;
     if (tiers && [tiers.low, tiers.mid, tiers.high].every(Number.isFinite) && tiers.low > 0)

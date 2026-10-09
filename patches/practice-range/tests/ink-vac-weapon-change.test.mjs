@@ -4,7 +4,7 @@ import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 
 const EXTRA_EXPORTS = `
   export { RangeSession } from './patches/practice-range/runtime/session.mjs';
-  export { inkVacState, INK_VAC_EVENTS } from './patches/splatoon3/runtime/kit-ink-vac.mjs';
+  export { inkVacState, INK_VAC_EVENTS, INK_VAC_CALIBRATION } from './patches/splatoon3/runtime/kit-ink-vac.mjs';
   export { KIT_FORWARD } from './patches/splatoon3/runtime/kit-network.mjs';
 `;
 let runtime;
@@ -140,16 +140,41 @@ test('Practice Range Ink Vac weapon-change lifecycle through the complete six-ad
 
     await t.test('a released blast and spent gauge survive a later weapon change', async () => {
       prepare(w);
-      const state = activateInkVac(w);
-      for (let i = 0; i < 600 && state.phase === 'inhale'; i++) tick();
-      assert.equal(state.phase, 'exhale', 'the native inhale timer must admit the release before firing');
-      local.intent.fire = true; tick(); local.intent.fire = false;
-      const blast = projectiles.list.find(p => p.type === 'blast' && p.owner === local);
-      assert.ok(blast, 'the real native projectile path launched its blast');
+      activateInkVac(w);
+      // The native kit holds 'inhale' until the configured suction bound, then
+      // releases only on a ZR press-then-release edge (or the exhale timeout):
+      // drive that real lifecycle instead of assuming an immediate birth.
+      const releaseEvents = [];
+      const offRelease = R.on(R.INK_VAC_EVENTS.release, event => releaseEvents.push(event));
+      try {
+        // Known configured timing, not an arbitrary wait: the native suction cap
+        // is inhaleDurationSeconds x 60 fps (360 F / 6.0 s at tick's 1/60 dt).
+        const suctionFrames = Math.ceil(R.INK_VAC_CALIBRATION.inhaleDurationSeconds * 60);
+        const suctionBound = suctionFrames + 5;
+        let enteredAt = 0;
+        for (let i = 1; i <= suctionBound; i++) {
+          tick();
+          if (R.inkVacState(local)?.phase === 'exhale') { enteredAt = i; break; }
+        }
+        assert.ok(enteredAt >= suctionFrames && enteredAt <= suctionBound,
+          `the held inhale reaches the native exhale hold inside the configured ${suctionFrames}F suction bound (entered at ${enteredAt}F)`);
+        // Bridge an independent production arm path: hold one press tick, then
+        // release, so the native edge (not an immediate birth) authors the shot.
+        local.intent.fire = true; tick();
+        local.intent.fire = false; tick();
+        assert.equal(releaseEvents.length, 1, 'the real native kit emitted one release event');
+        assert.equal(releaseEvents[0].authored, true, 'that release event reports its authored native projectile');
+        assert.equal(R.inkVacState(local), null, 'the real native release retired the held state');
+      } finally { offRelease(); }
+      const blasts = projectiles.list.filter(p => p.type === 'blast' && p.owner === local);
+      assert.equal(blasts.length, 1, 'exactly one blast exists on the native projectile path');
+      const blast = blasts[0];
       const age = blast.age;
       assert.equal(local.special, 0);
       session.setWeapon('shooter');
       assert.ok(projectiles.list.includes(blast), 'the already released projectile keeps its owner');
+      assert.equal(projectiles.list.filter(p => p.type === 'blast' && p.owner === local).length, 1,
+        'the later weapon change preserves exactly one released blast');
       assert.equal(blast.age, age, 'the synchronous switch does not advance projectile time');
       assert.equal(local.special, 0, 'the spent gauge remains spent');
     });

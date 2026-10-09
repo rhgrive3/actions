@@ -17,6 +17,7 @@ import { adaptPadSensitivity } from './pad-sensitivity-adapter.mjs';
 import { adaptCombatRange } from './combat-range-adapter.mjs';
 import { adaptChargerFieldCollision } from './charger-field-adapter.mjs';
 import { adaptKitRescue } from './kit-rescue-adapter.mjs';
+import { adaptRollerDepletion } from './roller-depletion-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
@@ -25,6 +26,7 @@ import { adaptChargerSightCache } from './charger-sight-cache-adapter.mjs';
 import { adaptJuddResult } from './judd-result-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
 import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
+import { adaptPaintOwnership } from './paint-ownership-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -66,18 +68,6 @@ export function adaptSource(rel, code) {
       'this.base.set(actor.pos.x, actor.pos.y + (actor.smoothY || 0), actor.pos.z);',
       'this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);',
       'ink flight contact ignores render-only smoothing');
-    code = replaceOnce(code,
-      "actor.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, p.inkPlayerRadius);",
-      'hurtboxHeight(actor, PLAYER), p.inkPlayerRadius);',
-      'ink flight shared capsule height');
-    code = replaceOnce(code,
-      'capsuleEntry(p.prev, p.pos, this.base, PLAYER.radius,',
-      'capsuleEntry(p.prev, p.pos, this.base, hurtboxRadius(actor, PLAYER),',
-      'ink flight uses the current shared player hurtbox');
-    code = replaceOnce(code,
-      "import { PLAYER } from '../config.js';",
-      "import { PLAYER } from '../config.js';\nimport { hurtboxRadius, hurtboxHeight } from '../../patches/splatoon3/runtime/player-hurtbox.mjs';",
-      'ink flight shared hurtbox import');
     // #385/#604/#597: Source-guided head motion and sourced S3 wall-drop
     // share one collision authority. A wall impact must retain the falling
     // droplet state instead of treating every wall as a terminal head hit.
@@ -89,12 +79,27 @@ export function adaptSource(rel, code) {
       '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);',
       '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);\n        if (!target && !boss && world.hit && beginFidelityWallDrop(this.system, p, world)) return false;',
       'ink flight first wall contact admits sourced WallDrop phase');
-    code = "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    code = "import { coherentMotionStart } from '../../patches/splatoon3/runtime/actor-motion.mjs';\n" +
+      "import { hurtboxRadius, hurtboxHeight } from '../../patches/splatoon3/runtime/player-hurtbox.mjs';\n" +
+      "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     code = replaceOnce(code,
       '        if (!actor.alive || actor.team === p.team) continue;',
       '        const friendly = actor.team === p.team;\n' +
       '        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;',
       'ink flight S3 team contact eligibility');
+    code = replaceOnce(code,
+      '        const t = capsuleEntry(p.prev, p.pos, this.base, PLAYER.radius,\n' +
+      '          actor.form === \'squid\' ? PLAYER.squidHeight : PLAYER.height, p.inkPlayerRadius);',
+      '        const motion = coherentMotionStart(actor);\n' +
+      '        const bodyRadius = hurtboxRadius(actor, PLAYER), bodyHeight = hurtboxHeight(actor, PLAYER);\n' +
+      '        let t;\n' +
+      '        if (motion) {\n' +
+      '          this.base.set(motion.x0, motion.y0, motion.z0);\n' +
+      '          this.point.set(p.pos.x - (actor.pos.x - motion.x0), p.pos.y - (actor.pos.y - motion.y0),\n' +
+      '            p.pos.z - (actor.pos.z - motion.z0));\n' +
+      '          t = capsuleEntry(p.prev, this.point, this.base, bodyRadius, bodyHeight, p.inkPlayerRadius);\n' +
+      '        } else t = capsuleEntry(p.prev, p.pos, this.base, bodyRadius, bodyHeight, p.inkPlayerRadius);',
+      'ink flight same-tick actor motion and current per-form hurtbox');
     code = replaceOnce(code,
       '        // World wins ties: no wall-through damage, independent of actors order.',
       '        if (friendly && Number.isFinite(t) && (previousAge + INK_DT * t) * INK_HZ + EPS < p.fidelityFriendThrough) continue;\n' +
@@ -219,8 +224,9 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/game/actor.js' && !code.includes('_s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1')) {
     code = replaceOnce(code, '  reset() {',
-      '  reset() {\n    this._s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1;',
+      '  reset() {\n    markActorMotionDiscontinuity(this);\n    this._s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1;',
       'cancel pending Slosher births when an actor resets');
+    code = "import { markActorMotionDiscontinuity } from '../../patches/splatoon3/runtime/actor-motion.mjs';\n" + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code,
@@ -821,9 +827,39 @@ export function adaptSource(rel, code) {
       'let tail = p.fidelitySloshDraw ? fidelitySlosherDrawTail(p, sp) : (p.tail0 ?? 1) + Math.min(p.tailK ?? 1.2, sp * 0.04) * g;', 'slosher source tail window');
     code = replaceOnce(code, 'const r0 = p.vis || p.size, spk =',
       'const r0 = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : p.vis || p.size, spk =', 'slosher satellite source radius');
+    code = adaptRollerDepletion(rel, code, replaceOnce);
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
     code = replaceOnce(code, 'if (g.hit && !c.ghost) c.owner.addTurf(', 'if (g.hit && (!c.ghost || !c.owner.remote)) c.owner.addTurf(', 'adopted Storm owns its remaining paint');
     code = replaceOnce(code, '        if (!c.ghost) G.boss?.rain(', '        if (!c.ghost || !c.owner.remote) G.boss?.rain(', 'adopted Storm owns its remaining Boss rain');
+    // #537: preserve INKWAVE's distance rate and apply only the sourced minimum
+    // floor from SpeedInkConsumeMin upward, independently of the paint batch.
+    code = replaceOnce(code,
+      '      if (canRoll) { this.lastRollPos = a.pos.clone(); this.rollDist = 0; }',
+      '      if (canRoll) { this.lastRollPos = a.pos.clone(); this.lastRollInkPos = a.pos.clone(); this.rollInkChargedDistance = 0; this.rollDist = 0; }',
+      'roller per-update ink distance origin');
+    code = replaceOnce(code,
+      '    if (moved < 0.28) return;\n    this.lastRollPos.copy(a.pos);\n    a.ink = Math.max(0, a.ink - w.rollInkPerMeter * moved);',
+      '    const minS = w.rollInkMinSpeed;\n' +
+      '    const hasRollInkFloor = Number.isFinite(w.rollInkMinPerFrame) && Number.isFinite(minS);\n' +
+      '    const inkMoved = a.pos.distanceTo(this.lastRollInkPos || this.lastRollPos);\n' +
+      '    if (this.lastRollInkPos) this.lastRollInkPos.copy(a.pos); else this.lastRollInkPos = a.pos.clone();\n' +
+      '    if (hasRollInkFloor && hs >= minS) {\n' +
+      // The sourced value is tank fraction per 60 Hz frame; a.ink is percent.
+      // Keep the existing distance charge and raise it only to that minimum.
+      '      const floorInk = w.rollInkMinPerFrame * 100 * 60 * dt;\n' +
+      '      const distanceInk = w.rollInkPerMeter * inkMoved;\n' +
+      '      a.ink = Math.max(0, a.ink - Math.max(distanceInk, floorInk));\n' +
+      '      this.rollInkChargedDistance = (this.rollInkChargedDistance || 0) + inkMoved;\n' +
+      '    }\n' +
+      '    if (moved < 0.28) return;\n' +
+      '    this.lastRollPos.copy(a.pos);\n' +
+      '    if (!hasRollInkFloor) a.ink = Math.max(0, a.ink - w.rollInkPerMeter * moved);\n' +
+      '    else {\n' +
+      '      const unchargedDistance = Math.max(0, moved - (this.rollInkChargedDistance || 0));\n' +
+      '      if (unchargedDistance > 0) a.ink = Math.max(0, a.ink - w.rollInkPerMeter * unchargedDistance);\n' +
+      '      this.rollInkChargedDistance = 0;\n' +
+      '    }',
+      'roller rolling ink floor and paint batch');
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
     code = replaceOnce(code, 'Math.max(this.cooldown, 0.22)', 'Math.max(this.cooldown, w.postStreamDelay)', 'splatling sourced post-stream delay');
@@ -968,6 +1004,22 @@ export function adaptSource(rel, code) {
       'rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random() }',
       'Roller native trail age width');
     code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\n" + code;
+    code = replaceOnce(code,
+      "seed: Math.random(), kind: 'roll', stretch: _fwd });",
+      "seed: Math.random(), kind: 'roll', stretch: _fwd, claimOwner: a });",
+      'roller body ownership credit');
+    code = replaceOnce(code,
+      '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25 });',
+      '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner });',
+      'slosher impact paint ownership credit');
+    code = replaceOnce(code,
+      'area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });',
+      'area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7, claimOwner: p.owner });',
+      'projectile impact paint ownership credit');
+    code = replaceOnce(code,
+      '0.45 + Math.random() * 0.35, c.team, { seed: Math.random() }));',
+      '0.45 + Math.random() * 0.35, c.team, { seed: Math.random(), claimOwner: c.owner }));',
+      'Storm rain paint ownership credit');
     return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
@@ -1073,7 +1125,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "    if (specialPressed && this.specialReady()) { this._startSpecial(); this._finishFrame(dt); return; }",
       "    if (specialPressed && this.specialReady()) { clearFullCancelCandidate(this); this._startSpecial(); if (this.alive) { if (this.specialActive?.id === 'storm') updateResources(this, dt); else if (this.specialActive?.id === 'slam') updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (this.specialActive?.id === 'trizooka' && !this.remote) updateResources(this, dt); } this._finishFrame(dt); return; }",
       'storm/slam/trizooka activation resources');
-    code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    if (this._checkFallDeath()) return false;\n    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,", 'super jump wall support and destination admission');
+    code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    this._checkWaterHazard();\n    if (!this.alive) return false;\n    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,", 'lethal water admission, super jump wall support and destination admission');
     code = replaceOnce(code, 'target, from: new THREE.Vector3(), to: new THREE.Vector3(), marker: 0', 'target, from: new THREE.Vector3(), to: destination, marker: 0', 'super jump committed destination');
     code = replaceOnce(code, "      this.vel.set(0, 0, 0);\n      this.form = 'squid';\n      this._probeGround();", '      const supported = prepareSuperJump(this, dt);\n      if (!this.alive) return;', 'super jump preparation physics');
     const targetStart = code.indexOf('        const tgt = s.target;'), targetEnd = code.indexOf("        s.phase = 'flight';", targetStart);
@@ -1437,9 +1489,13 @@ export function adaptSource(rel, code) {
 
 
   if (rel === 'src/world/paint.js') {
+    code = adaptPaintOwnership(rel, code, replaceOnce);
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
-      code + '\ninstallIssue570PaintPresentation(PaintSystem);\n';
+      "import { installIssue264PaintOwnership } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" +
+      code + '\ninstallIssue570PaintPresentation(PaintSystem);\n' +
+      'installIssue264PaintOwnership(PaintSystem, { kind: K, reach: REACH, dripReach: DRIP_REACH, shapes: [[5, 7, 8, 3], [3, 4, 5, 2], [7, 9, 10, 4], [10, 12, 14, 5], [3, 4, 4, 2], [2, 2, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]] });\n';
   }
+  code = adaptPaintOwnership(rel, code, replaceOnce);
   return code;
 }
 

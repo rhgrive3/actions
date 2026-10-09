@@ -1,4 +1,4 @@
-// #514: the native runner's eased charge is 1/6 after the first legal 8F tap,
+// #514: the native runner's linear charge is 8/60 after the first legal 8F tap,
 // so the installed flight must start at the pinned DistanceMinCharge endpoint
 // there — not at the 11.53 interior point — while full charge keeps its own
 // endpoint. Real composed Actor + WeaponRunner + installed flight, not raw
@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 import { chargerRangeCharge, CHARGER_MIN_LEGAL_CHARGE } from '../runtime/weapons-charger-flight.mjs';
 
-const MIN = 9.033, FULL = 24.037, LEGAL = 1 / 6;
+const MIN = 9.033, FULL = 24.037, LEGAL = 8 / 60;
 
 test('#514 the legal minimum band anchors the pinned minimum endpoint', () => {
   assert.equal(CHARGER_MIN_LEGAL_CHARGE, LEGAL);
@@ -37,7 +37,7 @@ test('#514 an 8F native tap births the minimum legal charge and reach', async ()
     assert.ok(a.weaponRunner.chargeT <= 8 / 60 + 1e-9, 'charge clock must land exactly on 8F');
   }
   assert.ok(Math.abs(a.weaponRunner.chargeT - 8 / 60) < 1e-9, 'native fractional clock at 8F');
-  assert.ok(Math.abs(a.weaponRunner.charge - LEGAL) < 1e-9, 'native eased charge at 8F is 1/6');
+  assert.ok(Math.abs(a.weaponRunner.charge - LEGAL) < 1e-9, 'native linear charge at 8F is 8/60');
   a.intent.fire = false;
   // The release-gap adapter births the shot one frame after the release input.
   for (let i = 0; i < 3 && f.shots.length === 0; i++) f.tick(a);

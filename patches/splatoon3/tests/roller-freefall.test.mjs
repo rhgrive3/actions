@@ -22,6 +22,16 @@ test('issue-479 adapter transform applies cleanly and fails closed on anchor mis
   assert.ok(transformed.includes('installActorFreefallHooks'));
   assert.ok(!transformed.includes('!a.grounded ? w.verticalInk'));
 
+  const current = fs.readFileSync(new URL('../runtime/roller.mjs', import.meta.url), 'utf8');
+  const composed = adaptIssue479('patches/splatoon3/runtime/roller.mjs', current);
+  assert.match(composed, /const isVertical = !fullCancelGroundAttack && selectRollerFlickVertical/);
+  assert.match(composed, /const flickCost = fullCancelGroundAttack \? w\.flickInk : isVertical \? w\.verticalInk : w\.flickInk/);
+  assert.match(composed, /this\.s3FlickVertical = groundedCancel \? false : isVertical/);
+  assert.match(composed, /const depleted = DEPLETION_ENABLED/);
+  assert.equal(adaptIssue479('patches/splatoon3/runtime/roller.mjs', composed), composed);
+  assert.throws(() => adaptIssue479('patches/splatoon3/runtime/roller.mjs',
+    current.replace('this.s3FlickVertical = !groundedCancel && !a.grounded;', 'this.s3FlickVertical = false;')), /conflict/);
+
   // Non-target files remain untouched
   assert.equal(adaptIssue479('src/game/actor.js', dummy), dummy);
   assert.equal(adaptIssue479('patches/splatoon3/runtime/weapons.mjs', dummy), dummy);
