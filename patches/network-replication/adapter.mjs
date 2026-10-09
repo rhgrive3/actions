@@ -389,9 +389,18 @@ export function emit(name, payload) {
       '      const snap = unpackActor(s, d.ts);\n      snap.rollId = roll?.id ?? 0; snap.rollRemaining = roll?.remaining ?? 0;\n      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.sloshElapsed = pose ? pose[0] : -1; snap.slamPhase = pose ? pose[1] : 0; snap.slamT = pose ? pose[2] : 0;\n      snap.blasterWindup = windup; snap.rollerFlick = flick;\n      snap.spCost = d.sc?.[a.nid];',
       'attach validated presentation-only action clocks');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
-      if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
+      // _rec precedes _sendTick: a queued event cannot be newer than its envelope.
+      if (!Array.isArray(e) || !validSnapshotTimestamp(e[0]) || e[0] > d.ts) continue;
       e._netPeer = from;
-      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
+      if (d.r === 2) {
+        const seq = e[e.length-1], tick = e[e.length-2];
+        if (!Number.isSafeInteger(seq) || seq < 1) continue;
+        if (Number.isSafeInteger(tick)) {
+          if (tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;
+          e._netTick = tick;
+        }
+        e._netSeq = seq;
+      }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'

@@ -2386,6 +2386,8 @@ Scoped correction: normal and jump `_spreadDeg` now publish the full sourced env
 
 Evidence conflict / remaining work: the [Heavy Splatling page](https://splatoonwiki.org/wiki/Heavy_Splatling#Splatoon_3) describes 30% outer shots, while the [detailed deviation explanation](https://splatoonwiki.org/wiki/User:XarrotD/Data_Explanation#Deviation_Calculations) describes a continuous power-law distribution using bias. The raw value `Stand_DegBiasMax=.3` alone does not prove a Bernoulli selection. A proposed two-kernel implementation was therefore withdrawn before publication. This commit does **not** introduce that probability model or invent an inner-reticle angle. The existing uniform-area radial PDF and the intermediate linear jump-recovery curve remain unverified approximations, so #940 stays open. Maximum-envelope correction is not a claim of complete S3 shot-distribution fidelity.
 
+2026-10-09 source follow-up: [the detailed PDF/recovery audit](inkwave-splatling-pdf-source-audit-2026-10-09.md) records the actual Drive archive members, immutable S1/S2/S3 source snapshots, functions/placeholders inspected, and concrete missing evidence. Published S3 research supplies a signed power-law candidate, but the underlying Spinner joint distribution and 25F–70F time curve were not established by the inspected code or measurements. No new runtime formula is adopted and no PDF acceptance criterion is marked complete.
+
 Verification: the five new regressions fail against unmodified main (0/5) and pass against composed source and the emitted/minified build (5/5 each). The focused Splatling, native jump, weapon-edgecase and seven-claims Node group passes 56/56. Coverage includes real projectile envelope/pitch endpoints, unchanged four-draw RNG ownership, no bloom/first-shot dependency, source-anchor fail-closed guards, 40 bullets with identical seeded vectors at 30/60/120Hz rendering, released/reheld ZR, and existing native two-jump/landing/reset/ghost regressions. `scripts/check-inkwave-patches.mjs --quick`, build and diff checks pass. No full CI, physical mobile, or Switch comparison is claimed. Headless Chromium verification remains unavailable here because its required process-singleton socket is denied even after the supported escalation retry.
 
 ## 2026-10-09 — Blaster no-jump ledge-fall scalar residual (#1102)
@@ -2840,3 +2842,34 @@ Current-host ownership alone allowed malformed `d.B` state into native Boss unpa
 The guards reuse existing engineering pose/clock safety limits and native producer structure; HULLBREAKER has no claimed Nintendo equivalent. No S3 tuning changes. VM evidence uses bounded construction/render sinks and does not establish browser, live relay or Switch behavior. A separate exact-latest Boss sampling boundary was found in normal-packet testing and is handled independently.
 
 The independent Boss boundary follow-up changes only the final `t > last.t` sample selection to inclusive equality. Exactly at the newest packet timestamp, native playback previously restored the oldest pose/discrete state. Removed-fix and fixed complete-bootstrap tests reproduce and correct x=3 versus 9, HP=100 versus 40, clock=0 versus 10, phase/animation and crablet selection. Final combined Boss snapshot/boundary tests pass 8/8; interpolation, spring, network cadence and Nintendo values are unchanged. See the same Boss admission report for scope and evidence limits.
+
+### 2026-10-09 — #1178 event clocks cannot outlive their enclosing tick
+
+The snapshot timestamp guard did not validate each queued event's timestamp.
+With all production adapters and bootstrap installers, an accepted packet at
+`ts=1000` containing `event[0]=1e308` leaves that event at the FIFO head; the
+following valid trigger at `ts=1000.1` remains queued and never plays. A safe
+integer event simulation tick later than its enclosing packet's `u` produces
+the same obstruction. This is distinct from the earlier snapshot clock and
+event-container type checks, which remain intact.
+
+Admission now applies the existing safe rounded-millisecond timestamp rule
+to each event and enforces `event[0] <= d.ts`. For events carrying a safe integer
+simulation tick, it rejects negative ticks and ticks beyond the envelope's
+existing safe-integer `d.u`. No missing legacy simulation clock is invented:
+old envelopes without that field retain their established event admission and
+playback compatibility.
+The bounds follow the actual `_rec` before `_sendTick` order, not an invented
+network delay limit or a Nintendo timing constant. Rejected events never enter
+the FIFO or consume the playback sequence watermark; other valid records and
+snapshots in the same packet retain their existing admission.
+
+The old-condition counterfactual reproduces both blocked-queue paths. Six new
+native checks cover those counterexamples, invalid/recovery and sequence reuse,
+valid delayed ordering, duplicate suppression, legacy envelopes, actual native
+record/send bounds and fixed-step-equivalent playback at 30/60/120 Hz. The first
+five and final cadence case passed in separate focused runs. Adjacent container,
+paint causality, packet/timing, owner simulation-clock and Slosher birth checks
+pass 45/45 with concurrency 1. Quick upstream, syntax and whitespace checks pass.
+These are native implementation checks; browser/relay/physical-device tests and
+Splatoon 3 network internals remain unverified. Reference stays S3 11.3.0.
