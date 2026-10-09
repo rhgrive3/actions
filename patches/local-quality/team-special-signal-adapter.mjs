@@ -32,7 +32,7 @@ export function adaptTeamSpecialSignal(rel, code, once) {
       on('special:use', ({ actor, id }) => this._teamSpecialUse(actor, id)),
       on('match:state', ({ match, state }) => { if (match === G.match && state !== 'playing') this._clearTeamSpecialSignals(); }),
       on('match:dispose', ({ match }) => { if (match === G.match) this._clearTeamSpecialSignals(); }),`, 'accepted event and current Match retirement');
-  patch('  setVisible(v) {', '  setVisible(v) {\n    if (!v) this._clearTeamSpecialSignals();', 'hidden HUD retirement');
-  patch('  dispose() {', '  dispose() {\n    this._clearTeamSpecialSignals();', 'disposed HUD retirement');
+  patch('  setVisible(v) {', '  setVisible(v) {\n    if (!v) this._clearTeamSpecialSignals?.();', 'hidden HUD retirement');
+  patch('  dispose() {', '  dispose() {\n    this._clearTeamSpecialSignals?.();', 'disposed HUD retirement');
   return code;
 }

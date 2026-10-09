@@ -476,6 +476,9 @@ export function emit(name, payload) {
     patch('    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
       '    applyAdoptionSample(this, a, S);\n    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
       'restore adoption sample after authoritative age-based Super Jump phase');
+    patch("    applyAdoptionSample(this, a, S);\n    const wr = a.weaponRunner;",
+      "    applyAdoptionSample(this, a, S);\n    // #904: the optional adoption transfer rebuilds the Jump object and\n    // clears its wallSupport. Restore presentation only from the accepted\n    // owner snapshot flag and finite unit wall normal, after that transfer.\n    if (a.superJumpState) {\n      if (a.superJumpState.phase === 'charge' && (f & F.climb) &&\n          Number.isFinite(S.wx) && Number.isFinite(S.wy) && Number.isFinite(S.wz) &&\n          Math.hypot(S.wx, S.wy, S.wz) > 0.5 &&\n          Math.hypot(S.wx, S.wy, S.wz) < 1.5) {\n        (a.superJumpState.wallSupport ||= new THREE.Vector3()).set(S.wx, S.wy, S.wz);\n        a.climbing = false;\n      } else a.superJumpState.wallSupport = null;\n    }\n    const wr = a.weaponRunner;",
+      'restore network Super Jump wall basis after ownership state');
     patch('    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;',
       "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;\n    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }",
       'remote Tidal Slam phase clock');
