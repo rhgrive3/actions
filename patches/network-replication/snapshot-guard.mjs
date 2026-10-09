@@ -26,9 +26,9 @@ export function validBossSnapshotRow(row, timestamp) {
     for (const i of [1, 2, 3]) if (!bounded(crab[i], -1e6, 1e6)) return false;
     if (!bounded(crab[4], -1e5, 1e5) || !finite(crab[5])) return false;
   }
-  return row[18] == null || validBossSnapshotMove(row[18]);
+  return row[18] == null || validBossMove(row[18]);
 }
-function validBossSnapshotMove(move) {
+export function validBossMove(move) {
   if (!move || typeof move !== 'object' || Array.isArray(move) || !validSnapshotTimestamp(move.t0)
     || !integer(move.s, 0, 0xffffffff) || !Array.isArray(move.d) || move.d.length !== 3
     || !move.d.every(v => finite(v) && v >= 0) || !move.p || typeof move.p !== 'object' || Array.isArray(move.p)) return false;

@@ -614,6 +614,14 @@ export function emit(name, payload) {
         || readPaintOrder(this, from, e) === false) return;
     }
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
+    // Validate Boss payloads before replay admission: malformed state must not
+    // enter hazards or consume the sender's event sequence.
+    if (e[1] === 'bm' || e[1] === 'bc') {
+      if (from !== this.s.hostId) return;
+      if (e[1] === 'bm') {
+        if (!validBossMove(e[2])) return;
+      } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
+    }
     const eventPeer = this.peers.get(from);
     if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
@@ -624,14 +632,6 @@ export function emit(name, payload) {
       const nid = e[3]?.actor?.n ?? e[3]?.victim?.n;
       const actor = this.byNid.get(nid);
       if (!actor?.remote || actor.owner !== from) return;
-    }
-    // Boss hazard/crablet timeline records are host-authoritative at admission.
-    if (e[1] === 'bm' || e[1] === 'bc') {
-      if (from !== this.s.hostId) return;
-      if (e[1] === 'bm') {
-        const move = e[2];
-        if (!move || typeof move !== 'object' || !Number.isFinite(move.t0)) return;
-      } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
     }
     switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
     {
@@ -1457,7 +1457,7 @@ ${bombHit}`;
 
   }
   if (rel === 'src/net/netmatch.js') {
-    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     patch('if (d.B && from === this.s.hostId && boss && !boss.sim) {',
       'if (d.B && from === this.s.hostId && boss && !boss.sim && validBossSnapshotRow(d.B, d.ts)) {',
       'validate host Boss snapshot before unpacking and buffering');
@@ -1467,6 +1467,9 @@ ${bombHit}`;
     patch('    if (!Number.isFinite(d.ts)) return;',
       '    if (!validSnapshotTimestamp(d.ts)) return;\n    if (d.e != null && !Array.isArray(d.e)) return;',
       'reject unsafe owner clock before replay watermark mutation');
+    patch('    if (d.e != null && !Array.isArray(d.e)) return;',
+      "    if (d.e != null && !Array.isArray(d.e)) return;\n    if (from === this.s.hostId && d.c != null && (!Array.isArray(d.c) || d.c.length !== 2 || typeof d.c[0] !== 'string' || !Number.isFinite(d.c[1]) || d.c[1] < 0)) return;",
+      'validate host match clock before snapshot mutation');
     // #574: use the established authenticated, life-scoped, deduplicated hit
     // transaction. A zero-damage Blaster contact is admitted only with bounded
     // geometry; no other cause gains a zero/negative-damage exception.

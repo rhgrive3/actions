@@ -18,6 +18,7 @@ export function adaptPadHandoff(rel, code) {
     else if (previous) this._padDisconnected = true;
     this._padIdentity = identity; this._padIdentityLost = false;
     if (changed) {
+      if (previous && this.lastDevice === 'pad') this._s3PadCanceled = true;
       ++this._padEpoch;
       this.padPrev = []; this.padPressed.clear(); this.padMenuPressed?.clear(); this.padMenuBlocked?.clear();
       this._padTakeoverBlocked.clear(); this._padTakeoverAxes = true;

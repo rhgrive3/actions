@@ -2873,3 +2873,69 @@ paint causality, packet/timing, owner simulation-clock and Slosher birth checks
 pass 45/45 with concurrency 1. Quick upstream, syntax and whitespace checks pass.
 These are native implementation checks; browser/relay/physical-device tests and
 Splatoon 3 network internals remain unverified. Reference stays S3 11.3.0.
+
+
+### 2026-10-09 — #1178 host clock sidecar admission before snapshot mutation
+
+At PR #1182 base `b1626ee8`, a current-host snapshot with `d.c={}` reaches
+`_hostClock([state,time])` only after updating the peer replay watermark and
+actor buffers. Full production composition and all eight bootstrap installers
+reproduce the throw with `lastTs=2000` and position x=40 committed; the next
+normal snapshot at ts=1000.1 is rejected. A JSON-representable clock tuple
+`['playing',null]` also coerces null to zero and halves the follower's remaining
+time from 100 to 50 without a valid host time.
+
+The snapshot entrance now checks a present current-host clock sidecar before
+clock, statistics or actor mutation: exactly two array entries, a string state,
+and finite nonnegative numeric remaining time. Missing/null sidecars remain
+compatible. Non-host clock fields remain ignored rather than acquiring any
+clock authority. The native correction threshold/formula, state-message and
+finish/result paths are unchanged; no protocol fields or balance values were
+added. Optional simulation tick (`u`) handling is outside this change.
+
+Five new native checks pass, including removed-guard counterfactual, malformed
+container/scalars, first-packet isolation, valid subsequent recovery, native
+send output, host authority, existing half-correction and 30/60/120 Hz fixed-step
+trace equivalence. Adjacent event/clock/Boss/final-count checks pass 31/31 with
+concurrency 1. Syntax, quick upstream compatibility and whitespace checks pass.
+Reference remains Splatoon 3 11.3.0; this is a defensive INKWAVE implementation
+invariant, not a claim about Nintendo wire formats or calibrated network timing.
+Browser two-peer, live relay and physical-device validation were not performed.
+### #569 malformed current-host Boss move timeline residual
+
+The earlier host-only authority fix is preserved, but finite `t0` alone admitted `{t0:1}` into the native hazard list and caused an exception in the next update. Timeline `bm` now shares the existing snapshot move schema, and Boss validation precedes sequence admission. Removed-guard negative control, malformed rows followed by a valid same-sequence event, all six native move generators across three phases and adjacent timeline/paint cases pass 33/33 without skips (concurrency 1). Syntax/quick/whitespace checks pass. Details: `reports/inkwave-boss-move-timeline-569-2026-10-09.md`.
+
+These checks apply every production build/bootstrap wrapper but use bounded construction/navigation/render sinks. Browser, relay and Nintendo hardware remain unverified; the INKWAVE-specific Boss protocol change introduces no S3 gameplay calibration value.
+
+### 2026-10-09 — #1024 cancel held actions on direct active-pad replacement
+
+The existing no-pad cancellation does not run when a disconnected active pad A
+is immediately replaced by an already connected pad B in the same poll. B is
+non-null, and its neutral RT/RB levels consequently become apparent releases
+of A's pending actions. Full production composition and all bootstrap
+installers reproduce one Charger shot, one Splatling shot/stream and one SUB
+bomb on the respective paths, without a physical release.
+
+The established pad-identity handoff now marks `_s3PadCanceled` when a previous
+pad existed and pad was the input owner. The existing PlayerController
+cancellation and WeaponRunner cancellation owners consume that flag before
+normal input-edge handling. No new runner reset, timing, weapon value or
+controller identity mechanism was introduced. Replacements while keyboard/
+mouse owns an action do not cancel it; existing replacement held-blocks and
+fresh-press rules remain in force.
+
+Six new native checks pass: removed-line counterfactual for all three actions,
+direct replacement with/without browser disconnect notification, normal real
+release and fresh replacement press, keyboard/mouse ownership, once-only
+cancellation preserving cooldown/lock/roll resources and accepted projectiles,
+and equal 30/60/120 Hz fixed-step results. Adjacent pad handoff, disconnect
+filters, Joy-Con composition and original #1024 checks pass 38/38, concurrency
+1. Syntax, quick compatibility and whitespace checks pass. Reference remains
+Splatoon 3 11.3.0; this corrects INKWAVE device-lifecycle cancellation, without
+claiming Nintendo gamepad hardware behavior. Bluetooth/USB physical devices,
+mobile browser lifecycle and final aggregate CI were not tested here.
+### 2026-10-09 — #1090 Ink Vac bomb credit survives the native network hop
+
+On PR #1182 base `b1626ee8`, a real Suction Bomb carried 180 HP into the absorption proposal, but the receiver capped it at the shooter's main-weapon 36 HP. Native local absorption retained 180. The full production bootstrap, native bomb first-contact owner, event packing, JSON and authenticated playback reproduce this difference. A bomb-only scalar sub descriptor now selects the receiver's existing equipped-sub damage ceiling; ordinary/legacy main proposals retain their previous cap. Unknown/mismatched descriptors reject before consuming a valid proposal key. Existing sender, target, life, serial, amount, duplicate and ghost guards are preserved.
+
+This is an attack-identity/accounting repair using existing S3 11.3.0 comparison values, not a new balance or timing calibration. Native tests cover both bomb types, removed-fix reproduction, exactly-once local/remote equality, rejection/recovery, ghost behavior and fixed 30/60/120 Hz presentation schedules. Browser, live relay and Nintendo hardware remain unmeasured. See [the scoped report](inkwave-inkvac-bomb-credit-1090.md).

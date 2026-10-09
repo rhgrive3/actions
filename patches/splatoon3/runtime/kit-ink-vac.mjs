@@ -28,6 +28,8 @@
 // parent wires into the native NetMatch transport. No native source, adapter,
 // profile or network file is touched here; see INK_VAC_EVENTS below.
 
+import { kitSubFor } from './kit-subs.mjs';
+
 let api = null;
 const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
 export const VAC_ID = 'inkVac';
@@ -111,7 +113,7 @@ export const INK_VAC_EVENTS = Object.freeze({
   activation: 'special:inkvac',
   // { actor: owner, kit, serial, charge }  owner-approved charge state
   charge: 'special:inkvac-charge',
-  // { actor: shooter, target: vac owner, kit, serial, key }  credit PROPOSAL
+  // { actor: shooter, target: vac owner, kit, serial, key, damage, sub? } credit PROPOSAL
   absorb: 'special:inkvac-absorb',
   // { actor: owner, kit, serial, charge }  the countershot itself travels as a
   // native recProj/ghostProjectile packet, so this carries NO projectile.
@@ -321,6 +323,18 @@ function proposalWeaponDamage(weapon) {
     weapon.flickDamageNear, weapon.damageMin].find(v => Number.isFinite(v) && v > 0);
   return value || 0;
 }
+// #1090: a thrown bomb retains its own sub identity. The main weapon's damage
+// is not a bound for that separate attack (e.g. Suction Bomb 180 vs Shooter 36).
+// Resolve the optional descriptor only against the receiver's authenticated kit
+// and live registry; a packet cannot supply a damage table or choose another sub.
+function proposalDamageLimit(actor, payload) {
+  if (!Object.hasOwn(payload, 'sub')) return proposalWeaponDamage(actor.weapon);
+  const id = payload.sub;
+  if (id !== 'bomb' && id !== 'suction') return null;
+  const sub = kitSubFor(actor.weapon, api.SUB);
+  if (sub?.id !== id || !Number.isFinite(sub.damageMax) || sub.damageMax <= 0) return null;
+  return Math.min(MAX_ACCEPTED_DAMAGE_HP, sub.damageMax);
+}
 // Use the projectile's damage BEFORE neutralising it. Native bombs may carry
 // their damaging hitbox on the linked bomb rather than on their visual proxy.
 function absorbDamageEquivalent(projectile) {
@@ -352,7 +366,10 @@ function proposeAbsorption(state, projectile, damage) {
   if (!shooter || shooter.remote === true) return false;   // only a locally owned shooter may propose
   if (!Number.isInteger(state.serial)) return false;
   const key = `${shooter.nid !== undefined ? shooter.nid : 'i' + identityOf(shooter)}#p${++proposalSeq}`;
-  api.emit?.(INK_VAC_EVENTS.absorb, { actor: shooter, target: state.actor, kit: VAC_ID, serial: state.serial, key, damage });
+  const event = { actor: shooter, target: state.actor, kit: VAC_ID, serial: state.serial, key, damage };
+  const bomb = projectile.s3InkVacBomb;
+  if (bomb) event.sub = bomb.s3Sub?.id || bomb.s3Resolved?.spec?.id || 'bomb';
+  api.emit?.(INK_VAC_EVENTS.absorb, event);
   return true;
 }
 
@@ -603,14 +620,16 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     if (!Number.isFinite(damage) || damage < 0 || damage > MAX_ACCEPTED_DAMAGE_HP) {
       return drop('invalid-absorb-damage');
     }
+    const limit = proposalDamageLimit(actor, payload);
+    if (limit === null) return drop('invalid-absorb-sub');
     const ledger = proposalLedger(subject);
     if (ledger.set.has(key)) return drop('duplicate-proposal');
     ledger.set.add(key); ledger.order.push(key);
     while (ledger.order.length > PROPOSAL_MEMORY) ledger.set.delete(ledger.order.shift());
     // Keep fractional/partial-hit damage from the proposal, but NEVER credit
-    // more than the sender's locally resolved weapon can deliver. Missing
-    // authenticated weapon data fails closed with zero charge.
-    creditCharge(state, Math.min(damage, proposalWeaponDamage(actor.weapon)));
+    // more than the sender's locally resolved attack can deliver. Main shots
+    // retain their existing bound; missing main data still credits zero.
+    creditCharge(state, Math.min(damage, limit));
     return { applied: true, serial, charge: state.charge };
   }
 

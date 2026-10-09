@@ -6,6 +6,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 import { validBossSnapshotRow } from '../snapshot-guard.mjs';
 const exports = `
   export { Boss } from './inkwave-public/src/boss/boss.js';
+  export { BossHazards } from './inkwave-public/src/boss/bossHazards.js';
   export { BossBrain } from './inkwave-public/src/boss/bossBrain.js';
   export { installIssueFiveHotfixA } from './patches/splatoon3/runtime/issue-five-hotfix-a.mjs';
   export { installIssueFiveHotfixB } from './patches/splatoon3/runtime/issue-five-hotfix-b.mjs';
@@ -17,10 +18,12 @@ const exports = `
   export { installIssueEightFollowup } from './patches/splatoon3/runtime/issue-eight-followup.mjs';
 `;
 
-async function rig({negative=false,boundaryNegative=false}={}) {
+async function rig({negative=false,boundaryNegative=false,moveNegative=false}={}) {
   const adapt=(rel,code)=>{
     const out=adaptBuildSource(rel,code);
     if(rel==='src/net/netmatch.js'&&negative)return out.replace(' && validBossSnapshotRow(d.B, d.ts)','');
+    if(rel==='src/net/netmatch.js'&&moveNegative)return out.replace('if (!validBossMove(e[2])) return;',
+      "if (!e[2] || typeof e[2] !== 'object' || !Number.isFinite(e[2].t0)) return;");
     return rel==='src/net/netmatch.js'&&boundaryNegative?out.replace('const s = t >= last.t ? last : s0;','const s = t > last.t ? last : s0;'):out;
   };
   const f = await fixture({ fullRuntime: true, adapt, adaptRuntime:adapt, extraExports: exports });
@@ -116,4 +119,48 @@ test('native pack, all six native move producers, interpolation and current-host
   a[16]=[[1,0,0,0,0,30]];z[16]=[[1,10,0,0,0,20]];
   f.send(a,++ts);f.send(z,++ts);f.sample(ts-.5);
   assert.equal(b.pos.x,5);assert.equal(b.crabs.get(1).x,5);assert.equal(b.crabs.get(1).hp,20);
+});
+
+
+function nativeHazards(f) {
+  f.boss.log={moves:[]};
+  f.boss.hz=Object.assign(Object.create(f.BossHazards.prototype),{boss:f.boss,moves:[],hits:new Set(),prevBt:0,dead:-1,fx:{draw(){}}});
+}
+test('#569 negative control: finite-t0-only host move reaches native hazards and crashes update',async()=>{
+  const f=await rig({moveNegative:true});nativeHazards(f);
+  f.nm.onMessage('host',{k:'t',ts:1000,a:[],e:[[1000,'bm',{t0:1}]]});
+  f.nm.peers.get('host').tr=1000;f.nm._playEvents();
+  assert.equal(f.boss.hz.moves.length,1);
+  assert.throws(()=>f.boss.hz.update(1/60,2,{live:false}),/iterable/);
+});
+test('#569 malformed host moves do not mutate native hazards or consume replay admission',async()=>{
+  const f=await rig();nativeHazards(f);
+  const move={id:'slam',t0:1,s:0,d:[1,1,1],p:{x:0,y:0,z:0,rings:[0]}};
+  const bad=[{t0:1},{...move,d:null},{...move,d:[1,NaN,1]},
+    {...move,p:{x:0,y:0,z:0}}, {...move,p:{...move.p,rings:[null]}}, {...move,id:'missing'}];
+  let ts=1000;
+  const receive=(payload,seq=1)=>{
+    f.nm.onMessage('host',{k:'t',ts:++ts,r:2,u:1,a:[],e:[[ts,'bm',payload,1,seq]]});
+    const peer=f.nm.peers.get('host');peer.tr=ts;peer.sim=1;f.nm._playEvents();return peer;
+  };
+  for(const payload of bad){const peer=receive(payload);assert.equal(peer._lastEventSeq||0,0);}
+  assert.doesNotThrow(()=>f.boss.hz.update(1/60,2,{live:false}));
+  assert.equal(f.boss.hz.moves.length,0);
+  receive(move);assert.equal(f.boss.hz.moves.length,1);assert.equal(f.nm.peers.get('host')._lastEventSeq,1);
+  receive(move);assert.equal(f.boss.hz.moves.length,1,'replay still applies once');
+  assert.doesNotThrow(()=>f.boss.hz.update(1/60,2,{live:false}));
+});
+test('#569 all native move generators reach the real host-event hazard consumer',async()=>{
+  const f=await rig();nativeHazards(f);const b=f.boss;
+  b.nav={floorAt:()=>0,inPad:()=>false,cast:()=>({dist:12,wall:false}),wallClear:()=>10,floorClear:()=>10};b.difficulty='normal';
+  const target={alive:true,team:0,pos:new f.THREE.Vector3(4,0,6),vel:new f.THREE.Vector3()};f.G.actors=[target];
+  const brain=Object.assign(Object.create(f.BossBrain.prototype),{b,rnd:()=>.5,cd:{},_lane:()=>({})});
+  let ts=1000;
+  for(const phase of [1,2,3])for(const id of ['slam','barrage','sweep','charge','crablets','frenzy']){
+    b.phase=phase;b.bt=++ts;brain._start({id,lane:{}},target);
+    const move=JSON.parse(JSON.stringify(b.move));b.hz.moves.length=0;b.log.moves.length=0;
+    f.nm.onMessage('host',{k:'t',ts,a:[],e:[[ts,'bm',move]]});f.nm.peers.get('host').tr=ts;f.nm._playEvents();
+    assert.equal(b.hz.moves.length,1,id);assert.equal(b.hz.moves[0].id,id);
+    assert.doesNotThrow(()=>b.hz.update(1/60,ts+.1,{live:false}));
+  }
 });
