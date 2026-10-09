@@ -32,6 +32,8 @@ test('walking diagonal blends four source direction clips, not a faster procedur
   assert.ok(distance(front, clip(.28, 0, 1, 0, 1)) > .1, 'running uses a shorter source clip');
   assert.ok(distance(clip(.28, 0, 1, 0, 1), clip(.28, 0, 1, 1, 1)) > .1,
     'held run and shooting run use distinct 32-frame native reference clips');
+  const atCrossing = clip(.21, 0, 1);
+  assert.ok(distance(front, atCrossing) > 1e-6, 'different source phases are not interchangeable');
   // Compare direction changes at the SAME clock phase. Comparing phase .21
   // with `front` at .28 above measured normal animation, not discontinuity.
   for (const phase of [0, .21, .28, .73, 1 - 1e-6]) {
