@@ -65,6 +65,7 @@ permissions:
 env:
   SOURCE_SHA: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
   FOCUSED_EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/evidence/inkwave-focused-${{ github.run_id }}-${{ github.run_attempt }}
+  INKWAVE_TEST_SCRATCH: /mnt/workspace/.dev-state/agent-work/scratch/inkwave-worker-${{ github.run_id }}-${{ github.run_attempt }}
   RUNTIME_PERFORMANCE: ${{ inputs.runtime_performance == true || (github.event_name == 'pull_request' && (github.head_ref == 'inkwave/runtime-performance-ui' || github.head_ref == 'inkwave/final-nine-way-integration')) }}
   REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}
 jobs:
@@ -83,6 +84,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install pinned source regression and build tool
+        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2
+      - name: Prepare persistent worker regression fixtures
+        run: |
+          test "$(realpath -m "$INKWAVE_TEST_SCRATCH")" = "$INKWAVE_TEST_SCRATCH"
+          sudo mkdir -p "$INKWAVE_TEST_SCRATCH"
+          sudo chown "$(id -u):$(id -g)" "$INKWAVE_TEST_SCRATCH"
+          test "$(realpath "$INKWAVE_TEST_SCRATCH")" = "$INKWAVE_TEST_SCRATCH"
+          test -w "$INKWAVE_TEST_SCRATCH"
       - name: Prepare persistent focused test evidence
         if: inputs.focused_tests != ''
         run: |
@@ -243,7 +253,6 @@ jobs:
           PY
       - name: Build patched site at the checkout commit
         run: |
-          npm install --no-save --no-package-lock --silent esbuild@0.28.2
           node --test scripts/tests/inkwave-worker-compaction.test.mjs
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
