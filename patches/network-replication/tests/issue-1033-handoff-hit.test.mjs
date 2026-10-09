@@ -8,6 +8,7 @@ import { respawnPunisherEquipped, withHitPunisher } from '../../splatoon3/runtim
 import { validDamageGroup } from '../../splatoon3/runtime/final-damage.mjs';
 import { C1088_SURGE_TAG, clearRemoteC1088Surge } from '../issue-1088-surge-presentation.mjs';
 import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
+import { clearRemoteDodgeClock } from '../../splatoon3/runtime/remote-dodge-clock.mjs';
 
 const raw = fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js', import.meta.url), 'utf8');
 const source = adaptBuildSource('src/net/netmatch.js', raw);
@@ -66,7 +67,7 @@ function makeWorld(id) {
     'G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'mapNoBots',
     'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'C1088_SURGE_TAG',
-    'retireDisconnectedMainProjectiles',
+    'retireDisconnectedMainProjectiles', 'clearRemoteDodgeClock',
     `${helpers}\n${ghostHelper}\nreturn class NetMatchHarness {
 ${methods}
   _adopt(actor) { actor.remote = false; actor.isBot = true; actor.net.buf.length = 0; }
@@ -78,7 +79,7 @@ ${methods}
     180, new Set(['shooter']), (map) => map === 'cargo-terminal' || map === 'range',
     () => {}, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge,
     WEAPONS, validDamageGroup, clearRemoteRollerPresentation, C1088_SURGE_TAG,
-    retireDisconnectedMainProjectiles,
+    retireDisconnectedMainProjectiles, clearRemoteDodgeClock,
   );
   const net = new NetMatchHarness();
   Object.assign(net, {
