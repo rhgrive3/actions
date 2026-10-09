@@ -18,6 +18,10 @@ import { adaptIssue427 } from '../../splatoon3/issue-427-adapter.mjs';
 const raw = fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js', import.meta.url), 'utf8');
 const rel = 'src/net/netmatch.js';
 const source = adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, raw)))));
+const hitStateStart = source.indexOf("const HIT_AUTHORITY_TAG = '");
+const hitStateEnd = source.indexOf('\nconst ADOPTION_STATE_TAG', hitStateStart);
+assert.ok(hitStateStart >= 0 && hitStateEnd > hitStateStart, 'production hit-authority serialization is composed');
+const hitAuthoritySource = source.slice(hitStateStart, hitStateEnd);
 function method(name) {
   const start = source.indexOf('  ' + name + '('), end = source.indexOf('\n  }\n', start);
   assert.ok(start >= 0 && end > start, name);
@@ -41,7 +45,7 @@ function hitWorld() {
   } } };
   const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'now', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock',
-    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + dropCleanup + hitLimits + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hitHandoffPacket', '_hit', '_validHitAuthorityMetadata', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
+    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + dropCleanup + hitLimits + hitAuthoritySource + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hitHandoffPacket', '_hit', '_validHitAuthorityMetadata', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
     (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, () => 1, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock);
   const n = new C();
   Object.assign(n, { myId: 'A', byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } },
@@ -86,7 +90,10 @@ test('composed #427 forwards the existing damage group and restores nested apply
 
 test('composed respawn preserves all current retirements and clears only this victim pending hits', () => {
   const f = hitWorld(), a = { nid: 2, alive: false, hp: 0, invuln: 0, respawnTimer: 4, lastDamage: 0,
-    superJumpGround: {}, net: { _stormBirthAuth: {} }, s3: { revealedUntil: 99 }, s3SpecialCost: 100,
+    superJumpGround: {}, net: { _stormBirthAuth: {},
+      _hitHandoff: { owner: 'B', life: 1, sequence: 1, ts: 2, hp: 80 },
+      _hitAuthority: { owner: 'B', life: 1, sequence: 2, ts: 3, hp: 70, alive: true } },
+    s3: { revealedUntil: 99 }, s3SpecialCost: 100,
     s3SpecialReady: true, lastAttacker: {}, lastAttackerHitAge: 0 };
   a.remote = true; a.owner = 'B';
   a.remoteDodgeClock = { owner: 'B', life: 1, tp: 0, token: 1, epoch: 1 };
@@ -105,6 +112,8 @@ test('composed respawn preserves all current retirements and clears only this vi
     'retirement keeps the old-life watermark so delayed snapshots cannot revive the pose');
   assert.equal(a.alive, true); assert.equal(a.hp, 100); assert.equal(a.superJumpGround, null);
   assert.equal(a.net._stormBirthAuth, null); assert.equal(a.net.spawnPending, true);
+  assert.equal(a.net._hitHandoff, null, 'respawn retires the completed-life owner chain');
+  assert.equal(a.net._hitAuthority, null, 'respawn retires the completed-life hit watermark');
   assert.equal(a.lastDamage, 99); assert.equal(a.lastAttacker, null); assert.equal(a.lastAttackerHitAge, 99);
   assert.equal(a.s3.revealedUntil, undefined); assert.equal(a.s3SpecialCost, undefined); assert.equal(a.s3SpecialReady, false);
   assert.equal(a.s3.c1088SurgePresentation, undefined, 'respawn retires the actual remote Surge presentation state');
@@ -132,6 +141,27 @@ test('current QR splat history shares the existing local/enemy guards with confi
   assert.equal(attacker.s3.splatsThisLife, 1); assert.equal(attacker.s3.quickRespawnHistory.splats, 1);
   attacker.remote = false; listeners.get('combat:confirmed')({ attacker, victim, killed: true });
   assert.equal(attacker.s3.splatsThisLife, 2); assert.equal(attacker.s3.quickRespawnHistory.splats, 2);
+});
+
+test('native local respawn clears the previous life hit authority chain', async () => {
+  const f = await fixture();
+  class CharacterStub {
+    constructor() { this.root = { position: new f.THREE.Vector3(), rotation: { y: 0 } }; }
+    setVisible() {}
+    setHurt() {}
+    trigger() {}
+  }
+  f.G.physics.groundProbe = () => ({ hit: false });
+  const actor = new f.Actor({ team: 0, name: 'respawn authority check', CharacterClass: CharacterStub });
+  actor.netLife = 4;
+  actor.net = {
+    _hitHandoff: { owner: 'old-owner', life: 4, sequence: 2, ts: 3, hp: 40 },
+    _hitAuthority: { owner: 'new-owner', life: 4, sequence: 1, ts: 4, hp: 40, alive: true },
+  };
+  actor.respawn();
+  assert.equal(actor.netLife, 5);
+  assert.equal(actor.net._hitHandoff, null);
+  assert.equal(actor.net._hitAuthority, null);
 });
 
 test('current 36-field projectile layout validates units without dropping legacy33 or accepting malformed units', async () => {

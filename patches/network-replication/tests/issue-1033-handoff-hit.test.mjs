@@ -20,8 +20,24 @@ const weaponsSource = adaptBuildSource('src/game/weapons.js', weaponsRaw);
 const hitStateStart = source.indexOf("const HIT_AUTHORITY_TAG = '");
 const hitStateEnd = source.indexOf('\nconst ADOPTION_STATE_TAG', hitStateStart);
 assert.ok(hitStateStart >= 0 && hitStateEnd > hitStateStart, 'production hit-state snapshot helpers are composed');
+const hitAuthoritySource = source.slice(hitStateStart, hitStateEnd);
 const { packHitAuthorityState, readHitAuthorityState } = new Function(
-  'PLAYER', `${source.slice(hitStateStart, hitStateEnd)}\nreturn { packHitAuthorityState, readHitAuthorityState };`,
+  'PLAYER', `${hitAuthoritySource}\nreturn { packHitAuthorityState, readHitAuthorityState };`,
+)({ hp: 100 });
+function sourceFunction(name) {
+  const start = source.indexOf(`function ${name}(`), end = source.indexOf('\n}\n', start);
+  assert.ok(start >= 0 && end > start, `production ${name} is composed`);
+  return source.slice(start, end + 3);
+}
+const productionPackActor = new Function(
+  'PLAYER', 'F', 'SPAWN_ARMOR_FLAG', 'RESPAWN_PUNISHER_FLAG', 'chargerSightVisible', 'slamProtected',
+  'spawnProtectionRemaining', 'respawnPunisherEquipped', 'swimTrailVisible', 'swimSplashVisible', 'r2', 'r3',
+  'packAdoptionState', 'packC1088SurgePresentation',
+  `${hitAuthoritySource}\n${sourceFunction('packActor')}\nreturn packActor;`,
+)({ hp: 100 }, {}, 0, 0, () => false, () => false, () => 0, () => false, () => true, () => true,
+  (x) => Math.round(x * 100) / 100, (x) => Math.round(x * 1000) / 1000, () => null, () => null);
+const productionUnpackActor = new Function('PLAYER',
+  `${hitAuthoritySource}\n${sourceFunction('unpackActor')}\nreturn unpackActor;`,
 )({ hp: 100 });
 
 function methodFrom(code, name, optional = false) {
@@ -77,7 +93,7 @@ function makeWorld(id) {
   const methodNames = [
     'sendHit', 'shouldApplyHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_retryPendingHitsForLeave',
     '_retryNackedHit', '_hitNack', '_hit', '_hitAck', '_hitHandoffPacket', '_readHitHandoffPacket', '_validHitAuthorityMetadata',
-    '_mergeHitAuthorityParent', '_acceptHitAuthorityAck', '_acceptHitAuthoritySnapshot', '_hitAuthorityHp',
+    '_hitHandoffParentEntries', '_hitHandoffParentOffset', '_mergeHitAuthorityParent', '_acceptHitAuthorityAck', '_acceptHitAuthoritySnapshot', '_hitAuthorityHp',
     'onMessage', 'onLeave', '_onLocalEvent', 'bind', 'dispose', '_requestFirstSplat',
   ];
   const forwardStart = source.indexOf('const FORWARD = '), forwardEnd = source.indexOf(';', forwardStart);
@@ -92,12 +108,15 @@ function makeWorld(id) {
     'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'C1088_SURGE_TAG',
     'retireDisconnectedMainProjectiles', 'clearRemoteDodgeClock', 'KIT_FORWARD',
-    `${helpers}\n${ghostHelper}\n${dropCleanup}\n${hitLimits}\n${forwardList}\nreturn class NetMatchHarness {
+    `${helpers}\n${ghostHelper}\n${dropCleanup}\n${hitLimits}\n${hitAuthoritySource}\n${forwardList}\nreturn class NetMatchHarness {
 ${methods}
   _setupActor() {}
   _adopt(actor) { actor.remote = false; actor.isBot = true; actor.net.buf.length = 0; }
   _remoteSplat(actor) { this.authoritySplatCalls = (this.authoritySplatCalls || 0) + 1; actor.alive = false; actor.hp = 0; }
-  _remove(actor) { this.byNid.delete(actor.nid); this.match?.removeActor?.(actor); }
+  _remove(actor) {
+    if (actor.net) { actor.net._hitHandoff = null; actor.net._hitAuthority = null; }
+    this.byNid.delete(actor.nid); this.match?.removeActor?.(actor);
+  }
   _stopLoops() {}
 }`,
   )(
@@ -130,7 +149,7 @@ function actor(nid, owner, localId, team, life) {
   return {
     nid, owner, team, netLife: life, alive: true, remote: owner !== localId,
     hp: 100, isBot: false, net: { buf: [], tp: 0 }, character: {}, weaponRunner: {}, s3: {},
-    pos: { x: 0, y: 0, z: 0 },
+    pos: { x: 0, y: 0, z: 0 }, vel: { x: 0, y: 0, z: 0 }, stats: { turf: 0, specials: 0 },
   };
 }
 
@@ -153,6 +172,13 @@ function leave(world, departed, newHost, hostChanged = false) {
 function ack(world, index = -1) { return world.sent.filter((item) => item.data?.k === 'hit_ack').at(index)?.data; }
 
 function deliver(from, to, packet) { to.net.onMessage(from.id, packet); }
+function packedHitSnapshot(actor, time) {
+  const row = productionPackActor(actor);
+  const sample = productionUnpackActor(row, time);
+  sample.life = actor.netLife; // the live t packet carries this life in its outer `l` map
+  assert.equal(sample.hp, actor.hp, 'the production actor row preserves the current HP');
+  return sample;
+}
 function productionProjectiles(G, events = []) {
   const applyHit = methodFrom(weaponsSource, 'applyHit');
   const ProjectilesHarness = new Function('G', 'emit', 'rumble', '_vh', `return class { ${applyHit} }`)(
@@ -328,6 +354,154 @@ test('composed same-life owner epochs merge concurrent hits regardless of ACK de
   };
   run(false);
   run(true);
+});
+
+test('composed late owner ACK survives the actual V to H to C two-hop handoff', () => {
+  const f = room();
+  assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
+  deliver(f.S, f.V, f.S.sent.at(-1).data);
+  const oldAck = ack(f.V);
+  assert.equal(oldAck.hp, 64);
+
+  for (const world of [f.S, f.H, f.C]) leave(world, 'V', 'H');
+  for (const world of [f.S, f.H, f.C]) leave(world, 'H', 'C', true);
+  assert.equal(f.C.victim.owner, 'C');
+  assert.deepEqual(f.C.net._hitHandoffPacket(f.C.victim), [
+    'inkwave-hit-handoff-chain-v1', ['V', 5, 0, 0, 100], ['H', 5, 0, 0, 100],
+  ], 'the second handoff carries both same-life predecessor checkpoints');
+
+  deliver(f.V, f.C, oldAck);
+  deliver(f.V, f.S, oldAck);
+  assert.equal(f.C.victim.hp, 64, 'the final owner applies the original accepted damage exactly once');
+  assert.equal(f.S.victim.hp, 64, 'the shooter receives the same reconciled HP');
+  deliver(f.V, f.C, oldAck);
+  deliver(f.V, f.S, oldAck);
+  assert.equal(f.C.victim.hp, 64, 'duplicate old-owner ACK cannot apply damage twice');
+  assert.equal(f.S.events.filter((event) => event.name === 'combat:confirmed').length, 1,
+    'the accepted hit confirms once');
+  assert.equal(f.S.net.hitPending.size, 0);
+  assert.equal(f.S.net._pendingHits.size, 0);
+});
+
+test('composed concurrent old/new hits reconcile ACK and packed snapshots in either order', () => {
+  const run = (oldAckFirst) => {
+    const f = room();
+    assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
+    deliver(f.S, f.V, f.S.sent.at(-1).data);
+    const oldAck = ack(f.V);
+    for (const world of [f.S, f.H, f.C]) leave(world, 'V', 'H');
+    for (const world of [f.S, f.H, f.C]) leave(world, 'H', 'C', true);
+
+    assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
+    const newHit = f.S.sent.at(-1).data;
+    assert.equal(f.S.sent.at(-1).to, 'C');
+    deliver(f.S, f.C, newHit);
+    const newAck = ack(f.C);
+    assert.equal(f.C.victim.hp, 64, 'the new owner independently accepts its concurrent hit');
+    const staleSnapshot = packedHitSnapshot(f.C.victim, newAck.ht + 0.1);
+    assert.equal(staleSnapshot.hitSeq, newAck.hr, 'snapshot revision comes from the production hit-state serializer');
+
+    if (oldAckFirst) {
+      deliver(f.V, f.C, oldAck);
+      deliver(f.V, f.S, oldAck);
+      deliver(f.C, f.S, newAck);
+    } else {
+      deliver(f.C, f.S, newAck);
+      deliver(f.V, f.C, oldAck);
+      deliver(f.V, f.S, oldAck);
+    }
+    assert.equal(f.C.victim.hp, 28, 'the final owner combines both accepted hits');
+    assert.equal(f.S.victim.hp, 28, 'ACK order cannot roll back either hit');
+    assert.equal(f.S.net._acceptHitAuthoritySnapshot(f.S.victim, staleSnapshot, 'C'), true,
+      'a snapshot emitted before the old ACK is reconciled against the newer local checkpoint');
+    assert.equal(f.S.victim.hp, 28, 'late snapshot cannot replace the newer reconciled HP');
+    assert.equal(f.S.net._hitAuthorityHp(f.S.victim, staleSnapshot, 'C'), 28,
+      'replayed stale snapshot remains behind the current owner watermark');
+
+    deliver(f.V, f.C, oldAck);
+    deliver(f.V, f.S, oldAck);
+    deliver(f.C, f.S, newAck);
+    assert.equal(f.C.victim.hp, 28, 'duplicate ACK delivery does not repeat damage');
+    assert.equal(f.S.victim.hp, 28, 'duplicate ACK delivery cannot reset current-owner HP');
+    assert.equal(f.V.calls.length, 1);
+    assert.equal(f.C.calls.length, 1);
+    assert.equal(f.S.events.filter((event) => event.name === 'combat:confirmed').length, 2,
+      'each accepted hit confirms once across duplicate deliveries');
+    assert.equal(f.S.net.hitPending.size, 0);
+    assert.equal(f.S.net._pendingHits.size, 0);
+  };
+  run(true);
+  run(false);
+});
+
+test('composed cumulative lethal damage across chained owners produces one splat', () => {
+  for (const oldAckFirst of [true, false]) {
+    const f = room();
+    assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 60, 'shooter'), true);
+    deliver(f.S, f.V, f.S.sent.at(-1).data);
+    const oldAck = ack(f.V);
+    assert.equal(oldAck.hp, 40);
+    for (const world of [f.S, f.H, f.C]) leave(world, 'V', 'H');
+    for (const world of [f.S, f.H, f.C]) leave(world, 'H', 'C', true);
+
+    assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 50, 'shooter'), true);
+    deliver(f.S, f.C, f.S.sent.at(-1).data);
+    const newAck = ack(f.C);
+    assert.equal(f.C.victim.hp, 50);
+    if (oldAckFirst) {
+      deliver(f.V, f.C, oldAck);
+      deliver(f.V, f.S, oldAck);
+      deliver(f.C, f.S, newAck);
+    } else {
+      deliver(f.C, f.S, newAck);
+      deliver(f.V, f.C, oldAck);
+      deliver(f.V, f.S, oldAck);
+    }
+    assert.equal(f.C.victim.hp, 0);
+    assert.equal(f.C.victim.alive, false);
+    assert.equal(f.S.victim.hp, 0);
+    assert.equal(f.S.victim.alive, false);
+    assert.equal(f.C.net.authoritySplatCalls, 1, 'combined accepted damage splats the final owner once');
+    assert.equal(f.S.net.authoritySplatCalls, 1, 'combined accepted damage splats the shooter proxy once');
+    deliver(f.V, f.C, oldAck);
+    deliver(f.V, f.S, oldAck);
+    deliver(f.C, f.S, newAck);
+    assert.equal(f.C.net.authoritySplatCalls, 1, 'duplicate lethal ACKs cannot replay the splat');
+    assert.equal(f.S.net.authoritySplatCalls, 1);
+    assert.equal(f.S.events.filter((event) => event.name === 'combat:confirmed').length, 2);
+    assert.equal(f.S.net.hitPending.size, 0);
+    assert.equal(f.S.net._pendingHits.size, 0);
+  }
+});
+
+test('composed owner checkpoint chain remains bounded and legacy checkpoint tuples still decode', () => {
+  const f = room();
+  let departed = 'V';
+  for (let index = 0; index < 12; index++) {
+    const successor = `peer-${index}`;
+    f.S.net.s.hostId = successor;
+    f.S.victim.owner = departed;
+    f.S.net.onLeave(departed, true);
+    departed = successor;
+  }
+  const packet = f.S.net._hitHandoffPacket(f.S.victim);
+  assert.equal(packet[0], 'inkwave-hit-handoff-chain-v1');
+  assert.equal(packet.length, 9, 'only eight owner checkpoints are retained on the wire');
+  assert.deepEqual(f.S.net._readHitHandoffPacket(['legacy-owner', 5, 3, 7.5, 82]), {
+    owner: 'legacy-owner', life: 5, sequence: 3, ts: 7.5, hp: 82,
+  }, 'the pre-chain single-owner tuple remains readable');
+  const twoHop = room();
+  leave(twoHop.S, 'V', 'H');
+  leave(twoHop.S, 'H', 'C', true);
+  const oldFormatLatestParent = twoHop.S.net._readHitHandoffPacket(['H', 5, 0, 0, 100]);
+  assert.ok(Number.isFinite(twoHop.S.net._hitHandoffParentOffset(twoHop.S.victim, oldFormatLatestParent)),
+    'a legacy single-parent packet still matches the latest checkpoint of a local chain');
+  assert.equal(f.S.net._readHitHandoffPacket([
+    'inkwave-hit-handoff-chain-v1', ['duplicate', 5, 1, 1, 90], ['duplicate', 5, 2, 2, 80],
+  ]), false, 'ambiguous repeated owners are rejected');
+  assert.equal(f.S.net._readHitHandoffPacket([
+    'inkwave-hit-handoff-chain-v1', ...Array.from({ length: 9 }, (_, i) => [`peer-${i}`, 5, 0, 0, 100]),
+  ]), false, 'oversized chain metadata is rejected');
 });
 
 test('composed malformed authority ACK leaves the exact hit receipt pending for a valid ACK', () => {
@@ -600,6 +774,14 @@ test('composed stale-life NACK and Practice Range removal retire without damage 
   assert.equal(noBots.S.net.byNid.has(4), false, 'the noBots Actor remains removed on leave');
   assert.equal(noBots.S.net.hitPending.size, 0);
   assert.equal(noBots.S.net._pendingHits.size, 0);
+
+  const removedChain = room();
+  leave(removedChain.S, 'V', 'H');
+  assert.ok(removedChain.S.victim.net._hitHandoff, 'the first transfer established owner checkpoint state');
+  removedChain.S.net.cfg.map = 'range';
+  leave(removedChain.S, 'H', 'C', true);
+  assert.equal(removedChain.S.net.byNid.has(4), false);
+  assert.equal(removedChain.S.victim.net._hitHandoff, null, 'Range removal releases the retained owner chain');
 });
 
 test('production mapNoBots cargo removes the actor and retires its hit without rerouting', () => {
@@ -654,15 +836,22 @@ test('composed hit dedupe retains the inclusive 65,536-id window without scannin
 test('bind, disposal, and the production session close path retire hit state before reconnect', () => {
   const f = room();
   f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter');
+  leave(f.S, 'V', 'H');
+  leave(f.S, 'H', 'C', true);
+  assert.ok(f.S.victim.net._hitHandoff, 'the actual two-hop handoff retains a chain before rebinding');
   f.S.net.bind({ actors: [], boss: null });
   assert.equal(f.S.net.hitPending.size, 0, 'rebinding clears delivery retries');
   assert.equal(f.S.net._pendingHits.size, 0, 'rebinding clears combat receipts');
+  assert.equal(f.S.victim.net._hitHandoff, null, 'rebinding releases the old match owner chain');
   assert.equal(f.S.G.netm, f.S.net, 'the composed production bind path owns the active match');
 
   f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter');
+  leave(f.S, 'C', 'H');
+  assert.ok(f.S.victim.net._hitHandoff, 'the next session has fresh owner state before disposal');
   f.S.net.dispose();
   assert.equal(f.S.net.hitPending.size, 0, 'dispose clears delivery retries');
   assert.equal(f.S.net._pendingHits.size, 0, 'dispose clears combat receipts');
+  assert.equal(f.S.victim.net._hitHandoff, null, 'dispose releases the owner chain before reconnect');
   assert.equal(f.S.net.unsubs.length, 0);
 
   const lost = room();
