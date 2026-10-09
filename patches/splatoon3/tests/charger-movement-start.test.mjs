@@ -136,6 +136,11 @@ test('actual Actor tracks partial target, reaches 1.2 full charge and honors loc
   for (let i = 2; i < 61; i++) clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
   assert.equal(clock.ticks, 61);
   assert.equal(a.weaponRunner.chargeT, 1);
+  close(a.weaponRunner.moveSpeed(), 1.2, 'full-charge runner endpoint');
+  // Movement acceleration/deceleration is finite. The tick that first reaches
+  // full charge still began from the previous partial target; one ordinary
+  // fixed interval is enough to settle the remaining velocity delta to 1.2.
+  clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
   const settled = Math.hypot(a.vel.x, a.vel.z);
   assert.ok(Math.abs(settled - 1.2) < 1e-6, `converged speed ${settled}`);
   // Upstream cooldown/state priority is preserved: a planted turret wins.
