@@ -185,8 +185,11 @@ export function installRespawnLifecycle(api, profile) {
     if (spawn) {
       if (spawn.phase === 'aim') {
         spawn.wait += Number.isFinite(dt) && dt > 0 ? dt : 0;
-        const target = targetFor(this);
-        if (target) spawn.target = target;
+        if (spawn.transferTargetPending) delete spawn.transferTargetPending;
+        else {
+          const target = targetFor(this);
+          if (target) spawn.target = target;
+        }
         if (!this.intent.fire) spawn.fireArmed = true;
         const pressed = spawn.fireArmed && this.intent.fire && !this._prevIntent.fire;
         const auto = this.isBot || this.remote;
