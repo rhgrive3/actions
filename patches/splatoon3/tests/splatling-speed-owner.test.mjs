@@ -26,7 +26,7 @@ test('negative old uniform layer compounds the dedicated sampler and violates bo
 });
 test('native recorder captures the sampled birth velocity and ghosts preserve it without a second sample',async()=>{
  const {f,a}=await rig(true);
- const nm={mute:0,out:[],_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};f.G.netm=nm;
+ const nm={s:{},mute:0,out:[],_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};f.G.netm=nm;
  const p=launch(f,a,1,.25),packet=nm.out[0];assert.equal(nm.out.length,1);
  for(const [axis,i] of [['x',8],['y',9],['z',10]])close(packet[i],p.vel[axis]);
  f.context.Math.random=()=>1;f.projectiles.ghostProjectile(a,packet);const ghost=f.projectiles.list.at(-1);

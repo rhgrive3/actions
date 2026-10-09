@@ -68,7 +68,7 @@ for (const key of ['shooter','roller-horizontal','roller-vertical']) {
   const a = reset(f,c); a.nid=42;
   // Use the installed recorder, including the existing birth metadata and
   // owner-tick/sequence footer. This adds no protocol fields or runtime changes.
-  const network={mute:0,out:[],_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  const network={s:{},mute:0,out:[],_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
   f.G.netm=network; launch(f,a,c); const locals=[...f.projectiles.list], packets=network.out;
   assert.equal(packets.length,locals.length,key);
   for (const [i,p] of packets.entries()) {
@@ -282,7 +282,7 @@ assert.equal(ghostDualies.f.paints.length,0,'ghost Dualies wall-drop cannot muta
   f.wall(4,{height:8});
   const a=f.make('blaster'); a.nid=42; a.aimPoint.set(0,1.05,20);
   const packets=[];
-  const recorder={mute:0,out:packets,_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  const recorder={s:{},mute:0,out:packets,_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
   f.G.netm=recorder;
   f.projectiles.fireBlaster(a,a.weapon,0);
   assert.equal(packets.length,1,'Blaster birth packet recorded');
