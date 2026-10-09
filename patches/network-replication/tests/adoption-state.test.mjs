@@ -91,7 +91,9 @@ test('native Super Jump transfers its exact flight and lands continuously at 30/
     const ownerState = source.superJumpState;
     assert.ok(ownerState.t > 0 && ownerState.t < ownerState.dur);
     const packet = sendTick(sender);
-    assert.equal(packet.a[0].length, 24, 'legacy special count remains at index 22 after the Super Jump clock, and adoption state uses index 23');
+    assert.equal(packet.a[0].length, 26, 'adoption index 23 remains stable; surge and accepted-hit state append at 24/25');
+    assert.equal(packet.a[0][24], null, 'an ordinary Super Jump does not fabricate a Squid Surge');
+    assert.deepEqual(Array.from(packet.a[0][25]), ['inkwave-hit-authority-v1', source.netLife, 0]);
     assert.equal(packet.a[0][22], source.stats.specials);
     assert.equal(packet.a[0][23][0], ADOPTION_TAG);
     assert.deepEqual(packet.a[0][23][5].slice(6, 9), [destination.x, destination.y, destination.z]);
