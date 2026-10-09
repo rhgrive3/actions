@@ -2973,3 +2973,25 @@ The #1090 continuation found the same main-only cap on actual Trizooka and Ink V
 ## 2026-10-09 — #382 Comeback and Turf Squid Spawn composition
 
 PR #1182 `b1626ee8` の全production変換＋全bootstrapで、敵死後のSquid Spawnが既存gear/Flow respawn wrapperを迂回し、Comebackが0秒/+0APに戻ることを再現した。Respawn Lifecycleのinstallを既存gear/Flow ownerの内側へ移し、既存20秒/+10APと同じ時計を復元した。根拠は既存#382が参照する[Comeback資料](https://splatoonwiki.org/wiki/Comeback)で、設定値・曲線・物理/モーション値は変更していない。新life/初期出撃/環境死/繰返し/Flow/Quick Respawn/Opening Gambit/ゲージと、30/60/120Hzの固定tick一致を限定検証。詳細は [#382比較記録](inkwave-comeback-squid-spawn-382.md)。実ブラウザ/実通信/Switchとretailの正確なaim/launch/landing発動境界は未確認のまま。
+
+### 2026-10-09 — #1178 reject malformed R2 event simulation ticks
+
+R2 events with a noninteger tick skipped the old `isSafeInteger` branch but
+still received `_netSeq`. They therefore fell back to wall-time playback rather
+than being rejected. A complete-bootstrap native counterfactual confirms that
+JSON-null tick plays a trigger at peer.sim=-1, while the same valid tick=0 event
+correctly waits for owner simulation progress.
+
+R2 now requires a nonnegative safe integer event tick before queueing. This
+matches the actual `_rec` producer. Existing future-tick/envelope checks stay
+unchanged. Legacy events without R2 retain wall-time compatibility, and a valid
+R2 event in an old envelope without outer `u` is still accepted. Invalid rows
+neither queue nor consume the later legitimate row's sequence. No outer-u rule,
+network delay limit, protocol field or Nintendo constant was introduced.
+
+All eight event-time cases pass, including the earlier six and two new
+counterfactual/type-and-recovery checks; adjacent owner simulation, packet
+robustness, paint order and host clock checks pass 34/34, concurrency 1.
+Syntax, quick compatibility and whitespace checks pass. These are native VM
+and build-composition checks, not physical relay/browser or S3 wire-format
+validation. The comparison baseline remains Splatoon 3 11.3.0.

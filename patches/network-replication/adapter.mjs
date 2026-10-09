@@ -395,10 +395,8 @@ export function emit(name, payload) {
       if (d.r === 2) {
         const seq = e[e.length-1], tick = e[e.length-2];
         if (!Number.isSafeInteger(seq) || seq < 1) continue;
-        if (Number.isSafeInteger(tick)) {
-          if (tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;
-          e._netTick = tick;
-        }
+        if (!Number.isSafeInteger(tick) || tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;
+        e._netTick = tick;
         e._netSeq = seq;
       }
       // Receiver-created proof only: an event cannot supply its own authority.

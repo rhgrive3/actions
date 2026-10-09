@@ -17,10 +17,18 @@ async function rig({ negative = false } = {}) {
   const adapt = (rel, code) => {
     const out = adaptBuildSource(rel, code);
     if (!negative || rel !== 'src/net/netmatch.js') return out;
+    if (negative === 'tick-type') {
+      const gate = '        if (!Number.isSafeInteger(tick) || tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;\n        e._netTick = tick;';
+      assert.ok(out.includes(gate));
+      return out.replace(gate, `        if (Number.isSafeInteger(tick)) {
+          if (tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;
+          e._netTick = tick;
+        }`);
+    }
     const gate = '!validSnapshotTimestamp(e[0]) || e[0] > d.ts';
     assert.ok(out.includes(gate), 'counterfactual removes the event timestamp check only');
     return out.replace(gate, '!Number.isFinite(e[0])')
-      .replace('if (tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;', '');
+      .replace('if (!Number.isSafeInteger(tick) || tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;', '');
   };
   const f = await fixture({ fullRuntime: true, adapt, adaptRuntime: adapt, extraExports: exports });
   const source = fs.readFileSync(new URL('../../splatoon3/bootstrap.mjs', import.meta.url), 'utf8');
@@ -127,4 +135,24 @@ test('#1178 valid queued playback after a rejected future event is fixed-step eq
     traces.push(trace);
   }
   assert.deepEqual(traces[0], traces[1]); assert.deepEqual(traces[1], traces[2]);
+});
+
+
+test('#1178 old R2 tick-type fallback plays before the owner simulation tick is ready', async () => {
+  const old = await rig({negative:'tick-type'});
+  receive(old,1000,[trigger(1000,null,1)]);drain(old,1000,-1);
+  assert.deepEqual(old.played,['jump']);
+  const valid = await rig();receive(valid,1000,[trigger(1000,0,1)]);drain(valid,1000,-1);
+  assert.deepEqual(valid.played,[]);assert.equal(valid.nm.peers.get('p2').events.length,1);
+  drain(valid,1000,0);assert.deepEqual(valid.played,['jump']);
+});
+
+test('#1178 R2 noninteger ticks never queue or burn the next valid event sequence', async () => {
+  const f=await rig();let ts=1000,seq=0;
+  for(const tick of [null,'0',0.5,NaN,Infinity,{},[],Number.MAX_SAFE_INTEGER+1]) {
+    const peer=receive(f,ts,[trigger(ts,tick,seq+1)]);
+    assert.equal(peer.events.length,0);assert.equal(peer._lastEventSeq||0,seq);
+    ts+=.1;receive(f,ts,[trigger(ts,0,++seq)]);drain(f,ts,0);
+    assert.equal(f.played.length,seq);assert.equal(peer._lastEventSeq,seq);ts+=.1;
+  }
 });
