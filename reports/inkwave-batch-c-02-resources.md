@@ -8,6 +8,14 @@ Baseline main: `17602ab094da6efb663d872934458e818ae3c93e`.
 - #419: disabled Minimap leaves `_built=false`, but both native match starters call setViewerTeam, forcing raster allocation. Disabled constructors now hold four 1x1 placeholder canvases, no ImageData or raster arrays. Team orientation/version remains logical; deferred work rechecks current preference and layout. Explicit update/ensure lazily creates native full-sized layers; a team change invalidates stale raster. This does not free an already initialized map when OFF is selected. TAB's native 3D map is unaffected.
 - #415: enemy-ink ground contact clamps elapsed recovery time to 0.4s, crediting that interval after exit. The gameplay build transform resets elapsed time to zero inside the native contact branch. Preserve configured global delay/rates, damage cap/grace, CPU paint and weapon tuning. The numerical delay tracked separately by #195 is not changed.
 
+## #433 LOW/mobile atlas continuation on main `5d0be6b7`
+
+The main-menu preload root is already covered by merged PR #476 and remains unchanged here. The prior LOW atlas cap commit `9cf2d92c` is not an ancestor of this main, and no current open PR contains its LobbySet atlas-builder change. On this main, touch still resolves to the native LOW LobbySet profile through #472, but LobbySet allocated all four atlases at desktop backing dimensions.
+
+This continuation applies a 0.5 scale to each LOW atlas canvas dimension and scales its 2D drawing context to retain the existing logical layout and UV mapping. The four assets remain used by the Online set; only their LOW backing resolution changes. HIGH/MEDIUM dimensions, Online entry/reuse/exit, geometry, and gameplay stay as before. Full backing is 10,485,760 pixels / 40 MiB nominal RGBA and a mip-chain estimate of about 53.34 MiB. LOW/mobile becomes 2,621,440 pixels / 10 MiB nominal RGBA and less than 14 MiB for the mip-chain estimate. These are source-dimension and texture-format calculations, not browser or device memory measurements.
+
+The focused lobby and #472 suites pass 10/10. They execute the four native atlas builders with instrumented Canvas2D stubs to record dimensions, then exercise `_updateSet` → `_lobRelease` → `LobbySet.dispose()` at 30/60/120 Hz for two release cycles, counting each owned texture disposal. No browser, physical mobile GPU, or Switch measurement is claimed.
+
 ## Coordination and overlap
 
 Each issue was live-checked for Open/Draft PR root coverage and remote assignment comments before atomic C claim and GitHub assignment comment. PR326 portrait cache, PR399 cloud/cubemap/pause policy, PR61/457 loading caches, and PR184/339 menu/range work do not supply these roots. PR315 retains the 0.4s clamp; PR322's storm recovery gate is distinct. Assignment/comment receipts and actual diff snapshots persist under the dedicated task root. Linked timeline #433 -> #472 is a separate newly reported lobby-quality issue, not a fixing PR.

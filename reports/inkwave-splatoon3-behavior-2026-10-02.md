@@ -2360,6 +2360,15 @@ The build overlay now gives authoritative ancillary ownership and GLSL rays/sate
 
 The combined canonical diagnostic now covers more than 3,500 tests and required about 23 minutes locally before the remaining network, quality, reference and built-weapon gates. The validate job deadline is extended from 30 to 45 minutes so the complete enlarged sequence can finish. No test is removed, skipped or made conditional by this change, and no gameplay, visual, numeric, worker, startup or performance acceptance threshold changes.
 
+## 2026-10-09: #433 LOW/mobile Online LobbySet atlas backing
+
+- 比較対象は Splatoon 3 Ver.11.3.0 の Online lobby 表示。ブキ・ギア・操作条件は資源所有経路のため対象外。S3側の atlas 寸法や GPU 常駐量は今回計測していないため、メモリ実装の一致や数値 parity は主張しない。
+- 再現手順: touch 端末で Online hub または room を開くと、`issue-472-adapter.mjs` が raw quality 設定から native LOW LobbySet を選び、`_lobLoad()` が LobbySet と4枚の atlas を生成する。Online を離れて offline main に戻ると、`_updateSet()` の1.5秒 release path から `_lobRelease()`、`LobbySet.dispose()` に進む。通常 play 入力や対戦状態は不要。
+- main `5d0be6b7` では元の menu preload fix は既に含まれるが、別ブランチの `9cf2d92c` atlas cap は main の祖先ではなかった。4 atlas はすべて Online presentation に使われる一方、LOW/mobile でも desktop backing のまま作成されていた。build adapter は LOW の width/height を各1/2にし、canvas context の描画座標と UV/layout を維持する。HIGH/MEDIUM は native dimensions のまま。
+- 資源計算: decal 2048²、lit 2048×1024、skyline 2048×1024、ground mask 1024×2048 は計10,485,760 px / RGBA換算40 MiB、full mip chain 約53.34 MiB。LOW はそれぞれ1024²、1024×512、1024×512、512×1024で計2,621,440 px / 10 MiB、mip chain は14 MiB未満。これは4 atlasに限った寸法/format計算で、Canvas/GPU driver overhead、他のscene資源、端末常駐量を含まない。
+- `patches/local-quality/tests/lobby-resources.test.mjs` と `issue-472-lobby.test.mjs` は10/10。テストは native atlas builder source を Canvas2D stub で実行して backing寸法/pixel countを数え、native release/dispose owner pathを30/60/120 Hzで2周期ずつ実行する。これは source/lifecycle call evidence であり、実 browser upload、Safari/WebKit、iOS/Android GPU reclaim、Switch parity の代用ではない。
+- プレイへの影響は LOW LobbySet の atlas raster detail の低下に限る。UV、geometry、menu/Online lifecycle、input、gameplay logic は変更しない。実機画面の可読性レビューと browser/GPU profiling は未確認のまま残す。
+
 ## 2026-10-09 — Roller depleted collision radius (#305 residual)
 
 Reference: Splatoon 3 Ver. 11.3.0 Splat Roller, using the pinned `WeaponRollerNormal` table at Leanny `splat3@7280ff9` linked in the issue. Every one of the five Splat Roller units (2 wide + 3 vertical) carries `UnitParam.CollisionParam.DepletionRate = 0.5` alongside its own `InitRadiusFor{Player,Field}`, `EndRadiusFor{Player,Field}`, `ChangeFrameFor{Player,Field}` and `FriendThroughFrameForPlayer`. The field scales the depleted round's hit magnitudes; it does not replace the growth chronology, the teammate window, or the sourced damage/speed/paint parameters. Units: wide init 0.12/0.1 → end 1.02/0.6 over 4F/2F; vertical unit 0/1 init 0.116/0.1 → end 0.87/0.75 over 4F/3F; vertical unit 2 init 0.116/0.1 → end 0.82/0.55 over 4F/2F; friend-through 3F on all five. Per-frame native radius behavior on hardware remains unmeasured.
