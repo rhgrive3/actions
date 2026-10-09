@@ -2536,4 +2536,3 @@ The #1161/#272 combined production gear panel retains both fixed shoes-main abil
   - `patches/practice-range/tests/isolation.test.mjs`（7/7 パス）により Practice Range の排他性・非公開性が損なわれていないことを確認。
   - `scripts/check-inkwave-patches.mjs --quick`（パス）により `inkwave-public/` 凍結と upstream 互換性を確認。
 - 遊びへの影響と状態：ステージ選択画面およびローカル/ネットワーク対戦で「ユノハナ大渓谷」が選択可能になり、Ver.8.0.0改修後の高低差・中央タワー・金網ルート・低地迂回路を活用した立ち回りが可能となった。坂道から谷底への移動が途切れることなく安全に進行でき、金網上のインク透過や谷底側面への落下死など基本ルールが機能する。本家の実機 CAD 寸法や細部の装飾メッシュとの完全同一性は未確認（ローカル座標系による誠実なブロックアウト実装）として残す。
-
