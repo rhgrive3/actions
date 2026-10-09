@@ -16,7 +16,7 @@ function replaceAllExpected(code, before, after, expected, label) {
   return code.split(before).join(after);
 }
 export function networkIdentity() {
-  return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs']
+  return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs', 'snapshot-guard.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -1440,8 +1440,10 @@ ${bombHit}`;
 
   }
   if (rel === 'src/net/netmatch.js') {
+    code = "import { validActorSnapshotRow, validRemoteActorPose } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     code = adaptIssue1088SurgePresentation(code);
-    patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
+    patch('if (d.a) for (const s of d.a) {\n      const rawRoll', 'if (Array.isArray(d.a)) for (const s of d.a) {\n      if (!validActorSnapshotRow(s, d.ts)) continue;\n      const rawRoll', 'reject malformed owner snapshot before buffering');
+    patch('    const S = n.cur;', '    const S = n.cur;\n    if (!validRemoteActorPose(S, n.err)) { a.character.root.visible = false; return; }\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'reject nonfinite remote pose before actor/character writes');
   }
   return code;
 }
