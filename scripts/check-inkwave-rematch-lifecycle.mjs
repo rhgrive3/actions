@@ -105,7 +105,33 @@ const tap = async (id) => {
     let k = 1; for (let n = e; n && n !== document.body; n = n.parentElement) k *= +getComputedStyle(n).opacity;
     return e.getBoundingClientRect().width > 0 && k > 0.6;
   }, sel, 300000, 'tappable ' + id);
-  await operationTrace.run('tap: ' + id, () => page.tap(sel, { timeout: 30000 }));
+  // Playwright locator.tap additionally waits for actionability/synchronous
+  // completion *after* native visibility was proven above. On software GL
+  // the third rematch can run at ~5 fps; in CI it reached the dispatch stage
+  // at 29.8 s and then timed out at 30 s even though the button was present.
+  // Dispatch a real mobile touch at the verified hit-tested button location.
+  // Never invoke the DOM click handler or skip the resulting battle/menu checks.
+  if (id === 'start') {
+    await operationTrace.run('touch: start', async () => {
+      // Locator.tap performs this scroll before dispatch. The START button
+      // can be below the first iPad viewport: keep that real user step while
+      // avoiding the costly post-scroll tap actionability synchronization.
+      await page.locator(sel).scrollIntoViewIfNeeded({ timeout: 30000 });
+      const point = await page.evaluate((selector) => {
+        const button = document.querySelector(selector);
+        if (!button) throw Error('Turf START disappeared before touch');
+        const b = button.getBoundingClientRect();
+        const x = b.left + b.width * .5, y = b.top + b.height * .5;
+        const hit = document.elementFromPoint(x, y);
+        if (!(button === hit || button.contains(hit))) {
+          throw Error('Turf START touch blocked by ' + (hit?.outerHTML?.slice(0, 160) || 'no hit element') +
+            ' at ' + JSON.stringify({x,y,rect:{left:b.left,top:b.top,width:b.width,height:b.height},viewport:[innerWidth,innerHeight]}));
+        }
+        return { x, y };
+      }, sel);
+      await page.touchscreen.tap(point.x, point.y);
+    });
+  } else await operationTrace.run('tap: ' + id, () => page.tap(sel, { timeout: 30000 }));
 };
 const menuIs = (name) => until((n) => window.__inkwave?.menus?.current === n, name, 300000, 'menu ' + name);
 // Native touch rows/tabs own their highlight; ordinary main-menu buttons use

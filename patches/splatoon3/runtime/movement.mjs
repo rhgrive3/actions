@@ -238,9 +238,21 @@ function beginSurgeLaunchArmor(actor, surge) {
   movementState(actor).armor = surge;
 }
 export function normalJumpVelocity(a, velocity) {
-  const r = a.weaponRunner, cap = a.weapon.fullChargeJumpVelocity;
-  if (a.form !== 'squid' && a.weapon.kind === 'charger' && a.intent.fire &&
-      r.charging && r.charge >= 1 && Number.isFinite(cap)) return Math.min(velocity, cap);
+  const r = a.weaponRunner;
+  if (a.form === 'squid') return velocity;
+  // #251: only a held full-charge Charger lowers the takeoff impulse.
+  if (a.weapon.kind === 'charger') {
+    const cap = a.weapon.fullChargeJumpVelocity;
+    if (a.intent.fire && r.charging && r.charge >= 1 && Number.isFinite(cap)) return Math.min(velocity, cap);
+    return velocity;
+  }
+  // #888: the whole Splatling charging state uses its own lower takeoff impulse
+  // (S3 0.7 DU/f), which also caps the enemy-ink / Ink Resistance result. The
+  // value is per-weapon data so 1.0-DU/f exception Splatlings can be added later.
+  if (a.weapon.kind === 'splatling') {
+    const cap = a.weapon.chargeJumpVelocity;
+    if (a.intent.fire && r.charging && Number.isFinite(cap)) return Math.min(velocity, cap);
+  }
   return velocity;
 }
 export function isSquidReturnerCeiling(actor, physics) {

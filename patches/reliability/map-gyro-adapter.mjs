@@ -9,7 +9,9 @@ export function adaptMapGyro(rel, code) {
     patch('    inp.mobile?.gyro?.discard?.();','    // Dead navigation routes motion after resolving whether the map is open.','defer dead motion consumption');
     patch('    this.mapHeld = this.respawnMapOpen();','    this.mapHeld = this.respawnMapOpen();\n    this.captureMapGyro(this.mapHeld);','dead map owns gyro');
     patch('    this.pendingRespawnJump = null;\n    this.padJumpTarget = null;', '    this.clearMapGyro();\n    this.pendingRespawnJump = null;\n    this.padJumpTarget = null;', 'lifecycle clears map motion');
-    patch('      selected = true; this.pendingRespawnJump = null;', '      this._mapGyroYaw = this._mapGyroPitch = 0;\n      this._mapGyroCursor = false; this.mapGyroTarget = null;\n      selected = true; this.pendingRespawnJump = null;', 'D-pad remains explicit selection');
+    const targetSelection = '      selected = true; this.pendingRespawnJump = null;';
+    if (!code.includes(targetSelection)) throw new Error('INKWAVE reliability input conflict (map gyro: dynamic selection owner)');
+    code = code.split(targetSelection).join('      this._mapGyroYaw = this._mapGyroPitch = 0;\n      this._mapGyroCursor = false; this.mapGyroTarget = null;\n' + targetSelection);
     patch('    const target = this.padJumpTarget;', '    if (!selected && this._mapGyroCursor) this.padJumpTarget = this.mapGyroTarget;\n    const target = this.padJumpTarget;', 'gyro hover uses existing confirmation');
     patch('  canRequestMapJump() {', METHODS+'\n  canRequestMapJump() {','map queue methods');
     patch('  resetCamera() {','  resetCamera() {\n    this.clearMapGyro();','reset clears gyro cursor');
@@ -34,6 +36,7 @@ export function adaptMapGyro(rel, code) {
     }
     // snap: nearest jumpable pin within reach`, 'project gyro into map cursor');
     patch('    const cxp = this.cx * W, cyp = this.cy * H;', `    if (navigation?._mapGyroCursor) navigation.mapGyroTarget = best === 3 ? {spawn:true} :
+      best >= 4 && this.pins[best]?.bubblerTarget ? {bubbler:this.pins[best].bubblerTarget} :
       best >= 0 && this.pins[best].ok ? {actor:this.pins[best].target} : null;
     const cxp = this.cx * W, cyp = this.cy * H;`, 'share motion hover target identity');
   }

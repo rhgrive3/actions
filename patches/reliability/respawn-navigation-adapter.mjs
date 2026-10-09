@@ -38,8 +38,6 @@ Input.prototype.pollPad = function (...args) {
   if (rel === 'src/game/player.js') {
     patch('    const it = a.intent;', '    const it = a.intent;\n    if (this.updateRespawnNavigation()) return;', 'dead navigation precedes body return');
     patch('      selected = true; inp.padPressed.delete(directions[i]);', '      selected = true; this.pendingRespawnJump = null; inp.padPressed.delete(directions[i]);', 'new selection cancels older queued choice');
-    patch('    if (!a.canSuperJump() || !target || this.padJumpIndex < 0) return;', '    if (!this.canRequestMapJump() || !target || this.padJumpIndex < 0) return;', 'shared pad admission');
-    patch('    if (a.superJump(destination)) {', '    if (this.requestMapJump(destination) && !this.pendingRespawnJump) {', 'pad queue does not close itself');
     patch('  updatePadMapSelection(standardPad) {', `${METHODS}\n  updatePadMapSelection(standardPad) {`, 'shared navigation methods');
   }
   if (rel === 'src/ui/hud.js' || rel === 'src/ui/diorama.js') {
@@ -49,15 +47,36 @@ Input.prototype.pollPad = function (...args) {
       isHud ? `    const canJump = this.lab ? true : (${request});` : `    const canJump = ${request};`, 'present selectable targets');
     patch('    if (!me || !me.canSuperJump || !me.canSuperJump()) {', `    if (!(${request})) {`, 'click navigation eligibility');
     if (isHud) {
-      const c39 = '    const ticket = tg.home ? null : me.selectSuperJumpTarget(tg.actor);\n    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor, ticket);';
-      const raw = '    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor);';
-      patch(code.includes(c39) ? c39 : raw,
-        '    const target = tg.home ? tg.pad.clone() : tg.actor;\n    const ok = me && G.match?.controller?.a === me ? G.match.controller.requestMapJump(target) : me.superJump(target);',
-        'HUD routes one request');
+      patch(`    let ok = false;
+    if (tg.home) ok = me.superJump(tg.pad.clone());
+    else if (tg.kind === 'bubbler') {
+      const selected = this._map.targetKeys?.[i];
+      if (selected && selected.kind === 'bubbler' && selected.id === tg.domeId &&
+          selected.serial === tg.serial && selected.team === tg.team) ok = !!me.superJumpToBubbler?.(selected);
+    } else {
+      const ticket = me.selectSuperJumpTarget?.(tg.actor);
+      ok = me.superJump(tg.actor, ticket);
+    }`,
+        `    let ok = false;
+    if (tg.home) {
+      const target = tg.pad.clone();
+      ok = me && G.match?.controller?.a === me ? G.match.controller.requestMapJump(target) : me.superJump(target);
+    } else if (tg.kind === 'bubbler') {
+      const selected = this._map.targetKeys?.[i];
+      if (selected && selected.kind === 'bubbler' && selected.id === tg.domeId &&
+          selected.serial === tg.serial && selected.team === tg.team) {
+        ok = me && G.match?.controller?.a === me
+          ? G.match.controller.requestMapBubblerJump(selected) : !!me.superJumpToBubbler?.(selected);
+      }
+    } else if (me && G.match?.controller?.a === me) ok = G.match.controller.requestMapJump(tg.actor);
+    else {
+      const ticket = me.selectSuperJumpTarget?.(tg.actor);
+      ok = me.superJump(tg.actor, ticket);
+    }`, 'HUD routes one request');
     }
     else {
-      patch("    if (i === 3) { const pad = G.level?.spawnPads?.[me.team]; ok = pad ? me.superJump(pad.clone()) : false; }\n    else if (p.target && p.target.alive && !p.target.superJumpState) ok = me.superJump(p.target);",
-        "    const request = target => me && G.match?.controller?.a === me ? G.match.controller.requestMapJump(target) : me.superJump(target);\n    if (i === 3) { const pad = G.level?.spawnPads?.[me.team]; ok = pad ? request(pad.clone()) : false; }\n    else if (p.target && p.target.alive && !p.target.superJumpState) ok = request(p.target);", 'diorama routes one request');
+      patch("    if (i === 3) { const pad = G.level?.spawnPads?.[me.team]; ok = pad ? me.superJump(pad.clone()) : false; }\n    else if (i >= 4 && i < this.pins.length - 1) ok = p.bubblerTarget ? !!me.superJumpToBubbler?.(p.bubblerTarget) : false;\n    else if (p.target && p.target.alive && !p.target.superJumpState) ok = me.superJump(p.target);",
+        "    if (i === 3) { const pad = G.level?.spawnPads?.[me.team]; ok = pad ? (me && G.match?.controller?.a === me ? G.match.controller.requestMapJump(pad.clone()) : me.superJump(pad.clone())) : false; }\n    else if (i >= 4 && i < this.pins.length - 1) ok = p.bubblerTarget ? (me && G.match?.controller?.a === me ? G.match.controller.requestMapBubblerJump(p.bubblerTarget) : !!me.superJumpToBubbler?.(p.bubblerTarget)) : false;\n    else if (p.target && p.target.alive && !p.target.superJumpState) ok = me && G.match?.controller?.a === me ? G.match.controller.requestMapJump(p.target) : me.superJump(p.target);", 'diorama routes one request');
       patch("(inp.locked && inp.mouse.leftPressed) || inp.padPressed?.has?.(0)", "(inp.locked && inp.mouse.leftPressed) || (inp.pad?.mapping !== 'standard' && inp.padPressed?.has?.(0))", 'standard pad retains sole A confirmation owner');
     }
   }
@@ -69,6 +88,8 @@ const METHODS = `  canRequestMapJump() {
   }
 
   validMapJumpTarget(target) {
+    if (target?.kind === 'bubbler') return target.team === this.a.team &&
+      (G.bigBubblerJumpTargets?.(this.a.team) || []).some(d => d.id === target.id && d.serial === target.serial);
     if (target?.pos?.isVector3) return target !== this.a && target.team === this.a.team &&
       G.actors.includes(target) && target.alive && !target.superJumpState;
     return !!(target?.isVector3 && [target.x, target.y, target.z].every(Number.isFinite));
@@ -87,6 +108,23 @@ const METHODS = `  canRequestMapJump() {
       return true;
     }
     return this.a.superJump(target);
+  }
+
+  requestMapBubblerJump(target) {
+    if (!this.canRequestMapJump()) return false;
+    const live = (G.bigBubblerJumpTargets?.(this.a.team) || []).find(d =>
+      d.id === target?.id && d.serial === target?.serial && d.team === target?.team);
+    if (!live) {
+      if (this._respawnNavigationActive) this.pendingRespawnJump = null;
+      return false;
+    }
+    const identity = { kind: 'bubbler', id: live.id, serial: live.serial, team: live.team };
+    if (!this.a.alive || (this._respawnNavigationActive && !this.a.grounded)) {
+      this._respawnNavigationOwner = this.input.navigationDevice ?? this.input.lastDevice;
+      this.pendingRespawnJump = { bubbler: identity };
+      return true;
+    }
+    return !!this.a.superJumpToBubbler?.(identity);
   }
 
   clearRespawnNavigation() {
@@ -124,7 +162,9 @@ const METHODS = `  canRequestMapJump() {
           const pending = this.pendingRespawnJump;
           this.clearRespawnNavigation();
           const target = pending?.actor || pending?.point;
-          if (target && this.requestMapJump(target)) {
+          const started = pending?.bubbler ? this.requestMapBubblerJump(pending.bubbler)
+            : target && this.requestMapJump(target);
+          if (started) {
             this.padMapOpen = this.mapHeld = false; inp.mobile?.setMap?.(false);
             a.intent.move.set(0, 0, 0);
             a.intent.fire = a.intent.jump = a.intent.squid = a.intent.sub = a.intent.special = false;
@@ -151,7 +191,8 @@ const METHODS = `  canRequestMapJump() {
     if (touch) for (const id of ['fire','jump','sub','special','squid']) touch.pressed.delete(id);
     this.mapHeld = this.respawnMapOpen();
     if (!this.mapHeld) { this.pendingRespawnJump = null; this.padJumpTarget = null; this.padJumpIndex = -1; return true; }
-    if (this.pendingRespawnJump && !this.validMapJumpTarget(this.pendingRespawnJump.actor || this.pendingRespawnJump.point)) this.pendingRespawnJump = null;
+    const pendingTarget = this.pendingRespawnJump?.bubbler || this.pendingRespawnJump?.actor || this.pendingRespawnJump?.point;
+    if (this.pendingRespawnJump && !this.validMapJumpTarget(pendingTarget)) this.pendingRespawnJump = null;
     this.updatePadMapSelection(standard);
     const allies = G.actors.filter(o => o.team === a.team && o !== a);
     // Mobile's normal consume method closes the map. A deferred choice stays visible/cancellable.
@@ -162,6 +203,13 @@ const METHODS = `  canRequestMapJump() {
       if (inp.wasPressed(key) || rawPad || touchIndex === i) {
         const target = i === 3 ? G.level.spawnPads?.[a.team]?.clone() : allies[i];
         this.requestMapJump(target); inp.pressed.delete(key); if (rawPad) inp.padPressed.delete(direction);
+      }
+    }
+    const bubblers = G.bigBubblerJumpTargets?.(a.team) || [];
+    for (let i = 0; i < Math.min(5, bubblers.length); i++) {
+      const key = 'Digit' + (i + 5);
+      if (inp.wasPressed(key)) {
+        this.requestMapBubblerJump(bubblers[i]); inp.pressed.delete(key);
       }
     }
     return true;

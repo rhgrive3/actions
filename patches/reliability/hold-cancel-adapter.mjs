@@ -12,8 +12,8 @@ export function adaptHoldCancel(rel, code) {
     code = replaceOnce(code, '    this.mobile?.endFrame();\n    this.pressed.clear();',
       '    this.mobile?.endFrame();\n    this._holdCancelled?.clear();\n    this.pressed.clear();', 'hold cancel consumption');
   } else if (rel === 'src/game/player.js') {
-    code = replaceOnce(code, '    // super jump: while the map is open,',
-      '    this._cancelHolds(inp, it);\n    // super jump: while the map is open,',
+    code = replaceOnce(code, '    // super jump: 1-3 / d-pad directions retain teammate targeting, 4 / d-pad down is home;',
+      '    this._cancelHolds(inp, it);\n    // super jump: 1-3 / d-pad directions retain teammate targeting, 4 / d-pad down is home;',
       'cancelled hold after final map ownership');
     code = replaceOnce(code, '      this.input.mobile?.gyro?.discard();\n      return;\n    }',
       '      this.input.mobile?.gyro?.discard();\n      this._cancelHolds(inp, it);\n      return;\n    }', 'cancelled hold while disabled');

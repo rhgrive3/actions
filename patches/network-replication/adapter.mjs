@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue1088SurgePresentation } from './issue-1088-surge-adapter.mjs';
+import { adaptIssue1163RemoteDodgeClock } from './dodge-clock-adapter.mjs';
 export const NETWORK_ROOT = fileURLToPath(new URL('./', import.meta.url));
 function once(code, before, after, label) {
   const i = code.indexOf(before);
@@ -16,7 +17,11 @@ function replaceAllExpected(code, before, after, expected, label) {
   return code.split(before).join(after);
 }
 export function networkIdentity() {
-  return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs']
+  // S3 runtime dependencies are already tracked under canonical patch/runtime/
+  // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
+  // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
+  return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
+    'dodge-clock-adapter.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -1441,6 +1446,7 @@ ${bombHit}`;
   }
   if (rel === 'src/net/netmatch.js') {
     code = adaptIssue1088SurgePresentation(code);
+    code = adaptIssue1163RemoteDodgeClock(code);
     patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
   }
   return code;

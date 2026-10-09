@@ -1,3 +1,4 @@
+import { adaptBubblerMap } from './bubbler-map-adapter.mjs';
 import { adaptRollerMaxPaint } from './roller-max-paint-adapter.mjs';
 import { adaptHostTeams } from './lobby-host-team-adapter.mjs';
 import { adaptLocalBatch01 } from './local-batch-01-adapter.mjs';
@@ -57,6 +58,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);
   // The source-guided shooter-family InkFlightRuntime is the authority for
   // head integration and detached paint drops. It does not traverse the
@@ -601,8 +603,11 @@ export function adaptSource(rel, code) {
   _bindBus() {`,
       'Super Jump target notification HUD cue');
     code = replaceOnce(code,
-      "    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor);",
-      "    const ticket = tg.home ? null : me.selectSuperJumpTarget(tg.actor);\n    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor, ticket);",
+      'else ok = me.superJump(tg.actor);',
+      `else {
+      const ticket = me.selectSuperJumpTarget?.(tg.actor);
+      ok = me.superJump(tg.actor, ticket);
+    }`,
       'MapRoster Super Jump target selection cue');
     code = replaceOnce(code,
       "    on('superjump', ({ actor, phase, to }) => { if (actor === this._local() && phase === 'charge' && this._live()) this._snd('ui_confirm', { volume: 0.6 }); void to; }),",

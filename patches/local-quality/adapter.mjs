@@ -36,6 +36,7 @@ import { adaptS3SquidLook } from './s3-squid-look-adapter.mjs';
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
 import { adaptScreenfxDamageReset } from './screenfx-damage-reset-adapter.mjs';
+import { adaptComposerFormat } from './composer-format-adapter.mjs';
 import { adaptComposerTarget } from './composer-target-adapter.mjs';
 import { adaptScreenfxLensRelease } from './screenfx-lens-release-adapter.mjs';
 import { adaptActorWeaponInput } from './actor-weapon-input-adapter.mjs';
@@ -72,7 +73,7 @@ const IDENTITY_FILES = [
   'issue-418-adapter.mjs','world-quality.mjs','quality-probe.mjs','texlib-adapter.mjs','texlib.mjs',
   'boss-hit-adapter.mjs',
   'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
-  'screenfx-damage-reset-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
+  'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
   'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt',
@@ -120,7 +121,9 @@ export function adaptQualitySource(rel, code) {
   code = adaptIssue482(rel, code);
   code = adaptIssue405(rel, code);
   code = adaptIssue484(rel, code);
-  return adaptComposerTarget(rel, adaptFrameOrder(rel, adaptQualityLayer(rel, code)), replaceOnce);
+  const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
+  const lazy = adaptComposerTarget(rel, framed, replaceOnce);
+  return adaptComposerFormat(rel, lazy, replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {

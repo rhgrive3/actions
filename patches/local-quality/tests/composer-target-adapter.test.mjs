@@ -57,13 +57,20 @@ test('#642 adapter changes only the full production renderer composition and rou
   assert.ok(raw.includes(BASELINE));
   assert.ok(raw.indexOf(BASELINE) < raw.indexOf('this.renderPass = new RenderPass(this.scene, this.camera);'));
 
-  const full = adaptQualitySource(REL, raw);
+  const full = adaptComposerTarget(REL, raw, replaceOnce);
   assert.notEqual(full, raw);
   assert.ok(full.includes('createLazyComposerTarget((state) => {'));
   assert.ok(full.includes('type: THREE.HalfFloatType, samples'));
   assert.ok(full.includes('ownerDocument: r.domElement?.ownerDocument'));
+  assert.ok(full.includes('Math.round(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio, mobileCap) * s * 1e6) / 1e6'));
   assert.ok(!/UnsignedByteType|UnsignedInt101111Type/.test(full));
   assert.ok(qualityIdentity()['composer-target-adapter.mjs']);
+  assert.ok(qualityIdentity()['composer-format-adapter.mjs']);
+
+  const composed = adaptQualitySource(REL, raw);
+  assert.ok(composed.includes('composerColorTarget.options'));
+  assert.ok(composed.includes('configureComposerColorTargets(THREE, composer, composerColorTarget)'));
+  assert.ok(composed.includes('type: THREE.UnsignedInt101111Type'));
 
   const restored = revertComposerTarget(full);
   assert.ok(restored.includes(BASELINE));
@@ -120,11 +127,18 @@ test('#642 lazy native pair keeps HDR across resize, hidden release and offscree
   assert.equal(proxy.renderTarget1.height, 540);
   assert.equal(state.disposals, 2, 'native setSize releases the previous target storage');
 
+  proxy.setPixelRatio(1.25);
+  assert.equal(proxy.renderTarget1.width, 800, 'dynamic-resolution ratio updates the physical width');
+  assert.equal(proxy.renderTarget1.height, 450, 'dynamic-resolution ratio updates the physical height');
+  assert.equal(state.disposals, 4, 'native setPixelRatio resizes and releases each old target once');
+  proxy.setSize(640, 360);
+  assert.equal(state.disposals, 4, 'the following unchanged logical size does not dispose the pair again');
+
   doc.visibilityState = 'hidden';
   doc.emit('visibilitychange');
   assert.equal(proxy.renderTarget1, null);
   assert.equal(proxy.renderTarget2, null);
-  assert.equal(state.disposals, 4, 'hidden release disposes both native targets once');
+  assert.equal(state.disposals, 6, 'hidden release disposes both native targets once');
   assert.equal(proxy.render('hidden-frame'), undefined);
   assert.equal(state.created, 1, 'hidden on-screen frames do not recreate the pair');
 
@@ -138,7 +152,7 @@ test('#642 lazy native pair keeps HDR across resize, hidden release and offscree
   proxy.dispose();
   assert.equal(proxy.renderTarget1, null);
   assert.equal(doc.listenerCount('visibilitychange'), 0);
-  assert.equal(state.disposals, 6, 'final disposal releases the recreated native pair exactly once');
+  assert.equal(state.disposals, 8, 'final disposal releases the recreated native pair exactly once');
 });
 
 test('#642 quality rebuild disposes the old native pair and preserves the new sample choice', () => {
