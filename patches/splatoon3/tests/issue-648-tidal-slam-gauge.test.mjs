@@ -147,9 +147,13 @@ test('the composed action and HUD trace is identical at 30/60/120 Hz render cade
     const clock = new FixedClock(), trace = [];
     for (let frame = 0; frame < hz * 3 && (a.specialActive || a.s3TidalSlamGaugeFinish); frame++) {
       clock.advance(1 / hz, dt => {
+        // At 30 Hz a single render step may include two fixed ticks. Keep the
+        // terminating simulation tick, but never append an extra idle sample
+        // after the action and its gauge finish have both completed.
+        const actionOwned = !!(a.specialActive || a.s3TidalSlamGaugeFinish);
         f.G.time += dt;
         a.update(dt);
-        trace.push([a.specialActive?.phase ?? 'complete', a.special, a.specialFrac()]);
+        if (actionOwned) trace.push([a.specialActive?.phase ?? 'complete', a.special, a.specialFrac()]);
       });
     }
     assert.equal(a.special, 0);
