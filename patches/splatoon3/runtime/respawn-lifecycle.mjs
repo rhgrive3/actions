@@ -74,9 +74,24 @@ export function installRespawnLifecycle(api, profile) {
     const ang = (actor.slot / count) * Math.PI * 2 + 0.6;
     return { pad, x: pad.x + Math.cos(ang) * 1.1, y: pad.y + 4.5, z: pad.z + Math.sin(ang) * 1.1 };
   };
-  const groundTarget = (x, z) => {
+  const supportedTarget = (actor, x, z) => {
     const y = G.level.groundHeight?.(x, z);
-    return Number.isFinite(y) ? { x, y, z } : null;
+    if (!Number.isFinite(y) || typeof actor?._resolve !== 'function' || typeof G.physics?.collideBody !== 'function') return null;
+    // groundHeight includes steep top faces which Actor._resolve rejects. Probe
+    // a detached actor snapshot through the native body/feet resolver so aim
+    // validation cannot mutate the live actor or emit a landing event.
+    const probe = Object.assign(Object.create(Object.getPrototypeOf(actor)), actor);
+    probe.pos = actor.pos.clone().set(x, y, z);
+    probe.vel = actor.vel.clone().set(0, -1, 0);
+    probe.grounded = true; // suppress _onLand while retaining _resolve's landing query
+    probe.ground = Object.assign({}, actor.ground, { normal: actor.ground.normal.clone() });
+    probe.groundN = actor.groundN.clone();
+    probe.contacts = { ...actor.contacts, groundNormal: actor.contacts.groundNormal.clone(), wallNormal: actor.contacts.wallNormal.clone() };
+    probe._railIds = [];
+    probe._resolve(false, y, false);
+    return probe.grounded && probe.ground?.hit && probe.pos.x === x && probe.pos.z === z
+      ? { x, y: probe.pos.y, z }
+      : null;
   };
   const targetFor = actor => {
     const { pad } = slotPoint(actor), aim = actor.aimPoint;
@@ -84,33 +99,30 @@ export function installRespawnLifecycle(api, profile) {
     let len = Math.hypot(dx, dz);
     if (len < minRange) { const yaw = Number.isFinite(actor.aimYaw) ? actor.aimYaw : (actor.team === 0 ? 0 : Math.PI); dx = Math.sin(yaw) * 7.5; dz = Math.cos(yaw) * 7.5; len = 7.5; }
     if (len > maxRange) { dx *= maxRange / len; dz *= maxRange / len; }
-    return groundTarget(pad.x + dx, pad.z + dz);
+    return supportedTarget(actor, pad.x + dx, pad.z + dz);
   };
   const slotTarget = actor => {
     const { x, z } = slotPoint(actor);
-    return groundTarget(x, z);
+    return supportedTarget(actor, x, z);
   };
   const setPos = (actor, p) => { actor.pos.set(p.x,p.y,p.z); actor.character.root.position.copy(actor.pos); };
   function finishLanding(actor) {
     actor._surface?.();
     actor.vel.set(0,0,0); actor.grounded = true;
     actor.invuln = 0;
-    actor.s3.spawnArmorManaged = true;
-    actor.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
     actor.character.root.position.copy(actor.pos);
     delete actor.s3.squidSpawn;
     emit?.('squidspawn:land',{actor});
   }
   function launch(actor) {
     const s = actor.s3?.squidSpawn; if (!s || s.phase !== 'aim') return false;
-    const target = s.target && groundTarget(s.target.x, s.target.z);
+    const target = s.target && supportedTarget(actor, s.target.x, s.target.z);
     if (!target) return false;
     s.target = target;
     s.phase = 'flight'; s.t = 0; s.duration = flightDuration; s.from = { x: actor.pos.x, y: actor.pos.y, z: actor.pos.z }; s.to = { ...target };
-    // Spawn protection begins at landing, not launch: keep only the native
-    // flight invulnerability here so the flight itself stays unhittable while
-    // the finite 235F armor clock starts when ground is reached.
-    actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = null;
+    // Preserve #1005's launch-owned finite armor clock; advanceSpawnProtection
+    // consumes it during flight just as it does during other live actor time.
+    actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = { hp: cfg.hp, remaining: cfg.duration, breakRemaining: null };
     actor.invuln = flightDuration + 1e-6; actor.grounded = false; actor.vel.set(0,0,0); actor.character.trigger('spawn');
     emit?.('squidspawn:launch', { actor, initial: s.initial, target: { ...s.to } });
     return true;
@@ -204,8 +216,8 @@ export function installRespawnLifecycle(api, profile) {
           let x=spawn.to.x+this.intent.move.x*steerSpeed*dt,z=spawn.to.z+this.intent.move.z*steerSpeed*dt;
           const pad=G.level.spawnPads[this.team],dx=x-pad.x,dz=z-pad.z,len=Math.hypot(dx,dz);
           if(len>maxRange){x=pad.x+dx*maxRange/len;z=pad.z+dz*maxRange/len;}
-          const y=G.level.groundHeight?.(x,z);
-          if(Number.isFinite(y)){spawn.to.x=x;spawn.to.y=y;spawn.to.z=z;}
+          const target=supportedTarget(this,x,z);
+          if(target)spawn.to=target;
         }
         spawn.t = Math.min(spawn.duration, spawn.t + dt); const u=Math.min(1,spawn.t/spawn.duration),arc=Math.sin(Math.PI*u)*2.2;
         this.pos.set(spawn.from.x+(spawn.to.x-spawn.from.x)*u, spawn.from.y+(spawn.to.y-spawn.from.y)*u+arc, spawn.from.z+(spawn.to.z-spawn.from.z)*u);
@@ -214,11 +226,11 @@ export function installRespawnLifecycle(api, profile) {
         if (u >= 1-1e-10) {
           // A selected point stays eligible only while the native stage still
           // has support there. A ground-probe miss hands off to native gravity.
-          const y=G.level.groundHeight?.(spawn.to.x,spawn.to.z);
-          if(!Number.isFinite(y)||typeof this._resolve!=='function'||typeof G.physics?.collideBody!=='function'){
+          if(!Number.isFinite(spawn.to?.x)||!Number.isFinite(spawn.to?.y)||!Number.isFinite(spawn.to?.z)||
+             typeof this._resolve!=='function'||typeof G.physics?.collideBody!=='function'){
             spawn.phase='landing';this.invuln=Infinity;return;
           }
-          this.pos.set(spawn.to.x,y,spawn.to.z);
+          this.pos.set(spawn.to.x,spawn.to.y,spawn.to.z);
           this._resolve(false,oldY,false);
           this.character.root.position.copy(this.pos);
           if(!this.grounded||!this.ground?.hit){
