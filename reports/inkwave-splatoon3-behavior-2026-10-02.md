@@ -2283,3 +2283,22 @@ The build overlay now gives authoritative ancillary ownership and GLSL rays/sate
 ### PR1175 complete validation scheduling (2026-10-09)
 
 The combined canonical diagnostic now covers more than 3,500 tests and required about 23 minutes locally before the remaining network, quality, reference and built-weapon gates. The validate job deadline is extended from 30 to 45 minutes so the complete enlarged sequence can finish. No test is removed, skipped or made conditional by this change, and no gameplay, visual, numeric, worker, startup or performance acceptance threshold changes.
+
+## 2026-10-09: Joy-Con / Pro Controller motion input path (#71)
+
+- **本家比較条件:** Splatoon 3 Ver. 11.3.0。コントローラー操作条件: Joy-Con 2本持ち（Gripまたは分割）および Nintendo Switch Pro コントローラー。公式操作体系（https://splatoon.nintendo.com/en/basics/）において、ジャイロ操作有効時、右スティックは水平カメラ旋回（粗調整、ヨー軸）のみを担当し、垂直カメラ操作（ピッチ軸）はジャイロ操作が排他的に担当する。照準・旋回はジャイロの角速度（ヨー・ピッチ）を積分して合成する。カメラリセット（Yボタン）押下時はカメラピッチを水平（0）に復元し、カメラヨーをプレイヤーキャラクターの向きに整列させる。
+- **本家の根拠:** 公開されている Nintendo Switch コントローラー HID リバースエンジニアリング仕様（Vendor ID `0x057e`、Joy-Con L `0x2006`、Joy-Con R `0x2007`、Pro Controller `0x2009`、Grip/Composite `0x200e`）。標準フル入力レポート `0x30` / サブコマンド応答レポート `0x21` / NFC・IRレポート `0x31` の 13〜48 バイトに格納される ST LSM6DS3 6軸IMUデータ。公称感度 ±2000 dps レンジで 70 mdps/LSB（0.070 dps/LSB = 約 0.00122173 rad/s per raw unit）。Joy-Con 2本持ち時は右Joy-Con（`0x2007`）のIMUのみが照準に寄与し、左Joy-ConのIMUは照準から除外される。Web環境では標準 Gamepad API は IMU データを公開しないため、WebHID API（`navigator.hid`）が実際のコントローラーモーション経路となる。
+- **INKWAVEの実装箇所:** `patches/splatoon3/runtime/controller-motion.mjs`。
+  1. HIDレポートデコーダー（`decodeSwitchMotionReport`）: `0x30`/`0x21`/`0x31` レポート検証、Joy-Con L（`0x2006`）照準除外、ST LSM6DS3 IMU公称感度による rad/s 変換、マルチフレーム平均化対応、異常値ガード（25 rad/s 超過および非数/無限大の除外）。
+  2. WebHID デバイスリーダー（`createSwitchHIDReader`）: `HIDDevice` およびモックデバイスの `inputreport` イベントを購読し最新角速度サンプルを保持、カメラリセット時のドリフト・キャッシュ破棄（`recenter`）を提供。
+  3. プラットフォーム検知・通知（`hasWebHIDSupport`、`getControllerMotionPlatformStatus`、`Input.prototype.controllerMotionPlatformStatus`）: `navigator.hid` 非対応環境（iOS/Safari/Firefox/ヘッドレス等）での明示的 `'unsupported-platform'` 通知とスティック単独操作への安全なフォールバック。
+  4. スティックとジャイロの二重積分防止と合成: `PlayerController.prototype.update` において、コントローラージャイロ適用時は右スティックの水平ヨー旋回とジャイロヨーを合成しつつ、右スティックの垂直ピッチ入力を抑制してジャイロピッチとの競合・二重積分を防止。カメラリセット（`resetCamera`）発生時はピッチ0復帰を優先し、リーダーの `recenter` を呼び出し。
+- **再現操作:**
+  1. WebHID 非対応環境での明示的ステータス取得と、通常スティック照準動作の確認。
+  2. 合成 HID `0x30`/`0x21` レポート入力による Pro Controller および Joy-Con R からの角速度抽出。
+  3. 右スティック同時入力時のヨー合成と垂直ピッチ抑制の検証。
+  4. Yボタン（カメラリセット）によるピッチ0復元およびリーダー状態クリアの検証。
+  5. 30 Hz / 60 Hz / 120 Hz での積分量同一性確認（1秒間の定常角速度における積分変位が完全一致）。
+- **プレイへの影響:** WebHID 対応ブラウザにおいて Nintendo Switch Joy-Con / Pro コントローラー接続時に本家スプラトゥーン3準拠のジャイロエイミングが可能となる。非対応環境やジャイロ未接続時は従来のスティック操作・マウス・タッチ入力が一切阻害されず維持される。
+- **確認状態:** 公開 HID 仕様に基づく合成テストパケットおよびモック WebHID イベントによるロジック確認（7/7 テスト GREEN）。本検証環境はヘッドレス Linux であり、物理的な Switch 実機コントローラーの Bluetooth/USB 接続による実機実測は行われていない（実機未確認項目として明記）。
+
