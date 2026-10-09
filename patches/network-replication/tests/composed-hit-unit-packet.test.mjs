@@ -26,6 +26,10 @@ function method(name) {
 const limitsStart = source.indexOf('const HIT_DELIVERY_LIMIT = '), limitsEnd = source.indexOf('const TICK = 1 / 20;', limitsStart);
 assert.ok(limitsStart >= 0 && limitsEnd > limitsStart, 'production bounded hit limits are composed');
 const hitLimits = source.slice(limitsStart, limitsEnd);
+const dropRollStart = source.indexOf('function clearRemoteDropRoll(');
+const dropRollEnd = source.indexOf('function syncRemoteDropRoll(', dropRollStart);
+assert.ok(dropRollStart >= 0 && dropRollEnd > dropRollStart, 'production Drop Roller retirement helper is composed');
+const dropRollRetirement = source.slice(dropRollStart, dropRollEnd);
 // Execute the exact composed owner methods; transport and damage-event delivery
 // are bounded sinks. This covers the adapter connection, not live relay latency.
 function hitWorld() {
@@ -38,7 +42,7 @@ function hitWorld() {
   } } };
   const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock',
-    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + hitLimits + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
+    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + dropRollRetirement + hitLimits + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
     (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock);
   const n = new C();
   Object.assign(n, { myId: 'A', byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } },
