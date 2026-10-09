@@ -22,6 +22,9 @@ async function setup(patched=true){const f=await fixture("export {projectShotGui
 function comparable(r){const value=JSON.parse(JSON.stringify({frame:r.frame,mobile:r.mobile}));
  for(const f of [value.frame,value.mobile])for(const k of ['inkLow','subCost','subReady'])delete f[k];
  delete value.frame.crosshair.guide;delete value.frame.crosshair.muzzleBlock;delete value.frame.crosshair.chargerCurrent;delete value.frame.crosshair.chargerFull;delete value.frame.healthMarkers;
+ // #1186 adds owner-specific scalar marker data; old geometry/visibility still
+ // compares exactly, and marker-owner-metadata.test covers the new authority.
+ for(const marker of value.frame.markers){delete marker.weapon;delete marker.specialReady;}
  for(const t of value.frame.teams){delete t.leading;delete t.danger;for(const p of t.players)delete p.respawn;}
  return value;
 }

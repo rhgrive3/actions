@@ -8,6 +8,11 @@ import { adaptRange } from '../../practice-range/adapter.mjs';
 import { adaptGearSub } from '../gear-sub-adapter.mjs';
 const adaptBuildSource=(rel,code)=>adaptRange(rel,adaptNetworkSource(rel,adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,code))))));
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),SRC=path.join(ROOT,'inkwave-public'),DT=1/60;
+function compiledModule(rel, source) {
+ const base=pathToFileURL(path.join(ROOT,rel));
+ const absolute=source.replace(/(from\s*['"])(\.[^'"]+)(['"])/g,(_match,start,spec,end)=>start+new URL(spec,base).href+end);
+ return import('data:text/javascript;base64,'+Buffer.from(absolute).toString('base64'));
+}
 async function rig(){
  const context=vm.createContext({console,performance,URL}),mods=new Map();
  function load(file){if(mods.has(file))return mods.get(file);const raw=fs.readFileSync(file,'utf8'),s=adaptBuildSource(file.startsWith(SRC+'/')?path.relative(SRC,file):path.relative(ROOT,file),raw);const m=new vm.SourceTextModule(s,{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});mods.set(file,m);return m;}
@@ -39,7 +44,7 @@ test('actor-local gear resolution preserves unknown cost instead of inventing a 
 
 test('full dispatcher preserves explicit Kit power once and implicit Storm snapshot with existing vertical inheritance',async()=>{
  const rel='patches/splatoon3/runtime/sub-special-fidelity.mjs', raw=fs.readFileSync(ROOT+rel,'utf8');
- const compiled=adaptBuildSource(rel,raw), f=await import('data:text/javascript;base64,'+Buffer.from(compiled).toString('base64'));
+ const compiled=adaptBuildSource(rel,raw), f=await compiledModule(rel,compiled);
  const a={aimYaw:.3,aimPitch:.2,vel:{x:2,y:7,z:-3},s3:{modifiers:{subPower:1.5},stormPowerSnapshot:{throwScale:1.25}}};
  const vector=()=>({set(x,y,z){this.x=x;this.y=y;this.z=z;return this;}});
  for(const kind of ['bomb','storm'])for(const explicit of [undefined,0,42,100.8]){
@@ -53,7 +58,7 @@ test('full dispatcher preserves explicit Kit power once and implicit Storm snaps
  const oldZ='  const horizontal = p.spawnSpeedZ * cp - p.spawnSpeedY * sp;';
  assert.throws(()=>replace(raw,oldZ,'unused'),/0 !== 1/,'old dispatcher anchor cannot transform the explicit-speed module');
  const legacy=raw.replace('  const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;\n','').replaceAll('speed * cp','p.spawnSpeedZ * cp').replaceAll('speed * sp','p.spawnSpeedZ * sp');
- const legacyCompiled=adaptGearSub(rel,legacy,replace), old=await import('data:text/javascript;base64,'+Buffer.from(legacyCompiled).toString('base64'));
+ const legacyCompiled=adaptGearSub(rel,legacy,replace), old=await compiledModule(rel,legacyCompiled);
  for(const kind of ['bomb','storm']){const x=old.fidelityThrowVelocity(a,kind,vector()),y=f.fidelityThrowVelocity(a,kind,vector());assert.deepEqual([x.x,x.y,x.z],[y.x,y.y,y.z]);}
  assert.throws(()=>adaptGearSub(rel,compiled,replace),/expected one fidelity launch-speed owner/);
  assert.throws(()=>adaptGearSub(rel,raw+raw,replace),/expected one fidelity launch-speed owner/);

@@ -205,3 +205,16 @@ test('#920 refreshed snapshots of the same Bubbler remain tappable and cancellat
   h.send(4,'pointerup',first); assert.deepEqual(h.jumps,[same]);
   h.send(4,'pointerup',first); assert.equal(h.jumps.length,1);
 });
+
+for(const team of [0,1])test(`#779 Diorama base pin position and completed touch use team ${team}'s separate home point`,async()=>{
+ const h=await boot(); h.me.team=team; h.me.alive=true; h.me.pos=new THREE.Vector3();
+ h.G.actors=[h.me]; h.G.level.homeSuperJumpPoints=[new THREE.Vector3(-3,0,-5),new THREE.Vector3(3,0,5)];
+ const camera=h.G.camera=new THREE.PerspectiveCamera(60,1000/700,.1,100);
+ camera.position.set(0,20,15);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
+ h.dio.update(1/60,1);
+ const home=h.G.level.homeSuperJumpPoints[team], screen=home.clone();screen.y+=.1;screen.project(camera);
+ assert.ok(Math.abs(h.dio.pins[3].x-(screen.x*.5+.5)*1000)<1e-8,'base marker uses home');
+ assert.ok(Math.abs(h.dio.pins[3].y-(.5-screen.y*.5)*700)<1e-8,'base marker uses home');
+ const e=h.down(3);h.send(3,'pointerup',e);assert.equal(h.jumps.length,1);assert.ok(h.jumps[0].equals(home));
+ assert.notEqual(h.jumps[0],home);assert.ok(!h.jumps[0].equals(h.G.level.spawnPads[team]));
+});

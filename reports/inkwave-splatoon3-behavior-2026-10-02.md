@@ -2775,3 +2775,60 @@ remain unmeasured.
 # 2026-10-09: #1039 responsive fixture host-confirmation precondition
 
 PR #1182 responsive job 113810814039 reached guest Ready with pointer/click delivery and no page errors, but the legacy MockNet audit never supplied the host's `teamsConfirmed` state. The production rejection was correct. The fixture now explicitly verifies rejection before simulated host confirmation, emits that mock-only lobby update, and then requires the same Ready interaction to succeed. Production guards are unchanged. Focused native tests: 13/13, no skips; browser re-run and hardware comparison remain unverified. Details: [responsive fixture report](inkwave-responsive-fixture-1039-2026-10-09.md).
+
+
+### #779 all Base selectors consume the existing home-return point
+
+The HUD already used `homeSuperJumpPoints`, while live keyboard/touch/raw-pad, standard-pad confirmation, deferred respawn selection and Diorama display/dispatch still used `spawnPads`. The new fail-closed home-jump adapter connects those five source owners to the existing team-specific home point with the existing legacy fallback. Ten actual-input/display regressions failed before and pass after; three full-runtime flight/landing/event checks cover 30/60/120 Hz. Focused validation: 96/96 passes, zero skips, concurrency 1; syntax and whitespace checks pass. Existing stage points and respawn data are unchanged. See `reports/inkwave-home-jump-endpoint-779-2026-10-09.md`.
+
+The reference remains Splatoon 3 11.3.0 and Issue #779's documented home/spawner distinction. Fresh community-page retrieval returned HTTP 403, so this follow-up asserts only synchronization of the already accepted project contract, not new Nintendo coordinate/timing calibration. Physical devices, browser/WebGL and live relay were not tested.
+
+### 2026-10-09 — unnumbered presentation-prediction cache lifetime root
+
+This is separate from #622's live-projectile pool: HUD/controller predictions
+never enter `Projectiles.list` or `pool`. The persistent prediction records kept
+Shooter, Splatling, Slosher, Blaster and Dualies Actors after `clear()`, and the
+Shooter/Slosher/Blaster cache keys also retained the retired Level, Physics,
+Character and runner. Full production composition and all bootstrap runtime
+installers reproduce these retained links; source checks establish the real
+Game/HUD/PlayerController consumers and the existing Game clear boundary.
+No GitHub Issue has been created for this distinct root.
+
+The native clear wrapper now drops match-owned prediction cache keys and
+severs the scratch projectile owners while reusing their vector storage.
+Clearing an unrelated Projectiles instance does not clear the current
+controller's shared guide owner. Active-match prediction formulas, cache
+admission, shot-guide frames, trajectories and weapon behavior are unchanged.
+
+New native cases preserve the prior-cleanup counterexample, verify detached
+owners/world keys, repeated/idempotent clear and twenty five-weapon rebuild
+cycles with identical outputs and restored steady-state cache reuse. They run
+with the existing pool, Shooter/Splatling guide, Dualies cache and muzzle-cache
+regressions: 35/35 pass with concurrency 1. The separate #851 real-Character
+pose/guide-cache regression also passes (1/1). Quick upstream compatibility,
+syntax and whitespace checks pass. These are native-module/object-reference
+checks; browser forced-GC heap measurements, mobile memory/FPS and Switch
+comparison are unmeasured. The comparison baseline stays Splatoon 3 11.3.0,
+with no new Nintendo value or retail-parity claim.
+
+### #1186 same-name ally markers retain their own weapon/readiness
+
+The Session permits duplicate display names, but the HUD formerly resolved marker weapon/readiness through a name Map over all actors. Two same-name allies could both inherit an enemy's Blaster icon and ready glow. The existing pooled marker now carries the projected ally's scalar weapon/readiness; both render and icon invalidation include weapon, with legacy name fallback preserved. Native death/respawn covers same-name slot reuse without assuming an unproven roster replacement. Five regressions and adjacent HUD checks pass 41 cases with 2 emitted-site skips; full composed modules parse and quick/whitespace checks pass. Details and negative control: `reports/inkwave-marker-owner-1186.md`.
+
+This is application metadata ownership, not a new Splatoon 3 tuning value. Tests use actual six-adapter Game projection/HUD methods and bounded Actor/DOM sinks; browser, relay and Nintendo hardware/visual parity remain unverified.
+
+The same unnumbered prediction-lifetime audit also found the bomb-arc cache:
+its performance-wrapper Symbol retained the Actor/Physics after native clear,
+and hiding the guide removed only that Symbol while `_arcCache.physics` still
+retained the prior world. The arc installer's clear wrapper now invalidates
+both records. It keeps the arc geometry and position/distance buffers and
+preserves the exact rebuilt path; no bomb is emitted by cache cleanup.
+Three additional native tests cover the old-clear/hide counterexample,
+ten identical rebuild cycles and unrelated-system isolation. All eight
+prediction-lifetime cases and all nineteen existing bomb-motion cases pass.
+The adjacent six-case sub-gear file initially had five passes and one
+pre-existing data-URL fixture import failure for `tidal-slam-gauge.mjs`;
+resolving its compiled/legacy relative imports against the source module URL
+makes that isolated dispatcher case pass. The whole group was not rerun.
+Syntax, quick compatibility and whitespace checks pass; heap/device claims
+remain unmeasured and this root remains unnumbered.

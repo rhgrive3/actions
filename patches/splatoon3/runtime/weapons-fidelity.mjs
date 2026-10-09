@@ -1418,7 +1418,17 @@ export function installWeaponsFidelity(context,profile) {
     return reach;
   };
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,step=Projectiles.prototype._step,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear,updateSystem=Projectiles.prototype.update;
-  Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;this._dualiesGuideCache=null;this._s3DetachedWallDrops?.splice(0);this._s3TimedBlasterDrops?.splice(0);return result;};
+  Projectiles.prototype.clear=function(...args){
+    const result=clear.apply(this,args);
+    this._fidelityCollision=null;this._fidelitySloshContext=null;this._dualiesGuideCache=null;
+    // Presentation predictions never enter list/pool. Retire their match-owned
+    // cache keys too, while retaining the reusable projectile/vector storage.
+    this._s3GuideCache=null;this._s3ShooterImpactCache=null;this._s3MuzzleFeedbackCache=null;
+    for(const p of [this._s3ShooterImpact,this._s3SlosherGuideProjectile,this._s3BlasterGuideProjectile,
+      ...(this._s3DualiesGuideProjectiles||[])])if(p)p.owner=null;
+    if(context.G?.projectiles===this&&context._shotGuide?.probe)context._shotGuide.probe.owner=null;
+    this._s3DetachedWallDrops?.splice(0);this._s3TimedBlasterDrops?.splice(0);return result;
+  };
   Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);advanceTimedBlasterDrops(this,dt);return updateSystem.call(this,dt);};
   Projectiles.prototype._new=function(...args){
     // Clear the outgoing kit before native _new erases wid and the generic

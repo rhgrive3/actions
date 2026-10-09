@@ -14,6 +14,19 @@ function frameKeys(node, required, optional = []) {
 }
 
 export function adaptHudSnapshots(rel, code, once) {
+  if (rel === 'src/ui/hud.js') {
+    // Display names are not identities. Current Game snapshots carry their own
+    // scalar metadata; retain the name lookup only for older/Lab marker inputs.
+    code = once(code,
+      '      const ready = !!(ac && ac.specialReady && ac.specialReady());',
+      "      const ready = typeof m.specialReady === 'boolean' ? m.specialReady : !!(ac && ac.specialReady && ac.specialReady());\n      const w = m.weapon || (ac && ac.weaponId);",
+      'ally marker readiness and weapon belong to the projected actor');
+    code = once(code, '|${m.name}|${m.color}|${ready ? 1 : 0}|${far.toFixed(1)}`;',
+      '|${m.name}|${m.color}|${ready ? 1 : 0}|${far.toFixed(1)}|${w || \'\'}`;', 'ally marker weapon invalidates pooled render');
+    code = once(code, '      if (el._name !== m.name) {\n        el._name = m.name;',
+      '      if (el._name !== m.name || el._weapon !== w) {\n        el._name = m.name; el._weapon = w;', 'ally marker icon tracks same-name weapon changes');
+    return once(code, '        const w = (ac && ac.weaponId) || m.weapon;\n', '', 'use projected ally weapon in marker icon');
+  }
   if (rel === 'src/core/mobile.js') {
     code = once(code, '  setHud({ special = 0,', '  setHud({ inkLow = false, special = 0,', 'touch shortage feedback input');
     return once(code,
@@ -34,6 +47,10 @@ export function adaptHudSnapshots(rel, code, once) {
     return "import { teamHudSnapshot } from '../../patches/local-quality/hud-snapshots.mjs';\n" + code;
   }
   if (rel === 'src/main.js') {
+    code = once(code,
+      'mk.angle = angle; mk.dist = o.pos.distanceTo(a.pos);',
+      'mk.angle = angle; mk.dist = o.pos.distanceTo(a.pos);\n      mk.weapon = o.weaponId; mk.specialReady = !!o.specialReady();',
+      'pooled ally marker snapshots carry scalar owner metadata');
     const geared = code.includes('    const subCost = subInkSpec(a, SUB.bomb).inkCost;') || code.includes('    const subCost = selectedSubCost(a, SUB);');
     const healthMarked = code.includes('      healthMarkers: buildHealthMarkers(this, G, PLAYER, THREE),');
     const guide = 'projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H)';

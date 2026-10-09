@@ -181,3 +181,30 @@ for (const phase of ['charge', 'flight']) test(`#412 deferred respawn revalidate
   assert.equal(q.a.superJumpState, null, 'lost destination is rejected again after respawn');
   assert.equal(q.c.pendingRespawnJump, null);
 });
+
+function distinctHome(h, team) {
+ h.a.team=team; for(const ally of h.allies)ally.team=team;
+ h.G.level.spawnPads=[new h.THREE.Vector3(-30,2,-40),new h.THREE.Vector3(30,2,40)];
+ h.G.level.homeSuperJumpPoints=[new h.THREE.Vector3(-20,0,-25),new h.THREE.Vector3(20,0,25)];
+ return h.G.level.homeSuperJumpPoints[team];
+}
+function pickHome(h, mode) {
+ if(mode==='keyboard'){h.input.keys.add('Tab');h.input.pressed.add('Tab');h.input.pressed.add('Digit4');h.m.updateController(STEP);}
+ if(mode==='pad'){h.frame([3]);h.frame([13]);h.frame([1]);}
+ if(mode==='raw')h.frame([8,13],'');
+ if(mode==='touch'){const mob=h.touch();mob.setMap(true);mob.jumpTarget=3;h.m.updateController(STEP);}
+}
+for(const dead of [false,true]) for(const mode of ['keyboard','pad','touch','raw'])test(`#779 ${dead?'dead':'live'} ${mode} home selection uses the configured return point for both teams`,async()=>{
+ for(const team of [0,1]) {
+  const h=await rig(), home=distinctHome(h,team), spawn=h.G.level.spawnPads[team].clone();
+  if(dead)h.dead(); pickHome(h,mode);
+  const target=dead?h.c.pendingRespawnJump?.point:h.a.superJumpState?.target;
+  assert.ok(target?.equals(home),'home target differs from the spawner for '+mode);
+  assert.notEqual(target,home,'a committed choice owns its vector');
+  assert.ok(h.G.level.spawnPads[team].equals(spawn),'home selection cannot rewrite spawn metadata');
+  if(dead) {
+   h.a.respawn(); h.a.grounded=true; h.m.updateController(STEP);
+   assert.ok(h.a.superJumpState?.target.equals(home),'deferred respawn choice keeps the selected home return point');
+  }
+ }
+});
