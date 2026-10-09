@@ -23,6 +23,9 @@ function method(name) {
   assert.ok(start >= 0 && end > start, name);
   return source.slice(start, end + 4);
 }
+const limitsStart = source.indexOf('const HIT_DELIVERY_LIMIT = '), limitsEnd = source.indexOf('const TICK = 1 / 20;', limitsStart);
+assert.ok(limitsStart >= 0 && limitsEnd > limitsStart, 'production bounded hit limits are composed');
+const hitLimits = source.slice(limitsStart, limitsEnd);
 // Execute the exact composed owner methods; transport and damage-event delivery
 // are bounded sinks. This covers the adapter connection, not live relay latency.
 function hitWorld() {
@@ -35,10 +38,10 @@ function hitWorld() {
   } } };
   const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock',
-    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
+    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + hitLimits + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
     (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock);
   const n = new C();
-  Object.assign(n, { myId: 'A', byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); } } },
+  Object.assign(n, { myId: 'A', byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } },
     peers: new Map(), _peer(id) { if (!this.peers.has(id)) this.peers.set(id, {}); return this.peers.get(id); } });
   return { n, sent, events, calls, G, listeners };
 }
