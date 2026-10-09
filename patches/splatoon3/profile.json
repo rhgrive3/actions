@@ -84,7 +84,8 @@
       "spawnPlayerForwardRate": 2,
       "shotGuideFrame": 7,
       "rollPaintWidthHalf": 1.8,
-      "rollPaintWorldScale": 1
+      "rollPaintWorldScale": 1,
+      "rollDist": 5
     },
     "blaster": {
       "inkPerShot": 10,
@@ -209,7 +210,8 @@
       "storedFireDelay": 0.5166666666666667,
       "storedLaserDelay": 0.4166666666666667,
       "allowEmptyCharge": true,
-      "reticleDelayF": 5
+      "reticleDelayF": 5,
+      "moveSpeedChargingStart": 5.76
     },
     "roller": {
       "rollContactInterval": 0.4,
@@ -365,8 +367,7 @@
       "spawnPlayerForwardRate": 2,
       "squidFlickDelay": 0.21666666666666667,
       "rollDamage": 125,
-      "rollInkRecoverStop": 0.3333333333333333,
-      "rollContactInterval": 0.4
+      "rollInkRecoverStop": 0.3333333333333333
     },
     "slosher": {
       "inkPerShot": 7.6,
@@ -653,7 +654,29 @@
       "Roller rollContactInterval uses the S3 community v10.0.0 repeated-contact table 24F (0.4s). Normal BodyParam default is corroborated by the published parameter table; no direct v11.3.0 console measurement is claimed. Boss uses the same INKWAVE weapon interval, not Salmon Run Coop timing.",
       "weapons.splatling.chargeJumpVelocity (4.2 world u/s) is the existing DU/f x6 calibration applied to the S3 gear-power verification table's 0.7 DU/f charging jump initial velocity for non-exception splatlings (Heavy Splatling). It is the same calibration already used for weapons.charger.fullChargeJumpVelocity (pinned JumpHeightFullCharge 0.07 x60 = 4.2) and for enemyInkJumpVel (pinned OpInk_JumpVel 0.08 x60 = 4.8). The pinned 11.3.0 WeaponSpinnerStandard WeaponParam exposes JumpGnd_Charge 0.08 but no field named like the charger's JumpHeightFullCharge; it is not treated as this value. Splat Spinner / Ballpoint / Heavy Edit / R-PEN/5H exceptions (1.0 DU/f) are not implemented because those weapons are absent; the field is per-weapon so they can be added as data. No direct Switch capture was taken."
     ],
-    "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
+    "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md",
+    "weaponAudit20261009": {
+      "dualiesRollDistance": {
+        "value": 5,
+        "unit": "world metres, NOT legacy DU",
+        "basis": "Splat Dualies community measurement: 1 practice line = 50 legacy DU = 5 m",
+        "source": "https://wikiwiki.jp/splatoon3mix/ブキ/スプラマニューバー",
+        "status": "community measurement; exact velocity curve remains calibrated"
+      },
+      "chargerPartialMovement": {
+        "start": 5.76,
+        "full": 1.2,
+        "unit": "world m/s",
+        "source": "https://wikiwiki.jp/splatoon3mix/ブキ/スプラチャージャー",
+        "basis": "0.96 legacy DU/frame at charge entry; 0.21 near full and 0.20 at full; 1 DU=0.1m, 60Hz",
+        "curve": "linear in elapsed charge fraction; intermediate curve NOT recovered from S3 engine"
+      },
+      "shotBiasKernel": {
+        "model": "gamma radial quantile with retained azimuth; separate Splatling pitch median",
+        "source": "https://parumemo.hatenablog.com/entry/2022/08/26/144547",
+        "status": "S2 community hypothesis extrapolated to S3 and to 2-D cone; NOT an exact S3 distribution; source bias is not an outer-hit probability"
+      }
+    }
   },
   "bindings": {
     "player.runSpeed": {

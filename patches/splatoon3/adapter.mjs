@@ -58,6 +58,14 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  // Splat Dualies can enter a slide in midair. Keep admission, ink, chain
+  // limits and action cancellation in WeaponRunner; only remove Actor's old
+  // grounded-only call-site filter. Successful admission consumes the jump
+  // buffer, so this cannot grant a simultaneous normal/coyote jump.
+  if (rel === 'src/game/actor.js') code = replaceOnce(code,
+    '    if (this.jumpBuffer > 0 && !isSquid && this.grounded && this.weaponRunner.tryDodge?.(this.intent.move)) this.jumpBuffer = 0;',
+    '    if (this.jumpBuffer > 0 && !isSquid && !this.climbing && this.weaponRunner.tryDodge?.(this.intent.move)) this.jumpBuffer = 0;',
+    'dualies aerial slide admission');
   code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);
   // The source-guided shooter-family InkFlightRuntime is the authority for
@@ -430,8 +438,8 @@ export function adaptSource(rel, code) {
       '    if (this._blasterBiasEl) {\n' +
       '      const percent = cueActive ? Math.round(jumpState.bias * 100) : 0;\n' +
       '      const cuePhase = cueActive ? jumpState.phase : \'idle\';\n' +
-      '      const cue = !cueActive ? \'\' : cuePhase === \'held\' ? `OUTER ${percent}%`\n' +
-      '        : cuePhase === \'recovering\' ? \'RECOVERING\' : `OUTER ${percent}%`;\n' +
+      '      const cue = !cueActive ? \'\' : cuePhase === \'held\' ? `BIAS ${percent}%`\n' +
+      '        : cuePhase === \'recovering\' ? \'RECOVERING\' : `BIAS ${percent}%`;\n' +
       '      if (cue !== L.blasterCue || cuePhase !== L.blasterCuePhase) {\n' +
       '        L.blasterCue = cue; L.blasterCuePhase = cuePhase;\n' +
       '        this._blasterBiasEl.hidden = !cueActive;\n' +
