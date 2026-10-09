@@ -94,9 +94,12 @@ export function installThermalTracking(api, tuning) {
     };
     on('combat:confirmed', ({ attacker, victim, damage }) => {
       const r = ackContext;
+      // _hitAck emits this only after authenticating the exact receipt, its
+      // delivered owner, and the live victim life. A predecessor can therefore
+      // confirm a same-life hit after ownership has transferred.
       if (damage > 0 && r?.attacker === attacker && r.victim === victim && r.match === G.match &&
           r.ownerEpoch === epoch(attacker) && r.victimEpoch === epoch(victim) &&
-          r.receiptOwner === victim.owner) stamp(attacker, victim, G.time);
+          r.receiptOwner) stamp(attacker, victim, G.time);
     });
   }
   ensureRenderer();

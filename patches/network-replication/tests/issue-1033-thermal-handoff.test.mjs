@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 
-async function acceptedHit(ackOwner) {
+async function appliedHit(ackOwner) {
   const f = await fixture({ fullRuntime: true, productionComposition: true,
     extraExports: "export * from './patches/splatoon3/runtime/private-tracking.mjs';" });
   const attacker = f.make('shooter'), victim = f.make('shooter');
@@ -40,22 +40,60 @@ async function acceptedHit(ackOwner) {
   if (ackOwner === 'NEW') ack = apply('NEW', sent.at(-1).data);
   assert.equal(victim.hp, 90, 'the owning peer applied one actual hit');
   assert.equal(ack.d, 10);
-  sender.onMessage(ackOwner, ack);
-  assert.equal(confirmations.length, 1);
-  assert.equal(confirmations[0].damage, 10);
-  assert.equal(sender._pendingHits.size, 0);
-  assert.equal(sender.hitPending.size, 0);
-  const marked = !!f.thermalTrackingRecord(victim, attacker);
-  sender.onMessage(ackOwner, ack);
-  assert.equal(confirmations.length, 1, 'duplicate receipt cannot apply feedback twice');
-  assert.equal(victim.hp, 90);
-  return marked;
+  return { f, attacker, victim, sender, ack, confirmations };
 }
 
 test('#1033 new owner authoritative ACK retains the Thermal Ink mark after routed delivery', async () => {
-  assert.equal(await acceptedHit('NEW'), true);
+  const hit = await appliedHit('NEW');
+  hit.sender.onMessage('NEW', hit.ack);
+  assert.equal(hit.confirmations.length, 1);
+  assert.equal(hit.confirmations[0].damage, 10);
+  assert.equal(!!hit.f.thermalTrackingRecord(hit.victim, hit.attacker), true);
 });
 
-test('#1033 delayed superseded owner ACK settles its applied hit without creating a new tracking mark', async () => {
-  assert.equal(await acceptedHit('OLD'), false);
+test('#1033 delayed superseded owner ACK settles its same-life hit and creates the shooter-private mark', async () => {
+  const hit = await appliedHit('OLD');
+  hit.sender.onMessage('OLD', hit.ack);
+  assert.equal(hit.confirmations.length, 1);
+  assert.equal(hit.confirmations[0].damage, 10);
+  assert.equal(!!hit.f.thermalTrackingRecord(hit.victim, hit.attacker), true);
+  assert.equal(hit.sender._pendingHits.size, 0);
+  assert.equal(hit.sender.hitPending.size, 0);
+});
+
+test('#1033 an unauthenticated sender cannot turn a predecessor receipt into a Thermal Ink mark', async () => {
+  const hit = await appliedHit('OLD');
+  hit.sender.onMessage('INTRUDER', hit.ack);
+  assert.equal(hit.confirmations.length, 0);
+  assert.equal(hit.f.thermalTrackingRecord(hit.victim, hit.attacker), null);
+  assert.equal(hit.sender._pendingHits.size, 1, 'a bogus sender cannot settle the receipt');
+});
+
+test('#1033 a zero-damage receipt does not create a Thermal Ink mark', async () => {
+  const hit = await appliedHit('OLD');
+  hit.sender.onMessage('OLD', { ...hit.ack, d: 0, kld: 0 });
+  assert.equal(hit.confirmations.length, 0);
+  assert.equal(hit.f.thermalTrackingRecord(hit.victim, hit.attacker), null);
+  assert.equal(hit.sender._pendingHits.size, 0, 'the authenticated zero-damage receipt is retired');
+});
+
+test('#1033 a valid predecessor receipt for a stale victim life cannot create a Thermal Ink mark', async () => {
+  const hit = await appliedHit('OLD');
+  hit.victim.netLife++;
+  hit.sender.onMessage('OLD', hit.ack);
+  assert.equal(hit.confirmations.length, 0);
+  assert.equal(hit.f.thermalTrackingRecord(hit.victim, hit.attacker), null);
+  assert.equal(hit.sender._pendingHits.size, 0, 'the obsolete-life receipt is retired');
+});
+
+test('#1033 replaying a confirmed predecessor receipt cannot recreate an expired Thermal Ink mark', async () => {
+  const hit = await appliedHit('OLD');
+  hit.sender.onMessage('OLD', hit.ack);
+  const record = hit.f.thermalTrackingRecord(hit.victim, hit.attacker);
+  assert.ok(record);
+  hit.f.G.time = record.until;
+  hit.sender.onMessage('OLD', hit.ack);
+  assert.equal(hit.confirmations.length, 1, 'the duplicate receipt emits no second confirmation');
+  assert.equal(hit.f.thermalTrackingRecord(hit.victim, hit.attacker), null,
+    'the duplicate cannot restamp the expired private mark');
 });
