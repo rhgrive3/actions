@@ -30,7 +30,13 @@ const projectRoot = path.resolve(PATCH_ROOT, '../..');
 const contains = (parent, child) => parent === child || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
 if (contains(OUT, projectRoot) || contains(OUT, SRC) || contains(SRC, OUT) || contains(PATCH_ROOT, OUT) || contains(RELIABILITY_ROOT, OUT) || contains(QUALITY_ROOT, OUT) || contains(NETWORK_ROOT, OUT) || contains(LOADING_ROOT, OUT) || contains(RANGE_ROOT, OUT)) throw new Error('Build output must be separate from upstream source and patch files');
 checkCompatibility(SRC);
-const esbuild = await import(process.env.ESBUILD_MODULE ? pathToFileURL(process.env.ESBUILD_MODULE).href : 'esbuild');
+const unminified = process.env.INKWAVE_BUILD_UNMINIFIED === '1';
+// An explicit offline diagnostic build follows the SAME source adapters, asset
+// staging, revisioning, module graph and service worker. Only optimization is
+// skipped. Default production builds still require and fail closed on esbuild.
+const esbuild = unminified ? null : await import(process.env.ESBUILD_MODULE ? pathToFileURL(process.env.ESBUILD_MODULE).href : 'esbuild');
+const transform = unminified ? async code => ({ code }) : esbuild.transform;
+if (unminified) console.log('INKWAVE: explicit unminified offline build (no minification or tree shaking)');
 const SKIP = new Set(['FETCH_MANIFEST.json', 'README_FETCH.txt']);
 
 const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => {
@@ -52,7 +58,7 @@ for (const file of walk(SRC)) {
   const ext = path.extname(file);
   if (ext === '.js' || ext === '.mjs' || ext === '.css') {
     const code = adaptBuildSource(rel, fs.readFileSync(file, 'utf8'));
-    const res = await esbuild.transform(code, {
+    const res = await transform(code, {
       loader: ext === '.css' ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
     });
     fs.writeFileSync(dst, res.code);
@@ -69,7 +75,7 @@ for (const file of walk(PATCH_ROOT)) {
   if (/\.(m?js|css)$/.test(rel)) {
     const patchRel = 'patches/splatoon3/' + rel.split(path.sep).join('/');
     const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
-    const res = await esbuild.transform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
+    const res = await transform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
     fs.writeFileSync(dst, res.code);
   } else fs.copyFileSync(file, dst);
 }
@@ -80,7 +86,7 @@ for (const file of walk(QUALITY_ROOT)) {
   const dst = path.join(BUILD, 'patches/local-quality', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
-    const res = await esbuild.transform(adaptBuildSource('patches/local-quality/' + rel.split(path.sep).join('/'), fs.readFileSync(file, 'utf8')), { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/local-quality/' + rel.split(path.sep).join('/') });
+    const res = await transform(adaptBuildSource('patches/local-quality/' + rel.split(path.sep).join('/'), fs.readFileSync(file, 'utf8')), { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/local-quality/' + rel.split(path.sep).join('/') });
     fs.writeFileSync(dst, res.code);
   } else fs.copyFileSync(file, dst);
 }
@@ -102,7 +108,7 @@ for (const [root, prefix] of [
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     if (/\.(?:m?js|css)$/.test(rel)) {
       const sourcefile = prefix + '/' + rel;
-      const result = await esbuild.transform(adaptBuildSource(sourcefile, fs.readFileSync(file, 'utf8')), {
+      const result = await transform(adaptBuildSource(sourcefile, fs.readFileSync(file, 'utf8')), {
         loader: rel.endsWith('.css') ? 'css' : 'js',
         minify: true, charset: 'utf8', legalComments: 'inline', sourcefile,
       });
@@ -127,7 +133,7 @@ for (const file of walk(RANGE_ROOT)) {
   const dst = path.join(BUILD, 'patches/practice-range', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
-    const res = await esbuild.transform(fs.readFileSync(file, 'utf8'), { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/practice-range/' + rel });
+    const res = await transform(fs.readFileSync(file, 'utf8'), { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/practice-range/' + rel });
     fs.writeFileSync(dst, res.code);
   } else fs.copyFileSync(file, dst);
 }
@@ -140,7 +146,7 @@ if (fs.existsSync(pwaWorker)) fs.copyFileSync(pwaWorker, path.join(BUILD, 'sw.js
 // ---- three.js: tree-shake to the symbols the game (and the bundled three/addons) actually use. Every `THREE.x`
 // access in the sources is static (verified: no computed THREE[...] lookups), so the namespace keeps what it needs.
 const THREE_DIR = path.join(SRC, 'vendor/three/build');
-if (fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && process.env.INKWAVE_NO_THREE_SHAKE !== '1') {
+if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && process.env.INKWAVE_NO_THREE_SHAKE !== '1') {
   const srcFiles = [...walk(path.join(SRC, 'src')), ...walk(path.join(SRC, 'vendor/three/jsm')), ...walk(PATCH_ROOT), ...walk(QUALITY_ROOT), ...walk(RELIABILITY_ROOT), ...walk(NETWORK_ROOT), ...walk(RANGE_ROOT)].filter((f) => /\.m?js$/.test(f) && !f.includes('/tests/'));
   const used = new Set();
   for (const f of srcFiles) {
@@ -341,7 +347,7 @@ const deferredIntegrationPreloads = new Set([
 ]);
 // Apply loading instrumentation first, so hint selection measures final bytes.
 // All modules in order still enter the complete offline dependency graph.
-const loadingPlan = prepareLoading(BUILD, order);
+const loadingPlan = prepareLoading(BUILD, order, { diagnosticUnminified: unminified });
 const loadingHTML0 = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
 const isRange = file => file.startsWith('patches/practice-range/');
 const bytes = file => fs.statSync(path.join(BUILD, file)).size;
@@ -375,8 +381,8 @@ for (const file of versionFiles) {
 // stylesheet URLs and runtime fetches resolve within the same revision.
 fs.writeFileSync(path.join(BUILD,'index.html'), loadingHTML.replace('<head>', `<head>\n<base href="./_versions/${revision}/">`));
 const loadingSummary = finalizeLoadingWorker(BUILD, revision, loadingPlan,
-  source => compactLoadingWorkerTemplate(source, esbuild.transformSync));
-const identity = writeBuildIdentity(SRC, BUILD, PATCH_ROOT, { esbuild:esbuild.version, revision, script:sha256(fs.readFileSync(new URL(import.meta.url))), touchLayout:touchLayoutIdentity(), reliability:reliabilityIdentity(), quality:qualityIdentity(), network:networkIdentity(), range:rangeIdentity(), loadingCache:{ source:loadingIdentity(), ...loadingSummary } });
+  source => unminified ? source : compactLoadingWorkerTemplate(source, esbuild.transformSync));
+const identity = writeBuildIdentity(SRC, BUILD, PATCH_ROOT, { esbuild:esbuild?.version ?? null, optimization:unminified ? 'none-offline' : 'esbuild-minify', revision, script:sha256(fs.readFileSync(new URL(import.meta.url))), touchLayout:touchLayoutIdentity(), reliability:reliabilityIdentity(), quality:qualityIdentity(), network:networkIdentity(), range:rangeIdentity(), loadingCache:{ source:loadingIdentity(), ...loadingSummary } });
 // Include the independent editor in exact-source verification, not only artifact hashing.
 for (const [file, hash] of Object.entries(identity.build.touchLayout)) identity.files['touch-layout/' + file] = hash;
 for (const [file, hash] of Object.entries(identity.build.reliability)) identity.files['reliability/' + file] = hash;
