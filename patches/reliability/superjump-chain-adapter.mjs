@@ -4,7 +4,12 @@ import { replaceOnce } from './input-adapter.mjs';
 export function adaptSuperJumpChain(rel, code) {
   const patch = (before, after) => { code = replaceOnce(code, before, after, '#412 chain-jump ' + rel); };
   const ready = actor => `(!${actor}.superJumpState || hasCommittedSuperJumpDestination(${actor}))`;
-  if (rel === 'src/game/player.js') {
+  if (rel === 'src/game/bots.js') {
+    // AI uses the same actor capability as map confirmation. Keep its existing
+    // respawn choice/ranking; only remove the obsolete blanket phase rejection.
+    patch('o === a || o.team !== a.team || !o.alive || o.superJumpState',
+      'o === a || o.team !== a.team || !o.alive || (o.superJumpState && !hasCommittedSuperJumpDestination(o))');
+  } else if (rel === 'src/game/player.js') {
     patch('o && o.alive && !o.superJumpState', `o && o.alive && ${ready('o')}`);
     patch('G.actors.includes(target) && target.alive && !target.superJumpState',
       `G.actors.includes(target) && target.alive && ${ready('target')}`);

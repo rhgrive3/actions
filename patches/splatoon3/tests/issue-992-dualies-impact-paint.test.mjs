@@ -55,7 +55,8 @@ async function impactCase({distance=10.55,angle=22.5,phase=0,ghost=false,throws=
   f.projectiles.fireDualies(a,a.weapon,0,0);
   const p=f.projectiles.list[0],radians=angle*Math.PI/180;
   p.start.set(0,0,0);p.pos.set(distance,0,0);p.vel.set(Math.cos(radians),-Math.sin(radians),0);
-  p.fidelityPhase=phase;p.ghost=ghost;
+  // This helper explicitly exercises the generic fallback, not native flight.
+  p.inkProfile=null;p.fidelityPhase=phase;p.ghost=ghost;
   const hit={point:p.pos.clone(),normal:new f.THREE.Vector3(0,1,0),face:0};
   f.paints.length=0;
   if(throws)f.G.paint.splat=()=>{throw new Error('paint sink');};
@@ -66,7 +67,7 @@ async function impactCase({distance=10.55,angle=22.5,phase=0,ghost=false,throws=
   return {f,a,p,draws:f.draws()-draws};
 }
 
-test('#992 actual Dualies impact sends source width/angle to CPU paint and credits its returned area',async()=>{
+test('#992 generic fallback Dualies impact sends source width/angle to CPU paint and credits its returned area',async()=>{
   const {f,a}=await impactCase();
   assert.equal(f.paints.length,1);
   near(f.paints[0].radius,1.685);
@@ -78,7 +79,7 @@ test('#992 actual Dualies impact sends source width/angle to CPU paint and credi
   assert.deepEqual(JSON.parse(JSON.stringify(repeated.f.paints)),JSON.parse(JSON.stringify(f.paints)),'same seed gives identical authoritative mask and score');
 });
 
-test('#992 break/free width still improves while unknown depth keeps its existing presentation',async()=>{
+test('#992 generic fallback break/free width keeps the existing unknown depth',async()=>{
   const {f}=await impactCase({distance:20,phase:2});
   near(f.paints[0].radius,1.66);near(f.paints[0].stretchAmt,.7);
 });
@@ -119,7 +120,7 @@ test('#992 30/60/120 Hz render schedules agree on live fixed-60Hz Dualies floor 
   assert.deepEqual(outcomes[1],outcomes[0]);assert.deepEqual(outcomes[2],outcomes[0]);
 });
 
-test('#992 the complete production installer preserves the same terminal paint owner',async()=>{
+test('#992 direct generic fallback under the complete installer preserves its terminal paint owner',async()=>{
   const f=await fullFixture({productionComposition:true,realProjectiles:true,fullRuntime:true});
   const a=f.make('dualies'),ps=f.G.projectiles,V=f.THREE.Vector3;
   f.G.camera={position:new V()};
@@ -127,7 +128,7 @@ test('#992 the complete production installer preserves the same terminal paint o
   const paint=[];f.G.paint.splat=(center,radius,team,opts={})=>{paint.push({radius,depth:opts.stretchAmt});return 1;};
   ps.fireDualies(a,a.weapon,0,0);
   const p=ps.list[0];p.start.set(0,0,0);p.vel.set(Math.cos(Math.PI/8),-Math.sin(Math.PI/8),0);
-  p.fidelityPhase=0;paint.length=0;
+  p.inkProfile=null;p.fidelityPhase=0;paint.length=0;
   ps._impact(p,{point:new V(10.55,0,0),normal:new V(0,1,0)});
   assert.equal(paint.length,1);near(paint[0].radius,1.685);near(paint[0].depth,.775);
 });

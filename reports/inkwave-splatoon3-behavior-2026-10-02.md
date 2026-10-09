@@ -3013,9 +3013,6 @@ unverified physical-browser/Switch conditions. See [the focused report](inkwave-
 ### 2026-10-09: buffered short-hop and tall-wall crest boundaries (#890/#846)
 
 [Focused evidence](inkwave-movement-evidence-boundaries-2026-10-09.md) records two residual repairs on the PR1182 integration. A B tap released before native landing-buffer admission now receives the same existing short-hop response as a direct tap, rather than being marked consumed before application. A Surge that reaches the ledge after its existing boost has expired emits its crest once without reapplying boost velocity. The new actual Actor/Physics and native wall-transition cases pass with 30/60/120Hz fixed-step controls. Existing provisional jump/Surge coefficients are unchanged; Nintendo's jump-hold cutoff and extended wall-boost curve remain unmeasured. Pinned public S3 Player/Spinner/Shoes tables were fetched directly from GitHub, with public blob identities and missing fields recorded; no guessed formula closes #952/#956 or the remaining numeric acceptance of #890/#846.
-## 2026-10-09 — #992 sourced Dualies floor-impact width and straight-angle envelope
-
-At PR #1182 baseline `12be2542`, the ordinary Dualies terminal splat still used a random generic radius. The runtime now reads the pinned S3 11.3.0 PaintParam near/middle/far widths through explicit world-scale conversion and the researched 10–35 degree straight-flight depth envelope, preserving the actual CPU paint/score path, ghost exclusion and separate wall-drop/slide paint. Source distances 1.1/10.55/20 map to 1.71/1.685/1.66 radii. The seven-pattern flight droplets and exact break/free height selector remain unimplemented, so #992 is not fully resolved. New actual-projectile tests include deterministic CPU area, exception cleanup, wall contact and 30/60/120 Hz outer loops. These are logic-level results, not Nintendo hardware or browser-GPU equivalence. See [evidence and remaining criteria](inkwave-dualies-paint-evidence-992-2026-10-09.md).
 ## 2026-10-09 — Slosher landing-paint single-owner repair (#1011 / #1140)
 
 At PR #1182 baseline `12be2542`, actual nine-glob emission followed by native impact reproduced a composition defect: the adapter's source-unit/world-scale/high-drop paint was overwritten by a second global paint wrapper. The first live glob at source XZ distance 5 painted radius 0.768 instead of the configured 4.44, and the overwritten result ignored high-drop shrink. The wrapper's fixed 0.2 used glossary test-range-line notation as world units, despite the active profile's scale 1.
@@ -3023,6 +3020,20 @@ At PR #1182 baseline `12be2542`, actual nine-glob emission followed by native im
 The duplicate wrapper is removed. `fidelitySlosherImpactPaint` and the explicit-scale source helper now own the same first/after-unit contract; no source numbers or current decay/interpolation formulas change. Native tests cover every emitted glob, near/far endpoints, zero/12-source-unit drop, one stamp, untouched stored collision/damage/velocity, callback/exception ownership, ghosts, and full-runtime 30/60/120 Hz fixed-step consistency. The same tests pass in the actual emitted build `d76fd8324faa`; quick provenance and unchanged startup/cache gates pass. See [the source/verification report](inkwave-weapon-evidence-recheck-2026-10-09.md).
 
 This fixes the INKWAVE composition residual. The exact Nintendo high-drop collision/paint curve remains unverified; #1140 is not fully resolved. The publicly referenced parameter tables do not specify #940's native PDF, #1022's bias semantics, or #498's intermediate age curve. No invented curve, physical Switch parity, whole-branch CI, or Issue closure is claimed.
+
+## 2026-10-09 — #412 inherited destinations reach the respawn Bot caller
+
+At PR #1182 head `2eaec912`, the native Bot's post-respawn selection still
+blanket-rejected an already-jumping teammate, even though Actor and every map
+confirmation path could inherit its committed destination. The Bot now shares
+the same finite-destination predicate, preserving its choice/ranking and all
+movement numbers. Actual Bot death/respawn, Squid Spawn, chain admission and
+Physics landing fail before the correction and pass after it, with invalid and
+ordinary-target controls and exact 30/60/120 Hz traces. New and adjacent suites
+pass 117/117. See [the scoped follow-up](inkwave-superjump-chain-412-2026-10-09.md).
+This is one residual of #412; no new Issue completion or retail AI parity is
+claimed. Other wall/chain audits that only pass existing behavior are not counted
+as additional repairs.
 
 ## #927 friendly Storm recovery-law source verification (2026-10-09)
 
@@ -3040,6 +3051,9 @@ before the change; all 26 hidden-host and 260 adjacent checks pass afterward.
 This completes INKWAVE result delivery under its existing policy, without
 claiming equivalence to Splatoon 3 Ver. 11.3.0 disconnect adjudication or physical
 background behavior. See [the result-deadline report](inkwave-hidden-host-result-878-2026-10-09.md).
+## 2026-10-09 — #992 native Dualies paint owner correction
+
+Correction: ordinary Dualies already use native InkFlightRuntime, with sourced distance/angle coefficients, a separate detached-drop path and a per-shot count of one. The first generic `_impact` tests did not establish this actual owner; their random-to-source radius change must not be reported as a normal-play balance improvement. The adapter now connects the real native impact to the retained PaintParam resolver as well, and reads native `inkPhase` instead of stale generic `fidelityPhase`. Full-installer real firing through Physics and CPU paint verifies this connection, includes a bridge-disabled changed-source counterfactual, and preserves the existing native break/free model, ghost exclusion and seven-shot drop cap. The exact pattern and height semantics remain unverified reconstruction, so #992 stays open. See [corrected evidence, path and remaining criteria](inkwave-dualies-paint-evidence-992-2026-10-09.md).
 
 ## 2026-10-09 — #522 malformed paint numeric boundary
 
@@ -3052,3 +3066,6 @@ listener cannot keep the retired timer alive or send its result. Three new
 regressions failed before this follow-up; all 29 hidden-host source/emitted and
 260 adjacent checks now pass. This is lifecycle ownership hardening, with no
 change to gameplay values or the Splatoon 3 comparison limits above.
+## 2026-10-09 — Slosher sweep group-boundary residual (#258)
+
+Against PR #1182 head `2eaec912`, the public Slosher verification notes distinguish per-group angular increments from absolute birth delays. The old sweep used `[0,1,2,3,4,6,8,10,12]` for both; the corrected angle accumulation is `[0,1,2,3,5,7,9,11,13]`, preserving the original birth times and every source damage/movement/paint value. This restores the research model's 130-degree cap rather than the previous 120-degree result. Native admission, real birth packets, both turn directions, +/-pi wrapping, repeat/reset/exception recovery, and 30/60/120 Hz fixed clocks are covered. The source itself qualifies measured variation; no Switch parity or unknown PDF is certified. See [public evidence and verification](inkwave-slosher-sweep-group-boundary-2026-10-09.md).

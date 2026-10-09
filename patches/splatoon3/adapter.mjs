@@ -76,6 +76,19 @@ export function adaptSource(rel, code) {
       'this.base.set(actor.pos.x, actor.pos.y + (actor.smoothY || 0), actor.pos.z);',
       'this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);',
       'ink flight contact ignores render-only smoothing');
+    // #992: real Dualies heads use InkFlightRuntime.impact, not _impact.
+    // Share the retained source width/straight-angle contract with the legacy
+    // fallback. Preserve the existing unknown break/free model and drop path.
+    code = replaceOnce(code,
+      "    this.paint(p, hit, shape, p.vel, 'shot');",
+      "    const sourced = fidelityDualiesNativeImpactPaint(p, hit);\n" +
+      "    if (sourced) {\n" +
+      "      shape.radius = sourced.radius;\n" +
+      "      if (sourced.depthScale !== null) shape.stretch = Math.max(0, sourced.depthScale - 1);\n" +
+      "    }\n" +
+      "    this.paint(p, hit, shape, p.vel, 'shot');",
+      'native Dualies retained-source terminal paint owner');
+    code = "import { fidelityDualiesNativeImpactPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     // #385/#604/#597: Source-guided head motion and sourced S3 wall-drop
     // share one collision authority. A wall impact must retain the falling
     // droplet state instead of treating every wall as a terminal head hit.

@@ -28,3 +28,42 @@ Current network replication already reconstructs charge/flight `to` from its aut
 - `scripts/check-inkwave-patches.mjs --quick` and `git diff --check`: pass.
 
 These are bounded native-logic, replication and build checks. Geometry/DOM/presentation fixtures are not GPU rendering, hardware latency or retail trajectory measurements. Full repository CI and browser/device validation remain separate.
+
+## Follow-up: respawn Bot selection (2026-10-09 UTC)
+
+PR #1182 head `2eaec912f4eeaa54982a698e1ac41576b7d574e4` already passed
+the Actor/map inheritance cases. Its native `BotBrain.update()` still rejected
+every `o.superJumpState` in the one-time post-respawn teammate selector, before
+Actor's repaired admission could run. This is a remaining caller of the same
+capability, not another claim that the original seven tests were a new fix.
+
+The [Super Jump mechanics page](https://splatoonwiki.org/wiki/Super_Jump#Multiplayer_matches)
+was opened again: it documents inheriting a jumping teammate's destination.
+That qualitative rule is unchanged. INKWAVE's automatic teammate-choice policy
+is its own AI, not a claimed Nintendo multiplayer-bot behavior.
+
+The final reliability adapter now uses the existing finite committed-destination
+predicate for that Bot guard too. The bot's existing random choice, distance
+filter and ranking are preserved, as are ordinary teammate admission, input,
+trajectory, timing, gear, collision and network owners. No table or coefficient
+was changed. Phase-only legacy targets remain unavailable.
+
+New complete-bootstrap tests run actual `BotBrain` and Actor death/respawn,
+the installed Squid Spawn flight, Super Jump charge/flight and native Physics
+landing. With deterministic choice input, both charge and flight teammates were
+rejected before the patch. The four-case suite had three failures and one valid
+rejection/control pass. After the change it verifies inherited snapshots survive
+target mutation/death, unknown/nonfinite/dead/enemy rejection, ordinary teammate
+selection and identical full traces at 30/60/120 Hz. Independent navigation data,
+paint queries and character/audio sinks are fixture boundaries; the gameplay
+owners above are real. Ground-resolution position comparisons allow only
+`1e-9` WU floating-point error; fixed-cadence traces are compared exactly.
+
+The new suite and adjacent bot, map/respawn and Super Jump suites pass 117/117,
+zero skipped. Existing wall-roll and wall-start suites also pass 18/18 without
+new runtime repairs for #714/#904. Production build `1d5098354091` succeeds;
+all 11 Bot/map chain cases pass against emitted/minified modules. Quick upstream
+and numeric provenance checks and `git diff --check` pass. Full CI, physical
+controller/browser and retail Switch tests are not represented by these logic
+tests. This is one implementation residual on the existing Issue, not another
+completed Issue.

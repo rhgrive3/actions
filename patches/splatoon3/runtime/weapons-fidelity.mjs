@@ -341,7 +341,8 @@ export function dualiesImpactPaintSource(p, hit, raw, scale = 1) {
     ? wn + (wm-wn) * (distance-near)/(middle-near)
     : wm + (wf-wm) * clamp01((distance-middle)/(far-middle));
   let depthScale = null;
-  if ((p.fidelityPhase ?? 0) === 0) {
+  const phase = p.inkProfile ? p.inkPhase : p.fidelityPhase;
+  if ((phase ?? 0) === 0) {
     const angle = rollerImpactAngleDegrees(p.vel,hit.normal);
     const lo = paint.DegreeUseDepthScaleMax ?? 10, hi = paint.DegreeUseDepthScaleMin ?? 35;
     if (angle !== null && [lo,hi,paint.DepthScaleMax,paint.DepthScaleMin].every(Number.isFinite) &&
@@ -349,6 +350,14 @@ export function dualiesImpactPaintSource(p, hit, raw, scale = 1) {
       depthScale = paint.DepthScaleMax + (paint.DepthScaleMin-paint.DepthScaleMax) * clamp01((angle-lo)/(hi-lo));
   }
   return { radius: width*scale, depthScale };
+}
+
+// The native shooter-family runtime bypasses Projectiles._impact. Resolve the
+// same retained source here, while leaving its already-existing break/free
+// height model and detached-drop owner unchanged.
+export function fidelityDualiesNativeImpactPaint(p, hit) {
+  if (p?.s3Weapon?.kind !== 'dualies') return null;
+  return dualiesImpactPaintSource(p, hit, rawWeapon(p?.s3Weapon), completion?.worldUnitsPerSourceUnit);
 }
 
 function withDualiesImpactPaint(game,p,hit,source,callback) {
@@ -1578,11 +1587,13 @@ export function installWeaponsFidelity(context,profile) {
       p.delay=((u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0))/60;
       const speed=((p.owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
       const aim=p.owner.aimDir.clone().normalize();
-      // #258: preserve the frame-spaced 4+5 launch contract while sweeping
-      // each source unit from the last two fixed-tick aim headings. A source
-      // UnitDelayFrame (not array position) determines the angular offset.
-      const launchFrame=(u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0);
-      const yaw=Math.atan2(aim.x,aim.z)+active.turnDelta*launchFrame+radians(u.BaseRotateYDegree||0)+slosherYawOffset(u,index);
+      // #258: the published Slosher research accumulates each incoming
+      // glob's group interval, not its absolute birth delay. At the 4+5
+      // boundary this advances by 2F: [0,1,2,3,5,7,9,11,13]. Births remain
+      // [0,1,2,3,4,6,8,10,12]. Zero-count source groups contribute nothing.
+      // This is the documented sweep model, not measured retail parity.
+      if(active.index>1)active.sweepFrames+=u.AfterOffsetDelayFrame||0;
+      const yaw=Math.atan2(aim.x,aim.z)+active.turnDelta*active.sweepFrames+radians(u.BaseRotateYDegree||0)+slosherYawOffset(u,index);
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
       p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
@@ -1642,7 +1653,7 @@ export function installWeaponsFidelity(context,profile) {
     const sampled=actor.weaponRunner?.s3SloshTurnDelta;
     const turnDelta=Number.isFinite(sampled) && !actor.remote
       ? Math.max(-Math.PI/18,Math.min(Math.PI/18,sampled)) : 0;
-    this._fidelitySloshContext={index:0,group:new Map(),groupId:`${actor.nid??'local'}:${sequence}`,turnDelta};
+    this._fidelitySloshContext={index:0,sweepFrames:0,group:new Map(),groupId:`${actor.nid??'local'}:${sequence}`,turnDelta};
     paintSlosherNearest(api.G,actor,rawWeapon(w),completion.worldUnitsPerSourceUnit,sequence);
     try{
       const drops=rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0);
