@@ -414,7 +414,7 @@ export function emit(name, payload) {
     if (this._applyingHit) return 'local';
     if (weaponId === 'bomb' || weaponId === 'splat-bomb-far') return victim.remote ? 'drop' : 'local';`, 'bomb recipient authority');
 
-    patch('  onLeave(id, hostChanged) {', '  onLeave(id, hostChanged) {\n    this.s._members?.delete(id);\n    this.peers.delete(id);', 'retire departed paint sender before replay');
+    patch('  onLeave(id, hostChanged) {', '  onLeave(id, hostChanged) {\n    const adoptionSim = this.peers.get(id)?.sim;\n    for (const actor of this.byNid.values()) if (actor.owner === id && actor.net) actor.net._adoptionSourceSim = adoptionSim;\n    this.s._members?.delete(id);\n    this.peers.delete(id);', 'capture owner simulation clock before retiring departed peer');
     patch('  _rec(e) { this.out.push([r3(now()), ...e]); }', `  _rec(e) {
     const seq = this._eventSeq = Math.max(this._eventSeq || 0, this.s._inkwaveEventSeq || 0) + 1;
     if (!Number.isSafeInteger(seq)) throw new Error('Network event sequence exhausted');
@@ -497,18 +497,23 @@ export function emit(name, payload) {
       "        if (e[3] === 'movement_cancel' || e[3] === 'land' || e[3] === 'spawn') clearRemoteSquidroll(a, true);\n        a.character._netTrig?.(e[3], unpackTrig(e[4]));",
       'remote cancellation event invalidates current visual Roll');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      clearRemoteSquidroll(a);\n      clearRemoteRollerPresentation(a);\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
+      '      if (drop) { this._remove(a); continue; }\n      if (a.net) a.net._adoptionSourceOwner = a.owner;\n      clearRemoteSquidroll(a);\n      clearRemoteRollerPresentation(a);\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retain prior snapshot clock for adoption');
     patch('    const drop = mapNoBots(this.cfg.map);',
       "    const drop = this.cfg.map === 'range' || mapNoBots(this.cfg.map);", 'Practice Range remains humans-only on disconnect');
-    patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a);\n    clearRemoteSquidroll(a);\n    clearRemoteRollerPresentation(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
+    patch('  _adopt(a) {', '  _adopt(a) {\n    const adoptionTransfer = latestAdoptionTransfer(a, this);\n    if (a.net) { delete a.net._adoptionSourceOwner; delete a.net._adoptionSourceSim; }\n    clearRemoteSquidroll(a);\n    clearRemoteRollerPresentation(a);\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'capture accepted actor state before adoption');
     patch('    if (a.alive && a.net.spawnPending) { a.net.spawnPending = false; a.respawn(); }   // mid-respawn: finish it here',
-      `    if (a.alive && a.net.spawnPending) {
+      `    if (a.alive && a.net.spawnPending && !adoptionTransfer?.latest?.squidSpawn) {
       a.net.spawnPending = false;
       // _remoteRespawn has already made this proxy alive. Let the installed
       // post-death respawn wrapper see the pending Turf event as a death-to-life
       // transition so an adopted bot enters Squid Spawn and keeps its final gauge.
       if (G.match?.mode === 'turf' && !G.match?.opts?.range) a.alive = false;
       a.respawn();
+    } else if (a.alive && adoptionTransfer?.latest?.squidSpawn) {
+      // The first post-respawn owner snapshot already contains the lifecycle;
+      // do not start a second respawn while adopting it.
+      a.net.spawnPending = false;
+      a.character.setVisible(true); a.character.root.visible = true;
     }`,
       'pending Turf respawn enters the installed Squid Spawn lifecycle');
     patch('    a.superJumpState = null; a.specialActive = null;',
@@ -531,10 +536,10 @@ export function emit(name, payload) {
       'sample adoption state on the sender timeline');
     patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23 && s.length !== 24 && s.length !== 25) continue;
       const adoption = s.length >= 24
-        ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq, a.weapon?.special)
+        ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq, a.weapon?.special, d.u, a, a.net._adoptionTick)
         : null;
       if (s.length >= 24 && !adoption) continue;
-      if (adoption) { snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence; }
+      if (adoption) { snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence; a.net._adoptionTick = adoption.tick; }
       else delete snap.adoption;
       a.net.lastLife = snap.life;`, 'strict life/sequence-bound adoption packet');
     patch('    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
@@ -841,15 +846,79 @@ function readProtectionAge(row) {
     || armor[2] !== null && (!Number.isFinite(armor[2]) || armor[2] < 0 || armor[2] > 20 / 60))) return null;
   return { invuln: row[2], managed: row[3], armor: armor?.slice() || null };
 }
-function restoreProtection(actor, state) {
+const SQUID_SPAWN_TAG = 'inkwave-squidspawn-v1';
+function spawnPointRow(value) {
+  const point = Array.isArray(value) ? value : value && [value.x, value.y, value.z];
+  return point?.length === 3 && point.every(v => Number.isFinite(v) && Math.abs(v) <= ADOPTION_WORLD_MAX)
+    ? point.slice() : null;
+}
+function hasNativeSpawnSupport(actor, point) {
+  if (!actor?.pos?.clone || !actor?.vel?.clone || typeof actor._resolve !== 'function'
+    || typeof G.physics?.collideBody !== 'function' || typeof G.level?.groundHeight !== 'function') return false;
+  const [x, y, z] = point || [];
+  const floor = G.level.groundHeight(x, z);
+  if (!Number.isFinite(floor) || !Number.isFinite(y)) return false;
+  const probe = Object.assign(Object.create(Object.getPrototypeOf(actor)), actor);
+  probe.pos = actor.pos.clone().set(x, floor, z);
+  probe.vel = actor.vel.clone().set(0, -1, 0);
+  probe.grounded = true;
+  probe.ground = Object.assign({}, actor.ground, { normal: actor.ground?.normal?.clone?.() || new THREE.Vector3(0, 1, 0) });
+  probe.groundN = actor.groundN?.clone?.() || new THREE.Vector3(0, 1, 0);
+  probe.contacts = { ...actor.contacts,
+    groundNormal: actor.contacts?.groundNormal?.clone?.() || new THREE.Vector3(0, 1, 0),
+    wallNormal: actor.contacts?.wallNormal?.clone?.() || new THREE.Vector3() };
+  probe._railIds = [];
+  try { probe._resolve(false, floor, false); } catch { return false; }
+  return probe.grounded && probe.ground?.hit && probe.pos.x === x && probe.pos.z === z
+    && Math.abs(probe.pos.y - y) <= 1e-5;
+}
+function packSquidSpawnState(actor) {
+  const state = actor.s3?.squidSpawn;
+  if (!state || !actor.alive) return null;
+  if (G.match?.mode !== 'turf' || G.match?.opts?.range) return null;
+  const phase = state.phase === 'aim' ? 0 : state.phase === 'flight' ? 1 : state.phase === 'landing' ? 2 : -1;
+  const target = phase === 0 ? spawnPointRow(state.target)
+    : phase === 1 ? spawnPointRow(state.to || state.target) : null;
+  const remaining = phase === 0 || phase === 2 ? 0 : phase === 1 ? state.duration - state.t : NaN;
+  const invuln = actor.invuln === Infinity ? 'infinity' : actor.invuln;
+  return [SQUID_SPAWN_TAG, phase, remaining, target, actor.special, invuln];
+}
+function readSquidSpawnState(row, actor, flags, tick, ownerTick, protection) {
+  if (row === null) return null;
+  if (!Array.isArray(row) || row.length !== 6 || row[0] !== SQUID_SPAWN_TAG
+    || !actor || !(flags & F.alive) || !Number.isSafeInteger(ownerTick) || ownerTick !== tick
+    || G.match?.mode !== 'turf' || G.match?.opts?.range
+    || !Number.isSafeInteger(row[1]) || row[1] < 0 || row[1] > 2
+    || !Number.isFinite(row[2]) || row[2] < 0 || row[2] > ADOPTION_AGE_MAX
+    || !Number.isFinite(row[4]) || row[4] < 0
+    || !protection?.managed || (flags & (F.sjCharge | F.sjFlight))) return undefined;
+  const cost = actor.specialCost?.();
+  if (!Number.isFinite(cost) || row[4] > cost) return undefined;
+  const phase = row[1], target = row[3];
+  if (phase === 0 || phase === 1) {
+    if (!Array.isArray(target) || target.length !== 3
+      || !target.every(v => Number.isFinite(v) && Math.abs(v) <= ADOPTION_WORLD_MAX)
+      || !hasNativeSpawnSupport(actor, target)) return undefined;
+  } else if (target !== null || row[2] !== 0) return undefined;
+  if (phase === 0 && row[2] !== 0) return undefined;
+  if ((phase === 0 || phase === 2) ? row[5] !== 'infinity'
+    : (!Number.isFinite(row[5]) || row[5] <= 0 || row[5] > 10)) return undefined;
+  if (phase === 0 && protection.armor) return undefined;
+  return { phase: ['aim', 'flight', 'landing'][phase], remaining: row[2],
+    target: target?.slice() || null, special: row[4], invuln: row[5] };
+}
+function restoreProtection(actor, state, age = 0) {
   const p = state.protection;
   if (!p || !actor.alive) return;
+  const elapsed = Number.isFinite(age) && age > 0 ? age : 0;
   actor.invuln = p.invuln;
   actor.s3 ||= {};
   actor.s3.spawnArmorManaged = p.managed;
   actor.s3.spawnArmorRemote = false;
-  actor.s3.spawnArmor = p.armor && p.armor[1] > 0
-    ? { hp: p.armor[0], remaining: p.armor[1], breakRemaining: p.armor[2] } : null;
+  const remaining = p.armor ? Math.max(0, p.armor[1] - elapsed) : 0;
+  const breakRemaining = p.armor?.[2] === null ? null : p.armor ? Math.max(0, p.armor[2] - elapsed) : null;
+  actor.s3.spawnArmor = p.armor && remaining > 0
+    ? { hp: p.armor[0], remaining, breakRemaining } : null;
 }
 function packAdoptionState(actor) {
   const life = Number.isSafeInteger(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
@@ -861,11 +930,14 @@ function packAdoptionState(actor) {
   const spin = exportSplatlingReservation(actor.weaponRunner);
   const cooldown = Number.isFinite(actor.weaponRunner?.cooldown)
     ? Math.min(ADOPTION_COOLDOWN_MAX, Math.max(0, actor.weaponRunner.cooldown)) : 0;
-  return [ADOPTION_STATE_TAG, life, sequence, tick, packProtectionAge(actor),
+  const row = [ADOPTION_STATE_TAG, life, sequence, tick, packProtectionAge(actor),
     packSuperJumpState(actor.superJumpState), lethal?.[0] === life ? lethal : null, spin, cooldown, packSlamState(actor)];
+  const squidSpawn = packSquidSpawnState(actor);
+  if (squidSpawn) row.push(squidSpawn);
+  return row;
 }
-function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence, weaponSpecial) {
-  if (!Array.isArray(row) || ![8,9,10].includes(row.length) || row[0] !== ADOPTION_STATE_TAG) return null;
+function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence, weaponSpecial, ownerTick, actor, previousTick) {
+  if (!Array.isArray(row) || ![8,9,10,11].includes(row.length) || row[0] !== ADOPTION_STATE_TAG) return null;
   const [tag, rowLife, sequence, tick, ageRow, jumpRow, lethalRow, spinRow] = row;
   const protection = Array.isArray(ageRow) ? readProtectionAge(ageRow) : null;
   if (Array.isArray(ageRow) && !protection) return null;
@@ -882,9 +954,12 @@ function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence, w
   if (lethal === undefined) return null;
   const streaming = !!(flags & F.streaming);
   if (spinRow === null ? streaming : (!streaming || weaponKind !== 'splatling' || !isValidSplatlingReservation(spinRow, PLAYER.inkMax))) return null;
-  const slam = row.length === 10 ? readSlamState(row[9], !!(flags & F.alive) && !!(flags & F.special) && weaponSpecial === 'slam') : null;
+  const slam = row.length >= 10 ? readSlamState(row[9], !!(flags & F.alive) && !!(flags & F.special) && weaponSpecial === 'slam') : null;
   if (slam === undefined) return null;
-  return { life: rowLife, sequence, tick, recoveryAge, protection, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown, slam };
+  if (row.length === 11 && Number.isSafeInteger(previousTick) && tick <= previousTick) return null;
+  const spawn = row.length === 11 ? readSquidSpawnState(row[10], actor, flags, tick, ownerTick, protection) : null;
+  if (spawn === undefined || row.length === 11 && !spawn || spawn && (jump || slam)) return null;
+  return { life: rowLife, sequence, tick, recoveryAge, protection, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown, slam, squidSpawn: spawn };
 }
 // Transfer the latest accepted native action, not an interpolated presentation
 // phase. Its exact pose/velocity and gauge reservation continue on one host.
@@ -915,7 +990,8 @@ function restoreSlamState(actor, row) {
 function copyAdoptionState(state) {
   if (!state) return null;
   return { ...state, jump: state.jump ? { ...state.jump, from: state.jump.from.slice(), to: state.jump.to.slice(), target: state.jump.target.slice() } : null,
-    lethal: state.lethal ? state.lethal.slice() : null, spin: state.spin ? state.spin.slice() : null };
+    lethal: state.lethal ? state.lethal.slice() : null, spin: state.spin ? state.spin.slice() : null,
+    squidSpawn: state.squidSpawn ? { ...state.squidSpawn, target: state.squidSpawn.target?.slice() || null } : null };
 }
 function sampleAdoptionState(buf, t, mode, ownerTick) {
   if (!buf?.length) return null;
@@ -977,11 +1053,38 @@ function applyAdoptionRecoveryAge(match, actor, sample) {
   const peer = match.peers.get(actor.owner), ahead = Number.isFinite(peer?.sim) && peer.sim > state.tick ? (peer.sim - state.tick) / 60 : 0;
   actor.lastDamage = clampAdoptionAge(state.recoveryAge + ahead);
 }
-function latestAdoptionTransfer(actor) {
+function latestAdoptionTransfer(actor, match) {
   const latest = actor.net?.buf?.at(-1), state = latest?.adoption;
   if (!state || state.life !== actor.net.lastLife) return null;
   const sampled = actor.net.cur?.adoption;
-  return { latest: state, current: sampled?.life === state.life ? sampled : state, hp: latest.hp };
+  const owner = actor.net._adoptionSourceOwner || actor.owner;
+  const sim = actor.net._adoptionSourceSim ?? match?.peers?.get(owner)?.sim;
+  const spawnAge = state.squidSpawn && Number.isFinite(sim) && sim > state.tick ? (sim - state.tick) / 60 : 0;
+  return { latest: state, current: sampled?.life === state.life ? sampled : state, hp: latest.hp, spawnAge };
+}
+function restoreSquidSpawnState(actor, state, age) {
+  if (!state || !actor.alive) return;
+  const point = state.target;
+  if (point && !hasNativeSpawnSupport(actor, point)) return;
+  const target = point ? { x: point[0], y: point[1], z: point[2] } : null;
+  actor.special = state.special;
+  actor.s3 ||= {};
+  actor.s3.spawnArmorManaged = true;
+  actor.s3.spawnArmorRemote = false;
+  const spawn = { phase: state.phase, initial: false, wait: 0, fireArmed: true, target };
+  if (state.phase === 'aim') {
+    actor.s3.spawnArmor = null;
+    actor.invuln = Infinity;
+    spawn.transferTargetPending = true;
+  } else if (state.phase === 'flight') {
+    const remaining = Math.max(0, state.remaining - Math.max(0, age || 0));
+    spawn.t = 0;
+    spawn.duration = Math.max(Number.EPSILON, remaining);
+    spawn.from = { x: actor.pos.x, y: actor.pos.y, z: actor.pos.z };
+    spawn.to = { ...target };
+    actor.invuln = Math.max(0, state.invuln - Math.max(0, age || 0));
+  } else actor.invuln = Infinity;
+  actor.s3.squidSpawn = spawn;
 }
 function restoreAdoptionState(match, actor, transfer) {
   if (!transfer) return;
@@ -995,7 +1098,8 @@ function restoreAdoptionState(match, actor, transfer) {
   actor.net._adoptionSeq = Math.max(Number.isSafeInteger(actor.net._adoptionSeq) ? actor.net._adoptionSeq : 0, latest.sequence);
   // Resume from the newest accepted owner state, not the delayed visual
   // sample (which would extend protection or undo an already broken armor).
-  restoreProtection(actor, latest);
+  restoreProtection(actor, latest, latest.squidSpawn ? transfer.spawnAge : 0);
+  restoreSquidSpawnState(actor, latest.squidSpawn, transfer.spawnAge);
   actor.lastDamage = clampAdoptionAge(current.recoveryAge);
   actor.weaponRunner.cooldown = Math.max(actor.weaponRunner.cooldown || 0, current.cooldown || 0);
   if (current.jump) {
