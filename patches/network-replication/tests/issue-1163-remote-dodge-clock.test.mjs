@@ -34,6 +34,14 @@ async function makeWorld(startTime) {
     ...Object.fromEntries(['fireShooter', 'fireDualies', 'fireCharger', 'fireSplatling', 'fireBlaster',
       'fireSlosh', 'throwBomb', 'fireFlick'].map(k => [k, () => {}])) };
   G.actors = []; G.time = 0;
+  // The fixture uses performance time for sender epochs. Keep the owner's
+  // simulation tick advancing too, or strict snapshot admission drops every
+  // post-baseline sample as a duplicate tick before its sidecar can be read.
+  const setPerformanceTime = clock.set;
+  clock.set = seconds => {
+    setPerformanceTime(seconds);
+    G.time = Math.max(G.time, seconds - startTime);
+  };
   return { ...f, clock };
 }
 
