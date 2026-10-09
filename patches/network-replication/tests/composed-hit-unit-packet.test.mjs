@@ -26,6 +26,9 @@ function method(name) {
 const limitsStart = source.indexOf('const HIT_DELIVERY_LIMIT = '), limitsEnd = source.indexOf('const TICK = 1 / 20;', limitsStart);
 assert.ok(limitsStart >= 0 && limitsEnd > limitsStart, 'production bounded hit limits are composed');
 const hitLimits = source.slice(limitsStart, limitsEnd);
+const dropStart = source.indexOf('function clearRemoteDropRoll('), dropEnd = source.indexOf('function syncRemoteDropRoll(', dropStart);
+assert.ok(dropStart >= 0 && dropEnd > dropStart, 'production Drop Roller cleanup helper is composed');
+const dropCleanup = source.slice(dropStart, dropEnd);
 // Execute the exact composed owner methods; transport and damage-event delivery
 // are bounded sinks. This covers the adapter connection, not live relay latency.
 function hitWorld() {
@@ -36,10 +39,10 @@ function hitWorld() {
   const G = { projectiles: { applyHit(a, v, damage, weapon, group) {
     calls.push({ a, v, damage, weapon, group, punisher:respawnPunisherEquipped(a) }); emit('damage', { victim: v, attacker: a, amount: damage });
   } } };
-  const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
+  const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'now', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock',
-    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + hitLimits + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
-    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock);
+    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + dropCleanup + hitLimits + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hitHandoffPacket', '_hit', '_validHitAuthorityMetadata', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
+    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, () => 1, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock);
   const n = new C();
   Object.assign(n, { myId: 'A', byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } },
     peers: new Map(), _peer(id) { if (!this.peers.has(id)) this.peers.set(id, {}); return this.peers.get(id); } });
