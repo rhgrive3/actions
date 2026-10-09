@@ -84,7 +84,7 @@ async function pair() {
   const sender=owner.makeNetMatch(owner.makeSession('p2','p2',[['p2','Owner'],['host','Host']]));
   const receiver=host.makeNetMatch(host.makeSession('host','host',[['host','Host'],['p2','Owner']]));
   bindActors(owner,sender,[source]);bindActors(host,receiver,[local,remote]);
-  const send=()=>{owner.clock.advance(.05);owner.G.time+=.05;const p=sendTick(sender);receiveTick(host,receiver,[remote],p);return p;};
+  const send=()=>{owner.clock.advance(.05);owner.G.time+=.05;const p=sendTick(sender);receiveTick(host,receiver,[remote],p);assert.ok(remote.net.buf.length, `snapshot rejected: ${JSON.stringify(p.a?.[0])}`);return p;};
   return {owner,host,source,local,remote,sender,receiver,send};
 }
 test('#958 adopted owner keeps the complete finite invulnerability timer and expiry',async()=>{
