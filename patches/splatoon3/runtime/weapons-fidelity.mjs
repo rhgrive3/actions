@@ -121,7 +121,7 @@ export function advanceFidelityProjectile(p, dt) {
     }
   }
   p.pos.addScaledVector(p.vel, step);
-  // #713 candidate input: retain the flight apex for Roller break/free paint.
+  // #713: retain the flight apex for the Roller break/free paint height input.
   if (!Number.isFinite(p.fidelityMaxY) || p.pos.y > p.fidelityMaxY) p.fidelityMaxY = p.pos.y;
   if (p.fidelitySloshDownward && p.age <= p.straight + EPSILON)
     p.fidelitySloshFallAnchorY = p.pos.y;
