@@ -2283,3 +2283,12 @@ The build overlay now gives authoritative ancillary ownership and GLSL rays/sate
 ### PR1175 complete validation scheduling (2026-10-09)
 
 The combined canonical diagnostic now covers more than 3,500 tests and required about 23 minutes locally before the remaining network, quality, reference and built-weapon gates. The validate job deadline is extended from 30 to 45 minutes so the complete enlarged sequence can finish. No test is removed, skipped or made conditional by this change, and no gameplay, visual, numeric, worker, startup or performance acceptance threshold changes.
+
+## 2026-10-09: #433 LOW/mobile Online lobby atlas budget
+
+- 比較対象は公開版 `inkwave-public/` の Online hub/lobby 資源ライフサイクル。本家参照版はこの記録の Splatoon 3 Ver.11.3.0 のまま。アトラスの寸法・Canvas/GPU 常駐量は Nintendo の公開 gameplay 数値ではないため、本家とのメモリ数値一致は主張しない。移動、射撃、衝突、塗り、Online のルール・タイミングは変更していない。
+- 再現手順: 起動後 Online を開かず2.8秒以上メニューにいると composed build では `showcase.lob` が未作成。Online hub を開くと `showHub()` → `_lobEnsure()` → `_lobLoad()` が LobbySet を生成し、Canvas atlas とシーンを warm-up する。通常の Online 退出後は `_updateSet()` の 1.5秒 release path から `_lobRelease()` と `LobbySet.dispose()` へ進む。
+- 残存差分: `issue-472-adapter.mjs` の touch→native LOW 品質判定後も旧ビルドは4枚の Canvas atlas をデスクトップ寸法で生成していた。Decal 2048×2048、Lit 2048×1024、Skyline 2048×1024、Mask 1024×2048。合計10,485,760 px、4 byte RGBA 換算40 MiB。mip texel 合計は上限近似で約53.34 MiB。これは INKWAVE ソースと texture 設定からの決定的計算で、Safari/WebKit や端末GPU実測ではない。
+- `patches/local-quality/lobby-resource-adapter.mjs` は LOW atlas の backing canvas を幅・高さそれぞれ1/2にし、描画座標とUV配置を維持する。合計2,621,440 px、名目 source 10 MiB、mip chain 上限14 MiB未満。HIGH/MEDIUM の atlas 解像度は維持。Scene の reflection/shadow/PMREM・geometry/material はこの atlas 上限の外で、driver overhead も含めない。
+- `patches/local-quality/tests/lobby-resources.test.mjs` と `issue-472-lobby.test.mjs` は10/10。旧 LOW 固定寸法を負例にし、composed touch→LOW→scaled-builder 経路を確認。実際の native `_updateSet`、`_lobRelease`、`LobbySet.dispose()` を fixture 所有リソースで2回ずつ、30/60/120 Hz で実行。source dispose call の結果であり、`renderer.info` 実測・GC後の実メモリ・iOS/Android端末確認の代用にはしない。
+- 状態: build-only 差分とロジック回帰は確認済み。Browser/WebGL、端末GPU reclaim、Online画面の実描画品質は未確認。本家S3の操作比較はこの resource-only 差分には該当せず、S3との挙動一致を追加推測しない。
