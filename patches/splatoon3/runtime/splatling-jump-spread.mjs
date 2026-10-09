@@ -3,15 +3,9 @@ const RECOVERY_END_FRAMES = 70;
 const SIMULATION_HZ = 60;
 const INSTALLED = Symbol.for('inkwave.s3.splatling-jump-spread.v1');
 
-// The pinned 11.3.0 tables publish the hold and end frames, not the curve
+// The pinned 11.3.0 table publishes the hold and end frames, not the curve
 // between them. This is an internal monotone linear interpolation, not a claim
 // about Nintendo's unpublished intermediate curve.
-//
-// #887: Splat Dualies (WeaponManeuverNormal) publishes the same
-// Jump_DegBiasDecreaseStartFrame=25 / Jump_DegBiasEndFrame=70 boundaries as
-// WeaponSpinnerStandard, plus Jump_DegSwerve=7.5 / Stand_DegSwerve=2. The
-// shared age machine drives both families; the post-roll LapOver_DegSwerve
-// turret cone stays a separate Dualies state.
 export function splatlingJumpRecoveryAt(ageFrames) {
   if (!Number.isFinite(ageFrames)) return null;
   return Math.max(0, Math.min(1, (ageFrames - HOLD_FRAMES) / (RECOVERY_END_FRAMES - HOLD_FRAMES)));
@@ -71,14 +65,10 @@ export function installSplatlingJumpSpread({ Actor, WeaponRunner, on }) {
 
   const spread = WeaponRunner.prototype._spreadDeg;
   WeaponRunner.prototype._spreadDeg = function (weapon) {
-    const jumpKind = weapon.kind === 'splatling' || weapon.kind === 'dualies';
-    const recovery = jumpKind
+    const recovery = weapon.kind === 'splatling'
       ? splatlingJumpRecoveryAt(this.a.s3SplatlingJumpAgeFrames)
       : null;
-    // The legal post-roll Dualies turret cone (LapOver_DegSwerve) is independent
-    // of the jump-accuracy recovery and must stay owned by the native turret path.
-    if (recovery === null || (weapon.kind === 'dualies' && this.s3Turret) ||
-        !Number.isFinite(weapon.spreadAir) || !Number.isFinite(weapon.spreadGround)) {
+    if (recovery === null || !Number.isFinite(weapon.spreadAir) || !Number.isFinite(weapon.spreadGround)) {
       return spread.call(this, weapon);
     }
     const first = weapon.spreadFirst ?? 0.45;
