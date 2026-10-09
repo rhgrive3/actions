@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 // Issue #561 — Splatoon 3 assist presentation.
 //
 // Splatoon 2/3 give an assisting player no splat notification; a distinct splat icon
@@ -252,7 +253,7 @@ async function installedRig(site) {
   const media = () => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} });
   const G = { teamHex: ['#ff8a14', '#2f5bff'], mode: 'match' };
   const context = vm.createContext({
-    console, document, G, performance: { now: () => 0 },
+    console, document, G, URL, performance: { now: () => 0 },
     localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
     window: { addEventListener() {}, removeEventListener() {}, innerWidth: 1280, innerHeight: 720, matchMedia: media },
     innerWidth: 1280, innerHeight: 720, screen: { width: 1280, height: 720, orientation: { angle: 0 } },
@@ -265,7 +266,7 @@ async function installedRig(site) {
   const cache = new Map();
   const load = file => {
     if (cache.has(file)) return cache.get(file);
-    const m = new vm.SourceTextModule(fs.readFileSync(file, 'utf8'), { context, identifier: file });
+    const m = new vm.SourceTextModule(fs.readFileSync(file, 'utf8'), { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     cache.set(file, m);
     return m;
   };
@@ -300,7 +301,9 @@ test('#561: installed built site presents the assist exactly like the compositio
   const victim = r.enemy();
   const assist = r.make();
   assist._kills.dealt.set(victim, assist._now());
-  assist._onSplatted({ victim, attacker: r.mate() });
+  // Installed HUD consumes the authoritative accepted-assist event, not its
+  // obsolete private damage cache. This matches the native flow test below.
+  assist._onSplatted({ victim, attacker: r.mate(), assists: [r.me] });
   assert.equal(assist.kcards.children.length, 0, 'the installed site shows no ASSIST card');
   assert.deepEqual(r.sounds, [], 'the installed site plays no assist sound');
   assert.deepEqual(r.timers, [], 'the installed site schedules no 1.7 s assist card');

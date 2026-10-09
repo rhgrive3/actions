@@ -178,16 +178,16 @@ test('store while holding fire and roll maintaining charge (#390 / #386 baseline
   assert.equal(obs.roll1Stored.charge, 1, 'stored charge remains 1.0 during roll');
 });
 
-test('Issue #377 regression: charger charging movement speed capped at 1.2 WU/s from charging entry', async () => {
+test('Charger composition keeps startup separate from partial-charge slowdown (#377 corrected oracle)', async () => {
   const { obs } = await runScenario(60);
-  // #726: the ZR edge is the 1F humanoid startup, so tick 1 is not charging and
-  // keeps the uncharged run speed. S3 MoveSpeedFullCharge = 0.02 DU/frame
-  // (pinned 0.02, not 0.20; 1.2 WU/s at 60Hz) then clamps immediately on the
-  // charging entry tick without slow ease (#377 unchanged).
-  assert.equal(obs.firstTickCharging, false, 'Charger is in its 1F startup on tick 1');
-  assert.equal(obs.firstTickCharge, 0, 'the startup tick advances no charge progress');
-  assert.equal(obs.entryTickCharging, true, 'Charger enters charging state on tick 2');
-  assert.ok(obs.entryTickMoveSpeed <= 1.2 + 1e-5, `Expected <= 1.2 WU/s at charging entry, got ${obs.entryTickMoveSpeed}`);
+  // Independent community measurements: partial .96 -> .21 legacy DU/F,
+  // full .20 DU/F. Full-charge .02 m/F is NOT an entry-speed cap.
+  // Intermediate interpolation remains a declared calibration, not an oracle.
+  assert.equal(obs.firstTickCharging, false, '1F humanoid startup is preserved');
+  assert.equal(obs.firstTickCharge, 0, 'startup advances no charge');
+  assert.equal(obs.entryTickCharging, true, 'charging starts on tick 2');
+  assert.ok(obs.entryTickMoveSpeed > 5.6 && obs.entryTickMoveSpeed <= .96 * .1 * 60,
+    `partial entry remains near the uncharged endpoint: ${obs.entryTickMoveSpeed}`);
 });
 
 test('Issue #386 regression: roll-chain second floor action at 70F retains .85 attenuation', async () => {

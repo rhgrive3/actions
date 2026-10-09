@@ -1,3 +1,4 @@
+import { installWeaponAccuracy, withShotBias } from './weapon-accuracy.mjs';
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { shooterMovementRemaining, shooterMovementSpeed } from './shooter-movement.mjs';
@@ -464,7 +465,7 @@ export function installWeapons(context, profile) {
     }
     if (weapon.kind === 'shooter') {
       if (this.s3WasGrounded && !this.a.grounded) this.s3JumpSpreadAge = 0;
-      if (this.s3JumpSpreadAge != null) this.s3JumpSpreadAge += dt;
+      else if (this.s3JumpSpreadAge != null) this.s3JumpSpreadAge += dt;
       this.s3WasGrounded = !!this.a.grounded;
       let next = input;
       const isSquid = this.a.form === 'squid';
@@ -491,7 +492,7 @@ export function installWeapons(context, profile) {
         next = { ...next, fire: false, firePressed: false };
       input = next;
     }
-    if (weapon.kind === 'shooter' && !input.fire) this.s3Accuracy?.advance(dt);
+    if (weapon.kind === 'shooter') this.s3Accuracy?.advance(dt);
     const result = runnerUpdate.call(this, dt, input);
     if (weapon.kind === 'shooter' && this.s3ShooterInterruptJustArmed) {
       // R/ZL cancellation may coincide with a due repeat; the native owner above
@@ -870,7 +871,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype._spreadDeg = function (w) {
     // The upstream blaster reads `spread`, while the pinned profile supplies
     // Stand_DegSwerve as spreadGround. During the sourced jump-recovery state
-    // publish the outer envelope; the probability bias is sampled at fire time.
+    // publish the outer envelope; the angular bias is applied at fire time.
     if (w.kind === 'blaster') {
       const state = this.s3BlasterJumpState(w);
       return state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
@@ -880,18 +881,18 @@ export function installWeapons(context, profile) {
       let base;
       if (age <= hold + 1e-10) base = w.spreadAir;
       else if (age < end - 1e-10) base = w.spreadAir + (w.spreadGround - w.spreadAir) * ((age - hold) / (end - hold));
-      else { base = w.spreadGround; this.s3JumpSpreadAge = null; }
-      return base; // S3 maximum outer envelope; selection happens on each admitted shot
+      else { base = w.spreadGround; if (this.a.grounded) this.s3JumpSpreadAge = null; }
+      return base; // S3 maximum outer envelope; bias is applied on each admitted shot
     }
-    if (w.kind === 'shooter') return w.spreadGround;
+    if (w.kind === 'shooter') return this.a.grounded ? w.spreadGround : w.spreadAir;
     return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
   Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {
     const state = a?.weaponRunner?.s3BlasterJumpState?.(w);
-    if (state?.active)
-      return fireBlaster.call(this, a, w, Math.random() < state.bias ? state.envelope : state.ground);
-    return fireBlaster.call(this, a, w, spreadDeg);
+    const bias = state?.active ? state.bias : (a.grounded ? 0 : BLASTER_BIAS_MAX);
+    const full = state?.active ? state.envelope : spreadDeg;
+    return withShotBias(a, bias, bias, () => fireBlaster.call(this, a, w, full));
   };
   const fireShooter = Projectiles.prototype.fireShooter;
   const shooterSource = profile.weaponsFidelityCompletion?.weapons?.shooter;
@@ -901,13 +902,10 @@ export function installWeapons(context, profile) {
   const nearDown = new THREE.Vector3(0, -1, 0), nearOrigin = new THREE.Vector3(), nearHit = new Hit();
   Projectiles.prototype.fireShooter = function (a, weapon, spreadDeg) {
     const accuracy = a.weaponRunner?.s3Accuracy;
-    const outerChance = accuracy?.shot(!!a.grounded, a.weaponRunner?.s3JumpSpreadAge);
-    // The sourced probability is independent of the native generic cone bloom.
-    // Inner angular kernel remains a provisional narrow cone pending Nintendo validation.
+    const bias = accuracy?.shot(!!a.grounded, a.weaponRunner?.s3JumpSpreadAge);
     const maxDeviation = Number.isFinite(spreadDeg) ? spreadDeg : (a.grounded ? weapon.spreadGround : weapon.spreadAir);
-    const deviation = outerChance == null ? maxDeviation :
-      (Math.random() < outerChance ? maxDeviation : maxDeviation * (weapon.spreadFirst ?? 0.45));
-    const result = fireShooter.call(this, a, weapon, deviation);
+    const result = withShotBias(a, bias, bias,
+      () => fireShooter.call(this, a, weapon, maxDeviation));
     if (a.weaponRunner && weapon.kind === 'shooter') {
       const runner = a.weaponRunner;
       runner.s3PostFireLockActive = true;
@@ -1022,7 +1020,16 @@ export function installWeapons(context, profile) {
     const w = this.a.weapon;
     if (this.lockT > 0) return moveSpeed.call(this);
     if (w.kind === 'blaster' && this.s3BlasterMoveRemaining > 1e-10 && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
-    if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
+    if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) {
+      // S3 measured endpoints: .96 DU/F on entry -> .21 near full -> .20
+      // full (=5.76 -> ~1.26 -> 1.2 world m/s). MoveSpeedFullCharge must
+      // not be used for the whole partial-charge period. The intermediate
+      // interpolation is an explicit calibration, not extracted engine code.
+      // Actor-local Run Speed/Flow multiplies this target once in gear.mjs.
+      const start = Number.isFinite(w.moveSpeedChargingStart) ? w.moveSpeedChargingStart : PLAYER.runSpeed;
+      const progress = Math.max(0, Math.min(1, Number.isFinite(this.chargeT) ? this.chargeT : 0));
+      return start + (w.moveSpeedFiring - start) * progress;
+    }
     return moveSpeed.call(this);
   };
   installSplatlingRadiusCharge(api, profile);
@@ -1032,6 +1039,7 @@ export function installWeapons(context, profile) {
   installContactRecovery(api);
   installWeaponEdgecases(api);
   installSplatlingJumpSpread(api);
+  installWeaponAccuracy(api, profile);
   const applyHit = Projectiles.prototype.applyHit;
   Projectiles.prototype.applyHit = function (attacker, victim, damage, weaponId, groupId) {
     // Only Slosher wire hits carry a cumulative volley maximum. Other families
