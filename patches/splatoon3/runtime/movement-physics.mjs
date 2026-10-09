@@ -63,7 +63,18 @@ export function rollingMovementActive(a) {
 export function rollingMovementSpeed(r) {
   const w = r.a.weapon;
   const base = Number.isFinite(w.rollBaseSpeed) ? w.rollBaseSpeed : w.rollSpeed;
-  return r.rollT + MOVEMENT_EPSILON >= (w.rollDashTime ?? 0) ? w.rollSpeed : base;
+  if (r.rollT + MOVEMENT_EPSILON < (w.rollDashTime ?? 0)) return base;
+  // The S3 dash-turn parameter is separate from straight dash speed.
+  // A true reversal (negative projected velocity) enters the turn-break
+  // state; returning to the forward heading recovers the same dash clock.
+  const mv = r.a.intent?.move, vel = r.a.vel;
+  if (Number.isFinite(w.rollDashTurnBreakSpeed) && mv && vel &&
+      Number.isFinite(mv.x) && Number.isFinite(mv.z) &&
+      Number.isFinite(vel.x) && Number.isFinite(vel.z) &&
+      Math.hypot(mv.x, mv.z) > 0.01 && Math.hypot(vel.x, vel.z) > 0.01 &&
+      mv.x * vel.x + mv.z * vel.z < 0)
+    return Math.min(w.rollSpeed, w.rollDashTurnBreakSpeed);
+  return w.rollSpeed;
 }
 
 /** Integral of the existing 1.5*(1-u^2) curve, not a new guessed Nintendo curve.
