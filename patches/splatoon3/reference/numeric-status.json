@@ -299,6 +299,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.dualies.rollDist": {
+    "value": 5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.dualies.inkPerShot": {
     "value": 0.72,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -1062,6 +1067,16 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.charger.partialChargeMoveStart": {
+    "value": 5.76,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.partialChargeMoveEnd": {
+    "value": 1.26,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.charger.keepChargeTime": {
     "value": 1.25,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -1272,6 +1287,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.roller.rollDashTurnBreakSpeed": {
+    "value": 6.48,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.rollInkPerMeter": {
     "value": 0.7575757575757576,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1294,6 +1314,71 @@
   },
   "weapons.roller.rollInkMaxSpeed": {
     "value": 7.92,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.horizontalSpawn.width": {
+    "value": 0.8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.horizontalSpawn.randomCube": {
+    "value": 0.1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.horizontalSpawn.worldScale": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalSpawn.groups.0.count": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalSpawn.groups.0.height": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalSpawn.groups.0.offsetHeight": {
+    "value": 0.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalSpawn.groups.1.count": {
+    "value": 2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalSpawn.groups.1.height": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalSpawn.groups.1.offsetHeight": {
+    "value": -0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalSpawn.groups.2.count": {
+    "value": 2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalSpawn.groups.2.height": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalSpawn.groups.2.offsetHeight": {
+    "value": -1.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.verticalSpawn.worldScale": {
+    "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -2023,6 +2108,11 @@
   },
   "specials.slam.damageMin": {
     "value": 60,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "specials.slam.hang": {
+    "value": 0.5,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
