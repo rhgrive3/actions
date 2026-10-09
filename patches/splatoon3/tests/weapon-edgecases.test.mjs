@@ -55,6 +55,47 @@ test('Dualies sub release on the post-shot unlock tick replays the buffered pres
   assert.equal(thrown, 1, 'the same release cannot throw again');
 });
 
+test('#853 Dualies buffered sub boundaries: release before/on/after the 4F unlock throws exactly once', async () => {
+  // Each case holds sub through the post-shot lock and releases on a different
+  // 60 Hz boundary of the lock expiry. One Splat Bomb, paid once, or none.
+  const cases = [
+    { name: 'release exactly on the unlock tick', postShot: 2 / 60, hold: 1, death: false, ink: 100, expect: 1 },
+    { name: 'release one tick before unlock', postShot: 3 / 60, hold: 1, death: false, ink: 100, expect: 1 },
+    { name: 'hold through unlock, release one tick after', postShot: 2 / 60, hold: 2, death: false, ink: 100, expect: 1 },
+    { name: 'insufficient ink release stays rejected', postShot: 2 / 60, hold: 1, death: false, ink: 50, expect: 0 },
+    { name: 'death before unlock clears the buffered press', postShot: 4 / 60, hold: 1, death: true, ink: 100, expect: 0 },
+  ];
+  for (const c of cases) {
+    const f = await setup('dualies'), a = f.a, runner = a.weaponRunner;
+    let thrown = 0;
+    f.G.projectiles.throwBomb = () => { thrown++; };
+    runner.s3DualiesPostShot = c.postShot;
+    a.ink = c.ink;
+    a.intent.sub = true;
+    f.tick(a, c.hold);
+    assert.equal(runner.s3DualiesSubBuffered, true, `${c.name}: press buffered under the lock`);
+    if (c.death) {
+      a.intent.sub = false;
+      a.weaponRunner.onDeath(); a.alive = false;
+      f.tick(a); a.alive = true;
+      assert.equal(runner.s3DualiesSubBuffered, false, `${c.name}: death clears the press buffer`);
+      assert.equal(runner.s3DualiesSubReleaseBuffered, false, `${c.name}: death clears the release buffer`);
+    } else {
+      a.intent.sub = false;
+      f.tick(a); // the release tick: on the unlock tick, one tick before it, or one after
+      assert.equal(thrown, 0, `${c.name}: no instant throw on the release tick`);
+      f.tick(a, 2);
+      assert.equal(thrown, 0, `${c.name}: preparation precedes the throw`);
+    }
+    f.tick(a, 10);
+    assert.equal(thrown, c.expect, `${c.name}: exactly ${c.expect} bomb(s)`);
+    f.tick(a, 20);
+    assert.equal(thrown, c.expect, `${c.name}: never duplicated later`);
+    assert.equal(runner.s3DualiesSubBuffered, false, `${c.name}: press buffer cleared`);
+    assert.equal(runner.s3DualiesSubReleaseBuffered, false, `${c.name}: release buffer cleared`);
+  }
+});
+
 test('dualies stable human starts on recognized frame 3, then every 5F without early ink',async()=>{
  const f=await setup('dualies');f.tick(f.a,600);f.a.intent.fire=true;
  f.tick(f.a);assert.equal(f.shots.length,0);assert.equal(f.a.ink,100);f.tick(f.a);assert.equal(f.shots.length,0);assert.equal(f.a.ink,100);
