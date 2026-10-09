@@ -2,6 +2,10 @@
 
 - Issue: https://github.com/rhgrive3/actions/issues/884 — [INKWAVE][Perf] S3 gear wrappers allocate two scratch objects per actor every 60 Hz tick
 - Base SHA: `5d0be6b7fdebfd07e696e75497aaa97aa5ff5648` (branch start, verified `rev-parse HEAD`)
+- Result commit: `856c31968bba2d690fe67ea895f79ad943b83efc` (docs receipt, pushed nonforce to
+  `origin/inkwave/c-884-cl2-reboot5-20261009`; final branch head after this docs edit is recorded
+  in `claim.json` `completed_sha` and the issue comment below)
+- Result comment: https://github.com/rhgrive3/actions/issues/884#issuecomment-6079493860
 - Working Tree: `/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-c-resume-20261009/cl2-884-reboot5`
 - Branch: `inkwave/c-884-cl2-reboot5-20261009`
 - Persistent Evidence: `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-c-resume-20261009/cl2-884-reboot5`
