@@ -1,10 +1,12 @@
+import {effectiveQuality} from '../../../inkwave-public/src/config.js';
 import test from 'node:test';
 import { updateSplatGhosts } from '../../splatoon3/issue-284-adapter.mjs';
 import assert from 'node:assert/strict';
 import { compose } from './idle-fixture.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
-import { idleAttractMenuBudget, pausedWorldFrame } from '../idle-resources.mjs';
+import { idleAttractMenuBudget, notePausedWorldChange, pausedWorldFrame } from '../idle-resources.mjs';
+import { applyAimSettingsChange } from '../aim-profile.mjs';
 import { installClock, runSimulation } from '../../splatoon3/runtime/clock.mjs';
 import { syncPortraitFrame } from '../portrait-guard.mjs';
 
@@ -12,9 +14,9 @@ const source = adaptRange('src/main.js', adaptNetworkSource('src/main.js', compo
 const start = source.indexOf('  _frame(dt) {');
 const end = source.indexOf('\n  // continuous sounds', start);
 assert.ok(start >= 0 && end > start, 'composed installed Game._frame exists');
-const makeFrame = G => new Function('updateSplatGhosts', 'G', 'runSimulation', 'pausedWorldFrame', 'idleAttractMenuBudget', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame',
+const makeFrame = G => new Function('updateSplatGhosts', 'G', 'runSimulation', 'pausedWorldFrame', 'idleAttractMenuBudget', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame', 'effectiveQuality',
   `return class Frame {\n${source.slice(start, end)}\n}`)
-  (updateSplatGhosts, G, runSimulation, pausedWorldFrame, idleAttractMenuBudget, performance, (a, b) => b, x => x, {}, syncPortraitFrame);
+  (updateSplatGhosts, G, runSimulation, pausedWorldFrame, idleAttractMenuBudget, performance, (a, b) => b, x => x, {}, syncPortraitFrame,effectiveQuality);
 
 const vector = () => ({ copy() { return this; }, set() { return this; }, getWorldDirection() { return this; } });
 function fixture({ mode = 'menu', attract = true, touch = true, quality = 'high', fullFrame = false } = {}) {
@@ -107,4 +109,71 @@ test('only touch or LOW menu backdrops are budgeted; live matches and desktop HI
   assert.equal(idleAttractMenuBudget({ match: { attract: false }, mobile: { touch: true }, settings: { quality: 'low' } }, { mode: 'menu' }), false);
   assert.equal(idleAttractMenuBudget({ match: { attract: true }, mobile: { touch: true }, showcase: { fullFrame: true } }, { mode: 'menu' }), false);
   assert.equal(idleAttractMenuBudget({ match: { attract: true }, mobile: { touch: true } }, { mode: 'match' }), false);
+});
+
+test('composed offline pause compares fixed controls without enumerating settings and invalidates through real settings writes', () => {
+  const h = fixture({ mode: 'match', attract: false, touch: false });
+  h.game.match.paused = true;
+  let enumerations = 0;
+  const values = { quality: 'high', shadows: true, bloom: true, fov: 82, lang: 'ja', gyro: false }; // native DEFAULT_SETTINGS starts with gyro disabled
+  h.G.camera.fov = values.fov; // the native settings writer starts from an already applied camera FOV
+  h.game.settings = new Proxy(values, { ownKeys(target) { enumerations++; return Reflect.ownKeys(target); } });
+  const width = Object.hasOwn(globalThis, 'innerWidth') ? globalThis.innerWidth : undefined;
+  const height = Object.hasOwn(globalThis, 'innerHeight') ? globalThis.innerHeight : undefined;
+  const pixelRatio = Object.hasOwn(globalThis, 'devicePixelRatio') ? globalThis.devicePixelRatio : undefined;
+  const hadWidth = Object.hasOwn(globalThis, 'innerWidth'), hadHeight = Object.hasOwn(globalThis, 'innerHeight');
+  const hadPixelRatio = Object.hasOwn(globalThis, 'devicePixelRatio');
+  globalThis.innerWidth = 800; globalThis.innerHeight = 600; globalThis.devicePixelRatio = 1;
+  try {
+    let steady;
+    for (let i = 0; i < 120; i++) {
+      h.frame(1 / 60);
+      const status = pausedWorldFrame(h.game, h.G);
+      if (steady) assert.equal(status, steady, 'unchanged paused frames reuse the same no-draw status without commit closures');
+      steady = status;
+      assert.equal(status.commit, undefined, 'unchanged path has no fresh commit closure');
+    }
+    assert.equal(h.calls.worldRender, 1, 'offline paused world renders once across 120 composed frames');
+    assert.equal(enumerations, 0, 'unchanged RAF frames never enumerate or serialize the settings object');
+
+    const setStart = source.indexOf('  _setSettings(partial) {');
+    const setEnd = source.indexOf('\n  _applyAudioVolumes(', setStart);
+    assert.ok(setStart >= 0 && setEnd > setStart, 'production settings writer remains in composed Game source');
+    const SettingsWriter = new Function('notePausedWorldChange', 'applyAimSettingsChange', 'G', 'saveJSON',
+      `return class SettingsWriter {\n${source.slice(setStart, setEnd)}\n}`)(notePausedWorldChange, applyAimSettingsChange, h.G, () => {});
+    SettingsWriter.prototype._setSettings.call(h.game, { lang: 'en' });
+    assert.equal(h.game._pausedWorldRevision || 0, 0, 'language-only writes do not invalidate the arena');
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 1);
+    SettingsWriter.prototype._setSettings.call(h.game, { fov: 84 });
+    assert.equal(h.game._pausedWorldRevision, 1, 'changed backdrop settings advance the real API revision');
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 2);
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 2, 'one settings write causes one redraw');
+
+    h.game.settings.bloom = false;
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 3, 'direct native setting mutation is observed');
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 3);
+    h.game.settings.gyro = true;
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 4, 'direct native UI gyro mutation is observed');
+    h.G.camera.position.x = 2;
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 5, 'camera transform changes invalidate the frozen view');
+    h.G.env.reflections = false;
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 6, 'reflection controls invalidate the frozen view');
+    h.G.renderer.toneMapping = 'linear';
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 7, 'renderer controls invalidate the frozen view');
+    globalThis.innerWidth = 1200;
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 8, 'viewport changes invalidate the frozen view');
+    h.game.R.dynScale = .9;
+    h.frame(1 / 60); assert.equal(h.calls.worldRender, 9, 'dynamic render scale changes invalidate the frozen view');
+    const rangeRender = h.calls.showcaseRender;
+    h.game.showcase.fullFrame = true; h.frame(1 / 60); h.frame(1 / 60);
+    assert.equal(h.calls.showcaseRender, rangeRender + 2, 'full-frame Practice Range presentation remains live');
+    assert.equal(h.calls.worldRender, 9, 'the covered arena backdrop remains isolated');
+    h.game.showcase.fullFrame = false; h.G.netm = {};
+    h.frame(1 / 60); h.frame(1 / 60);
+    assert.equal(h.calls.worldRender, 11, 'online pause continues rendering at frame cadence');
+  } finally {
+    if (hadWidth) globalThis.innerWidth = width; else delete globalThis.innerWidth;
+    if (hadHeight) globalThis.innerHeight = height; else delete globalThis.innerHeight;
+    if (hadPixelRatio) globalThis.devicePixelRatio = pixelRatio; else delete globalThis.devicePixelRatio;
+  }
 });

@@ -18,7 +18,7 @@ const compose = (rel, code = read('inkwave-public/' + rel)) =>
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
 
 const D2R = Math.PI / 180;
-const GAIN = 360 / 132;                 // sensitivity 0: 132 device degrees per in-game 360°
+const GAIN = 360 / 200;                 // current composed provisional bridge at sensitivity0:200 device degrees per360°
 
 async function makeGyro() {
   const context = vm.createContext({
@@ -102,6 +102,8 @@ function stationary(g, st, hz, seconds, { offset = 0.7, attRate = 0.1, axis = 'b
 }
 
 const rate = s => (Math.abs(s.yaw) + Math.abs(s.pitch));
+// Compare initial sensor-space drift independently of the composed camera gain.
+const MIN_INITIAL_SENSOR_RATE = 0.02 / (360 / 132);
 
 test('#615 stationary raw-rate offset drifts at first, then converges to near-zero camera velocity', async () => {
   const g = await makeGyro();
@@ -111,7 +113,7 @@ test('#615 stationary raw-rate offset drifts at first, then converges to near-ze
   const { early, late } = stationary(g, st, 60, 45);
   const earlyRate = rate(early) / 3;
   const lateRate = rate(late) / 5;
-  assert.ok(earlyRate > 0.02, `synthetic offset must drift first: ${earlyRate} rad/s`);
+  assert.ok(earlyRate / GAIN > MIN_INITIAL_SENSOR_RATE, `synthetic offset must drift first: ${earlyRate} rad/s`);
   assert.ok(lateRate < 0.0009, `stationary period must converge the camera velocity: ${lateRate} rad/s`);
   assert.equal(g._src, 'rrA', 'raw-source retention (#595) must survive the stationary window');
 });
@@ -172,7 +174,7 @@ test('#615 rrA and rrB pass the same stationary bias test', async () => {
     promote(g, st, 60, axis);
     assert.equal(g._src, axis === 'beta' ? 'rrA' : 'rrB');
     const { early, late } = stationary(g, st, 60, 30, { axis });
-    assert.ok(rate(early) / 3 > 0.02, `${axis}: offset must drift first: ${rate(early) / 3}`);
+    assert.ok(rate(early) / 3 / GAIN > MIN_INITIAL_SENSOR_RATE, `${axis}: offset must drift first: ${rate(early) / 3}`);
     assert.ok(rate(late) / 5 < 0.0009, `${axis}: must converge: ${rate(late) / 5}`);
   }
 });

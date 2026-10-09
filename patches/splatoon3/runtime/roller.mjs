@@ -1,6 +1,7 @@
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { ROLLER_DRUM } from './roller-model.mjs';
 import { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';
+import { rollerBubblerCandidate, applyRollerBubblerHit } from './kit-big-bubbler.mjs';
 // Roller-specific refinements. Timing comes from the existing gameplay profile;
 // joint curves are visual calibration against Nintendo's public roller videos.
 const EPS = 1e-10;
@@ -57,6 +58,152 @@ export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
 
+// 847: the Splat Roller body dimensions in the pinned 11.3.0 parameter table
+// (Radius 0.4, WidthHalf 1.4). Retain the runner's existing 0.75 forward
+// offset; do not substitute paint width, damage reach, or the tuned render mesh.
+const DRUM_FORWARD = 0.75, ROLLER_BODY_RADIUS = 0.4, ROLLER_BODY_HALF_WIDTH = 1.4;
+const STICK_EPS = 0.01; // same deadzone as Actor._horizontal steering (mh > 0.01)
+const CONTACT_EPS = 1e-6;
+const WALL_BAND = 0.6; // same surface classification used by Physics.collideBody
+
+export function rollerStickActive(a) {
+  // Remote proxies carry no authoritative stick state; the owner admits the hit
+  // and replicates it, so remotes never suppress here (no new wire fields).
+  if (a.remote) return true;
+  const mv = a.intent?.move;
+  return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;
+}
+
+// #1122: authoritative lowered-drum contact. The 0.75 forward offset and
+// 0.4/1.4 drum dimensions are existing/pinned values above; vertical aim rotates
+// that offset in 3D instead of inventing an angle→height tuning coefficient.
+function segmentDistanceSq(p1, q1, p2, q2) {
+  const ux=q1.x-p1.x, uy=q1.y-p1.y, uz=q1.z-p1.z;
+  const vx=q2.x-p2.x, vy=q2.y-p2.y, vz=q2.z-p2.z;
+  const wx=p1.x-p2.x, wy=p1.y-p2.y, wz=p1.z-p2.z;
+  const a=ux*ux+uy*uy+uz*uz, b=ux*vx+uy*vy+uz*vz, cc=vx*vx+vy*vy+vz*vz;
+  const d=ux*wx+uy*wy+uz*wz, e=vx*wx+vy*wy+vz*wz, D=a*cc-b*b;
+  let sN, sD=D, tN, tD=D;
+  if (D < 1e-12) { sN=0; sD=1; tN=e; tD=cc; }
+  else {
+    sN=b*e-cc*d; tN=a*e-b*d;
+    if (sN<0) { sN=0; tN=e; tD=cc; }
+    else if (sN>sD) { sN=sD; tN=e+b; tD=cc; }
+  }
+  if (tN<0) {
+    tN=0;
+    if (-d<0) sN=0; else if (-d>a) sN=sD; else { sN=-d; sD=a; }
+  } else if (tN>tD) {
+    tN=tD;
+    if (-d+b<0) sN=0; else if (-d+b>a) sN=sD; else { sN=-d+b; sD=a; }
+  }
+  const sc=Math.abs(sN)<1e-12?0:sN/sD, tc=Math.abs(tN)<1e-12?0:tN/tD;
+  const dx=wx+sc*ux-tc*vx, dy=wy+sc*uy-tc*vy, dz=wz+sc*uz-tc*vz;
+  return dx*dx+dy*dy+dz*dz;
+}
+
+export function rollerContactCandidate(actor, target, weapon, player) {
+  if (!actor?.pos || !target?.pos || !player) return false;
+  const yaw=Number.isFinite(actor.yaw)?actor.yaw:0;
+  const pitch=Number.isFinite(actor.aimPitch)?actor.aimPitch:0;
+  const fx=Math.sin(yaw), fz=Math.cos(yaw), rx=fz, rz=-fx;
+  const cp=Math.cos(pitch), sp=Math.sin(pitch);
+  const cx=actor.pos.x+fx*DRUM_FORWARD*cp;
+  const cy=actor.pos.y+ROLLER_BODY_RADIUS+sp*DRUM_FORWARD;
+  const cz=actor.pos.z+fz*DRUM_FORWARD*cp;
+  // WidthHalf is the sourced physical drum half-width; weapon.rollWidth is
+  // paint/gameplay reach and must not reshape the body-contact volume.
+  const half=ROLLER_BODY_HALF_WIDTH;
+  const d0={x:cx-rx*half,y:cy,z:cz-rz*half}, d1={x:cx+rx*half,y:cy,z:cz+rz*half};
+  const tr=Number.isFinite(player.radius)?player.radius:0.35;
+  const h=target.form==='squid' ? player.squidHeight : player.height;
+  const low=target.pos.y+Math.min(tr,h/2), high=target.pos.y+Math.max(Math.min(tr,h/2),h-tr);
+  const t0={x:target.pos.x,y:low,z:target.pos.z}, t1={x:target.pos.x,y:high,z:target.pos.z};
+  const rr=ROLLER_BODY_RADIUS+tr;
+  return segmentDistanceSq(d0,d1,t0,t1) <= rr*rr+CONTACT_EPS;
+}
+
+function rollerCapsuleTouchesBlock(start, delta, block, scratch) {
+  const axes = block.axes, center = block.center, half = block.half;
+  const p0x = (start.x - center.x) * axes[0].x + (start.y - center.y) * axes[0].y + (start.z - center.z) * axes[0].z;
+  const p0y = (start.x - center.x) * axes[1].x + (start.y - center.y) * axes[1].y + (start.z - center.z) * axes[1].z;
+  const p0z = (start.x - center.x) * axes[2].x + (start.y - center.y) * axes[2].y + (start.z - center.z) * axes[2].z;
+  const dx = delta.x * axes[0].x + delta.y * axes[0].y + delta.z * axes[0].z;
+  const dy = delta.x * axes[1].x + delta.y * axes[1].y + delta.z * axes[1].z;
+  const dz = delta.x * axes[2].x + delta.y * axes[2].y + delta.z * axes[2].z;
+  const hx = half.x, hy = half.y, hz = half.z;
+  const derivative = t => {
+    const x = p0x + dx * t, y = p0y + dy * t, z = p0z + dz * t;
+    let d = 0;
+    if (x < -hx) d += (x + hx) * dx; else if (x > hx) d += (x - hx) * dx;
+    if (y < -hy) d += (y + hy) * dy; else if (y > hy) d += (y - hy) * dy;
+    if (z < -hz) d += (z + hz) * dz; else if (z > hz) d += (z - hz) * dz;
+    return d;
+  };
+  const d0 = derivative(0), d1 = derivative(1);
+  let t = d0 >= 0 ? 0 : d1 <= 0 ? 1 : 0.5;
+  if (d0 < 0 && d1 > 0) {
+    let lo = 0, hi = 1;
+    for (let i = 0; i < 24; i++) {
+      t = (lo + hi) * 0.5;
+      if (derivative(t) < 0) lo = t; else hi = t;
+    }
+    t = (lo + hi) * 0.5;
+  }
+  const x = p0x + dx * t, y = p0y + dy * t, z = p0z + dz * t;
+  let nx = x - Math.max(-hx, Math.min(hx, x));
+  let ny = y - Math.max(-hy, Math.min(hy, y));
+  let nz = z - Math.max(-hz, Math.min(hz, z));
+  const d2 = nx * nx + ny * ny + nz * nz;
+  if (d2 > ROLLER_BODY_RADIUS * ROLLER_BODY_RADIUS + CONTACT_EPS) return false;
+  if (d2 > CONTACT_EPS) {
+    const inv = 1 / Math.sqrt(d2); nx *= inv; ny *= inv; nz *= inv;
+  } else {
+    const px = hx - Math.abs(x), py = hy - Math.abs(y), pz = hz - Math.abs(z);
+    if (px <= py && px <= pz) { nx = x < 0 ? -1 : 1; ny = nz = 0; }
+    else if (py <= pz) { ny = y < 0 ? -1 : 1; nx = nz = 0; }
+    else { nz = z < 0 ? -1 : 1; nx = ny = 0; }
+  }
+  scratch.normalY = nx * axes[0].y + ny * axes[1].y + nz * axes[2].y;
+  // Closest actual contact point on this oriented solid, not the player's feet.
+  const qx = Math.max(-hx, Math.min(hx, x)), qy = Math.max(-hy, Math.min(hy, y)), qz = Math.max(-hz, Math.min(hz, z));
+  scratch.contactPoint.x = center.x + qx * axes[0].x + qy * axes[1].x + qz * axes[2].x;
+  scratch.contactPoint.y = center.y + qx * axes[0].y + qy * axes[1].y + qz * axes[2].y;
+  scratch.contactPoint.z = center.z + qx * axes[0].z + qy * axes[1].z + qz * axes[2].z;
+  return true;
+}
+
+export function rollerDrumSupport(a, G, scratch) {
+  const level = G?.physics?.level;
+  if (!level?.blocks || typeof level.queryBlocks !== 'function')
+    return { floor: a.grounded, wall: false, supported: a.grounded };
+  const fx = Math.sin(a.yaw), fz = Math.cos(a.yaw), rx = fz, rz = -fx;
+  const cx = a.pos.x + fx * DRUM_FORWARD, cy = a.pos.y + ROLLER_BODY_RADIUS, cz = a.pos.z + fz * DRUM_FORWARD;
+  const half = ROLLER_BODY_HALF_WIDTH;
+  const start = scratch.start, delta = scratch.delta;
+  start.x = cx - rx * half; start.y = cy; start.z = cz - rz * half;
+  delta.x = rx * half * 2; delta.y = 0; delta.z = rz * half * 2;
+  const endX = start.x + delta.x, endZ = start.z + delta.z, radius = ROLLER_BODY_RADIUS;
+  const ids = level.queryBlocks(Math.min(start.x, endX) - radius, Math.min(start.z, endZ) - radius,
+    Math.max(start.x, endX) + radius, Math.max(start.z, endZ) + radius, scratch.ids);
+  let floor = false, wall = false;
+  for (let i = 0; i < ids.length; i++) {
+    const block = level.blocks[ids[i]];
+    if (!block.solid || cy + radius < block.aabbMin.y || cy - radius > block.aabbMax.y) continue;
+    if (!rollerCapsuleTouchesBlock(start, delta, block, scratch)) continue;
+    const ny = scratch.normalY;
+    if (ny >= WALL_BAND) floor = true;
+    else if (Math.abs(ny) < WALL_BAND) {
+      wall = true;
+      scratch.wallPoint.x = scratch.contactPoint.x;
+      scratch.wallPoint.y = scratch.contactPoint.y;
+      scratch.wallPoint.z = scratch.contactPoint.z;
+    }
+    if (floor && wall) break;
+  }
+  return { floor, wall, supported: floor || wall };
+}
+
 // Action-interruption windows that start when an authoritative roll ENDS.
 export const ROLL_STOP_LOCKS = Object.freeze({ main: 16 / 60, sub: 5 / 60, squid: 6 / 60 });
 export function rollStopBlocks(now, locks) {
@@ -67,9 +214,38 @@ export function rollStopLocks(now) {
   return { main: now + ROLL_STOP_LOCKS.main, sub: now + ROLL_STOP_LOCKS.sub, squid: now + ROLL_STOP_LOCKS.squid };
 }
 
-export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
+// Stationary drum-to-wall contact is paint-eligible without stick input. It
+// must never open the native contact-damage gate, which still requires speed.
+export function stationaryRollerWallPaintEligible({ firing, wall, stick, alive, ink, cooldown }) {
+  return !!firing && !!wall && !stick && !!alive && ink > 0.5 && cooldown <= 0.25;
+}
+export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset, actorUpdate = Actor.prototype.update;
   const runnerUpdate = WeaponRunner.prototype.update;
+  const scratch = { ids: [], start: { x: 0, y: 0, z: 0 }, delta: { x: 0, y: 0, z: 0 }, normalY: 0, contactPoint: { x: 0, y: 0, z: 0 }, wallPoint: { x: 0, y: 0, z: 0 } };
+  const wallOrigin = new THREE.Vector3(), wallDirection = new THREE.Vector3(), wallContact = new THREE.Vector3(), wallHit = new Hit();
+  const paintStillWall = (runner, a, w, dt) => {
+    // #1108: direct drum-wall paint is contact-owned, not movement/side splash.
+    // No-stick must not authorize native roll-contact damage or floor paint.
+    if (a.remote || !a.alive || !(a.ink > 0.5) || !(dt > 0) || !G.paint?.splat || !G.physics?.raycast) return;
+    runner.s3WallPaintElapsed = Math.min(0.3, (runner.s3WallPaintElapsed || 0) + dt);
+    if (runner.s3WallPaintElapsed + 1e-10 < 1 / 12) return;
+    runner.s3WallPaintElapsed %= 1 / 12;
+    const fx = Math.sin(a.yaw), fz = Math.cos(a.yaw), rx = fz, rz = -fx;
+    wallDirection.set(fx, 0, fz);
+    let area = 0;
+    for (let i = -1; i <= 1; i++) {
+      const side = i * ROLLER_BODY_HALF_WIDTH * .7;
+      wallOrigin.set(a.pos.x + rx * side, a.pos.y + ROLLER_BODY_RADIUS, a.pos.z + rz * side);
+      const h = G.physics.raycast(wallOrigin, wallDirection, DRUM_FORWARD + ROLLER_BODY_RADIUS + .05, wallHit, true);
+      if (!h?.hit || Math.abs(h.normal.y) >= WALL_BAND) continue;
+      wallContact.copy(h.point).addScaledVector(h.normal, .025);
+      const painted = G.paint.splat(wallContact, ROLLER_BODY_RADIUS, a.team,
+        { kind: 'roll', seed: ((Math.imul((Math.round(G.time * 60) || 0) + i + 7, 2654435761) >>> 0) / 4294967296) });
+      if (Number.isFinite(painted)) area += painted;
+    }
+    if (area) a.addTurf(area);
+  };
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
     if (r && this.weapon?.kind === 'roller') {
@@ -123,16 +299,19 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     const runner = this.weaponRunner;
     if (!runner) return rollStopActorUpdate.call(this, dt, ...rest);
     const now = G.time;
+    // Capture the native B edge before Actor.update overwrites _prevIntent and
+    // consumes jumpBuffer. _roller runs later in this same authoritative tick.
+    runner.s3RollerJumpPressed = this.weapon?.kind === 'roller' && !!this.intent?.jump && !this._prevIntent?.jump;
     const armed = armAheadOf(runner, now, !!(this.intent?.fire || this.fireBuffer > 0));
     const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;
     if (blockSquid && this.intent?.squid) {
       const held = this.intent.squid;
       this.intent.squid = false;
       try { return rollStopActorUpdate.call(this, dt, ...rest); }
-      finally { this.intent.squid = held; disarmIf(runner, armed); }
+      finally { this.intent.squid = held; runner.s3RollerJumpPressed = false; disarmIf(runner, armed); }
     }
     try { return rollStopActorUpdate.call(this, dt, ...rest); }
-    finally { disarmIf(runner, armed); }
+    finally { runner.s3RollerJumpPressed = false; disarmIf(runner, armed); }
   };
 
   const resolveRemoteContact = (event, accepted) => {
@@ -167,6 +346,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
     this.s3RollerSquidPressT = null;
+    this.s3RollerJumpPressed = false;
     this.s3PendingRollHits = new Map();
     this.s3RollHitEpochs = new Map();
     this.s3RollHitConfirmDisabled = uncorrelated;
@@ -180,6 +360,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
   };
   WeaponRunner.prototype._roller = function (dt, inp, w) {
     const a = this.a;
+    // Flick windup/release is an airborne-valid attack and never gated here.
+    // 847 conditions only the rolling path below (feet-grounded admission and
+    // the contact-speed check), scoped to the public call (try/finally
+    // restore): movement already integrated, anim reads the restored state,
+    // and roll speed/ink/damage/group/packet law is untouched.
     resolveRollHitEpochs(this);
     if (this.s3FlickPostSub > 0) {
       this.s3FlickPostSub -= dt;
@@ -192,6 +377,19 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     const fullCancelGroundAttack = hasFullCancelGroundAttack(a);
     const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&
       a.ink >= (fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk);
+    const winding = this.flick >= 0;
+    const onFlickPath = starting || winding;
+    const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);
+    const stick = onFlickPath || rollerStickActive(a);
+    const stillWall = !!(inp.fire && !onFlickPath && sup?.wall && !stick && !a.remote);
+    const fireIn = (onFlickPath || (sup?.supported && stick) || stillWall) ? inp : { ...inp, fire: false, firePressed: false };
+    const restoreAirborne = !!(sup?.wall && !sup.floor && !a.grounded);
+    // Native contact damage reads horizontal speed; prevent no-stick damage
+    // without mutating authoritative actor movement outside the native call.
+    const savedVelX = a.vel.x, savedVelZ = a.vel.z;
+    if (stillWall) { a.vel.x = 0; a.vel.z = 0; }
+    if (restoreAirborne) a.grounded = true;
+    try {
     if (starting) {
       this.cooldown = Math.min(0, this.cooldown);
       const groundedCancel = takeFullCancelGroundAttack(a);
@@ -202,7 +400,12 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
         const elapsed = Math.max(0, G.time - this.s3RollerSquidPressT);
         windup = Math.max(EPS, 34 / 60 - elapsed);
       }
-      this.s3RollerAttack = { vertical: this.s3FlickVertical, windup, interval: mode.flickInterval, elapsed: 0, released: false, rolling: false };
+      this.s3RollerAttack = {
+        vertical: this.s3FlickVertical, windup, interval: mode.flickInterval,
+        elapsed: 0, released: false, rolling: false,
+        groundedStart: !this.s3FlickVertical && !!a.grounded && !groundedCancel,
+        jumpConverted: false,
+      };
       this.s3RollerSquidPressT = null;
       a.character.s3RollerFlick = this.s3RollerAttack;
       // Starting a new flick lifts the drum. The public runner otherwise leaves
@@ -211,22 +414,51 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
       this.rollLoop?.stop(.12); this.rollLoop = null;
     }
     const state = this.s3RollerAttack;
+    // #1041: grounded ZR remains provisional for the first 3 fixed frames.
+    // A real B/jump edge at +1/+2/+3F converts it once to vertical and uses
+    // the measured one-frame-faster converted startup. +4F is too late.
+    if (state && !state.released && !state.vertical && state.groundedStart && !state.jumpConverted &&
+        this.s3RollerJumpPressed && !a.grounded && state.elapsed < 3 / 60 - EPS) {
+      const verticalMode = rollerMode(w, true);
+      const extraInk = Math.max(0, (verticalMode.flickInk || 0) - (w.flickInk || 0));
+      if (a.ink + EPS >= extraInk) {
+        if (extraInk > 0) a.ink = Math.max(0, a.ink - extraInk);
+        state.vertical = true; state.jumpConverted = true;
+        state.windup = Math.max(EPS, verticalMode.flickWindup - 1 / 60);
+        state.interval = verticalMode.flickInterval;
+        this.s3FlickVertical = true;
+        if (a.character) a.character.s3RollerFlick = state;
+      }
+    }
+    if (state && !starting) state.elapsed += dt;
+    // #1056: if ZR was first pressed in the air, touching down in the first
+    // five 60Hz frames turns that pending vertical flick into the faster
+    // horizontal flick. #1041 grounded-start jump conversions stay separate.
+    if (state && state.vertical && !state.groundedStart && !state.jumpConverted &&
+        !state.released && a.grounded && state.elapsed > EPS &&
+        state.elapsed <= 5 / 60 + EPS) {
+      const horizontal = rollerMode(w, false);
+      state.vertical = false; this.s3FlickVertical = false;
+      state.windup = Math.max(EPS, horizontal.flickWindup - 1 / 60);
+      state.interval = horizontal.flickInterval;
+    }
     const vertical = state ? state.vertical : this.s3FlickVertical;
     let mode = rollerMode(w, vertical);
     if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
-    const winding = this.flick >= 0;
-    if (state && !starting) state.elapsed += dt;
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
-    let rollInp = inp;
+    let rollInp = fireIn;
     if (state && state.released) {
       const rollDelay = state.vertical ? (22 / 60) : (7 / 60);
       const postRelease = state.elapsed - state.windup;
-      if (postRelease + EPS < rollDelay) rollInp = inp.fire ? { ...inp, fire: false } : inp;
+      if (postRelease + EPS < rollDelay) rollInp = fireIn.fire ? { ...fireIn, fire: false } : fireIn;
     }
     const projectiles = G.projectiles, applyHit = projectiles?.applyHit;
     let result;
-    if (typeof applyHit === 'function') {
+    // #1105: an idle tick cannot emit native Roller contact, so do not create
+    // an admission closure or swap the shared applyHit method on that path.
+    // Held fire is conservatively included: native may enter rolling THIS tick.
+    if (typeof applyHit === 'function' && (this.rolling || state?.rolling || !!fireIn.fire)) {
       const runner = this;
       const admittedHit = function (attacker, victim, ...args) {
         const admission = applyHit.call(this, attacker, victim, ...args);
@@ -257,6 +489,16 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
       try { result = roller.call(this, dt, rollInp, mode); }
       finally { if (projectiles.applyHit === admittedHit) projectiles.applyHit = applyHit; }
     } else result = roller.call(this, dt, rollInp, mode);
+    // #1036: the Bubbler shell is permeable. Only base/emitter hardware enters
+    // the existing 0.5s Roller contact-damage cadence.
+    const rollSpeed = Math.hypot(a.vel.x, a.vel.z);
+    if (this.rolling && rollSpeed > 1.0) {
+      const bubbler = rollerBubblerCandidate(a, Math.sin(a.yaw), Math.cos(a.yaw), w.rollWidth);
+      if (bubbler && G.time - (this.rollHits.get(bubbler.dome) || -9) > 0.5) {
+        this.rollHits.set(bubbler.dome, G.time);
+        applyRollerBubblerHit(bubbler, a, w.rollDamage);
+      }
+    }
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;
@@ -288,7 +530,13 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
         if (a.character) a.character.s3RollerFlick = null;
       }
     }
+    if (stillWall && this.rolling) paintStillWall(this, a, w, dt);
+    else this.s3WallPaintElapsed = 0;
     return result;
+    } finally {
+      if (stillWall) { a.vel.x = savedVelX; a.vel.z = savedVelZ; }
+      if (restoreAirborne && a.grounded) a.grounded = false;
+    }
   };
 }
 
@@ -318,8 +566,51 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   if (!Character || !C || !T) throw new Error('Roller motion requires exact upstream Character channels and timers');
   const flick = Character.prototype._poseFlick, animate = Character.prototype._animWeapon, setWeapon = Character.prototype.setWeapon;
   const updateStates = Character.prototype._updateStates, weaponPose = Character.prototype._poseWeapon;
+  // The native torso/foot solver moves the admitted contact anchor with its
+  // gait spring. Ground-align the right-hand
+  // target BEFORE the native arm IK; its left-hand solver then follows the same
+  // unchanged grips. The support cylinder is derived from this rig's actual
+  // geometry, not a new height constant or a gameplay collision volume.
+  const solve = Character.prototype._solveLimb, bounds = new WeakMap();
+  let center, axisX, axisY, axisZ, lift, weaponQ, inverseHandQ;
+  Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
+    if (this._s3RollerContactPose && limb === this.limbs.armR && orientation && weight > .999 && !this.P[C.SPIN]) {
+      const d = this.weapon.def;
+      let bound = bounds.get(d);
+      if (!bound) {
+        let minX = Infinity, maxX = -Infinity, radius = 0;
+        for (const geo of [d.drum, d.drumCaps]) {
+          const p = geo?.attributes.position;
+          for (let i = 0; p && i < p.count; i++) {
+            minX = Math.min(minX, p.getX(i)); maxX = Math.max(maxX, p.getX(i));
+            radius = Math.max(radius, Math.hypot(p.getY(i), p.getZ(i)));
+          }
+        }
+        bound = { centerX: (minX + maxX) / 2, halfWidth: (maxX - minX) / 2, radius };
+        bounds.set(d, bound);
+      }
+      if (!center) {
+        center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone(); lift = target.clone();
+        weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
+      }
+      const kid = this.kid;
+      weaponQ.copy(orientation).multiply(inverseHandQ.copy(d.handR.quat).invert());
+      center.copy(d.drumAt); center.x += bound.centerX;
+      center.sub(d.handR.pos).applyQuaternion(weaponQ).add(target).multiply(kid.scale).applyQuaternion(kid.quaternion).add(kid.position);
+      axisX.set(1, 0, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      axisY.set(0, 1, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      axisZ.set(0, 0, 1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      const bottom = center.y - bound.halfWidth * Math.abs(axisX.y) - bound.radius * Math.hypot(axisY.y, axisZ.y);
+      if (Number.isFinite(bottom) && bottom !== 0) {
+        lift.set(0, -bottom, 0).applyQuaternion(inverseHandQ.copy(kid.quaternion).invert()).divide(kid.scale);
+        target.add(lift);
+      }
+    }
+    return solve.call(this, limb, target, pole, orientation, weight, index);
+  };
   Character.prototype._s3CancelRollerFlick = function () {
     this.s3RollerFlick = null;
+    this._s3RollerContactPose = false;
     // A cancelled runner must not fall back to the legacy 0.7s pose or its
     // 0.15s drum impulse on the next Character frame.
     if (this.tr) this.tr[T.T_FLICK] = 99;
@@ -337,12 +628,23 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     return result;
   };
   Character.prototype._poseWeapon = function (dt, s) {
-    const result = weaponPose.call(this, dt, s);
-    if (this.weaponKind !== 'roller' || !this.kidForm || this.dance || this.wSub > .01) return result;
-    if (T && (!specialMotionAllowsAction(this,this.tr[T.T_LEAP] >= 1.9 && this.tr[T.T_SLAM] >= 1.4) || this.tr[T.T_DODGE] < this.dodgeDur || this.tr[T.T_SPAWN] < 1.4)) return result;
+    const available = this.weaponKind === 'roller' && this.kidForm && !this.dance && this.wSub <= .01 &&
+      (!T || (specialMotionAllowsAction(this,this.tr[T.T_LEAP] >= 1.9 && this.tr[T.T_SLAM] >= 1.4) &&
+        this.tr[T.T_DODGE] >= this.dodgeDur && this.tr[T.T_SPAWN] >= 1.4));
+    // #263: once native contact/stripe authority is admitted, use the existing
+    // settled ground-contact target, not another raised-carry blend. Keep wRoll
+    // itself unchanged: gameplay cleanup and drum-spin blending read that clock.
+    // The same target also owns an admitted vertical-flick-to-roll handoff.
+    // Airborne/recovery poses remain active until native rolling is admitted.
+    const contact = available && this.grounded && !!s.rolling, previous = this.wRoll;
+    this._s3RollerContactPose = contact;
+    let result;
+    try { if (contact) this.wRoll = 1; result = weaponPose.call(this, dt, s); }
+    finally { this.wRoll = previous; }
+    if (!available) return result;
     // Official footage carries the raised drum behind the shoulder, then lowers
     // it only to roll. These targets are rig calibration, not Nintendo joints.
-    const P = this.P, roll = this.wRoll;
+    const P = this.P, roll = contact ? 1 : this.wRoll;
     for (let i = 0; i < 3; i++) {
       P[C.ANC + i] = mix(READY_ANCHOR[i], ROLL_ANCHOR[i], roll);
       P[C.ANCR + i] = mix(READY_ROTATION[i], ROLL_ROTATION[i], roll);
@@ -360,6 +662,9 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   Character.prototype._poseFlick = function (P, ft) {
     const state = this.s3RollerFlick;
     if (!state) return flick.call(this, P, ft);
+    // The released flick must not lift the same drum after its authoritative
+    // roll begins. Input release/cancel before admission still uses recovery.
+    if (state.released && state.rolling && this.kidForm && this.grounded && !this.dance) return;
     if (!state.vertical) {
       // Preserve the upstream horizontal joints, retiming coil/whip/recovery to
       // the actual attack, including the existing calibrated cooldown.

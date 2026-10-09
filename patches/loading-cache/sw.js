@@ -49,7 +49,12 @@ async function verify(response, expected) {
   }
   // Clone before exposing the response. Never clone a response whose body the page already consumed.
   const bytes = await response.clone().arrayBuffer();
-  if (bytes.byteLength !== expected.bytes || await digest(bytes) !== expected.sha256) {
+  // Asset entries are compact tuples; the HTML build descriptor is the
+  // named {bytes, sha256} record emitted by the same builder.
+  const descriptor=Array.isArray(expected)?expected:expected&&typeof expected==='object'?[expected.bytes,expected.sha256]:null;
+  if (!descriptor || descriptor.length !== 2 || !Number.isSafeInteger(descriptor[0]) || descriptor[0]<0 ||
+      typeof descriptor[1]!=='string' || !/^[a-f0-9]{64}$/.test(descriptor[1]) ||
+      bytes.byteLength !== descriptor[0] || await digest(bytes) !== descriptor[1]) {
     throw new Error('Revision asset integrity mismatch');
   }
   return response;

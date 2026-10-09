@@ -24,8 +24,8 @@ test('owner actor hit retires ghost at hit tick and keeps remote damage zero',as
  const peer={tr:1000.2,sim:6};nm.peers.set('p2',peer);let bursts=0;f.G.fx={burst(){bursts++;}};
  a.remote=false;a.owner='me';a.character.getMuzzle=o=>o.set(0,3,0);f.projectiles.fireShooter(a,a.weapon,0);const ownerShot=f.projectiles.list[0];
  ownerShot.vel.set(0,0,60);ownerShot.delay=0;ownerShot.life=1;ownerShot.straight=99;ownerShot.grav=ownerShot.drag=0;nm.recProj(ownerShot);
- const birth=nm.out.at(-1);assert.equal(birth.length,35);assert.equal(birth.at(-2),0);f.projectiles.clear();a.remote=true;a.owner='p2';nm._play('p2',birth);
- const p=f.projectiles.list[0];assert.equal(p.damage,0);f.G.time=3/60;nm._rec(['pe',a.nid,birth[31],1,0,3,4]);const end=nm.out.at(-1);assert.equal(end.at(-2),3);nm._play('p2',end);f.projectiles.update(1/60);
+ const birth=nm.out.at(-1);assert.equal(birth.length,36);assert.equal(birth.at(-2),0);f.projectiles.clear();a.remote=true;a.owner='p2';nm._play('p2',birth);
+ const p=f.projectiles.list[0];assert.equal(p.damage,0);f.G.time=3/60;nm._rec(['pe',a.nid,birth[32],1,0,3,4]);const end=nm.out.at(-1);assert.equal(end.at(-2),3);nm._play('p2',end);f.projectiles.update(1/60);
  assert.equal(p._netSteps,4);assert.equal(bursts,1);assert.equal(f.projectiles.list.length,0);
  nm._play('p2',end);nm._play('p2',birth);f.projectiles.update(1/60);assert.equal(bursts,1,'terminal replay cannot duplicate hit effects');assert.equal(f.projectiles.list.length,0,'recorded birth cannot revive the retired identity');
 });
@@ -61,4 +61,25 @@ test('remote-to-remote owner migration retires old projectile and bomb clocks',a
  nm._play('p2',shot(0));nm._play('p3',shot(1));nm._play('p2',[1000,'b',0,'bomb',0,30,0,0,0,10]);nm._play('p3',[1000,'b',1,'bomb',0,30,0,0,0,10]);
  nm.onLeave('p2',false);f.projectiles.update(1/60);assert.equal(gone.owner,'p3');assert.equal(gone.remote,true);
  assert.equal(f.projectiles.list.length,1);assert.equal(f.projectiles.list[0].owner,stay);assert.equal(f.projectiles.bombs.length,1);assert.equal(f.projectiles.bombs[0].owner,stay);
+});
+
+
+test('source-guided owner head publishes its actual actor terminal once', async () => {
+  const f=await fixture(), nm=f.makeNetMatch(f.makeSession());
+  const a=f.makeActor({nid:7,owner:'me',roller:false});
+  const victim=f.makeActor({nid:8,owner:'me',roller:false,team:1});
+  a.pos.set(0,0,0); victim.pos.set(0,0,3);
+  a.aimPoint.set(0,1.05,10); a.aimDir.set(0,0,1);
+  a.character.getMuzzle=o=>o.set(0,1.05,.3);
+  f.bind(nm,[a,victim]); f.G.actors=[a,victim];
+  let impacts=0; f.projectiles.applyHit=()=>{ impacts++; };
+  f.projectiles.fireShooter(a,a.weapon,0);
+  const shot=f.projectiles.list[0]; assert.ok(shot.inkProfile);
+  for(let i=0;i<30&&f.projectiles.list.includes(shot);i++) { f.G.time+=1/60; f.projectiles.update(1/60); }
+  const terminals=nm.out.filter(e=>e[1]==='pe');
+  assert.equal(impacts,1); assert.equal(terminals.length,1);
+  assert.equal(terminals[0][2],a.nid); assert.equal(terminals[0][3],shot._netId);
+  assert.equal(terminals[0][4],1); assert.ok(terminals[0].slice(5,8).every(Number.isFinite));
+  f.projectiles.update(1/60); assert.equal(nm.out.filter(e=>e[1]==='pe').length,1);
+  nm.dispose();
 });

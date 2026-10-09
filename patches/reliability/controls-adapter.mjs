@@ -23,7 +23,15 @@ export function adaptControls(rel, code) {
   ]) code = replaceOnce(code, before, before.replace('inp.padButton(8)', 'padMap'), 'standard map ownership');
   code = replaceOnce(code, 'inp.padButton(3) || inp.padButton(11)', "(!standardPad && inp.padButton(3)) || inp.padButton(11)", 'standard special ownership');
   code = replaceOnce(code, 'this.padLook.y += (_stick.y * c - this.padLook.y) * k;', 'if (!gyroActive) this.padLook.y += (_stick.y * c - this.padLook.y) * k;', 'gyro vertical stick filter');
-  code = replaceOnce(code, 'rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;', 'rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);', 'independent right-stick horizontal inversion');
+  if (code.includes('rig.yaw -= this.padLook.x * yawRate * friction * dt;')) {
+    code = replaceOnce(code, 'rig.yaw -= this.padLook.x * yawRate * friction * dt;',
+      'rig.yaw -= this.padLook.x * yawRate * friction * dt * (s.padInvertX ? -1 : 1);',
+      'independent right-stick horizontal inversion');
+  } else {
+    code = replaceOnce(code, 'rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;',
+      'rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);',
+      'independent right-stick horizontal inversion');
+  }
   code = replaceOnce(code, 'rig.pitch -= this.padLook.y * 2.4 * ps * friction * dt * inv;', 'if (!gyroActive) rig.pitch -= this.padLook.y * 2.4 * ps * friction * dt * inv;', 'gyro owns vertical camera');
   code = replaceOnce(code, '    // ---- move (camera relative)', "    if (standardPad && inp.padPressed.has(2)) { this.resetCamera(); inp.padPressed.delete(2); }\n    // ---- move (camera relative)", 'camera reset gameplay edge');
   code = replaceOnce(code, '    if (this.mapHeld) { it.fire = false; it.sub = false; }', '    if (this.mapHeld) {\n      // Map clicks belong to the selection UI; an independent ZR remains a real hold.\n      it.fire = inp.padValue(7) > 0.3 || inp.padPressed.has(7); it.sub = false;\n    }', 'map input source ownership');

@@ -42,27 +42,28 @@ export function adaptMapLook(rel, code) {
     '      if (!mapUp && _stick.mag > 0) lookActive = true;',
     'look activity suppression');
 
-  code = replaceVariantOnce(code, [
-    {
-      before: '      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);',
-      after: '      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);',
-    },
-    {
-      before: '      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;',
-      after: '      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;',
-    },
-  ], 'map yaw suppression');
+  if (!code.includes('if (!mapUp) rig.yaw -= this.padLook.x')) {
+    const yawPattern = /^([ \t]*)rig\.yaw -= this\.padLook\.x[^;]*;$/gm;
+    const yawMatches = [...code.matchAll(yawPattern)];
+    if (yawMatches.length !== 1) {
+      throw new Error(`INKWAVE reliability patch conflict (map look: map yaw suppression): expected exactly one padLook yaw line (${yawMatches.length})`);
+    }
+    code = code.replace(yawPattern, '$1if (!mapUp) ' + yawMatches[0][0].trimStart());
+  }
 
-  code = replaceVariantOnce(code, [
-    {
-      before: '      if (!gyroActive) rig.pitch -= this.padLook.y * 2.4 * ps * friction * dt * inv;',
-      after: '      if (!mapUp && !gyroActive) rig.pitch -= this.padLook.y * 2.4 * ps * friction * dt * inv;',
-    },
-    {
-      before: '      rig.pitch -= this.padLook.y * 2.4 * ps * friction * dt * inv;',
-      after: '      if (!mapUp) rig.pitch -= this.padLook.y * 2.4 * ps * friction * dt * inv;',
-    },
-  ], 'map pitch suppression');
+  if (!code.includes('if (!mapUp) rig.pitch -= this.padLook.y') &&
+      !code.includes('if (!mapUp && !gyroActive) rig.pitch -= this.padLook.y')) {
+    const pitchPattern = /^([ \t]*)(?:if \(!gyroActive\) )?rig\.pitch -= this\.padLook\.y[^;]*;$/gm;
+    const pitchMatches = [...code.matchAll(pitchPattern)];
+    if (pitchMatches.length !== 1) {
+      throw new Error(`INKWAVE reliability patch conflict (map look: map pitch suppression): expected exactly one padLook pitch line (${pitchMatches.length})`);
+    }
+    code = code.replace(pitchPattern, (line, indent) => {
+      const body = line.trimStart();
+      if (body.startsWith('if (!gyroActive) ')) return indent + body.replace('if (!gyroActive) ', 'if (!mapUp && !gyroActive) ');
+      return indent + 'if (!mapUp) ' + body;
+    });
+  }
 
   return code;
 }

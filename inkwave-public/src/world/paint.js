@@ -392,7 +392,8 @@ export class PaintSystem {
   }
 
   // ------------------------------------------------------------ splat
-  // center: Vector3, radius (m), team 0|1, opts: { stretch: Vector3 dir, stretchAmt, seed, kind, instant, cosmetic }
+  // center: Vector3, radius (m), team 0|1, opts: { stretch: Vector3 dir, stretchAmt, seed, kind, instant, cosmetic, face? }
+  // face restricts new physical ink impacts to their struck surface.
   // Returns the area (m²) newly claimed by `team` (for turf points / special gauge).
   splat(center, radius, team, opts = {}) {
     // online: other players' ghost rounds never paint (their owner's splats arrive instead); yours are recorded
@@ -421,7 +422,7 @@ export class PaintSystem {
           center.z < b.aabbMin.z - reach || center.z > b.aabbMax.z + reach) continue;
       for (let fi = 0; fi < 6; fi++) {
         const fid = b.faces[fi];
-        if (fid < 0) continue;
+        if (fid < 0 || (Number.isInteger(opts.face) && opts.face >= 0 && fid !== opts.face)) continue;
         const f = this.level.faces[fid];
         if (!f.atlas) continue;
         _rel.copy(center).sub(f.origin);

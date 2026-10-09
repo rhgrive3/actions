@@ -14,7 +14,12 @@
     "enemyInkDamageCap": 40,
     "s3GroundAccel": 36,
     "s3AttackGroundAccel": 72,
-    "respawnTime": 8.5
+    "respawnTime": 8.5,
+    "s3HumanoidHurtRadius": 0.35,
+    "s3HumanoidHurtHeight": 1.65,
+    "s3TerrainDistanceScale": 1,
+    "s3HumanoidTerrainRadiusRaw": 0.35,
+    "s3SwimTerrainRadiusRaw": 0.675
   },
   "weapons": {
     "shooter": {
@@ -74,7 +79,9 @@
       "rollShotDelay": 0.06666666666666667,
       "swimFirstShotDelay": 0.2,
       "spawnPlayerForwardRate": 2,
-      "shotGuideFrame": 7
+      "shotGuideFrame": 7,
+      "rollPaintWidthHalf": 1.8,
+      "rollPaintWorldScale": 1
     },
     "blaster": {
       "inkPerShot": 10,
@@ -114,7 +121,8 @@
       },
       "fieldCollisionRadius": 0.2,
       "postShotDelay": 0.36666666666666664,
-      "terrainSplashRadiusRate": 0.4234
+      "terrainSplashRadiusRate": 0.4234,
+      "wallImpactPaintRadius": 2.2
     },
     "splatling": {
       "inkPerShot": 0.5625,
@@ -166,7 +174,7 @@
       "moveSpeedFiring": 1.2,
       "keepChargeTime": 1.25,
       "chargeTime": 1,
-      "inkRecoverStop": 0.3333333333333333,
+      "inkRecoverStop": 0.31666666666666665,
       "damagePartialMax": 80,
       "fieldCollisionRadius": 0.02,
       "rechargeDelay": 0.1,
@@ -188,13 +196,14 @@
       "scopedCharge": false,
       "postShotSwimTime": 0.25,
       "damageMinChargeTime": 0.13333333333333333,
-      "partialDamagePerSecond": 138.46,
+      "partialDamagePerSecond": 46.15384615384615,
       "minimumChargeTime": 0.13333333333333333,
       "airChargeRate": 0.3333333333333333,
       "emptyChargeRate": 0.3333333333333333,
-      "feetPaintRadius": 0.7,
+      "feetPaintRadius": 1.2,
       "minReleaseTime": 0.13333333333333333,
       "storedFireDelay": 0.5166666666666667,
+      "storedLaserDelay": 0.4166666666666667,
       "allowEmptyCharge": true,
       "reticleDelayF": 5
     },
@@ -361,7 +370,12 @@
         "bulletOrderNumInUnit": 0,
         "frame": 13
       },
-      "postShotDelay": 0.26666666666666666
+      "postShotDelay": 0.26666666666666666,
+      "postShotLock": 0.26666666666666666,
+      "reticleRange": {
+        "ground": 14.24,
+        "air": 13.67
+      }
     }
   },
   "bomb": {
@@ -381,6 +395,11 @@
         30
       ]
     ],
+    "knockback": {
+      "accel": 700,
+      "bias": 0.8,
+      "distance": 12
+    },
     "inkRecoverStop": 1,
     "readyTimeKid": 0.08333333333333333,
     "readyTimeSquid": 0.16666666666666666,
@@ -395,6 +414,10 @@
     "storm": {
       "duration": 8,
       "radius": 10
+    },
+    "slam": {
+      "damageMax": 220,
+      "damageMin": 60
     }
   },
   "gear": {
@@ -519,7 +542,7 @@
     "maxDuration": 30,
     "weights": {
       "splat": 1,
-      "assist": 0.5,
+      "assist": 0.42,
       "damage": 0,
       "turf": 0.0024
     },
@@ -544,7 +567,17 @@
     },
     "abilityPoints": 30,
     "effectSource": "https://bsky.app/profile/did:plc:bqlxkhq26ie3xvvjv5kjae3r/post/3mdramqcbbs2o?ref_src=embed",
-    "effectStatus": "Primary community analysis, 2026-02-01; +30 AP for four abilities, cap 57. Not a new Switch measurement. Legacy speed multipliers are identity for pending patch composition."
+    "effectStatus": "Primary community analysis, 2026-02-01; +30 AP for four abilities, cap 57. Not a new Switch measurement. Legacy speed multipliers are identity for pending patch composition.",
+    "assistPoints": {
+      "referenceThreshold": 100,
+      "damage": 14,
+      "marking": 4,
+      "sources": [
+        "pointSensor",
+        "lineMarker"
+      ],
+      "status": "FIXED #544: S3 11.3.0 +14 damage / +4 marking assist split; Point Sensor and Line Marker marking receipts are explicit and splat-gated activation remains separate. Tacticooler assist fp remains intentionally unverified/out of scope."
+    }
   },
   "superJump": {
     "chargeTime": 1.3333333333333333,
@@ -573,7 +606,7 @@
       "roller cooldown and projectile distribution/damage aggregation details",
       "splatling second charge phase interpretation and partial stream duration",
       "ink recovery suppression during stored charge and dry squid",
-      "special slam remains INKWAVE original; it is not Triple Splashdown",
+      "special slam remains INKWAVE original; it is not Triple Splashdown (only the HP endpoints 220/60 follow Inkipedia's S3 Triple Splashdown base damage, community-sourced and not in the pinned extraction; radii, fists, falloff shape and armor are unchanged)",
       "splatling ChargeFrame_Second is interpreted cumulatively (72F total), not added to ChargeFrame_First (48F); actual engine timing requires verification",
       "weapon weight classes and all charging/rolling movement restrictions",
       "Flow action-intensify bonus and gear stacking; fixed run/swim/enemy-ink multipliers remain provisional, not equivalent to confirmed AP",
@@ -1815,6 +1848,7 @@
     "status": "source-guided; Switch parity not certified",
     "brakeDragPerFrame": 0.36,
     "brakeGravity": 252,
+    "brakeToFreeVelocityXZ": 14.129999999999999,
     "brakeToFreeVelocityY": -9,
     "freeDragPerFrame": 0.02,
     "freeGravity": 57.599999999999994,
@@ -3512,6 +3546,19 @@
       "selfSpecialLoss": 0.225,
       "quickRespawnAPScale": 0.15,
       "specialSaverAPScale": 0.7
+    },
+    "thermalInk": {
+      "duration": 16
+    },
+    "trackingVisual": {
+      "nearStart": 6,
+      "nearFull": 8,
+      "status": "PROVISIONAL visual calibration in INKWAVE world units, NOT S2 DU or converted S3 range-line distances. Exact S3 near fade remains uncalibrated."
+    },
+    "haunt": {
+      "targetFrames": 45,
+      "targetSpecialLoss": 0.15,
+      "status": "PARTIAL #351: post-respawn offline/online Haunt, owner/life-authorized transport, immediate-trade exclusion, QR/Special Saver, target Respawn Punisher, and Tacticooler composition are verified. Public S3 verification still reports the exact pre-respawn delayed-posthumous activation boundary as unknown, so that boundary remains BLOCKED rather than guessed."
     }
   }
 }

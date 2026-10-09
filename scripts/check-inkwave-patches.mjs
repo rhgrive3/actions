@@ -36,7 +36,14 @@ try {
     for (const file of [...walk(path.join(SRC, 'src')), ...walk(PATCH_ROOT)]) {
       if (!/\.m?js$/.test(file)) continue;
       const rel = path.relative(SRC, file);
-      new vm.SourceTextModule(adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, fs.readFileSync(file, 'utf8')))), { identifier: file });
+      try {
+        new vm.SourceTextModule(adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, fs.readFileSync(file, 'utf8')))), { identifier: file });
+      } catch (error) {
+        // An unlabelled SyntaxError in a 300+ file integration gives no clue
+        // which exact composed module failed. Keep fail-closed parsing while
+        // printing the module path so CI can pinpoint the broken adapter.
+        throw new Error(`INKWAVE composed module parse failure (${rel}): ${error.message}`, { cause: error });
+      }
     }
   }
   const files = [...walk(path.join(PATCH_ROOT, 'tests')), ...walk(path.join(RELIABILITY_ROOT, 'tests'))].filter(f => f.endsWith('.test.mjs')).sort();

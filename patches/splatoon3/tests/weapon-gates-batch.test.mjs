@@ -1,3 +1,4 @@
+import {hurtboxRadius} from '../runtime/player-hurtbox.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture as baseFixture} from './source-fixture.mjs';
@@ -117,7 +118,7 @@ test('fixed-clock 30/60/120Hz traces agree for post-dodge shots and ink clocks',
 test('#228: actual native swept-player hit has a post-roll-only grazing band',async()=>{
  const f=await fixture(),a=f.make('dualies'),e=f.make('shooter'),ps=new f.Projectiles(new f.THREE.Scene());
  e.team=1;e.invuln=0;f.G.actors=[a,e];f.G.physics.segment=(_a,_b,hit)=>{hit.hit=false;return hit;};a.aimPoint.set(0,1.05,80);a.aimDir.set(0,0,1);
- const normal=.31,post=.335,offset=f.PLAYER.radius+(normal+post)/2;
+ const normal=.31,post=.335,offset=hurtboxRadius(e,f.PLAYER)+(normal+post)/2;
  // The canonical capsule solver adds the authoritative Actor radius to each sourced projectile radius.
  let hits=0;ps.applyHit=()=>hits++;
  for(const turret of [false,true]){
@@ -133,7 +134,7 @@ test('#214: a sub released during the lock is discarded, while holding past the 
  f.G.projectiles.throwBomb=()=>bombs++;
  while(!r.s3PostShotRemaining)step(a,1,{fire:true});
  step(a,1,{subReleased:true});step(a,30);assert.equal(bombs,0);assert.equal(r.aimingSub,false);
- step(a,1,{sub:true});assert.equal(r.aimingSub,true);step(a,5,{sub:true});step(a,1,{subReleased:true});assert.equal(bombs,1);
+ step(a,1,{sub:true});assert.equal(r.aimingSub,true);step(a,5,{sub:true});step(a,1,{subReleased:true});assert.equal(bombs,0);step(a,1,{});assert.equal(bombs,1);
 });
 
 function saverLoadout(gp){

@@ -16,7 +16,7 @@ test('#373 independent target remains constant with gear/Flow and selected mode 
  for(const vertical of [false,true]){
   const f=await setup(vertical),{a,r}=f;a.s3.loadout=Array.from({length:3},()=>({main:'runSpeed',subs:['runSpeed','runSpeed','runSpeed']}));a.setWeapon('roller');
   r.update(dt,{fire:true,firePressed:true});const expected=r.moveSpeed();assert.ok(expected>=2.88); // Preserve whichever gear classification the composed gear owner selects.
-  if(vertical)a.grounded=true;
+  if(vertical){for(let i=0;i<6;i++)r.update(dt,{fire:false});a.grounded=true;}
   for(let i=0;i<10;i++)r.update(dt,{fire:false});near(r.moveSpeed(),expected);assert.equal(r.s3FlickVertical,vertical);
   a.s3.flow.active=true;near(r.moveSpeed(),expected*f.profile.flow.runMultiplier);
  }
@@ -28,7 +28,7 @@ test('#373 native actor horizontal uses fixed target and keeps acceleration, not
  near(a.vel.length(),2.88);
 });
 test('#373 hold-to-roll transition, dash, lock, reset and dry admission retain native branches',async()=>{
- const f=await setup(),{a,r}=f;r.update(dt,{fire:true,firePressed:true});for(let i=0;i<42;i++)r.update(dt,{fire:true});assert.ok(r.rolling);near(r.moveSpeed(),a.weapon.rollBaseSpeed);
+ const f=await setup(),{a,r}=f;a.intent.move.set(0,0,1);r.update(dt,{fire:true,firePressed:true});for(let i=0;i<42;i++)r.update(dt,{fire:true});assert.ok(r.rolling);near(r.moveSpeed(),a.weapon.rollBaseSpeed);
  r.rollT=2;near(r.moveSpeed(),a.weapon.rollSpeed);r.update(dt,{fire:false});assert.equal(r.rolling,false);r.reset();near(r.moveSpeed(),f.PLAYER.runSpeed);
  a.ink=0;r.update(dt,{fire:true,firePressed:true});assert.equal(r.flick,-1);near(r.moveSpeed(),f.PLAYER.runSpeed);r.reset();r.flick=.1;r.lockT=.1;near(r.moveSpeed(),0);
  a.setWeapon('shooter');r.reset();r.firingT=.2;near(r.moveSpeed(),a.weapon.moveSpeedFiring);

@@ -28,7 +28,7 @@ test('#565 actual judge selects the authoritative winning team for both local si
   const {calls,game}=await run({team,winner,online}),p=calls.find(c=>c[0]==='podium'),result=calls.find(c=>c[0]==='results')[1],won=team===winner;
   assert.equal(p[1],winner);assert.equal(p[2],true);assert.equal(p[3],winner?'blue':'orange');assert.deepEqual(Array.from(p[4],a=>a.name),Array.from({length:4},(_,i)=>'P'+(winner*4+i)));
   assert.equal(result.win,won);assert.equal(result.online,online?true:undefined);assert.equal(result.players.length,8);assert.equal(result.players.find(p=>p.isSelf).team,team);
-  assert.equal(game.profile.wins,won?1:0);assert.equal(game.profile.matches,1);assert.equal(result.xp.gained,300+100+(won?600:0));
+  assert.equal(game.profile.wins,!online&&won?1:0);assert.equal(game.profile.matches,online?0:1);assert.equal(result.xp.gained,online?0:300+100+(won?600:0));
   assert(calls.some(c=>c[0]==='audio'&&c[1]===(won?'victory_fanfare':'defeat_jingle')));assert(calls.some(c=>c[0]==='music'&&c[1]===(won?'results_win':'results_lose')));
  }
 });

@@ -384,7 +384,10 @@ try {
           const heldAxes = pad.axes; pad.axes = [0,0,0,0]; input.pollPad();
           pad.axes = heldAxes; input.pollPad();
           dio=new DioramaOverlay(document.body);dio.on=true;dio.k=1;dio.pins[0].target=ally;
-          dio.pins[0].el.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true,cancelable:true}));
+          const pin=dio.pins[0].el,pointerId=73,pinEvent={pointerId,pointerType:'touch',bubbles:true,cancelable:true,clientX:24,clientY:24};
+          pin.dispatchEvent(new PointerEvent('pointerdown',pinEvent));
+          const dioramaDownDeferred=!c.pendingRespawnJump&&!a.superJumpState;
+          pin.dispatchEvent(new PointerEvent('pointerup',pinEvent));
           const dioramaQueued=c.pendingRespawnJump?.actor===ally&&!a.superJumpState;
           for(let i=0;i<120;i++){input.pollPad();Match.prototype.updateController.call(match,1/60);}
           const heldAxesPreserve=c.pendingRespawnJump?.actor===ally&&input.lastDevice==='pad'&&input.navigationDevice==='touch';
@@ -396,14 +399,14 @@ try {
           const freshPadCancels=!c.pendingRespawnJump;
           c.requestMapJump(ally);c.menuBlocked=true;Match.prototype.updateController.call(match,1/60);
           const pauseCancels=!c.pendingRespawnJump&&!c.mapHeld&&!a.intent.fire;
-          return {deadBlocked,hudQueued,dioramaQueued,waitsForLanding,landed,pauseCancels,heldAxesPreserve,freshPadCancels};
+          return {deadBlocked,hudQueued,dioramaDownDeferred,dioramaQueued,waitsForLanding,landed,pauseCancels,heldAxesPreserve,freshPadCancels};
         } finally {
           if(padDescriptor)Object.defineProperty(navigator,'getGamepads',padDescriptor);else delete navigator.getGamepads;
           input.pollPad();hud?.dispose();dio?.el.remove();input.keys.clear();input.pressed.clear();input.mouse.left=false;input.lastDevice=old.device;
           mobile.setMap(false);G.match=old.match;G.actors=old.actors;G.input=old.input;G.level=old.level;
         }
       });
-      assert.deepEqual(respawnNavigation,{deadBlocked:true,hudQueued:true,dioramaQueued:true,waitsForLanding:true,landed:true,pauseCancels:true,heldAxesPreserve:true,freshPadCancels:true});
+      assert.deepEqual(respawnNavigation,{deadBlocked:true,hudQueued:true,dioramaDownDeferred:true,dioramaQueued:true,waitsForLanding:true,landed:true,pauseCancels:true,heldAxesPreserve:true,freshPadCancels:true});
       entry.checks.push('actual-built-Match-HUD-diorama-dead-map-selection-and-deferred-respawn-admission');
       const mapGyro = await page.evaluate(() => {
         const old={match:G.match,actors:G.actors,rig:G.rig,camera:G.camera,level:G.level,device:input.lastDevice,active:mobile.active,enabled:mobile.gyro.enabled};
@@ -493,7 +496,7 @@ try {
           return { aiming, heldShots, releaseShots, finalShots: shots };
         } finally { mobile.reset(); G.projectiles = old; actionActor.setWeapon('dualies'); }
       });
-      assert.deepEqual(subOwnership, { aiming: true, heldShots: [], releaseShots: ['bomb'], finalShots: ['bomb'] });
+      assert.deepEqual(subOwnership, { aiming: true, heldShots: [], releaseShots: [], finalShots: ['bomb'] });
       entry.checks.push('native-DOM-sub-hold-and-release-exclude-simultaneous-main-and-phantom-replay');
       await runHybridKeyboardMapCases({ page, gesture, entry });
 

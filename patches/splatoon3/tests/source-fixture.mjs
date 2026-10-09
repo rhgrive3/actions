@@ -18,8 +18,8 @@ const adaptProduction = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
 export async function fixture(options = {}) {
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
   const { adapt = adaptSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
-    fullRuntime = false, productionComposition = false, realProjectiles = false } = typeof options === 'string' ? {} : options;
-  const context = vm.createContext({ console, performance, URL, URLSearchParams, TextEncoder, TextDecoder,
+    fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false, vmPerformance = performance } = typeof options === 'string' ? {} : options;
+  const context = vm.createContext({ console, performance: vmPerformance, URL, URLSearchParams, TextEncoder, TextDecoder,
     setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
   const modules = new Map();
   function resolve(spec, from) {
@@ -44,6 +44,10 @@ export async function fixture(options = {}) {
     const mod = new vm.SourceTextModule(source, { context, identifier: file,
       initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } }); modules.set(file, mod); return mod;
   }
+  const characterExports = includeCharacter ? `
+    export { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_BOMB_POSE } from './inkwave-public/src/game/character.js';
+    export { installSpecialMotion, specialMotionSnapshot } from './patches/splatoon3/runtime/special-motion.mjs';
+  ` : '';
   const root = new vm.SourceTextModule(`
     export * from './inkwave-public/src/core/ctx.js';
     export * from './inkwave-public/src/config.js';
@@ -69,6 +73,7 @@ export async function fixture(options = {}) {
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
     export * from './patches/splatoon3/runtime/clock.mjs';
     export const TEST_MATH = Math;
+    ${characterExports}
     ${extraExports}
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();

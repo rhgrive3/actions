@@ -16,8 +16,11 @@ async function production(){
   let file=requested.startsWith(path.join(SRC,'patches')+path.sep)?path.join(ROOT,path.relative(SRC,requested)):requested;
   if(file.startsWith(path.join(ROOT,'src')+path.sep))file=path.join(SRC,path.relative(ROOT,file));
   if(modules.has(file))return modules.get(file);
-  const source=fs.readFileSync(file,'utf8'),m=new vm.SourceTextModule(file.startsWith(SRC+path.sep)?adaptSource(path.relative(SRC,file),source):source,
-   {context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});
+  const source=fs.readFileSync(file,'utf8');
+  const adapted=file.startsWith(SRC+path.sep)?adaptSource(path.relative(SRC,file),source):source;
+  let m;
+  try { m=new vm.SourceTextModule(adapted,{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}}); }
+  catch(error){ throw new SyntaxError(`${file}: ${error.message}`,{cause:error}); }
   modules.set(file,m);return m;
  };
  const entry=new vm.SourceTextModule(`export {install} from './patches/splatoon3/runtime/install.mjs';

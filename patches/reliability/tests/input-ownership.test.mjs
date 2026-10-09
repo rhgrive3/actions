@@ -21,7 +21,8 @@ test('#475 deliberate pad motion acquires ownership immediately; touch clears fi
   const h=await setup(),p=pad();p[0].axes=[.8,0,1,0];h.setPads(p);h.input.pollPad();h.controller.update(STEP);
   assert.equal(h.input.lastDevice,'pad');assert.notEqual(h.rig.yaw,0);assert.ok(h.actor.intent.move.length()>0);
   for(let i=0;i<30;i++)h.controller.update(STEP);
-  assert.ok(h.controller.edgeT>.16);
+  assert.equal(h.controller.edgeT,0,'S3 right-stick rate cap keeps obsolete rim timer at zero');
+  h.controller.edgeT=.4; // If an old filter was pending, touch must still clear it.
   const yaw=h.rig.yaw;h.input.lastDevice='touch';p[0].axes=[.2,0,.2,0];h.input.pollPad();h.controller.update(STEP);
   assert.equal(h.rig.yaw,yaw);assert.equal(h.actor.intent.move.length(),0);assert.deepEqual({...h.controller.padLook},{x:0,y:0});assert.equal(h.controller.edgeT,0);
 });

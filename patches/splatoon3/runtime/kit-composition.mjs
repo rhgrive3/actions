@@ -2,7 +2,7 @@
 // Verified base rows: Leanny/splat3@7280ff9c, data/mush/1130/WeaponInfoMain.json.
 // Mechanics retain their separately declared calibrations; this maps kit identity.
 export const VERIFIED_KITS = Object.freeze({
-  shooter: Object.freeze({ main: 'Shooter_Normal_00', sub: 'suction', special: 'trizooka', specialCost: 200 }),
+  shooter: Object.freeze({ main: 'Shooter_Normal_00', sub: 'suction', special: 'trizooka', specialCost: 210 }),
   roller: Object.freeze({ main: 'Roller_Normal_00', sub: 'curling', special: 'bubbler', specialCost: 180 }),
   charger: Object.freeze({ main: 'Charger_Normal_00', sub: 'bomb', special: 'inkVac', specialCost: 190 }),
 });

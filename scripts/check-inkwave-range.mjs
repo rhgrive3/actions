@@ -132,9 +132,16 @@ for (const run of RUNS) {
     // a hit on the 10 m gallery target from its stand mark
     out.checks.hit = await page.evaluate(async () => {
       const G = window.__G, g = window.__inkwave, s = G.match.range, a = G.local;
-      s.travel('gallery'); a.pos.set(-12, 0.05, 0); g.rig.yaw = 0; g.rig.pitch = -0.02;
+      s.travel('gallery');
+      // Let the travel and camera transition settle BEFORE positioning the
+      // projectile probe. Otherwise a pending teleport/match tick restores the
+      // spawn location and the real rounds miss the gallery lane altogether.
       await new Promise((r) => setTimeout(r, 2500));
       const target = s.targets.find((x) => x.rangeTarget?.dist === 10);
+      if (!target) throw new Error('10 m gallery target is missing');
+      a.pos.set(target.pos.x, 0.05, target.pos.z - target.rangeTarget.dist);
+      a.vel.set(0, 0, 0); a.yaw = a.aimYaw = 0; a.aimPitch = -0.02;
+      g.rig.yaw = 0; g.rig.pitch = -0.02; g.rig.follow(a, true);
       const births = [];
       const push = G.projectiles?._push;
       if (push) G.projectiles._push = function (p) {

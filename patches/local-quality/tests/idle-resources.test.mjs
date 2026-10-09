@@ -1,9 +1,10 @@
+import {effectiveQuality} from '../../../inkwave-public/src/config.js';
 import { updateSplatGhosts } from '../../splatoon3/issue-284-adapter.mjs';
 import { syncPortraitFrame } from '../portrait-guard.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { idleFixture, audioFixture, compose } from './idle-fixture.mjs';
-import { environmentBudget, refreshEnvironmentBudget, pausedWorldFrame, idleAttractMenuBudget } from '../idle-resources.mjs';
+import { environmentBudget, refreshEnvironmentBudget, pausedWorldFrame, idleAttractMenuBudget, releaseReflection } from '../idle-resources.mjs';
 
 test('cloud and far budgets are explicit for every effective device/quality tier',()=>{
   for(const quality of ['low','medium','high','ultra']) for(const touch of [false,true]) {
@@ -57,6 +58,34 @@ test('actual far target releases once on exit, clears sampler and recreates for 
   }
 });
 
+test('#938 actual planar reflection target releases once on marina exit, clears sampler, recreates on re-entry; LOW never allocates',async()=>{
+  const {G,THREE,Environment}=await idleFixture(),base=await idleFixture({baseline:true});
+  for(const [quality,allocates] of [['low',false],['high',true]]) for(const patched of [true,false]){
+    const ns=patched?{G,THREE,Environment}:base;ns.G.settings={quality};ns.G.actors=[];
+    const e=Object.create(ns.Environment.prototype);e.U={uReflOn:{value:0},uReflTex:{value:null},uWetCount:{value:0},uReflMat:{value:new ns.THREE.Matrix4()}};
+    e._marina=true;e.reflections=true;e.marinaFx=null;e.seaMat={defines:{MARINA:''},needsUpdate:false};e._writeRects=()=>{};e._frameId=0;e._reflSkips=()=>[];
+    const camera=new ns.THREE.PerspectiveCamera(60,16/9,.1,200);camera.position.set(0,12,20);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
+    const renderer={xr:{enabled:false},shadowMap:{autoUpdate:true,needsUpdate:false},getDrawingBufferSize:v=>v.set(1920,1080),getRenderTarget:()=>null,getClearColor:c=>c.set(0),getClearAlpha:()=>1,setClearColor(){},setRenderTarget(){},clear(){},render(){}};
+    const scene=new ns.THREE.Scene();
+    for(let cycle=0;cycle<6;cycle++){
+      e._marina=true;e._frameId++;e._renderReflection(renderer,scene,camera);
+      if(!allocates){assert.equal(e._reflRT??null,null,'LOW never allocates the planar target');assert.equal(e.U.uReflTex.value,null);continue;}
+      const rt=e._reflRT;assert.ok(rt,'marina entry creates the planar target');assert.deepEqual([rt.width,rt.height],[768,432]);assert.equal(e.U.uReflTex.value,rt.texture);assert.equal(e.U.uReflOn.value,1);
+      let disposed=0;rt.addEventListener('dispose',()=>disposed++);
+      e._marina=false;e._applyMarina();e._applyMarina();
+      if(patched){assert.equal(disposed,1);assert.equal(e._reflRT,null);assert.equal(e._reflCam,null);assert.equal(e.U.uReflTex.value,null);}
+      else{assert.equal(disposed,0);assert.equal(e._reflRT,rt);assert.equal(e.U.uReflTex.value,rt.texture);}
+      assert.equal(e.U.uReflOn.value,0);
+      if(!patched)break;
+    }
+  }
+});
+
+test('#938 releaseReflection tolerates an environment that never allocated the target',async()=>{
+  const e={U:{uReflOn:{value:1},uReflTex:{value:'stale'}}};releaseReflection(e);releaseReflection(e);
+  assert.equal(e._reflRT,null);assert.equal(e._reflCam,null);assert.equal(e.U.uReflTex.value,null);assert.equal(e.U.uReflOn.value,0);
+});
+
 test('native music plays/pumps when audible, mute owns no scheduler/players, SFX context stays running',async()=>{
   const f=audioFixture(), {MusicEngine}=await idleFixture({globals:f.globals});const m=new MusicEngine();
   m._init(f.ctx,f.ctx.createGain());assert.equal(f.workers.size,0);
@@ -104,9 +133,9 @@ test('actual composed Game._frame skips only offline paused world; UI/net/input 
   const vector={copy(){},set(){},getWorldDirection(){return this;}};
   const G={time:1,level:{},teamColors:[{},{}],renderer:{info:{reset:count('info'),render:{calls:0,triangles:0}},shadowMap:{needsUpdate:false}},
     env:{theme:'day',update:count('env')},fx:{update:count('fx')},projectiles:{updateArc:count('arc')},paint:{flush:count('paint')},camera:{position:vector,up:vector}};
-  const Frame=new Function('updateSplatGhosts','syncPortraitFrame','G','runSimulation','pausedWorldFrame','idleAttractMenuBudget','performance','damp','clamp','THREE',
+  const Frame=new Function('updateSplatGhosts','syncPortraitFrame','G','runSimulation','pausedWorldFrame','idleAttractMenuBudget','performance','damp','clamp','THREE','effectiveQuality',
     'return class Frame {\n'+source.slice(start,end)+'\n}')
-    (updateSplatGhosts,syncPortraitFrame,G,count('simulation'),pausedWorldFrame,idleAttractMenuBudget,performance,(a,b)=>b,x=>x,{});
+    (updateSplatGhosts,syncPortraitFrame,G,count('simulation'),pausedWorldFrame,idleAttractMenuBudget,performance,(a,b)=>b,x=>x,{},effectiveQuality);
   const f=new Frame();f.settings={quality:'high'};f.match={paused:true,attract:false,state:'playing',local:null};
   f.showcase={fullFrame:false,mode:null,update:count('showcase'),render:count('showcaseRender')};
   f.R={render:count('worldRender'),grade:{uniforms:{uHurt:{value:0}}}};f.decor={update:count('decor')};f.props={update:count('props')};

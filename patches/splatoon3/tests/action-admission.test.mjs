@@ -303,7 +303,10 @@ test('admission managed Special action ownership includes Storm with disabled, u
 test('admission cancelled Bomb permits a fresh real Dodge without fast-forwarding the native throw or projectile clocks', async () => {
   const api = await production(), T = api.CHARACTER_TIMERS, r = rig(api);
   try {
-    for (let ready = 0; ready < 6; ready++) r.step(1 / 60, { sub: true }); r.step(1 / 60, { subReleased: true });
+    for (let ready = 0; ready < 6; ready++) r.step(1 / 60, { sub: true });
+    r.step(1 / 60, { subReleased: true });
+    assert.equal(api.G.projectiles.bombs.length, 0, 'native #1037 use requires one further frame');
+    r.step(1 / 60, {});
     assert.equal(api.G.projectiles.bombs.length, 1);
     const bomb = api.G.projectiles.bombs[0], age = r.ch.tr[T.T_THROW], bombBefore = { age: bomb.age, fuse: bomb.fuse, pos: bomb.pos.toArray(), vel: bomb.vel.toArray() };
     r.ch.setVisible(false); r.ch.setVisible(true); r.visual(0);

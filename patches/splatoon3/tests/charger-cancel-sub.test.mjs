@@ -18,7 +18,8 @@ for(const hz of [30,60,120])for(const full of [false,true])test(`${hz}Hz ${full?
   if(age===5){assert.equal(h.r.s3SubReady.age,0);assert.equal(h.r.s3ChargerPostShot,0);}
   age++;
  });
- assert.equal(first,5);assert.deepEqual(throws,[10]);assert.equal(h.projectiles._fidelityChargerFlights?.length||0,0);
+ // #1037: the admitted release retains one independent use-startup fixed tick.
+ assert.equal(first,5);assert.deepEqual(throws,[11]);assert.equal(h.projectiles._fidelityChargerFlights?.length||0,0);
 });
 test('early released R is discarded, idle sub remains immediate',async()=>{
  const h=await setup();let throws=0;h.projectiles.throwBomb=()=>throws++;

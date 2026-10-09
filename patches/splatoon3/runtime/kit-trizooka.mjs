@@ -30,6 +30,7 @@
 // perFrameGravityToPerSecondSquared *3600, rawDamageToHP /10.
 
 import { configureTrizookaNative } from './trizooka-collision.mjs';
+import { gearCurve } from './gear.mjs';
 
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
@@ -91,44 +92,41 @@ export const TRIZOOKA = {
   status: 'extracted',
 };
 
-// SpecialChargeUp ladder. `DistanceDamageDistanceRate` is a DISTANCE rate: it
-// stretches the bands outward and must not touch the damage numbers, which stay
-// at the table's 53 / 35 at every AP. INKWAVE does carry ability points
-// (gear.mjs: `abilityPoints(loadout)` -> `a.s3.modifiers`, 10 per main, 3 per
-// sub), but there is no Special Power Up selectable ability wired to a weapon,
-// so no AP source reaches this special today. `apOf` therefore reads AP 0 unless
-// the parent supplies one, and says so rather than claiming AP is absent.
+// Special Power Up resolves the extracted control points from canonical 0..57
+// actor-local equipment AP. Distance rates never change HP damage values.
 export const TRIZOOKA_SPEC_UP = {
-  ap: [0, 1, 2],
+  apDomain: [0, 57],
   duration: [TRIZOOKA.duration, TRIZOOKA.durationMid, TRIZOOKA.durationHigh],
   // PaintRadius is the ink/FX radius and stays at the table value
   paintRadius: [TRIZOOKA.paintRadius, TRIZOOKA.paintRadius, TRIZOOKA.paintRadius],
   // DistanceDamageDistanceRate, applied to DISTANCE only
   distanceRate: [1.0, 1.15, 1.3],
   outerBandDistance: 4.0,            // the outermost damage band, before AP
-  status: 'ladder-extracted-no-special-power-up-ability-is-wired-to-this-weapon-yet',
+  status: 'extracted-control-points-canonical-gear-curve-activation-snapshot',
 };
 
 export function apOf(actor) {
-  const ap = actor?.apLevel ?? actor?.s3Ap ?? actor?.s3?.specialPowerUp ?? 0;
-  return Number.isFinite(ap) ? Math.max(0, Math.min(2, Math.floor(ap))) : 0;
+  return boundedSpecialPowerAP(actor?.s3?.abilityPoints?.specialPower);
+}
+export function boundedSpecialPowerAP(ap) {
+  return Number.isFinite(ap) ? Math.max(0, Math.min(57, ap)) : 0;
 }
 
 // The AP-scaled damage bands: the RATE stretches the distance, never the damage.
 export function splashBandsFor(ap) {
-  const rate = TRIZOOKA_SPEC_UP.distanceRate[ap] ?? 1;
+  const rate = gearCurve(boundedSpecialPowerAP(ap), ...TRIZOOKA_SPEC_UP.distanceRate);
   return TRIZOOKA.splashBands.map(([r, d]) => [r * rate, d]);
 }
 
 // The outer radius that actually damages is the outer band distance x the rate,
 // NOT PaintRadius: the paint/FX radius and the damage radius are distinct.
 export function splashRadiusFor(ap) {
-  const rate = TRIZOOKA_SPEC_UP.distanceRate[ap] ?? 1;
+  const rate = gearCurve(boundedSpecialPowerAP(ap), ...TRIZOOKA_SPEC_UP.distanceRate);
   return TRIZOOKA_SPEC_UP.outerBandDistance * rate;
 }
 
 export function durationFor(ap) {
-  return TRIZOOKA_SPEC_UP.duration[ap] ?? TRIZOOKA_SPEC_UP.duration[0];
+  return gearCurve(boundedSpecialPowerAP(ap), ...TRIZOOKA_SPEC_UP.duration);
 }
 
 // Cartridge visuals are recorded from spl__WeaponSpUltraShotParam; the eject mesh
@@ -155,19 +153,19 @@ export const TRIZOOKA_CARTRIDGE = {
 // three-lobed burst and marked as such. They are deliberately non-null: a null
 // count produced zero projectiles, which is not the weapon.
 //
-// The damage contract is the important part. Exactly ONE lobe per volley is the
-// damage carrier (`damageOwner: true`, type 'blast'). The other lobes are
-// visual-only: type 'shot', `damage: 0`, no burst. Three 220 HP direct hits must
-// never stack, so the native blast path can only ever be entered once per
-// volley. All lobes share one native `vol` record, so the native per-victim
-// dedupe in `_step` (`p.vol.hits`) applies on top of that.
+// #1057: every one of the three fired globs is an authoritative Trizooka
+// projectile. Each owns its own direct hit, 53/35 splash and impact paint. The
+// native per-victim ledger remains useful only as a per-GLOB duplicate guard,
+// so every glob receives a distinct reused `vol` record instead of sharing one
+// volley-wide immunity token. Ghost/replay copies remain presentation-only.
 export const VOLLEY_CONFIG = {
   lobes: 3,
   lobesStatus: 'simulation-calibration-not-extracted',
   spreadDeg: 2.6,
   spreadStatus: 'simulation-calibration-not-extracted',
-  damageCarriers: 1,
-  damageStatus: 'deliberate-dedupe-single-authoritative-shot',
+  damageCarriers: 3,
+  damageStatus: 'independent-authoritative-projectiles',
+  // retained as the deterministic centre-lobe index for spread/aim calibration
   damageLobeIndex: 0,
 };
 
@@ -194,7 +192,8 @@ export function trizookaSpecialWeapon(ap = 0) {
     splashRadius,
     burstRadius: splashRadius,
     impactRadius: splashRadius,
-    paintRadius: TRIZOOKA_SPEC_UP.paintRadius[ap] ?? TRIZOOKA.paintRadius,
+    paintRadius: TRIZOOKA.paintRadius,
+    specialPowerAP: boundedSpecialPowerAP(ap),
     damageMax,
     damageMin,
     splashDamageMax: damageMax,
@@ -212,8 +211,8 @@ export function trizookaSpecialWeapon(ap = 0) {
 }
 
 // Replay/ghost path: the parent restores the descriptor from SPECIALS[wid].
-export function trizookaProjectileDescriptor(_p) {
-  return trizookaSpecialWeapon();
+export function trizookaProjectileDescriptor(p) {
+  return trizookaSpecialWeapon(p?.s3TrizookaAP);
 }
 
 // ---- volley -----------------------------------------------------------------
@@ -223,8 +222,6 @@ export function trizookaProjectileDescriptor(_p) {
 // Returns the real projectile objects that entered the one native list.
 export function throwVolley(System, actor, descriptor) {
   const count = VOLLEY_CONFIG.lobes;
-  const vol = System.vols ? System.vols[System.volI = (System.volI + 1) % System.vols.length] : null;
-  if (vol) vol.hits.length = 0;
   // The camera-ray aim path, exactly as the native shooter uses it: the muzzle
   // anchor from native `_muzzle`, the 3D direction from native `_aimFrom` (which
   // falls back to aimDir when the aim point is too close or behind). The
@@ -239,28 +236,28 @@ export function throwVolley(System, actor, descriptor) {
   for (let i = 0; i < count; i++) {
     const p = i === 0 ? seed : System._new();
     const spread = VOLLEY_CONFIG.spreadDeg * Math.PI / 180;
-    // the fan is symmetric about the DAMAGE CARRIER, so the authoritative shot
-    // travels exactly along the native aim ray and the side lobes straddle it
+    // The calibrated fan stays symmetric about lobe 0. Authority is independent
+    // of that visual/aim index: all three local globs are full Trizooka rounds.
     const k = i === VOLLEY_CONFIG.damageLobeIndex ? 0 : (i === 1 ? -1 : 1);
-    const carrier = i === VOLLEY_CONFIG.damageLobeIndex;
+    const vol = System.vols ? System.vols[System.volI = (System.volI + 1) % System.vols.length] : null;
+    if (vol) vol.hits.length = 0;
     Object.assign(p, {
-      type: carrier ? descriptor.type : 'shot',
+      type: descriptor.type,
       wid: descriptor.wid,                    // native cause id, used by ghost restore
       owner: actor,
       team: actor.team,
       age: 0,
       life: TRIZOOKA.duration,
       straight: TRIZOOKA.goStraightFrames,
-      // one authoritative damage lobe per volley; the rest are visual
-      damage: carrier ? descriptor.directDamage : 0,
-      damageOwner: carrier,
-      radius: carrier ? descriptor.impactRadius : descriptor.burstRadius * 0.55,
-      size: carrier ? 0.22 : 0.15,
+      damage: descriptor.directDamage,
+      damageOwner: true,
+      radius: descriptor.impactRadius,
+      size: 0.22,
       grav: descriptor.grav,
       drag: descriptor.drag,
       vol,
       trail: -1.5,
-      trailEvery: carrier ? 1.1 : 0,
+      trailEvery: 1.1,
       trailRadius: 0.3,
       seed: (i * 0.37 + 0.11) % 1,
     });
@@ -334,6 +331,15 @@ export function trizookaState(actor) {
 export function trizookaIsActive(actor) {
   return !!actor?.s3Trizooka?.active;
 }
+export function trizookaGaugeFraction(actor) {
+  const s = actor?.s3Trizooka;
+  if (!s?.active || !(s.duration > 0)) return 0;
+  return Math.max(0, Math.min(1, 1 - s.t / s.duration));
+}
+function syncTrizookaGauge(actor) {
+  const cost = typeof actor?.specialCost === 'function' ? actor.specialCost() : actor?.weapon?.specialCost;
+  if (Number.isFinite(cost) && cost >= 0) actor.special = cost * trizookaGaugeFraction(actor);
+}
 
 // Activation guards. Dead, super-jumping, already-active or not-ready is refused.
 export function canActivateTrizooka(actor) {
@@ -387,6 +393,8 @@ export function stepTrizooka(actor, dt, System) {
   if (!actor.alive || actor.superJumpState || !matchIsPlaying()) { disposeTrizooka(actor); return []; }
 
   s.t += dt;
+  // #1030: use the authoritative Trizooka lifetime as the active special meter.
+  syncTrizookaGauge(actor);
   const events = [];
   const intent = actor.intent;
   const held = !!intent?.fire;
@@ -439,6 +447,7 @@ export function endTrizooka(actor, reason = 'done') {
   s.active = false;
   s.endedAt = s.t;
   s.endReason = reason;
+  actor.special = 0;
   if (actor.specialActive?.id === TRIZOOKA_ID) actor.specialActive = null;
   actor.fireBuffer = 0;
   disposeTrizooka(actor);
@@ -608,7 +617,7 @@ export function trizookaOrbitOffset(p, dt) {
 export const TRIZOOKA_PROJECTILE_FIELDS = [
   's3SpecialWeapon', 's3Weapon', 's3VolleyIndex', 's3ActionIndex', 'damageOwner', 's3OrbitPhase', 's3Yaw',
   's3Stage', 's3StageFrames', 's3StageTransition', 's3AppliedStage', 's3ActorRadius', 's3WorldRadius', 's3SizeBase',
-  's3OrbitApplied',
+  's3OrbitApplied', 's3TrizookaAP',
 ];
 
 export function trizookaClearProjectile(p) {
@@ -657,7 +666,8 @@ export function trizookaReplayActivate(state, payload = {}) {
   s.reason = null;
   s.actionIndex = 0;
   s.t = 0;
-  s.ap = apOf(payload) || 0;
+  s.ap = boundedSpecialPowerAP(payload.specialPowerAP);
+  s.duration = durationFor(s.ap);
   return s;
 }
 
@@ -728,6 +738,7 @@ export function installTrizookaLifecycle(api) {
     if (this.stats.specials !== specialsBefore + 1) return r;
     this.s3Trizooka = newTrizookaState(apOf(this));
     this.specialActive = { id: TRIZOOKA_ID, t: 0, phase: 'charge', armor: false };
+    syncTrizookaGauge(this);
     return r;
   };
 
@@ -803,7 +814,7 @@ export function installKitTrizooka(api, profile) {
     installKitTrizooka, installTrizookaLifecycle, trizookaUninstall,
     trizookaSpecialWeapon, trizookaProjectileDescriptor,
     startTrizooka, stepTrizooka, endTrizooka, canActivateTrizooka, disposeTrizooka,
-    trizookaState, trizookaIsActive, newTrizookaState, newTrizookaReplayState,
+    trizookaState, trizookaIsActive, trizookaGaugeFraction, newTrizookaState, newTrizookaReplayState,
     trizookaReplayActivate, trizookaReplayFire, trizookaReplayEnd,
     throwVolley, volleysPerAction, apOf, durationFor, VOLLEY_CONFIG,
     selectTrizookaFlight, selectTrizookaCollision, trizookaOrbitOffset,

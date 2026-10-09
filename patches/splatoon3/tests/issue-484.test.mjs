@@ -229,7 +229,7 @@ test('negative control: unpatched INKWAVE loses special ready glow on remote cli
   hostNM.tickT = 0;
   hostNM.update(1 / 20);
   assert.ok(hostPacket);
-  assert.equal(hostPacket.a[0].length, 22, 'Current writer includes its existing special-use count slot');
+  assert.equal(hostPacket.a[0].length, 23, 'Current writer includes its existing special-use count slot');
 
   // Client receives tick
   clientNM.onMessage('host-id', hostPacket);
@@ -301,7 +301,7 @@ test('root acceptance: patched INKWAVE synchronizes specialReady and effective s
   hostNM.tickT = 0;
   hostNM.update(1 / 20);
   assert.ok(hostPacket);
-  assert.equal(hostPacket.a[0].length, 22, 'current actor tuple and special-use slot are unchanged');
+  assert.equal(hostPacket.a[0].length, 23, 'current actor tuple and special-use slot are unchanged');
   assert.equal(Math.round(hostPacket.sc[owner.nid]), 165, 'named sidecar carries effective cost');
   assert.ok(hostPacket.a[0][10] & 67108864, 'Flags contain specialReady bit');
 

@@ -33,6 +33,11 @@ const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
 export const VAC_ID = 'inkVac';
 
 const RAW_TO_HP = 10;             // repository conversion rawDamageToHP: "/10"
+// #1090: S3 Ink Vac gauge is damage-equivalent (~1100 HP), not round count.
+// 1100 is a verified approximate capacity; upper bound prevents infinite/NaN
+// transport values, but is not proof of the remote projectile's damage.
+const ABSORB_CAPACITY_HP = 1100;
+const MAX_ACCEPTED_DAMAGE_HP = 220;
 const INHALE_LENGTH = 15;         // pinned LengthMax
 const NEAR_LOW = 0.8, NEAR_HIGH = 1.4;   // pinned RadiusMin.Low/.High
 const FAR_LOW = 3.3, FAR_HIGH = 4.3;     // pinned RadiusMax.Low/.High
@@ -41,6 +46,7 @@ const FLY_GRAVITY = 0.003;        // pinned per frame^2
 const FLY_AIR_RESIST = 0.01;      // pinned per frame
 const SPAWN_BLAST_WAIT = 50;      // pinned frames: native projectile LIFETIME before detonation
 const INHALE_TO_EXHALE_WAIT = 20; // pinned frames
+const EXHALE_WAIT = 150;           // pinned frames: maximum return-shot hold
 const BLAST_MIN = 6.0, BLAST_MAX = 11.0;// pinned blast paint radius
 // Bounded duplicate-proposal memory per owner: a proposal is keyed by
 // source projectile + activation, and only the last PROPOSAL_MEMORY keys count.
@@ -57,23 +63,29 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   framesPerSecond: 60,
   breathOriginHeight: 1.0,   // intake origin above feet (kid chest) — calibration
   frontalEpsilon: -0.05,    // projectile must travel against player aim — calibration
-  absorbCreditPerProjectile: 0.34, // charge added per accepted projectile — calibration
+  absorbCapacityDamage: ABSORB_CAPACITY_HP,
+  absorbDamageLimit: MAX_ACCEPTED_DAMAGE_HP,
+  absorbStatus: 'damage-proportional, 1100 approximate S3 capacity; remote source damage requires separate authoritative hit attestation',
   geometry: 'frustum: near radius at the muzzle growing linearly to far radius at LengthMax; RadiusMin/RadiusMax read as near/far and Low/High as charge ends',
   geometryStatus: 'interpretation / calibration; Nintendo field meaning unconfirmed',
   speedStatus: 'pinned per-frame values multiplied by 60 to per-second',
   damageStatus: 'pinned raw 2200 with repository /10 conversion; exceeds the 100 HP pool (instakill) — physical scale limitation',
-  inhaleDurationSeconds: 2.5,
-  inhaleDurationStatus: 'CALIBRATED: the SpBlower table carries no total inhale duration. ExhaleWaitFrame 150 is an exhale standby field and is deliberately NOT used as the inhale duration; minInhaleSeconds below interprets InhaleToExhaleWaitFrame 20.',
+  // #1042: S3 suction lasts up to 360F / 6 s. ExhaleWaitFrame is a
+  // separate 150F / 2.5 s return-shot hold and must never cap suction.
+  inhaleDurationSeconds: 6,
+  inhaleDurationStatus: 'community-verified S3 suction cap: 360F / 6.0 s',
+  exhaleHoldSeconds: EXHALE_WAIT / 60,
+  exhaleHoldStatus: 'pinned ExhaleWaitFrame 150: post-suction return-shot hold / automatic-fire deadline',
   minInhaleSeconds: INHALE_TO_EXHALE_WAIT / 60,
-  minInhaleStatus: 'interpretation of pinned InhaleToExhaleWaitFrame 20 as the minimum inhale before a manual release',
+  minInhaleStatus: 'pinned InhaleToExhaleWaitFrame 20: earliest inhale-to-exhale transition after charge completion',
   burstLifetimeSeconds: SPAWN_BLAST_WAIT / 60,
   burstLifetimeStatus: 'pinned SpawnBlastWaitFrame 50 used as the native projectile lifetime; delay stays 0 so the native integrator runs immediately and bursts on the age>life deadline',
   proposalMemory: PROPOSAL_MEMORY,
   tombstoneMemory: TOMBSTONE_MEMORY,
   proposalKeyMaxLength: MAX_KEY_LENGTH,
   authorityStatus: 'the absorb branch validates the claimed sender against the transport-resolved actor, the installed peer-binding validator, team, liveness, the locally-owned live target and the exact live serial. WITHOUT a parent-installed validator the peer binding cannot be checked from a replayed payload and that gap is not papered over.',
-  replicaStuckGuardSeconds: 7.5,
-  replicaStuckGuardStatus: 'CALIBRATED presentation-only failsafe: a replica cone is hidden when its release/dispose packet never arrives, after inhaleDurationSeconds (2.5) + 2x the 2.5 s owner cap. Generous by design so it can never pre-empt a real owner release. The owner packet remains authoritative.',
+  replicaStuckGuardSeconds: 11,
+  replicaStuckGuardStatus: 'presentation-only failsafe: 6 s suction + 2x the pinned 2.5 s return-shot hold; owner release/dispose remains authoritative.',
   status: 'pinned geometry/ballistics/timings; origin height, frontal epsilon and the frustum field reading are calibration',
 });
 
@@ -90,7 +102,7 @@ const states = new WeakMap();
 // `_playEvent` both read `e.actor || e.victim`, so `actor` is the SHOOTER for an
 // absorption proposal and the Vac OWNER for every owner-emitted event.
 export const INK_VAC_EVENTS = Object.freeze({
-  // { actor: owner, kit, serial, charge, nid? }
+  // { actor: owner, kit, serial, charge, power, nid? }
   activation: 'special:inkvac',
   // { actor: owner, kit, serial, charge }  owner-approved charge state
   charge: 'special:inkvac-charge',
@@ -284,8 +296,42 @@ export function inkVacAbsorbCandidate(actor, start, end, projectile) {
 
 // Credit the held local intake by its OWN calibration value. Only the owner may
 // credit; a replica never calls this from a replayed packet.
-function creditCharge(state) {
-  state.charge = Math.min(1, state.charge + INK_VAC_CALIBRATION.absorbCreditPerProjectile);
+export function inkVacChargeFromDamage(damage, capacity = INK_VAC_CALIBRATION.absorbCapacityDamage) {
+  return Number.isFinite(damage) && Number.isFinite(capacity) && capacity > 0
+    ? Math.max(0, Math.min(1, damage / capacity)) : 0;
+}
+// Native shots carry their authoritative damage in projectile.damage. If a
+// special object has no such value, neutralise it without inventing credit.
+function absorbedDamageEquivalent(projectile) {
+  const raw = projectile?.damage;
+  return Number.isFinite(raw) && raw > 0 ? raw : 0;
+}
+// The Vac owner does not trust an arbitrary damage amount from a client.
+// Its independently known, authenticated shooter's weapon bounds proposals.
+function proposalWeaponDamage(weapon) {
+  if (!weapon) return 0;
+  // The receiver's equipped weapon bounds the claimed projectile damage.
+  // Chargers have a charge-dependent damageMax, not a fixed damage scalar.
+  const value = [weapon.damage, weapon.damageMax, weapon.damageHead, weapon.directDamage,
+    weapon.flickDamageNear, weapon.damageMin].find(v => Number.isFinite(v) && v > 0);
+  return value || 0;
+}
+// Use the projectile's damage BEFORE neutralising it. Native bombs may carry
+// their damaging hitbox on the linked bomb rather than on their visual proxy.
+function absorbDamageEquivalent(projectile) {
+  const bomb = projectile?.s3InkVacBomb;
+  const values = [projectile?.damage, bomb?.damage,
+    projectile?.splashDamageMax, bomb?.splashDamageMax,
+    projectile?.splashDamage, bomb?.splashDamage];
+  const damage = values.find(v => Number.isFinite(v) && v > 0) ?? 0;
+  return Math.min(MAX_ACCEPTED_DAMAGE_HP, damage);
+}
+function creditCharge(state, damageEquivalent) {
+  const delta = Number.isFinite(damageEquivalent) ? Math.max(0, damageEquivalent) : 0;
+  if (!(delta > 0)) return state.charge;
+  const capacity = INK_VAC_CALIBRATION.absorbCapacityDamage;
+  state.absorbedDamage = Math.min(capacity, (state.absorbedDamage || 0) + delta);
+  state.charge = inkVacChargeFromDamage(state.absorbedDamage, capacity);
   state.absorbed++;
   updateVisual(state);
   api.emit?.(INK_VAC_EVENTS.charge, { actor: state.actor, kit: VAC_ID, serial: state.serial, charge: state.charge });
@@ -296,12 +342,12 @@ function creditCharge(state) {
 // own round, so it neutralises the shooter-authoritative damage at first contact
 // and asks the owner to credit once. `actor` is the shooter and `target` the Vac
 // owner, both flat actor references the native packer keeps.
-function proposeAbsorption(state, projectile) {
+function proposeAbsorption(state, projectile, damage) {
   const shooter = projectile.owner;
   if (!shooter || shooter.remote === true) return false;   // only a locally owned shooter may propose
   if (!Number.isInteger(state.serial)) return false;
   const key = `${shooter.nid !== undefined ? shooter.nid : 'i' + identityOf(shooter)}#p${++proposalSeq}`;
-  api.emit?.(INK_VAC_EVENTS.absorb, { actor: shooter, target: state.actor, kit: VAC_ID, serial: state.serial, key });
+  api.emit?.(INK_VAC_EVENTS.absorb, { actor: shooter, target: state.actor, kit: VAC_ID, serial: state.serial, key, damage });
   return true;
 }
 
@@ -311,16 +357,19 @@ function proposeAbsorption(state, projectile) {
 function absorb(state, projectile) {
   if (!projectile) return false;
   if (states.get(state.actor) !== state || state.phase !== 'inhale') return false;  // stale / disposed
-  if (projectile.s3InkVacAbsorbed) return false;
+  const nativeBomb = projectile.s3InkVacBomb;
+  if (projectile.s3InkVacAbsorbed || nativeBomb?.s3InkVacAbsorbed) return false;
   projectile.s3InkVacAbsorbed = true;
+  if (nativeBomb) nativeBomb.s3InkVacAbsorbed = true; // #1118 native bomb lifetime owner consumes it
   // A net ghost is a replay of an authoritative shot: this module applies no
   // authority to it, so it may be consumed VISUALLY only -- no damage edit, no
   // charge, no proposal, no paint.
   if (projectile.ghost) return false;
+  const damage = absorbDamageEquivalent(projectile);
   projectile.damage = 0;      // neutralise the shooter-authoritative damage here
   // A replica may not claim charge from a replayed ghost; it proposes instead.
-  if (state.remote) return proposeAbsorption(state, projectile);
-  creditCharge(state);
+  if (state.remote) return proposeAbsorption(state, projectile, damage);
+  creditCharge(state, damage);
   return true;
 }
 
@@ -329,8 +378,12 @@ function absorb(state, projectile) {
 // extend behind the owner, oriented to the full 3D aim and visible while active.
 function makeState(actor, opts = {}) {
   const remote = opts.remote === true;
-  return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0,
-    nearR: intakeNearRadius(0), farR: intakeFarRadius(0), baseFar: FAR_HIGH,
+  // #1010: suction geometry is selected by Special Power Up, not absorbed charge.
+  const specialPower = clamp01(Number.isFinite(opts.specialPower)
+    ? opts.specialPower : actor?.s3?.modifiers?.specialPower || 0);
+  return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0, specialPower,
+    fireHeld: false, exhaleArmed: false,
+    nearR: intakeNearRadius(specialPower), farR: intakeFarRadius(specialPower), baseFar: FAR_HIGH,
     mesh: null, geo: null, mat: null,
     _fwd: new api.THREE.Vector3(), _org: new api.THREE.Vector3(), _q: new api.THREE.Vector3(),
     _m: new api.THREE.Vector3(), _e: new api.THREE.Vector3(), _up: new api.THREE.Vector3(0, 1, 0) };
@@ -389,6 +442,18 @@ export function disposeInkVac(actor) {
 // descriptor. Native integrator and _blastBurst remain the authority for motion and
 // detonation; this module applies no manual splash/paint. Errors are NOT swallowed.
 // A replica NEVER reaches here: it only ever hides its presentation.
+function beginExhale(state) {
+  if (!state || state.phase !== 'inhale') return false;
+  state.phase = 'exhale';
+  state.t = 0;
+  // #1120: a ZR hold carried out of suction arms a later RELEASE edge; the
+  // held level itself never authors the return shot.
+  state.exhaleArmed = !!state.fireHeld;
+  disposeVisual(state);
+  const active = state.actor?.specialActive;
+  if (active?.id === VAC_ID) active.phase = 'exhale';
+  return true;
+}
 function release(state) {
   const a = state.actor, c = state.charge, { G, emit } = api;
   state.phase = 'done';
@@ -410,10 +475,11 @@ function inkVacUpdate(a, dt) {
   const state = states.get(a);
   if (!state || state.phase !== 'inhale' || !(dt > 0)) return;
   state.t += dt;
-  state.nearR = intakeNearRadius(state.charge);
-  state.farR = intakeFarRadius(state.charge);
   updateVisual(state);
-  if (state.charge >= 1 || state.t >= INK_VAC_CALIBRATION.inhaleDurationSeconds) release(state);
+  if (state.t + 1e-10 >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
+      state.charge >= 1 && state.t + 1e-10 >= INK_VAC_CALIBRATION.minInhaleSeconds) {
+    beginExhale(state);
+  }
 }
 
 // Per-frame advance of a REPLICA cone. Remote actors are driven by the native
@@ -422,14 +488,13 @@ function inkVacUpdate(a, dt) {
 // it authors no projectile, paint, damage, gauge or refill.
 export function advanceInkVacReplica(actor, dt) {
   const state = states.get(actor);
-  if (!state || !state.remote || state.phase !== 'inhale' || !(dt > 0)) return false;
+  if (!state || !state.remote || !(dt > 0)) return false;
   state.t += dt;
-  state.nearR = intakeNearRadius(state.charge);
-  state.farR = intakeFarRadius(state.charge);
-  updateVisual(state);
-  // Presentation-only failsafe if the owner's release/dispose packet is lost.
-  if (state.t >= INK_VAC_CALIBRATION.replicaStuckGuardSeconds) {
-    disposeVisual(state);
+  if (state.phase === 'inhale') {
+    updateVisual(state);
+    if (state.t + 1e-10 >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
+        state.charge >= 1 && state.t + 1e-10 >= INK_VAC_CALIBRATION.minInhaleSeconds) beginExhale(state);
+  } else if (state.phase === 'exhale' && state.t >= INK_VAC_CALIBRATION.exhaleHoldSeconds + 5) {
     state.phase = 'done';
     states.delete(actor);
   }
@@ -494,11 +559,20 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     if (typeof key !== 'string' || key.length === 0 || key.length > MAX_KEY_LENGTH || !KEY_PATTERN.test(key)) {
       return drop('malformed-proposal-key');
     }
+    // Mandatory numerical proposal: old flat-count packets cannot regain the
+    // removed 34% fallback. Peer binding/serial/dedup remain required above.
+    const damage = payload.damage;
+    if (!Number.isFinite(damage) || damage < 0 || damage > MAX_ACCEPTED_DAMAGE_HP) {
+      return drop('invalid-absorb-damage');
+    }
     const ledger = proposalLedger(subject);
     if (ledger.set.has(key)) return drop('duplicate-proposal');
     ledger.set.add(key); ledger.order.push(key);
     while (ledger.order.length > PROPOSAL_MEMORY) ledger.set.delete(ledger.order.shift());
-    creditCharge(state);            // owner's own calibration, once
+    // Keep fractional/partial-hit damage from the proposal, but NEVER credit
+    // more than the sender's locally resolved weapon can deliver. Missing
+    // authenticated weapon data fails closed with zero charge.
+    creditCharge(state, Math.min(damage, proposalWeaponDamage(actor.weapon)));
     return { applied: true, serial, charge: state.charge };
   }
 
@@ -530,9 +604,9 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     if (current && current.serial === serial) return drop('duplicate-activation');
     if (current) disposeVisual(current);        // a newer activation supersedes an older cone
     const charge = Number.isFinite(payload.charge) ? clamp01(payload.charge) : 0;
-    const state = makeState(subject, { remote: true, serial });
+    const power = Number.isFinite(payload.power) ? clamp01(payload.power) : 0;
+    const state = makeState(subject, { remote: true, serial, specialPower: power });
     state.charge = charge;
-    state.nearR = intakeNearRadius(charge); state.farR = intakeFarRadius(charge);
     states.set(subject, state);
     remoteSerials.set(subject, serial);
     createVisual(state);
@@ -556,7 +630,8 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     return { applied: false, reason: 'charge-regression-rejected', serial, charge: state.charge };
   }
   state.charge = next;
-  state.nearR = intakeNearRadius(state.charge); state.farR = intakeFarRadius(state.charge);
+  if (state.phase === 'inhale' && state.charge >= 1 &&
+      state.t + 1e-10 >= INK_VAC_CALIBRATION.minInhaleSeconds) beginExhale(state);
   updateVisual(state);
   return { applied: true, serial, charge: state.charge };
 }
@@ -577,39 +652,40 @@ export function installKitInkVac(context, _profile) {
       const s = this.specialActive;
       const state = s && s.id === VAC_ID ? states.get(this) : null;
       if (!state) return update.call(this, dt);
-      // A held state whose owner died is dropped whatever the frame step is.
       if (!this.alive) { disposeInkVac(this); return update.call(this, dt); }
-      // STRICT PAUSE: with no time passing the held special must touch nothing --
-      // not form, not _prevIntent, not the weapons, not the inhale clock. Early
-      // return before any mutation and before the native pass.
       if (!(dt > 0)) return undefined;
+
       const it = this.intent;
-      // Primary fire releases the countershot: the special replaces the main/sub.
-      if (it.fire && state.t >= INK_VAC_CALIBRATION.minInhaleSeconds) {
-        release(state);
-        // The release frame still suppresses the replaced weapons, so the player
-        // cannot also shoot the main weapon or the sub on the same frame.
-        const fire = it.fire, sub = it.sub, squid = it.squid;
-        it.fire = false; it.sub = false; it.squid = false;
-        try { return update.call(this, dt); }
-        finally { it.fire = fire; it.sub = sub; it.squid = squid; }
-      }
-      // Inhale: normal movement continues; main, sub and squid form are withheld.
       const fire = it.fire, sub = it.sub, squid = it.squid;
       it.fire = false; it.sub = false; it.squid = false;
       this.form = 'kid';
-      this.specialActive = null;                    // so the native pass does not early-return
+      this.specialActive = null;
       let result;
       try { result = update.call(this, dt); }
       finally {
         it.fire = fire; it.sub = sub; it.squid = squid;
-        // Only restore the token if this actor is still alive and still owns it.
         if (this.alive && states.get(this) === state && !this.specialActive) this.specialActive = s;
       }
-      inkVacUpdate(this, dt);
+
+      if (states.get(this) !== state || !this.alive) return result;
+      if (state.phase === 'inhale') {
+        // Keep the physical ZR level across the inhale→exhale boundary. A held
+        // suction input may arm the future release edge but cannot fire here.
+        state.fireHeld = !!fire;
+        inkVacUpdate(this, dt);
+      } else if (state.phase === 'exhale') {
+        state.t += dt;
+        // A held suction ZR is not a NEW shot request. It waits until release.
+        // A fresh press after suction, however, authors the return shot at once.
+        const freshPressEdge = !state.exhaleArmed && !state.fireHeld && !!fire;
+        const releaseEdge = state.exhaleArmed && state.fireHeld && !fire;
+        if (fire && !freshPressEdge) state.exhaleArmed = true;
+        state.fireHeld = !!fire;
+        if (freshPressEdge) { release(state); return result; }
+        if (releaseEdge || state.t + 1e-10 >= INK_VAC_CALIBRATION.exhaleHoldSeconds) release(state);
+      }
       return result;
     };
-
     proto._startSpecial = function () {
       if (this.weapon.special !== VAC_ID) return startSpecial.call(this);
       // A genuine native activation, exactly once: alive, not already holding a
@@ -623,13 +699,14 @@ export function installKitInkVac(context, _profile) {
       this._setClimb(false);
       api.emit?.('special:use', { actor: this, id: VAC_ID });
       api.G.audio?.play('special_activate', { pos: this.isLocal ? undefined : this.pos, volume: this.isLocal ? 1 : 0.7 });
-      const state = makeState(this, { remote: false, serial: ++activationSeq });
+      const state = makeState(this, { remote: false, serial: ++activationSeq,
+        specialPower: this.s3?.modifiers?.specialPower || 0 });
       states.set(this, state);
       this.specialActive = { id: VAC_ID, t: 0, phase: 'inhale', armor: false };
       this.ink = api.PLAYER.inkMax;                 // tank refill, once per activation
       createVisual(state);
       api.emit?.(INK_VAC_EVENTS.activation, { actor: this, kit: VAC_ID, serial: state.serial,
-        charge: 0, ...(this.nid !== undefined ? { nid: this.nid } : {}) });
+        charge: 0, power: state.specialPower, ...(this.nid !== undefined ? { nid: this.nid } : {}) });
       return undefined;
     };
 

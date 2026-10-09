@@ -106,6 +106,8 @@ function rig(api, kind = 'shooter', enabled = true) {
   function step(dt = 1 / 60, input = {}) {
     G.projectiles = projectiles;
     a.intent.fire = !!input.fire; a.intent.sub = !!input.sub;
+    // This rig calls the runner directly; Actor.update owns the Slosher 16F post-shot countdown (#926).
+    const runner = a.weaponRunner; if (runner.s3SloshPostShot > 0) runner.s3SloshPostShot = Math.max(0, runner.s3SloshPostShot - dt);
     G.time += dt; a.lastFire += dt; a.weaponRunner.update(dt, input); a._finishFrame(dt); ch.root.updateMatrixWorld(true);
     assert.ok(Array.from(ch.P).every(Number.isFinite));
     assert.ok(ch.getMuzzle(new THREE.Vector3()).toArray().every(Number.isFinite));
@@ -316,14 +318,17 @@ test('hidden, form, death, reset, disposal and weapon swap invalidate owned bomb
         if (action === 'hide') r.ch.setVisible(true); else r.a.form = 'kid';
         for (let i = 0; i < 30; i++) r.step(1 / 60, { sub: true });
         assert.equal(r.ch.bombHeld, true, 'current actual input rebuilds fresh hold after return');
-        r.step(1 / 60, { subReleased: true }); assert.equal(r.projectiles.bombs.length, 1);
+        r.step(1 / 60, { subReleased: true });
+        r.step(1 / 60);
+        assert.equal(r.projectiles.bombs.length, 1);
       }
     } finally { if (action !== 'dispose') r.close(); }
   }
   for (const action of ['reset', 'swap', 'form', 'hide', 'death']) {
     const r = rig(api);
     try {
-      for (let ready = 0; ready < 6; ready++) r.step(1 / 60, { sub: true }); r.step(1 / 60, { subReleased: true });
+      for (let ready = 0; ready < 6; ready++) r.step(1 / 60, { sub: true });
+      r.step(1 / 60, { subReleased: true });r.step(1 / 60);
       assert.equal(api.bombMotionSnapshot(r.ch).throwing, true);
       const beforeClock = r.ch.tr[T.T_THROW];
       if (action === 'reset') r.a.weaponRunner.reset();
@@ -343,7 +348,7 @@ test('held and release overlays reserve the left hand during main attacks, movem
     const r = rig(api, kind);
     try {
       r.a.vel.set(1.5, 0, 1); r.a.grounded = false;
-      for (let i = 0; i < 40; i++) { r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.step(1 / 60, { sub: true, fire: true }); r.a.ink = 100; }
+      for (let i = 0; i < (kind === 'slosher' ? 80 : 40); i++) { r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.step(1 / 60, { sub: true, fire: kind !== 'slosher' || i === 0 }); r.a.ink = 100; }
       // Splattershot's verified post-shot sub lock can interrupt a simultaneous
       // sub hold. Releasing main fire must admit the still-held sub after 4F.
       if (kind === 'shooter' && !r.ch.bombHeld) {
@@ -356,6 +361,7 @@ test('held and release overlays reserve the left hand during main attacks, movem
       }
       assert.equal(r.ch.bombHeld, true); assert.ok(r.ch.P[C.IKL] < .01, kind);
       r.step(1 / 60, { subReleased: true, fire: true });
+      r.step(1 / 60); // #1037 use tick ends the held visual and begins recovery
       assert.equal(r.ch.bomb.group.visible, false); assert.ok(r.ch.P[C.IKL] < .01, kind);
       assert.ok(r.ch.P[C.FARML] > -1, kind);
       r.a.weaponRunner.reset(); r.a.grounded = true;
@@ -412,7 +418,7 @@ test('release and per-frame preview sample native rig without changing any live 
       r.a.vel.set(1.8, 0, 2.9);
       for (let i = 0; i < 30; i++) {
         r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.a.yaw = .4 + i * .004;
-        r.step(1 / 60, { sub: true, fire: kind === 'slosher' && i === 4 });
+        r.step(1 / 60, { sub: true, fire: kind === 'slosher' && i === 0 });
         r.a.ink = 100;
         const before = preservedRig(r, api, true), beforeCalls = { ...calls }, beforeEvents = flowEvents;
         const preview = new api.THREE.Vector3(0, 1.35, 0);
@@ -431,7 +437,9 @@ test('release and per-frame preview sample native rig without changing any live 
         'actual drawn native arc starts at the same native release sample');
       // Trigger and launch in the real runner, with no intervening pose update.
       api.G.projectiles = r.projectiles;
-      r.a.weaponRunner.update(0, { subReleased: true });
+      r.a.weaponRunner.update(1 / 60, { subReleased: true });
+      assert.equal(r.projectiles.bombs.length, 0, 'no same-tick launch under #1037');
+      r.a.weaponRunner.update(1 / 60, {});
       assert.equal(r.projectiles.bombs.length, 1);
       assert.ok(r.projectiles.bombs[0].pos.distanceTo(preview) < 1e-12, 'preview and creation use the same pose and physical origin');
       assert.deepEqual(calls, beforeCalls, 'actual source throw samples without an extra Character tick');
@@ -567,7 +575,8 @@ test('native drawn arc follows actual bomb origin, velocity and gravity at every
       [vertices.getX(i), vertices.getY(i), vertices.getZ(i)]);
     assert.equal(drawn.length, 64, 'actual native BufferAttribute draw supplies the complete collision-free arc');
     api.G.projectiles = r.projectiles;
-    r.a.weaponRunner.update(0, { subReleased: true });
+    r.a.weaponRunner.update(1 / 60, { subReleased: true });
+    r.a.weaponRunner.update(1 / 60, {});
     const bomb = r.projectiles.bombs[0];
     assert.deepEqual(drawn[0], Array.from(bomb.pos.toArray(), Math.fround));
     const launchVelocity = Array.from(bomb.vel.toArray());
@@ -692,7 +701,8 @@ test('issue 798: aiming micro-drift reuses the cached arc without new collision 
       api.SUB.bomb.throwSpeed = oldThrowSpeed;
       // Actual bomb creation still uses the live pose, never the cached line.
       api.G.projectiles = r.projectiles;
-      r.a.weaponRunner.update(0, { subReleased: true });
+      r.a.weaponRunner.update(1 / 60, { subReleased: true });
+      r.a.weaponRunner.update(1 / 60, {});
       assert.equal(r.projectiles.bombs.length, 1, 'actual bomb gameplay is unchanged by the preview budget');
     } finally {
       physics.segment = native;
@@ -795,7 +805,7 @@ test('a duplicate installer from a different VM realm preserves the original pro
     const second = duplicate.namespace.bombPreviewPosition(r.a, new api.THREE.Vector3());
     assert.ok(second.distanceTo(first) < 1e-12); assert.deepEqual(preservedRig(r, api), before);
     for (let ready = 0; ready < 5; ready++) r.step(1 / 60, { sub: true });
-    r.step(1 / 60, { subReleased: true });
+    r.step(1 / 60, { subReleased: true });r.step(1 / 60);
     assert.equal(r.projectiles.bombs.length, 1);
     assert.equal(duplicate.namespace.bombMotionSnapshot(r.ch).throwing, true, 'second-realm helper reads the actual first-installer state');
     const original = api.bombReleasePosition(r.a, new api.THREE.Vector3());
@@ -830,7 +840,8 @@ test('admission cancellation preserves paired native throw clocks through hide, 
     const baseline = rig(api, 'dualies', false), r = rig(api, 'dualies');
     try {
       for (const x of [baseline, r]) {
-        for (let ready = 0; ready < Math.ceil(hz * 5 / 60) + 1; ready++) x.step(1 / hz, { sub: true }); x.step(1 / hz, { subReleased: true });
+        for (let ready = 0; ready < Math.ceil(hz * 5 / 60) + 1; ready++) x.step(1 / hz, { sub: true });
+        x.step(1 / hz, { subReleased: true });for(let startup=0;startup<Math.ceil(hz/60);startup++)x.step(1 / hz);
         if (action === 'hide') x.ch.setVisible(false);
         if (action === 'ancestor') api.G.scene.visible = false;
         if (action === 'dance') x.ch.setDance('future-custom-presentation');
@@ -861,7 +872,8 @@ test('admission cancellation preserves paired native throw clocks through hide, 
         assert.ok(drawnVertices(r.ch.weapon.left.pivot, api.THREE).length > 100);
         assert.ok(r.ch.ikErr.every(Number.isFinite));
         r.a.ink = 100; // a fresh actual release requires the native 70-ink cost
-        for (let ready = 0; ready < Math.ceil(hz * 5 / 60) + 1; ready++) r.step(1 / hz, { sub: true }); r.step(1 / hz, { subReleased: true });
+        for (let ready = 0; ready < Math.ceil(hz * 5 / 60) + 1; ready++) r.step(1 / hz, { sub: true });
+        r.step(1 / hz, { subReleased: true });for(let startup=0;startup<Math.ceil(hz/60);startup++)r.step(1 / hz);
         assert.equal(api.bombMotionSnapshot(r.ch).throwing, true, `${action}: a fresh native event restarts owned presentation`);
       }
     } finally {
@@ -882,7 +894,7 @@ test('admission bomb hold and read-only release preview resume after mapped Spec
     const preview = api.bombPreviewPosition(r.a, candidate.clone());
     assert.ok(preview.distanceTo(candidate) > .5); assert.deepEqual(preservedRig(r, api, true), before);
     for (let ready = 0; ready < 5; ready++) r.step(1 / 60, { sub: true });
-    r.step(1 / 60, { subReleased: true });
+    r.step(1 / 60, { subReleased: true });r.step(1 / 60);
     assert.equal(r.projectiles.bombs.length, 1); assert.equal(api.bombMotionSnapshot(r.ch).throwing, true);
     assert.equal(r.ch.tr[T.T_THROW], Math.fround(1 / 60));
     assert.ok(drawnVertices(r.projectiles.bombs[0].mesh, api.THREE).length > 100);

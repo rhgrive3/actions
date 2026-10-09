@@ -22,7 +22,7 @@ test('#712 sight shares the shot grate mask while normal solid walls and open ra
   G.actors=[a];a.weaponRunner.charging=true;
   for(const charge of [0,.5,1]){
    a.weaponRunner.charge=charge;ps._updateBeams(0);
-   const m=ps._muzzle(a,V()),dir=ps._aimFrom(a,m,V()),range=a.weapon.rangeMin+(a.weapon.rangeMax-a.weapon.rangeMin)*charge;
+   const m=ps._muzzle(a,V()),dir=ps._aimFrom(a,m,V()),range=a.weapon.rangeMax;/* #922: the laser is the maximum range at every charge */
    const h=G.physics.raycast(m,dir,range,new f.Hit(),true),expected=h.hit?h.dist:range;
    assert.ok(Math.abs(ps.sights.get(a).scale.z-expected)<1e-9);
    if(scene==='grate-wall')assert.equal(G.physics.raycast(m,dir,range,new f.Hit()).dist,1.65,'object mask still sees the grate');
@@ -66,7 +66,7 @@ test('#727 actual rig no longer births inside a small obstacle and paints its ba
  try{
   for(let i=0;i<90;i++)ch.update(1/60,{form:'kid',grounded:true,speed:0,localMove:{x:0,z:0},firing:true,charge:0,ink:1,hp:1,vy:0});ch.root.updateMatrixWorld(true);
   a.character=ch;a.aimPoint.set(0,.868,100);const left=ch.getMuzzleHand(V(),1).clone();const center=left.clone();center.z-=.01;
-  const b=box(center.toArray(),[.025,.025,.02]);
+  const b=box(center.toArray(),[.025,.025,.02]);b.faces=[0,0,0,0,0,0];G.level.faces=[{origin:center.clone(),u:V(1,0,0),v:V(0,1,0)}];
   assert(Math.hypot(Math.max(0,Math.abs(center.x)-b.half.x),Math.max(0,Math.abs(center.z)-b.half.z))>f.PLAYER.radius,'body stays clear');
   const paints=[];G.paint.splat=pos=>{paints.push(pos.clone());return 0;};ps.fireDualies(a,a.weapon,0,1);
   const p=ps.list[0];assert(p.start.distanceTo(left)>.1,'unsafe real left origin is rejected');assert.deepEqual(Array.from(p.start.toArray()),[0,1.05,.3]);

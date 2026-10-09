@@ -100,3 +100,34 @@ test('all source-attesting browser verifiers recognize the loading-cache namespa
  ];
  for(const[file,pattern]of checks)assert.match(fs.readFileSync(path.join(root,file),'utf8'),pattern,file);
 });
+
+
+test('startup verifier bounds a failed natural worker install before controller acquisition',async()=>{
+ const code=fs.readFileSync('scripts/check-inkwave-startup-browser.mjs','utf8');
+ const start=code.indexOf('const naturalController=async page=>{'),end=code.indexOf('\n};',start)+3;
+ assert(start>=0&&end>start);
+ const run=vm.runInNewContext(code.slice(start,end)+';naturalController',{timeout:25});
+ let timeoutCallback,removed=0;
+ const sw={ready:new Promise(()=>{}),controller:null,addEventListener(){},removeEventListener(){removed++;}};
+ const page={waitForFunction:async()=>{},evaluate:async(fn,ms)=>{
+  const context={navigator:{serviceWorker:sw},setTimeout:fn=>{timeoutCallback=fn;return 1;},clearTimeout(){}};
+  const promise=vm.runInNewContext('('+fn.toString()+')('+ms+')',context);
+  timeoutCallback();return promise;
+ }};
+ await assert.rejects(run(page),/activation\/controllerchange timeout/);assert.equal(removed,1);
+});
+test('startup verifier requires both ready and a controller and cleans up its listener',async()=>{
+ const code=fs.readFileSync('scripts/check-inkwave-startup-browser.mjs','utf8');
+ const start=code.indexOf('const naturalController=async page=>{'),end=code.indexOf('\n};',start)+3;
+ const run=vm.runInNewContext(code.slice(start,end)+';naturalController',{timeout:25});
+ for(const initiallyControlled of [false,true]){
+  let changed,removed=0,cleared=0;
+  const sw={ready:Promise.resolve({}),controller:initiallyControlled?{}:null,addEventListener(_n,fn){changed=fn;},removeEventListener(){removed++;}};
+  const page={waitForFunction:async()=>{},evaluate:async(fn,ms)=>{
+   const context={navigator:{serviceWorker:sw},setTimeout:()=>1,clearTimeout(){cleared++;}};
+   const promise=vm.runInNewContext('('+fn.toString()+')('+ms+')',context);
+   await Promise.resolve();if(!initiallyControlled){assert.equal(removed,0);sw.controller={};changed();}return promise;
+  }};
+  await run(page);assert.equal(removed,1);assert.equal(cleared,1);
+ }
+});

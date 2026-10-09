@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptSource } from '../adapter.mjs';
-import { fidelityPlayerCollisionRadius } from '../runtime/weapons-fidelity.mjs';
+import { fidelityPlayerCollisionRadius, slosherDropScale, slosherYawOffset, fidelitySlosherImpactPaint, blasterPaintContract } from '../runtime/weapons-fidelity.mjs';
 
 const root = new URL('../../../', import.meta.url);
 const source = fs.readFileSync(new URL('inkwave-public/src/game/weapons.js', root), 'utf8');
@@ -87,4 +87,50 @@ test('Roller wall-drop source remains bound per flick unit', () => {
       vertical.WallDropCollisionPaintParam.PaintRadiusGround],
     [.08, .10, 1.4, .7, .65],
   );
+});
+
+test('#1022 Slosher random-yaw bias changes scatter but preserves source angle and exceptions', () => {
+  const u = { RandomRotateYDegree: 4.5, RandomRotateYBias: .65, RandomRotateYOffOrderNum: [0] };
+  assert.equal(slosherYawOffset(u, 0, () => .75), 0);
+  const bias = slosherYawOffset(u, 1, () => .75);
+  const uniform = slosherYawOffset({ ...u, RandomRotateYBias: 0 }, 1, () => .75);
+  assert.ok(bias > 0 && bias < uniform);
+  assert.ok(Math.abs(slosherYawOffset(u, 1, () => 1) - 4.5 * Math.PI / 180) < 1e-12);
+  assert.ok(Math.abs(slosherYawOffset(u, 1, () => 0) + 4.5 * Math.PI / 180) < 1e-12);
+});
+
+test('#1140 high-drop Slosher collision narrows after normal age growth', () => {
+  const profile = JSON.parse(fs.readFileSync(new URL('patches/splatoon3/profile.json', root)));
+  const u = profile.weaponsFidelityCompletion.weapons.slosher.UnitGroupParam.Unit[1];
+  const p = { fidelitySloshUnit: u, fidelitySloshIndex: 0, start: { y: 50 }, pos: { y: 50 },
+    age: 5 / 60, size: .1, fidelityPlayerCollision: { initRadius: .1, endRadius: .8, changeTime: 4 / 60 } };
+  assert.equal(slosherDropScale(p), 1);
+  assert.equal(fidelityPlayerCollisionRadius(p), .8);
+  p.pos.y = 38;
+  assert.ok(Math.abs(slosherDropScale(p) - .7) < 1e-12);
+  assert.ok(Math.abs(fidelityPlayerCollisionRadius(p) - .56) < 1e-12);
+  p.pos.y = -10;
+  assert.ok(fidelityPlayerCollisionRadius(p) < .08, 'extreme fall no longer retains a full-size damage capsule');
+});
+
+test('#1011 Slosher landing paint respects first/after-unit width and distance records', () => {
+  const profile = JSON.parse(fs.readFileSync(new URL('patches/splatoon3/profile.json', root)));
+  const u = profile.weaponsFidelityCompletion.weapons.slosher.UnitGroupParam.Unit[1];
+  const p = { fidelitySloshUnit: u, fidelitySloshIndex: 0, start: { x: 0, y: 10, z: 0 }, pos: { y: 10 } };
+  const radius = d => fidelitySlosherImpactPaint(p, { x: d, y: 10, z: 0 }).radius;
+  assert.ok(Math.abs(radius(u.PaintParam.DistanceXZNear) - u.PaintParam.WidthHalfNear) < 1e-12);
+  assert.ok(Math.abs(radius(u.PaintParam.DistanceXZFar) - u.PaintParam.WidthHalfFar) < 1e-12);
+  p.fidelitySloshIndex = 1;
+  assert.ok(Math.abs(radius(u.AfterPaintParam.DistanceXZNear) - u.AfterPaintParam.WidthHalfNear) < 1e-12);
+  assert.ok(Math.abs(radius(u.AfterPaintParam.DistanceXZFar) - u.AfterPaintParam.WidthHalfFar) < 1e-12);
+});
+
+test('#1107 sparse Blaster timed burst restores normal and falling-drop defaults', () => {
+  const profile = JSON.parse(fs.readFileSync(new URL('patches/splatoon3/profile.json', root)));
+  const burst = blasterPaintContract(profile.weaponsFidelityCompletion.weapons.blaster).burst;
+  assert.equal(burst.radius, 2.5, 'impact-specific radius remains independent');
+  assert.equal(burst.timedSplashRadius, 2.0);
+  assert.equal(burst.timedDropRadius, 3.2);
+  assert.equal(burst.timedDropOn, true);
+  assert.equal(burst.timedDropInitialSpeed, 0);
 });

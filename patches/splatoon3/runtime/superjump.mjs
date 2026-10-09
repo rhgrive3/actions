@@ -8,6 +8,42 @@ import { PLAYER } from '../../../src/config.js';
 // frame value. Nintendo confirms pre-landing attacks but not their exact gate.
 export const SUPERJUMP_MAIN_PROGRESS = 0.82;
 
+// Splatoon 3 Ver. 11.0.0 Stealth Jump flight-only penalty (#272).
+// Current public measurement resolves the stage-forward travel coordinate from
+// the difference of XZ distances to two stage-specific reference foci. Their
+// exact placement is not published and is not equivalent to ordinary spawn pads,
+// so only an explicitly calibrated level.stealthJumpFoci pair is accepted. This
+// deliberately fails closed rather than guessing anchors for INKWAVE stages.
+// The verified curve is 0F through 60 units, linear to +60F at 100 units, then
+// capped. Vertical displacement is intentionally excluded.
+export const STEALTH_JUMP_DISTANCE_MIN = 60;
+export const STEALTH_JUMP_DISTANCE_MAX = 100;
+export const STEALTH_JUMP_EXTRA_FRAMES_MAX = 60;
+
+function xzDistance(a, b) {
+  return Math.hypot((a?.x || 0) - (b?.x || 0), (a?.z || 0) - (b?.z || 0));
+}
+
+export function stealthJumpLongitudinalDistance(from, to, level = G.level) {
+  const refs = level?.stealthJumpFoci;
+  if (!from || !to || !refs?.[0] || !refs?.[1]) return 0;
+  const axis = p => (xzDistance(p, refs[0]) - xzDistance(p, refs[1])) * 0.5;
+  return Math.abs(axis(to) - axis(from));
+}
+
+export function stealthJumpExtraFrames(a, from, to, level = G.level) {
+  if (!a?.s3?.modifiers?.stealthJump) return 0;
+  const d = stealthJumpLongitudinalDistance(from, to, level);
+  if (d <= STEALTH_JUMP_DISTANCE_MIN) return 0;
+  if (d >= STEALTH_JUMP_DISTANCE_MAX) return STEALTH_JUMP_EXTRA_FRAMES_MAX;
+  return (d - STEALTH_JUMP_DISTANCE_MIN) /
+    (STEALTH_JUMP_DISTANCE_MAX - STEALTH_JUMP_DISTANCE_MIN) * STEALTH_JUMP_EXTRA_FRAMES_MAX;
+}
+
+export function stealthJumpExtraTime(a, from, to, level = G.level) {
+  return stealthJumpExtraFrames(a, from, to, level) / 60;
+}
+
 // S3 starts the Super Jump clock from the form the destination was confirmed
 // in: a 1F term while already swimming, 22F from humanoid form. It sits in
 // front of the unchanged 80F charge wait and is never folded into

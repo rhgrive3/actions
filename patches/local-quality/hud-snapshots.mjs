@@ -28,7 +28,7 @@ export function teamHudSnapshot(match, colors, viewerTeam = 0, paint = null) {
   t0.players.length = n0; t1.players.length = n1;
   return viewerTeam === 1 ? cache.reverse : cache.forward;
 }
-export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt, showMinimap, PLAYER, SUB, subCost = SUB.bomb.inkCost, guide, healthMarkers, muzzleBlock) {
+export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt, showMinimap, PLAYER, SUB, subCost = SUB.bomb.inkCost, guide, healthMarkers, muzzleBlock, chargerCurrent, chargerFull) {
   let cache = game._hudTransport;
   if (!cache) cache = game._hudTransport = { frame: {}, crosshair: {}, map: {}, mobile: {} };
   const frame = cache.frame, crosshair = cache.crosshair, map = cache.map;
@@ -39,6 +39,10 @@ export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt
   crosshair.spread = spread; crosshair.onTarget = m.controller?.onTarget ? 'enemy' : null; crosshair.inRange = m.controller ? m.controller.inRange !== false : true;
   if (guide === undefined) delete crosshair.guide; else crosshair.guide = guide;
   if (muzzleBlock === undefined) delete crosshair.muzzleBlock; else crosshair.muzzleBlock = muzzleBlock;
+  // Distinct Charger current-release/maximum endpoint presentation survives
+  // the persistent-frame fast path; no alternate hit or range owner.
+  if (chargerCurrent === undefined) delete crosshair.chargerCurrent; else crosshair.chargerCurrent = chargerCurrent;
+  if (chargerFull === undefined) delete crosshair.chargerFull; else crosshair.chargerFull = chargerFull;
   frame.crosshair = crosshair;
   map.canvas = showMinimap ? game.minimap.canvas : null; map.expanded = false; map.players = players;
   frame.map = showMinimap ? map : null; frame.markers = markers;

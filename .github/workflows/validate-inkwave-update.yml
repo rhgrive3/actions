@@ -37,6 +37,14 @@ on:
         description: Full immutable commit SHA to verify
         required: true
         type: string
+      focused_tests:
+        description: Optional JSON list of INKWAVE test files; supplements the unchanged full gate
+        type: string
+        default: ''
+      focused_baselines:
+        description: Optional JSON list of immutable baseline SHAs required by focused tests
+        type: string
+        default: '[]'
       runtime_performance:
         description: Run the pinned runtime workstream baseline and candidate comparison
         type: boolean
@@ -56,6 +64,7 @@ permissions:
   contents: read
 env:
   SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
+  FOCUSED_EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/evidence/inkwave-focused-${{ github.run_id }}-${{ github.run_attempt }}
   RUNTIME_PERFORMANCE: ${{ inputs.runtime_performance == true || (github.event_name == 'pull_request' && (github.head_ref == 'inkwave/runtime-performance-ui' || github.head_ref == 'inkwave/final-nine-way-integration')) }}
   REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}
 jobs:
@@ -74,10 +83,44 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Prepare persistent focused test evidence
+        if: inputs.focused_tests != ''
+        run: |
+          test "$(realpath -m "$FOCUSED_EVIDENCE_DIR")" = "$FOCUSED_EVIDENCE_DIR"
+          sudo mkdir -p "$FOCUSED_EVIDENCE_DIR"
+          sudo chown "$(id -u):$(id -g)" "$FOCUSED_EVIDENCE_DIR"
+          test "$(realpath "$FOCUSED_EVIDENCE_DIR")" = "$FOCUSED_EVIDENCE_DIR"
+          test -w "$FOCUSED_EVIDENCE_DIR"
+      - name: Run requested focused source regressions
+        if: inputs.focused_tests != ''
+        id: focused_native
+        env:
+          FOCUSED_TESTS: ${{ inputs.focused_tests }}
+          FOCUSED_BASELINES: ${{ inputs.focused_baselines }}
+        run: node scripts/run-inkwave-focused-tests.mjs
+      - uses: actions/upload-artifact@v4
+        if: inputs.focused_tests != '' && steps.focused_native.outcome == 'success'
+        with:
+          name: inkwave-focused-${{ inputs.source_sha || github.sha }}
+          if-no-files-found: error
+          path: ${{ env.FOCUSED_EVIDENCE_DIR }}/
+          retention-days: 14
+      - name: Verify six follow-up INKWAVE regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-six-followup-network-paint.test.mjs patches/splatoon3/tests/issue-1032-background-guest.test.mjs
+      - name: Verify eight additional INKWAVE regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-eight-followup.test.mjs
+      - name: Verify finish authority, adoption and portrait regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issues-1092-1114-finish-mobile-adoption.test.mjs patches/network-replication/tests/issue-1101-adoption-cooldown.test.mjs
+      - name: Verify source-sampled direction-aware humanoid gait
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/legacy-walk-reference.test.mjs
+      - name: Verify PR1077 additional seven regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/kit-ink-vac.test.mjs patches/splatoon3/tests/kit-subs.test.mjs patches/splatoon3/tests/issue-1008-1020-1037-1053.test.mjs
       - name: Diagnose nine-way walk contact regression
         run: node --experimental-vm-modules --test patches/splatoon3/tests/walk-special-contact.test.mjs
       - name: Verify gameplay patch contracts and regressions
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
+      - name: Verify source-guided ink flight model
+        run: node --test tests/ink-flight/model.test.mjs
       - name: Verify deterministic network replication
         run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs
       - name: Compare authoritative and reconstructed attacks
@@ -190,6 +233,7 @@ jobs:
       - name: Build patched site at the checkout commit
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2
+          node --test scripts/tests/inkwave-worker-compaction.test.mjs
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
           git rev-parse HEAD > _site-source-sha.txt

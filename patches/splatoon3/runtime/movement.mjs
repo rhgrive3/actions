@@ -83,6 +83,10 @@ function launch(a, direction, speed, vertical, kind) {
   a.character.trigger(kind, { duration: config.roll.duration });
   api.emit('actor:' + kind, { actor: a });
 }
+function tickArmorTimer(action, dt) {
+  const remaining = (action.armorTime || 0) - dt;
+  action.armorTime = remaining <= 1e-10 ? 0 : remaining;
+}
 export function beforeActions(a, dt, jumpPressed, input = {}) {
   if (!api) throw new Error('INKWAVE movement patch not installed');
   const state = movementState(a), cfg = config;
@@ -121,16 +125,22 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
       }
     }
   }
-  for (const action of new Set([state.roll, state.surge, state.armor])) if (action) {
-    const remaining = (action.armorTime || 0) - dt;
-    action.armorTime = remaining <= 1e-10 ? 0 : remaining;
-  }
+  // Three optional references, not three distinct actions: armor aliases the
+  // active roll/surge. Avoid temporary Array/Set allocation on every Actor tick.
+  const rollAction = state.roll, surgeAction = state.surge, armorAction = state.armor;
+  if (rollAction) tickArmorTimer(rollAction, dt);
+  if (surgeAction && surgeAction !== rollAction) tickArmorTimer(surgeAction, dt);
+  if (armorAction && armorAction !== rollAction && armorAction !== surgeAction) tickArmorTimer(armorAction, dt);
   if (state.roll) {
     state.roll.time -= dt;
     if (state.roll.time <= 1e-10 || a.form !== 'squid') state.roll = null;
   }
   if (!a.alive || a.specialActive || a.superJumpState || a.form !== 'squid') {
-    state.roll = state.surge = state.armor = state.floorSpeed = null; state.chainSpeed = 0; a.anim.surgeCharge = 0; sync(a, state); return false;
+    state.roll = state.surge = state.armor = state.floorSpeed = null;
+    // #972: ordinary humanoid/attack transitions cancel the action and shield,
+    // not the still-live consecutive-roll history. Its own clock expires it.
+    if (!a.alive || a.specialActive || a.superJumpState) state.chainSpeed = 0;
+    a.anim.surgeCharge = 0; sync(a, state); return false;
   }
   // Keep the last qualifying real velocity direction briefly; do not queue raw input.
   if (!a.submerged || !a.grounded || a.climbing || state.roll) state.floorSpeed = null;
@@ -218,6 +228,12 @@ export function normalJumpVelocity(a, velocity) {
       r.charging && r.charge >= 1 && Number.isFinite(cap)) return Math.min(velocity, cap);
   return velocity;
 }
+export function isSquidReturnerCeiling(actor, physics) {
+  const id = actor?.contacts?.ceilingBlock;
+  return actor?.contacts?.ceiling === true && Number.isInteger(id) && id >= 0 &&
+    physics?.level?.blocks?.[id]?.squidReturner === true;
+}
+
 export function installMovement(context, tuning) {
   api = context; config = tuning.movement;
   const { Actor } = api;
@@ -240,7 +256,7 @@ export function installMovement(context, tuning) {
       // simultaneous Roll/Surge armor pool as a second layer.
       if (this.s3?.spawnArmor && spawnProtectionRemaining(this) > 0) {
         const shield = this.s3.spawnArmor;
-        const left = absorbSpawnDamage(this, amount, source, tuning.spawnArmor);
+        const left = absorbSpawnDamage(this, amount, source, tuning.spawnArmor, attacker);
         if (left !== amount) api.emit('actor:armorhit', { actor: this, absorbed: amount - left, broken: !this.s3.spawnArmor || shield.hp <= 0, kind: 'spawn' });
         amount = left;
       } else {
@@ -256,7 +272,8 @@ export function installMovement(context, tuning) {
   const integrate = Actor.prototype._integrate, splat = Actor.prototype.splat;
   Actor.prototype._integrate = function (...args) {
     const value = integrate.apply(this, args);
-    if (this.contacts.ceiling) {
+    // #1075: normal ceilings are geometry, not Squid Returners.
+    if (isSquidReturnerCeiling(this, api.G.physics)) {
       const state = movementState(this);
       for (const shield of new Set([state.armor, state.roll, state.surge])) if (shield) shield.armorTime = 0;
       state.armor = null;
@@ -324,6 +341,18 @@ export function installMovement(context, tuning) {
     if (was && !this.climbing && movementState(this).surge?.phase === 'auto-climb') { movementState(this).surge = null; sync(this, state); }
     // Losing an inked wall cancels charge. A ledge burst is kept in the air.
     if (was && !this.climbing && movementState(this).surge?.phase === 'charge') { movementState(this).surge = null; this.anim.surgeCharge = 0; }
+    // #253: Ordinary inked-wall cling has a neutral descent, separate from
+    // Squid Surge charging/auto-climb and from stick-driven upward swimming.
+    // 0.9 world units/s is a provisional movement calibration, not measured S3.
+    const neutralCling = this.alive && this.climbing && this.form === 'squid' &&
+      !this.specialActive && !this.superJumpState && !this.intent.jump && !state.surge &&
+      Math.hypot(savedX, savedZ) <= 0.01;
+    if (neutralCling && Number.isFinite(args[0]) && args[0] > 0) {
+      this.s3NeutralWallSlideT = Math.min(1, (this.s3NeutralWallSlideT || 0) + args[0]);
+      const descent = -Math.min(0.9, this.s3NeutralWallSlideT * 3.6);
+      this.climbV = descent;
+      this.vel.y = descent;
+    } else this.s3NeutralWallSlideT = 0;
     return value;
   };
   for (const method of ['_startSpecial', 'superJump']) {

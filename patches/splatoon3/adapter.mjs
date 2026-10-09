@@ -1,3 +1,6 @@
+import { adaptRollerMaxPaint } from './roller-max-paint-adapter.mjs';
+import { adaptHostTeams } from './lobby-host-team-adapter.mjs';
+import { adaptLocalBatch01 } from './local-batch-01-adapter.mjs';
 import { adaptAssistPresentation } from './assist-presentation-adapter.mjs';
 import { adaptMatchHud } from './match-hud-adapter.mjs';
 import { adaptChargerSurface } from './charger-surface-adapter.mjs';
@@ -24,6 +27,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue415 } from './runtime/issue-415-adapter.mjs';
+import { adaptTidalSlamGauge } from './tidal-slam-gauge-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -47,6 +51,69 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  // The source-guided shooter-family InkFlightRuntime is the authority for
+  // head integration and detached paint drops. It does not traverse the
+  // patched generic Projectiles._step actor loop. Bridge its actor contact
+  // with the SAME sourced teammate-through window installed on each main
+  // projectile, rather than silently letting bullets cross an ally.
+  if (rel === 'src/game/inkFlightRuntime.js') {
+    code = replaceOnce(code,
+      'this.base.set(actor.pos.x, actor.pos.y + (actor.smoothY || 0), actor.pos.z);',
+      'this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);',
+      'ink flight contact ignores render-only smoothing');
+    code = replaceOnce(code,
+      "actor.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, p.inkPlayerRadius);",
+      'hurtboxHeight(actor, PLAYER), p.inkPlayerRadius);',
+      'ink flight shared capsule height');
+    code = replaceOnce(code,
+      'capsuleEntry(p.prev, p.pos, this.base, PLAYER.radius,',
+      'capsuleEntry(p.prev, p.pos, this.base, hurtboxRadius(actor, PLAYER),',
+      'ink flight uses the current shared player hurtbox');
+    code = replaceOnce(code,
+      "import { PLAYER } from '../config.js';",
+      "import { PLAYER } from '../config.js';\nimport { hurtboxRadius, hurtboxHeight } from '../../patches/splatoon3/runtime/player-hurtbox.mjs';",
+      'ink flight shared hurtbox import');
+    // #385/#604/#597: Source-guided head motion and sourced S3 wall-drop
+    // share one collision authority. A wall impact must retain the falling
+    // droplet state instead of treating every wall as a terminal head hit.
+    code = replaceOnce(code,
+      '  stepHead(p, dt) {\n    p.inkCarry += dt;',
+      '  stepHead(p, dt) {\n    if (p.fidelityWallDrop) return advanceFidelityWallDrop(this.system, p, dt);\n    p.inkCarry += dt;',
+      'ink flight retained S3 wall-drop update');
+    code = replaceOnce(code,
+      '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);',
+      '      if (first <= 1) {\n        p.pos.lerpVectors(p.prev, p.pos, first);\n        if (!target && !boss && world.hit && beginFidelityWallDrop(this.system, p, world)) return false;',
+      'ink flight first wall contact admits sourced WallDrop phase');
+    code = "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    code = replaceOnce(code,
+      '        if (!actor.alive || actor.team === p.team) continue;',
+      '        const friendly = actor.team === p.team;\n' +
+      '        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;',
+      'ink flight S3 team contact eligibility');
+    code = replaceOnce(code,
+      '        // World wins ties: no wall-through damage, independent of actors order.',
+      '        if (friendly && Number.isFinite(t) && (previousAge + INK_DT * t) * INK_HZ + EPS < p.fidelityFriendThrough) continue;\n' +
+      '        // World wins ties: no wall-through damage, independent of actors order.',
+      'ink flight S3 friend-through at first-contact age');
+    code = replaceOnce(code,
+      '            this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
+      '            if (target.team !== p.team) this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
+      'ink flight never damages a teammate');
+    code = replaceOnce(code,
+      "            G.fx?.burst(p.pos, this.normal, p.owner.color, { count: 6, speed: 3, size: 0.07 });",
+      "            if (target.team !== p.team) G.fx?.burst(p.pos, this.normal, p.owner.color, { count: 6, speed: 3, size: 0.07 });",
+      'ink flight friendly contact has no hostile-hit FX');
+    code = replaceOnce(code,
+      "            emit('weapon:impact', { pos: p.pos.clone(), normal: this.normal.clone(), team: p.team, kind: 'shot', radius: 0.3, victim: target });",
+      "            if (target.team !== p.team) emit('weapon:impact', { pos: p.pos.clone(), normal: this.normal.clone(), team: p.team, kind: 'shot', radius: 0.3, victim: target });",
+      'ink flight friendly contact has no hostile-hit packet');
+    return code;
+  }
+  code = adaptHostTeams(rel, code, replaceOnce);
+  code = adaptLocalBatch01(rel, code, replaceOnce);
+  code = adaptRollerMaxPaint(rel,code,replaceOnce);
+  // Only raw locked sources enter this build-only adapter. Re-applying a
+  // completed or partial BUILD tree must reach the exact anchors and fail closed.
   // Storm owns the structural cloud-loop rewrite. Gear/Sub may then refine
   // the terminal frame boundary without hiding Storm's original connection.
   if (rel === 'src/game/weapons.js') code = adaptStormEffects(rel, code);
@@ -59,8 +126,14 @@ export function adaptSource(rel, code) {
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
   code = adaptAssistPresentation(rel, code, replaceOnce);
-  if (rel === 'src/config.js') return replaceOnce(code,
-    '  minimap: true,', '  minimap: false,', 'optional corner map default');
+  if (rel === 'src/config.js') {
+    code = replaceOnce(code,
+      '  gyroSens: 0,              // −5..+5, Splatoon 3 scale (0 = 132° of device turn per in-game 360°)',
+      '  gyroSens: 0,              // −5..+5; provisional bridge ~1.8x at zero (S3 response unverified)',
+      'gyro sensitivity provenance');
+    return replaceOnce(code,
+      '  minimap: true,', '  minimap: false,', 'optional corner map default');
+  }
   if (rel === 'src/ui/menus.js') {
     code = replaceOnce(code,
       'const fnv = (str) => { let x = 2166136261;',
@@ -74,10 +147,25 @@ export function adaptSource(rel, code) {
       'const tagNum = (name) =>',
       'export const tagNum = (name) =>',
       'export tagNum');
-    return replaceOnce(code,
+    code = replaceOnce(code,
     "{ key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },",
     "{ key: 'minimap', label: 'Corner map (non-S3 aid)', type: 'toggle', help: 'Optional aid outside the S3 baseline. The full Turf Map remains available.' },",
     'optional corner map explanation');
+    code = replaceOnce(code,
+      "h('div', { class: 'iw-res__foot' }, xpPanel, h('div', { class: 'iw-res__btns' },",
+      "h('div', { class: 'iw-res__foot' }, online ? null : xpPanel, h('div', { class: 'iw-res__btns' },",
+      'Private Battle result XP panel');
+    return replaceOnce(code,
+      "h('div', { class: 'iw-res__teams' }, table(0), table(1)),",
+      "h('div', { class: 'iw-res__teams' }, table(winTeam), table(1 - winTeam)),",
+      'winner-first Turf results order');
+  }
+  if (rel === 'src/core/gyro.js') {
+    // #725: approximate public bridge endpoints, not extracted Nintendo code.
+    return replaceOnce(code,
+      'const GYRO_DEG = [[-5, 278], [-2.5, 178], [0, 132], [2.5, 119], [5, 110]];',
+      'const GYRO_DEG = [[-5, 360], [0, 200], [5, 120]]; // ~1x / ~1.8x / ~3x public bridge',
+      'gyro sensitivity reference endpoints');
   }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",
@@ -91,14 +179,34 @@ export function adaptSource(rel, code) {
       'const win = cov[0] >= cov[1] ? 0 : 1; // Exact tie belongs to the assigned Alpha side.',
       'deterministic Alpha turf tie');
     code = replaceOnce(code, '  setState(s) {',
-      '  setState(s) {\n    captureTurfFinish(this, s, G.paint);', 'Turf deadline snapshot before state listeners');
+      '  setState(s) {\n    captureTurfFinish(this, s, G.paint, G.netm, G.game?.minimap);', 'Turf deadline snapshot before state listeners');
     code = replaceOnce(code, '    const cov = G.paint.coverage();',
       '    const cov = this.s3FinishCoverage ? [...this.s3FinishCoverage] : G.paint.coverage();', 'Turf judge deadline coverage');
     code = replaceOnce(code, "          if (!this.follower) this.setState('finish');",
-      "          if (!this.follower) this.setState('finish'); else blockExpiredGuestInput(this);", 'guest local deadline input cancellation');
+      "          if (!this.follower) requestTurfFinish(this); else if (!this.s3DeadlineStep) blockExpiredGuestInput(this);", 'guest local deadline input cancellation');
+    // #923: the turf finish/judge state machine and neutral bot intents still
+    // advance. Only Actor combat/physics and the pairwise soft-push are skipped.
+    // simulateMatchInterval continues ticking projectiles and their distinct
+    // post-time special terminal rules; never clear the flight queue at TIME UP.
+    code = replaceOnce(code,
+      '    const nm = G.netm;\n    for (const a of this.actors) { if (a.remote && nm) nm.applyRemote(a, dt); else a.update(dt); }',
+      '    if (!this.attract && !this.bossMode && (this.mode == null || this.mode === \'turf\') && (this.state === \'finish\' || this.state === \'judge\')) return;\n    const nm = G.netm;\n    for (const a of this.actors) { if (a.remote && nm) nm.applyRemote(a, dt); else a.update(dt); }',
+      'post-TIME-UP turf actors stop physics while live projectiles continue');
     code = replaceOnce(code, '    if (!this.controller) return;',
       '    if (blockExpiredGuestInput(this) || !this.controller) return;', 'guest deadline controller admission');
-    code = "import { captureTurfFinish, blockExpiredGuestInput } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
+    code = replaceOnce(code,
+      '        a.pos.x -= (dx / d) * push * ka; a.pos.z -= (dz / d) * push * ka;\n        b.pos.x += (dx / d) * push * kb; b.pos.z += (dz / d) * push * kb;',
+      '        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);\n        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);',
+      'world-aware actor soft push');
+    code = replaceOnce(code,
+      '    const pickTeam = (first) => {\n      const pool = [...WEAPON_ORDER];\n      const out = [];\n      if (first) { out.push(first); pool.splice(pool.indexOf(first), 1); }',
+      "    const independent = this.mode !== 'boss' && !this.attract;\n    const pickTeam = (first) => {\n      const pool = [...WEAPON_ORDER];\n      const out = [];\n      if (first) { out.push(first); if (!independent) pool.splice(pool.indexOf(first), 1); }",
+      'standard Turf weapon draws keep the local weapon');
+    code = replaceOnce(code,
+      '        out.push(pool.splice((Math.random() * pool.length) | 0, 1)[0]);',
+      '        const pick = (Math.random() * pool.length) | 0;\n        out.push(independent ? pool[pick] : pool.splice(pick, 1)[0]);',
+      'standard Turf weapon draws allow duplicates');
+    code = "import { softPushActor } from '../../patches/splatoon3/runtime/movement-physics.mjs';\nimport { captureTurfFinish, blockExpiredGuestInput, requestTurfFinish } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
 
     return code;
   }
@@ -106,6 +214,12 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '  reset() {',
       '  reset() {\n    this._s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1;',
       'cancel pending Slosher births when an actor resets');
+  }
+  if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code,
+      '    const wasFull = this.ink >= P.inkMax;\n    if (this.submerged || this.climbing) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillSwim * dt);\n    else if (!isSquid && this.lastFire > P.inkRefillDelay && !this.weaponRunner.busy()) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * dt);\n    else if (isSquid) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * 0.5 * dt);',
+      '    const wasFull = this.ink >= P.inkMax;\n    const inkRecoveryBlocked = (this.weaponRunner?.s3InkRecoverRemaining || 0) > 1e-10;\n    if (!inkRecoveryBlocked && (this.submerged || this.climbing)) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillSwim * dt);\n    else if (!inkRecoveryBlocked && !isSquid && this.lastFire > P.inkRefillDelay && !this.weaponRunner.busy()) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * dt);\n    else if (!inkRecoveryBlocked && isSquid) this.ink = Math.min(P.inkMax, this.ink + P.inkRefillKid * 0.5 * dt);',
+      'Blaster source-backed ink recovery admission');
   }
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
@@ -152,7 +266,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'this.growing.push(g);', 'this.growing.push(g);', 'paint deferred growth record');
   }
   if (rel === 'src/game/character.js') {
-    code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
+    code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,ANL,ANLR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
     code = replaceOnce(code, 'const BALL_Z = 0.11, HEEL_Z = 0.065;', 'const BALL_Z = 0.11, HEEL_Z = 0.065;\nexport const CHARACTER_FOOT_METRICS = Object.freeze({ ANKLE_H, BALL_Z, HEEL_Z });', 'character foot metrics');
     code = replaceOnce(code, 'const TN = _tk;', 'const TN = _tk;\nexport const CHARACTER_TIMERS = Object.freeze({ T_FLICK,T_LEAP,T_SLAM,T_DODGE,T_SPAWN,T_LAND,T_SHOOT,T_SHOOTL,T_THROW,T_SLOSH,T_REL });', 'character timers');
     code = replaceOnce(code, 'const M_GAIT = 0, M_CATCH = 1, M_SETTLE = 2;', 'const M_GAIT = 0, M_CATCH = 1, M_SETTLE = 2;\nexport const CHARACTER_FOOT_MODES = Object.freeze({ M_GAIT,M_CATCH,M_SETTLE });', 'character foot modes');
@@ -175,38 +289,20 @@ export function adaptSource(rel, code) {
     for (const [anchor, label] of [['  _poseThrow(P, tt) {', 'native bomb throw pose'], ['  _applyPose(dt, s) {', 'native bomb pose application']])
       code = replaceOnce(code, anchor, anchor, label);
     code += '\nexport const CHARACTER_BOMB_POSE = Object.freeze({ throw: Character.prototype._poseThrow, apply: Character.prototype._applyPose });\n';
-    return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
+    // Roller middle hinge (#916): the native static yoke gains one articulated group
+    // that owns the roller-side parts and the drum. Dedicated connection, kept apart
+    // from the independent #915 weapon-transform ownership.
+    code = replaceOnce(code, '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle); off.add(muzzle);',
+      '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle); off.add(muzzle);\n    const fold = attachRollerFold(d, off, parts, drum);', 'roller articulated hinge group');
+    code = replaceOnce(code, 'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, near: true, pump: 0, trig: 0, left: null, hidden: 0 };',
+      'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
+    return "import { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg>`;',
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg><span class="iw-ret__bias" hidden aria-hidden="true"></span>`;',
       'Blaster outer-bias cue element');
-    code = replaceOnce(code,
-      '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
-      '    this._L.spread = null; this._L.charge = null; this._L.full = null;\n' +
-      '    this._L.blasterCue = null; this._L.blasterCuePhase = null;\n' +
-      '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;',
-      'Blaster outer-bias cue ownership');
-    code = replaceOnce(code,
-      '    const ch = f.crosshair || {};',
-      '    const ch = f.crosshair || {};\n' +
-      '    const localActor = this._local();\n' +
-      '    const jumpState = L.kind === \'blaster\' ? localActor?.weaponRunner?.s3BlasterJumpState?.(localActor.weapon) : null;\n' +
-      '    const cueActive = !!(jumpState?.supported && jumpState.active);\n' +
-      '    if (this._blasterBiasEl) {\n' +
-      '      const percent = cueActive ? Math.round(jumpState.bias * 100) : 0;\n' +
-      '      const cuePhase = cueActive ? jumpState.phase : \'idle\';\n' +
-      '      const cue = !cueActive ? \'\' : cuePhase === \'held\' ? `OUTER ${percent}%`\n' +
-      '        : cuePhase === \'recovering\' ? \'RECOVERING\' : `OUTER ${percent}%`;\n' +
-      '      if (cue !== L.blasterCue || cuePhase !== L.blasterCuePhase) {\n' +
-      '        L.blasterCue = cue; L.blasterCuePhase = cuePhase;\n' +
-      '        this._blasterBiasEl.hidden = !cueActive;\n' +
-      '        this._blasterBiasEl.textContent = cue;\n' +
-      '        this._blasterBiasEl.dataset.phase = cuePhase;\n' +
-      '      }\n' +
-      '    }',
-      'Blaster sourced bias and recovery presentation');
     code = replaceOnce(code,
       '// ------------------------------------------------------------------ HUD-only art',
       "// Splatoon 3 drives the charge reticle off the runner's fixed-tick charge clock, never the\n" +
@@ -229,12 +325,14 @@ export function adaptSource(rel, code) {
       'charger charge-reticle display delay helper');
     code = replaceOnce(code,
       "    if (L.kind === 'charger') {\n      const c = clamp(+f.charge || 0);\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = (this._chargeC * (1 - c)).toFixed(2);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = c > 0.001;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n    } else if",
-      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n      const delayed = view.delayed;\n      if (delayed !== L.chargeDelay) { L.chargeDelay = delayed; this.ret.classList.toggle('is-charge-delay', delayed); }\n    } else if",
+      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n      const delayed = view.delayed;\n      if (delayed !== L.chargeDelay) { L.chargeDelay = delayed; this.ret.classList.toggle('is-charge-delay', delayed); }\n      let reachOn = view.visible && !!ch.chargerCurrent && !!ch.chargerFull;\n      if (reachOn) {\n        const cam = G.rig?.gameCam || G.camera;\n        const current = cam ? this._project(cam, ch.chargerCurrent.x, ch.chargerCurrent.y, ch.chargerCurrent.z) : null;\n        const fullReach = cam ? this._project(cam, ch.chargerFull.x, ch.chargerFull.y, ch.chargerFull.z) : null;\n        reachOn = !!current && !!fullReach && current.z >= -1 && current.z <= 1 && fullReach.z >= -1 && fullReach.z <= 1;\n        if (reachOn) {\n          this.ret.style.setProperty('--crx', (current.x * innerWidth * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cry', (-current.y * innerHeight * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cfx', (fullReach.x * innerWidth * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cfy', (-fullReach.y * innerHeight * 0.5).toFixed(1) + 'px');\n        }\n      }\n      this.ret.classList.toggle('has-reach', reachOn);\n    } else if",
       'charger charge-reticle display delay');
     code = replaceOnce(code,
       '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
-      '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.chargeDelay = null;',
-      'reset the charge-delay reticle gate on rebuild');
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.chargeDelay = null;\n' +
+      '    this._L.blasterCue = null; this._L.blasterCuePhase = null;\n' +
+      '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;',
+      'reset charge-delay and Blaster bias presentation state');
     code = replaceOnce(code,
       "    if (L.kind === 'slosher') {",
       "    // S3 charge-reticle lifecycle (#594): a charging weapon shows no charge cluster while idle.\n" +
@@ -283,8 +381,23 @@ export function adaptSource(rel, code) {
       '        this.xh.style.setProperty(\'--muzzle-hit-y\', `${muzzleBlock.y.toFixed(1)}px`);\n' +
       '      }\n' +
       '    }\n' +
-      '    this.xh.classList.toggle(\'is-muzzle-blocked\', !!muzzleBlock);',
-      'S3 ShotGuideFrame reticle placement');
+      '    this.xh.classList.toggle(\'is-muzzle-blocked\', !!muzzleBlock);\n' +
+      '    const localActor = this._local();\n' +
+      '    const jumpState = L.kind === \'blaster\' ? localActor?.weaponRunner?.s3BlasterJumpState?.(localActor.weapon) : null;\n' +
+      '    const cueActive = !!(jumpState?.supported && jumpState.active);\n' +
+      '    if (this._blasterBiasEl) {\n' +
+      '      const percent = cueActive ? Math.round(jumpState.bias * 100) : 0;\n' +
+      '      const cuePhase = cueActive ? jumpState.phase : \'idle\';\n' +
+      '      const cue = !cueActive ? \'\' : cuePhase === \'held\' ? `OUTER ${percent}%`\n' +
+      '        : cuePhase === \'recovering\' ? \'RECOVERING\' : `OUTER ${percent}%`;\n' +
+      '      if (cue !== L.blasterCue || cuePhase !== L.blasterCuePhase) {\n' +
+      '        L.blasterCue = cue; L.blasterCuePhase = cuePhase;\n' +
+      '        this._blasterBiasEl.hidden = !cueActive;\n' +
+      '        this._blasterBiasEl.textContent = cue;\n' +
+      '        if (this._blasterBiasEl.dataset) this._blasterBiasEl.dataset.phase = cuePhase; else this._blasterBiasEl.setAttribute?.(\'data-phase\', cuePhase);\n' +
+      '      }\n' +
+      '    }',
+      'S3 ShotGuide, muzzle contact and Blaster jump-bias presentation');
     code = replaceOnce(code,
       '    } else if (kind === \'roller\') {\n' +
       '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg wide" viewBox="-80 -40 160 80" aria-hidden="true">\n' +
@@ -319,20 +432,24 @@ export function adaptSource(rel, code) {
       this.xh.style.setProperty('--gy', \`\${guideY.toFixed(1)}px\`);
     }
     if (L.kind === 'dualies') {
-      const pair = guideMe && guideCam && G.projectiles?.s3DualiesGuides?.(guideMe, guideMe.weapon);
-      const projected = pair?.map(point => this._project(guideCam, point.x, point.y, point.z)) || [];
-      const offsets = projected.map(point => point && point.z < 1
-        ? [point.x * innerWidth * .5, -point.y * innerHeight * .5] : [0, 0]);
-      const key = offsets.map(v => v.map(n => n.toFixed(1)).join(',')).join('|');
-      if (key !== L.dualGuide && this._twin && offsets.length === 2) {
-        L.dualGuide = key;
-        const turret = !!guideMe?.weaponRunner?.s3Turret;
+      const pair = guideMe && guideCam && G.projectiles?.s3DualiesGuides?.(guideMe, guideMe.weapon, guideCam);
+      const turret = !!guideMe?.weaponRunner?.s3Turret;
+      if (pair && this._twin) {
+        const previous = L.dualGuideValues || (L.dualGuideValues = []);
         for (let i = 0; i < 2; i++) {
-          const baseX = i === 0 ? 10.5 : -10.5;
-          const lockX = turret ? (i === 0 ? 4 : -4) : 0;
-          this._twin[i]?.setAttribute('transform',
-            \`translate(\${(offsets[i][0] - baseX + lockX).toFixed(2)} \${offsets[i][1].toFixed(2)})\`);
+          const point = this._project(guideCam, pair[i].x, pair[i].y, pair[i].z);
+          const x = point && point.z < 1 ? point.x * innerWidth * .5 : 0;
+          const y = point && point.z < 1 ? -point.y * innerHeight * .5 : 0;
+          const keyX = Math.round(x * 10), keyY = Math.round(y * 10);
+          if (!L.dualGuide || previous[i * 2] !== keyX || previous[i * 2 + 1] !== keyY || L.dualGuideTurret !== turret) {
+            previous[i * 2] = keyX; previous[i * 2 + 1] = keyY;
+            const baseX = i === 0 ? 10.5 : -10.5;
+            const lockX = turret ? (i === 0 ? 4 : -4) : 0;
+            this._twin[i]?.setAttribute('transform',
+              \`translate(\${(x - baseX + lockX).toFixed(2)} \${y.toFixed(2)})\`);
+          }
         }
+        L.dualGuide = true; L.dualGuideTurret = turret;
       }
     } else if (L.dualGuide != null) {
       L.dualGuide = null;
@@ -457,6 +574,16 @@ export function adaptSource(rel, code) {
     }),`,
       'exact recipient Super Jump target event');
     code = adaptJuddResult(rel, code, replaceOnce);
+    // #1066 progression mutation is owned by src/main.js after the UI split.
+
+    code = replaceOnce(code,
+      "  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
+      "  showSplatted({ by = null, who = null, byColor = '#2f5bff', respawn = 5, actor = null } = {}) {",
+      'death card opponent identity input');
+    code = replaceOnce(code,
+      "          killer && killer.weaponId ? h('div', { class: 'iw-spl__wn' }, (WEAPONS[killer.weaponId] || {}).name || '') : null),",
+      "          who ? h('div', { class: 'iw-spl__wn iw-spl__who' }, String(who)) : null),",
+      'death card opponent identity line');
     return "import { t as tr } from '../i18n.js';\nimport { applyShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { tagArt, AWARDS, AWARD_ICONS, awardIcon } from './menu-art.js';\nimport { fnv, tagTitle, tagNum } from './menus.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -479,7 +606,30 @@ export function adaptSource(rel, code) {
       '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
       'pwa service worker');
   }
+  if (rel === 'src/game/physics.js') {
+    const capsuleStart = code.indexOf('  collideCapsule(');
+    const capsuleEnd = code.indexOf('\n  // Flat-footprint ground probe', capsuleStart);
+    if (capsuleStart < 0 || capsuleEnd < capsuleStart) throw new Error('INKWAVE patch conflict: collideCapsule boundary');
+    let capsule = code.slice(capsuleStart, capsuleEnd);
+    if (!capsule.includes('c.ceilingBlock = -1;')) {
+      const matches = capsule.match(/c\.wallBlock\s*=\s*-1;/g) || [];
+      if (matches.length !== 1) throw new Error('INKWAVE patch conflict (ceiling contact block identity): expected exactly one wall-block reset in collideCapsule.');
+      capsule = capsule.replace(/c\.wallBlock\s*=\s*-1;/, match => match + ' c.ceilingBlock = -1;');
+    }
+    if (!capsule.includes('c.ceilingBlock = b.id;')) {
+      const ceilingLine = /else if \(_n\.y < -0\.6\)\s*(?:\{\s*)?c\.ceiling = true;(?:\s*\})?/;
+      const matches = capsule.match(new RegExp(ceilingLine.source, 'g')) || [];
+      if (matches.length !== 1) throw new Error('INKWAVE patch conflict (ceiling contact classification): expected exactly one ceiling contact branch in collideCapsule.');
+      capsule = capsule.replace(ceilingLine, 'else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }');
+    }
+    code = code.slice(0, capsuleStart) + capsule + code.slice(capsuleEnd);
+    return code;
+  }
   if (rel === 'src/world/level.js') {
+    code = replaceOnce(code,
+      '      roof: !!d.roof,              // off-limits top (roofs, crane legs …): never inkable, anyone landing on it slides off',
+      '      roof: !!d.roof,              // off-limits top (roofs, crane legs …): never inkable, anyone landing on it slides off\n      squidReturner: !!d.squidReturner,  // explicit anti-climb ceiling; ordinary ceilings do not strip Roll/Surge armor',
+      'Squid Returner surface classification');
     code = replaceOnce(code,
       '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));',
       '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));\n    this.homeSuperJumpPoints = (layout.homeSuperJumpPoints || layout.spawnPads).map((p) => new THREE.Vector3(...p));',
@@ -522,8 +672,19 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/core/input.js') {
-    code = replaceOnce(code, '    const ax = pad.axes;', `    const touchContact = this.lastDevice === 'touch' && this.mobile?.active && !this.mobile._destroyed &&
+    code = replaceOnce(code, '  pollPad() {', `  _liveTouchContact() {
+    return this.lastDevice === 'touch' && !!this.mobile?.active && !this.mobile._destroyed &&
       ((this.mobile._ptr?.size || 0) > 0 || (this.mobile._stick?.id ?? -1) >= 0);
+  }
+  pollPad() {`, 'live touch contact predicate');
+    code = replaceOnce(code, '  pollPad() {\n    const pads = navigator.getGamepads ? navigator.getGamepads() : [];',
+      "  pollPad() {\n    const previousPad = this.pad, padOwned = !!previousPad && this.lastDevice === 'pad';\n    const pads = navigator.getGamepads ? navigator.getGamepads() : [];",
+      'gamepad disconnect ownership snapshot');
+    code = replaceOnce(code, '    this.pad = pad;\n    this.padPressed.clear();\n    if (!pad) return;',
+      "    this.pad = pad;\n    this.padPressed.clear();\n    if (!pad) {\n      if (padOwned) { this._s3PadCanceled = true; this.padPrev.length = 0; }\n      return;\n    }",
+      'gamepad disappearance is cancellation epoch');
+
+    code = replaceOnce(code, '    const ax = pad.axes;', `    const touchContact = this._liveTouchContact();
     const ax = pad.axes;`, 'live touch gesture owns axis arbitration');
     return replaceOnce(code,
       "if (Math.abs(ax[0]) > 0.3 || Math.abs(ax[1]) > 0.3 || Math.abs(ax[2]) > 0.3 || Math.abs(ax[3]) > 0.3) this.lastDevice = 'pad';",
@@ -542,12 +703,51 @@ export function adaptSource(rel, code) {
     this._s3Enabled = value;
   }
   update(dt) {`, 'controller disable neutralizes transient pad look');
+    code = replaceOnce(code, '    this.inRange = false;',
+      '    this.inRange = false;\n    this.chargerCurrentReach = new THREE.Vector3(); this.chargerFullReach = new THREE.Vector3(); this.chargerReachVisible = false;',
+      'Charger dual reach HUD state');
+    code = replaceOnce(code, '    const it = a.intent;\n    if (!this.enabled) {',
+      `    const it = a.intent;
+    if (inp._s3PadCanceled) {
+      // #1024: losing the active pad is source cancellation, not RT/RB release.
+      inp._s3PadCanceled = false;
+      a.weaponRunner?.cancelPendingInput?.();
+      if (a.weaponRunner) a.weaponRunner.aimingSub = false;
+      if (a._prevIntent) { a._prevIntent.fire = false; a._prevIntent.sub = false; }
+      it.fire = false; it.sub = false;
+      this.padLook.x = this.padLook.y = 0; this.edgeT = 0;
+    }
+    if (!this.enabled) {`, 'pad disconnect cancels held release actions');
+    code = replaceOnce(code,
+      `      // edge boost: holding the stick at the rim speeds yaw up (quick 180s) after a short delay
+      if (_stick.mag > 0.93) this.edgeT = Math.min(0.5, this.edgeT + dt); else this.edgeT = Math.max(0, this.edgeT - dt * 3);
+      const boost = 1 + 0.55 * clamp((this.edgeT - 0.16) / 0.3, 0, 1);
+      const c = _stick.mag > 0 ? lookCurve(_stick.mag) / _stick.mag : 0;`,
+      `      this.edgeT = 0;
+      const yawRate = Math.min(3.6 * ps, Math.PI * 2 - 1e-6);
+      const c = _stick.mag > 0 ? lookCurve(_stick.mag) / _stick.mag : 0;`,
+      'S3 right-stick steady yaw cap');
+    code = replaceOnce(code,
+      '      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;',
+      '      rig.yaw -= this.padLook.x * yawRate * friction * dt;',
+      'S3 right-stick yaw rate');
+
     const start = code.indexOf('    if (this.onTarget && this.onTarget !== G.boss) {');
     const end = code.indexOf('    // is the crosshair point inside', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: camera aim connection');
     code = code.slice(0, start) + code.slice(end);
     code = replaceOnce(code, '    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;\n  }',
-      '    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;\n    updateShotGuide(this);\n  }', 'S3 ShotGuideFrame guide point');
+      "    if (w.kind === 'charger') {\n" +
+      "      const fullRange = G.projectiles?.chargerReach ? G.projectiles.chargerReach(1) : w.rangeMax;\n" +
+      "      const stop = Math.min(range, this.onTarget === G.boss ? a.aimPoint.distanceTo(start) : best);\n" +
+      "      this.chargerCurrentReach.copy(start).addScaledVector(fwd, stop);\n" +
+      "      this.chargerFullReach.copy(start).addScaledVector(fwd, fullRange);\n" +
+      "      this.chargerReachVisible = !!a.weaponRunner?.charging;\n" +
+      "    } else this.chargerReachVisible = false;\n" +
+      "    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;\n" +
+      "    updateShotGuide(this);\n" +
+      "  }",
+      'Charger current/full HUD endpoints');
     code = replaceOnce(code, "it.jump = inp.down('Space')", "it.jump = inp.wasPressed('Space') || inp.padPressed.has(0) || inp.down('Space')", 'latched jump input');
     code = replaceOnce(code, "it.squid = inp.down('ShiftLeft')", "it.squid = inp.wasPressed('ShiftLeft') || inp.wasPressed('ShiftRight') || inp.down('ShiftLeft')", 'latched squid input');
     code = replaceOnce(code, 'it.fire = inp.mouse.left ||', 'it.fire = inp.mouse.leftPressed || inp.mouse.left ||', 'latched fire input');
@@ -555,7 +755,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "it.special = inp.down('KeyF')", "it.special = inp.wasPressed('KeyF') || inp.wasPressed('KeyQ') || inp.down('KeyF')", 'latched special input');
     code = replaceOnce(code, "    const range = w.kind === 'charger' ? w.rangeMax : w.kind === 'roller' ? 6 : (w.range || 12);",
       "    const chargeNow = clamp(w.kind === 'splatling' ? (a.weaponRunner?.streaming ? (a.weaponRunner?.fidelitySplatlingCharge ?? a.weaponRunner?.charge ?? 0) : (a.weaponRunner?.charge ?? 0)) : (a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0), 0, 1);\n" +
-      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'splatling' ? (G.projectiles?.splatlingReach ? G.projectiles.splatlingReach(w, chargeNow) : (w.range || 12)) : w.kind === 'roller' ? 6 : (w.range || 12);",
+      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'splatling' ? (G.projectiles?.splatlingReach ? G.projectiles.splatlingReach(w, chargeNow) : (w.range || 12)) : w.kind === 'roller' ? 6 : w.reticleRange ? (a.grounded ? w.reticleRange.ground : w.reticleRange.air) : (w.range || 12);",
       'Charger and Splatling HUD reach follow charge');
     code = replaceOnce(code,
       '    const pick = (i) => { const o = allies[i]; if (o && o.alive && !o.superJumpState) a.superJump(o); };',
@@ -570,7 +770,31 @@ export function adaptSource(rel, code) {
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
+    // #226/#735: count INKWAVE rain candidates, ground contact and owned
+    // paint separately. The existing 12-unit ray is an internal consistency
+    // bound, not a verified S3-specific HP cutoff or RainNum semantics.
+    code = replaceOnce(code,
+      '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;',
+      '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;\n    const inkWaveRainReach = 12;',
+      'finite rain trace');
+    code = replaceOnce(code,
+      '          const g = G.physics.raycast(_v, DOWN, 12, _hit);',
+      '          const g = G.physics.raycast(_v, DOWN, inkWaveRainReach, _hit);\n          const audit = c.s3RainAudit || (c.s3RainAudit = { candidateDrops: 0, groundHits: 0, paintEvents: 0 });\n          audit.candidateDrops++;\n          if (g.hit) audit.groundHits++;\n          if (g.hit && (!c.ghost || !c.owner.remote)) audit.paintEvents++;',
+      'count Storm rain candidate/contact/paint separately');
+    code = replaceOnce(code,
+      '          if (dx * dx + dz * dz > (sp.radius * s) ** 2 || e.pos.y > c.group.position.y) continue;',
+      '          if (dx * dx + dz * dz > (sp.radius * s) ** 2 || e.pos.y > c.group.position.y ||\n              e.pos.y + 1.2 < c.group.position.y - 0.8 - inkWaveRainReach) continue;',
+      'prevent damage beyond own finite rain reach');
+    code = "import { fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    code = replaceOnce(code, 'let vis = (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));',
+      'let vis = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));', 'slosher source draw radius');
+    code = replaceOnce(code, 'let tail = (p.tail0 ?? 1) + Math.min(p.tailK ?? 1.2, sp * 0.04) * g;',
+      'let tail = p.fidelitySloshDraw ? fidelitySlosherDrawTail(p, sp) : (p.tail0 ?? 1) + Math.min(p.tailK ?? 1.2, sp * 0.04) * g;', 'slosher source tail window');
+    code = replaceOnce(code, 'const r0 = p.vis || p.size, spk =',
+      'const r0 = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : p.vis || p.size, spk =', 'slosher satellite source radius');
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
+    code = replaceOnce(code, 'if (g.hit && !c.ghost) c.owner.addTurf(', 'if (g.hit && (!c.ghost || !c.owner.remote)) c.owner.addTurf(', 'adopted Storm owns its remaining paint');
+    code = replaceOnce(code, '        if (!c.ghost) G.boss?.rain(', '        if (!c.ghost || !c.owner.remote) G.boss?.rain(', 'adopted Storm owns its remaining Boss rain');
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
     code = replaceOnce(code, 'Math.max(this.cooldown, 0.22)', 'Math.max(this.cooldown, w.postStreamDelay)', 'splatling sourced post-stream delay');
@@ -593,6 +817,8 @@ export function adaptSource(rel, code) {
       "      this.applyHit(b.owner, e, distanceDamage(s.damageBands, d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');", 'bomb damage bands');
     code = replaceOnce(code, "      this.applyHit(p.owner, e, lerp(w.splashDamageMax, w.splashDamageMin, d / w.splashRadius), 'blaster');",
       "      this.applyHit(p.owner, e, distanceDamage(w.damageBands, d), 'blaster');", 'blaster damage bands');
+    code = replaceOnce(code, '      if (!G.physics.los(c, _v)) continue;',
+      '      if (!blasterBlastExposed(G.physics, c, e, PLAYER)) continue;', 'Blaster volume-aware burst cover');
     code = replaceOnce(code, '      b.vel.y -= 24 * dt;', '      b.vel.y -= (b.kind === \'bomb\' ? SUB.bomb.gravity : 24) * dt;', 'bomb gravity');
     code = replaceOnce(code, 'const pos = _v.copy(a.pos); pos.y += 1.35;', 'const pos = _v.copy(a.pos); pos.y += 1.35; bombReleasePosition(a, pos);', 'bomb release origin');
     code = replaceOnce(code, 'const p = _v.copy(a.pos); p.y += 1.35;', 'const p = _v.copy(a.pos); p.y += 1.35; bombPreviewPosition(a, p);', 'bomb preview origin');
@@ -608,7 +834,7 @@ export function adaptSource(rel, code) {
       "if (b.kind === 'storm' && b.age > 1.1) { this._spawnCloud(b); if (b.ghost) this.clouds[this.clouds.length - 1].ghost = true; this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
       "if (b.kind === 'storm' && b.age > 30) { this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
       'storm airborne deploy');
-    code = replaceOnce(code, '  clear() {',
+    if (!code.includes('  _recycle(p) {')) code = replaceOnce(code, '  clear() {',
       '  // Pooled records wait inside the persistent G.projectiles pool across matches;\n' +
       '  // sever the Actor reference before the record is pooled (#622).\n' +
       '  _recycle(p) {\n' +
@@ -616,9 +842,15 @@ export function adaptSource(rel, code) {
       '    this.pool.push(p);\n' +
       '  }\n\n' +
       '  clear() {', 'projectile owner-severing recycle helper');
-    code = replaceOnce(code, '  clear() {\n    for (const p of this.list) this.pool.push(p);',
-      '  clear() {\n    for (const p of this.list) this._recycle(p);',
-      'clear recycles without owners');
+    if (!code.includes('for (const p of this.list) this._recycle(p);')) {
+      const clearAnchor = code.includes('  clear() {\n    this.inkFlight.clear();\n    for (const p of this.list) this.pool.push(p);')
+        ? '  clear() {\n    this.inkFlight.clear();\n    for (const p of this.list) this.pool.push(p);'
+        : '  clear() {\n    for (const p of this.list) this.pool.push(p);';
+      const clearTarget = clearAnchor.includes('inkFlight.clear')
+        ? '  clear() {\n    this.inkFlight.clear();\n    for (const p of this.list) this._recycle(p);'
+        : '  clear() {\n    for (const p of this.list) this._recycle(p);';
+      code = replaceOnce(code, clearAnchor, clearTarget, 'clear recycles without owners');
+    }
     code = replaceOnce(code, '{ list[i] = list[list.length - 1]; list.pop(); this.pool.push(p); } }',
       '{ list[i] = list[list.length - 1]; list.pop(); this._recycle(p); } }',
       'normal completion recycles without owners');
@@ -627,8 +859,79 @@ export function adaptSource(rel, code) {
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
+    // #1135: S3 standard Slosher has no opponent-damage landing splash record.
+    // Keep landing FX/paint, but do not let a zero-damage legacy radius poison
+    // the shared volley hit cache or emit false hit feedback.
+    code = replaceOnce(code,
+      "    const w = WEAPONS[p.wid] || WEAPONS.slosher;\n    for (const e of G.actors) {",
+      "    const w = WEAPONS[p.wid] || WEAPONS.slosher;\n    if (w.splashDamage > 0) {\n    for (const e of G.actors) {",
+      'Slosher qualifying landing damage gate');
+    code = replaceOnce(code,
+      "    if (G.boss && direct !== 'boss' && !(p.vol && p.vol.hits.includes(G.boss))) { p.vol?.hits.push(G.boss); G.boss.splash(p.owner, at, w.splashRadius + 0.3, w.splashDamage, w.splashDamage, p.wid || 'slosher'); }\n    if (p.owner.isLocal || G.camera.position.distanceToSquared(at) < 26 * 26) {",
+      "    if (G.boss && direct !== 'boss' && !(p.vol && p.vol.hits.includes(G.boss))) { p.vol?.hits.push(G.boss); G.boss.splash(p.owner, at, w.splashRadius + 0.3, w.splashDamage, w.splashDamage, p.wid || 'slosher'); }\n    }\n    if (p.owner.isLocal || G.camera.position.distanceToSquared(at) < 26 * 26) {",
+      'Slosher visual-only landing path');
+
+    // #1123: selected kit bombs own one source-shaped explosion paint pass.
+    // Generic Splat Bomb keeps the native footprint unchanged.
+    code = replaceOnce(code,
+      "    let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), s.paintRadius, b.team, { seed: Math.random() });\n    for (let i = 0; i < 5; i++) {\n      const a = Math.random() * Math.PI * 2, r = s.paintRadius * (0.6 + Math.random() * 0.4);\n      area += G.paint.splat(_v.set(c.x + Math.cos(a) * r, c.y + 0.5, c.z + Math.sin(a) * r), 0.7 + Math.random() * 0.5, b.team, { seed: Math.random() });\n    }\n    b.owner.addTurf(area);",
+      "    const kitArea = kitBombExplosionPaint(SUB, b, G.paint);\n    if (kitArea == null) {\n      let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), s.paintRadius, b.team, { seed: Math.random() });\n      for (let i = 0; i < 5; i++) {\n        const a = Math.random() * Math.PI * 2, r = s.paintRadius * (0.6 + Math.random() * 0.4);\n        area += G.paint.splat(_v.set(c.x + Math.cos(a) * r, c.y + 0.5, c.z + Math.sin(a) * r), 0.7 + Math.random() * 0.5, b.team, { seed: Math.random() });\n      }\n      b.owner.addTurf(area);\n    } else b.owner.addTurf(kitArea);",
+      'kit-specific bomb explosion paint');
+    // #1118/#1113: arbitrate the native bomb's swept segment against Vac and
+    // Big Bubbler before native world-contact mutation. A nearer stage surface
+    // wins ties/order; a Vac consumes without detonation, a Bubbler contact
+    // detonates exactly once at the contact point.
+    code = replaceOnce(code,
+      '      const hit = G.physics.segment(_v, b.pos, _hit);',
+      `      const hit = G.physics.segment(_v, b.pos, _hit);
+      const s3BombDefense = this.kitBombDefenseCandidate?.(b, _v, b.pos);
+      const s3BombStep = _v.distanceTo(b.pos);
+      const s3WorldDistance = hit.hit ? _v.distanceTo(hit.point) : Infinity;
+      if (s3BombDefense && s3BombDefense.distance < s3WorldDistance - 1e-10) {
+        if (s3BombStep > 1e-10) b.pos.copy(_v).lerp(b.pos, Math.max(0, Math.min(1, s3BombDefense.distance / s3BombStep)));
+        s3BombDefense.onHit();
+        if (s3BombDefense.kind === 'bubbler') {
+          const nm = G.netm; if (b.ghost && nm) nm.mute++;
+          try { this._explodeBomb(b); } finally { if (b.ghost && nm) nm.mute--; }
+        }
+        this._releaseBomb(b); this.bombs.splice(i, 1); continue;
+      }`,
+      'native bomb first-contact Vac/Bubbler arbitration');
+    // #1060: remove only the generic burst-floor stamp after the kit authority
+    // adapter has attached its owner/ghost gate to this exact burst location.
+    code = replaceOnce(code,
+      "    // paint under the burst\n    const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n",
+      "    // paint under the burst\n    if (p.s3Weapon?.kind === 'blaster') {\n      applyFidelityBlasterBurstPaint(this, p, c, direct);\n    } else {\n      const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n      if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n    }\n",
+      'Blaster source collision-burst paint with timed-burst suppression');
+    // #1049: sourced Blaster SplashPaintParam owns the vertical receiving-surface window.
+    code = replaceOnce(code,
+      '        const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);',
+      '        const dropProbe = p.type === \'blast\' && Number.isFinite(p.s3SplashDropMax) ? p.s3SplashDropMax : 4;\n        const g = G.physics.raycast(p.pos, DOWN, dropProbe, _hit2, true);',
+      'Blaster flight splash drop-height window');
+    code = replaceOnce(code,
+      '      if (d > kitBombRadius(SUB, b, s.radius)) continue;',
+      '      if (d > Math.max(kitBombRadius(SUB, b, s.radius), b.s3Sub ? 0 : (s.knockback?.distance ?? 0))) continue;',
+      'Splat Bomb independent knockback radius');
+    code = replaceOnce(code,
+      "      this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');",
+      "      if (d <= kitBombRadius(SUB, b, s.radius)) {\n        this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');\n      }\n      if (!b.s3Sub && s.knockback && d <= s.knockback.distance) applySplatBombKnockback(b, e, c, _v, d, s.knockback);",
+      'Splat Bomb damage and independent knockback');
+    code = replaceOnce(code,
+      '        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);',
+      '        applySplatBombSurfaceResponse(b, hit.normal);', 'Splat Bomb sourced ground resistance');
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
-    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
+    // Apply after contact-recovery and Agent3 have both transformed the source.
+    // Otherwise the native pre-LOS condition is gone and the build fails.
+    // #1109 permits micro-speed only with actual stick admission.
+    code = replaceOnce(code,
+      '      if (agent3RollerBodyContact(a, e, hs) && rollerContactClear(a, e, w, G.physics, PLAYER)) {',
+      '      if (rollerStickActive(a) && rollerContactCandidate(a, e, w, PLAYER) && agent3RollerBodyContact(a, e, hs, true) && rollerContactClear(a, e, w, G.physics, PLAYER)) {',
+      'Roller micro-speed actor contact admission');
+    code = replaceOnce(code,
+      '    if (G.boss && hs > 1.0) {',
+      '    if (G.boss && rollerStickActive(a)) {',
+      'Roller micro-speed boss contact admission');
+    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
@@ -636,9 +939,9 @@ export function adaptSource(rel, code) {
     return `import { swimTrailVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/fx/fxHooks.js') {
+    code = adaptChargerSightCache(rel, code, replaceOnce);
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
-    code = adaptChargerSightCache(rel, code, replaceOnce);
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
@@ -698,36 +1001,42 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    if (!this.alive || amount <= 0) return false;',
       '    if (!this.alive || amount <= 0) return false;\n    if (hasPendingLethal(this)) return false;', 'pending lethal damage admission');
     code = replaceOnce(code, '    if (this.hp <= 0) { this.splat(attacker, source); return true; }',
-      '    if (this.hp <= 0) { scheduleLethal(this, attacker, source); return true; }', 'one-frame lethal decision delay');
+      '    if (this.hp <= 0) { scheduleLethal(this, attacker, source, G.time); return true; }', 'one-frame lethal decision delay');
     const actorUpdateHead = code.includes('  update(dt) {\n    advanceStormLock(this, dt);\n    this.anim.time = G.time;')
       ? '  update(dt) {\n    advanceStormLock(this, dt);\n    this.anim.time = G.time;'
       : '  update(dt) {\n    this.anim.time = G.time;';
     code = replaceOnce(code, actorUpdateHead,
-      actorUpdateHead.replace('    this.anim.time = G.time;', '    flushPendingLethal(this);\n    this.anim.time = G.time;'),
+      actorUpdateHead.replace('    this.anim.time = G.time;', '    flushPendingLethal(this, G.time);\n    this.anim.time = G.time;'),
       'flush lethal on next fixed tick');
     code = replaceOnce(code, '  _finishFrame(dt) {', '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);', 'record grounded jump destination');
     code = replaceOnce(code, '    this.grounded = grounded;\n    this.airTime', '    this.grounded = grounded;\n    rememberSuperJumpGround(this);\n    this.airTime', 'record resolved jump destination');
     code = replaceOnce(code, 'this.groundN.copy(gh.normal); }\n  }', 'this.groundN.copy(gh.normal); }\n    rememberSuperJumpGround(this);\n  }', 'record spawn jump destination');
-    code = replaceOnce(code, "    if (this.superJumpState) { this._updateSuperJump(dt); this._finishFrame(dt); return; }", "    if (this.superJumpState) { clearFullCancelCandidate(this); this._updateSuperJump(dt); updateSuperJumpMain(this, dt, firePressed); if (this.alive) this._finishFrame(dt); return; }", 'super jump main input');
+    // Issue #1050: the Super Jump-owned branch must run the shared lethal-water
+    // owner before and after each jump step so a request or a crossing inside
+    // lethal open water commits the owner water splat exactly once instead of
+    // being rescued by charge/flight. Dead actors never reach this branch
+    // (update() returns earlier), and the owner's own alive guard keeps the
+    // splat single-fire for local and remote owners alike.
+    code = replaceOnce(code, "    if (this.superJumpState) { this._updateSuperJump(dt); this._finishFrame(dt); return; }", "    if (this.superJumpState) { clearFullCancelCandidate(this); this._checkFallDeath(); if (!this.alive) return; this._updateSuperJump(dt); if (this.alive) { this._checkFallDeath(); if (!this.alive) return; } updateSuperJumpMain(this, dt, firePressed); if (this.alive) this._finishFrame(dt); return; }", 'super jump main input and lethal-water hazard');
     // Issue #744: the Super Jump branch returns before the shared post-movement
     // resource phase. Charge stays damageable (#255 protects flight only), so a
     // tick that starts in charge runs the same phase once. Flight runs HP only.
-    code = replaceOnce(code, '    if (this.superJumpState) { clearFullCancelCandidate(this); this._updateSuperJump(dt); updateSuperJumpMain(',
-      "    if (this.superJumpState) { clearFullCancelCandidate(this); const superJumpCharge = this.superJumpState.phase === 'charge'; this._updateSuperJump(dt); if (this.alive) { if (superJumpCharge) updateResources(this, dt); else if (!this.remote) updateHealthRecovery(this, dt); } updateSuperJumpMain(",
+    code = replaceOnce(code, '    if (this.superJumpState) { clearFullCancelCandidate(this); this._checkFallDeath(); if (!this.alive) return; this._updateSuperJump(dt); if (this.alive) { this._checkFallDeath(); if (!this.alive) return; } updateSuperJumpMain(',
+      "    if (this.superJumpState) { clearFullCancelCandidate(this); this._checkFallDeath(); if (!this.alive) return; const superJumpCharge = this.superJumpState.phase === 'charge'; this._updateSuperJump(dt); if (this.alive) { this._checkFallDeath(); if (!this.alive) return; } if (this.alive) { if (superJumpCharge) updateResources(this, dt); else if (!this.remote) updateHealthRecovery(this, dt); } updateSuperJumpMain(",
       'super jump charge resource phase');
     const specialActiveHead = code.includes("    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }")
       ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }"
       : "    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }";
     const specialActiveTarget = specialActiveHead.includes('stormHolding')
-      ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { clearFullCancelCandidate(this); const stormResources = this.specialActive.id === 'storm'; this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }"
-      : "    if (this.specialActive) { clearFullCancelCandidate(this); const stormResources = this.specialActive.id === 'storm'; this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }";
+      ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { clearFullCancelCandidate(this); const activeSpecial = this.specialActive.id, stormResources = activeSpecial === 'storm', slamRecovery = activeSpecial === 'slam', trizookaHealth = activeSpecial === 'trizooka' && !this.remote; this._updateSpecial(dt); if (this.alive) { if (stormResources) updateResources(this, dt); else if (slamRecovery) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (trizookaHealth) updateSpecialHealthRecovery(this, dt); } if (this.alive) this._finishFrame(dt); return; }"
+      : "    if (this.specialActive) { clearFullCancelCandidate(this); const activeSpecial = this.specialActive.id, stormResources = activeSpecial === 'storm', slamRecovery = activeSpecial === 'slam', trizookaHealth = activeSpecial === 'trizooka' && !this.remote; this._updateSpecial(dt); if (this.alive) { if (stormResources) updateResources(this, dt); else if (slamRecovery) updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (trizookaHealth) updateSpecialHealthRecovery(this, dt); } if (this.alive) this._finishFrame(dt); return; }";
     code = replaceOnce(code, specialActiveHead, specialActiveTarget, 'special active resources');
     // Issue #624 residual: activation also returns before ordinary resources.
     // Admit only a live Storm user; other specials retain their resource gates.
     code = replaceOnce(code, "    if (specialPressed && this.specialReady()) { this._startSpecial(); this._finishFrame(dt); return; }",
-      "    if (specialPressed && this.specialReady()) { clearFullCancelCandidate(this); this._startSpecial(); if (this.alive && this.specialActive?.id === 'storm') updateResources(this, dt); this._finishFrame(dt); return; }",
-      'storm activation resources');
-    code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,", 'super jump wall support and destination admission');
+      "    if (specialPressed && this.specialReady()) { clearFullCancelCandidate(this); this._startSpecial(); if (this.alive) { if (this.specialActive?.id === 'storm') updateResources(this, dt); else if (this.specialActive?.id === 'slam') updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (this.specialActive?.id === 'trizooka' && !this.remote) updateSpecialHealthRecovery(this, dt); } this._finishFrame(dt); return; }",
+      'storm/slam/trizooka activation resources');
+    code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    if (this._checkFallDeath()) return false;\n    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,", 'super jump wall support and destination admission');
     code = replaceOnce(code, 'target, from: new THREE.Vector3(), to: new THREE.Vector3(), marker: 0', 'target, from: new THREE.Vector3(), to: destination, marker: 0', 'super jump committed destination');
     code = replaceOnce(code, "      this.vel.set(0, 0, 0);\n      this.form = 'squid';\n      this._probeGround();", '      const supported = prepareSuperJump(this, dt);\n      if (!this.alive) return;', 'super jump preparation physics');
     const targetStart = code.indexOf('        const tgt = s.target;'), targetEnd = code.indexOf("        s.phase = 'flight';", targetStart);
@@ -754,7 +1063,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    if (!inked) {                                                        // ink ran out under us: let go',
       '    if (!inked && crossSurgeInkGap(this, h, into)) return;\n    if (!inked) {                                                        // ink ran out under us: let go', 'surge unpainted gap');
     code = replaceOnce(code, '      if (s.t > 0.75) {', '      if (supported && s.t + 1e-10 >= this.s3.jumpChargeTime + superJumpStartupTime(this)) {', 'super jump charge');
-    code = replaceOnce(code, '        s.dur = 1.15 + Math.min(0.6, s.from.distanceTo(s.to) / 80);', '        s.dur = this.s3.jumpFlightTime;', 'super jump flight');
+    code = replaceOnce(code, '        s.dur = 1.15 + Math.min(0.6, s.from.distanceTo(s.to) / 80);', '        s.dur = this.s3.jumpFlightTime + stealthJumpExtraTime(this, s.from, s.to);', 'super jump flight');
     code = replaceOnce(code, '        this.invuln = Math.max(this.invuln, s.dur + 0.2);',
       '        // Super Jump does not grant an extra landing shield.', 'super jump invulnerability');
     code = replaceOnce(code, '      const k = Math.min(1, s.t / s.dur);',
@@ -788,6 +1097,7 @@ export function adaptSource(rel, code) {
         '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
         '    const wantSquid = intent.squid && !fireWins && !hasFullCancelGroundAttack(this) && !this.weaponRunner.busy() && !enemyGrounded;\n';
     code = replaceOnce(code, swimFormHead, swimFormTarget, 'enemy ink swim-form eligibility');
+    code = replaceOnce(code, '      if (wantSquid && this.groundTeam === 1) G.fx?.burst(', '      if (wantSquid && this.grounded && this.groundTeam === 1) G.fx?.burst(', 'no ground-entry spray for mid-air transform');
     code = replaceOnce(code,
       "    // ---- surface under feet (from last frame's ground probe; position hasn't moved since)\n    this._surface();\n",
       '', 'move surface sample before form selection');
@@ -798,12 +1108,14 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this._spawnBarrier();',
       '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
       'S3 universal spawn barrier removal');
-    return `import { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
+    code = adaptTidalSlamGauge(rel, code, replaceOnce);
+    return `import { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, stealthJumpExtraTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery, updateSpecialHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
-    code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerModel(buildRoller()),', 'roller drum proportions');
-    return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\n" + code;
+    code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerFoldModel(rollerModel(buildRoller())),', 'roller drum proportions and articulated middle hinge');
+    code = replaceOnce(code, 'blaster: buildBlaster,', 'blaster: () => blasterMechanism(buildBlaster()),', 'blaster S3 lever/spring-front mechanism channels');
+    return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\nimport { rollerFoldModel } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { blasterMechanism } from '../../patches/splatoon3/runtime/blaster-mechanism-model.mjs';\n" + code;
   }
   if (rel === 'src/audio/music.js') {
     // Match-start Opening cue (issue #605): an original short sting for the pre-GO intro.
@@ -913,7 +1225,50 @@ export function adaptSource(rel, code) {
       '      if (this.swimWake && (!m || (!m.paused && !resultsQuiet))) this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);',
       '#53 swim wakes behind results');
     code = replaceOnce(code, '    dt = Math.min(dt, 1 / 24);\n', '', 'elapsed time');
+    code = replaceOnce(code,
+      `    // shadows: every frame (half-rate updates made moving shadows — your own, right under the crosshair — judder);
+    // only the low preset halves it
+    const sm = G.renderer.shadowMap;
+    sm.autoUpdate = false;
+    this._frameN = (this._frameN || 0) + 1;
+    if (!worldHidden && (this.settings.quality !== 'low' || (this._frameN & 1))) sm.needsUpdate = true;`,
+      `    // #1026: shadow cadence follows effective device quality. Touch-primary
+    // gameplay caps the 2048px sun shadow at 30 Hz; desktop HIGH/ULTRA keeps
+    // full cadence and LOW remains half-rate. ShadowCache stays enabled.
+    const sm = G.renderer.shadowMap;
+    sm.autoUpdate = false;
+    this._frameN = (this._frameN || 0) + 1;
+    const shadowQuality = effectiveQuality(this.settings, this.mobile);
+    const halfRateShadow = !!this.mobile?.touch || shadowQuality.shadowSize <= 1024;
+    if (!worldHidden && (!halfRateShadow || (this._frameN & 1))) sm.needsUpdate = true;`,
+      'effective mobile shadow cadence');
     code = replaceOnce(code, '    this.input.endFrame();\n', '', 'input consumption');
+    {
+      const judgeStart = code.indexOf('  async _judge() {');
+      const judgeEnd = code.indexOf('\n  _fade(', judgeStart);
+      if (judgeStart < 0 || judgeEnd < judgeStart) throw new Error('INKWAVE patch conflict (Private Battle persistent progression): judge boundary');
+      let judge = code.slice(judgeStart, judgeEnd);
+      if (!judge.includes('const privateBattle = !!G.netm;')) {
+        // score-hud runs before this inline composition and may own the exact
+        // Turf XP expression. Preserve that expression without coupling this
+        // ownership patch to its spelling.
+        const gainedPattern = /^(\s*)const gained = ([^\n;]+);/gm;
+        const gainedMatches = [...judge.matchAll(gainedPattern)];
+        if (gainedMatches.length !== 1) throw new Error(`INKWAVE patch conflict (Private Battle persistent progression): expected one Turf gained line (${gainedMatches.length})`);
+        judge = judge.replace(gainedPattern, (_line, indent, rhs) =>
+          `${indent}const privateBattle = !!G.netm;\n${indent}const gained = privateBattle ? 0 : ${rhs};`);
+
+        const mutStart = judge.indexOf('    p.xp += gained;');
+        const saveLine = "    saveJSON('inkwave.profile', p);";
+        const saveStart = judge.indexOf(saveLine, mutStart);
+        if (mutStart < 0 || saveStart < mutStart) throw new Error('INKWAVE patch conflict (Private Battle persistent progression): profile mutation block');
+        const mutEnd = saveStart + saveLine.length;
+        const mutation = judge.slice(mutStart, mutEnd);
+        const indented = mutation.split('\n').map(line => '  ' + line).join('\n');
+        judge = judge.slice(0, mutStart) + '    if (!privateBattle) {\n' + indented + '\n    }' + judge.slice(mutEnd);
+      }
+      code = code.slice(0, judgeStart) + judge + code.slice(judgeEnd);
+    }
     code = replaceOnce(code,
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES });',
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
@@ -944,7 +1299,7 @@ export function adaptSource(rel, code) {
       'projected Shooter muzzle contact');
     code = replaceOnce(code,
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },",
-      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H), muzzleBlock },",
+      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H), muzzleBlock, chargerCurrent: m.controller?.chargerReachVisible ? m.controller.chargerCurrentReach : null, chargerFull: m.controller?.chargerReachVisible ? m.controller.chargerFullReach : null },",
       'S3 ShotGuideFrame and muzzle-contact HUD projection');
     {
       const rawEnemyReveal = "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;";
@@ -960,7 +1315,74 @@ export function adaptSource(rel, code) {
         if (accepted !== 1) throw new Error('INKWAVE patch conflict (enemy map reveal): expected raw, score-HUD, or composed connection');
       }
     }
-    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\n` + code;
+    code = replaceOnce(code,
+      "        const by = attacker ? attacker.name : t(cause === 'water' ? 'the sea' : 'enemy ink');\n        this.hud?.showSplatted({ by, byColor:",
+      "        const card = splatCardText(cause, attacker, t); // SPLATTED BY names the cause; the opponent is a separate line\n        this.hud?.showSplatted({ by: card.cause, who: card.who, byColor:",
+      'death card splat cause');
+    // #1131: an async Judd reveal belongs to the match/epoch that started it.
+    // Quitting/room abort invalidates the epoch synchronously, before the fade,
+    // so stale continuation cannot revive results or mutate persistent XP.
+    code = replaceOnce(code,
+      '  async _judge() {\n    const m = this.match;',
+      '  async _judge() {\n    const m = this.match;\n    const judgeEpoch = this._s3JudgeEpoch = (this._s3JudgeEpoch || 0) + 1;',
+      'Judd result epoch');
+    code = replaceOnce(code,
+      '    await (judgeP || new Promise((r) => setTimeout(r, 4000)));',
+      '    await (judgeP || new Promise((r) => setTimeout(r, 4000)));\n    if (this._s3JudgeEpoch !== judgeEpoch || this.match !== m || m.state !== \'judge\') return;',
+      'Judd stale continuation guard');
+    code = replaceOnce(code,
+      '  async quitToMenu() {\n    clearTimeout(this._netEndT);',
+      '  async quitToMenu() {\n    this._s3JudgeEpoch = (this._s3JudgeEpoch || 0) + 1;\n    clearTimeout(this._netEndT);',
+      'menu exit invalidates Judd result');
+    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\nimport { splatCardText } from '../patches/splatoon3/runtime/death-card.mjs';\n` + code;
+  }
+
+  if (rel === 'src/game/showcase.js') {
+    // #1119: portrait readback staging targets are lazy resources, not
+    // lifetime Showcase allocations. Leaving Locker releases them once async
+    // readbacks settle; final dispose also tears down the resolve material/scene.
+    code = replaceOnce(code,
+      '    this._pq = []; this._pcache = new Map(); this._prt = null; this._prt8 = null; this._pbuf = null; this._pcam = null;',
+      '    this._pq = []; this._pcache = new Map(); this._prt = null; this._prt8 = null; this._pbuf = null; this._pcam = null; this._portraitReleasePending = false;',
+      'portrait target lifecycle state');
+    code = replaceOnce(code,
+      '  hide() {\n    if (!this.mode) return;',
+      "  hide() {\n    if (!this.mode) return;\n    const leavingPortraitScreen = this.mode === 'locker';",
+      'portrait screen exit capture');
+    code = replaceOnce(code,
+      '    this.mode = null;\n  }\n\n  dispose() {',
+      "    this.mode = null;\n    if (leavingPortraitScreen) this._releasePortraitTargets(false);\n  }\n\n  dispose() {",
+      'portrait target release on Locker exit');
+    code = replaceOnce(code,
+      '    this._lobRelease();\n    this._rt?.dispose(); this._rt = null;',
+      '    this._lobRelease();\n    this._releasePortraitTargets(true);\n    this._rt?.dispose(); this._rt = null;',
+      'portrait target final disposal');
+    code = replaceOnce(code,
+      '  _renderPortrait(req) {',
+      `  _releasePortraitTargets(final = false) {
+    if (!final && ((this._pflight || 0) > 0 || this._pq?.some?.((x) => x.cbs?.length))) { this._portraitReleasePending = true; return false; }
+    this._portraitReleasePending = false;
+    this._prt?.dispose(); this._prt8?.dispose();
+    this._prt = this._prt8 = null;
+    if (final) {
+      this._pres?.dispose(); this._pres = null;
+      this._presScene?.clear?.(); this._presScene = null;
+      this._pcam = null; this._pbuf = null;
+    }
+    return true;
+  }
+
+  _renderPortrait(req) {`,
+      'portrait target release helper');
+    code = replaceOnce(code,
+      "    read.then((cv) => { this._pflight--; finish(cv); }, (e) => { this._pflight--; console.error('[showcase] portrait read', e); finish(null); });",
+      "    const settle = () => { this._pflight--; if (this._portraitReleasePending && this._pflight === 0) this._releasePortraitTargets(false); };\n    read.then((cv) => { settle(); finish(cv); }, (e) => { settle(); console.error('[showcase] portrait read', e); finish(null); });",
+      'portrait readback-safe release');
+    code = replaceOnce(code,
+      '    const job = this._pq.shift();\n    if (!job) return;',
+      '    const job = this._pq.shift();\n    if (!job) { if (this._portraitReleasePending && (this._pflight || 0) === 0) this._releasePortraitTargets(false); return; }',
+      'portrait empty-queue release');
+    return code;
   }
 
   if (rel === 'src/core/shadowcache.js') {

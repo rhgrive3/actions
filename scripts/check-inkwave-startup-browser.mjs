@@ -165,11 +165,17 @@ const measure=async(page,label,action,pageErrors)=>{
 const naturalController=async page=>{
   await page.waitForFunction(()=>!!navigator.serviceWorker?.ready,undefined,{timeout});
   await page.evaluate(async timeoutMs=>{
-    await navigator.serviceWorker.ready;
-    if(navigator.serviceWorker.controller)return;
     await new Promise((resolve,reject)=>{
-      const timer=setTimeout(()=>reject(new Error('controllerchange timeout')),timeoutMs);
-      navigator.serviceWorker.addEventListener('controllerchange',()=>{clearTimeout(timer);resolve();},{once:true});
+      const sw=navigator.serviceWorker;
+      let ready=false;
+      const cleanup=()=>{clearTimeout(timer);sw.removeEventListener('controllerchange',check);};
+      const check=()=>{if(ready&&sw.controller){cleanup();resolve();}};
+      const timer=setTimeout(()=>{cleanup();reject(new Error('service worker activation/controllerchange timeout'));},timeoutMs);
+      sw.addEventListener('controllerchange',check);
+      // ready itself never rejects an installation failure. Bound that wait too,
+      // so a broken cache produces evidence instead of consuming the entire CI job.
+      sw.ready.then(()=>{ready=true;check();},error=>{cleanup();reject(error);});
+      check();
     });
   },Math.min(timeout,180000));
   await page.waitForFunction(()=>!!navigator.serviceWorker.controller,undefined,{timeout});

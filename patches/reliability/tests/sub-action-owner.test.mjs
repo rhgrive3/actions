@@ -19,7 +19,10 @@ for (const kind of ['shooter','charger','roller','splatling','dualies','slosher'
     assert.equal(h.r.charging,false); assert.equal(h.r.streaming,false); assert.equal(h.r.rolling,false);
     assert.equal(h.a.ink,100,'no main ink spent during aim');
     h.step({subReleased:true,fire:true,firePressed:true});
-    assert.deepEqual(h.shots.map(s=>s.kind),['bomb'],'release emits only the bomb');
+    assert.deepEqual(h.shots.map(s=>s.kind),[], '#1037 uses one independent fixed tick after admission');
+    assert.equal(h.r.s3SubReady?.pending,true,'admitted release survives the use-startup boundary');
+    h.step();
+    assert.deepEqual(h.shots.map(s=>s.kind),['bomb'],'only the bomb emits on the next fixed tick');
     assert.equal(h.a.ink,100-h.SUB.bomb.inkCost);
     for(let i=0;i<120;i++) h.step();
     assert.deepEqual(h.shots.map(s=>s.kind),['bomb'],'aborted or released aim leaves no main action queued');
@@ -27,12 +30,25 @@ for (const kind of ['shooter','charger','roller','splatling','dualies','slosher'
 }
 for (const kind of ['charger','splatling']) test(`#530 ${kind}: entering sub cancels an existing charge without firing`, async()=>{
   const h=await rig(kind);for(let i=0;i<20;i++)h.step({fire:true,firePressed:i===0});assert.equal(h.r.charging,true);
-  const ink=h.a.ink;h.step({sub:true});assert.equal(h.r.charging,false);assert.equal(h.r.streaming,false);assert.equal(h.r.s3Stored,null);assert.equal(h.shots.length,0);assert.equal(h.a.ink,ink);
+  const ink=h.a.ink;
+  if(kind==='splatling'){
+    for(let frame=1;frame<=4;frame++){
+      h.step({sub:true});assert.equal(h.r.charging,true,`frame ${frame}: charge remains live`);
+      assert.equal(h.r.aimingSub,false);assert.equal(h.r.s3SubReady,null);assert.equal(h.shots.length,0);
+    }
+    h.step({sub:true});
+  }else h.step({sub:true});
+  assert.equal(h.r.charging,false);assert.equal(h.r.streaming,false);assert.equal(h.r.s3Stored,null);assert.equal(h.shots.length,0);assert.equal(h.a.ink,ink);
   h.step();for(let i=0;i<60;i++)h.step();assert.equal(h.shots.length,0,'abort does not release a latent main charge');
 });
 test('#530 a cancelled prepaid stream refunds only its recorded unspent balance and never reappears',async()=>{
   const h=await rig('splatling');for(let i=0;i<72;i++)h.step({fire:true});h.step();assert.equal(h.r.streaming,true);
-  const ink=h.a.ink,unspent=h.r.s3Spin.unspent;h.step({sub:true});assert.equal(h.r.streaming,false);assert.equal(h.a.ink,Math.min(100,ink+unspent));const shots=h.shots.length;
+  for(let frame=1;frame<=4;frame++){
+    h.step({sub:true});assert.equal(h.r.streaming,true,`frame ${frame}: stream remains live`);
+    assert.equal(h.r.aimingSub,false);assert.equal(h.r.s3SubReady,null);
+  }
+  const ink=h.a.ink,unspent=h.r.s3Spin.unspent;h.step({sub:true});
+  assert.equal(h.r.streaming,false);assert.equal(h.r.s3Spin,null);assert.equal(h.a.ink,Math.min(100,ink+unspent));const shots=h.shots.length;
   h.step();for(let i=0;i<120;i++)h.step();assert.equal(h.shots.length,shots);
 });
 for(const kind of ['roller','slosher','blaster'])test(`#530 ${kind}: committed attack completes before admitting a fresh sub hold`,async()=>{
@@ -40,7 +56,12 @@ for(const kind of ['roller','slosher','blaster'])test(`#530 ${kind}: committed a
   const pending=()=>h.r.flick>=0||h.r.slosh>=0||h.r.s3BlasterWindup>0;
   assert.ok(pending());let ticks=0;while(pending()&&ticks++<180){h.step({sub:true});assert.equal(h.r.aimingSub,false);}
   assert.ok(ticks<180);assert.deepEqual(h.shots.map(s=>s.kind),[kind]);const lock=Math.max(h.r.s3FlickPostSub||0,h.r.s3PostShotRemaining||0);assert.ok(lock>0,'current release owns its post-shot sub gate');for(let age=1;age<=Math.ceil((lock+1e-9)/STEP)+1&&!h.r.aimingSub;age++)h.step({sub:true});assert.equal(h.r.aimingSub,true);
-  h.step({subReleased:true,fire:true,firePressed:true});assert.deepEqual(h.shots.map(s=>s.kind),[kind,'bomb']);
+  // A rejected main-lock press cannot pre-age a fresh preparation owner.
+  const ready=h.r.s3SubReady,readySteps=ready?Math.ceil(Math.max(0,ready.minimum-ready.age)/STEP):0;
+  for(let frame=0;frame<readySteps;frame++)h.step({sub:true});
+  h.step({subReleased:true,fire:true,firePressed:true});
+  assert.deepEqual(h.shots.map(s=>s.kind),[kind],'the separate 1F use-startup emits no main or bomb early');
+  h.step();assert.deepEqual(h.shots.map(s=>s.kind),[kind,'bomb']);
 });
 test('#530 sub aim preserves elapsed cooldown/recovery and low-ink Bomb rejection',async()=>{
   const h=await rig('shooter');h.a.ink=1;h.r.cooldown=.5;h.r.flickRecover=.4;
@@ -66,8 +87,17 @@ test('#530 an in-flight Dualies dodge and its native lock keep advancing before 
   assert.ok(ticks<180);assert.equal(h.a.ink,ink);assert.equal(h.shots.length,0);h.step({sub:true});assert.equal(h.r.aimingSub,true);
 });
 test('#530 a long sub hold accrues no main-shot debt on the next legitimate press',async()=>{
- const h=await rig('shooter');for(let i=0;i<120;i++)h.step({sub:true});h.step({subReleased:true});
- const before=h.shots.length;for(let i=0;i<Math.round(h.a.weapon.firstShotDelay/STEP);i++){h.step({fire:true,firePressed:i===0});if(i<Math.round(h.a.weapon.firstShotDelay/STEP)-1)assert.equal(h.shots.length,before);}assert.equal(h.shots.length-before,1);assert.equal(h.shots.at(-1).kind,'shooter');
+ const h=await rig('shooter');for(let i=0;i<120;i++)h.step({sub:true});
+ h.step({subReleased:true});h.step(); // settle the independent #1037 use tick
+ const control=await rig('shooter');
+ const normal=()=>h.shots.filter(s=>s.kind==='shooter').length;
+ const fresh=()=>control.shots.filter(s=>s.kind==='shooter').length;
+ for(let i=0;i<16;i++){
+   const input={fire:true,firePressed:i===0};
+   h.step(input);control.step(input);
+   assert.equal(normal(),fresh(),`Sub hold cannot create early/main-shot debt at frame ${i}`);
+ }
+ assert.ok(normal()>0,'normal held main fire eventually emits');
 });
 test('#530 completed Roller release is cancelled visually instead of replayed during sub aim',async()=>{
  const f=await fixture({character:true});f.installWalkMotion(f,f.profile);f.installRollerMotion(f,f.profile);const a=new f.Actor({team:0,name:'sub visual',weapon:'roller',CharacterClass:f.Character}),r=a.weaponRunner,ch=a.character;

@@ -27,6 +27,9 @@ export function resetPlatformInput(input, controller) {
       weapon.chargeLoop?.stop?.(.05); weapon.chargeLoop = null;
     }
     if (weapon) weapon.aimingSub = false;
+    // Deferred shots are derived from the input just neutralized; do not let
+    // them survive a platform boundary and synthesize a later fire (#991).
+    weapon?.cancelPendingInput?.();
     if (actor._prevIntent) for (const key of ['fire', 'jump', 'squid', 'sub', 'special']) actor._prevIntent[key] = false;
   }
 }

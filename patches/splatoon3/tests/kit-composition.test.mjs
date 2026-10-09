@@ -11,7 +11,7 @@ function registries() {
 test('all three required base kits agree with pinned extracted main rows', () => {
   const api=registries();composeKits(api);
   const expected = {
-    shooter: { row:219, main:'Shooter_Normal_00', sub:'suction', special:'trizooka', specialCost:200, rawSub:'Bomb_Suction', rawSpecial:'SpUltraShot' },
+    shooter: { row:219, main:'Shooter_Normal_00', sub:'suction', special:'trizooka', specialCost:210, legacySpecialCost:200, rawSub:'Bomb_Suction', rawSpecial:'SpUltraShot' },
     roller: { row:133, main:'Roller_Normal_00', sub:'curling', special:'bubbler', specialCost:180, rawSub:'Bomb_Curling', rawSpecial:'SpGreatBarrier' },
     charger: { row:73, main:'Charger_Normal_00', sub:'bomb', special:'inkVac', specialCost:190, rawSub:'Bomb_Splash', rawSpecial:'SpBlower' },
   };
@@ -21,7 +21,10 @@ test('all three required base kits agree with pinned extracted main rows', () =>
   for (const [main, kit] of Object.entries(expected)) {
     const prefix=`data/mush/1130/WeaponInfoMain.json#/${kit.row}/`;
     assert.equal(reference.parameters[prefix+'__RowId'].value,kit.main);
-    assert.equal(reference.parameters[prefix+'SpecialPoint'].value,kit.specialCost);
+    // The extracted WeaponInfoMain row is historical; Nintendo 7.2.0
+    // increased the original Splattershot to 210p, and live S3 still uses
+    // that later balancing override (#1132). Do not rewrite source receipts.
+    assert.equal(reference.parameters[prefix+'SpecialPoint'].value,kit.legacySpecialCost ?? kit.specialCost);
     assert.equal(reference.parameters[prefix+'SubWeapon'].value,`Work/Gyml/${kit.rawSub}.spl__WeaponInfoSub.gyml`);
     assert.equal(reference.parameters[prefix+'SpecialWeapon'].value,`Work/Gyml/${kit.rawSpecial}.spl__WeaponInfoSpecial.gyml`);
     assert.deepEqual(VERIFIED_KITS[main], {main:kit.main,sub:kit.sub,special:kit.special,specialCost:kit.specialCost});

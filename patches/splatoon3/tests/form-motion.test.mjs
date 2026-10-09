@@ -76,6 +76,7 @@ function rig(api, kind = 'shooter', enabled = true, carry = true) {
     'fireBlaster', 'fireSlosh', 'throwBomb', 'fireFlick'].map(name => [name, () => { shots++; }]));
   const step = (dt = 1 / 60, input = {}) => {
     G.projectiles = projectiles; a.intent.fire = !!input.fire; a.intent.sub = !!input.sub;
+    if (input.move) a.intent.move.set(input.move.x, 0, input.move.z);
     G.time += dt; a.weaponRunner.update(dt, input); a._finishFrame(dt);
     ch.root.updateMatrixWorld(true); ch.skeleton.update();
     assert.ok(Array.from(ch.P).every(Number.isFinite));
@@ -361,7 +362,7 @@ test('actual native Physics/Actor/Runner gameplay is unchanged by posed form cor
 test('main fire, sub aim, throw, roller, dualies and special actions own their channels on emergence', async () => {
   const api = await production(), C = api.CHARACTER_CHANNELS, actionRows = [];
   for (const [kind, input] of [['shooter', { fire: true }], ['charger', { fire: true }],
-    ['slosher', { fire: true }], ['roller', { fire: true }], ['dualies', { sub: true }]]) {
+    ['slosher', { fire: true }], ['roller', { fire: true, move: { x: 0, z: 1 } }], ['dualies', { sub: true }]]) {
     const r = rig(api, kind), control = rig(api, kind);
     // Counterfactual full native rig with the owned form gesture absent. Its
     // native action, solver and scale path still run. This isolates whether
@@ -388,6 +389,7 @@ test('main fire, sub aim, throw, roller, dualies and special actions own their c
       if (kind === 'dualies') {
         assert.equal(r.ch.bombHeld, true); assert.equal(r.ch.bomb.group.visible, true);
         r.step(1 / 60, { subReleased: true });
+        assert.equal(r.ch.bombHeld, true, 'separate 1F sub use-startup retains the held bomb');r.step();
         assert.equal(r.ch.bombHeld, false);
         assert.ok(r.ch.tr[api.CHARACTER_TIMERS.T_THROW] < .1, 'native release actually triggers throw');
         assert.equal(api.formMotionSnapshot(r.ch).actionBlocked, true);
@@ -454,7 +456,7 @@ test('a retired real Bomb presentation does not keep new emergence blocked by it
   const api = await production(), r = rig(api), T = api.CHARACTER_TIMERS;
   try {
     for (let i = 0; i < 12; i++) r.step(1 / 60, {sub:true});
-    assert.equal(r.ch.bombHeld,true);r.step(1 / 60,{subReleased:true});
+    assert.equal(r.ch.bombHeld,true);r.step(1 / 60,{subReleased:true});r.step(1 / 60);
     assert.ok(r.ch.tr[T.T_THROW]<.1,'actual native release event');
     form(r,'swim');for(let i=0;i<3;i++)r.step();
     form(r,'kid');r.step();

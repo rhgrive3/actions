@@ -26,12 +26,12 @@ const IDS = ['jump', 'squid', 'fire', 'sub', 'special'];
 const read = rel => fs.readFileSync(path.join(RAW, rel), 'utf8');
 const classList = () => ({ add() {}, remove() {}, toggle() {}, contains() { return false; } });
 
-async function boot({exit='async'}={}) {
- const f=await fixture(),listeners=new Map(),docListeners=new Map(),modules=new Map();let exits=0,requests=0,unlocks=0;
+async function boot({exit='async',request='immediate'}={}) {
+ const f=await fixture(),listeners=new Map(),docListeners=new Map(),modules=new Map();let exits=0,requests=0,unlocks=0,resolvePendingLock;
  const add=(map,name,fn)=>{if(!map.has(name))map.set(name,[]);map.get(name).push(fn);};
  const doc={hidden:false,documentElement:{classList:classList()},addEventListener:(n,fn)=>add(docListeners,n,fn),querySelector:()=>null,pointerLockElement:null};
  const fireDoc=()=>{for(const fn of docListeners.get('pointerlockchange')||[])fn();};
- const canvas={ownerDocument:doc,closest:()=>null,requestPointerLock(){requests++;}};
+ const canvas={ownerDocument:doc,closest:()=>null,requestPointerLock(){requests++;if(request==='pending')return new Promise(resolve=>{resolvePendingLock=()=>{doc.pointerLockElement=canvas;fireDoc();resolve();};});}};
  const overlayTarget=(kind)=>({closest:(sel)=>{if(kind==='editor')return sel.includes('.iwm-edit')?{}:null;return (sel.includes('.iwm-look')||sel.includes('.iwm-movezone')||sel.includes('.iwm-b'))?{}:null;}});
  doc.exitPointerLock=()=>{exits++;if(exit==='throw')throw Error('fixture exit unavailable');if(exit==='sync'){doc.pointerLockElement=null;fireDoc();}};
  const context=vm.createContext({console,performance,AbortController,setTimeout,clearTimeout,
@@ -56,6 +56,7 @@ async function boot({exit='async'}={}) {
   release(e){continueCanvasTouch(mobile,{...e,type:'pointerup'},true);},
   mouse(target=canvas){event('pointerdown',{pointerType:'mouse',target});},move(){event('mousemove',{movementX:1,movementY:2});},
   overlay:(kind='look')=>overlayTarget(kind),
+  completePendingLock(){assert.equal(typeof resolvePendingLock,'function');resolvePendingLock();},
   unlocked(){doc.pointerLockElement=null;fireDoc();},locked(){doc.pointerLockElement=canvas;fireDoc();},listenerCount:()=>[...listeners.values(),...docListeners.values()].reduce((n,a)=>n+a.length,0)};
 }
 for(const kind of ['fire','stick','look'])for(const exit of ['sync','async'])test(`#662 ${kind} touch survives ${exit} mouse unlock and delayed motion`,async()=>{
@@ -160,5 +161,23 @@ test('#859 first mouse press does not lock in menus or while map/editor own inpu
   h.mouse();
   assert.equal(h.requests(),0,state);
   assert.equal(h.input.lastDevice,'kbm',state);
+ }
+});
+test('#859 a late pre-touch lock cannot restore lock after a blocked map/editor mouse handoff',async()=>{
+ for(const state of ['map','editing']){
+  const h=await boot({request:'pending'});
+  h.input.locked=false;h.doc.pointerLockElement=null;
+  h.input.requestLock();assert.equal(h.requests(),1);
+  const e=h.touch('look');h.release(e);
+  if(state==='map')h.mobile.mapOpen=true;else h.mobile.editing=true;
+  h.mouse();assert.equal(h.input.lastDevice,'kbm');assert.equal(h.requests(),1);
+  h.completePendingLock();await Promise.resolve();
+  assert.equal(h.input.locked,false,state);assert.equal(h.exits(),1,state);
+  h.unlocked();assert.equal(h.unlocks(),0,'retiring the old request does not pause');
+  h.mobile.mapOpen=false;h.mobile.editing=false;
+  if(state==='map')h.input.requestLock();else h.mouse();
+  assert.equal(h.requests(),2,'a fresh eligible request or mouse gesture can request lock');
+  h.completePendingLock();await Promise.resolve();
+  assert.equal(h.input.locked,true,'the new eligible request still completes');
  }
 });

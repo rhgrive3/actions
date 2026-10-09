@@ -23,7 +23,10 @@ export function validateDetailReceipts(loaded) {
   for (const module of ['bomb-motion','flow-motion','weapon-detail-motion'])
     if (!loaded.some(file=>file.endsWith('/patches/splatoon3/runtime/'+module+'.mjs'))) throw Error('Actual detail module not loaded: '+module);
 }
-export function validateDetailResult(result) {
+export // #1037: native Splat Bomb creation follows the admitted sub release by
+// 1 fixed frame. The held pose is still sampled on frame 29, while the actual
+// projectile/contact is asserted on frame 31 rather than the input edge (30).
+function validateDetailResult(result) {
   if(result.pixelControls?.dither!==false||result.pixelControls?.samples!==0||result.pixelControls?.target!=='explicit-srgb-rgba8')throw Error('Controlled detail pixel framebuffer');
   const finite=(v,path)=>{ if(typeof v!=='number'||!Number.isFinite(v))throw Error('Non-finite detail '+path); };
   const numericTree=(v,path)=>{ if(typeof v==='number')finite(v,path);else if(v&&typeof v==='object')for(const [key,value] of Object.entries(v))numericTree(value,path+'.'+key); };
@@ -53,7 +56,7 @@ export function validateDetailResult(result) {
       if(typeof s.flow.active!=='boolean'||typeof s.flow.visible!=='boolean')throw Error('Detail Flow identity: '+name);
       if(s.flow.opacity<0||s.flow.opacity>1||s.flow.resources<0||s.flow.aliveParticles<0)throw Error('Detail Flow range: '+name);
     }
-    const renderFrames=[21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].filter(f=>f<frames);
+    const renderFrames=[21,29,30,31,45,75,95,110,111,145,160,165,200,239,310,360,419].filter(f=>f<frames);
     if(!Array.isArray(events)||!Array.isArray(releaseFrames)||!Array.isArray(renderMetrics)||renderMetrics.length!==renderFrames.length||new Set(renderMetrics.map(m=>m.frame)).size!==renderFrames.length||renderFrames.some(f=>!renderMetrics.some(m=>m.frame===f)))throw Error('Detail event/render denominator: '+name);
     for(const event of events){finite(event.frame,name+'.eventFrame');if(typeof event.name!=='string'||event.frame<0||event.frame>=frames)throw Error('Detail release event identity: '+name);}
     for(const release of releaseFrames){for(const key of ['frame','fuse','meshOriginError','releaseSnapshotError'])finite(release[key],name+'.release.'+key);for(const key of ['pos','velocity']){if(!Array.isArray(release[key])||release[key].length!==3)throw Error('Detail release vector denominator');release[key].forEach(v=>finite(v,name+'.releaseVector'));}}
@@ -78,9 +81,9 @@ export function validateDetailResult(result) {
     if(!disposed?.disposed||disposed.resources!==0||disposed.aliveParticles!==0)throw Error('Flow resources survived Character disposal: '+name);
     const peak=Math.max(...samples.map(s=>Math.abs(s.rcP))),tail=samples.slice(-24);
     if(scenario.type==='bomb') {
-      if(releaseFrames.length!==1||releaseFrames[0].frame!==30||!samples[29].heldVisible||samples[30].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
+      if(releaseFrames.length!==1||releaseFrames[0].frame!==31||!samples[29].heldVisible||samples[31].heldVisible||samples.at(-1).bomb.throwing)throw Error('Actual bomb aim/release/recovery regression: '+name);
       if(scenario.kind==='dualies'&&(samples[29].leftPistolVisible||!samples.at(-1).leftPistolVisible))throw Error('Bomb dualies pistol recovery regression');
-      const held=renderMetrics.find(m=>m.frame===29)?.heldBomb,released=renderMetrics.find(m=>m.frame===30)?.releasedBomb;
+      const held=renderMetrics.find(m=>m.frame===29)?.heldBomb,released=renderMetrics.find(m=>m.frame===31)?.releasedBomb;
       if(!held||held.indexedVertices<50||held.nearestLeft>=.12||!released||released.indexedVertices<100||released.nearestLeft>=.22)throw Error('Actual indexed bomb/hand contact regression: '+name);
       if(samples[29].ik.slice(0,2).some(e=>e>=.015)||tail.some(s=>s.ik.slice(0,2).some(e=>e>=.015)))throw Error('Native bomb arm reach regression: '+name);
       if(releaseFrames[0].meshOriginError>1e-10||releaseFrames[0].releaseSnapshotError>1e-8)throw Error('Rendered/collision bomb release regression: '+name);
@@ -164,7 +167,7 @@ server = http.createServer((req, res) => {
   fs.createReadStream(file).pipe(res);
 });
 await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
-  browser = await chromium.launchPersistentContext(profileDir, { headless: true, viewport: { width: 960, height: 720 },
+  browser = await chromium.launchPersistentContext(profileDir, { ...(process.env.INKWAVE_CHROMIUM ? {executablePath:process.env.INKWAVE_CHROMIUM} : {}), headless: true, viewport: { width: 960, height: 720 },
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   page = await browser.newPage();
   page.on('pageerror', error => recordError(error.message));
@@ -269,10 +272,17 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       const beforeRender=nativeRenderState();
       projectiles._draw();camera.position.copy(ch.root.position).add(new THREE.Vector3(2.6,1.3,3.4));
       camera.lookAt(ch.root.position.clone().add(new THREE.Vector3(0,.62,0)));camera.updateMatrixWorld();renderer.render(scene,camera);
-      const actual=pixels(),image=frameImage(),visible=ch.root.visible;
+      const image=frameImage(),visible=ch.root.visible;
+      // This pose fixture intentionally does not advance projectile physics.
+      // Frozen source-sized Slosher heads at the muzzle can completely occlude
+      // the actor. Isolate that unrelated instanced draw for BOTH rig images,
+      // while keeping the same strict visible-pixel and native-state gates.
+      const headVisible=projectiles.blobs.visible;
       let rig;
-      try{ch.root.visible=false;renderer.render(scene,camera);rig=globalThis.motionPixelDifference(actual,pixels());}
-      finally{ch.root.visible=visible;}
+      try{
+        projectiles.blobs.visible=false;renderer.render(scene,camera);const actual=pixels();
+        ch.root.visible=false;renderer.render(scene,camera);rig=globalThis.motionPixelDifference(actual,pixels());
+      } finally{ch.root.visible=visible;projectiles.blobs.visible=headVisible;}
       let flow=null,wholeSceneFlow=null,flowIsolation=null;
       if(scenario.type==='flow'){
         // Each visibility pair owns a fresh baseline. The preceding rig-hidden
@@ -307,7 +317,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       images.push({name:scenario.name+'-'+String(frame).padStart(3,'0'),image});
       const left=ch.bones.handL.getWorldPosition(new THREE.Vector3()),right=ch.bones.handR.getWorldPosition(new THREE.Vector3());
       if(nativeRenderState()!==beforeRender)throw Error('Rendered pair advanced native clocks/gameplay: '+scenario.name+' frame '+frame);
-      return {frame,renderClocksStable:true,rig,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===30?drawnContact(projectiles.bombs.at(-1).mesh,left,right):null};
+      return {frame,renderClocksStable:true,rig,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===31&&projectiles.bombs.at(-1)?.mesh?drawnContact(projectiles.bombs.at(-1).mesh,left,right):null};
     }
     try {
     for (const scenario of cases) {
@@ -372,7 +382,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
             // simulation step. Preserve the last completed frame on a crash.
             await new Promise(resolve=>setTimeout(resolve,0));
           }
-          if([21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame))renderMetrics.push(capture(scenario,frame,ch,actor));
+          if([21,29,30,31,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame))renderMetrics.push(capture(scenario,frame,ch,actor));
         }
         data.push({name:scenario.name,scenario,frames,fireInterval:actor.weapon.fireInterval,firstShotDelay:actor.weapon.firstShotDelay||0,samples,releaseFrames,events,renderMetrics});
       } finally {
@@ -383,7 +393,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       }
     }
     return {contentHash,cases:data.length,data,images,pixelControls:{defaultDither,dither:glControl.isEnabled(glControl.DITHER),samples:pixelTarget.samples,target:'explicit-srgb-rgba8'},
-      fixture:{source:'production install once; actual Actor/Runner/Projectiles/full native rig',driver:'WeaponRunner.update + Actor._finishFrame only; no Actor.update or Projectiles.update',terrain:'flat diagnostic plane; raycast hit=false',flow:'active/remaining assigned manually; gameplay activation, extension and duration not measured',air:'height=.8 and vertical velocity=0 throughout; no jump/landing physics',render:'60Hz single-sample software WebGL; independent same-frame visible/hidden pairs with native clock/gameplay transactions',parity:'calibrated INKWAVE regression; Nintendo curves unknown; not Switch/iOS or original image parity'}};
+      fixture:{source:'production install once; actual Actor/Runner/Projectiles/full native rig',driver:'WeaponRunner.update + Actor._finishFrame only; no Actor.update or Projectiles.update',terrain:'flat diagnostic plane; raycast hit=false',flow:'active/remaining assigned manually; gameplay activation, extension and duration not measured',air:'height=.8 and vertical velocity=0 throughout; no jump/landing physics',render:'60Hz single-sample software WebGL; rig pairs exclude frozen head instances; independent same-frame visible/hidden pairs with native clock/gameplay transactions',parity:'calibrated INKWAVE regression; Nintendo curves unknown; not Switch/iOS or original image parity'}};
     }finally{
       projectiles.clear();
       const geometries=new Set(),materials=new Set();scene.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const m of (Array.isArray(node.material)?node.material:[node.material]))if(m)materials.add(m);});
@@ -392,9 +402,12 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       for(const g of geometries)g.dispose();for(const m of materials)m.dispose();pixelTarget.dispose();renderer.dispose();renderer.domElement.remove();
     }
   }, { prefix, contentHash: manifest.contentHash });
+  // Keep completed pixel pairs even when semantic validation rejects a case.
+  // Failure artifacts must show the exact native image that failed the gate.
+  for(const entry of result.images)fs.writeFileSync(path.join(output,entry.name+'.png'),Buffer.from(entry.image.split(',')[1],'base64'));
+  delete result.images;
   result.summary=validateDetailResult(result);validateDetailReceipts(loaded);
   if(errors.length)throw Error('Detail animation/shader errors: '+errors.join('; '));
-  for(const entry of result.images)fs.writeFileSync(path.join(output,entry.name+'.png'),Buffer.from(entry.image.split(',')[1],'base64'));delete result.images;
 }catch(error){failure=error;try{if(page)result={...(result||{}),progress:await page.evaluate(()=>globalThis.motionProbeProgress||null)};}catch{};try{await page?.screenshot({path:path.join(output,'motion-detail-failed.png'),timeout:10000});}catch{}}
 finally{for(const cleanup of [()=>browser?.close(),()=>server?.listening?new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve())):null])try{await cleanup();}catch(error){failure ||= error;}}
 if(failure){if(result?.data){const diagnostic={...result,status:'failed',message:String(failure.message||failure).slice(0,2500)};delete diagnostic.images;fs.writeFileSync(path.join(output,'motion-detail-failed-native.json.writing'),JSON.stringify(diagnostic,null,2)+'\n');fs.renameSync(path.join(output,'motion-detail-failed-native.json.writing'),path.join(output,'motion-detail-failed-native.json'));}publish({status:'failed',contentHash:manifest?.contentHash||null,build:manifest?.build||null,message:String(failure.message||failure).slice(0,2500),errors,loaded:[...new Set(loaded)].slice(0,200),progress:result?.progress||lastProgress||null,casesFinished:result?.data?.length||lastProgress?.casesFinished||0});console.error(JSON.stringify({status:'failed',message:String(failure.message||failure).slice(0,1200),evidence:path.join(output,'motion-detail-result.json')}));process.exitCode=1;return;}

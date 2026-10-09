@@ -68,10 +68,19 @@ function adaptIssue460Net(code) {
     `    if (!a.net) a.net = { buf: [], err: new THREE.Vector3(), tp: -1, lastRaw: null, rendered: new THREE.Vector3(), has: false, prevGrounded: true, prevVy: 0, yawPrev: 0, loops: {}, sjTo: null, sjRing: 0, sjDur460: 0, sjT460: 0, sjMarker460: null };`,
     'issue-460 remote gauge clock fields');
   // off flight (charge/land/respawn flag clear): collapse clock + marker + gauge
-  code = replaceOnce(code,
-    `    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? 'flight' : 'charge';`,
-    `    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? 'flight' : 'charge';\n    if (!a.superJumpState || a.superJumpState.phase !== 'flight') { n.sjT460 = 0; n.sjDur460 = 0; n.sjMarker460 = null; clearJumpGauge460(a); }`,
-    'issue-460 remote gauge clear off flight');
+  const legacyPhase = `    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? 'flight' : 'charge';`;
+  // #1142 replaces the legacy flag-only update with authoritative remote age.
+  // Install the gauge clear AFTER either supported phase owner, without replacing
+  // the newly replicated Super Jump age/timing state.
+  const newPhase = `    } else a.superJumpState = null;`;
+  if (code.includes(legacyPhase)) code = replaceOnce(code,
+    legacyPhase,
+    legacyPhase + `\n    if (!a.superJumpState || a.superJumpState.phase !== 'flight') { n.sjT460 = 0; n.sjDur460 = 0; n.sjMarker460 = null; clearJumpGauge460(a); }`,
+    'issue-460 legacy remote gauge clear off flight');
+  else code = replaceOnce(code,
+    newPhase,
+    newPhase + `\n    if (!a.superJumpState || a.superJumpState.phase !== 'flight') { n.sjT460 = 0; n.sjDur460 = 0; n.sjMarker460 = null; clearJumpGauge460(a); }`,
+    'issue-460 remote gauge clear after age-based phase owner');
   // every flight frame: snapshot from the event-seeded clock + gauge at n.sjTo
   code = replaceOnce(code,
     `    if (a.superJumpState?.phase === 'flight' && n.sjTo) {\n      n.sjRing += dt;`,

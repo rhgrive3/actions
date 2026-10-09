@@ -2,10 +2,17 @@
 // Heavy Splatling / Blaster clips. These are this rig's visual curves, never
 // claimed to be unpublished Nintendo joint parameters. Gameplay is read only.
 import { specialMotionAllowsAction } from './action-admission.mjs';
+import { BLASTER_MECHANISM, blasterMechanismCycle } from './blaster-mechanism.mjs';
 import { slosherMotionSnapshot } from './weapon-motion.mjs';
 const INSTALLED = Symbol.for('inkwave.weapon-detail-motion.installed');
 const RESET_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.runner-reset-installed');
+const RUNNER_SHOT_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.blaster-runner-shot-installed');
+const PROJECTILE_SHOT_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.blaster-projectile-shot-installed');
+const NETPLAY_SHOT_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.blaster-netplay-shot-installed');
 const tracks = new WeakMap(), fills = new WeakMap(), reaches = new WeakMap(), disposed = new WeakSet();
+const activeBlasterEmissions = new WeakMap(), acceptedRemoteBlasterEmission = new WeakMap();
+const remoteBlasterNetState = new WeakMap();
+const recoilOverlayStates = new WeakMap(), spreadSymbols = new WeakMap(), EMPTY_SYMBOLS = Object.freeze([]);
 const TAU = Math.PI * 2;
 const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
@@ -28,11 +35,50 @@ const recoil = Object.freeze({
 function track(ch) {
   const map = trackMap(ch);
   let m = map.get(ch);
-  if (!m) { m = { slosh: null, release: null }; map.set(ch, m); }
+  if (!m) { m = { slosh: null, release: null, mech: null }; map.set(ch, m); }
   return m;
 }
 function enabled(ch) { return !!ch && ch.s3WeaponDetailMotionEnabled !== false && ch.s3WeaponMotionEnabled !== false
   && !registry(ch)?.disposed?.has(ch); }
+// Cache per-record symbol-key lists; each overlay belongs to one Character
+// and nesting depth, and refreshes string keys and values from live records.
+function enumerableSymbols(source) {
+  if (source == null || (typeof source !== 'object' && typeof source !== 'function')) return EMPTY_SYMBOLS;
+  let symbols = spreadSymbols.get(source);
+  if (!symbols) { symbols = Object.getOwnPropertySymbols(source); spreadSymbols.set(source, symbols); }
+  return symbols;
+}
+function refreshSpread(target, source, slot, symbolField) {
+  for (const key of slot[symbolField]) delete target[key];
+  for (const key in target) if (Object.hasOwn(target, key)) delete target[key];
+  const symbols = enumerableSymbols(source);
+  slot[symbolField] = symbols;
+  if (source == null) return;
+  for (const key in source) if (Object.hasOwn(source, key)) {
+    const value = source[key];
+    if (key === '__proto__') Object.defineProperty(target, key, { value, writable: true, configurable: true, enumerable: true });
+    else target[key] = value;
+  }
+  for (const key of symbols) if (Object.prototype.propertyIsEnumerable.call(source, key)) target[key] = source[key];
+}
+function spreadInto(target, source) {
+  for (const key in source) if (Object.hasOwn(source, key)) target[key] = source[key];
+  const symbols = enumerableSymbols(source);
+  for (const key of symbols) if (Object.prototype.propertyIsEnumerable.call(source, key)) target[key] = source[key];
+}
+function recoilOverlayState(ch) {
+  let state = recoilOverlayStates.get(ch);
+  if (!state) { state = { depth: 0, slots: [] }; recoilOverlayStates.set(ch, state); }
+  return state;
+}
+function recoilOverlaySlot(state, depth) {
+  let slot = state.slots[depth];
+  if (!slot) {
+    slot = { hold: {}, rc: {}, holdSymbols: EMPTY_SYMBOLS, rcSymbols: EMPTY_SYMBOLS };
+    state.slots[depth] = slot;
+  }
+  return slot;
+}
 function activeSpecial(ch, T) {
   return !specialMotionAllowsAction(ch, !(ch._owner()?.specialActive ||
     Number.isInteger(T.T_SLAM) && ch.tr[T.T_SLAM] < 1.4 ||
@@ -41,8 +87,34 @@ function activeSpecial(ch, T) {
 function withRecoil(ch, fn) {
   const original = ch.hold, tune = recoil[ch.weaponKind];
   if (!enabled(ch) || !tune || !original) return fn();
-  ch.hold = { ...original, rc: { ...original.rc, ...tune } };
-  try { return fn(); } finally { ch.hold = original; }
+  const state = recoilOverlayState(ch), depth = state.depth;
+  state.depth = depth + 1;
+  try {
+    const overlay = recoilOverlaySlot(state, depth);
+    // Re-read native fields on every entry so mutable records and weapon
+    // changes stay visible; a nested call gets another slot and finally puts
+    // back the exact hold identity that was installed on entry.
+    refreshSpread(overlay.hold, original, overlay, 'holdSymbols');
+    refreshSpread(overlay.rc, original.rc, overlay, 'rcSymbols');
+    spreadInto(overlay.rc, tune);
+    overlay.hold.rc = overlay.rc;
+    ch.hold = overlay.hold;
+    try { return fn(); } finally { ch.hold = original; }
+  } finally { state.depth = depth; }
+}
+function boundedRemember(set, order, key, limit = 1024) {
+  if (set.has(key)) return false;
+  set.add(key); order.push(key);
+  if (order.length > limit) set.delete(order.shift());
+  return true;
+}
+function remoteNetState(net) {
+  let state = remoteBlasterNetState.get(net);
+  if (!state) {
+    state = { projectiles: new Set(), projectileOrder: [], triggers: new Set(), triggerOrder: [], pending: new Map() };
+    remoteBlasterNetState.set(net, state);
+  }
+  return state;
 }
 // Integrate the exponential motor's angle as well as velocity. Updating angle
 // with the end-of-step velocity produces different coast at 30 and 120 Hz.
@@ -106,6 +178,8 @@ function clear(ch) {
     if (w.def.kind === 'blaster') {
       w.pump = 0;
       if (w.parts?.pump) w.parts.pump.position.copy(w.parts.pump.userData.rest);
+      if (w.parts?.lever) w.parts.lever.rotation.set(0, 0, 0);   // #915 S3 mechanism channels
+      if (w.parts?.front) w.parts.front.position.copy(w.parts.front.userData.rest);
     }
   }
 }
@@ -117,10 +191,86 @@ export function weaponDetailMotionSnapshot(ch) {
     bucketSurfaceY: w?.parts?.surface?.position.y ?? null,
     barrelSpeed: w?.def.kind === 'splatling' ? w.spinW || 0 : null,
     barrelAngle: w?.def.kind === 'splatling' ? w.spinA || 0 : null,
-    chargerReleaseAge: m?.release ?? null, gripCorrection: m?.gripCorrection ?? 0, pump: w?.pump || 0 });
+    chargerReleaseAge: m?.release ?? null, gripCorrection: m?.gripCorrection ?? 0, pump: w?.pump || 0,
+    blasterMechAge: m?.mech ?? null });
 }
-export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }) {
-  if (!Character || !THREE || !C || !Number.isInteger(T?.T_SLOSH)) throw Error('Weapon detail motion requires actual Character, Three, channels and slosh timer');
+export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles, NetMatch, G, THREE, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }) {
+  if (!Character || !WeaponRunner || !Projectiles || !NetMatch || !THREE || !C || !Number.isInteger(T?.T_SLOSH)) throw Error('Weapon detail motion requires actual Character, WeaponRunner, Projectiles, NetMatch, Three, channels and slosh timer');
+  if (!Object.hasOwn(Projectiles.prototype, PROJECTILE_SHOT_INSTALLED)) {
+    Object.defineProperty(Projectiles.prototype, PROJECTILE_SHOT_INSTALLED, { value: true });
+    const push = Projectiles.prototype._push;
+    Projectiles.prototype._push = function (p, ...args) {
+      const result = push.call(this, p, ...args);
+      const ch = p?.owner?.character, emission = ch && activeBlasterEmissions.get(ch);
+      if (emission?.actor === p.owner && p?.type === 'blast' && !p.ghost) emission.pending++;
+      return result;
+    };
+  }
+  if (!Object.hasOwn(WeaponRunner.prototype, RUNNER_SHOT_INSTALLED)) {
+    Object.defineProperty(WeaponRunner.prototype, RUNNER_SHOT_INSTALLED, { value: true });
+    const auto = WeaponRunner.prototype._auto;
+    WeaponRunner.prototype._auto = function (dt, input, w) {
+      if (w?.kind !== 'blaster' || !this.a?.character) return auto.call(this, dt, input, w);
+      const ch = this.a.character, previous = activeBlasterEmissions.get(ch);
+      const emission = { actor: this.a, pending: 0 };
+      activeBlasterEmissions.set(ch, emission);
+      try { return auto.call(this, dt, input, w); }
+      finally {
+        if (previous) activeBlasterEmissions.set(ch, previous);
+        else activeBlasterEmissions.delete(ch);
+      }
+    };
+  }
+  if (!Object.hasOwn(NetMatch.prototype, NETPLAY_SHOT_INSTALLED)) {
+    Object.defineProperty(NetMatch.prototype, NETPLAY_SHOT_INSTALLED, { value: true });
+    const play = NetMatch.prototype._play;
+    NetMatch.prototype._play = function (from, e, ...args) {
+      const actor = e && this.byNid?.get(e[2]);
+      if (!actor?.remote || actor.character?.weaponKind !== 'blaster') return play.call(this, from, e, ...args);
+      const state = remoteNetState(this), actorKey = `${String(from)}\u001f${String(e[2])}`;
+      const time = Number(e[0]);
+      if (e[1] === 'p' && e[3] === 'blast') {
+        const projectiles = G.projectiles;
+        const before = projectiles?.list?.length || 0;
+        const result = play.call(this, from, e, ...args);
+        // Only a ghost actually admitted by the production owner/sequence/ID
+        // gates is evidence. Rejected packets must not authorize a later trigger.
+        const admitted = projectiles?.list?.slice(before).some(p =>
+          p.ghost && p.owner === actor && p.type === 'blast');
+        if (!admitted) return result;
+        const key = `${actorKey}\u001f${String(e[0])}\u001f${JSON.stringify(e.slice(3))}`;
+        if (!boundedRemember(state.projectiles, state.projectileOrder, key)) return result;
+        const queue = state.pending.get(actorKey) || [];
+        queue.push({ time, key });
+        if (queue.length > 16) queue.shift();
+        state.pending.set(actorKey, queue);
+        return result;
+      }
+      if (e[1] === 'tr' && e[3] === 'shoot') {
+        const key = `${actorKey}\u001f${String(e[0])}\u001f${JSON.stringify(e[4] ?? null)}`;
+        if (!boundedRemember(state.triggers, state.triggerOrder, key)) return;
+        const queue = state.pending.get(actorKey) || [];
+        let match = -1, distance = Infinity;
+        for (let i = 0; i < queue.length; i++) {
+          const d = Math.abs(queue[i].time - time);
+          if (d <= .1 && d < distance) { match = i; distance = d; }
+        }
+        const authorized = match >= 0;
+        if (authorized) queue.splice(match, 1);
+        else if (Number.isFinite(time)) {
+          for (let i = queue.length - 1; i >= 0; i--) if (time - queue[i].time > .1) queue.splice(i, 1);
+        }
+        if (!queue.length) state.pending.delete(actorKey);
+        else state.pending.set(actorKey, queue);
+        if (!authorized) return play.call(this, from, e, ...args);
+        const ch = actor.character;
+        acceptedRemoteBlasterEmission.set(ch, key);
+        try { return play.call(this, from, e, ...args); }
+        finally { acceptedRemoteBlasterEmission.delete(ch); }
+      }
+      return play.call(this, from, e, ...args);
+    };
+  }
   if (WeaponRunner && !Object.hasOwn(WeaponRunner.prototype, RESET_INSTALLED)) {
     Object.defineProperty(WeaponRunner.prototype, RESET_INSTALLED, { value: true });
     const reset = WeaponRunner.prototype.reset;
@@ -177,6 +327,13 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
   };
   P._recoil = function (...args) { return withRecoil(this, () => nativeRecoil.apply(this, args)); };
   P.trigger = function (name, ...args) {
+    const owner = name === 'shoot' && this.weaponKind === 'blaster' ? this._owner() : null;
+    const canAnimateBlaster = name === 'shoot' && this.weaponKind === 'blaster' && this.kidForm && !this.dance
+      && this.visible && owner && owner.form === 'kid' && owner.alive !== false;
+    const emission = canAnimateBlaster ? activeBlasterEmissions.get(this) : null;
+    const acceptedLocalEmission = emission?.actor === owner && emission.pending > 0;
+    const acceptedRemoteEmission = canAnimateBlaster && acceptedRemoteBlasterEmission.has(this);
+    if (acceptedLocalEmission) emission.pending--;
     const result = trigger.call(this, name, ...args);
     if (!enabled(this)) return result;
     const m = track(this);
@@ -186,6 +343,12 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
         recovery: w.fireInterval - w.windup, releaseAge: null } : null;
     }
     if (name === 'charge_release' && this.weaponKind === 'charger') m.release = 0;
+    // #915: the mechanism is owned by the ACTUAL emission event. For the
+    // Blaster this trigger fires only from WeaponRunner._auto after a real
+    // projectile (never on held ZR, dry fire or windup), and remote proxies
+    // replay the identical trigger through NetMatch, so every accepted shot
+    // starts exactly one lever + spring-front cycle locally and remotely.
+    if (name === 'shoot' && this.weaponKind === 'blaster' && (acceptedLocalEmission || acceptedRemoteEmission)) m.mech = 0;
     return result;
   };
   P._updateStates = function (dt, s) {
@@ -217,6 +380,13 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
       else this.wAim = Math.min(this.wAim,
         1 - smooth((m.release - WEAPON_DETAIL_CALIBRATION.chargerReturnStart) /
           (WEAPON_DETAIL_CALIBRATION.chargerReturnEnd - WEAPON_DETAIL_CALIBRATION.chargerReturnStart)));
+    }
+    if (m.mech != null && this.weaponKind === 'blaster') {
+      // Event-owned mechanism age advanced by the simulation step only, so the
+      // peak stays tied to the emission frame regardless of render partitioning.
+      // Form/death/hide/swap clear the track (above) and restore rest poses.
+      m.mech += dt;
+      if (m.mech >= BLASTER_MECHANISM.settle) m.mech = null;
     }
     return result;
   };
@@ -286,6 +456,16 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
     if (w.def.kind === 'blaster') {
       w.pump = 0;
       if (parts.pump) parts.pump.position.copy(parts.pump.userData.rest);
+      // #915 S3 mechanism: left lever pulls down, centre spring throws the front
+      // section forward, one rest→peak→rest cycle per actual emission. These two
+      // channels are written only here from the event-owned age; generic
+      // whole-weapon recoil (withRecoil) stays additive and never drives them,
+      // and the suppressed pump stroke above remains at rest.
+      const age = m.mech;
+      if (parts.lever) parts.lever.rotation.z = age == null ? 0
+        : -BLASTER_MECHANISM.leverPeak * blasterMechanismCycle(age, BLASTER_MECHANISM.lever);
+      if (parts.front) parts.front.position.z = parts.front.userData.rest.z + (age == null ? 0
+        : BLASTER_MECHANISM.frontPeak * blasterMechanismCycle(age, BLASTER_MECHANISM.front));
     }
     if (w.def.kind === 'splatling') {
       const target = this.kidForm && this.visible && !this.dance && this._owner()?.alive !== false ? r ? r.charging ? 14 + 46 * (r.charge || 0) : r.streaming ? 64 : 0
