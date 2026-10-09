@@ -43,7 +43,7 @@
       "family": "共通",
       "target": "塗り本体・飛沫・GPU",
       "status": "partial",
-      "result": "実CPU面積と既存共有形状論理を検査。実WebGL2比較は環境で失敗。"
+      "result": "PR1188: CPU本体輪郭をGPU零交差へ一致。WebGL2(SwiftShader)実描画で本体81条件・付随108条件のCPU/GPU一致（零交差同値のみ）。本家テクスチャ形状との画像比較は未実施。"
     },
     {
       "id": "B07",
@@ -57,7 +57,7 @@
       "family": "共通",
       "target": "攻撃中の移動",
       "status": "partial",
-      "result": "Charger目標とDualiesを修正。Splatling専用減速・実機中間曲線は残存。"
+      "result": "PR1188: スピナーのチャージ開始減速(VelGnd_DownRt_Charge)を実Actorへ接続。比例減衰はモデル、VelGnd_Bias_Chargeは定義不明で未割当。"
     },
     {
       "id": "B09",
@@ -91,8 +91,8 @@
       "id": "B13",
       "family": "シューター",
       "target": "飛沫・高所・着弾",
-      "status": "regression-only",
-      "result": "既存の実衝突とCPU塗り距離を検査。実機形状は未検証。"
+      "status": "partial",
+      "result": "PR1188: シューター系の落下飛沫足跡を楕円(幅×深さ)の全長・面積一致へ写像。InkFlightの落下・高さ別深さは既存。実機形状は未検証。"
     },
     {
       "id": "B14",
@@ -134,7 +134,7 @@
       "family": "バレル",
       "target": "チャージ減速・予約・解除",
       "status": "partial",
-      "result": "空中/低インク・予約/解除は既存回帰。専用地上減速未実装。"
+      "result": "PR1188: 専用地上減速を実装(5%/F)。空中/低インク・予約/解除は既存回帰。中間関数の実機比較なし。"
     },
     {
       "id": "B20",
@@ -175,8 +175,8 @@
       "id": "B25",
       "family": "ブラスター",
       "target": "爆風ダメージ・ノックバック",
-      "status": "incomplete",
-      "result": "既存70→50・遮蔽は回帰。ノックバック適用は未実装。"
+      "status": "partial",
+      "result": "PR1188: KnockBackParam 700/0.8/3.5を#535同型換算で適用、地形/直撃は縮小体積。ノックバックの本家積分式は非公開(モデル)。"
     },
     {
       "id": "B26",
@@ -189,8 +189,8 @@
       "id": "B27",
       "family": "ブラスター",
       "target": "壁・バリア倍率・塗り",
-      "status": "already-in-baseline",
-      "result": "1.9倍等既存専用コードを維持し回帰。実機画素一致は未検証。"
+      "status": "partial",
+      "result": "PR1188: 床塗りを落下飛沫・球状爆発塗り・壁飛沫接続で再構成（BLASTER_FLOOR_PAINT_COMPARISON参照）。1.9倍等の既存倍率は維持。"
     },
     {
       "id": "B28",
@@ -203,8 +203,8 @@
       "id": "B29",
       "family": "ローラー",
       "target": "転がし・旋回・接触",
-      "status": "incomplete",
-      "result": "既存速度/旋回は回帰。相互ノックバック未実装。"
+      "status": "partial",
+      "result": "PR1188: 接触ノックバック(相手/自分、DamageOn/Off)を実装、遠隔は複製ヒットで被弾者側が適用。補間式はモデル。"
     },
     {
       "id": "B30",
@@ -266,8 +266,22 @@
       "id": "B38",
       "family": "キット",
       "target": "4系統の標準セット化",
-      "status": "incomplete",
-      "result": "抽出行は照合したが独自セットが残存。機能のない名前だけの置換なし。"
+      "status": "partial",
+      "result": "PR1188: スロット単位で実装済み機構を本家構成へ。未実装サブ/スペシャルは独自と明示。シューター必要SPを公式11.1.0に従い200へ。"
+    },
+    {
+      "id": "B39",
+      "family": "ブラスター",
+      "target": "床塗り（飛翔飛沫・爆発・壁飛沫・CPU/GPU）",
+      "status": "partial",
+      "result": "PR1188: 4WU打ち切り撤廃、高さ別深さ1.2→1.0、壁飛沫接続、爆発の球状塗り＋落下滴、30/60/120Hz一致。初速・空気抵抗・滴数・地形時球半径は既定値/モデル。"
+    },
+    {
+      "id": "B40",
+      "family": "キット",
+      "target": "スプラシューター必要SP",
+      "status": "fixed",
+      "result": "PR1188: 公式Ver.11.1.0(210→200)と11.3.0 WeaponInfoMain(200)に一致させた。#1132の210は7.2.0止まりだった。"
     }
   ]
 }

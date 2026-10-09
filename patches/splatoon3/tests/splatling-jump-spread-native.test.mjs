@@ -287,6 +287,8 @@ test('zero-spread ground Splatling range probe preserves its native projectile a
   assert.deepEqual(paintMetrics(f), paintMetrics(control),
     'the jump-only control preserves production paint metrics and every painted footprint cell');
   const paint = paintMetrics(f);
+  // PR1188: the CPU body edge equals the rendered GPU body edge (was 0.97 of
+  // it), adding the visible boundary ring: 16.875/15.875/254 -> below.
   assert.deepEqual({ maxZ: paint.bounds?.maxZ, area: paint.area, cells: paint.cells },
-    { maxZ: 16.875, area: 15.875, cells: 254 });
+    { maxZ: 17.125, area: 16.9375, cells: 271 });
 });

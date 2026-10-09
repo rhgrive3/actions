@@ -1,5 +1,7 @@
 # Claude引継ぎプロンプト — INKWAVE 武器挙動 Ver.11.3.0
 
+> **対応記録（2026-10-09）:** この引継ぎの作業結果は [README.md「PR1188 完成作業」](README.md#pr1188-完成作業claude-2026-10-09)、[BLASTER_FLOOR_PAINT_COMPARISON.md「PR1188 修正後」](BLASTER_FLOOR_PAINT_COMPARISON.md)、[TEST_RESULTS.md](TEST_RESULTS.md) にある。以下は引継ぎ時点の指示の原文。
+
 あなたはINKWAVEのスプラトゥーン3 Ver.11.3.0ブキ性能再現を完成させる実装担当です。調査だけで終了せず、コード修正・自動テスト・ビルド・実行時確認・Draft PR更新まで一貫して完了してください。必要な修正件数や調査範囲を恣意的に制限しないでください。
 
 ## 作業場所

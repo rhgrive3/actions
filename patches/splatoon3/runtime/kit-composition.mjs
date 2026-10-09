@@ -1,10 +1,28 @@
 // One shared registry feeds menus, actor-local gear copies, bots and HUD.
 // Verified base rows: Leanny/splat3@7280ff9c, data/mush/1130/WeaponInfoMain.json.
 // Mechanics retain their separately declared calibrations; this maps kit identity.
+// PR1188: Splattershot is 200p in 11.3.0. Ver.7.2.0 raised it 200 -> 210 but
+// Ver.11.1.0 (official notes) lowered it 210 -> 200 again; the pinned 1110 and
+// 1130 WeaponInfoMain rows agree. #1132 had stopped at 7.2.0.
 export const VERIFIED_KITS = Object.freeze({
-  shooter: Object.freeze({ main: 'Shooter_Normal_00', sub: 'suction', special: 'trizooka', specialCost: 210 }),
+  shooter: Object.freeze({ main: 'Shooter_Normal_00', sub: 'suction', special: 'trizooka', specialCost: 200 }),
   roller: Object.freeze({ main: 'Roller_Normal_00', sub: 'curling', special: 'bubbler', specialCost: 180 }),
   charger: Object.freeze({ main: 'Charger_Normal_00', sub: 'bomb', special: 'inkVac', specialCost: 190 }),
+});
+// PR1188: kits whose 11.3.0 sub or special already has implemented INKWAVE
+// mechanics take that verified slot; the other slot (whose mechanic is not
+// implemented: Autobomb, Sprinkler, Wave Breaker, Crab Tank, Triple Inkstrike)
+// stays the original INKWAVE one and is labelled. A special cost belongs to the
+// special it charges, so it is only adopted together with a verified special.
+export const PARTIAL_KITS = Object.freeze({
+  blaster: Object.freeze({ main: 'Blaster_Middle_00', special: 'bubbler', specialCost: 190,
+    missing: Object.freeze({ sub: 'Bomb_Robot (Autobomb)' }) }),
+  dualies: Object.freeze({ main: 'Maneuver_Normal_00', sub: 'suction',
+    missing: Object.freeze({ special: 'SpChariot (Crab Tank)', specialCost: 200 }) }),
+  slosher: Object.freeze({ main: 'Slosher_Strong_00', sub: 'bomb',
+    missing: Object.freeze({ special: 'SpTripleTornado (Triple Inkstrike)', specialCost: 220 }) }),
+  splatling: Object.freeze({ main: 'Spinner_Standard_00',
+    missing: Object.freeze({ sub: 'Sprinkler', special: 'SpShockSonar (Wave Breaker)', specialCost: 210 }) }),
 });
 export function selectedSub(actorOrWeapon, SUB) {
   const w = actorOrWeapon?.weapon || actorOrWeapon;
@@ -26,11 +44,24 @@ export function composeKits({ WEAPONS, SUB, SPECIALS }) {
     const cost = SUB[kit.sub].inkCost ?? SUB[kit.sub].inkCostFallback;
     if (!Number.isFinite(cost)) throw new Error(`Kit cost unresolved: ${kit.sub}`);
   }
+  for (const [main, partial] of Object.entries(PARTIAL_KITS)) {
+    if (!WEAPONS[main]) continue;
+    if ((partial.sub && !SUB[partial.sub]) || (partial.special && !SPECIALS[partial.special]))
+      throw new Error(`Kit registration incomplete: ${main}/${partial.sub || '-'}/${partial.special || '-'}`);
+  }
   for (const [main, w] of Object.entries(WEAPONS)) {
-    const kit = VERIFIED_KITS[main];
+    const kit = VERIFIED_KITS[main], partial = PARTIAL_KITS[main];
     if (kit) Object.assign(w, { sub: kit.sub, special: kit.special, specialCost: kit.specialCost,
       kitReference: kit.main, kitStatus: 'verified-base-kit' });
-    else {
+    else if (partial && (partial.sub || partial.special)) {
+      if (partial.sub) w.sub = partial.sub;
+      if (partial.special) Object.assign(w, { special: partial.special, specialCost: partial.specialCost });
+      const verified = [partial.sub && 'sub', partial.special && 'special'].filter(Boolean);
+      Object.assign(w, { kitReference: partial.main, kitStatus: 'partial-verified-kit', kitVerifiedSlots: verified,
+        kitMissing: partial.missing });
+      const label = `Partial Splatoon 3 kit: ${verified.join(' and ')} verified; ${Object.keys(partial.missing).filter(k => k !== 'specialCost').join(' and ')} original INKWAVE (${Object.entries(partial.missing).filter(([k]) => k !== 'specialCost').map(([, v]) => v).join(', ')} not implemented).`;
+      if (!w.blurb?.includes('Partial Splatoon 3 kit')) w.blurb = `${w.blurb || ''} ${label}`.trim();
+    } else {
       Object.assign(w, { kitReference: null, kitStatus: 'original-inkwave-kit' });
       const label = 'Original INKWAVE kit (not a verified Splatoon 3 kit).';
       if (!w.blurb?.includes(label)) w.blurb = `${w.blurb || ''} ${label}`.trim();

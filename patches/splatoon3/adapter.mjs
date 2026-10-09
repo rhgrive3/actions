@@ -80,6 +80,17 @@ export function adaptSource(rel, code) {
       'const options = { seed: p.seed, kind, face: hit.face,',
       'const options = { seed: p.seed, kind, face: hit.face, claimOwner: p.owner,',
       'native ink-flight temporal paint owner');
+    // PR1188: detached splash drops use the same ellipse mapping as Blaster and
+    // Roller splashes: a WidthHalf x (WidthHalf * depth) footprint centred on
+    // the landing point (equal length and area on PaintSystem's forward smear).
+    code = replaceOnce(code,
+      "            this.paint(p, hit, shape, p.heading, p.feet ? 'trail' : 'drop');",
+      "            this.paint(p, hit, splashPaintFootprint(shape), p.heading, p.feet ? 'trail' : 'drop');",
+      'ink flight splash ellipse footprint');
+    code = replaceOnce(code,
+      '    if (projected > EPS) this.heading.multiplyScalar(1 / projected);',
+      '    if (projected > EPS) this.heading.multiplyScalar(1 / projected);\n    if (projected > EPS && shape.centreBack > 0) this.point.addScaledVector(this.heading, -shape.centreBack);',
+      'ink flight splash footprint centred on landing');
     code = replaceOnce(code,
       'this.base.set(actor.pos.x, actor.pos.y + (actor.smoothY || 0), actor.pos.z);',
       'this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);',
@@ -97,7 +108,8 @@ export function adaptSource(rel, code) {
       'ink flight first wall contact admits sourced WallDrop phase');
     code = "import { coherentMotionStart } from '../../patches/splatoon3/runtime/actor-motion.mjs';\n" +
       "import { hurtboxRadius, hurtboxHeight } from '../../patches/splatoon3/runtime/player-hurtbox.mjs';\n" +
-      "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+      "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" +
+      "import { splashPaintFootprint } from '../../patches/splatoon3/runtime/blaster-flight-paint.mjs';\n" + code;
     code = replaceOnce(code,
       '        if (!actor.alive || actor.team === p.team) continue;',
       '        const friendly = actor.team === p.team;\n' +

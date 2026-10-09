@@ -27,7 +27,8 @@ test('#682 horizontal flight has no recurring trail; #423 owns vertical group pa
     for(const q of p.list){q.trail=10;assert.equal(q.trailEvery,0);}
     assert.equal(p.list.filter(q=>q.s3RollerFlightPaint).length,vertical?1:0,'#423 only the central vertical group carrier owns flight paint');
     for(const q of p.list) p._step(q,1/60);
-    assert.equal(paints.length>0,vertical,'only the bounded #423 vertical group path may generate flight drips');
+    // PR1188: the vertical carrier releases falling splashes; they paint where they land.
+    assert.equal((p._s3SplashDrops||[]).length>0,vertical,'only the bounded #423 vertical group path may generate flight drips');
     if(!vertical){
       const q=p.list[0];
       // Restore only the old cadence to demonstrate the extra mid-flight paint.

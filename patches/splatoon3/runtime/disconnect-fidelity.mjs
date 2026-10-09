@@ -285,7 +285,7 @@ export function retireDisconnectedMainProjectiles(system,owner,{ghostOnly=false}
  remove(system.beams,b=>retiredBeams.has(b)||(!owner||b._netOwner===owner)&&!!b._netPeer,b=>{
   if(b.mesh){b.mesh.visible=false;system.beamPool?.push(b.mesh);}
  });
- for(const key of ['_s3DetachedWallDrops','_s3TimedBlasterDrops','_s3ChargerWallDrops'])remove(system[key],owns);
+ for(const key of ['_s3DetachedWallDrops','_s3SplashDrops','_s3ChargerWallDrops'])remove(system[key],owns);
  remove(system.s3BlastQueue,entry=>owns(entry.p));
  return count;
 }

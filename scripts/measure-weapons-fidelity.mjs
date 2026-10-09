@@ -41,7 +41,11 @@ export function finish(f,a,maxFrames=240, trace=null) {
   const ids=new Map(); let next=0;
   const snap=(p,dead=false)=>({id:ids.get(p),age:round(p.age),pos:vec(p.pos),velocity:vec(p.vel),dead});
   if(trace) for(const p of f.projectiles.list){ids.set(p,next++);trace.push(snap(p));}
-  for(let i=0;i<maxFrames && (f.projectiles.list.length || f.projectiles._fidelityChargerFlights?.length);i++){
+  // PR1188: in-flight work includes falling splash drops, queued terrain bursts
+  // and detached wall drops; their paint lands after the round itself is gone.
+  const pending=()=>f.projectiles.list.length || f.projectiles._fidelityChargerFlights?.length ||
+    f.projectiles._s3SplashDrops?.length || f.projectiles.s3BlastQueue?.length || f.projectiles._s3DetachedWallDrops?.length;
+  for(let i=0;i<maxFrames && pending();i++){
     const ps=[...f.projectiles.list]; f.tick(a);
     if(trace)for(const p of ps)trace.push(snap(p,!f.projectiles.list.includes(p)));
   }

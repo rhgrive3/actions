@@ -23,6 +23,7 @@ import { installMovementMotion } from './movement-motion.mjs';
 import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
+import { installMainKnockback } from './main-knockback.mjs';
 import { installMuzzleFeedback } from './muzzle-feedback.mjs';
 import { installShotGuide } from './weapons-fidelity.mjs';
 import { installChargerSurface } from './charger-surface.mjs';
@@ -134,6 +135,8 @@ export function install(profile) {
   // Main-weapon fidelity must be installed on the same canonical context before
   // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
   installWeaponsFidelity(api, profile);
+  // PR1188: sourced Roller body-contact knockback on the body-owning client.
+  installMainKnockback(api, profile);
   installSuperJumpTargetNotification(api);
   installMuzzleFeedback(api);
   installMinimapDirty(api);

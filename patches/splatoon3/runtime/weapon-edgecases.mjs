@@ -402,8 +402,10 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     if (!flushing && p.s3TerrainBurst) {
       (this.s3BlastQueue ??= []).push({
         point: point.clone(), victim,
-        p: { owner: p.owner, team: p.team, ghost: !!p.ghost, wid: p.wid,
-          s3Weapon: p.s3Weapon ?? null, s3TerrainBurst: true },
+        p: { owner: p.owner, team: p.team, ghost: !!p.ghost, wid: p.wid, seed: p.seed,
+          s3Weapon: p.s3Weapon ?? null, s3TerrainBurst: true,
+          // PR1188: keep the struck surface orientation for the falling burst drop.
+          s3BurstCollisionHit: p.s3BurstCollisionHit?.normal ? { normal: p.s3BurstCollisionHit.normal.clone() } : null },
       });
       return;
     }

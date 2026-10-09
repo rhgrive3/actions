@@ -77,6 +77,12 @@ for (const file of walk(PATCH_ROOT)) {
     const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
     const res = await transform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
     fs.writeFileSync(dst, res.code);
+  } else if (rel === 'profile.json' && !unminified) {
+    // PR1188: the precached gameplay profile ships without indentation. The
+    // parsed value is identical (verified below); only whitespace is removed.
+    const source = fs.readFileSync(file, 'utf8'), compact = JSON.stringify(JSON.parse(source));
+    if (JSON.stringify(JSON.parse(compact)) !== compact) throw new Error('profile.json compaction changed its value');
+    fs.writeFileSync(dst, compact);
   } else fs.copyFileSync(file, dst);
 }
 for (const file of walk(QUALITY_ROOT)) {
@@ -213,6 +219,8 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/private-tracking.mjs',
   'patches/splatoon3/runtime/dry-ink.mjs',
   'patches/splatoon3/runtime/blaster-flight-paint.mjs',
+  // PR1188: sourced main-weapon knockback; static import and precache retained.
+  'patches/splatoon3/runtime/main-knockback.mjs',
   'patches/splatoon3/runtime/roller-vertical-paint.mjs',
   'patches/splatoon3/runtime/roller-max-paint.mjs',
   'patches/splatoon3/runtime/dualies-guide-cache.mjs',

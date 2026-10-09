@@ -55,7 +55,7 @@ async function production() {
 
 test('the unmodified public installer activates all three genuine base kits before actors copy them', async () => {
   const api = await production();
-  for (const [main, sub, special, cost] of [['shooter','suction','trizooka',210],['roller','curling','bubbler',180],['charger','bomb','inkVac',190]]) {
+  for (const [main, sub, special, cost] of [['shooter','suction','trizooka',200],['roller','curling','bubbler',180],['charger','bomb','inkVac',190]]) {
     assert.equal(api.WEAPONS[main].sub, sub, main + ' installed sub');
     assert.equal(api.WEAPONS[main].special, special, main + ' installed special');
     assert.equal(api.WEAPONS[main].specialCost, cost);
@@ -72,10 +72,17 @@ test('the unmodified public installer activates all three genuine base kits befo
       assert.notEqual(a.weapon,api.WEAPONS[main], 'gear snapshot remains actor-local');
     } finally {a.character.dispose();}
   }
-  for (const main of ['blaster','slosher','splatling','dualies']) {
-    assert.equal(api.WEAPONS[main].kitStatus,'original-inkwave-kit');
-    assert.match(api.WEAPONS[main].blurb,/Original INKWAVE kit/);
+  // PR1188: implemented 11.3.0 slots are adopted per slot; unimplemented ones stay original.
+  for (const [main, sub, special, cost, slots] of [['blaster','bomb','bubbler',190,['special']],
+    ['dualies','suction',null,null,['sub']],['slosher','bomb',null,null,['sub']]]) {
+    assert.equal(api.WEAPONS[main].kitStatus,'partial-verified-kit',main);
+    assert.deepEqual([...api.WEAPONS[main].kitVerifiedSlots],slots,main);
+    assert.equal(api.WEAPONS[main].sub,sub,main);
+    if (special) { assert.equal(api.WEAPONS[main].special,special); assert.equal(api.WEAPONS[main].specialCost,cost); }
+    assert.match(api.WEAPONS[main].blurb,/Partial Splatoon 3 kit/);
   }
+  assert.equal(api.WEAPONS.splatling.kitStatus,'original-inkwave-kit');
+  assert.match(api.WEAPONS.splatling.blurb,/Original INKWAVE kit/);
 });
 
 

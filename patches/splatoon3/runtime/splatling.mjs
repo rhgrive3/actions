@@ -97,6 +97,11 @@ export function sampleSplatlingSpeed(base, halfWidth, bias, uniform) {
   return Math.max(0, base + Math.sign(signed) * halfWidth * magnitude);
 }
 
+export function splatlingChargeDownRate(profile) {
+  const rate = profile?.weaponsFidelityCompletion?.weapons?.splatling?.WeaponParam?.VelGnd_DownRt_Charge;
+  return Number.isFinite(rate) && rate > 0 && rate < 1 ? rate : 0;
+}
+
 export function installSplatling(api, profile, { splatlingChargeCap, splatlingReservation, tickSplatlingInterrupt, releaseSplatlingInterrupt }) {
   const { WeaponRunner, Projectiles, Actor, G, PLAYER } = api;
   if (WeaponRunner.prototype[INSTALLED]) return;
@@ -121,6 +126,33 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
     Actor.prototype._startSpecial = function (...args) {
       if (this.weapon.kind === 'splatling') cancel(this.weaponRunner);
       return startSpecial.apply(this, args);
+    };
+  }
+
+  // PR1188 (A05): dedicated ground slowdown while a Splatling charge starts.
+  // Pinned 11.3.0 WeaponSpinnerStandard: MoveSpeed_Charge 0.062,
+  // VelGnd_DownRt_Charge 0.05. Model (not extracted code): while charging on
+  // the ground above the charge target, speed falls by DownRt of itself per
+  // 60 Hz reference frame, never below the target, replacing the generic run
+  // brake. VelGnd_Bias_Charge (0.9) has no published definition and stays
+  // unmapped rather than inventing a steering law.
+  const chargeDownRate = splatlingChargeDownRate(profile);
+  if (Actor?.prototype._horizontal && chargeDownRate > 0) {
+    const horizontal = Actor.prototype._horizontal;
+    Actor.prototype._horizontal = function (dt, squid, onEnemy, ...rest) {
+      const runner = this.weaponRunner, before = Math.hypot(this.vel.x, this.vel.z);
+      const value = horizontal.call(this, dt, squid, onEnemy, ...rest);
+      if (!(dt > 0) || squid || onEnemy || !this.grounded || this.weapon?.kind !== 'splatling' ||
+          !runner?.charging || runner.streaming || runner.dodge || (runner.lockT || 0) > 0) return value;
+      const move = this.intent?.move, input = move ? Math.min(1, Math.hypot(move.x, move.z)) : 0;
+      if (input < .01) return value;
+      const target = runner.moveSpeed() * input, after = Math.hypot(this.vel.x, this.vel.z);
+      if (!(before > target + 1e-9) || !(after > 1e-9)) return value;
+      const sourced = Math.max(target, before * Math.pow(1 - chargeDownRate, dt * 60));
+      const k = sourced / after;
+      this.vel.x *= k; this.vel.z *= k;
+      runner.s3SplatlingChargeDecel = { before, target, speed: sourced };
+      return value;
     };
   }
 

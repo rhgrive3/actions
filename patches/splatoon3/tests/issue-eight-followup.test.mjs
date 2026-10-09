@@ -75,8 +75,10 @@ function runtimeFixture(kind = 'roller') {
   return { Actor, Runner, Projectiles };
 }
 
-test('#1132: Splattershot base special cost is 210p; Roller/Charger controls stay 180/190', () => {
-  assert.equal(VERIFIED_KITS.shooter.specialCost, 210);
+// PR1188: #1132 applied Ver.7.2.0 (200 -> 210) but missed official Ver.11.1.0
+// (210 -> 200); the pinned 11.3.0 WeaponInfoMain row is 200 as well.
+test('#1132/PR1188: Splattershot base special cost is 200p in 11.3.0; Roller/Charger controls stay 180/190', () => {
+  assert.equal(VERIFIED_KITS.shooter.specialCost, 200);
   assert.equal(VERIFIED_KITS.roller.specialCost, 180);
   assert.equal(VERIFIED_KITS.charger.specialCost, 190);
 });

@@ -1,5 +1,18 @@
 import { PAINT_SHAPE_HASH_GLSL } from './runtime/paint-ownership.mjs';
 
+// PR1188: the GPU body edge is the zero crossing of the body SDF
+// (r * grow * wob with grow = 1 once grown; AA alpha 0.5 there). The native
+// CPU scorer stopped at 0.97 of that edge, leaving a ring of visible,
+// unowned ink (WebGL2 probe: 1,864 of 32,313 body cells). Own exactly the
+// cells whose centre lies inside the rendered body.
+export function adaptPaintBodyEdge(rel, code, replaceOnce) {
+  if (rel !== 'src/world/paint.js') return code;
+  return replaceOnce(code,
+    '          if (d / (r * blobWobble(Math.atan2(py, px), seed)) > 0.97) continue;',
+    '          if (d / (r * blobWobble(Math.atan2(py, px), seed)) > 1) continue; // PR1188: GPU body zero crossing',
+    'CPU body ownership edge equals the rendered body edge');
+}
+
 export function adaptPaintOwnership(rel, code, replaceOnce) {
   if (rel === 'src/world/paint.js') {
     code = "import { paintShapeSeed } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
@@ -45,6 +58,7 @@ export function adaptPaintOwnership(rel, code, replaceOnce) {
       '        if (prev === val) continue;\n' +
       '        this.grid[k] = val;',
       'preserve newest paint ownership order');
+    code = adaptPaintBodyEdge(rel, code, replaceOnce);
     code = replaceOnce(code,
       '  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind) {',
       '  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind, orderId = 0, orderState = null) {',
