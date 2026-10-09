@@ -1480,6 +1480,20 @@ age は actor に保持する。再ジャンプは age を再開し、death/rese
 
 未確認: Switch 実機の同条件 spread・pitch と gear 条件、非公開の25–70F中間曲線、`Jump_DegBiasMax` の実際の shot-selection 挙動。これらを本変更で解決済みにしない。全体 build / batch / CI は親側の検証に委ねる。
 
+## 2026-10-09 — Splat Dualies jump spread (#887)
+
+比較対象は Splatoon 3 Ver. 11.3.0 の Splat Dualies (`WeaponManeuverNormal`)。根拠は [Nintendo の更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/) と、固定した [Leanny 11.3.0 raw parameter table](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json) (`7280ff9cde8bb1c5dcef46c700c326471584d2e6`)。2026-10-09 に同 raw を再取得し、`WeaponParam` が `Stand_DegSwerve=2`、`Jump_DegSwerve=7.5`、`Jump_DegBiasDecreaseStartFrame=25`、`Jump_DegBiasEndFrame=70`、`Jump_DegBiasMax=0.4`、`LapOver_DegSwerve=0`、`RepeatFrame=5` であることを確認した。frame 値は既存の単位変換 `/60` で秒に直し、`25/60=0.4166…s`、`70/60=1.1666…s` とする。角度は profile が既に同じ raw 由来の度で保持している。`Jump_DegBiasMax` は角度加算・角度スケールに変換していない。
+
+条件は通常のヒト形態、追加ギアなし。ジャンプ入力は射撃方向移動なし（射撃中でも `tryDodge` は移動入力が無ければ成立しない）ので通常ジャンプになり、`s3JumpSerial` と `actor:jump` が発生する。本家 Switch 実機での同一ギア・入力フレーム計測は今回行っていない。
+
+開始 main `2195d5244408a9632bfbbb3b106f2cfdf1fa6d77` では `inkwave-public/src/game/weapons.js::WeaponRunner._spreadDeg()` の dualies 分岐が `a.grounded ? spreadGround : spreadAir` を選び、ジャンプ経過時間を読まない。complete production adapter composition の repro は、空中 frame 36 の runner spread `3.75`（=7.5×`spreadFirst`0.5）が、着地した frame 37 で `1.0`（=2×0.5）へ即座に落ちることを確認した。この値は HUD 表示 (`main.js` が `a.weaponRunner.spread` を投影)・`_dualies()` から投射物へ渡す cone の両方に現れる。post-roll の `LapOver_DegSwerve=0` turret cone は別状態であり本件の対象外。
+
+overlay の `runtime/splatling-jump-spread.mjs` は #850 と同じ actor age machine（`actor:jump` で age 0、native fixed simulation の `dt*60` で前進、actor に保持）を Dualies にも適用する。`_spreadDeg()` は Dualies のとき、turret 中なら native の `spreadLock` をそのまま返し（独立）、それ以外で jump age が有効なら 25F まで `spreadAir` を保持し、25F–70F を既存 air/ground endpoint 間の単調な線形重みで補間し、既存の bloom factor を掛ける。raw table は開始・終了 frame を示すだけで中間カーブを公開していないため、線形部分は **INKWAVE 内部の未検証近似であり、Nintendo の正確なカーブとは呼ばない**。着地しても age は続くので初回 grounded tick で ground spread に snap しない。70F 以降は grounded で age を消去する。再ジャンプは age を再開、death/reset は消去、`dt=0` は進めない。`RepeatFrame=5`（`fireInterval=5/60`）、ink、damage、wire、owner/remote authority は変更していない。
+
+確認は complete production adapter composition (`adaptSource` → `adaptTouchLayout` → `adaptReliability` → `adaptQualitySource` → `adaptNetworkSource` → `adaptRange`) と native `Actor`・`WeaponRunner` で行った。追加した `patches/splatoon3/tests/dualies-jump-spread-native.test.mjs` は 8/8 pass。sourced 境界（25F/70F/7.5/2/`spreadLock`0/5F）、stable grounded の 2 endpoint、未ジャンプ空中と jump 直後の 7.5 endpoint、25F まで非回復、25F 直後回復開始、70F で normal endpoint、landing 非 snap、turret cone の独立、reset/death/`dt=0` lifecycle、HUD scalar と composed projectile cone の一致、30/60/120Hz render が同一の fixed 60Hz trace になること、そして jump-spread hook を A/B で無効化しても landing・ink・cooldown・shot emission frame が完全一致（5F cadence 不変）を確認する。既存 `splatling-jump-spread-native.test.mjs` 4/4、`issue-883-dualies-scalar-spread.test.mjs`、`dualies-*.test.mjs`、`integration.test.mjs` を含む focused 131 cases はすべて pass。
+
+未確認: Switch 実機の同条件 spread と gear（Action Intensify の `ReduceJumpSwerveRate`）条件、非公開の25–70F中間曲線、`Jump_DegBiasMax=0.4` の実際の shot-selection 確率挙動。これらを本変更で解決済みにしない。全体 build / batch / CI は親側の検証に委ねる。
+
 ## 2026-10-07: Locker portrait queue staging and character reuse (#834)
 
 ### Splatoon 3 reference conditions
