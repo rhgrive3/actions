@@ -348,10 +348,8 @@ export function emit(name, payload) {
     patch('    this.hitPending.set(message.seq, { message, oldOwner: victim.owner });',
       `    const deliveryOwners = new Set([victim.owner]);
     const receipt = this._pendingHits?.get(message.h);
-    if (receipt) { receipt.deliveryOwners = deliveryOwners; receipt.deliverySeq = message.seq; }
-    this.hitPending.set(message.seq, {
-      message, oldOwner: victim.owner, destination: victim.owner, nackTo: null, retries: 0, deliveryOwners,
-    });`, 'track each admitted hit destination and ACK authority');
+    if (receipt) receipt.delivery = [deliveryOwners, message.seq];
+    this.hitPending.set(message.seq, [message, victim.owner, victim.owner, null, 0, deliveryOwners]);`, 'track each admitted hit destination and ACK authority');
     patch('    this.s.tr?.sendTo(victim.owner, message);\n    return true;',
       `    const sent = this.s.tr?.sendTo(victim.owner, message) === true;
     if (!sent) { this._retirePendingHit(message.h); return false; }
@@ -373,7 +371,7 @@ export function emit(name, payload) {
     if (!Number.isSafeInteger(d.h) || d.h < 1 || d.h <= (hitPeer.lastHit ?? 0)) return;
     hitPeer.lastHit = d.h;`,
       `    const hitPeer = this._peer(from ?? atk.owner);
-    if (!Number.isSafeInteger(d.h) || d.h < 1) return;`, 'validate hit receipt identity');
+    if (!hitSafe(d.h) || d.h < 1) return;`, 'validate hit receipt identity');
     patch(`    if (WEAPONS[d.w]?.kind === 'slosher' &&
       (typeof d.g !== 'string' || !validDamageGroup(d.g))) return;
     this._applyingHit = true;`,
@@ -395,10 +393,10 @@ export function emit(name, payload) {
     seenHits.add(d.h);
     hitPeer.lastHit = nextHighHit;
     const hitLife = v.netLife ?? 0;
-    const previousHitAuthority = v.net?._hitAuthority;
-    const hitRevision = previousHitAuthority?.life === hitLife && previousHitAuthority.owner === this.myId
-      ? previousHitAuthority.sequence + 1 : 1;
-    if (!Number.isSafeInteger(hitRevision) || hitRevision < 1) return;
+    const previousHitAuthority = hitAuthorityRow(v.net?._hitAuthority);
+    const hitRevision = previousHitAuthority?.[1] === hitLife && previousHitAuthority[0] === this.myId
+      ? previousHitAuthority[2] + 1 : 1;
+    if (!hitSafe(hitRevision) || hitRevision < 1) return;
     this._applyingHit = true;`, 'deduplicate validated reordered hit retries');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     for (const a of this.byNid.values()) {
@@ -420,11 +418,11 @@ export function emit(name, payload) {
     // from older clients; the ordered bomb event is replayed on the victim owner.
     if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject shooter bomb hit');
     patch("    this.s.tr?.sendTo(from ?? atk.owner, { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0, vl: v.netLife ?? 0 });",
-      `    const hitState = { owner: this.myId, life: hitLife, sequence: hitRevision, ts: now(), hp: v.hp, alive: !!v.alive };
+      `    const hitState = [this.myId, hitLife, hitRevision, now(), v.hp, !!v.alive];
     v.net ||= {};
     v.net._hitAuthority = hitState;
     const ack = { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0,
-      vl: hitLife, hp: hitState.hp, hr: hitRevision, ht: hitState.ts, la: hitState.alive ? 1 : 0,
+      vl: hitLife, hp: hitState[4], hr: hitRevision, ht: hitState[3], la: hitState[5] ? 1 : 0,
       he: this._hitHandoffPacket(v) };
     if (typeof this.s.tr?.broadcast === 'function') this.s.tr.broadcast(ack);
     else {
@@ -546,22 +544,21 @@ export function emit(name, payload) {
       retireNetworkGhosts(a);
       if (a.net) {
         a.net._stormBirthAuth = null;
-        const life = Number.isSafeInteger(a.netLife) ? a.netLife : (a.net.lastLife ?? 0);
-        const oldHit = a.net._hitAuthority;
-        const prior = oldHit?.life === life && oldHit.owner === id ? oldHit : null;
-        const checkpointHp = Number.isFinite(a.hp) ? Math.max(0, Math.min(PLAYER.hp, a.hp))
-          : Number.isFinite(prior?.hp) ? Math.max(0, Math.min(PLAYER.hp, prior.hp)) : PLAYER.hp;
-        const parent = { owner: id, life, sequence: Number.isSafeInteger(prior?.sequence) ? prior.sequence : 0,
-          ts: Number.isFinite(prior?.ts) ? prior.ts : 0, hp: checkpointHp };
+        const life = hitSafe(a.netLife) ? a.netLife : (a.net.lastLife ?? 0);
+        const oldHit = hitAuthorityRow(a.net._hitAuthority);
+        const prior = oldHit?.[1] === life && oldHit[0] === id ? oldHit : null;
+        const checkpointHp = hitFinite(a.hp) ? hitClamp(a.hp)
+          : hitFinite(prior?.[4]) ? hitClamp(prior[4]) : PLAYER.hp;
+        const parent = [id, life, hitSafe(prior?.[2]) ? prior[2] : 0,
+          hitFinite(prior?.[3]) ? prior[3] : 0, checkpointHp];
         const priorHandoff = a.net._hitHandoff;
-        const ancestors = priorHandoff?.life === life
-          ? hitHandoffEntries(priorHandoff).map(({ owner, life: priorLife, sequence, ts, hp }) =>
-            ({ owner, life: priorLife, sequence, ts, hp }))
+        const ancestors = hitHandoffLife(priorHandoff) === life
+          ? hitHandoffEntries(priorHandoff).filter((entry) => entry[0] !== id)
           : [];
-        const chain = [...ancestors.filter((entry) => entry.owner !== id), parent].slice(-HIT_HANDOFF_CHAIN_LIMIT);
-        a.net._hitHandoff = chain.length > 1 ? { ...parent, prior: chain.slice(0, -1) } : parent;
+        const chain = [...ancestors, parent].slice(-HIT_HANDOFF_CHAIN_LIMIT);
+        a.net._hitHandoff = chain.length > 1 ? [HIT_HANDOFF_CHAIN_TAG, ...chain] : parent;
         a.owner = this.s.hostId;
-        a.net._hitAuthority = { owner: a.owner, life, sequence: 0, ts: 0, hp: a.hp, alive: !!a.alive };
+        a.net._hitAuthority = [a.owner, life, 0, 0, a.hp, !!a.alive];
       } else a.owner = this.s.hostId;`, 'retain prior snapshot clock and begin a distinct hit-owner epoch');
     patch('    const drop = mapNoBots(this.cfg.map);',
       "    const drop = this.cfg.map === 'range' || mapNoBots(this.cfg.map);", 'Practice Range remains humans-only on disconnect');
@@ -607,9 +604,9 @@ export function emit(name, payload) {
       if (s.length >= 24 && !adoption) continue;
       const hitAuthority = s.length >= 26 ? readHitAuthorityState(s[25], snap.life) : null;
       if (s.length >= 26 && !hitAuthority) continue;
-      snap.hitLife = hitAuthority?.life ?? snap.life;
-      snap.hitSeq = hitAuthority?.sequence ?? 0;
-      snap.hitParent = hitAuthority?.parent ?? null;
+      snap.hitLife = hitAuthority?.[0] ?? snap.life;
+      snap.hitSeq = hitAuthority?.[1] ?? 0;
+      snap.hitParent = hitAuthority?.[2] ?? null;
       if (adoption) {
         snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence;
         a.net._adoptionTick = adoption.tick; a.net._adoptionTickOwner = from;
@@ -855,64 +852,95 @@ export function emit(name, payload) {
 const HIT_AUTHORITY_TAG = 'inkwave-hit-authority-v1';
 const HIT_HANDOFF_CHAIN_TAG = 'inkwave-hit-handoff-chain-v1';
 const HIT_HANDOFF_CHAIN_LIMIT = 8;
+const HIT_AUTHORITY_FIELDS = ['hp', 'hr', 'ht', 'la'];
+const hitSafe = Number.isSafeInteger, hitFinite = Number.isFinite, hitArray = Array.isArray;
+const hitClamp = hp => Math.max(0, Math.min(PLAYER.hp, hp));
 function hitHandoffEntries(state) {
-  return state ? [...(Array.isArray(state.prior) ? state.prior : []), state] : [];
+  return state?.[0] === HIT_HANDOFF_CHAIN_TAG ? state.slice(1) : state ? [state] : [];
+}
+function hitHandoffLife(state) {
+  return state?.[0] === HIT_HANDOFF_CHAIN_TAG ? state.at(-1)?.[1] : state?.[1];
+}
+function validHitHandoffRow(row, life, owners) {
+  return row.length === 5 && typeof row[0] === 'string' && row[0] && !owners.has(row[0])
+    && row[1] === life && hitSafe(life) && life >= 0
+    && hitSafe(row[2]) && row[2] >= 0 && hitFinite(row[3]) && row[3] >= 0
+    && hitFinite(row[4]) && row[4] >= 0 && row[4] <= PLAYER.hp;
+}
+function hitHandoffOrder(a, b) {
+  return a[2] - b[2] || a[3] - b[3] || a[4] - b[4];
+}
+function staleHitRevision(sequence, ts, state) {
+  return sequence < state[2] || sequence === state[2] && ts <= state[3];
+}
+function setHitHandoffRevision(state, sequence, ts, hp) {
+  state[2] = sequence; state[3] = ts; state[4] = hp;
+}
+function applyHitHandoff(net, actor, state, sequence, ts, hp, splat) {
+  const next = hitClamp(actor.hp - (state[4] - hp));
+  setHitHandoffRevision(state, sequence, ts, hp);
+  if (actor.alive) actor.hp = next;
+  else actor.hp = 0;
+  if (actor.alive && (splat || actor.hp <= 0)) net._remoteSplat?.(actor, null, 'shooter');
+}
+function hitAuthorityRow(state) {
+  return hitArray(state) ? state : null;
+}
+function setHitAuthorityResult(state, hp, alive) {
+  state[4] = hp; state[5] = alive;
+}
+function mergeHitAuthorityParent(net, actor, packet) {
+  const parent = packet == null ? null : net._readHitHandoffPacket(packet);
+  const matches = parent === false ? false : parent ? net._hitHandoffParentEntries(actor, parent) : [];
+  if (parent === false || parent && !matches || !net._mergeHitAuthorityParent(actor, parent, matches)) return NaN;
+  return parent ? matches.offset : 0;
 }
 function packHitHandoffState(state) {
   const entries = hitHandoffEntries(state);
   if (!entries.length || entries.length > HIT_HANDOFF_CHAIN_LIMIT) return null;
-  const owners = new Set(), life = entries[0].life, rows = [];
-  for (const entry of entries) {
-    if (typeof entry.owner !== 'string' || !entry.owner || owners.has(entry.owner) || entry.life !== life
-      || !Number.isSafeInteger(entry.life) || entry.life < 0 || !Number.isSafeInteger(entry.sequence) || entry.sequence < 0
-      || !Number.isFinite(entry.ts) || entry.ts < 0 || !Number.isFinite(entry.hp) || entry.hp < 0 || entry.hp > PLAYER.hp) return null;
-    owners.add(entry.owner);
-    rows.push([entry.owner, entry.life, entry.sequence, entry.ts, entry.hp]);
+  const owners = new Set(), rows = entries.map(row => row.slice()), life = rows[0][1];
+  for (const row of rows) {
+    if (!validHitHandoffRow(row, life, owners)) return null;
+    owners.add(row[0]);
   }
   return rows.length === 1 ? rows[0] : [HIT_HANDOFF_CHAIN_TAG, ...rows];
 }
 function readHitHandoffState(row) {
-  const chained = Array.isArray(row) && row[0] === HIT_HANDOFF_CHAIN_TAG && row.length >= 3 && Array.isArray(row[1]);
-  const objectState = row && typeof row === 'object' && !Array.isArray(row);
-  const rows = chained ? row.slice(1) : objectState && Array.isArray(row.prior) ? [...row.prior, row] : [row];
-  const isChain = chained || rows.length > 1;
-  if ((!Array.isArray(row) && !objectState) || isChain && (rows.length < 2 || rows.length > HIT_HANDOFF_CHAIN_LIMIT)) return null;
+  const isArray = hitArray(row), chained = isArray && row[0] === HIT_HANDOFF_CHAIN_TAG && row.length >= 3 && hitArray(row[1]);
+  const objectState = row && typeof row === 'object' && !isArray;
+  const rows = chained ? row.slice(1) : objectState && hitArray(row.prior) ? [...row.prior, row] : [row];
+  if ((!isArray && !objectState) || rows.length > HIT_HANDOFF_CHAIN_LIMIT) return null;
   const owners = new Set(), entries = [];
   for (const item of rows) {
-    const values = Array.isArray(item) ? item : item && typeof item === 'object'
+    const values = hitArray(item) ? item : item && typeof item === 'object'
       ? [item.owner, item.life, item.sequence, item.ts, item.hp] : null;
-    if (!values || values.length !== 5 || typeof values[0] !== 'string' || !values[0] || owners.has(values[0])
-      || !Number.isSafeInteger(values[1]) || values[1] < 0 || !Number.isSafeInteger(values[2]) || values[2] < 0
-      || !Number.isFinite(values[3]) || values[3] < 0 || !Number.isFinite(values[4]) || values[4] < 0 || values[4] > PLAYER.hp) return null;
-    if (entries.length && entries[0].life !== values[1]) return null;
+    if (!values || !validHitHandoffRow(values, entries.length ? entries[0][1] : values[1], owners)) return null;
     owners.add(values[0]);
-    entries.push({ owner: values[0], life: values[1], sequence: values[2], ts: values[3], hp: values[4] });
+    entries.push(values);
   }
-  const latest = entries.at(-1);
-  return entries.length === 1 ? latest : { ...latest, prior: entries.slice(0, -1) };
+  return entries.length > 1 ? [HIT_HANDOFF_CHAIN_TAG, ...entries] : entries[0];
 }
 function packHitAuthorityState(actor) {
-  const life = Number.isSafeInteger(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
-  const previous = actor.net?._hitAuthority;
-  const sameOwnerEpoch = previous?.life === life && previous.owner === actor.owner;
-  const sequence = sameOwnerEpoch && Number.isSafeInteger(previous.sequence) && previous.sequence >= 0
-    ? previous.sequence : 0;
-  const ts = sameOwnerEpoch && Number.isFinite(previous?.ts) ? previous.ts : 0;
-  const handoff = actor.net?._hitHandoff?.life === life ? actor.net._hitHandoff : null;
+  const life = hitSafe(actor.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
+  const previous = hitAuthorityRow(actor.net?._hitAuthority);
+  const sameOwnerEpoch = previous?.[1] === life && previous[0] === actor.owner;
+  const sequence = sameOwnerEpoch && hitSafe(previous[2]) && previous[2] >= 0 ? previous[2] : 0;
+  const ts = sameOwnerEpoch && hitFinite(previous?.[3]) ? previous[3] : 0;
+  const handoff = hitHandoffLife(actor.net?._hitHandoff) === life ? actor.net._hitHandoff : null;
   const parent = handoff ? packHitHandoffState(handoff) : null;
-  const validParent = !handoff || parent !== null;
-  if (actor.net) actor.net._hitAuthority = { ...previous, owner: actor.owner, life, sequence, ts, hp: actor.hp, alive: !!actor.alive };
-  return validParent && parent
+  if (actor.net) actor.net._hitAuthority = [actor.owner, life, sequence, ts, actor.hp, !!actor.alive];
+  return parent
     ? [HIT_AUTHORITY_TAG, life, sequence, parent]
     : [HIT_AUTHORITY_TAG, life, sequence];
 }
 function readHitAuthorityState(row, life) {
-  if (!Array.isArray(row) || (row.length !== 3 && row.length !== 4) || row[0] !== HIT_AUTHORITY_TAG
-    || !Number.isSafeInteger(row[1]) || row[1] < 0 || row[1] !== life
-    || !Number.isSafeInteger(row[2]) || row[2] < 0) return null;
-  const parent = row.length === 4 && row[3] !== null ? readHitHandoffState(row[3]) : null;
-  if (row.length === 4 && row[3] !== null && !parent) return null;
-  return { life: row[1], sequence: row[2], parent };
+  if (!hitArray(row) || row.length < 3 || row.length > 4 || row[0] !== HIT_AUTHORITY_TAG
+    || !hitSafe(row[1]) || row[1] < 0 || row[1] !== life
+    || !hitSafe(row[2]) || row[2] < 0) return null;
+  const hasParent = row.length === 4 && row[3] !== null;
+  const parent = hasParent ? readHitHandoffState(row[3]) : null;
+  if (hasParent && !parent) return null;
+  return [row[1], row[2], parent];
 }
 
 const ADOPTION_STATE_TAG = 'inkwave-adoption-v1';
@@ -1495,21 +1523,21 @@ function firstSplatStateFor(session,cfg) {
     const pending = this.hitPending?.get(seq);
     if (!pending) return false;
     this.hitPending.delete(seq);
-    if (Number.isSafeInteger(pending.message?.h)) this._pendingHits?.delete(pending.message.h);
+    if (hitSafe(pending[0]?.h)) this._pendingHits?.delete(pending[0].h);
     return true;
   }
 
   _retirePendingHit(h) {
-    if (!Number.isSafeInteger(h) || h < 1) return false;
+    if (!hitSafe(h) || h < 1) return false;
     const receipt = this._pendingHits?.get(h);
     this._pendingHits?.delete(h);
     let retired = false;
-    const seq = receipt?.deliverySeq;
-    if (Number.isSafeInteger(seq) && this.hitPending?.has(seq)) {
+    const seq = receipt?.delivery?.[1];
+    if (hitSafe(seq) && this.hitPending?.has(seq)) {
       this.hitPending.delete(seq);
       retired = true;
     } else {
-      for (const [key, pending] of [...(this.hitPending || [])]) if (pending.message?.h === h) {
+      for (const [key, pending] of [...(this.hitPending || [])]) if (pending[0]?.h === h) {
         this.hitPending.delete(key);
         retired = true;
       }
@@ -1519,89 +1547,79 @@ function firstSplatStateFor(session,cfg) {
 
   _retirePendingHitsForVictim(nid) {
     for (const [seq, pending] of [...(this.hitPending || [])])
-      if (pending.message?.v === nid) this._retirePendingSequence(seq);
+      if (pending[0]?.v === nid) this._retirePendingSequence(seq);
     for (const [h, receipt] of [...(this._pendingHits || [])]) if (receipt.v === nid) {
       this._pendingHits.delete(h);
-      if (Number.isSafeInteger(receipt.deliverySeq)) this.hitPending?.delete(receipt.deliverySeq);
+      if (hitSafe(receipt.delivery?.[1])) this.hitPending?.delete(receipt.delivery[1]);
     }
   }
 
   _hitHandoffPacket(actor) {
     const state = actor?.net?._hitHandoff;
-    const life = Number.isSafeInteger(actor?.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
-    return state?.life === life ? packHitHandoffState(state) : null;
+    const life = hitSafe(actor?.netLife) && actor.netLife >= 0 ? actor.netLife : 0;
+    return hitHandoffLife(state) === life ? packHitHandoffState(state) : null;
   }
 
   _readHitHandoffPacket(row) {
-    if (row === null || row === undefined) return null;
+    if (row == null) return null;
     return readHitHandoffState(row) || false;
   }
 
   _validHitAuthorityMetadata(d) {
-    const fields = ['hp', 'hr', 'ht', 'la'];
-    const present = fields.filter((key) => d?.[key] !== undefined).length;
+    const present = HIT_AUTHORITY_FIELDS.filter((key) => d?.[key] !== undefined).length;
     if (present === 0) return d?.he === undefined;
-    if (present !== fields.length || !Number.isSafeInteger(d.h) || d.h < 1
-      || !Number.isSafeInteger(d.v) || d.v < 0 || !Number.isSafeInteger(d.a) || d.a < 0
-      || !Number.isSafeInteger(d.vl) || d.vl < 0 || typeof d.d !== 'number' || !Number.isFinite(d.d) || d.d < 0
-      || (d.kld !== 0 && d.kld !== 1) || typeof d.hp !== 'number' || !Number.isFinite(d.hp)
-      || d.hp < 0 || d.hp > PLAYER.hp || !Number.isSafeInteger(d.hr) || d.hr < 1
-      || typeof d.ht !== 'number' || !Number.isFinite(d.ht) || d.ht < 0
+    if (present !== 4 || !hitSafe(d.h) || d.h < 1
+      || !hitSafe(d.v) || d.v < 0 || !hitSafe(d.a) || d.a < 0
+      || !hitSafe(d.vl) || d.vl < 0 || !hitFinite(d.d) || d.d < 0
+      || (d.kld !== 0 && d.kld !== 1) || !hitFinite(d.hp)
+      || d.hp < 0 || d.hp > PLAYER.hp || !hitSafe(d.hr) || d.hr < 1
+      || !hitFinite(d.ht) || d.ht < 0
       || (d.la !== 0 && d.la !== 1) || (d.kld === 1 && (d.hp !== 0 || d.la !== 0))
       || (d.kld === 0 && d.la !== 1)) return false;
-    return d.he === undefined || d.he === null || this._readHitHandoffPacket(d.he) !== false;
+    return d.he == null || this._readHitHandoffPacket(d.he) !== false;
   }
 
   _hitHandoffParentEntries(actor, parent) {
     if (!parent) return [];
     const handoff = actor?.net?._hitHandoff;
-    if (!handoff || handoff.life !== parent.life) return false;
-    const known = hitHandoffEntries(handoff), reported = hitHandoffEntries(parent);
+    if (!handoff || hitHandoffLife(handoff) !== hitHandoffLife(parent)) return false;
+    const known = hitHandoffEntries(handoff);
+    const reported = hitHandoffEntries(parent);
     if (!reported.length || reported.length > known.length) return false;
     const matches = [];
-    let next = 0;
+    let next = 0, offset = 0;
     for (const incoming of reported) {
-      let index = next;
-      while (index < known.length && (known[index].owner !== incoming.owner || known[index].life !== incoming.life)) index++;
+      let index = next, current;
+      while (index < known.length && ((current = known[index])[0] !== incoming[0] || current[1] !== incoming[1])) index++;
       if (index >= known.length) return false;
-      matches.push({ current: known[index], incoming });
+      if (hitHandoffOrder(incoming, current) < 0) offset += incoming[4] - current[4];
+      matches.push([index, incoming]);
       next = index + 1;
     }
+    matches.offset = offset;
     return matches;
   }
 
-  _hitHandoffParentOffset(actor, parent) {
+  _hitHandoffParentOffset(actor, parent, matches) {
     if (!parent) return 0;
-    const matches = this._hitHandoffParentEntries(actor, parent);
-    if (!matches) return NaN;
-    let offset = 0;
-    for (const { current, incoming } of matches) {
-      if (incoming.sequence < current.sequence || incoming.sequence === current.sequence
-        && (incoming.ts < current.ts || incoming.ts === current.ts && incoming.hp < current.hp))
-        offset += incoming.hp - current.hp;
-    }
-    return offset;
+    matches ||= this._hitHandoffParentEntries(actor, parent);
+    return matches ? matches.offset : NaN;
   }
 
-  _mergeHitAuthorityParent(actor, parent) {
+  _mergeHitAuthorityParent(actor, parent, matches) {
     if (!parent) return true;
-    const matches = this._hitHandoffParentEntries(actor, parent);
-    if (!matches || !Number.isFinite(this._hitHandoffParentOffset(actor, parent))) return false;
+    matches ||= this._hitHandoffParentEntries(actor, parent);
+    if (!matches || !hitFinite(matches.offset)) return false;
     const hpBefore = actor.hp;
-    for (const { current: handoff, incoming: candidate } of matches) {
-      const advances = candidate.sequence > handoff.sequence || candidate.sequence === handoff.sequence
-        && (candidate.ts > handoff.ts || candidate.ts === handoff.ts && candidate.hp > handoff.hp);
-      if (!advances) continue;
-      const nextHp = Math.max(0, Math.min(PLAYER.hp, actor.hp - (handoff.hp - candidate.hp)));
-      handoff.sequence = candidate.sequence; handoff.ts = candidate.ts; handoff.hp = candidate.hp;
-      if (actor.alive) actor.hp = nextHp;
-      else actor.hp = 0;
-      if ((candidate.hp <= 0 || actor.hp <= 0) && actor.alive) this._remoteSplat?.(actor, null, 'shooter');
+    const states = hitHandoffEntries(actor.net._hitHandoff);
+    for (const [index, candidate] of matches) {
+      const handoff = states[index], current = handoff;
+      if (hitHandoffOrder(candidate, current) <= 0) continue;
+      applyHitHandoff(this, actor, handoff, candidate[2], candidate[3], candidate[4], candidate[4] <= 0);
     }
-    const current = actor.net?._hitAuthority;
-    if (current?.life === actor.net._hitHandoff.life && current.owner === actor.owner) {
-      current.hp = actor.hp;
-      current.alive = !!actor.alive;
+    const current = hitAuthorityRow(actor.net?._hitAuthority);
+    if (current?.[1] === hitHandoffLife(actor.net._hitHandoff) && current[0] === actor.owner) {
+      setHitAuthorityResult(actor.net._hitAuthority, actor.hp, !!actor.alive);
     }
     if (actor.hp < hpBefore) actor.lastDamage = 0;
     return true;
@@ -1610,81 +1628,73 @@ function firstSplatStateFor(session,cfg) {
   _acceptHitAuthorityAck(d, from) {
     const victim = this.byNid.get(d?.v), life = d?.vl;
     if (!victim || typeof from !== 'string' || !from || !this._validHitAuthorityMetadata(d) || d.hr === undefined) return false;
-    const currentLife = Math.max(Number.isSafeInteger(victim.netLife) ? victim.netLife : 0,
-      Number.isSafeInteger(victim.net?.lastLife) ? victim.net.lastLife : 0);
+    const currentLife = Math.max(hitSafe(victim.netLife) ? victim.netLife : 0,
+      hitSafe(victim.net?.lastLife) ? victim.net.lastLife : 0);
     const handoff = victim.net?._hitHandoff;
     const previousOwner = victim.owner !== from;
-    const checkpoint = previousOwner && handoff?.life === life
-      ? hitHandoffEntries(handoff).find((entry) => entry.owner === from && entry.life === life) : null;
+    const checkpoint = previousOwner && hitHandoffLife(handoff) === life
+      ? hitHandoffEntries(handoff).find((entry) => entry[0] === from && entry[1] === life) : null;
     if (life !== currentLife || previousOwner && !checkpoint) return false;
-    const current = victim.net?._hitAuthority;
+    const current = hitAuthorityRow(victim.net?._hitAuthority);
     victim.net ||= {};
     if (previousOwner) {
-      if (d.hr < checkpoint.sequence || d.hr === checkpoint.sequence && d.ht <= checkpoint.ts) return false;
+      if (staleHitRevision(d.hr, d.ht, checkpoint)) return false;
       const hpBefore = victim.hp;
-      const nextHp = Math.max(0, Math.min(PLAYER.hp, hpBefore - (checkpoint.hp - d.hp)));
-      checkpoint.sequence = d.hr; checkpoint.ts = d.ht; checkpoint.hp = d.hp;
-      if (victim.alive) victim.hp = nextHp;
-      else victim.hp = 0;
-      if (victim.alive && (d.la === 0 || victim.hp <= 0)) this._remoteSplat?.(victim, null, 'shooter');
-      if (current?.life === life && current.owner === victim.owner) {
-        current.hp = victim.hp; current.alive = !!victim.alive;
+      applyHitHandoff(this, victim, checkpoint, d.hr, d.ht, d.hp, d.la === 0);
+      if (current?.[1] === life && current[0] === victim.owner) {
+        setHitAuthorityResult(victim.net._hitAuthority, victim.hp, !!victim.alive);
       }
       if (victim.hp < hpBefore) victim.lastDamage = 0;
       return true;
     }
 
-    const parent = d.he === undefined || d.he === null ? null : this._readHitHandoffPacket(d.he);
-    const parentOffset = parent === false ? NaN : this._hitHandoffParentOffset(victim, parent);
-    if (!Number.isFinite(parentOffset)) return false;
-    if (!this._mergeHitAuthorityParent(victim, parent)) return false;
-    const sameEpoch = current?.life === life && current.owner === from;
-    if (sameEpoch && (d.hr < current.sequence || d.hr === current.sequence && d.ht <= current.ts)) return false;
+    const parentOffset = mergeHitAuthorityParent(this, victim, d.he);
+    if (!hitFinite(parentOffset)) return false;
+    const sameEpoch = current?.[1] === life && current[0] === from;
+    if (sameEpoch && staleHitRevision(d.hr, d.ht, current)) return false;
     const hpBefore = victim.hp;
     if (victim.alive) {
-      const reportedHp = parent ? d.hp - parentOffset
-        : handoff?.life === life ? victim.hp - d.d : d.hp;
-      victim.hp = Math.max(0, Math.min(PLAYER.hp, reportedHp));
+      const reportedHp = d.he != null ? d.hp - parentOffset
+        : hitHandoffLife(handoff) === life ? victim.hp - d.d : d.hp;
+      victim.hp = hitClamp(reportedHp);
     } else victim.hp = 0;
     if (victim.alive && (d.la === 0 || victim.hp <= 0)) this._remoteSplat?.(victim, null, 'shooter');
-    victim.net._hitAuthority = { owner: from, life, sequence: d.hr, ts: d.ht, hp: victim.hp, alive: !!victim.alive };
+    victim.net._hitAuthority = [from, life, d.hr, d.ht, victim.hp, !!victim.alive];
     if (victim.hp < hpBefore) victim.lastDamage = 0;
     return true;
   }
 
   _acceptHitAuthoritySnapshot(actor, snap, from) {
-    if (!actor || actor.owner !== from || !Number.isSafeInteger(snap?.hitLife)
-      || !Number.isSafeInteger(snap?.hitSeq) || snap.hitSeq < 0 || !Number.isFinite(snap?.t)
-      || !Number.isFinite(snap?.hp)) return false;
+    if (!actor || actor.owner !== from || !hitSafe(snap?.hitLife)
+      || !hitSafe(snap?.hitSeq) || snap.hitSeq < 0 || !hitFinite(snap?.t)
+      || !hitFinite(snap?.hp)) return false;
     const life = snap.hitLife;
     if (life !== snap.life) return false;
-    const current = actor.net?._hitAuthority;
-    const sameEpoch = current?.life === life && current.owner === from;
-    if (sameEpoch && (snap.hitSeq < current.sequence || snap.hitSeq === current.sequence && snap.t <= current.ts)) return false;
-    const parent = snap.hitParent === undefined || snap.hitParent === null ? null : this._readHitHandoffPacket(snap.hitParent);
-    const parentOffset = parent === false ? NaN : this._hitHandoffParentOffset(actor, parent);
-    if (!Number.isFinite(parentOffset)) return false;
-    if (!this._mergeHitAuthorityParent(actor, parent)) return false;
-    const hp = Math.max(0, Math.min(PLAYER.hp, snap.hp - parentOffset));
+    const current = hitAuthorityRow(actor.net?._hitAuthority);
+    const sameEpoch = current?.[1] === life && current[0] === from;
+    if (sameEpoch && staleHitRevision(snap.hitSeq, snap.t, current)) return false;
+    const parentOffset = mergeHitAuthorityParent(this, actor, snap.hitParent);
+    if (!hitFinite(parentOffset)) return false;
+    const hp = hitClamp(snap.hp - parentOffset);
     actor.net ||= {};
-    actor.net._hitAuthority = { ...current, owner: from, life, sequence: snap.hitSeq, ts: snap.t, hp, alive: hp > 0 };
+    actor.net._hitAuthority = [from, life, snap.hitSeq, snap.t, hp, hp > 0];
     return true;
   }
 
   _hitAuthorityHp(actor, sample, owner) {
-    if (!Number.isSafeInteger(sample?.hitLife) || !Number.isSafeInteger(sample?.hitSeq)) return sample.hp;
+    if (!hitSafe(sample?.hitLife) || !hitSafe(sample?.hitSeq)) return sample.hp;
     this._acceptHitAuthoritySnapshot(actor, sample, owner);
-    const state = actor.net?._hitAuthority;
-    if (!state || state.life !== sample.hitLife || state.owner !== owner) return sample.hp;
-    return state.hp;
+    const state = hitAuthorityRow(actor.net?._hitAuthority);
+    if (!state || state[1] !== sample.hitLife || state[0] !== owner) return sample.hp;
+    return state[4];
   }
 
   _retryNackedHit(pending) {
-    if (!pending || pending.nackTo !== pending.destination || !pending.message) return false;
-    const message = pending.message;
+    if (!pending || pending[3] !== pending[2] || !pending[0]) return false;
+    const message = pending[0];
     const victim = this.byNid.get(message.v), attacker = this.byNid.get(message.a);
-    const life = Number.isSafeInteger(victim?.netLife) ? victim.netLife : 0;
-    if (!victim?.alive || !Number.isSafeInteger(message.l) || message.l < 0 || life !== message.l
+    const life = hitSafe(victim?.netLife) ? victim.netLife : 0;
+    if (!victim?.alive || !hitSafe(message.l) || message.l < 0 || life !== message.l
       || !attacker || attacker.remote || attacker.owner !== this.myId || attacker.nid !== message.a
       || attacker.team === victim.team) {
       this._retirePendingHit(message.h);
@@ -1695,15 +1705,15 @@ function firstSplatStateFor(session,cfg) {
       this._retirePendingHit(message.h);
       return false;
     }
-    if (owner === pending.destination || (victim.remote === (owner === this.myId))) return false;
+    if (owner === pending[2] || (victim.remote === (owner === this.myId))) return false;
 
-    pending.deliveryOwners ||= new Set([pending.oldOwner]);
-    pending.deliveryOwners.add(owner);
-    pending.destination = owner;
-    pending.nackTo = null;
-    pending.retries = (pending.retries || 0) + 1;
+    pending[5] ||= new Set([pending[1]]);
+    pending[5].add(owner);
+    pending[2] = owner;
+    pending[3] = null;
+    pending[4]++;
     const receipt = this._pendingHits?.get(message.h);
-    if (receipt) { receipt.deliveryOwners = pending.deliveryOwners; receipt.deliverySeq = message.seq; }
+    if (receipt) receipt.delivery = [pending[5], message.seq];
     // The shooter remains the authenticated sender. A new victim owner never
     // turns a proxy into authority or receives a newly synthesized hit.
     if (owner === this.myId) this._hit(message, attacker.owner);
@@ -1713,7 +1723,7 @@ function firstSplatStateFor(session,cfg) {
 
   _retryPendingHitsForLeave(actor, departed) {
     for (const pending of this.hitPending?.values() || [])
-      if (pending.message?.v === actor.nid && pending.nackTo === departed) this._retryNackedHit(pending);
+      if (pending[0]?.v === actor.nid && pending[3] === departed) this._retryNackedHit(pending);
   }
 
   _hitNack(d) {`, 'retire and follow exact hit identities through owner changes');
@@ -1740,33 +1750,33 @@ function firstSplatStateFor(session,cfg) {
       code = once(code, original, replacement, rel + ': local hit retirement');
     }
     replaceMethod('_hitNack', `  _hitNack(d) {
-    if (!d || !Number.isSafeInteger(d.seq) || d.seq < 1 || typeof d.to !== 'string' || !d.to) return;
+    if (!d || !hitSafe(d.seq) || d.seq < 1 || typeof d.to !== 'string' || !d.to) return;
     const pending = this.hitPending?.get(d.seq);
-    if (!pending || pending.destination !== d.to || pending.nackTo === d.to) return;
-    pending.nackTo = d.to;
+    if (!pending || pending[2] !== d.to || pending[3] === d.to) return;
+    pending[3] = d.to;
     this._retryNackedHit(pending);
   }`, 'relay NACK must match latest destination');
     replaceMethod('_hitAck', `  _hitAck(d, from) {
     if (!d || typeof d !== 'object' || !this._validHitAuthorityMetadata(d)) return;
-    const hasAuthority = ['hp', 'hr', 'ht', 'la'].some((key) => d[key] !== undefined);
+    const hasAuthority = HIT_AUTHORITY_FIELDS.some((key) => d[key] !== undefined);
     if (hasAuthority) this._acceptHitAuthorityAck(d, from);
     const h = d.h;
-    if (!Number.isSafeInteger(h) || h < 1) return;
+    if (!hitSafe(h) || h < 1) return;
     const receipt = this._pendingHits?.get(h);
-    let seq = receipt?.deliverySeq, delivery = Number.isSafeInteger(seq) ? this.hitPending?.get(seq) : null;
+    let seq = receipt?.delivery?.[1], delivery = hitSafe(seq) ? this.hitPending?.get(seq) : null;
     if (!delivery && this.hitPending) for (const [key, pending] of this.hitPending)
-      if (pending.message?.h === h) { seq = key; delivery = pending; break; }
-    const message = delivery?.message;
-    const owners = delivery?.deliveryOwners || receipt?.deliveryOwners || (receipt?.vo ? new Set([receipt.vo]) : null);
+      if (pending[0]?.h === h) { seq = key; delivery = pending; break; }
+    const message = delivery?.[0];
+    const owners = delivery?.[5] || receipt?.delivery?.[0] || (receipt?.vo ? new Set([receipt.vo]) : null);
     const victimNid = receipt?.v ?? message?.v, attackerNid = receipt?.a ?? message?.a;
     const life = receipt?.vl ?? message?.l;
-    if (!owners?.has(from) || !Number.isSafeInteger(victimNid) || !Number.isSafeInteger(attackerNid)
-      || !Number.isSafeInteger(life) || life < 0 || d.v !== victimNid || d.a !== attackerNid
-      || !Number.isSafeInteger(d.vl) || d.vl !== life
-      || typeof d.d !== 'number' || !Number.isFinite(d.d) || d.d < 0
+    if (!owners?.has(from) || !hitSafe(victimNid) || !hitSafe(attackerNid)
+      || !hitSafe(life) || life < 0 || d.v !== victimNid || d.a !== attackerNid
+      || !hitSafe(d.vl) || d.vl !== life
+      || !hitFinite(d.d) || d.d < 0
       || (d.kld !== 0 && d.kld !== 1)) return;
     const victim = this.byNid.get(victimNid);
-    const currentLife = Number.isSafeInteger(victim?.netLife) ? victim.netLife : 0;
+    const currentLife = hitSafe(victim?.netLife) ? victim.netLife : 0;
     if (!victim || currentLife !== life) {
       this._retirePendingHit(h);
       return;
@@ -2129,7 +2139,7 @@ ${bombHit}`;
       'c1088Row.push(c1088Surge || null, packHitAuthorityState(a));\n  return c1088Row;',
       rel + ': append life-bound accepted-hit state');
     code = once(code, 'surgePresentation: s[24] ?? null, surgeSampleTime: ts };',
-      'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2], hitParent: readHitAuthorityState(s[25], s[25]?.[1])?.parent ?? null };',
+      'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2], hitParent: readHitAuthorityState(s[25], s[25]?.[1])?.[2] ?? null };',
       rel + ': unpack accepted-hit revision');
     code = adaptIssue1163RemoteDodgeClock(code);
     patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
