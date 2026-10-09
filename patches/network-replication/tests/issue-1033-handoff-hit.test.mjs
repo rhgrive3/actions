@@ -291,14 +291,12 @@ test('composed owner handoff preserves HP recovery newer than its accepted-hit w
   f.H.victim.hp = 80; // owner-side recovery after the accepted hit
   leave(f.H, 'V', 'H');
   assert.equal(f.H.victim.hp, 80, 'adoption checkpoints current HP instead of the older hit ACK HP');
-  assert.deepEqual(f.H.victim.net._hitHandoff, {
-    owner: 'V', life: 5, sequence: receipt.hr, ts: receipt.ht, hp: 80,
-  });
+  assert.deepEqual(f.H.victim.net._hitHandoff, ['V', 5, receipt.hr, receipt.ht, 80]);
 
   deliver(f.V, f.H, receipt);
   assert.equal(f.H.victim.hp, 80, 'a duplicate old-owner receipt cannot undo the recovery');
   const adoptedState = readHitAuthorityState(packHitAuthorityState(f.H.victim), 5);
-  assert.equal(adoptedState.parent.hp, 80, 'the next snapshot carries the recovered HP checkpoint');
+  assert.equal(adoptedState[2][4], 80, 'the next snapshot carries the recovered HP checkpoint');
 });
 
 test('composed same-life owner epochs merge concurrent hits regardless of ACK delivery order', () => {
@@ -314,7 +312,7 @@ test('composed same-life owner epochs merge concurrent hits regardless of ACK de
     leave(f.S, 'V', 'H');
     leave(f.H, 'V', 'H');
     assert.equal(f.H.victim.hp, 100, 'the new owner adopted the stale pre-hit snapshot');
-    assert.deepEqual(f.H.victim.net._hitHandoff, { owner: 'V', life: 5, sequence: 0, ts: 0, hp: 100 });
+    assert.deepEqual(f.H.victim.net._hitHandoff, ['V', 5, 0, 0, 100]);
 
     assert.equal(f.S.net.sendHit(f.S.attacker, f.S.victim, 36, 'shooter'), true);
     const newHit = f.S.sent.at(-1).data;
@@ -327,12 +325,10 @@ test('composed same-life owner epochs merge concurrent hits regardless of ACK de
 
     deliver(f.V, f.H, oldAck);
     assert.equal(f.H.victim.hp, 28, 'the delayed prior-owner ACK contributes its unmerged 36 damage');
-    assert.equal(f.H.victim.net._hitAuthority.owner, 'H');
-    assert.equal(f.H.victim.net._hitAuthority.sequence, 1, 'the prior epoch cannot advance or replace H revision 1');
+    assert.equal(f.H.victim.net._hitAuthority[0], 'H');
+    assert.equal(f.H.victim.net._hitAuthority[2], 1, 'the prior epoch cannot advance or replace H revision 1');
     const row = packHitAuthorityState(f.H.victim);
-    assert.deepEqual(readHitAuthorityState(row, 5), {
-      life: 5, sequence: 1, parent: { owner: 'V', life: 5, sequence: 1, ts: oldAck.ht, hp: 64 },
-    });
+    assert.deepEqual(readHitAuthorityState(row, 5), [5, 1, ['V', 5, 1, oldAck.ht, 64]]);
     const staleNewOwnerSample = { t: newAck.ht + 1, life: 5, hitLife: 5, hitSeq: 1, hp: 64,
       hitParent: { owner: 'V', life: 5, sequence: 0, ts: 0, hp: 100 } };
     assert.equal(f.H.net._hitAuthorityHp(f.H.victim, staleNewOwnerSample, 'H'), 28,
@@ -487,9 +483,8 @@ test('composed owner checkpoint chain remains bounded and legacy checkpoint tupl
   const packet = f.S.net._hitHandoffPacket(f.S.victim);
   assert.equal(packet[0], 'inkwave-hit-handoff-chain-v1');
   assert.equal(packet.length, 9, 'only eight owner checkpoints are retained on the wire');
-  assert.deepEqual(f.S.net._readHitHandoffPacket(['legacy-owner', 5, 3, 7.5, 82]), {
-    owner: 'legacy-owner', life: 5, sequence: 3, ts: 7.5, hp: 82,
-  }, 'the pre-chain single-owner tuple remains readable');
+  assert.deepEqual(f.S.net._readHitHandoffPacket(['legacy-owner', 5, 3, 7.5, 82]),
+    ['legacy-owner', 5, 3, 7.5, 82], 'the pre-chain single-owner tuple remains readable');
   const twoHop = room();
   leave(twoHop.S, 'V', 'H');
   leave(twoHop.S, 'H', 'C', true);
@@ -502,6 +497,8 @@ test('composed owner checkpoint chain remains bounded and legacy checkpoint tupl
   assert.equal(f.S.net._readHitHandoffPacket([
     'inkwave-hit-handoff-chain-v1', ...Array.from({ length: 9 }, (_, i) => [`peer-${i}`, 5, 0, 0, 100]),
   ]), false, 'oversized chain metadata is rejected');
+  assert.equal(f.S.net._readHitHandoffPacket(['legacy-owner', 5, 3, 7.5, 82, 'extra']), false,
+    'single-owner rows reject trailing fields');
 });
 
 test('composed malformed authority ACK leaves the exact hit receipt pending for a valid ACK', () => {
@@ -568,12 +565,12 @@ test('composed victim respawn retires a previous-life ACK while attacker respawn
 
 test('composed actor snapshot hit revision is life-bound and preserves the current owner sequence', () => {
   const a = actor(4, 'H', 'H', 1, 5);
-  a.net._hitAuthority = { owner: 'H', life: 5, sequence: 2, ts: 3, hp: 54, alive: true };
+  a.net._hitAuthority = ['H', 5, 2, 3, 54, true];
   const row = packHitAuthorityState(a);
-  assert.deepEqual(readHitAuthorityState(row, 5), { life: 5, sequence: 2, parent: null });
+  assert.deepEqual(readHitAuthorityState(row, 5), [5, 2, null]);
   assert.equal(readHitAuthorityState(row, 6), null, 'another life cannot reuse the previous revision');
   a.netLife = 6;
-  assert.deepEqual(readHitAuthorityState(packHitAuthorityState(a), 6), { life: 6, sequence: 0, parent: null });
+  assert.deepEqual(readHitAuthorityState(packHitAuthorityState(a), 6), [6, 0, null]);
 });
 
 test('composed ordinary hit to a host-owned victim is acknowledged and deduplicated', () => {
@@ -669,7 +666,7 @@ test('bounded hit admission preserves all 64 accepted routes and rejects the nex
   const oldest = f.S.sent[0].data;
   assert.equal(f.S.net.hitPending.size, 64);
   assert.equal(f.S.net._pendingHits.size, 64);
-  assert.equal(f.S.net.hitPending.get(oldest.seq).message, oldest);
+  assert.equal(f.S.net.hitPending.get(oldest.seq)[0], oldest);
   assert.ok(f.S.net._pendingHits.has(oldest.h));
 
   f.S.G.netm = f.S.net;

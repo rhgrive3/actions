@@ -91,8 +91,8 @@ test('composed #427 forwards the existing damage group and restores nested apply
 test('composed respawn preserves all current retirements and clears only this victim pending hits', () => {
   const f = hitWorld(), a = { nid: 2, alive: false, hp: 0, invuln: 0, respawnTimer: 4, lastDamage: 0,
     superJumpGround: {}, net: { _stormBirthAuth: {},
-      _hitHandoff: { owner: 'B', life: 1, sequence: 1, ts: 2, hp: 80 },
-      _hitAuthority: { owner: 'B', life: 1, sequence: 2, ts: 3, hp: 70, alive: true } },
+      _hitHandoff: ['B', 1, 1, 2, 80],
+      _hitAuthority: ['B', 1, 2, 3, 70, true] },
     s3: { revealedUntil: 99 }, s3SpecialCost: 100,
     s3SpecialReady: true, lastAttacker: {}, lastAttackerHitAge: 0 };
   a.remote = true; a.owner = 'B';
@@ -155,8 +155,8 @@ test('native local respawn clears the previous life hit authority chain', async 
   const actor = new f.Actor({ team: 0, name: 'respawn authority check', CharacterClass: CharacterStub });
   actor.netLife = 4;
   actor.net = {
-    _hitHandoff: { owner: 'old-owner', life: 4, sequence: 2, ts: 3, hp: 40 },
-    _hitAuthority: { owner: 'new-owner', life: 4, sequence: 1, ts: 4, hp: 40, alive: true },
+    _hitHandoff: ['old-owner', 4, 2, 3, 40],
+    _hitAuthority: ['new-owner', 4, 1, 4, 40, true],
   };
   actor.respawn();
   assert.equal(actor.netLife, 5);
