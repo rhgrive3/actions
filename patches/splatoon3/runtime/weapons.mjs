@@ -13,6 +13,7 @@ import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 import { installRollerLogic } from './roller.mjs';
 import { installSplatlingJumpSpread } from './splatling-jump-spread.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
+import { DualiesAccuracy } from './dualies-accuracy.mjs';
 let api;
 const dualiesLockConfigs = new WeakMap();
 const splatlingStreamConfigs = new WeakMap();
@@ -321,6 +322,9 @@ export function installWeapons(context, profile) {
   // The public shooter raises the launch ray to compensate for drop at the
   // camera target. Use the launch ray as aimed; gravity acts on the bullet.
   Projectiles.prototype._ballistic = function (_from, direction) { return direction; };
+  const dualiesParam = profile.weaponsFidelityCompletion?.weapons?.dualies?.WeaponParam;
+  const dualiesReferenceHz = Number.isFinite(profile.weaponsFidelityCompletion?.referenceHz)
+    ? profile.weaponsFidelityCompletion.referenceHz : 60;
   const reset = WeaponRunner.prototype.reset, busy = WeaponRunner.prototype.busy;
   const nativeMoveSpeed = WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed = function () {
@@ -351,6 +355,9 @@ export function installWeapons(context, profile) {
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
     this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
+    this.s3DualiesAccuracy = this.a?.weapon?.kind === 'dualies' && dualiesParam
+      ? new DualiesAccuracy(dualiesParam, dualiesReferenceHz) : null;
+    this.s3DualiesJumpSeen = this.a?.s3JumpSerial || 0;
     this.s3ShooterMoveRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
@@ -443,9 +450,29 @@ export function installWeapons(context, profile) {
     return { supported: true, active, age: active ? this.s3BlasterJumpT : null,
       frames, bias, envelope, ground, phase, recovering: phase === 'recovering' };
   };
+  WeaponRunner.prototype.s3DualiesBiasState = function (w) {
+    if (!w || w.kind !== 'dualies' || !this.s3DualiesAccuracy) {
+      return { supported: false, bias: null, jumpActive: false, turret: false };
+    }
+    const turret = !!(this.s3Turret || this.lockT > 0);
+    return { supported: true, ...this.s3DualiesAccuracy.snapshot(turret),
+      bias: turret ? null : this.s3DualiesAccuracy.bias };
+  };
   const runnerUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const weapon = this.a.weapon;
+    if (weapon?.kind === 'dualies') {
+      if (!this.s3DualiesAccuracy && dualiesParam)
+        this.s3DualiesAccuracy = new DualiesAccuracy(dualiesParam, dualiesReferenceHz);
+      this.s3DualiesAccuracy?.advance(dt);
+      const jumpSerial = this.a.s3JumpSerial || 0;
+      if (jumpSerial !== this.s3DualiesJumpSeen) this.s3DualiesAccuracy?.enterJump();
+      else if (this.a.grounded && this.s3DualiesAccuracy?.jumpActive) this.s3DualiesAccuracy.land();
+      this.s3DualiesJumpSeen = jumpSerial;
+    } else {
+      this.s3DualiesAccuracy = null;
+      this.s3DualiesJumpSeen = this.a?.s3JumpSerial || 0;
+    }
     if (weapon.kind === 'shooter') this.s3ShooterMoveRemaining = shooterMovementRemaining(this.s3ShooterMoveRemaining, dt);
     if (weapon?.kind === 'blaster') this.s3BlasterMoveRemaining = Math.max(0, (this.s3BlasterMoveRemaining || 0) - dt);
     else this.s3BlasterMoveRemaining = 0;
@@ -493,6 +520,12 @@ export function installWeapons(context, profile) {
     }
     if (weapon.kind === 'shooter' && !input.fire) this.s3Accuracy?.advance(dt);
     const result = runnerUpdate.call(this, dt, input);
+    if (weapon?.kind === 'dualies') {
+      // The generic cone bloom is not the Dualies bias and has no gameplay or
+      // HUD authority on this path.
+      this.bloom = 0;
+      this.spread = this._spreadDeg(weapon);
+    }
     if (weapon.kind === 'shooter' && this.s3ShooterInterruptJustArmed) {
       // R/ZL cancellation may coincide with a due repeat; the native owner above
       // gets that cancellation-frame shot once, then the stream is retired.
@@ -833,8 +866,17 @@ export function installWeapons(context, profile) {
   }
   const fireDualies = Projectiles.prototype.fireDualies;
   Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
+    const before = this.list?.length;
     const result = fireDualies.call(this, a, w, spreadDeg, hand);
-    if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
+    if (a.weaponRunner) {
+      a.weaponRunner.s3DualiesPostShot = 4 / 60;
+      const runner = a.weaponRunner;
+      const emitted = Number.isInteger(before) && this.list.length === before + 1;
+      if (emitted && w?.kind === 'dualies' && spreadDeg > 0 && !a.remote &&
+          !runner.s3Turret && runner.lockT <= 1e-10) {
+        runner.s3DualiesAccuracy?.recordShot(!!a.grounded);
+      }
+    }
     return result;
   };
   const dualies = WeaponRunner.prototype._dualies, spread = WeaponRunner.prototype._spreadDeg;
@@ -884,7 +926,11 @@ export function installWeapons(context, profile) {
       return base; // S3 maximum outer envelope; selection happens on each admitted shot
     }
     if (w.kind === 'shooter') return w.spreadGround;
-    return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
+    if (w.kind === 'dualies') {
+      if (this.s3Turret || this.lockT > 0) return w.spreadLock;
+      return this.a.grounded ? w.spreadGround : w.spreadAir;
+    }
+    return spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
   Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {

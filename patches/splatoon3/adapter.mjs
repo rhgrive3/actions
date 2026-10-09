@@ -363,6 +363,24 @@ export function adaptSource(rel, code) {
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg><span class="iw-ret__bias" hidden aria-hidden="true"></span>`;',
       'Blaster outer-bias cue element');
     code = replaceOnce(code,
+      '      this._twin = [r.querySelector(\'.iw-ret__twin.r\'), r.querySelector(\'.iw-ret__twin.l\')];',
+      '      this._twin = [r.querySelector(\'.iw-ret__twin.r\'), r.querySelector(\'.iw-ret__twin.l\')];\n' +
+      '      const biasCue = document.createElement(\'span\');\n' +
+      '      biasCue.className = \'iw-ret__bias\'; biasCue.hidden = true; biasCue.setAttribute(\'aria-hidden\', \'true\');\n' +
+      '      biasCue.style.cssText = \'position:absolute;left:50%;top:calc(50% + 23px);transform:translateX(-50%);font:600 9px/1 system-ui,sans-serif;letter-spacing:.04em;white-space:nowrap;text-shadow:0 1px 3px #000;pointer-events:none\';\n' +
+      '      r.appendChild(biasCue);',
+      'Dualies authoritative-bias HUD cue element');
+    code = replaceOnce(code,
+      '    const tgt = ch.onTarget === \'enemy\';',
+      '    const dualiesBias = L.kind === \'dualies\' && !ch.turret && Number.isFinite(ch.bias) ? ch.bias : null;\n' +
+      '    if (this._dualiesBiasEl) {\n' +
+      '      const label = dualiesBias == null ? \'\' : \'OUT \' + (dualiesBias * 100).toFixed(1) + \'%\';\n' +
+      '      this._dualiesBiasEl.hidden = label === \'\';\n' +
+      '      if (this._dualiesBiasEl.textContent !== label) this._dualiesBiasEl.textContent = label;\n' +
+      '    }\n' +
+      '    const tgt = ch.onTarget === \'enemy\';',
+      'Dualies HUD reads the authoritative sampling bias');
+    code = replaceOnce(code,
       '// ------------------------------------------------------------------ HUD-only art',
       "// Splatoon 3 drives the charge reticle off the runner's fixed-tick charge clock, never the\n" +
       "// render cadence. The standard Splat Charger keeps the whole reticle off for its profile's\n" +
@@ -390,7 +408,8 @@ export function adaptSource(rel, code) {
       '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
       '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.chargeDelay = null;\n' +
       '    this._L.blasterCue = null; this._L.blasterCuePhase = null;\n' +
-      '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;',
+      '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;\n' +
+      '    this._dualiesBiasEl = kind === \'dualies\' ? r.querySelector(\'.iw-ret__bias\') : null;',
       'reset charge-delay and Blaster bias presentation state');
     code = replaceOnce(code,
       "    if (L.kind === 'slosher') {",
@@ -1412,12 +1431,14 @@ export function adaptSource(rel, code) {
         muzzleBlock = { x: projectedContact.x * W / 2, y: -projectedContact.y * H / 2 };
       }
     }
+    const dualiesRunner = m.controller?.a?.weaponRunner;
+    const dualiesBiasState = dualiesRunner?.s3DualiesBiasState?.(m.controller?.a?.weapon);
     const frame = {
       time: m.time,`,
       'projected Shooter muzzle contact');
     code = replaceOnce(code,
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },",
-      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H), muzzleBlock, chargerCurrent: m.controller?.chargerReachVisible ? m.controller.chargerCurrentReach : null, chargerFull: m.controller?.chargerReachVisible ? m.controller.chargerFullReach : null },",
+      "      crosshair: { spread, bias: dualiesBiasState?.supported && !dualiesBiasState.turret ? dualiesBiasState.bias : null, turret: !!dualiesBiasState?.turret, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H), muzzleBlock, chargerCurrent: m.controller?.chargerReachVisible ? m.controller.chargerCurrentReach : null, chargerFull: m.controller?.chargerReachVisible ? m.controller.chargerFullReach : null },",
       'S3 ShotGuideFrame and muzzle-contact HUD projection');
     {
       const rawEnemyReveal = "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;";

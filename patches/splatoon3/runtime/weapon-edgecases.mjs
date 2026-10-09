@@ -1,6 +1,7 @@
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
+import { dualiesBiasRadius } from './dualies-accuracy.mjs';
 
 const EPS = 1e-10, DEG = Math.PI / 180;
 const EMPTY_SUB_GATE_INPUT = Object.freeze({});
@@ -65,7 +66,8 @@ export function dualiesInputGate(runner) {
 // a resolved burst from being captured and queued again.
 let flushing = 0;
 
-// This retains the existing two-draw radial sampler, not a claimed S3 PDF.
+// The #891 Dualies path uses the public Wiki bias transform; other weapons
+// retain their existing sampling law.
 // #1045: PitchDegSwerve is independent of the horizontal jump/recovery envelope.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
@@ -73,7 +75,9 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
   // generic path's unsourced vertical compression.
   if (w.kind === 'dualies') {
     if (horizontal <= 0) return dir;
-    const radius = horizontal * DEG * Math.sqrt(Math.random());
+    const bias = a.weaponRunner?.s3DualiesAccuracy?.bias;
+    if (!Number.isFinite(bias)) throw new Error('Dualies shot is missing its authoritative bias state');
+    const radius = dualiesBiasRadius(Math.random(), horizontal, bias) * DEG;
     const angle = Math.random() * Math.PI * 2;
     const aim = dir.clone().normalize();
     const right = aim.clone().set(-aim.z, 0, aim.x);
