@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { bossWorld } from './boss-hit-fixture.mjs';
-test('admission-disabled negative control permits spoof/healing; guarded native boss health and credit apply once', async () => {
-  const raw = await bossWorld(false);raw.nm.onMessage('spoof', raw.hit());assert.equal(raw.boss.hp, 9970);
-  raw.nm.onMessage('spoof', raw.hit({ d: -50 }));assert.equal(raw.boss.hp, 10020);
+test('admission bypass is still sender-bound and finite: no spoof or healing', async () => {
+  const raw = await bossWorld(false);raw.nm.onMessage('spoof', raw.hit());assert.equal(raw.boss.hp, 10000);
+  raw.nm.onMessage('guest', raw.hit({ d: -50 }));assert.equal(raw.boss.hp, 10000);
+  raw.nm.onMessage('guest', raw.hit());assert.equal(raw.boss.hp, 9970);
   const f = await bossWorld();f.nm.onMessage('guest', f.hit());
   assert.equal(f.boss.hp, 9970);assert.equal(f.actor.stats.bossDmg, 30);assert.equal(f.boss.log.recv, 1);
   f.boss.hit(f.actor, 30, null, "shooter", null);assert.equal(f.boss.hp, 9970);
@@ -36,7 +37,8 @@ test('native crablet damage, storm batching and body cap preserve legitimate beh
   f.nm.onMessage('guest', f.hit({ c: 7, d: 40, w: 'crab' }));assert.equal(crab.hp, 0);assert.equal(f.actor.stats.splats, 1);
   f.nm.onMessage('guest', f.hit({ c: 7, d: 40, w: 'crab' }));assert.equal(f.actor.stats.splats, 1);
   f.nm.onMessage('guest', f.hit({ q: 2, d: 1.25, w: 'storm' }));assert.equal(f.boss.hp, 9998.75);
-  f.nm.onMessage('guest', f.hit({ q: 3, d: 2500 }));assert.equal(f.boss.hp, 7998.75);assert.equal(f.actor.stats.bossDmg, 2001.25);
+  f.nm.onMessage('guest', f.hit({ q: 3, d: 2500 }));assert.equal(f.boss.hp, 9998.75);
+  f.nm.onMessage('guest', f.hit({ q: 4, d: 2000 }));assert.equal(f.boss.hp, 7998.75);assert.equal(f.actor.stats.bossDmg, 2001.25);
 });
 test('native sender includes only boss metadata; normal player hit routing and authority remain separate', async () => {
   const f = await bossWorld();let received;
