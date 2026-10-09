@@ -41,6 +41,20 @@ test('#1178 malformed owner snapshots cannot poison interpolation or transforms'
   }
 });
 
+test('#1178 known Spawn Armor wire extension remains admissible', async () => {
+  const f = await fixture();
+  const nm = f.makeNetMatch(f.makeSession('me', 'p2', [['me', 'Me'], ['p2', 'P2']]));
+  const a = f.makeActor({ nid: 17, owner: 'p2', remote: true });
+  f.bind(nm, [a]);
+  // bit 23 is the shipped SPAWN_ARMOR_FLAG; it is validated by its own
+  // protection/adoption reader and must not be rejected as an unknown F bit.
+  f.tick(nm, 'p2', 1000.05, { a: [f.packActor(a, { f: 8388608 })] });
+  assert.equal(a.net.buf.length, 1);
+  const bad = f.packActor(a, { f: 0x40000000 });
+  f.tick(nm, 'p2', 1000.10, { a: [bad] });
+  assert.equal(a.net.buf.length, 1, 'truly unknown extension bit is still rejected');
+});
+
 test('#1178 actor snapshot ownership is still required', async () => {
   const f = await fixture();
   const nm = f.makeNetMatch(f.makeSession('me', 'p2', [['me', 'Me'], ['p2', 'P2'], ['p3', 'P3']]));
