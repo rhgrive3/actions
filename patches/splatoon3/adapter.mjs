@@ -1025,6 +1025,14 @@ export function adaptSource(rel, code) {
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
+    // #904: replicate the owner-proven wall basis with the existing fields,
+    // but keep the remote actor non-climbing while its Super Jump is charging.
+    code = replaceOnce(code, '  if (a.climbing) f |= F.climb;',
+      "  if (a.climbing || (a.superJumpState?.phase === 'charge' && a.superJumpState.wallSupport)) f |= F.climb;", 'wall-start jump visual flag');
+    code = replaceOnce(code, '  const n = a.climbing ? a.wallN : null;',
+      "  const n = a.superJumpState?.phase === 'charge' && a.superJumpState.wallSupport || (a.climbing ? a.wallN : null);", 'wall-start jump visual normal');
+    code = replaceOnce(code, "    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? 'flight' : 'charge';",
+      "    if (a.superJumpState) a.superJumpState.phase = f & F.sjFlight ? 'flight' : 'charge';\n    if (a.superJumpState) {\n      if (a.superJumpState.phase === 'charge' && (f & F.climb)) {\n        (a.superJumpState.wallSupport ||= new THREE.Vector3()).copy(a.wallN);\n        a.climbing = false;\n      } else a.superJumpState.wallSupport = null;\n    }", 'remote jump wall-charge presentation');
     code = replaceOnce(code,
       'const F = {',
       'const F = {\n  flickVertical: 16777216,',
