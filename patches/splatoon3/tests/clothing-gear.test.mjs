@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { fixture } from './clothing-gear-fixture.mjs';
 import { emptyLoadout, normalizeLoadout, abilityPoints, gearCurve } from '../runtime/gear.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
+const ADOPTION_TAG='inkwave-adoption-v1';
+const HIT_AUTHORITY_TAG='inkwave-hit-authority-v1';
 const near = (a,b) => assert.ok(Math.abs(a-b)<1e-9, `${a} != ${b}`);
 const extra = "export * from './inkwave-public/src/net/netmatch.js'; export * from './patches/splatoon3/runtime/clothing-gear.mjs';";
 async function setup(options){const f=await fixture(options);f.profile.flow.threshold=1e6;f.G.level.spawnPads=[new f.THREE.Vector3(),new f.THREE.Vector3()];return f;}
@@ -65,10 +67,10 @@ test('RP assist-only contributors do not penalize a victim killed by someone els
  const f=await setup(),a=f.make(),e=f.make(),helper=f.make();e.team=1;dress(helper,'respawnPunisher');e.special=80;
  f.emit('damage',{attacker:helper,victim:e,amount:20,source:'shooter'});e.splat(a);near(e.special,40);near(e.respawnTimer,f.PLAYER.respawnTime);
 });
-test('real NetMatch sends distinct bit25 without changing current24 columns and rejects foreign/stale snapshots',async()=>{
+test('real NetMatch sends distinct bit25 with appended tagged state and rejects foreign/stale snapshots',async()=>{
  const f=await setup(),a=f.make();a.nid=1;a.owner='owner';dress(a,'respawnPunisher');
  let packet;const n=new f.NetMatch({myId:'owner',hostId:'owner',isHost:true,tr:{broadcast:d=>{packet=JSON.parse(JSON.stringify(d));}}},{id:'clothing'});n.bind({actors:[a],state:'playing',time:180});n._sendTick();
- const row=packet.a[0];assert.equal(row.length,24);assert.ok(row[10]&f.RESPAWN_PUNISHER_FLAG);
+ const row=packet.a[0];assert.equal(row.length,26,'the composed row appends Surge and accepted-hit state');assert.equal(row[22],a.stats.specials||0,'the existing special counter retains its slot');assert.equal(row[23][0],ADOPTION_TAG,'the adoption sidecar retains its tagged slot');assert.equal(row[24],null,'an ordinary snapshot does not fabricate a Surge presentation');assert.equal(row[25][0],HIT_AUTHORITY_TAG,'the accepted-hit sidecar uses its explicit tag');assert.ok(row[10]&f.RESPAWN_PUNISHER_FLAG);
  const remote=f.make();remote.owner='owner';remote.nid=1;
  const receiver=new f.NetMatch({myId:'viewer',hostId:'owner',isHost:false},{id:'clothing'});receiver.bind({actors:[remote],state:'playing',time:180});
  receiver._tick('foreign',{...packet,ts:1});assert.equal(f.respawnPunisherEquipped(remote),false);
