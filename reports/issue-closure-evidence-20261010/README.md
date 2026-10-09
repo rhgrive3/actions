@@ -10,6 +10,7 @@
 - [PR #1191 / #1192 — Turf Map / Trizooka水死 / 開幕Squid Spawn](./PR1191-1192.md)
 - [**固定原典・抽出値・Git blob SHA・公式/検証Wiki・Drive資料**](./SOURCES.md)
 - [**閉鎖を進める最小追加テストと未証明ゲート**](./CLOSURE_GATES.md)
+- [**機械可読の80件Issue受入条件・PR関連付けJSON**](./ledger.json)
 
 ## 全Open Issueとの照合結果
 
