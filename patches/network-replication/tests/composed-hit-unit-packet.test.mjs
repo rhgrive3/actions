@@ -26,6 +26,9 @@ function method(name) {
 const limitsStart = source.indexOf('const HIT_DELIVERY_LIMIT = '), limitsEnd = source.indexOf('const TICK = 1 / 20;', limitsStart);
 assert.ok(limitsStart >= 0 && limitsEnd > limitsStart, 'production bounded hit limits are composed');
 const hitLimits = source.slice(limitsStart, limitsEnd);
+const dropRollCleanupStart = source.indexOf('function clearRemoteDropRoll('), dropRollCleanupEnd = source.indexOf('function syncRemoteDropRoll(', dropRollCleanupStart);
+assert.ok(dropRollCleanupStart >= 0 && dropRollCleanupEnd > dropRollCleanupStart, 'production Drop Roller cleanup is composed');
+const dropRollCleanup = source.slice(dropRollCleanupStart, dropRollCleanupEnd);
 // Execute the exact composed owner methods; transport and damage-event delivery
 // are bounded sinks. This covers the adapter connection, not live relay latency.
 function hitWorld() {
@@ -38,7 +41,7 @@ function hitWorld() {
   } } };
   const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock',
-    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + hitLimits + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
+    source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + dropRollCleanup + hitLimits + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
     (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock);
   const n = new C();
   Object.assign(n, { myId: 'A', byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } },
@@ -87,6 +90,7 @@ test('composed respawn preserves all current retirements and clears only this vi
     s3SpecialReady: true, lastAttacker: {}, lastAttackerHitAge: 0 };
   a.remote = true; a.owner = 'B';
   a.remoteDodgeClock = { owner: 'B', life: 1, tp: 0, token: 1, epoch: 1 };
+  a.remoteDropRollVisual = { remotePresentation: true, id: 9 };
   a.net.remoteDodgeWatermark = { owner: 'B', life: 1, tp: 0, token: 1, epoch: 1 };
   a.character = { s3RollerFlick: { networkRemote: true, owner: 'B', life: 1, epoch: 1, vertical: true } };
   a.weaponRunner = { s3RollerAttack: { networkRemote: true }, s3FlickVertical: true };
@@ -96,6 +100,7 @@ test('composed respawn preserves all current retirements and clears only this vi
   assert.equal(a.s3.c1088SurgePresentation.tag, C1088_SURGE_TAG, 'a live remote Surge presentation exists before respawn');
   f.n._remoteRespawn(a);
   assert.equal(a.remoteDodgeClock, undefined, 'respawn retires the actual remote dodge pose clock');
+  assert.equal(a.remoteDropRollVisual, null, 'respawn retires the actual remote Drop Roller presentation');
   assert.deepEqual(a.net.remoteDodgeWatermark, { owner: 'B', life: 1, tp: 0, token: 1, epoch: 1 },
     'retirement keeps the old-life watermark so delayed snapshots cannot revive the pose');
   assert.equal(a.alive, true); assert.equal(a.hp, 100); assert.equal(a.superJumpGround, null);
