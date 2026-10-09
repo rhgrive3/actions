@@ -1,16 +1,19 @@
 # Ordinary kid jump comparison — 2026-10-03
 
-The additive [jump module](../runtime/jump-motion.mjs) corrects the aimed shooter
-jump's leg silhouette on the actual public Character. Both ankles now curl
-rearward under flexed knees instead of adopting the native forward ankle tuck
-or wide running split. Native takeoff extension, descent reach, landing,
-carry jumps, other weapons, squid actions, specials and dodge remain with their
-existing owners. All new dimensions and blending values are **visual
-calibration**, not published Nintendo joint curves.
+The additive [jump module](../runtime/jump-motion.mjs) selects an ordinary
+airborne leg-pose profile for each of the seven weapon kinds in the current
+public profile. Five kinds select a named family candidate from a public
+resource-name index; Charger and Blaster use its shared Normal candidate. The
+poses are distinct **local INKWAVE calibration** on the actual public
+Character. Public names do not prove which retail clip plays or reveal its
+joint curves. Native takeoff extension, descent reach, landing, weapon hold,
+squid actions, specials and dodge retain their existing owners.
 
-This lane is based on `5cdc815c923e2e6e0a9860bcfec6a4734a089657` and changes
-only this comparison, the runtime module and its focused native-source test.
-`inkwave-public/` is the comparison target; `game/` is not used.
+The original shooter-pose comparison was based on
+`5cdc815c923e2e6e0a9860bcfec6a4734a089657`; this #1116 continuation updates
+the runtime, focused native-source test, this comparison, README and shared
+behavior report. `inkwave-public/` is the comparison target and remains
+unchanged; `game/` is not used.
 
 ## Fresh primary-source evidence
 
@@ -58,16 +61,18 @@ video frame (PTS 2.069833), not from a presumed button press.
 
 | ID | Original evidence | Public INKWAVE implementation and reproduction | Play effect and correction | Status |
 | --- | --- | --- | --- | --- |
-| J01 | Frames 222–246 above: both shoes behind the knees in an aimed kid hop | `inkwave-public/src/game/character.js::_poseAir`, standing tuck assigns ankles forward (`z` to .07/.04). Keep shooter firing, trigger ordinary jump, inspect apex from the side. | Native silhouette reads as a forward knee tuck. The additive hook adjusts only the six foot position/rotation components per leg, blending toward a rearward, softly asymmetric flexed pose while aiming. Native two-bone IK and skinned geometry apply it. | Original silhouette observed; new dimensions/curves visually calibrated; hardware parity unverified. |
-| J02 | Same stationary aimed hop supplies the common flexed-leg silhouette; it does not show a running takeoff | Native `trigger('jump')` captures `jumpRun`/`jumpLead`; `_poseAir` drives a long opposing leg split and swaps the legs as vertical speed falls, including aimed shooter jumps. Run while firing, jump, inspect rising/apex/falling poses. | The aimed correction blends away from the wide split so both knees flex and shoes stay rearward through the apex. Capture of takeoff speed/lead and un-aimed running leap remain native. | Running application is visual extrapolation from the stationary aimed hop, **not verified original running-jump parity**. |
+| J01 | Frames 222–246 above: both shoes behind the knees in an aimed shooter hop | `inkwave-public/src/game/character.js::_poseAir`, standing tuck assigns ankles forward (`z` to .07/.04). Keep shooter firing, trigger ordinary jump, inspect apex from the side. | Native silhouette reads as a forward knee tuck. The additive hook now selects an INKWAVE-local profile by current weapon kind and adjusts only the six foot position/rotation components per leg. The shooter clip supports that observed silhouette only; it is not evidence for other families' curves. Native two-bone IK and skinned geometry apply the local poses. | Shooter silhouette observed; all local family values are INKWAVE calibration; S3 family curves and hardware parity unverified. |
+| J02 | Same stationary aimed hop supplies the common shooter silhouette; it does not show a running takeoff | Native `trigger('jump')` captures `jumpRun`/`jumpLead`; `_poseAir` drives a long opposing leg split and swaps the legs as vertical speed falls. Run, jump and inspect rising/apex/falling poses. | Each selected local family profile uses the existing launch, rise, apex, descent and ground-reach envelopes. No new family timing or physics is introduced. | Local CPU presentation tested; original per-family running variants and parity remain **unverified**. |
 | J03 | Frames 210 and 258 visibly differ from the apex pose; unpublished launch/landing curves are unknown | Native launch envelope and ground-distance descent reach in `_poseAir` already distinguish these phases. | Reuse these envelopes; correction weight is zero in the initial extended push-off and yields as ground reach/long fall take over. `land` and grounded updates cancel the private jump state. No landing hook is replaced. | Existing timing retained, original exact timing unknown. |
-| J04 | Fresh clips do not establish all carry, weapon-specific, long-fall, ledge, slope or transform variants | Ordinary carry jump, off-ledge falling, other weapon kinds and form/action layers have native behavior. | Gate correction to a fresh ordinary `jump` event, kid form and aimed shooter. Cancel on reset/death/form/sub aim/weapon change/special/Super Jump/dodge/throw/spawn/landing, including hidden-character interruptions. No inferred feature mapping is added. | Native gates regression-tested; original variants remain unverified. |
+| J04 | Public resource names do not establish runtime selection, family curves, carry, long-fall, ledge, slope or transform variants | `jump-motion.mjs` snapshots the weapon kind at `trigger('jump')` and selects its local ordinary-jump profile from the presentation layer. Reproduce with no-fire jumps for each current profile kind. | All seven current weapon kinds now select a pose: Shooter, Roller, Dualies, Slosher, Splatling, or a shared local Normal fallback for Charger/Blaster. Firing/charge weapon holds remain under `_poseWeapon`; action, form, death, hide, weapon-change, landing and special interruptions cancel the ordinary profile. | Local selector, pose-channel isolation, action cancellation and representative local/remote timeline parity are tested. Retail clip selection and joint curves remain unverified. |
 
 ## Implementation and verification boundaries
 
 `installJumpMotion(api, profile)` wraps `_poseAir` after the native method. It
 also observes `trigger`, `update`, `setWeapon`, `dispose` and `Actor.reset` to
-maintain/cancel private WeakMap state. It reads `Character.t` for age and never
+maintain/cancel private WeakMap state. The captured family selects one local
+foot calibration; its catalog candidate is diagnostic metadata and never a
+loaded Nintendo resource. It reads `Character.t` for age and never
 writes native clocks, world/root position, inputs, physics, resource counters,
 weapon runner or native springs. A `Symbol.for` prototype guard makes a
 duplicate install from another module realm harmless. It creates no meshes,
@@ -75,27 +80,27 @@ materials, listeners or timers; disposal releases its private state.
 
 The runtime uses the already exported `FOOTL/FOOTR/FOOTLR/FOOTRR` and action
 timer indices. No new adapter export is needed, and no private timer order is
-guessed. `jumpMotionSnapshot(character)` exposes active/age/phase/weight for
-diagnostics; `s3JumpMotionEnabled=false` provides the native comparison path.
-Install after existing motion hooks. Parent integration owns the production
-import/call, combined build/browser checks and shared report updates.
+guessed. `jumpMotionSnapshot(character)` exposes active/age/phase/weight,
+selected family/profile, candidate name, local calibration source and an
+always-false `referenceCurveVerified` marker; `s3JumpMotionEnabled=false`
+provides the native comparison path. Install after existing motion hooks.
 
 Run the focused suite:
 
 ```sh
-node --experimental-vm-modules --test patches/splatoon3/tests/jump-motion.test.mjs
+node --experimental-vm-modules --test --test-name-pattern='#1116|ordinary input-driven jump' patches/splatoon3/tests/jump-motion.test.mjs
 ```
 
-The suite loads the unmodified production installer, with the integrated module,
-in one VM realm with actual Actor, Runner, Character, THREE and native IK.
-It verifies indexed skinned leg vertices, posed ankle/knee bones, all other pose
-channels, native clock preservation, actual weapon grip/reach, interruption,
-nullable preview and cleanup. 30/60/120 Hz render intervals use the production
-60 Hz fixed clock and produce identical complete pose/bone traces. This proves
-production fixed-tick composition; it does **not** claim native variable-dt
-numerical equality or Nintendo hardware comparison. Direct 30/60/120 Hz native
-preview updates also verify the rearward apex silhouette and reachable IK
-qualitatively.
+The suite loads the production installer in one VM realm with actual Actor,
+Runner, Character, THREE and native IK. It verifies all seven currently
+playable kinds on non-firing airborne jumps, six distinct local profiles,
+Charger/Blaster shared fallback, weapon hold/charge channel isolation, action
+cancellation, and exact local/remote profile playback for Roller and Charger.
+The earlier 30/60/120 Hz fixed-clock and real-physics checks still cover the
+shooter calibration and gameplay-state equality; they do not claim cross-rate
+equality for every family. The suite also checks indexed skinned leg vertices,
+posed ankle/knee bones, native clock preservation, weapon grip/reach, nullable
+preview and cleanup. No test is a Nintendo hardware comparison.
 
 `native-jump-trace.json` records before/after takeoff/rise/apex/fall/long-fall
 samples, real bone quaternions/positions, indexed vertex coordinates, all pose
@@ -111,10 +116,9 @@ world muzzle displacement of `0.0000468134` native units. These are engine
 measurements, not Nintendo values.
 
 The original's exact joint curves, blend timings, running/strafing/backward
-variants, gear effects, weapon variants and 11.3.0 hardware equivalence remain
-unknown. Parent should link this comparison from
-`reports/inkwave-splatoon3-behavior-2026-10-02.md` without closing P04 or other
-unverified gameplay differences on the strength of CPU pose tests.
+variants, gear effects, weapon variants, actual clip selection and 11.3.0
+hardware equivalence remain unknown. The comparison is linked from the shared
+behavior report without closing any unverified S3 difference on CPU pose tests.
 
 
 ## Independent complete-installation review — 2026-10-03
@@ -156,3 +160,54 @@ a pose-envelope fixture only. Derived native head/tank spring feedback may
 change with the drawn pose; tests preserve gameplay state and verify that the
 air hook itself never writes spring/clock state. FixedClock tests still prove
 identical output per 60 Hz tick, not variable-dt trajectory equality.
+
+
+## Weapon-family presentation selection — 2026-10-09 (#1116)
+
+**Comparison conditions.** Splatoon 3 Ver. 11.3.0 is the parameter-profile
+target, not a verified build for every animation-name source. Weapon kinds are
+Shooter, Roller, Dualies, Slosher, Splatling, Charger and Blaster from the
+current `patches/splatoon3/profile.json`. The intended state is an ordinary
+humanoid jump with no special, sub-aim, throw, flick, slosh or dodge active;
+separate focused checks also hold fire/charge presentation during the jump.
+Nintendo's public shooter demonstration above establishes only a shooter
+silhouette. Local test actors use the default style with no configured gear
+modifier. The reference clip's gear setup, button trace, Switch capture and
+family joint curves are unavailable for this continuation.
+
+**Resource and class evidence.** The public pinned
+[animation-name index at Flexlion/flexlion.github.io @7740d29](https://github.com/Flexlion/flexlion.github.io/blob/7740d29fdded2899a7633e50647736e3723c5e9a/assets/animations.txt)
+contains ordinary-jump candidates `Jump_Shtr00`, `Jump_Rllr00`,
+`Jump_Mnvr00`, `Jump_Slsh00`, `Jump_Spnr00` and `Jump_Nrml00`, plus separate
+`JumpShoot_*` names and `_St`/`_Ed` name forms. These strings provide resource
+organization/class-state evidence only; they do not prove that a named clip
+plays in a specific input condition, nor do they reveal FSKA or bone curves.
+The class labels are cross-checked against public 11.3.0
+[WeaponInfoMain data at Leanny/splat3 @7280ff9](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/mush/1130/WeaponInfoMain.json).
+That table is class metadata, not animation evidence. The animation index does
+not list family-specific ordinary-jump names for Charger or Blaster; the
+presentation chooser maps both to its `Jump_Nrml00` candidate. Stringer,
+Brella and Splatana names remain catalogued but are not selected because those
+kinds are not present in the current INKWAVE weapon profile.
+
+**INKWAVE implementation and effect.** `runtime/jump-motion.mjs` now captures
+the weapon kind at the ordinary `jump` event and dispatches to a real local
+pose profile in `_poseAir`: Shooter, Roller, Dualies, Slosher, Splatling or a
+shared Normal fallback. Each profile changes only the existing foot pose
+channels; launch, rise, apex, descent and ground-reach envelopes stay common.
+The profiles are explicitly local calibration in the INKWAVE kid rig, not
+Nintendo joint curves inferred from their names. The native weapon hold/charge
+layer remains later in `Character.update` and is untouched. Existing action
+owners and timers cancel the jump state, and remote Character playback uses the
+same captured family selection on the same timeline.
+
+**Reproduction and status.** Run
+`node --experimental-vm-modules --test --test-name-pattern='#1116|ordinary input-driven jump' patches/splatoon3/tests/jump-motion.test.mjs`
+(5/5 passed on the final test source). Tests exercise non-firing class
+selection, visible local profiles, hold/charge channel isolation, action
+cancellation and local/remote parity while retaining native IK, weapon grip
+and gameplay-state checks. CPU tests show selection and ownership behavior
+only. Browser/GPU rendering, actual S3
+resource selection, original per-family joint curves, gear variants and Switch
+hardware parity remain **unverified**. No movement, collision, jump timing,
+damage, ink, weapon admission/cooldown or packet behavior was changed.
