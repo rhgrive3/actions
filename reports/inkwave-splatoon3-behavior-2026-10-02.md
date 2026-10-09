@@ -2832,3 +2832,11 @@ resolving its compiled/legacy relative imports against the source module URL
 makes that isolated dispatcher case pass. The whole group was not rerun.
 Syntax, quick compatibility and whitespace checks pass; heap/device claims
 remain unmeasured and this root remains unnumbered.
+
+### Host Boss snapshot schema before guest sampling (unassigned issue number)
+
+Current-host ownership alone allowed malformed `d.B` state into native Boss unpack/sampling/follow. `{}` produced NaN pose/clock, and a null nested crablet threw. The receiver now validates the native 18/19-field snapshot, nested crablets and optional full move shape before Boss buffering while preserving other valid tick components. New complete-bootstrap/native-path checks pass 6/6; adjacent Boss timeline/actor/clock/event cases pass 21/21. All six actual Boss move generators across phases 1–3, normal crablet interpolation and recovery are covered. Syntax/quick/whitespace checks pass. Details: `reports/inkwave-boss-snapshot-admission-2026-10-09.md`.
+
+The guards reuse existing engineering pose/clock safety limits and native producer structure; HULLBREAKER has no claimed Nintendo equivalent. No S3 tuning changes. VM evidence uses bounded construction/render sinks and does not establish browser, live relay or Switch behavior. A separate exact-latest Boss sampling boundary was found in normal-packet testing and is handled independently.
+
+The independent Boss boundary follow-up changes only the final `t > last.t` sample selection to inclusive equality. Exactly at the newest packet timestamp, native playback previously restored the oldest pose/discrete state. Removed-fix and fixed complete-bootstrap tests reproduce and correct x=3 versus 9, HP=100 versus 40, clock=0 versus 10, phase/animation and crablet selection. Final combined Boss snapshot/boundary tests pass 8/8; interpolation, spring, network cadence and Nintendo values are unchanged. See the same Boss admission report for scope and evidence limits.

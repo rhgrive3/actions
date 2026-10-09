@@ -8,6 +8,42 @@ const integer = (value, min, max) => Number.isSafeInteger(value) && value >= min
 export function validSnapshotTimestamp(timestamp) {
   return finite(timestamp) && timestamp >= 0 && Number.isSafeInteger(Math.round(timestamp * 1000));
 }
+// Native Boss.pack has 18 fields, plus an optional full move record. Match the
+// producer's structural contract before Boss.unpack/Hermite/guest follow.
+export function validBossSnapshotRow(row, timestamp) {
+  if (!Array.isArray(row) || (row.length !== 18 && row.length !== 19) || !validSnapshotTimestamp(timestamp)) return false;
+  if (!validSnapshotTimestamp(row[0])) return false;
+  for (const i of [1, 2, 3]) if (!bounded(row[i], -1e6, 1e6)) return false;
+  for (const i of [5, 6]) if (!bounded(row[i], -1e4, 1e4)) return false;
+  if (!bounded(row[4], -1e5, 1e5) || !bounded(row[12], -1e5, 1e5)) return false;
+  if (!finite(row[7]) || !finite(row[17]) || row[17] <= 0) return false;
+  if (!integer(row[8], 1, 3) || !integer(row[9], 0, 15) || !integer(row[11], 0, 2)) return false;
+  if (row[10] !== -1 && !validSnapshotTimestamp(row[10])) return false;
+  for (const i of [13, 14]) if (!integer(row[i], 0, Number.MAX_SAFE_INTEGER)) return false;
+  if (!integer(row[15], -1, Number.MAX_SAFE_INTEGER) || !Array.isArray(row[16])) return false;
+  for (const crab of row[16]) {
+    if (!Array.isArray(crab) || crab.length !== 6 || !integer(crab[0], 0, Number.MAX_SAFE_INTEGER)) return false;
+    for (const i of [1, 2, 3]) if (!bounded(crab[i], -1e6, 1e6)) return false;
+    if (!bounded(crab[4], -1e5, 1e5) || !finite(crab[5])) return false;
+  }
+  return row[18] == null || validBossSnapshotMove(row[18]);
+}
+function validBossSnapshotMove(move) {
+  if (!move || typeof move !== 'object' || Array.isArray(move) || !validSnapshotTimestamp(move.t0)
+    || !integer(move.s, 0, 0xffffffff) || !Array.isArray(move.d) || move.d.length !== 3
+    || !move.d.every(v => finite(v) && v >= 0) || !move.p || typeof move.p !== 'object' || Array.isArray(move.p)) return false;
+  const p = move.p, fields = keys => keys.every(key => finite(p[key]));
+  switch (move.id) {
+    case 'slam': return fields(['x', 'y', 'z']) && Array.isArray(p.rings) && p.rings.every(v => finite(v) && v >= 0);
+    case 'barrage': return fields(['sx', 'sy', 'sz']) && Array.isArray(p.b)
+      && p.b.every(b => Array.isArray(b) && b.length === 4 && b.every(finite));
+    case 'sweep': return fields(['ox', 'oy', 'oz', 'y', 'a0', 'a1', 'c']);
+    case 'charge': return fields(['x', 'y', 'z', 'yaw', 'L', 'v', 'wall', 'stun']) && p.L >= 0 && p.v > 0;
+    case 'crablets': return integer(p.n, 0, Number.MAX_SAFE_INTEGER);
+    case 'frenzy': return fields(['x', 'y', 'z', 'rot0', 'spin', 'stun']);
+    default: return false;
+  }
+}
 export function validActorSnapshotRow(row, timestamp) {
   if (!Array.isArray(row) || row.length < 21 || row.length > 25 || !validSnapshotTimestamp(timestamp)) return false;
   if (!integer(row[0], 0, 0x7fffffff)) return false; // nid

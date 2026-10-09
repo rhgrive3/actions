@@ -1448,7 +1448,13 @@ ${bombHit}`;
 
   }
   if (rel === 'src/net/netmatch.js') {
-    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    patch('if (d.B && from === this.s.hostId && boss && !boss.sim) {',
+      'if (d.B && from === this.s.hostId && boss && !boss.sim && validBossSnapshotRow(d.B, d.ts)) {',
+      'validate host Boss snapshot before unpacking and buffering');
+    patch('      const s = t > last.t ? last : s0;',
+      '      const s = t >= last.t ? last : s0;',
+      'Boss exact latest timestamp selects the latest snapshot');
     patch('    if (!Number.isFinite(d.ts)) return;',
       '    if (!validSnapshotTimestamp(d.ts)) return;\n    if (d.e != null && !Array.isArray(d.e)) return;',
       'reject unsafe owner clock before replay watermark mutation');
