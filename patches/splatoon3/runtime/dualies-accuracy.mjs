@@ -1,4 +1,4 @@
-// Splat Dualies' outer-reticle selection state from the pinned Ver.11.3.0
+// Splat Dualies' outer-reticle bias state from the pinned Ver.11.3.0
 // WeaponParam plus the current Inkipedia-documented grounded cap.
 // Values are bias fractions (for example 0.01 = 1%), and elapsed time is
 // converted to the source's 60 Hz frame units.

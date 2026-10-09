@@ -2,12 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { fixture } from './source-fixture.mjs';
 import { DualiesAccuracy, DUALIES_GROUNDED_BIAS_MAX, DUALIES_ACCURACY_RECOVERY_DELAY_FRAMES } from '../runtime/dualies-accuracy.mjs';
-import { applyShotGuide } from '../runtime/weapons-fidelity.mjs';
-import { selectedSub, selectedSubCost } from '../runtime/kit-composition.mjs';
 import { adaptSource } from '../adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -33,18 +30,23 @@ async function nativeFixture() {
   return { f, a, r: a.weaponRunner, projectiles: f.G.projectiles };
 }
 
-function fireOne(f, a, randomValues = [0.99]) {
+function fireOne(f, a, randomValues = [0.99], observation = null) {
   const r = a.weaponRunner, values = [...randomValues];
+  let randomCalls = 0;
   const before = f.G.projectiles.list.length;
   r.cooldown = 0;
   r.hand = 0;
   r.inkShotSequences = Object.create(null);
-  f.setRandom(() => values.length ? values.shift() : 0.99);
+  f.setRandom(() => {
+    randomCalls++;
+    return values.length ? values.shift() : 0.99;
+  });
   try {
     for (let i = 0; i < 8 && f.G.projectiles.list.length === before; i++)
       r.update(FRAME, { fire: true });
   }
   finally { f.restoreRandom(); }
+  if (observation) observation.randomCalls = randomCalls;
   assert.equal(f.G.projectiles.list.length, before + 1, 'native WeaponRunner admission emits one Dualies projectile');
   return f.G.projectiles.list.at(-1);
 }
@@ -96,7 +98,7 @@ test('#891 jump sets 40% bias and keeps its 5F/0.5pp recovery state separate', (
   close(accuracy.bias, 0.01, '83 frames after a jump shot reaches the minimum');
 });
 
-test('#891 production Dualies projectiles choose inner versus outer envelope from the same bias state', async () => {
+test('#891 ordinary Dualies keep the sourced envelope and existing radial sample at minimum bias', async () => {
   const { f, a, r } = await nativeFixture();
   const selected = [];
   const originalRound = f.Projectiles.prototype._fireRound;
@@ -105,16 +107,12 @@ test('#891 production Dualies projectiles choose inner versus outer envelope fro
     return originalRound.call(this, actor, weapon, spread, ...rest);
   };
   try {
-    const inner = fireOne(f, a, [0.99]);
-    assert.equal(selected[0], 0, 'non-outer event stays on the inner aim point');
+    const sample = {};
+    fireOne(f, a, [0.25, 0, 0.99], sample);
+    assert.equal(selected[0], 2, 'low bias does not collapse the sourced grounded envelope to a point');
+    assert.equal(sample.randomCalls, 3, 'the existing radial sampler consumes two draws plus the projectile seed');
     close(r.s3DualiesBiasState(a.weapon).bias, 0.02, 'one admitted grounded round advances the next bias by 1pp');
-
-    const outer = fireOne(f, a, [0, 0.999999, 0]);
-    assert.equal(selected[1], 2, 'outer event uses the sourced 2 degree grounded envelope');
-    const angleDegrees = inner.vel.clone().normalize().angleTo(outer.vel.clone().normalize()) * 180 / Math.PI;
-    assert.ok(angleDegrees > 1.9 && angleDegrees <= 2.001, `outer projectile leaves the inner aim by the 2 degree envelope, got ${angleDegrees}`);
-    close(r.s3DualiesBiasState(a.weapon).bias, 0.03, 'second admitted grounded round advances once');
-    assert.equal(r.spread, 2, 'runner/HUD envelope remains the sourced maximum, not a probability-weighted cone');
+    assert.equal(r.spread, 2, 'runner spread remains the sourced maximum envelope');
   } finally {
     f.Projectiles.prototype._fireRound = originalRound;
     f.restoreRandom();
@@ -142,17 +140,45 @@ test('#891 jump bias, grounded/air envelopes and post-roll turret remain separat
   r.update(FRAME, { fire: false });
   assert.equal(r.s3DualiesBiasState(a.weapon).bias, 0.4);
   assert.equal(r.spread, 7.5, 'air envelope stays at Jump_DegSwerve');
-  r.update(FRAME, { fire: true });
+  const selected = [];
+  const originalRound = f.Projectiles.prototype._fireRound;
+  f.Projectiles.prototype._fireRound = function (actor, weapon, spread, ...rest) {
+    if (actor === a && weapon.kind === 'dualies') selected.push(spread);
+    return originalRound.call(this, actor, weapon, spread, ...rest);
+  };
+  try {
+    const jumpSample = {};
+    fireOne(f, a, [0.25, 0, 0.99], jumpSample);
+    assert.equal(selected[0], 7.5, 'jump fire retains the sourced airborne envelope');
+    assert.equal(jumpSample.randomCalls, 3, 'jump fire uses the same two-draw spread sampler');
+  } finally {
+    f.Projectiles.prototype._fireRound = originalRound;
+    f.restoreRandom();
+  }
   assert.equal(r.s3DualiesBiasState(a.weapon).bias, 0.4, 'air shots do not replace the jump bias with the grounded cap');
 
   const beforeTurret = r.s3DualiesBiasState(a.weapon).bias;
   r.s3Turret = true;
   r.bloom = 1;
   assert.equal(r._spreadDeg(a.weapon), a.weapon.spreadLock);
-  r.cooldown = 0;
+  let turretRandomCalls = 0;
+  f.setRandom(() => { turretRandomCalls++; return 0.99; });
   const before = f.G.projectiles.list.length;
-  r.update(FRAME, { fire: true });
+  const directSpreads = [];
+  const originalFire = f.G.projectiles.fireDualies;
+  f.G.projectiles.fireDualies = function (actor, weapon, spread, hand) {
+    directSpreads.push(spread);
+    return originalFire.call(this, actor, weapon, spread, hand);
+  };
+  try {
+    f.G.projectiles.fireDualies(a, a.weapon, r._spreadDeg(a.weapon), 0);
+  } finally {
+    f.G.projectiles.fireDualies = originalFire;
+    f.restoreRandom();
+  }
   assert.equal(f.G.projectiles.list.length, before + 1, 'turret still emits through its independent native shot path');
+  assert.equal(directSpreads[0], 0, 'post-roll turret keeps its sourced zero-spread envelope');
+  assert.equal(turretRandomCalls, 1, 'zero-spread turret skips the two spread draws');
   close(r.s3DualiesBiasState(a.weapon).bias, beforeTurret, 'turret firing does not inherit or advance normal bias');
 });
 
@@ -171,12 +197,14 @@ test('#891 landing applies the documented grounded cap before the next normal pr
   };
   a.grounded = true;
   try {
-    fireOne(f, a, [0.3, 0.99, 0.99]);
+    const sample = {};
+    fireOne(f, a, [0.3, 0.99, 0.99], sample);
+    assert.equal(sample.randomCalls, 3, 'landing normal fire uses the existing radial sample without a bias coin flip');
   } finally {
     f.Projectiles.prototype._fireRound = originalRound;
     f.restoreRandom();
   }
-  assert.equal(selected[0], 0, 'grounded cap applies before chance selection on the landing frame');
+  assert.equal(selected[0], 2, 'landing uses the sourced grounded envelope after applying the grounded cap');
   assert.equal(r.s3DualiesBiasState(a.weapon).bias, 0.25);
 });
 
@@ -210,80 +238,7 @@ test('#891 fixed-clock native shot and recovery boundaries match at 30/60/120 Hz
   assert.equal(traces[0].ticks, 180);
 });
 
-class ClassList {
-  constructor() { this.names = new Set(); }
-  contains(name) { return this.names.has(name); }
-  toggle(name, enabled = !this.contains(name)) { enabled ? this.names.add(name) : this.names.delete(name); return enabled; }
-}
-class ElementStub {
-  constructor() {
-    this.classList = new ClassList();
-    this.style = { setProperty(key, value) { this[key] = value; } };
-    this.parts = new Map();
-    this.dataset = {};
-    this.hidden = false;
-    this.textContent = '';
-  }
-  querySelector(key) {
-    if (!this.parts.has(key)) this.parts.set(key, new ElementStub());
-    return this.parts.get(key);
-  }
-}
-
-function dualiesHud(actor, G, WEAPONS, SUB) {
+test('#891 keeps bias state out of custom reticle labels', () => {
   const source = adaptSource('src/ui/hud.js', read('src/ui/hud.js'));
-  assert.match(source, /this\._dualiesBiasEl = r\.querySelector\('\.iw-ret__bias'\)/);
-  assert.match(source, /s3DualiesBiasState\?\.\(WEAPONS\[w\]\)/);
-  const start = '  _updCrosshair(f, dt) {';
-  const at = source.indexOf(start), end = source.indexOf('\n  // ---------------------------------------------------------------- ink tank (canvas, sloshing liquid)', at);
-  assert.ok(at >= 0 && end > at, 'adapted HUD update method exists');
-  const method = source.slice(at, end);
-  const context = vm.createContext({
-    clamp: (value, min = 0, max = 1) => Math.max(min, Math.min(max, value)),
-    G, WEAPONS, SUB, SUB_ICONS: {}, applyShotGuide, selectedSub, selectedSubCost,
-    specialIcon: () => '', innerWidth: 800, innerHeight: 600,
-  });
-  const Harness = vm.runInContext(`class Harness {\n${method}\n}\nHarness`, context);
-  const h = Object.create(Harness.prototype);
-  Object.assign(h, {
-    _L: { weapon: 'dualies', kind: 'dualies', tgt: false, far: false, spread: null, lock: false, roll: false, inv: false, aim: false },
-    _bloom: 0, _kick: 0, ret: new ElementStub(), xh: new ElementStub(), shield: new ElementStub(),
-    subChip: new ElementStub(), _dualiesBiasEl: new ElementStub(), _local: () => actor, _snd() {},
-  });
-  return { h, update() { h._updCrosshair({ weapon: 'dualies', crosshair: { spread: 0 }, ink: 1, subCost: 0.7 }, FRAME); } };
-}
-
-test('#891 adapted Dualies HUD displays the same live authoritative bias and hides it in turret mode', async () => {
-  const { f, a, r } = await nativeFixture();
-  const hud = dualiesHud(a, f.G, f.WEAPONS, f.SUB);
-  hud.update();
-  assert.equal(hud.h._dualiesBiasEl.textContent, 'OUT 1%');
-  assert.equal(hud.h._dualiesBiasEl.hidden, false);
-
-  for (let i = 0; i < 24; i++) fireOne(f, a, [0.99]);
-  hud.update();
-  assert.equal(hud.h._dualiesBiasEl.textContent, 'OUT 25%');
-  assert.equal(hud.h._dualiesBiasEl.dataset.phase, 'holding');
-
-  a.ink = 0;
-  for (let i = 0; i < 5; i++) {
-    r.cooldown = 0;
-    r.update(FRAME, { fire: true });
-  }
-  close(r.s3DualiesBiasState(a.weapon).bias, 0.25, 'dry held input still observes the five-frame recovery wait');
-  r.cooldown = 0;
-  r.update(FRAME, { fire: true });
-  close(r.s3DualiesBiasState(a.weapon).bias, 0.245, 'dry held input advances recovery after the wait');
-  hud.update();
-  assert.equal(hud.h._dualiesBiasEl.textContent, 'OUT 24.5%');
-  assert.equal(hud.h._dualiesBiasEl.dataset.phase, 'recovering');
-
-  r.s3Turret = true;
-  hud.update();
-  assert.equal(hud.h._dualiesBiasEl.hidden, true, 'post-roll lock presents its separate turret state');
-
-  r.s3Turret = false;
-  r.lockT = 1 / 60;
-  hud.update();
-  assert.equal(hud.h._dualiesBiasEl.hidden, true, 'the zero-spread lock window also hides normal-fire bias');
+  assert.doesNotMatch(source, /_dualiesBiasEl|s3DualiesBiasState|Dualies sourced outer-bias HUD/);
 });

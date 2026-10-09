@@ -850,19 +850,18 @@ export function installWeapons(context, profile) {
       return result;
     };
   }
+  // The pinned table documents bias values and maximum deviation envelopes,
+  // but not the conditional inner-reticle angular kernel. Keep the existing
+  // envelope/sampler path until that geometry is sourced; do not invent a
+  // perfectly centered inner shot or a retail probability density.
   const fireDualies = Projectiles.prototype.fireDualies;
   Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
     const runner = a?.weaponRunner;
     const normal = w?.kind === 'dualies' && runner && !runner.s3Turret && !(runner.lockT > 0);
-    let shotSpread = spreadDeg;
-    if (normal) {
-      const accuracy = runner.s3DualiesAccuracy;
-      if (!accuracy) throw new Error('Dualies projectile has no authoritative accuracy state');
-      const envelope = Number.isFinite(spreadDeg) ? spreadDeg : (a.grounded ? w.spreadGround : w.spreadAir);
-      shotSpread = Math.random() < accuracy.bias ? envelope : 0;
-    }
+    if (normal && !runner.s3DualiesAccuracy)
+      throw new Error('Dualies projectile has no authoritative accuracy state');
     const before = Array.isArray(this.list) ? this.list.length : null;
-    const result = fireDualies.call(this, a, w, shotSpread, hand);
+    const result = fireDualies.call(this, a, w, spreadDeg, hand);
     const emitted = before !== null && Array.isArray(this.list) ? this.list.length - before : 0;
     if (normal && emitted > 0) {
       const accuracy = runner.s3DualiesAccuracy;
