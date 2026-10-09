@@ -174,7 +174,7 @@ function projectilePhysicsDigest(projectiles) {
 }
 
 const mainSnapshots = {
-  horizontal: { randomDraws: 124, sha256: '860b86cdb44a3383c84d960bfa43caea55df8534f394265bd7dcac48682b3040', physicsSha256: 'dabc60d166032b840ed07cf05e4fce3dcd0bc157d4bf7527b688aa956f532e49' },
+  horizontal: { randomDraws: 124, sha256: '43c18193b6328b90d0ed4a04b34a4c85194f60870251d36704dc069186e1ea49', physicsSha256: '4b9cfda22281103f36da3ea2f2dc8e326acedaca783f374dd367506f449f2510' },
   vertical: { randomDraws: 30, sha256: '12ce562aae09f7f292c207211671ae352298f49ed7c0edd6464ef9ad09126bfc', physicsSha256: 'e0845aaa2a4d5ca278ba35c330c57cb234ad7be94cb2cf4749f3c93c8173debf' },
 };
 
