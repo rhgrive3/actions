@@ -128,7 +128,8 @@ test('#247 charge/stream/slosh use un-geared action speed times the resistance c
   const f=await fixture();
   for(const ap of [0,3,10,30,57]) for(const kind of ['charger','splatling','slosher']) {
     const a=f.make(kind);equip(a,ap);const r=a.weaponRunner;
-    if(kind==='slosher'){r.slosh=.1;r.firingT=.2;}else{r.charging=true;r.charge=1;}
+    if(kind==='slosher'){r.slosh=.1;r.firingT=.2;}else{r.charging=true;r.charge=1;if(kind==='charger')r.chargeT=1;}
+    // Charger uses chargeT (not Splatling's charge): test the actual full-charge state.
     const base=kind==='slosher'?a.weapon.moveSpeedFiring:kind==='charger'?a.weapon.moveSpeedFiring:a.weapon.moveSpeedCharging;
     const expected=Math.min(a.s3.modifiers.enemyMoveSpeed,base*gearCurve(ap,.5,.75,1));
     assert.ok(Math.abs(speed(a)-expected)<1e-8,`${kind} AP${ap}: ${speed(a)} != ${expected}`);
@@ -144,7 +145,7 @@ test('#247 splatling release does not select a different enemy speed during its 
 });
 
 test('#247 restores shared tuning even when movement throws, preserving other actors and dry movement', async () => {
-  const f=await fixture(), a=f.make('charger'), b=f.make();equip(a,57);a.weaponRunner.charging=true;a.weaponRunner.charge=1;
+  const f=await fixture(), a=f.make('charger'), b=f.make();equip(a,57);a.weaponRunner.charging=true;a.weaponRunner.chargeT=1;
   const shared=f.PLAYER.enemyInkSpeed; speed(a);close(f.PLAYER.enemyInkSpeed,shared);close(speed(b),1.44);
   const move=a.intent.move;
   a.intent.move={get x(){throw Error('movement probe');},z:0};

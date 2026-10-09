@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ShooterAccuracy } from '../runtime/shooter-accuracy.mjs';
 const frame = 1/60;
-test('S3 Splattershot 1%->25% outer shot chance over successful rounds', () => {
+test('S3 Splattershot angular bias .01->.25 over successful rounds', () => {
   const a = new ShooterAccuracy();
   const sampled = Array.from({length: 30}, () => a.shot(true, null));
   assert.equal(sampled[0], .01);
@@ -10,7 +10,7 @@ test('S3 Splattershot 1%->25% outer shot chance over successful rounds', () => {
   assert.equal(sampled[24], .25);
   assert.equal(sampled[29], .25);
 });
-test('recovery waits six idle frames then decays at 1.5pp per frame', () => {
+test('recovery waits six elapsed frames after the last shot then decays at 1.5pp per frame', () => {
   const a = new ShooterAccuracy();
   for(let i=0;i<24;i++) a.shot(true,null);
   for(let i=0;i<6;i++) a.advance(frame);
