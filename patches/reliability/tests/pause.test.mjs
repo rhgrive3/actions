@@ -30,6 +30,7 @@ for (const patched of [false, true]) test(`online pause ${patched ? 'blocks' : '
   assert.equal(h.controller.enabled, !patched);
   assert.equal(h.actor.intent.move.length(), patched ? 0 : 1);
   assert.equal(h.actor.intent.fire, !patched);
+  if (!patched) { h.frame(STEP); h.frame(STEP); }
   assert.equal(h.ownedShots.filter(a => a === h.actor).length, patched ? 0 : 1);
 });
 
@@ -41,7 +42,7 @@ test('online pause preserves actual Match clock and another actual actor firing;
   assert.ok(h.m.time < time); assert.equal(h.game.s3Clock.ticks, 5);
   assert.ok(h.ownedShots.some(a => a === h.other)); assert.ok(!h.ownedShots.some(a => a === h.actor));
   assert.equal(h.actor.intent.move.length(), 0);
-  h.game.resume(); h.frame(STEP);
+  h.game.resume(); for (let i = 0; i < 3; i++) h.frame(STEP);
   assert.equal(h.controller.enabled, true); assert.equal(h.actor.intent.move.length(), 1);
   assert.ok(h.ownedShots.some(a => a === h.actor));
 });
@@ -54,7 +55,8 @@ for (const hz of [120, 144]) test(`${hz}Hz online Start blocks only local input 
   assert.equal(h.controller.enabled, false); assert.equal(h.ownedShots.length, 0);
   h.setPads(pad()); h.frame(1 / hz); h.setPads(pad([9])); h.frame(1 / hz);
   assert.equal(h.menus.current, null);
-  h.frame(STEP); assert.equal(h.controller.enabled, true); assert.ok(h.ownedShots.length > 0);
+  for (let i = 0; i < 3; i++) h.frame(STEP);
+  assert.equal(h.controller.enabled, true); assert.ok(h.ownedShots.length > 0);
 });
 
 test('released controls and discarded look during online pause do not replay after resume', async () => {
@@ -70,7 +72,7 @@ test('offline pause still freezes actual Match time and actors; resume restores 
   const h = await boot(); h.game.pause(); const time = h.m.time;
   h.input.keys.add('KeyW'); h.input.mouse.left = true; h.frame(STEP);
   assert.equal(h.controller.enabled, false); assert.equal(h.m.time, time);
-  assert.equal(h.ownedShots.length, 0); h.game.resume(); h.frame(STEP);
+  assert.equal(h.ownedShots.length, 0); h.game.resume(); for (let i = 0; i < 3; i++) h.frame(STEP);
   assert.ok(h.m.time < time); assert.equal(h.actor.intent.move.length(), 1);
   assert.equal(h.ownedShots.length, 1);
 });
@@ -114,12 +116,14 @@ test('menu A is consumed while an unrelated fire tap remains available after res
   assert.equal(h.actor.intent.jump, false); assert.equal(h.actor.intent.fire, true);
 });
 
-test('a render-only map d-pad tap keeps its actual super-jump edge until the simulation tick', async () => {
+test('a render-only map d-pad selection survives until the simulation tick and waits for A confirmation', async () => {
   const h = await boot(), targets = [];
   h.actor.canSuperJump = () => true; h.actor.superJump = target => targets.push(target);
-  h.setPads(pad([8, 14])); h.frame(STEP / 2);
+  h.setPads(pad([3, 14])); h.frame(STEP / 2);
   assert.equal(targets.length, 0); assert.equal(h.input.padPressed.has(14), true);
-  h.setPads(pad([8])); h.frame(STEP / 2);
+  h.setPads(pad([3])); h.frame(STEP / 2);
+  assert.equal(targets.length, 0); assert.equal(h.controller.padJumpIndex, 0);
+  h.setPads(pad([1])); h.frame(STEP);
   assert.deepEqual(targets, [h.other]); h.frame(STEP);
   assert.equal(targets.length, 1);
 });
@@ -132,14 +136,17 @@ test('menu RB cannot leak as a held bomb after resuming', async () => {
   assert.equal(h.actor.intent.sub, true);
 });
 
-test('blur and disconnect clear menu channel; reconnect permits a fresh owned button', async () => {
+test('blur and disconnect clear menu channel; held reconnect waits for release and fresh press', async () => {
   const h = await boot(); h.setPads(pad([0])); h.input.pollPad();
   assert.equal(h.input.padMenuPressed.has(0), true); h.event('blur', {});
   assert.equal(h.input.padMenuPressed.size, 0);
   h.input.consumePadMenuButton(0); h.setPads([]); h.input.pollPad();
   assert.equal(h.input.padMenuBlocked.size, 0); assert.equal(h.input.padMenuPressed.size, 0);
-  h.setPads(pad([0])); h.input.pollPad(); assert.equal(h.input.padMenuPressed.has(0), true);
-  assert.equal(h.input.padButton(0), true);
+  const held = pad([0]); h.setPads(held); h.input.pollPad();
+  assert.equal(h.input.padMenuPressed.has(0), false); assert.equal(h.input.padButton(0), false);
+  held[0].buttons[0] = { pressed: false, value: 0 }; h.input.pollPad();
+  held[0].buttons[0] = { pressed: true, value: 1 }; h.input.pollPad();
+  assert.equal(h.input.padMenuPressed.has(0), true); assert.equal(h.input.padButton(0), true);
 });
 
 test('adapter rejects missing/duplicated/already applied anchors and leaves unrelated modules intact', () => {

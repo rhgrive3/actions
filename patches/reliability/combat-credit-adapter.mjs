@@ -31,8 +31,8 @@ export function adaptCombatCredit(rel, code) {
     '        e.attacker.stats.splats++;\n' +
     '        if (!e.attacker.remote) e.attacker.addTurf(area);\n' +
     '      }\n' +
-    '      // A delayed confirmation may still owe reward, but cannot splat a newer life.\n' +
-    '      if (life !== (a.net.cur?.life ?? a.netLife ?? 0)) return;\n' +
+    '      // Keep delayed credit, but only present death when both accepted and sampled lives still match.\n' +
+    '      if (life !== (a.net.lastLife ?? a.netLife ?? 0) || life !== (a.net.cur?.life ?? a.netLife ?? 0)) return;\n' +
     '    }', 'once-only independent reward');
   patch('    if (attacker) attacker.stats.splats++;',
     '    if (attacker && victim._combatCreditLife === undefined) attacker.stats.splats++;', 'no duplicate splat count');

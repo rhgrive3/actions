@@ -1,0 +1,12 @@
+# PR790 UI roots572,605,673 on current868
+
+Original source: PR790 a71da170ca4dc5a0c55e5633907c9ed9edced300.
+Base: PR868327651d26bfbd63d2f867e1205b14aa88e339948. Original source owners and Issue attribution are retained; this is a hunk adoption, not a whole-file replacement.
+
+- #572: restore the original standard Charger reticle display delay and gauge mapping from the runner charge clock. Add only profile.weapons.charger.reticleDelayF=5 and its original community-verification limitation. Existing #726 fresh-start tick, #680 release hold, #594 idle visibility, #715 swim visibility and authoritative charge/damage remain owned by current868. The5F test counts charge-progress frames after the current admission tick, not a new physical ZR timing measurement.
+- #605: restore the original synthesized Opening Sting and Turf intro call. The new cue is inserted into the existing music transform branch, preserving later timer/visibility ownership and all subsequent music adapters. Boss/Range/GO/final-minute/results routing remains unchanged. No listening session is claimed.
+- #673: restore original participant Splashtag presentation, safe metadata/asset handling, native style payload, deterministic fallback, local highlight and stable physical-team ordering. Export the existing three Menus helpers and retain the current HUD ShotGuide import. Boss presentation remains unchanged. The source's timing and presentation contract are retained; real device rendering is not newly measured.
+
+Verification: source Charger7, Opening6, Splashtag13 cases pass (26 total, including original negative/fail-closed cases). Existing #715 swim/shape coexistence passes at30/60/120Hz. Actual fully transformed HUD→Menus graphs link through both match-HUD and clothing fixtures. New imports require URL/import.meta support in those VM fixtures; the implementation module graph is real, DOM rendering remains bounded test scaffolding. The #715 fixture now supplies actual selectedSub/selectedSubCost/ShotGuide helpers and the native insertAdjacentHTML surface, with all existing assertions retained.
+
+All509 prior numeric index records remain identical; exactly the Charger delay key is added. The separate #505 bonus repair may independently add another key; regenerate the shared index when composing both. No new workflow, browser gate, full build or CI is included here. Remaining PR790 #561 assist presentation is separate; #750/#558 belong to the weapon lane. PR751 #479/#473 remain separate.

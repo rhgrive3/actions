@@ -1,0 +1,79 @@
+{
+  "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/mush/1130/WeaponInfoMain.json",
+  "note": "Exact twelve source fields re-read for Kit composition acceptance; no omitted default reconstructed.",
+  "parameters": {
+    "data/mush/1130/WeaponInfoMain.json#/73/__RowId": {
+      "value": "Charger_Normal_00",
+      "pointer": "/73/__RowId",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/73/SpecialPoint": {
+      "value": 190,
+      "pointer": "/73/SpecialPoint",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/73/SubWeapon": {
+      "value": "Work/Gyml/Bomb_Splash.spl__WeaponInfoSub.gyml",
+      "pointer": "/73/SubWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/73/SpecialWeapon": {
+      "value": "Work/Gyml/SpBlower.spl__WeaponInfoSpecial.gyml",
+      "pointer": "/73/SpecialWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/133/__RowId": {
+      "value": "Roller_Normal_00",
+      "pointer": "/133/__RowId",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/133/SpecialPoint": {
+      "value": 180,
+      "pointer": "/133/SpecialPoint",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/133/SubWeapon": {
+      "value": "Work/Gyml/Bomb_Curling.spl__WeaponInfoSub.gyml",
+      "pointer": "/133/SubWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/133/SpecialWeapon": {
+      "value": "Work/Gyml/SpGreatBarrier.spl__WeaponInfoSpecial.gyml",
+      "pointer": "/133/SpecialWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/219/__RowId": {
+      "value": "Shooter_Normal_00",
+      "pointer": "/219/__RowId",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/219/SpecialPoint": {
+      "value": 200,
+      "pointer": "/219/SpecialPoint",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/219/SubWeapon": {
+      "value": "Work/Gyml/Bomb_Suction.spl__WeaponInfoSub.gyml",
+      "pointer": "/219/SubWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/219/SpecialWeapon": {
+      "value": "Work/Gyml/SpUltraShot.spl__WeaponInfoSpecial.gyml",
+      "pointer": "/219/SpecialWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    }
+  }
+}

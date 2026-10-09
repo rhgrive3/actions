@@ -13,6 +13,8 @@ import { checkCoreMenus } from './check-inkwave-responsive-core.mjs';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : null; };
 const source = path.resolve(arg('--source') || path.join(repo, 'inkwave-public'));
+const manifestPath = path.join(source, 'inkwave-build.json');
+const touchCameraReset = fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).build?.reliability?.['navigation-adapter.mjs'];
 const evidence = path.resolve(arg('--evidence-dir') || '/mnt/workspace/.dev-state/agent-work/evidence/inkwave-responsive-ui-20261002');
 const cache = path.resolve(arg('--profile-dir') || '/mnt/workspace/.dev-state/agent-work/cache/inkwave-responsive-ui-20261002');
 const baseline = arg('--baseline');
@@ -28,16 +30,29 @@ for (const p of [evidence, cache]) {
 const require = createRequire(import.meta.url);
 const { chromium, webkit, devices } = require('playwright');
 const patchStyles = fs.existsSync(path.join(source, 'patches/splatoon3/ui.css')) ? '<link rel="stylesheet" href="/patches/splatoon3/ui.css">' : '';
+const runtimeFiles = patchStyles ? ['patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/gear.mjs', 'patches/splatoon3/runtime/conditional-gear.mjs', 'patches/splatoon3/runtime/sub-resistance.mjs', 'patches/splatoon3/profile.json'] : [];
+for (const file of runtimeFiles) assert(fs.existsSync(path.join(source, file)), `Missing installed UI input: ${file}`);
+const runtimeInstaller = patchStyles ? `
+import { install } from '/patches/splatoon3/runtime/install.mjs';
+const tuningResponse = await fetch('/patches/splatoon3/profile.json');
+if (!tuningResponse.ok) throw Error('Published gameplay profile unavailable');
+const tuning = await tuningResponse.json();
+install(tuning);
+` : '';
 const html = `<!doctype html><html lang="ja"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="/styles/ui.css"><link rel="stylesheet" href="/styles/mobile.css">
 ${patchStyles}
 <style>html,body{margin:0;overflow:hidden;background:#0d1020;touch-action:none}#ui-root{position:fixed;inset:0}</style>
-<div id="ui-root"></div><script type="module">
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script>
+<div id="ui-root"></div>
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script>
+<script type="module">
 import { Menus } from '/src/ui/menus.js';
 import { G } from '/src/core/ctx.js';
 import { MockNet } from '/src/net/mock.js';
 import { DEFAULT_SETTINGS } from '/src/config.js';
+${runtimeInstaller}
 let settings={...DEFAULT_SETTINGS}, profile={name:'Test Squidkid',level:5,xp:1200}, loadout={weapon:'shooter'};
 G.settings=settings; G.net=new MockNet();
 window.G=G;window.menuState=()=>({settings,profile,loadout});window.menus=new Menus(document.getElementById('ui-root'),{
@@ -66,13 +81,14 @@ const server = http.createServer((request, response) => {
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const address = `http://127.0.0.1:${server.address().port}/__menus?netmock=1&mockauto=0&mocklat=0&news=0`;
 const result = { kind: 'production-menu-dom-with-offline-session', source, section, selectedCases, realDeviceVerified: false, baseline: baseline || null, cases: [], errors: [] };
+result.runtimeInstalled = !!patchStyles;
 const hash = (b) => crypto.createHash('sha256').update(b).digest('hex');
-const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.css', 'src/ui/menus.js', 'src/ui/news.js', 'src/core/device.js', ...(patchStyles ? ['patches/splatoon3/ui.css'] : [])].map((f) => {
+const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.css', 'src/ui/menus.js', 'src/ui/news.js', 'src/core/device.js', ...(patchStyles ? ['patches/splatoon3/ui.css'] : []), ...runtimeFiles].map((f) => {
   const original = baseline && ['styles/mobile.css', 'src/ui/menus.js', 'src/ui/news.js'].includes(f);
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));
 result.sourceHashes = sourceHashes();
-const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
+const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
 result.runnerHashes = runnerHashes();
 const configurations = [
   ['phone-portrait', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } }],
@@ -105,6 +121,7 @@ const geometry = async (page, selector, label) => {
   return measurements;
 };
 const tap = async (page, selector) => { const el = page.locator(selector).first(); await el.scrollIntoViewIfNeeded(); await el.tap(); };
+const activeCodeInput = page => page.locator('.iw-screen:not(.is-leaving) .iw-code-input').first();
 const engines = arg('--engine') ? [arg('--engine')] : ['chromium', 'webkit'];
 try {
   for (const engineName of engines) {
@@ -121,6 +138,7 @@ try {
       const entry = { engine: engineName, browserVersion: context.browser()?.version(), viewport: config.viewport, name, screens: {} };
       result.cases.push(entry);
       const page = context.pages()[0] || await context.newPage();
+      const codeInput = activeCodeInput(page);
       page.on('pageerror', (e) => result.errors.push(`${engineName}/${name}: ${e.message}`));
       await page.addInitScript(() => {
         window.responsiveEvents = [];
@@ -136,8 +154,9 @@ try {
         await show(page, 'online');
         if (name === 'desktop') {
           if (section !== 'expansion') {
-            await checkCoreMenus({ page, entry, config, engineName, evidence, show, settle,
-              geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; }, tap, audit: true });
+            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle,
+              geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; },
+              tap: async (page, selector) => { const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.click(); }, audit: true, testContinuation: !audit });
             for (const [screen, selector] of [['main', '.iw-main__menu'], ['setup', '.iw-ss__hero'], ['settings', '.iw-settings__panel']]) {
               await show(page, screen);
               assert.equal(await page.locator(selector).evaluate((el) => getComputedStyle(el).position), 'absolute', `${screen}: desktop composition must remain unchanged`);
@@ -145,7 +164,7 @@ try {
             entry.coreMenus = 'desktop-composition-passed';
             await show(page, 'online');
           }
-          entry.nativeInputHidden = await page.locator('.iw-code-input').count() === 0 || !(await page.locator('.iw-code-input').isVisible());
+          entry.nativeInputHidden = await codeInput.count() === 0 || !(await codeInput.isVisible());
           assert(entry.nativeInputHidden);
           const slot = page.locator('.iw-code__box').first(); await slot.click();
           await page.keyboard.type('bc'); await page.keyboard.press('Backspace');
@@ -161,21 +180,22 @@ try {
         entry.touchMode = await page.locator('.iw-ui').evaluate((el) => el.classList.contains('is-touch'));
         assert(entry.touchMode, `${name}: touch mode not detected`);
         if (section !== 'expansion') {
-          await checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit });
+          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, geometry, tap, audit });
           if (section === 'core') { entry.status = audit ? 'audited' : 'passed'; continue; }
           await show(page, 'online');
         }
         entry.screens.online = await geometry(page, '.iw-code-input, .iw-join__btns button, .iw-hubcard--create, .iw-hub__chip, .iw-online .iw-backbtn', 'online');
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-online.png`) });
         if (audit) continue;
-        await tap(page, '.iw-code-input');
-        assert.equal(await page.locator('.iw-code-input').evaluate((el) => document.activeElement === el), true);
-        await page.locator('.iw-code-input').fill('bc');
-        await page.locator('.iw-code-input').press('Backspace');
-        assert.equal(await page.locator('.iw-code-input').inputValue(), 'B');
-        await page.locator('.iw-code-input').fill('BO1-C');
-        assert.equal(await page.locator('.iw-code-input').inputValue(), 'BC');
-        await page.locator('.iw-code-input').fill('BC234');
+        await codeInput.scrollIntoViewIfNeeded();
+        await codeInput.tap();
+        assert.equal(await codeInput.evaluate((el) => document.activeElement === el), true);
+        await codeInput.fill('bc');
+        await codeInput.press('Backspace');
+        assert.equal(await codeInput.inputValue(), 'B');
+        await codeInput.fill('BO1-C');
+        assert.equal(await codeInput.inputValue(), 'BC');
+        await codeInput.fill('BC234');
         await page.waitForTimeout(500);
         assert.equal(await page.evaluate(() => G.net.state), 'offline', 'native typing must allow correction before joining');
         await tap(page, '.iw-join__btns .is-go');
@@ -214,19 +234,19 @@ try {
         assert.equal(await page.evaluate(() => G.net.lobby.players.find((p) => p.you).ready), true);
         await page.evaluate(() => G.net.leave());
         await show(page, 'online');
-        await page.locator('.iw-code-input').fill('ZZZZZ');
+        await codeInput.fill('ZZZZZ');
         await tap(page, '.iw-join__btns .is-go');
         await page.waitForFunction(() => document.querySelector('.iw-jstat')?.classList.contains('is-on'));
-        assert.equal(await page.locator('.iw-code-input').isDisabled(), false);
-        await page.locator('.iw-code-input').evaluate((el) => {
+        assert.equal(await codeInput.isDisabled(), false);
+        await codeInput.evaluate((el) => {
           const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', 'Join my room: BC234');
           el.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }));
         });
-        assert.equal(await page.locator('.iw-code-input').inputValue(), 'BC234');
+        assert.equal(await codeInput.inputValue(), 'BC234');
         await page.waitForTimeout(500);
         assert.equal(await page.evaluate(() => G.net.state), 'error', 'native paste must wait for JOIN');
         await page.evaluate(() => menus.setInputMode('kbm'));
-        assert.equal(await page.locator('.iw-code-input').isVisible(), true, 'touch device layout must survive an attached keyboard or compatibility mouse event');
+        assert.equal(await codeInput.isVisible(), true, 'touch device layout must survive an attached keyboard or compatibility mouse event');
         assert.equal(await page.locator('.iw-online').evaluate((el) => getComputedStyle(el).overflowY), 'auto');
         await page.evaluate(() => menus.setInputMode('touch'));
         await page.evaluate(() => G.net.leave());

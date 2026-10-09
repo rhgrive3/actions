@@ -4,3 +4,262 @@
 .s3-gear label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .s3-gear select { max-width: 70%; font: inherit; padding: .25rem; color: #fff; background: #25353e; }
 @media (max-width: 500px) { .s3-gear { left: 1rem; right: 1rem; width: auto; } .s3-gear label { font-size: .8rem; } }
+
+/* Ver.11 approximate health: no precise HP numbers or enemy name disclosure. */
+.iw-health{position:absolute;left:0;top:0;width:46px;height:7px;margin:-3px 0 0 -23px;border:1px solid #fff;border-radius:4px;background:#111c;overflow:hidden;pointer-events:none;box-shadow:0 1px 3px #0009}
+.iw-health[hidden]{display:none}
+.iw-health>i{display:block;width:100%;height:100%;background:var(--health-color,#fff);transform-origin:left center}
+
+/* Blaster reticle: live spread (--sp, set on .iw-ret) widens only the outer dashed ring; the inner thin ring keeps its rest size. */
+.iw-ret--blaster .iw-ret__svg { transform: none; transition: none; }
+.iw-ret--blaster .iw-ret__svg circle.iw-ret__ring:not(.thin) { transform: scale(calc(1 + var(--sp, 0) * .012)); transform-box: fill-box; transform-origin: center; transition: transform .1s linear; }
+.iw-ret--blaster .iw-ret__bias[hidden] { display: none; }
+.iw-ret--blaster .iw-ret__bias:not([hidden]) {
+  display: block; position: absolute; left: 50%; top: 29px; translate: -50% 0; z-index: 1;
+  padding: 3px 5px 5px; border: 1px solid rgba(255,255,255,.82); border-radius: 999px;
+  background: rgba(10,12,18,.88); color: #fff; font: 700 9px/1 ui-monospace, monospace;
+  letter-spacing: .035em; white-space: nowrap; pointer-events: none;
+}
+.iw-ret--blaster .iw-ret__bias[data-phase='recovering'] { border-color: #ffe08a; color: #ffe08a; }
+
+/* #594: Splatoon 3 shows no charge-reticle cluster on a charging weapon while it is idle. */
+.iw-ret--charger.is-idle, .iw-ret--splatling.is-idle { visibility: hidden; }
+
+/* Turf's fourth statistic; Boss keeps its separate native columns. */
+.iw-ttable--turf .iw-ttable__head, .iw-ttable--turf .iw-prow { grid-template-columns: calc(var(--u) * 2.7) minmax(0, 1fr) calc(var(--u) * 8) repeat(3, calc(var(--u) * 3.3)); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-ttable__head,
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-prow { grid-template-columns: 28px minmax(0, 1fr) 86px repeat(3, 36px); }
+@media (max-width: 700px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-ttable__head,
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-prow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Issue #673: Splatoon 3 battle-start Splashtag intro presentation */
+.iw-lineup.iw-lineup--stags {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+  bottom: 8%;
+  pointer-events: none;
+}
+.iw-lineup__col {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * .6);
+  width: calc(var(--u) * 23);
+}
+.iw-lineup__col--a {
+  align-items: flex-end;
+}
+.iw-lineup__col--b {
+  align-items: flex-start;
+}
+.iw-stag--intro {
+  position: relative;
+  width: calc(var(--u) * 22);
+  height: calc(var(--u) * 4.6);
+  padding: 0 calc(var(--u) * 1) 0 calc(var(--u) * 4.2);
+  border-radius: calc(var(--u) * .8);
+  box-shadow: 0 calc(var(--u) * .3) 0 rgba(0, 0, 0, .45), inset 0 0 0 1.5px rgba(255, 255, 255, .3);
+  animation: iw-stag-in-a .55s var(--spring, ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 80ms + 150ms);
+}
+.iw-lineup__col--b .iw-stag--intro {
+  animation-name: iw-stag-in-b;
+}
+.iw-stag--intro.is-self {
+  box-shadow: 0 0 0 calc(var(--u) * .2) #fff, 0 calc(var(--u) * .3) 0 rgba(0, 0, 0, .55);
+}
+.iw-stag--intro .iw-stag__name {
+  font: 400 calc(var(--u) * 1.25) / 1 'Titan One', 'IW JP Display', sans-serif;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.iw-stag--intro .iw-stag__title {
+  font: 800 calc(var(--u) * .62) / 1 'Rubik', 'IW JP Body', sans-serif;
+  letter-spacing: .04em;
+  color: rgba(255, 255, 255, .9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.iw-stag--intro .iw-stag__w {
+  left: calc(var(--u) * -.6);
+  width: calc(var(--u) * 4.2);
+  height: calc(var(--u) * 4.2);
+  margin-top: calc(var(--u) * -2.1);
+  box-shadow: 0 0 0 2px var(--k, #0e0b16);
+  background: var(--tc);
+}
+.iw-stag--intro .iw-stag__num {
+  left: calc(var(--u) * 4.2);
+  bottom: calc(var(--u) * .25);
+  font: 900 calc(var(--u) * .55) / 1 'Rubik', sans-serif;
+}
+.iw-stag--intro .iw-stag__badges {
+  position: absolute;
+  right: calc(var(--u) * .6);
+  bottom: calc(var(--u) * .3);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * .2);
+}
+.iw-stag--intro .iw-stag__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 1.3);
+  height: calc(var(--u) * 1.3);
+  border-radius: calc(var(--u) * .25);
+  background: rgba(0, 0, 0, .45);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .3);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.iw-stag--intro .iw-stag__badge svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.iw-stag--intro .iw-stag__badge--text {
+  font: 900 calc(var(--u) * .55) / 1 'Rubik', sans-serif;
+  color: #fff;
+  padding: 0 2px;
+}
+@keyframes iw-stag-in-a {
+  from { opacity: 0; translate: calc(var(--u) * -20) 0; }
+}
+@keyframes iw-stag-in-b {
+  from { opacity: 0; translate: calc(var(--u) * 20) 0; }
+}
+.iw-lineup.is-out .iw-lineup__col--a {
+  animation: iw-stag-out-a .45s var(--in, ease-in) forwards;
+}
+.iw-lineup.is-out .iw-lineup__col--b {
+  animation: iw-stag-out-b .45s var(--in, ease-in) forwards;
+}
+@keyframes iw-stag-out-a {
+  to { opacity: 0; translate: calc(var(--u) * -18) 0; }
+}
+@keyframes iw-stag-out-b {
+  to { opacity: 0; translate: calc(var(--u) * 18) 0; }
+}
+
+/* Splatoon 3 keeps the whole charge reticle off until the sourced gauge delay ends, not just the
+   ring fill: the gray track, the notch marks and the three cross lines are all still painted when
+   only `is-charging` is withheld. `is-charge-delay` is set only while a real charge is still inside
+   its profile's delay, so this hides the Charger reticle for exactly those frames. Idle
+   Charger/Splatling visibility is a separate owner and is not gated here. */
+.iw-ret--charger.is-charge-delay { visibility: hidden; }
+
+/* Issue #561 Splatoon 3 assist presentation: no splat notification for the assister.
+   A distinct splat icon sits above the splatted location in the existing world-marker pool. */
+.iw-down--assist i { left: -15px; top: -52px; width: 30px; height: 30px; color: #fff; animation-name: iw-assist-in; }
+@keyframes iw-assist-in { 0% { opacity: 0; scale: .3; translate: 0 8px; } 60% { scale: 1.15; } }
+
+/* ------------------------------------------------------------------ #894 Judd + Li'l Judd stage result scene
+   Splatoon 3 judges the final Turf result with the two series referees standing beside the
+   stage/map result plate: Judd for the local player's team, Li'l Judd for the opposing team.
+   The figures are original stylised SVG/CSS cats (no official asset, pose or frame value is
+   reproduced); the flag and outcome classes are driven by the authoritative winner in
+   HUD.judge(). The stylesheet loads after styles/ui.css + styles/mobile.css, so these rules
+   override the upstream .iw-jd__* layout only inside the scene root (.iw-jd--refs). */
+.iw-jd--refs .iw-jd__title { top: 11%; }
+.iw-jd__refs { position: absolute; inset: 0; pointer-events: none; }
+.iw-jd__stage {
+  position: absolute; left: 17vw; right: 17vw; top: 50%; translate: 0 -50%;
+  min-height: min(50vh, calc(var(--u) * 64));
+  padding: calc(var(--u) * 3) calc(var(--u) * 3.5) calc(var(--u) * 2.6);
+  border-radius: calc(var(--u) * 2.6); border: calc(var(--u) * .5) solid var(--k);
+  box-shadow: 0 calc(var(--u) * 1.2) 0 calc(var(--u) * .6) rgba(0, 0, 0, .4);
+  background: linear-gradient(180deg, rgba(48, 40, 84, .94), rgba(18, 14, 34, .97));
+  overflow: hidden; animation: iw-in-up .6s var(--spring) .45s backwards;
+}
+/* This is a snapshot from the live Minimap canvas (stage terrain + current ink coverage). */
+.iw-jd__stagemap {
+  position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden;
+}
+.iw-jd__map-snapshot {
+  position: absolute; inset: 0; display: block;
+  width: 100%; height: 100%; object-fit: contain; opacity: .9;
+}
+.iw-jd--refs .iw-jd__arena {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+  padding: calc(var(--u) * 2.2); z-index: 1; animation: none;
+}
+.iw-jd--refs .iw-jd__labels { align-items: center; gap: calc(var(--u) * 1.2); margin: 0; }
+.iw-jd--refs .iw-jd__side {
+  align-items: center; gap: calc(var(--u) * .8); min-width: 0; padding: .35em .55em;
+  border-radius: .55em; background: rgba(10, 8, 18, .86);
+}
+.iw-jd--refs .iw-jd__side .iw-jd__name { font-size: min(calc(var(--u) * 2.4), 4.2vw); }
+.iw-jd--refs .iw-jd__side .iw-jd__num { font-size: min(calc(var(--u) * 3.2), 5.2vw); }
+/* Keep inherited race-bar nodes for the existing result contracts, but never show them here. */
+.iw-jd--refs .iw-jd__track { display: none; }
+.iw-jd--refs .iw-jd__win { top: 88%; z-index: 2; }
+
+/* the two referees flank the stage plate and stay for win, loss and tie alike */
+.iw-jd__ref { position: absolute; top: 50%; translate: 0 -50%; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 1.4); }
+.iw-jd__ref.a { left: 2vw; } .iw-jd__ref.b { right: 2vw; }
+.iw-jd__figure { width: min(13vw, calc(var(--u) * 24)); aspect-ratio: 1; }
+.iw-jd__cat { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 calc(var(--u) * .5) 0 rgba(0, 0, 0, .35)); }
+.iw-jd__ear { fill: #fdfdfb; stroke: var(--k); stroke-width: 5; stroke-linejoin: round; }
+.iw-jd__face { fill: #fdfdfb; stroke: var(--k); stroke-width: 5; }
+.iw-jd__patch { fill: #23202e; }
+.iw-jd__eye { fill: #1a1626; }
+.iw-jd__nose { fill: #ff7b8a; stroke: var(--k); stroke-width: 2; }
+.iw-jd__mouth, .iw-jd__whisker { fill: none; stroke: var(--k); stroke-width: 4; stroke-linecap: round; }
+/* Li'l Judd is the miniature of Judd */
+.iw-jd__ref.is-liljudd .iw-jd__figure { scale: .72; }
+.iw-jd__refname {
+  font: 900 var(--fs-xs) / 1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .14em; text-transform: uppercase;
+  color: #fff; padding: .32em .6em; border-radius: .4em; background: rgba(10, 8, 18, .6);
+  text-shadow: 0 .1em 0 var(--k); white-space: nowrap;
+}
+.iw-jd__ref.a .iw-jd__refname { box-shadow: 0 0 0 .18em var(--ja); }
+.iw-jd__ref.b .iw-jd__refname { box-shadow: 0 0 0 .18em var(--jb); }
+
+/* team flag: raised for the winning referee, dropped for the losing one, level on a tie */
+.iw-jd__flag { position: absolute; top: calc(var(--u) * -7); left: 50%; width: calc(var(--u) * 7); height: calc(var(--u) * 7); translate: -50% 0; }
+.iw-jd__pole { position: absolute; left: 44%; top: 0; width: calc(var(--u) * .7); height: 100%; border-radius: calc(var(--u) * .4); background: linear-gradient(180deg, #fff, #cfcfe0); box-shadow: 0 0 0 calc(var(--u) * .2) var(--k); }
+.iw-jd__cloth {
+  position: absolute; left: 52%; top: 7%; width: 62%; height: 42%; transform-origin: left center; rotate: 4deg;
+  border-radius: 0 calc(var(--u) * .6) calc(var(--u) * .6) 0; box-shadow: 0 0 0 calc(var(--u) * .22) var(--k);
+  transition: rotate .45s var(--spring), translate .45s var(--spring);
+}
+.iw-jd__ref.a .iw-jd__cloth { background: linear-gradient(180deg, var(--ja-light), var(--ja) 55%, var(--ja-dark)); }
+.iw-jd__ref.b .iw-jd__cloth { background: linear-gradient(180deg, var(--jb-light), var(--jb) 55%, var(--jb-dark)); }
+.iw-jd__flag.is-up .iw-jd__cloth { rotate: -46deg; translate: 0 calc(var(--u) * -1); }
+.iw-jd__flag.is-down .iw-jd__cloth { rotate: 84deg; translate: 0 calc(var(--u) * 3.2); }
+.iw-jd__ref.is-tie .iw-jd__cloth, .iw-jd__flag.is-flat .iw-jd__cloth { rotate: -8deg; }
+
+/* judges attend during the drumroll, then react to the authoritative outcome */
+.iw-jd.is-racing .iw-jd__ref { animation: iw-ref-bob .45s ease-in-out infinite alternate; }
+@keyframes iw-ref-bob { to { translate: 0 calc(var(--u) * -1.4); } }
+.iw-jd.is-drum .iw-jd__figure { animation: iw-shake .25s infinite; }
+.iw-jd__ref.is-win .iw-jd__figure { animation: iw-ref-win .6s var(--spring2) both; }
+@keyframes iw-ref-win { 0% { scale: .92; } 45% { scale: 1.12; rotate: -5deg; } 100% { scale: 1.05; rotate: 0deg; } }
+.iw-jd__ref.is-lose .iw-jd__figure { filter: saturate(.6) brightness(.78); translate: 0 calc(var(--u) * .9); }
+
+@media (prefers-reduced-motion: reduce) {
+  .iw-jd__stage, .iw-jd.is-racing .iw-jd__ref, .iw-jd.is-drum .iw-jd__figure, .iw-jd__ref.is-win .iw-jd__figure { animation: none; }
+  .iw-jd__cloth { transition: none; }
+}
+/* Generic field-contact cue; separate from and does not reposition ShotGuide. */
+.iw-xh.is-muzzle-blocked::after {
+  content: "";
+  position: absolute;
+  left: var(--muzzle-hit-x, 0px);
+  top: var(--muzzle-hit-y, 0px);
+  width: 9px;
+  height: 9px;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .9);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}

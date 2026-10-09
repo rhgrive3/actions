@@ -39,7 +39,11 @@ export function adaptCombatLife(rel, code) {
     '    if (!Number.isSafeInteger(d.h) || d.h < 1 || d.h <= (hitPeer.lastHit ?? 0)) return;\n' +
     '    hitPeer.lastHit = d.h;', 'life admission');
   const nativeHit = '    this._applyingHit = true;\n    G.projectiles?.applyHit(atk, v, d.d, d.w);\n    this._applyingHit = false;';
-  if (code.includes(nativeHit)) patch(nativeHit,
+  const groupedHit = '    this._applyingHit = true;\n    G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);\n    this._applyingHit = false;';
+  if (code.includes(groupedHit)) patch(groupedHit,
+    '    const applying = this._applyingHit;\n    this._applyingHit = true;\n' +
+    '    try { G.projectiles?.applyHit(atk, v, d.d, d.w, d.g); }\n    finally { this._applyingHit = applying; }', 'grouped hit transaction');
+  else if (code.includes(nativeHit)) patch(nativeHit,
     '    const applying = this._applyingHit;\n    this._applyingHit = true;\n' +
     '    try { G.projectiles?.applyHit(atk, v, d.d, d.w); }\n    finally { this._applyingHit = applying; }', 'hit transaction');
   return code;

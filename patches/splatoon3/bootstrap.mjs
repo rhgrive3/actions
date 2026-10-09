@@ -1,11 +1,13 @@
 import { install } from './runtime/install.mjs';
+import { installWeaponsFidelity } from './runtime/weapons-fidelity.mjs';
 import { installQuality } from '../local-quality/install.mjs';
 try {
   const response = await fetch(new URL('./profile.json', import.meta.url));
   if (!response.ok) throw new Error(`パッチ設定の読み込みに失敗しました (${response.status})`);
   const profile = await response.json();
-  install(profile);
+  const context = install(profile);
   installQuality(profile);
+  installWeaponsFidelity(context, profile);
   await import('../../src/main.js');
 } catch (error) {
   console.error('[INKWAVE patches]', error);

@@ -1,9 +1,10 @@
+import { checkResultContinuation } from './check-inkwave-result-continuation.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
 // Runs the existing menu actions against the caller's fixture API. It tests
 // layout and UI state; it does not simulate gameplay or attest a real device.
-export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit }) {
+export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, testContinuation = !audit, touchCameraReset = false }) {
   const capture = async (name, selector) => {
     entry.screens[name] = selector ? await geometry(page, selector, name) : 'display';
     if (!audit) assert(await page.locator('.iw-ss__frame, .iw-prev__stage, .iw-wd, .iw-howto__ctl, .iw-lpanel, .iw-lfoot, .iw-pmatch').evaluateAll((els) => els.every((el) => {
@@ -73,6 +74,29 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
   await show(page, 'loadout');
   await capture('loadout', '.iw-loadout .iw-wcard, .iw-loadout__look button, .iw-loadout .iw-backbtn');
   if (!audit) {
+    // Exercise actual native selects/storage, rather than only inspecting the
+    // ABILITIES object. Only head-main may offer the three conditional powers.
+    await tap(page, '.s3-gear summary');
+    const selects = page.locator('.s3-gear select');
+    assert.equal(await selects.count(), 12);
+    for (const id of ['lastDitchEffort', 'comeback', 'openingGambit']) {
+      assert.equal(await selects.nth(0).locator(`option[value="${id}"]`).count(), 1);
+      for (let i = 1; i < 12; i++) assert.equal(await selects.nth(i).locator(`option[value="${id}"]`).count(), 0);
+      await selects.nth(0).selectOption(id);
+      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('inkwave.splatoon3.gear.v1'))[0].main), id);
+    }
+    for (let i = 0; i < 12; i++) assert.equal(await selects.nth(i).locator('option[value="subResistance"]').count(), 1);
+    await selects.nth(1).selectOption('subResistance');
+    await show(page, 'setup'); await show(page, 'loadout');
+    assert.equal(await page.locator('.s3-gear select').nth(0).inputValue(), 'openingGambit');
+    assert.equal(await page.locator('.s3-gear select').nth(1).inputValue(), 'subResistance');
+    if (!await page.locator('.s3-gear').evaluate(el => el.open)) await page.locator('.s3-gear summary').tap();
+    await page.locator('.s3-gear select').nth(0).selectOption('none');
+    await page.locator('.s3-gear select').nth(1).selectOption('none');
+    // The expanded native details panel is an overlay. Close it with the same
+    // summary action as a player before tapping a weapon behind that panel.
+    await tap(page, '.s3-gear summary');
+    assert.equal(await page.locator('.s3-gear').evaluate(el => el.open), false, 'gear panel closes before returning to weapon selection');
     const card = page.locator('.iw-loadout .iw-wcard').last();
     const weapon = await card.evaluate((el) => el._wid);
     await card.scrollIntoViewIfNeeded(); await card.tap();
@@ -100,11 +124,13 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
   await show(page, 'howto');
   await capture('howto', '.iw-howto .iw-seg__opt, .iw-howto .iw-backbtn');
   if (!audit) {
-    assert.equal(await page.locator('.iw-ctl--touch .iw-ctl__row').count(), 9);
+    assert.equal(await page.locator('.iw-ctl--touch .iw-ctl__row').count(), touchCameraReset ? 10 : 9);
+    if (touchCameraReset) assert.match(await page.locator('.iw-ctl--touch .iw-ctl__act').last().textContent(), /Camera reset|カメラリセット/);
     await tap(page, '.iw-howto .iw-seg__opt:last-child');
     assert.equal(await page.locator('.iw-ctl--touch').count(), 0);
     await tap(page, '.iw-howto .iw-seg__opt');
-    assert.equal(await page.locator('.iw-ctl--touch .iw-ctl__row').count(), 9);
+    assert.equal(await page.locator('.iw-ctl--touch .iw-ctl__row').count(), touchCameraReset ? 10 : 9);
+    if (touchCameraReset) assert.match(await page.locator('.iw-ctl--touch .iw-ctl__act').last().textContent(), /Camera reset|カメラリセット/);
   }
   await show(page, 'credits');
   await capture('credits', '.iw-credits .iw-backbtn');
@@ -170,6 +196,7 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
       await tap(page, '.iw-res__foot button:last-child');
     }
   }
+  if (testContinuation) await checkResultContinuation({ page, tap, settle, capture, entry });
   await page.evaluate(() => { menus._results = null; });
   await settle(page);
   entry.coreMenus = audit ? 'audited' : 'passed';

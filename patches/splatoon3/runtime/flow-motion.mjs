@@ -8,7 +8,7 @@ export const FLOW_MOTION_CALIBRATION = Object.freeze({
   status: 'visible calibration; original particle curves and expiry unmeasured',
 });
 const INSTALL = Symbol.for('inkwave.s3.flow-motion.install.v1');
-const states = new WeakMap(), disposed = new WeakSet();
+const states = new WeakMap(), disposed = new WeakSet(), resumptions = new WeakMap();
 const TAU = Math.PI * 2, EPS = 1e-10;
 const smooth = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
 
@@ -189,7 +189,7 @@ function makeResources(ch, s, THREE) {
   const squidShell = gate(new THREE.Mesh(squidView, shellMat));
   squidShell.name = 's3-flow-squid-edge'; squidShell.frustumCulled = false; squidShell.renderOrder = 4;
   squidShell.visible = false; ch.squid.body.parent.add(squidShell);
-  const r = { group, glints, alpha, glintGeo, glintMat, ribbonGeo, ribbonMat,
+  const r = { shown: false, group, glints, alpha, glintGeo, glintMat, ribbonGeo, ribbonMat,
     ribbons, shellMat, squidShell, kidShells: new Map(), kidSources: new Map(),
     shellMaterials: new Map([['squid', shellMat]]), ownedGeometries: [glintGeo, ribbonGeo, squidView], squidSource: ch.squid.body.geometry,
     ownedMaterials: [glintMat, ribbonMat, shellMat] };
@@ -244,15 +244,22 @@ function anchors(ch, s) {
     s.anchors[1].copy(s.anchors[0]); s.anchors[2].copy(s.anchors[0]);
   }
 }
+function hideResources(r) {
+  if (!r?.shown) return;
+  r.shown = false;
+  r.group.visible = r.squidShell.visible = false;
+  for (const shells of r.kidShells.values()) for (const { shell } of shells) shell.visible = false;
+  r.shellMat.uniforms.uLevel.value = 0;
+}
 function draw(ch, s, THREE) {
   const shown = ch.visible !== false && ch.root.visible && s.level > EPS;
   if (!s.resources && shown) makeResources(ch, s, THREE);
   const r = s.resources; if (!r) return;
-  r.group.visible = shown; syncShell(ch, s, r, THREE, shown);
+  if (!shown) { hideResources(r); return; }
+  r.shown = true; r.group.visible = true; syncShell(ch, s, r, THREE, true);
   const color = ch.color;
   for (const m of r.ownedMaterials) m.uniforms.uColor.value.copy(color).multiplyScalar(1.45);
   r.shellMat.uniforms.uLevel.value = s.level;
-  if (!shown) return;
   anchors(ch, s);
   const leg = ch.rest.hips.y - ch.rest.footL.y;
   const radius = leg * (ch.kidForm ? .62 : .50);
@@ -291,11 +298,7 @@ function clear(ch) {
   const s = states.get(ch); if (!s) return;
   s.active = false; s.phase = 'off'; s.age = s.time = s.level = s.remaining = 0;
   s.event = null; s.eventAge = 0; s.fadeStart = 0; s.owner = null;
-  if (s.resources) {
-    s.resources.group.visible = s.resources.squidShell.visible = false;
-    for (const shells of s.resources.kidShells.values()) for (const { shell } of shells) shell.visible = false;
-    s.resources.shellMat.uniforms.uLevel.value = 0;
-  }
+  hideResources(s.resources);
   ch.u.uGlow.value.copy(ch.color).multiplyScalar(nativeGlow(ch));
 }
 function step(ch, dt, THREE) {
@@ -312,7 +315,12 @@ function step(ch, dt, THREE) {
   if (!enabled || s.owner && s.owner !== actor) clear(ch);
   s.owner = enabled ? actor : null;
   const active = !!(enabled && flow?.active);
-  if (active && !s.active) {
+  if (active && !s.active && resumptions.get(ch) === flow) {
+    // The same authoritative Flow survived a life transition; resume its
+    // steady appearance without a second activation/paint/entry event.
+    s.phase = 'active'; s.age = FLOW_MOTION_CALIBRATION.entryTime; s.time = 0;
+    s.event = null; s.eventAge = 0; resumptions.delete(ch);
+  } else if (active && !s.active) {
     s.phase = 'entry'; s.age = s.time = 0; s.event = 'entry'; s.eventAge = 0; s.activationCount++;
   } else if (active && flow.remaining > s.remaining + EPS) {
     s.event = 'extension'; s.eventAge = 0; s.extensionCount++;
@@ -369,10 +377,7 @@ export function installFlowMotion({ THREE, Character, Actor }) {
   };
   C.setVisible = function (...args) {
     const result = setVisible.apply(this, args), s = states.get(this);
-    if (!args[0] && s?.resources) {
-      s.resources.group.visible = s.resources.squidShell.visible = false;
-      for (const shells of s.resources.kidShells.values()) for (const { shell } of shells) shell.visible = false;
-    }
+    if (!args[0]) hideResources(s?.resources);
     if (this._owner()?.alive === false) clear(this);
     return result;
   };
@@ -387,9 +392,21 @@ export function installFlowMotion({ THREE, Character, Actor }) {
       for (const mat of r.ownedMaterials) mat.dispose();
       r.glints.dispose();
     }
-    states.delete(this); return dispose.apply(this, args);
+    states.delete(this); resumptions.delete(this); return dispose.apply(this, args);
   };
   const reset = A.reset, splat = A.splat;
-  A.reset = function (...args) { const result = reset.apply(this, args); clear(this.character); return result; };
-  A.splat = function (...args) { const result = splat.apply(this, args); if (!this.alive) clear(this.character); return result; };
+  A.reset = function (...args) {
+    const result = reset.apply(this, args); clear(this.character);
+    if (!this.s3?.flow?.active || resumptions.get(this.character) !== this.s3.flow) resumptions.delete(this.character);
+    return result;
+  };
+  A.splat = function (...args) {
+    const result = splat.apply(this, args);
+    if (!this.alive) {
+      if (this.s3?.flow?.active) resumptions.set(this.character, this.s3.flow);
+      else resumptions.delete(this.character);
+      clear(this.character);
+    }
+    return result;
+  };
 }

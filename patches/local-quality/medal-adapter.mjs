@@ -293,15 +293,11 @@ const MENU_ART_COMPUTE_AFTER = `export function computeAwards(players = [], { wi
 
     // 3. Overall Splatter (#1 Battle / #2 Battle2) and Splat Assister (#1 KillAssist / #2 KillAssist2)
     // Eligible ONLY if authoritative finite non-negative assists are known for the ENTIRE compared team,
-    // AND positive assists are present. Missing is unknown (not 0); zero/missing assists awards no Overall.
+    // Missing is unknown; an explicitly known zero still contributes to the combined total.
     const hasTeamwideFiniteAssists = team.every((p) => (
       typeof p.assists === 'number' && Number.isFinite(p.assists) && p.assists >= 0
     ));
-    const hasAnyPositiveAssists = team.some((p) => (
-      typeof p.assists === 'number' && Number.isFinite(p.assists) && p.assists > 0
-    ));
-
-    if (hasTeamwideFiniteAssists && hasAnyPositiveAssists) {
+    if (hasTeamwideFiniteAssists) {
       evalMetric((p) => p.splats + p.assists, 'Battle', 'Battle2', (v) => tr(v === 1 ? '{n} splat' : '{n} splats', { n: v }));
       evalMetric((p) => p.assists, 'KillAssist', 'KillAssist2', (v) => tr(v === 1 ? '{n} assist' : '{n} assists', { n: v }));
     }

@@ -22,7 +22,7 @@ function section(source, start, end) {
 // Entire actual judge, FX scheduler, sound forwarding, visibility/dispose, and Game
 // judge/quit methods. Actual ui-util/config modules are evaluated too. Only platform
 // DOM/RAF/audio and unrelated 3D/menu rendering are fixtures, not a physical browser.
-export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSource = existingGameSource() } = {}) {
+export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSource = existingGameSource(), globals = {} } = {}) {
   const rafs = new Map(), timers = new Map(), calls = [], voices = [];
   let serial = 0, now = 0, hook = null;
   class Classes {
@@ -49,7 +49,7 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
   const document = { body, createElement: tag => new Node(tag), createTextNode: value => { const n = new Node('#text'); n.textContent = value; return n; } };
   const G = { teamHex: ['#ff8a14','#2f5bff'], teamColors: ['orange','blue'], net: null, netm: null, mode: 'match', audio: { duck() {}, play: name => calls.push(['gameSound',name]) } };
   const context = vm.createContext({
-    console, document, G, Promise, performance: { now: () => now },
+    ...globals, console, document, G, Promise, performance: { now: () => now },
     addEventListener() {}, removeEventListener() {},
     requestAnimationFrame: fn => { const id = ++serial; rafs.set(id,fn); return id; }, cancelAnimationFrame: id => rafs.delete(id),
     setTimeout: (fn, ms) => { const id = ++serial; timers.set(id,{ fn, ms, due: now + ms }); return id; }, clearTimeout: id => timers.delete(id),

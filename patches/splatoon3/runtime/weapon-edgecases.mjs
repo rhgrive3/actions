@@ -1,10 +1,45 @@
+import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
+// #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
+import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
 const EPS = 1e-10, DEG = Math.PI / 180;
+
+// #729 — S3 Ver.11.3.0 resolves an impact-triggered blast one fixed frame after the
+// contact (tick N impact -> tick N+1 burst), so a target can move between the two
+// frames. Queued bursts are resolved from inside `Projectiles.update`; this flag keeps
+// a resolved burst from being captured and queued again.
+let flushing = 0;
 
 // This retains the existing two-draw radial sampler, not a claimed S3 PDF.
 // Ground pitch has its own angular envelope; neither bloom nor the horizontal
 // scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
+  // #883: Dualies expose one scalar spread envelope, so do not inherit the
+  // generic path's unsourced vertical compression.
+  if (w.kind === 'dualies') {
+    if (horizontal <= 0) return dir;
+    const radius = horizontal * DEG * Math.sqrt(Math.random());
+    const angle = Math.random() * Math.PI * 2;
+    const aim = dir.clone().normalize();
+    const right = aim.clone().set(-aim.z, 0, aim.x);
+    if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(aim, -aim.x);
+    right.normalize();
+    const up = aim.clone().cross(right);
+    return dir.copy(aim).addScaledVector(right, Math.cos(angle) * Math.tan(radius))
+      .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
+  }
+  if (w.kind === 'shooter' || w.kind === 'blaster') {
+    if (horizontal <= 0) return dir;
+    // Keep the existing two-draw radial law; correct only the scalar cone
+    // geometry. This is not a new claim about Nintendo's bias/PDF.
+    const radius = horizontal * DEG * Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
+    const right = dir.clone().set(-dir.z, 0, dir.x);
+    if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(dir, -dir.x);
+    right.normalize();
+    const up = dir.clone().cross(right).normalize();
+    return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
+      .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
+  }
   if (w.kind !== 'splatling' || !a.grounded || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, horizontal);
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
   const right = dir.clone().set(-dir.z, 0, dir.x);
@@ -39,8 +74,8 @@ export function appendRollerNearUnit(system, a, w) {
   const p = system._new();
   Object.assign(p, { type: 'drop', owner: a, team: a.team, age: 0, life: 1.4, straight: w.ballistics?.horizontalStraightTime ?? 0,
     radius: 1, damage: w.flickDamageNear, dmgFar: w.flickDamageFar, size: .15, trail: 0, trailEvery: 1.8, trailRadius: .45,
-    grav: w.flickGravity ?? 26, drag: w.flickDrag ?? .4, seed: Math.random(), vis: .185, tail0: .4, tailK: 1, wob: .1, wobF: 19, nose: 0, sats: 2,
-    s3FlickUnit: 1, fidelityMode: 'horizontal', fidelityYaw: angle - a.yaw });
+    grav: w.flickGravity ?? 26, drag: w.flickDrag ?? .4, seed: Math.random(), vis: rollerFlickDrawRadius(w, false, Math.max(0, (w.flickDrops ?? 2) - 1), 0, .185), tail0: .4, tailK: 1, wob: .1, wobF: 19, nose: 0, sats: 2,
+    s3FlickUnit: 1, fidelityMode: 'horizontal', fidelityYaw: angle - a.yaw, fidelitySectorYaw: a.yaw });
   p.pos.set(a.pos.x + fx * .6 + fz * lateral, a.pos.y + 1.3, a.pos.z + fz * .6 - fx * lateral);
   p.prev.copy(p.pos); p.start.copy(p.pos);
   p.vel.set(Math.sin(angle) * cp * speed, Math.sin(pitch) * speed, Math.cos(angle) * cp * speed);
@@ -49,22 +84,107 @@ export function appendRollerNearUnit(system, a, w) {
   system._push(p);
 }
 
-export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER }) {
+export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER, G, THREE, Hit }) {
   const tag = Symbol.for('inkwave.s3.weapon-edgecases.v1');
   if (WeaponRunner.prototype[tag]) return;
   Object.defineProperty(WeaponRunner.prototype, tag, { value: true });
+  // Each Dualies hand owns its birth origin. LOS intentionally omits an end
+  // margin, so validate the full segment before allowing an origin in cover.
+  const nativeMuzzleHand = Projectiles.prototype._muzzleHand;
+  const muzzleFrom = new THREE.Vector3(), muzzleDelta = new THREE.Vector3(), muzzleHit = new Hit();
+  const obstructed = end => {
+    muzzleDelta.copy(end).sub(muzzleFrom);
+    const distance = muzzleDelta.length();
+    return distance > EPS && G.physics.raycast(muzzleFrom, muzzleDelta.multiplyScalar(1 / distance), distance, muzzleHit, true).hit;
+  };
+  Projectiles.prototype._muzzleHand = function (actor, hand, out) {
+    nativeMuzzleHand.call(this, actor, hand, out);
+    if (actor.weapon?.kind !== 'dualies') return out;
+    muzzleFrom.copy(actor.pos); muzzleFrom.y += actor.form === 'squid' ? .4 : 1.05;
+    if (!Number.isFinite(out.x) || !Number.isFinite(out.y) || !Number.isFinite(out.z) || obstructed(out)) {
+      out.copy(muzzleFrom).addScaledVector(actor.aimDir, .3);
+      if (!Number.isFinite(out.x) || !Number.isFinite(out.y) || !Number.isFinite(out.z) || obstructed(out)) out.copy(muzzleFrom);
+    }
+    return out;
+  };
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
+  const clearDualiesLocks = r => {
+    r.s3DualiesPostShot = 0; r.s3DodgeShotPending = 0;
+    r.s3DualiesSubBuffered = false; r.s3DualiesSubReleaseBuffered = false;
+  };
   const reset = WeaponRunner.prototype.reset;
-  WeaponRunner.prototype.reset = function (...args) { const out = reset.apply(this, args); clear(this); this.s3DualiesEmerging = false; return out; };
+  WeaponRunner.prototype.reset = function (...args) {
+    const out = reset.apply(this, args);
+    clear(this); clearDualiesLocks(this); this.s3DualiesEmerging = false; this.s3ChargerPostShot = 0; this.s3DualiesSwimStart = null;
+    return out;
+  };
+  // #874: dodge admission uses current fire intent, not the recent-fire presentation timer.
+  const tryDodge = WeaponRunner.prototype.tryDodge;
+  WeaponRunner.prototype.tryDodge = function (...args) {
+    if (this.a?.weapon?.kind === 'dualies' && !this.a.intent?.fire) return false;
+    return tryDodge.apply(this, args);
+  };
   const update = Actor.prototype.update;
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
+    if (r) {
+      if (r.s3ChargerPostShot > 0) r.s3ChargerPostShot = Math.max(0, r.s3ChargerPostShot - dt);
+      if (r.s3DualiesPostShot > 0) r.s3DualiesPostShot = Math.max(0, r.s3DualiesPostShot - dt);
+      const cancelAction = !this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady();
+      if (cancelAction) {
+        r.s3ChargerPostShot = 0;
+        clearDualiesLocks(r);
+      }
+    }
     if (r && this.weapon.kind === 'dualies') {
-      if (this.form === 'squid') { clear(r); r.s3DualiesEmerging = true; }
+      if (this.form === 'squid') { clear(r); clearDualiesLocks(r); r.s3DualiesEmerging = true; }
       else if (this.kidT > PLAYER.emergeDelay && !this.intent.fire) r.s3DualiesEmerging = false;
+      const canceled = !this.alive || !this.intent.fire || this.intent.sub || this.specialActive || this.superJumpState ||
+        this.intent.special && this.specialReady() || r.dodge || r.lockT > 0 ||
+        r.s3DualiesSwimStart != null && this._prevIntent.fire && (this.form === 'squid' || this.intent.squid && !this._prevIntent.squid);
+      if (canceled) {
+        if (r.s3DualiesSwimStart != null) { this.fireBuffer = 0; r.s3DualiesEmerging = false; }
+        r.s3DualiesSwimStart = null;
+      } else if (this.form === 'squid' && !this._prevIntent.fire) {
+        r.s3DualiesSwimStart = this.weapon.swimFirstShotDelay;
+      } else if (r.s3DualiesSwimStart != null) {
+        r.s3DualiesSwimStart = Math.max(0, r.s3DualiesSwimStart - dt);
+      }
       if (!this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady()) clear(r);
     }
     return update.call(this, dt);
+  };
+  const weaponUpdate = WeaponRunner.prototype.update;
+  WeaponRunner.prototype.update = function (dt, input) {
+    if (this.a.weapon.kind === 'charger' && (input?.sub || input?.subReleased)) {
+      const source = input, runner = this;
+      return weaponUpdate.call(this, dt, { ...source,
+        get sub() { return chargerPostShotBlocksSub(runner) ? false : source.sub; },
+        get subReleased() { return chargerPostShotBlocksSub(runner) ? false : source.subReleased; },
+      });
+    }
+    if (this.a.weapon.kind !== 'dualies') return weaponUpdate.call(this, dt, input);
+    const source = input || {}, locked = this.s3DualiesPostShot > EPS;
+    if (locked) {
+      if (source.sub) this.s3DualiesSubBuffered = true;
+      if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
+    }
+    let prepared = locked ? { ...source, sub: false, subReleased: false } : { ...source };
+    if (!locked && this.s3DualiesSubReleaseBuffered) {
+      prepared.sub = true; prepared.subReleased = true;
+      this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
+    }
+    const runner = this;
+    const gated = new Proxy(prepared, { get(target, prop) {
+      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
+      return target[prop];
+    }});
+    const out = weaponUpdate.call(this, dt, gated);
+    if (this.s3DualiesPostShot > EPS) {
+      if (prepared.sub) this.s3DualiesSubBuffered = true;
+      if (prepared.subReleased) this.s3DualiesSubReleaseBuffered = true;
+    }
+    return out;
   };
   const dualies = WeaponRunner.prototype._dualies;
   WeaponRunner.prototype._dualies = function (dt, inp, w) {
@@ -73,6 +193,11 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     if (blocked || postRoll) clear(this);
     if (inp.sub) return dualies.call(this, dt, { ...inp, fire: false }, w);
     if (!blocked && !postRoll) {
+      if (this.s3DualiesSwimStart != null) {
+        if (this.s3DualiesSwimStart > EPS) { this.cooldown = Math.max(0, this.cooldown); this.firingT = .35; return; }
+        this.s3DualiesSwimStart = null;
+        this.s3DualiesEmerging = true;
+      }
       if (!this.s3DualiesHeld) {
         this.s3DualiesHeld = true;
         this.cooldown = Math.max(0, this.cooldown);
@@ -97,4 +222,57 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   };
   const fresh = Projectiles.prototype._new;
   Projectiles.prototype._new = function (...args) { const p = fresh.apply(this, args); p.s3FlickUnit = 0; p.s3TerrainBurst = false; return p; };
+  // #729 — an impact-triggered Blaster burst must resolve on the next fixed tick, not in
+  // the contact tick. `_impact` above and the sourced wall-drop transition are the only
+  // callers that raise a burst while `s3TerrainBurst` is set, so that marker alone
+  // separates the terrain burst from direct victim hits, boss hits and the natural timed
+  // mid-air explosion (all of which keep their current tick). The snapshot clones the
+  // contact point (the shared physics scratch hit) and copies the fields the burst chain
+  // reads, because the projectile returns to the pool as soon as `_impact` returns.
+  const terrainBurst = Projectiles.prototype._blastBurst;
+  const projectilesUpdate = Projectiles.prototype.update;
+  const projectilesClear = Projectiles.prototype.clear;
+  Projectiles.prototype.clear = function (...args) {
+    try {
+      return projectilesClear.apply(this, args);
+    } finally {
+      if (this.s3BlastQueue) {
+        this.s3BlastQueue.length = 0;
+        this.s3BlastQueue = null;
+      }
+    }
+  };
+  Projectiles.prototype.flushBlastImpacts = function () {
+    const queue = this.s3BlastQueue;
+    if (!queue || !queue.length) return 0;
+    this.s3BlastQueue = null;
+    flushing++;
+    try {
+      const nm = G.netm;
+      for (const e of queue) {
+        if (e.p.ghost && nm) nm.mute++;
+        try { this._blastBurst(e.p, e.point, e.victim); }
+        finally { if (e.p.ghost && nm) nm.mute--; }
+      }
+    }
+    finally { flushing--; }
+    return queue.length;
+  };
+  Projectiles.prototype._blastBurst = function (p, point, victim) {
+    if (!flushing && p.s3TerrainBurst) {
+      (this.s3BlastQueue ??= []).push({
+        point: point.clone(), victim,
+        p: { owner: p.owner, team: p.team, ghost: !!p.ghost, wid: p.wid,
+          s3Weapon: p.s3Weapon ?? null, s3TerrainBurst: true },
+      });
+      return;
+    }
+    return terrainBurst.call(this, p, point, victim);
+  };
+  // Fixed-tick entry: the queued terrain burst of tick N resolves before anything moves
+  // in tick N+1, so render cadence cannot change the ordering.
+  Projectiles.prototype.update = function (dt) {
+    this.flushBlastImpacts();
+    return projectilesUpdate.call(this, dt);
+  };
 }

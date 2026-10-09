@@ -1,0 +1,758 @@
+// Network owns the wire contract. Compose LAST; upstream modules and gameplay
+// tuning remain immutable. Each connection fails closed on source drift.
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+export const NETWORK_ROOT = fileURLToPath(new URL('./', import.meta.url));
+function once(code, before, after, label) {
+  const i = code.indexOf(before);
+  if (i < 0 || code.indexOf(before, i + before.length) >= 0) throw Error('Network replication anchor mismatch: ' + label);
+  return code.slice(0,i) + after + code.slice(i+before.length);
+}
+function replaceAllExpected(code, before, after, expected, label) {
+  const count = code.split(before).length - 1;
+  if (count !== expected) throw Error('Network replication anchor mismatch: ' + label + ' (' + count + ' != ' + expected + ')');
+  return code.split(before).join(after);
+}
+export function networkIdentity() {
+  return Object.fromEntries(['adapter.mjs'].map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
+}
+export function adaptNetworkSource(rel, code) {
+  const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
+  if (rel === 'src/core/ctx.js') {
+    patch('export function emit(name, payload) {\n  const set = listeners.get(name);\n  if (!set) return;\n  for (const fn of set) fn(payload);\n}', `const EVENT_VECTOR_FIELDS = Object.freeze({
+  muzzle: eventVectorField('weapon-fire-muzzle', readMuzzle, writeMuzzle),
+  dir: eventVectorField('weapon-fire-direction', readDirection, writeDirection),
+  pos: eventVectorField('weapon-impact-position', readPosition, writePosition),
+  normal: eventVectorField('weapon-impact-normal', readNormal, writeNormal),
+});
+function eventVectorField(name, get, set) {
+  return {
+    x: Symbol(name + '.x'), y: Symbol(name + '.y'), z: Symbol(name + '.z'),
+    cached: Symbol(name + '.cached'), valid: Symbol(name + '.valid'), wrapped: Symbol(name + '.wrapped'), get, set,
+    xDescriptor: { configurable: true, writable: true, value: 0 },
+    yDescriptor: { configurable: true, writable: true, value: 0 },
+    zDescriptor: { configurable: true, writable: true, value: 0 },
+    cachedDescriptor: { configurable: true, writable: true, value: undefined },
+    validDescriptor: { configurable: true, writable: true, value: false },
+    wrappedDescriptor: { configurable: true, writable: true, value: false },
+    propertyDescriptor: { configurable: true, enumerable: true, get, set },
+  };
+}
+function writeVectorSlot(payload, field, slot, value) {
+  const descriptor = field[slot + 'Descriptor'];
+  descriptor.value = value;
+  Object.defineProperty(payload, field[slot], descriptor);
+}
+function setVectorCoordinates(payload, field, value) {
+  payload[field.valid] = !!value && !!value.isVector3;
+  if (!payload[field.valid]) return;
+  writeVectorSlot(payload, field, 'x', value.x);
+  writeVectorSlot(payload, field, 'y', value.y);
+  writeVectorSlot(payload, field, 'z', value.z);
+}
+function materializeVector(payload, field) {
+  const cached = payload[field.cached];
+  if (cached !== undefined || !payload[field.valid]) return cached;
+  const vector = new THREE.Vector3(payload[field.x], payload[field.y], payload[field.z]);
+  writeVectorSlot(payload, field, 'cached', vector);
+  return vector;
+}
+function assignVector(payload, field, value) {
+  setVectorCoordinates(payload, field, value);
+  writeVectorSlot(payload, field, 'cached', value);
+}
+function readMuzzle() { return materializeVector(this, EVENT_VECTOR_FIELDS.muzzle); }
+function writeMuzzle(value) { assignVector(this, EVENT_VECTOR_FIELDS.muzzle, value); }
+function readDirection() { return materializeVector(this, EVENT_VECTOR_FIELDS.dir); }
+function writeDirection(value) { assignVector(this, EVENT_VECTOR_FIELDS.dir, value); }
+function readPosition() { return materializeVector(this, EVENT_VECTOR_FIELDS.pos); }
+function writePosition(value) { assignVector(this, EVENT_VECTOR_FIELDS.pos, value); }
+function readNormal() { return materializeVector(this, EVENT_VECTOR_FIELDS.normal); }
+function writeNormal(value) { assignVector(this, EVENT_VECTOR_FIELDS.normal, value); }
+function snapshotEventVector(payload, key) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (!field || payload[field.wrapped]) return false;
+  const value = payload[key];
+  if (!value || !value.isVector3) return false;
+  writeVectorSlot(payload, field, 'x', value.x);
+  writeVectorSlot(payload, field, 'y', value.y);
+  writeVectorSlot(payload, field, 'z', value.z);
+  writeVectorSlot(payload, field, 'valid', true);
+  Object.defineProperty(payload, key, field.propertyDescriptor);
+  writeVectorSlot(payload, field, 'wrapped', true);
+  return true;
+}
+function snapshotWeaponEvent(name, payload) {
+  if (!payload || typeof payload !== 'object') return;
+  if (name === 'weapon:fire') { snapshotEventVector(payload, 'muzzle'); snapshotEventVector(payload, 'dir'); }
+  else if (name === 'weapon:impact') { snapshotEventVector(payload, 'pos'); snapshotEventVector(payload, 'normal'); }
+}
+export function isEventVectorPayload(payload, key) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  return !!(field && payload && payload[field.valid] && (payload[field.cached] === undefined || payload[field.cached] !== null && payload[field.cached] !== undefined && payload[field.cached].isVector3));
+}
+export function hasEventVector(payload, key) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (field && payload && payload[field.valid]) return payload[field.cached] === undefined || !!payload[field.cached];
+  return !!(payload && payload[key]);
+}
+export function eventVectorComponent(payload, key, axis) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (field && payload && payload[field.valid]) {
+    const cached = payload[field.cached];
+    if (cached !== undefined) return cached ? cached[axis === 0 ? 'x' : axis === 1 ? 'y' : 'z'] : undefined;
+    return payload[axis === 0 ? field.x : axis === 1 ? field.y : field.z];
+  }
+  const value = payload && payload[key];
+  return value && value[axis === 0 ? 'x' : axis === 1 ? 'y' : 'z'];
+}
+export function copyEventVector(payload, key, target) {
+  const field = EVENT_VECTOR_FIELDS[key];
+  if (field && payload && payload[field.valid]) {
+    const cached = payload[field.cached];
+    if (cached !== undefined) { if (!cached) return false; target.copy(cached); return true; }
+    target.set(payload[field.x], payload[field.y], payload[field.z]);
+    return true;
+  }
+  const value = payload && payload[key];
+  if (!value) return false;
+  target.copy(value);
+  return true;
+}
+export function emit(name, payload) {
+  const set = listeners.get(name);
+  if (!set) return;
+  snapshotWeaponEvent(name, payload);
+  for (const fn of set) fn(payload);
+}`, 'snapshot event vectors before synchronous dispatch');
+    code = "import * as THREE from 'three';\n" + code;
+    return code;
+  }
+  if (rel === 'src/net/netmatch.js') {
+    patch("import { G, emit, on } from '../core/ctx.js'", "import { G, emit, on, isEventVectorPayload, eventVectorComponent } from '../core/ctx.js'", 'read numeric event snapshots');
+    patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
+    patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
+    patch("      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;", "      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;\n      case 'fs': this._acceptFirstSplat(from,d); break;\n      case 'fsq': this._answerFirstSplat(from,d); break;", 'first-splat host confirmation packets');
+    patch('  _remoteSplat(victim, attacker, cause) {', `  _requestFirstSplat() {
+    const id = this.cfg?.id;
+    if (!this.isHost && typeof id === 'string' && id && this.s.hostId) this.s.tr?.sendTo(this.s.hostId,{k:'fsq',m:id});
+  }
+
+  _firstSplatPair(attackerNid,victimNid) {
+    const m = this.match, validNid = n => Number.isSafeInteger(n) && n >= 0;
+    if (!m || G.netm !== this || m.attract || m.range || m.opts?.range
+      || !validNid(attackerNid) || !validNid(victimNid) || attackerNid === victimNid) return null;
+    const attacker = this.byNid.get(attackerNid), victim = this.byNid.get(victimNid);
+    if (!attacker || !victim || !m.actors?.includes(attacker) || !m.actors?.includes(victim)
+      || attacker.team === victim.team) return null;
+    return { attacker, victim };
+  }
+
+  claimFirstSplat(attacker,victim) {
+    const state = this._firstSplatState;
+    if (!this.isHost || !state.matchId || state.matchId !== this.cfg?.id || state.claimed
+      || !attacker || !victim) return false;
+    const pair = this._firstSplatPair(attacker.nid,victim.nid);
+    if (!pair || pair.attacker !== attacker || pair.victim !== victim) return false;
+    state.claimed = true;
+    state.attackerNid = attacker.nid; state.victimNid = victim.nid;
+    this._sendNow({k:'fs',m:state.matchId,a:state.attackerNid,v:state.victimNid});
+    return true;
+  }
+
+  _acceptFirstSplat(from,d) {
+    const state = this._firstSplatState;
+    if (from !== this.s.hostId || !state.matchId || d?.m !== this.cfg?.id || d.m !== state.matchId || state.claimed) return false;
+    const pair = this._firstSplatPair(d.a,d.v);
+    if (!pair) return false;
+    state.claimed = true;
+    state.attackerNid = pair.attacker.nid; state.victimNid = pair.victim.nid;
+    emit('flow:first-splat-confirmed',{match:this.match,matchId:d.m,attacker:pair.attacker,victim:pair.victim});
+    return true;
+  }
+
+  _answerFirstSplat(from,d) {
+    const state = this._firstSplatState;
+    if (!this.isHost || from === this.myId || !this.s._members?.has(from)
+      || !state.matchId || d?.m !== this.cfg?.id || d.m !== state.matchId || !state.claimed) return false;
+    this.s.tr?.sendTo(from,{k:'fs',m:state.matchId,a:state.attackerNid,v:state.victimNid});
+    return true;
+  }
+
+  _remoteSplat(victim, attacker, cause) {`, 'host-authoritative first-splat protocol');
+    patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    victim.alive = false;", 'Flow observes only accepted remote splats');
+    patch('const FORWARD = [', "const FORWARD = ['hit', 'hit:rejected', ",
+      'authoritative hit admission feedback');
+    patch('    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;',
+      "    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;\n    if (name === 'hit' && e.killed) return;",
+      'lethal confirmation remains owned by splat event');
+    {
+      const hitCalls = [
+        'G.projectiles?.applyHit(atk, v, d.d, d.w);',
+        'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);'
+      ];
+      const hitCall = hitCalls.find(candidate => code.includes(candidate));
+      if (!hitCall) throw Error('Network replication anchor mismatch: ' + rel + ': owner hit admission result');
+      patch(hitCall,
+        `const hitAdmission = ${hitCall.slice(0, -1)};\n    if (hitAdmission === 'rejected-invulnerable') emit('hit:rejected', { attacker: atk, victim: v, damage: d.d, weaponId: d.w });`,
+        'owner confirms invulnerability rejection');
+    }
+    code = "import { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    patch('  sendHit(attacker, victim, dmg, wid) {',
+      '  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {', 'Slosher volley identity send');
+    {
+      const matches = [...code.matchAll(/    this\.s\.tr\?\.sendTo\(victim\.owner, \{ k: 'hit',[^\n]+\}\);/g)];
+      if (matches.length !== 1) throw Error('Network replication anchor mismatch: ' + rel + ': Slosher volley identity wire field');
+      const match = matches[0], payload = match[0].slice(match[0].indexOf('{'), -2);
+      const replacement = `    const hit = ${payload};\n    if (slosherVolleyId != null) hit.g = slosherVolleyId;\n    this.s.tr?.sendTo(victim.owner, hit);`;
+      code = code.slice(0, match.index) + replacement + code.slice(match.index + match[0].length);
+    }
+    const groupedHit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
+    patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
+      groupedHit, 'Slosher volley identity owner admission');
+    patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
+    retireNetworkGhosts();
+    for (const u of this.unsubs)`, 'session disposal retirement');
+    patch('  _remove(a) {\n    this.byNid.delete(a.nid);', `  _remove(a) {
+    retireNetworkGhosts(a);
+    this.byNid.delete(a.nid);`, 'departed owner retirement');
+
+    patch('  _hit(d, from) {', `  _hit(d, from) {
+    // Bomb damage is victim-owned. Ignore attack-side guesses, including packets
+    // from older clients; the ordered bomb event is replayed on the victim owner.
+    if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject shooter bomb hit');
+    patch("  shouldApplyHit(attacker, victim) {\n    // ghosts never hurt anyone; the shooter's client decides, the victim's owner applies\n    if (this._applyingHit) return 'local';",
+      `  shouldApplyHit(attacker, victim, weaponId) {
+    // A bomb ghost tests local actors using their owner's position and LOS.
+    // Never accept the attacker's remote-actor geometry as bomb authority.
+    if (this._applyingHit) return 'local';
+    if (weaponId === 'bomb' || weaponId === 'splat-bomb-far') return victim.remote ? 'drop' : 'local';`, 'bomb recipient authority');
+
+    patch('  _rec(e) { this.out.push([r3(now()), ...e]); }', `  _rec(e) {
+    const seq = this._eventSeq = (this._eventSeq || 0) + 1;
+    const tick = Math.round((G.time || 0)*60);
+    const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event);
+  }`, 'ordered event identity');
+    patch("const msg = { k: 't', ts: r3(now()), a",
+      "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
+      'owner simulation tick preserving existing sidecars');
+    patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
+    patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
+      const points = p.physicsPoints || (p.physicsPoints = []);
+      points.push(d.ts,d.u); if (points.length > 80) { points.copyWithin(0,points.length-80); points.length = 80; }
+    }
+    // actors
+    if (d.a)`, 'snapshot physics tick pair');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema only in event packets');
+    patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
+      if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
+      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
+      // Receiver-created proof only: an event cannot supply its own authority.
+      e._stormSnapshot = null;
+      const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
+        : e[1] === 'ev' && e[2] === 'special:use' && e[3]?.id === 'storm' ? e[3]?.actor?.n : null;
+      const stormActor = this.byNid.get(stormNid), snap = stormActor?.net?.buf?.at(-1);
+      if (stormActor?.remote && stormActor.owner === from && snap?.t === d.ts
+        && Number.isSafeInteger(snap.life) && snap.life === stormActor.net.lastLife
+        && (snap.f & F.alive) && (snap.f & F.special)
+        && Number.isSafeInteger(d.u) && Number.isSafeInteger(e._netTick) && e._netTick >= 0
+        && e._netTick >= (p.physicsPoints?.at(-3) ?? 0) && e._netTick <= d.u && e[0] <= d.ts) {
+        e._stormSnapshot = { owner: from, life: snap.life, at: snap.t, tick: d.u };
+      }
+      p.events.push(e);
+    }`, 'receive event identity');
+    patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
+    patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
+    patch('function packEvent(e) {', 'function packEvent(e, precise = false) {', 'hitscan precision policy');
+    patch('  for (const k in e) {\n    const v = e[k];', `  for (const k in e) {
+    if (isEventVectorPayload(e,k)) {
+      const x = eventVectorComponent(e,k,0), y = eventVectorComponent(e,k,1), z = eventVectorComponent(e,k,2);
+      o[k] = precise ? [x,y,z] : [r2(x),r2(y),r2(z)];
+      continue;
+    }
+    const v = e[k];`, 'pack immutable event vectors without materializing');
+    patch('else if (v && v.isVector3) o[k] = [r2(v.x), r2(v.y), r2(v.z)];', 'else if (v && v.isVector3) o[k] = precise ? [v.x,v.y,v.z] : [r2(v.x),r2(v.y),r2(v.z)];', 'hitscan unit direction and origin');
+    patch("else if (typeof v === 'number') o[k] = r3(v);", "else if (typeof v === 'number') o[k] = precise ? v : r3(v);", 'hitscan charge and length');
+    patch('while (i < p.events.length && p.events[i][0] <= tr) i++;',
+      'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
+      'events share owner simulation time during render hitches');
+    patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
+      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
+    patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'ownership transfer retirement');
+    patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
+    patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
+    const kitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
+    if (code.includes(kitBirth)) patch(kitBirth,
+      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'append birth mode, appearance seed, identity, roller unit after kit fields');
+    else patch('p.nose ?? 0.3, p.sats ?? 3]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'append birth mode, appearance seed, identity, roller unit');
+    {
+      const combatLifeTick = '  _tick(from, d) {\n    this.stats.in++;\n    // Ordered WebSocket ticks cannot replay paint or terminal events.\n    if (!Number.isFinite(d.ts) || d.ts <= (this.peers.get(from)?.lastTs ?? -Infinity)) return;\n    const p = this._peer(from);';
+      if (code.includes(combatLifeTick)) patch(combatLifeTick, `  _tick(from, d) {
+    if (!Number.isFinite(d.ts)) return;
+    const previous = this.peers.get(from);
+    // One ordered replay gate owns both combat-life admission and projectile/event chronology.
+    if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
+    this.stats.in++;
+    const p = this._peer(from);`, 'ordered tick replay guard with combat life');
+      else patch('  _tick(from, d) {\n    this.stats.in++;', `  _tick(from, d) {
+    if (!Number.isFinite(d.ts)) return;
+    const previous = this.peers.get(from);
+    // WebSocket delivery is ordered and reliable. A replay cannot create a
+    // second shot, rewind the clock window, or resurrect a finished projectile.
+    if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
+    this.stats.in++;`, 'ordered tick replay guard');
+    }
+    patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
+    if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
+    const eventPeer = this.peers.get(from);
+    if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
+    if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
+      const actor = this.byNid.get(e[2]);
+      if (!actor?.remote || actor.owner !== from) return;
+    }
+    if (e[1] === 'ev') {
+      const nid = e[3]?.actor?.n ?? e[3]?.victim?.n;
+      const actor = this.byNid.get(nid);
+      if (!actor?.remote || actor.owner !== from) return;
+    }
+    // Boss hazard/crablet timeline records are host-authoritative at admission.
+    if (e[1] === 'bm' || e[1] === 'bc') {
+      if (from !== this.s.hostId) return;
+      if (e[1] === 'bm') {
+        const move = e[2];
+        if (!move || typeof move !== 'object' || !Number.isFinite(move.t0)) return;
+      } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
+    }
+    switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
+    {
+      const bombWithKitMeta = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12]); break; }";
+      const bombWithKit = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11]); break; }";
+      const bombWithMeta = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10]); break; }";
+      const bombPlain = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }";
+      const before = code.includes(bombWithKitMeta) ? bombWithKitMeta : code.includes(bombWithKit) ? bombWithKit : code.includes(bombWithMeta) ? bombWithMeta : bombPlain;
+      const bombReplayArgs = before === bombWithKitMeta ? ', e[10], e[11], e[12]' : before === bombWithKit ? ', e[10], e[11]' : before === bombWithMeta ? ', e[10]' : '';
+      patch(before, `case 'b': {
+        for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
+        const a = this.byNid.get(e[2]);
+        if (e[3] === 'storm') {
+          const auth = a?.net?._stormBirthAuth;
+          if (!stormSnapshotAllows(a, e._stormSnapshot, from) || a.weapon?.special !== 'storm'
+            || !auth || auth.used || auth.owner !== from || auth.life !== e._stormSnapshot.life
+            || !Number.isSafeInteger(e._netTick) || e._netTick !== auth.tick
+            || !Number.isSafeInteger(e._netSeq) || e._netSeq <= auth.useSeq) break;
+          auth.used = true;
+        }
+        const b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]${bombReplayArgs});
+        if (b) {
+          b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
+          b._netBornLocal = Number.isFinite(b._netPeer?.off) ? e[0] + b._netPeer.off : NaN;
+        }
+        break;
+      }`, 'bomb timeline birth with optional metadata and kit identity');
+    }
+    const kitEventCase = "case 'ev': this._playEvent(e[2], e[3], from); break;";
+    if (code.includes(kitEventCase)) patch(kitEventCase, `case 'ev': {
+        const before = G.projectiles?.beams.length || 0;
+        const actor = this.byNid.get(e[3]?.actor?.n);
+        if (actor && e[2] === 'special:use') {
+          if (e[3]?.id === 'storm' && actor.weapon?.special === 'storm'
+            && stormSnapshotAllows(actor, e._stormSnapshot, from) && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(e._netSeq)) {
+            const previous = actor.net._stormBirthAuth;
+            if (!previous || previous.owner !== from || previous.life !== e._stormSnapshot.life || previous.tick !== e._netTick) {
+              actor.net._stormBirthAuth = { owner: from, life: e._stormSnapshot.life, tick: e._netTick, useSeq: e._netSeq, used: false };
+            }
+          } else if (actor.net) actor.net._stormBirthAuth = null;
+        }
+        if (actor && e[2] === 'weapon:fire') actor._netFlickFirst = e[3].projectileFirst;
+        try { this._playEvent(e[2],e[3],from); } finally { if (actor) actor._netFlickFirst = undefined; }
+        for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
+        break;
+      }`, 'beam birth clock with kit sender');
+    else patch("case 'ev': this._playEvent(e[2], e[3]); break;", `case 'ev': {
+        const before = G.projectiles?.beams.length || 0;
+        const actor = this.byNid.get(e[3]?.actor?.n);
+        if (actor && e[2] === 'weapon:fire') actor._netFlickFirst = e[3].projectileFirst;
+        try { this._playEvent(e[2],e[3]); } finally { if (actor) actor._netFlickFirst = undefined; }
+        for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
+        break;
+      }`, 'beam birth clock');
+    patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
+    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
+    patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
+        for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
+        if (e[11] < 0 || e[12] <= 0) return;
+        const peer = this.peers.get(from);
+        const birthId = e[e.length === 35 ? 31 : 29];
+        if (Number.isFinite(birthId) && peer) { if (birthId <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = birthId; }
+        const a = this.byNid.get(e[2]), p = a && G.projectiles?.ghostProjectile(a, e);
+        if (p) { p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0; p._netMaxSteps = Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2; }
+        break;
+      }
+      case 'pe': {
+        if (e[4] === 1 && (!Number.isFinite(e[5]) || !Number.isFinite(e[6]) || !Number.isFinite(e[7]))) return;
+        for (const p of G.projectiles?.list || []) if (p.ghost && p.owner?.nid === e[2] && p._netId === e[3]) { p._netEnded = true; p._qualityDead = true; p._netEndStep = Number.isFinite(e._netTick) && Number.isFinite(p._netBornTick) ? e._netTick - p._netBornTick + 1 : Math.floor((e[0] - p._netBorn + .00101) * 60) + 1; p._netEndReason = e[4] || 0; p._netHitX = e[5]; p._netHitY = e[6]; p._netHitZ = e[7]; }
+        break;
+      }`, 'birth and terminal events');
+    code += `
+function stormSnapshotAllows(actor, proof, from) {
+  const latest = actor?.net?.buf?.at(-1);
+  return !!(proof && actor?.alive && actor.remote && actor.owner === from && proof.owner === from
+    && actor.net.lastLife === proof.life && latest?.life === proof.life
+    && latest.t >= proof.at && (latest.f & F.alive) && (latest.f & F.special));
+}
+function sampleOwnerSimulation(peer) {
+  const points = peer.physicsPoints, t = peer.tr;
+  if (!points?.length || !Number.isFinite(t)) return;
+  if (t <= points[0]) { peer.sim = points[1] + (t-points[0])*60; return; }
+  for (let i = 2; i < points.length; i += 2) if (t <= points[i]) {
+    const span = points[i]-points[i-2], k = span ? (t-points[i-2])/span : 1;
+    peer.sim = points[i-1] + (points[i+1]-points[i-1])*k; return;
+  }
+  peer.sim = points[points.length-1]; // no physics beyond the latest owner state
+}
+function retireNetworkGhosts(owner = null) {
+  const P = G.projectiles; if (!P) return;
+  const owns = p => !owner || p.owner === owner;
+  for (const p of P.list) if (p.ghost && owns(p)) { p._netEnded = true; p._qualityDead = true; p._netEndStep = p._netSteps; }
+  for (let i = P.bombs.length-1; i >= 0; i--) if (P.bombs[i].ghost && owns(P.bombs[i])) { P._releaseBomb(P.bombs[i]); P.bombs.splice(i,1); }
+  for (let i = P.clouds.length-1; i >= 0; i--) if (P.clouds[i].ghost && owns(P.clouds[i])) { P._releaseCloud(P.clouds[i],.3); P.clouds.splice(i,1); }
+  for (let i = P.beams.length-1; i >= 0; i--) { const b = P.beams[i]; if (b._netPeer && (!owner || b._netOwner === owner)) { b.mesh.visible = false; P.beamPool.push(b.mesh); P.beams.splice(i,1); } }
+  for (const [a,mesh] of P.sights) if (a.remote && (!owner || a === owner)) { P.scene.remove(mesh); mesh.material.dispose(); P.sights.delete(a); }
+}
+const firstSplatSessions = new WeakMap();
+function firstSplatStateFor(session,cfg) {
+  const id = typeof cfg?.id === 'string' && cfg.id ? cfg.id : null;
+  if (!id) return { matchId:null, claimed:false, attackerNid:null, victimNid:null };
+  let matches = firstSplatSessions.get(session);
+  if (!matches) { matches = new Map(); firstSplatSessions.set(session,matches); }
+  let state = matches.get(id);
+  if (!state) { state = { matchId:id, claimed:false, attackerNid:null, victimNid:null }; matches.set(id,state); }
+  return state;
+}
+`;
+  }
+  if (rel === 'src/fx/fxHooks.js') {
+    patch("import { on } from '../core/ctx.js';", "import { on, copyEventVector, hasEventVector } from '../core/ctx.js';", 'consume vector snapshots without materialization');
+    patch('    this._sp = new THREE.Vector3();', '    this._sp = new THREE.Vector3();\n    this._eventVectorPool = []; this._eventVectorDepth = 0;', 'owned nested event scratch pool');
+    patch('  _weaponFire(e) {\n    const a = e.actor; if (!a || !e.muzzle) return;\n    const kind = (e.weapon && (e.weapon.kind || e.weapon)) || a.weapon?.kind;\n    const dir = e.dir || a.aimDir;\n    if (kind === \'blaster\') this.fx.muzzle?.(e.muzzle, dir, a.color, \'blaster\');\n    else if (kind === \'charger\') this.fx.muzzle?.(e.muzzle, dir, a.color, \'charger\');\n    else if (kind === \'roller\') this._flick(a);\n    this._bump(FIRE_KEY[kind] || \'fire:other\');\n  }', `  _borrowEventVectors() {
+    const depth = this._eventVectorDepth++;
+    let pair = this._eventVectorPool[depth];
+    if (!pair) pair = this._eventVectorPool[depth] = [new THREE.Vector3(), new THREE.Vector3()];
+    return pair;
+  }
+  _releaseEventVectors() { this._eventVectorDepth--; }
+  _weaponFire(e) {
+    const a = e.actor; if (!a || !hasEventVector(e, 'muzzle')) return;
+    const kind = (e.weapon && (e.weapon.kind || e.weapon)) || a.weapon?.kind;
+    if (kind === 'blaster' || kind === 'charger') {
+      const pair = this._borrowEventVectors();
+      try {
+        if (!copyEventVector(e, 'muzzle', pair[0])) return;
+        const dir = copyEventVector(e, 'dir', pair[1]) ? pair[1] : a.aimDir;
+        this.fx.muzzle?.(pair[0], dir, a.color, kind);
+      } finally { this._releaseEventVectors(); }
+    } else if (kind === 'roller') this._flick(a);
+    this._bump(FIRE_KEY[kind] || 'fire:other');
+  }`, 'read fire snapshots through owned scratch');
+    patch('  _impact(e) {\n    if (!e.pos || !this._near(e.pos, 32)) return;\n    const col = this.G.teamColors[e.team] || _c.set(0xffffff);\n    const n = e.normal || UP;\n    // shots / flick drops: weapons.js already bursts the splash (fx.burst) and the paint system ripples the ink —\n    // nothing is stacked on top here (no decal blots)\n    if (e.kind === \'charger\') this.fx.beamImpact?.(e.pos, n, col, 1);\n    if (e.kind === \'drop\' && !e.victim) {\n      const H = this.dropHits;\n      if (H.length >= 24) H.shift();\n      H.push({ x: e.pos.x, y: e.pos.y, z: e.pos.z, nx: n.x, ny: n.y, nz: n.z, t: this.time });\n    }\n    this._bump(IMPACT_KEY[e.kind] || \'impact:other\');\n  }', `  _impact(e) {
+    if (!hasEventVector(e, 'pos')) return;
+    const pair = this._borrowEventVectors();
+    try {
+      const pos = pair[0];
+      if (!copyEventVector(e, 'pos', pos) || !this._near(pos, 32)) return;
+      const col = this.G.teamColors[e.team] || _c.set(0xffffff);
+      const n = copyEventVector(e, 'normal', pair[1]) ? pair[1] : UP;
+      if (e.kind === 'charger') this.fx.beamImpact?.(pos, n, col, 1);
+      if (e.kind === 'drop' && !e.victim) {
+        const H = this.dropHits;
+        if (H.length >= 24) H.shift();
+        H.push({ x: pos.x, y: pos.y, z: pos.z, nx: n.x, ny: n.y, nz: n.z, t: this.time });
+      }
+      this._bump(IMPACT_KEY[e.kind] || 'impact:other');
+    } finally { this._releaseEventVectors(); }
+  }`, 'read impact snapshots through owned scratch');
+    return code;
+  }
+  if (rel === 'src/fx/screenfx.js') {
+    patch("import { on, G as CTX, clamp, damp, lerp } from '../core/ctx.js';", "import { on, G as CTX, clamp, damp, lerp, copyEventVector } from '../core/ctx.js';", 'consume impact snapshot numerically');
+    patch('const _v = new THREE.Vector3(), _v2 = new THREE.Vector3();', 'const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _impactPos = new THREE.Vector3();', 'retain lens impact scratch vector');
+    patch("    on('weapon:impact', ({ pos, team, kind }) => {\n      if (!live() || !pos || kind === 'roll') return;", "    on('weapon:impact', (e) => {\n      const { team, kind } = e;\n      if (!live() || kind === 'roll' || !copyEventVector(e, 'pos', _impactPos)) return;\n      const pos = _impactPos;", 'project impact snapshots without event vectors');
+    return code;
+  }
+  if (rel === 'src/game/weapons.js') {
+    code = replaceAllExpected(code,
+      "emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75, a.pos.y + 0.02, a.pos.z + fz * 0.75).clone(), normal: a.groundN ? a.groundN.clone() : UP.clone(), team: a.team, kind: 'roll', radius: w.rollWidth / 2 });",
+      "emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75, a.pos.y + 0.02, a.pos.z + fz * 0.75), normal: a.groundN || UP, team: a.team, kind: 'roll', radius: w.rollWidth / 2 });",
+      1, 'roller impact snapshots shared scratch');
+    code = replaceAllExpected(code,
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone() });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir });",
+      3, 'pooled shooter, splatling and blaster fire payloads');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone(), hand });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir, hand });", 'dualies fire payload');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: _dir.clone() });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir: _dir });", 'blaster fire payload');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6), dir: new THREE.Vector3(fx, Math.sin(up), fz).normalize() });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6), dir: _v3.set(fx, Math.sin(up), fz).normalize() });",
+      'roller flick fire uses existing scratch vectors');
+    patch('      const end = new THREE.Vector3().copy(m).addScaledVector(dir, len);',
+      '      const end = _v3.copy(m).addScaledVector(dir, len);', 'charger endpoint reuses existing scratch');
+    patch("emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m.clone(), dir: dir.clone(), charge, len });",
+      "emit('weapon:fire', { actor: a, weapon: w.id, muzzle: m, dir, charge, len });", 'charger fire payload');
+    patch("emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal.clone() : dir.clone().negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });",
+      "emit('weapon:impact', { pos: end, normal: hit.hit && !victim && !bossHit ? hit.normal : _v2.copy(dir).negate(), team: a.team, kind: 'charger', radius: w.impactRadius * (0.6 + 0.4 * charge) });",
+      'charger impact payload');
+    patch("if (p.type !== 'blast') emit('weapon:impact', { pos: _v.clone(), normal: _v2.clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: e });",
+      "if (p.type !== 'blast') emit('weapon:impact', { pos: _v, normal: _v2, team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: e });",
+      'victim impact payload');
+    patch("if (p.type !== 'blast') emit('weapon:impact', { pos: at.clone(), normal: _v2.copy(p.vel).normalize().negate().clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: null });",
+      "if (p.type !== 'blast') emit('weapon:impact', { pos: at, normal: _v2.copy(p.vel).normalize().negate(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim: null });",
+      'boss impact payload');
+    patch("if (p.type !== 'blast') emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: rad });",
+      "if (p.type !== 'blast') emit('weapon:impact', { pos: hit.point, normal: hit.normal, team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: rad });",
+      'world impact payload');
+    patch("emit('weapon:impact', { pos: c.clone(), normal: new THREE.Vector3(0, 1, 0), team: p.team, kind: 'blast', radius: w.burstRadius });",
+      "emit('weapon:impact', { pos: c, normal: UP, team: p.team, kind: 'blast', radius: w.burstRadius });",
+      'blast impact payload');
+    patch('    if (nm && !p.ghost) nm.recProj(p);',
+      '    if (nm && !p.ghost && !p._s3SloshBirthPending) nm.recProj(p);',
+      'defer pending Slosher projectile packet until birth');
+    patch('  applyHit(attacker, victim, dmg, weaponId) {',
+      '  applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {', 'Slosher volley identity projectile entry');
+    patch('nm.sendHit(attacker, victim, dmg, weaponId)',
+      'nm.sendHit(attacker, victim, dmg, weaponId, slosherVolleyId)', 'Slosher volley identity projectile forwarding');
+    patch("    const route = nm ? nm.shouldApplyHit(attacker, victim) : 'local';",
+      "    const route = nm ? nm.shouldApplyHit(attacker, victim, weaponId) : 'local';", 'pass weapon to damage authority');
+    patch('    const c = b.pos;\n    let area = G.paint.splat',
+      '    const c = b.pos;\n    const detonationLocalTime = b.ghost ? b._netBornLocal + b.age : null;\n    let area = G.paint.splat',
+      'bomb detonation playback time');
+    {
+      // Gameplay fidelity may classify the far Splat Bomb band as
+      // 'splat-bomb-far'; the recipient-life guard belongs to the bomb actor,
+      // not to one exact cause-string spelling.
+      const bombHitMatches = [...code.matchAll(/^([ \t]*)this\.applyHit\(b\.owner, e, [^\n]+\);$/gm)];
+      if (bombHitMatches.length !== 1) throw Error('Network replication anchor mismatch: ' + rel + ': reject bomb from prior recipient life');
+      const bombHit = bombHitMatches[0][0], indent = bombHitMatches[0][1];
+      const guarded = `${indent}if (b.ghost && (!Number.isFinite(detonationLocalTime)
+${indent}  || !Number.isFinite(e._netLifeStartedAt) || e._netLifeStartedAt > detonationLocalTime)) continue;
+${bombHit}`;
+      code = code.slice(0, bombHitMatches[0].index) + guarded + code.slice(bombHitMatches[0].index + bombHit.length);
+    }
+    patch('    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;', '    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    let projectileFirst;', 'attack-owned first projectile');
+    patch("      this._push(p);\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", "      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'capture exact volley during generation');
+    patch('weapon: w.id, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: _v2.set(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
+
+    patch('      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);', `      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);
+      // The active attack parameters own physics. Finalize before _push records
+      // them; the gameplay overlay formerly assigned these only after publication.
+      p.s3Vertical = !!a.weaponRunner?.s3FlickVertical;
+      p.grav = w.flickGravity ?? p.grav;
+      p.drag = w.flickDrag ?? p.drag;`, 'final flick physics before publication');
+
+    patch('    p.delay = 0; p.head = false;', '    p._netId = undefined; p._netEnded = false; p._netPeer = null; p._netBorn = undefined; p._netBornTick = undefined; p._netSteps = 0; p._netMaxSteps = 0; p._netEndStep = undefined; p._netEndReason = 0; p._netHitActor = false;\n    p.delay = 0; p.head = false;', 'recycled identity reset');
+    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    const birthOffset = e.length === 35 ? 2 : 0;
+    p.s3Vertical = e[27 + birthOffset] === 1;
+    if (Number.isFinite(e[28 + birthOffset])) p.seed = e[28 + birthOffset]; // retain the native random draw above
+    p._netId = e[29 + birthOffset];
+    this.list.push(p);
+    return p;
+  }
+
+  ghostBomb`, 'exact ghost metadata');
+    if (code.includes('      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));')) {
+      patch(`      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));
+      p.delay = Math.max(0, (p.delay || 0) - dt);
+      if (elapsed <= 1e-10) continue;`, `      if (p.ghost && p._netPeer) {
+        const clock = Math.min(p._netPeer.tr,p._netPeer.lastTs ?? p._netPeer.tr);
+        const ownerElapsed = Number.isFinite(p._netPeer.sim) && Number.isFinite(p._netBornTick) ? p._netPeer.sim - p._netBornTick : (clock-p._netBorn)/SIM_DT;
+        const target = Math.min(Math.floor(ownerElapsed+.0306)+1,p._netEndStep ?? Infinity);
+        const limit = p._netMaxSteps;
+        let dead = false;
+        if (nm) nm.mute++;
+        try {
+          while (!dead && p._netSteps < target && p._netSteps < limit) {
+            p._netSteps++;
+            const activeDt = Math.max(0, SIM_DT - Math.max(0, p.delay || 0));
+            p.delay = Math.max(0, (p.delay || 0) - SIM_DT);
+            if (activeDt <= 1e-10) continue;
+            dead = this._step(p, activeDt);
+          }
+        } finally { if (nm) nm.mute--; }
+        dead ||= p._netEnded && p._netSteps >= p._netEndStep;
+        if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this._recycle(p); }
+        continue;
+      }
+      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));
+      p.delay = Math.max(0, (p.delay || 0) - dt);
+      if (elapsed <= 1e-10) continue;`, 'owner timeline projectile advancement with fractional delay');
+    } else {
+      patch('      if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }', `      if (p.ghost && p._netPeer) {
+          const clock = Math.min(p._netPeer.tr,p._netPeer.lastTs ?? p._netPeer.tr);
+          const elapsed = Number.isFinite(p._netPeer.sim) && Number.isFinite(p._netBornTick) ? p._netPeer.sim - p._netBornTick : (clock-p._netBorn)/SIM_DT;
+          const target = Math.min(Math.floor(elapsed+.0306)+1,p._netEndStep ?? Infinity);
+          // Step on the owner's playback clock, never on receipt wall time.
+          // .0306 tick tolerates 0.51 ms legacy timestamp rounding, not travel distance.
+          // Finite lifetime bounds catch-up work, including a delayed birth.
+          const limit = p._netMaxSteps;
+          let dead = false;
+          if (nm) nm.mute++;
+          try {
+            while (!dead && p._netSteps < target && p._netSteps < limit) {
+              p._netSteps++;
+              if (p.delay > 0) { p.delay -= SIM_DT; if (p.delay > 0) continue; }
+              dead = this._step(p, SIM_DT);
+            }
+          } finally { if (nm) nm.mute--; }
+          dead ||= p._netEnded && p._netSteps >= p._netEndStep;
+          if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this._recycle(p); }
+          continue;
+        }
+        if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }`, 'owner timeline projectile advancement');
+    }
+    patch('      if (!dead && p.pos.y < PLAYER.waterY - 1.8) dead = true;\n      return dead;', `      if (!dead && p.pos.y < PLAYER.waterY - 1.8) dead = true;
+      if (dead && !p.ghost && p._netId !== undefined && G.netm) G.netm._rec(p._netHitActor ? ['pe',p.owner.nid,p._netId,1,p._netHitX,p._netHitY,p._netHitZ] : ['pe',p.owner.nid,p._netId,0]);
+      return dead;`, 'owner terminal publication');
+    patch('          let dmg = p.damage;', '          p._netHitActor = true; p._netHitX = _v.x; p._netHitY = _v.y; p._netHitZ = _v.z;\n          let dmg = p.damage;', 'capture owner actor impact');
+    if (code.includes('      advanceFidelityProjectile(p, dt);')) {
+      patch('      advanceFidelityProjectile(p, dt);', `      advanceFidelityProjectile(p, dt);
+      if (p.ghost && p._netEndReason === 1 && p._netSteps >= p._netEndStep) {
+        _v.set(p._netHitX,p._netHitY,p._netHitZ);
+        G.fx?.burst(_v,_v2.copy(p.vel).normalize().negate(),p.owner.color,{count:6,speed:3,size:.07});
+        if (p.type === 'blast') this._blastBurst(p,_v,null);
+        if (p.type === 'slosh' && p.head) this._sloshSplash(p,_v,null);
+        return true;
+      }`, 'owner actor terminal effect with fidelity integration');
+    } else {
+      patch('      p.pos.addScaledVector(p.vel, dt);\n      let dead = false;', `      p.pos.addScaledVector(p.vel, dt);
+        if (p.ghost && p._netEndReason === 1 && p._netSteps >= p._netEndStep) {
+          _v.set(p._netHitX,p._netHitY,p._netHitZ);
+          G.fx?.burst(_v,_v2.copy(p.vel).normalize().negate(),p.owner.color,{count:6,speed:3,size:.07});
+          if (p.type === 'blast') this._blastBurst(p,_v,null);
+          if (p.type === 'slosh' && p.head) this._sloshSplash(p,_v,null);
+          return true;
+        }
+        let dead = false;`, 'owner actor terminal effect');
+    }
+    if (code.includes('      for (const e of fidelityProjectileTargets(this, p)) {')) {
+      patch('      for (const e of fidelityProjectileTargets(this, p)) {',
+        '      for (const e of fidelityProjectileTargets(this, p)) {\n        if (p.ghost) break;',
+        'authoritative actor collision ownership with fidelity chronology');
+    } else {
+      patch('      // actors\n      for (const e of G.actors) {', '      // Actor collisions belong to the shooter; terminal events retire ghosts.\n      for (const e of G.actors) {\n        if (p.ghost) break;', 'authoritative actor collision ownership');
+    }
+    patch('      if (!dead && G.boss) {', '      if (!dead && G.boss && !p.ghost) {', 'authoritative boss collision ownership');
+    patch('    if (b.dir) b.dir.set(vx, 0, vz).normalize();', '    if (b.dir) b.dir.set(vx, 0, vz).normalize();\n    return b;', 'ghost bomb handle');
+    const bombStart = code.indexOf('  _updateBombs(dt) {'), bombEnd = code.indexOf('  _updateClouds(dt) {', bombStart);
+    if (bombStart < 0 || bombEnd < 0) throw Error('Network bomb integrator anchor mismatch');
+    let bombs = code.slice(bombStart,bombEnd);
+    bombs = once(bombs,'      b.age += dt;', `      const peer = b.ghost && b._netPeer;
+      const target = peer ? Math.floor((Number.isFinite(peer.sim) && Number.isFinite(b._netBornTick) ? peer.sim-b._netBornTick : (Math.min(peer.tr,peer.lastTs ?? peer.tr)-b._netBorn)/SIM_DT)+.0306)+1 : 0;
+      const steps = peer ? Math.max(0,Math.min(180,target - b._netSteps)) : 1;
+      const stepDt = peer ? SIM_DT : dt;
+      for (let tick = 0; tick < steps; tick++) {
+      if (peer) b._netSteps++;
+      b.age += stepDt;`, 'bomb owner steps');
+    bombs = bombs.replace(/\bdt\b/g,'stepDt').replace('_updateBombs(stepDt)', '_updateBombs(dt)').replace('peer ? SIM_DT : stepDt','peer ? SIM_DT : dt');
+    bombs = bombs.replaceAll('this.bombs.splice(i, 1); continue;', 'this.bombs.splice(i, 1); break;');
+    bombs = once(bombs,'      b.mesh.rotation.z += b.spin.y * stepDt * (b.fuse < 0 ? 1 : 0.2);', '      b.mesh.rotation.z += b.spin.y * stepDt * (b.fuse < 0 ? 1 : 0.2);\n      }', 'close bomb steps');
+    code = code.slice(0,bombStart)+bombs+code.slice(bombEnd);
+    patch('e.len || 20, e.charge || 0.5', 'e.len ?? 20, e.charge ?? 0.5', 'charger zero values');
+    patch('    this.clouds.push({ owner: b.owner,', `    this.clouds.push({ _netPeer: b._netPeer, _netBorn: b._netBorn + (b._netSteps - 1) * SIM_DT, _netBornTick: b._netBornTick + b._netSteps - 1, _netSteps: 0, owner: b.owner,`, 'cloud inherits owner timeline');
+    const cloudStart = code.indexOf('  _updateClouds(dt) {'), cloudEnd = code.indexOf('  _updateBeams(dt) {',cloudStart);
+    let clouds = code.slice(cloudStart,cloudEnd);
+    clouds = once(clouds,'      c.t += dt;', `      const peer = c.ghost && c._netPeer;
+      const target = peer ? Math.floor((Number.isFinite(peer.sim) && Number.isFinite(c._netBornTick) ? peer.sim-c._netBornTick : (Math.min(peer.tr,peer.lastTs ?? peer.tr)-c._netBorn)/SIM_DT)+.0306)+1 : 0;
+      const steps = peer ? Math.max(0,Math.min(Math.ceil(c.dur / SIM_DT) + 1,target - c._netSteps)) : 1;
+      const stepDt = peer ? SIM_DT : dt;
+      for (let tick = 0; tick < steps; tick++) {
+      if (peer) c._netSteps++;
+      c.t += stepDt;`, 'cloud owner steps');
+    clouds = clouds.replace(/\bdt\b/g,'stepDt').replace('_updateClouds(stepDt)','_updateClouds(dt)').replace('peer ? SIM_DT : stepDt','peer ? SIM_DT : dt');
+    clouds = once(clouds,'this.clouds.splice(i, 1); }','this.clouds.splice(i, 1); break; }\n      }','close cloud steps');
+    clouds = once(clouds,'        for (const e of G.actors) {','        for (const e of G.actors) {\n          if (peer && tick !== steps-1) break;', 'recipient cloud damage once per frame');
+    if (clouds.includes('e.damage(sp.dps * stepDt,')) {
+      clouds = once(clouds,'e.damage(sp.dps * stepDt,', 'e.damage(sp.dps * (peer ? dt : stepDt),', 'recipient damage elapsed time');
+    } else {
+      clouds = once(clouds,'collectStormHit(rainHits, e, c, sp.dps * stepDt);',
+        'collectStormHit(rainHits, e, c, sp.dps * (peer ? dt : stepDt));',
+        'recipient Storm arbitration elapsed time');
+    }
+    clouds = once(clouds,'        G.fx?.rain(c.group.position, sp.radius * s, G.teamColors[c.team], stepDt, { cloud: false });','        if (!peer || tick === steps-1) G.fx?.rain(c.group.position, sp.radius * s, G.teamColors[c.team], peer ? dt : stepDt, { cloud: false });','bounded catch-up rain emission');
+    code = code.slice(0,cloudStart)+clouds+code.slice(cloudEnd);
+    patch('      b.t += dt;', `      if (b._netPeer) {
+        const clock = Math.min(b._netPeer.tr,b._netPeer.lastTs ?? b._netPeer.tr);
+        const target = Math.min(Math.floor((Number.isFinite(b._netPeer.sim) && Number.isFinite(b._netBornTick) ? b._netPeer.sim-b._netBornTick : (clock-b._netBorn)/SIM_DT)+.0306)+1,Math.ceil(b.life/SIM_DT)+1);
+        b._netSteps ??= 0;
+        while (b._netSteps < target && b.t < b.life) { b.t += SIM_DT; b._netSteps++; }
+      } else b.t += dt;`, 'beam owner age');
+
+  }
+  if (rel === 'src/game/actor.js') {
+    patch('    this.netLife = (this.netLife ?? 0) + 1;',
+      '    this.netLife = (this.netLife ?? 0) + 1;\n    this._netLifeStartedAt = performance.now() / 1000;',
+      'record recipient life start for late bomb replay');
+  }
+  if (rel === 'patches/splatoon3/runtime/weapons-fidelity.mjs') {
+    patch('api=context;completion=profile.weaponsFidelityCompletion;', 'api=context;completion=profile.weaponsFidelityCompletion;\n  const eventImpactNormal = new context.THREE.Vector3();', 'reuse fidelity impact normal scratch');
+    patch("api.emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });",
+      "api.emit('weapon:impact', { pos: hit.point, normal: hit.normal, team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });",
+      'wall drop impact payload');
+    patch("context.emit('weapon:impact',{pos:hit.point.clone(),normal:p.vel.clone().normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});",
+      "context.emit('weapon:impact',{pos:hit.point,normal:eventImpactNormal.copy(p.vel).normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});",
+      'boss impact payload');
+    return code;
+  }
+  if (rel === 'patches/splatoon3/runtime/weapons-charger-flight.mjs') {
+    patch("emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});",
+      "emit('weapon:fire',{actor,weapon:w.id,muzzle:origin,dir:direction,charge,len:distance});",
+      'charger flight fire payload');
+    patch("emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});",
+      "emit('weapon:impact',{pos:job.pos,normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});",
+      'charger flight impact payload');
+    return code;
+  }
+  if (rel === 'patches/local-quality/roller-visual.mjs') {
+    patch('P._push=function(p){', 'P._push=function(p){\n    if (p.type === \'drop\' && p.owner?.weapon?.kind === \'roller\') p.s3Vertical = !!p.owner.weaponRunner?.s3FlickVertical;', 'capture birth mode before visual and gameplay finalization');
+    patch("p.owner.weaponRunner?.s3FlickVertical){", "p.s3Vertical){", 'birth mode owns ligament');
+    patch("if(p.owner!==actor||p.type!=='drop'||p.age>1/60||p._qualityDead)continue;", `if(p.owner!==actor||p.type!=='drop'||p._qualityDead)continue;
+    if (p.ghost) {
+      const first = actor._netFlickFirst;
+      if (!Number.isFinite(first) || p._netId < first || p._netId >= first + (p.s3Vertical ? actor.weapon.verticalDrops : actor.weapon.flickDrops)) continue;
+    } else if (p.age > 1/60) continue;`, 'late curtain uses explicit volley');
+    patch('const vertical=p.ghost?p.nose===.55&&p.tailK===1.7:!!actor.weaponRunner?.s3FlickVertical;\n    if(vertical)out.push(p);', 'out.push(p); // immutable births own both horizontal and vertical curtains', 'projectile envelope owns both curtain modes');
+  }
+  if (rel === 'src/fx/fx.js') {
+    // The quality adapter uses source presence as a vertical proxy. With both
+    // modes bound, select silhouette from the immutable birth mode instead.
+    const count = (code.match(/sources\?\.length \?/g) || []).length;
+    if (count !== 4) throw Error('Network curtain silhouette anchor mismatch');
+    code = code.replaceAll('sources?.length ?', 'sources?.[0]?.s3Vertical ?');
+    patch('      this._sprite(this.puffs, pos.x + Math.sin(a) * 0.8, pos.y + 0.2, pos.z + Math.cos(a) * 0.8, Math.sin(a) * 3, 1.0, Math.cos(a) * 3, this._colB,', '      const puff = this._sprite(this.puffs, pos.x + Math.sin(a) * 0.8, pos.y + 0.2, pos.z + Math.cos(a) * 0.8, Math.sin(a) * 3, 1.0, Math.cos(a) * 3, this._colB,', 'curtain puff handle');
+    patch('    }\n  }\n\n  // ---- bombs\n  dangerRing', `      if (sources?.length) {
+        const pool = this.puffs, source = sources[Math.floor(i * sources.length / 3)];
+        pool._netSource ||= new Array(pool.cap).fill(null);
+        pool._netGeneration ||= new Uint32Array(pool.cap);
+        pool._netSource[puff] = source; pool._netGeneration[puff] = source._qualityGeneration;
+      }
+    }
+  }
+
+  // ---- bombs
+  dangerRing`, 'bind curtain puff');
+    patch('    const i3 = i * 3, x = i * 14;', '    if (pool._netSource) pool._netSource[i] = null;\n    const i3 = i * 3, x = i * 14;', 'sprite pool identity reset');
+    patch('        const last = --pool.n;', `        const last = --pool.n;
+        if (pool._netSource) { pool._netSource[i] = pool._netSource[last]; pool._netGeneration[i] = pool._netGeneration[last]; pool._netSource[last] = null; }`, 'sprite compaction identity');
+    patch('      aC[i4] = C[i3]; aC[i4 + 1] = C[i3 + 1]; aC[i4 + 2] = C[i3 + 2]; aC[i4 + 3] = a;', `      const source = pool._netSource?.[i];
+      if (source) {
+        if (source._qualityDead || source._qualityGeneration !== pool._netGeneration[i]) { aPS[i4 + 3] = 0; }
+        else { aPS[i4] = source.pos.x; aPS[i4 + 1] = source.pos.y; aPS[i4 + 2] = source.pos.z; }
+      }
+      aC[i4] = C[i3]; aC[i4 + 1] = C[i3 + 1]; aC[i4 + 2] = C[i3 + 2]; aC[i4 + 3] = a;`, 'puff presentation belongs to source');
+
+  }
+  return code;
+}

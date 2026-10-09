@@ -3,7 +3,7 @@
 // Every connection is a unique exact anchor. A missing or duplicated anchor throws so the
 // build fails closed instead of silently shipping a half-patched input module.
 //
-// adaptInput() returns `code` unchanged for every module except src/core/input.js.
+// Input polling plus the disconnected PlayerController filter boundary.
 
 const INPUT_REL = 'src/core/input.js';
 
@@ -40,8 +40,36 @@ const NOPAD_BEFORE = '    this.padPressed.clear();\n    if (!pad) return;';
 const NOPAD_AFTER = '    this.padPressed.clear();\n    if (!pad) { this.padPrev = []; return; }';
 
 export function adaptInput(rel, code) {
+  if (rel === 'src/game/player.js') return replaceOnce(code, '    const it = a.intent;\n    if (!this.enabled) {',
+    '    const it = a.intent;\n    // A missing pad cannot retain camera velocity for a later reconnect (#676).\n    if (!inp.pad) { this.padLook.x = this.padLook.y = 0; this.edgeT = 0; }\n    if (!this.enabled) {', 'disconnected pad camera filter');
   if (rel !== INPUT_REL) return code;
+  code = replaceOnce(code,
+    "      this.lastDevice = 'kbm';\n      if (this.onKey && this.onKey(e, false)) return;",
+    "      // Keyboard state remains live while an existing touch contact owns its gesture.\n" +
+    "      const touchContact = this.lastDevice === 'touch' && this.mobile?.active && !this.mobile._destroyed &&\n" +
+    "        ((this.mobile._ptr?.size || 0) > 0 || (this.mobile._stick?.id ?? -1) >= 0);\n" +
+    "      if (!touchContact) this.lastDevice = 'kbm';\n      if (this.onKey && this.onKey(e, false)) return;",
+    'keyboard preserves live touch contact');
+  code = replaceOnce(code,
+    '    const pads = navigator.getGamepads ? navigator.getGamepads() : [];',
+    '    let pads = [];\n' +
+    '    try { pads = navigator.getGamepads ? navigator.getGamepads() : []; }\n' +
+    '    catch {\n' +
+    '      // Optional browser input may be policy-blocked. Retire buffered pad\n' +
+    '      // edges/filter ownership, then run the ordinary no-pad cleanup below.\n' +
+    '      this._padEpoch = (this._padEpoch || 0) + 1;\n' +
+    '    }', 'optional gamepad capability boundary');
   code = replaceOnce(code, BLUR_BEFORE, BLUR_AFTER, 'blur focus reset');
   code = replaceOnce(code, NOPAD_BEFORE, NOPAD_AFTER, 'gamepad disconnect reset');
+  code = replaceOnce(code,
+    '    pad.buttons.forEach((b, i) => {',
+    '    pad.buttons.forEach((b, i) => {\n' +
+    '      // Trigger edges use the same threshold as canonical held fire/swim.\n' +
+    '      if (i === 6 || i === 7) b = { pressed: b.value > 0.3 };',
+    'canonical gamepad trigger threshold');
+  code = replaceOnce(code,
+    'if (!this.locked) { this.mouse.left = this.mouse.right = false; this.onUnlock?.(); }',
+    'if (!this.locked) { this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0; this.onUnlock?.(); }',
+    'pointer loss cancels pending mouse input');
   return code;
 }
