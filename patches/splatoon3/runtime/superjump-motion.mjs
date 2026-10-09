@@ -91,6 +91,13 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
       // Only observe the existing native landing clock/pose; no parallel age.
       m.phase = 'touchdown';
     } else m.touchdown = false;
+    // #904: during a wall-start Super Jump, borrow the native wall-cling
+    // presentation only for this Character.update call. Never restore gameplay climb.
+    if (m.phase === 'charge' && sj.wallSupport) {
+      const form = s.form, normal = s.wallNormal;
+      try { s.form = 'climb'; s.wallNormal = sj.wallSupport; return update.call(this, dt, s); }
+      finally { s.form = form; s.wallNormal = normal; }
+    }
     return update.call(this, dt, s);
   };
   C._updateSquid = function (dt, s) {
