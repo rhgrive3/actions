@@ -75,7 +75,7 @@ export function tickTripleSlamFists(actor, dt, G, THREE, emit) {
   // If the user was splatted before landing, the already-launched fists
   // continue on the fixed owner's timeline; don't invent a player impact.
   if (state.remaining == null) {
-    if (state.elapsed < 85 / 60) return false;
+    if (state.elapsed + 1e-10 < 85 / 60) return false; // 85th fixed tick, not 86th due to floating point
     state.remaining = 0;
   } else state.remaining = Math.max(0, state.remaining - dt);
   if (state.remaining > 1e-10) return false;
