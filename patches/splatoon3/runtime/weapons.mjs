@@ -3,7 +3,7 @@ import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { shooterMovementRemaining, shooterMovementSpeed } from './shooter-movement.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
-import { installFinalDamage, damageGroupId, withFinalDamageGroup } from './final-damage.mjs';
+import { installFinalDamage, damageGroupId, withFinalDamageGroup, finalDamageCredit } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installSplatling } from './splatling.mjs';
@@ -226,9 +226,12 @@ export function applySlosherVolleyHit(system, owner, victim, group, groupId, amo
   if (!(delta > 0)) return;
   if (!group) return system.applyHit(owner, victim, delta, weaponId);
   const hpBefore = victim.hp, aliveBefore = victim.alive;
-  const result = withFinalDamageGroup(victim, groupId ?? damageGroupId(group),
+  const roundingGroup = groupId ?? damageGroupId(group);
+  const creditBefore = finalDamageCredit(victim, owner, roundingGroup);
+  const result = withFinalDamageGroup(victim, roundingGroup,
     () => system.applyHit(owner, victim, delta, weaponId));
-  if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
+  if (acceptedHit(result, victim, hpBefore, aliveBefore) ||
+      finalDamageCredit(victim, owner, roundingGroup) > creditBefore) group.set(victim, next);
   return result;
 }
 // Preserve in-flight volley dedupe without retaining every historical wire id
@@ -297,8 +300,28 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
     return withMainDirectDamage(projectile.owner, victim, () => applySlosherVolleyHit(system, projectile.owner, victim, projectile.s3DamageGroup,
       projectile.s3DamageGroupId, amount, projectile.wid || projectile.type || 'slosher'));
   }
-  amount = groupDamage(projectile.s3DamageGroup, victim, amount);
-  if (amount > 0) applyMainDirectHit(system, projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
+  return applyGroupedProjectileHit(system, projectile, victim, amount);
+}
+// Both legacy and source-guided collision solvers route their already-resolved
+// damage through this owner; neither solver may reserve an invulnerable hit.
+export function applyGroupedProjectileHit(system, projectile, victim, amount) {
+  const weapon = projectile.s3Weapon || projectile.owner.weapon;
+  const group = projectile.s3DamageGroup, previous = group?.get(victim);
+  amount = groupDamage(group, victim, amount);
+  if (amount > 0) {
+    const result = applyMainDirectHit(system, projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(group));
+    // #999: a spawn-flight/invulnerable contact never reached the armor
+    // resolver. Keep the last admitted Roller maximum so a later legal
+    // contact still carries the whole swing into its penetration ledger.
+    // Ordinary armor absorption can return 'rejected' without HP loss and
+    // MUST retain its contribution. Pending sends retain their existing
+    // sender-side deduplication; this is not an asynchronous ACK redesign.
+    if (weapon.kind === 'roller' && group && result === 'rejected-invulnerable') {
+      if (previous === undefined) group.delete(victim);
+      else group.set(victim, previous);
+    }
+    return result;
+  }
 }
 export function installWeapons(context, profile) {
   api = context;
@@ -1085,8 +1108,10 @@ export function installWeapons(context, profile) {
     const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
     if (!(delta > 0)) return 'accepted';
     const hpBefore = victim.hp, aliveBefore = victim.alive;
+    const creditBefore = finalDamageCredit(victim, attacker, groupId);
     const result = applyHit.call(this, attacker, victim, delta, weaponId, groupId);
-    if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
+    if (acceptedHit(result, victim, hpBefore, aliveBefore) ||
+        finalDamageCredit(victim, attacker, groupId) > creditBefore) group.set(victim, next);
     return result;
   };
   const clearProjectiles = Projectiles.prototype.clear;

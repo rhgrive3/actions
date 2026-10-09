@@ -2492,3 +2492,154 @@ verified offline replay of all 300 precache entries. The #415 negative control
 intentionally remains source-only because it needs the unpatched clamp. Startup
 payload and dependency gates pass. No gameplay values or Splatoon 3 11.3.0 comparison
 claims change. File/VM checks are not physical-device or browser measurements.
+
+## 2026-10-09 — rejected Roller contributions preserve spawn-armor penetration (#999 residual)
+
+Reference and scope: Splatoon 3 Ver.11.3.0 Splat Roller against Squid Spawn armor, using the existing `spawnArmor` 30-HP pool, 100-HP per-logical-attack absorption threshold and 20F break interval already cited under #999. This change introduces no Nintendo timing, damage, interpolation or armor value. It repairs bookkeeping before the existing native damage/armor owners.
+
+Reproduction on current main/aggregate 909a7014: a Roller group contacts during native `invuln > 0` for a nominal 90; `Projectiles.applyHit` returns `rejected-invulnerable` and neither HP nor armor changes, but `groupDamage` has already stored 90. Once invulnerability expires, the same swing's valid 150 contact sends only 60 to `absorbSpawnDamage`, so armor absorbs it and HP incorrectly stays 100 instead of 50. The same defect exists in both legacy and source-guided fidelity contact functions, despite the existing accepted-90-plus-60 armor regression passing.
+
+Correction: both collision owners now use one grouped direct-hit helper. Only an explicitly `rejected-invulnerable` Roller contribution restores the previous group maximum (or deletes the unadmitted first entry). Ordinary armor absorption, including a zero-HP-damage result, retains its contribution. Duplicate valid contacts, independent swings, other victims, source-guided damage calculations and all other weapon families keep their existing accounting. A known invulnerable remote proxy also does not reserve a smaller amount before the next accepted send.
+
+Verification: the new regression initially failed four cases on the existing source. The final five-case suite uses the full production composition and real Actor/Projectiles, plus real `fireFlick`-emitted source-guided units through the fidelity contact callback at 30/60/120Hz. It checks rejected first/larger contacts, admitted armor-only contributions, lower-first/higher-first order, independent attacks/victims and immediate remote-send admission. The new suite plus existing #999 armor and final-quantization tests passes 12/12. This is deterministic CPU/native composition evidence, not browser or Switch capture.
+
+Limits: pending wire sends retain the existing sender-side incremental Roller protocol. A later asynchronous victim rejection/ACK reconciliation is not redesigned or claimed verified here. The tests exercise a controlled native invulnerability boundary, not measured Nintendo projectile/flight overlap timing. #999 remains a non-closing reference; full networking and hardware parity are not inferred from this bounded repair.
+
+### Issue #469: Storm used-gauge display follows the existing recharge lock
+
+At aggregate `909a7014`, the gameplay-owned Storm holding/recharge lock was present but persistent HUD/mobile snapshots showed zero charge and lost their in-use signal when the short throw token ended. The snapshot now projects the same authoritative remaining lock, keeping holding full and the used gauge active until recharge unlocks. The initial actual lock duration is captured after throwing so an existing Special Power extension stays normalized across death/reset. Raw spendable charge, specialReady and wire charge remain unchanged; there is no second timer or new balance value. Production-composed native Actor/Projectiles/snapshot/HUD and packet tests pass 5/5, including the removed-projection negative control and fixed 30/60/120 Hz equality; adjacent suites pass 55 with two emitted-site-only skips. Syntax/whitespace/quick checks pass. Details: `reports/inkwave-storm-gauge-display-469.md`.
+
+Splatoon 3 baseline remains 11.3.0, Ink Storm with no gear and the existing Special Power path. This is an established lock-state display correction. Exact retail gauge animation/segment curve, browser pixels and two-device communication remain unverified rather than inferred from the native tests.
+
+## 2026-10-09 — #1039 host final-Ready integration follow-up
+
+The host-team session required every participant's final Ready while the menu hid
+and bypassed the host's own Ready action, preventing confirmed Turf rooms from
+starting. The menu now exposes that action and routes Confirm/Ready/Start through
+its existing focus binding, while preserving Boss and host authority. Nintendo's
+current Private Battle instructions support the per-participant ready sequence.
+Native two-client/menu regression and related composition checks pass 16/16;
+baseline negative control fails 5/6. Browser/relay/hardware parity remains untested.
+See [scope, source, reproduction and remaining limits](inkwave-private-host-ready-1039-2026-10-09.md).
+
+## 2026-10-09 — #927 Storm recovery shares the active rain area
+
+At integrated `909a7014`, friendly-rain recovery existed but its spatial query
+still used a fixed full radius and infinite downward extent, and stopped 0.3s
+earlier than actual rain. This granted the boost, or enemy-rain recovery
+suppression, outside the live rain area. The existing native growth/fade and
+finite trace geometry are now shared with recovery without retuning any values.
+Growth/fade/vertical/cover/expiry and 30/60/120Hz native regressions cover the
+change. Source-defined effect existence is distinct from still-unverified
+retail geometry and multiplier. See [the scoped report](inkwave-storm-recovery-area-927-2026-10-09.md).
+
+### Issue #1179: guest crablet hits remain independent of Boss shell immunity
+
+At aggregate `8e7ddae6`, the new remote Boss numeric guard also rejected live crablet hits when the Boss body was invulnerable/hidden. Actual local native routing and #949 admission already allow those independent targets. The shell check now applies only to body packets; all numeric, owner/life/match/replay, death and live-target defenses remain. Same-composition negative controls reproduce local HP200→170 versus guest HP200; the corrected real NetMatch path reaches HP170 once while body HP remains protected. New and adjacent Boss/#949 tests pass 22/22; syntax/whitespace/quick checks pass. See `reports/inkwave-boss-crablet-shell-1179.md`.
+
+Splatoon 3 baseline remains 11.3.0. INKWAVE's original Boss encounter has no asserted retail counterpart, and no new damage or physical scale is introduced. Native-source tests do not establish browser/relay/hardware parity.
+
+### 2026-10-09 — composed hit-policy admission (new root, Issue not yet created)
+
+At integration base `909a7014`, the reliability adapter generated a global
+180-HP hit ceiling and cause allowlist from the immutable raw configuration.
+The production installer instead supplies the S3-profile Slam 220 endpoint
+and registers damaging kits. In two actual Actor/Projectiles/NetMatch worlds,
+a valid sender's 220-HP Slam packet left the receiver at its original HP and
+produced no acknowledgement. This is a transport/composition inconsistency,
+separate from closed #917's damage-endpoint correction and #462's sender checks.
+
+The build-only adapter now derives the envelope from cloned base definitions,
+the same profile overrides, registered sub definitions and existing Trizooka /
+Ink Vac projectile descriptors. It does not mutate raw or gameplay values, add
+new damage tuning, remove sender/life/sequence checks or admit unknown causes.
+Big Bubbler is not added as a damage cause. The minified netmatch output grows
+40 bytes; no runtime helper, import or per-hit scan is introduced.
+
+The old-policy counterfactual rejects six production-derived damage/cause
+pairs. The repaired owner-to-victim path applies each once and acknowledges it;
+forged sender, invalid/over-limit amounts, stale life and unknown causes remain
+rejected without consuming the genuine sequence. With the actual baseline
+adapter restored, the new positive regression fails. Focused policy, combat,
+packet and Blaster-knockback tests pass 42/42. These are native-source/VM checks,
+not browser, relay-service or Switch evidence. Existing S3 11.3.0 calibration
+limitations remain unchanged. New-Issue publication is pending authorization;
+no existing Issue is relabeled or claimed as this distinct root.
+
+Additional #999 production-sweep evidence: the sixth regression uses a real Level/Physics, normal seeded `fireFlick`, and `Projectiles.update`, with a stationary target five existing world units ahead. `Actor.update` naturally expires the target's last three spawn-invulnerability ticks. Real glob contacts at tick 3 are rejected; the next glob at tick 4 deals the full 150 into armor and leaves 50 HP at 30/60/120Hz. The unchanged pre-fix worktree reproduces 100 HP at the same 5.0/5.1 positions, while 5.2+ controls whose first contact is after expiry already leave 50 HP. This establishes the collision-path defect without moving the victim or manually dispatching those swept contacts. The final new suite passes 6/6; adjacent group-owner/Slosher-wire/fidelity-source checks pass 13/13.
+
+The same #1039 follow-up also exposes the previously desktop-hidden assignment
+roster, binds all player/team actions to native menu navigation, preserves focus
+while retiring obsolete controls, and puts Confirm in the control dock. Combined
+native/source/menu-ownership checks pass 23/23. The attempted local Chromium probe
+could not launch (socket EPERM; escalated launch aborted), so rendered desktop/touch
+fit and browser input delivery remain explicitly unverified in the linked report.
+
+## 2026-10-09 — #716 canonical health-marker composition
+
+PR #1182's additional HP-bar layer duplicated the existing production
+`healthMarkers` renderer: one injured enemy plus one ally produced four bars.
+The extra layer could also reveal an enemy omitted by canonical concealment or
+damage-age rules. Frames with canonical rows, including an empty array, now
+retain that single renderer and retire fallback state. Existing private tracking,
+team reveal, and new-life damage-age behavior is preserved without retuning
+values. Two failing composition regressions now pass; the focused total is
+33/33, with Node composition distinct from browser/Switch evidence. See
+[the scoped report](inkwave-health-bar-composition-716-2026-10-09.md).
+
+## 2026-10-09 — #366 effective music mute boundary
+
+The merged Music=0 idle fix was retained, but Master=0 with Music>0 still started
+or retained inaudible music players and a worker/interval scheduler. Both native
+AudioEngine enable hooks now require positive master and music volumes, reusing
+the existing music-only idle/resume lifecycle. Four new failing boundaries now
+pass; the focused suite is 34/34 with no skips. SFX preferences, shared-context
+ownership and gameplay parameters are unchanged. Node audio-graph tests are not
+real-device power/audio measurements. See
+[the scoped report](inkwave-music-master-mute-366-2026-10-09.md).
+
+### 2026-10-09 PR #1182 follow-on packaging: unchanged gameplay profile values
+
+- Basis: aggregate `4c90da98`. Its actual build exceeds the unchanged 5 MiB
+  precache ceiling by 2,924 bytes (5,245,804 bytes / 300 entries).
+- Root: the required runtime `patches/splatoon3/profile.json` is copied with
+  38,629 bytes of indentation. Bootstrap uses the same URL and `response.json()`;
+  no runtime consumer depends on that formatting. Compact only the emitted JSON,
+  leaving source profile values and files unchanged. Parsed deep equality covers
+  all properties, strings and numeric values; no S3 tuning or runtime code changes.
+- Separate distribution correction: explicitly exclude 23 more audited build-only
+  transformer/template modules (120,821 minified bytes at this baseline). These
+  were already outside the precache graph, so their removal is not credited to
+  the 5 MiB fix. Runtime-helper URLs remain present. Every retained JS/CSS/other
+  data file is byte-identical to baseline staging; only profile formatting and
+  generated identity/worker/index metadata change.
+- Validation: full emitted module AST audit covers static/re-export/literal dynamic
+  imports. The five nonliteral imports were checked separately: main's native
+  module-loader wrappers use app-module callsites, and the three probe imports
+  construct explicit URLs for paint, world-quality and config. None loads an
+  excluded transformer. Build-only auxiliary exports are individually audited,
+  not permitted by a broad filename or export-name heuristic.
+- Actual output: 5,207,175 precache bytes (35,705 headroom), still 300 entries;
+  worker 57,188 bytes; total declared payload 9,051,590 bytes. Budget ceilings,
+  preload selection, offline coverage, source lock and gameplay are unchanged.
+  The committed exact-tree build, all 6 packaging/identity/profile/worker tests,
+  and startup-budget gate passed; offline replay covered all 300 entries. These
+  are deterministic build/Node checks, not new
+  browser timings or physical Splatoon 3 measurements; all gameplay calibration
+  unknowns elsewhere in this report remain unchanged.
+
+## 2026-10-09 — Slosher zero-quantized increments must advance the admitted volley maximum
+
+Reference: Splatoon 3 Ver.11.3.0 Slosher, the existing source-guided high-drop damage curve and the already implemented maximum-per-volley/final-0.1-HP-quantization rules. This is an internal bookkeeping correction, with no new Nintendo damage, defense, falloff or timing value. It is independent of #627/#628 invulnerability admission and #261 final quantization themselves.
+
+Production reproduction: a 100-HP unprotected enemy receives cumulative Slosher amounts 50.04, 50.09, 50.09 for one group. The final-damage ledger admits the first two raw increments but the second increments HP by zero after quantization. Native `applyHit` consequently reports `rejected`, leaving the Slosher maximum at 50.04. The duplicate 50.09 retries the already-credited 0.05 and incorrectly leaves 49.9 HP, instead of 50.0. Both local contact and victim-owner packet entrypoints reproduce this on the existing main/aggregate composition.
+
+Correction: the two Slosher maximum owners also compare the exact victim/attacker/owner-generation/group final rounding credit before and after the native hit. A legitimately credited zero-quantized increment advances the maximum once. Actual invulnerability, dropped/failed/pending sends, unrelated groups and other victims cannot provide that receipt. Native hit status and feedback remain unchanged; no premature wire rounding or raw balance adjustment is introduced.
+
+Verification: the initial nine-case regression fails three cases without the correction. The final twelve-case production suite passes 12/12, including real Actor/Projectiles, cumulative retries/order, a later larger maximum, independent actor/victim/group/host-generation keys, native invulnerability, pending/drop/send failure, anonymous local groups, real sender-to-victim-owner NetMatch packets, and real `fireSlosh` units through the source-guided fractional falloff/contact path at 30/60/120Hz. The ten-case intermediate suite plus existing #627 admission, #1150 transport, final-quantization and #999 Roller tests passes 24/24. These are CPU/native-source integration checks; the contact test selects points on the existing falloff curve rather than claiming a measured retail trajectory. Browser, relay latency and Switch captures remain unverified. The defect has no separate Issue number in this batch.
+
+### Issue #469: preserve the post-throw Storm recharge lock during adoption
+
+Real owner snapshots previously omitted the remaining Storm lock, so an adopted bot could recharge immediately while the departed owner still had six seconds of used gauge remaining. An optional life/sequence-bound tick sidecar now transfers that existing clock and its captured duration without changing the 24-field actor or 10-field adoption rows. The latest accepted snapshot and existing owner-clock extrapolation prevent restart or resurrection after expiry; death/reset preserve the lock. No throw, cloud, charge or new gameplay timer is created. New native two-world tests pass 5/5 and neighboring adoption/Slam/cooldown/protection tests pass 27/27. An exact pre-change receiver accepts the new packet while ignoring its optional sidecar. Syntax/whitespace/quick checks pass. Details: `reports/inkwave-storm-lock-adoption-469.md`.
+
+Splatoon 3 comparison remains 11.3.0, Ink Storm with no gear and the existing Special Power path. This preserves established INKWAVE state on ownership transfer; exact retail gauge timing/curve, browser pixels and live relay/hardware parity remain unverified.

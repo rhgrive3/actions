@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { WEAPONS, SUB, SPECIALS } from '../../../inkwave-public/src/config.js';
 import { adaptCombatLife } from '../combat-life-adapter.mjs';
 import {
-  adaptNetHitPayload, isHitPayloadValid, MAX_HIT_DAMAGE, KNOWN_HIT_CAUSES,
+  adaptNetHitPayload, isHitPayloadValid, MAX_HIT_DAMAGE, KNOWN_HIT_CAUSES, hitPayloadPolicy,
 } from '../net-hit-payload-adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -36,25 +36,21 @@ async function harness({ adapt }) {
   return { nm, calls };
 }
 
-const configMaxDamage = () => {
-  let max = 0;
-  for (const def of [...Object.values(WEAPONS), ...Object.values(SUB), ...Object.values(SPECIALS)]) {
-    for (const [key, value] of Object.entries(def || {})) if (/damage/i.test(key) && typeof value === 'number') max = Math.max(max, value);
-  }
-  return max;
-};
-
-test('#462 bounds are DERIVED from the active config, never invented', () => {
-  assert.equal(MAX_HIT_DAMAGE, configMaxDamage());
-  assert.equal(MAX_HIT_DAMAGE, 180); // SUB.bomb.damageMax / SPECIALS.slam.damageMax
-  assert.ok(MAX_HIT_DAMAGE >= 160 && MAX_HIT_DAMAGE >= 150 && MAX_HIT_DAMAGE >= 125, 'covers charger/roller/blaster');
-  for (const cause of [...Object.keys(WEAPONS), ...Object.keys(SUB), ...Object.keys(SPECIALS), 'shot', 'slosh', 'blast', 'drop']) {
+test('#462 bounds follow the production profile and registered kits without mutating raw config', () => {
+  const profile = JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json', import.meta.url)));
+  assert.equal(SPECIALS.slam.damageMax, 180, 'raw snapshot stays unchanged');
+  assert.equal(MAX_HIT_DAMAGE, 220, 'composed Slam / kit direct-hit ceiling');
+  assert.equal(hitPayloadPolicy({ ...profile, specials: { slam: { damageMax: 240 } } }).maxDamage, 240,
+    'the profile is an input, rather than a second hard-coded maximum');
+  assert.equal(SPECIALS.slam.damageMax, 180);
+  for (const cause of [...Object.keys(WEAPONS), ...Object.keys(SUB), ...Object.keys(SPECIALS),
+    'suction', 'curling', 'trizooka', 'inkVac', 'shot', 'slosh', 'blast', 'drop']) {
     assert.ok(KNOWN_HIT_CAUSES.includes(cause), 'known cause ' + cause);
   }
   assert.ok(!KNOWN_HIT_CAUSES.includes('frobnicate'));
-  // A legitimate max-damage hit is accepted; a lie one unit above is not.
-  assert.equal(isHitPayloadValid({ d: MAX_HIT_DAMAGE, w: 'bomb' }), true);
-  assert.equal(isHitPayloadValid({ d: MAX_HIT_DAMAGE + 1, w: 'bomb' }), false);
+  assert.ok(!KNOWN_HIT_CAUSES.includes('bubbler'), 'a non-damaging kit is not a new hit cause');
+  assert.equal(isHitPayloadValid({ d: MAX_HIT_DAMAGE, w: 'slam' }), true);
+  assert.equal(isHitPayloadValid({ d: MAX_HIT_DAMAGE + 1, w: 'slam' }), false);
 });
 
 test('#462 residual adapter: unique anchors, other paths untouched, fails closed on drift', () => {

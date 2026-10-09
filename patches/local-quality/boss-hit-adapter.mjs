@@ -10,9 +10,10 @@ export function adaptBossHit(rel, code) {
     code = once(code,
       "    if (!this.sim) return;\n    const atk = G.netm?.byNid.get(d.a);",
       "    if (!this.sim || !d || typeof d.d !== 'number' || !Number.isFinite(d.d) || d.d <= 0 || d.d > 2000 || !Number.isSafeInteger(d.c) || d.c < -1 || (d.weak !== 0 && d.weak !== 1)) return;\n    const atk = G.netm?.byNid.get(d.a);");
+    // Native crablets have their own HP/admission; shell immunity blocks only body hits.
     code = once(code,
       '    if (!atk) return;\n    this.log.recv++;',
-      "    if (!atk || !atk.remote || atk.alive === false || this.dead || this.invuln || !this.visible || this.match?.state !== 'playing' || !Number.isFinite(this.hp)) return;\n    if (d.c >= 0 && (!this.crabs.get(d.c) || this.crabs.get(d.c).dead)) return;\n    this.log.recv++;");
+      "    if (!atk || !atk.remote || atk.alive === false || this.dead || (d.c === -1 && (this.invuln || !this.visible)) || this.match?.state !== 'playing' || !Number.isFinite(this.hp)) return;\n    if (d.c >= 0 && (!this.crabs.get(d.c) || this.crabs.get(d.c).dead)) return;\n    this.log.recv++;");
     code = once(code,
       "    if (this.dead || this.invuln || !this.visible || this.match.state !== 'playing') return 0;",
       "    if (this.dead || this.invuln || !this.visible || this.match.state !== 'playing' || typeof d !== 'number' || !Number.isFinite(d) || d <= 0 || !Number.isFinite(this.hp) || this.hp <= 0) return 0;");

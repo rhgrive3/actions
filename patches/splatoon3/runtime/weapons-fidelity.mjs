@@ -1,4 +1,4 @@
-import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
+import { withMainDirectDamage } from './private-tracking.mjs';
 import { configureRollerVerticalPaint, paintRollerVerticalFlight } from './roller-vertical-paint.mjs';
 import { paintRollerMaximumWidth } from './roller-max-paint.mjs';
 import { configureBlasterFlightPaint, paintBlasterFlight } from './blaster-flight-paint.mjs';
@@ -12,8 +12,7 @@ import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-coll
 // Main-weapon gameplay only. Values live in profile.json; provenance and retained
 // uncertainty live in reference/weapons-fidelity-reference.json.
 // Source fields and interpreted equations are explicitly separated in the profile.
-import {distanceDamage, groupDamage, applyProjectileHit as legacyHit, applySlosherVolleyHit, cachedWeaponOverrideConfig, withWeaponScalarOverride} from './weapons.mjs';
-import {damageGroupId} from './final-damage.mjs';
+import {distanceDamage, groupDamage, applyGroupedProjectileHit, applyProjectileHit as legacyHit, applySlosherVolleyHit, cachedWeaponOverrideConfig, withWeaponScalarOverride} from './weapons.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { coherentMotionStart } from './actor-motion.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
@@ -1244,8 +1243,7 @@ export function applyFidelityProjectileHit(system,p,victim,amount,point) {
   const weapon=p.s3Weapon||p.owner.weapon;
   if(weapon.kind==='slosher'&&p.s3DamageGroup)
     return withMainDirectDamage(p.owner,victim,()=>applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||p.type||'slosher'));
-  amount=groupDamage(p.s3DamageGroup,victim,amount);
-  if(amount>0)applyMainDirectHit(system,p.owner,victim,amount,p.wid||p.type,damageGroupId(p.s3DamageGroup));
+  return applyGroupedProjectileHit(system,p,victim,amount);
 }
 
 export function splatlingLaunchSpeed(weapon,charge) {

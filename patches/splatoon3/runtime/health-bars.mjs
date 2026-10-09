@@ -66,6 +66,12 @@ export function installHealthBarHud({ HUD, G, THREE, PLAYER }, env = globalThis)
   const update = proto.update, dispose = proto.dispose;
   proto.update = function (dt, frame) {
     const result = update.call(this, dt, frame);
+    // installUi already renders the canonical Game healthMarkers, including
+    // private tracking, concealment and authoritative damage-age/life rules.
+    // Empty rows also own visibility: a parallel overlay would disclose actors
+    // that the canonical producer deliberately omitted. Keep this fallback only
+    // for frames without that producer and retire any previous fallback state.
+    if (Array.isArray(frame?.healthMarkers)) { retire(this); return result; }
     const doc = env.document, match = G.match;
     if (!frame || !doc || !this.el?.appendChild || !match?.actors) return result;
     if (this._s3HealthMatch !== match) {

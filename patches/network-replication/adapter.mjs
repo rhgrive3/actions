@@ -372,7 +372,7 @@ export function emit(name, payload) {
       "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
       'owner simulation tick preserving existing sidecars');
     patch('    const a = [];\n    for (const x of this.byNid.values()) if (!x.remote) a.push(packActor(x));',
-      '    const a = [], sq = Object.create(null), wp = Object.create(null), bw = Object.create(null), rf = Object.create(null);\n    const simulationTick = Math.max(0, Math.round((G.time || 0) * 60));\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const flick = packRollerPresentation(x, this, simulationTick);\n      if (flick) rf[x.nid] = flick;\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const wr = x.weaponRunner, slosh = x.weapon?.kind === \'slosher\' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n      const sp = x.specialActive, phase = sp?.id === \'slam\' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n      const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n      if (slosh >= 0 || phase) wp[x.nid] = [slosh, phase, slamT];\n      const windup = x.weapon?.kind === \'blaster\' ? x.weaponRunner?.s3BlasterWindup : 0;\n      if (Number.isFinite(windup) && windup > 0) bw[x.nid] = Math.min(1, windup);\n    }',
+      '    const a = [], sq = Object.create(null), wp = Object.create(null), bw = Object.create(null), rf = Object.create(null), sg = Object.create(null);\n    const simulationTick = Math.max(0, Math.round((G.time || 0) * 60));\n    for (const x of this.byNid.values()) if (!x.remote) {\n      a.push(packActor(x));\n      const stormGauge = packStormGaugeState(x);\n      if (stormGauge) sg[x.nid] = [x.netLife ?? 0, x._adoptionSequence, ...stormGauge];\n      const flick = packRollerPresentation(x, this, simulationTick);\n      if (flick) rf[x.nid] = flick;\n      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const wr = x.weaponRunner, slosh = x.weapon?.kind === \'slosher\' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n      const sp = x.specialActive, phase = sp?.id === \'slam\' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n      const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n      if (slosh >= 0 || phase) wp[x.nid] = [slosh, phase, slamT];\n      const windup = x.weapon?.kind === \'blaster\' ? x.weaponRunner?.s3BlasterWindup : 0;\n      if (Number.isFinite(windup) && windup > 0) bw[x.nid] = Math.min(1, windup);\n    }',
       'append optional Squid Roll and weapon/special motion sidecars');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
@@ -381,7 +381,7 @@ export function emit(name, payload) {
     }
     // actors
     if (d.a)`, 'snapshot physics tick pair');
-    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (Object.keys(rf).length) msg.rf = rf;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
+    patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (Object.keys(rf).length) msg.rf = rf;\n    if (Object.keys(sg).length) msg.sg = sg;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
       'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
       'strict optional Squid Roll and motion metadata validation');
@@ -470,7 +470,12 @@ export function emit(name, payload) {
         ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq, a.weapon?.special)
         : null;
       if (s.length >= 24 && !adoption) continue;
-      if (adoption) { snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence; }
+      if (adoption) {
+        const stormGauge = readStormGaugeSidecar(d.sg, a.nid, adoption.life, adoption.sequence);
+        if (stormGauge === undefined) continue;
+        adoption.stormGauge = stormGauge;
+        snap.adoption = adoption; a.net._adoptionSeq = adoption.sequence;
+      }
       else delete snap.adoption;
       a.net.lastLife = snap.life;`, 'strict life/sequence-bound adoption packet');
     patch('    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
@@ -825,6 +830,29 @@ function readAdoptionState(row, life, flags, hp, weaponKind, previousSequence, w
   if (slam === undefined) return null;
   return { life: rowLife, sequence, tick, recoveryAge, protection, jump, lethal, spin: spinRow === null ? null : spinRow.slice(), cooldown, slam };
 }
+// #469: post-throw Storm recharge lock outlives specialActive, including death.
+// Transfer the spent clock independently, never as reusable special charge.
+function readStormGaugeState(row) {
+  if (row === null) return null;
+  if (!Array.isArray(row) || row.length !== 2 || !row.every(Number.isFinite)
+    || row[0] <= 0 || row[1] <= 0 || row[0] > row[1] || row[1] > ADOPTION_AGE_MAX) return undefined;
+  return row.slice();
+}
+// Optional tick sidecar keeps actor/adoption array shapes unchanged, so older
+// receivers ignore this metadata without rejecting otherwise valid actor rows.
+function readStormGaugeSidecar(sidecar, nid, life, sequence) {
+  if (sidecar === undefined) return null;
+  if (!sidecar || typeof sidecar !== 'object' || Array.isArray(sidecar)) return undefined;
+  if (!Object.hasOwn(sidecar, nid)) return null;
+  const row = sidecar[nid];
+  if (!Array.isArray(row) || row.length !== 4 || row[0] !== life || row[1] !== sequence) return undefined;
+  return readStormGaugeState(row.slice(2));
+}
+function packStormGaugeState(actor) {
+  if (!(actor.stormGaugeLock > 0)) return null;
+  const row = [actor.stormGaugeLock, actor.stormGaugeDuration];
+  return readStormGaugeState(row) ? row : null;
+}
 // Transfer the latest accepted native action, not an interpolated presentation
 // phase. Its exact pose/velocity and gauge reservation continue on one host.
 function packSlamState(actor) {
@@ -930,6 +958,10 @@ function restoreAdoptionState(match, actor, transfer) {
   // A later completed/dead snapshot has slam=null and cannot revive an older
   // sampled action. onLeave transfers ownership before any future impact.
   restoreSlamState(actor, latest.slam);
+  const stormGauge = latest.stormGauge;
+  const stormAhead = Math.max(0, (current.tick - latest.tick) / 60);
+  actor.stormGaugeLock = stormGauge ? Math.max(0, stormGauge[0] - stormAhead) : 0;
+  actor.stormGaugeDuration = stormGauge ? stormGauge[1] : 0;
   actor._adoptionSequence = Math.max(Number.isSafeInteger(actor._adoptionSequence) ? actor._adoptionSequence : 0, latest.sequence);
   actor.net._adoptionSeq = Math.max(Number.isSafeInteger(actor.net._adoptionSeq) ? actor.net._adoptionSeq : 0, latest.sequence);
   // Resume from the newest accepted owner state, not the delayed visual

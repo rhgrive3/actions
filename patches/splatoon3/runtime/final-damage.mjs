@@ -25,6 +25,11 @@ export function damageTenths(amount) {
   const scaled = Math.max(0, amount) * 10, nearest = Math.round(scaled);
   return (Math.abs(scaled - nearest) <= EPS ? nearest : Math.floor(scaled)) / 10;
 }
+// Positive damage can enter this ledger without crossing the next 0.1-HP
+// boundary. Upstream maximum budgets must not retry such an admitted increment.
+export function finalDamageCredit(victim, attacker, group) {
+  return CREDIT.get(victim)?.get(attacker)?.get(JSON.stringify([attacker?.owner ?? 'local', group]))?.raw || 0;
+}
 export function finalWeaponDamage(victim, amount, attacker, source) {
   if (source === 'ink') return amount; // enemy-ink ticks are a separate owner
   const group = victim.s3PendingHitGroup;

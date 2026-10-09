@@ -821,16 +821,20 @@ export function adaptSource(rel, code) {
     // bound, not a verified S3-specific HP cutoff or RainNum semantics.
     code = replaceOnce(code,
       '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;',
-      '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;\n    const inkWaveRainReach = 12;',
+      '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;\n    const inkWaveRainReach = STORM_RAIN_REACH;',
       'finite rain trace');
     code = replaceOnce(code,
       '          const g = G.physics.raycast(_v, DOWN, 12, _hit);',
       '          const g = G.physics.raycast(_v, DOWN, inkWaveRainReach, _hit);\n          const audit = c.s3RainAudit || (c.s3RainAudit = { candidateDrops: 0, groundHits: 0, paintEvents: 0 });\n          audit.candidateDrops++;\n          if (g.hit) audit.groundHits++;\n          if (g.hit && (!c.ghost || !c.owner.remote)) audit.paintEvents++;',
       'count Storm rain candidate/contact/paint separately');
     code = replaceOnce(code,
-      '          if (dx * dx + dz * dz > (sp.radius * s) ** 2 || e.pos.y > c.group.position.y) continue;',
-      '          if (dx * dx + dz * dz > (sp.radius * s) ** 2 || e.pos.y > c.group.position.y ||\n              e.pos.y + 1.2 < c.group.position.y - 0.8 - inkWaveRainReach) continue;',
-      'prevent damage beyond own finite rain reach');
+      '      const grow = clamp(c.t / 0.5, 0, 1), fade = clamp((c.dur - c.t) / 0.6, 0, 1);\n      const s = (0.3 + 0.7 * (1 - Math.pow(1 - grow, 3))) * (0.2 + 0.8 * fade);',
+      '      const fade = clamp((c.dur - c.t) / 0.6, 0, 1);\n      const s = stormRainScale(c);',
+      'shared native Storm growth and fade');
+    code = replaceOnce(code,
+      '          const dx = e.pos.x - c.group.position.x, dz = e.pos.z - c.group.position.z;\n          if (dx * dx + dz * dz > (sp.radius * s) ** 2 || e.pos.y > c.group.position.y) continue;',
+      '          if (!stormRainContains(c, e, sp.radius, s)) continue;',
+      'share finite rain contact with HP recovery');
     code = "import { fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     code = replaceOnce(code, 'let vis = (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));',
       'let vis = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));', 'slosher source draw radius');

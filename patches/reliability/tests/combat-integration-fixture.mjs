@@ -10,7 +10,7 @@ import { adaptReliability } from '../adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_SITE, paintArea = .123456789, network = false } = {}) {
+export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_SITE, paintArea = .123456789, network = false, transformSource = (_rel, source) => source } = {}) {
   const SRC = emitted ? path.resolve(emitted) : path.join(ROOT, 'inkwave-public');
   let clock = 1000;
   const context = vm.createContext({ console, performance: { now: () => clock * 1000 } });
@@ -29,6 +29,7 @@ export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_
       const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file);
       source = adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source))));
       if (network) source = adaptNetworkSource(rel, source);
+      source = transformSource(rel, source);
     }
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); mods.set(file, mod); return mod;
   };

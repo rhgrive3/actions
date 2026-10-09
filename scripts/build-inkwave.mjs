@@ -71,6 +71,10 @@ for (const file of walk(PATCH_ROOT)) {
     const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
     const res = await esbuild.transform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
     fs.writeFileSync(dst, res.code);
+  } else if (rel === 'profile.json') {
+    // Bootstrap reads JSON values, never formatting. Keep the source/profile URL
+    // unchanged while excluding indentation from the complete offline cache.
+    fs.writeFileSync(dst, JSON.stringify(JSON.parse(fs.readFileSync(file, 'utf8'))));
   } else fs.copyFileSync(file, dst);
 }
 for (const file of walk(QUALITY_ROOT)) {
@@ -97,7 +101,7 @@ for (const [root, prefix] of [
 ]) {
   for (const file of walk(root)) {
     const rel = path.relative(root, file).split(path.sep).join('/');
-    if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs')) continue;
+    if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     if (/\.(?:m?js|css)$/.test(rel)) {
