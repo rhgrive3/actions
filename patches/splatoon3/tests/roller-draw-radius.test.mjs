@@ -16,13 +16,10 @@
 // shipped `_draw` head expression taken from that same adapted source, so the
 // asserted scale is the installed renderer's, not a restatement of it.
 //
-// Gameplay is pinned by the fingerprint below: spawn positions, launch
+// Gameplay is pinned by the pre-fix fingerprint below: spawn positions,
 // velocities, seeds, collision radii, satellite counts, `size` and the exact
-// Math.random() draw count are captured on the tree and must not move again.
-// The rendered head radius was the only #750 change; #771 later re-derived the
-// horizontal launch yaw from the pinned SwerveRateBySpeed + sampled speed (see
-// roller-swerve-speed.test.mjs), so the horizontal `vel` entries encode that
-// sourced swerve and stay frozen here.
+// Math.random() draw count are captured on the unmodified tree and must not
+// move. Only the rendered head radius is allowed to change.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -72,7 +69,7 @@ const FINGERPRINT = {
   horizontal: {
     count: 13, draws: 124,
     pos: [[-0.885567, 1.218557, 0.516495], [-0.719494, 1.239175, 0.537113], [-0.553421, 1.259794, 0.557732]],
-    vel: [[-14.278462, 0, 41.695099], [-12.901312, 0, 46.779342], [-10.954422, 0, 51.834501]],
+    vel: [[-13.619048, 0, 41.91512], [-12.336141, 0, 46.931549], [-10.5212, 0, 51.924168]],
     seed: [0.030928, 0.134021, 0.237113],
     radius: [0.856186, 0.887113, 0.918041],
     sats: [1, 1, 1], size: 0.12,

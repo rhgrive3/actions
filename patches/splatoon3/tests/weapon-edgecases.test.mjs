@@ -175,10 +175,7 @@ test('roller release adds separate12+1 unit, shared max group, one8.5 ink paymen
 });
 test('roller near unit signed angle/width/speed envelopes; main12 seed sequence and vertical5 preserved',async()=>{
  const f=await setup('roller'),ps=projectiles(f),a=f.a;
- // #771: the near glob's angle now also carries its pinned Unit[1] SwerveRateBySpeed 0.1
- // applied to the sampled speed deviation (0.11), so the signed envelope adds
- // 0.1*(2rng-1)*0.11 radians on top of the provisional +/-4 degrees.
- for(const rng of [0,.5,1-1e-12]){f.setRandom(()=>rng);ps.fireFlick(a,a.weapon);const p=ps.list.find(p=>p.s3FlickUnit===1);close(p.vel.length(),a.weapon.flickSpeed*(.48+(2*rng-1)*.11)/1.05);close(Math.atan2(p.vel.x,p.vel.z)*180/Math.PI,(2*rng-1)*4+(2*rng-1)*0.1*0.11*180/Math.PI);close(p.start.x,(rng-.5)*.4);ps.clear();}
+ for(const rng of [0,.5,1-1e-12]){f.setRandom(()=>rng);ps.fireFlick(a,a.weapon);const p=ps.list.find(p=>p.s3FlickUnit===1);close(p.vel.length(),a.weapon.flickSpeed*(.48+(2*rng-1)*.11)/1.05);close(Math.atan2(p.vel.x,p.vel.z)*180/Math.PI,(2*rng-1)*4);close(p.start.x,(rng-.5)*.4);ps.clear();}
  f.setRandom(()=>.5);ps.fireFlick(a,a.weapon);const main=ps.list.filter(p=>p.s3FlickUnit===0).map(p=>p.vel.toArray());ps.clear();const u=a.weapon.nearFlickUnit;a.weapon.nearFlickUnit=null;ps.fireFlick(a,a.weapon);assert.deepEqual(ps.list.map(p=>p.vel.toArray()),main);a.weapon.nearFlickUnit=u;ps.clear();a.weaponRunner.s3FlickVertical=true;ps.fireFlick(a,a.weapon);assert.equal(ps.list.length,5);assert.ok(ps.list.every(p=>p.s3FlickUnit===0));
 });
 test('launch packets include13 once; ghosts use transmitted velocity without resampling spread/unit',async()=>{

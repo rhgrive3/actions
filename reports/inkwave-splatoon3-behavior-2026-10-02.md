@@ -792,20 +792,6 @@ Splat Roller の命中判定は各弾の**spawn 位置から実際のヒット�
 | プレイへの影響 | 重なり領域で ±16° 境界付近のダメージが「どちらの弾が勝ったか」ではなく実際のヒット幾何で決まる。距離減衰・ダメージ帯・1 挥ぎ 1 最大命中・vertical 帯・near unit・pool reset・ghost の無ダメージは変更しない。sector 基準を持たない弾（remote ghost）は Inside のまま保持し、packet 拡張はしない |
 | 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-734-roller-hit-sector.test.mjs` 7/7、baseline `a3993f37` では 0/7 failing→修正後 7/7。Roller/weapons focused 7 ファイル 53/53）。**本家実機（Switch Ver.11.3.0）での ±16° 境界・overlap 実測は未確認**。描画間隔（30/60/120 Hz）依存は角度判定に無く固定 tick の決定性のみを直接証明。#611（straight/free 選択）・#674（入射角深度）・#58 は別 root のまま |
 
-## 2026-10-09 — #771 ローラー横振りの SwerveRateBySpeed 消費（速度連動 swerve）
-
-Base: main `2195d5244408a9632bfbbb3b106f2cfdf1fa6d77`（公開版 `inkwave-public/` + `patches/splatoon3/`）。参照: Splatoon 3 Ver.11.3.0（Nintendo 現行版、[公式更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/)）、無ギア・地上・フルインクの Splat Roller 横振り。pinned 値は [WeaponRollerNormal 11.3.0 raw table](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json)。
-
-| 比較項目 | 本家 Splatoon 3 / 根拠 | 公開版 INKWAVE と確認 |
-|---|---|---|
-| 条件・根拠 | 横振り `WideSwingUnitGroupParam.Unit`: Unit[0]（12 発）に `SpawnWideDegree=18` / `SpawnSpeedBase=1.05` / `SpawnSpeedRandom=0.36` / **`SwerveRateBySpeed=0.05`**、Unit[1]（1 発、`BulletNum` 省略=1）に `4` / `0.48` / `0.11` / **`0.1`**。S3 パラメータ用語集は `SpawnWideDegree:飛沫の拡散角度 (値)°`、速度を `(値*10)DU/F` と定義する。**`SwerveRateBySpeed` の数値→角度変換則と本家 RNG/PDF は公開資料に記載がなく未回復**（[S3 メインパラメータ情報](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%91%E3%83%A9%E3%83%A1%E3%83%BC%E3%82%BF%E6%83%85%E5%A0%B1/%E3%83%A1%E3%82%A4%E3%83%B3)） | `patches/splatoon3/runtime/weapons-fidelity.mjs` の `configureFidelityFlick()` 横振り分岐を読解。以前は `angle = actor.yaw + fan*SpawnWideDegree` の固定ファンのみで `SwerveRateBySpeed` を一切読まなかった |
-| 再現操作 | 固定 actor yaw・地上で多数回フルインク横振りし、各 main glob の launch yaw と speed を記録する | `patches/splatoon3/tests/roller-swerve-speed.test.mjs` が実 `Projectiles.fireFlick` → `configureFidelityFlick` / `appendRollerNearUnit` を駆動。修正前は各 index の yaw が swing 間で不変（例 index0=-18.000°、同 index 6 swing で yaw unique=1・speed unique=6） |
-| INKWAVE の実装箇所 | — | `rollerHorizontalSwerveRadians(unit, sampledRaw) = SwerveRateBySpeed * (sampledRaw - SpawnSpeedBase)` を新設し、既存の 1 回の速度抽選へ加算。`appendRollerNearUnit()` も pinned Unit[1] の rate を同関数で消費。抽選回数・順序、spawn position/width/cube、`SpawnSpeedRandom`、`SpawnWideDegree` ファン、12+1 個数、1 volley damage group は不変 |
-| プレイへの影響 | 横振り飛沫方向は `SwerveRateBySpeed` により速度依存の swerve を持つ | 各 main index の launch yaw が sample 速度に連動して変化（main 最大 ±0.9° = 0.05*18、near 最大 ±0.4° = 0.1*4）。fan 平均幅・centering・ダメージ帯・速度分布・spawn 位置は維持。edge-of-fan の命中/塗り確率が swing ごとに変動しうる |
-| 確認状態 | Switch 実機での swerve 角度計測は **未確認** | **ロジック確認済み**: `roller-swerve-speed.test.mjs` 9/9、関連 roller/weapon/projectile 384 中 382 pass・0 fail・2 skip（参照画像未取得の既存 skip）、`scripts/check-inkwave-weapons-fidelity.mjs` exit 0（roller-horizontal 実測 hit 11.2→11.1 を固定 seed golden へ反映）。owner→packet→ghost の方向一致と 30/60/120 Hz の launch 分布一致を fixture 上で確認。**`rate*(speed-SpawnSpeedBase)` を rad とする本実装は明示的にラベル付けした INKWAVE calibration であり、Nintendo 分布ではない**。pinned 非ゼロ場の消費と yaw の速度連動という構造要件のみを満たし、厳密な単位・則は #771 の未確認項目として残す |
-
-本修正は分割された既存挙動（`SpawnPositionWidth`、`SpawnPositionRandomCube`、`SpawnSpeedRandom`、Inside/Outside ダメージ #734、1 volley grouping）を変更せず、`SwerveRateBySpeed` を live 横振り emitter に接続する残余のみを扱う。near unit は既存の暫定角度/幅マッピングを保ったまま pinned rate を追加消費する。#361（near unit 補完）・#285（spawn 位置幅）・#734（hit 角度）は別 root のまま。
-
 ## 2026-10-06 — #731 sub-weapon ready state on the enemy-ink attack/ready curve
 
 Base: main `a3993f3`. Reference: Splatoon 3 Ver. 11.3.0, the release this profile pins. The Pinned 11.3.0 `misc/params.json` keeps two separate enemy-ink movement curves, `OpInk_MoveVel` (0.024 / 0.0557 / 0.0768) and `OpInk_MoveVel_Shot` (0.012 / 0.0330 / 0.0420); both are already bound in `profile.json`, so neither is an inferred value. Nintendo's Splatoon 2 Ver. 1.4.0 notes list "moving while preparing to throw a bomb or sub weapon" among the states Ink Resistance Up must apply, and the current Splatoon 3 ability documentation states it works the same way as in Splatoon 2. At 0 AP the attack/ready value is exactly half the ordinary value.
@@ -1717,3 +1703,39 @@ Pinned Chromium primary sources: [Windows product mapping at revision 413fd160](
 - Publication was reconciled against every tracked blob in the tested local commit, rather than only the prepared delta. This restores eleven omitted files from the earlier CI composition repair, including Range's immediate-control respawn exclusion and its test, lethal-water return ownership, remote clothing admission and current fixture dependencies. Source and test assertions are the same ones already validated locally. Only a fully matching remote tree and its fresh Actions results qualify for acceptance.
 
 - Latest exact-tree UI evidence (run 37865808562) exposed a verifier-only mismatch: native touch input hides the ring for rows/tabs, but ordinary main-menu buttons retain it. The earlier universal hidden-ring assertion incorrectly passed only before the next throttled UI frame. Rematch now waits for actual native placement plus computed CSS visibility/opacity and requires the same focus geometry for touch return and keyboard handoff. New native/patched repeated-return and negative visibility/geometry controls cover the distinction. No gameplay/UI behavior or numerical threshold is changed, and physical S3 interface equivalence is not claimed.
+
+
+## #771 ローラー横振りの `SwerveRateBySpeed`：未解決（2026-10-09）
+
+対象：GitHub Issue #771「[INKWAVE][Roller] Horizontal flick ignores S3 SwerveRateBySpeed and fixes each main-glob yaw」。
+確認状態：**未解決（NOT SOLVED）**。本家の実測・公開資料からフィールドの変換則を確定できず、Issue の受け入れ条件が禁じている推測則を実装したため、その実装は巻き戻した。
+
+### 本家の根拠
+
+- 固定参照は Ver.11.3.0。スプラローラー（`WeaponRollerNormal`）の `WideSwingUnitGroupParam` には横振り2ユニットに非ゼロの `SwerveRateBySpeed` がある（Unit[0]=0.05／Unit[1]=0.1）。近傍に `SpawnSpeedBase`・`SpawnSpeedRandom`・`SpawnWideDegree`・`SpawnPositionWidth`・`SpawnPositionRandomCube` が並ぶ（[pinned table, commit `7280ff9c…`](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json)）。
+- 同フィールドは同じ1130データでパブロ（`WeaponBrushMini`：`SwingUnitGroupParam` Unit[0]=0.1／Unit[1]=0.3）にも存在し、シューター（`WeaponShooterNormal`）・チャージャー・マニューバー・シェルターには存在しない。振り系ブキ固有のフィールドであることは確認できる。
+- しかし本家の**挙動としての変換則は公開されていない**。スプラトゥーン3検証Wikiのシステム詳細仕様「ローラー種の弾」は横振りを「(A)初速に大きく乱数がかかる他、**弾の種類によってX方向（横方向）へ一定の角度をつける設定**がされている（ほぼ真っすぐ飛ぶ弾、角度をつけて飛ぶ弾などがグループ分けされており、結果として扇状の攻撃範囲となる）」と記述する。すなわち同Wikiの検証モデルは「横角度は弾の種類ごとの一定値」であり、速度に依存する連続関数としては説明していない。
+- 同Wikiのパラメータ解説（検証/パラメータ情報/メイン）と Inkipedia のアナリスト向けパラメータ表にも `SwerveRateBySpeed` の説明はない。GitHub/Web 検索でも同フィールドを解釈・実装した公開コードは見つからなかった。
+
+### 未解決の内容
+
+`SwerveRateBySpeed` の**単位・符号・速度との結合式（減算の有無、radians か degree か、乱数則）が未公表・未回収**である。したがって「どのような法則で発射角に効くか」を本家の根拠付きで決められない。Issue の受け入れ条件も「先にフィールドの実際の規約を回収・検証すること」「新しい一様乱数を勝手に考案しないこと」を要求している。
+
+### 巻き戻し
+
+初回実装（commit `751c0a83f7dbab21947da41a7be8ebda00a4b85b`）は `swerveRadians = SwerveRateBySpeed * (sampledRawSpeed - SpawnSpeedBase)` という**未確認の推測則**を採用していた。この式は出典がなく、上記Wikiの「弾種ごとの一定角度」という検証記述とも整合しない。そのため当該コミットのコード・テスト・固定シード受領値はすべて巻き戻し、**推測則は出荷しない**。対象ファイルは main `2195d5244408a9632bfbbb3b106f2cfdf1fa6d77` と同一に戻した。
+
+### INKWAVE 側の現状（未確認のまま）
+
+- `patches/splatoon3/runtime/weapons-fidelity.mjs::configureFidelityFlick()` の横振り分岐は、`SpawnWideDegree` から12発を等間隔の決定的な扇に並べ、`SwerveRateBySpeed` を読まない。各弾インデックスの発射角は固定、速度とスポーン位置のみ乱数。
+- 再現：固定 yaw で同インデックスを複数回サンプルすると `yaw unique=1`／`speed unique=6`（証拠 `evidence/inkwave-c-resume-20261009/fb6/repro-771.mjs`）。
+- 「各インデックスで角度が一定」が本家でも正しいのか誤りなのかは、上記のとおり**未確認**。本Wikiの「弾種ごとの一定角度」記述とは矛盾しないため、これ単独では不具合と確定できない。
+
+### プレイへの影響（未確認）
+
+横振り扇の角度分布が本家と一致するかは、`SwerveRateBySpeed` の実際の寄与が回収できていないため判定できない。近距離の当たり／塗りの再現性への影響も未確認。
+
+### 解消に必要な作業
+
+1. `SwerveRateBySpeed` の実際の意味（単位・速度との結合式）を、本家実機計測または公開された解析資料で回収する。
+2. 回収した規約に基づいてのみ横振り発射角へ反映する。回収できない間は本項目を未解決のまま維持し、推測値を本家仕様として実装しない。
