@@ -2,6 +2,7 @@
 // not joint curves or world units. The native rig, IK and shot impulses remain
 // authoritative; gameplay state is only read here.
 import { specialMotionAllowsAction, bombMotionAllowsAction } from './action-admission.mjs';
+import { clearRemoteDodgeClock, remoteDodgePresentation } from './remote-dodge-clock.mjs';
 const INSTALL = Symbol.for('inkwave.splatoon3.dualies-motion.v1');
 const clamp01 = x => Math.max(0, Math.min(1, x));
 const smooth = x => { const u = clamp01(x); return u * u * (3 - 2 * u); };
@@ -49,7 +50,32 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
     ch.tumble = ch.tumbleDrop = ch.lockW = 0;
   }
   function prepare(ch, input) {
-    const s = state(ch), runner = ch._runner(input), d = runner?.dodge;
+    const s = state(ch), runner = ch._runner(input), actor = ch._owner();
+    if (actor?.remote) {
+      const presentation = remoteDodgePresentation(actor), clock = presentation?.clock || null;
+      if (presentation) {
+        const active = s.blockedRoll !== clock;
+        s.phase = active ? presentation.phase : null;
+        s.progress = active ? presentation.progress : 0;
+        s.managed = false;
+        s.runner = runner;
+        s.nativeFallback = false;
+        s.remoteClock = active ? clock : null;
+        return { s, runner, d: null, active };
+      }
+      s.blockedRoll = null;
+      const allowedPlant = allowed(ch, input, runner)
+        && !runner?.dodge && ch.grounded && !!(runner && (runner.lockT > 0 || runner.s3Turret));
+      s.phase = allowedPlant ? 'plant' : null;
+      s.progress = allowedPlant ? 1 : 0;
+      s.managed = false;
+      s.runner = runner;
+      s.nativeFallback = false;
+      s.remoteClock = null;
+      return { s, runner, d: null, active: allowedPlant };
+    }
+    s.remoteClock = null;
+    const d = runner?.dodge;
     const ok = allowed(ch, input, runner);
     if (!ok && d) s.blockedRoll = d;
     if (!d) s.blockedRoll = null;
@@ -83,11 +109,18 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
     if (!enabled(this)) { states.delete(this); return result; }
     const { s, runner, d, active } = prepare(this, input);
     if (s.nativeFallback) return result;
-    if (d && runner._dodgeDir && Number.isFinite(runner._dodgeDir.x) && Number.isFinite(runner._dodgeDir.z)) {
+    const remoteDirection = s.remoteClock?.direction;
+    if (remoteDirection && s.remoteClock.directionSpace === 'root') {
+      const len = Math.hypot(remoteDirection.x, remoteDirection.z);
+      if (len > 1e-6) { s.x = remoteDirection.x / len; s.z = remoteDirection.z / len; }
+      else { s.x = this.dodgeX; s.z = this.dodgeZ; }
+    } else if (remoteDirection || d && runner._dodgeDir && Number.isFinite(runner._dodgeDir.x) && Number.isFinite(runner._dodgeDir.z)) {
       // Re-express the authoritative world direction in the current root frame.
       // A camera/aim turn during a roll must not rotate the physical tumble axis.
       const yaw = this.root.rotation.y, cy = Math.cos(yaw), sy = Math.sin(yaw);
-      const x = runner._dodgeDir.x, z = runner._dodgeDir.z, len = Math.hypot(x, z);
+      const x = remoteDirection?.x ?? runner._dodgeDir.x;
+      const z = remoteDirection?.z ?? runner._dodgeDir.z;
+      const len = Math.hypot(x, z);
       if (len > 1e-6) { s.x = (x * cy - z * sy) / len; s.z = (x * sy + z * cy) / len; }
       else { s.x = this.dodgeX; s.z = this.dodgeZ; }
     } else { s.x = this.dodgeX; s.z = this.dodgeZ; }
@@ -141,15 +174,20 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
     finally { this.lockW = lock; }
   };
   proto.setWeapon = function (...args) {
-    if (enabled(this) && args[0] !== this.weaponKind) clear(this);
+    if (args[0] !== this.weaponKind) {
+      const actor = this._owner();
+      if (actor?.remote) clearRemoteDodgeClock(actor);
+      if (enabled(this)) clear(this);
+    }
     return setWeapon.apply(this, args);
   };
   proto.setVisible = function (value) {
     if (!value && enabled(this)) {
       // Rendering may stop completely while hidden. Retire the pose now and
-      // retain the interrupted runner token so showing it cannot replay a roll.
+      // retain the owner action token so showing it cannot replay a roll.
       const s = state(this);
-      s.blockedRoll = this._runner()?.dodge || null; s.phase = null; s.progress = 0;
+      s.blockedRoll = remoteDodgePresentation(this._owner())?.clock || this._runner()?.dodge || null;
+      s.phase = null; s.progress = 0;
       this.tumble = this.tumbleDrop = this.lockW = 0;
     }
     return setVisible.call(this, value);
