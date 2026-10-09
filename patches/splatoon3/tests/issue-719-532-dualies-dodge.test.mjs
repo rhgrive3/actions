@@ -28,7 +28,11 @@ test('#719 airborne ordinary jump cannot roll without firing/direction/roll/ink'
   for(const opts of [{fire:false},{move:0},{rolls:0},{ink:0}]){
     const {a,r,before}=await trial(opts);
     assert.equal(r.dodge,null,JSON.stringify(opts));
-    assert.equal(a.ink,before,JSON.stringify(opts));
+    // Rejected rolls cost no ink. At zero ink, normal fixed-tick kid-form
+    // regeneration remains legal and must not be mistaken for a roll charge.
+    if (opts.ink === 0) {
+      assert.ok(a.ink >= before && a.ink <= before + f.PLAYER.inkRefillKid / 60 + 1e-8, JSON.stringify(opts));
+    } else assert.equal(a.ink,before,JSON.stringify(opts));
   }
   const {r}=await trial({airborne:false});assert.ok(r.dodge,'ground dodge unchanged');
 });
