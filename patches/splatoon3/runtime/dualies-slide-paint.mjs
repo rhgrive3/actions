@@ -1,10 +1,11 @@
 /** #979: source-width, distance-sampled Dualies slide paint.
  * Source: bundled profile -> SideStepParam.SplashSlideParam.PaintWidthHalf.
- * PaintSystem's existing roll stamp has a lateral half-width of
- * nominalRadius * (.62 + .10 - .03); reuse its CPU/GPU/network path.
+ * The shared CPU/GPU roll outline includes corner rounding and two edge
+ * waves. Fit their maximum extent inside the sourced half-width; the old
+ * CPU-only .03 inset no longer describes the permanent visible footprint.
  */
 const EPS = 1e-9;
-const ROLL_LATERAL_HALF = .62 + .10 - .03;
+const ROLL_LATERAL_HALF = .62 + .10 + .03 + .018;
 const SURFACE_OFFSET = .03;
 
 export function configureDualiesSlidePaint(weapons, profile) {
@@ -54,7 +55,7 @@ export function paintDualiesSlide(game, runner, weapon, ending = false) {
     if (!hit?.hit || hit.normal.y <= .55) return;
     state.sample.copy(hit.point).addScaledVector(hit.normal, SURFACE_OFFSET);
     const painted = game.paint.splat(state.sample, slideStampRadius(half), actor.team, {
-      kind: 'roll', stretch: state.direction, stretchAmt: 0,
+      kind: 'roll', stretch: state.direction, stretchAmt: 0, claimOwner: actor,
       seed: stampSeed(actor.nid ?? 'local', state.token ?? 0, state.index++)
     });
     if (Number.isFinite(painted)) area += painted;

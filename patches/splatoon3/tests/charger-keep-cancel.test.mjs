@@ -118,8 +118,16 @@ test('a partial charge cannot be kept', async () => {
   assert.ok(a.weaponRunner.charge > .3 && a.weaponRunner.charge < .999);
   a.intent.squid = true;
   f.tick(a);
-  assert.equal(a.form, 'squid');
+  assert.equal(a.form, 'kid', 'partial cancellation observes the independent 6F form gate');
+  assert.equal(a.weaponRunner.charging, false, 'partial charge cancels immediately');
   assert.equal(a.weaponRunner.s3Stored, null, 'partial charges are ineligible for charge keep');
+  for (let i = 1; i < 6; i++) {
+    f.tick(a); assert.equal(a.form, 'kid', `partial cancel at +${i}F`);
+    assert.equal(a.weaponRunner.s3Stored, null);
+  }
+  f.tick(a); assert.equal(a.form, 'squid', 'form opens at the existing 6F boundary');
+  assert.equal(a.weaponRunner.s3Stored, null);
+  assert.equal(f.shots.length, 0, 'a cancelled partial charge never becomes a shot');
 });
 
 test('cancellation spends no ink, sets no cooldown and queues no shot', async () => {

@@ -753,7 +753,7 @@ test('UI interactive settings change callback refreshes all aim controls on prof
   assert.equal(refreshed.invertX, true);
 });
 
-test('Controls tooltip uses simple selected profile sensitivity explanation and legacy stick scale', () => {
+test('Controls tooltip uses simple selected profile sensitivity explanation and S3 right-stick scale', () => {
   const menusCode = compose('src/ui/menus.js');
 
   const controlsIdx = menusCode.indexOf("id: 'controls'");
@@ -767,8 +767,8 @@ test('Controls tooltip uses simple selected profile sensitivity explanation and 
   assert.ok(!controlsTabContent.includes('278°'), 'angle constant 278° not copied in Controls tooltip');
   assert.ok(controlsTabContent.includes('Motion-control aiming sensitivity for the selected profile.'), 'simple explanation used in Controls');
 
-  // 2. Stick sensitivity uses INKWAVE legacy scale 0.2..3
-  assert.ok(controlsTabContent.includes("min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×'"), 'stick scale is legacy 0.2..3');
+  // 2. Final composed control row uses the S3 -5..+5 scale.
+  assert.ok(controlsTabContent.includes("min: -5, max: 5, step: 0.5, fmt: sgnFmt"), 'S3 right-stick UI scale');
 });
 
 // ------------------------------------------------------------------------------------------

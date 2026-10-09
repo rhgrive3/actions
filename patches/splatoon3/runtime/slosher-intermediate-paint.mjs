@@ -101,7 +101,7 @@ export function installSlosherIntermediatePaint(api, profile) {
     if (stretch.lengthSq() <= EPS) stretch.set(0, 0, 1);
     else stretch.normalize();
     const area = G.paint?.splat?.(point, spec.widthHalf, p.team, {
-      seed: p.seed,
+      seed: p.seed, claimOwner: p.owner,
       stretch,
       stretchAmt: spec.depthScale,
     }) || 0;

@@ -4,6 +4,20 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     code = replaceOnce(code, before, after, 'movement physics: ' + name);
   };
   if (rel === 'src/game/actor.js') {
+    replace('const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _fwd = new THREE.Vector3();',
+      'const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _fwd = new THREE.Vector3(), _fitGround = new THREE.Vector3();',
+      '#1160 raised-ground fit scratch');
+    replace("    this.form = 'kid';           // desired form",
+      "    this.form = 'kid';           // desired form\n    this._stepClearanceBlocked = false;",
+      '#1160 reset blocked-step latch');
+    replace('    const wasGrounded = this.grounded;\n    let grounded = false;',
+      '    const wasGrounded = this.grounded;\n' +
+      '    if (!stick || this._stepClearanceForm !== isSquid) {\n' +
+      '      this._stepClearanceBlocked = false;\n' +
+      '      this._stepClearanceForm = isSquid;\n' +
+      '    }\n' +
+      '    let grounded = false;',
+      '#1160 reset clearance latch on airtime/form change');
     replace('    if (this.weaponRunner.dodgeVel?.(this.vel)) return;',
       '    if (this.weaponRunner.dodge) return; // integrated once, after admission', 'single dodge velocity owner');
     replace('  _integrate(dt, isSquid, jumped) {',
@@ -12,6 +26,56 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
       '    this._resolve(isSquid, prevY, wasGrounded, dt);', 'resolver timestep');
     replace('  _resolve(isSquid, prevY, stick) {', '  _resolve(isSquid, prevY, stick, dt = 1 / 60) {', 'resolver timestep compatibility');
     replace('this.airTime + 1 / 60', 'this.airTime + dt', 'airtime in seconds');
+    replace('      if (!isSquid) this._railFeet(gh, this.pos.y - P.stepDown, this.pos.y + up);\n      if (gh.hit) {',
+      '      if (!isSquid) this._railFeet(gh, this.pos.y - P.stepDown, this.pos.y + up);\n' +
+      '      const raisedSupport = gh.hit && gh.y > this.pos.y + 1e-4;\n' +
+      '      const raisedBodyFits = !raisedSupport || !G.physics.bodyFits ||\n' +
+      '        G.physics.bodyFits(_fitGround.set(this.pos.x, gh.y, this.pos.z), terrainRadius, lift, height, isSquid);\n' +
+      '      if (raisedSupport && !raisedBodyFits) this._stepClearanceBlocked = true;\n' +
+      '      else if (raisedSupport) this._stepClearanceBlocked = false;\n' +
+      '      if (this._stepClearanceBlocked) {\n' +
+      '        // Feet may reach a step whose raised body would hit a ceiling. Keep the\n' +
+      '        // current height and resolve the curb side with the same capsule lowered\n' +
+      '        // to the feet. Keep doing so until the capsule clears the side.\n' +
+      '        G.physics.collideBody(this.pos, terrainRadius, 0, height, this.contacts, true, isSquid);\n' +
+      '        const sideBlocked = this.contacts.wall;\n' +
+      '        if (sideBlocked) {\n' +
+      '          const n = this.contacts.wallNormal;\n' +
+      '          const vn = this.vel.x * n.x + this.vel.z * n.z;\n' +
+      '          if (vn < 0) { this.vel.x -= n.x * vn; this.vel.z -= n.z * vn; }\n' +
+      '        }\n' +
+      '        this._stepClearanceBlocked = sideBlocked;\n' +
+      '        if (!raisedBodyFits || sideBlocked) {\n' +
+      '          G.physics.groundProbe(this.pos.x, this.pos.y, this.pos.z, 0, P.stepDown, P.footRadius, gh, isSquid);\n' +
+      '          if (!isSquid) this._railFeet(gh, this.pos.y - P.stepDown, this.pos.y);\n' +
+      '        }\n' +
+      '      }\n' +
+      '      if (gh.hit) {',
+      '#1160 head clearance and curb-side collision');
+    replace('      if (gh.hit && gh.y >= this.pos.y - 0.02 && (this.vel.y <= 0 || gh.y - this.pos.y < 0.02)) {',
+      '      const raisedLanding = gh.hit && gh.y > this.pos.y + 1e-4;\n' +
+      '      let landingFits = !raisedLanding || !G.physics.bodyFits ||\n' +
+      '        G.physics.bodyFits(_fitGround.set(this.pos.x, gh.y, this.pos.z), terrainRadius, lift, height, isSquid);\n' +
+      '      if (raisedLanding && !landingFits) {\n' +
+      '        // A jump can reach the same raised support as a step. Test its body fit,\n' +
+      '        // then resolve from below the support so the curb side remains solid.\n' +
+      '        const landingY = this.pos.y;\n' +
+      '        this.pos.y = Math.min(landingY, gh.y - up);\n' +
+      '        G.physics.collideBody(this.pos, terrainRadius, 0, height, this.contacts, true, isSquid);\n' +
+      '        if (this.contacts.wall) {\n' +
+      '          const n = this.contacts.wallNormal;\n' +
+      '          const vn = this.vel.x * n.x + this.vel.z * n.z;\n' +
+      '          if (vn < 0) { this.vel.x -= n.x * vn; this.vel.z -= n.z * vn; }\n' +
+      '        }\n' +
+      '        this.pos.y = landingY;\n' +
+      '        G.physics.groundProbe(this.pos.x, this.pos.y, this.pos.z, 0, P.stepDown, P.footRadius, gh, isSquid);\n' +
+      '        if (!isSquid) this._railFeet(gh, this.pos.y - P.stepDown, this.pos.y);\n' +
+      '        const lowerSupport = gh.hit && gh.y > this.pos.y + 1e-4;\n' +
+      '        landingFits = !lowerSupport || !G.physics.bodyFits ||\n' +
+      '          G.physics.bodyFits(_fitGround.set(this.pos.x, gh.y, this.pos.z), terrainRadius, lift, height, isSquid);\n' +
+      '      }\n' +
+      '      if (landingFits && gh.hit && gh.y >= this.pos.y - 0.02 && (this.vel.y <= 0 || gh.y - this.pos.y < 0.02)) {',
+      '#1160 airborne landing fit and curb-side collision');
     replace('    const side = _v2.set(mv.x, 0, mv.z);',
       '    const side = _v2.set(mv.x, 0, mv.z);\n    if (mh > 1) side.multiplyScalar(1 / mh);', 'wall lateral magnitude');
     replace('    } else if (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub) {',

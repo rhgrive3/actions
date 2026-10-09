@@ -127,7 +127,7 @@ export function finalizeLoadingWorker(build, revision, plan, compactTemplate = s
   const marker='__INKWAVE_CACHE_CONFIG_VALUE__';
   const compact=compactTemplate(countReplace(template,'/*__INKWAVE_CACHE_BUILD__*/ null',marker,'worker template marker'));
   const worker=countReplace(compact,marker,JSON.stringify(config),'worker stamp');
-  if(Buffer.byteLength(worker)>64*1024)throw new Error('loading-cache: worker exceeds 64 KiB budget');
+  if(Buffer.byteLength(worker)>64*1024)throw new Error(`loading-cache: worker exceeds 64 KiB budget (${Buffer.byteLength(worker)} bytes)`);
   fs.writeFileSync(path.join(build,'sw.js'),worker);
   return {revision,precacheCount:plan.precache.length,precacheBytes:plan.precacheBytes,declaredBytes:config.declaredBytes,maxRevisions:2,workerBytes:Buffer.byteLength(worker)};
 }

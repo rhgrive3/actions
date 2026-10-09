@@ -1,5 +1,13 @@
 // Per-weapon action clocks. The native runner still owns shots/ink/projectiles.
 const EPS = 1e-10;
+// Existing native humanoid descent boundary, not a measured Nintendo frame.
+export const SUPERJUMP_MAIN_PROGRESS = 0.82;
+export function canStageSuperJumpSub(actor) {
+  const jump = actor?.superJumpState;
+  return !!actor?.alive && !actor.specialActive && actor.form === 'kid' &&
+    jump?.phase === 'flight' && Number.isFinite(jump.t) && Number.isFinite(jump.dur) &&
+    jump.dur > 0 && jump.t / jump.dur > SUPERJUMP_MAIN_PROGRESS && jump.t < jump.dur;
+}
 export const BLASTER_INTERRUPT_SUB = 3 / 60;
 export const BLASTER_INTERRUPT_SQUID = 4 / 60;
 export function blasterCancellationEdge(actor, runner) {

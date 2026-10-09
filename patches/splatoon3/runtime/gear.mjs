@@ -127,7 +127,7 @@ export function installGear(api, tuning) {
     // Actor-local copy. An opponent's equipment never changes shared stats.
     const base = api.WEAPONS[a.weaponId];
     if (!transient) a.weapon = { ...base };
-    else for (const field of ['spreadAir', 'specialCost', 'inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter']) {
+    else for (const field of ['spreadAir', 'specialCost', 'inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter', 'rollInkMinPerFrame', 'rollInkMaxPerFrame']) {
       if (field in base) a.weapon[field] = base[field];
     }
     // MainWeaponSetting and ActionSpecUp overrides belong to the equipped
@@ -135,7 +135,7 @@ export function installGear(api, tuning) {
     m.runSpeedFiring = gearCurve(ap.runSpeed || 0, ...(a.weapon.runSpeedFiringCurve || extra.runSpeedFiring));
     m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...(a.weapon.actionAirSpreadCurve || extra.actionAirSpread));
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
-    for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
+    for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter', 'rollInkMinPerFrame', 'rollInkMaxPerFrame']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
     const sub = api.SUB[a.weapon.sub || 'bomb'];
     const tiers = sub?.throwSpeedTiers;
     if (tiers && [tiers.low, tiers.mid, tiers.high].every(Number.isFinite) && tiers.low > 0)
@@ -177,13 +177,13 @@ export function installGear(api, tuning) {
     const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
     if (this.a.grounded && (this.aimingSub || throwingStorm)) return tuning.bomb.holdMoveSpeed;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger' && this.a.onEnemy;
-    const attacking = this.firingT > 0 || this.flick >= 0 || this.charging || this.streaming;
+    const attacking = (w.kind === 'shooter' ? this.s3ShooterMoveRemaining > 1e-10 : this.firingT > 0) || this.flick >= 0 || this.charging || this.streaming;
     // Ordinary airborne steering must not acquire extra reach from the ground
     // run-speed ability. Keep attack/ready/action-specific speed owners separate;
     // this only changes the target multiplier, never the velocity at takeoff.
     const ordinaryAir = !this.a.grounded && this.a.form === 'kid' &&
       !this.a.specialActive && !this.a.superJumpState && !this.a.s3?.roll && !this.a.s3?.surge &&
-      !this.busy() && !this.firingPose() && !this.aimingSub && !(this.flickRecover > 0);
+      !this.busy() && !(w.kind === 'shooter' ? this.s3ShooterMoveRemaining > 1e-10 : this.firingPose()) && !this.aimingSub && !(this.flickRecover > 0);
     const gear = lockedMode || ordinaryAir ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear;
   };
@@ -197,7 +197,7 @@ export function installGear(api, tuning) {
     api.PLAYER.swimSpeed *= swimSpeedMultiplier(this);
     const runner = this.weaponRunner, kind = this.weapon.kind;
     const pendingFirst = kind === 'shooter' ? !!runner.s3ShooterPendingFirst : kind === 'dualies' && runner.s3DualiesStart > 1e-10;
-    const firing = (!pendingFirst && runner.firingT > 0) || runner.s3BlasterWindup > 0;
+    const firing = (kind === 'shooter' ? (!pendingFirst && runner.s3ShooterMoveRemaining > 1e-10) : (!pendingFirst && runner.firingT > 0)) || runner.s3BlasterWindup > 0;
     // Actor._horizontal runs before WeaponRunner.update. Predict only the same-tick
     // Shooter/Dualies emission that update() will actually admit; raw held ZR, cooldown,
     // empty ink and emerge-delay attempts must not select the shot curve early.

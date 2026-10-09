@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture, emitMainShot } from './source-fixture.mjs';
 import { emptyLoadout, gearCurve } from '../runtime/gear.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 const close = (a, b) => assert.ok(Math.abs(a-b) < 1e-8, `${a} != ${b}`);
@@ -105,11 +105,21 @@ test('#114 equipped total cap suppresses regeneration even during grace or invul
 });
 
 test('#247 classifies actual shooter/dualies/blaster attack state instead of held ZR', async () => {
-  const f=await fixture();
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
   for(const kind of ['shooter','dualies','blaster']) {
     const a=f.make(kind);a.intent.fire=true;close(speed(a),1.44);
-    a.intent.fire=false;a.weaponRunner.firingT=.2;close(speed(a),.72);
-    a.weaponRunner.firingT=0;close(speed(a),1.44);
+    a.intent.fire=false;a.weaponRunner.firingT=.2;
+    if(kind==='shooter')close(speed(a),1.44,'visual pose alone is not an emitted shot');
+    emitMainShot(f,a);close(speed(a),.72);
+    if(kind==='shooter'){
+      const frames=Math.round(a.weapon.postFireSwimLock*60);
+      for(let i=1;i<frames;i++){f.tick(a);close(speed(a),.72);}
+      f.tick(a);assert.ok(a.weaponRunner.firingT>0,'visual pose outlives the native 4F movement window');
+    }else{
+      for(let i=0;i<60&&a.weaponRunner.firingT>0;i++)f.tick(a);
+      assert.equal(a.weaponRunner.firingT,0);
+    }
+    close(speed(a),1.44);
   }
   const b=f.make('blaster');b.weaponRunner.s3BlasterWindup=.1;close(speed(b),.72);
 });

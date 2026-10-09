@@ -53,6 +53,7 @@ import { installSwimMotion } from './swim-motion.mjs';
 import { installWallMotion } from './wall-motion.mjs';
 import { installFormMotion } from './form-motion.mjs';
 import { installDualiesMotion } from './dualies-motion.mjs';
+import { installDualiesNetwork } from './dualies-network.mjs';
 import { installRollerDetailMotion } from './roller-detail-motion.mjs';
 import { installRollerFold } from './roller-fold.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
@@ -150,5 +151,6 @@ export function install(profile) {
   installIssue196SpecialChargeCancel(api);
   installSplatGhostReturn(api);
   installTurfCombatGate(api);
+  installDualiesNetwork(api);
   return api;
 }

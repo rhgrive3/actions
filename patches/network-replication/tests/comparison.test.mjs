@@ -225,7 +225,7 @@ test('visual envelope: curtain follows immutable birth mode, not mutable actor m
   }
 });
 
-test('slosher: per-drop delay and lifetime survive the wire exactly', async () => {
+test('slosher: true-birth unit and lifetime survive the wire exactly', async () => {
   const f = await fixture({ network: true });
   const nm = f.makeNetMatch(f.makeSession());
   const a = f.makeActor({ nid: 0, owner: 'me', roller: false });
@@ -242,8 +242,9 @@ test('slosher: per-drop delay and lifetime survive the wire exactly', async () =
   const packets = nm.out.filter(e => e[1] === 'p');
   assert(local.length > 1 && packets.length === local.length);
   for (let i = 0; i < local.length; i++) {
-    assert.equal(packets[i][11], local[i]._s3SloshBirthDelay, `drop ${i} source delay`);
-    assert.equal(packets[i][12], local[i].life, `drop ${i} life`);
-    assert.equal(packets[i][13], local[i].straight, `drop ${i} straight`);
+    const born=local[packets[i][33]];
+    assert.equal(packets[i][11], 0, `drop ${i} remaining delay`);
+    assert.equal(packets[i][12], born.life, `drop ${i} life`);
+    assert.equal(packets[i][13], born.straight, `drop ${i} straight`);
   }
 });

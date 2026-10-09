@@ -65,7 +65,7 @@ test('#1007/#1052 finite Charger keeps feet paint and forward trajectory widths 
   const a = f.make({ weapon: 'charger' });
   f.tick(a);
   const ps = f.G.projectiles;
-  for (const [charge, forwardWidth] of [[1 / 6, .78], [1, 1.56]]) {
+  for (const [charge, forwardWidth] of [[8 / 60, .78], [1, 1.56]]) {
     ps.clear(); f.painted.length = 0;
     ps.fireCharger(a, a.weapon, charge);
     assert.equal(f.painted.length, 1, 'accepted shot creates exactly one immediate feet splat');

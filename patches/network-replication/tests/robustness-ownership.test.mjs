@@ -88,12 +88,25 @@ test('removing a departed owner retires that owner\'s ghosts only', async () => 
   f.projectiles.ghostProjectile(stay, shot(8));
   const ghosts = f.projectiles.list.filter((p) => p.ghost);
   assert.equal(ghosts.length, 2);
+  const goneGhost = ghosts.find(p => p.owner === gone), stayGhost = ghosts.find(p => p.owner === stay);
   nm._remove(gone);
   const ended = ghosts.filter((p) => p._netEnded);
   assert.equal(ended.length, 1, 'removal did not retire exactly the departed owner\'s ghost');
-  assert.equal(ended[0].owner, gone);
+  assert.equal(ended[0], goneGhost, 'the retired projectile belonged to the departed owner');
+  assert.equal(goneGhost.owner, null, 'recycling clears the departed owner reference');
+  assert.equal(f.projectiles.list.includes(goneGhost), false, 'retired ghosts leave active simulation immediately');
+  assert.equal(f.projectiles.pool.includes(goneGhost), true);
+  assert.equal(stayGhost.owner, stay);
+  assert.equal(f.projectiles.list.includes(stayGhost), true, 'the remaining owner keeps its active ghost');
   assert.equal(nm.byNid.has(7), false);
   assert.equal(nm.byNid.has(8), true);
+  let paint = 0, damage = 0;
+  f.G.paint.splat = () => { paint++; return 0; };
+  f.projectiles.applyHit = () => { damage++; };
+  f.projectiles.update(1 / 60);
+  assert.equal(f.projectiles.list.includes(goneGhost), false, 'a recycled ghost cannot resume on the next frame');
+  assert.equal(paint, 0, 'remote retirement does not add paint');
+  assert.equal(damage, 0, 'remote retirement does not apply damage');
 });
 
 test('late join keeps a valid remote actor and its ownership intact', async () => {

@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
-import {fixture} from './source-fixture.mjs';
+import {fixture,emitMainShot} from './source-fixture.mjs';
 import {FixedClock} from '../runtime/clock.mjs';
 const DT=1/60,near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 function box(f,id,x,z,wx,wz,yaw=0,{centerY=1,halfY=1}={}){
@@ -62,7 +62,11 @@ test('#176: horizontal43F / vertical58F swing stops retain their own boundaries'
 });
 
 test('#176: active roll never refills, and an outstanding longer lock is not shortened',async()=>{
- const f=await fixture(),a=rolling(f);spentRoll(f,a);const ink=a.ink;f.tick(a,30);near(a.ink,ink);
+ const f=await fixture(),a=rolling(f);spentRoll(f,a);const ink=a.ink;
+ // #537 independently debits the sourced floor each moving roll frame, even
+ // while this collision fixture holds position below the next paint batch.
+ const perFrame=a.weapon.rollInkMinPerFrame*100;
+ for(let i=1;i<=30;i++){f.tick(a);assert.equal(a.weaponRunner.rolling,true);near(a.ink,ink-i*perFrame);}
  a.s3.recoverStopRemaining=1;spentRoll(f,a);const next=a.ink;a.intent.fire=false;
  for(let i=1;i<59;i++){f.tick(a);near(a.ink,next);}f.tick(a);assert.ok(a.ink>next);
  a.reset();assert.equal(a.s3.rollerRefillMode,false);
@@ -119,10 +123,10 @@ test('#350: real tap/held repeated horizontal/vertical flicks use firing gear at
  }
 });
 test('#350: idle walking retains normal gear, while reset, re-equip, enemy ink and other actors do not compound it',async()=>{
- const f=await fixture(),a=f.make('roller'),b=f.make('roller');a.s3.loadout=runLoadout(57);a.setWeapon('roller');near(a.weaponRunner.moveSpeed()/b.weaponRunner.moveSpeed(),1.5);
+ const f=await fixture({realProjectiles:true}),a=f.make('roller'),b=f.make('roller');a.s3.loadout=runLoadout(57);a.setWeapon('roller');near(a.weaponRunner.moveSpeed()/b.weaponRunner.moveSpeed(),1.5);
  for(let i=0;i<3;i++){a.weaponRunner.update(DT,{firePressed:true});near(a.weaponRunner.moveSpeed(),2.88*1.25);a.reset();a.grounded=true;a.setWeapon('roller');near(a.weaponRunner.moveSpeed(),f.PLAYER.runSpeed*1.5);}
  a.weaponRunner.update(DT,{firePressed:true});a.grounded=true;a.intent.fire=true;a.intent.move.set(1,0,0);a.vel.set(a.s3.modifiers.enemyShotSpeed,0,0);a._horizontal(DT,false,true);near(a.vel.x,a.s3.modifiers.enemyShotSpeed);near(b.weaponRunner.moveSpeed(),f.PLAYER.runSpeed);
- a.setWeapon('shooter');near(a.weaponRunner.moveSpeed(),f.PLAYER.runSpeed*1.5);a.weaponRunner.firingT=.2;near(a.weaponRunner.moveSpeed(),a.weapon.moveSpeedFiring*1.25);
+ a.setWeapon('shooter');near(a.weaponRunner.moveSpeed(),f.PLAYER.runSpeed*1.5);emitMainShot(f,a);near(a.weaponRunner.moveSpeed(),a.weapon.moveSpeedFiring*1.25);
 });
 test('#350: previous firing pose cannot change the same flick-phase gear ratio',async()=>{
  const f=await fixture(),a=f.make('roller'),b=f.make('roller');for(const x of[a,b]){x.s3.loadout=runLoadout(10);x.setWeapon('roller');}

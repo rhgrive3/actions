@@ -172,7 +172,10 @@ test('the extracted 45-frame no-gear surge charge reaches full exactly on frame 
   a.form = 'squid'; a.intent.squid = true; a.intent.jump = true; a.climbing = true; a._updateClimb = () => {};
   f.tick(a, 44); assert.ok(a.s3.surge.charge < 1); close(a.anim.surgeCharge, 44 / 45);
   f.tick(a); assert.equal(a.s3.surge.charge, 1);
-  a.intent.jump = false; f.tick(a); assert.equal(a.s3.surge.phase, 'burst'); assert.ok(a.s3.surge.armorTime > 0);
+  a.intent.jump = false; f.tick(a); assert.equal(a.s3.surge.phase, 'burst');
+  assert.equal(a.s3.surge.armorTime, 0); assert.equal(a.s3.surge.armorPending, true);
+  a._ledgePop(new f.THREE.Vector3(0, 0, -1));
+  close(a.s3.actions.armor.armorTime, f.profile.movement.surge.armorTime);
 });
 
 test('charge visuals and active actions clear on form switch, jump takeover and reset', async () => {

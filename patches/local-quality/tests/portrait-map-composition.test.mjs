@@ -8,8 +8,9 @@ async function rig(dead=false,online=false){
  const mobile=input.mobile;Object.assign(mobile,{active:true,visible:true,root:{isConnected:true,classList:{contains:n=>n==='is-active',toggle(){}},querySelectorAll:()=>[]}});input.lastDevice='touch';mobile.gyro.enabled=true;
  let portrait=false;const env={document:{documentElement:{classList:{contains:n=>n==='iw-touch'}}},matchMedia:()=>({matches:portrait})};
  const game={input,match:m,s3Clock:{reset(){}}};if(dead){a.alive=false;a.hp=0;}
- const tick=()=>m.updateController(1/60);
- input.keys.add('Tab');tick();mobile.gyro.dYaw=.13;mobile.gyro.dPitch=.09;tick();assert(c._mapGyroYaw!==0);
+ const tick=()=>{m.updateController(1/60);input.endFrame();};
+ input.keys.add('Tab');input.pressed.add('Tab');tick();assert.equal(c.mapHeld,true,'native map toggle accepts the fresh Tab edge');
+ mobile.gyro.dYaw=.13;mobile.gyro.dPitch=.09;tick();assert.equal(c._mapGyroYaw,.13,'fixture queued real yaw before portrait');assert.equal(c._mapGyroPitch,.09,'fixture queued real pitch before portrait');
  return{f,input,a,c,camera,m,mobile,game,env,tick,portrait:v=>{portrait=v;}};
 }
 for(const dead of [false,true])for(const online of [false,true])test(`portrait clears queued map motion before renderer/clock (${dead?'dead':'alive'},${online?'online':'offline'})`,async()=>{
@@ -22,6 +23,8 @@ for(const dead of [false,true])for(const online of [false,true])test(`portrait c
 
 test('old portrait guard leaves real controller map motion queued before a skipped offline tick',async()=>{
  const h=await rig(false,false),raw=fs.readFileSync(new URL('../portrait-guard.mjs',import.meta.url),'utf8');
- const old=vm.runInNewContext(raw.replace('if(blocked||s.released)m.controller.clearMapGyro?.();','').replace('m.controller.navigationEnabled=false;','').replaceAll('export ','')+';syncPortraitFrame');
+ const hooks=['if(blocked||s.released)m.controller.clearMapGyro?.();','m.controller.navigationEnabled=false;'];
+ for(const hook of hooks)assert.equal(raw.split(hook).length,2,'negative control must remove exactly one live guard hook');
+ const old=vm.runInNewContext(hooks.reduce((source,hook)=>source.replace(hook,''),raw).replaceAll('export ','')+';syncPortraitFrame');
  h.portrait(true);old(h.game,h.f.G,h.env);assert.equal(h.c.navigationEnabled,true);assert.deepEqual({...h.c.consumeMapGyro()},{yaw:.13,pitch:.09});
 });

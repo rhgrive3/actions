@@ -19,14 +19,14 @@ export const DEFAULT_AIM_PROFILES = Object.freeze({
   tv: Object.freeze({
     gyro: false,
     gyroSens: 0,
-    padSensitivity: 1.0,
+    padSensitivity: 0,
     invertY: false,
     invertX: false,
   }),
   handheld: Object.freeze({
     gyro: false,
     gyroSens: 0,
-    padSensitivity: 1.0,
+    padSensitivity: 0,
     invertY: false,
     invertX: false,
   }),
@@ -37,14 +37,14 @@ export function createDefaultAimProfiles() {
     tv: {
       gyro: false,
       gyroSens: 0,
-      padSensitivity: 1.0,
+      padSensitivity: 0,
       invertY: false,
       invertX: false,
     },
     handheld: {
       gyro: false,
       gyroSens: 0,
-      padSensitivity: 1.0,
+      padSensitivity: 0,
       invertY: false,
       invertX: false,
     },
@@ -55,7 +55,7 @@ export function sanitizeAimProfile(profile, fallback = {}) {
   return {
     gyro: profile?.gyro != null ? Boolean(profile.gyro) : (fallback.gyro ?? false),
     gyroSens: Number.isFinite(Number(profile?.gyroSens)) ? Number(profile.gyroSens) : (fallback.gyroSens ?? 0),
-    padSensitivity: Number.isFinite(Number(profile?.padSensitivity)) ? Number(profile.padSensitivity) : (fallback.padSensitivity ?? 1.0),
+    padSensitivity: Number.isFinite(Number(profile?.padSensitivity)) ? Number(profile.padSensitivity) : (fallback.padSensitivity ?? 0),
     invertY: profile?.invertY != null ? Boolean(profile.invertY) : (fallback.invertY ?? false),
     invertX: profile?.invertX != null ? Boolean(profile.invertX) : (fallback.invertX ?? false),
   };

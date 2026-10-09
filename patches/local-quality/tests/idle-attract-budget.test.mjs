@@ -1,4 +1,4 @@
-import {effectiveQuality} from '../../../inkwave-public/src/config.js';
+import { effectiveQuality } from '../../../inkwave-public/src/config.js';
 import test from 'node:test';
 import { updateSplatGhosts } from '../../splatoon3/issue-284-adapter.mjs';
 import assert from 'node:assert/strict';
@@ -14,9 +14,9 @@ const source = adaptRange('src/main.js', adaptNetworkSource('src/main.js', compo
 const start = source.indexOf('  _frame(dt) {');
 const end = source.indexOf('\n  // continuous sounds', start);
 assert.ok(start >= 0 && end > start, 'composed installed Game._frame exists');
-const makeFrame = G => new Function('updateSplatGhosts', 'G', 'runSimulation', 'pausedWorldFrame', 'idleAttractMenuBudget', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame', 'effectiveQuality',
+const makeFrame = (G, document) => new Function('effectiveQuality','document', 'updateSplatGhosts', 'G', 'runSimulation', 'pausedWorldFrame', 'idleAttractMenuBudget', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame',
   `return class Frame {\n${source.slice(start, end)}\n}`)
-  (updateSplatGhosts, G, runSimulation, pausedWorldFrame, idleAttractMenuBudget, performance, (a, b) => b, x => x, {}, syncPortraitFrame,effectiveQuality);
+  (effectiveQuality, document, updateSplatGhosts, G, runSimulation, pausedWorldFrame, idleAttractMenuBudget, performance, (a, b) => b, x => x, {}, syncPortraitFrame);
 
 const vector = () => ({ copy() { return this; }, set() { return this; }, getWorldDirection() { return this; } });
 function fixture({ mode = 'menu', attract = true, touch = true, quality = 'high', fullFrame = false } = {}) {
@@ -39,7 +39,8 @@ function fixture({ mode = 'menu', attract = true, touch = true, quality = 'high'
     updateController(dt) { calls.controllerDt.push(dt); },
     update(dt) { calls.matchDt.push(dt); calls.botUpdates += 8; calls.actorUpdates += 8; },
   };
-  const game = new (makeFrame(G))();
+  const document = { hidden: false };
+  const game = new (makeFrame(G, document))();
   Object.assign(game, {
     match, mobile: { touch }, settings: { quality }, showcase: { fullFrame, mode: null, update: count('showcaseUpdate'), render: count('showcaseRender') },
     input: { padPressed: new Set(), _padEpoch: 0, pollPad() {}, endFrame: count('inputEnd') },
@@ -57,7 +58,7 @@ function fixture({ mode = 'menu', attract = true, touch = true, quality = 'high'
   });
   installClock({ G });
   return {
-    G, game, calls,
+    G, game, calls, document,
     frame(dt) {
       game._frame(dt);
       if (game._menuAttractFrame) calls.renderDt.push(game._menuAttractFrameDelta);
@@ -175,5 +176,34 @@ test('composed offline pause compares fixed controls without enumerating setting
     if (hadWidth) globalThis.innerWidth = width; else delete globalThis.innerWidth;
     if (hadHeight) globalThis.innerHeight = height; else delete globalThis.innerHeight;
     if (hadPixelRatio) globalThis.devicePixelRatio = pixelRatio; else delete globalThis.devicePixelRatio;
+  }
+});
+
+
+test('#1166 composed hidden frames suspend all world draws and resume without suspending online simulation', () => {
+  for (const opts of [
+    { mode: 'menu', attract: true, touch: true },
+    { mode: 'match', attract: false, touch: false },
+    { mode: 'match', attract: false, touch: true, fullFrame: true },
+  ]) {
+    const h = fixture(opts);
+    h.G.netm = {}; // authority continues independently of the visual gate
+    h.document.hidden = true;
+    for (let i = 0; i < 60; i++) h.frame(1 / 60);
+    assert.equal(h.calls.worldRender || 0, 0);
+    assert.equal(h.calls.showcaseRender || 0, 0);
+    assert.equal(h.G.renderer.shadowMap.needsUpdate, false);
+    for (const key of ['fx', 'environment', 'paint', 'screenfx', 'decor', 'props', 'rig'])
+      assert.equal(h.calls[key].length, 0, key + ' is hidden');
+    assert.equal(h.calls.network, 60);
+    assert.ok(h.calls.matchDt.length > 0, 'online Match still ticks');
+    assert.ok(Math.abs(h.G.time - 1) < 1e-9, 'authoritative clock advances');
+    h.document.hidden = false;
+    for (let i = 0; i < 3; i++) h.frame(1 / 60);
+    assert.equal(h.calls.showcaseRender, 3);
+    if (!opts.fullFrame) {
+      assert.ok(h.calls.worldRender > 0);
+      assert.ok(h.calls.paint.length > 0, 'queued paint flushes on restoration');
+    }
   }
 });

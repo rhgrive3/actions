@@ -143,12 +143,14 @@ test('physical checkout storage accepts CI ownership and rejects temporary paths
 });
 
 test('all declared original input namespaces retain exact committed byte identity (acceptance logic only)', () => {
-  const keys = ['upstream/src/game/character.js', 'patch/runtime/walk.mjs', 'touch-layout/runtime/install.mjs', 'reliability/runtime/install.mjs', 'network-replication/adapter.mjs'];
+  const keys = ['upstream/src/game/character.js', 'patch/runtime/walk.mjs', 'touch-layout/runtime/install.mjs', 'reliability/runtime/install.mjs', 'network-replication/adapter.mjs', 'build-script/lib/inkwave-build-only-modules.mjs', 'build-script/lib/inkwave-worker-compaction.mjs', 'build-script/inkwave-source-composition.mjs'];
   const files = Object.fromEntries(keys.map(key => [key, hash]));
   const manifest = { files, inputHash: crypto.createHash('sha256').update(JSON.stringify(files)).digest('hex') };
   const receipts = keys.map(key => ({ key, file: catalogInputPath(key), sha256: hash, committedSHA256: hash, bytes: 100 }));
   assert.equal(receipts[3].file, 'patches/reliability/runtime/install.mjs');
   assert.equal(receipts[4].file, 'patches/network-replication/adapter.mjs');
+  assert.equal(receipts[5].file, 'scripts/lib/inkwave-build-only-modules.mjs');
+  assert.throws(() => validateCatalogInputReceipts(manifest, receipts.map(r => r.key.startsWith('build-script/') ? { ...r, committedSHA256: 'b'.repeat(64) } : r)), /committed source input identity build-script/);
   assert.throws(() => validateCatalogInputReceipts(manifest, receipts.map(r => r.key.startsWith('network-replication/') ? { ...r, committedSHA256: 'b'.repeat(64) } : r)), /committed source input identity network-replication/);
   assert.doesNotThrow(() => validateCatalogInputReceipts(manifest, receipts));
   assert.throws(() => validateCatalogInputReceipts(manifest, receipts.slice(0, -1)), /source input denominator/);

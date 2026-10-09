@@ -147,7 +147,9 @@ test('native recovery age transfers early-hit, already-elapsed, and clamped fini
   const sender = owner.makeNetMatch(owner.makeSession('p2', 'p2'));
   bindActors(owner, sender, sources);
   const packet = sendTick(sender);
-  assert.deepEqual(packet.a.map(row => row[23][4]), [0.2, delay + 0.2, 60]);
+  assert.ok(packet.a.every(row => row[23][4][0] === 'inkwave-protection-v1'),
+    'recovery age shares the current protection-transfer slot');
+  assert.deepEqual(packet.a.map(row => row[23][4][1]), [0.2, delay + 0.2, 60]);
 
   const host = await runtimeFixture();
   const local = makeActor(host, { nid: 29, owner: 'host', team: 1 });

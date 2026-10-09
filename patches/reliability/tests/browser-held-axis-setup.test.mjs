@@ -10,7 +10,7 @@ async function run(prime){
  const f=await fixture(),input=new f.Input({}),a=f.make(),ally=f.make(),camera={yaw:.4,pitch:.2},c=new f.PlayerController(a,camera,input);c.computeAim=()=>{};a.alive=false;
  const M=vm.runInNewContext(`class M{${part(source('src/game/match.js'),'  updateController(dt) {','\n  _judge() {')}};M`,{blockExpiredGuestInput});
  const match={state:'playing',paused:false,attract:false,local:a,controller:c};f.G.match=match;f.G.actors=[a,ally];f.G.input=input;f.G.level.spawnPads=[new f.THREE.Vector3()];
- input.lastDevice='kbm';input.keys.add('Tab');M.prototype.updateController.call(match,DT);
+ input.lastDevice='kbm';input.keys.add('Tab');input.pressed.add('Tab');M.prototype.updateController.call(match,DT);
  f.setPads([makePad('previous',[0,0,0,0])]);input.pollPad();f.setPads([]);input.pollPad();
  const pad=makePad('respawn-intent',[.9,-.5,.8,.7]);f.setPads([pad]);input.pollPad();const initial={device:input.lastDevice,blocked:input._padTakeoverAxes};
  if(prime){pad.axes=[0,0,0,0];input.pollPad();pad.axes=[.9,-.5,.8,.7];input.pollPad();}
