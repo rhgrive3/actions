@@ -23,9 +23,15 @@ export const adaptConstrainedSource = (rel, code) => adaptSpecialWater(rel, adap
 export async function fixture(options = {}) {
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
   const { adapt = adaptConstrainedSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
-    fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false, vmPerformance = performance } = typeof options === 'string' ? {} : options;
+    fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false,
+    vmPerformance = performance, vmMathRandom = null } = typeof options === 'string' ? {} : options;
   const context = vm.createContext({ console, performance: vmPerformance, URL, URLSearchParams, TextEncoder, TextDecoder,
     setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
+  if (typeof vmMathRandom === 'function') {
+    context.__inkwaveFixtureMathRandom = vmMathRandom;
+    vm.runInContext('Math.random = globalThis.__inkwaveFixtureMathRandom', context);
+    delete context.__inkwaveFixtureMathRandom;
+  }
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
