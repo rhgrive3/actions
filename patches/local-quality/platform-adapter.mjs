@@ -41,26 +41,19 @@ export function adaptPlatformSource(rel, code) {
     return install(code, 'mobile-platform', 'installMobilePlatform', 'MobileInput');
   }
   if (rel === 'src/core/input.js') {
-    const reliabilityOwner = [
-      '    const _resetActiveInput = () => {',
-      '      // Drop held keys, pending key edges, mouse held/pending edges and',
-      '      // look deltas so no input from the inactive/hidden window is replayed.',
-      '      this.keys.clear(); this.pressed.clear();',
-      '      this.mouse.left = this.mouse.right = false;',
-      '      this.mouse.leftPressed = this.mouse.rightPressed = false;',
-      '      this.mouse.dx = 0; this.mouse.dy = 0;',
-      '      // padPrev stays: a pad button held across blur/hidden must not re-trigger when polling resumes.',
-      '      this.padPressed.clear();',
-      '    };',
-      "    window.addEventListener('blur', _resetActiveInput);",
-      "    if (typeof document !== 'undefined') {",
-      "      document.addEventListener('visibilitychange', () => { if (document.hidden) _resetActiveInput(); });",
-      '    }',
-      "    window.addEventListener('pagehide', _resetActiveInput);",
-    ].join('\n');
-    if (code.includes(reliabilityOwner)) {
-      code = replaceOnce(code, reliabilityOwner,
-        '    // Stale input is cleared by the PlatformLifecycle owner.', 'input reliability lifecycle owner');
+    const helperStart = '    const _resetActiveInput = () => {';
+    const helperEnd = "    window.addEventListener('pagehide', _resetActiveInput);";
+    const hs = code.indexOf(helperStart), he = hs >= 0 ? code.indexOf(helperEnd, hs) : -1;
+    if (hs >= 0 || he >= 0) {
+      if (hs < 0 || he < hs || code.indexOf(helperStart, hs + helperStart.length) >= 0 ||
+          code.indexOf(helperEnd, he + helperEnd.length) >= 0)
+        throw new Error('INKWAVE platform anchor mismatch: input reliability lifecycle owner');
+      const ownerBlock = code.slice(hs, he + helperEnd.length);
+      for (const proof of ['this.keys.clear()', 'this.pressed.clear()', 'this.padPressed.clear()',
+        "addEventListener('blur'", "addEventListener('visibilitychange'", "addEventListener('pagehide'"])
+        if (!ownerBlock.includes(proof)) throw new Error('INKWAVE platform anchor mismatch: input reliability lifecycle proof');
+      code = code.slice(0, hs) + '    // Stale input is cleared by the PlatformLifecycle owner.' +
+        code.slice(he + helperEnd.length);
     } else {
       const blocks = [...code.matchAll(/    window\.addEventListener\('blur', \(\) => \{[\s\S]*?\n    \}\);/g)];
       if (blocks.length !== 1 || !blocks[0][0].includes('this.keys.clear()') || !blocks[0][0].includes('this.padPressed.clear()')) throw new Error('INKWAVE platform anchor mismatch: input blur owner');
