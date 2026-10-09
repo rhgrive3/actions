@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { fixture } from './source-fixture.mjs';
 import { installRespawnLifecycle, advanceSpawnProtection, spawnProtectionRemaining, sampleRespawnCountdown, beginInitialSquidSpawn } from '../runtime/respawn-lifecycle.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
+import { emptyLoadout } from '../runtime/gear.mjs';
 const patched = process.env.INKWAVE_RESPAWN_BASELINE !== '1';
 async function setup() {
   const f = await fixture(); if (patched) installRespawnLifecycle(f, f.profile);
@@ -36,15 +37,19 @@ function installUnsupportedLandingStage(f) {
   f.G.level = level; f.G.physics = new f.Physics(level);
   return level;
 }
-test('post-splat gauge including Special Saver survives native respawn; initial spawn/reset still clears', async () => {
+test('post-splat gauge including equipped Special Saver survives Squid Spawn; initial spawn/reset still clears', async () => {
   const f = await setup(), a = f.make(), observed = [];
+  a.isLocal = false; f.G.match.mode = 'turf'; f.G.match.opts = {};
   f.on('respawn', ({ actor }) => { if (actor === a) observed.push(actor.special); });
-  for (const [initial, saver] of [[160,.5],[100,.8],[0,1]]) {
-    a.reset(); a.special = initial; a.s3.modifiers.specialSaver = saver;
+  for (const [initial, ap] of [[160,0],[100,10],[80,30],[0,30]]) {
+    a.reset(); a.s3.loadout = emptyLoadout();
+    for (let piece = 0; piece < ap / 10; piece++) a.s3.loadout[piece].main = 'specialSaver';
+    a.setWeapon(a.weaponId); const saver = a.s3.modifiers.specialSaver;
+    a.special = initial;
     a.splat(null); const retained = a.special; assert.equal(retained, initial*saver);
     a.hp = 1; a.ink = 1; a.respawn(); assert.equal(a.special, retained); assert.equal(observed.at(-1), retained);
-    assert.equal(a.hp, 100); assert.equal(a.ink, 100); assert.equal(a.specialActive, null);
-    a.s3.modifiers.specialSaver = saver; a.splat(null); a.respawn(); assert.equal(a.special, retained*saver);
+    assert.equal(a.s3.squidSpawn.phase, 'aim'); assert.equal(a.hp, 100); assert.equal(a.ink, 100); assert.equal(a.specialActive, null);
+    a.splat(null); a.respawn(); assert.equal(a.special, retained*saver);
     a.spawnAt(new f.THREE.Vector3(), 0); assert.equal(a.special, 0); assert.equal(a.s3.spawnArmor, undefined);
   }
 });
@@ -95,12 +100,30 @@ test('all held action keys rearm independently, stale press ordering disappears,
   const bot=f.make('roller');bot.isBot=true;bot.splat(null);bot.respawn();assert.equal(bot.s3.respawnRearm,undefined);
 });
 test('HUD samples final actor timer after gear wrapper, ignores independent FX time and isolates players', async () => {
-  const f=await setup(),a=f.make(),b=f.make();const killer=f.make();killer.team=1;a.s3.modifiers.quickRespawnReduction=4;a.splat(killer);a.respawn();
+  const f=await setup(),a=f.make(),b=f.make();const killer=f.make();killer.team=1;a.isLocal=false;a.s3.loadout=emptyLoadout();a.s3.loadout[0].main='quickRespawn';a.setWeapon(a.weaponId);const reduction=a.s3.modifiers.quickRespawnReduction;assert.ok(reduction>0);a.splat(killer);a.respawn();assert.equal(a.s3.quickRespawnHistory.seenEnemyDeath,true);
   let st;f.on('splatted',({victim})=>{if(victim===a)st={actor:a,end:5.5,total:0,circumference:100,ring:{style:{}}};});
-  a.s3.modifiers.quickRespawnReduction=4;a.splat(killer);assert.ok(Math.abs(a.respawnTimer-(f.PLAYER.respawnTime-4))<1e-10);const timer=a.respawnTimer;assert.equal(sampleRespawnCountdown(st,0),a.respawnTimer);assert.equal(st.ring.style.strokeDashoffset,'100');
+  a.splat(killer);assert.ok(Math.abs(a.respawnTimer-(f.PLAYER.respawnTime-reduction))<1e-10);const timer=a.respawnTimer;assert.equal(sampleRespawnCountdown(st,0),a.respawnTimer);assert.equal(st.ring.style.strokeDashoffset,'100');
   b.respawnTimer=99;assert.equal(sampleRespawnCountdown(st,200),a.respawnTimer,'render FX clock cannot consume authoritative time');
   a.respawnTimer=timer/2;assert.equal(sampleRespawnCountdown(st,0),timer/2);assert.ok(Math.abs(Number(st.ring.style.strokeDashoffset)-50)<1e-10);
   a.alive=true;assert.equal(sampleRespawnCountdown(st,0),0);assert.equal(sampleRespawnCountdown({end:4},1),3,'preview fallback retains old behavior');
+});
+test('#93 Turf Squid Spawn preserves Quick Respawn history through launch and feeds the gear-adjusted HUD timer', async () => {
+  const f=await setup(),a=f.make(),killer=f.make();a.isLocal=false;killer.team=1;
+  f.G.match.mode='turf';f.G.match.opts={};installLandingStage(f);
+  a.s3.loadout=emptyLoadout();a.s3.loadout[0].main='quickRespawn';a.setWeapon(a.weaponId);
+  const reduction=a.s3.modifiers.quickRespawnReduction;assert.ok(reduction>0);
+  a.splat(killer);assert.equal(a.s3.quickRespawnHistory.seenEnemyDeath,true);assert.equal(a.s3.quickRespawnHistory.splats,0);
+  a.respawn();assert.equal(a.s3.squidSpawn.phase,'aim');
+  assert.equal(a.s3.quickRespawnHistory.seenEnemyDeath,true,'Squid Spawn keeps post-death gear history across spawnAt reset');assert.equal(a.s3.quickRespawnHistory.splats,0);
+  a.intent.fire=true;f.tick(a);a.intent.fire=false;assert.equal(a.s3.squidSpawn.phase,'flight');
+  for(let i=0;i<90&&a.s3.squidSpawn;i++)f.tick(a);
+  assert.equal(a.s3.squidSpawn,undefined);assert.equal(a.grounded,true);
+  let state;f.on('splatted',({victim})=>{if(victim===a)state={actor:a,end:5.5,total:0,circumference:100,ring:{style:{}}};});
+  a.splat(killer);const expected=f.PLAYER.respawnTime-reduction;
+  assert.ok(Math.abs(a.respawnTimer-expected)<1e-10,'Quick Respawn reduction survives the completed Squid Spawn');
+  assert.equal(a.s3.lastDeathGear.quickReduction,reduction);
+  assert.equal(sampleRespawnCountdown(state,250),expected,'HUD reads the final gear-adjusted actor timer');
+  assert.equal(state.ring.style.strokeDashoffset,'100');
 });
 test('30/60/120 render schedules preserve armor and retained gauge boundaries', async () => {
   const results=[];

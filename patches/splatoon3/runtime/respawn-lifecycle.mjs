@@ -131,13 +131,22 @@ export function installRespawnLifecycle(api, profile) {
   }
   function begin(actor, initial = false) {
     if (!actor || G.match?.mode !== 'turf' || G.match?.opts?.range) return false;
-    const wasDead = !actor.alive, special = actor.special, p = slotPoint(actor), yaw = actor.team === 0 ? 0 : Math.PI;
+    const wasDead = !actor.alive, special = actor.special,
+      quickRespawnHistory = actor.s3?.quickRespawnHistory, splatsThisLife = actor.s3?.splatsThisLife,
+      p = slotPoint(actor), yaw = actor.team === 0 ? 0 : Math.PI;
     actor._respawnLifecycle = { wasDead, special };
     try { const point = actor.pos.clone().set(p.x,p.y,p.z); spawnAt.call(actor, point, yaw); }
     finally { delete actor._respawnLifecycle; }
     // Native spawnAt resets special; a post-death Squid Spawn must preserve the
     // already-finalized death penalty just like the legacy respawn wrapper did.
-    if (wasDead) actor.special = special;
+    if (wasDead) {
+      actor.special = special;
+      // The native gear wrapper also carries Quick Respawn's no-splat history
+      // across spawnAt's reset. Squid Spawn calls spawnAt directly, so keep that
+      // post-death gear state here while initial spawn/reset still starts clean.
+      if (quickRespawnHistory) actor.s3.quickRespawnHistory = quickRespawnHistory;
+      if (Number.isFinite(splatsThisLife)) actor.s3.splatsThisLife = splatsThisLife;
+    }
     setPos(actor, p); actor.yaw = actor.aimYaw = yaw; actor.invuln = Infinity; actor.grounded = false; actor.vel.set(0,0,0);
     actor.s3 ||= {}; actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = null;
     actor.s3.squidSpawn = { phase:'aim', initial:!!initial, wait:0, fireArmed:!actor.intent.fire, target:targetFor(actor) ?? slotTarget(actor) };
