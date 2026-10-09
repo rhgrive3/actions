@@ -68,14 +68,22 @@ export function createLazyComposerTarget(createNative, {
     },
     setPixelRatio(value) {
       assertLive();
+      const changed = state.pixelRatio !== value;
       state.pixelRatio = value;
-      native?.setPixelRatio(value);
+      if (native && changed) {
+        // EffectComposer.setPixelRatio() resizes both targets itself. Renderer
+        // calls setSize() immediately after this during dynamic resolution;
+        // avoid disposing those same attachments again when setSize receives
+        // the unchanged logical viewport.
+        native.setPixelRatio(value);
+      }
     },
     setSize(nextWidth, nextHeight) {
       assertLive();
+      const changed = state.width !== nextWidth || state.height !== nextHeight;
       state.width = nextWidth;
       state.height = nextHeight;
-      native?.setSize(nextWidth, nextHeight);
+      if (native && changed) native.setSize(nextWidth, nextHeight);
     },
     render(...args) {
       assertLive();
@@ -125,6 +133,12 @@ const BASELINE =
   '    comp.setPixelRatio(pr);\n' +
   '    comp.setSize(w, h);';
 
+const DYNAMIC_PIXEL_RATIO_BASELINE =
+  '    const pr = Math.min(window.devicePixelRatio || 1, this.q.pixelRatio, mobileCap) * s;';
+const DYNAMIC_PIXEL_RATIO_STABLE =
+  '    // Keep integral backing-buffer sizes integral despite floating point multiplication.\n' +
+  '    const pr = Math.round(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio, mobileCap) * s * 1e6) / 1e6;';
+
 const HELPER_ANCHOR = 'const BLOOM = [0.28, 0.45, 2.4];';
 const HELPER_SOURCE = `${createLazyComposerTarget.toString()}\n\n`;
 const LAZY_COMPOSER =
@@ -143,10 +157,13 @@ const LAZY_COMPOSER =
 export function adaptComposerTarget(rel, code, once) {
   if (rel !== 'src/core/renderer.js') return code;
   code = once(code, HELPER_ANCHOR, `${HELPER_SOURCE}${HELPER_ANCHOR}`, '#642 lazy composer helper');
-  return once(code, BASELINE, LAZY_COMPOSER, '#642 lazy HalfFloat composer targets');
+  code = once(code, BASELINE, LAZY_COMPOSER, '#642 lazy HalfFloat composer targets');
+  return once(code, DYNAMIC_PIXEL_RATIO_BASELINE, DYNAMIC_PIXEL_RATIO_STABLE, '#642 stable dynamic-resolution target dimensions');
 }
 
 // Exact inverse used by the focused baseline regression.
 export function revertComposerTarget(code) {
-  return code.replace(LAZY_COMPOSER, BASELINE).replace(HELPER_SOURCE, '');
+  return code.replace(DYNAMIC_PIXEL_RATIO_STABLE, DYNAMIC_PIXEL_RATIO_BASELINE)
+    .replace(LAZY_COMPOSER, BASELINE)
+    .replace(HELPER_SOURCE, '');
 }
