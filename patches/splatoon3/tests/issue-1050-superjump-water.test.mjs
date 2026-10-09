@@ -275,10 +275,17 @@ test('#1050 late-flight crossing of the lethal boundary commits one owner water 
 });
 
 test('#1050 dry low terrain below sea level and a normal jump stay unchanged', async t => {
-  const f = await boot({ extra: [{ kind: 'box', min: [8, -2, 8], max: [20, -1.5, 20] }] }); t.after(f.close);
+  // Build a real open trench. The default full-width y=0 slab would put the
+  // low start inside an overlapping floor/ceiling, so it cannot be a valid
+  // dry-ground control for native capsule/step-clearance physics.
+  const f = await boot({ floor: false, extra: [
+    { kind: 'box', min: [-5, -.5, -5], max: [20, 0, 5] },
+    { kind: 'box', min: [8, -2, 8], max: [20, -1.5, 20] },
+  ] }); t.after(f.close);
   const deaths = track(f);
   // Dry trench: y < fallDeathY but groundHeight(...) !== -Infinity → safe.
   const a = f.make({ pos: [14, -1.46, 14] });
+  assert.equal(f.G.level.groundHeight(14,14),-1.5,'the trench surface is exposed below sea level');
   assert.equal(a.superJump(new f.THREE.Vector3(0, 0, 0)), true, 'a dry position below sea level may start a jump');
   let guard = 0, sawLethalY = false;
   while (a.superJumpState && guard++ < 1200) { f.tick(a); if (a.alive && a.pos.y < LETHAL_Y) sawLethalY = true; }

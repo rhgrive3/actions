@@ -16,6 +16,7 @@
     "s3AttackGroundAccel": 72,
     "respawnTime": 8.5,
     "s3HumanoidHurtRadius": 0.35,
+    "s3SwimHurtRadius": 0.675,
     "s3HumanoidHurtHeight": 1.65,
     "s3TerrainDistanceScale": 1,
     "s3HumanoidTerrainRadiusRaw": 0.35,
@@ -46,7 +47,9 @@
       "swimFirstShotDelay": 0.2,
       "postFireSwimLock": 0.06666666666666667,
       "jumpSpreadHold": 0.4166666666666667,
-      "jumpSpreadRecoverEnd": 1.1666666666666667
+      "jumpSpreadRecoverEnd": 1.1666666666666667,
+      "combatRange": 11.56,
+      "matchmakingRange": 12.9
     },
     "dualies": {
       "inkPerShot": 0.72,
@@ -208,10 +211,15 @@
       "reticleDelayF": 5
     },
     "roller": {
+      "rollContactInterval": 0.4,
       "rollSpeed": 7.92,
       "rollBaseSpeed": 6.4799999999999995,
       "rollDashTime": 1.5,
       "rollInkPerMeter": 0.7575757575757576,
+      "rollInkMinPerFrame": 0.0002,
+      "rollInkMaxPerFrame": 0.001,
+      "rollInkMinSpeed": 1.2,
+      "rollInkMaxSpeed": 7.92,
       "flickWindup": 0.35,
       "flickInk": 8.5,
       "moveSpeedFiring": 2.88,
@@ -220,6 +228,10 @@
       "flickSpreadDeg": 36,
       "flickDamageNear": 150,
       "flickDamageFar": 35,
+      "depletionInkRate": 0.5,
+      "flickDepletionDrops": 3,
+      "verticalDepletionDrops": 3,
+      "depletionDamageRate": 0.25,
       "flickDamageBands": [
         [
           4.2,
@@ -276,7 +288,8 @@
         "mainSpeedBase": 1.05,
         "halfAngleDegrees": 4,
         "mainWidthReference": 0.8,
-        "widthRatio": 0.5
+        "widthRatio": 0.5,
+        "depletionSpeedRate": 0.5
       },
       "ballistics": {
         "endSpeed": null,
@@ -620,7 +633,7 @@
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
       "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
       "upstream acceleration/braking/turn/air-control/jump and landing feel",
-      "Splatling grounded pitch1.6deg uses the existing radial sampler with separate axes; S3 PDF, bias, air/IA correlations are unverified.",
+      "Splatling pitch1.6deg uses the existing radial sampler independently of horizontal ground/air/recovery spread; S3 PDF, bias and IA correlations are unverified.",
       "Roller near-unit count1 is corroborated by S3 unit research, not an inferred omitted BulletNum; velocity and width use relative mappings, sampler/absolute spawn calibration remains unverified.",
       "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated.",
       "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",

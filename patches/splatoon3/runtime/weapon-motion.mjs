@@ -90,17 +90,22 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
   const setWeapon = C.setWeapon, materials = C._updateMaterials, poseWeapon = C._poseWeapon;
   C._runner = function (s) {
     const r = runner.call(this, s);
-    if (this.s3WeaponMotionEnabled === false || !this.dual || !r?.s3Turret) return r;
+    const remoteTurret = this.s3RemoteTurretPose === true;
+    if (this.s3WeaponMotionEnabled === false || !this.dual || !r || !(r.s3Turret || remoteTurret)) return r;
     // Character already has the correct stationary dualies stance. Its old
     // lockT-only input misses continued turret fire after movement unlocks.
-    // The view is used solely by Character, never by the gameplay runner.
-    let view = views.get(r);
+    // Remote state is a Character-only view, never a gameplay-runner mutation.
+    const cached = views.get(this);
+    let view = cached?.runner === r ? cached.view : null;
     if (!view) {
+      const character = this;
       view = new Proxy(r, { get(target, name) {
         const value = Reflect.get(target, name, target);
-        return name === 'lockT' && target.s3Turret ? Math.max(EPS, value || 0) : value;
+        if (name === 's3Turret' && character.s3RemoteTurretPose === true) return true;
+        return name === 'lockT' && (target.s3Turret || character.s3RemoteTurretPose === true)
+          ? Math.max(EPS, value || 0) : value;
       } });
-      views.set(r, view);
+      views.set(this, { runner: r, view });
     }
     return view;
   };
@@ -145,7 +150,8 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
   };
   C._poseDodge = function (P, elapsed) {
     const r = runner.call(this);
-    if (this.s3WeaponMotionEnabled !== false && r && !r.dodge && !(r.lockT > 0) && !r.s3Turret) {
+    if (this.s3WeaponMotionEnabled !== false && r && !r.dodge && !(r.lockT > 0) && !r.s3Turret
+        && this.s3RemoteTurretPose !== true) {
       this.tumble = this.tumbleDrop = 0; return;
     }
     return dodge.call(this, P, elapsed);

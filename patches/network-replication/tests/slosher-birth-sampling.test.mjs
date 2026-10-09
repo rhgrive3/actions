@@ -156,7 +156,7 @@ test('birth samples the moving muzzle and current muzzle aim while retaining the
       assert.ok(Math.abs(angleDelta(b.yaw,b.preparedYaw))<1e-10,'aim changes do not replace the firing sweep direction');
       assert.equal(b.seed,b.preparedSeed,'birth does not consume a new random draw');
       assert.equal(e[3],'slosh');
-      assert.ok(close(e[11],s.delay,1e-12),`glob ${i} wire delay ${e[11]} keeps source delay ${s.delay}`);
+      assert.equal(e[11],0,`glob ${i} birth has no remaining delay`);
       assert.equal(e.at(-2),b.tick);
       for(let axis=0;axis<3;axis++){
         assert.ok(Math.abs(e[5+axis]-b.start[axis])<=0.00501,'wire position is the birth origin');
@@ -237,5 +237,32 @@ test('plain battle still samples births without network and invalid owner births
     assert.equal(r.births.length,0,`${invalid}: no invalid projectile reaches birth`);
     assert.equal(r.liveSlosh.length,0,`${invalid}: pending projectile is retired`);
     if(invalid==='reset')assert.ok(r.a._s3SlosherBirthEpoch>=2,'the composed native Actor.reset advances its generation');
+  }
+});
+
+test('#1152 two/three clients observe exactly nine true births at every display rate',async()=>{
+  for(const hz of [30,60,120])for(const peers of [1,2]){
+    const owner=await runVolley({hz,move:true,flipGroundAt:3,flipTo:false});
+    assert.equal(owner.packetsAtFire,0);assert.equal(owner.packets.length,9);
+    assert.deepEqual(Array.from(owner.packets,e=>e.at(-2)-1),[0,1,2,3,4,6,8,10,12]);
+    for(let observer=0;observer<peers;observer++){
+      const f=await fixture({network:true}),a=createActor(f,{owner:'p2',remote:true});f.G.actors.push(a);
+      const nm=f.makeNetMatch(f.makeSession());f.bind(nm,[a]);
+      for(const packet of owner.packets){
+        const wire=JSON.parse(JSON.stringify(packet));
+        nm.onMessage('p2',{k:'t',ts:wire[0],r:2,u:wire.at(-2),l:{0:0},e:[wire]});
+        const peer=nm.peers.get('p2');peer.tr=wire[0];nm.update(0);
+      }
+      const ghosts=f.projectiles.list.filter(p=>p.ghost&&p.type==='slosh');
+      assert.equal(ghosts.length,9,`${hz}Hz observer ${observer}`);
+      assert.equal(nm.out.filter(e=>e[1]==='p').length,0,'observer never authors ghosts');
+      for(let i=0;i<9;i++){
+        assert.equal(ghosts[i].delay,0);
+        assert.deepEqual(Array.from(ghosts[i].start.toArray()),Array.from(owner.packets[i].slice(5,8)));
+        assert.deepEqual(Array.from(ghosts[i].vel.toArray()),Array.from(owner.packets[i].slice(8,11)));
+      }
+      nm.dispose();
+    }
+    owner.nm.dispose();
   }
 });

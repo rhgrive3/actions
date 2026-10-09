@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
+import { adaptSource, replaceOnce } from '../adapter.mjs';
+import { adaptIssueBatch1171 } from '../issue-batch-1171-adapter.mjs';
 import { fixture } from './source-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -25,7 +26,9 @@ async function loadPaintSystem({ adapted, countNativeAllocations = false }) {
   function load(file) {
     if (modules.has(file)) return modules.get(file);
     const original = fs.readFileSync(file, 'utf8');
-    let source = adapted && file === PAINT_PATH ? adaptSource('src/world/paint.js', original) : original;
+    // Compare pooling with the same current Roller ownership formula on both sides.
+    let source = file === PAINT_PATH ? (adapted ? adaptSource('src/world/paint.js', original)
+      : adaptIssueBatch1171('src/world/paint.js', original, replaceOnce)) : original;
     if (countNativeAllocations && file === PAINT_PATH) {
       for (const [before, after] of [
         ['    const entries = [];', '    this._nativeSplatStats.entryArraysCreated++;\n    const entries = [];'],

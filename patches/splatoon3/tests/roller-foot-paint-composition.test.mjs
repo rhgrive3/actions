@@ -114,6 +114,10 @@ async function setup({ remote = false, y = 0, grounded = true, vertical = false,
   const paintCalls = [];
   const paint = Object.create(api.PaintSystem.prototype);
   paint.level = level;
+  // This release-geometry fixture has no atlas faces, but uses native CPU state.
+  paint.cell = 0.25;
+  paint.paintFaces = level.faces.filter(face => face.paintable);
+  paint._initGrid();
   paint.growing = [];
   paint._qb = [];
   // Match the current production constructor's native splat-pool ownership.
@@ -130,7 +134,8 @@ async function setup({ remote = false, y = 0, grounded = true, vertical = false,
   api.G.paint = paint;
   api.G.netm = null;
   const actor = makeActor(api, { remote, y, grounded, vertical, yaw });
-  const net = new api.NetMatch({ myId: remote ? 'remote' : 'owner', isHost: true }, {});
+  const net = new api.NetMatch({ myId: remote ? 'remote' : 'owner', hostId: 'owner', isHost: !remote,
+    _members: new Map([['owner', 'Owner'], ['remote', 'Remote']]) }, {});
   net.byNid.set(actor.nid, actor);
   api.G.netm = net;
   const projectiles = new api.Projectiles(api.G.scene);
@@ -175,8 +180,39 @@ function projectilePhysicsDigest(projectiles) {
 
 const mainSnapshots = {
   horizontal: { randomDraws: 124, sha256: '860b86cdb44a3383c84d960bfa43caea55df8534f394265bd7dcac48682b3040', physicsSha256: 'dabc60d166032b840ed07cf05e4fce3dcd0bc157d4bf7527b688aa956f532e49' },
-  vertical: { randomDraws: 30, sha256: '12ce562aae09f7f292c207211671ae352298f49ed7c0edd6464ef9ad09126bfc', physicsSha256: 'e0845aaa2a4d5ca278ba35c330c57cb234ad7be94cb2cf4749f3c93c8173debf' },
+  // Vertical provenance (stale a628 golden, kept for audit only): grounded y=0 full
+  // '12ce562aae09f7f292c207211671ae352298f49ed7c0edd6464ef9ad09126bfc' and physics
+  // 'e0845aaa2a4d5ca278ba35c330c57cb234ad7be94cb2cf4749f3c93c8173debf'. Current main
+  // intentionally emits trailEvery=0 via the #423 primary vertical-paint owner
+  // (patches/splatoon3/runtime/roller-vertical-paint.mjs:23) instead of the legacy
+  // random trail (1.8), so physics payloads differ only there. Independent SAME
+  // current-production grounded control below replaces the stale golden.
+  vertical: { randomDraws: 30, sha256: null, physicsSha256: null },
 };
+
+const verticalGroundControl = { digest: null, physics: null, randomDraws: null };
+
+async function currentVerticalGroundControl() {
+  if (verticalGroundControl.digest) return verticalGroundControl;
+  const f = await setup({ y: 0, grounded: true, vertical: true });
+  f.resetRandom();
+  f.projectiles.fireFlick(f.actor, f.actor.weapon);
+  assert.equal(f.projectiles.list.length, 5, 'independent grounded control keeps 5 release units');
+  assert.equal(f.paintCalls.length, 1, 'independent grounded control keeps one release footprint');
+  assert.equal(f.paintCalls[0].radius, 1.462, 'independent grounded control keeps source radius');
+  assert.equal(f.randomCount(), mainSnapshots.vertical.randomDraws, 'grounded control consumes the same draws');
+  assert.ok(f.projectiles.list.every(p => p.trailEvery === 0),
+    'primary vertical-paint owner disables the legacy random trail (no double paint)');
+  verticalGroundControl.digest = crypto.createHash('sha256')
+    .update(JSON.stringify(projectileSnapshot(f.projectiles))).digest('hex');
+  verticalGroundControl.physics = projectileSnapshot(f.projectiles).map(p => ({
+    unit: p.unit, mode: p.mode, vertical: p.vertical, vel: p.vel, seed: p.seed,
+    life: p.life, straight: p.straight, damage: p.damage, dmgFar: p.dmgFar,
+    radius: p.radius, size: p.size, grav: p.grav, drag: p.drag, trailEvery: p.trailEvery,
+  }));
+  verticalGroundControl.randomDraws = f.randomCount();
+  return verticalGroundControl;
+}
 
 async function assertReleaseShape(mode, y, grounded) {
   let heightControl=null;
@@ -201,14 +237,28 @@ async function assertReleaseShape(mode, y, grounded) {
   assert.equal(net.out.filter(e => e[1] === 's').length, 1, 'owner records one authoritative paint event');
   assert.equal(net.out.filter(e => e[1] === 'p').length, expected.count, 'projectile packet count remains unchanged');
   assert.equal(f.randomCount(), mainSnapshots[mode].randomDraws, 'foot paint consumes no additional random draws');
-  if (actor.pos.y === 0) {
+  if (mode === 'horizontal' && actor.pos.y === 0) {
     const digest = crypto.createHash('sha256').update(JSON.stringify(projectileSnapshot(projectiles))).digest('hex');
     assert.equal(digest, mainSnapshots[mode].sha256, 'launch transform and full projectile payload match main');
-  } else {
-    assert.equal(projectilePhysicsDigest(projectiles), heightControl,
+  } else if (mode === 'vertical') {
+    // Independent SAME current-production grounded control (no copied golden):
+    // airborne physics must equal the current grounded release payload field-for-field.
+    const control = await currentVerticalGroundControl();
+    const controlDigest = crypto.createHash('sha256').update(JSON.stringify(control.physics)).digest('hex');
+    assert.equal(projectilePhysicsDigest(projectiles), controlDigest,
       'airborne height does not change seed, velocity, lifetime, damage or projectile payload');
+    assert.deepEqual(projectileSnapshot(projectiles).map(p => ({
+      unit: p.unit, mode: p.mode, vertical: p.vertical, vel: p.vel, seed: p.seed,
+      life: p.life, straight: p.straight, damage: p.damage, dmgFar: p.dmgFar,
+      radius: p.radius, size: p.size, grav: p.grav, drag: p.drag, trailEvery: p.trailEvery,
+    })), control.physics, 'grounded and airborne physics payloads stay field-identical');
+    assert.ok(projectiles.list.every(p => p.trailEvery === 0),
+      'primary vertical-paint owner keeps legacy random trail disabled (no double paint)');
     const normalizedY = Array.from(projectileSnapshot(projectiles, actor.pos.y), p => Number(p.start[1].toFixed(6)));
     assert.deepEqual(normalizedY, [1.8, 1.3, 1.3, 0.3, 0.3], 'airborne release shifts launch origins only by actor height');
+  } else {
+    assert.equal(projectilePhysicsDigest(projectiles), heightControl,
+      'airborne height preserves the current horizontal projectile payload');
   }
   return { f, paintEvent: net.out.find(e => e[1] === 's'), projectileEvents: net.out.filter(e => e[1] === 'p') };
 }
@@ -238,23 +288,39 @@ test('airborne vertical release paints only when source-bounded walkable ground 
 
 test('NetMatch replays owner paint once and remote projectile visuals never paint again', async t => {
   for (const [mode, y, grounded] of [['horizontal', 0, true], ['vertical', 1.8, false]]) {
-    await t.test(mode, async () => {
-      const owner = await assertReleaseShape(mode, y, grounded);
-      const { f, paintEvent, projectileEvents } = owner;
-      const { G, net, paintCalls } = f;
-      const remote = makeActor(f, { remote: true, y, grounded, vertical: mode === 'vertical' });
+    await t.test(mode, async subtest => {
+      const { f, projectileEvents } = await assertReleaseShape(mode, y, grounded);
+      let packet;
+      f.net.s.tr = { broadcast: value => { packet = JSON.parse(JSON.stringify(value)); } };
+      f.net._sendTick();
+      assert.equal(packet.e.filter(event => event[1] === 's').length, 1);
+      assert.equal(packet.e.filter(event => event[1] === 'p').length, projectileEvents.length);
+
+      // The owner has already applied this paint sequence. Receive through a
+      // distinct session and world, as another authenticated client would.
+      const receiver = await setup({ remote: true, y, grounded, vertical: mode === 'vertical' });
+      const { G, net, paintCalls, actor: remote } = receiver;
+      subtest.after(() => { net.dispose(); f.net.dispose(); });
+      assert.notEqual(net, f.net);
+      assert.notEqual(net.s, f.net.s);
+      assert.equal(net.s._members.has('owner'), true);
       remote.owner = 'owner'; // production admission requires the actual sender owner
-      net.byNid.set(remote.nid, remote);
-      G.actors = [remote];
-      G.projectiles = new f.Projectiles(G.scene);
-      paintCalls.length = 0;
-      net.out.length = 0;
-      net._play('owner', paintEvent);
-      for (const event of projectileEvents) net._play('owner', event);
+      net.bind({ actors: [remote], state: 'playing', time: 180 });
+      const deliver = value => {
+        net.onMessage('owner', JSON.parse(JSON.stringify(value)));
+        net.peers.get('owner').tr = value.ts;
+        net._playEvents();
+      };
+      deliver(packet);
       assert.equal(paintCalls.length, 1, 'the replicated splat is the only remote turf mutation');
       assert.equal(G.projectiles.list.length, projectileEvents.length);
       assert.ok(G.projectiles.list.every(p => p.ghost), 'remote projectile events remain visual ghosts');
       assert.equal(net.out.length, 0, 'remote replay does not re-record paint or projectile packets');
+      deliver(packet);
+      deliver({ ...packet, ts: packet.ts + 1 / 60 });
+      assert.equal(paintCalls.length, 1, 'duplicate packets and repeated paint sequences never repaint');
+      assert.equal(G.projectiles.list.length, projectileEvents.length, 'duplicate births never create extra ghosts');
+      assert.equal(net.out.length, 0, 'duplicate replay never emits new packets');
       G.projectiles.clear();
       G.projectiles.fireFlick(remote, remote.weapon);
       assert.equal(paintCalls.length, 1, 'remote fireFlick cannot apply the owner footprint a second time');
@@ -263,7 +329,7 @@ test('NetMatch replays owner paint once and remote projectile visuals never pain
   }
 });
 
-test('WeaponRunner admission pays once, releases once, and suppresses idle, low-ink and reset windups', async () => {
+test('WeaponRunner admission pays once, releases once, and suppresses idle, empty-ink and reset windups', async () => {
   const f = await setup();
   const { actor, projectiles, paintCalls } = f;
   const runner = actor.weaponRunner;
@@ -271,9 +337,10 @@ test('WeaponRunner admission pays once, releases once, and suppresses idle, low-
   runner.update(dt, { fire: false });
   assert.equal(paintCalls.length, 0);
   assert.equal(projectiles.list.length, 0);
-  actor.ink = actor.weapon.flickInk - 0.01;
+  // #305 permits positive-tank depletion swings; only an empty tank rejects.
+  actor.ink = 0;
   runner.update(dt, { fire: false, firePressed: true });
-  assert.equal(paintCalls.length, 0, 'insufficient ink is rejected before release');
+  assert.equal(paintCalls.length, 0, 'empty ink is rejected before release');
   assert.equal(projectiles.list.length, 0);
 
   actor.ink = 100;

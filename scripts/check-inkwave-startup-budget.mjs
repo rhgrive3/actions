@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
+import { normalizeCacheAssets } from './lib/inkwave-cache-manifest.mjs';
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import crypto from 'node:crypto';
 import {parse} from '../patches/loading-cache/vendor/acorn.mjs';
 const root=path.resolve(process.argv[2]||'_site');const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
@@ -20,12 +22,8 @@ assert(fs.statSync(path.join(root,entry)).size<=12*1024,'new startup module budg
 const worker=fs.readFileSync(path.join(root,'sw.js'),'utf8');assert(Buffer.byteLength(worker)<=64*1024,'worker budget');
 const ast=parse(worker,{ecmaVersion:'latest',sourceType:'script'});const build=ast.body.find(node=>node.type==='VariableDeclaration'&&node.declarations[0].id.name==='BUILD').declarations[0].init;
 const config=JSON.parse(worker.slice(build.start,build.end));assert.equal(config.revision,revision);assert.equal(config.index.sha256,hash(Buffer.from(html)));assert(config.index.bytes===Buffer.byteLength(html));
-// The generated manifest stores asset descriptors as compact [bytes, sha256]
-// tuples. Decode only after validating the complete shape; never sum undefined.
-for(const [file,entry] of Object.entries(config.assets)){
- assert(Array.isArray(entry)&&entry.length===2&&Number.isSafeInteger(entry[0])&&entry[0]>=0&&typeof entry[1]==='string'&&/^[a-f0-9]{64}$/.test(entry[1]),'asset descriptor '+file);
- config.assets[file]={bytes:entry[0],sha256:entry[1]};
-}
+// Accept historical named descriptors and current tuples only after validating every field.
+config.assets=normalizeCacheAssets(config.assets);
 const core=new Set(config.precache);assert.equal(core.size,config.precache.length);const precacheBytes=config.precache.reduce((sum,file)=>sum+config.assets[file].bytes,0);assert(precacheBytes<=5*1024*1024,'core precache budget');assert(config.declaredBytes<=12*1024*1024,'revision payload budget');
 const importMap=JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]).imports;
 const resolve=(from,spec)=>{for(const[k,v]of Object.entries(importMap).sort((a,b)=>b[0].length-a[0].length))if(k.endsWith('/')?spec.startsWith(k):spec===k)return path.posix.normalize(v.replace(/^\.\//,'')+(k.endsWith('/')?spec.slice(k.length):''));return spec.startsWith('.')?path.posix.normalize(path.posix.join(path.posix.dirname(from),spec)):null;};
@@ -39,7 +37,7 @@ for(const file of core){
  }
  if(file.endsWith('.css'))for(const match of bytes.toString().matchAll(/@import\s*(?:url\()?['"]([^'"]+)['"]/g))assert(core.has(resolve(file,'./'+match[1])),`CSS import missing: ${file} -> ${match[1]}`);
 }
-for(const file of Object.keys(config.assets)){assert(!file.includes('..'));const bytes=fs.readFileSync(path.join(root,'_versions',revision,file));assert.equal(hash(bytes),config.assets[file].sha256);}
+for(const file of Object.keys(config.assets)){assert(!BUILD_ONLY_PATCH_MODULES.has(file),'build-only source transformer published: '+file);assert(!file.includes('..'));const bytes=fs.readFileSync(path.join(root,'_versions',revision,file));assert.equal(hash(bytes),config.assets[file].sha256);}
 assert(!fs.readFileSync(path.join(root,'src/main.js'),'utf8').includes('.png?h='),'lightmap URL must match precache');
 assert(!html.includes('navigator.serviceWorker.register'),'single runtime registration owner');
 console.log(JSON.stringify({status:'passed',revision,initialJSRequests:initial.length,modulePreloads:preloads.length,coreModulePreloads:corePreloads.length,practiceRangeModulePreloads:rangePreloads.length,practiceRangePreloadBytes:rangePreloadBytes,initialJSBytes,criticalHTMLBytes:Buffer.byteLength(html),precacheCount:core.size,precacheBytes,workerBytes:Buffer.byteLength(worker),declaredBytes:config.declaredBytes,measurementKind:'deterministic file and dependency gates; not native browser timings'},null,2));

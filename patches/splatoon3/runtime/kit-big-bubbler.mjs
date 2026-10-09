@@ -160,6 +160,19 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 // constant in weapons.js, not a new calibration.
 const DROP_FALLOFF_RANGE = 7;
 
+// #1161: source-side DIMENSIONLESS object multiplier the stock Hot Blaster
+// (Japanese ホットブラスター, the one `kind: 'blaster'` main weapon) applies to its
+// DIRECT projectile against the Big Bubbler. It is a SOURCE property, applied
+// once before the target-side DamgeRatio, exactly like the Roller 1.8 below.
+//
+// Provenance: community measurement on wikiwiki (version provenance 11.2.0 /
+// 3.1.1 marked); direct 125 -> 237.5 (x1.9), Object Shredder x2.09 (1.9 x 1.1)
+// applied once. No Nintendo 11.3 capture is claimed, and the generic separate
+// ブラスター entry is 2.1x, so this is NOT blanket-applied to every blaster
+// variant: only the stock Blaster's own direct round is scaled, the burst splash
+// never reaches this query, and no unlisted variant is guessed.
+export const BLASTER_OBJECT_MULTIPLIER = 1.9;
+
 // The damage this projectile would deal to a target at `hitPoint`, using the SAME
 // rule the native pipeline already applies to actors (`_step`) and to the boss
 // (`_bossImpact`):
@@ -187,6 +200,14 @@ function damageAtContact(p, hitPoint, impactT = 1) {
     return fidelityDamage(p, hitPoint, impactT) * 1.8;
   }
   const near = p?.damage;
+  // #1161: the stock Hot Blaster's DIRECT projectile carries the 1.9x
+  // source-side object modifier. `type === 'blast'` is the direct round only
+  // (the burst splash never enters this query), and `kind === 'blaster'` is the
+  // one stock main weapon, so no shooter, Roller, Trizooka or unlisted variant
+  // is amplified.
+  if (p?.type === 'blast' && weapon?.kind === 'blaster') {
+    return Number.isFinite(near) ? near * BLASTER_OBJECT_MULTIPLIER : 0;
+  }
   if (p?.type !== 'drop' || !Number.isFinite(near)) return Number.isFinite(near) ? near : 0;
   const far = p.dmgFar;
   if (!Number.isFinite(far)) return near;
@@ -726,7 +747,7 @@ export function tickBigBubblers(dt) {
       dome.ignited = true;
       if (tuning.paintAtIgnition) {
         const area = api.G.paint?.splat?.(dome.pos.clone().setY(dome.pos.y + raw.paintRadius * 0.35),
-          raw.paintRadius, dome.team, { seed: Math.random() }) || 0;
+          raw.paintRadius, dome.team, { seed: Math.random(), claimOwner: dome.owner, claimMode: 'no-special' }) || 0;
         dome.owner.addTurfNoSpecial?.(area);
       }
       api.emit?.('kit:bubbler:ignite', {

@@ -1,3 +1,4 @@
+import { adaptMuralAtlas } from './mural-atlas-adapter.mjs';
 import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
 import { adaptClothingGear } from '../splatoon3/clothing-gear-adapter.mjs';
 import { adaptIssue465 } from '../splatoon3/issue-465-adapter.mjs';
@@ -34,6 +35,7 @@ import { adaptHudAuthority } from './hud-authority-adapter.mjs';
 import fs from 'node:fs';
 import { adaptScreenfxDamageReset } from './screenfx-damage-reset-adapter.mjs';
 import { adaptComposerFormat } from './composer-format-adapter.mjs';
+import { adaptComposerTarget } from './composer-target-adapter.mjs';
 import { adaptScreenfxLensRelease } from './screenfx-lens-release-adapter.mjs';
 import { adaptActorWeaponInput } from './actor-weapon-input-adapter.mjs';
 import { adaptBotRefillRelease } from './bot-refill-release-adapter.mjs';
@@ -64,11 +66,12 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'mural-atlas-adapter.mjs',
   'bot-paint-observation-adapter.mjs',
   'issue-418-adapter.mjs','world-quality.mjs','quality-probe.mjs','texlib-adapter.mjs','texlib.mjs',
   'boss-hit-adapter.mjs',
   'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
-  'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
+  'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
   'hud-authority-adapter.mjs',
@@ -95,6 +98,7 @@ const IDENTITY_FILES = [
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs', 'refl-skip-adapter.mjs', 'finish-tape-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'match-retainer-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
+  'offscreen-visual-budget.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
@@ -111,10 +115,13 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  code = adaptMuralAtlas(rel, code, replaceOnce);
   code = adaptIssue482(rel, code);
   code = adaptIssue405(rel, code);
   code = adaptIssue484(rel, code);
-  return adaptComposerFormat(rel, adaptFrameOrder(rel, adaptQualityLayer(rel, code)), replaceOnce);
+  const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
+  const lazy = adaptComposerTarget(rel, framed, replaceOnce);
+  return adaptComposerFormat(rel, lazy, replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
@@ -527,6 +534,12 @@ function adaptQualityLayer(rel, code) {
     this.shoulder = damp(this.shoulder || 0, shT, 8, dt);
     if (this.shoulder > shMax) this.shoulder = shMax;
     if (this.shoulder > 1e-3) cam.position.addScaledVector(_right, this.shoulder);`, 'camera persistent shoulder framing and wall-transition clearance');
+  }
+
+  if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code, '    ch.update(dt, a);',
+      '    a.remote = this.remote === true;\n    ch.update(dt, a);',
+      'carry actor authority into Character presentation budget');
   }
 
   return code;

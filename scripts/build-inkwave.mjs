@@ -18,6 +18,7 @@ import { reliabilityIdentity, RELIABILITY_ROOT } from '../patches/reliability/ad
 import { qualityIdentity, QUALITY_ROOT } from '../patches/local-quality/adapter.mjs';
 import { networkIdentity, NETWORK_ROOT } from '../patches/network-replication/adapter.mjs';
 import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity } from '../patches/loading-cache/adapter.mjs';
+import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
 
@@ -62,7 +63,7 @@ for (const file of walk(SRC)) {
 }
 for (const file of walk(PATCH_ROOT)) {
   const rel = path.relative(PATCH_ROOT, file);
-  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json') continue;
+  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json' || BUILD_ONLY_PATCH_MODULES.has('patches/splatoon3/' + rel.split(path.sep).join('/'))) continue;
   const dst = path.join(BUILD, 'patches/splatoon3', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
@@ -74,7 +75,8 @@ for (const file of walk(PATCH_ROOT)) {
 }
 for (const file of walk(QUALITY_ROOT)) {
   const rel = path.relative(QUALITY_ROOT, file);
-  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs') continue;
+  // Exclude only audited transformers; mixed runtime/adapter helpers remain shipped.
+  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/' + rel.split(path.sep).join('/'))) continue;
   const dst = path.join(BUILD, 'patches/local-quality', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
@@ -176,6 +178,7 @@ const seen = new Set();
 const order = [];
 const visit = (rel) => {
   if (!rel || seen.has(rel) || rel.includes('/dev/')) return;
+  if (BUILD_ONLY_PATCH_MODULES.has(rel)) throw new Error('Runtime imports build-only source transformer: ' + rel);
   const abs = path.join(BUILD, rel);
   if (!fs.existsSync(abs)) return;
   seen.add(rel);
@@ -302,6 +305,8 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/weapon-edgecases.mjs',
   // PR587 dependencies: defer only eager hints; retain the complete precache graph.
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
+  // #1040 pose capture runs inside fixed simulation ticks; retain its static imports and full precache.
+  'patches/splatoon3/runtime/actor-motion.mjs',
   'patches/splatoon3/runtime/weapons-collision.mjs',
   'patches/splatoon3/runtime/weapons-charger-flight.mjs',
   // PR868 combat and Actor rules; the importing runtime still requests these dependencies.
@@ -334,13 +339,29 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/depth-cache.mjs',
   'patches/local-quality/resource-budget.mjs',
 ]);
-const preloadOrder = order.filter((f) => !deferredIntegrationPreloads.has(f));
-const preload = preloadOrder.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');
-const html = html0.replace('</head>', `<!-- build: module graph preloaded (${preloadOrder.length} modules) -->\n${preload}\n</head>`);
-fs.writeFileSync(path.join(BUILD, 'index.html'), html);
-fs.writeFileSync(path.join(BUILD, '.nojekyll'), '');
+// Apply loading instrumentation first, so hint selection measures final bytes.
+// All modules in order still enter the complete offline dependency graph.
 const loadingPlan = prepareLoading(BUILD, order);
-const loadingHTML = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
+const loadingHTML0 = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
+const isRange = file => file.startsWith('patches/practice-range/');
+const bytes = file => fs.statSync(path.join(BUILD, file)).size;
+// Reserve the startup entry and all existing range hints before choosing core
+// hints in deterministic graph order. Omitted hints keep their static imports.
+let initialHintBytes = bytes('patches/loading-cache/runtime/startup.mjs') +
+  order.filter(file => isRange(file) && !deferredIntegrationPreloads.has(file)).reduce((sum, file) => sum + bytes(file), 0);
+let corePreloadCount = 0;
+const preloadOrder = order.filter((file) => {
+  if (deferredIntegrationPreloads.has(file)) return false;
+  if (isRange(file)) return true;
+  const size = bytes(file);
+  if (corePreloadCount >= 131 || initialHintBytes + size > 3.2 * 1024 * 1024) return false;
+  corePreloadCount++; initialHintBytes += size;
+  return true;
+});
+const preload = preloadOrder.map((file) => `<link rel="modulepreload" href="./${file}">`).join('\n');
+const loadingHTML = loadingHTML0.replace('</head>', `<!-- build: module graph preloaded (${preloadOrder.length} modules) -->\n${preload}\n</head>`);
+fs.writeFileSync(path.join(BUILD, 'index.html'), loadingHTML);
+fs.writeFileSync(path.join(BUILD, '.nojekyll'), '');
 // Give the entire module/asset tree an immutable URL. A cached old module must
 // never import a newer profile or dependency after the next OSS update.
 const revision = sha256(JSON.stringify(walk(BUILD).sort().map(file => [path.relative(BUILD,file),sha256(fs.readFileSync(file))])));
@@ -363,6 +384,11 @@ for (const [file, hash] of Object.entries(identity.build.quality)) identity.file
 for (const [file, hash] of Object.entries(identity.build.network)) identity.files['network-replication/' + file] = hash;
 for (const [file, hash] of Object.entries(identity.build.range)) identity.files['practice-range/' + file] = hash;
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
+// Direct script helpers also control composition, packaging and worker output.
+// Include them in the same input hash and committed-source checks as overlays.
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs']) {
+  identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
+}
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');
 fs.rmSync(OUT, { recursive: true, force: true });

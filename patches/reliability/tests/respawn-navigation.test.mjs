@@ -37,21 +37,21 @@ for(const mode of ['keyboard','pad','touch','raw'])test(`#409 ${mode} opens and 
  const h=await rig();h.dead();const aim=[h.camera.yaw,h.camera.pitch],pos=h.a.pos.clone();
  h.input.keys.add('KeyW');h.input.keys.add('Space');h.input.mouse.left=true;h.input.mouse.dx=200;
  let mob;
- if(mode==='keyboard')h.input.keys.add('Tab');
+ if(mode==='keyboard'){h.input.keys.add('Tab');h.input.pressed.add('Tab');}
  if(mode==='touch'){mob=h.touch();mob.setMap(true);mob.lookDX=.4;mob.gyro.dYaw=.5;}
- if(mode==='pad'||mode==='raw')h.frame(mode==='pad'?[3,0,7,11]:[8,0,7,11],mode==='raw'?'':'standard');else h.m.updateController(STEP);
+ if(mode==='pad'||mode==='raw')h.frame(mode==='pad'?[3,7,11]:[8,0,7,11],mode==='raw'?'':'standard');else h.m.updateController(STEP);
  assert.equal(h.c.enabled,false);assert.equal(h.c.mapHeld,true);assert.equal(h.a.intent.move.length(),0);
  for(const k of ['fire','jump','squid','sub','special'])assert.equal(h.a.intent[k],false,k);
  assert.deepEqual([h.camera.yaw,h.camera.pitch],aim);assert.ok(h.a.pos.equals(pos));assert.equal(h.a.superJumpState,null);
- if(mode==='keyboard'){h.input.keys.delete('Tab');h.m.updateController(STEP);}
+ if(mode==='keyboard'){h.input.keys.delete('Tab');h.input.pressed.add('KeyM');h.m.updateController(STEP);}
  if(mode==='touch'){mob.setMap(false);h.m.updateController(STEP);}
  if(mode==='pad'){h.frame([]);h.frame([3]);}
- if(mode==='raw')h.frame([], '');
+ if(mode==='raw'){h.frame([], '');h.frame([8], '');}
  assert.equal(h.c.mapHeld,false);
 });
 for(const mode of ['keyboard','pad','touch','raw'])test(`#409 ${mode} queues one target until real respawn lands`,async()=>{
  const h=await rig();h.dead();let mob;
- if(mode==='keyboard'){h.input.keys.add('Tab');h.input.pressed.add('Digit2');h.m.updateController(STEP);}
+ if(mode==='keyboard'){h.input.keys.add('Tab');h.input.pressed.add('Tab');h.input.pressed.add('Digit2');h.m.updateController(STEP);}
  if(mode==='pad'){h.frame([3]);h.frame([12]);assert.equal(h.c.pendingRespawnJump??null,null);h.frame([1]);}
  if(mode==='raw')h.frame([8,12],'');
  if(mode==='touch'){mob=h.touch();mob.setMap(true);mob.jumpTarget=1;h.m.updateController(STEP);}
@@ -81,7 +81,7 @@ test('#409 same-frame X cancellation wins over queued respawn admission and rost
 });
 test('#409 direct request rejects hidden, stale, enemy and already-jumping targets',async()=>{
  const h=await rig();h.dead();h.m.updateController(STEP);assert.equal(h.c.requestMapJump(h.allies[0]),false);
- h.input.keys.add('Tab');h.m.updateController(STEP);const stranger=h.make();stranger.team=1;
+ h.input.keys.add('Tab');h.input.pressed.add('Tab');h.m.updateController(STEP);const stranger=h.make();stranger.team=1;
  for(const target of [null,{},stranger,h.a,new h.THREE.Vector3(NaN,0,0)])assert.equal(h.c.requestMapJump(target),false);
  h.allies[0].superJumpState={phase:'charge'};assert.equal(h.c.requestMapJump(h.allies[0]),false);
  assert.equal(h.c.requestMapJump(h.G.level.spawnPads[0]),true);assert.ok(h.c.pendingRespawnJump.point);
@@ -93,7 +93,7 @@ test('#409 selecting another direction clears the old confirmed target before a 
 test('#409 30/60/120/144Hz controller cadence admits once after the same landing tick',async()=>{
  let expected;
  for(const hz of [30,60,120,144]) {
-  const h=await rig();h.dead();h.input.lastDevice='kbm';h.input.keys.add('Tab');h.input.pressed.add('Digit1');const clock=new h.FixedClock(),trace=[];
+  const h=await rig();h.dead();h.input.lastDevice='kbm';h.input.keys.add('Tab');h.input.pressed.add('Tab');h.input.pressed.add('Digit1');const clock=new h.FixedClock(),trace=[];
   for(let frame=0;frame<hz;frame++)clock.advance(1/hz,()=>{
     if(clock.ticks===20)h.a.respawn();if(clock.ticks===40)h.a.grounded=true;
     h.m.updateController(STEP);trace.push(!!h.a.superJumpState);h.input.endFrame();
@@ -102,7 +102,7 @@ test('#409 30/60/120/144Hz controller cadence admits once after the same landing
  }
 });
 test('#409 native HUD and diorama clicks route to the deferred controller owner',async()=>{
- const h=await rig();h.dead();h.input.keys.add('Tab');h.m.updateController(STEP);
+ const h=await rig();h.dead();h.input.keys.add('Tab');h.input.pressed.add('Tab');h.m.updateController(STEP);
  for(const [rel,start,end,name,args] of [
   ['src/ui/hud.js','  _jumpTo(i) {','\n  _updMarkers(', 'HUD',[0]],
   ['src/ui/diorama.js','  _jump(i, me) {','\n  _flash(', 'Diorama',[0,h.a]]
@@ -122,7 +122,7 @@ test('#409 a second death during spawn descent cannot carry the prior-life reque
  h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);assert.equal(h.a.superJumpState,null);
 });
 test('#409 an explicit touch choice adopts the new Input owner after keyboard opened the map',async()=>{
- const h=await rig();h.dead();h.input.lastDevice='kbm';h.input.keys.add('Tab');h.m.updateController(STEP);
+ const h=await rig();h.dead();h.input.lastDevice='kbm';h.input.keys.add('Tab');h.input.pressed.add('Tab');h.m.updateController(STEP);
  h.event('pointerdown',{pointerType:'touch'});assert.equal(h.input.lastDevice,'touch');
  assert.equal(h.c.requestMapJump(h.allies[0]),true);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);
  assert.ok(h.a.superJumpState?.target.equals(h.allies[0].pos));
@@ -130,7 +130,7 @@ test('#409 an explicit touch choice adopts the new Input owner after keyboard op
 
 test('#409 held-axis polls preserve native touch pin intent without Mobile contact',async()=>{
  for(const name of ['HUD','Diorama']){
-  const h=await rig();h.dead();h.frame([3]);assert.equal(h.c.mapHeld,true);h.input.keys.add('Tab');
+  const h=await rig();h.dead();h.frame([3]);assert.equal(h.c.mapHeld,true);
   h.event('pointerdown',{pointerType:'touch'});assert.equal(h.input.lastDevice,'touch');assert.equal(h.input.mobile._ptr.size,0);assert.equal(h.input.mobile._stick.id,-1);
   const rel=name==='HUD'?'src/ui/hud.js':'src/ui/diorama.js',start=name==='HUD'?'  _jumpTo(i) {':'  _jump(i, me) {',end=name==='HUD'?'\n  _updMarkers(':'\n  _flash(';
   const native=adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,fs.readFileSync(path.join(root,'inkwave-public',rel),'utf8')))));
@@ -142,7 +142,7 @@ test('#409 held-axis polls preserve native touch pin intent without Mobile conta
 });
 
 for (const action of ['button','neutral-axis','keyboard','disconnect-axis','replacement-axis','opposite-axis','second-axis']) test(`#409 fresh ${action} cancels after automatic held-axis reacquisition`,async()=>{
- const h=await rig();h.dead();h.frame([3]);h.input.keys.add('Tab');h.event('pointerdown',{pointerType:'touch'});h.c.requestMapJump(h.allies[0]);h.frame([]);
+ const h=await rig();h.dead();h.frame([3]);h.event('pointerdown',{pointerType:'touch'});h.c.requestMapJump(h.allies[0]);h.frame([]);
  assert.equal(h.input.lastDevice,'pad');assert.equal(h.input.navigationDevice,'touch');assert.ok(h.c.pendingRespawnJump);
  if(action==='button')h.frame([0]);
  if(action==='keyboard')h.event('keydown',{code:'KeyW',preventDefault(){}});

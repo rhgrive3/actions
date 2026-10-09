@@ -3,6 +3,18 @@
 // projectile falloff keep full precision until this boundary.
 const EPS = 1e-9;
 const IDS = new WeakMap(), CREDIT = new WeakMap();
+const SCOPED = new WeakMap();
+export function validDamageGroup(group) {
+  return Number.isSafeInteger(group) && group > 0 ||
+    typeof group === 'string' && group.length <= 96 && /:([1-9][0-9]{0,14})$/.test(group);
+}
+// Already-budgeted local Slosher increments still share one rounding group.
+// Keep this scope separate from the cumulative wire maximum admission wrapper.
+export function withFinalDamageGroup(victim, group, apply) {
+  const previous = SCOPED.get(victim); SCOPED.set(victim, group);
+  try { return apply(); }
+  finally { if (previous === undefined) SCOPED.delete(victim); else SCOPED.set(victim, previous); }
+}
 let nextGroup = 0;
 export function damageGroupId(group) {
   if (!group) return null;
@@ -16,13 +28,13 @@ export function damageTenths(amount) {
 export function finalWeaponDamage(victim, amount, attacker, source) {
   if (source === 'ink') return amount; // enemy-ink ticks are a separate owner
   const group = victim.s3PendingHitGroup;
-  if (!attacker || !Number.isSafeInteger(group) || group <= 0) return damageTenths(amount);
+  if (!attacker || !validDamageGroup(group)) return damageTenths(amount);
   let attackers = CREDIT.get(victim);
   if (!attackers) { attackers = new WeakMap(); CREDIT.set(victim, attackers); }
   let groups = attackers.get(attacker);
   if (!groups) { groups = new Map(); attackers.set(attacker, groups); }
   // Actor handoff can reuse its object while changing the sender's sequence.
-  const key = `${attacker.owner ?? 'local'}:${group}`;
+  const key = JSON.stringify([attacker.owner ?? 'local', group]);
   let credit = groups.get(key);
   if (!credit) {
     // Bound long-match bookkeeping. Ordinary projectile lifetime is <3 s;
@@ -45,7 +57,8 @@ export function installFinalDamage({Actor, Projectiles}) {
   Actor.prototype.reset=function(...args){CREDIT.delete(this);this.s3PendingHitGroup=null;return reset.apply(this,args);};
   Projectiles.prototype.applyHit=function(attacker,victim,amount,weaponId,group=null){
     const previous=victim.s3PendingHitGroup;
-    victim.s3PendingHitGroup=Number.isSafeInteger(group)&&group>0?group:null;
+    const scoped = group ?? SCOPED.get(victim);
+    victim.s3PendingHitGroup=validDamageGroup(scoped)?scoped:null;
     try{return hit.call(this,attacker,victim,amount,weaponId,group);}
     finally{victim.s3PendingHitGroup=previous;}
   };

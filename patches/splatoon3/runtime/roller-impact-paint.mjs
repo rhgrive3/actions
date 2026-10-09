@@ -16,6 +16,26 @@ export function rollerImpactPaintParam(projectile) {
   return projectile?.fidelityRollerUnit?.UnitParam?.PaintParam ?? null;
 }
 
+/** #498: source-defined width falloff endpoints per Roller unit.
+ * S3 specifies 20F/30F start, 50F end and minimum 0.6. The intermediate
+ * interpolation shape is *provisional* (linear); 11.3.0 engine/capture
+ * verification is still required before declaring the Issue fully fixed.
+ */
+export function rollerPaintAgeMultiplier(projectile) {
+  if (!projectile || projectile.ghost || projectile.type !== 'drop' ||
+      projectile.s3Weapon?.kind !== 'roller') return 1;
+  const p=rollerImpactPaintParam(projectile);
+  const from=p?.ChangeWidthStartFrame, to=p?.ChangeWidthEndFrame, rate=p?.ChangeFrameWidthRate;
+  if (![from,to,rate].every(Number.isFinite) || !(to>from) || !(rate>0) || rate>1) return 1;
+  const frame=Math.max(0,Number.isFinite(projectile.age)?projectile.age*60:0);
+  if (frame<=from) return 1;
+  if (frame>=to) return rate;
+  return lerp(1,rate,clamp01((frame-from)/(to-from)));
+}
+export function rollerTrailAgeWidth(projectile,width) {
+  return width*rollerPaintAgeMultiplier(projectile);
+}
+
 /** Lateral landing-paint radius from the sourced near/far distance anchors. */
 export function rollerImpactRadius(projectile, hitPoint, scale=1) {
   const paint=rollerImpactPaintParam(projectile);
@@ -26,7 +46,7 @@ export function rollerImpactRadius(projectile, hitPoint, scale=1) {
   if(!(far>near))return null;
   const distance=projectile.start.distanceTo(hitPoint)/scale;
   const t=clamp01((distance-near)/(far-near));
-  return lerp(nearWidth,farWidth,t)*scale;
+  return lerp(nearWidth,farWidth,t)*scale*rollerPaintAgeMultiplier(projectile);
 }
 
 
@@ -69,7 +89,10 @@ export function rollerImpactDepthScale(projectile, normal) {
  * collision, trajectory and wall-drop ownership untouched.
  */
 export function withRollerImpactPaint(game,projectile,hit,scale,callback) {
-  const radius=rollerImpactRadius(projectile,hit?.point,scale);
+  const paintScale=projectile?.s3DepletionRound===true && Number.isFinite(projectile.s3DepletionPaintScale) && projectile.s3DepletionPaintScale>0
+    ? projectile.s3DepletionPaintScale : 1;
+  const baseRadius=rollerImpactRadius(projectile,hit?.point,scale);
+  const radius=baseRadius===null?null:baseRadius*paintScale;
   const depthScale=rollerImpactDepthScale(projectile,hit?.normal);
   const paint=game?.paint;
   if(!(radius>0) || !(depthScale>0) || !paint || typeof paint.splat!=='function')return callback();
@@ -78,7 +101,7 @@ export function withRollerImpactPaint(game,projectile,hit,scale,callback) {
   paint.splat=function(point,nativeRadius,team,opts={}){
     if(replaced)return native.call(this,point,nativeRadius,team,opts);
     replaced=true;
-    return native.call(this,point,radius,team,{...opts,stretchAmt:Math.max(0,depthScale-1)});
+    return native.call(this,point,radius,team,{...opts,stretchAmt:Math.max(0,(depthScale-1)*paintScale)});
   };
   try{return callback({radius,depthScale});}finally{context.splat=native;}
 }

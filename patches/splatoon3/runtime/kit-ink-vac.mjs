@@ -59,6 +59,11 @@ const MAX_KEY_LENGTH = 64;
 const KEY_PATTERN = /^[A-Za-z0-9#._:-]{1,64}$/;
 
 export const INK_VAC_CALIBRATION = Object.freeze({
+  // #1149: ReceiveDamageForPlayer 15 raw /10 *60 = 90 HP-equivalent/s.
+  actorContactDamagePerSecond: 90,
+  actorInkFractionPerSecond: .12,
+  actorMoveSpeedScale: .6,
+  actorSuppressionStatus: 'engineering calibration: 12% tank/s and 60% movement cap; sparse S3 PoisonMistForPlayer data omits drain/speed defaults; retail magnitudes unverified',
   rawToHp: RAW_TO_HP,
   framesPerSecond: 60,
   breathOriginHeight: 1.0,   // intake origin above feet (kid chest) — calibration
@@ -326,13 +331,13 @@ function absorbDamageEquivalent(projectile) {
   const damage = values.find(v => Number.isFinite(v) && v > 0) ?? 0;
   return Math.min(MAX_ACCEPTED_DAMAGE_HP, damage);
 }
-function creditCharge(state, damageEquivalent) {
+function creditCharge(state, damageEquivalent, projectile = true) {
   const delta = Number.isFinite(damageEquivalent) ? Math.max(0, damageEquivalent) : 0;
   if (!(delta > 0)) return state.charge;
   const capacity = INK_VAC_CALIBRATION.absorbCapacityDamage;
   state.absorbedDamage = Math.min(capacity, (state.absorbedDamage || 0) + delta);
   state.charge = inkVacChargeFromDamage(state.absorbedDamage, capacity);
-  state.absorbed++;
+  if (projectile) state.absorbed++;
   updateVisual(state);
   api.emit?.(INK_VAC_EVENTS.charge, { actor: state.actor, kit: VAC_ID, serial: state.serial, charge: state.charge });
   return state.charge;
@@ -470,10 +475,43 @@ function release(state) {
   states.delete(a);
 }
 
+// Actor contact has no HP hit path. The Vac owner authors gauge; each victim
+// owner authors its own tank and movement. Replica cones are geometry only.
+export function inkVacActorContact(owner, victim) {
+  const state = states.get(owner);
+  if (!state || state.phase !== 'inhale' || (!state.remote && owner.specialActive?.id !== VAC_ID) ||
+      !owner.alive || !victim?.alive || owner === victim || owner.team === victim.team) return false;
+  const point = state._q;
+  point.copy(victim.pos); point.y += victim.form === 'squid' ? .3 : 1;
+  return Number.isFinite(firstEntry(state, point, point)) && !!api.G.physics?.los?.(state._org, point);
+}
+function actorInVortex(victim) {
+  return !victim.remote && victim.alive && (api.G.actors || []).some(owner => inkVacActorContact(owner, victim));
+}
+function suppressMovement(actor) {
+  if (!actorInVortex(actor)) return;
+  const base = actor.form === 'squid'
+    ? (actor.submerged ? api.PLAYER.swimSpeed : api.PLAYER.squidDrySpeed)
+    : actor.weaponRunner.moveSpeed();
+  const speed = Math.hypot(actor.vel.x, actor.vel.z), cap = base * INK_VAC_CALIBRATION.actorMoveSpeedScale;
+  if (speed > cap && cap >= 0) { actor.vel.x *= cap / speed; actor.vel.z *= cap / speed; }
+}
+
 // Per-frame advance of a LOCALLY owned inhale. dt <= 0 is a strict no-op.
 function inkVacUpdate(a, dt) {
   const state = states.get(a);
   if (!state || state.phase !== 'inhale' || !(dt > 0)) return;
+  const eligible = Math.min(dt, Math.max(0, INK_VAC_CALIBRATION.inhaleDurationSeconds - state.t));
+  if (!a.remote && !state.remote) {
+    const seen = new Set(); let count = 0;
+    for (const victim of api.G.actors || []) {
+      const identity = victim.nid === undefined ? victim : `${victim.owner}:${victim.nid}`;
+      if (seen.has(identity)) continue; seen.add(identity);
+      if (inkVacActorContact(a, victim)) count++;
+    }
+    const amount = count * eligible * INK_VAC_CALIBRATION.actorContactDamagePerSecond;
+    if (amount > 0) creditCharge(state, amount, false);
+  }
   state.t += dt;
   updateVisual(state);
   if (state.t + 1e-10 >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
@@ -686,6 +724,23 @@ export function installKitInkVac(context, _profile) {
       }
       return result;
     };
+    const vacUpdate = proto.update;
+    proto.update = function (dt) {
+      const contact = dt > 0 && actorInVortex(this), inkBefore = this.ink;
+      const result = vacUpdate.call(this, dt);
+      if (contact && actorInVortex(this)) {
+        this.ink = Math.max(0, Math.min(this.ink, inkBefore) - api.PLAYER.inkMax * INK_VAC_CALIBRATION.actorInkFractionPerSecond * dt);
+      }
+      return result;
+    };
+    // Cap after native acceleration, and again at the collision entry used by
+    // dodge slices. No persistent debuff survives exit/reset or modifies replicas.
+    for (const key of ['_horizontal', '_integrateMovementStep']) {
+      const original = proto[key]; if (typeof original !== 'function') continue;
+      proto[key] = key === '_horizontal' ? function (...args) {
+        const result = original.apply(this, args); suppressMovement(this); return result;
+      } : function (...args) { suppressMovement(this); return original.apply(this, args); };
+    }
     proto._startSpecial = function () {
       if (this.weapon.special !== VAC_ID) return startSpecial.call(this);
       // A genuine native activation, exactly once: alive, not already holding a

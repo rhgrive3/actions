@@ -29,6 +29,8 @@ test('complete integration-sized manifest fits the unchanged worker ceiling afte
     minifyIdentifiers: false, minifySyntax: false, legalComments: 'inline' }).code.replace(marker, JSON.stringify(config));
   assert(Buffer.byteLength(before) > 64 * 1024, 'prior generated worker exceeds the unchanged ceiling');
   const after = stamp(config);
+  parse(after, { ecmaVersion: 'latest', sourceType: 'script' });
+  assert(!after.includes('const SCOPE='), 'private top-level worker identifiers are compacted');
   assert(Buffer.byteLength(after) <= 64 * 1024, 'complete manifest remains within the same ceiling');
   assert.deepEqual(configLiteral(after), config, 'all assets, hashes, index and precache identities remain literal');
 });
@@ -46,4 +48,9 @@ test('compacted real worker retains revision install, offline replay and integri
   const corrupt = new World(); corrupt.serve(build);
   corrupt.route(`_versions/${build.config.revision}/src/main.js`, 'tampered');
   await assert.rejects(corrupt.worker(build, stamp(build.config)).install());
+});
+
+test('worker compaction rejects missing or duplicated BUILD insertion bindings', () => {
+  assert.throws(() => compactLoadingWorkerTemplate(unstamped.replace('const BUILD =', 'const LOST ='), transformSync), /BUILD binding/);
+  assert.throws(() => compactLoadingWorkerTemplate(unstamped + '\nconst BUILD=__INKWAVE_CACHE_CONFIG_VALUE__;', transformSync), /BUILD binding/);
 });

@@ -24,14 +24,14 @@ function state(net) {
 
 // Self-test the build boundary as well as the runtime correction.
 test('network transforms require unique source anchors and leave other paths unchanged', () => {
-  for (const rel of ['src/net/session.js', 'src/net/transport.js']) {
+  for (const rel of ['src/net/session.js', 'src/net/transport.js', 'src/net/netmatch.js']) {
     const source = readSource(rel);
     assert.notEqual(adaptNet(rel, source), source);
     assert.throws(() => adaptNet(rel, ''), /anchor mismatch/);
     assert.throws(() => adaptNet(rel, source + source), /anchor mismatch/);
     assert.throws(() => adaptNet(rel, adaptNet(rel, source)), /anchor mismatch/);
   }
-  assert.equal(adaptNet('src/net/netmatch.js', 'untouched'), 'untouched');
+  assert.equal(adaptNet('src/core/ctx.js', 'untouched'), 'untouched');
 });
 
 test('pending Transport.close rejects promptly and removes every owned callback/timer', async () => {
@@ -299,4 +299,32 @@ test('synchronous starting-state cancellation stops match-start acquisition', as
   await f.net._begin({ id: 'old', roster: [] });
   assert.equal(calls, 0); assert.equal(events, 0);
   assert.equal(f.net.state, 'offline'); assert.equal(f.net.match, null); assert.equal(f.timers.size, 0);
+});
+
+for (const retire of ['_fail', '_closed']) test(`#1159 ${retire} clears the old GO deadline before another room`, async () => {
+  const f=await fixture(); await room(f);
+  f.G.game.startNetMatch=async()=>{};
+  f.net._members.set('slow','Slow');
+  await f.net._begin({id:'old',roster:[{bot:false,owner:'me'},{bot:false,owner:'slow'}]});
+  const id=f.timer(12000), queued=f.timers.get(id).fn;
+  f.net[retire](retire==='_fail'?new Error('aborted'):'closed');
+  assert.equal(f.timers.has(id),false);assert.equal(f.net._goT,null);
+  await room(f,'BC236');
+  f.net._members.set('slow','Slow');
+  await f.net._begin({id:'new',roster:[{bot:false,owner:'me'},{bot:false,owner:'slow'}]});
+  const current=f.timer(12000);
+  queued();assert.equal(f.net.state,'starting');assert.equal(f.net._goT,current);
+  assert.equal(f.timers.get(current).ms,12000);
+  f.run(current);assert.equal(f.net.state,'match');f.net.leave();
+});
+
+test('#1159 a new round on the same transport retires the old deadline and owns a full interval', async()=>{
+  const f=await fixture();await room(f);f.G.game.startNetMatch=async()=>{};
+  f.net._members.set('slow','Slow');
+  const cfg=id=>({id,roster:[{bot:false,owner:'me'},{bot:false,owner:'slow'}]});
+  await f.net._begin(cfg('old'));const old=f.timer(12000),queued=f.timers.get(old).fn;
+  await f.net._begin(cfg('new'));const current=f.timer(12000);
+  assert.notEqual(current,old);assert.equal(f.timers.has(old),false);
+  queued();assert.equal(f.net.state,'starting');assert.equal(f.net._goT,current);
+  f.run(current);assert.equal(f.net.state,'match');f.net.leave();
 });

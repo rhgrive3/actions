@@ -22,6 +22,16 @@ test('issue-479 adapter transform applies cleanly and fails closed on anchor mis
   assert.ok(transformed.includes('installActorFreefallHooks'));
   assert.ok(!transformed.includes('!a.grounded ? w.verticalInk'));
 
+  const current = fs.readFileSync(new URL('../runtime/roller.mjs', import.meta.url), 'utf8');
+  const composed = adaptIssue479('patches/splatoon3/runtime/roller.mjs', current);
+  assert.match(composed, /const isVertical = !fullCancelGroundAttack && selectRollerFlickVertical/);
+  assert.match(composed, /const flickCost = fullCancelGroundAttack \? w\.flickInk : isVertical \? w\.verticalInk : w\.flickInk/);
+  assert.match(composed, /this\.s3FlickVertical = groundedCancel \? false : isVertical/);
+  assert.match(composed, /const depleted = DEPLETION_ENABLED/);
+  assert.equal(adaptIssue479('patches/splatoon3/runtime/roller.mjs', composed), composed);
+  assert.throws(() => adaptIssue479('patches/splatoon3/runtime/roller.mjs',
+    current.replace('this.s3FlickVertical = !groundedCancel && !a.grounded;', 'this.s3FlickVertical = false;')), /conflict/);
+
   // Non-target files remain untouched
   assert.equal(adaptIssue479('src/game/actor.js', dummy), dummy);
   assert.equal(adaptIssue479('patches/splatoon3/runtime/weapons.mjs', dummy), dummy);
@@ -445,6 +455,8 @@ test('partial Surge armor and Roller accepted-launch mode compose in the product
     a.climbing = true; a.grounded = false; a._updateClimb = () => {};
     f.tick(a, 1); a.intent.jump = false; f.tick(a, 1);
     assert.ok(!a.s3.surge || a.s3.surge.time <= 1e-10, 'short movement boost ended');
+    assert.equal(a.s3.actions.armor, null, '#568 no shield while still on the wall');
+    a._ledgePop(new f.THREE.Vector3(0, 0, -1));
     assert.ok(a.s3.actions.armor?.armorTime > 0, 'current independent shield remains alive');
     const hp = a.hp; a.damage(30, null, 'shooter'); assert.equal(a.hp, hp);
     assert.equal(a.s3.actions.armor.armorHP, Math.max(0,f.profile.movement.surge.armorHP-30));

@@ -97,8 +97,10 @@ test('surge charge, partial burst, wall loss and top release reach the actual sq
       a.intent.jump = false; r.step();
       assert.equal(movementMotionSnapshot(ch).phase, 'surge-burst');
       assert.ok(ch.squid.pivot.scale.y > chargeScale * 1.1, 'release stretches the real mesh');
-      assert.equal(a.s3.surge.armorTime, f.profile.movement.surge.armorTime, 'current473 partial charge uses the existing armor owner');
+      assert.equal(a.s3.surge.armorTime, 0, '#568 wall release reserves the shield');
+      assert.equal(a.s3.surge.armorPending, true);
       a._ledgePop(new f.THREE.Vector3(0, 0, -1)); r.draw();
+      assert.equal(a.s3.actions.armor.armorTime, f.profile.movement.surge.armorTime, '#568 native launch starts the partial shield');
       assert.equal(movementMotionSnapshot(ch).phase, 'surge-top');
       const initial = ch.squid.pivot.quaternion.clone();
       for (let i = 0; i < Math.round(.1 * hz); i++) r.step();
@@ -217,7 +219,8 @@ test('wall charge takes over a live roll, full charge releases, and wall roll ta
       for (let i = 1; i < Math.ceil(f.profile.movement.surge.chargeTime * hz); i++) r.step();
       close(a.s3.surge.charge, 1); close(movementMotionSnapshot(ch).charge, 1);
       a.intent.jump = false; r.step();
-      assert.ok(a.s3.surge.armorTime > 0); assert.equal(movementMotionSnapshot(ch).phase, 'surge-burst');
+      assert.equal(a.s3.surge.armorTime, 0); assert.equal(a.s3.surge.armorPending, true);
+      assert.equal(movementMotionSnapshot(ch).phase, 'surge-burst');
       a.intent.move.set(0, 0, 1); a.intent.jump = true; r.step();
       assert.ok(a.s3.roll); assert.equal(a.s3.surge, null);
       assert.equal(movementMotionSnapshot(ch).phase, 'roll');

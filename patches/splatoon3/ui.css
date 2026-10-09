@@ -280,3 +280,16 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+
+/* #1158: the post-dodge Splat Dualies aim guide becomes ONE true centered
+   reticle. Normal two-hand guides and their shot kick remain independent. */
+.iw-ret--dualies .iw-ret__merged {
+  opacity: 0;
+  transition: opacity .18s var(--spring);
+}
+.iw-ret--dualies.is-lock .iw-ret__merged { opacity: 1; }
+.iw-ret--dualies.is-lock .iw-ret__twin,
+.iw-ret--dualies.is-lock .iw-ret__lock {
+  visibility: hidden;
+  opacity: 0;
+}
