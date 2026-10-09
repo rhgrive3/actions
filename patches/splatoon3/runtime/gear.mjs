@@ -12,6 +12,7 @@ import { installSubResistance } from './sub-resistance.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
   haunt: 'リベンジ', thermalInk: 'サーマルインク', respawnPunisher: '復活ペナルティアップ', abilityDoubler: 'フェスT：追加ギアパワー倍化',
+  objectShredder: '対物攻撃力アップ',
   ninjaSquid: 'イカニンジャ',
   lastDitchEffort: 'ラストスパート', comeback: 'カムバック', openingGambit: 'スタートダッシュ', subResistance: 'サブ影響軽減',
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
@@ -22,8 +23,11 @@ export const ABILITIES = Object.freeze({
   specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
   quickSuperJump: 'スーパージャンプ時間短縮', stealthJump: 'ステルスジャンプ', subPower: 'cµブ性能アップ',
 });
+// Pinned 11.3.0 Leanny gear traits identify Object Shredder as shoes-only.
+// It is a fixed primary ability, not a stackable AP curve.
+export const SHOES_ABILITIES = Object.freeze(['objectShredder']);
 export function abilityAllowed(id, piece, slot, item) {
-  return Object.hasOwn(ABILITIES, id) && clothingAbilityAllowed(id, piece, slot, item) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0) && (id !== 'ninjaSquid' || piece === 1 && slot === 0) && (id !== 'stealthJump' || piece === 2 && slot === 0);
+  return Object.hasOwn(ABILITIES, id) && clothingAbilityAllowed(id, piece, slot, item) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0) && (!SHOES_ABILITIES.includes(id) || piece === 2 && slot === 0) && (id !== 'ninjaSquid' || piece === 1 && slot === 0) && (id !== 'stealthJump' || piece === 2 && slot === 0);
 }
 export const emptyLoadout = () => Array.from({ length: 3 }, () => ({ main: 'none', subs: ['none', 'none', 'none'] }));
 export function normalizeLoadout(value) {
@@ -97,6 +101,7 @@ export function installGear(api, tuning) {
     a.s3.modifiers = modifiersFor(loadout, tuning.gear, points);
     const m = a.s3.modifiers;
     m.ninjaSquid = loadout[1].main === 'ninjaSquid';
+    m.objectShredder = loadout[2].main === 'objectShredder';
     // #272: Stealth Jump is a shoes-only primary ability in Splatoon 3.
     // Its Ver. 11.0.0 movement penalty is consumed by the Super Jump flight
     // state and deliberately does not alter Quick Super Jump AP curves.
@@ -310,7 +315,7 @@ export function installGear(api, tuning) {
         const row = document.createElement('label'); const labelText = document.createElement('span'); labelText.dataset.slot = String(slot); row.append(labelText);
         const select = document.createElement('select'); select.setAttribute('aria-label', `${label} ${slot === 0 ? 'メイン' : '追加' + slot}`);
         for (const [id, name] of Object.entries(ABILITIES)) {
-          if (!abilityAllowed(id, piece, slot, id === 'abilityDoubler' ? SPLATFEST_TEE : loadout[piece].item) || id !== 'none' && !CLOTHING_ABILITIES.includes(id) && !HEAD_ABILITIES.includes(id) && id !== 'ninjaSquid' && !tuning.gear[id]) continue;
+          if (!abilityAllowed(id, piece, slot, id === 'abilityDoubler' ? SPLATFEST_TEE : loadout[piece].item) || id !== 'none' && !CLOTHING_ABILITIES.includes(id) && !HEAD_ABILITIES.includes(id) && !SHOES_ABILITIES.includes(id) && id !== 'ninjaSquid' && !tuning.gear[id]) continue;
           const option = document.createElement('option'); option.value = id; option.textContent = name; select.append(option);
         }
         select.value = slot === 0 ? loadout[piece].main : loadout[piece].subs[slot - 1];
