@@ -4,12 +4,12 @@ import {batchFixture,cpuFloor} from './batch03-fixture.mjs';
 import {rollingMovementSpeed} from '../runtime/movement-physics.mjs';
 import {FixedClock} from '../runtime/clock.mjs';
 
-async function rollAt(speed, startFrame, {sideTarget=false}={}) {
+async function rollAt(speed, startFrame, {sideTarget=false, ink=100}={}) {
   const f=await batchFixture(),a=f.make('roller'),r=a.weaponRunner;
   const splat=f.G.paint.splat;
   // Feed one fixed seed to the real compositor so its CPU footprint is reproducible.
   f.G.paint.splat=(point,radius,team,opts={})=>splat(point,radius,team,{...opts,seed:.5});
-  a.isLocal=true;a.alive=true;a.grounded=true;a.ink=100;a.yaw=0;
+  a.isLocal=true;a.alive=true;a.grounded=true;a.ink=ink;a.yaw=0;
   a.intent.move.set(0,0,1);a.vel.set(0,0,speed);
   r.rolling=true;r.rollT=startFrame/60;
   r.lastRollPos=a.pos.clone().add(new f.THREE.Vector3(0,0,-1));
@@ -73,6 +73,20 @@ test('#649 rolling side paint widens by ground speed from low roll to the source
   assert.equal(dash.a.weapon.rollWidth,1.9,'native damage width is unchanged');
   assert.ok(Math.abs(100-dash.a.ink-dash.a.weapon.rollInkPerMeter)<1e-10,
     'the side splashes do not change native per-meter ink consumption');
+});
+
+test('#649 stopped and low-ink rolls keep the native body-only footprint; ink level does not scale width',async()=>{
+  const stopped=await rollAt(0,60);
+  assert.equal(stopped.f.paint.length,3,'a stopped drum emits only the three native body bands: hs=0 clamps the side bands away');
+  assert.ok(stopped.f.paint.every(e=>e.opts.kind==='roll'&&e.radius===.62));
+  const dry=await rollAt(6.48,30,{ink:.4});
+  assert.equal(dry.f.paint.length,0,'ink at or below the 0.5 roll gate stops rolling before any paint emission');
+  const lowInk=await rollAt(6.48,30,{ink:.6});
+  const full=await rollAt(6.48,30);
+  assert.equal(lowInk.f.paint.length,5,'ink just above the gate still rolls with both side bands');
+  assert.ok(Math.abs(lowInk.width-full.width)<1e-9,
+    'ink level does not scale the speed-derived width: only ground speed does');
+  assert.ok(stopped.width<=lowInk.width+1e-9,'stopped footprint never exceeds the rolling one');
 });
 
 async function composedRoll(renderHz) {
