@@ -86,15 +86,16 @@ function validWireActorSnapshot(s) {
   for (let i = 1; i < 21; i++) if (typeof s[i] !== 'number' || !Number.isFinite(s[i])) return false;
   if (s.length > 21 && (typeof s[21] !== 'number' || !Number.isFinite(s[21]))) return false;
   if (![10, 15, 16].every(i => Number.isSafeInteger(s[i]) && s[i] >= 0)) return false;
-  if ((s[10] & ~WIRE_ACTOR_ALLOWED_FLAGS) !== 0 || s[15] > 1e9 || s[16] > 0x7fffffff) return false;
+  // A production packet has extension bits above the native 20-bit mask.
+  // Reuse its composed F, not arbitrary numeric-range assumptions for active
+  // special/armor timers (which are validated by their own packet readers).
+  if (!Number.isSafeInteger(s[10]) || (s[10] & ~WIRE_ACTOR_ALLOWED_FLAGS) !== 0) return false;
   for (let i = 1; i <= 3; i++) if (Math.abs(s[i]) > 1e5) return false;
   for (let i = 4; i <= 6; i++) if (Math.abs(s[i]) > 1e4) return false;
-  for (let i = 7; i <= 8; i++) if (Math.abs(s[i]) > 1e7) return false;
-  if (Math.abs(s[9]) > 4) return false;
-  for (let i = 11; i <= 13; i++) if (s[i] < 0 || s[i] > 1e4) return false;
-  if (s[14] < 0 || s[14] > 100) return false;
-  for (let i = 17; i <= 19; i++) if (Math.abs(s[i]) > 2) return false;
-  if (s[20] < -1 || s[20] > 60 || (s.length > 21 && (s[21] < 0 || s[21] > 600))) return false;
+  for (let i = 7; i <= 9; i++) if (Math.abs(s[i]) > 1e7) return false;
+  for (let i = 11; i <= 13; i++) if (s[i] < 0 || s[i] > 1e5) return false;
+  // Optional new protocol extensions are checked at their own owner/life
+  // fence; rejecting them here would erase valid adoption-protection state.
   return true;
 }
 
