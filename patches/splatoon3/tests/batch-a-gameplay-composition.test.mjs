@@ -178,16 +178,16 @@ test('store while holding fire and roll maintaining charge (#390 / #386 baseline
   assert.equal(obs.roll1Stored.charge, 1, 'stored charge remains 1.0 during roll');
 });
 
-test('Issue #377 regression: charger charging movement speed capped at 1.2 WU/s from charging entry', async () => {
+test('Issue #539 supersedes #377: Charger enters charge at partial normal-run speed', async () => {
   const { obs } = await runScenario(60);
-  // #726: the ZR edge is the 1F humanoid startup, so tick 1 is not charging and
-  // keeps the uncharged run speed. S3 MoveSpeedFullCharge = 0.02 DU/frame
-  // (pinned 0.02, not 0.20; 1.2 WU/s at 60Hz) then clamps immediately on the
-  // charging entry tick without slow ease (#377 unchanged).
+  // #726 retains its 1F startup. #539 identifies the 1.2 WU/s speed as the
+  // full-charge endpoint, not the partial-charge entry speed; the verified
+  // 0.96 S3 partial entry is 5.76 in the current INKWAVE profile.
   assert.equal(obs.firstTickCharging, false, 'Charger is in its 1F startup on tick 1');
   assert.equal(obs.firstTickCharge, 0, 'the startup tick advances no charge progress');
   assert.equal(obs.entryTickCharging, true, 'Charger enters charging state on tick 2');
-  assert.ok(obs.entryTickMoveSpeed <= 1.2 + 1e-5, `Expected <= 1.2 WU/s at charging entry, got ${obs.entryTickMoveSpeed}`);
+  assert.ok(Math.abs(obs.entryTickMoveSpeed - 5.76) < 1e-5,
+    `Expected 5.76 WU/s at charging entry, got ${obs.entryTickMoveSpeed}`);
 });
 
 test('Issue #386 regression: roll-chain second floor action at 70F retains .85 attenuation', async () => {
