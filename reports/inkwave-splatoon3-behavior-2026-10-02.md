@@ -2298,3 +2298,13 @@ position, size and hit area. Presentation only: no special points, costs, timer 
 In-match type now uses original condensed chamfered timer numerals and an OFL Rounded M+ 1c Black
 subset for Japanese HUD text; roster squids get a masked ink shading. Full-gauge appearance, other team colours and Turf War-specific HUD remain unconfirmed. Details:
 [the HUD look report](inkwave-s3-hud-look-2026-10-08.md).
+
+## 2026-10-09: squid-form look from Nintendo's official clips
+
+Compared against Nintendo's official clips (`ikahito_pc.mp4`, `s3_howtoplay_move01/02/03.mp4`, hashes in
+[the HUD look report](inkwave-s3-hud-look-2026-10-08.md)). The local swimmer in own ink now shows a glossy ink
+mound instead of a see-through squid; the drawn squid travels mantle-first with its face trailing (the
+third-person camera sees the eyes); on dry ground it lies flat with the eyes up; arms are short and bundled
+with two long feelers ending in dark clubs. Presentation only: speeds, acceleration, hop timing, swim
+visibility rules and damage are unchanged. No ripped game model or animation data is used. Mound size/wobble
+and the dry lift angle are visual calibration; Switch parity remains unverified.
