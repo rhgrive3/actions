@@ -18,7 +18,10 @@ test('#573 49/50/51F switch from vulnerability to full rejection for weapon and 
 });
 test('#573 landing ends action protection without overwriting an independently owned timer',async()=>{
  const f=await rig();for(let i=0;i<51;i++)f.step();f.a.invuln=.7;
- f.a._resolve=()=>{f.a.grounded=true;};f.step();assert.equal(f.a.specialActive,null);near(f.a.invuln,.7);
+ f.a._resolve=()=>{f.a.grounded=true;};
+ let waited=0;while(f.a.specialActive&&waited++<100)f.step();
+ assert.ok(waited>1&&waited<100,'S3 70F Slam now enters fall after the extended hang before landing');
+ assert.equal(f.a.specialActive,null);near(f.a.invuln,.7);
  assert.ok(f.a.s3TidalSlamGaugeFinish);f.a.invuln=0;f.a.hardLand=.1;const hp=f.a.hp;f.a.damage(10,null,'shooter');near(f.a.hp,hp);
  f.a.hardLand=0;finishTidalSlamGauge(f.a);assert.equal(f.a.s3TidalSlamGaugeFinish,null);f.a.damage(10,null,'shooter');near(f.a.hp,hp-10);
 });
