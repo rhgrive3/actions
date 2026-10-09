@@ -118,6 +118,12 @@ export function adaptQualitySource(rel, code) {
 }
 
 function adaptQualityLayer(rel, code) {
+  if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code,
+      '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);\n    const a = this.anim;',
+      '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);\n    const a = this.anim;\n    a.isBot = this.isBot === true;',
+      'carry bot identity to visual-only Character scheduling');
+  }
   code = adaptBotPaintObservation(rel, code);
   code = adaptPropRetention(rel, code);
   code = adaptPropAtlas(rel, code);
