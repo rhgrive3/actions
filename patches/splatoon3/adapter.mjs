@@ -982,7 +982,7 @@ export function adaptSource(rel, code) {
     // #1049: sourced Blaster SplashPaintParam owns the vertical receiving-surface window.
     code = replaceOnce(code,
       '        const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);',
-      '        const dropProbe = p.type === \'blast\' && Number.isFinite(p.s3SplashDropMax) ? p.s3SplashDropMax : 4;\n        const g = G.physics.raycast(p.pos, DOWN, dropProbe, _hit2, true);',
+      '        const dropProbe = p.type === \'blast\' && Number.isFinite(p.s3SplashDropMax) ? p.s3SplashDropMax : (p.s3Weapon?.flightPaint ? Math.max(20, p.s3Weapon.flightPaint.dropHeightMin) : 4);\n        const g = G.physics.raycast(p.pos, DOWN, dropProbe, _hit2, true);\n        if (g.hit) p.lastDropDist = g.dist;',
       'Blaster flight splash drop-height window');
     code = replaceOnce(code,
       '      if (d > kitBombRadius(SUB, b, s.radius)) continue;',

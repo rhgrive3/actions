@@ -19,6 +19,63 @@ export const VERTICAL_SWING = Object.freeze({ coil: -2.45, release: -.04, follow
 // Read-only view for regressions; the arrays stay owned by this module.
 export const ROLLER_POSE = Object.freeze({ READY_ANCHOR, READY_ROTATION, ROLL_ANCHOR, ROLL_ROTATION, ROLL_LEAN });
 
+// Issue #387: S3 Ver. 11.3.0 Roller-body contact knockback responses.
+export const ROLLER_BODY_COLLISION = Object.freeze({
+  duPerWorldUnit: 10,
+  referenceHz: 60,
+  knockBackOpponent: Object.freeze({
+    accelMin: 420,
+    accelMax: 800,
+    myVelocityRate: 30,
+    opponentVelocityRate: 4800,
+  }),
+  knockBackRollerPlayerDamageOn: Object.freeze({
+    accelMin: 410,
+    accelMax: 550,
+    myVelocityRate: 4800,
+    opponentVelocityRate: 30,
+  }),
+  knockBackRollerPlayerDamageOff: Object.freeze({
+    accelMin: 280,
+    accelMax: 280,
+    myVelocityRate: 4800,
+    opponentVelocityRate: 30,
+  }),
+});
+
+export function applyRollerBodyKnockback(attacker, victim, damage = 0, spec = ROLLER_BODY_COLLISION) {
+  if (!attacker?.vel || !victim?.vel) return false;
+  let dx = victim.pos.x - attacker.pos.x, dz = victim.pos.z - attacker.pos.z;
+  let len = Math.hypot(dx, dz);
+  let dirX, dirZ;
+  if (len > 1e-4) {
+    dirX = dx / len; dirZ = dz / len;
+  } else {
+    const yaw = attacker.yaw || 0;
+    dirX = Math.sin(yaw); dirZ = Math.cos(yaw);
+  }
+  const divisor = spec.duPerWorldUnit * spec.referenceHz; // 600
+  const hs = Math.hypot(attacker.vel.x, attacker.vel.z);
+  const rollSpeed = attacker.weapon?.rollSpeed || 7.92;
+  const t = Math.max(0, Math.min(1, (hs - 1.0) / Math.max(0.1, rollSpeed - 1.0)));
+
+  // Opponent knockback
+  const oppSpec = spec.knockBackOpponent;
+  const oppAccel = oppSpec.accelMin + (oppSpec.accelMax - oppSpec.accelMin) * t;
+  const dvOpp = oppAccel / divisor;
+  victim.vel.x += dirX * dvOpp;
+  victim.vel.z += dirZ * dvOpp;
+
+  // Roller player knockback (recoil)
+  const playerSpec = damage > 0 ? spec.knockBackRollerPlayerDamageOn : spec.knockBackRollerPlayerDamageOff;
+  const playerAccel = playerSpec.accelMin + (playerSpec.accelMax - playerSpec.accelMin) * t;
+  const dvPlayer = playerAccel / divisor;
+  attacker.vel.x -= dirX * dvPlayer;
+  attacker.vel.z -= dirZ * dvPlayer;
+
+  return true;
+}
+
 // Issue #635: gates after flick release, independent of roll-stop locks.
 const POST_SUB = { horizontal: 14 / 60, vertical: 18 / 60 };
 const POST_SQUID = { horizontal: 15 / 60, vertical: 19 / 60 };
@@ -516,6 +573,9 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       const admittedHit = function (attacker, victim, ...args) {
         const admission = applyHit.call(this, attacker, victim, ...args);
         if (attacker === a && args[1] === 'roller') {
+          if (admission !== 'rejected' && admission !== 'rejected-invulnerable') {
+            applyRollerBodyKnockback(attacker, victim, args[0]);
+          }
           if (admission === 'rejected') {
             if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);
             runner.s3PendingRollHits.delete(victim);
