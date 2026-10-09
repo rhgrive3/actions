@@ -2995,3 +2995,35 @@ robustness, paint order and host clock checks pass 34/34, concurrency 1.
 Syntax, quick compatibility and whitespace checks pass. These are native VM
 and build-composition checks, not physical relay/browser or S3 wire-format
 validation. The comparison baseline remains Splatoon 3 11.3.0.
+
+## #1149 explicit Ink Vac dodge suppression (2026-10-09)
+
+[Evidence and validation](inkwave-special-source-evidence-20261009.md): re-read pinned S3 11.3.0 `PoisonMistForPlayer.SideStepInkConsumeRate=3.5`. The real composed Dualies admission now checks and pays 3.5× its current equipped dodge cost while its locally-owned actor contacts a hostile Ink Vac. It previously paid base cost. The ordinary drain/speed defaults, progressive effects and exact contact geometry remain unverified. Complete-bootstrap tests distinguish the removed-query negative control, local/remote ownership, non-stacking and 30/60/120 Hz scheduling; no retail/renderer claim.
+## 2026-10-09 — #878 hidden deadline across an existing suspension
+
+An already WebGL/freeze/pagehide-suspended host could later become hidden
+without a second `suspend` callback, leaving both its deadline and resume
+correction absent. Independent visibility notification now captures and settles
+that interval even while another blocker remains. The actual host/guest/relay
+fixture reproduces the failure; new tests fail 5/6 before the change and all
+16 hidden-host cases pass afterward, with 63 adjacent checks passing. Physics,
+global simulation time, constants and disconnect policy are unchanged. The
+Splatoon 3 Ver. 11.3.0 comparison retains the existing policy distinction and
+unverified physical-browser/Switch conditions. See [the focused report](inkwave-hidden-host-blocked-visibility-878-2026-10-09.md).
+### 2026-10-09: buffered short-hop and tall-wall crest boundaries (#890/#846)
+
+[Focused evidence](inkwave-movement-evidence-boundaries-2026-10-09.md) records two residual repairs on the PR1182 integration. A B tap released before native landing-buffer admission now receives the same existing short-hop response as a direct tap, rather than being marked consumed before application. A Surge that reaches the ledge after its existing boost has expired emits its crest once without reapplying boost velocity. The new actual Actor/Physics and native wall-transition cases pass with 30/60/120Hz fixed-step controls. Existing provisional jump/Surge coefficients are unchanged; Nintendo's jump-hold cutoff and extended wall-boost curve remain unmeasured. Pinned public S3 Player/Spinner/Shoes tables were fetched directly from GitHub, with public blob identities and missing fields recorded; no guessed formula closes #952/#956 or the remaining numeric acceptance of #890/#846.
+## 2026-10-09 — #992 sourced Dualies floor-impact width and straight-angle envelope
+
+At PR #1182 baseline `12be2542`, the ordinary Dualies terminal splat still used a random generic radius. The runtime now reads the pinned S3 11.3.0 PaintParam near/middle/far widths through explicit world-scale conversion and the researched 10–35 degree straight-flight depth envelope, preserving the actual CPU paint/score path, ghost exclusion and separate wall-drop/slide paint. Source distances 1.1/10.55/20 map to 1.71/1.685/1.66 radii. The seven-pattern flight droplets and exact break/free height selector remain unimplemented, so #992 is not fully resolved. New actual-projectile tests include deterministic CPU area, exception cleanup, wall contact and 30/60/120 Hz outer loops. These are logic-level results, not Nintendo hardware or browser-GPU equivalence. See [evidence and remaining criteria](inkwave-dualies-paint-evidence-992-2026-10-09.md).
+## 2026-10-09 — Slosher landing-paint single-owner repair (#1011 / #1140)
+
+At PR #1182 baseline `12be2542`, actual nine-glob emission followed by native impact reproduced a composition defect: the adapter's source-unit/world-scale/high-drop paint was overwritten by a second global paint wrapper. The first live glob at source XZ distance 5 painted radius 0.768 instead of the configured 4.44, and the overwritten result ignored high-drop shrink. The wrapper's fixed 0.2 used glossary test-range-line notation as world units, despite the active profile's scale 1.
+
+The duplicate wrapper is removed. `fidelitySlosherImpactPaint` and the explicit-scale source helper now own the same first/after-unit contract; no source numbers or current decay/interpolation formulas change. Native tests cover every emitted glob, near/far endpoints, zero/12-source-unit drop, one stamp, untouched stored collision/damage/velocity, callback/exception ownership, ghosts, and full-runtime 30/60/120 Hz fixed-step consistency. The same tests pass in the actual emitted build `d76fd8324faa`; quick provenance and unchanged startup/cache gates pass. See [the source/verification report](inkwave-weapon-evidence-recheck-2026-10-09.md).
+
+This fixes the INKWAVE composition residual. The exact Nintendo high-drop collision/paint curve remains unverified; #1140 is not fully resolved. The publicly referenced parameter tables do not specify #940's native PDF, #1022's bias semantics, or #498's intermediate age curve. No invented curve, physical Switch parity, whole-branch CI, or Issue closure is claimed.
+
+## #927 friendly Storm recovery-law source verification (2026-10-09)
+
+The retrieved [Ink Storm verification specification](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E3%82%A2%E3%83%A1%E3%83%95%E3%83%A9%E3%82%B7#ab7922ee) resolves the prior unknown recovery-rate relationship: humanoid friendly-rain recovery equals normal submerged recovery, while submerged rate and 60F delay are unchanged. Current implementation matches; new six-case complete-bootstrap suite passes, including 59/60F and 30/60/120Hz. This supersedes earlier statements that this relationship lacked evidence. Geometry/growth/fade and our own hardware comparison remain unverified. See [the five-issue evidence scope](inkwave-special-source-evidence-20261009.md).

@@ -100,6 +100,23 @@ export function installPlatformGame(Game, G, env = globalThis) {
     };
     r.off = owner.subscribe({
       suspend() { r.hiddenHostClock = captureHiddenHostClock(game, G, env); clear(); scheduleHiddenHostDeadline(r.hiddenHostClock, game, G, env, r); },
+      visibility() {
+        if (env.document?.hidden) {
+          // A prior WebGL/freeze/pagehide blocker can own the suspend already.
+          // Preserve an existing interval on duplicate visibility delivery.
+          if (!r.hiddenHostClock) {
+            r.hiddenHostClock = captureHiddenHostClock(game, G, env);
+            scheduleHiddenHostDeadline(r.hiddenHostClock, game, G, env, r);
+          }
+        } else {
+          // Showing need not resume the renderer. Settle only the actual hidden
+          // interval, so later visibility cycles and renderer recovery cannot
+          // lose it or subtract the same elapsed time again.
+          const saved = r.hiddenHostClock; r.hiddenHostClock = null;
+          clearHiddenHostDeadline(r, env);
+          resumeHiddenHostClock(saved, game, G, env);
+        }
+      },
       prepareResume() {
         const saved = r.hiddenHostClock; r.hiddenHostClock = null;
         clearHiddenHostDeadline(r, env);

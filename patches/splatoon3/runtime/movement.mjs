@@ -345,8 +345,10 @@ export function installMovement(context, tuning) {
   Actor.prototype._ledgePop = function (...args) {
     const wasClimbing = this.climbing, surge = movementState(this).surge, value = ledge.apply(this, args);
     if (wasClimbing && !this.climbing && (surge?.phase === 'burst' || surge?.phase === 'auto-climb')) beginSurgeLaunchArmor(this, surge);
-    if (surge?.phase === 'burst') {
-      this.vel.y = Math.max(this.vel.y, surge.speed);
+    if (wasClimbing && !this.climbing && (surge?.phase === 'burst' || surge?.phase === 'auto-climb')) {
+      // The crest belongs to the wall-top transition, including tall walls
+      // reached after boost expiry. Only the live boost may change velocity.
+      if (surge.phase === 'burst') this.vel.y = Math.max(this.vel.y, surge.speed);
       this.character.trigger('squidsurge_top', { charge: surge.charge, duration: config.surge.duration });
     }
     return value;

@@ -5,7 +5,7 @@ import { configureBlasterFlightPaint, paintBlasterFlight } from './blaster-fligh
 import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
-import { withRollerImpactPaint } from './roller-impact-paint.mjs';
+import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
@@ -46,21 +46,20 @@ export function biasedSourceYaw(uniform, degrees, bias = 0.5) {
   return Math.sign(x) * magnitude * radians(degrees);
 }
 const MAIN_SHOT_LIFETIME = 1.2;
-// Current S3 parameter glossary: Slosher WidthHalf and DistanceXZ values
-// use 0.2-world-unit notation. Near/far interpolation is a documented
-// local approximation pending S3 capture; the source endpoint values and
-// first-versus-after unit identity are authoritative.
-const SLOSHER_PAINT_UNIT = 0.2;
-export function slosherImpactPaintSource(unit, index, xzDistance) {
+// Source WidthHalf/DistanceXZ share the fidelity profile's world scale.
+// A glossary's 0.2-lines notation converts source distance to test-range lines,
+// not to INKWAVE world units. Keep the current interpolation model unchanged.
+export function slosherImpactPaintSource(unit, index, xzDistance, worldScale = 1) {
   const paint = index === 0 ? unit?.PaintParam : unit?.AfterPaintParam;
-  if (!paint || ![paint.DistanceXZNear,paint.DistanceXZFar,
-      paint.WidthHalfNear,paint.WidthHalfFar,paint.DepthScaleNear,paint.DepthScaleFar].every(Number.isFinite))
-    return null;
-  const near = paint.DistanceXZNear*SLOSHER_PAINT_UNIT;
-  const far = paint.DistanceXZFar*SLOSHER_PAINT_UNIT;
-  const t = far>near ? clamp01((Math.max(0,xzDistance)-near)/(far-near)) : (xzDistance>=far?1:0);
+  if (!paint || ![worldScale,xzDistance,paint.DistanceXZNear,paint.DistanceXZFar,
+      paint.WidthHalfNear,paint.WidthHalfFar,paint.DepthScaleNear,paint.DepthScaleFar].every(Number.isFinite) ||
+      !(worldScale>0) || !(paint.DistanceXZFar>paint.DistanceXZNear) ||
+      !(paint.WidthHalfNear>0&&paint.WidthHalfFar>0)) return null;
+  const near = paint.DistanceXZNear*worldScale;
+  const far = paint.DistanceXZFar*worldScale;
+  const t = clamp01((Math.max(0,xzDistance)-near)/(far-near));
   return {
-    radius:(paint.WidthHalfNear+(paint.WidthHalfFar-paint.WidthHalfNear)*t)*SLOSHER_PAINT_UNIT,
+    radius:(paint.WidthHalfNear+(paint.WidthHalfFar-paint.WidthHalfNear)*t)*worldScale,
     depthScale:paint.DepthScaleNear+(paint.DepthScaleFar-paint.DepthScaleNear)*t,
     source: index === 0 ? 'PaintParam' : 'AfterPaintParam', t,
   };
@@ -320,6 +319,59 @@ export function configureFidelityInkFlight(projectiles, helpers) {
 // Source records supply endpoints/counts. Added random draws are deterministic
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
 function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
+
+// #992: S3 BulletShooterPaintParam's sparse defaults and interpolation semantics
+// are documented by the original parameter research in
+// https://splatoonwiki.org/wiki/User:XarrotD/paramtable . DistanceMiddle is a
+// source distance, not a normalized fraction; DistanceFar defaults to 20.
+// The break/free HEIGHT selector remains unverified in that research. Do not
+// silently substitute impact angle or a guessed launch/apex height for it.
+export function dualiesImpactPaintSource(p, hit, raw, scale = 1) {
+  const paint = raw?.PaintParam;
+  if (p?.ghost || p?.s3SpecialWeapon || p?.s3Weapon?.kind !== 'dualies' ||
+      p.type !== 'shot' || !p.start || !hit?.point || !(hit.normal?.y > .5) ||
+      !Number.isFinite(scale) || !(scale > 0) || !paint) return null;
+  const near = paint.DistanceNear ?? 1.1, middle = paint.DistanceMiddle, far = paint.DistanceFar ?? 20;
+  const wn = paint.WidthHalfNear, wm = paint.WidthHalfMiddle, wf = paint.WidthHalfFar;
+  if (![near,middle,far,wn,wm,wf].every(Number.isFinite) ||
+      near < 0 || middle < near || far <= middle || Math.min(wn,wm,wf) <= 0) return null;
+  const distance = p.start.distanceTo(hit.point) / scale;
+  if (!Number.isFinite(distance)) return null;
+  const width = distance <= near ? wn : distance < middle
+    ? wn + (wm-wn) * (distance-near)/(middle-near)
+    : wm + (wf-wm) * clamp01((distance-middle)/(far-middle));
+  let depthScale = null;
+  if ((p.fidelityPhase ?? 0) === 0) {
+    const angle = rollerImpactAngleDegrees(p.vel,hit.normal);
+    const lo = paint.DegreeUseDepthScaleMax ?? 10, hi = paint.DegreeUseDepthScaleMin ?? 35;
+    if (angle !== null && [lo,hi,paint.DepthScaleMax,paint.DepthScaleMin].every(Number.isFinite) &&
+        hi > lo && paint.DepthScaleMax > 0 && paint.DepthScaleMin > 0)
+      depthScale = paint.DepthScaleMax + (paint.DepthScaleMin-paint.DepthScaleMax) * clamp01((angle-lo)/(hi-lo));
+  }
+  return { radius: width*scale, depthScale };
+}
+
+function withDualiesImpactPaint(game,p,hit,source,callback) {
+  if (!source || typeof game?.paint?.splat !== 'function') return callback();
+  const paint=game.paint,native=paint.splat;
+  let first=true;
+  paint.splat=function(center,radius,team,opts={}) {
+    if (!first) return native.call(this,center,radius,team,opts);
+    first=false;
+    const next={...opts};
+    if (source.depthScale !== null) {
+      // The angle was already consumed above. Avoid applying a second cos(angle)
+      // attenuation in the rasterizer by supplying the in-plane unit heading.
+      const direction=p.vel.clone(),normal=hit.normal;
+      direction.addScaledVector(normal,-direction.dot(normal)/normal.lengthSq());
+      if (direction.lengthSq()>1e-12) direction.normalize();
+      else direction.set(0,0,0); // normal incidence has no preferred floor heading
+      next.stretch=direction;next.stretchAmt=Math.max(0,source.depthScale-1);
+    }
+    return native.call(this,center,source.radius,team,next);
+  };
+  try { return callback(); } finally { paint.splat=native; }
+}
 
 // #873: keep intermediate and nearest/feet widths separate. Consume the same
 // legacy RNG draw to avoid changing unrelated spread/paint-seed ordering, but
@@ -849,16 +901,14 @@ export function fidelityPlayerCollisionRadius(p) { return slosherCollisionRadius
 function fieldRadiusAt(p,age,y=p.pos?.y) { return slosherCollisionRadius(p,age,true,y); }
 // #1011: footprint uses the source unit and first/after bullet distinctions.
 export function fidelitySlosherImpactPaint(p, point) {
-  const src=slosherPaintRecord(p), start=p?.start, scale=completion?.worldUnitsPerSourceUnit ?? 1;
-  if (!src || !start || !point || !(scale>0)) return null;
-  const n=src.DistanceXZNear,f=src.DistanceXZFar,w0=src.WidthHalfNear,w1=src.WidthHalfFar;
-  const d0=src.DepthScaleNear,d1=src.DepthScaleFar;
-  if (![n,f,w0,w1,d0,d1].every(Number.isFinite) || !(f>n) || !(w0>0&&w1>0)) return null;
-  const distance=Math.hypot(point.x-start.x,point.z-start.z)/scale;
-  const t=clamp01((distance-n)/(f-n)), shrink=slosherDropScale(p,point.y);
-  const radius=(w0+(w1-w0)*t)*scale*shrink;
-  return radius>0?{radius,stretchAmt:Math.max(.05,(d0+(d1-d0)*t)*shrink)}:null;
+  if (!p?.start || !point) return null;
+  const source=slosherImpactPaintSource(p.fidelitySloshUnit,p.fidelitySloshIndex||0,
+    Math.hypot(point.x-p.start.x,point.z-p.start.z),completion?.worldUnitsPerSourceUnit??1);
+  if (!source) return null;
+  const shrink=slosherDropScale(p,point.y), radius=source.radius*shrink;
+  return radius>0?{radius,stretchAmt:Math.max(.05,source.depthScale*shrink)}:null;
 }
+
 // #1022: explicit source bias input, keeping one RNG draw and exclusions.
 // The exponent is a deliberately labelled symmetric calibration, NOT a
 // verified Nintendo distribution; replace it when sampling semantics are known.
@@ -2055,28 +2105,18 @@ export function installWeaponsFidelity(context,profile) {
       if(p.type==='blast')p.s3BurstCollisionHit=hit;
       try{
         const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon;
+        if(w?.kind==='dualies' && p.type==='shot') {
+          const source=dualiesImpactPaintSource(p,hit,rawWeapon(w),completion.worldUnitsPerSourceUnit);
+          return withDualiesImpactPaint(context.G,p,hit,source,()=>nativeImpact.call(this,p,hit));
+        }
         if(w?.kind==='roller' && p.type==='drop' && p.fidelityRollerUnit){
           // #411/#674/#611 share one authoritative landing-paint sample.
           return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));
         }
-        if(w?.kind==='slosher' && p.type==='slosh' && p.fidelitySloshUnit && context.G.paint?.splat){
-          // #1011: native _impact paints its first stamp using legacy global
-          // radius plus a random multiplier. Replace THAT stamp with this
-          // projectile's distinct source unit/index contract, never foot paint.
-          const dx=hit.point.x-p.start.x,dz=hit.point.z-p.start.z;
-          const source=slosherImpactPaintSource(p.fidelitySloshUnit,p.fidelitySloshIndex,Math.hypot(dx,dz));
-          if(source){
-            const paint=context.G.paint,nativeSplat=paint.splat;
-            let first=true;
-            paint.splat=function(center,radius,team,opts){
-              if(!first)return nativeSplat.call(this,center,radius,team,opts);
-              first=false;
-              return nativeSplat.call(this,center,source.radius,team,{...opts,stretchAmt:source.depthScale});
-            };
-            try{return nativeImpact.call(this,p,hit);}
-            finally{paint.splat=nativeSplat;}
-          }
-        }
+        // #1011/#1140: the adapted native Slosher impact already owns source
+        // unit/distance paint, the configured world scale and high-drop shrink.
+        // Do not replace that stamp through a second G.paint.splat wrapper.
+
         return nativeImpact.call(this,p,hit);
       }finally{p.s3BurstCollisionHit=before;}
     }

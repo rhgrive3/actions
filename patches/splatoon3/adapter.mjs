@@ -875,8 +875,8 @@ export function adaptSource(rel, code) {
       '      this.rollInkChargedDistance = 0;\n' +
       '    }',
       'roller rolling ink floor and paint batch');
-    code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
-    code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
+    code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'const rollInk = this.inkVacDodgeInkCost?.(w.rollInk) ?? w.rollInk;\n    if (a.ink + 1e-10 < rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
+    code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
     code = replaceOnce(code,
       'if (!inp.fire) this.bloom = Math.max(0, this.bloom - dt / (w.bloomRecover ?? 0.28));',
       "if (w.kind !== 'splatling' && !inp.fire) this.bloom = Math.max(0, this.bloom - dt / (w.bloomRecover ?? 0.28));",

@@ -34,6 +34,9 @@ export function rollerStationaryRecoveryEligible(a) {
 // damage, surface sampling, ink refill, or resource recovery clocks.
 export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) {
   if (!turfCombatAllowed(api.G)) return;
+  // S3 verification Wiki, Ink Storm (11.3.0 baseline): friendly rain gives
+  // humanoid actors the submerged recovery rate; submerged rate and the
+  // ordinary 60F post-damage wait are unchanged. See the source evidence report.
   const P = api.PLAYER, r = tuning, rain = stormRecoveryState(a, api);
   if (!onEnemy && !rain.enemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
     a.hp = Math.min(P.hp, a.hp + (submerged || rain.ally ? r.regenRateSwim : r.regenRate) * dt);

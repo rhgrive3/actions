@@ -63,6 +63,9 @@ const KEY_PATTERN = /^[A-Za-z0-9#._:-]{1,64}$/;
 export const INK_VAC_CALIBRATION = Object.freeze({
   // #1149: ReceiveDamageForPlayer 15 raw /10 *60 = 90 HP-equivalent/s.
   actorContactDamagePerSecond: 90,
+  // Pinned 11.3.0 PoisonMistForPlayer.SideStepInkConsumeRate. This multiplier
+  // is explicit even though ordinary drain/speed defaults are absent.
+  actorDodgeInkCostScale: 3.5,
   actorInkFractionPerSecond: .12,
   actorMoveSpeedScale: .6,
   actorSuppressionStatus: 'engineering calibration: 12% tank/s and 60% movement cap; sparse S3 PoisonMistForPlayer data omits drain/speed defaults; retail magnitudes unverified',
@@ -710,6 +713,14 @@ export function installKitInkVac(context, _profile) {
   const { Actor, THREE } = api;
   if (!Actor?.prototype || !THREE?.Vector3) throw new Error('Ink Vac requires the actual Actor and THREE');
   const proto = Actor.prototype;
+  if (api.WeaponRunner?.prototype) {
+    // Sample current contact once at dodge admission. The composed native
+    // method uses this same cost for its availability check and payment.
+    // No weapon registry mutation, post-debit correction or persistent debuff.
+    api.WeaponRunner.prototype.inkVacDodgeInkCost = function (baseCost) {
+      return actorInVortex(this.a) ? baseCost * INK_VAC_CALIBRATION.actorDodgeInkCostScale : baseCost;
+    };
+  }
   if (!Object.hasOwn(proto, INSTALL)) {
     Object.defineProperty(proto, INSTALL, { value: true });
     const update = proto.update, startSpecial = proto._startSpecial;
