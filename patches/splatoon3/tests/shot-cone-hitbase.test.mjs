@@ -111,7 +111,7 @@ test('#607/#677 ghosts preserve transmitted launch vectors without applying spre
  }
 });
 
-test('current35-field recorder preserves scalar launch vectors through the full network composition',async()=>{
+test('current36-field recorder preserves scalar launch vectors through the full network composition',async()=>{
  const {fixture:composed}=await import('../../../scripts/weapons-fixture.mjs');
  for(const kind of ['shooter','blaster']){
   const f=await composed({site:new URL('../../../.cone-network-source',import.meta.url).pathname,fidelity:true,network:true});
@@ -120,7 +120,7 @@ test('current35-field recorder preserves scalar launch vectors through the full 
   const nm=f.G.netm=new f.NetMatch({myId:7},{});
   f.projectiles[kind==='shooter'?'fireShooter':'fireBlaster'](a,a.weapon,10);
   const p=f.projectiles.list[0],velocity=Array.from(p.vel.toArray()),packet=nm.out.find(e=>e[1]==='p');
-  assert.equal(packet.length,35);assert.equal(packet[4],kind);
+  assert.equal(packet.length,36);assert.equal(packet[4],kind);
   const peer=f.make(kind);peer.remote=true;peer.aimPoint.set(20,5,-20);peer.grounded=true;
   f.projectiles.list.length=0;let draws=0;f.context.Math.random=()=>{draws++;return .9;};
   f.projectiles.ghostProjectile(peer,packet);const q=f.projectiles.list[0];

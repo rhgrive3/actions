@@ -714,10 +714,9 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     // #263: once native contact/stripe authority is admitted, use the existing
     // settled ground-contact target, not another raised-carry blend. Keep wRoll
     // itself unchanged: gameplay cleanup and drum-spin blending read that clock.
-    // #263 is the grounded horizontal handoff; keep the separately audited
-    // vertical landing/recovery pose and its admission clock unchanged.
-    const vertical = this.s3RollerFlick?.vertical ?? this._runner?.(s)?.s3FlickVertical ?? false;
-    const contact = available && !vertical && this.grounded && !!s.rolling, previous = this.wRoll;
+    // The same target also owns an admitted vertical-flick-to-roll handoff.
+    // Airborne/recovery poses remain active until native rolling is admitted.
+    const contact = available && this.grounded && !!s.rolling, previous = this.wRoll;
     this._s3RollerContactPose = contact;
     let result;
     try { if (contact) this.wRoll = 1; result = weaponPose.call(this, dt, s); }
@@ -745,7 +744,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     if (!state) return flick.call(this, P, ft);
     // The released flick must not lift the same drum after its authoritative
     // roll begins. Input release/cancel before admission still uses recovery.
-    if (!state.vertical && state.released && state.rolling && this.kidForm && this.grounded && !this.dance) return;
+    if (state.released && state.rolling && this.kidForm && this.grounded && !this.dance) return;
     if (!state.vertical) {
       // Preserve the upstream horizontal joints, retiming coil/whip/recovery to
       // the actual attack, including the existing calibrated cooldown.

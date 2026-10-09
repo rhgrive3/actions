@@ -99,9 +99,9 @@ test('full production Roll snapshots sustain remote pose without transferring ga
   const authorityBeforeSend = { ...firstAction };
   const first = sendSnapshot(sender, sent), row = first.a.find(item => item[0] === owner.nid);
   const firstMeta = first.sq?.[owner.nid];
-  assert.equal(row.length, 23, 'combined adoption extension occupies its one tagged slot');
+  assert.equal(row.length, 24, 'combined adoption extension occupies its one tagged slot');
   assert.equal(row[21], owner.stats.specials || 0, 'existing special counter retains slot 21');
-  assert.equal(row[22][0], 'inkwave-adoption-v1', 'Roll sidecar does not occupy the adoption slot');
+  assert.equal(row[23][0], 'inkwave-adoption-v1', 'Roll sidecar does not occupy the adoption slot');
   assert.deepEqual(firstMeta?.[0], 's3roll-v1');
   assert.ok(firstMeta[1] > 0 && firstMeta[2] > 0 && firstMeta[2] <= ownerWorld.profile.movement.roll.duration);
   assert.deepEqual({ ...firstAction }, authorityBeforeSend, 'packing does not mutate owner Roll/gameplay state');

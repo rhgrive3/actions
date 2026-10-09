@@ -440,7 +440,9 @@ export function installWeapons(context, profile) {
       }
       const locked = this.s3PostFireLockActive && this.a.lastFire + 1e-10 < (weapon.postFireSwimLock || 0);
       if (!locked && this.s3PostFireLockActive) this.s3PostFireLockActive = false;
-      if (locked || this.s3ShooterPendingFirst || this.s3ShooterInterruptSub > 1e-10)
+      // A stream cancellation owns its separate 3F sub gate. A due shot on
+      // that edge must not replace it with the 4F squid/post-shot form gate.
+      if ((locked && !this.s3ShooterCancelMain) || this.s3ShooterPendingFirst || this.s3ShooterInterruptSub > 1e-10)
         next = { ...next, sub: false, subReleased: false };
       if (this.s3ShooterCancelMain && !this.s3ShooterInterruptJustArmed)
         next = { ...next, fire: false, firePressed: false };

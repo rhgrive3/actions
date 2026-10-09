@@ -53,6 +53,15 @@ export function adaptNetworkSource(rel, code) {
       '    if (r <= 0.02) { if (orderState) orderState.accepted = true; return 0; }',
       'keep existing fine paint presentation');
   }
+  if (rel === 'src/game/inkFlightRuntime.js') {
+    patch('      for (const actor of G.actors) {',
+      '      for (const actor of G.actors) {\n        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head',
+      'source-guided head collision authority');
+    patch('this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
+      '{ p._netHitActor = true; p._netHitX = p.pos.x; p._netHitY = p.pos.y; p._netHitZ = p.pos.z; this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey); }',
+      'source-guided head terminal identity');
+    return code;
+  }
   if (rel === 'src/core/ctx.js') {
     patch('export function emit(name, payload) {\n  const set = listeners.get(name);\n  if (!set) return;\n  for (const fn of set) fn(payload);\n}', `const EVENT_VECTOR_FIELDS = Object.freeze({
   muzzle: eventVectorField('weapon-fire-muzzle', readMuzzle, writeMuzzle),
@@ -977,6 +986,18 @@ function firstSplatStateFor(session,cfg) {
     return code;
   }
   if (rel === 'src/game/weapons.js') {
+    // Source-guided heads return before the generic fidelity branch below.
+    // Preserve the same owner terminal publication and receiver-only impact FX.
+    patch('    if (p.inkProfile) return this.inkFlight.stepHead(p, dt);', `    if (p.inkProfile) {
+      const dead = this.inkFlight.stepHead(p, dt);
+      if (p.ghost && p._netEndReason === 1 && p._netSteps >= p._netEndStep) {
+        _v.set(p._netHitX,p._netHitY,p._netHitZ);
+        G.fx?.burst(_v,_v2.copy(p.vel).normalize().negate(),p.owner.color,{count:6,speed:3,size:.07});
+        return true;
+      }
+      if (dead && !p.ghost && p._netId !== undefined && G.netm) G.netm._rec(p._netHitActor ? ['pe',p.owner.nid,p._netId,1,p._netHitX,p._netHitY,p._netHitZ] : ['pe',p.owner.nid,p._netId,0]);
+      return dead;
+    }`, 'source-guided head terminal publication and replay');
     code = replaceAllExpected(code,
       "emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75, a.pos.y + 0.02, a.pos.z + fz * 0.75).clone(), normal: a.groundN ? a.groundN.clone() : UP.clone(), team: a.team, kind: 'roll', radius: w.rollWidth / 2 });",
       "emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75, a.pos.y + 0.02, a.pos.z + fz * 0.75), normal: a.groundN || UP, team: a.team, kind: 'roll', radius: w.rollWidth / 2 });",

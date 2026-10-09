@@ -17,7 +17,8 @@ test('#411 sourced near/transition/far impact widths stay distinct by Roller uni
 test('#411 production impact uses unit/distance radius without changing projectile collision radius',async()=>{
   const f=await batchFixture(),a=f.make('roller');a.isLocal=true;a.grounded=true;a.weaponRunner.s3FlickVertical=false;
   f.G.camera={position:new f.THREE.Vector3()};
-  f.G.projectiles.fireFlick(a,a.weapon);
+  f.G.projectiles.fireFlick(a,a.weapon);f.paint.length=0; // Isolate impact from the independently sourced nearest launch paint.
+
   const p=f.G.projectiles.list[0],collision=p.size,hit={point:p.start.clone().add(new f.THREE.Vector3(12,0,0)),normal:new f.THREE.Vector3(0,1,0)};
   p.vel.set(1,-1,0);
   f.G.projectiles._impact(p,hit);

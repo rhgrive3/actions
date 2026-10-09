@@ -212,7 +212,18 @@ try {
     check(i + 1, 'menu', menu.menu === 'main' && menu.screen === 'main' && menu.screens === 1 && !menu.starting && !menu.modal, 'one live main menu screen', menu);
     check(i + 1, 'menu', menu.huds === 1 && menu.hudOverlays === 1 && menu.menuLayers === 1 && menu.mobileRoots === 1 && menu.duplicateIds.length === 0, 'no duplicated UI roots or ids', menu);
     check(i + 1, 'menu', menu.hudHidden && !menu.touchVisible && menu.touchDown.length === 0 && menu.judges === 0, 'HUD and touch controls retired in the menus', menu);
-    check(i + 1, 'menu', menu.focusConnected === true && menu.ringOn && menu.ringVisible && menu.ringOnFocus === true, 'selection ring state is on and its geometry matches the focused item (no pixel readback)', menu);
+    check(i + 1, 'menu', menu.focusConnected === true && !menu.ringOn && !menu.ringVisible,
+      'touch-owned return preserves focus without displaying a keyboard selection ring', menu);
+    await page.keyboard.press('ArrowDown');
+    await until(() => {
+      const m=window.__inkwave.menus,c=m?._cur,f=m?._focus;
+      if(!c?.on||!f?.isConnected||m.cursorEl?.style.visibility==='hidden')return false;
+      const r=f.getBoundingClientRect(),pad=f.dataset.curPad!=null?+f.dataset.curPad:7;
+      return Math.abs(c.x.x-(r.left-pad))<.6&&Math.abs(c.y.x-(r.top-pad))<.6&&Math.abs(c.w.x-(r.width+pad*2))<.6;
+    }, null, 30000, 'keyboard selection aligned to focus');
+    const keyboardMenu = await snap();
+    check(i + 1, 'menu', keyboardMenu.ringOn && keyboardMenu.ringVisible && keyboardMenu.ringOnFocus === true,
+      'keyboard handoff restores the selection ring on the focused item (no pixel readback)', keyboardMenu);
     check(i + 1, 'menu', menu.fade < 0.05, 'fade cleared', menu.fade);
     if (!baseline) baseline = menu;
     else {

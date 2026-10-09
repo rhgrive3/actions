@@ -107,7 +107,14 @@ function updateFeet(ch,dt){
       const f=F[i];let elapsed=dt;
       if(f.planted){
         f.stT+=dt;f.stU+=dt*ch.cad/ch.duty;
-        const rootDist=Math.hypot(f.pw.x-R.x,f.pw.z-R.z),far=rootDist>tuning.catchDistance;
+        // Measure the horizontal extension from this leg's stance, rather than
+        // charging its lateral stance width against the travel allowance. Keep
+        // the original catch distance: the full leg length also has to support
+        // the pelvis vertically, so it is not a safe horizontal catch limit.
+        const yaw=ch.yaw+ch.hipTwist,stance=ch.stance[f.i===0?0:3];
+        const rootDist=Math.hypot(f.pw.x-R.x,f.pw.z-R.z);
+        const extension=Math.hypot(f.pw.x-R.x-stance*Math.cos(yaw),f.pw.z-R.z+stance*Math.sin(yaw));
+        const far=extension>tuning.catchDistance;
         // A freshly landed foot normally owns at least 60 ms of stance to avoid
         // chatter. Do not keep that hold once the gameplay root has moved farther
         // than the whole leg can possibly span (common on a sharp reversal).

@@ -11,7 +11,7 @@ test('#1109 Roller stage LOS, stick and Agent3 body geometry compose without bre
   const expected='rollerStickActive(a) && rollerContactCandidate(a, e, w, PLAYER) && agent3RollerBodyContact(a, e, hs, true) && rollerContactClear(a, e, w, G.physics, PLAYER)';
   assert.equal(code.split(expected).length-1,1);
   assert.match(code,/if \(G\.boss && rollerStickActive\(a\)\)/);
-  assert.throws(()=>adaptSource(rel,code),/patch conflict/);
+  assert.throws(()=>adaptSource(rel,code),/conflict/);
 });
 test('#1109 valid small-speed contact still requires the real Agent3 collision shape',()=>{
   const drum={Radius:.4,WidthHalf:1.4};

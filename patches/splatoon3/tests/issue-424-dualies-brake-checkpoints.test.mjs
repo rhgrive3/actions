@@ -10,14 +10,14 @@ test('#424 native stationary Dualies shot has 3F straight, capped brake, then fr
  f.projectiles.fireDualies(a,a.weapon,0,0);const p=f.projectiles.list[0],start=p.pos.clone();
  near(p.vel.length()/60,2.37);near(p.fidelityMove.endSpeed/60,2.3425);
  for(let frame=1;frame<=3;frame++){
-  f.projectiles.update(1/60);near(p.vel.z/60,2.37);assert.equal(p.fidelityPhase,0);
+  f.projectiles.update(1/60);near(p.vel.z/60,2.37);assert.equal(p.inkPhase,0);
  }
  near(p.pos.z-start.z,7.11);
- f.projectiles.update(1/60);near(p.vel.z/60,1.4992);assert.equal(p.fidelityPhase,1);
+ f.projectiles.update(1/60);near(p.vel.z/60,1.4992);assert.equal(p.inkPhase,1);
  near(p.vel.y/60,-.07);
- f.projectiles.update(1/60);assert.equal(p.fidelityPhase,1);
- f.projectiles.update(1/60);assert.equal(p.fidelityPhase,1);
- f.projectiles.update(1/60);assert.equal(p.fidelityPhase,2,'7F enters free after crossing -0.15 u/F');
+ f.projectiles.update(1/60);assert.equal(p.inkPhase,1);
+ f.projectiles.update(1/60);assert.equal(p.inkPhase,1);
+ f.projectiles.update(1/60);assert.equal(p.inkPhase,2,'7F enters free after crossing -0.15 u/F');
  const z=p.vel.z,y=p.vel.y;
  f.projectiles.update(1/60);near(p.vel.z,z*.98);near(p.vel.y,y*.98-.016*60);
  near(p.damage,30);near(a.weapon.damageMin,15);near(a.weapon.fireInterval,5/60);

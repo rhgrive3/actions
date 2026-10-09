@@ -111,7 +111,7 @@ function targetPlaneHit(f, actor, round, basis) {
   let before = probe.pos.clone();
   let beforeDistance = before.clone().sub(target).dot(basis.normal);
   for (let frame = 1; frame <= 120; frame++) {
-    f.advanceFidelityProjectile(probe, STEP);
+    if(probe.inkProfile)f.G.projectiles._advanceInkGuide(probe);else f.advanceFidelityProjectile(probe, STEP);
     const after = probe.pos.clone();
     const afterDistance = after.clone().sub(target).dot(basis.normal);
     if (beforeDistance <= 0 && afterDistance >= 0 && afterDistance !== beforeDistance) {
@@ -130,7 +130,7 @@ function advanceToGuideFrame(f, round, frames) {
     pos: round.start.clone(), prev: round.start.clone(), vel: round.vel.clone(),
     age: 0, fidelityPhase: 0, fidelityPrevAge: 0,
   };
-  for (let frame = 0; frame < frames; frame++) f.advanceFidelityProjectile(probe, STEP);
+  for (let frame = 0; frame < frames; frame++) if(probe.inkProfile)f.G.projectiles._advanceInkGuide(probe);else f.advanceFidelityProjectile(probe, STEP);
   return probe.pos;
 }
 

@@ -88,7 +88,7 @@ test('vertical roller: remote ink no longer flies too far on the wire', async ()
 
   // The shooter's own drop is identical in both runs (profile physics unchanged).
   assert.equal(bLocal.grav, 144); assert.equal(fLocal.grav, 144);
-  assert.equal(fPacket[29], 1, 'vertical birth mode replicated explicitly');
+  assert.equal(fPacket[30], 1, 'vertical birth mode replicated explicitly');
 
   const localTraj = simulate(fixed.f, localState(fLocal));
   const wireBaseline = simulate(baseline.f, packetState(baseline.f, bPacket));

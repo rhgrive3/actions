@@ -23,14 +23,14 @@ test('ordinary Dualies ticks reuse input without per-frame spread or Proxy, but 
   assert.equal(runner.s3DualiesSubBuffered, false);
   runner.s3DualiesPostShot = 4 / 60;
   runner.update(1 / 60, input);
-  assert.ok(ownKeys > 0, 'post-shot lock must still use dynamically gated input');
+  assert.ok(runner.s3SubGateInput?.view, 'post-shot lock retains its dynamically gated input');
   const ownKeysAfterLock = ownKeys;
   runner.s3DualiesPostShot = 0;
   const released = new Proxy({ fire: false, sub: false, subReleased: true }, {
     ownKeys(target) { ownKeys++; return Reflect.ownKeys(target); },
   });
   runner.update(1 / 60, released);
-  assert.ok(ownKeys > ownKeysAfterLock, 'sub-release edge must not take the fast path');
+  assert.ok(runner.s3SubGateInput?.view, 'sub-release edge retains the reusable gate');
 });
 
 test('Dualies sub release on the post-shot unlock tick replays the buffered press exactly once', async () => {
@@ -46,7 +46,9 @@ test('Dualies sub release on the post-shot unlock tick replays the buffered pres
   assert.equal(runner.s3DualiesSubBuffered, true, 'press was buffered under the lock');
   a.intent.sub = false;
   f.tick(a);
-  assert.equal(thrown, 1, 'unlock-frame release must replay the buffered press and release');
+  assert.equal(thrown, 0, 'unlock replays release into normal preparation');
+  f.tick(a, 4); assert.equal(thrown, 0, '5F preparation precedes the separate use-startup');
+  f.tick(a); assert.equal(thrown, 1, 'prepared buffered release emits after 1F use-startup');
   assert.equal(runner.s3DualiesSubBuffered, false);
   assert.equal(runner.s3DualiesSubReleaseBuffered, false);
   f.tick(a, 4);
@@ -214,12 +216,14 @@ async function shooterWallDrop({floor=true,dt=1/60,ghost=false}={}){
  const axes=[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces=[-1,-1,-1,-1,-1,-1];
  const blocks=[{id:0,solid:true,center:new V(0,1,4),half:new V(10,4,.1),axes,faces}];
  if(floor)blocks.push({id:1,solid:true,center:new V(0,-.1,0),half:new V(100,.1,100),axes,faces});
- const level={blocks,queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;for(const b of blocks)out.push(b.id);return out;}};
+ blocks[0].faces[2]=0;
+  const level={blocks,faces:[{origin:new V(-100,0,-100),u:new V(1,0,0),v:new V(0,0,1)}],queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;for(const b of blocks)out.push(b.id);return out;}};
  f.G.level=level;f.G.physics=new f.Physics(level);
  const paints=[],owned=[];
  f.G.paint.splat=(point,radius)=>{paints.push({radius,y:point.y});return 1;};
  f.a.addTurf=area=>{owned.push(area);};
  let impacts=0;const impact=ps._impact;ps._impact=function(p,h){impacts++;return impact.call(this,p,h);};
+  const inkImpact=ps.inkFlight.impact;ps.inkFlight.impact=function(p,h){impacts++;return inkImpact.call(this,p,h);};
  ps.fireShooter(f.a,f.a.weapon,0);
  const p=ps.list[0];if(ghost)p.ghost=true;
  let state=null,contact=null;
@@ -300,10 +304,12 @@ test('ordinary floor contact stays a single generic impact for every family',asy
   f.a.aimPoint.set(0,0.02,20);f.setRandom(()=>.5);
   const axes=[new V(1,0,0),new V(0,1,0),new V(0,0,1)];
   const blocks=[{id:0,solid:true,center:new V(0,-.1,0),half:new V(100,.1,100),axes,faces:[-1,-1,-1,-1,-1,-1]}];
-  const level={blocks,queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;out.push(0);return out;}};
+  blocks[0].faces[2]=0;
+  const level={blocks,faces:[{origin:new V(-100,0,-100),u:new V(1,0,0),v:new V(0,0,1)}],queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;out.push(0);return out;}};
   f.G.level=level;f.G.physics=new f.Physics(level);
   let paint=0;f.G.paint.splat=()=>{paint++;return 0;};
   let impacts=0;const impact=ps._impact;ps._impact=function(p,h){impacts++;return impact.call(this,p,h);};
+  const inkImpact=ps.inkFlight.impact;ps.inkFlight.impact=function(p,h){impacts++;return inkImpact.call(this,p,h);};
   if(kind==='shooter')ps.fireShooter(f.a,f.a.weapon,0);
   else if(kind==='blaster')ps.fireBlaster(f.a,f.a.weapon,0);
   else if(kind==='splatling'){f.a.weaponRunner.fidelitySplatlingCharge=1;ps.fireSplatling(f.a,f.a.weapon,0);}

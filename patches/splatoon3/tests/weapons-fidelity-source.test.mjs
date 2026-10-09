@@ -121,11 +121,11 @@ test('#1011 Slosher landing paint respects first/after-unit width and distance r
   const u = profile.weaponsFidelityCompletion.weapons.slosher.UnitGroupParam.Unit[1];
   const p = { fidelitySloshUnit: u, fidelitySloshIndex: 0, start: { x: 0, y: 10, z: 0 }, pos: { y: 10 } };
   const radius = d => fidelitySlosherImpactPaint(p, { x: d, y: 10, z: 0 }).radius;
-  assert.ok(Math.abs(radius(8.5) - u.PaintParam.WidthHalfNear) < 1e-12);
-  assert.ok(Math.abs(radius(12) - u.PaintParam.WidthHalfFar) < 1e-12);
+  assert.ok(Math.abs(radius(u.PaintParam.DistanceXZNear) - u.PaintParam.WidthHalfNear) < 1e-12);
+  assert.ok(Math.abs(radius(u.PaintParam.DistanceXZFar) - u.PaintParam.WidthHalfFar) < 1e-12);
   p.fidelitySloshIndex = 1;
-  assert.ok(Math.abs(radius(8.5) - u.AfterPaintParam.WidthHalfNear) < 1e-12);
-  assert.ok(Math.abs(radius(12) - u.AfterPaintParam.WidthHalfFar) < 1e-12);
+  assert.ok(Math.abs(radius(u.AfterPaintParam.DistanceXZNear) - u.AfterPaintParam.WidthHalfNear) < 1e-12);
+  assert.ok(Math.abs(radius(u.AfterPaintParam.DistanceXZFar) - u.AfterPaintParam.WidthHalfFar) < 1e-12);
 });
 
 test('#1107 sparse Blaster timed burst restores normal and falling-drop defaults', () => {

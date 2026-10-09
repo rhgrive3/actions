@@ -148,6 +148,8 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   // A new grounded flick uses the existing horizontal path and clears only the
   // network-owned vertical presentation state on the proxy.
   local.weaponRunner.reset();
+  // #1056 owns landings in the first 5F; test the retained selection after that window.
+  for(let i=0;i<6;i++) ownerStep({ owner, local }, dt, { fire: true });
   local.grounded = true;
   ownerStep({ owner, local }, dt, { fire: true, firePressed: true });
   const horizontal = snapshot(sender);

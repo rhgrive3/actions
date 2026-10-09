@@ -196,11 +196,17 @@ export function installGear(api, tuning) {
     const m = this.s3?.modifiers || {};
     api.PLAYER.swimSpeed *= swimSpeedMultiplier(this);
     const runner = this.weaponRunner, kind = this.weapon.kind;
-    const firing = runner.firingT > 0 || runner.s3BlasterWindup > 0;
+    const pendingFirst = kind === 'shooter' ? !!runner.s3ShooterPendingFirst : kind === 'dualies' && runner.s3DualiesStart > 1e-10;
+    const firing = (!pendingFirst && runner.firingT > 0) || runner.s3BlasterWindup > 0;
     // Actor._horizontal runs before WeaponRunner.update. Predict only the same-tick
     // Shooter/Dualies emission that update() will actually admit; raw held ZR, cooldown,
     // empty ink and emerge-delay attempts must not select the shot curve early.
-    const sameTickShot = (kind === 'shooter' || kind === 'dualies') && !squid &&
+    const firstReady = kind === 'shooter'
+      ? !runner.s3ShooterCancelMain && (runner.s3ShooterPendingFirst ? runner.s3ShooterFirstRemaining <= dt + 1e-10
+        : runner.s3ShooterHeld || (this.weapon.firstShotDelay || 0) <= dt + 1e-10)
+      : kind === 'dualies' && !runner.dodge && (runner.s3DualiesHeld
+        ? (runner.s3DualiesStart || 0) <= dt + 1e-10 : !(this.weapon.humanoidFirstShotDelay > 1e-10));
+    const sameTickShot = firstReady && (kind === 'shooter' || kind === 'dualies') && !squid &&
       (this.intent.fire || this.fireBuffer > 0) && this.kidT >= api.PLAYER.emergeDelay &&
       runner.cooldown <= dt + 1e-10 && this.ink + 1e-10 >= this.weapon.inkPerShot;
     const fixedShot = ['shooter', 'dualies', 'blaster'].includes(kind) && (firing || sameTickShot);

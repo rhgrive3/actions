@@ -184,14 +184,14 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
       f.real.fireSplatling(a, a.weapon, 0);
       assert.equal(f.real.list.length, before + 1, 'the production fire path emits one real reference projectile');
       const p = f.real.list.at(-1), start = p.pos.clone();
-      assert.equal(p.life, 1.2, 'public _fireRound lifetime is copied without changing its owner');
+      assert.equal(p.life, 3, 'installed main-shot lifetime is copied without changing its owner');
       assert.equal(p.straight, a.weapon.straightTime, 'production uses the configured straight phase');
       assert.equal(p.fidelityMove.endSpeed, a.weapon.ballistics.endSpeed, 'production uses the configured brake speed cap');
       assert.ok(Math.abs(p.vel.length() - splatlingLaunchSpeed(a.weapon, charge)) < 1e-9,
         'the production launch uses the same deterministic no-random speed');
       while (p.age < p.life - 1e-10) {
         const step = Math.min(STEP, p.life - p.age);
-        advanceFidelityProjectile(p, step);
+        if(p.inkProfile)f.real._advanceInkGuide(p);else advanceFidelityProjectile(p, step);
       }
       return Math.hypot(p.pos.x - start.x, p.pos.z - start.z);
     } finally {
@@ -209,9 +209,9 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
   assert.ok(Math.abs(firstReach - higherFlight) < 1e-9, 'higher charge keeps the first-circle launch-speed cap');
   assert.equal(P.splatlingReach(a.weapon, NaN), lowReach, 'invalid charge uses the deterministic minimum');
 
-  const guideProjectile=P._s3SplatlingReachProjectile, advance=guideProjectile.pos.addScaledVector;
+  const guideProjectile=P._inkReachProbe, advance=guideProjectile.pos.set;
   let guideSteps=0;
-  guideProjectile.pos.addScaledVector=function(...args){guideSteps++;return advance.apply(this,args);};
+  guideProjectile.pos.set=function(...args){guideSteps++;return advance.apply(this,args);};
   try {
     const births=P.list.length;
     for(let i=0;i<60;i++)assert.equal(P.splatlingReach(a.weapon,0),lowReach);
@@ -222,8 +222,8 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
     guideSteps=0;
     const changed={...a.weapon,straightTime:a.weapon.straightTime+STEP};
     assert.ok(Number.isFinite(P.splatlingReach(changed,circle)));
-    assert.ok(guideSteps>0,'changed flight inputs invalidate the memoized result');
-  } finally {guideProjectile.pos.addScaledVector=advance;}
+    assert.equal(guideSteps,0,'legacy straightTime copies cannot override the canonical source flight profile');
+  } finally {guideProjectile.pos.set=advance;}
 
   const main = await mainBoot(), baseline = main.make('splatling');
   assert.equal(main.inRange(baseline, 0, mid), true, 'baseline fixed w.range reports this target in range at low charge');

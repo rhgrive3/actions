@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {batchFixture} from './batch03-fixture.mjs';
 import {rollerVerticalPaintSpec,configureRollerVerticalPaint,paintRollerVerticalFlight} from '../runtime/roller-vertical-paint.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
-async function setup(vertical=true){const f=await batchFixture(),a=f.make('roller');a.isLocal=true;a.grounded=!vertical;a.weaponRunner.s3FlickVertical=vertical;a.aimPitch=0;f.G.projectiles.fireFlick(a,a.weapon);return {...f,a,ps:f.G.projectiles.list,group:f.profile.weaponsFidelityCompletion.weapons.roller.VerticalSwingUnitGroupParam};}
+async function setup(vertical=true){const f=await batchFixture(),a=f.make('roller');a.isLocal=true;a.grounded=!vertical;a.weaponRunner.s3FlickVertical=vertical;a.aimPitch=0;f.G.projectiles.fireFlick(a,a.weapon);f.paint.length=0; /* This suite measures flight paint after the separate nearest launch checkpoint. */ return {...f,a,ps:f.G.projectiles.list,group:f.profile.weaponsFidelityCompletion.weapons.roller.VerticalSwingUnitGroupParam};}
 test('#423 one vertical group owns four intermediate events plus one reserved nearest slot; no five legacy trails',async()=>{
  const f=await setup();assert.equal(f.ps.length,5);assert.equal(f.ps.filter(p=>p.s3RollerFlightPaint).length,1);assert.ok(f.ps.every(p=>p.trailEvery===0));const p=f.ps[0],start=p.pos.clone();
  p.pos.copy(start).add(new f.THREE.Vector3(0,0,30));paintRollerVerticalFlight(f.G,p);assert.equal(f.paint.length,4);assert.equal(p.s3RollerFlightPaint.spec.reservedNearest,1);

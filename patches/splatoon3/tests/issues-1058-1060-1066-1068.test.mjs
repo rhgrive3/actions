@@ -32,7 +32,11 @@ async function firstEnemyInkTick(kind, { ink = null, cooldown = 0, kidT = 1 } = 
     set(v) { selected.push(v); store = v; },
   });
   const shots = f.shots.length;
-  a.update(1 / 60);
+  for(let tick=0;tick<10;tick++){
+    selected.length=0;a.update(1 / 60);
+    if(f.shots.length>shots || ink===0 || cooldown>0 || kidT===0)break;
+    assert.equal(selected[0],expectedWalk,kind+' startup before emission uses the walk curve');
+  }
   return { f, a, selected, emitted: f.shots.length - shots, expectedShot, expectedWalk };
 }
 
@@ -66,9 +70,10 @@ test('#1060 composed Blaster burst keeps damage/FX but has no generic impactRadi
   const burst = section(source, '  _blastBurst(p, at, direct) {', '\n  _updateBombs(dt) {');
   assert.match(burst, /G\.fx\?\.explosion/);
   assert.match(burst, /weapon:impact/);
-  assert.match(burst, /distanceDamage\(w\.damageBands/);
-  assert.doesNotMatch(burst, /G\.paint\.splat/);
-  assert.doesNotMatch(burst, /w\.impactRadius/);
+  assert.match(burst, /blasterBurstDamage\(p, w, d, distanceDamage\)/);
+  const standardBlasterPaint = section(burst, "if (p.s3Weapon?.kind === 'blaster') {", '} else {');
+  assert.match(standardBlasterPaint, /applyFidelityBlasterBurstPaint/);
+  assert.doesNotMatch(standardBlasterPaint, /G\.paint\.splat|w\.impactRadius/);
 });
 
 test('#1066 Private Battle gates persistent level progression and omits the normal XP panel', () => {

@@ -132,9 +132,13 @@ result=await page.evaluate(async({prefix,contentHash})=>{
  return {contentHash,data,images};
  }finally{floor.geometry.dispose();floor.material.dispose();renderer.dispose();renderer.domElement.remove();}
 },{prefix,contentHash:manifest.contentHash});
+// Preserve completed native samples and pixels before a semantic assertion.
+// The bounded failure receipt still stays small, while a failing transition
+// retains the actual frames needed to diagnose it instead of a disposed scene.
+fs.writeFileSync(path.join(output,'motion-samples.json'),JSON.stringify({contentHash:result.contentHash,data:result.data})+'\n');
+for(const entry of result.images)fs.writeFileSync(path.join(output,entry.name+'.png'),Buffer.from(entry.image.split(',')[1],'base64'));delete result.images;
 result.summary=validateWalkingResult(result);validateWalkingReceipts(loaded);
 if(errors.length)throw Error('Browser walking error: '+errors.join('; '));
-for(const entry of result.images)fs.writeFileSync(path.join(output,entry.name+'.png'),Buffer.from(entry.image.split(',')[1],'base64'));delete result.images;
 }catch(error){failure=error;try{if(page)result={...(result||{}),progress:await page.evaluate(()=>globalThis.motionProbeProgress||null)};}catch{};try{await page?.screenshot({path:path.join(output,'motion-failed.png'),timeout:10000});}catch{}}
 finally{for(const cleanup of [()=>browser?.close(),()=>server?.listening?new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve())):null])try{await cleanup();}catch(error){failure ||= error;}}
 if(failure){publish({status:'failed',contentHash:manifest?.contentHash||null,build:manifest?.build||null,message:String(failure.message||failure).slice(0,2500),errors,loaded:[...new Set(loaded)].slice(0,200),progress:result?.progress||null,casesFinished:result?.data?.length||0});console.error(JSON.stringify({status:'failed',message:String(failure.message||failure).slice(0,1200),evidence:path.join(output,'motion-result.json')}));process.exitCode=1;return;}

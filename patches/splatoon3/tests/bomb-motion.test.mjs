@@ -841,7 +841,7 @@ test('admission cancellation preserves paired native throw clocks through hide, 
     try {
       for (const x of [baseline, r]) {
         for (let ready = 0; ready < Math.ceil(hz * 5 / 60) + 1; ready++) x.step(1 / hz, { sub: true });
-        x.step(1 / hz, { subReleased: true });x.step(1 / hz);
+        x.step(1 / hz, { subReleased: true });for(let startup=0;startup<Math.ceil(hz/60);startup++)x.step(1 / hz);
         if (action === 'hide') x.ch.setVisible(false);
         if (action === 'ancestor') api.G.scene.visible = false;
         if (action === 'dance') x.ch.setDance('future-custom-presentation');
@@ -873,7 +873,7 @@ test('admission cancellation preserves paired native throw clocks through hide, 
         assert.ok(r.ch.ikErr.every(Number.isFinite));
         r.a.ink = 100; // a fresh actual release requires the native 70-ink cost
         for (let ready = 0; ready < Math.ceil(hz * 5 / 60) + 1; ready++) r.step(1 / hz, { sub: true });
-        r.step(1 / hz, { subReleased: true });r.step(1 / hz);
+        r.step(1 / hz, { subReleased: true });for(let startup=0;startup<Math.ceil(hz/60);startup++)r.step(1 / hz);
         assert.equal(api.bombMotionSnapshot(r.ch).throwing, true, `${action}: a fresh native event restarts owned presentation`);
       }
     } finally {

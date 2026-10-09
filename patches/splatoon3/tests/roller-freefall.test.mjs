@@ -244,7 +244,8 @@ test('grounded ZR followed by later jump keeps its already-selected horizontal m
   f.tick(a, 1);
   assert.equal(a.weaponRunner.s3FlickVertical, false, 'grounded start is horizontal');
 
-  // Jump during windup on next frame
+  // #1041 permits jump conversion through +3F; this latching control is later.
+  f.tick(a, 3);
   a.intent.jump = true;
   a.intent.fire = false;
   f.tick(a, 1);
@@ -259,7 +260,7 @@ test('grounded ZR followed by later jump keeps its already-selected horizontal m
   assert.equal(a.weaponRunner.s3RollerAttack?.vertical, false);
 
   // Advance until horizontal shot releases (21F windup = 0.35 s)
-  f.tick(a, 19);
+  f.tick(a, 16);
   assert.equal(f.shots.length, 1, 'shot released at 21F horizontal windup');
   close(f.shots[0].windup, 21 / 60, 'released shot windup is horizontal');
   assert.equal(a.weaponRunner.s3RollerAttack.vertical, false);
@@ -275,7 +276,8 @@ test('landing during an already-selected airborne vertical attack keeps its vert
   f.tick(a, 1);
   assert.equal(a.weaponRunner.s3FlickVertical, true, 'jump start is vertical');
 
-  // Land during windup on next frame
+  // #1056 owns the first 5F landing conversion; later landing keeps this mode.
+  f.tick(a, 6);
   a.grounded = true;
   a.intent.jump = false;
   a.intent.fire = false;
@@ -284,7 +286,7 @@ test('landing during an already-selected airborne vertical attack keeps its vert
   assert.equal(a.weaponRunner.s3RollerAttack?.vertical, true);
 
   // Preserve the current vertical windup; this root changes only mode selection.
-  f.tick(a, Math.round(profile.weapons.roller.verticalWindup*60)-2);
+  f.tick(a, Math.round(profile.weapons.roller.verticalWindup*60)-8);
   assert.equal(f.shots.length, 0, 'vertical shot must wait full current vertical windup despite landing');
 
   f.tick(a, 1);

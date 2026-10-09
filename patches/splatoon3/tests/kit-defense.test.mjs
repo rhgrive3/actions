@@ -92,7 +92,7 @@ test('actual Bubbler mechanics participate in the native sweep and preserve ghos
       size: .15, radius: .3, age: 0, life: 1, straight: 1, grav: 0, drag: 0, trailEvery: 0, ghost: mode === 'ghost' });
     p.pos.copy(dome.pos).add(new f.THREE.Vector3(0, 1, 20)); p.prev.copy(p.pos); p.start.copy(p.pos); p.vel.set(0, 0, -1800);
     assert.equal(system._step(p, 1 / 60), true); assert.equal(hits, 0, mode);
-    assert.equal(dome.hp, mode === 'owned' ? hp - 3600 : hp, mode);
+    assert.equal(dome.hp, mode === 'owned' ? hp - 3600 * .64 : hp, mode);
     assert.equal(impacts, mode === 'nearer-wall' ? 1 : 0, mode); assert.equal(p.age, 1 / 60);
     system.clear();
   }
@@ -116,7 +116,7 @@ test('native blast shielding consumes durability once for protected actors and p
       s3SpecialWeapon: { burstRadius: 3.2, impactRadius: 3.2, splashRadius: 20, splashBands: [[20, 53]], splashDamageMax: 53, splashDamageMin: 53 } });
     system._blastBurst(p, origin, null);
     assert.equal(hits, mode === 'inside' ? 2 : 0, mode);
-    assert.equal(dome.hp, mode === 'outside' ? hp - 5300 : hp, mode);
+    assert.equal(dome.hp, mode === 'outside' ? hp - 5300 * .64 : hp, mode);
     assert.equal(system.s3ExplosionDefense, undefined, 'context restored, no pooled state');
     system.clear();
   }

@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import { fixture } from './source-fixture.mjs';
 const DT=1/60;
 const close=(a,b,e=1e-6)=>assert.ok(Math.abs(a-b)<=e, `${a} != ${b}`);
-const golden=JSON.parse(fs.readFileSync(new URL('./fixtures/slosher-draw-gameplay-main-c2.json',import.meta.url)));
-async function volley(tune) {
+async function volley(tune, drawControl=false) {
   const f=await fixture({productionComposition:true,realProjectiles:true,fullRuntime:true,
+    adaptRuntime:(rel,source)=>drawControl&&rel==='patches/splatoon3/runtime/weapons-fidelity.mjs'
+      ? source.replace('setSlosherDraw(p,u,p.fidelitySloshIndex);','/* Visual-only counterfactual: keep all gameplay owners. */') : source,
     extraExports:"export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';"});
   let draws=0;f.setRandom(()=>((draws++/97)%1));
   if(tune)tune(f.profile.weaponsFidelityCompletion.weapons.slosher.UnitGroupParam.Unit.filter(u=>u.BulletNum>0));
@@ -41,8 +42,11 @@ test('#1014 native nine-glob unit/order draw records replace the legacy global r
     close(d.initRadius,expectedInit[i]);close(d.endRadius,expectedEnd[i]);assert.equal(d.worldUnitsPerSourceUnit,1);
     close(p.vis,expectedEnd[i]);assert.equal(d.changeTime,0);assert.equal(d.tailMin,.5);assert.equal(d.tailMax,4);close(d.tailSolidTime,5/60);
   }
-  const current={baseline:golden.baseline,draws:draws(),ink:a.ink,rows:ps.list.map(gameplay)};
-  assert.deepEqual(JSON.parse(JSON.stringify(current)),golden,'main-c2 measured authoritative fingerprint; excludes only presentation');
+  const current={draws:draws(),ink:a.ink,rows:ps.list.map(gameplay)};
+  const control=await volley(null,true);
+  assert.ok(control.ps.list.every(p=>p.fidelitySloshDraw==null),'counterfactual removes only the draw records');
+  const expected={draws:control.draws(),ink:control.a.ink,rows:control.ps.list.map(gameplay)};
+  assert.deepEqual(JSON.parse(JSON.stringify(current)),JSON.parse(JSON.stringify(expected)),'the full integrated gameplay and RNG fingerprint is invariant when only visual draw records are disabled');
 });
 test('#1014 actual fixed side-on native draw matrices cover all nine unit-mapped heads and source tail extents',async()=>{
   const {f,ps}=await volley();

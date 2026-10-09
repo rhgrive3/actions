@@ -125,6 +125,35 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     this.blobFourPetals.needsUpdate = true;
   }`, 'FourPetals instance upload');
   if (code.includes('    const inkProfile = profileFor(w);')) {
+    patch("import { profileFor, launchSpeed, correctInkAim, referenceReach } from './inkFlight.js';",
+      "import { profileFor, launchSpeed, correctInkAim, referenceReach, advanceInkFrame, INK_MODEL } from './inkFlight.js';",
+      'share canonical InkFlight predictor with HUD');
+    patch('  _configureInkRound(p, actor, weapon) {', `  _nominalInkGuide(p, actor, weapon, from, dir, target, speed) {
+    const profile = profileFor(weapon);
+    if (!profile) { p.inkProfile = null; return false; }
+    const charge = actor.weaponRunner?.fidelitySplatlingCharge ?? actor.weaponRunner?.charge ?? 0;
+    correctInkAim(profile, from, dir, target, speed,
+      Math.min(weapon.range, referenceReach(profile, charge * (weapon.chargeTime || 0))));
+    p.inkProfile=profile; p.inkFrame=0; p.inkPhase=0; p.age=0; p.life=INK_MODEL.headLife;
+    p.pos.copy(from); p.prev.copy(from); (p.start ||= new THREE.Vector3()).copy(from); p.vel.copy(dir).multiplyScalar(speed);
+    return true;
+  }
+  _advanceInkGuide(p) { p.prev.copy(p.pos); advanceInkFrame(p, p.inkProfile); }
+  _nominalInkReach(weapon, charge) {
+    const profile=profileFor(weapon); if(!profile)return null;
+    const speed=launchSpeed(profile,(charge || 0)*(weapon.chargeTime || 0));
+    const p=this._inkReachProbe || (this._inkReachProbe={pos:new THREE.Vector3(),vel:new THREE.Vector3()});
+    if(p.profile===profile && p.speed===speed)return p.reach;
+    p.pos.set(0,0,0);p.vel.set(0,0,speed);p.inkFrame=0;p.inkPhase=0;
+    for(let frame=0;frame<Math.round(INK_MODEL.headLife*60);frame++)advanceInkFrame(p,profile);
+    p.profile=profile;p.speed=speed;p.reach=p.pos.z;return p.reach;
+  }
+
+  _configureInkRound(p, actor, weapon) {`, 'read-only canonical InkFlight guide owner');
+
+    patch('this.inkFlight.configure(p, key, sequence, p.seed, runner.lockT > 0);',
+      'this.inkFlight.configure(p, key, sequence, p.seed, !!runner.s3Turret || runner.lockT > 0);',
+      'source-guided turret collider persists after roll recovery');
     // #1082 source-guided ink flight owns Shooter-family launch speed and aim
     // correction. Preserve it; only compose the existing fallback and Dualies
     // per-hand target into that source path.
@@ -142,6 +171,13 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     const roundEnd = code.indexOf('\n  fireDualies(', roundStart);
     if (roundStart < 0 || roundEnd < roundStart) throw new Error('INKWAVE patch conflict: source-guided Dualies/Splatling flight');
     let round = code.slice(roundStart, roundEnd);
+    // The dedicated Splatling wrapper has already resolved charge and sampled
+    // the source speed envelope. Native InkFlight must consume that result.
+    round = replaceOnce(round,
+      '    const inkSpeed = inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;',
+      "    const inkSpeed = w.kind === 'splatling' ? w.projSpeed : inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;",
+      'weapons fidelity: keep sampled Splatling source launch speed');
+
     round = replaceOnce(round,
       '    if (!dualiesLaunch && inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, chargeSeconds)));',
       '    if (!dualiesLaunch && inkProfile) correctInkAim(inkProfile, m, dir, aimTarget, inkSpeed, Math.min(w.range, referenceReach(inkProfile, chargeSeconds)));',

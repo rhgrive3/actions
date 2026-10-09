@@ -11,12 +11,13 @@ export function installMuzzleFeedback(api) {
     const w = actor.weapon, physics = G.physics, level = physics.level;
     this._muzzle(actor, muzzle);
     const aim = actor.aimPoint, dir = actor.aimDir, pos = actor.pos;
-    const t = G.time;
+    const t = G.time, generation = level?.geometryGeneration ?? level?._geometryGeneration ?? level?._generation;
     const m = this._s3MuzzleFeedbackCache;
-    if (m && Number.isFinite(t) && t >= m.t && t - m.t < .25 &&
+    if (m && Number.isFinite(t) && t >= m.t && t - m.t < .2 &&
       m.actor === actor && m.character === actor.character && m.weapon === w &&
       m.physics === physics && m.level === level && m.blocks === level?.blocks &&
       m.hash === level?.hash && m.blockStamp === level?.blockStamp &&
+      m.generation === generation && m.blocksLength === level?.blocks?.length && m.facesLength === level?.faces?.length &&
       m.raycast === physics.raycast && m.impact === this.s3ShooterImpact &&
       m.muzzleFn === this._muzzle && m.ballistic === this._ballistic &&
       m.mx === muzzle.x && m.my === muzzle.y && m.mz === muzzle.z &&
@@ -32,6 +33,7 @@ export function installMuzzleFeedback(api) {
     cache.actor = actor; cache.character = actor.character; cache.weapon = w;
     cache.physics = physics; cache.level = level; cache.blocks = level?.blocks;
     cache.hash = level?.hash; cache.blockStamp = level?.blockStamp;
+    cache.generation = generation; cache.blocksLength = level?.blocks?.length; cache.facesLength = level?.faces?.length;
     cache.raycast = physics.raycast; cache.impact = this.s3ShooterImpact;
     cache.muzzleFn = this._muzzle; cache.ballistic = this._ballistic;
     cache.t = Number.isFinite(t) ? t : -Infinity;

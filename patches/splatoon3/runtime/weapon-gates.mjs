@@ -71,6 +71,9 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
     if (!this.a?.intent?.fire) r.s3BlasterCancelLatch = false;
     // The actual-shot lock and cancellation-edge lock advance in parallel.
     const subBlocked = r.s3PostShotRemaining > EPS || r.s3BlasterInterruptSub > EPS;
+    // No channel changes are needed in steady state. Preserve the caller's
+    // input identity so the independent Dualies/Slosher gate stays allocation-free.
+    if (!subBlocked && !r.s3BlasterCancelLatch) return update.call(this, dt, input);
     const admitted = { ...input,
       get fire() { return r.s3BlasterCancelLatch ? false : input.fire; },
       get firePressed() { return r.s3BlasterCancelLatch ? false : input.firePressed; },

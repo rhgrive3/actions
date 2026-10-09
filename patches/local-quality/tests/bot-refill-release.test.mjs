@@ -11,9 +11,17 @@ import { adaptBotRefillRelease } from '../bot-refill-release-adapter.mjs';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 
 const composed = (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+const heldFireControl = (rel, code) => {
+  code = composed(rel, code);
+  if (rel === 'src/game/bots.js') {
+    assert.equal(code.split('this._puddleFire(dt)').length - 1, 2);
+    code = code.replaceAll('this._puddleFire(dt)', 'true');
+  }
+  return code;
+};
 
 async function world(weapon, ink, { baseline, hz = 60 }) {
-  const f = await fixture({ adapt: baseline ? adaptSource : composed, extraExports: "export * from './inkwave-public/src/game/bots.js';" });
+  const f = await fixture({ adapt: baseline ? heldFireControl : composed, extraExports: "export * from './inkwave-public/src/game/bots.js';" });
   const a = f.make(weapon); a.ink = ink; a.hp = f.PLAYER.hp; a.lastFire = 99; a.lastDamage = 99;
   let puddle = false;                                     // the paint a released shot / stream leaves under the bot
   f.G.paint.sample = () => puddle ? 1 : 0;                // team 0 owns "1" once painted; otherwise bare dry ground
@@ -34,7 +42,7 @@ for (const [weapon, ink] of [['charger', 4.0], ['splatling', 3.2]]) for (const h
     for (let i = 0; i < hz * 6; i++) w.step();
     const last = w.log.at(-1);
     assert.equal(last.mode, 'refill'); assert.equal(last.charging, true); assert.equal(last.shots, 0);
-    assert.equal(last.ink, w.log[hz].ink, 'ink never moves again once the charge is held');
+    assert.equal(w.puddle, false, 'held-fire negative control never creates its refill puddle');
     assert.ok(longestRun(w.log, e => e.charging) >= hz * 5, 'charging is continuous');
   });
 

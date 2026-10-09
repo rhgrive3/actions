@@ -4,13 +4,15 @@ export async function batchFixture() {
   f.installWeaponsFidelity(f, f.profile);
   const { G, THREE } = f;
   G.scene = new THREE.Scene(); G.actors = []; G.boss = null; G.netm = null;
-  G.level = {blocks: [], faces: [], groundHeight: () => 0, queryBlocks: (_a,_b,_c,_d,out) => {out.length=0;return out;}};
+  // Native drum support and projectile sweeps must share the same real floor.
+  G.level = new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},
+    spawnPads:[[-80,0,0],[80,0,0]],spawnBarrier:0,
+    single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}],half:[]});
   G.physics = new f.Physics(G.level);
-  G.physics.raycast = (from, direction, distance, hit) => {
-    hit.hit = direction.y < 0 && from.y >= 0 && from.y / -direction.y <= distance;
-    if(hit.hit){hit.point.copy(from).addScaledVector(direction,from.y / -direction.y);hit.normal.set(0,1,0);hit.face=0;hit.block=-1; } // synthetic floor has no backing block; native groundProbe must not dereference blocks[0]
-    return hit;
-  };
+  // Tests can disable the volume sweep to supply a specific segment hit, while
+  // paint's independent downward probe still owns this concrete floor.
+  const physics=G.physics,floorLevel=G.level,raycast=physics.raycast.bind(physics);
+  physics.raycast=(...args)=>{const level=physics.level;if(!level)physics.level=floorLevel;try{return raycast(...args);}finally{physics.level=level;}};
   G.physics.los = () => true;
   G.projectiles = new f.Projectiles(G.scene);
   const paint = [];

@@ -1,3 +1,4 @@
+import {configDependency} from './config-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -27,7 +28,7 @@ async function fixture({baseline=false}={}) {
   const on=(n,fn)=>{let v=bus.get(n);if(!v)bus.set(n,v=new Set());v.add(fn);return()=>v.delete(fn);};
   const emit=(n,e)=>{for(const fn of bus.get(n)||[])fn(e);};
   const context=vm.createContext({console,performance,Math,Map,WeakMap,Uint8ClampedArray,innerWidth:1000,innerHeight:700,setTimeout:()=>0,requestIdleCallback:()=>0,document:{body:new El(),createElement(){const c=new El();c.getContext=()=>({createImageData:(w,h)=>({width:w,height:h,data:new Uint8ClampedArray(w*h*4)})});return c;}}});
-  const config=new vm.SourceTextModule(site&&!baseline?fs.readFileSync(path.join(site,'src/config.js'),'utf8'):raw('src/config.js'),{context});await config.link(()=>{throw Error('config dependency');});await config.evaluate();
+  const config=new vm.SourceTextModule(site&&!baseline?fs.readFileSync(path.join(site,'src/config.js'),'utf8'):raw('src/config.js'),{context});await config.link(spec=>configDependency(spec,context));await config.evaluate();
   const util={G,on,emit,...config.namespace,...THREE,clamp:(v,a=0,b=1)=>Math.min(b,Math.max(a,v)),t:x=>x,esc:x=>x,keycap:x=>x,weaponIcon:x=>x,richText:x=>x,
     h(_tag,_attrs,...children){const el=new El();el.append(...children.flat().filter(x=>x&&typeof x==='object'));return el;}};
   async function load(rel){

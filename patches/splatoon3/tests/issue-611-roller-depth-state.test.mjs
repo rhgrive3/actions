@@ -19,6 +19,7 @@ test('#611 horizontal break/free uses sourced 1.20 minimum instead of straight s
 });
 
 test('#611 production impact changes only paint stretch across the existing fidelity phase',async()=>{
-  const sample=async phase=>{const f=await batchFixture(),a=f.make('roller');a.isLocal=true;a.grounded=true;a.weaponRunner.s3FlickVertical=true;f.G.camera={position:new f.THREE.Vector3()};f.G.projectiles.fireFlick(a,a.weapon);const p=f.G.projectiles.list[0];p.fidelityPhase=phase;p.vel.copy(velocity(f.THREE.Vector3,50));const hit={point:p.start.clone().add(new f.THREE.Vector3(8,0,0)),normal:new f.THREE.Vector3(0,1,0)};f.G.projectiles._impact(p,hit);return f.paint[0].opts.stretchAmt;};
+  const sample=async phase=>{const f=await batchFixture(),a=f.make('roller');a.isLocal=true;a.grounded=true;a.weaponRunner.s3FlickVertical=true;f.G.camera={position:new f.THREE.Vector3()};f.G.projectiles.fireFlick(a,a.weapon);f.paint.length=0; // Isolate impact from the independently sourced nearest launch paint.
+const p=f.G.projectiles.list[0];p.fidelityPhase=phase;p.vel.copy(velocity(f.THREE.Vector3,50));const hit={point:p.start.clone().add(new f.THREE.Vector3(8,0,0)),normal:new f.THREE.Vector3(0,1,0)};f.G.projectiles._impact(p,hit);return f.paint[0].opts.stretchAmt;};
   approx(await sample(0),.10);approx(await sample(1),.32);
 });

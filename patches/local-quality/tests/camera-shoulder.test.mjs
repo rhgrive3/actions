@@ -346,7 +346,7 @@ test('shoulder framing preserves aim and settled rig state with probe-cache cade
     ['squid', { actor: { form: 'squid' } }],
     ['swimming', { actor: { anim: { form: 'swim' } } }],
     ['super jump flight', { actor: { superJumpState: superJumpFlight() } }],
-    ['charger fully charged', { actor: { weaponRunner: { charging: true, charge: 1 } } }],
+    ['charger fully charged', { actor: { weapon: { kind: 'charger' }, weaponRunner: { charging: true, charge: 1 } } }],
     ['wall behind, boom free', { world: { ray: wallAt(9) } }],
   ];
   for (const [name, opts] of scenarios) {
@@ -390,7 +390,7 @@ test('shoulder framing preserves aim and settled rig state with probe-cache cade
 
 test('the Charger zoom profile is untouched (#363/#367)', async () => {
   const idle = await differential();
-  const { fx, up } = await differential({ actor: { weaponRunner: { charging: true, charge: 1 } } });
+  const { fx, up } = await differential({ actor: { weapon: { kind: 'charger' }, weaponRunner: { charging: true, charge: 1 } } });
   assert.ok(Math.abs(fx.rig.zoom - 14) < 1e-6, `charger zoom drifted: ${fx.rig.zoom}`);
   assert.ok(Math.abs(up.rig.zoom - 14) < 1e-6, `precondition: upstream also reaches 14, got ${up.rig.zoom}`);
   // charging pulls the boom in by 0.6 exactly as before, and the offset rides on top of it
@@ -399,7 +399,7 @@ test('the Charger zoom profile is untouched (#363/#367)', async () => {
   const calibratedOffset = idle.fx.cam.fov - idle.up.cam.fov;
   assert.ok(Math.abs((fx.cam.fov - up.cam.fov) - calibratedOffset) < 1e-3, 'charging must preserve the calibrated S3 FOV offset');
   // a partial charge still tracks the same ramp
-  const half = await differential({ actor: { weaponRunner: { charging: true, charge: 0.5 } } });
+  const half = await differential({ actor: { weapon: { kind: 'charger' }, weaponRunner: { charging: true, charge: 0.5 } } });
   assert.ok(Math.abs(half.fx.rig.zoom - half.up.rig.zoom) < 1e-12, 'partial charge ramp must match upstream');
   assert.ok(Math.abs(half.fx.rig.zoom - 3) < 1e-6, `charge*6 ramp broken: ${half.fx.rig.zoom}`);
   assert.ok(Math.abs((half.fx.cam.fov - half.up.cam.fov) - calibratedOffset) < 1e-3, 'partial charge must preserve the calibrated S3 FOV offset');

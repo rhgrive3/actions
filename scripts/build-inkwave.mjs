@@ -198,6 +198,40 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  // PR1083 adds these 29 modules beyond main c2c938b9. Keep all static imports
+  // and immutable precache entries, preserving the existing 131-core hint budget.
+  'src/game/inkFlight.js',
+  'patches/splatoon3/runtime/haunt.mjs',
+  'patches/splatoon3/runtime/private-tracking-render.mjs',
+  'patches/splatoon3/runtime/private-tracking.mjs',
+  'patches/splatoon3/runtime/dry-ink.mjs',
+  'patches/splatoon3/runtime/blaster-flight-paint.mjs',
+  'patches/splatoon3/runtime/roller-vertical-paint.mjs',
+  'patches/splatoon3/runtime/roller-max-paint.mjs',
+  'patches/splatoon3/runtime/dualies-guide-cache.mjs',
+  'patches/splatoon3/runtime/dualies-slide-paint.mjs',
+  'patches/splatoon3/runtime/slosher-nearest-paint.mjs',
+  'patches/splatoon3/runtime/roller-impact-paint.mjs',
+  'patches/splatoon3/runtime/player-hurtbox.mjs',
+  'patches/splatoon3/runtime/turf-combat.mjs',
+  'patches/splatoon3/runtime/blast-occlusion.mjs',
+  'src/game/inkCollision.js',
+  'src/game/inkFlightRuntime.js',
+  'patches/reliability/menu-takeover.mjs',
+  'patches/splatoon3/runtime/battle-framing.mjs',
+  'patches/splatoon3/runtime/legacy-walk-curves.mjs',
+  'patches/splatoon3/runtime/normal-jump-hold.mjs',
+  'patches/splatoon3/runtime/spawn-pose-motion.mjs',
+  'patches/splatoon3/runtime/controller-motion.mjs',
+  'patches/splatoon3/runtime/issue-five-hotfix-a.mjs',
+  'patches/splatoon3/runtime/issue-five-hotfix-b.mjs',
+  'patches/splatoon3/runtime/issue-five-hotfix-c.mjs',
+  'patches/splatoon3/runtime/disconnect-fidelity.mjs',
+  'patches/splatoon3/runtime/slosher-intermediate-paint.mjs',
+  'patches/splatoon3/runtime/issue-eight-followup.mjs',
+  // Update-news cards are not shown on the title screen. Their ordinary static
+  // import and offline cache remain, but no extra critical-HTML fetch priority is needed.
+  'src/ui/news.js',
   // #1088 remains precached but is not a new eager preload hint.
   'patches/network-replication/issue-1088-surge-presentation.mjs',
   // C30-C39 helpers keep static imports and full precache without four new eager hints.

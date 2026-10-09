@@ -34,7 +34,7 @@ test('#524 adoption order/phase retains its one-interval ownership with the comm
   const {g,context}=await setup(),trace=events(hz,phase,order,100,2,map);replay(g,trace);assert.equal(g._src,map);
   const duration=context.__samples.reduce((n,s)=>n+s.dt,0),expected=(trace.out.at(-1).t-100)/1000;
   assert.ok(Math.abs(duration-expected)<1e-8,JSON.stringify({hz,phase,order,map,duration,expected}));
-  assert.ok(Math.abs(g.dPitch-expected*120*Math.PI/180*(360/132))<1e-7);
+  assert.ok(Math.abs(g.dPitch-expected*120*Math.PI/180*(360/200))<1e-7);
  }
 });
 test('resync, reversed timestamps and long gaps cannot consume a previous sensor lifetime',async()=>{
@@ -68,7 +68,7 @@ test('both dropout directions cover 80–490ms and settle before a later raw ado
    if(!(missing&&gap==='orientation')||elapsed===length)g._orientation({timeStamp:t,alpha:0,beta:(t-100)*.12,gamma:0});
   }
   const expected=(length+500)/1000;assert.ok(Math.abs(context.__samples.reduce((n,s)=>n+s.dt,0)-expected)<1e-9);
-  assert.ok(Math.abs(g.dPitch-before-expected*120*Math.PI/180*(360/132))<1e-7);assert.equal(g._src,map);
+  assert.ok(Math.abs(g.dPitch-before-expected*120*Math.PI/180*(360/200))<1e-7);assert.equal(g._src,map);
  }
 });
 
@@ -79,7 +79,7 @@ test('sub-2ms raw events cannot indefinitely freeze observation ownership or gro
   if(elapsed%10===0)g._orientation({timeStamp:t,alpha:0,beta:(t-100)*.12,gamma:0});
   assert.ok(g._qualityGyro.attitudes.length<=8);
  }
- assert.ok(Math.abs(g.dPitch-before-.5*120*Math.PI/180*(360/132))<1e-7);
+ assert.ok(Math.abs(g.dPitch-before-.5*120*Math.PI/180*(360/200))<1e-7);
 });
 
 test('#618 retained absolute attitude observations preserve the measured multiaxis camera path after fallback',async()=>{
@@ -118,5 +118,5 @@ test('discard retires queued attitude samples without replaying them on fallback
  for(const t of [1120,1140])g._orientation({timeStamp:t,alpha:0,beta:(t-100)*.12,gamma:0});
  assert.equal(g._qualityGyro.attitudes.length,2);g.discard();assert.equal(g.dPitch,0);
  for(const t of [1160,1180])g._orientation({timeStamp:t,alpha:0,beta:(t-100)*.12,gamma:0});
- assert.ok(Math.abs(g.dPitch-.04*120*Math.PI/180*(360/132))<1e-9);
+ assert.ok(Math.abs(g.dPitch-.04*120*Math.PI/180*(360/200))<1e-9);
 });

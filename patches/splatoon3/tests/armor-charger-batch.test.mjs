@@ -82,9 +82,9 @@ test('#208 ink bypasses the shield and form/death/reset/special/jump transitions
   }
 });
 
-test('#208 actual integrate ceiling contact ends armor without resetting collision velocity',async()=>{
+test('#208 actual Squid Returner ceiling contact ends armor without resetting collision velocity',async()=>{
   const f=await fixture(),a=roll(f);delete a._integrate;
-  a.climbing=true;f.G.physics.collideBody=(_p,_r,_l,_h,c)=>{c.ceiling=true;return c;};
+  a.climbing=true;f.G.physics.level={blocks:[{squidReturner:true}]};f.G.physics.collideBody=(_p,_r,_l,_h,c)=>{c.ceiling=true;c.ceilingBlock=0;return c;};
   a._integrate(1/60,true,false);close(a.vel.y,0);assert.equal(a.s3.actions.armor,null);
   a.damage(40,null,'shooter');close(a.hp,60);
 });

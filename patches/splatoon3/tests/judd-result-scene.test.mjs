@@ -15,6 +15,7 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { fixture, readSource } from '../../reliability/tests/hud-fixture.mjs';
+import { captureFinishMapSnapshot } from '../runtime/turf-finish.mjs';
 import { turfExperience } from '../runtime/results-scoring.mjs';
 
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
@@ -37,9 +38,10 @@ const sceneFixture = async ({ pendingBands = 0 } = {}) => {
     canvas, _band: pendingBands,
     update(dt, force) { calls.push({ kind: 'update', dt, force, band: this._band }); if (this._band > 0) this._band--; },
   };
-  f.G.game = { minimap };
+  f.G.game = { minimap }; f.G.match = f.match;
   f.hud._mapCanvas = canvas;
   f.mapFixture = { calls, canvas, minimap };
+  captureFinishMapSnapshot(f.match, minimap);
   return f;
 };
 const texts = (root, sel) => root.querySelectorAll(sel).map(n => n.textContent);
@@ -100,7 +102,7 @@ for (const hz of [30, 120]) test(`#894 ${hz}Hz judging shows both referees and n
   assert.ok(scaleX(sceneRoot)[0] > 0.5, 'Alpha keeps the larger share of the stage plate');
 });
 
-test('#894 result plate snapshots the current stage and ink from the minimap renderer', async () => {
+test('#894 result plate uses the TIME UP stage and ink snapshot from the minimap renderer', async () => {
   const f = await sceneFixture({ pendingBands: 2 });
   const pending = f.hud.judge({ percents: [56, 44], winner: 0 });
   await f.advance(80);

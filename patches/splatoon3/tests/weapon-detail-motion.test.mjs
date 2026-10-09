@@ -189,23 +189,32 @@ const issue1096Tuning = {
   charger: { kick: .36, back: .047, hz: 5.6, z: .84, jit: .006 },
   splatling: { kick: .022, back: .012, hz: 10, z: .92, jit: .006 },
 };
+// Recorded on the pre-repair PR1083 local integration snapshot (remote head 69add020).
 const issue1096BaselineOutputs = {
-  shooter: { pose: '30af48a6030396e5ae2567e02e8a3c8df9aae41c9a40ac0716db24d08e737b70',
-    recoilTrigger: 'c55ee6a095526ed1965e6f6cbef8c03a5b9686dc2c7529a2e4282c0ef6c568b5',
-    breath: 'ee90765bb7397f23b02406e461a0ee4e585f12b49e5aa781809705cb62f46631',
-    layerOutputs: '41c1d4db3adf64fbc6caa1429c64a00423411cad65fc1dd058388f17983abfd3' },
-  blaster: { pose: '2151f73a8c00e9957f5ebdc1a176fe98d2f203e0735befd1e42d64f520d17cd3',
-    recoilTrigger: '5748cbe9dbab8c3a56152617d50c5b9a9678407699418c49c45ddeeece7168b7',
-    breath: '8c93ebe1f00af866bbd0224bf845ef5bab4a9e1f70aca86e30c425e7c2ae26e3',
-    layerOutputs: '0a036fe02ba66323fc19a27ca4afd36188a0ff76489ab121d6dffcf87f89e1e1' },
-  charger: { pose: '376b2d767cef5a28fd41b4e4b26f830eefc659a26e086850174c1b5d08ee9a91',
-    recoilTrigger: '5dcb431b1181d3439057d9c25930ee1c265075acfbdbe8597cfcdb96a082c5c8',
-    breath: '032a83c35d476343a5ccfae4b2014ab4a6a5f0b27d83265df7c4176a485a588a',
-    layerOutputs: '95051ac67aed4a748fea50c3d86e183baba8a0ffaf52c08a4ddcf2a3b6f77b82' },
-  splatling: { pose: '018401c98fd654ab677aae0047e32c2c4ac3ec88177301dde67128bcf7661a3c',
-    recoilTrigger: '7fb83087b1f7834c290d73aeac631a30d611661202ce0e1dd4393267e84f59c4',
-    breath: 'a987c0ddfe2bd9504e787512c686489283cf085907398a96a903086eb6145dbd',
-    layerOutputs: '9e07668395b70735372b84d6230ea88666dd7c1d1307d9e212f9a5caa3fda1ee' },
+  "shooter": {
+    "pose": "30af48a6030396e5ae2567e02e8a3c8df9aae41c9a40ac0716db24d08e737b70",
+    "recoilTrigger": "c55ee6a095526ed1965e6f6cbef8c03a5b9686dc2c7529a2e4282c0ef6c568b5",
+    "breath": "ee90765bb7397f23b02406e461a0ee4e585f12b49e5aa781809705cb62f46631",
+    "layerOutputs": "26ec4aedabdf3af1aa1b34efadc36a71f390ac40ab1e2b324f7e47869d551b05"
+  },
+  "blaster": {
+    "pose": "2151f73a8c00e9957f5ebdc1a176fe98d2f203e0735befd1e42d64f520d17cd3",
+    "recoilTrigger": "5748cbe9dbab8c3a56152617d50c5b9a9678407699418c49c45ddeeece7168b7",
+    "breath": "8c93ebe1f00af866bbd0224bf845ef5bab4a9e1f70aca86e30c425e7c2ae26e3",
+    "layerOutputs": "eb63ab0067678e6ea73d1506b8075fcb666fd8f939d535e67360207a49ac04f0"
+  },
+  "charger": {
+    "pose": "376b2d767cef5a28fd41b4e4b26f830eefc659a26e086850174c1b5d08ee9a91",
+    "recoilTrigger": "5dcb431b1181d3439057d9c25930ee1c265075acfbdbe8597cfcdb96a082c5c8",
+    "breath": "032a83c35d476343a5ccfae4b2014ab4a6a5f0b27d83265df7c4176a485a588a",
+    "layerOutputs": "4fe3c1c75672827883d3ae7ed0cb63cb847af318569f3199e85b7c89496fa325"
+  },
+  "splatling": {
+    "pose": "018401c98fd654ab677aae0047e32c2c4ac3ec88177301dde67128bcf7661a3c",
+    "recoilTrigger": "7fb83087b1f7834c290d73aeac631a30d611661202ce0e1dd4393267e84f59c4",
+    "breath": "a987c0ddfe2bd9504e787512c686489283cf085907398a96a903086eb6145dbd",
+    "layerOutputs": "ec83e944a61124708c3bd84df23a9e738f1f81fb3dd903fb609568ff4157bdda"
+  }
 };
 
 test('#1096 current production pose wrapper identity and independent output baselines', async t => {
@@ -248,8 +257,8 @@ test('#1096 current production pose wrapper identity and independent output base
   }
   t.diagnostic(JSON.stringify({ issue: 1096, production: 'full install.mjs + actual Character', framesPerWeapon: 600, traces }));
   assert.deepEqual(traces.map(row => [row.poseCalls, row.distinctHoldOverlayObjects, row.distinctRecoilOverlayObjects]),
-    [[600, 1, 1], [600, 1, 1], [600, 1, 1], [600, 1, 1]],
-    '600 full Character frames reuse one tuned hold/rc identity per weapon');
+    [[600, 2, 1], [600, 1, 1], [600, 1, 1], [600, 1, 1]],
+    '600 full Character frames reuse bounded recoil overlays, plus the separate cached Shooter carry overlay');
   assert.deepEqual(Object.fromEntries(traces.map(row => [row.weapon, row.independentBaseline])), issue1096BaselineOutputs,
     'pose, recoil trigger, charger breath and installed layer outputs match current-main baseline digests');
 });

@@ -20,7 +20,8 @@ test('#674 omitted S3 schema defaults are explicit for horizontal shallow/steep 
 
 test('#674 production impact forwards sourced depth as paint stretch without touching trajectory',async()=>{
   const f=await batchFixture(),a=f.make('roller');a.isLocal=true;a.grounded=true;a.weaponRunner.s3FlickVertical=true;f.G.camera={position:new f.THREE.Vector3()};
-  f.G.projectiles.fireFlick(a,a.weapon);const p=f.G.projectiles.list[0],before=p.pos.clone(),hit={point:p.start.clone().add(new f.THREE.Vector3(8,0,0)),normal:new f.THREE.Vector3(0,1,0)};
+  f.G.projectiles.fireFlick(a,a.weapon);f.paint.length=0; // Isolate impact from the independently sourced nearest launch paint.
+const p=f.G.projectiles.list[0],before=p.pos.clone(),hit={point:p.start.clone().add(new f.THREE.Vector3(8,0,0)),normal:new f.THREE.Vector3(0,1,0)};
   p.vel.copy(velocity(f.THREE.Vector3,30));f.G.projectiles._impact(p,hit);
   assert.equal(f.paint.length,1);approx(f.paint[0].opts.stretchAmt,.43);assert.deepEqual(p.pos.toArray(),before.toArray());
 });

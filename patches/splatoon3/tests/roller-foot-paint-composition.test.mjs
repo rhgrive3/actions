@@ -215,6 +215,8 @@ async function currentVerticalGroundControl() {
 }
 
 async function assertReleaseShape(mode, y, grounded) {
+  let heightControl=null;
+  if(y!==0){const base=await setup({y:0,grounded,vertical:mode==='vertical'});base.resetRandom();base.projectiles.fireFlick(base.actor,base.actor.weapon);heightControl=projectilePhysicsDigest(base.projectiles);}
   const f = await setup({ y, grounded, vertical: mode === 'vertical' });
   const { actor, G, net, projectiles, paintCalls } = f;
   const expected = mode === 'horizontal' ? { radius: 1.5, count: 13, mainCount: 12, mainLast: 11 } :
@@ -254,6 +256,9 @@ async function assertReleaseShape(mode, y, grounded) {
       'primary vertical-paint owner keeps legacy random trail disabled (no double paint)');
     const normalizedY = Array.from(projectileSnapshot(projectiles, actor.pos.y), p => Number(p.start[1].toFixed(6)));
     assert.deepEqual(normalizedY, [1.8, 1.3, 1.3, 0.3, 0.3], 'airborne release shifts launch origins only by actor height');
+  } else {
+    assert.equal(projectilePhysicsDigest(projectiles), heightControl,
+      'airborne horizontal height preserves the full current production physics payload');
   }
   return { f, paintEvent: net.out.find(e => e[1] === 's'), projectileEvents: net.out.filter(e => e[1] === 'p') };
 }

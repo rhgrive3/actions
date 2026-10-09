@@ -86,7 +86,7 @@ test('a replayed projectile event cannot create a second ghost or resurrect an e
   const peer = { tr: 1000 };
   nm.peers.set('p2', peer);
   a.remote=false;a.owner='me';a.character.getMuzzle=o=>o.copy(a.pos).setY(30);f.projectiles.fireShooter(a,a.weapon,0);
-  const shot=JSON.parse(JSON.stringify(nm.out.find(e=>e[1]==='p')));assert.equal(shot.length,35);assert(Number.isSafeInteger(shot[31]));
+  const shot=JSON.parse(JSON.stringify(nm.out.find(e=>e[1]==='p')));assert.equal(shot.length,36);assert(Number.isSafeInteger(shot[32]));
   f.projectiles.clear();a.remote=true;a.owner='p2';
   nm._play('p3',shot);assert.equal(f.projectiles.list.length,0,'a different sender cannot claim the recorded birth');
   nm._play('p2', shot);
@@ -98,7 +98,7 @@ test('a replayed projectile event cannot create a second ghost or resurrect an e
   peer.tr = shot[0]+shot[11]+shot[12]+1;
   f.projectiles.update(1 / 60);
   assert.equal(f.projectiles.list.length, 0);
-  f.G.time=1;nm._rec(['pe',a.nid,shot[31],0]);const end=nm.out.at(-1);nm._play('p2',end);nm._play('p2',end);
+  f.G.time=1;nm._rec(['pe',a.nid,shot[32],0]);const end=nm.out.at(-1);nm._play('p2',end);nm._play('p2',end);
   nm._play('p2', shot);
   assert.equal(f.projectiles.list.length, 0, 'a finished projectile was resurrected');
 });

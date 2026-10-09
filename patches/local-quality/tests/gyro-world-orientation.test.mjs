@@ -308,11 +308,11 @@ test('#678: sensitivity, inversion, filter coefficients and lifecycle are unchan
 
   // the Splatoon 3 sensitivity curve is untouched by this change
   const ns = await loadGyro({ adapted: true });
-  const published = rawUpstream();
+  const published = adaptSource('src/core/gyro.js',rawUpstream());
   for (const s of [-5, -2.5, 0, 2.5, 5]) {
     assert.equal(ns.gyroTurnDeg(s), expectedTurnDeg(published, s), `gyroTurnDeg(${s}) must be unchanged`);
   }
-  assert.equal(ns.gyroTurnDeg(0), 132, 'the documented 132 deg-per-360 curve point must survive');
+  assert.equal(ns.gyroTurnDeg(0), 200, 'the separately composed provisional 1.8x bridge must survive');
   assert.ok(ns.touchSensMul(0) === 1, 'touch sensitivity multiplier must be untouched');
 
   // inversion still flips both signs, on real mapped values

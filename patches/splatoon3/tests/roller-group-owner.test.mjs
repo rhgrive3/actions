@@ -35,9 +35,9 @@ test('receiver uses immutable hit weapon identity after attacker switches weapon
   const f = await fixture({site: `${ROOT}.group-source`, fidelity:true});
   const a = f.make('shooter'), victim = f.make('shooter',{team:1,z:2});
   f.G.netm=null; a.weapon=f.WEAPONS.roller;
-  f.projectiles.applyHit(a,victim,40,'slosher','wire-volley');
-  f.projectiles.applyHit(a,victim,70,'slosher','wire-volley');
-  f.projectiles.applyHit(a,victim,70,'slosher','wire-volley');
+  f.projectiles.applyHit(a,victim,40,'slosher','local:1');
+  f.projectiles.applyHit(a,victim,70,'slosher','local:1');
+  f.projectiles.applyHit(a,victim,70,'slosher','local:1');
   assert.equal(f.hits.reduce((n,h)=>n+h.damage,0),70,'Slosher cumulative maximum remains deduplicated');
   f.hits.length=0; a.weapon=f.WEAPONS.slosher;
   f.projectiles.applyHit(a,victim,149.19758204830146,'roller','roller-volley');

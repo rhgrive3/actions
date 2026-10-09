@@ -1,3 +1,4 @@
+import {effectiveQuality} from '../../../inkwave-public/src/config.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { compose } from './idle-fixture.mjs';
@@ -71,9 +72,9 @@ function makeGame(env, { touch = true, frameRate = 'auto' } = {}) {
     net: { update(dt) { calls.network.push(dt); } },
   };
   installClock({ G });
-  const Game = new Function('updateSplatGhosts', 'G', 'runSimulation', 'pausedWorldFrame', 'idleAttractMenuBudget', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame', 'document',
+  const Game = new Function('updateSplatGhosts', 'G', 'runSimulation', 'pausedWorldFrame', 'idleAttractMenuBudget', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame', 'document', 'effectiveQuality',
     `return class Game {\n${dynMethod}\n${frameMethod}\n}`)
-    (updateSplatGhosts, G, runSimulation, pausedWorldFrame, idleAttractMenuBudget, env.performance, (a, b) => b, x => x, {}, syncPortraitFrame, env.document);
+    (updateSplatGhosts, G, runSimulation, pausedWorldFrame, idleAttractMenuBudget, env.performance, (a, b) => b, x => x, {}, syncPortraitFrame, env.document,effectiveQuality);
   Game.prototype._onPointerUnlock = function (value) { this.unlockCalls = (this.unlockCalls || 0) + 1; return value; };
   const game = new Game();
   Object.assign(game, {
