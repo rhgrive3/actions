@@ -32,7 +32,7 @@ export function tripleSlamFistDamage(distance, scale = 1) {
   return 220 + (60 - 220) * ((distance - near) / (far - near));
 }
 
-function blast(actor, record, G, THREE) {
+function blast(actor, record, G, THREE, emit) {
   if (!G?.projectiles?.applyHit || actor.remote || !record?.centers?.length) return;
   const v = new THREE.Vector3(), from = new THREE.Vector3();
   for (const center of record.centers) {
@@ -60,10 +60,14 @@ function blast(actor, record, G, THREE) {
       G.projectiles.applyHit(actor, victim, damage, 'slam');
     }
     G.fx?.explosion?.(pos, actor.color, FIST_FAR_RADIUS * record.scale);
+    // Reuse the existing authenticated special:slam owner event. Remote
+    // clients get two fist bursts at the same presentation clock without
+    // replaying local physics, paint or damage on non-owner actors.
+    emit?.('special:slam', { actor, pos: new THREE.Vector3(pos.x, pos.y, pos.z), radius: FIST_FAR_RADIUS * record.scale, fist: true });
   }
 }
 
-export function tickTripleSlamFists(actor, dt, G, THREE) {
+export function tickTripleSlamFists(actor, dt, G, THREE, emit) {
   const state = actor?._s3TripleSlamFists;
   if (!state || actor.remote || !finite(dt) || !(dt > 0)) return false;
   state.elapsed += dt;
@@ -76,11 +80,11 @@ export function tickTripleSlamFists(actor, dt, G, THREE) {
   } else state.remaining = Math.max(0, state.remaining - dt);
   if (state.remaining > 1e-10) return false;
   actor._s3TripleSlamFists = null;
-  blast(actor, state, G, THREE);
+  blast(actor, state, G, THREE, emit);
   return true;
 }
 
-export function installTripleSlamFists({ Actor, G, THREE }, profile) {
+export function installTripleSlamFists({ Actor, G, THREE, emit }, profile) {
   if (!Actor || !G || !THREE || Actor.prototype[INSTALL]) return;
   Object.defineProperty(Actor.prototype, INSTALL, { value: true });
   const scale = profile?.weaponsFidelityCompletion?.worldUnitsPerSourceUnit;
@@ -108,7 +112,7 @@ export function installTripleSlamFists({ Actor, G, THREE }, profile) {
   // Tick before native update so a fist scheduled during this very frame's
   // player impact receives a full 15F delay, never an accidental 14F.
   Actor.prototype.update = function (dt, ...args) {
-    tickTripleSlamFists(this, dt, G, THREE);
+    tickTripleSlamFists(this, dt, G, THREE, emit);
     return update.call(this, dt, ...args);
   };
   if (typeof reset === 'function') Actor.prototype.reset = function (...args) {
