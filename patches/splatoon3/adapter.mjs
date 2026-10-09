@@ -1156,6 +1156,10 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "      if (k >= 1) {\n        this.superJumpState = null;",
       "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
     code = replaceOnce(code,
+      '        if (!this.grounded) { this.grounded = true; this._resolve(false, this.pos.y, true); if (!this.grounded) this.vel.y = -6; }',
+      '        if (!this.grounded) { this.grounded = true; this._resolve(false, this.pos.y, true); if (!this.grounded) this.vel.y = -6; }\n        startDropRoller(this, this.intent.move);',
+      'Drop Roller samples the live stick after native Super Jump ground resolution');
+    code = replaceOnce(code,
       '        this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));\n',
       '        // Splatoon 3: Ordinary Super Jump does not leave ink, grant turf points, or charge special at landing.\n',
       'super jump landing paint');
@@ -1197,6 +1201,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '      this.invuln = 0.3;', '      // #573: protection ends with the action/landing owner.', 'Slam has no detached post-impact invulnerability');
     code = adaptTidalSlamGauge(rel, code, replaceOnce);
     code = adaptPaintOwnership(rel, code, replaceOnce);
+    code = "import { startDropRoller } from '../../patches/splatoon3/runtime/gear.mjs';\n" + code;
     return `import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, stealthJumpExtraTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery, updateSpecialHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
