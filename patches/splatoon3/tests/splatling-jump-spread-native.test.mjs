@@ -98,11 +98,12 @@ test('production six-adapter native jump age holds 25F, recovers by 70F, and nev
     });
     assert.equal(frame, 120, 'clock executes 120 native simulation frames');
     assert.equal(landings.length, 2, 'both native jumps land on the in-memory floor');
-    for (const landing of landings) {
+    for (const [index, landing] of landings.entries()) {
       // #888: the second (still-charging) jump is the shorter S3 charging jump,
       // so it lands inside the 25F hold instead of after it; the 25F hold itself
       // is asserted directly at frame 25.
       assert.ok(landing.age > 0 && landing.age < 70, `landing remains in jump spread: ${landing.age}`);
+      assert.ok(index === 0 ? landing.age > 25 : landing.age < 25, `uncharged/charging takeoff retains its distinct landing boundary: ${index}, ${landing.age}`);
       close(landing.spread, expectedHorizontalAtLanding(a.weapon, a.weaponRunner.bloom, landing.age));
       assert.ok(landing.spread > a.weapon.spreadGround * bloomScale(a.weaponRunner), 'first grounded frame retains jump spread');
     }
