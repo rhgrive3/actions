@@ -95,6 +95,7 @@ export const LAYOUT = {
   // Decor anchors for level.js
   decor: {
     lamps: [[-9, -42], [9, -42], [-17, -26], [17, -26]],
+    palms: [],
     flags: [[-8, 3.2, -47.5], [8, 3.2, -47.5]],
   },
 };
