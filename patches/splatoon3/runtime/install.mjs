@@ -12,6 +12,8 @@ import { ShadowCache } from '../../../src/core/shadowcache.js';
 import { installMovement } from './movement.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
 import { installWeapons } from './weapons.mjs';
+import { installWeaponsFidelity } from './weapons-fidelity.mjs';
+import { installSubSpecialFidelity } from './sub-special-fidelity.mjs';
 import { installGear } from './gear.mjs';
 import { installFlow } from './flow.mjs';
 import { installResources } from './resources.mjs';
@@ -54,6 +56,7 @@ export function install(profile) {
   Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   installWeapons(api, profile);
+  installSubSpecialFidelity(api, profile);
   installRollerMotion(api, profile);
   installMovement(api, profile);
   installMovementMotion(api, profile);
@@ -84,6 +87,9 @@ export function install(profile) {
   installSpecialMotion(api, profile);
   installFlowMotion(api);
   installFaceMotion(api, profile);
+  // Main-weapon fidelity must be installed on the same canonical context before
+  // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
+  installWeaponsFidelity(api, profile);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;

@@ -203,3 +203,34 @@ test('Character channel/drum hooks are hash locked and fail closed', () => {
   assert.doesNotThrow(() => checkCompatibility(path.join(ROOT, 'inkwave-public')));
   for (const name of ['character.js', 'character-weapons.js']) assert.throws(() => adaptSource('src/game/' + name, ''), /conflict/);
 });
+
+test('roller drum proportions follow the kid and its painted stripe; a pushed drum rests on the floor with both grips held', async () => {
+  const { Character, THREE } = await realCharacter(), f = await fixture();
+  const c = new Character({ name: 'roller proportions', weapon: 'roller', style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+  const s = { form: 'kid', grounded: true, speed: 0, vy: 0, firing: false, rolling: false, localMove: { x: 0, z: 0 }, charge: 0, ink: 1, hp: 1 };
+  for (let i = 0; i < 90; i++) c.update(1 / 60, s);
+  c.root.updateMatrixWorld(true);
+  const box = new THREE.Box3();
+  c.kid.traverse(m => { if (m.isSkinnedMesh && m.visible) box.expandByObject(m, true); });
+  const kid = box.max.y, def = c.weapon.def;
+  const drum = new THREE.Box3().setFromBufferAttribute(def.drum.getAttribute('position'));
+  const body = new THREE.Box3().setFromBufferAttribute(def.body.getAttribute('position'));
+  const width = drum.max.x - drum.min.x, diameter = drum.max.y - drum.min.y;
+  // Bands are INKWAVE regression bounds around public-footage estimates, not
+  // Nintendo measurements: drum about the kid's height long, a quarter across.
+  assert.ok(width > .8 * kid && width < f.WEAPONS.roller.rollWidth, `drum width ${width} vs kid ${kid}`);
+  assert.ok(diameter > .22 * kid && diameter < .32 * kid, `drum diameter ${diameter} vs kid ${kid}`);
+  assert.ok(body.max.x > width / 2 && body.min.x < -width / 2, 'yoke arms reach both drum ends');
+  assert.ok(def.drumAt.z - def.drumR >= .84 - .1 - 1e-6, 'the axle moves out so the hub keeps its upstream clearance');
+  s.rolling = true; s.firing = true;
+  let bottom = Infinity, top = -Infinity, grip = 0;
+  for (let i = 0; i < 90; i++) {
+    c.root.position.z += 7.92 / 60; s.speed = 7.92; s.localMove.z = 1; c.update(1 / 60, s); c.root.updateMatrixWorld(true);
+    if (i < 45) continue;
+    const y = drumMinimum(c, THREE); bottom = Math.min(bottom, y); top = Math.max(top, y);
+    grip = Math.max(grip, gripError(c, THREE, 'handL'), gripError(c, THREE, 'handR'));
+  }
+  assert.ok(bottom >= -.006 && top < .05, `pushed drum rests on the floor (${bottom}..${top})`);
+  assert.ok(grip < .02, `both hands stay on the handle while pushing (${grip})`);
+  c.dispose();
+});

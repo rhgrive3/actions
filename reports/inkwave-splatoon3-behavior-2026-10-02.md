@@ -172,6 +172,22 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 停止姿勢の全画面beauty再描画では、実際の時計・骨・座標が同一でもnative fragmentの数pixelの色差が反復描画ごとに変化する。停止のモーション検証は、そのbeauty画像を両方保存したうえで、最終描画色だけを固定した別materialによる実GPU比較へ分けた。実際にコンパイルされたnative／比較側vertex shaderのSHA256一致、骨行列・pose・全node world行列・ゲーム時計の不変性、固定色画像の既存0差分条件を必須とする。各ケースで実rootを0.03動かす反例も描き、16pixel以上の変化を検出できない比較器は合格にしない。通常の全339描画ペア、Flow／壁のGTAO、表示中・中断・解放の検査はnative beauty shaderのままであり、この停止の比較を本家の画像一致の証拠にはしない。
 
 
+## Action reliability workstream (2026-10-04)
+
+入力位相によるDualies dodge消失を既存build-only reliability ownerで修正した。物理jump edgeのActorへの転送、gamepad action edge、sub優先、pointer-loss取消を実コードregressionで確認した。速度・距離・duration設定・poseは変更していない。roll終了比較の浮動小数点誤差による1tick残留だけを補正した。本家11.3.0実機の受付タイミング一致は未確認。分母・before/after・ownership・browser/CIの確認範囲は [action-reliability-report.md](action-reliability-report.md) を参照。
+
+## Network replication の修復（2026-10-04）
+
+ローラー横／縦振りの owner physics を packet 化する順序を修正し、remote の trajectory と projectile に紐付く curtain の時間軸を一致させた。基準射程・威力・spread・local physics・animation pose の変更はない。全武器の native replay、二人の WebSocket arena、遅延／重複／退出回帰の詳細は [Network replication report](network-replication-report.md) に記録する。これは INKWAVE 内の同期比較であり、本家の実機比較、原作の射程校正、physical iOS 検証の未確認項目を解消したという意味ではない。
+
+## 練習場（2026-10-03）
+
+ブランチ `inkwave/practice-range` に、既存システムを測るためのソロ練習場を独立パッチ `patches/practice-range/` として追加した（[練習場レポート](practice-range-report.md)）。歩行・泳ぎ・射撃・塗り・ボム・スペシャル・被弾の数値とロジックは変更していない。練習場の目盛りはワールド座標（1 m = 1 ワールド単位）で、本家の距離単位との対応は引き続き未確認（`distanceScale` は推定）。この記録の既存の差分・未確認項目は、練習場の追加によって解消済みとしない。
+
+挙動に関わる変更は1点だけ：上流 `hud.js` の `isJa` の import 漏れにより、ローカルプレイヤーが相手を倒すたびに `splatted` イベント内で ReferenceError が起き、後続のリスナーと `Actor.splat` の呼び出し元の処理が中断していた（全モード）。import を補ってこの中断を解消した。本家との比較項目ではなく、INKWAVE 自身の不具合修正である。
+
+練習場のロジック測定で、スプラッシュボムを水平に投げると約 48.8 m 先で爆発することを記録した（`profile.json` の初速 67.2・重力 57.6、ロジック単独、描画・実機なし）。シューター射程 12.9 m の約 3.8 倍。本家の投擲距離との比較は単位対応が未確立のため未確認とし、値は変更していない。
+
 ## Batch C の着地と通信状態の確認（2026-10-04）
 
 比較条件は公開INKWAVE、既存Splatoon 3 Ver.11.3.0参照、通常装備・通常着地。
@@ -234,17 +250,3 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
-
-## ナワバリバトル表彰（Medals）の味方内集計・カテゴリ・ティア（#502、2026-10-05）
-
-公開版 INKWAVE のリザルト画面における表彰ロジックを、スプラトゥーン3（Ver.11.3.0）の表彰仕様と比較・修正した。本体 `inkwave-public/` は変更せず、ビルド時アダプター `patches/local-quality/medal-adapter.mjs` を通じて適用する。
-
-| 項目 | 内容 |
-|---|---|
-| 本家の根拠 | スプラトゥーン3 一次解析資料 `https://leanny.github.io/splat3/medals.html`（原本保管: `/mnt/workspace/inkwave-batch-c/evidence/b09-medals-primary.html`）および公式ローカライゼーション `CommonMsg/VS/VSAwardName`。表彰は味方チーム内（同チーム4人）のみを比較母集団として算出され、相手チームの戦績から完全に独立する（「For the medals only your team is considered... The opposing team is never included in the evaluation」）。優先度は金・銀の各配列の上から下への評価順（「During the evaluation the game goes through this list from top to bottom and tries to find a matching medal」）によって定義され、任意の数値ランク符号化ではなくリストの文字通りの順序に従う。ティアは金・銀のみで構成され、ブロンズメダルおよび独自MVPは存在しない。表示枠は最大3個。**タイ挙動に関する注記**: 原本ページには同率タイ時の厳密な配分規則は記載されておらず、Switch実機でのハードウェア計測も未実施。本実装では標準的な競技方式（1位タイは全員金、2位は上位が厳密に1人の場合のみ銀）を決定論的な方針として採用し、未確認事項として明記する。 |
-| INKWAVE の実装箇所 | `inkwave-public/src/ui/menu-art.js`（`AWARDS`, `computeAwards`）および `src/ui/menus.js`（`_scr_results` の `myAwards` スライスと `.is-4` クラス）。公開版ではロビー全体比較（TURF KING, TOP SPLATTER）や独自MVP、ブロンズ（UNTOUCHABLE, SURVIVOR, PURE PAINTER）、最大4枠表示を行っていた。またネイティブのリザルト入力は `turf`, `splats`, `deaths` のみを渡し、`stats.splats` は相手撃破数（Enemy Splats）を加算する。 |
-| パッチでの変更 | `patches/local-quality/medal-adapter.mjs` を追加し、`adapter.mjs` の dispatcher に登録。正準な S3 カテゴリ（Gold/Silver）を定義し、味方チーム内比較で金・銀メダルを付与。ネイティブの `splats` は「#1/#2 Enemy Splatter」（敵撃破数）として常に評価。「#1/#2 Overall Splatter」（キル・アシスト合算）は、比較対象の味方全員に有限な `assists`（アシスト数）が確認され、かつ正値のアシストが存在する場合のみ評価する（未取得のアシストは0ではなく不明であり、ゼロ/欠損アシスト時は合算表彰を付与しない）。ネイティブ結果パスに接続されていない投機的な空間・イベント指標は評価から除外。優先度ソートを適用して最大3枠に制限。Boss バトル（`computeBossAwards`, `BOSS_AWARDS`）は変更せず維持。 |
-| 再現操作と影響 | ナワバリバトル終了時、相手チームに 99999p のプレイヤーがいても自チーム内で 1 位であれば「#1 Turf Inker」（金）を獲得。自チーム内最多キルであれば「#1 Enemy Splatter」（金）を獲得。アシストが未追跡の通常試合では「#1 Overall Splatter」は合成されず、4枠目やブロンズメダル、独自MVPも付与・表示されない。 |
-| 確認状態 | **ロジック・描画検証済み**（`patches/local-quality/tests/medals.test.mjs` 13テスト: 摂動試験、タイ、ゼロ値、優先度・3枠制限、Boss負の対照、ネイティブsplats→Enemy Splatter、ゼロ/欠損assists時のOverall除外、完全assists時の順位付け、不完全assistsのチーム内除外、有限性検証）。**実機未確認事項**: `medals.html` に記載のない同率タイ時の実機挙動、通信切断者がいた場合のチーム内表彰枠補正。 |
-
-
