@@ -33,7 +33,7 @@ export function adaptWireSecurity(rel, code) {
     if (typeof d.d !== 'number' || !Number.isFinite(d.d) || d.d <= 0 || d.d > 2000) return;
     if (!Number.isSafeInteger(d.c) || d.c < -1) return;
     const atk = G.netm?.byNid.get(d.a);
-    if (!atk || !atk.remote || !atk.alive || atk.owner !== from) return;
+    if (!atk || !atk.remote || atk.alive === false || atk.owner !== from) return;
     if (d.c >= 0) {
       const c = this.crabs.get(d.c);
       if (!c || c.dead || !Number.isFinite(c.hp) || c.hp <= 0) return;
@@ -55,8 +55,8 @@ export function adaptWireSecurity(rel, code) {
   }
   if (rel === 'src/net/netmatch.js') {
     code = once(code,
-      "case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d); break;",
-      "case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d, from); break;",
+      "case 'bhit': if (this.isHost && this._acceptBossHit(from, d)) this.match.boss.remoteHit(d); break;",
+      "case 'bhit': if (this.isHost && this._acceptBossHit(from, d)) this.match.boss.remoteHit(d, from); break;",
       'boss sender propagation');
     code = once(code,
       '      const a = this.byNid.get(s[0]);',
@@ -64,7 +64,7 @@ export function adaptWireSecurity(rel, code) {
       'reject malformed snapshots before interpolation');
     code = once(code,
       '  _tick(from, d) {',
-      '  _tick(from, d) {\n    if (!d || !Array.isArray(d.a) || d.a.length > 128) return;',
+      '  _tick(from, d) {\n    if (!d || (d.a !== undefined && (!Array.isArray(d.a) || d.a.length > 128))) return;',
       'bound tick actor array');
     code = once(code,
       '    const S = n.cur;',
