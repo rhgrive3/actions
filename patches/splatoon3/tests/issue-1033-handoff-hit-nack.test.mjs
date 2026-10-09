@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { NetMatch } from '../../../inkwave-public/src/net/netmatch.js';
+import { fixture } from './source-fixture.mjs';
+const { NetMatch } = await fixture();
 
 const sent=[];
 const attacker={nid:7,owner:'shooter',remote:false};

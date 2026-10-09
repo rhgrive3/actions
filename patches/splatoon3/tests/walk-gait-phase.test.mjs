@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {character} from './real-character-fixture.mjs';
+import {boot} from './full-install-fixture.mjs';
 // Gait alternation, side steps and direction changes on the complete skinned
 // Character. Thresholds reject visible regressions in INKWAVE units; they are
 // not Switch measurements or Nintendo joint curves.
@@ -90,4 +91,36 @@ test('direction changes keep contacts planted, the pelvis continuous and the leg
   const crossed=late.filter(r=>Math.abs(r.L.fwd-r.R.fwd)<.2&&r.L.lat-r.R.lat<.06);
   assert.equal(crossed.length,0,`no crossover after the change settles (${crossed.map(r=>`${r.tick}:${(r.L.lat-r.R.lat).toFixed(3)}`)})`);
  });
+});
+
+test('fully installed rig catches abrupt browser-probe turns before pelvis overextension',async t=>{
+ const api=await boot();
+ try{
+  for(const hz of [30,60,120])await t.test(hz+' Hz',()=>{
+   const ch=new api.Character({name:'Motion fixture',weapon:'shooter',style:{hair:0,skin:2,outfit:0,eyes:0}});
+   api.G.scene.add(ch.root);ch.onEvent=null;
+   const s={form:'kid',grounded:true,speed:0,localMove:{x:0,z:0},firing:false,charge:0,ink:1,hp:1,vy:0};
+   const dt=1/hz,rows=[],last=[null,null];
+   try{
+    for(let i=0;i<1.5*hz;i++)ch.update(dt,s);
+    // Match the browser's abrupt, fixed-facing 90-degree turn. The broader
+    // gait tests above turn/accelerate the root smoothly and missed this case.
+    for(let frame=0;frame<3*hz;frame++){
+     const time=frame/hz,v=4.2*Math.min(1,time/.18),dx=time>=1.4?1:0,dz=time>=1.4?0:1;
+     ch.root.position.x+=dx*v*dt;ch.root.position.z+=dz*v*dt;
+     Object.assign(s,{speed:v,localMove:{x:-dx,z:dz}});api.G.time+=dt;
+     ch.update(dt,s);ch.root.updateMatrixWorld(true);
+     for(const [i,f] of ch.feet.entries()){
+      if(f.planted&&last[i]?.planted)assert.ok(f.cw.distanceTo(last[i].cw)<1e-8,'planted contact never slides');
+      last[i]={planted:f.planted,cw:f.cw.clone()};
+      if(time>=.8&&f.planted)assert.ok(ch.ikErr[i+2]<1e-6,'weighted leg stays reachable');
+     }
+     if(time>=.8)rows.push({drop:ch.hipDrop,y:ch.bones.hips.position.y});
+    }
+    const drop=Math.max(...rows.map(r=>r.drop)),travel=Math.max(...rows.map(r=>r.y))-Math.min(...rows.map(r=>r.y));
+    assert.ok(drop<=.10,'unchanged browser pelvis-drop gate: '+drop);
+    assert.ok(travel<=.11,'unchanged browser pelvis-travel gate: '+travel);
+   }finally{api.G.scene.remove(ch.root);ch.dispose();}
+  });
+ }finally{api.close();}
 });
