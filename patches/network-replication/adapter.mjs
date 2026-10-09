@@ -181,6 +181,7 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
+    patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
     code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
@@ -308,6 +309,12 @@ export function emit(name, payload) {
     code = "import { packRollerPresentation, readRollerPresentation, applyRemoteRollerPresentation, clearRemoteRollerPresentation } from '../../patches/network-replication/roller-presentation.mjs';\nimport { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     patch('  sendHit(attacker, victim, dmg, wid) {',
       '  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {', 'Slosher volley identity send');
+    patch('  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {\n    if (victim.owner === this.myId) return false;',
+      `  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {
+    if (victim.owner === this.myId) return false;
+    // Do not evict an accepted in-flight hit to admit a newer one.
+    if (this.hitPending.size >= HIT_DELIVERY_LIMIT || (this._pendingHits?.size ?? 0) >= HIT_RECEIPT_LIMIT) return false;`,
+      'admit only while both bounded hit queues have room');
     {
       const matches = [...code.matchAll(/    this\.s\.tr\?\.sendTo\(victim\.owner, \{ k: 'hit',[^\n]+\}\);/g)];
       if (matches.length === 1) {
@@ -343,12 +350,17 @@ export function emit(name, payload) {
     this.hitPending.set(message.seq, {
       message, oldOwner: victim.owner, destination: victim.owner, nackTo: null, retries: 0, deliveryOwners,
     });`, 'track each admitted hit destination and ACK authority');
+    patch('    this.s.tr?.sendTo(victim.owner, message);\n    return true;',
+      `    const sent = this.s.tr?.sendTo(victim.owner, message) === true;
+    if (!sent) { this._retirePendingHit(message.h); return false; }
+    return true;`,
+      'failed transport send retires only the unadmitted hit');
     patch('    while (this.hitPending.size > 64) this.hitPending.delete(this.hitPending.keys().next().value);',
-      '    while (this.hitPending.size > 64) this._retirePendingSequence(this.hitPending.keys().next().value);',
-      'bounded hit queue retires paired confirmation');
+      "    if (this.hitPending.size > HIT_DELIVERY_LIMIT) throw new Error('Hit delivery admission exceeded its bound');",
+      'bounded delivery admission never evicts accepted hit');
     patch('    if (this._pendingHits.size > 120) this._pendingHits.delete(this._pendingHits.keys().next().value);',
-      '    if (this._pendingHits.size > 120) this._retirePendingHit(this._pendingHits.keys().next().value);',
-      'bounded confirmation queue retires paired delivery');
+      "    if (this._pendingHits.size > HIT_RECEIPT_LIMIT) throw new Error('Hit receipt admission exceeded its bound');",
+      'bounded confirmation admission never evicts accepted receipt');
     patch("if (typeof message.g !== 'string' || !validDamageGroup(message.g)) { this.hitPending.delete(message.seq); this._pendingHits?.delete(message.h); return false; }",
       "if (typeof message.g !== 'string' || !validDamageGroup(message.g)) { this._retirePendingHit(message.h); return false; }",
       'invalid Slosher hit retires both records');
@@ -367,17 +379,19 @@ export function emit(name, payload) {
       (typeof d.g !== 'string' || !validDamageGroup(d.g))) return;
     const seenHits = hitPeer.hitSequences || (hitPeer.hitSequences = new Set());
     // Handoff retries may arrive after later hits. Retain exact IDs for this
-    // sender's recent sequence window, so reordering is safe and an evicted
-    // identity cannot become new damage.
+    // sender's recent sequence window; modulo slots retire only the aged ID
+    // that reuses a slot, without scanning the retained Set on each hit.
+    const hitSlots = hitPeer.hitSequenceSlots || (hitPeer.hitSequenceSlots = new Map());
     const highHit = hitPeer.lastHit ?? 0;
-    const hitFloor = Math.max(0, highHit - 65536);
+    const nextHighHit = Math.max(highHit, d.h);
+    const hitFloor = Math.max(0, nextHighHit - HIT_SEQUENCE_WINDOW);
     if (d.h <= hitFloor || seenHits.has(d.h)) return;
+    const slot = d.h % HIT_SEQUENCE_WINDOW;
+    const previous = hitSlots.get(slot);
+    if (previous !== undefined) seenHits.delete(previous);
+    hitSlots.set(slot, d.h);
     seenHits.add(d.h);
-    hitPeer.lastHit = Math.max(highHit, d.h);
-    if (d.h > highHit) {
-      const newFloor = Math.max(0, d.h - 65536);
-      if (newFloor > hitFloor) for (const seq of seenHits) if (seq <= newFloor) seenHits.delete(seq);
-    }
+    hitPeer.lastHit = nextHighHit;
     this._applyingHit = true;`, 'deduplicate validated reordered hit retries');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     for (const a of this.byNid.values()) { clearRemoteSquidroll(a); clearRemoteRollerPresentation(a); }
