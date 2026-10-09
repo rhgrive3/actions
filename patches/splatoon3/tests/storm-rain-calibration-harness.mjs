@@ -7,9 +7,31 @@ export const STORM_CALIBRATION_SEED = 0x2262026;
 export const STORM_CALIBRATION_EXTRA_EXPORTS = "export { FX } from './inkwave-public/src/fx/fx.js';";
 
 const TAU = Math.PI * 2;
-const RADIAL_BIN_METERS = 0.5;
+const RADIAL_BIN_WORLD_UNITS = 0.5;
 const ANGULAR_BIN_DEGREES = 30;
 const round = (n) => Number.isFinite(n) ? Math.round(n * 1e9) / 1e9 : null;
+
+function isLeafRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    && Object.values(value).every((item) => item === null || ['string', 'number', 'boolean'].includes(typeof item));
+}
+
+export function stringifyCalibrationJson(value) {
+  const format = (item, depth) => {
+    if (item === null || typeof item !== 'object') return JSON.stringify(item);
+    if (isLeafRecord(item)) return JSON.stringify(item);
+    const indent = '  '.repeat(depth);
+    const childIndent = '  '.repeat(depth + 1);
+    if (Array.isArray(item)) {
+      if (item.length === 0) return '[]';
+      return `[\n${item.map((child) => `${childIndent}${format(child, depth + 1)}`).join(',\n')}\n${indent}]`;
+    }
+    const entries = Object.entries(item);
+    if (entries.length === 0) return '{}';
+    return `{\n${entries.map(([key, child]) => `${childIndent}${JSON.stringify(key)}: ${format(child, depth + 1)}`).join(',\n')}\n${indent}}`;
+  };
+  return format(value, 0);
+}
 
 function mulberry32(seed) {
   let state = seed >>> 0;
@@ -47,12 +69,12 @@ function timestamp(renderHz, renderFrame, simulationTick, G, cloud) {
   };
 }
 
-function collectCpuTurf(paint, level, center, team, radiusLimitM) {
+function collectCpuTurf(paint, level, center, team, radiusLimitWorldUnits) {
   const own = team + 1;
   let cells = 0;
-  let areaM2 = 0;
+  let areaWorldUnitsSquared = 0;
   const bins = new Map();
-  const radialBinCount = Math.ceil(radiusLimitM / RADIAL_BIN_METERS);
+  const radialBinCount = Math.ceil(radiusLimitWorldUnits / RADIAL_BIN_WORLD_UNITS);
   for (const face of level.faces) {
     if (!face.turf || !face.atlas) continue;
     for (let j = 0; j < face.nv; j++) for (let i = 0; i < face.nu; i++) {
@@ -60,31 +82,31 @@ function collectCpuTurf(paint, level, center, team, radiusLimitM) {
       if (paint.dead[k] || paint.grid[k] !== own) continue;
       cells++;
       const cellArea = face.cu * face.cv;
-      areaM2 += cellArea;
+      areaWorldUnitsSquared += cellArea;
       const x = face.origin.x + face.u.x * (i + 0.5) * face.cu + face.v.x * (j + 0.5) * face.cv;
       const z = face.origin.z + face.u.z * (i + 0.5) * face.cu + face.v.z * (j + 0.5) * face.cv;
       const dx = x - center.x, dz = z - center.z;
       const radius = Math.hypot(dx, dz);
-      const radialBin = Math.min(radialBinCount - 1, Math.floor(radius / RADIAL_BIN_METERS));
+      const radialBin = Math.min(radialBinCount - 1, Math.floor(radius / RADIAL_BIN_WORLD_UNITS));
       const angle = (Math.atan2(dz, dx) + TAU) % TAU;
       const angularBin = Math.floor(angle * 180 / Math.PI / ANGULAR_BIN_DEGREES);
       const key = `${radialBin}:${angularBin}`;
-      const bin = bins.get(key) || { radialBin, angularBin, cells: 0, areaM2: 0 };
+      const bin = bins.get(key) || { radialBin, angularBin, cells: 0, areaWorldUnitsSquared: 0 };
       bin.cells++;
-      bin.areaM2 += cellArea;
+      bin.areaWorldUnitsSquared += cellArea;
       bins.set(key, bin);
     }
   }
   return {
     cells,
-    areaM2: round(areaM2),
+    areaWorldUnitsSquared: round(areaWorldUnitsSquared),
     distribution: [...bins.values()].sort((a, b) => a.radialBin - b.radialBin || a.angularBin - b.angularBin).map((bin) => ({
-      radialStartM: round(bin.radialBin * RADIAL_BIN_METERS),
-      radialEndM: round((bin.radialBin + 1) * RADIAL_BIN_METERS),
+      radialStartWorldUnits: round(bin.radialBin * RADIAL_BIN_WORLD_UNITS),
+      radialEndWorldUnits: round((bin.radialBin + 1) * RADIAL_BIN_WORLD_UNITS),
       angleStartDegrees: bin.angularBin * ANGULAR_BIN_DEGREES,
       angleEndDegrees: (bin.angularBin + 1) * ANGULAR_BIN_DEGREES,
       cells: bin.cells,
-      areaM2: round(bin.areaM2),
+      areaWorldUnitsSquared: round(bin.areaWorldUnitsSquared),
     })),
   };
 }
@@ -178,7 +200,7 @@ export async function measureStormRainAtRenderHz(renderHz, {
     record('candidate_ray_emission', {
       candidateIndex,
       x: round(origin.x), y: round(origin.y), z: round(origin.z),
-      rayLengthM: round(reach),
+      rayLengthWorldUnits: round(reach),
       hit: !!result.hit,
     });
     if (result.hit) record('ray_ground_hit', {
@@ -190,29 +212,29 @@ export async function measureStormRainAtRenderHz(renderHz, {
   };
 
   const splat = G.paint.splat.bind(G.paint);
-  let summedCircularBrushFootprintAreaM2 = 0;
-  let summedClaimedAreaM2 = 0;
+  let summedCircularBrushFootprintWorldUnitsSquared = 0;
+  let summedClaimedWorldUnitsSquared = 0;
   let paintWriteEvents = 0;
   G.paint.splat = (center, radius, team, opts = {}) => {
     const beforeCells = G.paint.counts[team];
     const beforeVersion = G.paint.version;
-    const claimedAreaM2 = splat(center, radius, team, opts);
+    const claimedWorldUnitsSquared = splat(center, radius, team, opts);
     const cellDelta = G.paint.counts[team] - beforeCells;
     const result = {
       candidateIndex: currentCandidateIndex,
       x: round(center.x), y: round(center.y), z: round(center.z),
-      radiusM: round(radius),
-      nominalCircularBrushFootprintM2: round(Math.PI * radius * radius),
-      claimedAreaM2: round(claimedAreaM2),
+      radiusWorldUnits: round(radius),
+      nominalCircularBrushFootprintWorldUnitsSquared: round(Math.PI * radius * radius),
+      claimedWorldUnitsSquared: round(claimedWorldUnitsSquared),
       cpuTurfCellsDelta: cellDelta,
       cpuGridVersionDelta: G.paint.version - beforeVersion,
     };
-    summedCircularBrushFootprintAreaM2 += Math.PI * radius * radius;
-    summedClaimedAreaM2 += claimedAreaM2;
+    summedCircularBrushFootprintWorldUnitsSquared += Math.PI * radius * radius;
+    summedClaimedWorldUnitsSquared += claimedWorldUnitsSquared;
     paintWriteEvents++;
     record('paint_splat_write', result);
     currentCandidateIndex = null;
-    return claimedAreaM2;
+    return claimedWorldUnitsSquared;
   };
 
   const fx = G.fx;
@@ -238,7 +260,7 @@ export async function measureStormRainAtRenderHz(renderHz, {
       paintFlaggedCosmeticEmissions += batch.paintFlagged;
       record('cosmetic_fx_rain_batch', {
         x: round(pos.x), y: round(pos.y), z: round(pos.z),
-        visualRadiusM: round(radius),
+        visualRadiusWorldUnits: round(radius),
         emittedCosmeticParticles: batch.count,
         paintFlaggedParticles: batch.paintFlagged,
       });
@@ -281,10 +303,10 @@ export async function measureStormRainAtRenderHz(renderHz, {
     cosmeticParticleEmissions,
     cosmeticParticleBatchEvents: cosmeticParticleBatchEvents.length,
     paintFlaggedCosmeticEmissions,
-    summedCircularBrushFootprintAreaM2: round(summedCircularBrushFootprintAreaM2),
-    summedClaimedAreaM2: round(summedClaimedAreaM2),
+    summedCircularBrushFootprintWorldUnitsSquared: round(summedCircularBrushFootprintWorldUnitsSquared),
+    summedClaimedWorldUnitsSquared: round(summedClaimedWorldUnitsSquared),
     finalCpuTurfCellsFromGrid: turf.cells,
-    finalCpuTurfUnionAreaM2: turf.areaM2,
+    finalCpuTurfUnionWorldUnitsSquared: turf.areaWorldUnitsSquared,
     finalCpuTurfCellsFromPaintCounts: G.paint.counts[cloud.team],
     finalCpuTurfGridVersion: G.paint.version,
     renderCadenceSimulationTimeSeconds: round(G.time),
@@ -300,34 +322,39 @@ export async function measureStormRainCalibration({ renderRates = STORM_CALIBRAT
       issue: 226,
       status: 'calibration research; no confirmed overpainting defect',
       measurementDate: '2026-10-09',
-      inkwaveSourceSnapshot: 'a8f22317917505646a5e8e2ec65822dade5a7101',
       baselineMain: '5d0be6b7fdebfd07e696e75497aaa97aa5ff5648',
       seed: options.seed ?? STORM_CALIBRATION_SEED,
       durationSeconds: options.durationSeconds ?? STORM_CALIBRATION_SECONDS,
       fixedSimulationHz: 60,
       renderRates,
+      coordinateUnits: {
+        inkwaveInternalConvention: 'The project profile documents raw coordinates 1:1 with INKWAVE meters, with distanceScale.factor=1 marked inferred; actual character/stage scale still requires measurement.',
+        distance: 'INKWAVE world units (WU); no conversion to retail Splatoon 3 units is established',
+        area: 'INKWAVE world units squared (WU²); no conversion to retail Splatoon 3 area is established',
+        retailMapping: 'unknown; this measurement applies no conversion',
+      },
       scenario: {
         cloudCount: 1,
         team: 0,
         owner: 'local, non-ghost',
-        cloudOriginMeters: [0, 5, 0],
+        cloudOriginWorldUnits: [0, 5, 0],
         cloudDriftDirection: [0, 0, 0],
-        terrain: '64 m x 64 m flat paintable CPU turf plane at y=0',
+        terrain: '64 WU x 64 WU flat paintable CPU turf plane at y=0 WU',
         actors: 0,
         gear: 'none',
       },
       existingAdapterContext: {
         stormUpdateWindow: 'the already-present composed adapter runs rain through the final duration tick; no change made here',
-        rayReachMeters: 12,
-        rayReachStatus: 'existing INKWAVE adapter bound; not asserted as a Nintendo-specific value or changed by this tooling',
+        rayReachWorldUnits: 12,
+        rayReachStatus: 'existing INKWAVE adapter bound in WU; no Nintendo-specific value asserted and no gameplay value changed by this tooling',
       },
       terminology: {
         candidateRayEmissions: 'INKWAVE calls into its rain raycast path; not Nintendo rain particles',
         rayGroundHits: 'successful returns from the composed INKWAVE Physics.raycast against the fixture plane',
         paintWriteEvents: 'calls to the composed INKWAVE PaintSystem.splat; CPU turf grid accounting is reported separately',
         cosmeticParticleEmissions: 'FX.rain drop-pool admissions counted at FX._spawnDrop; not Nintendo particles',
-        summedCircularBrushFootprintAreaM2: 'sum of pi*r^2 for each splat call; a nominal overlap-prone proxy, not turf union',
-        finalCpuTurfUnionAreaM2: 'area of unique team-owned turf cells in the real PaintSystem CPU grid after the run',
+        summedCircularBrushFootprintWorldUnitsSquared: 'sum of pi*r^2 for each splat call in WU²; a nominal overlap-prone proxy, not turf union',
+        finalCpuTurfUnionWorldUnitsSquared: 'area in WU² of unique team-owned turf cells in the real PaintSystem CPU grid after the run',
       },
     },
     runs,

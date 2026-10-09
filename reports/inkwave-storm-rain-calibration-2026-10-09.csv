@@ -1,4 +1,4 @@
-render_hz,render_frame,simulation_tick,simulation_time_s,cloud_time_s,kind,candidate_index,hit,x_m,y_m,z_m,ray_length_m,radius_m,nominal_circle_footprint_m2,claimed_area_m2,cpu_turf_cells_delta,cosmetic_particles,paint_flagged_particles,cpu_radial_start_m,cpu_radial_end_m,cpu_angle_start_deg,cpu_angle_end_deg,cpu_turf_cells,cpu_turf_area_m2,metric_name,metric_value
+render_hz,render_frame,simulation_tick,simulation_time_s,cloud_time_s,kind,candidate_index,hit,x_wu,y_wu,z_wu,ray_length_wu,radius_wu,nominal_circle_footprint_wu2,claimed_area_wu2,cpu_turf_cells_delta,cosmetic_particles,paint_flagged_particles,cpu_radial_start_wu,cpu_radial_end_wu,cpu_angle_start_deg,cpu_angle_end_deg,cpu_turf_cells,cpu_turf_area_wu2,metric_name,metric_value
 30,1,1,0.016666667,0.016666667,cosmetic_fx_rain_batch,,,0,5,0,,3.676925926,,,,2,0,,,,,,,,
 30,1,1,0.016666667,0.016666667,candidate_ray_emission,0,true,0.196859085,4.2,0.468555467,12,,,,,,,,,,,,,,
 30,1,1,0.016666667,0.016666667,ray_ground_hit,0,,0.196859085,0,0.468555467,,,,,,,,,,,,,,,
@@ -1278,10 +1278,10 @@ render_hz,render_frame,simulation_tick,simulation_time_s,cloud_time_s,kind,candi
 30,,,,,summary,,,,,,,,,,,,,,,,,,,cosmeticParticleEmissions,6384
 30,,,,,summary,,,,,,,,,,,,,,,,,,,cosmeticParticleBatchEvents,480
 30,,,,,summary,,,,,,,,,,,,,,,,,,,paintFlaggedCosmeticEmissions,0
-30,,,,,summary,,,,,,,,,,,,,,,,,,,summedCircularBrushFootprintAreaM2,233.134166494
-30,,,,,summary,,,,,,,,,,,,,,,,,,,summedClaimedAreaM2,170.6875
+30,,,,,summary,,,,,,,,,,,,,,,,,,,summedCircularBrushFootprintWorldUnitsSquared,233.134166494
+30,,,,,summary,,,,,,,,,,,,,,,,,,,summedClaimedWorldUnitsSquared,170.6875
 30,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfCellsFromGrid,2731
-30,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfUnionAreaM2,170.6875
+30,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfUnionWorldUnitsSquared,170.6875
 30,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfCellsFromPaintCounts,2731
 30,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfGridVersion,174
 30,,,,,summary,,,,,,,,,,,,,,,,,,,renderCadenceSimulationTimeSeconds,8
@@ -2564,10 +2564,10 @@ render_hz,render_frame,simulation_tick,simulation_time_s,cloud_time_s,kind,candi
 60,,,,,summary,,,,,,,,,,,,,,,,,,,cosmeticParticleEmissions,6384
 60,,,,,summary,,,,,,,,,,,,,,,,,,,cosmeticParticleBatchEvents,480
 60,,,,,summary,,,,,,,,,,,,,,,,,,,paintFlaggedCosmeticEmissions,0
-60,,,,,summary,,,,,,,,,,,,,,,,,,,summedCircularBrushFootprintAreaM2,233.134166494
-60,,,,,summary,,,,,,,,,,,,,,,,,,,summedClaimedAreaM2,170.6875
+60,,,,,summary,,,,,,,,,,,,,,,,,,,summedCircularBrushFootprintWorldUnitsSquared,233.134166494
+60,,,,,summary,,,,,,,,,,,,,,,,,,,summedClaimedWorldUnitsSquared,170.6875
 60,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfCellsFromGrid,2731
-60,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfUnionAreaM2,170.6875
+60,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfUnionWorldUnitsSquared,170.6875
 60,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfCellsFromPaintCounts,2731
 60,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfGridVersion,174
 60,,,,,summary,,,,,,,,,,,,,,,,,,,renderCadenceSimulationTimeSeconds,8
@@ -3850,10 +3850,10 @@ render_hz,render_frame,simulation_tick,simulation_time_s,cloud_time_s,kind,candi
 120,,,,,summary,,,,,,,,,,,,,,,,,,,cosmeticParticleEmissions,6384
 120,,,,,summary,,,,,,,,,,,,,,,,,,,cosmeticParticleBatchEvents,480
 120,,,,,summary,,,,,,,,,,,,,,,,,,,paintFlaggedCosmeticEmissions,0
-120,,,,,summary,,,,,,,,,,,,,,,,,,,summedCircularBrushFootprintAreaM2,233.134166494
-120,,,,,summary,,,,,,,,,,,,,,,,,,,summedClaimedAreaM2,170.6875
+120,,,,,summary,,,,,,,,,,,,,,,,,,,summedCircularBrushFootprintWorldUnitsSquared,233.134166494
+120,,,,,summary,,,,,,,,,,,,,,,,,,,summedClaimedWorldUnitsSquared,170.6875
 120,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfCellsFromGrid,2731
-120,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfUnionAreaM2,170.6875
+120,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfUnionWorldUnitsSquared,170.6875
 120,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfCellsFromPaintCounts,2731
 120,,,,,summary,,,,,,,,,,,,,,,,,,,finalCpuTurfGridVersion,174
 120,,,,,summary,,,,,,,,,,,,,,,,,,,renderCadenceSimulationTimeSeconds,8
