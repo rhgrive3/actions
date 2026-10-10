@@ -31,6 +31,7 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
     export * from './src/core/ctx.js';
     export * from './src/config.js';
     export * from './patches/splatoon3/runtime/clock.mjs';
+    export * from './patches/splatoon3/runtime/actor-motion.mjs';
     export * from './src/game/actor.js';
     ${network ? "export * from './src/net/netmatch.js';" : ''}
     export * from './src/game/physics.js';
