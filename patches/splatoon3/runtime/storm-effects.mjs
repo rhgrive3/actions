@@ -2,6 +2,18 @@
 // Distinct from cloud lifetime and the held-device / throw animation lifetime.
 export const STORM_GAUGE_LOCK = 480 / 60;
 export function isStormHolding(a) { return a.specialActive?.id === 'storm' && a.specialActive.phase === 'hold'; }
+// Display projection of the spent special (#469). The gauge is full while the
+// device is held, then follows the existing actor-owned lock clock. It is never
+// reusable charge: specialFrac, specialReady and the native charge stay unchanged.
+// Remote actors have no replicated post-use clock, so they keep the old value.
+export function stormGaugeFraction(a) {
+  if (a.remote) return null;
+  if (isStormHolding(a)) return 1;
+  const remaining = a.stormGaugeLock;
+  if (!Number.isFinite(remaining) || remaining <= 0) return null;
+  const total = a.stormGaugeDuration;
+  return Math.min(1, remaining / (Number.isFinite(total) && total > 0 ? total : STORM_GAUGE_LOCK));
+}
 export function advanceStormLock(a, dt) {
   const remaining = (a.stormGaugeLock || 0) - dt;
   a.stormGaugeLock = remaining <= 1e-10 ? 0 : remaining;
@@ -30,6 +42,9 @@ export function updateStormHold(a, dt, G) {
     a.stormGaugeLock = STORM_GAUGE_LOCK;
     a.character.trigger('throw');
     G.projectiles.throwStorm(a);
+    // Captured after the throw: the Special Power wrapper may extend this lock.
+    // Actor.reset removes the temporary power snapshot but keeps this denominator.
+    a.stormGaugeDuration = a.stormGaugeLock;
   }
   s.subWasDown = down;
 }

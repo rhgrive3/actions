@@ -2834,3 +2834,22 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
   - ロジックのみ確認: `patches/splatoon3/tests/issue-675-charger-ink-consumption.test.mjs` 7 件（8F/60F の端点、単調増加、中点、Ink Saver 0/10/57 AP、低インクで負値にならない、8F 未満の release は拒否、30/60/120 Hz で同一）が main で 7/7 pass。
   - 未確認: 8F〜60F の中間曲線が S3 の検証済みパラメータに基づくこと。線形補間は INKWAVE の選択で、本家と一致する根拠はない。Ink Saver の係数値そのものの本家照合も未確認。
   - 未確認: 本家実機での中間消費量の計測、ブラウザ表示、実機比較。本記録はロジック確認であり、実機比較の代用ではない。
+## 2026-10-10 — #469 Ink Storm 使用済みゲージの表示（上書き担当）
+
+| 項目 | 内容 |
+| --- | --- |
+| 本家の根拠 | Inkipedia Special Gauge（コミュニティWiki）: 「使用中は反時計回りに空になるまで減る」、Ink Storm は投擲後にゲージが減り切るまで次のスペシャルを溜められないと記す。どちらも時間・フレーム数は示さない。Ver.11.3.0 の公式更新履歴は本件のゲージ挙動を記述していない（未確認）。 |
+| 参照条件 | スプラトゥーン3 Ver.11.3.0、ブキ Ink Storm、ギアなし、Special Power 無し（延長は既存 wrapper の値）。 |
+| 480F の出典 | 既存コメント「S3 検証 Wiki, GP0」の一次照合は今回到達できず **未確認**。発動 tick では lock を変えず、投擲後の既存 lock をそのまま投影する。 |
+| INKWAVE 実装箇所 | `patches/splatoon3/runtime/storm-effects.mjs` の `stormGaugeFraction()`（lock の残り比率、保持中は満量、リモートは対象外）と `updateStormHold()` の `stormGaugeDuration` 捕捉（投擲後の lock 長）。`patches/local-quality/hud-snapshots.mjs` の `hudFrameSnapshot()` が `frame.special` / `frame.specialActive` に投影し、モバイル転送も同じ値を受ける。既存 lock は `storm-effects.mjs` / `storm-effects-adapter.mjs`（時計と再蓄積禁止）、`storm-power.mjs`（延長）。 |
+| 再現操作 | 満タンの Storm を発動。発動 tick は `a.special`=0 のまま、表示は満量（保持中）。投擲後 240 tick で表示 0.5、対照として `specialFrac()`=0。480 tick で表示が消え、充電が再開する。死亡・reset では lock と表示比率が跳ねない。 |
+| プレイへの影響 | 発動直後に HUD / モバイルの SP ゲージが空にならず、投擲後の使用中表示が既存 lock に沿って減る。充電量・`specialReady`・ネット送信 charge は変更しない。 |
+| 確認状態 | **ロジック確認済み**（実 Actor / Projectiles、fixture、`hudFrameSnapshot` 直接呼び出し）。`patches/splatoon3/tests/issue-469-storm-gauge-display.test.mjs` 4/4 pass。HUD 試験は旧 `hud-snapshots.mjs` で fail を確認。隣接 storm / HUD 試験 pass、`check-inkwave-patches --quick` OK。ブラウザ実動作、2端末通信、Switch 実機での表示曲線・セグメント遷移は **未確認**。 |
+
+未確認・残差:
+
+- 480F の lock 値、表示の比例曲線、セグメント遷移は本家実機と照合していない。表示は既存 INKWAVE lock の投影であり、本家の計測値ではない。
+- `actor.special` は発動 tick に 0 のまま（使用済み値を充電値に戻さない設計）。Issue の「発動 tick に gauge を 0 にしない」を権威的な `special` の意味で読む場合は未達で、オーナー判断が必要。
+- リモート actor は複製された使用後の時計を持たないため、表示は従来どおり 0 のまま。
+- 死亡時の通常ゲージ減少規則と使用後ドレインの関係は、本家実機で未確認。試験では lock と表示が死亡・reset をまたいで継続することだけを確認した。
+- 関連 Issue: #322 系の lock、#76（ink tank refill）、#177、#192 は別件として扱い、本記録では変更していない。
