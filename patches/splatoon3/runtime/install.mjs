@@ -23,6 +23,7 @@ import { installMovementMotion } from './movement-motion.mjs';
 import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
+import { installRollerBodyKnockback } from './roller-body-knockback.mjs';
 import { installMuzzleFeedback } from './muzzle-feedback.mjs';
 import { installShotGuide } from './weapons-fidelity.mjs';
 import { installChargerSurface } from './charger-surface.mjs';
@@ -62,6 +63,7 @@ import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSuperJumpTargetNotification } from './superjump-target-notification.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
+import { installWeaponHitReaction } from './weapon-hit-reaction.mjs';
 import { installSpawnPoseMotion } from './spawn-pose-motion.mjs';
 import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
@@ -70,6 +72,7 @@ import { installFaceMotion } from './face-motion.mjs';
 import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
 import { installControllerMotion } from './controller-motion.mjs';
+import { installTripleSlamFists } from './triple-slam-fists.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -98,6 +101,9 @@ export function install(profile) {
   installMovement(api, profile);
   installNormalJumpHold(api, profile);
   installMovementMotion(api, profile);
+  // Keep respawn-owned gameplay wrappers outside Squid Spawn: its Turf branch
+  // starts a new life without invoking the legacy native respawn method.
+  installRespawnLifecycle(api, profile);
   installGear(api, profile);
   installFlow(api, profile);
   installResources(api, profile);
@@ -129,7 +135,6 @@ export function install(profile) {
   installSpecialMotion(api, profile);
   installFlowMotion(api);
   installFaceMotion(api, profile);
-  installRespawnLifecycle(api, profile);
   installControllerMotion({ Input, PlayerController, G });
   // Issue #798: the arc guide is presentation-only. Throttle its native
   // collision-query cadence without touching actual bomb physics.
@@ -137,6 +142,8 @@ export function install(profile) {
   // Main-weapon fidelity must be installed on the same canonical context before
   // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
   installWeaponsFidelity(api, profile);
+  // #387: after the damage route is final, add the Roller body-contact response (model, 未確認 units).
+  installRollerBodyKnockback(api, profile);
   installSuperJumpTargetNotification(api);
   installMuzzleFeedback(api);
   installMinimapDirty(api);
@@ -146,6 +153,9 @@ export function install(profile) {
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.
   installShotGuide(api, profile);
   installChargerSurface(api);
+  // #1097: preserve the composed ordinary muzzle pose while drawing the
+  // render-only weapon-class hit layer; install after every pose/muzzle adapter.
+  installWeaponHitReaction(api);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;
@@ -155,6 +165,9 @@ export function install(profile) {
   installSplatGhostReturn(api);
   installTurfCombatGate(api);
   installDualiesNetwork(api);
+  // Installed after the native special/gear/net wrappers: owns the two Triple
+  // Splashdown fists (#912) and their 15F-delayed impact, separate from the player's blast.
+  installTripleSlamFists(api, profile);
   // Install after weapon and net owners, so it observes the final public path.
   installSupportGameplay(api);
   installBotPaintDeviceProfile({ G, Actor });

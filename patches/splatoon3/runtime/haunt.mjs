@@ -7,7 +7,15 @@ const INSTALL = Symbol.for('inkwave.s3.haunt.v1');
 let G, cfg, tuningRef, curve, marks = new WeakMap();
 const generation = new WeakMap(), reviving = new WeakSet();
 export const HAUNT_FORWARD = Object.freeze(['haunt:mark', 'haunt:arm']);
-const networkLife = a => Number.isSafeInteger(a?.netLife) && a.netLife >= 0 ? a.netLife : null;
+const isNetworkLife = n => Number.isSafeInteger(n) && n >= 0;
+const renderedLife = a => isNetworkLife(a?.netLife) ? a.netLife : null;
+const networkLife = a => {
+  // Owner ticks authenticate this epoch before event replay; Actor.netLife is
+  // only updated later by applyRemote, and even cur.life can still be older.
+  const accepted = a?.remote ? a.net?.lastLife : null;
+  return isNetworkLife(accepted) ? accepted : renderedLife(a);
+};
+const recordEpoch = r => r?.ownerLife?.startsWith('net:') ? Number(r.ownerLife.slice(4)) : null;
 const life = a => networkLife(a) === null ? `local:${generation.get(a) || 0}` : `net:${networkLife(a)}`;
 const wireLife = a => networkLife(a);
 const environment = cause => ['water','fall','out','bounds','void','drown','outOfBounds','oob'].includes(cause);
@@ -20,9 +28,16 @@ function validRecord(target, owner) {
   const ownerAuthorized = r.proven === true || hauntEquipped(owner);
   if (!target?.alive || !ownerAuthorized || r.match !== G?.match ||
       r.owner !== owner.owner || r.targetOwner !== target.owner ||
-      r.targetLife !== life(target) || r.ownerLife !== life(owner) ||
+      r.targetLife !== life(target) ||
       Array.isArray(roster) && (!roster.includes(owner) || !roster.includes(target))) {
     map.delete(target); return null;
+  }
+  if (r.ownerLife !== life(owner)) {
+    // A newer accepted owner life may precede its queued arm. Do not expose
+    // the old penalty, but preserve the proven mark for that arm to refresh.
+    const epoch = recordEpoch(r);
+    if (!(owner.remote && r.proven && isNetworkLife(epoch) && epoch < networkLife(owner))) map.delete(target);
+    return null;
   }
   return r;
 }
@@ -57,13 +72,21 @@ function acceptRemoteState(name, e, from, netmatch) {
       netmatch?.byNid?.get(owner.nid) !== owner || netmatch?.byNid?.get(target.nid) !== target ||
       e.ownerOwner !== owner.owner || e.targetOwner !== target.owner ||
       !Number.isSafeInteger(e.ownerLife) || e.ownerLife < 0 || !Number.isSafeInteger(e.targetLife) || e.targetLife < 0 ||
-      e.ownerLife !== (owner.netLife ?? 0) || e.targetLife !== (target.netLife ?? 0)) return true;
+      e.targetLife !== (networkLife(target) ?? 0)) return true;
+  const accepted = networkLife(owner) ?? 0;
+  // A replay backlog may span multiple deaths/respawns. Its historical marks
+  // are valid within the rendered-to-accepted interval; only the latest life
+  // can arm a penalty. The ordered owner event stream supplies the chronology.
+  if (name === 'haunt:mark'
+    ? e.ownerLife < (renderedLife(owner) ?? 0) || e.ownerLife > accepted
+    : e.ownerLife !== accepted) return true;
+  const record = marks.get(owner)?.get(target);
+  if (recordEpoch(record) > e.ownerLife) return true;
   if (name === 'haunt:mark') {
     putRecord(owner, target, { armed: false, proven: true,
       ownerLife: `net:${e.ownerLife}`, targetLife: `net:${e.targetLife}` });
     return true;
   }
-  const record = marks.get(owner)?.get(target);
   if (!record || record.match !== G?.match || record.owner !== owner.owner || record.targetOwner !== target.owner ||
       record.targetLife !== `net:${e.targetLife}`) return true;
   record.ownerLife = `net:${e.ownerLife}`; record.armed = true; record.proven = true;

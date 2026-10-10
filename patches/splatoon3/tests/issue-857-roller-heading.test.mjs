@@ -17,7 +17,7 @@ async function trace(hz){
    a._finishFrame(dt);
    near(a.character.root.rotation.y,a.yaw);
    f.paint.length=0;r.lastRollPos=a.pos.clone().add(new f.THREE.Vector3(0,0,-1));r._roller(dt,{fire:true},a.weapon);
-   assert.equal(f.paint.length,3);
+   assert.equal(f.paint.length,5,'3 body bands + 2 speed-scaled floor bands (#649)');
    for(const p of f.paint){near(p.opts.stretch.x,Math.sin(a.yaw));near(p.opts.stretch.z,Math.cos(a.yaw));}
    rows.push([a.yaw,a.character.root.rotation.y,f.paint[1].point.x,f.paint[1].point.z]);
   });

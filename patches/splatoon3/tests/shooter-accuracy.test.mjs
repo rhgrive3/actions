@@ -27,3 +27,20 @@ test('40% jump bias and 25F->70F recovery independent of standing state',()=>{
   assert.ok(a.chance(true,45/60)<.4);
   assert.equal(a.chance(true,70/60),.01);
 });
+test('#198 second successful round uses 2%, and the six-frame gate holds at 3%', () => {
+  const a = new ShooterAccuracy();
+  assert.ok(Math.abs(a.shot(true,null)-.01)<1e-12);
+  assert.ok(Math.abs(a.shot(true,null)-.02)<1e-12);
+  for(let i=0;i<6;i++) a.advance(frame);
+  assert.ok(Math.abs(a.chance(true,null)-.03)<1e-12);
+});
+test('#198 idle recovery is the same for 30, 60, 120 and 144 Hz frame steps', () => {
+  const expected = .25 - (20 - 6) * .015;
+  for(const step of [1/30, 1/60, 1/120, 1/144]) {
+    const a = new ShooterAccuracy();
+    for(let i=0;i<24;i++) a.shot(true,null);
+    const n = Math.round(20 / 60 / step);
+    for(let i=0;i<n;i++) a.advance(step);
+    assert.ok(Math.abs(a.chance(true,null)-expected)<1e-9, `step ${step}`);
+  }
+});

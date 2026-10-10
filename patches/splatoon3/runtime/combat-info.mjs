@@ -16,10 +16,25 @@ export function mapActorVisible(actor, viewer, hpMax = 100, now = 0) {
   if (actor === viewer || actor.team === viewer.team) return true;
   return enemyRevealedOnMap(actor, hpMax, viewer, now);
 }
+// Presentation-only hit clock for the enemy health window (#716). It advances
+// only when the authoritative HP is observed to fall, so enemy-ink recovery
+// clamps and regen timers (actor.lastDamage) cannot keep a bar alive. Death
+// clears the record, and the respawn HP is the new baseline. Unverified: whether
+// S3 counts enemy-ink HP ticks as qualifying damage (ink ticks refresh here).
+const hpObserved = new WeakMap();
+export function healthHitAge(actor, now = 0) {
+  if (!actor?.alive) { hpObserved.delete(actor); return Infinity; }
+  const seen = hpObserved.get(actor);
+  if (!seen) { hpObserved.set(actor, { hp: actor.hp, at: -Infinity }); return Infinity; }
+  if (actor.hp < seen.hp - 1e-6) seen.at = now;
+  seen.hp = actor.hp;
+  return now - seen.at;
+}
 function healthActorDecision(actor, viewer, hpMax, now, visible) {
+  const age = healthHitAge(actor, now);
   if (!actor?.alive || actor === viewer || !(actor.hp > 0 && actor.hp < hpMax)) return false;
   if (actor.team === viewer.team) return true;
-  if (!(actor.lastDamage >= 0 && actor.lastDamage < ENEMY_HEALTH_SECONDS)) return false;
+  if (!(age >= 0 && age < ENEMY_HEALTH_SECONDS)) return false;
   const hidden = actor.submerged || actor.climbing || actor.anim?.form === 'swim' || actor.anim?.form === 'climb';
   if (revealedTo(actor, viewer, now) || privateTrackingOpacity(actor, viewer, now) > 0) return true;
   if (hidden) return false;

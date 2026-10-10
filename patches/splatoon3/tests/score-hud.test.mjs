@@ -108,15 +108,16 @@ test('#220 map threshold is independent of pose and HP-bar visibility; source fr
 });
 
 test('#231 health disclosure respects enemy 3s window, own-ink concealment, LOS, explicit team reveal and ally damage', async () => {
-  const f = await fixture(), { a, b, enemy } = fighters(f); enemy.hp = b.hp = 50; enemy.lastDamage = 0;
-  for (const age of [0, 2.999, 3, 4]) { enemy.lastDamage = age; assert.equal(f.healthActorVisible(enemy, a, { visible: true }), age < 3); }
-  enemy.lastDamage = 1;
-  assert.equal(f.healthActorVisible(enemy, a, { visible: false }), false);
-  for (const hidden of ['submerged', 'climbing']) { enemy[hidden] = true; assert.equal(f.healthActorVisible(enemy, a, { visible: true }), false); enemy[hidden] = false; }
-  enemy.s3.revealedUntil = { 0: 5 }; assert.equal(f.healthActorVisible(enemy, a, { now: 4, visible: false }), true);
-  assert.equal(f.healthActorVisible(enemy, a, { now: 5, visible: false }), false);
-  enemy.hp = 100; assert.equal(f.healthActorVisible(enemy, a, { now: 4, visible: true }), false);
-  enemy.hp = 1; enemy.alive = false; assert.equal(f.healthActorVisible(enemy, a, { now: 4, visible: true }), false);
+  const f = await fixture(), { a, b, enemy } = fighters(f); enemy.hp = 100; b.hp = 50;
+  // #716: the window starts at the observed HP loss (t=10), not at a recovery-clock field.
+  f.healthActorVisible(enemy, a, { now: 9.999, visible: true }); enemy.hp = 50;
+  for (const age of [0, 2.999, 3, 4]) assert.equal(f.healthActorVisible(enemy, a, { now: 10 + age, visible: true }), age < 3);
+  assert.equal(f.healthActorVisible(enemy, a, { now: 11, visible: false }), false);
+  for (const hidden of ['submerged', 'climbing']) { enemy[hidden] = true; assert.equal(f.healthActorVisible(enemy, a, { now: 11, visible: true }), false); enemy[hidden] = false; }
+  enemy.s3.revealedUntil = { 0: 12 }; assert.equal(f.healthActorVisible(enemy, a, { now: 11, visible: false }), true);
+  assert.equal(f.healthActorVisible(enemy, a, { now: 12, visible: false }), false);
+  enemy.hp = 100; assert.equal(f.healthActorVisible(enemy, a, { now: 11, visible: true }), false);
+  enemy.hp = 1; enemy.alive = false; assert.equal(f.healthActorVisible(enemy, a, { now: 11, visible: true }), false);
   assert.equal(f.healthActorVisible(b, a), true); assert.equal(f.healthActorVisible(a, a), false);
 });
 
@@ -144,7 +145,7 @@ test('#220/#231 actual Game HUD frame keeps map damage, enemy health visibility,
   const f = await fixture(), { a, b, enemy } = fighters(f); a.isLocal = true; b.name = 'ally'; enemy.name = 'enemy';
   f.G.camera = new f.THREE.PerspectiveCamera(60, 800 / 600, .1, 100); f.G.camera.position.set(0, 2, 10); f.G.camera.lookAt(0, 1, 0); f.G.camera.updateMatrixWorld();
   f.G.actors = [a, b, enemy]; a.character.root.position.set(-2, 0, 0); b.character.root.position.set(2, 0, 0);
-  b.hp = enemy.hp = 50; enemy.lastDamage = 0;
+  b.hp = enemy.hp = f.PLAYER.hp;
   const source = composed('src/main.js'), code = section(source, '  _updateHud(dt) {', '\n  // ---------------------------------------------------------------------------------------- touch / gyro');
   const Game = vm.runInNewContext(`class Game {${code}}; Game`, { G: f.G, PLAYER: f.PLAYER, SUB: f.SUB, THREE: f.THREE, selectedSubCost, projectShotGuide, hudFrameSnapshot, enemyRevealedOnMap,
     mapActorVisible: f.mapActorVisible, buildHealthMarkers: f.buildHealthMarkers, innerWidth: 800, innerHeight: 600, t: x => x });
@@ -152,7 +153,8 @@ test('#220/#231 actual Game HUD frame keeps map damage, enemy health visibility,
   Object.assign(game, { match: { local: a, actors: f.G.actors, time: 150, duration: 180, state: 'playing', teamSummary: () => [{},{}] },
     settings: { minimap: true }, minimap: { update() {}, toCanvas(x, z, out) { out.x = x; out.y = z; }, w: 100, h: 100, canvas: {} },
     _hintT: 0, _hints: {}, _lowInkFlash: 0, input: {}, hud: { update: (_dt, f) => { frame = f; } } });
-  game._updateHud(1 / 60); assert.equal(frame.hp, 1); assert.equal(frame.map.players.length, 3); assert.equal(frame.healthMarkers.length, 2);
+  game._updateHud(1 / 60); b.hp = enemy.hp = 50; game._updateHud(1 / 60);
+  assert.equal(frame.hp, 1); assert.equal(frame.map.players.length, 3); assert.equal(frame.healthMarkers.length, 2);
   assert.deepEqual(plain(frame.markers.map(x => x.name)), ['ally']);
   enemy.submerged = true; enemy.anim.form = 'swim'; game._updateHud(1 / 60); assert.equal(frame.map.players.length, 3); assert.equal(frame.healthMarkers.length, 1);
   enemy.submerged = false; enemy.anim.form = 'kid'; f.G.physics.los = () => false; game._updateHud(1 / 60); assert.equal(frame.healthMarkers.length, 1);
@@ -166,9 +168,12 @@ test('#231 remote health samples start the same damage window once and respawn c
     x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, aimYaw: 0, aimPitch: 0,
     f: f.NET_FLAGS.alive | f.NET_FLAGS.grounded, hp: 50, ink: 100, sp: 0, turf: 0, ch: 0, lock: 0,
   } };
-  const nm = Object.create(f.NetMatch.prototype); nm.applyRemote(enemy, 1 / 60);
-  assert.ok(enemy.lastDamage <= 1 / 60 + 1e-10); assert.equal(f.healthActorVisible(enemy, a, { visible: true }), true);
-  nm.applyRemote(enemy, 3); assert.equal(f.healthActorVisible(enemy, a, { visible: true }), false, 'repeated same sample does not restart the window');
+  const nm = Object.create(f.NetMatch.prototype);
+  // #716: the replicated HP loss is observed as a drop from the full-HP baseline; repeats do not refresh it.
+  enemy.hp = 100; assert.equal(f.healthActorVisible(enemy, a, { visible: true }), false, 'full-HP baseline has no window');
+  nm.applyRemote(enemy, 1 / 60);
+  assert.equal(enemy.hp, 50); assert.equal(f.healthActorVisible(enemy, a, { visible: true }), true);
+  nm.applyRemote(enemy, 3); assert.equal(f.healthActorVisible(enemy, a, { now: 3, visible: true }), false, 'repeated same sample does not restart the window');
   enemy.s3.revealedUntil = { 0: 99 }; nm._remoteRespawn(enemy);
   assert.equal(enemy.lastDamage, 99); assert.equal(enemy.s3.revealedUntil, undefined); assert.equal(f.healthActorVisible(enemy, a, { visible: true }), false);
 });

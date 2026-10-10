@@ -62,9 +62,16 @@ export function installNormalJumpHold({ Actor },profile={}) {
       }
     } else if(prior && (!ordinary || this.grounded)) states.delete(this);
     const result=update.call(this,dt);
-    if(ordinary && this.s3JumpSerial!==before && !this.superJumpState) {
+    // Native update may emerge from squid before admitting a humanoid jump.
+    // Own the successful jump, not the form at the beginning of its input tick.
+    const started=(this.s3JumpSerial||0)!==before;
+    if(started && this.alive && this.form==='kid' && !this.superJumpState &&
+       !this.specialActive && !this.climbing) {
       states.set(this,{serial:this.s3JumpSerial,frames:Number.isFinite(dt)&&dt>0?dt*60:0,
-        released:!this.intent?.jump,applied:false});
+        // Buffered presses can be released before native landing admission.
+        // Observe that release on the next ascent tick just like an ordinary
+        // 1F tap, rather than marking an unapplied response already consumed.
+        released:false,applied:false});
     }
     return result;
   };
