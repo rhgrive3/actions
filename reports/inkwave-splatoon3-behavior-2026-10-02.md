@@ -2869,3 +2869,14 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
 - 修正後: 着地確定までは塗りの統計・イベントは通常どおり加算されるが、残量の回復、準備完了イベント、再発動はいずれも行われない。着地確定後は通常どおり回復・準備完了が起きる。地面のないタイムアウト（void）着地も同じ保持を保ち、被弾時は元の残量だけが特殊節約の対象になる。
 - プレイへの影響: 着地の隙に塗っても、Slam の残量が未確定の間は次のスペシャルを撃てない。
 - 確認状態: 単独測定のみ（composed Actor を固定 60 Hz で駆動する Node テスト、30/60/120 Hz で同一の回復判定トレース）。本家の実機比較、ブラウザ実動作は未実施。減少曲線、1 セグメントの量（`SPECIAL_GAUGE_SEGMENTS = 23` の解釈）、インパクト時間（Issue 本文が引用する 70F 表記）、着地動作の終了時間、Special Saver の数値は未確認のまま変更していない。#573（無敵タイミング）、#577、#582 は範囲外。
+## 2026-10-10: #890 ordinary-jump B hold/release residuals
+
+**本家の根拠.** Splatoon 3 Ver. 11.3.0 では通常ジャンプに B 長押しによる大ジャンプと、小ジャンプ（早い離し）の区別がある。Issue #890 本文が引く Nintendo サポートの更新履歴（a_id/59461）と Squiffer α 検証ページを出典とする。本セッションでは両ページを再取得していない。離しの閾値フレームと上昇曲線は公開されておらず、`patches/splatoon3/reference/curated-numbers.json` にも通常ジャンプの B 長押し閾値・上昇曲線のキーはない（武器別 `JumpHeightFullCharge`、`OpInk_JumpVel` 等のみ）。
+
+**INKWAVE 実装箇所.** `patches/splatoon3/runtime/normal-jump-hold.mjs`。`LEGACY_JUMP_FEEL`（`holdFrames:5`、`releaseRate:0.7`、`provenance:'legacy-approximation'`）は Splatoon (Wii U) `Player00_anim.szs` の 5F 開始クリップに由来する INKWAVE の暫定 game-feel 値で、Nintendo の閾値や物理値ではない。残差の修正は二点。(1) 入場時の離し判定を `released:false` で未消費にし、着地前に 1F だけ押した B の離しを次の上昇 tick で観測する。(2) 人型入場の判定を更新前の form ではなく、更新後に成立したジャンプの serial と form で行う（スクイッドから同一 tick で人型ジャンプが成立した場合を含む）。待機・泳ぎ form の入場と reset は hold 状態を作らない。
+
+**再現操作.** (a) 着地直前（ジャンプバッファ 0.13 s 内）に B を 1F だけ押して離す。(b) スクイッド状態で ZL を離し、同じ tick に B を押す。修正前は (a) の離しが入場時に消費され、(b) では hold 状態が作られず、どちらも長押しと同じ高い軌道になる。
+
+**プレイへの影響.** 通常の 1F タップが、バッファ入場やイカからヒトへの変形直後に長押しと同じ軌道になり、段差・敵インク越えのタイミングに影響する。
+
+**確認状態.** ロジック単独（実 Actor/Physics と full installer、固定 30/60/120 Hz の trace 比較）。修正前の main で新規の native 試験のうち 3 件（バッファ 1F タップ、ヒト化直後の 30/60/120 Hz、同 tick 人型化の hold 状態を検査する試験）が失敗し、修正後は全件成功した。ブラウザ実動作と Switch 実機比較は未実施。S3 の小/大ジャンプの閾値フレーム・上昇曲線は**未確認**のまま。`holdFrames=5` / `releaseRate=0.7` は INKWAVE 暫定値であり、本家値と一致したとは扱わない。敵インク・自インク・武器別ジャンプ上限・コヨーテ 0.12 s の独立試験は本件では未追加で、**未確認**。
