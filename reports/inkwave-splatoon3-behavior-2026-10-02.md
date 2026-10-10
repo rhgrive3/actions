@@ -3176,3 +3176,18 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - 再現操作: (1) タイトルで確定後 200ms 以内に設定を開く、または無効な画面要求を出す。(2) タイトルで確定を連打、または確定後にメインへ戻って再度タイトルに入る。(3) Mode で選択後 260ms 以内にメインへ戻り、再度 Mode に入る。(4) タイトル確定後、ワイプ途中で画面を破棄する。
 - プレイへの影響: 遅延中の新しい画面操作を古い遷移が上書きしない。Mode の古い選択が後の訪問で Setup へ進まない。破棄後に古い画面が再生成されず、画面変更通知も出ない。通常の 200ms / 260ms 遷移、reduced-motion の 0ms、ワイプ、入力ガード、設定値は変更しない。
 - 確認状態: 合成 Menus（実メソッド、DOM・時刻は有界な fake）の回帰試験のみ。修正を接続しない状態では新規試験 26 件中 17 件が失敗し、接続後は 26/26 成功。関連する menu・result・packaging の試験は 26 成功、3 skip（build 成果物が必要なため）。`scripts/check-inkwave-patches.mjs --quick` は成功。ブラウザでの実動作、実機の入力や割り込みのタイミングは未確認（本セッションではブラウザを起動していない）。draft PR #1182 に同じ修正があり、統合時に重複を一本化する必要がある。
+## #1184: オフライン試合開始の読込失敗後に黒い画面から戻れない問題（2026年10月10日）
+
+- 本家参照版：該当なし。スプラトゥーン3には、ブラウザでのモジュール読込失敗後の画面遷移に関する公開仕様がない。本件は本家との挙動比較の対象外で、本家の数値・タイミング・演出は推定していない。
+- 比較条件：オフラインの試合開始中に Boss モジュールの読込、ワールド構築、キャラクター事前描画のいずれかが reject した場合。
+- INKWAVE の変更前：メニューの `startMatch` が返す Promise を `safeCall` が消費せず、reject 後にメニューへ戻す処理がなかった。`_loadBoss` は失敗した import を `_bossMod` に残し、再試行でも同じ reject を再利用した。
+- INKWAVE の変更：
+  - `patches/reliability/start-adapter.mjs`：メニュー用の `_startMenuMatch` を追加した。現在の開始操作だけが `quitToMenu` で復帰し、短いエラーを一度表示する。古い操作の reject は復帰を起こさない。core `startMatch` は明示 flow を受け取れるが、通常呼び出しの例外契約は変えない。`quitToMenu` は復帰した attract 試合を返す。`_loadBoss` は失敗した自分の取得だけキャッシュを解除する。
+  - `patches/reliability/tests/start.test.mjs`：実メニュー API、開始と復帰の所有権、古い reject、成功、失敗後の再試行、反復失敗の回帰試験（#1184 の 10 件）を追加した。
+  - `patches/reliability/tests/attract.test.mjs`：start 試験の composed fixture が参照する `adaptBuildSource` を sandbox に渡すよう補正した。
+- 再現と確認：
+  - `patches/reliability/start-adapter.mjs` を変更前に戻すと、#1184 の 10 件が失敗する（129 pass / 10 fail）。変更後は `patches/reliability/tests/start.test.mjs` が 139/139 pass。
+  - `patches/reliability/tests/attract.test.mjs` 13/13 pass。`hud`、`menu-raf`、`loading-cache` adapter、`practice-range` isolation は同時実行で 35 pass / 0 fail / 4 skip。`practice-range` untimed は単独実行で 3/3 pass（143 秒）。
+  - これらは Node の VM 上で実 adapter から組み立てたメソッドを動かす単独検証であり、ブラウザや WebGL の実動作、Switch の実機確認ではない。
+- 遊びへの影響と状態：オフラインで Boss、ワールド、キャラクターの読込が失敗しても、黒い画面で止まらずメニューへ戻り、再試行できる（コード上の状態遷移の確認）。
+- 未確認：ブラウザでの実際のモジュール読込失敗、ライブ WebGL のシェーダー拒否、フェードの画素、実機・Switch での表示。新しいエラー文言は `t()` を通すが、日本語訳は公開版の `inkwave-public/src/i18n.js` に無く、本作業では追加していない（日本語モードでも英語表示のまま）。
