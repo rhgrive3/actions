@@ -654,7 +654,32 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       // EXACTLY the same native vertex shader as the original beauty pass.
       excluded.push([o,o.visible]);o.visible=false;
     });
-    // Keep every native vertex shader, mesh, skinning, alpha and cutout.
+    // A shared THREE material can be drawn on more than one vertex layout.
+    // renderer.properties.get(material).currentProgram is ONLY the last variant,
+    // not necessarily the program used for any particular mesh. Capture the
+    // actual compiled vertex shader inside each mesh's draw callback in BOTH
+    // passes; this keeps the equality gate strict without comparing variants
+    // from two unrelated draws of one shared MeshStandardMaterial.
+    const sampleVertices = (target) => {
+      const observers = [];
+      scene.traverse(n => {
+        if (!n.isMesh || !n.material) return;
+        const previous = n.onAfterRender;
+        observers.push([n, previous]);
+        n.onAfterRender = function (...args) {
+          if (typeof previous === 'function') previous.apply(this, args);
+          const material = args[4], program = material && renderer.properties.get(material).currentProgram;
+          if (!program) throw Error('Missing actual draw vertex program: ' + (n.name || n.type));
+          let programs = target.get(n);
+          if (!programs) { programs = []; target.set(n, programs); }
+          programs.push({ type: material.type, vertex: gl.getShaderSource(program.vertexShader) });
+        };
+      });
+      return () => { for (const [mesh, previous] of observers) mesh.onAfterRender = previous; };
+    };
+    const nativeDraws = new Map(), controlledDraws = new Map();
+    let releaseCapture = sampleVertices(nativeDraws);
+    try { renderer.render(scene, camera); } finally { releaseCapture(); }
     const replacements = [], materials = new Map(), vertexSources = [], originalPosition = ch.root.position.clone();
     scene.traverse(n => {
       if (!n.material) return;
@@ -669,22 +694,31 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
           shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', '#include <opaque_fragment>\ngl_FragColor.rgb = vec3(' + c + ', ' + (.9 - c) + ', .4);');
         };
         clone.customProgramCacheKey = () => key + '|s3-pause-flat-colour-v2';
-        const p = renderer.properties.get(m).currentProgram;
-        materials.set(m, { clone, nativeVertex: p ? gl.getShaderSource(p.vertexShader) : null });
+        materials.set(m, { clone });
         return clone;
       };
       replacements.push([n, n.material]); n.material = Array.isArray(n.material) ? n.material.map(replace) : replace(n.material);
     });
     let sameRgb, movedRigRgb, image, repeatedImage, movedImage;
     try {
-      renderer.render(scene, camera); const paused = pixels(); image = await save(name + '-geometry', frameImage());
+      releaseCapture = sampleVertices(controlledDraws);
+      try { renderer.render(scene, camera); } finally { releaseCapture(); }
+      const paused = pixels(); image = await save(name + '-geometry', frameImage());
       renderer.render(scene, camera); sameRgb = globalThis.catalogPixelDifference(paused, pixels());
       repeatedImage = await save(name + '-geometry-repeat', frameImage());
-      for (const { clone, nativeVertex } of materials.values()) {
-        const p = renderer.properties.get(clone).currentProgram;
-        if (!p) continue; // invisible materials have no draw or shader evidence
-        if (!nativeVertex) throw Error('Pause missing original compiled vertex shader');
-        vertexSources.push({ type: clone.type, nativeSHA256: await digest(nativeVertex), controlledSHA256: await digest(gl.getShaderSource(p.vertexShader)) });
+      if (nativeDraws.size !== controlledDraws.size) throw Error('Pause changed native visible mesh count');
+      for (const [mesh, reference] of nativeDraws) {
+        const controlled = controlledDraws.get(mesh);
+        if (!controlled || controlled.length !== reference.length)
+          throw Error('Pause changed actual native draw count: ' + (mesh.name || mesh.type));
+        for (let i = 0; i < reference.length; i++) {
+          if (reference[i].type !== controlled[i].type) throw Error('Pause material draw type mismatch');
+          vertexSources.push({
+            mesh: mesh.name || mesh.type, type: reference[i].type,
+            nativeSHA256: await digest(reference[i].vertex),
+            controlledSHA256: await digest(controlled[i].vertex),
+          });
+        }
       }
       ch.root.position.x += .03; renderer.render(scene, camera);
       movedRigRgb = globalThis.catalogPixelDifference(paused, pixels()); movedImage = await save(name + '-moved', frameImage());
