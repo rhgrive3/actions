@@ -22,7 +22,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'dodge-clock-adapter.mjs']
+    'dodge-clock-adapter.mjs', 'superjump-epoch.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -844,8 +844,9 @@ export function emit(name, payload) {
         for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
         break;
       }`, 'beam birth clock');
-    patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
+    patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; endRemoteSuperJumpEpoch(victim);', 'death invalidates storm admission and remote Super Jump epoch');
     patch('  _remoteRespawn(a) {', `  _remoteRespawn(a) {
+    endRemoteSuperJumpEpoch(a);
     clearRemoteSquidroll(a);
     clearRemoteDropRoll(a);
     clearRemoteRollerPresentation(a);
@@ -2152,6 +2153,9 @@ ${bombHit}`;
 
   }
   if (rel === 'src/game/actor.js') {
+    patch("    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form, t: 0, target, from: new THREE.Vector3(), to: destination, marker: 0 };",
+      "    this._s3SuperJumpEpoch = Number.isSafeInteger(this._s3SuperJumpEpoch) && this._s3SuperJumpEpoch >= 0 && this._s3SuperJumpEpoch < Number.MAX_SAFE_INTEGER ? this._s3SuperJumpEpoch + 1 : 1;\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form, t: 0, target, from: new THREE.Vector3(), to: destination, marker: 0, sjEpoch: this._s3SuperJumpEpoch };",
+      'owner Super Jump action epoch');
     patch('    this.netLife = (this.netLife ?? 0) + 1;',
       '    this.netLife = (this.netLife ?? 0) + 1;\n    if (this.net) { this.net._hitHandoff = null; this.net._hitAuthority = null; }\n    this._netLifeStartedAt = performance.now() / 1000;',
       'clear prior-life hit authority before publishing the new life');
@@ -2224,6 +2228,22 @@ ${bombHit}`;
       rel + ': unpack accepted-hit revision');
     code = adaptIssue1163RemoteDodgeClock(code);
     patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
+    code = "import { applyRemoteSuperJumpEpoch, endRemoteSuperJumpEpoch } from '../../patches/network-replication/superjump-epoch.mjs';\n" + code;
+    patch('    this.stats.out++;\n    this.s.tr?.broadcast(msg);',
+      '    msg.sjEpochs = Object.create(null);\n    for (const actor of this.byNid.values()) if (!actor.remote && Number.isSafeInteger(actor.nid)) {\n      const epoch = actor._s3SuperJumpEpoch;\n      msg.sjEpochs[actor.nid] = Number.isSafeInteger(epoch) && epoch >= 0 ? epoch : 0;\n    }\n    this.stats.out++;\n    this.s.tr?.broadcast(msg);',
+      'optional Super Jump sender epoch sidecar');
+    patch('      const snap = unpackActor(s, d.ts);\n      snap.surgeOwner = from;',
+      '      const snap = unpackActor(s, d.ts);\n      snap.surgeOwner = from;\n      const sjEpoch = d.sjEpochs?.[s[0]];\n      snap.sjEpoch = Number.isSafeInteger(sjEpoch) && sjEpoch >= 0 ? sjEpoch : null;',
+      'associate Super Jump epoch with its accepted sender sample');
+    patch('  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);',
+      '  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  const sameJumpEpoch = sameJumpPhase && a.sjEpoch === b.sjEpoch;\n  o.sjT = sameJumpEpoch ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);',
+      'interpolate Super Jump age only within its sender epoch');
+    patch("    const jumpPhase = f & F.sjFlight ? 'flight' : 'charge';\n    if (f & (F.sjCharge | F.sjFlight)) {\n      const age = Number.isFinite(S.sjT) ? Math.max(0, S.sjT) : 0;\n      if (!a.superJumpState || !a.superJumpState.net || a.superJumpState.phase !== jumpPhase)\n        a.superJumpState = { phase: jumpPhase, net: true, t: age };\n      else a.superJumpState.t = Math.max(Number.isFinite(a.superJumpState.t) ? a.superJumpState.t : 0, age);\n    } else a.superJumpState = null;",
+      "    const jumpPhase = f & (F.sjCharge | F.sjFlight) ? f & F.sjFlight ? 'flight' : 'charge' : null;\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase);",
+      'derive remote Super Jump phase through sender-epoch state before gauge reconciliation');
+    patch('    applyAdoptionSample(this, a, S);',
+      '    applyAdoptionSample(this, a, S);\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase);',
+      'restore last accepted Super Jump epoch after adoption reconciliation');
   }
   return code;
 }

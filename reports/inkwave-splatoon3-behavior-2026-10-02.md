@@ -3520,3 +3520,11 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - **再現操作**: Android UA、ジャイロ有効、姿勢の向きを 1 deg/s で 10 秒ドリフトさせ、rotationRate の大きさを 1e-4 / 0.01 / 0.35 deg/s にする（ローカル probe）。変更前は 1e-4 deg/s で視点が約 0.31 rad 累積し、厳密な0のみ 0。変更後は 30/60/90/120 Hz すべて 0。
 - **プレイへの影響**: Android で静止中の視点の流れが抑えられる。代わりに STILL_DEG 未満のゆっくりした実回転（0.35 deg/s 未満）は視点へ反映されない。1 deg/s 以上の実回転と閾値超えの rate は従来どおり反映される（回帰試験あり）。
 - **確認状態**: 単体試験（`patches/local-quality/tests/android-stationary-tolerance.test.mjs`、既存の `android-stationary.test.mjs` と隣接する gyro 試験、計 112 件）のみ。実 Android 機、rotationRate のノイズとバイアスの分布、端末ごとの単位・符号の差、閾値の妥当性、本家との視点挙動の比較は未確認。終了後の視点の尾（平滑化の窓）と、静止中に平滑化を 0 にする既存処理の影響も未確認。
+### #1110 リモートのスーパージャンプ溜めの位相エポック（上書き担当・部分対応）
+
+- 本家の根拠: Splatoon 3 Ver.11.3.0（Nintendo サポート最新更新、Inkipedia「Super Jump」）。通常のスーパージャンプは、立ち・泳ぎから変形し、上方向の溜めの姿勢を見せてから発射する。溜め時間と QSJ の短縮値は既存 profile の範囲に留め、本記録で新たな数値は確定しない。
+- INKWAVE 実装箇所: `patches/network-replication/superjump-epoch.mjs`（新規。送信者の任意の `sjEpoch` を使い、同じ位相の再発動と古いサンプルの再生を区別する）、`patches/network-replication/adapter.mjs`（所有者側の行動エポック、`msg.sjEpochs` の付加サイドカー、受信サンプルへの付与、補間の同一エポック限定、死亡・リスポーン時の終了、適応状態の前後での適用）、`patches/network-replication/tests/issue-1110-superjump-epoch.test.mjs`。
+- 既存の修正: `patches/splatoon3/runtime/movement-motion.mjs` と `superjump-motion.mjs` は溜めの進行に `Number.isFinite(sj.t) ? sj.t : 0` を用いるため、NaN による姿勢・スケールの破損は本記録の時点でも防がれている（コード上の確認。描画の実行確認ではない）。
+- 再現操作: 2 台の接続（所有者 A、観測者 B）で平地から通常のスーパージャンプを行い、溜め中に 20Hz のスナップショットを受けた後、続けて 2 回目の発動をする。観測側で溜めの姿勢が連続して戻るか、前回の値に固着しないかを見る。
+- プレイへの影響: 同一位相の再発動で、観測側が間の無位相サンプルを受けない経路では、遠隔プレイヤーの溜めの姿勢が前回の進行度に残り得る（発生頻度は実機で未確認）。ゲームの権威（移動・当たり判定・被弾・行動の許可）は変更していない。
+- 確認状態: ロジック単独の回帰試験 3 件（同一エポックの重複、再発動、旧形式の互換、30/60/120Hz の補間）は通過。関連する既存試験（adoption-state、movement-motion、superjump-motion、issue-1050、superjump-startup-form、issue-1062）は通過し、`check-inkwave-patches.mjs --quick` も通過。実機の二クライアント観測（溜めの開始・ピーク・発射の見た目の一致）は未実施で、未確認。適応状態（owner の経過時間）が届く経路では、既存の寿命・順序による保護が先に働くため、エポックの効果は主に適応のない経路（旧形式、寿命が一致しない直後）で確認した。
