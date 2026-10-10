@@ -223,7 +223,7 @@ test('#710/#835 exact pinned 1130 Point Sensor and Tacticooler duration/launch f
   assert.equal(TACTICOOLER_SOURCE.serveAreaHeightUp,3);
   assert.equal(TACTICOOLER_SOURCE.serveAreaHeightDown,0);
   assert.equal(tacticoolerDrinkFrames(0,gearCurve),1020);
-  assert.equal(tacticoolerDrinkFrames(30,gearCurve),1379, '30 AP is not the abstract 50-percent curve midpoint');
+  assert.equal(tacticoolerDrinkFrames(30,gearCurve),1397, 'non-midpoint 1290/1020/1500 source tier uses its own interpolation exponent');
   assert.equal(tacticoolerDrinkFrames(57,gearCurve),1500);
 });
 test('#835 pinned Tacticooler serving cylinder rejects through-floor pickups',()=>{
