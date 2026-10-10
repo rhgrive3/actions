@@ -3288,3 +3288,10 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - **再現操作:** 同一の環境オブジェクトで、マリーナ on/off、`footprint` と `bounds` の差し替えを 6 段階行い、各段階 120 点で従来実装と値を比較する。
 - **プレイへの影響:** 波高・浮遊物の位置は変えない（試験上は従来と完全一致）。フレームごとの一時配列の削減による FPS・GC の改善は測っておらず、主張しない。
 - **確認状態:** ロジック単独の回帰試験のみ。ソース上で配列生成の式が残っていないことは文字列検査で確認（実行時のアロケーション計測ではない）。テーマ・seaState は `waterHeightAt` の入力ではないことをソースで確認。浮遊物・反射・環境破棄のブラウザ動作、実機のアロケーション数・GC・FPS は未確認。
+## 2026-10-10 — #1116 action-state catalog selection
+
+**本家の根拠.** Flexlion animation-name index @7740d29 (re-fetched 2026-10-10) lists `JumpShoot_Shtr00`–`02`, `JumpShoot_Rllr00`, `JumpShoot_Spnr00` and `JumpShoot_Chrg00`–`02`. No `JumpShoot_*` name appears for Dualies, Slosher or Normal. Names alone do not prove playback or joint curves.
+**INKWAVE実装箇所.** `patches/splatoon3/runtime/jump-motion.mjs` (`JUMP_SHOOT_REFERENCE_CANDIDATES`, `jumpMotionSnapshot` の `actionState` / `selectedCatalogCandidates`). Tests: the last two cases in `patches/splatoon3/tests/jump-motion.test.mjs`.
+**再現操作.** Flat ground, ordinary jump with ZR released, then press ZR (fire or charge) mid-air, for each of the seven kinds. The CPU rig reports `actionState` `firing` and the JumpShoot candidate for Shooter, Roller, Splatling and Charger; `ordinary` for Dualies, Slosher and Blaster.
+**プレイへの影響.** None to the pose, physics, timing, damage, ink or weapon admission. Only the named catalog candidate in the snapshot changes.
+**確認状態.** CPU tests only: `jump-motion.test.mjs` 12/12, neighbouring motion tests 62/62. Which clip actually plays, the variant mapping (Shtr/Chrg), Blaster's firing clip, joint curves, and browser/GPU/Switch parity remain **未確認**.
