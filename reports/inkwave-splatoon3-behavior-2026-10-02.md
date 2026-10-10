@@ -3006,3 +3006,10 @@ Player impact and limits: a depleted Roller round's hit volume (owner capsule vi
 - **再現操作**: 表示名が同じ `Player` の味方 2 人を置く。一方は Charger で特殊準備完了、もう一方は Roller で未準備。同名の敵 Blaster は準備完了。修正前は両方の味方マーカーが Blaster・準備完了として描画された。味方が死亡・復活してマーカースロットが別の同名味方に再利用されると、武器アイコンが古いまま残った。
 - **プレイへの影響**: 同名のプレイヤーがいる場合（既定名 `Player` を含む）、味方マーカーの武器アイコンと特殊準備の光が、そのマーカーの味方本人のものになる。ゲームロジック、特殊の数値、タイミング、判定、プールの仕組みは変わらない。Actor の参照は転送されない。
 - **確認状態**: ソース合成テスト（本家コードを 6 段の変換後に実行し、Actor と DOM の stand-in、実 THREE で投影）。`marker-owner-metadata.test.mjs` は 5 件中、修正前に 2 件（同名の借用、死亡・復活の再利用）が失敗し、修正後は 5 件すべて成功（旧メタデータ欠落のネガティブコントロールを含む）。隣接テスト（hud-snapshots、ui-actor-lifetime、respawn-navigation、ally-down-marker、hud-sub-snapshots、low-ink-snapshots）は計 74 件成功、2 件スキップ（発出箇所の確認）、失敗 0。ブラウザ、オンライン中継、Switch 実機、本家の味方マーカーの見た目との一致は**未確認**。詳細: [marker owner report](inkwave-marker-owner-1186.md)。
+## 2026-10-10: #1090 Ink Vac absorption keeps the attack's own damage across the network
+
+- 本家の根拠: Ver. 11.3.0 の Ink Vac 吸収はダメージ比例（容量は近似 1100 ダメージ相当、Ver.11.3.0 確認記録の値。本セッションでは再取得していない）。Splat/Suction Bomb の 180 は repo に固定した抽出値（`kit-subs.mjs` の WeaponBombSuction DamageMax 1800 raw、sha256 `a64c24c3…`、および `profile.json` の bomb.damageMax 180）。Trizooka の直撃 220 は `kit-trizooka.mjs` の DirectHitDamage 2200 raw。Shooter 本体 36 は既存の武器データ。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/kit-ink-vac.mjs` の `proposeAbsorption`（送信側が sub / special の識別子を付与）と `proposalDamageLimit`（受信側は認証済みの装備 sub / special と既存レジストリの上限だけで判定）。`replayInkVac` の吸収提案の処理で、`sub` / `special` を持たない旧提案は従来どおり本体武器の上限を使う。
+- 再現操作: 全 production 組み込みで Suction Bomb（または Splat Bomb）を Ink Vac の吸収範囲に当てる。ネイティブの吸収は 180 を保持するが、修正前の受信側は本体の 36 に切り詰めて加算していた。Trizooka と Ink Vac の放出弾も 220 が本体上限に切り詰められていた。
+- プレイへの影響: 他プレイヤーの爆弾・特殊弾による吸収量が、ローカル側と一致するようになる。不正・不一致な識別子、二重指定、未知の特殊は鍵を消費する前に拒否する。吸収容量 1100 と Ink Vac の時間・半径・射撃値は変更していない。
+- 確認状態: 回帰試験 `patches/splatoon3/tests/issue-1090-bomb-absorption-authority.test.mjs` 8/8 合格。修正を戻した main の Ink Vac 実装では 7/8 が失敗（1 件は旧経路のハーネス検査）。隣接する kit / Ink Vac / Special のテスト計 105 件が合格、quick の上流・数値確認も合格。30 / 60 / 120 Hz の固定更新で結果は一致。ブラウザ、live relay、Nintendo 実機、Switch との比較は未実施で、容量 1100 の近似値は未確認のまま残る。
