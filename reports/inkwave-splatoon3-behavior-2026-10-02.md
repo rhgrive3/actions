@@ -2861,3 +2861,11 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
 - 結果（論理計測、描画スタブ、実機ではない）: `production`（adapter 込み、60 Hz 固定時計）は 30/60/120 Hz すべて候補レイ 178。`public-source`（未改変の公開モジュール、描画フレームごとに 1 回の更新）は 172 / 172 / 171。
 - プレイへの影響: なし。雨の処理、塗り、数値は変更していない。
 - 確認状態: 未確認。実機 11.3.0 での粒子の生成・再利用・地面接触の時刻、対応する塗り分布が必要。`RainNum=72` を候補レイ、塗り呼出、CPU 塗りの必要数とは扱わない。詳細: [雨の会計報告](inkwave-storm-rain-calibration-2026-10-09.md)。
+## #647: Tidal Slam の着地確定前にゲージが再充填・再発動できる問題（2026-10-10）
+
+- 本家の根拠: Nintendo の Splatoon 3 Ver. 11.3.0 更新履歴（https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/）は、Triple Splashdown の無敵開始を約 1/6 秒早めたことのみ記載し、ゲージ挙動は記載なし。Inkipedia（https://splatoonwiki.org/wiki/Triple_Splashdown）は、発動中に被弾した場合に満タンゲージの一部が残ることのみ記載し、減少曲線・着地時の残量・ゼロ到達時点は記載なし。Issue #647 本文が引用する攻略 Wiki の検証（発動後に徐々に減少、着地時に 1 セグメント、着地動作の終了でゼロ）は、今回の確認では取得できず未確認。
+- INKWAVE 実装箇所: `patches/splatoon3/tidal-slam-gauge-adapter.mjs`（`addTurf` の回復ゲートと `specialReady` に `!this.s3TidalSlamGaugeFinish` を追加）、`patches/splatoon3/issue-484-adapter.mjs`（リモート準備判定の既定分岐にも同じ条件を維持）。着地確定処理は既存の `patches/splatoon3/runtime/tidal-slam-gauge.mjs`（`finishTidalSlamGauge`）。
+- 再現操作（修正前の main）: Slam を発動し、インパクトで `specialActive` が解除された後、着地動作中（`hardLand > 0`、`s3TidalSlamGaugeFinish` が残る間）に塗りを加える。使用中の残量が増え、満タンで `specialReady()` が真になり、スペシャル入力で 2 回目の Slam が開始された（`patches/splatoon3/tests/issue-647-landing-gauge-admission.test.mjs` の負例で再現）。
+- 修正後: 着地確定までは塗りの統計・イベントは通常どおり加算されるが、残量の回復、準備完了イベント、再発動はいずれも行われない。着地確定後は通常どおり回復・準備完了が起きる。地面のないタイムアウト（void）着地も同じ保持を保ち、被弾時は元の残量だけが特殊節約の対象になる。
+- プレイへの影響: 着地の隙に塗っても、Slam の残量が未確定の間は次のスペシャルを撃てない。
+- 確認状態: 単独測定のみ（composed Actor を固定 60 Hz で駆動する Node テスト、30/60/120 Hz で同一の回復判定トレース）。本家の実機比較、ブラウザ実動作は未実施。減少曲線、1 セグメントの量（`SPECIAL_GAUGE_SEGMENTS = 23` の解釈）、インパクト時間（Issue 本文が引用する 70F 表記）、着地動作の終了時間、Special Saver の数値は未確認のまま変更していない。#573（無敵タイミング）、#577、#582 は範囲外。
