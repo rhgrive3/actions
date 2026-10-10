@@ -67,7 +67,7 @@ import { installWeaponHitReaction } from './weapon-hit-reaction.mjs';
 import { installSpawnPoseMotion } from './spawn-pose-motion.mjs';
 import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
-import { installSpecialMotion } from './special-motion.mjs';
+import { installSpecialMotion, installSpecialPresentation } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
 import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
@@ -171,5 +171,6 @@ export function install(profile) {
   // Install after weapon and net owners, so it observes the final public path.
   installSupportGameplay(api);
   installBotPaintDeviceProfile({ G, Actor });
+  installSpecialPresentation(api, profile);
   return api;
 }

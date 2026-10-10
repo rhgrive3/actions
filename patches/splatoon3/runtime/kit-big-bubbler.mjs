@@ -1,4 +1,5 @@
 import { gearCurve } from './gear.mjs';
+import { createBubblerHardware, disposeSpecialModel } from './special-motion.mjs';
 
 // Big Bubbler (Splat Roller special; internal id SpGreatBarrier) for the
 // composed public INKWAVE runtime.
@@ -407,17 +408,11 @@ function groundHeightAt(x, z, fromY) {
 function buildVisual(dome) {
   const { THREE } = api, scene = api.G.scene;
   if (!scene) return;
-  const group = new THREE.Group();
-  const shell = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
-    new THREE.MeshBasicMaterial({ color: dome.color, transparent: true, opacity: 0.28,
-      side: THREE.DoubleSide, depthWrite: false }));
+  const group = createBubblerHardware(dome.color, api.THREE);
+  const shell = group.userData.shell;
   shell.castShadow = false; shell.receiveShadow = false; shell.frustumCulled = false;
-  const emitter = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(raw.fieldCollisionRadius, 1),
-    new THREE.MeshBasicMaterial({ color: dome.color }));
+  const emitter = group.userData.emitter;
   emitter.frustumCulled = false;
-  group.add(shell, emitter);
   group.position.copy(dome.pos);
   group.renderOrder = 4;
   scene.add(group);
@@ -426,11 +421,7 @@ function buildVisual(dome) {
 
 function releaseVisual(dome) {
   if (api.G.scene && dome.group) api.G.scene.remove(dome.group);
-  dome.group?.traverse(o => {
-    o.geometry?.dispose?.();
-    const m = o.material;
-    if (Array.isArray(m)) m.forEach(x => x?.dispose?.()); else m?.dispose?.();
-  });
+  disposeSpecialModel(dome.group);
   dome.group = dome.shell = dome.emitterMesh = null;
 }
 
@@ -509,6 +500,8 @@ function syncVisual(dome) {
   if (!dome.shell) return;
   dome.shell.scale.setScalar(Math.max(0.001, dome.radius));
   dome.emitterMesh.position.set(0, dome.emitterY, 0);
+  dome.shell.material.uniforms.age.value=dome.t;
+  dome.shell.material.uniforms.health.value=Math.max(0,dome.hp/dome.hpMax);
 }
 
 // ------------------------------------------------------------------- damage

@@ -342,6 +342,9 @@ jobs:
       - name: Verify two-player replication with 100 ms ordered delivery delay
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-network-browser.mjs --delay-frames 6 --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network-delay" --profile-dir "$CI_STORAGE/cache/network-delay" --exact-source
+      - name: Verify existing special models, grips, shaders and GPU retirement
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-special-presentation.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/special-presentation"
       - name: Verify rendered walking contacts and transitions
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/motion" --profile-dir "$CI_STORAGE/cache/motion"
