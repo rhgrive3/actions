@@ -966,7 +966,11 @@ export function installWeapons(context, profile) {
     // publish the outer envelope; the probability bias is sampled at fire time.
     if (w.kind === 'blaster') {
       const state = this.s3BlasterJumpState(w);
-      return state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
+      // #1102: an admitted jump owns this penalty. The serial gate above
+      // already distinguishes a jump from a ledge fall; do not reintroduce
+      // the airborne penalty through the inactive-state scalar fallback.
+      if (state.supported) return state.active ? state.envelope : state.ground;
+      return this.a.grounded ? w.spreadGround : w.spreadAir;
     }
     if (w.kind === 'shooter' && this.s3JumpSpreadAge != null) {
       const age = this.s3JumpSpreadAge, hold = w.jumpSpreadHold ?? 0, end = Math.max(hold + 1e-10, w.jumpSpreadRecoverEnd ?? hold);
