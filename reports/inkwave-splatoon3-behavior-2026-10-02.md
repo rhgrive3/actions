@@ -3060,3 +3060,11 @@ Known residual: the same-tick check uses the new source's final intent, so a new
 - 再現操作: 初回起動 → 設定 → コントロール → RESET TO DEFAULTS を二回押す → 右スティック感度の表示と保存値を確認 → 再読込。
 - プレイへの影響: 既定に戻した直後の右スティック旋回が、設定 0 ではなく +1 相当になる（暫定曲線での差）。
 - 確認状態: 回帰試験 `patches/splatoon3/tests/issue-287-settings-reset.test.mjs` は修正前に 2 件とも失敗（`1 !== 0`）、修正後に成功。`pad-sensitivity` 5/5、`aim-profile` ほか隣接 22/22、`check-inkwave-patches --quick` OK。ただし、S3 の実ゲイン曲線、設定 0 の校正、−5/0/+5 の旋回速度トレースの一致、実機・ブラウザでの操作感は未確認で、#287 は閉じない。
+
+## 2026-10-10: #384 paused quality change redraws the invalidated sun shadow once
+
+- 本家の根拠: 比較対象外。影の更新や描画負荷について、Splatoon 3 の検証済みの実装・数値は確認していない（ブラウザ側の描画資源の欠陥で、ゲームの挙動・ロジックには当たらない。本家の影更新を推測しない）。
+- INKWAVE 実装箇所: `patches/local-quality/idle-adapter.mjs` の `Game._frame` の一時停止時の描画。一時停止中に無効化を受けた描画の直前だけ `sm.needsUpdate = true` にし、描画後に `false` に戻す。`applyRuntimeWorldQuality`（`world-quality.mjs`）が破棄した太陽光シャドウを、その一回の描画で再作成する。
+- 再現操作: オフラインの対戦を一時停止し、設定で画質または影を変更する。修正前は、無効化された太陽光シャドウが再作成されず `sun.shadow.map` が null のまま残る。
+- プレイへの影響: 一時停止中に画質・影を変えると、影はその時の一回の描画で更新される。無変更の一時停止では描画を止めたままで、ゲームの時間・判定・数値は変わらない。オンライン一時停止は変更しない。
+- 確認状態: Node のテスト。本家コードを変換して実行し、同梱の実 THREE の `WebGLShadowMap` と ShadowCache の非 WebGL2 経路を使う（描画の状態は stand-in）。`idle-attract-budget.test.mjs` の #384 試験は修正前に 30 Hz / cache=false で失敗し、修正後は 5/5 合格。隣接する 5 ファイル計 64 件は 63 合格、1 件 skip。未確認: 実 WebGL2 の深度描画、ブラウザの実画面、GPU 負荷、iOS / Android の実機での発熱と電池消費。Issue #384 は open のまま。
