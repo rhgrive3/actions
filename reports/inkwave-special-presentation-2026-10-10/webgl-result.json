@@ -1,0 +1,111 @@
+{
+  "status": "passed",
+  "contentHash": "75ef157e4e7797891a335a1853a4e61bb43bdd1b3b16c73eaa3a161a66a15408",
+  "revision": "025aef0871b4d6161ae3613a0764cffce54adcfef538d036acbaa2a93a697aee",
+  "rows": [
+    {
+      "id": "trizooka",
+      "sourceMotion": "ready",
+      "phase": "charge",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 24594,
+      "actorPixels": 44095,
+      "maxHandError": 8.007134808947023e-16,
+      "calls": 12,
+      "triangles": 39624
+    },
+    {
+      "id": "inkVac",
+      "sourceMotion": "ready",
+      "phase": "inhale",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 6238,
+      "actorPixels": 32087,
+      "maxHandError": 9.099281950539972e-16,
+      "calls": 12,
+      "triangles": 37372
+    },
+    {
+      "id": "storm",
+      "sourceMotion": "ready",
+      "phase": "hold",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 2745,
+      "actorPixels": 23638,
+      "maxHandError": 0,
+      "calls": 9,
+      "triangles": 34160
+    },
+    {
+      "id": "slam",
+      "sourceMotion": "ready",
+      "phase": "hang",
+      "position": [
+        0,
+        2.033333333333334,
+        0
+      ],
+      "changedPixels": 60740,
+      "actorPixels": 10075,
+      "maxHandError": 0,
+      "calls": 11,
+      "triangles": 39104
+    },
+    {
+      "id": "bubbler",
+      "sourceMotion": "ready",
+      "phase": null,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 240424,
+      "actorPixels": 548,
+      "maxHandError": 0,
+      "calls": 18,
+      "triangles": 39158
+    },
+    {
+      "id": "tacticooler",
+      "sourceMotion": "ready",
+      "phase": null,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 41530,
+      "actorPixels": 17010,
+      "maxHandError": 0,
+      "calls": 20,
+      "triangles": 14456
+    }
+  ],
+  "cloudDrawCalls": 1,
+  "baseline": {
+    "geometries": 45,
+    "textures": 2,
+    "programs": 23
+  },
+  "after": {
+    "geometries": 45,
+    "textures": 2,
+    "programs": 23
+  },
+  "renderer": "WebKit WebGL",
+  "fixture": "source-loaded native rig + special activation/update; flat collision stub; Chromium software WebGL; no retail parity claim",
+  "errors": []
+}
