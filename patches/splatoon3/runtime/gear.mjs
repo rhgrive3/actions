@@ -2,6 +2,7 @@ import { installThermalTracking } from './private-tracking.mjs';
 import { installHaunt } from './haunt.mjs';
 import { installDryInk } from './dry-ink.mjs';
 import { CLOTHING_ABILITIES, SPLATFEST_TEE, clothingAbilityAllowed, deathGearPenalty } from './clothing-gear.mjs';
+import { drinkGearPoints } from './support-cooler.mjs';
 import { selectedSub } from './kit-composition.mjs';
 import { installSubReady } from './sub-ready.mjs';
 import { installStormPower } from './storm-power.mjs';
@@ -140,13 +141,18 @@ export function installGear(api, tuning) {
   const key = a => conditionalKey(a, G.match, tuning.conditionalGear);
   const refreshConditional = a => { if (a.s3?.modifiers && a.s3.conditionalKey !== key(a)) equip(a, true); };
   const refresh = a => { refreshConditional(a); refreshFlow(a); };
+  // Drink pickup/expiry requires an immediate actor-local AP refresh even when
+  // no main/sub is being fired. Never mutate the shared WEAPONS object.
+  Actor.prototype.s3RefreshGear = function () { if (this.s3) equip(this, true); };
   function equip(a, transient = false) {
     a.s3 ||= {};
     const loadout = a.isLocal && !transient ? readLoadout() : normalizeLoadout(a.s3.loadout);
     const beforeCost = a.weapon?.specialCost, beforeSpecial = a.special;
     a.s3.loadout = loadout;
     const points = { ...conditionalPoints(a, abilityPoints(loadout), G.match, tuning.conditionalGear) };
-    const effectivePoints = { ...points };
+    // Tacticooler supplies minimum independent AP (29/57), not additional
+    // stackable gear points. Canonical equipped AP stays untouched below.
+    const effectivePoints = drinkGearPoints(points, a);
     if (!a.remote && (a.s3.dropRollerBuffRemaining || 0) > 1e-10)
       for (const id of DROP_ROLLER_BUFFS) effectivePoints[id] = (effectivePoints[id] || 0) + 30;
     a.s3.abilityPoints = Object.freeze({ ...points }); // permanent/equipment AP stays canonical
@@ -159,8 +165,8 @@ export function installGear(api, tuning) {
     // state and deliberately does not alter Quick Super Jump AP curves.
     m.stealthJump = loadout[2].main === 'stealthJump';
     m.dropRoller = loadout[2].main === 'dropRoller';
-    const ap = points, extra = tuning.gearExtra;
-    m.specialPowerAP = ap.specialPower || 0;
+    const ap = effectivePoints, extra = tuning.gearExtra;
+    m.specialPowerAP = points.specialPower || 0;
     const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
     const around = Math.floor(gearCurve(ap.quickRespawn || 0, ...extra.quickRespawnAroundFrames) + 1e-10);
     const chase = Math.floor(chaseBase * (m.quickRespawn ?? 1) + 1e-10);
