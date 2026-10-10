@@ -1176,7 +1176,7 @@
       "sourceId": null,
       "pointer": null,
       "status": "unknown",
-      "notes": "Requires reference-device calibration and input response measurements."
+      "notes": "Requires reference-device calibration and input response measurements. #725: third-party controller-bridge footnote (DamianS-eng/GTuner-TitanTwo, footnote 2) gives output:input about 1:1 at the lowest in-game motion setting, about 1.8:1 at default and 3:1 at the highest; game version and method are not stated. The adapter uses only these endpoints (GYRO_DEG in patches/splatoon3/adapter.mjs); intermediate settings, Ver.11.3.0 parity and device response remain unverified. value stays null."
     },
     "terrain.feet": {
       "value": null,

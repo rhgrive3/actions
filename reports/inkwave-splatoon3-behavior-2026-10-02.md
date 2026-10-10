@@ -3386,3 +3386,11 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 **Gameplay impact.** Only the stale Surge object after a plain away cancel is removed. Speeds, boost duration (`surge.duration`), armor values and the wall-Roll (B + flick) path are unchanged.
 
 **Confirmation.** Node logic tests only: `patches/splatoon3/tests/issue-951-surge-away-cancel.test.mjs` (8 production-composed cases, failing 5/8 on unpatched main before the fix) and 10 neighbouring Surge/wall tests pass. Browser rendering and Switch comparison are not done. Still 未確認: whether Splatoon 3 cancels a Surge on a plain away push with no B, and the armor-after-cancel claim from the issue (the test on unpatched main stopped at the Surge-state assertion, so it did not isolate armor). The wrapper already clears `armorPending` on detach, so armor is not separately confirmed as stale.
+
+## 2026-10-10 (#725): gyro sensitivity endpoints
+
+- 本家の根拠: DamianS-eng/GTuner-TitanTwo の README 注記2（https://github.com/DamianS-eng/GTuner-TitanTwo ）は、Splatoon 3 の本家モーション設定のみで出力:入力比が最低 約1:1、既定 約1.8:1、最高 3:1 と述べる。ゲーム版・計測環境は記載がなく、第三者計測であり Nintendo 公式資料ではない。中間の設定値は公開されておらず **未確認**。
+- INKWAVE実装箇所: `patches/splatoon3/adapter.mjs` が `inkwave-public/src/core/gyro.js` の `GYRO_DEG` を `[[-5,360],[0,200],[5,120]]` に置換する（main の `8c351574`）。中間は端点間の線形補間、利得は `360 / gyroTurnDeg(sens)`。公開版の表 `278/178/132/119/110` では -5 が 1.295x、+5 が 3.273x だった。
+- 再現操作: 感度 -5 / 0 / +5、端末を立てた状態で 90 度/秒の偏向を 2 秒、ジャイロ入力の `_sample` 出力を物理 180 度と比べる。
+- プレイへの影響: 既定値（0）の利得が公開版の 2.73x から 1.8x へ下がる。物理 90 度の旋回は -5 で 90 度、+5 で 270 度になる（公開版は約 116.5 度、約 294.5 度）。操作感が大きく変わるため、実機確認までは本家一致とは扱わない。
+- 確認状態: 論理試験のみ。`patches/splatoon3/tests/gyro-sensitivity-endpoints.test.mjs` 4/4 が通る。30 / 60 / 120 Hz の一定角速度でも積分結果は一致する。低速の平滑化・引き締め（約 3〜10 度/秒の境界）は試験していないため、フレーム間隔依存は **未確認**。未確認: Ver.11.3.0 の同条件実機計測、-2.5 / +2.5 など中間設定、Joy-Con / Pro Controller 実機入力、iOS / Android の DeviceOrientation 実動作。Issue #725 の中間値と実機一致の受け入れ項目は未達のまま。
