@@ -229,7 +229,7 @@ export function emit(name, payload) {
   for (const i of [1,2,3]) if (!finite(s[i], 100000)) return false;
   for (const i of [4,5,6]) if (!finite(s[i], 10000)) return false;
   for (const i of [7,8,9]) if (!finite(s[i], 10000)) return false;
-  if (!Number.isSafeInteger(s[10]) || s[10] < 0 || s[10] > 1048575) return false;
+  if (!Number.isSafeInteger(s[10]) || s[10] < 0) return false;
   if (!finite(s[11], 10000) || !finite(s[12], 10000) || !finite(s[13], 10000000)
     || !finite(s[14], 10000) || !finite(s[15], 1000000000000)) return false;
   if (!Number.isSafeInteger(s[16]) || s[16] < 0) return false;
