@@ -152,7 +152,8 @@ export function installGear(api, tuning) {
     const points = { ...conditionalPoints(a, abilityPoints(loadout), G.match, tuning.conditionalGear) };
     // Tacticooler supplies minimum independent AP (29/57), not additional
     // stackable gear points. Canonical equipped AP stays untouched below.
-    const effectivePoints = drinkGearPoints(points, a);
+    // Permanent equipped AP and transient drink/Drop Roller AP must never alias.
+    const effectivePoints = { ...drinkGearPoints(points, a) };
     if (!a.remote && (a.s3.dropRollerBuffRemaining || 0) > 1e-10)
       for (const id of DROP_ROLLER_BUFFS) effectivePoints[id] = (effectivePoints[id] || 0) + 30;
     a.s3.abilityPoints = Object.freeze({ ...points }); // permanent/equipment AP stays canonical
