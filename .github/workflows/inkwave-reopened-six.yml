@@ -1,0 +1,30 @@
+name: INKWAVE reopened-six focused regressions
+on:
+  pull_request:
+    paths:
+      - 'patches/splatoon3/**'
+      - 'patches/local-quality/**'
+      - '.github/workflows/inkwave-reopened-six.yml'
+  workflow_dispatch:
+jobs:
+  reopened-six:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test reopened gameplay issues against production source
+        run: |
+          node --experimental-vm-modules --test \
+            patches/splatoon3/tests/superjump-gameplay.test.mjs \
+            patches/splatoon3/tests/support-kit-recon-cooler.test.mjs \
+            patches/splatoon3/tests/support-kit-two-peer.test.mjs \
+            patches/splatoon3/tests/issue-835-cooler-punisher.test.mjs \
+            patches/splatoon3/tests/issue-514-sourced-partial-range.test.mjs \
+            patches/splatoon3/tests/issue-1108-roller-wall-idle.test.mjs \
+            patches/splatoon3/tests/map-reveal.test.mjs \
+            patches/splatoon3/tests/turf-finish.test.mjs \
+            patches/local-quality/tests/bot-paint-device-profile.test.mjs \
+            patches/local-quality/tests/bot-paint-observation.test.mjs
