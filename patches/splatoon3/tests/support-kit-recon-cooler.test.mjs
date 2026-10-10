@@ -140,3 +140,34 @@ test('#710/#835 reject foreign, stale, malformed and wrong-weapon online event p
   net._play('clientA',[3,'ks','c',7,2,0,0,1.6,0]);
   assert.equal(f.G.projectiles._s3SupportCoolers.length,1);
 });
+
+
+test('#710/#835 production r2 transport tick/sequence trailers survive sender-authenticated replay',async()=>{
+  const {f,actor,enemy}=await setup();
+  actor.remote=true;actor.owner='clientA';actor.nid=7;
+  const nm=Object.create(f.NetMatch.prototype);
+  nm.byNid=new Map([[7,actor],[2,enemy]]);
+  nm.match=f.G.match;f.G.netm=nm;
+  // In the actual network-replication adapter, _rec appends [fixedTick,wireSeq].
+  const birth=[1,'ks','p',7,1,0,1.35,0,0,0,1,0,60,12];
+  birth._netSeq=12;birth._netTick=60;
+  nm._play('clientA',birth);
+  assert.equal(f.G.projectiles._s3SupportSensors.length,1);
+  const mark=[1.05,'ks','m',7,1,2,0,61,13];
+  mark._netSeq=13;mark._netTick=61;
+  nm._play('clientA',mark);
+  assert.ok(enemy.s3?.revealedUntil?.[0]>f.G.time,'real r2 mark is accepted');
+  const before=enemy.s3.revealedUntil[0];
+  nm._play('clientA',mark);
+  assert.equal(enemy.s3.revealedUntil[0],before,'duplicate transport cannot prolong mark');
+  const stand=[1.1,'ks','c',7,2,0,0,1.6,0,62,14];
+  stand._netSeq=14;stand._netTick=62;
+  nm._play('clientA',stand);
+  assert.equal(f.G.projectiles._s3SupportCoolers.length,1);
+  const malformed=[1.2,'ks','p',7,3,0,1.35,0,0,0,1,0,60,15];
+  malformed._netSeq=999;
+  nm._play('clientA',malformed);
+  assert.equal(f.G.projectiles._s3SupportSensors.length,1,'metadata mismatch fails closed');
+  nm._play('intruder',[1.1,'ks','c',7,3,0,0,1.6,0,62,16]);
+  assert.equal(f.G.projectiles._s3SupportCoolers.length,1,'other peer may not deploy');
+});
