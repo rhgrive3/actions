@@ -36,3 +36,13 @@ test('#573 victim-owned hit admission and outgoing invulnerability flag use the 
  let rejected=0;f.on('hit:rejected',()=>rejected++);nm.onMessage('peer',{k:'hit',m:'slam-wire',v:1,a:2,d:50,w:'shooter',l:1,h:2,seq:2});near(a.hp,90);assert.equal(rejected,1);
  nm.dispose();
 });
+test('#573 enemy ink contact uses the same 50F admission as weapon damage and the landing owner',async()=>{
+ const f=await rig(),a=f.a;f.G.match={mode:'turf',state:'playing',duration:180,time:100,actors:[a]};
+ const ink=()=>{const surface=a._surface,grounded=a.grounded,groundTeam=a.groundTeam;a._surface=()=>{a.grounded=true;a.groundTeam=2;};
+  try{f.updateResources(a,1/60);}finally{a._surface=surface;a.grounded=grounded;a.groundTeam=groundTeam;}};
+ for(let i=0;i<49;i++)f.step();let hp=a.hp;ink();assert.ok(a.hp<hp,'pre-50F enemy ink still damages');
+ for(const frame of [50,51]){f.step();hp=a.hp;ink();near(a.hp,hp);}
+ a._resolve=()=>{a.grounded=true;};f.step();assert.equal(a.specialActive,null);assert.ok(a.s3TidalSlamGaugeFinish);
+ a.hardLand=.1;hp=a.hp;ink();near(a.hp,hp);
+ a.hardLand=0;finishTidalSlamGauge(a);hp=a.hp;ink();assert.ok(a.hp<hp,'enemy ink resumes after the landing owner ends protection');
+});
