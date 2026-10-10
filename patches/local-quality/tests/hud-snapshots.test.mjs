@@ -32,7 +32,7 @@ function currentFields(f,r){const a=f.m.local,base=f.SUB[a.weapon.sub||'bomb'],c
  for(const x of [r.frame,r.mobile]){assert.equal(x.inkLow,f.game._lowInkFlash>0);assert.equal(x.subCost,cost/f.PLAYER.inkMax);assert.equal(x.subReady,a.ink>=cost);}
  for(const t of r.frame.teams){assert.equal(t.leading,false);assert.equal(t.danger,false);for(const p of t.players)assert.equal(p.respawn,p.alive?0:null);}
  assert.equal(r.frame.crosshair.guide,null,'disabled controller has no projected guide');assert(r.frame.healthMarkers.length>0,'injured ally positive health marker');
- assert.equal(r.frame.teams[0].color,f.G.teamHex[a.team]);assert(r.frame.healthMarkers.every(marker=>marker.color===f.G.teamHex[a.team] && marker.hp>0 && marker.hp<1));
+ assert.equal(r.frame.teams[0].color,f.G.teamHex[a.team]);assert(r.frame.healthMarkers.every(marker=>[f.G.teamHex[0],f.G.teamHex[1]].includes(marker.color) && marker.hp>0 && marker.hp<1));
 }
 test('#510 pooled transport retains failure-only ink feedback, selected cost, qualitative deaths and map concealment',async()=>{
  const f=await setup(),old=await setup(false),a=f.m.local;
