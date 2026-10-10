@@ -181,8 +181,72 @@ export function emit(name, payload) {
     code = "import * as THREE from 'three';\n" + code;
     return code;
   }
+  if (rel === 'src/boss/boss.js') {
+    patch(`  remoteHit(d) {
+    if (!this.sim) return;
+    const atk = G.netm?.byNid.get(d.a);
+    if (!atk) return;
+    this.log.recv++; this.log.recvDmg += +d.d || 0;
+    if (d.c >= 0) { const c = this.crabs.get(d.c); if (c) this._hitCrab(atk, c, d.d, true); return; }
+    this.applyDamage(atk, Math.min(+d.d || 0, 2000), !!d.weak, null);
+  }`,
+      `  remoteHit(d, from) {
+    if (!this.sim || !d || typeof from !== 'string') return;
+    const atk = G.netm?.byNid.get(d.a), dmg = d.d, crab = d.c;
+    if (!atk || atk.owner !== from || !atk.remote || !atk.alive
+      || typeof dmg !== 'number' || !Number.isFinite(dmg) || dmg <= 0 || dmg > 2000
+      || !Number.isSafeInteger(crab) || crab < -1
+      || !(d.weak === 0 || d.weak === 1 || d.weak === false || d.weak === true)) return;
+    if (crab >= 0) {
+      const c = this.crabs.get(crab);
+      if (!c || c.dead) return;
+      this.log.recv++; this.log.recvDmg += dmg;
+      this._hitCrab(atk, c, dmg, true);
+      return;
+    }
+    this.log.recv++; this.log.recvDmg += dmg;
+    this.applyDamage(atk, dmg, d.weak === 1 || d.weak === true, null);
+  }`, 'strict Boss hit admission');
+    patch(`  applyDamage(attacker, d, weak, point) {
+    if (this.dead || this.invuln || !this.visible || this.match.state !== 'playing') return 0;
+    d = Math.min(d, this.hp);`,
+      `  applyDamage(attacker, d, weak, point) {
+    if (this.dead || this.invuln || !this.visible || this.match.state !== 'playing'
+      || !Number.isFinite(d) || d <= 0 || !Number.isFinite(this.hp) || this.hp < 0) return 0;
+    d = Math.min(d, this.hp);`, 'Boss damage stays positive and finite');
+    patch(`  _hitCrab(attacker, c, dmg, fromNet = false) {
+    if (c.dead) return;`,
+      `  _hitCrab(attacker, c, dmg, fromNet = false) {
+    if (c.dead || !Number.isFinite(dmg) || dmg <= 0 || !Number.isFinite(c.hp) || c.hp < 0) return;`,
+      'Crablet damage stays positive and finite');
+    return code;
+  }
   if (rel === 'src/net/netmatch.js') {
     patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
+    patch('function unpackActor(s, ts) {', `function validActorSnapshot(s) {
+  const finite = (value, limit) => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= limit;
+  if (!Array.isArray(s) || s.length < 21 || s.length > 27 || !Number.isSafeInteger(s[0]) || s[0] < 0) return false;
+  for (const i of [1,2,3]) if (!finite(s[i], 100000)) return false;
+  for (const i of [4,5,6]) if (!finite(s[i], 10000)) return false;
+  for (const i of [7,8,9]) if (!finite(s[i], 10000)) return false;
+  if (!Number.isSafeInteger(s[10]) || s[10] < 0) return false;
+  if (!finite(s[11], 10000) || !finite(s[12], 10000) || !finite(s[13], 10000000)
+    || !finite(s[14], 10000) || !finite(s[15], 1000000000000)) return false;
+  if (!Number.isSafeInteger(s[16]) || s[16] < 0) return false;
+  for (const i of [17,18,19,20]) if (!finite(s[i], 10000)) return false;
+  if (s.length > 21 && !finite(s[21], 10000)) return false;
+  return true;
+}
+function finiteRemoteSample(s) {
+  if (!s) return false;
+  for (const k of ['x','y','z','vx','vy','vz','yaw','aimYaw','aimPitch','hp','ink','sp','ch','lock','sjT'])
+    if (typeof s[k] !== 'number' || !Number.isFinite(s[k])) return false;
+  return true;
+}
+function unpackActor(s, ts) {`, 'strict owner actor snapshot schema');
+    patch("case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d); break;",
+      "case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d, from); break;",
+      'bind Boss hit to authenticated sender');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
     code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
@@ -467,6 +531,9 @@ export function emit(name, payload) {
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
       'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
       'strict optional Squid Roll and motion metadata validation');
+    patch('if (d.a) for (const s of d.a) {\n      const rawRoll',
+      'if (d.a) for (const s of d.a) {\n      if (!validActorSnapshot(s)) continue;\n      const rawRoll',
+      'reject malformed owner actor snapshots');
     patch('      const roll = rawRoll === false ? null : rawRoll;',
       '      const roll = rawRoll === false ? null : rawRoll;\n      const rawDropRoll = d.dr && typeof d.dr === \'object\' && !Array.isArray(d.dr) && Object.hasOwn(d.dr, s[0])\n        ? readDropRollSnapshot(d.dr[s[0]]) : null;\n      const dropRoll = rawDropRoll === false ? null : rawDropRoll;',
       'strict Drop Roller presentation metadata validation');
@@ -2153,7 +2220,7 @@ ${bombHit}`;
       'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2], hitParent: readHitAuthorityState(s[25], s[25]?.[1])?.[2] ?? null };',
       rel + ': unpack accepted-hit revision');
     code = adaptIssue1163RemoteDodgeClock(code);
-    patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
+    patch('    const S = n.cur;', '    const S = n.cur;\n    if (!finiteRemoteSample(S)) return;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
   }
   return code;
 }
