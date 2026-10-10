@@ -522,9 +522,9 @@ export function emit(name, payload) {
       '      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.dropRollId = dropRoll?.id ?? 0; snap.dropRollRemaining = dropRoll?.remaining ?? 0;\n      snap.dropRollX = dropRoll?.x ?? 0; snap.dropRollZ = dropRoll?.z ?? 0; snap.dropRollDuration = dropRoll?.duration ?? 0;',
       'attach validated Drop Roller clock and direction');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
-      if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
+      // #1200: a sender event cannot be dated after its enclosing owner tick.\n      if (!Array.isArray(e) || !Number.isFinite(e[0]) || !Number.isFinite(d.ts) || e[0] > d.ts) continue;
       e._netPeer = from;
-      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
+      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (!Number.isSafeInteger(tick) || tick < 0 || !Number.isSafeInteger(d.u) || tick > d.u) continue; e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
@@ -546,7 +546,7 @@ export function emit(name, payload) {
         if (receivePaintOrder(this, from, e) === false) continue;
         if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
       }
-      p.events.push(e);
+      if (p.events.length < 512) p.events.push(e);
     }`, 'receive event identity');
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
     patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
@@ -2279,6 +2279,12 @@ ${bombHit}`;
       '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner, projectilePaint: slosherImpactMetadata(p,hit) }',
       'bind sourced Slosher terrain paint to its projectile birth');
   }
-  if (rel === 'src/net/netmatch.js') code = adaptKitPaintAdmission(code, once);
+  if (rel === 'src/net/netmatch.js') {
+    code = adaptKitPaintAdmission(code, once);
+    // Bound incoming work before reordering/provenance logic inspects the envelope.
+    patch('    if (Array.isArray(d?.e)) d = { ...d, e: d.e.filter(Array.isArray) };',
+      '    if (Array.isArray(d?.e)) d = { ...d, e: d.e.slice(0, 256).filter(Array.isArray) };',
+      'cap owner timeline rows per packet');
+  }
   return code;
 }
