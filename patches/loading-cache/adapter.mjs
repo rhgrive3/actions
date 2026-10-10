@@ -115,7 +115,10 @@ export function prepareLoading(build, preloads, compactRuntime = source => sourc
     const bytes=fs.readFileSync(file);assets[rel]=[bytes.length,hash(bytes)];
   }
   const css=Object.keys(assets).filter(rel=>rel.endsWith('.css')); // Includes @import HUD CSS and non-./ HTML hrefs.
-  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||rel.startsWith('assets/lightmaps/')||rel==='assets/stages/manifest.json'||rel.startsWith('patches/splatoon3/pwa/'))]);
+  // The 512px install icon is optional for gameplay and is integrity-checked and
+  // cache-on-request by the same worker, while the 192px and vector icons stay
+  // in the cold-offline core. Preserve all boot modules and stage lightmaps.
+  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||rel.startsWith('assets/lightmaps/')||rel==='assets/stages/manifest.json'||(rel.startsWith('patches/splatoon3/pwa/') && rel!=='patches/splatoon3/pwa/icon-512.png'))]);
   for(const rel of core)if(!assets[rel])throw new Error(`loading-cache: missing precache dependency ${rel}`);
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
