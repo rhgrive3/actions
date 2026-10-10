@@ -125,6 +125,18 @@ export function chargerDamage(actor, weapon, charge) {
   if (elapsed + 1e-10 < minimum) return legacy;
   return Math.min(weapon.damagePartialMax, weapon.damageMin + (elapsed - minimum) * rate);
 }
+export function chargerInkCost(w, c, chargeT) {
+  const inkMin = w.inkMin ?? 2.25;
+  const inkFull = w.inkFull ?? 18;
+  const minTime = 8 / 60;
+  const fullTime = w.chargeTime || 1;
+  const progress = Number.isFinite(chargeT) ? chargeT : (c || 0);
+  const elapsed = progress * fullTime;
+  if (elapsed <= minTime + 1e-6) return inkMin;
+  if (elapsed >= fullTime - 1e-6) return inkFull;
+  const frac = Math.min(1, Math.max(0, (elapsed - minTime) / (fullTime - minTime)));
+  return inkMin + (inkFull - inkMin) * frac;
+}
 export const SPLATLING_INTERRUPT = 6 / 60;
 // Splatling R cancellation is a separate destination from its 6F squid
 // interruption window. The sub-ready owner consumes this delay before aiming.

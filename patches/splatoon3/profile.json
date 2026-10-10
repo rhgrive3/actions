@@ -511,7 +511,7 @@
     "inkRefillKid": 10,
     "inkRefillDelay": 0.3333333333333333,
     "regenDelay": 1,
-    "regenRate": 12.5,
+    "regenRate": 12.6,
     "regenRateSwim": 100,
     "enemyInkDps": 18,
     "enemyInkDamageCap": 40,
