@@ -55,7 +55,7 @@ async function verify(response, expected) {
   if (!descriptor || descriptor.length !== 2 || !Number.isSafeInteger(descriptor[0]) || descriptor[0]<0 ||
       typeof descriptor[1]!=='string' || !/^[a-f0-9]{64}$/.test(descriptor[1]) ||
       bytes.byteLength !== descriptor[0] || await digest(bytes) !== descriptor[1]) {
-    throw new Error('Revision asset integrity mismatch');
+    throw new Error('Asset integrity mismatch');
   }
   return response;
 }
@@ -82,7 +82,7 @@ async function populate(cache, rel, reusable, reusableRevision) {
   await cache.put(url, response);
 }
 async function installSnapshot() {
-  if (BUILD.declaredBytes > MAX_REVISION_BYTES || BUILD.index.bytes > MAX_HTML_BYTES) throw new Error('Cache budget exceeded');
+  if (BUILD.declaredBytes > MAX_REVISION_BYTES || BUILD.index.bytes > MAX_HTML_BYTES) throw new Error('Cache budget');
   const previous = await state(true);
   const active = safeRevision(previous.activeRevision) ? previous.activeRevision : null;
   if (!active) {
@@ -90,7 +90,7 @@ async function installSnapshot() {
     // Only a fetch-handling (therefore active) worker may repair this metadata.
     for (const name of await caches.keys()) {
       if (name.startsWith(PREFIX) && name !== CURRENT && name !== META && await complete(name.slice(PREFIX.length))) {
-        throw new Error('Cache state missing; active worker repairs it on navigation');
+        throw new Error('Cache state missing');
       }
     }
   }
