@@ -22,6 +22,7 @@ export function adaptKitPaintAdmission(code,once){
           || receivePaintOrder(this, from, e) === false) continue;
         p._lastPaintSeq = e._netSeq;
       }
+      if (p.events.length >= 512) break; // #1200: recovered births cannot overflow the same bounded event FIFO
       p.events.push(e);
     }
     p.events.sort((a,b) => (a._netSeq ?? Infinity) - (b._netSeq ?? Infinity));
