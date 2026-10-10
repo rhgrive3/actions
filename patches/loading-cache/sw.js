@@ -15,8 +15,7 @@ const CURRENT = SNAPSHOT(BUILD.revision);
 const REVISION_PREFIX = new URL(`_versions/${BUILD.revision}/`, SCOPE).href;
 const NAVIGATION_TIMEOUT_MS = 4000;
 const MAX_HTML_BYTES = 512 * 1024;
-// Keep this hard upper bound aligned with prepareLoading() and two-revision storage.
-const MAX_REVISION_BYTES = 16 * 1024 * 1024;
+const MAX_REVISION_BYTES = 12 * 1024 * 1024;
 const flights = new Map();
 const jsonResponse = value => new Response(JSON.stringify(value), { headers: { 'Content-Type': 'application/json' } });
 const digest = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');

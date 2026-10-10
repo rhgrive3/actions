@@ -118,16 +118,15 @@ export function prepareLoading(build, preloads, compactRuntime = source => sourc
   // The 512px install icon is optional for gameplay and is integrity-checked and
   // cache-on-request by the same worker, while the 192px and vector icons stay
   // in the cold-offline core. Preserve all boot modules and stage lightmaps.
-  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||rel.startsWith('assets/lightmaps/')||rel==='assets/stages/manifest.json'||(rel.startsWith('patches/splatoon3/pwa/') && rel!=='patches/splatoon3/pwa/icon-512.png'))]);
+  // PWA icons are fetched by the browser at install/display time, not game startup.
+  // Keep all three versioned icon files in BUILD.assets for integrity-checked
+  // cache-on-request; precache the manifest and actual gameplay dependencies.
+  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||rel.startsWith('assets/lightmaps/')||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest')]);
   for(const rel of core)if(!assets[rel])throw new Error(`loading-cache: missing precache dependency ${rel}`);
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
   const assetBytes=Object.values(assets).reduce((sum,a)=>sum+a[0],0);
-  // Preserve main's optional 512px icon exclusion and the PR's finite,
-  // mutually consistent loader/service-worker revision budgets.
-  const PRE_CACHE_LIMIT = 6 * 1024 * 1024, REVISION_LIMIT = 16 * 1024 * 1024;
-  if (precacheBytes > PRE_CACHE_LIMIT || assetBytes + 512 * 1024 > REVISION_LIMIT)
-    throw new Error(`loading-cache: payload budget exceeded (precache ${precacheBytes}/${PRE_CACHE_LIMIT}, revision ${assetBytes + 512 * 1024}/${REVISION_LIMIT})`);
+  if(precacheBytes>5*1024*1024||assetBytes+512*1024>12*1024*1024)throw new Error('loading-cache: payload budget exceeded (precache '+precacheBytes+'/5242880, declared '+(assetBytes+512*1024)+'/12582912 bytes)');
   return {assets,precache,assetBytes,precacheBytes,phases:adapted.phases};
 }
 export function finalizeLoadingWorker(build, revision, plan, compactTemplate = source => source) {

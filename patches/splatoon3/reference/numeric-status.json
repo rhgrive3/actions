@@ -2457,7 +2457,7 @@
     "binding": null
   },
   "resources.regenRate": {
-    "value": 12.5,
+    "value": 12.6,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
