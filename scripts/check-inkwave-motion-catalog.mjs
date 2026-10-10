@@ -189,7 +189,12 @@ export function validateCatalogResult(result) {
       }
       if (!Array.isArray(s.feet) || s.feet.length !== 2) fail('native foot denominator ' + label);
       for (const f of s.feet) {
-        if (typeof f.planted !== 'boolean') fail('foot identity ' + label);
+        if (typeof f.planted !== 'boolean' || (f.authority && !['native','source'].includes(f.authority))) fail('foot identity ' + label);
+        if (f.authority === 'source') {
+          if (typeof f.contactIntent !== 'boolean') fail('source contact identity ' + label);
+          finite(f.soleClearance, label + '.sourceSoleClearance');
+          if (f.planted && (!f.contactIntent || f.contactWeight < .999)) fail('source planted without full physical lock ' + label);
+        }
         for (const k of ['actual', 'expected', 'contact', 'normal']) vector(f[k], 3, label + '.ankle.' + k);
         finite(f.error, label + '.ankleError'); finite(f.drift, label + '.plantDrift');
         finite(f.contactWeight, label + '.nativeContactWeight');
@@ -230,7 +235,12 @@ export function validateCatalogResult(result) {
     if (requiredPhases) for (const p of requiredPhases[1]) need(renderPhase(requiredPhases[0], p), 'phase RGB sample ' + p);
     if (label === 'carry-walk-fire-return' || scenario.hz) {
       need(count(s => s.snapshots.carry?.active && s.grip.left.held) >= (scenario.hz ? 40 : 200), 'supported carry denominator');
-      need(count(s => s.walkActive && s.feet.some(f => f.planted && f.contactWeight > .999)) >= 20, 'walking contact denominator');
+      if (row.samples.some(s => s.sourceMotionActive)) {
+        // Authored gait contact acquisition spans several frames; assert
+        // actual source stance opportunities AND truly settled sole anchors.
+        need(count(s => s.walkActive && s.feet.some(f => f.authority === 'source' && f.contactIntent && f.contactWeight > .05)) >= 20, 'sourced walking stance denominator');
+        need(count(s => s.walkActive && s.feet.some(f => f.authority === 'source' && f.planted && f.contactWeight > .999)) >= 6, 'sourced settled contact denominator');
+      } else need(count(s => s.walkActive && s.feet.some(f => f.planted && f.contactWeight > .999)) >= 20, 'native walking contact denominator');
     }
     if (label === 'ordinary-aimed-jump') {
       for (const p of ['rise', 'apex', 'fall']) need(phase('jump', p) >= 1, 'ordinary jump phase ' + p);
@@ -539,7 +549,22 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     return { gap: target.distanceTo(hand), boneOriginGap, socket: target.toArray(), fist: hand.toArray(), weight, explicitTarget, swapped, held: weight > .999 && explicitTarget <= .001 && swapped <= .001 && ch.kidForm };
   }
   function record(ch, a, frame, last, invariant, contactEpoch) {
+    // Source BFRES motion owns a different, true world-space sole anchor.
+    // Do not measure it against stale procedural heel/toe controller targets.
+    const sourced = ch.sourceMotion?.active && ch.sourceMotion.retarget?.contacts;
     const feet = ch.feet.map((f, i) => {
+      if (sourced) {
+        const foot = sourced[i], settled = foot.locked && foot.weight > .999 && foot.filter.age >= foot.filter.duration;
+        const continuing = settled && last[i]?.planted && last[i].authority === 'source' && last[i].epoch === foot.plants;
+        const drift = continuing ? foot.anchor.distanceTo(last[i].cw) : 0;
+        last[i] = { planted: settled, authority: 'source', cw: foot.anchor.clone(), epoch: foot.plants };
+        const error = settled ? Math.hypot(foot.actual.x - foot.anchor.x, foot.actual.z - foot.anchor.z) : 0;
+        return { authority: 'source', contactIntent: foot.locked, planted: settled, contactEpoch: foot.plants,
+          contactWeight: foot.weight, error, drift, actual: foot.actual.toArray(),
+          expected: settled ? foot.anchor.toArray() : foot.actual.toArray(), contact: foot.anchor.toArray(),
+          normal: foot.normal.toArray(), pitch: 0, appliedPitch: 0, mode: 'source',
+          swingProgress: foot.filter.age, stanceProgress: foot.filter.duration, soleClearance: foot.lastClearance };
+      }
       const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), f.cn).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), f.cyaw));
       const bone = ch.bones[i ? 'footR' : 'footL'], applied = bone.getWorldQuaternion(new THREE.Quaternion());
       // Native application adds idle shift and TIPTOE to the controller pitch.
@@ -553,7 +578,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     });
     const pose = Array.from(ch.P);
     if (!pose.every(Number.isFinite)) throw Error('Non-finite native pose');
-    return { frame, time: ch.t, timers: Object.fromEntries(Object.entries(api.CHARACTER_TIMERS).map(([k, i]) => [k, ch.tr[i]])), alive: a?.alive ?? true, grounded: ch.grounded, specialActive: a?.specialActive ? { id: a.specialActive.id, phase: a.specialActive.phase, time: a.specialActive.t } : null, visible: ch.root.visible, root: ch.root.position.toArray(), velocity: a?.vel.toArray() || [0, 0, 0], input: a?.intent.move.toArray() || [0, 0, 0], hp: a?.hp ?? 100, ink: a?.ink ?? 100, plantWeight: ch.plantW, hipDrop: ch.hipDrop, kidScale: ch.kidScale, squidScale: ch.sqScale, walkActive: walkActive(ch), pose: { length: pose.length, minimum: Math.min(...pose), maximum: Math.max(...pose), l1: pose.reduce((sum, x) => sum + Math.abs(x), 0) }, ik: Array.from(ch.ikErr), hands: { left: ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray(), right: ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray() }, grip: { left: grip(ch, 'left'), right: grip(ch, 'right') }, feet, rolling: !!a?.weaponRunner.rolling, heldBomb: ch.bomb.group.visible, dualiesAction: a?.weapon.kind === 'dualies' ? { subRequested: !!a.intent.sub, aimingSub: !!a.weaponRunner.aimingSub, dodge: !!a.weaponRunner.dodge, lockT: a.weaponRunner.lockT } : null, dance: ch.dance, danceWeight: ch.wDance, snapshots: snap(ch), visualGameplayInvariant: invariant };
+    return { sourceMotionActive: !!sourced, frame, time: ch.t, timers: Object.fromEntries(Object.entries(api.CHARACTER_TIMERS).map(([k, i]) => [k, ch.tr[i]])), alive: a?.alive ?? true, grounded: ch.grounded, specialActive: a?.specialActive ? { id: a.specialActive.id, phase: a.specialActive.phase, time: a.specialActive.t } : null, visible: ch.root.visible, root: ch.root.position.toArray(), velocity: a?.vel.toArray() || [0, 0, 0], input: a?.intent.move.toArray() || [0, 0, 0], hp: a?.hp ?? 100, ink: a?.ink ?? 100, plantWeight: ch.plantW, hipDrop: ch.hipDrop, kidScale: ch.kidScale, squidScale: ch.sqScale, walkActive: walkActive(ch), pose: { length: pose.length, minimum: Math.min(...pose), maximum: Math.max(...pose), l1: pose.reduce((sum, x) => sum + Math.abs(x), 0) }, ik: Array.from(ch.ikErr), hands: { left: ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray(), right: ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray() }, grip: { left: grip(ch, 'left'), right: grip(ch, 'right') }, feet, rolling: !!a?.weaponRunner.rolling, heldBomb: ch.bomb.group.visible, dualiesAction: a?.weapon.kind === 'dualies' ? { subRequested: !!a.intent.sub, aimingSub: !!a.weaponRunner.aimingSub, dodge: !!a.weaponRunner.dodge, lockT: a.weaponRunner.lockT } : null, dance: ch.dance, danceWeight: ch.wDance, snapshots: snap(ch), visualGameplayInvariant: invariant };
   }
   async function capture(ch, scenario, frame, tick) {
     projectiles._draw();
@@ -660,6 +685,11 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       ch.setLod('hero'); // Native supported audit tier, disclosed in fixture.
       if (a) { ch.actor = a; G.actors = [a]; a.grounded = a.ground.hit = true; a.ground.block = 0; a.groundN.set(0, 1, 0); } else G.actors = [];
       scene.add(ch.root);
+      // Test the source engine itself, not an accidental native fallback
+      // caused by different asynchronous fetch timing at 30/60/120 Hz.
+      if (ch._sourceMotionLoader) await ch._sourceMotionLoader;
+      if (ch.sourceMotion?.ready) await ch.sourceMotion.ready;
+      if (ch.sourceMotion?.status !== 'ready') throw Error('Catalog source motion load failed: ' + ch.sourceMotion?.status);
       const samples = [], renders = [], events = [], transitions = [], last = [null, null], trace = [], originalMethods = new Map();
       let frame = -1, invariant = true, zeroDt = null;
       const update = ch.update;
@@ -779,7 +809,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     }
     for (const hz of [30, 60, 120]) {
       G.actors = []; const ch = new Character({ name: 'catalog variable dt', weapon: 'shooter' });
-      try { ch.update(0, null); const time = ch.t; for (let i = 0; i < hz; i++) ch.update(1 / hz, null); previewRates.push({ hz, frames: hz, finite: Array.from(ch.P).every(Number.isFinite) && Array.from(ch.ikErr).every(Number.isFinite), elapsed: ch.t - time }); }
+      try { if (ch._sourceMotionLoader) await ch._sourceMotionLoader; if (ch.sourceMotion?.ready) await ch.sourceMotion.ready; if (ch.sourceMotion?.status !== 'ready') throw Error('Variable-dt source unavailable'); ch.update(0, null); const time = ch.t; for (let i = 0; i < hz; i++) ch.update(1 / hz, null); previewRates.push({ hz, frames: hz, finite: Array.from(ch.P).every(Number.isFinite) && Array.from(ch.ikErr).every(Number.isFinite), elapsed: ch.t - time }); }
       finally { collect(ch.root); ch.dispose(); }
     }
     const result = { schema: 1, source: 'built-production-native', installCalls: 1, contentHash, turfFinish, duplicateRealm, gpu, data, images, previewRates, fixture: { render: 'actual Chromium WebGL (software ANGLE SwiftShader); native shaders compiled; same-frame RGB visibility pairs; native hero audit LOD', geometry: 'actual native indexed/skinned CPU output; does not include custom GPU vertex deformation', gameplay: 'native isolated methods; case driver and diagnostic assignments disclosed', parity: 'Nintendo executable version/gear/input/joint curves remain unknown; no console/iOS/full-match parity claim' } };
