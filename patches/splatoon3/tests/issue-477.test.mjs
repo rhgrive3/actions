@@ -4,7 +4,9 @@
 // 1. Fixed 60 Hz simulation: no roll displacement during the 4 startup frames.
 // 2. 12F roll movement begins only after the 4F startup (at tick 5).
 // 3. Movement duration remains exactly 12F.
-// 4. Total roll displacement equals the intended Splat Dualies distance (w.rollDist = 2.8m); startup does not modify it.
+// 4. The 12F moving roll covers the active roll distance; startup does not modify it.
+//    For the sourced standard 5 WU Dualies this is the 4 WU core; the separate
+//    1 WU post-roll glide is verified in dualies-roll-phases-1130.test.mjs.
 // 5. Visible anticipation/roll pose follows the same startup -> roll boundary:
 //    - Actual bounded native tuck pose during startup without movement/tumble;
 //    - Real bone/pose values verified and compared to baseline idle, startup, and moving.
@@ -31,6 +33,7 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { activeDualiesRollDistance } from '../runtime/movement-physics.mjs';
 import {
   adaptIssue477Source,
   adaptIssue477Weapons,
@@ -299,11 +302,13 @@ test('Movement duration remains exactly 12F and total roll displacement is exact
 
     assert.equal(rollTicks, DUALIES_ROLL_FRAMES, `Roll movement duration must be exactly 12 frames (got ${rollTicks})`);
 
-    const expectedDist = a.weapon.rollDist; // 2.8m
+    // The 12F moving roll covers the active roll distance: the 4 WU core of
+    // the sourced 5 WU standard roll (its 1 WU glide follows in the post-roll).
+    const expectedDist = activeDualiesRollDistance(a.weapon);
     const actualNetDist = a.pos.distanceTo(startPos);
     assert.ok(
       Math.abs(actualNetDist - expectedDist) < 0.35,
-      `Total displacement (${actualNetDist.toFixed(4)}) matches intended roll distance (${expectedDist})`
+      `12F roll displacement (${actualNetDist.toFixed(4)}) matches active roll distance (${expectedDist})`
     );
   } finally {
     actorRig.close();

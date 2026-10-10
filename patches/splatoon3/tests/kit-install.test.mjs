@@ -79,7 +79,9 @@ test('the unmodified public installer activates all three genuine base kits befo
     assert.deepEqual([...api.WEAPONS[main].kitVerifiedSlots],slots,main);
     assert.equal(api.WEAPONS[main].sub,sub,main);
     if (special) { assert.equal(api.WEAPONS[main].special,special); assert.equal(api.WEAPONS[main].specialCost,cost); }
-    assert.match(api.WEAPONS[main].blurb,/Partial Splatoon 3 kit/);
+    // Every slot implemented (Blaster: Autobomb + Big Bubbler) gets the installed
+    // label; any original slot keeps the explicit partial-kit label.
+    assert.match(api.WEAPONS[main].blurb, slots.length === 2 ? /11\.3\.0 kit slots installed/ : /Partial Splatoon 3 kit/, main);
   }
   assert.equal(api.WEAPONS.splatling.kitStatus,'partial-verified-kit');
   assert.ok(api.SUB.sprinkler && api.SUB.autobomb, 'new 11.3.0 native sub mechanics registered');
