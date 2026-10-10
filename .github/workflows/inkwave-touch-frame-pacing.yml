@@ -19,4 +19,4 @@ jobs:
       - name: Install pinned build dependency
         run: npm install --no-save --no-package-lock --silent esbuild@0.28.2
       - name: Verify touch cadence, profiler and final composed main loop
-        run: node --experimental-vm-modules --test patches/local-quality/tests/range-frame-pacing.test.mjs patches/local-quality/tests/quality.test.mjs
+        run: node --experimental-vm-modules --test patches/local-quality/tests/range-frame-pacing.test.mjs patches/local-quality/tests/quality.test.mjs patches/loading-cache/tests/cargo-offline-precache.test.mjs
