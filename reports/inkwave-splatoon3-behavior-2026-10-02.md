@@ -2840,6 +2840,14 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
 - 再現操作: Bucket Slosher を発射し、各弾を平らな地面・始点と同じ高さで、始点から DistanceXZNear と DistanceXZFar の距離（`worldUnitsPerSourceUnit` 1）に着弾させる。修正前は Unit 1 先頭弾の近距離で半径 0.768（3.84 × 0.2、遠距離値）となり、本家値 4.44 にならなかった。修正後は全 9 弾が near/far の本家値に一致する。
 - プレイへの影響: 1 発ごとの塗り半径と奥行きが変わるため、塗り面積、泳げる地面、Turf War の得点、スペシャル増加に影響する。ダメージ、当たり判定、弾の軌道は変更していない。
 - 確認状態: ロジック単独のヘッドレス回帰（production composition、固定乱数、`patches/splatoon3/tests/issue-1011-slosher-impact-source.test.mjs`）で確認した。修正前は失敗（0.768 != 4.44）、修正後は合格。ブラウザでの実動作と本家の実機比較は未実施。未確認: DistanceXZ の near/far 区間の補間式（現行は線形の近似）、`worldUnitsPerSourceUnit` 1 の換算、高低差縮小の本家側の対応。#978 の足元塗り、中間スプラッシュ、#554 の壁経路は別経路のまま変更していない。
+## 2026-10-10: Slosher 後続塗りの期待値を #1011 後の格子に合わせる（統合再照合）
+
+- 本家の根拠: 新しい本家値の追加はない。#1011 の Slosher 先頭塗り（WeaponSlosherStrong の単位・弾順・距離区分）を前提とした回帰期待値の更新のみ。
+- INKWAVE 実装箇所: 後続セルの所有は `patches/splatoon3/runtime/paint-ownership.mjs` の `claimAncillaryCells`。ゲームロジックは変更していない。
+- 再現操作: `patches/splatoon3/tests/issue-264-additional-paint-owners.test.mjs` の native slosher release / flight / landing（seed 0.17、0.37、0.71、0.25 単位の格子、後続 32 tick）。
+- プレイへの影響: なし（テスト期待値のみ）。上の 2026-10-02 の記録にある「0.25 単位の格子で後続の新規セルなし」は、#1011 以前の狭い塗りを前提にしていたため、#1011 以後はこの 3 シードで成り立たない。後続クレジットは各セルの格子所有差分と一致することを引き続き検査する。
+- 確認状態: ロジック単独のヘッドレス回帰のみ。対象ファイル 6/6 が通過。本家の実機比較とブラウザ実動作は未実施。未確認: 0.25 単位の格子で後続セルが生じる量の本家との対応。
+
 ## 2026-10-10: #675 Splat Charger ink debit at the 8F first legal release
 
 - 参照条件: Splatoon 3 Ver.11.3.0、Splat Charger（WeaponChargerNormal）、ギアなし、地上ヒト状態、十分なインク、チャージして release。
