@@ -25,12 +25,18 @@ export function adaptPaintHotpath(rel, code, replaceOnce) {
     'fill identical 6000-quad index buffer without 6000 small arrays');
   // opts.face is a stable input object during one splat; the optional face
   // restriction should be validated once, not for every face of every block.
-  change('    let claimed = 0;\n    const entries = [];\n    let wall = false;',
-    `    let claimed = 0;
-    const entries = [];
-    const faceOnly = Number.isInteger(opts.face) && opts.face >= 0 ? opts.face : -1;
-    let wall = false;`,
-    'hoist optional per-face gate');
+  const entryGate = '    let claimed = 0;\n    const entries = [];\n    let wall = false;';
+  const pooledGate = '    let claimed = 0;\n    let entries = this._takeSplatEntries();\n    let growth = null;\n    let wall = false;';
+  const insertion = '    const faceOnly = Number.isInteger(opts.face) && opts.face >= 0 ? opts.face : -1;\n';
+  if (code.includes(pooledGate)) {
+    // #803 uses leased entry arrays in the production six-layer build.
+    // Retain that pool; insert only one invariant validation beside it.
+    change(pooledGate, pooledGate.replace('    let wall = false;', insertion + '    let wall = false;'),
+      'hoist optional per-face gate after splat-entry pool');
+  } else {
+    change(entryGate, entryGate.replace('    let wall = false;', insertion + '    let wall = false;'),
+      'hoist optional per-face gate in upstream source');
+  }
   change('if (fid < 0 || (Number.isInteger(opts.face) && opts.face >= 0 && fid !== opts.face)) continue;',
     'if (fid < 0 || (faceOnly >= 0 && fid !== faceOnly)) continue;',
     'reuse stable per-splat face gate');
