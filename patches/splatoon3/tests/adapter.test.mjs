@@ -9,7 +9,7 @@ test('upstream compatibility matches the audited original; patches do not edit s
   const actor = fs.readFileSync(new URL('src/game/actor.js', publicRoot), 'utf8');
   assert.ok(!actor.includes('beforeActions'));
   const generated = adaptSource('src/game/actor.js', actor);
-  assert.ok(generated.includes('beforeActions(this, dt, jumpPressed)'));
+  assert.ok(generated.includes('beforeActions(this, dt, jumpPressed, { wasSquid, wasSubmerged, wasClimbing, firePressed, fireWins })'));
   assert.ok(generated.includes('!actionHandled && this.jumpBuffer'));
 });
 test('missing or duplicated upstream connections fail closed', () => {
@@ -18,6 +18,35 @@ test('missing or duplicated upstream connections fail closed', () => {
   assert.throws(() => adaptSource('src/main.js', ''), /conflict/);
   assert.throws(() => adaptSource('index.html', '<html>'), /conflict/);
 });
+
+test('native FX composes charger sight and swim splash connections once', () => {
+  const fx = fs.readFileSync(new URL('src/fx/fxHooks.js', publicRoot), 'utf8');
+  const built = adaptSource('src/fx/fxHooks.js', fx);
+  assert.ok(built.includes('swimSplashVisible(a)'));
+  assert.ok(built.includes('const h = cachedChargerSightDot(s) ??'));
+  assert.equal(built.split('import { cachedChargerSightDot, clearChargerSightDot }').length - 1, 1);
+  assert.throws(() => adaptSource('src/fx/fxHooks.js', built), /conflict/);
+});
+
+test('completed and partial paint trees cannot bypass the raw-source build connections', () => {
+  const raw = fs.readFileSync(new URL('src/world/paint.js', publicRoot), 'utf8');
+  const built = adaptSource('src/world/paint.js', raw);
+  assert.throws(() => adaptSource('src/world/paint.js', built), /conflict/);
+  // These two actual reviewer counterexamples were accepted by the old complete
+  // signature while silently removing turf accounting or active growth rendering.
+  for (const connection of [
+    'claimed += cellA;',
+    'else { this.growing.push(g); growth = null; }',
+    '        changed = true;',
+    'if (this._inkMark) this._inkMark(f, i, j);',
+    'installIssue570PaintPresentation(PaintSystem)',
+  ]) {
+    assert.ok(built.includes(connection), connection);
+    assert.throws(() => adaptSource('src/world/paint.js', built.replace(connection, '/* owner connection removed */')), /conflict/, connection);
+    assert.throws(() => adaptSource('src/world/paint.js', built + '\n' + connection), /conflict/, connection);
+  }
+});
+
 test('an upstream change to the planted-leg reach connection stops the build', () => {
   const character = fs.readFileSync(new URL('src/game/character.js', publicRoot), 'utf8');
   const anchor = 'const d = _v5.length(), mxr = this.legReach * 0.97;';
@@ -80,4 +109,13 @@ test('dualies pre-aim and contact admission stop on missing or duplicated native
     assert.throws(() => adaptSource('src/game/character.js', character.replace(anchor, '/* upstream changed */')), new RegExp(label));
     assert.throws(() => adaptSource('src/game/character.js', character + '\n' + anchor), new RegExp(label));
   }
+});
+
+
+test('#725 gyro adapter replaces only the measured public endpoints', () => {
+  const native=fs.readFileSync(new URL('src/core/gyro.js',publicRoot),'utf8');
+  const adapted=adaptSource('src/core/gyro.js',native);
+  assert.ok(adapted.includes('const GYRO_DEG = [[-5, 360], [0, 200], [5, 120]];'));
+  assert.ok(!adapted.includes('[-5, 278]'));
+  assert.throws(()=>adaptSource('src/core/gyro.js',adapted),/conflict/);
 });

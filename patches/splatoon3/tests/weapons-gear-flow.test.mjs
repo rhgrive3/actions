@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture, emitMainShot } from './source-fixture.mjs';
 import { gearCurve } from '../runtime/gear.mjs';
 
 const loadout = (ability, points = 57) => {
@@ -11,8 +11,10 @@ const loadout = (ability, points = 57) => {
 };
 
 test('actual equipped Splatling uses its 1.35 firing override without altering another actor', async () => {
-  const f = await fixture(), spinner = f.make('splatling'), shooter = f.make('shooter');
-  for (const a of [spinner, shooter]) { a.s3.loadout = loadout('runSpeed'); a.setWeapon(a.weaponId); a.weaponRunner.firingT = 1; }
+  const f = await fixture({ realProjectiles: true }), spinner = f.make('splatling'), shooter = f.make('shooter');
+  for (const a of [spinner, shooter]) { a.s3.loadout = loadout('runSpeed'); a.setWeapon(a.weaponId); }
+  spinner.weaponRunner.firingT = 1;
+  emitMainShot(f, shooter);
   assert.ok(Math.abs(spinner.weaponRunner.moveSpeed() - spinner.weapon.moveSpeedFiring * 1.35) < 1e-9);
   assert.ok(Math.abs(shooter.weaponRunner.moveSpeed() - shooter.weapon.moveSpeedFiring * 1.25) < 1e-9);
   spinner.s3.loadout = loadout('runSpeed', 10); spinner.setWeapon('splatling'); spinner.weaponRunner.firingT = 1;
@@ -24,12 +26,16 @@ test('actual equipped Splatling uses its 1.35 firing override without altering a
 test('actual blaster connects zero ground spread and its distinct Action Intensify curve', async () => {
   const f = await fixture(), a = f.make('blaster'), r = a.weaponRunner;
   assert.equal(r._spreadDeg(a.weapon), 0);
-  a.grounded = false; assert.equal(r._spreadDeg(a.weapon), 10);
+  a.grounded = false; assert.equal(r._spreadDeg(a.weapon), 0, 'falling alone is not a jump');
+  a.s3JumpSerial = (a.s3JumpSerial || 0) + 1; r.update(1 / 60, { fire: false });
+  assert.equal(r._spreadDeg(a.weapon), 10);
   a.s3.loadout = loadout('actionIntensify', 10); a.setWeapon('blaster');
+  a.s3JumpSerial++; r.update(1 / 60, { fire: false });
   const expected = 10 * (1 - gearCurve(10, 0, .5, 1));
   assert.ok(Math.abs(r._spreadDeg(a.weapon) - expected) < 1e-9);
   assert.notEqual(r._spreadDeg(a.weapon), 10 * (1 - gearCurve(10, 0, .75, 1)));
   a.s3.loadout = loadout('actionIntensify'); a.setWeapon('blaster');
+  a.s3JumpSerial++; r.update(1 / 60, { fire: false });
   assert.equal(r._spreadDeg(a.weapon), 0);
 });
 
@@ -54,19 +60,21 @@ test('actual Flow uses hostile damage credit for an assist extension', async () 
   let paints = 0; f.G.paint.splat = () => { paints++; return 0; };
   f.emit('damage', { victim, attacker: helper, amount: 20, source: 'shooter' });
   f.emit('splatted', { victim, attacker: killer });
-  assert.equal(helper.s3.flow.remaining, 15); assert.equal(paints, 1);
+  assert.equal(helper.s3.flow.remaining, 20); assert.equal(paints, 1);
   assert.equal(helper.s3.splatsThisLife || 0, 0);
 });
 
-test('actual quick respawn requires consecutive lives without a splat and ignores assists', async () => {
+test('actual quick respawn tracks enemy deaths and ignores assists', async () => {
   const f = await fixture(), a = f.make(), ally = f.make(), victim = f.make(); victim.team = 1;
   a.s3.loadout = loadout('quickRespawn'); a.setWeapon('shooter');
-  a.splat(null); const ordinary = a.respawnTimer;
-  a.reset(); f.emit('damage', { victim, attacker: a, amount: 20, source: 'shooter' });
+  f.G.level.spawnPads = [new f.THREE.Vector3(), new f.THREE.Vector3()];
+  f.G.physics.groundProbe = (_x,_y,_z,_u,_d,_r,h) => { h.hit = false; return h; };
+  a.splat(victim); const ordinary = a.respawnTimer;
+  a.respawn(); f.emit('damage', { victim, attacker: a, amount: 20, source: 'shooter' });
   f.emit('splatted', { victim, attacker: ally });
   assert.equal(a.s3.splatsThisLife || 0, 0);
-  a.splat(null); assert.ok(a.respawnTimer < ordinary);
-  a.reset(); f.emit('splatted', { victim, attacker: a }); a.splat(null);
+  a.splat(victim); assert.ok(a.respawnTimer < ordinary);
+  a.respawn(); f.emit('splatted', { victim, attacker: a }); a.splat(victim);
   assert.equal(a.respawnTimer, ordinary);
 });
 

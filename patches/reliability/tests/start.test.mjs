@@ -6,14 +6,21 @@ import { adaptStart } from '../start-adapter.mjs';
 import { adaptResults } from '../results-adapter.mjs';
 import { adaptIntro } from '../intro-adapter.mjs';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
+import { turfExperience } from '../../splatoon3/runtime/results-scoring.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { adaptCompiledMain } from '../../loading-cache/adapter.mjs';
 
 const RAW = fs.readFileSync(new URL('../../../inkwave-public/src/main.js', import.meta.url), 'utf8');
 const BEFORE = adaptIntro('src/main.js', adaptResults('src/main.js', adaptTouchLayout('src/main.js', adaptSource('src/main.js', RAW))));
 const AFTER = adaptStart('src/main.js', BEFORE);
+const PRODUCTION = adaptBuildSource('src/main.js', RAW);
 // Actual preceding results methods plus the current operation-aware start/quit
 // methods reproduce the confirmed composition gap without inventing a judge.
-const oldResults = section(BEFORE, '  async _bossResults() {', '\n  _fade(to, ms)');
+const oldResults = section(BEFORE, '  async _bossResults() {', '\n  _fade(to, ms)')
+  // The newer epoch guard independently closes part of this old race. Remove
+  // it only in the explicit negative control so the missing operation owner is exercised.
+  .replace("    if (this._s3JudgeEpoch !== judgeEpoch || this.match !== m || m.state !== 'judge') return;\n", '');
 const RESULT_FLOW_BEFORE = AFTER.replace(section(AFTER, '  async _bossResults() {', '\n  _fade(to, ms)'), oldResults);
 function section(source, start, end) {
   const at = source.indexOf(start), until = source.indexOf(end, at);
@@ -67,12 +74,13 @@ function boot(source, held = []) {
     env: { setTheme: () => record('theme'), getSkyColors: () => ({}), rebuildForArena: () => record('arena') },
   };
   const sandbox = {
-    console: { warn() {}, error() {} }, Promise, G, Match, Level, PropKit,
+    console: { warn() {}, error(...args) { record('error', ...args); } }, Promise, G, Match, Level, PropKit,
     MAPS: maps, OFFLINE_MAPS: maps, MAP_LAYOUTS: Object.fromEntries(maps.map(m => [m.id, m])),
-    mapOfflineOk: () => true, mapBossOk: () => true, mapNoBots: () => false,
+    mapOfflineOk: () => true, mapBossOk: () => true, mapNoBots: () => false, isRangeMap: () => false,
     DEV_STAGE: false, MATCH: { defaultDuration: 180 }, params: { has: () => false },
     mapTheme: (_map, time) => time, TEAM_PALETTES: [{}], COLORBLIND_PALETTE: {},
     effectiveQuality: () => ({ paintAtlas: 64 }), dressingFor: () => [{}],
+    syncWorldTexlib: async () => ({ nextTexlib: null, oldTexlib: null }), updateLobbyTexlib() {}, STAGE_SURFACES: {},
     Physics: class { constructor(level) { this.id = level.id; } },
     PaintSystem: class { constructor(_renderer, level) { return resource('paint:' + level.id, { texture: {}, size: 64, clear() {} }); } },
     createLevelMaterial: () => resource('material'),
@@ -82,6 +90,7 @@ function boot(source, held = []) {
     Minimap: class { constructor(level) { this.id = level.id; } setViewerTeam(team) { record('viewer', team); } },
     THREE: { Mesh: class { constructor(geometry, material) { this.geometry = geometry; this.material = material; } } },
     setTimeout: () => 1, clearTimeout: () => record('clearTimer'),
+    t: text => text,   // i18n.t in English mode; main.js imports it at module scope
   };
   const methods = [
     section(source, '  async _buildWorld(', '\n  // deck slabs over the sea:'),
@@ -96,7 +105,7 @@ function boot(source, held = []) {
   const Game = vm.runInContext(`class Game {${methods}}; Game`, context);
   const game = new Game(), initial = new Match({ attract: true });
   Object.assign(game, {
-    match: initial, mapDef: maps[0], layoutId: 'old', time: 'day', theme: 'day', settings: { difficulty: 'normal', quality: 'high', matchLength: 180 },
+    match: initial, mapDef: maps[0], layoutId: 'old', time: 'day', theme: 'day', _builtQuality: 'high', settings: { difficulty: 'normal', quality: 'high', matchLength: 180 },
     profile: { name: 'Player', weapon: 'shooter' }, PropKit,
     murals: { userData: { setStage: id => record('mural', id) } },
     rig: { follow: () => record('follow') },
@@ -427,6 +436,7 @@ function resultFixture(source, boss, online = false, existingFlow = true) {
   assert.ok(progressionAt >= 0 && progressionEnd > progressionAt);
   vm.runInContext(config.slice(progressionAt, progressionEnd + 3).replace('export ', '') + '\nglobalThis.PROGRESSION = PROGRESSION;', h.context);
   h.context.TEAM_NAMES = ['A', 'B'];
+  h.context.turfExperience = turfExperience;
   h.context.saveJSON = (key, profile) => h.calls.push(['saveProfile', key, { ...profile }]);
   h.context.setTimeout = (fn, ms) => { const timer = { fn, ms }; timers.push(timer); return timer; };
   h.G.teamHex = ['#f80', '#05f']; h.G.teamColors = ['orange', 'blue'];
@@ -473,7 +483,7 @@ for (const boss of [false, true]) {
       const departure = beginDeparture(h, operation);
       assert.equal(h.game.match, originalMatch, 'fade has not replaced match');
       await h.resolveResults(pending);
-      assert.equal(h.count('saveProfile'), 1); assert.equal(h.count('resultData'), 1);
+      assert.equal(h.count('saveProfile'), Number(boss || !online)); assert.equal(h.count('resultData'), 1);
       assert.equal(h.game.menus.current, 'results');
       h.gates.fade.resolve(); await departure;
     });
@@ -498,7 +508,7 @@ for (const boss of [false, true]) {
       await before.resolveResults(before.game._judge()); await after.resolveResults(after.game._judge());
       assert.deepEqual(after.game.profile, before.game.profile);
       assert.deepEqual(JSON.parse(JSON.stringify(after.calls)), JSON.parse(JSON.stringify(before.calls)));
-      assert.equal(after.count('saveProfile'), 1); assert.equal(after.count('resultData'), 1);
+      assert.equal(after.count('saveProfile'), Number(boss)); assert.equal(after.count('resultData'), 1);
       let returning;
       const actualReturn = after.game.netMatchEnd;
       after.game.netMatchEnd = function () { return (returning = actualReturn.call(this)); };
@@ -562,4 +572,107 @@ test('start adapter is fail-closed, requires results predecessor and leaves unre
     assert.throws(() => adaptStart('src/main.js', BEFORE.replace(original, original.replace(closure, 'changed result owners'))), /start conflict/);
     assert.throws(() => adaptStart('src/main.js', BEFORE.replace(original, original.replace(closure, closure + '\n' + closure))), /start conflict/);
   }
+});
+
+function offlineUi(held = []) {
+  const h = boot(PRODUCTION, held);
+  Object.assign(h.G.net, { state:'offline', tr:null, match:null });
+  return h;
+}
+
+function menuStart(h, source = PRODUCTION) {
+  const line = source.match(/^      startMatch: \(o\) => self\.[^\n]+/m)?.[0];
+  assert.ok(line,'actual composed menu API entry');
+  const api = vm.runInNewContext(`({${line}})`,{self:h.game});
+  return api.startMatch({mapId:'a',mode:'boss'});
+}
+
+for (const phase of ['boss','world','warm']) test(`#1184 real menu API recovers current ${phase} rejection and permits retry`,async()=>{
+  const h=offlineUi([phase]), toasts=[];
+  h.game.menus.toast=(...args)=>toasts.push(args);
+  const pending=menuStart(h);
+  await h.reached[phase].promise;
+  h.gates[phase].reject(new Error('temporary '+phase));
+  await pending;
+  assert.equal(h.G.mode,'menu'); assert.equal(h.game.menus.current,'main');
+  assert.equal(h.game.match.attract,true); assert.equal(h.game.match.disposed,0);
+  assert.equal(h.count('exitLock'),1); assert.equal(h.count('fadeOut'),1);
+  assert.equal(toasts.length,1);
+  h.gates[phase]=deferred();
+  h.gates[phase].resolve(phase==='boss'?{BOSS_MODE:{duration:240}}:undefined);
+  await menuStart(h);
+  assert.equal(h.G.mode,'match',h.calls.filter(c=>c[0]==='error').map(c=>String(c.at(-1))).join('\n')); assert.equal(h.game.match.attract,false);
+  assert.equal(toasts.length,1,'successful retry adds no failure message');
+});
+
+test('#1184 negative control: the old real menu entry propagates rejection and never uncovers or restores its menu',async()=>{
+  const h=offlineUi(['boss']);
+  const oldApi=PRODUCTION.replace('startMatch: (o) => self._startMenuMatch(o),','startMatch: (o) => self.startMatch(o),');
+  assert.notEqual(oldApi,PRODUCTION);
+  const pending=menuStart(h,oldApi); await h.reached.boss.promise;
+  h.gates.boss.reject(new Error('network import failure'));
+  await assert.rejects(pending,/network import failure/);
+  assert.equal(h.game.menus.current,null); assert.equal(h.count('fade'),1); assert.equal(h.count('fadeOut'),0);
+  assert.equal(h.initial.disposed,1,'startup had already retired the previous attract match');
+});
+
+for(const newer of ['retry','quit']) test(`#1184 stale rejection cannot replace a newer ${newer}`,async()=>{
+  const h=offlineUi(['boss']),toasts=[];
+  h.game.menus.toast=x=>toasts.push(x);
+  const old=menuStart(h); await h.reached.boss.promise; const oldGate=h.gates.boss;
+  h.gates.boss=deferred();h.gates.boss.resolve({BOSS_MODE:{duration:240}});
+  await (newer==='retry'?menuStart(h):h.game.quitToMenu());
+  const before=h.snapshot(),at=h.calls.length;
+  oldGate.reject(new Error('obsolete load failure')); await old;
+  assert.deepEqual(h.snapshot(),before); assert.deepEqual(h.calls.slice(at),[]); assert.equal(toasts.length,0);
+});
+
+test('#1184 synchronous re-entry and throw cannot give old UI recovery ownership of the replacement',async()=>{
+  const h=offlineUi(),toasts=[];let replacement;
+  h.game.menus.toast=x=>toasts.push(x);
+  h.hooks.audio=()=>{delete h.hooks.audio;replacement=menuStart(h);throw new Error('obsolete synchronous failure');};
+  await menuStart(h); await replacement;
+  assert.equal(h.G.mode,'match'); assert.equal(h.game.match.attract,false);
+  assert.equal(h.count('exitLock'),0);assert.equal(toasts.length,0);
+});
+
+test('#1184 repeated current failures each recover once and leave the main menu usable',async()=>{
+  const h=offlineUi(['boss']),toasts=[];h.game.menus.toast=x=>toasts.push(x);
+  for(let i=0;i<5;i++) {
+    h.gates.boss=deferred(); h.reached.boss=deferred();
+    const pending=menuStart(h); await h.reached.boss.promise;h.gates.boss.reject(new Error('attempt '+i));await pending;
+    assert.equal(h.game.menus.current,'main');assert.equal(h.game.match.attract,true);
+    assert.equal(h.game.match.disposed,0); assert.equal(h.game._matchFlow,null);
+    assert.equal(h.count('exitLock'),i+1);assert.equal(h.count('fadeOut'),i+1);assert.equal(toasts.length,i+1);
+  }
+});
+
+test('#1184 actual Boss loader retries rejected acquisition while coalescing pending/successful loads',async()=>{
+  for(const baseline of [true,false]) {
+    const code=section(baseline?RAW:PRODUCTION,'  async _loadBoss() {','\n  // lamps, signs');
+    const gates=[];
+    const Game=vm.runInNewContext(`class Game{${code}};Game`,{loadLazyModule:()=>{const gate=deferred();gates.push(gate);return gate.promise;}});
+    const game=new Game(),p=game._loadBoss(),same=game._loadBoss();assert.equal(gates.length,1);
+    gates[0].reject(new Error('temporary fetch failure'));
+    await Promise.all([assert.rejects(p,/temporary/),assert.rejects(same,/temporary/)]);
+    const retry=game._loadBoss();
+    if(baseline){assert.equal(gates.length,1);await assert.rejects(retry,/temporary/);continue;}
+    assert.equal(gates.length,2);const module={BOSS_MODE:{duration:240}};gates[1].resolve(module);
+    assert.equal(await retry,module);assert.equal(await game._loadBoss(),module);assert.equal(gates.length,2);
+  }
+});
+
+test('#1184 final loading-cache instrumentation still records the real menu attempt and only successful readiness',async()=>{
+  const emitted=adaptCompiledMain(PRODUCTION).code;
+  const h=boot(emitted,['boss']),marks=[],ready=[];
+  Object.assign(h.G.net,{state:'offline',tr:null,match:null});
+  h.context.__inkwaveStartup={mark:name=>marks.push(name),battleReady:game=>ready.push(game)};
+  h.game.menus.toast=()=>{};
+  const first=menuStart(h,emitted);await h.reached.boss.promise;
+  h.gates.boss.reject(new Error('first load failed'));await first;
+  assert.deepEqual(marks,['first-battle-request']);assert.equal(ready.length,0);
+  h.gates.boss=deferred();h.gates.boss.resolve({BOSS_MODE:{duration:240}});
+  await menuStart(h,emitted);
+  assert.deepEqual(marks,['first-battle-request','first-battle-request']);
+  assert.deepEqual(ready,[h.game]);assert.equal(h.game.match.attract,false);
 });

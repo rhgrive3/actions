@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {fixture} from './source-fixture.mjs';
+import {FixedClock} from '../runtime/clock.mjs';
+const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
+async function rig(chargeFrames=45){
+ const f=await fixture(),a=f.make();let terrain='wall';
+ a.grounded=false;a.form='squid';a.intent.squid=true;a.climbing=true;a.wallN.set(0,0,1);a.intent.move.set(0,0,-1);a.intent.jump=true;
+ f.G.physics.raycast=(p,dir,max,h)=>{if(terrain==='throw')throw Error('probe terrain failure');h.hit=Math.abs(dir.y)<.5&&terrain!=='top';if(h.hit){h.face=0;h.u=h.v=.5;h.normal.set(0,0,1);h.point.copy(p).addScaledVector(dir,.3);}return h;};
+ f.G.paint.sample=()=>terrain==='ink-end'?0:1;
+ f.tick(a,chargeFrames);const charge=a.s3.surge.charge;a.intent.jump=false;a.intent.move.set(0,0,0);
+ return {...f,a,charge,terrain(v){terrain=v;}};
+}
+// #846: the 18F countdown must not end the automatic climb while the actor stays on continuous own ink.
+test('Refs846 full-charge boost keeps its burst state and speed past the 18F countdown',async()=>{const h=await rig();h.tick(h.a,17);assert.equal(h.a.s3.surge.phase,'burst');assert.equal(h.a.climbV,15);h.tick(h.a,23);assert.equal(h.a.s3.surge.phase,'burst');assert.equal(h.a.climbing,true);assert.equal(h.a.climbV,15);assert.equal(h.a.s3.surge.time,0);});
+test('Refs846 burst stays geometry-driven far beyond its countdown on a tall continuous wall',async()=>{const h=await rig();h.tick(h.a,300);assert.equal(h.a.s3.surge.phase,'burst');assert.equal(h.a.climbing,true);assert.equal(h.a.climbV,15);});
+test('Refs846 partial charge keeps its charge-scaled speed without a geometry-independent cutoff',async()=>{const h=await rig(15);h.tick(h.a);const expected=h.profile.movement.surge.minimumVelocity+(h.profile.movement.surge.velocity-h.profile.movement.surge.minimumVelocity)*h.charge;assert.equal(h.a.climbV,expected);assert.ok(h.a.climbV<15);h.tick(h.a,40);assert.equal(h.a.s3.surge.phase,'burst');assert.equal(h.a.climbing,true);assert.equal(h.a.climbV,expected);});
+test('Refs846 a held B during the countdown does not restart the charge',async()=>{const h=await rig();h.tick(h.a,10);h.a.intent.jump=true;h.tick(h.a,5);assert.equal(h.a.s3.surge.phase,'burst');assert.equal(h.a.climbV,15);});
+test('Refs846 ledge reached after the countdown takes the top launch and armor',async()=>{const h=await rig(),events=[];h.a.character.trigger=(name)=>events.push(name);h.tick(h.a,40);assert.equal(h.a.s3.surge.phase,'burst');assert.ok(events.indexOf('squidsurge_top')<0);h.terrain('top');h.tick(h.a);assert.equal(h.a.climbing,false);assert.ok(events.includes('squidsurge_top'));assert.equal(h.a.s3.surge,null);const shield=h.a.s3.actions?.armor;assert.ok(shield);near(shield.armorTime,h.profile.movement.surge.armorTime);});
+test('Refs846 wall top, end-of-ink and away input retire the sustained climb',async()=>{for(const cause of ['top','ink-end','away']){const h=await rig();h.tick(h.a,40);if(cause==='away')h.a.intent.move.set(0,0,1);else h.terrain(cause);h.tick(h.a);assert.equal(h.a.climbing,false,cause);assert.equal(h.a.s3.surge,null,cause);if(cause==='top')assert.ok(h.a.vel.y>0,'native ledge launch remains');}});
+test('Refs846 fresh charge and wall Roll remain independently admitted after the countdown',async()=>{const h=await rig();h.tick(h.a,40);h.a.intent.jump=true;h.tick(h.a);assert.equal(h.a.s3.surge.phase,'charge');const r=await rig();r.tick(r.a,40);r.a.intent.move.set(0,0,1);r.a.intent.jump=true;r.tick(r.a);assert.ok(r.a.s3.roll);assert.equal(r.a.s3.surge,null);});
+test('Refs846 native movement intent and shared speed are restored even when wall probing throws',async()=>{const h=await rig();h.tick(h.a,40);const speed=h.PLAYER.climbSpeed;h.terrain('throw');assert.throws(()=>h.a._updateClimb(1/60,true),/terrain failure/);assert.deepEqual(Array.from(h.a.intent.move.toArray()),[0,0,0]);assert.equal(h.PLAYER.climbSpeed,speed);});
+test('Refs846 reset, form change and Super Jump retire the sustained climb through existing owners',async()=>{for(const cause of ['reset','form','jump']){const h=await rig();h.tick(h.a,40);if(cause==='reset')h.a.reset();else if(cause==='form'){h.a.intent.squid=false;h.tick(h.a);}else h.a.superJump(new h.THREE.Vector3(0,0,8));assert.equal(h.a.s3.surge,null,cause);}});
+test('Refs846 30/60/120Hz rendering produces the same sixty fixed sustained-climb ticks',async()=>{const rows=[];for(const hz of [30,60,120]){const h=await rig(),clock=new FixedClock();let ticks=0;for(let i=0;i<hz;i++)clock.advance(1/hz,()=>{ticks++;h.tick(h.a);});rows.push({ticks,phase:h.a.s3.surge.phase,climbing:h.a.climbing,speed:h.a.climbV,armor:h.a.s3.surge.armorTime});}assert.deepEqual(rows[0],rows[1]);assert.deepEqual(rows[1],rows[2]);assert.equal(rows[0].ticks,60);assert.equal(rows[0].phase,'burst');assert.equal(rows[0].climbing,true);assert.equal(rows[0].speed,15);});

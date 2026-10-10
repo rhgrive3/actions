@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { combatWorld } from '../../reliability/tests/combat-integration-fixture.mjs';
+import { installSplatGhostReturn, updateSplatGhosts, splatGhostSnapshot } from '../issue-284-adapter.mjs';
+for (const owner of ['A','B']) test(`native ${owner} death/remote event trajectory is once per death`, async () => {
+ const w = await combatWorld(owner); const {G,Actor,NetMatch,victim,net,THREE} = w;
+ const calls=[]; G.fx={splatted(){},ghost(pos){calls.push({...pos});}};
+ installSplatGhostReturn({Actor,NetMatch,G});
+ if (owner==='B') victim.splat(null,'weapon'); else net._remoteSplat(victim,null,'weapon');
+ const first=splatGhostSnapshot(victim); assert.ok(first?.active);
+ for(let i=0;i<75;i++)updateSplatGhosts(G,1/30);
+ assert.ok(calls.length>20); assert.equal(splatGhostSnapshot(victim).active,false);
+ if (owner==='B') victim.splat(null,'weapon'); else net._remoteSplat(victim,null,'weapon');
+ assert.equal(splatGhostSnapshot(victim).active,false,'replayed terminal event cannot restart completed ghost');
+ const count=calls.length;updateSplatGhosts(G,1/30);assert.equal(calls.length,count);
+ victim.spawnAt(new THREE.Vector3(2,0,2),0); assert.equal(splatGhostSnapshot(victim),null);
+ if (owner==='B') victim.splat(null,'weapon'); else net._remoteSplat(victim,null,'weapon');
+ assert.ok(splatGhostSnapshot(victim).active,'next genuine death starts a new ghost');
+ assert.equal(victim.stats.deaths,2);w.dispose();
+});

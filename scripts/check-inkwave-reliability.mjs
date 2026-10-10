@@ -8,9 +8,13 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
+import { runTouchTransitionCases, withWindowFocusRestored, runHybridKeyboardMapCases } from './inkwave-touch-transition-cases.mjs';
+import { runFocusLossCase } from './inkwave-focus-loss-case.mjs';
 
 const option = name => { const i = process.argv.indexOf(name); assert(i >= 0 && process.argv[i + 1], 'Required ' + name); return path.resolve(process.argv[i + 1]); };
 const site = option('--site'), evidence = option('--evidence-dir'), cache = option('--profile-dir');
+const focusedOnly = process.argv.includes('--focused-touch-transitions');
+const negativeControl = process.argv.includes('--negative-control');
 const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
 for (const dir of [evidence, cache]) { assert(physical(dir).startsWith('/mnt/workspace/'), 'Persistent workspace required'); fs.mkdirSync(dir, { recursive: true }); }
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -23,7 +27,7 @@ assert(manifest.build.reliability && Object.keys(manifest.build.reliability).len
 const fixture = `<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="/styles/ui.css"><link rel="stylesheet" href="/styles/mobile.css">
 <style>html,body{margin:0;overflow:hidden;background:#0d1020;touch-action:none}canvas{width:100vw;height:100vh}</style>
-<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script><canvas id="game"></canvas><script type="module">
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script><canvas id="game"></canvas><div id="test-menu-target" class="iw-menu" style="position:fixed;top:10px;left:10px;z-index:9500;width:120px;height:40px;background:#333;color:#fff;pointer-events:auto">Menu Item</div><script type="module">
 import * as THREE from 'three';
 import { Input } from '/src/core/input.js';
 import { PlayerController } from '/src/game/player.js';
@@ -33,6 +37,7 @@ import { DEFAULT_SETTINGS } from '/src/config.js';
 import { installClock,runSimulation } from '/patches/splatoon3/runtime/clock.mjs';
 import { NetSession } from '/src/net/session.js';
 import { HUD } from '/src/ui/hud.js';
+import { DioramaOverlay } from '/src/ui/diorama.js';
 window.input=new Input(document.getElementById('game'));window.mobile=input.mobile;
 input.lastDevice='touch';mobile.setVisible(true);
 G.settings={...DEFAULT_SETTINGS,aimAssist:0,aimAssistMouse:false};
@@ -41,8 +46,8 @@ window.rig={yaw:0,pitch:0,mode:'follow',target:actor};
 window.controller=new PlayerController(actor,rig,input);controller.computeAim=()=>{};
 G.rig=rig;G.projectiles={update(){}};
 window.intents=[];const match={state:'playing',local:actor,controller,updateController(dt){controller.update(dt);},update(){intents.push({...actor.intent,move:actor.intent.move.toArray()});}};
-window.sim={input,rig,match,showcase:{},_padMenus(){}};installClock({G});
-window.advance=dt=>runSimulation(sim,dt);window.G=G;window.Match=Match;window.NetSession=NetSession;window.HUD=HUD;window.ready=true;
+G.match=match;window.sim={input,rig,match,showcase:{},_padMenus(){}};installClock({G});
+window.advance=dt=>runSimulation(sim,dt);window.G=G;window.Match=Match;window.NetSession=NetSession;window.HUD=HUD;window.DioramaOverlay=DioramaOverlay;window.THREE=THREE;window.ready=true;
 </script></html>`;
 const receipts = {}, errors = [];
 const types = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
@@ -72,20 +77,29 @@ try {
       const page = context.pages()[0] || await context.newPage(); page.setDefaultTimeout(10000);
       page.on('pageerror', error => errors.push(engineName + ': ' + error.message));
       await page.goto(url); await page.waitForFunction(() => window.ready);
-      const entry = { engine: engineName, viewport: { width: 1024, height: 768 }, checks: [], dragEvents: engineName === 'chromium' ? 'native-CDP-touch' : 'DOM-PointerEvent' }; report.cases.push(entry);
+      const entry = { engine: engineName, viewport: { width: 1024, height: 768 }, checks: [], dragEvents: engineName === 'chromium' ? 'native-CDP-touch' : 'DOM-PointerEvent', evidenceClass: engineName === 'chromium' ? 'native-CDP-touch' : 'DOM-PointerEvent' }; report.cases.push(entry);
       const cdp = engineName === 'chromium' ? await context.newCDPSession(page) : null;
       const gesture = async (type, points) => {
         if (cdp) await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map(p => ({ id: p.id, x: p.x, y: p.y, radiusX: 2, radiusY: 2, force: 1 })) });
         else await page.evaluate(({ type, points }) => {
           const pointers = window.testPointers || (window.testPointers = new Map());
           if (type === 'touchEnd' || type === 'touchCancel') {
-            for (const [id, p] of pointers) if (!points.some(q => q.id === id)) { mobile.root.dispatchEvent(new PointerEvent(type === 'touchEnd' ? 'pointerup' : 'pointercancel', { bubbles: true, cancelable: true, pointerType: 'touch', pointerId: id, clientX: p.x, clientY: p.y })); pointers.delete(id); }
+            for (const [id, p] of pointers) if (!points.some(q => q.id === id)) {
+              const target = (mobile._ptr?.has(id) || mobile._stick?.id === id || (mobile.root?.hasPointerCapture?.(id))) ? mobile.root : (p.target || mobile.root);
+              target.dispatchEvent(new PointerEvent(type === 'touchEnd' ? 'pointerup' : 'pointercancel', { bubbles: true, cancelable: true, pointerType: 'touch', pointerId: id, clientX: p.x, clientY: p.y }));
+              pointers.delete(id);
+            }
           } else for (const p of points) {
-            const isNew = !pointers.has(p.id), target = isNew ? document.elementFromPoint(p.x, p.y) : mobile.root;
-            target.dispatchEvent(new PointerEvent(isNew ? 'pointerdown' : 'pointermove', { bubbles: true, cancelable: true, pointerType: 'touch', pointerId: p.id, clientX: p.x, clientY: p.y })); pointers.set(p.id, p);
+            const isNew = !pointers.has(p.id);
+            let target;
+            if (isNew) target = document.elementFromPoint(p.x, p.y) || document.getElementById('game');
+            else target = (mobile._ptr?.has(p.id) || mobile._stick?.id === p.id || (mobile.root?.hasPointerCapture?.(p.id))) ? mobile.root : (pointers.get(p.id)?.target || mobile.root);
+            target.dispatchEvent(new PointerEvent(isNew ? 'pointerdown' : 'pointermove', { bubbles: true, cancelable: true, pointerType: 'touch', pointerId: p.id, clientX: p.x, clientY: p.y }));
+            pointers.set(p.id, { x: p.x, y: p.y, target });
           }
         }, { type, points });
       };
+      if (!focusedOnly) {
       const reset = () => page.evaluate(() => { mobile.reset(); mobile.layout = {}; mobile.s.stickMode = 'float'; mobile.s.fireAim = true; mobile._layoutAll(); sim.s3Clock?.reset(); intents.length = 0; });
       const look = () => page.evaluate(() => [mobile.lookDX, mobile.lookDY]);
       await reset();
@@ -130,10 +144,8 @@ try {
         await reset();
       }
       entry.checks.push('native-five-button-taps-survive-render-only-frame-and-consume-once');
-      await page.locator('[data-c="fire"]').tap(); await page.evaluate(() => { mobile.jumpTarget = 2; window.dispatchEvent(new Event('blur')); });
-      assert.deepEqual(await page.evaluate(() => ({ edges: [...mobile.pressed], target: mobile.jumpTarget, look: [mobile.lookDX, mobile.lookDY] })), { edges: [], target: -1, look: [0, 0] });
-      await page.evaluate(() => advance(1 / 60)); assert.equal(await page.evaluate(() => intents.at(-1).fire), false);
-      entry.checks.push('focus-loss-cancels-pending-touch-action-and-jump-target');
+      await page.locator('[data-c="fire"]').tap();
+      await runFocusLossCase(page, entry);
       const network = await page.evaluate(async () => {
         const real = { WebSocket, setTimeout, clearTimeout, setInterval, clearInterval }, sockets = [], timers = new Map(); let seq = 0;
         window.setTimeout = (fn, ms) => { const id = ++seq; timers.set(id, { fn, ms }); return id; };
@@ -160,12 +172,12 @@ try {
         } });
         try {
           let owner = {}, captured = owner;
-          const old = hud.judge({ percents: [65, 35], isCurrent: () => owner === captured });
+          const old = hud.judge({ winner: 0, percents: [65, 35], isCurrent: () => owner === captured });
           const oldFx = hud._fxMap.get('judge'); hud._fxTime = 1; oldFx(.1);
           owner = {}; oldFx(.1); const cancelled = await old;
           const afterCancel = { cancelled: cancelled.cancelled, elements: hud.overLayer.querySelectorAll('.iw-jd').length, sounds: [...sounds], voicesStopped: voices.every(v => v.disposed > 0) };
-          const older = hud.judge({ percents: [70, 30] }), savedFx = hud._fxMap.get('judge');
-          const newer = hud.judge({ percents: [40, 60] }), newerFx = hud._fxMap.get('judge');
+          const older = hud.judge({ winner: 0, percents: [70, 30] }), savedFx = hud._fxMap.get('judge');
+          const newer = hud.judge({ winner: 1, percents: [40, 60] }), newerFx = hud._fxMap.get('judge');
           const replaced = await older; savedFx(.1);
           const newerPreserved = hud._fxMap.get('judge') === newerFx && hud.overLayer.querySelectorAll('.iw-jd').length === 1;
           hud._fxTime += 5.2; newerFx(.1); const delivered = await newer;
@@ -223,6 +235,8 @@ try {
         try {
           Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [pad] });
           input.padPrev = []; input.padPressed.clear(); input.padMenuPressed.clear(); input.padMenuBlocked.clear();
+          // Focus return needs one real neutral sample before new pad presses.
+          buttons([]); input.pollPad(); input.endFrame();
           let startEdges = 0;
           sim._padMenus = () => {
             if (input.padMenuPressed.has(9)) startEdges++;
@@ -247,7 +261,304 @@ try {
       });
       assert.deepEqual(menuPad, { startEdges: 2, menuAcceptOwned: true, nextGameplayPressRestored: true });
       entry.checks.push('actual-built-Input-menu-pad-edge-and-hold-ownership-through-144Hz-clock');
+      const gyroViability = await page.evaluate(async () => {
+        await mobile.setGyro(false);mobile.setVisible(true);
+        const access=mobile.gyro._platformGyroAccess,permission=access.permission;
+        // A fixture-supplied session grant; this probe never requests browser/OS permission.
+        access.permission='granted';
+        try {
+          await mobile.setGyro(true);
+          const waiting=mobile.gyro.platformStatus.availability==='waiting'&&!mobile.els.gyro.classList.contains('is-on')&&mobile.els.gyro.getAttribute('aria-busy')==='true';
+          mobile.moveX=.4;mobile.buttons.fire=true;mobile.lookDX=.2;
+          await new Promise(resolve=>setTimeout(resolve,2150));
+          const stopped=!mobile.gyro.enabled&&!mobile._gyroWanted&&!mobile.s.gyro&&mobile.gyro.platformStatus.reason==='no-sensor-data';
+          const offUI=!mobile.els.gyro.classList.contains('is-on')&&mobile.els.gyro.getAttribute('aria-pressed')==='false';
+          const inputPreserved=mobile.moveX===.4&&mobile.buttons.fire&&mobile.lookDX===.2;
+          await mobile.setGyro(true);
+          mobile.gyro._orientation({alpha:0,beta:0,gamma:0,timeStamp:performance.now()+1});
+          mobile.gyro._orientation({alpha:20,beta:0,gamma:0,timeStamp:performance.now()+18});
+          const recovered=mobile.gyro.enabled&&mobile.gyro.platformStatus.availability==='active'&&mobile.els.gyro.classList.contains('is-on');
+          const motion=[mobile.gyro.dYaw,mobile.gyro.dPitch];
+          window.dispatchEvent(new Event('focus'));
+          const duplicateFocusPreserved=Math.abs(motion[0])+Math.abs(motion[1])>0&&mobile.gyro.dYaw===motion[0]&&mobile.gyro.dPitch===motion[1];
+          return {waiting,stopped,offUI,inputPreserved,recovered,duplicateFocusPreserved};
+        } finally {await mobile.setGyro(false);mobile.reset();access.permission=permission;}
+      });
+      entry.gyroViability = gyroViability;
+      assert.deepEqual(gyroViability,{waiting:true,stopped:true,offUI:true,inputPreserved:true,recovered:true,duplicateFocusPreserved:true});
+      entry.checks.push('actual-built-gyro-no-data-stops-ON-state-and-explicit-retry-recovers');
+      const startupGrant = await page.evaluate(async () => {
+        const {prepareGyroStartup,startGyroStartup}=await import('/patches/local-quality/gyro-startup.mjs');
+        const {initialGyroDefaults}=await import('/patches/local-quality/gyro-permission.mjs');
+        await mobile.setGyro(false);mobile.setVisible(true);
+        const gyro=mobile.gyro,original=gyro.request,descriptor=Object.getOwnPropertyDescriptor(gyro,'needsPermission');
+        const access=gyro._platformGyroAccess,permission=access.permission;
+        let resolve,count=0;
+        try {
+          Object.defineProperty(gyro,'needsPermission',{configurable:true,value:true});
+          gyro.request=()=>{count++;return new Promise(r=>{resolve=r;});};
+          const game={input:{mobile},settings:{gyro:true},match:{state:'playing',paused:false},menus:{current:null}},world={mode:'match'};
+          const prepared=prepareGyroStartup(game,world);const started=startGyroStartup(game,world);
+          const stayedOff=!gyro.enabled&&count===1;
+          access.permission='granted';gyro.request=original;Object.defineProperty(gyro,'needsPermission',{configurable:true,value:false});resolve(true);
+          await prepared;await started;
+          gyro._orientation({alpha:0,beta:0,gamma:0,timeStamp:performance.now()+1});
+          gyro._orientation({alpha:15,beta:0,gamma:0,timeStamp:performance.now()+18});
+          return {stayedOff,started:gyro.enabled&&gyro.platformStatus.availability==='active',onePrompt:count===1,
+            mobileDefault:initialGyroDefaults({gyro:false},{touch:true}).gyro,desktopDefault:initialGyroDefaults({gyro:false},{touch:false}).gyro};
+        } finally {
+          gyro.request=original;if(descriptor)Object.defineProperty(gyro,'needsPermission',descriptor);else delete gyro.needsPermission;
+          await mobile.setGyro(false);access.permission=permission;
+        }
+      });
+      assert.deepEqual(startupGrant,{stayedOff:true,started:true,onePrompt:true,mobileDefault:true,desktopDefault:false});
+      entry.checks.push('actual-built-late-START-grant-and-device-specific-default');
+
+
+      // Native touch action, actual shared PlayerController reset, and actual gyro
+      // rebaseline. No sensor permission is requested: the fixture supplies samples.
+      for (const gyroOn of [false, true]) {
+        await page.evaluate(enabled => {
+          mobile.reset(); mobile.setVisible(true); input.lastDevice = 'touch';
+          controller.enabled = true; controller.a.yaw = 1.2;
+          controller.rig.yaw = -2; controller.rig.pitch = .7;
+          mobile.gyro.enabled = enabled; mobile.gyro.dYaw = .4; mobile.gyro.dPitch = .3;
+          mobile.lookDX = .2; mobile.lookDY = .1;
+          sim.s3Clock?.reset();
+        }, gyroOn);
+        await page.locator('[data-c="cameraReset"]').tap();
+        const recentered = await page.evaluate(() => {
+          advance(1 / 60);
+          const first = [rig.yaw, rig.pitch, mobile.gyro.enabled];
+          const sampleTime=performance.now()+1;
+          mobile.gyro._orientation({ alpha: 150, beta: 30, gamma: 45, timeStamp: sampleTime });
+          const sampleAccepted=mobile.gyro._hasQ&&mobile.gyro._tQ===sampleTime;
+          advance(1 / 60);
+          return { first, next: [rig.yaw, rig.pitch], pending: mobile.wasPressed('cameraReset'),sampleAccepted };
+        });
+        (entry.cameraResetSamples ||= []).push(recentered);
+        assert.deepEqual(recentered, { first: [1.2, 0, gyroOn], next: [1.2, 0], pending: false,sampleAccepted:gyroOn });
+      }
+      await page.evaluate(() => { mobile.gyro.enabled = false; mobile.gyro.discard(); });
+      entry.checks.push('native-touch-camera-reset-shares-controller-path-and-rebases-next-sensor-sample');
+      const padHighlight = await page.evaluate(() => {
+        window.navigationPrevious = { match: G.match, input: G.input, pad: input.pad, device: input.lastDevice };
+        input.pad = { mapping: 'standard' }; input.lastDevice = 'pad'; G.input = input;
+        G.match = { state: 'playing', controller }; controller.padJumpIndex = 1;
+        const hud = window.navigationHud = new HUD();
+        hud.lab = { local: controller.a, beacons: [0, 1, 2, 3].map(i => ({ x: .2 + i * .2, y: .3, name: 'Target ' + i, weapon: 'shooter', ok: true, home: i === 3 })) };
+        hud.setVisible(true); hud._mapT = 1;
+        const canvas = document.createElement('canvas'); canvas.width = canvas.height = 256;
+        hud._updMap({ canvas, expanded: true, players: [] }, 0);
+        return { beacon: hud.beacons[1].classList.contains('is-hover'), row: hud.legendRows[1].classList.contains('is-hover'), cursor: hud.mapCursor.classList.contains('is-on'), guide: hud.mapLegend.querySelector('.iw-lg__foot').textContent };
+      });
+      assert.equal(padHighlight.beacon, true); assert.equal(padHighlight.row, true); assert.equal(padHighlight.cursor, false);
+      assert(padHighlight.guide.includes('A'));
+      await page.screenshot({ path: path.join(evidence, engineName + '-pad-map-selection.png') });
+      await page.evaluate(() => {
+        navigationHud.dispose(); const old = navigationPrevious;
+        G.match = old.match; G.input = old.input; input.pad = old.pad; input.lastDevice = old.device;
+        controller.padJumpIndex = -1;
+      });
+      entry.checks.push('actual-built-HUD-highlights-selected-pad-beacon-and-confirmation-guide');
+      const respawnNavigation = await page.evaluate(() => {
+        const old = { match:G.match, actors:G.actors, input:G.input, level:G.level, device:input.lastDevice };
+        const a={alive:false,grounded:false,team:0,intent:{move:new THREE.Vector3()},pos:new THREE.Vector3(),
+          canSuperJump(){return this.alive&&!this.superJumpState;},superJump(target){if(!this.canSuperJump())return false;this.superJumpState={target};return true;}};
+        const ally={alive:true,team:0,pos:new THREE.Vector3(2,0,3)};
+        const camera={yaw:.4,pitch:.2},c=new controller.constructor(a,camera,input);c.computeAim=()=>{};
+        const match={state:'playing',paused:false,local:a,controller:c};
+        const padDescriptor=Object.getOwnPropertyDescriptor(navigator,'getGamepads');
+        const pad={index:0,id:'respawn-intent',connected:true,mapping:'standard',axes:[.9,-.5,.8,.7],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};
+        let hud,dio;
+        try {
+          G.match=match;G.actors=[a,ally];G.input=input;G.level={spawnPads:[new THREE.Vector3()]};
+          input.lastDevice='kbm';input.keys.add('Tab');input.pressed.add('Tab');input.keys.add('KeyW');input.mouse.left=true;
+          Match.prototype.updateController.call(match,1/60);
+          const deadBlocked=!c.enabled&&c.mapHeld&&a.intent.move.lengthSq()===0&&!a.intent.fire&&camera.yaw===.4&&camera.pitch===.2;
+          hud=new HUD();hud._local=()=>a;hud._beaconTargets=()=>[{ok:true,actor:ally}];hud._jumpTo(0);
+          const hudQueued=c.pendingRespawnJump?.actor===ally&&!a.superJumpState;
+          c.pendingRespawnJump=null;
+          Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[pad]});
+          // Reconnected pads require neutral before this fixture establishes a held-axis owner.
+          const heldAxes = pad.axes; pad.axes = [0,0,0,0]; input.pollPad();
+          pad.axes = heldAxes; input.pollPad();
+          dio=new DioramaOverlay(document.body);dio.on=true;dio.k=1;dio.pins[0].target=ally;
+          const pin=dio.pins[0].el,pointerId=73,pinEvent={pointerId,pointerType:'touch',bubbles:true,cancelable:true,clientX:24,clientY:24};
+          pin.dispatchEvent(new PointerEvent('pointerdown',pinEvent));
+          const dioramaDownDeferred=!c.pendingRespawnJump&&!a.superJumpState;
+          pin.dispatchEvent(new PointerEvent('pointerup',pinEvent));
+          const dioramaQueued=c.pendingRespawnJump?.actor===ally&&!a.superJumpState;
+          for(let i=0;i<120;i++){input.pollPad();Match.prototype.updateController.call(match,1/60);}
+          const heldAxesPreserve=c.pendingRespawnJump?.actor===ally&&input.lastDevice==='pad'&&input.navigationDevice==='touch';
+          a.alive=true;Match.prototype.updateController.call(match,1/60);const waitsForLanding=!a.superJumpState;
+          a.grounded=true;Match.prototype.updateController.call(match,1/60);const landed=a.superJumpState?.target===ally&&!c.pendingRespawnJump;
+          a.alive=false;a.superJumpState=null;Match.prototype.updateController.call(match,1/60);c.requestMapJump(ally);
+          window.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch'}));c.requestMapJump(ally);input.pollPad();
+          pad.buttons[0]={pressed:true,value:1};input.pollPad();Match.prototype.updateController.call(match,1/60);
+          const freshPadCancels=!c.pendingRespawnJump;
+          c.requestMapJump(ally);c.menuBlocked=true;Match.prototype.updateController.call(match,1/60);
+          const pauseCancels=!c.pendingRespawnJump&&!c.mapHeld&&!a.intent.fire;
+          return {deadBlocked,hudQueued,dioramaDownDeferred,dioramaQueued,waitsForLanding,landed,pauseCancels,heldAxesPreserve,freshPadCancels};
+        } finally {
+          if(padDescriptor)Object.defineProperty(navigator,'getGamepads',padDescriptor);else delete navigator.getGamepads;
+          input.pollPad();hud?.dispose();dio?.el.remove();input.keys.clear();input.pressed.clear();input.mouse.left=false;input.lastDevice=old.device;
+          mobile.setMap(false);G.match=old.match;G.actors=old.actors;G.input=old.input;G.level=old.level;
+        }
+      });
+      assert.deepEqual(respawnNavigation,{deadBlocked:true,hudQueued:true,dioramaDownDeferred:true,dioramaQueued:true,waitsForLanding:true,landed:true,pauseCancels:true,heldAxesPreserve:true,freshPadCancels:true});
+      entry.checks.push('actual-built-Match-HUD-diorama-dead-map-selection-and-deferred-respawn-admission');
+      const mapGyro = await page.evaluate(() => {
+        const old={match:G.match,actors:G.actors,rig:G.rig,camera:G.camera,level:G.level,device:input.lastDevice,active:mobile.active,enabled:mobile.gyro.enabled};
+        const a={alive:true,grounded:true,team:0,yaw:0,weapon:{kind:'shooter',range:12},pos:new THREE.Vector3(),intent:{move:new THREE.Vector3()},canSuperJump(){return true;}};
+        const rig={yaw:.2,pitch:.3,dioLook:{x:0,y:0},mapK:0},c=new controller.constructor(a,rig,input);c.computeAim=()=>{};
+        const match={state:'playing',paused:false,local:a,controller:c};let dio;
+        try {
+          G.match=match;G.actors=[a];G.rig=rig;G.level={spawnPads:[new THREE.Vector3()]};
+          G.camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,100);G.camera.position.set(0,8,12);G.camera.lookAt(0,0,0);G.camera.updateMatrixWorld();
+          mobile.active=true;mobile.gyro.enabled=true;mobile.setMap(false);input.lastDevice='touch';input.keys.add('Tab');input.pressed.add('Tab');
+          dio=new DioramaOverlay(document.body);Match.prototype.updateController.call(match,1/60);dio.update(1/60,1);
+          const x=dio.cx,y=dio.cy;mobile.gyro.dYaw=.04;mobile.gyro.dPitch=.03;Match.prototype.updateController.call(match,1/60);dio.update(1/60,1);
+          const cursorMoves=dio.cx<x&&dio.cy<y,frozen=rig.yaw===.2&&rig.pitch===.3,after=[dio.cx,dio.cy];dio.update(1/60,1);
+          const once=dio.cx===after[0]&&dio.cy===after[1];input.keys.delete('Tab');c.setTurfMap(false);mobile.gyro.dYaw=.5;Match.prototype.updateController.call(match,1/60);
+          const noReplay=rig.yaw===.2;mobile.gyro.dYaw=.02;Match.prototype.updateController.call(match,1/60);const battleResumes=rig.yaw>.2;
+          return {cursorMoves,frozen,once,noReplay,battleResumes};
+        } finally {
+          dio?.el.remove();input.keys.clear();input.pressed.clear();mobile.gyro.discard();mobile.gyro.enabled=old.enabled;mobile.active=old.active;input.lastDevice=old.device;
+          G.match=old.match;G.actors=old.actors;G.rig=old.rig;G.camera=old.camera;G.level=old.level;
+        }
+      });
+      assert.deepEqual(mapGyro,{cursorMoves:true,frozen:true,once:true,noReplay:true,battleResumes:true});
+      entry.checks.push('actual-built-gyro-map-cursor-single-consumption-and-camera-ownership');
+
+      const shooterCorners = await page.evaluate(async () => {
+        const hud = new HUD();
+        try {
+          hud._buildReticle('shooter');
+          const rows = [];
+          for (const spread of [0,20,0]) {
+            hud.ret.style.setProperty('--sp',String(spread));
+            const ticks=[...hud.ret.querySelectorAll('.iw-ret__tick')];
+            ticks.forEach(t=>t.style.transition='none');
+            await new Promise(requestAnimationFrame);
+            rows.push(ticks.map(t=>{
+              const s=getComputedStyle(t),m=new DOMMatrix(s.transform);
+              return {x:m.e,y:m.f,width:parseFloat(s.width),height:parseFloat(s.height),diagonal:Math.abs(Math.abs(m.a)-Math.SQRT1_2)<1e-5};
+            }));
+          }
+          return rows;
+        } finally { hud.dispose(); }
+      });
+      for (const [i,row] of shooterCorners.entries()) {
+        assert.equal(row.length,4);
+        const x=i===1?44:24;
+        assert.deepEqual(row.map(t=>[t.x,t.y]),[[-x,-24],[x,-24],[-x,24],[x,24]]);
+        assert(row.every(t=>t.width===3&&t.height===14&&t.diagonal));
+      }
+      entry.checks.push('actual-built-Shooter-measured-diagonal-corners-expand-and-contract');
+
+
+      // Complete built action pipeline, including the native Character trigger.
+      // Ground collision/paint/projectile display are bounded fixture surfaces.
+      await page.evaluate(async () => {
+        const { install } = await import('/patches/splatoon3/runtime/install.mjs');
+        const { Actor } = await import('/src/game/actor.js');
+        const { Character } = await import('/src/game/character.js');
+        const { on } = await import('/src/core/ctx.js');
+        const THREE = await import('three');
+        install(await fetch('/patches/splatoon3/profile.json').then(r => r.json()));
+        G.scene = new THREE.Scene(); G.teamColors = [new THREE.Color('orange'), new THREE.Color('blue')];
+        G.level = { blocks: [], groundHeight: () => 0 };
+        G.paint = { sample: () => 1, splat: () => 0 };
+        G.physics = { los: () => true, raycast: (_a, _b, _c, hit) => { hit.hit = false; return hit; } };
+        // MobileInput routes map changes to the active Match controller, just
+        // as in production, even after temporary controller probes above.
+        G.match = { playing: () => true, controller };
+        G.projectiles = { update() {}, fireDualies() {} };
+        const a = window.actionActor = new Actor({ team: 0, name: 'browser input', weapon: 'dualies', CharacterClass: Character });
+        a.grounded = a.ground.hit = true; a._integrate = () => {}; a._spawnBarrier = () => {};
+        a.canSuperJump = () => false; G.actors = [a];
+        window.actionDodges = 0; on('weapon:dodge', event => { if (event.actor === a) actionDodges++; });
+        controller.a = a; sim.match.local = a; rig.target = a;
+        sim.match.update = dt => a.update(dt); sim.s3Clock.reset();
+        mobile.reset(); mobile.setVisible(true); mobile.moveX = .8; input.lastDevice = 'touch';
+      });
+      await page.locator('[data-c="fire"]').tap(); await page.locator('[data-c="jump"]').tap();
+      await page.evaluate(() => advance(1 / 120));
+      assert.equal(await page.evaluate(() => actionDodges), 0);
+      await page.evaluate(() => advance(1 / 120));
+      assert.equal(await page.evaluate(() => actionDodges), 1);
+      await page.evaluate(() => {
+        // A separate held-input trial begins from neutral admission state.
+        // Pressing jump again during the preceding tap's active roll is illegal.
+        actionActor.weaponRunner.reset(); actionActor.grounded = true;
+        actionActor.jumpBuffer = 0; actionActor._prevIntent.jump = false;
+        mobile.reset(); mobile.moveX = .8; actionDodges = 0;
+        const pointer = (id, pointerId, type) => {
+          const el = document.querySelector(`[data-c="${id}"]`), r = el.getBoundingClientRect();
+          el.dispatchEvent(new PointerEvent(type, { pointerId, pointerType: 'touch', bubbles: true, cancelable: true, clientX: r.x + r.width / 2, clientY: r.y + r.height / 2 }));
+        };
+        window.actionPointer = pointer;
+        pointer('fire', 501, 'pointerdown'); pointer('jump', 502, 'pointerdown');
+        for (let i = 0; i < 31; i++) advance(1 / 60);
+        pointer('jump', 502, 'pointerup'); pointer('jump', 503, 'pointerdown');
+        advance(1 / 120); advance(1 / 120);
+        for (let i = 0; i < 60; i++) advance(1 / 60);
+      });
+      assert.equal(await page.evaluate(() => actionDodges), 2, 'held touch release/repress reaches real Character once');
+      await page.evaluate(() => { actionPointer('jump', 503, 'pointerup'); actionPointer('fire', 501, 'pointerup'); advance(1 / 60); });
+      assert.equal(await page.evaluate(() => actionActor.intent.jump), false);
+      entry.checks.push('native-taps-and-DOM-touch-repress-reach-actual-Actor-Runner-Character-once');
+      const subOwnership = await page.evaluate(() => {
+        const old = G.projectiles, shots = [];
+        try {
+          mobile.reset(); mobile.moveX = mobile.moveY = 0; input.lastDevice = 'touch';
+          actionActor.setWeapon('shooter'); actionActor.kidT = 1; actionActor.ink = 100;
+          actionActor._prevIntent.fire = actionActor._prevIntent.sub = false;
+          G.projectiles = { update() {}, fireShooter() { shots.push('main'); }, throwBomb() { shots.push('bomb'); } };
+          actionPointer('sub', 601, 'pointerdown'); actionPointer('fire', 602, 'pointerdown');
+          for (let i = 0; i < 20; i++) advance(1 / 60);
+          const aiming = actionActor.weaponRunner.aimingSub, heldShots = [...shots];
+          actionPointer('sub', 601, 'pointerup'); advance(1 / 60); const releaseShots = [...shots];
+          actionPointer('fire', 602, 'pointerup'); for (let i = 0; i < 30; i++) advance(1 / 60);
+          return { aiming, heldShots, releaseShots, finalShots: shots };
+        } finally { mobile.reset(); G.projectiles = old; actionActor.setWeapon('dualies'); }
+      });
+      assert.deepEqual(subOwnership, { aiming: true, heldShots: [], releaseShots: [], finalShots: ['bomb'] });
+      entry.checks.push('native-DOM-sub-hold-and-release-exclude-simultaneous-main-and-phantom-replay');
+      await runHybridKeyboardMapCases({ page, gesture, entry });
+
+      }
+      if (!focusedOnly && !negativeControl) {
+        const previousViewport=page.viewportSize();
+        try {
+          await page.setViewportSize({width:390,height:844});
+          await page.evaluate(()=>{input.lastDevice='touch';mobile.reset();mobile.setVisible(true);document.documentElement.classList.add('iw-touch');});
+          await page.waitForFunction(()=>{const el=mobile.root.querySelector('.iwm-rotate');return el&&getComputedStyle(el).display!=='none'&&el.getBoundingClientRect().width>0;});
+          entry.portraitGuard=await page.evaluate(()=>{
+            const overlay=mobile.root.querySelector('.iwm-rotate'),rows=[],gyro=mobile.gyro.enabled;
+            const neutral=()=>mobile._ptr.size===0&&mobile._stick.id===-1&&mobile.moveX===0&&mobile.moveY===0&&mobile.lookDX===0&&mobile.lookDY===0&&mobile.pressed.size===0&&!mobile.mapOpen&&Object.values(mobile.buttons).every(v=>!v);
+            const route=(id,x,y)=>{for(const [type,dx,dy]of [['pointerdown',0,0],['pointermove',30,20],['pointerup',30,20]])overlay.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerType:'touch',pointerId:id,clientX:x+dx,clientY:y+dy}));};
+            for(const [i,id]of ['fire','squid','jump','sub','special','map','gyro','pause'].entries()){const b=mobile._box(id);route(i+90,b.x,b.y);if(!neutral())throw Error('Portrait hidden control routed: '+id);rows.push(id);}
+            for(const x of [30,360]){route(110+x,x,400);if(!neutral())throw Error('Portrait overlay drag routed');}
+            if(mobile.gyro.enabled!==gyro)throw Error('Portrait pointer changed gyro');
+            const r=overlay.getBoundingClientRect();return {controls:rows,neutral:neutral(),gyroUnchanged:true,visible:getComputedStyle(overlay).display!=='none',width:r.width,height:r.height};
+          });
+          await page.screenshot({path:path.join(evidence,engineName+'-portrait-guard.png'),animations:'disabled'});
+        } finally {if(previousViewport)await page.setViewportSize(previousViewport);await page.evaluate(()=>{mobile.reset();input.lastDevice='touch';mobile.setVisible(true);});}
+        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+        const fire=await page.evaluate(()=>mobile._box('fire'));
+        await page.touchscreen.tap(fire.x,fire.y);
+        assert(await page.evaluate(()=>mobile.pressed.has('fire')),'landscape FIRE edge restores after portrait');
+        await page.evaluate(()=>mobile.reset());
+        entry.checks.push('portrait-guard-visible-native-DOM-routing-neutral-landscape-restored');
+      }
       await page.screenshot({ path: path.join(evidence, engineName + '-tablet-controls.png') });
+      // Transition coverage ends by destroying MobileInput; run it after every
+      // probe that requires the live overlay, retaining its destruction checks.
+      await runTouchTransitionCases({
+        page, context, cdp, engineName, gesture, entry, report, negativeControl,
+      });
     } finally { await context.close(); }
   }
   assert.deepEqual(errors, []); report.status = 'passed';

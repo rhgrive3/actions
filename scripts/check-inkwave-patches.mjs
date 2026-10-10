@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { runLoggedTestProcess } from './run-logged-test-process.mjs';
 import vm from 'node:vm';
 import { checkCompatibility, adaptSource, PATCH_ROOT } from '../patches/splatoon3/adapter.mjs';
 import { numericStatus } from './sync-inkwave-numeric-status.mjs';
@@ -36,19 +36,26 @@ try {
     for (const file of [...walk(path.join(SRC, 'src')), ...walk(PATCH_ROOT)]) {
       if (!/\.m?js$/.test(file)) continue;
       const rel = path.relative(SRC, file);
-      new vm.SourceTextModule(adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, fs.readFileSync(file, 'utf8')))), { identifier: file });
+      try {
+        new vm.SourceTextModule(adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, fs.readFileSync(file, 'utf8')))), { identifier: file });
+      } catch (error) {
+        // An unlabelled SyntaxError in a 300+ file integration gives no clue
+        // which exact composed module failed. Keep fail-closed parsing while
+        // printing the module path so CI can pinpoint the broken adapter.
+        throw new Error(`INKWAVE composed module parse failure (${rel}): ${error.message}`, { cause: error });
+      }
     }
   }
   const files = [...walk(path.join(PATCH_ROOT, 'tests')), ...walk(path.join(RELIABILITY_ROOT, 'tests'))].filter(f => f.endsWith('.test.mjs')).sort();
   if (!files.length) throw new Error('No patch tests discovered');
-  const result = spawnSync(process.execPath, ['--experimental-vm-modules', '--test', ...files], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
   const logDir = path.resolve(process.env.INKWAVE_TEST_LOG_DIR || path.join(ROOT, '.ci-scratch/inkwave-patches'));
   const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
   if (['/tmp', '/var/tmp', '/dev/shm'].some(p => physical(logDir) === p || physical(logDir).startsWith(p + '/'))) throw Error('Persistent test log storage required');
   fs.mkdirSync(logDir, { recursive: true });
   const log = path.join(logDir, 'patch-tests.log');
-  fs.writeFileSync(log + '.writing', (result.stdout || '') + (result.stderr || ''));
-  fs.renameSync(log + '.writing', log);
+  const result = await runLoggedTestProcess(process.execPath, ['--experimental-vm-modules', '--test', ...files], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, logFile: log });
+  result.stdout = fs.readFileSync(log, 'utf8');
+  result.stderr = '';
   if (result.status !== 0) {
     const lines = (result.stdout || '').split('\n'), failures = [];
     for (let i = 0; i < lines.length; i++) if (/^\s*not ok\b/.test(lines[i])) {

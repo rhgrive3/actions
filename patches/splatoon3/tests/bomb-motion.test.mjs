@@ -5,6 +5,12 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
+import { ARC_PREVIEW_MIN_INTERVAL_S } from '../runtime/weapons.mjs';
 
 // The complete production installer and adapter run once in one VM. Duplicate
 // installers are exercised separately and must retain the original registry.
@@ -32,7 +38,7 @@ async function production() {
       ? path.join(fs.realpathSync(baseline), path.basename(file)) : null;
     const raw = fs.readFileSync(prior && fs.existsSync(prior) ? prior : file, 'utf8');
     const relative = path.relative(SRC, file);
-    let source = file.startsWith(SRC + path.sep) ? adaptSource(relative, raw) : raw;
+    let source = file.startsWith(SRC + path.sep) ? adaptRange(relative, adaptNetworkSource(relative, adaptQualitySource(relative, adaptReliability(relative, adaptTouchLayout(relative, adaptSource(relative, raw)))))) : raw;
     // Use only the real production adapter. A missing release/preview export
     // or connection must fail here instead of being repaired by the fixture.
     const module = new vm.SourceTextModule(source,
@@ -41,6 +47,7 @@ async function production() {
   };
   const entry = new vm.SourceTextModule(`
     export { install } from './patches/splatoon3/runtime/install.mjs';
+    export { updateStormHold, isStormHolding } from './patches/splatoon3/runtime/storm-effects.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
     export { CHARACTER_BOMB_POSE } from './inkwave-public/src/game/character.js';
     export { installBombMotion, bombMotionSnapshot, bombReleasePosition, bombPreviewPosition } from './patches/splatoon3/runtime/bomb-motion.mjs';
@@ -99,7 +106,9 @@ function rig(api, kind = 'shooter', enabled = true) {
   function step(dt = 1 / 60, input = {}) {
     G.projectiles = projectiles;
     a.intent.fire = !!input.fire; a.intent.sub = !!input.sub;
-    G.time += dt; a.weaponRunner.update(dt, input); a._finishFrame(dt); ch.root.updateMatrixWorld(true);
+    // This rig calls the runner directly; Actor.update owns the Slosher 16F post-shot countdown (#926).
+    const runner = a.weaponRunner; if (runner.s3SloshPostShot > 0) runner.s3SloshPostShot = Math.max(0, runner.s3SloshPostShot - dt);
+    G.time += dt; a.lastFire += dt; a.weaponRunner.update(dt, input); a._finishFrame(dt); ch.root.updateMatrixWorld(true);
     assert.ok(Array.from(ch.P).every(Number.isFinite));
     assert.ok(ch.getMuzzle(new THREE.Vector3()).toArray().every(Number.isFinite));
   }
@@ -159,7 +168,7 @@ function countCalls(ch) {
   return counts;
 }
 
-test('real release creates its projectile immediately in whip posture, without a second cock', async () => {
+test('admitted release creates its projectile in whip posture without a second cock after minimum ready time', async () => {
   const api = await production(), C = api.CHARACTER_CHANNELS, T = api.CHARACTER_TIMERS;
   const measurements = [];
   for (const hz of [30, 60, 120]) for (const holdFrames of [1, hz / 2]) {
@@ -169,6 +178,11 @@ test('real release creates its projectile immediately in whip posture, without a
         for (let i = 0; i < holdFrames; i++) x.step(1 / hz, { sub: true });
         assert.equal(x.projectiles.bombs.length, 0);
         x.step(1 / hz, { subReleased: true });
+        // A short tap is now queued by the native gameplay ready gate. The
+        // pose assertions below concern actual emission, not physical R-up.
+        for (let wait = 0; x.a.weaponRunner.s3SubReady?.pending && wait < Math.ceil(hz * 5 / 60) + 2; wait++) {
+          assert.equal(x.projectiles.bombs.length, 0); x.step(1 / hz);
+        }
         assert.equal(x.projectiles.bombs.length, 1);
         assert.equal(x.a.ink, 30, 'actual 70 ink cost remains on the release tick');
         assert.ok(Math.abs(x.ch.tr[T.T_THROW] - 1 / hz) < 1e-8, 'native Float32 clock advances by exactly one rendered update');
@@ -219,7 +233,7 @@ test('actual Storm deployment keeps the special throw and never starts bomb reco
   const api = await production(), traces = [];
   const previous = { physics: api.G.physics, level: api.G.level };
   const level = { blocks: [], queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; return out; },
-    groundHeight: () => 0 };
+    groundHeight: () => 0, spawnPads: [new api.THREE.Vector3(-80,0,0),new api.THREE.Vector3(80,0,0)], spawnBarrier: 0 };
   api.G.level = level; api.G.physics = new api.Physics(level);
   try {
     for (const enabled of [false, true]) {
@@ -227,7 +241,10 @@ test('actual Storm deployment keeps the special throw and never starts bomb reco
       try {
         r.a.weapon = { ...r.a.weapon, special: 'storm' };
         api.G.projectiles = r.projectiles;
-        r.a._startSpecial();
+        r.a.special = r.a.specialCost(); r.a._startSpecial();
+        assert.equal(api.isStormHolding(r.a), true); assert.equal(r.projectiles.bombs.length, 0);
+        r.a.intent.sub = true; api.updateStormHold(r.a, 1 / 60, api.G);
+        r.a.intent.sub = false; api.updateStormHold(r.a, 1 / 60, api.G);
         assert.equal(r.projectiles.bombs.length, 1); assert.equal(r.projectiles.bombs[0].kind, 'storm');
         if (enabled) assert.equal(api.bombMotionSnapshot(r.ch).throwing, false, 'the native throw event also belongs to Storm');
         for (let i = 0; i < 40; i++) {
@@ -301,14 +318,17 @@ test('hidden, form, death, reset, disposal and weapon swap invalidate owned bomb
         if (action === 'hide') r.ch.setVisible(true); else r.a.form = 'kid';
         for (let i = 0; i < 30; i++) r.step(1 / 60, { sub: true });
         assert.equal(r.ch.bombHeld, true, 'current actual input rebuilds fresh hold after return');
-        r.step(1 / 60, { subReleased: true }); assert.equal(r.projectiles.bombs.length, 1);
+        r.step(1 / 60, { subReleased: true });
+        r.step(1 / 60);
+        assert.equal(r.projectiles.bombs.length, 1);
       }
     } finally { if (action !== 'dispose') r.close(); }
   }
   for (const action of ['reset', 'swap', 'form', 'hide', 'death']) {
     const r = rig(api);
     try {
-      r.step(1 / 60, { sub: true }); r.step(1 / 60, { subReleased: true });
+      for (let ready = 0; ready < 6; ready++) r.step(1 / 60, { sub: true });
+      r.step(1 / 60, { subReleased: true });r.step(1 / 60);
       assert.equal(api.bombMotionSnapshot(r.ch).throwing, true);
       const beforeClock = r.ch.tr[T.T_THROW];
       if (action === 'reset') r.a.weaponRunner.reset();
@@ -328,9 +348,20 @@ test('held and release overlays reserve the left hand during main attacks, movem
     const r = rig(api, kind);
     try {
       r.a.vel.set(1.5, 0, 1); r.a.grounded = false;
-      for (let i = 0; i < 40; i++) { r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.step(1 / 60, { sub: true, fire: true }); r.a.ink = 100; }
+      for (let i = 0; i < (kind === 'slosher' ? 80 : 40); i++) { r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.step(1 / 60, { sub: true, fire: kind !== 'slosher' || i === 0 }); r.a.ink = 100; }
+      // Splattershot's verified post-shot sub lock can interrupt a simultaneous
+      // sub hold. Releasing main fire must admit the still-held sub after 4F.
+      if (kind === 'shooter' && !r.ch.bombHeld) {
+        for (let i = 0; i < 4; i++) r.step(1 / 60, { sub: true, fire: false });
+        assert.equal(r.a.weaponRunner.aimingSub, true, 'gameplay sub is admitted after the 4F lock');
+        // Gameplay admission is exact; the held-bomb pose eases the free hand
+        // into place over subsequent presentation frames.
+        for (let i = 0; i < 4; i++) r.step(1 / 60, { sub: true, fire: false });
+        for (let i = 0; i < 36 && r.ch.P[C.IKL] >= .01; i++) r.step(1 / 60, { sub: true, fire: false });
+      }
       assert.equal(r.ch.bombHeld, true); assert.ok(r.ch.P[C.IKL] < .01, kind);
       r.step(1 / 60, { subReleased: true, fire: true });
+      r.step(1 / 60); // #1037 use tick ends the held visual and begins recovery
       assert.equal(r.ch.bomb.group.visible, false); assert.ok(r.ch.P[C.IKL] < .01, kind);
       assert.ok(r.ch.P[C.FARML] > -1, kind);
       r.a.weaponRunner.reset(); r.a.grounded = true;
@@ -387,7 +418,7 @@ test('release and per-frame preview sample native rig without changing any live 
       r.a.vel.set(1.8, 0, 2.9);
       for (let i = 0; i < 30; i++) {
         r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.a.yaw = .4 + i * .004;
-        r.step(1 / 60, { sub: true, fire: kind === 'slosher' && i === 4 });
+        r.step(1 / 60, { sub: true, fire: kind === 'slosher' && i === 0 });
         r.a.ink = 100;
         const before = preservedRig(r, api, true), beforeCalls = { ...calls }, beforeEvents = flowEvents;
         const preview = new api.THREE.Vector3(0, 1.35, 0);
@@ -395,7 +426,7 @@ test('release and per-frame preview sample native rig without changing any live 
         assert.deepEqual(preservedRig(r, api, true), before, kind + ' preview preserves the complete live native rig and physics scratch');
         assert.deepEqual(calls, beforeCalls, 'preview performs no update, animation or secondary simulation');
         assert.equal(flowEvents, beforeEvents);
-        assert.ok(preview.distanceTo(r.a.pos) < 1.25, 'sample is reachable by this native model');
+        assert.ok(preview.distanceTo(r.a.pos) < 1.25, `sample is reachable by this native model ${kind} frame${i}: physical=${preview.distanceTo(r.a.pos)} rendered=${preview.distanceTo(r.ch.root.position)}`);
       }
       const before = preservedRig(r, api), beforeCalls = { ...calls }, preview = api.bombPreviewPosition(r.a, new api.THREE.Vector3());
       r.projectiles.updateArc(r.a, true);
@@ -406,7 +437,9 @@ test('release and per-frame preview sample native rig without changing any live 
         'actual drawn native arc starts at the same native release sample');
       // Trigger and launch in the real runner, with no intervening pose update.
       api.G.projectiles = r.projectiles;
-      r.a.weaponRunner.update(0, { subReleased: true });
+      r.a.weaponRunner.update(1 / 60, { subReleased: true });
+      assert.equal(r.projectiles.bombs.length, 0, 'no same-tick launch under #1037');
+      r.a.weaponRunner.update(1 / 60, {});
       assert.equal(r.projectiles.bombs.length, 1);
       assert.ok(r.projectiles.bombs[0].pos.distanceTo(preview) < 1e-12, 'preview and creation use the same pose and physical origin');
       assert.deepEqual(calls, beforeCalls, 'actual source throw samples without an extra Character tick');
@@ -491,14 +524,15 @@ test('moving real throw tick has the same walking contacts, cadence and root vel
       for (let i = 0; i < 65; i++) {
         r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.a.yaw = .4 + i * .004;
         r.a.ink = 100;
-        r.step(1 / 60, { sub: i < 20, subReleased: i === 20, fire: i === 13 });
+        r.step(1 / 60, { sub: i < 20, subReleased: i === 20, fire: i === 13 || i === 30 });
         rows.push({ feet: Array.from(r.ch.feet, fields), root: fields({ rp: r.ch.rp, rv: r.ch.rv, ra: r.ch.ra,
           prevYaw: r.ch.prevYaw, yawRate: r.ch.yawRate, phase: r.ch.phase, cadence: r.ch.cad, moving: r.ch.moving }),
           pose: Array.from(r.ch.P), springs: Array.from(r.ch.sp), hair: Array.from(r.ch.hv),
           clocks: Array.from(r.ch.tr), calls: { ...calls }, volleys });
         rows.at(-1).motions = Object.fromEntries(DETAIL_HOOKS.map(([module, snapshot]) => [module, JSON.parse(JSON.stringify(api[snapshot](r.ch)))]));
       }
-      assert.equal(volleys, 1, 'real slosher fire is not duplicated by the concurrent bomb');
+      assert.equal(rows[20].volleys, 0, 'the concurrent main request is rejected by the production sub owner');
+      assert.equal(volleys, 1, 'one later legal Slosher request fires without being duplicated by sampling');
       assert.equal(calls.update, 65); assert.equal(calls._trackRoot, 65); assert.equal(calls._updateFeet, 65);
       assert.equal(calls._animWeapon, 65); assert.equal(calls._updateHair, 65);
       assert.ok(rows[20].root.moving, 'throw tick remains a real moving step');
@@ -541,7 +575,8 @@ test('native drawn arc follows actual bomb origin, velocity and gravity at every
       [vertices.getX(i), vertices.getY(i), vertices.getZ(i)]);
     assert.equal(drawn.length, 64, 'actual native BufferAttribute draw supplies the complete collision-free arc');
     api.G.projectiles = r.projectiles;
-    r.a.weaponRunner.update(0, { subReleased: true });
+    r.a.weaponRunner.update(1 / 60, { subReleased: true });
+    r.a.weaponRunner.update(1 / 60, {});
     const bomb = r.projectiles.bombs[0];
     assert.deepEqual(drawn[0], Array.from(bomb.pos.toArray(), Math.fround));
     const launchVelocity = Array.from(bomb.vel.toArray());
@@ -575,6 +610,177 @@ test('native drawn arc follows actual bomb origin, velocity and gravity at every
   } finally { api.PLAYER.waterY = waterY; r.close(); }
 });
 
+// Issue #798: continuous movement and aim share a bounded local presentation
+// refresh cadence. Discontinuities still delegate to the unchanged native path.
+test('issue 798: aiming micro-drift reuses the cached arc without new collision queries', async () => {
+  const api = await production(), r = rig(api);
+  const waterY = api.PLAYER.waterY, originalPhysics = api.G.physics;
+  try {
+    api.PLAYER.waterY = -10000;
+    r.a.yaw = 0.64; r.a.pitch = -0.19;
+    for (let i = 0; i < 40; i++) r.step(1 / 60, { sub: true });
+    r.projectiles.updateArc(r.a, true);
+    const attribute = r.projectiles.arcGeo.getAttribute('position');
+    const landedBefore = r.projectiles._arcCache.landed;
+    let segments = 0;
+    const physics = api.G.physics, native = physics.segment;
+    physics.segment = function (...args) { segments++; return native.apply(this, args); };
+    try {
+      // Hold G.time inside one throttle interval and drift aim/position by
+      // less than the quantization epsilon: no native recompute may run.
+      const drift = 0.001;
+      for (let i = 0; i < 10; i++) {
+        r.a.pos.x += drift; r.a.pos.z += drift;
+        r.a.aimYaw += drift * 0.01; r.a.aimPitch += drift * 0.005;
+        r.projectiles.updateArc(r.a, true);
+        assert.equal(segments, 0, 'micro drift within one interval must not query Physics');
+        assert.equal(r.projectiles.arcLine.visible, true, 'cached guide stays visible every frame');
+        assert.equal(r.projectiles.arcRing.visible, landedBefore, 'landing marker follows the cached result');
+      }
+      const colorBefore = Array.from(r.projectiles.arcLine.material.color.toArray());
+      const ringScaleBefore = r.projectiles.arcRing.scale.x;
+      r.a.color.setRGB(0.12, 0.35, 0.7);
+      api.G.time += 0.01;
+      r.projectiles.updateArc(r.a, true);
+      assert.equal(segments, 0, 'live presentation refresh does not query Physics');
+      assert.notDeepEqual(Array.from(r.projectiles.arcLine.material.color.toArray()), colorBefore,
+        'cached guide color follows current actor ink/color state');
+      assert.notEqual(r.projectiles.arcRing.scale.x, ringScaleBefore, 'ring pulse follows current presentation time');
+      // A large throw-parameter change must recompute through the native path.
+      r.a.pos.x += 5; r.a.aimYaw += 0.5;
+      const beforeVertices = Array.from({ length: r.projectiles.arcGeo.drawRange.count },
+        (_, i) => [attribute.getX(i), attribute.getY(i), attribute.getZ(i)]);
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > 0, 'large aim/position change recomputes through native Physics');
+      assert.ok(segments <= 126, 'one recompute still runs at most one native preview pass');
+      const afterVertices = Array.from({ length: r.projectiles.arcGeo.drawRange.count },
+        (_, i) => [attribute.getX(i), attribute.getY(i), attribute.getZ(i)]);
+      assert.notDeepEqual(afterVertices, beforeVertices, 'large motion moves the drawn guide');
+      // Advancing past the throttle interval recomputes even when the native
+      // exact-value cache would still hit: drift again so both the wrapper
+      // interval and the native inputs change, then confirm the native pass.
+      r.a.pos.x += 0.2; r.a.aimYaw += 0.02;
+      api.G.time += ARC_PREVIEW_MIN_INTERVAL_S + 1 / 60;
+      const count = segments;
+      r.projectiles.updateArc(r.a, true);
+      assert.equal(segments, count, 'ordinary cadence retains one cached draw after the previous refresh');
+      r.a.pos.x += 0.01; r.a.aimYaw += 0.01; api.G.time += 1 / 60;
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > count, 'the following bounded tick refreshes the guide through the native path');
+      // Aiming off hides the guide through the native guard and resets state.
+      r.projectiles.updateArc(r.a, false);
+      assert.equal(r.projectiles.arcLine.visible, false);
+      // Re-show has no wrapper throttle state. Invalidate the underlying exact
+      // native cache too, so this proves the show path reaches Physics again.
+      r.projectiles._arcCache.physics = null;
+      const beforeShow = segments;
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > beforeShow, 'show after hide refreshes through native Physics');
+
+      // Actor, Physics instance and throw-speed changes retain immediate guards.
+      const other = rig(api);
+      try {
+        r.projectiles._arcCache.physics = null;
+        const beforeActor = segments;
+        r.projectiles.updateArc(other.a, true);
+        assert.ok(segments > beforeActor, 'actor change refreshes through native Physics');
+      } finally { other.close(); }
+      const previousPhysics = api.G.physics, changedPhysics = new api.Physics(api.G.level);
+      const changedSegment = changedPhysics.segment;
+      changedPhysics.segment = function (...args) { segments++; return changedSegment.apply(this, args); };
+      api.G.physics = changedPhysics;
+      const beforePhysics = segments;
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > beforePhysics, 'Physics instance change refreshes through native Physics');
+      api.G.physics = previousPhysics;
+      const oldThrowSpeed = api.SUB.bomb.throwSpeed;
+      api.SUB.bomb.throwSpeed = oldThrowSpeed + 0.1;
+      const beforeThrowSpeed = segments;
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > beforeThrowSpeed, 'throw-speed parameter change above epsilon refreshes');
+      api.SUB.bomb.throwSpeed = oldThrowSpeed;
+      // Actual bomb creation still uses the live pose, never the cached line.
+      api.G.projectiles = r.projectiles;
+      r.a.weaponRunner.update(1 / 60, { subReleased: true });
+      r.a.weaponRunner.update(1 / 60, {});
+      assert.equal(r.projectiles.bombs.length, 1, 'actual bomb gameplay is unchanged by the preview budget');
+    } finally {
+      physics.segment = native;
+    }
+  } finally {
+    api.G.physics = originalPhysics;
+    api.PLAYER.waterY = waterY;
+    r.close();
+  }
+});
+
+test('issue 798: installed native updateArc bounds walking and continuous aim queries at 30/60/120/144 Hz', async t => {
+  const api = await production(), waterY = api.PLAYER.waterY, originalPhysics = api.G.physics;
+  const originalThrowSpeed = api.SUB.bomb.throwSpeed, rows = [];
+  const installStamp = Symbol.for('inkwave.s3.arc-preview-performance.install.v1');
+  assert.equal(api.Projectiles.prototype[installStamp], true, 'the production Projectiles updater has the budget wrapper installed');
+  api.PLAYER.waterY = -10000;
+  try {
+    for (const mode of ['walking', 'aim']) for (const hz of [30, 60, 120, 144]) {
+      const r = rig(api), physics = api.G.physics, nativeSegment = physics.segment;
+      let queries = 0, lastQueryTime = NaN;
+      const refreshTimes = [];
+      physics.segment = function (...args) {
+        queries++;
+        if (api.G.time !== lastQueryTime) {
+          refreshTimes.push(api.G.time);
+          lastQueryTime = api.G.time;
+        }
+        return nativeSegment.apply(this, args);
+      };
+      const frames = hz, dt = 1 / hz;
+      let maximumFrameQueries = 0, maximumCacheAge = 0, cumulativeCacheAge = 0;
+      try {
+        for (let frame = 0; frame < frames; frame++) {
+          const before = queries;
+          api.G.time += dt;
+          if (mode === 'walking') r.a.pos.x += 4.32 * dt;
+          else r.a.aimYaw += 1.2 * dt;
+          r.projectiles.updateArc(r.a, true);
+          const frameQueries = queries - before;
+          maximumFrameQueries = Math.max(maximumFrameQueries, frameQueries);
+          assert.ok(frameQueries <= 126, `${mode} ${hz}Hz frame ${frame} must stay within one native preview pass`);
+          if (frameQueries) assert.equal(frameQueries, 126, 'empty-space native preview performs its real 126 segment queries');
+          assert.ok(refreshTimes.length > 0, 'native Physics.segment queries were observed');
+          const age = api.G.time - refreshTimes[refreshTimes.length - 1];
+          maximumCacheAge = Math.max(maximumCacheAge, age);
+          cumulativeCacheAge += age;
+          assert.ok(age <= ARC_PREVIEW_MIN_INTERVAL_S + dt + 1e-9,
+            `${mode} ${hz}Hz cached guide age stays within the 30Hz budget plus one render sample`);
+        }
+        for (let i = 1; i < refreshTimes.length; i++) {
+          assert.ok(refreshTimes[i] - refreshTimes[i - 1] >= ARC_PREVIEW_MIN_INTERVAL_S - 1e-9,
+            `${mode} ${hz}Hz continuous input cannot refresh above 30Hz`);
+        }
+        const expectedBudget = Math.min(30, hz / 2);
+        assert.ok(refreshTimes.length >= expectedBudget - 2 && refreshTimes.length <= expectedBudget,
+          `${mode} ${hz}Hz refreshes=${refreshTimes.length}; times=${JSON.stringify(refreshTimes)}; expected near ${expectedBudget}`);
+        assert.ok(queries <= frames * 126 / 2,
+          `${mode} ${hz}Hz reduces actual continuous-input collision queries by at least half`);
+        assert.ok(cumulativeCacheAge <= frames * (ARC_PREVIEW_MIN_INTERVAL_S + dt + 1e-9),
+          `${mode} ${hz}Hz cumulative sampled cache age stays bounded`);
+        assert.equal(queries, refreshTimes.length * 126, 'measured queries come from actual native preview passes');
+        rows.push({ mode, renderHz: hz, seconds: frames / hz, nativeRefreshes: refreshTimes.length,
+          segmentQueries: queries, maxQueriesPerRenderFrame: maximumFrameQueries,
+          maxCacheAgeSeconds: maximumCacheAge, cumulativeSampledCacheAgeSeconds: cumulativeCacheAge });
+      } finally {
+        physics.segment = nativeSegment;
+        r.close();
+      }
+    }
+    t.diagnostic(JSON.stringify(rows));
+  } finally {
+    api.G.physics = originalPhysics;
+    api.SUB.bomb.throwSpeed = originalThrowSpeed;
+    api.PLAYER.waterY = waterY;
+  }
+});
+
 test('a duplicate installer from a different VM realm preserves the original prototype hooks and live helper state', async () => {
   const api = await production(), r = rig(api, 'dualies');
   const otherContext = vm.createContext({}), modules = new Map();
@@ -598,7 +804,8 @@ test('a duplicate installer from a different VM realm preserves the original pro
     const before = preservedRig(r, api), first = api.bombPreviewPosition(r.a, new api.THREE.Vector3());
     const second = duplicate.namespace.bombPreviewPosition(r.a, new api.THREE.Vector3());
     assert.ok(second.distanceTo(first) < 1e-12); assert.deepEqual(preservedRig(r, api), before);
-    r.step(1 / 60, { subReleased: true });
+    for (let ready = 0; ready < 5; ready++) r.step(1 / 60, { sub: true });
+    r.step(1 / 60, { subReleased: true });r.step(1 / 60);
     assert.equal(r.projectiles.bombs.length, 1);
     assert.equal(duplicate.namespace.bombMotionSnapshot(r.ch).throwing, true, 'second-realm helper reads the actual first-installer state');
     const original = api.bombReleasePosition(r.a, new api.THREE.Vector3());
@@ -633,7 +840,8 @@ test('admission cancellation preserves paired native throw clocks through hide, 
     const baseline = rig(api, 'dualies', false), r = rig(api, 'dualies');
     try {
       for (const x of [baseline, r]) {
-        x.step(1 / hz, { sub: true }); x.step(1 / hz, { subReleased: true });
+        for (let ready = 0; ready < Math.ceil(hz * 5 / 60) + 1; ready++) x.step(1 / hz, { sub: true });
+        x.step(1 / hz, { subReleased: true });for(let startup=0;startup<Math.ceil(hz/60);startup++)x.step(1 / hz);
         if (action === 'hide') x.ch.setVisible(false);
         if (action === 'ancestor') api.G.scene.visible = false;
         if (action === 'dance') x.ch.setDance('future-custom-presentation');
@@ -664,7 +872,8 @@ test('admission cancellation preserves paired native throw clocks through hide, 
         assert.ok(drawnVertices(r.ch.weapon.left.pivot, api.THREE).length > 100);
         assert.ok(r.ch.ikErr.every(Number.isFinite));
         r.a.ink = 100; // a fresh actual release requires the native 70-ink cost
-        r.step(1 / hz, { sub: true }); r.step(1 / hz, { subReleased: true });
+        for (let ready = 0; ready < Math.ceil(hz * 5 / 60) + 1; ready++) r.step(1 / hz, { sub: true });
+        r.step(1 / hz, { subReleased: true });for(let startup=0;startup<Math.ceil(hz/60);startup++)r.step(1 / hz);
         assert.equal(api.bombMotionSnapshot(r.ch).throwing, true, `${action}: a fresh native event restarts owned presentation`);
       }
     } finally {
@@ -684,7 +893,8 @@ test('admission bomb hold and read-only release preview resume after mapped Spec
     const candidate = new api.THREE.Vector3(1, 2, 3), before = preservedRig(r, api, true);
     const preview = api.bombPreviewPosition(r.a, candidate.clone());
     assert.ok(preview.distanceTo(candidate) > .5); assert.deepEqual(preservedRig(r, api, true), before);
-    r.step(1 / 60, { subReleased: true });
+    for (let ready = 0; ready < 5; ready++) r.step(1 / 60, { sub: true });
+    r.step(1 / 60, { subReleased: true });r.step(1 / 60);
     assert.equal(r.projectiles.bombs.length, 1); assert.equal(api.bombMotionSnapshot(r.ch).throwing, true);
     assert.equal(r.ch.tr[T.T_THROW], Math.fround(1 / 60));
     assert.ok(drawnVertices(r.projectiles.bombs[0].mesh, api.THREE).length > 100);

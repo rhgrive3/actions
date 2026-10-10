@@ -5,14 +5,25 @@ import path from 'node:path';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
-const ROOT=new URL('../../../', import.meta.url).pathname.replace(/\/$/, ''), UP=process.env.INKWAVE_UPSTREAM_SOURCE || ROOT+'/inkwave-public';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+const ROOT=path.resolve(fileURLToPath(new URL('../../../', import.meta.url))), UP=path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT,'inkwave-public'));
 const {adaptSource}=await import(ROOT+'/patches/splatoon3/adapter.mjs');
 const {adaptTouchLayout}=await import(ROOT+'/patches/touch-layout/adapter.mjs');
 const {adaptPause}=await import('../pause-adapter.mjs');
 const {fixture}=await import(ROOT+'/patches/splatoon3/tests/source-fixture.mjs');
 const {installClock,runSimulation}= await import(ROOT+'/patches/splatoon3/runtime/clock.mjs');
+const {blockExpiredGuestInput}=await import(ROOT+'/patches/splatoon3/runtime/turf-finish.mjs');
 export const hashes={};
+function within(base,file){const rel=path.relative(base,file);return rel===''||rel!=='..'&&!rel.startsWith('..'+path.sep)&&!path.isAbsolute(rel);}
+export function resolveFixtureModule(specifier,from){
+ if(specifier==='three')return specifier;
+ let file=path.resolve(path.dirname(from),specifier);
+ const checkedInUpstream=path.join(ROOT,'inkwave-public');
+ if(within(checkedInUpstream,file))file=path.join(UP,path.relative(checkedInUpstream,file));
+ if(within(path.join(UP,'patches'),file))file=path.join(ROOT,path.relative(UP,file));
+ if(within(path.join(ROOT,'src'),file))file=path.join(UP,path.relative(ROOT,file));
+ return file;
+}
 // Follow the real dispatcher order, excluding only the adapter under test. This
 // also keeps the old negative control available after pause enters production.
 const dispatcher=fs.readFileSync(ROOT+'/patches/reliability/adapter.mjs','utf8');
@@ -21,16 +32,15 @@ assert.ok(order?.length, 'production reliability dispatcher adapter order');
 const imports=new Map([...dispatcher.matchAll(/import \{ (\w+) \} from '(\.\/[^']+)';/g)].map(m=>[m[1],m[2]]));
 const preceding=[];
 for(const name of order){
- if(name==='adaptPause')continue;
  assert.ok(imports.has(name),`actual dispatcher import ${name}`);
  const module=await import(new URL(imports.get(name),pathToFileURL(ROOT+'/patches/reliability/adapter.mjs')));
  preceding.push(module[name]);
 }
-function composed(rel, patched=false){let s=adaptTouchLayout(rel,adaptSource(rel,fs.readFileSync(UP+'/'+rel,'utf8')));for(const adapt of preceding)s=adapt(rel,s);if(patched)s=adaptPause(rel,s);hashes[rel]=crypto.createHash('sha256').update(s).digest('hex');return s;}
+function composed(rel, patched=false){let s=adaptTouchLayout(rel,adaptSource(rel,fs.readFileSync(UP+'/'+rel,'utf8')));for(const adapt of preceding){if(adapt===adaptPause&&!patched)continue;s=adapt(rel,s);}hashes[rel]=crypto.createHash('sha256').update(s).digest('hex');return s;}
 function section(s,a,b){const at=s.indexOf(a),end=s.indexOf(b,at);assert.ok(at>=0&&end>at,a);return s.slice(at,end);}
 function sources(patched){const main=composed('src/main.js',patched),match=composed('src/game/match.js',patched);
 const methods=[section(main,'  pause() {','\n  async quitToMenu() {'),section(main,'  _padMenus() {','\n  _updateHud(dt) {'),section(main,'  _onKey(e, repeat) {','\n  _onPointerUnlock() {')].join('\n');return {main,match,methods};}
-export async function boot(patched=true){
+export async function boot(patched=true,{transform=(_rel,source)=>source}={}){
  const {match,methods}=sources(patched);
  const f=await fixture(), modules=new Map(),listeners=new Map();let pads=[];
  const cls=()=>({add(){},remove(){},toggle(){}});
@@ -40,16 +50,16 @@ export async function boot(patched=true){
  function load(file){if(modules.has(file))return modules.get(file);const rel=path.relative(UP,file);let m;
  if(['src/core/ctx.js','src/config.js','src/game/physics.js'].includes(rel))m=synthetic(file,f);
  else if(file==='three')m=synthetic(file,{...f.THREE});
- else m=new vm.SourceTextModule(file.startsWith(UP+'/')?composed(rel,patched):fs.readFileSync(file,'utf8'),{context,identifier:file});modules.set(file,m);return m;}
+ else m=new vm.SourceTextModule(transform(rel,within(UP,file)?composed(rel,patched):fs.readFileSync(file,'utf8')),{context,identifier:file});modules.set(file,m);return m;}
  const entry=new vm.SourceTextModule("export { Input } from './src/core/input.js'; export { PlayerController } from './src/game/player.js';",{context,identifier:UP+'/resume-entry.js'});
- await entry.link((s,from)=>load(s==='three'?s:path.resolve(path.dirname(from.identifier),s)));await entry.evaluate();
+ await entry.link((s,from)=>load(resolveFixtureModule(s,from.identifier)));await entry.evaluate();
  const input=new entry.namespace.Input({}),a=f.make('shooter'),rig={yaw:0,pitch:0,mode:'follow',target:a};
  const controller=new entry.namespace.PlayerController(a,rig,input);controller.computeAim=()=>{};
  f.G.settings={aimAssist:0};f.G.rig=rig;f.G.actors=[a];f.G.time=0;f.G.mode='match';f.G.netm=null;
  f.G.projectiles.update=()=>{};const updates=[], ownedShots=[];
  const shoot=f.G.projectiles.fireShooter;
  f.G.projectiles.fireShooter=(actor,...args)=>{ownedShots.push(actor);shoot(actor,...args);};
- const actualMatch=vm.runInNewContext(`class Match {${section(match,'  update(dt) {','\n  _judge() {')}}; Match`,{...f,G:f.G});
+ const actualMatch=vm.runInNewContext(`class Match {${section(match,'  update(dt) {','\n  _judge() {')}}; Match`,{...f,G:f.G,blockExpiredGuestInput});
  const other=f.make('shooter');other.pos.x=10;
  const m={time:180,duration:180,stateT:0,attract:false,state:'playing',paused:false,local:a,controller,actors:[a,other],
    playing:actualMatch.prototype.playing || (()=>m.state==='playing'&&!m.paused),

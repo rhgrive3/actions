@@ -1,0 +1,16 @@
+# Contact and actor-local Sub gear acceptance
+
+Base868ac1a87c0. Assigned contact-recovery/gear-sub source failures are repaired without replacing current Kit, main-weapon or damage owners.
+
+Contact fixture changes preserve current contracts: repeated roll contact uses the existing24F profile interval; Roller recovery is measured from actual release; Blaster terrain burst resolves on the following fixed tick; grounded walking is compared after resetting the actor to a grounded test state. Storm fixtures explicitly press/release R after entering the real hold owner, preserving launch snapshots and lifetime assertions.
+
+Two runtime connections were defective. Gear mutated the shared SUB registry across native runner calls, so a57AP owner's synchronous throw callback could make another0AP owner pay45.5 instead of70. Kit release/preview also reread that shared scoped speed. The repair resolves actor-local cost and forward speed once on Kit specs, leaves the registry unchanged, and uses a per-Projectiles temporary preview-speed scalar with finally restoration. Native trajectory and its refresh cache read the same scalar. Existing receipt-based refill and all Kit per-bomb physics remain owned by their current code.
+
+Full production installation revealed an additional lost writer: final throwVelocity ignored its speed argument entirely. It now passes the supplied finite forward component to the existing fidelity equation, retaining the sourced vertical component, inherited velocity/caps, and the original default when no finite component is supplied. No numerical parameters change.
+
+Validation: both assigned source files29/29 pass; original Bomb/Storm separate vertical-cap and reinstall controls2/2 pass. Two full-install cases use actual Actor/Character/native Projectiles: nested cost isolation for Bomb/Suction/Curling; nested Bomb preview/throw/power and exception cleanup. The unchanged old full runtime fails the new nested-cost assertion; final candidate passes. The initial full-install velocity check exposed the ignored argument and was not counted as success. The final positive derives the unchanged inherited component from the native function, so raw legacy1.5Y is not confused with the installed sourced14.4Y component.
+
+This is local source/installed-module evidence, not new build, browser, hardware or complete multiplayer validation. Ghost packet and life/authority owners are unchanged. Peer Kit patches must be merged as hunks; do not replace these shared files wholesale.
+
+## Production dispatcher composition on wave4
+The first full-install fixture transformed native modules only, so it missed the existing gear/sub transformation of the fidelity module itself. The corrected fixture transforms native and patch modules through the full production dispatcher. The gear/sub adapter accepts exactly one known launch-speed shape. Explicit Kit/actor-resolved forward speed is used once; omitted speed retains the existing sub-power or Storm activation snapshot multiplier. Vertical launch and inheritance remain unchanged. Four limited cases pass, including nested actual Kit releases and previews, both speed sources, legacy equivalence and fail-closed negatives. This is not full browser or whole-CI acceptance.

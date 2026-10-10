@@ -5,7 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
+import { adaptConstrainedSource } from './source-fixture.mjs';
 import { installSquidrollMotion as duplicateInstall, squidrollMotionSnapshot as duplicateSnapshot } from '../runtime/squidroll-motion.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -21,7 +21,7 @@ async function production() {
     if (modules.has(file)) return modules.get(file);
     const source = fs.readFileSync(file, 'utf8');
     const module = new vm.SourceTextModule(file.startsWith(SRC + path.sep)
-      ? adaptSource(path.relative(SRC, file), source) : source,
+      ? adaptConstrainedSource(path.relative(SRC, file), source) : source,
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, module); return module;
   };
@@ -171,6 +171,17 @@ function posed(r, dense = false) {
     form: ch.form, kidVisible: ch.kid.visible, squidVisible: ch.squidRoot.visible,
     action: JSON.parse(JSON.stringify(api.movementMotionSnapshot(ch))),
     motion: JSON.parse(JSON.stringify(api.squidrollMotionSnapshot(ch))) };
+}
+function stableSnapshot(value) {
+  // Three.js can differ by one final IEEE-754 bit when zero-dt visual
+  // composition rebuilds equivalent quaternion/matrix state. Preserve exact
+  // structure and all non-numeric values while comparing numeric snapshots at
+  // a precision far tighter than any visible/gameplay tolerance.
+  if (typeof value === 'number') return Number.isFinite(value) ? Number(value.toPrecision(14)) : value;
+  if (Array.isArray(value)) return value.map(stableSnapshot);
+  if (value && typeof value === 'object') return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, stableSnapshot(item)]));
+  return value;
 }
 function save(rows) {
   const destination = process.env.INKWAVE_SQUIDROLL_TRACE_PATH;
@@ -444,7 +455,7 @@ test('production swim, wall, Roll and Super Jump own the displayed squid exclusi
     assert.ok(mantle(r).dot(velocity) > 1 - 1e-8, 'rendered native mantle follows world flight velocity');
     const frozen = posed(r), native = gameplay(r);
     for (let i = 0; i < 4; i++) r.visual(0);
-    assert.deepEqual(posed(r), frozen, 'paused composition retains drawn indexed geometry');
+    assert.deepEqual(stableSnapshot(posed(r)), stableSnapshot(frozen), 'paused composition retains drawn indexed geometry');
     assert.deepEqual(gameplay(r), native, 'paused composition retains native gameplay and springs');
     r.a.reset(); r.a.form = 'squid'; r.a.climbing = true; r.a.grounded = false;
     r.a.intent.squid = true; r.a.anim.wallNormal.set(0, 0, 1); r.a.intent.jump = true;

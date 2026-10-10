@@ -30,6 +30,7 @@ async function production() {
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export * from './patches/splatoon3/runtime/special-motion.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
+    export { updateStormHold } from './patches/splatoon3/runtime/storm-effects.mjs';
   `, { context, identifier: path.join(ROOT, 'special-production-entry.mjs') });
   await entry.link((specifier, from) => load(specifier === 'three'
     ? path.join(SRC, 'vendor/three/build/three.module.js')
@@ -68,8 +69,16 @@ function rig(api, kind = 'shooter', enabled = true) {
     close() { G.actors = G.actors.filter(x => x !== a); G.scene.remove(ch.root); ch.dispose(); } };
 }
 function start(r, id = 'slam') {
-  assert.equal(r.a.weapon.special, id, 'use the real public kit');
-  r.a._startSpecial();
+  // Exercise the native pose owner on the original weapon geometry without
+  // claiming that every current public kit still equips Slam or Storm.
+  r.a.weapon = { ...r.a.weapon, special: id };
+  r.a._startSpecial(); assert.equal(r.a.specialActive?.id, id);
+  if (id === 'storm') {
+    assert.equal(r.a.specialActive.phase, 'hold');
+    r.a.intent.sub=true; r.api.updateStormHold(r.a,1/60,r.api.G);
+    r.a.intent.sub=false; r.api.updateStormHold(r.a,1/60,r.api.G);
+    assert.equal(r.a.specialActive.phase, 'throw');
+  }
 }
 function posed(r, label) {
   const { ch, api } = r, { THREE } = api;
@@ -169,10 +178,10 @@ test('real slam phase changes suppress leap; grounded recovery releases the norm
   } finally { r.close(); before.close(); }
 });
 
-test('storm aligns empty-hand follow-through to actual immediate deployment, ordinary sub throws are unchanged', async () => {
+test('storm aligns empty-hand follow-through to actual R-release deployment, ordinary sub throws are unchanged', async () => {
   const api = await production(), r = rig(api, 'charger'), before = rig(api, 'charger', false);
   try {
-    assert.equal(r.a.weapon.special, 'storm');
+    assert.equal(r.a.weapon.kind, 'charger', 'the original native weapon geometry remains the control');
     let deployments = 0; api.G.projectiles.throwStorm = () => { deployments++; };
     // The opted-out native Storm has its original event age. Build the paired
     // native counterfactual with only the calibrated throw offset, rather than
@@ -408,7 +417,9 @@ test('a short actual Slam fall preserves native impact impulses when primary fir
             else if (impacted) r.a.weaponRunner.update(1 / hz, { fire: true });
             r.visual(1 / hz);
             if (!r.a.specialActive && !impacted) { impacted = true; contactAge = r.ch.tr[api.CHARACTER_TIMERS.T_SLAM]; }
-            if (impacted && i > hz + 5) break;
+            // #966 adds 15 fixed frames to Slam hang. After impact, continue
+            // through the native follow-through so the impact hair impulse is
+            // observed rather than truncating on the new later landing tick.
           }
           assert.ok(impacted && r.a.grounded, 'actual floor/ceiling Physics completes the special');
           assert.ok(Math.abs(contactAge - 1 / hz) < 1e-6, 'low ceiling makes fall/contact share its first visual tick');
@@ -427,8 +438,8 @@ test('a short actual Slam fall preserves native impact impulses when primary fir
 
 test('mapped Slam hang and strike keep actual native arm reach and drawn weapon grips', async () => {
   const api = await production();
-  const kits = Object.keys(api.profile.weapons).filter(k => api.WEAPONS[k].special === 'slam');
-  assert.equal(kits.length, 4, 'all four real public Slam kits must execute');
+  const kits = ['shooter','dualies','blaster','roller'];
+  assert.ok(kits.every(k=>api.WEAPONS[k]), 'all four original native weapon geometries remain exercised');
   for (const kind of kits) {
     const r = rig(api, kind);
     try {

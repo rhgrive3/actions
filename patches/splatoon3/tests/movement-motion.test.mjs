@@ -97,8 +97,10 @@ test('surge charge, partial burst, wall loss and top release reach the actual sq
       a.intent.jump = false; r.step();
       assert.equal(movementMotionSnapshot(ch).phase, 'surge-burst');
       assert.ok(ch.squid.pivot.scale.y > chargeScale * 1.1, 'release stretches the real mesh');
-      assert.equal(a.s3.surge.armorTime, 0, 'partial charge does not claim full armor');
+      assert.equal(a.s3.surge.armorTime, 0, '#568 wall release reserves the shield');
+      assert.equal(a.s3.surge.armorPending, true);
       a._ledgePop(new f.THREE.Vector3(0, 0, -1)); r.draw();
+      assert.equal(a.s3.actions.armor.armorTime, f.profile.movement.surge.armorTime, '#568 native launch starts the partial shield');
       assert.equal(movementMotionSnapshot(ch).phase, 'surge-top');
       const initial = ch.squid.pivot.quaternion.clone();
       for (let i = 0; i < Math.round(.1 * hz); i++) r.step();
@@ -138,11 +140,29 @@ test('standalone burst previews expire and Super Jump preparation follows the li
     squid(r, 'squid'); a._probeGround = () => { a.grounded = true; };
     a.s3.jumpChargeTime = f.profile.superJump.chargeTime / 2;
     a.superJump(new f.THREE.Vector3(0, 0, 8));
-    for (let i = 0; i < 24; i++) r.step();
-    assert.equal(movementMotionSnapshot(ch).phase, 'superjump-charge');
-    close(movementMotionSnapshot(ch).charge, .6);
-    for (let i = 24; i < 40; i++) r.step();
-    assert.equal(a.superJumpState.phase, 'flight'); assert.equal(movementMotionSnapshot(ch).phase, 'superjump-flight');
+    // The loop starts mid-charge, so the remaining prep is the rest of the charge plus the human
+    // startup. Drive the real state and record where the transition actually happens, so the gate
+    // is an exact known total rather than a stale frame index that drifts when a value changes.
+    const CHARGE_F = f.profile.superJump.chargeTime * 60;
+    // This actor is deliberately pre-charged to mid-charge, so only the REMAINING charge is left to
+    // run; the human startup has already been served by the time the loop starts (that startup is
+    // gated exactly, on an un-pre-charged actor, by movement-resources' dedicated boundary actor).
+    // The window therefore allows the remaining charge plus one tick of inclusive boundary slack.
+    const PREP_MAX = CHARGE_F / 2 + 1;
+    const seq = [];
+    let chargePeak = 0, flightAt = 0;
+    for (let i = 0; i < CHARGE_F * 2 + f.profile.superJump.startupHumanoidF * 2; i++) {
+      r.step();
+      const s = movementMotionSnapshot(ch);
+      if (seq[seq.length - 1] !== (s && s.phase)) seq.push(s && s.phase);
+      if (s && s.phase === 'superjump-charge') chargePeak = Math.max(chargePeak, s.charge);
+      if (s && s.phase === 'superjump-flight') { flightAt = i + 1; break; }
+    }
+    assert.equal(movementMotionSnapshot(ch).phase, 'superjump-flight',
+      `flight never began; phase sequence was ${JSON.stringify(seq)}`);
+    assert.ok(flightAt > 0 && flightAt <= PREP_MAX,
+      `takeoff must happen within the ${PREP_MAX}F remaining-charge window, saw ${flightAt} (phases ${JSON.stringify(seq)})`);
+    assert.ok(chargePeak > 0 && chargePeak <= 1, `charge progress must stay in range, peaked at ${chargePeak}`);
   } finally { ch.dispose(); }
 });
 
@@ -187,6 +207,33 @@ test('super jump charge is distinct from idle and flight is actually airborne be
   }
 });
 
+test('remote Super Jump charge transforms stay finite at 30/60/120Hz', async () => {
+  for (const hz of [30, 60, 120]) {
+    const r = await rig(hz), { a, ch } = r;
+    try {
+      a.remote = true; a.form = 'squid'; a.grounded = false;
+      a.superJumpState = { phase: 'charge', net: true, t: Number.NaN, sjEpoch: 4 };
+      r.draw();
+      assert.equal(movementMotionSnapshot(ch).phase, 'superjump-charge');
+      close(movementMotionSnapshot(ch).charge, 0);
+
+      a.superJumpState = { phase: 'charge', net: true, t: 0.2, sjEpoch: 4 };
+      r.draw();
+      close(movementMotionSnapshot(ch).charge, 0.2 / r.f.profile.superJump.chargeTime);
+      const transform = [
+        ...ch.root.position.toArray(), ...ch.root.quaternion.toArray(), ...ch.root.scale.toArray(),
+        ...ch.squid.pivot.position.toArray(), ...ch.squid.pivot.quaternion.toArray(), ...ch.squid.pivot.scale.toArray(),
+      ];
+      assert.ok(transform.every(Number.isFinite), `${hz}Hz transform: ${transform}`);
+
+      a.superJumpState = null; r.draw();
+      assert.notEqual(movementMotionSnapshot(ch).phase, 'superjump-charge');
+      assert.ok([...ch.squid.pivot.position.toArray(), ...ch.squid.pivot.quaternion.toArray(),
+        ...ch.squid.pivot.scale.toArray()].every(Number.isFinite), `${hz}Hz restored transform`);
+    } finally { ch.dispose(); }
+  }
+});
+
 test('wall charge takes over a live roll, full charge releases, and wall roll takes over surge', async () => {
   for (const hz of [30, 60, 120]) {
     const r = await rig(hz), { a, ch, f, dt } = r;
@@ -199,7 +246,8 @@ test('wall charge takes over a live roll, full charge releases, and wall roll ta
       for (let i = 1; i < Math.ceil(f.profile.movement.surge.chargeTime * hz); i++) r.step();
       close(a.s3.surge.charge, 1); close(movementMotionSnapshot(ch).charge, 1);
       a.intent.jump = false; r.step();
-      assert.ok(a.s3.surge.armorTime > 0); assert.equal(movementMotionSnapshot(ch).phase, 'surge-burst');
+      assert.equal(a.s3.surge.armorTime, 0); assert.equal(a.s3.surge.armorPending, true);
+      assert.equal(movementMotionSnapshot(ch).phase, 'surge-burst');
       a.intent.move.set(0, 0, 1); a.intent.jump = true; r.step();
       assert.ok(a.s3.roll); assert.equal(a.s3.surge, null);
       assert.equal(movementMotionSnapshot(ch).phase, 'roll');

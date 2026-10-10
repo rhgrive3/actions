@@ -1,0 +1,138 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import {execFileSync,spawnSync} from 'node:child_process';import path from 'node:path';import os from 'node:os';import crypto from 'node:crypto';
+import {parse} from '../vendor/acorn.mjs';import {adaptCompiledMain,loadingIdentity} from '../adapter.mjs';
+const baseline=process.env.INKWAVE_BASELINE_SITE;
+const source=baseline?fs.readFileSync(path.join(baseline,'src/main.js'),'utf8'):null;
+function writableTestTmp(){
+ const candidates=[process.env.INKWAVE_TEST_TMP,process.env.TMPDIR,path.resolve('.ci-scratch'),
+   process.env.TMP,process.env.TEMP,process.env.CI_STORAGE,os.tmpdir()].filter(Boolean);
+ const seen=new Set();
+ for(const candidate of candidates){
+  const root=path.resolve(candidate);if(seen.has(root))continue;seen.add(root);
+  try{fs.mkdirSync(root,{recursive:true});fs.accessSync(root,fs.constants.W_OK);return root;}catch{}
+ }
+ throw new Error('No writable temporary directory for loading/cache regression tests');
+}
+const TEST_TMP=writableTestTmp();
+const classMethods=s=>{const ast=parse(s,{ecmaVersion:'latest',sourceType:'module'});const cls=ast.body.find(n=>n.type==='ClassDeclaration'&&n.body.body.some(m=>m.key?.name==='boot'));return new Map(cls.body.body.filter(n=>n.type==='MethodDefinition').map(n=>[n.key.name,s.slice(n.start,n.end)]));};
+function shape(node){if(Array.isArray(node))return node.map(shape);if(node&&typeof node==='object')return Object.fromEntries(Object.entries(node).filter(([k])=>!['start','end','raw'].includes(k)).map(([k,v])=>[k,shape(v)]));return node;}
+function uninstrument(node){if(Array.isArray(node))return node.map(uninstrument).filter(Boolean);if(!node||typeof node!=='object')return node;
+ if(node.type==='ExpressionStatement'&&(JSON.stringify(node).includes('"name":"__inkwaveStartup"')))return null;
+ if(node.type==='FunctionDeclaration'&&node.id?.name==='__iwStartupMeasure')return null;
+ if(node.type==='CallExpression'&&node.callee.name==='__iwStartupMeasure')return uninstrument(node.arguments[1].body);
+ return Object.fromEntries(Object.entries(node).map(([k,v])=>[k,uninstrument(v)]));}
+
+test('adapter exact baseline parses, preserves every method except three startup-owned methods',{skip:!source},()=>{
+ const adapted=adaptCompiledMain(source),old=classMethods(source),current=classMethods(adapted.code);assert.equal(adapted.removedDwellMs,250);assert.equal(adapted.phases.length,22);
+ for(const[name,code]of old)if(!['boot','startMatch','_loadLightmap'].includes(name))assert.equal(current.get(name),code,name);
+ assert(current.get('_loadLightmap').includes('cache:"force-cache"'));assert(!current.get('_loadLightmap').includes('.png?h='));
+ assert.equal(current.get('boot').match(/\.compileAsync\(/g)?.length,old.get('boot').match(/\.compileAsync\(/g)?.length);
+});
+test('removing profiler wrappers yields identical full AST except explicit dwell/cache edits',{skip:!source},()=>{
+ const before=parse(source,{ecmaVersion:'latest',sourceType:'module'}),after=uninstrument(parse(adaptCompiledMain(source).code,{ecmaVersion:'latest',sourceType:'module'}));
+ // Normalize only the three deliberately changed constants/templates in the baseline.
+ function visit(node){if(!node||typeof node!=='object')return;if(node.type==='AwaitExpression'&&node.argument.type==='NewExpression'&&node.argument.callee.name==='Promise'){
+ const cb=node.argument.arguments[0];if(cb?.body?.callee?.name==='setTimeout'&&cb.body.arguments[1]?.value===250)cb.body.arguments[1].value=0;
+ }if(node.type==='Property'&&(node.key.name||node.key.value)==='cache'&&node.value.value==='no-cache')node.value.value='force-cache';
+ if(node.type==='TemplateLiteral'&&node.quasis?.[0]?.value.raw==='assets/lightmaps/'&&node.quasis[1]?.value.raw==='.png?h='){
+ node.expressions.pop();node.quasis.pop();node.quasis[1].value={raw:'.png',cooked:'.png'};node.quasis[1].tail=true;
+ }
+ for(const v of Object.values(node))if(Array.isArray(v))v.forEach(visit);else if(v&&typeof v==='object')visit(v);
+ }visit(before);assert.deepEqual(shape(after),shape(before));
+});
+test('adapter rejects duplicate application and unexpected source topology',{skip:!source},()=>{
+ const adapted=adaptCompiledMain(source);assert.throws(()=>adaptCompiledMain(adapted.code),/twice/);
+ assert.throws(()=>adaptCompiledMain(source.replace('compileAsync','compileUnknown')),/topology/);
+ assert.throws(()=>adaptCompiledMain(source.replace('.png?h=','.png?wrong=')),/lightmap cache topology/);
+});
+test('production profiler dispatch does not alter evaluation count or synchronous return',{skip:!source},()=>{
+ const helper=adaptCompiledMain(source).code.split('\n')[0];const ctx=vm.createContext({});vm.runInContext(helper,ctx);
+ assert.equal(vm.runInContext('let count=0;const value=__iwStartupMeasure("x",()=>{count++;return 42;});value===42&&count===1',ctx),true);
+ assert.equal(vm.runInContext('const promise=Promise.resolve(7);__iwStartupMeasure("x",()=>promise)===promise',ctx),true);
+ assert.throws(()=>vm.runInContext('__iwStartupMeasure("x",()=>{throw new Error("same error");})',ctx),/same error/);
+});
+test('loading identity binds runtime, shell, worker, adapter and exact Acorn; excludes tests',()=>{
+ const files=loadingIdentity();for(const k of ['adapter.mjs','runtime/startup.mjs','sw.js','shell.html','vendor/acorn.mjs','vendor/ACORN-LICENSE'])assert.match(files[k],/^[a-f0-9]{64}$/);
+ assert(!Object.keys(files).some(k=>k.startsWith('tests/')));
+});
+for (const [inputKey, relativeInput] of [
+ ['loading-cache/runtime/startup.mjs', 'patches/loading-cache/runtime/startup.mjs'],
+ ['build-script/inkwave-source-composition.mjs', 'scripts/inkwave-source-composition.mjs'],
+ ['build-script/lib/inkwave-build-only-modules.mjs', 'scripts/lib/inkwave-build-only-modules.mjs'],
+ ['build-script/lib/inkwave-worker-compaction.mjs', 'scripts/lib/inkwave-worker-compaction.mjs'],
+]) test('exact-source checker rejects forged ' + inputKey + ' despite self-consistent manifest',()=>{
+ const root=path.resolve(new URL('../../../',import.meta.url).pathname);
+ const dir=fs.mkdtempSync(path.join(TEST_TMP,'iw-identity-'));
+ try{
+ const fixture=path.join(dir,'repo'),site=path.join(dir,'site');fs.mkdirSync(path.join(fixture,'scripts'),{recursive:true});fs.mkdirSync(path.join(fixture,'patches/loading-cache/runtime'),{recursive:true});fs.mkdirSync(site);
+ // Copy the checker's real static local import closure. Browser-only dynamic
+ // imports are reached after the identity gate and are deliberately not invoked.
+ const copied=new Set();
+ function copyModule(rel){
+  if(copied.has(rel))return;copied.add(rel);
+  const original=path.join(root,rel),target=path.join(fixture,rel),code=fs.readFileSync(original,'utf8');
+  fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(original,target);
+  for(const node of parse(code,{ecmaVersion:'latest',sourceType:'module'}).body){
+   if(!['ImportDeclaration','ExportNamedDeclaration','ExportAllDeclaration'].includes(node.type))continue;
+   const spec=node.source?.value;if(typeof spec!=='string'||!spec.startsWith('.'))continue;
+   const dep=path.normalize(path.join(path.dirname(rel),spec));assert(!dep.startsWith('..')&&!path.isAbsolute(dep),'fixture dependencies stay inside repository');copyModule(dep);
+  }
+ }
+ copyModule('scripts/check-inkwave-browser.mjs');
+ for(const dep of ['scripts/check-inkwave-hud-authority.mjs','patches/local-quality/quality-probe.mjs','patches/local-quality/paint-mipmap-probe.mjs'])assert(copied.has(dep),dep);
+ fs.writeFileSync(path.join(fixture,'scripts/build-inkwave.mjs'),'// committed builder\n');const target=path.join(fixture,relativeInput);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,'// committed source\n');
+ const git=(...args)=>execFileSync('git',args,{cwd:fixture,stdio:'pipe'});
+ git('init','-q');git('add','.');git('-c','user.name=Identity Fixture','-c','user.email=fixture@example.invalid','commit','-qm','fixture');
+ fs.appendFileSync(target,'// UNCOMMITTED\n');const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+ const identity={artifacts:{},contentHash:hash(JSON.stringify({})),files:{[inputKey]:hash(fs.readFileSync(target))},build:{script:hash(fs.readFileSync(path.join(fixture,'scripts/build-inkwave.mjs')))}};
+ fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(identity));
+ // The checker rejects /tmp for browser outputs. This check exits before browser use.
+ const outputs=path.join(TEST_TMP,'iw-identity-outputs-'+path.basename(dir));fs.mkdirSync(outputs,{recursive:true});
+ try{const check=spawnSync(process.execPath,[path.join(fixture,'scripts/check-inkwave-browser.mjs'),'--site',site,'--evidence-dir',path.join(outputs,'evidence'),'--profile-dir',path.join(outputs,'profile'),'--exact-source'],{encoding:'utf8',timeout:15000});
+ assert.notEqual(check.status,0);assert(check.stderr.includes('Build input differs from commit: '+relativeInput),check.stderr);
+ }finally{fs.rmSync(outputs,{recursive:true,force:true});}
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+
+test('all source-attesting browser verifiers recognize the loading-cache namespace',()=>{
+ const root=path.resolve(new URL('../../../',import.meta.url).pathname);
+ const checks=[
+  ['scripts/check-inkwave-browser.mjs',/loading-cache/],
+  ['scripts/check-inkwave-touch-layout-identity.mjs',/loading-cache/],
+  ['scripts/check-inkwave-motion-catalog.mjs',/'loading-cache': 'patches\/loading-cache'/],
+  ['scripts/check-inkwave-flow-render.mjs',/key\.startsWith\('loading-cache\/'\)/],
+  ['scripts/check-inkwave-wall-render.mjs',/key\.startsWith\('loading-cache\/'\)/],
+ ];
+ for(const[file,pattern]of checks)assert.match(fs.readFileSync(path.join(root,file),'utf8'),pattern,file);
+});
+
+
+test('startup verifier bounds a failed natural worker install before controller acquisition',async()=>{
+ const code=fs.readFileSync('scripts/check-inkwave-startup-browser.mjs','utf8');
+ const start=code.indexOf('const naturalController=async page=>{'),end=code.indexOf('\n};',start)+3;
+ assert(start>=0&&end>start);
+ const run=vm.runInNewContext(code.slice(start,end)+';naturalController',{timeout:25});
+ let timeoutCallback,removed=0;
+ const sw={ready:new Promise(()=>{}),controller:null,addEventListener(){},removeEventListener(){removed++;}};
+ const page={waitForFunction:async()=>{},evaluate:async(fn,ms)=>{
+  const context={navigator:{serviceWorker:sw},setTimeout:fn=>{timeoutCallback=fn;return 1;},clearTimeout(){}};
+  const promise=vm.runInNewContext('('+fn.toString()+')('+ms+')',context);
+  timeoutCallback();return promise;
+ }};
+ await assert.rejects(run(page),/activation\/controllerchange timeout/);assert.equal(removed,1);
+});
+test('startup verifier requires both ready and a controller and cleans up its listener',async()=>{
+ const code=fs.readFileSync('scripts/check-inkwave-startup-browser.mjs','utf8');
+ const start=code.indexOf('const naturalController=async page=>{'),end=code.indexOf('\n};',start)+3;
+ const run=vm.runInNewContext(code.slice(start,end)+';naturalController',{timeout:25});
+ for(const initiallyControlled of [false,true]){
+  let changed,removed=0,cleared=0;
+  const sw={ready:Promise.resolve({}),controller:initiallyControlled?{}:null,addEventListener(_n,fn){changed=fn;},removeEventListener(){removed++;}};
+  const page={waitForFunction:async()=>{},evaluate:async(fn,ms)=>{
+   const context={navigator:{serviceWorker:sw},setTimeout:()=>1,clearTimeout(){cleared++;}};
+   const promise=vm.runInNewContext('('+fn.toString()+')('+ms+')',context);
+   await Promise.resolve();if(!initiallyControlled){assert.equal(removed,0);sw.controller={};changed();}return promise;
+  }};
+  await run(page);assert.equal(removed,1);assert.equal(cleared,1);
+ }
+});

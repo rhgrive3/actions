@@ -1,5 +1,17 @@
-let api, tuning;
-export function installResources(context, values) { api = context; tuning = values.resources; }
+import { turfCombatAllowed } from './turf-combat.mjs';
+import { stormRecoveryState } from './storm-effects.mjs';
+import { isChargerFullCharge } from './weapons.mjs';
+import { slamProtected } from './tidal-slam-gauge.mjs';
+let api, tuning, profile;
+export function installResources(context, values) { api = context; tuning = values.resources; profile = values; }
+export const RESPAWN_CAUSES = Object.freeze({ normal: 8.5, water: 7.0, outOfBounds: 5.5 });
+export function respawnSeconds(cause, values = profile) {
+  const table = values?.respawn || RESPAWN_CAUSES;
+  if (cause === 'water' || cause === 'drown') return table.water ?? table.normal;
+  if (cause === 'outOfBounds' || cause === 'fall' || cause === 'oob') return table.outOfBounds ?? table.normal;
+  return table.normal ?? RESPAWN_CAUSES.normal;
+}
+export function setRespawnTimer(a, cause = 'weapon') { a.respawnTimer = respawnSeconds(cause); return a.respawnTimer; }
 export function resourceSurface(a) {
   // Integration may have crossed a paint edge, taken off, or landed this tick.
   // The pre-movement surface is only suitable for movement, not recovery.
@@ -7,36 +19,105 @@ export function resourceSurface(a) {
   const isSquid = a.form === 'squid';
   a.submerged = isSquid && a.grounded && a.groundTeam === 1;
   a.onEnemy = a.grounded && a.groundTeam === 2 && !a.submerged;
-  return { isSquid, onEnemy: a.onEnemy };
+  return isSquid;
+}
+export function enemyInkDamageRate(rate, referenceHz = 60, quantum = 0.1) {
+  return Math.max(0, Math.floor(rate / referenceHz / quantum + 1e-10)) * quantum * referenceHz;
+}
+export function rollerStationaryRecoveryEligible(a) {
+  if (a?.weapon?.kind !== 'roller' || !a.weaponRunner?.rolling || !a.s3?.rollerRefillMode) return false;
+  const move = a.intent?.move;
+  const input = Math.hypot(move?.x || 0, move?.z || 0);
+  const speed = Math.hypot(a.vel?.x || 0, a.vel?.z || 0);
+  return input <= 1e-3 && speed <= 0.1;
+}
+// State-owned airborne actions share HP recovery without running ground contact
+// damage, surface sampling, ink refill, or resource recovery clocks.
+export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) {
+  if (!turfCombatAllowed(api.G)) return;
+  const P = api.PLAYER, r = tuning, rain = stormRecoveryState(a, api);
+  if (!onEnemy && !rain.enemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
+    a.hp = Math.min(P.hp, a.hp + (submerged || rain.ally ? r.regenRateSwim : r.regenRate) * dt);
+  }
+}
+export function updateSpecialHealthRecovery(a, dt) {
+  // #1019: body-owning specials still use the shared post-movement HP recovery
+  // law. Refresh the current surface once, but deliberately do not touch ink,
+  // enemy-ink damage, weapon gates, or any other resource phase.
+  const isSquid = resourceSurface(a);
+  updateHealthRecovery(a, dt, a.onEnemy, a.submerged || (isSquid && a.climbing));
 }
 export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
+  if (!turfCombatAllowed(api.G)) return;
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
-  const { onEnemy, isSquid } = resourceSurface(a);
+  const isSquid = resourceSurface(a), onEnemy = a.onEnemy;
   if (onEnemy) {
     a.s3 ||= {};
     const before = a.s3.enemyInkTime || 0;
     a.s3.enemyInkTime = before + dt;
-    // Only the part of this tick beyond grace can deal contact damage.
-    const exposure = Math.max(0, a.s3.enemyInkTime - Math.max(before, r.enemyInkGrace || 0));
+    a.s3.enemyInkAwayTime = 0;
+    // Only the part of this tick beyond the equipped grace can deal contact damage.
+    const exposure = Math.max(0, a.s3.enemyInkTime - Math.max(before, mods.enemyInkGrace ?? r.enemyInkGrace ?? 0));
     const cap = mods.enemyDamageCap ?? r.enemyInkDamageCap;
-    if (exposure > 0 && a.damageFromInk < cap && a.invuln <= 0) {
-      const damage = Math.min((mods.enemyDamageRate ?? r.enemyInkDps) * exposure, cap - a.damageFromInk);
-      a.damageFromInk += damage; a.hp = Math.max(1, a.hp - damage);
+    const allowance = Math.max(0, cap - (P.hp - a.hp));
+    // #573: Slam's 50F full-invulnerability owner rejects enemy-ink contact too, the same as weapon damage.
+    if (exposure > 0 && allowance > 0 && a.invuln <= 0 && !slamProtected(a)) {
+      const rate = enemyInkDamageRate(mods.enemyDamageRate ?? r.enemyInkDps, r.enemyInkReferenceHz, r.enemyInkDamageQuantum);
+      const damage = Math.min(rate * exposure, allowance, Math.max(0, a.hp - 1));
+      a.damageFromInk += damage; a.hp -= damage;
     }
     a.lastDamage = Math.min(a.lastDamage, r.enemyInkRegenSuppression);
   } else {
-    if (a.s3) a.s3.enemyInkTime = 0;
+    if (a.s3) {
+      const resetAfter = r.enemyInkGraceReset ?? 0;
+      a.s3.enemyInkAwayTime = Math.min(resetAfter, (a.s3.enemyInkAwayTime || 0) + dt);
+      if (a.s3.enemyInkAwayTime + 1e-10 >= resetAfter) a.s3.enemyInkTime = 0;
+    }
     a.damageFromInk = Math.max(0, a.damageFromInk - dt * r.enemyInkRecovery);
   }
-  if (!onEnemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
-    a.hp = Math.min(P.hp, a.hp + (a.submerged ? r.regenRateSwim : r.regenRate) * dt);
-  }
+  const swimmingForRecovery = a.submerged || (isSquid && a.climbing);
+  updateHealthRecovery(a, dt, onEnemy, swimmingForRecovery);
   const wasFull = a.ink >= P.inkMax;
-  const weaponDelay = a.weapon.inkRecoverStop ?? r.inkRefillDelay;
+  const rollingRecovery = a.weapon.kind === 'roller' && a.s3?.rollerRefillMode;
+  const stationaryRollRecovery = rollingRecovery && rollerStationaryRecoveryEligible(a);
+  const weaponDelay = rollingRecovery ? 0 : a.weapon.inkRecoverStop ?? r.inkRefillDelay;
   const delay = Math.max(weaponDelay, a.s3?.inkRecoverStop || 0);
   if(a.s3) a.s3.recoverStopRemaining = Math.max(0,(a.s3.recoverStopRemaining || 0)-dt);
-  const canRefill = a.lastFire + 1e-10 >= delay && (a.s3?.recoverStopRemaining || 0) <= 1e-10 && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored;
+  // #737: an active partial/fresh Splat Charger charge cleared by this update's
+  // form change is a charge interruption. The S3 verification table gives
+  // charge-interruption → ink recovery = 19F for the Splat Charger, separate
+  // from #416's 6F cancel→squid form recovery and from the ordinary post-shot
+  // delay above. The #416 pre-admission owner publishes the cancellation
+  // before clearing `charging`; the legacy form transition remains supported.
+  // Consume the event here to lock the cancellation update itself; after
+  // this tick's decrement the lock is rewritten to exactly 19F, which blocks
+  // 19 fixed ticks (cancel tick .. cancel+18F) and reopens eligibility at
+  // cancel+19F. Full-charge keeps (isChargerFullCharge → s3Stored) never take this
+  // path. Community-verified S3 table, no Switch re-measurement is claimed.
+  if (a.s3) {
+    a.s3.chargerInterruptRecover = Math.max(0, (a.s3.chargerInterruptRecover || 0) - dt);
+    a.s3.chargerKeepRecover = Math.max(0, (a.s3.chargerKeepRecover || 0) - dt);
+  }
+  const runner = a.weaponRunner;
+  const chargerCancelled = runner?.s3ChargerCancelRefillPending === true;
+  if (runner) runner.s3ChargerCancelRefillPending = false;
+  if (a.weapon.kind === 'charger' && (chargerCancelled ||
+      runner?.charging && isSquid && !isChargerFullCharge(runner.charge))) {
+    a.s3 ||= {};
+    a.s3.chargerInterruptRecover = 19 / 60;
+  }
+  const chargerInterruptRecover = a.weapon.kind === 'charger' ? (a.s3?.chargerInterruptRecover || 0) : 0;
+  const chargerKeepRecover = a.weapon.kind === 'charger' ? (a.s3?.chargerKeepRecover || 0) : 0;
+  const chargerLowRecovery = a.weapon?.kind === 'charger' && runner?.charging &&
+    a.ink + 1e-10 < (a.weapon.inkMin ?? 0) && chargerInterruptRecover <= 1e-10 && chargerKeepRecover <= 1e-10;
+  const canRefill = chargerLowRecovery ||
+    ((rollingRecovery ? (!a.weaponRunner.rolling || stationaryRollRecovery) : a.lastFire + 1e-10 >= delay)
+      && (a.s3?.recoverStopRemaining || 0) <= 1e-10
+      && (a.weaponRunner.s3DodgeInkRemaining || 0) <= 1e-10
+      && chargerInterruptRecover <= 1e-10
+      && chargerKeepRecover <= 1e-10
+      && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored);
   if (canRefill) {
     let rate = 0;
     if (a.submerged || a.climbing) rate = r.inkRefillSwim;

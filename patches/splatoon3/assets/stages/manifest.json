@@ -1,0 +1,12 @@
+{
+  "scorch": {
+    "day": {
+      "src": "assets/stages/scorch-day.webp",
+      "sm": "assets/stages/scorch-day-sm.webp"
+    },
+    "dusk": {
+      "src": "assets/stages/scorch-dusk.webp",
+      "sm": "assets/stages/scorch-dusk-sm.webp"
+    }
+  }
+}

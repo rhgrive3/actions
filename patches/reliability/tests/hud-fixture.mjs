@@ -22,7 +22,7 @@ function section(source, start, end) {
 // Entire actual judge, FX scheduler, sound forwarding, visibility/dispose, and Game
 // judge/quit methods. Actual ui-util/config modules are evaluated too. Only platform
 // DOM/RAF/audio and unrelated 3D/menu rendering are fixtures, not a physical browser.
-export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSource = existingGameSource() } = {}) {
+export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSource = existingGameSource(), globals = {} } = {}) {
   const rafs = new Map(), timers = new Map(), calls = [], voices = [];
   let serial = 0, now = 0, hook = null;
   class Classes {
@@ -49,7 +49,7 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
   const document = { body, createElement: tag => new Node(tag), createTextNode: value => { const n = new Node('#text'); n.textContent = value; return n; } };
   const G = { teamHex: ['#ff8a14','#2f5bff'], teamColors: ['orange','blue'], net: null, netm: null, mode: 'match', audio: { duck() {}, play: name => calls.push(['gameSound',name]) } };
   const context = vm.createContext({
-    console, document, G, Promise, performance: { now: () => now },
+    ...globals, console, document, G, Promise, performance: { now: () => now },
     addEventListener() {}, removeEventListener() {},
     requestAnimationFrame: fn => { const id = ++serial; rafs.set(id,fn); return id; }, cancelAnimationFrame: id => rafs.delete(id),
     setTimeout: (fn, ms) => { const id = ++serial; timers.set(id,{ fn, ms, due: now + ms }); return id; }, clearTimeout: id => timers.delete(id),
@@ -59,8 +59,16 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
   const util = new vm.SourceTextModule(readSource('src/ui/ui-util.js'),{context});
   const tx = new vm.SourceTextModule('export const tx=value=>value;',{context});
   await util.link(() => tx); await util.evaluate();
+  // Current config uses the real source-guided ink flight constants. Evaluate
+  // that dependency instead of rejecting the production config import.
+  const inkFlight = new vm.SourceTextModule(readSource('src/game/inkFlight.js'),{context});
+  await inkFlight.link(() => { throw Error('Unexpected inkFlight import'); });
   const config = new vm.SourceTextModule(readSource('src/config.js'),{context});
-  await config.link(() => { throw Error('Unexpected config import'); }); await config.evaluate();
+  await config.link(spec => {
+    if (spec === './game/inkFlight.js') return inkFlight;
+    throw Error('Unexpected config import: ' + spec);
+  });
+  await config.evaluate();
   Object.assign(context, util.namespace, config.namespace);
   const hudMethods = [
     section(hudSource, '  setVisible(v) {', '\n  /** ScreenFX'),

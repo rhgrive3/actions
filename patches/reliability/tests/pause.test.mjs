@@ -30,6 +30,7 @@ for (const patched of [false, true]) test(`online pause ${patched ? 'blocks' : '
   assert.equal(h.controller.enabled, !patched);
   assert.equal(h.actor.intent.move.length(), patched ? 0 : 1);
   assert.equal(h.actor.intent.fire, !patched);
+  if (!patched) { h.frame(STEP); h.frame(STEP); }
   assert.equal(h.ownedShots.filter(a => a === h.actor).length, patched ? 0 : 1);
 });
 
@@ -41,7 +42,7 @@ test('online pause preserves actual Match clock and another actual actor firing;
   assert.ok(h.m.time < time); assert.equal(h.game.s3Clock.ticks, 5);
   assert.ok(h.ownedShots.some(a => a === h.other)); assert.ok(!h.ownedShots.some(a => a === h.actor));
   assert.equal(h.actor.intent.move.length(), 0);
-  h.game.resume(); h.frame(STEP);
+  h.game.resume(); for (let i = 0; i < 3; i++) h.frame(STEP);
   assert.equal(h.controller.enabled, true); assert.equal(h.actor.intent.move.length(), 1);
   assert.ok(h.ownedShots.some(a => a === h.actor));
 });
@@ -54,7 +55,8 @@ for (const hz of [120, 144]) test(`${hz}Hz online Start blocks only local input 
   assert.equal(h.controller.enabled, false); assert.equal(h.ownedShots.length, 0);
   h.setPads(pad()); h.frame(1 / hz); h.setPads(pad([9])); h.frame(1 / hz);
   assert.equal(h.menus.current, null);
-  h.frame(STEP); assert.equal(h.controller.enabled, true); assert.ok(h.ownedShots.length > 0);
+  for (let i = 0; i < 3; i++) h.frame(STEP);
+  assert.equal(h.controller.enabled, true); assert.ok(h.ownedShots.length > 0);
 });
 
 test('released controls and discarded look during online pause do not replay after resume', async () => {
@@ -70,7 +72,7 @@ test('offline pause still freezes actual Match time and actors; resume restores 
   const h = await boot(); h.game.pause(); const time = h.m.time;
   h.input.keys.add('KeyW'); h.input.mouse.left = true; h.frame(STEP);
   assert.equal(h.controller.enabled, false); assert.equal(h.m.time, time);
-  assert.equal(h.ownedShots.length, 0); h.game.resume(); h.frame(STEP);
+  assert.equal(h.ownedShots.length, 0); h.game.resume(); for (let i = 0; i < 3; i++) h.frame(STEP);
   assert.ok(h.m.time < time); assert.equal(h.actor.intent.move.length(), 1);
   assert.equal(h.ownedShots.length, 1);
 });
@@ -114,12 +116,14 @@ test('menu A is consumed while an unrelated fire tap remains available after res
   assert.equal(h.actor.intent.jump, false); assert.equal(h.actor.intent.fire, true);
 });
 
-test('a render-only map d-pad tap keeps its actual super-jump edge until the simulation tick', async () => {
+test('a render-only map d-pad selection survives until the simulation tick and waits for A confirmation', async () => {
   const h = await boot(), targets = [];
   h.actor.canSuperJump = () => true; h.actor.superJump = target => targets.push(target);
-  h.setPads(pad([8, 14])); h.frame(STEP / 2);
+  h.setPads(pad([3, 14])); h.frame(STEP / 2);
   assert.equal(targets.length, 0); assert.equal(h.input.padPressed.has(14), true);
-  h.setPads(pad([8])); h.frame(STEP / 2);
+  h.setPads(pad([3])); h.frame(STEP / 2);
+  assert.equal(targets.length, 0); assert.equal(h.controller.padJumpIndex, 0);
+  h.setPads(pad([1])); h.frame(STEP);
   assert.deepEqual(targets, [h.other]); h.frame(STEP);
   assert.equal(targets.length, 1);
 });
@@ -132,21 +136,47 @@ test('menu RB cannot leak as a held bomb after resuming', async () => {
   assert.equal(h.actor.intent.sub, true);
 });
 
-test('blur and disconnect clear menu channel; reconnect permits a fresh owned button', async () => {
+test('blur and disconnect clear menu channel; held reconnect waits for release and fresh press', async () => {
   const h = await boot(); h.setPads(pad([0])); h.input.pollPad();
   assert.equal(h.input.padMenuPressed.has(0), true); h.event('blur', {});
   assert.equal(h.input.padMenuPressed.size, 0);
   h.input.consumePadMenuButton(0); h.setPads([]); h.input.pollPad();
   assert.equal(h.input.padMenuBlocked.size, 0); assert.equal(h.input.padMenuPressed.size, 0);
-  h.setPads(pad([0])); h.input.pollPad(); assert.equal(h.input.padMenuPressed.has(0), true);
-  assert.equal(h.input.padButton(0), true);
+  const held = pad([0]); h.setPads(held); h.input.pollPad();
+  assert.equal(h.input.padMenuPressed.has(0), false); assert.equal(h.input.padButton(0), false);
+  held[0].buttons[0] = { pressed: false, value: 0 }; h.input.pollPad();
+  held[0].buttons[0] = { pressed: true, value: 1 }; h.input.pollPad();
+  assert.equal(h.input.padMenuPressed.has(0), true); assert.equal(h.input.padButton(0), true);
 });
 
 test('adapter rejects missing/duplicated/already applied anchors and leaves unrelated modules intact', () => {
-  for (const rel of ['src/main.js', 'src/core/input.js', 'src/game/match.js']) {
+  for (const rel of ['src/main.js', 'src/core/input.js', 'src/game/match.js', 'src/game/player.js']) {
     const source = composed(rel); assert.throws(() => adaptPause(rel, ''), /conflict/);
     assert.throws(() => adaptPause(rel, source + source), /conflict/);
     assert.throws(() => adaptPause(rel, adaptPause(rel, source)), /conflict/);
   }
-  assert.equal(adaptPause('src/game/player.js', 'untouched'), 'untouched');
+  assert.equal(adaptPause('src/game/character.js', 'untouched'), 'untouched');
+});
+
+
+for(const hz of [30,60,120])test(`#974 online menu cancels live release actions and requires rearm at ${hz}Hz`,async()=>{
+ for(const weapon of ['charger','splatling','shooter']){
+  const h=await boot();h.actor.setWeapon(weapon);h.G.netm={};let bombs=0;h.G.projectiles.throwBomb=()=>bombs++;
+  const sub=weapon==='shooter';if(sub)h.input.mouse.right=true;else h.input.mouse.left=true;
+  for(let i=0;i<(weapon==='splatling'?55:20);i++)h.frame(STEP);
+  const r=h.actor.weaponRunner;assert.equal(sub?r.aimingSub:r.charging,true,weapon);
+  const beforeShots=h.shots.length,beforeInk=h.actor.ink,time=h.m.time;h.other.intent.fire=true;
+  h.game.pause();assert.equal(h.m.paused,false);
+  for(let i=0;i<hz*2;i++)h.frame(1/hz);
+  assert.equal(bombs,0);assert.equal(r.charging,false);assert.equal(r.streaming,false);assert.equal(r.s3ReleaseHold||false,false);assert.equal(r.aimingSub,false);
+  assert.ok(h.actor.ink>=beforeInk-1e-8);assert.ok(h.m.time<time);assert.ok(h.ownedShots.includes(h.other));
+  if(!sub)assert.equal(h.shots.filter(s=>s.kind===weapon).length,0);
+  h.game.resume();for(let i=0;i<10;i++)h.frame(STEP);
+  assert.equal(sub?h.actor.intent.sub:h.actor.intent.fire,false,'interrupted hold is not a new press');assert.equal(bombs,0);
+  h.input.mouse.left=h.input.mouse.right=false;h.frame(STEP);
+  if(sub)h.input.mouse.right=true;else h.input.mouse.left=true;
+  for(let i=0;i<(weapon==='splatling'?55:20);i++)h.frame(STEP);
+  h.input.mouse.left=h.input.mouse.right=false;h.frame(STEP);h.frame(STEP);
+  if(sub)assert.equal(bombs,1);else assert.ok(h.shots.some(s=>s.kind===weapon));
+ }
 });

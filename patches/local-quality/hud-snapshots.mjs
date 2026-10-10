@@ -1,0 +1,58 @@
+// Mutable synchronous HUD transport, owned by one Match/Game. No actor references
+// are retained in snapshot values; removed actors are weak keys only.
+import { stormGaugeFraction } from '../splatoon3/runtime/storm-effects.mjs';
+export function teamHudSnapshot(match, colors, viewerTeam = 0, paint = null) {
+  let cache = match._teamHudSnapshot;
+  if (!cache) {
+    const a = { color: '', players: [] }, b = { color: '', players: [] };
+    cache = match._teamHudSnapshot = { teams: [a, b], forward: [a, b], reverse: [b, a], players: new WeakMap() };
+  }
+  const t0 = cache.teams[0], t1 = cache.teams[1];
+  t0.color = colors[0]; t1.color = colors[1];
+  const coverage = match.mode === 'turf' && match.state === 'playing' && !match.attract ? paint?.coverage?.() : null;
+  const valid = Array.isArray(coverage) && coverage.length === 2 && coverage.every(v => Number.isFinite(v) && v >= 0 && v <= 1) && coverage[0] + coverage[1] <= 1 + Number.EPSILON * 4;
+  const delta = valid ? coverage[0] - coverage[1] : 0;
+  const leader = Math.abs(delta) + Number.EPSILON >= 0.1 ? (delta > 0 ? 0 : 1) : -1;
+  t0.leading = leader === 0; t0.danger = leader === 1;
+  t1.leading = leader === 1; t1.danger = leader === 0;
+  let n0 = 0, n1 = 0;
+  for (let i = 0; i < match.actors.length; i++) {
+    const a = match.actors[i];
+    if (a.team !== 0 && a.team !== 1) continue;
+    let p = cache.players.get(a);
+    if (!p) { p = {}; cache.players.set(a, p); }
+    p.name = a.name; p.weapon = a.weaponId; p.alive = a.alive;
+    p.respawn = a.alive ? 0 : null;
+    p.specialReady = a.specialReady(); p.isSelf = a.isLocal;
+    if (a.team === 0) t0.players[n0++] = p; else t1.players[n1++] = p;
+  }
+  t0.players.length = n0; t1.players.length = n1;
+  return viewerTeam === 1 ? cache.reverse : cache.forward;
+}
+export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt, showMinimap, PLAYER, SUB, subCost = SUB.bomb.inkCost, guide, healthMarkers, muzzleBlock, chargerCurrent, chargerFull) {
+  let cache = game._hudTransport;
+  if (!cache) cache = game._hudTransport = { frame: {}, crosshair: {}, map: {}, mobile: {} };
+  const frame = cache.frame, crosshair = cache.crosshair, map = cache.map;
+  frame.time = m.time; frame.teams = m.teamSummary(a.team);
+  frame.ink = a.ink / PLAYER.inkMax; frame.inkLow = game._lowInkFlash > 0; frame.subCost = subCost / PLAYER.inkMax; frame.subReady = a.ink >= subCost;
+  // #469: the spent Storm gauge is shown from its actor-owned lock, not from the zeroed charge.
+  const stormGauge = stormGaugeFraction(a);
+  frame.special = stormGauge ?? a.specialFrac(); frame.specialReady = a.specialReady(); frame.specialActive = stormGauge !== null || !!a.specialActive;
+  frame.hp = a.hp / PLAYER.hp; frame.weapon = a.weaponId; frame.charge = a.weaponRunner.charge;
+  crosshair.spread = spread; crosshair.onTarget = m.controller?.onTarget ? 'enemy' : null; crosshair.inRange = m.controller ? m.controller.inRange !== false : true;
+  if (guide === undefined) delete crosshair.guide; else crosshair.guide = guide;
+  if (muzzleBlock === undefined) delete crosshair.muzzleBlock; else crosshair.muzzleBlock = muzzleBlock;
+  // Distinct Charger current-release/maximum endpoint presentation survives
+  // the persistent-frame fast path; no alternate hit or range owner.
+  if (chargerCurrent === undefined) delete crosshair.chargerCurrent; else crosshair.chargerCurrent = chargerCurrent;
+  if (chargerFull === undefined) delete crosshair.chargerFull; else crosshair.chargerFull = chargerFull;
+  frame.crosshair = crosshair;
+  map.canvas = showMinimap ? game.minimap.canvas : null; map.expanded = false; map.players = players;
+  frame.map = showMinimap ? map : null; frame.markers = markers;
+  if (healthMarkers === undefined) delete frame.healthMarkers; else frame.healthMarkers = healthMarkers;
+  frame.prompt = prompt; frame.fps = game.settings.showFps ? game.fps : undefined;
+  const mobile = cache.mobile;
+  mobile.special = frame.special; mobile.ready = frame.specialReady; mobile.activeSp = frame.specialActive; mobile.weapon = w.kind || a.weaponId;
+  mobile.specialId = w.special; mobile.ink = frame.ink; mobile.inkLow = frame.inkLow; mobile.subCost = frame.subCost; mobile.subReady = frame.subReady;
+  return frame;
+}
