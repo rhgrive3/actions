@@ -3650,3 +3650,34 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - **ローラー転がしのバリア倍率**: 原典 `RollerCore` 行（1.0／1.0）を通し、対物攻撃力アップ1.1が転がしにも効くようにした。INKWAVE の転がしの当たり対象は膜ではなく土台（#1036）なので、膜用の `DamgeRatio 0.64` は掛けない。
 - **見送った項目（根拠不足）**: キューインキの吸い込み範囲の伸び（`InhaleParam.LengthAddPerFrame 0.3334`）は当たり判定の伸びか見た目の伸びかを項目名から断定できず、既存の判定（起動直後から最大15）を維持した。ブラスターの初弾遅延（`PreDelayFrame_HumanShot 10`／`_SquidShot 15`）は既存の公開実測（ヒト14F／イカ24F）を採用している理由が別にあるため変更していない。スロッシャーのブレーキ段階1Fの省略、チャージャーの溜めキープ後の遅延の対応付けも既存判断のまま。
 - **確認状態**: すべてロジック単独の確認。Switch 実機・ブラウザでの比較は未実施。
+## 2026-10-10: ボム3種（スプラッシュ・キューバン・カーリング）の性能・投げ方・予測線・見た目
+
+- **本家の根拠**: 参照版 Ver. 11.3.0。Leanny/splat3 固定コミット `7280ff9c` の `data/parameter/1130/weapon/WeaponBombSplash`・`WeaponBombSuction`・`WeaponBombCurling.game__GameParameterTable.json`（差分表なので記載値は明示値）。主な項目：スプラッシュ `SpawnSpeedZ 1.12`・`SpawnSpeedY 0.24`・`FlyGravity 0.016`・`GroundPosition{Horizon,Deg50}AirResist 0.19/0.28`・`BlastParam.KnockBackParam 700/0.8/12`。キューバン `SpawnSpeedY 0.24`・`SpawnSpeedYWorldMin -0.4`・`spl__SpawnBulletAdditionMovePlayerParam {XRate 1.6, ZRate 2.0, YPlusRate 4.0, YMax 0.32}`・`BlastParam {PaintRadius 5.0, PaintOffsetY 0.45, SplashAroundParam {Num 15, PaintRadius 1.116, OffsetY 0.5}, KnockBackParam 700/0.8/12}`。カーリング `SpawnSpeedY 0.12`（`MaxCharge` も 0.12）・`SpawnSpeedYWorldMin -0.5`・`{XRate 0.8, ZRate 1.2, YPlusRate 2.0, YMax 0.16}`・`FlyPositionAirResist 0.05866`・`GroundPositionAirResist 0.0`・`GroundGravity 0.0016`・`BaseSpeedMinCharge 0.22`・`BaseSpeedComeOverRate 0.92`／`ComeUnderRate 0.96`・`BurstTimingSpeedStartRestFrame 90`／`StopBias 0.41`・`WarningAnimRestFrame 90`・`BlastParamMin/MaxCharge.KnockBackParam 700/0.8/9`。挙動の記述は [Inkipedia Curling Bomb](https://splatoonwiki.org/wiki/Curling_Bomb)（床をまっすぐ進み、最大距離に近づくと減速、溜めると距離が短く・大きくなる、上部ランプが爆発前に緑→赤）、[Suction Bomb](https://splatoonwiki.org/wiki/Suction_Bomb)（吸盤付きスプレー缶の形、床・壁に付く）、[Splat Bomb](https://splatoonwiki.org/wiki/Splat_Bomb)。攻略 wiki（[スプラトゥーン3 wiki カーリングボム](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B5%E3%83%96%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E3%82%AB%E3%83%BC%E3%83%AA%E3%83%B3%E3%82%B0%E3%83%9C%E3%83%A0)、検索結果の抜粋のみ確認）は、下向きに投げるとすぐ滑り出して遠くまで進み、上向きでは進行距離が縮むとする。そのためカーリングにも照準の上下角を残した。
+- **比較条件**: ギアなし（0 AP）、平地、立ち投げ、静止または一定速度。ブキとサブの組は `kit-composition.mjs` の検証済みキット（スプラシューター＝キューバン、スプラローラー＝カーリング、スプラチャージャー＝スプラッシュ）。測定は本番と同じ6段アダプター合成のヘッドレス Node（実 `_updateBombs`）。60/30/120 Hz。
+- **修正前の差分（本番合成で実行して確認）**:
+  1. キューバン・カーリングの爆発の塗りを、スプラッシュボム用の塗り置換（`sub-special-fidelity.mjs` の `_explodeBomb` ラッパー）が先頭6回分握りつぶし、代わりにスプラッシュボムの塗り（2.7＋1.064×15）を足していた。キューバンの中心 r=5.0 は一度も塗られず、塗り面積は本来の約1/3〜1/2。
+  2. 爆風のノックバックが全ボムで0だった。ゲート `!b.s3Sub` が、スプラッシュボムを含む全ての投擲ボムに付く `s3Sub` で常に偽になっていた。
+  3. カーリングの初速の上向き成分・下限・移動慣性がスプラッシュボムの値（14.4/s、XRate 1.6 を X/Z 両方）だった。キューバンの前方慣性も 2.0 ではなく 1.6。
+  4. カーリングの空中減速（FlyPositionAirResist）と地上の基準速度（BaseSpeed 系）・爆発前の減速が未使用。地上では床に当たったフレームだけ 0.92 倍しており、滑走距離がフレームレートで変わった（ヘッドレス測定で 41.3/44.0/44.8 at 30/60/120 Hz）。
+  5. カーリングの導火線が空中で止まり、投げてから約 3.8 s で爆発（原典 210F＝3.5 s）。転がり中は掃引ヒットの間に床へ最大 0.21 沈み込んでいた。
+  6. スプラッシュボムの地面抵抗が掃引ヒットのフレームだけに掛かり、平らに投げると着地後 22〜28 滑った（30/60/120 Hz で異なる）。
+  7. 予測線はカーリングでも最初の着地点で止まり、転がった先の爆発地点を示さなかった。見た目は3種とも同じ球＋円筒。
+- **INKWAVE 実装箇所**:
+  - 塗り：`sub-special-fidelity.mjs` の `kitOwnedExplosionPaint`（キットの塗りを横取りしない）、`kit-subs.mjs` の `kitBombOwnsExplosionPaint`・`kitBombExplosionPaint`（`PaintOffsetY`／`SplashAroundParam.OffsetY` を法線方向に適用。カーリングは省略値なので従来の 0.1）。
+  - ノックバック：`kit-subs.mjs` の `kitBombKnockback`、`adapter.mjs` の爆発ループ（各ボムの `KnockBackParam`。強さの換算は #535 の既存校正 `splatBombKnockbackDelta` のまま）。
+  - 投擲：`kit-subs.mjs` の各サブの `launch` と `withThrowLaunch`、`sub-special-fidelity.mjs` の `fidelityThrowVelocity`（プレイヤー速度を向き方向 Z と横 X に分けて掛ける。ZRate を持たないスプラッシュボムは従来どおり XRate を両方に）。
+  - カーリングの運動：`kit-subs.mjs` の `kitBombStep`（各積分ステップでガードした重力の直前に実行。空中は `(1−0.05866)^(dt·60)`、地上は基準速度 13.2/s へ超過分 0.92・不足分 0.96 で近づき、残り 90F から `(残り/90F)^0.41` で 0 へ）、`followRollingGround`（床のクリアランス 0.21 を毎ステップ維持、床が無ければ空中に戻る）、`kitBombKeepsFuse`（導火線は投げた時から常に進む＝#1099 の記述どおり）。
+  - スプラッシュボムの滑り：`sub-special-fidelity.mjs` の `applySplatBombRestingResistance`（接地中の毎ステップにも同じ抵抗、時間でスケール）と `applySplatBombSurfaceResponse` の `dt` 対応。
+  - 予測線：`kit-subs.mjs` の `previewCurlingPath`（実弾と同じステップ処理を表示専用の記録で再生し、壁反射を含めて爆発地点まで線を引き、マーカーを置く）。
+  - 見た目：`runtime/bomb-models.mjs`（投擲・ゴースト・手持ち）。スプラッシュ＝丸い三角錐＋上部キャップ、キューバン＝缶＋白い肩＋黒い吸盤（壁・天井では吸盤を面に向ける、爆発前に底のリングが点滅）、カーリング＝黒い短い円筒＋インク色の側面帯＋灰色の取っ手＋上部ランプ（残り 90F で緑→赤点滅、溜めで最大 1.29/1.075 倍に大きく、回転せず進行方向を向く）。寸法は INKWAVE の表示上の値。
+- **再現操作**: スプラローラーでカーリングを短く押して投げる／長押しで投げる、スプラシューターで壁にキューバンを投げる、スプラチャージャーで平地にスプラッシュボムを水平に投げる。敵の近く（キューバン 8〜12、カーリング 8〜9）で爆発させる。
+- **修正後（ロジック測定）**: キューバンの爆発の塗りは r=5.0（+0.45）＋1.116×15 の16回だけ。カーリング最大溜めは 5.0＋0.805×12 の13回。ノックバックはスプラッシュ・キューバンで距離 12 まで、カーリングで 9 まで。カーリングのタップ（溜め約0.1）で約 36、最大溜めで約 10.4 進んで爆発。60/30/120 Hz の差は 0.6 未満。爆発は投げてから 3.3 s（溜め0.1）／1.5 s（最大）。スプラッシュボムの着地後の滑りは 5〜11（30/60/120 Hz）。カーリング最大溜めの予測マーカーは実際の爆発地点と 1e-6 以内で一致（壁反射あり・なし）。
+- **プレイへの影響**: キューバン・カーリングの爆発で塗れる面積が本来の大きさになる。ボムの爆風で相手が押し出されるようになる。カーリングは低く滑り出し、溜めるほど手前で早く爆発し、壁で跳ね返る経路が予測線に出る。スプラッシュボムは着地点の近くで止まる。3種のボムを形で見分けられる。
+- **確認状態**: ロジック単独で確認済み（`patches/splatoon3/tests/bomb-kit-fidelity.test.mjs` 10件、既存の #371・kit-subs のテストを新しい処理に合わせて更新）。モデルはヘッドレス Chromium で描画して形を目視確認した。ゲーム内のブラウザ動作と Switch 実機との比較は未実施。監査用のサブエージェントが修正前（HEAD `fe68983a`）と作業中のツリーを別々に測定し、上記 1〜6 を独立に確認した。
+- **未確認（解消していない）**:
+  1. カーリングの地上速度則の形。各フィールドの値は原典だが、近づき方（ステップごとの比率）と残り 90F からの減速曲線（`StopBias` を指数として使用）は INKWAVE の読み。最大溜めの基準速度（`BaseSpeedMaxCharge` は表に無い）は最小溜めの 13.2 を共用。
+  2. カーリングの溜めの始まり。押した瞬間から数えるため、サブの準備 5F＋使用開始 1F の間も溜まり、タップでも溜め約 0.1 になる（初速 22.8、爆発 3.3 s）。本家で溜めが何フレーム目から始まるかは未確認。
+  3. カーリングの溜め投げ後のインク回復停止（`InkRecoverStopMaxCharge 30F`）が、`resources.mjs` の「本体の停止時間との大きい方」の規則で 43F（スプラローラー本体）になる。共通の回復停止の設計に関わるため変更していない。
+  4. 予測マーカーの位置。本家のカーリングのガイド表示の形と、爆風範囲をガイドで示すかどうかは公開資料で確認できなかった。INKWAVE は爆風半径を表示せず、爆発地点の予測だけを出す（スプラッシュ・キューバンは従来どおり最初の着地点、マーカー 0.55〜0.75 ≒ `GuideRadius 0.575`）。
+  5. `SplashAroundParam` の飛び方（Pitch/Velocity）の再現、キューバンの `DamageOffsetY 0.6`、スプラッシュボムの床での跳ね返り係数（`vn·0.35·0.45`、原典の項目なし）。
+  6. スプラッシュボムの滑り距離そのもの（本家の値は未計測）、モデルの寸法・色。

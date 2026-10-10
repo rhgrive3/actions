@@ -1055,15 +1055,15 @@ export function adaptSource(rel, code) {
       'Blaster flight splash drop-height window');
     code = replaceOnce(code,
       '      if (d > kitBombRadius(SUB, b, s.radius)) continue;',
-      '      if (d > Math.max(kitBombRadius(SUB, b, s.radius), b.s3Sub ? 0 : (s.knockback?.distance ?? 0))) continue;',
+      '      if (d > Math.max(kitBombRadius(SUB, b, s.radius), kitBombKnockback(SUB, b, s.knockback)?.distance ?? 0)) continue;',
       'Splat Bomb independent knockback radius');
     code = replaceOnce(code,
       "      this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');",
-      "      if (d <= kitBombRadius(SUB, b, s.radius)) {\n        this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');\n      }\n      if (!b.s3Sub && s.knockback && d <= s.knockback.distance) applySplatBombKnockback(b, e, c, _v, d, s.knockback);",
+      "      if (d <= kitBombRadius(SUB, b, s.radius)) {\n        this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');\n      }\n      const s3Knock = kitBombKnockback(SUB, b, s.knockback);\n      if (s3Knock && d <= s3Knock.distance) applySplatBombKnockback(b, e, c, _v, d, s3Knock);",
       'Splat Bomb damage and independent knockback');
     code = replaceOnce(code,
       '        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);',
-      '        applySplatBombSurfaceResponse(b, hit.normal);', 'Splat Bomb sourced ground resistance');
+      '        applySplatBombSurfaceResponse(b, hit.normal, undefined, dt);', 'Splat Bomb sourced ground resistance');
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
     // Apply after contact-recovery and Agent3 have both transformed the source.
     // Otherwise the native pre-LOS condition is gone and the build fails.
@@ -1085,7 +1085,7 @@ export function adaptSource(rel, code) {
       'Roller native trail age width');
     code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\n" + code;
     code = adaptPaintOwnership(rel, code, replaceOnce);
-    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, applyBlasterBlastContact, BLASTER_KNOCKBACK } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
+    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint, kitBombKnockback } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, applyBlasterBlastContact, BLASTER_KNOCKBACK } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",

@@ -30,6 +30,7 @@ import { installChargerSurface } from './charger-surface.mjs';
 import { installSubSpecialFidelity } from './sub-special-fidelity.mjs';
 import { installKitDefense } from './kit-defense.mjs';
 import { installKitSubs } from './kit-subs.mjs';
+import { installBombModels } from './bomb-models.mjs';
 import { installKitBigBubbler } from './kit-big-bubbler.mjs';
 import { installKitInkVac } from './kit-ink-vac.mjs';
 import { installKitNetwork } from './kit-network.mjs';
@@ -89,6 +90,8 @@ export function install(profile) {
   installSubSpecialFidelity(api, profile);
   installKitDefense(api);
   installKitSubs(api, profile);
+  // Presentation only: Splat/Suction/Curling silhouettes, held and thrown.
+  installBombModels(api);
   installKitBigBubbler(api, profile);
   installKitInkVac(api, profile);
   installKitTrizooka(api, profile);
