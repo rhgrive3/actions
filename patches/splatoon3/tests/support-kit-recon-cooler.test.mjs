@@ -58,8 +58,21 @@ test('#710 source-owned sensor uses no turf/damage, marks only opposing team', a
   assert.ok(actor.ink<=ink-40,`real selected sub spends ink after readiness: ${actor.ink} vs ${ink}; pending=${JSON.stringify(actor.weaponRunner.s3SubReady)}`);
   assert.equal(f.G.projectiles.bombs.length,0,'sensor is not a damaging native Splat Bomb');
   assert.equal(f.G.projectiles._s3SupportSensors?.length,1);
-  tick(f,90);
-  assert.ok(enemy.s3?.revealedUntil?.[0]>f.G.time,'enemy receives bounded team reveal');
+  // The projectile inherits aim and the S3 launch arc. The marked actor
+  // must intersect the *landed* field, not a guessed static world coordinate.
+  let landed = null;
+  for (let i = 0; i < 90; i++) {
+    tick(f);
+    const candidate = f.G.projectiles._s3SupportSensors?.[0];
+    if (candidate?.activeAt !== null && candidate?.activeAt !== undefined) { landed = candidate; break; }
+  }
+  assert.ok(landed, 'the production sensor has landed and armed');
+  enemy.pos.set(landed.pos.x, landed.pos.y - .7, landed.pos.z);
+  ally.pos.copy(enemy.pos);
+  tick(f,2);
+  assert.ok(enemy.s3?.revealedUntil?.[0]>f.G.time,
+    `enemy receives bounded team reveal at actual sensor hit: ${JSON.stringify({ field: landed.pos.toArray(), target: enemy.pos.toArray(), ghost: landed.ghost, ownerLife: landed.sourceLife })}`);
+  tick(f,80);
   assert.equal(enemy.s3?.revealedUntil?.[1],undefined);
   assert.equal(ally.s3?.revealedUntil?.[0],undefined);
   assert.equal(damage,0);
