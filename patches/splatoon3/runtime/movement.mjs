@@ -204,16 +204,14 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
     }
   }
   if (state.surge?.phase === 'burst') {
-    const burst = state.surge; burst.time -= dt;
-    if (burst.time <= 1e-10) {
-      // The existing boost ends here; neutral auto-climb is a separate native-speed phase.
-      if (a.climbing) { burst.phase = 'auto-climb'; burst.time = 0; }
-      else state.surge = null;
-    } else if (!a.climbing && a.grounded) state.surge = null;
-    else if (a.climbing) {
+    const burst = state.surge; burst.time = Math.max(0, burst.time - dt);
+    // #846: while attached to the inked wall the automatic climb ends at the wall top, the end of
+    // own ink, or a cancel, not at the charge-scaled countdown. The countdown only ends an airborne burst.
+    if (a.climbing) {
       a.climbV = burst.speed; a.vel.y = burst.speed; a.jumpBuffer = 0;
       sync(a, state); return true;
     }
+    if (burst.time <= 1e-10 || a.grounded) state.surge = null;
   }
   sync(a, state);
   return !!state.roll;
@@ -221,7 +219,7 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
 // Called only at the native unpainted-wall boundary, after the real raycast.
 export function crossSurgeInkGap(a, hit, into) {
   const burst = movementState(a).surge;
-  if (burst?.phase !== 'burst' || burst.time <= 0 || a.vel.y <= 0 ||
+  if (burst?.phase !== 'burst' || a.vel.y <= 0 ||
       !a.climbing || a.form !== 'squid' || !hit.hit || Math.abs(hit.normal.y) >= .5 ||
       hit.face < 0 || api.G.paint.sample(hit.face, hit.u, hit.v) !== 0 ||
       into < api.PLAYER.climbDetachDot) return false;
@@ -331,7 +329,7 @@ export function installMovement(context, tuning) {
   const ledge = Actor.prototype._ledgePop;
   Actor.prototype._ledgePop = function (...args) {
     const wasClimbing = this.climbing, surge = movementState(this).surge, value = ledge.apply(this, args);
-    if (wasClimbing && !this.climbing && (surge?.phase === 'burst' || surge?.phase === 'auto-climb')) beginSurgeLaunchArmor(this, surge);
+    if (wasClimbing && !this.climbing && surge?.phase === 'burst') beginSurgeLaunchArmor(this, surge);
     if (surge?.phase === 'burst') {
       this.vel.y = Math.max(this.vel.y, surge.speed);
       this.character.trigger('squidsurge_top', { charge: surge.charge, duration: config.surge.duration });
@@ -350,12 +348,8 @@ export function installMovement(context, tuning) {
   const climb = Actor.prototype._updateClimb;
   Actor.prototype._updateClimb = function (...args) {
     const was = this.climbing, state = movementState(this);
-    // A fresh held B may start the existing charge path again after the boost.
-    if (state.surge?.phase === 'auto-climb' && this.intent.jump) { state.surge = null; sync(this, state); }
-    const move = this.intent.move, savedX = move.x, savedZ = move.z;
-    const continueNeutral = was && state.surge?.phase === 'auto-climb' && this.form === 'squid' &&
-      !this.specialActive && !this.superJumpState && Math.hypot(move.x, move.z) <= EPSILON;
-    if (continueNeutral) { move.x = -this.wallN.x; move.z = -this.wallN.z; }
+    // A fresh held B may start the existing charge path again once the boost countdown has run out.
+    if (state.surge?.phase === 'burst' && state.surge.time <= 1e-10 && this.intent.jump) { state.surge = null; sync(this, state); }
     const charging = this.alive && this.form === 'squid' && this.climbing && this.intent.jump &&
       !this.specialActive && !this.superJumpState && (!state.surge || state.surge.phase === 'charge');
     const P = api.PLAYER, speed = P.climbSpeed, side = P.climbSideSpeed;
@@ -365,17 +359,16 @@ export function installMovement(context, tuning) {
     }
     let value;
     try { value = climb.apply(this, args); }
-    finally { P.climbSpeed = speed; P.climbSideSpeed = side; if (continueNeutral) { move.x = savedX; move.z = savedZ; } }
+    finally { P.climbSpeed = speed; P.climbSideSpeed = side; }
     if (was && !this.climbing && state.surge?.armorPending) state.surge.armorPending = false;
-    if (was && !this.climbing && movementState(this).surge?.phase === 'auto-climb') { movementState(this).surge = null; sync(this, state); }
     // Losing an inked wall cancels charge. A ledge burst is kept in the air.
     if (was && !this.climbing && movementState(this).surge?.phase === 'charge') { movementState(this).surge = null; this.anim.surgeCharge = 0; }
     // #253: Ordinary inked-wall cling has a neutral descent, separate from
-    // Squid Surge charging/auto-climb and from stick-driven upward swimming.
+    // Squid Surge charging/boost and from stick-driven upward swimming.
     // 0.9 world units/s is a provisional movement calibration, not measured S3.
     const neutralCling = this.alive && this.climbing && this.form === 'squid' &&
       !this.specialActive && !this.superJumpState && !this.intent.jump && !state.surge &&
-      Math.hypot(savedX, savedZ) <= 0.01;
+      Math.hypot(this.intent.move.x, this.intent.move.z) <= 0.01;
     if (neutralCling && Number.isFinite(args[0]) && args[0] > 0) {
       this.s3NeutralWallSlideT = Math.min(1, (this.s3NeutralWallSlideT || 0) + args[0]);
       const descent = -Math.min(0.9, this.s3NeutralWallSlideT * 3.6);

@@ -2762,3 +2762,18 @@ Confirmed in harness only: 29/29 hidden-host tests; neighbouring lifecycle, inpu
 Unverified: real browser background throttling, OS sleep timing, live relay, Switch disconnect and no-contest
 timing, and the policy for a permanently hidden guest. The Turf War result packet timing is not measured against
 hardware. Issue #878 remains open.
+## 2026-10-10: #846 Squid Surge automatic climb lifetime
+
+Scope: the wall climb after B release only. Charge, armor timing and roll are unchanged. Reference version Splatoon 3 Ver. 11.3.0.
+
+- Splatoon 3 basis: [GameWith](https://gamewith.jp/splatoon3/362219), fetched 2026-10-10, says releasing B starts an automatic climb on the wall, that holding the left stick down cancels it, and that down+B derives into Squid Roll. It gives no duration, speed or top/ink-end rule. The claim that the rush runs to the ledge and bursts there comes from the Gamepur page cited in the issue. Gamepur returned HTTP 403 on fetch, so that claim is not verified here.
+- INKWAVE before: the boost countdown (`surge.duration` 0.3 s times charge, 18F at full charge) ended the burst while the actor was still attached to a continuous own-ink wall. Partial repair c9283ef (Refs #846) switched to a native-speed `auto-climb` phase instead.
+- INKWAVE now: `patches/splatoon3/runtime/movement.mjs`. While attached, the burst keeps `surge.speed` (charge-scaled; existing values unchanged) and the countdown no longer ends it. The countdown still ends an airborne burst. Arriving at the ledge during the burst fires `squidsurge_top` and the launch. The ink-end launch no longer requires remaining countdown. A held B after the countdown has elapsed still restarts the charge, as before. The `auto-climb` phase is removed.
+- Reproduction (fixed 60 Hz fixture, own-ink wall taller than 18F): full charge at 0 AP, release B. At 18F and beyond the actor stays climbing with climbV 15. Reaching the top fires `squidsurge_top` and arms the launch shield.
+- Play impact: a full Surge on a tall inked wall keeps its boost up to the ledge instead of dropping to wall-swim speed at 18F.
+- Verification status:
+  - Logic only: `patches/splatoon3/tests/surge-auto-continuation.test.mjs`. All 10 tests pass with the change; 5 of them fail on main's `movement.mjs`. Raycast and paint are stubbed. No browser run and no real device.
+  - 未確認: whether the Ver. 11.3.0 rush keeps the same speed over long walls (constant boost speed to the top is the behavior the issue requests, not a measured curve); the Gamepur top/ink-end statements; whether INKWAVE's away-push detach corresponds to the game's stick-down cancel; real-device feel on tall walls; Switch parity.
+  - Not separately tested: the down-stick cancel input mapping (covered only through the native away-push detach).
+  - Not on this branch: local commit 97e3e6c (PR #1182 integration) is absent from this worktree. Reconcile at integration.
+  - #846 is not closed by this change.
