@@ -400,6 +400,15 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       (this.s3RollerPrevInk ?? -Infinity) > DRY_INK;
     const dryHold = inp.fire === true && this.rolling === true && this.flick < 0 &&
       this.cooldown <= 0.25 && a.grounded === true && a.ink <= DRY_INK && hadPaidInk;
+    // Issue #541: a refill inside a held dry roll leaves `rolling` true, so the
+    // native edge (canRoll !== rolling) never fires and the roll loop, stripe
+    // anchor and rollDist reset of a normal roll start would be skipped. Drop the
+    // flag for this call only, so native re-enters the roll through its own
+    // transition (one loop, anchored at the refill position). When native's
+    // canRoll is false it ends the state exactly as it would have done anyway.
+    if (this.s3RollerWasDry === true && this.rolling === true && this.flick < 0 && a.ink > DRY_INK) {
+      this.rolling = false;
+    }
     if (this.s3FlickPostSub > 0) {
       this.s3FlickPostSub -= dt;
       if (this.s3FlickPostSub < EPS) this.s3FlickPostSub = 0;
