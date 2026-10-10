@@ -14,6 +14,9 @@ async function view(id) {
   // without returning true instead simulates a rejected send and correctly
   // retires the pending hit before any acknowledgement can arrive.
   nm.s.tr.sendTo = (to, packet) => { sent.push({ to, packet: structuredClone(packet) }); return true; };
+  // Production victim-owner receipts are broadcast to current participants.
+  // The socket-free fixture must observe that authenticated ACK channel too.
+  nm.s.tr.broadcast = packet => { sent.push({ to: 'broadcast', packet: structuredClone(packet) }); return true; };
   const attacker = damageActor(f.makeActor({ nid: 1, owner: 'p1', remote: id !== 'p1', team: 0, roller: false }));
   const victim = damageActor(f.makeActor({ nid: 2, owner: 'p2', remote: id !== 'p2', team: 1, roller: false }));
   attacker.weapon = f.WEAPONS.blaster;
