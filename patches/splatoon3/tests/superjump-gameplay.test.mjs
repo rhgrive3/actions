@@ -8,6 +8,7 @@ import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { ABILITIES, abilityAllowed, abilityPoints, emptyLoadout, normalizeLoadout } from '../runtime/gear.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const BUILT = process.env.INKWAVE_SUPERJUMP_SITE;
 const SRC = BUILT ? path.resolve(BUILT) : path.join(ROOT, 'inkwave-public');
@@ -515,4 +516,184 @@ test('#728 remote respawn clears support history and the first grounded sample r
   r.sample(-6, 0, 2, r.F.grounded); r.sample(-7, 5, 2, 0);
   assert.equal(a.superJump(r.b), true);
   assert.deepEqual(plain(a.superJumpState.to.toArray()), [-6, 0, 2]);
+});
+
+function equipDropRoller(a) {
+  a.s3.loadout[2].main = 'dropRoller';
+  a.setWeapon(a.weaponId);
+}
+function landSuperJump(f, a, move = null) {
+  a.s3.jumpChargeTime = STEP;
+  a.s3.jumpFlightTime = 0.5;
+  assert.equal(a.superJump(new f.THREE.Vector3(12, 0, 0)), true);
+  let frames = 0;
+  while (a.superJumpState && frames++ < 600) {
+    const jump = a.superJumpState;
+    if (move && jump.phase === 'flight' && jump.t + STEP + 1e-10 >= jump.dur) a.intent.move.set(move[0], 0, move[1]);
+    f.tick(a);
+  }
+  assert.equal(a.superJumpState, null, 'the native Super Jump reaches its landing boundary');
+  assert.ok(frames < 600);
+}
+
+test('#292 Drop Roller is shoes-main only and its landing roll samples the live direction', async t => {
+  const f = await boot(); t.after(f.close);
+  assert.equal(ABILITIES.dropRoller, '受け身術');
+  for (let piece = 0; piece < 3; piece++) for (let slot = 0; slot < 4; slot++)
+    assert.equal(abilityAllowed('dropRoller', piece, slot), piece === 2 && slot === 0);
+  const invalid = emptyLoadout();
+  invalid[0].main = 'dropRoller'; invalid[1].subs[0] = 'dropRoller'; invalid[2].subs[1] = 'dropRoller';
+  const normalized = normalizeLoadout(invalid);
+  assert.equal(normalized[0].main, 'none'); assert.equal(normalized[1].subs[0], 'none');
+  assert.equal(normalized[2].subs[1], 'none');
+  const legal = emptyLoadout(); legal[2].main = 'dropRoller';
+  assert.equal(abilityPoints(legal).dropRoller, undefined);
+
+  const a = f.make(); equipDropRoller(a);
+  a.intent.move.set(0, 0, 1);
+  landSuperJump(f, a, [1, 0]); // the held landing frame, not the charge-time input, owns direction
+  assert.equal(a.s3.dropRoller?.x, 1); assert.equal(a.s3.dropRoller?.z, 0);
+  const dodge = a.character.events.filter(([name]) => name === 'dodge');
+  assert.equal(dodge.length, 1, 'one local presentation trigger accompanies one owner action');
+  assert.equal(dodge[0][1].t, a.s3.dropRoller.duration);
+  assert.equal(a.s3.actions?.roll ?? null, null, 'Drop Roller does not enter the Squid Roll chain');
+});
+
+test('#292 neutral input, ordinary jumps, and Practice Range never admit Drop Roller', async t => {
+  const f = await boot(); t.after(f.close);
+  const neutral = f.make(); equipDropRoller(neutral); landSuperJump(f, neutral);
+  assert.equal(neutral.s3.dropRoller, undefined); assert.equal(neutral.s3.dropRollerBuffRemaining || 0, 0);
+  const micro = f.make(); equipDropRoller(micro); landSuperJump(f, micro, [0.01, 0]);
+  assert.equal(micro.s3.dropRoller, undefined, 'the production Actor movement boundary is neutral');
+  const aboveDeadzone = f.make(); equipDropRoller(aboveDeadzone); landSuperJump(f, aboveDeadzone, [0.010001, 0]);
+  assert.ok(aboveDeadzone.s3.dropRoller, 'movement above the production deadzone remains eligible');
+  assert.equal(aboveDeadzone.s3.dropRoller.x, 1, 'the accepted magnitude selects direction without changing the direction');
+
+  const ordinary = f.make(); landSuperJump(f, ordinary, [0, 1]);
+  assert.equal(ordinary.s3.dropRoller, undefined, 'an ordinary Super Jump has no Drop Roller shoes');
+
+  const range = f.make(); equipDropRoller(range); f.G.match.range = {};
+  landSuperJump(f, range, [0, 1]);
+  assert.equal(range.s3.dropRoller, undefined); assert.equal(range.s3.dropRollerBuffRemaining || 0, 0);
+});
+
+test('#292 fire during the landing control window emits a real Shooter round and spends its ink', async t => {
+  const f = await boot(); t.after(f.close); const a = f.make(); equipDropRoller(a);
+  landSuperJump(f, a, [1, 0]);
+  assert.ok(a.s3.dropRoller, 'the owner landing action is active');
+  a.intent.fire = true; a.lastFire = 0; a.ink = f.PLAYER.inkMax; a.weaponRunner.cooldown = 0;
+  const beforeInk = a.ink, beforeProjectiles = f.G.projectiles.list.length, emissions = [];
+  f.on('weapon:fire', event => {
+    if (event.actor === a) emissions.push({ action: !!a.s3.dropRoller, ink: a.ink, weapon: event.weapon,
+      muzzle: event.muzzle?.toArray?.() ?? null, projectileCount: f.G.projectiles.list.length });
+  });
+  for (let i = 0; i < 8 && emissions.length === 0; i++) f.tick(a);
+  assert.equal(emissions.length, 1, 'the normal projectile emission path ran during the forced-direction action');
+  assert.equal(emissions[0].action, true, 'the Drop Roller action remained live when the shot was emitted');
+  assert.equal(emissions[0].weapon, a.weaponId);
+  assert.equal(emissions[0].projectileCount, beforeProjectiles + 1, 'one real projectile exists at the emission event');
+  assert.equal(emissions[0].muzzle?.length, 3);
+  assert.ok(emissions[0].muzzle.every(Number.isFinite), 'the real shot carried a finite muzzle origin');
+  assert.ok(a.ink < beforeInk, 'the emitted shot paid the weapon ink cost');
+  assert.ok(Math.abs(a.ink - (beforeInk - a.weapon.inkPerShot)) < 1e-10, 'no Drop Roller-specific ammo waiver or extra cost was added');
+});
+
+test('#292 successful roll grants temporary +30 AP-derived effects, then expiry restores permanent gear', async t => {
+  const f = await boot(); t.after(f.close); const a = f.make(); equipDropRoller(a);
+  const permanentPoints = { ...a.s3.abilityPoints };
+  const before = { run: a.s3.modifiers.runSpeed, swim: a.s3.modifiers.swimSpeed, ink: a.s3.modifiers.enemyMoveSpeed };
+  landSuperJump(f, a, [0, -1]);
+  let frames = 0;
+  while (a.s3.dropRoller && frames++ < 90) f.tick(a);
+  assert.equal(a.s3.dropRoller, undefined, 'the landing action completes');
+  assert.ok(frames < 90); assert.equal(a.s3.dropRollerBuffRemaining, 3);
+  assert.deepEqual({ ...a.s3.abilityPoints }, permanentPoints, 'temporary AP never changes canonical equipment points');
+  assert.ok(a.s3.modifiers.runSpeed > before.run);
+  assert.ok(a.s3.modifiers.swimSpeed > before.swim, JSON.stringify({ before, after: a.s3.modifiers }));
+  assert.ok(a.s3.modifiers.enemyMoveSpeed > before.ink, 'temporary Ink Resistance Up is active in the derived modifier');
+  f.tick(a, 179); assert.ok(a.s3.dropRollerBuffRemaining > 0);
+  f.tick(a); assert.equal(a.s3.dropRollerBuffRemaining, 0);
+  assert.deepEqual({ run: a.s3.modifiers.runSpeed, swim: a.s3.modifiers.swimSpeed, ink: a.s3.modifiers.enemyMoveSpeed }, before);
+  assert.deepEqual({ ...a.s3.abilityPoints }, permanentPoints);
+});
+
+test('#292 battle-earned Drop Roller buff clears before the first Practice Range update', async t => {
+  const f = await boot(); t.after(f.close); const a = f.make(); equipDropRoller(a);
+  landSuperJump(f, a, [0, 1]);
+  while (a.s3.dropRoller) f.tick(a);
+  const permanentPoints = { ...a.s3.abilityPoints };
+  const permanentRunSpeed = f.profile.gear.runSpeed[0];
+  assert.equal(a.s3.dropRollerBuffRemaining, 3);
+  assert.ok(a.s3.modifiers.runSpeed > permanentRunSpeed);
+  f.G.match.range = {}; f.G.match.opts = { range: true };
+  f.tick(a);
+  assert.equal(a.s3.dropRollerBuffRemaining, 0);
+  assert.equal(a.s3.dropRoller, undefined);
+  assert.equal(a.s3.modifiers.runSpeed, permanentRunSpeed, 'Range movement begins with the permanent gear curve');
+  assert.deepEqual({ ...a.s3.abilityPoints }, permanentPoints, 'clearing the transient effect leaves equipped AP unchanged');
+});
+
+test('#292 interrupted landing action and life reset clear action/buff state', async t => {
+  const f = await boot(); t.after(f.close); const a = f.make(); equipDropRoller(a);
+  landSuperJump(f, a, [1, 0]);
+  a.intent.jump = true; f.tick(a);
+  assert.equal(a.s3.dropRoller, undefined, 'a new jump interrupts the landing roll');
+  assert.equal(a.s3.dropRollerBuffRemaining || 0, 0, 'an interrupted roll grants no temporary ability points');
+  a.intent.jump = false;
+  landSuperJump(f, a, [1, 0]);
+  while (a.s3.dropRoller) f.tick(a);
+  assert.equal(a.s3.dropRollerBuffRemaining, 3);
+  a.reset();
+  assert.equal(a.s3.dropRoller, undefined); assert.equal(a.s3.dropRollerBuffRemaining, 0);
+  assert.equal(a.s3.modifiers.runSpeed, f.profile.gear.runSpeed[0]);
+});
+
+test('#292 splat and respawn clear an earned buff', async t => {
+  const f = await boot(); t.after(f.close);
+  const splat = f.make(); equipDropRoller(splat); landSuperJump(f, splat, [0, 1]);
+  while (splat.s3.dropRoller) f.tick(splat);
+  assert.equal(splat.s3.dropRollerBuffRemaining, 3);
+  splat.splat(null, 'water');
+  assert.equal(splat.alive, false); assert.equal(splat.s3.dropRollerBuffRemaining, 0);
+  assert.equal(splat.s3.modifiers.runSpeed, f.profile.gear.runSpeed[0]);
+
+  const respawn = f.make(); equipDropRoller(respawn); landSuperJump(f, respawn, [0, 1]);
+  while (respawn.s3.dropRoller) f.tick(respawn);
+  assert.equal(respawn.s3.dropRollerBuffRemaining, 3);
+  respawn.respawn();
+  assert.equal(respawn.s3.dropRollerBuffRemaining, 0);
+  assert.equal(respawn.s3.modifiers.runSpeed, f.profile.gear.runSpeed[0]);
+
+  const fall = f.make(); equipDropRoller(fall); landSuperJump(f, fall, [1, 0]);
+  while (fall.s3.dropRoller) f.tick(fall);
+  assert.equal(fall.s3.dropRollerBuffRemaining, 3);
+  let fallCause = null;
+  f.on('splatted', ({ victim, cause }) => { if (victim === fall) fallCause = cause; });
+  fall.pos.y = -2; fall.vel.set(0, 0, 0); fall.grounded = false;
+  f.tick(fall);
+  assert.equal(fallCause, 'water', 'the native open-water fall-death path reached Actor.splat');
+  assert.equal(fall.alive, false);
+  assert.equal(fall.s3.dropRollerBuffRemaining, 0, 'environmental death clears a previously earned buff');
+  assert.equal(fall.s3.modifiers.runSpeed, f.profile.gear.runSpeed[0]);
+});
+
+test('#292 landing action and three-second buff are identical at 30/60/120Hz render cadence', async t => {
+  let expected;
+  for (const hz of [30, 60, 120]) {
+    const f = await boot(); t.after(f.close); const a = f.make(); equipDropRoller(a);
+    a.s3.jumpChargeTime = STEP; a.s3.jumpFlightTime = 0.5; a.superJump(new f.THREE.Vector3(12, 0, 0));
+    const clock = new f.FixedClock(), trace = [];
+    for (let frame = 0; frame < hz * 5; frame++) clock.advance(1 / hz, dt => {
+      f.G.time += dt;
+      const jump = a.superJumpState;
+      if (jump?.phase === 'flight' && jump.t + dt + 1e-10 >= jump.dur) a.intent.move.set(0, 0, 1);
+      a.update(dt);
+      trace.push([a.superJumpState?.phase ?? null, a.s3.dropRoller?.remaining ?? 0,
+        a.s3.dropRollerBuffRemaining || 0, a.pos.x, a.pos.z,
+        a.s3.modifiers.runSpeed, a.s3.modifiers.swimSpeed, a.s3.modifiers.enemyMoveSpeed]);
+    });
+    const result = plain(trace); if (expected) assert.deepEqual(result, expected); else expected = result;
+    assert.equal(a.superJumpState, null); assert.equal(a.s3.dropRoller, undefined);
+    assert.equal(a.s3.dropRollerBuffRemaining, 0, 'the complete temporary effect expires on the fixed simulation clock');
+  }
 });

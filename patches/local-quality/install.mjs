@@ -7,12 +7,16 @@ import { installRollerMotionQuality } from './roller-motion.mjs';
 import { installRollerVisualQuality } from './roller-visual.mjs';
 import { installMenuQuality } from './menu.mjs';
 import { installOffscreenVisualBudget } from './offscreen-visual-budget.mjs';
+import { installOfflineOffscreenBudget } from './offline-offscreen-budget.mjs';
 export function installQuality(profile){
   const api={Character,CHARACTER_CHANNELS,CHARACTER_TIMERS,Projectiles};
   installRollerMotionQuality(api,rollerDetailMotionSnapshot);
   installRollerVisualQuality(api);
   installMenuQuality(Menus);
-  // #845: rendering-only. Frustum-culled actors keep authoritative simulation and
-  // stop paying for pose, hair, and foot-IK work nobody draws.
+  // Main #1175 path: presentation-only remote replicas can defer full visual pose.
   installOffscreenVisualBudget(api,G);
+  // #845 residual: offline bots author shots from rig-bone muzzles, so retain pose
+  // and muzzle transforms; substitute exact level ground queries and defer only
+  // stable offscreen leg IK, pose tail, hair and material presentation work.
+  installOfflineOffscreenBudget(api,G);
 }

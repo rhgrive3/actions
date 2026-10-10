@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import * as continuation from '../result-continuation.mjs';
 import {adaptResultContinuation} from '../result-continuation-adapter.mjs';
-import {ABILITIES,abilityAllowed,emptyLoadout} from '../../splatoon3/runtime/gear.mjs';
+import {ABILITIES,SHOES_ABILITIES,abilityAllowed,emptyLoadout} from '../../splatoon3/runtime/gear.mjs';
 import {CLOTHING_ABILITIES,SPLATFEST_TEE} from '../../splatoon3/runtime/clothing-gear.mjs';
 import {HEAD_ABILITIES} from '../../splatoon3/runtime/conditional-gear.mjs';
 const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
@@ -25,7 +25,7 @@ class Node {
 }
 function rig({active=true,gear=true}={}){
  const saved=[],tuning=JSON.parse(read('../../splatoon3/profile.json'));
- const create=vm.runInNewContext('('+source.slice(panel.start,panel.end)+')',{document:{createElement:tag=>new Node(tag)},readLoadout:()=>emptyLoadout(),ABILITIES,abilityAllowed,CLOTHING_ABILITIES,SPLATFEST_TEE,HEAD_ABILITIES,tuning,G:{},STORAGE:'inkwave.splatoon3.gear.v1',localStorage:{setItem:(key,value)=>saved.push([key,JSON.parse(value)])}});
+ const create=vm.runInNewContext('('+source.slice(panel.start,panel.end)+')',{document:{createElement:tag=>new Node(tag)},readLoadout:()=>emptyLoadout(),ABILITIES,SHOES_ABILITIES,abilityAllowed,CLOTHING_ABILITIES,SPLATFEST_TEE,HEAD_ABILITIES,tuning,G:{},STORAGE:'inkwave.splatoon3.gear.v1',localStorage:{setItem:(key,value)=>saved.push([key,JSON.parse(value)])}});
  const el=new Node('div'),box=new Node('div'),look=new Node('button');box.className='iw-loadout__look';box.append(look);el.append(box);const details=gear?create():null;if(details)el.append(details);
  const result={win:true,players:[]},screen={name:'loadout',el},calls=[],menus={current:'loadout',_results:result,_scr:screen,_resultContinuation:active?{result,committed:false}:null,_btn:opts=>Object.assign(new Node('button'),{opts}),api:{prepareMatch:()=>calls.push('prepare'),rematch:()=>calls.push('rematch')}};
  return {el,box,look,details,screen,menus,calls,saved};
@@ -46,6 +46,18 @@ test('continuation keeps live native gear controls below both actions in one scr
 test('ordinary loadout keeps the gear owner untouched; mirrors without gear retain continuation',()=>{
  const f=rig({active:false});continuation.augmentContinuationLoadout(f.menus,f.screen);assert.equal(f.details.parentNode,f.el);assert.deepEqual(f.box.children,[f.look]);
  const plain=rig({gear:false});continuation.augmentContinuationLoadout(plain.menus,plain.screen);assert.equal(plain.box.children.length,2);plain.box.children[1].opts.accept();assert.deepEqual(plain.calls,['prepare','rematch']);
+});
+test('#272 actual gear panel offers Stealth Jump only in shoes main and saves that choice',()=>{
+ const f=rig(),selects=f.details.querySelectorAll('select');
+ assert.equal(selects.length,12);
+ for(const select of selects){
+  const visible=select.children.some(option=>option.value==='stealthJump');
+  assert.equal(visible,select['aria-label']==='クツ メイン',select['aria-label']);
+ }
+ const shoesMain=selects.find(select=>select['aria-label']==='クツ メイン');
+ shoesMain.value='stealthJump';shoesMain.listeners.get('change')();
+ assert.equal(f.saved.length,1);
+ assert.equal(f.saved[0][1][2].main,'stealthJump');
 });
 test('old continuation leaves the absolute gear sibling outside its action flow as a negative control',()=>{
  const current=read('../result-continuation.mjs'),needle="  const gear = screen.el.querySelector('.s3-gear');\n  if (gear) box.appendChild(gear);";assert(current.includes(needle));

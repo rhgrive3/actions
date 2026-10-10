@@ -15,6 +15,11 @@ export function refreshFlowEffects(actor, api, tuning, abilityPoints, gearCurve)
   const active = !!s.flow?.active, previous = applied.get(actor);
   if (previous?.active === active && previous.modifiers === m && previous.weapon === weapon) return;
   const basePoints = conditionalPoints(actor, abilityPoints(s.loadout), api.G.match, tuning.conditionalGear);
+  // Drop Roller and Flow both contribute temporary AP to overlapping movement
+  // curves. Preserve the Drop Roller speed/resistance bonus when Flow refreshes
+  // derived modifiers, while leaving canonical equipment AP untouched.
+  if (!actor.remote && (s.dropRollerBuffRemaining || 0) > 1e-10)
+    for (const id of ['runSpeed', 'swimSpeed', 'inkResistance']) basePoints[id] = Math.min(57, (basePoints[id] || 0) + 30);
   const ap = flowAbilityPoints(basePoints, active, tuning.flow.abilityPoints);
   const extra = tuning.gearExtra, base = api.WEAPONS[actor.weaponId];
   for (const id of FLOW_ABILITIES) m[id] = gearCurve(ap[id] || 0, ...tuning.gear[id]);

@@ -166,12 +166,15 @@ const DROP_FALLOFF_RANGE = 7;
 // once before the target-side DamgeRatio, exactly like the Roller 1.8 below.
 //
 // Provenance: community measurement on wikiwiki (version provenance 11.2.0 /
-// 3.1.1 marked); direct 125 -> 237.5 (x1.9), Object Shredder x2.09 (1.9 x 1.1)
-// applied once. No Nintendo 11.3 capture is claimed, and the generic separate
+// 3.1.1 marked); current pinned 11.3.0 Leanny data also maps the stock Hot
+// Blaster's `BlasterMiddle` source row to 1.9 against both Great Barrier targets.
+// Object Shredder adds a separate x1.1 factor (total x2.09), applied once.
+// No Nintendo 11.3 capture is claimed, and the generic separate
 // ブラスター entry is 2.1x, so this is NOT blanket-applied to every blaster
 // variant: only the stock Blaster's own direct round is scaled, the burst splash
 // never reaches this query, and no unlisted variant is guessed.
 export const BLASTER_OBJECT_MULTIPLIER = 1.9;
+export const OBJECT_SHREDDER_MULTIPLIER = 1.1;
 
 // The damage this projectile would deal to a target at `hitPoint`, using the SAME
 // rule the native pipeline already applies to actors (`_step`) and to the boss
@@ -206,7 +209,10 @@ function damageAtContact(p, hitPoint, impactT = 1) {
   // one stock main weapon, so no shooter, Roller, Trizooka or unlisted variant
   // is amplified.
   if (p?.type === 'blast' && weapon?.kind === 'blaster') {
-    return Number.isFinite(near) ? near * BLASTER_OBJECT_MULTIPLIER : 0;
+    if (!Number.isFinite(near)) return 0;
+    const objectShredder = p.owner?.s3?.modifiers?.objectShredder === true
+      ? OBJECT_SHREDDER_MULTIPLIER : 1;
+    return near * BLASTER_OBJECT_MULTIPLIER * objectShredder;
   }
   if (p?.type !== 'drop' || !Number.isFinite(near)) return Number.isFinite(near) ? near : 0;
   const far = p.dmgFar;
