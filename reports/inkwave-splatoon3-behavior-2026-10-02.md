@@ -3118,3 +3118,12 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - 2000 の根拠: 旧 `remoteHit` の `Math.min(…, 2000)` を上限として維持した。コード内で宣言された最大ダメージ定数は 180 で、1回の最大は 180 × 2.5（weak）× 1.25（stunned）= 562.5 と算出される。これはINKWAVE内のコードからの算出で、スプラトゥーン3の数値ではない。
 - プレイへの影響: 正規のホストとゲストの間では値は変わらない想定。改造クライアントの不正な値は拒否され、Boss とクラブレットの HP が無限・負にならない。Boss の数値、武器倍率、ダメージ計算は変更していない。
 - 確認状態: ノード VM 試験（`boss-hit.test.mjs` 9件、`boss-crablet-shell-admission.test.mjs` 4件、計13件）PASS。修正を外した対照では 10/13 が FAIL。周辺 local-quality 試験 36件 PASS。未確認: ホストとゲストのブラウザー＋リレー統合、実際の2端末での通信。
+## 2026-10-10: #433 LOW/mobile neon halo canvases
+
+- 本家の根拠: なし。描画資源の解像度と寿命だけを変更し、スプラトゥーン3の挙動・操作・数値の比較対象ではない。Ver.11.3.0 の Online lobby の見た目も今回は計測していない。
+- INKWAVE 実装箇所: `patches/local-quality/lobby-resource-adapter.mjs` の `adaptLobbySet()`。公開版 `inkwave-public/src/game/lobbySet.js` の `_neon()` が作る neon halo 2枚（INK & SKATE、squid sign）は `this.halos` に入り、LobbySet の寿命中保持される。`lobbySet-tex.js` の `neonHalo()` は未変更。
+- 問題: 前回の LOW atlas 上限（15c19ac8）は4 atlas だけを対象にしていた。halo 2枚は LOW/mobile でも既定の 180 px/m のまま作られ、Online を離れるまで保持される。
+- 変更: LOW のみ `pxPerM` を 90 にする。halo の blur、線幅、canvas 寸法は pxPerM に比例するため、解像度の比例縮小になる。rect（メートル単位の幾何）は不変。HIGH/MEDIUM は既定値（180）のまま。
+- 再現操作（手順のみ、今回の実行はなし）: LOW 設定または touch 端末で Online hub を開き、`__inkwave.showcase.lob.set.halos` の texture の image 寸法を確認する。修正前は LOW でも HIGH と同寸法。
+- プレイへの影響: LOW の Online lobby の看板グローの解像度だけが下がる。看板の形・位置・点灯、ゲームの挙動は変えない。
+- 確認状態: `patches/local-quality/tests/lobby-resources.test.mjs` 7/7、`issue-472-lobby.test.mjs` と `texlib-stage-pack.test.mjs` 計18/18。試験は native `neonHalo` を Canvas2D stub で実行し、寸法式と LOW の約1/4画素を確認した。合成ストロークの寸法を使っており、実際の sign の寸法は未計測。実ブラウザ描画、反復 Online の GPU 常駐量、LOW/mobile の実機予算、メモリ回収、看板の見え方の実機レビューは未確認のまま残す。`drawGraffiti` の一時 canvas（矩形サイズ、描画中のみ確保）は変更していない。
