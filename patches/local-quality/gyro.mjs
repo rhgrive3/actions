@@ -232,7 +232,13 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (t < this._platformSensorStart && this._platformSensorStart - t < 3600000) return;
     if (this._tRR && (t < this._tRR || t - this._tRR > 500)) this.resync();
     const s=state(this); s.motionTime = t;
-    s.stationaryMotion = e.rotationRate.alpha === 0 && e.rotationRate.beta === 0 && e.rotationRate.gamma === 0;
+    // #187: small nonzero Android gyro residuals can accompany a drifting
+    // fused attitude while the handset is effectively still. Apply the same
+    // attitude-reference-only rebase as exact zero, but only to fresh motion
+    // evidence within this narrow 0.025-degree/s engineering noise band.
+    // Above that band retain the ordinary controller motion path unchanged.
+    const nearZeroRate = Math.hypot(e.rotationRate.alpha,e.rotationRate.beta,e.rotationRate.gamma) <= .025;
+    s.stationaryMotion = nearZeroRate;
     if (this._src !== 'ori' && (isAndroid() || !gyroRateTrusted(this, e.rotationRate, t))) fallback(this, 'untrusted-motion');
     s.event={kind:'motion',time:t};
     try {
