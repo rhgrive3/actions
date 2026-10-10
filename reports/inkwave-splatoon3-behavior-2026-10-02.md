@@ -3569,3 +3569,13 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - 試験の補正: 描画フレームが衝突後に固定 tick を 1 つ余分に進める場合があり、試験の計数と記録が 1 tick ずれていた。ゲーム側の挙動は変えず、試験は衝突までの tick だけを数えるように補正した（`issue-648-tidal-slam-gauge.test.mjs` の HUD trace、`issue-966-slam-impact.test.mjs` の描画間隔テスト）。`special-motion.test.mjs` は衝突が遅れたため、衝突後に早く打ち切らないよう追従させた。
 - プレイへの影響: 落下開始が約0.25秒遅れ、滞空が長くなる。ゲージ・ダメージ・塗り半径・拳の判定は不変。`slam-damage-state` の #573 保護テストは、着地が遅れた分に合わせて「着地で保護が終わり、独立の無敵タイマーは残る」ことを確認する形に更新した。
 - 確認状態: **未確認**。本家の 70F 相当値、Switch 実機での滞空と着地の比較は未実施。70F は本 Issue の目標値として採用したもので、任天堂一致は主張しない。関連テスト 68 件（9 ファイル）と `check-inkwave-patches --quick` は通過。
+## 2026-10-10: #382 Comeback after an enemy splat in Turf Squid Spawn
+
+- 本家の根拠: 参照版は Splatoon 3 Ver. 11.3.0（既存の参照値）。敵由来の復活後 20 秒、Run/Swim Speed Up・Ink Saver Main/Sub・Ink Recovery Up・Special Charge Up 各 +10 AP は、既存設定 `profile.json` の `conditionalGear` と [Splatoonwiki Comeback](https://splatoonwiki.org/wiki/Comeback)（コミュニティ資料）に基づく。任天堂公式資料でのこの数値の確認は未確認。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/conditional-gear.mjs`（敵由来の死亡フラグと 20 秒の状態）、`runtime/respawn-lifecycle.mjs` の `begin()`（Turf の Squid Spawn 復活）、`runtime/install.mjs`（Respawn Lifecycle の導入順）。
+- 修正前の差分: 頭メインに Comeback を付けた状態で Turf の敵に倒されて Squid Spawn で復活すると、Comeback は 0 秒・+0 AP のままだった。Turf の復活は `Actor.prototype.respawn` の既存ラッパーを通らず、reset で敵由来の死亡フラグが消えていた。水・落下などの環境死では発動しない（既存の方針どおり）。
+- 再現操作: 頭メイン Comeback、Turf、敵の攻撃で倒される、Squid Spawn の aim で復活。修正前は `comeback` が 0 のまま（期待値 20）。
+- 修正: Respawn Lifecycle の導入を gear / Flow の respawn ラッパーの内側に移した（PR #1182 の commit `7eb9487d` の #382 部分を移植）。20 秒・+10 AP の曲線と既存設定値は変更していない。
+- プレイへの影響: 修正前は Turf で敵に倒された直後の復活で、本家の Comeback にある移動・インク回復の補正が入らなかった。修正後は敵由来の死亡で 20 秒発動し、環境死では発動しない。
+- 確認状態: ロジック確認のみ。完全な production 変換・bootstrap 後続 installer・実 Actor/Physics で `issue-382-squid-spawn-comeback.test.mjs` 8/8 が通過（修正前は 8 件中 5 件が `0 != 20` 等で失敗、残り 3 件は対照ケース）。30/60/120Hz の固定 tick で一致。ブラウザ実動作、実通信、Switch 実機比較は未確認。
+- 未確認: 20 秒の開始境界（Squid Spawn の aim / launch / landing のどこから数えるか）。現在の実装は aim 中も時計が進むが、本家の正確な境界は未計測。環境死をまたぐ残存効果の扱いは既存の未校正事項のまま。

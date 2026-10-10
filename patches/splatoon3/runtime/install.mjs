@@ -98,6 +98,9 @@ export function install(profile) {
   installMovement(api, profile);
   installNormalJumpHold(api, profile);
   installMovementMotion(api, profile);
+  // Keep respawn-owned gameplay wrappers outside Squid Spawn: its Turf branch
+  // starts a new life without invoking the legacy native respawn method.
+  installRespawnLifecycle(api, profile);
   installGear(api, profile);
   installFlow(api, profile);
   installResources(api, profile);
@@ -129,7 +132,6 @@ export function install(profile) {
   installSpecialMotion(api, profile);
   installFlowMotion(api);
   installFaceMotion(api, profile);
-  installRespawnLifecycle(api, profile);
   installControllerMotion({ Input, PlayerController, G });
   // Issue #798: the arc guide is presentation-only. Throttle its native
   // collision-query cadence without touching actual bomb physics.
