@@ -102,7 +102,13 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     const sa = kind === 1 ? 1.2 : kind === 6 ? 1 : 0, sdu = sa ? 0.6 : 0, sdv = sa ? 0.8 : 0;
     const g = { R: 2.7, team: 0, seed, kind, age: tn, dur: 1, dripDur: wall ? 3 : 0,
       entries: [face, 16, 20, 0, sdu, sdv, sa], paintOrder: order, netOrderId: order };
-    paint._advanceSplatOwnership(g);
+    // Roller body has no ancillary ink: use the production CPU body path.
+    if (kind === 6) {
+      const claimed = paint._cpuSplat(face, 16, 20, g.R, 0, seed, sdu, sdv, sa, kind, order);
+      check(claimed > 0, `Roller CPU band must claim turf: ${JSON.stringify({ wall, seed, tn })}`);
+    } else {
+      paint._advanceSplatOwnership(g);
+    }
     const dT = wall ? 1 - Math.pow(1 - Math.min(1, tn / 3), 2.2) : 1;
     const count = paint._paintOrderRuns(face, order, 0, 32, 0, 32), runs = paint._paintOrderRunScratch.slice(0, count * 4);
     const points = []; let cells = 0;
