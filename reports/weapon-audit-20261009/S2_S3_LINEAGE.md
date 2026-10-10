@@ -39,3 +39,16 @@ This evidence does **not** resolve S3's missing two-dimensional aiming PDF, skin
 ### Additional S2 5.5.0 → S3 11.3.0 Hot Blaster comparison
 
 The pinned `BlasterMiddle.json` contributes **16** explicit comparisons, of which **15** normalized numeric values agree; **one changes**: `mInkRecoverStop = 60F` in S2 becomes `WeaponParam.InkRecoverStop = 57F` in S3. Other matching fields include 50F repeat, 7 flight splashes, flight length 15→1.5, initial 5→0.5, spawn velocity 9.45→0.945, jump 10°, bias 0.5, straight travel 9F, straight-end speed 9.131→0.9131 and 0.1 ink/shot. This strengthens field mapping evidence only: **the underlying runtime RNG, projectile integrator and paint shader are not proved identical**. Run the 41-field oracle via `node scripts/measure-splatoon2-3-lineage.mjs`.
+
+### S3独立の射撃ブレ確率式（2026-10-10検証）
+
+[かなもじ「スプラトゥーン3の弾の命中率 #1」](https://note.com/kanamoji_1027/n/nfd4a961652a6)
+と[同 #2](https://note.com/kanamoji_1027/n/na3307fdc69e7)は、S2の仮説とは独立した2024年のS3向け解析を提示。
+水平角度のモデル `y=s*u^(log(b)/log(0.5))` とCDF `P(y≤s*r)=r^(log(0.5)/log(b))` を区別し、
+`s3-shooter-bias-cdf.test.mjs` で、各ブレ値b・角度上限rの決定的5,000点測定が解析CDFと一致することを検査する。
+中央値 `u=0.5→角度=s*b` も固定。
+S3 ShooterNormalの明示値は地上4.86°／ジャンプ11.66°、ジャンプBias0.4。地上BiasMax0.25は
+11.3.0 JSONでは省略されるが、S3 2024検証では命中率75.54%（372発中281発）が0.25仮説と整合し、
+0.4仮説とは有意に異なった（使用した検証時点と11.3.0の差は別途留保）。
+この追加テストは**INKWAVEの角度量子化とコミュニティ公式の数式の一致**を証明するが、
+任天堂の内部PRNG・垂直角度との結合分布まで確定したわけではない。

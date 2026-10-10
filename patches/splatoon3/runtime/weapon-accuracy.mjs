@@ -21,12 +21,15 @@ export function accuracyEnvelope(weapon, grounded, jumpAge, param = {}, hz = 60)
 }
 
 /**
- * Community gamma calibration, NOT a recovered Nintendo implementation.
- * The public analysis gives y = s * u ** log(b)/log(0.5), where b is
- * the median *angle fraction*, not a Bernoulli probability. We retain the
- * existing cone azimuth; the joint 2-D PDF remains unverified in S3.
- * https://parumemo.hatenablog.com/entry/2022/08/26/144547
- * The hypothesis originates in S2; S3 endpoints are pinned independently.
+ * Community-supported angular gamma calibration, NOT Nintendo executable code.
+ * y = s * u ** (log(b)/log(0.5)); b is a median ANGLE FRACTION, not
+ * Bernoulli outer-ring odds. Independently analysed for Splatoon 3 in 2024:
+ * https://note.com/kanamoji_1027/n/nfd4a961652a6
+ * https://note.com/kanamoji_1027/n/na3307fdc69e7
+ * Earlier S2 derivation: https://parumemo.hatenablog.com/entry/2022/08/26/144547
+ * The CDF is P(angle <= s*r) = r ** (log(0.5)/log(b)).
+ * The joint horizontal/vertical 2-D PDF and production game PRNG call path
+ * remain unverified; we retain the existing per-axis launcher semantics.
  */
 export function biasQuantile(u, bias) {
   const x = clamp01(finite(u, 0));
