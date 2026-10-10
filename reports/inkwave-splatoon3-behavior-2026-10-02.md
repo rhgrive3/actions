@@ -2587,3 +2587,11 @@ third-person camera sees the eyes); on dry ground it lies flat with the eyes up;
 with two long feelers ending in dark clubs. Presentation only: speeds, acceleration, hop timing, swim
 visibility rules and damage are unchanged. No ripped game model or animation data is used. Mound size/wobble
 and the dry lift angle are visual calibration; Switch parity remains unverified.
+
+## 2026-10-10: Trizooka lethal water death (#1164)
+
+- 本家の根拠: Splatoon 3 Ver. 11.3.0 (Nintendo, 2026-08-19 NA) の更新内容は Trizooka の弾速（約13%）のみに触れ、Ultra Shot・水没・復活の変更は記載なし。Splatoonwiki の Water は、水に入ったイカ・タコが即座に倒されると記す（シリーズ全体の記述）。特殊による水没免除の記載はない。公開された Ultra Shot の水没判定のフレーム値は未確認。
+- INKWAVE 実装箇所: `patches/reliability/special-water-adapter.mjs`（移動後の `_checkWaterHazard`、発射前・発動前の水没判定。PR #1191 で合流済み）、`patches/splatoon3/runtime/kit-trizooka.mjs` の `stepTrizooka`（同一 tick で `stepMovement` より前に volley を出す既存順序）。
+- 再現操作: 支持された床で Trizooka を発動し、床のない水域（`groundHeight` が -Infinity）へ `fallDeathY` 未満まで移動する。発射未入力、発射待ちの buffered shot あり、発射中の 3 パターン。`patches/splatoon3/tests/trizooka-water-crossing.test.mjs` で再現。
+- プレイへの影響: この項目では挙動を変更していない。試験で既存挙動を固定した。30/60/120Hz と rendering hitch で、水没は最初の固定 tick に 1 回だけ起き、死亡 tick の後に volley は出ない。owner の packet は remote で 1 回だけ適用され、水没によるキル credit は発生しない。
+- 確認状態: 自動試験（production composition、FixedClock、ロジック単独）で確認。ブラウザ実動作、実機、複数端末の同期は未確認。境界を跨ぐ tick で移動後判定より前に volley が出る既存順序は、本家の根拠が見つからないため未確認のまま残し、変更していない。Issue #1164 は Open のまま。
