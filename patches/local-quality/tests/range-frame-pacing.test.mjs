@@ -91,7 +91,7 @@ test('source adapters connect one real Game._loop and do not touch unrelated fil
   const source=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const out=adaptRangeFramePacing('src/main.js',source);
   assert.match(out,/evenTouchAutoHz\(this\._iwRefreshProbe\.sample\(rawDt\)\)/);
-  assert.match(out,/this\._rangeFrameProbe\?\.record/);
+  assert.match(out,/this\._rangeFrameProbe\.record/);
   assert.match(out,/fr === 'display' \? 0 : fr === 60 \? 60/);
   assert.equal((out.match(/createRefreshProbe\(\)/g)||[]).length,1);
   assert.equal(adaptRangeFramePacing('src/config.js',source),source);
