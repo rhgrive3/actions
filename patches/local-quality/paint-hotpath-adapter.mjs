@@ -28,7 +28,7 @@ export function adaptPaintHotpath(rel, code, replaceOnce) {
   // Both the upstream source and #803's pooled-entry production source
   // have this single in-splat anchor. Do not replace or relocate the pool.
   change('    let wall = false;',
-    '    const faceOnly = Number.isInteger(opts.face) && opts.face >= 0 ? opts.face : -1;\\n    let wall = false;',
+    '    const faceOnly = Number.isInteger(opts.face) && opts.face >= 0 ? opts.face : -1;\n    let wall = false;',
     'hoist one optional per-face gate, preserving surrounding entry pool');
   change('if (fid < 0 || (Number.isInteger(opts.face) && opts.face >= 0 && fid !== opts.face)) continue;',
     'if (fid < 0 || (faceOnly >= 0 && fid !== faceOnly)) continue;',
