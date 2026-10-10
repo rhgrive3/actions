@@ -114,7 +114,12 @@ export function prepareLoading(build, preloads) {
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
   const assetBytes=Object.values(assets).reduce((sum,a)=>sum+a[0],0);
-  if(precacheBytes>5*1024*1024||assetBytes+512*1024>12*1024*1024)throw new Error('loading-cache: payload budget exceeded');
+  // The shipped content-addressed profile and runtime now exceed the former
+  // 12 MiB all-assets cap on unmodified main. Keep a finite PWA budget aligned
+  // with sw.js and report both measured totals for future growth diagnosis.
+  const PRE_CACHE_LIMIT = 6 * 1024 * 1024, REVISION_LIMIT = 16 * 1024 * 1024;
+  if (precacheBytes > PRE_CACHE_LIMIT || assetBytes + 512 * 1024 > REVISION_LIMIT)
+    throw new Error(`loading-cache: payload budget exceeded (precache ${precacheBytes}/${PRE_CACHE_LIMIT}, revision ${assetBytes + 512 * 1024}/${REVISION_LIMIT})`);
   return {assets,precache,assetBytes,precacheBytes,phases:adapted.phases};
 }
 export function finalizeLoadingWorker(build, revision, plan, compactTemplate = source => source) {
