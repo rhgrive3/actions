@@ -190,7 +190,7 @@ test('final shipped six-layer main connects live Game only to opt-in on-demand p
 
 test('Playwright polls an entirely synchronous, completed Practice Range trace', () => {
   const source = fs.readFileSync(new URL('../../../scripts/check-inkwave-range.mjs', import.meta.url), 'utf8');
-  assert.match(source, /page\\.waitForFunction\\(profileRangeAcceptanceSnapshot,/);
+  assert.ok(source.includes('page.waitForFunction(profileRangeAcceptanceSnapshot,'), 'browser gate must use synchronous inspector');
   assert.equal(profileRangeAcceptanceSnapshot.constructor.name, 'Function');
   assert.strictEqual(profileRangeAcceptanceSnapshot({}), false);
   const trace = { capturedFrames: 11, gpu: 'unsupported', gpuSamples: 0,
