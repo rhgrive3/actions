@@ -4,9 +4,8 @@
 //   Stand_DegSwerve = 2, Jump_DegSwerve = 7.5,
 //   Jump_DegBiasMax = 0.4,
 //   Jump_DegBiasDecreaseStartFrame = 25, Jump_DegBiasEndFrame = 70.
-// Per the Inkipedia data explanation the DegBias* fields are the hidden
-// OUTER-RETICLE PROBABILITY (bias), while DegSwerve* are the deviation angles:
-// the same 25F/70F window drives a per-shot selection, not an angle lerp.
+// S3 studies model DegBias as a median angular fraction, not a Bernoulli
+// outer/inner gate. DegSwerve specifies the sourced maximum yaw angle.
 // This mirrors the already-sourced Blaster jump-bias owner. The exact
 // 25F->70F curve shape is NOT published; the linear recovery is the same
 // repository-wide approximation, so these tests assert only the sourced
@@ -16,15 +15,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
+import { biasQuantile } from '../runtime/weapon-accuracy.mjs';
 
 const START_F = 25, END_F = 70;
 const close = (actual, expected, label, eps = 1e-9) =>
   assert.ok(Math.abs(actual - expected) <= eps, `${label}: ${actual} != ${expected}`);
 const round = v => Math.round(v * 1e9) / 1e9;
-const bloomScale = a => {
-  const first = a.weapon.spreadFirst ?? 0.45;
-  return first + (1 - first) * a.weaponRunner.bloom;
-};
+const bloomScale = () => 1; // Keep full source DegSwerve, never scale by legacy bloom.
 const stateOf = a => a.weaponRunner.s3DualiesJumpState(a.weapon);
 
 async function floorFixture() {
@@ -56,8 +53,8 @@ async function floorFixture() {
 const jump = (f, a) => { a.intent.jump = true; f.tick(a); a.intent.jump = false; };
 const angleDeg = (u, v) => Math.atan2(u.clone().cross(v).length(), u.dot(v)) * 180 / Math.PI;
 // Fire one round with a scripted Math.random sequence and return its direction.
-// seq[0] is the bias draw, seq[1] the radial draw (deviation = spread*sqrt(seq[1])),
-// seq[2] the in-cone angle. A radial draw of 0 fires straight down the aim axis.
+// S3 horizontal launch consumes a magnitude quantile then a sign draw.
+// A zero quantile points precisely along the aim axis.
 const fireDir = (f, a, seq) => {
   const ps = f.G.projectiles;
   let i = 0;
@@ -82,7 +79,7 @@ test('#887 pinned Dualies source boundaries and endpoints are the values under t
   close(f.WEAPONS.dualies.fireInterval, 5 / 60, 'sourced 5F normal cadence');
 });
 
-test('#887 the jump bias is a probability that holds 0.4 to 25F and reaches the normal endpoint at 70F', async () => {
+test('#887 angular median holds 0.4 to 25F and reaches the modeled endpoint at 70F', async () => {
   const f = await floorFixture(), { a } = f;
   const runner = a.weaponRunner;
   runner.s3DualiesJumpT = 0;
@@ -144,36 +141,41 @@ test('#887 an admitted jump holds the outer envelope, then landing does not coll
   close(a.weaponRunner.spread, a.weapon.spreadGround * bloomScale(a), 'normal endpoint after recovery');
 });
 
-test('#887 the fire-time bias selects the sourced swerve endpoint and the deviation law endpoints hold', async () => {
+test('#887 jump-fire median quantiles retain the sourced 7.5/2-degree maximum angles', async () => {
   const f = await floorFixture(), { a } = f;
   jump(f, a);
   a.aimYaw = 0; a.aimPitch = 0; a.aimDir.set(0, 0, 1); a.aimPoint.set(0, 1.05, 100);
-  const bloom = bloomScale(a);
   const state = stateOf(a);
-  assert.equal(state.bias, 0.4, 'held jump bias');
-  const aim = fireDir(f, a, [0, 0, 0.5]);            // radial 0 => straight down the aim axis
-  const outer = fireDir(f, a, [0, 0.5, 0.25]);       // bias draw 0 < 0.4 => Jump_DegSwerve
-  const inner = fireDir(f, a, [0.9, 0.5, 0.25]);     // bias draw .9 > 0.4 => Stand_DegSwerve
-  // spreadWeaponRound sets deviation = spread * sqrt(radial) in degrees.
-  close(angleDeg(aim, outer), state.envelope * bloom * Math.sqrt(0.5), 'outer round uses Jump_DegSwerve', 1e-6);
-  close(angleDeg(aim, inner), state.ground * bloom * Math.sqrt(0.5), 'normal round uses Stand_DegSwerve', 1e-6);
-  close(angleDeg(aim, outer) / angleDeg(aim, inner), state.envelope / state.ground,
-    'outer:normal deviation ratio is the sourced swerve ratio', 1e-6);
+  assert.equal(state.bias, .4);
+  const aim = fireDir(f, a, [0, .5]);
+  for (const u of [.125, .5, 1 - 1e-12]) {
+    const fired = fireDir(f, a, [u, .75]);
+    close(angleDeg(aim, fired), state.envelope * biasQuantile(u, state.bias),
+      'jump angular CDF agrees with sourced air maximum', 1e-6);
+  }
+  a.weaponRunner.s3DualiesJumpT = null;
+  a.grounded = true;
+  a.weaponRunner.s3DualiesAccuracy.stand = .25;
+  const straight = fireDir(f, a, [0, .5]);
+  const normal = fireDir(f, a, [.5, .75]);
+  close(angleDeg(straight, normal), state.ground * biasQuantile(.5, .25),
+    'ground angular CDF agrees with the 2 degree source maximum', 1e-6);
+  assert.equal(a.weaponRunner.s3DualiesAccuracy.stand, .25,
+    'direct helpers must not count as admitted shots');
 });
 
-test('#887 the HUD scalar and the projectile cone read the same jump-accuracy state', async () => {
+test('#887 HUD retains the maximum source angle while median-biased shots vary within it', async () => {
   const f = await floorFixture(), { a } = f;
   jump(f, a);
   f.tick(a, 30);
   const state = stateOf(a);
-  assert.ok(state.active && state.frames > START_F && state.frames < END_F, 'sampled mid-recovery');
-  close(a.weaponRunner.spread, state.envelope * bloomScale(a),
-    'HUD scalar is the outer envelope while the bias is recovering');
+  assert.ok(state.active && state.frames > START_F && state.frames < END_F);
+  close(a.weaponRunner.spread, state.envelope, 'HUD shows full source angular limit');
   a.aimYaw = 0; a.aimPitch = 0; a.aimDir.set(0, 0, 1); a.aimPoint.set(0, 1.05, 100);
-  const aim = fireDir(f, a, [0, 0, 0.5]);
-  const round = fireDir(f, a, [0, 0.5, 0.25]);
-  close(angleDeg(aim, round), a.weaponRunner.spread * Math.sqrt(0.5),
-    'composed projectile cone equals the HUD recovery scalar', 1e-6);
+  const aim = fireDir(f, a, [0, .5]);
+  const fired = fireDir(f, a, [.5, .75]);
+  close(angleDeg(aim, fired), a.weaponRunner.spread * biasQuantile(.5, state.bias),
+    'shot samples S3 angular quantile inside the HUD envelope', 1e-6);
 });
 
 test('#887 the LapOver turret cone stays independent of jump recovery', async () => {
@@ -257,9 +259,11 @@ test('#887 an airborne actor past 70F returns to the normal airborne 7.5 endpoin
   assert.equal(stateOf(a).active, false, 'an airborne clock past 70F is cleared');
   close(a.weaponRunner.spread, a.weapon.spreadAir * bloomScale(a), 'airborne spread is the 7.5 endpoint');
   a.aimYaw = 0; a.aimPitch = 0; a.aimDir.set(0, 0, 1); a.aimPoint.set(0, 1.05, 100);
-  // Inactive state draws no bias sample: the draws are radial, then azimuth.
-  const aim = fireDir(f, a, [0]);
-  const round = fireDir(f, a, [0.5, 0.25]);
-  close(angleDeg(aim, round), a.weapon.spreadAir * bloomScale(a) * Math.sqrt(0.5),
-    'the airborne projectile cone equals the 7.5 endpoint, not the 2 endpoint', 1e-6);
+  // After the jump clock, the airborne median remains independent of the
+  // full 7.5 degree maximum angle.
+  const bias = a.weaponRunner.s3DualiesAccuracy.chance(false);
+  const aim = fireDir(f, a, [0, .5]);
+  const round = fireDir(f, a, [.5, .75]);
+  close(angleDeg(aim, round), a.weapon.spreadAir * biasQuantile(.5, bias),
+    'airborne median is inside the 7.5 degree maximum', 1e-6);
 });
