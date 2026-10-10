@@ -182,6 +182,16 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/boss/boss.js') {
+    // Build composition applies the local-quality Boss admission first.
+    // Amend its emitted method without replaying native-only anchors.
+    if (code.includes("  remoteHit(d) {\n    if (!this.sim || !d || typeof d.d")) {
+      patch('  remoteHit(d) {', '  remoteHit(d, from) {', 'retain authenticated sender on quality-guarded Boss method');
+      patch('    if (!atk || !atk.remote || atk.alive === false || this.dead ||',
+        "    if (!atk || typeof from !== 'string' || atk.owner !== from || !atk.remote || atk.alive === false || this.dead ||",
+        'bind defense-in-depth Boss admission to sender');
+      return code;
+    }
+    // Direct network-only fixtures still exercise strict raw-source guards.
     patch(`  remoteHit(d) {
     if (!this.sim) return;
     const atk = G.netm?.byNid.get(d.a);
@@ -245,13 +255,21 @@ function finiteRemoteSample(s) {
   return true;
 }
 function unpackActor(s, ts) {`, 'strict owner actor snapshot schema');
-    patch('  onMessage(from, d) {\n    switch (d.k) {',
-      `  onMessage(from, d) {
-    if (d?.k === 'bhit') {
-      if (this.isHost) this.match?.boss?.remoteHit(d, from);
-      return;
+    // The production composition already installed authenticated, life-bound
+    // Boss packet admission in local-quality. Never bypass _acceptBossHit.
+    if (code.includes("case 'bhit': if (this.isHost && this._acceptBossHit(from, d)) this.match.boss.remoteHit(d); break;")) {
+      patch("case 'bhit': if (this.isHost && this._acceptBossHit(from, d)) this.match.boss.remoteHit(d); break;",
+        "case 'bhit': if (this.isHost && this._acceptBossHit(from, d)) this.match.boss.remoteHit(d, from); break;",
+        'pass authenticated sender after existing Boss admission');
+    } else {
+      patch('  onMessage(from, d) {\n    switch (d.k) {',
+        `  onMessage(from, d) {
+      if (d?.k === 'bhit') {
+        if (this.isHost) this.match?.boss?.remoteHit(d, from);
+        return;
+      }
+      switch (d.k) {`, 'bind Boss hit to authenticated sender');
     }
-    switch (d.k) {`, 'bind Boss hit to authenticated sender');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
     code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
