@@ -21,6 +21,7 @@ import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity } 
 import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
+import { overlayScorchStageAssets } from './lib/inkwave-stage-assets.mjs';
 
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
 const SRC = physicalLocation(path.resolve(process.argv[2] || 'inkwave-public'));
@@ -64,6 +65,9 @@ for (const file of walk(SRC)) {
 for (const file of walk(PATCH_ROOT)) {
   const rel = path.relative(PATCH_ROOT, file);
   if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json' || BUILD_ONLY_PATCH_MODULES.has('patches/splatoon3/' + rel.split(path.sep).join('/'))) continue;
+  // Scorch menu artwork belongs at the shared stage asset URLs, not under the
+  // patch source namespace. Merge only its stage manifest entry below.
+  if (rel.startsWith('assets/stages/')) continue;
   const dst = path.join(BUILD, 'patches/splatoon3', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
@@ -71,6 +75,10 @@ for (const file of walk(PATCH_ROOT)) {
     const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
     const res = await esbuild.transform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
     fs.writeFileSync(dst, res.code);
+  } else if (rel === 'profile.json') {
+    // Serialize the same parsed tuning data without source indentation. Keep
+    // every field and the source hash; the emitted bytes get their own hash.
+    fs.writeFileSync(dst, JSON.stringify(JSON.parse(fs.readFileSync(file, 'utf8'))));
   } else fs.copyFileSync(file, dst);
 }
 for (const file of walk(QUALITY_ROOT)) {
@@ -84,6 +92,11 @@ for (const file of walk(QUALITY_ROOT)) {
     fs.writeFileSync(dst, res.code);
   } else fs.copyFileSync(file, dst);
 }
+
+// Scorch menu images overlay the upstream stage path while the upstream tree
+// remains frozen. The stage manifest receives the Scorch entry; loading-cache
+// then hashes all four files into its immutable asset allowlist.
+overlayScorchStageAssets(BUILD);
 
 // The reliability/network overlays are independent from splatoon3 and local-quality.
 // The production adapters import their runtime modules at those exact public paths
@@ -386,7 +399,7 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 identity.inputHash = sha256(JSON.stringify(identity.files));

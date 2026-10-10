@@ -4,6 +4,8 @@ import { fixture as sourceFixture } from '../../splatoon3/tests/source-fixture.m
 
 const ACTOR_NID = 17;
 const PRESENTATION_TAG = 'inkwave.roller-presentation.v1';
+const ADOPTION_TAG = 'inkwave-adoption-v1';
+const HIT_AUTHORITY_TAG = 'inkwave-hit-authority-v1';
 const clone = value => JSON.parse(JSON.stringify(value));
 
 async function makePair() {
@@ -75,7 +77,12 @@ test('C1155 full production composition replicates accepted Roller pose mode and
     assert.equal(wire[3], 1); assert.equal(wire[4], mode === 'vertical' ? 1 : 0);
     assert.ok(Number.isSafeInteger(wire[2]) && wire[2] > lastEpoch, 'each accepted action gets a newer epoch');
     lastEpoch = wire[2];
-    assert.equal(packet.a[0].length, 24, 'the legacy actor row width remains unchanged');
+    const row = packet.a[0];
+    assert.equal(row.length, 26, 'composed snapshots append the Surge and accepted-hit slots');
+    assert.equal(row[22], owner.stats.specials || 0, 'the existing special counter retains its slot');
+    assert.equal(row[23][0], ADOPTION_TAG, 'the adoption sidecar retains its tagged slot');
+    assert.equal(row[24], null, 'an ordinary Roller snapshot does not fabricate a Surge presentation');
+    assert.equal(row[25][0], HIT_AUTHORITY_TAG, 'the accepted-hit sidecar uses its explicit tag');
     deliver(packet);
 
     const presentation = remote.character.s3RollerFlick;

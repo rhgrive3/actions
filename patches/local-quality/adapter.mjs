@@ -97,6 +97,7 @@ const IDENTITY_FILES = [
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs', 'refl-skip-adapter.mjs', 'finish-tape-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
+  'offline-offscreen-budget.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'match-retainer-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
   'offscreen-visual-budget.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
@@ -125,6 +126,12 @@ export function adaptQualitySource(rel, code) {
 }
 
 function adaptQualityLayer(rel, code) {
+  if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code,
+      '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);\n    const a = this.anim;',
+      '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);\n    const a = this.anim;\n    a.isBot = this.isBot === true;',
+      'carry bot identity to visual-only Character scheduling');
+  }
   code = adaptBotPaintObservation(rel, code);
   code = adaptPropRetention(rel, code);
   code = adaptPropAtlas(rel, code);
@@ -540,6 +547,20 @@ function adaptQualityLayer(rel, code) {
     code = replaceOnce(code, '    ch.update(dt, a);',
       '    a.remote = this.remote === true;\n    ch.update(dt, a);',
       'carry actor authority into Character presentation budget');
+  }
+
+  if (rel === 'src/game/character.js') {
+    // Offline bot projectiles read weapon.muzzle from the live rig. Preserve
+    // the pelvis/torso/arm/weapon transform path every simulation tick, but
+    // skip leg joint IK and the decorative tail which cannot affect that rig.
+    code = replaceOnce(code,
+      '    const hyw = P[HIPS + 1];\n    for (let i = 0; i < 2; i++) {\n      const leg = i === 0 ? this.limbs.legL : this.limbs.legR, sd = i === 0 ? 1 : -1;',
+      '    const hyw = P[HIPS + 1];\n    if (!this._oobPoseTailSkip || this.replant || !this.feetValid) for (let i = 0; i < 2; i++) {\n      const leg = i === 0 ? this.limbs.legL : this.limbs.legR, sd = i === 0 ? 1 : -1;',
+      'skip stable offscreen leg-joint IK while retaining replant transitions');
+    code = replaceOnce(code,
+      '    const lv = this.lifeLv;\n    // ---- face',
+      '    if (this._oobPoseTailSkip && !this.replant && this.feetValid) {\n      this._headQW.copy(B.head.quaternion); this._headSet = true;\n      for (const f of this.feet) f.dispOK = false;\n      this._oobPoseTailSkipped = true;\n      return; // weapon rig is current; rebuild display-only state before the next replant.\n    }\n    const lv = this.lifeLv;\n    // ---- face',
+      'skip stable offscreen decorative pose tail after authoritative weapon rig');
   }
 
   return code;

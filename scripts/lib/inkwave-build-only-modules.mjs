@@ -62,6 +62,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/splatoon3/respawn-lifecycle-adapter.mjs',
   'patches/splatoon3/roller-depletion-adapter.mjs',
   'patches/splatoon3/roller-max-paint-adapter.mjs',
+  'patches/splatoon3/scorch-gorge-adapter.mjs',
   'patches/splatoon3/score-hud-adapter.mjs',
   'patches/splatoon3/storm-effects-adapter.mjs',
   'patches/splatoon3/sub-special-adapter.mjs',
