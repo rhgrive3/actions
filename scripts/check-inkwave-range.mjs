@@ -244,6 +244,39 @@ for (const run of RUNS) {
       if (iso.layout !== 'tidewater' || iso.range || iso.rangeOpt || iso.actors !== 8 || iso.targets || iso.signage || iso.hudClass || iso.rangeDom || iso.maps.includes('range') || iso.scenePads || !['intro', 'playing'].includes(iso.state)) throw new Error('isolation ' + JSON.stringify(iso));
     }
     }
+    // The performance diagnostics use the real built Practice Range and are
+    // opt-in only. Exercise them on one browser after all gameplay/isolation
+    // checks, so the tracing wrappers never perturb the normal range audit.
+    if (run.name === 'chromium-desktop' && !signageOnly) {
+      await page.goto(base + '?range&skipTitle&profileRange=1', { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page.waitForFunction(async () => {
+        const p = window.__inkwaveRangePerf;
+        if (!p || !window.__G?.match?.range || window.__G.match.state !== 'playing') return false;
+        await p.ready;
+        return !!(p.snapshot().trace?.capturedFrames >= 12);
+      }, null, { timeout: 90000 });
+      out.checks.profiler = await page.evaluate(() => {
+        const p = window.__inkwaveRangePerf;
+        const s = p.snapshot(), t = s.trace;
+        const parsed = JSON.parse(p.report());
+        return {
+          mode: s.mode, collected: t.capturedFrames,
+          gpuStatus: t.gpu, gpuSamples: t.gpuSamples,
+          stageNames: Object.keys(t.latest?.stages || {}),
+          reportSchema: parsed.schema,
+          profileButton: !!document.querySelector('#inkwave-copy-frame-trace'),
+          tracerFileLoaded: !!performance.getEntriesByType('resource')
+            .find(x => x.name.includes('range-hitch-tracer.mjs')),
+        };
+      });
+      const perf = out.checks.profiler;
+      if (perf.mode !== 'practice' || perf.collected < 12 ||
+          !perf.stageNames.includes('paint') || !perf.stageNames.includes('render') ||
+          perf.reportSchema !== 'inkwave-frame-trace-v1' || !perf.profileButton ||
+          !perf.tracerFileLoaded || perf.gpuStatus === 'error') {
+        throw new Error('Practice Range opt-in performance diagnostic: ' + JSON.stringify(perf));
+      }
+    }
     if (out.errors.length) throw new Error('page errors: ' + out.errors.join(' | '));
     if (out.missing.length) throw new Error('missing assets: ' + out.missing.join(' | '));
     out.status = 'passed';
