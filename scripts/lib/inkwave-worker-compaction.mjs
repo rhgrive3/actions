@@ -5,7 +5,7 @@ export function compactLoadingWorkerTemplate(source, transformSync) {
   if ([...source.matchAll(binding)].length !== 1) throw Error('Worker compaction requires one unstamped BUILD binding');
   const executable = source.replace(binding, '');
   const code = transformSync(executable, {
-    loader: 'js', format: 'esm', minifyWhitespace: true, minifyIdentifiers: true,
+    loader: 'js', format: 'esm', charset: 'utf8', minifyWhitespace: true, minifyIdentifiers: true,
     minifySyntax: true, legalComments: 'inline',
   }).code;
   // Input has no imports/exports. ESM mode only enables private top-level name
