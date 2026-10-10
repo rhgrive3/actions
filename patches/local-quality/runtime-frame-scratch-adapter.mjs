@@ -34,5 +34,31 @@ export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
       vis.length = 0;`,
       'retire scratch references immediately after reflection render');
   }
+  if (rel === 'src/ui/hud.js') {
+    // The live minimap's two display sizes previously created a new fit()
+    // closure and two temporary arrays every HUD update. Same scalars and
+    // arithmetic order, no changes to the displayed box or touch layout.
+    patch(
+      '    const fit = (sz) => (asp >= 1 ? [sz, sz / asp] : [sz * asp, sz]);\n    const [w0, h0] = fit(14.5 * u), [w1, h1] = fit(Math.min(H * 0.78, W * 0.6));',
+      `    const small = 14.5 * u, large = Math.min(H * 0.78, W * 0.6);
+    const w0 = asp >= 1 ? small : small * asp, h0 = asp >= 1 ? small / asp : small;
+    const w1 = asp >= 1 ? large : large * asp, h1 = asp >= 1 ? large / asp : large;`,
+      'avoid per-HUD-frame fit closure and two arrays');
+    // Squad fallbacks ask for team-indexed actors. Use a stable direct scan
+    // for ordinary integer indices, retaining the original Array.filter
+    // semantics for unusual property keys, so external/debug callers agree.
+    patch(
+      '    const list = this._actors().filter((a) => a.team === team);\n    return list[i] || null;',
+      `    const actors = this._actors();
+    if (!Number.isInteger(i) || i < 0) return actors.filter((a) => a.team === team)[i] || null;
+    let seen = 0;
+    for (let j = 0; j < actors.length; j++) {
+      if (!(j in actors)) continue;
+      const a = actors[j];
+      if (a.team === team && seen++ === i) return a;
+    }
+    return null;`,
+      'scan squad fallback without allocating a filtered actor list');
+  }
   return code;
 }
