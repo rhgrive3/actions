@@ -1,0 +1,21 @@
+name: INKWAVE allocation-only frame parity
+on:
+  pull_request:
+    paths:
+      - "patches/local-quality/**"
+      - "scripts/lib/inkwave-build-only-modules.mjs"
+      - ".github/workflows/inkwave-runtime-frame-parity.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frame-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify real Game._loop and Environment reflection sequence parity
+        run: node --experimental-vm-modules --test patches/local-quality/tests/runtime-frame-scratch.test.mjs patches/local-quality/tests/quality.test.mjs
