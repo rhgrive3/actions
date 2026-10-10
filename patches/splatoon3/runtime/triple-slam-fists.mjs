@@ -20,8 +20,37 @@ export const FIST_SOURCE_ANGLE = 30 * DEG;
 export const FIST_NEAR_RADIUS = 6.4;
 export const FIST_FAR_RADIUS = 9.6;
 export const FIST_PAINT_RADIUS = 10;
+// Remote paint admission accepts radius <= 3.744 (network-replication PAINT_RADIUS_MAX, #522), so a
+// 10-radius fist splat cannot be replicated as one row. It is emitted as a hex cluster of stamps at
+// this radius instead. Each stamp is an ordinary paint row that every peer admits, so sender and
+// receiver replay the same stamps. The cluster approximates the single 10-radius footprint; it is
+// not the same shape (tests/issue-912-fist-paint-replication.test.mjs measures the area and coverage).
+export const FIST_STAMP_RADIUS = 3.74;
+// Hex spacing and stamp-centre inset were tuned on the logic footprint (not the game): 19 stamps per
+// fist give ~1.12x the single 10-radius claimed area with ~95% of its cells covered.
+const FIST_STAMP_SPACING = 1.0 * FIST_STAMP_RADIUS;
+const FIST_STAMP_INSET = 1.5;
+// Wire rows keep centre/radius to 2 dp and seed to 3 dp (netmatch recSplat). Quantising here means
+// the sender's CPU turf uses the same values the receiver reconstructs.
+const q2 = x => Math.round(x * 100) / 100;
+const q3 = x => Math.round(x * 1000) / 1000;
 
 const finite = x => typeof x === 'number' && Number.isFinite(x);
+
+export function tripleSlamFistStamps(radius) {
+  if (!finite(radius) || radius <= 0) return [];
+  const s = FIST_STAMP_SPACING, dz = s * Math.sqrt(3) / 2;
+  const rows = Math.ceil(radius / dz), cols = Math.ceil(radius / s);
+  const stamps = [];
+  for (let j = -rows; j <= rows; j++) {
+    const z = j * dz, shift = (j & 1) ? s / 2 : 0;
+    for (let i = -cols; i <= cols; i++) {
+      const x = i * s + shift;
+      if (Math.hypot(x, z) <= radius - FIST_STAMP_INSET) stamps.push({ dx: x, dz: z });
+    }
+  }
+  return stamps;
+}
 
 export function tripleSlamFistCenters(origin, yaw, scale = 1) {
   if (!origin || ![origin.x, origin.y, origin.z, yaw, scale].every(finite) || scale <= 0)
@@ -44,7 +73,7 @@ export function tripleSlamFistDamage(distance, scale = 1) {
 
 function blast(actor, record, G, THREE) {
   if (!G?.projectiles?.applyHit || actor.remote || !record?.centers?.length) return;
-  const v = new THREE.Vector3(), from = new THREE.Vector3();
+  const v = new THREE.Vector3(), from = new THREE.Vector3(), stampAt = new THREE.Vector3();
   for (const center of record.centers) {
     const top = Number.isFinite(G.level?.groundHeight?.(center.x, center.z, center.y + 8))
       ? G.level.groundHeight(center.x, center.z, center.y + 8) : center.y;
@@ -55,10 +84,19 @@ function blast(actor, record, G, THREE) {
     if (G.physics?.los && !G.physics.los(source, pos)) continue;
     if (G.paint?.splat) {
       // Same ownership split as the player's impact: painted area is personal
-      // turf and never refills the special gauge.
-      const area = G.paint.splat(pos, FIST_PAINT_RADIUS * record.scale, actor.team,
-        { seed: Math.random(), claimOwner: actor, claimMode: 'no-special' });
-      if (Number.isFinite(area) && area > 0) actor.addTurfNoSpecial?.(area);
+      // turf and never refills the special gauge. Each stamp is an admissible
+      // remote row (radius <= FIST_STAMP_RADIUS); the cluster replaces one 10-radius splat.
+      let area = 0;
+      for (const stamp of tripleSlamFistStamps(FIST_PAINT_RADIUS * record.scale)) {
+        const sx = q2(center.x + stamp.dx), sz = q2(center.z + stamp.dz);
+        const ground = Number.isFinite(G.level?.groundHeight?.(sx, sz, center.y + 8))
+          ? G.level.groundHeight(sx, sz, center.y + 8) : center.y;
+        const at = stampAt.set(sx, q2(ground + .12), sz);
+        const got = G.paint.splat(at, FIST_STAMP_RADIUS, actor.team,
+          { seed: q3(Math.random()), claimOwner: actor, claimMode: 'no-special' });
+        if (Number.isFinite(got) && got > 0) area += got;
+      }
+      if (area > 0) actor.addTurfNoSpecial?.(area);
     }
     for (const victim of G.actors || []) {
       if (!victim.alive || victim.team === actor.team || victim === actor) continue;

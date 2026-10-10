@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   tripleSlamFistCenters, tripleSlamFistDamage, tickTripleSlamFists,
-  installTripleSlamFists, FIST_TRAVEL,
+  installTripleSlamFists, FIST_TRAVEL, FIST_STAMP_RADIUS, tripleSlamFistStamps,
 } from '../runtime/triple-slam-fists.mjs';
 import { getBoot } from './tidal-slam-fixture.mjs';
 
@@ -62,6 +62,15 @@ test('#912 pinned 11.3.0 symmetric fist centers and near/far damage endpoints', 
   assert.equal(FIST_TRAVEL, 15 / 60);
 });
 
+test('#912 fist stamps are inside the 10-radius cluster and each stays under the remote admission ceiling', () => {
+  const stamps = tripleSlamFistStamps(10);
+  assert.ok(stamps.length >= 2 && stamps.length <= 40, `stamp count ${stamps.length}`);
+  assert.ok(stamps.every(s => Math.hypot(s.dx, s.dz) <= 10));
+  assert.ok(stamps.some(s => s.dx === 0 && s.dz === 0), 'the splat centre is always stamped');
+  assert.ok(FIST_STAMP_RADIUS <= 3.744, 'stamp radius is admitted by PAINT_RADIUS_MAX (#522)');
+  assert.deepEqual(tripleSlamFistStamps(0), []);
+});
+
 test('#912 native impact is separate from the two fists, delayed by exactly 15F, and emits no boss-visible special:slam', () => {
   const w = world(), a = new w.Actor();
   a._startSpecial(); assert.equal(a.mainImpacts, 0); assert.equal(w.hits.length, 0);
@@ -73,9 +82,10 @@ test('#912 native impact is separate from the two fists, delayed by exactly 15F,
   a.update(1 / 60);
   assert.equal(w.hits.length, 2, 'both fist contact zones independently damage');
   assert.ok(w.hits.every(h => h.damage === 220 && h.cause === 'slam'));
-  assert.equal(w.paint.length, 2);
-  assert.ok(w.paint.every(p => p.radius === 10 && p.opts.claimMode === 'no-special' && p.opts.kind === undefined));
-  assert.equal(a.turf, 4, 'fist paint accrues personal turf but never refills special');
+  const stamps = tripleSlamFistStamps(10).length;
+  assert.equal(w.paint.length, 2 * stamps, 'each fist is a cluster of admissible stamps');
+  assert.ok(w.paint.every(p => p.radius === FIST_STAMP_RADIUS && p.radius <= 3.744 && p.opts.claimMode === 'no-special' && p.opts.kind === undefined));
+  assert.equal(a.turf, 2 * w.paint.length, 'fist paint accrues personal turf but never refills special');
   assert.equal(w.blasts.length, 2);
   assert.equal(w.emits.length, 0, 'special:slam would also trigger the boss 180/55 splash');
   assert.equal(a._s3TripleSlamFists, null);
@@ -87,7 +97,7 @@ test('#912 wall cover suppresses the blocked fist while the other fist remains a
   a._startSpecial(); a._slamImpact();
   for (let i = 0; i < 15; i++) a.update(1 / 60);
   assert.equal(w.hits.length, 1);
-  assert.equal(w.paint.length, 1);
+  assert.equal(w.paint.length, tripleSlamFistStamps(10).length, 'only the uncovered fist paints');
 });
 
 test('#912 Super Jump Slam and remotely presented actors never instantiate fists', () => {

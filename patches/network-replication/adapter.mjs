@@ -1472,6 +1472,8 @@ const PAINT_ORDER_TAG = 'inkwave-paint-order-v1';
 // SPECIALS.slam.radius (5.2, inkwave-public/src/config.js) * 0.72 (actor.js _slamImpact).
 // Other producers are smaller: Boss hazard 2.8, Ink flight 2.226, Splat Bomb 2.7, Blaster 1.5 * 1.15.
 const PAINT_RADIUS_MAX = 5.2 * 0.72;
+// #912: Triple Splashdown fists are never one 10-radius row. triple-slam-fists.mjs emits them as stamps at
+// FIST_STAMP_RADIUS (3.74), which this ceiling admits. A radius-10 row is still forged and rejected.
 // actor.js splat(): a victim's death burst paints the attacker's team at radius 1.7, with no kind, stretch or face.
 // It is the only non-host producer whose team differs from its sender's team.
 const PAINT_VICTIM_BURST_RADIUS = 1.7;

@@ -197,6 +197,7 @@ test('#522 every legitimate paint producer passes the ceiling and team admission
     ['Blaster impact at 1.15 jitter (1.5 * 1.15)', 'b', 1.5 * 1.15, 1, {}],
     ['Tidal Slam scatter (1.1 + 0.6)', 'b', 1.7, 1, {}],
     ['Victim death burst (attacker team)', 'b', 1.7, 0, {}],
+    ['Triple Splashdown fist stamp (#912, FIST_STAMP_RADIUS)', 'b', 3.74, 1, {}],
   ];
   for (const [name, from, radius, team, opts] of producers) assert.equal(await admits(from, radius, team, opts), true, `${name} still admitted`);
   assert.equal(await admits('b', 3.745, 1), false, 'a radius just above the ceiling is rejected');

@@ -3088,6 +3088,7 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - Reproduction: a remote `s` row with radius above 3.744, a non-finite Float32 value, an unknown kind, or an invalid face selector used to paint. A non-host row whose team differs from every squid the sender owns used to paint. Now both are dropped before sender sequence or causal clock is reserved.
 - Admitted foreign-team case: only the victim death burst (radius 1.7, no kind, stretch or face). The host is not team-checked, since it owns Boss ink.
 - Play impact: legitimate producers in `issue-522-paint-numeric-admission.test.mjs` are still admitted. A member can still forge the death-burst signature, and no action provenance exists, so #522 stays open.
+- #912 fist paint: a fist no longer sends one radius-10 row. It sends 19 stamps at radius 3.74 per fist, which this ceiling admits. A forged radius-10 row without fist provenance is still rejected (`issue-912-fist-paint-replication.test.mjs`).
 - Confirmation: logic and fixture-network tests only (`issue-522-paint-numeric-admission.test.mjs`, 7 tests). Not browser play, GPU output, or live multiplayer. Action provenance for every paint producer and the life/session epoch remain 未解決.
 
 ## 2026-10-10: #253 Neutral inked-wall cling descent
@@ -3423,10 +3424,12 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - INKWAVE 実装箇所: `patches/splatoon3/runtime/triple-slam-fists.mjs`（新規）、`patches/splatoon3/runtime/install.mjs`（`installTripleSlamFists(api, profile)`）。テスト: `patches/splatoon3/tests/issue-912-triple-slam-fists.test.mjs`。地上の `_startSpecial` で拳を登録し、本体の `_slamImpact` から 15F 後（固定 60 Hz）に拳2つを独立に判定する。Super Jump Slam は `_startSpecial` を通らないため拳を作らない。
 - 再現操作: 地上で Tidal Slam を発動して着地する。本人正面 ±30° の 6.54 地点（x=±3.27, z=5.66 付近）の敵は、本人の爆発半径（5.2）の外でも拳爆発で被弾する（6.4 以内 220、9.6 で 60）。拳の重なり域は両方が加算される（例: 2 つの拳の中点で 440）。着地の 15F 前には拳のダメージがない。
 - プレイへの影響: 変更前は拳の範囲が 0 ダメージだった。変更後は前方に追加の爆発域が増え、重なり域で加算ダメージが出る。拳の塗りは個人ターフのみに加算し、スペシャルゲージは増えない（本人の爆発と同じ扱い）。
+- 2026-10-10 追補（#522 との整合）: 拳の塗りは半径 10 の1行ではなく、拳1つにつき半径 3.74 の stamp 19 個（`tripleSlamFistStamps`、六角格子、中心は半径 8.5 以内）として送る。#522 の塗り半径上限（3.744）を変えずに、受信側が同じ行を同じ順序で受理して CPU 塗りを送信側と一致させるため。半径 10 の非拳行は引き続き拒否する。拳であることの証明（provenance）はなく、受理は半径・所属の検査のみ（#522 と同じ限界）。
 - 確認状態:
   - 論理テスト 9 件（合成 Actor の 7 件、本番インストーラーの合成 Slam 1 件、配線の確認 1 件）と近接する Slam テスト（28 件・68 件）は通過。固定 60 Hz の 15F 遅延、1/120 s 刻みでも 0.25 s で発火すること、壁による拳の遮断、Super Jump と remote で拳を作らないこと（コード経路と合成試験）を確認。ブラウザ実動作、Switch 実機比較は未実施。
+  - 二者間回帰（`patches/network-replication/tests/issue-912-fist-paint-replication.test.mjs`、3 件、論理・fixture のみ）: 実 NetMatch の行経路で、拳着地後の受信側 CPU 塗りと turf 数が送信側と一致。半径 10 の非拳行は拒否。stamp 群の面積は単独半径 10 塗りの約 1.12 倍、単独塗りの 95% を被覆（論理測定。本家の形状ではない）。修正前（単独 10 半径行）は受信側が塗らず、一致テストが失敗することを確認済み。
   - 意図的な差分（Draft PR #1181 からの変更）: 拳は `special:slam` を発火しない。boss.js の 180/55 splash が拳ごとに追加で当たるのを避けるため（拳の表示は local のみ）。本体が着地前に死亡した場合は拳を打ち切る（本家の挙動は未確認。Wiki は拳が本人の着地後に爆発すると記載）。塗りは `claimMode: 'no-special'` で本人の爆発と同じ扱い。
-  - 未確認: 拳の床追従・段差・短い壁の乗り越え（LOS 遮断は近似）、220 から 60 への減衰形（直線補間は INKWAVE の選択）、拳のメッシュ・VFX・SFX、拳の塗り半径 10（Wiki のインク飛沫半径 v9.3.0 を流用）、拳の表示のリモート同期（未実装）、本家の数値の一次資料による確認。
+  - 未確認: 拳の床追従・段差・短い壁の乗り越え（LOS 遮断は近似）、220 から 60 への減衰形（直線補間は INKWAVE の選択）、拳のメッシュ・VFX・SFX、拳の塗り半径 10（Wiki のインク飛沫半径 v9.3.0 を流用。INKWAVE は stamp 群で近似し、本家の単独 10 半径の形状・面積は未確認）、拳の表示のリモート同期（未実装）、本家の数値の一次資料による確認。
 ## 2026-10-10 — #573: enemy-ink contact during Tidal Slam protection
 
 Reference: Splatoon 3 Ver. 11.3.0. Nintendo's [11.3.0 notes](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/) (fetched 2026-10-10) say that after activation players "become invulnerable to damage approximately 1/6th of a second faster than before". The notes do not mention enemy ink. The 50F player boundary is the pinned Leanny `WeaponSpPogo` value already recorded in the 2026-10-08 entry (`spl__WeaponSpPogoParam.Rise_NoDamageStartFrame=50`).
