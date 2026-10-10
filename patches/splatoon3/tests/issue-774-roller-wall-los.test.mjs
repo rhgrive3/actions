@@ -107,13 +107,16 @@ test('#774 roller roll contact rejects points inside geometry', () => {
 import { fixture as nativeWorld } from '../../../scripts/weapons-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 async function contactWorld({ wall = 'none', x = 0, z = 1 } = {}) {
-  const f = await nativeWorld({ fidelity: true, floor: false });
+  const f = await nativeWorld({ fidelity: true, floor: true });
   const roller = f.make('roller');
   const target = f.make('shooter', { team: 1, x, z, hp: 1000 });
   f.G.actors = [roller, target];
   roller.pos.set(0, 0, 0);
   roller.yaw = 0;
   roller.grounded = true;
+  // Feed an actual forward movement command. The S3 adapter intentionally
+  // forbids Roller-drum contact on an idle stick even if fire is held.
+  roller.intent.move.set(0, 0, 1);
   roller.vel.set(0, 0, 6);
   roller.ink = 100;
   roller.weaponRunner.cooldown = 0;
@@ -131,7 +134,8 @@ async function contactWorld({ wall = 'none', x = 0, z = 1 } = {}) {
       f.G.level.blocks.push({ id: f.G.level.blocks.length, solid: true, grate: false,
         center: V(.45, 2, .75), half: V(.025, 2, 1),
         axes: [V(1,0,0), V(0,1,0), V(0,0,1)],
-        faces: [-1,-1,-1,-1,-1,-1] });
+        faces: [-1,-1,-1,-1,-1,-1],
+        aabbMin: V(.425, 0, -.25), aabbMax: V(.475, 4, 1.75) });
     }
   }
   return { f, roller, target };

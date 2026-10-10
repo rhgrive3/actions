@@ -91,6 +91,10 @@ test('#841 actual R-released Storm throw regenerates 0.21 HP once per fixed tick
   a.weapon = { ...a.weapon, special: 'storm' };
   a.special = 200;
   a.hp = 50;
+  // This focused source fixture intentionally has no rigid-body solver;
+  // Storm release invokes native _resolve for presentation placement.
+  // Suppress only that unrelated collision pass, not Actor.update/resources.
+  a._resolve = () => {};
   a.lastDamage = 10; // the separate 60F post-hit wait is already complete
   a.intent.special = true;
   f.tick(a);
@@ -121,6 +125,7 @@ test('#841 throwing a Storm never bypasses a fresh 60F damage recovery delay', a
   const a = f.make();
   a.weapon = { ...a.weapon, special: 'storm' };
   a.special = 200; a.hp = 50; a.lastDamage = 0;
+  a._resolve = () => {}; // isolated Storm throw; no physics solver in source fixture
   a.intent.special = true; f.tick(a); a.intent.special = false;
   a.intent.sub = true; f.tick(a);
   a.intent.sub = false; f.tick(a);

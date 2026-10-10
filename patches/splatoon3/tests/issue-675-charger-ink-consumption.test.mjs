@@ -125,7 +125,10 @@ test('#675 source-backed Gear/AP: 8F and 60F actual Charger ink debits at 0/10/5
     for (let i = 0; i < chargeFrames; i++) f.tick(actor);
     close(actor.weaponRunner.chargeT, chargeFrames / 60, 'source charge progression');
     actor.intent.fire = false;
-    for (let i = 0; i < 3; i++) f.tick(actor);
+    // Assert the debit on the actual release tick, before the independent
+    // post-shot ink regeneration can begin on later simulation ticks.
+    f.tick(actor);
+    assert.equal(f.shots.length, 1, 'one legal geared Charger release');
     const expected = (chargeFrames === 8 ? 2.25 : 18) * factor;
     close(100 - actor.ink, expected, gp + 'AP at ' + chargeFrames + 'F source cost');
     assert.ok(actor.ink >= 0, 'never underdraws ink');
