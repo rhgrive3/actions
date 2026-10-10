@@ -3051,3 +3051,12 @@ Known residual: the same-tick check uses the new source's final intent, so a new
 - Reproduction (logic only, deterministic paint calls): roll on a flat floor at 0.108 (normal), just before the 90F dash, and at 0.132 (dash); compare the outer lateral boundary of the `rollFloor` calls. Expected from this change: low < normal < dash, saturating at the #189 maximum. Stopped and low-ink rolls keep the body-only footprint.
 - Play impact: normal-speed rolling now paints side floor splashes; main painted none below `SpeedMax`. The linear shape between the endpoints is an INKWAVE approximation, not Nintendo's curve.
 - Status: 未確認. Logic-only regression tests (`issue-649-roller-speed-width`, `issue-189-roller-max-width`, `issue-857-roller-heading`) are the only evidence; this is not a Switch comparison and not a browser run. Still 未確認: the intermediate curve, the zero-speed endpoint (whether any side splash exists at rest), and the retail speed-to-width values. This also changes #189's earlier stance of not guessing a sub-maximum curve (#650): the #189 test now expects five paint calls at 1, 6.48 and 7.8 instead of three. The change follows the owner's #649 takeover directive and is recorded as a choice, not as a resolved difference.
+## 2026-10-10: #287 右スティック感度のリセット経路（−5…+5 の既定値）
+
+- 参照条件: Splatoon 3 Ver. 11.3.0、Standard Gamepad の右スティック、TV/Tabletop と Handheld の独立 profile。
+- 本家の根拠: Inkipedia の Options 項目（splatoonwiki.org/wiki/Options、oldid=729360、2026-08-23 更新確認）に、Right Stick Sensitivity が「−5 から 5」と記載。既定値、ゲイン曲線、度/秒の値は記載なし。Nintendo サポートの Ver. 11.3.0 ページは今回再取得していない。
+- INKWAVE 実装箇所: 設定 UI は `patches/local-quality/aim-profile-adapter.mjs`（−5…+5、0.5 刻み）。係数は `patches/splatoon3/runtime/pad-sensitivity.mjs` の `s3PadMultiplier = 2^(v/5)`（暫定、本家の曲線は未抽出）。既存設定の移行は `patches/splatoon3/pad-sensitivity-adapter.mjs`。
+- 残っていた不具合: 初回起動の移行後に「RESET TO DEFAULTS」を二回押すと、legacy 既定値 `1.0` が S3 設定 `+1` として active profile に保存された（handheld は 0 のまま、再読込でも戻らない）。暫定曲線では `2^(1/5)` 倍の本来と異なる感度になる。修正は `inkwave-public/src/ui/menus.js` の `setSettings({ ...DEFAULT_SETTINGS })` 境界で legacy 値を `legacyPadToS3` で変換し、`padSensitivityScale: 's3'` を書き込むこと。`inkwave-public/` は変更しない。
+- 再現操作: 初回起動 → 設定 → コントロール → RESET TO DEFAULTS を二回押す → 右スティック感度の表示と保存値を確認 → 再読込。
+- プレイへの影響: 既定に戻した直後の右スティック旋回が、設定 0 ではなく +1 相当になる（暫定曲線での差）。
+- 確認状態: 回帰試験 `patches/splatoon3/tests/issue-287-settings-reset.test.mjs` は修正前に 2 件とも失敗（`1 !== 0`）、修正後に成功。`pad-sensitivity` 5/5、`aim-profile` ほか隣接 22/22、`check-inkwave-patches --quick` OK。ただし、S3 の実ゲイン曲線、設定 0 の校正、−5/0/+5 の旋回速度トレースの一致、実機・ブラウザでの操作感は未確認で、#287 は閉じない。

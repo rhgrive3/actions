@@ -27,6 +27,10 @@ test('build-only adapter rejects missing/duplicate anchors', () => {
   const src = '  padSensitivity: 1.0,';
   assert.equal(adaptPadSensitivity('src/config.js', src, once), src);
   const ui = "{ key: 'padSensitivity', label: 'Controller sensitivity', type: 'slider', min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×', help: 'Camera turn speed with the right stick.' },";
-  assert.equal(adaptPadSensitivity('src/ui/menus.js', ui, once), ui); // composed by local-quality aim-profile owner
-  assert.equal(adaptPadSensitivity('src/ui/menus.js', ui + '\n' + ui, once), ui + '\n' + ui);
+  const reset = 'this.api.setSettings({ ...DEFAULT_SETTINGS })';
+  const adapted = adaptPadSensitivity('src/ui/menus.js', ui + '\n' + reset, once);
+  assert.ok(adapted.includes(ui)); // rows are composed by local-quality aim-profile owner
+  assert.ok(adapted.includes('padSensitivity: legacyPadToS3(DEFAULT_SETTINGS.padSensitivity)'));
+  assert.throws(() => adaptPadSensitivity('src/ui/menus.js', ui, once), /anchor mismatch/);
+  assert.throws(() => adaptPadSensitivity('src/ui/menus.js', reset + '\n' + reset, once), /anchor mismatch/);
 });
