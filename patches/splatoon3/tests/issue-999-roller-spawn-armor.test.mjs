@@ -49,3 +49,22 @@ test('#999 one 160 hit and enemy-ink bypass preserve native armor behavior',()=>
   assert.equal(absorbSpawnDamage(second,5,'ink',tuning,enemy),5);
   assert.equal(second.s3.spawnArmor.hp,30);
 });
+
+test('#999 owner handoff retires same-numbered Roller swing before new owner penetration', () => {
+  const victim = owner(), a = { team: 1, owner: 'player-a' };
+  victim.s3PendingHitGroup = 7;
+  assert.equal(absorbSpawnDamage(victim, 90, 'roller', tuning, a), 0);
+  assert.equal(victim.s3.spawnArmor.hp, 0);
+  // The same live Actor instance receives a new network owner, which may
+  // restart its local damage-group counter from the same integer.
+  a.owner = 'player-b';
+  assert.equal(absorbSpawnDamage(victim, 90, 'roller', tuning, a), 0,
+    'new owner must not receive prior owner\'s already consumed budget');
+  assert.equal(absorbSpawnDamage(victim, 60, 'roller', tuning, a), 50,
+    'one 150-damage logical swing still penetrates exactly 50');
+  // Returning control to the prior owner is a third generation, not a
+  // resurrection of its first owner-era group #7.
+  a.owner = 'player-a';
+  assert.equal(absorbSpawnDamage(victim, 150, 'roller', tuning, a), 50,
+    'return handoff cannot resurrect retired first-era group #7');
+});
