@@ -3495,3 +3495,12 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - 再現操作（単独測定、fixture 上で `_impact` を直接呼ぶ）: 床の近距離 0.8 で、角度 5° / phase 0 → 半径 1.93、伸び 1.24。角度 60° / phase 0 → 伸び 0.31。角度 60° / phase 1 → 伸び 0.12。シード 1・42・87654 で同一。壁法線の着弾は従来経路のまま（半径 0.72〜0.98）。
 - プレイへの影響: 床の本弾塗りが従来の約 0.72〜0.98 から 1.93 へ拡大し（約 2〜2.7 倍）、浅い角度ほど伸びる。ターフ面積と敵インクの見た目に影響する。飛沫（#873 の flight paint 経路）と nearest splash は変更なし。
 - 確認状態: ロジック単独の測定と既存試験 91 件（#873、#94、#674、#411、#498、#1011 ほか）と新規 6 件のみ。ブラウザの実動作および本家の実機比較は未実施。未確認（根拠なく解消済みにしない）: (1) 遠距離帯の端点（暫定で射程を使用）、(2) 角度閾値 10°/35°（Shooter 記録に無く、Splat Roller の既定値を暫定流用）、(3) 位相→envelope の対応（Roller #611 の規則を暫定流用）、(4) 壁着弾の専用フットプリント（未変更）、(5) 換算スケール 1 による面積の妥当性、(6) Splattershot の床塗り形状と面積の実機計測。
+## 2026-10-10: Turf War guest input after the host end (#838)
+
+- 本家の根拠: Play Nintendo の Splatoon 3 tips（https://play.nintendo.com/news-tips/tips-tricks/splatoon-3-tips-and-tricks/）は、Turf War を「three-minute, 4-vs-4 battle」と記載（本セッションで確認）。参照版は Ver. 11.3.0（Issue 本文の Nintendo Support 記載、本セッションでは未取得）。終了判定後の入力受付、通信遅延下での終了境界は公式資料で確認できず、未確認。
+- INKWAVE 実装箇所: pin 版 `inkwave-public/src/net/netmatch.js` の `_hostClock` は変更せず、`patches/splatoon3/adapter.mjs` の netmatch ブロックで `recordHostDeadline` を接続。`patches/splatoon3/runtime/turf-finish.mjs` の `recordHostDeadline`（残り時間から中継 RTT を引き、0〜0.5 s に制限）と `blockExpiredGuestInput(match, dt)`（ホスト期限を tick ごとに減算し、尽きたら入力を閉じる）。`match.js` の `updateController` から `dt` を渡す。
+- 再現操作（ロジック単独・決定的 fixture）: ゲストのローカル時計 0.45 s、ホストの `c` が「残り 0.5 s、RTT 400 ms」で届く。ホスト終了は受信後 0.1 s。従来は約 0.35 s 後のローカル 0 まで撃てたが、修正後は 0.1 s 後に入力が閉じる。100/250/500 ms の finish パケット遅延でも、finish 到着までに撃てない。
+- プレイへの影響: 修正はゲストの入力受付のみを変える。HUD の時間表示、塗り判定、finish 状態への遷移（ホストの `st:finish` を待つ）は変えない。ローカル時計が 0.2 s 超ずれる場合の半補正は既存のまま。
+- 確認状態: 単独の決定的試験のみ。`reliability/tests/guest-deadline-input.test.mjs` 13 件 pass（新規 2 件は hook を外すと 2 件 fail）、隣接 5 試験ファイル pass、`check-inkwave-patches --quick` OK。実機・ブラウザ・実ネットワーク遅延での比較は未実施で、この結果を実機比較の代用にしない。
+- 未確認として残すもの: 片道遅延は中継 RTT からの推定（ホスト側の経路は未計測、対称と仮定）。`c` は 0.5 s ごとに届くため、古い標本は受信後の経過時間を減算して扱う（回線が止まると最後の標本の期限で入力が閉じる）。終了時刻の共通エポック化（プロトコル変更）、ホスト側での所有者イベントのタイムスタンプ拒否は未実装。#410 の射出済み弾・塗り、#878 の永久 hidden host は別件。Drive の "INKWAVE" + "Splatoon" 検索では遅延・終了計測の資料は見つからず（題名ベース、未読）。
+- Issue #838 は閉じない。

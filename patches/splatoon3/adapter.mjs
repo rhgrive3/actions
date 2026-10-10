@@ -247,7 +247,7 @@ export function adaptSource(rel, code) {
       '    if (!this.attract && !this.bossMode && (this.mode == null || this.mode === \'turf\') && (this.state === \'finish\' || this.state === \'judge\')) return;\n    const nm = G.netm;\n    for (const a of this.actors) { if (a.remote && nm) nm.applyRemote(a, dt); else a.update(dt); }',
       'post-TIME-UP turf actors stop physics while live projectiles continue');
     code = replaceOnce(code, '    if (!this.controller) return;',
-      '    if (blockExpiredGuestInput(this) || !this.controller) return;', 'guest deadline controller admission');
+      '    if (blockExpiredGuestInput(this, dt) || !this.controller) return;', 'guest deadline controller admission');
     code = replaceOnce(code,
       '        a.pos.x -= (dx / d) * push * ka; a.pos.z -= (dz / d) * push * ka;\n        b.pos.x += (dx / d) * push * kb; b.pos.z += (dz / d) * push * kb;',
       '        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);\n        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);',
@@ -1137,7 +1137,12 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'G.projectiles?.applyHit(atk, v, d.d, d.w);', 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);', 'receive final damage group');
     code = replaceOnce(code, '    victim.alive = false; victim.hp = 0;', '    victim.alive = false; victim.hp = 0; victim.superJumpGround = null;', 'remote jump target death');
     code = replaceOnce(code, '    a.alive = true; a.hp = PLAYER.hp;', '    a.superJumpGround = null;\n    a.alive = true; a.hp = PLAYER.hp;', 'remote jump target respawn');
-    return `import { swimTrailVisible, swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
+    // #838: the host clock sample feeds the guest input gate with latency-compensated remaining time.
+    code = replaceOnce(code,
+      "    if (state === 'playing' && m.state === 'playing' && Math.abs(m.time - time) > 0.2) m.time += (time - m.time) * 0.5;",
+      "    if (state === 'playing' && m.state === 'playing' && Math.abs(m.time - time) > 0.2) m.time += (time - m.time) * 0.5;\n    if (state === 'playing' && m.state === 'playing') recordHostDeadline(m, time, this.s.tr?.rtt);",
+      'host clock records a latency-compensated input deadline');
+    return `import { recordHostDeadline } from '../../patches/splatoon3/runtime/turf-finish.mjs';\nimport { swimTrailVisible, swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, 'this.fireBuffer = firePressed ? P.fireBuffer : Math.max(0, this.fireBuffer - dt);',
