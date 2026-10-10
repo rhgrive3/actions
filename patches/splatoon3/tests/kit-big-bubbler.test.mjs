@@ -180,19 +180,18 @@ test('the pinned TimeDamage collapses the canopy and releases its scene resource
   activate(f, a);
   const dome = bigBubblerDomes()[0];
   assert.ok(scene.children.length > sceneBefore, 'the dome owns real scene objects');
-  const disposals = [];
-  const watch = (mesh, kind) => {
-    const original = mesh[kind].dispose.bind(mesh[kind]);
-    mesh[kind].dispose = () => { disposals.push(`${dome.shell === mesh ? 'shell' : 'emitter'}:${kind}`); original(); };
-  };
-  watch(dome.shell, 'geometry'); watch(dome.shell, 'material');
-  watch(dome.emitterMesh, 'geometry'); watch(dome.emitterMesh, 'material');
+  const geometries = new Set(), materials = new Set(), disposals = new Map();
+  dome.group.traverse(o => { if(o.geometry)geometries.add(o.geometry); if(o.material)materials.add(o.material); });
+  for(const resource of [...geometries,...materials]){
+    const original=resource.dispose.bind(resource);
+    resource.dispose=()=>{disposals.set(resource,(disposals.get(resource)||0)+1);original();};
+  }
   for (let i = 0; i < 60 * 30 && bigBubblerDomes().length; i++) tickBigBubblers(DT);
   assert.equal(bigBubblerDomes().length, 0, 'the pinned TimeDamage ends the dome');
   assert.equal(scene.children.length, sceneBefore, 'the dome leaves the scene');
-  assert.deepEqual(disposals.sort(),
-    ['emitter:geometry', 'emitter:material', 'shell:geometry', 'shell:material'],
-    'every dome GPU resource is disposed exactly once');
+  for(const material of materials)assert.equal(disposals.get(material),1,'each activation material is retired once');
+  for(const geometry of geometries)assert.equal(disposals.get(geometry)||0,0,'immutable cached geometry survives another live activation');
+
 });
 
 // ---------------------------------------------------------------------------

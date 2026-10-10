@@ -3682,3 +3682,24 @@ Reference: Splatoon 3 Ver.11.3.0; pinned Leanny/splat3 `7280ff9c` tables (Weapon
 | Original kits for Blaster/Dualies/Slosher | WeaponInfoMain 1130 sub/special | `PARTIAL_KITS` | menu/kit tests | Blaster gets Big Bubbler (190p); Dualies Suction Bomb; Slosher keeps Splat Bomb | partial: unimplemented subs/specials remain original and labelled |
 
 Not changed and still unverified: Dualies aerial slide descent (no sourced field or public measurement), Tidal Slam (original special), shot-spread 2D PDFs, real-device timing/audio/feel, and two-device network feel.
+
+
+### 2026-10-10: 既存スペシャルの専用モデル・演出
+
+対象は現在の公開mainにあるTrizooka、Ink Storm、Big Bubbler、Ink Vac、Triple Splashdown相当の`slam`、任意キットのTacticooler。新規19種の別PRは取り込まない。数値参照は既存のSplatoon 3 **11.3.0** 固定抽出を継続する。
+
+| 対象 | 本家の根拠と公開版との差 | 今回の実装 / 再現操作 | 確認状態と残差 |
+| --- | --- | --- | --- |
+| Trizooka | Nintendo公式宣伝画（Wiki保存）では3本の後部タンク、蛇腹砲身、緑の前部。従来はメイン武器を保持していた | `runtime/special-motion.mjs` の専用モデル、両手IK、反動、3個の排莢プール、フラッシュ。Shooterでスペシャル後に上下照準/射撃。発射口は専用モデルのソケットへ追従 | 手の握り穴との接続と発射口一致を検証。元メッシュ寸法、テクスチャ、排莢速度/角速度の単位は未確認。固定30F/60F/5Fの排莢開始/寿命/フェード以外は演出校正 |
+| Ink Vac | 公式デモでは丸い白いタンク、水色のエンジン/ノズル、太いホース。従来は吸引円錐のみ | 丸胴タンク/ノズル/保持IK、充填表示、渦のシェーダー。Chargerでスペシャルを保持し、上下照準→反撃 | 吸引のnear/far/長さは従来の判定値を可視化。反撃のダメージ/塗りは既存ネイティブ所有。リグ、ホースの動的変形、実機ピクセル一致は未確認 |
+| Ink Storm | 公式画の雲は暗いインクの雲。投擲装置の細部は今回取得した公式画では見えず、Wiki本文を参照 | 保持用/投擲用カプセル、暗い15パフのインスタンス雲。Stormを保持→Rで投げる | 雲の描画を15パフ/1 drawへ統合。移動・雨・被害・塗りの所有者は従来のまま。カプセル細部と雲/雨の本家シェーダーは未確認 |
+| Big Bubbler | 公式画では透明膜、リング、上部装置。Wikiはコマ状発射台/ビーコンと白いプロペラを記述 | 発射台・ビーコン・上昇装置、輪と表面模様の膜。Rollerで起動し、発生器へ射撃 | 半径、上昇、HP、寿命は既存判定に追従。細部は校正。破壊演出/元シェーダーは未確認 |
+| Triple Splashdown相当 | Nintendo公式動画/3D宣伝画では道具を持たず左右のインク拳と自身が落下。従来はメイン武器を振り下ろすポーズ、追加2拳は判定のみ | メイン武器を退避、両腕の素手ポーズ、左右を反転した2拳、渦状エネルギー、降下と既存15Fの追加着弾に追従。Blaster等の既存Slamキットで起動 | ローカル判定トークンを読むだけで新たなダメージ/塗りを作らない。遠隔は受信phaseから描画するため開始位置/遅延は実機・二端末映像比較が残る |
+| Tacticooler | 公式回転/デモでは円筒透明胴、縦フレーム、4つの横アームと缶。従来は箱に缶を載せる形 | 任意Recon Training Kitのスタンドを円筒・透明胴・4本のアーム/缶へ。飲用に合わせ缶を非表示 | スタンド形状と缶消費は描画確認。実機と同じ投擲→展開アニメ、缶取得時のキャラクター全関節は未確認 |
+
+元の公開ミラー`inkwave-public/`は変更しない。モデル形状/関節座標/材質/演出曲線は参照画像に基づくINKWAVE用の手続き的校正であり、Nintendo製の元アセット/全フレームを入手して同一性を証明したものではない。既存ゲーム判定値を新しい見た目の寸法で上書きしない。比較画像と原典リンク、検証結果の詳細は `inkwave-special-presentation-2026-10-10.md` に記録する。
+
+
+#### 追加自己レビュー: 雲のインスタンスGPU buffer終了
+
+本家との雲形状・元シェーダー比較の未確認状態は維持する。INKWAVE側では、インスタンス化した雲の専用matrix GPU bufferを終了時に解放していなかった。`runtime/special-motion.mjs` の手続きモデル終了と実際の `Projectiles._releaseCloud` を修正した。Stormを投擲し、雲の自然消滅/明示終了/試合clearを繰り返す再現で、雲ごとに1回だけdisposeされ、他の雲が使う共有geometryは解放されない。雲の移動・雨・ダメージ・塗り・寿命は変更しない。修正前ランタイムで0回になる負の対照を確認し、修正後は専用8回帰がソース/最適化ビルドで成功。実WebGLの72回生成/破棄後もbuffer数232で安定した。これはINKWAVEの資源寿命検証であり、本家のGPU実装/FPSとの一致を証明するものではない。
