@@ -48,7 +48,7 @@ function hitWorld() {
     source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + dropCleanup + hitLimits + hitAuthoritySource + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hitHandoffPacket', '_hit', '_validHitAuthorityMetadata', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
     (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, () => 1, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock);
   const n = new C();
-  Object.assign(n, { myId: 'A', byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } },
+  Object.assign(n, { myId: 'A', cfg: { id: 'hit-unit-round' }, byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } },
     peers: new Map(), _peer(id) { if (!this.peers.has(id)) this.peers.set(id, {}); return this.peers.get(id); } });
   return { n, sent, events, calls, G, listeners };
 }
