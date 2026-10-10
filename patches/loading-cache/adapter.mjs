@@ -84,7 +84,7 @@ export function adaptCompiledMain(source) {
 export function loadingIdentity() {
   return Object.fromEntries(filesIn(LOADING_ROOT).filter(file=>!file.includes(`${path.sep}tests${path.sep}`)&&!file.endsWith('.md')).map(file=>[path.relative(LOADING_ROOT,file).split(path.sep).join('/'),hash(fs.readFileSync(file))]));
 }
-export function prepareLoading(build, preloads, options = {}) {
+// Keep stage lightmaps needed for cold-offline play; the online-only Cargo\n// image is integrity checked and cached on demand.\nexport const coldOfflineLightmap = rel => coldOfflineLightmap(rel) &&\n  rel !== 'assets/lightmaps/cargo.png';\nexport function prepareLoading(build, preloads, options = {}) {
   // Compose main's startup-runtime minifier with the PR's explicit diagnostic
   // limits. Preserve the old third-argument callback for existing callers.
   const compactRuntime = typeof options === 'function' ? options : options.compactRuntime ?? (source => source);

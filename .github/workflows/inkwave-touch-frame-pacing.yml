@@ -1,0 +1,22 @@
+name: INKWAVE touch frame pacing
+on:
+  pull_request:
+    paths:
+      - "patches/local-quality/**"
+      - ".github/workflows/inkwave-touch-frame-pacing.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frame-pacing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned build dependency
+        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2
+      - name: Verify touch cadence, profiler and final composed main loop
+        run: node --experimental-vm-modules --test patches/local-quality/tests/range-frame-pacing.test.mjs patches/local-quality/tests/quality.test.mjs patches/loading-cache/tests/cargo-offline-precache.test.mjs
