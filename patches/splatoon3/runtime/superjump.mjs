@@ -16,8 +16,11 @@ export { SUPERJUMP_MAIN_PROGRESS };
 // exact placement is not published and is not equivalent to ordinary spawn pads,
 // so only an explicitly calibrated level.stealthJumpFoci pair is accepted. This
 // deliberately fails closed rather than guessing anchors for INKWAVE stages.
-// The verified curve is 0F through 60 units, linear to +60F at 100 units, then
-// capped. Vertical displacement is intentionally excluded.
+// The 0F through 60 unit, linear to +60F at 100 unit, then capped curve is NOT
+// verified against Ver. 11.3.0 (未確認): only the 60F maximum is backed by the
+// pinned ExtraMove_FrmMax, and the 100 unit value is ExtraMove_DistXZMax. The
+// 60 unit lower threshold and the linear interpolation are unpublished. Vertical
+// displacement is intentionally excluded.
 export const STEALTH_JUMP_DISTANCE_MIN = 60;
 export const STEALTH_JUMP_DISTANCE_MAX = 100;
 export const STEALTH_JUMP_EXTRA_FRAMES_MAX = 60;

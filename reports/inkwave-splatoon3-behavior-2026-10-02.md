@@ -3127,3 +3127,35 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - 再現操作（手順のみ、今回の実行はなし）: LOW 設定または touch 端末で Online hub を開き、`__inkwave.showcase.lob.set.halos` の texture の image 寸法を確認する。修正前は LOW でも HIGH と同寸法。
 - プレイへの影響: LOW の Online lobby の看板グローの解像度だけが下がる。看板の形・位置・点灯、ゲームの挙動は変えない。
 - 確認状態: `patches/local-quality/tests/lobby-resources.test.mjs` 7/7、`issue-472-lobby.test.mjs` と `texlib-stage-pack.test.mjs` 計18/18。試験は native `neonHalo` を Canvas2D stub で実行し、寸法式と LOW の約1/4画素を確認した。合成ストロークの寸法を使っており、実際の sign の寸法は未計測。実ブラウザ描画、反復 Online の GPU 常駐量、LOW/mobile の実機予算、メモリ回収、看板の見え方の実機レビューは未確認のまま残す。`drawGraffiti` の一時 canvas（矩形サイズ、描画中のみ確保）は変更していない。
+## 2026-10-10 — #272 Stealth Jump 超ジャンプ標識の隠蔽（上書き担当）
+
+### 本家の根拠
+
+- Ver. 11.0.0 の Stealth Jump 飛行延長（距離依存、飛行のみ、最大約1秒）は Issue 本文が引用する Nintendo の更新履歴・解説に基づく。本セッションでは一次資料を再取得していない。
+- 固定版 Leanny `splat3@7280ff9c` の `SplPlayer` は `ExtraMove_FrmMax = 60`、`ExtraMove_DistXZMax = 100`。`SuperJumpSign_Hide` の KindLimit は Shoes と 2026-10-09 の記録にある（今回は再照合していない）。Issue 本文の headgear 記載は、この記録に従い shoes main を正とする。
+- 標識を敵から隠す効果は trait 名 `SuperJumpSign_Hide` に基づく。隠れる範囲（リング・カウントダウン・目的地のどこまでか）は未確認。
+
+### INKWAVE の実装箇所
+
+- `patches/splatoon3/issue-460-marker.mjs`: `superJumpSignHiddenFrom(jumper, viewer)` を追加。Stealth Jump 装備者の標識は対立チームの視聴者に隠す。視聴者が不明な場合も隠す（目的地を漏らさない保守的選択）。本人と味方には隠さない。
+- `patches/splatoon3/issue-460-adapter.mjs`: 公開版 `src/game/actor.js` の所有者側飛行で、着地リングをこの判定で抑止し、カウントダウンの `concealed` に同じ判定を渡す。
+- `patches/splatoon3/runtime/superjump.mjs`: 飛行延長の 60 / 100 unit 閾値と線形曲線を「検証済み」から「未確認」へ訂正（挙動は不変）。
+
+### 再現操作と結果
+
+1. オフラインまたは Bot 戦で、クツ メインの Stealth Jump 装備者が超ジャンプし、対立チームの視点で着地標識を見る。修正後は標識とカウントダウンを出さない（ロジック単独テスト。実機未確認）。
+2. 同じ着地を味方の視点で見る、または本人が見る。修正後も標識は出る。
+3. ネット対戦で遠隔の Stealth Jump 使用者の標識は隠れない。遠隔 Actor に loadout が複製されないため判定できず、`netmatch.js` の着地リングは未変更。
+
+### プレイへの影響と未確認事項
+
+- オフライン・Bot 戦の所有者側の標識隠蔽のみ配線した。ネット対戦の敵視点では目的地が漏れる（未対応）。
+- 飛行延長は `level.stealthJumpFoci` が無い限り 0 のまま（fail-closed）。距離座標アンカーは未公開で、推定で埋めない。
+- 60 / 100 unit 閾値と線形曲線は未検証。60F の上限のみ固定版データに対応する。
+- 隠蔽の見た目の範囲、Switch 実機、対戦での時間比較は未確認。
+
+### 確認状態
+
+- `node --experimental-vm-modules --test patches/splatoon3/tests/issue-272-sign-concealment.test.mjs` — 5/5（新規）。
+- `node --experimental-vm-modules --test patches/splatoon3/tests/issue-460-marker.test.mjs patches/splatoon3/tests/issue-460-gauge.test.mjs patches/splatoon3/tests/issue-272-stealth-jump.test.mjs patches/splatoon3/tests/superjump-hp-recovery.test.mjs` — 22/22。
+- ブラウザ実動作、ネット対戦、本家実機比較は未実施。

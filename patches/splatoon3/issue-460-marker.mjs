@@ -23,6 +23,18 @@ const clamp01 = (x) => {
   return v < 0 ? 0 : v > 1 ? 1 : v;
 };
 
+// #272: Stealth Jump (pinned trait SuperJumpSign_Hide, shoes main) conceals the
+// super-jump landing sign from the opposing team. The jumper always sees their
+// own sign and teammates still see it. Without a known local viewer the sign is
+// treated as hidden, the conservative choice so the destination does not leak.
+// Network peers are not covered: remote Actors carry no replicated loadout, so
+// their stealthJump flag is unknown here (未対応, recorded in the report).
+export function superJumpSignHiddenFrom(jumper, viewer) {
+  if (!jumper?.s3?.modifiers?.stealthJump) return false;
+  if (viewer && viewer === jumper) return false;
+  return jumper.team !== viewer?.team;
+}
+
 // Owner-side normalized flight progress from the live native flight state.
 // Returns 0 outside an active flight so charge/cancel/land collapse cleanly.
 export function ownerJumpProgress(state) {
