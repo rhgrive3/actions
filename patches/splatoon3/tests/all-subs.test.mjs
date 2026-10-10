@@ -177,7 +177,8 @@ test('Fizzy stage two remains at 80 held frames and stage three needs cumulative
   assert.equal(full.object?.popLimit, 3, '40 + 80 per-stage frames reach full charge');
   const actor = f.make('shooter'); equip(actor, 'fizzy'); actor.ink = 100;
   actor.intent.sub = true; actor.intent.move.set(1, 0, 0);
-  f.G.time += 1 / 60; actor.update(1 / 60);
+  f.G.time += 1 / 60; actor.update(1 / 60); // admitted input queues the stick-edge bonus
+  f.G.time += 1 / 60; actor.update(1 / 60); // the per-frame cap drains it into the real hold clock
   assert.ok(actor.weaponRunner.s3FizzyCharge?.queue > 0, 'real stick input leaves a queued bonus');
   assert.ok(actor.weaponRunner.s3SubHold > 1 / 60, 'the actual runner hold includes drained bonus frames');
   actor.weaponRunner.reset();
