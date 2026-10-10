@@ -3200,3 +3200,9 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - プレイへの影響: 修正前は、被弾済みの敵が敵インク上にいる間ずっと残HPバーが出ていた。修正後はバーの寿命が HP 減少時刻に従う。
 - 確認状態: 単独試験のみ。`patches/splatoon3/tests/health-window.test.mjs`（5件）、`score-hud.test.mjs`（12件）、`sub-hud.test.mjs`（4件）、`patches/local-quality/tests/hud-snapshots.test.mjs`（8件、環境変数で有効化される1件はskip）が通過。既存の試験は、HP を直接変える前提に合わせて、HP 減少の時刻を観測させる形に書き換えた。
 - 未確認: 3秒の厳密値、敵インクの継続ダメージを本家が「被弾」として窓を更新するか、残HP表示の形と寸法、遮蔽・潜伏判定の本家との一致、ブラウザ実動作、実機比較。PR #1182 の HUD 重複オーバーレイ修正（e61db6fe 系）は main に該当コードがなく、本修正には移植していない。
+## #268: Splat Charger wall-drop drip lifetime (main `97ae3fec`)
+
+- Reference: Splatoon 3 Ver. 11.3.0, pinned `WeaponChargerNormal` in Leanny/splat3 `7280ff9c…`. Gameplay wall-drop path = first (15–30 frames) + second (10, XarrotD default) + last (15–30 frames), i.e. 40–70 frames (0.67–1.17 s). Charge-dependent fall/shock radii (1.5× min→max) are already implemented and tested in `runtime/weapons-charger-flight.mjs`.
+- INKWAVE: `inkwave-public/src/world/paint.js` line 464 gives every wall stamp `dripDur = 1.1 + min(2.2, radius × 1.5)`; the Charger fall stamps (r 0.8–1.2) therefore keep their drip for 2.3–2.9 s and the shock stamp (r 1.8) for 3.3 s, longer than the gameplay path.
+- Status: **not resolved**. The drip-lifetime fix (set the Charger stamp's drip to the remaining path time) was tried and reverted: in the fixture the Charger wall-drop splats return area 0 and are never added to `paint.growing`, so the change could not be exercised by a test. The next step is to confirm, on a real wall with paint surfaces, whether these splats reach `paint.growing` through the #264 and #570 wrappers, then set the drip lifetime there.
+- Unverified: the second-frame and last-min defaults (XarrotD paramtable, medium confidence), the unit of the target speeds, and Switch timing and pixel parity. None of these are resolved by this entry.
