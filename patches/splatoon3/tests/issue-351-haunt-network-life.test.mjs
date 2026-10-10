@@ -42,8 +42,13 @@ async function pair(t, hz, old = false) {
     Object.assign(b, { nid: 2, owner: 'B', team: 1, netLife: 5, isLocal: id === 'B' });
     Object.assign(c, { nid: 3, owner: 'B', team: 1, netLife: 7 });
     if (id === 'A') { a.s3.loadout[1].main = 'haunt'; f.saveTestLoadout(a.s3.loadout); }
-    f.G.level.spawnPads = [new f.THREE.Vector3(), new f.THREE.Vector3()];
-    f.G.physics.groundProbe = (...args) => { args[6].hit = false; return args[6]; };
+    // Exercise the real Squid Spawn landing/retarget lifecycle against a
+    // supported native floor. A hard-coded groundProbe miss leaves the respawn
+    // indefinitely in `aim`/`landing`, never reaching the next valid life.
+    const level = new f.Level({ bounds: { minX: -30, maxX: 30, minZ: -30, maxZ: 30 },
+      spawnPads: [[0, 0, 0], [0, 0, 20]], spawnBarrier: 0, half: [],
+      single: [{ kind: 'box', min: [-30, -.5, -30], max: [30, 0, 30] }] });
+    f.G.level = level; f.G.physics = new f.Physics(level);
     f.G.match = { mode: 'turf', state: 'playing', time: 180, playing: () => true, canRespawn: () => true,
       local: id === 'A' ? a : b, actors: [a, b, c] };
     const nm = new f.NetMatch({ myId: id, hostId: 'B', isHost: id === 'B',
