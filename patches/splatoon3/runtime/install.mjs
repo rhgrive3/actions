@@ -23,6 +23,7 @@ import { installMovementMotion } from './movement-motion.mjs';
 import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
+import { installRollerBodyKnockback } from './roller-body-knockback.mjs';
 import { installMuzzleFeedback } from './muzzle-feedback.mjs';
 import { installShotGuide } from './weapons-fidelity.mjs';
 import { installChargerSurface } from './charger-surface.mjs';
@@ -135,6 +136,8 @@ export function install(profile) {
   // Main-weapon fidelity must be installed on the same canonical context before
   // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
   installWeaponsFidelity(api, profile);
+  // #387: after the damage route is final, add the Roller body-contact response (model, 未確認 units).
+  installRollerBodyKnockback(api, profile);
   installSuperJumpTargetNotification(api);
   installMuzzleFeedback(api);
   installMinimapDirty(api);
