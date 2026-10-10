@@ -350,7 +350,11 @@ export function installGear(api, tuning) {
       this.special = before * Math.max(0, (penalty.incoming ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
       const history = this.s3.quickRespawnHistory;
       if (enemyDeath) {
-        if (history.seenEnemyDeath && history.splats === 0) this.respawnTimer = Math.max(0, this.respawnTimer - (penalty.incoming ? penalty.quickReduction : this.s3.modifiers.quickRespawnReduction));
+        // A Tacticooler drink supplies 57AP Quick Respawn on any enemy splat,
+        // independently of the ordinary zero-splat eligibility condition.
+        // RP still adds its extra frames, but cannot negate the drink (#835).
+        if (penalty.cooler || (history.seenEnemyDeath && history.splats === 0))
+          this.respawnTimer = Math.max(0, this.respawnTimer - (penalty.incoming || penalty.cooler ? penalty.quickReduction : this.s3.modifiers.quickRespawnReduction));
         history.seenEnemyDeath = true; history.splats = 0;
         this.s3.splatsThisLife = 0;
       }
