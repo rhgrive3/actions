@@ -3401,3 +3401,13 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - 再現条件: `patches/splatoon3/tests/issue-498-roller-paint-age-endpoints.test.mjs` は 30/60/120 Hz で横 13 種・縦 5 種の全ユニットを、境界 19/20/49/50F（縦は 29/30/49/50F）で確認し、6/6 件合格。
 - プレイへの影響: 20F/30F の開始と 50F の 0.6 倍という端点は source とテストで一致。20F〜50F の幅の減り方と、フレーム丸めは未確認のまま。
 - 確認状態: 端点はテスト確認済み（ロジック単独の測定であり、実機比較ではない）。中間曲線とフレーム丸めは未確認で、実機のフレーム計測が必要。#498 は Open のまま。
+## #912 Tidal Slam の地上 Triple Splashdown 拳2つ（2026-10-10、上書き担当）
+
+- 本家の根拠: Splatoon 3 Ver. 11.3.0 の Triple Splashdown（通常発動）は本人の爆発に加え、インクの拳2つがそれぞれ爆発する。Splatoon Wiki「Triple Splashdown」（v11.3.0: 拳の移動 6 → 6.54、±30°、220ダメージ半径 7 → 6.4、60ダメージ半径 10.5 → 9.6、拳の遅延 0.25秒、拳の爆発 220 近距離 / 60 遠距離。Super Jump 時は拳なし）。Nintendo 11.3.0 注記は Issue 本文の引用で、ページは今回再取得していない。Leanny 抽出（commit `7280ff9c`）に拳のパラメータはない。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/triple-slam-fists.mjs`（新規）、`patches/splatoon3/runtime/install.mjs`（`installTripleSlamFists(api, profile)`）。テスト: `patches/splatoon3/tests/issue-912-triple-slam-fists.test.mjs`。地上の `_startSpecial` で拳を登録し、本体の `_slamImpact` から 15F 後（固定 60 Hz）に拳2つを独立に判定する。Super Jump Slam は `_startSpecial` を通らないため拳を作らない。
+- 再現操作: 地上で Tidal Slam を発動して着地する。本人正面 ±30° の 6.54 地点（x=±3.27, z=5.66 付近）の敵は、本人の爆発半径（5.2）の外でも拳爆発で被弾する（6.4 以内 220、9.6 で 60）。拳の重なり域は両方が加算される（例: 2 つの拳の中点で 440）。着地の 15F 前には拳のダメージがない。
+- プレイへの影響: 変更前は拳の範囲が 0 ダメージだった。変更後は前方に追加の爆発域が増え、重なり域で加算ダメージが出る。拳の塗りは個人ターフのみに加算し、スペシャルゲージは増えない（本人の爆発と同じ扱い）。
+- 確認状態:
+  - 論理テスト 9 件（合成 Actor の 7 件、本番インストーラーの合成 Slam 1 件、配線の確認 1 件）と近接する Slam テスト（28 件・68 件）は通過。固定 60 Hz の 15F 遅延、1/120 s 刻みでも 0.25 s で発火すること、壁による拳の遮断、Super Jump と remote で拳を作らないこと（コード経路と合成試験）を確認。ブラウザ実動作、Switch 実機比較は未実施。
+  - 意図的な差分（Draft PR #1181 からの変更）: 拳は `special:slam` を発火しない。boss.js の 180/55 splash が拳ごとに追加で当たるのを避けるため（拳の表示は local のみ）。本体が着地前に死亡した場合は拳を打ち切る（本家の挙動は未確認。Wiki は拳が本人の着地後に爆発すると記載）。塗りは `claimMode: 'no-special'` で本人の爆発と同じ扱い。
+  - 未確認: 拳の床追従・段差・短い壁の乗り越え（LOS 遮断は近似）、220 から 60 への減衰形（直線補間は INKWAVE の選択）、拳のメッシュ・VFX・SFX、拳の塗り半径 10（Wiki のインク飛沫半径 v9.3.0 を流用）、拳の表示のリモート同期（未実装）、本家の数値の一次資料による確認。

@@ -70,6 +70,7 @@ import { installFaceMotion } from './face-motion.mjs';
 import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
 import { installControllerMotion } from './controller-motion.mjs';
+import { installTripleSlamFists } from './triple-slam-fists.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -159,5 +160,8 @@ export function install(profile) {
   installSplatGhostReturn(api);
   installTurfCombatGate(api);
   installDualiesNetwork(api);
+  // Installed after the native special/gear/net wrappers: owns the two Triple
+  // Splashdown fists (#912) and their 15F-delayed impact, separate from the player's blast.
+  installTripleSlamFists(api, profile);
   return api;
 }
