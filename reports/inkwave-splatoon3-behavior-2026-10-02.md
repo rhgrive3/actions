@@ -3627,3 +3627,11 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - **再現操作**: 相手を倒さない程度に撃つ。頭上に細いバーが 3 秒出る。味方が被弾した時も同じバーが出る（既存の動作）。
 - **確認状態**: `patches/splatoon3/tests/health-bar-source.test.mjs`（3件）で、台帳の原典値と表示時間・縦横比・背景色の一致を検査。旧 CSS では縦横比・背景色の試験が失敗することを確認した。ブラウザでの描画確認と Switch 実機比較は未実施。
 - **未確認（解消していない）**: (1) `BarWidth/BarHeight` の単位（1080p のレイアウト座標か等）が公開されていないため、絶対サイズは変えていない。(2) `RecvDmgReactColorFrm 12`：被弾直後 12F の色の反応は、その色が表の項目に無いため実装していない。(3) 縁取りの有無、距離による大きさの変化、敵インクによる継続ダメージで表示時間を延長するかどうか。
+## 2026-10-10: グレートバリアへの各攻撃の倍率（DamageRateInfoConfig）
+
+- **本家の根拠**: 固定 11.3.0 の `data/parameter/1130/misc/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json`（列 `GreatBarrier_Barrier`／`GreatBarrier_WeakPoint`）と、各ブキの行を決める `data/mush/1130/WeaponInfo{Main,Sub,Special}.json` の `DefaultDamageRateInfoRow`／`ExtraDamageRateInfoRowSet`。バリア本体／弱点の倍率は、スプラシューター・スプラマニューバー・バレルスピナー 1.0／1.0、バケットスロッシャー 2.4／2.4、ホットブラスター 直撃（Normal）・爆風（ExtraBombCore）とも 1.9／1.9、スプラチャージャー 通常 2.0／2.0・フルチャージ 2.0／1.5、スプラローラー 振り 1.8／1.8・転がし 1.0／1.0、スプラッシュボム 直撃 2.0／1.5・爆風 2.0／0.5、キューバンボム 2.0／0.5、カーリングボム 接触 1.0／1.0・爆風 2.0／0.5、ウルトラショット 1.3／0.975、キューインキ 本体 0／0・放出爆発 4.2／2.1。対物攻撃力アップは [Inkipedia Object Shredder](https://splatoonwiki.org/wiki/Object_Shredder) が「プレイヤー以外の全対象」で、グレートバリアは 110% とする。
+- **修正前の差分**: `patches/splatoon3/runtime/kit-big-bubbler.mjs` の `damageAtContact` は、ブラスターの直撃 1.9 とローラーの振り（原典ユニット）1.8 だけを掛け、本体と弱点の区別もなかった。チャージャー・スロッシャー・ボム・ウルトラショット・キューインキ・ブラスター爆風は 1.0 で、対物攻撃力アップもブラスター直撃にしか効かなかった。
+- **INKWAVE 実装箇所**: `BIG_BUBBLER_SOURCE_RATES`／`bigBubblerSourceRow`／`bigBubblerSourceRate`（`kit-big-bubbler.mjs`）。当たり対象 `canopy` を Barrier、`field`（上昇したドローン、`DroneParam.FieldCollisionRadius`）を WeakPoint に対応させた。爆風の行は `kit-defense.mjs` の `explosionBubblerRow`、チャージャーのフルチャージ判定は `weapons-charger-flight.mjs` から渡す。本体側の `DamgeRatio 0.64` は従来どおり本体だけに掛かる。
+- **再現操作**: 相手のグレートバリアにスプラチャージャー・バケットスロッシャー・ボムなどで攻撃する。修正前は同じ威力のシューターと同じ削れ方だった。修正後は原典の倍率で速く割れる（例：スロッシャーは 2.4 倍）。
+- **確認状態**: ロジック確認のみ。グレートバリア関連の6ファイル 73 件が合格。旧前提に依存していた4件（ブラスター爆風に倍率なし、旧経路のローラー振り滴に倍率なし、キューインキ爆発に倍率なし）は原典の倍率に合わせて期待値を更新した。Switch 実機比較・ブラウザ確認は未実施。
+- **未確認**: インクストーム（5.0／5.0）は INKWAVE の雨がグレートバリアに当たり判定を持たないため未接続。トリプルトルネード・カニタンク等は INKWAVE に無い。バリアの HP 換算（`rawPerDamageUnit 100`）は既存の宣言済み校正のまま。

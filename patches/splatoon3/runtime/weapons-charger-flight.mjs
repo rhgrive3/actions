@@ -174,7 +174,7 @@ export function installChargerFlight(api,completion) {
     job.pos.copy(job.prev).addScaledVector(job.dir,length);
     const world=sweptWorldHit(G.physics,job.prev,job.pos,collision.InitRadiusForField,collision.EndRadiusForField,job.hit,true);
     let distance=world.hit?world.dist:length,ended=world.hit,normal=world.hit?world.normal.clone():job.dir.clone().negate(),target=null;
-    const defense=system.kitDefenseCandidate?.({owner:job.owner,team:job.team,prev:job.prev,pos:job.pos,vel:job.dir,damage:job.damage,type:'beam',size:0,ghost:job.ghost});
+    const defense=system.kitDefenseCandidate?.({owner:job.owner,team:job.team,prev:job.prev,pos:job.pos,vel:job.dir,damage:job.damage,type:'beam',size:0,ghost:job.ghost,full:!!job.full});
     if(defense&&(!world.hit||defense.distance<world.dist-EPS)){distance=defense.distance;ended=true;target='defense';normal=job.dir.clone().negate();}
     const boss=G.boss?.segHit(job.prev,job.pos,collision.InitRadiusForPlayer);
     if(boss&&boss.dist<distance-EPS){distance=boss.dist;ended=true;normal=job.dir.clone().negate();target='boss';}
