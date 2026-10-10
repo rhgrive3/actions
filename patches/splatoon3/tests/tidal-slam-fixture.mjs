@@ -41,11 +41,12 @@ export async function boot() {
     level, physics: new Physics(level), mode: 'match', teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')],
     match: { playing: () => true, canRespawn: () => false }, paint: { sample: () => 1, splat: () => 0 } });
   G.projectiles = new api.Projectiles(G.scene);
-  const slamWeapon = Object.keys(WEAPONS).find(id => WEAPONS[id].special === 'slam');
+  // Catalogue base kits use retail specials; keep this legacy-action fixture explicit.
+  const slamWeapon = 'slosher';
   function make({ pos = [0, 0, 0], team = 0, weapon = slamWeapon } = {}) {
     const a = new api.Actor({ team, name: 'tidal slam', weapon, CharacterClass: api.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
     a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
-    a.spawnAt(new THREE.Vector3(...pos), 0); a.invuln = 0; return a;
+    a.spawnAt(new THREE.Vector3(...pos), 0); a.invuln = 0; a.weapon = { ...a.weapon, special: 'slam' }; return a;
   }
   const tick = (a, count = 1) => { for (let i = 0; i < count; i++) { G.time += STEP; a.update(STEP); } };
   const close = () => { for (const a of G.actors) a.character.dispose(); G.projectiles.clear(); };
