@@ -27,7 +27,7 @@
         0,
         0
       ],
-      "changedPixels": 6237,
+      "changedPixels": 6238,
       "actorPixels": 32087,
       "maxHandError": 9.099281950539972e-16,
       "calls": 12,
@@ -87,7 +87,7 @@
         0,
         0
       ],
-      "changedPixels": 41529,
+      "changedPixels": 41530,
       "actorPixels": 17010,
       "maxHandError": 0,
       "calls": 20,
@@ -95,6 +95,7 @@
     }
   ],
   "cloudDrawCalls": 1,
+  "nativeCloudRetirements": 36,
   "baseline": {
     "geometries": 45,
     "textures": 2,

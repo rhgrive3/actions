@@ -41,9 +41,9 @@ GPU解放修正版のローカルビルドのrevisionは`f16047de959abcb3d5efcb5
 
 初期JS 3,349,326 bytes、precache 5,121,821 bytes、worker 65,520 bytes、145 modulepreloadで既存予算検査に成功。これらは依存グラフ/ファイル量の検査で、端末のFPS/ロード時間そのものではない。CIには専用WebGL検査を追加し、実行commitとartifactを別途確認する。
 
-追加レビューで、雲のInstancedMeshの `instanceMatrix` は共有geometry/材質と別の専用GPU bufferを持つことを確認した。元の雲終了は材質のみを破棄し、手続きモデルの汎用終了もInstancedMesh自身のdisposeを呼ばなかった。修正前ランタイムを使う負の対照で、両経路のdisposeが0回になることを再現した。汎用終了に加え、実際のProjectilesの自然消滅/明示終了/clearでインスタンスを1回だけ破棄し、共有geometryは維持する。WebGLのcreateBuffer/deleteBufferも数える検査へ拡張し、72回の生成・破棄後にbuffer数が増えないことを確認した。
+追加レビューで、雲のInstancedMeshの `instanceMatrix` は共有geometry/材質と別の専用GPU bufferを持つことを確認した。元の雲終了は材質のみを破棄し、手続きモデルの汎用終了もInstancedMesh自身のdisposeを呼ばなかった。修正前ランタイムを使う負の対照で、両経路のdisposeが0回になることを再現した。汎用終了に加え、実際のProjectilesの自然消滅/明示終了/clearでインスタンスを1回だけ破棄し、共有geometryは維持する。WebGLのcreateBuffer/deleteBufferも数える検査へ拡張し、72回のモデル生成・破棄に加え、36回の実際の雲生成・描画・終了を確認した。各雲の専用bufferがGPUへアップロードされ、自然消滅/明示終了/clearの直後にbuffer数が232へ戻る。二重終了でも増減しない。
 
-## mainと公開版の確認
+## 初回のmainと公開版の確認
 
 [PR #1216](https://github.com/rhgrive3/actions/pull/1216)をmain `4ec8f14c63a26b43415e14629d1f60237b4e4b49` へ統合した。テスト対象PR head `06a367ccf77354519921a3fa47c2f36e79597d50` と統合直後mainのtreeは、どちらも `a301adb3df370aa4d49375e5504236304107592f` で一致する。
 
