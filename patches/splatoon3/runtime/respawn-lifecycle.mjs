@@ -2,8 +2,10 @@
 // teammate Super Jump and its invulnerability keep their existing owners.
 const EPS = 1e-10, KEYS = ['fire', 'jump', 'sub', 'special', 'squid'];
 const INSTALL = Symbol.for('inkwave.s3.respawn-lifecycle.v1');
-let beginInitialImpl = null;
+let beginInitialImpl = null, syncRemoteInitialImpl = null;
 export function beginInitialSquidSpawn(actor) { return beginInitialImpl?.(actor) ?? false; }
+// #512: follows an owner-replicated opening Squid Spawn on a remote human proxy.
+export function syncRemoteInitialSquidSpawn(actor, adoption) { return syncRemoteInitialImpl?.(actor, adoption) ?? false; }
 export function squidSpawnState(actor) { return actor?.s3?.squidSpawn || null; }
 export const SPAWN_ARMOR_FLAG = 8388608;
 export const SQUID_SPAWN_FLIGHT_DURATION = 60 / 60;
@@ -166,13 +168,43 @@ export function installRespawnLifecycle(api, profile) {
     }
     setPos(actor, p); actor.yaw = actor.aimYaw = yaw; actor.invuln = Infinity; actor.grounded = false; actor.vel.set(0,0,0);
     actor.s3 ||= {}; actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = null;
-    actor.s3.squidSpawn = { phase:'aim', initial:!!initial, wait:0, fireArmed:!actor.intent.fire, target:(initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor) };
+    // #512: a remote human's opening launch is decided by its own peer. Until that
+    // peer's replicated aim/flight arrives, this proxy waits at the spawner instead
+    // of launching to the local fallback aim (which differs from the owner's).
+    const ownerReplicated = !!initial && !!actor.remote && !actor.isBot;
+    actor.s3.squidSpawn = { phase:'aim', initial:!!initial, wait:0, fireArmed:!actor.intent.fire,
+      target: ownerReplicated ? null : ((initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor)) };
+    if (ownerReplicated) actor.s3.squidSpawn.ownerReplicated = true;
     actor.netTp = (actor.netTp || 0) + 1;
     if (wasDead && !actor.isBot && !actor.remote) actor.s3.respawnRearm = new Set(KEYS);
     emit?.('respawn', { actor }); emit?.('squidspawn:aim', { actor, initial:!!initial });
-    if (actor.isBot || actor.remote) launch(actor);
+    if ((actor.isBot || actor.remote) && !ownerReplicated) launch(actor);
     return true;
   }
+  // #512: mirror the owner's replicated aim target, launch target and flight clock.
+  // Position still comes from the owner's sampled path (applyRemote), so both
+  // peers share one trajectory; this proxy never advances the flight itself.
+  const replicatedPoint = p => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite) ? { x: p[0], y: p[1], z: p[2] } : null;
+  syncRemoteInitialImpl = (actor, adoption) => {
+    const s = actor?.s3?.squidSpawn;
+    if (!actor?.remote || !s?.ownerReplicated || !adoption) return false;
+    const owner = adoption.squidSpawn;
+    if (!owner) { delete actor.s3.squidSpawn; return true; }
+    if (owner.phase === 'aim') { s.phase = 'aim'; s.target = replicatedPoint(owner.target); return true; }
+    const to = replicatedPoint(owner.target) || s.to;
+    if (!to) return false;
+    if (s.phase === 'aim') {
+      s.from = { x: actor.pos.x, y: actor.pos.y, z: actor.pos.z };
+      s.to = { ...to };
+      emit?.('squidspawn:launch', { actor, initial: true, target: { ...to } });
+    }
+    if (owner.phase === 'flight') {
+      s.to = { ...to }; s.duration = flightDuration;
+      s.t = Math.min(flightDuration, Math.max(0, flightDuration - owner.remaining));
+    }
+    s.phase = owner.phase;
+    return true;
+  };
   beginInitialImpl = actor => begin(actor, true);
   A.reset = function (...args) {
     const result = reset.apply(this, args); this.s3 ||= {};
@@ -204,11 +236,14 @@ export function installRespawnLifecycle(api, profile) {
   };
   A.splat = function (...args) {
     const alive = this.alive, result = splat.apply(this, args);
-    if (alive && !this.alive) { this.s3.spawnArmor = null; this.s3.spawnArmorRemote = false; }
+    if (alive && !this.alive) { this.s3.spawnArmor = null; this.s3.spawnArmorRemote = false; delete this.s3.squidSpawn; }
     return result;
   };
   A.update = function (dt) {
     advanceSpawnProtection(this, dt);
+    // A remote death/disconnect may bypass local splat. A corpse cannot own
+    // spawn motion or intercept the native death/respawn countdown.
+    if (!this.alive && this.s3) delete this.s3.squidSpawn;
     const spawn = this.s3?.squidSpawn;
     if (spawn) {
       if (spawn.phase === 'aim') {

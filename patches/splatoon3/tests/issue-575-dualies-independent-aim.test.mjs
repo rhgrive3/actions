@@ -181,8 +181,9 @@ test('native grounded and airborne Dualies keep two independent aim centers and 
     assert.ok(shots.every(row => !row.turret), 'normal-fire launches remain outside the post-roll turret owner');
     assert.equal(shots[1].tick - shots[0].tick, Math.round(actor.weapon.fireInterval / STEP),
       'normal-fire cadence remains the native weapon interval');
-    assert.ok(shots.every(row => row.draws === (row.spread > 0 ? 3 : 1)),
-      'each real shot consumes only the existing spread sample draws plus one projectile seed');
+    // #891: each admitted normal Dualies shot also draws one outer-reticle bias sample before the spread draws.
+    assert.ok(shots.every(row => row.draws === (row.spread > 0 ? 4 : 1)),
+      'each real shot consumes the existing spread sample draws, one projectile seed and the #891 outer-reticle draw');
 
     const basis = planeBasis(fixture);
     const hits = shots.map(row => targetPlaneHit(f, actor, row.round, basis));

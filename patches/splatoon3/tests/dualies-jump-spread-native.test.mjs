@@ -243,3 +243,23 @@ test('#887 30/60/120Hz render cadence shares one fixed-60Hz jump-accuracy trace'
   assert.deepEqual(t30, t60, '30Hz and 60Hz render cadence share the fixed 60Hz trace');
   assert.deepEqual(t120, t60, '120Hz and 60Hz render cadence share the fixed 60Hz trace');
 });
+
+test('#887 an airborne actor past 70F returns to the normal airborne 7.5 endpoint, not the 0-bias 2 endpoint', async () => {
+  const f = await floorFixture(), { a } = f;
+  jump(f, a);
+  // Hold the actor in the air well past the sourced 70F boundary. Landing is
+  // the only event that could otherwise end the recovery clock.
+  for (let frame = 0; frame < 90; frame++) {
+    a.pos.y = 50; a.vel.y = 0;
+    f.tick(a);
+    assert.equal(a.grounded, false, `held airborne at frame ${frame + 1}`);
+  }
+  assert.equal(stateOf(a).active, false, 'an airborne clock past 70F is cleared');
+  close(a.weaponRunner.spread, a.weapon.spreadAir * bloomScale(a), 'airborne spread is the 7.5 endpoint');
+  a.aimYaw = 0; a.aimPitch = 0; a.aimDir.set(0, 0, 1); a.aimPoint.set(0, 1.05, 100);
+  // Inactive state draws no bias sample: the draws are radial, then azimuth.
+  const aim = fireDir(f, a, [0]);
+  const round = fireDir(f, a, [0.5, 0.25]);
+  close(angleDeg(aim, round), a.weapon.spreadAir * bloomScale(a) * Math.sqrt(0.5),
+    'the airborne projectile cone equals the 7.5 endpoint, not the 2 endpoint', 1e-6);
+});

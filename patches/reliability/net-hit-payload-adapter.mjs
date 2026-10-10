@@ -73,7 +73,9 @@ export function adaptNetHitPayload(rel, code) {
   }
   const block = GUARD + '\n' +
     '    ' + MARKER + ': reject malformed combat claims before they touch HP/state.\n' +
-    '    if (!Number.isFinite(d.d) || d.d <= 0 || d.d > IW_HIT_MAX_DAMAGE) return;\n' +
+    // #574: a zero-damage packet is admissible only when it carries the
+    // Blaster knockback geometry field; the network guard validates that field.
+    '    if (!Number.isFinite(d.d) || d.d < 0 || d.d > IW_HIT_MAX_DAMAGE || (d.d === 0 && d.kb === undefined)) return;\n' +
     '    if (typeof d.w !== \'string\' || !IW_HIT_CAUSES.has(d.w)) return;';
   return code.slice(0, at) + block + code.slice(at + GUARD.length);
 }

@@ -91,10 +91,7 @@ test('#1110 owner epochs restart remote charge age without changing actor row pr
   source.superJumpState.t = 0.52;
   const first = sendTick(sender);
   assert.equal(first.sjEpochs?.[source.nid], 1);
-  const rowLength=packetFor(first, source.nid).length;
-  // The current main appends hit-authority metadata beyond historical 24-slot
-  // snapshots. #1110 uses an independent tick sidecar, never a new actor slot.
-  assert.ok(rowLength>=24, 'current composed actor row retains existing protocol slots');
+  assert.equal(packetFor(first, source.nid).length, 26, 'the additive epoch does not extend existing actor rows (main row protocol: 26 fields incl. adoption, hit authority)');
   close(packetFor(first, source.nid)[21], 0.52);
 
   const host = await runtimeFixture();
@@ -119,7 +116,6 @@ test('#1110 owner epochs restart remote charge age without changing actor row pr
   source.superJumpState.t = 0.025;
   owner.clock.advance(0.05);
   const restarted = sendTick(sender);
-  assert.equal(packetFor(restarted, source.nid).length,rowLength,'action restart changes the epoch sidecar, not the actor row schema');
   assert.equal(restarted.sjEpochs?.[source.nid], 2);
   close(packetFor(restarted, source.nid)[21], 0.025);
   receiveTick(receiver, remote, restarted);

@@ -24,8 +24,14 @@ export function adaptIssue460Source(rel, code) {
 function adaptIssue460Actor(code) {
   code = replaceOnce(code,
     `import { WeaponRunner } from './weapons.js';`,
-    `import { WeaponRunner } from './weapons.js';\nimport { ownerJumpProgress, jumpMarkerSnapshot, liveJumpMarker } from '../../patches/splatoon3/issue-460-marker.mjs';\nimport { renderJumpGauge460, clearJumpGauge460 } from '../../patches/splatoon3/issue-460-gauge.mjs';`,
+    `import { WeaponRunner } from './weapons.js';\nimport { ownerJumpProgress, jumpMarkerSnapshot, liveJumpMarker, superJumpSignHiddenFrom } from '../../patches/splatoon3/issue-460-marker.mjs';\nimport { renderJumpGauge460, clearJumpGauge460 } from '../../patches/splatoon3/issue-460-gauge.mjs';`,
     'issue-460 marker + gauge helpers');
+  // #272: the owner's native landing ring is the same destination cue as the
+  // gauge, so it is suppressed for opposing viewers when the jumper has Stealth Jump.
+  code = replaceOnce(code,
+    `      if (s.marker > 0.12) { s.marker = 0; G.fx?.ring(`,
+    `      if (s.marker > 0.12) { s.marker = 0; if (!superJumpSignHiddenFrom(this, G.local)) G.fx?.ring(`,
+    'issue-272 owner landing ring concealment');
   code = replaceOnce(code,
     `emit('superjump', { actor: this, phase: 'flight', to: s.to.clone() });`,
     `emit('superjump', { actor: this, phase: 'flight', to: s.to.clone(), dur: s.dur });`,
@@ -33,7 +39,7 @@ function adaptIssue460Actor(code) {
   // every flight frame: snapshot + actual gauge geometry/label at s.to
   code = replaceOnce(code,
     `    if (s.phase === 'flight') {`,
-    `    if (s.phase === 'flight') {\n      { const m460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: ownerJumpProgress(s), dur: s.dur, jumper: this.name })); this.s3 ||= {}; this.s3.jumpMarker460 = m460; renderJumpGauge460(G, this, m460, s.to, this.color, THREE); }`,
+    `    if (s.phase === 'flight') {\n      { const m460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: ownerJumpProgress(s), dur: s.dur, jumper: this.name, concealed: superJumpSignHiddenFrom(this, G.local) })); this.s3 ||= {}; this.s3.jumpMarker460 = m460; renderJumpGauge460(G, this, m460, s.to, this.color, THREE); }`,
     'issue-460 owner gauge render');
   code = replaceOnce(code,
     `      if (k >= 1) {`,

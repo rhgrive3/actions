@@ -133,7 +133,7 @@ async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster
         broadcast: data => wire.push({ data: JSON.parse(JSON.stringify(data)) })
       }
     };
-    net = new api.NetMatch(session, { id: 'test-round-427', map: 'reef' });
+    net = new api.NetMatch(session, { map: 'reef' });
     const match = { actors: G.actors, state: 'playing', time: 180, playing: () => true, canRespawn: () => true };
     G.match = match; net.bind(match);
   }
@@ -310,7 +310,7 @@ test('adversarial: false sender cannot consume real ack, which subsequently gran
     assert.equal(shooter.net._pendingHits.has(h), true, 'pending hit registered');
 
     // Attacker sends forged ACK from forged sender 'C'
-    const forgedAck = { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: 30, kld: 0, vl: defender.victim.netLife ?? 0 };
+    const forgedAck = { k: 'hit_ack', h, v: 2, a: 1, d: 30, kld: 0, vl: defender.victim.netLife ?? 0 };
     shooter.net.onMessage('C', forgedAck);
 
     // Verify progression was NOT awarded, and crucially, pending hit was NOT consumed!
@@ -338,42 +338,42 @@ test('adversarial: wrong a/v/life and malformed payloads are rejected without co
     const correctVl = defender.victim.netLife ?? 0;
 
     // 1. Wrong attacker ID
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 999, d: 40, kld: 0, vl: correctVl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 999, d: 40, kld: 0, vl: correctVl });
     assert.equal(shooter.attacker.s3.flow.score, 0);
     assert.equal(shooter.net._pendingHits.has(h), true);
 
     // 2. Wrong victim ID
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 999, a: 1, d: 40, kld: 0, vl: correctVl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 999, a: 1, d: 40, kld: 0, vl: correctVl });
     assert.equal(shooter.attacker.s3.flow.score, 0);
     assert.equal(shooter.net._pendingHits.has(h), true);
 
     // 3. Wrong victim life
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: 40, kld: 0, vl: 999 });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: 40, kld: 0, vl: 999 });
     assert.equal(shooter.attacker.s3.flow.score, 0);
     assert.equal(shooter.net._pendingHits.has(h), true);
 
     // 4. Negative damage
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: -10, kld: 0, vl: correctVl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: -10, kld: 0, vl: correctVl });
     assert.equal(shooter.attacker.s3.flow.score, 0);
     assert.equal(shooter.net._pendingHits.has(h), true);
 
     // 5. Non-finite damage (NaN / string / Infinity)
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: NaN, kld: 0, vl: correctVl });
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: '40', kld: 0, vl: correctVl });
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: Infinity, kld: 0, vl: correctVl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: NaN, kld: 0, vl: correctVl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: '40', kld: 0, vl: correctVl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: Infinity, kld: 0, vl: correctVl });
     assert.equal(shooter.attacker.s3.flow.score, 0);
     assert.equal(shooter.net._pendingHits.has(h), true);
 
     // 6. Non-strict killed (truthiness / invalid numbers)
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: 40, kld: 2, vl: correctVl });
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: 40, kld: true, vl: correctVl });
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: 40, kld: '1', vl: correctVl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: 40, kld: 2, vl: correctVl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: 40, kld: true, vl: correctVl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: 40, kld: '1', vl: correctVl });
     assert.equal(shooter.attacker.s3.flow.score, 0);
     assert.equal(shooter.attacker.s3.splatsThisLife ?? 0, 0);
     assert.equal(shooter.net._pendingHits.has(h), true);
 
     // 7. Finally valid genuine ACK is accepted and consumes pending
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: 40, kld: 0, vl: correctVl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: 40, kld: 0, vl: correctVl });
     assert.ok(Math.abs(shooter.attacker.s3.flow.score - damageScore(40)) < 1e-6);
     assert.equal(shooter.net._pendingHits.has(h), false);
   } finally {
@@ -432,8 +432,8 @@ test('adversarial: out-of-order distinct legitimate ACKs each credit without dro
     assert.equal(shooter.net._pendingHits.size, 2);
 
     const vl = defender.victim.netLife ?? 0;
-    const ack1 = { k: 'hit_ack', m: 'test-round-427', h: h1, v: 2, a: 1, d: 20, kld: 0, vl };
-    const ack2 = { k: 'hit_ack', m: 'test-round-427', h: h2, v: 2, a: 1, d: 30, kld: 0, vl };
+    const ack1 = { k: 'hit_ack', h: h1, v: 2, a: 1, d: 20, kld: 0, vl };
+    const ack2 = { k: 'hit_ack', h: h2, v: 2, a: 1, d: 30, kld: 0, vl };
 
     // Network reordering: ACK 2 arrives BEFORE ACK 1!
     shooter.net.onMessage('B', ack2);
@@ -466,7 +466,7 @@ test('adversarial: dead or stale owner cannot progress combat state and cleans u
 
     // Attacker dies before ACK arrives
     shooter.attacker.alive = false;
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h: h1, v: 2, a: 1, d: 50, kld: 0, vl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h: h1, v: 2, a: 1, d: 50, kld: 0, vl });
     assert.equal(shooter.attacker.s3.flow.score, 0, 'dead attacker cannot progress Flow');
 
     // Attacker respawns (new combat life)
@@ -475,7 +475,7 @@ test('adversarial: dead or stale owner cannot progress combat state and cleans u
     assert.ok((shooter.attacker.netLife ?? 0) > 1);
 
     // Old-life ACK arriving for new life is strictly rejected
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h: h1, v: 2, a: 1, d: 50, kld: 0, vl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h: h1, v: 2, a: 1, d: 50, kld: 0, vl });
     assert.equal(shooter.attacker.s3.flow.score, 0, 'old life ACK rejected for respawned life');
 
     // New hit in new life records pending hit, but local splat cleans it up immediately
@@ -534,7 +534,7 @@ test('adversarial: assistant receives Flow assist progression on authenticated t
     assert.ok(Math.abs(helperActorH.s3.flow.score - damageScore(30)) < 1e-6, 'helper awarded damage Flow progress');
 
     // 2. Killer A shoots victim V for 70 damage -> lethal blow!
-    const hitPktFromA = { k: 'hit', m: 'test-round-427', v: 3, a: 2, l: victimActorV.netLife, h: 1, d: 70, w: 'shooter' };
+    const hitPktFromA = { k: 'hit', v: 3, a: 2, l: victimActorV.netLife, h: 1, d: 70, w: 'shooter' };
     victimWorld.receiveHit('A', hitPktFromA);
     assert.equal(victimActorV.alive, false, 'victim is splatted');
 
@@ -679,7 +679,7 @@ test('negative counterexample: terminal-before-ACK ordering awards assist exactl
       assert.ok(Math.abs(h2.s3.flow.score - damageScore(30)) < 1e-6, 'ACK-first damage awarded');
 
       // V2 killed by C
-      victimWorld2.receiveHit('C', { k: 'hit', m: 'test-round-427', v: 3, a: 2, l: v2.netLife, h: 1, d: 70, w: 'shooter' });
+      victimWorld2.receiveHit('C', { k: 'hit', v: 3, a: 2, l: v2.netLife, h: 1, d: 70, w: 'shooter' });
       victimWorld2.net._sendTick();
       const terminalTick2 = victimWorld2.wire.filter(x => x.data?.k === 't').at(-1)?.data;
 
@@ -731,7 +731,7 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
     assert.equal(helperH.s3.flow.score, 0, 'helper flow reset on new life');
 
     // Victim V dies to Killer C; victim owner broadcasts terminal tick
-    victimWorld.receiveHit('C', { k: 'hit', m: 'test-round-427', v: 3, a: 2, l: victimV.netLife, h: 10, d: 70, w: 'shooter' });
+    victimWorld.receiveHit('C', { k: 'hit', v: 3, a: 2, l: victimV.netLife, h: 10, d: 70, w: 'shooter' });
     victimWorld.net._sendTick();
     const terminalTick1 = victimWorld.wire.filter(x => x.data?.k === 't').at(-1)?.data;
 
@@ -758,7 +758,7 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
       const ackPkt2 = victimWorld2.wire.find(x => x.to === 'H' && x.data?.k === 'hit_ack')?.data;
 
       // V2 dies to C; terminal tick arrives at H2 before delayed ACK
-      victimWorld2.receiveHit('C', { k: 'hit', m: 'test-round-427', v: 3, a: 2, l: v2.netLife, h: 11, d: 70, w: 'shooter' });
+      victimWorld2.receiveHit('C', { k: 'hit', v: 3, a: 2, l: v2.netLife, h: 11, d: 70, w: 'shooter' });
       victimWorld2.net._sendTick();
       const terminalTick2 = victimWorld2.wire.filter(x => x.data?.k === 't').at(-1)?.data;
       helperWorld2.deliver('V', terminalTick2);
@@ -793,7 +793,7 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
       victimWorld3.receiveHit('H', hitPkt3);
       const ackPkt3 = victimWorld3.wire.find(x => x.to === 'H' && x.data?.k === 'hit_ack')?.data;
 
-      victimWorld3.receiveHit('C', { k: 'hit', m: 'test-round-427', v: 3, a: 2, l: v3.netLife, h: 12, d: 70, w: 'shooter' });
+      victimWorld3.receiveHit('C', { k: 'hit', v: 3, a: 2, l: v3.netLife, h: 12, d: 70, w: 'shooter' });
       victimWorld3.net._sendTick();
       const terminalTick3 = victimWorld3.wire.filter(x => x.data?.k === 't').at(-1)?.data;
       for (const row of terminalTick3.e || []) if (row[1] === 'ev' && row[2] === 'splatted') delete row[3].assistLives; // legacy metadata-free expiry path
@@ -870,12 +870,12 @@ test('adversarial: spoof ownership cannot consume pending, changed victim owner 
     const vl = shooter.victim.netLife ?? 0;
 
     // ACK from old owner B is rejected because victim.owner ('C') !== from ('B')
-    shooter.net.onMessage('B', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: 50, kld: 0, vl });
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: 50, kld: 0, vl });
     assert.equal(shooter.attacker.s3.flow.score, 0, 'ACK from old owner rejected when victim owner changed');
     assert.equal(shooter.net._pendingHits.has(h), true, 'pending hit not consumed by rejected ACK');
 
     // ACK from new owner C is rejected because from ('C') !== pending.vo ('B')
-    shooter.net.onMessage('C', { k: 'hit_ack', m: 'test-round-427', h, v: 2, a: 1, d: 50, kld: 0, vl });
+    shooter.net.onMessage('C', { k: 'hit_ack', h, v: 2, a: 1, d: 50, kld: 0, vl });
     assert.equal(shooter.attacker.s3.flow.score, 0, 'ACK from new owner rejected because pending was bound to old owner');
     assert.equal(shooter.net._pendingHits.has(h), true, 'pending hit not consumed by mismatched owner ACK');
 
@@ -913,7 +913,7 @@ async function assistPacketRig({ oldAssistLife = false, newOwner = false } = {})
   h.G.projectiles.applyHit(helper,target,30,'shooter');
   v.receiveHit('H',h.wire.find(x=>x.data.k==='hit').data);
   const ack = v.wire.find(x=>x.data.k==='hit_ack').data;
-  v.receiveHit('C',{k:'hit',m:'test-round-427',v:3,a:2,l:victim.netLife,h:1,d:70,w:'shooter'});
+  v.receiveHit('C',{k:'hit',v:3,a:2,l:victim.netLife,h:1,d:70,w:'shooter'});
   v.net._sendTick();
   const packet=v.wire.findLast(x=>x.data.k==='t').data;
   const payload=packet.e.find(row=>row[1]==='ev'&&row[2]==='splatted')[3];

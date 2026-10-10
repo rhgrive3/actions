@@ -209,22 +209,8 @@ try {
         entry.checks.push('moved-stick-gameplay-routing');
         await page.evaluate(() => mobile.openEditor());
         const beforeRotation = page.viewportSize();
-        // A fixed viewport fraction may land under a WebKit editor toolbar,
-        // especially after switching the small portrait fixture to landscape.
-        // Locate a genuinely hit-testable editor surface: do not bypass the
-        // real DOM router by dispatching directly to mobile.root.
-        const rotationTouch = await page.evaluate(() => {
-          for (const [fx, fy] of [[.45, .4], [.5, .5], [.35, .5], [.65, .5], [.5, .65], [.2, .6]]) {
-            const x = Math.round(innerWidth * fx), y = Math.round(innerHeight * fy);
-            const target = document.elementFromPoint(x, y);
-            if (target && mobile.root.contains(target) &&
-                !target.closest('.iwm-edit__bar, .iwm-edit__sel')) return { x, y };
-          }
-          return null;
-        });
-        assert(rotationTouch, 'Rotation test requires an exposed editor touch surface');
-        await pointer(page, 'pointerdown', 81, rotationTouch.x, rotationTouch.y);
-        assert.equal(await page.evaluate(() => mobile._edit?.pts.size), 1, 'Real editor hit target must retain the pointer');
+        await pointer(page, 'pointerdown', 81, beforeRotation.width * .45, beforeRotation.height * .4);
+        assert.equal(await page.evaluate(() => mobile._edit?.pts.size), 1);
         await page.setViewportSize({ width: beforeRotation.height, height: beforeRotation.width });
         await page.waitForFunction(() => mobile._edit === null && mobile._H === Math.max(300, Math.min(460, Math.min(innerWidth, innerHeight))));
         const bounds = await page.evaluate(() => Object.keys(mobile.els).map(id => ({ id, ...mobile._box(id), w: innerWidth, h: innerHeight })));

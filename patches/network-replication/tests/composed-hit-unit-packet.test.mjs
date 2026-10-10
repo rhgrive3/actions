@@ -2,6 +2,7 @@ import {validDamageGroup} from '../../splatoon3/runtime/final-damage.mjs';
 import {respawnPunisherEquipped,withHitPunisher} from '../../splatoon3/runtime/clothing-gear.mjs';
 import { C1088_SURGE_TAG, clearRemoteC1088Surge } from '../issue-1088-surge-presentation.mjs';
 import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
+import { endRemoteSuperJumpEpoch } from '../superjump-epoch.mjs';
 import { clearRemoteDodgeClock } from '../../splatoon3/runtime/remote-dodge-clock.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -44,11 +45,11 @@ function hitWorld() {
     calls.push({ a, v, damage, weapon, group, punisher:respawnPunisherEquipped(a) }); emit('damage', { victim: v, attacker: a, amount: damage });
   } } };
   const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'now', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
-    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock',
+    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock', 'endRemoteSuperJumpEpoch',
     source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + dropCleanup + hitLimits + hitAuthoritySource + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hitHandoffPacket', '_hit', '_validHitAuthorityMetadata', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
-    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, () => 1, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock);
+    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, () => 1, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock, endRemoteSuperJumpEpoch);
   const n = new C();
-  Object.assign(n, { myId: 'A', cfg: { id: 'hit-unit-round' }, byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } },
+  Object.assign(n, { myId: 'A', cfg: { id: 'match-A' }, byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } },
     peers: new Map(), _peer(id) { if (!this.peers.has(id)) this.peers.set(id, {}); return this.peers.get(id); } });
   return { n, sent, events, calls, G, listeners };
 }
@@ -63,7 +64,7 @@ test('composed #427 keeps unrounded damage/group sidecar and binds one ACK to th
   assert.equal(message.rp,true,'actual equipment helper supplies wire metadata');
   assert.equal(message.d, 12.34567); assert.equal(message.g, 'volley:7');
   assert.equal(f.n._pendingHits.get(message.h).d, 12.34567);
-  const ack = { h: message.h, a: 1, v: 2, vl: 2, d: 12.35, kld: 0 };
+  const ack = { m: 'match-A', h: message.h, a: 1, v: 2, vl: 2, d: 12.35, kld: 0 };
   f.n._hitAck(ack, 'intruder'); f.n._hitAck({ ...ack, vl: 3 }, 'B');
   assert.equal(f.n._pendingHits.size, 1); assert.equal(f.events.length, 0);
   f.n._hitAck(ack, 'B'); f.n._hitAck(ack, 'B');
@@ -74,7 +75,7 @@ test('composed #427 keeps unrounded damage/group sidecar and binds one ACK to th
 test('composed #427 forwards the existing damage group and restores nested apply ownership on throw', () => {
   const f = hitWorld(), a = { nid: 1, owner: 'A', team: 0, remote: true }, v = { nid: 2, owner: 'B', team: 1, remote: false, alive: true, netLife: 2 };
   f.n.byNid.set(1, a); f.n.byNid.set(2, v); f.n.myId = 'B'; f.n._applyingHit = 'outer';
-  const msg = { h: 1, a: 1, v: 2, l: 2, d: 12.34567, w: 'shooter', g: 'volley:7', rp:true };
+  const msg = { m: 'match-A', h: 1, a: 1, v: 2, l: 2, d: 12.34567, w: 'shooter', g: 'volley:7', rp:true };
   f.n._hit(msg, 'A');
   assert.equal(f.calls[0].punisher,true);assert.equal(a.s3.clothingHitPunisher,undefined,'scoped hit equipment is restored');
   assert.equal(f.calls[0].group, 'volley:7'); assert.equal(f.calls[0].damage, 12.34567);

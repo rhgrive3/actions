@@ -6,6 +6,11 @@ import { GyroPermission, gyroStatusMessage } from './gyro-permission.mjs';
 // are integrated here, rather than stacking another sensor wrapper.
 const INSTALL = Symbol.for('inkwave.local-quality.gyro.v1');
 const RAD = Math.PI / 180;
+// #187: rotationRate is in deg/s (W3C Device Orientation and Motion). A rate whose
+// magnitude is at or below this value counts as "effectively zero" on Android.
+// Engineering threshold shared with the #615 still definition below; it is not a
+// published Nintendo or W3C constant, and real-device noise/bias is unverified.
+const STILL_DEG = 0.35;
 const zeros = () => ({ n: 0, a: 0, b: 0, ra: 0, rb: 0 });
 const state = g => g._qualityGyro || (g._qualityGyro = {
   orientationTime: -Infinity, rate: [0, 0, 0], screen: null,
@@ -216,8 +221,9 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
         else if(t>s.boundary.time)(s.attitudes||(s.attitudes=[])).push({time:t,q:this._q.slice()});
       }
       if (stationary) {
-        // Zero is invariant under axis/sign/unit calibration. Keep the updated
-        // attitude reference, but do not turn its correction into camera motion.
+        // #187: the rate magnitude (spec deg/s, axis-order independent) is at or
+        // below STILL_DEG. Keep the updated attitude reference, but do not turn
+        // its correction into camera motion.
         this.dYaw = yaw; this.dPitch = pitch; this._sm.y = this._sm.p = 0;
       }
       return result;
@@ -232,13 +238,9 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (t < this._platformSensorStart && this._platformSensorStart - t < 3600000) return;
     if (this._tRR && (t < this._tRR || t - this._tRR > 500)) this.resync();
     const s=state(this); s.motionTime = t;
-    // #187: small nonzero Android gyro residuals can accompany a drifting
-    // fused attitude while the handset is effectively still. Apply the same
-    // attitude-reference-only rebase as exact zero, but only to fresh motion
-    // evidence within this narrow 0.025-degree/s engineering noise band.
-    // Above that band retain the ordinary controller motion path unchanged.
-    const nearZeroRate = Math.hypot(e.rotationRate.alpha,e.rotationRate.beta,e.rotationRate.gamma) <= .025;
-    s.stationaryMotion = nearZeroRate;
+    // #187: reference rebasing uses a narrow sensor-noise band (0.025°/s).
+    // Bias calibration retains STILL_DEG; it must not silence deliberate slow turns.
+    s.stationaryMotion = Math.hypot(e.rotationRate.alpha, e.rotationRate.beta, e.rotationRate.gamma) <= .025;
     if (this._src !== 'ori' && (isAndroid() || !gyroRateTrusted(this, e.rotationRate, t))) fallback(this, 'untrusted-motion');
     s.event={kind:'motion',time:t};
     try {
@@ -256,7 +258,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
   // result. Thresholds are engineering values for this overlay — not
   // Nintendo's unpublished calibration constants. Raw-minus-attitude residual
   // learning preserves deliberate motion even below the stillness threshold.
-  const STILL_DEG = 0.35, HOLD_S = 1.2, TAU_S = 2;
+  const HOLD_S = 1.2, TAU_S = 2;
   const calibratedSample = P._sample;
   P._sample = function (wx, wy, wz, dt) {
     const s = state(this);

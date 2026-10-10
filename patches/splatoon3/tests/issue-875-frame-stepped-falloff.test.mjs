@@ -26,19 +26,21 @@ test('#875 projectile damage falloff uses integer frame steps instead of continu
   close(getDamageAtAge(0 / 60), 35, '0F');
   close(getDamageAtAge(7 / 60), 35, '7F');
 
-  // Subframe age near 7F rounds to 7F (no continuous intermediate reduction)
-  close(getDamageAtAge(7.2 / 60), 35, '7.2F rounds to 7F');
-  close(getDamageAtAge(7.49 / 60), 35, '7.49F rounds to 7F');
+  // Subframe ages count completed frames: no continuous intermediate reduction
+  // and no half-frame step (Math.round would have moved the state at 7.5F).
+  close(getDamageAtAge(7.2 / 60), 35, '7.2F is 7 completed frames');
+  close(getDamageAtAge(7.49 / 60), 35, '7.49F is 7 completed frames');
+  close(getDamageAtAge(7.51 / 60), 35, '7.51F is still 7 completed frames');
+  close(getDamageAtAge(7.99 / 60), 35, '7.99F is still 7 completed frames');
 
-  // Subframe age 7.51F rounds to 8F
+  // The first 8F state starts exactly at the 8.0F boundary
   const expected8F = 35 + (17.5 - 35) * (1 / 8); // 32.8125
-  close(getDamageAtAge(7.51 / 60), expected8F, '7.51F rounds to 8F');
   close(getDamageAtAge(8.0 / 60), expected8F, '8.0F');
 
   // Frame 11 (midpoint of 7..15, step 4/8 = 0.5)
   const expected11F = 35 + (17.5 - 35) * 0.5; // 26.25
   close(getDamageAtAge(11.0 / 60), expected11F, '11F');
-  close(getDamageAtAge(11.3 / 60), expected11F, '11.3F rounds to 11F');
+  close(getDamageAtAge(11.3 / 60), expected11F, '11.3F is 11 completed frames');
 
   // Frame 15 and beyond: minimum damage (17.5)
   close(getDamageAtAge(15.0 / 60), 17.5, '15F');
@@ -87,6 +89,10 @@ async function heavyShot() {
   return { f, round };
 }
 
+// 未確認: which completed tick S3 uses at a swept contact (before or after the
+// frame's advance) is not established by the pinned data. INKWAVE models it as
+// the completed tick, so the 11->12F contact is 28.125 HP here. The boundary
+// positions below are INKWAVE's model choice, not a Nintendo-measured parity.
 test('#875 real emitted Heavy Splatling shot loses exactly 1.875 HP only at 11..19F boundaries', async () => {
   const { f, round } = await heavyShot();
   const point = round.start.clone();

@@ -111,8 +111,8 @@ const tap = async (id) => {
   // at 29.8 s and then timed out at 30 s even though the button was present.
   // Dispatch a real mobile touch at the verified hit-tested button location.
   // Never invoke the DOM click handler or skip the resulting battle/menu checks.
-  {
-    await operationTrace.run('touch: ' + id, async () => {
+  if (id === 'start') {
+    await operationTrace.run('touch: start', async () => {
       // START can be below the first iPad viewport. Scroll natively, wait until
       // its real hit target is in view, then send the actual user touch.
       await page.evaluate((selector) => {
@@ -145,7 +145,7 @@ const tap = async (id) => {
       }, sel);
       await page.touchscreen.tap(point.x, point.y);
     });
-  }
+  } else await operationTrace.run('tap: ' + id, () => page.tap(sel, { timeout: 30000 }));
 };
 const menuIs = (name) => until((n) => window.__inkwave?.menus?.current === n, name, 300000, 'menu ' + name);
 // Native touch rows/tabs own their highlight; ordinary main-menu buttons use

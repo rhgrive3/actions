@@ -533,7 +533,7 @@ function playEvents(api, nm, events, actor) {
   const peer = nm._peer('peer');
   peer.init = true;
   peer.tr = Infinity;
-  for (const e of events) {if(e.length===15){e._netTick=e.at(-2);e._netSeq=e.at(-1);}peer.events.push(e);}peer.sim=events[0]?._netTick??0;peer.lastTs=events[0]?.[0]??0;
+  for (const e of events) {if((e.length===15||e.length===16)&&Number.isSafeInteger(e.at(-2))&&Number.isSafeInteger(e.at(-1))){e._netTick=e.at(-2);e._netSeq=e.at(-1);}peer.events.push(e);}peer.sim=events[0]?._netTick??0;peer.lastTs=events[0]?.[0]??0;
   nm._playEvents();
 }
 
@@ -549,9 +549,36 @@ test('the native recBomb packet carries the sub id and the held charge', async (
   near(curling[0][12], 1, 'a full hold crosses the wire');
   const tap = recordBomb(api, nm, 'curling', 0.2);
   assert.ok(tap[0][12] > 0 && tap[0][12] < 1, 'a partial hold crosses the wire as a fraction');
-  // The native indices are untouched, so an older peer reads the same event.
-  assert.equal(curling[0].length, 15);
-  assert.equal(curling[0][2], 3, 'nid is still index 2');
+  // Typed kit birth metadata follows the unchanged native/kit fields; the
+  // simulation tick and sequence remain the final two fields after JSON.
+  for (const [event] of [suction, curling, tap]) {
+    assert.equal(event.length, 16);
+    assert.equal(event[2], 3, 'nid is still index 2');
+    assert.deepEqual(event[13], ['inkwave-kit-birth-v1', '', 0]);
+    assert.equal(event.at(-2), Math.round((api.G.time || 0) * 60));
+    assert.ok(Number.isSafeInteger(event.at(-1)) && event.at(-1) > 0);
+  }
+  assert.ok(suction[0].at(-1) < curling[0].at(-1));
+  assert.ok(curling[0].at(-1) < tap[0].at(-1), 'metadata does not reset sender sequence');
+  const generic = recordBomb(api, nm, 'bomb', 0)[0];
+  assert.equal(generic.length, 15, 'untagged generic birth keeps its exact prior wire length');
+  assert.equal(generic[11], ''); assert.equal(generic[12], 0);
+  assert.equal(generic[13], Math.round((api.G.time || 0) * 60));
+  assert.ok(generic[14] > tap[0].at(-1), 'legacy-shaped events share the same sender sequence');
+});
+
+test('untagged 15-field kit birth retains charge, footer and ghost playback', async () => {
+  const api = await production(); ground(api, 'record'); const nm = makeNet(api);
+  const [event] = recordBomb(api, nm, 'curling', 0.2);
+  const legacy = [...event.slice(0, 13), ...event.slice(-2)];
+  assert.equal(legacy.length, 15);
+  assert.deepEqual(legacy.slice(0, 13), event.slice(0, 13));
+  assert.deepEqual(legacy.slice(-2), event.slice(-2));
+  playEvents(api, nm, [legacy], remoteActor(api));
+  const ghost = api.G.projectiles.bombs.at(-1);
+  assert.ok(ghost?.ghost); assert.equal(ghost.s3GhostResolved.spec.id, 'curling');
+  near(ghost.s3Charge, legacy[12], 'legacy kit charge is preserved');
+  assert.equal(ghost.s3PaintBirth, undefined, 'legacy birth gains no typed core-paint authority');
 });
 
 test('a native old-format packet with no appended fields replays as a generic ghost', async () => {

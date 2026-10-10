@@ -1,5 +1,26 @@
 // S3 Roller projectile landing paint width (#411) and depth (#611/#674/#713).
 //
+// Height/depth source law (#713): pinned 11.3.0 Splat Roller
+// `WeaponRollerNormal` records carry
+// `HeightUseDepthScaleMaxBreakFree=1.5` / `HeightUseDepthScaleMinBreakFree=10`
+// next to `DepthScaleMaxBreakFree` / `DepthScaleMinBreakFree` (wide 2.4/1.2,
+// vertical 1.76/1.32). Units/apex mapping is resolved below per source:
+// `worldUnitsPerSourceUnit=1` is the pinned project scale (profile.json
+// `calibration.distanceScale`, status `inferred`), so raw height anchors
+// compare 1:1 with world Y; apex height is the retained flight peak above the
+// contacted point (`fidelityMaxY - hit.point.y`), matching the frozen public
+// projectile source's `max(0, inkPeak - hit.point.y)` input
+// (`inkwave-public/src/game/inkFlightRuntime.js::impact()`), which likewise
+// carries no height law on wall-like faces (`|normal.y| < 0.5`).
+// UNSOURCED (explicit provisional): the public source's law is shooter-family
+// and NESTED (`inkFlight.js::paintShape` mixes the height unit into the fall
+// low end, then mixes by angle — at shallow incidence that nesting gives NO
+// height effect). The Roller break/free law below instead linearly
+// interpolates the raw anchors and combines height/angle with `max(...)`;
+// neither the interpolation curve nor the max combination is in any pinned
+// source or measurement. Switch capture is still required to claim hardware
+// fidelity.
+//
 // Some Splat Roller records omit schema-default fields.  Keep the documented
 // PaintParam DistanceNear default explicit instead of treating omission as 0.
 const DEFAULT_DISTANCE_NEAR = 1.1;
@@ -60,15 +81,16 @@ export function rollerImpactAngleDegrees(velocity, normal) {
 }
 
 /**
- * #713 candidate height blend for break/free impacts.
+ * #713 height unit for break/free impacts (raw source anchors).
  *
- * The pinned 11.3.0 Splat Roller records provide height anchors 1.5 and 10,
- * alongside the break/free depth scales. Public data does not define the exact
- * height reference, units, interpolation curve, or interaction with incidence
- * angle. This model uses the flight apex above the contacted plane, maps the
- * two raw anchors linearly, and composes the normalized height/angle reductions
- * by taking the stronger one. These choices are deterministic but provisional;
- * Switch capture is still required to claim hardware fidelity.
+ * Pinned 11.3.0 Splat Roller `PaintParam` carries
+ * `HeightUseDepthScaleMaxBreakFree=1.5` /
+ * `HeightUseDepthScaleMinBreakFree=10` (evidence:
+ * `WeaponRollerNormal.1130.json`, SHA-256
+ * `5b423eb35d4cac268a1e4085ec8321d27639ddbfc8f3775bb65696af5c2449c7`).
+ * UNSOURCED LAW (explicit): linear interpolation between the two anchors is
+ * not in any pinned source or measurement. It is a deterministic placeholder;
+ * Switch capture is required to claim the retail curve.
  */
 export function rollerBreakFreeHeightUnit(projectile, height) {
   const paint=rollerImpactPaintParam(projectile);
@@ -92,16 +114,31 @@ export function rollerImpactHeightDepthScale(projectile, height) {
 }
 
 /**
- * Estimate the projectile's flight height for the landing paint selector.
- * `fidelityImpactHeight` is an explicit fixture/replay input; production keeps
- * the shot's highest Y and measures it above the contacted plane. This
- * interpretation and its source-to-world conversion remain uncalibrated.
+ * Flight height above the contacted point for the break/free height selector.
+ * Mirrors the frozen public projectile source's height input
+ * (`inkwave-public/src/game/inkFlightRuntime.js::impact()`:
+ * `max(0, inkPeak - hit.point.y)`): the retained flight peak (`fidelityMaxY`,
+ * kept by `advanceFidelityProjectile()` and the installed live `_step()`
+ * wrapper, widened with pos/prev/start for fixtures) minus `hit.point.y`,
+ * clamped at 0. `fidelityImpactHeight` is an explicit fixture/replay input in
+ * world units and is gated the same way. Wall-like faces
+ * (`|normal.y| < 0.5`) carry no height law in that source — it paints walls
+ * with a fixed radius — so they return null here too and break/free depth
+ * falls back to the angle-only selector instead of inventing a wall height.
+ * The result is divided by the pinned project scale (`worldUnitsPerSourceUnit`,
+ * currently 1: raw source units compare 1:1 with world Y; profile.json
+ * `calibration.distanceScale`, status `inferred` — not an SI-metre claim).
  */
 export function rollerImpactHeight(projectile, hit, scale=1) {
   if(!projectile||!hit?.point||!hit?.normal)return null;
   const n=hit.normal,nl=Math.hypot(n.x,n.y,n.z);
   if(!(nl>0))return null;
   const unitScale=Number.isFinite(scale)&&scale>0?scale:1;
+  // Wall-like faces carry no height law in the frozen public projectile
+  // source (`inkFlightRuntime.js::impact()` uses a fixed wall radius with
+  // stretch 0 when |normal.y| < 0.5). Gate first so even explicit
+  // fixture/replay heights cannot invent a wall height law.
+  if(Math.abs(n.y/nl)<0.5)return null;
   if(Number.isFinite(projectile.fidelityImpactHeight))
     return Math.max(0,projectile.fidelityImpactHeight)/unitScale;
   let highest=-Infinity;
@@ -109,10 +146,8 @@ export function rollerImpactHeight(projectile, hit, scale=1) {
     if(Number.isFinite(point?.y))highest=Math.max(highest,point.y);
   if(Number.isFinite(projectile.fidelityMaxY))highest=Math.max(highest,projectile.fidelityMaxY);
   if(!Number.isFinite(highest))return null;
-  const p=projectile.pos||projectile.start;
-  const clearance=p?Math.max(0,((p.x-hit.point.x)*n.x+(p.y-hit.point.y)*n.y+(p.z-hit.point.z)*n.z)/nl):0;
-  const arc=(n.y/nl)>0.5?Math.max(0,highest-hit.point.y):0;
-  return Math.max(clearance,arc)/unitScale;
+  if(!Number.isFinite(hit.point?.y))return null;
+  return Math.max(0,highest-hit.point.y)/unitScale;
 }
 
 function rollerImpactDepthScaleForPhase(projectile, normal, straight, height) {
@@ -126,12 +161,19 @@ function rollerImpactDepthScaleForPhase(projectile, normal, straight, height) {
   const maxDegree=finite(paint.DegreeUseDepthScaleMax,DEFAULT_DEGREE_MAX);
   const minDegree=finite(paint.DegreeUseDepthScaleMin,DEFAULT_DEGREE_MIN);
   if(!(minDegree>maxDegree))return null;
-  let t=clamp01((angle-maxDegree)/(minDegree-maxDegree));
-  if(!straight){
-    const tHeight=rollerBreakFreeHeightUnit(projectile,height);
-    if(tHeight!==null)t=Math.max(t,tHeight);
-  }
-  return lerp(max,min,t);
+  const tAngle=clamp01((angle-maxDegree)/(minDegree-maxDegree));
+  if(straight)return lerp(max,min,tAngle);
+  const tHeight=rollerBreakFreeHeightUnit(projectile,height);
+  if(tHeight===null)return lerp(max,min,tAngle);
+  // UNSOURCED LAW (explicit): the break/free height-angle composition is not
+  // in any pinned source or measurement. The frozen public shooter-family
+  // source nests instead (`inkFlight.js::paintShape`: low=mix(depthMin,
+  // depthMinFall,tH); depth=mix(high,low,tA)), which would give NO height
+  // effect at shallow incidence. This Roller fix keeps max(tAngle,tHeight) so
+  // the #713 acceptance holds (same shallow angle, low vs high height differ)
+  // while preserving the #674 angle selector. Retail Roller composition is
+  // unmeasured; Switch capture is required.
+  return lerp(max,min,Math.max(tAngle,tHeight));
 }
 
 /** #674: impact incidence selects/interpolates the straight-flight depth envelope. */

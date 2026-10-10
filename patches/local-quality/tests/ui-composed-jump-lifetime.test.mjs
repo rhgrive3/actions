@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptRespawnNavigation } from '../../reliability/respawn-navigation-adapter.mjs';
+import { hasCommittedSuperJumpDestination } from '../../splatoon3/runtime/superjump-destination.mjs';
 
 const dioramaRel = 'src/ui/diorama.js';
 const playerRel = 'src/game/player.js';
@@ -23,8 +24,9 @@ function section(source, start, end) {
 
 const jumpMethod = section(diorama, '  _jump(i, me) {', '  _flash(i) {');
 const navigationMethods = section(player, '  canRequestMapJump() {', '  clearRespawnNavigation() {');
-const DioramaJump = G => new Function('G', `return class {${jumpMethod}}`)(G);
-const CurrentNavigation = G => new Function('G', `return class {${navigationMethods}}`)(G);
+// The composed module imports this #412 helper; the sliced class must bind it too.
+const DioramaJump = G => new Function('G', 'hasCommittedSuperJumpDestination', `return class {${jumpMethod}}`)(G, hasCommittedSuperJumpDestination);
+const CurrentNavigation = G => new Function('G', 'hasCommittedSuperJumpDestination', `return class {${navigationMethods}}`)(G, hasCommittedSuperJumpDestination);
 
 function vector(x, y, z) {
   return { isVector3: true, x, y, z, clone() { return vector(x, y, z); } };

@@ -3,6 +3,9 @@
 // LOW is also the native touch LobbySet profile (#472), so cap retained mobile
 // atlas sources at one quarter of the desktop pixel count.
 const LOBBY_LOW_ATLAS_SCALE = 0.5;
+// The neon halo canvases are retained for the whole set (this.halos) and default to 180 px/m.
+// Their blur and stroke widths are proportional to pxPerM, so the LOW density is an exact resolution scale.
+const LOBBY_LOW_HALO_PX_PER_M = 180 * LOBBY_LOW_ATLAS_SCALE;
 
 function replaceOnce(code, before, after, label) {
   const at = code.indexOf(before);
@@ -13,7 +16,7 @@ function replaceOnce(code, before, after, label) {
 }
 
 function adaptLobbySet(code) {
-  return replaceOnce(code,
+  code = replaceOnce(code,
     `    this.tex = {
       decal: createDecalAtlas(), lit: createLitAtlas(), sky: createSkyline(),
       mask: createGroundMask(PUDDLES, SPLATS),
@@ -25,6 +28,15 @@ function adaptLobbySet(code) {
       mask: createGroundMask(PUDDLES, SPLATS, atlasScale),
     };`,
     'LOW atlas budget');
+  code = replaceOnce(code,
+    '    const hA = neonHalo(txt.strokes, 0.45);',
+    `    const hA = neonHalo(txt.strokes, 0.45, this.quality === 'low' ? ${LOBBY_LOW_HALO_PX_PER_M} : undefined);`,
+    'LOW halo A');
+  code = replaceOnce(code,
+    '    const hB = neonHalo(sq.strokes, 0.5);',
+    `    const hB = neonHalo(sq.strokes, 0.5, this.quality === 'low' ? ${LOBBY_LOW_HALO_PX_PER_M} : undefined);`,
+    'LOW halo B');
+  return code;
 }
 
 function adaptLobbyAtlasBuilders(code) {

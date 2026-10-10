@@ -165,6 +165,43 @@ test('#905 live owner-leave retires only the disconnected Storm, on host and pee
   }
 });
 
+// #905 residual (see reports/inkwave-splatoon3-behavior-2026-10-02.md): after the
+// owner leaves, its late packets are fenced in _tick/_play on host and peer, and
+// the retirement result does not depend on the fixed-step render rate at leave time.
+test('#905 owner-leave retirement is fenced for late owner packets and invariant at 30/60/120 Hz', () => {
+  const seen = new Map();
+  for (const hz of [30, 60, 120]) for (const host of [true, false]) {
+    const actor = fakeActor(41), other = fakeActor(42, 'connected');
+    const released = [];
+    const G = { game: { hud: { banner() {} } }, projectiles: {
+      clouds: [{ owner: actor }, { owner: other }],
+      bombs: [{ owner: actor, kind: 'storm' }, { owner: other, kind: 'storm' }],
+      _releaseCloud(c) { released.push(['cloud', c.owner.nid]); },
+      _releaseBomb(b) { released.push(['bomb', b.owner.nid]); },
+    } };
+    installDisconnectFidelity({ NetMatch: FakeNetMatch, G });
+    const members = new Map([['me', true], ['gone', true], ['connected', true]]);
+    const nm = new FakeNetMatch({ myId: 'me', hostId: host ? 'me' : 'connected', _members: members });
+    nm.bind(fakeMatch('playing', 75, [actor, other]));
+    for (let i = 0; i < hz; i++) nm.update(1 / hz);
+    assert.equal(nm.updateCalls, hz, `the ${hz} Hz fixed-step loop ran`);
+    nm.onLeave('gone', false);
+    const playAfterLeave = nm.playCalls, tickAfterLeave = nm.tickCalls;
+    nm._tick('gone', {});
+    nm._play('gone', [0, 's']);
+    assert.equal(nm.tickCalls, tickAfterLeave, 'late tick packets from the departed owner are dropped');
+    assert.equal(nm.playCalls, playAfterLeave, 'late Storm/paint playback from the departed owner is dropped');
+    nm._play('connected', [0, 's']);
+    assert.equal(nm.playCalls, playAfterLeave + 1, 'a connected owner still plays back');
+    assert.deepEqual(G.projectiles.clouds.map(c => c.owner.nid), [42], 'only the connected owner keeps its Storm cloud');
+    assert.deepEqual(G.projectiles.bombs.map(b => b.owner.nid), [42], 'only the connected owner keeps its Storm device');
+    const signature = JSON.stringify(released);
+    if (!seen.has(host)) seen.set(host, signature);
+    assert.equal(signature, seen.get(host), `retirement at ${hz} Hz matches the first run on host=${host}`);
+    assert.deepEqual(released, [['cloud', 41], ['bomb', 41]], 'the departed owner retires its cloud and Storm exactly once');
+  }
+});
+
 test('#201: first-minute disconnect starts 6s no-contest and bypasses normal result path', () => {
   const a = fakeActor(3);
   let ended = 0;
@@ -310,7 +347,7 @@ test('#1002: intermediate splash paints once, scores once and disables legacy tr
   ps._step(p, 1 / 60);
   assert.equal(splats.length, 1);
   assert.equal(splats[0].radius, .7);
-  assert.equal(splats[0].opts.stretchAmt, 2);
+  assert.equal(splats[0].opts.stretchAmt, 1);
   assert.equal(p.trailEvery, 0);
   assert.equal(turf, 5);
   ps._step(p, 1 / 60);

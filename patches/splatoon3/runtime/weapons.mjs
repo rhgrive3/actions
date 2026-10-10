@@ -1,5 +1,6 @@
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
+import { DualiesAccuracy } from './dualies-accuracy.mjs';
 import { shooterMovementRemaining, shooterMovementSpeed } from './shooter-movement.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
@@ -114,6 +115,25 @@ export function splatlingChargeCap(ink, w) {
 export function isChargerFullCharge(charge) {
   return Number.isFinite(charge) && charge >= 1;
 }
+/** #539: partial-charge movement runs from the S3 normal-side endpoint
+ * (partialChargeMoveStart) to the maximum-partial endpoint
+ * (partialChargeMoveEnd); true full charge uses moveSpeedFiring. Progress is
+ * the time-normalized chargeT that owns the 8F minimum gate, not the
+ * non-linear damage curve in `charge`. The interior is a linear
+ * approximation: its Nintendo easing is unverified (未確認).
+ */
+export function chargerPartialMoveSpeed(w, chargeT, runSpeed) {
+  const full = Number.isFinite(w.moveSpeedFiring) ? w.moveSpeedFiring : Math.max(0, runSpeed);
+  const start = Number.isFinite(w.partialChargeMoveStart) ? w.partialChargeMoveStart : runSpeed;
+  const end = Number.isFinite(w.partialChargeMoveEnd) ? w.partialChargeMoveEnd : full;
+  const t = Number.isFinite(chargeT) ? Math.max(0, Math.min(1, chargeT)) : 0;
+  if (t >= 1) return full;
+  const chargeTime = Number.isFinite(w.chargeTime) && w.chargeTime > 0 ? w.chargeTime : 1;
+  const minimum = Number.isFinite(w.minimumChargeTime) ? w.minimumChargeTime : 8 / 60;
+  const minT = Math.max(0, Math.min(0.9, minimum / chargeTime));
+  if (t <= minT) return start;
+  return start + (end - start) * ((t - minT) / (1 - minT));
+}
 export function chargerDamage(actor, weapon, charge) {
   const legacy = weapon.damageMin + (weapon.damagePartialMax - weapon.damageMin) * charge;
   const minimum = weapon.damageMinChargeTime, rate = weapon.partialDamagePerSecond;
@@ -125,6 +145,13 @@ export function chargerDamage(actor, weapon, charge) {
   if (elapsed + 1e-10 < minimum) return legacy;
   return Math.min(weapon.damagePartialMax, weapon.damageMin + (elapsed - minimum) * rate);
 }
+// #675 ink debit for a Splat Charger release. The 8F first-legal endpoint
+// (2.25%) and full charge (18%, 60F) come from the pinned 11.3.0
+// WeaponChargerNormal values (InkConsumeMinCharge .0225, InkConsumeFullCharge
+// .18; Leanny/splat3 7280ff9c). Nothing sourced gives the curve between them:
+// the linear interpolation over charge time below is an INKWAVE choice and is
+// UNVERIFIED against Splatoon 3. Do not present the middle shape as
+// source-backed; only the endpoints and monotonic order are pinned.
 export function chargerInkCost(w, c, chargeT) {
   const inkMin = w.inkMin ?? 2.25;
   const inkFull = w.inkFull ?? 18;
@@ -177,6 +204,10 @@ export function splatlingSubInterrupt(runner, actor, dt, input) {
     return 'ready';
   }
   if (!input?.sub || !(runner.charging || runner.streaming)) return null;
+  if (runner.charging && !runner.streaming) {
+    actor.s3 ||= {};
+    actor.s3.recoverStopRemaining = Math.max(actor.s3.recoverStopRemaining || 0, 29 / 60);
+  }
   runner.s3SplatlingSubInterruptPending = true;
   // The input update is the first fixed frame of the interruption window.
   // Consume its dt here so the native sub-ready handoff lands on frame five,
@@ -195,6 +226,11 @@ export function splatlingInterrupt(runner, actor, slot) {
   if ((runner[x.press] ?? -1) !== actor._squidPressT) {
     runner[x.press] = actor._squidPressT;
     runner[x.time] = cancel && x.live(runner) ? SPLATLING_INTERRUPT : 0;
+    // v10.0.1 community verification table: charge cancellation stops refill
+    // for 29F, independently of the 6F squid admission and 40F shot recovery.
+    // Form admission precedes resources; publish once for that phase to arm.
+    if (slot === 'charge' && runner[x.time] > 0 && !runner.streaming)
+      runner.s3SplatlingCancelRefillPending = true;
   }
   return (runner[x.time] ?? 0) > INTERRUPT_EPS;
 }
@@ -309,12 +345,61 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
     return withMainDirectDamage(projectile.owner, victim, () => applySlosherVolleyHit(system, projectile.owner, victim, projectile.s3DamageGroup,
       projectile.s3DamageGroupId, amount, projectile.wid || projectile.type || 'slosher'));
   }
-  amount = groupDamage(projectile.s3DamageGroup, victim, amount);
-  if (amount > 0) applyMainDirectHit(system, projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
+  return applyGroupedProjectileHit(system, projectile, victim, amount);
+}
+// Both legacy and source-guided collision solvers route their already-resolved
+// damage through this owner; neither solver may reserve an invulnerable hit.
+export function applyGroupedProjectileHit(system, projectile, victim, amount) {
+  const weapon = projectile.s3Weapon || projectile.owner.weapon;
+  const group = projectile.s3DamageGroup, previous = group?.get(victim);
+  amount = groupDamage(group, victim, amount);
+  if (amount > 0) {
+    const result = applyMainDirectHit(system, projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(group));
+    // #999: a spawn-flight/invulnerable contact never reached the armor
+    // resolver. Keep the last admitted Roller maximum so a later legal
+    // contact still carries the whole swing into its penetration ledger.
+    // Ordinary armor absorption can return 'rejected' without HP loss and
+    // MUST retain its contribution. Pending sends retain their existing
+    // sender-side deduplication; this is not an asynchronous ACK redesign.
+    if (weapon.kind === 'roller' && group && result === 'rejected-invulnerable') {
+      if (previous === undefined) group.delete(victim);
+      else group.set(victim, previous);
+    }
+    return result;
+  }
 }
 export function installWeapons(context, profile) {
   api = context;
-  const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER, on } = api;
+  // #1089: use the committed activation event, not the physical Special input.
+  // Some kit owners bypass native _startSpecial; all successful starts publish
+  // this boundary. A rejected activation never interrupts the retained stance.
+  on?.('special:use', event => {
+    const actor = event?.actor, runner = actor?.weaponRunner;
+    if (!runner || actor.remote || actor.weapon?.kind !== 'dualies') return;
+    runner.s3Turret = false;
+    runner.s3DodgeShotPending = 0;
+    runner.s3GateDodgeShotPending = false;
+    runner.s3DodgeShotRemaining = 0;
+    // Keep paid ink, roll count, movement/recovery clocks and shot cooldown.
+  });
+  // A committed Special interrupts main-weapon actions even when its kit
+  // bypasses native _startSpecial (Ink Vac). Cancel pending input through the
+  // installed owners; do not reset paid ink, hit history or recovery clocks.
+  on?.('special:use', event => {
+    const actor = event?.actor, runner = actor?.weaponRunner;
+    const kind = actor?.weapon?.kind;
+    if (!runner || actor.remote || !['splatling', 'slosher', 'roller'].includes(kind)) return;
+    runner.cancelPendingInput?.();
+    if (kind === 'slosher') {
+      runner.slosh = -1; runner.s3SloshRecovery = false;
+      runner.s3SloshPrevYaw = null; runner.s3SloshTurnDelta = 0;
+    }
+    if (kind === 'roller') {
+      runner.rolling = false; runner.rollT = 0;
+      runner.rollLoop?.stop(.12); runner.rollLoop = null;
+    }
+  });
   WeaponRunner.prototype.s3StepSplatlingSubInterrupt = function (dt, input) {
     return splatlingSubInterrupt(this, this.a, dt, input);
   };
@@ -361,9 +446,11 @@ export function installWeapons(context, profile) {
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3ChargerCancelSwimRemaining = 0; // #416 partial-charge squid cancel recovery
     this.s3ChargerCancelRefillPending = false;
+    this.s3SplatlingCancelRefillPending = false;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
     this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
+    this.s3DualiesAccuracy = new DualiesAccuracy(profile.weaponsFidelityCompletion?.weapons?.dualies?.WeaponParam);
     this.s3ShooterMoveRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
@@ -503,12 +590,14 @@ export function installWeapons(context, profile) {
       this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
     }
     if (dualiesJumpSupported() && weapon?.kind === 'dualies') {
-      const grounded = !!this.a.grounded;
       const jumpSerial = this.a.s3JumpSerial || 0;
       if (jumpSerial !== this.s3DualiesJumpSeen) this.s3DualiesJumpT = 0;
       else if (this.s3DualiesJumpT != null) this.s3DualiesJumpT += dt;
       this.s3DualiesJumpSeen = jumpSerial;
-      if (this.s3DualiesJumpT != null && grounded && this.s3DualiesJumpT >= DUALIES_END) this.s3DualiesJumpT = null;
+      // The sourced clock ends at 70F whether or not the actor has landed. An
+      // airborne actor past 70F returns to the normal airborne 7.5 endpoint;
+      // keeping the clock would select the 0-bias 2 endpoint in the air.
+      if (this.s3DualiesJumpT != null && this.s3DualiesJumpT >= DUALIES_END) this.s3DualiesJumpT = null;
     } else {
       this.s3DualiesJumpT = null;
       this.s3DualiesJumpSeen = this.a?.s3JumpSerial || 0;
@@ -543,6 +632,8 @@ export function installWeapons(context, profile) {
       input = next;
     }
     if (weapon.kind === 'shooter' && !input.fire) this.s3Accuracy?.advance(dt);
+    // #891: Dualies bias recovery counts time since the last admitted shot, so it runs with or without fire held.
+    if (weapon.kind === 'dualies') this.s3DualiesAccuracy?.advance(dt);
     const result = runnerUpdate.call(this, dt, input);
     if (weapon.kind === 'shooter' && this.s3ShooterInterruptJustArmed) {
       // R/ZL cancellation may coincide with a due repeat; the native owner above
@@ -736,7 +827,8 @@ export function installWeapons(context, profile) {
       }
       const beforeT = this.chargeT || 0, realInk = a.ink;
       const fundedInk = (this.s3ChargerSpent || 0) + realInk;
-      const low = fundedInk + epsilon < w.inkMin;
+      const fundingThreshold = this.s3ChargerFullInkBudget ? w.inkFull : w.inkMin;
+      const low = fundedInk + epsilon < fundingThreshold;
       const chargeDuration = Math.max(epsilon, w.chargeTime);
       // #971: air slowdown starts only beyond the minimum charge. Split a
       // crossing step; low-ink slowdown is independent and still applies first.
@@ -888,20 +980,34 @@ export function installWeapons(context, profile) {
     // published outer-reticle probability and fire at the chosen sourced
     // endpoint (Jump_DegSwerve vs Stand_DegSwerve). Same model as the Blaster
     // jump bias; the LapOver turret cone is already handled by _spreadDeg.
-    const state = a?.weaponRunner?.s3DualiesJumpState?.(w);
+    // #891: otherwise normal Dualies fire samples the outer-reticle bias once
+    // per admitted shot against the grounded/air envelope. Locked turret shots
+    // (spreadLock) are a separate owner for both and do not advance the bias.
+    const runner = a?.weaponRunner;
+    const locked = !!(runner?.s3Turret || runner?.lockT > 0);
+    const state = runner?.s3DualiesJumpState?.(w);
+    const accuracy = runner?.s3DualiesAccuracy;
     let effective = spreadDeg;
-    // The legal post-roll LapOver turret cone (spreadLock) is a separate owner
-    // and must not be replaced by a jump-bias selection.
-    if (state?.active && !(a.weaponRunner.s3Turret || a.weaponRunner.lockT > 0)) {
+    if (state?.active && !locked) {
       const first = w.spreadFirst ?? .45;
-      const bloom = first + (1 - first) * (a.weaponRunner.bloom || 0);
+      const bloom = first + (1 - first) * (runner.bloom || 0);
       effective = (Math.random() < state.bias ? state.envelope : state.ground) * bloom;
+    } else if (accuracy && runner.s3DualiesAdmitting && !locked) {
+      const envelope = a.grounded ? w.spreadGround : w.spreadAir;
+      const outerChance = accuracy.shot(!!a.grounded);
+      effective = Math.random() < outerChance ? envelope : envelope * (w.spreadFirst ?? 0.45);
     }
     const result = fireDualies.call(this, a, w, effective, hand);
     if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
     return result;
   };
-  const dualies = WeaponRunner.prototype._dualies, spread = WeaponRunner.prototype._spreadDeg;
+  const dualiesBase = WeaponRunner.prototype._dualies, spread = WeaponRunner.prototype._spreadDeg;
+  // #891: only shots admitted by the runner's own fire loop sample the Dualies bias. Direct
+  // Projectiles.fireDualies calls keep the cone they are given.
+  const dualies = function (dt, inp, w) {
+    this.s3DualiesAdmitting = true;
+    try { return dualiesBase.call(this, dt, inp, w); } finally { this.s3DualiesAdmitting = false; }
+  };
   WeaponRunner.prototype._dualies = function (dt, inp, w) {
     const dodging = !!this.dodge;
     if (this.s3DodgeShotPending > 1e-10 && (!inp.fire || inp.sub || this.a.form === 'squid')) this.s3DodgeShotPending = 0;
@@ -937,7 +1043,11 @@ export function installWeapons(context, profile) {
     // publish the outer envelope; the probability bias is sampled at fire time.
     if (w.kind === 'blaster') {
       const state = this.s3BlasterJumpState(w);
-      return state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
+      // #1102: an admitted jump owns this penalty. The serial gate above
+      // already distinguishes a jump from a ledge fall; do not reintroduce
+      // the airborne penalty through the inactive-state scalar fallback.
+      if (state.supported) return state.active ? state.envelope : state.ground;
+      return this.a.grounded ? w.spreadGround : w.spreadAir;
     }
     if (w.kind === 'shooter' && this.s3JumpSpreadAge != null) {
       const age = this.s3JumpSpreadAge, hold = w.jumpSpreadHold ?? 0, end = Math.max(hold + 1e-10, w.jumpSpreadRecoverEnd ?? hold);
@@ -1096,7 +1206,7 @@ export function installWeapons(context, profile) {
     const w = this.a.weapon;
     if (this.lockT > 0) return moveSpeed.call(this);
     if (w.kind === 'blaster' && this.s3BlasterMoveRemaining > 1e-10 && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
-    if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
+    if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return chargerPartialMoveSpeed(w, this.chargeT, PLAYER.runSpeed);
     return moveSpeed.call(this);
   };
   installSplatlingRadiusCharge(api, profile);
