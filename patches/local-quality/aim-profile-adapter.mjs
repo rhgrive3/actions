@@ -120,7 +120,9 @@ export function adaptAimProfiles(rel, code) {
   }
 
   if (rel === 'src/game/player.js') {
-    // Gyro stale delta discard on input ownership change to touch.
+    // Gyro stale delta discard on unnotified input ownership changes to touch.
+    // The device event already rebases real transitions; never erase fresh
+    // sensor data arriving between that event and the next controller update.
     // reliability/touch-gyro-owner may already have tightened the native branch
     // from touch-presence to current touch ownership; compose with either form.
     const gyroRaw = "    if (touch && touch.gyro.enabled) {";
@@ -130,12 +132,13 @@ export function adaptAimProfiles(rel, code) {
     const gyroResetCode = "    if (this._lastOwnedInput !== inp.lastDevice) {\n" +
       "      if (this._lastOwnedInput && inp.lastDevice === 'touch') {\n" +
       "        const mob = touch || inp.mobile;\n" +
-      "        mob?.gyro?.discard?.();\n" +
-      "        mob?.gyro?.resync?.();\n" +
+      "        const eventReset = mob?._gyroOwnerAtReset === inp.lastDevice && mob?._gyroOwnerResetSerial !== this._lastGyroOwnerResetSerial;\n" +
+      "        if (!eventReset) { mob?.gyro?.discard?.(); mob?.gyro?.resync?.(); }\n" +
       "        if (this._gyro) { this._gyro.yaw = 0; this._gyro.pitch = 0; }\n" +
       "      }\n" +
       "      this._lastOwnedInput = inp.lastDevice;\n" +
       "    }\n" +
+      "    this._lastGyroOwnerResetSerial = (touch || inp.mobile)?._gyroOwnerResetSerial;\n" +
       gyroAnchor;
     code = replaceOnce(code, gyroAnchor, gyroResetCode, 'player gyro reset on ownership switch');
 

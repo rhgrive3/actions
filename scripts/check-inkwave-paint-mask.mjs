@@ -103,5 +103,7 @@ try {
     verifierHash: hash(fs.readFileSync(fileURLToPath(import.meta.url))), fixtureHash: hash(fixtureCode), received: [...received].sort(), results };
   fs.writeFileSync(path.join(evidence, 'paint-mask-result.json'), JSON.stringify(receipt, null, 2) + '\n');
   console.log(JSON.stringify({ status: receipt.status, sourceSha, cases: results.built.rows.length,
-    hashQueries: results.built.hashQueries, cells: results.built.cells, negativeUnsupported: results.built.negativeUnsupported }));
+    hashQueries: results.built.hashQueries, cells: results.built.cells, negativeUnsupported: results.built.negativeUnsupported,
+    body: { cases: results.built.body.rows.length, cpuCells: results.built.body.cpuCells, gpuCells: results.built.body.gpuCells,
+      cpuOnly: results.built.body.cpuOnly, gpuOnly: results.built.body.gpuOnly, ties: results.built.body.ties } }));
 } finally { await context?.close(); await new Promise(resolve => server.close(resolve)); }

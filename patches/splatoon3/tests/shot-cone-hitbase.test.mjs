@@ -12,20 +12,24 @@ async function setup(){
  const ps=G.projectiles=new f.Projectiles(G.scene);return{f,ps};
 }
 
-test('#607/#677 actual Shooter and Blaster have azimuth-independent scalar deviation',async()=>{
+test('#607/#677 calibrated scalar deviation stays azimuth-independent through real emission',async()=>{
  const {f,ps}=await setup();
+ // The old test encoded a Bernoulli inner/outer gate that has no source basis.
+ // Gamma quantiles below test the explicitly labelled S2-derived calibration;
+ // they do NOT claim measured S3 marginal/joint angular probabilities.
  for(const [kind,grounded,deg] of [['shooter',true,4.86],['shooter',false,11.66],['blaster',false,10]]){
   const a=f.make(kind);a.grounded=grounded;a.aimPoint.set(0,1.05,100);a.aimDir.set(0,0,1);
-  // Shooter accuracy chooses its outer/inner envelope before the native two-
-  // draw scalar cone. Keep that probability draw separate from radius/azimuth.
-  const envelopes=kind==='shooter'?[[0,1],[.999999,a.weapon.spreadFirst??.45]]:[[null,1]];
-  for(const [probability,scale] of envelopes)for(const radius of [.2,.6,1])for(const azimuth of [0,.125,.25,.375,.5,.75]){
-   const draws=[...(probability===null?[]:[probability]),radius*radius,azimuth];let calls=0;
+  const biases=kind==='shooter'?(grounded?[.01,.25]:[.4]):[.5];
+  for(const bias of biases)for(const u of [.25,.5,1])for(const azimuth of [0,.125,.25,.375,.5,.75]){
+   if(kind==='shooter')a.weaponRunner.s3Accuracy.stand=bias;
+   const draws=[u,azimuth];let calls=0;
    f.setRandom(()=>{calls++;return draws.length?draws.shift():.5;});
    ps[kind==='shooter'?'fireShooter':'fireBlaster'](a,a.weapon,deg);const p=ps.list.at(-1),dir=p.vel.clone().normalize();
-   near(Math.acos(Math.min(1,Math.max(-1,dir.z)))*180/Math.PI,deg*scale*radius);
-   assert.equal(draws.length,0,'the native cone consumes both scalar draws');
-   assert.equal(calls,kind==='shooter'?5:3,'native seed and Shooter visual-size draws follow the accuracy/cone draws');
+   const calibrated=deg*Math.pow(u,Math.log(bias)/Math.log(.5));
+   near(Math.acos(Math.min(1,Math.max(-1,dir.z)))*180/Math.PI,calibrated);
+   near(dir.y,0); // S3 Shooter/Blaster deviation is yaw-only, never randomized elevation.
+   assert.equal(draws.length,0,'radius and azimuth are consumed exactly once');
+   assert.equal(calls,kind==='shooter'?4:3,'seed/visual-size draws follow without an extra probability draw');
    near(p.vel.length(),a.weapon.projSpeed);assert.equal(p.wid,kind);ps.clear();
   }
  }

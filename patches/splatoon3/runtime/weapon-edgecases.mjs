@@ -1,3 +1,4 @@
+import { biasQuantile } from './weapon-accuracy.mjs';
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
@@ -67,50 +68,51 @@ export function dualiesInputGate(runner) {
 // a resolved burst from being captured and queued again.
 let flushing = 0;
 
-// This retains the existing two-draw radial sampler, not a claimed S3 PDF.
-// #1045: PitchDegSwerve is independent of the horizontal jump/recovery envelope.
+// The S3 community studies specify signed one-axis angular sampling and
+// Splatling-specific pitch. Each axis uses the same bias quantile but a
+// separate draw. The actual Nintendo game PRNG remains unverified.
+export function signedBiasSample(u, bias = .5) {
+  if (!Number.isFinite(u)) return 0;
+  const signed = Math.max(-1, Math.min(1, 2 * u - 1));
+  if (!signed) return 0;
+  return Math.sign(signed) * biasQuantile(Math.abs(signed), bias);
+}
+
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
-  // #883: Dualies expose one scalar spread envelope, so do not inherit the
-  // generic path's unsourced vertical compression.
-  if (w.kind === 'dualies') {
+  const bias = a.weaponRunner?.s3ShotBias;
+  const radiusSample = u => Number.isFinite(bias?.horizontal)
+    ? biasQuantile(u, bias.horizontal) : Math.sqrt(u);
+  // S3 source-backed: Shooter, Blaster and Dualies have horizontal (yaw)
+  // deviation only. Splatlings uniquely carry independent PitchDegSwerve.
+  // Sources: https://note.com/kanamoji_1027/n/n20cb3c3fb251 and
+  // https://wikiwiki.jp/splatoon3mix/ブキ/スピナー属
+  // Keep the existing two random draws (magnitude then signed side), since
+  // the shot seed, network replay and later paint use this gameplay RNG stream.
+  if (w.kind === 'dualies' || w.kind === 'shooter' || w.kind === 'blaster') {
     if (horizontal <= 0) return dir;
-    const radius = horizontal * DEG * Math.sqrt(Math.random());
-    const angle = Math.random() * Math.PI * 2;
-    const aim = dir.clone().normalize();
-    const right = aim.clone().set(-aim.z, 0, aim.x);
-    if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(aim, -aim.x);
-    right.normalize();
-    const up = aim.clone().cross(right);
-    return dir.copy(aim).addScaledVector(right, Math.cos(angle) * Math.tan(radius))
-      .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
-  }
-  if (w.kind === 'shooter' || w.kind === 'blaster') {
-    if (horizontal <= 0) return dir;
-    // Keep the existing two-draw radial law; correct only the scalar cone
-    // geometry. This is not a new claim about Nintendo's bias/PDF.
-    const radius = horizontal * DEG * Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
-    const right = dir.clone().set(-dir.z, 0, dir.x);
-    if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(dir, -dir.x);
-    right.normalize();
-    const up = dir.clone().cross(right).normalize();
-    return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
-      .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
+    const magnitude = horizontal * DEG * radiusSample(Math.random());
+    const side = Math.random() < .5 ? -1 : 1;
+    const yaw = magnitude * side, c = Math.cos(yaw), s = Math.sin(yaw);
+    // Rotate around world up: preserve the vertical aim component exactly.
+    const x = dir.x, z = dir.z;
+    return dir.set(x * c + z * s, dir.y, z * c - x * s).normalize();
   }
   if (w.kind !== 'splatling' || !Number.isFinite(w.spreadPitchGround)) {
     return system._spread(dir, horizontal);
   }
-  // Keep both Splatling spread draws when the horizontal cone is zero. The
-  // projectile seed and later paint effects share this gameplay RNG stream.
-  const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
-  const horizontalAngle = Math.max(0, horizontal) * DEG * radius;
-  const pitchAngle = w.spreadPitchGround * DEG * radius;
-  const right = dir.clone().set(-dir.z, 0, dir.x);
-  if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
-  right.normalize();
-  const up = dir.clone().cross(right);
-  return dir.addScaledVector(right, Math.cos(angle) * Math.tan(horizontalAngle))
-    .addScaledVector(up, Math.sin(angle) * Math.tan(pitchAngle)).normalize();
+  // S3 Splatling samples horizontal and pitch deviation as independent
+  // SIGNED angular offsets, each with its own bias/maximum-angle field.
+  // See Kanamoji 2024 Splatling theory (note.com/kanamoji_1027/n/n4de8b03535de).
+  // Both legacy random draws remain: replacing the shared circle radius/azimuth
+  // removes their artificial correlation without changing projectile seed order.
+  const yawOffset = Math.max(0, horizontal) * DEG * signedBiasSample(Math.random(), bias?.horizontal);
+  const pitchOffset = Math.max(0, w.spreadPitchGround) * DEG * signedBiasSample(Math.random(), bias?.pitch);
+  const yaw = Math.atan2(dir.x, dir.z) + yawOffset;
+  const pitch = Math.atan2(dir.y, Math.hypot(dir.x, dir.z)) + pitchOffset;
+  // Horizontal aim is rotated around world Y; independent pitch is then added
+  // to the original aim elevation. This retains speed and unit direction.
+  return dir.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).normalize();
 }
 
 export function blasterBurstDamage(p, w, distance, distanceDamage) {
@@ -397,8 +399,10 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     if (!flushing && p.s3TerrainBurst) {
       (this.s3BlastQueue ??= []).push({
         point: point.clone(), victim,
-        p: { owner: p.owner, team: p.team, ghost: !!p.ghost, wid: p.wid,
-          s3Weapon: p.s3Weapon ?? null, s3TerrainBurst: true },
+        p: { owner: p.owner, team: p.team, ghost: !!p.ghost, wid: p.wid, seed: p.seed,
+          s3Weapon: p.s3Weapon ?? null, s3TerrainBurst: true,
+          // PR1188: keep the struck surface orientation for the falling burst drop.
+          s3BurstCollisionHit: p.s3BurstCollisionHit?.normal ? { normal: p.s3BurstCollisionHit.normal.clone() } : null },
       });
       return;
     }

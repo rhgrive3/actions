@@ -31,6 +31,7 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { activeDualiesRollDistance } from '../runtime/movement-physics.mjs';
 import {
   adaptIssue477Source,
   adaptIssue477Weapons,
@@ -303,7 +304,7 @@ test('Movement duration remains exactly 12F and total roll displacement is exact
     const actualNetDist = a.pos.distanceTo(startPos);
     assert.ok(
       Math.abs(actualNetDist - expectedDist) < 0.35,
-      `Total displacement (${actualNetDist.toFixed(4)}) matches intended roll distance (${expectedDist})`
+      `12F roll displacement (${actualNetDist.toFixed(4)}) matches active roll distance (${expectedDist})`
     );
   } finally {
     actorRig.close();

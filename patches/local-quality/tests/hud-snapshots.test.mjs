@@ -77,7 +77,7 @@ test('#510 adapters reject missing/duplicate source connections and preserve unr
 test('#510 emitted full Game/Match modules preserve reusable transport and live scalar updates',{skip:!process.env.INKWAVE_HUD_SNAPSHOT_SITE},async()=>{
  const site=path.resolve(process.env.INKWAVE_HUD_SNAPSHOT_SITE),mods=new Map(),context=vm.createContext({console,performance,URL,URLSearchParams,location:{search:""},innerWidth:800,innerHeight:600});
  function load(file){if(mods.has(file))return mods.get(file);let code=fs.readFileSync(file,'utf8');if(file===path.join(site,'src/main.js')){
-  const boot=/const ([\w$]+)=new ([\w$]+);\1\.boot\(\)\.catch\([\s\S]*$/;const hit=code.match(boot);assert.ok(hit,'unique production auto-boot tail');code=code.replace(boot,`export { ${hit[2]} as Game };`);
+  const boot=/const\s+([\w$]+)\s*=\s*new\s+([\w$]+)(?:\(\))?\s*;\s*\1\.boot\(\)\.catch\([\s\S]*$/;const hit=code.match(boot);assert.ok(hit,'unique production auto-boot tail');code=code.replace(boot,`export { ${hit[2]} as Game };`);
  }const m=new vm.SourceTextModule(code,{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});mods.set(file,m);return m;}
  const main=load(path.join(site,'src/main.js'));await main.link((s,m)=>load(s==='three'?path.join(site,'vendor/three/build/three.module.js'):s.startsWith('three/addons/')?path.join(site,'vendor/three/jsm',s.slice('three/addons/'.length)):path.resolve(path.dirname(m.identifier),s)));await main.evaluate();
  const f=await setup(),G=mods.get(path.join(site,'src/core/ctx.js')).namespace.G;G.camera=f.G.camera;G.teamHex=f.G.teamHex;

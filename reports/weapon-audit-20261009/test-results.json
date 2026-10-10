@@ -1,0 +1,191 @@
+{
+  "dateJST": "2026-10-09",
+  "nodeVersion": "22.16.0",
+  "inputBaseline": "5d0be6b7fdebfd07e696e75497aaa97aa5ff5648",
+  "runtimeArtifactIdentity": {
+    "contentHash": "1b172cf51f4e9502da598ce4c47e08cef645548e9133c8d2a8244c663142d74a",
+    "inputHash": "a5767a4e95dcb983b020e32b566f8755a9c436a952bac3434fc40bb204fb1cd3"
+  },
+  "phases": [
+    {
+      "label": "ブキ／S3全体",
+      "log": "verified-splatoon3.tap",
+      "exit": 0,
+      "command": "node --experimental-vm-modules --test --test-concurrency=5 patches/splatoon3/tests/*.test.mjs",
+      "tests": 2746,
+      "pass": 2740,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 6,
+      "todo": 0,
+      "skipCases": [
+        "ok 73 - \\#561: installed built site presents the assist exactly like the composition # SKIP",
+        "ok 383 - \\#523 emitted config preserves opt-in policy # SKIP",
+        "ok 385 - \\#523 emitted Game/Match use emitted defaults for the live HUD transport # SKIP",
+        "ok 1139 - \\#724 the pinned official reference image is unmodified # SKIP reference image not fetched in this environment",
+        "ok 1140 - \\#724 the reference record carries the measured geometry, not the retracted absence claim # SKIP reference manifest not fetched in this environment",
+        "ok 2464 - \\#158: emitted full Match module judges deterministic Alpha and preserves close non-ties # SKIP"
+      ],
+      "snapshotScope": "before final ancillary gyro fix; affected emitted paths retested after final build"
+    },
+    {
+      "label": "キャッシュ・通信・移動・練習場",
+      "log": "verified-related.tap",
+      "exit": 0,
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 patches/loading-cache/tests/*.test.mjs patches/network-replication/tests/*.test.mjs patches/movement-physics/tests/*.test.mjs patches/practice-range/tests/*.test.mjs",
+      "tests": 286,
+      "pass": 281,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 5,
+      "todo": 0,
+      "skipCases": [
+        "ok 1 - adapter exact baseline parses, preserves every method except three startup-owned methods # SKIP",
+        "ok 2 - removing profiler wrappers yields identical full AST except explicit dwell/cache edits # SKIP",
+        "ok 3 - adapter rejects duplicate application and unexpected source topology # SKIP",
+        "ok 4 - production profiler dispatch does not alter evaluation count or synchronous return # SKIP",
+        "ok 46 - old worker fixture really refetches/rewrites warm scripts and bypasses JSON # SKIP"
+      ],
+      "snapshotScope": "before final ancillary gyro fix; affected emitted paths retested after final build"
+    },
+    {
+      "label": "品質・入力・信頼性",
+      "log": "quality-delivery.tap",
+      "exit": 0,
+      "command": "node --experimental-vm-modules --test --test-concurrency=4 patches/local-quality/tests/*.test.mjs patches/reliability/tests/*.test.mjs",
+      "tests": 1562,
+      "pass": 1545,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 17,
+      "todo": 0,
+      "skipCases": [
+        "ok 192 - FxHooks alone cannot retain Actor after missing lifecycle or a late event # SKIP",
+        "ok 306 - \\#425: emitted full HUD and touch modules retain quantization and authoritative readiness # SKIP",
+        "ok 322 - \\#510 emitted full Game/Match modules preserve reusable transport and live scalar updates # SKIP",
+        "ok 478 - full emitted Game frame gates native Match clock/projectiles and rebases after portrait # SKIP",
+        "ok 548 - production emitted helper follows identical native navigation and single-start guards # SKIP",
+        "ok 597 - isolated forced GC releases the old attacker after reset; baseline retains it # SKIP",
+        "ok 653 - emitted complete Match module contains the production passive path # SKIP",
+        "ok 706 - \\#672 a live minimap module cannot retain a retired jump Actor during unticked menus # SKIP",
+        "ok 821 - emitted menu fixture: unfocused # SKIP",
+        "ok 822 - emitted menu fixture: focus-without-neutral # SKIP",
+        "ok 823 - emitted menu fixture: fixed # SKIP",
+        "ok 969 - 30Hz emitted page focus gates gamepad authority # SKIP",
+        "ok 970 - 60Hz emitted page focus gates gamepad authority # SKIP",
+        "ok 971 - 120Hz emitted page focus gates gamepad authority # SKIP",
+        "ok 972 - actual emitted input policy boundaries # SKIP",
+        "ok 1036 - \\#523 + \\#533 emitted defaults hide corner map while alive gyro projection and A confirmation work # SKIP",
+        "ok 1037 - \\#523 + \\#533 emitted defaults hide corner map while dead gyro projection and A confirmation work # SKIP"
+      ],
+      "snapshotScope": "final relevant code; see verification ordering"
+    },
+    {
+      "label": "測定の入力基準SHA",
+      "log": "provenance-test.tap",
+      "exit": 0,
+      "command": "node --test scripts/tests/weapon-measurement-provenance.test.mjs",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "skipCases": [],
+      "snapshotScope": "final relevant code; see verification ordering"
+    },
+    {
+      "label": "ジャイロ所有者リセット世代の追加回帰",
+      "log": "gyro-epoch.tap",
+      "command": "node --experimental-vm-modules --test patches/local-quality/tests/gyro-owner-epoch.test.mjs",
+      "exit": 0,
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "skipCases": [],
+      "snapshotScope": "final relevant code; see verification ordering"
+    }
+  ],
+  "totals": {
+    "tests": 4597,
+    "pass": 4569,
+    "fail": 0,
+    "skipped": 28
+  },
+  "notCertification": "No Nintendo hardware or subjective shot-feel parity; see acceptance-ledger.json",
+  "diagnosticBuild": {
+    "status": "passed",
+    "log": "build-last.log",
+    "optimization": "none-offline"
+  },
+  "productionBuild": {
+    "status": "failed-environment",
+    "log": "production-build.log",
+    "reason": "ERR_MODULE_NOT_FOUND: esbuild; dependency fetch previously EAI_AGAIN"
+  },
+  "browser": {
+    "status": "failed-environment",
+    "attempts": [
+      {
+        "log": "paint-mask.log",
+        "reason": "ERR_BLOCKED_BY_ADMINISTRATOR"
+      },
+      {
+        "log": "browser-delivery.json",
+        "reason": "Real WebGL2 context not available"
+      }
+    ]
+  },
+  "measurements": {
+    "status": "passed",
+    "cases": 15,
+    "log": "measurements-delivery.json"
+  },
+  "builtFidelity": {
+    "status": "passed",
+    "cases": 15,
+    "networkModes": 3,
+    "wallDropFamilies": 4,
+    "wallDropCases": 6,
+    "log": "built-final.log"
+  },
+  "sources": {
+    "status": "passed",
+    "files": 7,
+    "sha256": {
+      "shooter": "dfca9f45fd0df3b6afab8f6ec0e47034912f3a6fc411936b9fd7257fe85c4cb9",
+      "dualies": "55e37c4d8db92b63d48f281015a30a9aaccd1ff838edf88ae4103124c365eb07",
+      "charger": "dfe4637def507f933b0bbecbc805331f6357bb69ac165608a6e558406a4b72c1",
+      "roller": "5b423eb35d4cac268a1e4085ec8321d27639ddbfc8f3775bb65696af5c2449c7",
+      "blaster": "36139282d2bd915f675424d99d5641800f184bcc9a9d1b0c94be533d38f64e18",
+      "slosher": "1d20043ad7efaf2831801afbce601fb1e14bfd11947063903c6fadd6c98f5298",
+      "splatling": "92647d586beee1764ca8984820fa37e0fd7887e2a756f7ca18e10e1aef97fd08"
+    },
+    "priorExplicitFields": 63,
+    "mirroredNumericLeaves": 1045,
+    "checkedBindingsIncludingHashes": 38,
+    "mirrorIsNotProofOfRuntimeUse": true,
+    "analystDefaultsVerified": false,
+    "engineParityCertified": false
+  },
+  "verificationOrdering": "Weapon and related full suites completed before the final ancillary gyro-owner fix. After that fix the full quality/input/reliability suites, added two gyro-epoch tests, 132 emitted/GC cases, diagnostic build, built-fidelity and measurements were run. The full weapon and related suites were not rerun after the final gyro fix. This is not a claim of all suites on one final snapshot.",
+  "supplemental": [
+    {
+      "label": "実生成コード・明示GCの追加検査",
+      "log": "emitted-delivery.tap",
+      "command": "bash scripts/check-weapon-audit-emitted.sh _site",
+      "exactInvocation": "evidence/emitted-final-command.json",
+      "exit": 0,
+      "tests": 132,
+      "pass": 132,
+      "fail": 0,
+      "skipped": 0,
+      "overlapsPrimary": true,
+      "addedToPrimaryTotal": false
+    }
+  ],
+  "evidenceLocation": "Validation ZIP contains reports/weapon-audit-20261009/evidence/. Evidence logs are not included in the source patch or source ZIP."
+}

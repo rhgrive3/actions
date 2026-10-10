@@ -872,3 +872,138 @@ test('parent: a native ghost bomb remains visual after transport disposal and pe
   nm.out.length = 0; nm.recBomb(ghost);
   assert.equal(nm.out.length, 0, 'an adopted ghost cannot be recorded even outside its spawn window');
 });
+
+
+test('S3 Sprinkler extracted parameters and 30F/480F/900F emission phases', async () => {
+  const { SPRINKLER, sprinklerPhase, sprinklerShotFrames } = await import('../runtime/kit-sprinkler.mjs');
+  assert.equal(SPRINKLER.inkCost, 60);
+  assert.equal(SPRINKLER.inkRecoverStop, 1);
+  assert.equal(SPRINKLER.throwSpeed, 67.2);
+  assert.equal(SPRINKLER.hp, 120);
+  assert.equal(sprinklerPhase(29), -1);
+  assert.equal(sprinklerPhase(30), 0);
+  assert.equal(sprinklerPhase(479), 0);
+  assert.equal(sprinklerPhase(480), 1);
+  assert.equal(sprinklerPhase(900), 2);
+  const shots = sprinklerShotFrames(925);
+  assert.deepEqual(shots.slice(0,5), [30,34,38,42,46]);
+  assert.ok(shots.includes(480), 'source phase boundary 480F');
+  assert.ok(shots.includes(900), 'source phase boundary 900F');
+});
+
+test('native Sprinkler sticks to wall, creates falling owner ink, retires on death without generic explosion', async () => {
+  const api=await production();ground(api,'record');
+  const {projectiles,actor,bomb}=await throwReal(api,'sprinkler',0);
+  assert.equal(bomb.s3Sub.id,'sprinkler');
+  assert.equal(bomb.s3Resolved.spec.inkCost,60);
+  let initial=true;
+  api.G.physics.segment=(_a,_b,out)=>{
+    out.hit=initial;initial=false;
+    if(out.hit){out.point=new api.THREE.Vector3(0,1,3);out.normal=new api.THREE.Vector3(0,0,-1);}
+    return out;
+  };
+  projectiles._updateBombs(1/60);
+  assert.equal(bomb.s3Mode,'sprinkling');
+  assert.equal(bomb.fuse,-1,'no Splat Bomb countdown');
+  const explode=projectiles._explodeBomb.bind(projectiles);let explosions=0;
+  projectiles._explodeBomb=b=>{explosions++;return explode(b);};
+  const painted=api.G.paint.__splats;
+  assert.ok(painted.some(x=>x.radius===.3),'source placement paint');
+  const before=painted.length;
+  api.G.physics.segment=(_a,to,out)=>{
+    out.hit=to.y<1;
+    if(out.hit){out.point=new api.THREE.Vector3(to.x,0,to.z);out.normal=new api.THREE.Vector3(0,1,0);}
+    return out;
+  };
+  for(let i=0;i<130;i++){api.G.time+=1/60;projectiles._updateBombs(1/60);}
+  assert.ok(bomb.s3Sprinkler.spraySequence>0,'30F startup spawns detached physical droplets');
+  assert.ok(painted.length>before,'physical drops paint only when contacting a surface');
+  assert.equal(explosions,0);
+  assert.equal(projectiles.bombs.length,1);
+  actor.alive=false;projectiles._updateBombs(1/60);
+  assert.equal(projectiles.bombs.length,0,'owner death retires native bomb');
+  assert.equal(explosions,0,'no generic Splat Bomb explosion');
+});
+
+test('one Sprinkler per owner; bounded packet identity and ghost has no paint or hit authority', async () => {
+  const api=await production();ground(api,'record');
+  const {projectiles,actor,bomb:first}=await throwReal(api,'sprinkler',0);
+  projectiles.throwBomb(actor);
+  assert.equal(projectiles.bombs.length,1,'same owner native replacement');
+  assert.notEqual(projectiles.bombs[0],first);
+  const ghost={kind:'bomb',ghost:true,pos:new api.THREE.Vector3(0,2,0),age:0,fuse:-1,team:1,
+    vel:new api.THREE.Vector3(),owner:{alive:true},s3Mode:'flight'};
+  assert.ok(kitGhostBombAttach(api.SUB,projectiles,ghost,'sprinkler',0));
+  assert.equal(ghost.s3Resolved,undefined);
+  assert.equal(kitBombTrail(api.SUB,ghost,api.G.paint,projectiles),0);
+  assert.deepEqual(kitBombPacket(projectiles.bombs[0]),['sprinkler',0]);
+});
+
+
+test('Autobomb 11.3 source pins ink, chase frames, damage bands and select-nearest semantics',async()=>{
+  const {AUTOBOMB,autobombTarget}=await import('../runtime/kit-autobomb.mjs');
+  assert.equal(AUTOBOMB.inkCost,55);
+  assert.equal(AUTOBOMB.inkRecoverStop,85/60);
+  assert.equal(AUTOBOMB.throwSpeed,67.2);
+  assert.equal(AUTOBOMB.chaseFrames,150);
+  near(AUTOBOMB.groundMaxSpeed,5.4);
+  assert.equal(AUTOBOMB.chaseBurstDelayFrames,60);
+  assert.deepEqual([AUTOBOMB.damageMax,AUTOBOMB.damageMin],[180,30]);
+  assert.deepEqual([AUTOBOMB.damageInnerDistance,AUTOBOMB.damageOuterDistance],[2.85,6.5]);
+  const owner={pos:{x:0,y:0,z:0},team:0}, b={owner,team:0,pos:{x:0,y:0,z:0}};
+  const actors=[owner,{team:1,alive:true,pos:{x:0,y:0,z:2.2}},{team:1,alive:true,pos:{x:1,y:0,z:1}}];
+  assert.equal(autobombTarget(owner,b,{actors}),actors[2]);
+});
+
+test('real native Autobomb targets, walks and explodes only after a 60F warning',async()=>{
+  const api=await production();ground(api,'record');
+  const {projectiles,actor,bomb}=await throwReal(api,'autobomb',0);
+  assert.equal(bomb.s3Sub.id,'autobomb');
+  assert.equal(bomb.s3Resolved.spec.inkCost,55);
+  const e={team:1,alive:true,pos:new api.THREE.Vector3(0,0,2),form:'kid',hp:100,
+    damage(dmg){this.hp-=dmg;return true;}};
+  api.G.actors=[actor,e];api.G.physics.los=()=>true;
+  let first=true;
+  api.G.physics.segment=(_a,_b,out)=>{
+    out.hit=first;first=false;
+    if(out.hit){out.point=new api.THREE.Vector3(0,0,0);out.normal=new api.THREE.Vector3(0,1,0);}
+    return out;
+  };
+  projectiles._updateBombs(1/60);
+  assert.equal(bomb.s3Mode,'chasing');assert.equal(bomb.fuse,-1);
+  const before=bomb.pos.z;let warning=-1;
+  for(let i=0;i<200&&projectiles.bombs.length;i++){
+    projectiles._updateBombs(1/60);
+    if(bomb.fuse>=0){warning=i;break;}
+  }
+  assert.ok(bomb.pos.z>before+.2,'real chase moves towards tracked victim');
+  assert.ok(warning>=30,'chase cannot explode immediately');
+  assert.ok(bomb.fuse>0&&bomb.fuse<=1,'1s countdown after reaching target');
+  assert.deepEqual(kitBombPacket(bomb),['autobomb',0]);
+  let explosions=0;
+  const native=projectiles._explodeBomb.bind(projectiles);
+  projectiles._explodeBomb=b=>{explosions++;return native(b);};
+  for(let i=0;i<120&&projectiles.bombs.length;i++)projectiles._updateBombs(1/60);
+  assert.equal(explosions,1,'the native bomb blast owns paint/hit exactly once');
+  assert.equal(projectiles.bombs.length,0);
+});
+
+test('Autobomb no target arms 180F wait, and network ghosts have no kit combat authority',async()=>{
+  const api=await production();ground(api,'record');
+  const {projectiles,actor,bomb}=await throwReal(api,'autobomb',0);
+  api.G.actors=[actor];let first=true;
+  api.G.physics.segment=(_a,_b,out)=>{
+    out.hit=first;first=false;
+    if(out.hit){out.point=new api.THREE.Vector3(0,0,0);out.normal=new api.THREE.Vector3(0,1,0);}
+    return out;
+  };
+  projectiles._updateBombs(1/60);assert.equal(bomb.fuse,-1);
+  for(let i=0;i<12;i++)projectiles._updateBombs(1/60);
+  assert.ok(bomb.fuse>2.8&&bomb.fuse<=3,'extracted no-target wait');
+  assert.deepEqual(kitBombPacket(bomb),['autobomb',0]);
+  const ghost={kind:'bomb',ghost:true,pos:new api.THREE.Vector3(),age:0,fuse:-1,team:1,
+    vel:new api.THREE.Vector3(),owner:{alive:true}};
+  assert.ok(kitGhostBombAttach(api.SUB,projectiles,ghost,'autobomb',0));
+  assert.equal(ghost.s3Resolved,undefined);
+  assert.equal(kitBombTrail(api.SUB,ghost,api.G.paint,projectiles),0);
+});

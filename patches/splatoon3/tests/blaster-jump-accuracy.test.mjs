@@ -10,7 +10,7 @@ import { compose as composePracticeRange } from '../../practice-range/tests/harn
 
 // #684: the S3 Blaster carries a jump-accuracy state on the fixed simulation
 // clock — recovery starts at Jump_DegBiasDecreaseStartFrame (25F), reaches its
-// endpoint at Jump_DegBiasEndFrame (70F), and the initial outer-reticle bias is
+// endpoint at Jump_DegBiasEndFrame (70F), and the initial angular bias is
 // Jump_DegBiasMax (0.5). Only those sourced endpoints/boundaries are asserted.
 // The curve between them is NOT a sourced Nintendo value, so these tests assert
 // monotonicity and the boundaries only and never a specific intermediate value.
@@ -40,7 +40,7 @@ test('#684 pinned source boundaries are the values under test', async () => {
   const src = blasterSource(f);
   assert.equal(src.Jump_DegBiasDecreaseStartFrame, START_F, 'sourced recovery start frame');
   assert.equal(src.Jump_DegBiasEndFrame, END_F, 'sourced recovered endpoint frame');
-  assert.equal(src.Jump_DegBiasMax, BIAS_MAX, 'sourced initial outer-reticle bias');
+  assert.equal(src.Jump_DegBiasMax, BIAS_MAX, 'sourced initial angular bias');
   assert.equal(src.Stand_DegSwerve, 0, 'grounded endpoint stays 0');
 });
 
@@ -59,7 +59,7 @@ test('#684 grounded endpoint stays 0 and the jump edge starts the bias state at 
   assert.equal(s.active, true, 'a live jump-accuracy state after leaving the ground');
   assert.equal(s.frames, 0, 'state starts on the jump edge');
   close(s.envelope, 10, 'airborne angular endpoint stays the sourced maximum');
-  close(s.bias, BIAS_MAX, 'outer-reticle bias starts at Jump_DegBiasMax');
+  close(s.bias, BIAS_MAX, 'angular bias starts at Jump_DegBiasMax');
   assert.equal(s.phase, 'held', 'the sourced initial state is held through 25F');
 });
 
@@ -124,7 +124,7 @@ test('#684 extended airtime preserves the outer envelope while the independent b
   airborne(f, a, 30); const at60 = state(a);
   airborne(f, a, 10); const at70 = state(a);
   assert.ok(at25.bias > at30.bias && at30.bias > at60.bias && at60.bias > at70.bias,
-    `outer-shot bias must recover: ${[at25.bias, at30.bias, at60.bias, at70.bias]}`);
+    `angular bias must recover: ${[at25.bias, at30.bias, at60.bias, at70.bias]}`);
   for (const sample of [at25, at30, at60, at70]) close(sample.envelope, 10, 'outer envelope stays at the sourced endpoint');
   close(at70.bias, 0, 'bias reaches the sourced recovered endpoint');
   assert.equal(at70.phase, 'recovered', 'the separate HUD presentation reaches its recovery endpoint');
@@ -149,7 +149,7 @@ test('#684 HUD renders the 10-degree outer envelope and a separate bias cue from
   const adaptedHud = adaptSource('src/ui/hud.js', hudSource);
   assert.doesNotThrow(() => new vm.SourceTextModule(adaptedHud), 'adapted HUD is valid module source');
   assert.ok(adaptedHud.includes('s3BlasterJumpState'), 'HUD reads the same runner state as the sampler');
-  assert.ok(adaptedHud.includes("cuePhase === 'held' ? `OUTER ${percent}%`"), 'HUD presents the sourced initial outer-shot bias');
+  assert.ok(adaptedHud.includes("cuePhase === 'held' ? `BIAS ${percent}%`"), 'HUD presents the sourced initial angular bias');
   assert.ok(adaptedHud.includes("cuePhase === 'recovering' ? 'RECOVERING'"), 'HUD presents recovery without inventing an intermediate probability law');
   assert.ok(adaptedHud.includes('this._blasterBiasEl.textContent = cue;'), 'HUD renders the current bias value');
   assert.ok(adaptedHud.includes('this._blasterBiasEl.dataset.phase = cuePhase'), 'HUD presents hold/recovery phase separately');
@@ -177,19 +177,23 @@ test('#684 HUD renders the 10-degree outer envelope and a separate bias cue from
     f.setRandom(() => values[Math.min(i++, values.length - 1)]);
   };
 
-  // First draw chooses outer/inner. The composed family spread owner then gets
-  // radius=1 and azimuth=0, so the actual projectile deviation equals the chosen envelope.
-  randomSequence([0.1, 1, 0]);             // 0.1 < bias -> outer reticle
+  // The prior Bernoulli oracle was wrong: bias is not the probability of
+  // selecting the entire outer cone. Check the median and endpoints of the
+  // documented community gamma calibration instead. This is NOT S3 PDF proof.
+  randomSequence([1, 0]);
   ps.fireBlaster(a, a.weapon, 999);
-  close(deviations.at(-1), s.envelope, 'outer draw uses the full airborne envelope', 1e-6);
-  randomSequence([0.1, 1, 0]);
+  close(deviations.at(-1), s.envelope, 'quantile endpoint reaches the outer envelope', 1e-6);
+  randomSequence([1, 0]);
   ps.fireBlaster(remote, remote.weapon, 999);
-  close(deviations.at(-1), state(remote).envelope, 'remote owner also uses its own full outer envelope', 1e-6);
+  close(deviations.at(-1), state(remote).envelope, 'remote owner uses its own envelope', 1e-6);
   assert.equal(owners[0], a, 'native projectile keeps its local owner');
   assert.equal(owners[1], remote, 'native projectile keeps its remote owner');
-  randomSequence([0.9, 1, 0]);             // 0.9 >= bias -> grounded endpoint
+  randomSequence([0.5, 0]);
   ps.fireBlaster(a, a.weapon, 999);
-  close(deviations.at(-1), s.ground, 'inner draw stays on the grounded endpoint', 1e-6);
+  close(deviations.at(-1), s.envelope * s.bias, 'calibration median is bias times envelope', 1e-6);
+  randomSequence([0, 0]);
+  ps.fireBlaster(a, a.weapon, 999);
+  close(deviations.at(-1), 0, 'zero quantile stays on center', 1e-6);
   f.restoreRandom();
   assert.notEqual(s.bias, 0.5, 'mid-recovery bias is below the initial maximum');
 

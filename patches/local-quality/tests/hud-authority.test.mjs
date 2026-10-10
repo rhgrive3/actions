@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -125,10 +126,10 @@ test('HUD adapters compile in production order and preserve an existing authorit
 
 test('#425: emitted full HUD and touch modules retain quantization and authoritative readiness', {skip:!process.env.INKWAVE_HUD_BUILT_SITE}, async()=>{
   const site=process.env.INKWAVE_HUD_BUILT_SITE;
-  const path=await import('node:path');const modules=new Map(),context=vm.createContext({console,performance});
+  const path=await import('node:path');const modules=new Map(),context=vm.createContext({console,performance,URL});
   function load(file){
     if(modules.has(file))return modules.get(file);
-    const m=new vm.SourceTextModule(fs.readFileSync(file,'utf8'),{context,identifier:file});modules.set(file,m);return m;
+    const m=new vm.SourceTextModule(fs.readFileSync(file,'utf8'),{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});modules.set(file,m);return m;
   }
   const root=load(path.join(site,'src/ui/hud.js'));
   await root.link((spec,from)=>load(spec==='three'?path.join(site,'vendor/three/build/three.module.js'):path.resolve(path.dirname(from.identifier),spec)));

@@ -111,7 +111,7 @@ test('remote Dualies released-fire Jump does not manufacture a roll from stale f
  assert.equal(a.ink,ink);assert.equal(a.weaponRunner.rollsLeft,rolls);
  assert.ok(a.character.events.some(([name])=>name==='jump'));
 });
-test('splatling yaw and pitch have independent signed ground boundaries on arbitrary aim rays',async()=>{
+test('S3 Splatling independent signed yaw/pitch offsets preserve arbitrary aim elevations',async()=>{
  const f=await setup('splatling'),ps=projectiles(f),a=f.a;
  for(const yaw of [0,1.2])for(const pitch of [0,.7,-.6])for(const [theta,axis,limit] of [[0,'yaw',3.3],[.5,'yaw',-3.3],[.25,'pitch',1.6],[.75,'pitch',-1.6]]){
   const dir=new f.THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));a.aimDir.copy(dir);a.aimPoint.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3)).addScaledVector(dir,100);
@@ -120,12 +120,13 @@ test('splatling yaw and pitch have independent signed ground boundaries on arbit
   const side=Math.atan2(v.dot(axis==='yaw'?right:up),v.dot(dir))*180/Math.PI;close(side,limit);close(v.dot(axis==='yaw'?up:right),0);
  }
 });
-test('splatling retained horizontal scalar does not infer or rescale vertical1.6 in ground and air',async()=>{
+test('S3 Splatling independent vertical 1.6-degree bound does not scale with retained horizontal scalar',async()=>{
  const f=await setup('splatling'),ps=projectiles(f),a=f.a;a.aimPoint.set(0,1.05,100);a.aimDir.set(0,0,1);
  for(const [ground,spread,expected] of [[true,1.98,1.6],[true,3.3,1.6],[false,7,1.6]]){
   a.grounded=ground;let n=0;const draws=ground?[.5,.5,1-1e-12,.25]:[.5,1-1e-12,.25]; // #940 standing outer-reticle draw precedes speed/radius/angle; airborne has none
   f.setRandom(()=>draws[n++]??.5);ps.fireSplatling(a,a.weapon,spread);const p=ps.list.at(-1),v=p.vel.clone();close(Math.abs(Math.atan2(v.y,Math.hypot(v.x,v.z))*180/Math.PI),expected);
   a.grounded=!ground;a.weapon.spreadPitchGround=1.6;assert.ok(p.vel.equals(v));
+  ps.clear();
  }
 });
 function blast(f,ps){const p=ps._new();Object.assign(p,{type:'blast',owner:f.a,team:0,radius:1,seed:.5,wid:'blaster'});p.vel.set(0,0,1);return p;}

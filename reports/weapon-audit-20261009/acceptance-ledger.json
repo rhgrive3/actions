@@ -1,0 +1,287 @@
+{
+  "version": "11.3.0",
+  "upstreamSha": "5d0be6b7fdebfd07e696e75497aaa97aa5ff5648",
+  "allMismatchesResolved": false,
+  "items": [
+    {
+      "id": "B01",
+      "family": "共通",
+      "target": "絶対距離・速度尺度",
+      "status": "partial",
+      "result": "原典単位／INKWAVE尺度の区別、15条件ローカル測定。任天堂実機の絶対尺度は未実測。"
+    },
+    {
+      "id": "B02",
+      "family": "共通",
+      "target": "弾道積分",
+      "status": "regression-only",
+      "result": "既存の段階飛翔・抵抗・重力・寿命の回帰。省略既定値／原典積分順の完全同定なし。"
+    },
+    {
+      "id": "B03",
+      "family": "共通",
+      "target": "照準収束・射撃位置",
+      "status": "partial",
+      "result": "発射方向の実経路を変更・原点/姿勢/通信回帰。Nintendo銃口／近距離照準は未校正。"
+    },
+    {
+      "id": "B04",
+      "family": "共通",
+      "target": "命中・被弾判定",
+      "status": "regression-only",
+      "result": "実CPU衝突の回帰。Nintendoカプセル形状・接触順まで未証明。"
+    },
+    {
+      "id": "B05",
+      "family": "共通",
+      "target": "ダメージ時刻・倍率",
+      "status": "regression-only",
+      "result": "15条件実ダメージと既存倍率・時刻テスト。実機の丸め・全特殊物体未検証。"
+    },
+    {
+      "id": "B06",
+      "family": "共通",
+      "target": "塗り本体・飛沫・GPU",
+      "status": "partial",
+      "result": "PR1188: CPU本体輪郭をGPU零交差へ一致。WebGL2(SwiftShader)実描画で本体81条件・付随108条件のCPU/GPU一致（零交差同値のみ）。本家テクスチャ形状との画像比較は未実施。"
+    },
+    {
+      "id": "B07",
+      "family": "共通",
+      "target": "インク・硬直・中断",
+      "status": "regression-only",
+      "result": "既存状態／インク処理を回帰。全操作境界の実機比較なし。"
+    },
+    {
+      "id": "B08",
+      "family": "共通",
+      "target": "攻撃中の移動",
+      "status": "partial",
+      "result": "PR1188: スピナーのチャージ開始減速(VelGnd_DownRt_Charge)を実Actorへ接続。比例減衰はモデル、VelGnd_Bias_Chargeは定義不明で未割当。"
+    },
+    {
+      "id": "B09",
+      "family": "共通",
+      "target": "オンライン同期",
+      "status": "regression-only",
+      "result": "実イベント形式・ghost・因果塗り・重複排除を回帰。実2端末通信の体感検査なし。"
+    },
+    {
+      "id": "B10",
+      "family": "共通",
+      "target": "表示・反動・音・モーション",
+      "status": "unverified",
+      "result": "誤解を招くOUTER表示のみBIASへ変更。実機映像・音・入力遅延は未検証。"
+    },
+    {
+      "id": "B11",
+      "family": "シューター",
+      "target": "分布",
+      "status": "calibration",
+      "result": "二択円錐を撤去しBias校正を実発射へ接続。S3の二次元PDFは未証明。"
+    },
+    {
+      "id": "B12",
+      "family": "シューター",
+      "target": "ジャンプ・タップ周期",
+      "status": "partial",
+      "result": "経過時間回復を修正、端点と6F周期を検査。中間曲線は校正。"
+    },
+    {
+      "id": "B13",
+      "family": "シューター",
+      "target": "飛沫・高所・着弾",
+      "status": "partial",
+      "result": "PR1188: シューター系の落下飛沫足跡を楕円(幅×深さ)の全長・面積一致へ写像。InkFlightの落下・高さ別深さは既存。実機形状は未検証。"
+    },
+    {
+      "id": "B14",
+      "family": "シューター",
+      "target": "終了後の移動",
+      "status": "already-in-baseline",
+      "result": "専用shooter-movement経路を維持。旧Issueを根拠に再修正しない。"
+    },
+    {
+      "id": "B15",
+      "family": "マニューバー",
+      "target": "通常・スライド・ジャンプ精度",
+      "status": "partial",
+      "result": "専用精度状態、最大角、回復を接続。左右銃口等は既存回帰、PDFは校正。"
+    },
+    {
+      "id": "B16",
+      "family": "マニューバー",
+      "target": "スライドの時刻・距離・軌道",
+      "status": "partial",
+      "result": "4F/12F/5m/7%の実Actor検査。後続滑りと空中専用下降は未完了。"
+    },
+    {
+      "id": "B17",
+      "family": "マニューバー",
+      "target": "スライド塗り・着弾形状",
+      "status": "regression-only",
+      "result": "既存塗りを保持しCPU測定。塗り帯の実機形状未確認。"
+    },
+    {
+      "id": "B18",
+      "family": "バレル",
+      "target": "二段階・部分チャージ",
+      "status": "regression-only",
+      "result": "既存48F/72F・20/40発経路を回帰。全中間関数の実機比較なし。"
+    },
+    {
+      "id": "B19",
+      "family": "バレル",
+      "target": "チャージ減速・予約・解除",
+      "status": "partial",
+      "result": "PR1188: 専用地上減速を実装(5%/F)。空中/低インク・予約/解除は既存回帰。中間関数の実機比較なし。"
+    },
+    {
+      "id": "B20",
+      "family": "バレル",
+      "target": "弾速乱数・角度・塗り",
+      "status": "partial",
+      "result": "0.6角度縮小を撤去しBias接続。速度PDF/二次元PDFは未校正。"
+    },
+    {
+      "id": "B21",
+      "family": "バレル",
+      "target": "ジャンプ回復",
+      "status": "calibration",
+      "result": "25/70F端点を保持し全角を使用。線形回復・PDFは校正。"
+    },
+    {
+      "id": "B22",
+      "family": "チャージャー",
+      "target": "移動・チャージキープ・銃口",
+      "status": "partial",
+      "result": "部分チャージ目標修正。中間曲線・装備銃口位置は未校正。"
+    },
+    {
+      "id": "B23",
+      "family": "チャージャー",
+      "target": "チャージと射程・速度・威力",
+      "status": "regression-only",
+      "result": "8F最小・有限弾速・75Fキープ等は既存。15条件中6チャージ条件を測定。"
+    },
+    {
+      "id": "B24",
+      "family": "チャージャー",
+      "target": "貫通・壁・足元塗り",
+      "status": "regression-only",
+      "result": "既存専用経路を実CPU測定。Nintendo塗り曲線未確認。"
+    },
+    {
+      "id": "B25",
+      "family": "ブラスター",
+      "target": "爆風ダメージ・ノックバック",
+      "status": "partial",
+      "result": "PR1188: KnockBackParam 700/0.8/3.5を#535同型換算で適用、地形/直撃は縮小体積。ノックバックの本家積分式は非公開(モデル)。"
+    },
+    {
+      "id": "B26",
+      "family": "ブラスター",
+      "target": "空中精度・時刻・硬直",
+      "status": "partial",
+      "result": "Bias0.5を使用した分布校正。既存50F周期・壁落ちを回帰。"
+    },
+    {
+      "id": "B27",
+      "family": "ブラスター",
+      "target": "壁・バリア倍率・塗り",
+      "status": "partial",
+      "result": "PR1188: 床塗りを落下飛沫・球状爆発塗り・壁飛沫接続で再構成（BLASTER_FLOOR_PAINT_COMPARISON参照）。1.9倍等の既存倍率は維持。"
+    },
+    {
+      "id": "B28",
+      "family": "ローラー",
+      "target": "単位生成・角度・速度",
+      "status": "regression-only",
+      "result": "横13/縦5の既存構成を回帰。実機の全単位軌道未同定。"
+    },
+    {
+      "id": "B29",
+      "family": "ローラー",
+      "target": "転がし・旋回・接触",
+      "status": "partial",
+      "result": "PR1188: 接触ノックバック(相手/自分、DamageOn/Off)を実装、遠隔は複製ヒットで被弾者側が適用。補間式はモデル。"
+    },
+    {
+      "id": "B30",
+      "family": "ローラー",
+      "target": "減耗・ドライ・塗り減衰",
+      "status": "already-in-baseline",
+      "result": "既存0.5衝突縮小とドライ等を保持。塗り減衰の実機曲線未校正。"
+    },
+    {
+      "id": "B31",
+      "family": "ローラー",
+      "target": "CPU/GPU境界",
+      "status": "already-in-baseline",
+      "result": "基準の共有形状を確認。二重修正撤回。実WebGL比較は失敗。"
+    },
+    {
+      "id": "B32",
+      "family": "スロッシャー",
+      "target": "4+5単位・時差・重複防止",
+      "status": "regression-only",
+      "result": "既存実行グラフを回帰。Nintendoの全時刻/優先度未照合。"
+    },
+    {
+      "id": "B33",
+      "family": "スロッシャー",
+      "target": "RandomRotateYBias分布",
+      "status": "unverified",
+      "result": "独自sign(x)*abs(x)^(1+bias)を維持。意味の違うガンマ式へ無根拠変更しない。"
+    },
+    {
+      "id": "B34",
+      "family": "スロッシャー",
+      "target": "高所縮小・弾ごとの塗り",
+      "status": "regression-only",
+      "result": "既存専用経路を回帰。中間形状・補間の実機一致未確認。"
+    },
+    {
+      "id": "B35",
+      "family": "スロッシャー",
+      "target": "照準表示・遮蔽物越え",
+      "status": "unverified",
+      "result": "CPU射程/遮蔽の回帰に限る。実機照準の対応は未検証。"
+    },
+    {
+      "id": "B36",
+      "family": "サブ",
+      "target": "ボム等の全挙動",
+      "status": "regression-only",
+      "result": "既存専用テストを実行。全挙動の原典一致認定なし。"
+    },
+    {
+      "id": "B37",
+      "family": "スペシャル",
+      "target": "体積・効果・相互作用",
+      "status": "regression-only",
+      "result": "既存機能の回帰。未実装スペシャルは同等と扱わない。"
+    },
+    {
+      "id": "B38",
+      "family": "キット",
+      "target": "4系統の標準セット化",
+      "status": "partial",
+      "result": "PR1188: スロット単位で実装済み機構を本家構成へ。未実装サブ/スペシャルは独自と明示。シューター必要SPを公式11.1.0に従い200へ。"
+    },
+    {
+      "id": "B39",
+      "family": "ブラスター",
+      "target": "床塗り（飛翔飛沫・爆発・壁飛沫・CPU/GPU）",
+      "status": "partial",
+      "result": "PR1188: 4WU打ち切り撤廃、高さ別深さ1.2→1.0、壁飛沫接続、爆発の球状塗り＋落下滴、30/60/120Hz一致。初速・空気抵抗・滴数・地形時球半径は既定値/モデル。"
+    },
+    {
+      "id": "B40",
+      "family": "キット",
+      "target": "スプラシューター必要SP",
+      "status": "fixed",
+      "result": "PR1188: 公式Ver.11.1.0(210→200)と11.3.0 WeaponInfoMain(200)に一致させた。#1132の210は7.2.0止まりだった。"
+    }
+  ]
+}

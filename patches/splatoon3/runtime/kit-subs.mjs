@@ -33,6 +33,8 @@ import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidel
 // scope, so these hooks always read the one live registry and still behave exactly
 // like the native code when installKitSubs has not been applied.
 
+import { SPRINKLER, beginSprinkler, stepSprinkler } from './kit-sprinkler.mjs';
+import { AUTOBOMB, startAutobomb, stepAutobomb } from './kit-autobomb.mjs';
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
 const frames = (v) => (v == null ? null : v * FRAME);
@@ -201,7 +203,7 @@ export const BOMB = {
   status: 'upstream-generic',
 };
 
-export const KIT_SUBS = { suction: SUCTION, curling: CURLING, bomb: BOMB };
+export const KIT_SUBS = { suction: SUCTION, curling: CURLING, sprinkler: SPRINKLER, autobomb: AUTOBOMB, bomb: BOMB };
 
 // ---- Registry ----------------------------------------------------------------
 
@@ -410,6 +412,12 @@ export function kitBombAttach(SUB, projectiles, actor, release) {
     ? { ...resolveSubForThrow(actor, holdSeconds, SUB), charge: release.id === sub.id ? (release.__charge ?? 0) : 0 }
     : resolveSubForThrow(actor, holdSeconds, SUB);
   if (!b || !resolved) return null;
+  // One physical Sprinkler at a time per owner, on the same native bomb list.
+  if (sub.mode === 'sprinkler') for (let i=projectiles.bombs.length-2;i>=0;i--) {
+    const previous=projectiles.bombs[i];
+    if (previous.owner!==actor || previous.s3Sub?.mode!=='sprinkler') continue;
+    projectiles._releaseBomb(previous);projectiles.bombs.splice(i,1);
+  }
   b.s3Sub = sub;
   b.s3Resolved = resolved;
   b.s3Charge = resolved.charge;
@@ -438,7 +446,7 @@ export function kitBombAttach(SUB, projectiles, actor, release) {
 export const NATIVE_STORM_GRAVITY = 24;
 export function kitBombGravity(SUB, b) {
   if (b?.kind === 'storm') return NATIVE_STORM_GRAVITY;
-  if (b?.s3Mode === 'stuck') return 0;
+  if (b?.s3Mode === 'stuck' || b?.s3Mode === 'sprinkling' || b?.s3Mode === 'chasing') return 0;
   const spec = presentedOf(b)?.spec;
   if (!spec) return SUB.bomb.gravity;
   if (b?.s3Mode === 'rolling') return Number.isFinite(spec.groundGravity) ? spec.groundGravity : SUB.bomb.gravity;
@@ -464,6 +472,25 @@ export function kitBombContact(SUB, b, hit, dt) {
   const n = hit.normal;
   const spec = r.spec;
 
+  if (spec.mode === 'chase') {
+    if (b.s3Mode === 'chasing') {
+      b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
+      if (Math.abs(n.y)<.6) b.vel.set(0,0,0);
+      return true;
+    }
+    if (n.y<.6) return false;
+    b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
+    b.vel.set(0,0,0);b.fuse=-1;b.s3Mode='chasing';
+    startAutobomb(b,spec);return true;
+  }
+  if (spec.mode === 'sprinkler') {
+    if (b.s3Mode === 'sprinkling') return true;
+    b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
+    b.vel.set(0,0,0);b.fuse=-1;b.s3Mode='sprinkling';
+    b.s3SurfaceNormal ||= new b.pos.constructor();b.s3SurfaceNormal.copy(n);
+    beginSprinkler(b,n,spec);
+    return true;
+  }
   if (spec.mode === 'stick') {
     const onFloor = n.y > 0.6;
     const onWall = Math.abs(n.x) > 0.5 || Math.abs(n.z) > 0.5;
@@ -519,6 +546,11 @@ export function kitBombContact(SUB, b, hit, dt) {
 // is a real THREE.Vector3 because the native PaintSystem reads vector fields.
 // Allocated once per bomb and reused; no per-frame allocation.
 export function kitBombTrail(SUB, b, paint, projectiles) {
+  if (b?.s3Mode === 'chasing') { stepAutobomb(b, G_REF); return 0; }
+  if (b?.s3Mode === 'sprinkling') {
+    if (b.owner?.alive === false) return 0;
+    return stepSprinkler(b, paint, projectiles, G_REF, PHYSICS_REF, PLAYER_REF);
+  }
   const r = resolvedOf(b);
   if (!r || b.s3Mode !== 'rolling') return 0;
   const spec = r.spec;
@@ -551,6 +583,13 @@ export function kitBombTrail(SUB, b, paint, projectiles) {
   const area = paint.splat(b.s3TrailPoint, radius, b.team, { seed: Math.random(), claimOwner: b.owner });
   if (area > 0) b.owner?.addTurf?.(area);
   return area;
+}
+
+// The owner can be splatted, or a game effect can explicitly retire a placed
+// Sprinkler, without triggering the generic Splat Bomb explosion.
+export function kitBombRetire(b) {
+  return !!b && (b.s3Resolved?.spec?.mode==='sprinkler' || b.s3GhostResolved?.spec?.mode==='sprinkler')
+    && (b.owner?.alive===false || b.s3Destroyed===true);
 }
 
 // Denominator for the native fuse progress/beep curve. One native decrement, so
@@ -669,7 +708,7 @@ export function kitBombDamageMin(SUB, b, fallback) {
 // Bounded: a peer's packet may only name a sub that exists in this module's own
 // allowlist, and the charge may only be a finite number. Nothing off the wire
 // reaches `SUB` as a lookup key.
-const PACKET_SUB_IDS = Object.freeze(['suction', 'curling']);
+const PACKET_SUB_IDS = Object.freeze(['suction', 'curling', 'sprinkler', 'autobomb']);
 
 const packetSubId = (raw) => (typeof raw === 'string' && raw.length <= 16 && PACKET_SUB_IDS.includes(raw) ? raw : null);
 

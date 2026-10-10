@@ -175,3 +175,20 @@ test('landing uses the existing bounded jump buffer, without extending its deadl
   assert.equal(dodges(h), 1, 'landing next tick consumes existing jump buffer');
   h.frame(STEP * 10); assert.equal(dodges(h), 1);
 });
+
+test('ordinary landing jump keeps its original buffer and expiry', async () => {
+  for (const expired of [false, true]) {
+    const h = await boot({ weapon: 'shooter' }), set = device(h, 'keyboard');
+    h.actor.grounded = false; h.actor.coyote = 0;
+    h.actor._integrate = () => { h.actor.grounded = false; };
+    set('jump', true); h.frame(); set('jump', false);
+    assert.equal(h.actor.character.events.filter(e => e[0] === 'jump').length, 0);
+    if (expired) for (let i = 0; i < 30; i++) h.frame();
+    h.actor._integrate = () => { h.actor.grounded = true; };
+    h.frame(); h.frame();
+    assert.equal(h.actor.character.events.filter(e => e[0] === 'jump').length, expired ? 0 : 1);
+    assert.equal(dodges(h), 0, 'ordinary jump never becomes a dodge');
+    for (let i = 0; i < 10; i++) h.frame();
+    assert.equal(h.actor.character.events.filter(e => e[0] === 'jump').length, expired ? 0 : 1);
+  }
+});

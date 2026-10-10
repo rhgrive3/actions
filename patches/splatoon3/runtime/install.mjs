@@ -144,6 +144,7 @@ export function install(profile) {
   installWeaponsFidelity(api, profile);
   // #387: after the damage route is final, add the Roller body-contact response (model, 未確認 units).
   installRollerBodyKnockback(api, profile);
+  // PR1188: sourced Roller body-contact knockback on the body-owning client.
   installSuperJumpTargetNotification(api);
   installMuzzleFeedback(api);
   installMinimapDirty(api);

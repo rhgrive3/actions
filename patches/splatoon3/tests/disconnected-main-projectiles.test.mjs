@@ -31,7 +31,7 @@ for(const kind of ['shooter','dualies','splatling','roller','slosher','blaster',
 test('#955 detached queues and finite ghost beams retire without adopting ghost damage or removing another owner',()=>{
  const a={},b={},mesh={visible:true},control={owner:b},beam={mesh};
  const P={list:[],pool:[],inkFlight:{drops:[{owner:a,ghost:true},control],pool:[]},_fidelityChargerFlights:[{owner:a,ghost:true,beam}],beams:[beam],beamPool:[],
- _s3DetachedWallDrops:[{owner:a},control],_s3TimedBlasterDrops:[{owner:a},control],_s3ChargerWallDrops:[{owner:a},control],s3BlastQueue:[{p:{owner:a}},{p:{owner:b}}]};
+ _s3DetachedWallDrops:[{owner:a},control],_s3SplashDrops:[{owner:a},control],_s3ChargerWallDrops:[{owner:a},control],s3BlastQueue:[{p:{owner:a}},{p:{owner:b}}]};
  retireDisconnectedMainProjectiles(P,a,{ghostOnly:true});assert.equal(P.inkFlight.drops.length,1);assert.equal(P._fidelityChargerFlights.length,0);assert.equal(P.beams.length,0);assert.equal(mesh.visible,false);
- retireDisconnectedMainProjectiles(P,a);for(const k of ['_s3DetachedWallDrops','_s3TimedBlasterDrops','_s3ChargerWallDrops'])assert.deepEqual(P[k],[control]);assert.equal(P.s3BlastQueue.length,1);
+ retireDisconnectedMainProjectiles(P,a);for(const k of ['_s3DetachedWallDrops','_s3SplashDrops','_s3ChargerWallDrops'])assert.deepEqual(P[k],[control]);assert.equal(P.s3BlastQueue.length,1);
 });

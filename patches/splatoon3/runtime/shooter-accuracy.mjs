@@ -1,4 +1,5 @@
-// Authoritative Splattershot outer-shot probability, in fixed 60 Hz frame units.
+// Shooter/Dualies angular-bias state, in fixed 60 Hz frame units.
+// Bias is not an outer-reticle probability; see weapon-accuracy.mjs.
 // Pinned Leanny 11.3.0 WeaponShooterNormal (sha256 dfca9f45...) WeaponParam supplies:
 // Stand_DegBiasMin=.01, Stand_DegBiasKf=.01, Stand_DegBiasDecrease=.015 (per frame;
 // the unit is not stated in the file, per-frame agrees with Inkipedia 1.5%/F),
@@ -11,7 +12,10 @@ export const OUTER_CHANCE_CAP = .25; // 未確認 (Inkipedia only)
 export const RECOVERY_GATE_FRAMES = 6; // 未確認 (Inkipedia only)
 export class ShooterAccuracy {
   constructor(param = {}, hz = 60) {
+    if (!Number.isFinite(hz) || hz <= 0) throw new RangeError('Accuracy frequency must be positive');
     this.hz = hz;
+    this.maximum = Number.isFinite(param.Stand_DegBiasMax) ? param.Stand_DegBiasMax : .25;
+    this.recoveryFrames = Number.isFinite(param.RepeatFrame) ? Math.max(0, param.RepeatFrame) : 6;
     this.minimum = Number.isFinite(param.Stand_DegBiasMin) ? param.Stand_DegBiasMin : .01;
     this.step = Number.isFinite(param.Stand_DegBiasKf) ? param.Stand_DegBiasKf : .01;
     this.recovery = Number.isFinite(param.Stand_DegBiasDecrease) ? param.Stand_DegBiasDecrease : .015;
@@ -22,7 +26,8 @@ export class ShooterAccuracy {
     this.sinceShotFrames = 0;
   }
   advance(dt) {
-    const frames = Math.max(0, dt) * this.hz;
+    if (!Number.isFinite(dt) || !(dt > 0)) return;
+    const frames = dt * this.hz;
     const previous = this.sinceShotFrames;
     this.sinceShotFrames += frames;
     const after = Math.max(0, this.sinceShotFrames - RECOVERY_GATE_FRAMES);
@@ -30,13 +35,12 @@ export class ShooterAccuracy {
     if (after > before) this.stand = Math.max(this.minimum, this.stand - (after - before) * this.recovery);
   }
   chance(grounded, jumpAgeSeconds) {
-    if (!grounded) return this.jumpBias;
     if (Number.isFinite(jumpAgeSeconds)) {
       const f = jumpAgeSeconds * this.hz;
       if (f <= this.jumpStart) return this.jumpBias;
       if (f < this.jumpEnd) return this.jumpBias + (this.stand - this.jumpBias) * (f - this.jumpStart) / (this.jumpEnd - this.jumpStart);
     }
-    return this.stand;
+    return Number.isFinite(jumpAgeSeconds) || grounded ? this.stand : this.jumpBias;
   }
   shot(grounded, jumpAgeSeconds) {
     const p = this.chance(grounded, jumpAgeSeconds);

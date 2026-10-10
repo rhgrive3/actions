@@ -3,7 +3,7 @@ import {replaceOnce} from './input-adapter.mjs';
 export function adaptTouchGyroOwner(rel, code) {
   if(rel==='src/core/mobile.js')return replaceOnce(code,
     '  onDeviceChange() { this._syncVisible(); }',
-    '  onDeviceChange() { this.gyro?.discard?.(); this.gyro?.resync?.(); this._syncVisible(); }',
+    '  onDeviceChange() { this.gyro?.discard?.(); this.gyro?.resync?.(); this._gyroOwnerAtReset = this.owner?.lastDevice; this._gyroOwnerResetSerial = (this._gyroOwnerResetSerial || 0) + 1; this._syncVisible(); }',
     'rebase mobile gyro at the device transition');
   if(rel!=='src/game/player.js')return code;
   // Existing #276 may precede this adapter: a non-owning phone gyro must not

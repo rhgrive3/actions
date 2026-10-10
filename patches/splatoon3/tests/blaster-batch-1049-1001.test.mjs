@@ -25,8 +25,12 @@ test('#1049 Blaster flight splash consumes the sourced 3-to-10 drop-height regim
   assert.equal(blasterSplashDropBand(contract, 3), 'max');
   assert.equal(blasterSplashDropBand(contract, 4), 'transition');
   assert.equal(blasterSplashDropBand(contract, 5), 'transition');
-  assert.equal(blasterSplashDropBand(contract, 10), 'transition');
-  assert.equal(blasterSplashDropBand(contract, 10.001), 'none');
+  assert.equal(blasterSplashDropBand(contract, 10), 'min');
+  // PR1188: DepthMinDropHeight is the end of the depth-scale transition, not a
+  // cut-off; a splash that falls farther still paints at DepthScaleMin.
+  assert.equal(blasterSplashDropBand(contract, 10.001), 'min');
+  assert.equal(blasterSplashDropBand(contract, 40), 'min');
+  assert.equal(blasterSplashDropBand(contract, -1), 'none');
 });
 
 test('#1009 flight-splash wall contact keeps its own nested S3 wall state', () => {

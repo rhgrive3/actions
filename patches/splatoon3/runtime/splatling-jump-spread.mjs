@@ -71,9 +71,8 @@ export function installSplatlingJumpSpread({ Actor, WeaponRunner, on }) {
     if (recovery === null || !Number.isFinite(weapon.spreadAir) || !Number.isFinite(weapon.spreadGround)) {
       return spread.call(this, weapon);
     }
-    const first = weapon.spreadFirst ?? 0.45;
-    const bloom = first + (1 - first) * this.bloom;
-    const base = weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery;
-    return base * bloom;
+    // This is the outer guide envelope; the per-shot source bias is sampled
+    // after admission. Generic shooter bloom must not shrink this a second time.
+    return weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery;
   };
 }

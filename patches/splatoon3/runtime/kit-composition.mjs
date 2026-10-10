@@ -1,10 +1,28 @@
 // One shared registry feeds menus, actor-local gear copies, bots and HUD.
 // Verified base rows: Leanny/splat3@7280ff9c, data/mush/1130/WeaponInfoMain.json.
 // Mechanics retain their separately declared calibrations; this maps kit identity.
+// PR1188: Splattershot is 200p in 11.3.0. Ver.7.2.0 raised it 200 -> 210 but
+// Ver.11.1.0 (official notes) lowered it 210 -> 200 again; the pinned 1110 and
+// 1130 WeaponInfoMain rows agree. #1132 had stopped at 7.2.0.
 export const VERIFIED_KITS = Object.freeze({
-  shooter: Object.freeze({ main: 'Shooter_Normal_00', sub: 'suction', special: 'trizooka', specialCost: 210 }),
+  shooter: Object.freeze({ main: 'Shooter_Normal_00', sub: 'suction', special: 'trizooka', specialCost: 200 }),
   roller: Object.freeze({ main: 'Roller_Normal_00', sub: 'curling', special: 'bubbler', specialCost: 180 }),
   charger: Object.freeze({ main: 'Charger_Normal_00', sub: 'bomb', special: 'inkVac', specialCost: 190 }),
+});
+// PR1188: kits whose 11.3.0 sub or special already has implemented INKWAVE
+// mechanics take that verified slot; the other slot (whose mechanic is not
+// implemented: Autobomb, Sprinkler, Wave Breaker, Crab Tank, Triple Inkstrike)
+// stays the original INKWAVE one and is labelled. A special cost belongs to the
+// special it charges, so it is only adopted together with a verified special.
+export const PARTIAL_KITS = Object.freeze({
+  blaster: Object.freeze({ main: 'Blaster_Middle_00', sub: 'autobomb', special: 'bubbler',
+    specialCost: 190, missing: Object.freeze({}) }),
+  dualies: Object.freeze({ main: 'Maneuver_Normal_00', sub: 'suction',
+    missing: Object.freeze({ special: 'SpChariot (Crab Tank)', specialCost: 200 }) }),
+  slosher: Object.freeze({ main: 'Slosher_Strong_00', sub: 'bomb',
+    missing: Object.freeze({ special: 'SpTripleTornado (Triple Inkstrike)', specialCost: 220 }) }),
+  splatling: Object.freeze({ main: 'Spinner_Standard_00', sub: 'sprinkler',
+    missing: Object.freeze({ special: 'SpShockSonar (Wave Breaker)', specialCost: 210 }) }),
 });
 export function selectedSub(actorOrWeapon, SUB) {
   const w = actorOrWeapon?.weapon || actorOrWeapon;
@@ -26,8 +44,13 @@ export function composeKits({ WEAPONS, SUB, SPECIALS }) {
     const cost = SUB[kit.sub].inkCost ?? SUB[kit.sub].inkCostFallback;
     if (!Number.isFinite(cost)) throw new Error(`Kit cost unresolved: ${kit.sub}`);
   }
+  for (const [main, partial] of Object.entries(PARTIAL_KITS)) {
+    if (!WEAPONS[main]) continue;
+    if ((partial.sub && !SUB[partial.sub]) || (partial.special && !SPECIALS[partial.special]))
+      throw new Error(`Kit registration incomplete: ${main}/${partial.sub || '-'}/${partial.special || '-'}`);
+  }
   for (const [main, w] of Object.entries(WEAPONS)) {
-    const kit = VERIFIED_KITS[main];
+    const kit = VERIFIED_KITS[main], partial = PARTIAL_KITS[main];
     if (kit) Object.assign(w, { sub: kit.sub, special: kit.special, specialCost: kit.specialCost,
       kitReference: kit.main, kitStatus: 'verified-base-kit' });
     else if (w.kitStatus === 'opt-in-inkwave-support-approx-main' && w.id === 'support') {
@@ -47,6 +70,8 @@ const icon = body => `<svg class="iw-ico" viewBox="0 0 64 64" aria-hidden="true"
 const subIcons = {
   suction: icon('<ellipse cx="32" cy="49" rx="23" ry="8"/><path d="M18 43V26Q18 12 32 12Q46 12 46 26V43Z"/><rect x="27" y="5" width="10" height="12" rx="3"/>'),
   curling: icon('<ellipse cx="32" cy="40" rx="24" ry="12"/><path d="M10 40V47Q32 61 54 47V40Z"/><path d="M24 29V15H42V22H32V29Z"/>'),
+  sprinkler: icon('<path d="M28 8H36V29H28Z"/><circle cx="32" cy="35" r="12"/><path d="M20 33L6 20M44 33L58 20M32 48V60"/>'),
+  autobomb: icon('<rect x="18" y="14" width="28" height="30" rx="6"/><circle cx="27" cy="26" r="3"/><circle cx="38" cy="26" r="3"/><path d="M21 44L15 57M43 44L49 57"/>'),
 };
 const specialMetadata = {
   trizooka: { name:'Trizooka', blurb:'Fire up to three volleys of spiraling ink projectiles.',

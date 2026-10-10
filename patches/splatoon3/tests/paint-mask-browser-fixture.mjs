@@ -135,6 +135,50 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   for (const name of Object.keys(families)) check(rows.some(row => row.familyUnsupported[name] > 0 && (name !== 'drips' || row.wall)),
     `independently reverted ${name} must expose unsupported cells`);
   check(rows.length === 108, 'all shape kinds, seeds, wall/floor and growth phases exercised');
+  const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail);
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, rows,
-    cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0) };
+    cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
+    body };
+}
+
+// PR1188: bidirectional CPU-grid / GPU-body agreement. The GPU program is the
+// emitted shader in its native body-only mode (vGrow.z > 1.5, fully grown)
+// with only the AA output replaced by the zero-crossing of the body SDF. Every
+// gameplay cell centre inside the reach box is asked of both sides.
+function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
+  const bodyShader = nativeShader.replace(tx, 'float tx = 1.0 / 64.0;')
+    .replace(tail, '  gl_FragColor = vec4(sd < 0.0 ? 1.0 : 0.0, abs(sd) < 1e-3 ? 1.0 : 0.0, 0.0, 1.0);');
+  const gpu = program(bodyShader), rows = [];
+  const size = 32, cell = 0.25, n = size / cell;
+  const face = { atlas: { x: 0, y: 0, pad: 2, ppm: 64 }, su: size, sv: size, nu: n, nv: n, cu: cell, cv: cell,
+    grid: 0, wall: false, turf: true };
+  const cases = [];
+  for (const [kind, sa] of [[0, 0.7], [2, 0], [3, 0], [4, 0], [4, 0.32], [5, 0], [5, 0.32], [5, 0.2743], [5, 3.2]])
+    for (const R of [1.62, 2.43, 3.2]) for (const seed of [0.11, 0.5, 0.93]) cases.push({ kind, sa, R, seed });
+  for (const { kind, sa, R, seed } of cases) {
+    paint.grid = new Uint8Array(n * n); paint.dead = new Uint8Array(n * n); paint.counts = [0, 0];
+    paint._paintOwnershipOrder = new Uint32Array(n * n);
+    const sdu = sa ? 0.6 : 0, sdv = sa ? 0.8 : 0, lu = 16, lv = 16;
+    paint._cpuSplat(face, lu, lv, R, 0, seed, sdu, sdv, sa, kind);
+    const points = [], index = [];
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const x = (i + 0.5) * cell - lu, y = (j + 0.5) * cell - lv;
+      if (Math.hypot(x, y) > R * (1 + sa) * 1.6) continue;
+      points.push(x, y, 0); index.push(j * n + i);
+    }
+    const pixels = query(gpu, points, [R, 0, Math.fround(seed), 2 * kind], [3, 1, 2, 0], [sdu, sdv, sa]);
+    let cpu = 0, gpuCells = 0, cpuOnly = 0, gpuOnly = 0, ties = 0;
+    for (let k = 0; k < index.length; k++) {
+      const owned = paint.grid[index[k]] === 1, visible = pixels[k * 4] === 255, tie = pixels[k * 4 + 1] === 255;
+      if (owned) cpu++; if (visible) gpuCells++;
+      if (owned !== visible) { if (tie) ties++; else if (owned) cpuOnly++; else gpuOnly++; }
+    }
+    rows.push({ kind, sa, R, seed, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties });
+  }
+  const result = { rows, cpuOnly: rows.reduce((t, r) => t + r.cpuOnly, 0), gpuOnly: rows.reduce((t, r) => t + r.gpuOnly, 0),
+    ties: rows.reduce((t, r) => t + r.ties, 0), cpuCells: rows.reduce((t, r) => t + r.cpu, 0), gpuCells: rows.reduce((t, r) => t + r.gpu, 0) };
+  // Only float32 ties on the SDF zero crossing (|sd| < 1e-3 WU, 1/16 texel) may disagree.
+  check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
+  check(rows.length === 81 && result.cpuCells > 0, 'all body kinds, smears, radii and seeds exercised');
+  return result;
 }
