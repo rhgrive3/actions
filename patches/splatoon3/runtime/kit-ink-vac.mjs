@@ -63,6 +63,9 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   actorContactDamagePerSecond: 90,
   actorInkFractionPerSecond: .12,
   actorMoveSpeedScale: .6,
+  // #1149: PoisonMistForPlayer.SideStepInkConsumeRate 3.5 (Leanny/splat3 @7280ff9c,
+  // WeaponSpBlower). Applied to the Dualies dodge-roll admission cost only.
+  sideStepInkConsumeRate: 3.5,
   actorSuppressionStatus: 'engineering calibration: 12% tank/s and 60% movement cap; sparse S3 PoisonMistForPlayer data omits drain/speed defaults; retail magnitudes unverified',
   rawToHp: RAW_TO_HP,
   framesPerSecond: 60,
@@ -488,6 +491,12 @@ export function inkVacActorContact(owner, victim) {
 function actorInVortex(victim) {
   return !victim.remote && victim.alive && (api.G.actors || []).some(owner => inkVacActorContact(owner, victim));
 }
+// #1149: the Dualies dodge-roll cost (rollInk) is multiplied by the sourced
+// SideStepInkConsumeRate while the Dualies owner is inside a live hostile cone.
+// Admission-time only, matching the existing one-time rollInk payment.
+export function inkVacSideStepScale(actor) {
+  return actor?.weapon?.kind === 'dualies' && actorInVortex(actor) ? INK_VAC_CALIBRATION.sideStepInkConsumeRate : 1;
+}
 function suppressMovement(actor) {
   if (!actorInVortex(actor)) return;
   const base = actor.form === 'squid'
@@ -740,6 +749,25 @@ export function installKitInkVac(context, _profile) {
       proto[key] = key === '_horizontal' ? function (...args) {
         const result = original.apply(this, args); suppressMovement(this); return result;
       } : function (...args) { suppressMovement(this); return original.apply(this, args); };
+    }
+    // #1149: a Dualies dodge roll admitted inside a hostile cone costs
+    // rollInk x SideStepInkConsumeRate. The base method checks and pays rollInk,
+    // so the wrapper raises that check and payment by the exact surcharge and
+    // restores ink on refusal. Only Dualies owners are affected.
+    const runner = api.WeaponRunner?.prototype;
+    if (runner && typeof runner.tryDodge === 'function' && !Object.hasOwn(runner, INSTALL)) {
+      Object.defineProperty(runner, INSTALL, { value: true });
+      const dodge = runner.tryDodge;
+      runner.tryDodge = function (...args) {
+        const a = this.a, w = a?.weapon, scale = inkVacSideStepScale(a);
+        if (!(scale > 1) || !(w?.rollInk > 0)) return dodge.apply(this, args);
+        const before = a.ink;
+        a.ink = before - w.rollInk * (scale - 1);
+        let accepted = false;
+        try { accepted = dodge.apply(this, args); }
+        finally { if (!accepted) a.ink = before; }
+        return accepted;
+      };
     }
     proto._startSpecial = function () {
       if (this.weapon.special !== VAC_ID) return startSpecial.call(this);

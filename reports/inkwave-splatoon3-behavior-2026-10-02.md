@@ -2699,3 +2699,27 @@ applying to a victim who falls or drowns after an RP splat is the basis for the 
 - **Reproduction:** ink a vertical wall, enter wall swim, admit a Super Jump while still attached, then sample each fixed tick while `superJumpState.phase === 'charge'`. On HEAD the squid pivot's world orientation rotated 0.00826 rad from the pre-admission wall-cling pose at 30 Hz (INKWAVE's own deviation, not a reference value).
 - **Play impact:** before the fix the squid visibly turned away from the wall at admission while the actor was still held against it; with the fix the wall basis holds through the supported charge and releases when support is lost or on launch.
 - **Confirmation status:** logic regression only (`patches/splatoon3/tests/issue-904-wall-superjump-charge.test.mjs`, real Actor/Character, fixed clock at 30/60/120 Hz). The 30 Hz pose test fails on HEAD and passes with the fix; the support-loss test is a guard and passes on HEAD too. Neighbouring super jump and wall suites pass. **Unverified:** the official Switch joint curve and angle at admission, the blend frame at charge-to-flight against a clip, live two-browser remote timing (remote uses the existing climb flag and normal; no packet field was added), and support loss during live play.
+## #1149 follow-up: Dualies dodge roll inside a hostile Ink Vac cone (2026-10-10)
+
+Reference: Splatoon 3 Ver. 11.3.0, Splat Charger / Ink Vac, Dualies dodge roll (sidestep), no gear, a live
+non-firing enemy inside the existing 3D vortex with unobstructed LOS. Primary extraction, pinned to
+Leanny/splat3 @7280ff9c: [WeaponSpBlower](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json).
+`GameParameters.InhaleParam.PoisonMistForPlayer.SideStepInkConsumeRate = 3.5` (fetched 2026-10-10). The same
+extraction has no ordinary tank-drain or movement field inside `PoisonMistForPlayer`.
+
+INKWAVE: `patches/splatoon3/runtime/kit-ink-vac.mjs` `inkVacSideStepScale` and the `WeaponRunner.prototype.tryDodge`
+wrapper in `installKitInkVac`. A Dualies owner that is inside a live hostile cone (`inkVacActorContact`: hostile,
+alive, not remote, unobstructed) pays `rollInk x 3.5` at dodge admission. The check and payment are both raised by
+the surcharge, and ink is restored on refusal. Outside the cone, for allies, behind solid cover, after release, and
+for non-Dualies victims, the cost stays at `rollInk` (7 in the public config).
+
+Reproduction: Charger with Ink Vac aims at a stationary Dualies enemy in the cone for 30 ticks, at 30/60/120 Hz
+outer frames. The victim has 24.4 ink: the dodge is refused. At 24.5 it is accepted and ink becomes 0. Regression:
+`patches/splatoon3/tests/issue-1149-sidestep-vortex.test.mjs`. Before this change, 24.4 ink was accepted (normal cost).
+
+Interpretation and status: the 3.5 rate is sourced. Mapping it onto the INKWAVE Dualies dodge roll is an INKWAVE
+interpretation of the field name. It is applied once at admission, matching the existing one-time `rollInk` payment.
+Retail behaviour is unverified for: whether the rate is continuous or admission-only, the mist linger after leaving the
+cone, and progressive levels. Drain of 12% tank/s and the 60% movement cap remain INKWAVE engineering calibration
+(`actorSuppressionStatus` in the calibration object), not Nintendo magnitudes. Contact-charge 1.5/frame (90/s)
+remains supported by `ReceiveDamageForPlayer = 15`. Nothing here is a physical-device or retail match claim.
