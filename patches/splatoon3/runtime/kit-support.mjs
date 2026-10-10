@@ -224,17 +224,28 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
   NetMatch.prototype._play=function(from,e) {
     if(e?.[1]!=='ks')return play.call(this,from,e);
     const kind=e[2],owner=this.byNid?.get(e[3]);
+    // Production network-replication appends authoritative tick and transport
+    // sequence to every _rec event (r=2). A legacy fixture has no trailer.
+    // Reject malformed/truncated/spoofed envelope lengths before using fields.
+    const baseLength=kind==='p'?12:kind==='m'?7:kind==='c'?9:0;
+    if(!baseLength || e.length!==baseLength && e.length!==baseLength+2)return;
+    if(e.length===baseLength+2) {
+      const tick=e[baseLength], transportSeq=e[baseLength+1];
+      if(!Number.isSafeInteger(tick) || tick<0 || !seqOK(transportSeq) ||
+         e._netSeq!==undefined && e._netSeq!==transportSeq ||
+         e._netTick!==undefined && e._netTick!==tick)return;
+    }
     if(!owner?.remote || owner.owner!==from || !seqOK(e[4]) ||
        this.match!==G.match || !aliveInMatch(G))return;
     const record=last.get(owner)||{p:0,c:0};
     if(kind==='p') {
-      if(owner.weapon?.sub!=='pointSensor' || e.length!==12 || !finiteTriplet(e,5) ||
+      if(owner.weapon?.sub!=='pointSensor' || !finiteTriplet(e,5) ||
          !finiteTriplet(e,8) || e[11]!==life(owner) || e[4]<=record.p ||
          Math.hypot(e[5]-owner.pos.x,e[6]-owner.pos.y,e[7]-owner.pos.z)>10)return;
       record.p=e[4];last.set(owner,record);
       spawnPointSensor(owner,G.projectiles,G,THREE,Hit,true,[...e.slice(5,11),e[4]]);
     } else if(kind==='m') {
-      if(e.length!==7 || owner.weapon?.sub!=='pointSensor' || !Number.isSafeInteger(e[5]))return;
+      if(owner.weapon?.sub!=='pointSensor' || !Number.isSafeInteger(e[5]))return;
       const target=this.byNid?.get(e[5]);
       const sensor=G.projectiles?._s3SupportSensors?.find(s=>s.owner===owner&&s.seq===e[4]);
       if(!sensor || sensor.seen.has(target) || !target || target.team===owner.team ||
@@ -242,7 +253,7 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
          !pointSensorContact(target,sensor.pos,POINT_SENSOR.radiusWorld+3))return;
       sensor.seen.add(target);pointSensorMark(target,owner.team,G.time);
     } else if(kind==='c') {
-      if(owner.weapon?.special!=='tacticooler' || e.length!==9 || !finiteTriplet(e,5) ||
+      if(owner.weapon?.special!=='tacticooler' || !finiteTriplet(e,5) ||
          e[8]!==life(owner) || e[4]<=record.c ||
          Math.hypot(e[5]-owner.pos.x,e[6]-owner.pos.y,e[7]-owner.pos.z)>10)return;
       record.c=e[4];last.set(owner,record);
