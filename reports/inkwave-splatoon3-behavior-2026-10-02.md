@@ -3559,3 +3559,13 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - 再現操作: Bucket Slosher の Unit 1 先頭弾を実 `Projectiles` で発射し、`DistanceXZNear` の水平距離で着弾させる。落下 0 と、`ScaleStartFallDistance` から `ScaleEndFallDistance` の中間の落下で比較する（`patches/splatoon3/tests/issue-1140-slosher-impact-drop.test.mjs`）。
 - プレイへの影響: 高所からの Bucket Slosher の地形塗りは、0.2 倍の固定換算を外したため広がる。0.2 の値には源データの根拠がなかった。足元塗り（NearestParam）は変更なし（`slosher-nearest-paint.mjs` に落下項はない）。70→50 の落下ダメージ減衰も変更なし。
 - 確認状態: 単独のロジック試験のみ（実 `Projectiles` と fixture による node 試験）。Splatoon 3 の実機比較はしていない。未確認: Nintendo の当たり・塗りの縮小曲線、極端な高さでの消失（現在は指数減衰で 0 に到達しない）、INKWAVE 単位と Splatoon 3 の縮尺（profile の 1 は未検証）、30/60/120 render FPS での同一性（半径関数は age と位置のみに依存するが、別途測定していない）、場の当たり判定の縮小（既存試験は当たりの player 側のみ）。
+## 2026-10-10 — #966 Tidal Slam の衝突タイミング（約55F → 約70F の目標）
+
+- 参照版: Splatoon 3 Ver.11.3.0（Issue の比較版）。比較対象は本家 Triple Splashdown の衝突タイミングで、INKWAVE の Tidal Slam は独自スペシャルであり、拳・判定・無敵遷移は等価実装ではない（`patches/splatoon3/README.md`、調査台帳 A11）。
+- 本家の根拠: 任天堂公式の公開資料に Triple Splashdown の衝突フレームは無い。Leanny/splat3 固定コミット `7280ff9c` の抽出にも無い（`reference/curated-numbers.json` の `special.slam` は値なし、`profile.json` の未確認注記）。本 Issue の 70F は本プロジェクトの目標値であり、本家の公開値ではない。公開検索で得たのは Splatoon 2 の Splashdown（溜め 1.2 秒など）のみで、S3 の衝突 tick は確認できなかった。
+- INKWAVE 実装箇所: `patches/splatoon3/profile.json` の `specials.slam.hang` を 0.25 → 0.5 秒（+15F）。`runtime/install.mjs` が `SPECIALS.slam` へ反映し、`inkwave-public/src/game/actor.js` の rise → hang → fall と `_slamImpact` が同じ固定 tick で塗り・ダメージ・Slam 終了を行う（本体ファイルは変更しない）。`reference/numeric-status.json` に `specials.slam.hang` を記録。
+- 再現操作: 平地で Tidal Slam を発動し、上昇・滞空・落下の後に床へ接地する。
+- テスト結果（固定クロック、ロジック単独）: 60Hz の衝突 tick は 70（main 相当の 0.25 秒では 55）。30/60/120Hz 描画で同じ衝突 tick。`issue-966-slam-impact.test.mjs` は main の hang で失敗することを確認。
+- 試験の補正: 描画フレームが衝突後に固定 tick を 1 つ余分に進める場合があり、試験の計数と記録が 1 tick ずれていた。ゲーム側の挙動は変えず、試験は衝突までの tick だけを数えるように補正した（`issue-648-tidal-slam-gauge.test.mjs` の HUD trace、`issue-966-slam-impact.test.mjs` の描画間隔テスト）。`special-motion.test.mjs` は衝突が遅れたため、衝突後に早く打ち切らないよう追従させた。
+- プレイへの影響: 落下開始が約0.25秒遅れ、滞空が長くなる。ゲージ・ダメージ・塗り半径・拳の判定は不変。`slam-damage-state` の #573 保護テストは、着地が遅れた分に合わせて「着地で保護が終わり、独立の無敵タイマーは残る」ことを確認する形に更新した。
+- 確認状態: **未確認**。本家の 70F 相当値、Switch 実機での滞空と着地の比較は未実施。70F は本 Issue の目標値として採用したもので、任天堂一致は主張しない。関連テスト 68 件（9 ファイル）と `check-inkwave-patches --quick` は通過。

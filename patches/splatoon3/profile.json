@@ -435,7 +435,8 @@
     },
     "slam": {
       "damageMax": 220,
-      "damageMin": 60
+      "damageMin": 60,
+      "hang": 0.5
     }
   },
   "gear": {
@@ -630,6 +631,7 @@
       "splatling second charge phase interpretation and partial stream duration",
       "ink recovery suppression during stored charge and dry squid",
       "special slam remains INKWAVE original; it is not Triple Splashdown (only the HP endpoints 220/60 follow Inkipedia's S3 Triple Splashdown base damage, community-sourced and not in the pinned extraction; radii, fists, falloff shape and armor are unchanged)",
+      "special slam hang 0.5s (was 0.25s, +15F) is an INKWAVE calibration that places the 60Hz ground-contact impact near the project's 70F target (issue #966); no Nintendo-published Triple Splashdown impact frame is in the pinned extraction, so the 70F target and Switch frame-level parity are unverified",
       "splatling ChargeFrame_Second is interpreted cumulatively (72F total), not added to ChargeFrame_First (48F); actual engine timing requires verification",
       "weapon weight classes and all charging/rolling movement restrictions",
       "Flow action-intensify bonus and gear stacking; fixed run/swim/enemy-ink multipliers remain provisional, not equivalent to confirmed AP",

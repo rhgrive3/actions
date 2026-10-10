@@ -2051,6 +2051,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "specials.slam.hang": {
+    "value": 0.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "gear.runSpeed.0": {
     "value": 1,
     "status": "derived from pinned extracted data; physical scale unverified",
