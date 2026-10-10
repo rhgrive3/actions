@@ -3206,3 +3206,16 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - INKWAVE: `inkwave-public/src/world/paint.js` line 464 gives every wall stamp `dripDur = 1.1 + min(2.2, radius × 1.5)`; the Charger fall stamps (r 0.8–1.2) therefore keep their drip for 2.3–2.9 s and the shock stamp (r 1.8) for 3.3 s, longer than the gameplay path.
 - Status: **not resolved**. The drip-lifetime fix (set the Charger stamp's drip to the remaining path time) was tried and reverted: in the fixture the Charger wall-drop splats return area 0 and are never added to `paint.growing`, so the change could not be exercised by a test. The next step is to confirm, on a real wall with paint surfaces, whether these splats reach `paint.growing` through the #264 and #570 wrappers, then set the drip lifetime there.
 - Unverified: the second-frame and last-min defaults (XarrotD paramtable, medium confidence), the unit of the target speeds, and Switch timing and pixel parity. None of these are resolved by this entry.
+## 2026-10-10 — Sub-cell fine-spatter ownership (#264)
+
+**本家の根拠（未公開の範囲）:** Splatoon 3 Ver. 11.3.0 の公開資料（[Nintendo 更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/kw/Splatoon%203)）は、インクの GPU マスク、セル単位の所有、スパッタの幾何を公開していない。したがって本件の本家比較は「描かれた同チーム色のインクは、移動・補充・ターフ計上に使う権威的な所有と一致しなければならない」という内部整合性の基準に限る。Splatoon 3 のスパッタ形状や数値は一切使っておらず、本家の実測値は **UNKNOWN / unverified**。
+
+**INKWAVE の差分（修正前）:** `inkwave-public/src/world/paint.js` の GLSL は、通常の着弾に対して `h1×2π` の角度、距離 `R×(1.3+1.2·h2)`、半径 `max(R×(0.011+0.02·h3)×fall, texel×0.9)` の細かいスパッタを同チーム色で描く。CPU 所有は `patches/splatoon3/runtime/paint-ownership.mjs` の `cellIsSolidlyVisible` で、セル中心と内側4点の5サンプルのみを判定していた。本番の CPU セルは 0.25 m であり、半径 0.03〜0.08 m のドットは5サンプルの間に入り込んで所有されなかった。
+
+**再現操作（一時 probe、未コミット）:** 本番の `PaintSystem`（セル 0.25、`fixture` の production composition）で、平らな床に `kind: 'bomb'`、`seed: 0.5`、`R: 2.7` を着弾させ、成長完了（31 tick、`growing` が空）まで進める。bomb の行 `[10,12,14,5]` の14個のスパッタについて、ドット中心のセルを確認した。修正前は、14個すべてでドット中心のセルが同チーム所有ではなかった。セルを 0.125 m にすると所有セルが現れ、欠落が解像度依存であることを確認した。
+
+**修正:** `cellIsSolidlyVisible` に、`sa <= 0` かつ半径が半セル（`max(cu, cv)/2`）未満の type-1 スパッタに限り、中心を含むセルを所有とする規則を追加した。大きいドットと引き伸ばし（`sa > 0`）の種類は従来の5サンプル規則のまま。ターフ計上は所有セル1つにつき `cu×cv`（0.0625 m²）増える。`inkwave-public/` は変更していない。
+
+**確認状態:** `patches/splatoon3/tests/issue-264-subcell-spatter-owner.test.mjs` 2/2 通過。規則を一時的に無効にすると、1件目（14個のスパッタ中心セルがすべて所有されること）が失敗することを確認した（その後復元）。既存の近傍試験15ファイル（issue-264 の temporal/authority/score-boundaries/additional/hash/wall、turf-projected-area、projectile-paint-radius、issue-289、issue-803、issue-979、roller-foot、weapon-paint-inertia、network paint-canonical-order）は計90件すべて通過。これらはロジック単独の測定であり、ブラウザの WebGL 実描画、物理 GPU、Switch の画素一致の証拠ではない。
+
+**未解決・残件（未確認）:** (1) サテライト（type 2、楕円）と引き伸ばし（`sa > 0`）の極小ドットは、従来の5サンプル規則のまま。(2) 既存の browser probe（`paint-mask-browser-fixture.mjs`）は「CPU所有セル ⊆ GPU可視」の向きのみを検証し、今回の中心セル規則とは厳密には食い違う可能性があるが、ブラウザ実行はこの環境で未実施。「GPU可視 ⊆ CPU所有」の向きの追加検証も未実施。(3) 物理 GPU、ブラウザの実描画、Switch でのピクセル一致は **UNKNOWN / unverified**。
