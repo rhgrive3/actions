@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './robustness-fixture.mjs';
 
-const MOVE = { id: 'slam', t0: 1000, s: 0, d: [1.15, 1.9, 1], p: { x: 0, y: 0, z: 0 } };
+const MOVE = { id: 'slam', t0: 1000, s: 0, d: [1.15, 1.9, 1], p: { x: 0, y: 0, z: 0, rings: [0] } };
 
 // Native Boss.onMove / Boss._crabBurst admission, recorded instead of drawn:
 // the contract under test is whether NetMatch hands the record over at all.

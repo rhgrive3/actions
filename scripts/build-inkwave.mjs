@@ -110,7 +110,7 @@ for (const [root, prefix] of [
 ]) {
   for (const file of walk(root)) {
     const rel = path.relative(root, file).split(path.sep).join('/');
-    if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs')) continue;
+    if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     if (/\.(?:m?js|css)$/.test(rel)) {

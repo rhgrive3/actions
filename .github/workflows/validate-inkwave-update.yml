@@ -158,7 +158,7 @@ jobs:
       - name: Verify platform lifecycle smoke regressions
         run: node --test tests/platform-lifecycle/platform-smoke.test.mjs
       - name: Verify movement physics smoke regressions
-        run: node --test patches/movement-physics/tests/movement-smoke.test.mjs
+        run: node --test patches/movement-physics/tests/*.test.mjs
       - name: Verify practice range measurement, rules and battle isolation
         run: node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
       - name: Verify loading/cache regressions
@@ -259,7 +259,9 @@ jobs:
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
       - name: Verify built weapons fidelity measurements and packet parity
-        run: node --experimental-vm-modules scripts/check-inkwave-weapons-fidelity.mjs --site _site
+        run: |
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test scripts/tests/inkwave-slosher-paint-golden.test.mjs
+          node --experimental-vm-modules scripts/check-inkwave-weapons-fidelity.mjs --site _site
       - uses: actions/upload-artifact@v4
         with:
           name: inkwave-patched-site-${{ env.SOURCE_SHA }}

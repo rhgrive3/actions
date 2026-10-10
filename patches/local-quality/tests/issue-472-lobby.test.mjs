@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
-  resolveLobbyQualityName, lobbyShadowDue, patchLobbySetShowcase,
+  resolveLobbyQualityName, lobbyShadowDue,
   LOBBY_SHADOW_INTERVAL_LOW,
 } from '../issue-472-adapter.mjs';
+import { patchLobbySetShowcase } from '../lobby-quality-adapter.mjs';
 
 const ROOT = new URL('../../../', import.meta.url);
 const read = (rel) => fs.readFileSync(new URL(rel, ROOT), 'utf8');

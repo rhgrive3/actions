@@ -31,6 +31,12 @@ export function adaptUiActorLifetime(rel, code, once) {
   }
   if (rel === 'src/ui/diorama.js') {
     patch('  update(dt, k) {', `  releaseMatchActors(actors = null, match) {
+    // Pending contacts are UI owners too. Retire the matching input lifetime
+    // even when newer pins have already taken over the displayed Match.
+    if (this._pinTaps) for (const [id, tap] of this._pinTaps) {
+      if (match ? tap.match === match : !actors || actors.includes(tap.actor) || actors.includes(tap.target))
+        this._pinTaps.delete(id);
+    }
     if (match && this._targetMatch && this._targetMatch !== match) return;
     if (match && this._targetMatch === match) actors = null;
     if (!actors) this._targetMatch = null;

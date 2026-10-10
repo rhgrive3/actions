@@ -721,6 +721,17 @@ export function ghostBombSpawning() { return ghostSpawnDepth > 0; }
 
 // ---- Install -----------------------------------------------------------------
 
+// #281: S3 Splat Bomb has independent Y (0.24/F) and Z (1.12/F at 0 AP)
+// launch components. Rotate the LOCAL axis pair by aim pitch, never synthesize
+// a vertical velocity by pitching one scalar plus an arbitrary constant.
+export function splatBombAxisVelocity(actor, forwardSpeed, verticalSpeed, out) {
+  const pitch = Math.max(-0.3, Math.min(1.1, Number.isFinite(actor.aimPitch) ? actor.aimPitch : 0));
+  const yaw = Number.isFinite(actor.aimYaw) ? actor.aimYaw : 0;
+  const forward = forwardSpeed * Math.cos(pitch) - verticalSpeed * Math.sin(pitch);
+  const up = forwardSpeed * Math.sin(pitch) + verticalSpeed * Math.cos(pitch);
+  return out.set(Math.sin(yaw) * forward + actor.vel.x * .4,
+    up, Math.cos(yaw) * forward + actor.vel.z * .4);
+}
 const KIT_KEY = '__kitSubsInstalled';
 
 export function installKitSubs(api, profile) {
@@ -731,12 +742,27 @@ export function installKitSubs(api, profile) {
   G_REF = G; PLAYER_REF = api.PLAYER; PHYSICS_REF = api.Physics;
   registerKitSubs(SUB, profile);
 
+  // The same method owns native Splat Bomb launch and the trajectory preview.
+  // Other sub-weapons and Storm keep their own generic launch dynamics.
+  const originalThrowVelocity = Projectiles.prototype.throwVelocity;
+  Projectiles.prototype.throwVelocity = function(actor, speed, out) {
+    if ((this.s3BombLaunching || this.s3PreviewSubSpeed != null) &&
+        kitSubFor(actor?.weapon, SUB) === SUB.bomb && Number.isFinite(speed)) {
+      return splatBombAxisVelocity(actor, speed, profile.bomb.spawnSpeedY ?? 14.4, out);
+    }
+    return originalThrowVelocity.call(this, actor, speed, out);
+  };
+
   // The per-bomb spec is attached by the adapter before recBomb; this wrapper only
   // consumes the held charge so the next press starts from zero.
   const throwBomb = Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb = function (actor) {
     const runner = actor?.weaponRunner;
-    const out = throwBomb.call(this, actor);
+    const savedLaunching = this.s3BombLaunching;
+    this.s3BombLaunching = true;
+    let out;
+    try { out = throwBomb.call(this, actor); }
+    finally { this.s3BombLaunching = savedLaunching; }
     // Charge is consumed by the owner's own release. A ghost replays through this
     // same method, and a remote runner's hold is not ours to clear.
     if (runner && !actor?.remote && !ghostBombSpawning()) runner.s3SubHold = 0;

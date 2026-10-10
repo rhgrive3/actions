@@ -17,3 +17,21 @@ test('Refs846 fresh charge and wall Roll remain independently admitted after con
 test('Refs846 native movement intent and shared speed are restored even when wall probing throws',async()=>{const h=await rig();h.tick(h.a,40);const speed=h.PLAYER.climbSpeed;h.terrain('throw');assert.throws(()=>h.a._updateClimb(1/60,true),/terrain failure/);assert.deepEqual(Array.from(h.a.intent.move.toArray()),[0,0,0]);assert.equal(h.PLAYER.climbSpeed,speed);});
 test('Refs846 reset, form change and Super Jump retire continuation through existing owners',async()=>{for(const cause of ['reset','form','jump']){const h=await rig();h.tick(h.a,40);if(cause==='reset')h.a.reset();else if(cause==='form'){h.a.intent.squid=false;h.tick(h.a);}else h.a.superJump(new h.THREE.Vector3(0,0,8));assert.equal(h.a.s3.surge,null,cause);}});
 test('Refs846 30/60/120Hz rendering produces the same sixty fixed continuation ticks',async()=>{const rows=[];for(const hz of [30,60,120]){const h=await rig(),clock=new FixedClock();let ticks=0;for(let i=0;i<hz;i++)clock.advance(1/hz,()=>{ticks++;h.tick(h.a);});rows.push({ticks,phase:h.a.s3.surge.phase,speed:h.a.climbV,armor:h.a.s3.surge.armorTime});}assert.deepEqual(rows[0],rows[1]);assert.deepEqual(rows[1],rows[2]);assert.equal(rows[0].ticks,60);});
+test('Refs846 a real ledge after long automatic climb emits the same crest transition as an early ledge', async () => {
+  for (const delay of [2, 40]) {
+    const f = await rig(); f.tick(f.a, delay);
+    const oldVelocity = f.a.vel.y;
+    const phase = f.a.s3.surge.phase;
+    f.terrain('top'); f.tick(f.a);
+    assert.equal(f.a.climbing, false);
+    const crests = f.a.character.events.filter(([name]) => name === 'squidsurge_top');
+    assert.equal(crests.length, 1, `ledge after ${delay}F (${phase})`);
+    assert.equal(crests[0][1].charge, f.charge);
+    assert.equal(crests[0][1].duration, f.profile.movement.surge.duration);
+    if (phase === 'auto-climb') assert.ok(f.a.vel.y <= oldVelocity, 'presentation must not reapply the expired boost');
+    // A later helper call without a wall transition must not replay the crest.
+    f.a._ledgePop(new f.THREE.Vector3(0, 0, -1));
+    f.tick(f.a, 3);
+    assert.equal(f.a.character.events.filter(([name]) => name === 'squidsurge_top').length, 1);
+  }
+});

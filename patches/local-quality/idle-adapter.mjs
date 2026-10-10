@@ -12,12 +12,32 @@ export function adaptIdleSource(rel, code, replace) {
   }
   if (rel === 'src/audio/music.js') {
     code = "import { installMusicIdle } from '../../patches/local-quality/music-idle.mjs';\n" + code;
+    // #366: construction/startup failure must release the resources created
+    // before falling back. Keep the native successful-worker cleanup delay.
+    patch('  _startTimer() {',
+      '  _startTimer() {\n    let workerUrl = null;', 'music worker failure URL owner');
+    patch("      const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));",
+      "      const url = workerUrl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));", 'music worker URL capture');
+    patch('      this.worker.onerror = () => { this.worker = null; if (!this._timerPaused && !this.timer) this.timer = setInterval(tick, TICK_MS); };',
+      `      const startedWorker = this.worker;
+      startedWorker.onerror = () => {
+        if (this.worker !== startedWorker) return;
+        this.worker = null;
+        startedWorker.onmessage = startedWorker.onerror = null; startedWorker.terminate();
+        if (!this._timerPaused && !this.timer) this.timer = setInterval(tick, TICK_MS);
+      };`, 'music asynchronous failure owner');
+    patch('    } catch (e) {\n      if (!this._timerPaused) this.timer = setInterval(tick, TICK_MS);',
+      `    } catch (e) {
+      const worker = this.worker; this.worker = null;
+      if (worker) { worker.onmessage = worker.onerror = null; worker.terminate(); }
+      if (workerUrl !== null) URL.revokeObjectURL(workerUrl);
+      if (!this._timerPaused) this.timer = setInterval(tick, TICK_MS);`, 'music failed worker cleanup');
     patch('export const music = new MusicEngine();', 'installMusicIdle(MusicEngine);\nexport const music = new MusicEngine();', 'music installer before singleton');
   }
   if (rel === 'src/audio/audio.js') {
     const init = '    if (this.opts.music !== false && this.music) this.music._init(ctx, this.musicBus, { offline: this.offline });';
-    patch(init, '    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.music > 0);\n' + init, 'initial mute state before music initialization');
-    patch("    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", "    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.music > 0);\n    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", 'live and pre-init mute');
+    patch(init, '    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.master > 0 && this.vol.music > 0);\n' + init, 'initial mute state before music initialization');
+    patch("    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", "    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.master > 0 && this.vol.music > 0);\n    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", 'live and pre-init mute');
   }
   if (rel === 'src/main.js') {
     code = "import { idleAttractMenuBudget, notePausedWorldChange, pausedWorldFrame, refreshEnvironmentBudget } from '../patches/local-quality/idle-resources.mjs';\n" + code;
@@ -42,7 +62,14 @@ export function adaptIdleSource(rel, code, replace) {
     patch('G.paint.flush(dt);', 'G.paint.flush(worldDt);', 'attract paint cadence');
     patch('this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);', 'this.swimWake.update(worldDt, this.levelMat.userData.uniforms, G.camera.position);', 'attract wake cadence');
     patch('  _dynRes(dt) {', '  _dynRes(dt) {\n    if (this.match?.paused && !this.match.attract && !G.netm) return;', 'paused frames are not GPU headroom samples');
-    patch('      if (!setUp) this.R.render();', '      if (!setUp && pausedFrame.draw && (!menuAttractBudget || this._menuAttractFrame)) { this.R.render(); if (pausedFrame.paused) G.renderer.shadowMap.needsUpdate = false; pausedFrame.commit?.(); }', 'frozen pause or budgeted menu backdrop');
+    patch('      if (!setUp) this.R.render();', `      if (!setUp && pausedFrame.draw && (!menuAttractBudget || this._menuAttractFrame)) {
+        // A paused quality/context invalidation may have retired the sun map.
+        // Refresh it once with the backdrop; unchanged paused frames stay idle.
+        if (pausedFrame.paused && sm.enabled) sm.needsUpdate = true;
+        this.R.render();
+        if (pausedFrame.paused) sm.needsUpdate = false;
+        pausedFrame.commit?.();
+      }`, 'frozen pause or budgeted menu backdrop');
     patch('    this.menus?.update?.(dt);', '    this.menus?.update?.(dt);\n    if (pausedFrame.paused) G.renderer.shadowMap.needsUpdate = false;', 'paused shadow flag retirement');
   }
   return code;

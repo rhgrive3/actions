@@ -55,6 +55,9 @@ const METHODS = `  cancelForMapTakeover() { cancelMapGameplay(this); }
   setTurfMap(open, owner = this.input.navigationDevice) {
     open = !!open;
     if (this.mapHeld === open) return;
+    // Pin contacts belong to one map lifetime, even when close/reopen happens
+    // before the diorama receives another presentation frame.
+    this._turfMapEpoch = (this._turfMapEpoch ?? 0) + 1;
     // A UI takeover is cancellation, including open/close within one tick.
     this.cancelForMapTakeover();
     this.mapHeld = this.padMapOpen = open;

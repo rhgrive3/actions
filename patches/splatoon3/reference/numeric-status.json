@@ -1272,6 +1272,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.roller.rollDashTurnBreakSpeed": {
+    "value": 6.4799999999999995,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.rollDashTime": {
     "value": 1.5,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1905,6 +1910,11 @@
       "factor": 60,
       "rawValue": 1.12
     }
+  },
+  "bomb.spawnSpeedY": {
+    "value": 14.4,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   },
   "bomb.gravity": {
     "value": 57.6,

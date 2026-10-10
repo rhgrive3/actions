@@ -32,7 +32,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { adaptIssue415 } from './runtime/issue-415-adapter.mjs';
+import { adaptIssue415 } from './enemy-ink-recovery-adapter.mjs';
 import { adaptIssueBatch1171 } from './issue-batch-1171-adapter.mjs';
 import { adaptTidalSlamGauge } from './tidal-slam-gauge-adapter.mjs';
 import { adaptScorchGorge } from './scorch-gorge-adapter.mjs';
@@ -78,6 +78,19 @@ export function adaptSource(rel, code) {
       'this.base.set(actor.pos.x, actor.pos.y + (actor.smoothY || 0), actor.pos.z);',
       'this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);',
       'ink flight contact ignores render-only smoothing');
+    // #992: real Dualies heads use InkFlightRuntime.impact, not _impact.
+    // Share the retained source width/straight-angle contract with the legacy
+    // fallback. Preserve the existing unknown break/free model and drop path.
+    code = replaceOnce(code,
+      "    this.paint(p, hit, shape, p.vel, 'shot');",
+      "    const sourced = fidelityDualiesNativeImpactPaint(p, hit);\n" +
+      "    if (sourced) {\n" +
+      "      shape.radius = sourced.radius;\n" +
+      "      if (sourced.depthScale !== null) shape.stretch = Math.max(0, sourced.depthScale - 1);\n" +
+      "    }\n" +
+      "    this.paint(p, hit, shape, p.vel, 'shot');",
+      'native Dualies retained-source terminal paint owner');
+    code = "import { fidelityDualiesNativeImpactPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     // #385/#604/#597: Source-guided head motion and sourced S3 wall-drop
     // share one collision authority. A wall impact must retain the falling
     // droplet state instead of treating every wall as a terminal head hit.
@@ -223,6 +236,12 @@ export function adaptSource(rel, code) {
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',
       'const win = cov[0] >= cov[1] ? 0 : 1; // Exact tie belongs to the assigned Alpha side.',
       'deterministic Alpha turf tie');
+    // One native presentation-delay owner for RAF and hidden-host completion.
+    const finishDelay = '(this.bossMode ? (this.bossMode.boss.dead ? this.bossCfg.finishWin : this.bossCfg.finishLose) : 2.6)';
+    code = replaceOnce(code, 'this.stateT > ' + finishDelay,
+      'this.stateT > this.finishDelay()', 'shared native finish delay');
+    code = replaceOnce(code, '  _judge() {',
+      '  finishDelay() { return ' + finishDelay + '; }\n\n  _judge() {', 'native finish-delay accessor');
     code = replaceOnce(code, '  setState(s) {',
       '  setState(s) {\n    captureTurfFinish(this, s, G.paint, G.netm, G.game?.minimap);', 'Turf deadline snapshot before state listeners');
     code = replaceOnce(code, '    const cov = G.paint.coverage();',
@@ -846,16 +865,20 @@ export function adaptSource(rel, code) {
     // bound, not a verified S3-specific HP cutoff or RainNum semantics.
     code = replaceOnce(code,
       '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;',
-      '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;\n    const inkWaveRainReach = 12;',
+      '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;\n    const inkWaveRainReach = STORM_RAIN_REACH;',
       'finite rain trace');
     code = replaceOnce(code,
       '          const g = G.physics.raycast(_v, DOWN, 12, _hit);',
       '          const g = G.physics.raycast(_v, DOWN, inkWaveRainReach, _hit);\n          const audit = c.s3RainAudit || (c.s3RainAudit = { candidateDrops: 0, groundHits: 0, paintEvents: 0 });\n          audit.candidateDrops++;\n          if (g.hit) audit.groundHits++;\n          if (g.hit && (!c.ghost || !c.owner.remote)) audit.paintEvents++;',
       'count Storm rain candidate/contact/paint separately');
     code = replaceOnce(code,
-      '          if (dx * dx + dz * dz > (sp.radius * s) ** 2 || e.pos.y > c.group.position.y) continue;',
-      '          if (dx * dx + dz * dz > (sp.radius * s) ** 2 || e.pos.y > c.group.position.y ||\n              e.pos.y + 1.2 < c.group.position.y - 0.8 - inkWaveRainReach) continue;',
-      'prevent damage beyond own finite rain reach');
+      '      const grow = clamp(c.t / 0.5, 0, 1), fade = clamp((c.dur - c.t) / 0.6, 0, 1);\n      const s = (0.3 + 0.7 * (1 - Math.pow(1 - grow, 3))) * (0.2 + 0.8 * fade);',
+      '      const fade = clamp((c.dur - c.t) / 0.6, 0, 1);\n      const s = stormRainScale(c);',
+      'shared native Storm growth and fade');
+    code = replaceOnce(code,
+      '          const dx = e.pos.x - c.group.position.x, dz = e.pos.z - c.group.position.z;\n          if (dx * dx + dz * dz > (sp.radius * s) ** 2 || e.pos.y > c.group.position.y) continue;',
+      '          if (!stormRainContains(c, e, sp.radius, s)) continue;',
+      'share finite rain contact with HP recovery');
     code = "import { fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     code = replaceOnce(code, 'let vis = (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));',
       'let vis = p.fidelitySloshDraw ? fidelitySlosherDrawRadius(p) : (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));', 'slosher source draw radius');
@@ -896,8 +919,12 @@ export function adaptSource(rel, code) {
       '      this.rollInkChargedDistance = 0;\n' +
       '    }',
       'roller rolling ink floor and paint batch');
-    code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
-    code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
+    code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'const rollInk = this.inkVacDodgeInkCost?.(w.rollInk) ?? w.rollInk;\n    if (a.ink + 1e-10 < rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
+    code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
+    code = replaceOnce(code,
+      'if (!inp.fire) this.bloom = Math.max(0, this.bloom - dt / (w.bloomRecover ?? 0.28));',
+      "if (w.kind !== 'splatling' && !inp.fire) this.bloom = Math.max(0, this.bloom - dt / (w.bloomRecover ?? 0.28));",
+      'splatling release starts stream without shooter bloom recovery (#940)');
     code = replaceOnce(code, 'Math.max(this.cooldown, 0.22)', 'Math.max(this.cooldown, w.postStreamDelay)', 'splatling sourced post-stream delay');
     code = replaceOnce(code, 'if (this.slosh >= 0) return w.moveSpeedFiring * 0.7;              // slosher heave plants you a little',
       'if (this.slosh >= 0) return w.moveSpeedFiring; // shared sourced firing cap', 'slosher windup sourced move cap');
@@ -940,6 +967,9 @@ export function adaptSource(rel, code) {
       '  // sever the Actor reference before the record is pooled (#622).\n' +
       '  _recycle(p) {\n' +
       '    p.owner = null;\n' +
+      '    // These per-shot references can also retain Actors while the pool waits.\n' +
+      '    // Detach shared ledgers; clearing them would change still-active sibling rounds.\n' +
+      '    p._s3SloshBirthOwner = p.fidelityImpactActor = p.s3DamageGroup = p.vol = null;\n' +
       '    this.pool.push(p);\n' +
       '  }\n\n' +
       '  clear() {', 'projectile owner-severing recycle helper');
@@ -1040,8 +1070,18 @@ export function adaptSource(rel, code) {
       'rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random() }',
       'Roller native trail age width');
     code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\n" + code;
+    // #574 air-burst force has its own radius; damage keeps the existing
+    // terrain-scaled bands and direct targets keep their separate native path.
+    code = replaceOnce(code,
+      '      if (d > w.splashRadius * blasterPlayerRadiusRate(p, w)) continue;',
+      '      const damageRadius = w.splashRadius * blasterPlayerRadiusRate(p, w);\n      if (d > Math.max(damageRadius, p.s3TerrainBurst || p.s3SpecialWeapon ? 0 : BLASTER_KNOCKBACK.distance)) continue;',
+      'Blaster independent air-burst knockback radius');
+    code = replaceOnce(code,
+      "      this.applyHit(p.owner, e, p.s3SpecialWeapon ? distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)) : blasterBurstDamage(p, w, d, distanceDamage), p.wid || 'blaster');",
+      "      if (p.s3SpecialWeapon) this.applyHit(p.owner, e, distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)), p.wid || 'blaster');\n      else applyBlasterBlastContact(this, p, e, c, _v, d <= damageRadius ? blasterBurstDamage(p, w, d, distanceDamage) : 0, G.netm);",
+      'Blaster air-burst authoritative contact');
     code = adaptPaintOwnership(rel, code, replaceOnce);
-    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
+    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, BLASTER_KNOCKBACK, applyBlasterBlastContact } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
@@ -1055,6 +1095,13 @@ export function adaptSource(rel, code) {
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
+    // #904: replicate the owner-proven wall normal while showing the charge
+    // pose, without enabling ordinary remote wall-climb movement.
+    code = replaceOnce(code, '  if (a.climbing) f |= F.climb;',
+      "  if (a.climbing || (a.superJumpState?.phase === 'charge' && a.superJumpState.wallSupport)) f |= F.climb;", 'wall-start jump visual flag');
+    code = replaceOnce(code, '  const n = a.climbing ? a.wallN : null;',
+      "  const n = a.superJumpState?.phase === 'charge' && a.superJumpState.wallSupport || (a.climbing ? a.wallN : null);", 'wall-start jump visual normal');
+
     code = replaceOnce(code,
       'const F = {',
       'const F = {\n  flickVertical: 16777216,',
@@ -1146,7 +1193,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "    if (specialPressed && this.specialReady()) { this._startSpecial(); this._finishFrame(dt); return; }",
       "    if (specialPressed && this.specialReady()) { clearFullCancelCandidate(this); this._startSpecial(); if (this.alive) { if (this.specialActive?.id === 'storm') updateResources(this, dt); else if (this.specialActive?.id === 'slam') updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (this.specialActive?.id === 'trizooka' && !this.remote) updateResources(this, dt); } this._finishFrame(dt); return; }",
       'storm/slam/trizooka activation resources');
-    code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    this._checkWaterHazard();\n    if (!this.alive) return false;\n    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,", 'lethal water admission, super jump wall support and destination admission');
+    code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    this._checkWaterHazard();\n    if (!this.alive) return false;\n    if (target?.pos?.isVector3 && (target === this || target.team !== this.team)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,", 'lethal water admission, super jump wall support and destination admission');
     code = replaceOnce(code, 'target, from: new THREE.Vector3(), to: new THREE.Vector3(), marker: 0', 'target, from: new THREE.Vector3(), to: destination, marker: 0', 'super jump committed destination');
     code = replaceOnce(code, "      this.vel.set(0, 0, 0);\n      this.form = 'squid';\n      this._probeGround();", '      const supported = prepareSuperJump(this, dt);\n      if (!this.alive) return;', 'super jump preparation physics');
     const targetStart = code.indexOf('        const tgt = s.target;'), targetEnd = code.indexOf("        s.phase = 'flight';", targetStart);

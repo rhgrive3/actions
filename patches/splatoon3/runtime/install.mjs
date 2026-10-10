@@ -35,6 +35,7 @@ import { installKitNetwork } from './kit-network.mjs';
 import { installKitTrizooka } from './kit-trizooka.mjs';
 import { composeKits, registerKitMetadata } from './kit-composition.mjs';
 import { installGear } from './gear.mjs';
+import { installHealthBarHud } from './health-bars.mjs';
 import { installFlow } from './flow.mjs';
 import { installResources } from './resources.mjs';
 import { installClock } from './clock.mjs';
@@ -95,12 +96,16 @@ export function install(profile) {
   installMovement(api, profile);
   installNormalJumpHold(api, profile);
   installMovementMotion(api, profile);
+  // Keep respawn-owned gameplay wrappers outside Squid Spawn: its Turf branch
+  // starts a new life without invoking the legacy native respawn method.
+  installRespawnLifecycle(api, profile);
   installGear(api, profile);
   installFlow(api, profile);
   installResources(api, profile);
   installScoring(api);
   installClock(api);
   installUi(api);
+  installHealthBarHud(api);
   installRendering(api);
   installWeaponMotion(api, profile);
   installBombMotion(api);
@@ -126,7 +131,6 @@ export function install(profile) {
   installSpecialMotion(api, profile);
   installFlowMotion(api);
   installFaceMotion(api, profile);
-  installRespawnLifecycle(api, profile);
   installControllerMotion({ Input, PlayerController, G });
   // Issue #798: the arc guide is presentation-only. Throttle its native
   // collision-query cadence without touching actual bomb physics.

@@ -3,7 +3,7 @@ import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { shooterMovementRemaining, shooterMovementSpeed } from './shooter-movement.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
-import { installFinalDamage, damageGroupId, withFinalDamageGroup } from './final-damage.mjs';
+import { installFinalDamage, damageGroupId, withFinalDamageGroup, finalDamageCredit } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installSplatling } from './splatling.mjs';
@@ -238,9 +238,12 @@ export function applySlosherVolleyHit(system, owner, victim, group, groupId, amo
   if (!(delta > 0)) return;
   if (!group) return system.applyHit(owner, victim, delta, weaponId);
   const hpBefore = victim.hp, aliveBefore = victim.alive;
-  const result = withFinalDamageGroup(victim, groupId ?? damageGroupId(group),
+  const roundingGroup = groupId ?? damageGroupId(group);
+  const creditBefore = finalDamageCredit(victim, owner, roundingGroup);
+  const result = withFinalDamageGroup(victim, roundingGroup,
     () => system.applyHit(owner, victim, delta, weaponId));
-  if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
+  if (acceptedHit(result, victim, hpBefore, aliveBefore) ||
+      finalDamageCredit(victim, owner, roundingGroup) > creditBefore) group.set(victim, next);
   return result;
 }
 // Preserve in-flight volley dedupe without retaining every historical wire id
@@ -309,12 +312,44 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
     return withMainDirectDamage(projectile.owner, victim, () => applySlosherVolleyHit(system, projectile.owner, victim, projectile.s3DamageGroup,
       projectile.s3DamageGroupId, amount, projectile.wid || projectile.type || 'slosher'));
   }
-  amount = groupDamage(projectile.s3DamageGroup, victim, amount);
-  if (amount > 0) applyMainDirectHit(system, projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
+  return applyGroupedProjectileHit(system, projectile, victim, amount);
+}
+// Both legacy and source-guided collision solvers route their already-resolved
+// damage through this owner; neither solver may reserve an invulnerable hit.
+export function applyGroupedProjectileHit(system, projectile, victim, amount) {
+  const weapon = projectile.s3Weapon || projectile.owner.weapon;
+  const group = projectile.s3DamageGroup, previous = group?.get(victim);
+  amount = groupDamage(group, victim, amount);
+  if (amount > 0) {
+    const result = applyMainDirectHit(system, projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(group));
+    // #999: a spawn-flight/invulnerable contact never reached the armor
+    // resolver. Keep the last admitted Roller maximum so a later legal
+    // contact still carries the whole swing into its penetration ledger.
+    // Ordinary armor absorption can return 'rejected' without HP loss and
+    // MUST retain its contribution. Pending sends retain their existing
+    // sender-side deduplication; this is not an asynchronous ACK redesign.
+    if (weapon.kind === 'roller' && group && result === 'rejected-invulnerable') {
+      if (previous === undefined) group.delete(victim);
+      else group.set(victim, previous);
+    }
+    return result;
+  }
 }
 export function installWeapons(context, profile) {
   api = context;
-  const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER, on } = api;
+  // #1089: use the committed activation event, not the physical Special input.
+  // Some kit owners bypass native _startSpecial; all successful starts publish
+  // this boundary. A rejected activation never interrupts the retained stance.
+  on?.('special:use', event => {
+    const actor = event?.actor, runner = actor?.weaponRunner;
+    if (!runner || actor.remote || actor.weapon?.kind !== 'dualies') return;
+    runner.s3Turret = false;
+    runner.s3DodgeShotPending = 0;
+    runner.s3GateDodgeShotPending = false;
+    runner.s3DodgeShotRemaining = 0;
+    // Keep paid ink, roll count, movement/recovery clocks and shot cooldown.
+  });
   WeaponRunner.prototype.s3StepSplatlingSubInterrupt = function (dt, input) {
     return splatlingSubInterrupt(this, this.a, dt, input);
   };
@@ -885,7 +920,11 @@ export function installWeapons(context, profile) {
     // publish the outer envelope; the probability bias is sampled at fire time.
     if (w.kind === 'blaster') {
       const state = this.s3BlasterJumpState(w);
-      return state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
+      // #1102: an admitted jump owns this penalty. The serial gate above
+      // already distinguishes a jump from a ledge fall; do not reintroduce
+      // the airborne penalty through the inactive-state scalar fallback.
+      if (state.supported) return state.active ? state.envelope : state.ground;
+      return this.a.grounded ? w.spreadGround : w.spreadAir;
     }
     if (w.kind === 'shooter' && this.s3JumpSpreadAge != null) {
       const age = this.s3JumpSpreadAge, hold = w.jumpSpreadHold ?? 0, end = Math.max(hold + 1e-10, w.jumpSpreadRecoverEnd ?? hold);
@@ -1081,8 +1120,10 @@ export function installWeapons(context, profile) {
     const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
     if (!(delta > 0)) return 'accepted';
     const hpBefore = victim.hp, aliveBefore = victim.alive;
+    const creditBefore = finalDamageCredit(victim, attacker, groupId);
     const result = applyHit.call(this, attacker, victim, delta, weaponId, groupId);
-    if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
+    if (acceptedHit(result, victim, hpBefore, aliveBefore) ||
+        finalDamageCredit(victim, attacker, groupId) > creditBefore) group.set(victim, next);
     return result;
   };
   const clearProjectiles = Projectiles.prototype.clear;
@@ -1226,6 +1267,13 @@ export function installArcPreviewPerformance(api) {
       hits: 0,
     };
     return result;
+  };
+  const clearArc = Projectiles.prototype.clear;
+  Projectiles.prototype.clear = function (...args) {
+    // No further preview frame is guaranteed after a match/level is retired.
+    delete this[ARC_PREVIEW_STATE];
+    this._arcCache = null;
+    return clearArc.apply(this, args);
   };
   Object.defineProperty(Projectiles.prototype, ARC_PREVIEW_INSTALL, { value: true, configurable: false });
   Object.defineProperty(Projectiles.prototype, Symbol.for('inkwave.s3.arc-preview-performance.originals.v1'), {

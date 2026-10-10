@@ -22,7 +22,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'dodge-clock-adapter.mjs']
+    'dodge-clock-adapter.mjs', 'snapshot-guard.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -477,9 +477,16 @@ export function emit(name, payload) {
       '      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.dropRollId = dropRoll?.id ?? 0; snap.dropRollRemaining = dropRoll?.remaining ?? 0;\n      snap.dropRollX = dropRoll?.x ?? 0; snap.dropRollZ = dropRoll?.z ?? 0; snap.dropRollDuration = dropRoll?.duration ?? 0;',
       'attach validated Drop Roller clock and direction');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
-      if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
+      // _rec precedes _sendTick: a queued event cannot be newer than its envelope.
+      if (!Array.isArray(e) || !validSnapshotTimestamp(e[0]) || e[0] > d.ts) continue;
       e._netPeer = from;
-      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
+      if (d.r === 2) {
+        const seq = e[e.length-1], tick = e[e.length-2];
+        if (!Number.isSafeInteger(seq) || seq < 1) continue;
+        if (!Number.isSafeInteger(tick) || tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;
+        e._netTick = tick;
+        e._netSeq = seq;
+      }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
@@ -620,6 +627,9 @@ export function emit(name, payload) {
     patch('    a.hp = S.hp; a.ink = S.ink; a.special = S.sp;',
       '    const hitHp = this._hitAuthorityHp(a, S, a.owner);\n    if (hitHp < a.hp) a.lastDamage = 0;\n    a.hp = hitHp; a.ink = S.ink; a.special = S.sp;',
       'prevent stale owner samples from undoing confirmed hit state');
+    patch("    applyAdoptionSample(this, a, S);\n    const wr = a.weaponRunner;",
+      "    applyAdoptionSample(this, a, S);\n    // #904: the optional adoption transfer rebuilds the Jump object and\n    // clears its wallSupport. Restore presentation only from the accepted\n    // owner snapshot flag and finite unit wall normal, after that transfer.\n    if (a.superJumpState) {\n      if (a.superJumpState.phase === 'charge' && (f & F.climb) &&\n          Number.isFinite(S.wx) && Number.isFinite(S.wy) && Number.isFinite(S.wz) &&\n          Math.hypot(S.wx, S.wy, S.wz) > 0.5 &&\n          Math.hypot(S.wx, S.wy, S.wz) < 1.5) {\n        (a.superJumpState.wallSupport ||= new THREE.Vector3()).set(S.wx, S.wy, S.wz);\n        a.climbing = false;\n      } else a.superJumpState.wallSupport = null;\n    }\n    const wr = a.weaponRunner;",
+      'restore network Super Jump wall basis after ownership state');
     patch('    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;',
       "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;\n    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }",
       'remote Tidal Slam phase clock');
@@ -746,6 +756,14 @@ export function emit(name, payload) {
         || readPaintOrder(this, from, e) === false) return;
     }
     if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
+    // Validate Boss payloads before replay admission: malformed state must not
+    // enter hazards or consume the sender's event sequence.
+    if (e[1] === 'bm' || e[1] === 'bc') {
+      if (from !== this.s.hostId) return;
+      if (e[1] === 'bm') {
+        if (!validBossMove(e[2])) return;
+      } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
+    }
     const eventPeer = this.peers.get(from);
     if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
@@ -756,14 +774,6 @@ export function emit(name, payload) {
       const nid = e[3]?.actor?.n ?? e[3]?.victim?.n;
       const actor = this.byNid.get(nid);
       if (!actor?.remote || actor.owner !== from) return;
-    }
-    // Boss hazard/crablet timeline records are host-authoritative at admission.
-    if (e[1] === 'bm' || e[1] === 'bc') {
-      if (from !== this.s.hostId) return;
-      if (e[1] === 'bm') {
-        const move = e[2];
-        if (!move || typeof move !== 'object' || !Number.isFinite(move.t0)) return;
-      } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
     }
     switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
     {
@@ -1441,6 +1451,7 @@ function syncRemoteDropRoll(actor, sample, peer) {
 // Sender simulation ticks only schedule playback. They are application uptimes,
 // never a clock that can order paint from two different owners.
 const PAINT_ORDER_TAG = 'inkwave-paint-order-v1';
+const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck']);
 const paintClockSessions = new WeakMap();
 function paintClockStateFor(session, cfg) {
   const matchId = typeof cfg?.id === 'string' ? cfg.id : '';
@@ -1463,9 +1474,33 @@ function readPaintOrder(nm, from, e) {
   if (typeof from !== 'string' || !nm.s._members?.has(from)) return false;
   // Victim-owned splat bursts and host-owned Boss ink can paint the other team.
   // Membership, the match epoch and sender sequence own admission, not team color.
-  for (let i = 2; i <= 7; i++) if (!Number.isFinite(e[i])) return false;
-  for (let i = 9; i <= 12; i++) if (e[i] !== undefined && !Number.isFinite(e[i])) return false;
-  if (e[5] <= 0 || (e[6] !== 0 && e[6] !== 1)) return false;
+  // #522: JS-finite is insufficient for the Float32 atlas attributes/shader.
+  // Reject before either sender replay or causal paint clocks are reserved.
+  for (let i = 2; i <= 7; i++) if (!paintFloat(e[i])) return false;
+  for (let i = 9; i <= 12; i++) if (e[i] !== undefined && !paintFloat(e[i])) return false;
+  if (e[5] <= 0 || Math.fround(e[5]) === 0 || (e[6] !== 0 && e[6] !== 1)) return false;
+  // _kind uses a plain object table. Names inherited from Object.prototype
+  // must not become a shader kind/flags value or poison footprint arithmetic.
+  if (e[8] !== undefined && e[8] !== 0 && !PAINT_EVENT_KINDS.has(e[8])) return false;
+  // -1 (or an omitted legacy field) means no face restriction. A malformed
+  // selector must not silently widen a face-specific stamp to every face.
+  if (e[13] !== undefined && (!Number.isSafeInteger(e[13]) || e[13] < -1)) return false;
+  // PaintSystem squares radius/local distances and projects the stretch vector.
+  // Ray angles also contain seed*6.2831 before entering wob(): the largest
+  // composed seed factor is 73+11*6.2831 < 144 (with bounded phase terms).
+  // These are representation limits of the existing renderer, not new weapon
+  // range/radius caps or a substitute for action-provenance validation.
+  // Round uploaded inputs FIRST: a double just below an overflow boundary can
+  // round upward in the Float32 buffer before the shader multiplies it.
+  const positionLength = Math.fround(Math.hypot(e[2], e[3], e[4]));
+  const radius = Math.fround(e[5]), seed = Math.fround(e[7]);
+  const hasStretch = !!(e[9] || e[10] || e[11]);
+  if (hasStretch && ![e[9], e[10], e[11]].every(paintFloat)) return false;
+  // Legacy rows may omit the amount; match PaintSystem's actual default (1).
+  const stretch = Math.fround(Math.hypot(e[9] ?? 0, e[10] ?? 0, e[11] ?? 0) * (e[12] ?? 1));
+  const reach = Math.fround(radius * (3.9 + 1.4 * Math.abs(stretch)));
+  if (!paintFloat(positionLength * positionLength) || !paintFloat(radius * radius) ||
+      !paintFloat(Math.abs(seed) * 144 + 256) || !paintFloat(stretch) || !paintFloat(reach * reach)) return false;
   const hasTick = e._netTick !== undefined, hasSeq = e._netSeq !== undefined;
   if (hasTick !== hasSeq || hasTick && (!Number.isSafeInteger(e._netTick) || e._netTick < 0
     || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)) return false;
@@ -1482,6 +1517,7 @@ function readPaintOrder(nm, from, e) {
   // Their owner-local sequence is deterministic; their uptime is irrelevant.
   return hasSeq ? { clock: e._netSeq, peer: from, seq: e._netSeq, legacy: true } : null;
 }
+function paintFloat(value) { return Number.isFinite(value) && Number.isFinite(Math.fround(value)); }
 function receivePaintOrder(nm, from, e) {
   const order = readPaintOrder(nm, from, e);
   if (order && !order.legacy) {
@@ -2134,6 +2170,38 @@ ${bombHit}`;
 
   }
   if (rel === 'src/net/netmatch.js') {
+    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    patch('if (d.B && from === this.s.hostId && boss && !boss.sim) {',
+      'if (d.B && from === this.s.hostId && boss && !boss.sim && validBossSnapshotRow(d.B, d.ts)) {',
+      'validate host Boss snapshot before unpacking and buffering');
+    patch('      const s = t > last.t ? last : s0;',
+      '      const s = t >= last.t ? last : s0;',
+      'Boss exact latest timestamp selects the latest snapshot');
+    patch('    if (!Number.isFinite(d.ts)) return;',
+      '    if (!validSnapshotTimestamp(d.ts)) return;\n    if (d.e != null && !Array.isArray(d.e)) return;',
+      'reject unsafe owner clock before replay watermark mutation');
+    patch('    if (d.e != null && !Array.isArray(d.e)) return;',
+      "    if (d.e != null && !Array.isArray(d.e)) return;\n    if (from === this.s.hostId && d.c != null && (!Array.isArray(d.c) || d.c.length !== 2 || typeof d.c[0] !== 'string' || !Number.isFinite(d.c[1]) || d.c[1] < 0)) return;",
+      'validate host match clock before snapshot mutation');
+    // #574: use the established authenticated, life-scoped, deduplicated hit
+    // transaction. A zero-damage Blaster contact is admitted only with bounded
+    // geometry; no other cause gains a zero/negative-damage exception.
+    code = "import { validBlasterKnockback, applyBlasterKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\n" + code;
+    // The delivery-admission adapter already rewrote sendTo() to a checked
+    // `const sent`; attach knockback before that final check, preserving the
+    // mutable message retained for NACK-driven ownership retries.
+    patch('    const sent = this.s.tr?.sendTo(victim.owner, message) === true;',
+      "    const blast = this._s3BlasterKnockback;\n    if (wid === 'blaster' && blast?.attacker === attacker && blast.victim === victim && validBlasterKnockback(blast.offset)) message.kb = blast.offset.slice();\n    const sent = this.s.tr?.sendTo(victim.owner, message) === true;",
+      'Blaster knockback geometry on retryable hit');
+    patch('    if (!Number.isFinite(d.d) || d.d <= 0 || d.d > IW_HIT_MAX_DAMAGE) return;',
+      "    const blastKnockback = d.w === 'blaster' && validBlasterKnockback(d.kb);\n    if (d.kb !== undefined && !blastKnockback) return;\n    if (!Number.isFinite(d.d) || d.d < 0 || (d.d === 0 && !blastKnockback) || d.d > IW_HIT_MAX_DAMAGE) return;",
+      'Blaster bounded knockback-only admission');
+    patch('    if (atk.owner !== from || !Number.isFinite(d.d) || d.d <= 0 || d.d > 10000) return;',
+      '    if (atk.owner !== from || !Number.isFinite(d.d) || d.d < 0 || (d.d === 0 && !blastKnockback) || d.d > 10000) return;',
+      'Blaster knockback preserves authenticated owner admission');
+    patch('const hitAdmission = G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);',
+      "const hitAdmission = d.d > 0 ? G.projectiles?.applyHit(atk, v, d.d, d.w, d.g) : 'accepted';\n    if (blastKnockback && hitAdmission === 'accepted') applyBlasterKnockback(v, d.kb);",
+      'Blaster applies once after recipient hit admission');
     code = adaptIssue1088SurgePresentation(code);
     code = once(code, 'if (c1088Surge) c1088Row.push(c1088Surge);\n  return c1088Row;',
       'c1088Row.push(c1088Surge || null, packHitAuthorityState(a));\n  return c1088Row;',
@@ -2142,7 +2210,12 @@ ${bombHit}`;
       'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2], hitParent: readHitAuthorityState(s[25], s[25]?.[1])?.[2] ?? null };',
       rel + ': unpack accepted-hit revision');
     code = adaptIssue1163RemoteDodgeClock(code);
-    patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
+    patch('if (d.a) for (const s of d.a) {\n      const rawRoll',
+      'if (Array.isArray(d.a)) for (const s of d.a) {\n      if (!validActorSnapshotRow(s, d.ts)) continue;\n      const rawRoll',
+      'strict owner snapshot schema before Hermite buffering');
+    patch('    const S = n.cur;',
+      '    const S = n.cur;\n    if (!validRemoteActorPose(S, n.err)) { a.character.root.visible = false; return; }\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);',
+      'nonfinite remote pose guard');
   }
   return code;
 }

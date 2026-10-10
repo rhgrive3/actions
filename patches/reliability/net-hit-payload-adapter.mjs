@@ -6,45 +6,48 @@
 // This adapter deliberately does NOT duplicate that sender check; it adds only the
 // remaining payload-shape validation that the owner thread listed as still open.
 //
-// The cause allowlist and the damage ceiling are DERIVED from the active runtime
-// config (inkwave-public/src/config.js) rather than invented:
-//   · causes = every authored weapon id, sub id and special id, plus the projectile
-//     "type" fallbacks that weapons.js passes when a round has no wid
-//     (`p.wid || p.type`, see weapons.js _step/_sloshSplash).
-//   · MAX_HIT_DAMAGE = the largest authored single-event damage field in WEAPONS /
-//     SUB / SPECIALS. In the current active config that is 180 (SUB.bomb.damageMax
-//     and SPECIALS.slam.damageMax), so every genuine hit — including the charger
-//     160, roller 150 and blaster 125 — stays accepted and unbounded lies are not.
-// No player-side damage buff exists in the active config: the only damage multiplier
-// is boss `dmgMul`, which scales boss hazards applied via actor.damage / boss._damage
-// and never routes through NetMatch.sendHit, so there is no aggregate to include.
-//
-// Upstream src/net/netmatch.js stays untouched. Both anchors must be present exactly
-// once; source drift fails closed.
+// Admission follows the same profile and kit definitions that production installs,
+// not just the frozen raw snapshot. In particular, raw Slam is 180 while the
+// active S3 Slam, Trizooka direct hit and Ink Vac countershot can each be 220.
+// These are payload ceilings, not new damage tuning or sender authority.
+import fs from 'node:fs';
 import { WEAPONS, SUB, SPECIALS } from '../../inkwave-public/src/config.js';
+import { registerKitSubs } from '../splatoon3/runtime/kit-subs.mjs';
+import { trizookaSpecialWeapon, TRIZOOKA_ID } from '../splatoon3/runtime/kit-trizooka.mjs';
+import { inkVacBlastDescriptor, VAC_ID } from '../splatoon3/runtime/kit-ink-vac.mjs';
 
 const GUARD = '    if (!v || v.remote || !v.alive || !atk || atk.team === v.team) return;';
 const TOP = 'const TICK = 1 / 20;';
 const MARKER = '// #462 residual: reject malformed combat claims';
 
 const DAMAGE_FIELD = /damage/i;
-function derivedMaxDamage() {
-  let max = 0;
-  for (const def of [...Object.values(WEAPONS), ...Object.values(SUB), ...Object.values(SPECIALS)]) {
+const profile = JSON.parse(fs.readFileSync(new URL('../splatoon3/profile.json', import.meta.url), 'utf8'));
+const copyDefinitions = source => Object.fromEntries(Object.entries(source).map(([id, spec]) => [id, { ...spec }]));
+
+// Build-only: no shared raw config is mutated and no browser startup work is added.
+export function hitPayloadPolicy(tuning = profile) {
+  const weapons = copyDefinitions(WEAPONS), subs = copyDefinitions(SUB), specials = copyDefinitions(SPECIALS);
+  for (const [id, spec] of Object.entries(tuning.weapons || {})) Object.assign(weapons[id] ||= {}, spec);
+  Object.assign(subs.bomb, tuning.bomb);
+  for (const [id, spec] of Object.entries(tuning.specials || {})) Object.assign(specials[id] ||= {}, spec);
+  registerKitSubs(subs, tuning);
+  const descriptors = [trizookaSpecialWeapon(0), trizookaSpecialWeapon(57), inkVacBlastDescriptor(0), inkVacBlastDescriptor(1)];
+  let maxDamage = 0;
+  for (const def of [...Object.values(weapons), ...Object.values(subs), ...Object.values(specials), ...descriptors]) {
     for (const [key, value] of Object.entries(def || {})) {
-      if (DAMAGE_FIELD.test(key) && typeof value === 'number' && Number.isFinite(value)) max = Math.max(max, value);
+      if (DAMAGE_FIELD.test(key) && Number.isFinite(value)) maxDamage = Math.max(maxDamage, value);
     }
   }
-  return max;
+  const causes = [...new Set([
+    ...Object.keys(weapons), ...Object.keys(subs), ...Object.keys(specials),
+    TRIZOOKA_ID, VAC_ID, // registered damaging specials; Big Bubbler authors no hit
+    'shot', 'slosh', 'blast', 'drop', // authored projectile-type fallbacks
+  ])];
+  return { maxDamage, causes };
 }
-
-// Largest authored single-event damage in the active config (currently 180).
-export const MAX_HIT_DAMAGE = derivedMaxDamage();
-// Every cause string a legitimate hit packet can carry.
-export const KNOWN_HIT_CAUSES = Object.freeze([
-  ...Object.keys(WEAPONS), ...Object.keys(SUB), ...Object.keys(SPECIALS),
-  'shot', 'slosh', 'blast', 'drop', // projectile-type fallbacks where p.wid is unset
-]);
+const policy = hitPayloadPolicy();
+export const MAX_HIT_DAMAGE = policy.maxDamage;
+export const KNOWN_HIT_CAUSES = Object.freeze(policy.causes);
 const CAUSE_SET = new Set(KNOWN_HIT_CAUSES);
 
 export function isHitPayloadValid(d) {
@@ -62,7 +65,7 @@ export function adaptNetHitPayload(rel, code) {
     throw new Error('Hit payload anchor mismatch: module constants');
   }
   const constants = TOP + '\n' +
-    '// #462 payload bounds derived from the active config by the reliability adapter.\n' +
+    '// #462 payload bounds derived from the production profile and kit definitions.\n' +
     `const IW_HIT_MAX_DAMAGE = ${MAX_HIT_DAMAGE};\n` +
     `const IW_HIT_CAUSES = new Set(${JSON.stringify(KNOWN_HIT_CAUSES)});`;
   code = code.slice(0, topAt) + constants + code.slice(topAt + TOP.length);

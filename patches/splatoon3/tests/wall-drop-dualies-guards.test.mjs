@@ -158,7 +158,7 @@ for (const weapon of ['shooter', 'charger', 'roller']) test(`#644/#643 ${weapon}
   assert.ok(f.SUB.bomb.inkRecoverStop > a.weapon.inkRecoverStop);
 });
 
-test('#556 grounded Blaster shots use spreadGround = 0; airborne keeps spreadAir', async t => {
+test('#556 grounded Blaster shots use spreadGround = 0; an admitted jump uses spreadAir', async t => {
   const f = await boot(); t.after(f.close);
   const a = f.make({ weapon: 'blaster' }); f.tick(a);
   assert.equal(a.grounded, true); assert.equal(a.weapon.spreadGround, 0);
@@ -167,5 +167,8 @@ test('#556 grounded Blaster shots use spreadGround = 0; airborne keeps spreadAir
   const dirs = [];
   for (let i = 0; i < 6; i++) { f.G.projectiles.fireBlaster(a, a.weapon, a.weaponRunner._spreadDeg(a.weapon)); dirs.push(f.G.projectiles.list.at(-1).vel.clone().normalize()); }
   for (const d of dirs) close(d.angleTo(dirs[0]), 0, 'grounded shots share one direction', 1e-9);
-  a.grounded = false; assert.equal(a.weaponRunner._spreadDeg(a.weapon), a.weapon.spreadAir);
+  a.grounded = false; assert.equal(a.weaponRunner._spreadDeg(a.weapon), 0, 'ledge fall retains the normal endpoint');
+  a.s3JumpSerial = (a.s3JumpSerial || 0) + 1;
+  a.weaponRunner.update(1 / 60, { fire: false });
+  assert.equal(a.weaponRunner._spreadDeg(a.weapon), a.weapon.spreadAir);
 });

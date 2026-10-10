@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptFirstTouch, adoptCanvasTouch, continueCanvasTouch } from '../first-touch-adapter.mjs';
+import { adoptCanvasTouch, continueCanvasTouch } from '../first-touch-adapter.mjs';
+import { adaptFirstTouch } from '../first-touch-source-adapter.mjs';
 
 test('first canvas touch delegates the original event once; other event paths stay independent', () => {
   const canvas = { ownerDocument: { hidden: false } }, delivered = [];

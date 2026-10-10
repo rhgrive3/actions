@@ -1,5 +1,6 @@
 // Mutable synchronous HUD transport, owned by one Match/Game. No actor references
 // are retained in snapshot values; removed actors are weak keys only.
+import { stormGaugeFraction } from '../splatoon3/runtime/storm-effects.mjs';
 export function teamHudSnapshot(match, colors, viewerTeam = 0, paint = null) {
   let cache = match._teamHudSnapshot;
   if (!cache) {
@@ -34,7 +35,8 @@ export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt
   const frame = cache.frame, crosshair = cache.crosshair, map = cache.map;
   frame.time = m.time; frame.teams = m.teamSummary(a.team);
   frame.ink = a.ink / PLAYER.inkMax; frame.inkLow = game._lowInkFlash > 0; frame.subCost = subCost / PLAYER.inkMax; frame.subReady = a.ink >= subCost;
-  frame.special = a.specialFrac(); frame.specialReady = a.specialReady(); frame.specialActive = !!a.specialActive;
+  const stormGauge = stormGaugeFraction(a);
+  frame.special = stormGauge ?? a.specialFrac(); frame.specialReady = a.specialReady(); frame.specialActive = stormGauge !== null || !!a.specialActive;
   frame.hp = a.hp / PLAYER.hp; frame.weapon = a.weaponId; frame.charge = a.weaponRunner.charge;
   crosshair.spread = spread; crosshair.onTarget = m.controller?.onTarget ? 'enemy' : null; crosshair.inRange = m.controller ? m.controller.inRange !== false : true;
   if (guide === undefined) delete crosshair.guide; else crosshair.guide = guide;

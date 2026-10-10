@@ -30,6 +30,20 @@ const HELPERS = `  // Each menu/start operation owns its continuations and inten
     return flow;
   }
 
+  async _startMenuMatch(o = {}) {
+    const flow = this._beginMatchFlow();
+    try { return await this.startMatch(o, flow); }
+    catch (error) {
+      // The core API still rejects. The visible menu owns recovery only for
+      // its own current attempt; an abandoned rejection cannot cancel a retry.
+      if (!flow.current()) return;
+      console.error('[inkwave] match start failed', error);
+      const menuMatch = await this.quitToMenu();
+      if (menuMatch && this.match === menuMatch && !this._matchFlow && G.mode === 'menu' && this.menus?.current === 'main')
+        this.menus.toast?.('Could not start the match. Please try again.', { kind: 'error' });
+    }
+  }
+
 `;
 
 function startup(source, online) {
@@ -64,6 +78,14 @@ export function adaptStart(rel, code) {
   code = method(code, '  async startMatch(o = {}) {', '\n  // ---- online (src/net/session.js', source => startup(source, false));
   code = method(code, '  async startNetMatch(cfg, nm) {', '\n  // Compile every shader variant', source => startup(source, true));
   code = replaceOnce(code, '  async startMatch(o = {}) {', HELPERS + '  async startMatch(o = {}) {', 'operation helper');
+  code = replaceOnce(code, '  async startMatch(o = {}) {\n    const flow = this._beginMatchFlow();',
+    '  async startMatch(o = {}, flow = this._beginMatchFlow()) {',
+    'startup accepts its UI-owned operation without bypassing build instrumentation');
+  code = replaceOnce(code, '      startMatch: (o) => self.startMatch(o),',
+    '      startMatch: (o) => self._startMenuMatch(o),', 'menu consumes active startup rejection');
+  code = replaceOnce(code, "    if (!this._bossMod) this._bossMod = loadLazyModule('./boss/bossMode.js');",
+    "    if (!this._bossMod) {\n      const pending = this._bossMod = loadLazyModule('./boss/bossMode.js');\n      pending.catch(() => { if (this._bossMod === pending) this._bossMod = null; });\n    }",
+    'failed Boss module can be retried');
   code = replaceOnce(code, '  _startAttract() {', '  _startAttract() {\n    this._matchFlow = null; this._worldBuild = null;', 'attract invalidation');
   code = method(code, '  async quitToMenu() {', '\n  // Boss Battle intro:', source => {
     source = replaceOnce(source, '  async quitToMenu() {', '  async quitToMenu() {\n    const flow = this._beginMatchFlow();', 'quit reservation');
@@ -78,6 +100,8 @@ export function adaptStart(rel, code) {
     for (const line of ['    this.input.exitLock();', '    this.menus?.show(null);', '    await this._fade(1, 350);']) {
       source = replaceOnce(source, line, line + '\n    if (!flow.current()) return;', 'quit ownership');
     }
+    source = replaceOnce(source, '    this._fade(0, 500);',
+      '    this._fade(0, 500);\n    return this.match;', 'identify completed menu recovery');
     return source;
   });
   // The results overlay already guards room/match identity. The operation handle

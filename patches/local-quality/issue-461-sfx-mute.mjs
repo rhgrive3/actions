@@ -4,7 +4,7 @@
 // build time (never mutating inkwave-public/ itself) so that an effective-zero
 // SFX bus becomes an execution/lifecycle state, not just a downstream gain:
 //
-//   * `play()` short-circuits while `taper(this.vol.sfx) <= 0` (no GainNode /
+//   * `play()` short-circuits while either Master or SFX is zero (no GainNode /
 //     panner / filter / reverb-send / builder work for an inaudible one-shot).
 //   * `loop()` while muted records the request but builds no graph. The returned
 //     handle stays a valid handle object, so an app-held handle such as
@@ -41,7 +41,7 @@ function replaceOnce(code, before, after, label) {
 
 // Deferred-request lifecycle. The handle returned to callers survives the muted
 // interval; `rec.live` is the actual engine loop handle while audible.
-const HELPERS = `  _sfxSilent() { return taper(this.vol.sfx) <= 0; }
+const HELPERS = `  _sfxSilent() { return taper(this.vol.master) <= 0 || taper(this.vol.sfx) <= 0; }
   _suspendSfxReqs() { for (const rec of this._sfxReq) if (rec.live) { rec.live.stop(0.05); rec.live = null; } }
   _resumeSfxReqs() { for (const rec of [...this._sfxReq]) this._activateSfxReq(rec); }
 `;
@@ -128,6 +128,9 @@ export function adaptIssue461Source(rel, code) {
     const h = {
       name,
       get playing() { return !rec.stopped && !!rec.live && rec.live.playing; },
+      // Temporarily parked is distinct from stopped/dead for the outer loop
+      // parameter-deduplication wrapper: muted requests still need updates.
+      get _sfxDeferred() { return !rec.stopped && !rec.live; },
       set(p = {}) {
         if (rec.stopped || !p) return;
         if (rec.live) rec.live.set(p);

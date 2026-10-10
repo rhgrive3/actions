@@ -44,9 +44,10 @@ function createActor(f,{nid=0,owner='me',remote=false,native=false}={}){
   return actor;
 }
 
-async function runVolley({hz=60,network=true,move=false,aimChangeAt=null,flipGroundAt=null,flipTo=false,initialGrounded=true,invalid=null}={}){
+async function runVolley({hz=60,network=true,move=false,aimChangeAt=null,flipGroundAt=null,flipTo=false,initialGrounded=true,invalid=null,turnDelta=0}={}){
   const f=await fixture({network:true});
   const a=createActor(f,{native:invalid==='reset'});
+  (a.weaponRunner||={}).s3SloshTurnDelta=turnDelta;
   a.grounded=initialGrounded;
   f.G.actors.push(a);
   const nm=network?f.makeNetMatch(f.makeSession('me','me',[['me','Me']])):null;
@@ -240,9 +241,9 @@ test('plain battle still samples births without network and invalid owner births
   }
 });
 
-test('#1152 two/three clients observe exactly nine true births at every display rate',async()=>{
+test('#1152 / #258 two/three clients preserve swept velocities and nine true births at every display rate',async()=>{
   for(const hz of [30,60,120])for(const peers of [1,2]){
-    const owner=await runVolley({hz,move:true,flipGroundAt:3,flipTo:false});
+    const owner=await runVolley({hz,move:true,flipGroundAt:3,flipTo:false,turnDelta:(peers===1?1:-1)*Math.PI/18});
     assert.equal(owner.packetsAtFire,0);assert.equal(owner.packets.length,9);
     assert.deepEqual(Array.from(owner.packets,e=>e.at(-2)-1),[0,1,2,3,4,6,8,10,12]);
     for(let observer=0;observer<peers;observer++){

@@ -19,9 +19,10 @@ const mode=process.env.INKWAVE_UI_LIFETIME_MINIFY==='1';
 const transformSync=mode?(await import(process.env.ESBUILD_MODULE?pathToFileURL(process.env.ESBUILD_MODULE).href:'esbuild')).transformSync:null;
 const site=process.env.INKWAVE_UI_LIFETIME_SITE;
 class El {
-  constructor(){this.children=[];this.style={setProperty(k,v){this[k]=v;}};this.names=new Set();this.classList={add:(...n)=>n.forEach(x=>this.names.add(x)),remove:(...n)=>n.forEach(x=>this.names.delete(x)),toggle:(n,v)=>v?this.names.add(n):this.names.delete(n)};}
+  constructor(){this.children=[];this.listeners=new Map();this.style={setProperty(k,v){this[k]=v;}};this.names=new Set();this.classList={add:(...n)=>n.forEach(x=>this.names.add(x)),remove:(...n)=>n.forEach(x=>this.names.delete(x)),toggle:(n,v)=>v?this.names.add(n):this.names.delete(n)};}
   appendChild(c){if(c)this.children.push(c);return c;} append(...cs){cs.forEach(c=>this.appendChild(c));} prepend(...cs){this.children.unshift(...cs.filter(Boolean));}
-  setAttribute(){} addEventListener(){} querySelector(){return new El();} querySelectorAll(){return [];} remove(){} get offsetWidth(){return 1;}
+  setAttribute(){} addEventListener(name, fn){const rows=this.listeners.get(name)||[];rows.push(fn);this.listeners.set(name,rows);}
+  dispatch(name, event){for(const fn of this.listeners.get(name)||[])fn({preventDefault(){},stopPropagation(){},...event});} querySelector(){return new El();} querySelectorAll(){return [];} remove(){} get offsetWidth(){return 1;}
 }
 async function fixture({baseline=false}={}) {
   const bus=new Map(),G={settings:{minimap:false},teamHex:['#f80','#08f'],actors:[],audio:{play(){}}};
@@ -120,4 +121,59 @@ test('new connections fail closed on missing/duplicate anchors and register in b
     assert.throws(()=>adaptUiActorLifetime(rel,'',replaceOnce));assert.throws(()=>adaptUiActorLifetime(rel,raw(rel)+raw(rel),replaceOnce));
   }
   assert.equal(adaptUiActorLifetime('unrelated.txt','unchanged',replaceOnce),'unchanged');assert(qualityIdentity()['ui-actor-lifetime-adapter.mjs']);
+});
+
+function tapMap(f, dio, name) {
+  const me=f.actor(name+'-me'), ally=f.actor(name+'-ally'), m=f.match([me,ally]);
+  m.local=me; m.attract=false; m.controller={a:me,mapHeld:true,canRequestMapJump:()=>true};
+  f.G.match=m; f.G.actors=m.actors; dio.update(1/60,1);
+  return {me,ally,m,down(pointerId=1,pointerType='touch') {
+    dio.pins[0].el.dispatch('pointerdown',{pointerId,pointerType,clientX:20,clientY:40});
+    return dio._pinTaps.get(pointerId);
+  }};
+}
+
+test('#685 composed touch/pen pending pins release the whole retiring match before character disposal without another map frame',async()=>{
+  for(const pointerType of ['touch','pen']) {
+    const f=await fixture(), dio=f.G.game.diorama=new f.DioramaOverlay(new El()), h=tapMap(f,dio,pointerType);
+    const tap=h.down(1,pointerType); assert.equal(tap.target,h.ally); assert.equal(tap.match,h.m);
+    assert.equal(tap.actor,h.me); assert.equal(tap.controller,h.m.controller);
+    h.me.character.dispose=()=>assert.equal(dio._pinTaps.size,0,'release precedes Actor teardown');
+    h.m.dispose(); assert.equal(dio._pinTaps.size,0); assert.equal(dio.pins[0].target,null);
+  }
+});
+
+test('#685 empty retiring roster still releases taps by match identity',async()=>{
+  const f=await fixture(), dio=f.G.game.diorama=new f.DioramaOverlay(new El()), h=tapMap(f,dio,'empty');
+  h.down(); h.m.actors.length=0; h.m.dispose();
+  assert.equal(dio._pinTaps.size,0); assert.equal(dio._targetMatch,null);
+});
+
+test('#685 stale match release removes only its pending contacts and preserves the newer map owner',async()=>{
+  const f=await fixture(), dio=new f.DioramaOverlay(new El());
+  const old=tapMap(f,dio,'old'); old.down(1);
+  const next=tapMap(f,dio,'next'); const current=next.down(2,'pen');
+  assert.equal(dio._pinTaps.size,2);
+  dio.releaseMatchActors(old.m.actors,old.m);
+  assert.equal(dio._pinTaps.has(1),false); assert.equal(dio._pinTaps.get(2),current);
+  assert.equal(dio.pins[0].target,next.ally); assert.equal(dio._targetMatch,next.m);
+  dio.releaseMatchActors(old.m.actors,old.m); assert.equal(dio._pinTaps.size,1);
+  dio.releaseMatchActors(next.m.actors,next.m); assert.equal(dio._pinTaps.size,0);
+});
+
+test('#685 targeted actor and absent-viewer cleanup retire pending contacts while preserving unrelated contacts',async()=>{
+  const f=await fixture(), dio=new f.DioramaOverlay(new El()), h=tapMap(f,dio,'target');
+  h.down(1); const other=f.actor('other'); dio.pins[1].target=other;
+  dio.pins[1].el.dispatch('pointerdown',{pointerId:2,pointerType:'pen',clientX:20,clientY:40});
+  const second=dio._pinTaps.get(2);
+  dio.releaseMatchActors([h.ally]); assert.equal(dio._pinTaps.has(1),false); assert.equal(dio._pinTaps.get(2),second);
+  f.G.match.local=null; dio.update(1/60,1); assert.equal(dio._pinTaps.size,0);
+});
+
+test('#685 repeated map-match disposal cannot accumulate pending Actor owners between pointer notifications',async()=>{
+  const f=await fixture(), dio=f.G.game.diorama=new f.DioramaOverlay(new El());
+  for(let cycle=0;cycle<25;cycle++) {
+    const h=tapMap(f,dio,'cycle'+cycle); h.down(cycle+1,cycle%2?'pen':'touch');
+    assert.equal(dio._pinTaps.size,1); h.m.dispose(); assert.equal(dio._pinTaps.size,0);
+  }
 });

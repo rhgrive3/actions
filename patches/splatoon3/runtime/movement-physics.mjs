@@ -63,7 +63,17 @@ export function rollingMovementActive(a) {
 export function rollingMovementSpeed(r) {
   const w = r.a.weapon;
   const base = Number.isFinite(w.rollBaseSpeed) ? w.rollBaseSpeed : w.rollSpeed;
-  return r.rollT + MOVEMENT_EPSILON >= (w.rollDashTime ?? 0) ? w.rollSpeed : base;
+  if (r.rollT + MOVEMENT_EPSILON < (w.rollDashTime ?? 0)) return base;
+  // #466: a rapid dash reversal uses the sourced SpeedDashTurnBreak
+  // (0.108/frame) instead of the straight dash SpeedDash (0.132/frame).
+  // A low-speed/stationary stick does not accidentally engage the brake state.
+  const move = r.a.intent?.move, vel = r.a.vel;
+  const input = move ? Math.hypot(move.x, move.z) : 0;
+  const speed = vel ? Math.hypot(vel.x, vel.z) : 0;
+  if (input > 0.01 && speed > 0.01
+      && (move.x * vel.x + move.z * vel.z) / (input * speed) < 0)
+    return Math.min(w.rollSpeed, w.rollDashTurnBreakSpeed ?? base);
+  return w.rollSpeed;
 }
 
 /** Integral of the existing 1.5*(1-u^2) curve, not a new guessed Nintendo curve.

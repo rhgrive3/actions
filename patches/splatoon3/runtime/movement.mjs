@@ -39,6 +39,19 @@ export function movementState(a) {
   return state;
 }
 function sync(a, state) { a.s3.roll = state.roll; a.s3.surge = state.surge; }
+// #951: retire the Surge boost only on the native 3.2-unit away-stick
+// detach; ledge pops and ink-gap crossings keep their existing flight/armor.
+export function retireAwaySurge(actor, state, wasClimbing, moveX, moveZ, P) {
+  const burst = state.surge, length = Math.hypot(moveX, moveZ);
+  if (!wasClimbing || actor.climbing || burst?.phase !== 'burst' || !(length > EPSILON)
+      || actor.climbExit + EPSILON < 0.3 || Math.abs(actor.vel.y - 3.2) > EPSILON) return false;
+  const into = -(moveX * actor.wallN.x + moveZ * actor.wallN.z) / length;
+  if (!(into < P.climbDetachDot)) return false;
+  burst.armorTime = 0; burst.armorPending = false;
+  if (state.armor === burst) state.armor = null;
+  state.surge = null; actor.anim.surgeCharge = 0; sync(actor, state);
+  return true;
+}
 function advanceChainTimer(state, dt) {
   state.chainTimer = Math.max(0, state.chainTimer - dt);
   if (state.chainTimer <= EPSILON) { state.chain = 0; state.chainTimer = 0; state.chainSpeed = 0; }
@@ -332,8 +345,10 @@ export function installMovement(context, tuning) {
   Actor.prototype._ledgePop = function (...args) {
     const wasClimbing = this.climbing, surge = movementState(this).surge, value = ledge.apply(this, args);
     if (wasClimbing && !this.climbing && (surge?.phase === 'burst' || surge?.phase === 'auto-climb')) beginSurgeLaunchArmor(this, surge);
-    if (surge?.phase === 'burst') {
-      this.vel.y = Math.max(this.vel.y, surge.speed);
+    if (wasClimbing && !this.climbing && (surge?.phase === 'burst' || surge?.phase === 'auto-climb')) {
+      // The crest belongs to the wall-top transition, including tall walls
+      // reached after boost expiry. Only the live boost may change velocity.
+      if (surge.phase === 'burst') this.vel.y = Math.max(this.vel.y, surge.speed);
       this.character.trigger('squidsurge_top', { charge: surge.charge, duration: config.surge.duration });
     }
     return value;
@@ -366,6 +381,7 @@ export function installMovement(context, tuning) {
     let value;
     try { value = climb.apply(this, args); }
     finally { P.climbSpeed = speed; P.climbSideSpeed = side; if (continueNeutral) { move.x = savedX; move.z = savedZ; } }
+    retireAwaySurge(this, state, was, savedX, savedZ, P);
     if (was && !this.climbing && state.surge?.armorPending) state.surge.armorPending = false;
     if (was && !this.climbing && movementState(this).surge?.phase === 'auto-climb') { movementState(this).surge = null; sync(this, state); }
     // Losing an inked wall cancels charge. A ledge burst is kept in the air.
