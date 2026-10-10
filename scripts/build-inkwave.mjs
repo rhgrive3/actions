@@ -212,6 +212,19 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  // ContactPolish: lazily import source animation at runtime, never a new eager HTML hint.
+  'src/game/motion/source-bank.js',
+  'src/game/motion/source-controller.js',
+  'src/game/motion/retarget.js',
+  'src/game/motion/locomotion-profile.js',
+  'src/game/motion/gait-targets.js',
+  'src/game/motion/squid-rig.js',
+  'src/game/motion/root-hair.js',
+  'src/game/motion/body-balance.js',
+  'src/game/motion/hair-targets.js',
+  'src/game/motion/cadence-control.js',
+  'src/game/motion/contact-transition.js',
+  'src/game/motion/run-foot-path.js',
   // PR1083 adds these 29 modules beyond main c2c938b9. Keep all static imports
   // and immutable precache entries, preserving the existing 131-core hint budget.
   'src/game/inkFlight.js',
