@@ -36,6 +36,8 @@ test('#710 opt-in support kit preserves original Shooter identity and 7-weapon l
   assert.equal(f.WEAPONS.shooter.sub,'suction');
   assert.equal(f.WEAPONS.shooter.special,'trizooka');
   assert.equal(actor.weapon.id,'support');
+  assert.equal(f.WEAPONS.support.kitStatus,'opt-in-inkwave-support-approx-main',
+    'provisional training kit must not be mislabeled as a legacy or source-verified main');
   assert.equal(actor.weapon.kind,'shooter');
   assert.equal(actor.weapon.sub,'pointSensor');
   assert.equal(actor.weapon.special,'tacticooler');
