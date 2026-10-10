@@ -1,6 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
+import { registerMainWeaponCatalog } from '../runtime/main-weapon-catalog.mjs';
+import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
+
+test('registration applies Japanese and English even after the early i18n boot',()=>{
+  for(const LANG of ['ja','en']){
+    const legacy=MAIN_WEAPON_CATALOG.records.filter(r=>r.legacy);
+    const WEAPONS=Object.fromEntries(legacy.map(r=>[r.id,{id:r.id,kind:r.modelKind,class:r.family}]));
+    registerMainWeaponCatalog({LANG,WEAPONS,WEAPON_ORDER:legacy.map(r=>r.id)});
+    for(const record of MAIN_WEAPON_CATALOG.records)assert.equal(WEAPONS[record.id].name,record.names[LANG]);
+  }
+});
 
 async function setup() {
   const f = await fixture({ fullRuntime:true, productionComposition:true, realProjectiles:true,

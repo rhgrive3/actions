@@ -90,6 +90,7 @@ try {
         check(weapon?.sourceMainActor === record.sourceActor, `${record.id} registered source actor`);
         check(weapon.referenceNames?.en === record.names.en && weapon.referenceNames?.ja === record.names.ja,
           `${record.id} registered language metadata`);
+        check(weapon.name === record.names[api.LANG], `${record.id} boot language applies after registration`);
         if (record.legacy) {
           legacyCount++;
           continue;

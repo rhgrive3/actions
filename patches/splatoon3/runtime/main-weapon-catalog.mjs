@@ -82,7 +82,7 @@ function definition(r, api) {
   const rate = b?.repeat || finite(t.RepeatFrame, finite(t.SwingFrame, 6));
   const actualRange = finite(move.DistanceFullCharge, finite(p.MainEffectiveRangeUpParam?.BaseDistance, r.matchmakingRange));
   const u = Object.fromEntries((r.ui || []).map(x => [x.Type, clamp(x.Value / 100)]));
-  return { id:r.id, name:r.names.en, referenceNames:r.names, kind:'catalog', behaviorKind:r.family,
+  return { id:r.id, name:r.names[api.LANG==='ja'?'ja':'en'], referenceNames:r.names, kind:'catalog', behaviorKind:r.family,
     modelKind:r.modelKind, class:{brush:'Brush',brella:'Brella',stringer:'Stringer',splatana:'Splatana'}[r.family] || existing.class,
     catalogRecord:r, sourceMainActor:r.sourceActor, sub:'bomb', special:'slam', specialCost:190, kitStatus:'original-inkwave-kit',
     blurb:'Main-weapon numerical reference: Splatoon 3 11.3.0. Shared temporary model.',
@@ -107,7 +107,7 @@ export function registerMainWeaponCatalog(api) {
   const { WEAPONS, WEAPON_ORDER } = api;
   for (const r of MAIN_WEAPON_CATALOG.records) {
     if (r.legacy) {
-      Object.assign(WEAPONS[r.id], { referenceNames:r.names, name:r.names.en, sourceMainActor:r.sourceActor });
+      Object.assign(WEAPONS[r.id], { referenceNames:r.names, name:r.names[api.LANG==='ja'?'ja':'en'], sourceMainActor:r.sourceActor });
     } else {
       if (WEAPONS[r.id]) throw new Error('Duplicate catalog weapon '+r.id);
       WEAPONS[r.id] = definition(r, api);
