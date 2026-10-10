@@ -353,7 +353,7 @@ export function installGear(api, tuning) {
     const result = splat.apply(this, args);
     if (alive && !this.alive) {
       clearDropRollerLife(this); equip(this, true);
-      this.special = before * Math.max(0, (penalty.incoming ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
+      this.special = before * Math.max(0, (penalty.incoming || penalty.cooler ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
       const history = this.s3.quickRespawnHistory;
       if (enemyDeath) {
         // A Tacticooler drink supplies 57AP Quick Respawn on any enemy splat,
