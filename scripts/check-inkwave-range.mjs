@@ -238,7 +238,11 @@ for (const run of RUNS) {
     await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').last().click();
     await page.waitForFunction(id => window.__G.local.weaponId === id && !window.__G.match.paused, picker.last.slice(2), { timeout: 30000 });
     out.checks.weaponPicker.selected = await page.evaluate(() => window.__G.local.weaponId);
+    // Resume is asynchronous: the old pause owner can remain current briefly
+    // even after the gameplay paused flag clears. Do not toggle pause mid-exit.
+    await page.waitForFunction(() => !window.__G.match.paused && !window.__G.menus.current, null, { timeout: 30000 });
     await page.evaluate(() => window.__inkwave.pause());
+    await page.waitForFunction(() => window.__G.match.paused && window.__G.menus.current === 'pause', null, { timeout: 30000 });
     // Menus._swap intentionally leaves the prior pause DOM mounted for 340ms
     // while its transition finishes. Scope to the current active screen, not
     // a leaving, still-clickable weapon-picker panel from the previous pause.
@@ -246,7 +250,24 @@ for (const run of RUNS) {
     await travelButton.waitFor({ state: 'visible', timeout: 30000 });
     if (await travelButton.count() !== 1) throw new Error('range has duplicate active travel buttons');
     await travelButton.click();
-    await page.waitForFunction(() => window.__G.match?.range?.telemetry()?.zone === 'bomb' && !window.__G.match.paused && !window.__G.menus.current, { timeout: 30000 });
+    try {
+      // Verify the real native travel and a fully resumed game, not just DOM.
+      await page.waitForFunction(() => window.__G.match?.range?.telemetry()?.zone === 'bomb' && !window.__G.match.paused && !window.__G.menus.current, null, { timeout: 30000 });
+    } catch (error) {
+      const state = await page.evaluate(() => {
+        const G = window.__G, a = G?.local;
+        return {
+          zone: G?.match?.range?.telemetry()?.zone,
+          paused: G?.match?.paused,
+          menu: G?.menus?.current,
+          alive: a?.alive,
+          pos: a?.pos?.toArray?.(),
+          weapon: a?.weaponId,
+          activeTravelButtons: document.querySelectorAll('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]').length,
+        };
+      });
+      throw new Error('range native travel/resume acceptance: ' + JSON.stringify(state) + '; ' + error.message);
+    }
     out.checks.travel = await page.evaluate(() => ({ screen: window.__G.menus.current, paused: window.__G.match.paused, pos: window.__G.local.pos.toArray(), zone: window.__G.match.range.telemetry().zone }));
     if (out.checks.travel.screen || out.checks.travel.paused || out.checks.travel.zone !== 'bomb') throw new Error('travel ' + JSON.stringify(out.checks.travel));
     if (run.isolation) {
