@@ -99,3 +99,19 @@ test('measured CPU footprint: source death blast versus the replaced radius-1.7 
   // A radius-5 footprint must cover several times the radius-1.7 one on the same flat floor.
   assert.ok(after / before > 4, `death-blast/native CPU cells ${after}/${before}`);
 });
+
+test('a radius-5 row is admitted above the ceiling only at a sender-owned actor of another team', async () => {
+  const sender = await client('b'), observer = await client('c');
+  sender.victim.pos.set(1.5, 0, -2);
+  sender.victim.splat(sender.attacker, 'shooter');
+  const main = sender.nm.out.find(e => e[1] === 's' && e[5] === sender.f.profile.deathBlast.paintRadius);
+  const play = row => { observer.nm._peer('b'); observer.nm._play('b', received(row)); return observer.nm._peer('b')._lastEventSeq === row._netSeq; };
+  const far = received(main); far._netSeq = main._netSeq; far._netTick = main._netTick;
+  far[2] += 12;                                   // 12+ units from the victim the sender owns
+  assert.equal(play(far), false, 'far from any sender-owned victim: rejected');
+  const own = received(main); own._netSeq = main._netSeq + 1; own._netTick = main._netTick;
+  own[6] = sender.victim.team;                    // the victim's own colour: not a death blast
+  assert.equal(play(own), false, 'own-team radius-5 row stays under the ceiling');
+  const ok = received(main); ok._netSeq = main._netSeq + 2; ok._netTick = main._netTick;
+  assert.equal(play(ok), true, 'the attacker-colour row at the victim is admitted');
+});

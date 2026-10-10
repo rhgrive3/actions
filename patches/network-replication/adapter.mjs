@@ -1537,7 +1537,7 @@ function readPaintOrder(nm, from, e) {
   // #522: radius ceiling derived from the largest legitimate producer (PAINT_RADIUS_MAX).
   // The plain death-blast row (exactly PAINT_VICTIM_BLAST_RADIUS) is the only row allowed above the ceiling.
   // The ceiling line itself stays verbatim so later source adapters can still anchor on it.
-  if (!(Math.fround(e[5]) === Math.fround(PAINT_VICTIM_BLAST_RADIUS) && paintVictimBlastSignature(e)))
+  if (!(Math.fround(e[5]) === Math.fround(PAINT_VICTIM_BLAST_RADIUS) && paintVictimBlastAboveCeiling(nm, from, e)))
   if (Math.fround(e[5]) > Math.fround(PAINT_RADIUS_MAX)) return false;
   if (!paintTeamAdmitted(nm, from, e)) return false;
   // _kind uses a plain object table. Names inherited from Object.prototype
@@ -1592,6 +1592,20 @@ function paintTeamAdmitted(nm, from, e) {
   }
   if (!owned) return false;
   return paintVictimBlastSignature(e);
+}
+// The radius-5 death blast is the victim owner's row in the ATTACKER's colour, centred
+// on the victim. Only that shape may exceed the ceiling: the sender must own an actor of
+// another team than the row within PAINT_VICTIM_BLAST_REACH of its centre (remote
+// interpolation lag included). A sender's own-team radius-5 row (for example a kit core
+// stripped of its #1209 capability tag) stays under the legacy ceiling.
+const PAINT_VICTIM_BLAST_REACH = 6;
+function paintVictimBlastAboveCeiling(nm, from, e) {
+  if (!paintVictimBlastSignature(e)) return false;
+  for (const a of nm.byNid?.values?.() || []) {
+    if (a.owner !== from || a.team === e[6] || !a.pos) continue;
+    if (Math.hypot(a.pos.x - e[2], a.pos.y - e[3], a.pos.z - e[4]) <= PAINT_VICTIM_BLAST_REACH) return true;
+  }
+  return false;
 }
 function paintVictimBlastSignature(e) {
   const radius = Math.fround(e[5]);
