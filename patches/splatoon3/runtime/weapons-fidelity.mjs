@@ -122,6 +122,8 @@ export function advanceFidelityProjectile(p, dt) {
     }
   }
   p.pos.addScaledVector(p.vel, step);
+  // #713 candidate input: retain the flight apex for Roller break/free paint.
+  if (!Number.isFinite(p.fidelityMaxY) || p.pos.y > p.fidelityMaxY) p.fidelityMaxY = p.pos.y;
   if (p.fidelitySloshDownward && p.age <= p.straight + EPSILON)
     p.fidelitySloshFallAnchorY = p.pos.y;
   if (isKitProjectile(p)) kitTrizookaOrbitDelta(null, p, step);
@@ -1082,7 +1084,7 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   }
   // Only offsets are extracted. Native body +1.3 anchor is not claimed as Switch height.
   p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(unit.SpawnPositionHeight||0);
-  p.prev.copy(p.pos);p.start.copy(p.pos);
+  p.prev.copy(p.pos);p.start.copy(p.pos);p.fidelityMaxY=p.pos.y;p.fidelityImpactHeight=null;
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
@@ -1487,6 +1489,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
+    p.fidelityMaxY=null;p.fidelityImpactHeight=null;
     p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.s3DepletionPaintScale=1;p.s3DepletionRound=false;p.fidelitySloshUnit=null;p.fidelitySloshDownward=null;p.fidelitySloshFallAnchorY=null;p.fidelitySloshPacketIndex=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
   };
   function initialize(p,w){
@@ -1624,7 +1627,9 @@ export function installWeaponsFidelity(context,profile) {
       try{if(!p.ghost)context.G?.netm?.recProj?.(p);}
       finally{p.delay=0;p._s3SloshBirthPending=false;}
     }
-    return step.call(this,p,dt);
+    const done=step.call(this,p,dt);
+    if(Number.isFinite(p.pos?.y)&&(!Number.isFinite(p.fidelityMaxY)||p.pos.y>p.fidelityMaxY))p.fidelityMaxY=p.pos.y;
+    return done;
   };
   Projectiles.prototype.prepareFidelityProjectilePacket=prepareFidelityProjectilePacket;
   Projectiles.prototype.ghostProjectile=function(actor,event){
@@ -2098,7 +2103,7 @@ export function installWeaponsFidelity(context,profile) {
       try{
         const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon;
         if(w?.kind==='roller' && p.type==='drop' && p.fidelityRollerUnit){
-          // #411/#674/#611 share one authoritative landing-paint sample.
+          // #411/#674/#611/#713 share one authoritative landing-paint sample.
           return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));
         }
         if(w?.kind==='slosher' && p.type==='slosh' && p.fidelitySloshUnit && context.G.paint?.splat){
