@@ -3469,3 +3469,21 @@ Play impact: the lateral spread of Slosher globs (edge hits, cover contact, lane
 - プレイへの影響: 通常爆発の床塗り範囲が、爆発の高さに応じて小さくなる（床が球の外なら塗られない）。飛沫の半径と数値は変えない。
 - 確認状態: 回帰試験 `patches/splatoon3/tests/issue-1107-timed-burst-centre.test.mjs`（ソース束縛と `paint.js` の球の幾何）と既存の #1107 系試験は通過。ブラウザ・実機での塗り範囲の比較は未確認。
 - 未確認: 落下飛沫の重力は `api.PLAYER.gravity`（フォールバック 20）のままで、Blaster の出典付き値には接続していない。飛沫の初速と重力の本家値は未確認。30/60/120 Hz での不変性はクロックが固定 60 Hz である設計で説明されるが、この項目の専用試験は無い。フライト飛沫との二重計上の確認も未了。PR #1188 の球・`spawnSplashDrop` 方式は本ブランチに移植していない。
+## 2026-10-10 — #997 ordinary weak-diagonal walking gait (PARTIAL, no behavior change)
+
+本家の根拠: 基準は Splatoon 3 Ver. 11.3.0（Issue #997 記載の Nintendo サポート情報）。本セッションでは S3 の歩行クリップ、フレーム値、実機キャプチャを参照していない。リポジトリ内の公式映像（`s3_howtoplay_move01–03`、上記 HUD 記録の参照）は歩行の計測に使っていない。
+
+INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
+- `patches/splatoon3/runtime/walk.mjs` 211–219: 歩行の時計は移動速度で一つ。方向による歩幅の縮小（旧 sideStrideCut）は外れている（c8aa54d3 のコメント）。
+- 同 39–47: 骨盤ひねり `strafeTwist` は手調整の連続式のまま。S3 の基準がなく未確認。
+- 同 226–230: 足の目標は手調整の横幅・速度の式で作る。未確認。
+- `patches/splatoon3/runtime/legacy-walk-curves.mjs`: 向き別の歩容は Splatoon（Wii U）`Player00_anim.szs` 由来（歩行 40F、走行 32F、`calibratedRuntimeRate: false`）。ファイル冒頭の注記どおり S3 のデータではない。
+- 同 318 `weakDiagonalWalkTrace`: 斜め歩行の再現用トレース（`s3CurveVerified: false`）。未マージ枝 `inkwave/gpt6-seven-next-20261008-71` の e774ec73 と同内容で、main には c8aa54d3 経由で入っている。
+
+既存テスト: `patches/splatoon3/tests/legacy-walk-reference.test.mjs`（方向別 4 クリップ、弱い斜めの歩行時計が前進と一致、トレースの出典の境界）と `walk-gait-phase.test.mjs` の計 30 件が合格。
+
+再現操作: Issue #997 の手順（0.25–0.5 の弱い斜め入力、30/45/60°、横歩き）は未実施。実ブラウザでの比較も未実施。
+
+プレイへの影響: 本エントリでは挙動を変更していない。弱い斜め歩行の歩幅・足運び・骨盤の見た目は、S1 由来の形と手調整の式のまま。
+
+確認状態: 未確認。S3 の基準キャプチャ（60 fps、速度・方向の行列）と、歩行から走行への切替の計測が必要。ロジック単独の試験は実機比較の代わりにはならない。
