@@ -2938,3 +2938,14 @@ Player impact and limits: a depleted Roller round's hit volume (owner capsule vi
 - **再現操作**: Storm を発動し、R を離して投擲する。HP 50、被ダメージ後 60F 経過、味方床。21F で +4.41 HP（0.21 HP/F）。`patches/splatoon3/tests/issue-841-inkstorm-hp-recovery.test.mjs` は 30/60/120 Hz の固定 0.3 s 窓での同等性、activation / exit の各 tick が 0.21 HP を 1 回だけ加えること、味方雨で 100 HP/s が重複しないことを検査する。
 - **プレイへの影響**: 本変更では挙動を変えない。HP 回復の時間同等性と境界 tick の 1 回適用を回帰テストで固定する。
 - **確認状態**: ロジック単独（source fixture と native Actor）のみ。本家の実機比較は未実施。12.6 HP/s の一次資料での再確認、味方雨の 1.75 / 100 の不一致、投擲中のインク補充と敵インク接触ダメージの本家挙動は未確認。
+## 2026-10-10: Ink Storm friendly recovery area (#927)
+
+**本家の根拠.** Nintendo の Splatoon 3 Ver. 6.1.0（2024-01-24）公式ノート: 「Damage taken while within the area of effect of your own team's Ink Storm will recover more quickly」、「even when not submerged in ink」。[Ver. 6.1.0 ノート](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/) を 2026-10-10 に取得して確認した。参照版は Ver. 11.3.0。回復倍率、雨の成長・fade 曲線、12単位トレースの世界単位換算は公開情報で確定していない。検証Wiki（アメフラシ仕様節）は本セッションで 403 となり再取得できなかったため、Issue #927 のコメント記録に依存する。
+
+**INKWAVE 実装箇所.** 味方の雨での回復率（`regenRateSwim`、潜伏時と同じ）は既存の `runtime/resources.mjs` の `updateHealthRecovery` にある。本件では `runtime/storm-effects.mjs` の味方回復判定 `cloudCoversActor` を、ネイティブ雨と同じ `stormRainContains` / `stormRainScale`（成長・fade の半径、雨の上限、既存の12単位トレース）に揃え、期限は `dur - 0.3` ではなく雨の失効までとした。`adapter.mjs` の native 接触判定も同じ関数を使う。判定則は従来と同一のため、ダメージの挙動は変わらない。
+
+**再現操作（修正前）.** 味方の雨を作り、被弾後の通常の待機時間を過ぎてから、立ったままの味方（潜伏なし）を計測する。成長初期（有効半径 3）の外側、雨のトレースより下、期限前 0.3 秒の位置で、雨がない時の回復率（`regenRate`）ではなく潜伏時の `regenRateSwim` が出ていた。修正後は、ネイティブ接触と同じ半径で判定し、期限まで継続し、トレースより下では止まる。30/60/120 Hz の同一トレースは修正前後とも成立する。
+
+**プレイへの影響.** 味方が雨の外縁（成長・消滅中）や雨の下にいる時の加速が出なくなる。雨の最後の 0.3 秒の加速は残る。敵の雨による回復阻害も同じ範囲になる。ダメージ、塗り、雨の寿命の挙動は変更していない。
+
+**確認状態.** Node の production 合成テスト `patches/splatoon3/tests/issue-927-storm-recovery-area.test.mjs` 5件。修正前の main では 3件が失敗し、修正後は 5件とも成功する。隣接する 15 ファイル（storm・superjump・movement・reliability・local-quality）の 124件も成功。`check-inkwave-patches --quick` は OK。splatoon3 全体のテストは本 session では完走していない（統合後に実行予定）。未確認: Nintendo の回復倍率と成長曲線、12単位トレースの世界単位、ネイティブ雨ダメージが `dur - 0.3` で止まる件（#563 の範囲で未変更）、実機とブラウザでの比較。
