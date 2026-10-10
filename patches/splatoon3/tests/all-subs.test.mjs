@@ -58,6 +58,8 @@ test('catalogue exposes fourteen entries and extracted rows follow the pinned 11
 
   const fizzy = source('WeaponBombFizzy');
   assert.deepEqual(ALL_SUB_SPECS.fizzy.chargeFrames, fizzy.MoveParam.ChargeFrameArray);
+  assert.equal(ALL_SUB_SPECS.fizzy.maxChargeTime, frames(fizzy.MoveParam.ChargeFrameArray.reduce((n, x) => n + x, 0)),
+    'S3 gameplay interprets the extracted [40, 80] charge rows as sequential stages, totaling 120 frames');
   assert.deepEqual(ALL_SUB_SPECS.fizzy.burstWaitFrames, fizzy.MoveParam.BurstWaitFrameArray);
   assert.deepEqual(ALL_SUB_SPECS.fizzy.bursts.map(row => row.damageInner), fizzy.MoveParam.BlastParamArray.map(row => row.DistanceDamage[0].Distance));
   assert.equal(ALL_SUB_SPECS.fizzy.objectDamage, rawDamage(fizzy.MoveParam.ObjColDamage));
@@ -118,6 +120,76 @@ test('real WeaponRunner sub hold and release pay the selected cost and create a 
   assert.equal(object.fuse, frames(15), 'the first pop waits the extracted 15 frames');
   assert.equal(object.popLimit, 1, 'a short hold gets one pop');
   assert.ok(events.some(event => event.phase === 'spawn' && event.subId === 'fizzy' && event.actor === actor && event.sourceLife === 2));
+});
+
+test('Fizzy admitted jump, stick and aim inputs accelerate charge at 30, 60 and 120 Hz', async () => {
+  for (const hz of [30, 60, 120]) {
+    const f = await fixture({ fullRuntime: true, realProjectiles: true });
+    const dt = 1 / hz;
+    const chargeToSecondPop = (mode) => {
+      const actor = f.make('shooter'); equip(actor, 'fizzy'); actor.ink = 100;
+      actor.intent.sub = true;
+      let elapsed = 0, ticks = 0;
+      while ((actor.weaponRunner.s3SubHold || 0) * 60 < 40 - 1e-8 && ticks < hz * 3) {
+        elapsed += dt;
+        actor.intent.jump = mode === 'jump' && Math.floor(elapsed / .12) % 2 === 1;
+        actor.intent.move.set(mode === 'move' ? (Math.floor(elapsed / .12) % 2 ? -1 : 1) : 0, 0, 0);
+        actor.aimYaw = mode === 'aim' ? 4 * elapsed : 0;
+        f.G.time += dt; actor.update(dt); ticks++;
+      }
+      assert.ok((actor.weaponRunner.s3SubHold || 0) * 60 >= 40 - 1e-8, `${mode} reaches the second tier at ${hz} Hz`);
+      const chargeSeconds = ticks * dt;
+      actor.intent.sub = false;
+      for (let i = 0; i < 12 && !f.G.projectiles._s3SubObjects?.some(o => o.owner === actor && o.subId === 'fizzy'); i++) {
+        f.G.time += dt; actor.update(dt);
+      }
+      const object = f.G.projectiles._s3SubObjects?.find(o => o.owner === actor && o.subId === 'fizzy');
+      assert.equal(object?.popLimit, 2, `${mode} input throws the second-tier Fizzy at ${hz} Hz`);
+      return chargeSeconds;
+    };
+    const stationary = chargeToSecondPop('still');
+    for (const mode of ['jump', 'move', 'aim']) {
+      const accelerated = chargeToSecondPop(mode);
+      assert.ok(accelerated < stationary, `${mode} is faster than stationary at ${hz} Hz (${accelerated} < ${stationary})`);
+    }
+  }
+});
+
+test('Fizzy stage two remains at 80 held frames and stage three needs cumulative 120, with reset isolation', async () => {
+  const f = await fixture({ fullRuntime: true, realProjectiles: true });
+  const throwAfter = async targetFrames => {
+    const actor = f.make('shooter'); equip(actor, 'fizzy'); actor.ink = 100;
+    actor.intent.sub = true;
+    let ticks = 0;
+    while ((actor.weaponRunner.s3SubHold || 0) * 60 < targetFrames - 1e-8 && ticks++ < 240) {
+      f.G.time += 1 / 60; actor.update(1 / 60);
+    }
+    assert.ok((actor.weaponRunner.s3SubHold || 0) * 60 >= targetFrames - 1e-8, `actual hold reaches ${targetFrames}F`);
+    actor.intent.sub = false;
+    for (let i = 0; i < 8 && !f.G.projectiles._s3SubObjects?.some(o => o.owner === actor && o.subId === 'fizzy'); i++) {
+      f.G.time += 1 / 60; actor.update(1 / 60);
+    }
+    return { actor, object: f.G.projectiles._s3SubObjects?.find(o => o.owner === actor && o.subId === 'fizzy') };
+  };
+  const stageTwo = await throwAfter(80);
+  assert.equal(stageTwo.object?.popLimit, 2, '80 frames are 40 into the second stage, not full charge');
+  const full = await throwAfter(120);
+  assert.equal(full.object?.popLimit, 3, '40 + 80 per-stage frames reach full charge');
+  const actor = f.make('shooter'); equip(actor, 'fizzy'); actor.ink = 100;
+  actor.intent.sub = true; actor.intent.move.set(1, 0, 0);
+  f.G.time += 1 / 60; actor.update(1 / 60);
+  assert.ok(actor.weaponRunner.s3FizzyCharge?.queue > 0, 'real stick input leaves a queued bonus');
+  assert.ok(actor.weaponRunner.s3SubHold > 1 / 60, 'the actual runner hold includes drained bonus frames');
+  actor.weaponRunner.reset();
+  assert.equal(actor.weaponRunner.s3FizzyCharge, null, 'runner reset clears queued acceleration state');
+  assert.equal(actor.weaponRunner.s3SubHold, 0, 'runner reset leaves no charged hold');
+
+  equip(actor, 'curling'); actor.weaponRunner.reset(); actor.intent.sub = false; actor.intent.move.set(0, 0, 0);
+  f.G.time += 1 / 60; actor.update(1 / 60); // clear the previous sub-button edge
+  actor.intent.sub = true;
+  for (let i = 0; i < 8; i++) { f.G.time += 1 / 60; actor.update(1 / 60); }
+  near(actor.weaponRunner.s3SubHold * 60, 8, 'Curling retains its native unaccelerated held charge');
+  assert.equal(actor.weaponRunner.s3FizzyCharge, null, 'Fizzy input state never attaches to Curling');
 });
 
 test('only one live Torpedo is admitted and a blocked second release costs no ink', async () => {
