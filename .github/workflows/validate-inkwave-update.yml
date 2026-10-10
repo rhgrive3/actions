@@ -205,6 +205,26 @@ jobs:
           node scripts/check-weapons-reference.mjs .reference-data/weapons
       - name: Verify completed weapon source mirror
         run: node scripts/verify-completion-sources.mjs .reference-data/weapons
+      - name: Compare every catalog record with its pinned numerical source
+        run: |
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          import { MAIN_WEAPON_CATALOG as catalog } from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';
+          fs.writeFileSync('.reference-catalog-index.json',JSON.stringify({commit:catalog.sourceCommit,paths:catalog.records.map(r=>r.sourcePath)}));
+          JS
+          python3 - <<'PY'
+          import concurrent.futures, json, pathlib, urllib.request
+          index=json.loads(pathlib.Path('.reference-catalog-index.json').read_text())
+          paths=set(index['paths']) | {'data/mush/1130/WeaponInfoMain.json','data/language/USen.json','data/language/JPja.json'}
+          def fetch_source(relative):
+            target=pathlib.Path('.reference-data/catalog')/relative
+            target.parent.mkdir(parents=True,exist_ok=True)
+            url='https://raw.githubusercontent.com/Leanny/splat3/'+index['commit']+'/'+relative
+            with urllib.request.urlopen(url,timeout=30) as response: target.write_bytes(response.read())
+          with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+            list(pool.map(fetch_source,sorted(paths)))
+          PY
+          INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test patches/splatoon3/tests/main-weapon-catalog-data.test.mjs
       - name: Verify pinned Sub/Special numerical sources
         run: |
           python3 - <<'PY'
@@ -560,6 +580,7 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/seven-site
           node scripts/check-inkwave-seven-claims.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/seven-browser.json
       - name: Verify compiled main weapon catalog in Chromium and WebKit
+        shell: bash
         run: node scripts/check-inkwave-catalog-browser.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/catalog-browser.json
       - uses: actions/upload-artifact@v4
         if: always()
