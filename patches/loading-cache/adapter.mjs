@@ -84,7 +84,7 @@ export function adaptCompiledMain(source) {
 export function loadingIdentity() {
   return Object.fromEntries(filesIn(LOADING_ROOT).filter(file=>!file.includes(`${path.sep}tests${path.sep}`)&&!file.endsWith('.md')).map(file=>[path.relative(LOADING_ROOT,file).split(path.sep).join('/'),hash(fs.readFileSync(file))]));
 }
-export function prepareLoading(build, preloads) {
+export function prepareLoading(build, preloads, compactRuntime = source => source) {
   let html=fs.readFileSync(path.join(build,'index.html'),'utf8');
   if(/<base\s/i.test(html)||html.includes('inkwave-startup-shell'))throw new Error('loading-cache requires one unversioned staging tree');
   if(preloads.length!==new Set(preloads).size)throw new Error('loading-cache: duplicate preload inputs');
@@ -95,7 +95,13 @@ export function prepareLoading(build, preloads) {
   fs.writeFileSync(path.join(build,'index.html'),html);
   for(const file of filesIn(path.join(LOADING_ROOT,'runtime'))) {
     const rel=path.relative(LOADING_ROOT,file),dst=path.join(build,'patches/loading-cache',rel);
-    fs.mkdirSync(path.dirname(dst),{recursive:true});fs.copyFileSync(file,dst);
+    fs.mkdirSync(path.dirname(dst),{recursive:true});
+    if(rel==='runtime/startup.mjs'){
+      const original=fs.readFileSync(file,'utf8'), compact=compactRuntime(original);
+      if(typeof compact!=='string'||!compact.length)throw new Error('loading-cache: invalid startup runtime transform');
+      fs.writeFileSync(dst,compact);
+      console.log('startup runtime: '+Buffer.byteLength(original)+' -> '+Buffer.byteLength(compact)+' bytes');
+    }else fs.copyFileSync(file,dst);
   }
   const main=path.join(build,'src/main.js');
   const adapted=adaptCompiledMain(fs.readFileSync(main,'utf8'));fs.writeFileSync(main,adapted.code);
