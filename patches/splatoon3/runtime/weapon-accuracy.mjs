@@ -1,6 +1,4 @@
-import { ShooterAccuracy } from './shooter-accuracy.mjs';
-
-const INSTALLED = Symbol.for('inkwave.s3.weapon-accuracy.v2');
+const INSTALLED_SPLATLING = Symbol.for('inkwave.s3.weapon-accuracy.splatling.v3');
 const finite = (x, otherwise) => Number.isFinite(x) ? x : otherwise;
 const clamp01 = x => Math.max(0, Math.min(1, x));
 
@@ -50,66 +48,25 @@ export function withShotBias(actor, bias, pitchBias, launch) {
   try { return launch(); } finally { r.s3ShotBias = previous; }
 }
 
-export function installWeaponAccuracy({ WeaponRunner, Projectiles }, profile) {
-  if (WeaponRunner.prototype[INSTALLED]) return;
-  Object.defineProperty(WeaponRunner.prototype, INSTALLED, { value: true });
-  const completion = profile.weaponsFidelityCompletion;
-  const hz = finite(completion?.hz, 60);
-  const dualiesParam = completion?.weapons?.dualies?.WeaponParam ?? {};
-  const spinParam = completion?.weapons?.splatling?.WeaponParam ?? {};
-
-  const reset = WeaponRunner.prototype.reset;
-  WeaponRunner.prototype.reset = function (...args) {
-    const result = reset.apply(this, args);
-    this.s3DualiesAccuracy = new ShooterAccuracy(dualiesParam, hz);
-    this.s3DualiesJumpAge = null;
-    this.s3DualiesWasGrounded = !!this.a?.grounded;
-    return result;
-  };
-  const update = WeaponRunner.prototype.update;
-  WeaponRunner.prototype.update = function (dt, input) {
-    if (this.a.weapon.kind === 'dualies') {
-      const grounded = !!this.a.grounded;
-      // Age belongs to elapsed simulation time, not the number of rendered
-      // frames or how long ZR has been released. Empty held fire also recovers.
-      this.s3DualiesAccuracy?.advance(dt);
-      if (this.s3DualiesWasGrounded && !grounded) this.s3DualiesJumpAge = 0;
-      else if (this.s3DualiesJumpAge != null && Number.isFinite(dt) && dt > 0)
-        this.s3DualiesJumpAge += dt;
-      if (grounded && this.s3DualiesJumpAge != null && this.s3DualiesJumpAge * hz >= finite(dualiesParam.Jump_DegBiasEndFrame, 70))
-        this.s3DualiesJumpAge = null;
-      this.s3DualiesWasGrounded = grounded;
-    }
-    return update.call(this, dt, input);
-  };
-  const spread = WeaponRunner.prototype._spreadDeg;
-  WeaponRunner.prototype._spreadDeg = function (weapon) {
-    if (weapon.kind !== 'dualies') return spread.call(this, weapon);
-    if (this.s3Turret || this.lockT > 0) return weapon.spreadLock;
-    return accuracyEnvelope(weapon, !!this.a.grounded, this.s3DualiesJumpAge, dualiesParam, hz);
-  };
-  const fireDualies = Projectiles.prototype.fireDualies;
-  Projectiles.prototype.fireDualies = function (actor, weapon, spreadDeg, hand) {
-    const runner = actor.weaponRunner;
-    const locked = runner?.s3Turret || runner?.lockT > 0;
-    let envelope = Number.isFinite(spreadDeg) ? spreadDeg
-      : accuracyEnvelope(weapon, !!actor.grounded, runner?.s3DualiesJumpAge, dualiesParam, hz);
-    if (locked) envelope = weapon.spreadLock;
-    else if (runner?.s3DualiesAccuracy) {
-      const bias = runner.s3DualiesAccuracy.shot(!!actor.grounded, runner.s3DualiesJumpAge);
-      return withShotBias(actor, bias, bias,
-        () => fireDualies.call(this, actor, weapon, envelope, hand));
-    }
-    return fireDualies.call(this, actor, weapon, envelope, hand);
-  };
+/**
+ * The weapon runner already owns Shooter and Dualies admission, reset,
+ * recovery clocks and scalar envelopes in weapons.mjs. Do not wrap these a
+ * second time here: it would advance the Dualies bias twice, consume another
+ * bias sample for direct shots and bypass its jump/turret admission rules.
+ *
+ * Splatling has a separate pitch-bias field, so this hook only supplies the
+ * ephemeral per-axis launch context; movement and firing state remain owned
+ * by their original adapters. The source angles are retained without the
+ * previous unsourced bloom multiplier.
+ */
+export function installWeaponAccuracy({ Projectiles }, profile) {
+  if (Projectiles.prototype[INSTALLED_SPLATLING]) return;
+  Object.defineProperty(Projectiles.prototype, INSTALLED_SPLATLING, { value: true });
+  const param = profile.weaponsFidelityCompletion?.weapons?.splatling?.WeaponParam ?? {};
   const fireSplatling = Projectiles.prototype.fireSplatling;
   Projectiles.prototype.fireSplatling = function (actor, weapon, spreadDeg) {
-    const age = Number.isFinite(actor.s3SplatlingJumpAgeFrames)
-      ? actor.s3SplatlingJumpAgeFrames / hz : null;
-    const full = Number.isFinite(spreadDeg) ? spreadDeg
-      : accuracyEnvelope(weapon, !!actor.grounded, age, spinParam, hz);
-    const bias = actor.grounded ? spinParam.Stand_DegBiasMax : spinParam.Jump_DegBiasMax;
-    return withShotBias(actor, bias, spinParam.PitchDegBias,
-      () => fireSplatling.call(this, actor, weapon, full));
+    const bias = actor.grounded ? param.Stand_DegBiasMax : param.Jump_DegBiasMax;
+    return withShotBias(actor, bias, param.PitchDegBias,
+      () => fireSplatling.call(this, actor, weapon, spreadDeg));
   };
 }

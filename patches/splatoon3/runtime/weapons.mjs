@@ -977,28 +977,35 @@ export function installWeapons(context, profile) {
   }
   const fireDualies = Projectiles.prototype.fireDualies;
   Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
-    // #887: while the Dualies jump-accuracy bias clock is active, sample the
-    // published outer-reticle probability and fire at the chosen sourced
-    // endpoint (Jump_DegSwerve vs Stand_DegSwerve). Same model as the Blaster
-    // jump bias; the LapOver turret cone is already handled by _spreadDeg.
-    // #891: otherwise normal Dualies fire samples the outer-reticle bias once
-    // per admitted shot against the grounded/air envelope. Locked turret shots
-    // (spreadLock) are a separate owner for both and do not advance the bias.
+    // #887/#891: source angular maxima and calibrated DegBias quantiles are
+    // distinct. Only admitted Dualies shots advance the accuracy state once;
+    // direct helpers observe it without altering timing or resource gates.
+    // A locked post-roll turret uses its separate zero-degree spreadLock.
     const runner = a?.weaponRunner;
     const locked = !!(runner?.s3Turret || runner?.lockT > 0);
     const state = runner?.s3DualiesJumpState?.(w);
     const accuracy = runner?.s3DualiesAccuracy;
     let effective = spreadDeg;
+    let angularBias = null;
     if (state?.active && !locked) {
-      const first = w.spreadFirst ?? .45;
-      const bloom = first + (1 - first) * (runner.bloom || 0);
-      effective = (Math.random() < state.bias ? state.envelope : state.ground) * bloom;
-    } else if (accuracy && runner.s3DualiesAdmitting && !locked) {
-      const envelope = a.grounded ? w.spreadGround : w.spreadAir;
-      const outerChance = accuracy.shot(!!a.grounded);
-      effective = Math.random() < outerChance ? envelope : envelope * (w.spreadFirst ?? 0.45);
+      // S3 DegSwerve is the maximum horizontal angle and DegBias is the
+      // median angular fraction (not an outer/inner Bernoulli probability).
+      // Retain the full maximum at the HUD and launch, independent of bloom.
+      effective = state.envelope;
+      angularBias = state.bias;
+      if (runner?.s3DualiesAdmitting) accuracy?.shot(!!a.grounded);
+    } else if (accuracy && !locked) {
+      // Direct helpers sample the current distribution without consuming an
+      // admitted shot; the real runner alone owns per-shot progression.
+      angularBias = runner?.s3DualiesAdmitting
+        ? accuracy.shot(!!a.grounded)
+        : accuracy.chance(!!a.grounded);
+      if (runner?.s3DualiesAdmitting)
+        effective = a.grounded ? w.spreadGround : w.spreadAir;
     }
-    const result = fireDualies.call(this, a, w, effective, hand);
+    const emit = () => fireDualies.call(this, a, w, effective, hand);
+    const result = Number.isFinite(angularBias)
+      ? withShotBias(a, angularBias, angularBias, emit) : emit();
     if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
     return result;
   };
@@ -1065,8 +1072,7 @@ export function installWeapons(context, profile) {
       if (this.s3Turret || this.lockT > 0) return w.spreadLock;
       const state = this.s3DualiesJumpState(w);
       const base = state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
-      const first = w.spreadFirst ?? .45;
-      return base * (first + (1 - first) * this.bloom);
+      return base; // Sourced maximum yaw deviation; bloom affects median bias, not this endpoint.
     }
     if (w.kind === 'shooter') return this.a.grounded ? w.spreadGround : w.spreadAir;
     return spread.call(this, w);
