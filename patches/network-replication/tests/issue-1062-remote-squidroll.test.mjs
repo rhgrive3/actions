@@ -76,8 +76,12 @@ function sendSnapshot(net, capture) {
   return capture.value;
 }
 function receiveFrame(f, net, actor, packet, dt = 1 / 60) {
+  const previousLength = actor.net.buf.length;
   net.onMessage('owner', JSON.parse(JSON.stringify(packet)));
   const peer = net.peers.get('owner');
+  assert.equal(peer.lastTs, packet.ts, 'fresh production snapshot passes the receiver replay gate');
+  assert.equal(actor.net.buf.at(-1)?.t, packet.ts, 'the receiver appends this exact owner snapshot');
+  assert.equal(actor.net.buf.length, previousLength + 1, 'accepted owner snapshot adds one remote sample');
   peer.tr = packet.ts; net._sample(actor, packet.ts, 0); net._playEvents(); net.applyRemote(actor, dt);
 }
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -99,9 +103,13 @@ test('full production Roll snapshots sustain remote pose without transferring ga
   const authorityBeforeSend = { ...firstAction };
   const first = sendSnapshot(sender, sent), row = first.a.find(item => item[0] === owner.nid);
   const firstMeta = first.sq?.[owner.nid];
-  assert.equal(row.length, 24, 'combined adoption extension occupies its one tagged slot');
-  assert.equal(row[21], owner.stats.specials || 0, 'existing special counter retains slot 21');
+  assert.equal(row.length, 26, 'combined adoption, Surge, and hit-authority extensions retain their slots');
+  assert.equal(row[22], owner.stats.specials || 0, 'existing special counter retains slot 22');
   assert.equal(row[23][0], 'inkwave-adoption-v1', 'Roll sidecar does not occupy the adoption slot');
+  assert.equal(row[24], null, 'ordinary Roll snapshots leave the optional Surge slot empty');
+  const ownerLife = Number.isSafeInteger(owner.netLife) && owner.netLife >= 0 ? owner.netLife : 0;
+  assert.deepEqual(Array.from(row[25]), ['inkwave-hit-authority-v1', ownerLife, 0],
+    'the appended hit-authority row remains tagged and bound to the owner life');
   assert.deepEqual(firstMeta?.[0], 's3roll-v1');
   assert.ok(firstMeta[1] > 0 && firstMeta[2] > 0 && firstMeta[2] <= ownerWorld.profile.movement.roll.duration);
   assert.deepEqual({ ...firstAction }, authorityBeforeSend, 'packing does not mutate owner Roll/gameplay state');
@@ -164,12 +172,15 @@ test('full production Roll snapshots sustain remote pose without transferring ga
     'the next action follows its new owner launch vector');
 
   await delay(15);
+  step(ownerWorld, owner, 1 / 60); // each production adoption row needs a newer owner simulation tick
   const malformed = sendSnapshot(sender, sent);
+  assert.equal(malformed.sq?.[owner.nid]?.length, 5, 'malformed case starts from an actual valid production sidecar');
   malformed.sq[owner.nid] = [...malformed.sq[owner.nid], 7];
   receiveFrame(viewerWorld, receiver, remote, malformed);
   assert.equal(remote.net.buf.at(-1).rollId, 0, 'wrong tagged sidecar shape is rejected');
   assert.equal(remote.remoteSquidrollVisual, null);
   await delay(15);
+  step(ownerWorld, owner, 1 / 60);
   const legacy = sendSnapshot(sender, sent); delete legacy.sq;
   legacy.a = legacy.a.map(row => row.slice(0, 22)); // actual pre-adoption peers
   receiveFrame(viewerWorld, receiver, remote, legacy);
@@ -177,16 +188,19 @@ test('full production Roll snapshots sustain remote pose without transferring ga
   assert.equal(remote.remoteSquidrollVisual, null);
 
   await delay(15);
+  step(ownerWorld, owner, 1 / 60);
   const recovery = sendSnapshot(sender, sent);
   receiveFrame(viewerWorld, receiver, remote, recovery);
   assert.equal(remote.remoteSquidrollVisual?.id, chainedMeta[1], 'a later valid owner snapshot restores the same action');
   owner.character.trigger('movement_cancel'); await delay(15);
+  step(ownerWorld, owner, 1 / 60);
   const interrupted = sendSnapshot(sender, sent);
   assert.equal(interrupted.sq?.[owner.nid]?.[1], chainedMeta[1], 'the control packet still carries the current action identity');
   receiveFrame(viewerWorld, receiver, remote, interrupted);
   assert.equal(remote.remoteSquidrollVisual, null, 'owner cancel event blocks the matching visual action');
   assert.notEqual(viewerWorld.movementMotionSnapshot(remote.character)?.phase, 'roll');
   owner.form = 'kid'; await delay(15);
+  step(ownerWorld, owner, 1 / 60);
   const formChange = sendSnapshot(sender, sent);
   receiveFrame(viewerWorld, receiver, remote, formChange);
   assert.equal(remote.remoteSquidrollVisual, null, 'form change clears presentation metadata');
@@ -197,7 +211,8 @@ test('full production Roll snapshots sustain remote pose without transferring ga
   const beforeCancel = sendSnapshot(sender, sent);
   receiveFrame(viewerWorld, receiver, remote, beforeCancel);
   assert.ok(remote.remoteSquidrollVisual);
-  owner.s3.actions.roll = null; owner.s3.roll = null; await delay(15);
+  owner.intent.jump = false; owner.s3.actions.roll = null; owner.s3.roll = null; await delay(15);
+  step(ownerWorld, owner, 1 / 60);
   const canceled = sendSnapshot(sender, sent);
   receiveFrame(viewerWorld, receiver, remote, canceled);
   assert.equal(remote.remoteSquidrollVisual, null, 'owner cancellation marker clears the remote visual action');

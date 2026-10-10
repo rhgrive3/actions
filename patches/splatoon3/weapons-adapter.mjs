@@ -62,8 +62,13 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch(`          const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);
           if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }));`,
     `          if (!applyFidelityBlasterFlightPaint(this, p)) {
-            const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);
-            if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }));
+            const maxDrops = p.dropSplashMax ?? (p.s3Weapon?.kind === 'shooter' || (!p.s3Weapon && p.type === 'shot') ? 2 : Infinity);
+            p.dropSplashCount = (p.dropSplashCount || 0);
+            if (p.dropSplashCount < maxDrops) {
+              p.dropSplashCount++;
+              const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);
+              if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }));
+            }
           }`, 'Blaster source-backed flight splash paint');
   // #1034: current-S3 Blaster ordinary projectile PaintParam is zero.
   // Keep dedicated burst/wall/splash paint, but suppress the legacy generic impact splat.

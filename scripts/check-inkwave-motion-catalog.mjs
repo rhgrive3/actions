@@ -57,16 +57,22 @@ export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'hit-spawn-reset', kind: 'shooter', frames: 300, probes: [20, 246, 250, 280] },
   { name: 'quiet-idle-held-sub', kind: 'shooter', frames: 180, probes: [55, 100] },
   ...[0, 1, 2].map(variant => ({ name: 'victory-fade-lobby-' + variant, kind: 'shooter', frames: 360, variant, probes: [240, 279, 280, 290, 310] })),
-  { name: 'native-slam-phases', kind: 'shooter', nativeSpecial: 'slam', frames: 180, probes: [33, 49, 54, 79, 133] },
+  // Phase-entry frames (rise/hang/fall/slam-recovery) are observed per run; fixed probes stay at rise end and late recovery.
+  { name: 'native-slam-phases', kind: 'shooter', nativeSpecial: 'slam', frames: 180, probes: [33, 79, 133] },
   { name: 'native-storm-deploy', kind: 'charger', nativeSpecial: 'storm', frames: 120 },
   { name: 'gaze-face-actions', kind: 'shooter', frames: 180 },
   { name: 'lifecycle-interruptions', kind: 'shooter', frames: 180, probes: [105, 119, 135, 140, 145, 150, 165] },
   { name: 'nullable-preview', kind: 'shooter', frames: 90 },
   ...[30, 60, 120].map(hz => ({ name: 'cadence-' + hz, kind: 'shooter', frames: 60, hz })),
 ]);
-export function catalogRenderFrames(s) {
+export function catalogRenderFrames(s, samples = []) {
   if (s.hz) return [s.hz === 120 ? 1 : 0, Math.floor(s.hz / 2), s.hz - 1];
-  return [...new Set([0, 6, 12, 21, 26, 30, 45, 60, 90, 120, 179, s.frames - 1, ...(s.probes || [])].filter(f => f < s.frames))].sort((a, b) => a - b);
+  // Tidal Slam phase boundaries follow the native state machine (rise/hang
+  // durations are calibration), so render the first observed sample of each
+  // special phase instead of a fixed frame number that a timing change moves.
+  const observed = [], seen = new Set();
+  if (s.nativeSpecial === 'slam') samples.forEach((sample, i) => { const p = sample.snapshots?.special?.phase; if (p && !seen.has(p)) { seen.add(p); observed.push(i); } });
+  return [...new Set([0, 6, 12, 21, 26, 30, 45, 60, 90, 120, 179, s.frames - 1, ...(s.probes || []), ...observed].filter(f => f < s.frames))].sort((a, b) => a - b);
 }
 const fail = message => { throw Error('Catalog ' + message); };
 const contains = (parent, child) => parent === child || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
@@ -189,7 +195,12 @@ export function validateCatalogResult(result) {
       }
       if (!Array.isArray(s.feet) || s.feet.length !== 2) fail('native foot denominator ' + label);
       for (const f of s.feet) {
-        if (typeof f.planted !== 'boolean') fail('foot identity ' + label);
+        if (typeof f.planted !== 'boolean' || (f.authority && !['native','source'].includes(f.authority))) fail('foot identity ' + label);
+        if (f.authority === 'source') {
+          if (typeof f.contactIntent !== 'boolean') fail('source contact identity ' + label);
+          finite(f.soleClearance, label + '.sourceSoleClearance');
+          if (f.planted && (!f.contactIntent || f.contactWeight < .999)) fail('source planted without full physical lock ' + label);
+        }
         for (const k of ['actual', 'expected', 'contact', 'normal']) vector(f[k], 3, label + '.ankle.' + k);
         finite(f.error, label + '.ankleError'); finite(f.drift, label + '.plantDrift');
         finite(f.contactWeight, label + '.nativeContactWeight');
@@ -197,7 +208,7 @@ export function validateCatalogResult(result) {
         if (s.visible && s.kidScale > .999 && s.walkActive && f.planted && f.contactWeight > .999 && (f.error >= .001 || f.drift > 1e-8)) fail('planted native walking contact ' + label + ' frame ' + i);
       }
     }
-    const expected = catalogRenderFrames(scenario);
+    const expected = catalogRenderFrames(scenario, row.samples);
     if (!Array.isArray(row.renders) || row.renders.length !== expected.length || new Set(row.renders.map(r => r.frame)).size !== expected.length || expected.some(f => !row.renders.some(r => r.frame === f))) fail('render frame denominator ' + label);
     for (const r of row.renders) {
       const sample = row.samples[r.tick];
@@ -230,7 +241,22 @@ export function validateCatalogResult(result) {
     if (requiredPhases) for (const p of requiredPhases[1]) need(renderPhase(requiredPhases[0], p), 'phase RGB sample ' + p);
     if (label === 'carry-walk-fire-return' || scenario.hz) {
       need(count(s => s.snapshots.carry?.active && s.grip.left.held) >= (scenario.hz ? 40 : 200), 'supported carry denominator');
-      need(count(s => s.walkActive && s.feet.some(f => f.planted && f.contactWeight > .999)) >= 20, 'walking contact denominator');
+      if (row.samples.some(s => s.sourceMotionActive)) {
+        // The BFRES-inspired stance has a shorter authored duty window than
+        // native procedural gait. Denominators scale with the REAL measured
+        // clock ticks, never a scene name or rendering frame rate. Both an
+        // actual native-Actor locomotion drive and a settled source anchor
+        // must be present; simply floating the sole cannot pass the gate.
+        const gaitTicks=count(s => s.walkActive);
+        // A foot can finish settling after the stick returns to neutral.
+        // Count REAL anchored support across the sampled interval, while the
+        // independent gaitTicks requirement proves that movement occurred.
+        const stanceTicks=count(s => s.feet.some(f => f.authority==='source' && f.contactIntent && f.contactWeight>.05));
+        const lockedTicks=count(s => s.feet.some(f => f.authority==='source' && f.planted && f.contactWeight>.999));
+        need(gaitTicks>=Math.min(20,Math.floor(row.samples.length/2)), 'source locomotion clock denominator');
+        need(stanceTicks>=Math.max(8,Math.floor(gaitTicks*.22)), 'sourced walking stance denominator');
+        need(lockedTicks>=Math.max(3,Math.floor(gaitTicks*.065)), 'sourced settled support denominator');
+      } else need(count(s => s.walkActive && s.feet.some(f => f.planted && f.contactWeight > .999)) >= 20, 'native walking contact denominator');
     }
     if (label === 'ordinary-aimed-jump') {
       for (const p of ['rise', 'apex', 'fall']) need(phase('jump', p) >= 1, 'ordinary jump phase ' + p);
@@ -261,16 +287,18 @@ export function validateCatalogResult(result) {
         || row.pause.measurement !== 'native-vertex-flat-colour' || row.pause.sameRgb.changedPixels !== 0)
       fail('pause denominator ' + label);
     if (!Array.isArray(row.pause.vertexSources) || row.pause.vertexSources.length !== row.pause.vertexPrograms
-        || row.pause.vertexSources.some(p => !/^[a-f0-9]{64}$/.test(p.nativeSHA256) || p.nativeSHA256 !== p.controlledSHA256))
+        || row.pause.vertexSources.some(p => !/^[a-f0-9]{64}$/.test(p.nativeSHA256) || p.nativeSHA256 !== p.controlledSHA256
+            || !/^[a-f0-9]{64}$/.test(p.rawNativeSHA256) || !/^[a-f0-9]{64}$/.test(p.rawControlledSHA256)
+            || (p.rawNativeSHA256 !== p.rawControlledSHA256 && p.nameOnlyDifference !== true)))
       fail('pause native vertex shader identity ' + label);
     pixels(row.pause.sameRgb, label + '.pause', false);
     // Native beauty shaders are retained as a diagnostic; their repeated
     // subpixel shading varies even with identical native pose and clocks.
     pixels(row.pause.wholeSceneRgb, label + '.pause-beauty', null);
-    // A squid braked to rest in its own ink is drawn under the surface
-    // (swim-motion.test.mjs): moving that rig must leave the frame unchanged.
-    // Every other scenario keeps proving that the paused pass sees rig motion.
-    pixels(row.pause.movedRigRgb, label + '.pause-counterexample', label !== 'swim-turn-brake');
+    // Every scenario must prove the paused pass sees rig motion. The braked own-ink
+    // swimmer's body stays under the surface, but the local player's Splatoon 3
+    // ink mound (patches/local-quality/s3-squid-look-adapter.mjs) rides on it.
+    pixels(row.pause.movedRigRgb, label + '.pause-counterexample', true);
     for (const key of ['image', 'repeatedImage', 'movedImage', 'beautyImage', 'repeatedBeautyImage'])
       if (!imageFiles.has(row.pause[key])) fail('pause screenshot denominator ' + label);
     if (!row.zeroDt || row.zeroDt.unchangedClocks !== true || row.zeroDt.gameplayInvariant !== true) fail('zero-dt native clock/physics invariant ' + label);
@@ -539,7 +567,25 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     return { gap: target.distanceTo(hand), boneOriginGap, socket: target.toArray(), fist: hand.toArray(), weight, explicitTarget, swapped, held: weight > .999 && explicitTarget <= .001 && swapped <= .001 && ch.kidForm };
   }
   function record(ch, a, frame, last, invariant, contactEpoch) {
+    // Source BFRES motion owns a different, true world-space sole anchor.
+    // Do not measure it against stale procedural heel/toe controller targets.
+    const sourced = ch.sourceMotion?.active && ch.sourceMotion.retarget?.contacts;
     const feet = ch.feet.map((f, i) => {
+      if (sourced) {
+        const foot = sourced[i], settled = foot.locked && foot.weight > .999 && foot.filter.age >= foot.filter.duration;
+        // Heel-to-ball support switching changes the ANCHOR LANDMARK by
+        // the sole's length, not the ground-relative foot position. Compare
+        // only the same physical landmark across adjacent planted frames.
+        const continuing = settled && last[i]?.planted && last[i].authority === 'source' && last[i].epoch === foot.plants && last[i].feature === foot.feature;
+        const drift = continuing ? foot.anchor.distanceTo(last[i].cw) : 0;
+        last[i] = { planted: settled, authority: 'source', cw: foot.anchor.clone(), epoch: foot.plants, feature: foot.feature };
+        const error = settled ? Math.hypot(foot.actual.x - foot.anchor.x, foot.actual.z - foot.anchor.z) : 0;
+        return { authority: 'source', contactIntent: foot.locked, planted: settled, contactEpoch: foot.plants,
+          contactWeight: foot.weight, error, drift, actual: foot.actual.toArray(),
+          expected: settled ? foot.anchor.toArray() : foot.actual.toArray(), contact: foot.anchor.toArray(),
+          normal: foot.normal.toArray(), pitch: 0, appliedPitch: 0, mode: 'source',
+          swingProgress: foot.filter.age, stanceProgress: foot.filter.duration, soleClearance: foot.lastClearance };
+      }
       const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), f.cn).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), f.cyaw));
       const bone = ch.bones[i ? 'footR' : 'footL'], applied = bone.getWorldQuaternion(new THREE.Quaternion());
       // Native application adds idle shift and TIPTOE to the controller pitch.
@@ -553,7 +599,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     });
     const pose = Array.from(ch.P);
     if (!pose.every(Number.isFinite)) throw Error('Non-finite native pose');
-    return { frame, time: ch.t, timers: Object.fromEntries(Object.entries(api.CHARACTER_TIMERS).map(([k, i]) => [k, ch.tr[i]])), alive: a?.alive ?? true, grounded: ch.grounded, specialActive: a?.specialActive ? { id: a.specialActive.id, phase: a.specialActive.phase, time: a.specialActive.t } : null, visible: ch.root.visible, root: ch.root.position.toArray(), velocity: a?.vel.toArray() || [0, 0, 0], input: a?.intent.move.toArray() || [0, 0, 0], hp: a?.hp ?? 100, ink: a?.ink ?? 100, plantWeight: ch.plantW, hipDrop: ch.hipDrop, kidScale: ch.kidScale, squidScale: ch.sqScale, walkActive: walkActive(ch), pose: { length: pose.length, minimum: Math.min(...pose), maximum: Math.max(...pose), l1: pose.reduce((sum, x) => sum + Math.abs(x), 0) }, ik: Array.from(ch.ikErr), hands: { left: ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray(), right: ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray() }, grip: { left: grip(ch, 'left'), right: grip(ch, 'right') }, feet, rolling: !!a?.weaponRunner.rolling, heldBomb: ch.bomb.group.visible, dualiesAction: a?.weapon.kind === 'dualies' ? { subRequested: !!a.intent.sub, aimingSub: !!a.weaponRunner.aimingSub, dodge: !!a.weaponRunner.dodge, lockT: a.weaponRunner.lockT } : null, dance: ch.dance, danceWeight: ch.wDance, snapshots: snap(ch), visualGameplayInvariant: invariant };
+    return { sourceMotionActive: !!sourced, frame, time: ch.t, timers: Object.fromEntries(Object.entries(api.CHARACTER_TIMERS).map(([k, i]) => [k, ch.tr[i]])), alive: a?.alive ?? true, grounded: ch.grounded, specialActive: a?.specialActive ? { id: a.specialActive.id, phase: a.specialActive.phase, time: a.specialActive.t } : null, visible: ch.root.visible, root: ch.root.position.toArray(), velocity: a?.vel.toArray() || [0, 0, 0], input: a?.intent.move.toArray() || [0, 0, 0], hp: a?.hp ?? 100, ink: a?.ink ?? 100, plantWeight: ch.plantW, hipDrop: ch.hipDrop, kidScale: ch.kidScale, squidScale: ch.sqScale, walkActive: walkActive(ch), pose: { length: pose.length, minimum: Math.min(...pose), maximum: Math.max(...pose), l1: pose.reduce((sum, x) => sum + Math.abs(x), 0) }, ik: Array.from(ch.ikErr), hands: { left: ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray(), right: ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray() }, grip: { left: grip(ch, 'left'), right: grip(ch, 'right') }, feet, rolling: !!a?.weaponRunner.rolling, heldBomb: ch.bomb.group.visible, dualiesAction: a?.weapon.kind === 'dualies' ? { subRequested: !!a.intent.sub, aimingSub: !!a.weaponRunner.aimingSub, dodge: !!a.weaponRunner.dodge, lockT: a.weaponRunner.lockT } : null, dance: ch.dance, danceWeight: ch.wDance, snapshots: snap(ch), visualGameplayInvariant: invariant };
   }
   async function capture(ch, scenario, frame, tick) {
     projectiles._draw();
@@ -586,6 +632,13 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     return { frame, tick, visible, rig, image, hiddenImage, glint, coating, face, geometry: geometry(ch), programs, materials, shaderErrors: programs.filter(p => !p.linked || !p.vertexCompiled || !p.fragmentCompiled).length };
   }
   async function capturePause(ch, a, scenario) {
+    // The scenario can advance far beyond its last sampled render frame.
+    // Frame the FINAL moving rig rather than an obsolete camera anchor:
+    // otherwise the tiny submerged squid leaves the framebuffer entirely
+    // and a valid vertex-motion sensitivity test falsely sees flat pixels.
+    camera.position.copy(ch.root.position).add(new THREE.Vector3(2.6,1.3,3.4));
+    camera.lookAt(ch.root.position.clone().add(new THREE.Vector3(0,.62,0)));
+    camera.updateMatrixWorld();
     const name = scenario.name + '-pause', clocks = () => JSON.stringify([ch.t, Array.from(ch.tr), ch.danceT, gameState(a)]);
     const rig = () => {
       const nodes = []; ch.root.traverse(n => nodes.push([n.uuid, n.visible, n.matrixWorld.elements.slice(), n.morphTargetInfluences?.slice()]));
@@ -597,10 +650,44 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     renderer.render(scene, camera);
     const wholeSceneRgb = globalThis.catalogPixelDifference(beauty, pixels());
     const repeatedBeautyImage = await save(name + '-beauty-repeat', frameImage());
-    // This pass isolates actual vertex motion from native fragment shading.
-    // Keep every native vertex shader, mesh, bone, depth test and cutout. Only
-    // replace the final fragment colour, using a separate temporary material.
-    // Retain both unmodified beauty images and require real movement sensitivity.
+    // A swimming squid can be occluded by its stage floor: a flat shaded
+    // WORLD proves nothing about the actor's vertex response. Beauty and
+    // visibility were verified above with the full original scene. Isolate
+    // the ACTOR for the flat RGB geometry sensitivity proof.
+    const excluded = [];
+    scene.traverse(o => {
+      if(!(o.isMesh||o.isLine||o.isPoints||o.isSprite))return;
+      for(let p=o;p;p=p.parent)if(p===ch.root)return;
+      // Never hide lights or their parent groups: the test must compile
+      // EXACTLY the same native vertex shader as the original beauty pass.
+      excluded.push([o,o.visible]);o.visible=false;
+    });
+    // A shared THREE material can be drawn on more than one vertex layout.
+    // renderer.properties.get(material).currentProgram is ONLY the last variant,
+    // not necessarily the program used for any particular mesh. Capture the
+    // actual compiled vertex shader inside each mesh's draw callback in BOTH
+    // passes; this keeps the equality gate strict without comparing variants
+    // from two unrelated draws of one shared MeshStandardMaterial.
+    const sampleVertices = (target) => {
+      const observers = [];
+      scene.traverse(n => {
+        if (!n.isMesh || !n.material) return;
+        const previous = n.onAfterRender;
+        observers.push([n, previous]);
+        n.onAfterRender = function (...args) {
+          if (typeof previous === 'function') previous.apply(this, args);
+          const material = args[4], program = material && renderer.properties.get(material).currentProgram;
+          if (!program) throw Error('Missing actual draw vertex program: ' + (n.name || n.type));
+          let programs = target.get(n);
+          if (!programs) { programs = []; target.set(n, programs); }
+          programs.push({ type: material.type, vertex: gl.getShaderSource(program.vertexShader) });
+        };
+      });
+      return () => { for (const [mesh, previous] of observers) mesh.onAfterRender = previous; };
+    };
+    const nativeDraws = new Map(), controlledDraws = new Map();
+    let releaseCapture = sampleVertices(nativeDraws);
+    try { renderer.render(scene, camera); } finally { releaseCapture(); }
     const replacements = [], materials = new Map(), vertexSources = [], originalPosition = ch.root.position.clone();
     scene.traverse(n => {
       if (!n.material) return;
@@ -612,25 +699,64 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
         clone.onBeforeCompile = function (shader, r) {
           hook.call(this, shader, r);
           if (!shader.fragmentShader.includes('#include <opaque_fragment>')) throw Error('Pause unsupported native fragment shader: ' + m.type);
-          shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', '#include <opaque_fragment>\ngl_FragColor = vec4(' + c + ', ' + (.9 - c) + ', .4, 1.0);');
+          shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', '#include <opaque_fragment>\ngl_FragColor.rgb = vec3(' + c + ', ' + (.9 - c) + ', .4);');
         };
-        clone.customProgramCacheKey = () => key + '|s3-pause-flat-colour-v1';
-        const p = renderer.properties.get(m).currentProgram;
-        materials.set(m, { clone, nativeVertex: p ? gl.getShaderSource(p.vertexShader) : null });
+        clone.customProgramCacheKey = () => key + '|s3-pause-flat-colour-v2';
+        materials.set(m, { clone });
         return clone;
       };
       replacements.push([n, n.material]); n.material = Array.isArray(n.material) ? n.material.map(replace) : replace(n.material);
     });
     let sameRgb, movedRigRgb, image, repeatedImage, movedImage;
     try {
-      renderer.render(scene, camera); const paused = pixels(); image = await save(name + '-geometry', frameImage());
+      releaseCapture = sampleVertices(controlledDraws);
+      try { renderer.render(scene, camera); } finally { releaseCapture(); }
+      const paused = pixels(); image = await save(name + '-geometry', frameImage());
       renderer.render(scene, camera); sameRgb = globalThis.catalogPixelDifference(paused, pixels());
       repeatedImage = await save(name + '-geometry-repeat', frameImage());
-      for (const { clone, nativeVertex } of materials.values()) {
-        const p = renderer.properties.get(clone).currentProgram;
-        if (!p) continue; // invisible materials have no draw or shader evidence
-        if (!nativeVertex) throw Error('Pause missing original compiled vertex shader');
-        vertexSources.push({ type: clone.type, nativeSHA256: await digest(nativeVertex), controlledSHA256: await digest(gl.getShaderSource(p.vertexShader)) });
+      if (nativeDraws.size !== controlledDraws.size) throw Error('Pause changed native visible mesh count');
+      for (const [mesh, reference] of nativeDraws) {
+        const controlled = controlledDraws.get(mesh);
+        if (!controlled || controlled.length !== reference.length)
+          throw Error('Pause changed actual native draw count: ' + (mesh.name || mesh.type));
+        for (let i = 0; i < reference.length; i++) {
+          if (reference[i].type !== controlled[i].type) throw Error('Pause material draw type mismatch');
+          const originalShader = reference[i].vertex, flatShader = controlled[i].vertex;
+          let firstDifference = -1;
+          for (let k = 0; k < Math.max(originalShader.length, flatShader.length); k++) {
+            if (originalShader[k] !== flatShader[k]) { firstDifference = k; break; }
+          }
+          // WebGLProgram prefixes a debug-only material name into each
+          // uploaded shader. Three.js can reuse an original unnamed program
+          // for an 'iw-lamp' material while the fragment-only test clone gets
+          // its named program. The observed 7-byte difference was EXACTLY
+          // '#define SHADER_NAME ' versus '#define SHADER_NAME iw-lamp'.
+          // This GLSL debug macro is not referenced by any shader instruction.
+          // Remove ONLY its value and demand that ALL remaining compiled
+          // vertex source bytes (including uniforms, defines, skinning,
+          // attributes and functions) match exactly. Keep raw SHA evidence.
+          const withoutDebugName = shader => {
+            const names = shader.match(/^#define SHADER_NAME[^\r\n]*$/gm) || [];
+            if (names.length !== 1 || (shader.match(/SHADER_NAME/g) || []).length !== 1)
+              throw Error('Unsafe or referenced GLSL debug name');
+            return shader.replace(/^#define SHADER_NAME[^\r\n]*$/m, '#define SHADER_NAME');
+          };
+          const nativeCanonical = withoutDebugName(originalShader);
+          const flatCanonical = withoutDebugName(flatShader);
+          vertexSources.push({
+            mesh: mesh.name || mesh.type, type: reference[i].type,
+            nativeSHA256: await digest(nativeCanonical),
+            controlledSHA256: await digest(flatCanonical),
+            rawNativeSHA256: await digest(originalShader),
+            rawControlledSHA256: await digest(flatShader),
+            nameOnlyDifference: firstDifference >= 0 && nativeCanonical === flatCanonical,
+            mismatch: firstDifference < 0 ? null : {
+              at: firstDifference, nativeLength: originalShader.length, flatLength: flatShader.length,
+              nativeContext: originalShader.slice(Math.max(0, firstDifference - 200), firstDifference + 400),
+              flatContext: flatShader.slice(Math.max(0, firstDifference - 200), firstDifference + 400),
+            },
+          });
+        }
       }
       ch.root.position.x += .03; renderer.render(scene, camera);
       movedRigRgb = globalThis.catalogPixelDifference(paused, pixels()); movedImage = await save(name + '-moved', frameImage());
@@ -638,6 +764,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       ch.root.position.copy(originalPosition);
       for (const [n, material] of replacements) n.material = material;
       for (const { clone } of materials.values()) clone.dispose();
+      for (const [o,wasVisible] of excluded) o.visible=wasVisible;
       renderer.render(scene, camera);
     }
     return { unchangedClocks: beforeClocks === clocks(), unchangedRig: beforeRig === rig(),
@@ -660,6 +787,11 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       ch.setLod('hero'); // Native supported audit tier, disclosed in fixture.
       if (a) { ch.actor = a; G.actors = [a]; a.grounded = a.ground.hit = true; a.ground.block = 0; a.groundN.set(0, 1, 0); } else G.actors = [];
       scene.add(ch.root);
+      // Test the source engine itself, not an accidental native fallback
+      // caused by different asynchronous fetch timing at 30/60/120 Hz.
+      if (ch._sourceMotionLoader) await ch._sourceMotionLoader;
+      if (ch.sourceMotion?.ready) await ch.sourceMotion.ready;
+      if (ch.sourceMotion?.status !== 'ready') throw Error('Catalog source motion load failed: ' + ch.sourceMotion?.status);
       const samples = [], renders = [], events = [], transitions = [], last = [null, null], trace = [], originalMethods = new Map();
       let frame = -1, invariant = true, zeroDt = null;
       const update = ch.update;
@@ -763,7 +895,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
           const clock = new FixedClock(); frame = 0;
           for (let display = 0; display < scenario.hz; display++) { clock.advance(1 / scenario.hz, () => { runFrame(); frame++; }); if (renderFrames.includes(display)) renders.push(await capture(ch, scenario, display, frame - 1)); else renderer.render(scene, camera); }
           displayFrames = scenario.hz; clockTicks = clock.ticks;
-        } else for (frame = 0; frame < scenario.frames; frame++) { runFrame(); if (renderFrames.includes(frame)) renders.push(await capture(ch, scenario, frame, frame)); }
+        } else for (frame = 0; frame < scenario.frames; frame++) { runFrame(); if (globalThis.catalogRenderFrames(scenario, samples).includes(frame)) renders.push(await capture(ch, scenario, frame, frame)); }
         const pause = await capturePause(ch, a, scenario);
         row = { name: scenario.name, kind: scenario.kind, frames: scenario.frames, hz: scenario.hz || 60, driver, diagnostics: ['kinematic initial/root conditions except explicit native Physics/Super Jump/special/wall drivers', 'invulnerability countdown and fidget id in hit/idle cases assigned manually; not full gameplay', 'one explicit diagnostic Character.update(0) at tick 6; delta recorded, clocks/gameplay must remain stable'], samples, renders, events, transitions, pause, zeroDt, displayFrames, clockTicks, traceHash: scenario.hz ? await digest(trace) : null };
         data.push(row); globalThis.catalogPartial = { data, gpu, duplicateRealm, images };
@@ -779,7 +911,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     }
     for (const hz of [30, 60, 120]) {
       G.actors = []; const ch = new Character({ name: 'catalog variable dt', weapon: 'shooter' });
-      try { ch.update(0, null); const time = ch.t; for (let i = 0; i < hz; i++) ch.update(1 / hz, null); previewRates.push({ hz, frames: hz, finite: Array.from(ch.P).every(Number.isFinite) && Array.from(ch.ikErr).every(Number.isFinite), elapsed: ch.t - time }); }
+      try { if (ch._sourceMotionLoader) await ch._sourceMotionLoader; if (ch.sourceMotion?.ready) await ch.sourceMotion.ready; if (ch.sourceMotion?.status !== 'ready') throw Error('Variable-dt source unavailable'); ch.update(0, null); const time = ch.t; for (let i = 0; i < hz; i++) ch.update(1 / hz, null); previewRates.push({ hz, frames: hz, finite: Array.from(ch.P).every(Number.isFinite) && Array.from(ch.ikErr).every(Number.isFinite), elapsed: ch.t - time }); }
       finally { collect(ch.root); ch.dispose(); }
     }
     const result = { schema: 1, source: 'built-production-native', installCalls: 1, contentHash, turfFinish, duplicateRealm, gpu, data, images, previewRates, fixture: { render: 'actual Chromium WebGL (software ANGLE SwiftShader); native shaders compiled; same-frame RGB visibility pairs; native hero audit LOD', geometry: 'actual native indexed/skinned CPU output; does not include custom GPU vertex deformation', gameplay: 'native isolated methods; case driver and diagnostic assignments disclosed', parity: 'Nintendo executable version/gear/input/joint curves remain unknown; no console/iOS/full-match parity claim' } };

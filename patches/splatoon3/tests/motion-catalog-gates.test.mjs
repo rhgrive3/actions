@@ -14,10 +14,11 @@ function gateFixture() {
   const artifacts = Object.fromEntries(files.map(file => ['_versions/fixture/' + file, hash]));
   const data = CATALOG_SCENARIOS.map(scenario => {
     const samples = Array.from({ length: scenario.frames }, (_, frame) => ({ frame, visible: true, grounded: true, visualGameplayInvariant: true, root: [0, 0, 0], velocity: [0, 0, 0], hp: 90, kidScale: 1, walkActive: true, pose: { length: 150, minimum: -1, maximum: 1, l1: 50 }, ik: [0, 0, 0, 0], hands: { left: [0, 1, 0], right: [0, 1, 0] }, grip: { left: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 }, right: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 } }, feet: [0, 1].map(() => ({ planted: true, contactEpoch: 1, contactWeight: 1, actual: [0, .1, 0], expected: [0, .1, 0], contact: [0, 0, 0], normal: [0, 1, 0], error: 0, drift: 0 })), snapshots: Object.fromEntries(CATALOG_MODULES.map(([id]) => [id, null])) }));
-    const renders = catalogRenderFrames(scenario).map(frame => ({ frame, tick: scenario.hz ? Math.min(scenario.frames - 1, Math.floor((frame + 1) * 60 / scenario.hz) - 1) : frame, visible: true, shaderErrors: 0, programs: [{ linked: true, vertexCompiled: true, fragmentCompiled: true }], materials: [{ type: 'fabricated gate material', linked: true, vertexCompiled: true, fragmentCompiled: true }], rig: { ...pixel }, image: 'fixture.png', hiddenImage: 'fixture-hidden.png', geometry: { indexedVertices: 300, triangles: 100, skinnedVertices: 300, meshes: 1, min: [0, 0, 0], max: [1, 1, 1] } }));
+    const makeRenders = () => catalogRenderFrames(scenario, samples).map(frame => ({ frame, tick: scenario.hz ? Math.min(scenario.frames - 1, Math.floor((frame + 1) * 60 / scenario.hz) - 1) : frame, visible: true, shaderErrors: 0, programs: [{ linked: true, vertexCompiled: true, fragmentCompiled: true }], materials: [{ type: 'fabricated gate material', linked: true, vertexCompiled: true, fragmentCompiled: true }], rig: { ...pixel }, image: 'fixture.png', hiddenImage: 'fixture-hidden.png', geometry: { indexedVertices: 300, triangles: 100, skinnedVertices: 300, meshes: 1, min: [0, 0, 0], max: [1, 1, 1] } }));
     // FixedClock's first selected 120Hz display is index 1, after tick 0.
+    let renders = makeRenders();
     for (const r of renders) r.tick = Math.max(0, r.tick);
-    const row = { name: scenario.name, kind: scenario.kind, frames: scenario.frames, hz: scenario.hz || 60, driver: 'fabricated acceptance-logic fixture only', samples, renders, contactSheet: 'fixture-sheet.png', events: [], transitions: [], cleanup: { detached: true, ownedMaterials: 8, disposedMaterials: 8, glints: 0, disposedGlints: 0, cleanStates: true, secondDisposeStable: true }, pause: { unchangedClocks: true, unchangedRig: true, nativeVertexShaders: true, measurement: 'native-vertex-flat-colour', vertexPrograms: 1, vertexSources: [{ nativeSHA256: hash, controlledSHA256: hash }], image: 'fixture.png', repeatedImage: 'fixture.png', movedImage: 'fixture.png', beautyImage: 'fixture.png', repeatedBeautyImage: 'fixture.png', wholeSceneRgb: {...pixel}, movedRigRgb: scenario.name === 'swim-turn-brake' ? { ...pixel, changedPixels: 0, totalRgbDifference: 0, maxChannelDifference: 0 } : {...pixel}, sameRgb: { ...pixel, changedPixels: 0, totalRgbDifference: 0, maxChannelDifference: 0 } }, zeroDt: { unchangedClocks: true, gameplayInvariant: true, poseDelta: 0 }, traceHash: hash, displayFrames: scenario.hz || scenario.frames, clockTicks: scenario.frames };
+    const row = { name: scenario.name, kind: scenario.kind, frames: scenario.frames, hz: scenario.hz || 60, driver: 'fabricated acceptance-logic fixture only', samples, renders, contactSheet: 'fixture-sheet.png', events: [], transitions: [], cleanup: { detached: true, ownedMaterials: 8, disposedMaterials: 8, glints: 0, disposedGlints: 0, cleanStates: true, secondDisposeStable: true }, pause: { unchangedClocks: true, unchangedRig: true, nativeVertexShaders: true, measurement: 'native-vertex-flat-colour', vertexPrograms: 1, vertexSources: [{ nativeSHA256: hash, controlledSHA256: hash, rawNativeSHA256: hash, rawControlledSHA256: hash, nameOnlyDifference: false }], image: 'fixture.png', repeatedImage: 'fixture.png', movedImage: 'fixture.png', beautyImage: 'fixture.png', repeatedBeautyImage: 'fixture.png', wholeSceneRgb: {...pixel}, movedRigRgb: {...pixel}, sameRgb: { ...pixel, changedPixels: 0, totalRgbDifference: 0, maxChannelDifference: 0 } }, zeroDt: { unchangedClocks: true, gameplayInvariant: true, poseDelta: 0 }, traceHash: hash, displayFrames: scenario.hz || scenario.frames, clockTicks: scenario.frames };
     const fill = (id, v, start = 0, end = samples.length) => { for (const s of samples.slice(start, end)) s.snapshots[id] = structuredClone(v); };
     fill('carry', { active: true });
     switch (scenario.name) {
@@ -44,6 +45,8 @@ function gateFixture() {
     }
     if (scenario.name.startsWith('superjump-')) { for (const [i, phase] of ['charge', 'takeoff', 'flight', 'descent', 'touchdown'].entries()) fill('superjump', { phase }, i * 15, (i + 1) * 15); fill('superjump', { phase: null }, 75); }
     if (scenario.name.startsWith('victory-')) { fill('emotes', { phase: 'action' }, 0, 240); fill('emotes', { phase: 'hold' }, 240, 280); for (const s of samples) { s.dance = s.frame < 280 ? 'victory' : s.frame < 310 ? null : 'lobby_pose'; s.danceWeight = s.frame >= 280 && s.frame < 310 ? .5 : 1; } }
+    // Tidal Slam render frames are observed phase entries, so they exist only after the phases are filled.
+    if (scenario.nativeSpecial === 'slam') { renders = makeRenders(); for (const r of renders) r.tick = Math.max(0, r.tick); row.renders = renders; }
     // Hidden native frames must have exactly zero RGB contribution.
     for (const r of renders) if (!samples[r.tick].visible) { r.visible = false; r.rig.changedPixels = r.rig.totalRgbDifference = r.rig.maxChannelDifference = 0; }
     return row;
@@ -89,8 +92,10 @@ for (const [name, mutate, pattern] of [
   ['pause native rig moves', r => r.data[0].pause.unchangedRig = false, /pause denominator/],
   ['pause controlled RGB moves', r => r.data[0].pause.sameRgb.changedPixels = 1, /pause denominator/],
   ['pause replaces native vertex shader', r => r.data[0].pause.vertexSources[0].controlledSHA256 = 'b'.repeat(64), /pause native vertex shader identity/],
+  ['pause raw vertex source differs without declared debug-name normalization', r => r.data[0].pause.vertexSources[0].rawControlledSHA256 = 'b'.repeat(64), /pause native vertex shader identity/],
   ['pause insensitive to real rig motion', r => r.data[0].pause.movedRigRgb.changedPixels = 0, /not rendered/],
-  ['braked squid drawn above its own ink', r => Object.assign(r.data.find(x => x.name === 'swim-turn-brake').pause.movedRigRgb, pixel), /not rendered \/ hidden pixels swim-turn-brake/],
+  // The local swimmer's own-ink mound sits on the surface (s3-squid-look), so the braked swim pose must move with its rig too.
+  ['braked swimmer mound missing', r => Object.assign(r.data.find(x => x.name === 'swim-turn-brake').pause.movedRigRgb, { changedPixels: 0, totalRgbDifference: 0, maxChannelDifference: 0 }), /not rendered \/ hidden pixels swim-turn-brake/],
   ['pause lacks raw beauty image', r => delete r.data[0].pause.beautyImage, /pause screenshot denominator/],
   ['zero dt advances native clock', r => r.data[0].zeroDt.unchangedClocks = false, /zero-dt/],
   ['walking remains suppressed after authoritative special recovery', r => r.data.find(x => x.name === 'native-slam-phases').samples[80].walkActive = false, /post-special native walking owner/],
@@ -100,6 +105,14 @@ for (const [name, mutate, pattern] of [
   ['gameplay touched by pose', r => r.data[0].samples[0].visualGameplayInvariant = false, /native frame identity/],
   ['duplicate realm adds wrapper', r => r.duplicateRealm.unchanged = false, /cross-realm/],
 ]) test('rejects ' + name + ' (acceptance logic only)', () => { const result = gateFixture(); mutate(result); assert.throws(() => validateCatalogResult(result), pattern); });
+
+test('synthetic canonical vertex source may differ only in an explicitly reported debug shader name', () => {
+  const result = gateFixture();
+  const vertex = result.data[0].pause.vertexSources[0];
+  vertex.rawControlledSHA256 = 'b'.repeat(64);
+  vertex.nameOnlyDifference = true;
+  assert.equal(validateCatalogResult(result).length, CATALOG_SCENARIOS.length);
+});
 
 test('one native contact failure does not hide another scenario failure (acceptance logic only)', () => {
   const result = gateFixture(); result.data[0].samples[0].feet[0].error = .02; result.data[1].renders[0].rig.changedPixels = 0;

@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installJumpMotion as duplicateInstall, jumpReferenceCandidate, JUMP_REFERENCE_CANDIDATES } from '../runtime/jump-motion.mjs';
+import { installJumpMotion as duplicateInstall, jumpReferenceCandidate, jumpPresentationFamily, JUMP_REFERENCE_CANDIDATES, jumpShootReferenceCandidates } from '../runtime/jump-motion.mjs';
 
 // Actual production installer + native Character/Actor/Runner/THREE in one
 // realm. World collision is outside this pose test; no rig or IK test double.
@@ -233,7 +233,7 @@ test('production fixed clock composes jump at 30/60/120Hz; paused dt0 does not a
   }
 });
 
-test('interruptions cannot resume an old jump; landing, carry, other weapons and off-ledge falls retain native pose', async () => {
+test('interruptions cannot resume an old jump; landing, carry and off-ledge falls retain native pose', async () => {
   const api = await production();
   for (const interrupt of ['reset', 'death', 'form', 'sub', 'weapon', 'special', 'superjump', 'land', 'dodge', 'throw', 'spawn', 'hidden']) {
     const r = rig(api);
@@ -255,21 +255,19 @@ test('interruptions cannot resume an old jump; landing, carry, other weapons and
       r.frame(.4); assert.equal(api.jumpMotionSnapshot(r.ch).active, false, 'interrupted jump stays cancelled');
     } finally { r.close(); }
   }
-  for (const scenario of ['carry', 'fall', 'landing', 'dualies', 'charger', 'roller', 'slosher', 'splatling', 'blaster']) {
-    const kind = ['carry', 'fall', 'landing'].includes(scenario) ? 'shooter' : scenario;
-    const a = rig(api, true, kind, 0, scenario !== 'carry'), b = rig(api, scenario === 'landing', kind, 0, scenario !== 'carry');
-    try {
-      if (scenario !== 'fall') { a.begin(); b.begin(); }
-      for (let f = 1; f <= 40; f++) {
-        if (scenario === 'landing' && f === 20) {
-          b.ch.s3JumpMotionEnabled = false;
-          a.input.grounded = b.input.grounded = true; a.ch.trigger('land', 8); b.ch.trigger('land', 8);
-        }
-        a.frame(f / 60); b.frame(f / 60);
-        assert.deepEqual(Array.from(a.ch.P), Array.from(b.ch.P), scenario);
-      }
-    } finally { a.close(); b.close(); }
-  }
+  const landing = rig(api, true, 'shooter', 0, true);
+  try {
+    landing.begin(); for (let f = 1; f <= 19; f++) landing.frame(f / 60);
+    assert.ok(api.jumpMotionSnapshot(landing.ch).weight > .5);
+    landing.input.grounded = true; landing.ch.trigger('land', 8); landing.frame(.34);
+    assert.equal(api.jumpMotionSnapshot(landing.ch).active, false, 'landing cancels the selected ordinary jump');
+    landing.frame(.4); assert.equal(api.jumpMotionSnapshot(landing.ch).active, false, 'landing does not replay the old jump');
+  } finally { landing.close(); }
+  const fall = rig(api, true, 'shooter', 0, false);
+  try {
+    for (let f = 1; f <= 40; f++) fall.frame(f / 60);
+    assert.equal(api.jumpMotionSnapshot(fall.ch).active, false, 'walking off a ledge without a jump trigger does not select a jump pose');
+  } finally { fall.close(); }
   const preview = new api.Character({ name: 'nullable jump preview' });
   try { preview.update(0, null); preview.trigger('jump'); preview.update(1 / 60, null); assert.ok(Array.from(preview.P).every(Number.isFinite)); }
   finally { preview.dispose(); }
@@ -368,4 +366,142 @@ test('#1116 class jump clip names are reference candidates, not unverified insta
   assert.equal(jumpReferenceCandidate('slosher'),'Jump_Slsh00');
   assert.equal(jumpReferenceCandidate('splatling'),'Jump_Spnr00');
   assert.equal(jumpReferenceCandidate('missing-class'),JUMP_REFERENCE_CANDIDATES.fallback);
+});
+
+test('#1116 selects local family profiles on non-firing airborne jumps without touching weapon holds', async () => {
+  const api = await production(), C = api.CHARACTER_CHANNELS;
+  const kinds = ['shooter', 'roller', 'dualies', 'slosher', 'splatling', 'charger', 'blaster'];
+  const candidates = {
+    shooter: 'Jump_Shtr00', roller: 'Jump_Rllr00', dualies: 'Jump_Mnvr00',
+    slosher: 'Jump_Slsh00', splatling: 'Jump_Spnr00',
+    charger: 'Jump_Nrml00', blaster: 'Jump_Nrml00',
+  };
+  const changed = new Set([C.FOOTL, C.FOOTR, C.FOOTLR, C.FOOTRR].flatMap(x => [x, x + 1, x + 2]));
+  const profiles = new Map(), poses = new Map();
+  for (const kind of kinds) {
+    const before = rig(api, false, kind, 0, false), after = rig(api, true, kind, 0, false);
+    try {
+      // First exercise the issue's ordinary no-fire jump. Then introduce
+      // weapon aim/charge mid-air to prove the native hold layer still owns it.
+      for (const r of [before, after]) r.begin();
+      for (let f = 1; f <= 30; f++) {
+        before.frame(f / 60); after.frame(f / 60);
+      }
+      const snapshot = api.jumpMotionSnapshot(after.ch);
+      const selection = jumpPresentationFamily(kind);
+      assert.ok(snapshot.weight > .5, `${kind} airborne pose active in a non-firing jump`);
+      assert.equal(snapshot.familyKind, kind);
+      assert.equal(snapshot.catalogCandidate, candidates[kind]);
+      assert.equal(selection.resourceCandidate, candidates[kind]);
+      assert.equal(snapshot.presentationProfile, selection.poseProfile);
+      assert.equal(snapshot.calibrationSource, 'local-inkwave-kid-rig');
+      assert.equal(snapshot.referenceCurveVerified, false);
+      const familyPose = Array.from(after.ch.P).filter((_, i) => changed.has(i));
+      profiles.set(selection.poseProfile, familyPose); poses.set(kind, familyPose);
+      assert.ok(Array.from(after.ch.P).some((value, i) => changed.has(i) && value !== before.ch.P[i]), `${kind} selects a visible local pose profile`);
+      for (let i = 0; i < before.ch.P.length; i++) if (!changed.has(i))
+        assert.equal(after.ch.P[i], before.ch.P[i], `${kind} leaves native no-fire pose channel ${i}`);
+      assert.deepEqual(Array.from(after.ch.tr), Array.from(before.ch.tr), `${kind} leaves native action clocks unchanged`);
+      assert.deepEqual(after.a.pos.toArray(), before.a.pos.toArray(), `${kind} leaves position unchanged`);
+      assert.deepEqual(after.a.vel.toArray(), before.a.vel.toArray(), `${kind} leaves velocity unchanged`);
+      assert.equal(after.a.ink, before.a.ink); assert.equal(after.a.hp, before.a.hp);
+
+      for (const r of [before, after]) {
+        r.input.firing = true; r.input.charge = kind === 'charger' ? .7 : .35;
+        r.input.aimPitch = .3;
+      }
+      for (let f = 31; f <= 45; f++) {
+        before.frame(f / 60); after.frame(f / 60);
+      }
+      assert.equal(api.jumpMotionSnapshot(after.ch).presentationProfile, selection.poseProfile, `${kind} family remains selected while aiming/charging`);
+      for (let i = 0; i < before.ch.P.length; i++) if (!changed.has(i))
+        assert.equal(after.ch.P[i], before.ch.P[i], `${kind} leaves native weapon hold/action channel ${i}`);
+      const a = row(api, after, `family-${kind}`), b = row(api, before, `native-${kind}`);
+      assert.ok(Math.hypot(...a.muzzle.map((x, i) => x - b.muzzle[i])) < .001, `${kind} weapon muzzle and hold anchor stay aligned`);
+      assert.ok(a.nativeIK.every(e => e < .0005), `${kind} native limb and weapon IK remain converged`);
+    } finally { before.close(); after.close(); }
+  }
+  assert.equal(profiles.size, 6, 'five named families plus one shared Normal fallback profile');
+  assert.equal(new Set([...profiles.values()].map(x => JSON.stringify(x))).size, 6, 'each selected local family profile produces its own foot pose');
+  assert.deepEqual(poses.get('charger'), poses.get('blaster'), 'both classes use the same public Normal candidate and local fallback pose');
+  assert.equal(jumpPresentationFamily('charger').poseProfile, jumpPresentationFamily('blaster').poseProfile);
+  assert.equal(jumpPresentationFamily('unknown'), null, 'unmapped weapon kinds stay on native presentation');
+});
+
+test('#1116 action ownership cancels every selected family jump without stale pose resuming', async () => {
+  const api = await production();
+  const cases = [
+    ['shooter', 'throw'], ['roller', 'flick'], ['dualies', 'dodge'],
+    ['slosher', 'slosh'], ['splatling', 'special_leap'], ['charger', 'special_slam'], ['blaster', 'throw'],
+  ];
+  for (const [kind, action] of cases) {
+    const r = rig(api, true, kind, 0, false);
+    try {
+      r.begin(); for (let f = 1; f <= 18; f++) r.frame(f / 60);
+      assert.ok(api.jumpMotionSnapshot(r.ch).weight > .5, `${kind} normal jump selected before action`);
+      r.ch.trigger(action, action === 'dodge' ? { t: .2 } : undefined);
+      r.frame(.32);
+      assert.equal(api.jumpMotionSnapshot(r.ch).active, false, `${kind} ${action} owns presentation`);
+      r.frame(.42);
+      assert.equal(api.jumpMotionSnapshot(r.ch).active, false, `${kind} old jump does not resume after ${action}`);
+    } finally { r.close(); }
+  }
+});
+
+test('#1116 local and remote owners select the same family presentation on one playback timeline', async () => {
+  const api = await production();
+  for (const kind of ['roller', 'charger']) {
+    const local = rig(api, true, kind, 0, false), remote = rig(api, true, kind, 0, false);
+    remote.a.remote = true; remote.a.isLocal = false; remote.a.owner = 'remote-peer';
+    try {
+      local.begin(); remote.begin();
+      for (let f = 1; f <= 30; f++) {
+        local.frame(f / 60); remote.frame(f / 60);
+        assert.deepEqual(Array.from(remote.ch.P), Array.from(local.ch.P), `${kind} remote pose matches owner pose at frame ${f}`);
+        const a = api.jumpMotionSnapshot(local.ch), b = api.jumpMotionSnapshot(remote.ch);
+        assert.equal(b.familyKind, a.familyKind); assert.equal(b.presentationProfile, a.presentationProfile);
+        assert.equal(b.catalogCandidate, a.catalogCandidate); assert.equal(b.weight, a.weight);
+      }
+    } finally { local.close(); remote.close(); }
+  }
+});
+
+test('#1116 JumpShoot candidates exist only for the families the pinned index names', () => {
+  assert.deepEqual(jumpShootReferenceCandidates('shooter'), ['JumpShoot_Shtr00', 'JumpShoot_Shtr01', 'JumpShoot_Shtr02']);
+  assert.deepEqual(jumpShootReferenceCandidates('roller'), ['JumpShoot_Rllr00']);
+  assert.deepEqual(jumpShootReferenceCandidates('splatling'), ['JumpShoot_Spnr00']);
+  assert.deepEqual(jumpShootReferenceCandidates('charger'), ['JumpShoot_Chrg00', 'JumpShoot_Chrg01', 'JumpShoot_Chrg02']);
+  for (const kind of ['dualies', 'slosher', 'blaster', 'unknown'])
+    assert.equal(jumpShootReferenceCandidates(kind), null, `${kind} has no verified JumpShoot name`);
+});
+
+test('#1116 firing airborne jumps switch the named catalog state while the local pose profile is shared', async () => {
+  const api = await production();
+  for (const kind of ['shooter', 'roller', 'dualies', 'slosher', 'splatling', 'charger', 'blaster']) {
+    const r = rig(api, true, kind, 0, false);
+    try {
+      r.begin();
+      for (let f = 1; f <= 30; f++) r.frame(f / 60);
+      const ordinary = api.jumpMotionSnapshot(r.ch);
+      assert.equal(ordinary.active, true, `${kind} no-fire jump active`);
+      assert.equal(ordinary.actionState, 'ordinary', `${kind} no-fire jump is the ordinary state`);
+      assert.deepEqual(Array.from(ordinary.selectedCatalogCandidates), [jumpReferenceCandidate(kind)], `${kind} ordinary catalog candidate`);
+
+      r.input.firing = true; r.input.charge = kind === 'charger' ? .7 : .35; r.input.aimPitch = .3;
+      for (let f = 31; f <= 40; f++) r.frame(f / 60);
+      const fire = api.jumpMotionSnapshot(r.ch);
+      const expected = jumpShootReferenceCandidates(kind) ?? [jumpReferenceCandidate(kind)];
+      assert.equal(fire.active, true, `${kind} firing jump still active`);
+      assert.equal(fire.actionState, 'firing', `${kind} firing jump is the firing state`);
+      assert.deepEqual(Array.from(fire.selectedCatalogCandidates), expected, `${kind} firing catalog candidates`);
+      assert.equal(fire.catalogCandidate, ordinary.catalogCandidate, `${kind} ordinary candidate is unchanged`);
+      assert.equal(fire.presentationProfile, ordinary.presentationProfile, `${kind} pose profile is shared by both states`);
+      assert.equal(fire.calibrationSource, 'local-inkwave-kid-rig');
+      assert.equal(fire.referenceCurveVerified, false, `${kind} joint curves stay unverified`);
+
+      r.input.firing = false; r.input.charge = 0;
+      r.frame(41 / 60);
+      assert.equal(api.jumpMotionSnapshot(r.ch).actionState, 'ordinary', `${kind} returns to the ordinary state when firing stops`);
+    } finally { r.close(); }
+  }
 });

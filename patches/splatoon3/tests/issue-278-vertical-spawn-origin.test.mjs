@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {fixture} from '../../../scripts/weapons-fixture.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
 test('#278 vertical1+2+2 groups preserve their source-relative launch heights before integration',async()=>{
@@ -20,4 +21,14 @@ test('#278 vertical1+2+2 groups preserve their source-relative launch heights be
  }
  const first=volley(112);assert.deepEqual(volley(112),first);assert.deepEqual(volley(113),first,'vertical position fields have no positional RNG');
  volley(112,.73);f.projectiles.clear();
+});
+test('#278 pinned vertical group heights match the test table and their unverified combination stays recorded',()=>{
+ const profile=JSON.parse(readFileSync(new URL('../profile.json',import.meta.url),'utf8'));
+ const units=profile.weaponsFidelityCompletion.weapons.roller.VerticalSwingUnitGroupParam.Unit;
+ assert.deepStrictEqual(units.map(u=>u.BulletNum??1),[1,2,2]);
+ assert.deepStrictEqual(units.map(u=>(u.SpawnPositionOffsetHeight||0)+(u.SpawnPositionHeight||0)),[.5,0,-1]);
+ let note=null;
+ (function walk(o){if(o&&typeof o==='object'){if(typeof o.rollerVerticalSpawnHeight==='string')note=o.rollerVerticalSpawnHeight;for(const v of Object.values(o))walk(v);}})(profile);
+ assert.ok(note,'rollerVerticalSpawnHeight must be recorded in profile models');
+ for(const s of ['unverified','scale 1','not an SI-metre claim'])assert.ok(note.includes(s),`missing "${s}"`);
 });

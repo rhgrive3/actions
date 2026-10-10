@@ -115,7 +115,7 @@ test('splatling yaw and pitch have independent signed ground boundaries on arbit
  const f=await setup('splatling'),ps=projectiles(f),a=f.a;
  for(const yaw of [0,1.2])for(const pitch of [0,.7,-.6])for(const [theta,axis,limit] of [[0,'yaw',3.3],[.5,'yaw',-3.3],[.25,'pitch',1.6],[.75,'pitch',-1.6]]){
   const dir=new f.THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));a.aimDir.copy(dir);a.aimPoint.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3)).addScaledVector(dir,100);
-  let n=0;const draws=[.5,1-1e-12,theta]; // neutral #64 speed RNG, then inherited speed RNG if present, then yaw/pitch spread draws
+  let n=0;const draws=[.5,.5,1-1e-12,theta]; // #940 standing outer-reticle draw (.5 >= 0.3 keeps the inner cone), neutral #64 speed RNG, then radius and yaw/pitch angle draws
   f.setRandom(()=>draws[n++]??.5);ps.fireSplatling(a,a.weapon,3.3);const v=ps.list.at(-1).vel.clone().normalize(),right=dir.clone().set(-dir.z,0,dir.x).normalize(),up=dir.clone().cross(right);
   const side=Math.atan2(v.dot(axis==='yaw'?right:up),v.dot(dir))*180/Math.PI;close(side,limit);close(v.dot(axis==='yaw'?up:right),0);
  }
@@ -123,7 +123,7 @@ test('splatling yaw and pitch have independent signed ground boundaries on arbit
 test('splatling retained horizontal scalar does not infer or rescale vertical1.6 in ground and air',async()=>{
  const f=await setup('splatling'),ps=projectiles(f),a=f.a;a.aimPoint.set(0,1.05,100);a.aimDir.set(0,0,1);
  for(const [ground,spread,expected] of [[true,1.98,1.6],[true,3.3,1.6],[false,7,1.6]]){
-  a.grounded=ground;let n=0;const draws=[.5,1-1e-12,.25]; // isolate pitch boundary from independent speed randomness
+  a.grounded=ground;let n=0;const draws=ground?[.5,.5,1-1e-12,.25]:[.5,1-1e-12,.25]; // #940 standing outer-reticle draw precedes speed/radius/angle; airborne has none
   f.setRandom(()=>draws[n++]??.5);ps.fireSplatling(a,a.weapon,spread);const p=ps.list.at(-1),v=p.vel.clone();close(Math.abs(Math.atan2(v.y,Math.hypot(v.x,v.z))*180/Math.PI),expected);
   a.grounded=!ground;a.weapon.spreadPitchGround=1.6;assert.ok(p.vel.equals(v));
  }

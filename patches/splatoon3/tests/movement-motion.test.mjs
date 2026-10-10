@@ -207,6 +207,33 @@ test('super jump charge is distinct from idle and flight is actually airborne be
   }
 });
 
+test('remote Super Jump charge transforms stay finite at 30/60/120Hz', async () => {
+  for (const hz of [30, 60, 120]) {
+    const r = await rig(hz), { a, ch } = r;
+    try {
+      a.remote = true; a.form = 'squid'; a.grounded = false;
+      a.superJumpState = { phase: 'charge', net: true, t: Number.NaN, sjEpoch: 4 };
+      r.draw();
+      assert.equal(movementMotionSnapshot(ch).phase, 'superjump-charge');
+      close(movementMotionSnapshot(ch).charge, 0);
+
+      a.superJumpState = { phase: 'charge', net: true, t: 0.2, sjEpoch: 4 };
+      r.draw();
+      close(movementMotionSnapshot(ch).charge, 0.2 / r.f.profile.superJump.chargeTime);
+      const transform = [
+        ...ch.root.position.toArray(), ...ch.root.quaternion.toArray(), ...ch.root.scale.toArray(),
+        ...ch.squid.pivot.position.toArray(), ...ch.squid.pivot.quaternion.toArray(), ...ch.squid.pivot.scale.toArray(),
+      ];
+      assert.ok(transform.every(Number.isFinite), `${hz}Hz transform: ${transform}`);
+
+      a.superJumpState = null; r.draw();
+      assert.notEqual(movementMotionSnapshot(ch).phase, 'superjump-charge');
+      assert.ok([...ch.squid.pivot.position.toArray(), ...ch.squid.pivot.quaternion.toArray(),
+        ...ch.squid.pivot.scale.toArray()].every(Number.isFinite), `${hz}Hz restored transform`);
+    } finally { ch.dispose(); }
+  }
+});
+
 test('wall charge takes over a live roll, full charge releases, and wall roll takes over surge', async () => {
   for (const hz of [30, 60, 120]) {
     const r = await rig(hz), { a, ch, f, dt } = r;

@@ -8,6 +8,8 @@ import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../adapter.mjs';
 import { adaptLobbyResources } from '../lobby-resource-adapter.mjs';
 
+const LOBBY_LOW_ATLAS_SCALE = 0.5;
+
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 const raw = read('src/main.js');
 const built = adaptQualitySource('src/main.js', adaptReliability('src/main.js', adaptTouchLayout('src/main.js', adaptSource('src/main.js', raw))));
@@ -73,6 +75,182 @@ test('native Online hub and room entry remain demand-loaded and reuse the curren
   assert.equal(created, 0);
   s.showHub({}, { isColor: true }, 'shooter'); assert.equal(created, 1);
   s.showLobby([], [], {}); assert.equal(created, 1); assert.equal(s.lob.room, true);
+});
+
+test('LOW/mobile LobbySet caps atlas backing pixels while HIGH keeps native dimensions', () => {
+  const rawSet = read('src/game/lobbySet.js');
+  const rawTex = read('src/game/lobbySet-tex.js');
+  assert.match(rawSet, /decal: createDecalAtlas\(\), lit: createLitAtlas\(\), sky: createSkyline\(\)/);
+  assert.match(rawTex, /canvas\(DA, DA\)/);
+  assert.match(rawTex, /canvas\(LA\[0\], LA\[1\]\)/);
+  assert.match(rawTex, /const W = 2048, H = 1024, c = canvas\(W, H\)/);
+  assert.match(rawTex, /const W = 1024, H = 2048, c = canvas\(W, H\)/);
+
+  const set = adaptQualitySource('src/game/lobbySet.js', rawSet);
+  const tex = adaptQualitySource('src/game/lobbySet-tex.js', rawTex);
+  const showcase = adaptQualitySource('src/game/showcase.js', read('src/game/showcase.js'));
+  assert.match(showcase, /resolveLobbyQualityName\(G\.settings\?\.quality, G\.mobile \?\? G\.game\?\.mobile\)/);
+  assert.match(set, new RegExp(`this\\.quality === 'low' \\? ${LOBBY_LOW_ATLAS_SCALE} : 1`));
+  assert.match(set, /decal: createDecalAtlas\(atlasScale\), lit: createLitAtlas\(atlasScale\), sky: createSkyline\(atlasScale\)/);
+  assert.match(set, /mask: createGroundMask\(PUDDLES, SPLATS, atlasScale\)/);
+  for (const name of ['createDecalAtlas', 'createLitAtlas', 'createSkyline', 'createGroundMask']) {
+    assert.match(tex, new RegExp(`export function ${name}\\([^)]*scale = 1`));
+  }
+  assert.equal((tex.match(/g\.scale\(scale, scale\)/g) || []).length, 4);
+
+  const builder = (name, endMarker) => {
+    const at = tex.indexOf(`export function ${name}(`);
+    const end = tex.indexOf(endMarker, at);
+    assert.ok(at >= 0 && end > at, `${name} source span`);
+    return tex.slice(at, end).replace('export function', 'function');
+  };
+  const builders = [
+    builder('createDecalAtlas', '\nfunction drawDecals('),
+    builder('createLitAtlas', '\nfunction drawLit('),
+    builder('createSkyline', '\n// ------------------------------------------------------------------------------------------------ neon glyphs'),
+    builder('createGroundMask', '\n// ------------------------------------------------------------------------------------------------ lit atlas'),
+  ].join('\n');
+  const dimensionsAt = scale => vm.runInNewContext(`(() => {
+    const DA = 2048, LA = [2048, 1024], GROUND_RECT = [-4, -14, 4, 7], PUDDLES = [], SPLATS = [];
+    const THREE = { ClampToEdgeWrapping: 1, RepeatWrapping: 2 };
+    const canvases = [], scales = [];
+    function canvas(width, height) {
+      const ctx = {
+        scale(x, y) { scales.push([x, y]); }, clearRect() {}, fillRect() {},
+        beginPath() {}, moveTo() {}, lineTo() {}, fill() {}, ellipse() {},
+      };
+      const c = { width, height, getContext() { return ctx; } };
+      canvases.push(c); return c;
+    }
+    function tex(image) { return { image, userData: {} }; }
+    function loadSetFonts() { return Promise.resolve(); }
+    function drawDecals() {}
+    function drawLit() {}
+    function mulberry() { return () => 0.45; }
+    ${builders}
+    createDecalAtlas(${scale}); createLitAtlas(${scale}); createSkyline(${scale});
+    createGroundMask(PUDDLES, SPLATS, ${scale});
+    return { dimensions: canvases.map(c => [c.width, c.height]), scales };
+  })()`);
+  const lowCanvases = dimensionsAt(LOBBY_LOW_ATLAS_SCALE);
+  assert.deepEqual(Array.from(lowCanvases.dimensions, d => Array.from(d)), [
+    [1024, 1024], [1024, 512], [1024, 512], [512, 1024],
+  ]);
+  assert.deepEqual(Array.from(lowCanvases.scales, d => Array.from(d)), Array.from({ length: 4 }, () => [0.5, 0.5]));
+  const fullCanvases = dimensionsAt(1);
+  assert.deepEqual(Array.from(fullCanvases.dimensions, d => Array.from(d)), [
+    [2048, 2048], [2048, 1024], [2048, 1024], [1024, 2048],
+  ]);
+
+  const fullPixels = 2048 * 2048 + 2048 * 1024 + 2048 * 1024 + 1024 * 2048;
+  const lowPixels = lowCanvases.dimensions.reduce((sum, [w, h]) => sum + w * h, 0);
+  assert.equal(fullPixels, 10_485_760);
+  assert.equal(lowPixels, 2_621_440);
+  assert.equal(lowPixels * 4, 10 * 1024 * 1024);
+  assert.ok(Math.ceil(lowPixels * 4 * (4 / 3)) < 14 * 1024 * 1024);
+  assert.throws(() => adaptLobbyResources('src/game/lobbySet.js', set), /patch conflict/);
+  assert.throws(() => adaptLobbyResources('src/game/lobbySet-tex.js', tex), /patch conflict/);
+});
+
+test('LOW/mobile retained neon halo canvases follow the LOW density; HIGH keeps 180 px/m', () => {
+  const set = adaptQualitySource('src/game/lobbySet.js', read('src/game/lobbySet.js'));
+  assert.match(set, /const hA = neonHalo\(txt\.strokes, 0\.45, this\.quality === 'low' \? 90 : undefined\);/);
+  assert.match(set, /const hB = neonHalo\(sq\.strokes, 0\.5, this\.quality === 'low' \? 90 : undefined\);/);
+
+  // Execute the native neonHalo (unchanged by the adapter) with the canvas and texture stubs it needs.
+  const raw = read('src/game/lobbySet-tex.js');
+  const at = raw.indexOf('export function neonHalo(');
+  const end = raw.indexOf('\n}\n', at) + 3;
+  assert.ok(at >= 0 && end > at, 'neonHalo source span');
+  const fn = raw.slice(at, end).replace('export function', 'function');
+  const halo = (strokes, pad, pxPerM) => vm.runInNewContext(`(() => {
+    const canvases = [];
+    function canvas(width, height) {
+      const ctx = { fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {} };
+      const c = { width, height, getContext() { return ctx; } };
+      canvases.push(c); return c;
+    }
+    function tex(image) { return { image }; }
+    ${fn}
+    const r = neonHalo(${JSON.stringify(strokes)}, ${pad}, ${pxPerM});
+    return { dims: [canvases[0].width, canvases[0].height], rect: r.rect };
+  })()`);
+  // Stroke extents matching the INK & SKATE sign (about 3.2 x 0.42 m) and the squid sign (about 0.9 x 1.0 m).
+  const cases = [
+    [[{ pts: [[0, 0], [3.2, 0.42]] }, { pts: [[0, 0.42], [1.4, 0]] }], 0.45],
+    [[{ pts: [[-0.45, 0.04], [0.45, 1.03]] }], 0.5],
+  ];
+  let highPixels = 0, lowPixels = 0;
+  for (const [strokes, pad] of cases) {
+    const high = halo(strokes, pad, undefined);
+    const low = halo(strokes, pad, 180 * LOBBY_LOW_ATLAS_SCALE);
+    const [x0, y0, x1, y1] = Array.from(high.rect);
+    assert.deepEqual(Array.from(high.dims), [Math.ceil((x1 - x0) * 180), Math.ceil((y1 - y0) * 180)]);
+    assert.deepEqual(Array.from(low.dims), [Math.ceil((x1 - x0) * 90), Math.ceil((y1 - y0) * 90)]);
+    assert.deepEqual(Array.from(low.rect), Array.from(high.rect), 'halo geometry in metres is unchanged');
+    assert.ok(low.dims[0] * low.dims[1] < high.dims[0] * high.dims[1] / 3.5, 'LOW halo is about a quarter of HIGH');
+  }
+});
+
+test('native Online atlas disposal remains on the ordinary release path at 30/60/120 Hz', () => {
+  const showcase = adaptQualitySource('src/game/showcase.js', read('src/game/showcase.js'));
+  const lobbySet = adaptQualitySource('src/game/lobbySet.js', read('src/game/lobbySet.js'));
+  const updateBody = section(showcase, '  _updateSet(dt) {', '\n  _lobContact(');
+  const releaseBody = section(showcase, '  _lobRelease() {', '\n  _enterSetMode(');
+  const setDisposeBody = section(lobbySet, '  dispose() {', '\n}\n\n// ------------------------------------------------------------------------------------------------ data');
+  const SET = vm.runInNewContext(`class LobbySet { ${setDisposeBody} }; LobbySet`);
+  const Showcase = vm.runInNewContext(`class Showcase { ${updateBody} ${releaseBody} }; Showcase`, {
+    SET_MODES: new Set(['hub', 'lobby']), SET_FADE: 0.45,
+    G: { menus: { _stack: [], current: 'main' }, net: { state: 'offline' }, settings: { quality: 'low' } },
+  });
+  const disposeSet = () => {
+    const counts = { texture: 0, mesh: 0, material: 0, shadow: 0, target: 0 };
+    const d = key => ({ dispose() { counts[key]++; } });
+    const node = { geometry: d('mesh'), material: d('material') };
+    const set = Object.create(SET.prototype);
+    Object.assign(set, {
+      root: { traverse(fn) { fn(node); }, removeFromParent() {} },
+      lights: { key: { shadow: d('shadow') }, spill: { map: d('target') } },
+      tex: { decal: d('texture'), lit: d('texture'), sky: d('texture'), mask: d('texture') },
+      halos: [{ material: { uniforms: { map: { value: d('texture') } } } }],
+      _rRT: d('target'), _envRT: d('target'), _envOld: d('target'), _pmrem: d('target'),
+      _envScene: { traverse(fn) { fn(node); } },
+    });
+    return { set, counts };
+  };
+  const resource = (counts, key) => ({
+    dispose() { counts[key]++; },
+    geometry: { dispose() { counts[key]++; } },
+    material: { dispose() { counts[key]++; } },
+  });
+
+  for (const hz of [30, 60, 120]) {
+    const dt = 1 / hz;
+    const inst = Object.create(Showcase.prototype);
+    inst.mode = 'menu';
+    for (let cycle = 0; cycle < 2; cycle++) {
+      const disposed = disposeSet();
+      const fxCounts = { member: 0, fx: 0, ink: 0, spark: 0, trail: 0, contact: 0 };
+      const fx = () => ({ mesh: resource(fxCounts, 'fx'), splats: resource(fxCounts, 'fx'), rings: resource(fxCounts, 'fx') });
+      const L = {
+        room: false, preload: false, k: 0, gone: 0, ready: false,
+        members: new Map([['self', { c: { dispose() { fxCounts.member++; } } }]]),
+        set: disposed.set, fx: [fx(), fx()], ink: [resource(fxCounts, 'ink'), resource(fxCounts, 'ink')],
+        sparks: { mesh: resource(fxCounts, 'spark') }, trail: { dispose() { fxCounts.trail++; } },
+        contact: { dispose() { fxCounts.contact++; } }, scene: { clear() {} },
+      };
+      inst.lob = L;
+      for (let i = 0; i < Math.ceil(1.7 / dt) && inst.lob; i++) inst._updateSet(dt);
+      assert.equal(inst.lob, null, `cycle ${cycle} is released at ${hz}Hz`);
+      assert.deepEqual(disposed.counts, { texture: 5, mesh: 2, material: 2, shadow: 1, target: 5 });
+      assert.equal(fxCounts.member, 1);
+      assert.equal(fxCounts.fx, 12);
+      assert.equal(fxCounts.ink, 2);
+      assert.equal(fxCounts.spark, 3);
+      assert.equal(fxCounts.trail, 1);
+      assert.equal(fxCounts.contact, 1);
+    }
+  }
 });
 
 test('lobby adapter fails closed on drift or double application and leaves gameplay modules intact', () => {

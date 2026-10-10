@@ -14,6 +14,11 @@ function placeRoller(world) {
   return attacker.weaponRunner;
 }
 
+function useProductionSendToContract(world) {
+  const tr = world.net.s.tr, sendTo = tr.sendTo;
+  tr.sendTo = (to, data) => { sendTo(to, data); return true; };
+}
+
 test('invulnerability rejection emits no generic feedback or Roller success debounce; vulnerable contact still kills', async () => {
   const f = await fixture(), { G, WEAPONS, Projectiles } = f;
   const attacker = f.make('roller'), victim = f.make('shooter');
@@ -87,11 +92,14 @@ test('real victim update order around expiry does not leave failed-contact immun
 test('remote Roller retries on native cadence after lost confirmation and ignores late ACK for a newer request', async () => {
   const sender = await combatWorld('A', { network: true }), receiver = await combatWorld('B', { network: true });
   try {
+    useProductionSendToContract(sender);
     const runner = placeRoller(sender), { victim } = sender, { victim: ownedVictim } = receiver;
     sender.G.time = 1;
     victim.hp = ownedVictim.hp = 500;
     const feedback = [];
+    const hits = [];
     sender.G.audio = { play: (...args) => feedback.push(args), loop: () => ({ set(){}, stop(){} }) };
+    sender.on('hit', event => hits.push(event));
 
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
     const first = sender.wire[0].data;
@@ -108,8 +116,9 @@ test('remote Roller retries on native cadence after lost confirmation and ignore
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
     assert.equal(sender.wire.length, 1, 'the existing contact gate remains closed before the 0.4-second boundary');
 
-    // sendHit returns true when tr/sendTo is absent. Let this native-cadence
-    // retry disappear, then prove another retry can still reach the owner.
+    // The missing transport retires this unsent attempt without pretending the
+    // owner rejected damage; Roller still waits one native contact interval.
+    const unsentSeq = sender.net.hitNextSeq + 1, unsentHit = sender.net._hitSeq + 1;
     sender.net.s.tr = null;
     sender.G.time = 1.4;
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
@@ -117,8 +126,13 @@ test('remote Roller retries on native cadence after lost confirmation and ignore
     assert.equal(runner.rollHits.get(victim), sender.G.time, 'the transport-absent request keeps the native finite retry timestamp');
     assert.equal(runner.s3RollHitConfirmDisabled.has(victim), true,
       'the second attempt retires ambiguous ACK matching even though no transport sent it');
+    assert.equal(runner.s3PendingRollHits.has(victim), false, 'an unsent attempt does not await an owner ACK');
+    assert.equal(sender.net.hitPending.has(unsentSeq), false, 'the unsent delivery record is retired');
+    assert.equal(sender.net._pendingHits.has(unsentHit), false, 'the unsent confirmation receipt is retired');
+    assert.equal(hits.length, 0, 'transport failure emits no accepted-hit feedback');
+    assert.equal(feedback.filter(args => args[0] === 'ink_hit_body').length, 0);
 
-    const transport = { sendTo: (to, data) => sender.wire.push({ to, data: JSON.parse(JSON.stringify(data)) }) };
+    const transport = { sendTo: (to, data) => { sender.wire.push({ to, data: JSON.parse(JSON.stringify(data)) }); return true; } };
     sender.net.s.tr = transport;
     sender.G.time = 1.8;
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
@@ -132,6 +146,7 @@ test('remote Roller retries on native cadence after lost confirmation and ignore
       'no hit-body feedback is predicted while the owner confirmation is undelivered');
 
     sender.deliver('B', lateFirstAck);
+    assert.equal(hits.length, 1, 'the delayed owner event reports the first accepted hit once');
     assert.equal(runner.rollHits.get(victim), secondSentAt,
       'an old same-owner/same-life ACK cannot resolve or extend the newer contact request');
     receiver.deliver('A', second);
@@ -166,6 +181,7 @@ test('remote Roller retries on native cadence after lost confirmation and ignore
 test('remote Roller contact waits for owner acceptance, retries after rejection, and confirms once over the existing event wire', async () => {
   const sender = await combatWorld('A', { network: true }), receiver = await combatWorld('B', { network: true });
   try {
+    useProductionSendToContract(sender);
     const runner = placeRoller(sender), { victim } = sender;
     sender.G.time = 1;
     victim.invuln = .1;
@@ -207,7 +223,8 @@ test('remote Roller contact waits for owner acceptance, retries after rejection,
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
     assert.equal(sender.wire.length, 2, 'the rejection acknowledgement admits a retry without starting the configured 0.4-second debounce');
     assert.equal(runner.rollHits.get(victim), sender.G.time);
-    assert.deepEqual(Object.keys(sender.wire[1].data).sort(), ['a', 'd', 'h', 'k', 'l', 'rp', 'seq', 'v', 'w']);
+    // #1185: the hit wire carries its creating match id (m) beside the existing fields.
+    assert.deepEqual(Object.keys(sender.wire[1].data).sort(), ['a', 'd', 'h', 'k', 'l', 'm', 'rp', 'seq', 'v', 'w']);
     assert.equal(sender.wire[1].data.rp, false, 'ordinary contact carries the accepted equipment flag without inventing Punisher');
 
     receiver.victim.invuln = 0;

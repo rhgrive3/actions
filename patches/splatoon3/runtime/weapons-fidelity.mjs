@@ -6,19 +6,21 @@ import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint } from './roller-impact-paint.mjs';
+import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint } from './shooter-impact-paint.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
 // Main-weapon gameplay only. Values live in profile.json; provenance and retained
 // uncertainty live in reference/weapons-fidelity-reference.json.
 // Source fields and interpreted equations are explicitly separated in the profile.
-import {distanceDamage, groupDamage, applyProjectileHit as legacyHit, applySlosherVolleyHit, cachedWeaponOverrideConfig, withWeaponScalarOverride} from './weapons.mjs';
+import {distanceDamage, groupDamage, applyGroupedProjectileHit, applyProjectileHit as legacyHit, applySlosherVolleyHit, cachedWeaponOverrideConfig, withWeaponScalarOverride} from './weapons.mjs';
 import {damageGroupId} from './final-damage.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { coherentMotionStart } from './actor-motion.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
+const NORMALIZED_PROJECTILE_PACKET = Symbol('inkwave.normalizedProjectilePacket');
 const inkFlightHelpers = new WeakMap();
 const SPLATLING_NOMINAL_LIFETIME = 1.2;
 let api, completion, moves, slosherVolleySequence = 0;
@@ -27,39 +29,15 @@ const splatlingSpeedViews = new WeakMap();
 const blasterPaintContracts = new WeakMap();
 const blasterAxisDirectionsCache = new WeakMap();
 const clamp01 = value => Math.max(0, Math.min(1, value));
+// #949: rejected hits cannot reserve the Slosher volley damage budget.
+export function bossVolleyAdmission(boss, attacker, target) {
+  if (!boss || !attacker || attacker.remote || boss.dead || boss.match?.state !== 'playing') return false;
+  const crab = target?.hp !== undefined && target?.id !== undefined;
+  if (crab) return !target.dead && Number.isFinite(target.hp) && target.hp > 0;
+  return !boss.invuln && !!boss.visible && Number.isFinite(boss.hp) && boss.hp > 0;
+}
 const radians = degrees => degrees * Math.PI / 180;
-// Splatoon deviation law: magnitude = s * x^(log_0.5(bias)).
-// Reflect the same ONE existing uniform RNG draw around zero, keeping the
-// sign independent of |x|. 0.5 retains the previous uniform yaw; 0 -> 0;
-// 1 -> full deviation. Exempt source indices consume no random numbers.
-export function biasedSourceYaw(uniform, degrees, bias = 0.5) {
-  const half = Math.min(1, Math.max(0, Number.isFinite(bias) ? bias : 0.5));
-  if (half <= 0 || !Number.isFinite(degrees) || degrees === 0) return 0;
-  const x = Math.min(1, Math.max(0, Number.isFinite(uniform) ? uniform : 0.5)) * 2 - 1;
-  const magnitude = half >= 1 ? (x === 0 ? 0 : 1) : Math.pow(Math.abs(x), Math.log(half) / Math.log(0.5));
-  return Math.sign(x) * magnitude * radians(degrees);
-}
 const MAIN_SHOT_LIFETIME = 1.2;
-// Current S3 parameter glossary: Slosher WidthHalf and DistanceXZ values
-// use 0.2-world-unit notation. Near/far interpolation is a documented
-// local approximation pending S3 capture; the source endpoint values and
-// first-versus-after unit identity are authoritative.
-const SLOSHER_PAINT_UNIT = 0.2;
-export function slosherImpactPaintSource(unit, index, xzDistance) {
-  const paint = index === 0 ? unit?.PaintParam : unit?.AfterPaintParam;
-  if (!paint || ![paint.DistanceXZNear,paint.DistanceXZFar,
-      paint.WidthHalfNear,paint.WidthHalfFar,paint.DepthScaleNear,paint.DepthScaleFar].every(Number.isFinite))
-    return null;
-  const near = paint.DistanceXZNear*SLOSHER_PAINT_UNIT;
-  const far = paint.DistanceXZFar*SLOSHER_PAINT_UNIT;
-  const t = far>near ? clamp01((Math.max(0,xzDistance)-near)/(far-near)) : (xzDistance>=far?1:0);
-  return {
-    radius:(paint.WidthHalfNear+(paint.WidthHalfFar-paint.WidthHalfNear)*t)*SLOSHER_PAINT_UNIT,
-    depthScale:paint.DepthScaleNear+(paint.DepthScaleFar-paint.DepthScaleNear)*t,
-    source: index === 0 ? 'PaintParam' : 'AfterPaintParam', t,
-  };
-}
-
 function freezeDeep(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
     for (const child of Object.values(value)) freezeDeep(child);
@@ -121,6 +99,8 @@ export function advanceFidelityProjectile(p, dt) {
     }
   }
   p.pos.addScaledVector(p.vel, step);
+  // #713: retain the flight apex for the Roller break/free paint height input.
+  if (!Number.isFinite(p.fidelityMaxY) || p.pos.y > p.fidelityMaxY) p.fidelityMaxY = p.pos.y;
   if (p.fidelitySloshDownward && p.age <= p.straight + EPSILON)
     p.fidelitySloshFallAnchorY = p.pos.y;
   if (isKitProjectile(p)) kitTrizookaOrbitDelta(null, p, step);
@@ -318,9 +298,25 @@ function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
 // #873: keep intermediate and nearest/feet widths separate. Consume the same
 // legacy RNG draw to avoid changing unrelated spread/paint-seed ordering, but
 // never let that draw randomize the sourced Shooter gameplay radius.
-export function fidelityFlightPaintRadius(p) {
+export function fidelityFlightPaintRadius(p, fallHeight) {
   const legacyRandom = Math.random();
-  return p.s3Weapon?.flightPaint?.intermediate ?? p.trailRadius * (0.8 + legacyRandom * 0.4);
+  const fp = p?.s3Weapon?.flightPaint;
+  const dist = fallHeight !== undefined && Number.isFinite(fallHeight)
+    ? fallHeight
+    : (p?.lastDropDist !== undefined && Number.isFinite(p.lastDropDist) ? p.lastDropDist : undefined);
+  if (p && 'lastDropDist' in p) delete p.lastDropDist;
+  if (fp) {
+    if (dist !== undefined) {
+      const minH = fp.dropHeightMax ?? 3.0;
+      const maxH = fp.dropHeightMin ?? 10.0;
+      if (dist <= minH) return fp.nearest;
+      if (dist >= maxH) return fp.intermediate;
+      const t = (dist - minH) / (maxH - minH);
+      return fp.nearest + (fp.intermediate - fp.nearest) * t;
+    }
+    return fp.intermediate;
+  }
+  return (p?.trailRadius ?? 0.44) * (0.8 + legacyRandom * 0.4);
 }
 
 function deriveRollerReleaseFootPaint(profile) {
@@ -669,15 +665,13 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   if (p.ghost) return true;
   const { contract } = source, burst = contract.burst;
   if (!collision) {
-    const physics=api.G.physics;
-    const origin=system._s3BlasterTimedBurstOrigin || (system._s3BlasterTimedBurstOrigin=new api.THREE.Vector3());
-    const down=system._s3BlasterTimedBurstDown || (system._s3BlasterTimedBurstDown=new api.THREE.Vector3(0,-1,0));
-    const hit=system._s3BlasterTimedBurstHit || (system._s3BlasterTimedBurstHit=new api.Hit());
-    origin.copy(point);origin.y+=.2;
-    const floor=physics?.raycast?.(origin,down,3.5,hit,true);
-    if(floor?.hit&&burst.timedSplashRadius>0){
-      const at=floor.point.clone().addScaledVector(floor.normal,.025);
-      const area=api.G.paint?.splat?.(at,burst.timedSplashRadius,p.team,{seed:seededUnit(p.seed,0x1106),claimOwner:p.owner});
+    // #1107: the timed airburst's SplashPaintRadius is a splash centred on the
+    // burst point. paint.splat tests each face by its plane distance to that
+    // centre (a sphere), so a floor 2.0-3.5 below the burst is not reached. A
+    // downward floor probe here would be the generic stamp #1060 removed.
+    if(burst.timedSplashRadius>0 && api.G.paint?.splat){
+      const at=point.clone();
+      const area=api.G.paint.splat(at,burst.timedSplashRadius,p.team,{seed:seededUnit(p.seed,0x1106),claimOwner:p.owner});
       if(Number.isFinite(area))p.owner?.addTurf?.(area);
     }
     queueTimedBlasterDrop(system,p,point,burst);
@@ -853,9 +847,11 @@ export function fidelitySlosherImpactPaint(p, point) {
   const radius=(w0+(w1-w0)*t)*scale*shrink;
   return radius>0?{radius,stretchAmt:Math.max(.05,(d0+(d1-d0)*t)*shrink)}:null;
 }
-// #1022: explicit source bias input, keeping one RNG draw and exclusions.
-// The exponent is a deliberately labelled symmetric calibration, NOT a
-// verified Nintendo distribution; replace it when sampling semantics are known.
+// #1022: the single live Slosher yaw law. RandomRotateYBias is consumed as an
+// exponent 1+bias on the normalised uniform draw (bias 0 = uniform control).
+// This is an INKWAVE calibration, NOT a verified Nintendo distribution: the
+// native sampling law is 未確認. Exempt indices (RandomRotateYOffOrderNum)
+// consume no random number; other indices consume exactly one.
 export function slosherYawOffset(u,index,rng=Math.random) {
   if (!u || u.RandomRotateYOffOrderNum?.includes(index)) return 0;
   const angle=u.RandomRotateYDegree || 0;
@@ -884,39 +880,80 @@ function setCollision(p,c,offset=0,depleted=false) {
 }
 // Legacy projectile packets have no unit discriminator. New packets preserve
 // their first30 entries, then carry unit before the existing owner tick/sequence.
-export function validFidelityRollerUnitPacket(event) {
-  if (!Array.isArray(event)) return false;
-  if ([27, 30, 32].includes(event.length)) return true; // legacy pre-birth layouts
-  const hasInkMeta = event[27] === null || typeof event[27] === 'object';
+function copyProjectilePacketProperties(from, to) {
+  for (const key of Reflect.ownKeys(from)) {
+    if (key === 'length' || typeof key === 'symbol' || /^(?:0|[1-9]\d*)$/.test(key)) continue;
+    Object.defineProperty(to, key, Object.getOwnPropertyDescriptor(from, key));
+  }
+}
+function projectilePacketShape(packet) {
+  if (!Array.isArray(packet)) return null;
+  if ([27, 30, 32].includes(packet.length)) return { legacy: true, depleted: false, birthOffset: 0 };
+  const hasInkMeta = packet[27] === null || typeof packet[27] === 'object';
   const accepted = hasInkMeta
-    ? event.length === 34 || event.length === 36 || event.length === 37
-    : event.length === 33 || event.length === 35 || event.length === 36;
-  if (!accepted) return false;
+    ? packet.length === 34 || packet.length === 36 || packet.length === 37
+    : packet.length === 33 || packet.length === 35 || packet.length === 36;
+  if (!accepted) return null;
   const inkMetaOffset = hasInkMeta ? 1 : 0;
-  const kitOffset = event.length === 35 || event.length === 36 || event.length === 37 ? 2 : 0;
+  const kitOffset = packet.length === 35 || packet.length === 36 || packet.length === 37 ? 2 : 0;
   const birthOffset = inkMetaOffset + kitOffset;
-  const powerIndex = 27 + birthOffset + 4;
-  const hasPower = hasInkMeta ? event.length === 37 : event.length === 36;
+  const hasPower = hasInkMeta ? packet.length === 37 : packet.length === 36;
+  return { legacy: false, hasInkMeta, kitOffset, birthOffset, hasPower };
+}
+function normalizedProjectilePacketValid(packet, shape, depleted) {
+  if (!shape) return false;
+  if (shape.legacy) return !depleted;
+  const { birthOffset, hasPower } = shape;
+  const powerIndex = 31 + birthOffset;
   if (hasPower) {
-    const power = event[powerIndex]?.s3SpecialPowerAP;
-    const entry = api?.SPECIALS && Object.hasOwn(api.SPECIALS, event[4]) ? api.SPECIALS[event[4]] : null;
+    const power = packet[powerIndex]?.s3SpecialPowerAP;
+    const entry = api?.SPECIALS && Object.hasOwn(api.SPECIALS, packet[4]) ? api.SPECIALS[packet[4]] : null;
     if (typeof entry?.projectileDescriptor !== 'function' || !Number.isFinite(power) || power < 0 || power > 57) return false;
   }
   const weapons = api?.WEAPONS;
-  const weapon = weapons && Object.hasOwn(weapons, event[4]) ? weapons[event[4]] : null;
-  const unit = event[30 + birthOffset];
+  const weapon = weapons && Object.hasOwn(weapons, packet[4]) ? weapons[packet[4]] : null;
+  const unit = packet[30 + birthOffset];
   if (!weapon) {
-    const specials=api?.SPECIALS,entry=specials&&Object.hasOwn(specials,event[4])?specials[event[4]]:null;
-    return typeof entry?.projectileDescriptor==='function' && unit===-1;
+    const specials=api?.SPECIALS,entry=specials&&Object.hasOwn(specials,packet[4])?specials[packet[4]]:null;
+    return typeof entry?.projectileDescriptor==='function' && unit===-1 && !depleted;
   }
   if (weapon.kind === 'slosher') {
     const count = rawWeapon(weapon)?.UnitGroupParam?.Unit?.reduce((n,u)=>n+(u.BulletNum??1),0);
-    return unit === -1 || Number.isSafeInteger(unit) && unit >= 0 && unit < count;
+    return !depleted && (unit === -1 || Number.isSafeInteger(unit) && unit >= 0 && unit < count);
   }
-  if (weapon.kind !== 'roller') return unit === -1;
-  if (event[27 + birthOffset] !== 0 && event[27 + birthOffset] !== 1) return false;
-  const units = rawWeapon(weapon)?.[event[27 + birthOffset] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
+  if (weapon.kind !== 'roller') return !depleted && unit === -1;
+  if (packet[27 + birthOffset] !== 0 && packet[27 + birthOffset] !== 1) return false;
+  const units = rawWeapon(weapon)?.[packet[27 + birthOffset] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
   return Number.isSafeInteger(unit) && unit >= 0 && !!units && unit < units.length;
+}
+function prepareFidelityProjectilePacket(event) {
+  if (!Array.isArray(event)) return null;
+  const prepared = event[NORMALIZED_PROJECTILE_PACKET];
+  if (prepared) {
+    const shape = projectilePacketShape(event);
+    return normalizedProjectilePacketValid(event, shape, prepared.depleted) ? event : null;
+  }
+  const flagIndices = [];
+  for (let index = 31; index <= 35; index++) if (event[index] === true) flagIndices.push(index);
+  if (flagIndices.length > 1) return null;
+  const markerIndex = flagIndices[0] ?? -1;
+  const depleted = markerIndex >= 0;
+  const packet = event.slice();
+  if (depleted) packet.splice(markerIndex, 1);
+  copyProjectilePacketProperties(event, packet);
+  const shape = projectilePacketShape(packet);
+  if (depleted) {
+    const expectedMarkerIndex = shape && !shape.legacy
+      ? 31 + shape.birthOffset + (shape.hasPower ? 1 : 0)
+      : -1;
+    if (markerIndex !== expectedMarkerIndex || api?.WEAPONS?.[packet[4]]?.kind !== 'roller') return null;
+  }
+  if (!normalizedProjectilePacketValid(packet, shape, depleted)) return null;
+  Object.defineProperty(packet, NORMALIZED_PROJECTILE_PACKET, { value: { depleted } });
+  return packet;
+}
+export function validFidelityRollerUnitPacket(event) {
+  return !!prepareFidelityProjectilePacket(event);
 }
 // #750: the swing unit declares the head's *rendered* size in
 // UnitParam.DrawSizeParam, separately from CollisionParam and from paint.
@@ -1023,8 +1060,12 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
     p.pos.y+=(Math.random()*2-1)*j;
   }
   // Only offsets are extracted. Native body +1.3 anchor is not claimed as Switch height.
+  // #278: the two pinned height fields are summed as raw INKWAVE world units (scale 1).
+  // The additive combination and per-field engine meaning are unverified: the pinned
+  // Leanny table carries no field semantics. This is an INKWAVE assumption, not a
+  // sourced engine law, and makes no SI-metre claim (profile.json models.rollerVerticalSpawnHeight).
   p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(unit.SpawnPositionHeight||0);
-  p.prev.copy(p.pos);p.start.copy(p.pos);
+  p.prev.copy(p.pos);p.start.copy(p.pos);p.fidelityMaxY=p.pos.y;p.fidelityImpactHeight=null;
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
@@ -1221,11 +1262,18 @@ export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
     const t=clamp01((fall-d.ReduceStartFallDistance)/(d.ReduceEndFallDistance-d.ReduceStartFallDistance));
     return (d.ValueMax+(d.ValueMin-d.ValueMax)*t)/10;
   }
-  const age=(p.fidelityPrevAge??p.age)+(p.age-(p.fidelityPrevAge??p.age))*impactT;
   if(['shooter','dualies','splatling'].includes(w.kind)){
-    const t=clamp01((age-w.damageReduceStart)/(w.damageReduceEnd-w.damageReduceStart));
-    return w.damage+(w.damageMin-w.damage)*t;
+    const startFrame = Math.round((w.damageReduceStart ?? 0) * 60);
+    const endFrame = Math.round((w.damageReduceEnd ?? 0) * 60);
+    // #875: the damage age is the number of completed fixed 60Hz frames, the
+    // same completed-tick model as the ink-flight contact. Math.round would move
+    // the falloff state at half-frame ages (7.5F); the epsilon only absorbs float
+    // error from k/60*60. Which completed tick S3 uses at a contact is 未確認.
+    const frame = Math.floor((p.age ?? 0) * 60 + 1e-9);
+    const t = endFrame > startFrame ? clamp01((frame - startFrame) / (endFrame - startFrame)) : 0;
+    return w.damage + (w.damageMin - w.damage) * t;
   }
+  const age=(p.fidelityPrevAge??p.age)+(p.age-(p.fidelityPrevAge??p.age))*impactT;
   return p.damage;
 }
 export function applyFidelityProjectileHit(system,p,victim,amount,point) {
@@ -1237,8 +1285,7 @@ export function applyFidelityProjectileHit(system,p,victim,amount,point) {
   const weapon=p.s3Weapon||p.owner.weapon;
   if(weapon.kind==='slosher'&&p.s3DamageGroup)
     return withMainDirectDamage(p.owner,victim,()=>applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||p.type||'slosher'));
-  amount=groupDamage(p.s3DamageGroup,victim,amount);
-  if(amount>0)applyMainDirectHit(system,p.owner,victim,amount,p.wid||p.type,damageGroupId(p.s3DamageGroup));
+  return applyGroupedProjectileHit(system,p,victim,amount);
 }
 
 export function splatlingLaunchSpeed(weapon,charge) {
@@ -1310,7 +1357,7 @@ function simulateSplatlingReach(p,weapon,charge,initializeFlight) {
 
 export function fidelityRollerMaximumPaint(r,w,fx,fz) {
   if(!api?.G || !completion?.weapons?.roller?.BodyParam?.PaintParam)return 0;
-  return paintRollerMaximumWidth(api.G,r,w,completion.weapons.roller.BodyParam.PaintParam,completion.worldUnitsPerSourceUnit,fx,fz);
+  return paintRollerMaximumWidth(api.G,r,w,completion.weapons.roller.BodyParam.PaintParam,completion.worldUnitsPerSourceUnit,completion.referenceHz,fx,fz);
 }
 
 // Issue #297: Bucket Slosher carries an explicit player-motion addition record.
@@ -1356,7 +1403,27 @@ export function installWeaponsFidelity(context,profile) {
   WEAPONS.shooter.flightPaint = Object.freeze({
     intermediate: shooterPaint.WidthHalf * paintScale,
     nearest: shooterPaint.WidthHalfNearest * paintScale,
+    dropHeightMax: (shooterPaint.DepthMaxDropHeight ?? 3) * paintScale,
+    dropHeightMin: (shooterPaint.DepthMinDropHeight ?? 10) * paintScale,
     worldUnitsPerSourceUnit: paintScale,
+  });
+  // #79: Shooter PaintParam (Ver. 11.3.0). Far anchor and angle thresholds are not
+  // in the record; see shooter-impact-paint.mjs for the provisional choices.
+  const shooterImpact = completion.weapons?.shooter?.PaintParam;
+  const impactSource = [shooterImpact?.WidthHalfNear, shooterImpact?.WidthHalfMiddle, shooterImpact?.WidthHalfFar,
+    shooterImpact?.DistanceMiddle, shooterImpact?.DepthScaleMax, shooterImpact?.DepthScaleMin,
+    shooterImpact?.DepthScaleMaxBreakFree, shooterImpact?.DepthScaleMinBreakFree];
+  if (!impactSource.every(v => Number.isFinite(v) && v > 0))
+    throw new RangeError('Invalid Shooter impact paint source');
+  WEAPONS.shooter.impactPaint = Object.freeze({
+    widthNear: shooterImpact.WidthHalfNear * paintScale,
+    widthMiddle: shooterImpact.WidthHalfMiddle * paintScale,
+    widthFar: shooterImpact.WidthHalfFar * paintScale,
+    distanceMiddle: shooterImpact.DistanceMiddle * paintScale,
+    depthMax: shooterImpact.DepthScaleMax,
+    depthMin: shooterImpact.DepthScaleMin,
+    depthMaxBreakFree: shooterImpact.DepthScaleMaxBreakFree,
+    depthMinBreakFree: shooterImpact.DepthScaleMinBreakFree,
   });
   roller.releaseFootPaint = deriveRollerReleaseFootPaint(profile);
   moves=new Map();
@@ -1424,6 +1491,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
+    p.fidelityMaxY=null;p.fidelityImpactHeight=null;
     p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.s3DepletionPaintScale=1;p.s3DepletionRound=false;p.fidelitySloshUnit=null;p.fidelitySloshDownward=null;p.fidelitySloshFallAnchorY=null;p.fidelitySloshPacketIndex=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
   };
   function initialize(p,w){
@@ -1505,7 +1573,7 @@ export function installWeaponsFidelity(context,profile) {
   Projectiles.prototype._push=function(p){
     const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon,active=this._fidelitySloshContext;
     if(active&&p.type==='slosh'){
-      let index=active.index++,u;
+      const volleyIndex=active.index++;let index=volleyIndex,u;
       p.fidelitySloshPacketIndex=index;
       for(const unit of rawWeapon(w).UnitGroupParam.Unit){if(index<(unit.BulletNum??1)){u=unit;break;}index-=unit.BulletNum??1;}
       if(!u)throw new RangeError('Slosher unit index');
@@ -1513,11 +1581,14 @@ export function installWeaponsFidelity(context,profile) {
       p.delay=((u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0))/60;
       const speed=((p.owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
       const aim=p.owner.aimDir.clone().normalize();
-      // #258: preserve the frame-spaced 4+5 launch contract while sweeping
-      // each source unit from the last two fixed-tick aim headings. A source
-      // UnitDelayFrame (not array position) determines the angular offset.
-      const launchFrame=(u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0);
-      const yaw=Math.atan2(aim.x,aim.z)+active.turnDelta*launchFrame+radians(u.BaseRotateYDegree||0)+slosherYawOffset(u,index);
+      // #258: the sweep coefficient accumulates each bullet's group firing
+      // interval (AfterOffsetDelayFrame) across the volley, so the 4-bullet
+      // group sweeps 0..3 and the 5-bullet group starts at 3+2=5, not at its
+      // birth frame 4. Birth delays above are unchanged. Source: Leanny 11.3.0
+      // UnitGroupParam; the sweep law is a public-Wiki description and remains
+      // 未確認 against Nintendo or a Switch capture.
+      if(volleyIndex>0)active.sweepFrame+=u.AfterOffsetDelayFrame||0;
+      const yaw=Math.atan2(aim.x,aim.z)+active.turnDelta*active.sweepFrame+radians(u.BaseRotateYDegree||0)+slosherYawOffset(u,index);
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
       p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
@@ -1561,14 +1632,26 @@ export function installWeaponsFidelity(context,profile) {
       try{if(!p.ghost)context.G?.netm?.recProj?.(p);}
       finally{p.delay=0;p._s3SloshBirthPending=false;}
     }
-    return step.call(this,p,dt);
+    const done=step.call(this,p,dt);
+    if(Number.isFinite(p.pos?.y)&&(!Number.isFinite(p.fidelityMaxY)||p.pos.y>p.fidelityMaxY))p.fidelityMaxY=p.pos.y;
+    // Live Heavy Splatling rounds carry inkProfile, so the upstream inkFlight
+    // stepper advances them and owns p.inkPhase (0 straight, 1 brake, 2 free).
+    // advanceFidelityProjectile never runs for them, leaving fidelityPhase stale
+    // at 0. Mirror the owner's phase so the single reported state stays truthful.
+    if(p.s3Weapon?.kind==='splatling'&&p.inkProfile&&Number.isInteger(p.inkPhase))p.fidelityPhase=p.inkPhase;
+    return done;
   };
+  Projectiles.prototype.prepareFidelityProjectilePacket=prepareFidelityProjectilePacket;
   Projectiles.prototype.ghostProjectile=function(actor,event){
-    if(!validFidelityRollerUnitPacket(event))return null;
-    const before=this.list.length;const result=ghost.call(this,actor,event);
+    const packet=prepareFidelityProjectilePacket(event);
+    if(!packet)return null;
+    const before=this.list.length;const result=ghost.call(this,actor,packet);
     if(this.list.length>before){const p=this.list.at(-1);const special=api.SPECIALS&&Object.hasOwn(api.SPECIALS,p.wid)?api.SPECIALS[p.wid]:null;
+      // #305: preserve the owner's explicit depleted-attack identity before
+      // initialize() rebuilds the remote presentation collision record.
+      p.s3DepletionRound=packet[NORMALIZED_PROJECTILE_PACKET].depleted;
       if(!p.s3SpecialWeapon&&typeof special?.projectileDescriptor==='function'){p.s3SpecialWeapon=special.projectileDescriptor(p);p.s3Weapon=p.s3SpecialWeapon;}
-      const inkMetaOffset=event[27]===null||typeof event[27]==='object'?1:0,kitOffset=(event.length===35||event.length===36||event.length===37)?2:0,birthOffset=inkMetaOffset+kitOffset;if([33,34,35,36,37].includes(event.length)&&event[30+birthOffset]>=0){p.fidelitySloshPacketIndex=event[30+birthOffset];p.fidelityRollerUnitIndex=event[30+birthOffset];p.fidelityMode=event[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
+      const shape=projectilePacketShape(packet),birthOffset=shape?.birthOffset??0;if(!shape?.legacy&&packet[30+birthOffset]>=0){p.fidelitySloshPacketIndex=packet[30+birthOffset];p.fidelityRollerUnitIndex=packet[30+birthOffset];p.fidelityMode=packet[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;
@@ -1577,7 +1660,7 @@ export function installWeaponsFidelity(context,profile) {
     const sampled=actor.weaponRunner?.s3SloshTurnDelta;
     const turnDelta=Number.isFinite(sampled) && !actor.remote
       ? Math.max(-Math.PI/18,Math.min(Math.PI/18,sampled)) : 0;
-    this._fidelitySloshContext={index:0,group:new Map(),groupId:`${actor.nid??'local'}:${sequence}`,turnDelta};
+    this._fidelitySloshContext={index:0,sweepFrame:0,group:new Map(),groupId:`${actor.nid??'local'}:${sequence}`,turnDelta};
     paintSlosherNearest(api.G,actor,rawWeapon(w),completion.worldUnitsPerSourceUnit,sequence);
     try{
       const drops=rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0);
@@ -2006,9 +2089,20 @@ export function installWeaponsFidelity(context,profile) {
     if(p.ghost||!kitVolleyHitAuthority(p))return;
     const w=p.s3Weapon||p.owner.weapon;
     if(!['roller','slosher','shooter','dualies','splatling'].includes(w.kind))return bossImpact.call(this,p,hit);
-    const victim=hit.target?.hp!==undefined&&hit.target?.id!==undefined?hit.target:context.G.boss;
-    const damage=groupDamage(p.s3DamageGroup,victim,fidelityDamage(p,hit.point));
-    if(damage>0)context.G.boss.hit(p.owner,damage,hit.target,w.id,hit.point.clone());
+    const boss=context.G.boss;
+    const victim=hit.target?.hp!==undefined&&hit.target?.id!==undefined?hit.target:boss;
+    const raw=fidelityDamage(p,hit.point);
+    if (Number.isFinite(raw) && raw>0) {
+      if (bossVolleyAdmission(boss,p.owner,hit.target)) {
+        const damage=groupDamage(p.s3DamageGroup,victim,raw);
+        if(damage>0)boss.hit(p.owner,damage,hit.target,w.id,hit.point.clone());
+      } else if (boss && victim===boss && p.owner && !p.owner.remote && !boss.dead && (boss.invuln || !boss.visible)) {
+        // Preserve native blocked FX / HUD IMMUNE feedback without reserving
+        // the rejected volley maximum or letting guests send a rejected hit.
+        const damage=Math.max(0,raw-(p.s3DamageGroup?.get(victim)||0));
+        if(damage>0)boss.hit(p.owner,damage,hit.target,w.id,hit.point.clone());
+      }
+    }
     context.emit('weapon:impact',{pos:hit.point.clone(),normal:p.vel.clone().normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});
   };
   Projectiles.prototype._blastBurst=function(p,point,victim){
@@ -2030,27 +2124,18 @@ export function installWeaponsFidelity(context,profile) {
       try{
         const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon;
         if(w?.kind==='roller' && p.type==='drop' && p.fidelityRollerUnit){
-          // #411/#674/#611 share one authoritative landing-paint sample.
+          // #411/#674/#611/#713 share one authoritative landing-paint sample.
           return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));
         }
-        if(w?.kind==='slosher' && p.type==='slosh' && p.fidelitySloshUnit && context.G.paint?.splat){
-          // #1011: native _impact paints its first stamp using legacy global
-          // radius plus a random multiplier. Replace THAT stamp with this
-          // projectile's distinct source unit/index contract, never foot paint.
-          const dx=hit.point.x-p.start.x,dz=hit.point.z-p.start.z;
-          const source=slosherImpactPaintSource(p.fidelitySloshUnit,p.fidelitySloshIndex,Math.hypot(dx,dz));
-          if(source){
-            const paint=context.G.paint,nativeSplat=paint.splat;
-            let first=true;
-            paint.splat=function(center,radius,team,opts){
-              if(!first)return nativeSplat.call(this,center,radius,team,opts);
-              first=false;
-              return nativeSplat.call(this,center,source.radius,team,{...opts,stretchAmt:source.depthScale});
-            };
-            try{return nativeImpact.call(this,p,hit);}
-            finally{paint.splat=nativeSplat;}
-          }
+        if(w?.kind==='shooter' && p.type==='shot' && !p.fidelityWallDrop && w.impactPaint &&
+           hit?.normal?.y>=SHOOTER_FLOOR_NORMAL_Y && context.G.paint?.splat){
+          // #79: floor shot impacts use the sourced Shooter footprint. Wall contacts keep the native path.
+          return withShooterImpactPaint(context.G,p,hit,w,()=>nativeImpact.call(this,p,hit));
         }
+        // #1011/#1140: the adapted native Slosher impact already owns the
+        // source unit/first-after/near-far paint, the profile world scale and
+        // the high-drop shrink. Do not overwrite that stamp from a second
+        // wrapper: a fixed 0.2 scale there dropped the source width and shrink.
         return nativeImpact.call(this,p,hit);
       }finally{p.s3BurstCollisionHit=before;}
     }

@@ -50,10 +50,10 @@ test('#348 submerged is hidden, wall climbing is eligible, and near fade is expl
  assert.match(f.profile.clothingGear.trackingVisual.status,/PROVISIONAL/);
 });
 test('#348 HP exception uses the same private visibility, but never extends the three-second HP window or map reveal',async()=>{
- const f=await rig();direct(f);const opts={now:0,visible:false};assert.equal(f.healthActorVisible(f.b,f.a,opts),true);
+ const f=await rig();const opts={now:0,visible:false};f.healthActorVisible(f.b,f.a,opts);direct(f);assert.equal(f.healthActorVisible(f.b,f.a,opts),true);
  assert.equal(f.healthActorVisible(f.b,f.c,opts),false);assert.equal(f.mapActorVisible(f.b,f.a),false);
- f.b.lastDamage=3;assert.equal(f.healthActorVisible(f.b,f.a,opts),false);assert.ok(f.thermalTrackingRecord(f.b,f.a));
- f.b.lastDamage=0;f.b.submerged=true;assert.equal(f.healthActorVisible(f.b,f.a,opts),false);
+ f.b.submerged=true;assert.equal(f.healthActorVisible(f.b,f.a,opts),false);f.b.submerged=false;assert.ok(f.thermalTrackingRecord(f.b,f.a));
+ assert.equal(f.healthActorVisible(f.b,f.a,{now:3,visible:false}),false);
 });
 test('#348 reset, target death/respawn, owner transfer, roster retirement and new matches invalidate private records',async()=>{
  for(const mode of ['owner-reset','victim-reset','death','owner-transfer','victim-transfer','disconnect','new-match','remote-respawn']){
@@ -65,14 +65,14 @@ test('#348 reset, target death/respawn, owner transfer, roster retirement and ne
  }
 });
 test('#348 confirmed-hit transport stores no public mark and admits only a validated nonzero owner ACK',async()=>{
- const f=await rig(true);f.b.remote=true;const nm=Object.create(f.NetMatch.prototype);nm.myId='local';nm.hitPending=new Map();nm.hitNextSeq=0;nm._pendingHits=new Map();nm._hitSeq=0;nm.byNid=new Map([[1,f.a],[2,f.b]]);const packets=[];nm.s={tr:{sendTo:(to,packet)=>packets.push({to,packet})}};
+ const f=await rig(true);f.b.remote=true;const nm=Object.create(f.NetMatch.prototype);nm.myId='local';nm.cfg={id:'round-1'};nm.hitPending=new Map();nm.hitNextSeq=0;nm._pendingHits=new Map();nm._hitSeq=0;nm.byNid=new Map([[1,f.a],[2,f.b]]);const packets=[];nm.s={tr:{sendTo:(to,packet)=>{packets.push({to,packet});return true;}}};
  f.withMainDirectDamage(f.a,f.b,()=>nm.sendHit(f.a,f.b,10,'blaster'));
  assert.equal(f.thermalTrackingRecord(f.b,f.a),null,'prediction has no mark');assert.equal(packets[0].packet.privateThermal,undefined);
- const h=nm._hitSeq,receipt={h,a:1,v:2,d:10,kld:0,vl:3};nm._hitAck(receipt,'forged');assert.equal(f.thermalTrackingRecord(f.b,f.a),null);
+ const h=nm._hitSeq,receipt={m:'round-1',h,a:1,v:2,d:10,kld:0,vl:3};nm._hitAck(receipt,'forged');assert.equal(f.thermalTrackingRecord(f.b,f.a),null);
  nm._hitAck(receipt,'enemy');assert.ok(f.thermalTrackingRecord(f.b,f.a));const end=f.thermalTrackingRecord(f.b,f.a).until;
  f.G.time=1;nm._hitAck(receipt,'enemy');assert.equal(f.thermalTrackingRecord(f.b,f.a).until,end,'replay cannot refresh');
- f.b.reset();f.b.remote=true;f.b.netLife=4;nm.sendHit(f.a,f.b,10,'shooter');nm._hitAck({h:nm._hitSeq,a:1,v:2,d:0,kld:0,vl:4},'enemy');assert.equal(f.thermalTrackingRecord(f.b,f.a),null,'armor-only receipt');
- nm.sendHit(f.a,f.b,10,'shooter');f.b.owner='replacement';nm._hitAck({h:nm._hitSeq,a:1,v:2,d:10,kld:0,vl:4},'enemy');assert.equal(f.thermalTrackingRecord(f.b,f.a),null,'reused ID with another owner');
+ f.b.reset();f.b.remote=true;f.b.netLife=4;nm.sendHit(f.a,f.b,10,'shooter');nm._hitAck({m:'round-1',h:nm._hitSeq,a:1,v:2,d:0,kld:0,vl:4},'enemy');assert.equal(f.thermalTrackingRecord(f.b,f.a),null,'armor-only receipt');
+ nm.sendHit(f.a,f.b,10,'shooter');f.b.owner='replacement';f.b.netLife=5;nm._hitAck({m:'round-1',h:nm._hitSeq,a:1,v:2,d:10,kld:0,vl:4},'enemy');assert.equal(f.thermalTrackingRecord(f.b,f.a),null,'reused ID after victim life advanced');
 });
 test('#348 a private second render pass shares real geometry, restores state, and retires only owned materials',async()=>{
  const f=await rig();const {THREE:T}=f;f.G.scene=new T.Scene();f.G.camera=new T.PerspectiveCamera();f.G.camera.position.set(0,1,0);f.G.physics.los=()=>false;

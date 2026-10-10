@@ -28,7 +28,7 @@ export function stepGroundVelocity(vel, moveX, moveZ, targetSpeed, accel, dt) {
  * Same condition as the grounded selection; also holds after entering squid.
  */
 export function attackAirRateScale(a, P) {
-  const attacking = a.weaponRunner.firingPose?.() || a.intent.sub || a.specialActive;
+  const attacking = a.weaponRunner.firingPose?.() || a.intent.sub || a.weaponRunner.aimingSub || a.specialActive;
   const ratio = (P.s3AttackGroundAccel ?? 72) / (P.s3GroundAccel ?? 36);
   return attacking && ratio > 0 ? ratio : 1;
 }
@@ -59,11 +59,30 @@ export function rollingMovementActive(a) {
     r.flick < 0 && !(r.flickRecover > MOVEMENT_EPSILON) && !r.aimingSub;
 }
 
-/** One speed source: WeaponRunner.moveSpeed -> Actor -> existing animation state. */
+/** #466: a dash-turn reversal is a stick more than 90 degrees away from the current
+ * world-space travel direction. Both vectors are world-space (Actor._horizontal uses
+ * the same comparison). The 90-degree threshold is an INKWAVE choice: the S3 trigger
+ * is not published (unverified). A stationary stick or near-zero velocity never qualifies.
+ */
+export function dashTurnBreakActive(a) {
+  const move = a.intent?.move, vel = a.vel;
+  const input = move ? Math.hypot(move.x, move.z) : 0;
+  const speed = vel ? Math.hypot(vel.x, vel.z) : 0;
+  return input > 0.01 && speed > 0.01 && (move.x * vel.x + move.z * vel.z) / (input * speed) < 0;
+}
+
+/** One speed source: WeaponRunner.moveSpeed -> Actor -> existing animation state.
+ * Normal roll 6.48 (SpeedNormal 0.108/frame), dash from 90F 7.92 (SpeedDash 0.132/frame).
+ * While dashing and turning back, the target is capped at SpeedDashTurnBreak
+ * (0.108/frame, 6.48 with the profile scale). The return to SpeedDash on the first
+ * non-reversing frame is unverified; the dash state (rollT) is never reset.
+ */
 export function rollingMovementSpeed(r) {
   const w = r.a.weapon;
   const base = Number.isFinite(w.rollBaseSpeed) ? w.rollBaseSpeed : w.rollSpeed;
-  return r.rollT + MOVEMENT_EPSILON >= (w.rollDashTime ?? 0) ? w.rollSpeed : base;
+  if (r.rollT + MOVEMENT_EPSILON < (w.rollDashTime ?? 0)) return base;
+  if (dashTurnBreakActive(r.a)) return Math.min(w.rollSpeed, w.rollDashTurnBreakSpeed ?? base);
+  return w.rollSpeed;
 }
 
 /** Integral of the existing 1.5*(1-u^2) curve, not a new guessed Nintendo curve.

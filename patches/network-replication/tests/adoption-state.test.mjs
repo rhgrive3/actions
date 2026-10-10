@@ -4,6 +4,7 @@ import { fixture } from './robustness-fixture.mjs';
 
 const DT = 1 / 60;
 const ADOPTION_TAG = 'inkwave-adoption-v1';
+const HIT_AUTHORITY_TAG = 'inkwave-hit-authority-v1';
 const close = (actual, expected, tolerance = 1e-8) =>
   assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} != ${expected}`);
 
@@ -91,7 +92,9 @@ test('native Super Jump transfers its exact flight and lands continuously at 30/
     const ownerState = source.superJumpState;
     assert.ok(ownerState.t > 0 && ownerState.t < ownerState.dur);
     const packet = sendTick(sender);
-    assert.equal(packet.a[0].length, 24, 'legacy special count remains at index 22 after the Super Jump clock, and adoption state uses index 23');
+    assert.equal(packet.a[0].length, 26, 'adoption index 23 remains stable; surge and accepted-hit state append at 24/25');
+    assert.equal(packet.a[0][24], null, 'an ordinary Super Jump does not fabricate a Squid Surge');
+    assert.deepEqual(Array.from(packet.a[0][25]), ['inkwave-hit-authority-v1', source.netLife, 0]);
     assert.equal(packet.a[0][22], source.stats.specials);
     assert.equal(packet.a[0][23][0], ADOPTION_TAG);
     assert.deepEqual(packet.a[0][23][5].slice(6, 9), [destination.x, destination.y, destination.z]);
@@ -131,6 +134,43 @@ test('native Super Jump transfers its exact flight and lands continuously at 30/
     assert.equal(remote.superJumpState, null, 'native trajectory completed');
     assert.equal(remote.grounded, true, 'native landing resolved against the floor');
     assert.ok(remote.pos.distanceTo(destination) < 1e-8, 'the adopted actor landed at the transmitted destination');
+  }
+});
+
+test('appended hit-authority slot keeps legacy actor row lengths 22 through 25 readable', async () => {
+  const owner = await runtimeFixture();
+  const source = makeActor(owner, { nid: 31, owner: 'p2', team: 0 });
+  const sender = owner.makeNetMatch(owner.makeSession('p2', 'p2', [['p2', 'Owner'], ['host', 'Host']]));
+  bindActors(owner, sender, [source]);
+  const packet = sendTick(sender);
+  const row = packet.a[0];
+  assert.equal(row.length, 26);
+  assert.equal(row[23][0], ADOPTION_TAG);
+  assert.equal(row[24], null);
+  assert.equal(row[25][0], HIT_AUTHORITY_TAG);
+
+  for (const length of [22, 23, 24, 25]) {
+    const host = await runtimeFixture();
+    const remote = makeActor(host, { nid: source.nid, owner: 'p2', remote: true, team: 0 });
+    const receiver = host.makeNetMatch(host.makeSession('host', 'host', [['host', 'Host'], ['p2', 'Owner']]));
+    bindActors(host, receiver, [remote]);
+    const legacy = structuredClone(packet);
+    legacy.a[0] = row.slice(0, length);
+    receiver.onMessage('p2', legacy);
+
+    assert.equal(remote.net.buf.length, 1, `legacy row length ${length} is accepted`);
+    const sample = remote.net.buf[0];
+    assert.equal(sample.x, row[1]);
+    assert.equal(sample.y, row[2]);
+    assert.equal(sample.z, row[3]);
+    assert.equal(sample.hp, row[11]);
+    assert.equal(sample.ink, row[12]);
+    assert.equal(sample.sp, row[13]);
+    assert.equal(sample.life, packet.l[source.nid]);
+    assert.equal(sample.hitLife, packet.l[source.nid], 'legacy rows retain the existing actor-life fallback');
+    assert.equal(sample.hitSeq, 0, 'legacy rows do not invent an accepted-hit revision');
+    assert.equal(sample.adoption?.life, length >= 24 ? packet.l[source.nid] : undefined,
+      'legacy rows keep adoption state only when its tagged slot is present');
   }
 });
 

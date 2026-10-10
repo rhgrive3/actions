@@ -23,9 +23,15 @@ export const adaptConstrainedSource = (rel, code) => adaptSpecialWater(rel, adap
 export async function fixture(options = {}) {
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
   const { adapt = adaptConstrainedSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
-    fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false, vmPerformance = performance } = typeof options === 'string' ? {} : options;
+    fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false,
+    vmPerformance = performance, vmMathRandom = null } = typeof options === 'string' ? {} : options;
   const context = vm.createContext({ console, performance: vmPerformance, URL, URLSearchParams, TextEncoder, TextDecoder,
     setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
+  if (typeof vmMathRandom === 'function') {
+    context.__inkwaveFixtureMathRandom = vmMathRandom;
+    vm.runInContext('Math.random = globalThis.__inkwaveFixtureMathRandom', context);
+    delete context.__inkwaveFixtureMathRandom;
+  }
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
@@ -65,7 +71,7 @@ export async function fixture(options = {}) {
     export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/world/level.js';
     export * from './inkwave-public/src/core/shadowcache.js';
-    ${fullRuntime ? "export { install as installS3 } from './patches/splatoon3/runtime/install.mjs';" : ""}
+    ${fullRuntime ? "export { install as installS3 } from './patches/splatoon3/runtime/install.mjs';\nexport { beginInitialSquidSpawn } from './patches/splatoon3/runtime/respawn-lifecycle.mjs';" : ""}
     export * from './inkwave-public/src/world/paint.js';
     export * as THREE from 'three';
     export const VM_MATH = Math;
@@ -87,7 +93,8 @@ export async function fixture(options = {}) {
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
-  if (fullRuntime) api.installS3(profile);
+  let installedRuntime = null;
+  if (fullRuntime) installedRuntime = api.installS3(profile);
   else for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
   G.level = { blocks: [], groundHeight: () => 0 }; G.time = 0; G.actors = [];
@@ -122,7 +129,7 @@ export async function fixture(options = {}) {
     delete context.__inkwaveTestRandom;
   }
   function restoreRandom() { setRandom(originalRandom); }
-  return { ...api, profile, make, tick, shots, context, setRandom, restoreRandom };
+  return { ...api, installedRuntime, profile, make, tick, shots, context, setRandom, restoreRandom };
 }
 
 // Exercise the installed Actor -> WeaponRunner -> Projectiles admission path.
