@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {
-  detectStableDisplayHz, evenTouchAutoHz, createRefreshProbe, createFrameTimingProbe,
+  detectStableDisplayHz, evenTouchAutoHz, createRefreshProbe,
 } from '../range-frame-pacing.mjs';
+import { createFrameTimingProbe } from '../range-frame-profiler.mjs';
 import { adaptRangeFramePacing } from '../range-frame-pacing-adapter.mjs';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
@@ -91,6 +92,8 @@ test('source adapters connect one real Game._loop and do not touch unrelated fil
   const source=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const out=adaptRangeFramePacing('src/main.js',source);
   assert.match(out,/evenTouchAutoHz\(this\._iwRefreshProbe\.sample\(rawDt\)\)/);
+  assert.match(out,/import\('\.\.\/patches\/local-quality\/range-frame-profiler\.mjs'\)/,
+    'diagnostic is on-demand, never a cold-offline preload');
   assert.match(out,/this\._rangeFrameProbe\.record/);
   assert.match(out,/fr === 'display' \? 0 : fr === 60 \? 60/);
   assert.equal((out.match(/createRefreshProbe\(\)/g)||[]).length,1);
