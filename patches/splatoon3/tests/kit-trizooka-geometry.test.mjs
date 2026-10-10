@@ -754,7 +754,8 @@ test('the volley identity rides the main projectile packet, and old packets stil
   for (const g of ghosts) {
     assert.equal(g.damageOwner, false, 'and none of them carries authority');
     assert.equal(g.s3SpecialWeapon.specialPowerAP, 57);
-    near(g.s3SpecialWeapon.impactRadius, 5.2, '#977 ghost inherits owner radius');
+    near(g.s3SpecialWeapon.splashRadius, 5.2, '#977 ghost inherits owner damage radius');
+    near(g.s3SpecialWeapon.impactRadius, 4.0, '#977 ghost inherits owner PaintRadius High');
   }
 
   // an OLD packet, with no appended fields at all, must still replay
