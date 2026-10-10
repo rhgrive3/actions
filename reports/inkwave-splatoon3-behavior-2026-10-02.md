@@ -2684,3 +2684,11 @@ applying to a victim who falls or drowns after an RP splat is the basis for the 
   against the original console, drum width and shape against S3 footage, and real-device behavior. Speed-dependent
   side paint is not covered by the new file. Draft PR #1195 carries a stationary-only test for the same issue;
   this change does not modify that PR.
+## 2026-10-10 — #992 Splat Dualies 通常発射の塗り（native 所有の確認と回帰）
+
+- **本家の根拠:** 参照版 Ver. 11.3.0、Leanny/splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の Splat Dualies。PaintParam は WidthHalfNear 1.71 / Middle 1.71 / Far 1.66、DistanceMiddle 1.1、DepthScaleMax 2.24 / Min 1.31、BreakFree 2.24 / 1.12。SplashSpawnParam は SpawnNum 1、SpawnNearestLength 1、SpawnBetweenLength 14、SplitNum 7。SplashPaintParam は WidthHalf 1.55825、WidthHalfNearest 2.18155、DepthMaxDropHeight 3、DepthMinDropHeight 10、DepthScaleMin 1。pinned の PaintParam には DistanceNear/Far と角度・落下高さの閾値フィールドが無い（WebFetch で確認。取得結果は武器名を明示しなかったため、値の一致で同定した）。
+- **INKWAVE 実装箇所:** `inkwave-public/src/config.js` の dualies（`inkFlightProfile: 'dualies'`）→ `weapons.js` `_fireRound` → `_configureInkRound` → `inkFlightRuntime.js`。通常発射は native が所有し `trailEvery` は 0 になる。塗り形状は `inkFlight.js` の `paintShape` / `splashPlan` / `splashShape`。Issue 本文の generic trail（trailRadius×0.8〜1.2）は、この native 所有により通常発射では通らない。`weapons-fidelity.mjs` の `fidelityFlightPaintRadius` の dualies 分岐も、同じ理由で通常発射では通らない。
+- **再現操作:** 本回帰は論理単独の確認である。fixture 上で `fireDualies` を発射し、`paintShape` / `splashPlan` / `splashShape` を直接評価した。ブラウザの実動作と実機比較は未実施。
+- **回帰:** `patches/splatoon3/tests/issue-992-dualies-normal-paint.test.mjs`（7 件）。pinned 値の配線、near 1.71 と far 1.66 の端点、DepthScale の pre-fall / fall 端点、ドロップレットの 1 発 1 滴・14 間隔・7 分割での feet、半径 1.55825 / 2.18155、実発射の native 所有を確認する。
+- **プレイへの影響:** 通常発射の塗り幅・深さ・ドロップレットの値は既存の native 実装から変更していない。回帰の追加のみで、塗りの挙動は変えていない。
+- **確認状態:** 未確認。以下は pinned データにも INKWAVE 側にも出典が無いため、解消済みとしない。far anchor 20、角度閾値 10〜35、飛行中の高さ閾値 1.5〜10、splash の DepthScaleMax 1.2、7 パターン位相、粒子動力学、break-free 高さ合成。回帰はこれらの未出典値に依存する端点を避けている。PR #1182（a8bead03）の Refs #992 も同じ residual を残す。Issue #992 は OPEN のまま。
