@@ -162,7 +162,7 @@ export function installHitchTracer(game, {
         const t = active ? now() : 0;
         try { return original.apply(this, arguments); }
         finally {
-          if (active && old !== this.dynScale) {
+          if (old !== this.dynScale) {
             note('render-target-resize', { from: round(old), to: round(this.dynScale),
               cpuMs: round(now() - t) });
           }
@@ -226,7 +226,8 @@ export function installHitchTracer(game, {
   };
   const frameReport = (stamp, ms, data = {}) => {
     if (disposed) return;
-    attachGpu();
+    // Register the current frame before polling completed GPU samples.
+    // A fast query can already be available in this very first record call.
     if (!last) return;
     const rec = last;
     last = null;
