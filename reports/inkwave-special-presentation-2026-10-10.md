@@ -31,17 +31,19 @@
 
 - 2種類の両手保持で、専用グリップと実際の手の握り穴の最大距離は1e-5 world unit未満。Shooter/マニューバー/ローラーで極端な上下照準も検証した。
 - 各専用装置/拳が描画に寄与し、キャラクターも隠れていないことを、表示/非表示で変わるピクセルから確認。渦・透明膜のシェーダーも実際にコンパイルした。
-- 12巡×5種類の生成/描画/破棄で、ウォームアップ後のGPU数はgeometry 45、texture 2、program 23のまま。雲の描画寄与は1 draw。ソフトウェアWebGLの資源数検査であり、実機FPS計測ではない。
+- 12巡×6種類（雲を含む）の生成/描画/破棄で、ウォームアップ後のGPU数はgeometry 45、texture 2、program 23、WebGL buffer 232のまま。雲の描画寄与は1 draw。ソフトウェアWebGLの資源数検査であり、実機FPS計測ではない。
 - 30/60/120Hzの保持、キャンセル/死亡/武器変更、固定排莢フレーム、停止フレーム、受理/拒否された遠隔パケットの回帰を追加した。遠隔表示はdamage/paint/networkの権限を取得しない。
 - 自己レビューで、極端な照準の手外れ、Stormの手首座標とモデル座標の混同、Slamの拳による本体遮蔽、渦の未定義smoothstep、共有ジオメトリの誤破棄、終了済み遠隔射撃による小道具再表示を修正した。
 
 CIの27場面のモーションcatalogでは全場面が完走したが、独立rendererの終了検査がgeometry 2を残して失敗した。拳はシーン直下にあり、Character終了で切り離される一方、共有ジオメトリはrenderer生存中の再利用に必要である。検査fixtureがキャラクターrootだけを収集していたため、拳の2個をfixture自身の最終破棄対象に記録できていなかった。`scripts/check-inkwave-motion-catalog.mjs` の描画時の資源収集をscene全体へ拡げた。終了時geometry/textureが0である合格条件は維持する。
 
-最終ローカルビルドのrevisionは`025aef0871b4d6161ae3613a0764cffce54adcfef538d036acbaa2a93a697aee`、artifact contentHashは`75ef157e4e7797891a335a1853a4e61bb43bdd1b3b16c73eaa3a161a66a15408`。専用表示7件を含む変更関連の回帰170件は全件成功。品質/練習場/キャッシュ回帰918件は905成功・13skip・失敗0。キャッシュPython harnessは3成功・1skip、既存workflow構成テストも成功。Chromiumは環境にある133 headless shellで確認し、Playwright 1.62.1の実行先だけをローカルで指定した。CIはワークフローに固定されたブラウザを使用する。
+GPU解放修正版のローカルビルドのrevisionは`f16047de959abcb3d5efcb592376dd39abc6b14a2b9c25ba81a761ec62396fea`、artifact contentHashは`51681afe2d7d97eafcd1f8076a8c38088579a56ce962546c5c20680bb611f26c`。初回実装で専用表示7件を含む変更関連の回帰170件は全件成功。品質/練習場/キャッシュ回帰918件は905成功・13skip・失敗0。キャッシュPython harnessは3成功・1skip、既存workflow構成テストも成功。GPU解放修正版の専用表示8件はソースと最適化ビルドの両方で成功。Chromiumは環境にある133 headless shellで確認し、Playwright 1.62.1の実行先だけをローカルで指定した。CIはワークフローに固定されたブラウザを使用する。
 
-初期JS 3,349,124 bytes、precache 5,121,619 bytes、worker 65,520 bytes、145 modulepreloadで既存予算検査に成功。これらは依存グラフ/ファイル量の検査で、端末のFPS/ロード時間そのものではない。CIには専用WebGL検査を追加し、実行commitとartifactを別途確認する。
+初期JS 3,349,326 bytes、precache 5,121,821 bytes、worker 65,520 bytes、145 modulepreloadで既存予算検査に成功。これらは依存グラフ/ファイル量の検査で、端末のFPS/ロード時間そのものではない。CIには専用WebGL検査を追加し、実行commitとartifactを別途確認する。
 
-## mainと公開版の確認
+追加レビューで、雲のInstancedMeshの `instanceMatrix` は共有geometry/材質と別の専用GPU bufferを持つことを確認した。元の雲終了は材質のみを破棄し、手続きモデルの汎用終了もInstancedMesh自身のdisposeを呼ばなかった。修正前ランタイムを使う負の対照で、両経路のdisposeが0回になることを再現した。汎用終了に加え、実際のProjectilesの自然消滅/明示終了/clearでインスタンスを1回だけ破棄し、共有geometryは維持する。WebGLのcreateBuffer/deleteBufferも数える検査へ拡張し、72回のモデル生成・破棄に加え、36回の実際の雲生成・描画・終了を確認した。各雲の専用bufferがGPUへアップロードされ、自然消滅/明示終了/clearの直後にbuffer数が232へ戻る。二重終了でも増減しない。
+
+## 初回のmainと公開版の確認
 
 [PR #1216](https://github.com/rhgrive3/actions/pull/1216)をmain `4ec8f14c63a26b43415e14629d1f60237b4e4b49` へ統合した。テスト対象PR head `06a367ccf77354519921a3fa47c2f36e79597d50` と統合直後mainのtreeは、どちらも `a301adb3df370aa4d49375e5504236304107592f` で一致する。
 

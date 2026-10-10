@@ -32,18 +32,22 @@ try{
   const art=await import(prefix+'patches/splatoon3/runtime/special-motion.mjs'),vac=await import(prefix+'patches/splatoon3/runtime/kit-ink-vac.mjs'),bubble=await import(prefix+'patches/splatoon3/runtime/kit-big-bubbler.mjs');
   const scene=new THREE.Scene();scene.background=new THREE.Color('#dae2e7');
   const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(960,720);document.body.appendChild(renderer.domElement);
+  // renderer.info.memory omits InstancedMesh's per-object matrix buffers.
+  const glBuffers=new Set(),gl=renderer.getContext(),createBuffer=gl.createBuffer.bind(gl),deleteBuffer=gl.deleteBuffer.bind(gl);
+  gl.createBuffer=()=>{const b=createBuffer();if(b)glBuffers.add(b);return b;};gl.deleteBuffer=b=>{glBuffers.delete(b);return deleteBuffer(b);};
   const camera=new THREE.PerspectiveCamera(40,4/3,.01,200);camera.position.set(2.2,1.9,3.2);camera.lookAt(0,.8,0);
   scene.add(new THREE.HemisphereLight(0xffffff,0x637278,2.4));const light=new THREE.DirectionalLight(0xffffff,2.8);light.position.set(-3,4,3);scene.add(light);
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshStandardMaterial({color:'#b7c3cb',roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-.005;scene.add(floor);
   Object.assign(G,{scene,renderer,camera,settings:{quality:'high'},mode:'match',actors:[],time:0,teamColors:[new THREE.Color('#ff7711'),new THREE.Color('#2255dd')],match:{state:'playing',playing:()=>true},level:{blocks:[],groundHeight:()=>0},paint:{sample:()=>1,splat:()=>0}});
   G.physics={los:()=>true,segment:(_a,_b,h)=>{h.hit=false;return h;},raycast:(a,_b,_c,h)=>{h.hit=true;h.point.copy(a).setY(0);h.normal.set(0,1,0);h.distance=a.y;return h;}};
-  G.projectiles=new api.Projectiles(scene);const rows=[],images=[];
+  G.projectiles=new api.Projectiles(scene);const rows=[],images=[];let stormOwner;
   const render=()=>{renderer.render(scene,camera);const gl=renderer.getContext(),p=new Uint8Array(960*720*4);gl.readPixels(0,0,960,720,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;};
   const changed=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=4)if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>=9)n++;return n;};
   const clear=()=>{G.projectiles.clear();bubble.clearBigBubblers?.();};
   for(const id of ['trizooka','inkVac','storm','slam','bubbler','tacticooler']){
     clear();const a=new api.Actor({team:0,name:'special render',weapon:'shooter',CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
     G.actors=[a];scene.add(ch.root);ch.onEvent=null;a.grounded=a.ground.hit=true;a._integrate=()=>{};a._resolve=()=>{};a._spawnBarrier=()=>{};
+    if(id==='storm')stormOwner=a;
     if(ch._sourceMotionLoader)await ch._sourceMotionLoader;if(ch.sourceMotion?.ready)await ch.sourceMotion.ready;
     if(ch.sourceMotion?.status!=='ready')throw Error('Source motion unavailable: '+id);
     a.weapon={...a.weapon,special:id,specialCost:200};a.special=200;
@@ -83,10 +87,19 @@ try{
   const cloud=art.createStormCloud('#2255dd',THREE);cloud.position.set(0,3,0);scene.add(cloud);camera.position.set(5,4,8);camera.lookAt(0,1.8,0);render();
   const cloudCallsBefore=renderer.info.render.calls;cloud.visible=false;render();const cloudDrawCalls=cloudCallsBefore-renderer.info.render.calls;
   if(cloudDrawCalls!==1)throw Error('Cloud instancing regression');art.disposeSpecialModel(vortex);art.disposeSpecialModel(cloud);render();
-  const memory=()=>({...renderer.info.memory,programs:renderer.info.programs.length}),baseline=memory();
-  for(let cycle=0;cycle<12;cycle++)for(const create of [art.createTrizooka,art.createInkVac,art.createInkFist,art.createBubblerHardware,art.createTacticooler]){const g=create('#ff7711',THREE);scene.add(g);render();art.disposeSpecialModel(g);}render();
-  const after=memory();if(after.geometries>baseline.geometries||after.textures>baseline.textures||after.programs>baseline.programs)throw Error('GPU resource count grew after repeated use');
-  return {rows,images,cloudDrawCalls,baseline,after,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig + special activation/update; flat collision stub; Chromium software WebGL; no retail parity claim'};
+  const memory=()=>({...renderer.info.memory,programs:renderer.info.programs.length,buffers:glBuffers.size}),baseline=memory();
+  for(let cycle=0;cycle<12;cycle++)for(const create of [art.createTrizooka,art.createInkVac,art.createInkFist,art.createBubblerHardware,art.createTacticooler,art.createStormCloud]){const g=create('#ff7711',THREE);scene.add(g);render();art.disposeSpecialModel(g);}render();
+  let nativeCloudRetirements=0;
+  for(let cycle=0;cycle<12;cycle++)for(const end of ['expiry','release','clear']){
+    G.projectiles._spawnCloud({owner:stormOwner,team:0,pos:new THREE.Vector3(),dir:new THREE.Vector3(0,0,1)});
+    const c=G.projectiles.clouds.at(-1);c.group.scale.setScalar(1);render();
+    if(glBuffers.size<=baseline.buffers)throw Error('Native cloud instance buffer was not uploaded');
+    if(end==='expiry')G.projectiles._updateClouds(c.dur+1/60);else if(end==='release')G.projectiles._releaseCloud(c);else G.projectiles.clear();
+    G.projectiles._releaseCloud(c);G.projectiles.clear();render();nativeCloudRetirements++;
+    if(glBuffers.size!==baseline.buffers)throw Error('Native cloud instance buffer survived '+end);
+  }
+  const after=memory();if(after.geometries>baseline.geometries||after.textures>baseline.textures||after.programs>baseline.programs||after.buffers>baseline.buffers)throw Error('GPU resource count grew after repeated use');
+  return {rows,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig + special activation/update; flat collision stub; Chromium software WebGL; no retail parity claim'};
  },prefix);
  for(const item of result.images)fs.writeFileSync(path.join(out,item.name+'.png'),Buffer.from(item.data.split(',')[1],'base64'));delete result.images;
  assert.deepEqual(errors,[]);result={status:'passed',contentHash:manifest.contentHash,revision:manifest.build.revision,...result,errors};
