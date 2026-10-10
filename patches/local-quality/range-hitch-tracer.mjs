@@ -183,6 +183,13 @@ export function installHitchTracer(game, {
           longTasks++;
           recentTasks.push({ at: item.startTime, ms: item.duration });
           if (recentTasks.length > 60) recentTasks.shift();
+          // Browser longtask observations are asynchronous; attach them to
+          // already-recorded frames too, not only the next callback.
+          for (const rec of current) {
+            if (item.startTime < rec.start - 2 || item.startTime > rec.end + 2) continue;
+            rec.longTaskMs = Math.max(rec.longTaskMs || 0, item.duration);
+            rec.cause = classify(rec);
+          }
         }
       });
       observer.observe({ entryTypes: ['longtask'] });
