@@ -713,10 +713,23 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
           throw Error('Pause changed actual native draw count: ' + (mesh.name || mesh.type));
         for (let i = 0; i < reference.length; i++) {
           if (reference[i].type !== controlled[i].type) throw Error('Pause material draw type mismatch');
+          const originalShader = reference[i].vertex, flatShader = controlled[i].vertex;
+          let firstDifference = -1;
+          for (let k = 0; k < Math.max(originalShader.length, flatShader.length); k++) {
+            if (originalShader[k] !== flatShader[k]) { firstDifference = k; break; }
+          }
           vertexSources.push({
             mesh: mesh.name || mesh.type, type: reference[i].type,
-            nativeSHA256: await digest(reference[i].vertex),
-            controlledSHA256: await digest(controlled[i].vertex),
+            nativeSHA256: await digest(originalShader),
+            controlledSHA256: await digest(flatShader),
+            // Diagnostics are emitted ONLY when a true vertex-source mismatch
+            // occurs. Show the first differing GLSL context and exact lengths;
+            // do not approve the result or weaken the equality requirement.
+            mismatch: firstDifference < 0 ? null : {
+              at: firstDifference, nativeLength: originalShader.length, flatLength: flatShader.length,
+              nativeContext: originalShader.slice(Math.max(0, firstDifference - 200), firstDifference + 400),
+              flatContext: flatShader.slice(Math.max(0, firstDifference - 200), firstDifference + 400),
+            },
           });
         }
       }
