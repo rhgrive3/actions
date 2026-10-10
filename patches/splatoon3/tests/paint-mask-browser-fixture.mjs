@@ -90,10 +90,16 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     spatter: program(revertedShader(6, 9)), drips: program(revertedShader(9, 12)) };
   const face = { atlas: { x: 0, y: 0, pad: 2, ppm }, su: 32, sv: 32, nu: 128, nv: 128, cu: 0.25, cv: 0.25,
     grid: 0, wall: false, turf: true };
-  for (const wall of [false, true]) for (const kind of [0, 1, 2, 3, 4, 5]) for (const seed of [0.37, 0.72, 0.99999]) for (const tn of [0.6, 1.1, 3]) {
+  // #1165: exercise the *actual WebGL shader and CPU ownership* for Roller
+  // body-kind 6 too. Its final band is stable only after growth (tn >= 1):
+  // source-side CPU/Judd and emitted fragment need to agree at those ticks.
+  // pi/60 is the published witness where the old CPU border skipped visible ink.
+  for (const wall of [false, true]) for (const kind of [0, 1, 2, 3, 4, 5, 6])
+    for (const seed of (kind === 6 ? [0.37, 0.72, 0.99999, Math.PI / 60] : [0.37, 0.72, 0.99999]))
+      for (const tn of (kind === 6 ? [1.1, 3] : [0.6, 1.1, 3])) {
     paint.clear(); face.wall = wall;
     const order = paint._paintOrderId({ tick: 1, peer: 'mask-probe', seq: 1 });
-    const sa = kind === 1 ? 1.2 : 0, sdu = sa ? 0.6 : 0, sdv = sa ? 0.8 : 0;
+    const sa = kind === 1 ? 1.2 : kind === 6 ? 1 : 0, sdu = sa ? 0.6 : 0, sdv = sa ? 0.8 : 0;
     const g = { R: 2.7, team: 0, seed, kind, age: tn, dur: 1, dripDur: wall ? 3 : 0,
       entries: [face, 16, 20, 0, sdu, sdv, sa], paintOrder: order, netOrderId: order };
     paint._advanceSplatOwnership(g);
@@ -134,7 +140,7 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   for (const wall of [false, true]) check(rows.some(row => row.wall === wall && row.negativeUnsupported > 0), `old-sine ${wall ? 'wall' : 'floor'} negative control must fail`);
   for (const name of Object.keys(families)) check(rows.some(row => row.familyUnsupported[name] > 0 && (name !== 'drips' || row.wall)),
     `independently reverted ${name} must expose unsupported cells`);
-  check(rows.length === 108, 'all shape kinds, seeds, wall/floor and growth phases exercised');
+  check(rows.length === 124, 'six original kinds plus final-growth Roller body: real WebGL and CPU cells exercised');
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0) };
 }
