@@ -10,7 +10,10 @@ function damageActor(actor) {
 async function view(id) {
   const f = await fixture();
   const sent = [], nm = f.makeNetMatch(f.makeSession(id, 'p1', [['p1','attacker'],['p2','victim']]));
-  nm.s.tr.sendTo = (to, packet) => sent.push({ to, packet: structuredClone(packet) });
+  // The real relay reports successful admission explicitly. Capturing a packet
+  // without returning true instead simulates a rejected send and correctly
+  // retires the pending hit before any acknowledgement can arrive.
+  nm.s.tr.sendTo = (to, packet) => { sent.push({ to, packet: structuredClone(packet) }); return true; };
   const attacker = damageActor(f.makeActor({ nid: 1, owner: 'p1', remote: id !== 'p1', team: 0, roller: false }));
   const victim = damageActor(f.makeActor({ nid: 2, owner: 'p2', remote: id !== 'p2', team: 1, roller: false }));
   attacker.weapon = f.WEAPONS.blaster;
@@ -44,7 +47,9 @@ test('#574 network annulus keeps zero HP damage, one bounded impulse, retry meta
     a.victim.pos.x = 3.4; a.burst();
     const packet = a.sent.find(x => x.packet.k === 'hit').packet;
     assert.equal(packet.d, 0); assert.deepEqual(packet.kb, [3.4, 0, 0]);
-    assert.deepEqual(Array.from(a.nm.hitPending.get(packet.seq).message.kb), packet.kb);
+    const pending = a.nm.hitPending.get(packet.seq);
+    assert.ok(pending, 'accepted relay send retains a retryable delivery record');
+    assert.deepEqual(pending[0].kb, packet.kb, 'retry retains exactly the original bounded knockback geometry');
     b.nm.onMessage('p1', packet); b.nm.onMessage('p1', packet);
     assert.equal(b.victim.hp, 100); assert.ok(b.victim.vel.x > 0);
     const ack = b.sent.find(x => x.packet.k === 'hit_ack').packet;
