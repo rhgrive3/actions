@@ -2929,3 +2929,12 @@ Player impact and limits: a depleted Roller round's hit volume (owner capsule vi
 - 検討した実装（未採用）: `719485b3`（rate×(速度−SpawnSpeedBase)、ラジアン）と `8dc17992`（rate×正規化速度偏差、ラジアン）。どちらも INKWAVE の推測則で、本家の変換則ではない。`5a328147` はこの推測則を「未公表の変換則」として巻き戻している。main へは移植しない。
 - プレイへの影響: 未確認。推測則を入れると主グロブで最大約 1°（0.05×0.36 rad）の発射角変化が生じるが、符号・単位・式が本家と一致する根拠がない。扇の角度分布、近距離の当たり・塗りの再現性への影響も判定できない。
 - 確認状態: **未確認（コード変更なし）**。`SwerveRateBySpeed` の変換則は実機計測（Ver. 11.3.0 で同一 yaw の横振りを多数回発射し、各弾の初速と発射角の相関を記録）が必要。「各インデックスの発射角が一定」が本家でも正しいかは未判定。Roller 横振りの扇そのもの（`SpawnWideDegree`、`SpawnPositionWidth`、`SpawnSpeedRandom`）は既存の挙動を変えていない。
+## 2026-10-10: #841 Ink Storm throw HP recovery
+
+- **本家の根拠**: Issue 本文が引用する Wikiwiki「システム詳細仕様」のダメージ回復節（参照版 Ver. 11.3.0 とされる）。被ダメージ後 60F 待機、非潜伏時 0.21 HP/F（12.6 HP/s）、潜伏・味方アメフラシ範囲 100 HP/s、投擲中に回復が止まるという記載はない。この環境では Wikiwiki への WebFetch が 403 となり、数値は再確認できていない。一般 wiki（splatoonwiki.org の HP ページ）は humanoid 12.5 HP/s、潜伏 100 HP/s と記す（S3 固有ではない）。12.6 と 12.5 の差は未解決。Issue の「1.75 HP/F = 100 HP/s」は 60 Hz で 105 HP/s となり内部で食い違うため、味方雨の値は未確認のまま。
+- **INKWAVE 実装箇所**: `patches/splatoon3/adapter.mjs` の Actor.update の specialActive 分岐と activation 分岐。Storm では `updateResources()`（`runtime/resources.mjs`）を呼ぶ。HP 回復は `updateHealthRecovery()` が担う。数値は `profile.json` の `resources.regenRate` 12.6、`regenRateSwim` 100。base `5d0be6b7` の時点で投擲窓は既に `updateResources()` を呼ぶ。
+- **投擲窓の既存挙動（変更しない）**: `updateResources()` のため、投擲中はインク補充と敵インク接触ダメージも働く。ロジック単独測定では、味方床・インク 50 の 21F で 50.5 → 54.0 に補充し、敵インク上では 21F に約 7.2 HP の接触ダメージを確認。`patches/splatoon3/tests/storm-throwlock-resources.test.mjs`（#624）がこの挙動を固定している。一度 HP のみに狭めて検証したが同テストの 4 件が失敗したため、取り下げた。
+- **受け入れ基準との食い違い**: Issue の「投擲中にインク補充・敵地面接触ダメージを追加しない」は、現行 main の #624 挙動と文字どおりには一致しない。どちらを正とするかは本セッションでは決めず、オーナー判断事項として未確認に残す。
+- **再現操作**: Storm を発動し、R を離して投擲する。HP 50、被ダメージ後 60F 経過、味方床。21F で +4.41 HP（0.21 HP/F）。`patches/splatoon3/tests/issue-841-inkstorm-hp-recovery.test.mjs` は 30/60/120 Hz の固定 0.3 s 窓での同等性、activation / exit の各 tick が 0.21 HP を 1 回だけ加えること、味方雨で 100 HP/s が重複しないことを検査する。
+- **プレイへの影響**: 本変更では挙動を変えない。HP 回復の時間同等性と境界 tick の 1 回適用を回帰テストで固定する。
+- **確認状態**: ロジック単独（source fixture と native Actor）のみ。本家の実機比較は未実施。12.6 HP/s の一次資料での再確認、味方雨の 1.75 / 100 の不一致、投擲中のインク補充と敵インク接触ダメージの本家挙動は未確認。
