@@ -58,7 +58,7 @@ test('#300 real activation counts survive owner snapshots and authoritative resu
  const guest=new f.NetMatch({myId:'guest',isHost:false},{}),actor=f.make();guest.byNid.set(7,actor);guest.match={time:1,setState(s){this.state=s;}};guest._result(result);assert.equal(actor.stats.specials,3);
  guest._result({...result,specialCounts:[[7,1]]});assert.equal(actor.stats.specials,3,'stale result cannot erase known own count');
  for(const bad of [-1,1.5,null,'9']){guest._result({...result,specialCounts:[[7,bad]]});assert.equal(actor.stats.specials,3);}
- for(const malformed of [{}, 'invalid', [null], [{}], [[7]], [42]]){guest.match.time=77;guest._result({...result,specialCounts:malformed});assert.equal(actor.stats.specials,3);assert.equal(guest.match.time,0,'malformed optional counts do not stop the native result');}
+ for(const malformed of [{}, 'invalid', [null], [{}], [[7]], [42]]){guest.match={time:77,setState(s){this.state=s;}};guest._result({...result,specialCounts:malformed});assert.equal(actor.stats.specials,3);assert.equal(guest.match.time,0,'malformed optional counts do not stop the native result');}
  delete result.specialCounts;guest._result(result);assert.equal(actor.stats.specials,3,'older peer result does not erase known count');
 });
 
