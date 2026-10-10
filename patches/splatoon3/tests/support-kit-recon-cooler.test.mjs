@@ -52,7 +52,10 @@ test('#710 source-owned sensor uses no turf/damage, marks only opposing team', a
   let ink=actor.ink;
   actor.intent.sub=true; f.tick(actor);
   actor.intent.sub=false; f.tick(actor);
-  assert.ok(actor.ink<=ink-40,'real selected sub owner spends its ink');
+  // Splatoon 3 uses a real preparatory 5F/10F + 1F sub-use clock;
+  // the source-owned throw is not legal on the first release frame.
+  f.tick(actor,20);
+  assert.ok(actor.ink<=ink-40,`real selected sub spends ink after readiness: ${actor.ink} vs ${ink}; pending=${JSON.stringify(actor.weaponRunner.s3SubReady)}`);
   assert.equal(f.G.projectiles.bombs.length,0,'sensor is not a damaging native Splat Bomb');
   assert.equal(f.G.projectiles._s3SupportSensors?.length,1);
   tick(f,90);
@@ -86,7 +89,7 @@ test('#835 standalone cooler gives distinct one-per-player drinks and expires cl
   assert.equal(actor.s3.drink,true,'owner can take one');
   assert.equal(ally.s3.drink,true,'ally can take one');
   assert.notEqual(enemy.s3?.drink,true,'enemy can never take our drink');
-  assert.ok(ally.s3.modifiers.runSpeed>normal,'live gear AP recomputed');
+  assert.ok(ally.s3.modifiers.runSpeed>normal,`live gear AP recomputed: normal=${normal}, after=${ally.s3.modifiers.runSpeed}, refresh=${typeof ally.s3RefreshGear}, drink=${ally.s3.drink}, points=${JSON.stringify(ally.s3.abilityPoints)}`);
   const stand=f.G.projectiles._s3SupportCoolers[0];
   assert.equal(stand.taken.size,2);
   tick(f,60);
