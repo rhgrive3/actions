@@ -3639,3 +3639,9 @@ Initial combined regression on the earlier head: 4,021 tests, 4,006 pass, zero f
 - Charger #1040: use the same-frame actor-motion snapshot for swept contacts, clip the actor interval when projectile range ends early, and reject invalid dt before dedicated-flight mutation. Source speed/radius/range are unchanged.
 
 These remain implementation and native-fixture validations. Browser/device parity and exact-final-head CI remain separate gates. PR1202 itself is not modified.
+
+## 2026-10-10 PR1209 follow-up boundary review
+
+After the published 49ecbc3 checkpoint (4051 passed / 0 failed / 15 skipped), independent review identified four further implementation defects: Slosher legitimate impact footprints rejected by generic network radius admission; Fist split stamp centres crossing thin solid cover; menu-period HID samples replayed on resume; and a one-tick Charger keep-entry ink refill. Fixes preserve the documented source-version and approximation limitations. See `slosher-impact-network-admission-2026-10-10.md`, `fist-paint-wall-boundary-2026-10-10.md`, and `charger-keep-entry-resource-order-2026-10-10.md`. Pause resume now discards pending optional controller-motion reports at the ownership transition; fresh post-resume input remains accepted.
+
+The combined new focused tests pass 51/51 with no skips. Prior complete-suite results describe the previous published tree, not these later edits. Full final-suite and exact-head remote CI results must be checked separately. No raw Drive archives are published and these native tests are not console-equivalence or browser gameplay validation.

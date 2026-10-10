@@ -94,6 +94,9 @@ function blast(actor, record, G, THREE) {
         // unrelated upper shelf (or lower it off a cliff), bypassing the old
         // splat's surface-side/height rejection. Keep the admitted fist plane.
         const at = stampAt.set(sx, q2(pos.y), sz);
+        // A split centre must not cross solid cover and paint its back face.
+        // The original single centre stayed on the admitted side of that wall.
+        if (G.physics?.los && !G.physics.los(pos, at)) continue;
         const got = G.paint.splat(at, FIST_STAMP_RADIUS, actor.team,
           { seed: q3(Math.random()), claimOwner: actor, claimMode: 'no-special' });
         if (Number.isFinite(got) && got > 0) area += got;

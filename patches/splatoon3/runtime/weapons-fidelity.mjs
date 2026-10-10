@@ -955,6 +955,22 @@ function prepareFidelityProjectilePacket(event) {
   Object.defineProperty(packet, NORMALIZED_PROJECTILE_PACKET, { value: { depleted } });
   return packet;
 }
+// The paint receiver uses the same packet/unit parser as ghost construction.
+// It does not trust a sender-supplied radius or a separately guessed unit layout.
+export function fidelitySlosherPaintBirth(event) {
+  const packet=prepareFidelityProjectilePacket(event),shape=packet&&projectilePacketShape(packet);
+  if(!packet||shape.legacy||packet[3]!=='slosh'||packet[4]!=='slosher')return null;
+  const projectileId=packet[29+shape.birthOffset],ordinal=packet[30+shape.birthOffset],proof=shape.hasInkMeta?packet[27]?.s3SlosherPaintBirth:null;
+  if(!Array.isArray(proof)||proof.length!==3||proof[0]!=='inkwave-slosher-birth-v1'||typeof proof[1]!=='string'||!Number.isSafeInteger(proof[2])||proof[2]<0)return null;
+  if(!Number.isSafeInteger(projectileId)||projectileId<1||!Number.isSafeInteger(ordinal)||ordinal<0
+    ||!packet.slice(5,19).every(Number.isFinite)||packet[11]<0||packet[12]<=0||!Number.isFinite(packet[28+shape.birthOffset]))return null;
+  let index=ordinal,unit=null;
+  for(const u of rawWeapon(api.WEAPONS.slosher)?.UnitGroupParam?.Unit||[]){
+    if(index<(u.BulletNum??1)){unit=u;break;}index-=u.BulletNum??1;
+  }
+  if(!unit)return null;
+  return {projectileId,unit,index,epoch:proof[1],life:proof[2],start:{x:packet[5],y:packet[6],z:packet[7]},heading:{x:packet[8],z:packet[10]},seed:packet[28+shape.birthOffset]};
+}
 export function validFidelityRollerUnitPacket(event) {
   return !!prepareFidelityProjectilePacket(event);
 }

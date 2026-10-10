@@ -23,7 +23,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'dodge-clock-adapter.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs']
+    'dodge-clock-adapter.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -2272,6 +2272,12 @@ ${bombHit}`;
     patch('    applyAdoptionSample(this, a, S);',
       '    applyAdoptionSample(this, a, S);\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase, sampledSuperJumpDestination(a, S, jumpPhase));',
       'restore last accepted Super Jump epoch after adoption reconciliation');
+  }
+  if (rel === 'src/game/weapons.js') {
+    code="import { slosherImpactMetadata } from '../../patches/network-replication/slosher-paint-admission.mjs';\n"+code;
+    patch('{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner }',
+      '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner, projectilePaint: slosherImpactMetadata(p,hit) }',
+      'bind sourced Slosher terrain paint to its projectile birth');
   }
   if (rel === 'src/net/netmatch.js') code = adaptKitPaintAdmission(code, once);
   return code;

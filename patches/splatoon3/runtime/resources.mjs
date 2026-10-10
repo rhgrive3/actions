@@ -125,6 +125,10 @@ export function updateResources(a, dt) {
       && (a.weaponRunner.s3DodgeInkRemaining || 0) <= 1e-10
       && chargerInterruptRecover <= 1e-10
       && chargerKeepRecover <= 1e-10
+      // busy() also grants form admission: a full charge may enter squid form
+      // before the later weapon phase creates s3Stored. That does not grant a
+      // refill tick between the paid hold and its keep record.
+      && !(a.weapon.kind === 'charger' && runner?.charging && isChargerFullCharge(runner.charge))
       && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored);
   if (canRefill) {
     let rate = 0;
