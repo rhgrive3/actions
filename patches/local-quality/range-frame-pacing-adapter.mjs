@@ -50,9 +50,8 @@ export function adaptRangeFramePacing(rel, code) {
     '      if (this._frameCapAcc + 1e-6 < step) { this._rangeFrameProbe?.skipped(); return; }',
     'frame cap skipped callback');
   code = once(code,
-    '    dt = Math.min(dt, 1 / 24);\n    this._frame(dt);\n  }',
-    `    dt = Math.min(dt, 1 / 24);
-    const frameStart = this._rangeFrameProbe ? performance.now() : 0;
+    '    this._frame(dt);',
+    `    const frameStart = this._rangeFrameProbe ? performance.now() : 0;
     this._frame(dt);
     if (this._rangeFrameProbe) this._rangeFrameProbe.record(frameStart, performance.now()-frameStart, {
       frameRateHz: capHz || this._iwRefreshProbe?.rate || 60,
@@ -61,8 +60,7 @@ export function adaptRangeFramePacing(rel, code) {
       phase: this.match?.range || this.match?.opts?.range ? 'practice' :
         this.match?.attract ? 'attract' : this.match ? 'battle' : 'menu',
       stages: this.perf,
-    });
-  }`,
+    });`,
     'frame CPU recorder');
   return "import { createRefreshProbe, evenTouchAutoHz, createFrameTimingProbe } from '../patches/local-quality/range-frame-pacing.mjs';\n"+code;
 }
