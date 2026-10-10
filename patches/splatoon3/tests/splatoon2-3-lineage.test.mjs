@@ -57,7 +57,7 @@ test('S2 Blaster and S3 Blaster explicitly disagree on collision drop radius and
   const volume = lookup(rows, 'blaster', 'collision-radius-rate');
   assert.deepEqual([volume.s2, volume.s3Explicit], [.5, .4234]);
   assert.equal(volume.status, 'changed-extracted-value');
-  assert.equal(lookup(rows, 'blaster', 'collision-sphere').s2Converted, 1.4);
+  assert.ok(Math.abs(lookup(rows, 'blaster', 'collision-sphere').s2Converted - 1.4) <= 1e-9);
   assert.equal(lookup(rows, 'blaster', 'collision-sphere').status, 'omitted-s3-default-unknown');
   assert.equal(lookup(rows, 'blaster', 'timed-sphere').status, 'omitted-s3-default-unknown');
 });

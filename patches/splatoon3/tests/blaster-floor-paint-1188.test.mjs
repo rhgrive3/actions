@@ -118,12 +118,19 @@ test('PR1188 wall: a splash released within FirstDistance sticks to the wall, th
   fire(w); run(w); settle(w);
   const records = paintRecords(w), land = landings(w);
   const floorFlight = land.filter(l => (l.radius === SRC.width || l.radius === SRC.nearest) && Math.abs(l.y) < 1e-6);
-  const wallShock = records.filter(r => r.radius === SRC.wallShock);
+  // SplashWallHit PaintRadiusShock (1.4, extracted) and the modelled
+  // shot-collision sphere (1.4, S2-derived) share a radius: the wall drop
+  // paints on the struck face, the collision sphere at the burst point.
+  const wallShock = records.filter(r => r.radius === SRC.wallShock && r.z < 6 - 1e-3);
+  const collisionSphere = records.filter(r => r.radius === SRC.wallShock && r.z >= 6 - 1e-3);
   // Releases at 0.5/2.0/3.5/5.0 from the muzzle (z=0.3); the round meets the wall at z=6.
   // Only the z=5.3 release is within 1.8 of the wall along the lowered velocity.
   assert.deepEqual(floorFlight.map(l => +l.releaseZ.toFixed(6)).sort((a, b) => a - b), [.8, 2.3, 3.8]);
   assert.equal(wallShock.length, 1, 'one splash becomes a SplashWallHit drop');
   near(wallShock[0].z, 6 - .025, 1e-3, 'wall drop on the struck face');
+  assert.equal(collisionSphere.length, 1, 'terrain-contact burst paints one collision sphere');
+  near(collisionSphere[0].z, 6, 1e-6, 'collision sphere at the burst point');
+  assert.equal(records.filter(r => r.radius === DEFAULTS.timedSplash).length, 0, 'terrain contact does not reuse the timed 2.0 sphere');
   const burstDrop = records.filter(r => r.radius === SRC.dropRadius);
   assert.equal(burstDrop.length, 1, 'terrain-contact burst drop');
   near(burstDrop[0].y, .1, 1e-6, 'burst drop reaches the floor at the wall base');

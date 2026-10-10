@@ -1,3 +1,4 @@
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BLASTER_BURST_PARAM_DEFAULTS, resolvedBlasterBurstParam, blasterPaintContract } from '../runtime/weapons-fidelity.mjs';
 import fs from 'node:fs';
