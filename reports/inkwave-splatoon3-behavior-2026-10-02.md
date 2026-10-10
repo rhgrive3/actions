@@ -3646,6 +3646,18 @@ After the published 49ecbc3 checkpoint (4051 passed / 0 failed / 15 skipped), in
 
 The combined new focused tests pass 51/51 with no skips. Prior complete-suite results describe the previous published tree, not these later edits. Full final-suite and exact-head remote CI results must be checked separately. No raw Drive archives are published and these native tests are not console-equivalence or browser gameplay validation.
 
+
+## 2026-10-10 全サブ・スペシャルの実装
+
+対象は公開版 `inkwave-public/`、基準は `9117816`。未実装10サブと14スペシャルを追加し、S3の14サブ／19スペシャルすべてを装備画面で選べる。既存のTidal Slamは別の試作技として残し、ウルトラチャクチは独立した本体・2拳・破壊判定・スーパージャンプ派生を持つ。名称は依頼に沿った本家の仮名。モデルと本格的なアニメーションは対象外。
+
+- **根拠:** DriveのS3資料と11.3.0抽出表33件を使用。出典、SHA256、公式更新情報と公開攻略値の区別は [catalogue source record](inkwave-complete-catalogue-sources-2026-10-11.md) と [receipt](catalogue-1130-receipt.json)。S1/S2への代替は不要だった。
+- **実装:** `all-subs.mjs`は投擲、誘導、充電、設置、索敵、減速、破壊、塗り・ダメージを担当。`all-specials.mjs`はロック、飛行と帰還、ナイス充電、装甲、砲撃、突進、反復攻撃、設置波、視界効果などを担当。`catalogue.mjs`は自由装備、実ブキの標準セット、ウルトラチャクチ、ビーコンのマップジャンプ、入力と通信を統合する。
+- **再現:** 装備画面の「サブ・スペシャルを選ぶ」で変更し、試し撃ちまたは対戦へ入る。ナイスはN／標準パッド下／画面ボタン。個別操作説明は同じ画面に表示する。選択はメインブキ別に保存され、ギア更新・復活でも保持する。「標準セットに戻す」で解除する。
+- **プレイへの影響:** 実リソース支払いと既存の被弾・塗りへ接続。持ち主の死亡でスプリンクラーは消えるが、ビーコンや投擲済みのボムは残る。設置物への遠隔攻撃は所有者へ提案し、幽霊オブジェクトは二重にダメージ・塗りを適用しない。イベントは所有者・life・順番を確認する。参加者には同じ更新版が必要。
+- **比較範囲:** 表のフレーム・HP・コストを根拠とし、ソース依存のfixtureを同梱。世界単位への変換、地形での当たり判定、塗り形状、移動とカメラ演出は近似であり、Switch実機との完全一致は未確認。ローカルブラウザ確認やネイティブfixtureを実機比較として扱わない。ビーコン遠隔予約は楽観的で、通信遅延時の競合は追加の実対戦確認が必要。
+追加確認: 試し撃ちでポイズンミストからポイントセンサーへ変更し、実Actor/WeaponRunnerのサブ払い・解放と90F更新を通して、ネイティブボムへ誤流入しないことを確認。エナジースタンドも試し撃ちで発動・設置できる。ホップソナーは本体30ダメージ/0.5秒と波45ダメージを区別し、波の8秒マーキングと無塗り、入力まで保持する経路を修正。元表の本体45Fマーキングを波へ転用しない。
+
 ## 2026-10-10: seven base weapon models and current attack pose ownership
 
 - **本家の根拠:** [任天堂公式ブキ図鑑](https://www.nintendo.com/jp/character/splatoon/fashion/index.html) の基本7種のシルエット・タンク・銃口・フレームを参照（2026-10-10確認）。図鑑は版番号のないシリーズ資料。S3実行バイナリ、正確な寸法、関節軌道の根拠として扱わない。既存のS3設定・攻撃時間は維持。
