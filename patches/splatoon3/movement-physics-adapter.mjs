@@ -105,7 +105,7 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     else if (isSquid) vt = P.squidDrySpeed;
     else vt = this.weaponRunner.moveSpeed();
     if (!isSquid && this.hardLand > 0) vt *= 1 - (1 - P.hardLandSlow) * this.hardLand;
-    let accel = (this.weaponRunner.firingPose?.() || this.intent.sub || this.specialActive)
+    let accel = (this.weaponRunner.firingPose?.() || this.intent.sub || this.weaponRunner.aimingSub || this.specialActive)
       ? (P.s3AttackGroundAccel ?? 72) : (P.s3GroundAccel ?? 36);
     if (onEnemy) vt = Math.min(vt, P.enemyInkSpeed); // enemy ink limits target speed, not the selected S3 acceleration
     stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);`, 'S3 grounded vector acceleration');

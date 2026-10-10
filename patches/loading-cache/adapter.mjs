@@ -84,7 +84,12 @@ export function adaptCompiledMain(source) {
 export function loadingIdentity() {
   return Object.fromEntries(filesIn(LOADING_ROOT).filter(file=>!file.includes(`${path.sep}tests${path.sep}`)&&!file.endsWith('.md')).map(file=>[path.relative(LOADING_ROOT,file).split(path.sep).join('/'),hash(fs.readFileSync(file))]));
 }
-export function prepareLoading(build, preloads, { diagnosticUnminified = false } = {}) {
+export function prepareLoading(build, preloads, options = {}) {
+  // Compose main's startup-runtime minifier with the PR's explicit diagnostic
+  // limits. Preserve the old third-argument callback for existing callers.
+  const compactRuntime = typeof options === 'function' ? options : options.compactRuntime ?? (source => source);
+  if (typeof compactRuntime !== 'function') throw new TypeError('loading-cache: invalid startup runtime compactor');
+  const diagnosticUnminified = typeof options === 'function' ? false : !!options.diagnosticUnminified;
   // Production limits are unchanged. An explicitly selected local diagnostic
   // build has no minifier/tree shaking, so declare its separate bounded budget.
   const budget = diagnosticUnminified
@@ -100,7 +105,14 @@ export function prepareLoading(build, preloads, { diagnosticUnminified = false }
   fs.writeFileSync(path.join(build,'index.html'),html);
   for(const file of filesIn(path.join(LOADING_ROOT,'runtime'))) {
     const rel=path.relative(LOADING_ROOT,file),dst=path.join(build,'patches/loading-cache',rel);
-    fs.mkdirSync(path.dirname(dst),{recursive:true});fs.copyFileSync(file,dst);
+    fs.mkdirSync(path.dirname(dst),{recursive:true});
+    if (rel === 'runtime/startup.mjs') {
+      const original = fs.readFileSync(file, 'utf8'), compact = compactRuntime(original);
+      if (typeof compact !== 'string' || !compact.length)
+        throw new Error('loading-cache: invalid startup runtime transform');
+      fs.writeFileSync(dst, compact);
+      console.log('startup runtime: ' + Buffer.byteLength(original) + ' -> ' + Buffer.byteLength(compact) + ' bytes');
+    } else fs.copyFileSync(file,dst);
   }
   const main=path.join(build,'src/main.js');
   const adapted=adaptCompiledMain(fs.readFileSync(main,'utf8'));fs.writeFileSync(main,adapted.code);
@@ -114,12 +126,12 @@ export function prepareLoading(build, preloads, { diagnosticUnminified = false }
     const bytes=fs.readFileSync(file);assets[rel]=[bytes.length,hash(bytes)];
   }
   const css=Object.keys(assets).filter(rel=>rel.endsWith('.css')); // Includes @import HUD CSS and non-./ HTML hrefs.
-  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||rel.startsWith('assets/lightmaps/')||rel==='assets/stages/manifest.json'||rel.startsWith('patches/splatoon3/pwa/'))]);
+  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||rel.startsWith('assets/lightmaps/')||rel==='assets/stages/manifest.json'||(rel.startsWith('patches/splatoon3/pwa/') && rel!=='patches/splatoon3/pwa/icon-512.png'))]);
   for(const rel of core)if(!assets[rel])throw new Error(`loading-cache: missing precache dependency ${rel}`);
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
   const assetBytes=Object.values(assets).reduce((sum,a)=>sum+a[0],0);
-  if(precacheBytes>budget.precache||assetBytes+512*1024>budget.revision)throw new Error(`loading-cache: ${budget.mode} payload budget exceeded (${precacheBytes} precache, ${assetBytes} assets)`);
+  if(precacheBytes>budget.precache||assetBytes+512*1024>budget.revision)throw new Error(`loading-cache: ${budget.mode} payload budget exceeded (precache ${precacheBytes}/${budget.precache}, declared ${assetBytes+512*1024}/${budget.revision} bytes)`);
   return {assets,precache,assetBytes,precacheBytes,phases:adapted.phases,budget};
 }
 export function finalizeLoadingWorker(build, revision, plan, compactTemplate = source => source) {

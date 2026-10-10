@@ -373,7 +373,14 @@ const deferredIntegrationPreloads = new Set([
 ]);
 // Apply loading instrumentation first, so hint selection measures final bytes.
 // All modules in order still enter the complete offline dependency graph.
-const loadingPlan = prepareLoading(BUILD, order, { diagnosticUnminified: unminified });
+const loadingPlan = prepareLoading(BUILD, order, {
+  diagnosticUnminified: unminified,
+  // main's production compaction reduces startup JS and the complete immutable
+  // precache; diagnostic builds keep the unminified startup runtime.
+  compactRuntime: source => unminified ? source
+    : esbuild.transformSync(source, { loader: 'js', minify: true, charset: 'utf8',
+      legalComments: 'inline', sourcefile: 'patches/loading-cache/runtime/startup.mjs' }).code,
+});
 const loadingHTML0 = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
 const isRange = file => file.startsWith('patches/practice-range/');
 const bytes = file => fs.statSync(path.join(BUILD, file)).size;

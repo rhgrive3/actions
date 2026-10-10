@@ -2563,6 +2563,31 @@ The #1161/#272 combined production gear panel retains both fixed shoes-main abil
 
 **Reproduction and impact.** The production-composed regressions reproduce V→H→C, deliver V's real accepted 36-damage ACK after both transfers, and confirm HP 64 at C and S while settling the combat receipt once. Concurrent V/C hits, packed owner-state snapshots, both ACK orders, stale snapshot replay and duplicated delivery converge to HP 28; cumulative 60+50 damage splats once in either order. The eight-checkpoint bound and legacy tuple parsing are covered. Focused local results: `issue-1033-handoff-hit.test.mjs` 26/26, `composed-hit-unit-packet.test.mjs` 6/6, and `issue-1033-thermal-handoff.test.mjs` 2/2 (34 total). These are deterministic source-composition checks, not live WebSocket or browser reconnection runs. Physical Switch comparison, retail owner-transfer behavior, live transport races, and mixed-version clients that cannot send the new chain remain **unverified**.
 
+## 2026-10-08: HUD look compared with a Splatoon 3 recording
+
+A user-supplied Splatoon 3 recording (Splat Zones, 1280x720 game area) was measured frame by frame.
+The special gauge has **23** radial teeth at ~11.9 deg pitch on an arc from 12 o'clock clockwise
+to ~272 deg; the upper-left quarter has no teeth. Lit teeth are a fixed yellow-orange (#fac337 centre,
+#b56a00 edge), not the team ink. The 23-segment count of the 2026-10-04 entry is confirmed; only the
+layout changed from a full ring to the measured arc. (A first pass assumed a full ring and drew 30 teeth;
+re-measuring the unlit teeth corrected it.) Quantization and readiness keep their single authority.
+The roster uses squid silhouettes, dark splatted icons under a grey X and a flat timer plate; the splat
+notice is a bottom bar reading "<name> をたおした！". Touch keeps the SP button as the gauge with the same
+position, size and hit area. Presentation only: no special points, costs, timer or match rules change.
+In-match type now uses original condensed chamfered timer numerals and an OFL Rounded M+ 1c Black
+subset for Japanese HUD text; roster squids get a masked ink shading. Full-gauge appearance, other team colours and Turf War-specific HUD remain unconfirmed. Details:
+[the HUD look report](inkwave-s3-hud-look-2026-10-08.md).
+
+## 2026-10-09: squid-form look from Nintendo's official clips
+
+Compared against Nintendo's official clips (`ikahito_pc.mp4`, `s3_howtoplay_move01/02/03.mp4`, hashes in
+[the HUD look report](inkwave-s3-hud-look-2026-10-08.md)). The local swimmer in own ink now shows a glossy ink
+mound instead of a see-through squid; the drawn squid travels mantle-first with its face trailing (the
+third-person camera sees the eyes); on dry ground it lies flat with the eyes up; arms are short and bundled
+with two long feelers ending in dark clubs. Presentation only: speeds, acceleration, hop timing, swim
+visibility rules and damage are unchanged. No ripped game model or animation data is used. Mound size/wobble
+and the dry lift angle are visual calibration; Switch parity remains unverified.
+
 ## 2026-10-09 — Offline weapon audit against supplied 5d0be6b7 ZIPs
 
 The four user-supplied source archives were restored locally; no GitHub clone, push, or remote write was used. This pass integrates per-family accuracy state into emitted shot angles, removes the outer/inner Bernoulli cone interpretation and fixed Splatling 0.6 cone shrink, corrects Dualies ground-slide body distance and the Actor aerial admission gate, and replaces Charger's immediate full-charge movement target with a charge-dependent target. The S2-derived gamma cone and Charger's intermediate linear curve are explicitly calibrations, not recovered S3 logic. Raw 11.3.0 records are bundled with hashes. The original `inkwave-public/` tree is unchanged.
