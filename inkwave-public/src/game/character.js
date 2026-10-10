@@ -15,7 +15,9 @@
 //   application   → kid squash/stretch → pelvis reach solve → torso FK → stabilised head look → two-bone IK legs/arms
 //                   → face → hair spring chains → tank slosh → weapon extras
 import * as THREE from 'three';
-import { SourceMotionController } from './motion/source-controller.js';
+// Optional source clip engine: keep the 5 MiB startup/offline graph independent of retarget assets.
+// Resolved dynamically and integrity-cached on demand; fallback procedural motion remains available.
+const SOURCE_MOTION_MODULE = './motion/' + 'source-controller.js';
 import { PLAYER } from '../config.js';
 import { G, on } from '../core/ctx.js';
 import {
@@ -534,7 +536,17 @@ export class Character {
     this.setColor(opts.color ?? '#ff8a14');
     this.setWeapon(opts.weapon || 'shooter');
     poseNeutral(this.P);
-    this.sourceMotion = new SourceMotionController(this, opts);
+    this.sourceMotion = null;
+    this._sourceMotionDisposed = false;
+    this._sourceMotionLoader = import(SOURCE_MOTION_MODULE).then(({SourceMotionController}) => {
+      if (this._sourceMotionDisposed) return null;
+      const motion = new SourceMotionController(this, opts);
+      this.sourceMotion = motion;
+      return motion.ready;
+    }).catch(error => {
+      if (!this._sourceMotionDisposed) console.warn('[INKWAVE optional source motion]', error);
+      return null; // Legacy procedural animation remains fully operational.
+    });
   }
 
   _mkFoot(i) {
@@ -902,7 +914,7 @@ export class Character {
     if (this._warmed) return this._warmed;
     if (!renderer || !camera || !target || !renderer.compileAsync) return false;
     const done = this._warmed = (async () => {
-      if (this.sourceMotion?.enabled) await this.sourceMotion.ready;
+      if (this._sourceMotionLoader) await this._sourceMotionLoader;
       const q = G.settings?.quality || 'high';
       // build every tier + the dither twins (warm-only meshes on this skeleton; the materials stay with the kid)
       const grp = new THREE.Group(); grp.name = 'warm';
@@ -1107,6 +1119,7 @@ export class Character {
 
   dispose() {
     LIVE.delete(this);
+    this._sourceMotionDisposed = true;
     this.sourceMotion?.dispose();
     this.root.parent?.remove(this.root);
     for (const k of ['skin', 'cloth', 'hair', 'eye', 'fill', 'squid', 'squidGhost', 'glow']) this.mats[k].dispose();
