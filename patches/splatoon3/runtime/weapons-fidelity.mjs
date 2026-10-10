@@ -41,26 +41,6 @@ export function biasedSourceYaw(uniform, degrees, bias = 0.5) {
   return Math.sign(x) * magnitude * radians(degrees);
 }
 const MAIN_SHOT_LIFETIME = 1.2;
-// Current S3 parameter glossary: Slosher WidthHalf and DistanceXZ values
-// use 0.2-world-unit notation. Near/far interpolation is a documented
-// local approximation pending S3 capture; the source endpoint values and
-// first-versus-after unit identity are authoritative.
-const SLOSHER_PAINT_UNIT = 0.2;
-export function slosherImpactPaintSource(unit, index, xzDistance) {
-  const paint = index === 0 ? unit?.PaintParam : unit?.AfterPaintParam;
-  if (!paint || ![paint.DistanceXZNear,paint.DistanceXZFar,
-      paint.WidthHalfNear,paint.WidthHalfFar,paint.DepthScaleNear,paint.DepthScaleFar].every(Number.isFinite))
-    return null;
-  const near = paint.DistanceXZNear*SLOSHER_PAINT_UNIT;
-  const far = paint.DistanceXZFar*SLOSHER_PAINT_UNIT;
-  const t = far>near ? clamp01((Math.max(0,xzDistance)-near)/(far-near)) : (xzDistance>=far?1:0);
-  return {
-    radius:(paint.WidthHalfNear+(paint.WidthHalfFar-paint.WidthHalfNear)*t)*SLOSHER_PAINT_UNIT,
-    depthScale:paint.DepthScaleNear+(paint.DepthScaleFar-paint.DepthScaleNear)*t,
-    source: index === 0 ? 'PaintParam' : 'AfterPaintParam', t,
-  };
-}
-
 function freezeDeep(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
     for (const child of Object.values(value)) freezeDeep(child);
@@ -2104,24 +2084,10 @@ export function installWeaponsFidelity(context,profile) {
           // #411/#674/#611 share one authoritative landing-paint sample.
           return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));
         }
-        if(w?.kind==='slosher' && p.type==='slosh' && p.fidelitySloshUnit && context.G.paint?.splat){
-          // #1011: native _impact paints its first stamp using legacy global
-          // radius plus a random multiplier. Replace THAT stamp with this
-          // projectile's distinct source unit/index contract, never foot paint.
-          const dx=hit.point.x-p.start.x,dz=hit.point.z-p.start.z;
-          const source=slosherImpactPaintSource(p.fidelitySloshUnit,p.fidelitySloshIndex,Math.hypot(dx,dz));
-          if(source){
-            const paint=context.G.paint,nativeSplat=paint.splat;
-            let first=true;
-            paint.splat=function(center,radius,team,opts){
-              if(!first)return nativeSplat.call(this,center,radius,team,opts);
-              first=false;
-              return nativeSplat.call(this,center,source.radius,team,{...opts,stretchAmt:source.depthScale});
-            };
-            try{return nativeImpact.call(this,p,hit);}
-            finally{paint.splat=nativeSplat;}
-          }
-        }
+        // #1011/#1140: the adapted native Slosher impact already owns the
+        // source unit/first-after/near-far paint, the profile world scale and
+        // the high-drop shrink. Do not overwrite that stamp from a second
+        // wrapper: a fixed 0.2 scale there dropped the source width and shrink.
         return nativeImpact.call(this,p,hit);
       }finally{p.s3BurstCollisionHit=before;}
     }

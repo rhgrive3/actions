@@ -2815,3 +2815,10 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
 - 再現操作: Heavy Splatling を装備し、接地と跳躍・射撃で集弾値を変えてレティクル DOM を見る。
 - プレイへの影響: 外側マーカーの向きと位置（サイズは大きくなる）が変わる。チャージ表示、射撃・集弾の値、塗りは変わらない。
 - 確認状態: 単独測定（CSS 変換の数式、回帰テスト `patches/splatoon3/tests/issue-1100-splatling-reticle.test.mjs`）のみ。ブラウザでの描画と本家の実機比較は未実施。未確認: 参照キャプチャの集弾状態（sp との対応）、sp=0 の絶対寸法、ブラケットの線幅と角の丸み、リング半径の本家との対応付け、Nintendo 公式画像による検証。
+## 2026-10-10: Slosher 着弾塗りの本家パラメータ対応（#1011）
+
+- 本家の根拠: Splatoon 3 Ver. 11.3.0、Leanny/splat3 コミット `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の `data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json` を直接取得して確認した。Unit 1（BulletNum 4）は先頭 PaintParam で DistanceXZ 5/15、WidthHalf 4.44/3.84、DepthScale 1/1、後続 AfterPaintParam で 8.5/12、1.44/1.92、1.3/1.2。Unit 2（BulletNum 5）は先頭で 2/8、1.2/1.2、1.4/1.4、後続で 2/8、0.96/1.14、1.4/1.4。Unit 0 は BulletNum 0 で発射されない。
+- INKWAVE 実装箇所: `patches/splatoon3/weapons-adapter.mjs` の Slosher 着弾分岐が `patches/splatoon3/runtime/weapons-fidelity.mjs` の `fidelitySlosherImpactPaint` で単位・弾順・距離区分の塗り半径と奥行きを選ぶ。今回、同じ最初の `G.paint.splat` を固定 0.2 倍で置換し高低差縮小を消していた二重の `Projectiles.prototype._impact` ラッパーと、未使用になった `slosherImpactPaintSource` を削除した。
+- 再現操作: Bucket Slosher を発射し、各弾を平らな地面・始点と同じ高さで、始点から DistanceXZNear と DistanceXZFar の距離（`worldUnitsPerSourceUnit` 1）に着弾させる。修正前は Unit 1 先頭弾の近距離で半径 0.768（3.84 × 0.2、遠距離値）となり、本家値 4.44 にならなかった。修正後は全 9 弾が near/far の本家値に一致する。
+- プレイへの影響: 1 発ごとの塗り半径と奥行きが変わるため、塗り面積、泳げる地面、Turf War の得点、スペシャル増加に影響する。ダメージ、当たり判定、弾の軌道は変更していない。
+- 確認状態: ロジック単独のヘッドレス回帰（production composition、固定乱数、`patches/splatoon3/tests/issue-1011-slosher-impact-source.test.mjs`）で確認した。修正前は失敗（0.768 != 4.44）、修正後は合格。ブラウザでの実動作と本家の実機比較は未実施。未確認: DistanceXZ の near/far 区間の補間式（現行は線形の近似）、`worldUnitsPerSourceUnit` 1 の換算、高低差縮小の本家側の対応。#978 の足元塗り、中間スプラッシュ、#554 の壁経路は別経路のまま変更していない。
