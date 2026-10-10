@@ -93,7 +93,8 @@ export async function fixture(options = {}) {
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
-  if (fullRuntime) api.installS3(profile);
+  let installedRuntime = null;
+  if (fullRuntime) installedRuntime = api.installS3(profile);
   else for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
   G.level = { blocks: [], groundHeight: () => 0 }; G.time = 0; G.actors = [];
@@ -128,7 +129,7 @@ export async function fixture(options = {}) {
     delete context.__inkwaveTestRandom;
   }
   function restoreRandom() { setRandom(originalRandom); }
-  return { ...api, profile, make, tick, shots, context, setRandom, restoreRandom };
+  return { ...api, installedRuntime, profile, make, tick, shots, context, setRandom, restoreRandom };
 }
 
 // Exercise the installed Actor -> WeaponRunner -> Projectiles admission path.

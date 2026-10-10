@@ -2990,3 +2990,12 @@ Player impact and limits: a depleted Roller round's hit volume (owner capsule vi
 - **論理テスト**: `patches/network-replication/tests/issue-512-remote-initial-squidspawn.test.mjs`（30/60/120 Hz、オーナーと受信側の二端末）。受信側はオーナーの発射まで待ち、照準目標と発射目標を一致して写し、発射イベントは 1 回だけ出る。飛行中の受信側位置はオーナーの発射線上（約 0.002 m）にあり、旧仮目標の線からは約 2.4〜2.9 m 離れる。着地後の位置はオーナーの着地点と一致する（1e-3 m 以内。既存の位置補正が収束した後）。
 - **プレイへの影響**: 受信側に見える他プレイヤーの開始位置・発射目標・発射タイミングが、オーナーの操作と揃う。Bot の初期発射は変わらない。
 - **確認状態**: 上記は二端末のロジックテストによる単独測定であり、実機同期の代用ではない。オンラインの遅延・欠損下の同期、本家の Bot AI 角度、本家との操作感の比較は未確認のまま残す。Nintendo 公式ページの一次確認も未了。
+## 2026-10-10: Haunt (リベンジ) arm lost on ordinary online post-respawn replay (#351)
+
+- 本家の根拠: 既存の #351 記録と同じ。任天堂公式更新履歴（Ver.2.1.0 の復活ペナルティ、Ver.3.0.0 の Haunt 透過表示）と、Splatoon3攻略＆検証Wiki・リベンジの「本人が対象を倒した場合に +45F・SP減少 +15パーセントポイント、味方撃破では追跡解除のみ」。参照版 Ver.11.3.0。新しい本家数値は導入していない。数値は既存の `haunt.mjs` の既定値（45F / 0.15）のまま。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/haunt.mjs`（`networkLife` は受理済みの remote owner life を優先し、`acceptRemoteState` は `haunt:arm` を受理済み life と照合）。元の検証は `Actor.netLife` と比べていた。`inkwave-public/src/main.js:1029` の `G.net.update` → `NetMatch._playEvents`（`netmatch.js:180`）が、`inkwave-public/src/game/match.js:194` の `applyRemote`（`Actor.netLife` を更新）より先に動くため、復活直後の正規 arm が旧 life と照合されて捨てられていた。
+- 再現操作: 同一プロセスの二つの NetMatch（JSON 往復）。A のメインをフクのリベンジにし、B が A を倒す → A が復活 → A が生存中の B を倒す。修正前は被害側（B）が SP 100→50、追加復活時間なし。修正後は期待値の SP 35 と +45F（45/60 秒）。
+- プレイへの影響: 通常のオンライン対戦（NetMatch 経路）で、復活後にリベンジ発動が成立した被害側の SP 減少と復活時間が欠落していた。ローカル/CPU 戦の挙動は変更しない。
+- 適用元: PR #1182 の commit `46e12a8`（head `b08a3abd` は回帰テストの fixture 追随のみ）。`source-fixture.mjs` は installer 戻り値の `installedRuntime` を返すよう更新した（追加プロパティのみ）。
+- 確認状態: 回帰 `patches/splatoon3/tests/issue-351-haunt-network-life.test.mjs` 4/4 pass（修正前 0/4）。30/60/120Hz の送信位相、二回復活の backlog（異なる killer）、偽装・未来・過去 mark の拒否、rendered-life のみの対照で arm 欠落を確認。隣接の haunt・respawn・gear・combat-life・network 系の既存テストも pass。ただし、これは同一プロセスの固定クロックによるロジック試験であり、ブラウザ実動作・Switch 実機・本家実機との比較は未実施。
+- 未確認（従来どおり留保）: 相打ち・死後弾の発動開始時刻、特殊ギア/ドリンク併用、近距離・潜伏時の透過抑制の校正、本家の総復活時間（#91 の範囲）。
