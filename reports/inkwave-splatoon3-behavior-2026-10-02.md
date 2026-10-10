@@ -2595,3 +2595,12 @@ and the dry lift angle are visual calibration; Switch parity remains unverified.
 - 再現操作: 支持された床で Trizooka を発動し、床のない水域（`groundHeight` が -Infinity）へ `fallDeathY` 未満まで移動する。発射未入力、発射待ちの buffered shot あり、発射中の 3 パターン。`patches/splatoon3/tests/trizooka-water-crossing.test.mjs` で再現。
 - プレイへの影響: この項目では挙動を変更していない。試験で既存挙動を固定した。30/60/120Hz と rendering hitch で、水没は最初の固定 tick に 1 回だけ起き、死亡 tick の後に volley は出ない。owner の packet は remote で 1 回だけ適用され、水没によるキル credit は発生しない。
 - 確認状態: 自動試験（production composition、FixedClock、ロジック単独）で確認。ブラウザ実動作、実機、複数端末の同期は未確認。境界を跨ぐ tick で移動後判定より前に volley が出る既存順序は、本家の根拠が見つからないため未確認のまま残し、変更していない。Issue #1164 は Open のまま。
+## #935: TIME UP で held Charger / Splatling / SUB が release 扱いにならない（2026-10-10）
+
+- 本家の根拠: **未確認**。2026-10-10 に一般 Web 検索（「Splatoon 3 time up held charger splatling release」）を行ったが、試合終了時の held 入力の扱いを示す資料は見つからなかった。Google Drive 検索でも関連ノートは見つからず、ビルド圧縮ファイルのみだった。任天堂公式資料と Inkipedia の試合終了ルールは未確認。Charger / Splatling の通常 release の仕様は、既存の各ブキ項目の範囲に限る。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/turf-finish.mjs` の `captureTurfFinish` が `playing→finish` の一回の境界で `weaponRunner.cancelPendingInput()` を呼び、`neutralizeTurfInput` が現在の intent と前回の `_prevIntent` の fire / sub / jump / squid / special を両方 false にする。変更は commit `04d862c`（PR #868、main の `7ab20b4` に収容）。
+- 再現操作（修正前）: オンライン・オフラインの Turf War で FIRE を保持したまま残り時間 0 を跨ぐ。Charger は発射、Heavy Splatling は streaming に入った（`reports/inkwave-finish935-input.md` の旧 runtime 再現）。issue 本文は SUB を保持したままの Splat Bomb の投擲も挙げるが、#410 の current / previous 入力の同時クリアで既に防がれており、本件では対照として扱う。
+- 再現操作（修正後）: 同じ操作で、TIME UP 直後に新たな発射・stream・投擲は起きない。通常の playing 中の release は各 1 回。既存の弾・ボム・雲は保持され、クールダウン・ロール状態は変わらない。
+- 試験: `patches/reliability/tests/finish935-input.test.mjs` 9 件、合格。30 / 60 / 120 Hz の固定ステップ、オフラインと NetMatch ホスト。加えて、一時停止中に保持した Charger / Splatling / SUB が偽の release を生まず、再開後の実際の release で 1 回だけ作用することを確認（この追加分は保持の確認であり、修正前の失敗を示すものではない）。隣接試験（`turf-finish`、`platform-pending-input`、`charger-cancel-sub`、`charger-squid-cancel-recovery`、`issues-1092-1114-finish-mobile-adoption`）も合格。
+- プレイへの影響: TIME UP 後の新たな攻撃は発生しない。一時停止の保持は解放されない。観測のみの点: 一時停止中に実際に指を離した場合、Charger / Splatling の発射と SUB のボム投擲は再開時に行われる。これが本家の仕様と一致するかは未確認。
+- 確認状態: ロジックの組み立て試験のみ（VM 上の Match / Actor / WeaponRunner と NetMatch オブジェクト）。実ブラウザ、実機、本家との比較は未実施。CI の最終結果と main への merge は未確認。Issue #935 の close は、本家根拠と CI の確認まで行わない。フォロワー（オンライン guest）の遅延は #838、弾・雲の継続描画は #410 の範囲で別管理。メニュー遷移とフォーカス喪失時の held 保持は、この追加試験では未検証（フォーカス喪失の pending 取消は既存の `platform-pending-input` 試験、#991）。
