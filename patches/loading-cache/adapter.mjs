@@ -84,6 +84,9 @@ export function adaptCompiledMain(source) {
 export function loadingIdentity() {
   return Object.fromEntries(filesIn(LOADING_ROOT).filter(file=>!file.includes(`${path.sep}tests${path.sep}`)&&!file.endsWith('.md')).map(file=>[path.relative(LOADING_ROOT,file).split(path.sep).join('/'),hash(fs.readFileSync(file))]));
 }
+// Cold offline cache only needs stages that can actually be played offline.
+// The Cargo stage has onlineOnly:true; its lightmap remains versioned and
+// cache-on-request but not in the install-time 5 MiB snapshot.
 export const coldOfflineLightmap = rel => rel.startsWith('assets/lightmaps/') &&
   rel !== 'assets/lightmaps/cargo.png';
 export function prepareLoading(build, preloads, compactRuntime = source => source) {
@@ -120,6 +123,10 @@ export function prepareLoading(build, preloads, compactRuntime = source => sourc
   // The 512px install icon is optional for gameplay and is integrity-checked and
   // cache-on-request by the same worker, while the 192px and vector icons stay
   // in the cold-offline core. Preserve all boot modules and stage lightmaps.
+  // Cargo is an online-only/no-bots/no-boss stage (src/config.js). Its PNG
+  // lightmap is integrity-checked and cached on first online use, not copied
+  // into the 5 MiB cold-offline snapshot where that stage cannot be played.
+  // All three playable offline stage lightmaps remain in the install snapshot.
   // PWA icons are fetched by the browser at install/display time, not game startup.
   // Keep all three versioned icon files in BUILD.assets for integrity-checked
   // cache-on-request; precache the manifest and actual gameplay dependencies.

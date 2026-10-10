@@ -1,3 +1,4 @@
+import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
 // Splatoon 3 sub weapons for the published INKWAVE runtime.
 //
 // Authority stays exactly where issue 177 and the parent advisory place it:
@@ -151,6 +152,9 @@ export const CURLING = {
 
   spawnSpeedY: perSecond(0.12),
   spawnSpeedYMaxCharge: perSecond(0.12),
+  spawnSpeedYWorldMin: perSecond(-0.5),
+  inheritYPlus: 2,
+  inheritYMax: perSecond(0.16),
   // Same launch contract as Suction. SpawnSpeedY equals SpawnSpeedYMaxCharge,
   // so the vertical launch does not depend on the held charge.
   launch: Object.freeze({ spawnSpeedY: perSecond(0.12), spawnSpeedYWorldMin: perSecond(-0.5),
@@ -450,20 +454,10 @@ export function kitBombAttach(SUB, projectiles, actor, release) {
   // Held charge re-aims through the native throwVelocity, so aim pitch and
   // player-velocity carry stay with the native implementation.
   if (resolved.throwSpeed != null) {
-    const v = withThrowLaunch(projectiles, resolved.spec?.launch,
-      () => projectiles.throwVelocity(actor, resolved.throwSpeed, b.vel.clone()));
+    const v = projectiles.throwVelocity(actor, resolved.throwSpeed, b.vel.clone());
     if (v) b.vel.copy(v);
   }
   return b;
-}
-
-// The throw integrator (sub-special-fidelity) reads `s3ThrowLaunch` for the one
-// synchronous throwVelocity call, so the Splat Bomb keeps its own fields.
-export function withThrowLaunch(projectiles, launch, fn) {
-  const saved = projectiles.s3ThrowLaunch;
-  projectiles.s3ThrowLaunch = launch || null;
-  try { return fn(); }
-  finally { projectiles.s3ThrowLaunch = saved; }
 }
 
 // ---- 3. per-bomb gravity, contact and fuse inside the native loop ------------
@@ -718,7 +712,7 @@ export function kitBombExplosionPaint(SUB, b, paint) {
   const center = b.s3PaintPoint.copy(b.pos).addScaledVector(n, offset);
   const baseSeed = Number.isFinite(b.s3ExplosionPaintSeed) ? b.s3ExplosionPaintSeed
     : (b.s3ExplosionPaintSeed = Math.random());
-  let area = paint.splat(center, r.paintRadius, b.team, { seed: baseSeed, claimOwner: b.owner });
+  let area = paint.splat(center, r.paintRadius, b.team, { seed: baseSeed, claimOwner: b.owner, kitPaint: b.s3PaintBirth });
   if (satelliteRadius > 0 && ring > 0) {
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2;
@@ -912,6 +906,19 @@ function previewCurlingPath(projectiles, resolved) {
 }
 let UP_REF = null, SUB_REF = null;
 
+// Consume the sub's own launch record (MoveParam SpawnSpeedY/YWorldMin and
+// SpawnBulletAdditionMovePlayerParam X/Z/YPlus/YMax) without changing the
+// Splat Bomb or Storm mapping. Curling interpolates SpawnSpeedY towards
+// SpawnSpeedYMaxCharge with the held charge (both 0.12 in 11.3.0).
+export function kitThrowVelocity(actor, resolved, speed, out) {
+  const spec = resolved?.spec;
+  if (!spec?.launch || spec.id === 'bomb') return null;
+  const y = Number.isFinite(spec.spawnSpeedYMaxCharge) && Number.isFinite(spec.spawnSpeedY)
+    ? spec.spawnSpeedY + (spec.spawnSpeedYMaxCharge - spec.spawnSpeedY) * (resolved.charge || 0)
+    : spec.launch.spawnSpeedY;
+  return fidelityThrowVelocity(actor, 'bomb', out, speed, { ...SUB_SPECIAL_FIDELITY.bomb, ...spec.launch, spawnSpeedY: y });
+}
+
 // ---- Install -----------------------------------------------------------------
 
 const KIT_KEY = '__kitSubsInstalled';
@@ -925,12 +932,22 @@ export function installKitSubs(api, profile) {
   UP_REF = api.THREE ? new api.THREE.Vector3(0, 1, 0) : null; SUB_REF = SUB;
   registerKitSubs(SUB, profile);
 
+  const nativeThrowVelocity = Projectiles.prototype.throwVelocity;
+  Projectiles.prototype.throwVelocity = function (actor, speed, out) {
+    const resolved = this.s3KitThrowResolved || this.s3KitPreviewResolved;
+    return kitThrowVelocity(actor, resolved, speed, out) || nativeThrowVelocity.call(this, actor, speed, out);
+  };
+
   // The per-bomb spec is attached by the adapter before recBomb; this wrapper only
   // consumes the held charge so the next press starts from zero.
   const throwBomb = Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb = function (actor) {
     const runner = actor?.weaponRunner;
-    const out = throwBomb.call(this, actor);
+    const previous = this.s3KitThrowResolved;
+    this.s3KitThrowResolved = resolveSubForThrow(actor, runner?.s3SubHold, SUB);
+    let out;
+    try { out = throwBomb.call(this, actor); }
+    finally { this.s3KitThrowResolved = previous; }
     // Charge is consumed by the owner's own release. A ghost replays through this
     // same method, and a remote runner's hold is not ours to clear.
     if (runner && !actor?.remote && !ghostBombSpawning()) runner.s3SubHold = 0;
@@ -942,11 +959,12 @@ export function installKitSubs(api, profile) {
   Projectiles.prototype.updateArc = function (actor, show) {
     const resolved = resolveSubForThrow(actor, actor?.weaponRunner?.s3SubHold, SUB);
     if (!resolved || resolved.throwSpeed == null) return updateArc.call(this, actor, show);
-    const saved = this.s3PreviewSubSpeed;
+    const saved = this.s3PreviewSubSpeed, previous = this.s3KitPreviewResolved;
+    this.s3KitPreviewResolved = resolved;
     this.s3PreviewSubSpeed = resolved.throwSpeed;
     let out;
-    try { out = withThrowLaunch(this, resolved.spec?.launch, () => updateArc.call(this, actor, show)); }
-    finally { this.s3PreviewSubSpeed = saved; }
+    try { out = updateArc.call(this, actor, show); }
+    finally { this.s3PreviewSubSpeed = saved; this.s3KitPreviewResolved = previous; }
     if (show && actor?.alive && resolved.spec?.mode === 'roll') previewCurlingPath(this, resolved);
     return out;
   };

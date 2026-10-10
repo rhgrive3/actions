@@ -1503,8 +1503,8 @@ export function adaptSource(rel, code) {
     {
       const rawEnemyReveal = "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;";
       const scoreHudEnemyReveal = "          if (!mapActorVisible(o, a, PLAYER.hp, G.time)) continue;";
-      const directEnemyReveal = "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp)) continue;";
-      const combinedEnemyReveal = "          // S3 Turf Map: preserve timed/team reveal and explicit recon marking; damage >=18 satisfies both.\n          if (!mapActorVisible(o, a, PLAYER.hp, G.time) && !enemyRevealedOnMap(o, PLAYER.hp)) continue;";
+      const directEnemyReveal = "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp, a, G.time)) continue;";
+      const combinedEnemyReveal = "          // S3 Turf Map: preserve timed/team reveal and explicit recon marking; damage >=18 satisfies both.\n          if (!mapActorVisible(o, a, PLAYER.hp, G.time) && !enemyRevealedOnMap(o, PLAYER.hp, a, G.time)) continue;";
       if (code.includes(scoreHudEnemyReveal)) {
         code = replaceOnce(code, scoreHudEnemyReveal, combinedEnemyReveal, 'enemy map reveal after score HUD');
       } else if (code.includes(rawEnemyReveal)) {

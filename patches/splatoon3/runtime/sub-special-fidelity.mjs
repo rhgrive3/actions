@@ -135,14 +135,6 @@ export function applySplatBombSurfaceResponse(b, normal, spec = SUB_SPECIAL_FIDE
   return b;
 }
 
-// Same predicate as kit-subs kitBombOwnsExplosionPaint (kept import-free: this
-// module is also loaded standalone). An owner-authoritative Suction/Curling
-// record paints its own BlastParam footprint and must not be intercepted.
-export function kitOwnedExplosionPaint(b) {
-  const r = b && !b.ghost ? b.s3Resolved : null;
-  return !!r && r.spec?.id !== 'bomb' && Number.isFinite(r.paintRadius);
-}
-
 // A Splat Bomb resting on (or skidding along) a surface between swept hits.
 // The native sweep only reports a hit on the steps where the bomb dips through
 // the surface, so applying the ground AirResist on hits alone left the bomb
@@ -293,13 +285,12 @@ export function applyBlasterBlastContact(system, projectile, victim, center, tar
   return admission;
 }
 
-// `launch` (optional) replaces the Splat Bomb launch fields for a sub whose own
-// MoveParam/SpawnBulletAdditionMovePlayerParam states them (kit-subs launch).
+// `override` (optional) replaces the Splat Bomb launch record for a sub whose
+// own MoveParam/SpawnBulletAdditionMovePlayerParam states it (kit-subs launch).
 // Player velocity is split into the facing (Z) and lateral (X) parts; a record
-// without ZRate (Splat Bomb, Storm) uses XRate for both, as before.
-export function fidelityThrowVelocity(actor, kind, out, forwardSpeed, launch) {
-  const base = kind === 'storm' ? SUB_SPECIAL_FIDELITY.storm : SUB_SPECIAL_FIDELITY.bomb;
-  const p = kind !== 'storm' && launch ? { ...base, ...launch } : base;
+// without inheritZ (Splat Bomb, Storm) uses XRate for both, as before.
+export function fidelityThrowVelocity(actor, kind, out, forwardSpeed, override) {
+  const p = override || (kind === 'storm' ? SUB_SPECIAL_FIDELITY.storm : SUB_SPECIAL_FIDELITY.bomb);
   const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;
   const pitch = clamp(actor.aimPitch || 0, -1.05, 1.15);
   const yaw = actor.aimYaw || 0;
@@ -351,7 +342,7 @@ export function installSubSpecialFidelity(api, profile) {
   const throwVelocity = Projectiles.prototype.throwVelocity;
   Projectiles.prototype.throwVelocity = function (actor, speed, out) {
     const kind = this[THROW_KIND] === 'storm' ? 'storm' : 'bomb';
-    return fidelityThrowVelocity(actor, kind, out, speed, kind === 'storm' ? null : this.s3ThrowLaunch);
+    return fidelityThrowVelocity(actor, kind, out, speed);
   };
 
   const throwStorm = Projectiles.prototype.throwStorm;
@@ -367,10 +358,10 @@ export function installSubSpecialFidelity(api, profile) {
   const explodeBomb = Projectiles.prototype._explodeBomb;
   const c0 = new THREE.Vector3(), c1 = new THREE.Vector3();
   Projectiles.prototype._explodeBomb = function (b) {
+    // Kit paint has its own single native owner; never intercept its stamps.
+    if (!b.ghost && ['suction', 'curling'].includes(b.s3Resolved?.spec?.id)) return explodeBomb.call(this, b);
     const paint = G.paint;
-    // Suction/Curling paint their own BlastParam footprint (kit-subs #1123);
-    // only the native Splat Bomb paint pass is replaced here.
-    if (!paint?.splat || kitOwnedExplosionPaint(b)) return explodeBomb.call(this, b);
+    if (!paint?.splat) return explodeBomb.call(this, b);
     const nativeSplat = paint.splat;
     let intercepted = 0;
     paint.splat = function (...args) {
