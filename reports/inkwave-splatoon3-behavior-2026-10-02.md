@@ -3331,3 +3331,20 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - テスト: `patches/splatoon3/tests/splatling-standing-outer-share.test.mjs`（300発で外側90発、30%を決定的に確認）。`splatling-jump-spread-native.test.mjs` の描画乱数の順番を、接地発射の選択1回ぶん更新。
 - 確認状態: 単独の決定的テストのみ。内側kernelの角度（1.98° は INKWAVE の既存値で S3 の実測ではない）、外側確率の形（二択か連続か）、最終PDF、HUDの外側リング表示、リモート対戦での同期、30/60/120 Hz での実機比較、実機比較は **未確認**。
 
+## 2026-10-10 — #719 airborne Splat Dualies dodge roll
+
+**Reference and conditions.** Comparison target: Splatoon 3 Ver. 11.3.0, as cited in #719 (Nintendo Ver. 11.3.0 update notes; Inkipedia Dualies and Mobility pages). These sources were not re-fetched in this session. Condition: Splat Dualies, firing with a movement direction, jump pressed while not on the ground. The airborne vertical velocity, acceleration and trajectory shape are not published and are not pinned here.
+
+**INKWAVE implementation.** The Actor's jump-buffer dodge admission in `inkwave-public/src/game/actor.js` (`Actor.update`) was gated by `this.grounded`. `patches/splatoon3/issue-719-dodge-adapter.mjs`, wired in `patches/splatoon3/adapter.mjs` `adaptSource`, removes that gate. `WeaponRunner.tryDodge` (`weapons.js`) still owns the weapon, fire, direction, roll-count and ink checks. An admitted airborne roll is marked `dodge.airborne = true` and its vertical velocity is set to `max(-maxFall, min(vel.y, -gravity * rollTime))` with INKWAVE's own `gravity` and `maxFall` (`config.js`). This is an INKWAVE-derived descent, not a Splatoon 3 constant. A jump inside the coyote window after leaving a ledge keeps the ordinary jump; this precedence is an INKWAVE choice and is not sourced from Splatoon 3.
+
+**Reproduction and impact.** Equip Splat Dualies, step off a ledge, hold fire and a direction, then press jump. Before the fix nothing rolls. After the fix one roll starts, pays the normal roll ink once and descends. Ordinary airborne jumps without fire, direction, rolls or ink are unchanged. Grounded rolls are unchanged. Ground contact during the roll neither starts a second roll nor double-charges; roll count refills on ground contact as before.
+
+**Test status.** `node --experimental-vm-modules --test patches/splatoon3/tests/issue-719-dualies-airborne-roll.test.mjs` passes 5/5. Two of the five (airborne admission and ground-contact continuity) fail with the adapter call disabled. Seven neighbouring Dualies and adapter files (`adapter`, `dualies-jump-lock`, `dualies-roll-recovery`, `issue-477`, `issue-eight-followup`, `action-admission`, `integration`) pass 80/80. `scripts/check-inkwave-patches.mjs --quick` passes.
+
+**Unconfirmed.**
+- The Splatoon 3 airborne downward speed, acceleration and trajectory are 未確認. The INKWAVE descent above is a provisional, engine-derived choice.
+- The 30/60/120 Hz identity of admission and landing ticks is 未確認; this change's tests do not vary the render rate.
+- Air tumble presentation in the procedural Character is 未確認 in a browser. `dualies-motion.mjs` does not read `dodge.airborne` yet.
+- A real floor landing mid-roll is 未確認; the test sets only the grounded flag because the fixture has no floor.
+- The coyote-window precedence is an INKWAVE choice and is 未確認 against Splatoon 3.
+- #477 (4F startup) and #532 (distance calibration) are separate and are not resolved by this entry.
