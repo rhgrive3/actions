@@ -87,6 +87,11 @@ function rig(api, kind = 'shooter', enabled = true) {
   const a = new Actor({ team: 0, name: 'bomb motion regression', weapon: kind,
     CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   a.isLocal = true; a.grounded = true; a.ground.hit = true;
+  // These base kits now carry deployed catalogue subs. This fixture tests
+  // native held-bomb animation across main rigs, so explicitly select a bomb.
+  if (['blaster', 'slosher', 'splatling'].includes(kind)) {
+    a.weapon = { ...a.weapon, sub: 'suction' }; a.weaponRunner.reset();
+  }
   const ch = a.character; ch.actor = a; ch.onEvent = null; ch.s3BombMotionEnabled = enabled;
   G.actors = [a]; G.scene.add(ch.root);
   const projectiles = new api.Projectiles(G.scene);
