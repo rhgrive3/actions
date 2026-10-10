@@ -85,12 +85,18 @@ test('Splat Bomb released through a custom kit retains the generic native paint 
 
 test('Practice Range keeps Point Sensor and Tacticooler on the composed support-kit paths after Toxic Mist',async()=>{
  const f=await setup(),a=f.make();f.G.match={range:{},playing:()=>false};
+ const release=()=>{
+  a.intent.sub=true;for(let i=0;i<8;i++){f.tick(a);f.G.projectiles.update(1/60);}
+  a.intent.sub=false;for(let i=0;i<12;i++){f.tick(a);f.G.projectiles.update(1/60);}
+ };
  equip(f,a,'toxicMist','trizooka');
- const mist=f.G.projectiles.throwBomb(a);assert.equal(mist.subId,'toxicMist');assert.equal(f.G.projectiles.bombs.length,0);
+ release();assert.ok(f.G.projectiles._s3SubObjects.some(o=>o.subId==='toxicMist'));assert.equal(f.G.projectiles.bombs.length,0);
  f.G.projectiles.clear();equip(f,a,'pointSensor','tacticooler');a.ink=100;
- const sensor=f.G.projectiles.throwBomb(a);
- assert.ok(sensor);assert.equal(f.G.projectiles._s3SupportSensors.at(-1),sensor);
+ assert.equal(a.weaponRunner.s3Sub.id,'pointSensor','catalogue selection refreshes the real runner cache');
+ release();const sensor=f.G.projectiles._s3SupportSensors.at(-1);
+ assert.ok(sensor);
  assert.equal(f.G.projectiles.bombs.length,0,'Point Sensor must not fall through to native Splat Bomb');
+ for(let i=0;i<90;i++){f.tick(a);f.G.projectiles.update(1/60);}
  const specials=a.stats.specials;a._startSpecial();
  assert.equal(a.stats.specials,specials+1);assert.equal(a.specialActive?.id,'tacticooler');
  assert.equal(f.G.projectiles._s3SupportCoolers.at(-1)?.owner,a);
