@@ -52,6 +52,7 @@
       "matchmakingRange": 12.9
     },
     "dualies": {
+      "rollDist": 5,
       "inkPerShot": 0.72,
       "moveSpeedFiring": 4.8,
       "projSpeed": 142.20000000000002,

@@ -3421,3 +3421,22 @@ Reference: Splatoon 3 Ver. 11.3.0. Nintendo's [11.3.0 notes](https://en-americas
 - Play impact: enemy ink no longer bleeds through Slam's full-invulnerability window, so it matches the weapon-damage rule for the same window.
 - Tests: `tests/slam-damage-state.test.mjs` new case `#573 enemy ink contact ...` fails before the fix and passes after; the file is 6/6. Neighbouring `movement-resources`, `issue-731-sub-ready-enemy-ink`, `issue-160-enemy-ink-form` and `tidal-slam-damage` pass 45/45.
 - Unverified (未確認): whether retail Triple Splashdown invulnerability blocks enemy-ink contact is not stated by Nintendo and was not measured; this INKWAVE rule follows the issue's "ink/environmental damage follows the verified special rule" criterion and is not a retail capture. The post-landing protection duration remains a capture gap, unchanged. No device or Switch comparison was run.
+## 2026-10-10 — #532 Splat Dualies dodge-roll displacement (5.0 units instead of the inherited 2.8)
+
+- 本家の根拠（比較基準 Splatoon 3 Ver.11.3.0。移動距離の公式値は未確認）:
+  - Splatoon Wiki "Splat Dualies" の Dodge Roll: 「ロールアニメ中に 4.0 units、その後のスライドで 1.0 units」、合計 5.0 units。4f の startup、12f のアニメーション、アニメ後 4f でショット再開。
+  - Splatoon Wiki "User:XarrotD/newdata"（oldid 575090、2024-05-05 版の利用者作業ページ）: 5.0DU、4f startup、12f roll、4f shot cooldown。一次資料ではない。
+  - Splatoon Wiki "DU": 距離単位の m 換算は非公式（conjectural タグ付き）。wiki は DU と WU の対応を示さない。
+  - Leanny/splat3 `7280ff9c`: `WeaponManeuverNormal` の `SideStepParam.MoveFrame = 12`。距離フィールドは抽出されていないため、5.0 は抽出値ではない。
+- INKWAVE 実装箇所: `patches/splatoon3/profile.json` の `dualies.rollDist = 5`（従来は汎用の 2.8 が S3 build に継承）。`dodgeVel` は `rollDist` を `movement-physics.mjs` の `dodgeIntervalDistance` で 12F に積分する。`reference/numeric-status.json` に `weapons.dualies.rollDist` を記録。
+- 再現操作: Splat Dualies、平坦で障害物なし、静止から 1 回ロール。前後左右の 4 方向で、ロール移動フェーズ（12F）の水平変位を積分する。
+- 差分: 修正前の総量は 2.8、本家の 5.0 に対して 56%。修正後は 5.0 を既存の前傾積分（`1.5 × rollDist / rollTime × (1 − u²)`）で配分する。ロールの時間、ink 7%、4F 射撃ゲートは変更しない。
+- プレイへの影響: 1 回の回避の移動量が約 1.8 倍になる（DU と WU を 1:1 とみなす場合）。連続 2 回のロールの総量も同じ比率で増える。
+- 出典の経路: 未マージの `fix/inkwave-10-issues-20261009` の e48cbc9f（profile）、ec0f43b2（試験）、ac9af891（numeric-status の rollDist 部分のみ）を main に移植した。`issue-477.test.mjs` の期待値コメントを 5.0 に更新。
+- テスト: `patches/splatoon3/tests/issue-532-dualies-dodge-distance.test.mjs`（5 件）。rollDist を 2.8 に戻すと 5 件とも失敗することを確認。関連する dualies / roll の targeted tests 10 ファイルと `check-inkwave-patches.mjs --quick` は失敗 0。
+- 確認状態:
+  - 確認済み（公開版 Actor 上の決定的な単独テスト。60Hz 固定刻み）: 4 方向で総量 5.0、12F のダッシュ所有フェーズ。
+  - 未確認: S3 DU から INKWAVE world unit への物理スケール（1:1 は既存の raw 値運用に従った仮定。wiki は m 換算を非公式とする）。
+  - 未確認: 4.0（アニメ中）と 1.0（スライド）の分配。今回は分配を新設せず、12F の積分で総量だけを合わせた。
+  - 未テスト: 2 連続ロールの総量、壁衝突での打ち切り、30/120 Hz 描画での終点一致、坂や段差上のロール。
+  - 本家の実機比較は未実施。上記の単独テストは実機比較の代用にならない。
