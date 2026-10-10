@@ -144,7 +144,7 @@ test('catalog expansion keeps hub pads separate and every main switchable', asyn
     const pads = s.pads.defs.filter(p => p.kind === 'weapon');
     assert.equal(s.pads.defs.length, 14);
     assert.equal(pads.length, 7);
-    assert.deepEqual(pads.map(p => p.weapon), ['shooter', 'dualies', 'splatling', 'roller', 'slosher', 'charger', 'blaster']);
+    assert.deepEqual(Array.from(pads, p => p.weapon), ['shooter', 'dualies', 'splatling', 'roller', 'slosher', 'charger', 'blaster']);
     for (let i = 0; i < pads.length; i++) {
       for (const other of pads.slice(i + 1)) {
         assert.ok(Math.hypot(pads[i].x - other.x, pads[i].z - other.z) >= 2 * R.ZONES.PAD_R, 'no overlapping activation regions');
