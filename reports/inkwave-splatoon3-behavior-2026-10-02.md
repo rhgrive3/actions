@@ -2853,3 +2853,11 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
 - リモート actor は複製された使用後の時計を持たないため、表示は従来どおり 0 のまま。
 - 死亡時の通常ゲージ減少規則と使用後ドレインの関係は、本家実機で未確認。試験では lock と表示が死亡・reset をまたいで継続することだけを確認した。
 - 関連 Issue: #322 系の lock、#76（ink tank refill）、#177、#192 は別件として扱い、本記録では変更していない。
+## 2026-10-10: #226 Ink Storm rain accounting (calibration only, no gameplay change)
+
+- 本家の根拠: Ver. 11.3.0 の Leanny 抽出値 `CloudParam.RainNum=72`、`RainyFrame.Low=480`（[抽出表](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json)）。72 が生成総数、同時管理数、再利用、地面到達、塗り呼出のどれに対応するかは未確認。
+- INKWAVE 実装箇所: 計測のみ。`patches/splatoon3/tests/storm-rain-calibration-harness.mjs`、`scripts/measure-inkwave-storm-rain.mjs`。公開版 `inkwave-public/src/game/weapons.js` の `_updateClouds` は残り 0.3 秒の時点で雨の生成を止める。
+- 再現操作: 単独の非ゴースト雲（チーム0、(0,5,0) WU、平坦な 64 WU 平面、8 秒）を 30/60/120 Hz の描画刻みで実行。
+- 結果（論理計測、描画スタブ、実機ではない）: `production`（adapter 込み、60 Hz 固定時計）は 30/60/120 Hz すべて候補レイ 178。`public-source`（未改変の公開モジュール、描画フレームごとに 1 回の更新）は 172 / 172 / 171。
+- プレイへの影響: なし。雨の処理、塗り、数値は変更していない。
+- 確認状態: 未確認。実機 11.3.0 での粒子の生成・再利用・地面接触の時刻、対応する塗り分布が必要。`RainNum=72` を候補レイ、塗り呼出、CPU 塗りの必要数とは扱わない。詳細: [雨の会計報告](inkwave-storm-rain-calibration-2026-10-09.md)。
