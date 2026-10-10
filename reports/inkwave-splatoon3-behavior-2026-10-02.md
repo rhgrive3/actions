@@ -3281,3 +3281,10 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - 再現操作: stand on the ground for two or more frames, walk off a ledge without any jump input, then fire during the fall. Before the change, `_spreadDeg` returned 10 during the fall. After the change it returns 0, and a real jump from the same spot still starts the 10 degree / 0.5 bias state with the 25F to 70F recovery.
 - プレイへの影響: before the change, a shot fired while falling off a ledge used the jump-accuracy envelope and bias. After the change, the fall uses the normal grounded cone. Intensify Action still scales only the real jump envelope.
 - 確認状態: logic tests only (`blaster-jump-accuracy.test.mjs`, `weapons-gear-flow.test.mjs`, 30/60/120 Hz, gear on and off, shot path). The fall-without-jump rule has no official Nintendo source here, so it stays 未確認 for real hardware. Browser behaviour and a live Ver. 11.3.0 comparison are not done. The intermediate recovery curve between 25F and 70F is not a sourced value and stays 未確認. The same hunk is in PR #1182 commit e6c0107d. The integration branch `ccr-bfa73df8-u3uhvi` and main still have the fallback until this commit is merged.
+## 2026-10-10 — #1162 water-height footprint scan (takeover)
+
+- **本家の根拠:** なし。性能項目で、スプラトゥーン3の挙動・数値を比較する対象ではない。本家との比較ではなく、INKWAVE 内部の波高が従来と同じ値を返すことだけを確認する。
+- **INKWAVE 実装箇所:** `inkwave-public/src/world/environment.js` の `waterHeightAt()`。上流は変更せず、`patches/splatoon3/issue-batch-1171-adapter.mjs`（`adaptSource` 経由）が毎回の一時配列を作らないループに置換する。試験は `patches/splatoon3/tests/issue-batch-1171.test.mjs`。
+- **再現操作:** 同一の環境オブジェクトで、マリーナ on/off、`footprint` と `bounds` の差し替えを 6 段階行い、各段階 120 点で従来実装と値を比較する。
+- **プレイへの影響:** 波高・浮遊物の位置は変えない（試験上は従来と完全一致）。フレームごとの一時配列の削減による FPS・GC の改善は測っておらず、主張しない。
+- **確認状態:** ロジック単独の回帰試験のみ。ソース上で配列生成の式が残っていないことは文字列検査で確認（実行時のアロケーション計測ではない）。テーマ・seaState は `waterHeightAt` の入力ではないことをソースで確認。浮遊物・反射・環境破棄のブラウザ動作、実機のアロケーション数・GC・FPS は未確認。
