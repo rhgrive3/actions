@@ -3036,3 +3036,11 @@ Known residual: the same-tick check uses the new source's final intent, so a new
 - 再現操作: Turf のオンライン部屋 (2 クライアント)。ホストが部屋を作り、ゲストが参加。ホストが各プレイヤーの A/B を割り当てて CONFIRM TEAMS。ゲストが READY。ホストが READY を選ぶ (修正前は不可)。START。
 - プレイへの影響: Turf のプライベート部屋の開始手順。修正前はホストが開始できない。ゲストのチーム変更不可、ホストの割当は既存どおり。
 - 確認状態: 自動テスト (`patches/splatoon3/tests/issue-1039-private-host-teams.test.mjs` 4/4、`patches/reliability/tests/` の composition 8/8、`check-inkwave-patches --quick` OK) のみ。ブラウザの実 2 クライアント操作、ボタン配置と見た目、実機での Splatoon 3 との一致は未確認。`scripts/check-inkwave-network-browser.mjs` は未実行。ホストが最終 Ready を行うかどうかは未確認 (記事の文言からの推測)。
+
+## 2026-10-10: teammate already in a Super Jump is a target, and the chain inherits its destination (#412)
+
+- 本家の根拠: Inkipedia「Super Jump」の Multiplayer matches 節に「Jumping to a player that is in the middle of a Super Jump makes the destination match the other player's destination.」とある（2026-10-10 取得）。Nintendo の Ver. 11.3.0 公式パッチノート（https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/）には Super Jump と味方への言及がない。この規則が 11.3.0 で成立するかは未確認。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/superjump.mjs` の `superJumpTarget`（味方が Super Jump 中なら、有限な確定行先 `superJumpState.to` のみを継承。地面スナップショットと空中の `pos` は使わない）、`patches/splatoon3/adapter.mjs` の Actor 受付（`target.superJumpState` の一律拒否を削除）、`patches/reliability/superjump-chain-adapter.mjs`（`player.js` のマップ選択・確認・航法、`hud.js` と `diorama.js` の確認経路、`bots.js` の復活後選択）、`patches/splatoon3/runtime/superjump-destination.mjs`（確定行先の判定）。
+- 再現操作: 味方 B が生存したまま Super Jump の溜め中または飛行中に、A が Tab マップ、1〜3 キー、パッド、タッチのいずれかで B を選ぶ。修正前は B が拒否され、修正後は A の行先が B の確定行先と一致する。
+- プレイへの影響: 生存中の Super Jump 中の味方を選べるようになる。死亡、敵、自分自身、未確定・不正な座標、確定行先のない旧形式の状態は引き続き拒否する。通常の味方選択と、#362 の通常目標のスナップショットは変更しない。Bot の復活後選択は既存の 50% 判定と順位付けを保つ。
+- 確認状態: 実ソースを合成したロジック単独の試験（Actor、PlayerController、HUD、diorama、Bot、30/60/120 Hz の固定刻み）で確認。修正前は新規 11 件中 9 件が失敗。ブラウザでの実動作と本家の実機比較は未確認。溜め中に選べる点は「Super Jump の途中」からの推定で、本家の仕様文はこの区別を書いていない（未確認）。オンラインの遠隔味方は確定行先を受理済みの状態から復元できる場合だけ使い、復元できない場合は拒否のまま（未確認）。

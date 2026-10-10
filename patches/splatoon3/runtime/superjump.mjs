@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { G } from '../../../src/core/ctx.js';
 import { PLAYER } from '../../../src/config.js';
 import { SUPERJUMP_MAIN_PROGRESS } from './weapon-gates.mjs';
+import { hasCommittedSuperJumpDestination } from './superjump-destination.mjs';
 
 // Preserve the public game's existing human-form boundary, NOT a measured S3
 // frame value. Nintendo confirms pre-landing attacks but not their exact gate.
@@ -95,6 +96,12 @@ export function superJumpTarget(target, out) {
     out.copy(target); return true;
   }
   if (!target.alive) return false;
+  // #412: a teammate already in a Super Jump hands over its committed
+  // destination (never its transient airborne pos or last-ground point).
+  if (target.superJumpState) {
+    if (!hasCommittedSuperJumpDestination(target)) return false;
+    out.copy(target.superJumpState.to); return true;
+  }
   rememberSuperJumpGround(target);
   // Never silently fall back to an airborne coordinate. Newly seen airborne
   // network peers have no known support yet and cannot be resolved safely.
