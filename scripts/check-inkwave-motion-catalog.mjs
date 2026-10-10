@@ -242,8 +242,11 @@ export function validateCatalogResult(result) {
         // actual native-Actor locomotion drive and a settled source anchor
         // must be present; simply floating the sole cannot pass the gate.
         const gaitTicks=count(s => s.walkActive);
-        const stanceTicks=count(s => s.walkActive && s.feet.some(f => f.authority==='source' && f.contactIntent && f.contactWeight>.05));
-        const lockedTicks=count(s => s.walkActive && s.feet.some(f => f.authority==='source' && f.planted && f.contactWeight>.999));
+        // A foot can finish settling after the stick returns to neutral.
+        // Count REAL anchored support across the sampled interval, while the
+        // independent gaitTicks requirement proves that movement occurred.
+        const stanceTicks=count(s => s.feet.some(f => f.authority==='source' && f.contactIntent && f.contactWeight>.05));
+        const lockedTicks=count(s => s.feet.some(f => f.authority==='source' && f.planted && f.contactWeight>.999));
         need(gaitTicks>=Math.min(20,Math.floor(row.samples.length/2)), 'source locomotion clock denominator');
         need(stanceTicks>=Math.max(8,Math.floor(gaitTicks*.22)), 'sourced walking stance denominator');
         need(lockedTicks>=Math.max(3,Math.floor(gaitTicks*.065)), 'sourced settled support denominator');
@@ -639,10 +642,13 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     renderer.render(scene, camera);
     const wholeSceneRgb = globalThis.catalogPixelDifference(beauty, pixels());
     const repeatedBeautyImage = await save(name + '-beauty-repeat', frameImage());
-    // This pass isolates actual vertex motion from native fragment shading.
-    // Keep every native vertex shader, mesh, bone, depth test and cutout. Only
-    // replace the final fragment colour, using a separate temporary material.
-    // Retain both unmodified beauty images and require real movement sensitivity.
+    // A swimming squid can be occluded by its stage floor: a flat shaded
+    // WORLD proves nothing about the actor's vertex response. Beauty and
+    // visibility were verified above with the full original scene. Isolate
+    // the ACTOR for the flat RGB geometry sensitivity proof.
+    const excluded = scene.children.filter(o => o !== ch.root).map(o => [o,o.visible]);
+    for(const [o] of excluded)o.visible=false;
+    // Keep every native vertex shader, mesh, skinning, alpha and cutout.
     const replacements = [], materials = new Map(), vertexSources = [], originalPosition = ch.root.position.clone();
     scene.traverse(n => {
       if (!n.material) return;
@@ -654,9 +660,9 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
         clone.onBeforeCompile = function (shader, r) {
           hook.call(this, shader, r);
           if (!shader.fragmentShader.includes('#include <opaque_fragment>')) throw Error('Pause unsupported native fragment shader: ' + m.type);
-          shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', '#include <opaque_fragment>\ngl_FragColor = vec4(' + c + ', ' + (.9 - c) + ', .4, 1.0);');
+          shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', '#include <opaque_fragment>\ngl_FragColor.rgb = vec3(' + c + ', ' + (.9 - c) + ', .4);');
         };
-        clone.customProgramCacheKey = () => key + '|s3-pause-flat-colour-v1';
+        clone.customProgramCacheKey = () => key + '|s3-pause-flat-colour-v2';
         const p = renderer.properties.get(m).currentProgram;
         materials.set(m, { clone, nativeVertex: p ? gl.getShaderSource(p.vertexShader) : null });
         return clone;
@@ -680,6 +686,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       ch.root.position.copy(originalPosition);
       for (const [n, material] of replacements) n.material = material;
       for (const { clone } of materials.values()) clone.dispose();
+      for (const [o,wasVisible] of excluded) o.visible=wasVisible;
       renderer.render(scene, camera);
     }
     return { unchangedClocks: beforeClocks === clocks(), unchangedRig: beforeRig === rig(),

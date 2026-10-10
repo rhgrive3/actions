@@ -80,7 +80,10 @@ export class SourceMotionController {
   dt=Number.isFinite(dt)?clamp(dt,0,0.1):0;
   if(this.lastAdvanceTime!==undefined&&this.time<this.lastAdvanceTime){this.shootUntil=0;this.directionTurnUntil=0;this.retarget?.reset();}
   this.time+=dt;this.lastAdvanceTime=this.time;
-  this.active=this.enabled&&this.status==='ready'&&!this.disposed;
+  // The source-retargeted roller pelvis shortens its authoritative native
+   // two-hand reach. Until a source weapon fit is calibrated, keep roller
+   // locomotion/contacts under the existing verified native rig owner.
+   this.active=this.enabled&&this.status==='ready'&&!this.disposed&&this.character.weaponKind!=='roller';
   const c=this.character,R=c.root.position,yaw=c.root.rotation.y;
   let dx=0,dy=0,dz=0,dist=0;
   if(this.rootSet){dx=R.x-this.previousRoot.x;dy=R.y-this.previousRoot.y;dz=R.z-this.previousRoot.z;dist=Math.hypot(dx,dz);}

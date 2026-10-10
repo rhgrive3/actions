@@ -329,7 +329,7 @@ export function weakDiagonalWalkTrace(ch) {
 export function walkActive(ch){
   // An active sourced gait skips the procedural _updateFeet owner, so the old
   // WeakMap flag is stale. Report the ACTUAL gait owner for game diagnostics.
-  if(ch.sourceMotion?.active) return ch.sourceMotion.state==='move';
+  if(ch.sourceMotion?.active) return !!ch.kidForm&&!!ch.grounded&&ch.sourceMotion.state==='move';
   return !!states.get(ch)?.active;
 }
 
