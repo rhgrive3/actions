@@ -598,7 +598,13 @@ export function kitBombRetire(b) {
 // has to go off when the owner's did.
 export function kitBombKeepsFuse(b) {
   const mode=presentedOf(b)?.spec?.mode;
-  return mode==='stick'&&b.s3Mode==='stuck'||mode==='roll';
+  // Autobomb's landing starts an actor-owned chase: later walking frames do
+  // not need a second native segment hit to admit the final fuse explosion.
+  // Only a properly landed, armed chase can keep its fuse without new contact.
+  // A flying/forged/unarmed bomb never gains this exemption.
+  return mode==='stick'&&b.s3Mode==='stuck' || mode==='roll'
+    || mode==='chase'&&b.s3Mode==='chasing'&&!!b.s3Auto
+      &&Number.isFinite(b.fuse)&&b.fuse>=0;
 }
 export function kitBombFuseTotal(SUB, b) {
   const t = presentedOf(b)?.fuse;
