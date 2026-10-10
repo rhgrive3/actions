@@ -64,19 +64,19 @@ test('jump endpoints are independent of generic bloom and retain the 25/70F cali
   close(accuracyEnvelope(w,true,25/60,p),7.5);close(accuracyEnvelope(w,true,70/60,p),2);
   let last=7.5;for(let i=26;i<=70;i++){const x=accuracyEnvelope(w,true,i/60,p);assert(x<=last);last=x;}
 });
-test('native Actor slide covers one 5m practice line in 4F startup +12F, at all render cadences',async()=>{
+test('native Actor slide travels 4 WU during 12F roll plus 1 WU during 4F post-roll glide, at all render cadences',async()=>{
   const traces=[];
   for(const hz of [30,60,120]){
     const f=await fixture({fidelity:true}),a=f.make('dualies'),clock=new FixedClock(),trace=[];
     f.G.actors=[a];a.intent.fire=true;a.intent.move.set(0,0,1);a.intent.jump=true;
-    for(let i=0;i<hz*.3;i++)clock.advance(1/hz,dt=>{
+    for(let i=0;i<hz*.4;i++)clock.advance(1/hz,dt=>{
       f.G.time+=dt;a.update(dt);a.intent.jump=false;
       trace.push([a.pos.x,a.pos.z,a.ink,a.weaponRunner.dodge?.t??-1]);
     });
-    assert.equal(trace.length,18);
+    assert.equal(trace.length,24);
     for(let i=0;i<4;i++)close(trace[i][1],0);
-    close(trace[15][1],5);close(trace[15][2],93); // 7% roll ink, no shot before20F
-    close(trace[17][1],5);assert.equal(a.weaponRunner.dodge,null);traces.push(trace);
+    close(trace[15][1],4);close(trace[15][2],93); // 4WU moving roll, 7% ink, no shot before20F
+    close(trace[19][1],5);close(trace[23][1],5);assert.equal(a.weaponRunner.dodge,null);assert.equal(a.weaponRunner.s3DualiesGlide,null);traces.push(trace);
   }
   assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);
 });
@@ -84,8 +84,11 @@ test('actual aerial input admits a slide, spends once, consumes jump, and respec
   const f=await fixture({fidelity:true}),a=f.make('dualies',{y:10});f.G.actors=[a];
   a.grounded=false;a.coyote=0;a.intent.fire=true;a.intent.jump=true;a.intent.move.set(0,0,1);
   for(let i=0;i<16;i++){f.G.time+=1/60;a.update(1/60);a.intent.jump=false;}
-  close(a.pos.z,5);close(a.ink,93);assert.equal(a.weaponRunner.rollsLeft,1);assert.equal(a.jumpBuffer,0);
-  assert(a.pos.y<10 && !a.grounded); // ordinary gravity is retained; exact S3 rapid-fall path unverified
+  close(a.pos.z,4);close(a.ink,93);assert.equal(a.weaponRunner.rollsLeft,1);assert.equal(a.jumpBuffer,0);
+  const rollEndY=a.pos.y;for(let i=0;i<4;i++){f.G.time+=1/60;a.update(1/60);}
+  close(a.pos.z,5);assert(a.pos.y<rollEndY);close(a.ink,92.28); // first post-roll shot at 20F
+  assert(a.pos.y<10 && !a.grounded); // exact S3 drop speed is a calibrated candidate
+  assert(a.vel.y < -8, 'aerial dodge begins a steeper descent than ordinary freefall');
   const g=await fixture({fidelity:true});g.wall(2,{height:20});const b=g.make('dualies',{y:10});g.G.actors=[b];
   b.grounded=false;b.coyote=0;b.intent.fire=true;b.intent.jump=true;b.intent.move.set(0,0,1);
   for(let i=0;i<16;i++){g.G.time+=1/60;b.update(1/60);b.intent.jump=false;}
