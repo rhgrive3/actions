@@ -76,7 +76,7 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     const legacyStormAge = "      if (b.kind === 'storm' && b.age > 1.1)";
     const guardedStormAge = "      if (b.kind === 'storm' && b.age > 30)";
     const stormAgeAnchor = code.includes(guardedStormAge) ? guardedStormAge : legacyStormAge;
-    patch(stormAgeAnchor,"      kitBombTrail(SUB, b, G.paint, this);\n" + stormAgeAnchor,'curling trail');
+    patch(stormAgeAnchor,"      kitBombTrail(SUB, b, G.paint, this);\n      if (kitBombRetire(b)) { this._releaseBomb(b); this.bombs.splice(i, 1); continue; }\n" + stormAgeAnchor,'curling trail');
     patch("      b.vel.y -= (b.kind === 'bomb' ? SUB.bomb.gravity : 24) * dt;","      b.vel.y -= kitBombGravity(SUB, b) * dt;",'kit bomb gravity');
     patch('distanceDamage(s.damageBands, d, false)','distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false)','kit bomb bands');
     patch('      if (d > s.radius) continue;','      if (d > kitBombRadius(SUB, b, s.radius)) continue;','kit bomb radius');
@@ -121,7 +121,7 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     patch("    this.list.push(p);\n  }",
       "    kitTrizookaGhost(p, a, SPECIALS, { volleyIndex: s3Volley, actionIndex: s3Action, specialPowerAP: e[34]?.s3SpecialPowerAP ?? e[33]?.s3SpecialPowerAP ?? e[30]?.s3SpecialPowerAP ?? e[29]?.s3SpecialPowerAP });\n    this.list.push(p);\n  }",
       'trizooka ghost reconstruction');
-    code="import { kitPaintAuthority, kitTrizookaGhost, kitTrizookaSteppedBands } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { kitSubRelease, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombKeepsFuse, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n"+code;
+    code="import { kitPaintAuthority, kitTrizookaGhost, kitTrizookaSteppedBands } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { kitSubRelease, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombRetire, kitBombFuseTotal, kitBombKeepsFuse, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n"+code;
   }
   return code;
 }

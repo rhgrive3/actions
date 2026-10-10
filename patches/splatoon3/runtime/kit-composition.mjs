@@ -21,8 +21,8 @@ export const PARTIAL_KITS = Object.freeze({
     missing: Object.freeze({ special: 'SpChariot (Crab Tank)', specialCost: 200 }) }),
   slosher: Object.freeze({ main: 'Slosher_Strong_00', sub: 'bomb',
     missing: Object.freeze({ special: 'SpTripleTornado (Triple Inkstrike)', specialCost: 220 }) }),
-  splatling: Object.freeze({ main: 'Spinner_Standard_00',
-    missing: Object.freeze({ sub: 'Sprinkler', special: 'SpShockSonar (Wave Breaker)', specialCost: 210 }) }),
+  splatling: Object.freeze({ main: 'Spinner_Standard_00', sub: 'sprinkler',
+    missing: Object.freeze({ special: 'SpShockSonar (Wave Breaker)', specialCost: 210 }) }),
 });
 export function selectedSub(actorOrWeapon, SUB) {
   const w = actorOrWeapon?.weapon || actorOrWeapon;
@@ -74,6 +74,7 @@ const icon = body => `<svg class="iw-ico" viewBox="0 0 64 64" aria-hidden="true"
 const subIcons = {
   suction: icon('<ellipse cx="32" cy="49" rx="23" ry="8"/><path d="M18 43V26Q18 12 32 12Q46 12 46 26V43Z"/><rect x="27" y="5" width="10" height="12" rx="3"/>'),
   curling: icon('<ellipse cx="32" cy="40" rx="24" ry="12"/><path d="M10 40V47Q32 61 54 47V40Z"/><path d="M24 29V15H42V22H32V29Z"/>'),
+  sprinkler: icon('<path d="M28 8H36V29H28Z"/><circle cx="32" cy="35" r="12"/><path d="M20 33L6 20M44 33L58 20M32 48V60"/>'),
 };
 const specialMetadata = {
   trizooka: { name:'Trizooka', blurb:'Fire up to three volleys of spiraling ink projectiles.',
