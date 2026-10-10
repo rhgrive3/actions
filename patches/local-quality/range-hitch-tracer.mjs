@@ -97,7 +97,7 @@ export function installHitchTracer(game, {
   const originalFrame = game._frame;
   let active = null, last = null, previousStamp = 0, nextId = 0, disposed = false;
   let longTasks = 0, longTaskSupported = false, observer = null;
-  let gpuTimer = null; const pendingEvents = [];
+  let gpuTimer = null, paintGpuTimer = null; const pendingEvents = [];
   const stageState = new Map();
 
   const getWorld = () => env?.__G || {};
@@ -132,15 +132,21 @@ export function installHitchTracer(game, {
       const wrapper = function (...args) {
         const rec = active;
         const t = rec ? now() : 0;
-        let gpuStarted = false;
-        if (rec && name === 'render') {
-          if (!gpuTimer) gpuTimer = createGpuRenderTimer(game.R?.renderer, { every: gpuEvery });
-          gpuStarted = gpuTimer.begin(rec.id);
+        let gpuStarted = false, timer = null;
+        if (rec && (name === 'render' || name === 'paint')) {
+          if (name === 'render') {
+            if (!gpuTimer) gpuTimer = createGpuRenderTimer(game.R?.renderer, { every: gpuEvery });
+            timer = gpuTimer;
+          } else {
+            if (!paintGpuTimer) paintGpuTimer = createGpuRenderTimer(game.R?.renderer, { every: gpuEvery });
+            timer = paintGpuTimer;
+          }
+          gpuStarted = timer.begin(rec.id);
         }
         try {
           return original.apply(this, args);
         } finally {
-          if (gpuStarted) gpuTimer.end();
+          if (gpuStarted) timer.end();
           if (rec) {
             rec.cpu[name] = (rec.cpu[name] || 0) + Math.max(0, now() - t);
           }
@@ -200,7 +206,7 @@ export function installHitchTracer(game, {
   const wrappedFrame = function (...args) {
     if (disposed) return originalFrame.apply(this, args);
     rebind();
-    const rec = { id: ++nextId, start: now(), cpu: Object.create(null), events: pendingEvents.splice(0), gpuMs: null };
+    const rec = { id: ++nextId, start: now(), cpu: Object.create(null), events: pendingEvents.splice(0), gpuMs: null, gpuPaintMs: null };
     active = rec;
     try { return originalFrame.apply(this, args); }
     finally {
@@ -217,17 +223,20 @@ export function installHitchTracer(game, {
     if (rec.workMs > budget * 0.85) {
       return worst ? 'CPU / '+worst[0] : 'CPU / unclassified';
     }
-    if (rec.gpuMs !== null && rec.gpuMs > budget * 0.85) return 'GPU commands (sampled)';
+    if (rec.gpuPaintMs !== null && rec.gpuPaintMs > budget * 0.85) return 'GPU paint atlas (sampled)';
+    if (rec.gpuMs !== null && rec.gpuMs > budget * 0.85) return 'GPU scene/compositor (sampled)';
     if (rec.longTaskMs >= 50) return 'browser main-thread long task';
     if (rec.frameGapMs > Math.max(34, budget * 1.6)) return 'GPU / compositor / scheduling (undetermined)';
     return 'within budget';
   };
   const attachGpu = () => {
-    for (const result of gpuTimer?.poll?.() || []) {
-      const rec = current.find(f=>f.id===result.id) || hitches.find(f=>f.id===result.id);
-      if (rec) {
-        rec.gpuMs = round(result.ms);
-        rec.cause = classify(rec);
+    for (const [timer, field] of [[gpuTimer,'gpuMs'],[paintGpuTimer,'gpuPaintMs']]) {
+      for (const result of timer?.poll?.() || []) {
+        const rec = current.find(f=>f.id===result.id) || hitches.find(f=>f.id===result.id);
+        if (rec) {
+          rec[field] = round(result.ms);
+          rec.cause = classify(rec);
+        }
       }
     }
   };
@@ -262,7 +271,7 @@ export function installHitchTracer(game, {
   const serialize = (rec) => ({
     id:rec.id, mode:rec.mode, gapMs:round(rec.frameGapMs),
     workMs:round(rec.workMs), targetHz:rec.targetHz, scale:rec.scale,
-    gpuCommandsMs:rec.gpuMs, longTaskMs:round(rec.longTaskMs),
+    gpuCommandsMs:rec.gpuMs, gpuPaintCommandsMs:rec.gpuPaintMs, longTaskMs:round(rec.longTaskMs),
     stages:Object.fromEntries(Object.entries(rec.cpu).map(([k,v])=>[k,round(v)])),
     events:rec.events, cause:rec.cause,
   });
@@ -275,7 +284,10 @@ export function installHitchTracer(game, {
       };
       return {
         gpu:gpuTimer?.status || 'unavailable',
+        gpuPaint:paintGpuTimer?.status || 'unavailable',
         gpuSamples:sample.filter(f=>f.gpuMs!==null).length,
+        gpuPaintSamples:sample.filter(f=>f.gpuPaintMs!==null).length,
+        latestGPUPaintMs:[...sample].reverse().find(f=>f.gpuPaintMs!==null)?.gpuPaintMs??null,
         gpuP95Ms:percent('gpuMs',.95), gpuMaxMs:sample.length
           ? Math.max(0,...sample.map(r=>r.gpuMs??0)) : null,
         latestGPUCommandsMs: [...sample].reverse().find(f=>f.gpuMs!==null)?.gpuMs??null,
@@ -290,7 +302,7 @@ export function installHitchTracer(game, {
       const s=this.snapshot();
       return JSON.stringify({ schema:'inkwave-frame-trace-v1',
         source:'local debug capture, no upload',
-        gpuCaveat:'sampled WebGL render commands; not presentation or swap delay',
+        gpuCaveat:'sampled GPU paint atlas and scene/compositor commands; not presentation or swap delay',
         ...s },null,2);
     },
     reset() {
@@ -308,6 +320,7 @@ export function installHitchTracer(game, {
       stageState.clear();
       observer?.disconnect?.();
       gpuTimer?.dispose?.();
+      paintGpuTimer?.dispose?.();
     },
   };
   return result;
