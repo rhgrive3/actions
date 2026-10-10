@@ -3087,3 +3087,26 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - **Reproduction:** own-ink vertical wall, ZL held, stick neutral, B not held. Fixture numbers in INKWAVE internal units, with no floor in the mock: vertical speed -0.06 at tick 1, -0.9 at tick 15 (0.25 s), height 5.0 to 4.88 at 15F, 4.21 at 60F, 3.31 at 120F. Cling stays on. Held B, stick input, wall roll, top-edge exit and paint loss do not receive the neutral descent.
 - **Play impact:** a neutral wall cling now slides down at the provisional speed instead of freezing. Release of ZL, stick input and B charge are unchanged. The descent speed and start delay will differ from Switch until measured.
 - **Verification status:** Node VM fixture tests only, `patches/splatoon3/tests/issue-253-wall-climb-descent.test.mjs` (6 tests). Coverage: real coordinate descent through `_integrate`, identical results at 30/60/120 Hz via `FixedClock`, wall-roll guard (fails without it), and charge, top-edge and paint-loss exclusions. Browser run and Switch 11.3.0 comparison are not done. The terminal speed 0.9 WU/s, acceleration 3.6 WU/s^2 and the start delay are 未確認. #253 stays open and is not auto-closed.
+## 2026-10-10: Heavy Splatling brake and free states after 8F (#378)
+
+- 本家の根拠: Ver.11.3.0 の Heavy Splatling の一次データは Leanny/splat3 固定コミット `7280ff9` の `WeaponSpinnerStandard`
+  の `MoveParam` で、`GoStraightToBrakeStateFrame` 8、`GoStraightStateEndMaxSpeed` 1.5105、`SpawnSpeed` 1.05 を確認した。
+  同ファイルの `MoveParam` には `BrakeAirResist`、`BrakeGravity`、`FreeAirResist`、`FreeGravity`、`BrakeToFreeVelocityY`、
+  `BrakeToFreeStateFrame` が見当たらない（WebFetch による抽出のため、字句検索による再確認は未実施）。ブレーキ減衰 0.36、
+  ブレーキ重力 252 u/s²、自由抗力 0.02、BrakeToFreeVelocityY -9 は Issue 本文の引用と既存の INKWAVE 既定値（`inkFlight.js` の `motionDefaults`）に依拠しており、
+  Ver.11.3.0 の値としては未確認。
+- INKWAVE 実装箇所: 実飛行は `inkwave-public/src/game/inkFlight.js` の `advanceInkFrame`（`p.inkPhase`）が進める。
+  `patches/splatoon3/runtime/weapons-fidelity.mjs` の `advanceFidelityProjectile`（`p.fidelityPhase`）は、
+  この弾では呼ばれない。`fidelityMove` は離散到達判定（`simulateSplatlingReach`）と `profile.json` 由来の値で共有される。
+- 修正: 生存中の Heavy Splatling 弾の `_step` 後に `p.fidelityPhase` を `p.inkPhase` へ同期した。実飛行の挙動は変えていない。
+- 再現操作（60 Hz、最小チャージ、初速 1.05 u/f、水平、障害物なし）: 1〜8F は 1.05 u/f の直進。9F で 0.672 u/f（x 0.64）、
+  12F で vy < -9 u/s となりブレーキから自由へ遷移（この条件は 12F で成立し、前回分類の 13F とは異なる）。13F は自由状態。
+  充電最大（2.1 u/f）は 9F で 1.5105 u/f に抑えられてから 0.96672 u/f になる。30 Hz と 120 Hz は 60 Hz と同じ値を
+  8F・10F・12F 等の境界で示す（`patches/splatoon3/tests/issue-378-splatling-brake-state.test.mjs`）。
+- 基準コミット `404c66c` の Issue 本文が述べる 9F の 1.036 u/f（汎用ドラッグ）は、main では再現しなかった（単独試験で 0.672 u/f）。
+  main の実飛行は `inkFlight` のブレーキ状態で既に動いており、残差は `fidelityPhase` 状態の不整合が中心。
+- プレイへの影響: 実飛行の速度と軌道は変えていない。`fidelityPhase` を読むのはローラーの着弾深さだけで、
+  Heavy Splatling 弾の見た目や当たりは変わらない（実機記録との比較は未実施）。
+- 確認状態: 単独の固定ステップ試験（ロジック単独）で確認。実機（Switch）の同じ操作による比較は未確認。
+  ブレーキ減衰、ブレーキ重力、BrakeToFree 条件、自由抗力は本家パラメータで確認できなかったため未確認のまま。
+  充電依存・乱数の初速（#252）と直進 8F の判定は本件の対象外。

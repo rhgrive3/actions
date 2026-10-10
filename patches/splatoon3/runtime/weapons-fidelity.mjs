@@ -1616,6 +1616,11 @@ export function installWeaponsFidelity(context,profile) {
     }
     const done=step.call(this,p,dt);
     if(Number.isFinite(p.pos?.y)&&(!Number.isFinite(p.fidelityMaxY)||p.pos.y>p.fidelityMaxY))p.fidelityMaxY=p.pos.y;
+    // Live Heavy Splatling rounds carry inkProfile, so the upstream inkFlight
+    // stepper advances them and owns p.inkPhase (0 straight, 1 brake, 2 free).
+    // advanceFidelityProjectile never runs for them, leaving fidelityPhase stale
+    // at 0. Mirror the owner's phase so the single reported state stays truthful.
+    if(p.s3Weapon?.kind==='splatling'&&p.inkProfile&&Number.isInteger(p.inkPhase))p.fidelityPhase=p.inkPhase;
     return done;
   };
   Projectiles.prototype.prepareFidelityProjectilePacket=prepareFidelityProjectilePacket;
