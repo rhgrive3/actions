@@ -2,7 +2,16 @@
 import { replaceOnce } from './input-adapter.mjs';
 export function adaptInputOwnership(rel, code) {
   if (rel === 'src/core/input.js') {
-    code = replaceOnce(code, '    this._dev = v;', `    this._dev = v;
+    code = replaceOnce(code, '    this._dev = v;', `    // #1187: masking a still-held old pad is a cancellation, not a release.
+    if (this._dev === 'pad' && v !== 'pad') {
+      const fire = this.padValue(7) > 0.3, sub = this.padButton(5);
+      if (fire || sub) {
+        const cancelled = this._holdCancelled || (this._holdCancelled = new Set());
+        if (fire) cancelled.add('fire');
+        if (sub) cancelled.add('sub');
+      }
+    }
+    this._dev = v;
     if (v !== 'pad') this.padPressed.clear();`, 'drop stale pad gameplay edges on owner change');
     // Wrap after class construction so other overlays can retain exact upstream anchors.
     return code + `

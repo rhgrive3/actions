@@ -261,13 +261,18 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
 
     let sawBurst = false;
     let sawEnd = false;
+    let sawSustained = false;
     for (let i = 0; i < hz * 2; i++) {
-      const packet = step(dt, false);
+      // #846 keeps the boost while attached to the wall; land after one second to send the explicit end.
+      const packet = step(dt, false, i < hz ? 'wall' : 'ground');
       assertCurrentActorSlots(packet.a[0], owner);
       const wire = packet.a[0][SURGE_PRESENTATION_SLOT];
       if (wire.phase === 'burst') {
         sawBurst = true;
-        assert.ok(Number.isFinite(wire.time) && wire.time > 0);
+        // #846 sustained climb: zero remaining boost time is valid only while the owner stays attached.
+        assert.ok(Number.isFinite(wire.time) && wire.time >= 0 && (wire.time > 0 || owner.climbing),
+          'burst carries remaining boost time, or zero only while the owner stays on the inked wall');
+        if (wire.time === 0) sawSustained = true;
         assertPoseParity(f, owner, remote, `${hz}Hz burst`);
         assert.equal(remote.s3?.actions?.surge ?? null, null,
           'remote burst remains presentation state and grants no movement or armor credit');
@@ -332,6 +337,7 @@ test('C1088 full-six real NetMatch/Character parity at 30/60/120 Hz and lifecycl
       }
     }
     assert.ok(sawBurst, `${hz}Hz owner entered the calibrated burst`);
+    assert.ok(sawSustained, `${hz}Hz owner held the sustained wall climb after the countdown`);
     assert.ok(sawEnd, `${hz}Hz owner sent an explicit end state`);
     life = owner.stats.deaths + 1;
   }

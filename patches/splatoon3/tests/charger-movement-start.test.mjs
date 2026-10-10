@@ -1,7 +1,8 @@
-// #377 S3 Charger charging movement starts at the charging baseline.
-// Logic-only source-fixture checks (no browser/Switch). Source caveat:
-// pinned MoveSpeedFullCharge 0.02 raw -> profile 1.2 u/s, plus community
-// guide support; no Switch measurement is claimed.
+// #539 supersedes #377's full-charge-speed-from-entry interpretation.
+// Partial endpoints 5.76 -> 1.26 u/s are community verification-table values
+// (not in the pinned Leanny extraction); full 1.2 u/s is the pinned endpoint.
+// The interpolation between endpoints is a linear approximation (未確認).
+// This checks the real fixed-step Actor and gear/lock composition.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
@@ -22,7 +23,7 @@ async function chargingAt(frame, dt = 1 / 60) {
   return { f, a, r, speed };
 }
 
-test('S3 Charger uses 1.2 u/s from charging entry (startup 1F, frames 2/8/12/18/full)', async () => {
+test('S3 Charger preserves separate partial and full endpoints (startup 1F, frames 2/8/12/18/full)', async () => {
   const f0 = await fixture();
   assert.equal(f0.profile.weapons.charger.moveSpeedFiring, 1.2);
   assert.equal(f0.PLAYER.runSpeed, 5.76);
@@ -31,11 +32,16 @@ test('S3 Charger uses 1.2 u/s from charging entry (startup 1F, frames 2/8/12/18/
   const startup = await chargingAt(1);
   close(startup.speed, f0.PLAYER.runSpeed, 'startup frame');
   assert.equal(startup.r.charging, false, 'no charging state during the 1F startup');
-  // The charging baseline applies unchanged from the charging entry (frame 2).
+  // The entry remains normal humanoid speed. Partial frames monotonically
+  // approach but never collapse into the full-charge 1.2 endpoint.
+  let previous = f0.PLAYER.runSpeed;
   for (const frame of [2, 8, 12, 18]) {
     const { speed } = await chargingAt(frame);
-    close(speed, 1.2, `frame ${frame}`);
+    assert.ok(speed <= previous + 1e-6 && speed >= 1.26 - 1e-6, `partial frame ${frame}: ${speed}`);
+    if (frame === 2) close(speed, f0.PLAYER.runSpeed, 'charging entry');
+    previous = speed;
   }
+  assert.ok(previous < f0.PLAYER.runSpeed, 'charge progress slows movement');
   const full = await chargingAt(61);   // 1F startup + 60 charge frames
   close(full.speed, 1.2, 'full charge');
   assert.equal(full.r.chargeT, 1);
@@ -94,20 +100,23 @@ test('S3 Charger charging speed holds across 30/60/120Hz render cadences', async
     assert.equal(firstCharging, 1, `${hz}Hz: charging enters on tick 2 after the 1F startup`);
     assert.equal(a.weaponRunner.chargeT, 1, `${hz}Hz reaches full charge`);
     assert.equal(a.weaponRunner.charging, true, `${hz}Hz still charging`);
-    // Startup frame keeps the uncharged run speed; the charging baseline is
-    // 1.2 from the entry tick on (#377 unchanged, entry shifted by #726 1F).
+    // #726 startup is uncharged; #539 partial starts at 5.76 and approaches
+    // 1.26 before the separate 1.2 full-charge endpoint.
     close(states[0].speed, f.PLAYER.runSpeed, `startup frame at ${hz}Hz`);
     assert.equal(states[0].charging, false, `startup frame at ${hz}Hz`);
     for (let i = 1; i < states.length; i++) {
-      close(states[i].speed, 1.2, `charging tick ${i + 1} at ${hz}Hz`);
+      assert.ok(states[i].speed <= states[i - 1].speed + 1e-6 &&
+        states[i].speed >= 1.2 - 1e-6, `charging tick ${i + 1} at ${hz}Hz`);
     }
+    close(states[1].speed, f.PLAYER.runSpeed, `charging entry at ${hz}Hz`);
+    close(states.at(-1).speed, 1.2, `full-charge endpoint at ${hz}Hz`);
     traces.push(states);
   }
   assert.deepEqual(traces[1], traces[0], '60Hz matches 30Hz per-tick states');
   assert.deepEqual(traces[2], traces[0], '120Hz matches 30Hz per-tick states');
 });
 
-test('actual Actor horizontal converges below 1.2 and lockT keeps priority', async () => {
+test('actual Actor tracks partial target, reaches 1.2 full charge and honors lockT', async () => {
   const f = await fixture();
   const a = f.make('charger');
   a.intent.fire = true;
@@ -118,16 +127,21 @@ test('actual Actor horizontal converges below 1.2 and lockT keeps priority', asy
   clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
   assert.equal(clock.ticks, 1);
   assert.equal(a.weaponRunner.charging, false);
-  // Tick 2 enters charging and targets the baseline immediately.
+  // Tick 2 begins at the #539 normal-side partial endpoint (community table).
   clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
   assert.equal(a.weaponRunner.charging, true);
-  close(a.weaponRunner.moveSpeed(), 1.2, 'runner target at charging entry');
+  close(a.weaponRunner.moveSpeed(), 5.76, 'runner target at charging entry');
   const speed = Math.hypot(a.vel.x, a.vel.z);
-  assert.ok(speed >= 0 && speed <= 1.2 + 1e-6, `horizontal speed ${speed}`);
+  assert.ok(speed >= 0 && speed <= 5.76 + 1e-6, `horizontal speed ${speed}`);
   // Run the full charge after the startup tick: velocity converges to 1.2.
   for (let i = 2; i < 61; i++) clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
   assert.equal(clock.ticks, 61);
   assert.equal(a.weaponRunner.chargeT, 1);
+  close(a.weaponRunner.moveSpeed(), 1.2, 'full-charge runner endpoint');
+  // Movement acceleration/deceleration is finite. The tick that first reaches
+  // full charge still began from the previous partial target; one ordinary
+  // fixed interval is enough to settle the remaining velocity delta to 1.2.
+  clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
   const settled = Math.hypot(a.vel.x, a.vel.z);
   assert.ok(Math.abs(settled - 1.2) < 1e-6, `converged speed ${settled}`);
   // Upstream cooldown/state priority is preserved: a planted turret wins.
@@ -146,8 +160,9 @@ test('two actors with distinct charge/Flow gear state share no target', async ()
   idle.s3.flow.active = true;
   idle.s3.flow.remaining = f.profile.flow.duration;
   charging.weaponRunner.charging = true;
-  // Charger charging locks the baseline before gear; idle run scales by Flow.
-  close(charging.weaponRunner.moveSpeed(), 1.2 * gearCurve(57, ...f.profile.gearExtra.runSpeedFiring), 'charging target applies the current dedicated firing-speed gear curve');
+  // #539 applies the sourced partial-entry endpoint before the firing-speed
+  // gear modifier; a separate idle actor still uses the Flow run curve.
+  close(charging.weaponRunner.moveSpeed(), 5.76 * gearCurve(57, ...f.profile.gearExtra.runSpeedFiring), 'charging target applies the current dedicated firing-speed gear curve');
   close(idle.weaponRunner.moveSpeed(), f.PLAYER.runSpeed * gearCurve(f.profile.flow.abilityPoints, ...f.profile.gear.runSpeed), 'idle Flow target');
   assert.notEqual(charging.weapon, idle.weapon, 'per-actor weapon copies');
   assert.equal(f.profile.weapons.charger.moveSpeedFiring, 1.2, 'shared profile untouched');

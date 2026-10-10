@@ -124,19 +124,29 @@ export function comparableStormRun(run) {
   };
 }
 
+// 'production': the composed INKWAVE build (adapter + runtime), updated on the fixed 60 Hz clock.
+// 'public-source': the unpatched inkwave-public modules, with one _updateClouds(dt) per render frame
+// (the Issue #226 "関数単独" scope). Its update window stops 0.3 s before expiry in the public source.
+export const STORM_CALIBRATION_SCOPES = Object.freeze(['production', 'public-source']);
+const passthroughSource = (_rel, code) => code;
+
 export async function measureStormRainAtRenderHz(renderHz, {
   seed = STORM_CALIBRATION_SEED,
   durationSeconds = STORM_CALIBRATION_SECONDS,
+  scope = 'production',
 } = {}) {
   if (!Number.isInteger(renderHz) || renderHz <= 0 || renderHz > 240) throw new RangeError('renderHz must be an integer from 1 to 240');
   if (!Number.isInteger(durationSeconds) || durationSeconds <= 0) throw new RangeError('durationSeconds must be a positive integer');
+  if (!STORM_CALIBRATION_SCOPES.includes(scope)) throw new RangeError(`scope must be one of ${STORM_CALIBRATION_SCOPES.join(', ')}`);
+  const production = scope === 'production';
 
   const f = await fixture({
-    productionComposition: true,
-    fullRuntime: true,
+    productionComposition: production,
+    fullRuntime: production,
     realProjectiles: true,
     extraExports: STORM_CALIBRATION_EXTRA_EXPORTS,
     vmMathRandom: mulberry32(seed ^ 0x58584658),
+    ...(production ? {} : { adapt: passthroughSource, adaptNative: passthroughSource }),
   });
   const { G, THREE, Level, PaintSystem, Projectiles, Physics, FX, profile } = f;
   G.scene = new THREE.Scene();
@@ -267,38 +277,47 @@ export async function measureStormRainAtRenderHz(renderHz, {
     }
   };
 
-  G.paint.useFixedPaintClock();
-  const clock = new FixedClock();
+  const clock = production ? new FixedClock() : null;
+  if (production) G.paint.useFixedPaintClock();
   const renderFrames = renderHz * durationSeconds;
   for (renderFrame = 1; renderFrame <= renderFrames; renderFrame++) {
-    clock.advance(1 / renderHz, (dt) => {
+    if (production) {
+      clock.advance(1 / renderHz, (dt) => {
+        simulationTick++;
+        G.time += dt;
+        G.projectiles._updateClouds(dt);
+        G.paint.advanceSimulation(dt);
+      });
+    } else {
       simulationTick++;
-      G.time += dt;
-      G.projectiles._updateClouds(dt);
-      G.paint.advanceSimulation(dt);
-    });
+      G.time += 1 / renderHz;
+      G.projectiles._updateClouds(1 / renderHz);
+    }
     G.paint.flush(1 / renderHz);
   }
 
   const turf = collectCpuTurf(G.paint, level, cloud.group.position, cloud.team, profile.specials.storm.radius + 2);
-  const audit = cloud.s3RainAudit || {};
+  const audit = production ? (cloud.s3RainAudit || {}) : null;
   const candidateRayEmissions = events.filter((e) => e.kind === 'candidate_ray_emission').length;
   const rayGroundHits = events.filter((e) => e.kind === 'ray_ground_hit').length;
   const cosmeticParticleBatchEvents = events.filter((e) => e.kind === 'cosmetic_fx_rain_batch');
+  const simulationTicks = production ? clock.ticks : simulationTick;
   const summary = {
+    scope,
     renderHz,
     renderFrames,
-    fixedSimulationHz: 60,
-    fixedSimulationTicks: clock.ticks,
-    fixedSimulationSeconds: round(clock.ticks * STEP),
+    fixedSimulationHz: production ? 60 : null,
+    simulationStepRule: production ? 'composed INKWAVE FixedClock, 60 Hz' : 'one public _updateClouds(1/renderHz) per render frame',
+    fixedSimulationTicks: simulationTicks,
+    fixedSimulationSeconds: round(production ? clock.ticks * STEP : renderFrames / renderHz),
     cloudCount: 1,
     cloudRemovedAtEnd: G.projectiles.clouds.length === 0,
     candidateRayEmissions,
     rayGroundHits,
     paintWriteEvents,
-    auditCandidateRayEmissions: audit.candidateDrops ?? 0,
-    auditRayGroundHits: audit.groundHits ?? 0,
-    auditPaintEvents: audit.paintEvents ?? 0,
+    auditCandidateRayEmissions: audit ? (audit.candidateDrops ?? 0) : null,
+    auditRayGroundHits: audit ? (audit.groundHits ?? 0) : null,
+    auditPaintEvents: audit ? (audit.paintEvents ?? 0) : null,
     cosmeticRainCalls,
     cosmeticParticleEmissions,
     cosmeticParticleBatchEvents: cosmeticParticleBatchEvents.length,
@@ -314,9 +333,13 @@ export async function measureStormRainAtRenderHz(renderHz, {
   return { summary, events, distribution: turf.distribution };
 }
 
-export async function measureStormRainCalibration({ renderRates = STORM_CALIBRATION_RENDER_HZ, ...options } = {}) {
+export async function measureStormRainCalibration({
+  renderRates = STORM_CALIBRATION_RENDER_HZ,
+  scopes = STORM_CALIBRATION_SCOPES,
+  ...options
+} = {}) {
   const runs = [];
-  for (const renderHz of renderRates) runs.push(await measureStormRainAtRenderHz(renderHz, options));
+  for (const scope of scopes) for (const renderHz of renderRates) runs.push(await measureStormRainAtRenderHz(renderHz, { ...options, scope }));
   return {
     measurement: {
       issue: 226,
@@ -327,6 +350,7 @@ export async function measureStormRainCalibration({ renderRates = STORM_CALIBRAT
       durationSeconds: options.durationSeconds ?? STORM_CALIBRATION_SECONDS,
       fixedSimulationHz: 60,
       renderRates,
+      scopes,
       coordinateUnits: {
         inkwaveInternalConvention: 'The project profile documents raw coordinates 1:1 with INKWAVE meters, with distanceScale.factor=1 marked inferred; actual character/stage scale still requires measurement.',
         distance: 'INKWAVE world units (WU); no conversion to retail Splatoon 3 units is established',
@@ -344,7 +368,8 @@ export async function measureStormRainCalibration({ renderRates = STORM_CALIBRAT
         gear: 'none',
       },
       existingAdapterContext: {
-        stormUpdateWindow: 'the already-present composed adapter runs rain through the final duration tick; no change made here',
+        stormUpdateWindow: 'production scope: the already-present composed adapter runs rain through the final duration tick; no change made here',
+        publicSourceUpdateWindow: 'public-source scope: unpatched _updateClouds emits rain only while cloud time < duration - 0.3 s, checked once per update call',
         rayReachWorldUnits: 12,
         rayReachStatus: 'existing INKWAVE adapter bound in WU; no Nintendo-specific value asserted and no gameplay value changed by this tooling',
       },
