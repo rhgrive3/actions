@@ -1357,7 +1357,7 @@ function simulateSplatlingReach(p,weapon,charge,initializeFlight) {
 
 export function fidelityRollerMaximumPaint(r,w,fx,fz) {
   if(!api?.G || !completion?.weapons?.roller?.BodyParam?.PaintParam)return 0;
-  return paintRollerMaximumWidth(api.G,r,w,completion.weapons.roller.BodyParam.PaintParam,completion.worldUnitsPerSourceUnit,fx,fz);
+  return paintRollerMaximumWidth(api.G,r,w,completion.weapons.roller.BodyParam.PaintParam,completion.worldUnitsPerSourceUnit,completion.referenceHz,fx,fz);
 }
 
 // Issue #297: Bucket Slosher carries an explicit player-motion addition record.
