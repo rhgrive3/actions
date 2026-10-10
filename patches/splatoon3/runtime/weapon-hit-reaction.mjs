@@ -72,6 +72,13 @@ function eligible(ch,s) {
     ch.root.visible && ch._owner()?.alive!==false;
 }
 
+// Same held-grip definition as the motion catalog gate: IK weight owns the
+// hand, no explicit hand target, and no bomb swap on the dual left hand.
+function heldGrip(ch,C,left) {
+  return !!ch.kidForm && ch.P[left?C.IKL:C.IKR]>.999 && (!left || ch.P[C.LTW]<=.001)
+    && (left && ch.dual ? ch.bombSwap : 0)<=.001;
+}
+
 function applyPresentation(ch,T,C,s) {
   const {SPINE,CHEST,NECK,HEAD,HIPS,HIPS_P,CLAVL,CLAVR,UARML,UARMR,ANC,ANCR,ANL,ANLR}=C;
   s.t=ch.tr[T.T_HIT];
@@ -82,7 +89,11 @@ function applyPresentation(ch,T,C,s) {
     hz=clamp(s.z,-1,1),hx=clamp(s.x,-1,1),w=env*d[j+14]/100;
   const front=hz*k,side=hx*k,y=d[j+4]*side,r=d[j+5]*side,clav=d[j+8]*k;
   s.mv=false;
-  if(s.pre&&w>.001) for(const base of [ANC,ANCR,ANL,ANLR,C.POLER,C.POLEL])
+  // Anchor translations are held-grip owned (see below); the pre-hit blend may
+  // not drag a held anchor back either, or the hand IK loses its target.
+  const holdL=heldGrip(ch,C,true),holdR=heldGrip(ch,C,false);
+  const ancMoves=!(ch.dual?holdR:holdL||holdR), ancLMoves=!holdL;
+  if(s.pre&&w>.001) for(const base of [ANCR,ANLR,C.POLER,C.POLEL,...(ancMoves?[ANC]:[]),...(ancLMoves?[ANL]:[])])
     for(let i=base;i<base+3;i++){const before=s.pre[i];P[i]=before+(P[i]-before)*(1-w);}
   P[SPINE]+=d[j]*front;P[SPINE+1]+=y;P[SPINE+2]+=r;
   P[CHEST]+=d[j+1]*front;P[CHEST+1]+=.6*y;P[CHEST+2]+=.6*r;
@@ -91,8 +102,12 @@ function applyPresentation(ch,T,C,s) {
   P[CLAVL+2]+=clav;P[CLAVR+2]-=clav;
   P[UARML]+=d[j+9]*k;P[UARMR]+=d[j+10]*k;
   const ay=d[j+11]*k,az=d[j+12]*k,rx=d[j+13]*k;
-  P[ANC+1]+=ay;P[ANC+2]+=az;P[ANCR]+=rx;
-  if(ch.dual){P[ANL+1]+=ay;P[ANL+2]+=az;P[ANLR]+=rx;}
+  // The weapon anchor is the target of a held grip. Translating it while IK
+  // still owns the hand detaches the grip (catalog gate: left hand up to 5.7 cm
+  // off the foregrip). Rotation and the body/arm reaction still apply.
+  if(ancMoves){P[ANC+1]+=ay;P[ANC+2]+=az;}
+  P[ANCR]+=rx;
+  if(ch.dual){if(ancLMoves){P[ANL+1]+=ay;P[ANL+2]+=az;}P[ANLR]+=rx;}
   s.on=true;
 }
 
