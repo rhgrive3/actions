@@ -87,7 +87,9 @@ test('#1108 ordinary floor rolling keeps distance-based floor paint and no wall 
   step(12);
   assert.ok(a.pos.distanceTo(start) > .28, 'floor rolling crosses the displacement threshold');
   assert.ok(paints.length > 0, 'rolling on the floor paints the ground stripe');
-  assert.ok(paints.every(p => p.pos.y < .5 && p.kind === 'roll'), 'ground stripe stays at drum height');
+  // #649 speed-scales the floor-only rollFloor side bands (drum height, y .35) beside the roll stripe.
+  assert.ok(paints.every(p => p.pos.y < .5 && (p.kind === 'roll' || p.kind === 'rollFloor')), 'ground stripe stays at drum height');
+  assert.ok(paints.some(p => p.kind === 'roll'), 'distance-based roll stripe is present');
   assert.equal(paints.filter(isWallPaint).length, 0, 'no wall is present to paint');
 });
 

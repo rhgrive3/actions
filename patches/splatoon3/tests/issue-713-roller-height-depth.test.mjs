@@ -213,6 +213,15 @@ test('#713 non-roller impact paint stays native and the roller selectors stay in
   const hit={point:p.start.clone().add(new V(8,0,0)),normal:new V(0,1,0)};
   f.G.projectiles._impact(p,hit);
   assert.equal(f.paint.length,1);
+  // #79 replaces the floor shot's native stretch and jittered radius with the sourced Shooter footprint:
+  // grazing impact takes the straight Max envelope (DepthScaleMax 2.24, stretch = depth - 1) and the
+  // radius interpolates WidthMiddle 1.93 -> WidthFar 1.71 from DistanceMiddle 1.1 to the weapon range.
+  approx(f.paint[0].opts.stretchAmt,2.24-1);
+  approx(f.paint[0].radius,1.93+(1.71-1.93)*(8-1.1)/(a.weapon.range-1.1),1e-9);
+  // Wall contact keeps the native path (#79), so the native constant and random radius band still apply.
+  f.paint.length=0;
+  f.G.projectiles._impact(p,{point:hit.point,normal:new V(-1,0,0)});
+  assert.equal(f.paint.length,1);
   approx(f.paint[0].opts.stretchAmt,.7); // native _impact constant: #713 never rewrites it
   assert.ok(f.paint[0].radius>=0.85*p.radius&&f.paint[0].radius<=1.15*p.radius,
     'native random radius band, not the roller replacement radius');
