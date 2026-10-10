@@ -183,7 +183,7 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
-    patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
+    patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\n// #1200: owner event and send-tick timestamps use the same clock.\nconst OWNER_EVENT_FUTURE_S = 0.1;\nconst OWNER_EVENT_AGE_S = 3;\nconst OWNER_EVENTS_PER_TICK = 4096;\nconst OWNER_EVENT_BACKLOG = 16384;\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
     code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
@@ -478,8 +478,13 @@ export function emit(name, payload) {
     patch('      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;',
       '      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.dropRollId = dropRoll?.id ?? 0; snap.dropRollRemaining = dropRoll?.remaining ?? 0;\n      snap.dropRollX = dropRoll?.x ?? 0; snap.dropRollZ = dropRoll?.z ?? 0; snap.dropRollDuration = dropRoll?.duration ?? 0;',
       'attach validated Drop Roller clock and direction');
-    patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
-      if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
+    patch('if (d.e) for (const e of d.e) p.events.push(e);',  `const events = Array.isArray(d.e) ? d.e : null;
+      if (events) for (let eventIndex = 0; eventIndex < Math.min(events.length, OWNER_EVENTS_PER_TICK); eventIndex++) {
+        const e = events[eventIndex];
+        // #1200: a sender-event clock cannot lead its enclosing owner tick
+        // indefinitely; discard malformed times before FIFO event admission.
+        if (!Array.isArray(e) || !Number.isFinite(e[0]) || !Number.isFinite(d.ts)
+          || e[0] > d.ts + OWNER_EVENT_FUTURE_S || e[0] < d.ts - OWNER_EVENT_AGE_S) continue;
       e._netPeer = from;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
@@ -504,7 +509,11 @@ export function emit(name, payload) {
         if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
       }
       p.events.push(e);
-    }`, 'receive event identity');
+    }
+    // Limit even deliberately withheld presentation-clock queues while
+    // preserving ordered admitted events in the normal-sized window.
+    if (p.events.length > OWNER_EVENT_BACKLOG)
+      p.events.splice(0, p.events.length - OWNER_EVENT_BACKLOG);`, 'receive event identity');
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
     patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
     patch('function packEvent(e) {', 'function packEvent(e, precise = false) {', 'hitscan precision policy');
