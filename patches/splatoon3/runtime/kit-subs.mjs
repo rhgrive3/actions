@@ -33,6 +33,7 @@
 // like the native code when installKitSubs has not been applied.
 
 import { SPRINKLER, beginSprinkler, stepSprinkler } from './kit-sprinkler.mjs';
+import { AUTOBOMB, startAutobomb, stepAutobomb } from './kit-autobomb.mjs';
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
 const frames = (v) => (v == null ? null : v * FRAME);
@@ -198,7 +199,7 @@ export const BOMB = {
   status: 'upstream-generic',
 };
 
-export const KIT_SUBS = { suction: SUCTION, curling: CURLING, sprinkler: SPRINKLER, bomb: BOMB };
+export const KIT_SUBS = { suction: SUCTION, curling: CURLING, sprinkler: SPRINKLER, autobomb: AUTOBOMB, bomb: BOMB };
 
 // ---- Registry ----------------------------------------------------------------
 
@@ -441,7 +442,7 @@ export function kitBombAttach(SUB, projectiles, actor, release) {
 export const NATIVE_STORM_GRAVITY = 24;
 export function kitBombGravity(SUB, b) {
   if (b?.kind === 'storm') return NATIVE_STORM_GRAVITY;
-  if (b?.s3Mode === 'stuck' || b?.s3Mode === 'sprinkling') return 0;
+  if (b?.s3Mode === 'stuck' || b?.s3Mode === 'sprinkling' || b?.s3Mode === 'chasing') return 0;
   const spec = presentedOf(b)?.spec;
   if (!spec) return SUB.bomb.gravity;
   if (b?.s3Mode === 'rolling') return Number.isFinite(spec.groundGravity) ? spec.groundGravity : SUB.bomb.gravity;
@@ -467,6 +468,17 @@ export function kitBombContact(SUB, b, hit, dt) {
   const n = hit.normal;
   const spec = r.spec;
 
+  if (spec.mode === 'chase') {
+    if (b.s3Mode === 'chasing') {
+      b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
+      if (Math.abs(n.y)<.6) b.vel.set(0,0,0);
+      return true;
+    }
+    if (n.y<.6) return false;
+    b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
+    b.vel.set(0,0,0);b.fuse=-1;b.s3Mode='chasing';
+    startAutobomb(b,spec);return true;
+  }
   if (spec.mode === 'sprinkler') {
     if (b.s3Mode === 'sprinkling') return true;
     b.pos.copy(hit.point).addScaledVector(n, CONTACT_BIAS);
@@ -530,6 +542,7 @@ export function kitBombContact(SUB, b, hit, dt) {
 // is a real THREE.Vector3 because the native PaintSystem reads vector fields.
 // Allocated once per bomb and reused; no per-frame allocation.
 export function kitBombTrail(SUB, b, paint, projectiles) {
+  if (b?.s3Mode === 'chasing') { stepAutobomb(b, G_REF); return 0; }
   if (b?.s3Mode === 'sprinkling') {
     if (b.owner?.alive === false) return 0;
     return stepSprinkler(b, paint, projectiles, G_REF, PHYSICS_REF, PLAYER_REF);
@@ -581,7 +594,7 @@ export function kitBombRetire(b) {
 // has to go off when the owner's did.
 export function kitBombKeepsFuse(b) {
   const mode=presentedOf(b)?.spec?.mode;
-  return mode==='stick'&&b.s3Mode==='stuck'||mode==='roll'&&b.s3Mode==='rolling';
+  return mode==='stick'&&b.s3Mode==='stuck'||mode==='roll'&&b.s3Mode==='rolling'||mode==='chase'&&b.s3Mode==='chasing';
 }
 export function kitBombFuseTotal(SUB, b) {
   const t = presentedOf(b)?.fuse;
@@ -691,7 +704,7 @@ export function kitBombDamageMin(SUB, b, fallback) {
 // Bounded: a peer's packet may only name a sub that exists in this module's own
 // allowlist, and the charge may only be a finite number. Nothing off the wire
 // reaches `SUB` as a lookup key.
-const PACKET_SUB_IDS = Object.freeze(['suction', 'curling', 'sprinkler']);
+const PACKET_SUB_IDS = Object.freeze(['suction', 'curling', 'sprinkler', 'autobomb']);
 
 const packetSubId = (raw) => (typeof raw === 'string' && raw.length <= 16 && PACKET_SUB_IDS.includes(raw) ? raw : null);
 

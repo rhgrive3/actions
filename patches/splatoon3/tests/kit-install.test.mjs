@@ -73,16 +73,16 @@ test('the unmodified public installer activates all three genuine base kits befo
     } finally {a.character.dispose();}
   }
   // PR1188: implemented 11.3.0 slots are adopted per slot; unimplemented ones stay original.
-  for (const [main, sub, special, cost, slots] of [['blaster','bomb','bubbler',190,['special']],
-    ['dualies','suction',null,null,['sub']],['slosher','bomb',null,null,['sub']]]) {
+  for (const [main, sub, special, cost, slots] of [['blaster','autobomb','bubbler',190,['sub','special']],
+    ['dualies','suction',null,null,['sub']],['slosher','bomb',null,null,['sub']],['splatling','sprinkler',null,null,['sub']]]) {
     assert.equal(api.WEAPONS[main].kitStatus,'partial-verified-kit',main);
     assert.deepEqual([...api.WEAPONS[main].kitVerifiedSlots],slots,main);
     assert.equal(api.WEAPONS[main].sub,sub,main);
     if (special) { assert.equal(api.WEAPONS[main].special,special); assert.equal(api.WEAPONS[main].specialCost,cost); }
     assert.match(api.WEAPONS[main].blurb,/Partial Splatoon 3 kit/);
   }
-  assert.equal(api.WEAPONS.splatling.kitStatus,'original-inkwave-kit');
-  assert.match(api.WEAPONS.splatling.blurb,/Original INKWAVE kit/);
+  assert.equal(api.WEAPONS.splatling.kitStatus,'partial-verified-kit');
+  assert.ok(api.SUB.sprinkler && api.SUB.autobomb, 'new 11.3.0 native sub mechanics registered');
 });
 
 

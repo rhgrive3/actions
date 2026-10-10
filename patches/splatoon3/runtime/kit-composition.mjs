@@ -15,8 +15,8 @@ export const VERIFIED_KITS = Object.freeze({
 // stays the original INKWAVE one and is labelled. A special cost belongs to the
 // special it charges, so it is only adopted together with a verified special.
 export const PARTIAL_KITS = Object.freeze({
-  blaster: Object.freeze({ main: 'Blaster_Middle_00', special: 'bubbler', specialCost: 190,
-    missing: Object.freeze({ sub: 'Bomb_Robot (Autobomb)' }) }),
+  blaster: Object.freeze({ main: 'Blaster_Middle_00', sub: 'autobomb', special: 'bubbler',
+    specialCost: 190, missing: Object.freeze({}) }),
   dualies: Object.freeze({ main: 'Maneuver_Normal_00', sub: 'suction',
     missing: Object.freeze({ special: 'SpChariot (Crab Tank)', specialCost: 200 }) }),
   slosher: Object.freeze({ main: 'Slosher_Strong_00', sub: 'bomb',
@@ -59,7 +59,10 @@ export function composeKits({ WEAPONS, SUB, SPECIALS }) {
       const verified = [partial.sub && 'sub', partial.special && 'special'].filter(Boolean);
       Object.assign(w, { kitReference: partial.main, kitStatus: 'partial-verified-kit', kitVerifiedSlots: verified,
         kitMissing: partial.missing });
-      const label = `Partial Splatoon 3 kit: ${verified.join(' and ')} verified; ${Object.keys(partial.missing).filter(k => k !== 'specialCost').join(' and ')} original INKWAVE (${Object.entries(partial.missing).filter(([k]) => k !== 'specialCost').map(([, v]) => v).join(', ')} not implemented).`;
+      const unsupplied = Object.entries(partial.missing).filter(([key]) => key !== 'specialCost');
+      const label = unsupplied.length
+        ? `Partial Splatoon 3 kit: ${verified.join(' and ')} verified; ${unsupplied.map(([key]) => key).join(' and ')} original INKWAVE (${unsupplied.map(([, value]) => value).join(', ')} not implemented).`
+        : '11.3.0 kit slots installed; certain mechanics retain explicit source-calibration limits.';
       if (!w.blurb?.includes('Partial Splatoon 3 kit')) w.blurb = `${w.blurb || ''} ${label}`.trim();
     } else {
       Object.assign(w, { kitReference: null, kitStatus: 'original-inkwave-kit' });
@@ -75,6 +78,7 @@ const subIcons = {
   suction: icon('<ellipse cx="32" cy="49" rx="23" ry="8"/><path d="M18 43V26Q18 12 32 12Q46 12 46 26V43Z"/><rect x="27" y="5" width="10" height="12" rx="3"/>'),
   curling: icon('<ellipse cx="32" cy="40" rx="24" ry="12"/><path d="M10 40V47Q32 61 54 47V40Z"/><path d="M24 29V15H42V22H32V29Z"/>'),
   sprinkler: icon('<path d="M28 8H36V29H28Z"/><circle cx="32" cy="35" r="12"/><path d="M20 33L6 20M44 33L58 20M32 48V60"/>'),
+  autobomb: icon('<rect x="18" y="14" width="28" height="30" rx="6"/><circle cx="27" cy="26" r="3"/><circle cx="38" cy="26" r="3"/><path d="M21 44L15 57M43 44L49 57"/>'),
 };
 const specialMetadata = {
   trizooka: { name:'Trizooka', blurb:'Fire up to three volleys of spiraling ink projectiles.',

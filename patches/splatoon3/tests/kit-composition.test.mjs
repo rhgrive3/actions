@@ -5,7 +5,7 @@ import { composeKits, VERIFIED_KITS, selectedSubCost, registerKitMetadata } from
 const reference = JSON.parse(fs.readFileSync(new URL('../reference/kit-main-reference.json', import.meta.url)));
 function registries() {
   return { WEAPONS: Object.fromEntries(['shooter','roller','charger','blaster'].map(id => [id,{id,sub:'bomb',special:'slam',specialCost:999}])),
-    SUB: { bomb:{id:'bomb',inkCost:70}, suction:{id:'suction',inkCost:null,inkCostFallback:70}, curling:{id:'curling',inkCost:65} },
+    SUB: { bomb:{id:'bomb',inkCost:70}, suction:{id:'suction',inkCost:null,inkCostFallback:70}, curling:{id:'curling',inkCost:65}, autobomb:{id:'autobomb',inkCost:55} },
     SPECIALS: { trizooka:{id:'trizooka'}, bubbler:{id:'bubbler'}, inkVac:{id:'inkVac'} } };
 }
 test('all three required base kits agree with pinned extracted main rows', () => {
@@ -32,16 +32,16 @@ test('all three required base kits agree with pinned extracted main rows', () =>
     assert.equal(configured.WEAPONS[main].specialCost,kit.specialCost);
   }
   assert.deepEqual(reference.officialHistory['Ver.11.1.0'].specialPointChanges.Shooter_Normal_00,[210,200]);
-  // Blaster takes its implemented 11.3.0 special (Big Bubbler, 190p); its
-  // Autobomb sub is not implemented, so the original sub stays and is labelled.
+  // 11.3.0 Blaster installs both the source sub and special. The Autobomb
+  // chasing curve is explicitly a calibration, not a decompiled game binary.
   assert.equal(api.WEAPONS.blaster.kitStatus,'partial-verified-kit');
   assert.equal(api.WEAPONS.blaster.special,'bubbler');assert.equal(api.WEAPONS.blaster.specialCost,190);
-  assert.equal(api.WEAPONS.blaster.sub,'bomb');assert.deepEqual(api.WEAPONS.blaster.kitVerifiedSlots,['special']);
+  assert.equal(api.WEAPONS.blaster.sub,'autobomb');assert.deepEqual(api.WEAPONS.blaster.kitVerifiedSlots,['sub','special']);
   const blasterRow='data/mush/1130/WeaponInfoMain.json#/19/';
   assert.equal(reference.parameters[blasterRow+'__RowId'].value,'Blaster_Middle_00');
   assert.equal(reference.parameters[blasterRow+'SpecialPoint'].value,190);
   assert.equal(reference.parameters[blasterRow+'SpecialWeapon'].value,'Work/Gyml/SpGreatBarrier.spl__WeaponInfoSpecial.gyml');
-  assert.match(api.WEAPONS.blaster.blurb,/Partial Splatoon 3 kit: special verified; sub original INKWAVE \(Bomb_Robot/);
+  assert.match(api.WEAPONS.blaster.blurb,/11.3.0 kit slots installed/);
 });
 test('missing implementation registration fails before any kit changes', () => {
   const api=registries();delete api.SPECIALS.inkVac;
