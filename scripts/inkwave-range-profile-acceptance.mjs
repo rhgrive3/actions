@@ -3,6 +3,7 @@
 // can cause a false-positive wakeup with a JSHandle whose value is `false`.
 // Keep self-contained: Playwright serializes this function into page context.
 export function profileRangeAcceptanceSnapshot(env = globalThis) {
+  env ??= globalThis; // Playwright explicitly passes null as waitForFunction's argument.
   const p = env.__inkwaveRangePerf, match = env.__G?.match;
   if (!p || !match?.range || match.state !== 'playing') return false;
   const s = p.snapshot();
