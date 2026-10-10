@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "receiptDate": "2026-10-10",
+  "scope": {
+    "subCatalogEntries": 14,
+    "specialCatalogEntries": 19,
+    "parameterJsonCount": 33,
+    "weaponInfoJsonCount": 1
+  },
+  "provenance": {
+    "upstreamRepository": "https://github.com/Leanny/splat3",
+    "upstreamCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+    "upstreamCommitUrl": "https://github.com/Leanny/splat3/commit/7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+    "driveFolder": "https://drive.google.com/drive/folders/1iAhs_iWB0jfPkAB3lgUT9le95T-B323b",
+    "localArchive": "splatoon-source.zip",
+    "localArchiveSha256": "1a4fe5b48f47de60426a474034cf3e2aa61acf5f7eaf4b947a9e502e7d52ef66",
+    "localExtractedRoot": "source-reference/Splatoon3-resources/",
+    "parameterVersion": "1130",
+    "upstreamDataRoot": "data/",
+    "localDataRoot": "source-reference/Splatoon3-resources/splat3/data/"
+  },
+  "catalogueParameterFiles": [
+    {
+      "id": "bomb",
+      "name": "Splat Bomb",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "sha256": "d2a7e096d8e3ba3b5bef7774c7b62d1e9cb252b054650317955fa38f90658f97",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json"
+    },
+    {
+      "id": "suction",
+      "name": "Suction Bomb",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "sha256": "a64c24c3167e5a7ec201cf8377fbeb3f6f8870ecd0be4549c50b9c3c57e840f7",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json"
+    },
+    {
+      "id": "curling",
+      "name": "Curling Bomb",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "sha256": "aa1d1c0a13d13c4f5d236524fb0452ccf6bfadf736274cb207181cb75b8fe815",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json"
+    },
+    {
+      "id": "burst",
+      "name": "Burst Bomb",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponBombQuick.game__GameParameterTable.json",
+      "sha256": "1b93391d4a4fe6955a6e90eb605c9c4c00c5d78fe198b75895f141cb17f6c997",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombQuick.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponBombQuick.game__GameParameterTable.json"
+    },
+    {
+      "id": "autobomb",
+      "name": "Autobomb",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponBombRobot.game__GameParameterTable.json",
+      "sha256": "749b83b8e2cbf53aba2a4f2f232a8eaf04ead4ab287983ed1c15b70d78f19fa1",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombRobot.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponBombRobot.game__GameParameterTable.json"
+    },
+    {
+      "id": "fizzy",
+      "name": "Fizzy Bomb",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponBombFizzy.game__GameParameterTable.json",
+      "sha256": "3657b6fc76bedb2eb13b901257283addb9337660755c2e41e57896aff6ef0f9b",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombFizzy.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponBombFizzy.game__GameParameterTable.json"
+    },
+    {
+      "id": "torpedo",
+      "name": "Torpedo",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponBombTorpedo.game__GameParameterTable.json",
+      "sha256": "bc56f9fef0297cab5652fa8a9d7a9049feca04dbdd0254eba60b4d9e49746c09",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombTorpedo.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponBombTorpedo.game__GameParameterTable.json"
+    },
+    {
+      "id": "inkMine",
+      "name": "Ink Mine",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponTrap.game__GameParameterTable.json",
+      "sha256": "432472253e5c25558851ddac7a12947e7b348c57e24b44f9465f2daddba33457",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponTrap.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponTrap.game__GameParameterTable.json"
+    },
+    {
+      "id": "toxicMist",
+      "name": "Toxic Mist",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponPoisonMist.game__GameParameterTable.json",
+      "sha256": "1667647b6176234ab455f97351fb8d316c40ba779b0bee660588be1e254fcdf7",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponPoisonMist.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponPoisonMist.game__GameParameterTable.json"
+    },
+    {
+      "id": "angleShooter",
+      "name": "Angle Shooter",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponLineMarker.game__GameParameterTable.json",
+      "sha256": "aae1cbb683bdf95e4318d639b5b3ea183e3e6b030665891a7ac5d0f2acfc0dda",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponLineMarker.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponLineMarker.game__GameParameterTable.json"
+    },
+    {
+      "id": "splashWall",
+      "name": "Splash Wall",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponShield.game__GameParameterTable.json",
+      "sha256": "ac757c5d3a6a29d45031d68527e3e9e7a6f4a5b7ac72cf7189250532db8c9648",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShield.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponShield.game__GameParameterTable.json"
+    },
+    {
+      "id": "sprinkler",
+      "name": "Sprinkler",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSprinkler.game__GameParameterTable.json",
+      "sha256": "d3b945ddf9691b93cfc5c236d456462637fa36ba5eab3b1761e995e8f74e49f8",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSprinkler.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSprinkler.game__GameParameterTable.json"
+    },
+    {
+      "id": "beakon",
+      "name": "Squid Beakon",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponBeacon.game__GameParameterTable.json",
+      "sha256": "e73cf2ca0655d67fd0b382ee3a81edc7302db4f91e66c511b3d46643b8173eb2",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBeacon.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponBeacon.game__GameParameterTable.json"
+    },
+    {
+      "id": "pointSensor",
+      "name": "Point Sensor",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponPointSensor.game__GameParameterTable.json",
+      "sha256": "57d0ab596ccdc9cd2e8da079ba4a169fc87aee36aeba079aafd81894d78bac03",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponPointSensor.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponPointSensor.game__GameParameterTable.json"
+    },
+    {
+      "id": "trizooka",
+      "name": "Trizooka",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "sha256": "b088c9df476ed786a4a9e76c1fd3d7166885adf0dcffd563b36d1d20b9995d22",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json"
+    },
+    {
+      "id": "bubbler",
+      "name": "Big Bubbler",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "sha256": "00a70cb95d668b0e48645d2852bbe2c4f9885afefbc5b42eadab00a1808f5434",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json"
+    },
+    {
+      "id": "zipcaster",
+      "name": "Zipcaster",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+      "sha256": "d01db186f0aaf53ad527a18413d9d210bf3c4877d0346f2d3fe4a227ec82b704",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpSuperHook.game__GameParameterTable.json"
+    },
+    {
+      "id": "tentaMissiles",
+      "name": "Tenta Missiles",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpMultiMissile.game__GameParameterTable.json",
+      "sha256": "628225d3e3932c78569a1030764b8752782288b9db54487e76d3009a5d3e6c04",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpMultiMissile.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpMultiMissile.game__GameParameterTable.json"
+    },
+    {
+      "id": "inkjet",
+      "name": "Inkjet",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+      "sha256": "2db76fbfddb420935f748f906f5804677239b590dff6b3a9fbc7c70525278364",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpJetpack.game__GameParameterTable.json"
+    },
+    {
+      "id": "storm",
+      "name": "Ink Storm",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "sha256": "86be8a104a6194523223a976c8dd91506bb02e6526465e48ecce6f189001ea0b",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json"
+    },
+    {
+      "id": "booyahBomb",
+      "name": "Booyah Bomb",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpNiceBall.game__GameParameterTable.json",
+      "sha256": "1852239839cc69b3534b11af382b089b44cd8ed51bd2451da333ebbbd23fa17c",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpNiceBall.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpNiceBall.game__GameParameterTable.json"
+    },
+    {
+      "id": "ultraStamp",
+      "name": "Ultra Stamp",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpUltraStamp.game__GameParameterTable.json",
+      "sha256": "8c3748f2899532deeeda341cbcceb3682a9378f3595fa448336897b9a54677ff",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpUltraStamp.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpUltraStamp.game__GameParameterTable.json"
+    },
+    {
+      "id": "killerWail",
+      "name": "Killer Wail 5.1",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpMicroLaser.game__GameParameterTable.json",
+      "sha256": "89c603551389349e2a163be212ddefa36c75dc9f0bf22c6e42a7200c0a6dd3b0",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpMicroLaser.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpMicroLaser.game__GameParameterTable.json"
+    },
+    {
+      "id": "inkVac",
+      "name": "Ink Vac",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "sha256": "0de43e9869cb0d9451da5d57890184d1726d14fb4b38daec2868a76cc5a3c3c0",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json"
+    },
+    {
+      "id": "crabTank",
+      "name": "Crab Tank",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "sha256": "6cd8048512e030276bf7bc889490838a4346f1108505dbb70eb6e424dbcdf252",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpChariot.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpChariot.game__GameParameterTable.json"
+    },
+    {
+      "id": "reefslider",
+      "name": "Reefslider",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpSkewer.game__GameParameterTable.json",
+      "sha256": "b216e08422a218b2de73c1430c4dc28d8956d43109344d59838cd5cbc2507d35",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpSkewer.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpSkewer.game__GameParameterTable.json"
+    },
+    {
+      "id": "tripleInkstrike",
+      "name": "Triple Inkstrike",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpTripleTornado.game__GameParameterTable.json",
+      "sha256": "8a4b9079b036322faaec32a9f20cc8f9269071a55aa2f03d8063434dbf1b46b3",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpTripleTornado.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpTripleTornado.game__GameParameterTable.json"
+    },
+    {
+      "id": "tacticooler",
+      "name": "Tacticooler",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpEnergyStand.game__GameParameterTable.json",
+      "sha256": "4222305b40620e1d269ce9119299419c4141e496ebf9e0cba069534932306c7d",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpEnergyStand.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpEnergyStand.game__GameParameterTable.json"
+    },
+    {
+      "id": "superChump",
+      "name": "Super Chump",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpFirework.game__GameParameterTable.json",
+      "sha256": "9fba4561d90e9f585ffa05674c402361042617a5750a8ba45332f7ef7de9782d",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpFirework.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpFirework.game__GameParameterTable.json"
+    },
+    {
+      "id": "krakenRoyale",
+      "name": "Kraken Royale",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpCastle.game__GameParameterTable.json",
+      "sha256": "0cee22701b77abbd5fd33776689744b7100848bfa4423d59987fcdc72afb2156",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpCastle.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpCastle.game__GameParameterTable.json"
+    },
+    {
+      "id": "splattercolorScreen",
+      "name": "Splattercolor Screen",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpChimney.game__GameParameterTable.json",
+      "sha256": "76a00aa02c0fdf4ed3b293b5fb39cecf2dbe67db4d537e613b68e90aa6040659",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpChimney.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpChimney.game__GameParameterTable.json"
+    },
+    {
+      "id": "waveBreaker",
+      "name": "Wave Breaker",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpShockSonar.game__GameParameterTable.json",
+      "sha256": "437209c1e549ab796d1dc480a07bf870e5078936ad8e85ed1a7363fc90cf7cbe",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpShockSonar.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpShockSonar.game__GameParameterTable.json"
+    },
+    {
+      "id": "tripleSplashdown",
+      "name": "Triple Splashdown",
+      "sourceFile": "splat3/data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json",
+      "sha256": "9edc75af8698166c89191cfa07c22aa3fda5ce4ea4d0ffaac600bd18be41e910",
+      "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json",
+      "upstreamPath": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json"
+    }
+  ],
+  "kitGaugeSource": {
+    "sourceFile": "splat3/data/mush/1130/WeaponInfoMain.json",
+    "sha256": "53641c4b4c96d56d3ed4ca8d4c7426d83a0bf28af6f85e9eafc391b2ae9f663e",
+    "upstreamUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/mush/1130/WeaponInfoMain.json",
+    "kitRows": [
+      {
+        "rowId": "Maneuver_Normal_00",
+        "name": "スプラマニューバー",
+        "specialPoint": 200,
+        "subWeapon": "Work/Gyml/Bomb_Suction.spl__WeaponInfoSub.gyml",
+        "specialWeapon": "Work/Gyml/SpChariot.spl__WeaponInfoSpecial.gyml"
+      },
+      {
+        "rowId": "Blaster_Middle_00",
+        "name": "ホットブラスター",
+        "specialPoint": 190,
+        "subWeapon": "Work/Gyml/Bomb_Robot.spl__WeaponInfoSub.gyml",
+        "specialWeapon": "Work/Gyml/SpGreatBarrier.spl__WeaponInfoSpecial.gyml"
+      },
+      {
+        "rowId": "Spinner_Standard_00",
+        "name": "バレルスピナー",
+        "specialPoint": 210,
+        "subWeapon": "Work/Gyml/Sprinkler.spl__WeaponInfoSub.gyml",
+        "specialWeapon": "Work/Gyml/SpShockSonar.spl__WeaponInfoSpecial.gyml"
+      },
+      {
+        "rowId": "Slosher_Strong_00",
+        "name": "バケットスロッシャー",
+        "specialPoint": 220,
+        "subWeapon": "Work/Gyml/Bomb_Splash.spl__WeaponInfoSub.gyml",
+        "specialWeapon": "Work/Gyml/SpTripleTornado.spl__WeaponInfoSpecial.gyml"
+      }
+    ],
+    "upstreamPath": "data/mush/1130/WeaponInfoMain.json"
+  }
+}
