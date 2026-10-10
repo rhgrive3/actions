@@ -2622,3 +2622,10 @@ and the dry lift angle are visual calibration; Switch parity remains unverified.
   an INKWAVE constant, not a Splatoon 3 value, and is unverified. Real browser on keyboard, pad and touch, and Switch/mobile parity
   remain 未確認. A separate report (#907 comment, 2026-10-07) says movement intent continues while the map is held; it was not
   reproduced here and is not changed by this entry.
+## 2026-10-10 — #1178 通常の20Hz owner snapshotの補間（24/30/60/120/144Hz）
+
+- 本家の根拠: なし。Splatoon 3 の通信仕様と遠隔プレイヤーの補間フレーム値は公開されていない。本件はINKWAVE受信側の防御範囲で、移動速度・加速・停止距離などのゲーム数値は変えない。Nintendo 公式資料の数値は使っていない。
+- INKWAVE 実装箇所: `inkwave-public/src/net/netmatch.js` の `_tick`（受信とバッファ）、`update` → `_advance` / `_sample`、`applyRemote`。`patches/network-replication/adapter.mjs` で合成。
+- 再現操作（試験）: `patches/network-replication/tests/issue-1178-owner-rate-matrix.test.mjs`。所有者が +x へ 2 単位/秒で動き、20Hz（50ms 間隔）・片道遅延 80ms で snapshot を送る。受信側は 24/30/60/120/144Hz で 4 秒進め、1.5 秒後から遠隔 Actor の x を標本化する。結果は 5/5 合格（main 基点の worktree、Node VM fixture）。
+- プレイへの影響: 相手の移動表示が描画フレーム数に依らず一定の速度で補間され、後退や停止が起きないことを受信経路の単体試験で確認した。不正な snapshot（`vx: "bad"` など）の拒否は PR #1182 の snapshot guard が担当し、main には未統合。
+- 確認状態: 単独の Node 試験。実ブラウザ二端末、relay、Switch 実機の通信は未確認。2 クライアント相当で「不正 snapshot の後に正常 snapshot」を流す試験は、#1182 の guard に依存するため本エントリでは未実施（未確認のまま）。#1178 は解決扱いにしない。
