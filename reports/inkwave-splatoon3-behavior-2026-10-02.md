@@ -2604,3 +2604,21 @@ and the dry lift angle are visual calibration; Switch parity remains unverified.
 - 試験: `patches/reliability/tests/finish935-input.test.mjs` 9 件、合格。30 / 60 / 120 Hz の固定ステップ、オフラインと NetMatch ホスト。加えて、一時停止中に保持した Charger / Splatling / SUB が偽の release を生まず、再開後の実際の release で 1 回だけ作用することを確認（この追加分は保持の確認であり、修正前の失敗を示すものではない）。隣接試験（`turf-finish`、`platform-pending-input`、`charger-cancel-sub`、`charger-squid-cancel-recovery`、`issues-1092-1114-finish-mobile-adoption`）も合格。
 - プレイへの影響: TIME UP 後の新たな攻撃は発生しない。一時停止の保持は解放されない。観測のみの点: 一時停止中に実際に指を離した場合、Charger / Splatling の発射と SUB のボム投擲は再開時に行われる。これが本家の仕様と一致するかは未確認。
 - 確認状態: ロジックの組み立て試験のみ（VM 上の Match / Actor / WeaponRunner と NetMatch オブジェクト）。実ブラウザ、実機、本家との比較は未実施。CI の最終結果と main への merge は未確認。Issue #935 の close は、本家根拠と CI の確認まで行わない。フォロワー（オンライン guest）の遅延は #838、弾・雲の継続描画は #410 の範囲で別管理。メニュー遷移とフォーカス喪失時の held 保持は、この追加試験では未検証（フォーカス喪失の pending 取消は既存の `platform-pending-input` 試験、#991）。
+## 2026-10-10: #907 explicit Turf Map drives the live camera
+
+- Splatoon 3 basis: Nintendo's Turf War guide says to press X to open the map and see each team's ink coverage
+  ([Nintendo guide](https://www.nintendo.com/jp/ichikara/av5ja/03_en.html); baseline Ver. 11.3.0). Map open/close
+  timing, the map layout and whether movement is locked while the map is held are not published here, so they are not compared.
+- INKWAVE implementation: `inkwave-public/src/main.js` `_frame` calls `rig.setMap(...)` from `controller.mapHeld`
+  while playing with no menu (upstream line 1057). With the corner minimap OFF, `patches/local-quality/minimap-resource-adapter.mjs`
+  keeps the live raster, actor markers and an `expanded: true` HUD frame only while the explicit map is held (PR #1191, merged).
+- Regression: `patches/local-quality/tests/explicit-map-rig-907.test.mjs` runs the composed `Game._frame` and checks that held
+  Tab/M, pad button 8 and touch MAP (all via `mapHeld`) open `rig.mapOpen`, release closes it, minimap on and off. Menu,
+  pause and attract do not open it. Mutation check: removing the `rig.setMap` wiring fails the four held/release cases.
+- Reproduction: hold the map control in live Turf War; the camera should swoop overhead. With the corner minimap OFF the
+  expanded map should show the current ink raster and teammate markers.
+- Play impact: the same held state suppresses FIRE/SUB and enables teammate Super Jump hotkeys, so the map view must match it.
+- Confirmation state: source and composed-fixture level only. INKWAVE's easing (0.42 s open, 0.34 s close in `cameraRig.js`) is
+  an INKWAVE constant, not a Splatoon 3 value, and is unverified. Real browser on keyboard, pad and touch, and Switch/mobile parity
+  remain 未確認. A separate report (#907 comment, 2026-10-07) says movement intent continues while the map is held; it was not
+  reproduced here and is not changed by this entry.
