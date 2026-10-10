@@ -250,6 +250,10 @@ for (const run of RUNS) {
     // checks, so the tracing wrappers never perturb the normal range audit.
     if (run.name === 'chromium-desktop' && !signageOnly) {
       await page.goto(base + '?range&skipTitle&profileRange=1', { waitUntil: 'domcontentloaded', timeout: 60000 });
+      // Persistent Chromium contexts can keep the original about:blank tab in front
+      // after this second navigation, suspending requestAnimationFrame.
+      // Activate the actual game tab; never synthesize frames or skip a trace gate.
+      await page.bringToFront();
       // Wait for a complete trace and snapshot it in the SAME evaluation.
       // A Practice Range transition may replace the page's diagnostic global
       // between separate evaluate calls even after the earlier predicate passed.
@@ -270,6 +274,8 @@ for (const run of RUNS) {
           try { snap = probe?.snapshot?.() ?? null; } catch (e) { snap = { snapshotError: String(e) }; }
           return {
             url: location.search, document: document.readyState,
+            hidden: document.hidden,
+            hasInstrumentedLoop: !!g?._loop?.toString().includes('_rangeFrameProbe'),
             matchState: match?.state ?? null, range: !!match?.range,
             gameExists: !!g, gameProbe: g?._rangeFrameProbe === undefined ? 'uninitialized' :
               g._rangeFrameProbe === null ? 'loading' : 'installed',
