@@ -21,16 +21,21 @@ export function replaceOnce(source, before, after, label) {
 // dropped too; padPrev is deliberately kept so a button held across the blur is not re-triggered.
 const BLUR_BEFORE = "    window.addEventListener('blur', () => { this.keys.clear(); this.mouse.left = this.mouse.right = false; });";
 const BLUR_AFTER = [
-  "    window.addEventListener('blur', () => {",
-  '      // Focus left mid-frame: drop held keys, pending key edges, mouse held/pending edges and',
-  '      // look deltas so no input from the inactive window is replayed on the next frame.',
+  '    const _resetActiveInput = () => {',
+  '      // Drop held keys, pending key edges, mouse held/pending edges and',
+  '      // look deltas so no input from the inactive/hidden window is replayed.',
   '      this.keys.clear(); this.pressed.clear();',
   '      this.mouse.left = this.mouse.right = false;',
   '      this.mouse.leftPressed = this.mouse.rightPressed = false;',
   '      this.mouse.dx = 0; this.mouse.dy = 0;',
-  '      // padPrev stays: a pad button held across the blur must not re-trigger when polling resumes.',
+  '      // padPrev stays: a pad button held across blur/hidden must not re-trigger when polling resumes.',
   '      this.padPressed.clear();',
-  '    });',
+  '    };',
+  "    window.addEventListener('blur', _resetActiveInput);",
+  "    if (typeof document !== 'undefined') {",
+  "      document.addEventListener('visibilitychange', () => { if (document.hidden) _resetActiveInput(); });",
+  '    }',
+  "    window.addEventListener('pagehide', _resetActiveInput);",
 ].join('\n');
 
 // Defect 2: with no connected gamepad pollPad() returned before touching padPrev, so a stale held

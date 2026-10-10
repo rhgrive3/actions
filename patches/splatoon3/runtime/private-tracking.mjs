@@ -87,13 +87,19 @@ export function installThermalTracking(api, tuning) {
       return result;
     };
     NetMatch.prototype._hitAck = function (receipt, ...args) {
-      const previous = ackContext; ackContext = this._pendingHits?.get(receipt?.h)?.privateThermal;
+      const previous = ackContext;
+      const metadata = this._pendingHits?.get(receipt?.h)?.privateThermal;
+      ackContext = metadata && { ...metadata, receiptOwner: args[0] };
       try { return ack.call(this, receipt, ...args); } finally { ackContext = previous; }
     };
     on('combat:confirmed', ({ attacker, victim, damage }) => {
       const r = ackContext;
+      // _hitAck emits this only after authenticating the exact receipt, its
+      // delivered owner, and the live victim life. A predecessor can therefore
+      // confirm a same-life hit after ownership has transferred.
       if (damage > 0 && r?.attacker === attacker && r.victim === victim && r.match === G.match &&
-          r.ownerEpoch === epoch(attacker) && r.victimEpoch === epoch(victim)) stamp(attacker, victim, G.time);
+          r.ownerEpoch === epoch(attacker) && r.victimEpoch === epoch(victim) &&
+          r.receiptOwner) stamp(attacker, victim, G.time);
     });
   }
   ensureRenderer();

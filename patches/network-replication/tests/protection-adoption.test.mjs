@@ -118,10 +118,10 @@ test('#958 malformed/stale/foreign protection cannot replace accepted ownership 
   const f=await pair();f.source.invuln=.8;const packet=f.send();assert.equal(packet.a[0][23][0],ADOPTION_TAG);
   const state=f.remote.net.buf.at(-1).adoption;close(state.protection.invuln,.8);
   for(const value of [NaN,Infinity,-1,11]){
-    const bad=structuredClone(packet);bad.ts+=.1;bad.a[0][23][2]++;bad.a[0][23][4][2]=value;f.receiver.onMessage('p2',bad);
+    const bad=structuredClone(packet);bad.ts+=.1;bad.u++;bad.a[0][23][3]=bad.u;bad.a[0][23][2]++;bad.a[0][23][4][2]=value;f.receiver.onMessage('p2',bad);
     close(f.remote.net.buf.at(-1).adoption.protection.invuln,.8);
   }
-  const foreign=structuredClone(packet);foreign.ts+=.2;foreign.a[0][23][2]++;foreign.a[0][23][4][2]=9;f.receiver.onMessage('intruder',foreign);assert.equal(f.remote.net.buf.length,1);
-  const legacy=structuredClone(packet);legacy.ts+=.3;legacy.a[0][23][2]++;legacy.a[0][23][4]=.7;f.receiver.onMessage('p2',legacy);
+  const foreign=structuredClone(packet);foreign.ts+=.2;foreign.u++;foreign.a[0][23][3]=foreign.u;foreign.a[0][23][2]++;foreign.a[0][23][4][2]=9;f.receiver.onMessage('intruder',foreign);assert.equal(f.remote.net.buf.length,1);
+  const legacy=structuredClone(packet);legacy.ts+=.3;legacy.u++;legacy.a[0][23][3]=legacy.u;legacy.a[0][23][2]++;legacy.a[0][23][4]=.7;f.receiver.onMessage('p2',legacy);
   close(f.remote.net.buf.at(-1).adoption.recoveryAge,.7);assert.equal(f.remote.net.buf.at(-1).adoption.protection,null);
 });

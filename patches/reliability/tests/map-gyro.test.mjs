@@ -41,6 +41,8 @@ async function setup(dead=false){
  const h=await rig();h.allies.forEach((a,i)=>a.pos.set((i-1)*4,0,-i*3));if(dead)h.dead();h.touch();h.input.mobile.gyro.enabled=true;h.G.rig=h.camera;h.camera.dioLook={x:0,y:0};
  h.G.camera=new h.THREE.PerspectiveCamera(60,1000/700,.1,100);h.G.camera.position.set(0,8,12);h.G.camera.lookAt(0,0,0);h.G.camera.updateMatrixWorld();
  const ui=Object.create(h.DioramaOverlay.prototype);Object.assign(ui,{on:true,k:1,cx:.5,cy:.62,hover:-1,_last:{},el:element(),cursor:element(),arc:element(),pins:Array.from({length:5},()=>({el:element(),icon:element(),name:element(),state:element()}))});
+ // Keep the partial DOM fixture in sync with the production constructor's target slots.
+ ui.basePins=ui.pins.slice(0,4);ui.bubblerPins=[];ui.selfPin=ui.pins[4];
  h.input.keys.add('Tab');h.input.pressed.add('Tab');h.m.updateController(STEP);ui.update(STEP,1);
  function motion(yaw,pitch){h.input.mobile.gyro.dYaw=yaw;h.input.mobile.gyro.dPitch=pitch;h.m.updateController(STEP);}
  return {...h,ui,motion};

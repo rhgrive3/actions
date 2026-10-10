@@ -62,7 +62,11 @@ test('production six-adapter native jump age holds 25F, recovers by 70F, and nev
     control.tick(control.a);
     nativeCharge.push([control.a.grounded, control.a.weaponRunner.charge, control.a.ink, control.G.projectiles.list.length]);
   }
-  assert.ok(nativeCharge.at(-1)[1] > 0 && nativeCharge.at(-1)[1] < 1, 'actual airborne charge remains partial after these two jumps');
+  // #888 reduces the charging takeoff impulse, so the still-charging second jump
+  // lands earlier and ground charge reaches full by frame 120. The scenario
+  // property this guard protects is real airborne partial-charge frames, not
+  // that the final frame is partial.
+  assert.ok(nativeCharge.some(([grounded, charge]) => !grounded && charge > 0 && charge < 1), 'actual airborne charge remains partial after these two jumps');
   const runs = [];
   for (const hz of [30, 60, 120]) {
     const f = await nativeFloorFixture(), { a } = f, clock = new FixedClock();
@@ -94,8 +98,12 @@ test('production six-adapter native jump age holds 25F, recovers by 70F, and nev
     });
     assert.equal(frame, 120, 'clock executes 120 native simulation frames');
     assert.equal(landings.length, 2, 'both native jumps land on the in-memory floor');
-    for (const landing of landings) {
-      assert.ok(landing.age > 25 && landing.age < 70, `landing remains in recovery: ${landing.age}`);
+    for (const [index, landing] of landings.entries()) {
+      // #888: the second (still-charging) jump is the shorter S3 charging jump,
+      // so it lands inside the 25F hold instead of after it; the 25F hold itself
+      // is asserted directly at frame 25.
+      assert.ok(landing.age > 0 && landing.age < 70, `landing remains in jump spread: ${landing.age}`);
+      assert.ok(index === 0 ? landing.age > 25 : landing.age < 25, `uncharged/charging takeoff retains its distinct landing boundary: ${index}, ${landing.age}`);
       close(landing.spread, expectedHorizontalAtLanding(a.weapon, a.weaponRunner.bloom, landing.age));
       assert.ok(landing.spread > a.weapon.spreadGround * bloomScale(a.weaponRunner), 'first grounded frame retains jump spread');
     }

@@ -28,7 +28,7 @@ export function stepGroundVelocity(vel, moveX, moveZ, targetSpeed, accel, dt) {
  * Same condition as the grounded selection; also holds after entering squid.
  */
 export function attackAirRateScale(a, P) {
-  const attacking = a.weaponRunner.firingPose?.() || a.intent.sub || a.specialActive;
+  const attacking = a.weaponRunner.firingPose?.() || a.intent.sub || a.weaponRunner.aimingSub || a.specialActive;
   const ratio = (P.s3AttackGroundAccel ?? 72) / (P.s3GroundAccel ?? 36);
   return attacking && ratio > 0 ? ratio : 1;
 }

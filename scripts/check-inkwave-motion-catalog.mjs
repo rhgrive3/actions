@@ -270,10 +270,10 @@ export function validateCatalogResult(result) {
     // Native beauty shaders are retained as a diagnostic; their repeated
     // subpixel shading varies even with identical native pose and clocks.
     pixels(row.pause.wholeSceneRgb, label + '.pause-beauty', null);
-    // A squid braked to rest in its own ink is drawn under the surface
-    // (swim-motion.test.mjs): moving that rig must leave the frame unchanged.
-    // Every other scenario keeps proving that the paused pass sees rig motion.
-    pixels(row.pause.movedRigRgb, label + '.pause-counterexample', label !== 'swim-turn-brake');
+    // Every scenario must prove the paused pass sees rig motion. The braked own-ink
+    // swimmer's body stays under the surface, but the local player's Splatoon 3
+    // ink mound (patches/local-quality/s3-squid-look-adapter.mjs) rides on it.
+    pixels(row.pause.movedRigRgb, label + '.pause-counterexample', true);
     for (const key of ['image', 'repeatedImage', 'movedImage', 'beautyImage', 'repeatedBeautyImage'])
       if (!imageFiles.has(row.pause[key])) fail('pause screenshot denominator ' + label);
     if (!row.zeroDt || row.zeroDt.unchangedClocks !== true || row.zeroDt.gameplayInvariant !== true) fail('zero-dt native clock/physics invariant ' + label);

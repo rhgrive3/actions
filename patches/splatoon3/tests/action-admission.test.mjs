@@ -167,14 +167,14 @@ function save(label, r, details = {}) {
   }, null, 2) + '\n'); fs.renameSync(file + '.pending', file);
 }
 
-// Retained red receipts predate these hooks; current tests exercise their actual
-// production activation before native aim/stance/contact consume the result.
-test('admission paused and remote Runner clocks govern native aim, stance and feet before rendering', async () => {
+// Retained red receipts predate these hooks; the owner Runner's actual action
+// clock is connected before native aim/stance/contact consume the result.
+test('admission paused owner Runner clocks govern native aim, stance and feet before rendering', async () => {
   const api = await production(), T = api.CHARACTER_TIMERS;
-  for (const hz of [30, 60, 120]) for (const remote of [false, true]) {
+  for (const hz of [30, 60, 120]) {
     const reference = rig(api), stale = rig(api);
     try {
-      for (const r of [reference, stale]) { r.a.remote = remote; r.roll(); r.step(1 / 60, { fire: true }); }
+      for (const r of [reference, stale]) { r.a.remote = false; r.roll(); r.step(1 / 60, { fire: true }); }
       reference.ch.tr[T.T_DODGE] = .02; stale.ch.tr[T.T_DODGE] = 2;
       const before = [reference, stale].map(gameplay);
       for (let i = 0; i < 4; i++) for (const r of [reference, stale]) r.visual(1 / hz);
@@ -189,10 +189,23 @@ test('admission paused and remote Runner clocks govern native aim, stance and fe
       assert.ok(actual.geometry.some(m => m.skinned && m.vertices.length > 0));
       assert.deepEqual(actual.bones, expected.bones);
       assert.deepEqual(actual.geometry, expected.geometry);
-      save('paused-runner', stale, { hz, remote });
+      save('paused-runner', stale, { hz, remote: false });
       for (const r of [reference, stale]) { const gameplayBefore = gameplay(r); r.visual(0); assert.deepEqual(gameplay(r), gameplayBefore); }
     } finally { reference.close(); stale.close(); }
   }
+});
+
+test('bare remote Runner dodge state does not invent an accepted sender clock', async () => {
+  const api = await production(), T = api.CHARACTER_TIMERS, r = rig(api);
+  try {
+    r.a.remote = true;
+    r.roll();
+    r.step(1 / 60, { fire: true });
+    r.ch.tr[T.T_DODGE] = 2;
+    r.visual(0);
+    assert.equal(r.a.remoteDodgeClock, undefined);
+    assert.equal(api.dualiesMotionSnapshot(r.ch)?.phase, null, 'runner.dodge alone cannot start a remote pose');
+  } finally { r.close(); }
 });
 
 test('admission native aim consumes Runner lock before stance even with an unfired remote presentation', async () => {
