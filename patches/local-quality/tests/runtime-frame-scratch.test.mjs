@@ -85,7 +85,7 @@ const reflectionSegment = source => {
   return source.slice(start,end);
 };
 function invokeReflection(source,{ultra=false,throws=false,repeat=1}={}) {
-  const f=new Function('renderer','scene','rc','rt','q','xr','sAuto','sNeed','_rCol','ca','G',reflectionSegment(source));
+  const f=new Function('renderer','scene','rc','rt','q','xr','sAuto','sNeed','_rCol','ca','G','prevRT',reflectionSegment(source));
   const all=Array.from({length:15},(_,i)=>({id:'object'+i,visible:i%4!==0}));
   const env={sea:all[0],sky:all[1],lhBeam:null,city:all[2],terrain:all[3],
     staticScenery:all[4],ferris:all[5],trees:all[6],sailInst:all[7],gullInst:all[8],
@@ -102,7 +102,7 @@ function invokeReflection(source,{ultra=false,throws=false,repeat=1}={}) {
   for(let i=0;i<repeat;i++){
     let thrown=null;
     try{f.call(env,renderer,{id:'scene'},{id:'camera'},renderTarget,
-      ultra?'ultra':'high',true,true,true,{id:'color'},.6,G);}
+      ultra?'ultra':'high',true,true,true,{id:'color'},.6,G,{id:'prior'});}
     catch(e){thrown=e.message;}
     rows.push({events:events.splice(0),passes:passes.splice(0),thrown,
       restored:all.map(o=>o.visible)});
