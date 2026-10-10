@@ -6,7 +6,7 @@ export function compactLoadingWorkerTemplate(source, transformSync) {
   const executable = source.replace(binding, '');
   const code = transformSync(executable, {
     loader: 'js', format: 'esm', minifyWhitespace: true, minifyIdentifiers: true,
-    minifySyntax: true, legalComments: 'inline',
+    minifySyntax: true, legalComments: 'inline', charset: 'utf8',
   }).code;
   // Input has no imports/exports. ESM mode only enables private top-level name
   // compaction; the emitted worker is still installed as a classic script.

@@ -80,6 +80,10 @@ for (const file of walk(SRC)) {
 for (const file of walk(PATCH_ROOT)) {
   const rel = path.relative(PATCH_ROOT, file);
   if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json' || BUILD_ONLY_PATCH_MODULES.has('patches/splatoon3/' + rel.split(path.sep).join('/'))) continue;
+  // Pinned source/audit tables are input evidence for tests and profile generation,
+  // never fetched by the browser. Keep them in Git, but exclude their JSON from
+  // the deployed PWA asset/hash manifest and the 64 KiB service worker.
+  if (rel.startsWith('reference/') && rel.endsWith('.json')) continue;
   // Scorch menu artwork belongs at the shared stage asset URLs, not under the
   // patch source namespace. Merge only its stage manifest entry below.
   if (rel.startsWith('assets/stages/')) continue;
