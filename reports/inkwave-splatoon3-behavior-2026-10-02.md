@@ -2777,3 +2777,12 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
   - Not separately tested: the down-stick cancel input mapping (covered only through the native away-push detach).
   - Not on this branch: local commit 97e3e6c (PR #1182 integration) is absent from this worktree. Reconcile at integration.
   - #846 is not closed by this change.
+## 2026-10-10: Turf Map enemy disclosure without a team/expiry check (#710)
+
+- 本家の根拠: Inkipedia [Point Sensor](https://splatoonwiki.org/wiki/Point_Sensor) は S2/S3 について「マーク対象の位置を自チーム全員に知らせる」と記載し、マーク（追跡）は約8秒、SP強化時は最大16秒と記す（数値はこのページの記述であり、S3 11.3.0 の実機確認ではない）。同ページは、マーク対象が Turf Map に出るかは記載していない。Inkipedia [Map](https://splatoonwiki.org/wiki/Map) は、敵アイコンが「一定量のダメージ」または「マーキング」で一時的に現れることだけを記し、閾値・期間は書いていない。18ダメージ閾値は既存記録（2026-10-05 項、検証Wiki由来）のままで、今回 wikiwiki は HTTP 403 で再照合できず未確認。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/map-reveal.mjs` の `enemyRevealedOnMap` から、無条件の `s3.revealed === true` 分岐を削除（修正前は、チームも期限も見ずに敵を地図へ載せていた）。`adapter.mjs` の合成ゲート（`mapActorVisible || enemyRevealedOnMap`）と、チーム別・期限付きの `s3.revealedUntil[team]`（`runtime/combat-info.mjs` の `mapActorVisible`）は変更なし。
+- 再現（修正前）: `enemyRevealedOnMap({alive:true,hp:100,s3:{revealed:true}},100)` が `true`。main 上で `s3.revealed` や `revealedUntil` を書く経路は見当たらず、実プレイでの露出は確認されていない（潜在的な経路）。
+- 修正後の地図表示条件: 味方は常時。敵は (a) 直近の被ダメージで合計18以上（閾値は上記の未確認値）、または (b) マーク側が自チームに設定し、期限内の `revealedUntil[team]`。非生存・リスポーン時は両方とも消える。
+- プレイへの影響: 現行 main では、通常プレイの敵表示は変化しない。変化は、将来の索敵実装が無条件フラグを書いた場合に両陣営へ位置が漏れるのを防ぐことだけ。
+- 確認状態（ロジック単独）: `patches/splatoon3/tests/map-reveal.test.mjs` 8/8 pass。新規の無条件フラグ試験は、修正前の HEAD 版の `enemyRevealedOnMap` で `true` を返すことを別途確認（fail する）。`score-hud`・`sub-hud`・`private-tracking` 26/26 pass、`hud-snapshots` 8 pass / 1 skip（既存の SKIP）、`check-inkwave-patches --quick` OK。
+- 未確認（解消していない）: 本家でマークされた敵が Turf Map に出るか、表示の期間・チーム範囲の実機照合。18ダメージ閾値の公式・実機照合。ポイントセンサー等の発生源（main 未実装。未マージ Draft PR #1195 の内容は main の実装事実として扱わない）。オンライン複製（マーク状態の送受信と非漏洩）。ブラウザでの実動作、本家実機との比較。Issue #710 は開いたままとする。
