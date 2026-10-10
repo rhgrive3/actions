@@ -3246,3 +3246,12 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - 再現操作: 平地で敵の正面 0.9 WU に回転中のローラーを置き、ダメージ適用後の双方の速度を比較する。無敵の敵では被弾が拒否され、ローラー側は DamageOff の反動になる。
 - プレイへの影響: 生存する回転接触で、敵は離れる向きに、ローラーは逆向きに速度を受ける。致死接触、回転していない接触、ドラム外の接触は変えない。ダメージ値と接触判定は変更しない。リモートのローラーは、複製された回転フラグ（`character.s3RollerFlick.rolling`）で判定し、その持ち主のクライアントだけが自分の体を動かす。
 - 確認状態: **未確認**。加速度の単位（DU/s² と仮定）、速度係数の単位、結合式（`AccelMin + MyVelocityRate*自分の接近速度 + OpponentVelocityRate*相手の接近速度` を `AccelMin..AccelMax` に丸める）は、公開資料にも一次計測にもない。速度変化には既存の #535 換算（splatBombKnockbackDelta）を暫定モデルとして使っている。ロジック単独の試験のみで、ブラウザの実動作、ネットワーク越しの実機比較、本家の押し量・反動量の実測は行っていない。実機で押し量と反動量を比べるまで、Splat 3 と一致したとは扱わない。
+## #919: teammate special activation signal (HUD)
+
+- 本家の根拠: 未確認。Nintendo 公式の Ver. 11.3.0 パッチノート（2026-08-19）には味方のスペシャル発動表示の記載がない。攻略Wiki（wikiwiki, スペシャルウェポン）は 403 で本文を取得できず、Issue本文が引く記述は確認できていない。Splatoonwiki の Special ページには味方発動の表示記述がない。Google Drive 上の関連ノートは本文未確認。
+- INKWAVE 実装箇所: `patches/local-quality/team-special-signal-adapter.mjs`（`src/ui/hud.js` の native feed に味方発動の行を追加）、`patches/local-quality/adapter.mjs`（登録）。`src/main.js` の local-only バナーは変更していない。
+- 挙動: 同じチームの非local actor が受理済みの `special:use` を発動したとき、その actor の special id に対応するアイコンを feed に 1 行出す。敵、local 自身、attract/menu/非 playing/paused、非表示・finish・dispose 時は出さない。オンラインは `NetMatch._playEvent` 末尾の `emit(name, e)` で既に bus に流れるため、二重注入はしない。Issue 本文の「音声のみ」という前提は現 main では不正確だった。
+- 再現操作: 同チームの味方 bot または remote 味方が特殊を発動する。現 main では表示されず、修正後は feed に行が出る。
+- プレイへの影響: HUD 表示のみ。ゲームプレイ、ゲージ、ダメージ、スペシャル時間は変更しない。
+- 表示時間: 既存の feed 失効（4.2 秒）を流用。INKWAVE の既存値であり、本家の表示時間の実測ではない。
+- 確認状態: 限定 source 回帰 6 件で、実 Actor の発動、HUD 行、アイコン、敵・自分の除外、重複受信の抑止、退役を確認（ロジック単独の測定）。本家の表示有無、位置、見た目、時間、積み方は未確認。ブラウザ実動作と本家実機比較は未実施。
