@@ -646,8 +646,14 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     // WORLD proves nothing about the actor's vertex response. Beauty and
     // visibility were verified above with the full original scene. Isolate
     // the ACTOR for the flat RGB geometry sensitivity proof.
-    const excluded = scene.children.filter(o => o !== ch.root).map(o => [o,o.visible]);
-    for(const [o] of excluded)o.visible=false;
+    const excluded = [];
+    scene.traverse(o => {
+      if(!(o.isMesh||o.isLine||o.isPoints||o.isSprite))return;
+      for(let p=o;p;p=p.parent)if(p===ch.root)return;
+      // Never hide lights or their parent groups: the test must compile
+      // EXACTLY the same native vertex shader as the original beauty pass.
+      excluded.push([o,o.visible]);o.visible=false;
+    });
     // Keep every native vertex shader, mesh, skinning, alpha and cutout.
     const replacements = [], materials = new Map(), vertexSources = [], originalPosition = ch.root.position.clone();
     scene.traverse(n => {
