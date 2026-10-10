@@ -2999,3 +2999,10 @@ Player impact and limits: a depleted Roller round's hit volume (owner capsule vi
 - 適用元: PR #1182 の commit `46e12a8`（head `b08a3abd` は回帰テストの fixture 追随のみ）。`source-fixture.mjs` は installer 戻り値の `installedRuntime` を返すよう更新した（追加プロパティのみ）。
 - 確認状態: 回帰 `patches/splatoon3/tests/issue-351-haunt-network-life.test.mjs` 4/4 pass（修正前 0/4）。30/60/120Hz の送信位相、二回復活の backlog（異なる killer）、偽装・未来・過去 mark の拒否、rendered-life のみの対照で arm 欠落を確認。隣接の haunt・respawn・gear・combat-life・network 系の既存テストも pass。ただし、これは同一プロセスの固定クロックによるロジック試験であり、ブラウザ実動作・Switch 実機・本家実機との比較は未実施。
 - 未確認（従来どおり留保）: 相打ち・死後弾の発動開始時刻、特殊ギア/ドリンク併用、近距離・潜伏時の透過抑制の校正、本家の総復活時間（#91 の範囲）。
+## #1186: same-name ally markers borrowed another actor's weapon and Special readiness
+
+- **本家の根拠（参照版 Splatoon 3 Ver.11.3.0）**: Inkipedia の [Special gauge](https://splatoonwiki.org/wiki/Special_gauge) の検索抜粋では、特殊ゲージは満タンで光り、Right Stick で発動できる。同じ検索で得た Inkipedia の競技ガイド（`Competitive:` 系ページの抜粋。出典ページは特定していない）は、相手の特殊準備を HUD で確認することに言及する。どちらも全文取得はしていない（検索抜粋のみ）。味方マーカーに武器アイコンや準備の光を出す表示そのものの仕様は確認できず、**未確認**。今回の比較は「表示の所有者が正しいか」に限り、数値や枠の校正は対象外。
+- **INKWAVE 実装箇所**: `inkwave-public/src/main.js` の味方マーカー投影（`mk.weapon`、`mk.specialReady`）、`patches/local-quality/hud-snapshots-adapter.mjs`（`src/ui/hud.js` の `_updMarkers`）。HUD は投影された値を優先し、武器を描画とアイコン更新の無効化条件に含める。表示名による全 Actor の Map 参照は、旧入力（メタデータなし、Lab）の fallback に限る。
+- **再現操作**: 表示名が同じ `Player` の味方 2 人を置く。一方は Charger で特殊準備完了、もう一方は Roller で未準備。同名の敵 Blaster は準備完了。修正前は両方の味方マーカーが Blaster・準備完了として描画された。味方が死亡・復活してマーカースロットが別の同名味方に再利用されると、武器アイコンが古いまま残った。
+- **プレイへの影響**: 同名のプレイヤーがいる場合（既定名 `Player` を含む）、味方マーカーの武器アイコンと特殊準備の光が、そのマーカーの味方本人のものになる。ゲームロジック、特殊の数値、タイミング、判定、プールの仕組みは変わらない。Actor の参照は転送されない。
+- **確認状態**: ソース合成テスト（本家コードを 6 段の変換後に実行し、Actor と DOM の stand-in、実 THREE で投影）。`marker-owner-metadata.test.mjs` は 5 件中、修正前に 2 件（同名の借用、死亡・復活の再利用）が失敗し、修正後は 5 件すべて成功（旧メタデータ欠落のネガティブコントロールを含む）。隣接テスト（hud-snapshots、ui-actor-lifetime、respawn-navigation、ally-down-marker、hud-sub-snapshots、low-ink-snapshots）は計 74 件成功、2 件スキップ（発出箇所の確認）、失敗 0。ブラウザ、オンライン中継、Switch 実機、本家の味方マーカーの見た目との一致は**未確認**。詳細: [marker owner report](inkwave-marker-owner-1186.md)。
