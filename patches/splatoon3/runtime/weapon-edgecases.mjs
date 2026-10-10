@@ -66,9 +66,16 @@ export function dualiesInputGate(runner) {
 // a resolved burst from being captured and queued again.
 let flushing = 0;
 
-// Two draws are retained. The optional shot bias applies a community gamma
-// calibration; the 2-D azimuth/pitch correlation is NOT a verified S3 PDF.
-// #1045: PitchDegSwerve is independent of the horizontal jump/recovery envelope.
+// The S3 community studies specify signed one-axis angular sampling and
+// Splatling-specific pitch. Each axis uses the same bias quantile but a
+// separate draw. The actual Nintendo game PRNG remains unverified.
+export function signedBiasSample(u, bias = .5) {
+  if (!Number.isFinite(u)) return 0;
+  const signed = Math.max(-1, Math.min(1, 2 * u - 1));
+  if (!signed) return 0;
+  return Math.sign(signed) * biasQuantile(Math.abs(signed), bias);
+}
+
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
   const bias = a.weaponRunner?.s3ShotBias;
@@ -92,19 +99,18 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
   if (w.kind !== 'splatling' || !Number.isFinite(w.spreadPitchGround)) {
     return system._spread(dir, horizontal);
   }
-  // Keep both Splatling spread draws when the horizontal cone is zero. The
-  // projectile seed and later paint effects share this gameplay RNG stream.
-  const u = Math.random(), angle = Math.random() * Math.PI * 2;
-  const radius = radiusSample(u);
-  const pitchRadius = Number.isFinite(bias?.pitch) ? biasQuantile(u, bias.pitch) : Math.sqrt(u);
-  const horizontalAngle = Math.max(0, horizontal) * DEG * radius;
-  const pitchAngle = w.spreadPitchGround * DEG * pitchRadius;
-  const right = dir.clone().set(-dir.z, 0, dir.x);
-  if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
-  right.normalize();
-  const up = dir.clone().cross(right);
-  return dir.addScaledVector(right, Math.cos(angle) * Math.tan(horizontalAngle))
-    .addScaledVector(up, Math.sin(angle) * Math.tan(pitchAngle)).normalize();
+  // S3 Splatling samples horizontal and pitch deviation as independent
+  // SIGNED angular offsets, each with its own bias/maximum-angle field.
+  // See Kanamoji 2024 Splatling theory (note.com/kanamoji_1027/n/n4de8b03535de).
+  // Both legacy random draws remain: replacing the shared circle radius/azimuth
+  // removes their artificial correlation without changing projectile seed order.
+  const yawOffset = Math.max(0, horizontal) * DEG * signedBiasSample(Math.random(), bias?.horizontal);
+  const pitchOffset = Math.max(0, w.spreadPitchGround) * DEG * signedBiasSample(Math.random(), bias?.pitch);
+  const yaw = Math.atan2(dir.x, dir.z) + yawOffset;
+  const pitch = Math.atan2(dir.y, Math.hypot(dir.x, dir.z)) + pitchOffset;
+  // Horizontal aim is rotated around world Y; independent pitch is then added
+  // to the original aim elevation. This retains speed and unit direction.
+  return dir.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).normalize();
 }
 
 export function blasterBurstDamage(p, w, distance, distanceDamage) {
