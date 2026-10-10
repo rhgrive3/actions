@@ -2789,11 +2789,13 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
 - INKWAVE now: `patches/splatoon3/runtime/movement.mjs`. While attached, the burst keeps `surge.speed` (charge-scaled; existing values unchanged) and the countdown no longer ends it. The countdown still ends an airborne burst. Arriving at the ledge during the burst fires `squidsurge_top` and the launch. The ink-end launch no longer requires remaining countdown. A held B after the countdown has elapsed still restarts the charge, as before. The `auto-climb` phase is removed.
 - Reproduction (fixed 60 Hz fixture, own-ink wall taller than 18F): full charge at 0 AP, release B. At 18F and beyond the actor stays climbing with climbV 15. Reaching the top fires `squidsurge_top` and arms the launch shield.
 - Play impact: a full Surge on a tall inked wall keeps its boost up to the ledge instead of dropping to wall-swim speed at 18F.
+- Remote viewers (replication follow-up): the owner sends the sustained climb as `burst` with remaining time 0 while attached. Before this follow-up, `patches/network-replication/issue-1088-surge-presentation.mjs` expired such a sample on arrival, so remote viewers lost the boost pose during the climb. The receiver now keeps it until the owner's `end` sample; countdown expiry still applies when time is above 0.
 - Verification status:
   - Logic only: `patches/splatoon3/tests/surge-auto-continuation.test.mjs`. All 10 tests pass with the change; 5 of them fail on main's `movement.mjs`. Raycast and paint are stubbed. No browser run and no real device.
   - 未確認: whether the Ver. 11.3.0 rush keeps the same speed over long walls (constant boost speed to the top is the behavior the issue requests, not a measured curve); the Gamepur top/ink-end statements; whether INKWAVE's away-push detach corresponds to the game's stick-down cancel; real-device feel on tall walls; Switch parity.
   - Not separately tested: the down-stick cancel input mapping (covered only through the native away-push detach).
   - Not on this branch: local commit 97e3e6c (PR #1182 integration) is absent from this worktree. Reconcile at integration.
+  - Remote replication: `patches/network-replication/tests/issue-1088-surge-presentation.test.mjs` (NetMatch/Character fixture, 30/60/120 Hz) checks remote pose parity through the sustained climb and the explicit end. Logic only: no browser, no two-client run, no real device. 未確認: how a remote viewer sees the sustained climb on a real device or Switch.
   - #846 is not closed by this change.
 ## 2026-10-10: Turf Map enemy disclosure without a team/expiry check (#710)
 

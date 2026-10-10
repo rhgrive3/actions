@@ -123,7 +123,9 @@ export function applyRemoteC1088Surge(actor, payload, sampleTime, playbackTime, 
   state.charge = next.charge;
   state.time = next.time;
   state.phase = next.phase;
-  if (next.phase === 'end' || next.phase === 'burst' && sampleAge >= next.time) {
+  // #846: a burst with time 0 is the sustained climb while the owner stays attached
+  // to the inked wall; only the owner's end sample (or a timed countdown) retires it.
+  if (next.phase === 'end' || next.phase === 'burst' && next.time > 0 && sampleAge >= next.time) {
     clearRemoteC1088Surge(actor);
     return true;
   }
