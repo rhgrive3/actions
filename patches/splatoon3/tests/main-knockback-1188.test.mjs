@@ -94,3 +94,23 @@ test('PR1188 Roller replicated hit: a remote roller pushes only the local victim
   G.projectiles.applyHit(r, me, 40, 'roller');
   assert.ok(me.vel.z > 0, 'local victim pushed away'); near(r.vel.z, 6, 1e-12, 'remote roller untouched');
 });
+
+test('PR1188 ordinary local burst delegates exactly one impulse to #574 native admission', async () => {
+  const f = await world(), { G, THREE } = f;
+  const owner = f.make('blaster'); owner.team = 0; owner.isLocal = true;
+  const victim = f.make('shooter'); victim.team = 1; victim.pos.set(0,0,2);
+  victim.vel.set(0,0,0); victim.invuln = 0;
+  const p = G.projectiles._new();
+  Object.assign(p,{ type:'blast',owner,team:0,s3Weapon:f.WEAPONS.blaster,wid:'blaster',seed:.5,ghost:false });
+  const center = new THREE.Vector3(0,.7,0);
+  G.projectiles._blastBurst(p,center,null);
+  near(victim.vel.z,splatBombKnockbackDelta(2,{accel:700,bias:.8,distance:3.5}),1e-9,
+    'one native #574 impulse rather than the former double push');
+  victim.vel.set(0,0,0); victim.invuln = 1;
+  G.projectiles._blastBurst(p,center,null);
+  assert.equal(victim.vel.length(),0,'native invulnerability cannot be bypassed by an outer wrapper');
+  victim.invuln = 0; victim.vel.set(0,0,0);
+  p.ghost = true; // local-owner visual-only ghost, NOT a remote network receipt
+  G.projectiles._blastBurst(p,center,null);
+  assert.equal(victim.vel.length(),0,'a local-owner ghost is presentation-only');
+});

@@ -81,7 +81,11 @@ test('#574 friendly, dead, blocked, invulnerable, direct and visual ghosts keep 
   f.G.projectiles.kitBarrierCandidate = () => null;
   f.p.s3TerrainBurst = true; f.victim.pos.set(1, 0, 0); f.burst(); f.G.projectiles.flushBlastImpacts?.();
   assert.ok(f.victim.hp < 100, 'existing terrain damage still lands');
-  assert.equal(f.victim.vel.length(), 0, 'unverified terrain knockback is not invented');
+  // PR1188 explicitly models a reduced-volume terrain impulse using the #535
+  // response. It is calibrated, not a recovered Nintendo terrain integrator.
+  const reduced = BLASTER_KNOCKBACK.distance * f.owner.weapon.terrainSplashRadiusRate;
+  near(f.victim.vel.x, splatBombKnockbackDelta(1, { ...BLASTER_KNOCKBACK, distance: reduced }));
+  near(f.victim.vel.y, 0); near(f.victim.vel.z, 0);
 });
 
 test('#574 response reaches native Actor integration and fixed-step displacement agrees at 30/60/120 render Hz', async () => {

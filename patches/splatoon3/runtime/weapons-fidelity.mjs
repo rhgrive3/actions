@@ -2142,14 +2142,22 @@ export function installWeaponsFidelity(context,profile) {
       const w=p.s3Weapon||WEAPONS.blaster;
       context.G.fx?.explosion(point,p.owner.color,w.burstRadius);
       context.G.audio?.play('blaster_boom',{pos:point,volume:.7});
-      blasterKnockback(p,point,victim);
+      // A local-owner visual ghost is not a network combat receipt. Only the
+      // remote-owner replay is authorised to displace a locally owned victim.
+      if(p.owner?.remote)blasterKnockback(p,point,victim);
       return;
     }
-    // The composed native burst already owns sourced paint and its deferred
-    // terrain queue. An outer legacy stamp would paint in the contact tick.
+    // #574's adapted native _blastBurst already calls applyBlasterBlastContact
+    // for every admitted ordinary splash target; repeating the independent
+    // PR1188 helper here doubles the velocity impulse and bypasses its
+    // invulnerability / LOS / kit-shield admission. Terrain bursts are
+    // deliberately different: native #574 suppresses their unsourced
+    // knockback, so the explicitly labelled reduced-volume PR1188 model
+    // remains the sole owner when the deferred collision resolves.
     const queued=this.s3BlastQueue?.length||0;
     const result=blastBurst.call(this,p,point,victim);
-    if((this.s3BlastQueue?.length||0)<=queued)blasterKnockback(p,point,victim);
+    if(p.s3TerrainBurst && (this.s3BlastQueue?.length||0)<=queued)
+      blasterKnockback(p,point,victim);
     return result;
   };
   const nativeImpact=Projectiles.prototype._impact;

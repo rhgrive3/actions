@@ -24,6 +24,7 @@
 import { splatBombKnockbackDelta } from './sub-special-fidelity.mjs';
 import { agent3RollerBodyContact } from './agent3-weapon-physics.mjs';
 import { blasterBlastExposed } from './blast-occlusion.mjs';
+import { slamProtected } from './tidal-slam-gauge.mjs';
 
 const INSTALLED = Symbol.for('inkwave.pr1188.main-knockback');
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -49,7 +50,8 @@ export function applyBlasterBurstKnockback(game, p, point, victim, { raw, scale 
   if (!spec) return 0;
   let pushed = 0;
   for (const e of game.actors) {
-    if (!e || e.team === p.team || !e.alive || e.remote || !e.vel) continue;
+    if (!e || e.team === p.team || !e.alive || e.remote || !e.vel ||
+        e.invuln > 0 || slamProtected(e)) continue;
     const tx = e.pos.x - point.x, ty = e.pos.y + .7 - point.y, tz = e.pos.z - point.z;
     const d = Math.hypot(tx, ty, tz);
     if (!(d > 1e-9) || d >= spec.distance) continue;
