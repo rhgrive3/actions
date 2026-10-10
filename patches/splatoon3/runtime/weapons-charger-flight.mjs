@@ -10,6 +10,13 @@ export function chargerPartialCharge(charge) {
   return c <= CHARGER_FIRST_LEGAL_CHARGE ? 0 : (c - CHARGER_FIRST_LEGAL_CHARGE) / (1 - CHARGER_FIRST_LEGAL_CHARGE);
 }
 // #514: range uses the same legal-minimum band as the paint coordinate above.
+// The S3 charge-frame partial ratio is max(0,min(1,(F-MinF)/(FullF-MinF))):
+// https://wikiwiki.jp/splatoon3mix/検証/メインウェポン (Charger 半チャージ割合)
+// Range endpoints are the pinned 11.3.0 DistanceMinCharge/DistanceMaxCharge
+// https://wikiwiki.jp/splatoon3mix/検証/パラメータ情報/メイン
+// This implements that linear band as an explicit model; the source verifies
+// the partial-charge ratio, while exact real-world muzzle-to-target geometry
+// remains separately unverified.
 // The authoritative linear charge is 8/60 after the first legal 8F release, so that
 // value — not raw zero — anchors DistanceMinCharge: a legal 8F tap resolves to
 // 9.033 instead of the interior 11.5337 the raw-charge lerp produced. Sub-law
