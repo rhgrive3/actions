@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {
-  detectStableDisplayHz, evenTouchAutoHz, createRefreshProbe,
+  detectStableDisplayHz, evenTouchAutoHz, createRefreshProbe, dynamicResolutionBudget,
 } from '../range-frame-pacing.mjs';
 import { createFrameTimingProbe } from '../range-frame-profiler.mjs';
 import { adaptRangeFramePacing } from '../range-frame-pacing-adapter.mjs';
@@ -28,6 +28,18 @@ test('actual 60/90/120/144 rAF cadence is detected without conflating FPS caps',
   assert.equal(evenTouchAutoHz(120),60);
   assert.equal(evenTouchAutoHz(144),48);
   assert.equal(evenTouchAutoHz(165),55);
+});
+test('auto 45/48Hz cadence does not trigger spurious dynamic-resolution downgrades',()=>{
+  const a=dynamicResolutionBudget(45);
+  assert.equal((1/45)>a.overloadFrameSeconds,false,
+    'steady 45Hz pacing must not count as a slow 60Hz render');
+  assert.equal((1/45)<a.headroomFrameSeconds,true);
+  const b=dynamicResolutionBudget(48);
+  assert.equal(1/48>b.overloadFrameSeconds,false);
+  const c=dynamicResolutionBudget(60);
+  assert.equal(c.overloadFrameSeconds,1/50);
+  assert.equal(c.headroomFrameSeconds,1/58);
+  assert.deepEqual(dynamicResolutionBudget(0),c);
 });
 test('sporadic slow frames cannot misidentify a 60Hz display as 90Hz',()=>{
   const p=createRefreshProbe();
@@ -95,6 +107,7 @@ test('source adapters connect one real Game._loop and do not touch unrelated fil
   assert.match(out,/import\('\.\.\/patches\/local-quality\/range-frame-profiler\.mjs'\)/,
     'diagnostic is on-demand, never a cold-offline preload');
   assert.match(out,/this\._rangeFrameProbe\.record/);
+  assert.match(out,/dynamicResolutionBudget\(/);
   assert.match(out,/fr === 'display' \? 0 : fr === 60 \? 60/);
   assert.equal((out.match(/createRefreshProbe\(\)/g)||[]).length,1);
   assert.equal(adaptRangeFramePacing('src/config.js',source),source);

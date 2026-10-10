@@ -59,3 +59,11 @@ export function createRefreshProbe() {
   };
 }
 
+
+// Dynamic resolution's old thresholds assume 60 presented frames per second.
+// An intentionally even 45/48Hz touch Auto cadence is NOT GPU overload.
+export function dynamicResolutionBudget(capHz = 60) {
+  const target = Number.isFinite(capHz) && capHz >= 30 && capHz <= 60 ? capHz : 60;
+  return { overloadFrameSeconds: 1 / (target * 50 / 60),
+    headroomFrameSeconds: 1 / (target * 58 / 60) };
+}

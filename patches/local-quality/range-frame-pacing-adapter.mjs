@@ -67,5 +67,15 @@ export function adaptRangeFramePacing(rel, code) {
       stages: this.perf,
     });`,
     'frame CPU recorder');
-  return "import { createRefreshProbe, evenTouchAutoHz } from '../patches/local-quality/range-frame-pacing.mjs';\n"+code;
+  code = once(code,
+    '    const overloaded = avg > 1 / 50;\\n    const headroom = avg < 1 / 58;',
+    `    // Compare against the actually selected evenly paced Auto cap; otherwise
+    // intentional 45Hz on a 90Hz panel is misdiagnosed as GPU overload and
+    // permanently drops texture resolution to its minimum.
+    const budget = dynamicResolutionBudget(this.settings.frameRate === 'auto'
+      && this.mobile?.touch ? this._iwLastCap : 60);
+    const overloaded = avg > budget.overloadFrameSeconds;
+    const headroom = avg < budget.headroomFrameSeconds;`,
+    'dynamic resolution respects touch cadence');
+  return "import { createRefreshProbe, evenTouchAutoHz, dynamicResolutionBudget } from '../patches/local-quality/range-frame-pacing.mjs';\n"+code;
 }
