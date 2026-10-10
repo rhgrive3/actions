@@ -68,6 +68,8 @@ const INSTALL = Symbol.for('inkwave.s3.kit-big-bubbler.install.v1');
 export const BIG_BUBBLER_RAW = Object.freeze({
   maxHp: 15360,                  // BarrierParam.MaxHP.Low        (0 AP Ink Resistance)
   maxFieldHp: 30720,             // BarrierParam.MaxFieldHP.Low
+  maxFieldHpMid: 33792,          // BarrierParam.MaxFieldHP.Mid
+  maxFieldHpHigh: 36864,         // BarrierParam.MaxFieldHP.High
   maxHpMid: 16896,               // BarrierParam.MaxHP.Mid
   maxHpHigh: 18432,              // BarrierParam.MaxHP.High
   timeDamage: 921,               // BarrierParam.TimeDamage
@@ -484,6 +486,11 @@ export function bigBubblerCanopyHp(owner) {
   const ap = owner?.s3?.modifiers?.specialPowerAP || 0;
   return gearCurve(ap, raw.maxHp, raw.maxHpMid, raw.maxHpHigh);
 }
+// The outer barrier pool (MaxFieldHP) has its own Special Power Up control points.
+export function bigBubblerBarrierHp(owner) {
+  const ap = owner?.s3?.modifiers?.specialPowerAP || 0;
+  return gearCurve(ap, raw.maxFieldHp, raw.maxFieldHpMid, raw.maxFieldHpHigh);
+}
 
 function makeDome({ id, serial, owner, team, pos, remote, hpMax = raw.maxFieldHp, fieldHpMax = raw.maxHp }) {
   return {
@@ -511,7 +518,7 @@ function deploy(owner) {
   const serial = ++deploySerial;
   const dome = makeDome({
     id: `${owner.team}:${bigBubblerOwnerId(owner) ?? 'unknown'}:${serial}`,
-    serial, owner, team: owner.team, pos, remote: false, fieldHpMax: bigBubblerCanopyHp(owner),
+    serial, owner, team: owner.team, pos, remote: false, hpMax: bigBubblerBarrierHp(owner), fieldHpMax: bigBubblerCanopyHp(owner),
   });
   buildVisual(dome);
   domes.push(dome);
@@ -782,9 +789,11 @@ export function applyRollerBubblerHit(candidate, actor, damage) {
   if (!dome || dome.dead || dome.team === actor.team || dome.id !== candidate.domeId || dome.serial !== candidate.serial) return 0;
   if (!listOf(dome).includes(dome)) return 0;
   candidate.settled = true;
-  // Splat Roller's object contact modifier is 1.0x. This is only the existing
-  // raw-damage-unit conversion used by other Bubbler damage inputs.
-  const amount = damage * tuning.rawPerDamageUnit;
+  // Rolling body against the base/emitter hardware (#1036; the permeable shell is
+  // never a roll target, so the shell-only DamgeRatio does not apply): pinned
+  // RollerCore source rate 1.0, with Object Shredder's 1.1 when equipped.
+  const amount = damage * tuning.rawPerDamageUnit
+    * bigBubblerSourceRate({ type: 'roll', owner: actor, s3Weapon: actor.weapon }, candidate.target);
   if (candidate.remote) {
     const eventId = ++proposalSerial;
     const payload = {

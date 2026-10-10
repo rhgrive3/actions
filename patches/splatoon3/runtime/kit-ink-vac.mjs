@@ -41,6 +41,8 @@ const RAW_TO_HP = 10;             // repository conversion rawDamageToHP: "/10"
 const ABSORB_CAPACITY_HP = 1100;
 const MAX_ACCEPTED_DAMAGE_HP = 220;
 const INHALE_LENGTH = 15;         // pinned LengthMax
+const OWNER_MOVE_SPEED_MIN_CHARGE = 0.09;   // pinned WeaponParam.MoveSpeedMinCharge (per 60 Hz frame)
+const OWNER_MOVE_SPEED_FULL_CHARGE = 0.07;  // pinned WeaponParam.MoveSpeedFullCharge (per 60 Hz frame)
 const NEAR_LOW = 0.8, NEAR_HIGH = 1.4;   // pinned RadiusMin.Low/.High
 const FAR_LOW = 3.3, FAR_HIGH = 4.3;     // pinned RadiusMax.Low/.High
 const SPEED_LOW = 0.55, SPEED_HIGH = 0.7;// pinned SpawnSpeedZ (per frame)
@@ -182,6 +184,11 @@ function remoteStateOf(actor) {
 }
 
 // Charge-scaled frustum radii (pinned Low/High ends).
+// Owner walking target while the Vac is held (inhale and the pre-release hold).
+// Endpoints are pinned; the linear charge interpolation between them is INKWAVE's.
+export function inkVacOwnerMoveSpeed(charge) {
+  return lerp(OWNER_MOVE_SPEED_MIN_CHARGE, OWNER_MOVE_SPEED_FULL_CHARGE, Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0))) * 60;
+}
 export function intakeNearRadius(charge) { return lerp(NEAR_LOW, NEAR_HIGH, charge); }
 export function intakeFarRadius(charge) { return lerp(FAR_LOW, FAR_HIGH, charge); }
 export function blastRadius(charge) { return lerp(BLAST_MIN, BLAST_MAX, charge); }
@@ -786,6 +793,13 @@ export function installKitInkVac(context, _profile) {
     const runner = api.WeaponRunner?.prototype;
     if (runner && typeof runner.tryDodge === 'function' && !Object.hasOwn(runner, INSTALL)) {
       Object.defineProperty(runner, INSTALL, { value: true });
+      const ownerMoveSpeed = runner.moveSpeed;
+      runner.moveSpeed = function () {
+        const state = states.get(this.a);
+        if (state && !state.remote && (state.phase === 'inhale' || state.phase === 'exhale'))
+          return inkVacOwnerMoveSpeed(state.charge);
+        return ownerMoveSpeed.call(this);
+      };
       const dodge = runner.tryDodge;
       runner.tryDodge = function (...args) {
         const a = this.a, w = a?.weapon, scale = inkVacSideStepScale(a);

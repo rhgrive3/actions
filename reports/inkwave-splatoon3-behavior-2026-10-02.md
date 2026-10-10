@@ -3642,3 +3642,11 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - **INKWAVE 実装箇所**: `patches/splatoon3/adapter.mjs`（`src/main.js` の `onDropletLand` と `src/fx/fxHooks.js` の `onSpeck` を何もしない関数に置換）。空中の飛沫そのものは残す。no-op にするのは、`null` にすると `fx.js` が代わりに円形の跡を描くため。
 - **確認状態**: `patches/splatoon3/tests/vfx-droplet-paint.test.mjs`（3件）で、6段の合成後のコードに飛沫からの塗り・跡が残らないことを確認。ブラウザでの見た目の確認は未実施。
 - **未確認（変更していない）**: 塗りの形そのもの（`paint.js` の放射状の線・衛星・飛び散り・壁の垂れ）。現在のパッチ（`paint-ownership.mjs`）はこれらを得点の対象にしているため、消すとナワバリ面積が変わる。本家の塗りテクスチャ（`PaintTexture` 等）との形の比較が必要で、今回は変更していない。
+## 2026-10-10: スペシャルの原典値の適用漏れ（ウルトラショット・キューインキ・グレートバリア）
+
+- **ウルトラショットの爆風の塗り半径**: 原典 `WeaponSpUltraShot BlastParam.PaintRadius 3.2` と `SubSpecialSpecUpList[PaintRadius] 3.2/3.6/4.0`。INKWAVE は床・地形の塗りにダメージ半径（4.0×距離倍率、最大5.2）を使い、塗り半径はAPによらず3.2で固定していた。`kit-trizooka.mjs` の記述子で `impactRadius`/`paintRadius` をスペシャル性能アップ込みの塗り半径にした。ダメージ帯は不変。関連テスト97件合格。
+- **キューインキ使用中の本人の移動速度**: 原典 `WeaponSpBlower WeaponParam.MoveSpeedMinCharge 0.09`／`MoveSpeedFullCharge 0.07`（×60＝5.4／4.2）。INKWAVE は吸い込み中も通常の歩行速度だった。`kit-ink-vac.mjs` で吸い込み中と発射待機中の歩行目標をこの値にした。端点は原典、溜まり具合による中間は線形補間（INKWAVE の校正）。ヒト移動速度アップがこの値に掛かるかは未確認（既存のギアの掛け方のまま）。
+- **グレートバリアの本体HP**: 原典 `BarrierParam.MaxFieldHP` にも `Low/Mid/High 30720/33792/36864` がある。#1013 の修正は `MaxHP` だけをスペシャル性能アップで伸ばし、`MaxFieldHP`（INKWAVE の本体プール）は固定していた。#1013 の Issue 自身が「原典が独自の曲線を持つ場合を除き」としていた条件に当たるため、本体プールにも適用した。どちらのプールが本家のバリア本体かという #1051 の対応付けは未確認のまま。
+- **ローラー転がしのバリア倍率**: 原典 `RollerCore` 行（1.0／1.0）を通し、対物攻撃力アップ1.1が転がしにも効くようにした。INKWAVE の転がしの当たり対象は膜ではなく土台（#1036）なので、膜用の `DamgeRatio 0.64` は掛けない。
+- **見送った項目（根拠不足）**: キューインキの吸い込み範囲の伸び（`InhaleParam.LengthAddPerFrame 0.3334`）は当たり判定の伸びか見た目の伸びかを項目名から断定できず、既存の判定（起動直後から最大15）を維持した。ブラスターの初弾遅延（`PreDelayFrame_HumanShot 10`／`_SquidShot 15`）は既存の公開実測（ヒト14F／イカ24F）を採用している理由が別にあるため変更していない。スロッシャーのブレーキ段階1Fの省略、チャージャーの溜めキープ後の遅延の対応付けも既存判断のまま。
+- **確認状態**: すべてロジック単独の確認。Switch 実機・ブラウザでの比較は未実施。
