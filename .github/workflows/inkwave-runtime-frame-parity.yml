@@ -18,4 +18,4 @@ jobs:
         with:
           node-version: 22
       - name: Verify real Game._loop and Environment reflection sequence parity
-        run: node --experimental-vm-modules --test patches/local-quality/tests/runtime-frame-scratch.test.mjs patches/local-quality/tests/quality.test.mjs
+        run: node --experimental-vm-modules --test patches/local-quality/tests/runtime-frame-scratch.test.mjs patches/local-quality/tests/hud-hotpath.test.mjs patches/local-quality/tests/quality.test.mjs
