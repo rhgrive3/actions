@@ -84,6 +84,8 @@ export function adaptCompiledMain(source) {
 export function loadingIdentity() {
   return Object.fromEntries(filesIn(LOADING_ROOT).filter(file=>!file.includes(`${path.sep}tests${path.sep}`)&&!file.endsWith('.md')).map(file=>[path.relative(LOADING_ROOT,file).split(path.sep).join('/'),hash(fs.readFileSync(file))]));
 }
+export const coldOfflineLightmap = rel => rel.startsWith('assets/lightmaps/') &&
+  rel !== 'assets/lightmaps/cargo.png';
 export function prepareLoading(build, preloads, compactRuntime = source => source) {
   let html=fs.readFileSync(path.join(build,'index.html'),'utf8');
   if(/<base\s/i.test(html)||html.includes('inkwave-startup-shell'))throw new Error('loading-cache requires one unversioned staging tree');
@@ -121,10 +123,9 @@ export function prepareLoading(build, preloads, compactRuntime = source => sourc
   // PWA icons are fetched by the browser at install/display time, not game startup.
   // Keep all three versioned icon files in BUILD.assets for integrity-checked
   // cache-on-request; precache the manifest and actual gameplay dependencies.
-  // Titan One title-display font is already fetched by the browser's HTML preload;
-  // it is integrity-declared and cache-on-demand, but not part of cold offline game
-  // readiness. Keep all gameplay modules, stage lightmaps and HUD fonts precached.
-  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>(rel.startsWith('assets/fonts/') && rel !== 'assets/fonts/TitanOne-latin.woff2')||rel.startsWith('assets/lightmaps/')||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest')]);
+  // Title-only Titan One remains hash-declared and cache-on-demand; all critical
+  // game scripts, HUD fonts, current stage and Range lightmaps stay offline-ready.
+  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>(rel.startsWith('assets/fonts/') && rel !== 'assets/fonts/TitanOne-latin.woff2')||coldOfflineLightmap(rel)||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest')]);
   for(const rel of core)if(!assets[rel])throw new Error(`loading-cache: missing precache dependency ${rel}`);
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
