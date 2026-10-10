@@ -388,7 +388,7 @@
         "bulletOrderNumInUnit": 0,
         "frame": 13
       },
-      "postShotDelay": 0.26666666666666666,
+      "postShotDelay": 0.25,
       "postShotLock": 0.26666666666666666,
       "reticleRange": {
         "ground": 14.24,

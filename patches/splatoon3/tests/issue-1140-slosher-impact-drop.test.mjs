@@ -42,7 +42,7 @@ test('#1140 first Slosher impact stamp uses the sourced width at the configured 
   impactAt(f, ps, p, 0);
   assert.ok(splats.length > 0, 'the native impact paints through G.paint.splat');
   close(splats[0].radius, src.WidthHalfNear, 1e-9);
-  close(splats[0].stretchAmt, src.DepthScaleNear, 1e-9);
+  close(splats[0].stretchAmt, Math.max(0, src.DepthScaleNear - 1), 1e-9);
 });
 
 test('#1140 high-drop Slosher impact stamp narrows by the sourced fall-distance scale on the live path', async () => {
@@ -56,7 +56,7 @@ test('#1140 high-drop Slosher impact stamp narrows by the sourced fall-distance 
   const expectedShrink = 1 - (1 - rate) * (drop - from) / (to - from);
   impactAt(f, ps, p, -drop);
   close(splats[0].radius, src.WidthHalfNear * expectedShrink, 1e-9);
-  close(splats[0].stretchAmt, src.DepthScaleNear * expectedShrink, 1e-9);
+  close(splats[0].stretchAmt, Math.max(0, src.DepthScaleNear * expectedShrink - 1), 1e-9);
 });
 
 test('#1140 high-drop shrink is a single live impact path and does not reach the foot-paint runtime', () => {

@@ -1,3 +1,4 @@
+import { coherentMotionStart } from './actor-motion.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { chargerDamage, isChargerFullCharge } from './weapons.mjs';
@@ -10,6 +11,13 @@ export function chargerPartialCharge(charge) {
   return c <= CHARGER_FIRST_LEGAL_CHARGE ? 0 : (c - CHARGER_FIRST_LEGAL_CHARGE) / (1 - CHARGER_FIRST_LEGAL_CHARGE);
 }
 // #514: range uses the same legal-minimum band as the paint coordinate above.
+// The S3 charge-frame partial ratio is max(0,min(1,(F-MinF)/(FullF-MinF))):
+// https://wikiwiki.jp/splatoon3mix/検証/メインウェポン (Charger 半チャージ割合)
+// Range endpoints are the pinned 11.3.0 DistanceMinCharge/DistanceMaxCharge
+// https://wikiwiki.jp/splatoon3mix/検証/パラメータ情報/メイン
+// This implements that linear band as an explicit model; the source verifies
+// the partial-charge ratio, while exact real-world muzzle-to-target geometry
+// remains separately unverified.
 // The authoritative linear charge is 8/60 after the first legal 8F release, so that
 // value — not raw zero — anchors DistanceMinCharge: a legal 8F tap resolves to
 // 9.033 instead of the interior 11.5337 the raw-charge lerp produced. Sub-law
@@ -105,7 +113,7 @@ export function installChargerFlight(api,completion) {
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;
     const job={owner:actor,team:actor.team,weapon:w,charge,chargeT,damage,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
-      pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,nearestPending:true,seed:Math.random(),paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
+      pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),moved:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,nearestPending:true,seed:Math.random(),paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
     system._ghostBeam(actor,origin,direction,.0001,charge,false);
     job.beam=system.beams.at(-1);
     (system._fidelityChargerFlights||(system._fidelityChargerFlights=[])).push(job);
@@ -182,8 +190,19 @@ export function installChargerFlight(api,completion) {
     for(const actor of G.actors){
       // Partial rounds meet allied bodies; full rounds retain teammate piercing.
       if(!actor.alive||actor===job.owner||(job.full&&actor.team===job.team)||job.seen.has(actor))continue;
-      job.base.copy(actor.pos); // same authoritative basis as ordinary projectiles
-      const t=capsuleEntry(job.prev,job.pos,job.base,hurtboxRadius(actor,PLAYER),hurtboxHeight(actor,PLAYER),
+      // A live fixed-step beam and the target must share one contact time.
+      // Historical ghost catch-up does not span the current actor snapshot.
+      const motion=!job.ghost && Math.abs(dt-SIM_DT)<=EPS ? coherentMotionStart(actor) : null;
+      let end=job.pos;
+      if(motion){
+        job.base.set(motion.x0,motion.y0,motion.z0);
+        // A last range-clipped segment expires before the tick ends. Scale the
+        // target interval by that same flight duration, never later movement.
+        const fraction=Math.min(1,length/(job.speed*dt));
+        job.moved.set(job.pos.x-(actor.pos.x-motion.x0)*fraction,job.pos.y-(actor.pos.y-motion.y0)*fraction,job.pos.z-(actor.pos.z-motion.z0)*fraction);
+        end=job.moved;
+      }else job.base.copy(actor.pos);
+      const t=capsuleEntry(job.prev,end,job.base,hurtboxRadius(actor,PLAYER),hurtboxHeight(actor,PLAYER),
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
       if(chargerActorBeforeStop(t,length,distance))actors.push({actor,d:t*length});
     }
@@ -218,6 +237,9 @@ export function installChargerFlight(api,completion) {
     return ended;
   }
   P.update=function(dt){
+    // Match native Projectiles.update before this earlier-installed owner can
+    // rewind/corrupt a live flight or run contact/paint side effects.
+    if(!Number.isFinite(dt)||dt<=0)return;
     advanceChargerWallDrops(this,dt,api);
     const list=this._fidelityChargerFlights;
     if(list)for(let i=list.length-1;i>=0;i--){

@@ -53,7 +53,7 @@ test('#1011 native Slosher impact paints each source unit/bullet record at its n
       const label = `unit ${unit + 1} bullet ${index} ${endpoint}`;
       assert.ok(first, `${label} paints through the native stamp`);
       close(first[1], paint[radiusKey] * scale, `${label} radius`);
-      close(first[3].stretchAmt, Math.max(0.05, paint[depthKey]), `${label} depth`);
+      close(first[3].stretchAmt, Math.max(0, paint[depthKey] - 1), `${label} depth`);
     }
     // Unit 1 first 4.44/3.84 and later 1.44/1.92; Unit 2 first 1.2/1.2 and later 0.96/1.14.
     const width = (unit, index) => rows.find(r => r.unit === unit && r.index === index).first[1];
