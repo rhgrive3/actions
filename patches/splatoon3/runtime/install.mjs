@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
 import { PLAYER, WEAPONS, WEAPON_ORDER, SUB, SPECIALS, DEFAULT_SETTINGS } from '../../../src/config.js';
 import { Actor } from '../../../src/game/actor.js';
+import { CameraRig } from '../../../src/game/cameraRig.js';
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
 import { NetMatch } from '../../../src/net/netmatch.js';
@@ -73,12 +74,15 @@ import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
 import { installControllerMotion } from './controller-motion.mjs';
 import { installTripleSlamFists } from './triple-slam-fists.mjs';
+import { installAllSubs, replaySub } from './all-subs.mjs';
+import { installAllSpecials, replaySpecial } from './all-specials.mjs';
+import {installCatalogueSplashdown,replaySplashdown,installCatalogueLoadout,SUB_NAMES,SPECIAL_NAMES,installCatalogueNetwork,completeBaseKits,installCatalogueVision,installCatalogueBeakonJumps,installCatalogueControls} from './catalogue.mjs';
 
 let installed = false;
 export function install(profile) {
   if (installed) throw new Error('INKWAVE patches already installed');
   if (profile.schema !== 1 || profile.referenceVersion !== '11.3.0') throw new Error('Unsupported gameplay profile');
-  const api = { THREE, G, on, emit, PLAYER, WEAPONS, WEAPON_ORDER, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, Minimap, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
+  const api = { THREE, G, on, emit, PLAYER, WEAPONS, WEAPON_ORDER, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, CameraRig, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, Minimap, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
   Object.assign(PLAYER, profile.player);
   for (const [kind, data] of Object.entries(profile.weapons)) {
     if (!WEAPONS[kind]) throw new Error(`Missing upstream weapon ${kind}`);
@@ -170,6 +174,17 @@ export function install(profile) {
   installTripleSlamFists(api, profile);
   // Install after weapon and net owners, so it observes the final public path.
   installSupportGameplay(api);
+  installAllSubs(api);
+  installAllSpecials(api);
+  installCatalogueSplashdown(api);
+  completeBaseKits(api);
+  for (const [id, name] of Object.entries(SUB_NAMES)) if (SUB[id]) Object.assign(SUB[id], {id, name});
+  for (const [id, name] of Object.entries(SPECIAL_NAMES)) if (SPECIALS[id]) SPECIALS[id].name = name;
+  installCatalogueLoadout(api);
+  installCatalogueVision(api);
+  installCatalogueBeakonJumps(api);
+  installCatalogueControls(api);
+  installCatalogueNetwork(api, { replaySub, replaySpecial, replaySplashdown });
   installBotPaintDeviceProfile({ G, Actor });
   return api;
 }
