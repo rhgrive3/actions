@@ -3169,3 +3169,10 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - 確認状態: ロジック単独のヘッドレス測定（30/60/120Hz の fidelity 接触と、実 projectile 経路の掃引接触を含む `tests/issue-999-rejected-roller-group.test.mjs` 6/6、`weapons.test.mjs` / `issue-999-roller-spawn-armor.test.mjs` / `respawn-lifecycle.test.mjs` / `weapons-fidelity-source.test.mjs` / `batch-b-final-damage.test.mjs` / `issue-608-fidelity-aim.test.mjs` 合計 44 件成功）。修正を外すと拒否寄与の 2 試験が失敗することを確認。
 - 未確認: 本家の実機での 150 フリックとアーマーの同時接触の挙動、20F の破壊遅延、30/60/120Hz 以外の端末。ブラウザ・Switch 実機比較は未実施。
 - 未移植（残差）: 同一 Actor の owner 交代（remote handoff）後に、旧 owner と新 owner の group 番号が armor 台帳で混ざる経路。コメントで報告されたが、この時点の PR #1182 head（`7a58339e`）と統合ブランチには対応する変更が無く、3 クライアント試験の成果物も参照できなかったため、実装していない。Issue は Open のまま。
+## 2026-10-10: menu delayed-navigation ownership (#950)
+
+- 本家の根拠: 本件は本家との数値・挙動の比較ではなく、INKWAVE 内部の UI 画面ライフタイムの不具合である。本家のタイトル確定から次画面までの遷移時間は公開資料で確認しておらず、ここでは確定しない。200ms（タイトル確定）、260ms（Mode 選択確定、reduced-motion は 0ms）、350ms（タイトル入力ガード）は INKWAVE の既存値として `inkwave-public/src/ui/menus.js`（`_titleGo`、`_scr_mode`、入力ガード）から維持し、本家一致は主張しない。参照版は Ver. 11.3.0。
+- INKWAVE 実装箇所: `patches/local-quality/menu-navigation-timer-adapter.mjs`（build-only 変換、`patches/local-quality/adapter.mjs` の `adaptQualitySource` で `menus.js` に適用）、`patches/local-quality/menu.mjs`（退役済み instance の `show` を無視）、`scripts/lib/inkwave-build-only-modules.mjs`（登録）。試験は `patches/local-quality/tests/menu-navigation-timer.test.mjs`、`menu-title-ownership.test.mjs`、`menu-navigation-fixture.mjs`。
+- 再現操作: (1) タイトルで確定後 200ms 以内に設定を開く、または無効な画面要求を出す。(2) タイトルで確定を連打、または確定後にメインへ戻って再度タイトルに入る。(3) Mode で選択後 260ms 以内にメインへ戻り、再度 Mode に入る。(4) タイトル確定後、ワイプ途中で画面を破棄する。
+- プレイへの影響: 遅延中の新しい画面操作を古い遷移が上書きしない。Mode の古い選択が後の訪問で Setup へ進まない。破棄後に古い画面が再生成されず、画面変更通知も出ない。通常の 200ms / 260ms 遷移、reduced-motion の 0ms、ワイプ、入力ガード、設定値は変更しない。
+- 確認状態: 合成 Menus（実メソッド、DOM・時刻は有界な fake）の回帰試験のみ。修正を接続しない状態では新規試験 26 件中 17 件が失敗し、接続後は 26/26 成功。関連する menu・result・packaging の試験は 26 成功、3 skip（build 成果物が必要なため）。`scripts/check-inkwave-patches.mjs --quick` は成功。ブラウザでの実動作、実機の入力や割り込みのタイミングは未確認（本セッションではブラウザを起動していない）。draft PR #1182 に同じ修正があり、統合時に重複を一本化する必要がある。

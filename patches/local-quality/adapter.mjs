@@ -57,6 +57,7 @@ import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
 import { adaptMatchRetainers } from './match-retainer-adapter.mjs';
 import { adaptFirstTouch } from './first-touch-adapter.mjs';
 import { adaptTouchRelayout } from './touch-relayout.mjs';
+import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
@@ -76,6 +77,7 @@ const IDENTITY_FILES = [
   'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
   'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
+  'menu-navigation-timer-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
   'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
@@ -127,7 +129,7 @@ export function adaptQualitySource(rel, code) {
   const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
   const paced = adaptRangeFramePacing(rel, framed);
   const lazy = adaptComposerTarget(rel, paced, replaceOnce);
-  return adaptComposerFormat(rel, lazy, replaceOnce);
+  return adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
