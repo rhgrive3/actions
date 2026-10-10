@@ -39,6 +39,10 @@ async function scenario({ wall = true, stick = false, remote = false } = {}) {
   a.intent.fire = true; a.intent.move.set(0, 0, stick ? 1 : 0);
   a.vel.set(0, 0, stick ? 3 : 0);
   a.weaponRunner.rolling = true; a.weaponRunner.rollT = 1;
+  // Native roller uses the last stripe position for distance-paid paint.
+  // Seed the true initial lowered-drum state, not a fabricated movement delta.
+  a.weaponRunner.lastRollPos = a.pos.clone();
+  a.weaponRunner.lastRollInkPos = a.pos.clone();
   a.weaponRunner.flick = -1; a.weaponRunner.cooldown = 0;
   return { f, a, paints, hits };
 }
