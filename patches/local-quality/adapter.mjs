@@ -111,7 +111,7 @@ const IDENTITY_FILES = [
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
-  'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-frame-pacing-adapter.mjs',
+  'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
