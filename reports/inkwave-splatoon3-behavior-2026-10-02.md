@@ -2982,3 +2982,11 @@ Player impact and limits: a depleted Roller round's hit volume (owner capsule vi
 **確認状態**: production composed adapter と native Actor / WeaponRunner による固定 60Hz のロジック試験のみ。本家 Switch 実機との比較はしていない。
 
 **未確認（解消済みとしない）**: 空中で 70F を超えた後の本家の bias と endpoint（本追補は INKWAVE 側の整合性として 7.5 endpoint を選んだ。本家仕様ではない）、25F–70F の確率回復カーブ形状、clock の起点が跳躍開始か着地か（INKWAVE は Blaster 既存実装と同じ跳躍開始起点）、jump bias と standing bias の合成則、Action Intensify による `Jump_DegSwerve` 増分の低減、Blaster 側の同種の消去条件の扱い、30/60/120Hz 以外の実機フレーム間隔での見え方。
+## 2026-10-10: #512 remote human opening Squid Spawn (Turf War start)
+
+- **本家の根拠**: Inkipedia "Spawner" の Mechanics 節（https://splatoonwiki.org/wiki/Spawner）。出撃前にスポナーで着地点を狙え、開始時に ZR で位置を固定するとスポナーが自動で発射する。飛行中は操作で着地点を変えられる。Nintendo 公式 gameplay ページ（https://splatoon.nintendo.com/en/gameplay/）は取得時 HTTP 503 のため一次確認できず、未確認。参照版は Ver.11.3.0（Issue 記載どおり）。ブキ・ギア・操作条件は個別に記録していない。
+- **INKWAVE 実装箇所**: `patches/splatoon3/runtime/respawn-lifecycle.mjs` の `begin()` は、オンラインの remote 人間の初期出撃を即発射せず、オーナーの複製を待つ（`ownerReplicated`）。`syncRemoteInitialSquidSpawn()` はオーナーのスナップショットに載る aim 目標・発射目標・残り飛行時間を受信側へ写し、発射イベントは一度だけ出す。`patches/network-replication/adapter.mjs` は `applyRemote` からこの同期を呼ぶ。Bot の決定的発射は変更していない。
+- **再現操作（修正前）**: 2 人以上のオンライン Turf War を開始する。受信側では、他プレイヤーが開始直後に中央前方 7.5 m の仮目標へ発射されてしまい、オーナー側の照準・発射目標と一致しない。
+- **論理テスト**: `patches/network-replication/tests/issue-512-remote-initial-squidspawn.test.mjs`（30/60/120 Hz、オーナーと受信側の二端末）。受信側はオーナーの発射まで待ち、照準目標と発射目標を一致して写し、発射イベントは 1 回だけ出る。飛行中の受信側位置はオーナーの発射線上（約 0.002 m）にあり、旧仮目標の線からは約 2.4〜2.9 m 離れる。着地後の位置はオーナーの着地点と一致する（1e-3 m 以内。既存の位置補正が収束した後）。
+- **プレイへの影響**: 受信側に見える他プレイヤーの開始位置・発射目標・発射タイミングが、オーナーの操作と揃う。Bot の初期発射は変わらない。
+- **確認状態**: 上記は二端末のロジックテストによる単独測定であり、実機同期の代用ではない。オンラインの遅延・欠損下の同期、本家の Bot AI 角度、本家との操作感の比較は未確認のまま残す。Nintendo 公式ページの一次確認も未了。

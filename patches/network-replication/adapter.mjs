@@ -182,6 +182,7 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
+    code = "import { syncRemoteInitialSquidSpawn } from '../../patches/splatoon3/runtime/respawn-lifecycle.mjs';\n" + code;
     patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
@@ -615,8 +616,8 @@ export function emit(name, payload) {
       a.net.lastLife = snap.life;
       this._acceptHitAuthoritySnapshot(a, snap, from);`, 'strict life/sequence-bound adoption packet');
     patch('    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
-      '    applyAdoptionSample(this, a, S);\n    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
-      'restore adoption sample after authoritative age-based Super Jump phase');
+      '    applyAdoptionSample(this, a, S);\n    syncRemoteInitialSquidSpawn(a, S.adoption);\n    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
+      'restore adoption sample after authoritative age-based Super Jump phase; #512 owner-replicated opening Squid Spawn');
     patch('    a.hp = S.hp; a.ink = S.ink; a.special = S.sp;',
       '    const hitHp = this._hitAuthorityHp(a, S, a.owner);\n    if (hitHp < a.hp) a.lastDamage = 0;\n    a.hp = hitHp; a.ink = S.ink; a.special = S.sp;',
       'prevent stale owner samples from undoing confirmed hit state');
