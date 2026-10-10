@@ -415,9 +415,13 @@ export function emit(name, payload) {
     this.byNid.delete(a.nid);`, 'departed owner retirement');
 
     patch('  _hit(d, from) {', `  _hit(d, from) {
+    // #1185: a hit belongs to the match that created it. Reject it before any HP,
+    // sequence, or authority state changes, so a delayed old-match packet cannot
+    // damage a reused actor or consume the new match's first sequence number.
+    if (typeof this.cfg?.id !== 'string' || !this.cfg.id || d?.m !== this.cfg.id) return;
     // Bomb damage is victim-owned. Ignore attack-side guesses, including packets
     // from older clients; the ordered bomb event is replayed on the victim owner.
-    if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject shooter bomb hit');
+    if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject cross-match and shooter bomb hits');
     patch("    this.s.tr?.sendTo(from ?? atk.owner, { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0, vl: v.netLife ?? 0 });",
       `    const hitState = [this.myId, hitLife, hitRevision, now(), v.hp, !!v.alive];
     v.net ||= {};
@@ -430,6 +434,14 @@ export function emit(name, payload) {
       const recipients = new Set([from ?? atk.owner, this.s.hostId]);
       for (const recipient of recipients) if (typeof recipient === 'string' && recipient) this.s.tr?.sendTo(recipient, ack);
     }`, 'broadcast life-bound authoritative hit confirmation');
+    // #1185: hit and hit_ack carry the creating match id. Receivers compare it
+    // before touching HP, hit sequences, receipts, or hit authority.
+    patch("    const message = { k: 'hit', v: victim.nid, a: attacker.nid,",
+      "    const message = { k: 'hit', m: this.cfg?.id, v: victim.nid, a: attacker.nid,",
+      'hit carries creating match identity');
+    patch("    const ack = { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid,",
+      "    const ack = { k: 'hit_ack', m: d.m, h: d.h, v: v.nid, a: atk.nid,",
+      'hit_ack echoes the settled hit match identity');
     patch("  shouldApplyHit(attacker, victim) {\n    // ghosts never hurt anyone; the shooter's client decides, the victim's owner applies\n    if (this._applyingHit) return 'local';",
       `  shouldApplyHit(attacker, victim, weaponId) {
     // A bomb ghost tests local actors using their owner's position and LOS.
@@ -1810,7 +1822,10 @@ function firstSplatStateFor(session,cfg) {
     this._retryNackedHit(pending);
   }`, 'relay NACK must match latest destination');
     replaceMethod('_hitAck', `  _hitAck(d, from) {
-    if (!d || typeof d !== 'object' || !this._validHitAuthorityMetadata(d)) return;
+    // #1185: a delayed ACK from another match must not settle this match's receipt
+    // or merge hit authority. Check the creating match id before any state changes.
+    if (!d || typeof d !== 'object' || typeof this.cfg?.id !== 'string' || !this.cfg.id || d.m !== this.cfg.id) return;
+    if (!this._validHitAuthorityMetadata(d)) return;
     const hasAuthority = HIT_AUTHORITY_FIELDS.some((key) => d[key] !== undefined);
     if (hasAuthority) this._acceptHitAuthorityAck(d, from);
     const h = d.h;
