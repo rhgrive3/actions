@@ -29,7 +29,7 @@ test('S2 v5.5.0 archived weapon values are compared to pinned S3 v11.3.0 with ex
 
 test('S2 shooter has the same ink and scaled splash distance but changed S3 spread endpoints', () => {
   const rows = compareLineage().rows;
-  assert.equal(lookup(rows, 'shooter', 'splash-between').s2Converted, 9.2);
+  assert.ok(Math.abs(lookup(rows, 'shooter', 'splash-between').s2Converted - 9.2) < 1e-9);
   assert.equal(lookup(rows, 'shooter', 'ink-consume').s3Explicit, .0092);
   assert.equal(lookup(rows, 'shooter', 'move-speed').s3Explicit, .072);
   assert.deepEqual([lookup(rows,'shooter','stand-spread').s2, lookup(rows,'shooter','stand-spread').s3Explicit], [6, 4.86]);
