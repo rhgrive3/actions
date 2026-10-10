@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
+import { profileRangeAcceptanceSnapshot } from './inkwave-range-profile-acceptance.mjs';
 import { pathToFileURL } from 'node:url';
 
 const option = (name) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw new Error('Required ' + name); return path.resolve(process.argv[i + 1]); };
@@ -252,27 +253,17 @@ for (const run of RUNS) {
       // Wait for a complete trace and snapshot it in the SAME evaluation.
       // A Practice Range transition may replace the page's diagnostic global
       // between separate evaluate calls even after the earlier predicate passed.
-      const profilerHandle = await page.waitForFunction(async () => {
-        const p = window.__inkwaveRangePerf;
-        if (!p || !window.__G?.match?.range || window.__G.match.state !== 'playing') return false;
-        await p.ready;
-        // Do not accept a missing tracer or an unfinished capture.
-        const s = p.snapshot(), t = s.trace;
-        if (!t || t.capturedFrames < 12) return false;
-        const parsed = JSON.parse(p.report());
-        return {
-          mode: s.mode, collected: t.capturedFrames,
-          gpuStatus: t.gpu, gpuSamples: t.gpuSamples,
-          stageNames: Object.keys(t.latest?.stages || {}),
-          reportSchema: parsed.schema,
-          profileButton: !!document.querySelector('#inkwave-copy-frame-trace'),
-          tracerFileLoaded: !!performance.getEntriesByType('resource')
-            .find(x => x.name.includes('range-hitch-tracer.mjs')),
-        };
-      }, null, { timeout: 90000 });
+      // Playwright waitForFunction expects a synchronous predicate. An async
+      // predicate returns a truthy Promise before the profiler is ready, then
+      // its JSHandle resolves to false and incorrectly fails the browser gate.
+      // The helper returns false until a completed trace exists, and supplies
+      // the entire snapshot in the one successful poll (no navigation race).
+      const profilerHandle = await page.waitForFunction(profileRangeAcceptanceSnapshot, null, { timeout: 90000 });
       out.checks.profiler = await profilerHandle.jsonValue();
       const perf = out.checks.profiler;
+      if (perf.traceError) throw new Error('Practice Range tracer load: ' + perf.traceError);
       if (perf.mode !== 'practice' || perf.collected < 12 ||
+          !Array.isArray(perf.stageNames) ||
           !perf.stageNames.includes('paint') || !perf.stageNames.includes('render') ||
           perf.reportSchema !== 'inkwave-frame-trace-v1' || !perf.profileButton ||
           !perf.tracerFileLoaded || perf.gpuStatus === 'error') {

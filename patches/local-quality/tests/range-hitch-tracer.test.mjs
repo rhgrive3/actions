@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { createGpuRenderTimer, installHitchTracer } from '../range-hitch-tracer.mjs';
 import { createFrameTimingProbe } from '../range-frame-profiler.mjs';
+import { profileRangeAcceptanceSnapshot } from '../../../scripts/inkwave-range-profile-acceptance.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 function fakeWebGL() {
@@ -185,4 +186,34 @@ test('final shipped six-layer main connects live Game only to opt-in on-demand p
   assert.ok(!main.includes("from '../patches/local-quality/range-hitch-tracer.mjs'"),
     'GPU profiler must not enter static game imports');
   assert.doesNotThrow(()=>new vm.SourceTextModule(main));
+});
+
+test('Playwright polls an entirely synchronous, completed Practice Range trace', () => {
+  const source = fs.readFileSync(new URL('../../../scripts/check-inkwave-range.mjs', import.meta.url), 'utf8');
+  assert.match(source, /page\\.waitForFunction\\(profileRangeAcceptanceSnapshot,/);
+  assert.equal(profileRangeAcceptanceSnapshot.constructor.name, 'Function');
+  assert.strictEqual(profileRangeAcceptanceSnapshot({}), false);
+  const trace = { capturedFrames: 11, gpu: 'unsupported', gpuSamples: 0,
+    latest: { stages: { paint: 1.4, render: 3.6 } } };
+  const env = {
+    __G: { match: { range: {}, state: 'playing' } },
+    __inkwaveRangePerf: { snapshot: () => ({ mode: 'practice', trace }),
+      report: () => JSON.stringify({ schema: 'inkwave-frame-trace-v1' }) },
+    document: { querySelector: () => ({}) },
+    performance: { getEntriesByType: () => [{ name: '/patches/local-quality/range-hitch-tracer.mjs' }] },
+  };
+  assert.strictEqual(profileRangeAcceptanceSnapshot(env), false, 'must wait for twelve frames');
+  trace.capturedFrames = 12;
+  const found = profileRangeAcceptanceSnapshot(env);
+  assert.equal(found.collected, 12);
+  assert.equal(found.reportSchema, 'inkwave-frame-trace-v1');
+  assert.deepEqual(found.stageNames, ['paint', 'render']);
+  assert.equal(found.profileButton, true);
+  assert.equal(found.tracerFileLoaded, true);
+  assert.equal(found.then, undefined, 'never return a Promise to Playwright waitForFunction');
+  env.__G.match.state = 'intro';
+  assert.strictEqual(profileRangeAcceptanceSnapshot(env), false, 'requires live playing range');
+  env.__G.match.state = 'playing';
+  env.__inkwaveRangePerf.snapshot = () => ({ traceError: 'failed dynamic import' });
+  assert.deepEqual(profileRangeAcceptanceSnapshot(env), { traceError: 'failed dynamic import' });
 });
