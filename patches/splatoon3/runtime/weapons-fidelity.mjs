@@ -1568,7 +1568,7 @@ export function installWeaponsFidelity(context,profile) {
   Projectiles.prototype._push=function(p){
     const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon,active=this._fidelitySloshContext;
     if(active&&p.type==='slosh'){
-      let index=active.index++,u;
+      const volleyIndex=active.index++;let index=volleyIndex,u;
       p.fidelitySloshPacketIndex=index;
       for(const unit of rawWeapon(w).UnitGroupParam.Unit){if(index<(unit.BulletNum??1)){u=unit;break;}index-=unit.BulletNum??1;}
       if(!u)throw new RangeError('Slosher unit index');
@@ -1576,11 +1576,14 @@ export function installWeaponsFidelity(context,profile) {
       p.delay=((u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0))/60;
       const speed=((p.owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
       const aim=p.owner.aimDir.clone().normalize();
-      // #258: preserve the frame-spaced 4+5 launch contract while sweeping
-      // each source unit from the last two fixed-tick aim headings. A source
-      // UnitDelayFrame (not array position) determines the angular offset.
-      const launchFrame=(u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0);
-      const yaw=Math.atan2(aim.x,aim.z)+active.turnDelta*launchFrame+radians(u.BaseRotateYDegree||0)+slosherYawOffset(u,index);
+      // #258: the sweep coefficient accumulates each bullet's group firing
+      // interval (AfterOffsetDelayFrame) across the volley, so the 4-bullet
+      // group sweeps 0..3 and the 5-bullet group starts at 3+2=5, not at its
+      // birth frame 4. Birth delays above are unchanged. Source: Leanny 11.3.0
+      // UnitGroupParam; the sweep law is a public-Wiki description and remains
+      // 未確認 against Nintendo or a Switch capture.
+      if(volleyIndex>0)active.sweepFrame+=u.AfterOffsetDelayFrame||0;
+      const yaw=Math.atan2(aim.x,aim.z)+active.turnDelta*active.sweepFrame+radians(u.BaseRotateYDegree||0)+slosherYawOffset(u,index);
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
       p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
@@ -1645,7 +1648,7 @@ export function installWeaponsFidelity(context,profile) {
     const sampled=actor.weaponRunner?.s3SloshTurnDelta;
     const turnDelta=Number.isFinite(sampled) && !actor.remote
       ? Math.max(-Math.PI/18,Math.min(Math.PI/18,sampled)) : 0;
-    this._fidelitySloshContext={index:0,group:new Map(),groupId:`${actor.nid??'local'}:${sequence}`,turnDelta};
+    this._fidelitySloshContext={index:0,sweepFrame:0,group:new Map(),groupId:`${actor.nid??'local'}:${sequence}`,turnDelta};
     paintSlosherNearest(api.G,actor,rawWeapon(w),completion.worldUnitsPerSourceUnit,sequence);
     try{
       const drops=rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0);
