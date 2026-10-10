@@ -111,3 +111,49 @@ test('a ghost bomb steps on the owner playback clock, not on how long it was del
   assert.ok(b._netSteps >= 60 && b._netSteps <= 180, `unexpected step count ${b._netSteps}`);
   assert.ok(Math.abs(b.age - b._netSteps / 60) < 1e-9, 'age did not follow the step count');
 });
+
+
+test('future-dated owner events cannot head-of-line block later timeline playback', async () => {
+  const f = await fixture();
+  const nm = f.makeNetMatch(f.makeSession('me', 'me', [['me', 'Me'], ['p2', 'P2']]));
+  const played = [];
+  nm._play = (id, e) => played.push([id, e]);
+  const peer = nm._peer('p2');
+
+  // Event time itself may never be newer than the enclosing authenticated sender tick.
+  nm.onMessage('p2', {
+    k: 't', ts: 1000, r: 2, u: 60000,
+    e: [[1e12, 'ev', 'respawn', {}, 60000, 1]],
+  });
+  assert.equal(peer.events.length, 0, 'far-future event timestamp was admitted');
+
+  // The same invariant applies to the owner's simulation tick carried by v2 events.
+  nm.onMessage('p2', {
+    k: 't', ts: 1000.05, r: 2, u: 60003,
+    e: [[1000.04, 'ev', 'respawn', {}, 999999999, 2]],
+  });
+  assert.equal(peer.events.length, 0, 'far-future owner simulation tick was admitted');
+
+  // A normal event immediately after malformed input must still play.
+  nm.onMessage('p2', {
+    k: 't', ts: 1000.10, r: 2, u: 60006,
+    e: [[1000.09, 'ev', 'respawn', {}, 60006, 3]],
+  });
+  peer.tr = 1000.10;
+  peer.sim = 60006;
+  nm._playEvents();
+  assert.equal(played.length, 1, 'valid tail event was starved');
+  assert.equal(played[0][1][5], 3);
+
+  // Admission is bounded per packet and per peer, so malformed traffic cannot
+  // grow the FIFO without limit even when every event is otherwise well-formed.
+  const flood = (ts, tick, seqBase) => Array.from({ length: 600 }, (_, i) =>
+    [ts - 0.001, 'ev', 'respawn', {}, tick, seqBase + i]);
+  peer.tr = 0;
+  nm.onMessage('p2', { k:'t', ts:1000.15, r:2, u:60009, e:flood(1000.15, 60009, 1000) });
+  assert.equal(peer.events.length, 256, 'per-packet event budget was not enforced');
+  nm.onMessage('p2', { k:'t', ts:1000.20, r:2, u:60012, e:flood(1000.20, 60012, 2000) });
+  assert.equal(peer.events.length, 512, 'peer event queue cap was not enforced');
+  nm.onMessage('p2', { k:'t', ts:1000.25, r:2, u:60015, e:flood(1000.25, 60015, 3000) });
+  assert.equal(peer.events.length, 512, 'peer event queue grew past its hard cap');
+});
