@@ -140,8 +140,35 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
         if (!familySeen) familyUnsupported[name]++;
       }
     }
-    rows.push({ wall, kind, seed, tn, cells, unsupported, negativeUnsupported, familyUnsupported });
+    // #1165 was a *GPU paints more than CPU scores* bug. Checking only
+    // CPU-owned cells would miss that exact regression: probe every dry cell
+    // near the Roller footprint for solid native GPU ink as well.
+    let gpuOnlySolid = 0, firstGpuOnly = null;
+    if (kind === 6) {
+      const dryPoints = [], dryCells = [];
+      for (let j = 0; j < face.nv; j++) for (let i = 0; i < face.nu; i++) {
+        const x = (i + 0.5) * face.cu, y = (j + 0.5) * face.cv;
+        if (Math.abs(x - 16) > g.R * 1.25 || Math.abs(y - 20) > g.R * 1.25) continue;
+        if (paint.grid[face.grid + j * face.nu + i]) continue;
+        dryPoints.push(x - 16, y - 20, 0);
+        dryCells.push([i, j]);
+      }
+      check(dryCells.length > 0, 'Roller GPU-only probe must sample unclaimed turf');
+      const dryMask = query(positive, dryPoints, args[1], args[2], args[3]);
+      for (let i = 0; i < dryCells.length; i++) if (dryMask[i * 4] === 255) {
+        gpuOnlySolid++;
+        firstGpuOnly ||= dryCells[i];
+      }
+      if (seed === Math.PI / 60) {
+        // Old GPU-only edge witness: across=0.73*r at q.along=0.
+        const across = 0.73 * g.R;
+        const witness = query(positive, [-sdv * across, sdu * across, 0], args[1], args[2], args[3]);
+        check(witness[0] === 255, 'published pi/60 Roller visible-band witness must remain covered');
+      }
+    }
+    rows.push({ wall, kind, seed, tn, cells, unsupported, gpuOnlySolid, negativeUnsupported, familyUnsupported });
     check(unsupported === 0, `CPU owns invisible GPU cells: ${JSON.stringify(rows.at(-1))}`);
+    check(gpuOnlySolid === 0, `GPU owns visibly solid dry Roller cells: ${JSON.stringify({ ...rows.at(-1), firstGpuOnly })}`);
   }
   for (const wall of [false, true]) check(rows.some(row => row.wall === wall && row.negativeUnsupported > 0), `old-sine ${wall ? 'wall' : 'floor'} negative control must fail`);
   for (const name of Object.keys(families)) check(rows.some(row => row.familyUnsupported[name] > 0 && (name !== 'drips' || row.wall)),
