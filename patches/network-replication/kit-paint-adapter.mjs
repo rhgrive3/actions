@@ -7,7 +7,7 @@ export function adaptKitPaintAdmission(code,once){
  patch('p.inkMeta || null, kitVolleyPacketIndex','slosherBirthInkMeta(this,p), kitVolleyPacketIndex','epoch and life in existing projectile metadata slot');
  const birth="const s3kit = kitBombPacket(b); if (!s3kit) return; this._rec(['b', o.nid, b.kind, r2(b.pos.x), r2(b.pos.y), r2(b.pos.z), r2(b.vel.x), r2(b.vel.y), r2(b.vel.z), b.kind === 'storm' ? { stormDuration: b.s3StormDuration } : null, s3kit[0], s3kit[1]]);";
  if(code.includes(birth))patch(birth,birth.replace("this._rec(","const birth = this._rec(").replace('s3kit[1]]);','s3kit[1], ...(kitBombBirthMetadata(this,b) ? [kitBombBirthMetadata(this,b)] : [])]); recordKitBombBirth(this,b,birth);'),'birth action metadata');
- patch('  _tick(from, d) {', '  _tick(from, d) {\n    if (Array.isArray(d?.e)) d = { ...d, e: d.e.filter(Array.isArray) };\n    acceptPendingKitBirths(this, from, d);', 'awaited birth in reordered envelope');
+ patch('  _tick(from, d) {', '  _tick(from, d) {\n    if (!Number.isFinite(d?.ts) || Math.abs(d.ts) > 1e12) return;\n    if (Array.isArray(d?.e)) d = { ...d, e: d.e.filter(Array.isArray) };\n    else if (d?.e != null) d = { ...d, e: [] };\n    acceptPendingKitBirths(this, from, d);', 'awaited birth in reordered envelope');
  // Legacy uncomposed fixtures have no kit launch producer and keep their cap.
  patch('nextPaintOrder(this, !!o.instant)]);','nextPaintOrder(this, !!o.instant), ...((o.kitPaint || o.projectilePaint) ? [o.kitPaint || o.projectilePaint] : [])]);','core action metadata');
  patch('if (d.e) for (const e of d.e) {','const kitPreparedEvents = [];\n    if (d.e) for (const e of d.e) {','prepare native envelope proofs before deferral');
