@@ -22,8 +22,8 @@ test('production HUD six-layer composition parses and eliminates map-sizing allo
   assert.throws(()=>adaptRuntimeFrameScratch('src/ui/hud.js',opt,once));
 });
 function mapBox(source,W,H,canvasW,canvasH) {
-  const a=source.indexOf('    const W = innerWidth, H = innerHeight;');
-  const b=source.indexOf('    const t = this._mapT;',a);
+  const b=source.indexOf('    const t = this._mapT;');
+  const a=source.lastIndexOf('    const W = innerWidth, H = innerHeight;',b);
   assert.ok(a>=0&&b>a,'real native minimap math');
   const fn=new Function('innerWidth','innerHeight','m',
     source.slice(a,b)+'\nreturn [w0,h0,w1,h1,asp,u];');
