@@ -215,7 +215,7 @@ test('#710/#835 exact pinned 1130 Point Sensor and Tacticooler duration/launch f
     assert.equal(pointSensorMarkFrames(ap,gearCurve),frames);
     assert.ok(Math.abs(pointSensorThrowSpeed(ap,gearCurve)-speed*60)<1e-9);
   }
-  assert.equal(pointSensorMarkFrames(30,gearCurve),720);
+  assert.equal(pointSensorMarkFrames(30,gearCurve),839, '30 AP follows the existing S3 gear curve, not the table mid-index');
   assert.deepEqual(TACTICOOLER_SOURCE.powerUpFrames,[1020,1290,1500]);
   assert.equal(TACTICOOLER_SOURCE.putFrame,900);
   assert.equal(TACTICOOLER_SOURCE.putFrameOnYagura,450);
@@ -223,7 +223,7 @@ test('#710/#835 exact pinned 1130 Point Sensor and Tacticooler duration/launch f
   assert.equal(TACTICOOLER_SOURCE.serveAreaHeightUp,3);
   assert.equal(TACTICOOLER_SOURCE.serveAreaHeightDown,0);
   assert.equal(tacticoolerDrinkFrames(0,gearCurve),1020);
-  assert.equal(tacticoolerDrinkFrames(30,gearCurve),1290);
+  assert.equal(tacticoolerDrinkFrames(30,gearCurve),1379, '30 AP is not the abstract 50-percent curve midpoint');
   assert.equal(tacticoolerDrinkFrames(57,gearCurve),1500);
 });
 test('#835 pinned Tacticooler serving cylinder rejects through-floor pickups',()=>{
