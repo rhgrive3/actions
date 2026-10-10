@@ -2187,8 +2187,11 @@ ${bombHit}`;
     // transaction. A zero-damage Blaster contact is admitted only with bounded
     // geometry; no other cause gains a zero/negative-damage exception.
     code = "import { validBlasterKnockback, applyBlasterKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\n" + code;
-    patch('    this.s.tr?.sendTo(victim.owner, message);',
-      "    const blast = this._s3BlasterKnockback;\n    if (wid === 'blaster' && blast?.attacker === attacker && blast.victim === victim && validBlasterKnockback(blast.offset)) message.kb = blast.offset.slice();\n    this.s.tr?.sendTo(victim.owner, message);",
+    // The delivery-admission adapter already rewrote sendTo() to a checked
+    // `const sent`; attach knockback before that final check, preserving the
+    // mutable message retained for NACK-driven ownership retries.
+    patch('    const sent = this.s.tr?.sendTo(victim.owner, message) === true;',
+      "    const blast = this._s3BlasterKnockback;\n    if (wid === 'blaster' && blast?.attacker === attacker && blast.victim === victim && validBlasterKnockback(blast.offset)) message.kb = blast.offset.slice();\n    const sent = this.s.tr?.sendTo(victim.owner, message) === true;",
       'Blaster knockback geometry on retryable hit');
     patch('    if (!Number.isFinite(d.d) || d.d <= 0 || d.d > IW_HIT_MAX_DAMAGE) return;',
       "    const blastKnockback = d.w === 'blaster' && validBlasterKnockback(d.kb);\n    if (d.kb !== undefined && !blastKnockback) return;\n    if (!Number.isFinite(d.d) || d.d < 0 || (d.d === 0 && !blastKnockback) || d.d > IW_HIT_MAX_DAMAGE) return;",
