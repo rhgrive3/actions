@@ -27,4 +27,5 @@ jobs:
             patches/splatoon3/tests/map-reveal.test.mjs \
             patches/splatoon3/tests/turf-finish.test.mjs \
             patches/local-quality/tests/bot-paint-device-profile.test.mjs \
-            patches/local-quality/tests/bot-paint-observation.test.mjs
+            patches/local-quality/tests/bot-paint-observation.test.mjs \
+            patches/loading-cache/tests/cargo-offline-precache.test.mjs
