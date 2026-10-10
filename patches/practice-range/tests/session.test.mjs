@@ -167,7 +167,18 @@ test('catalog expansion keeps hub pads separate and every main switchable', asyn
       assert.equal(local.weaponId, id, id);
       assert.equal(local.ink, R.PLAYER.inkMax);
       assert.equal(local.special, 0);
-      assert.equal(local.weapon, R.WEAPONS[id]);
+      // Gear creates an actor-local weapon copy, isolating equipment bonuses
+      // from the shared catalog. Verify both isolation and the pinned identity.
+      const base = R.WEAPONS[id];
+      assert.notStrictEqual(local.weapon, base, id + ': actor-local weapon');
+      assert.equal(local.weapon.id, base.id, id + ': main identity');
+      assert.equal(local.weapon.kind, base.kind, id + ': action family');
+      assert.equal(local.weapon.sourceMainActor, base.sourceMainActor, id + ': pinned actor source');
+      assert.equal(local.weapon.sub, base.sub, id + ': kit sub');
+      assert.equal(local.weapon.special, base.special, id + ': kit special');
+      assert.equal(local.weapon.range, base.range, id + ': unmodified base range');
+      if (base.catalogRecord)
+        assert.strictEqual(local.weapon.catalogRecord, base.catalogRecord, id + ': sourced catalog record');
     }
   } finally { w.done(); }
 });
