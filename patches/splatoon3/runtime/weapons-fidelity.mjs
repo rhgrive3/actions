@@ -872,17 +872,17 @@ export function fidelitySlosherImpactPaint(p, point) {
   const radius=(w0+(w1-w0)*t)*scale*shrink;
   return radius>0?{radius,stretchAmt:Math.max(.05,(d0+(d1-d0)*t)*shrink)}:null;
 }
-// #1022: explicit source bias input, keeping one RNG draw and exclusions.
-// The exponent is a deliberately labelled symmetric calibration, NOT a
-// verified Nintendo distribution; replace it when sampling semantics are known.
+// #1022: the documented deviation law maps bias to magnitude using
+// x^(log_0.5(bias)). Use the source-backed helper already used by the
+// deterministic parameter fixture rather than the inverted 1+bias heuristic.
+// Source exclusions consume no RNG, and an admitted glob consumes one draw.
+// Exact Nintendo Slosher RNG ordering and 2-D landing distribution remain unverified.
 export function slosherYawOffset(u,index,rng=Math.random) {
   if (!u || u.RandomRotateYOffOrderNum?.includes(index)) return 0;
   const angle=u.RandomRotateYDegree || 0;
-  if (!Number.isFinite(angle)) return 0;
-  const bias=Number.isFinite(u.RandomRotateYBias)?clamp01(u.RandomRotateYBias):0;
-  const sample=Math.max(-1,Math.min(1,2*rng()-1));
-  const centered=Math.sign(sample)*Math.pow(Math.abs(sample),1+bias);
-  return radians(angle*centered);
+  if (!Number.isFinite(angle) || angle===0) return 0;
+  const bias=Number.isFinite(u.RandomRotateYBias)?clamp01(u.RandomRotateYBias):.5;
+  return biasedSourceYaw(rng(),angle,bias);
 }
 function setCollision(p,c,offset=0,depleted=false) {
   // #305 residual: a Roller round born from a depletion swing applies its
