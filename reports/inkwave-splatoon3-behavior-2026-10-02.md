@@ -2822,3 +2822,15 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
 - 再現操作: Bucket Slosher を発射し、各弾を平らな地面・始点と同じ高さで、始点から DistanceXZNear と DistanceXZFar の距離（`worldUnitsPerSourceUnit` 1）に着弾させる。修正前は Unit 1 先頭弾の近距離で半径 0.768（3.84 × 0.2、遠距離値）となり、本家値 4.44 にならなかった。修正後は全 9 弾が near/far の本家値に一致する。
 - プレイへの影響: 1 発ごとの塗り半径と奥行きが変わるため、塗り面積、泳げる地面、Turf War の得点、スペシャル増加に影響する。ダメージ、当たり判定、弾の軌道は変更していない。
 - 確認状態: ロジック単独のヘッドレス回帰（production composition、固定乱数、`patches/splatoon3/tests/issue-1011-slosher-impact-source.test.mjs`）で確認した。修正前は失敗（0.768 != 4.44）、修正後は合格。ブラウザでの実動作と本家の実機比較は未実施。未確認: DistanceXZ の near/far 区間の補間式（現行は線形の近似）、`worldUnitsPerSourceUnit` 1 の換算、高低差縮小の本家側の対応。#978 の足元塗り、中間スプラッシュ、#554 の壁経路は別経路のまま変更していない。
+## 2026-10-10: #675 Splat Charger ink debit at the 8F first legal release
+
+- 参照条件: Splatoon 3 Ver.11.3.0、Splat Charger（WeaponChargerNormal）、ギアなし、地上ヒト状態、十分なインク、チャージして release。
+- 本家の根拠: Leanny/splat3 固定コミット `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の `WeaponChargerNormal` の `InkConsumeMinCharge` 0.0225（2.25%）と `InkConsumeFullCharge` 0.18（18%）。最初の合法 release は 8F、フル充填は 60F（[Inkipedia Splat Charger](https://splatoonwiki.org/wiki/Splat_Charger) は 8F、2.25%、18% を記載するが、中間の消費曲線は記載しない）。
+- 差分（修正前）: 8F の射撃は `max(2.25, 18 × 1/6)` = 3.00% を消費し、本家の最小値より 0.75 タンク%多かった。
+- INKWAVE の実装箇所: `patches/splatoon3/runtime/weapons.mjs` の `chargerInkCost`（8F 以前は 2.25%、8F〜60F は経過時間の線形補間、60F で 18%）。`patches/splatoon3/adapter.mjs` のチャージ消費置換（`a.ink - chargerInkCost(w, c, this.chargeT)`）。`patches/splatoon3/profile.json` の `charger.inkMin` / `inkFull`。PR #1190（main `a60306e3`）で導入済み。
+- 再現操作: 満タンのチャージャーで主射撃を固定 60 Hz で 8 tick 保持して離す。60F 保持なら 18.0%。Ink Saver (Main) の係数は既存のギア曲線を通して両端に掛かる。
+- プレイへの影響: 最速の合法 release の消費が 3.00% から 2.25% になる。タップ撃ち 5 発は 15.0% から 11.25% になる。
+- 確認状態:
+  - ロジックのみ確認: `patches/splatoon3/tests/issue-675-charger-ink-consumption.test.mjs` 7 件（8F/60F の端点、単調増加、中点、Ink Saver 0/10/57 AP、低インクで負値にならない、8F 未満の release は拒否、30/60/120 Hz で同一）が main で 7/7 pass。
+  - 未確認: 8F〜60F の中間曲線が S3 の検証済みパラメータに基づくこと。線形補間は INKWAVE の選択で、本家と一致する根拠はない。Ink Saver の係数値そのものの本家照合も未確認。
+  - 未確認: 本家実機での中間消費量の計測、ブラウザ表示、実機比較。本記録はロジック確認であり、実機比較の代用ではない。

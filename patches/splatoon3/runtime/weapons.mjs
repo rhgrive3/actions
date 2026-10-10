@@ -125,6 +125,13 @@ export function chargerDamage(actor, weapon, charge) {
   if (elapsed + 1e-10 < minimum) return legacy;
   return Math.min(weapon.damagePartialMax, weapon.damageMin + (elapsed - minimum) * rate);
 }
+// #675 ink debit for a Splat Charger release. The 8F first-legal endpoint
+// (2.25%) and full charge (18%, 60F) come from the pinned 11.3.0
+// WeaponChargerNormal values (InkConsumeMinCharge .0225, InkConsumeFullCharge
+// .18; Leanny/splat3 7280ff9c). Nothing sourced gives the curve between them:
+// the linear interpolation over charge time below is an INKWAVE choice and is
+// UNVERIFIED against Splatoon 3. Do not present the middle shape as
+// source-backed; only the endpoints and monotonic order are pinned.
 export function chargerInkCost(w, c, chargeT) {
   const inkMin = w.inkMin ?? 2.25;
   const inkFull = w.inkFull ?? 18;
