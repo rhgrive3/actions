@@ -30,7 +30,11 @@ export function composeKits({ WEAPONS, SUB, SPECIALS }) {
     const kit = VERIFIED_KITS[main];
     if (kit) Object.assign(w, { sub: kit.sub, special: kit.special, specialCost: kit.specialCost,
       kitReference: kit.main, kitStatus: 'verified-base-kit' });
-    else {
+    else if (w.kitStatus === 'opt-in-inkwave-support-approx-main' && w.id === 'support') {
+      // The optional training kit is deliberately not a source-verified main.
+      // Preserve its explicit identity rather than relabeling it as a legacy kit.
+      w.kitReference = null;
+    } else {
       Object.assign(w, { kitReference: null, kitStatus: 'original-inkwave-kit' });
       const label = 'Original INKWAVE kit (not a verified Splatoon 3 kit).';
       if (!w.blurb?.includes(label)) w.blurb = `${w.blurb || ''} ${label}`.trim();
