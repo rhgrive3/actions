@@ -198,12 +198,14 @@ test('GPU shader shape table, canonical cell runs, and fixed-clock CPU mask shar
   const productionPaint = adaptRange('src/world/paint.js', adaptNetworkSource('src/world/paint.js',
     adaptQualitySource('src/world/paint.js', adaptReliability('src/world/paint.js',
       adaptTouchLayout('src/world/paint.js', adaptSource('src/world/paint.js', rawPaint))))));
-  const shaderShapes = [...rawPaint.matchAll(/return vec4\(([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\);/g)]
+  // The composed shader is the one production draws (the splatoon3 adapter
+  // trims the decoration to the source paint radius in both tables).
+  const shaderShapes = [...productionPaint.matchAll(/return vec4\(([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\);/g)]
     .map(match => match.slice(1).map(Number));
   const adapterShapes = productionPaint.match(/shapes:\s*(\[\[[\d.,\s\[\]]+\]\])/);
   assert.ok(adapterShapes, 'the production PaintSystem installs the CPU mask contract');
   const cpuShapes = JSON.parse(adapterShapes[1]);
-  assert.deepEqual(cpuShapes.slice(0, shaderShapes.length), shaderShapes, 'CPU mask counts match the six explicit native GLSL kindShape rows');
+  assert.deepEqual(cpuShapes.slice(0, shaderShapes.length), shaderShapes, 'CPU mask counts match the six explicit composed GLSL kindShape rows');
   assert.ok(cpuShapes.slice(shaderShapes.length).every(row => row.every(value => value === 0)),
     'CPU ownership defaults keep the native zero-shaped roller band and speck kinds empty');
   assert.match(rawPaint, /float hsh\(float n\) \{ return fract\(sin\(n\) \* 43758\.5453123\); \}/);

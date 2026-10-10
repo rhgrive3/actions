@@ -1350,6 +1350,17 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/audio/audio.js') {
+    // Build the cached SFX loop noise (white/pink/brown, 2 s each; the first
+    // build measured tens of ms on the first-shot frame) right after the
+    // context exists, staggered off the input path.
+    code = replaceOnce(code,
+      "  kick, snare, crash, tom, brass, bell, pad, bass,\n} from './music.js';",
+      "  kick, snare, crash, tom, brass, bell, pad, bass, noiseBuffer,\n} from './music.js';",
+      'audio noise warm-up import');
+    code = replaceOnce(code,
+      "    this.ready = true;\n",
+      "    this.ready = true;\n    if (!this.offline && typeof setTimeout === 'function') ['white', 'pink', 'brown'].forEach((kind, i) => setTimeout(() => { try { if (this.ctx === ctx) noiseBuffer(ctx, kind); } catch { /* audio unavailable */ } }, 200 + i * 150));\n",
+      'audio noise warm-up');
     code = replaceOnce(code,
       "  resume() {\n    const c = this.ctx;\n    if (c && !this.offline && c.state !== 'running' && c.state !== 'closed' && c.resume) c.resume().catch(() => {});\n  }",
       "  resume() {\n    const c = this.ctx;\n    if (!c || this.offline || c.state === 'closed') return;\n    if (c.state === 'running') { this.music?._resumeTimer?.(); return; }\n    if (c.resume) c.resume().then(() => this.music?._resumeTimer?.()).catch(() => {});\n  }",
@@ -1361,6 +1372,13 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/main.js') {
+    // Warm the ScreenFX post pass (and lens ink) on the boot frames rendered
+    // behind the loading screen, so the first shot does not compile it.
+    code = replaceOnce(code,
+      "    this._warmup();\n",
+      "    this._warmup();\n    warmScreenFX(this.screenfx);\n",
+      'ScreenFX boot warm-up');
+    code = "import { warmScreenFX } from '../patches/splatoon3/runtime/ui.mjs';\n" + code;
     // #614: Splatoon 3's normal battle HUD has no global text feed naming remote
     // attacker/victim pairs. Drop the two remote-splat feed broadcasts; the local
     // splat confirmation (kind 'kill'), own-death showSplatted, the top roster and
@@ -1598,10 +1616,30 @@ export function adaptSource(rel, code) {
 
   if (rel === 'src/world/paint.js') {
     code = adaptPaintOwnership(rel, code, replaceOnce);
+    // Paint footprint = the source paint radius/width (PaintParam.WidthHalf*,
+    // SplashPaintParam.WidthHalf*, BlastParam.PaintRadius ...). Upstream adds
+    // decorative satellite droplets (1.1-2.15 R) and spatter (1.3-2.5 R) plus
+    // rays up to ~0.57 R past the wobbly edge, so one splat visibly reaches
+    // 2-3x its source radius (and #264 counts those pieces as turf). Keep the
+    // irregular edge: rays become short edge spikes (<= 0.2 R), satellites and
+    // spatter are removed, and the quad reach shrinks to wobble + spikes. The
+    // GPU shader and the CPU ownership contract (paint-ownership.mjs, the shapes
+    // below) change together so the drawn ink and the turf grid stay the same.
+    code = replaceOnce(code, 'const REACH = [2.45, 2.1, 2.7, 2.75, 2.3, 1.9, 1.25, 1.35];',
+      'const REACH = [1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.25, 1.35];', 'paint quad reach within the source radius');
+    for (const [from, to] of [
+      ['  if (k < 0.5) return vec4(5.0, 7.0, 8.0, 3.0);     // shot', '  if (k < 0.5) return vec4(5.0, 0.0, 0.0, 3.0);     // shot'],
+      ['  if (k < 1.5) return vec4(3.0, 4.0, 5.0, 2.0);     // charger line', '  if (k < 1.5) return vec4(3.0, 0.0, 0.0, 2.0);     // charger line'],
+      ['  if (k < 2.5) return vec4(7.0, 9.0, 10.0, 4.0);    // blast', '  if (k < 2.5) return vec4(7.0, 0.0, 0.0, 4.0);    // blast'],
+      ['  if (k < 3.5) return vec4(10.0, 12.0, 14.0, 5.0);  // bomb / slam / splat-out', '  if (k < 3.5) return vec4(10.0, 0.0, 0.0, 5.0);  // bomb / slam / splat-out'],
+      ['  if (k < 4.5) return vec4(3.0, 4.0, 4.0, 2.0);     // trail drip', '  if (k < 4.5) return vec4(3.0, 0.0, 0.0, 2.0);     // trail drip'],
+      ['  if (k < 5.5) return vec4(2.0, 2.0, 0.0, 1.0);     // droplet paint', '  if (k < 5.5) return vec4(2.0, 0.0, 0.0, 1.0);     // droplet paint'],
+      ['      float len = r * (0.07 + (big ? 0.5 : 0.4) * h2 * h2 * h2) * tsp;', '      float len = r * (0.04 + 0.16 * h2 * h2 * h2) * tsp;'],
+    ]) code = replaceOnce(code, from, to, 'paint shape within the source radius');
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
       "import { installIssue264PaintOwnership } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" +
       code + '\ninstallIssue570PaintPresentation(PaintSystem);\n' +
-      'installIssue264PaintOwnership(PaintSystem, { kind: K, reach: REACH, dripReach: DRIP_REACH, shapes: [[5, 7, 8, 3], [3, 4, 5, 2], [7, 9, 10, 4], [10, 12, 14, 5], [3, 4, 4, 2], [2, 2, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]] });\n';
+      'installIssue264PaintOwnership(PaintSystem, { kind: K, reach: REACH, dripReach: DRIP_REACH, shapes: [[5, 0, 0, 3], [3, 0, 0, 2], [7, 0, 0, 4], [10, 0, 0, 5], [3, 0, 0, 2], [2, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]] });\n';
   }
   code = adaptPaintOwnership(rel, code, replaceOnce);
   return code;
