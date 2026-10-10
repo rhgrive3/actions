@@ -49,14 +49,14 @@ export function installCatalogueLoadout(api) {
   Menus.prototype._scr_loadout=function(...args){
     const screen=render.apply(this,args), body=screen.el.querySelector('.iw-loadout__body')||screen.el;
     const panel=document.createElement('fieldset');panel.className='s3-catalogue';
-    panel.style.cssText='margin:12px 0;padding:14px;border:1px solid currentColor;border-radius:12px;display:grid;gap:10px';
+    panel.style.cssText='min-width:0;max-width:100%;box-sizing:border-box;margin:12px 0;padding:14px;border:1px solid currentColor;border-radius:12px;display:grid;gap:10px';
     const legend=document.createElement('legend');legend.textContent='サブ・スペシャルを選ぶ';panel.append(legend);
     const note=document.createElement('p');note.textContent='試作版の自由な組み合わせ。名称は本家の仮名です。';panel.append(note);
     const selectors={};
     for(const [field,names,registry,title] of [['sub',SUB_NAMES,SUB,'サブウェポン'],['special',SPECIAL_NAMES,SPECIALS,'スペシャル']]){
-      const label=document.createElement('label');label.textContent=title+' ';
+      const label=document.createElement('label');label.textContent=title+' ';label.style.cssText='display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0';
       const select=document.createElement('select');select.setAttribute('aria-label',title);
-      select.style.cssText='max-width:100%;min-height:44px;color:#15121c;background:#fff;font:inherit;border-radius:8px;padding:6px';
+      select.style.cssText='box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:44px;color:#15121c;background:#fff;font:inherit;border-radius:8px;padding:6px';
       for(const [id,name] of Object.entries(names)){if(!registry[id])throw new Error('Missing playable catalogue entry: '+id);const o=document.createElement('option');o.value=id;o.textContent=name;select.append(o);}
       select.addEventListener('keydown',e=>e.stopPropagation());
       select.addEventListener('change',()=>save());selectors[field]=select;label.append(select);panel.append(label);
