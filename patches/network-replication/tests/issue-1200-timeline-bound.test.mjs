@@ -48,3 +48,23 @@ test('#1200 malformed envelope members and stale ticks do not consume valid send
   peer.tr = 1000; peer.sim = 60000; nm._playEvents();
   assert.deepEqual(played.map(([_,e]) => e[5]), [3]);
 });
+
+test('#1200 malformed owner envelope does not crash playback or poison the peer clock', async () => {
+  const { nm, peer } = await receiver();
+  tick(nm, 1000, 60000, [row(999.99, 60000, 1)]);
+  assert.equal(peer.events.length, 1);
+  assert.equal(peer.lastTs, 1000);
+  for (const ts of [NaN, Infinity, -Infinity, '1000']) {
+    assert.doesNotThrow(() => nm.onMessage('p2', {
+      k: 't', ts, u: 60003, e: [row(999.99, 60003, 2)]
+    }), 'invalid timestamp must be ignored before timeline state changes');
+    assert.equal(peer.events.length, 1);
+    assert.equal(peer.lastTs, 1000);
+  }
+  assert.doesNotThrow(() => nm.onMessage('p2', {
+    k: 't', ts: 1000.05, u: 60003, e: { not: 'an array' }
+  }), 'malformed event envelope must be ignored without throwing');
+  assert.equal(peer.events.length, 1);
+  tick(nm, 1000.10, 60006, [row(1000.09, 60006, 3)]);
+  assert.equal(peer.events.length, 2, 'subsequent valid tick must remain playable');
+});
