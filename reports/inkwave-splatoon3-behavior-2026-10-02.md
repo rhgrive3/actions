@@ -2900,3 +2900,10 @@ Player impact and limits: a depleted Roller round's hit volume (owner capsule vi
   - 2026-10-06 の既存記録（base `3d8a48d3`、「未実装」）は、現行 main の内部下限ゲートに照らすと古い。履歴として残し、本記録で現況を補う。
   - 未確認: Splatoon 3 の垂直下限の数値。S3 世界単位と INKWAVE 座標の対応（1:1 は仮定）。粒子寿命や落下停止の規則（`FreeGravity` / `FreeAirResist` からは到達距離を導けない）。雲の拡大・消滅に伴う下限の変化（現行ゲートは雲の大きさに連動しない）。実機（Switch）での比較。
   - 未提出ブランチ `inkwave/c-735-codex2-impl12-20261009`（a7a30cd0）と `inkwave/c-735-cl8-work6-20261009`（e375fe08）は docs のみで、コードは含まない。
+## 2026-10-10: #952 Heavy Splatling charge-entry ground braking (partial, 未確認)
+
+- **本家の根拠**: Splatoon 3 Ver. 11.3.0 (参照版)。Leanny/splat3 固定 commit `7280ff9c` の `data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json` の WeaponParam で、`MoveSpeed_Charge` 0.062、`VelGnd_Bias_Charge` 0.9、`VelGnd_DownRt_Charge` 0.05 を確認（raw 取得）。フィールド名は意味を示さない。Splatoon 2 v1.4.0 のパラメータ表（mirayxs/SplatHeX）は `VelGnd_Bias_Charge` を「減速カーブ」、`VelGnd_DownRt_Charge` を「減速遅延」と記す。この表は S2 の世代資料であり、S3 の式の定義ではない。
+- **INKWAVE 実装箇所**: `inkwave-public/src/game/actor.js` の `_horizontal` は地上で一般の `PLAYER.runDecel` を使う（変更なし）。`patches/splatoon3/runtime/splatling.mjs` の `installSplatling` が、チャージ中・接地・非ストリーム・非回避・敵インク外の条件でだけ、速度を毎 60 Hz 基準フレームで 0.05 の比例で減らし、`MoveSpeed_Charge × 入力量` を下回らないようにする（#952 takeover、Draft PR #1188 A05 の移植）。`profile.json` の `weaponsFidelityCompletion.weapons.splatling.WeaponParam` から値を読む。
+- **再現操作**: 平地・敵インクなし・インク十分。一定の最大入力で走行を安定させ、入力を変えずに ZR を押し続ける。チャージ開始から安定するまでの毎 tick の水平速度を記録する。修正前は一般の走行ブレーキで減速していた。
+- **プレイへの影響**: 走りからチャージへ入るときの減速量と開始距離が変わる。角待ち・後退しながらのチャージに影響する。
+- **確認状態**: 未確認。(1) 5%/フレームの比例減速は INKWAVE のモデルであり、S3 の式ではない。S2 の「減速遅延」の表記とも一致は確認できていない。(2) `VelGnd_Bias_Charge`（0.9）は定義が公開されておらず未マップ。(3) S3 の 60 Hz 実機速度トレースは未取得のため、本家との一致は主張しない。(4) 確認したのは Node の単独測定（30/60/120 Hz で同一、固定時計の trace）であり、ブラウザ実動作・実機比較ではない。
