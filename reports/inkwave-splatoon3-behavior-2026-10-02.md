@@ -3319,3 +3319,15 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - **再現操作**: チャージャーを装備し、ジャンプせず地上で ZR を押して充填。充填時間の段階ごとに移動速度を確認する。
 - **プレイへの影響**: 短い部分チャージでの移動が速くなる。完全充填時の速度は変わらない。ダメージ、射程、インク、チャージ維持、塗り、Run Speed Up (#243)、完全充填ジャンプ (#251) は変更しない。
 - **確認状態**: 未確認。(1) 5.76 と 1.26 の出典は wikiwiki 検証表で、固定抽出データでは確認できていない。(2) 両端点の間の補間形（線形）と Nintendo の実際の曲線は未確認。(3) 30/60/120Hz の結果は論理テストでのみ確認。(4) 実機での比較は未実施。論理テストは実機比較の代わりにはならない。
+## #940 Heavy Splatling standing outer-reticle share (2026-10-10)
+
+- 参照: Splatoon 3 Ver. 11.3.0、Heavy Splatling (`WeaponSpinnerStandard`)、接地・非ジャンプ・連続射撃。
+- 本家の根拠: Leanny/splat3 固定コミット `7280ff9c` の `Stand_DegBiasMax = 0.3`、`Stand_DegSwerve = 3.3`（`patches/splatoon3/profile.json` に既存）。二択30%の読みは [Inkipedia Heavy Splatling](https://splatoonwiki.org/wiki/Heavy_Splatling) の Splatoon 3 データ節（"30% chance to shoot towards the outer reticle instead of the inner reticle"、3.3°/7.0° の記載）。公式資料では確認できていない。
+- 反対の資料: [User:XarrotD/Data_Explanation](https://splatoonwiki.org/wiki/User:XarrotD/Data_Explanation) は bias を連続的な偏差則（`y = s·x·log0.5(b)` と表記、0 で偏差なし、0.5 で swerve 内に一様）として説明し、Heavy Splatling には触れていない。二択30%の形は本記録では未確認。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/splatling.mjs` の `Projectiles.prototype.fireSplatling` ラッパー。接地・#850 ジャンプ回復の外で、発射ごとに `Math.random() < 0.3` なら外側 envelope `spreadGround`（3.3°）、そうでなければ公開中の内側cone（`spreadGround × spreadFirst`、約1.98°）を使う。公開される `_spreadDeg` と HUD の値は変更していない。
+- 前の状態（main 97ae3fec）: 接地の公開cone は 1.98° の固定値で、3.3° の envelope に到達する発射は無かった。generic bloom は Splatling では発生していない（bloom は常に0）。
+- 再現操作: 接地で ZR を満充填して離す。連続発射の各弾の偏差角を記録する。修正前は全弾 1.98°、修正後は約30%が 3.3°。
+- プレイへの影響: 接地の連続射撃で、外側へ逸れる弾が時々出る。#850 の空中・着地回復中の挙動、チャージ、インク、4F cadence は変えていない。
+- テスト: `patches/splatoon3/tests/splatling-standing-outer-share.test.mjs`（300発で外側90発、30%を決定的に確認）。`splatling-jump-spread-native.test.mjs` の描画乱数の順番を、接地発射の選択1回ぶん更新。
+- 確認状態: 単独の決定的テストのみ。内側kernelの角度（1.98° は INKWAVE の既存値で S3 の実測ではない）、外側確率の形（二択か連続か）、最終PDF、HUDの外側リング表示、リモート対戦での同期、30/60/120 Hz での実機比較、実機比較は **未確認**。
+
