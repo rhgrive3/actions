@@ -40,7 +40,7 @@ export function installInputPlatform(Input, env = globalThis) {
   if (Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
   const owner = getPlatformLifecycle(env), initialBlur = owner.metrics.blurs, initiallyFocused = owner.focused;
-  const poll = P.pollPad, axis = P.padAxis, stick = P.padStick, value = P.padValue;
+  const poll = P.pollPad, axis = P.padAxis, stick = P.padStick, value = P.padValue, button = P.padButton;
   P.pollPad = function (...args) {
     // Remember initial unfocus even if focus arrives before the first poll.
     if (this._platformPadBlurEpoch === undefined && !initiallyFocused) {
@@ -84,6 +84,10 @@ export function installInputPlatform(Input, env = globalThis) {
     }
     if (this._platformPadAxes && (!this.pad || this.pad.axes.every((value, i) => i >= 4 || Math.abs(value || 0) <= .14))) this._platformPadAxes = false;
     return result;
+  };
+  P.padButton = function (i) {
+    if ((i === 6 || i === 7) && this._platformPadHeldTriggers?.has(i)) return false;
+    return button.call(this, i);
   };
   P.padValue = function (i) {
     if ((i === 6 || i === 7) && this._platformPadHeldTriggers?.has(i)) return 0;
