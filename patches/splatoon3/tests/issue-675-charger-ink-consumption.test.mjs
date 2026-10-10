@@ -95,3 +95,78 @@ test('#675 low ink cannot become negative', async () => {
 
   assert.ok(a.ink >= 0, 'ink never drops below 0');
 });
+
+
+// #675: source-backed complete Actor/WeaponRunner Gear/AP regression.
+// 1130 WeaponChargerNormal: InkConsumeMinCharge=.0225, FullCharge=.18.
+import { emptyLoadout, gearCurve, abilityPoints } from '../runtime/gear.mjs';
+import { FixedClock } from '../runtime/clock.mjs';
+function equipInkSaver(actor, gp) {
+  actor.s3.loadout = emptyLoadout();
+  if (gp === 10) actor.s3.loadout[0].main = 'inkSaverMain';
+  if (gp === 57) for (const part of actor.s3.loadout) {
+    part.main = 'inkSaverMain';
+    part.subs.fill('inkSaverMain');
+  }
+  assert.equal(abilityPoints(actor.s3.loadout).inkSaverMain || 0, gp);
+  actor.setWeapon('charger');
+}
+test('#675 source-backed Gear/AP: 8F and 60F actual Charger ink debits at 0/10/57 AP', async () => {
+  for (const gp of [0, 10, 57]) for (const chargeFrames of [8, 60]) {
+    const f = await fixture(), actor = f.make('charger');
+    equipInkSaver(actor, gp);
+    const factor = gearCurve(gp, ...f.profile.gear.inkSaverMain);
+    close(actor.weapon.inkMin, 2.25 * factor, 'geared minimum source ink');
+    close(actor.weapon.inkFull, 18 * factor, 'geared full source ink');
+    actor.ink = 100;
+    actor.lastFire = 0;
+    actor.intent.fire = true;
+    f.tick(actor); // fresh humanoid ZR startup, no charge yet
+    for (let i = 0; i < chargeFrames; i++) f.tick(actor);
+    close(actor.weaponRunner.chargeT, chargeFrames / 60, 'source charge progression');
+    actor.intent.fire = false;
+    for (let i = 0; i < 3; i++) f.tick(actor);
+    const expected = (chargeFrames === 8 ? 2.25 : 18) * factor;
+    close(100 - actor.ink, expected, gp + 'AP at ' + chargeFrames + 'F source cost');
+    assert.ok(actor.ink >= 0, 'never underdraws ink');
+  }
+});
+
+test('#675 pre-minimum releases remain rejected instead of creating an unauthorized shot', async () => {
+  for (const heldFrames of [0, 1, 4, 7]) {
+    const f = await fixture(), actor = f.make('charger');
+    actor.intent.fire = true;
+    f.tick(actor);
+    for (let i = 0; i < heldFrames; i++) f.tick(actor);
+    actor.intent.fire = false;
+    for (let i = 0; i < 5; i++) f.tick(actor);
+    assert.equal(f.shots.length, 0, 'no unauthorized ' + heldFrames + 'F shot');
+    assert.ok(actor.ink >= 0 && actor.ink <= 100);
+  }
+});
+
+test('#675 8F/60F geared source cost has identical traces at 30/60/120Hz rendering', async () => {
+  for (const frames of [8, 60]) {
+    const traces = [];
+    for (const hz of [30, 60, 120]) {
+      const f = await fixture(), actor = f.make('charger'), clock = new FixedClock();
+      equipInkSaver(actor, 10);
+      actor.ink = 100;
+      actor.lastFire = 0;
+      const rows = [];
+      let ticks = 0;
+      for (let i = 0; i < 2 * hz; i++) clock.advance(1 / hz, () => {
+        ticks++;
+        actor.intent.fire = ticks <= frames + 1;
+        f.tick(actor);
+        rows.push([actor.ink, actor.weaponRunner.chargeT, actor.weaponRunner.charging, f.shots.length]);
+      });
+      assert.equal(ticks, 120);
+      const factor = gearCurve(10, ...f.profile.gear.inkSaverMain);
+      close(100 - actor.ink, (frames === 8 ? 2.25 : 18) * factor);
+      traces.push(rows);
+    }
+    assert.deepEqual(traces[0], traces[1]);
+    assert.deepEqual(traces[1], traces[2]);
+  }
+});
