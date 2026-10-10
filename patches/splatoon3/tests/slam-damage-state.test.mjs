@@ -45,7 +45,10 @@ test('#573 enemy ink contact uses the same 50F admission as weapon damage and th
   try{f.updateResources(a,1/60);}finally{a._surface=surface;a.grounded=grounded;a.groundTeam=groundTeam;}};
  for(let i=0;i<49;i++)f.step();let hp=a.hp;ink();assert.ok(a.hp<hp,'pre-50F enemy ink still damages');
  for(const frame of [50,51]){f.step();hp=a.hp;ink();near(a.hp,hp);}
- a._resolve=()=>{a.grounded=true;};f.step();assert.equal(a.specialActive,null);assert.ok(a.s3TidalSlamGaugeFinish);
+ a._resolve=()=>{a.grounded=true;};
+ let waited=0;while(a.specialActive&&waited++<100){f.step();hp=a.hp;ink();near(a.hp,hp);}
+ assert.ok(waited>1&&waited<100,'S3 70F Slam keeps enemy ink rejected through the extended hang until landing');
+ assert.equal(a.specialActive,null);assert.ok(a.s3TidalSlamGaugeFinish);
  a.hardLand=.1;hp=a.hp;ink();near(a.hp,hp);
  a.hardLand=0;finishTidalSlamGauge(a);hp=a.hp;ink();assert.ok(a.hp<hp,'enemy ink resumes after the landing owner ends protection');
 });
