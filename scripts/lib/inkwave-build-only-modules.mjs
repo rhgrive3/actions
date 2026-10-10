@@ -2,6 +2,10 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  'patches/splatoon3/weapon-catalog-adapter.mjs',
+  'patches/splatoon3/issue-405-adapter.mjs',
+  'patches/splatoon3/issue-427-adapter.mjs',
+  'patches/splatoon3/issue-460-adapter.mjs',
   'patches/network-replication/dodge-clock-adapter.mjs',
   'patches/splatoon3/bubbler-map-adapter.mjs',
   'patches/local-quality/actor-weapon-input-adapter.mjs',

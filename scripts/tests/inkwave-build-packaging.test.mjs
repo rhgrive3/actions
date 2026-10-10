@@ -31,7 +31,8 @@ test('excluded modules have audited build-only exports; mixed runtime adapters r
     assert(exports.length > 0, file);
     const expected = file === composer ? ['createLazyComposerTarget', 'adaptComposerTarget', 'revertComposerTarget']
       : file === composerFormat ? ['composerGradeKeepsPackedTargetNonnegative', 'selectComposerTargetFormat', 'configureComposerColorTargets'] : [];
-    assert(exports.every(name => /^adapt[A-Z]/.test(name) || expected.includes(name)),
+    const auditedSourceOnly = ['patches/splatoon3/issue-405-adapter.mjs', 'patches/splatoon3/issue-427-adapter.mjs', 'patches/splatoon3/issue-460-adapter.mjs'];
+    assert(exports.every(name => /^adapt[A-Z]/.test(name) || expected.includes(name) || (name === 'replaceOnce' && auditedSourceOnly.includes(file))),
       `New runtime export requires removing ${file} from the build-only list: ${exports}`);
   }
   for (const file of runtimeHelpers) assert(!BUILD_ONLY_PATCH_MODULES.has(file), file);

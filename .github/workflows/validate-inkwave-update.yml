@@ -559,11 +559,15 @@ jobs:
         run: |
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/seven-site
           node scripts/check-inkwave-seven-claims.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/seven-browser.json
+      - name: Verify compiled main weapon catalog in Chromium and WebKit
+        run: node scripts/check-inkwave-catalog-browser.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/catalog-browser.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: inkwave-seven-claims-${{ env.SOURCE_SHA }}
-          path: .ci-scratch/seven-browser.json
+          path: |
+            .ci-scratch/seven-browser.json
+            .ci-scratch/catalog-browser.json
           if-no-files-found: warn
           retention-days: 14
   resource_paint_continuation:

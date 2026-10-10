@@ -23,6 +23,7 @@ import { installMovementMotion } from './movement-motion.mjs';
 import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
+import { registerMainWeaponCatalog } from './main-weapon-catalog.mjs';
 import { installRollerBodyKnockback } from './roller-body-knockback.mjs';
 import { installMuzzleFeedback } from './muzzle-feedback.mjs';
 import { installShotGuide } from './weapons-fidelity.mjs';
@@ -86,6 +87,7 @@ export function install(profile) {
   }
   Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
+  registerMainWeaponCatalog(api);
   installWeapons(api, profile);
   installSubSpecialFidelity(api, profile);
   installKitDefense(api);
