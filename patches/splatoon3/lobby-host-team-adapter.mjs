@@ -51,6 +51,14 @@ export function adaptHostTeams(rel, code, replaceOnce) {
       "      const host = isHost();\n      confirmTeamsBtn.style.display = host && !bossMode() ? '' : 'none';\n      confirmTeamsBtn.textContent = lob.teamsConfirmed ? 'TEAMS CONFIRMED — READY UP' : 'CONFIRM TEAMS';\n      el.classList.toggle('is-host', host);",'show host confirmation phase');
     patch("      teamRow.classList.toggle('is-locked', bossMode());",
       "      teamRow.classList.toggle('is-locked', bossMode() || !host);",'guest picker is locked');
+    patch("      if (isHost()) { tryStart(); return; }",
+      "      if (isHost() && bossMode()) { tryStart(); return; }\n      // Turf: READY is each participant's final step after host-confirmed teams; START only launches (#1039).\n      if (!bossMode() && !lob.teamsConfirmed) { restartAnim(readyBtn, 'is-shake'); this._sfx('ui_error', 0.15); this.toast('Waiting for the host to confirm teams', { kind: 'info', icon: GLYPHS.users }); return; }",'host and guest ready wait for confirmation');
+    patch("    const barItems = () => [wChip, lChip, teamRow, emoteBtn, isHost() ? startBtn : readyBtn];",
+      "    const barItems = () => [wChip, lChip, teamRow, emoteBtn, ...(isHost() ? (bossMode() ? [startBtn] : [readyBtn, startBtn]) : [readyBtn])];",'host READY in Turf bar');
+    patch("      if (dir === 'right') return i < 1 ? copyBtn : isHost() ? startBtn : readyBtn;",
+      "      if (dir === 'right') return i < 1 ? copyBtn : isHost() && bossMode() ? startBtn : readyBtn;",'settings right reaches host READY');
+    patch("      readyBtn.classList.toggle('is-on', ready);",
+      "      readyBtn.classList.toggle('is-on', ready);\n      // The lobby CSS hides READY for hosts; a Turf host needs it after host-confirmed teams (#1039).\n      readyBtn.style.display = host && !bossMode() ? 'flex' : '';",'show host READY in Turf');
     return code;
   }
   return code;
