@@ -1,3 +1,4 @@
+import { adaptSuperJumpEpoch } from '../local-quality/superjump-epoch-adapter.mjs';
 // Network owns the wire contract. Compose LAST; upstream modules and gameplay
 // tuning remain immutable. Each connection fails closed on source drift.
 import fs from 'node:fs';
@@ -2145,5 +2146,5 @@ ${bombHit}`;
     code = adaptIssue1163RemoteDodgeClock(code);
     patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
   }
-  return code;
+  return adaptSuperJumpEpoch(rel, code);
 }
