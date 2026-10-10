@@ -1070,6 +1070,10 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
     p.pos.y+=(Math.random()*2-1)*j;
   }
   // Only offsets are extracted. Native body +1.3 anchor is not claimed as Switch height.
+  // #278: the two pinned height fields are summed as raw INKWAVE world units (scale 1).
+  // The additive combination and per-field engine meaning are unverified: the pinned
+  // Leanny table carries no field semantics. This is an INKWAVE assumption, not a
+  // sourced engine law, and makes no SI-metre claim (profile.json models.rollerVerticalSpawnHeight).
   p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(unit.SpawnPositionHeight||0);
   p.prev.copy(p.pos);p.start.copy(p.pos);p.fidelityMaxY=p.pos.y;p.fidelityImpactHeight=null;
   const cp=Math.cos(pitch);
