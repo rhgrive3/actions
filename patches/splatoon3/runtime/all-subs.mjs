@@ -1055,26 +1055,30 @@ export function installAllSubs(api,profile={}){
     let state=this.s3FizzyCharge;
     if(!state)this.s3FizzyCharge=state={jump:false,moveX:0,moveZ:0,moveMag:0,yaw,pitch,queue:0,aimCooldown:0};
     const held=!!input?.sub;
-    if(held){
+    const previousHold=this.s3SubHold||0;
+    let drained=0;
+    if((previousHold>0||this.aimingSub||this.s3SubReady?.pending)&&
+        (held||input?.subReleased||this.s3SubReady?.pending)&&dt>0&&Number.isFinite(dt)){
+      drained=Math.min(state.queue,FIZZY_ACCEL.drainPerSecond*dt);
+      state.queue-=drained;this.s3SubHold=previousHold+drained/60;
+    }
+    const result=nativeRunnerUpdate.call(this,dt,input,...args);
+    const admitted=held&&dt>0&&(this.s3SubHold||0)>previousHold+drained/60+1e-10;
+    state.aimCooldown=Math.max(0,state.aimCooldown-Math.max(0,dt||0));
+    if(admitted){
       if(jump&&!state.jump)state.queue=Math.min(FIZZY_ACCEL.queue,state.queue+FIZZY_ACCEL.jump);
       if(mag>FIZZY_ACCEL.moveDeadzone&&
           (state.moveMag<=FIZZY_ACCEL.moveDeadzone||
            (mx*state.moveX+mz*state.moveZ)/(mag*state.moveMag)<FIZZY_ACCEL.turnDot))
         state.queue=Math.min(FIZZY_ACCEL.queue,state.queue+FIZZY_ACCEL.stick);
       if(dt>0&&Number.isFinite(dt)){
-        state.aimCooldown=Math.max(0,state.aimCooldown-dt);
         const dyaw=Math.atan2(Math.sin(yaw-state.yaw),Math.cos(yaw-state.yaw));
         if(Math.hypot(dyaw,pitch-state.pitch)/dt>=FIZZY_ACCEL.aimRate&&state.aimCooldown<=0){
           state.queue=Math.min(FIZZY_ACCEL.queue,state.queue+FIZZY_ACCEL.aim);state.aimCooldown=FIZZY_ACCEL.aimCooldown;
         }
       }
     }
-    if((held||input?.subReleased||this.s3SubReady?.pending)&&dt>0&&Number.isFinite(dt)){
-      const drain=Math.min(state.queue,FIZZY_ACCEL.drainPerSecond*dt);
-      state.queue-=drain;this.s3SubHold=(this.s3SubHold||0)+drain/60;
-    }
     state.jump=jump;state.moveX=mx;state.moveZ=mz;state.moveMag=mag;state.yaw=yaw;state.pitch=pitch;
-    const result=nativeRunnerUpdate.call(this,dt,input,...args);
     if(!held&&!input?.subReleased&&!this.s3SubReady?.pending&&!this.aimingSub){
       if(!this.s3SubHold)this.s3FizzyCharge=null;
       else state.queue=0;
