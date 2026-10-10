@@ -17,6 +17,11 @@ const INSTALL = Symbol.for('inkwave.s3.all-subs.v1');
 const STEP = 1 / 60;
 const MAX_OBJECTS = 96;
 const MAX_REPLAY_EVENTS = 256;
+// S3 community testing describes these as queued bonuses, capped at 2.5 bonus
+// frames per 60 Hz frame. The source parameter table gives charge stages, not
+// acceleration values, so these are conservative calibration values.
+const FIZZY_ACCEL = Object.freeze({ jump: 8, stick: 11, aim: 10, queue: 30, drainPerSecond: 150,
+  moveDeadzone: .15, turnDot: -.5, aimRate: 3, aimCooldown: .12 });
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const finite3 = p => p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z);
@@ -59,14 +64,15 @@ export const ALL_SUB_SPECS = Object.freeze({
     // `chargeable` is reserved by kit-subs for Curling Bomb's path and expects
     // its minCharge/maxCharge blast tuple. Fizzy's hold timing is instead read
     // directly from the real runner by this module at throw time.
-    maxChargeTime: frameSeconds(80),
+    maxChargeTime: frameSeconds(120),
+    blurb: 'サブを保持。左右の切り返し・ジャンプ連打・照準を振ると速く充電、離すと投げる。',
     bursts: Object.freeze([
       Object.freeze({ radius: 3.8, damageInner: 1.6, damageOuter: 3.8, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'calibrated-quadratic', paintRadius: 3.0, crossPaintRadius: 2.0 }),
       Object.freeze({ radius: 4.5, damageInner: 1.95, damageOuter: 4.5, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'calibrated-quadratic', paintRadius: 3.4, crossPaintRadius: 2.0 }),
       Object.freeze({ radius: 5.45, damageInner: 2.6, damageOuter: 5.45, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'calibrated-quadratic', paintRadius: 3.8, crossPaintRadius: 2.0 }),
     ]),
     gravity: 24, inkCostFallback: 60,
-    calibration: 'charge frames and blast arrays extracted; bounce flight and hop interval calibrated',
+    calibration: 'per-stage charge frames and blast arrays extracted; acceleration mapped from community testing; bounce flight and hop interval calibrated',
   }),
   torpedo: Object.freeze({
     id: 'torpedo', name: 'Torpedo', source: 'WeaponBombTorpedo.game__GameParameterTable.json',
@@ -277,7 +283,7 @@ function createObject(api, projectiles, owner, id, record = {}) {
   };
   if (id === 'fizzy') {
     const hold = Number.isFinite(record.hold) ? record.hold : owner.weaponRunner?.s3SubHold || 0;
-    object.popLimit = hold >= frameSeconds(spec.chargeFrames[1]) ? 3 : hold >= frameSeconds(spec.chargeFrames[0]) ? 2 : 1;
+    object.popLimit = hold >= frameSeconds(spec.chargeFrames[0] + spec.chargeFrames[1]) ? 3 : hold >= frameSeconds(spec.chargeFrames[0]) ? 2 : 1;
     object.pops = object.popLimit;
     object.fuse = frameSeconds(spec.burstWaitFrames[0]);
   }
@@ -1022,7 +1028,7 @@ export function installAllSubs(api,profile={}){
     const hold=runner?.s3SubHold||0;
     const release=runner?.s3Release;
     const object=createObject(api,this,actor,id,{hold,charge:Math.min(1,hold/(ALL_SUB_SPECS[id].maxChargeTime||1))});
-    if(runner)runner.s3SubHold=0;
+    if(runner){runner.s3SubHold=0;if(id==='fizzy')runner.s3FizzyCharge=null;}
     return object;
   };
 
@@ -1030,14 +1036,50 @@ export function installAllSubs(api,profile={}){
   // Torpedo before the runner reaches that payment site while the first remains
   // in flight; the throw hook above also guards direct calls that bypass inputs.
   const nativeRunnerUpdate=WeaponRunner.prototype.update;
+  const nativeRunnerReset=WeaponRunner.prototype.reset;
+  if(nativeRunnerReset)WeaponRunner.prototype.reset=function(...args){this.s3FizzyCharge=null;return nativeRunnerReset.apply(this,args);};
   WeaponRunner.prototype.update=function(dt,input,...args){
     const actor=this.a;
     if(actor?.weapon?.sub==='torpedo'&&!actor.remote&&hasActiveTorpedo(G.projectiles,actor)){
+      this.s3FizzyCharge=null;
       this.s3SubHold=0;this.s3SubReady=null;this.aimingSub=false;
       const suppressed=input?{...input,sub:false,subReleased:false}:input;
       return nativeRunnerUpdate.call(this,dt,suppressed,...args);
     }
-    return nativeRunnerUpdate.call(this,dt,input,...args);
+    if(actor?.weapon?.sub!=='fizzy'||actor.remote){
+      if(this.s3FizzyCharge){this.s3FizzyCharge=null;this.s3SubHold=0;}
+      return nativeRunnerUpdate.call(this,dt,input,...args);
+    }
+    const intent=actor.intent||{},move=intent.move||{},yaw=actor.aimYaw||0,pitch=actor.aimPitch||0;
+    const mx=move.x||0,mz=move.z||0,mag=Math.hypot(mx,mz),jump=!!intent.jump;
+    let state=this.s3FizzyCharge;
+    if(!state)this.s3FizzyCharge=state={jump:false,moveX:0,moveZ:0,moveMag:0,yaw,pitch,queue:0,aimCooldown:0};
+    const held=!!input?.sub;
+    if(held){
+      if(jump&&!state.jump)state.queue=Math.min(FIZZY_ACCEL.queue,state.queue+FIZZY_ACCEL.jump);
+      if(mag>FIZZY_ACCEL.moveDeadzone&&
+          (state.moveMag<=FIZZY_ACCEL.moveDeadzone||
+           (mx*state.moveX+mz*state.moveZ)/(mag*state.moveMag)<FIZZY_ACCEL.turnDot))
+        state.queue=Math.min(FIZZY_ACCEL.queue,state.queue+FIZZY_ACCEL.stick);
+      if(dt>0&&Number.isFinite(dt)){
+        state.aimCooldown=Math.max(0,state.aimCooldown-dt);
+        const dyaw=Math.atan2(Math.sin(yaw-state.yaw),Math.cos(yaw-state.yaw));
+        if(Math.hypot(dyaw,pitch-state.pitch)/dt>=FIZZY_ACCEL.aimRate&&state.aimCooldown<=0){
+          state.queue=Math.min(FIZZY_ACCEL.queue,state.queue+FIZZY_ACCEL.aim);state.aimCooldown=FIZZY_ACCEL.aimCooldown;
+        }
+      }
+    }
+    if((held||input?.subReleased||this.s3SubReady?.pending)&&dt>0&&Number.isFinite(dt)){
+      const drain=Math.min(state.queue,FIZZY_ACCEL.drainPerSecond*dt);
+      state.queue-=drain;this.s3SubHold=(this.s3SubHold||0)+drain/60;
+    }
+    state.jump=jump;state.moveX=mx;state.moveZ=mz;state.moveMag=mag;state.yaw=yaw;state.pitch=pitch;
+    const result=nativeRunnerUpdate.call(this,dt,input,...args);
+    if(!held&&!input?.subReleased&&!this.s3SubReady?.pending&&!this.aimingSub){
+      if(!this.s3SubHold)this.s3FizzyCharge=null;
+      else state.queue=0;
+    }
+    return result;
   };
 
   const nativeUpdate=Projectiles.prototype.update;
