@@ -281,7 +281,9 @@ export function validateCatalogResult(result) {
         || row.pause.measurement !== 'native-vertex-flat-colour' || row.pause.sameRgb.changedPixels !== 0)
       fail('pause denominator ' + label);
     if (!Array.isArray(row.pause.vertexSources) || row.pause.vertexSources.length !== row.pause.vertexPrograms
-        || row.pause.vertexSources.some(p => !/^[a-f0-9]{64}$/.test(p.nativeSHA256) || p.nativeSHA256 !== p.controlledSHA256))
+        || row.pause.vertexSources.some(p => !/^[a-f0-9]{64}$/.test(p.nativeSHA256) || p.nativeSHA256 !== p.controlledSHA256
+            || !/^[a-f0-9]{64}$/.test(p.rawNativeSHA256) || !/^[a-f0-9]{64}$/.test(p.rawControlledSHA256)
+            || (p.rawNativeSHA256 !== p.rawControlledSHA256 && p.nameOnlyDifference !== true)))
       fail('pause native vertex shader identity ' + label);
     pixels(row.pause.sameRgb, label + '.pause', false);
     // Native beauty shaders are retained as a diagnostic; their repeated
@@ -718,13 +720,30 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
           for (let k = 0; k < Math.max(originalShader.length, flatShader.length); k++) {
             if (originalShader[k] !== flatShader[k]) { firstDifference = k; break; }
           }
+          // WebGLProgram prefixes a debug-only material name into each
+          // uploaded shader. Three.js can reuse an original unnamed program
+          // for an 'iw-lamp' material while the fragment-only test clone gets
+          // its named program. The observed 7-byte difference was EXACTLY
+          // '#define SHADER_NAME ' versus '#define SHADER_NAME iw-lamp'.
+          // This GLSL debug macro is not referenced by any shader instruction.
+          // Remove ONLY its value and demand that ALL remaining compiled
+          // vertex source bytes (including uniforms, defines, skinning,
+          // attributes and functions) match exactly. Keep raw SHA evidence.
+          const withoutDebugName = shader => {
+            const names = shader.match(/^#define SHADER_NAME[^\r\n]*$/gm) || [];
+            if (names.length !== 1 || (shader.match(/SHADER_NAME/g) || []).length !== 1)
+              throw Error('Unsafe or referenced GLSL debug name');
+            return shader.replace(/^#define SHADER_NAME[^\r\n]*$/m, '#define SHADER_NAME');
+          };
+          const nativeCanonical = withoutDebugName(originalShader);
+          const flatCanonical = withoutDebugName(flatShader);
           vertexSources.push({
             mesh: mesh.name || mesh.type, type: reference[i].type,
-            nativeSHA256: await digest(originalShader),
-            controlledSHA256: await digest(flatShader),
-            // Diagnostics are emitted ONLY when a true vertex-source mismatch
-            // occurs. Show the first differing GLSL context and exact lengths;
-            // do not approve the result or weaken the equality requirement.
+            nativeSHA256: await digest(nativeCanonical),
+            controlledSHA256: await digest(flatCanonical),
+            rawNativeSHA256: await digest(originalShader),
+            rawControlledSHA256: await digest(flatShader),
+            nameOnlyDifference: firstDifference >= 0 && nativeCanonical === flatCanonical,
             mismatch: firstDifference < 0 ? null : {
               at: firstDifference, nativeLength: originalShader.length, flatLength: flatShader.length,
               nativeContext: originalShader.slice(Math.max(0, firstDifference - 200), firstDifference + 400),
