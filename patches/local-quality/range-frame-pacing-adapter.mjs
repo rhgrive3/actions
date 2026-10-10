@@ -68,7 +68,7 @@ export function adaptRangeFramePacing(rel, code) {
     });`,
     'frame CPU recorder');
   code = once(code,
-    '    const overloaded = avg > 1 / 50;\\n    const headroom = avg < 1 / 58;',
+    '    const overloaded = avg > 1 / 50;\n    const headroom = avg < 1 / 58;',
     `    // Compare against the actually selected evenly paced Auto cap; otherwise
     // intentional 45Hz on a 90Hz panel is misdiagnosed as GPU overload and
     // permanently drops texture resolution to its minimum.
