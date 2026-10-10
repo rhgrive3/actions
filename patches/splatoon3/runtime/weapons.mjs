@@ -1,5 +1,6 @@
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
+import { DualiesAccuracy } from './dualies-accuracy.mjs';
 import { shooterMovementRemaining, shooterMovementSpeed } from './shooter-movement.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
@@ -422,6 +423,7 @@ export function installWeapons(context, profile) {
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
     this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
+    this.s3DualiesAccuracy = new DualiesAccuracy(profile.weaponsFidelityCompletion?.weapons?.dualies?.WeaponParam);
     this.s3ShooterMoveRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
     this.s3WasSquid = this.a?.form === 'squid'; this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
@@ -603,6 +605,8 @@ export function installWeapons(context, profile) {
       input = next;
     }
     if (weapon.kind === 'shooter' && !input.fire) this.s3Accuracy?.advance(dt);
+    // #891: Dualies bias recovery counts time since the last admitted shot, so it runs with or without fire held.
+    if (weapon.kind === 'dualies') this.s3DualiesAccuracy?.advance(dt);
     const result = runnerUpdate.call(this, dt, input);
     if (weapon.kind === 'shooter' && this.s3ShooterInterruptJustArmed) {
       // R/ZL cancellation may coincide with a due repeat; the native owner above
@@ -948,20 +952,34 @@ export function installWeapons(context, profile) {
     // published outer-reticle probability and fire at the chosen sourced
     // endpoint (Jump_DegSwerve vs Stand_DegSwerve). Same model as the Blaster
     // jump bias; the LapOver turret cone is already handled by _spreadDeg.
-    const state = a?.weaponRunner?.s3DualiesJumpState?.(w);
+    // #891: otherwise normal Dualies fire samples the outer-reticle bias once
+    // per admitted shot against the grounded/air envelope. Locked turret shots
+    // (spreadLock) are a separate owner for both and do not advance the bias.
+    const runner = a?.weaponRunner;
+    const locked = !!(runner?.s3Turret || runner?.lockT > 0);
+    const state = runner?.s3DualiesJumpState?.(w);
+    const accuracy = runner?.s3DualiesAccuracy;
     let effective = spreadDeg;
-    // The legal post-roll LapOver turret cone (spreadLock) is a separate owner
-    // and must not be replaced by a jump-bias selection.
-    if (state?.active && !(a.weaponRunner.s3Turret || a.weaponRunner.lockT > 0)) {
+    if (state?.active && !locked) {
       const first = w.spreadFirst ?? .45;
-      const bloom = first + (1 - first) * (a.weaponRunner.bloom || 0);
+      const bloom = first + (1 - first) * (runner.bloom || 0);
       effective = (Math.random() < state.bias ? state.envelope : state.ground) * bloom;
+    } else if (accuracy && runner.s3DualiesAdmitting && !locked) {
+      const envelope = a.grounded ? w.spreadGround : w.spreadAir;
+      const outerChance = accuracy.shot(!!a.grounded);
+      effective = Math.random() < outerChance ? envelope : envelope * (w.spreadFirst ?? 0.45);
     }
     const result = fireDualies.call(this, a, w, effective, hand);
     if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
     return result;
   };
-  const dualies = WeaponRunner.prototype._dualies, spread = WeaponRunner.prototype._spreadDeg;
+  const dualiesBase = WeaponRunner.prototype._dualies, spread = WeaponRunner.prototype._spreadDeg;
+  // #891: only shots admitted by the runner's own fire loop sample the Dualies bias. Direct
+  // Projectiles.fireDualies calls keep the cone they are given.
+  const dualies = function (dt, inp, w) {
+    this.s3DualiesAdmitting = true;
+    try { return dualiesBase.call(this, dt, inp, w); } finally { this.s3DualiesAdmitting = false; }
+  };
   WeaponRunner.prototype._dualies = function (dt, inp, w) {
     const dodging = !!this.dodge;
     if (this.s3DodgeShotPending > 1e-10 && (!inp.fire || inp.sub || this.a.form === 'squid')) this.s3DodgeShotPending = 0;
