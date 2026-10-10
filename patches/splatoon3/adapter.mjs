@@ -113,6 +113,14 @@ export function adaptSource(rel, code) {
       '        if (friendly && Number.isFinite(t) && (previousAge + INK_DT * t) * INK_HZ + EPS < p.fidelityFriendThrough) continue;\n' +
       '        // World wins ties: no wall-through damage, independent of actors order.',
       'ink flight S3 friend-through at first-contact age');
+    // #875: a swept contact chooses the shot's completed fixed 60Hz tick,
+    // not a fractional impact time within that tick. This is the same integer
+    // damage-age owner used by fidelityDamage for ordinary shooter-family
+    // projectiles; collision ordering and contact position remain continuous.
+    code = replaceOnce(code,
+      '          const damage = damageAt(p.inkProfile, previousAge + INK_DT * first);',
+      '          const damage = damageAt(p.inkProfile, p.age);',
+      'ink flight integer-frame damage vs continuous swept contact');
     code = replaceOnce(code,
       '            this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
       '            if (target.team !== p.team) this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
