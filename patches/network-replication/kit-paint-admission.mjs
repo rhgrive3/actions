@@ -1,5 +1,6 @@
 import { SLOSHER_IMPACT_TAG, slosherPaintMetaValid, slosherPaintBirth, slosherImpactMatches } from './slosher-paint-admission.mjs';
 import { KIT_SUBS, resolveSubAtCharge } from '../splatoon3/runtime/kit-subs.mjs';
+import { catalogPaintRadiusLimit } from './catalog-paint-admission.mjs';
 export const KIT_BIRTH_TAG = 'inkwave-kit-birth-v1';
 export const KIT_PAINT_TAG = 'inkwave-kit-core-v1';
 const states = new WeakMap();
@@ -90,7 +91,7 @@ function receipt(nm,from,e,s){
 export function kitPaintRadiusAllowed(nm,from,e,cap){
  if(paintMeta(e))return !!receipt(nm,from,e,state(nm));
  // Unknown metadata cannot gain the wider core permit.
- return Math.fround(e[5])<=Math.fround(cap);
+ return Math.fround(e[5])<=Math.fround(Math.max(cap,catalogPaintRadiusLimit(nm,from)));
 }
 export function consumeKitPaint(nm,from,e){
  if(!paintMeta(e))return true;

@@ -114,7 +114,7 @@ function rangePause(menus) {
   const cur = session?.local?.weaponId;
   const wchips = WEAPON_ORDER.map((id) => {
     const W = WEAPONS[id];
-    const b = h('button', { class: 'iwr-wchip' + (id === cur ? ' is-on' : '') }, h('span', { class: 'iwr-wchip__icon', html: weaponIcon(W.kind || id) }), h('b', null, W.name), h('small', null, W.class || ''));
+    const b = h('button', { class: 'iwr-wchip' + (id === cur ? ' is-on' : '') }, h('span', { class: 'iwr-wchip__icon', html: weaponIcon(id) }), h('b', null, W.name), h('small', null, W.class || ''));
     menus._fx(b); menus._bind(b, { id: 'w-' + id, accept: act(() => session?.setWeapon(id)) });
     return b;
   });

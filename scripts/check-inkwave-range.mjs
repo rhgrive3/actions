@@ -72,7 +72,10 @@ for (const run of RUNS) {
     out.checks.stage = await page.evaluate(() => {
       const G = window.__G, g = window.__inkwave, s = G.match.range;
       const hidden = (sel) => { const e = document.querySelector(sel); return !e || getComputedStyle(e).display === 'none'; };
+      const weaponPads = s.pads.defs.filter(p => p.kind === 'weapon');
+      const separation = Math.min(...weaponPads.flatMap((p, i) => weaponPads.slice(i + 1).map(q => Math.hypot(p.x - q.x, p.z - q.z))));
       return {
+        weaponPads: weaponPads.length, separation,
         layout: G.level.layout.id, lightmap: !!g.stageLightmap, signage: !!g.rangeSignage?.mesh?.geometry?.attributes?.position?.count,
         targets: s.targets.length, pads: s.pads.defs.length, bots: G.actors.filter((a) => a.bot).length,
         rosterHidden: hidden('.iw-hud__top'), telemetry: !!document.querySelector('.iwr-tel'),
@@ -80,7 +83,7 @@ for (const run of RUNS) {
       };
     });
     const st = out.checks.stage;
-    if (st.layout !== 'range' || !st.lightmap || !st.signage || st.targets !== 11 || st.pads !== 14 || st.bots !== 0 || !st.rosterHidden || !st.telemetry) throw new Error('stage check ' + JSON.stringify(st));
+    if (st.layout !== 'range' || !st.lightmap || !st.signage || st.targets !== 11 || st.pads !== 14 || st.weaponPads !== 7 || st.separation < 1.9 || st.bots !== 0 || !st.rosterHidden || !st.telemetry) throw new Error('stage check ' + JSON.stringify(st));
     // #589: inspect the real constrained atlas and a separate desktop-HIGH instance.
     const signageEvidence=await page.evaluate(async desktop=>{
       const G=window.__G,g=window.__inkwave;
@@ -224,6 +227,19 @@ for (const run of RUNS) {
     await page.waitForSelector('.iwr-pausescr [data-id="z-bomb"]', { timeout: 30000 });
     await page.waitForTimeout(1200);
     await page.screenshot({ path: path.join(evidence, run.name + '-pause.png'), timeout: 240000 });
+    // The physical hub ring remains readable; all 65 mains live in the scrollable picker.
+    out.checks.weaponPicker = await page.evaluate(() => {
+      const chips = [...document.querySelectorAll('.iwr-wchip')];
+      const ids = chips.map(c => c.dataset.id);
+      return { count: chips.length, unique: new Set(ids).size, last: ids.at(-1), catalog: ids.filter(id => id?.startsWith('w-s3-')).length };
+    });
+    const picker = out.checks.weaponPicker;
+    if (picker.count !== 65 || picker.unique !== 65 || picker.catalog !== 58 || !picker.last?.startsWith('w-s3-')) throw new Error('range weapon picker ' + JSON.stringify(picker));
+    await page.locator('.iwr-wchip').last().click();
+    await page.waitForFunction(id => window.__G.local.weaponId === id && !window.__G.match.paused, picker.last.slice(2), { timeout: 30000 });
+    out.checks.weaponPicker.selected = await page.evaluate(() => window.__G.local.weaponId);
+    await page.evaluate(() => window.__inkwave.pause());
+    await page.waitForSelector('.iwr-pausescr [data-id="z-bomb"]', { timeout: 30000 });
     await page.locator('.iwr-pausescr [data-id="z-bomb"]').click();
     await page.waitForTimeout(1500);
     out.checks.travel = await page.evaluate(() => ({ screen: window.__G.menus.current, paused: window.__G.match.paused, pos: window.__G.local.pos.toArray(), zone: window.__G.match.range.telemetry().zone }));

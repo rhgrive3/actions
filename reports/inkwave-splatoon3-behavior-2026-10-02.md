@@ -3646,6 +3646,10 @@ After the published 49ecbc3 checkpoint (4051 passed / 0 failed / 15 skipped), in
 
 The combined new focused tests pass 51/51 with no skips. Prior complete-suite results describe the previous published tree, not these later edits. Full final-suite and exact-head remote CI results must be checked separately. No raw Drive archives are published and these native tests are not console-equivalence or browser gameplay validation.
 
+
+## 2026-10-10: complete main-actor catalog expansion
+
+[Main-weapon catalog report](inkwave-main-weapon-catalog-2026-10-10.md) adds 58 source-guided main implementations alongside the existing seven, using the pinned 11.3.0 extraction with per-file hashes and temporary original Japanese/English names. It records action, ink, travel, collision and paint owners, neutral-gear conditions, source-versus-community timing, browser fixture scope and reproduction. New models and retail sub/special variants are deferred. Numerical records do not certify engine-equivalent paint/shape/controller formulas; omitted defaults, Slosher spiral, Ballpoint interpolation/recharge, scope camera and canopy multiplayer/terrain details remain explicitly unconfirmed or incomplete. Acceptance is final-head build/regression/browser CI; no Switch comparison was performed.
 ## 2026-10-10: seven base weapon models and current attack pose ownership
 
 - **本家の根拠:** [任天堂公式ブキ図鑑](https://www.nintendo.com/jp/character/splatoon/fashion/index.html) の基本7種のシルエット・タンク・銃口・フレームを参照（2026-10-10確認）。図鑑は版番号のないシリーズ資料。S3実行バイナリ、正確な寸法、関節軌道の根拠として扱わない。既存のS3設定・攻撃時間は維持。
