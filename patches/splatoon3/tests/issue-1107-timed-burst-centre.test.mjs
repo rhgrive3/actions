@@ -9,13 +9,19 @@ const src = fs.readFileSync(new URL('../runtime/weapons-fidelity.mjs', import.me
 const start = src.indexOf('export function applyFidelityBlasterBurstPaint(');
 const end = src.indexOf('\n}\n', start);
 const body = src.slice(start, end);
-const timed = body.slice(body.indexOf('if (!collision) {'), body.indexOf('queueTimedBlasterDrop(system,p,point,burst);'));
+const sphereStart = body.indexOf('const sphereRadius =');
+const sphereEnd = body.indexOf('if (burst.timedDropOn',sphereStart);
+const sphere = body.slice(sphereStart,sphereEnd);
 
 test('#1107 timed airburst splash is centred on the burst point, not a downward floor probe', () => {
   assert.ok(start > 0 && end > start, 'applyFidelityBlasterBurstPaint located');
-  assert.doesNotMatch(timed, /raycast/, 'no downward floor probe in the timed branch');
-  assert.match(timed, /const at=point\.clone\(\);/);
-  assert.match(timed, /api\.G\.paint\.splat\(at,burst\.timedSplashRadius,p\.team/);
+  assert.ok(sphereStart > 0 && sphereEnd > sphereStart,'burst sphere branch located');
+  assert.doesNotMatch(sphere, /raycast/, 'no floor probe inside the sphere stamp');
+  assert.match(sphere, /burst\.timedSplashRadius/, 'timed splash uses its own radius');
+  assert.match(sphere, /centre\.copy\(point\)/, 'burst point is the paint centre');
+  assert.match(sphere, /api\.G\.paint\.splat\(centre, sphereRadius, p\.team/,
+    'the real production branch paints a source-radius burst sphere');
+  assert.match(body, /spawnSplashDrop\(api\.G/, 'the falling drop is queued separately');
 });
 
 test('#1107 paint.splat tests faces by plane distance to the centre (sphere semantics)', () => {
