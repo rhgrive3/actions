@@ -1729,6 +1729,70 @@
       "status": "extracted",
       "unit": "raw reference units",
       "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/BarWidth": {
+      "value": 70.0,
+      "pointer": "/GameParameters/spl__PlayerDispHPParam/BarWidth",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/BarHeight": {
+      "value": 5.0,
+      "pointer": "/GameParameters/spl__PlayerDispHPParam/BarHeight",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/BarBgColor/R": {
+      "value": 0.3,
+      "pointer": "/GameParameters/spl__PlayerDispHPParam/BarBgColor/R",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/BarBgColor/G": {
+      "value": 0.3,
+      "pointer": "/GameParameters/spl__PlayerDispHPParam/BarBgColor/G",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/BarBgColor/B": {
+      "value": 0.3,
+      "pointer": "/GameParameters/spl__PlayerDispHPParam/BarBgColor/B",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/BarBgColor/A": {
+      "value": 1.0,
+      "pointer": "/GameParameters/spl__PlayerDispHPParam/BarBgColor/A",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/RecvDmgReactColorFrm": {
+      "value": 12,
+      "pointer": "/GameParameters/spl__PlayerDispHPParam/RecvDmgReactColorFrm",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/RecvDmgReactDispFrm": {
+      "value": 180,
+      "pointer": "/GameParameters/spl__PlayerDispHPParam/RecvDmgReactDispFrm",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
     }
   }
 }

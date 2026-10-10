@@ -3618,3 +3618,12 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - **INKWAVE 実装箇所**: 変更なし。現行のヒト速 5.76・イカ速 11.52 とギア曲線は Normal の `MoveVel_Human` / `MoveVel_Stealth` に結び付いている。Fast/Slow の曲線は記録のみで、使うブキがない。
 - **数値記録の補完**: 値は原典と一致していたが出典の紐付けがなかった移動速度を `profile.bindings` に追加した。チャージャー フルチャージ中 1.2（`MoveSpeedFullCharge` 0.02）、ローラー 塗り進み 7.92 / 6.48 / 旋回減速 6.48 / ダッシュ 1.5 s / インク消費速度境界 1.2・7.92（`WeaponRollParam`）、ローラー振り中 2.88（`WeaponWideSwingParam.SwingMoveSpeed`）、スロッシャー 2.4（`MoveSpeed` 0.04）、スピナー チャージ中 3.72（`MoveSpeed_Charge` 0.062）。挙動は変わらない。
 - **確認状態**: 重量区分の割当（7種＝Normal）は固定データと Inkipedia の2つの根拠で確認した。`profile.json` の未確認リストから割当の項目を外し、チャージ・塗り進み中の移動制限とスピナーのチャージ段階の移動曲線は未確認のまま残した。
+## 2026-10-10: 残り体力バー（Ver.11.0）の原典パラメータ
+
+- **本家の根拠**: 任天堂の [Ver.11.0.0 の紹介](https://www.nintendo.com/au/news-and-articles/whats-new-in-the-splatoon-3-version-11-update/)（Issue #716 に引用）は、被弾した相手の頭上に数秒間、残り体力を表示すると説明する。Leanny/splat3 固定コミット `7280ff9c` の `SplPlayer.game__GameParameterTable.json` の `spl__PlayerDispHPParam` は、10.0.0・10.1.0 の表には無く、11.0.0 の表で初めて現れ、11.3.0 まで同じ値（`BarWidth 70`、`BarHeight 5`、`BarBgColor RGBA 0.3/0.3/0.3/1.0`、`IsApplyDmgColorToBgColor false`、`RecvDmgReactColorFrm 12`、`RecvDmgReactDispFrm 180`）。追加された版と機能の一致から、この表を体力バーの設定とみなした。
+- **INKWAVE 実装箇所**: 表示の有無と 3 秒は既存の `patches/splatoon3/runtime/combat-info.mjs`（`ENEMY_HEALTH_SECONDS = 3` = 180F/60）。見た目は `patches/splatoon3/ui.css` の `.iw-health`。
+- **修正前の差分**: バーは 46×7 px（縦横比 約6.6:1）、背景はほぼ黒の半透明（`#111c`）。原典は 14:1、背景は不透明の RGB 0.3 灰。
+- **修正**: 単位に依存しない値だけを反映した。幅 46 px（既存の INKWAVE 校正値）を保ち、高さを 46×5/70 ≈ 3.29 px、背景を不透明の `rgb(77,77,77)` にした。白い縁取りは INKWAVE の視認性のための既存の装飾で、原典の項目ではない。
+- **再現操作**: 相手を倒さない程度に撃つ。頭上に細いバーが 3 秒出る。味方が被弾した時も同じバーが出る（既存の動作）。
+- **確認状態**: `patches/splatoon3/tests/health-bar-source.test.mjs`（3件）で、台帳の原典値と表示時間・縦横比・背景色の一致を検査。旧 CSS では縦横比・背景色の試験が失敗することを確認した。ブラウザでの描画確認と Switch 実機比較は未実施。
+- **未確認（解消していない）**: (1) `BarWidth/BarHeight` の単位（1080p のレイアウト座標か等）が公開されていないため、絶対サイズは変えていない。(2) `RecvDmgReactColorFrm 12`：被弾直後 12F の色の反応は、その色が表の項目に無いため実装していない。(3) 縁取りの有無、距離による大きさの変化、敵インクによる継続ダメージで表示時間を延長するかどうか。
