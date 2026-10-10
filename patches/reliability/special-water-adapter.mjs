@@ -30,6 +30,19 @@ ${method}
    'this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this._checkWaterHazard()) return; if (this.alive) this._finishFrame(dt); return;','special movement water hazard');
  else code=replaceOnce(code,plainMovement,
    'this._updateSpecial(dt); if (this._checkWaterHazard()) return; this._finishFrame(dt); return;','special movement water hazard');
+ // #1164: an actor already below the lethal water boundary must not run
+ // the active Special's fire/emission code *before* the existing post-motion
+ // water check. Preserve the post-check for actors crossing water this tick.
+ code=replaceOnce(code,
+   'this._updateSpecial(dt);',
+   'if (this._checkWaterHazard()) return; this._updateSpecial(dt);',
+   'active special pre-shot water hazard');
+ // Activation must also reject an already-drowned actor before consuming
+ // Special or spawning a Storm device; post-activation check is retained.
+ code=replaceOnce(code,
+   'this._startSpecial();',
+   'if (this._checkWaterHazard()) return; this._startSpecial();',
+   'special activation pre-shot water hazard');
  const plainActivation='this._startSpecial(); this._finishFrame(dt); return;';
  const composedSlamRecoveryActivation="this._startSpecial(); if (this.alive) { if (this.specialActive?.id === 'storm') updateResources(this, dt); else if (this.specialActive?.id === 'slam') updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); else if (this.specialActive?.id === 'trizooka' && !this.remote) updateResources(this, dt); } this._finishFrame(dt); return;";
  const composedSlamActivation="this._startSpecial(); if (this.alive && this.specialActive?.id === 'storm') updateResources(this, dt); else if (this.alive && this.specialActive?.id === 'slam') updateHealthRecovery(this, dt, this.grounded && this.groundTeam === 2 && !this.submerged, this.submerged); this._finishFrame(dt); return;";
