@@ -73,7 +73,7 @@ function eligible(ch,s) {
 }
 
 function applyPresentation(ch,T,C,s) {
-  const {SPINE,CHEST,NECK,HEAD,HIPS,HIPS_P,CLAVL,CLAVR,UARML,UARMR,ANC,ANCR,ANL,ANLR}=C;
+  const {SPINE,CHEST,NECK,HEAD,HIPS,HIPS_P,CLAVL,CLAVR,UARML,UARMR}=C;
   s.t=ch.tr[T.T_HIT];
   const env=eligible(ch,s)?envelope(s.t):0;
   s.e=env;s.on=false;
@@ -90,9 +90,9 @@ function applyPresentation(ch,T,C,s) {
   P[HIPS]+=d[j+6]*front;P[HIPS_P+1]+=d[j+7]*k;
   P[CLAVL+2]+=clav;P[CLAVR+2]-=clav;
   P[UARML]+=d[j+9]*k;P[UARMR]+=d[j+10]*k;
-  const ay=d[j+11]*k,az=d[j+12]*k,rx=d[j+13]*k;
-  P[ANC+1]+=ay;P[ANC+2]+=az;P[ANCR]+=rx;
-  if(ch.dual){P[ANL+1]+=ay;P[ANL+2]+=az;P[ANLR]+=rx;}
+  // Retain the native held-weapon anchor. Displacing it after the authored
+  // weapon hold has been solved can pull the support hand away from the grip.
+  // Torso, head, clavicles and upper arms still carry the hit response.
   s.on=true;
 }
 
