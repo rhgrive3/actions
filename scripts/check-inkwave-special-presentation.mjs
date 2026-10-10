@@ -32,6 +32,9 @@ try{
   const art=await import(prefix+'patches/splatoon3/runtime/special-motion.mjs'),vac=await import(prefix+'patches/splatoon3/runtime/kit-ink-vac.mjs'),bubble=await import(prefix+'patches/splatoon3/runtime/kit-big-bubbler.mjs');
   const scene=new THREE.Scene();scene.background=new THREE.Color('#dae2e7');
   const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(960,720);document.body.appendChild(renderer.domElement);
+  // renderer.info.memory omits InstancedMesh's per-object matrix buffers.
+  const glBuffers=new Set(),gl=renderer.getContext(),createBuffer=gl.createBuffer.bind(gl),deleteBuffer=gl.deleteBuffer.bind(gl);
+  gl.createBuffer=()=>{const b=createBuffer();if(b)glBuffers.add(b);return b;};gl.deleteBuffer=b=>{glBuffers.delete(b);return deleteBuffer(b);};
   const camera=new THREE.PerspectiveCamera(40,4/3,.01,200);camera.position.set(2.2,1.9,3.2);camera.lookAt(0,.8,0);
   scene.add(new THREE.HemisphereLight(0xffffff,0x637278,2.4));const light=new THREE.DirectionalLight(0xffffff,2.8);light.position.set(-3,4,3);scene.add(light);
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshStandardMaterial({color:'#b7c3cb',roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-.005;scene.add(floor);
@@ -83,9 +86,9 @@ try{
   const cloud=art.createStormCloud('#2255dd',THREE);cloud.position.set(0,3,0);scene.add(cloud);camera.position.set(5,4,8);camera.lookAt(0,1.8,0);render();
   const cloudCallsBefore=renderer.info.render.calls;cloud.visible=false;render();const cloudDrawCalls=cloudCallsBefore-renderer.info.render.calls;
   if(cloudDrawCalls!==1)throw Error('Cloud instancing regression');art.disposeSpecialModel(vortex);art.disposeSpecialModel(cloud);render();
-  const memory=()=>({...renderer.info.memory,programs:renderer.info.programs.length}),baseline=memory();
-  for(let cycle=0;cycle<12;cycle++)for(const create of [art.createTrizooka,art.createInkVac,art.createInkFist,art.createBubblerHardware,art.createTacticooler]){const g=create('#ff7711',THREE);scene.add(g);render();art.disposeSpecialModel(g);}render();
-  const after=memory();if(after.geometries>baseline.geometries||after.textures>baseline.textures||after.programs>baseline.programs)throw Error('GPU resource count grew after repeated use');
+  const memory=()=>({...renderer.info.memory,programs:renderer.info.programs.length,buffers:glBuffers.size}),baseline=memory();
+  for(let cycle=0;cycle<12;cycle++)for(const create of [art.createTrizooka,art.createInkVac,art.createInkFist,art.createBubblerHardware,art.createTacticooler,art.createStormCloud]){const g=create('#ff7711',THREE);scene.add(g);render();art.disposeSpecialModel(g);}render();
+  const after=memory();if(after.geometries>baseline.geometries||after.textures>baseline.textures||after.programs>baseline.programs||after.buffers>baseline.buffers)throw Error('GPU resource count grew after repeated use');
   return {rows,images,cloudDrawCalls,baseline,after,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig + special activation/update; flat collision stub; Chromium software WebGL; no retail parity claim'};
  },prefix);
  for(const item of result.images)fs.writeFileSync(path.join(out,item.name+'.png'),Buffer.from(item.data.split(',')[1],'base64'));delete result.images;

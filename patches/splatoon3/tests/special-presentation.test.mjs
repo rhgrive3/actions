@@ -63,7 +63,20 @@ test('procedural assets share geometry, own materials and use one cloud draw',as
     assert.equal(seen.length,other.length);for(let i=0;i<seen.length;i++){assert.equal(seen[i].geometry,other[i].geometry);assert.notEqual(seen[i].material,other[i].material);seen[i].geometry.addEventListener('dispose',()=>count++);}
     f.disposeSpecialModel(a);assert.equal(count,0,'disposing one activation cannot invalidate the other');f.disposeSpecialModel(b);
   }
-  const cloud=f.createStormCloud('#2244ee',f.THREE);assert.equal(cloud.children.length,1);assert.equal(cloud.children[0].isInstancedMesh,true);assert.equal(cloud.children[0].count,15);f.disposeSpecialModel(cloud);
+  const cloud=f.createStormCloud('#2244ee',f.THREE);assert.equal(cloud.children.length,1);assert.equal(cloud.children[0].isInstancedMesh,true);assert.equal(cloud.children[0].count,15);
+  let instances=0;cloud.children[0].addEventListener('dispose',()=>instances++);f.disposeSpecialModel(cloud);assert.equal(instances,1,'release the per-cloud GPU matrix buffer');
+});
+
+test('native cloud expiry, explicit release and clear retire instance buffers exactly once',async()=>{
+  const f=await boot(),r=rig(f),p=new f.Projectiles(f.G.scene);try{
+    for(const action of ['expiry','release','clear']){
+      p._spawnCloud({owner:r.a,team:0,pos:r.a.pos.clone(),dir:new f.THREE.Vector3(0,0,1)});
+      const cloud=p.clouds.at(-1),puff=cloud.group.children[0];let instances=0,geometry=0;
+      assert.equal(puff.isInstancedMesh,true);puff.addEventListener('dispose',()=>instances++);puff.geometry.addEventListener('dispose',()=>geometry++);
+      if(action==='expiry')p._updateClouds(cloud.dur+1/60);else if(action==='clear')p.clear();else p._releaseCloud(cloud);
+      p._releaseCloud(cloud);p.clear();assert.equal(instances,1,action);assert.equal(geometry,0,'another live cloud can reuse the geometry');
+    }
+  }finally{p.clear();r.close();}
 });
 
 test('local and remote paired fists follow visual phases without writing gameplay or network rows',async()=>{

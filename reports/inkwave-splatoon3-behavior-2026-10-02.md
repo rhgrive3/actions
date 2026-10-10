@@ -3670,3 +3670,8 @@ The combined new focused tests pass 51/51 with no skips. Prior complete-suite re
 | Tacticooler | 公式回転/デモでは円筒透明胴、縦フレーム、4つの横アームと缶。従来は箱に缶を載せる形 | 任意Recon Training Kitのスタンドを円筒・透明胴・4本のアーム/缶へ。飲用に合わせ缶を非表示 | スタンド形状と缶消費は描画確認。実機と同じ投擲→展開アニメ、缶取得時のキャラクター全関節は未確認 |
 
 元の公開ミラー`inkwave-public/`は変更しない。モデル形状/関節座標/材質/演出曲線は参照画像に基づくINKWAVE用の手続き的校正であり、Nintendo製の元アセット/全フレームを入手して同一性を証明したものではない。既存ゲーム判定値を新しい見た目の寸法で上書きしない。比較画像と原典リンク、検証結果の詳細は `inkwave-special-presentation-2026-10-10.md` に記録する。
+
+
+#### 追加自己レビュー: 雲のインスタンスGPU buffer終了
+
+本家との雲形状・元シェーダー比較の未確認状態は維持する。INKWAVE側では、インスタンス化した雲の専用matrix GPU bufferを終了時に解放していなかった。`runtime/special-motion.mjs` の手続きモデル終了と実際の `Projectiles._releaseCloud` を修正した。Stormを投擲し、雲の自然消滅/明示終了/試合clearを繰り返す再現で、雲ごとに1回だけdisposeされ、他の雲が使う共有geometryは解放されない。雲の移動・雨・ダメージ・塗り・寿命は変更しない。修正前ランタイムで0回になる負の対照を確認し、修正後は専用8回帰がソース/最適化ビルドで成功。実WebGLの72回生成/破棄後もbuffer数232で安定した。これはINKWAVEの資源寿命検証であり、本家のGPU実装/FPSとの一致を証明するものではない。

@@ -481,7 +481,7 @@ return {createTrizooka,createInkVac,createVacPack,createStormDevice,createInkFis
 function api(THREE){if(!factories.has(THREE))factories.set(THREE,factory(THREE));return factories.get(THREE);}
 export function disposeSpecialModel(root){
   if(!root)return;root.removeFromParent?.();const mats=new Set();
-  root.traverse(o=>{if(o.geometry&&!o.geometry.userData.specialShared)o.geometry.dispose();
+  root.traverse(o=>{if(o.isInstancedMesh)o.dispose();if(o.geometry&&!o.geometry.userData.specialShared)o.geometry.dispose();
     if(Array.isArray(o.material))for(const m of o.material)mats.add(m);else if(o.material)mats.add(o.material);});
   for(const m of mats)m.dispose();root.clear?.();
 }
@@ -656,7 +656,7 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
       m.model.updateWorldMatrix(true,false);return m.model.localToWorld(out.copy(m.model.userData.muzzle));}return muzzle.call(this,out);};
   cp.getAimMuzzle=function(out,pitch){if(mapped(this)==='trizooka'&&presentationMap(this).get(this)?.kind==='trizooka'){this.getMuzzle(out);return true;}return aimMuzzle.call(this,out,pitch);};
   cp.setWeapon=function(...args){if(this.actor?.specialActive)presentationBlocked.set(this,this.actor.specialActive);retire(this);return setWeapon.apply(this,args);};
-  if(Projectiles?.prototype){const pp=Projectiles.prototype,storm=pp.throwStorm,spawn=pp._spawnCloud;
+  if(Projectiles?.prototype){const pp=Projectiles.prototype,storm=pp.throwStorm,spawn=pp._spawnCloud,release=pp._releaseCloud;
     pp.throwStorm=function(...args){const n=this.bombs.length,result=storm.apply(this,args);for(let i=n;i<this.bombs.length;i++){
         const b=this.bombs[i];if(b.kind!=='storm')continue;const old=b.body,g=createStormDevice(G.teamColors[b.team],THREE);
         old.removeFromParent();old.material.dispose();b.mesh.add(g);b.body=g;
@@ -666,6 +666,10 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
         old.traverse(o=>{if(o.material)mats.add(o.material);});for(const mat of mats)mat.dispose();
         const children=[...g.children];for(const child of children)old.add(child);for(const child of [...old.children])if(!children.includes(child))old.remove(child);
       }return result;};
+    // InstancedMesh owns a GPU matrix buffer beyond its shared geometry. The
+    // native cloud owner releases materials; retire the instance buffer once.
+    pp._releaseCloud=function(c,...args){const live=c?.group&&!c._released,result=release.call(this,c,...args);
+      if(live)c.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();});return result;};
   }
   cp.dispose=function(...args){retire(this);return dispose.apply(this,args);};
   if(Actor?.prototype)for(const name of ['reset','splat']){const original=Actor.prototype[name];Actor.prototype[name]=function(...args){
