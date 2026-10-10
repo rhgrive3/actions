@@ -51,6 +51,16 @@ GPU解放修正版のローカルビルドのrevisionは`f16047de959abcb3d5efcb5
 
 [Pages実行38086780001](https://github.com/rhgrive3/actions/actions/runs/38086780001)は成功。[公開版](https://rhgrive3.github.io/actions/)のHTML、worker、関連ランタイム5モジュールの配信内容を取得し、検証ビルドのmanifestとSHA-256で照合した。[配信照合結果](inkwave-special-presentation-2026-10-10/published-verification.json)に7ファイルのハッシュを保存する。これは検証した7ファイルの配信一致であり、公開版全ファイルの再ダウンロード比較ではない。
 
-CI [実行38086434542](https://github.com/rhgrive3/actions/actions/runs/38086434542)では、専用WebGL・全モーションcatalog・通信・UI・練習場・起動/キャッシュを含む全ブラウザshard、およびseven_claimsとresource_paint_continuationが成功した。記録時点でvalidateジョブの全回帰は実行中であり、CI全体の完了とは扱わない。
+CI [実行38086434542](https://github.com/rhgrive3/actions/actions/runs/38086434542)では、専用WebGL・全モーションcatalog・通信・UI・練習場・起動/キャッシュを含む全ブラウザshard、およびseven_claimsとresource_paint_continuationが成功した。validateジョブの全回帰4,117件も4,102成功・15skip・失敗0で完了し、全必須ジョブが成功した。
+
+## GPU解放修正版の最終確認
+
+[追加自己レビューのPR #1217](https://github.com/rhgrive3/actions/pull/1217)をmain `a107422f62182036a4965c2bee65398d5af6f0fc` へ統合した。最終PR head `eb1ea8bf3fab01f4acbca436e1aa1b28535015e8` と統合直後mainのtreeは `f8009f8812d8edae5e6f23dbc795c82c5b38e4d6` で一致する。
+
+GPU修正版の正規のローカル全回帰は4,118件、4,103成功・15skip・失敗0。専用8件はソース/最適化ビルドの両方で成功した。最終artifactの全モーションcatalogも27場面・5,310フレーム・349描画対・232ロードモジュールを完走し、終了時geometry/textureは両方0。6種のWebGL表示、72回のモデル生成/破棄、36回の実際の雲生成/描画/終了、buffer 232の安定を再確認した。[最終レビュー結果](inkwave-special-presentation-2026-10-10/review-verification.json)に検証範囲を保存する。
+
+[最終Pages実行38088824316](https://github.com/rhgrive3/actions/actions/runs/38088824316)は成功。[公開版](https://rhgrive3.github.io/actions/)のHTML、worker、関連ランタイム5モジュールを再取得し、最終artifact contentHash `51681afe2d7d97eafcd1f8076a8c38088579a56ce962546c5c20680bb611f26c` のmanifestと7ファイルすべてのSHA-256が一致した。[最終配信照合](inkwave-special-presentation-2026-10-10/published-verification-final.json)に保存する。
+
+追加修正版CI [実行38088524965](https://github.com/rhgrive3/actions/actions/runs/38088524965)の専用モデル/握り/シェーダー/GPU終了のWebGL stepは成功した。最終記録時点で同CIの全回帰と一部ブラウザshardは実行中であり、追加修正版CI全体の完了とは扱わない。文書の追記はランタイムや公開artifactを変更しない。
 
 公開資料にないNintendo製の元メッシュ、テクスチャ、関節曲線、エフェクト素材との同一性は未確認であり、「完全一致」や「改善点ゼロ」とは判定しない。
