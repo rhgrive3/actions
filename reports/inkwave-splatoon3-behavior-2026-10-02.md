@@ -3542,3 +3542,11 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - 確認済み（単体・ロジック）: `tests/shooter-accuracy.test.mjs`（1%→25%、2発目 2%、6F 保持と 1.5pt/F の回復、フレーム間隔 30/60/120/144 Hz で同一の回復、ジャンプ 40%）、`tests/issue-198-shooter-outer-probability.test.mjs`（実発射経路で、地上 1発目→24発目→25%上限、空中 40%。上限を 0.30 に変えると失敗することを確認）。`tests/shot-cone-hitbase.test.mjs`、`tests/weapons.test.mjs` と合わせて 20/20 通過。
 - 未確認: 25% 上限と 6F ゲート（Inkipedia のみ、公式データ未確認）。ジャンプ後 25F→70F の確率の中間曲線（直線補間は暫定）。内側照準の角度分布（`spreadFirst 0.45` は暫定）。`Stand_DegBiasDecrease` の単位（Inkipedia の 1.5%/F と整合するが、ファイル上は単位の記載なし）。HUD のレティクル描画と実機の射撃感、Switch 版との一致。
 - 本家の Inkipedia には、ジャンプ後の射撃で 32F（6F + 26F）とする記述がある。INKWAVE の 25F→70F の確率補間とは時間配分が異なる。どちらが本家と一致するかは実機またはデータで確認が必要で、今回は変更していない。
+## 2026-10-10: #408 Splattershot post-shot movement window
+
+- **本家の根拠**: 参照版は Splatoon 3 Ver. 11.3.0。Leanny/splat3 `7280ff9c` の `WeaponShooterNormal` は `MoveSpeed: 0.072`（抽出値、本セッションで再確認）。ヒト速 0.096 / 射撃時 0.072 と射撃後隙 4F は、Inkipedia のユーザー空間草稿の検索スニペットでのみ確認した（版・日付不明、未検証。候補: `User:XarrotD/newdata`、`User:The_Thing/Sandbox`）。wikiwiki の検証表は 403 で読めなかった。ピン留めファイルの Shooter には移動解除時間や射撃後隙の項目がない。
+- **INKWAVE 実装箇所**: `patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype.moveSpeed`（shooter 分岐は `s3ShooterMoveRemaining` を読む）、同ファイルの update 先頭での減算、発射された弾で 4/60 s（`postFireSwimLock`、profile 値、バインドなし）を設定する箇所。`runtime/shooter-movement.mjs`、`runtime/gear.mjs`（移動速度アップの分岐と射撃ショット曲線の判定）。`firingT`（0.35 s）は姿勢の表示用に残る。公開版 `inkwave-public/src/game/weapons.js` の `firingT` 経路（移動に使用、0.35 s）は patch が置き換える。
+- **再現操作**: 固定 60 Hz、WeaponRunner 単独（実 Projectiles を使う fixture）。Fire を最初の弾まで保持して直後に解放し、各 tick の update 前に移動速度を読む。結果は解放後 4 tick が 4.32、その後 5.76。`firingT` を移動の判定に戻すと、追加した 4 件の試験がすべて失敗する。
+- **プレイへの影響**: 公開版の 0.35 s 由来の射撃速度の残留（最大 21F）は、patch 側では解放後 4 tick に縮小されている（単独測定のみ）。
+- **未確認（解消していない）**: (1) 解放後 4F の移動解除が本家のヒト移動速度の推移と一致するか。owner 監査コメント（2026-10-05）のとおり未確認。(2) 連射中の移動。現行モデルは 6F ごとに 2 tick だけ歩行速度へ戻る（4.32 が 4 tick、5.76 が 2 tick の繰り返し）。`issue-731-sub-ready-enemy-ink.test.mjs` がこのモデルを固定している。本家の連射中のヒト速は未計測のため、本修正では変更していない。(3) 実機とブラウザでの動作比較は未実施。
+- **試験**: `patches/splatoon3/tests/issue-408-shooter-movement-window.test.mjs`（4 件）。`shooter-movement.test.mjs` と `issue-731-sub-ready-enemy-ink.test.mjs` を合わせて 16/16 成功。
