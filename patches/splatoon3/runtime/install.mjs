@@ -60,6 +60,7 @@ import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSuperJumpTargetNotification } from './superjump-target-notification.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
+import { installWeaponHitReaction } from './weapon-hit-reaction.mjs';
 import { installSpawnPoseMotion } from './spawn-pose-motion.mjs';
 import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
@@ -143,6 +144,9 @@ export function install(profile) {
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.
   installShotGuide(api, profile);
   installChargerSurface(api);
+  // #1097: preserve the composed ordinary muzzle pose while drawing the
+  // render-only weapon-class hit layer; install after every pose/muzzle adapter.
+  installWeaponHitReaction(api);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;
