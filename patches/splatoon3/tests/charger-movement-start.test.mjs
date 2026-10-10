@@ -72,6 +72,7 @@ test('real Actor targets and charge chronology match at 30/60/120Hz rendering',a
       assert.ok(states[i].speed<=states[i-1].speed+1e-9,'nonincreasing partial curve');
     }
     assert.equal(clock.ticks, 120, `${hz}Hz yields 120 ticks`);
+    const firstCharging = states.findIndex(state => state.charging);
     assert.equal(firstCharging, 1, `${hz}Hz: charging enters on tick 2 after the 1F startup`);
     assert.equal(a.weaponRunner.chargeT, 1, `${hz}Hz reaches full charge`);
     assert.equal(a.weaponRunner.charging, true, `${hz}Hz still charging`);

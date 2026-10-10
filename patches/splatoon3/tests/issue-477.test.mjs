@@ -263,7 +263,7 @@ test('Patched: exactly 4F startup with 0 roll displacement before 12F roll movem
   }
 });
 
-test('Movement duration remains exactly 12F and total roll displacement is exactly w.rollDist', async () => {
+test('Movement duration remains 12F with 4 WU moving roll plus the separately owned 1 WU glide', async () => {
   const f = await getFixture({ apply477: true });
   const actorRig = f.createDualiesActor();
   const { a } = actorRig;
@@ -300,11 +300,15 @@ test('Movement duration remains exactly 12F and total roll displacement is exact
 
     assert.equal(rollTicks, DUALIES_ROLL_FRAMES, `Roll movement duration must be exactly 12 frames (got ${rollTicks})`);
 
-    const expectedDist = a.weapon.rollDist; // 5.0 units (#532), was 2.8
+    // S3's 5 WU total is 4 WU during this 12F roll plus 1 WU during
+    // the separate post-roll glide. The native Actor integration and final
+    // 5 WU endpoint are guarded in weapon-audit-1130.test.mjs.
+    const expectedDist = a.weapon.rollDist - 1;
     const actualNetDist = a.pos.distanceTo(startPos);
     assert.ok(
-      Math.abs(actualNetDist - expectedDist) < 0.35,
-      `12F roll displacement (${actualNetDist.toFixed(4)}) matches active roll distance (${expectedDist})`
+      Math.abs(actualNetDist - expectedDist) < 1e-6 &&
+      Math.abs(totalDisplacement - expectedDist) < 1e-6,
+      `12F moving-roll displacement (${actualNetDist.toFixed(4)}) matches 4 of the ${a.weapon.rollDist} total WU`
     );
   } finally {
     actorRig.close();
