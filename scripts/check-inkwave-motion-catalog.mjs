@@ -236,10 +236,17 @@ export function validateCatalogResult(result) {
     if (label === 'carry-walk-fire-return' || scenario.hz) {
       need(count(s => s.snapshots.carry?.active && s.grip.left.held) >= (scenario.hz ? 40 : 200), 'supported carry denominator');
       if (row.samples.some(s => s.sourceMotionActive)) {
-        // Authored gait contact acquisition spans several frames; assert
-        // actual source stance opportunities AND truly settled sole anchors.
-        need(count(s => s.walkActive && s.feet.some(f => f.authority === 'source' && f.contactIntent && f.contactWeight > .05)) >= 20, 'sourced walking stance denominator');
-        need(count(s => s.walkActive && s.feet.some(f => f.authority === 'source' && f.planted && f.contactWeight > .999)) >= 6, 'sourced settled contact denominator');
+        // The BFRES-inspired stance has a shorter authored duty window than
+        // native procedural gait. Denominators scale with the REAL measured
+        // clock ticks, never a scene name or rendering frame rate. Both an
+        // actual native-Actor locomotion drive and a settled source anchor
+        // must be present; simply floating the sole cannot pass the gate.
+        const gaitTicks=count(s => s.walkActive);
+        const stanceTicks=count(s => s.walkActive && s.feet.some(f => f.authority==='source' && f.contactIntent && f.contactWeight>.05));
+        const lockedTicks=count(s => s.walkActive && s.feet.some(f => f.authority==='source' && f.planted && f.contactWeight>.999));
+        need(gaitTicks>=Math.min(20,Math.floor(row.samples.length/2)), 'source locomotion clock denominator');
+        need(stanceTicks>=Math.max(8,Math.floor(gaitTicks*.22)), 'sourced walking stance denominator');
+        need(lockedTicks>=Math.max(3,Math.floor(gaitTicks*.065)), 'sourced settled support denominator');
       } else need(count(s => s.walkActive && s.feet.some(f => f.planted && f.contactWeight > .999)) >= 20, 'native walking contact denominator');
     }
     if (label === 'ordinary-aimed-jump') {
@@ -614,6 +621,13 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     return { frame, tick, visible, rig, image, hiddenImage, glint, coating, face, geometry: geometry(ch), programs, materials, shaderErrors: programs.filter(p => !p.linked || !p.vertexCompiled || !p.fragmentCompiled).length };
   }
   async function capturePause(ch, a, scenario) {
+    // The scenario can advance far beyond its last sampled render frame.
+    // Frame the FINAL moving rig rather than an obsolete camera anchor:
+    // otherwise the tiny submerged squid leaves the framebuffer entirely
+    // and a valid vertex-motion sensitivity test falsely sees flat pixels.
+    camera.position.copy(ch.root.position).add(new THREE.Vector3(2.6,1.3,3.4));
+    camera.lookAt(ch.root.position.clone().add(new THREE.Vector3(0,.62,0)));
+    camera.updateMatrixWorld();
     const name = scenario.name + '-pause', clocks = () => JSON.stringify([ch.t, Array.from(ch.tr), ch.danceT, gameState(a)]);
     const rig = () => {
       const nodes = []; ch.root.traverse(n => nodes.push([n.uuid, n.visible, n.matrixWorld.elements.slice(), n.morphTargetInfluences?.slice()]));

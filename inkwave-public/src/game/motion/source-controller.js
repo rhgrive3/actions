@@ -113,7 +113,11 @@ export class SourceMotionController {
   if(this.manual){this.manual.frame+=dt*HOST_MOTION.fps*this.manual.rate;this.sampleManual();return;}
   // Modern mechanics without an exact source clip must retain the host action, not be mislabeled as source-exact.
   if(this.time<this.dodgeUntil||this.time<this.specialUntil){this.active=false;this.squidRig?.resetDeformation();this.debug.fallback='native modern dodge/special action';return;}
-  const family=SOURCE_WEAPONS[c.weaponKind]||'Nrml';this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind];
+  const family=SOURCE_WEAPONS[c.weaponKind]||'Nrml';
+// A roller's authoritative native two-hand rig owns the moving roller contact.
+// Its source curves continue to drive both legs and body balance, but replacing
+// the held upper torso made the native support arm physically unreachable.
+this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';
   if(!this.sourceUpper)this.fallbacks.add(`modern ${c.weaponKind}: sourced legs; native weapon/upper body`);
   const triggerActive=!!s.firing||Number(s.charge)>0||c.lastShot<0.1;
   // Preserve the aiming gait between individual shots. This is a host pose
@@ -123,7 +127,11 @@ export class SourceMotionController {
   // Do not interrupt the complete walk cycle on every trigger edge. Blend the
   // sourced walking+shooting poses continuously while foot anchors persist.
   this.shootBlend+=((shooting?1:0)-this.shootBlend)*(1-Math.exp(-12*dt));
-  this.keepSourceArms=this.sourceUpper;this.constrainLeft=!this.sourceUpper||this.action?.name!=='throw';
+  this.keepSourceArms=this.sourceUpper;
+// Native LTW/IKL already gives thrown subs a separate left-hand target.
+// Suppressing its solver until a throw clip expires leaves a detached support
+// hand precisely when the native IK weight crosses back to 1.
+this.constrainLeft=true;
   // A pure yaw rotation has no linear displacement, but planted feet still need
   // to step around the rotation axis. Keep the turn step separate from world speed:
   // source sideways walk provides real foot curves, while the arc-to-phase rule
@@ -250,7 +258,7 @@ export class SourceMotionController {
    if(action){const cl=this.bank.clips.get(action),f=this.action.time*HOST_MOTION.fps;
     if(f<=cl.frames){this.bank.sample(cl,f,this.overlay,false);const weight=SMOOTH(f/2)*SMOOTH((cl.frames-f)/3);if(moving)this.mixUpper(this.overlay,weight);else this.pose.mix(this.overlay,weight);this.currentClips.push({name:action,frame:f,weight,upperOnly:moving});}
     else this.action=null;
-   }
+   } else if(this.action.time>0.5) this.action=null;
   }
   this.pose.fk();
   if(!moving||special)this.gaitTargets.copy(this.pose);

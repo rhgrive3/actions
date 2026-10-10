@@ -326,7 +326,12 @@ export function weakDiagonalWalkTrace(ch) {
     legacyWalkFrames:LEGACY_GAIT_INFO.walkFrames,legacyRunFrames:LEGACY_GAIT_INFO.runFrames,
     referenceGame:LEGACY_GAIT_INFO.game,s3CurveVerified:false,pose:Array.from(sampled) };
 }
-export function walkActive(ch){return !!states.get(ch)?.active;}
+export function walkActive(ch){
+  // An active sourced gait skips the procedural _updateFeet owner, so the old
+  // WeakMap flag is stale. Report the ACTUAL gait owner for game diagnostics.
+  if(ch.sourceMotion?.active) return ch.sourceMotion.state==='move';
+  return !!states.get(ch)?.active;
+}
 
 // A reversing filtered velocity can pass through zero while the real root
 // still travels. Only an actually stationary root uses preview tread motion.
