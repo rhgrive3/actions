@@ -124,3 +124,36 @@ test('projectile catch-up is bounded by immutable lifetime + delay, not the curr
   assert.equal(f.projectiles.list.length, 0, 'ghost never retired');
   assert.equal(f.projectiles.pool.at(-1)._qualityDead, true);
 });
+
+
+test('malformed owner snapshots are rejected before interpolation can poison remote actors', async () => {
+  const f = await fixture();
+  const { nm, a } = sender(f);
+
+  step(f, nm, 'p2', 1000.05, { a: [f.packActor(a, { x: 4, z: 0.5, vx: 0 })] });
+  const before = a.net.buf.length;
+  assert.equal(before, 1);
+
+  const badType = f.packActor(a, { x: 4.5, z: 0.75, vx: 0 });
+  badType[4] = 'bad';
+  step(f, nm, 'p2', 1000.10, { a: [badType] });
+  assert.equal(a.net.buf.length, before, 'string velocity entered the interpolation buffer');
+
+  const huge = f.packActor(a, { x: 5, z: 1, vx: 0 });
+  huge[1] = 1e308;
+  step(f, nm, 'p2', 1000.15, { a: [huge] });
+  assert.equal(a.net.buf.length, before, 'physically unbounded position entered the interpolation buffer');
+
+  const truncated = f.packActor(a, { x: 5.5, z: 1.25, vx: 0 }).slice(0, 10);
+  step(f, nm, 'p2', 1000.20, { a: [truncated] });
+  assert.equal(a.net.buf.length, before, 'truncated actor record entered the interpolation buffer');
+
+  step(f, nm, 'p2', 1000.25, { a: [f.packActor(a, { x: 6, z: 1.5, vx: 1 })] });
+  assert.equal(a.net.buf.length, before + 1, 'next valid owner snapshot did not recover');
+  for (let i = 0; i < 6; i++) {
+    f.clock.advance(1 / 60);
+    nm.update(1 / 60);
+    assert.ok(Number.isFinite(a.pos.x) && Number.isFinite(a.pos.y) && Number.isFinite(a.pos.z));
+    assert.ok(Number.isFinite(a.vel.x) && Number.isFinite(a.vel.y) && Number.isFinite(a.vel.z));
+  }
+});
