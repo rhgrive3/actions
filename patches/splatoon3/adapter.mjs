@@ -61,6 +61,10 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 
 export function adaptSource(rel, code) {
   // #719 aerial Dualies admission is already installed by adaptIssue719Dodge below.
+  if (rel === 'src/game/motion/source-controller.js') {
+    code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
+    return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" + code;
+  }
   code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);
   code = adaptScorchGorge(rel, code, replaceOnce);
@@ -362,7 +366,7 @@ export function adaptSource(rel, code) {
     // that owns the roller-side parts and the drum. Dedicated connection, kept apart
     // from the independent #915 weapon-transform ownership.
     code = replaceOnce(code, '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle); off.add(muzzle);',
-      '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle); off.add(muzzle);\n    const fold = attachRollerFold(d, off, parts, drum);', 'roller articulated hinge group');
+      '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle);\n    const muzzlePart = d.muzzlePart && parts[d.muzzlePart];\n    if (muzzlePart) { muzzle.position.sub(d.parts[d.muzzlePart].pivot); muzzlePart.add(muzzle); } else off.add(muzzle);\n    const fold = attachRollerFold(d, off, parts, drum);', 'roller articulated hinge group and rendered mechanism muzzle');
     code = replaceOnce(code, 'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, near: true, pump: 0, trig: 0, left: null, hidden: 0 };',
       'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
     return "import { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
@@ -1292,10 +1296,11 @@ export function adaptSource(rel, code) {
     return `import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, stealthJumpExtraTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery, updateSpecialHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
+    code = replaceOnce(code, 'const d = finishParts((BUILDERS[kind] || buildShooter)());', 'const d = finishParts(referenceWeaponModel((BUILDERS[kind] || buildShooter)()));', 'base weapon reference silhouettes');
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
     code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerFoldModel(rollerModel(buildRoller())),', 'roller drum proportions and articulated middle hinge');
     code = replaceOnce(code, 'blaster: buildBlaster,', 'blaster: () => blasterMechanism(buildBlaster()),', 'blaster S3 lever/spring-front mechanism channels');
-    return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\nimport { rollerFoldModel } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { blasterMechanism } from '../../patches/splatoon3/runtime/blaster-mechanism-model.mjs';\n" + code;
+    return "import { referenceWeaponModel } from '../../patches/splatoon3/runtime/weapon-reference-models.mjs';\nimport { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\nimport { rollerFoldModel } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { blasterMechanism } from '../../patches/splatoon3/runtime/blaster-mechanism-model.mjs';\n" + code;
   }
   if (rel === 'src/audio/music.js') {
     // Match-start Opening cue (issue #605): an original short sting for the pre-GO intro.
@@ -1492,8 +1497,8 @@ export function adaptSource(rel, code) {
     {
       const rawEnemyReveal = "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;";
       const scoreHudEnemyReveal = "          if (!mapActorVisible(o, a, PLAYER.hp, G.time)) continue;";
-      const directEnemyReveal = "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp)) continue;";
-      const combinedEnemyReveal = "          // S3 Turf Map: preserve timed/team reveal and explicit recon marking; damage >=18 satisfies both.\n          if (!mapActorVisible(o, a, PLAYER.hp, G.time) && !enemyRevealedOnMap(o, PLAYER.hp)) continue;";
+      const directEnemyReveal = "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp, a, G.time)) continue;";
+      const combinedEnemyReveal = "          // S3 Turf Map: preserve timed/team reveal and explicit recon marking; damage >=18 satisfies both.\n          if (!mapActorVisible(o, a, PLAYER.hp, G.time) && !enemyRevealedOnMap(o, PLAYER.hp, a, G.time)) continue;";
       if (code.includes(scoreHudEnemyReveal)) {
         code = replaceOnce(code, scoreHudEnemyReveal, combinedEnemyReveal, 'enemy map reveal after score HUD');
       } else if (code.includes(rawEnemyReveal)) {

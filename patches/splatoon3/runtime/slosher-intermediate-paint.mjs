@@ -68,43 +68,64 @@ export function installSlosherIntermediatePaint(api, profile) {
     return spec;
   };
 
-  Projectiles.prototype._step = function (p, dt) {
-    const spec = p?.type === 'slosh' && !p.ghost ? specFor(p) : null;
-    if (!spec) return step.call(this, p, dt);
-
-    // #1002: this source-owned splash replaces, rather than supplements, the
-    // unrelated legacy trail mark for this exact projectile/order.
-    p.trailEvery = 0;
+  // A seed is a random value, not a projectile lifetime identifier. Reset on
+  // allocation so a repeated sample cannot inherit a spent slot from the pool.
+  const fresh = Projectiles.prototype._new;
+  if (typeof fresh === 'function') Projectiles.prototype._new = function (...args) {
+    const p = fresh.apply(this, args);
+    p.s3SloshIntermediateSeed = undefined;
+    p.s3SloshIntermediateTravel = 0;
+    p.s3SloshIntermediateCount = 0;
+    return p;
+  };
+  const eligible = p => p?.type === 'slosh' && !p.ghost && !p.owner?.remote;
+  Projectiles.prototype.s3PaintSlosherSegment = function (p, from, end) {
+    p.s3SloshIntermediateSegmentHandled = true;
+    const spec = eligible(p) ? specFor(p) : null;
+    if (!spec || !from || !end) return;
     if (p.s3SloshIntermediateSeed !== p.seed) {
       p.s3SloshIntermediateSeed = p.seed;
       p.s3SloshIntermediateTravel = 0;
       p.s3SloshIntermediateCount = 0;
     }
-
-    const beforeX = p.pos.x, beforeY = p.pos.y, beforeZ = p.pos.z;
-    const dead = step.call(this, p, dt);
-    if (dead || (p.s3SloshIntermediateCount || 0) >= spec.spawnNum) return dead;
-
-    const dx = p.pos.x - beforeX, dz = p.pos.z - beforeZ;
-    const segment = Math.hypot(dx, dz);
+    if ((p.s3SloshIntermediateCount || 0) >= spec.spawnNum) return;
+    const segment = Math.hypot(end.x - from.x, end.z - from.z);
     const before = p.s3SloshIntermediateTravel || 0;
     const after = before + segment;
     p.s3SloshIntermediateTravel = after;
-    if (after + EPS < spec.targetLength) return dead;
-
+    if (after + EPS < spec.targetLength) return;
+    // This source slot belongs to the scheduled distance, including a miss.
+    // Retrying from a later point moves ink to a different piece of terrain.
+    p.s3SloshIntermediateCount = (p.s3SloshIntermediateCount || 0) + 1;
     const t = segment > EPS ? clamp01((spec.targetLength - before) / segment) : 1;
-    point.set(
-      beforeX + (p.pos.x - beforeX) * t,
-      beforeY + (p.pos.y - beforeY) * t,
-      beforeZ + (p.pos.z - beforeZ) * t,
-    );
+    point.set(from.x + (end.x - from.x) * t,
+      from.y + (end.y - from.y) * t, from.z + (end.z - from.z) * t);
+    const ground = G.physics?.raycast?.(point, down, 10 * scale, hit, true);
+    if (!ground?.hit) return;
+    point.copy(ground.point).addScaledVector(ground.normal, .1 * scale);
     stretch.set(p.vel.x, 0, p.vel.z);
     if (stretch.lengthSq() <= EPS) stretch.set(0, 0, 1);
-    // PaintDepthScale is a constant WidthHalf x (WidthHalf * depth) footprint;
-    // the shared splash landing maps it with equal length and area.
-    spawnSplashDrop(G, { owner: p.owner, team: p.team, seed: p.seed, salt: 0x1002, from: point, direction: stretch,
-      radius: spec.widthHalf, spec: spec.drop, depth: true, kind: 'drop' });
-    p.s3SloshIntermediateCount = (p.s3SloshIntermediateCount || 0) + 1;
+    else stretch.normalize();
+    const area = G.paint?.splat?.(point, spec.widthHalf, p.team, {
+      seed: p.seed, claimOwner: p.owner, stretch,
+      // PaintSystem takes an additive elongation, whereas the source stores
+      // the total depth ratio. Keep the rasterizer's asymmetry as calibration.
+      stretchAmt: Math.max(0, spec.depthScale - 1),
+    }) || 0;
+    p.owner?.addTurf?.(area);
+  };
+  const before = new THREE.Vector3();
+  Projectiles.prototype._step = function (p, dt) {
+    const spec = eligible(p) ? specFor(p) : null;
+    if (!spec) return step.call(this, p, dt);
+    p.trailEvery = 0;
+    before.copy(p.pos);
+    p.s3SloshIntermediateSegmentHandled = false;
+    const dead = step.call(this, p, dt);
+    // The fidelity collision solver owns the clipped segment, even on the
+    // terminal tick. Source-only fixtures retain the nonterminal fallback.
+    if (!p.s3SloshIntermediateSegmentHandled && !dead)
+      this.s3PaintSlosherSegment(p, before, p.pos);
     return dead;
   };
 }

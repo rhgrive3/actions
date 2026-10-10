@@ -205,6 +205,10 @@ export function splatlingSubInterrupt(runner, actor, dt, input) {
     return 'ready';
   }
   if (!input?.sub || !(runner.charging || runner.streaming)) return null;
+  if (runner.charging && !runner.streaming) {
+    actor.s3 ||= {};
+    actor.s3.recoverStopRemaining = Math.max(actor.s3.recoverStopRemaining || 0, 29 / 60);
+  }
   runner.s3SplatlingSubInterruptPending = true;
   // The input update is the first fixed frame of the interruption window.
   // Consume its dt here so the native sub-ready handoff lands on frame five,
@@ -223,6 +227,11 @@ export function splatlingInterrupt(runner, actor, slot) {
   if ((runner[x.press] ?? -1) !== actor._squidPressT) {
     runner[x.press] = actor._squidPressT;
     runner[x.time] = cancel && x.live(runner) ? SPLATLING_INTERRUPT : 0;
+    // v10.0.1 community verification table: charge cancellation stops refill
+    // for 29F, independently of the 6F squid admission and 40F shot recovery.
+    // Form admission precedes resources; publish once for that phase to arm.
+    if (slot === 'charge' && runner[x.time] > 0 && !runner.streaming)
+      runner.s3SplatlingCancelRefillPending = true;
   }
   return (runner[x.time] ?? 0) > INTERRUPT_EPS;
 }
@@ -375,6 +384,23 @@ export function installWeapons(context, profile) {
     runner.s3DodgeShotRemaining = 0;
     // Keep paid ink, roll count, movement/recovery clocks and shot cooldown.
   });
+  // A committed Special interrupts main-weapon actions even when its kit
+  // bypasses native _startSpecial (Ink Vac). Cancel pending input through the
+  // installed owners; do not reset paid ink, hit history or recovery clocks.
+  on?.('special:use', event => {
+    const actor = event?.actor, runner = actor?.weaponRunner;
+    const kind = actor?.weapon?.kind;
+    if (!runner || actor.remote || !['splatling', 'slosher', 'roller'].includes(kind)) return;
+    runner.cancelPendingInput?.();
+    if (kind === 'slosher') {
+      runner.slosh = -1; runner.s3SloshRecovery = false;
+      runner.s3SloshPrevYaw = null; runner.s3SloshTurnDelta = 0;
+    }
+    if (kind === 'roller') {
+      runner.rolling = false; runner.rollT = 0;
+      runner.rollLoop?.stop(.12); runner.rollLoop = null;
+    }
+  });
   WeaponRunner.prototype.s3StepSplatlingSubInterrupt = function (dt, input) {
     return splatlingSubInterrupt(this, this.a, dt, input);
   };
@@ -421,6 +447,7 @@ export function installWeapons(context, profile) {
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3ChargerCancelSwimRemaining = 0; // #416 partial-charge squid cancel recovery
     this.s3ChargerCancelRefillPending = false;
+    this.s3SplatlingCancelRefillPending = false;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
     this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
@@ -801,7 +828,8 @@ export function installWeapons(context, profile) {
       }
       const beforeT = this.chargeT || 0, realInk = a.ink;
       const fundedInk = (this.s3ChargerSpent || 0) + realInk;
-      const low = fundedInk + epsilon < w.inkMin;
+      const fundingThreshold = this.s3ChargerFullInkBudget ? w.inkFull : w.inkMin;
+      const low = fundedInk + epsilon < fundingThreshold;
       const chargeDuration = Math.max(epsilon, w.chargeTime);
       // #971: air slowdown starts only beyond the minimum charge. Split a
       // crossing step; low-ink slowdown is independent and still applies first.

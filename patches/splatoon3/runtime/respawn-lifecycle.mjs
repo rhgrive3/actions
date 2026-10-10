@@ -236,11 +236,14 @@ export function installRespawnLifecycle(api, profile) {
   };
   A.splat = function (...args) {
     const alive = this.alive, result = splat.apply(this, args);
-    if (alive && !this.alive) { this.s3.spawnArmor = null; this.s3.spawnArmorRemote = false; }
+    if (alive && !this.alive) { this.s3.spawnArmor = null; this.s3.spawnArmorRemote = false; delete this.s3.squidSpawn; }
     return result;
   };
   A.update = function (dt) {
     advanceSpawnProtection(this, dt);
+    // A remote death/disconnect may bypass local splat. A corpse cannot own
+    // spawn motion or intercept the native death/respawn countdown.
+    if (!this.alive && this.s3) delete this.s3.squidSpawn;
     const spawn = this.s3?.squidSpawn;
     if (spawn) {
       if (spawn.phase === 'aim') {

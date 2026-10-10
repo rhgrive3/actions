@@ -9,7 +9,9 @@ function subGateLocked(runner, kind, dt) {
   const postShot = kind === 'slosher'
     ? Math.max(0, (runner.s3SloshPostShot || 0) - (runner.s3GateInActor ? 0 : dt))
     : runner.s3DualiesPostShot;
-  return postShot > EPS || (kind === 'dualies' && (runner.s3DualiesInterruptSub || 0) > EPS);
+  // Community v10.0.1: Slosher sub admission is 15F, squid admission 16F.
+  const subThreshold = kind === 'slosher' ? 1 / 60 : 0;
+  return postShot > subThreshold + EPS || (kind === 'dualies' && (runner.s3DualiesInterruptSub || 0) > EPS);
 }
 function makeSubGateInput(runner) {
   const state = { runner, source: EMPTY_SUB_GATE_INPUT, kind: '', dt: 0,

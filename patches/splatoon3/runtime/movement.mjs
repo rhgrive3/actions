@@ -280,6 +280,7 @@ export function installMovement(context, tuning) {
   const reset = Actor.prototype.reset, damage = Actor.prototype.damage;
   const clearMovement = actor => {
     actor.s3 ||= {}; delete actor.s3.actions; actor.s3.roll = actor.s3.surge = null;
+    actor.s3NeutralWallSlideT = 0;
     actor.anim.surgeCharge = 0;
   };
   const remoteRespawn = api.NetMatch?.prototype._remoteRespawn;
@@ -288,6 +289,15 @@ export function installMovement(context, tuning) {
   };
   Actor.prototype.reset = function (...args) {
     const value = reset.apply(this, args); clearMovement(this); return value;
+  };
+  // The descent clock belongs to one uninterrupted wall contact, not the
+  // actor's lifetime. A Roll, death, special or teleport can detach without
+  // passing through the next _updateClimb neutral-input branch.
+  const setClimb = Actor.prototype._setClimb;
+  Actor.prototype._setClimb = function (on) {
+    const value = setClimb.call(this, on);
+    if (!this.climbing) this.s3NeutralWallSlideT = 0;
+    return value;
   };
   Actor.prototype.damage = function (amount, attacker, source) {
     if (this.invuln > 0 || slamProtected(this) || !this.alive) return false;
@@ -325,6 +335,7 @@ export function installMovement(context, tuning) {
     const result = splat.apply(this, args);
     if (!this.alive) {
       const state = movementState(this); state.roll = state.surge = state.armor = null;
+      this.s3NeutralWallSlideT = 0;
       this.anim.surgeCharge = 0; sync(this, state);
     }
     return result;

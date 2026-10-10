@@ -53,17 +53,10 @@ export function composeKits({ WEAPONS, SUB, SPECIALS }) {
     const kit = VERIFIED_KITS[main], partial = PARTIAL_KITS[main];
     if (kit) Object.assign(w, { sub: kit.sub, special: kit.special, specialCost: kit.specialCost,
       kitReference: kit.main, kitStatus: 'verified-base-kit' });
-    else if (partial && (partial.sub || partial.special)) {
-      if (partial.sub) w.sub = partial.sub;
-      if (partial.special) Object.assign(w, { special: partial.special, specialCost: partial.specialCost });
-      const verified = [partial.sub && 'sub', partial.special && 'special'].filter(Boolean);
-      Object.assign(w, { kitReference: partial.main, kitStatus: 'partial-verified-kit', kitVerifiedSlots: verified,
-        kitMissing: partial.missing });
-      const unsupplied = Object.entries(partial.missing).filter(([key]) => key !== 'specialCost');
-      const label = unsupplied.length
-        ? `Partial Splatoon 3 kit: ${verified.join(' and ')} verified; ${unsupplied.map(([key]) => key).join(' and ')} original INKWAVE (${unsupplied.map(([, value]) => value).join(', ')} not implemented).`
-        : '11.3.0 kit slots installed; certain mechanics retain explicit source-calibration limits.';
-      if (!w.blurb?.includes('Partial Splatoon 3 kit')) w.blurb = `${w.blurb || ''} ${label}`.trim();
+    else if (w.kitStatus === 'opt-in-inkwave-support-approx-main' && w.id === 'support') {
+      // The optional training kit is deliberately not a source-verified main.
+      // Preserve its explicit identity rather than relabeling it as a legacy kit.
+      w.kitReference = null;
     } else {
       Object.assign(w, { kitReference: null, kitStatus: 'original-inkwave-kit' });
       const label = 'Original INKWAVE kit (not a verified Splatoon 3 kit).';

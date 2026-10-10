@@ -2,6 +2,7 @@ import { installThermalTracking } from './private-tracking.mjs';
 import { installHaunt } from './haunt.mjs';
 import { installDryInk } from './dry-ink.mjs';
 import { CLOTHING_ABILITIES, SPLATFEST_TEE, clothingAbilityAllowed, deathGearPenalty } from './clothing-gear.mjs';
+import { drinkGearPoints } from './support-cooler.mjs';
 import { selectedSub } from './kit-composition.mjs';
 import { installSubReady } from './sub-ready.mjs';
 import { installStormPower } from './storm-power.mjs';
@@ -140,13 +141,19 @@ export function installGear(api, tuning) {
   const key = a => conditionalKey(a, G.match, tuning.conditionalGear);
   const refreshConditional = a => { if (a.s3?.modifiers && a.s3.conditionalKey !== key(a)) equip(a, true); };
   const refresh = a => { refreshConditional(a); refreshFlow(a); };
+  // Drink pickup/expiry requires an immediate actor-local AP refresh even when
+  // no main/sub is being fired. Never mutate the shared WEAPONS object.
+  Actor.prototype.s3RefreshGear = function () { if (this.s3) equip(this, true); };
   function equip(a, transient = false) {
     a.s3 ||= {};
     const loadout = a.isLocal && !transient ? readLoadout() : normalizeLoadout(a.s3.loadout);
     const beforeCost = a.weapon?.specialCost, beforeSpecial = a.special;
     a.s3.loadout = loadout;
     const points = { ...conditionalPoints(a, abilityPoints(loadout), G.match, tuning.conditionalGear) };
-    const effectivePoints = { ...points };
+    // Tacticooler supplies minimum independent AP (29/57), not additional
+    // stackable gear points. Canonical equipped AP stays untouched below.
+    // Permanent equipped AP and transient drink/Drop Roller AP must never alias.
+    const effectivePoints = { ...drinkGearPoints(points, a) };
     if (!a.remote && (a.s3.dropRollerBuffRemaining || 0) > 1e-10)
       for (const id of DROP_ROLLER_BUFFS) effectivePoints[id] = (effectivePoints[id] || 0) + 30;
     a.s3.abilityPoints = Object.freeze({ ...points }); // permanent/equipment AP stays canonical
@@ -159,8 +166,8 @@ export function installGear(api, tuning) {
     // state and deliberately does not alter Quick Super Jump AP curves.
     m.stealthJump = loadout[2].main === 'stealthJump';
     m.dropRoller = loadout[2].main === 'dropRoller';
-    const ap = points, extra = tuning.gearExtra;
-    m.specialPowerAP = ap.specialPower || 0;
+    const ap = effectivePoints, extra = tuning.gearExtra;
+    m.specialPowerAP = points.specialPower || 0;
     const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
     const around = Math.floor(gearCurve(ap.quickRespawn || 0, ...extra.quickRespawnAroundFrames) + 1e-10);
     const chase = Math.floor(chaseBase * (m.quickRespawn ?? 1) + 1e-10);
@@ -347,10 +354,14 @@ export function installGear(api, tuning) {
     const result = splat.apply(this, args);
     if (alive && !this.alive) {
       clearDropRollerLife(this); equip(this, true);
-      this.special = before * Math.max(0, (penalty.incoming ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
+      this.special = before * Math.max(0, (penalty.incoming || penalty.cooler ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
       const history = this.s3.quickRespawnHistory;
       if (enemyDeath) {
-        if (history.seenEnemyDeath && history.splats === 0) this.respawnTimer = Math.max(0, this.respawnTimer - (penalty.incoming ? penalty.quickReduction : this.s3.modifiers.quickRespawnReduction));
+        // A Tacticooler drink supplies 57AP Quick Respawn on any enemy splat,
+        // independently of the ordinary zero-splat eligibility condition.
+        // RP still adds its extra frames, but cannot negate the drink (#835).
+        if (penalty.cooler || (history.seenEnemyDeath && history.splats === 0))
+          this.respawnTimer = Math.max(0, this.respawnTimer - (penalty.incoming || penalty.cooler ? penalty.quickReduction : this.s3.modifiers.quickRespawnReduction));
         history.seenEnemyDeath = true; history.splats = 0;
         this.s3.splatsThisLife = 0;
       }
