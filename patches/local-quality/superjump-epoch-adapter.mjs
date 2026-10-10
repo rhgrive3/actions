@@ -52,10 +52,13 @@ export function adaptSuperJumpEpoch(rel, code) {
     } else a.superJumpState = null;`,
     `    const jumpPhase = f & (F.sjCharge | F.sjFlight) ? (f & F.sjFlight ? 'flight' : 'charge') : null;`,
     'owner timeline phase');
+  // The installed replication layer owns adoption ordering, but later
+  // adapter stages may inline that call. This unique native weapon-state
+  // boundary sits after the adoption restore and before remote pose sampling.
   code = once(code,
-    '    applyAdoptionSample(this, a, S);',
-    '    applyAdoptionSample(this, a, S);\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase);',
-    'reconcile after adoption');
+    '    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
+    '    applyRemoteSuperJumpEpoch(a, S, jumpPhase);\n    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
+    'reconcile before sampled remote weapon state');
   code = once(code,
     '    victim.specialActive = null; victim.superJumpState = null;',
     '    victim.specialActive = null; endRemoteSuperJumpEpoch(victim);',
