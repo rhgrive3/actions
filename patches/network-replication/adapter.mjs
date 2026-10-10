@@ -338,6 +338,19 @@ export function emit(name, payload) {
     const groupedHit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
     patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
       groupedHit, 'Slosher volley identity owner admission');
+    // #574: standard Blaster air-burst knockback. The attacker sends only the
+    // validated source-to-target geometry; the recipient re-derives the impulse
+    // after its own authenticated, life-bound hit admission (one application).
+    code = "import { validBlasterKnockback, applyBlasterKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\n" + code;
+    patch('      seq: ++this.hitNextSeq };',
+      "      seq: ++this.hitNextSeq };\n    const blast = this._s3BlasterKnockback;\n    if (wid === 'blaster' && blast?.attacker === attacker && blast.victim === victim && validBlasterKnockback(blast.offset)) message.kb = blast.offset.slice();",
+      'Blaster knockback geometry on hit message');
+    patch('    if (atk.owner !== from || !Number.isFinite(d.d) || d.d <= 0 || d.d > 10000) return;',
+      "    const blastKnockback = d.w === 'blaster' && validBlasterKnockback(d.kb);\n    if (d.kb !== undefined && !blastKnockback) return;\n    if (atk.owner !== from || !Number.isFinite(d.d) || d.d < 0 || (d.d === 0 && !blastKnockback) || d.d > 10000) return;",
+      'Blaster bounded knockback-only admission');
+    patch('const hitAdmission = G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);',
+      "const hitAdmission = d.d > 0 ? G.projectiles?.applyHit(atk, v, d.d, d.w, d.g) : 'accepted';\n    if (blastKnockback && hitAdmission === 'accepted') applyBlasterKnockback(v, d.kb);",
+      'Blaster applies once after recipient hit admission');
     // #1150: a missing/invalid volley cannot downgrade an online maximum to
     // ungrouped damage. Existing combat-life admission owns respawn isolation.
     code = "import { validDamageGroup } from '../../patches/splatoon3/runtime/final-damage.mjs';\n" + code;

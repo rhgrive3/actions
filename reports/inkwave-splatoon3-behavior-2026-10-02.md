@@ -3302,3 +3302,11 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - Reproduction (deterministic injection): match A sends hit `h:1` to a victim owner. Match B reuses nids 1/2 and victim life 1. Before the fix the old packet reached damage (victim HP 100 to 64), and the first valid match B hit with `h:1` was dropped as a duplicate. A stale ACK consumed match B's pending receipt. After the fix, both are rejected and the current match's own hit and ACK settle once.
 - Play impact: a delayed packet from an earlier round can no longer damage or confirm a kill in the next round. Same-match delivery, duplicates and ownership handoff are unchanged.
 - Confirmation: `patches/network-replication/tests/issue-1185-match-boundary-hit.test.mjs` runs the composed production NetMatch methods in a VM with transport and damage sinks. The packet delay is injected, not measured on a relay. No browser, real network latency or Switch measurement is claimed. Real-device verification remains unconfirmed.
+## 2026-10-10: #574 standard Blaster air-burst knockback (上書き担当)
+
+- 本家の根拠: Splatoon 3 Ver. 11.3.0 の標準ブラスター `BlastParam`（Leanny/splat3 コミット `7280ff9c` の `WeaponBlasterMiddle.game__GameParameterTable.json`）。`DamageAttackerPriority: true`、`DistanceDamage` 700 @1.025 / 500 @3.385、`KnockBackParam` Accel 700 / Bias 0.8 / Distance 3.5。内部の積分式は公開されていない。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/sub-special-fidelity.mjs`（`BLASTER_KNOCKBACK`、`applyBlasterBlastContact`、`applyBlasterKnockback`、Actor 側の 1 ステップ保持）、`patches/splatoon3/adapter.mjs`（`_blastBurst` の半径と接触、`adaptKitRescue` の後段）、`patches/network-replication/adapter.mjs`（送信時の `kb` 付与と受信側の一回適用）、`patches/reliability/net-hit-payload-adapter.mjs`（ダメージ 0 は `kb` 付きの場合のみ通す）。
+- 変換: #535 の爆弾校正式（`duPerWorldUnit` 10、`referenceHz` 60、減衰 `(1 - d/3.5)^bias`）を再利用。Accel と Bias の内部式ではない。
+- 再現操作: 空中の標準ブラスター爆風を、標的の横 1.0〜3.5 の位置で（直撃なし、LOS あり）発生させる。HP は 70→50 の帯だけ減り、3.385 を超え 3.5 未満では HP を減らさずに爆風の外向きへ押す。
+- プレイへの影響: 間接爆風で相手が押し出される。ダメージ帯、爆風半径、塗り、FX は変わらない。
+- 確認状態: 自動テストのみ（論理単独測定と VM fixture）。`issue-574-blaster-knockback` 6/6、`blaster-knockback-authority`（ネットワーク）4/4、隣接回帰 59/59 と 39/39、`check-inkwave-patches --quick` 合格。未確認: Accel/Bias の本家内部式と INKWAVE 単位への換算、直撃時の扱い（DamageAttackerPriority）、地形爆風へのノックバック（現状は付与しない）、壁越し・段差後の挙動、2 クライアントの実通信、本家実機との比較。
