@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { adaptSource } from '../adapter.mjs';
 import { FixedClock, STEP } from '../runtime/clock.mjs';
 
-// #735: adapter.mjs makes Ink Storm damage eligible only down to cloudY - 14
-// (`e.pos.y + 1.2 < cloudY - 0.8 - inkWaveRainReach` is excluded, with
-// inkWaveRainReach = 12, the same reach as the rain-paint ray). That bound is
-// INKWAVE's internal consistency value. It is NOT a verified Splatoon 3 cutoff:
+// #735: Ink Storm damage is eligible only down to cloudY - 14. The gate lives in
+// runtime/storm-effects.mjs stormRainContains (#927 moved it there from the
+// weapons.js adapter, shared with ally recovery): `point.y + 1.2 < p.y - 0.8 -
+// STORM_RAIN_REACH` is excluded, with STORM_RAIN_REACH = 12, the same reach as
+// the rain-paint ray. That bound is INKWAVE's internal consistency value. It is NOT a verified Splatoon 3 cutoff:
 // the pinned Ver. 11.3.0 table (Leanny/splat3 7280ff9c) has no vertical reach
 // field. These tests pin the internal boundary and its frame-interval behaviour.
 // Horizontal radius, above-cloud and cover rejection are covered by
@@ -15,11 +15,11 @@ import { FixedClock, STEP } from '../runtime/clock.mjs';
 
 const DPS = 24;          // specials.storm.dps: 0.4 HP/frame at 60 Hz
 const CLOUD_Y = 100;
-const INTERNAL_LOWER_CUTOFF = CLOUD_Y - 14; // 86, inclusive in the adapter
-const GATE = 'e.pos.y + 1.2 < c.group.position.y - 0.8 - inkWaveRainReach';
+const INTERNAL_LOWER_CUTOFF = CLOUD_Y - 14; // 86, inclusive in stormRainContains
+const GATE = 'point.y + 1.2 < p.y - 0.8 - STORM_RAIN_REACH';
 
-async function rig({ adapt } = {}) {
-  const f = await fixture(adapt ? { adapt } : {});
+async function rig({ adaptRuntime } = {}) {
+  const f = await fixture({ adaptRuntime });
   f.installSubSpecialFidelity?.(f, f.profile);
   const { G, THREE } = f;
   G.scene = new THREE.Scene(); G.netm = null; G.actors = [];
@@ -52,13 +52,13 @@ test('#735 internal lower reach: eligibility flips at cloudY-14 (inclusive), not
 });
 
 test('#735 negative control: without the internal reach gate, a far-below victim is damaged', async () => {
-  const adapt = (rel, code) => {
-    const out = adaptSource(rel, code);
-    if (rel !== 'src/game/weapons.js') return out;
-    assert.ok(out.includes(GATE), 'the lower reach gate is present in the adapted source');
-    return out.replace(GATE, 'false');
+  // Native damage and ally recovery share this runtime predicate, so the control removes the gate there.
+  const adaptRuntime = (rel, code) => {
+    if (rel !== 'patches/splatoon3/runtime/storm-effects.mjs') return code;
+    assert.ok(code.includes(GATE), 'the lower reach gate is present in the shared Storm predicate');
+    return code.replace(GATE, 'false');
   };
-  const r = await rig({ adapt });
+  const r = await rig({ adaptRuntime });
   r.victim.pos.y = CLOUD_Y - 60;
   r.p._updateClouds(STEP);
   assert.ok(r.total() > 0, 'unbounded cylinder damages the far-below victim, so the boundary test is discriminating');

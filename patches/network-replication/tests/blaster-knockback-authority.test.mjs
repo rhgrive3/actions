@@ -66,7 +66,8 @@ test('#574 malformed geometry, negative/ordinary zero damage, wrong sender, stal
   const f = await view('p2');
   try {
     let h = 0;
-    const base = () => ({ k:'hit', v:2, a:1, d:50, w:'blaster', l:0, h:++h, kb:[2,0,0] });
+    // #1185: a hit is admitted only with the creating match id; the hand-built packets must carry it.
+    const base = () => ({ k:'hit', m:f.nm.cfg.id, v:2, a:1, d:50, w:'blaster', l:0, h:++h, kb:[2,0,0] });
     const invalid = [
       { kb:[Infinity,0,0] }, { kb:[NaN,0,0] }, { kb:[3.5,0,0] }, { kb:[1,0] },
       { kb:[0,0,0] }, { kb:'2,0,0' }, { kb:[100,0,0] }, { d:-1 },
