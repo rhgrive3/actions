@@ -2723,3 +2723,10 @@ Retail behaviour is unverified for: whether the rate is continuous or admission-
 cone, and progressive levels. Drain of 12% tank/s and the 60% movement cap remain INKWAVE engineering calibration
 (`actorSuppressionStatus` in the calibration object), not Nintendo magnitudes. Contact-charge 1.5/frame (90/s)
 remains supported by `ReceiveDamageForPlayer = 15`. Nothing here is a physical-device or retail match claim.
+## 2026-10-10: #366 effective-zero music idle (Master=0 residual)
+
+- Reference: none. This is audio resource policy, not a Splatoon 3 gameplay or operation behavior, so no Nintendo value is claimed or compared.
+- INKWAVE: `patches/local-quality/idle-adapter.mjs` now calls `setMusicEnabled(master > 0 && music > 0)` in `setVolumes` and in the pre-init path. Before this, only `music > 0` was checked, so Master=0 with Music>0 kept the procedural player, the 25 ms worker, and the interval running behind a silent bus.
+- Reproduction (logic level): Master=0, Music=0.5, SFX=1 with a track playing. Expected: 0 players, 0 workers, 0 intervals; `a.play('jump')` does not suspend the context; raising Master resumes the latest track with one worker. Persisted Master=0 starts no track after unlock.
+- Evidence: `patches/local-quality/tests/idle-resources.test.mjs` (two `#366` tests; both failed before the change). The local-quality suite has 791 tests, 783 pass, 0 fail, 8 skipped.
+- Remaining 未確認: real browser audio, mobile battery/CPU figures, and the Worker/Blob URL cleanup after a synchronous Worker failure (not part of this change).
