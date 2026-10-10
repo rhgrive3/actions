@@ -2739,3 +2739,26 @@ remains supported by `ReceiveDamageForPlayer = 15`. Nothing here is a physical-d
 **再現操作:** 60Hz 固定クロックで charger を保持し、native `chargeT` が f/60（f = 8, 9, 12, 16, 23, 34, 48, 59）に達した時点で離す。flight job の `range` は `9.033 + 15.004 × (f−8)/52`。同じ式は旧 eased 律（`t<0.2 ? t×1.25 : 0.25+(t−0.2)×0.9375`）と全サンプルで 0.05 以上異なる。
 
 **確認状態:** logic／runtime 測定であり、実機比較ではない。runtime の `chargerRangeCharge` を raw charge に戻すと、既存の 8F 関連試験 4 件と新試験の native 2 件が失敗することを確認し、元に戻した。固定 60Hz シミュレーションのみで確認し、表示レートを変えた試験は追加していない。中間式の本家一次確認、wikiwiki 式の照合、Switch 実機での弾道一致は **未確認**。PR #1195 の中間 source-pin は未マージ（mergeable_state dirty）のため取り込んでいない。全受入条件は満たしていないため #514 は Open のまま。
+## 2026-10-10: #878 hidden online host and Turf War clock (Refs, not closed)
+
+Reference: Splatoon 3 Ver. 11.3.0. Sources as cited in #878 (not re-fetched in this run): Turf War timer counts
+down from three minutes to zero ([Inkipedia, Turf War](https://splatoonwiki.org/wiki/Turf_War)); disconnect
+handling, including the six-second first-minute no-contest case, is in
+([Inkipedia, Communication error](https://splatoonwiki.org/wiki/Communication_error)). No disconnect threshold is
+used in this change.
+
+INKWAVE: `patches/local-quality/platform-game.mjs` and `platform-lifecycle.mjs` extend the hidden-host clock to
+suspend ordering and post-deadline results. The host's hidden deadline (`hiddenHostDeadline`) sets `finish`, then
+the native finish delay (`Match.finishDelay()`, the existing 2.6 s or the boss finish value, from
+`patches/splatoon3/adapter.mjs`) advances on a timer so the host sends its result without Actor, projectile or
+`G.time` catch-up. A visibility notice still reaches the clock when WebGL, freeze or pagehide already owns the
+suspend. Both regressions use the real Match/NetSession/NetMatch and an in-process relay.
+
+Reproduction: online Turf War, host tab hidden at about 10 s left for 14 s or 120 s, visible guest. Expected:
+host and guest both reach `judge` with the same result, and nothing resumes on show. Before this change, the
+hidden host stalled at `finish` with no result, and a host already suspended by WebGL loss stayed `playing`.
+
+Confirmed in harness only: 29/29 hidden-host tests; neighbouring lifecycle, input, clock and finish suites pass.
+Unverified: real browser background throttling, OS sleep timing, live relay, Switch disconnect and no-contest
+timing, and the policy for a permanently hidden guest. The Turf War result packet timing is not measured against
+hardware. Issue #878 remains open.

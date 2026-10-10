@@ -217,6 +217,12 @@ export function adaptSource(rel, code) {
     "  'Connect Joy-Con / Pro Controller': 'Joy-Con / Proコントローラー接続', 'Pair a Nintendo Switch Joy-Con (R) or Pro Controller via WebHID for motion gyro aiming.': 'WebHID経由でJoy-Con (R) または Proコントローラーを接続し、ジャイロ照準を使用します。',\n  'Controller motion connected using user gyro calibration.': 'ユーザー校正を使ってコントローラーのモーション入力を接続しました。', 'Controller motion connected using factory gyro calibration.': '工場校正を使ってコントローラーのモーション入力を接続しました。', 'Controller motion connected; nominal gyro calibration used (SPI unavailable).': 'SPI校正を取得できないため、公称値でコントローラーのモーション入力を接続しました。', 'WebHID is unavailable in this browser.': 'このブラウザーではWebHIDを利用できません。', 'This browser cannot open the WebHID chooser.': 'このブラウザーではWebHIDデバイス選択を開けません。', 'No controller was selected.': 'コントローラーが選択されませんでした。', 'Controller initialization failed. Check WebHID permissions and reconnect.': 'コントローラーを初期化できませんでした。WebHIDの許可を確認して再接続してください。', 'Controller connection was denied or failed.': 'コントローラーへの接続が拒否されたか失敗しました。',\n  'Corner map (non-S3 aid)': '画面端マップ（本家外の補助）', 'Optional aid outside the S3 baseline. The full Turf Map remains available.': '本家の標準とは異なる任意の補助です。全体マップは引き続き使用できます。',\n  'Minimap': 'ミニマップ',",
     'optional corner map Japanese explanation');
   if (rel === 'src/game/match.js') {
+    // One native presentation-delay owner for RAF and hidden-host completion.
+    const finishDelay = '(this.bossMode ? (this.bossMode.boss.dead ? this.bossCfg.finishWin : this.bossCfg.finishLose) : 2.6)';
+    code = replaceOnce(code, 'this.stateT > ' + finishDelay,
+      'this.stateT > this.finishDelay()', 'shared native finish delay');
+    code = replaceOnce(code, '  _judge() {',
+      '  finishDelay() { return ' + finishDelay + '; }\n\n  _judge() {', 'native finish-delay accessor');
     // The lobby/roster protocol assigns team 0 to Alpha and team 1 to Bravo.
     // Preserve that match-side assignment; never redraw a winner at judgment.
     code = replaceOnce(code,
