@@ -3214,7 +3214,7 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - INKWAVE: `inkwave-public/src/world/paint.js` line 464 gives every wall stamp `dripDur = 1.1 + min(2.2, radius × 1.5)`; the Charger fall stamps (r 0.8–1.2) therefore keep their drip for 2.3–2.9 s and the shock stamp (r 1.8) for 3.3 s, longer than the gameplay path.
 - Status: **not resolved**. The drip-lifetime fix (set the Charger stamp's drip to the remaining path time) was tried and reverted: in the fixture the Charger wall-drop splats return area 0 and are never added to `paint.growing`, so the change could not be exercised by a test. The next step is to confirm, on a real wall with paint surfaces, whether these splats reach `paint.growing` through the #264 and #570 wrappers, then set the drip lifetime there.
 - Unverified: the second-frame and last-min defaults (XarrotD paramtable, medium confidence), the unit of the target speeds, and Switch timing and pixel parity. None of these are resolved by this entry.
-## 2026-10-10 — Sub-cell fine-spatter ownership (#264)
+## 2026-10-10 — Sub-cell fine-spatter ownership (#264): centre-cell rule reverted
 
 **本家の根拠（未公開の範囲）:** Splatoon 3 Ver. 11.3.0 の公開資料（[Nintendo 更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/kw/Splatoon%203)）は、インクの GPU マスク、セル単位の所有、スパッタの幾何を公開していない。したがって本件の本家比較は「描かれた同チーム色のインクは、移動・補充・ターフ計上に使う権威的な所有と一致しなければならない」という内部整合性の基準に限る。Splatoon 3 のスパッタ形状や数値は一切使っておらず、本家の実測値は **UNKNOWN / unverified**。
 
@@ -3222,11 +3222,16 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 
 **再現操作（一時 probe、未コミット）:** 本番の `PaintSystem`（セル 0.25、`fixture` の production composition）で、平らな床に `kind: 'bomb'`、`seed: 0.5`、`R: 2.7` を着弾させ、成長完了（31 tick、`growing` が空）まで進める。bomb の行 `[10,12,14,5]` の14個のスパッタについて、ドット中心のセルを確認した。修正前は、14個すべてでドット中心のセルが同チーム所有ではなかった。セルを 0.125 m にすると所有セルが現れ、欠落が解像度依存であることを確認した。
 
-**修正:** `cellIsSolidlyVisible` に、`sa <= 0` かつ半径が半セル（`max(cu, cv)/2`）未満の type-1 スパッタに限り、中心を含むセルを所有とする規則を追加した。大きいドットと引き伸ばし（`sa > 0`）の種類は従来の5サンプル規則のまま。ターフ計上は所有セル1つにつき `cu×cv`（0.0625 m²）増える。`inkwave-public/` は変更していない。
+**修正（撤回）:** 2026-10-10 に追加した中心セル規則（`cellIsSolidlyVisible` で、`sa<=0` かつ半径が半セル未満の type-1 スパッタについて中心を含むセルを所有する分岐）を撤回した。`patches/splatoon3/runtime/paint-ownership.mjs` は main `97ae3fec` と同一のバイト列に戻した（`storm-rain-calibration-2026-10-09.json` が記録する sha256 `2da2da0c…` と一致）。理由: CI の browser probe（`patches/splatoon3/tests/paint-mask-browser-fixture.mjs`、`scripts/check-inkwave-paint-mask.mjs`）は「CPU所有セルは、中心と ±0.08 m の4点からなる5サンプルのうち1点以上が GPU で描かれる」ことを要求する。中心規則は、どのサンプルも小ドットの内側に入らない中心セルを所有しうる。実際に `seed 0.37`、`kind 0`、床（`wall: false`）、`tn 0.6` の1セルが GPU 不可視として失敗した（`unsupported: 1`、`familyUnsupported.spatter: 1`）。中心セルの GPU 可視性で規則を裏付けようとすると、結局は既存の5サンプル判定そのものになり、新しい所有は生まれないため、安全な新規則は残らなかった。失敗の起点は `bb083687` 単独で、`97ae3fec..HEAD` で runtime に触れたのはこのコミットのみ。
 
-**確認状態:** `patches/splatoon3/tests/issue-264-subcell-spatter-owner.test.mjs` 2/2 通過。規則を一時的に無効にすると、1件目（14個のスパッタ中心セルがすべて所有されること）が失敗することを確認した（その後復元）。既存の近傍試験15ファイル（issue-264 の temporal/authority/score-boundaries/additional/hash/wall、turf-projected-area、projectile-paint-radius、issue-289、issue-803、issue-979、roller-foot、weapon-paint-inertia、network paint-canonical-order）は計90件すべて通過。これらはロジック単独の測定であり、ブラウザの WebGL 実描画、物理 GPU、Switch の画素一致の証拠ではない。
+**確認状態:**
+- browser probe（この環境で実行。Playwright 1.62.1、同梱 Chromium headless shell 1194、SwiftShader の WebGL2。実 GPU ではない）: branch `8fd8ebbd` は上記のとおり `CPU owns invisible GPU cells` で失敗。main `97ae3fec`、および #264 の runtime 変更だけを main に戻したツリーは passed（108 ケース、hash 照合 1512、セル 14137）。撤回後のツリーも passed（108 ケース）。
+- `issue-264-subcell-spatter-owner.test.mjs` は2件。1件目は撤回後の残件（seed 0.5 bomb の14ドットの中心セルが、この規則では所有されないこと）を固定する。2件目は所有セルが爆発の到達範囲内にあることを確認する。
+- 近傍として `issue-264-*`（additional-paint-owners、paint-authority、paint-temporal-ownership、paint-score-boundaries、wall-paint-owners、paint-hash）、`issue-570-paint-ownership-visibility`、`issue-979-slide-paint`、`issue-1031-slosher-flight-paint` の計44件が通過。13e5b3ce の slosher 遅延描画の期待値も撤回後に通過する。これらはロジック単独の測定であり、ブラウザ実描画や実機の証拠ではない。
+- `node --experimental-vm-modules scripts/check-inkwave-patches.mjs --quick` 通過。
 
-**未解決・残件（未確認）:** (1) サテライト（type 2、楕円）と引き伸ばし（`sa > 0`）の極小ドットは、従来の5サンプル規則のまま。(2) 既存の browser probe（`paint-mask-browser-fixture.mjs`）は「CPU所有セル ⊆ GPU可視」の向きのみを検証し、今回の中心セル規則とは厳密には食い違う可能性があるが、ブラウザ実行はこの環境で未実施。「GPU可視 ⊆ CPU所有」の向きの追加検証も未実施。(3) 物理 GPU、ブラウザの実描画、Switch でのピクセル一致は **UNKNOWN / unverified**。
+**未解決・残件（未確認）:** (1) 14個のスパッタのうち、5サンプル点の間に入る小ドットの中心セルは、この規則では所有されないまま（修正前 main と同じ）。GPU 可視性に従う所有規則は未設計で、未確認のまま残す。(2) サテライト（type 2、楕円）と引き伸ばし（`sa > 0`）の小ドットは従来の5サンプル規則のまま。(3) 「GPU 可視 ⊆ CPU 所有」の向きは未検証。(4) 物理 GPU、実機ブラウザの描画、Switch でのピクセル一致は **UNKNOWN / unverified**。
+
 ### #949 Boss rejected hits and Slosher volley budget (2026-10-10, takeover)
 
 **本家の根拠:** 直接の比較対象はINKWAVE独自のBossモードであり、Splatoon 3の公式仕様や実機の同等挙動とは同一視しない（PR #1182 の既存記録と同じ扱い）。本修正は、既存のSlosher volley最大値（プレイヤー側 `applySlosherVolleyHit`、#627/#628系）と同じ「同一volley内で同一対象に対し最大値を超えた分だけ適用する」INKWAVE内部契約を、Boss側でも受理後に確定させる修正である。新しいS3数値・ダメージ値は追加していない。Splatoon 3側のSlosher volley最大値規則そのものは今回再確認していないため未確認。

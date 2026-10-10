@@ -7,8 +7,11 @@ import { paintShapeSeed, paintShapeHash } from '../runtime/paint-ownership.mjs';
 // channel. For seed 0.5, kind bomb (K_BOMB = 3), R = 2.7, each dot k sits at
 // distance R*(1.3+1.2*h2) along angle h1*2*pi with radius R*(0.011+0.02*h3)*fall
 // (fall = 1 on the face that was hit). Those dots are far smaller than the
-// 0.25 m CPU paint grid, so the sampled ownership rule alone left all of them
-// unowned on main. Each dot's centre cell must now be owned by the shooter's team.
+// 0.25 m CPU paint grid. A centre-cell claim for them was tried and reverted: the
+// browser paint-mask probe (paint-mask-browser-fixture.mjs) found owned cells whose
+// five GPU samples were all unpainted, breaking "CPU-owned cells are GPU-visible".
+// No GPU-backed rule exists yet, so these dots stay an unowned residual (未確認),
+// pinned by the first test below.
 
 const SEED = 0.5, R = 2.7, BOMB_SPATTER = 14;
 
@@ -40,7 +43,7 @@ function makePaintWorld(f) {
   return { paint, face, V };
 }
 
-test('every native fine-spatter dot of a seed 0.5 bomb is owned by its team after full growth', async () => {
+test('fine-spatter dots of a seed 0.5 bomb stay an unowned residual: no centre-cell claim (#264)', async () => {
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
   const { paint, face, V } = makePaintWorld(f);
   const cx = 0, cz = 5;
@@ -61,10 +64,13 @@ test('every native fine-spatter dot of a seed 0.5 bomb is owned by its team afte
     assert.ok(i >= 0 && j >= 0 && i < face.nu && j < face.nv, `dot ${k} lies on the face`);
     if (paint.grid[j * face.nu + i] !== 1) missed.push({ k, distOverR: +(dist / R).toFixed(3) });
   }
-  assert.deepEqual(missed, [], 'no GPU-drawn fine-spatter dot may stay outside the CPU ownership grid');
+  // Residual, recorded: all 14 centre cells stay unowned by this rule. Owning them needs a GPU-backed
+  // rule; re-record the residual in reports/inkwave-splatoon3-behavior-2026-10-02.md if it changes.
+  assert.deepEqual(missed.map(m => m.k), Array.from({ length: BOMB_SPATTER }, (_, k) => k),
+    'the sub-cell dots must stay an unowned residual until a GPU-backed rule owns them');
 });
 
-test('the sub-cell spatter rule does not claim cells far from every drawn dot', async () => {
+test('owned cells of the bomb stay within the native reach', async () => {
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
   const { paint, face, V } = makePaintWorld(f);
   const lu0 = 0 - face.origin.x, lv0 = 5 - face.origin.z;
@@ -73,7 +79,7 @@ test('the sub-cell spatter rule does not claim cells far from every drawn dot', 
   for (let tick = 0; tick < 900 && paint.growing.length > 0; tick++) paint.advanceSimulation(1 / 60);
 
   // Every owned cell must lie inside the native body/ancillary reach of the bomb (2.75 R plus the
-  // largest satellite and dot extent). A stray cell beyond that would mean the new rule over-claims.
+  // largest satellite and dot extent). A stray cell beyond that would mean a rule over-claims.
   let beyond = 0;
   for (let idx = 0; idx < paint.grid.length; idx++) {
     if (!paint.grid[idx]) continue;

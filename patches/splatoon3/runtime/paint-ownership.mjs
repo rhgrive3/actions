@@ -168,18 +168,6 @@ function pointInsideAncillary(mask, x, y, seed) {
 
 function cellIsSolidlyVisible(mask, face, x, y) {
   const dx = face.cu * 0.32, dy = face.cv * 0.32;
-  // A fine spatter dot (native GLSL: radius R*(0.011+0.02*h3)) can be far smaller
-  // than the 0.25 m paint grid, so the five samples below may miss it entirely.
-  // An unstretched dot smaller than half a cell owns the cell containing its
-  // centre; the shader draws that centre in the same team colour. Larger dots,
-  // and all stretched kinds, keep the sampled rule.
-  if (mask.sa <= 0) {
-    for (let n = 0; n < mask.pieces.length; n++) {
-      const p = mask.pieces[n];
-      if (p.type !== 1 || p.radius >= 0.5 * Math.max(face.cu, face.cv)) continue;
-      if (Math.abs(p.x - x) <= face.cu / 2 && Math.abs(p.y - y) <= face.cv / 2) return true;
-    }
-  }
   // A paint cell owns its area when its center or one of four interior samples
   // lies well inside the shader mask. This catches most sub-cell satellites
   // without treating a hand-mirrored antialias width as gameplay truth.
