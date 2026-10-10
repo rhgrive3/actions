@@ -2,6 +2,7 @@
 // Respawn Punisher-style finish penalty.  Online state is proven by the Haunt
 // owner's event stream and bound to both actors' owner/life identities; the
 // victim owner remains authoritative for the actual death penalty.
+import { tacticoolerDrinkActive } from './clothing-gear.mjs';
 const INSTALL = Symbol.for('inkwave.s3.haunt.v1');
 let G, cfg, tuningRef, curve, marks = new WeakMap();
 const generation = new WeakMap(), reviving = new WeakSet();
@@ -105,9 +106,12 @@ export function hauntBasicPenalty(victim, attacker, cause = 'weapon') {
   // stream. Local/offline records originate from the equipped Actor.splat path.
   if (G?.netm && attacker.remote && !record.proven) return null;
   const ap = victim.s3?.abilityPoints || {};
-  const cooler = !!(victim.s3?.drink || victim.s3?.tacticooler || victim.s3?.cooler);
+  const cooler = tacticoolerDrinkActive(victim);
   const selfPunisher = victim.s3?.loadout?.[1]?.main === 'respawnPunisher';
-  const saverAP = (ap.specialSaver || 0) * (cooler ? 1 : (tuningRef?.clothingGear?.respawnPunisher?.specialSaverAPScale ?? .7));
+  const gearSaver = (ap.specialSaver || 0) * (tuningRef?.clothingGear?.respawnPunisher?.specialSaverAPScale ?? .7);
+  // Haunt follows the same post-2.1.0 exception as Respawn Punisher:
+  // keep the independent drink's 57 AP, still apply the penalty loss.
+  const saverAP = cooler ? Math.max(57, gearSaver) : gearSaver;
   const saver = curve ? curve(saverAP, ...tuningRef.gear.specialSaver) : (victim.s3?.modifiers?.specialSaver ?? .5);
   return {
     frames: cfg?.targetFrames ?? 45,
