@@ -82,6 +82,19 @@ test('the unmodified public installer activates all three genuine base kits befo
     // Every slot implemented (Blaster: Autobomb + Big Bubbler) gets the installed
     // label; any original slot keeps the explicit partial-kit label.
     assert.match(api.WEAPONS[main].blurb, slots.length === 2 ? /11\.3\.0 kit slots installed/ : /Partial Splatoon 3 kit/, main);
+    const actor = new api.Actor({team:0,name:'partial-slot actor',weapon:main,CharacterClass:api.Character,
+      style:{hair:0,skin:2,outfit:0,eyes:0}});
+    try {
+      assert.equal(actor.weapon.sub,sub,main+' actor-local verified sub');
+      assert.notEqual(actor.weapon,api.WEAPONS[main],main+' uses an actor-local copy');
+      if (special) {
+        assert.equal(actor.weapon.special,special,main+' verified special');
+        assert.equal(actor.specialCost(),cost,main+' verified special points');
+      } else {
+        assert.equal(actor.weapon.special,api.WEAPONS[main].special,main+' retains unsupported special');
+        assert.equal(actor.specialCost(),api.WEAPONS[main].specialCost,main+' retains its original cost');
+      }
+    } finally { actor.character.dispose(); }
   }
   assert.equal(api.WEAPONS.splatling.kitStatus,'partial-verified-kit');
   assert.ok(api.SUB.sprinkler && api.SUB.autobomb, 'new 11.3.0 native sub mechanics registered');

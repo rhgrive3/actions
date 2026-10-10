@@ -60,3 +60,25 @@ test('metadata cannot fabricate absent special mechanics or partially update exi
   const original = JSON.stringify(api); assert.throws(() => registerKitMetadata(api), /Special mechanics not registered: trizooka/);
   assert.equal(JSON.stringify(api), original); assert.throws(() => composeKits(api), /incomplete/);
 });
+
+test('partial 11.3.0 slots never overwrite an unsupported special or its point cost', () => {
+  const api = registries();
+  Object.assign(api.WEAPONS, Object.fromEntries(['dualies','slosher','splatling']
+    .map(id => [id,{id,sub:'bomb',special:'slam',specialCost:999,blurb:'baseline'}])));
+  api.SUB.sprinkler = {id:'sprinkler',inkCostFallback:60};
+  composeKits(api);
+  for (const [id,sub] of [['dualies','suction'],['slosher','bomb'],['splatling','sprinkler']]) {
+    const w = api.WEAPONS[id];
+    assert.equal(w.kitStatus,'partial-verified-kit',id);
+    assert.deepEqual(w.kitVerifiedSlots,['sub'],id);
+    assert.equal(w.sub,sub,id);
+    assert.equal(w.special,'slam',id+' retains original special');
+    assert.equal(w.specialCost,999,id+' retains original special cost');
+    assert.match(w.blurb,/Partial Splatoon 3 kit/,id);
+  }
+  const missing = registries();
+  delete missing.SUB.autobomb;
+  const before = JSON.stringify(missing.WEAPONS);
+  assert.throws(() => composeKits(missing),/incomplete.*blaster/);
+  assert.equal(JSON.stringify(missing.WEAPONS),before,'incomplete registration cannot partially mutate kits');
+});

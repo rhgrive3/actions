@@ -53,6 +53,27 @@ export function composeKits({ WEAPONS, SUB, SPECIALS }) {
     const kit = VERIFIED_KITS[main], partial = PARTIAL_KITS[main];
     if (kit) Object.assign(w, { sub: kit.sub, special: kit.special, specialCost: kit.specialCost,
       kitReference: kit.main, kitStatus: 'verified-base-kit' });
+    else if (partial) {
+      // Install only sourced slots whose mechanics are actually implemented.
+      // The unsupported special and its legacy gauge cost must stay together.
+      const slots = [], changes = {
+        kitReference: partial.main,
+        kitStatus: 'partial-verified-kit',
+        kitMissingSlots: { ...partial.missing },
+      };
+      if (partial.sub) { changes.sub = partial.sub; slots.push('sub'); }
+      if (partial.special) {
+        changes.special = partial.special;
+        changes.specialCost = partial.specialCost;
+        slots.push('special');
+      }
+      changes.kitVerifiedSlots = slots;
+      Object.assign(w, changes);
+      const label = slots.length === 2
+        ? '11.3.0 kit slots installed (mechanics may use explicitly labelled calibrations).'
+        : 'Partial Splatoon 3 kit: verified 11.3.0 slots installed; unsupported slots retain original INKWAVE mechanics.';
+      if (!w.blurb?.includes(label)) w.blurb = `${w.blurb || ''} ${label}`.trim();
+    }
     else if (w.kitStatus === 'opt-in-inkwave-support-approx-main' && w.id === 'support') {
       // The optional training kit is deliberately not a source-verified main.
       // Preserve its explicit identity rather than relabeling it as a legacy kit.
