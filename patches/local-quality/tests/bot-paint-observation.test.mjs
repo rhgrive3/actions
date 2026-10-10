@@ -86,3 +86,47 @@ test('Boss beam threat remains current while the paint observation is cached',as
  x.f.G.boss.hz.threat=()=>({level:0,ringIn:-1,beam:true,cover:false});
  x.tick();assert.equal(x.a.intent.squid,true);assert.equal(x.a.intent.fire,false);assert.equal(x.calls(),n);
 });
+
+
+const headlessRenderer = () => ({
+  capabilities: { getMaxAnisotropy: () => 1 }, target: null,
+  getRenderTarget() { return this.target; }, getClearColor(out) { return out.setRGB(0, 0, 0); },
+  getClearAlpha() { return 0; }, setRenderTarget(t) { this.target = t; },
+  setClearColor() {}, clear() {}, render() {},
+});
+async function nativePaintCPU(old) {
+  const x = await setup({ old });
+  const f = x.f;
+  const level = new f.Level({
+    bounds: { minX: -12, maxX: 12, minZ: -12, maxZ: 12 },
+    spawnPads: [[-8, 0, 0], [8, 0, 0]], spawnBarrier: 0, half: [],
+    single: [{ kind: 'box', min: [-12, -.5, -12], max: [12, 0, 12] }],
+  });
+  f.G.level = level;
+  const paint = new f.PaintSystem(headlessRenderer(), level, { atlasSize: 512, maxDensity: 2 });
+  let calls = 0, cpuMs = 0;
+  const original = paint.regionStats.bind(paint);
+  paint.regionStats = function (...args) {
+    const started = performance.now();
+    try { return original(...args); }
+    finally { cpuMs += performance.now() - started; calls++; }
+  };
+  f.G.paint = paint;
+  const brains = [x.brain, ...Array.from({ length: 6 }, () => x.newBrain())];
+  try {
+    const t0 = performance.now();
+    for (let step = 0; step < 60; step++)
+      for (const brain of brains) brain.update(1 / 60);
+    return { calls, cpuMs, totalMs: performance.now() - t0, bots: brains.length };
+  } finally { paint.dispose?.(); }
+}
+test('#861 real PaintSystem/Level bot-region scans and CPU time are recorded for 7 live brains', async () => {
+  const before = await nativePaintCPU(true);
+  const after = await nativePaintCPU(false);
+  assert.ok(before.calls >= 350, 'baseline reproduces bot count × tick-rate queries');
+  assert.ok(after.calls < before.calls / 4, 'perception reuse bounds the actual CPU-grid scan count');
+  assert.ok(before.cpuMs >= 0 && after.cpuMs >= 0 && Number.isFinite(before.totalMs) && Number.isFinite(after.totalMs));
+  // Actual Node CPU time is reported as evidence, NOT asserted as hardware or
+  // iOS/Android frame-time parity. Native query counts are deterministic.
+  console.log('#861 native PaintSystem regionStats 7 bots × 60 ticks', JSON.stringify({ before, after }));
+});

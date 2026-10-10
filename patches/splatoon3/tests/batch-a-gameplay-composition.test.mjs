@@ -181,8 +181,9 @@ test('store while holding fire and roll maintaining charge (#390 / #386 baseline
 test('Issue #539 supersedes #377: Charger enters charge at partial normal-run speed', async () => {
   const { obs } = await runScenario(60);
   // #726 retains its 1F startup. #539 identifies the 1.2 WU/s speed as the
-  // full-charge endpoint, not the partial-charge entry speed; the verified
-  // 0.96 S3 partial entry is 5.76 in the current INKWAVE profile.
+  // full-charge endpoint, not the partial-charge entry speed; the S3 0.96
+  // partial entry (community verification table, 未確認 as pinned data) is
+  // 5.76 in the current INKWAVE profile.
   assert.equal(obs.firstTickCharging, false, 'Charger is in its 1F startup on tick 1');
   assert.equal(obs.firstTickCharge, 0, 'the startup tick advances no charge progress');
   assert.equal(obs.entryTickCharging, true, 'Charger enters charging state on tick 2');

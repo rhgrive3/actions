@@ -1,4 +1,5 @@
 import { conditionalPoints } from './conditional-gear.mjs';
+import { drinkGearPoints } from './support-cooler.mjs';
 // Flow grants temporary ability points, not a second set of speed multipliers.
 // Permanent equipment, runner state, resource clocks and Flow lifetime stay owned
 // by their existing systems. The source/measurement limits are in the report.
@@ -14,7 +15,10 @@ export function refreshFlowEffects(actor, api, tuning, abilityPoints, gearCurve)
   if (!m || !weapon) return;
   const active = !!s.flow?.active, previous = applied.get(actor);
   if (previous?.active === active && previous.modifiers === m && previous.weapon === weapon) return;
-  const basePoints = conditionalPoints(actor, abilityPoints(s.loadout), api.G.match, tuning.conditionalGear);
+  // Flow recalculates movement curves after every gear refresh. Include the
+  // authoritative drink AP floors here, otherwise this second owner silently
+  // overwrites Tacticooler's speed/resistance immediately after pickup.
+  const basePoints = { ...drinkGearPoints(conditionalPoints(actor, abilityPoints(s.loadout), api.G.match, tuning.conditionalGear), actor) };
   // Drop Roller and Flow both contribute temporary AP to overlapping movement
   // curves. Preserve the Drop Roller speed/resistance bonus when Flow refreshes
   // derived modifiers, while leaving canonical equipment AP untouched.

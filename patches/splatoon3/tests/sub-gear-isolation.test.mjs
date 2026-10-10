@@ -37,9 +37,18 @@ test('full installed Kit preview and nested throw share actor-local power and re
 
 test('actor-local gear resolution preserves unknown cost instead of inventing a free sub',()=>{const a={weapon:{sub:'unknown'},s3:{modifiers:{inkSaverSub:.65,subPower:1.5}}},SUB={unknown:{id:'unknown',inkCost:null,inkCostFallback:null,throwSpeed:1}};const resolved=resolveSubForThrow(a,0,SUB);assert.equal(resolved.inkCost,null);assert.equal(resolved.throwSpeed,1.5);assert.equal(SUB.unknown.throwSpeed,1);});
 
+// #574 added `import { slamProtected } from './tidal-slam-gauge.mjs'` to the runtime module.
+// A data: URL cannot resolve that relative edge, and fidelityThrowVelocity never calls
+// slamProtected, so this loader stubs only that edge (same approach as gyro-sensitivity-endpoints).
+function loadCompiled(code){
+ const stubbed=code.replace("import { slamProtected } from './tidal-slam-gauge.mjs';",'const slamProtected = () => false;');
+ assert.notEqual(stubbed,code,'slamProtected import stub applied');
+ return import('data:text/javascript;base64,'+Buffer.from(stubbed).toString('base64'));
+}
+
 test('full dispatcher preserves explicit Kit power once and implicit Storm snapshot with existing vertical inheritance',async()=>{
  const rel='patches/splatoon3/runtime/sub-special-fidelity.mjs', raw=fs.readFileSync(ROOT+rel,'utf8');
- const compiled=adaptBuildSource(rel,raw), f=await import('data:text/javascript;base64,'+Buffer.from(compiled).toString('base64'));
+ const compiled=adaptBuildSource(rel,raw), f=await loadCompiled(compiled);
  const a={aimYaw:.3,aimPitch:.2,vel:{x:2,y:7,z:-3},s3:{modifiers:{subPower:1.5},stormPowerSnapshot:{throwScale:1.25}}};
  const vector=()=>({set(x,y,z){this.x=x;this.y=y;this.z=z;return this;}});
  for(const kind of ['bomb','storm'])for(const explicit of [undefined,0,42,100.8]){
@@ -53,7 +62,7 @@ test('full dispatcher preserves explicit Kit power once and implicit Storm snaps
  const oldZ='  const horizontal = p.spawnSpeedZ * cp - p.spawnSpeedY * sp;';
  assert.throws(()=>replace(raw,oldZ,'unused'),/0 !== 1/,'old dispatcher anchor cannot transform the explicit-speed module');
  const legacy=raw.replace('  const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;\n','').replaceAll('speed * cp','p.spawnSpeedZ * cp').replaceAll('speed * sp','p.spawnSpeedZ * sp');
- const legacyCompiled=adaptGearSub(rel,legacy,replace), old=await import('data:text/javascript;base64,'+Buffer.from(legacyCompiled).toString('base64'));
+ const legacyCompiled=adaptGearSub(rel,legacy,replace), old=await loadCompiled(legacyCompiled);
  for(const kind of ['bomb','storm']){const x=old.fidelityThrowVelocity(a,kind,vector()),y=f.fidelityThrowVelocity(a,kind,vector());assert.deepEqual([x.x,x.y,x.z],[y.x,y.y,y.z]);}
  assert.throws(()=>adaptGearSub(rel,compiled,replace),/expected one fidelity launch-speed owner/);
  assert.throws(()=>adaptGearSub(rel,raw+raw,replace),/expected one fidelity launch-speed owner/);

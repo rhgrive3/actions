@@ -60,12 +60,28 @@ export function installNormalJumpHold({ Actor },profile={}) {
           prior.applied=true;
         }
       }
-    } else if(prior && (!ordinary || this.grounded)) states.delete(this);
-    const result=update.call(this,dt);
-    if(ordinary && this.s3JumpSerial!==before && !this.superJumpState) {
-      states.set(this,{serial:this.s3JumpSerial,frames:Number.isFinite(dt)&&dt>0?dt*60:0,
-        released:!this.intent?.jump,applied:false});
+    } else if(prior && (!ordinary || this.grounded || this.vel?.y <= 0)) {
+      // A ceiling/apex ends this jump's ascent. An unrelated later upward
+      // impulse must not revive its still-unconsumed release response.
+      states.delete(this);
     }
+    const result=update.call(this,dt);
+    // Native update may emerge from squid before admitting a humanoid jump.
+    // Own the successful jump, not the form at the beginning of its input tick.
+    const started=(this.s3JumpSerial||0)!==before;
+    if(started && this.alive && this.form==='kid' && !this.superJumpState &&
+       !this.specialActive && !this.climbing) {
+      states.set(this,{serial:this.s3JumpSerial,frames:Number.isFinite(dt)&&dt>0?dt*60:0,
+        // Buffered presses can be released before native landing admission.
+        // Observe that release on the next ascent tick just like an ordinary
+        // 1F tap, rather than marking an unapplied response already consumed.
+        released:false,applied:false});
+    }
+    // Native collision/integration can end ascent during this very tick,
+    // including the takeoff tick under a low ceiling. Retire it before any
+    // later external impulse gets a chance to make velocity positive again.
+    if(this.vel?.y <= 0 || this.grounded || !this.alive || this.form!=='kid' ||
+       this.superJumpState || this.specialActive || this.climbing) states.delete(this);
     return result;
   };
   Actor.prototype.reset=function(...args){states.delete(this);return reset.apply(this,args);};

@@ -13,7 +13,7 @@ import { adaptRange } from '../../practice-range/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../',import.meta.url));
 const SRC = path.join(ROOT,'inkwave-public');
 const compose=(rel,code)=>adaptRange(rel,adaptNetworkSource(rel,adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,code))))));
-export async function bossWorld(patched = true) {
+export async function bossWorld(patched = true, { adapt = (_rel, code) => code } = {}) {
   const context=vm.createContext({ console, performance:{now:()=>1000} });
   const modules=new Map();
   function resolve(spec,from) {
@@ -27,11 +27,11 @@ export async function bossWorld(patched = true) {
   function load(file) {
     if(modules.has(file)) return modules.get(file);
     const rel=path.relative(file.startsWith(SRC+path.sep)?SRC:ROOT,file);
-    let code=compose(rel,fs.readFileSync(file,'utf8'));
+    let code=adapt(rel,compose(rel,fs.readFileSync(file,'utf8')));
     if(!patched && rel==='src/net/netmatch.js') {
-      const guarded="case 'bhit': if (this.isHost && this._acceptBossHit(from, d)) this.match.boss.remoteHit(d, from); break;";
+      const guarded="case 'bhit': if (this.isHost && this._acceptBossHit(from, d)) this.match.boss.remoteHit(d); break;";
       if(!code.includes(guarded)) throw Error('Boss negative-control admission boundary changed');
-      code=code.replace(guarded,"case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d, from); break;");
+      code=code.replace(guarded,"case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d); break;");
     }
     const module=new vm.SourceTextModule(code,{context,identifier:file});modules.set(file,module);return module;
   }

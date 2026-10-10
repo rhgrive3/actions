@@ -211,3 +211,34 @@ only. Browser/GPU rendering, actual S3
 resource selection, original per-family joint curves, gear variants and Switch
 hardware parity remain **unverified**. No movement, collision, jump timing,
 damage, ink, weapon admission/cooldown or packet behavior was changed.
+
+## Action-state catalog selection — 2026-10-10 (#1116)
+
+**Source.** The pinned Flexlion animation-name index at
+[@7740d29](https://github.com/Flexlion/flexlion.github.io/blob/7740d29fdded2899a7633e50647736e3723c5e9a/assets/animations.txt)
+was re-fetched on 2026-10-10 (28,748 bytes). It lists `JumpShoot_Shtr00`–`02`,
+`JumpShoot_Rllr00`, `JumpShoot_Spnr00` and `JumpShoot_Chrg00`–`02`, each with
+`_St`/`_Ed` forms. No `JumpShoot_*` name appears for Dualies (`Mnvr`), Slosher
+(`Slsh`) or the Normal fallback. Names alone do not prove playback, FSKA tracks
+or any shot/charge-level mapping.
+
+**INKWAVE implementation.** `runtime/jump-motion.mjs` tracks `input.firing` on
+each airborne ordinary jump. The snapshot reports `actionState` (`ordinary` or
+`firing`) and `selectedCatalogCandidates`. The firing state names the
+`JumpShoot_*` candidates above for Shooter, Roller, Splatling and Charger.
+Dualies, Slosher and Blaster keep their ordinary candidate, and Charger's
+ordinary candidate remains `Jump_Nrml00`. Both states use the same local foot
+pose profile, so the pose output is unchanged and `referenceCurveVerified`
+stays false.
+
+**Tests.** `patches/splatoon3/tests/jump-motion.test.mjs` passes 12/12, including
+the new candidate-table and action-state tests. Neighbouring
+walk-special-contact, bomb-motion, superjump-motion and squidroll-motion tests
+pass 62/62. These are CPU rig checks only.
+
+**Unverified.** Which `Jump_*` or `JumpShoot_*` clip actually plays for each
+input; the Shtr00/01/02 and Chrg00/01/02 variant mapping; whether Blaster has a
+firing clip (the `JumpShoot_Blower00` correspondence is not established);
+per-family joint curves; whether a firing jump's legs should differ from an
+ordinary jump; and Switch, GPU and browser parity. No movement, collision, jump
+timing, damage, ink, weapon admission/cooldown or packet behavior was changed.

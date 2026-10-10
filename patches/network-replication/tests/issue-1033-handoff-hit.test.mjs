@@ -128,7 +128,7 @@ ${methods}
   );
   const net = new NetMatchHarness();
   Object.assign(net, {
-    myId: id, isHost: id === 'H' || id === 'C', cfg: { map: 'normal' },
+    myId: id, isHost: id === 'H' || id === 'C', cfg: { id: 'match-1', map: 'normal' },
     byNid: new Map(), hitNextSeq: 0, hitPending: new Map(), _pendingHits: new Map(),
     peers: new Map(), unsubs: [],
     match: { boss: null, follower: true, removeActor() {} },
@@ -798,7 +798,7 @@ test('production mapNoBots cargo removes the actor and retires its hit without r
 test('composed hit receipt accepts a delayed retry before rejecting duplicate identity', () => {
   const f = room();
   const receiver = f.V.net;
-  const base = { k: 'hit', v: 4, a: 7, l: 5, d: 20, w: 'shooter', rp: false };
+  const base = { k: 'hit', m: 'match-1', v: 4, a: 7, l: 5, d: 20, w: 'shooter', rp: false };
   deliver(f.S, f.V, { ...base, h: 2, seq: 2 });
   deliver(f.S, f.V, { ...base, h: 1, seq: 1 });
   assert.equal(f.V.victim.hp, 60, 'an older undelivered hit can arrive after a newer accepted hit');
@@ -816,7 +816,7 @@ test('composed hit dedupe retains the inclusive 65,536-id window without scannin
   peer.lastHit = 65536;
   peer.hitSequences = new NoFullScanSet([1, 65536]);
   peer.hitSequenceSlots = new Map([[1, 1], [0, 65536]]);
-  const base = { k: 'hit', v: 4, a: 7, l: 5, d: 20, w: 'shooter', rp: false };
+  const base = { k: 'hit', m: 'match-1', v: 4, a: 7, l: 5, d: 20, w: 'shooter', rp: false };
   deliver(f.S, f.V, { ...base, h: 65537, seq: 65537 });
   assert.equal(f.V.victim.hp, 80);
   assert.equal(peer.hitSequences.has(1), false, 'high-water movement retires the id at the expired boundary');

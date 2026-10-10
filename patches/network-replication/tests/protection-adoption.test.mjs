@@ -102,7 +102,7 @@ test('#958 adopted owner keeps the complete finite invulnerability timer and exp
 test('#958 adoption resumes accepted breakable armor, not its proxy boolean or old visual sample',async()=>{
   const f=await pair();f.source.invuln=0;f.source.s3.spawnArmorManaged=true;
   f.source.s3.spawnArmor={hp:30,remaining:2.8,breakRemaining:null};f.send();
-  const delayed=f.remote.net.buf.at(-1).adoption;
+  const delayed=f.remote.net.cur.adoption;
   f.source.s3.spawnArmor={hp:0,remaining:2.5,breakRemaining:.12};f.send();
   f.remote.net.cur.adoption=delayed;f.receiver.onLeave('p2',false);
   assert.equal(f.remote.s3.spawnArmor.hp,0);close(f.remote.s3.spawnArmor.remaining,2.5);close(f.remote.s3.spawnArmor.breakRemaining,.12);
@@ -111,7 +111,7 @@ test('#958 adoption resumes accepted breakable armor, not its proxy boolean or o
   f.remote.damage(10,f.local,'shooter');assert.ok(f.remote.hp<hp);
 });
 test('#958 latest expired armor cannot be rearmed by a delayed protected sample',async()=>{
-  const f=await pair();f.source.s3.spawnArmorManaged=true;f.source.s3.spawnArmor={hp:30,remaining:1,breakRemaining:null};f.send();const stale=f.remote.net.buf.at(-1).adoption;
+  const f=await pair();f.source.s3.spawnArmorManaged=true;f.source.s3.spawnArmor={hp:30,remaining:1,breakRemaining:null};f.send();const stale=f.remote.net.cur.adoption;
   f.source.s3.spawnArmor=null;f.source.invuln=0;f.send();f.remote.net.cur.adoption=stale;f.receiver.onLeave('p2',false);assert.equal(f.remote.s3.spawnArmor,null);assert.equal(f.remote.invuln,0);
 });
 test('#958 malformed/stale/foreign protection cannot replace accepted ownership state; old age rows stay compatible',async()=>{

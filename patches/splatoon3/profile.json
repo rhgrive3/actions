@@ -218,38 +218,13 @@
       "rollContactInterval": 0.4,
       "rollSpeed": 7.92,
       "rollBaseSpeed": 6.4799999999999995,
+      "rollDashTurnBreakSpeed": 6.4799999999999995,
       "rollDashTime": 1.5,
-      "rollDashTurnBreakSpeed": 6.48,
       "rollInkPerMeter": 0.7575757575757576,
       "rollInkMinPerFrame": 0.0002,
       "rollInkMaxPerFrame": 0.001,
       "rollInkMinSpeed": 1.2,
       "rollInkMaxSpeed": 7.92,
-      "horizontalSpawn": {
-        "width": 0.8,
-        "randomCube": 0.1,
-        "worldScale": 1
-      },
-      "verticalSpawn": {
-        "groups": [
-          {
-            "count": 1,
-            "height": 0.25,
-            "offsetHeight": 0.5
-          },
-          {
-            "count": 2,
-            "height": 0.25,
-            "offsetHeight": -0.25
-          },
-          {
-            "count": 2,
-            "height": 0.25,
-            "offsetHeight": -1.25
-          }
-        ],
-        "worldScale": 1
-      },
       "flickWindup": 0.35,
       "flickInk": 8.5,
       "moveSpeedFiring": 2.88,
@@ -394,7 +369,8 @@
       "spawnPlayerForwardRate": 2,
       "squidFlickDelay": 0.21666666666666667,
       "rollDamage": 125,
-      "rollInkRecoverStop": 0.3333333333333333
+      "rollInkRecoverStop": 0.3333333333333333,
+      "rollContactInterval": 0.4
     },
     "slosher": {
       "inkPerShot": 7.6,
@@ -412,7 +388,7 @@
         "bulletOrderNumInUnit": 0,
         "frame": 13
       },
-      "postShotDelay": 0.26666666666666666,
+      "postShotDelay": 0.25,
       "postShotLock": 0.26666666666666666,
       "reticleRange": {
         "ground": 14.24,
@@ -576,7 +552,11 @@
       "chargeMoveScale": 0.25,
       "armorThreshold": 100
     },
-    "wallRollMaximumAngle": 0.7853981633974483
+    "wallRollMaximumAngle": 0.7853981633974483,
+    "neutralWallSlide": {
+      "terminalSpeed": 0.9,
+      "acceleration": 3.6
+    }
   },
   "flow": {
     "threshold": 3,
@@ -643,6 +623,7 @@
       "inkFractionToTankPoints": "*100"
     },
     "unverified": [
+      "#253 neutral inked-wall cling descent: terminalSpeed 0.9 WU/s and acceleration 3.6 WU/s^2 are provisional calibration; no climb/slide key was found in the pinned Leanny SplPlayer table (summary check only) and no measured Switch 11.3.0 speed curve or start delay has been recorded",
       "air-control/jump and landing feel; grounded base/attack acceleration is community-frame-calibrated, physical-device confirmation pending",
       "Flow scoring/extension/buff multipliers (30s duration is official)",
       "default omitted shooter fire/recovery and charger charge/recovery fields",
@@ -650,6 +631,7 @@
       "splatling second charge phase interpretation and partial stream duration",
       "ink recovery suppression during stored charge and dry squid",
       "special slam remains INKWAVE original; it is not Triple Splashdown (only the HP endpoints 220/60 follow Inkipedia's S3 Triple Splashdown base damage, community-sourced and not in the pinned extraction; radii, fists, falloff shape and armor are unchanged)",
+      "special slam hang 0.5s (was 0.25s, +15F) is an INKWAVE calibration that places the 60Hz ground-contact impact near the project's 70F target (issue #966); no Nintendo-published Triple Splashdown impact frame is in the pinned extraction, so the 70F target and Switch frame-level parity are unverified",
       "splatling ChargeFrame_Second is interpreted cumulatively (72F total), not added to ChargeFrame_First (48F); actual engine timing requires verification",
       "weapon weight classes and all charging/rolling movement restrictions",
       "Flow action-intensify bonus and gear stacking; fixed run/swim/enemy-ink multipliers remain provisional, not equivalent to confirmed AP",
@@ -675,6 +657,7 @@
       "Rescued #299/#315/#340 residuals: roll/surge control, enemy-ink grace/quantization/action speed, Roller contact/recovery and terrain Blaster hit ratio; current #5 projectile chronology remains authoritative.",
       "super jump initial-form term (1F swim / 22F humanoid, issue #708) is a published community measurement from the S3 main-weapon verification table, not an extracted 11.3.0 parameter; the 80F charge wait and 138F flight it precedes stay pinned and Quick Super Jump scaling still applies only to those two components",
       "Charger feetPaintRadius 0.7 is a local footprint calibration for guaranteed feet paint; physical Switch radius remains unverified.",
+      "#539 Charger partial-charge movement: partialChargeMoveStart 5.76 (S3 0.96 normal-side) and partialChargeMoveEnd 1.26 (S3 0.21 maximum-partial side) are community verification-table values (wikiwiki Splat Charger table, not re-fetched: HTTP 403), NOT in the pinned Leanny WeaponChargerNormal extraction, which carries only MoveSpeedFullCharge 0.02 (1.2 u/s); the linear interior between start and end and its Nintendo easing are unverified; the 1.2 full-charge endpoint remains the pinned value",
       "Death-cause respawn totals 8.5/7.0/5.5s are public-reference values retained from PR #186; official 11.3.0 parameter confirmation remains unavailable.",
       "Roller roll-stop action interruption (main 16F / sub 5F / squid 6F) is a community frame measurement from the S3 verification table '検証/メインウェポン/前隙・後隙', 塗り進み interruption row. The page returned HTTP 403 on the 2026-10-06 re-fetch, so the three numbers are recorded with that source and NOT claimed as re-verified here; the frame-to-second conversion is /60 and the endpoint convention is 'roll-end tick is frame 0'. They are not pinned Ver. 11.3.0 parameter-table fields.",
       "Rescued from PR #63: shooter fire gates, charger air/empty/min-release/store timing, HP regen rates and death-cause respawn routing remain regression-backed; physical-device confirmation is still pending.",
@@ -3544,6 +3527,7 @@
       "splatlingRandom": "symmetric uniform use of explicit SpawnSpeedRandomRate bounds; native bias law is not recovered",
       "rollerOmittedCount": "omitted BulletNum interpreted as one, matching the existing latest-main near-unit owner; omission semantics remain labelled inference",
       "rollerSpawnAnchor": "latest-main native body anchor retained; explicit source offsets applied by #64; absolute Switch-space anchor unverified",
+      "rollerVerticalSpawnHeight": "#278: each VerticalSwingUnitGroupParam unit's SpawnPositionHeight and SpawnPositionOffsetHeight are summed as raw INKWAVE world units (scale 1) onto the retained muzzle anchor, giving per-group starts 1+2+2; the additive combination, per-field engine meaning and the raw-unit scale are unverified (Leanny table has no field semantics); not an SI-metre claim",
       "rollerHorizontalRandom": "explicit speed/width random bounds are used while native probability distribution/order remains unverified",
       "slosherAim": "native aim direction retained with explicit AddSpawnSpeedYRateByXZ and source unit rotations; no range-fitting solve",
       "slosherOffsets": "AfterOffset fields applied once per subsequent unit instance; engine semantics are source-guided",

@@ -41,7 +41,8 @@ test('#966 render cadence cannot change the fixed-tick Slam impact',async()=>{
     const {f,a,hits}=await makeFlatSlam(),clock=new FixedClock();
     let ticks=0;
     for(let i=0;i<hz*3 && a.specialActive;i++){
-      clock.advance(1/hz,dt=>{f.G.time+=dt;a.update(dt);ticks++;});
+      // count only fixed ticks that began while the action was live, so a render frame that runs one extra tick cannot shift the count
+      clock.advance(1/hz,dt=>{const live=!!a.specialActive;f.G.time+=dt;a.update(dt);if(live)ticks++;});
     }
     assert.equal(hits.length,1);
     traces.push(ticks);

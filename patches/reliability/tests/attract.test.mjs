@@ -14,6 +14,7 @@ import { adaptIntro } from '../intro-adapter.mjs';
 import { adaptStart } from '../start-adapter.mjs';
 import { adaptAttract } from '../attract-adapter.mjs';
 import { adaptReliability } from '../adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 // Focused lifetime test for the menu-attract auto-reset in Game._updateAttract. It exercises the
 // actual composed methods (gameplay overlays + the reliability overlays in adapter.mjs order,
@@ -57,7 +58,7 @@ const fixtureCode = fs.readFileSync(FIXTURE_URL, 'utf8')
   .split("test('negative proof:")[0]
   .replace(/^import .*;\n/gm, '')
   .replaceAll('import.meta.url', JSON.stringify(pathToFileURL(fileURLToPath(FIXTURE_URL)).href));
-const sandbox = { assert, fs, vm, URL, adaptSource, adaptTouchLayout, adaptStart, adaptResults, adaptIntro };
+const sandbox = { assert, fs, vm, URL, adaptSource, adaptTouchLayout, adaptStart, adaptResults, adaptIntro, adaptBuildSource };
 vm.runInNewContext(`${fixtureCode}\nglobalThis.bootReview = boot; globalThis.deferredReview = deferred;`, sandbox);
 const { bootReview } = sandbox;
 

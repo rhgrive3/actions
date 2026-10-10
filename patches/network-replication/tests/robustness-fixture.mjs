@@ -177,7 +177,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
   const r3 = (x) => Math.round(x * 1000) / 1000;
   // mirrors packActor() field order
   function packActor(a, { x = a.pos.x, y = a.pos.y, z = a.pos.z, vx = a.vel.x, vy = a.vel.y, vz = a.vel.z, yaw = a.yaw, f = 0, tp = a.netTp || 0 } = {}) {
-    return [a.nid, r3(x), r3(y), r3(z), r3(vx), r3(vy), r3(vz), r3(yaw), r3(a.aimYaw), r3(a.aimPitch), f, 100, 100, 0, 0, 0, tp, 0, 0, 1, 0, 0];
+    return [a.nid, r3(x), r3(y), r3(z), r3(vx), r3(vy), r3(vz), r3(yaw), r3(a.aimYaw), r3(a.aimPitch), f, 100, 100, 0, 0, 0, tp, 0, 0, 1, 0];
   }
   const tick = (nm, from, ts, { a = [], e, l = null } = {}) => nm.onMessage(from, {
     k: 't', ts,

@@ -1,7 +1,8 @@
 // #539 supersedes #377's full-charge-speed-from-entry interpretation.
-// Source-backed partial endpoints: 5.76 -> 1.26 u/s; full: 1.2 u/s.
-// This checks the real fixed-step Actor and gear/lock composition; the
-// interpolation between pinned endpoints remains a local approximation.
+// Partial endpoints 5.76 -> 1.26 u/s are community verification-table values
+// (not in the pinned Leanny extraction); full 1.2 u/s is the pinned endpoint.
+// The interpolation between endpoints is a linear approximation (未確認).
+// This checks the real fixed-step Actor and gear/lock composition.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
@@ -126,7 +127,7 @@ test('actual Actor tracks partial target, reaches 1.2 full charge and honors loc
   clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
   assert.equal(clock.ticks, 1);
   assert.equal(a.weaponRunner.charging, false);
-  // Tick 2 begins at the pinned normal-run partial endpoint.
+  // Tick 2 begins at the #539 normal-side partial endpoint (community table).
   clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
   assert.equal(a.weaponRunner.charging, true);
   close(a.weaponRunner.moveSpeed(), 5.76, 'runner target at charging entry');

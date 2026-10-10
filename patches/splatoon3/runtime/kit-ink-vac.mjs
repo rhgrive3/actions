@@ -28,6 +28,8 @@
 // parent wires into the native NetMatch transport. No native source, adapter,
 // profile or network file is touched here; see INK_VAC_EVENTS below.
 
+import { kitSubFor } from './kit-subs.mjs';
+
 let api = null;
 const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
 export const VAC_ID = 'inkVac';
@@ -63,6 +65,9 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   actorContactDamagePerSecond: 90,
   actorInkFractionPerSecond: .12,
   actorMoveSpeedScale: .6,
+  // #1149: PoisonMistForPlayer.SideStepInkConsumeRate 3.5 (Leanny/splat3 @7280ff9c,
+  // WeaponSpBlower). Applied to the Dualies dodge-roll admission cost only.
+  sideStepInkConsumeRate: 3.5,
   actorSuppressionStatus: 'engineering calibration: 12% tank/s and 60% movement cap; sparse S3 PoisonMistForPlayer data omits drain/speed defaults; retail magnitudes unverified',
   rawToHp: RAW_TO_HP,
   framesPerSecond: 60,
@@ -111,7 +116,7 @@ export const INK_VAC_EVENTS = Object.freeze({
   activation: 'special:inkvac',
   // { actor: owner, kit, serial, charge }  owner-approved charge state
   charge: 'special:inkvac-charge',
-  // { actor: shooter, target: vac owner, kit, serial, key }  credit PROPOSAL
+  // { actor: shooter, target: vac owner, kit, serial, key, damage, sub?, special? } credit PROPOSAL
   absorb: 'special:inkvac-absorb',
   // { actor: owner, kit, serial, charge }  the countershot itself travels as a
   // native recProj/ghostProjectile packet, so this carries NO projectile.
@@ -321,6 +326,27 @@ function proposalWeaponDamage(weapon) {
     weapon.flickDamageNear, weapon.damageMin].find(v => Number.isFinite(v) && v > 0);
   return value || 0;
 }
+// #1090: a thrown bomb retains its own sub identity. The main weapon's damage
+// is not a bound for that separate attack (e.g. Suction Bomb 180 vs Shooter 36).
+// Resolve the optional descriptor only against the receiver's authenticated kit
+// and live registry; a packet cannot supply a damage table or choose another sub.
+function proposalDamageLimit(actor, payload) {
+  if (Object.hasOwn(payload, 'special')) {
+    const id = payload.special;
+    if (Object.hasOwn(payload, 'sub') || (id !== 'trizooka' && id !== VAC_ID) || actor.weapon?.special !== id) return null;
+    // The installed local registry owns these descriptors. No projectile data
+    // or charge/radius supplied by the peer is used to construct the ceiling.
+    const descriptor = api.SPECIALS?.[id]?.projectileDescriptor?.({});
+    const damage = descriptor?.directDamage ?? descriptor?.splashDamageMax;
+    return Number.isFinite(damage) && damage > 0 ? Math.min(MAX_ACCEPTED_DAMAGE_HP, damage) : null;
+  }
+  if (!Object.hasOwn(payload, 'sub')) return proposalWeaponDamage(actor.weapon);
+  const id = payload.sub;
+  if (id !== 'bomb' && id !== 'suction') return null;
+  const sub = kitSubFor(actor.weapon, api.SUB);
+  if (sub?.id !== id || !Number.isFinite(sub.damageMax) || sub.damageMax <= 0) return null;
+  return Math.min(MAX_ACCEPTED_DAMAGE_HP, sub.damageMax);
+}
 // Use the projectile's damage BEFORE neutralising it. Native bombs may carry
 // their damaging hitbox on the linked bomb rather than on their visual proxy.
 function absorbDamageEquivalent(projectile) {
@@ -352,7 +378,11 @@ function proposeAbsorption(state, projectile, damage) {
   if (!shooter || shooter.remote === true) return false;   // only a locally owned shooter may propose
   if (!Number.isInteger(state.serial)) return false;
   const key = `${shooter.nid !== undefined ? shooter.nid : 'i' + identityOf(shooter)}#p${++proposalSeq}`;
-  api.emit?.(INK_VAC_EVENTS.absorb, { actor: shooter, target: state.actor, kit: VAC_ID, serial: state.serial, key, damage });
+  const event = { actor: shooter, target: state.actor, kit: VAC_ID, serial: state.serial, key, damage };
+  const bomb = projectile.s3InkVacBomb;
+  if (bomb) event.sub = bomb.s3Sub?.id || bomb.s3Resolved?.spec?.id || 'bomb';
+  else if (projectile.s3SpecialWeapon) event.special = projectile.s3SpecialWeapon.id || projectile.s3SpecialWeapon.wid;
+  api.emit?.(INK_VAC_EVENTS.absorb, event);
   return true;
 }
 
@@ -488,6 +518,12 @@ export function inkVacActorContact(owner, victim) {
 function actorInVortex(victim) {
   return !victim.remote && victim.alive && (api.G.actors || []).some(owner => inkVacActorContact(owner, victim));
 }
+// #1149: the Dualies dodge-roll cost (rollInk) is multiplied by the sourced
+// SideStepInkConsumeRate while the Dualies owner is inside a live hostile cone.
+// Admission-time only, matching the existing one-time rollInk payment.
+export function inkVacSideStepScale(actor) {
+  return actor?.weapon?.kind === 'dualies' && actorInVortex(actor) ? INK_VAC_CALIBRATION.sideStepInkConsumeRate : 1;
+}
 function suppressMovement(actor) {
   if (!actorInVortex(actor)) return;
   const base = actor.form === 'squid'
@@ -603,14 +639,16 @@ export function replayInkVac(eventName, actor, payload, opts = {}) {
     if (!Number.isFinite(damage) || damage < 0 || damage > MAX_ACCEPTED_DAMAGE_HP) {
       return drop('invalid-absorb-damage');
     }
+    const limit = proposalDamageLimit(actor, payload);
+    if (limit === null) return drop('invalid-absorb-attack');
     const ledger = proposalLedger(subject);
     if (ledger.set.has(key)) return drop('duplicate-proposal');
     ledger.set.add(key); ledger.order.push(key);
     while (ledger.order.length > PROPOSAL_MEMORY) ledger.set.delete(ledger.order.shift());
     // Keep fractional/partial-hit damage from the proposal, but NEVER credit
-    // more than the sender's locally resolved weapon can deliver. Missing
-    // authenticated weapon data fails closed with zero charge.
-    creditCharge(state, Math.min(damage, proposalWeaponDamage(actor.weapon)));
+    // more than the sender's locally resolved attack can deliver. Main shots
+    // retain their existing bound; missing main data still credits zero.
+    creditCharge(state, Math.min(damage, limit));
     return { applied: true, serial, charge: state.charge };
   }
 
@@ -740,6 +778,25 @@ export function installKitInkVac(context, _profile) {
       proto[key] = key === '_horizontal' ? function (...args) {
         const result = original.apply(this, args); suppressMovement(this); return result;
       } : function (...args) { suppressMovement(this); return original.apply(this, args); };
+    }
+    // #1149: a Dualies dodge roll admitted inside a hostile cone costs
+    // rollInk x SideStepInkConsumeRate. The base method checks and pays rollInk,
+    // so the wrapper raises that check and payment by the exact surcharge and
+    // restores ink on refusal. Only Dualies owners are affected.
+    const runner = api.WeaponRunner?.prototype;
+    if (runner && typeof runner.tryDodge === 'function' && !Object.hasOwn(runner, INSTALL)) {
+      Object.defineProperty(runner, INSTALL, { value: true });
+      const dodge = runner.tryDodge;
+      runner.tryDodge = function (...args) {
+        const a = this.a, w = a?.weapon, scale = inkVacSideStepScale(a);
+        if (!(scale > 1) || !(w?.rollInk > 0)) return dodge.apply(this, args);
+        const before = a.ink;
+        a.ink = before - w.rollInk * (scale - 1);
+        let accepted = false;
+        try { accepted = dodge.apply(this, args); }
+        finally { if (!accepted) a.ink = before; }
+        return accepted;
+      };
     }
     proto._startSpecial = function () {
       if (this.weapon.special !== VAC_ID) return startSpecial.call(this);

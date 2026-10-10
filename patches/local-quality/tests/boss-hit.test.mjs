@@ -1,10 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { bossWorld } from './boss-hit-fixture.mjs';
-test('admission bypass is still sender-bound and finite: no spoof or healing', async () => {
-  const raw = await bossWorld(false);raw.nm.onMessage('spoof', raw.hit());assert.equal(raw.boss.hp, 10000);
-  raw.nm.onMessage('guest', raw.hit({ d: -50 }));assert.equal(raw.boss.hp, 10000);
-  raw.nm.onMessage('guest', raw.hit());assert.equal(raw.boss.hp, 9970);
+test('admission-disabled negative control permits spoof/healing; guarded native boss health and credit apply once', async () => {
+  const raw = await bossWorld(false);raw.nm.onMessage('spoof', raw.hit());assert.equal(raw.boss.hp, 9970);
+  raw.nm.onMessage('spoof', raw.hit({ d: -50 }));assert.equal(raw.boss.hp, 9970); // defense in depth still holds when transport is bypassed
   const f = await bossWorld();f.nm.onMessage('guest', f.hit());
   assert.equal(f.boss.hp, 9970);assert.equal(f.actor.stats.bossDmg, 30);assert.equal(f.boss.log.recv, 1);
   f.boss.hit(f.actor, 30, null, "shooter", null);assert.equal(f.boss.hp, 9970);
@@ -37,8 +36,8 @@ test('native crablet damage, storm batching and body cap preserve legitimate beh
   f.nm.onMessage('guest', f.hit({ c: 7, d: 40, w: 'crab' }));assert.equal(crab.hp, 0);assert.equal(f.actor.stats.splats, 1);
   f.nm.onMessage('guest', f.hit({ c: 7, d: 40, w: 'crab' }));assert.equal(f.actor.stats.splats, 1);
   f.nm.onMessage('guest', f.hit({ q: 2, d: 1.25, w: 'storm' }));assert.equal(f.boss.hp, 9998.75);
-  f.nm.onMessage('guest', f.hit({ q: 3, d: 2500 }));assert.equal(f.boss.hp, 9998.75);
-  f.nm.onMessage('guest', f.hit({ q: 4, d: 2000 }));assert.equal(f.boss.hp, 7998.75);assert.equal(f.actor.stats.bossDmg, 2001.25);
+  f.nm.onMessage('guest', f.hit({ q: 3, d: 2500 }));assert.equal(f.boss.hp, 9998.75); // over-limit payload must not reserve admission
+  f.nm.onMessage('guest', f.hit({ q: 3, d: 2000 }));assert.equal(f.boss.hp, 7998.75);assert.equal(f.actor.stats.bossDmg, 2001.25);
 });
 test('native sender includes only boss metadata; normal player hit routing and authority remain separate', async () => {
   const f = await bossWorld();let received;
@@ -51,4 +50,79 @@ test('native sender includes only boss metadata; normal player hit routing and a
   f.actor.remote = true;f.nm._peer('guest').lastHit = 99;f.nm.onMessage('guest', sent[1]);
   assert.equal(f.boss.hp, 9987.5);assert.equal(f.nm._peer('guest').lastHit, 99);
   sent = null;guest.sendBossHit(f.actor, 12.5, false, 'shooter');assert.equal(sent, null);
+});
+
+test('#1179 direct Boss methods reject nonnumeric, negative, nonfinite and unauthorized damage without HP/credit mutation', async () => {
+  const f = await bossWorld();
+  const crab = { id: 7, hp: 40, dead: false };
+  f.boss.crabs.set(7, crab);
+  const start = {hp:f.boss.hp, crab:crab.hp, recv:f.boss.log.recv};
+  const bad = [-20, 0, '-Infinity', '30', Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, NaN, null, {}, []];
+  for (const d of bad) {
+    f.boss.remoteHit(f.hit({ d }));
+    f.boss.remoteHit(f.hit({ d, c: 7 }));
+    f.boss.applyDamage(f.actor, d, false, null);
+    f.boss._hitCrab(f.actor, crab, d, true);
+    assert.equal(f.boss.hp, start.hp, `Boss HP corrupted by ${String(d)}`);
+    assert.equal(crab.hp, start.crab, `Crab HP corrupted by ${String(d)}`);
+  }
+  f.boss.remoteHit(f.hit({d:30,c:99}));
+  f.actor.alive = false;f.boss.remoteHit(f.hit({d:30}));
+  assert.equal(f.boss.hp, start.hp);
+  assert.equal(f.boss.log.recv, start.recv);
+  f.actor.alive = true;
+  f.boss.remoteHit(f.hit({d:30}));
+  assert.equal(f.boss.hp, 9970);
+  assert.equal(f.actor.stats.bossDmg, 30);
+  f.boss.remoteHit(f.hit({d:40,c:7}));
+  assert.equal(crab.hp, 0);
+  assert.equal(Number.isFinite(crab.hp) && Number.isFinite(f.boss.hp), true);
+});
+
+test('#1179 rejected over-limit and dead-attacker packets leave HP, credit, log and replay sequence unspent', async () => {
+  const f = await bossWorld();
+  const crab = { id:7, hp:40, dead:false }; f.boss.crabs.set(crab.id, crab);
+  f.nm.onMessage('guest', f.hit());
+  const before = { hp:f.boss.hp, credit:f.actor.stats.bossDmg, recv:f.boss.log.recv, seq:f.nm._peer('guest').lastBossHit };
+  for (const c of [-1, crab.id]) {
+    for (const d of [-1,0,NaN,Infinity,-Infinity,'30','-Infinity',null,{},[],2000.01,2001,2500]) {
+      f.nm.onMessage('guest', f.hit({ q:2, d, c }));
+      assert.deepEqual({ hp:f.boss.hp, credit:f.actor.stats.bossDmg, recv:f.boss.log.recv, seq:f.nm._peer('guest').lastBossHit }, before);
+      assert.equal(crab.hp, 40);
+    }
+    f.actor.alive = false; f.nm.onMessage('guest', f.hit({ q:2, c }));
+    assert.deepEqual({ hp:f.boss.hp, credit:f.actor.stats.bossDmg, recv:f.boss.log.recv, seq:f.nm._peer('guest').lastBossHit }, before);
+    assert.equal(crab.hp, 40); f.actor.alive = true;
+  }
+  f.nm.onMessage('guest', f.hit({ q:2 }));
+  assert.equal(f.boss.hp, 9940); assert.equal(f.nm._peer('guest').lastBossHit, 2);
+});
+
+test('#1179 same-composition negative control spends replay sequence on dead-attacker packets', async () => {
+  const f = await bossWorld(true, { adapt(rel, code) {
+    if (rel !== 'src/net/netmatch.js') return code;
+    const actorGuard = ' || actor.alive === false';
+    assert.equal(code.split(actorGuard).length, 2);
+    return code.replace(actorGuard, '');
+  } });
+  f.nm.onMessage('guest', f.hit());
+  assert.equal(f.boss.hp, 9970);
+  f.actor.alive = false; f.nm.onMessage('guest', f.hit({ q:2 }));
+  assert.equal(f.boss.hp, 9970); assert.equal(f.boss.log.recv, 1);
+  assert.equal(f.nm._peer('guest').lastBossHit, 2, 'old ingress reserves a dead-attacker sequence');
+  f.actor.alive = true; f.nm.onMessage('guest', f.hit({ q:2 }));
+  assert.equal(f.boss.hp, 9970, 'subsequent legitimate retry is discarded by that stale reservation');
+});
+
+test('#1179 wire maximum is not a new cap on positive finite internal Boss damage', async () => {
+  const f = await bossWorld(), crab = { id:7, hp:40, dead:false };
+  f.boss.crabs.set(crab.id, crab);
+  f.boss.remoteHit(f.hit({ d:2001 }));
+  f.boss.remoteHit(f.hit({ d:2001, c:crab.id }));
+  assert.equal(f.boss.hp, 10000); assert.equal(crab.hp, 40); assert.equal(f.boss.log.recv, 0);
+  assert.equal(f.boss.applyDamage(f.actor, 2001, false, null), 2001);
+  assert.equal(f.boss.hp, 7999);
+  f.boss._hitCrab(f.actor, crab, 2001, true);
+  assert.equal(crab.hp, 0); assert.equal(crab.dead, true);
+  assert.equal(Number.isFinite(f.boss.hp) && Number.isFinite(crab.hp), true);
 });

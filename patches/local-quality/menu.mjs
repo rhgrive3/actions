@@ -50,7 +50,13 @@ export function installMenuQuality(Menus, env=globalThis){
   // click needs a press that began on the same live screen, on a visible item.
   const pending=m=>!!(m._scr&&m.current!==m._scr.name);
   const closing=m=>{const el=m._scr?.el;if(!el||!pending(m))return;el.inert=true;el.style.pointerEvents='none';el.classList.add('is-closing');};
-  if(show)P.show=function(...args){const result=show.apply(this,args);closing(this);return result;};
+  // Delayed title/Mode transitions are owned by the transformed native Menus
+  // methods. Do not override _titleGo here: that would create a second timer
+  // owner and bypass their screen-generation and timer-identity checks.
+  if(show)P.show=function(...args){
+    if(retired.has(this))return;
+    const result=show.apply(this,args);closing(this);return result;
+  };
   if(nav)P._nav=function(dir){if(pending(this))return true;return nav.call(this,dir);};
   const visibleItem=(t,root)=>{
     let k=1;
