@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
+import { profileRangeAcceptanceSnapshot } from './inkwave-range-profile-acceptance.mjs';
 import { pathToFileURL } from 'node:url';
 
 const option = (name) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw new Error('Required ' + name); return path.resolve(process.argv[i + 1]); };
@@ -243,6 +244,58 @@ for (const run of RUNS) {
       const iso = out.checks.isolation;
       if (iso.layout !== 'tidewater' || iso.range || iso.rangeOpt || iso.actors !== 8 || iso.targets || iso.signage || iso.hudClass || iso.rangeDom || iso.maps.includes('range') || iso.scenePads || !['intro', 'playing'].includes(iso.state)) throw new Error('isolation ' + JSON.stringify(iso));
     }
+    }
+    // The performance diagnostics use the real built Practice Range and are
+    // opt-in only. Exercise them on one browser after all gameplay/isolation
+    // checks, so the tracing wrappers never perturb the normal range audit.
+    if (run.name === 'chromium-desktop' && !signageOnly) {
+      await page.goto(base + '?range&skipTitle&profileRange=1', { waitUntil: 'domcontentloaded', timeout: 60000 });
+      // Persistent Chromium contexts can keep the original about:blank tab in front
+      // after this second navigation, suspending requestAnimationFrame.
+      // Activate the actual game tab; never synthesize frames or skip a trace gate.
+      await page.bringToFront();
+      // Wait for a complete trace and snapshot it in the SAME evaluation.
+      // A Practice Range transition may replace the page's diagnostic global
+      // between separate evaluate calls even after the earlier predicate passed.
+      // Playwright waitForFunction expects a synchronous predicate. An async
+      // predicate returns a truthy Promise before the profiler is ready, then
+      // its JSHandle resolves to false and incorrectly fails the browser gate.
+      // The helper returns false until a completed trace exists, and supplies
+      // the entire snapshot in the one successful poll (no navigation race).
+      let profilerHandle;
+      try {
+        profilerHandle = await page.waitForFunction(profileRangeAcceptanceSnapshot, null, { timeout: 90000 });
+      } catch (error) {
+        // Preserve full acceptance. Diagnose why the real second-session
+        // tracer never became ready instead of reporting only a timeout.
+        const diagnostic = await page.evaluate(() => {
+          const g = window.__inkwave, match = window.__G?.match, probe = window.__inkwaveRangePerf;
+          let snap = null;
+          try { snap = probe?.snapshot?.() ?? null; } catch (e) { snap = { snapshotError: String(e) }; }
+          return {
+            url: location.search, document: document.readyState,
+            hidden: document.hidden,
+            hasInstrumentedLoop: !!g?._loop?.toString().includes('_rangeFrameProbe'),
+            matchState: match?.state ?? null, range: !!match?.range,
+            gameExists: !!g, gameProbe: g?._rangeFrameProbe === undefined ? 'uninitialized' :
+              g._rangeFrameProbe === null ? 'loading' : 'installed',
+            globalProbe: !!probe, capturedFrames: snap?.trace?.capturedFrames ?? null,
+            traceError: snap?.traceError ?? null, mode: snap?.mode ?? null,
+            traceLatest: snap?.trace?.latest?.stages ? Object.keys(snap.trace.latest.stages) : null,
+          };
+        }).catch(e => ({ diagnosticError: String(e) }));
+        throw new Error('Practice Range tracer never reached 12 frames: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+      }
+      out.checks.profiler = await profilerHandle.jsonValue();
+      const perf = out.checks.profiler;
+      if (perf.traceError) throw new Error('Practice Range tracer load: ' + perf.traceError);
+      if (perf.mode !== 'practice' || perf.collected < 12 ||
+          !Array.isArray(perf.stageNames) ||
+          !perf.stageNames.includes('paint') || !perf.stageNames.includes('render') ||
+          perf.reportSchema !== 'inkwave-frame-trace-v1' || !perf.profileButton ||
+          !perf.tracerFileLoaded || perf.gpuStatus === 'error') {
+        throw new Error('Practice Range opt-in performance diagnostic: ' + JSON.stringify(perf));
+      }
     }
     if (out.errors.length) throw new Error('page errors: ' + out.errors.join(' | '));
     if (out.missing.length) throw new Error('missing assets: ' + out.missing.join(' | '));
