@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './kit-composed-fixture.mjs';
 import {
   installKitBigBubbler, bigBubblerDomes, bigBubblerRemoteDomes,
-  clearBigBubblers, kitBarrierCandidate,
+  clearBigBubblers, kitBarrierCandidate, BIG_BUBBLER_SOURCE_RATES,
 } from '../runtime/kit-big-bubbler.mjs';
 import { installKitDefense } from '../runtime/kit-defense.mjs';
 import { fidelityDamage, installWeaponsFidelity } from '../runtime/weapons-fidelity.mjs';
@@ -26,6 +26,8 @@ import { fidelityDamage, installWeaponsFidelity } from '../runtime/weapons-fidel
 const RAW_PER_DAMAGE_UNIT = 100;   // BIG_BUBBLER_CALIBRATION.rawPerDamageUnit
 const FALLOFF_RANGE = 7;           // the native constant in weapons.js
 const FAR_CASE_HP = 20000;         // pinned test budget, above one far contact
+// Pinned spl__DamageRateInfoConfig RollerSplash x GreatBarrier_Barrier (canopy).
+const ROLLER_SPLASH = BIG_BUBBLER_SOURCE_RATES.RollerSplash[0];
 
 async function composed() {
   const f = await fixture();
@@ -134,7 +136,8 @@ test('BB-04: a far roller flick leaves the dome standing at the native-model HP 
   const p = spawnFlick(f, enemy, start, new f.THREE.Vector3(0, 0, 1), { damage: near, dmgFar: far, legacy: true });
   assert.ok(runPinningBeforeContact(f, p, dome, FAR_CASE_HP), 'the round must be consumed by the dome');
 
-  const expected = FAR_CASE_HP - far * RAW_PER_DAMAGE_UNIT * 0.64;
+  assert.equal(ROLLER_SPLASH, 1.8);
+  const expected = FAR_CASE_HP - far * ROLLER_SPLASH * RAW_PER_DAMAGE_UNIT * 0.64;
   assert.equal(dome.hp, expected,
     `far flick must spend flickDamageFar (${far}), not flickDamageNear (${near}); dome hp = ${dome.hp}`);
   assert.ok(dome.hp > 0, 'the dome must survive a far flick');
@@ -157,7 +160,7 @@ test('BB-04: a flick at zero range still spends essentially the full near amount
   const p = spawnFlick(f, a, start, new f.THREE.Vector3(0, 0, 1), { damage: near, dmgFar: far, legacy: true });
   assert.ok(runPinningBeforeContact(f, p, dome, 40000));
   const spent = 40000 - dome.hp;
-  const scaledNear = near * RAW_PER_DAMAGE_UNIT * 0.64;
+  const scaledNear = near * ROLLER_SPLASH * RAW_PER_DAMAGE_UNIT * 0.64;
   // 97% rather than 100%: the round is launched 1.2u above the dome centre, so
   // the sphere solve puts the contact ~0.14u further along than a perfectly
   // head-on shot. That ~2-3% is REAL native falloff, not a defect, so the guard
@@ -212,10 +215,10 @@ test('BB-04: the falloff uses the native contact-point distance, not travel dist
     `contact distance ${nativeDistance.toFixed(3)} must exceed per-step travel ${travelDistance.toFixed(3)}`);
 
   const expected = (near + (far - near) * Math.min(1, Math.max(0, nativeDistance / FALLOFF_RANGE)))
-    * RAW_PER_DAMAGE_UNIT * 0.64;
+    * ROLLER_SPLASH * RAW_PER_DAMAGE_UNIT * 0.64;
   assert.equal(c.damage, expected,
     `dome damage must equal the native lerp at the contact point (${expected})`);
-  assert.ok(c.damage < near * RAW_PER_DAMAGE_UNIT, 'a partially-scaled hit sits below the near amount');
+  assert.ok(c.damage < near * ROLLER_SPLASH * RAW_PER_DAMAGE_UNIT, 'a partially-scaled hit sits below the near amount');
 });
 
 test('BB-04: the owner adjudication receives the same scaled amount', async () => {

@@ -68,6 +68,8 @@ const INSTALL = Symbol.for('inkwave.s3.kit-big-bubbler.install.v1');
 export const BIG_BUBBLER_RAW = Object.freeze({
   maxHp: 15360,                  // BarrierParam.MaxHP.Low        (0 AP Ink Resistance)
   maxFieldHp: 30720,             // BarrierParam.MaxFieldHP.Low
+  maxFieldHpMid: 33792,          // BarrierParam.MaxFieldHP.Mid
+  maxFieldHpHigh: 36864,         // BarrierParam.MaxFieldHP.High
   maxHpMid: 16896,               // BarrierParam.MaxHP.Mid
   maxHpHigh: 18432,              // BarrierParam.MaxHP.High
   timeDamage: 921,               // BarrierParam.TimeDamage
@@ -160,21 +162,61 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 // constant in weapons.js, not a new calibration.
 const DROP_FALLOFF_RANGE = 7;
 
-// #1161: source-side DIMENSIONLESS object multiplier the stock Hot Blaster
-// (Japanese ホットブラスター, the one `kind: 'blaster'` main weapon) applies to its
-// DIRECT projectile against the Big Bubbler. It is a SOURCE property, applied
-// once before the target-side DamgeRatio, exactly like the Roller 1.8 below.
-//
-// Provenance: community measurement on wikiwiki (version provenance 11.2.0 /
-// 3.1.1 marked); current pinned 11.3.0 Leanny data also maps the stock Hot
-// Blaster's `BlasterMiddle` source row to 1.9 against both Great Barrier targets.
-// Object Shredder adds a separate x1.1 factor (total x2.09), applied once.
-// No Nintendo 11.3 capture is claimed, and the generic separate
-// ブラスター entry is 2.1x, so this is NOT blanket-applied to every blaster
-// variant: only the stock Blaster's own direct round is scaled, the burst splash
-// never reaches this query, and no unlisted variant is guessed.
-export const BLASTER_OBJECT_MULTIPLIER = 1.9;
+// Source-side object multipliers against the Big Bubbler, pinned 11.3.0
+// spl__DamageRateInfoConfig (Leanny/splat3 7280ff9c,
+// data/parameter/1130/misc/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json).
+// Each weapon's rows come from data/mush/1130/WeaponInfo{Main,Sub,Special}.json
+// (DefaultDamageRateInfoRow / ExtraDamageRateInfoRowSet). Columns:
+// [GreatBarrier_Barrier, GreatBarrier_WeakPoint] = INKWAVE targets ['canopy', 'field'].
+// The target-side BarrierParam.DamgeRatio stays a separate canopy-only factor.
+export const BIG_BUBBLER_SOURCE_RATES = Object.freeze({
+  Shooter: Object.freeze([1, 1]),               // Shooter_Normal_00 default
+  Maneuver: Object.freeze([1, 1]),              // Maneuver_Normal_00 default
+  Spinner: Object.freeze([1, 1]),               // Spinner_Standard_00 default
+  Slosher: Object.freeze([2.4, 2.4]),           // Slosher_Strong_00 default
+  Blaster_KillOneShot: Object.freeze([1.9, 1.9]),   // Blaster_Middle_00 Normal (direct round)
+  Blaster_BlasterMiddle: Object.freeze([1.9, 1.9]), // Blaster_Middle_00 ExtraBombCore / BlasterWeakBlast
+  Charger: Object.freeze([2, 2]),               // Charger_Normal_00 Normal
+  ChargerFull: Object.freeze([2, 1.5]),         // Charger_Normal_00 FullCharge
+  RollerSplash: Object.freeze([1.8, 1.8]),      // Roller_Normal_00 Normal (flick units)
+  RollerCore: Object.freeze([1, 1]),            // Roller_Normal_00 RollerCore (rolling body)
+  Bomb_DirectHit: Object.freeze([2, 1.5]),      // Bomb_Splash default (direct contact)
+  Bomb: Object.freeze([2, 0.5]),                // Bomb_Splash / Bomb_Curling ExtraBombCore (blast)
+  Bomb_Suction: Object.freeze([2, 0.5]),        // Bomb_Suction default
+  Bomb_CurlingBullet: Object.freeze([1, 1]),    // Bomb_Curling Normal (sliding contact)
+  UltraShot: Object.freeze([1.3, 0.975]),       // SpUltraShot default (Trizooka)
+  BlowerExhale: Object.freeze([0, 0]),          // SpBlower default (Ink Vac countershot body)
+  BlowerExhale_BombCore: Object.freeze([4.2, 2.1]), // SpBlower ExtraBombCore (countershot blast)
+});
+// Object Shredder adds a separate x1.1 factor, applied once (existing #1161 rule).
 export const OBJECT_SHREDDER_MULTIPLIER = 1.1;
+// Kept for existing callers: the stock Hot Blaster's pinned rate.
+export const BLASTER_OBJECT_MULTIPLIER = BIG_BUBBLER_SOURCE_RATES.Blaster_KillOneShot[0];
+
+const WEAPON_DEFAULT_ROWS = Object.freeze({ shooter: 'Shooter', dualies: 'Maneuver', splatling: 'Spinner', slosher: 'Slosher' });
+const BOMB_ROWS = Object.freeze({ bomb: 'Bomb_DirectHit', suction: 'Bomb_Suction', curling: 'Bomb_CurlingBullet' });
+
+// The pinned row a damage source uses against the dome, or null for a source
+// with no pinned row (it keeps 1.0). Explosion probes carry their row explicitly.
+export function bigBubblerSourceRow(p) {
+  if (!p) return null;
+  if (typeof p.s3BubblerRow === 'string') return p.s3BubblerRow;
+  if (p.wid === 'trizooka') return 'UltraShot';
+  if (p.wid === 'inkVac' || p.s3SpecialWeapon?.id === 'inkVac') return 'BlowerExhale';
+  if (p.type === 'bomb') return BOMB_ROWS[p.s3InkVacBomb?.s3Sub?.id || p.s3InkVacBomb?.s3Resolved?.spec?.id || 'bomb'] ?? null;
+  const weapon = p.s3Weapon || p.owner?.weapon;
+  if (p.type === 'beam' && weapon?.kind === 'charger') return p.full ? 'ChargerFull' : 'Charger';
+  if (weapon?.kind === 'roller') return p.type === 'drop' ? 'RollerSplash' : 'RollerCore';
+  if (p.type === 'blast' && weapon?.kind === 'blaster') return 'Blaster_KillOneShot';
+  return WEAPON_DEFAULT_ROWS[weapon?.kind] ?? null;
+}
+
+export function bigBubblerSourceRate(p, target) {
+  const rates = BIG_BUBBLER_SOURCE_RATES[bigBubblerSourceRow(p)];
+  if (!rates) return 1;
+  const shredder = p?.owner?.s3?.modifiers?.objectShredder === true ? OBJECT_SHREDDER_MULTIPLIER : 1;
+  return rates[target === 'field' ? 1 : 0] * shredder;
+}
 
 // The damage this projectile would deal to a target at `hitPoint`, using the SAME
 // rule the native pipeline already applies to actors (`_step`) and to the boss
@@ -182,44 +224,29 @@ export const OBJECT_SHREDDER_MULTIPLIER = 1.1;
 //
 //   dmg = lerp(p.damage, p.dmgFar, clamp(p.start.distanceTo(hit) / 7, 0, 1))
 //
-// The dome used to be charged `p.damage` outright, so it was the ONE target that
-// ignored the falloff: a roller flick or Trizooka drop that had already travelled
-// far destroyed a dome the native model would have left standing.
-//
+// then the pinned source-side rate for the struck target (canopy / field).
 // Notes, all deliberate:
 //   * the distance is measured to the dome CONTACT POINT, which is what native
 //     measures for its own contact point - not the per-step travel distance;
 //   * a round with no declared `dmgFar` keeps `p.damage`, exactly as a native drop
 //     without that field would;
-//   * only `type === "drop"` is scaled, so ordinary shots and every other gun are
-//     untouched. This is a pure computation: it mutates nothing and returns a
-//     number, so the query stays inert.
-function damageAtContact(p, hitPoint, impactT = 1) {
+//   * only `type === "drop"` is distance-scaled, so ordinary shots are untouched;
+//   * current Splat Roller flicks use the S3 distance/angle/airtime damage law (#1046);
+//   * pure computation: it mutates nothing and returns a number.
+function damageAtContact(p, hitPoint, impactT = 1, target = 'canopy') {
   const weapon = p?.s3Weapon || p?.owner?.weapon;
-  // #1046: current Splat Roller flicks use the same S3 distance/angle/airtime
-  // damage law as actor hits, then the verified Big Bubbler object modifier.
-  // Rolling/body contact is a different path and intentionally remains 1.0x.
+  const rate = bigBubblerSourceRate(p, target);
   if (p?.type === 'drop' && weapon?.kind === 'roller' && p?.fidelityRollerUnit) {
-    return fidelityDamage(p, hitPoint, impactT) * 1.8;
+    return fidelityDamage(p, hitPoint, impactT) * rate;
   }
   const near = p?.damage;
-  // #1161: the stock Hot Blaster's DIRECT projectile carries the 1.9x
-  // source-side object modifier. `type === 'blast'` is the direct round only
-  // (the burst splash never enters this query), and `kind === 'blaster'` is the
-  // one stock main weapon, so no shooter, Roller, Trizooka or unlisted variant
-  // is amplified.
-  if (p?.type === 'blast' && weapon?.kind === 'blaster') {
-    if (!Number.isFinite(near)) return 0;
-    const objectShredder = p.owner?.s3?.modifiers?.objectShredder === true
-      ? OBJECT_SHREDDER_MULTIPLIER : 1;
-    return near * BLASTER_OBJECT_MULTIPLIER * objectShredder;
-  }
-  if (p?.type !== 'drop' || !Number.isFinite(near)) return Number.isFinite(near) ? near : 0;
+  if (!Number.isFinite(near)) return 0;
+  if (p?.type !== 'drop') return near * rate;
   const far = p.dmgFar;
-  if (!Number.isFinite(far)) return near;
+  if (!Number.isFinite(far)) return near * rate;
   const travel = p.start?.distanceTo?.(hitPoint);
   const t = clamp(Number.isFinite(travel) ? travel / DROP_FALLOFF_RANGE : 0, 0, 1);
-  return near + (far - near) * t;
+  return (near + (far - near) * t) * rate;
 }
 
 // What this lane owns, stated explicitly so the network lane never has to guess
@@ -459,6 +486,11 @@ export function bigBubblerCanopyHp(owner) {
   const ap = owner?.s3?.modifiers?.specialPowerAP || 0;
   return gearCurve(ap, raw.maxHp, raw.maxHpMid, raw.maxHpHigh);
 }
+// The outer barrier pool (MaxFieldHP) has its own Special Power Up control points.
+export function bigBubblerBarrierHp(owner) {
+  const ap = owner?.s3?.modifiers?.specialPowerAP || 0;
+  return gearCurve(ap, raw.maxFieldHp, raw.maxFieldHpMid, raw.maxFieldHpHigh);
+}
 
 function makeDome({ id, serial, owner, team, pos, remote, hpMax = raw.maxFieldHp, fieldHpMax = raw.maxHp }) {
   return {
@@ -486,7 +518,7 @@ function deploy(owner) {
   const serial = ++deploySerial;
   const dome = makeDome({
     id: `${owner.team}:${bigBubblerOwnerId(owner) ?? 'unknown'}:${serial}`,
-    serial, owner, team: owner.team, pos, remote: false, fieldHpMax: bigBubblerCanopyHp(owner),
+    serial, owner, team: owner.team, pos, remote: false, hpMax: bigBubblerBarrierHp(owner), fieldHpMax: bigBubblerCanopyHp(owner),
   });
   buildVisual(dome);
   domes.push(dome);
@@ -639,7 +671,7 @@ export function kitBarrierCandidate(p, start, end) {
   // A remote dome has no authoritative HP on this client, so a local round can
   // only ever PROPOSE damage. The parent adjudicates; nothing is mutated here.
   candidate.ownership = candidate.remote ? 'remote-presentation' : 'authoritative';
-  const sourceDamage = damageAtContact(p, candidate.point, candidate.t) * tuning.rawPerDamageUnit;
+  const sourceDamage = damageAtContact(p, candidate.point, candidate.t, candidate.target) * tuning.rawPerDamageUnit;
   // #1051 DamgeRatio belongs to the outer barrier only. Proposals carry the
   // post-ratio amount so the remote authority must not apply it a second time.
   candidate.damage = sourceDamage * (candidate.target === 'canopy' ? raw.damageRatio : 1);
@@ -757,9 +789,11 @@ export function applyRollerBubblerHit(candidate, actor, damage) {
   if (!dome || dome.dead || dome.team === actor.team || dome.id !== candidate.domeId || dome.serial !== candidate.serial) return 0;
   if (!listOf(dome).includes(dome)) return 0;
   candidate.settled = true;
-  // Splat Roller's object contact modifier is 1.0x. This is only the existing
-  // raw-damage-unit conversion used by other Bubbler damage inputs.
-  const amount = damage * tuning.rawPerDamageUnit;
+  // Rolling body against the base/emitter hardware (#1036; the permeable shell is
+  // never a roll target, so the shell-only DamgeRatio does not apply): pinned
+  // RollerCore source rate 1.0, with Object Shredder's 1.1 when equipped.
+  const amount = damage * tuning.rawPerDamageUnit
+    * bigBubblerSourceRate({ type: 'roll', owner: actor, s3Weapon: actor.weapon }, candidate.target);
   if (candidate.remote) {
     const eventId = ++proposalSerial;
     const payload = {

@@ -279,6 +279,13 @@ test('a real curling bomb rolls, reflects on a wall after landing, and bursts', 
   assert.equal(bomb.s3Charge, 1, 'full charge carried onto the real record');
   // land first: floor normal
   let mode = null;
+  // The rolling bomb probes its floor every step (kitBombStep). This test stubs
+  // the swept world as a y=0 floor, so the clearance probe sees the same floor.
+  const raycast = api.G.physics.raycast.bind(api.G.physics);
+  api.G.physics.raycast = (o, d, len, out) => {
+    if (d.y < 0 && o.y >= 0 && o.y + d.y * len <= 0) { out.hit = true; out.point.set(o.x, 0, o.z); out.normal.set(0, 1, 0); out.dist = o.y; return out; }
+    return raycast(o, d, len, out);
+  };
   api.G.physics.segment = (a, b, out) => { out.hit = true; out.point = { x: b.x, y: 0, z: b.z }; out.normal = { x: 0, y: 1, z: 0 }; return out; };
   let cur = tick(api, projectiles, 1 / 60);
   assert.equal(cur.s3Mode, 'rolling', 'floor contact starts the roll');

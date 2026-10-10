@@ -3645,3 +3645,83 @@ These remain implementation and native-fixture validations. Browser/device parit
 After the published 49ecbc3 checkpoint (4051 passed / 0 failed / 15 skipped), independent review identified four further implementation defects: Slosher legitimate impact footprints rejected by generic network radius admission; Fist split stamp centres crossing thin solid cover; menu-period HID samples replayed on resume; and a one-tick Charger keep-entry ink refill. Fixes preserve the documented source-version and approximation limitations. See `slosher-impact-network-admission-2026-10-10.md`, `fist-paint-wall-boundary-2026-10-10.md`, and `charger-keep-entry-resource-order-2026-10-10.md`. Pause resume now discards pending optional controller-motion reports at the ownership transition; fresh post-resume input remains accepted.
 
 The combined new focused tests pass 51/51 with no skips. Prior complete-suite results describe the previous published tree, not these later edits. Full final-suite and exact-head remote CI results must be checked separately. No raw Drive archives are published and these native tests are not console-equivalence or browser gameplay validation.
+
+## 2026-10-10: やられ爆発（DieBlastParam）の塗り半径と周囲の飛沫
+
+- **本家の根拠**: 参照版は Splatoon 3 Ver. 11.3.0。Leanny/splat3 固定コミット `7280ff9c` の `data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json`（SHA-256 `afece0e3…bcb660`、`reference/curated-numbers.json` の固定値と一致）の `DieBlastParam` に `PaintRadius 5.0`、`CollisionRadiusForPaint 5.0`、`PaintOffsetY 0.1`、`KnockBackParam.Accel 0.0`、`SplashAroundParam {Num 10, PaintRadius 1.0, PitchMax 45.0, VelocityMin 0.54, VelocityMax 0.72}` がある。このテーブルは既定値を省く差分表なので、これらは明示値である。原典の距離をそのまま WU とする換算は、`profile.bomb` のスプラッシュボム DistanceDamage（3.6 / 7.0）と同じプロジェクトの慣例で、物理尺度の一致は未検証のまま。[Inkipedia Splat (occurrence)](https://splatoonwiki.org/wiki/Splat_(occurrence)) はやられた時に相手のインクで爆発することだけを記述し、大きさ・得点の扱いは書いていない。
+- **比較条件**: ブキは全種共通（やられ側・倒した側のブキに依存しない）、ギアなし、ナワバリ、平地。被弾で HP が 0 になった時。水没・落下などの環境死は、本家も INKWAVE も倒した側がいないため対象外。
+- **INKWAVE の差分（修正前）**: 公開版 `inkwave-public/src/game/actor.js` の `splat()` は、倒した側の色で足元 +0.35 に半径 1.7 の塗りを1回だけ行い、周囲の飛沫はなかった。平地の CPU 所有グリッドで 136〜141 セル（約 8.5〜8.8 WU²、4 種の seed）。
+- **INKWAVE 実装箇所**: `patches/splatoon3/runtime/death-blast.mjs`（`runtime/install.mjs` から導入）。`Actor.splat` を包み、その中の半径 1.7 の呼び出し1回だけを、`profile.deathBlast`（`bindings` で上記4項目に結び付け）による本体 r=5.0（足元 +0.1）＋飛沫 10 個（r=1.0）に置き換える。他の塗り呼び出し、塗り所有権（`_paintNextOwner` は本体が消費し、飛沫は `claimOwner` に倒した側）、得点帰属アダプター（`burstArea`）、`splatted` イベントの順序は変えない。飛沫の配置は本体の seed から作る局所乱数で決め、グローバルな `Math.random` の消費数は変わらない。通信では `patches/network-replication/adapter.mjs` の #522 受信検証を更新し、相手チーム色を許す署名を「半径 1.7」から「半径 5.0 または 1.0、種類・引き伸ばし・面指定なし」に変えた。通常行の半径上限（3.744）は据え置き、5.0 は署名が一致し、かつ送信者が所有する「行と別チームのキャラ」（＝倒された側）が行の中心から 6 以内にいる場合だけ許す（2026-10-10 追記：#1209 の「能力タグの無い半径5の行は上限で拒否」と両立させるため。キットのコアからタグを外した自チーム色の半径5の行は拒否される）。
+- **再現操作**: 相手を倒す（または倒される）。平地で足元を中心に半径約 5 の自チーム色（倒した側の色）の塗りと、その外縁の小さな飛沫が付く。ロジック測定では同じ平地で 1286〜1383 セル（約 80〜86 WU²、本体だけで約 78 = π·5²）。
+- **プレイへの影響**: キル地点が広く倒した側の色になり、ナワバリの塗り面積と見た目が本家の差分表の値に合う。INKWAVE の既存ルールでは、この塗り面積は倒した側の塗りポイントとスペシャル増加に入る（`combat-credit-adapter.mjs`）。そのため 1 キルあたりの加算が約 8.7 → 約 80 WU² に増える。
+- **確認状態**: ロジック単独で確認済み。本番と同じ6段アダプター合成＋全インストーラー（`patches/splatoon3/tests/death-blast.test.mjs`、6件）、実 PaintSystem と実 NetMatch 行を使う2者間の CPU 塗り・ターフ数の一致（`patches/network-replication/tests/death-blast-replication.test.mjs`、2件）、更新した #522 受信検証（`issue-522-paint-numeric-admission.test.mjs`）。陰性対照：導入を外すと 11 回 → 1 回で 4 件失敗、受信検証の変更を外すと2者間テストが失敗する。ブラウザ描画、Switch 実機との比較は未実施。
+- **未確認（解消していない）**: (1) 飛沫の飛行。`VelocityMin/Max`・`PitchMax` は固定値だが、飛沫の重力・抵抗・`OffsetY` の既定値は差分表に無いため、飛行は模擬せず、スプラッシュボムの SplashAround と同じ着地リングの校正（半径の 0.6〜1.0 倍）を使う。(2) `Death00` テクスチャの形（INKWAVE は seed による自前の形）。(3) 本家でこの塗りが倒した側の塗りポイント・スペシャル増加になるか。公式・Inkipedia とも記述を確認できず、既存の INKWAVE ルールを維持した。(4) 原典の距離と WU の物理尺度の一致。(5) `CollisionRadiusForPaint 5.0`：INKWAVE の `PaintSystem.splat` は中心から半径内の面（壁を含む）を塗るので同じ球の範囲になるが、本家の判定形状との一致は未確認。
+## 2026-10-10: ブキ重量区分（WeaponSpeedType）の割当の確認
+
+- **本家の根拠**: 固定 11.3.0 のブキ表は `MainWeaponSetting.WeaponSpeedType` を既定値以外の時だけ持つ。`WeaponShooterShort`・`WeaponShooterBlaze`・`WeaponManeuverShort` は `Fast`、`WeaponRollerHeavy`・`WeaponSpinnerHyper`・`WeaponChargerLong` は `Slow`。INKWAVE が使う7種（`ShooterNormal`・`ManeuverNormal`・`BlasterMiddle`・`SpinnerStandard`・`ChargerNormal`・`RollerNormal`・`SlosherStrong`、いずれも台帳の SHA-256 と一致）はこのフィールドを持たない＝Normal。[Inkipedia Weight](https://splatoonwiki.org/wiki/Weight) も同じ7種を Normal とし、Fast は走 +8.3%・泳 +5%、Slow は走 −8.3%・泳 −10% とする。これは `params.json` の `MoveVel_Human_Fast/Slow`（0.104 / 0.088 対 0.096）と `MoveVel_Stealth_Fast/Slow`（0.2016 / 0.1728 対 0.192）の比と一致する。
+- **INKWAVE 実装箇所**: 変更なし。現行のヒト速 5.76・イカ速 11.52 とギア曲線は Normal の `MoveVel_Human` / `MoveVel_Stealth` に結び付いている。Fast/Slow の曲線は記録のみで、使うブキがない。
+- **数値記録の補完**: 値は原典と一致していたが出典の紐付けがなかった移動速度を `profile.bindings` に追加した。チャージャー フルチャージ中 1.2（`MoveSpeedFullCharge` 0.02）、ローラー 塗り進み 7.92 / 6.48 / 旋回減速 6.48 / ダッシュ 1.5 s / インク消費速度境界 1.2・7.92（`WeaponRollParam`）、ローラー振り中 2.88（`WeaponWideSwingParam.SwingMoveSpeed`）、スロッシャー 2.4（`MoveSpeed` 0.04）、スピナー チャージ中 3.72（`MoveSpeed_Charge` 0.062）。挙動は変わらない。
+- **確認状態**: 重量区分の割当（7種＝Normal）は固定データと Inkipedia の2つの根拠で確認した。`profile.json` の未確認リストから割当の項目を外し、チャージ・塗り進み中の移動制限とスピナーのチャージ段階の移動曲線は未確認のまま残した。
+## 2026-10-10: 残り体力バー（Ver.11.0）の原典パラメータ
+
+- **本家の根拠**: 任天堂の [Ver.11.0.0 の紹介](https://www.nintendo.com/au/news-and-articles/whats-new-in-the-splatoon-3-version-11-update/)（Issue #716 に引用）は、被弾した相手の頭上に数秒間、残り体力を表示すると説明する。Leanny/splat3 固定コミット `7280ff9c` の `SplPlayer.game__GameParameterTable.json` の `spl__PlayerDispHPParam` は、10.0.0・10.1.0 の表には無く、11.0.0 の表で初めて現れ、11.3.0 まで同じ値（`BarWidth 70`、`BarHeight 5`、`BarBgColor RGBA 0.3/0.3/0.3/1.0`、`IsApplyDmgColorToBgColor false`、`RecvDmgReactColorFrm 12`、`RecvDmgReactDispFrm 180`）。追加された版と機能の一致から、この表を体力バーの設定とみなした。
+- **INKWAVE 実装箇所**: 表示の有無と 3 秒は既存の `patches/splatoon3/runtime/combat-info.mjs`（`ENEMY_HEALTH_SECONDS = 3` = 180F/60）。見た目は `patches/splatoon3/ui.css` の `.iw-health`。
+- **修正前の差分**: バーは 46×7 px（縦横比 約6.6:1）、背景はほぼ黒の半透明（`#111c`）。原典は 14:1、背景は不透明の RGB 0.3 灰。
+- **修正**: 単位に依存しない値だけを反映した。幅 46 px（既存の INKWAVE 校正値）を保ち、高さを 46×5/70 ≈ 3.29 px、背景を不透明の `rgb(77,77,77)` にした。白い縁取りは INKWAVE の視認性のための既存の装飾で、原典の項目ではない。
+- **再現操作**: 相手を倒さない程度に撃つ。頭上に細いバーが 3 秒出る。味方が被弾した時も同じバーが出る（既存の動作）。
+- **確認状態**: `patches/splatoon3/tests/health-bar-source.test.mjs`（3件）で、台帳の原典値と表示時間・縦横比・背景色の一致を検査。旧 CSS では縦横比・背景色の試験が失敗することを確認した。ブラウザでの描画確認と Switch 実機比較は未実施。
+- **未確認（解消していない）**: (1) `BarWidth/BarHeight` の単位（1080p のレイアウト座標か等）が公開されていないため、絶対サイズは変えていない。(2) `RecvDmgReactColorFrm 12`：被弾直後 12F の色の反応は、その色が表の項目に無いため実装していない。(3) 縁取りの有無、距離による大きさの変化、敵インクによる継続ダメージで表示時間を延長するかどうか。
+## 2026-10-10: グレートバリアへの各攻撃の倍率（DamageRateInfoConfig）
+
+- **本家の根拠**: 固定 11.3.0 の `data/parameter/1130/misc/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json`（列 `GreatBarrier_Barrier`／`GreatBarrier_WeakPoint`）と、各ブキの行を決める `data/mush/1130/WeaponInfo{Main,Sub,Special}.json` の `DefaultDamageRateInfoRow`／`ExtraDamageRateInfoRowSet`。バリア本体／弱点の倍率は、スプラシューター・スプラマニューバー・バレルスピナー 1.0／1.0、バケットスロッシャー 2.4／2.4、ホットブラスター 直撃（Normal）・爆風（ExtraBombCore）とも 1.9／1.9、スプラチャージャー 通常 2.0／2.0・フルチャージ 2.0／1.5、スプラローラー 振り 1.8／1.8・転がし 1.0／1.0、スプラッシュボム 直撃 2.0／1.5・爆風 2.0／0.5、キューバンボム 2.0／0.5、カーリングボム 接触 1.0／1.0・爆風 2.0／0.5、ウルトラショット 1.3／0.975、キューインキ 本体 0／0・放出爆発 4.2／2.1。対物攻撃力アップは [Inkipedia Object Shredder](https://splatoonwiki.org/wiki/Object_Shredder) が「プレイヤー以外の全対象」で、グレートバリアは 110% とする。
+- **修正前の差分**: `patches/splatoon3/runtime/kit-big-bubbler.mjs` の `damageAtContact` は、ブラスターの直撃 1.9 とローラーの振り（原典ユニット）1.8 だけを掛け、本体と弱点の区別もなかった。チャージャー・スロッシャー・ボム・ウルトラショット・キューインキ・ブラスター爆風は 1.0 で、対物攻撃力アップもブラスター直撃にしか効かなかった。
+- **INKWAVE 実装箇所**: `BIG_BUBBLER_SOURCE_RATES`／`bigBubblerSourceRow`／`bigBubblerSourceRate`（`kit-big-bubbler.mjs`）。当たり対象 `canopy` を Barrier、`field`（上昇したドローン、`DroneParam.FieldCollisionRadius`）を WeakPoint に対応させた。爆風の行は `kit-defense.mjs` の `explosionBubblerRow`、チャージャーのフルチャージ判定は `weapons-charger-flight.mjs` から渡す。本体側の `DamgeRatio 0.64` は従来どおり本体だけに掛かる。
+- **再現操作**: 相手のグレートバリアにスプラチャージャー・バケットスロッシャー・ボムなどで攻撃する。修正前は同じ威力のシューターと同じ削れ方だった。修正後は原典の倍率で速く割れる（例：スロッシャーは 2.4 倍）。
+- **確認状態**: ロジック確認のみ。グレートバリア関連の6ファイル 73 件が合格。旧前提に依存していた4件（ブラスター爆風に倍率なし、旧経路のローラー振り滴に倍率なし、キューインキ爆発に倍率なし）は原典の倍率に合わせて期待値を更新した。Switch 実機比較・ブラウザ確認は未実施。
+- **未確認**: インクストーム（5.0／5.0）は INKWAVE の雨がグレートバリアに当たり判定を持たないため未接続。トリプルトルネード・カニタンク等は INKWAVE に無い。バリアの HP 換算（`rawPerDamageUnit 100`）は既存の宣言済み校正のまま。
+## 2026-10-10: 演出用の飛沫が塗り（ナワバリ）になる処理の除去
+
+- **本家の根拠**: 本家の塗りは、ブキ・サブ・スペシャルの弾や爆風の原典パラメータ（`PaintParam`、`BlastParam.PaintRadius`、`SplashAroundParam` 等）で決まる。爆発・やられ・振り・スライド等の演出粒子が着地して塗るという記述・パラメータは見つからなかった（Inkipedia の Ink / Splat (occurrence) ページ等を確認）。
+- **修正前の差分**: 公開版 `inkwave-public/src/main.js` の `G.fx.onDropletLand` が、オフラインに限り、演出粒子（`fx.js` の explosion・splatted・flickCurtain・sloshImpact・dodgeSplash・rollerSpray・slamWave など）の着地点に、色から推定したチームで乱数シードの塗り（半径 0.12〜0.45）を作っていた。これは CPU の所有グリッドに入り、ナワバリ得点・足元の敵インク判定に影響した。オンラインでは同じ操作でも塗らないため、オフラインとオンラインで結果が違っていた。さらに `fxHooks.js` の `onSpeck` が、塗りではない見た目だけのインク跡（speck）を地面に描いていた。
+- **INKWAVE 実装箇所**: `patches/splatoon3/adapter.mjs`（`src/main.js` の `onDropletLand` と `src/fx/fxHooks.js` の `onSpeck` を何もしない関数に置換）。空中の飛沫そのものは残す。no-op にするのは、`null` にすると `fx.js` が代わりに円形の跡を描くため。
+- **確認状態**: `patches/splatoon3/tests/vfx-droplet-paint.test.mjs`（3件）で、6段の合成後のコードに飛沫からの塗り・跡が残らないことを確認。ブラウザでの見た目の確認は未実施。
+- **未確認（変更していない）**: 塗りの形そのもの（`paint.js` の放射状の線・衛星・飛び散り・壁の垂れ）。現在のパッチ（`paint-ownership.mjs`）はこれらを得点の対象にしているため、消すとナワバリ面積が変わる。本家の塗りテクスチャ（`PaintTexture` 等）との形の比較が必要で、今回は変更していない。
+## 2026-10-10: スペシャルの原典値の適用漏れ（ウルトラショット・キューインキ・グレートバリア）
+
+- **ウルトラショットの爆風の塗り半径**: 原典 `WeaponSpUltraShot BlastParam.PaintRadius 3.2` と `SubSpecialSpecUpList[PaintRadius] 3.2/3.6/4.0`。INKWAVE は床・地形の塗りにダメージ半径（4.0×距離倍率、最大5.2）を使い、塗り半径はAPによらず3.2で固定していた。`kit-trizooka.mjs` の記述子で `impactRadius`/`paintRadius` をスペシャル性能アップ込みの塗り半径にした。ダメージ帯は不変。関連テスト97件合格。
+- **キューインキ使用中の本人の移動速度**: 原典 `WeaponSpBlower WeaponParam.MoveSpeedMinCharge 0.09`／`MoveSpeedFullCharge 0.07`（×60＝5.4／4.2）。INKWAVE は吸い込み中も通常の歩行速度だった。`kit-ink-vac.mjs` で吸い込み中と発射待機中の歩行目標をこの値にした。端点は原典、溜まり具合による中間は線形補間（INKWAVE の校正）。ヒト移動速度アップがこの値に掛かるかは未確認（既存のギアの掛け方のまま）。
+- **グレートバリアの本体HP**: 原典 `BarrierParam.MaxFieldHP` にも `Low/Mid/High 30720/33792/36864` がある。#1013 の修正は `MaxHP` だけをスペシャル性能アップで伸ばし、`MaxFieldHP`（INKWAVE の本体プール）は固定していた。#1013 の Issue 自身が「原典が独自の曲線を持つ場合を除き」としていた条件に当たるため、本体プールにも適用した。どちらのプールが本家のバリア本体かという #1051 の対応付けは未確認のまま。
+- **ローラー転がしのバリア倍率**: 原典 `RollerCore` 行（1.0／1.0）を通し、対物攻撃力アップ1.1が転がしにも効くようにした。INKWAVE の転がしの当たり対象は膜ではなく土台（#1036）なので、膜用の `DamgeRatio 0.64` は掛けない。
+- **見送った項目（根拠不足）**: キューインキの吸い込み範囲の伸び（`InhaleParam.LengthAddPerFrame 0.3334`）は当たり判定の伸びか見た目の伸びかを項目名から断定できず、既存の判定（起動直後から最大15）を維持した。ブラスターの初弾遅延（`PreDelayFrame_HumanShot 10`／`_SquidShot 15`）は既存の公開実測（ヒト14F／イカ24F）を採用している理由が別にあるため変更していない。スロッシャーのブレーキ段階1Fの省略、チャージャーの溜めキープ後の遅延の対応付けも既存判断のまま。
+- **確認状態**: すべてロジック単独の確認。Switch 実機・ブラウザでの比較は未実施。
+## 2026-10-10: ボム3種（スプラッシュ・キューバン・カーリング）の性能・投げ方・予測線・見た目
+
+- **本家の根拠**: 参照版 Ver. 11.3.0。Leanny/splat3 固定コミット `7280ff9c` の `data/parameter/1130/weapon/WeaponBombSplash`・`WeaponBombSuction`・`WeaponBombCurling.game__GameParameterTable.json`（差分表なので記載値は明示値）。主な項目：スプラッシュ `SpawnSpeedZ 1.12`・`SpawnSpeedY 0.24`・`FlyGravity 0.016`・`GroundPosition{Horizon,Deg50}AirResist 0.19/0.28`・`BlastParam.KnockBackParam 700/0.8/12`。キューバン `SpawnSpeedY 0.24`・`SpawnSpeedYWorldMin -0.4`・`spl__SpawnBulletAdditionMovePlayerParam {XRate 1.6, ZRate 2.0, YPlusRate 4.0, YMax 0.32}`・`BlastParam {PaintRadius 5.0, PaintOffsetY 0.45, SplashAroundParam {Num 15, PaintRadius 1.116, OffsetY 0.5}, KnockBackParam 700/0.8/12}`。カーリング `SpawnSpeedY 0.12`（`MaxCharge` も 0.12）・`SpawnSpeedYWorldMin -0.5`・`{XRate 0.8, ZRate 1.2, YPlusRate 2.0, YMax 0.16}`・`FlyPositionAirResist 0.05866`・`GroundPositionAirResist 0.0`・`GroundGravity 0.0016`・`BaseSpeedMinCharge 0.22`・`BaseSpeedComeOverRate 0.92`／`ComeUnderRate 0.96`・`BurstTimingSpeedStartRestFrame 90`／`StopBias 0.41`・`WarningAnimRestFrame 90`・`BlastParamMin/MaxCharge.KnockBackParam 700/0.8/9`。挙動の記述は [Inkipedia Curling Bomb](https://splatoonwiki.org/wiki/Curling_Bomb)（床をまっすぐ進み、最大距離に近づくと減速、溜めると距離が短く・大きくなる、上部ランプが爆発前に緑→赤）、[Suction Bomb](https://splatoonwiki.org/wiki/Suction_Bomb)（吸盤付きスプレー缶の形、床・壁に付く）、[Splat Bomb](https://splatoonwiki.org/wiki/Splat_Bomb)。攻略 wiki（[スプラトゥーン3 wiki カーリングボム](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B5%E3%83%96%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E3%82%AB%E3%83%BC%E3%83%AA%E3%83%B3%E3%82%B0%E3%83%9C%E3%83%A0)、検索結果の抜粋のみ確認）は、下向きに投げるとすぐ滑り出して遠くまで進み、上向きでは進行距離が縮むとする。そのためカーリングにも照準の上下角を残した。
+- **比較条件**: ギアなし（0 AP）、平地、立ち投げ、静止または一定速度。ブキとサブの組は `kit-composition.mjs` の検証済みキット（スプラシューター＝キューバン、スプラローラー＝カーリング、スプラチャージャー＝スプラッシュ）。測定は本番と同じ6段アダプター合成のヘッドレス Node（実 `_updateBombs`）。60/30/120 Hz。
+- **修正前の差分（本番合成で実行して確認）**:
+  1. キューバン・カーリングの爆発の塗りを、スプラッシュボム用の塗り置換（`sub-special-fidelity.mjs` の `_explodeBomb` ラッパー）が先頭6回分握りつぶし、代わりにスプラッシュボムの塗り（2.7＋1.064×15）を足していた。キューバンの中心 r=5.0 は一度も塗られず、塗り面積は本来の約1/3〜1/2。
+  2. 爆風のノックバックが全ボムで0だった。ゲート `!b.s3Sub` が、スプラッシュボムを含む全ての投擲ボムに付く `s3Sub` で常に偽になっていた。
+  3. カーリングの初速の上向き成分・下限・移動慣性がスプラッシュボムの値（14.4/s、XRate 1.6 を X/Z 両方）だった。キューバンの前方慣性も 2.0 ではなく 1.6。
+  4. カーリングの空中減速（FlyPositionAirResist）と地上の基準速度（BaseSpeed 系）・爆発前の減速が未使用。地上では床に当たったフレームだけ 0.92 倍しており、滑走距離がフレームレートで変わった（ヘッドレス測定で 41.3/44.0/44.8 at 30/60/120 Hz）。
+  5. カーリングの導火線が空中で止まり、投げてから約 3.8 s で爆発（原典 210F＝3.5 s）。転がり中は掃引ヒットの間に床へ最大 0.21 沈み込んでいた。
+  6. スプラッシュボムの地面抵抗が掃引ヒットのフレームだけに掛かり、平らに投げると着地後 22〜28 滑った（30/60/120 Hz で異なる）。
+  7. 予測線はカーリングでも最初の着地点で止まり、転がった先の爆発地点を示さなかった。見た目は3種とも同じ球＋円筒。
+- **INKWAVE 実装箇所**:
+  - 塗り：`sub-special-fidelity.mjs` の `kitOwnedExplosionPaint`（キットの塗りを横取りしない）、`kit-subs.mjs` の `kitBombOwnsExplosionPaint`・`kitBombExplosionPaint`（`PaintOffsetY`／`SplashAroundParam.OffsetY` を法線方向に適用。カーリングは省略値なので従来の 0.1）。
+  - ノックバック：`kit-subs.mjs` の `kitBombKnockback`、`adapter.mjs` の爆発ループ（各ボムの `KnockBackParam`。強さの換算は #535 の既存校正 `splatBombKnockbackDelta` のまま）。
+  - 投擲：`kit-subs.mjs` の各サブの `launch` と `withThrowLaunch`、`sub-special-fidelity.mjs` の `fidelityThrowVelocity`（プレイヤー速度を向き方向 Z と横 X に分けて掛ける。ZRate を持たないスプラッシュボムは従来どおり XRate を両方に）。
+  - カーリングの運動：`kit-subs.mjs` の `kitBombStep`（各積分ステップでガードした重力の直前に実行。空中は `(1−0.05866)^(dt·60)`、地上は基準速度 13.2/s へ超過分 0.92・不足分 0.96 で近づき、残り 90F から `(残り/90F)^0.41` で 0 へ）、`followRollingGround`（床のクリアランス 0.21 を毎ステップ維持、床が無ければ空中に戻る）、`kitBombKeepsFuse`（導火線は投げた時から常に進む＝#1099 の記述どおり）。
+  - スプラッシュボムの滑り：`sub-special-fidelity.mjs` の `applySplatBombRestingResistance`（接地中の毎ステップにも同じ抵抗、時間でスケール）と `applySplatBombSurfaceResponse` の `dt` 対応。
+  - 予測線：`kit-subs.mjs` の `previewCurlingPath`（実弾と同じステップ処理を表示専用の記録で再生し、壁反射を含めて爆発地点まで線を引き、マーカーを置く）。
+  - 見た目：`runtime/bomb-models.mjs`（投擲・ゴースト・手持ち）。スプラッシュ＝丸い三角錐＋上部キャップ、キューバン＝缶＋白い肩＋黒い吸盤（壁・天井では吸盤を面に向ける、爆発前に底のリングが点滅）、カーリング＝黒い短い円筒＋インク色の側面帯＋灰色の取っ手＋上部ランプ（残り 90F で緑→赤点滅、溜めで最大 1.29/1.075 倍に大きく、回転せず進行方向を向く）。寸法は INKWAVE の表示上の値。
+- **再現操作**: スプラローラーでカーリングを短く押して投げる／長押しで投げる、スプラシューターで壁にキューバンを投げる、スプラチャージャーで平地にスプラッシュボムを水平に投げる。敵の近く（キューバン 8〜12、カーリング 8〜9）で爆発させる。
+- **修正後（ロジック測定）**: キューバンの爆発の塗りは r=5.0（+0.45）＋1.116×15 の16回だけ。カーリング最大溜めは 5.0＋0.805×12 の13回。ノックバックはスプラッシュ・キューバンで距離 12 まで、カーリングで 9 まで。カーリングのタップ（溜め約0.1）で約 36、最大溜めで約 10.4 進んで爆発。60/30/120 Hz の差は 0.6 未満。爆発は投げてから 3.3 s（溜め0.1）／1.5 s（最大）。スプラッシュボムの着地後の滑りは 5〜11（30/60/120 Hz）。カーリング最大溜めの予測マーカーは実際の爆発地点と 1e-6 以内で一致（壁反射あり・なし）。
+- **プレイへの影響**: キューバン・カーリングの爆発で塗れる面積が本来の大きさになる。ボムの爆風で相手が押し出されるようになる。カーリングは低く滑り出し、溜めるほど手前で早く爆発し、壁で跳ね返る経路が予測線に出る。スプラッシュボムは着地点の近くで止まる。3種のボムを形で見分けられる。
+- **確認状態**: ロジック単独で確認済み（`patches/splatoon3/tests/bomb-kit-fidelity.test.mjs` 10件、既存の #371・kit-subs のテストを新しい処理に合わせて更新）。モデルはヘッドレス Chromium で描画して形を目視確認した。ゲーム内のブラウザ動作と Switch 実機との比較は未実施。監査用のサブエージェントが修正前（HEAD `fe68983a`）と作業中のツリーを別々に測定し、上記 1〜6 を独立に確認した。
+- **未確認（解消していない）**:
+  1. カーリングの地上速度則の形。各フィールドの値は原典だが、近づき方（ステップごとの比率）と残り 90F からの減速曲線（`StopBias` を指数として使用）は INKWAVE の読み。最大溜めの基準速度（`BaseSpeedMaxCharge` は表に無い）は最小溜めの 13.2 を共用。
+  2. カーリングの溜めの始まり。押した瞬間から数えるため、サブの準備 5F＋使用開始 1F の間も溜まり、タップでも溜め約 0.1 になる（初速 22.8、爆発 3.3 s）。本家で溜めが何フレーム目から始まるかは未確認。
+  3. カーリングの溜め投げ後のインク回復停止（`InkRecoverStopMaxCharge 30F`）が、`resources.mjs` の「本体の停止時間との大きい方」の規則で 43F（スプラローラー本体）になる。共通の回復停止の設計に関わるため変更していない。
+  4. 予測マーカーの位置。本家のカーリングのガイド表示の形と、爆風範囲をガイドで示すかどうかは公開資料で確認できなかった。INKWAVE は爆風半径を表示せず、爆発地点の予測だけを出す（スプラッシュ・キューバンは従来どおり最初の着地点、マーカー 0.55〜0.75 ≒ `GuideRadius 0.575`）。
+  5. `SplashAroundParam` の飛び方（Pitch/Velocity）の再現、キューバンの `DamageOffsetY 0.6`、スプラッシュボムの床での跳ね返り係数（`vn·0.35·0.45`、原典の項目なし）。
+  6. スプラッシュボムの滑り距離そのもの（本家の値は未計測）、モデルの寸法・色。

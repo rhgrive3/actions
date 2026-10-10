@@ -30,6 +30,7 @@ import { installChargerSurface } from './charger-surface.mjs';
 import { installSubSpecialFidelity } from './sub-special-fidelity.mjs';
 import { installKitDefense } from './kit-defense.mjs';
 import { installKitSubs } from './kit-subs.mjs';
+import { installBombModels } from './bomb-models.mjs';
 import { installKitBigBubbler } from './kit-big-bubbler.mjs';
 import { installKitInkVac } from './kit-ink-vac.mjs';
 import { installKitNetwork } from './kit-network.mjs';
@@ -73,6 +74,7 @@ import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
 import { installControllerMotion } from './controller-motion.mjs';
 import { installTripleSlamFists } from './triple-slam-fists.mjs';
+import { installDeathBlast } from './death-blast.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -90,6 +92,8 @@ export function install(profile) {
   installSubSpecialFidelity(api, profile);
   installKitDefense(api);
   installKitSubs(api, profile);
+  // Presentation only: Splat/Suction/Curling silhouettes, held and thrown.
+  installBombModels(api);
   installKitBigBubbler(api, profile);
   installKitInkVac(api, profile);
   installKitTrizooka(api, profile);
@@ -107,6 +111,8 @@ export function install(profile) {
   installGear(api, profile);
   installFlow(api, profile);
   installResources(api, profile);
+  // Pinned SplPlayer DieBlastParam: only the death-burst paint call changes.
+  installDeathBlast(api, profile);
   installScoring(api);
   installClock(api);
   installUi(api);

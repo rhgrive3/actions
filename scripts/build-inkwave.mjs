@@ -321,6 +321,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/touch-relayout.mjs',
   'patches/splatoon3/runtime/death-camera.mjs', // Match/death hooks stay statically imported and precached.
   'patches/splatoon3/runtime/death-card.mjs',
+  'patches/splatoon3/runtime/death-blast.mjs', // Pinned DieBlastParam paint; static import and precache retained.
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
   'patches/splatoon3/runtime/map-reveal.mjs',
   'patches/splatoon3/runtime/movement-physics.mjs',
@@ -352,6 +353,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/kit-trizooka.mjs',
   'patches/splatoon3/runtime/trizooka-collision.mjs',
   'patches/splatoon3/runtime/kit-subs.mjs',
+  'patches/splatoon3/runtime/bomb-models.mjs', // Per-sub bomb models; presentation only.
   'patches/splatoon3/runtime/kit-composition.mjs',
   'patches/splatoon3/runtime/kit-ink-vac.mjs',
   'patches/splatoon3/runtime/kit-network.mjs',

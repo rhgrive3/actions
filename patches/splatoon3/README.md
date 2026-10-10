@@ -38,6 +38,8 @@
 | `runtime/resources.mjs` | インク回復の待ち時間、敵インク、HP 回復 |
 | `runtime/flow.mjs` | フローの発動・延長・失効。強化量等は暫定設定 |
 | `runtime/scoring.mjs` | 壁を除く、露出した床の実面積による塗り判定 |
+| `runtime/death-blast.mjs` | やられ爆発の塗りを SplPlayer `DieBlastParam`（半径 5.0、周囲の飛沫 10 個・半径 1.0）に合わせる。飛沫の飛行は未模擬 |
+| `runtime/bomb-models.mjs` | ボム3種の見た目（スプラッシュ＝丸い三角錐、キューバン＝吸盤付きの缶、カーリング＝取っ手付きの黒い円筒と緑→赤ランプ）を投擲・ゴースト・手持ちに適用。表示のみ |
 | `runtime/ui.mjs`, `runtime/render.mjs` | 公開版のメニュー・影無効時の起動不具合を補正 |
 | `profile.json` | 挙動の設定、数値の出典との対応、未確認事項 |
 | `reference/curated-numbers.json` | 抽出した値、JSON ポインター、出典ハッシュ、未知の項目 |

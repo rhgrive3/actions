@@ -1055,15 +1055,15 @@ export function adaptSource(rel, code) {
       'Blaster flight splash drop-height window');
     code = replaceOnce(code,
       '      if (d > kitBombRadius(SUB, b, s.radius)) continue;',
-      '      if (d > Math.max(kitBombRadius(SUB, b, s.radius), b.s3Sub ? 0 : (s.knockback?.distance ?? 0))) continue;',
+      '      if (d > Math.max(kitBombRadius(SUB, b, s.radius), kitBombKnockback(SUB, b, s.knockback)?.distance ?? 0)) continue;',
       'Splat Bomb independent knockback radius');
     code = replaceOnce(code,
       "      this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');",
-      "      if (d <= kitBombRadius(SUB, b, s.radius)) {\n        this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');\n      }\n      if (!b.s3Sub && s.knockback && d <= s.knockback.distance) applySplatBombKnockback(b, e, c, _v, d, s.knockback);",
+      "      if (d <= kitBombRadius(SUB, b, s.radius)) {\n        this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');\n      }\n      const s3Knock = kitBombKnockback(SUB, b, s.knockback);\n      if (s3Knock && d <= s3Knock.distance) applySplatBombKnockback(b, e, c, _v, d, s3Knock);",
       'Splat Bomb damage and independent knockback');
     code = replaceOnce(code,
       '        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);',
-      '        applySplatBombSurfaceResponse(b, hit.normal);', 'Splat Bomb sourced ground resistance');
+      '        applySplatBombSurfaceResponse(b, hit.normal, undefined, dt);', 'Splat Bomb sourced ground resistance');
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
     // Apply after contact-recovery and Agent3 have both transformed the source.
     // Otherwise the native pre-LOS condition is gone and the build fails.
@@ -1085,7 +1085,7 @@ export function adaptSource(rel, code) {
       'Roller native trail age width');
     code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\n" + code;
     code = adaptPaintOwnership(rel, code, replaceOnce);
-    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, applyBlasterBlastContact, BLASTER_KNOCKBACK } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
+    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint, kitBombKnockback } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, applyBlasterBlastContact, BLASTER_KNOCKBACK } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
@@ -1096,6 +1096,17 @@ export function adaptSource(rel, code) {
     code = adaptChargerSightCache(rel, code, replaceOnce);
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
+    // VFX droplets leave no ink speck on surfaces: a GPU-only mark that looks like
+    // paint but is not turf has no Splatoon 3 counterpart. A no-op (not null) keeps
+    // FX from substituting its fallback disc decal.
+    code = replaceOnce(code,
+      "      G.fx.onSpeck = (p, n, col, size) => {\n" +
+      "        const P = this.G.paint, t = this._teamOf(col);\n" +
+      "        if (!P || t < 0 || size < 0.014) return;\n" +
+      "        P.speck(this._sp.copy(p).addScaledVector(n, 0.04), Math.min(0.11, size * 1.7), t);\n" +
+      "      };",
+      "      G.fx.onSpeck = () => {};   // no paint-like specks from VFX droplets",
+      'VFX droplet specks leave no mark');
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
@@ -1377,6 +1388,19 @@ export function adaptSource(rel, code) {
       '    this.input = G.input = new Input(this.R.renderer.domElement);',
       '    this.input = G.input = new Input(this.R.renderer.domElement);\n    this.input.attachWebHID?.();',
       'auto attach WebHID on boot');
+    // Splatoon 3 turf comes only from the weapon/blast paint the source tables
+    // define. Offline, upstream turned landing VFX droplets (explosion, splatted,
+    // flick curtain, slosh, dodge, roller spray, slam) into random real turf, while
+    // online play never did. Landing droplets paint nothing in either mode.
+    code = replaceOnce(code,
+      "    G.fx.onDropletLand = (point, normal, color, size) => {\n" +
+      "      if (G.netm) return;   // online: turf only comes from replicated splats, never from local-only cosmetic droplets\n" +
+      "      const team = this._teamOfColor(color);\n" +
+      "      if (team < 0) return;\n" +
+      "      G.paint.splat(this._tmpV.copy(point).addScaledVector(normal, 0.05), clamp(size * 2.4, 0.12, 0.45), team, { seed: Math.random() });\n" +
+      "    };",
+      "    G.fx.onDropletLand = () => {};   // no VFX-droplet turf, offline or online (S3 paint comes from weapon/blast sources only)",
+      'VFX droplet landings never paint turf');
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
     const end = code.indexOf('    // A full-frame lobby/showcase completely covers', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: fixed simulation connection');

@@ -89,7 +89,11 @@ export function splatBombGroundResistance(normalY, rotate = false, spec = SUB_SP
   return a + (b - a) * t;
 }
 
-export function applySplatBombSurfaceResponse(b, normal, spec = SUB_SPECIAL_FIDELITY.bomb) {
+// The resist fields are per 60 Hz step. `dt` scales the retention so a 30 Hz
+// step removes what two 60 Hz steps would; the default keeps the 60 Hz value.
+const retainFor = (resist, dt) => Math.pow(1 - resist, Number.isFinite(dt) && dt > 0 ? dt * 60 : 1);
+
+export function applySplatBombSurfaceResponse(b, normal, spec = SUB_SPECIAL_FIDELITY.bomb, dt) {
   if (!b?.vel || !normal) return b;
   const vn = b.vel.x * normal.x + b.vel.y * normal.y + b.vel.z * normal.z;
   // Ground/slope contact owns the sourced positional + rotational drag. Keep
@@ -99,12 +103,12 @@ export function applySplatBombSurfaceResponse(b, normal, spec = SUB_SPECIAL_FIDE
     const tx = b.vel.x - vn * normal.x;
     const ty = b.vel.y - vn * normal.y;
     const tz = b.vel.z - vn * normal.z;
-    const retain = 1 - splatBombGroundResistance(normal.y, false, spec);
+    const retain = retainFor(splatBombGroundResistance(normal.y, false, spec), dt);
     const rebound = vn < 0 ? -vn * 0.35 * 0.45 : vn;
     b.vel.x = tx * retain + normal.x * rebound;
     b.vel.y = ty * retain + normal.y * rebound;
     b.vel.z = tz * retain + normal.z * rebound;
-    if (b.spin?.multiplyScalar) b.spin.multiplyScalar(1 - splatBombGroundResistance(normal.y, true, spec));
+    if (b.spin?.multiplyScalar) b.spin.multiplyScalar(retainFor(splatBombGroundResistance(normal.y, true, spec), dt));
     return b;
   }
   // Vertical walls own a dedicated S3 rebound *maximum*. Treat the field as
@@ -129,6 +133,25 @@ export function applySplatBombSurfaceResponse(b, normal, spec = SUB_SPECIAL_FIDE
   b.vel.z -= normal.z * vn * 1.35;
   b.vel.multiplyScalar?.(0.6);
   return b;
+}
+
+// A Splat Bomb resting on (or skidding along) a surface between swept hits.
+// The native sweep only reports a hit on the steps where the bomb dips through
+// the surface, so applying the ground AirResist on hits alone left the bomb
+// sliding for tens of metres after a flat throw and made the slide depend on
+// how often the sweep happened to touch. The same tangential/rotational
+// resistance is applied on every step of resting contact (the 0.21 probe that
+// already gates the fuse), scaled by elapsed time. Kit bombs own their contact.
+export function applySplatBombRestingResistance(b, normal, dt, spec = SUB_SPECIAL_FIDELITY.bomb) {
+  if (!b?.vel || !normal || !(normal.y > 1e-6) || b.kind !== 'bomb') return false;
+  if ((b.s3Sub && b.s3Sub.id !== 'bomb') || b.s3GhostResolved) return false;
+  const vn = b.vel.x * normal.x + b.vel.y * normal.y + b.vel.z * normal.z;
+  const retain = retainFor(splatBombGroundResistance(normal.y, false, spec), dt);
+  b.vel.x = (b.vel.x - vn * normal.x) * retain + vn * normal.x;
+  b.vel.y = (b.vel.y - vn * normal.y) * retain + vn * normal.y;
+  b.vel.z = (b.vel.z - vn * normal.z) * retain + vn * normal.z;
+  if (b.spin?.multiplyScalar) b.spin.multiplyScalar(retainFor(splatBombGroundResistance(normal.y, true, spec), dt));
+  return true;
 }
 
 // Issue #535 — Splat Bomb blast knockback. S3's public parameter mirrors
@@ -262,6 +285,10 @@ export function applyBlasterBlastContact(system, projectile, victim, center, tar
   return admission;
 }
 
+// `override` (optional) replaces the Splat Bomb launch record for a sub whose
+// own MoveParam/SpawnBulletAdditionMovePlayerParam states it (kit-subs launch).
+// Player velocity is split into the facing (Z) and lateral (X) parts; a record
+// without inheritZ (Splat Bomb, Storm) uses XRate for both, as before.
 export function fidelityThrowVelocity(actor, kind, out, forwardSpeed, override) {
   const p = override || (kind === 'storm' ? SUB_SPECIAL_FIDELITY.storm : SUB_SPECIAL_FIDELITY.bomb);
   const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;
@@ -273,10 +300,14 @@ export function fidelityThrowVelocity(actor, kind, out, forwardSpeed, override) 
   const av = actor.vel || { x: 0, y: 0, z: 0 };
   vy += Math.min(Math.max(0, av.y || 0) * p.inheritYPlus, p.inheritYMax);
   vy = Math.max(p.spawnSpeedYWorldMin, vy);
+  const fx = Math.sin(yaw), fz = Math.cos(yaw);
+  const forward = (av.x || 0) * fx + (av.z || 0) * fz;
+  const zRate = Number.isFinite(p.inheritZ) ? p.inheritZ : p.inheritX;
+  const lx = (av.x || 0) - forward * fx, lz = (av.z || 0) - forward * fz;
   return out.set(
-    Math.sin(yaw) * horizontal + (av.x || 0) * p.inheritX,
+    fx * horizontal + lx * p.inheritX + fx * forward * zRate,
     vy,
-    Math.cos(yaw) * horizontal + (av.z || 0) * p.inheritX,
+    fz * horizontal + lz * p.inheritX + fz * forward * zRate,
   );
 }
 

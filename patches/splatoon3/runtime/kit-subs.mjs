@@ -107,6 +107,11 @@ export const SUCTION = {
   splashVelocityMax: 0.64,
   knockBack: { accel: 700, bias: 0.8, distance: 12.0 },
   playerVelocity: { xRate: 1.6, yMax: 0.32, yPlusRate: 4.0, zRate: 2.0 },
+  // Launch fields for the shared throw integrator (sub-special-fidelity
+  // fidelityThrowVelocity): MoveParam.SpawnSpeedY / SpawnSpeedYWorldMin and
+  // spl__SpawnBulletAdditionMovePlayerParam X/Z/YMax/YPlusRate, all explicit.
+  launch: Object.freeze({ spawnSpeedY: perSecond(0.24), spawnSpeedYWorldMin: perSecond(-0.4),
+    inheritX: 1.6, inheritZ: 2.0, inheritYPlus: 4.0, inheritYMax: perSecond(0.32) }),
 
   // Functional calibration: Suction Bomb adheres to walls and ceilings, unlike the
   // existing Splat Bomb which arms only on near-vertical normals. Not a 11.3.0 field.
@@ -150,6 +155,21 @@ export const CURLING = {
   spawnSpeedYWorldMin: perSecond(-0.5),
   inheritYPlus: 2,
   inheritYMax: perSecond(0.16),
+  // Same launch contract as Suction. SpawnSpeedY equals SpawnSpeedYMaxCharge,
+  // so the vertical launch does not depend on the held charge.
+  launch: Object.freeze({ spawnSpeedY: perSecond(0.12), spawnSpeedYWorldMin: perSecond(-0.5),
+    inheritX: 0.8, inheritZ: 1.2, inheritYPlus: 2.0, inheritYMax: perSecond(0.16) }),
+  // MoveParam.FlyPositionAirResist: horizontal speed removed per 60 Hz flight
+  // step. GroundPositionAirResist is an explicit 0.0: the rolling speed is
+  // governed by the BaseSpeed fields below instead of a drag term.
+  flyPositionAirResist: 0.05866,
+  groundPositionAirResist: 0.0,
+  // MoveParam.BurstTimingSpeedStartRestFrame / BurstTimingSpeedStopBias: the
+  // slowdown towards the burst (Inkipedia: "slows down as it approaches its
+  // maximum distance"). The curve shape between the two fields is our reading.
+  burstTimingSpeedStartRest: frames(90),
+  burstTimingSpeedStopBias: 0.41,
+  rollSpeedLaw: 'calibrated',
   flyGravity: 0.016 * 3600,        // MoveParam.FlyGravity
   groundGravity: 0.0016 * 3600,    // MoveParam.GroundGravity
   gravityStatus: 'extracted',
@@ -169,7 +189,9 @@ export const CURLING = {
   paintRadiusMinCharge: 1.075,     // rolling trail radius
   paintRadiusMaxCharge: 1.29,
   guideHitCollision: 'EnemyOnFenceOn',
-  knockBack: { accel: 350, bias: 0.0, degree: 60, distance: 10.0 },
+  knockBack: { accel: 350, bias: 0.0, degree: 60, distance: 10.0 },   // MoveParam (rolling contact)
+  // BlastParamMinCharge/MaxCharge.KnockBackParam: identical at both charge ends.
+  blastKnockBack: { accel: 700, bias: 0.8, distance: 9.0 },
   // BlastParamMinCharge / BlastParamMaxCharge
   minCharge: {
     paintRadius: 2.133, crossPaintRadius: 1.0,
@@ -291,6 +313,7 @@ export function resolveSubAtCharge(sub, charge) {
     damageOuterDistance: blast.damageOuterDistance ?? sub.damageOuterDistance,
     trailRadius: sub.mode === 'roll' ? blast.trailRadius : null,
     throwSpeed: sub.chargeable ? curlingThrowSpeed(c, sub) : sub.throwSpeed,
+    knockback: sub.mode === 'roll' ? sub.blastKnockBack ?? null : sub.mode === 'stick' ? sub.knockBack ?? null : null,
   };
 }
 
@@ -345,6 +368,14 @@ const presentedOf = (b) => {
   if (b.ghost) return b.s3GhostResolved ?? null;
   return ownsAuthority(b) ? b.s3Resolved : null;
 };
+
+// Presentation identity of a live bomb record: 'suction' | 'curling' | 'bomb'.
+// Owner records carry s3Resolved, replayed ones s3GhostResolved; anything else
+// (an unregistered build, an older packet) is the native Splat Bomb.
+export function kitBombPresentation(b) {
+  const r = presentedOf(b);
+  return r ? { id: r.spec?.id || 'bomb', resolved: r } : { id: 'bomb', resolved: null };
+}
 
 // The live global context, used only for the native actor scan. Captured at install
 // time from the running composition.
@@ -431,6 +462,70 @@ export function kitBombAttach(SUB, projectiles, actor, release) {
 
 // ---- 3. per-bomb gravity, contact and fuse inside the native loop ------------
 
+// ---- 3a. Curling Bomb speed law, once per integration step ------------------
+// Called by the adapter immediately before the native gravity line, inside the
+// same per-step loop (owner frames and ghost catch-up steps alike), so the law
+// is applied per elapsed time rather than per surface contact.
+//
+// Flight : horizontal velocity keeps (1 - FlyPositionAirResist) per 60 Hz step.
+// Rolling: horizontal speed approaches the base speed. Above it the excess keeps
+//          BaseSpeedComeOverRate per step, below it the deficit keeps
+//          BaseSpeedComeUnderRate per step. BaseSpeedMinCharge is the only base
+//          the 11.3.0 table states (no max-charge base), so it serves every
+//          charge. Within BurstTimingSpeedStartRestFrame of the burst the base
+//          scales by (rest / start) ^ BurstTimingSpeedStopBias, reaching 0 at
+//          the burst. Field values are pinned; this composition is calibrated.
+export function curlingRollTargetSpeed(spec, rest) {
+  const base = perSecond(spec.baseSpeedMinCharge);
+  const start = spec.burstTimingSpeedStartRest;
+  if (!Number.isFinite(rest) || !(start > 0) || rest >= start) return base;
+  return base * Math.pow(Math.max(0, rest) / start, spec.burstTimingSpeedStopBias);
+}
+export function curlingRollSpeed(speed, target, spec, dt) {
+  const k = dt * 60;
+  return speed > target
+    ? target + (speed - target) * Math.pow(spec.baseSpeedComeOverRate, k)
+    : target - (target - speed) * Math.pow(spec.baseSpeedComeUnderRate, k);
+}
+// A rolling bomb stays on the surface it rolls on. The native sweep reports a
+// floor hit only when the centre dips through the surface, so with the tiny
+// GroundGravity the puck would sink up to its contact offset into the floor
+// between hits. Probe the contact clearance (plus a small step-down so slopes
+// and kerbs are followed) and keep the centre at the native 0.21 offset.
+// Nothing under it: the bomb has rolled off an edge and flies again (FlyGravity,
+// FlyPositionAirResist) until the next floor contact.
+const GROUND_FOLLOW_STEP_DOWN = 0.3;
+function followRollingGround(b) {
+  const physics = G_REF?.physics;
+  if (!physics?.raycast) return;
+  const V = b.pos.constructor;
+  const dir = b.s3RollProbeDir || (b.s3RollProbeDir = new V());
+  const hit = b.s3RollProbeHit || (b.s3RollProbeHit = { hit: false, dist: 0, point: new V(), normal: new V() });
+  const n = b.s3SurfaceNormal;
+  if (n && n.y > 0.6) dir.set(-n.x, -n.y, -n.z); else dir.set(0, -1, 0);
+  const g = physics.raycast(b.pos, dir, CONTACT_BIAS + GROUND_FOLLOW_STEP_DOWN, hit);
+  if (!g?.hit || !(g.normal?.y > 0.6)) { b.s3Mode = 'flight'; return; }
+  b.pos.copy(g.point).addScaledVector(g.normal, CONTACT_BIAS);
+  b.s3SurfaceNormal ||= new V();
+  b.s3SurfaceNormal.copy(g.normal);
+  const vn = b.vel.x * g.normal.x + b.vel.y * g.normal.y + b.vel.z * g.normal.z;
+  if (vn < 0) b.vel.addScaledVector(g.normal, -vn);
+}
+
+export function kitBombStep(SUB, b, dt) {
+  const spec = presentedOf(b)?.spec;
+  if (!spec || spec.mode !== 'roll' || !(dt > 0) || !b?.vel) return;
+  if (b.s3Mode === 'rolling') followRollingGround(b);
+  const h = Math.hypot(b.vel.x, b.vel.z);
+  if (!(h > 1e-9)) return;            // stopped (bounce budget spent): no direction to restore
+  let next;
+  if (b.s3Mode === 'rolling') next = curlingRollSpeed(h, curlingRollTargetSpeed(spec, b.fuse), spec, dt);
+  else if (Number.isFinite(spec.flyPositionAirResist)) next = h * Math.pow(1 - spec.flyPositionAirResist, dt * 60);
+  else return;
+  b.vel.x *= next / h;
+  b.vel.z *= next / h;
+}
+
 // Storm keeps the native 24 constant; this hook must not drag it onto the bomb
 // gravity. A stuck bomb gets zero, so it cannot drift off its surface without a
 // fresh physics hit. Otherwise the spec's own flight or ground value is used.
@@ -492,9 +587,9 @@ export function kitBombContact(SUB, b, hit, dt) {
       b.s3SurfaceNormal.copy(n);
       b.pos.copy(hit.point);
       b.pos.addScaledVector(n, CONTACT_BIAS);
+      // Speed along the floor is owned by kitBombStep (per-time BaseSpeed law),
+      // so the landing itself does not apply a per-contact multiplier.
       b.vel.y = 0;
-      b.vel.x *= spec.baseSpeedComeOverRate;
-      b.vel.z *= spec.baseSpeedComeOverRate;
       if (b.fuse < 0) { b.fuse = r.fuse; b.s3FuseTotal = r.fuse; }
       return true;
     }
@@ -559,6 +654,7 @@ export function kitBombTrail(SUB, b, paint, projectiles) {
 // has to go off when the owner's did.
 export function kitBombKeepsFuse(b) {
   const mode=presentedOf(b)?.spec?.mode;
+  // #1099: the Curling lifetime runs from release, airborne or rolling.
   return mode==='stick'&&b.s3Mode==='stuck'||mode==='roll';
 }
 export function kitBombFuseTotal(SUB, b) {
@@ -585,9 +681,16 @@ export function kitBombPaintRadius(SUB, b, fallback) {
 // resolved blast record. Returning null deliberately leaves the native Splat Bomb
 // footprint untouched. Satellites live in the contacted surface plane, so a
 // Suction Bomb stuck to a wall/ceiling does not stamp an unrelated XZ flower.
+// The explosion paint pass belongs to this module exactly when it would run.
+// The Splat Bomb overlay (sub-special-fidelity) must not intercept it.
+export function kitBombOwnsExplosionPaint(b) {
+  const r = resolvedOf(b);
+  return !!r && r.spec?.id !== 'bomb' && Number.isFinite(r.paintRadius);
+}
+
 export function kitBombExplosionPaint(SUB, b, paint) {
   const r = resolvedOf(b);
-  if (!r || r.spec?.id === 'bomb' || !paint?.splat || !Number.isFinite(r.paintRadius)) return null;
+  if (!kitBombOwnsExplosionPaint(b) || !paint?.splat) return null;
   const count = Math.max(0, Math.floor(r.splashSatellites || 0));
   const satelliteRadius = Number.isFinite(r.splashSatelliteRadius) ? r.splashSatelliteRadius : 0;
   const ring = Number.isFinite(r.crossPaintRadius) ? Math.max(0, r.crossPaintRadius) : 0;
@@ -602,14 +705,18 @@ export function kitBombExplosionPaint(SUB, b, paint) {
   if (Math.abs(n.y) < 0.9) t.set(0, 1, 0).cross(n).normalize();
   else t.set(1, 0, 0);
   const bit = b.s3PaintB.copy(n).cross(t).normalize();
-  const center = b.s3PaintPoint.copy(b.pos).addScaledVector(n, 0.1);
+  // BlastParam.PaintOffsetY / SplashAroundParam.OffsetY along the contact
+  // normal (Suction 0.45 / 0.5). Curling omits both; it keeps the 0.1 offset.
+  const offset = Number.isFinite(r.spec?.paintOffsetY) ? r.spec.paintOffsetY : 0.1;
+  const splashOffset = Number.isFinite(r.spec?.splashOffsetY) ? r.spec.splashOffsetY : offset;
+  const center = b.s3PaintPoint.copy(b.pos).addScaledVector(n, offset);
   const baseSeed = Number.isFinite(b.s3ExplosionPaintSeed) ? b.s3ExplosionPaintSeed
     : (b.s3ExplosionPaintSeed = Math.random());
   let area = paint.splat(center, r.paintRadius, b.team, { seed: baseSeed, claimOwner: b.owner, kitPaint: b.s3PaintBirth });
   if (satelliteRadius > 0 && ring > 0) {
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2;
-      center.copy(b.pos).addScaledVector(n, 0.1)
+      center.copy(b.pos).addScaledVector(n, splashOffset)
         .addScaledVector(t, Math.cos(angle) * ring)
         .addScaledVector(bit, Math.sin(angle) * ring);
       area += paint.splat(center, satelliteRadius, b.team,
@@ -641,6 +748,17 @@ export function kitBombDamageBands(SUB, b, fallback) {
   const inner = r.damageInnerDistance, outer = r.damageOuterDistance;
   if (!Number.isFinite(inner) || !Number.isFinite(outer)) return fallback;
   return [[inner, r.damageMax], [outer, r.damageMin]];
+}
+
+// Blast knockback for this bomb (BlastParam.KnockBackParam). Presentation
+// selector: the knockback is applied by the recipient to its own local actor,
+// so a replayed Curling Bomb must push with its own 9.0 range, not the Splat
+// Bomb's 12.0. The Splat Bomb (and any unresolved bomb) keeps the fallback.
+export function kitBombKnockback(SUB, b, fallback) {
+  const r = presentedOf(b);
+  if (!r || r.spec?.id === 'bomb') return fallback ?? null;
+  const k = r.knockback;
+  return k && Number.isFinite(k.accel) && Number.isFinite(k.distance) ? k : null;
 }
 
 export function kitBombDamageMax(SUB, b, fallback) {
@@ -723,17 +841,82 @@ export function withGhostBombSpawn(fn) {
 }
 export function ghostBombSpawning() { return ghostSpawnDepth > 0; }
 
-// Consume Curling's own launch Y tuple without changing Splat/Storm's mapping.
-// Horizontal player-velocity axis mapping remains the existing calibration.
+// ---- 6. Curling guide: flight + roll to the predicted burst point -------------
+// The native guide stops at the first surface, which is where a Splat or
+// Suction Bomb settles. A Curling Bomb keeps travelling, so its guide replays
+// the same per-step pipeline as _updateBombs (kitBombStep, flight gravity,
+// segment contact through kitBombContact, fuse from release) on a scratch
+// presentation record, and the marker sits where the bomb will burst. The
+// record is `ghost` with `s3GhostResolved`, so no authority is reachable.
+const PREVIEW_DT = 1 / 60;
+function previewCurlingPath(projectiles, resolved) {
+  const geo = projectiles.arcGeo, cache = projectiles._arcCache, physics = G_REF?.physics;
+  const pos = geo?.attributes?.position, ring = projectiles.arcRing;
+  if (!pos || !cache || !physics?.segment || !Number.isFinite(cache.vx) || !Number.isFinite(resolved.fuse)) return;
+  const key = projectiles.s3CurlingPreviewKey || (projectiles.s3CurlingPreviewKey = {});
+  const same = key.physics === physics && key.px === cache.px && key.py === cache.py && key.pz === cache.pz
+    && key.vx === cache.vx && key.vy === cache.vy && key.vz === cache.vz && key.charge === resolved.charge && key.fuse === resolved.fuse;
+  if (!same) {
+    const V = ring.position.constructor;
+    const b = key.record || (key.record = { pos: new V(), vel: new V(), ghost: true, kind: 'bomb', team: -1 });
+    const prev = key.prev || (key.prev = new V()), hit = key.hit || (key.hit = { hit: false, point: new V(), normal: new V() });
+    b.pos.set(cache.px, cache.py, cache.pz); b.vel.set(cache.vx, cache.vy, cache.vz);
+    b.s3GhostResolved = resolved; b.s3Mode = 'flight'; b.s3Bounces = 0; b.fuse = resolved.fuse; b.age = 0;
+    b.s3SurfaceNormal = null; b.s3BounceExhausted = false;
+    const steps = Math.ceil(resolved.fuse / PREVIEW_DT - 1e-9), every = Math.max(1, Math.ceil(steps / (projectiles.arcN - 2)));
+    let n = 1;
+    pos.setXYZ(0, b.pos.x, b.pos.y, b.pos.z);
+    for (let i = 1; i <= steps; i++) {
+      kitBombStep(SUB_REF, b, PREVIEW_DT);
+      b.vel.y -= kitBombGravity(SUB_REF, b) * PREVIEW_DT;
+      prev.copy(b.pos);
+      b.pos.addScaledVector(b.vel, PREVIEW_DT);
+      const h = physics.segment(prev, b.pos, hit);
+      if (h?.hit) kitBombContact(SUB_REF, b, h, PREVIEW_DT);
+      b.fuse -= PREVIEW_DT;
+      if (b.pos.y < (PLAYER_REF?.waterY ?? -Infinity) - 1.8) break;
+      if ((i % every === 0 || i === steps) && n < projectiles.arcN) { pos.setXYZ(n, b.pos.x, b.pos.y, b.pos.z); n++; }
+    }
+    key.n = n;
+    key.end = key.end || new V(); key.end.copy(b.pos);
+    key.normal = key.normal || new V(); key.normal.copy(b.s3SurfaceNormal || { x: 0, y: 1, z: 0 });
+    key.rolling = b.s3Mode === 'rolling';
+    Object.assign(key, { physics, px: cache.px, py: cache.py, pz: cache.pz, vx: cache.vx, vy: cache.vy, vz: cache.vz,
+      charge: resolved.charge, fuse: resolved.fuse });
+    pos.updateRanges && (pos.updateRanges.length = 0);
+    pos.needsUpdate = true;
+    const dist = geo.attributes.lineDistance;
+    if (dist) {
+      let total = 0;
+      dist.setX(0, 0);
+      for (let i = 1; i < key.n; i++) {
+        total += Math.hypot(pos.getX(i) - pos.getX(i - 1), pos.getY(i) - pos.getY(i - 1), pos.getZ(i) - pos.getZ(i - 1));
+        dist.setX(i, total);
+      }
+      dist.updateRanges && (dist.updateRanges.length = 0);
+      dist.needsUpdate = true;
+    }
+  }
+  geo.setDrawRange(0, key.n);
+  if (ring && UP_REF) {
+    ring.position.copy(key.end).addScaledVector(key.normal, 0.03 - CONTACT_BIAS);
+    ring.quaternion.setFromUnitVectors(UP_REF.copy({ x: 0, y: 1, z: 0 }), key.normal);
+    ring.visible = key.rolling;
+  }
+}
+let UP_REF = null, SUB_REF = null;
+
+// Consume the sub's own launch record (MoveParam SpawnSpeedY/YWorldMin and
+// SpawnBulletAdditionMovePlayerParam X/Z/YPlus/YMax) without changing the
+// Splat Bomb or Storm mapping. Curling interpolates SpawnSpeedY towards
+// SpawnSpeedYMaxCharge with the held charge (both 0.12 in 11.3.0).
 export function kitThrowVelocity(actor, resolved, speed, out) {
   const spec = resolved?.spec;
-  if (spec?.id !== 'curling') return null;
-  return fidelityThrowVelocity(actor, 'bomb', out, speed, {
-    ...SUB_SPECIAL_FIDELITY.bomb,
-    spawnSpeedY: spec.spawnSpeedY + (spec.spawnSpeedYMaxCharge - spec.spawnSpeedY) * resolved.charge,
-    spawnSpeedYWorldMin: spec.spawnSpeedYWorldMin,
-    inheritYPlus: spec.inheritYPlus, inheritYMax: spec.inheritYMax,
-  });
+  if (!spec?.launch || spec.id === 'bomb') return null;
+  const y = Number.isFinite(spec.spawnSpeedYMaxCharge) && Number.isFinite(spec.spawnSpeedY)
+    ? spec.spawnSpeedY + (spec.spawnSpeedYMaxCharge - spec.spawnSpeedY) * (resolved.charge || 0)
+    : spec.launch.spawnSpeedY;
+  return fidelityThrowVelocity(actor, 'bomb', out, speed, { ...SUB_SPECIAL_FIDELITY.bomb, ...spec.launch, spawnSpeedY: y });
 }
 
 // ---- Install -----------------------------------------------------------------
@@ -746,6 +929,7 @@ export function installKitSubs(api, profile) {
   if (!SUB || !Projectiles || !WeaponRunner) throw new Error('INKWAVE sub patch needs SUB, Projectiles and WeaponRunner');
   if (SUB[KIT_KEY]) return api;   // idempotent: no double wrapping
   G_REF = G; PLAYER_REF = api.PLAYER; PHYSICS_REF = api.Physics;
+  UP_REF = api.THREE ? new api.THREE.Vector3(0, 1, 0) : null; SUB_REF = SUB;
   registerKitSubs(SUB, profile);
 
   const nativeThrowVelocity = Projectiles.prototype.throwVelocity;
@@ -778,8 +962,11 @@ export function installKitSubs(api, profile) {
     const saved = this.s3PreviewSubSpeed, previous = this.s3KitPreviewResolved;
     this.s3KitPreviewResolved = resolved;
     this.s3PreviewSubSpeed = resolved.throwSpeed;
-    try { return updateArc.call(this, actor, show); }
+    let out;
+    try { out = updateArc.call(this, actor, show); }
     finally { this.s3PreviewSubSpeed = saved; this.s3KitPreviewResolved = previous; }
+    if (show && actor?.alive && resolved.spec?.mode === 'roll') previewCurlingPath(this, resolved);
+    return out;
   };
 
   // Charge state and death / weapon-change reset live on the real runner.

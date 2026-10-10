@@ -6,7 +6,11 @@
 @media (max-width: 500px) { .s3-gear { left: 1rem; right: 1rem; width: auto; } .s3-gear label { font-size: .8rem; } }
 
 /* Ver.11 approximate health: no precise HP numbers or enemy name disclosure. */
-.iw-health{position:absolute;left:0;top:0;width:46px;height:7px;margin:-3px 0 0 -23px;border:1px solid #fff;border-radius:4px;background:#111c;overflow:hidden;pointer-events:none;box-shadow:0 1px 3px #0009}
+/* Ver.11.0 remaining-health bar. SplPlayer spl__PlayerDispHPParam (first present in the 11.0.0 table, unchanged
+   through 11.3.0): BarWidth 70 x BarHeight 5 and an opaque BarBgColor RGB 0.3. Only the unit-free 14:1 aspect
+   ratio and the colour are applied; the 46px width is INKWAVE's existing calibration (the source UI unit is
+   unpublished). The white outline is an INKWAVE readability choice, not a source field. */
+.iw-health{position:absolute;left:0;top:0;width:46px;height:calc(46px * 5 / 70);margin:calc(46px * -2.5 / 70) 0 0 -23px;border:1px solid #fff;border-radius:2px;background:rgb(77,77,77);overflow:hidden;pointer-events:none;box-shadow:0 1px 3px #0009}
 .iw-health[hidden]{display:none}
 .iw-health>i{display:block;width:100%;height:100%;background:var(--health-color,#fff);transform-origin:left center}
 

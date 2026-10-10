@@ -120,7 +120,7 @@ test('the pinned Hermit2DSmooth curves evaluate through their pinned endpoints',
   }
 });
 
-test('#1013 MaxHP-backed target durability follows Special Power Up AP while outer MaxFieldHP stays independent', async () => {
+test('#1013 both durability pools follow their own pinned Special Power Up control points', async () => {
   const { f } = await composed();
   assert.equal(bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 0 } } }), BIG_BUBBLER_RAW.maxHp);
   assert.equal(bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 57 } } }), BIG_BUBBLER_RAW.maxHpHigh);
@@ -130,8 +130,10 @@ test('#1013 MaxHP-backed target durability follows Special Power Up AP while out
   level(f);
   const a = roller(f); a.s3.modifiers.specialPowerAP = 57; f.G.actors = [a]; activate(f, a);
   const dome = bigBubblerDomes()[0];
-  assert.equal(dome.hp, BIG_BUBBLER_RAW.maxFieldHp, 'outer barrier keeps MaxFieldHP ownership from #1051');
-  assert.equal(dome.hpMax, BIG_BUBBLER_RAW.maxFieldHp);
+  // BarrierParam.MaxFieldHP has its own Low/Mid/High (30720/33792/36864) in the pinned table.
+  assert.equal(BIG_BUBBLER_RAW.maxFieldHpHigh, 36864);
+  assert.equal(dome.hp, BIG_BUBBLER_RAW.maxFieldHpHigh, 'outer barrier keeps MaxFieldHP ownership from #1051 at its High endpoint');
+  assert.equal(dome.hpMax, BIG_BUBBLER_RAW.maxFieldHpHigh);
   assert.equal(dome.fieldHp, BIG_BUBBLER_RAW.maxHpHigh, 'MaxHP-backed target receives Special Power Up');
   assert.equal(dome.fieldHpMax, BIG_BUBBLER_RAW.maxHpHigh);
 });
