@@ -3528,3 +3528,17 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - 再現操作: 2 台の接続（所有者 A、観測者 B）で平地から通常のスーパージャンプを行い、溜め中に 20Hz のスナップショットを受けた後、続けて 2 回目の発動をする。観測側で溜めの姿勢が連続して戻るか、前回の値に固着しないかを見る。
 - プレイへの影響: 同一位相の再発動で、観測側が間の無位相サンプルを受けない経路では、遠隔プレイヤーの溜めの姿勢が前回の進行度に残り得る（発生頻度は実機で未確認）。ゲームの権威（移動・当たり判定・被弾・行動の許可）は変更していない。
 - 確認状態: ロジック単独の回帰試験 3 件（同一エポックの重複、再発動、旧形式の互換、30/60/120Hz の補間）は通過。関連する既存試験（adoption-state、movement-motion、superjump-motion、issue-1050、superjump-startup-form、issue-1062）は通過し、`check-inkwave-patches.mjs --quick` も通過。実機の二クライアント観測（溜めの開始・ピーク・発射の見た目の一致）は未実施で、未確認。適応状態（owner の経過時間）が届く経路では、既存の寿命・順序による保護が先に働くため、エポックの効果は主に適応のない経路（旧形式、寿命が一致しない直後）で確認した。
+## 2026-10-10 — #198 Splattershot outer-reticle probability (Splatoon 3 Ver. 11.3.0)
+
+**本家の根拠:** 固定コミット `7280ff9c` の Leanny 11.3.0 `WeaponShooterNormal`（sha256 `dfca9f45…` を照合）の `WeaponParam` は、`Stand_DegBiasMin=0.01`、`Stand_DegBiasKf=0.01`、`Stand_DegBiasDecrease=0.015`、`Jump_DegBiasMax=0.4`、`Jump_DegBiasDecreaseStartFrame=25`、`Jump_DegBiasEndFrame=70`、`Stand_DegSwerve=4.86`、`Jump_DegSwerve=11.66` を持つ。これらは INKWAVE の値と一致する。一方、25% の上限と 6F の回復ゲートは固定した WeaponParam に存在しない。Inkipedia の Splatoon 3 Splattershot 節（コミュニティ資料）には「1%開始、+1%/発、25%で上限（24発）、ジャンプ時40%、射撃停止後6F、-1.5%/F」と記載がある。Nintendo 公式資料では未確認。
+
+**INKWAVE の実装箇所:** `patches/splatoon3/runtime/shooter-accuracy.mjs`（状態機構。上限 `OUTER_CHANCE_CAP=.25`、ゲート `RECOVERY_GATE_FRAMES=6` は未確認の名前付き定数）。`runtime/weapons.mjs` の `fireShooter` が発射ごとに外側/内側を抽選し、`_spreadDeg` が HUD と発射の共通の包絡（空中 11.66、地上 4.86、ジャンプ後 25F→70F の包絡）を返す。内側の角度分布は `spreadFirst ?? 0.45` の暫定値。
+
+**再現操作:** 地上で発射を繰り返す。1発目の外側確率は 1%、以後 1発ごとに +1pt、24発目で 25% に達し、それ以上は増えない。発射を止めると 6F 保持の後、1.5pt/F で 1% まで下がる。空中の発射は外側確率 40%。ロジック単独の試験で、実機の射撃とは比較していない。
+
+**プレイへの影響:** 連射時の弾の散らばり方が、旧来の連続的な円錐（約5発で最大）から、外側確率の状態機構に変わる。最大の包絡（地上 4.86°、空中 11.66°）は変わらない。
+
+**確認状態:**
+- 確認済み（単体・ロジック）: `tests/shooter-accuracy.test.mjs`（1%→25%、2発目 2%、6F 保持と 1.5pt/F の回復、フレーム間隔 30/60/120/144 Hz で同一の回復、ジャンプ 40%）、`tests/issue-198-shooter-outer-probability.test.mjs`（実発射経路で、地上 1発目→24発目→25%上限、空中 40%。上限を 0.30 に変えると失敗することを確認）。`tests/shot-cone-hitbase.test.mjs`、`tests/weapons.test.mjs` と合わせて 20/20 通過。
+- 未確認: 25% 上限と 6F ゲート（Inkipedia のみ、公式データ未確認）。ジャンプ後 25F→70F の確率の中間曲線（直線補間は暫定）。内側照準の角度分布（`spreadFirst 0.45` は暫定）。`Stand_DegBiasDecrease` の単位（Inkipedia の 1.5%/F と整合するが、ファイル上は単位の記載なし）。HUD のレティクル描画と実機の射撃感、Switch 版との一致。
+- 本家の Inkipedia には、ジャンプ後の射撃で 32F（6F + 26F）とする記述がある。INKWAVE の 25F→70F の確率補間とは時間配分が異なる。どちらが本家と一致するかは実機またはデータで確認が必要で、今回は変更していない。
