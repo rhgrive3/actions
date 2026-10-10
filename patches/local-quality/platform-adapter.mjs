@@ -41,9 +41,24 @@ export function adaptPlatformSource(rel, code) {
     return install(code, 'mobile-platform', 'installMobilePlatform', 'MobileInput');
   }
   if (rel === 'src/core/input.js') {
-    const blocks = [...code.matchAll(/    window\.addEventListener\('blur', \(\) => \{[\s\S]*?\n    \}\);/g)];
-    if (blocks.length !== 1 || !blocks[0][0].includes('this.keys.clear()') || !blocks[0][0].includes('this.padPressed.clear()')) throw new Error('INKWAVE platform anchor mismatch: input blur owner');
-    code = code.replace(blocks[0][0], '    // Stale input is cleared by the page lifecycle owner.');
+    const helperStart = '    const _resetActiveInput = () => {';
+    const helperEnd = "    window.addEventListener('pagehide', _resetActiveInput);";
+    const hs = code.indexOf(helperStart), he = hs >= 0 ? code.indexOf(helperEnd, hs) : -1;
+    if (hs >= 0 || he >= 0) {
+      if (hs < 0 || he < hs || code.indexOf(helperStart, hs + helperStart.length) >= 0 ||
+          code.indexOf(helperEnd, he + helperEnd.length) >= 0)
+        throw new Error('INKWAVE platform anchor mismatch: input reliability lifecycle owner');
+      const ownerBlock = code.slice(hs, he + helperEnd.length);
+      for (const proof of ['this.keys.clear()', 'this.pressed.clear()', 'this.padPressed.clear()',
+        "addEventListener('blur'", "addEventListener('visibilitychange'", "addEventListener('pagehide'"])
+        if (!ownerBlock.includes(proof)) throw new Error('INKWAVE platform anchor mismatch: input reliability lifecycle proof');
+      code = code.slice(0, hs) + '    // Stale input is cleared by the PlatformLifecycle owner.' +
+        code.slice(he + helperEnd.length);
+    } else {
+      const blocks = [...code.matchAll(/    window\.addEventListener\('blur', \(\) => \{[\s\S]*?\n    \}\);/g)];
+      if (blocks.length !== 1 || !blocks[0][0].includes('this.keys.clear()') || !blocks[0][0].includes('this.padPressed.clear()')) throw new Error('INKWAVE platform anchor mismatch: input blur owner');
+      code = code.replace(blocks[0][0], '    // Stale input is cleared by the PlatformLifecycle owner.');
+    }
     return install(code, 'platform-input', 'installInputPlatform', 'Input');
   }
   if (rel === 'src/audio/audio.js') return install(code, 'platform-audio', 'installAudioPlatform', 'AudioEngine');

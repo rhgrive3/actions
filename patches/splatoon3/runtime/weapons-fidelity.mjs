@@ -319,9 +319,25 @@ function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
 // #873: keep intermediate and nearest/feet widths separate. Consume the same
 // legacy RNG draw to avoid changing unrelated spread/paint-seed ordering, but
 // never let that draw randomize the sourced Shooter gameplay radius.
-export function fidelityFlightPaintRadius(p) {
+export function fidelityFlightPaintRadius(p, fallHeight) {
   const legacyRandom = Math.random();
-  return p.s3Weapon?.flightPaint?.intermediate ?? p.trailRadius * (0.8 + legacyRandom * 0.4);
+  const fp = p?.s3Weapon?.flightPaint;
+  const dist = fallHeight !== undefined && Number.isFinite(fallHeight)
+    ? fallHeight
+    : (p?.lastDropDist !== undefined && Number.isFinite(p.lastDropDist) ? p.lastDropDist : undefined);
+  if (p && 'lastDropDist' in p) delete p.lastDropDist;
+  if (fp) {
+    if (dist !== undefined) {
+      const minH = fp.dropHeightMax ?? 3.0;
+      const maxH = fp.dropHeightMin ?? 10.0;
+      if (dist <= minH) return fp.nearest;
+      if (dist >= maxH) return fp.intermediate;
+      const t = (dist - minH) / (maxH - minH);
+      return fp.nearest + (fp.intermediate - fp.nearest) * t;
+    }
+    return fp.intermediate;
+  }
+  return (p?.trailRadius ?? 0.44) * (0.8 + legacyRandom * 0.4);
 }
 
 function deriveRollerReleaseFootPaint(profile) {
@@ -1398,6 +1414,8 @@ export function installWeaponsFidelity(context,profile) {
   WEAPONS.shooter.flightPaint = Object.freeze({
     intermediate: shooterPaint.WidthHalf * paintScale,
     nearest: shooterPaint.WidthHalfNearest * paintScale,
+    dropHeightMax: (shooterPaint.DepthMaxDropHeight ?? 3) * paintScale,
+    dropHeightMin: (shooterPaint.DepthMinDropHeight ?? 10) * paintScale,
     worldUnitsPerSourceUnit: paintScale,
   });
   roller.releaseFootPaint = deriveRollerReleaseFootPaint(profile);
