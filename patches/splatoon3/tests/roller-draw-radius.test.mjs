@@ -192,7 +192,14 @@ test('#750: CollisionParam gameplay radii, spawn, speed, RNG order and draw coun
     assert.equal(draws, fp.draws, `${key}: Math.random() draw count is unchanged`);
     assert.equal(p.list.length, fp.count, `${key}: glob count`);
     assert.deepEqual(Array.from(p.list.slice(0, 3), q => roundArray(q.pos.toArray())), fp.pos, `${key}: spawn positions`);
-    assert.deepEqual(Array.from(p.list.slice(0, 3), q => roundArray(q.vel.toArray())), fp.vel, `${key}: launch velocities`);
+    const velocities = Array.from(p.list.slice(0, 3), q => roundArray(q.vel.toArray()));
+    if (vertical) assert.deepEqual(velocities, fp.vel, 'vertical baseline');
+    else for (let i=0; i<3; i++) {
+      assert.equal(velocities[i][1], fp.vel[i][1], 'horizontal vertical-speed baseline');
+      assert.ok(Math.abs(Math.hypot(velocities[i][0],velocities[i][2]) -
+        Math.hypot(fp.vel[i][0],fp.vel[i][2])) < 1e-5,
+        'speed-preserving #771 horizontal yaw adjustment');
+    }
     assert.deepEqual(Array.from(p.list.slice(0, 3), q => round(q.seed)), fp.seed, `${key}: seeds`);
     assert.deepEqual(Array.from(p.list.slice(0, 3), q => round(q.radius)), fp.radius, `${key}: generic hit radius`);
     assert.deepEqual(Array.from(p.list.slice(0, 3), q => q.sats), fp.sats, `${key}: satellite count`);
