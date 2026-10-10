@@ -476,32 +476,43 @@ export function emit(name, payload) {
     patch('      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;',
       '      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.dropRollId = dropRoll?.id ?? 0; snap.dropRollRemaining = dropRoll?.remaining ?? 0;\n      snap.dropRollX = dropRoll?.x ?? 0; snap.dropRollZ = dropRoll?.z ?? 0; snap.dropRollDuration = dropRoll?.duration ?? 0;',
       'attach validated Drop Roller clock and direction');
-    patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
-      if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
-      e._netPeer = from;
-      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
-      // Receiver-created proof only: an event cannot supply its own authority.
-      e._stormSnapshot = null;
-      e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
-        && d.r === 2 && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(d.u)
-        && e._netTick >= 0 && e._netTick <= d.u;
-      e._finishPaintApplied = false;
-      const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
-        : e[1] === 'ev' && e[2] === 'special:use' && e[3]?.id === 'storm' ? e[3]?.actor?.n : null;
-      const stormActor = this.byNid.get(stormNid), snap = stormActor?.net?.buf?.at(-1);
-      if (stormActor?.remote && stormActor.owner === from && snap?.t === d.ts
-        && Number.isSafeInteger(snap.life) && snap.life === stormActor.net.lastLife
-        && (snap.f & F.alive) && (snap.f & F.special)
-        && Number.isSafeInteger(d.u) && Number.isSafeInteger(e._netTick) && e._netTick >= 0
-        && e._netTick >= (p.physicsPoints?.at(-3) ?? 0) && e._netTick <= d.u && e[0] <= d.ts) {
-        e._stormSnapshot = { owner: from, life: snap.life, at: snap.t, tick: d.u };
+    patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (Array.isArray(d.e)) {
+      let eventBudget = 0;
+      for (const e of d.e) {
+        if (eventBudget++ >= 256) break;
+        if (!Array.isArray(e) || !Number.isFinite(e[0]) || !Number.isFinite(d.ts) || e[0] > d.ts) continue;
+        e._netPeer = from;
+        if (d.r === 2) {
+          const seq = e[e.length-1], tick = e[e.length-2];
+          if (!Number.isSafeInteger(seq) || seq < 1
+            || !Number.isSafeInteger(tick) || tick < 0
+            || !Number.isSafeInteger(d.u) || d.u < 0 || tick > d.u) continue;
+          e._netSeq = seq; e._netTick = tick;
+        }
+        // Receiver-created proof only: an event cannot supply its own authority.
+        e._stormSnapshot = null;
+        e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
+          && d.r === 2 && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(d.u)
+          && e._netTick >= 0 && e._netTick <= d.u;
+        e._finishPaintApplied = false;
+        const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
+          : e[1] === 'ev' && e[2] === 'special:use' && e[3]?.id === 'storm' ? e[3]?.actor?.n : null;
+        const stormActor = this.byNid.get(stormNid), snap = stormActor?.net?.buf?.at(-1);
+        if (stormActor?.remote && stormActor.owner === from && snap?.t === d.ts
+          && Number.isSafeInteger(snap.life) && snap.life === stormActor.net.lastLife
+          && (snap.f & F.alive) && (snap.f & F.special)
+          && Number.isSafeInteger(d.u) && Number.isSafeInteger(e._netTick) && e._netTick >= 0
+          && e._netTick >= (p.physicsPoints?.at(-3) ?? 0) && e._netTick <= d.u && e[0] <= d.ts) {
+          e._stormSnapshot = { owner: from, life: snap.life, at: snap.t, tick: d.u };
+        }
+        if (e[1] === 's') {
+          if (e._netSeq !== undefined && e._netSeq <= Math.max(p._lastEventSeq || 0, p._lastPaintSeq || 0, this._paintClockState.applied.get(from) || 0)) continue;
+          if (receivePaintOrder(this, from, e) === false) continue;
+          if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
+        }
+        if (p.events.length >= 512) continue;
+        p.events.push(e);
       }
-      if (e[1] === 's') {
-        if (e._netSeq !== undefined && e._netSeq <= Math.max(p._lastEventSeq || 0, p._lastPaintSeq || 0, this._paintClockState.applied.get(from) || 0)) continue;
-        if (receivePaintOrder(this, from, e) === false) continue;
-        if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
-      }
-      p.events.push(e);
     }`, 'receive event identity');
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
     patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
