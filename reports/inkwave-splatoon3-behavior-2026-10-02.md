@@ -3650,3 +3650,11 @@ The combined new focused tests pass 51/51 with no skips. Prior complete-suite re
 ## 2026-10-10: complete main-actor catalog expansion
 
 [Main-weapon catalog report](inkwave-main-weapon-catalog-2026-10-10.md) adds 58 source-guided main implementations alongside the existing seven, using the pinned 11.3.0 extraction with per-file hashes and temporary original Japanese/English names. It records action, ink, travel, collision and paint owners, neutral-gear conditions, source-versus-community timing, browser fixture scope and reproduction. New models and retail sub/special variants are deferred. Numerical records do not certify engine-equivalent paint/shape/controller formulas; omitted defaults, Slosher spiral, Ballpoint interpolation/recharge, scope camera and canopy multiplayer/terrain details remain explicitly unconfirmed or incomplete. Acceptance is final-head build/regression/browser CI; no Switch comparison was performed.
+## 2026-10-10: seven base weapon models and current attack pose ownership
+
+- **本家の根拠:** [任天堂公式ブキ図鑑](https://www.nintendo.com/jp/character/splatoon/fashion/index.html) の基本7種のシルエット・タンク・銃口・フレームを参照（2026-10-10確認）。図鑑は版番号のないシリーズ資料。S3実行バイナリ、正確な寸法、関節軌道の根拠として扱わない。既存のS3設定・攻撃時間は維持。
+- **実装:** `patches/splatoon3/runtime/weapon-reference-models.mjs` と `source-weapon-owner.mjs`、production adapter。公開版の描画だけを重ね、上流ロック対象は維持。基本チャージャーの不要なスコープ、汎用銃に寄ったシューター/マニューバー、ヘビーの銃身・タンクなどを公式の対応形状に近づけた。ローラーの既存折り畳み/広いドラムは維持。
+- **再現操作と差分:** source bankの読み込み後に歩行→射撃→空中上向き照準→解除→サブ構え/投げ。従来は5系統で旧Wii U移動素材の上半身が現在の反動・バケツ振り・チャージ姿勢を上書き。現在のActor入力/Runner状態から上半身の所有権を切り替え、初回チャージ入力の1フレーム遅れも解消。完全保持中の補助手をネイティブのグリップ位置へ追従させる。
+- **影響:** ブキの識別性、持ち手と可動部の一致、攻撃姿勢の読みやすさ。ブラスターの描画銃口は前部のばね動作に追従し、静止時座標は既存値へ戻る。ダメージ/拡散/インク/連射間隔を再調整していない。
+- **確認範囲:** 新規productionテスト3件、7種の実ブラウザ270フレーム（各100射撃入力フレーム）、既存weapon detail/motionおよび14場面の描画検査。完全保持時の補助手誤差は0.006 world unit未満。全回帰・公開はexact-head CIとPages結果を別途確認する。
+- **未確認:** S3実機の全関節軌道・装備/カメラの全組合せとの完全一致。旧Wii U移動素材をS3モーションとは呼ばない。詳細と画像は [比較記録](inkwave-weapon-models-motion-2026-10-10.md)。

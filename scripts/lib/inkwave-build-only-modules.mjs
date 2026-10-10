@@ -36,6 +36,8 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/resource-adapter.mjs',
   'patches/local-quality/result-continuation-adapter.mjs',
   'patches/local-quality/score-reticle-adapter.mjs',
+  'patches/local-quality/range-frame-pacing-adapter.mjs',
+  'patches/local-quality/team-special-signal-adapter.mjs',
   'patches/local-quality/screenfx-damage-reset-adapter.mjs',
   'patches/local-quality/screenfx-lens-release-adapter.mjs',
   'patches/local-quality/showcase-shadow-adapter.mjs',
