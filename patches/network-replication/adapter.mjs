@@ -244,9 +244,13 @@ function finiteRemoteSample(s) {
   return true;
 }
 function unpackActor(s, ts) {`, 'strict owner actor snapshot schema');
-    patch("case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d); break;",
-      "case 'bhit': if (this.isHost) this.match?.boss?.remoteHit(d, from); break;",
-      'bind Boss hit to authenticated sender');
+    patch('  onMessage(from, d) {\n    switch (d.k) {',
+      `  onMessage(from, d) {
+    if (d?.k === 'bhit') {
+      if (this.isHost) this.match?.boss?.remoteHit(d, from);
+      return;
+    }
+    switch (d.k) {`, 'bind Boss hit to authenticated sender');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
     code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
