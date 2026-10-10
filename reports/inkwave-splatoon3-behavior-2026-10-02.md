@@ -3394,3 +3394,10 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - 再現操作: 感度 -5 / 0 / +5、端末を立てた状態で 90 度/秒の偏向を 2 秒、ジャイロ入力の `_sample` 出力を物理 180 度と比べる。
 - プレイへの影響: 既定値（0）の利得が公開版の 2.73x から 1.8x へ下がる。物理 90 度の旋回は -5 で 90 度、+5 で 270 度になる（公開版は約 116.5 度、約 294.5 度）。操作感が大きく変わるため、実機確認までは本家一致とは扱わない。
 - 確認状態: 論理試験のみ。`patches/splatoon3/tests/gyro-sensitivity-endpoints.test.mjs` 4/4 が通る。30 / 60 / 120 Hz の一定角速度でも積分結果は一致する。低速の平滑化・引き締め（約 3〜10 度/秒の境界）は試験していないため、フレーム間隔依存は **未確認**。未確認: Ver.11.3.0 の同条件実機計測、-2.5 / +2.5 など中間設定、Joy-Con / Pro Controller 実機入力、iOS / Android の DeviceOrientation 実動作。Issue #725 の中間値と実機一致の受け入れ項目は未達のまま。
+## 2026-10-10 — #498 Roller age-width recheck (no code change)
+
+- 本家の根拠: 固定した Leanny/splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の Ver. 11.3.0 Roller `PaintParam` では、横は `ChangeWidthStartFrame=20`、縦は `30`、どちらも `ChangeWidthEndFrame=50`、`ChangeFrameWidthRate=0.6`。パラメータ解説は倍率の最小値・開始・終了の意味だけを示し、開始から終了までの補間形と丸めは示さない。Web 検索と Google Drive 検索でも中間曲線の一次根拠は見つからなかった。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/roller-impact-paint.mjs`（`rollerPaintAgeMultiplier` は線形の暫定補間）、`patches/splatoon3/adapter.mjs`（Roller trail への配線）、着弾 paint は `withRollerImpactPaint`。
+- 再現条件: `patches/splatoon3/tests/issue-498-roller-paint-age-endpoints.test.mjs` は 30/60/120 Hz で横 13 種・縦 5 種の全ユニットを、境界 19/20/49/50F（縦は 29/30/49/50F）で確認し、6/6 件合格。
+- プレイへの影響: 20F/30F の開始と 50F の 0.6 倍という端点は source とテストで一致。20F〜50F の幅の減り方と、フレーム丸めは未確認のまま。
+- 確認状態: 端点はテスト確認済み（ロジック単独の測定であり、実機比較ではない）。中間曲線とフレーム丸めは未確認で、実機のフレーム計測が必要。#498 は Open のまま。
