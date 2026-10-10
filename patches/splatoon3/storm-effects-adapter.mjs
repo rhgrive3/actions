@@ -27,7 +27,7 @@ export function adaptStormEffects(rel, code) {
     code = once(code, '  _updateClouds(dt) {\n    const sp = SPECIALS.storm;', '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;', 'rain damage arbitration');
     code = once(code, "          const killed = e.damage(sp.dps * dt, c.owner, 'storm');\n          if (killed) emit('hit', { attacker: c.owner, victim: e, damage: 0, killed: true, weaponId: 'storm' });", '          collectStormHit(rainHits, e, c, sp.dps * dt);', 'non-stacking rain damage');
     code = once(code, "      if (c.t >= c.dur) { emit('storm:end', { pos: c.group.position.clone(), team: c.team, actor: c.owner }); this._releaseCloud(c, 0.3); this.clouds.splice(i, 1); }\n    }\n  }", "      if (c.t >= c.dur) { emit('storm:end', { pos: c.group.position.clone(), team: c.team, actor: c.owner }); this._releaseCloud(c, 0.3); this.clouds.splice(i, 1); }\n    }\n    applyStormHits(rainHits, emit);\n  }", 'one rain hit per actor tick');
-    return "import { collectStormHit, applyStormHits } from '../../patches/splatoon3/runtime/storm-effects.mjs';\n" + code;
+    return "import { collectStormHit, applyStormHits, stormRainScale, stormRainContains } from '../../patches/splatoon3/runtime/storm-effects.mjs';\n" + code;
   }
   return code;
 }

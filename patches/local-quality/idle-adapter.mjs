@@ -16,8 +16,9 @@ export function adaptIdleSource(rel, code, replace) {
   }
   if (rel === 'src/audio/audio.js') {
     const init = '    if (this.opts.music !== false && this.music) this.music._init(ctx, this.musicBus, { offline: this.offline });';
-    patch(init, '    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.music > 0);\n' + init, 'initial mute state before music initialization');
-    patch("    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", "    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.music > 0);\n    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", 'live and pre-init mute');
+    // #366: the music engine idles at any zero effective volume (Master or Music), not only Music = 0.
+    patch(init, '    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.master > 0 && this.vol.music > 0);\n' + init, 'initial mute state before music initialization');
+    patch("    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", "    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.master > 0 && this.vol.music > 0);\n    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", 'live and pre-init mute');
   }
   if (rel === 'src/main.js') {
     code = "import { idleAttractMenuBudget, notePausedWorldChange, pausedWorldFrame, refreshEnvironmentBudget } from '../patches/local-quality/idle-resources.mjs';\n" + code;
@@ -42,7 +43,14 @@ export function adaptIdleSource(rel, code, replace) {
     patch('G.paint.flush(dt);', 'G.paint.flush(worldDt);', 'attract paint cadence');
     patch('this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);', 'this.swimWake.update(worldDt, this.levelMat.userData.uniforms, G.camera.position);', 'attract wake cadence');
     patch('  _dynRes(dt) {', '  _dynRes(dt) {\n    if (this.match?.paused && !this.match.attract && !G.netm) return;', 'paused frames are not GPU headroom samples');
-    patch('      if (!setUp) this.R.render();', '      if (!setUp && pausedFrame.draw && (!menuAttractBudget || this._menuAttractFrame)) { this.R.render(); if (pausedFrame.paused) G.renderer.shadowMap.needsUpdate = false; pausedFrame.commit?.(); }', 'frozen pause or budgeted menu backdrop');
+    patch('      if (!setUp) this.R.render();', `      if (!setUp && pausedFrame.draw && (!menuAttractBudget || this._menuAttractFrame)) {
+        // A paused quality/context invalidation may have retired the sun map.
+        // Refresh it once with the backdrop; unchanged paused frames stay idle.
+        if (pausedFrame.paused && sm.enabled) sm.needsUpdate = true;
+        this.R.render();
+        if (pausedFrame.paused) sm.needsUpdate = false;
+        pausedFrame.commit?.();
+      }`, 'frozen pause or budgeted menu backdrop');
     patch('    this.menus?.update?.(dt);', '    this.menus?.update?.(dt);\n    if (pausedFrame.paused) G.renderer.shadowMap.needsUpdate = false;', 'paused shadow flag retirement');
   }
   return code;

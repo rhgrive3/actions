@@ -26,12 +26,16 @@ test('actual equipped Splatling uses its 1.35 firing override without altering a
 test('actual blaster connects zero ground spread and its distinct Action Intensify curve', async () => {
   const f = await fixture(), a = f.make('blaster'), r = a.weaponRunner;
   assert.equal(r._spreadDeg(a.weapon), 0);
-  a.grounded = false; assert.equal(r._spreadDeg(a.weapon), 10);
+  a.grounded = false; assert.equal(r._spreadDeg(a.weapon), 0, 'falling alone is not a jump');
+  a.s3JumpSerial = (a.s3JumpSerial || 0) + 1; r.update(1 / 60, { fire: false });
+  assert.equal(r._spreadDeg(a.weapon), 10);
   a.s3.loadout = loadout('actionIntensify', 10); a.setWeapon('blaster');
+  a.s3JumpSerial++; r.update(1 / 60, { fire: false });
   const expected = 10 * (1 - gearCurve(10, 0, .5, 1));
   assert.ok(Math.abs(r._spreadDeg(a.weapon) - expected) < 1e-9);
   assert.notEqual(r._spreadDeg(a.weapon), 10 * (1 - gearCurve(10, 0, .75, 1)));
   a.s3.loadout = loadout('actionIntensify'); a.setWeapon('blaster');
+  a.s3JumpSerial++; r.update(1 / 60, { fire: false });
   assert.equal(r._spreadDeg(a.weapon), 0);
 });
 

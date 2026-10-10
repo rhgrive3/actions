@@ -57,16 +57,22 @@ export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'hit-spawn-reset', kind: 'shooter', frames: 300, probes: [20, 246, 250, 280] },
   { name: 'quiet-idle-held-sub', kind: 'shooter', frames: 180, probes: [55, 100] },
   ...[0, 1, 2].map(variant => ({ name: 'victory-fade-lobby-' + variant, kind: 'shooter', frames: 360, variant, probes: [240, 279, 280, 290, 310] })),
-  { name: 'native-slam-phases', kind: 'shooter', nativeSpecial: 'slam', frames: 180, probes: [33, 49, 54, 79, 133] },
+  // Phase-entry frames (rise/hang/fall/slam-recovery) are observed per run; fixed probes stay at rise end and late recovery.
+  { name: 'native-slam-phases', kind: 'shooter', nativeSpecial: 'slam', frames: 180, probes: [33, 79, 133] },
   { name: 'native-storm-deploy', kind: 'charger', nativeSpecial: 'storm', frames: 120 },
   { name: 'gaze-face-actions', kind: 'shooter', frames: 180 },
   { name: 'lifecycle-interruptions', kind: 'shooter', frames: 180, probes: [105, 119, 135, 140, 145, 150, 165] },
   { name: 'nullable-preview', kind: 'shooter', frames: 90 },
   ...[30, 60, 120].map(hz => ({ name: 'cadence-' + hz, kind: 'shooter', frames: 60, hz })),
 ]);
-export function catalogRenderFrames(s) {
+export function catalogRenderFrames(s, samples = []) {
   if (s.hz) return [s.hz === 120 ? 1 : 0, Math.floor(s.hz / 2), s.hz - 1];
-  return [...new Set([0, 6, 12, 21, 26, 30, 45, 60, 90, 120, 179, s.frames - 1, ...(s.probes || [])].filter(f => f < s.frames))].sort((a, b) => a - b);
+  // Tidal Slam phase boundaries follow the native state machine (rise/hang
+  // durations are calibration), so render the first observed sample of each
+  // special phase instead of a fixed frame number that a timing change moves.
+  const observed = [], seen = new Set();
+  if (s.nativeSpecial === 'slam') samples.forEach((sample, i) => { const p = sample.snapshots?.special?.phase; if (p && !seen.has(p)) { seen.add(p); observed.push(i); } });
+  return [...new Set([0, 6, 12, 21, 26, 30, 45, 60, 90, 120, 179, s.frames - 1, ...(s.probes || []), ...observed].filter(f => f < s.frames))].sort((a, b) => a - b);
 }
 const fail = message => { throw Error('Catalog ' + message); };
 const contains = (parent, child) => parent === child || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
@@ -197,7 +203,7 @@ export function validateCatalogResult(result) {
         if (s.visible && s.kidScale > .999 && s.walkActive && f.planted && f.contactWeight > .999 && (f.error >= .001 || f.drift > 1e-8)) fail('planted native walking contact ' + label + ' frame ' + i);
       }
     }
-    const expected = catalogRenderFrames(scenario);
+    const expected = catalogRenderFrames(scenario, row.samples);
     if (!Array.isArray(row.renders) || row.renders.length !== expected.length || new Set(row.renders.map(r => r.frame)).size !== expected.length || expected.some(f => !row.renders.some(r => r.frame === f))) fail('render frame denominator ' + label);
     for (const r of row.renders) {
       const sample = row.samples[r.tick];
@@ -763,7 +769,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
           const clock = new FixedClock(); frame = 0;
           for (let display = 0; display < scenario.hz; display++) { clock.advance(1 / scenario.hz, () => { runFrame(); frame++; }); if (renderFrames.includes(display)) renders.push(await capture(ch, scenario, display, frame - 1)); else renderer.render(scene, camera); }
           displayFrames = scenario.hz; clockTicks = clock.ticks;
-        } else for (frame = 0; frame < scenario.frames; frame++) { runFrame(); if (renderFrames.includes(frame)) renders.push(await capture(ch, scenario, frame, frame)); }
+        } else for (frame = 0; frame < scenario.frames; frame++) { runFrame(); if (globalThis.catalogRenderFrames(scenario, samples).includes(frame)) renders.push(await capture(ch, scenario, frame, frame)); }
         const pause = await capturePause(ch, a, scenario);
         row = { name: scenario.name, kind: scenario.kind, frames: scenario.frames, hz: scenario.hz || 60, driver, diagnostics: ['kinematic initial/root conditions except explicit native Physics/Super Jump/special/wall drivers', 'invulnerability countdown and fidget id in hit/idle cases assigned manually; not full gameplay', 'one explicit diagnostic Character.update(0) at tick 6; delta recorded, clocks/gameplay must remain stable'], samples, renders, events, transitions, pause, zeroDt, displayFrames, clockTicks, traceHash: scenario.hz ? await digest(trace) : null };
         data.push(row); globalThis.catalogPartial = { data, gpu, duplicateRealm, images };

@@ -3,7 +3,16 @@ export function adaptPadSensitivity(rel, code, replaceOnce) {
   // Keep the legacy locked config anchor: reliability/controls-adapter.mjs
   // must first inject padInvertX. The first-boot migration maps default 1x to S3 0.
   // The local-quality aim-profile owner composes the final controls rows.
-  if (rel === 'src/ui/menus.js') return code;
+  if (rel === 'src/ui/menus.js') {
+    // DEFAULT_SETTINGS remains legacy-shaped for the one-time boot migration.
+    // A live reset already uses the S3 scale, so convert the default at this
+    // boundary rather than overwriting the centered profile with legacy 1x.
+    code = replaceOnce(code,
+      'this.api.setSettings({ ...DEFAULT_SETTINGS })',
+      "this.api.setSettings({ ...DEFAULT_SETTINGS, padSensitivity: legacyPadToS3(DEFAULT_SETTINGS.padSensitivity), padSensitivityScale: 's3' })",
+      'reset stick sensitivity in the active S3 scale');
+    return "import { legacyPadToS3 } from '../../patches/splatoon3/runtime/pad-sensitivity.mjs';\n" + code;
+  }
   if (rel === 'src/game/player.js') {
     code = replaceOnce(code, '      const ps = s.padSensitivity ?? 1;', '      const ps = s3PadMultiplier(s.padSensitivity);', 'S3 pad look multiplier');
     return "import { s3PadMultiplier } from '../../patches/splatoon3/runtime/pad-sensitivity.mjs';\n" + code;
