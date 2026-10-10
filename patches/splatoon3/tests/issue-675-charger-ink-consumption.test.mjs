@@ -163,7 +163,9 @@ test('#675 8F/60F geared source cost has identical traces at 30/60/120Hz renderi
       });
       assert.equal(ticks, 120);
       const factor = gearCurve(10, ...f.profile.gear.inkSaverMain);
-      close(100 - actor.ink, (frames === 8 ? 2.25 : 18) * factor);
+      // Compare the *release tick*, before the independent native ink-refill
+      // delay expires; the 2s trace intentionally includes later legal refill.
+      close(100 - rows[frames + 1][0], (frames === 8 ? 2.25 : 18) * factor);
       traces.push(rows);
     }
     assert.deepEqual(traces[0], traces[1]);
