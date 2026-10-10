@@ -3110,3 +3110,11 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - 確認状態: 単独の固定ステップ試験（ロジック単独）で確認。実機（Switch）の同じ操作による比較は未確認。
   ブレーキ減衰、ブレーキ重力、BrakeToFree 条件、自由抗力は本家パラメータで確認できなかったため未確認のまま。
   充電依存・乱数の初速（#252）と直進 8F の判定は本件の対象外。
+## 2026-10-10: #1179 online Boss hit admission (Refs #1179)
+
+- 本家の根拠: なし。Boss 戦はINKWAVE独自のオンライン機能で、スプラトゥーン3に対応する仕様はない。本家との比較は対象外とし、数値も本家から導出していない。
+- INKWAVE 実装箇所: `patches/local-quality/boss-hit-adapter.mjs`。`src/boss/boss.js` の `remoteHit` / `applyDamage` / `_hitCrab` に、有限・正値・2000以下の内部不変条件、攻撃者の生存、対戦状態の検査を追加。`src/net/netmatch.js` の `_acceptBossHit` は攻撃者の生存を確認してから replay 番号を消費する。crablet 分岐の shell 判定は本体への命中だけに限定。
+- 再現操作: ゲストが `bhit` の `d` に -20、0、`"-Infinity"`、NaN、2500 を送る。死亡した攻撃者の正規の値も送る。修正前は 2500 が 2000 に丸めて適用され、死亡攻撃者の値はリプレイ番号を消費していた。
+- 2000 の根拠: 旧 `remoteHit` の `Math.min(…, 2000)` を上限として維持した。コード内で宣言された最大ダメージ定数は 180 で、1回の最大は 180 × 2.5（weak）× 1.25（stunned）= 562.5 と算出される。これはINKWAVE内のコードからの算出で、スプラトゥーン3の数値ではない。
+- プレイへの影響: 正規のホストとゲストの間では値は変わらない想定。改造クライアントの不正な値は拒否され、Boss とクラブレットの HP が無限・負にならない。Boss の数値、武器倍率、ダメージ計算は変更していない。
+- 確認状態: ノード VM 試験（`boss-hit.test.mjs` 9件、`boss-crablet-shell-admission.test.mjs` 4件、計13件）PASS。修正を外した対照では 10/13 が FAIL。周辺 local-quality 試験 36件 PASS。未確認: ホストとゲストのブラウザー＋リレー統合、実際の2端末での通信。
