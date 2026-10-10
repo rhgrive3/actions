@@ -116,7 +116,8 @@ export function adaptSource(rel, code) {
       '        // World wins ties: no wall-through damage, independent of actors order.',
       'ink flight S3 friend-through at first-contact age');
     // #875: a swept contact chooses the shot's completed fixed 60Hz tick,
-    // not a fractional impact time within that tick. This is the same integer
+    // not a fractional impact time within that tick. The completed (post-advance)
+    // side is an INKWAVE model choice; S3 chronology at the boundary is 未確認. This is the same integer
     // damage-age owner used by fidelityDamage for ordinary shooter-family
     // projectiles; collision ordering and contact position remain continuous.
     code = replaceOnce(code,

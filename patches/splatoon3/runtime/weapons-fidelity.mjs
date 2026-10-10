@@ -1264,7 +1264,11 @@ export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
   if(['shooter','dualies','splatling'].includes(w.kind)){
     const startFrame = Math.round((w.damageReduceStart ?? 0) * 60);
     const endFrame = Math.round((w.damageReduceEnd ?? 0) * 60);
-    const frame = Math.round((p.age ?? 0) * 60);
+    // #875: the damage age is the number of completed fixed 60Hz frames, the
+    // same completed-tick model as the ink-flight contact. Math.round would move
+    // the falloff state at half-frame ages (7.5F); the epsilon only absorbs float
+    // error from k/60*60. Which completed tick S3 uses at a contact is 未確認.
+    const frame = Math.floor((p.age ?? 0) * 60 + 1e-9);
     const t = endFrame > startFrame ? clamp01((frame - startFrame) / (endFrame - startFrame)) : 0;
     return w.damage + (w.damageMin - w.damage) * t;
   }

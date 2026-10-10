@@ -2914,3 +2914,10 @@ Player impact and limits: a depleted Roller round's hit volume (owner capsule vi
 - **再現操作。** 平地で静止・歩行中に同一方向・同一量の非致死被弾を Shooter / Charger / Roller / Dualies に与える。武器クラス間で体幹の差分が共通カーブに潰れないことを fixture で確認する。射撃は layer on/off で muzzle・発射元・乱数消費が一致することを Shooter / Charger / Dualies の 30 / 60 / 120 Hz で確認する。
 - **プレイへの影響。** 被弾中の構えが武器クラスごとに異なる。ただし値は INKWAVE 局所であり、本家の被弾姿勢とは一致しない。ダメージ、HP、ノックバック、衝突、射撃タイミング、乱数は変えていない。
 - **確認状態。** 確認済み（fixture 層）: 移植後の `issue-1097-hit-reaction.test.mjs` 9/9、`check-inkwave-patches.mjs --quick` 通過、canonical build 成功（precache 5,029,285 / 5,242,880 bytes、余り 213,595 bytes、hit モジュール 5,402 bytes）、近傍の運動・導入試験 7 ファイル（`full-motion-install`、`hit-spawn-motion`、`idle-motion`、`dualies-motion`、`carry-motion`、`charger-postshot-flight`、`form-motion`）50/50 pass。未確認: 本家の damage 選択規則と関節曲線、onset / peak / recovery のタイミング、Blaster の基底クラス、Splatana / Brella / Stringer などのサフィックス対応、死亡（splat）の分離、リモート表示、ブラウザ描画、実機比較。ROMFS・実機キャプチャは本作業では未実施。
+## 2026-10-10: projectile falloff frame state (#875)
+
+- 本家の根拠: Leanny/splat3 commit `7280ff9c` の `WeaponSpinnerStandard` DamageParam は ReduceStartFrame 11、ReduceEndFrame 19、ValueMax 300、ValueMin 150（0.1 HP 単位）。この run で raw JSON から再確認した。端点だけで、衝突前後のどちらの年齢を使うかは含まれない。Nintendo 公式更新履歴の確認はこの差分では未実施。wikiwiki の減衰表は HTTP 403 のため再確認できず、版表記は未確認。
+- INKWAVE 実装箇所: `patches/splatoon3/adapter.mjs`（インク飛翔の接触ダメージを完了 tick の `p.age` で評価）、`patches/splatoon3/runtime/weapons-fidelity.mjs` の `fidelityDamage`（shooter/dualies/splatling は `floor(age*60)` の完了フレーム。以前の `Math.round` は 7.5F で段階が変わっていた）。
+- 再現操作: 静止した 100 HP の対象に Heavy Splatling を発射し、同じ 1F 内で接触位置（swept fraction）を 0.1 / 0.5 / 0.9 に変える。PR #868 時点では 11→12F で 29.8125 / 29.0625 / 28.3125 HP となり、接触位置で値が変わった（#875 の報告値）。修正後は 28.125 HP に固定。
+- プレイへの影響: 1F 内の接触位置だけで 1 回の命中値が変わる問題は除かれる。段階の側（完了 tick か衝突前の年齢か）を誤ると 11→12F と 18→19F の命中で 1.875 HP ずれる。
+- 確認状態: 単独ロジック試験のみ（実発射 Projectiles から InkFlightRuntime までの回帰、30/60/120 Hz の固定クロック一致）。本家実機との比較は未実施。未確認: (1) 衝突時に完了 tick と前 tick のどちらを使うか、(2) wikiwiki 表の版表記、(3) 生値の 0.1 HP 切り捨ては #261 の別件。対象外として残すもの: roller の DamageRejectRate は `impactT` による連続補間のまま（#875 の範囲外、未修正）。
