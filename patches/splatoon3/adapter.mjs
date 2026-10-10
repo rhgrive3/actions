@@ -370,6 +370,21 @@ export function adaptSource(rel, code) {
 .iw-ret--shooter .iw-ret__tick:nth-child(6) { --iw-cx: var(--iw-corner-x); --iw-cy: 24px; --iw-angle: 45deg; }
 /* Four outward-facing spread brackets, separate from the eight charge segments. */`,
       'Shooter measured four-corner spread strokes');
+    // #1100: Heavy Splatling outer brackets are axis-aligned corners of a frame outside the charge ring.
+    // Geometry: patches/splatoon3/reference/splatling-reticle-reference.json (one third-party S3 capture, measured 2026-10-10).
+    // The spread rate keeps the existing 1px-per-spread radial scale; the sp=0 envelope and absolute size remain 未確認.
+    code = replaceOnce(code,
+      '.iw-ret--splatling .iw-ret__tick { left: -4px; top: -4px; width: 8px; height: 8px; background: none; border-top: 2px solid currentColor; border-left: 2px solid currentColor; border-radius: 0; }',
+      `.iw-ret--splatling .iw-ret__tick {
+  --iw-x: calc(58px + var(--sp, 0) * 0.7071px); --iw-y: calc(40px + var(--sp, 0) * 0.7071px);
+  left: -10px; top: -10px; width: 20px; height: 20px; box-sizing: border-box; background: none; border: 0 solid currentColor; border-radius: 0;
+  transform: translate(var(--iw-cx), var(--iw-cy));
+}
+.iw-ret--splatling .iw-ret__tick[style*="--a:315deg"] { --iw-cx: calc(10px - var(--iw-x)); --iw-cy: calc(10px - var(--iw-y)); border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 3px; }
+.iw-ret--splatling .iw-ret__tick[style*="--a:45deg"] { --iw-cx: calc(var(--iw-x) - 10px); --iw-cy: calc(10px - var(--iw-y)); border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 3px; }
+.iw-ret--splatling .iw-ret__tick[style*="--a:135deg"] { --iw-cx: calc(var(--iw-x) - 10px); --iw-cy: calc(var(--iw-y) - 10px); border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 3px; }
+.iw-ret--splatling .iw-ret__tick[style*="--a:225deg"] { --iw-cx: calc(10px - var(--iw-x)); --iw-cy: calc(var(--iw-y) - 10px); border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 3px; }`,
+      'Heavy Splatling axis-aligned outer corner brackets (#1100)');
   }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,

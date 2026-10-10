@@ -2805,3 +2805,13 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
   - ロジック単独測定（fixture、`floor: false`）: 8 スロットの発数 [1,2,1,2,1,2,1,2]、移動距離上の位置 first+k×9.2 が 3 つの速度で一致。移動距離は約 52〜62 WU。テスト `patches/splatoon3/tests/issue-129-droplet-cap.test.mjs` の 5 件（新規 1 件を追加）と隣接テスト 21 件が通過。
   - 本家の実機比較: 未実施。飛沫の配置、8 パターンの順序、first の並びは Nintendo 側で未確認。
   - 着弾ペイント（#79）は対象外。
+## 2026-10-10 — #1100 Heavy Splatling outer reticle corners
+
+- 本家の根拠: Game8 のバレルスピナー記事のトレーニング場スクリーンショット（768x432、第三者キャプチャ、SHA-256 `150069970f14…`）。外側の集弾マーカーは中央のリングの外側に、水平・垂直の辺を持つ4隅のブラケットとして並ぶ。Inkipedia は外側レティクルが跳躍で広がり回復する集弾表示であると説明する。Nintendo 公式の高解像度画像は未取得。
+- 参照値: `patches/splatoon3/reference/splatling-reticle-reference.json`。リング（追跡半径 10.5px）に対する外隅のオフセットは平均 (±29, ±20) px。
+- INKWAVE 実装箇所: `patches/splatoon3/adapter.mjs` の `styles/hud.css` 差し替え（Heavy Splatling 用、#871 のシューター用ブロックとは別）。`inkwave-public/src/ui/hud.js` の4本 tick（PR #1190 の成果、`--a` は 45/135/225/315°）は保持する。
+- 変更前の差分: 4本の tick が `rotate(var(--a))` で回転したまま配置されるため、L字の角が斜め外向きでなく上下左右を向いた。sp=0 の位置は半径 17px で、チャージリング（半径 21px）の内側かつ斜めの区分 (r 17〜25) と重なっていた。
+- 変更後: 4隅のL字を回転させず、外隅を (±(58 + 0.7071·sp), ±(40 + 0.7071·sp)) px に置く（リングに対する比は参照キャプチャ由来、スプレッドの半径方向の速度 1px/単位は既存値のまま）。内側の辺はリングと区分の外側に収まる。
+- 再現操作: Heavy Splatling を装備し、接地と跳躍・射撃で集弾値を変えてレティクル DOM を見る。
+- プレイへの影響: 外側マーカーの向きと位置（サイズは大きくなる）が変わる。チャージ表示、射撃・集弾の値、塗りは変わらない。
+- 確認状態: 単独測定（CSS 変換の数式、回帰テスト `patches/splatoon3/tests/issue-1100-splatling-reticle.test.mjs`）のみ。ブラウザでの描画と本家の実機比較は未実施。未確認: 参照キャプチャの集弾状態（sp との対応）、sp=0 の絶対寸法、ブラケットの線幅と角の丸み、リング半径の本家との対応付け、Nintendo 公式画像による検証。
