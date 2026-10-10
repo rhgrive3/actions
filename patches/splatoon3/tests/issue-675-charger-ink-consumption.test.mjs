@@ -125,12 +125,17 @@ test('#675 source-backed Gear/AP: 8F and 60F actual Charger ink debits at 0/10/5
     for (let i = 0; i < chargeFrames; i++) f.tick(actor);
     close(actor.weaponRunner.chargeT, chargeFrames / 60, 'source charge progression');
     actor.intent.fire = false;
-    // Assert the debit on the actual release tick, before the independent
-    // post-shot ink regeneration can begin on later simulation ticks.
+    // #680 gives the native projectile one held release frame. Charge ink is
+    // already paid progressively, so record debit on that exact first frame,
+    // then verify that the second release frame emits one real shot. Do not
+    // confuse subsequent native ink regeneration with the firing ink cost.
     f.tick(actor);
-    assert.equal(f.shots.length, 1, 'one legal geared Charger release');
+    const paidOnRelease = 100 - actor.ink;
+    assert.equal(f.shots.length, 0, 'deferred one-frame release is still pending');
+    f.tick(actor);
+    assert.equal(f.shots.length, 1, 'one legal geared Charger release after the held frame');
     const expected = (chargeFrames === 8 ? 2.25 : 18) * factor;
-    close(100 - actor.ink, expected, gp + 'AP at ' + chargeFrames + 'F source cost');
+    close(paidOnRelease, expected, gp + 'AP at ' + chargeFrames + 'F source cost');
     assert.ok(actor.ink >= 0, 'never underdraws ink');
   }
 });
