@@ -206,9 +206,12 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
   };
   const reset=Actor.prototype.reset,splat=Actor.prototype.splat;
   Actor.prototype.reset=function(...args) {
+    // Gear.reset recalculates effective AP inside the original call. Retire the
+    // old drink *before* that calculation so a newly spawned life never keeps
+    // expired/consumed buff multipliers with a false drink flag.
+    if(this.s3){this.s3.drink=false;this.s3.drinkUntil=0;}
     const result=reset.apply(this,args);
     clearPointSensorMarks(this);
-    if(this.s3){this.s3.drink=false;this.s3.drinkUntil=0;}
     return result;
   };
   Actor.prototype.splat=function(...args) {
