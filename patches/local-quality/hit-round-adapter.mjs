@@ -18,10 +18,14 @@ export function adaptMatchHitIdentity(rel, code) {
     'outgoing hit match ID');
   // Acknowledgements may update HP, credits and pending receipt state;
   // stamp them at the victim authority, not at the transport relay.
-  code = once(code,
-    "    if (typeof this.s.tr?.broadcast === 'function') this.s.tr.broadcast(ack);",
-    "    ack.m = this.cfg.id;\n    if (typeof this.s.tr?.broadcast === 'function') this.s.tr.broadcast(ack);",
-    'outgoing hit acknowledgement match ID');
+  // In source-only fixtures the ACK path exists already. In the actual build,
+  // the network-replication adapter introduces the ACK later, so it must stamp
+  // the ACK at creation time rather than forcing an unavailable early anchor.
+  if (code.includes("    if (typeof this.s.tr?.broadcast === 'function') this.s.tr.broadcast(ack);"))
+    code = once(code,
+      "    if (typeof this.s.tr?.broadcast === 'function') this.s.tr.broadcast(ack);",
+      "    ack.m = this.cfg.id;\n    if (typeof this.s.tr?.broadcast === 'function') this.s.tr.broadcast(ack);",
+      'outgoing hit acknowledgement match ID');
   code = once(code,
     '  onMessage(from, d) {\n    switch (d.k) {',
     `  onMessage(from, d) {

@@ -424,6 +424,7 @@ export function emit(name, payload) {
     const ack = { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0,
       vl: hitLife, hp: hitState[4], hr: hitRevision, ht: hitState[3], la: hitState[5] ? 1 : 0,
       he: this._hitHandoffPacket(v) };
+    ack.m = this.cfg.id; // #1185: ACK belongs to the originating match
     if (typeof this.s.tr?.broadcast === 'function') this.s.tr.broadcast(ack);
     else {
       const recipients = new Set([from ?? atk.owner, this.s.hostId]);
