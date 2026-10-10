@@ -63,3 +63,67 @@ test('#875 Splat Dualies frame-stepped damage matches verified integer frame mil
   close(atFrame(15), 15, '15F');
   close(atFrame(20), 15, '20F');
 });
+
+
+// Source oracle: 1130 WeaponSpinnerStandard DamageParam ReduceStartFrame=11,
+// ReduceEndFrame=19, ValueMax=300 and ValueMin=150 (tenths of HP).
+// The tests above exercise the helper; these exercise a real emitted native
+// Heavy Splatling round and its accepted swept-collision subframe fraction.
+import { fixture as realShotFixture } from '../../../scripts/weapons-fixture.mjs';
+import { FixedClock } from '../runtime/clock.mjs';
+async function heavyShot() {
+  const f = await realShotFixture({ fidelity: true, floor: false });
+  const actor = f.make('splatling');
+  actor.vel.set(0, 0, 0);
+  actor.aimDir.set(0, 0, 1);
+  f.projectiles.fireSplatling(actor, actor.weapon, 0);
+  const round = f.projectiles.list.at(-1);
+  assert.ok(round, 'actual Projectiles emits a Splatling round');
+  assert.equal(round.s3Weapon.kind, 'splatling');
+  close(round.s3Weapon.damage, 30);
+  close(round.s3Weapon.damageMin, 15);
+  close(round.s3Weapon.damageReduceStart * 60, 11);
+  close(round.s3Weapon.damageReduceEnd * 60, 19);
+  return { f, round };
+}
+
+test('#875 real emitted Heavy Splatling shot loses exactly 1.875 HP only at 11..19F boundaries', async () => {
+  const { f, round } = await heavyShot();
+  const point = round.start.clone();
+  for (let frame = 0; frame <= 22; frame++) {
+    round.fidelityPrevAge = Math.max(0, frame - 1) / 60;
+    round.age = frame / 60;
+    const sourceExpected = 30 - 1.875 * Math.max(0, Math.min(8, frame - 11));
+    for (const impactT of [0, 0.1, 0.5, 0.9, 1]) {
+      close(f.fidelityDamage(round, point, impactT), sourceExpected,
+        'age=' + frame + 'F, swept-impact fraction=' + impactT);
+    }
+    if (frame >= 12 && frame <= 19) {
+      round.age = (frame - 1) / 60;
+      close(f.fidelityDamage(round, point, 0.9) -
+        f.fidelityDamage({ ...round, age: frame / 60 }, point, 0.1), 1.875,
+        'discrete 1.875HP boundary at frame ' + frame);
+    }
+  }
+});
+
+test('#875 actual Splatling shot damage-age traces agree at 30/60/120Hz display updates', async () => {
+  const traces = [];
+  for (const hz of [30, 60, 120]) {
+    const { f, round } = await heavyShot();
+    const clock = new FixedClock(), point = round.start.clone();
+    const trace = [];
+    let tick = 0;
+    for (let frame = 0; frame < hz * 0.4; frame++) clock.advance(1 / hz, () => {
+      tick++;
+      round.fidelityPrevAge = (tick - 1) / 60;
+      round.age = tick / 60;
+      trace.push([tick, f.fidelityDamage(round, point, 0.1),
+        f.fidelityDamage(round, point, 0.9)]);
+    });
+    assert.equal(tick, 24);
+    traces.push(trace);
+  }
+  assert.deepEqual(traces[0], traces[1]);
+  assert.deepEqual(traces[1], traces[2]);
+});
