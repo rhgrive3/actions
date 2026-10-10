@@ -71,6 +71,7 @@ import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
 import { installControllerMotion } from './controller-motion.mjs';
 import { installTripleSlamFists } from './triple-slam-fists.mjs';
+import { installDeathBlast } from './death-blast.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -104,6 +105,8 @@ export function install(profile) {
   installGear(api, profile);
   installFlow(api, profile);
   installResources(api, profile);
+  // Pinned SplPlayer DieBlastParam: only the death-burst paint call changes.
+  installDeathBlast(api, profile);
   installScoring(api);
   installClock(api);
   installUi(api);

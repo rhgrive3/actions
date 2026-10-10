@@ -1641,6 +1641,94 @@
       "status": "extracted",
       "unit": "raw reference units",
       "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintRadius": {
+      "value": 5.0,
+      "pointer": "/GameParameters/DieBlastParam/PaintRadius",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintOffsetY": {
+      "value": 0.1,
+      "pointer": "/GameParameters/DieBlastParam/PaintOffsetY",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/CollisionRadiusForPaint": {
+      "value": 5.0,
+      "pointer": "/GameParameters/DieBlastParam/CollisionRadiusForPaint",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/KnockBackParam/Accel": {
+      "value": 0.0,
+      "pointer": "/GameParameters/DieBlastParam/KnockBackParam/Accel",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/Num": {
+      "value": 10,
+      "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/Num",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/PaintRadius": {
+      "value": 1.0,
+      "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/PaintRadius",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/PitchMax": {
+      "value": 45.0,
+      "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/PitchMax",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/VelocityMin": {
+      "value": 0.54,
+      "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/VelocityMin",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/VelocityMax": {
+      "value": 0.72,
+      "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/VelocityMax",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedInkConsumeMin": {
+      "value": 0.02,
+      "pointer": "/GameParameters/WeaponRollParam/SpeedInkConsumeMin",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedInkConsumeMax": {
+      "value": 0.132,
+      "pointer": "/GameParameters/WeaponRollParam/SpeedInkConsumeMax",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
     }
   }
 }

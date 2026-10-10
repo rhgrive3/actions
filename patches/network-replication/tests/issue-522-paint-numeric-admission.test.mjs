@@ -163,7 +163,7 @@ test('#522 radius ceiling admits the largest legitimate splat and rejects anythi
   sender.paint.splat(new sender.f.THREE.Vector3(1, 0, 1), slam, 1, { seed: 0.31 });
   const valid = sender.nm.out.at(-1), peer = observer.nm._peer('b');
   const beforeGrid = Array.from(observer.paint.grid);
-  for (const radius of [slam * 1.001, 3.745, 1e3, 1e20]) {
+  for (const radius of [slam * 1.001, 3.745, 4.999, 5.001, 1e3, 1e20]) {
     const forged = received(valid);
     forged[5] = radius;
     observer.nm._play('b', forged);
@@ -180,10 +180,16 @@ test('#522 team ownership: own-team rows pass; foreign rows pass only with the e
   const { THREE } = await fixture();
   assert.equal(await admits('b', 0.42, 1), true, 'own-team paint from b is admitted');
   assert.equal(await admits('b', 0.42, 0), false, 'a foreign-team ordinary row from b is rejected');
-  assert.equal(await admits('b', 1.7, 0), true, 'a victim death burst paints the attacker team (actor.js splat)');
-  assert.equal(await admits('b', 1.7, 0, { kind: 'shot' }), false, 'a foreign burst carrying a kind is rejected');
-  assert.equal(await admits('b', 1.7, 0, { face: 0 }), false, 'a foreign burst restricted to a face is rejected');
-  assert.equal(await admits('b', 1.7, 0, { stretch: new THREE.Vector3(1, 0, 0), stretchAmt: 1 }), false, 'a foreign stretched burst is rejected');
+  // splatoon3/runtime/death-blast.mjs: SplPlayer DieBlastParam PaintRadius 5.0 + SplashAroundParam PaintRadius 1.0.
+  assert.equal(await admits('b', 5, 0), true, 'a victim death blast paints the attacker team (DieBlastParam.PaintRadius)');
+  assert.equal(await admits('b', 1, 0), true, 'a victim death-blast droplet paints the attacker team (SplashAroundParam.PaintRadius)');
+  assert.equal(await admits('b', 1.7, 0), false, 'the replaced native radius-1.7 burst is no longer a producer');
+  for (const radius of [5, 1]) {
+    assert.equal(await admits('b', radius, 0, { kind: 'shot' }), false, `a foreign ${radius} burst carrying a kind is rejected`);
+    assert.equal(await admits('b', radius, 0, { face: 0 }), false, `a foreign ${radius} burst restricted to a face is rejected`);
+    assert.equal(await admits('b', radius, 0, { stretch: new THREE.Vector3(1, 0, 0), stretchAmt: 1 }), false, `a foreign stretched ${radius} burst is rejected`);
+  }
+  assert.equal(await admits('b', 5, 1, { kind: 'shot' }), false, 'only the plain death-blast signature may exceed the ordinary ceiling');
   assert.equal(await admits('c', 0.42, 1), false, 'a team-0 member cannot paint team 1 at ordinary radius');
   assert.equal(await admits('a', 0.42, 1), true, 'host-owned Boss ink may paint the other team');
 });
@@ -196,7 +202,8 @@ test('#522 every legitimate paint producer passes the ceiling and team admission
     ['Ink flight widthNear (2.226)', 'b', 2.226, 1, { kind: 'shot' }],
     ['Blaster impact at 1.15 jitter (1.5 * 1.15)', 'b', 1.5 * 1.15, 1, {}],
     ['Tidal Slam scatter (1.1 + 0.6)', 'b', 1.7, 1, {}],
-    ['Victim death burst (attacker team)', 'b', 1.7, 0, {}],
+    ['Victim death blast (attacker team, DieBlastParam.PaintRadius)', 'b', 5, 0, {}],
+    ['Victim death-blast droplet (attacker team, SplashAroundParam.PaintRadius)', 'b', 1, 0, {}],
     ['Triple Splashdown fist stamp (#912, FIST_STAMP_RADIUS)', 'b', 3.74, 1, {}],
   ];
   for (const [name, from, radius, team, opts] of producers) assert.equal(await admits(from, radius, team, opts), true, `${name} still admitted`);

@@ -396,6 +396,12 @@
       }
     }
   },
+  "deathBlast": {
+    "paintRadius": 5,
+    "paintOffsetY": 0.1,
+    "splashAroundCount": 10,
+    "splashAroundPaintRadius": 1
+  },
   "bomb": {
     "fuse": 1,
     "throwSpeed": 67.2,
@@ -633,11 +639,12 @@
       "special slam remains INKWAVE original; it is not Triple Splashdown (only the HP endpoints 220/60 follow Inkipedia's S3 Triple Splashdown base damage, community-sourced and not in the pinned extraction; radii, fists, falloff shape and armor are unchanged)",
       "special slam hang 0.5s (was 0.25s, +15F) is an INKWAVE calibration that places the 60Hz ground-contact impact near the project's 70F target (issue #966); no Nintendo-published Triple Splashdown impact frame is in the pinned extraction, so the 70F target and Switch frame-level parity are unverified",
       "splatling ChargeFrame_Second is interpreted cumulatively (72F total), not added to ChargeFrame_First (48F); actual engine timing requires verification",
-      "weapon weight classes and all charging/rolling movement restrictions",
+      "charging/rolling movement restrictions beyond the bound MoveSpeed* fields (weapon weight-class assignment is resolved: the pinned 11.3.0 MainWeaponSetting.WeaponSpeedType is absent for all seven current kits, i.e. Normal, while ShooterShort/ShooterBlaze/ManeuverShort carry Fast and RollerHeavy/SpinnerHyper/ChargerLong carry Slow; Inkipedia Weight lists the same kits as Normal and the same +8.3%/+5% and -8.3%/-10% run/swim deltas as params.json MoveVel_*_Fast/Slow)",
       "Flow action-intensify bonus and gear stacking; fixed run/swim/enemy-ink multipliers remain provisional, not equivalent to confirmed AP",
       "Splat Bomb sub-resistance DamageRt_BombH/BombL family routing, sub-saver level, and omitted ink-consume default",
       "charger full-charge storage countdown after emerging, pre-delay fields and charge-to-ink accounting",
-      "per-weapon weight-class assignment and Splatling charge-stage movement curve; gear family curves alone do not establish assignment",
+      "death blast (#deathBlast): PaintRadius 5.0, PaintOffsetY 0.1 and SplashAroundParam Num 10 / PaintRadius 1.0 are pinned SplPlayer DieBlastParam fields; droplet flight (VelocityMin 0.54, VelocityMax 0.72, PitchMax 45 with omitted gravity/drag/OffsetY defaults) is not simulated and reuses the Splat Bomb SplashAround landing-ring calibration; the Death00 texture shape and whether Splatoon 3 credits this ink to the attacker's points/special gauge are unverified (the existing INKWAVE attacker-credit rule is unchanged, so credited area per splat rises from about 8.7 to about 80-86 WU^2 on flat floor)",
+      "Splatling charge-stage movement curve (per-weapon weight-class assignment: see the resolved WeaponSpeedType note above; only Normal kits exist, so the Fast/Slow MoveVel curves are recorded but unused)",
       "projectile brake-state defaults, charge-dependent Splatling velocity, collision radii and paint geometry remain unverified",
       "Squid Roll angle/minimum speed/chain reset/armor break vs overflow and duration; consecutive retention is applied once per launch but engine interpretation remains unverified",
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
@@ -668,6 +675,90 @@
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
   "bindings": {
+    "deathBlast.paintRadius": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintRadius",
+      "index": null,
+      "factor": 1,
+      "rawValue": 5.0
+    },
+    "deathBlast.paintOffsetY": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintOffsetY",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.1
+    },
+    "deathBlast.splashAroundCount": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/Num",
+      "index": null,
+      "factor": 1,
+      "rawValue": 10
+    },
+    "deathBlast.splashAroundPaintRadius": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/PaintRadius",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.0
+    },
+    "weapons.charger.moveSpeedFiring": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeedFullCharge",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.02
+    },
+    "weapons.roller.rollSpeed": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedDash",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.132
+    },
+    "weapons.roller.rollBaseSpeed": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedNormal",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.108
+    },
+    "weapons.roller.rollDashTurnBreakSpeed": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedDashTurnBreak",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.108
+    },
+    "weapons.roller.rollDashTime": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/DashFrame",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 90
+    },
+    "weapons.roller.rollInkMinSpeed": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedInkConsumeMin",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.02
+    },
+    "weapons.roller.rollInkMaxSpeed": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedInkConsumeMax",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.132
+    },
+    "weapons.roller.moveSpeedFiring": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponWideSwingParam/SwingMoveSpeed",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.048
+    },
+    "weapons.slosher.moveSpeedFiring": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.04
+    },
+    "weapons.splatling.moveSpeedCharging": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed_Charge",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.062
+    },
     "player.runSpeed": {
       "parameter": "data/parameter/1130/misc/params.json#/MoveVel_Human",
       "index": 2,

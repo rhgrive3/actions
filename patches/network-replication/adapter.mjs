@@ -1481,9 +1481,13 @@ const PAINT_ORDER_TAG = 'inkwave-paint-order-v1';
 const PAINT_RADIUS_MAX = 5.2 * 0.72;
 // #912: Triple Splashdown fists are never one 10-radius row. triple-slam-fists.mjs emits them as stamps at
 // FIST_STAMP_RADIUS (3.74), which this ceiling admits. A radius-10 row is still forged and rejected.
-// actor.js splat(): a victim's death burst paints the attacker's team at radius 1.7, with no kind, stretch or face.
-// It is the only non-host producer whose team differs from its sender's team.
-const PAINT_VICTIM_BURST_RADIUS = 1.7;
+// A victim's death blast paints the attacker's team with no kind, stretch or face. It is the only non-host
+// producer whose team differs from its sender's team. splatoon3/runtime/death-blast.mjs replaces actor.js
+// splat()'s single radius-1.7 call with the pinned SplPlayer DieBlastParam rows (profile.deathBlast):
+// one PaintRadius 5.0 blast plus SplashAroundParam PaintRadius 1.0 droplets. The 5.0 row is the only
+// row above PAINT_RADIUS_MAX, and only with this exact victim-blast signature.
+const PAINT_VICTIM_BLAST_RADIUS = 5;
+const PAINT_VICTIM_SPLASH_RADIUS = 1;
 const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck']);
 const paintClockSessions = new WeakMap();
 function paintClockStateFor(session, cfg) {
@@ -1512,7 +1516,8 @@ function readPaintOrder(nm, from, e) {
   for (let i = 9; i <= 12; i++) if (e[i] !== undefined && !paintFloat(e[i])) return false;
   if (e[5] <= 0 || Math.fround(e[5]) === 0 || (e[6] !== 0 && e[6] !== 1)) return false;
   // #522: radius ceiling derived from the largest legitimate producer (PAINT_RADIUS_MAX).
-  if (Math.fround(e[5]) > Math.fround(PAINT_RADIUS_MAX)) return false;
+  if (Math.fround(e[5]) > Math.fround(PAINT_RADIUS_MAX)
+    && !(Math.fround(e[5]) === Math.fround(PAINT_VICTIM_BLAST_RADIUS) && paintVictimBlastSignature(e))) return false;
   if (!paintTeamAdmitted(nm, from, e)) return false;
   // _kind uses a plain object table. Names inherited from Object.prototype
   // must not become a shader kind/flags value or poison footprint arithmetic.
@@ -1565,7 +1570,11 @@ function paintTeamAdmitted(nm, from, e) {
     if (a.team === e[6]) return true;
   }
   if (!owned) return false;
-  return Math.fround(e[5]) === Math.fround(PAINT_VICTIM_BURST_RADIUS)
+  return paintVictimBlastSignature(e);
+}
+function paintVictimBlastSignature(e) {
+  const radius = Math.fround(e[5]);
+  return (radius === Math.fround(PAINT_VICTIM_BLAST_RADIUS) || radius === Math.fround(PAINT_VICTIM_SPLASH_RADIUS))
     && (e[8] === undefined || e[8] === 0)
     && !(e[9] || e[10] || e[11]) && (e[12] ?? 0) === 0
     && (e[13] === undefined || e[13] === -1);
