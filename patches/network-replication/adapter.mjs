@@ -549,7 +549,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       // #1200: a sender event cannot be dated after its enclosing owner tick.\n      if (!Array.isArray(e) || !Number.isFinite(e[0]) || !Number.isFinite(d.ts) || e[0] > d.ts) continue;
       e._netPeer = from;
-      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (!Number.isSafeInteger(tick) || tick < 0 || !Number.isSafeInteger(d.u) || tick > d.u) continue; e._netTick = tick; }
+      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (!Number.isSafeInteger(tick) || tick < 0 || !(Number.isSafeInteger(d.u) && d.u >= 0 ? tick <= d.u : d.u === undefined && e[1] === 's')) continue; e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
@@ -2308,7 +2308,7 @@ ${bombHit}`;
     code = adaptKitPaintAdmission(code, once);
     // Bound incoming work before reordering/provenance logic inspects the envelope.
     patch('    if (Array.isArray(d?.e)) d = { ...d, e: d.e.filter(Array.isArray) };',
-      '    if (Array.isArray(d?.e)) d = { ...d, e: d.e.slice(0, 256).filter(Array.isArray) };',
+      '    if (Array.isArray(d?.e)) d = { ...d, _eventOverBudget: d.e.length > 256, e: d.e.slice(0, 256).filter(Array.isArray) };',
       'cap owner timeline rows per packet');
   }
   return code;
