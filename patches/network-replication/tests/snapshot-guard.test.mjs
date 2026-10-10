@@ -5,6 +5,12 @@ const row = () => [17, 4, 2, 8, 3, 0, 1, 0, 0, 0, 1, 100, 100, 0, 0, 12, 0, 0, 0
 test('#1178 full owner row accepts ordinary 20Hz packets and additional optional fields', () => {
   assert.equal(validActorSnapshotRow(row(), 2.5), true);
   assert.equal(validActorSnapshotRow([...row(), { sequence: 1 }], 2.55), true);
+  assert.equal(validActorSnapshotRow([...row(), null, null, ["owner", 1, 3, 2.5, 100, true]], 2.55), true,
+    'authoritative hit state at column 25 must not invalidate the owner row');
+  assert.equal(validActorSnapshotRow([...row(), null, null, ["owner", 1, 3, 2.5, 100, true], null], 2.55), true,
+    '26/27 column producer extension is structurally valid');
+  assert.equal(validActorSnapshotRow([...row(), null, null, ["owner", 1, 3, 2.5, 100, true], null, null], 2.55), false,
+    'oversized owner row remains rejected');
 });
 test('#1178 malformed owner scalars and truncated rows never reach Hermite', () => {
   for (const [index, bad] of [[1, null], [4, 'bad'], [4, NaN], [7, Infinity], [10, -1],

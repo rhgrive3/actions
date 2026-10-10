@@ -1,4 +1,7 @@
 // #1178: reject malformed owner-owned actor rows before Hermite sampling.
+// Current producer extends the legacy 21–25 column range with authoritative
+// hit and action sidecars (26/27). Validate core scalars here and leave each
+// optional sidecar to its own explicit typed reader.
 // Rows are received over the network; ownership checks alone do not validate their scalars.
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const bounded = (value, min, max) => finite(value) && value >= min && value <= max;
@@ -49,7 +52,7 @@ export function validBossMove(move) {
   }
 }
 export function validActorSnapshotRow(row, timestamp) {
-  if (!Array.isArray(row) || row.length < 21 || row.length > 25 || !validSnapshotTimestamp(timestamp)) return false;
+  if (!Array.isArray(row) || row.length < 21 || row.length > 27 || !validSnapshotTimestamp(timestamp)) return false;
   if (!integer(row[0], 0, 0x7fffffff)) return false; // nid
   // position, velocity, heading, aim and wall normal are never allowed to poison
   // interpolation, animation, collision, particles or the GPU.
