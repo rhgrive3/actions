@@ -121,6 +121,18 @@ test('#835 a swimmer cannot take a drink and a respawn cannot re-take the same s
   ally.s3.drink=false;ally.s3.drinkUntil=0;
   tick(f,1);assert.equal(ally.s3.drink,false,'already taken after simulated splat');
 });
+test('#835 actor reset retires Tacticooler before gear equip recalculates a fresh life', async () => {
+  const { f, ally } = await setup();
+  const baseSpeed = ally.s3.modifiers.runSpeed;
+  assert.equal(giveDrink(ally, f.G.time), true);
+  assert.ok(ally.s3.modifiers.runSpeed > baseSpeed, 'drink affects the actual runner before death');
+  ally.reset();
+  assert.equal(ally.s3.drink, false, 'new life has no active drink');
+  assert.equal(ally.s3.drinkUntil, 0, 'expiration clock is cleared');
+  assert.equal(ally.s3.modifiers.runSpeed, baseSpeed,
+    'respawn gear recalculation cannot carry a stale run-speed multiplier');
+});
+
 test('#835 drink is a maximum AP, not stackable points; RP remains a penalty',()=>{
   const actor={alive:true,remote:false,s3:{},s3RefreshGear(){}};
   assert.equal(giveDrink(actor,10),true);
