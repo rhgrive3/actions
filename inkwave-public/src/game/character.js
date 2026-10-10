@@ -1193,8 +1193,10 @@ export class Character {
     this._trackRoot(dt, s);
     this._updateStates(dt, s);
     this.sourceMotion?.advance(dt, s);
+    // The installed S3 form-lifecycle adapter owns this native hook (reversal, phase,
+    // action admission). Source motion replaces its visual scale, not its events.
+    this._updateFormScales(dt);
     if (this.sourceMotion?.active) this.sourceMotion.applyForm();
-    else this._updateFormScales(dt);
 
     // an external head turn applied after our last update (the showcase lobby glance): yaw of (now · ours⁻¹)
     if (this._headSet && this.kidForm) {

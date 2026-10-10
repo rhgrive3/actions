@@ -123,7 +123,7 @@ export class SourceMotionController {
   // Do not interrupt the complete walk cycle on every trigger edge. Blend the
   // sourced walking+shooting poses continuously while foot anchors persist.
   this.shootBlend+=((shooting?1:0)-this.shootBlend)*(1-Math.exp(-12*dt));
-  this.keepSourceArms=this.sourceUpper;this.constrainLeft=!this.sourceUpper||family!=='BBll'&&this.action?.name!=='throw';
+  this.keepSourceArms=this.sourceUpper;this.constrainLeft=!this.sourceUpper||this.action?.name!=='throw';
   // A pure yaw rotation has no linear displacement, but planted feet still need
   // to step around the rotation axis. Keep the turn step separate from world speed:
   // source sideways walk provides real foot curves, while the arc-to-phase rule
