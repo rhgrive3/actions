@@ -2793,3 +2793,15 @@ Scope: the wall climb after B release only. Charge, armor timing and roll are un
 - Reproduction: aim turning at the 10 degree per tick cap through the tick before a volley, then fire. The tail group's first bullet now sits 50 degrees from the final aim (was 40), and the last bullet 130 degrees (was 120). Stationary aim still has no sweep. Remote volleys keep turnDelta 0 and receive no reconstructed sweep; this is unchanged.
 - Play impact: on a turn, the tail group fans wider. The angular gap across the volley now follows each group's firing interval instead of its birth frame.
 - Verification status: Node VM tests only, using the installed WeaponRunner and patched Projectiles at fixed 60 Hz with 30 and 120 Hz render partitions. The angle law (group-interval accumulation and the 10 degree cap) is 未確認 against Nintendo and Switch capture. Browser behaviour and physical Switch comparison are not verified. RandomRotateYBias 0.65 and RandomRotateYDegree 4.5 remain separate 未確認 items (#1022). #258 stays open as a reference and is not auto-closed.
+## 2026-10-10: #129 Splattershot flight droplets (takeover, issue #129)
+
+- 本家の根拠: Leanny/splat3 @7280ff9cde8bb1c5dcef46c700c326471584d2e6 `data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json` の `SplashSpawnParam` は SpawnNum 1.5、SpawnBetweenLength 9.2、SpawnNearestLength 1.2、SplitNum 8、ForceSpawnNearestAddNumArray [4]。WebFetch で確認（gh API は本セッションで Leanny に未許可）。
+- 出典の注意: 同ファイルに `DropSplashNumMax` は見当たらなかった（WebFetch の全文検索要約）。Issue 本文と PR #1190 の「S3 WeaponShooterNormal の DropSplashNumMax = 2」は、この pinned ファイルからは確認できない。1 発 1 個または 2 個は SpawnNum 1.5 の累積からの導出であり、「最大 2 個」の本家側の直接根拠は未確認。
+- 本家の参照条件: Splattershot、Ver. 11.3.0、通常弾、射撃者は静止、地形なし（`floor: false`）、発射高 y=40。
+- INKWAVE 実装箇所（upstream 固定、変更なし）: `inkwave-public/src/game/inkFlight.js` の `splashPlan`（発数は 1.5 の累積、スロットは first + k×spacing、8 スロット、ordinal 4 は forceNearest）、`inkFlightRuntime.js` の `emitAlong` / `spawnDrop`（飛行の移動距離上で発生）。`patches/splatoon3/weapons-adapter.mjs` の上限 2 は inkProfile が無い場合のフォールバックのみ。
+- 再現操作: 通常弾を 8 発連続で発射し、各発の飛沫数と位置を記録する。速度を ×0.5 / ×1 / ×1.5 に変えても同じ。
+- プレイへの影響: 1 発あたりの飛沫は 1 個または 2 個、2 個目は 9.2 WU 後ろ。速度を変えても位置は変わらず、出る時刻だけが変わる。
+- 確認状態:
+  - ロジック単独測定（fixture、`floor: false`）: 8 スロットの発数 [1,2,1,2,1,2,1,2]、移動距離上の位置 first+k×9.2 が 3 つの速度で一致。移動距離は約 52〜62 WU。テスト `patches/splatoon3/tests/issue-129-droplet-cap.test.mjs` の 5 件（新規 1 件を追加）と隣接テスト 21 件が通過。
+  - 本家の実機比較: 未実施。飛沫の配置、8 パターンの順序、first の並びは Nintendo 側で未確認。
+  - 着弾ペイント（#79）は対象外。
