@@ -150,7 +150,12 @@ test('PR1188 direct hit in mid-air: the collision drop falls to the floor below 
   const w = await blasterWorld({ actorY: 6 });
   const e = w.make('shooter'); e.team = 1; e.pos.set(0, 6, 5); e.alive = true; w.G.actors.push(e);
   fire(w); run(w); settle(w);
-  const drop = paintRecords(w).find(r => r.radius === SRC.dropRadius);
+  const records = paintRecords(w);
+  const collisionSphere = records.find(r => r.radius === 1.4);
+  assert.ok(collisionSphere, 'direct hit has its own historical 1.4 collision-sphere model');
+  assert.equal(records.filter(r => r.radius === DEFAULTS.timedSplash).length, 0,
+    'a direct hit must not reuse the timed-airburst 2.0 sphere');
+  const drop = records.find(r => r.radius === SRC.dropRadius);
   assert.ok(drop, 'direct-hit burst drop painted');
   near(drop.y, .1, 1e-6); assert.ok(Math.abs(drop.z - 5) < 1, 'below the victim');
 });

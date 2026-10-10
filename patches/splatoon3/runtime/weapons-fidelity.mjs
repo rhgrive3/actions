@@ -439,6 +439,12 @@ export const BLASTER_BURST_PARAM_DEFAULTS = Object.freeze({
   SplashDropInitSpeed: 0,
   SplashDropPaintRadius: 3.2,
   SplashPaintRadius: 2.0,
+  // Sparse 11.3.0 Middle and Light omit this type-default member. The S2
+  // 5.5.0 Middle_Burst source has 14/10=1.4 for shot collision vs 20/10=2
+  // for timed airburst. S3 11.3.0 Long/Short/Precision explicitly keep an
+  // approximately 0.7 shot-collision/timed ratio. Carry 1.4 forward as a
+  // CROSS-GENERATION MODEL, not an extracted S3 default or exact retail shape.
+  SplashPaintShotColHitRadius: 1.4,
 });
 export function resolvedBlasterBurstParam(raw) {
   if (!raw?.BlasterBurstParam) return null;
@@ -456,7 +462,7 @@ export function blasterPaintContract(raw) {
     wall.SpawnParam.FirstDistance, wall.SpawnParam.VelocityMinusYRate,
     wall.WallDropCollisionPaintParam.PaintRadiusShock, wall.WallDropCollisionPaintParam.PaintRadiusFall,
     burst.SplashDropPaintShotColHitRadius,
-    burst.SplashDropPaintRadius, burst.SplashPaintRadius,
+    burst.SplashDropPaintRadius, burst.SplashPaintRadius, burst.SplashPaintShotColHitRadius,
     burst.SplashWallDropPaintParam.PaintRadiusShock,
     burst.SplashWallDropPaintParam.PaintRadiusFall,
     burst.SplashWallDropPaintParam.PaintRadiusGround,
@@ -465,7 +471,7 @@ export function blasterPaintContract(raw) {
       !x.length || !y.length || !x.every(Number.isFinite) || !y.every(Number.isFinite)) return null;
   if (splash.DepthMaxDropHeight < 0 || splash.DepthMinDropHeight < splash.DepthMaxDropHeight ||
       wall.SpawnParam.FirstDistance < 0 || wall.SpawnParam.VelocityMinusYRate < 0 ||
-      burst.SplashDropPaintShotColHitRadius <= 0) return null;
+      burst.SplashDropPaintShotColHitRadius <= 0 || burst.SplashPaintShotColHitRadius <= 0) return null;
   const gravity = raw.MoveParam?.FreeGravity;
   if (!(gravity > 0)) return null;
   const contract = {
@@ -496,11 +502,11 @@ export function blasterPaintContract(raw) {
       timedDropOn: burst.SplashDropOn ?? true,
       timedDropInitialSpeed: burst.SplashDropInitSpeed ?? 0,
       timedDropCollisionRadius: burst.SplashDropCollisionRadius ?? 0.4,
-      // PR1188: a shot-collision burst sphere uses its explicit override when
-      // the weapon has one (Long/LightShort/Precision/Short) and otherwise the
-      // resolved SplashPaintRadius. The 11.3.0 table omits it for Middle; this
-      // fallback is a modelling choice, not an extracted value.
-      collisionSplashRadius: burst.SplashPaintShotColHitRadius ?? burst.SplashPaintRadius ?? 2.0,
+      // Shot-collision sphere radius is a separate member from the timed
+      // airburst radius. If 11.3.0 omits it, use the documented S2-derived
+      // 1.4 model default rather than silently reusing the timed 2.0 radius.
+      // Keep explicit S3 overrides authoritative for other Blaster types.
+      collisionSplashRadius: burst.SplashPaintShotColHitRadius,
       axisX: x,
       axisY: y,
       move: burst.SplashWallDropMoveParam,

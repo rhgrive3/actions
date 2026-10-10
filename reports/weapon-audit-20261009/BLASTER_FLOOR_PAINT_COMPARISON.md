@@ -114,3 +114,18 @@ GPU検査（`scripts/check-inkwave-paint-mask.mjs`、実WebGL2 SwiftShader）：
 - 落下滴の初速・空気抵抗・落下時間（＝塗りが現れるまでの遅延）は既定値の推定モデル。本家の時刻はフレーム実測していない。
 - Middle の地形/直撃時の球状塗り半径（SplashPaintShotColHitRadius の型既定値）は未抽出で、SplashPaintRadius で代用。
 - 滴の個数（爆発1個）、SplashRoundAxis の各方向の飛沫が床へ落ちる処理（現在は壁に当たったものだけ壁落ち）は本家コード未確認。
+
+---
+## スプラ2 Ver.5.5.0との交差照合（2026-10-10 / PR #1188）
+
+**この節はPR1188に追加した独立の史料比較であり、上の2026-10-09当時の測定値とは区別する。**
+
+- 原典：Leannyの [S2 Ver.5.5.0 BlasterMiddle_Burst.json](https://github.com/Leanny/leanny.github.io/blob/master/data/Parameter/550/WeaponBullet/BlasterMiddle_Burst.json)。対応ファイルを `patches/splatoon3/reference/splatoon2-550/BlasterMiddle_Burst.json` に保存。
+- S2 `mSphereSplashPaintRadius=20` は、S3通常起爆の省略型既定値 `SplashPaintRadius=2.0` に対して10倍。S2 `mSphereSplashDropPaintRadius=32` はS3 `SplashDropPaintRadius=3.2` に対して10倍。**ここでの10倍は個別フィールドの観測対応であり、ゲーム全体の単位スケールを証明しない。**
+- **従来のINKWAVEの見落とし：** S2 `mSphereSplashPaintShotCollisionHitRadius=14`（対応候補は1.4）と通常半径20（2.0）は別。PR1188のS3 Middleの直撃/地形用球半径は、欠落した値を通常の2.0で代用していた。
+- S3 11.3.0でも独立した `SplashPaintShotColHitRadius` フィールドが存在する。長射程ブラスターは `SplashPaintRadius=2.093` / `SplashPaintShotColHitRadius=1.465`、クラッシュではなくショートの `2.4/1.68`、精密ブラスターの `1.0/0.7` と、約0.7の比率が実際に現れる。ただしノヴァ相当のLightShortは `1.8/1.6` と異なり、一律「×0.7」という一般則は正しくない。
+- **変更したモデル：** `SplashPaintShotColHitRadius` が省略されたMiddle/Lightには、S2最終版の独立した衝突球半径14から換算した **1.4** を推定既定値として使用。S3に明記された個別ブキの値は常に優先。通常時間起爆の球半径は2.0、落下滴は通常3.2・地形/直撃2.5のまま。ダメージ・射程は変更しない。
+- **重要な限界：** 3の省略型既定値のバイナリ証明ではない。S2の14→1.4という対応を継承した **cross-generation calibration** であり、任天堂3での正確な塗り半径が証明されたわけではない。公式3の実行コード、型のデフォルト定義、または独立検証が得られれば置き換える。
+- 回帰テスト：`issue-1107-blaster-defaults.test.mjs` はS2原典＋S3実データをロードし、通常/地形/直撃/落下半径の混同を防止。`blaster-floor-paint-1188.test.mjs` は実発射から衝突球半径1.4・落下滴2.5を確認する。
+
+これ以外のS2→S3の値・式の等価性は証明していない。
