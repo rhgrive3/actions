@@ -33,7 +33,7 @@ test('#841 Ink Storm throw animation does not freeze natural HP recovery', async
   // Under S3 rule, 12.6 HP/s = 0.21 HP/tick, 21 ticks restores ~4.41 HP
   const gainedHp = a.hp - hpBeforeThrow;
   assert.ok(gainedHp > 4.0 && gainedHp < 5.0, `gained ${gainedHp} HP during throw (expected ~4.41 HP)`);
-  close(gainedHp, stormTicks * (12.5 / 60), 'continuous natural HP recovery during storm throw');
+  close(gainedHp, stormTicks * (12.6 / 60), 'continuous natural HP recovery during storm throw');
 });
 
 test('#841 HP recovery respects post-hit delay during Ink Storm throw', async () => {
@@ -79,4 +79,53 @@ test('#841 natural HP recovery caps at 100 HP during throw', async () => {
   }
 
   assert.equal(a.hp, 100, 'HP capped at 100');
+});
+
+
+test('#841 actual R-released Storm throw regenerates 0.21 HP once per fixed tick', async () => {
+  const f = await fixture();
+  let throws = 0;
+  f.G.projectiles.throwStorm = () => { throws++; };
+  f.G.paint.sample = () => 1;
+  const a = f.make();
+  a.weapon = { ...a.weapon, special: 'storm' };
+  a.special = 200;
+  a.hp = 50;
+  a.lastDamage = 10; // the separate 60F post-hit wait is already complete
+  a.intent.special = true;
+  f.tick(a);
+  assert.equal(a.specialActive?.phase, 'hold');
+  assert.equal(throws, 0, 'activating alone does not throw');
+  a.intent.special = false;
+  a.intent.sub = true;
+  f.tick(a);
+  a.intent.sub = false;
+  f.tick(a);
+  assert.equal(throws, 1, 'actual R press/release throws one device');
+  assert.equal(a.specialActive?.phase, 'throw');
+  const hp = a.hp;
+  const tickCount = 10;
+  for (let i = 0; i < tickCount; i++) {
+    f.tick(a);
+    assert.equal(a.specialActive?.phase, 'throw', 'check only real throw frames');
+    close(a.hp - hp, (i + 1) * .21, 'normal HP recovers once per 60Hz throw frame', 1e-8);
+  }
+  close(f.profile.resources.regenRate, 12.6);
+  close(f.profile.resources.regenRateSwim, 100);
+});
+
+test('#841 throwing a Storm never bypasses a fresh 60F damage recovery delay', async () => {
+  const f = await fixture();
+  f.G.projectiles.throwStorm = () => {};
+  f.G.paint.sample = () => 1;
+  const a = f.make();
+  a.weapon = { ...a.weapon, special: 'storm' };
+  a.special = 200; a.hp = 50; a.lastDamage = 0;
+  a.intent.special = true; f.tick(a); a.intent.special = false;
+  a.intent.sub = true; f.tick(a);
+  a.intent.sub = false; f.tick(a);
+  assert.equal(a.specialActive?.phase, 'throw');
+  const before = a.hp;
+  f.tick(a, 10);
+  assert.equal(a.hp, before, 'the damage recovery wait still gates the real throw');
 });
