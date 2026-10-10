@@ -536,17 +536,25 @@ export class Character {
     this.setColor(opts.color ?? '#ff8a14');
     this.setWeapon(opts.weapon || 'shooter');
     poseNeutral(this.P);
-    this.sourceMotion = null;
     this._sourceMotionDisposed = false;
+    let abandoned = false;
+    const pending = {
+      enabled: opts.sourceMotion !== false, active: false, status: 'loading',
+      advance() {}, trigger() {}, applyBody() {}, alignWeapon() {}, applyAccessories() {},
+      updateSquid() { return false; }, dispose() { abandoned = true; }, ready: null,
+    };
+    this.sourceMotion = pending;
     this._sourceMotionLoader = import(SOURCE_MOTION_MODULE).then(({SourceMotionController}) => {
-      if (this._sourceMotionDisposed) return null;
+      if (this._sourceMotionDisposed || abandoned || this.sourceMotion !== pending) return null;
       const motion = new SourceMotionController(this, opts);
       this.sourceMotion = motion;
       return motion.ready;
     }).catch(error => {
-      if (!this._sourceMotionDisposed) console.warn('[INKWAVE optional source motion]', error);
-      return null; // Legacy procedural animation remains fully operational.
+      pending.enabled = false; pending.status = 'unavailable';
+      if (!this._sourceMotionDisposed && !abandoned) console.warn('[INKWAVE optional source motion]', error);
+      return null; // Keep native procedural animation on module/network failure.
     });
+    pending.ready = this._sourceMotionLoader;
   }
 
   _mkFoot(i) {
