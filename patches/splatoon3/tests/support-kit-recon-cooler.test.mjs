@@ -3,8 +3,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { POINT_SENSOR, pointSensorMark, pointSensorContact } from '../runtime/support-recon.mjs';
-import { TACTICOOLER, giveDrink, retireDrink, drinkEligible, drinkGearPoints } from '../runtime/support-cooler.mjs';
+import { gearCurve } from '../runtime/gear.mjs';
+import { POINT_SENSOR, POINT_SENSOR_SOURCE, pointSensorMarkFrames, pointSensorThrowSpeed, pointSensorMark, pointSensorContact } from '../runtime/support-recon.mjs';
+import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerDrinkFrames, giveDrink, retireDrink, drinkEligible, drinkGearPoints } from '../runtime/support-cooler.mjs';
 
 const tick = (f, n = 1) => { for(let i=0;i<n;i++) { f.G.time+=1/60; f.G.projectiles.update(1/60); } };
 async function setup() {
@@ -198,4 +199,63 @@ test('#710/#835 production r2 transport tick/sequence trailers survive sender-au
   assert.equal(f.G.projectiles._s3SupportSensors.length,1,'metadata mismatch fails closed');
   nm._play('intruder',[1.1,'ks','c',7,3,0,0,1.6,0,62,16]);
   assert.equal(f.G.projectiles._s3SupportCoolers.length,1,'other peer may not deploy');
+});
+
+
+test('#710/#835 exact pinned 1130 Point Sensor and Tacticooler duration/launch fields', () => {
+  assert.deepEqual(POINT_SENSOR_SOURCE.markingFrames, [480,720,960]);
+  assert.deepEqual(POINT_SENSOR_SOURCE.areaDistance, [6,6,6]);
+  assert.deepEqual(POINT_SENSOR_SOURCE.spawnSpeedZ, [1.38,1.64,1.87]);
+  assert.equal(POINT_SENSOR_SOURCE.spawnSpeedY, .24);
+  assert.equal(POINT_SENSOR_SOURCE.inkConsume, .45);
+  assert.equal(POINT_SENSOR_SOURCE.inkRecoverStopFrames, 75);
+  assert.equal(POINT_SENSOR.radiusWorld,6);
+  assert.equal(POINT_SENSOR.launchSpeedWorld,1.38*60);
+  for(const [ap,frames,speed] of [[0,480,1.38],[57,960,1.87]]) {
+    assert.equal(pointSensorMarkFrames(ap,gearCurve),frames);
+    assert.ok(Math.abs(pointSensorThrowSpeed(ap,gearCurve)-speed*60)<1e-9);
+  }
+  assert.equal(pointSensorMarkFrames(30,gearCurve),720);
+  assert.deepEqual(TACTICOOLER_SOURCE.powerUpFrames,[1020,1290,1500]);
+  assert.equal(TACTICOOLER_SOURCE.putFrame,900);
+  assert.equal(TACTICOOLER_SOURCE.putFrameOnYagura,450);
+  assert.equal(TACTICOOLER_SOURCE.serveAreaRadius,7);
+  assert.equal(TACTICOOLER_SOURCE.serveAreaHeightUp,3);
+  assert.equal(TACTICOOLER_SOURCE.serveAreaHeightDown,0);
+  assert.equal(tacticoolerDrinkFrames(0,gearCurve),1020);
+  assert.equal(tacticoolerDrinkFrames(30,gearCurve),1290);
+  assert.equal(tacticoolerDrinkFrames(57,gearCurve),1500);
+});
+test('#835 pinned Tacticooler serving cylinder rejects through-floor pickups',()=>{
+  const s={team:0,pos:{x:0,y:0,z:0},expires:20,taken:new Set()};
+  const actor={team:0,alive:true,remote:false,form:'kid',pos:{x:0,y:3,z:0}};
+  assert.equal(drinkEligible(actor,s,0),true);
+  actor.pos.y=3.01;assert.equal(drinkEligible(actor,s,0),false);
+  actor.pos.y=-.01;assert.equal(drinkEligible(actor,s,0),false);
+  actor.pos.y=0;actor.pos.x=7;assert.equal(drinkEligible(actor,s,0),true);
+  actor.pos.x=7.01;assert.equal(drinkEligible(actor,s,0),false);
+});
+test('#710/#835 authenticated extended source-frame packets survive r2 trailer and reject out of bounds',async()=>{
+  const {f,actor,enemy}=await setup();
+  actor.remote=true;actor.owner='clientA';actor.nid=7;
+  const nm=Object.create(f.NetMatch.prototype);
+  nm.byNid=new Map([[7,actor],[2,enemy]]);nm.match=f.G.match;f.G.netm=nm;
+  const sensor=[1,'ks','p',7,1,0,1.35,0,0,0,1,0,60,21];
+  sensor._netTick=60;sensor._netSeq=21;
+  nm._play('clientA',sensor);
+  assert.equal(f.G.projectiles._s3SupportSensors.length,1);
+  const mark=[1.1,'ks','m',7,1,2,0,960,61,22];
+  mark._netTick=61;mark._netSeq=22;
+  nm._play('clientA',mark);
+  assert.equal(enemy.s3.revealedUntil[0],16,'source 960F max marking duration');
+  const before=enemy.s3.revealedUntil[0];
+  nm._play('clientA',[1.2,'ks','m',7,1,2,0,10000,62,23]);
+  assert.equal(enemy.s3.revealedUntil[0],before);
+  const stand=[2,'ks','c',7,2,0,0,1.6,0,1500,63,24];
+  stand._netTick=63;stand._netSeq=24;
+  nm._play('clientA',stand);
+  assert.equal(f.G.projectiles._s3SupportCoolers[0].drinkSeconds,25);
+  const invalid=[2.1,'ks','c',7,3,0,0,1.6,0,1501,64,25];
+  nm._play('clientA',invalid);
+  assert.equal(f.G.projectiles._s3SupportCoolers.length,1);
 });
