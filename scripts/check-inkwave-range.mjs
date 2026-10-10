@@ -249,15 +249,16 @@ for (const run of RUNS) {
     // checks, so the tracing wrappers never perturb the normal range audit.
     if (run.name === 'chromium-desktop' && !signageOnly) {
       await page.goto(base + '?range&skipTitle&profileRange=1', { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await page.waitForFunction(async () => {
+      // Wait for a complete trace and snapshot it in the SAME evaluation.
+      // A Practice Range transition may replace the page's diagnostic global
+      // between separate evaluate calls even after the earlier predicate passed.
+      const profilerHandle = await page.waitForFunction(async () => {
         const p = window.__inkwaveRangePerf;
         if (!p || !window.__G?.match?.range || window.__G.match.state !== 'playing') return false;
         await p.ready;
-        return !!(p.snapshot().trace?.capturedFrames >= 12);
-      }, null, { timeout: 90000 });
-      out.checks.profiler = await page.evaluate(() => {
-        const p = window.__inkwaveRangePerf;
+        // Do not accept a missing tracer or an unfinished capture.
         const s = p.snapshot(), t = s.trace;
+        if (!t || t.capturedFrames < 12) return false;
         const parsed = JSON.parse(p.report());
         return {
           mode: s.mode, collected: t.capturedFrames,
@@ -268,7 +269,8 @@ for (const run of RUNS) {
           tracerFileLoaded: !!performance.getEntriesByType('resource')
             .find(x => x.name.includes('range-hitch-tracer.mjs')),
         };
-      });
+      }, null, { timeout: 90000 });
+      out.checks.profiler = await profilerHandle.jsonValue();
       const perf = out.checks.profiler;
       if (perf.mode !== 'practice' || perf.collected < 12 ||
           !perf.stageNames.includes('paint') || !perf.stageNames.includes('render') ||
