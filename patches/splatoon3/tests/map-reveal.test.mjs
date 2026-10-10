@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptSource } from '../adapter.mjs';
 import { enemyRevealedOnMap, MAP_REVEAL_DAMAGE } from '../runtime/map-reveal.mjs';
+import { mapActorVisible } from '../runtime/combat-info.mjs';
 
 const root = new URL('../../../', import.meta.url);
 const MAX = 100;
@@ -29,9 +30,23 @@ test('death and respawn produce no reveal', () => {
   assert.equal(enemyRevealedOnMap(actor({ hp: MAX }), MAX), false);
 });
 
-test('explicit recon marking reveals regardless of form or damage', () => {
-  assert.equal(enemyRevealedOnMap({ alive: true, hp: MAX, s3: { revealed: true } }, MAX), true);
-  assert.equal(enemyRevealedOnMap({ alive: true, hp: MAX, s3: { revealed: false } }, MAX), false);
+test('an unscoped s3.revealed flag never discloses an enemy (#710)', () => {
+  // With no owning team or expiry the flag would leak to both teams indefinitely.
+  assert.equal(enemyRevealedOnMap({ alive: true, hp: MAX, s3: { revealed: true } }, MAX), false);
+  const flagged = { alive: true, hp: MAX, team: 1, s3: { revealed: true } };
+  assert.equal(mapActorVisible(flagged, { team: 0 }, MAX, 0) || enemyRevealedOnMap(flagged, MAX), false);
+  // The damage rule still applies independently of the flag.
+  assert.equal(enemyRevealedOnMap({ alive: true, hp: 60, s3: { revealed: false } }, MAX), true);
+});
+
+test('team-scoped mark is visible only to its team and only until it expires (#710)', () => {
+  const enemy = { alive: true, hp: MAX, team: 1, s3: { revealedUntil: { 0: 10 } } };
+  assert.equal(mapActorVisible(enemy, { team: 0 }, MAX, 9.9), true);
+  assert.equal(mapActorVisible(enemy, { team: 0 }, MAX, 10), false);
+  assert.equal(mapActorVisible(enemy, { team: 2 }, MAX, 5), false);
+  // A non-finite expiry for the viewer's team discloses nothing.
+  const broken = { alive: true, hp: MAX, team: 1, s3: { revealedUntil: { 0: NaN } } };
+  assert.equal(mapActorVisible(broken, { team: 0 }, MAX, 0), false);
 });
 
 test('missing or non-finite HP fails closed', () => {

@@ -133,7 +133,9 @@ export function prepareLoading(build, preloads, options = {}) {
   // PWA icons are fetched by the browser at install/display time, not game startup.
   // Keep all three versioned icon files in BUILD.assets for integrity-checked
   // cache-on-request; precache the manifest and actual gameplay dependencies.
-  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||coldOfflineLightmap(rel)||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest')]);
+  // Title-only Titan One remains hash-declared and cache-on-demand; all critical
+  // game scripts, HUD fonts, current stage and Range lightmaps stay offline-ready.
+  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>(rel.startsWith('assets/fonts/') && rel !== 'assets/fonts/TitanOne-latin.woff2')||coldOfflineLightmap(rel)||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest')]);
   for(const rel of core)if(!assets[rel])throw new Error(`loading-cache: missing precache dependency ${rel}`);
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);

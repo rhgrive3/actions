@@ -128,8 +128,8 @@ test('#247 charge/stream/slosh use un-geared action speed times the resistance c
   const f=await fixture();
   for(const ap of [0,3,10,30,57]) for(const kind of ['charger','splatling','slosher']) {
     const a=f.make(kind);equip(a,ap);const r=a.weaponRunner;
+    // #539: Charger movement is owned by chargeT; full charge is chargeT 1.
     if(kind==='slosher'){r.slosh=.1;r.firingT=.2;}else{r.charging=true;r.charge=1;if(kind==='charger')r.chargeT=1;}
-    // Charger uses chargeT (not Splatling's charge): test the actual full-charge state.
     const base=kind==='slosher'?a.weapon.moveSpeedFiring:kind==='charger'?a.weapon.moveSpeedFiring:a.weapon.moveSpeedCharging;
     const expected=Math.min(a.s3.modifiers.enemyMoveSpeed,base*gearCurve(ap,.5,.75,1));
     assert.ok(Math.abs(speed(a)-expected)<1e-8,`${kind} AP${ap}: ${speed(a)} != ${expected}`);

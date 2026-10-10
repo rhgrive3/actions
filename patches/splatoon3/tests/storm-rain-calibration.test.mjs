@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   comparableStormRun,
+  measureStormRainAtRenderHz,
   measureStormRainCalibration,
   stringifyCalibrationJson,
 } from './storm-rain-calibration-harness.mjs';
@@ -44,11 +45,12 @@ test('#226 production-composed Storm accounting is deterministic at 30/60/120Hz 
   assert.match(measurement.coordinateUnits.inkwaveInternalConvention, /1:1 with INKWAVE meters/);
   assert.equal(measurement.coordinateUnits.retailMapping, 'unknown; this measurement applies no conversion');
   assert.equal(measurement.coordinateUnits.distance, 'INKWAVE world units (WU); no conversion to retail Splatoon 3 units is established');
-  assert.deepEqual(runs.map((run) => run.summary.renderHz), [30, 60, 120]);
-  assert.deepEqual(comparableStormRun(runs[0]), comparableStormRun(runs[1]));
-  assert.deepEqual(comparableStormRun(runs[1]), comparableStormRun(runs[2]));
+  const production = runs.filter((run) => run.summary.scope === 'production');
+  assert.deepEqual(production.map((run) => run.summary.renderHz), [30, 60, 120]);
+  assert.deepEqual(comparableStormRun(production[0]), comparableStormRun(production[1]));
+  assert.deepEqual(comparableStormRun(production[1]), comparableStormRun(production[2]));
 
-  for (const { summary, events, distribution } of runs) {
+  for (const { summary, events, distribution } of production) {
     assert.equal(summary.fixedSimulationTicks, 480);
     assert.equal(summary.cloudCount, 1);
     assert.equal(summary.cloudRemovedAtEnd, true);
@@ -73,6 +75,26 @@ test('#226 production-composed Storm accounting is deterministic at 30/60/120Hz 
     assert.ok(events.some((event) => event.kind === 'ray_ground_hit'));
     assert.ok(events.some((event) => event.kind === 'paint_splat_write' && Number.isFinite(event.claimedWorldUnitsSquared)));
     assert.ok(events.some((event) => event.kind === 'cosmetic_fx_rain_batch' && Number.isInteger(event.emittedCosmeticParticles)));
+  }
+});
+
+test('#226 public-source scope reproduces the issue 172/172/171 candidate-call counts and stops 0.3 s before expiry', async () => {
+  await assert.rejects(measureStormRainAtRenderHz(60, { scope: 'unknown' }), RangeError);
+  const runs = [];
+  for (const renderHz of [30, 60, 120]) runs.push(await measureStormRainAtRenderHz(renderHz, { scope: 'public-source' }));
+  assert.deepEqual(runs.map((run) => run.summary.candidateRayEmissions), [172, 172, 171]);
+  for (const { summary, events, distribution } of runs) {
+    assert.equal(summary.scope, 'public-source');
+    assert.equal(summary.auditCandidateRayEmissions, null);
+    assert.equal(summary.rayGroundHits, summary.candidateRayEmissions);
+    assert.equal(summary.paintWriteEvents, summary.rayGroundHits);
+    assert.equal(summary.cosmeticRainCalls, summary.cosmeticParticleBatchEvents);
+    assert.equal(summary.paintFlaggedCosmeticEmissions, 0);
+    assert.equal(summary.finalCpuTurfCellsFromGrid, summary.finalCpuTurfCellsFromPaintCounts);
+    assert.equal(distribution.reduce((sum, bin) => sum + bin.cells, 0), summary.finalCpuTurfCellsFromGrid);
+    // _updateClouds emits only after `c.t += dt` leaves c.t < duration - 0.3 (7.7 s), so no emission is at or after 7.7 s.
+    const emissionTimes = events.filter((event) => event.kind === 'candidate_ray_emission').map((event) => event.cloudTimeSeconds);
+    assert.ok(Math.max(...emissionTimes) < 7.7 + 1e-6);
   }
 });
 

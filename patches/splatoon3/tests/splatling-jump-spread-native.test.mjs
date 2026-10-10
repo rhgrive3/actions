@@ -211,7 +211,7 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   const owner = G.projectiles.list.at(-1), packet = nm.out.find(event => event[1] === 'p');
   const controlRunner = c.weaponRunner;
   const controlBefore = { charge: controlRunner.charge, cooldown: controlRunner.cooldown, ink: c.ink, streaming: controlRunner.streaming };
-  const controlDraws = [0.5, 1 - 1e-12, 0.125, 0.5];
+  const controlDraws = [0.9, 0.5, 1 - 1e-12, 0.125, 0.5];
   let controlDrawCount = 0;
   control.setRandom(() => { controlDrawCount++; return controlDraws.shift() ?? 0.5; });
   control.G.projectiles.fireSplatling(c, c.weapon, controlSpread);
@@ -221,7 +221,7 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   assert.equal(ownerDrawCount, 4, 'the speed, two spread samples, and seed retain their existing draw count');
   assert.ok(controlPacket, 'the same-composition control publishes its owner projectile event');
   assert.equal(controlNm.out.filter(event => event[1] === 'p').length, 1);
-  assert.equal(controlDrawCount, 4, 'the jump correction does not change projectile RNG consumption');
+  assert.equal(controlDrawCount, 5, 'the jump correction does not change projectile RNG consumption');
   assert.equal(runner.spread, spread, 'the live HUD spread is the scalar supplied to the projectile path');
   // The S3 2024 Spinner study models separate signed horizontal and pitch
   // deviations, not a shared-radius circular cone (the removed baseline).

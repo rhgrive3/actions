@@ -97,6 +97,8 @@ export function sampleSplatlingSpeed(base, halfWidth, bias, uniform) {
   return Math.max(0, base + Math.sign(signed) * halfWidth * magnitude);
 }
 
+// Pinned Leanny/splat3 7280ff9c WeaponSpinnerStandard WeaponParam.VelGnd_DownRt_Charge (0.05).
+// The field name carries no meaning; the Splatoon 2 table labels it 減速遅延 (deceleration delay).
 export function splatlingChargeDownRate(profile) {
   const rate = profile?.weaponsFidelityCompletion?.weapons?.splatling?.WeaponParam?.VelGnd_DownRt_Charge;
   return Number.isFinite(rate) && rate > 0 && rate < 1 ? rate : 0;
@@ -129,13 +131,13 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
     };
   }
 
-  // PR1188 (A05): dedicated ground slowdown while a Splatling charge starts.
-  // Pinned 11.3.0 WeaponSpinnerStandard: MoveSpeed_Charge 0.062,
-  // VelGnd_DownRt_Charge 0.05. Model (not extracted code): while charging on
-  // the ground above the charge target, speed falls by DownRt of itself per
-  // 60 Hz reference frame, never below the target, replacing the generic run
-  // brake. VelGnd_Bias_Charge (0.9) has no published definition and stays
-  // unmapped rather than inventing a steering law.
+  // Charge-start ground slowdown (#952, takeover of PR #1188 A05).
+  // Pinned 11.3.0 WeaponSpinnerStandard: MoveSpeed_Charge 0.062, VelGnd_DownRt_Charge 0.05.
+  // MODEL, NOT SOURCED FORM (未確認): while charging on the ground above the charge target,
+  // speed falls by DownRt of itself per 60 Hz reference frame, never below the target, in
+  // place of the generic PLAYER.runDecel brake. The S2 label 減速遅延 (deceleration delay)
+  // does not establish this per-frame proportional form; the S3 speed-vs-frame trace is not captured.
+  // VelGnd_Bias_Charge (0.9, 減速カーブ) has no published definition and stays unmapped.
   const chargeDownRate = splatlingChargeDownRate(profile);
   if (Actor?.prototype._horizontal && chargeDownRate > 0) {
     const horizontal = Actor.prototype._horizontal;
@@ -159,10 +161,10 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   const spread = WeaponRunner.prototype._spreadDeg;
   WeaponRunner.prototype._spreadDeg = function (w) {
     if (w.kind !== 'splatling') return spread.call(this, w);
-    // The guide exposes the sourced OUTER envelope. Actual admitted rounds
-    // choose their 30% wide component in weapon-accuracy.mjs, not a permanent
-    // 0.6 multiplier that prevents any shot from reaching the outer envelope.
-    return this.a.grounded ? w.spreadGround : w.spreadAir;
+    // Preserve the current release-held cone, but remove shooter-style bloom.
+    // This is not a claim that the inherited cone is S3's exact PDF. The published
+    // value is the inner cone; the S3 outer tail is chosen per shot in fireSplatling.
+    return (this.a.grounded ? w.spreadGround : w.spreadAir) * (w.spreadFirst ?? .6);
   };
 
   WeaponRunner.prototype._splatling = function (dt, input, w) {
@@ -263,5 +265,24 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
     if (w.kind !== 'splatling') return fireRound.call(this, a, w, ...args);
     const sampled = sampleSplatlingSpeed(w.projSpeed, w.speedRandomHalfWidth, w.speedRandomBias, Math.random());
     return withSampledProjectileSpeed(w, sampled, config => fireRound.call(this, a, config, ...args));
+  };
+
+  // #940: pinned 11.3.0 Heavy Splatling standing outer-reticle chance
+  // (Stand_DegBiasMax 0.3; Inkipedia Splatoon 3 data section gives 30%). The shape
+  // of the bias law is unverified. Standing shots only: #850 jump recovery keeps
+  // its own published envelope and is not re-selected here.
+  const standOuterChance = profile?.weaponsFidelityCompletion?.weapons?.splatling?.WeaponParam?.Stand_DegBiasMax;
+  const fireSplatling = Projectiles.prototype.fireSplatling;
+  Projectiles.prototype.fireSplatling = function (a, w, spreadDeg) {
+    const standing = w?.kind === 'splatling' && a?.grounded === true && !Number.isFinite(a.s3SplatlingJumpAgeFrames);
+    const envelope = w?.spreadGround;
+    if (!standing || !Number.isFinite(standOuterChance) || standOuterChance < 0 || standOuterChance > 1 ||
+        !(spreadDeg > 0) || !Number.isFinite(envelope) || envelope < spreadDeg) {
+      return fireSplatling.call(this, a, w, spreadDeg);
+    }
+    // Outer shot: the S3 standing envelope (Stand_DegSwerve 3.3). Inner shot: the
+    // published cone, which is the existing INKWAVE inner kernel (spreadFirst).
+    const deviation = Math.random() < standOuterChance ? envelope : spreadDeg;
+    return fireSplatling.call(this, a, w, deviation);
   };
 }

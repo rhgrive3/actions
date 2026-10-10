@@ -136,10 +136,11 @@ test('pointer lock loss cancels pending mouse fire without replay', async () => 
 });
 
 test('illegal dodge conditions stay rejected without spending roll ink', async () => {
-  // Aerial admission is legal for S3 Dualies; test it positively below.
-  for (const state of ['ink', 'rolls', 'still', 'dead', 'special', 'sub']) {
+  for (const state of ['coyote', 'ink', 'rolls', 'still', 'dead', 'special', 'sub']) {
     const h = await boot(), set = device(h, 'keyboard');
     set('fire', true); set('jump', true);
+    // #719: an airborne roll is admitted once the coyote window has closed; inside it the ordinary coyote jump keeps priority.
+    if (state === 'coyote') { h.actor.grounded = false; h.actor.coyote = .05; }
     if (state === 'ink') h.actor.ink = h.actor.weapon.rollInk - 1e-5;
     if (state === 'rolls') h.actor.weaponRunner.rollsLeft = 0;
     if (state === 'still') h.event('keyup', key('KeyD'));
@@ -162,20 +163,17 @@ test('roll ink exact boundary and shot cooldown do not suppress the dodge', asyn
   }
 });
 
-test('a legal aerial Dualies press is consumed before landing and cannot replay there', async () => {
-  // Public S3 Dualies behavior admits firing+direction+jump in air. This tests
-  // the input edge, not the as-yet uncalibrated aerial vertical trajectory.
-  for (const name of ['keyboard', 'gamepad', 'touch']) {
-    const h = await boot(), set = device(h, name);
-    h.actor.grounded = false; h.actor.coyote = 0;
-    h.actor._integrate = () => { h.actor.grounded = true; };
-    set('fire', true); set('jump', true); h.frame();
-    assert.equal(dodges(h), 1, name + ' admits before the landing integration');
-    assert.equal(h.actor.jumpBuffer, 0, 'accepted action consumes the existing buffer');
-    assert.equal(h.actor.character.events.filter(e => e[0] === 'jump').length, 0);
-    set('jump', false); h.frame(); h.frame(STEP * 10);
-    assert.equal(dodges(h), 1, name + ' landing cannot replay the accepted edge');
-  }
+test('landing uses the existing bounded jump buffer, without extending its deadline', async () => {
+  const h = await boot(), set = device(h, 'keyboard');
+  h.actor.grounded = false; h.actor.coyote = 0;
+  h.actor._integrate = () => { h.actor.grounded = true; };
+  // #719 admits an airborne roll only with a move direction, so the airborne press is refused here and buffered.
+  h.event('keyup', key('KeyD'));
+  set('fire', true); set('jump', true); h.frame();
+  assert.equal(dodges(h), 0, 'airborne without a direction is refused');
+  set('jump', false); h.event('keydown', key('KeyD')); h.frame();
+  assert.equal(dodges(h), 1, 'landing next tick consumes existing jump buffer');
+  h.frame(STEP * 10); assert.equal(dodges(h), 1);
 });
 
 test('ordinary landing jump keeps its original buffer and expiry', async () => {

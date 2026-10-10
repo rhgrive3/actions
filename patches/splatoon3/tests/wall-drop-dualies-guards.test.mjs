@@ -167,5 +167,8 @@ test('#556 grounded Blaster shots use spreadGround = 0; airborne keeps spreadAir
   const dirs = [];
   for (let i = 0; i < 6; i++) { f.G.projectiles.fireBlaster(a, a.weapon, a.weaponRunner._spreadDeg(a.weapon)); dirs.push(f.G.projectiles.list.at(-1).vel.clone().normalize()); }
   for (const d of dirs) close(d.angleTo(dirs[0]), 0, 'grounded shots share one direction', 1e-9);
-  a.grounded = false; assert.equal(a.weaponRunner._spreadDeg(a.weapon), a.weapon.spreadAir);
+  // #1102: a ledge fall without an admitted jump keeps the grounded cone; only a native jump serial owns the airborne envelope.
+  a.grounded = false; assert.equal(a.weaponRunner._spreadDeg(a.weapon), 0, 'ledge fall without a jump keeps the grounded cone');
+  a.s3JumpSerial = (a.s3JumpSerial || 0) + 1; a.weaponRunner.update(1 / 60, { fire: false });
+  assert.equal(a.weaponRunner._spreadDeg(a.weapon), a.weapon.spreadAir, 'airborne after an admitted jump keeps spreadAir');
 });

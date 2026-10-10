@@ -207,3 +207,73 @@ test('#1166 composed hidden frames suspend all world draws and resume without su
     }
   }
 });
+
+test('#384 paused quality invalidation rebuilds the real Three shadow target once, without waking world simulation', async () => {
+  const { idleFixture } = await import('./idle-fixture.mjs');
+  const { applyRuntimeWorldQuality } = await import('../world-quality.mjs');
+  const { THREE, ShadowCache, G: nativeG } = await idleFixture({ transform:(rel, code) => {
+    if (rel === 'vendor/three/build/three.module.js') return code + '\nexport { WebGLShadowMap };';
+    if (rel === 'src/world/environment.js') return code + "\nexport { ShadowCache } from '../core/shadowcache.js';";
+    return code;
+  } });
+  for (const fps of [30,60,120]) for (const cacheEnabled of [false,true]) {
+    const h = fixture({mode:'match',attract:false,touch:false});
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(), sun = new THREE.DirectionalLight();
+    scene.add(sun, sun.target); scene.updateMatrixWorld(true);
+    const draws = [];
+    const renderer = h.G.renderer;
+    Object.assign(renderer, {
+      getRenderTarget:()=>null, getActiveCubeFace:()=>0, getActiveMipmapLevel:()=>0,
+      getContext:()=>({}), setRenderTarget(){}, clear(){draws.push(sun.shadow.map);},
+      state:{setBlending(){},setScissorTest(){},viewport(){},buffers:{depth:{getReversed:()=>false,setTest(){}},color:{setClear(){}}}},
+    });
+    const sm = renderer.shadowMap = new THREE.WebGLShadowMap(renderer, {}, {maxTextureSize:8192});
+    sm.enabled=true;
+    sun.shadow.mapSize.set(4096,4096);
+    sm.render([sun],scene,camera);
+    assert.equal(sun.shadow.map.width,4096);
+    const original = sun.shadow.map; let disposed=0;
+    original.addEventListener('dispose',()=>disposed++);
+    h.G.scene=scene; nativeG.scene=scene;
+    if (cacheEnabled) h.game.shadowCache=new ShadowCache(renderer); // actual native gate; WebGL2 depth drawing is unavailable
+    h.G.env={sun,shadowSize:4096,theme:'day',_fitShadowCam(){}};
+    h.game.R.render=()=>{ h.calls.worldRender=(h.calls.worldRender||0)+1; sm.render([sun],scene,camera); };
+    h.game.match.paused=true;
+    h.frame(1/fps);
+    const initialDraws=draws.length;
+    notePausedWorldChange(h.game,{quality:'low'});
+    h.game.settings.quality='low';
+    applyRuntimeWorldQuality(h.game,h.game.settings,h.game.mobile,{G:h.G,effectiveQuality,THREE});
+    assert.equal(disposed,1,'actual quality owner disposes the old target');
+    assert.equal(sun.shadow.map,null);
+    assert.equal(sun.shadow.needsUpdate,true,'light-level invalidation alone cannot pass the global gate');
+    assert.equal(sm.needsUpdate,false);
+    h.game._skipRender=true; h.frame(1/fps);
+    assert.equal(sun.shadow.map,null,'a skipped frame must not commit the pending redraw');
+    h.game._skipRender=false; h.document.hidden=true; h.frame(1/fps);
+    assert.equal(sun.shadow.map,null,'a hidden frame must not allocate or commit the pending redraw');
+    h.document.hidden=false;
+    h.frame(1/fps);
+    assert.ok(sun.shadow.map, `${fps} Hz cache=${cacheEnabled}: one paused redraw must allocate the replacement shadow`);
+    assert.equal(sun.shadow.map.width,1024);
+    assert.notEqual(sun.shadow.map,original);
+    assert.equal(draws.length,initialDraws+1);
+    assert.equal(sm.needsUpdate,false);
+    for(let i=0;i<fps;i++)h.frame(1/fps);
+    assert.equal(draws.length,initialDraws+1,'unchanged paused frames never re-render shadows');
+    assert.equal(h.calls.worldRender,2);
+    assert.equal(h.calls.rig.length,0); assert.equal(h.calls.projectileDt.length,0);
+    notePausedWorldChange(h.game,{quality:'high',shadows:false});
+    Object.assign(h.game.settings,{quality:'high',shadows:false}); sm.enabled=false;
+    applyRuntimeWorldQuality(h.game,h.game.settings,h.game.mobile,{G:h.G,effectiveQuality,THREE});
+    h.frame(1/fps);
+    assert.equal(sun.shadow.map,null,'disabled shadows do not allocate at quality invalidation');
+    assert.equal(draws.length,initialDraws+1);
+    notePausedWorldChange(h.game,{shadows:true}); h.game.settings.shadows=true; sm.enabled=true;
+    h.frame(1/fps);
+    assert.equal(sun.shadow.map.width,4096,'enabling shadows while paused restores the target');
+    assert.equal(draws.length,initialDraws+2);
+    h.frame(1/fps); assert.equal(draws.length,initialDraws+2);
+    sun.shadow.map.dispose();
+  }
+});

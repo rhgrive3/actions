@@ -152,6 +152,46 @@ test('LOW/mobile LobbySet caps atlas backing pixels while HIGH keeps native dime
   assert.throws(() => adaptLobbyResources('src/game/lobbySet-tex.js', tex), /patch conflict/);
 });
 
+test('LOW/mobile retained neon halo canvases follow the LOW density; HIGH keeps 180 px/m', () => {
+  const set = adaptQualitySource('src/game/lobbySet.js', read('src/game/lobbySet.js'));
+  assert.match(set, /const hA = neonHalo\(txt\.strokes, 0\.45, this\.quality === 'low' \? 90 : undefined\);/);
+  assert.match(set, /const hB = neonHalo\(sq\.strokes, 0\.5, this\.quality === 'low' \? 90 : undefined\);/);
+
+  // Execute the native neonHalo (unchanged by the adapter) with the canvas and texture stubs it needs.
+  const raw = read('src/game/lobbySet-tex.js');
+  const at = raw.indexOf('export function neonHalo(');
+  const end = raw.indexOf('\n}\n', at) + 3;
+  assert.ok(at >= 0 && end > at, 'neonHalo source span');
+  const fn = raw.slice(at, end).replace('export function', 'function');
+  const halo = (strokes, pad, pxPerM) => vm.runInNewContext(`(() => {
+    const canvases = [];
+    function canvas(width, height) {
+      const ctx = { fillRect() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {} };
+      const c = { width, height, getContext() { return ctx; } };
+      canvases.push(c); return c;
+    }
+    function tex(image) { return { image }; }
+    ${fn}
+    const r = neonHalo(${JSON.stringify(strokes)}, ${pad}, ${pxPerM});
+    return { dims: [canvases[0].width, canvases[0].height], rect: r.rect };
+  })()`);
+  // Stroke extents matching the INK & SKATE sign (about 3.2 x 0.42 m) and the squid sign (about 0.9 x 1.0 m).
+  const cases = [
+    [[{ pts: [[0, 0], [3.2, 0.42]] }, { pts: [[0, 0.42], [1.4, 0]] }], 0.45],
+    [[{ pts: [[-0.45, 0.04], [0.45, 1.03]] }], 0.5],
+  ];
+  let highPixels = 0, lowPixels = 0;
+  for (const [strokes, pad] of cases) {
+    const high = halo(strokes, pad, undefined);
+    const low = halo(strokes, pad, 180 * LOBBY_LOW_ATLAS_SCALE);
+    const [x0, y0, x1, y1] = Array.from(high.rect);
+    assert.deepEqual(Array.from(high.dims), [Math.ceil((x1 - x0) * 180), Math.ceil((y1 - y0) * 180)]);
+    assert.deepEqual(Array.from(low.dims), [Math.ceil((x1 - x0) * 90), Math.ceil((y1 - y0) * 90)]);
+    assert.deepEqual(Array.from(low.rect), Array.from(high.rect), 'halo geometry in metres is unchanged');
+    assert.ok(low.dims[0] * low.dims[1] < high.dims[0] * high.dims[1] / 3.5, 'LOW halo is about a quarter of HIGH');
+  }
+});
+
 test('native Online atlas disposal remains on the ordinary release path at 30/60/120 Hz', () => {
   const showcase = adaptQualitySource('src/game/showcase.js', read('src/game/showcase.js'));
   const lobbySet = adaptQualitySource('src/game/lobbySet.js', read('src/game/lobbySet.js'));

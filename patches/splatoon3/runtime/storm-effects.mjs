@@ -2,6 +2,18 @@
 // Distinct from cloud lifetime and the held-device / throw animation lifetime.
 export const STORM_GAUGE_LOCK = 480 / 60;
 export function isStormHolding(a) { return a.specialActive?.id === 'storm' && a.specialActive.phase === 'hold'; }
+// Display projection of the spent special (#469). The gauge is full while the
+// device is held, then follows the existing actor-owned lock clock. It is never
+// reusable charge: specialFrac, specialReady and the native charge stay unchanged.
+// Remote actors have no replicated post-use clock, so they keep the old value.
+export function stormGaugeFraction(a) {
+  if (a.remote) return null;
+  if (isStormHolding(a)) return 1;
+  const remaining = a.stormGaugeLock;
+  if (!Number.isFinite(remaining) || remaining <= 0) return null;
+  const total = a.stormGaugeDuration;
+  return Math.min(1, remaining / (Number.isFinite(total) && total > 0 ? total : STORM_GAUGE_LOCK));
+}
 export function advanceStormLock(a, dt) {
   const remaining = (a.stormGaugeLock || 0) - dt;
   a.stormGaugeLock = remaining <= 1e-10 ? 0 : remaining;
@@ -30,17 +42,41 @@ export function updateStormHold(a, dt, G) {
     a.stormGaugeLock = STORM_GAUGE_LOCK;
     a.character.trigger('throw');
     G.projectiles.throwStorm(a);
+    // Captured after the throw: the Special Power wrapper may extend this lock.
+    // Actor.reset removes the temporary power snapshot but keeps this denominator.
+    a.stormGaugeDuration = a.stormGaugeLock;
   }
   s.subWasDown = down;
 }
 
+// INKWAVE's existing native rain trace reach (the raycast length in weapons.js).
+// It is an internal consistency bound, not a verified Splatoon 3 cutoff.
+export const STORM_RAIN_REACH = 12;
+// Growth/fade envelope copied from the native cloud update. These values are
+// INKWAVE's existing rain shape, not Nintendo calibrations.
+export function stormRainScale(c) {
+  const grow = Math.min(1, Math.max(0, c.t / 0.5));
+  const fade = Math.min(1, Math.max(0, (c.dur - c.t) / 0.6));
+  return (0.3 + 0.7 * (1 - Math.pow(1 - grow, 3))) * (0.2 + 0.8 * fade);
+}
+// Shared spatial test for rain contact and allied recovery: horizontal area at
+// the cloud's current scale, no contact above the cloud, and no contact below
+// the finite rain trace. Line-of-sight is checked by the caller.
+export function stormRainContains(c, a, baseRadius, scale = stormRainScale(c)) {
+  const p = c.group?.position, point = a?.pos;
+  if (!p || !point || !a.alive || !Number.isFinite(c.t) || !Number.isFinite(c.dur) ||
+      !Number.isFinite(baseRadius) || baseRadius < 0 || point.y > p.y ||
+      point.y + 1.2 < p.y - 0.8 - STORM_RAIN_REACH) return false;
+  const radius = baseRadius * scale;
+  const dx = point.x - p.x, dz = point.z - p.z;
+  return dx * dx + dz * dz <= radius * radius;
+}
+// Recovery follows the same live rain area as native contact until expiry. The
+// native damage loop keeps its separate dur-0.3 window (#563 scope).
 export function cloudCoversActor(c, a, G, SPECIALS) {
-  const p = c.group?.position, radius = SPECIALS.storm.radius;
-  if (!p || !(c.t < c.dur - .3) || !a.alive || a.pos.y > p.y) return false;
-  const dx = a.pos.x - p.x, dz = a.pos.z - p.z;
-  if (dx * dx + dz * dz > radius * radius) return false;
+  if (!(c.t < c.dur) || !stormRainContains(c, a, SPECIALS.storm.radius)) return false;
   const body = a.pos.clone(); body.y += 1.2;
-  const top = a.pos.clone(); top.y = p.y - .6;
+  const top = a.pos.clone(); top.y = c.group.position.y - .6;
   return !!G.physics.los(body, top);
 }
 export function stormRecoveryState(a, { G, SPECIALS }) {

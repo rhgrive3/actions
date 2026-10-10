@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {fixture} from './controls-fixture.mjs';
-import {installPlatformGame} from '../../local-quality/platform-game.mjs';
 import {RoomDurableObject} from '../../../server/src/index.js';
+const {installPlatformGame} = await import(process.env.INKWAVE_CONTROLS_SITE
+  ? pathToFileURL(path.resolve(process.env.INKWAVE_CONTROLS_SITE, 'patches/local-quality/platform-game.mjs')).href
+  : '../../local-quality/platform-game.mjs');
 let ms=1000000;
 class Socket {
  constructor(){this.handlers=new Map();this.sent=[];this.live=true;}
@@ -21,8 +25,8 @@ export async function pair(){
   socket.closed=()=>s._closed('Connection closed');
   const env=new EventTarget();env.document=new EventTarget();env.document.hidden=false;env.document.hasFocus=()=>true;env.performance={now:()=>ms};env.Date={now:()=>ms};let timerId=0;const timers=new Map();env.setTimeout=(fn,delay)=>{timers.set(++timerId,{fn,at:ms+delay});return timerId;};env.clearTimeout=id=>timers.delete(id);env.screen={orientation:new EventTarget()};env.console=console;let rid=0;const raf=new Map();env.requestAnimationFrame=fn=>{raf.set(++rid,fn);return rid;};env.cancelAnimationFrame=id=>raf.delete(id);
   class Game {constructor(){this.match=m;this.settings={frameRate:'display'};this.timer={update(){},disconnect(){}};this.input={padPressed:new Set(),pollPad(){},endFrame(){}};this.showcase={};this.rig={mode:'follow'};this.fpsAcc=this.fpsN=0;this.menus={current:null,setPlatformDriven(){}};} _padMenus(){} _dynRes(){} _loop(){} _frame(dt){f.runSimulation(this,dt);} netMatchAborted(){aborted++;this.match=null;}}
-  const game=new Game();Object.assign(f.G,{game,match:m,net:s,mode:'match'});f.G.paint.coverage=()=>[.5,.5];Object.assign(f.G.projectiles,{list:[],bombs:[],clouds:[],beams:[],sights:new Map(),update:()=>physics++});f.installClock(f);installPlatformGame(Game,f.G,env);game._loop();
-  const p={f,s,m,nm,game,env,socket,frame(){const entry=raf.entries().next().value;if(entry){raf.delete(entry[0]);entry[1](ms);}},hide(value){env.document.hidden=value;env.document.dispatchEvent(new Event('visibilitychange'));},runTimers(){for(const [id,t] of [...timers])if(t.at<=ms){timers.delete(id);t.fn();}},timerCount(){return timers.size;},snapshot(){return {time:m.time,state:m.state,follower:m.follower,host:s.isHost,sends,physics,raf:raf.size,session:s.state,aborted};},close(){const owner=game.platform.owner;game.disposePlatform();owner.dispose();nm.dispose();}};participants.push(p);return p;
+  const game=new Game();Object.assign(f.G,{game,match:m,net:s,mode:'match'});f.G.paint.coverage=()=>[.5,.5];Object.assign(f.G.projectiles,{list:[],bombs:[],clouds:[],beams:[],sights:new Map(),update:()=>physics++});f.installClock(f);installPlatformGame(Game,f.G,env);game._loop();const owner=game.platform.owner;
+  const p={f,s,m,nm,game,env,socket,frame(){const entry=raf.entries().next().value;if(entry){raf.delete(entry[0]);entry[1](ms);}},hide(value){env.document.hidden=value;env.document.dispatchEvent(new Event('visibilitychange'));},runTimers(){for(const [id,t] of [...timers])if(t.at<=ms){timers.delete(id);t.fn();}},timerCount(){return timers.size;},snapshot(){return {time:m.time,state:m.state,follower:m.follower,host:s.isHost,sends,physics,raf:raf.size,session:s.state,aborted};},close(){game.disposePlatform();owner.dispose();nm.dispose();}};participants.push(p);return p;
  }
  const host=await client('host'),guest=await client('guest');for(const p of participants){p.s._members=new Map([...relay.members].map(([id,m])=>[id,m.name]));p.s.lobby.players=[...relay.members].map(([id,m])=>({id,name:m.name,host:id===relay.hostId,team:0,ready:true}));}
  function frames(seconds,which=participants){for(let i=0;i<seconds*60;i++){ms+=1000/60;for(const p of participants)p.runTimers();for(const p of which)p.frame();}}

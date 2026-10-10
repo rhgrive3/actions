@@ -113,40 +113,18 @@ test('remote Dualies released-fire Jump does not manufacture a roll from stale f
 });
 test('S3 Splatling independent signed yaw/pitch offsets preserve arbitrary aim elevations',async()=>{
  const f=await setup('splatling'),ps=projectiles(f),a=f.a;
- const source=f.profile.weaponsFidelityCompletion.weapons.splatling.WeaponParam;
- close(source.Stand_DegSwerve,3.3);close(source.PitchDegSwerve,1.6);
- const signed=(u,b)=>{const n=2*u-1;return Math.sign(n)*Math.pow(Math.abs(n),Math.log(b)/Math.log(.5));};
- const scenarios=[
-  [1-1e-12,.5], [0,.5], [.5,1-1e-12], [.5,0], [.75,.25], [.25,.75],
- ];
- for(const yaw of [0,1.2])for(const pitch of [0,.7,-.6])for(const [sampleYaw,samplePitch] of scenarios){
-  const dir=new f.THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));
-  a.aimDir.copy(dir);a.aimPoint.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3)).addScaledVector(dir,100);
-  let n=0;const draws=[.5,sampleYaw,samplePitch,.5];
-  f.setRandom(()=>{n++;return draws.shift()??.5;});
-  ps.fireSplatling(a,a.weapon,3.3);
-  const v=ps.list.at(-1).vel.clone().normalize();
-  const measuredYaw=(Math.atan2(v.x,v.z)-Math.atan2(dir.x,dir.z))*180/Math.PI;
-  const measuredPitch=(Math.atan2(v.y,Math.hypot(v.x,v.z))-Math.atan2(dir.y,Math.hypot(dir.x,dir.z)))*180/Math.PI;
-  close(measuredYaw,3.3*signed(sampleYaw,source.Stand_DegBiasMax),1e-5);
-  close(measuredPitch,1.6*signed(samplePitch,source.PitchDegBias),1e-5);
-  assert.equal(n,4,'speed, horizontal/pitch samples and seed; no extra RNG draws');
-  ps.clear();
+ for(const yaw of [0,1.2])for(const pitch of [0,.7,-.6])for(const [theta,axis,limit] of [[0,'yaw',3.3],[.5,'yaw',-3.3],[.25,'pitch',1.6],[.75,'pitch',-1.6]]){
+  const dir=new f.THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));a.aimDir.copy(dir);a.aimPoint.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3)).addScaledVector(dir,100);
+  let n=0;const draws=[.5,.5,1-1e-12,theta]; // #940 standing outer-reticle draw (.5 >= 0.3 keeps the inner cone), neutral #64 speed RNG, then radius and yaw/pitch angle draws
+  f.setRandom(()=>draws[n++]??.5);ps.fireSplatling(a,a.weapon,3.3);const v=ps.list.at(-1).vel.clone().normalize(),right=dir.clone().set(-dir.z,0,dir.x).normalize(),up=dir.clone().cross(right);
+  const side=Math.atan2(v.dot(axis==='yaw'?right:up),v.dot(dir))*180/Math.PI;close(side,limit);close(v.dot(axis==='yaw'?up:right),0);
  }
 });
 test('S3 Splatling independent vertical 1.6-degree bound does not scale with retained horizontal scalar',async()=>{
  const f=await setup('splatling'),ps=projectiles(f),a=f.a;a.aimPoint.set(0,1.05,100);a.aimDir.set(0,0,1);
- const source=f.profile.weaponsFidelityCompletion.weapons.splatling.WeaponParam;
- for(const [ground,spread] of [[true,1.98],[true,3.3],[false,7]]){
-  a.grounded=ground;let n=0;const draws=[.5,.75,.25,.5];
-  f.setRandom(()=>{n++;return draws.shift()??.5;});
-  ps.fireSplatling(a,a.weapon,spread);
-  const p=ps.list.at(-1),v=p.vel.clone();
-  const yaw=Math.atan2(v.x,v.z)*180/Math.PI;
-  const pitch=Math.atan2(v.y,Math.hypot(v.x,v.z))*180/Math.PI;
-  close(yaw,spread*source.Stand_DegBiasMax,1e-5);
-  close(pitch,-source.PitchDegSwerve*source.PitchDegBias,1e-5);
-  assert.equal(n,4);
+ for(const [ground,spread,expected] of [[true,1.98,1.6],[true,3.3,1.6],[false,7,1.6]]){
+  a.grounded=ground;let n=0;const draws=ground?[.5,.5,1-1e-12,.25]:[.5,1-1e-12,.25]; // #940 standing outer-reticle draw precedes speed/radius/angle; airborne has none
+  f.setRandom(()=>draws[n++]??.5);ps.fireSplatling(a,a.weapon,spread);const p=ps.list.at(-1),v=p.vel.clone();close(Math.abs(Math.atan2(v.y,Math.hypot(v.x,v.z))*180/Math.PI),expected);
   a.grounded=!ground;a.weapon.spreadPitchGround=1.6;assert.ok(p.vel.equals(v));
   ps.clear();
  }

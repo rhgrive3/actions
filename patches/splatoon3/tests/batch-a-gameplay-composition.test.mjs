@@ -178,16 +178,17 @@ test('store while holding fire and roll maintaining charge (#390 / #386 baseline
   assert.equal(obs.roll1Stored.charge, 1, 'stored charge remains 1.0 during roll');
 });
 
-test('Charger composition keeps startup separate from partial-charge slowdown (#377 corrected oracle)', async () => {
+test('Issue #539 supersedes #377: Charger enters charge at partial normal-run speed', async () => {
   const { obs } = await runScenario(60);
-  // Independent community measurements: partial .96 -> .21 legacy DU/F,
-  // full .20 DU/F. Full-charge .02 m/F is NOT an entry-speed cap.
-  // Intermediate interpolation remains a declared calibration, not an oracle.
-  assert.equal(obs.firstTickCharging, false, '1F humanoid startup is preserved');
-  assert.equal(obs.firstTickCharge, 0, 'startup advances no charge');
-  assert.equal(obs.entryTickCharging, true, 'charging starts on tick 2');
-  assert.ok(obs.entryTickMoveSpeed > 5.6 && obs.entryTickMoveSpeed <= .96 * .1 * 60,
-    `partial entry remains near the uncharged endpoint: ${obs.entryTickMoveSpeed}`);
+  // #726 retains its 1F startup. #539 identifies the 1.2 WU/s speed as the
+  // full-charge endpoint, not the partial-charge entry speed; the S3 0.96
+  // partial entry (community verification table, 未確認 as pinned data) is
+  // 5.76 in the current INKWAVE profile.
+  assert.equal(obs.firstTickCharging, false, 'Charger is in its 1F startup on tick 1');
+  assert.equal(obs.firstTickCharge, 0, 'the startup tick advances no charge progress');
+  assert.equal(obs.entryTickCharging, true, 'Charger enters charging state on tick 2');
+  assert.ok(Math.abs(obs.entryTickMoveSpeed - 5.76) < 1e-5,
+    `Expected 5.76 WU/s at charging entry, got ${obs.entryTickMoveSpeed}`);
 });
 
 test('Issue #386 regression: roll-chain second floor action at 70F retains .85 attenuation', async () => {

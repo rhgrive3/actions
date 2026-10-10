@@ -21,7 +21,12 @@ export class PlatformLifecycle {
     // Keep legacy hosts without hasFocus usable; a failed query cannot grant input.
     try { this.focused = typeof env.document?.hasFocus === 'function' ? !!env.document.hasFocus() : true; }
     catch { this.focused = false; }
-    this._listen(env.document, 'visibilitychange', () => this.reconcile('visibilitychange'));
+    this._listen(env.document, 'visibilitychange', () => {
+      this.reconcile('visibilitychange');
+      // Visibility may change while a separate blocker keeps us suspended.
+      // Consumers with visibility-scoped work still need that boundary.
+      this._notify('visibility');
+    });
     this._listen(env, 'pagehide', e => { this.persisted = !!e.persisted; this.block('pagehide', true, 'pagehide'); });
     this._listen(env, 'pageshow', e => {
       this.persisted = !!e.persisted;

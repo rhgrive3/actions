@@ -31,12 +31,11 @@ for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} re
       `every native later cell credits its actual owner for seed ${seed}`);
     totalLateCredit += lateCredit;
   }
-  // These native Slosher stamps overlap at the coarse 0.25-unit grid and
-  // contain no fresh ancillary sample with the shared CPU/GPU hash. Their
-  // zero credit is checked above against actual grid ownership; a separate
-  // finer-grid native Slosher regression exercises positive late credit.
-  if (weapon === 'slosher') assert.equal(totalLateCredit, 0, 'overlap cannot invent late turf');
-  else assert.ok(totalLateCredit > 0, 'native later cells reach the emitting actor');
+  // Slosher's first stamp now uses the sourced unit/bullet footprint (#1011),
+  // which reaches cells not yet owned after the overlap on the 0.25-unit grid.
+  // Overlap still cannot invent turf: every late credit is checked above
+  // against the actual grid-count delta for the same owner.
+  assert.ok(totalLateCredit > 0, `native ${weapon} later cells reach the emitting actor`);
 });
 
 for (const sub of ['suction', 'curling']) test(`native ${sub} detonation retains its owner for every core and satellite splat`, async () => {
