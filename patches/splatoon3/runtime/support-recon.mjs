@@ -1,13 +1,35 @@
 // Splatoon 3 Point Sensor and team-scoped Turf Map marks (#710).
-// S3 11.3.0: ink 45%, active field 150F, base mark 480F.
-// Source: https://wikiwiki.jp/splatoon3mix/ブキ/サブウェポン/ポイントセンサー
-// The scene's metric-to-S3 lobby-line conversion remains uncalibrated. Radius
-// is therefore an explicit INKWAVE playable calibration, not an asserted 1:1 DU.
-export const POINT_SENSOR = Object.freeze({
-  id: 'pointSensor', inkCost: 45, areaSeconds: 150 / 60,
-  markSeconds: 480 / 60, radiusWorld: 1.2,
-  launchSpeedWorld: 13.5, maxFlightSeconds: 1.8,
+// Extracted from the pinned 11.3.0 source, not guessed from another weapon:
+// Splatoon3-resources/splat3/data/parameter/1130/weapon/
+// WeaponPointSensor.game__GameParameterTable.json
+// SHA256 57d0ab596ccdc9cd2e8da079ba4a169fc87aee36aeba079aafd81894d78bac03
+// The raw engine distance 6.0 is provisionally mapped to 6 INKWAVE world units;
+// player-collision and field durations still require real-console comparison.
+export const POINT_SENSOR_SOURCE = Object.freeze({
+  areaDistance: Object.freeze([6, 6, 6]),
+  markingFrames: Object.freeze([480, 720, 960]),
+  spawnSpeedZ: Object.freeze([1.38, 1.64, 1.87]),
+  spawnSpeedY: 0.24, spawnSpeedYWorldMin: -0.4,
+  inheritedVelocity: Object.freeze({ xRate: 1.6, yPlusRate: 4, yMax: .32 }),
+  inkConsume: .45, inkRecoverStopFrames: 75,
 });
+export const POINT_SENSOR = Object.freeze({
+  id: 'pointSensor', inkCost: POINT_SENSOR_SOURCE.inkConsume * 100,
+  areaSeconds: 150 / 60, markSeconds: POINT_SENSOR_SOURCE.markingFrames[0] / 60,
+  radiusWorld: POINT_SENSOR_SOURCE.areaDistance[0],
+  launchSpeedWorld: POINT_SENSOR_SOURCE.spawnSpeedZ[0] * 60,
+  maxFlightSeconds: 1.8,
+});
+export function pointSensorMarkFrames(ap, gearCurve) {
+  return typeof gearCurve === 'function'
+    ? Math.round(gearCurve(ap || 0, ...POINT_SENSOR_SOURCE.markingFrames))
+    : POINT_SENSOR_SOURCE.markingFrames[0];
+}
+export function pointSensorThrowSpeed(ap, gearCurve) {
+  return (typeof gearCurve === 'function'
+    ? gearCurve(ap || 0, ...POINT_SENSOR_SOURCE.spawnSpeedZ)
+    : POINT_SENSOR_SOURCE.spawnSpeedZ[0]) * 60;
+}
 const finite = value => Number.isFinite(value);
 export function pointSensorMark(victim, team, now, seconds = POINT_SENSOR.markSeconds) {
   if (!victim?.alive || !Number.isInteger(team) || team < 0 || team > 1 ||
