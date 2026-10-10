@@ -2659,3 +2659,28 @@ applying to a victim who falls or drowns after an RP splat is the basis for the 
   whether the Ver. 2.1.0 text still holds through 11.3.0 (only excerpts were read), whether the Haunt marker's
   full-AP exemption matches the source (it may be over-exempt), and real-console behavior. No fix was made,
   because any number for the retained fraction would be invented.
+## 2026-10-10: #1108 Roller drum-to-wall contact paint while the stick is held
+
+- **Splatoon 3 evidence (Ver. 11.3.0):** The issue cites the wikiwiki system detail page, which says Roller
+  contact paint occurs when the weapon physically touches a floor or wall, and that wall paint occurs with
+  Left Stick neutral; stick input gates contact damage. The wikiwiki pages returned HTTP 403 to the fetch
+  tool in this session, so the wording was not re-read here. The moving-contact paint rule is 未確認.
+- **INKWAVE implementation:** `patches/splatoon3/runtime/roller.mjs`. `paintStillWall` now runs whenever ZR is
+  held and the drum is supported by a paintable wall (`drumWallTouch`), with or without stick. Stick still
+  selects the native stripe and roll-contact damage path. The no-stick case (`stillWall`) still zeroes
+  horizontal speed during the native call, so no-stick contact cannot deal damage. The splat lands on the
+  wall face (contact point offset 0.025 along the normal), not on a ground projection.
+- **Reproduction:** Equip Splat Roller, face a paintable vertical wall, lower the drum against it, hold ZR,
+  then (a) keep the stick neutral, or (b) push the stick into the wall. Before this change (a) painted the
+  wall, while (b) produced only the ground stripe at drum height (y 0.35) and no wall-face splat. Both now
+  produce wall-face splats. Regression tests: `patches/splatoon3/tests/issue-1108-roller-wall-contact-runtime.test.mjs`.
+- **Play impact:** Pushing into a wall with stick now paints the wall face. Ink use is unchanged: the native
+  displacement cost and the stationary rule still apply, and direct wall contact paint spends no extra ink.
+  Whether S3 charges ink for this contact paint is 未確認.
+- **Verification status:** Logic-level tests on the production Level, Physics raycast, WeaponRunner and
+  `G.paint.splat` hooks. Stationary wall, moving wall, floor rolling and no-contact/remote controls pass.
+  Removing the wall paint call fails the stationary and moving tests. Restoring the no-stick-only gate fails
+  the moving test. Not verified: S3 moving-contact parity, ink cost per wall splat, wall-surface sampling
+  against the original console, drum width and shape against S3 footage, and real-device behavior. Speed-dependent
+  side paint is not covered by the new file. Draft PR #1195 carries a stationary-only test for the same issue;
+  this change does not modify that PR.

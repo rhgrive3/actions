@@ -231,8 +231,9 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
   const scratch = { ids: [], start: { x: 0, y: 0, z: 0 }, delta: { x: 0, y: 0, z: 0 }, normalY: 0, contactPoint: { x: 0, y: 0, z: 0 }, wallPoint: { x: 0, y: 0, z: 0 } };
   const wallOrigin = new THREE.Vector3(), wallDirection = new THREE.Vector3(), wallContact = new THREE.Vector3(), wallHit = new Hit();
   const paintStillWall = (runner, a, w, dt) => {
-    // #1108: direct drum-wall paint is contact-owned, not movement/side splash.
-    // No-stick must not authorize native roll-contact damage or floor paint.
+    // #1108: direct drum-wall paint is contact-owned (held with or without stick),
+    // not a movement/side splash. No-stick must not authorize native roll-contact
+    // damage or floor paint.
     if (a.remote || !a.alive || !(a.ink > 0.5) || !(dt > 0) || !G.paint?.splat || !G.physics?.raycast) return;
     runner.s3WallPaintElapsed = Math.min(0.3, (runner.s3WallPaintElapsed || 0) + dt);
     if (runner.s3WallPaintElapsed + 1e-10 < 1 / 12) return;
@@ -420,7 +421,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     const onFlickPath = starting || winding;
     const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);
     const stick = onFlickPath || rollerStickActive(a);
-    const stillWall = !!(inp.fire && !onFlickPath && sup?.wall && !stick && !a.remote);
+    // #1108: the drum body touching a paintable wall paints that wall while ZR is
+    // held, with or without Left Stick (S3 contact paint). Stick only decides the
+    // native stripe and roll-contact damage admission, so `stillWall` stays no-stick.
+    const drumWallTouch = !!(inp.fire && !onFlickPath && sup?.wall && !a.remote);
+    const stillWall = drumWallTouch && !stick;
     const fireIn = (onFlickPath || (sup?.supported && stick) || stillWall) ? inp : { ...inp, fire: false, firePressed: false };
     const restoreAirborne = !!(sup?.wall && !sup.floor && !a.grounded);
     // Native contact damage reads horizontal speed; prevent no-stick damage
@@ -611,7 +616,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
         if (a.character) a.character.s3RollerFlick = null;
       }
     }
-    if (stillWall && this.rolling) paintStillWall(this, a, w, dt);
+    if (drumWallTouch && this.rolling) paintStillWall(this, a, w, dt);
     else this.s3WallPaintElapsed = 0;
     return result;
     } finally {
