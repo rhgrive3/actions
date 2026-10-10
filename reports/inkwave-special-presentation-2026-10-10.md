@@ -13,7 +13,7 @@
 | Triple Splashdown相当（内部`slam`） | [SplatoonNA公式モデル](https://x.com/SplatoonNA/status/1729500483956424954)、[公式デモ](https://x.com/SplatoonNA/status/1729500670653276522)、[冬季公式紹介](https://www.nintendo.com/jp/topics/article/fa3d0720-7dae-476d-badd-24a738ef8dac)、[Wiki](https://splatoonwiki.org/wiki/Triple_Splashdown) | 道具を持たない上半身、左右で反転した大きなインク拳と渦状エネルギー。上昇/滞空/降下、既存の追加着弾15Fに合わせて表示。判定トークンを観測し、遠隔は受信phaseで表示 | 元の拳メッシュ/柔らかい変形/全関節軌道、遠隔開始位置/通信遅延と二端末実機映像 |
 | Tacticooler | [SplatoonJP公式モデル](https://x.com/SplatoonJP/status/1559102602662793216)、[公式デモ](https://x.com/SplatoonJP/status/1559102848981680130)、[Wiki](https://splatoonwiki.org/wiki/Tacticooler) | 円筒透明胴・縦フレーム・上部ヘッダー・4本の横アーム/缶、取得数に応じた缶の非表示 | 元の投擲→展開アニメ、缶取得時のキャラクター全関節 |
 
-公式画像はWikiに保存された同じ宣伝画像も目視した。吸引・冷蔵庫・追加2拳の動画は静止フレームも比較した。Driveの参照フォルダの19分割ZIPのうち最初の1本を調べたが、取得範囲の移動素材はWii U版であり、S3のこれらの専用リグ/元シェーダーを取得した根拠にはしない。他の18本を網羅したとは主張しない。
+公式画像はWikiに保存された同じ宣伝画像も目視した。吸引・冷蔵庫・追加2拳の動画は静止フレームも比較した。Driveの参照フォルダには19個の独立ZIPがある。取得したpart01の `SOURCE_INFO.txt` 6–7行はゲームRomFSを含まず、HoianViewerには別途取得したRomFSが必要と明記する。`HOW_TO_RECONSTRUCT_ALL.txt` 1行もRomFS不在を明記する。収録元はSplatoon/thickのdecompと、Leanny/splat3、HoianViewer、Awesome-Splatoon3-Hackingの公開スナップショットである。取得範囲の移動素材はWii U版であり、S3のこれらの専用リグ/元シェーダーを取得した根拠にはしない。他の18本はRange取得と通常取得が失敗したため内部未確認で、元アセット候補の不存在を個別に確認したとは主張しない。
 
 ## 所有権と処理量
 
@@ -40,5 +40,15 @@ CIの27場面のモーションcatalogでは全場面が完走したが、独立
 最終ローカルビルドのrevisionは`025aef0871b4d6161ae3613a0764cffce54adcfef538d036acbaa2a93a697aee`、artifact contentHashは`75ef157e4e7797891a335a1853a4e61bb43bdd1b3b16c73eaa3a161a66a15408`。専用表示7件を含む変更関連の回帰170件は全件成功。品質/練習場/キャッシュ回帰918件は905成功・13skip・失敗0。キャッシュPython harnessは3成功・1skip、既存workflow構成テストも成功。Chromiumは環境にある133 headless shellで確認し、Playwright 1.62.1の実行先だけをローカルで指定した。CIはワークフローに固定されたブラウザを使用する。
 
 初期JS 3,349,124 bytes、precache 5,121,619 bytes、worker 65,520 bytes、145 modulepreloadで既存予算検査に成功。これらは依存グラフ/ファイル量の検査で、端末のFPS/ロード時間そのものではない。CIには専用WebGL検査を追加し、実行commitとartifactを別途確認する。
+
+## mainと公開版の確認
+
+[PR #1216](https://github.com/rhgrive3/actions/pull/1216)をmain `4ec8f14c63a26b43415e14629d1f60237b4e4b49` へ統合した。テスト対象PR head `06a367ccf77354519921a3fa47c2f36e79597d50` と統合直後mainのtreeは、どちらも `a301adb3df370aa4d49375e5504236304107592f` で一致する。
+
+正規のローカル全回帰 `node scripts/check-inkwave-patches.mjs` は4,117件、4,102成功・15skip・失敗0。最適化ビルドの専用表示7件も成功した。修正後のモーションcatalogは27場面・5,310フレーム・349描画対を完走し、独立rendererの終了時geometry/textureは両方0である。
+
+[Pages実行38086780001](https://github.com/rhgrive3/actions/actions/runs/38086780001)は成功。[公開版](https://rhgrive3.github.io/actions/)のHTML、worker、関連ランタイム5モジュールの配信内容を取得し、検証ビルドのmanifestとSHA-256で照合した。[配信照合結果](inkwave-special-presentation-2026-10-10/published-verification.json)に7ファイルのハッシュを保存する。これは検証した7ファイルの配信一致であり、公開版全ファイルの再ダウンロード比較ではない。
+
+CI [実行38086434542](https://github.com/rhgrive3/actions/actions/runs/38086434542)では、専用WebGL・全モーションcatalog・通信・UI・練習場・起動/キャッシュを含む全ブラウザshard、およびseven_claimsとresource_paint_continuationが成功した。記録時点でvalidateジョブの全回帰は実行中であり、CI全体の完了とは扱わない。
 
 公開資料にないNintendo製の元メッシュ、テクスチャ、関節曲線、エフェクト素材との同一性は未確認であり、「完全一致」や「改善点ゼロ」とは判定しない。
