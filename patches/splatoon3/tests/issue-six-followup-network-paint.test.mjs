@@ -355,7 +355,9 @@ test('#1002: intermediate splash paints once, scores once and disables legacy tr
   for (let i = 0; i < 120 && ps._s3SplashDrops.length; i++) advanceSplashDrops(ps, 1 / 60, G);
   assert.equal(splats.length, 1);
   assert.equal(splats[0].radius, .7);
-  assert.equal(splats[0].opts.stretchAmt, 1);
+  // PaintSystem's front/back asymmetry maps source depth 2.0 to 1.6;
+  // the falling drop is centred after subtracting 0.375 * r * stretch.
+  assert.equal(splats[0].opts.stretchAmt, 1.6);
   assert.equal(p.trailEvery, 0);
   assert.equal(turf, 5);
   ps._step(p, 1 / 60);
