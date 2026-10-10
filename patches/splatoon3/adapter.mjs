@@ -1378,6 +1378,15 @@ export function adaptSource(rel, code) {
       "    this._warmup();\n",
       "    this._warmup();\n    warmScreenFX(this.screenfx);\n",
       'ScreenFX boot warm-up');
+    // The menu's attract match never ran _warmCharacters (only real matches do,
+    // behind their fade), so each attract kid built its LOD tiers (hair, far
+    // decimation) and compiled its variants the first time the orbiting camera
+    // saw it: 1-3 s main-thread spikes on the menu. Warm them where the attract
+    // match starts — during boot loading, or under the attract restart fade.
+    code = replaceOnce(code,
+      "    m.setup(); m.start();\n    for (const a of m.actors) { a.respawnTimer = 0; }",
+      "    m.setup(); m.start();\n    this._warmCharacters?.(m);\n    for (const a of m.actors) { a.respawnTimer = 0; }",
+      'attract match character warm-up');
     code = "import { warmScreenFX } from '../patches/splatoon3/runtime/ui.mjs';\n" + code;
     // #614: Splatoon 3's normal battle HUD has no global text feed naming remote
     // attacker/victim pairs. Drop the two remote-splat feed broadcasts; the local
