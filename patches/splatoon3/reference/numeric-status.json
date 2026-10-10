@@ -533,6 +533,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.dualies.rollDist": {
+    "value": 5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.blaster.inkPerShot": {
     "value": 10,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -1254,6 +1259,11 @@
   },
   "weapons.charger.reticleDelayF": {
     "value": 5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.moveSpeedChargingStart": {
+    "value": 5.76,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -3651,16 +3661,6 @@
   },
   "clothingGear.haunt.targetSpecialLoss": {
     "value": 0.15,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.dualies.rollDist": {
-    "value": 5,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.moveSpeedChargingStart": {
-    "value": 5.76,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   }
