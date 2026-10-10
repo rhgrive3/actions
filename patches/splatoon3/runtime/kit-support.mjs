@@ -10,7 +10,7 @@ import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerDrinkFrames, drinkEligible,
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
-const aliveInMatch = G => G.match?.state === 'playing' || G.match?.playing?.() === true;
+const aliveInMatch = G => !!G.match?.range || G.match?.state === 'playing' || G.match?.playing?.() === true;
 const life = a => Number.isSafeInteger(a?.netLife) && a.netLife >= 0 ? a.netLife : 0;
 const vec3 = v => v && [v.x,v.y,v.z].every(Number.isFinite);
 const finiteTriplet = (r, i) => [r[i],r[i+1],r[i+2]].every(Number.isFinite);
