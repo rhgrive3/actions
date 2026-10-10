@@ -258,7 +258,28 @@ for (const run of RUNS) {
       // its JSHandle resolves to false and incorrectly fails the browser gate.
       // The helper returns false until a completed trace exists, and supplies
       // the entire snapshot in the one successful poll (no navigation race).
-      const profilerHandle = await page.waitForFunction(profileRangeAcceptanceSnapshot, null, { timeout: 90000 });
+      let profilerHandle;
+      try {
+        profilerHandle = await page.waitForFunction(profileRangeAcceptanceSnapshot, null, { timeout: 90000 });
+      } catch (error) {
+        // Preserve full acceptance. Diagnose why the real second-session
+        // tracer never became ready instead of reporting only a timeout.
+        const diagnostic = await page.evaluate(() => {
+          const g = window.__inkwave, match = window.__G?.match, probe = window.__inkwaveRangePerf;
+          let snap = null;
+          try { snap = probe?.snapshot?.() ?? null; } catch (e) { snap = { snapshotError: String(e) }; }
+          return {
+            url: location.search, document: document.readyState,
+            matchState: match?.state ?? null, range: !!match?.range,
+            gameExists: !!g, gameProbe: g?._rangeFrameProbe === undefined ? 'uninitialized' :
+              g._rangeFrameProbe === null ? 'loading' : 'installed',
+            globalProbe: !!probe, capturedFrames: snap?.trace?.capturedFrames ?? null,
+            traceError: snap?.traceError ?? null, mode: snap?.mode ?? null,
+            traceLatest: snap?.trace?.latest?.stages ? Object.keys(snap.trace.latest.stages) : null,
+          };
+        }).catch(e => ({ diagnosticError: String(e) }));
+        throw new Error('Practice Range tracer never reached 12 frames: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+      }
       out.checks.profiler = await profilerHandle.jsonValue();
       const perf = out.checks.profiler;
       if (perf.traceError) throw new Error('Practice Range tracer load: ' + perf.traceError);
