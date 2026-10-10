@@ -14,6 +14,6 @@ test('PWA 5 MiB cold snapshot retains every offline-playable lightmap and lazy-c
   assert.equal(coldOfflineLightmap('assets/stages/manifest.json'),false,
     'manifest remains included by the separate mandatory dependency');
   const native=fs.readFileSync(new URL('../../../inkwave-public/src/config.js',import.meta.url),'utf8');
-  assert.match(native,/id:\s*'cargo'[^}\n]+onlineOnly:\s*true/,
+  assert.match(native,/\{ id:\s*'cargo'[^\n]*onlineOnly:\s*true/,
     'explicit online-only native stage admission backs the cache decision');
 });
