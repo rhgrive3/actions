@@ -100,19 +100,16 @@ export function installSlosherIntermediatePaint(api, profile) {
     const t = segment > EPS ? clamp01((spec.targetLength - before) / segment) : 1;
     point.set(from.x + (end.x - from.x) * t,
       from.y + (end.y - from.y) * t, from.z + (end.z - from.z) * t);
-    const ground = G.physics?.raycast?.(point, down, 10 * scale, hit, true);
-    if (!ground?.hit) return;
-    point.copy(ground.point).addScaledVector(ground.normal, .1 * scale);
+    // #1002 / PR1188: a released paint-only Slosher splash must enter the
+    // shared fixed-60Hz falling queue, not immediately stamp a point obtained
+    // from an arbitrary downward ray. The queue owns its real surface contact,
+    // face-clipped paint, source depth ellipse, and turf bookkeeping.
     stretch.set(p.vel.x, 0, p.vel.z);
     if (stretch.lengthSq() <= EPS) stretch.set(0, 0, 1);
     else stretch.normalize();
-    const area = G.paint?.splat?.(point, spec.widthHalf, p.team, {
-      seed: p.seed, claimOwner: p.owner, stretch,
-      // PaintSystem takes an additive elongation, whereas the source stores
-      // the total depth ratio. Keep the rasterizer's asymmetry as calibration.
-      stretchAmt: Math.max(0, spec.depthScale - 1),
-    }) || 0;
-    p.owner?.addTurf?.(area);
+    spawnSplashDrop(G, { owner: p.owner, team: p.team, seed: p.seed,
+      salt: p.s3SloshIntermediateCount, from: point, direction: stretch,
+      radius: spec.widthHalf, spec: spec.drop, depth: true, kind: 'drop' });
   };
   const before = new THREE.Vector3();
   Projectiles.prototype._step = function (p, dt) {
