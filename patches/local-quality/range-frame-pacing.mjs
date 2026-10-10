@@ -6,13 +6,20 @@ export const REFRESH_HZ = Object.freeze([60, 75, 90, 100, 120, 144, 165]);
 
 export function detectStableDisplayHz(periods) {
   if (!periods || periods.length < 32) return 0;
-  let best = 0, count = 0;
+  let best = 0, count = 0, bestDistance = Infinity;
   for (const hz of REFRESH_HZ) {
     const expected = 1 / hz;
-    let hits = 0;
-    for (const dt of periods)
-      if (Number.isFinite(dt) && Math.abs(dt - expected) <= expected * 0.13) hits++;
-    if (hits > count) { count = hits; best = hz; }
+    let hits = 0, distance = 0;
+    for (const dt of periods) {
+      if (!Number.isFinite(dt)) continue;
+      const error = Math.abs(dt - expected) / expected;
+      if (error <= .13) { hits++; distance += error; }
+    }
+    // Adjacent high-refresh windows may overlap at a generous 13% jitter
+    // threshold (144 vs 165 Hz). Break same-hit ties by actual period error.
+    if (hits > count || (hits === count && hits > 0 && distance < bestDistance)) {
+      count = hits; best = hz; bestDistance = distance;
+    }
   }
   return count >= Math.ceil(periods.length * .78) ? best : 0;
 }
