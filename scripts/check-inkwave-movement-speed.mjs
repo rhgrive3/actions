@@ -28,11 +28,21 @@ try {
   await page.evaluate(async()=>{globalThis.movementG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
   await page.waitForFunction(()=>movementG?.game?.menus&&movementG.s3?.installed&&movementG.mode!=='boot',null,{timeout:180000});
   await page.evaluate(async()=>{const g=movementG.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});});
-  await page.waitForFunction(()=>movementG.game.hud?._visible,null,{timeout:20000});
+  await page.waitForFunction(()=>movementG.game.hud?._visible&&!document.querySelector('.iw-lineup'),null,{timeout:20000});
   const result=await page.evaluate(async()=>{
     const G=movementG,g=G.game;g.debug.freezeBots();g._skipRender=true;
     for(let i=0;i<270;i++)g._frame(1/60);
     const a=g.match.local,r=a.weaponRunner;
+    // The real Squid Spawn waits for a ZR edge; walking cannot bypass its aim
+    // phase. Complete the native launch before measuring ordinary movement.
+    if(a.s3?.squidSpawn?.phase==='aim') {
+      g.debug.fire(false);g._frame(1/60);
+      g.debug.fire(true);g._frame(1/60);
+      g.debug.fire(false);
+      if(a.s3.squidSpawn?.phase!=='flight')throw Error('Native Squid Spawn did not launch');
+      for(let i=0;i<65;i++)g._frame(1/60);
+    }
+    if(a.s3?.squidSpawn||g.match.state!=='playing')throw Error('Movement probe started before native spawn/play admission');
     const {Level}=await import(new URL('src/world/level.js',document.baseURI));
     const {Physics}=await import(new URL('src/game/physics.js',document.baseURI));
     const profile=await fetch(new URL('patches/splatoon3/profile.json',document.baseURI)).then(r=>r.json());
