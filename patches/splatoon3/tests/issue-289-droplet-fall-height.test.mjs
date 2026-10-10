@@ -105,3 +105,55 @@ test('#289 shooter droplet at 5u above flat surface lands and paints instead of 
   const radius = f.fidelityFlightPaintRadius(projectile);
   near(radius, expectedRadius);
 });
+
+
+// A complete native Shooter emission, source-guided InkFlightRuntime droplet,
+// real Level/Physics, actual PaintSystem scoring and paintable world face.
+// The original helper/hand-made ray test above was unable to prove this path.
+import { fixture as gameWorld } from '../../../scripts/weapons-fixture.mjs';
+async function emittedDroplet(height) {
+  const f = await gameWorld({ fidelity: true, floor: true, seed: 289 });
+  const a = f.make('shooter', { y: height - 1.05, hp: 100 });
+  a.aimPoint.set(0, height, 100);
+  f.G.actors = [a];
+  f.projectiles.fireShooter(a, a.weapon, 0);
+  const p = f.projectiles.list[0];
+  assert.equal(p.inkKey, 'shooter', 'real source-guided bullet');
+  assert.ok(p.inkPlan && p.inkProfile, 'real Shooter retains source splash schedule');
+  assert.equal(p.trailEvery, 0, 'generic instant-stamp trail disabled');
+  const born = [];
+  f.projectiles.inkFlight.trace = ev => { if (ev.event === 'drop-born') born.push(ev); };
+  for (let i = 0; i < 150; i++) f.projectiles.update(1 / 60);
+  const drops = f.paints.filter(row => row.kind === 'drop' || row.kind === 'trail');
+  assert.ok(born.length > 0, 'the active head released a real detached drop');
+  assert.ok(drops.length > 0, 'a detached Shooter drop reached real paint geometry');
+  assert.ok(drops.some(row => row.area > 0), 'native authoritative CPU turf ownership advanced');
+  assert.ok(a.turf > 0, 'actual shooter receives turf credit');
+  assert.ok(drops.every(row => Math.abs(row.center[1]) < 0.1),
+    'all scheduled drop paint is on the real floor rather than projected through air');
+  assert.ok(born.length <= p.inkPlan.count, 'true source count remains bounded');
+  return { f, born, drops };
+}
+
+test('#289 natural 5WU shooter drop falls past old 4WU limit and paints real CPU turf', async () => {
+  const w = await emittedDroplet(5);
+  assert.ok(w.drops.some(row => row.area > 0));
+});
+
+test('#289 real flight splats preserve fall-height depth scaling below 3, across 3..10 and above 10', async () => {
+  const heights = [2, 3, 5, 6.5, 10, 12];
+  const footprints = [];
+  for (const h of heights) {
+    const { drops } = await emittedDroplet(h);
+    const first = drops.find(row => row.kind === 'drop' && row.area > 0) || drops.find(row => row.area > 0);
+    assert.ok(first && Number.isFinite(first.stretchAmt), 'actual PaintSystem received a finite depth value');
+    footprints.push(first.stretchAmt);
+  }
+  for (let i = 1; i < footprints.length; i++)
+    assert.ok(footprints[i] <= footprints[i-1] + 1e-6,
+      'higher-fall footprints do not reverse the sourced depth interpolation');
+  assert.ok(footprints[0] > footprints.at(-1) + 1e-4,
+    'falling from >10WU visibly narrows the paint depth compared with low drop');
+  assert.ok(Math.abs(footprints.at(-1)) < 1e-6,
+    'height >10WU reaches the sourced minimum depth, not paint extinction');
+});
