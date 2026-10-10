@@ -1096,6 +1096,17 @@ export function adaptSource(rel, code) {
     code = adaptChargerSightCache(rel, code, replaceOnce);
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
+    // VFX droplets leave no ink speck on surfaces: a GPU-only mark that looks like
+    // paint but is not turf has no Splatoon 3 counterpart. A no-op (not null) keeps
+    // FX from substituting its fallback disc decal.
+    code = replaceOnce(code,
+      "      G.fx.onSpeck = (p, n, col, size) => {\n" +
+      "        const P = this.G.paint, t = this._teamOf(col);\n" +
+      "        if (!P || t < 0 || size < 0.014) return;\n" +
+      "        P.speck(this._sp.copy(p).addScaledVector(n, 0.04), Math.min(0.11, size * 1.7), t);\n" +
+      "      };",
+      "      G.fx.onSpeck = () => {};   // no paint-like specks from VFX droplets",
+      'VFX droplet specks leave no mark');
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
@@ -1377,6 +1388,19 @@ export function adaptSource(rel, code) {
       '    this.input = G.input = new Input(this.R.renderer.domElement);',
       '    this.input = G.input = new Input(this.R.renderer.domElement);\n    this.input.attachWebHID?.();',
       'auto attach WebHID on boot');
+    // Splatoon 3 turf comes only from the weapon/blast paint the source tables
+    // define. Offline, upstream turned landing VFX droplets (explosion, splatted,
+    // flick curtain, slosh, dodge, roller spray, slam) into random real turf, while
+    // online play never did. Landing droplets paint nothing in either mode.
+    code = replaceOnce(code,
+      "    G.fx.onDropletLand = (point, normal, color, size) => {\n" +
+      "      if (G.netm) return;   // online: turf only comes from replicated splats, never from local-only cosmetic droplets\n" +
+      "      const team = this._teamOfColor(color);\n" +
+      "      if (team < 0) return;\n" +
+      "      G.paint.splat(this._tmpV.copy(point).addScaledVector(normal, 0.05), clamp(size * 2.4, 0.12, 0.45), team, { seed: Math.random() });\n" +
+      "    };",
+      "    G.fx.onDropletLand = () => {};   // no VFX-droplet turf, offline or online (S3 paint comes from weapon/blast sources only)",
+      'VFX droplet landings never paint turf');
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
     const end = code.indexOf('    // A full-frame lobby/showcase completely covers', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: fixed simulation connection');
