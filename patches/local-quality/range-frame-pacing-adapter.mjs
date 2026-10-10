@@ -19,7 +19,12 @@ export function adaptRangeFramePacing(rel, code) {
     if (this._rangeFrameProbe === undefined) {
       const enabled = typeof location !== 'undefined' &&
         new URLSearchParams(location.search).get('profileRange') === '1';
-      this._rangeFrameProbe = enabled ? createFrameTimingProbe({ env: globalThis }) : null;
+      this._rangeFrameProbe = null;
+      if (enabled) import('../patches/local-quality/range-frame-profiler.mjs')
+        .then(({ createFrameTimingProbe }) => {
+          this._rangeFrameProbe = createFrameTimingProbe({ env: globalThis });
+        })
+        .catch(error => console.warn('Optional range profiler unavailable:', error));
     }
     this._rangeFrameProbe?.callback(rawDt);
     if (this.frozen) return;`,
@@ -62,5 +67,5 @@ export function adaptRangeFramePacing(rel, code) {
       stages: this.perf,
     });`,
     'frame CPU recorder');
-  return "import { createRefreshProbe, evenTouchAutoHz, createFrameTimingProbe } from '../patches/local-quality/range-frame-pacing.mjs';\n"+code;
+  return "import { createRefreshProbe, evenTouchAutoHz } from '../patches/local-quality/range-frame-pacing.mjs';\n"+code;
 }
