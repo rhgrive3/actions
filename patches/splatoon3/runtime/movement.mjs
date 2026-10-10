@@ -39,6 +39,21 @@ export function movementState(a) {
   return state;
 }
 function sync(a, state) { a.s3.roll = state.roll; a.s3.surge = state.surge; }
+// #951: retire the Surge boost only on the native 3.2-unit away-stick
+// detach; ledge pops and ink-gap crossings keep their existing flight/armor.
+// 0.01 mirrors the native `mh > 0.01` gate that computes `into` in actor.js.
+const AWAY_INPUT_MIN = 0.01;
+export function retireAwaySurge(actor, state, wasClimbing, moveX, moveZ, P) {
+  const burst = state.surge, length = Math.hypot(moveX, moveZ);
+  if (!wasClimbing || actor.climbing || burst?.phase !== 'burst' || !(length > AWAY_INPUT_MIN)
+      || actor.climbExit + EPSILON < 0.3 || Math.abs(actor.vel.y - 3.2) > EPSILON) return false;
+  const into = -(moveX * actor.wallN.x + moveZ * actor.wallN.z) / length;
+  if (!(into < P.climbDetachDot)) return false;
+  burst.armorTime = 0; burst.armorPending = false;
+  if (state.armor === burst) state.armor = null;
+  state.surge = null; actor.anim.surgeCharge = 0; sync(actor, state);
+  return true;
+}
 function advanceChainTimer(state, dt) {
   state.chainTimer = Math.max(0, state.chainTimer - dt);
   if (state.chainTimer <= EPSILON) { state.chain = 0; state.chainTimer = 0; state.chainSpeed = 0; }
@@ -357,9 +372,11 @@ export function installMovement(context, tuning) {
       P.climbSpeed *= config.surge.chargeMoveScale;
       P.climbSideSpeed *= config.surge.chargeMoveScale;
     }
+    const moveX = this.intent.move.x, moveZ = this.intent.move.z;
     let value;
     try { value = climb.apply(this, args); }
     finally { P.climbSpeed = speed; P.climbSideSpeed = side; }
+    retireAwaySurge(this, state, was, moveX, moveZ, P);
     if (was && !this.climbing && state.surge?.armorPending) state.surge.armorPending = false;
     // Losing an inked wall cancels charge. A ledge burst is kept in the air.
     if (was && !this.climbing && movementState(this).surge?.phase === 'charge') { movementState(this).surge = null; this.anim.surgeCharge = 0; }
