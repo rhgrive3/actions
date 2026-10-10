@@ -360,7 +360,19 @@ export function applyGroupedProjectileHit(system, projectile, victim, amount) {
 }
 export function installWeapons(context, profile) {
   api = context;
-  const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  const { Actor, WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER, on } = api;
+  // #1089: use the committed activation event, not the physical Special input.
+  // Some kit owners bypass native _startSpecial; all successful starts publish
+  // this boundary. A rejected activation never interrupts the retained stance.
+  on?.('special:use', event => {
+    const actor = event?.actor, runner = actor?.weaponRunner;
+    if (!runner || actor.remote || actor.weapon?.kind !== 'dualies') return;
+    runner.s3Turret = false;
+    runner.s3DodgeShotPending = 0;
+    runner.s3GateDodgeShotPending = false;
+    runner.s3DodgeShotRemaining = 0;
+    // Keep paid ink, roll count, movement/recovery clocks and shot cooldown.
+  });
   WeaponRunner.prototype.s3StepSplatlingSubInterrupt = function (dt, input) {
     return splatlingSubInterrupt(this, this.a, dt, input);
   };

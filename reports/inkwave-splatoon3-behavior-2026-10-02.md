@@ -3361,3 +3361,17 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
   - 隣接テスト 21/21 成功（issue-1165, issue-batch-1171, issue-979, issue-570, issue-189）。
   - 未確認（テストなし、実機・実ブラウザ計測が必要）: 実ブラウザの WebGL atlas readback による比較（PR #1171 ブランチの headless 4,000 セル比較は main に未取り込み）、30/60/120/144 Hz の描画差、既存の敵インク上への重ね塗り、bot の判断、決勝 Judd の差、実機での見え方。
   - 所有判定は 60 Hz 固定のシミュレーションで行われるため、描画フレームレートによる差は設計上想定しないが、このテストでは確認していない。
+## 2026-10-10 — #1089 Dualies: Special 開始時に post-roll 射撃状態を破棄する
+
+**本家の根拠（未確認の部分を含む）.** Inkipedia「Splat Dualies」は、ローリング後の 4F 発射待ち、ローリング後の照準統合を記載するが、Special と post-roll 射撃状態の関係には触れていない（閲覧日 2026-10-10、先頭 100,000 文字）。Drive の `INKWAVE-weapon-audit-20261009.md` も Dualies の Special 相互作用を扱っていない。Nintendo 公式 Ver. 11.3.0 の更新履歴は本件では未照合。Special が post-roll 状態を破棄するという S3 の内部規則は、本件では**未確認**であり、このエントリで本家一致とは認定しない。
+
+**INKWAVE 実装箇所.** 修正は PR #1182 系 commit `e6c0107d`（`origin/pr-1182-head` 等）にのみあり、main（`97ae3fec`）には存在しなかった。移植先は `patches/splatoon3/runtime/weapons.mjs` の `installWeapons` 内 `special:use` 購読。成功した特殊開始（`inkwave-public/src/game/actor.js` の `_startSpecial` の `emit('special:use')`、および Storm・Trizooka・Ink Vac 等の kit 経路）のみで、Dualies の自機について `s3Turret`、`s3DodgeShotPending`、`s3GateDodgeShotPending`、`s3DodgeShotRemaining` を破棄する。リモート actor と他ブキは対象外。不成立の特殊入力では発火しない。ink・ロール回数・移動/回復クロック・クールダウンは変更しない。
+
+**再現操作.** 練習場で Dualies を使い、有効な Dodge Roll を行い、4F 発射待ち後に turret 発射を 1 回以上行う（`s3Turret === true`）。静止したまま ZR を押し続けて特殊を発動し、終了まで待つ。修正前は特殊終了後の最初の発射が `lockInterval = 4F` かつ `spreadLock = 0` のまま出る。修正後は ZR の保持・解除にかかわらず通常の 5F・非零拡散に戻る。4F gate 中の特殊発動では、保留中の旧射撃が特殊後に再開しない。
+
+**プレイへの影響.** 修正前は、ZR を押し続けたまま特殊を使うと、新しい Dodge Roll なしで turret の 4F 連射と 0° 拡散が特殊後にも残った。修正後は特殊が post-roll 状態を終える。通常の 4F turret 連射、0° 拡散、Dodge の距離とタイミングは変更していない。
+
+**確認状態.**
+- 自動テスト: `patches/splatoon3/tests/issue-1089-dualies-special-interruption.test.mjs` 7/7 pass。修正を外した同条件の対照（negative control）で旧挙動の残留を再現。修正前の main では 7 件中 5 件が失敗（うち 1 件は negative control の前提確認。修正前は listener が無いためネガティブ対照を組めない）。残りの 2 件（新規 Dodge 後の turret 再成立、拒否された特殊入力と kit 不成立の保持）は既存挙動の回帰確認として通過。
+- 回帰: 近傍テスト 12 ファイルを実行。前半 5 ファイル（`issue-1008-1020-1037-1053`、`issues-1041-1047-action-windows`、`dualies-reticle-state`、`dualies-recovery-pending`、`dualies-gate-owner-composition`）25/25 pass。後半 7 ファイル（`dualies-roll-recovery`、`weapon-gates-batch`、`weapon-edgecases`、`issue-575-dualies-independent-aim`、`issue-477`、`action-admission`、`issue-883-dualies-scalar-spread`）82/82 pass。
+- ローカル論理検査のみ。ブラウザ実動作、Nintendo 実機比較、S3 の Special 中の挙動は**未確認**。特殊中の状態が S3 でどう扱われるかは未確認のまま残す。
