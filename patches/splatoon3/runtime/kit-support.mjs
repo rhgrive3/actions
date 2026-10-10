@@ -3,8 +3,9 @@
 // Network: the originating player's actor is the only sender; received packets
 // are typed, finite, life-bound and duplicate-checked before any state change.
 // Cross-version S3 lobby-line <-> INKWAVE world geometry remains uncalibrated.
-import { POINT_SENSOR, pointSensorContact, pointSensorMark, clearPointSensorMarks } from './support-recon.mjs';
-import { TACTICOOLER, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
+import { POINT_SENSOR, POINT_SENSOR_SOURCE, pointSensorMarkFrames, pointSensorThrowSpeed, pointSensorContact, pointSensorMark, clearPointSensorMarks } from './support-recon.mjs';
+import { gearCurve } from './gear.mjs';
+import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
@@ -63,7 +64,7 @@ export function registerSupportKit({ WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_
   SUB.pointSensor = {
     ...SUB.bomb, id:'pointSensor', name:'Point Sensor', inkCost:POINT_SENSOR.inkCost,
     inkCostFallback:POINT_SENSOR.inkCost, throwSpeed:POINT_SENSOR.launchSpeedWorld,
-    inkRecoverStop:75/60, damageMax:0, damageMin:0, paintRadius:0,
+    inkRecoverStop:POINT_SENSOR_SOURCE.inkRecoverStopFrames/60, damageMax:0, damageMin:0, paintRadius:0,
     radius:POINT_SENSOR.radiusWorld,
     status:'S3 11.3.0 timing/cost; INKWAVE world radius/throw calibration pending',
   };
@@ -91,7 +92,7 @@ function spawnPointSensor(owner, projectile, G, THREE, Hit, remote = false, reco
   const pos = record ? new THREE.Vector3(record[0],record[1],record[2]) :
     owner.pos.clone().add(new THREE.Vector3(0,1.35,0));
   const vel = record ? new THREE.Vector3(record[3],record[4],record[5]) :
-    projectile.throwVelocity(owner, POINT_SENSOR.launchSpeedWorld, new THREE.Vector3());
+    projectile.throwVelocity(owner, pointSensorThrowSpeed(owner.s3?.abilityPoints?.subPower, gearCurve), new THREE.Vector3());
   if (!vec3(pos) || !vec3(vel)) return null;
   const sensor = { owner, team:owner.team, pos, vel, prev:pos.clone(), age:0,
     activeAt:null, expires:Infinity, seq:remote ? record[6] : serial(owner),
@@ -101,7 +102,7 @@ function spawnPointSensor(owner, projectile, G, THREE, Hit, remote = false, reco
   if (!remote) emitNet(G,owner,['p',owner.nid,sensor.seq,pos.x,pos.y,pos.z,vel.x,vel.y,vel.z,sensor.sourceLife]);
   return sensor;
 }
-function deployCooler(owner, projectile, G, THREE, remote = false, position = null, incomingSeq = null) {
+function deployCooler(owner, projectile, G, THREE, remote = false, position = null, incomingSeq = null, incomingFrames = null) {
   const pos = position ? new THREE.Vector3(...position) :
     owner.pos.clone().add(new THREE.Vector3(Math.sin(owner.yaw || 0)*1.6,0,Math.cos(owner.yaw || 0)*1.6));
   if (!vec3(pos)) return null;
@@ -110,10 +111,15 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
   for(let i=stands.length-1;i>=0;i--) if(stands[i].owner===owner) {
     releaseVisual(stands[i],G);stands.splice(i,1);
   }
+  const drinkFrames = remote && Number.isSafeInteger(incomingFrames)
+    && incomingFrames >= TACTICOOLER_SOURCE.powerUpFrames[0]
+    && incomingFrames <= TACTICOOLER_SOURCE.powerUpFrames[2]
+    ? incomingFrames : tacticoolerDrinkFrames(owner.s3?.abilityPoints?.specialPower, gearCurve);
   const stand={ owner, team:owner.team, pos, expires:G.time+TACTICOOLER.standSeconds,
-    sourceLife:life(owner), seq:remote?incomingSeq:serial(owner), taken:new Set(), mesh:coolerVisual(owner,pos,THREE,G) };
+    drinkSeconds:drinkFrames/60, sourceLife:life(owner), seq:remote?incomingSeq:serial(owner),
+    taken:new Set(), mesh:coolerVisual(owner,pos,THREE,G) };
   stands.push(stand);
-  if (!remote) emitNet(G,owner,['c',owner.nid,stand.seq,pos.x,pos.y,pos.z,stand.sourceLife]);
+  if (!remote) emitNet(G,owner,['c',owner.nid,stand.seq,pos.x,pos.y,pos.z,stand.sourceLife,drinkFrames]);
   return stand;
 }
 function stepSupport(projectile, G, THREE, dt) {
@@ -137,8 +143,9 @@ function stepSupport(projectile, G, THREE, dt) {
         if(sensor.seen.has(actor) || actor.team===sensor.team ||
            !pointSensorContact(actor,sensor.pos)) continue;
         sensor.seen.add(actor);
-        if(pointSensorMark(actor,sensor.team,G.time)) {
-          emitNet(G,sensor.owner,['m',sensor.owner.nid,sensor.seq,actor.nid,life(actor)]);
+        const frames=pointSensorMarkFrames(sensor.owner.s3?.abilityPoints?.subPower,gearCurve);
+        if(pointSensorMark(actor,sensor.team,G.time,frames/60)) {
+          emitNet(G,sensor.owner,['m',sensor.owner.nid,sensor.seq,actor.nid,life(actor),frames]);
         }
       }
       sensor.pulses+=dt;
@@ -160,7 +167,7 @@ function stepSupport(projectile, G, THREE, dt) {
     // Each actor's owner decides whether it obtained a drink; remote replicas
     // never mutate another peer's authoritative gear, HP or weapon state.
     for(const a of G.actors || [])if(drinkEligible(a,stand,G.time)) {
-      stand.taken.add(a); giveDrink(a,G.time);
+      stand.taken.add(a); giveDrink(a,G.time,stand.drinkSeconds);
       G.fx?.burst?.(a.pos,new THREE.Vector3(0,1,0),G.teamColors?.[a.team],{count:6,speed:2,size:.08});
     }
   }
@@ -230,7 +237,9 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
     // Production network-replication appends authoritative tick and transport
     // sequence to every _rec event (r=2). A legacy fixture has no trailer.
     // Reject malformed/truncated/spoofed envelope lengths before using fields.
-    const baseLength=kind==='p'?12:kind==='m'?7:kind==='c'?9:0;
+    const baseLength=kind==='p'?12:
+      kind==='m'?([8,10].includes(e.length)?8:7):
+      kind==='c'?([10,12].includes(e.length)?10:9):0;
     if(!baseLength || e.length!==baseLength && e.length!==baseLength+2)return;
     if(e.length===baseLength+2) {
       const tick=e[baseLength], transportSeq=e[baseLength+1];
@@ -248,19 +257,25 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
       record.p=e[4];last.set(owner,record);
       spawnPointSensor(owner,G.projectiles,G,THREE,Hit,true,[...e.slice(5,11),e[4]]);
     } else if(kind==='m') {
-      if(owner.weapon?.sub!=='pointSensor' || !Number.isSafeInteger(e[5]))return;
+      const frames = baseLength===8 ? e[7] : POINT_SENSOR_SOURCE.markingFrames[0];
+      if(owner.weapon?.sub!=='pointSensor' || !Number.isSafeInteger(e[5]) ||
+         !Number.isSafeInteger(frames) || frames < POINT_SENSOR_SOURCE.markingFrames[0] ||
+         frames > POINT_SENSOR_SOURCE.markingFrames[2])return;
       const target=this.byNid?.get(e[5]);
       const sensor=G.projectiles?._s3SupportSensors?.find(s=>s.owner===owner&&s.seq===e[4]);
       if(!sensor || sensor.seen.has(target) || !target || target.team===owner.team ||
          e[6]!==life(target) || target.alive===false ||
          !pointSensorContact(target,sensor.pos,POINT_SENSOR.radiusWorld+3))return;
-      sensor.seen.add(target);pointSensorMark(target,owner.team,G.time);
+      sensor.seen.add(target);pointSensorMark(target,owner.team,G.time,frames/60);
     } else if(kind==='c') {
-      if(owner.weapon?.special!=='tacticooler' || !finiteTriplet(e,5) ||
+      const frames = baseLength===10 ? e[9] : TACTICOOLER_SOURCE.powerUpFrames[0];
+      if(!Number.isSafeInteger(frames) || frames < TACTICOOLER_SOURCE.powerUpFrames[0] ||
+         frames > TACTICOOLER_SOURCE.powerUpFrames[2] ||
+         owner.weapon?.special!=='tacticooler' || !finiteTriplet(e,5) ||
          e[8]!==life(owner) || e[4]<=record.c ||
          Math.hypot(e[5]-owner.pos.x,e[6]-owner.pos.y,e[7]-owner.pos.z)>10)return;
       record.c=e[4];last.set(owner,record);
-      deployCooler(owner,G.projectiles,G,THREE,true,e.slice(5,8),e[4]);
+      deployCooler(owner,G.projectiles,G,THREE,true,e.slice(5,8),e[4],frames);
     }
   };
 }
