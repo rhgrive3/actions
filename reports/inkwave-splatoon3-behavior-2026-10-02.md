@@ -3440,3 +3440,11 @@ Reference: Splatoon 3 Ver. 11.3.0. Nintendo's [11.3.0 notes](https://en-americas
   - 未確認: 4.0（アニメ中）と 1.0（スライド）の分配。今回は分配を新設せず、12F の積分で総量だけを合わせた。
   - 未テスト: 2 連続ロールの総量、壁衝突での打ち切り、30/120 Hz 描画での終点一致、坂や段差上のロール。
   - 本家の実機比較は未実施。上記の単独テストは実機比較の代用にならない。
+## #905: Ink Storm after its owner disconnects (2026-10-10, partial)
+
+- 本家の根拠: 切断時の扱いは、コメント記録の Splatoon Wiki「Communication error」（no-bot 切断の参照）のみ。本セッションでは未再取得。切断後の Ink Storm の持続・塗り・ダメージの一次根拠（Nintendo 公式、実機）は未確認。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/disconnect-fidelity.mjs` の `retireDisconnectedStorms`（退場した持ち主の雲と Storm 投擲を全 peer で回収。ライブ経路 `deactivateDisconnectedActor` と未開始経路 `onLeave` の両方）。`_tick` / `_play` の退場済み持ち主の遅延パケット遮断。採用（adoption）による権限移譲は行わない（現行の no-bot 退場方針）。
+- 再現操作: 通常のオンライン Turf War で持ち主が Storm を発動し、雲が塗り範囲にある間に切断する。残りの雲・投擲は全 peer で消え、塗り・得点・ダメージは以後発生しない。
+- プレイへの影響: 切断直後から Storm の雨が止まり、切断前に受信済みの持ち主の塗りは保持される（履歴の得点は残る）。
+- 確認状態: 回帰試験 `issue-six-followup-network-paint.test.mjs` の #905 の 2 件（ホスト・非ホストの退場、遅延パケットの遮断、30/60/120 Hz の固定更新での回収結果の一致）でロジックのみ確認。実際のマルチクライアント、本家の実機比較は未実行。
+- 未確認・未対応: 退場時に各 peer で未再生の切断前スプラットを `peer.events` から破棄するため、peer 間で再生済み／未再生の境界が一致するかは未確認。切断後の Storm の残り時間・塗りの本家の挙動は未確認。採用・権限移譲の受け入れ条件は現行の退場方針により対象外。
