@@ -96,8 +96,8 @@ test('#1022 Slosher random-yaw bias changes scatter but preserves source angle a
   const u = { RandomRotateYDegree: 4.5, RandomRotateYBias: .65, RandomRotateYOffOrderNum: [0] };
   assert.equal(slosherYawOffset(u, 0, () => .75), 0);
   const bias = slosherYawOffset(u, 1, () => .75);
-  const uniform = slosherYawOffset({ ...u, RandomRotateYBias: 0 }, 1, () => .75);
-  assert.ok(bias > 0 && bias < uniform);
+  const uniform = slosherYawOffset({ ...u, RandomRotateYBias: .5 }, 1, () => .75);
+  assert.ok(bias > uniform && bias < 4.5 * Math.PI / 180, 'source 0.65 bias favors larger yaw than neutral 0.5');
   assert.ok(Math.abs(slosherYawOffset(u, 1, () => 1) - 4.5 * Math.PI / 180) < 1e-12);
   assert.ok(Math.abs(slosherYawOffset(u, 1, () => 0) + 4.5 * Math.PI / 180) < 1e-12);
 });

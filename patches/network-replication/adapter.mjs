@@ -418,7 +418,7 @@ export function emit(name, payload) {
     // Bomb damage is victim-owned. Ignore attack-side guesses, including packets
     // from older clients; the ordered bomb event is replayed on the victim owner.
     if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject shooter bomb hit');
-    patch("    this.s.tr?.sendTo(from ?? atk.owner, { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0, vl: v.netLife ?? 0 });",
+    patch("    this.s.tr?.sendTo(from ?? atk.owner, { k: 'hit_ack', m: this.cfg.id, h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0, vl: v.netLife ?? 0 });",
       `    const hitState = [this.myId, hitLife, hitRevision, now(), v.hp, !!v.alive];
     v.net ||= {};
     v.net._hitAuthority = hitState;
