@@ -3550,3 +3550,12 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - **プレイへの影響**: 公開版の 0.35 s 由来の射撃速度の残留（最大 21F）は、patch 側では解放後 4 tick に縮小されている（単独測定のみ）。
 - **未確認（解消していない）**: (1) 解放後 4F の移動解除が本家のヒト移動速度の推移と一致するか。owner 監査コメント（2026-10-05）のとおり未確認。(2) 連射中の移動。現行モデルは 6F ごとに 2 tick だけ歩行速度へ戻る（4.32 が 4 tick、5.76 が 2 tick の繰り返し）。`issue-731-sub-ready-enemy-ink.test.mjs` がこのモデルを固定している。本家の連射中のヒト速は未計測のため、本修正では変更していない。(3) 実機とブラウザでの動作比較は未実施。
 - **試験**: `patches/splatoon3/tests/issue-408-shooter-movement-window.test.mjs`（4 件）。`shooter-movement.test.mjs` と `issue-731-sub-ready-enemy-ink.test.mjs` を合わせて 16/16 成功。
+## 2026-10-10: #1140 Bucket Slosher high-drop shrink on the terrain paint
+
+- 本家の根拠: Ver. 11.3.0 固定データ（Leanny/splat3 `7280ff9c`、`WeaponSlosherStrong`）の PaintParam に `ScaleStartFallDistance`、`ScaleEndFallDistance`、`WidthDepthScaleFall`（有効ユニットで 1.5 / 12 / 0.7）がある。Issue #1140 が挙げる現行 Bucket Slosher の検証記事（wikiwiki）では、高所からの下向き発射で塗りと当たりが縮む。Nintendo の縮小曲線は未公開のため、本記録では式を確定しない（未確認）。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/weapons-fidelity.mjs` の `slosherDropScale`（既存、開始から終了までの線形縮小と以後の指数減衰）、`fidelitySlosherImpactPaint`（先頭スタンプの唯一の経路）、`slosherImpactPaintSource`（固定 0.2 換算を除き、`worldScale` 引数を受ける）。`installWeaponsFidelity` 内の `Projectiles.prototype._impact` にあった二重の `G.paint.splat` 差し替えを削除。当たり判定は既存の `slosherCollisionRadius` が担当。
+- 修正前: 先頭スタンプが固定 0.2 倍の源ユニット半径で上書きされ、距離区分、`worldUnitsPerSourceUnit`、高低差縮小が地形の塗りから消えていた。
+- 修正後: 先頭スタンプの幅 = 源 `WidthHalf`（距離区分） × profile の `worldUnitsPerSourceUnit`（現行値 1） × 高低差縮小。伸び量 = 源 `DepthScale` × 縮小。
+- 再現操作: Bucket Slosher の Unit 1 先頭弾を実 `Projectiles` で発射し、`DistanceXZNear` の水平距離で着弾させる。落下 0 と、`ScaleStartFallDistance` から `ScaleEndFallDistance` の中間の落下で比較する（`patches/splatoon3/tests/issue-1140-slosher-impact-drop.test.mjs`）。
+- プレイへの影響: 高所からの Bucket Slosher の地形塗りは、0.2 倍の固定換算を外したため広がる。0.2 の値には源データの根拠がなかった。足元塗り（NearestParam）は変更なし（`slosher-nearest-paint.mjs` に落下項はない）。70→50 の落下ダメージ減衰も変更なし。
+- 確認状態: 単独のロジック試験のみ（実 `Projectiles` と fixture による node 試験）。Splatoon 3 の実機比較はしていない。未確認: Nintendo の当たり・塗りの縮小曲線、極端な高さでの消失（現在は指数減衰で 0 に到達しない）、INKWAVE 単位と Splatoon 3 の縮尺（profile の 1 は未検証）、30/60/120 render FPS での同一性（半径関数は age と位置のみに依存するが、別途測定していない）、場の当たり判定の縮小（既存試験は当たりの player 側のみ）。
