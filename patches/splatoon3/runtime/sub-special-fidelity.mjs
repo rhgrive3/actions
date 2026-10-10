@@ -262,8 +262,8 @@ export function applyBlasterBlastContact(system, projectile, victim, center, tar
   return admission;
 }
 
-export function fidelityThrowVelocity(actor, kind, out, forwardSpeed) {
-  const p = kind === 'storm' ? SUB_SPECIAL_FIDELITY.storm : SUB_SPECIAL_FIDELITY.bomb;
+export function fidelityThrowVelocity(actor, kind, out, forwardSpeed, override) {
+  const p = override || (kind === 'storm' ? SUB_SPECIAL_FIDELITY.storm : SUB_SPECIAL_FIDELITY.bomb);
   const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;
   const pitch = clamp(actor.aimPitch || 0, -1.05, 1.15);
   const yaw = actor.aimYaw || 0;
@@ -327,6 +327,8 @@ export function installSubSpecialFidelity(api, profile) {
   const explodeBomb = Projectiles.prototype._explodeBomb;
   const c0 = new THREE.Vector3(), c1 = new THREE.Vector3();
   Projectiles.prototype._explodeBomb = function (b) {
+    // Kit paint has its own single native owner; never intercept its stamps.
+    if (!b.ghost && ['suction', 'curling'].includes(b.s3Resolved?.spec?.id)) return explodeBomb.call(this, b);
     const paint = G.paint;
     if (!paint?.splat) return explodeBomb.call(this, b);
     const nativeSplat = paint.splat;

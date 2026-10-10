@@ -92,15 +92,21 @@ function fenceNoContestJudging(match) {
   }
 }
 
+// Once an ordinary result is committed, delayed cancellation traffic cannot
+// replace it. An already accepted No Contest retains its existing precedence.
 function startNoContest(nm, seconds = NO_CONTEST_DELAY, announce = false) {
-  if (!nm?.match || nm.s3NoContestEnded) return;
+  if (!nm?.match || nm.s3NoContestEnded || nm.match.result && !nm.match.s3NoContest) return;
+  const remaining = Math.max(0, Number.isFinite(seconds) ? seconds : NO_CONTEST_DELAY);
+  // Retry/host migration notices may shorten the existing decision, never
+  // restart its elapsed six-second window (including a guest already at zero).
+  nm.s3NoContestRemaining = nm.match.s3NoContest && Number.isFinite(nm.s3NoContestRemaining)
+    ? Math.min(nm.s3NoContestRemaining, remaining) : remaining;
   nm.match.s3NoContest = true;
-  nm.s3NoContestRemaining = Math.max(0, Number.isFinite(seconds) ? seconds : NO_CONTEST_DELAY);
   if (announce && nm.isHost) nm._sendNow?.({ k: 'nc', r: nm.s3NoContestRemaining });
 }
 
 function finishNoContest(nm, announce = false) {
-  if (!nm?.match || nm.s3NoContestEnded) return;
+  if (!nm?.match || nm.s3NoContestEnded || nm.match.result && !nm.match.s3NoContest) return;
   nm.s3NoContestEnded = true;
   nm.s3NoContestRemaining = 0;
   nm.match.s3NoContest = true;
@@ -167,6 +173,7 @@ export function installDisconnectFidelity(api) {
     if (!this.match) return;
     const affected = [...this.byNid.values()].filter(a => a.owner === id);
     const live = this.match.state === 'playing';
+    const participated = live || ['finish', 'judge', 'results'].includes(this.match.state) || !!this.match.result;
     if (affected.length) {
       this.s3DisconnectedOwners ||= new Set();
       this.s3DisconnectedOwners.add(id);
@@ -177,9 +184,9 @@ export function installDisconnectFidelity(api) {
       if (peer?.events) peer.events.length = 0;
     }
 
-    // A loading/intro owner that vanished never becomes a dead remote slot.
-    // It was not yet a live battle participant, so remove it from this match.
-    if (!live) {
+    // Only loading/intro owners never participated. Keep terminal battle rows
+    // available for the final authoritative statistics and results presentation.
+    if (!participated) {
       for (const a of affected) {
         // An owner may leave during finish/judge while an old Storm is still
         // animated. The roster removal must not strand its projectile objects.
@@ -257,8 +264,10 @@ export function installDisconnectFidelity(api) {
   const update = nm.update;
   nm.update = function (dt, ...args) {
     const result = update.call(this, dt, ...args);
-    if (this.s3NoContestRemaining > EPS && !this.s3NoContestEnded) {
-      this.s3NoContestRemaining = Math.max(0, this.s3NoContestRemaining - Math.max(0, dt));
+    // A guest may already have reached zero before becoming the new host.
+    // The pending decision, rather than a positive clock, owns completion.
+    if (this.match?.s3NoContest && !this.s3NoContestEnded && Number.isFinite(this.s3NoContestRemaining)) {
+      this.s3NoContestRemaining = Math.max(0, this.s3NoContestRemaining - (Number.isFinite(dt) ? Math.max(0, dt) : 0));
       if (this.s3NoContestRemaining <= EPS && this.isHost) finishNoContest(this, true);
     }
     return result;

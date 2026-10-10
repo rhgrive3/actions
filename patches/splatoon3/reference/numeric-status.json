@@ -1892,7 +1892,7 @@
     "binding": null
   },
   "weapons.slosher.postShotDelay": {
-    "value": 0.26666666666666666,
+    "value": 0.25,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
