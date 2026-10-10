@@ -61,7 +61,7 @@ All files below are separately hashed in the receipt. The currently registered b
 | `superChump` | Super Chump | `WeaponSpFirework` | Decoy blast 70/35 at 3.6/6.0; flight 108F, burst 210F, special total 635F. Count/spread and target-facing behavior need comparison. |
 | `krakenRoyale` | Kraken Royale | `WeaponSpCastle` | Duration tiers 480/540/600F; charge/dash 35F each; jump raw damage 600 (=60); network-delay fields 60/30F. Community reference gives charge 120 and one-second activation/end vulnerability (half-second on other players' screens); hit/contact windows still need comparison. |
 | `splattercolorScreen` | Splattercolor Screen | `WeaponSpChimney` | Wall startup/running/closing 60/560/60F, `SaturationFrame=360`, fade-out 120F, mark 120F, touch damage raw 400 (=40). Do not assume the saturation timer equals screen lifetime. |
-| `waveBreaker` | Wave Breaker | `WeaponSpShockSonar` | Hit damage raw 300 (=30) at 0.5s interval; 4800 HP raw (=480); waves at 90/240/390F; mark 45F. Wave height/mark registration and painting need comparison. |
+| `waveBreaker` | Wave Breaker | `WeaponSpShockSonar` | Generator contact damage is raw 300 (=30) at 0.5s intervals and its nearby placement mark is 45F; the separate wave damage is raw 450 (=45), emitted at 90/240/390F; device HP is raw 4800 (=480). Public gameplay reference gives wave tracking as 8 seconds; shock waves do not paint. Ground-following and jump-clearance geometry remain calibrated. |
 | `tripleSplashdown` | Triple Splashdown | `WeaponSpPogo` | Blast 220/60 at 6.4/9.6; rise 60F; `Rise_NoDamageStartFrame=50` and `StartInvincibleFrame=55`. Placement/overlap hitboxes, ground contact and burst order need comparison. |
 
 ## Source facts and calibration limits
@@ -82,3 +82,5 @@ These references establish source attribution and the limits of the extracted nu
 
 
 Ink Mine has no natural expiry in S3, is activated by enemy ink, and detonates the oldest mine when a third is placed. This behavior follows [Inkipedia Ink Mine](https://splatoonwiki.org/wiki/Ink_Mine) (S3 duration and the S2 4.0 replacement rule retained in S3). The enemy-ink territory sample uses a calibrated 0.45 world-unit radius; that radius is not a field in the extracted table.
+
+Wave Breaker separates `GeneratorParam.HitDamage`/`MarkingFrame` from `WaveParam.Damage`: 30 contact damage and a 45F placement mark are not the wave's 45 damage and 8-second tracking. The runtime uses those distinct paths and emits no gameplay ink from the waves. Public-mechanics reference: [Wave Breaker](https://splatoonwiki.org/wiki/Wave_Breaker).
