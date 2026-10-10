@@ -49,6 +49,10 @@ These are remaining differences, not dismissed by successful logic tests:
 
 The request for perfect retail numerical behavior cannot be substantiated without those algorithms and hardware comparisons. This change establishes complete main-actor coverage, reproducible source records and playable per-family action owners while preserving these explicit limits.
 
+## Practice Range selection
+
+The original seven physical hub pads retain their non-overlapping positions. All 65 main actors are available in the existing scrollable pause weapon picker; added family icons route by model identity. Native checks exercise every main switch and pad separation, and the rendered Chromium/WebKit range check selects the last added weapon through its actual menu button before traveling.
+
 ## Validation layers
 
 - Source verification: optional raw-reference test recursively compares every retained value and both names against the pinned files, including SHA-256. Locally performed with `INKWAVE_MAIN_WEAPON_REFERENCE` set.

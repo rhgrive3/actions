@@ -136,3 +136,32 @@ test('ink course paints only the swim course floor (and never the island)', asyn
     }
   } finally { w.done(); }
 });
+
+test('catalog expansion keeps hub pads separate and every main switchable', async () => {
+  const w = await world();
+  try {
+    const { s, local, R } = w;
+    const pads = s.pads.defs.filter(p => p.kind === 'weapon');
+    assert.equal(s.pads.defs.length, 14);
+    assert.equal(pads.length, 7);
+    assert.deepEqual(pads.map(p => p.weapon), ['shooter', 'dualies', 'splatling', 'roller', 'slosher', 'charger', 'blaster']);
+    for (let i = 0; i < pads.length; i++) {
+      for (const other of pads.slice(i + 1)) {
+        assert.ok(Math.hypot(pads[i].x - other.x, pads[i].z - other.z) >= 2 * R.ZONES.PAD_R, 'no overlapping activation regions');
+      }
+      local.pos.set(pads[i].x, 0.05, pads[i].z);
+      local.alive = true; local.superJumpState = null;
+      s._updatePads(R.ZONES.PAD_DWELL + 1 / 60);
+      assert.equal(local.weaponId, pads[i].weapon, 'each physical pad admits its own weapon');
+    }
+    const ids = Object.keys(R.WEAPONS);
+    assert.equal(ids.length, 65);
+    for (const id of ids) {
+      s.setWeapon(id);
+      assert.equal(local.weaponId, id, id);
+      assert.equal(local.ink, R.PLAYER.inkMax);
+      assert.equal(local.special, 0);
+      assert.equal(local.weapon, R.WEAPONS[id]);
+    }
+  } finally { w.done(); }
+});
