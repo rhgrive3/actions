@@ -22,6 +22,7 @@ import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
 import { overlayScorchStageAssets } from './lib/inkwave-stage-assets.mjs';
+import { optimizeLightmapPng } from './lib/inkwave-lossless-lightmap.mjs';
 
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
 const SRC = physicalLocation(path.resolve(process.argv[2] || 'inkwave-public'));
@@ -51,6 +52,7 @@ const kb = (n) => `${(n / 1024).toFixed(0)} KB`;
 const BUILD = OUT + '.building';
 fs.rmSync(BUILD, { recursive: true, force: true });
 let rawJs = 0, minJs = 0, gzRaw = 0, gzMin = 0, rawCss = 0, minCss = 0;
+let losslessLightmapSavings = 0;
 for (const file of walk(SRC)) {
   const rel = path.relative(SRC, file);
   if (SKIP.has(rel)) continue;
@@ -66,7 +68,14 @@ for (const file of walk(SRC)) {
     if (ext === '.css') { rawCss += code.length; minCss += res.code.length; }
     else { rawJs += Buffer.byteLength(code); minJs += Buffer.byteLength(res.code); gzRaw += gz(Buffer.from(code)); gzMin += gz(Buffer.from(res.code)); }
   } else if (rel === 'index.html') fs.writeFileSync(dst, adaptBuildSource(rel, fs.readFileSync(file, 'utf8')));
-  else fs.copyFileSync(file, dst);
+  else if (!unminified && rel.startsWith('assets/lightmaps/') && ext === '.png') {
+    // Pack the same grayscale pixels with better PNG row filters + DEFLATE.
+    // Do not touch source assets, offline availability, module imports or the
+    // 5 MiB cache ceiling. The helper validates decoded pixels before use.
+    const original = fs.readFileSync(file), compact = optimizeLightmapPng(original);
+    fs.writeFileSync(dst, compact);
+    losslessLightmapSavings += original.length - compact.length;
+  } else fs.copyFileSync(file, dst);
 }
 for (const file of walk(PATCH_ROOT)) {
   const rel = path.relative(PATCH_ROOT, file);
@@ -409,7 +418,7 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 identity.inputHash = sha256(JSON.stringify(identity.files));
@@ -421,3 +430,4 @@ console.log(`patch: splatoon3+quality+range · build ${identity.contentHash.slic
 console.log(`JS : ${kb(rawJs)} → ${kb(minJs)}  (gzip ${kb(gzRaw)} → ${kb(gzMin)})`);
 console.log(`CSS: ${kb(rawCss)} → ${kb(minCss)}`);
 console.log(`modulepreload: ${preloadOrder.length} modules (${order.length - preloadOrder.length} deferred, all precached)`);
+console.log(`lossless lightmaps: ${losslessLightmapSavings} bytes saved with identical decoded pixels`);
