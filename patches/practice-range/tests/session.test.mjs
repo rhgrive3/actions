@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rangeRealm, rangeWorld } from './harness.mjs';
+import { MAIN_WEAPON_CATALOG } from '../../splatoon3/runtime/main-weapon-catalog-data.mjs';
 
 async function world() {
   const R = await rangeRealm();
@@ -155,7 +156,12 @@ test('catalog expansion keeps hub pads separate and every main switchable', asyn
       assert.equal(local.weaponId, pads[i].weapon, 'each physical pad admits its own weapon');
     }
     const ids = Object.keys(R.WEAPONS);
-    assert.equal(ids.length, 65);
+    // Keep all 65 pinned S3 mains switchable while retaining the separate
+    // opt-in INKWAVE training support kit that main adds to the WEAPONS table.
+    const catalogIds = new Set(MAIN_WEAPON_CATALOG.records.map(record => record.id));
+    assert.equal(catalogIds.size, 65);
+    assert.deepEqual(ids.filter(id => !catalogIds.has(id)), ['support']);
+    for (const id of catalogIds) assert.ok(ids.includes(id), 'missing sourced main: ' + id);
     for (const id of ids) {
       s.setWeapon(id);
       assert.equal(local.weaponId, id, id);
