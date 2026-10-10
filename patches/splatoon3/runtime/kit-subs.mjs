@@ -1,3 +1,4 @@
+import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
 // Splatoon 3 sub weapons for the published INKWAVE runtime.
 //
 // Authority stays exactly where issue 177 and the parent advisory place it:
@@ -146,6 +147,9 @@ export const CURLING = {
 
   spawnSpeedY: perSecond(0.12),
   spawnSpeedYMaxCharge: perSecond(0.12),
+  spawnSpeedYWorldMin: perSecond(-0.5),
+  inheritYPlus: 2,
+  inheritYMax: perSecond(0.16),
   flyGravity: 0.016 * 3600,        // MoveParam.FlyGravity
   groundGravity: 0.0016 * 3600,    // MoveParam.GroundGravity
   gravityStatus: 'extracted',
@@ -555,7 +559,7 @@ export function kitBombTrail(SUB, b, paint, projectiles) {
 // has to go off when the owner's did.
 export function kitBombKeepsFuse(b) {
   const mode=presentedOf(b)?.spec?.mode;
-  return mode==='stick'&&b.s3Mode==='stuck'||mode==='roll'&&b.s3Mode==='rolling';
+  return mode==='stick'&&b.s3Mode==='stuck'||mode==='roll';
 }
 export function kitBombFuseTotal(SUB, b) {
   const t = presentedOf(b)?.fuse;
@@ -601,7 +605,7 @@ export function kitBombExplosionPaint(SUB, b, paint) {
   const center = b.s3PaintPoint.copy(b.pos).addScaledVector(n, 0.1);
   const baseSeed = Number.isFinite(b.s3ExplosionPaintSeed) ? b.s3ExplosionPaintSeed
     : (b.s3ExplosionPaintSeed = Math.random());
-  let area = paint.splat(center, r.paintRadius, b.team, { seed: baseSeed, claimOwner: b.owner });
+  let area = paint.splat(center, r.paintRadius, b.team, { seed: baseSeed, claimOwner: b.owner, kitPaint: b.s3PaintBirth });
   if (satelliteRadius > 0 && ring > 0) {
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2;
@@ -719,6 +723,19 @@ export function withGhostBombSpawn(fn) {
 }
 export function ghostBombSpawning() { return ghostSpawnDepth > 0; }
 
+// Consume Curling's own launch Y tuple without changing Splat/Storm's mapping.
+// Horizontal player-velocity axis mapping remains the existing calibration.
+export function kitThrowVelocity(actor, resolved, speed, out) {
+  const spec = resolved?.spec;
+  if (spec?.id !== 'curling') return null;
+  return fidelityThrowVelocity(actor, 'bomb', out, speed, {
+    ...SUB_SPECIAL_FIDELITY.bomb,
+    spawnSpeedY: spec.spawnSpeedY + (spec.spawnSpeedYMaxCharge - spec.spawnSpeedY) * resolved.charge,
+    spawnSpeedYWorldMin: spec.spawnSpeedYWorldMin,
+    inheritYPlus: spec.inheritYPlus, inheritYMax: spec.inheritYMax,
+  });
+}
+
 // ---- Install -----------------------------------------------------------------
 
 const KIT_KEY = '__kitSubsInstalled';
@@ -731,12 +748,22 @@ export function installKitSubs(api, profile) {
   G_REF = G; PLAYER_REF = api.PLAYER; PHYSICS_REF = api.Physics;
   registerKitSubs(SUB, profile);
 
+  const nativeThrowVelocity = Projectiles.prototype.throwVelocity;
+  Projectiles.prototype.throwVelocity = function (actor, speed, out) {
+    const resolved = this.s3KitThrowResolved || this.s3KitPreviewResolved;
+    return kitThrowVelocity(actor, resolved, speed, out) || nativeThrowVelocity.call(this, actor, speed, out);
+  };
+
   // The per-bomb spec is attached by the adapter before recBomb; this wrapper only
   // consumes the held charge so the next press starts from zero.
   const throwBomb = Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb = function (actor) {
     const runner = actor?.weaponRunner;
-    const out = throwBomb.call(this, actor);
+    const previous = this.s3KitThrowResolved;
+    this.s3KitThrowResolved = resolveSubForThrow(actor, runner?.s3SubHold, SUB);
+    let out;
+    try { out = throwBomb.call(this, actor); }
+    finally { this.s3KitThrowResolved = previous; }
     // Charge is consumed by the owner's own release. A ghost replays through this
     // same method, and a remote runner's hold is not ours to clear.
     if (runner && !actor?.remote && !ghostBombSpawning()) runner.s3SubHold = 0;
@@ -748,10 +775,11 @@ export function installKitSubs(api, profile) {
   Projectiles.prototype.updateArc = function (actor, show) {
     const resolved = resolveSubForThrow(actor, actor?.weaponRunner?.s3SubHold, SUB);
     if (!resolved || resolved.throwSpeed == null) return updateArc.call(this, actor, show);
-    const saved = this.s3PreviewSubSpeed;
+    const saved = this.s3PreviewSubSpeed, previous = this.s3KitPreviewResolved;
+    this.s3KitPreviewResolved = resolved;
     this.s3PreviewSubSpeed = resolved.throwSpeed;
     try { return updateArc.call(this, actor, show); }
-    finally { this.s3PreviewSubSpeed = saved; }
+    finally { this.s3PreviewSubSpeed = saved; this.s3KitPreviewResolved = previous; }
   };
 
   // Charge state and death / weapon-change reset live on the real runner.

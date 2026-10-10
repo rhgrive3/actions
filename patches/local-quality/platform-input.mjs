@@ -6,6 +6,8 @@ export function resetPlatformInput(input, controller) {
   input.keys?.clear(); input.pressed?.clear(); input.padPressed?.clear(); input.padMenuPressed?.clear();
   if (input.mouse) Object.assign(input.mouse, { dx: 0, dy: 0, left: false, right: false, leftPressed: false, rightPressed: false });
   input.mobile?.reset?.(); input.mobile?.gyro?.resync?.();
+  // HID angular rates are held samples too; a platform boundary retires them.
+  try { input.s3ControllerMotionReader?.discard?.(); } catch {}
   input._platformPadRebase = true; input._platformPadAxes = true;
   // Neutralize analog trigger authority until a physical release after resume.
   input._platformPadHeldTriggers?.clear();
