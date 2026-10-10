@@ -84,7 +84,11 @@ export function adaptCompiledMain(source) {
 export function loadingIdentity() {
   return Object.fromEntries(filesIn(LOADING_ROOT).filter(file=>!file.includes(`${path.sep}tests${path.sep}`)&&!file.endsWith('.md')).map(file=>[path.relative(LOADING_ROOT,file).split(path.sep).join('/'),hash(fs.readFileSync(file))]));
 }
-// Keep stage lightmaps needed for cold-offline play; the online-only Cargo\n// image is integrity checked and cached on demand.\nexport const coldOfflineLightmap = rel => coldOfflineLightmap(rel) &&\n  rel !== 'assets/lightmaps/cargo.png';\nexport function prepareLoading(build, preloads, options = {}) {
+// Cache lightmaps for stages playable offline; Cargo is online-only and
+// receives integrity verification when fetched on demand.
+export const coldOfflineLightmap = rel => rel.startsWith('assets/lightmaps/') &&
+  rel !== 'assets/lightmaps/cargo.png';
+export function prepareLoading(build, preloads, options = {}) {
   // Compose main's startup-runtime minifier with the PR's explicit diagnostic
   // limits. Preserve the old third-argument callback for existing callers.
   const compactRuntime = typeof options === 'function' ? options : options.compactRuntime ?? (source => source);
@@ -129,7 +133,7 @@ export function loadingIdentity() {
   // PWA icons are fetched by the browser at install/display time, not game startup.
   // Keep all three versioned icon files in BUILD.assets for integrity-checked
   // cache-on-request; precache the manifest and actual gameplay dependencies.
-  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||rel.startsWith('assets/lightmaps/')||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest')]);
+  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||coldOfflineLightmap(rel)||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest')]);
   for(const rel of core)if(!assets[rel])throw new Error(`loading-cache: missing precache dependency ${rel}`);
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
