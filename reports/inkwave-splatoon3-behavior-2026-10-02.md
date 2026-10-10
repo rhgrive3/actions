@@ -2730,3 +2730,12 @@ remains supported by `ReceiveDamageForPlayer = 15`. Nothing here is a physical-d
 - Reproduction (logic level): Master=0, Music=0.5, SFX=1 with a track playing. Expected: 0 players, 0 workers, 0 intervals; `a.play('jump')` does not suspend the context; raising Master resumes the latest track with one worker. Persisted Master=0 starts no track after unlock.
 - Evidence: `patches/local-quality/tests/idle-resources.test.mjs` (two `#366` tests; both failed before the change). The local-quality suite has 791 tests, 783 pass, 0 fail, 8 skipped.
 - Remaining 未確認: real browser audio, mobile battery/CPU figures, and the Worker/Blob URL cleanup after a synchronous Worker failure (not part of this change).
+## 2026-10-10 — Charger 8F〜59F 中間射程の回帰固定 (#514, 残件; Issue は Open のまま)
+
+**本家比較条件:** Splatoon 3 Ver. 11.3.0、Splat Charger（WeaponChargerNormal）、ギア効果なし、通常フィールドの地上射撃。一次資料は pinned commit `7280ff9` の `DistanceMinCharge=9.033`、`DistanceMaxCharge`／`DistanceFullCharge=24.037` の両端点のみ。charge-frame→distance の中間写像フィールドは一次資料に無く、中間曲線は **UNKNOWN**。PR #1195 が引用する wikiwiki の (chargeF-8)/(60-8) 式は二次資料で、本セッションでは HTTP 403 のため取得・照合できなかった。
+
+**INKWAVE の実装箇所:** `patches/splatoon3/runtime/weapons-charger-flight.mjs` の `chargerRangeCharge`（`chargerPartialCharge`、[8/60,1]→[0,1] の線形 band）と `reachFor`。main は既に 8F→9.033、フル→24.037 を満たす（`charger-min-range.test.mjs`）。本変更では実装コードを変えず、中間フレームの回帰試験 `patches/splatoon3/tests/charger-range-frame-samples.test.mjs` を追加した。
+
+**再現操作:** 60Hz 固定クロックで charger を保持し、native `chargeT` が f/60（f = 8, 9, 12, 16, 23, 34, 48, 59）に達した時点で離す。flight job の `range` は `9.033 + 15.004 × (f−8)/52`。同じ式は旧 eased 律（`t<0.2 ? t×1.25 : 0.25+(t−0.2)×0.9375`）と全サンプルで 0.05 以上異なる。
+
+**確認状態:** logic／runtime 測定であり、実機比較ではない。runtime の `chargerRangeCharge` を raw charge に戻すと、既存の 8F 関連試験 4 件と新試験の native 2 件が失敗することを確認し、元に戻した。固定 60Hz シミュレーションのみで確認し、表示レートを変えた試験は追加していない。中間式の本家一次確認、wikiwiki 式の照合、Switch 実機での弾道一致は **未確認**。PR #1195 の中間 source-pin は未マージ（mergeable_state dirty）のため取り込んでいない。全受入条件は満たしていないため #514 は Open のまま。
