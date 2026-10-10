@@ -71,6 +71,9 @@ export function registerSupportKit({ WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_
     cost:TACTICOOLER.specialCost, status:'S3 11.3.0 timing/AP; world positioning calibrated' };
   WEAPONS.support = { ...WEAPONS.shooter,
     id:'support', name:'Recon Training Kit', kind:'shooter',
+    // Never inherit a pinned Shooter-specific 11.3.0 source field: this is an
+    // explicitly prototype kit with no corresponding source row.
+    shotGuideFrame: null,
     // Do not call this a source-verified H-3: it uses existing Shooter main
     // ballistics with only the sourced Point Sensor / Tacticooler support pair.
     sub:'pointSensor', special:'tacticooler', specialCost:TACTICOOLER.specialCost,
