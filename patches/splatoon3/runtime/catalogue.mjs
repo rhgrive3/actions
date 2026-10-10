@@ -56,13 +56,13 @@ export function installCatalogueLoadout(api) {
     for(const [field,names,registry,title] of [['sub',SUB_NAMES,SUB,'サブウェポン'],['special',SPECIAL_NAMES,SPECIALS,'スペシャル']]){
       const label=document.createElement('label');label.textContent=title+' ';
       const select=document.createElement('select');select.setAttribute('aria-label',title);
-      select.style.cssText='max-width:100%;min-height:40px;color:#15121c;background:#fff;font:inherit;border-radius:8px;padding:6px';
+      select.style.cssText='max-width:100%;min-height:44px;color:#15121c;background:#fff;font:inherit;border-radius:8px;padding:6px';
       for(const [id,name] of Object.entries(names)){if(!registry[id])throw new Error('Missing playable catalogue entry: '+id);const o=document.createElement('option');o.value=id;o.textContent=name;select.append(o);}
       select.addEventListener('keydown',e=>e.stopPropagation());
       select.addEventListener('change',()=>save());selectors[field]=select;label.append(select);panel.append(label);
     }
     const help=document.createElement('p');help.setAttribute('aria-live','polite');panel.append(help);
-    const reset=document.createElement('button');reset.type='button';reset.textContent='標準セットに戻す';reset.style.minHeight='40px';
+    const reset=document.createElement('button');reset.type='button';reset.textContent='標準セットに戻す';reset.style.minHeight='44px';
     reset.addEventListener('click',()=>save(true));panel.append(reset);
     const gear=screen.el.querySelector('details.s3-gear');
     if(gear){const summary=gear.querySelector('summary');if(summary)summary.textContent='サブ・スペシャル・ギア';gear.insertBefore(panel,summary?.nextSibling||null);}else body.append(panel);
