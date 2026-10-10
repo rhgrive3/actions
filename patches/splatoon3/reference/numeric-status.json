@@ -2631,6 +2631,16 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "movement.neutralWallSlide.terminalSpeed": {
+    "value": 0.9,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "movement.neutralWallSlide.acceleration": {
+    "value": 3.6,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "flow.threshold": {
     "value": 3,
     "status": "calibration or derived value; see reference raw table and unverified list",

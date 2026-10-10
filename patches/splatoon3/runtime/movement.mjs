@@ -364,14 +364,19 @@ export function installMovement(context, tuning) {
     // Losing an inked wall cancels charge. A ledge burst is kept in the air.
     if (was && !this.climbing && movementState(this).surge?.phase === 'charge') { movementState(this).surge = null; this.anim.surgeCharge = 0; }
     // #253: Ordinary inked-wall cling has a neutral descent, separate from
-    // Squid Surge charging/boost and from stick-driven upward swimming.
-    // 0.9 world units/s is a provisional movement calibration, not measured S3.
+    // Squid Surge charging/boost, Squid Roll (wall roll) and stick-driven upward
+    // swimming. Terminal speed and acceleration are provisional calibration
+    // (profile.json movement.neutralWallSlide, numeric-status unverified), not measured S3.
     const neutralCling = this.alive && this.climbing && this.form === 'squid' &&
-      !this.specialActive && !this.superJumpState && !this.intent.jump && !state.surge &&
+      !this.specialActive && !this.superJumpState && !this.intent.jump && !state.surge && !state.roll &&
       Math.hypot(this.intent.move.x, this.intent.move.z) <= 0.01;
     if (neutralCling && Number.isFinite(args[0]) && args[0] > 0) {
-      this.s3NeutralWallSlideT = Math.min(1, (this.s3NeutralWallSlideT || 0) + args[0]);
-      const descent = -Math.min(0.9, this.s3NeutralWallSlideT * 3.6);
+      const slide = config.neutralWallSlide;
+      // Accumulated seconds are capped where the terminal speed is reached, so
+      // the descent depends only on the fixed-tick sequence, never render cadence.
+      const cap = slide.terminalSpeed / slide.acceleration;
+      this.s3NeutralWallSlideT = Math.min(cap, (this.s3NeutralWallSlideT || 0) + args[0]);
+      const descent = -Math.min(slide.terminalSpeed, this.s3NeutralWallSlideT * slide.acceleration);
       this.climbV = descent;
       this.vel.y = descent;
     } else this.s3NeutralWallSlideT = 0;

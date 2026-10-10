@@ -547,7 +547,11 @@
       "chargeMoveScale": 0.25,
       "armorThreshold": 100
     },
-    "wallRollMaximumAngle": 0.7853981633974483
+    "wallRollMaximumAngle": 0.7853981633974483,
+    "neutralWallSlide": {
+      "terminalSpeed": 0.9,
+      "acceleration": 3.6
+    }
   },
   "flow": {
     "threshold": 3,
@@ -614,6 +618,7 @@
       "inkFractionToTankPoints": "*100"
     },
     "unverified": [
+      "#253 neutral inked-wall cling descent: terminalSpeed 0.9 WU/s and acceleration 3.6 WU/s^2 are provisional calibration; no climb/slide key was found in the pinned Leanny SplPlayer table (summary check only) and no measured Switch 11.3.0 speed curve or start delay has been recorded",
       "air-control/jump and landing feel; grounded base/attack acceleration is community-frame-calibrated, physical-device confirmation pending",
       "Flow scoring/extension/buff multipliers (30s duration is official)",
       "default omitted shooter fire/recovery and charger charge/recovery fields",
