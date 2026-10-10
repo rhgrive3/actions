@@ -10,11 +10,11 @@ const lookup = (rows, family, key) => {
 
 test('S2 v5.5.0 archived weapon values are compared to pinned S3 v11.3.0 with explicit per-field units', () => {
   const r = compareLineage(), rows = r.rows;
-  assert.equal(LINEAGE_FIELDS.length, 25);
-  assert.equal(rows.length, 25);
+  assert.equal(LINEAGE_FIELDS.length, 41);
+  assert.equal(rows.length, 41);
   assert.deepEqual(r.counts, {
-    'same-extracted-value': 12,
-    'changed-extracted-value': 5,
+    'same-extracted-value': 27,
+    'changed-extracted-value': 6,
     'omitted-s3-default-unknown': 8,
   });
   for (const row of rows) {
@@ -68,4 +68,18 @@ test('missing S3 sparse parameter never silently takes zero, a previous S2 value
   assert.equal(classifyNumeric(200, 20, 1).status, 'changed-extracted-value');
   assert.throws(() => classifyNumeric(NaN, 2, .1), /Invalid/);
   assert.throws(() => classifyNumeric(1, Infinity), /Non-finite/);
+});
+
+test('S2 Hot Blaster 5.5 source values normalize in fifteen fields but InkRecoverStop changed in S3', () => {
+  const rows = compareLineage().rows;
+  const main = rows.filter(r => r.family === 'blaster' && r.source2.startsWith('BlasterMiddle.'));
+  assert.equal(main.length, 16);
+  assert.equal(main.filter(r => r.status === 'same-extracted-value').length, 15);
+  const changed = main.filter(r => r.status === 'changed-extracted-value');
+  assert.deepEqual(changed.map(r => r.key), ['ink-recover-stop']);
+  assert.deepEqual([changed[0].s2, changed[0].s3Explicit], [60, 57],
+    'do not import S2 original InkRecoverStop into S3');
+  assert.deepEqual([lookup(rows,'blaster','spawn-speed').s2, lookup(rows,'blaster','spawn-speed').s3Explicit], [9.45, .945]);
+  assert.deepEqual([lookup(rows,'blaster','flight-spacing').s2, lookup(rows,'blaster','flight-spacing').s3Explicit], [15, 1.5]);
+  assert.deepEqual([lookup(rows,'blaster','repeat-frame').s2, lookup(rows,'blaster','repeat-frame').s3Explicit], [50, 50]);
 });

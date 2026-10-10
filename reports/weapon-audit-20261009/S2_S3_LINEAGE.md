@@ -4,7 +4,7 @@ This report is **not** a game-code decompilation or proof that S2 and S3 execute
 
 ### Reproduce
 
-`node scripts/measure-splatoon2-3-lineage.mjs` prints per-field source, numeric scale, normalized S2 value, explicit S3 value and one of **same-extracted-value**, **changed-extracted-value** or **omitted-s3-default-unknown**. Its 25 assertions run in `node --test patches/splatoon3/tests/splatoon2-3-lineage.test.mjs`. Sources are committed alongside the S3 11.3.0 refs, so the checks are offline and reproducible.
+`node scripts/measure-splatoon2-3-lineage.mjs` prints per-field source, numeric scale, normalized S2 value, explicit S3 value and one of **same-extracted-value**, **changed-extracted-value** or **omitted-s3-default-unknown**. Its pinned-field regression tests run in `node --test patches/splatoon3/tests/splatoon2-3-lineage.test.mjs`. Sources are committed alongside the S3 11.3.0 refs, so the checks are offline and reproducible.
 
 ### Source pinning
 
@@ -35,3 +35,7 @@ This report is **not** a game-code decompilation or proof that S2 and S3 execute
 Use S3 explicit parameters first, S2 data only to generate hypotheses for missing/default-valued parameters, and independently validate simulation-generated ink placement, hit admission and timing. Preserve the independently measured S3 Dualies 5.0 world-unit roll distance; do **not** force historical S2 4.0/16F onto S3 5.0/12F. Similarly, don't change S3 spread angles to S2 shooter spread angles.
 
 This evidence does **not** resolve S3's missing two-dimensional aiming PDF, skin/texture-shaped paint edge, aerial Dualies vertical velocity curve or exact physics integration law. Those remain open; keeping Draft PR #1188 is appropriate.
+
+### Additional S2 5.5.0 → S3 11.3.0 Hot Blaster comparison
+
+The pinned `BlasterMiddle.json` contributes **16** explicit comparisons, of which **15** normalized numeric values agree; **one changes**: `mInkRecoverStop = 60F` in S2 becomes `WeaponParam.InkRecoverStop = 57F` in S3. Other matching fields include 50F repeat, 7 flight splashes, flight length 15→1.5, initial 5→0.5, spawn velocity 9.45→0.945, jump 10°, bias 0.5, straight travel 9F, straight-end speed 9.131→0.9131 and 0.1 ink/shot. This strengthens field mapping evidence only: **the underlying runtime RNG, projectile integrator and paint shader are not proved identical**. Run the 41-field oracle via `node scripts/measure-splatoon2-3-lineage.mjs`.
