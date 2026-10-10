@@ -708,6 +708,14 @@
       "unit": "raw reference units",
       "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
     },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedDashTurnBreak": {
+      "value": 0.108,
+      "pointer": "/GameParameters/WeaponRollParam/SpeedDashTurnBreak",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field (#466). Reversal trigger and recovery semantics are not published; see the behavior report. Unit interpretation is recorded separately in profile.calibration."
+    },
     "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/DashFrame": {
       "value": 90,
       "pointer": "/GameParameters/WeaponRollParam/DashFrame",
