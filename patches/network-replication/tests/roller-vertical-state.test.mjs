@@ -10,6 +10,8 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 // Current open PR #758 uses bits 20–22 for replicated swim visibility.
 const FLICK_VERTICAL = 1 << 24;
 const FLICK = 1 << 16;
+const ADOPTION_TAG = 'inkwave-adoption-v1';
+const HIT_AUTHORITY_TAG = 'inkwave-hit-authority-v1';
 const clone = value => JSON.parse(JSON.stringify(value));
 
 function actor(f, { nid = 7, owner = 'owner', isLocal = false } = {}) {
@@ -81,7 +83,12 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   owner.emit('actor:jump', { actor: local });
   ownerStep({ owner, local }, dt, { fire: true, firePressed: true });
   const airborne = snapshot(sender);
-  assert.equal(airborne.a[0].length, 24, 'the existing current actor row shape is unchanged');
+  const row = airborne.a[0];
+  assert.equal(row.length, 26, 'the composed actor row retains its appended compatibility slots');
+  assert.equal(row[22], local.stats.specials || 0, 'the existing special counter retains its slot');
+  assert.equal(row[23][0], ADOPTION_TAG, 'the adoption sidecar retains its tagged slot');
+  assert.equal(row[24], null, 'ordinary Roller movement does not fabricate a Surge presentation');
+  assert.equal(row[25][0], HIT_AUTHORITY_TAG, 'the accepted-hit sidecar uses its explicit tag');
   assert.ok(airborne.a[0][10] & FLICK, 'the existing flick bit is retained');
   assert.ok(airborne.a[0][10] & FLICK_VERTICAL, 'airborne owner selection reaches the packet flags');
   assert.equal(local.weaponRunner.s3RollerAttack?.vertical, true);

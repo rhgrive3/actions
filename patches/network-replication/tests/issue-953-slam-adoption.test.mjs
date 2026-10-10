@@ -4,6 +4,7 @@ import { fixture } from './robustness-fixture.mjs';
 
 const DT = 1 / 60;
 const ADOPTION_TAG = 'inkwave-adoption-v1';
+const HIT_AUTHORITY_TAG = 'inkwave-hit-authority-v1';
 const close = (actual, expected, tolerance = 1e-8) =>
   assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} != ${expected}`);
 
@@ -93,7 +94,10 @@ async function receiving(packet) {
 
 for(const phase of ['rise','hang','fall'])for(const hz of [30,60,120])test(`#953 ${phase} Slam survives adoption and impacts once at ${hz}Hz`,async()=>{
   const owner=await started(phase), packet=sendTick(owner.nm);
-  const tag=packet.a[0].at(-1);assert.equal(tag[0],ADOPTION_TAG);assert.equal(tag.length,10);
+  const row = packet.a[0];
+  assert.equal(row.length, 26, 'native tick keeps adoption at index 23 and appends hit authority at 25');
+  assert.equal(row[25][0], HIT_AUTHORITY_TAG, 'accepted-hit metadata must not replace adoption state');
+  const tag = row[23]; assert.equal(tag[0], ADOPTION_TAG); assert.equal(tag.length, 10);
   const host=await receiving(packet);
   const victim=host.f.G.actors.find(a=>a!==host.a);victim.pos.set(21,0,0);
   let hits=0;const applyHit=host.f.G.projectiles.applyHit;
@@ -124,11 +128,11 @@ for(const phase of ['rise','hang','fall'])for(const hz of [30,60,120])test(`#953
 test('#953 malformed and wrong-life Slam payloads never grant authority',async()=>{
   const owner=await started('rise'),packet=sendTick(owner.nm);
   for(const mutate of [
-    p=>p.a[0].at(-1)[9][0]=9,
-    p=>p.a[0].at(-1)[9][1]=-1,
-    p=>p.a[0].at(-1)[9][11]=null,
-    p=>p.a[0].at(-1)[9][7]=1e9,
-    p=>p.a[0].at(-1)[1]++,
+    p=>p.a[0][23][9][0]=9,
+    p=>p.a[0][23][9][1]=-1,
+    p=>p.a[0][23][9][11]=null,
+    p=>p.a[0][23][9][7]=1e9,
+    p=>p.a[0][23][1]++,
   ]){
     const changed=structuredClone(packet);mutate(changed);
     const host=await receiving(changed);assert.equal(host.a.net.buf.length,0);
@@ -147,7 +151,9 @@ test('#953 a newer completed snapshot cannot revive an older displayed Slam',asy
 
 for (const length of [8,9]) test(`legacy ${length}-field adoption remains readable without manufacturing Slam authority`,async()=>{
   const owner=await started('rise'),packet=sendTick(owner.nm);
-  const tag=packet.a[0].at(-1);tag.length=length;
+  const row = packet.a[0];
+  assert.equal(row[25][0], HIT_AUTHORITY_TAG, 'later extension stays intact during legacy adoption coverage');
+  row[23].length = length;
   const host=await receiving(packet);
   assert.ok(host.a.net.buf.length>0,'accepted legacy packet');
   assert.equal(host.a.net.buf.at(-1).adoption.slam,null);

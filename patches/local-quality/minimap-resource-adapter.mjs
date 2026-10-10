@@ -14,6 +14,25 @@ export function replaceOnceMinimap(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 export function adaptMinimapResources(rel, code) {
+  // #907: keep the persistent corner map OFF, but the explicitly opened Turf Map
+  // still needs its live raster, per-actor markers and expanded HUD presentation.
+  if (rel === 'src/main.js') {
+    code = replaceOnceMinimap(code,
+      "    const showMinimap = this.settings.minimap !== false;\n    if (showMinimap) this.minimap.update(dt);\n    else this.minimap.tickHidden?.(dt);",
+      "    const showMinimap = this.settings.minimap !== false;\n    const explicitTurfMap = !!(m && !m.attract && !m.paused && m.state === 'playing' && m.controller?.mapHeld && !this.menus?.current);\n    if (showMinimap || explicitTurfMap) this.minimap.update(dt);\n    else this.minimap.tickHidden?.(dt);",
+      'explicit-map raster while corner map disabled');
+    code = replaceOnceMinimap(code,
+      "    if (showMinimap) {\n      for (const o of m.actors) {",
+      "    if (showMinimap || explicitTurfMap) {\n      for (const o of m.actors) {",
+      'explicit-map actor markers');
+    // HUD frame map transport may carry extra fields from other quality
+    // adapters. Override only for the explicit map, retaining that metadata.
+    code = replaceOnceMinimap(code,
+      '    this.hud.update(dt, frame);',
+      '    if (explicitTurfMap) frame.map = { ...(frame.map || {}), canvas: this.minimap.canvas, expanded: true, players };\n    this.hud.update(dt, frame);',
+      'explicit-map HUD presentation');
+    return code;
+  }
   if (rel !== 'src/game/minimap.js') return code;
   code = replaceOnceMinimap(code,
     "const mk = () => { const c = document.createElement('canvas'); c.width = this.w; c.height = this.h; return c; };",

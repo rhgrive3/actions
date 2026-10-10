@@ -13,7 +13,8 @@ const rel = 'src/core/renderer.js';
 const raw = fs.readFileSync(new URL(`../inkwave-public/${rel}`, import.meta.url), 'utf8');
 const composed = adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(
   rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, raw))))));
-const restored = revertComposerTarget(composed);
+const lazyOnly = adaptComposerTarget(rel, raw, replaceOnce);
+const restored = revertComposerTarget(lazyOnly);
 const targetLine = 'const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples });';
 const passLine = 'this.renderPass = new RenderPass(this.scene, this.camera);';
 
@@ -23,11 +24,14 @@ if (!raw.includes(targetLine) || raw.indexOf(targetLine) > raw.indexOf(passLine)
 if (!composed.includes('createLazyComposerTarget((state) => {') || !composed.includes('THREE.HalfFloatType')) {
   throw new Error('full production composition lost the lazy HalfFloat composer policy');
 }
-if (/UnsignedByteType|UnsignedInt101111Type/.test(composed)) {
-  throw new Error('unexpected composer target format fallback');
+if (/UnsignedByteType/.test(composed) ||
+    !composed.includes('type: THREE.UnsignedInt101111Type') ||
+    !composed.includes('configureComposerColorTargets(THREE, composer, composerColorTarget)') ||
+    !composed.includes('composerColorTarget.options')) {
+  throw new Error('full production composition lost the guarded packed Grade target or HDR fallback');
 }
-if (adaptComposerTarget(rel, restored, replaceOnce) !== composed) {
-  throw new Error('composer target adapter does not round-trip the full composition');
+if (adaptComposerTarget(rel, restored, replaceOnce) !== lazyOnly) {
+  throw new Error('lazy target adapter does not round-trip its own composition');
 }
 if (!vm.SourceTextModule) throw new Error('run with --experimental-vm-modules to parse the full composition');
 new vm.SourceTextModule(composed, { identifier: rel });
@@ -39,7 +43,7 @@ console.log(JSON.stringify({
   productionLayers: ['splatoon3', 'touch-layout', 'reliability', 'local-quality', 'network-replication', 'practice-range'],
   baselineTargetBeforePassPipeline: true,
   fullCompositionUsesLazyHalfFloatTargets: true,
-  targetFormatFallbackPresent: false,
+  guardedPackedGradeWithHalfFloatFallback: true,
   sourceParse: 'pass',
   roundTrip: 'pass',
 }, null, 2));
