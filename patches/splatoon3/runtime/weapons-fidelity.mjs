@@ -18,6 +18,7 @@ import { coherentMotionStart } from './actor-motion.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
+const NORMALIZED_PROJECTILE_PACKET = Symbol('inkwave.normalizedProjectilePacket');
 const inkFlightHelpers = new WeakMap();
 const SPLATLING_NOMINAL_LIFETIME = 1.2;
 let api, completion, moves, slosherVolleySequence = 0;
@@ -385,9 +386,25 @@ function withDualiesImpactPaint(game,p,hit,source,callback) {
 // #873: keep intermediate and nearest/feet widths separate. Consume the same
 // legacy RNG draw to avoid changing unrelated spread/paint-seed ordering, but
 // never let that draw randomize the sourced Shooter gameplay radius.
-export function fidelityFlightPaintRadius(p) {
+export function fidelityFlightPaintRadius(p, fallHeight) {
   const legacyRandom = Math.random();
-  return p.s3Weapon?.flightPaint?.intermediate ?? p.trailRadius * (0.8 + legacyRandom * 0.4);
+  const fp = p?.s3Weapon?.flightPaint;
+  const dist = fallHeight !== undefined && Number.isFinite(fallHeight)
+    ? fallHeight
+    : (p?.lastDropDist !== undefined && Number.isFinite(p.lastDropDist) ? p.lastDropDist : undefined);
+  if (p && 'lastDropDist' in p) delete p.lastDropDist;
+  if (fp) {
+    if (dist !== undefined) {
+      const minH = fp.dropHeightMax ?? 3.0;
+      const maxH = fp.dropHeightMin ?? 10.0;
+      if (dist <= minH) return fp.nearest;
+      if (dist >= maxH) return fp.intermediate;
+      const t = (dist - minH) / (maxH - minH);
+      return fp.nearest + (fp.intermediate - fp.nearest) * t;
+    }
+    return fp.intermediate;
+  }
+  return (p?.trailRadius ?? 0.44) * (0.8 + legacyRandom * 0.4);
 }
 
 function deriveRollerReleaseFootPaint(profile) {
@@ -949,39 +966,80 @@ function setCollision(p,c,offset=0,depleted=false) {
 }
 // Legacy projectile packets have no unit discriminator. New packets preserve
 // their first30 entries, then carry unit before the existing owner tick/sequence.
-export function validFidelityRollerUnitPacket(event) {
-  if (!Array.isArray(event)) return false;
-  if ([27, 30, 32].includes(event.length)) return true; // legacy pre-birth layouts
-  const hasInkMeta = event[27] === null || typeof event[27] === 'object';
+function copyProjectilePacketProperties(from, to) {
+  for (const key of Reflect.ownKeys(from)) {
+    if (key === 'length' || typeof key === 'symbol' || /^(?:0|[1-9]\d*)$/.test(key)) continue;
+    Object.defineProperty(to, key, Object.getOwnPropertyDescriptor(from, key));
+  }
+}
+function projectilePacketShape(packet) {
+  if (!Array.isArray(packet)) return null;
+  if ([27, 30, 32].includes(packet.length)) return { legacy: true, depleted: false, birthOffset: 0 };
+  const hasInkMeta = packet[27] === null || typeof packet[27] === 'object';
   const accepted = hasInkMeta
-    ? event.length === 34 || event.length === 36 || event.length === 37
-    : event.length === 33 || event.length === 35 || event.length === 36;
-  if (!accepted) return false;
+    ? packet.length === 34 || packet.length === 36 || packet.length === 37
+    : packet.length === 33 || packet.length === 35 || packet.length === 36;
+  if (!accepted) return null;
   const inkMetaOffset = hasInkMeta ? 1 : 0;
-  const kitOffset = event.length === 35 || event.length === 36 || event.length === 37 ? 2 : 0;
+  const kitOffset = packet.length === 35 || packet.length === 36 || packet.length === 37 ? 2 : 0;
   const birthOffset = inkMetaOffset + kitOffset;
-  const powerIndex = 27 + birthOffset + 4;
-  const hasPower = hasInkMeta ? event.length === 37 : event.length === 36;
+  const hasPower = hasInkMeta ? packet.length === 37 : packet.length === 36;
+  return { legacy: false, hasInkMeta, kitOffset, birthOffset, hasPower };
+}
+function normalizedProjectilePacketValid(packet, shape, depleted) {
+  if (!shape) return false;
+  if (shape.legacy) return !depleted;
+  const { birthOffset, hasPower } = shape;
+  const powerIndex = 31 + birthOffset;
   if (hasPower) {
-    const power = event[powerIndex]?.s3SpecialPowerAP;
-    const entry = api?.SPECIALS && Object.hasOwn(api.SPECIALS, event[4]) ? api.SPECIALS[event[4]] : null;
+    const power = packet[powerIndex]?.s3SpecialPowerAP;
+    const entry = api?.SPECIALS && Object.hasOwn(api.SPECIALS, packet[4]) ? api.SPECIALS[packet[4]] : null;
     if (typeof entry?.projectileDescriptor !== 'function' || !Number.isFinite(power) || power < 0 || power > 57) return false;
   }
   const weapons = api?.WEAPONS;
-  const weapon = weapons && Object.hasOwn(weapons, event[4]) ? weapons[event[4]] : null;
-  const unit = event[30 + birthOffset];
+  const weapon = weapons && Object.hasOwn(weapons, packet[4]) ? weapons[packet[4]] : null;
+  const unit = packet[30 + birthOffset];
   if (!weapon) {
-    const specials=api?.SPECIALS,entry=specials&&Object.hasOwn(specials,event[4])?specials[event[4]]:null;
-    return typeof entry?.projectileDescriptor==='function' && unit===-1;
+    const specials=api?.SPECIALS,entry=specials&&Object.hasOwn(specials,packet[4])?specials[packet[4]]:null;
+    return typeof entry?.projectileDescriptor==='function' && unit===-1 && !depleted;
   }
   if (weapon.kind === 'slosher') {
     const count = rawWeapon(weapon)?.UnitGroupParam?.Unit?.reduce((n,u)=>n+(u.BulletNum??1),0);
-    return unit === -1 || Number.isSafeInteger(unit) && unit >= 0 && unit < count;
+    return !depleted && (unit === -1 || Number.isSafeInteger(unit) && unit >= 0 && unit < count);
   }
-  if (weapon.kind !== 'roller') return unit === -1;
-  if (event[27 + birthOffset] !== 0 && event[27 + birthOffset] !== 1) return false;
-  const units = rawWeapon(weapon)?.[event[27 + birthOffset] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
+  if (weapon.kind !== 'roller') return !depleted && unit === -1;
+  if (packet[27 + birthOffset] !== 0 && packet[27 + birthOffset] !== 1) return false;
+  const units = rawWeapon(weapon)?.[packet[27 + birthOffset] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
   return Number.isSafeInteger(unit) && unit >= 0 && !!units && unit < units.length;
+}
+function prepareFidelityProjectilePacket(event) {
+  if (!Array.isArray(event)) return null;
+  const prepared = event[NORMALIZED_PROJECTILE_PACKET];
+  if (prepared) {
+    const shape = projectilePacketShape(event);
+    return normalizedProjectilePacketValid(event, shape, prepared.depleted) ? event : null;
+  }
+  const flagIndices = [];
+  for (let index = 31; index <= 35; index++) if (event[index] === true) flagIndices.push(index);
+  if (flagIndices.length > 1) return null;
+  const markerIndex = flagIndices[0] ?? -1;
+  const depleted = markerIndex >= 0;
+  const packet = event.slice();
+  if (depleted) packet.splice(markerIndex, 1);
+  copyProjectilePacketProperties(event, packet);
+  const shape = projectilePacketShape(packet);
+  if (depleted) {
+    const expectedMarkerIndex = shape && !shape.legacy
+      ? 31 + shape.birthOffset + (shape.hasPower ? 1 : 0)
+      : -1;
+    if (markerIndex !== expectedMarkerIndex || api?.WEAPONS?.[packet[4]]?.kind !== 'roller') return null;
+  }
+  if (!normalizedProjectilePacketValid(packet, shape, depleted)) return null;
+  Object.defineProperty(packet, NORMALIZED_PROJECTILE_PACKET, { value: { depleted } });
+  return packet;
+}
+export function validFidelityRollerUnitPacket(event) {
+  return !!prepareFidelityProjectilePacket(event);
 }
 // #750: the swing unit declares the head's *rendered* size in
 // UnitParam.DrawSizeParam, separately from CollisionParam and from paint.
@@ -1286,11 +1344,14 @@ export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
     const t=clamp01((fall-d.ReduceStartFallDistance)/(d.ReduceEndFallDistance-d.ReduceStartFallDistance));
     return (d.ValueMax+(d.ValueMin-d.ValueMax)*t)/10;
   }
-  const age=(p.fidelityPrevAge??p.age)+(p.age-(p.fidelityPrevAge??p.age))*impactT;
   if(['shooter','dualies','splatling'].includes(w.kind)){
-    const t=clamp01((age-w.damageReduceStart)/(w.damageReduceEnd-w.damageReduceStart));
-    return w.damage+(w.damageMin-w.damage)*t;
+    const startFrame = Math.round((w.damageReduceStart ?? 0) * 60);
+    const endFrame = Math.round((w.damageReduceEnd ?? 0) * 60);
+    const frame = Math.round((p.age ?? 0) * 60);
+    const t = endFrame > startFrame ? clamp01((frame - startFrame) / (endFrame - startFrame)) : 0;
+    return w.damage + (w.damageMin - w.damage) * t;
   }
+  const age=(p.fidelityPrevAge??p.age)+(p.age-(p.fidelityPrevAge??p.age))*impactT;
   return p.damage;
 }
 export function applyFidelityProjectileHit(system,p,victim,amount,point) {
@@ -1420,6 +1481,8 @@ export function installWeaponsFidelity(context,profile) {
   WEAPONS.shooter.flightPaint = Object.freeze({
     intermediate: shooterPaint.WidthHalf * paintScale,
     nearest: shooterPaint.WidthHalfNearest * paintScale,
+    dropHeightMax: (shooterPaint.DepthMaxDropHeight ?? 3) * paintScale,
+    dropHeightMin: (shooterPaint.DepthMinDropHeight ?? 10) * paintScale,
     worldUnitsPerSourceUnit: paintScale,
   });
   roller.releaseFootPaint = deriveRollerReleaseFootPaint(profile);
@@ -1639,12 +1702,17 @@ export function installWeaponsFidelity(context,profile) {
     }
     return step.call(this,p,dt);
   };
+  Projectiles.prototype.prepareFidelityProjectilePacket=prepareFidelityProjectilePacket;
   Projectiles.prototype.ghostProjectile=function(actor,event){
-    if(!validFidelityRollerUnitPacket(event))return null;
-    const before=this.list.length;const result=ghost.call(this,actor,event);
+    const packet=prepareFidelityProjectilePacket(event);
+    if(!packet)return null;
+    const before=this.list.length;const result=ghost.call(this,actor,packet);
     if(this.list.length>before){const p=this.list.at(-1);const special=api.SPECIALS&&Object.hasOwn(api.SPECIALS,p.wid)?api.SPECIALS[p.wid]:null;
+      // #305: preserve the owner's explicit depleted-attack identity before
+      // initialize() rebuilds the remote presentation collision record.
+      p.s3DepletionRound=packet[NORMALIZED_PROJECTILE_PACKET].depleted;
       if(!p.s3SpecialWeapon&&typeof special?.projectileDescriptor==='function'){p.s3SpecialWeapon=special.projectileDescriptor(p);p.s3Weapon=p.s3SpecialWeapon;}
-      const inkMetaOffset=event[27]===null||typeof event[27]==='object'?1:0,kitOffset=(event.length===35||event.length===36||event.length===37)?2:0,birthOffset=inkMetaOffset+kitOffset;if([33,34,35,36,37].includes(event.length)&&event[30+birthOffset]>=0){p.fidelitySloshPacketIndex=event[30+birthOffset];p.fidelityRollerUnitIndex=event[30+birthOffset];p.fidelityMode=event[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
+      const shape=projectilePacketShape(packet),birthOffset=shape?.birthOffset??0;if(!shape?.legacy&&packet[30+birthOffset]>=0){p.fidelitySloshPacketIndex=packet[30+birthOffset];p.fidelityRollerUnitIndex=packet[30+birthOffset];p.fidelityMode=packet[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;

@@ -1,7 +1,7 @@
 import { updateStormHold } from '../runtime/storm-effects.mjs';
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
-import {ABILITIES,normalizeLoadout,abilityPoints,gearCurve} from '../runtime/gear.mjs';
+import {ABILITIES,abilityAllowed,normalizeLoadout,abilityPoints,gearCurve} from '../runtime/gear.mjs';
 import {FixedClock} from '../runtime/clock.mjs';
 const DT=1/60,near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 function loadout(points,ability){
@@ -151,4 +151,23 @@ test('#267: subPower and Storm specialPower do not strengthen each others launch
  sub.weapon.special=special.weapon.special='storm';throwStorm(f,sub);throwStorm(f,special);const [normal,powered]=ps.bombs;
  near(powered.vel.clone().sub(new f.THREE.Vector3(0,1.5,0)).length()/normal.vel.clone().sub(new f.THREE.Vector3(0,1.5,0)).length(),1.5);
  ps.throwBomb(special);ps.throwBomb(sub);const plain=ps.bombs[2].vel.clone().sub(new f.THREE.Vector3(0,1.5,0)),strong=ps.bombs[3].vel.clone().sub(new f.THREE.Vector3(0,1.5,0));near(strong.length()/plain.length(),1.5);
+});
+
+test('#272: shoes-main Stealth Jump survives the gear-panel filter like the other fixed main',async()=>{
+ const tuning=JSON.parse(JSON.stringify((await fixture()).profile));
+ const { CLOTHING_ABILITIES } = await import('../runtime/clothing-gear.mjs');
+ const { HEAD_ABILITIES } = await import('../runtime/conditional-gear.mjs');
+ const panelVisible=(id,piece,slot)=>{
+  if(!abilityAllowed(id,piece,slot)) return false;
+  if(id!=='none'&&!CLOTHING_ABILITIES.includes(id)&&!HEAD_ABILITIES.includes(id)&&id!=='ninjaSquid'&&id!=='stealthJump'&&!tuning.gear[id]) return false;
+  return true;
+ };
+ assert.equal(panelVisible('stealthJump',2,0),true);
+ assert.equal(panelVisible('stealthJump',0,0),false);
+ assert.equal(panelVisible('stealthJump',2,1),false);
+ assert.equal(panelVisible('ninjaSquid',1,0),true);
+ const f=await fixture(),a=f.make();a.isLocal=false;
+ a.s3.loadout=f.emptyLoadout();a.s3.loadout[2].main='stealthJump';a.reset();
+ assert.equal(a.s3.modifiers.stealthJump,true);
+ assert.equal(a.s3.loadout[2].main,'stealthJump');
 });

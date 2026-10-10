@@ -997,11 +997,6 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "weapons.splatling.chargeJumpVelocity": {
-    "value": 4.2,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
   "weapons.charger.inkFull": {
     "value": 18,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -1268,11 +1263,6 @@
     "binding": null
   },
   "weapons.roller.rollBaseSpeed": {
-    "value": 6.4799999999999995,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.roller.rollDashTurnBreakSpeed": {
     "value": 6.4799999999999995,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
@@ -1911,11 +1901,6 @@
       "rawValue": 1.12
     }
   },
-  "bomb.spawnSpeedY": {
-    "value": 14.4,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
   "bomb.gravity": {
     "value": 57.6,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -2467,7 +2452,7 @@
     "binding": null
   },
   "resources.regenRate": {
-    "value": 12.5,
+    "value": 12.6,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -3661,6 +3646,21 @@
   },
   "clothingGear.haunt.targetSpecialLoss": {
     "value": 0.15,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.splatling.chargeJumpVelocity": {
+    "value": 4.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.rollDashTurnBreakSpeed": {
+    "value": 6.4799999999999995,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "bomb.spawnSpeedY": {
+    "value": 14.4,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   }

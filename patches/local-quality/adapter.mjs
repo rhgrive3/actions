@@ -32,6 +32,8 @@ import { adaptTeamWipeout } from './team-wipeout-adapter.mjs';
 import { adaptSplatlingReticle } from './splatling-reticle-adapter.mjs';
 import { adaptPortraitGuard } from './portrait-guard-adapter.mjs';
 import { adaptHudAuthority } from './hud-authority-adapter.mjs';
+import { adaptS3HudLook } from './s3-hud-look-adapter.mjs';
+import { adaptS3SquidLook } from './s3-squid-look-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
@@ -62,6 +64,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
 import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptFrameOrder } from './frame-order-adapter.mjs';
+import { adaptRangeFramePacing } from './range-frame-pacing-adapter.mjs';
 import { adaptReflSkip } from './refl-skip-adapter.mjs';
 import { adaptFinishTape } from './finish-tape-adapter.mjs';
 import { adaptAudioListener } from './audio-listener-adapter.mjs';
@@ -79,7 +82,7 @@ const IDENTITY_FILES = [
   'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
-  'hud-authority-adapter.mjs',
+  'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
   'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs',
   'team-wipeout.mjs', 'team-wipeout-adapter.mjs',
@@ -102,12 +105,14 @@ const IDENTITY_FILES = [
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs', 'refl-skip-adapter.mjs', 'finish-tape-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
+  'offline-offscreen-budget.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'match-retainer-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
   'offscreen-visual-budget.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
+  'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-frame-pacing-adapter.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -125,11 +130,18 @@ export function adaptQualitySource(rel, code) {
   code = adaptIssue405(rel, code);
   code = adaptIssue484(rel, code);
   const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
-  const lazy = adaptComposerTarget(rel, framed, replaceOnce);
+  const paced = adaptRangeFramePacing(rel, framed);
+  const lazy = adaptComposerTarget(rel, paced, replaceOnce);
   return adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
+  if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code,
+      '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);\n    const a = this.anim;',
+      '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);\n    const a = this.anim;\n    a.isBot = this.isBot === true;',
+      'carry bot identity to visual-only Character scheduling');
+  }
   code = adaptBotPaintObservation(rel, code);
   code = adaptPropRetention(rel, code);
   code = adaptPropAtlas(rel, code);
@@ -223,6 +235,9 @@ function adaptQualityLayer(rel, code) {
   // are composed once on the finished presentation layer.
   code = adaptFinishTape(rel, code);
   code = adaptHudAuthority(rel, code);
+  // Splatoon 3 HUD look composes on the finished gauge/roster markup.
+  code = adaptS3HudLook(rel, code);
+  code = adaptS3SquidLook(rel, code);
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
     code = adaptTouchRelayout(rel, code);
@@ -546,6 +561,20 @@ function adaptQualityLayer(rel, code) {
     code = replaceOnce(code, '    ch.update(dt, a);',
       '    a.remote = this.remote === true;\n    ch.update(dt, a);',
       'carry actor authority into Character presentation budget');
+  }
+
+  if (rel === 'src/game/character.js') {
+    // Offline bot projectiles read weapon.muzzle from the live rig. Preserve
+    // the pelvis/torso/arm/weapon transform path every simulation tick, but
+    // skip leg joint IK and the decorative tail which cannot affect that rig.
+    code = replaceOnce(code,
+      '    const hyw = P[HIPS + 1];\n    for (let i = 0; i < 2; i++) {\n      const leg = i === 0 ? this.limbs.legL : this.limbs.legR, sd = i === 0 ? 1 : -1;',
+      '    const hyw = P[HIPS + 1];\n    if (!this._oobPoseTailSkip || this.replant || !this.feetValid) for (let i = 0; i < 2; i++) {\n      const leg = i === 0 ? this.limbs.legL : this.limbs.legR, sd = i === 0 ? 1 : -1;',
+      'skip stable offscreen leg-joint IK while retaining replant transitions');
+    code = replaceOnce(code,
+      '    const lv = this.lifeLv;\n    // ---- face',
+      '    if (this._oobPoseTailSkip && !this.replant && this.feetValid) {\n      this._headQW.copy(B.head.quaternion); this._headSet = true;\n      for (const f of this.feet) f.dispOK = false;\n      this._oobPoseTailSkipped = true;\n      return; // weapon rig is current; rebuild display-only state before the next replant.\n    }\n    const lv = this.lifeLv;\n    // ---- face',
+      'skip stable offscreen decorative pose tail after authoritative weapon rig');
   }
 
   return code;

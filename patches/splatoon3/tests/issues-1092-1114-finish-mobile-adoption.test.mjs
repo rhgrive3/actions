@@ -107,7 +107,7 @@ test('#1101 adoption transfer carries remaining main-weapon cooldown across runn
   const source = fs.readFileSync(new URL('../../network-replication/adapter.mjs', import.meta.url), 'utf8');
   assert.match(source, /ADOPTION_COOLDOWN_MAX/);
   assert.match(source, /actor\.weaponRunner\?\.cooldown/);
-  assert.match(source, /!\[8,9,10\]\.includes\(row\.length\)/);
+  assert.match(source, /!\[8,9,10,11\]\.includes\(row\.length\)/);
   assert.match(source, /out\.cooldown = Math\.max\(0, \(a\.cooldown \|\| 0\) - dt\)/);
   assert.match(source, /actor\.weaponRunner\.cooldown = Math\.max\(actor\.weaponRunner\.cooldown \|\| 0, current\.cooldown \|\| 0\)/);
 });

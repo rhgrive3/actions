@@ -54,3 +54,58 @@ test('#1054 render cadence cannot change enemy-ink damage or the special timer',
   }
   assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);
 });
+
+
+test('#1164 active Trizooka cannot fire after entering unsupported lethal water',async()=>{
+  const h=await setup();
+  h.a._resolve=()=>{};
+  h.step(); // Activate normally on supported ground, before the lethal event.
+  assert.equal(h.a.specialActive?.id,'trizooka');
+  // Put a legally charged, buffered volley exactly at its fire gate. Without
+  // the pre-shot hazard guard, _updateSpecial would emit three rounds first.
+  h.a.s3Trizooka.t=6/60;
+  h.a.s3Trizooka.armed=true;
+  h.a.s3Trizooka.gateAt=0;
+  h.a.s3Trizooka.bufferedShot=true;
+  h.a.intent.fire=true;
+  h.a.pos.y=h.PLAYER.fallDeathY-.4;
+  h.a.grounded=false;
+  h.G.level.groundHeight=()=>-Infinity;
+  const before=h.G.projectiles.list.length, deaths=h.a.stats.deaths;
+  h.step();
+  assert.equal(h.a.alive,false);
+  assert.equal(h.a.hp,0);
+  assert.equal(h.a.stats.deaths,deaths+1);
+  assert.equal(h.a.specialActive,null);
+  assert.equal(h.G.projectiles.list.length,before,'underwater owner cannot emit a pre-death Trizooka volley');
+  h.tick(h.a,4);
+  assert.equal(h.a.stats.deaths,deaths+1,'no duplicate environmental splat');
+});
+
+test('#1164 lethal-water activation is rejected before consuming Special or spawning shots',async()=>{
+  const h=await setup(false);
+  h.a.pos.y=h.PLAYER.fallDeathY-.4;
+  h.a.grounded=false;h.G.level.groundHeight=()=>-Infinity;
+  h.a.intent.special=true;
+  const gauge=h.a.special, used=h.a.stats.specials, emitted=h.G.projectiles.list.length;
+  h.step();
+  assert.equal(h.a.alive,false);
+  assert.equal(h.a.specialActive,null);
+  assert.equal(h.a.stats.specials,used,'water-dead player may not activate Trizooka');
+  assert.equal(h.G.projectiles.list.length,emitted);
+  assert.equal(h.a.stats.deaths,1);
+  assert.ok(h.a.special<=gauge,'normal water-death gauge penalty remains owned by splat');
+});
+
+test('#1164 supported under-deck route does not cause a false water splat',async()=>{
+  const h=await setup();
+  h.a._resolve=()=>{};
+  h.step();
+  h.a.pos.y=h.PLAYER.fallDeathY-.4;h.a.grounded=false;
+  h.G.level.groundHeight=()=>-5; // finite supported terrain below sea level
+  const initialDeaths=h.a.stats.deaths;
+  h.step();
+  assert.equal(h.a.alive,true);
+  assert.equal(h.a.stats.deaths,initialDeaths);
+  assert.equal(h.a.specialActive?.id,'trizooka');
+});

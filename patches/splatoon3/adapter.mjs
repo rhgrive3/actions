@@ -35,6 +35,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptIssue415 } from './enemy-ink-recovery-adapter.mjs';
 import { adaptIssueBatch1171 } from './issue-batch-1171-adapter.mjs';
 import { adaptTidalSlamGauge } from './tidal-slam-gauge-adapter.mjs';
+import { adaptScorchGorge } from './scorch-gorge-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -60,6 +61,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 export function adaptSource(rel, code) {
   code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);
+  code = adaptScorchGorge(rel, code, replaceOnce);
   // The source-guided shooter-family InkFlightRuntime is the authority for
   // head integration and detached paint drops. It does not traverse the
   // patched generic Projectiles._step actor loop. Bridge its actor contact
@@ -126,6 +128,14 @@ export function adaptSource(rel, code) {
       '        if (friendly && Number.isFinite(t) && (previousAge + INK_DT * t) * INK_HZ + EPS < p.fidelityFriendThrough) continue;\n' +
       '        // World wins ties: no wall-through damage, independent of actors order.',
       'ink flight S3 friend-through at first-contact age');
+    // #875: a swept contact chooses the shot's completed fixed 60Hz tick,
+    // not a fractional impact time within that tick. This is the same integer
+    // damage-age owner used by fidelityDamage for ordinary shooter-family
+    // projectiles; collision ordering and contact position remain continuous.
+    code = replaceOnce(code,
+      '          const damage = damageAt(p.inkProfile, previousAge + INK_DT * first);',
+      '          const damage = damageAt(p.inkProfile, p.age);',
+      'ink flight integer-frame damage vs continuous swept contact');
     code = replaceOnce(code,
       '            this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
       '            if (target.team !== p.team) this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
@@ -181,6 +191,21 @@ export function adaptSource(rel, code) {
       'export const tagNum = (name) =>',
       'export tagNum');
     code = replaceOnce(code,
+      "    { key: '_howto', label: 'Controls reference', type: 'link', help: 'Every keyboard, mouse and controller binding in one place.' },",
+      "    { key: '_howto', label: 'Controls reference', type: 'link', help: 'Every keyboard, mouse and controller binding in one place.' },\n" +
+      "    { key: '_connectMotion', label: 'Connect Joy-Con / Pro Controller', type: 'link', linkLabel: 'CONNECT', help: 'Pair a Nintendo Switch Joy-Con (R) or Pro Controller via WebHID for motion gyro aiming.' },",
+      'menus _connectMotion link');
+    code = replaceOnce(code,
+      "          const go = r.key === '_layout'\n" +
+      "            ? () => { this._sfx('ui_click'); safeCall(() => this.api.editTouchLayout && this.api.editTouchLayout()); }\n" +
+      "            : () => { this._sfx('ui_click'); this._go('howto'); };",
+      "          const go = r.key === '_layout'\n" +
+      "            ? () => { this._sfx('ui_click'); safeCall(() => this.api.editTouchLayout && this.api.editTouchLayout()); }\n" +
+      "            : r.key === '_connectMotion'\n" +
+      "            ? () => { const request = safeCall(() => (this.api.connectControllerMotion ? this.api.connectControllerMotion() : (typeof G !== 'undefined' && G.input?.requestWebHID ? G.input.requestWebHID() : null))); this._sfx('ui_click'); if (request?.then) request.then(result => { const state = result?.status, calibration = result?.initResult?.calibration; const message = state === 'bridge-available' ? calibration?.source === 'user' ? 'Controller motion connected using user gyro calibration.' : calibration?.source === 'factory' ? 'Controller motion connected using factory gyro calibration.' : 'Controller motion connected; nominal gyro calibration used (SPI unavailable).' : state === 'unsupported-platform' ? 'WebHID is unavailable in this browser.' : state === 'request-unsupported' ? 'This browser cannot open the WebHID chooser.' : state === 'no-device-selected' ? 'No controller was selected.' : state === 'initialization-failed' ? 'Controller initialization failed. Check WebHID permissions and reconnect.' : state === 'request-error' ? 'Controller connection was denied or failed.' : null; if (message) this.toast(tr(message), { kind: state === 'bridge-available' ? 'good' : state === 'no-device-selected' ? 'info' : 'error' }); }).catch(() => this.toast(tr('Controller connection was denied or failed.'), { kind: 'error' })); }\n" +
+      "            : () => { this._sfx('ui_click'); this._go('howto'); };",
+      'menus _connectMotion accept handler');
+    code = replaceOnce(code,
     "{ key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },",
     "{ key: 'minimap', label: 'Corner map (non-S3 aid)', type: 'toggle', help: 'Optional aid outside the S3 baseline. The full Turf Map remains available.' },",
     'optional corner map explanation');
@@ -202,7 +227,7 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",
-    "  'Corner map (non-S3 aid)': '画面端マップ（本家外の補助）', 'Optional aid outside the S3 baseline. The full Turf Map remains available.': '本家の標準とは異なる任意の補助です。全体マップは引き続き使用できます。',\n  'Minimap': 'ミニマップ',",
+    "  'Connect Joy-Con / Pro Controller': 'Joy-Con / Proコントローラー接続', 'Pair a Nintendo Switch Joy-Con (R) or Pro Controller via WebHID for motion gyro aiming.': 'WebHID経由でJoy-Con (R) または Proコントローラーを接続し、ジャイロ照準を使用します。',\n  'Controller motion connected using user gyro calibration.': 'ユーザー校正を使ってコントローラーのモーション入力を接続しました。', 'Controller motion connected using factory gyro calibration.': '工場校正を使ってコントローラーのモーション入力を接続しました。', 'Controller motion connected; nominal gyro calibration used (SPI unavailable).': 'SPI校正を取得できないため、公称値でコントローラーのモーション入力を接続しました。', 'WebHID is unavailable in this browser.': 'このブラウザーではWebHIDを利用できません。', 'This browser cannot open the WebHID chooser.': 'このブラウザーではWebHIDデバイス選択を開けません。', 'No controller was selected.': 'コントローラーが選択されませんでした。', 'Controller initialization failed. Check WebHID permissions and reconnect.': 'コントローラーを初期化できませんでした。WebHIDの許可を確認して再接続してください。', 'Controller connection was denied or failed.': 'コントローラーへの接続が拒否されたか失敗しました。',\n  'Corner map (non-S3 aid)': '画面端マップ（本家外の補助）', 'Optional aid outside the S3 baseline. The full Turf Map remains available.': '本家の標準とは異なる任意の補助です。全体マップは引き続き使用できます。',\n  'Minimap': 'ミニマップ',",
     'optional corner map Japanese explanation');
   if (rel === 'src/game/match.js') {
     // The lobby/roster protocol assigns team 0 to Alpha and team 1 to Bravo.
@@ -910,7 +935,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'lerp(w.damageMin, w.damageMax * 0.62, charge)',
       'chargerDamage(a, w, charge)', 'charger partial damage curve');
     code = replaceOnce(code, 'a.ink < w.inkFull * 0.2', 'a.ink < w.inkMin', 'charger minimum ink');
-    code = replaceOnce(code, 'a.ink - w.inkFull * c', 'a.ink - Math.max(w.inkMin, w.inkFull * c)', 'charger ink floor');
+    code = replaceOnce(code, 'a.ink - w.inkFull * c', 'a.ink - chargerInkCost(w, c, this.chargeT)', 'charger ink floor');
     code = replaceOnce(code, 'const c = Math.max(0.12, this.charge);', 'const c = this.charge;', 'charger partial charge floor');
     code = replaceOnce(code, "          if (dmg > 0) this.applyHit(p.owner, e, dmg, p.wid || p.type);",
       '          if (dmg > 0) applyProjectileHit(this, p, e, dmg, _v);', 'projectile damage model');
@@ -1012,7 +1037,7 @@ export function adaptSource(rel, code) {
     // #1049: sourced Blaster SplashPaintParam owns the vertical receiving-surface window.
     code = replaceOnce(code,
       '        const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);',
-      '        const dropProbe = p.type === \'blast\' && Number.isFinite(p.s3SplashDropMax) ? p.s3SplashDropMax : 4;\n        const g = G.physics.raycast(p.pos, DOWN, dropProbe, _hit2, true);',
+      '        const dropProbe = p.type === \'blast\' && Number.isFinite(p.s3SplashDropMax) ? p.s3SplashDropMax : (p.s3Weapon?.flightPaint ? Math.max(20, p.s3Weapon.flightPaint.dropHeightMin) : 4);\n        const g = G.physics.raycast(p.pos, DOWN, dropProbe, _hit2, true);\n        if (g.hit) p.lastDropDist = g.dist;',
       'Blaster flight splash drop-height window');
     code = replaceOnce(code,
       '      if (d > kitBombRadius(SUB, b, s.radius)) continue;',
@@ -1056,7 +1081,7 @@ export function adaptSource(rel, code) {
       "      if (p.s3SpecialWeapon) this.applyHit(p.owner, e, distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)), p.wid || 'blaster');\n      else applyBlasterBlastContact(this, p, e, c, _v, d <= damageRadius ? blasterBurstDamage(p, w, d, distanceDamage) : 0, G.netm);",
       'Blaster air-burst authoritative contact');
     code = adaptPaintOwnership(rel, code, replaceOnce);
-    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, BLASTER_KNOCKBACK, applyBlasterBlastContact } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
+    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, BLASTER_KNOCKBACK, applyBlasterBlastContact } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
@@ -1203,6 +1228,10 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "      if (k >= 1) {\n        this.superJumpState = null;",
       "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
     code = replaceOnce(code,
+      '        if (!this.grounded) { this.grounded = true; this._resolve(false, this.pos.y, true); if (!this.grounded) this.vel.y = -6; }',
+      '        if (!this.grounded) { this.grounded = true; this._resolve(false, this.pos.y, true); if (!this.grounded) this.vel.y = -6; }\n        startDropRoller(this, this.intent.move);',
+      'Drop Roller samples the live stick after native Super Jump ground resolution');
+    code = replaceOnce(code,
       '        this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));\n',
       '        // Splatoon 3: Ordinary Super Jump does not leave ink, grant turf points, or charge special at landing.\n',
       'super jump landing paint');
@@ -1244,6 +1273,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '      this.invuln = 0.3;', '      // #573: protection ends with the action/landing owner.', 'Slam has no detached post-impact invulnerability');
     code = adaptTidalSlamGauge(rel, code, replaceOnce);
     code = adaptPaintOwnership(rel, code, replaceOnce);
+    code = "import { startDropRoller } from '../../patches/splatoon3/runtime/gear.mjs';\n" + code;
     return `import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, stealthJumpExtraTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery, updateSpecialHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
@@ -1337,6 +1367,14 @@ export function adaptSource(rel, code) {
       "      // Remote ally-on-enemy splats (#614) likewise add no text entry: the local\n" +
       "      // confirmation above is the only feed that names a remote player.",
       'splat feed remote-identity gate (#614)');
+    code = replaceOnce(code,
+      '  _menuApi() {\n    const self = this;\n    const api = (this.api = {\n',
+      '  _menuApi() {\n    const self = this;\n    const api = (this.api = {\n      connectControllerMotion: () => (self.input?.requestWebHID ? self.input.requestWebHID() : null),\n',
+      'menu api connectControllerMotion');
+    code = replaceOnce(code,
+      '    this.input = G.input = new Input(this.R.renderer.domElement);',
+      '    this.input = G.input = new Input(this.R.renderer.domElement);\n    this.input.attachWebHID?.();',
+      'auto attach WebHID on boot');
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
     const end = code.indexOf('    // A full-frame lobby/showcase completely covers', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: fixed simulation connection');

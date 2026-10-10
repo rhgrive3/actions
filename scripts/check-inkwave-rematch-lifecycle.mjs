@@ -113,14 +113,27 @@ const tap = async (id) => {
   // Never invoke the DOM click handler or skip the resulting battle/menu checks.
   if (id === 'start') {
     await operationTrace.run('touch: start', async () => {
-      // Playwright's scrollIntoViewIfNeeded waits for stable animation frames
-      // and can time out on a continuously moving menu under software GL.
-      // Native instant scrolling plus the real hit-test/touch below retains
-      // the player's viewport and touch path without that actionability wait.
+      // START can be below the first iPad viewport. Scroll natively, wait until
+      // its real hit target is in view, then send the actual user touch.
+      await page.evaluate((selector) => {
+        const button = document.querySelector(selector);
+        if (!button) throw Error('Turf START disappeared before scroll');
+        button.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+      }, sel);
+      // A native scroll does not depend on Playwright's stable-element actionability
+      // timer. Keep hit-testing the real viewport and dispatch an actual touch.
+      await until((selector) => {
+        const button = document.querySelector(selector);
+        if (!button) return false;
+        const r = button.getBoundingClientRect();
+        const x = r.left + r.width * .5, y = r.top + r.height * .5;
+        const hit = document.elementFromPoint(x, y);
+        return x >= 0 && x < innerWidth && y >= 0 && y < innerHeight &&
+          (button === hit || button.contains(hit));
+      }, sel, 30000, 'Turf START visible and hit-testable after native scroll');
       const point = await page.evaluate((selector) => {
         const button = document.querySelector(selector);
         if (!button) throw Error('Turf START disappeared before touch');
-        button.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' });
         const b = button.getBoundingClientRect();
         const x = b.left + b.width * .5, y = b.top + b.height * .5;
         const hit = document.elementFromPoint(x, y);
@@ -138,14 +151,6 @@ const menuIs = (name) => until((n) => window.__inkwave?.menus?.current === n, na
 // Native touch rows/tabs own their highlight; ordinary main-menu buttons use
 // the selection ring for every input owner. Wait for its real frame-owned
 // placement and CSS entrance, including after a previous keyboard handoff.
-const focusRingSettled = () => {
-  const m = window.__inkwave.menus, c = m?._cur, f = m?._focus, ring = m?.cursorEl;
-  if (!c?.on || !f?.isConnected || !ring) return false;
-  const style = getComputedStyle(ring);
-  if (style.visibility !== 'visible' || style.display === 'none' || +style.opacity <= 0.6) return false;
-  const r = f.getBoundingClientRect(), pad = f.dataset.curPad != null ? +f.dataset.curPad : 7;
-  return Math.abs(c.x.x - (r.left - pad)) < 0.6 && Math.abs(c.y.x - (r.top - pad)) < 0.6 && Math.abs(c.w.x - (r.width + pad * 2)) < 0.6;
-};
 const snap = () => page.evaluate(() => {
   const g = window.__inkwave, G = window.__G, m = g.match, menus = g.menus, mob = g.input?.mobile, hud = g.hud;
   const ids = {};
@@ -209,6 +214,20 @@ const snap = () => page.evaluate(() => {
     },
   };
 });
+// Read alignment and focused-element geometry in the same browser snapshot. A
+// previous separate predicate could succeed on one animation frame, then the
+// focus CSS transition advanced before snap() and generated a false failure.
+// Preserve the strict live-alignment requirement; persistent drift still fails.
+const alignedFocusSnapshot = async (phase) => operationTrace.run('aligned focus: ' + phase, async () => {
+  const start = Date.now();
+  let last = null;
+  do {
+    last = await snap();
+    if (last.ringOn && last.ringVisible && last.ringOnFocus === true) return last;
+    await page.waitForTimeout(200);
+  } while (Date.now() - start < 30000);
+  return last;
+});
 const check = (round, phase, cond, message, detail) => { if (!cond) failures.push({ round, phase, message, detail }); };
 
 let status = 'failed';
@@ -264,16 +283,14 @@ try {
     }
     await until(() => !document.querySelector('.iw-ui .iw-screen.is-leaving') && +getComputedStyle(window.__inkwave.fadeEl).opacity < 0.05, null, 30000, 'menu settled');
     await until(() => { const f = window.__inkwave.menus._focus; return f && +getComputedStyle(f).opacity > 0.6; }, null, 30000, 'menu entrance');
-    await until(focusRingSettled, null, 30000, 'touch button selection aligned to focus');
-    const menu = (round.menu = await snap());
+    const menu = (round.menu = await alignedFocusSnapshot('touch-owned menu'));
     check(i + 1, 'menu', menu.menu === 'main' && menu.screen === 'main' && menu.screens === 1 && !menu.starting && !menu.modal, 'one live main menu screen', menu);
     check(i + 1, 'menu', menu.huds === 1 && menu.hudOverlays === 1 && menu.menuLayers === 1 && menu.mobileRoots === 1 && menu.duplicateIds.length === 0, 'no duplicated UI roots or ids', menu);
     check(i + 1, 'menu', menu.hudHidden && !menu.touchVisible && menu.touchDown.length === 0 && menu.judges === 0, 'HUD and touch controls retired in the menus', menu);
     check(i + 1, 'menu', menu.focusConnected === true && menu.ringOn && menu.ringVisible && menu.ringOnFocus === true,
       'touch-owned main-menu button has its native visible focus-aligned selection ring', menu);
     await page.keyboard.press('ArrowDown');
-    await until(focusRingSettled, null, 30000, 'keyboard selection aligned to focus');
-    const keyboardMenu = await snap();
+    const keyboardMenu = await alignedFocusSnapshot('keyboard handoff');
     check(i + 1, 'menu', keyboardMenu.ringOn && keyboardMenu.ringVisible && keyboardMenu.ringOnFocus === true,
       'keyboard handoff restores the selection ring on the focused item (no pixel readback)', keyboardMenu);
     check(i + 1, 'menu', menu.fade < 0.05, 'fade cleared', menu.fade);

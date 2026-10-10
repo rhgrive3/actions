@@ -14,6 +14,20 @@ const SITE = () => process.env.INKWAVE_ISSUE305_SITE || `${ROOT}.issue-305-sourc
 const COST = 8.5;          // profile weapons.roller.flickInk / verticalInk
 const DEPLETION_COST = 4.25; // COST * sourced CollisionParam.DepletionRate (0.5)
 
+function assertDepletedCollision(p) {
+  const c = p.fidelityRollerUnit?.UnitParam?.CollisionParam;
+  assert.ok(c, 'the production projectile retains its exact source unit');
+  const rate = c.DepletionRate;
+  near(p.fidelityPlayerCollision.initRadius, c.InitRadiusForPlayer * rate, 'player init radius uses DepletionRate');
+  near(p.fidelityPlayerCollision.endRadius, c.EndRadiusForPlayer * rate, 'player end radius uses DepletionRate');
+  near(p.fidelityFieldCollision.initRadius, c.InitRadiusForField * rate, 'field init radius uses DepletionRate');
+  near(p.fidelityFieldCollision.endRadius, c.EndRadiusForField * rate, 'field end radius uses DepletionRate');
+  near(p.fidelityPlayerCollision.changeTime, c.ChangeFrameForPlayer / 60, 'player radius chronology stays sourced');
+  near(p.fidelityFieldCollision.changeTime, c.ChangeFrameForField / 60, 'field radius chronology stays sourced');
+  assert.equal(p.fidelityPlayerCollision.FriendThroughFrameForPlayer, c.FriendThroughFrameForPlayer);
+  near(p.size, p.fidelityPlayerCollision.initRadius, 'rendered size follows the actual hit radius');
+}
+
 async function setup(vertical, ink) {
   const f = await fixture({ site: SITE(), fidelity: true });
   const a = f.make('roller'); f.G.actors = [a];
@@ -62,7 +76,10 @@ for (const hz of [30, 60, 120]) for (const vertical of [false, true]) {
       assert.equal(p.s3DepletionRound, true, 'every emitted unit preserves the depleted swing');
       assert.equal(p.s3DepletionPaintScale, p.fidelityRollerUnit.UnitParam.PaintParam.DepletionDepthWidthRate,
         `unit ${p.fidelityRollerUnitIndex} uses its own sourced depletion paint rate`);
+      assertDepletedCollision(p);
     }
+    assert.ok(rel.globs.every(p => p.s3DamageGroup === rel.globs[0].s3DamageGroup),
+      'the real reduced volley keeps one grouped-hit owner');
     if (!vertical) assert.equal(rel.globs.at(-1).fidelityRollerUnitIndex, 1, 'the appended nearest glob is covered');
     // 4.0 < 4.25, so the real remaining tank is spent exactly once.
     near(4.0 - inkAfterRelease(h), 4.0, 'paid the whole remaining tank');

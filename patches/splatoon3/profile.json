@@ -366,8 +366,7 @@
       "spawnPlayerForwardRate": 2,
       "squidFlickDelay": 0.21666666666666667,
       "rollDamage": 125,
-      "rollInkRecoverStop": 0.3333333333333333,
-      "rollContactInterval": 0.4
+      "rollInkRecoverStop": 0.3333333333333333
     },
     "slosher": {
       "inkPerShot": 7.6,
@@ -513,7 +512,7 @@
     "inkRefillKid": 10,
     "inkRefillDelay": 0.3333333333333333,
     "regenDelay": 1,
-    "regenRate": 12.5,
+    "regenRate": 12.6,
     "regenRateSwim": 100,
     "enemyInkDps": 18,
     "enemyInkDamageCap": 40,

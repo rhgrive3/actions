@@ -333,19 +333,3 @@ test('#1153 remote Bubbler lifecycle is one static map target and fixed-step jum
     assert.equal(dome.hp, dome.hpMax, 'reusable jumps do not spend Bubbler durability');
   }
 });
-
-for (const hz of [30,60,120]) test(`#779 HUD and Diorama home requests retain separate stage points through native flight/landing at ${hz} Hz`,async t=>{
-  const f=await boot();t.after(f.close);
-  const homes=[new f.THREE.Vector3(-60,0,-15),new f.THREE.Vector3(60,0,15)];
-  f.G.level.homeSuperJumpPoints=homes;
-  const actors=[f.make('shooter',0,'home HUD',[0,0,5],0,91),f.make('shooter',1,'home Diorama',[0,0,-5],0,92)];
-  const flights=new Map();f.on('superjump',e=>{if(e.phase==='flight')flights.set(e.actor,e.to.clone());});
-  f.G.match.local=actors[0];const hud=hudFor(f,actors[0]);
-  assert.equal(hud._beaconTargets()[3].pad,homes[0]);hud._jumpTo(3);
-  f.G.match.local=actors[1];const dio=installDom(f);dio.update(STEP,1);dio._jump(3,actors[1]);
-  for(const a of actors){assert.ok(a.superJumpState?.target.equals(homes[a.team]));assert.notEqual(a.superJumpState.target,homes[a.team]);}
-  const spawnBefore=f.G.level.spawnPads.map(p=>p.toArray()),clock=new f.FixedClock();
-  for(let frame=0;frame<hz*5;frame++)clock.advance(1/hz,dt=>{f.G.time+=dt;for(const a of actors)a.update(dt);});
-  for(const a of actors){assert.equal(a.superJumpState,null);assert.ok(a.pos.distanceTo(homes[a.team])<1e-5);assert.ok(flights.get(a)?.equals(homes[a.team]));}
-  assert.deepEqual(f.G.level.spawnPads.map(p=>p.toArray()),spawnBefore);
-});

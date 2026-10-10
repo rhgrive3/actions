@@ -27,13 +27,14 @@ import {
   installKitBigBubbler, bigBubblerDomes, bigBubblerRemoteDomes,
   clearBigBubblers, kitBarrierCandidate, adjudicateBigBubblerDamage,
   bigBubblerOwnerId, BIG_BUBBLER_RAW, BIG_BUBBLER_CALIBRATION,
+  BLASTER_OBJECT_MULTIPLIER, OBJECT_SHREDDER_MULTIPLIER,
 } from '../runtime/kit-big-bubbler.mjs';
 import { installKitDefense } from '../runtime/kit-defense.mjs';
+import { abilityAllowed, emptyLoadout, normalizeLoadout } from '../runtime/gear.mjs';
 
 const RAW_PER_DAMAGE_UNIT = BIG_BUBBLER_CALIBRATION.rawPerDamageUnit; // 100 (declared)
 const CANOPY_RATIO = BIG_BUBBLER_RAW.damageRatio;                     // 0.64
 const BLASTER_DIRECT = 125;                  // profile.weapons.blaster.directDamage
-const BLASTER_OBJECT_MULTIPLIER = 1.9;       // #1161 sourced source-side object rate
 const DOME_HP = 40000;                       // pinned test budget above one contact
 
 async function composed() {
@@ -49,6 +50,45 @@ async function composed() {
   installKitDefense(api);
   clearBigBubblers('blaster-contact-test');
   return { f, api };
+}
+
+async function productionComposition() {
+  return productionFixture({ productionComposition: true, fullRuntime: true, realProjectiles: true,
+    extraExports: "export { bigBubblerDomes as productionDomes } from './patches/splatoon3/runtime/kit-big-bubbler.mjs';" });
+}
+
+async function productionDome(f) {
+  f.G.scene = new f.THREE.Scene();
+  f.G.projectiles = new f.Projectiles(f.G.scene);
+  level(f);
+  const owner = f.make('roller');
+  owner.pos.set(0, 0, 0); owner.yaw = owner.aimYaw = 0;
+  owner.weapon = { ...owner.weapon, special: 'bubbler', specialCost: 180 };
+  owner.special = owner.specialCost();
+  owner._startSpecial();
+  const dome = f.productionDomes()[0];
+  assert.ok(dome, 'the installed production runtime deploys the actual dome');
+  for (let i = 0; i < 240; i++) f.G.projectiles.update(1 / 60);
+  dome.hp = DOME_HP;
+  f.G.actors = [];
+  return { owner, dome };
+}
+
+function equipObjectShredder(actor) {
+  actor.isLocal = false;
+  actor.s3 ||= {};
+  actor.s3.loadout = emptyLoadout();
+  actor.s3.loadout[2].main = 'objectShredder';
+  actor.setWeapon('blaster');
+  return actor;
+}
+
+function equipNoObjectShredder(actor) {
+  actor.isLocal = false;
+  actor.s3 ||= {};
+  actor.s3.loadout = emptyLoadout();
+  actor.setWeapon('blaster');
+  return actor;
 }
 
 function level(f) {
@@ -167,6 +207,51 @@ test('#1161 source-side decomposition: source damage, object rate and target sca
     'the canopy ratio is a distinct target-side factor, not folded into the source rate');
 });
 
+test('#1161 Object Shredder is shoes-main-only and resolves per shooter', async () => {
+  assert.equal(BLASTER_OBJECT_MULTIPLIER, 1.9, 'preserve the existing primary-source object rate');
+  assert.equal(OBJECT_SHREDDER_MULTIPLIER, 1.1, 'the gear contribution is a separate source factor');
+  assert.equal(BLASTER_OBJECT_MULTIPLIER * OBJECT_SHREDDER_MULTIPLIER, 2.09);
+  assert.equal(abilityAllowed('objectShredder', 2, 0), true, 'Object Shredder is allowed on shoes main');
+  assert.equal(abilityAllowed('objectShredder', 0, 0), false, 'it is not a head ability');
+  assert.equal(abilityAllowed('objectShredder', 1, 0), false, 'it is not a clothes ability');
+  assert.equal(abilityAllowed('objectShredder', 2, 1), false, 'it cannot be a shoes sub');
+
+  const invalid = emptyLoadout();
+  invalid[0].main = 'objectShredder'; invalid[2].main = 'objectShredder';
+  invalid[2].subs[0] = 'objectShredder';
+  const normalized = normalizeLoadout(invalid);
+  assert.equal(normalized[0].main, 'none');
+  assert.equal(normalized[2].main, 'objectShredder');
+  assert.equal(normalized[2].subs[0], 'none');
+
+  const { f } = await composed();
+  const geared = equipObjectShredder(f.make('blaster')); geared.team = 1;
+  const bare = equipNoObjectShredder(f.make('blaster')); bare.team = 1;
+  assert.equal(geared.s3.modifiers.objectShredder, true);
+  assert.equal(bare.s3.modifiers.objectShredder, false);
+  const { dome } = await withDome(f, DOME_HP);
+  const { start, end } = approach(dome);
+  const gearedHit = kitBarrierCandidate(blastRound(f, geared, start, geared.weapon), start, end);
+  assert.ok(gearedHit);
+  const gearedDamage = gearedHit.damage;
+  const bareHit = kitBarrierCandidate(blastRound(f, bare, start, bare.weapon), start, end);
+  assert.ok(bareHit);
+  const bareDamage = bareHit.damage;
+  assert.equal(gearedDamage, BLASTER_DIRECT * 1.9 * 1.1 * RAW_PER_DAMAGE_UNIT * CANOPY_RATIO);
+  assert.equal(bareDamage, BLASTER_DIRECT * 1.9 * RAW_PER_DAMAGE_UNIT * CANOPY_RATIO,
+    'a different actor’s Object Shredder does not affect this shooter');
+
+  // At the exposed device/weakpoint, the same source rate applies without the
+  // canopy-only 0.64 target ratio.
+  const fieldY = dome.pos.y + dome.emitterY;
+  const fieldStart = new f.THREE.Vector3(dome.pos.x, fieldY, dome.pos.z - 10);
+  const fieldEnd = new f.THREE.Vector3(dome.pos.x, fieldY, dome.pos.z + 10);
+  const fieldHit = kitBarrierCandidate(blastRound(f, geared, fieldStart, geared.weapon), fieldStart, fieldEnd);
+  assert.ok(fieldHit && fieldHit.target === 'field', 'the exposed device is a separate target');
+  assert.equal(fieldHit.damage, BLASTER_DIRECT * 1.9 * 1.1 * RAW_PER_DAMAGE_UNIT,
+    'the weakpoint receives the 2.09x source rate without the canopy ratio');
+});
+
 test('#1161 controls: a shooter round and a non-stock blast family stay at 1.00x', async () => {
   const { f } = await composed();
   const { dome } = await withDome(f, DOME_HP);
@@ -193,7 +278,7 @@ test('#1161 controls: a shooter round and a non-stock blast family stay at 1.00x
     'a non-stock blast family is not amplified by the Hot Blaster rate');
 });
 
-test('#1161 the 1.9x is applied once: local spend, remote proposal and host adjudication agree', async () => {
+test('#1161 local 1.9x and remote 2.09x proposals each apply once through host adjudication', async () => {
   const { f } = await composed();
   const { dome: local } = await withDome(f, DOME_HP);
   const expected = BLASTER_DIRECT * BLASTER_OBJECT_MULTIPLIER * RAW_PER_DAMAGE_UNIT * CANOPY_RATIO;
@@ -214,13 +299,15 @@ test('#1161 the 1.9x is applied once: local spend, remote proposal and host adju
   const remote = { ...local, remote: true };
   bigBubblerDomes().length = 0;                // force the remote dome to win the query
   bigBubblerRemoteDomes().push(remote);
-  const remoteShooter = { ...enemy, nid: 22 };
-  const remoteCand = kitBarrierCandidate(blastRound(f, remoteShooter, start, enemy.weapon), start, end);
+  const remoteShooter = equipObjectShredder(f.make('blaster'));
+  remoteShooter.team = 1; remoteShooter.nid = 22;
+  const withObjectShredder = expected * OBJECT_SHREDDER_MULTIPLIER;
+  const remoteCand = kitBarrierCandidate(blastRound(f, remoteShooter, start, remoteShooter.weapon), start, end);
   assert.ok(remoteCand && remoteCand.remote, 'a local round against a remote dome only proposes');
-  assert.equal(remoteCand.damage, expected, 'the proposal amount already carries 1.9x once and 0.64 once');
+  assert.equal(remoteCand.damage, withObjectShredder, 'the proposal carries 1.9 x 1.1 and 0.64 once');
   const remoteHp = remote.hp;
   assert.equal(remoteCand.onHit(), 0, 'the proposing client spends nothing');
-  assert.equal(remoteCand.proposal.amount, expected, 'the flat proposal carries the canonical amount');
+  assert.equal(remoteCand.proposal.amount, withObjectShredder, 'the flat proposal carries the canonical 2.09x amount');
   assert.equal(remote.hp, remoteHp, 'the remote dome is untouched on the proposing client');
 
   // ---- host adjudication: applies the SAME amount once, never re-multiplies
@@ -231,38 +318,81 @@ test('#1161 the 1.9x is applied once: local spend, remote proposal and host adju
   const result = adjudicateBigBubblerDamage(remoteCand.proposal, { host: true, roster });
   assert.equal(result.ok, true, `adjudication must accept the proposal: ${JSON.stringify(result)}`);
   assert.equal(result.reason, 'applied');
-  assert.equal(result.applied, expected, 'the host applies the source-scaled amount once');
-  assert.equal(local.hp, DOME_HP - expected, 'and the authoritative dome moved by exactly that amount');
+  assert.equal(result.applied, withObjectShredder, 'the host applies the fully resolved amount once without re-multiplying');
+  assert.equal(local.hp, DOME_HP - withObjectShredder, 'and the authoritative dome moved by exactly that amount');
   const again = adjudicateBigBubblerDamage(remoteCand.proposal, { host: true, roster });
   assert.equal(again.ok, true);
   assert.equal(again.reason, 'duplicate', 'a retransmit is a duplicate');
-  assert.equal(local.hp, DOME_HP - expected, 'and never re-applies');
+  assert.equal(local.hp, DOME_HP - withObjectShredder, 'and never re-applies');
 
   // sanity: the owner identity used by adjudication is the real one
   assert.equal(remoteCand.proposal.domeOwner, bigBubblerOwnerId(owner));
 });
 
 
-test('#1161 complete production composition and installed runtime retain one direct contact multiplier', async () => {
-  const f = await productionFixture({ productionComposition: true, fullRuntime: true, realProjectiles: true,
-    extraExports: "export { bigBubblerDomes as productionDomes } from './patches/splatoon3/runtime/kit-big-bubbler.mjs';" });
-  f.G.scene = new f.THREE.Scene();
-  f.G.projectiles = new f.Projectiles(f.G.scene);
-  level(f);
-  const owner = f.make('roller');
-  owner.pos.set(0, 0, 0); owner.yaw = owner.aimYaw = 0;
-  owner.weapon = { ...owner.weapon, special: 'bubbler', specialCost: 180 };
-  owner.special = owner.specialCost();
-  owner._startSpecial();
-  const dome = f.productionDomes()[0];
-  assert.ok(dome, 'the installed production runtime deploys the actual dome');
-  for (let i = 0; i < 240; i++) f.G.projectiles.update(1 / 60);
-  dome.hp = DOME_HP;
-  f.G.actors = [];
+test('#1161 full production composition: Object Shredder adds exactly 1.1 to the real direct-contact path', async () => {
+  const f = await productionComposition();
+  const { dome } = await productionDome(f);
   const enemy = f.make('blaster'); enemy.team = 1;
   enemy.pos.set(dome.pos.x, 0, dome.pos.z - 40); enemy.yaw = enemy.aimYaw = 0;
+  equipObjectShredder(enemy);
   const round = spawnBlaster(f, enemy, new f.THREE.Vector3(dome.pos.x, 1.2, dome.pos.z - 40), new f.THREE.Vector3(0, 0, 1));
   assert.equal(round.s3Weapon.kind, 'blaster');
   assert.ok(runPinningBeforeContact(f, round, dome, DOME_HP));
-  assert.equal(DOME_HP - dome.hp, BLASTER_DIRECT * BLASTER_OBJECT_MULTIPLIER * RAW_PER_DAMAGE_UNIT * CANOPY_RATIO);
+  assert.equal(DOME_HP - dome.hp, BLASTER_DIRECT * 1.9 * 1.1 * RAW_PER_DAMAGE_UNIT * CANOPY_RATIO);
+});
+
+test('#1161 Object Shredder does not amplify blaster splash or make a neutral round authoritative', async () => {
+  const { f } = await composed();
+  const { dome } = await withDome(f, DOME_HP);
+  dome.ignited = false;
+  const at = new f.THREE.Vector3(dome.pos.x, 0.7, dome.pos.z - dome.radius - 0.2);
+  const victim = f.make('shooter'); victim.team = dome.team;
+  victim.pos.set(dome.pos.x, 0, dome.pos.z - dome.radius + 0.5);
+  const geared = equipObjectShredder(f.make('blaster')); geared.team = 1;
+  const splash = blastRound(f, geared, at, geared.weapon);
+  f.G.actors = [geared, victim];
+  const beforeSplash = dome.hp;
+  f.G.projectiles._blastBurst(splash, at, null);
+  const splashSpend = beforeSplash - dome.hp;
+  assert.ok(splashSpend > 0, 'the fixture routes a real production burst splash through kit defense');
+
+  dome.hp = DOME_HP; dome.damageProgress = 0;
+  const bare = equipNoObjectShredder(f.make('blaster')); bare.team = 1;
+  f.G.actors = [bare, victim];
+  const beforeBareSplash = dome.hp;
+  f.G.projectiles._blastBurst(blastRound(f, bare, at, bare.weapon), at, null);
+  assert.equal(beforeBareSplash - dome.hp, splashSpend,
+    'the native splash probe has no direct-contact type, so Object Shredder adds no direct multiplier');
+
+  dome.hp = DOME_HP; dome.damageProgress = 0;
+  f.G.actors = [];
+  const { start, end } = approach(dome);
+  const neutral = blastRound(f, geared, start, geared.weapon);
+  // A neutral hit is only a visual intercept.
+  neutral.team = null;
+  const visual = kitBarrierCandidate(neutral, start, end);
+  assert.ok(visual?.visualOnly);
+  assert.equal(visual.onHit(), 0);
+  assert.equal(dome.hp, DOME_HP, 'neutral projectiles cannot spend Big Bubbler HP');
+});
+
+test('#1161 Object Shredder does not change direct Blaster damage in Practice Range', async () => {
+  const f = await productionComposition();
+  f.G.scene = new f.THREE.Scene();
+  f.G.projectiles = new f.Projectiles(f.G.scene);
+  level(f);
+  f.G.match.opts = { ...(f.G.match.opts || {}), range: true };
+  const enemy = equipObjectShredder(f.make('blaster')); enemy.team = 1;
+  enemy.pos.set(0, 0, -40); enemy.yaw = enemy.aimYaw = 0;
+  const target = f.make('shooter'); target.team = 0; target.pos.set(0, 0, -5); target.hp = 500;
+  const directHits = [];
+  const stop = f.on('damage', e => { if (e.victim === target) directHits.push(e.amount); });
+  const round = spawnBlaster(f, enemy, new f.THREE.Vector3(0, 1.2, -40), new f.THREE.Vector3(0, 0, 1));
+  assert.equal(round.damage, BLASTER_DIRECT, 'Object Shredder does not rewrite projectile/player damage');
+  for (let i = 0; i < 6000 && f.G.projectiles.list.includes(round); i++) f.G.projectiles.update(1 / 240);
+  stop();
+  assert.ok(!f.G.projectiles.list.includes(round), 'the real direct round resolves against the range target');
+  assert.deepEqual(directHits, [BLASTER_DIRECT], 'Practice Range Actor damage remains the stock direct 125');
+  assert.equal(target.hp, 500 - BLASTER_DIRECT);
 });

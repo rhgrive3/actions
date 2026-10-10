@@ -4,11 +4,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import http from 'node:http';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { checkCoreMenus } from './check-inkwave-responsive-core.mjs';
+import { createResponsiveAssetServer } from './lib/inkwave-responsive-server.mjs';
 import { confirmResponsiveMockHostTeams } from './inkwave-responsive-fixture.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
@@ -67,19 +67,7 @@ window.G=G;window.menuState=()=>({settings,profile,loadout});window.menus=new Me
 window.addEventListener('keydown',e=>{if(menus.handleKey(e)&&document.activeElement?.tagName!=='INPUT')e.preventDefault()});
 window.menuReady=true;
 </script></html>`;
-const mime = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2' };
-const server = http.createServer((request, response) => {
-  try {
-    const url = new URL(request.url, 'http://localhost');
-    if (url.pathname === '/__menus') { response.writeHead(200, { 'content-type': 'text/html' }); response.end(html); return; }
-    const relative = decodeURIComponent(url.pathname).slice(1);
-    let file = path.resolve(source, relative);
-    assert(file.startsWith(source + path.sep));
-    if (baseline && ['styles/mobile.css', 'src/ui/menus.js', 'src/ui/news.js'].includes(relative)) file = path.join(path.resolve(baseline), 'inkwave-public', relative);
-    response.writeHead(200, { 'content-type': mime[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
-    response.end(fs.readFileSync(file));
-  } catch { response.writeHead(404); response.end('Missing'); }
-});
+const server = createResponsiveAssetServer({ source, html, baseline });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const address = `http://127.0.0.1:${server.address().port}/__menus?netmock=1&mockauto=0&mocklat=0&news=0`;
 const result = { kind: 'production-menu-dom-with-offline-session', source, section, selectedCases, realDeviceVerified: false, baseline: baseline || null, cases: [], errors: [] };
@@ -90,7 +78,7 @@ const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.c
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));
 result.sourceHashes = sourceHashes();
-const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
+const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
 result.runnerHashes = runnerHashes();
 const configurations = [
   ['phone-portrait', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } }],
