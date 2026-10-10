@@ -118,10 +118,14 @@ export function prepareLoading(build, preloads, compactRuntime = source => sourc
   // The 512px install icon is optional for gameplay and is integrity-checked and
   // cache-on-request by the same worker, while the 192px and vector icons stay
   // in the cold-offline core. Preserve all boot modules and stage lightmaps.
+  // Cargo is an online-only/no-bots/no-boss stage (src/config.js). Its PNG
+  // lightmap is integrity-checked and cached on first online use, not copied
+  // into the 5 MiB cold-offline snapshot where that stage cannot be played.
+  // All three playable offline stage lightmaps remain in the install snapshot.
   // PWA icons are fetched by the browser at install/display time, not game startup.
   // Keep all three versioned icon files in BUILD.assets for integrity-checked
   // cache-on-request; precache the manifest and actual gameplay dependencies.
-  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||rel.startsWith('assets/lightmaps/')||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest')]);
+  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>rel.startsWith('assets/fonts/')||(rel.startsWith('assets/lightmaps/') && rel!=='assets/lightmaps/cargo.png')||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest')]);
   for(const rel of core)if(!assets[rel])throw new Error(`loading-cache: missing precache dependency ${rel}`);
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
