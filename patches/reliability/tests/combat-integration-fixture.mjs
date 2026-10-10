@@ -75,7 +75,8 @@ export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_
   const wire = [];
   const session = { myId: owner, hostId: 'A', isHost: owner === 'A', _members: new Map([['A', 'A'], ['B', 'B']]),
     tr: { sendTo: (to, data) => wire.push({ to, data: JSON.parse(JSON.stringify(data)) }), broadcast: data => wire.push({ data: JSON.parse(JSON.stringify(data)) }) } };
-  const net = new api.NetMatch(session, { map: 'reef' });
+  // An actual room has an immutable match ID; untagged combat is deliberately rejected.
+  const net = new api.NetMatch(session, { id: 'integration-round', map: 'reef' });
   const match = { actors: G.actors, state: 'playing', time: 180, canRespawn: () => true };
   G.match = match; net.bind(match);
   G.projectiles = { list: [], pool: [], bombs: [], clouds: [], beams: [], sights: new Map(), applyHit: api.Projectiles.prototype.applyHit };
