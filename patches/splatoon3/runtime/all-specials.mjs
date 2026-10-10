@@ -36,7 +36,7 @@ const SPECIALS = Object.freeze({
   superChump: { name: 'Super Chump', source: 'WeaponSpFirework', duration: 10.583, radius: 6, paintRadius: 3.5, near: 70, far: 35, status: '11.3.0 table: 70/35 at 3.6/6, paint 3.5, decoy HP 60, 108F flight, 210F burst and 635F special; count and spread calibrated' },
   krakenRoyale: { name: 'Kraken Royale', source: 'WeaponSpCastle', duration: [8, 9, 10], radius: 2.65, paintRadius: 1.2, near: 60, far: 60, status: '11.3.0 table: 480/540/600F, 35F charge/dash and 60 jump attack; remaining contact/charge values require game comparison' },
   splattercolorScreen: { name: 'Splattercolor Screen', source: 'WeaponSpChimney', duration: 11.333, radius: 15, paintRadius: 0, near: 40, far: 40, status: '11.3.0 table: 60F startup, 560F running, 60F closing; touch 400 raw, mark 120F, saturation 360F; moving-wall scale calibrated' },
-  waveBreaker: { name: 'Wave Breaker', source: 'WeaponSpShockSonar', duration: 10.1, radius: [20, 24, 27], paintRadius: 1.15, near: 45, far: 45, status: '11.3.0 table: 45 damage at 90/240/390F, 480 device HP, radii 20/24/27, wave 160/192/216F; wave visibility and painting calibrated' },
+  waveBreaker: { name: 'Wave Breaker', source: 'WeaponSpShockSonar', duration: 10.1, radius: [20, 24, 27], paintRadius: 0, near: 45, far: 45, status: '11.3.0 table: 45 damage at 90/240/390F, 480 device HP, 30 contact damage/0.5s, 45F generator mark, radii 20/24/27, wave 160/192/216F; 8s wave marks, world mapping calibrated' },
 });
 const IDS = new Set(Object.keys(SPECIALS));
 const descriptions = Object.freeze({
@@ -54,7 +54,7 @@ const descriptions = Object.freeze({
   superChump: { radius: 6, paintRadius: 3.5, damageMax: 70, damageMin: 35, directDamage: 70, splashBands: [[3.6, 70], [6, 35]] },
   krakenRoyale: { radius: 2.65, paintRadius: 1.2, damageMax: 60, damageMin: 60, directDamage: 60, splashBands: [[2.65, 60]] },
   splattercolorScreen: { radius: 15, paintRadius: 0, damageMax: 40, damageMin: 40, directDamage: 40, splashBands: [[15, 40]] },
-  waveBreaker: { radius: 27, paintRadius: 1.15, damageMax: 45, damageMin: 45, directDamage: 45, splashBands: [[27, 45]] },
+  waveBreaker: { radius: 27, paintRadius: 0, damageMax: 45, damageMin: 45, directDamage: 45, splashBands: [[27, 45]] },
 });
 
 const actorStates = new WeakMap();
@@ -760,6 +760,20 @@ function updateWorld(rt,dt) {
       if(elapsed>=o.expand)removeWorld(rt,o,'expire');
     }else if(o.kind==='wave'){
       if(o.mesh)o.mesh.material.emissiveIntensity=.18+.4*Math.sin(o.age*9);
+      const frame=o.age*FPS,markRatio=frame<4?0:frame<18?.19+.425*(frame-4)/14:.615;
+      o.contactTimes ||= new Map();
+      for(const victim of rt.api.G.actors||[]){
+        if(!victim?.alive||victim.team===o.team)continue;
+        const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.hypot(dx,dz);
+        if(frame<=45&&d<=o.maxRadius*markRatio&&dy>=-5.2&&dy<=2.8){
+          victim.s3 ||= {};victim.s3.revealedUntil ||= {};
+          victim.s3.revealedUntil[o.team]=Math.max(victim.s3.revealedUntil[o.team]||0,rt.api.G.time+45/FPS);
+        }
+        if(d<=1.2&&dy>=-.75&&dy<=2.75){
+          const next=o.contactTimes.get(victim)||0;
+          if(o.age+1e-8>=next){if(!o.owner.remote)rt.api.G.projectiles.applyHit(o.owner,victim,30,'waveBreaker');o.contactTimes.set(victim,o.age+.5);}
+        }else if(o.contactTimes.get(victim)<=o.age)o.contactTimes.delete(victim);
+      }
       while(o.pulse<3&&o.age+1e-8>=o.pulseFrames[o.pulse]){
         const start=o.pulseFrames[o.pulse];o.waves.push({started:start,radius:o.maxRadius,last:0,seen:new Set(),pulse:o.pulse});
         o.pulse++;if(!o.owner.remote)emitObject(rt,o,'pulse');
@@ -774,13 +788,8 @@ function updateWorld(rt,dt) {
           wave.seen.add(victim);
           if(!o.owner.remote)rt.api.G.projectiles.applyHit(o.owner,victim,45,'waveBreaker');
           victim.s3 ||= {};victim.s3.revealedUntil ||= {};
-          victim.s3.revealedUntil[o.team]=Math.max(victim.s3.revealedUntil[o.team]||0,rt.api.G.time+45/FPS);
+          victim.s3.revealedUntil[o.team]=Math.max(victim.s3.revealedUntil[o.team]||0,rt.api.G.time+8);
         }
-        o.paintT=(o.paintT||0)-dt;
-        if(!o.owner.remote&&o.paintT<=0){o.paintT=.1;const n=24;for(let j=0;j<n;j++){
-          const a=j/n*Math.PI*2,p=rt.v1.set(o.pos.x+Math.cos(a)*r,o.pos.y+.08,o.pos.z+Math.sin(a)*r);
-          if(rt.api.G.physics?.raycast){const g=rt.api.G.physics.raycast(rt.v2.copy(p).add(rt.up),rt.down,4,rt.hit,true);if(g?.hit)paintStamp(rt,o.owner,g.point,.85,seedUnit(o.seed,wave.pulse*64+j+Math.floor(o.age*10)));}
-        }}
       }
       if(o.age>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='decoy'){
@@ -1016,7 +1025,7 @@ function activeStep(rt,actor,dt) {
   }
   if(state.id==='waveBreaker'){
     moveActor(rt,actor,dt,state,{squid:true});
-    if(edges.fire||edges.sub||elapsed>=.5)deployWave(rt,actor,state);
+    if(edges.fire||edges.sub)deployWave(rt,actor,state);
     return;
   }
 }
