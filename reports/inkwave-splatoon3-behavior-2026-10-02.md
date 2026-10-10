@@ -3219,3 +3219,14 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 **確認状態:** `patches/splatoon3/tests/issue-264-subcell-spatter-owner.test.mjs` 2/2 通過。規則を一時的に無効にすると、1件目（14個のスパッタ中心セルがすべて所有されること）が失敗することを確認した（その後復元）。既存の近傍試験15ファイル（issue-264 の temporal/authority/score-boundaries/additional/hash/wall、turf-projected-area、projectile-paint-radius、issue-289、issue-803、issue-979、roller-foot、weapon-paint-inertia、network paint-canonical-order）は計90件すべて通過。これらはロジック単独の測定であり、ブラウザの WebGL 実描画、物理 GPU、Switch の画素一致の証拠ではない。
 
 **未解決・残件（未確認）:** (1) サテライト（type 2、楕円）と引き伸ばし（`sa > 0`）の極小ドットは、従来の5サンプル規則のまま。(2) 既存の browser probe（`paint-mask-browser-fixture.mjs`）は「CPU所有セル ⊆ GPU可視」の向きのみを検証し、今回の中心セル規則とは厳密には食い違う可能性があるが、ブラウザ実行はこの環境で未実施。「GPU可視 ⊆ CPU所有」の向きの追加検証も未実施。(3) 物理 GPU、ブラウザの実描画、Switch でのピクセル一致は **UNKNOWN / unverified**。
+### #949 Boss rejected hits and Slosher volley budget (2026-10-10, takeover)
+
+**本家の根拠:** 直接の比較対象はINKWAVE独自のBossモードであり、Splatoon 3の公式仕様や実機の同等挙動とは同一視しない（PR #1182 の既存記録と同じ扱い）。本修正は、既存のSlosher volley最大値（プレイヤー側 `applySlosherVolleyHit`、#627/#628系）と同じ「同一volley内で同一対象に対し最大値を超えた分だけ適用する」INKWAVE内部契約を、Boss側でも受理後に確定させる修正である。新しいS3数値・ダメージ値は追加していない。Splatoon 3側のSlosher volley最大値規則そのものは今回再確認していないため未確認。
+
+**INKWAVE の実装箇所:** `patches/splatoon3/runtime/weapons-fidelity.mjs` の `bossVolleyAdmission`（新規）と `Projectiles.prototype._bossImpact`。生存・非無敵・可視・playing・有効なattacker・生存クラブレットの受理時だけ `groupDamage` で予算を確定して `Boss.hit` を呼ぶ。無敵・非表示の拒否で、local/host の攻撃者かつ本体（クラブレットではない）の場合だけ、既存の `Boss.hit` の blocked 通知（IMMUNE表示）を残すため、予算を確定せず未消費差分のみを渡す。`inkwave-public/src/boss/boss.js` は変更していない。
+
+**再現操作:** 実 Projectiles で Slosher の9 glob volley を発射し、最初の glob を無敵の Boss に当てる。その後、無敵を解除して同じ volley の次の glob を当てる。修正前は HP1000 のまま group 最大値70だけが残る。修正後は HP930 が1回だけ適用される。guest は拒否された命中を送信しない。
+
+**プレイへの影響:** 無敵・非表示中の命中が、同じ volley の後続の正当な命中の予算を奪わなくなる。無敵中の IMMUNE 表示は従来どおり出る。死亡・remote・ghost・終了後・攻撃者欠落では新たな送信や表示は増えない。
+
+**確認状態:** 実 Projectiles → Boss.hit/applyDamage/_hitCrab/BossHud._hit の Node 回帰（`issue-949-boss-blocked-feedback.test.mjs` 7件、`boss-volley-admission.test.mjs` 2件、隣接する Slosher・Boss の回帰を含む）で確認。修正前の main では 949 回帰7件が失敗することを確認した。ブラウザ描画、実通信、Nintendo 実機比較は未確認。Boss側の Splatoon 3 対応は未確認。
