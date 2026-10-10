@@ -137,7 +137,7 @@ test('uncacheable Vary star fails candidate, not previous snapshot',async()=>{
  await assert.rejects(world.worker(b).install(),/Uncacheable/);assert(world.maps.has(prefix+REV_A));assert(!world.maps.has(prefix+REV_B));
 });
 test('budget checks reject oversize revisions before network or storage writes',async()=>{
- const world=new World(),b=makeBuild();b.config.declaredBytes=12*1024*1024+1;await assert.rejects(world.worker(b).install(),/budget/);assert.equal(world.fetches.length,0);assert.equal(world.puts.length,0);
+ const world=new World(),b=makeBuild();b.config.declaredBytes=16*1024*1024+1;await assert.rejects(world.worker(b).install(),/budget/);assert.equal(world.fetches.length,0);assert.equal(world.puts.length,0);
 });
 test('old worker fixture really refetches/rewrites warm scripts and bypasses JSON',{skip:!process.env.INKWAVE_BASELINE_SITE},async()=>{
  const oldPath=process.env.INKWAVE_BASELINE_SITE;if(!oldPath)return;
