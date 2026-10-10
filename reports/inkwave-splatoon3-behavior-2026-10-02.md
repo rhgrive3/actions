@@ -3448,3 +3448,14 @@ Reference: Splatoon 3 Ver. 11.3.0. Nintendo's [11.3.0 notes](https://en-americas
 - プレイへの影響: 切断直後から Storm の雨が止まり、切断前に受信済みの持ち主の塗りは保持される（履歴の得点は残る）。
 - 確認状態: 回帰試験 `issue-six-followup-network-paint.test.mjs` の #905 の 2 件（ホスト・非ホストの退場、遅延パケットの遮断、30/60/120 Hz の固定更新での回収結果の一致）でロジックのみ確認。実際のマルチクライアント、本家の実機比較は未実行。
 - 未確認・未対応: 退場時に各 peer で未再生の切断前スプラットを `peer.events` から破棄するため、peer 間で再生済み／未再生の境界が一致するかは未確認。切断後の Storm の残り時間・塗りの本家の挙動は未確認。採用・権限移譲の受け入れ条件は現行の退場方針により対象外。
+### #1022 — Bucket Slosher random-yaw bias (RandomRotateYBias)
+
+Splatoon 3 reference: Ver. 11.3.0 Bucket Slosher, pinned source record `WeaponSlosherStrong.game__GameParameterTable.json` at Leanny/splat3 `7280ff9c`. Unit 1 (`RandomRotateYOffOrderNum` [0]: bullet 0 exempt) and Unit 2 carry `RandomRotateYDegree` 4.5 and `RandomRotateYBias` 0.65. The native sampling law of the bias field is 未確認: no official or community definition was found, so the source-backed meaning is not asserted.
+
+INKWAVE implementation: `slosherYawOffset()` in `patches/splatoon3/runtime/weapons-fidelity.mjs`, called from the launch yaw. Exempt bullets consume no random number; every other bullet consumes exactly one. The normalised draw x in [-1, 1] maps to sign(x)·|x|^(1+bias)·4.5°. Bias 0 is the uniform control. This curve is an INKWAVE calibration, not a Nintendo distribution. The unused parallel `biasedSourceYaw`, whose "deviation law" attribution was unverified and whose parameter direction differed from the live law, was removed.
+
+Reproduction (logic only): with a fixed RNG draw of 0.75, Unit 2 bullet 0 gives a launch yaw delta of about 1.43° at bias 0.65 and 2.25° at bias 0 (uniform). Unit 1 bullet 0 gives 0° and consumes no draw. Regression tests: `patches/splatoon3/tests/issue-1022-slosher-yaw-bias.test.mjs` and `weapons-fidelity-source.test.mjs`.
+
+Play impact: the lateral spread of Slosher globs (edge hits, cover contact, lane shape, turf placement) may differ from the native game. Relative to uniform, the calibration concentrates globs nearer the aim line. The magnitude is not measured on Switch.
+
+確認状態: 未確認. The bias sampling law, native distribution parity, and deterministic replay/network reproduction of the yaw are not verified. The numbers above are calculations from the calibration formula, not Nintendo or device measurements. Fixed on logic only: the bias field is consumed, exemption draws and the 4.5° range are covered by tests.

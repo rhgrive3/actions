@@ -36,17 +36,6 @@ export function bossVolleyAdmission(boss, attacker, target) {
   return !boss.invuln && !!boss.visible && Number.isFinite(boss.hp) && boss.hp > 0;
 }
 const radians = degrees => degrees * Math.PI / 180;
-// Splatoon deviation law: magnitude = s * x^(log_0.5(bias)).
-// Reflect the same ONE existing uniform RNG draw around zero, keeping the
-// sign independent of |x|. 0.5 retains the previous uniform yaw; 0 -> 0;
-// 1 -> full deviation. Exempt source indices consume no random numbers.
-export function biasedSourceYaw(uniform, degrees, bias = 0.5) {
-  const half = Math.min(1, Math.max(0, Number.isFinite(bias) ? bias : 0.5));
-  if (half <= 0 || !Number.isFinite(degrees) || degrees === 0) return 0;
-  const x = Math.min(1, Math.max(0, Number.isFinite(uniform) ? uniform : 0.5)) * 2 - 1;
-  const magnitude = half >= 1 ? (x === 0 ? 0 : 1) : Math.pow(Math.abs(x), Math.log(half) / Math.log(0.5));
-  return Math.sign(x) * magnitude * radians(degrees);
-}
 const MAIN_SHOT_LIFETIME = 1.2;
 function freezeDeep(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -859,9 +848,11 @@ export function fidelitySlosherImpactPaint(p, point) {
   const radius=(w0+(w1-w0)*t)*scale*shrink;
   return radius>0?{radius,stretchAmt:Math.max(.05,(d0+(d1-d0)*t)*shrink)}:null;
 }
-// #1022: explicit source bias input, keeping one RNG draw and exclusions.
-// The exponent is a deliberately labelled symmetric calibration, NOT a
-// verified Nintendo distribution; replace it when sampling semantics are known.
+// #1022: the single live Slosher yaw law. RandomRotateYBias is consumed as an
+// exponent 1+bias on the normalised uniform draw (bias 0 = uniform control).
+// This is an INKWAVE calibration, NOT a verified Nintendo distribution: the
+// native sampling law is 未確認. Exempt indices (RandomRotateYOffOrderNum)
+// consume no random number; other indices consume exactly one.
 export function slosherYawOffset(u,index,rng=Math.random) {
   if (!u || u.RandomRotateYOffOrderNum?.includes(index)) return 0;
   const angle=u.RandomRotateYDegree || 0;
