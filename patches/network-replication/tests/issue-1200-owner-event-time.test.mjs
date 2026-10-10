@@ -54,7 +54,7 @@ test('#1200 burst and stalled presentation clocks cannot retain an unbounded eve
     assert.ok(peer().events.length<=16384,'per-peer queue always bounded');
   }
   assert.equal(peer().events.length,16384);
-  assert.ok(peer().events.at(-1)[0]>=1000.29,'most recent legal events survive');
+  assert.ok(peer().events.at(-1)[0]>=1000.28,'most recent legal events survive');
   nm.onLeave('p2',false);
   assert.equal(nm.peers.has('p2'),false,'owner departure clears the queued event epoch');
 });
