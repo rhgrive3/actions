@@ -6,6 +6,7 @@ import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint } from './roller-impact-paint.mjs';
+import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint } from './shooter-impact-paint.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
@@ -1406,6 +1407,24 @@ export function installWeaponsFidelity(context,profile) {
     dropHeightMin: (shooterPaint.DepthMinDropHeight ?? 10) * paintScale,
     worldUnitsPerSourceUnit: paintScale,
   });
+  // #79: Shooter PaintParam (Ver. 11.3.0). Far anchor and angle thresholds are not
+  // in the record; see shooter-impact-paint.mjs for the provisional choices.
+  const shooterImpact = completion.weapons?.shooter?.PaintParam;
+  const impactSource = [shooterImpact?.WidthHalfNear, shooterImpact?.WidthHalfMiddle, shooterImpact?.WidthHalfFar,
+    shooterImpact?.DistanceMiddle, shooterImpact?.DepthScaleMax, shooterImpact?.DepthScaleMin,
+    shooterImpact?.DepthScaleMaxBreakFree, shooterImpact?.DepthScaleMinBreakFree];
+  if (!impactSource.every(v => Number.isFinite(v) && v > 0))
+    throw new RangeError('Invalid Shooter impact paint source');
+  WEAPONS.shooter.impactPaint = Object.freeze({
+    widthNear: shooterImpact.WidthHalfNear * paintScale,
+    widthMiddle: shooterImpact.WidthHalfMiddle * paintScale,
+    widthFar: shooterImpact.WidthHalfFar * paintScale,
+    distanceMiddle: shooterImpact.DistanceMiddle * paintScale,
+    depthMax: shooterImpact.DepthScaleMax,
+    depthMin: shooterImpact.DepthScaleMin,
+    depthMaxBreakFree: shooterImpact.DepthScaleMaxBreakFree,
+    depthMinBreakFree: shooterImpact.DepthScaleMinBreakFree,
+  });
   roller.releaseFootPaint = deriveRollerReleaseFootPaint(profile);
   moves=new Map();
   for(const [id,w]of Object.entries(WEAPONS)){
@@ -2107,6 +2126,11 @@ export function installWeaponsFidelity(context,profile) {
         if(w?.kind==='roller' && p.type==='drop' && p.fidelityRollerUnit){
           // #411/#674/#611/#713 share one authoritative landing-paint sample.
           return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));
+        }
+        if(w?.kind==='shooter' && p.type==='shot' && !p.fidelityWallDrop && w.impactPaint &&
+           hit?.normal?.y>=SHOOTER_FLOOR_NORMAL_Y && context.G.paint?.splat){
+          // #79: floor shot impacts use the sourced Shooter footprint. Wall contacts keep the native path.
+          return withShooterImpactPaint(context.G,p,hit,w,()=>nativeImpact.call(this,p,hit));
         }
         // #1011/#1140: the adapted native Slosher impact already owns the
         // source unit/first-after/near-far paint, the profile world scale and

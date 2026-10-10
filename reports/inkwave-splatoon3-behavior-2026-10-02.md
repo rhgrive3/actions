@@ -3487,3 +3487,11 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 プレイへの影響: 本エントリでは挙動を変更していない。弱い斜め歩行の歩幅・足運び・骨盤の見た目は、S1 由来の形と手調整の式のまま。
 
 確認状態: 未確認。S3 の基準キャプチャ（60 fps、速度・方向の行列）と、歩行から走行への切替の計測が必要。ロジック単独の試験は実機比較の代わりにはならない。
+## 2026-10-10 — #79 Splattershot floor-impact paint footprint
+
+- 本家の根拠: Leanny/splat3 コミット `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の `data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json`（SHA-256 `dfca9f45…4cb9` を取得時に照合、`reference/curated-numbers.json` の記録と一致）の `GameParameters.PaintParam`（参照版 Ver. 11.3.0）: WidthHalfNear 1.93, WidthHalfMiddle 1.93, WidthHalfFar 1.71, DistanceMiddle 1.1, DepthScaleMax 2.24, DepthScaleMin 1.31, DepthScaleMaxBreakFree 2.24, DepthScaleMinBreakFree 1.12。床着弾の角度閾値・遠距離の端点・壁着弾の専用値は記録に無い。Splatoon Wiki の検索では Splattershot 本弾の床・壁着弾値は得られず（Blaster 系のみ）、公式パッチノートにも該当値は無い。
+- INKWAVE 実装: `patches/splatoon3/runtime/shooter-impact-paint.mjs`（新規）。`runtime/weapons-fidelity.mjs` の `installWeaponsFidelity` が `WEAPONS.shooter.impactPaint` を凍結（欠落・不正値は fail closed）、`Projectiles.prototype._impact` が kind `shooter`、type `shot`、床法線 `normal.y >= 0.4`（nearest splash と同じ閾値）の着弾のみ置換。対象の `shooter` は config の表示名 Spritzer。`inkwave-public/` は未変更。
+- 変更: 床着弾の塗り半径を `radius × (0.85〜1.15)` の乱数から、距離帯の決定的な値に置換。距離 ≤ DistanceMiddle で WidthHalfNear、それ以降は WidthHalfMiddle→WidthHalfFar を射程（`w.range`）まで線形補間。伸び（`stretchAmt` = DepthScale − 1）は着弾角度 10°〜35° の線形補間で、straight 位相は DepthScaleMax/Min、brake・free は BreakFree 側。FX・音・乱数の消費順は従来どおり。換算は既存の `worldUnitsPerSourceUnit = 1`（flight paint・nearest splash と同じ）。
+- 再現操作（単独測定、fixture 上で `_impact` を直接呼ぶ）: 床の近距離 0.8 で、角度 5° / phase 0 → 半径 1.93、伸び 1.24。角度 60° / phase 0 → 伸び 0.31。角度 60° / phase 1 → 伸び 0.12。シード 1・42・87654 で同一。壁法線の着弾は従来経路のまま（半径 0.72〜0.98）。
+- プレイへの影響: 床の本弾塗りが従来の約 0.72〜0.98 から 1.93 へ拡大し（約 2〜2.7 倍）、浅い角度ほど伸びる。ターフ面積と敵インクの見た目に影響する。飛沫（#873 の flight paint 経路）と nearest splash は変更なし。
+- 確認状態: ロジック単独の測定と既存試験 91 件（#873、#94、#674、#411、#498、#1011 ほか）と新規 6 件のみ。ブラウザの実動作および本家の実機比較は未実施。未確認（根拠なく解消済みにしない）: (1) 遠距離帯の端点（暫定で射程を使用）、(2) 角度閾値 10°/35°（Shooter 記録に無く、Splat Roller の既定値を暫定流用）、(3) 位相→envelope の対応（Roller #611 の規則を暫定流用）、(4) 壁着弾の専用フットプリント（未変更）、(5) 換算スケール 1 による面積の妥当性、(6) Splattershot の床塗り形状と面積の実機計測。
