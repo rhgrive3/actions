@@ -184,6 +184,28 @@ export function emit(name, payload) {
   }
   if (rel === 'src/net/netmatch.js') {
     code = "import { validResultPacket } from '../../patches/network-replication/result-admission.mjs';\n" + code;
+    // #1178: reject malformed owner actor rows before unpack/Hermite interpolation.
+    // Optional sidecar fields are validated by their feature-specific readers.
+    patch('function unpackActor(s, ts) {', `function validActorSnapshot(s) {
+  const bounded = (x, limit) => typeof x === 'number' && Number.isFinite(x) && Math.abs(x) <= limit;
+  if (!Array.isArray(s) || s.length < 21 || s.length > 27
+    || !Number.isSafeInteger(s[0]) || s[0] < 0) return false;
+  for (const i of [1, 2, 3]) if (!bounded(s[i], 100000)) return false;
+  for (const i of [4, 5, 6, 7, 8, 9]) if (!bounded(s[i], 10000)) return false;
+  if (!Number.isSafeInteger(s[10]) || s[10] < 0 || s[10] > 0x7fffffff) return false;
+  for (const i of [11, 12, 14, 17, 18, 19, 20]) if (!bounded(s[i], 10000)) return false;
+  if (!bounded(s[13], 10000000) || !bounded(s[15], 1000000000000)
+    || !Number.isSafeInteger(s[16]) || s[16] < 0) return false;
+  if (s.length > 21 && !bounded(s[21], 10000)) return false;
+  return true;
+}
+function finiteRemoteSample(s) {
+  if (!s) return false;
+  for (const k of ['x','y','z','vx','vy','vz','yaw','aimYaw','aimPitch','hp','ink','sp','ch','lock','sjT'])
+    if (typeof s[k] !== 'number' || !Number.isFinite(s[k])) return false;
+  return true;
+}
+function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded remote samples');
     code = "import { syncRemoteInitialSquidSpawn } from '../../patches/splatoon3/runtime/respawn-lifecycle.mjs';\n" + code;
     patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
@@ -512,6 +534,9 @@ export function emit(name, payload) {
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
       'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
       'strict optional Squid Roll and motion metadata validation');
+    patch('if (d.a) for (const s of d.a) {\n      const rawRoll',
+      'if (Array.isArray(d.a)) for (const s of d.a) {\n      if (!validActorSnapshot(s)) continue;\n      const rawRoll',
+      'pre-buffer owner snapshot validation');
     patch('      const roll = rawRoll === false ? null : rawRoll;',
       '      const roll = rawRoll === false ? null : rawRoll;\n      const rawDropRoll = d.dr && typeof d.dr === \'object\' && !Array.isArray(d.dr) && Object.hasOwn(d.dr, s[0])\n        ? readDropRollSnapshot(d.dr[s[0]]) : null;\n      const dropRoll = rawDropRoll === false ? null : rawDropRoll;',
       'strict Drop Roller presentation metadata validation');
@@ -522,9 +547,9 @@ export function emit(name, payload) {
       '      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.dropRollId = dropRoll?.id ?? 0; snap.dropRollRemaining = dropRoll?.remaining ?? 0;\n      snap.dropRollX = dropRoll?.x ?? 0; snap.dropRollZ = dropRoll?.z ?? 0; snap.dropRollDuration = dropRoll?.duration ?? 0;',
       'attach validated Drop Roller clock and direction');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
-      if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
+      // #1200: a sender event cannot be dated after its enclosing owner tick.\n      if (!Array.isArray(e) || !Number.isFinite(e[0]) || !Number.isFinite(d.ts) || e[0] > d.ts) continue;
       e._netPeer = from;
-      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
+      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (!Number.isSafeInteger(tick) || tick < 0 || !(Number.isSafeInteger(d.u) && d.u >= 0 ? tick <= d.u : d.u === undefined && e[1] === 's')) continue; e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
@@ -546,7 +571,7 @@ export function emit(name, payload) {
         if (receivePaintOrder(this, from, e) === false) continue;
         if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
       }
-      p.events.push(e);
+      if (p.events.length < 512) p.events.push(e);
     }`, 'receive event identity');
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
     patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
@@ -2255,7 +2280,7 @@ ${bombHit}`;
       'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2], hitParent: readHitAuthorityState(s[25], s[25]?.[1])?.[2] ?? null };',
       rel + ': unpack accepted-hit revision');
     code = adaptIssue1163RemoteDodgeClock(code);
-    patch('    const S = n.cur;', '    const S = n.cur;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
+    patch('    const S = n.cur;', '    const S = n.cur;\n    if (!finiteRemoteSample(S)) return;\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);', 'clear Roller presentation before native death return');
     code = "import { applyRemoteSuperJumpEpoch, endRemoteSuperJumpEpoch } from '../../patches/network-replication/superjump-epoch.mjs';\n" + code;
     patch('    this.stats.out++;\n    this.s.tr?.broadcast(msg);',
       '    msg.sjEpochs = Object.create(null);\n    for (const actor of this.byNid.values()) if (!actor.remote && Number.isSafeInteger(actor.nid)) {\n      const epoch = actor._s3SuperJumpEpoch;\n      msg.sjEpochs[actor.nid] = Number.isSafeInteger(epoch) && epoch >= 0 ? epoch : 0;\n    }\n    this.stats.out++;\n    this.s.tr?.broadcast(msg);',
@@ -2279,6 +2304,12 @@ ${bombHit}`;
       '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner, projectilePaint: slosherImpactMetadata(p,hit) }',
       'bind sourced Slosher terrain paint to its projectile birth');
   }
-  if (rel === 'src/net/netmatch.js') code = adaptKitPaintAdmission(code, once);
+  if (rel === 'src/net/netmatch.js') {
+    code = adaptKitPaintAdmission(code, once);
+    // Bound incoming work before reordering/provenance logic inspects the envelope.
+    patch('    if (Array.isArray(d?.e)) d = { ...d, e: d.e.filter(Array.isArray) };',
+      '    if (Array.isArray(d?.e)) d = { ...d, _eventOverBudget: d.e.length > 256, e: d.e.slice(0, 256).filter(Array.isArray) };',
+      'cap owner timeline rows per packet');
+  }
   return code;
 }
