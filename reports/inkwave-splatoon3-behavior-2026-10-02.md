@@ -2629,3 +2629,33 @@ and the dry lift angle are visual calibration; Switch parity remains unverified.
 - 再現操作（試験）: `patches/network-replication/tests/issue-1178-owner-rate-matrix.test.mjs`。所有者が +x へ 2 単位/秒で動き、20Hz（50ms 間隔）・片道遅延 80ms で snapshot を送る。受信側は 24/30/60/120/144Hz で 4 秒進め、1.5 秒後から遠隔 Actor の x を標本化する。結果は 5/5 合格（main 基点の worktree、Node VM fixture）。
 - プレイへの影響: 相手の移動表示が描画フレーム数に依らず一定の速度で補間され、後退や停止が起きないことを受信経路の単体試験で確認した。不正な snapshot（`vx: "bad"` など）の拒否は PR #1182 の snapshot guard が担当し、main には未統合。
 - 確認状態: 単独の Node 試験。実ブラウザ二端末、relay、Switch 実機の通信は未確認。2 クライアント相当で「不正 snapshot の後に正常 snapshot」を流す試験は、#1182 の guard に依存するため本エントリでは未実施（未確認のまま）。#1178 は解決扱いにしない。
+## 2026-10-10: #835 Respawn Punisher and the Tacticooler exception
+
+Reference: Splatoon 3 Ver. 11.3.0 is the acceptance baseline. The Tacticooler rule was checked against Nintendo's
+primary source for Ver. 2.1.0 (released 2023-01-17): <https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257>.
+Its Special Weapon section says Tacticooler's "Quick Respawn and Special Saver effects will no longer be totally
+negated by gear abilities Respawn Punisher and Haunt. The increase in respawn time/special-gauge spawn penalty
+effects from Respawn Punisher and Haunt will still occur, to a degree." Inkipedia's paraphrase ("no longer
+prevents") is stronger than the primary text and is not used as the basis for any value. Respawn Punisher's
+85% Quick Respawn reduction is from Inkipedia, and the Nintendo Ver. 7.2.0 fix that stops Respawn Punisher
+applying to a victim who falls or drowns after an RP splat is the basis for the environmental exclusion.
+
+- **Main today (INKWAVE):** Respawn Punisher is a recognised clothing-main ability (`runtime/clothing-gear.mjs`
+  `CLOTHING_ABILITIES`, `clothingAbilityAllowed`). `deathGearPenalty` applies the wearer and victim frames and
+  Special loss, scales incoming Quick Respawn AP by 0.15 (85% reduction) and incoming Special Saver AP by 0.7,
+  and excludes water/fall/out/bounds/void deaths. `tests/clothing-gear.test.mjs` covers the branch, environment,
+  Quick Respawn and assist cases; `clothing-gear.test.mjs` plus `haunt.test.mjs` pass 29/29 on this worktree.
+- **Tacticooler on main:** the kit is not in the shipped weapon set. `runtime/haunt.mjs:85-87` reads a
+  `drink` / `tacticooler` / `cooler` marker and gives that victim full Special Saver AP in the Haunt penalty.
+  No gameplay path on main sets the marker; `tests/haunt.test.mjs` #351 sets it directly. `deathGearPenalty`
+  has no Tacticooler clause at all.
+- **Draft PR #1195 (unmerged, CI pending):** adds an optional `?supportKit=1` Tacticooler with an independent
+  57 AP Quick Respawn / Special Saver buff and Respawn Punisher / Haunt composition. It is not on main, and this
+  entry does not treat it as verified.
+- **Player impact on main:** none in the current public weapon set, because Tacticooler cannot be equipped.
+  The only reachable path is the test-only marker.
+- **Status:** PARTIAL. Respawn Punisher itself is present on main. The Tacticooler exception is not on main and
+  is not applicable in play there. Not verified: the degree of partial negation ("to a degree" is unquantified),
+  whether the Ver. 2.1.0 text still holds through 11.3.0 (only excerpts were read), whether the Haunt marker's
+  full-AP exemption matches the source (it may be over-exempt), and real-console behavior. No fix was made,
+  because any number for the retained fraction would be invented.
