@@ -1516,8 +1516,10 @@ function readPaintOrder(nm, from, e) {
   for (let i = 9; i <= 12; i++) if (e[i] !== undefined && !paintFloat(e[i])) return false;
   if (e[5] <= 0 || Math.fround(e[5]) === 0 || (e[6] !== 0 && e[6] !== 1)) return false;
   // #522: radius ceiling derived from the largest legitimate producer (PAINT_RADIUS_MAX).
-  if (Math.fround(e[5]) > Math.fround(PAINT_RADIUS_MAX)
-    && !(Math.fround(e[5]) === Math.fround(PAINT_VICTIM_BLAST_RADIUS) && paintVictimBlastSignature(e))) return false;
+  // The plain death-blast row (exactly PAINT_VICTIM_BLAST_RADIUS) is the only row allowed above the ceiling.
+  // The ceiling line itself stays verbatim so later source adapters can still anchor on it.
+  if (!(Math.fround(e[5]) === Math.fround(PAINT_VICTIM_BLAST_RADIUS) && paintVictimBlastSignature(e)))
+  if (Math.fround(e[5]) > Math.fround(PAINT_RADIUS_MAX)) return false;
   if (!paintTeamAdmitted(nm, from, e)) return false;
   // _kind uses a plain object table. Names inherited from Object.prototype
   // must not become a shader kind/flags value or poison footprint arithmetic.
