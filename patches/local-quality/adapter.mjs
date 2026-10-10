@@ -66,6 +66,7 @@ import { adaptRangeFramePacing } from './range-frame-pacing-adapter.mjs';
 import { adaptReflSkip } from './refl-skip-adapter.mjs';
 import { adaptFinishTape } from './finish-tape-adapter.mjs';
 import { adaptAudioListener } from './audio-listener-adapter.mjs';
+import { adaptMatchHitIdentity } from './hit-round-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
@@ -89,7 +90,7 @@ const IDENTITY_FILES = [
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
   'prop-retention-adapter.mjs', 'prop-atlas-adapter.mjs',
   'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
-  'audio-listener-adapter.mjs', 'runtime/audio-listener.mjs',
+  'audio-listener-adapter.mjs', 'runtime/audio-listener.mjs', 'hit-round-adapter.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'portrait-work.mjs', 'depth-cache.mjs',
   'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
@@ -127,7 +128,7 @@ export function adaptQualitySource(rel, code) {
   const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
   const paced = adaptRangeFramePacing(rel, framed);
   const lazy = adaptComposerTarget(rel, paced, replaceOnce);
-  return adaptComposerFormat(rel, lazy, replaceOnce);
+  return adaptMatchHitIdentity(rel, adaptComposerFormat(rel, lazy, replaceOnce));
 }
 
 function adaptQualityLayer(rel, code) {
