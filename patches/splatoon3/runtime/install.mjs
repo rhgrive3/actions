@@ -32,6 +32,7 @@ import { installKitSubs } from './kit-subs.mjs';
 import { installKitBigBubbler } from './kit-big-bubbler.mjs';
 import { installKitInkVac } from './kit-ink-vac.mjs';
 import { installKitNetwork } from './kit-network.mjs';
+import { installBotPaintDeviceProfile } from '../../local-quality/bot-paint-device-profile.mjs';
 import { registerSupportKit, installSupportGameplay } from './kit-support.mjs';
 import { installKitTrizooka } from './kit-trizooka.mjs';
 import { composeKits, registerKitMetadata } from './kit-composition.mjs';
@@ -156,5 +157,6 @@ export function install(profile) {
   installDualiesNetwork(api);
   // Install after weapon and net owners, so it observes the final public path.
   installSupportGameplay(api);
+  installBotPaintDeviceProfile({ G, Actor });
   return api;
 }

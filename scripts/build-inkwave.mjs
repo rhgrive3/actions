@@ -354,7 +354,10 @@ const deferredIntegrationPreloads = new Set([
 ]);
 // Apply loading instrumentation first, so hint selection measures final bytes.
 // All modules in order still enter the complete offline dependency graph.
-const loadingPlan = prepareLoading(BUILD, order);
+// The runtime startup is source-readable but is a core 5 MiB offline dependency.
+// Apply the same esbuild lossless syntax minification used for all other JS modules.
+const loadingPlan = prepareLoading(BUILD, order, source =>
+  esbuild.transformSync(source, {loader:'js',minify:true,charset:'utf8',legalComments:'inline',sourcefile:'patches/loading-cache/runtime/startup.mjs'}).code);
 const loadingHTML0 = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
 const isRange = file => file.startsWith('patches/practice-range/');
 const bytes = file => fs.statSync(path.join(BUILD, file)).size;
