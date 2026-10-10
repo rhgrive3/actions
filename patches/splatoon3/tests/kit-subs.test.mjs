@@ -13,7 +13,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {adaptKitSource as adaptSource} from './kit-composed-fixture.mjs';
-import { KIT_SUBS, SUCTION, CURLING, registerKitSubs, kitSubFor, kitSubRelease, kitBombGravity, kitBombRadius, kitBombFxRadius, kitBombPaintRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitBombTrail, kitBombFuseTotal, kitBombPacket, kitGhostBombAttach, ghostBombSpawning, withGhostBombSpawn, curlingChargeFraction, curlingThrowSpeed, curlingBlastParams, NATIVE_STORM_GRAVITY } from '../runtime/kit-subs.mjs';
+import { KIT_SUBS, SUCTION, CURLING, registerKitSubs, kitSubFor, kitSubRelease, kitBombGravity, kitBombRadius, kitBombFxRadius, kitBombPaintRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitBombTrail, kitBombFuseTotal, kitBombKeepsFuse, kitBombPacket, kitGhostBombAttach, ghostBombSpawning, withGhostBombSpawn, curlingChargeFraction, curlingThrowSpeed, curlingBlastParams, NATIVE_STORM_GRAVITY } from '../runtime/kit-subs.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
@@ -1006,4 +1006,14 @@ test('Autobomb no target arms 180F wait, and network ghosts have no kit combat a
   assert.ok(kitGhostBombAttach(api.SUB,projectiles,ghost,'autobomb',0));
   assert.equal(ghost.s3Resolved,undefined);
   assert.equal(kitBombTrail(api.SUB,ghost,api.G.paint,projectiles),0);
+});
+
+test('Autobomb fuse admission follows a real landed chase, not a new terrain hit every frame', () => {
+  const spec = KIT_SUBS.autobomb;
+  const native = { s3Resolved: { spec }, s3Mode: 'chasing', fuse: 1, s3Auto: { phase: 'countdown' } };
+  assert.equal(kitBombKeepsFuse(native), true, 'ground-armed chasing bomb may explode after walking away from initial contact');
+  assert.equal(kitBombKeepsFuse({ ...native, fuse: -1 }), false, 'unarmed tracking has no free detonation');
+  assert.equal(kitBombKeepsFuse({ ...native, s3Auto: null }), false, 'a bomb that never landed is not fuse-authoritative');
+  assert.equal(kitBombKeepsFuse({ ...native, s3Mode: 'flight' }), false, 'a flying bomb has no grounded chase fuse');
+  assert.equal(kitBombKeepsFuse({ ...native, ghost: true, s3Resolved: null }), false, 'unverified ghost cannot gain owner fuse authority');
 });
