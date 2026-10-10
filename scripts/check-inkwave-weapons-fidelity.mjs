@@ -34,7 +34,8 @@ const golden = {
   'charger-1':[24.8,24.8,26.875,0],
   'roller-horizontal':[11.2,6.1,14.125,13],
   'roller-vertical':[16.3,6.9,19.125,5],
-  slosher:[13.5,13.5,13.625,9],
+  // #1011/#1140: Slosher impact paint uses the sourced unit/bullet PaintParam footprint.
+  slosher:[13.5,13.5,20.875,9],
 };
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
   const c = data.cases[key];

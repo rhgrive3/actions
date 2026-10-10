@@ -274,3 +274,71 @@ test('#684 the Practice Range source composition keeps the same Blaster envelope
   close(s.bias, BIAS_MAX, 'the Range-composed runner keeps the sourced initial bias');
   close(a.weaponRunner.spread, 10, 'the Range-composed HUD value is the true outer envelope');
 });
+
+// #1102: walking off a ledge is not a jump. The Blaster jump-accuracy state is
+// admitted only by the native jump serial, so a ledge fall must keep the sourced
+// grounded 0-degree cone and must not publish the 10-degree airborne envelope.
+const walkOff = (f, a, frames) => {
+  f.tick(a, 2); a.grounded = true; f.tick(a, 2);
+  a.grounded = false;                          // no s3JumpSerial increment: a fall, not a jump
+  return airborne(f, a, frames);
+};
+
+test('#1102 walking off a ledge without a jump keeps the grounded 0-degree cone at 30/60/120 Hz', async () => {
+  const f = await fixture();
+  for (const hz of [30, 60, 120]) {
+    const dt = 1 / hz;
+    const a = f.make('blaster'); a.grounded = true; a.weaponRunner.update(dt, { fire: false });
+    a.grounded = false;                        // leave the ledge without any jump input
+    for (let i = 0; i < Math.round(hz * 1.5); i++) {
+      a.weaponRunner.update(dt, { fire: false });
+      assert.equal(state(a).active, false, `${hz} Hz: no Blaster jump-accuracy state after a fall`);
+      assert.equal(a.weaponRunner._spreadDeg(a.weapon), 0, `${hz} Hz: fall keeps the grounded 0-degree cone`);
+      assert.equal(a.weaponRunner.spread, 0, `${hz} Hz: the runner publishes the grounded cone`);
+    }
+  }
+});
+
+test('#1102 a real jump and a ledge fall from the same platform diverge: only the jump owns the 10-degree state', async () => {
+  const f = await fixture();
+  const walker = walkOff(f, f.make('blaster'), 30);
+  const jumper = jump(f, f.make('blaster'));
+  airborne(f, jumper, 30);
+  assert.equal(state(walker).active, false, 'walking off starts no jump-accuracy timer');
+  assert.equal(walker.weaponRunner.spread, 0, 'walking off keeps the 0-degree grounded cone');
+  assert.equal(state(jumper).active, true, 'the actual jump still starts its timer');
+  close(state(jumper).envelope, 10, 'the actual jump keeps the sourced 10-degree envelope');
+  close(state(jumper).bias, BIAS_MAX * (END_F - 30) / (END_F - START_F), 'the actual jump keeps the sourced 25F-70F recovery at 30F', 1e-9);
+});
+
+test('#1102 Intensify Action does not turn a non-jump ledge fall into an accuracy penalty', async () => {
+  const f = await fixture();
+  const a = f.make('blaster');
+  a.s3.loadout = Array.from({ length: 3 }, (_, i) => ({ main: i === 0 ? 'actionIntensify' : 'none', subs: ['none', 'none', 'none'] }));
+  a.setWeapon('blaster');
+  walkOff(f, a, END_F);
+  assert.equal(state(a).active, false, 'gear does not create a jump state from a fall');
+  assert.equal(a.weaponRunner._spreadDeg(a.weapon), 0, 'gear does not widen a fall');
+  assert.equal(a.weaponRunner.spread, 0, 'HUD cone stays grounded after a fall');
+});
+
+test('#1102 a shot fired during a ledge fall is drawn on the grounded cone', async () => {
+  const f = await fixture();
+  const { Projectiles, THREE } = f;
+  const ps = Object.create(Projectiles.prototype);
+  ps._muzzle = (actor, out) => out.set(0, 0, 0);
+  ps._aimFrom = (actor, muzzle, out) => out.set(0, 0, 1);
+  ps._new = () => ({ pos: new THREE.Vector3(), prev: new THREE.Vector3(), start: new THREE.Vector3(), vel: new THREE.Vector3() });
+  const deviations = [];
+  ps._push = p => {
+    const v = p.vel.clone().normalize();
+    deviations.push(Math.acos(Math.max(-1, Math.min(1, v.z))) * 180 / Math.PI);
+  };
+  const a = walkOff(f, f.make('blaster'), 20);
+  // Fire through the same value the runner publishes, with the draw sequence that
+  // maximises any non-zero cone, so a leaked 10-degree envelope would be visible.
+  f.setRandom(() => 1);
+  ps.fireBlaster(a, a.weapon, a.weaponRunner._spreadDeg(a.weapon));
+  f.restoreRandom();
+  close(deviations.at(-1), 0, 'a fall shot leaves the muzzle on the grounded 0-degree cone', 1e-6);
+});

@@ -1,6 +1,7 @@
 import { turfCombatAllowed } from './turf-combat.mjs';
 import { stormRecoveryState } from './storm-effects.mjs';
 import { isChargerFullCharge } from './weapons.mjs';
+import { slamProtected } from './tidal-slam-gauge.mjs';
 let api, tuning, profile;
 export function installResources(context, values) { api = context; tuning = values.resources; profile = values; }
 export const RESPAWN_CAUSES = Object.freeze({ normal: 8.5, water: 7.0, outOfBounds: 5.5 });
@@ -60,7 +61,8 @@ export function updateResources(a, dt) {
     const exposure = Math.max(0, a.s3.enemyInkTime - Math.max(before, mods.enemyInkGrace ?? r.enemyInkGrace ?? 0));
     const cap = mods.enemyDamageCap ?? r.enemyInkDamageCap;
     const allowance = Math.max(0, cap - (P.hp - a.hp));
-    if (exposure > 0 && allowance > 0 && a.invuln <= 0) {
+    // #573: Slam's 50F full-invulnerability owner rejects enemy-ink contact too, the same as weapon damage.
+    if (exposure > 0 && allowance > 0 && a.invuln <= 0 && !slamProtected(a)) {
       const rate = enemyInkDamageRate(mods.enemyDamageRate ?? r.enemyInkDps, r.enemyInkReferenceHz, r.enemyInkDamageQuantum);
       const damage = Math.min(rate * exposure, allowance, Math.max(0, a.hp - 1));
       a.damageFromInk += damage; a.hp -= damage;

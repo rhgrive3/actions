@@ -1,5 +1,15 @@
 export function adaptTidalSlamGauge(rel, code, replaceOnce) {
   if (rel !== 'src/game/actor.js') return code;
+  // The impact clears specialActive before the existing landing recovery ends.
+  // Its pending final segment still owns the gauge during that interval.
+  code = replaceOnce(code,
+    '    if (!this.specialActive && !(this.stormGaugeLock > 0)) {\n      const was = this.specialReady();',
+    '    if (!this.specialActive && !(this.stormGaugeLock > 0) && !this.s3TidalSlamGaugeFinish) {\n      const was = this.specialReady();',
+    'Tidal Slam pending landing blocks recharge');
+  code = replaceOnce(code,
+    'specialReady() { return this.special >= this.specialCost() && !this.specialActive && !(this.stormGaugeLock > 0); }',
+    'specialReady() { return this.special >= this.specialCost() && !this.specialActive && !(this.stormGaugeLock > 0) && !this.s3TidalSlamGaugeFinish; }',
+    'Tidal Slam pending landing blocks reactivation');
   code = replaceOnce(code,
     '    this.special = 0;\n    this.stats.specials++;',
     "    if (id !== 'slam') this.special = 0;\n    this.stats.specials++;",

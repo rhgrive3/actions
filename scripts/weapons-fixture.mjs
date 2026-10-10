@@ -41,7 +41,7 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
     export * from './patches/splatoon3/runtime/gear.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';
     export * from './patches/local-quality/roller-visual.mjs';
-    ${fidelity ? "export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';" : ''}
+    ${fidelity ? "export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';\n    export * from './patches/splatoon3/runtime/roller-body-knockback.mjs';" : ''}
   `, {context, identifier: path.join(site, 'fixture.mjs')});
   function load(spec, from) {
     let p = spec === 'three' ? path.join(sourceMode ? SOURCE : site, 'vendor/three/build/three.module.js')
@@ -95,6 +95,7 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
   api.installWeapons(api, profile); api.installMovement(api, profile); api.installGear(api, profile); api.installResources(api, profile);
   api.installRollerVisualQuality(api);
   if (fidelity) api.installWeaponsFidelity(api, profile);
+  if (fidelity) api.installRollerBodyKnockback(api, profile);
   const V = (x=0, y=0, z=0) => new THREE.Vector3(x,y,z);
   G.scene = new THREE.Scene(); G.camera = new THREE.PerspectiveCamera(); G.camera.position.set(0,3,-4);
   G.teamColors = [new THREE.Color(0xff8a14),new THREE.Color(0x2f5bff)];

@@ -4,7 +4,7 @@
 // 1. Fixed 60 Hz simulation: no roll displacement during the 4 startup frames.
 // 2. 12F roll movement begins only after the 4F startup (at tick 5).
 // 3. Movement duration remains exactly 12F.
-// 4. Total roll displacement equals the intended Splat Dualies distance (w.rollDist = 2.8m); startup does not modify it.
+// 4. Total roll displacement equals the intended Splat Dualies distance (w.rollDist, 5.0 units since #532); startup does not modify it.
 // 5. Visible anticipation/roll pose follows the same startup -> roll boundary:
 //    - Actual bounded native tuck pose during startup without movement/tumble;
 //    - Real bone/pose values verified and compared to baseline idle, startup, and moving.
@@ -299,7 +299,7 @@ test('Movement duration remains exactly 12F and total roll displacement is exact
 
     assert.equal(rollTicks, DUALIES_ROLL_FRAMES, `Roll movement duration must be exactly 12 frames (got ${rollTicks})`);
 
-    const expectedDist = a.weapon.rollDist; // 2.8m
+    const expectedDist = a.weapon.rollDist; // 5.0 units (#532), was 2.8
     const actualNetDist = a.pos.distanceTo(startPos);
     assert.ok(
       Math.abs(actualNetDist - expectedDist) < 0.35,

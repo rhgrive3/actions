@@ -28,3 +28,30 @@ test('#1039 per-player host assignment UI and confirm action do not reuse guest 
   assert.match(built,/confirmTeamsBtn\.style\.display/);
   assert.match(built,/bossMode\(\) \|\| !host/);
 });
+
+test('#1039 Turf host gets its own READY after host-confirmed teams; START only launches', () => {
+  const built=adaptSource('src/ui/menus.js',read('src/ui/menus.js'));
+  // Without this, the host had no READY control and canStart() (Turf: every player incl. host ready) never became true.
+  assert.ok(!built.includes("      if (isHost()) { tryStart(); return; }"), 'host READY key is no longer forwarded to START in Turf');
+  assert.match(built,/if \(isHost\(\) && bossMode\(\)\) \{ tryStart\(\); return; \}/);
+  assert.match(built,/if \(!bossMode\(\) && !lob\.teamsConfirmed\)/, 'READY is refused until the host confirms teams');
+  assert.match(built,/const barItems = \(\) => \[wChip, lChip, teamRow, emoteBtn, \.\.\.\(isHost\(\) \? \(bossMode\(\) \? \[startBtn\] : \[readyBtn, startBtn\]\) : \[readyBtn\]\)\];/);
+  assert.match(built,/return i < 1 \? copyBtn : isHost\(\) && bossMode\(\) \? startBtn : readyBtn;/);
+  assert.match(built,/readyBtn\.style\.display = host && !bossMode\(\) \? 'flex' : '';/, 'inline display overrides the lobby CSS that hides READY for hosts');
+});
+
+test('#1039 host READY is accepted by the session only after confirmation and does not bypass the ready gate', () => {
+  const built=adaptSource('src/net/session.js',read('src/net/session.js'));
+  const applyBody=built.match(/  _applyMe\(id, o\) \{([\s\S]*?)\n  \}/)?.[1];
+  assert.ok(applyBody, 'native _applyMe is present');
+  const apply=new Function('WEAPONS','id','o',applyBody);
+  let broadcasts=0;
+  const host={ isHost:true, state:'lobby', myId:'host', hostId:'host', _fixTeams(){}, _broadcastLobby(){ broadcasts++; },
+    lobby:{ mode:'turf', teamsConfirmed:false, players:[{id:'host',team:0,weapon:'shooter',ready:false},{id:'guest',team:1,weapon:'shooter',ready:false}] } };
+  apply.call(host,{shooter:{}},'host',{ready:true});
+  assert.equal(host.lobby.players[0].ready,false,'host READY before confirmation is refused');
+  host.lobby.teamsConfirmed=true;
+  apply.call(host,{shooter:{}},'host',{ready:true});
+  assert.equal(host.lobby.players[0].ready,true,'host READY after confirmation is accepted');
+  assert.equal(broadcasts,2);
+});

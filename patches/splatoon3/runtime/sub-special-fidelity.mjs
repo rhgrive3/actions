@@ -1,3 +1,4 @@
+import { slamProtected } from './tidal-slam-gauge.mjs';
 // Authoritative Sub/Special gameplay fidelity overlay for the pinned Splatoon 3 11.3.0 profile.
 // Numeric constants here are only fields that map directly to extracted parameters or strongly established behavior.
 
@@ -176,6 +177,91 @@ export function applySplatBombKnockback(bomb, victim, center, targetPoint, dista
   return true;
 }
 
+// #574: standard Blaster air-burst contact. The tuple is pinned S3 data;
+// its conversion uses exactly the existing #535 INKWAVE calibration above.
+// Nintendo's Accel/Bias integrator, terrain and direct-hit response remain
+// unverified. Do not present this response as retail-physics equivalence.
+export const BLASTER_KNOCKBACK = Object.freeze({ accel: 700, bias: 0.8, distance: 3.5 });
+const blasterPending = new WeakMap(), blasterMovementStep = new WeakMap();
+
+function installBlasterKnockbackMovement(Actor) {
+  const update = Actor.prototype.update, horizontal = Actor.prototype._horizontal, reset = Actor.prototype.reset;
+  Actor.prototype.reset = function (...args) {
+    blasterPending.delete(this); blasterMovementStep.delete(this);
+    return reset.apply(this, args);
+  };
+  Actor.prototype.update = function (dt, ...args) {
+    if (!(dt > 0)) return update.call(this, dt, ...args);
+    const pending = blasterPending.get(this);
+    blasterPending.delete(this);
+    if (pending) blasterMovementStep.set(this, pending);
+    try { return update.call(this, dt, ...args); }
+    finally { blasterMovementStep.delete(this); }
+  };
+  Actor.prototype._horizontal = function (...args) {
+    const pending = blasterMovementStep.get(this);
+    if (!pending) return horizontal.apply(this, args);
+    blasterMovementStep.delete(this);
+    // Input acceleration must not erase a new external impulse before it ever
+    // reaches the ordinary body/terrain integrator. Protect it for one update
+    // only; subsequent steering/braking uses the existing movement model.
+    this.vel.x -= pending.x; this.vel.z -= pending.z;
+    try { return horizontal.apply(this, args); }
+    finally { this.vel.x += pending.x; this.vel.z += pending.z; }
+  };
+}
+
+// Carry source-to-target geometry, never a client-selected velocity/force.
+// The recipient re-derives a bounded delta using the same local source tuple.
+export function validBlasterKnockback(offset) {
+  if (!Array.isArray(offset) || offset.length !== 3 || !offset.every(Number.isFinite)) return false;
+  const distance = Math.hypot(...offset);
+  return distance > 1e-9 && distance < BLASTER_KNOCKBACK.distance;
+}
+
+export function applyBlasterKnockback(victim, offset) {
+  if (!validBlasterKnockback(offset) || !victim?.alive || victim.remote || !victim.vel
+    || victim.invuln > 0 || slamProtected(victim)) return false;
+  const distance = Math.hypot(...offset);
+  const delta = splatBombKnockbackDelta(distance, BLASTER_KNOCKBACK);
+  const dx = offset[0] / distance * delta, dz = offset[2] / distance * delta;
+  victim.vel.x += dx;
+  victim.vel.y += offset[1] / distance * delta;
+  victim.vel.z += dz;
+  const pending = blasterPending.get(victim) || { x: 0, z: 0 };
+  pending.x += dx; pending.z += dz; blasterPending.set(victim, pending);
+  return true;
+}
+
+export function applyBlasterBlastContact(system, projectile, victim, center, target, damage, netmatch) {
+  if (projectile.ghost || !victim?.alive || victim.team === projectile.team) return 'rejected';
+  // Terrain radius/damage already have a separate source-backed owner. Their
+  // knockback scaling is not established, so retain that path unchanged.
+  const offset = projectile.s3TerrainBurst ? null
+    : [target.x - center.x, target.y - center.y, target.z - center.z];
+  const knockback = validBlasterKnockback(offset) ? offset : null;
+  if (!(damage > 0) && !knockback) return 'rejected';
+  const route = netmatch?.shouldApplyHit?.(projectile.owner, victim, 'blaster') ?? (victim.remote ? 'drop' : 'local');
+  if (route === 'drop') return 'rejected';
+  if (victim.invuln > 0 || slamProtected(victim)) return 'rejected-invulnerable';
+  if (!(damage > 0) && system.kitBarrierCandidate?.({ owner: projectile.owner, team: projectile.team,
+    damage: 0, size: 0, ghost: false }, center, target)) return 'rejected';
+  // The source contact owns the optional wire field only for this synchronous
+  // call. Existing damage wrappers need no new argument, and finally prevents
+  // an exception/reentrant hit from leaking metadata into the next attack.
+  const previous = netmatch?._s3BlasterKnockback;
+  if (netmatch) netmatch._s3BlasterKnockback = knockback
+    ? { attacker: projectile.owner, victim, offset: knockback } : null;
+  let admission;
+  try {
+    admission = damage > 0
+      ? system.applyHit(projectile.owner, victim, damage, 'blaster')
+      : route === 'send' ? (netmatch.sendHit(projectile.owner, victim, 0, 'blaster') ? 'pending' : 'rejected') : 'accepted';
+  } finally { if (netmatch) netmatch._s3BlasterKnockback = previous; }
+  if (route === 'local' && admission === 'accepted' && knockback) applyBlasterKnockback(victim, knockback);
+  return admission;
+}
+
 export function fidelityThrowVelocity(actor, kind, out, forwardSpeed) {
   const p = kind === 'storm' ? SUB_SPECIAL_FIDELITY.storm : SUB_SPECIAL_FIDELITY.bomb;
   const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;
@@ -206,6 +292,11 @@ export function installSubSpecialFidelity(api, profile) {
   assertNear(SUB.bomb.fuse, 1, 'bomb.fuse');
   assertNear(profile?.specials?.storm?.duration, SUB_SPECIAL_FIDELITY.storm.duration, 'profile.specials.storm.duration');
   assertNear(profile?.specials?.storm?.radius, SUB_SPECIAL_FIDELITY.storm.radius, 'profile.specials.storm.radius');
+  const blasterKnockback = profile?.weaponsFidelityCompletion?.weapons?.blaster?.BlastParam?.KnockBackParam;
+  assertNear(blasterKnockback?.Accel, BLASTER_KNOCKBACK.accel, 'blaster.knockback.accel');
+  assertNear(blasterKnockback?.Bias, BLASTER_KNOCKBACK.bias, 'blaster.knockback.bias');
+  assertNear(blasterKnockback?.Distance, BLASTER_KNOCKBACK.distance, 'blaster.knockback.distance');
+  installBlasterKnockbackMovement(Actor);
 
   Object.assign(SUB.bomb, {
     splashAroundCount: SUB_SPECIAL_FIDELITY.bomb.splashAroundCount,
