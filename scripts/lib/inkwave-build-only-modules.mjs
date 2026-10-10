@@ -23,6 +23,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/map-teammate-status-adapter.mjs',
   'patches/local-quality/match-retainer-adapter.mjs',
   'patches/local-quality/mural-atlas-adapter.mjs',
+  'patches/local-quality/paint-hotpath-adapter.mjs',
   'patches/local-quality/platform-adapter.mjs',
   'patches/local-quality/portrait-guard-adapter.mjs',
   'patches/local-quality/prop-atlas-adapter.mjs',
