@@ -99,3 +99,77 @@ test('#774 roller roll contact rejects points inside geometry', () => {
     'roller drum inside geometry cannot damage opponent'
   );
 });
+
+
+// Full native Physics.segment + real WeaponRunner._roller contact (not a mock
+// segment callback or a pure helper invocation). The wall has real OBB axes,
+// hash-query membership and solidity used by the game at the collision point.
+import { fixture as nativeWorld } from '../../../scripts/weapons-fixture.mjs';
+import { FixedClock } from '../runtime/clock.mjs';
+async function contactWorld({ wall = 'none', x = 0, z = 1 } = {}) {
+  const f = await nativeWorld({ fidelity: true, floor: false });
+  const roller = f.make('roller');
+  const target = f.make('shooter', { team: 1, x, z, hp: 1000 });
+  f.G.actors = [roller, target];
+  roller.pos.set(0, 0, 0);
+  roller.yaw = 0;
+  roller.grounded = true;
+  roller.vel.set(0, 0, 6);
+  roller.ink = 100;
+  roller.weaponRunner.cooldown = 0;
+  if (wall !== 'none') {
+    if (wall === 'forward' || wall === 'grate') {
+      f.wall(.5, { width: 5, height: 4, thickness: .06 });
+      if (wall === 'grate') {
+        const b = f.G.level.blocks.at(-1);
+        b.solid = false;
+        b.grate = true; // non-solid/pass-through grate cannot occlude contact
+      }
+    }
+    if (wall === 'side') {
+      const V = (...a) => new f.THREE.Vector3(...a);
+      f.G.level.blocks.push({ id: f.G.level.blocks.length, solid: true, grate: false,
+        center: V(.45, 2, .75), half: V(.025, 2, 1),
+        axes: [V(1,0,0), V(0,1,0), V(0,0,1)],
+        faces: [-1,-1,-1,-1,-1,-1] });
+    }
+  }
+  return { f, roller, target };
+}
+function rollFrame(w) {
+  w.f.tick(w.roller, { fire: true });
+  return 1000 - w.target.hp;
+}
+
+test('#774 actual native roll contact blocks thin forward/parallel walls, preserves clear and pass-through controls', async () => {
+  const clear = await contactWorld();
+  const cleanDamage = rollFrame(clear);
+  assert.equal(cleanDamage, clear.roller.weapon.rollDamage, 'ordinary uncovered roll still hits');
+  for (const kind of ['forward', 'side']) {
+    const w = await contactWorld({ wall: kind, x: kind === 'side' ? .9 : 0 });
+    assert.equal(rollFrame(w), 0, kind + ' solid obstruction never applies contact damage');
+    assert.equal(w.roller.weaponRunner.rollHits.size, 0, 'rejected contact does not consume cooldown');
+  }
+  const grate = await contactWorld({ wall: 'grate' });
+  assert.equal(rollFrame(grate), cleanDamage, 'transparent non-solid grate preserves hit admission');
+  const sameSide = await contactWorld({ wall: 'forward', z: .35 });
+  assert.equal(rollFrame(sameSide), cleanDamage, 'a valid contact on the same side remains active');
+});
+
+test('#774 live roller damage/LOS outcome is fixed-tick identical at 30/60/120Hz render cadence', async () => {
+  for (const wall of ['none', 'forward']) {
+    const traces = [];
+    for (const hz of [30, 60, 120]) {
+      const w = await contactWorld({ wall }), clock = new FixedClock(), samples = [];
+      for (let frame = 0; frame < hz * .3; frame++) clock.advance(1 / hz, () => {
+        rollFrame(w);
+        samples.push([w.target.hp, w.roller.weaponRunner.rollHits.size]);
+      });
+      assert.equal(clock.ticks, 18);
+      traces.push(samples);
+    }
+    assert.deepEqual(traces[0], traces[1]);
+    assert.deepEqual(traces[1], traces[2]);
+    assert.equal(traces[0][0][0] < 1000, wall === 'none');
+  }
+});
