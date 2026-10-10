@@ -235,13 +235,18 @@ for (const run of RUNS) {
     });
     const picker = out.checks.weaponPicker;
     if (picker.count !== 65 || picker.unique !== 65 || picker.catalog !== 58 || !picker.last?.startsWith('w-s3-')) throw new Error('range weapon picker ' + JSON.stringify(picker));
-    await page.locator('.iwr-wchip').last().click();
+    await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').last().click();
     await page.waitForFunction(id => window.__G.local.weaponId === id && !window.__G.match.paused, picker.last.slice(2), { timeout: 30000 });
     out.checks.weaponPicker.selected = await page.evaluate(() => window.__G.local.weaponId);
     await page.evaluate(() => window.__inkwave.pause());
-    await page.waitForSelector('.iwr-pausescr [data-id="z-bomb"]', { timeout: 30000 });
-    await page.locator('.iwr-pausescr [data-id="z-bomb"]').click();
-    await page.waitForTimeout(1500);
+    // Menus._swap intentionally leaves the prior pause DOM mounted for 340ms
+    // while its transition finishes. Scope to the current active screen, not
+    // a leaving, still-clickable weapon-picker panel from the previous pause.
+    const travelButton = page.locator('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]');
+    await travelButton.waitFor({ state: 'visible', timeout: 30000 });
+    if (await travelButton.count() !== 1) throw new Error('range has duplicate active travel buttons');
+    await travelButton.click();
+    await page.waitForFunction(() => window.__G.match?.range?.telemetry()?.zone === 'bomb' && !window.__G.match.paused && !window.__G.menus.current, { timeout: 30000 });
     out.checks.travel = await page.evaluate(() => ({ screen: window.__G.menus.current, paused: window.__G.match.paused, pos: window.__G.local.pos.toArray(), zone: window.__G.match.range.telemetry().zone }));
     if (out.checks.travel.screen || out.checks.travel.paused || out.checks.travel.zone !== 'bomb') throw new Error('travel ' + JSON.stringify(out.checks.travel));
     if (run.isolation) {
