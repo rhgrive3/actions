@@ -50,10 +50,10 @@ test('#348 submerged is hidden, wall climbing is eligible, and near fade is expl
  assert.match(f.profile.clothingGear.trackingVisual.status,/PROVISIONAL/);
 });
 test('#348 HP exception uses the same private visibility, but never extends the three-second HP window or map reveal',async()=>{
- const f=await rig();direct(f);const opts={now:0,visible:false};assert.equal(f.healthActorVisible(f.b,f.a,opts),true);
+ const f=await rig();const opts={now:0,visible:false};f.healthActorVisible(f.b,f.a,opts);direct(f);assert.equal(f.healthActorVisible(f.b,f.a,opts),true);
  assert.equal(f.healthActorVisible(f.b,f.c,opts),false);assert.equal(f.mapActorVisible(f.b,f.a),false);
- f.b.lastDamage=3;assert.equal(f.healthActorVisible(f.b,f.a,opts),false);assert.ok(f.thermalTrackingRecord(f.b,f.a));
- f.b.lastDamage=0;f.b.submerged=true;assert.equal(f.healthActorVisible(f.b,f.a,opts),false);
+ f.b.submerged=true;assert.equal(f.healthActorVisible(f.b,f.a,opts),false);f.b.submerged=false;assert.ok(f.thermalTrackingRecord(f.b,f.a));
+ assert.equal(f.healthActorVisible(f.b,f.a,{now:3,visible:false}),false);
 });
 test('#348 reset, target death/respawn, owner transfer, roster retirement and new matches invalidate private records',async()=>{
  for(const mode of ['owner-reset','victim-reset','death','owner-transfer','victim-transfer','disconnect','new-match','remote-respawn']){
