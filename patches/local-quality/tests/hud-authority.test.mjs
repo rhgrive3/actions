@@ -6,10 +6,11 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource, qualityIdentity } from '../adapter.mjs';
-import { adaptHudAuthority, SPECIAL_SEGMENTS, specialGaugeSVG } from '../hud-authority-adapter.mjs';
+import { adaptHudAuthority, SPECIAL_SEGMENTS, GAUGE_GEN, specialGaugeSVG, touchRingSVG } from '../hud-authority-adapter.mjs';
 import { turfExperience } from '../../splatoon3/runtime/results-scoring.mjs';
 import { fixture, readSource } from '../../reliability/tests/hud-fixture.mjs';
 const root = new URL('../../../', import.meta.url);
+const N = SPECIAL_SEGMENTS, at = s => Math.min(N, Math.floor(s * N));
 const compose = (rel, input = readSource(rel)) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, input))));
 const hudCode = compose('src/ui/hud.js'), gameCode = compose('src/main.js');
 const fixed = () => fixture({ hudSource: hudCode, gameSource: gameCode, globals:{turfExperience} });
@@ -18,45 +19,48 @@ function specialRig(code = hudCode) {
   const Hud = vm.runInNewContext(`class Hud { ${code.slice(a,b)} }; Hud`, { clamp: v => Math.min(1,Math.max(0,v)) });
   const make = () => ({ attrs:{}, classes:new Set(), classList:{ toggle(n,on){on?this.owner.classes.add(n):this.owner.classes.delete(n);} }, setAttribute(n,v){this.attrs[n]=v;}, animate(){} });
   const node = () => { const n=make();n.classList.owner=n;return n; };
-  const h = new Hud(); Object.assign(h,{_L:{},sp:node(),spSegments:Array.from({length:23},node),spLiquid:{style:{}},spPct:{textContent:''},flashes:[],_restart(_el,n){this.flashes.push(n);}});
+  const h = new Hud(); Object.assign(h,{_L:{},sp:node(),spSegments:Array.from({length:N},node),spLiquid:{style:{}},spPct:{textContent:''},flashes:[],_restart(_el,n){this.flashes.push(n);}});
   return {h, update(s,ready=false,active=false){h._updSpecial({special:s,specialReady:ready,specialActive:active},1/60);return h.spSegments.filter(x=>x.classes.has('is-filled')).length;}};
 }
 
-test('#425: native markup has exactly 23 paths and no continuous/numeric presentation', () => {
+test('#425: native markup has exactly one path per measured Splatoon 3 tooth and no continuous/numeric presentation', () => {
+  // 23 teeth measured from Splatoon 3 footage: 11.9 deg pitch, no teeth in the upper-left quarter.
   assert.equal(SPECIAL_SEGMENTS,23);
-  assert.equal((specialGaugeSVG().match(/class="iw-sp__segment"/g)||[]).length,23);
-  assert.equal((hudCode.match(/class=\\?"iw-sp__segment\\?"/g)||[]).length,23);
+  assert.equal((specialGaugeSVG().match(/class="iw-sp__segment"/g)||[]).length,N);
+  // the module ships the generator once and calls it for the orb markup (same source as specialGaugeSVG)
+  assert.equal(hudCode.split(GAUGE_GEN).length,2,'generator shipped once');
+  assert.match(hudCode,/html: s3SpecialGaugeSVG\(\) \}/);
   assert.doesNotMatch(hudCode,/spLiquid|spPct|iw-sp__pct|iw-sp__liquid|Math.floor\(s \* 100\)/);
-  assert.match(hudCode,/'aria-valuemax': '23'/);
+  assert.match(hudCode,new RegExp(`'aria-valuemax': '${N}'`));
   assert.match(compose('styles/hud.css'),/\.iw-sp__segment.is-filled/);
   assert.ok(JSON.stringify(qualityIdentity()).includes('hud-authority-adapter.mjs'));
 });
 
 test('#425: every boundary lights monotonically and ignores the old .002 deadband', () => {
   const r=specialRig(); assert.equal(r.update(0),0);
-  for(let i=1;i<23;i++){
-    assert.equal(r.update(i/23-1e-7),i-1);
-    assert.equal(r.update(i/23+1e-7),i);
+  for(let i=1;i<N;i++){
+    assert.equal(r.update(i/N-1e-7),i-1);
+    assert.equal(r.update(i/N+1e-7),i);
     assert.equal(r.h.sp.attrs['aria-valuenow'],String(i));
   }
-  assert.equal(r.update(.99999),22);assert.equal(r.update(1),23);
+  assert.equal(r.update(.99999),N-1);assert.equal(r.update(1),N);
   assert.equal(r.h.sp.classes.has('is-ready'),false);
 });
 
 test('#425: actual ready/consume/refill transitions flare once and never retain stale segments', () => {
   const r=specialRig(); r.update(.98);
-  assert.equal(r.update(1,true),23);assert.equal(r.update(1,true),23);
+  assert.equal(r.update(1,true),N);assert.equal(r.update(1,true),N);
   assert.equal(r.h.flashes.filter(x=>x==='is-flare').length,1);
-  assert.equal(r.update(1,false,true),23);assert(!r.h.sp.classes.has('is-ready'));
+  assert.equal(r.update(1,false,true),N);assert(!r.h.sp.classes.has('is-ready'));
   assert.equal(r.update(0,false,true),0);assert(r.h.sp.classes.has('is-active'));assert(!r.h.sp.classes.has('is-ready'));
-  assert.equal(r.update(.5,false,false),11);assert(!r.h.sp.classes.has('is-active'));
-  assert.equal(r.update(1,true),23);assert.equal(r.h.flashes.filter(x=>x==='is-flare').length,2);
-  assert.equal(r.update(NaN),0);assert.equal(r.update(-1),0);assert.equal(r.update(100),23);
+  assert.equal(r.update(.5,false,false),at(.5));assert(!r.h.sp.classes.has('is-active'));
+  assert.equal(r.update(1,true),N);assert.equal(r.h.flashes.filter(x=>x==='is-flare').length,2);
+  assert.equal(r.update(NaN),0);assert.equal(r.update(-1),0);assert.equal(r.update(100),N);
 });
 
 test('#425: normalized costs and 30/60/120Hz samples preserve the same display', () => {
   for(const cost of [160,180,200,220]){
-    const r=specialRig();for(let i=0;i<23;i++)assert.equal(r.update((cost*(i+.1)/23)/cost),i);
+    const r=specialRig();for(let i=0;i<N;i++)assert.equal(r.update((cost*(i+.1)/N)/cost),i);
   }
   const traces=[];
   for(const hz of [30,60,120]){const r=specialRig(),rows=[];for(let tick=0;tick<=120;tick++){for(let f=0;f<hz/30;f++)r.update(tick/120,tick===120);rows.push(r.h._L.spSegments);}traces.push(rows);}
@@ -130,29 +134,31 @@ test('#425: emitted full HUD and touch modules retain quantization and authorita
   await root.link((spec,from)=>load(spec==='three'?path.join(site,'vendor/three/build/three.module.js'):path.resolve(path.dirname(from.identifier),spec)));
   await root.evaluate();
   const r=specialRig();r.h._updSpecial=root.namespace.HUD.prototype._updSpecial;
-  for(const [s,count]of [[0,0],[.47,10],[.99999,22],[1,23]])assert.equal(r.update(s),count);
+  for(const [s,count]of [[0,0],[.47,at(.47)],[.99999,N-1],[1,N]])assert.equal(r.update(s),count);
   assert(!r.h.sp.classes.has('is-ready'));r.update(1,true);assert(r.h.sp.classes.has('is-ready'));
   assert.equal(r.update(0,false,true),0);assert.equal(r.h.flashes.filter(x=>x==='is-flare').length,1);
   const mobile=load(path.join(site,'src/core/mobile.js'));
   await mobile.link((spec,from)=>load(spec==='three'?path.join(site,'vendor/three/build/three.module.js'):path.resolve(path.dirname(from.identifier),spec)));await mobile.evaluate();
   const m={setHud:mobile.namespace.MobileInput.prototype.setHud,els:{special:r.h.sp,fire:r.h.sp,sub:r.h.sp},_buzz(){}};
   r.h.sp.querySelectorAll=()=>r.h.spSegments;r.h.sp.style={setProperty(){}};
-  for(const [s,count]of [[0,0],[.47,10],[.99999,22],[1,23],[0,0]]){m.setHud({special:s,ready:s===1});assert.equal(r.h.spSegments.filter(n=>n.classes.has('is-filled')).length,count);}
+  for(const [s,count]of [[0,0],[.47,at(.47)],[.99999,N-1],[1,N],[0,0]]){m.setHud({special:s,ready:s===1});assert.equal(r.h.spSegments.filter(n=>n.classes.has('is-filled')).length,count);}
 });
 
-test('#425: touch SP replacement uses 23 steps while preserving readiness/buzz and other controls',()=>{
+test('#425: touch SP replacement uses the measured tooth steps while preserving readiness/buzz and other controls',()=>{
   const code=compose('src/core/mobile.js');
-  assert.equal((code.match(/class="iwm-sp-segment"/g)||[]).length,23);
+  assert.equal(code.split(GAUGE_GEN).length,2,'generator shipped once');
+  assert.match(code,/' \+ s3SpRingSVG\(\) \+ '/);
+  assert.equal((touchRingSVG().match(/class="iwm-sp-segment"/g)||[]).length,N);
   assert.doesNotMatch(code,/E.special.style.setProperty\('--g'/);
   const start=code.indexOf('  setHud('),end=code.indexOf('\n  endFrame()',start);
   const Mobile=vm.runInNewContext(`class Mobile {${code.slice(start,end)}};Mobile`,{clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
   const r=specialRig(),m=new Mobile();m.els={special:r.h.sp,fire:r.h.sp,sub:r.h.sp};m.els.special.querySelectorAll=()=>r.h.spSegments;m.els.fire.style={setProperty(){}};
   let buzzes=0;m._buzz=()=>buzzes++;
-  for(let i=0;i<23;i++)for(const delta of [1e-7,2e-7]){m.setHud({special:i/23+delta});assert.equal(r.h.spSegments.filter(n=>n.classes.has('is-filled')).length,i);}
-  m.setHud({special:1});assert(!r.h.sp.classes.has('is-ready'));assert.equal(m._hud.sp,23);
+  for(let i=0;i<N;i++)for(const delta of [1e-7,2e-7]){m.setHud({special:i/N+delta});assert.equal(r.h.spSegments.filter(n=>n.classes.has('is-filled')).length,i);}
+  m.setHud({special:1});assert(!r.h.sp.classes.has('is-ready'));assert.equal(m._hud.sp,N);
   m.setHud({special:1,ready:true});m.setHud({special:1,ready:true});assert.equal(buzzes,1);
   m.setHud({special:0,activeSp:true});assert.equal(m._hud.sp,0);assert(r.h.sp.classes.has('is-active'));assert(!r.h.sp.classes.has('is-ready'));
-  m.setHud({special:.5});assert.equal(m._hud.sp,11);assert.equal(buzzes,1);
+  m.setHud({special:.5});assert.equal(m._hud.sp,at(.5));assert.equal(buzzes,1);
   new vm.SourceTextModule(code);
 });
 
