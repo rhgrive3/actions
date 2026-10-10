@@ -27,6 +27,7 @@ test('#607/#677 calibrated scalar deviation stays azimuth-independent through re
    ps[kind==='shooter'?'fireShooter':'fireBlaster'](a,a.weapon,deg);const p=ps.list.at(-1),dir=p.vel.clone().normalize();
    const calibrated=deg*Math.pow(u,Math.log(bias)/Math.log(.5));
    near(Math.acos(Math.min(1,Math.max(-1,dir.z)))*180/Math.PI,calibrated);
+   near(dir.y,0); // S3 Shooter/Blaster deviation is yaw-only, never randomized elevation.
    assert.equal(draws.length,0,'radius and azimuth are consumed exactly once');
    assert.equal(calls,kind==='shooter'?4:3,'seed/visual-size draws follow without an extra probability draw');
    near(p.vel.length(),a.weapon.projSpeed);assert.equal(p.wid,kind);ps.clear();

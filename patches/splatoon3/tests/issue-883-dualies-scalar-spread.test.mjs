@@ -4,11 +4,10 @@
 //
 // The composed build adapter routes native `_fireRound` (Dualies + Splatling)
 // through `spreadWeaponRound`. The native generic sampler `_spread` keeps an
-// unsourced fixed 0.55 pitch-axis compression, so a Dualies sample at vertical
-// azimuth only reaches atan(0.55*tan(envelope)). This test drives the REAL
-// composed `fireDualies` path (adapted native source, real Projectiles) with
-// deterministic spread draws and asserts the sampled angular deviation equals
-// the sourced scalar envelope at horizontal and vertical azimuths.
+// unsourced cone and a 0.55 vertical compression. In the S3 studies only
+// Splatlings have vertical shot deviation: Dualies/Shot/Blaster have a signed
+// yaw deviation with the source bias quantile, but no random pitch deviation.
+// These tests drive the REAL composed `fireDualies` path and compare angles.
 //
 // Controls kept independent: Heavy Splatling's separately sourced
 // PitchDegSwerve branch, the post-roll LapOver 0° turret, native `_spread`
@@ -74,6 +73,8 @@ function fireAndDecompose(f, ps, a, hand, spread, radius, thetaTurns) {
     v: Math.atan2(v.dot(frame.up), v.dot(frame.base)) * R2D,
     angle: Math.atan2(frame.base.clone().cross(v).length(), frame.base.dot(v)) * R2D,
     baseY: frame.base.y,
+    shotY: v.y,
+    yaw: (Math.atan2(v.x, v.z) - Math.atan2(frame.base.x, frame.base.z)) * R2D,
     speed: shot.vel.length(),
     damage: shot.damage,
     origin: shot.start.toArray(),
@@ -91,83 +92,66 @@ function nativeSpread(f, ps, base, spread, radius, thetaTurns) {
 }
 
 
-test('#883 grounded Dualies reach the sourced 2.0° scalar envelope at vertical and horizontal azimuths', async () => {
+test('#883 grounded Dualies use signed horizontal deviation up to 2°, not a 2D cone', async () => {
   const { f, ps, a } = await setup();
   a.grounded = true;
-  // Vertical azimuth (draw 0.25 -> t = pi/2, sin t = 1): the full scalar
-  // angle, no 0.55 pitch-axis compression.
-  const vert = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, 0.25);
-  close(vert.v, 2, 1e-6);
-  close(vert.h, 0, 1e-6);
-  // Horizontal azimuth (cos t = 1): identical scalar angle.
-  const horiz = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, 0);
-  close(horiz.h, 2, 1e-6);
-  close(horiz.v, 0, 1e-6);
-  // Equal scalar radius at 45°: equal angular deviation on both axes.
-  const quarter = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, 0.125);
-  const expected = Math.atan(Math.cos(Math.PI / 4) * Math.tan(2 * Math.PI / 180)) * R2D;
-  close(quarter.h, expected, 1e-6);
-  close(quarter.v, expected, 1e-6);
-  // Projectile speed and damage are untouched by the direction sampler.
-  close(quarter.speed, a.weapon.projSpeed, 1e-6);
-  assert.equal(quarter.damage, a.weapon.damage);
-  assert.equal(quarter.randomCalls, 3, 'two spread draws plus the existing projectile seed draw');
+  const left = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, .25);
+  close(Math.abs(left.h), 2, 1e-6); close(left.v, 0, 1e-6);
+  close(left.yaw, -2, 1e-6); close(left.shotY, left.baseY);
+  const right = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, .75);
+  close(Math.abs(right.h), 2, 1e-6); close(right.v, 0, 1e-6);
+  close(right.yaw, 2, 1e-6); close(right.shotY, right.baseY);
+  close(right.speed, a.weapon.projSpeed, 1e-6);
+  assert.equal(right.damage, a.weapon.damage);
+  assert.equal(right.randomCalls, 3, 'two spread draws plus existing seed');
 });
 
-test('#883 airborne Dualies reach the sourced 7.5° Jump_DegSwerve at vertical azimuth', async () => {
+test('#883 airborne Dualies 7.5° jump spread affects yaw but never randomizes pitch', async () => {
   const { f, ps, a } = await setup();
   a.grounded = false;
-  const vert = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, 0.25);
-  close(vert.v, 7.5, 1e-6);
-  close(vert.angle, 7.5, 1e-6);
-  assert.equal(vert.randomCalls, 3, 'two spread draws plus the existing projectile seed draw');
-  const horiz = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, 0);
-  close(horiz.h, 7.5, 1e-6);
+  for (const [side, sign] of [[.25,-1],[.75,1]]) {
+    const shot = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, side);
+    close(shot.yaw, sign*7.5, 1e-6);
+    close(shot.v, 0, 1e-6);
+    close(shot.shotY, shot.baseY);
+    assert.equal(shot.randomCalls, 3);
+  }
 });
 
-test('#883 before/after samples retain the exact native random-call count and radial draw', async () => {
+test('#883 native cone is kept separate; corrected Dualies preserve two random draws', async () => {
   const { f, ps, a } = await setup();
   a.grounded = true;
   const base = baseFrame(ps, a, 0).base;
-  const native = nativeSpread(f, ps, base, 2, 1 - 1e-12, 0.25);
-  close(native.angle, Math.atan(0.55 * Math.tan(2 * Math.PI / 180)) * R2D, 1e-6);
-  assert.equal(native.randomCalls, 2, 'native spread consumes exactly the radial and azimuth draws');
-  const corrected = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, 0.25);
-  close(corrected.angle, 2, 1e-6);
-  assert.equal(corrected.randomCalls, native.randomCalls + 1, 'the same two spread draws remain, plus unchanged projectile seed');
-
+  const native = nativeSpread(f, ps, base, 2, 1 - 1e-12, .25);
+  close(native.angle, Math.atan(.55 * Math.tan(2 * Math.PI / 180)) * R2D, 1e-6);
+  assert.equal(native.randomCalls, 2);
+  const corrected = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, .25);
+  close(corrected.yaw, -2, 1e-6);
+  close(corrected.shotY, corrected.baseY);
+  assert.equal(corrected.randomCalls, native.randomCalls + 1);
   a.grounded = false;
-  const airBase = baseFrame(ps, a, 0).base;
-  const airNative = nativeSpread(f, ps, airBase, 7.5, 1 - 1e-12, 0.25);
-  close(airNative.angle, Math.atan(0.55 * Math.tan(7.5 * Math.PI / 180)) * R2D, 1e-6);
-  assert.equal(airNative.randomCalls, 2);
-  const airCorrected = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, 0.25);
-  close(airCorrected.angle, 7.5, 1e-6);
-  assert.equal(airCorrected.randomCalls, airNative.randomCalls + 1);
-
-  const nativeLock = nativeSpread(f, ps, airBase, 0, 1 - 1e-12, 0.25);
-  assert.equal(nativeLock.randomCalls, 0, 'native lock consumes no spread draws');
-  const correctedLock = fireAndDecompose(f, ps, a, 0, 0, 1 - 1e-12, 0.25);
-  close(correctedLock.angle, 0, 1e-12);
-  assert.equal(correctedLock.randomCalls, nativeLock.randomCalls + 1, 'lock keeps zero spread draws and the existing seed draw');
+  const jump = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, .75);
+  close(jump.yaw, 7.5, 1e-6);
+  close(jump.shotY, jump.baseY);
+  assert.equal(jump.randomCalls, 3);
+  const nativeLock = nativeSpread(f, ps, base, 0, 1 - 1e-12, .25);
+  assert.equal(nativeLock.randomCalls, 0);
+  const lock = fireAndDecompose(f, ps, a, 0, 0, 1 - 1e-12, .25);
+  close(lock.angle, 0, 1e-12);
+  assert.equal(lock.randomCalls, 1);
 });
 
-test('#883 near-vertical upward and downward aims retain the scalar angular envelope', async () => {
+test('#883 steep up/down Dualies retain sightline elevation while yaw deviates 2°', async () => {
   const { f, ps, a } = await setup();
   a.grounded = true;
-  a.aimPoint.set(.1745329, 101.05, .3);
-  a.aimDir.set(.00174533, .99999848, 0).normalize();
-  const up = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, 0);
-  assert.ok(up.baseY > .9999, `upward aim should be near vertical, base y=${up.baseY}`);
-  close(up.h, 2, 1e-6);
-  close(up.angle, 2, 1e-6);
-
-  a.aimPoint.set(-.1745329, -98.95, .3);
-  a.aimDir.set(-.00174533, -.99999848, 0).normalize();
-  const down = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, 0);
-  assert.ok(down.baseY < -.9999, `downward aim should be near vertical, base y=${down.baseY}`);
-  close(down.h, 2, 1e-6);
-  close(down.angle, 2, 1e-6);
+  for (const sign of [1,-1]) {
+    a.aimPoint.set(sign*.1745329, 1.05 + sign*100, .3);
+    a.aimDir.set(sign*.00174533, sign*.99999848, 0).normalize();
+    const shot = fireAndDecompose(f, ps, a, 0, undefined, 1 - 1e-12, .75);
+    assert.ok(sign * shot.baseY > .9999);
+    close(shot.shotY, shot.baseY, 1e-8);
+    close(shot.yaw, 2, 1e-6);
+  }
 });
 
 test('#883 LapOver_DegSwerve 0 keeps legal post-roll turret fire at exactly 0°', async () => {
@@ -196,7 +180,7 @@ test('#883 Dualies never delegate to the 0.55-compressed native sampler; other f
   const system = { _spread(dir) { calls++; return dir; } };
   const dir = { clone: () => dir, copy: () => dir, set: () => dir, lengthSq: () => 1, normalize: () => dir, addScaledVector: () => dir, cross: () => dir };
   spreadWeaponRound(system, dir, { grounded: true }, { kind: 'dualies', spreadGround: 2 }, 2);
-  assert.equal(calls, 0, 'Dualies must sample the scalar cone inside spreadWeaponRound');
+  assert.equal(calls, 0, 'Dualies must use the source horizontal spread inside spreadWeaponRound');
   spreadWeaponRound(system, dir, { grounded: true }, { kind: 'splatling', spreadGround: 3.3, spreadPitchGround: 1.6 }, 3.3);
   assert.equal(calls, 0, 'grounded Splatling still uses its own PitchDegSwerve envelope');
   spreadWeaponRound(system, dir, { grounded: false }, { kind: 'splatling', spreadGround: 3.3 }, 7);
@@ -205,8 +189,7 @@ test('#883 Dualies never delegate to the 0.55-compressed native sampler; other f
 
 test('#883 native source, adapter routing and shot determinism stay intact', async () => {
   const native = fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js', import.meta.url), 'utf8');
-  // Native is immutable: the unsourced 0.55 term stays for the separate
-  // shooter/blaster roots (#607/#677), which this Dualies-only fix must not touch.
+  // Native is immutable; the generic 0.55 term remains for fallback paths.
   assert.ok(native.includes('Math.sin(t) * Math.tan(r) * 0.55'), 'native _spread unchanged');
   const composed = adaptSource('src/game/weapons.js', native);
   assert.ok(composed.includes('spreadWeaponRound(this, dir, a, w, spreadDeg);'), '_fireRound still routes through spreadWeaponRound');
@@ -238,8 +221,9 @@ test('#883 both hands use the same scalar rule from their own muzzle origins', a
   const shots = [];
   for (const hand of [0, 1]) {
     const shot = fireAndDecompose(f, ps, a, hand, undefined, 1 - 1e-12, 0.25);
-    close(shot.v, 2, 1e-6);
-    close(shot.h, 0, 1e-6);
+    close(shot.v, 0, 1e-6);
+    close(Math.abs(shot.h), 2, 1e-6);
+    close(shot.yaw, -2, 1e-6);
     shots.push(shot);
   }
   assert.notDeepEqual(shots[0].origin, shots[1].origin, 'alternating hands keep their separate muzzle origins');

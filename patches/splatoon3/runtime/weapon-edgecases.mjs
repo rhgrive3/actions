@@ -74,31 +74,20 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
   const bias = a.weaponRunner?.s3ShotBias;
   const radiusSample = u => Number.isFinite(bias?.horizontal)
     ? biasQuantile(u, bias.horizontal) : Math.sqrt(u);
-  // #883: Dualies expose one scalar spread envelope, so do not inherit the
-  // generic path's unsourced vertical compression.
-  if (w.kind === 'dualies') {
+  // S3 source-backed: Shooter, Blaster and Dualies have horizontal (yaw)
+  // deviation only. Splatlings uniquely carry independent PitchDegSwerve.
+  // Sources: https://note.com/kanamoji_1027/n/n20cb3c3fb251 and
+  // https://wikiwiki.jp/splatoon3mix/ブキ/スピナー属
+  // Keep the existing two random draws (magnitude then signed side), since
+  // the shot seed, network replay and later paint use this gameplay RNG stream.
+  if (w.kind === 'dualies' || w.kind === 'shooter' || w.kind === 'blaster') {
     if (horizontal <= 0) return dir;
-    const radius = horizontal * DEG * radiusSample(Math.random());
-    const angle = Math.random() * Math.PI * 2;
-    const aim = dir.clone().normalize();
-    const right = aim.clone().set(-aim.z, 0, aim.x);
-    if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(aim, -aim.x);
-    right.normalize();
-    const up = aim.clone().cross(right);
-    return dir.copy(aim).addScaledVector(right, Math.cos(angle) * Math.tan(radius))
-      .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
-  }
-  if (w.kind === 'shooter' || w.kind === 'blaster') {
-    if (horizontal <= 0) return dir;
-    // Keep two random draws and the scalar cone geometry. The launch
-    // context supplies an explicit, separately labelled angular calibration.
-    const radius = horizontal * DEG * radiusSample(Math.random()), angle = Math.random() * Math.PI * 2;
-    const right = dir.clone().set(-dir.z, 0, dir.x);
-    if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(dir, -dir.x);
-    right.normalize();
-    const up = dir.clone().cross(right).normalize();
-    return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
-      .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
+    const magnitude = horizontal * DEG * radiusSample(Math.random());
+    const side = Math.random() < .5 ? -1 : 1;
+    const yaw = magnitude * side, c = Math.cos(yaw), s = Math.sin(yaw);
+    // Rotate around world up: preserve the vertical aim component exactly.
+    const x = dir.x, z = dir.z;
+    return dir.set(x * c + z * s, dir.y, z * c - x * s).normalize();
   }
   if (w.kind !== 'splatling' || !Number.isFinite(w.spreadPitchGround)) {
     return system._spread(dir, horizontal);
