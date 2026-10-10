@@ -60,14 +60,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
-  // Splat Dualies can enter a slide in midair. Keep admission, ink, chain
-  // limits and action cancellation in WeaponRunner; only remove Actor's old
-  // grounded-only call-site filter. Successful admission consumes the jump
-  // buffer, so this cannot grant a simultaneous normal/coyote jump.
-  if (rel === 'src/game/actor.js') code = replaceOnce(code,
-    '    if (this.jumpBuffer > 0 && !isSquid && this.grounded && this.weaponRunner.tryDodge?.(this.intent.move)) this.jumpBuffer = 0;',
-    '    if (this.jumpBuffer > 0 && !isSquid && !this.climbing && this.weaponRunner.tryDodge?.(this.intent.move)) this.jumpBuffer = 0;',
-    'dualies aerial slide admission');
+  // #719 aerial Dualies admission is already installed by adaptIssue719Dodge below.
   code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);
   code = adaptScorchGorge(rel, code, replaceOnce);
