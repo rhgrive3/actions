@@ -98,6 +98,8 @@ test('native Game._frame runs in identical order with stage timing enabled and r
   assert.ok(result.latest.stages.paint>=2);
   assert.ok(result.latest.stages.render>=7);
   assert.equal(result.latest.gpuCommandsMs,9);
+  assert.equal(result.latest.gpuPaintCommandsMs,9,'paint GPU query is sampled separately');
+  assert.equal(result.gpuPaintSamples,1);
   assert.match(result.latest.cause,/CPU/);
   const text=tracer.report();
   assert.match(text,/"source": "local debug capture, no upload"/);
