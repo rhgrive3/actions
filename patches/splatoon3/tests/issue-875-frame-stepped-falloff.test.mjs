@@ -127,3 +127,52 @@ test('#875 actual Splatling shot damage-age traces agree at 30/60/120Hz display 
   assert.deepEqual(traces[0], traces[1]);
   assert.deepEqual(traces[1], traces[2]);
 });
+
+
+// The source-guided InkFlightRuntime is the REAL gameplay collision path for
+// shooter-family heads. It bypasses the generic fidelityDamage helper. Before
+// #875, it used previousAge + impactT/60 and changed damage inside one tick.
+// Run actual owner bullet -> native ink-flight swept capsule -> applyHit.
+test('#875 source-guided runtime damage is independent of 0.1/0.9 swept impact timing', async () => {
+  const results = [];
+  for (const startFrame of [10, 11, 12, 18, 19]) {
+    const row = [];
+    for (const contactT of [0.1, 0.9]) {
+      const f = await realShotFixture({ fidelity: true, floor: false }), owner = f.make('splatling');
+      const enemy = f.make('shooter', { team: 1, hp: 1000 });
+      f.G.actors = [enemy];
+      const hit = [];
+      f.projectiles.applyHit = (attacker, victim, amount) => {
+        assert.equal(attacker, owner);
+        assert.equal(victim, enemy);
+        hit.push(amount);
+      };
+      f.projectiles.fireSplatling(owner, owner.weapon, 0);
+      const p = f.projectiles.list.at(-1);
+      assert.equal(p.inkKey, 'splatling', 'emitted source-guided bullet, not synthetic helper');
+      assert.ok(p.inkProfile);
+      assert.equal(p.inkProfile.damage.startFrame, 11);
+      p.inkFrame = startFrame;
+      p.age = startFrame / 60;
+      p.inkPhase = 1;
+      p.pos.set(0, 1.05, 0);
+      p.prev.copy(p.pos);
+      p.vel.set(0, 0, 60);
+      p.inkCarry = 0;
+      const sweepStep = .64;
+      const actorRadius = f.profile.player.s3HumanoidHurtRadius;
+      enemy.pos.set(0, 0, actorRadius + p.inkPlayerRadius + sweepStep * contactT);
+      const finished = f.projectiles.inkFlight.stepHead(p, 1 / 60);
+      assert.equal(finished, true, 'native collision must actually accept swept contact');
+      assert.equal(hit.length, 1, 'one authoritative damage callback');
+      const endFrame = startFrame + 1;
+      const expected = 30 - Math.max(0, Math.min(8, endFrame - 11)) * 1.875;
+      close(hit[0], expected, 'native source-flight damage at fixed frame ' + endFrame);
+      row.push(hit[0]);
+    }
+    assert.deepEqual(row.slice(0, 1), row.slice(1),
+      'impact fraction cannot change HP within one committed 60Hz step');
+    results.push(row[0]);
+  }
+  assert.deepEqual(results, [30, 28.125, 26.25, 15, 15]);
+});
