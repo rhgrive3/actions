@@ -2,6 +2,16 @@
 
 > 2026-10-10 JST スナップショット。GitHub Issue本文、Open PR本文・HEAD、変更ファイル/テスト、11.3.0固定抽出パラメータ・公式更新・公開Wiki・Drive原本を集めて整理した。**コード修正やマージを勝手に実行するPRではない。** 各対象Issueの元の受入条件が全て充足して初めて完了扱いにする。CI成功と原典数値があるだけでは完全修正としない。
 
+## 2026-10-10 当日追補：監査後のPR統合状況
+
+この資料の「Open Issue 127件／8修正PRに関連80件／うち自動クローズ予定20件」は**監査時点の固定スナップショット**であり、現在のOpen件数を意味しない。元の `ledger.json` と受入条件を過去監査の証跡として保持し、集計値を無根拠に再計算しない。
+
+GitHubのPR状態を再照合した2026-10-10時点では、次の5件がこの監査の後に **mainへマージ済み**：[#1183](https://github.com/rhgrive3/actions/pull/1183)、[#1189](https://github.com/rhgrive3/actions/pull/1189)、[#1190](https://github.com/rhgrive3/actions/pull/1190)、[#1191](https://github.com/rhgrive3/actions/pull/1191)、[#1192](https://github.com/rhgrive3/actions/pull/1192)。この5本を引き続き「active fix PR」と解釈しない。
+
+監査対象のうち [#1181](https://github.com/rhgrive3/actions/pull/1181)、[#1182](https://github.com/rhgrive3/actions/pull/1182)、[#1188](https://github.com/rhgrive3/actions/pull/1188) は引き続きOpen。監査後に新設された [#1195](https://github.com/rhgrive3/actions/pull/1195) の6件は、旧8PRの分母に混ぜて数えない。実装PRの現HEADとexact-head CIは各PRの最新本文・Actionsを正本とする。
+
+**注意：** マージ済みPRに閉鎖キーワードがあっても、Refs専用の未受入項目や別PRに残るIssueが自動的に完成したことにはならない。元Issueの実際のOpen/Closed、受入条件、現在の差分を個別に再検査するまで残件数を確定しない。#401と#1083はこの追補の対象外。
+
 ## 目次
 
 - [PR #1181 / #1182 — Issue別受入チェックと実装・テスト候補](./PR1181-1182.md)
