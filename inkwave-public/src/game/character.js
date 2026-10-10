@@ -15,6 +15,7 @@
 //   application   → kid squash/stretch → pelvis reach solve → torso FK → stabilised head look → two-bone IK legs/arms
 //                   → face → hair spring chains → tank slosh → weapon extras
 import * as THREE from 'three';
+import { SourceMotionController } from './motion/source-controller.js';
 import { PLAYER } from '../config.js';
 import { G, on } from '../core/ctx.js';
 import {
@@ -533,6 +534,7 @@ export class Character {
     this.setColor(opts.color ?? '#ff8a14');
     this.setWeapon(opts.weapon || 'shooter');
     poseNeutral(this.P);
+    this.sourceMotion = new SourceMotionController(this, opts);
   }
 
   _mkFoot(i) {
@@ -818,6 +820,7 @@ export class Character {
       if (sq.dark) this.squid.dark.geometry = sq.dark;
       if (sq.eyes) this.squid.eyes.geometry = sq.eyes;
     }
+    this.sourceMotion?.squidRig?.refreshGeometry();
     if (T && T.glass && T.fill) { this.tank.glass.geometry = T.glass; this.tank.fill.geometry = T.fill; }
     this.tank.glass.visible = t !== T_FAR;   // a 14 %-opaque shell on a 60 px kid: the ink fill alone reads the same
   }
@@ -899,6 +902,7 @@ export class Character {
     if (this._warmed) return this._warmed;
     if (!renderer || !camera || !target || !renderer.compileAsync) return false;
     const done = this._warmed = (async () => {
+      if (this.sourceMotion?.enabled) await this.sourceMotion.ready;
       const q = G.settings?.quality || 'high';
       // build every tier + the dither twins (warm-only meshes on this skeleton; the materials stay with the kid)
       const grp = new THREE.Group(); grp.name = 'warm';
@@ -969,6 +973,7 @@ export class Character {
   }
 
   trigger(name, arg) {
+    this.sourceMotion?.trigger(name, arg);
     const tr = this.tr, sp = this.sp;
     switch (name) {
       case 'shoot': {
@@ -1101,6 +1106,7 @@ export class Character {
   }
 
   dispose() {
+    this.sourceMotion?.dispose();
     LIVE.delete(this);
     this.root.parent?.remove(this.root);
     for (const k of ['skin', 'cloth', 'hair', 'eye', 'fill', 'squid', 'squidGhost', 'glow']) this.mats[k].dispose();
@@ -1165,7 +1171,9 @@ export class Character {
 
     this._trackRoot(dt, s);
     this._updateStates(dt, s);
-    this._updateFormScales(dt);
+    this.sourceMotion?.advance(dt, s);
+    if (this.sourceMotion?.active) this.sourceMotion.applyForm();
+    else this._updateFormScales(dt);
 
     // an external head turn applied after our last update (the showcase lobby glance): yaw of (now · ours⁻¹)
     if (this._headSet && this.kidForm) {
@@ -1180,7 +1188,7 @@ export class Character {
     // hidden (not drawn): keep the clocks and states, skip the pose; the feet re-plant and the hair re-inits on return
     const shown = this.root.visible && (!this.root.parent || this.root.parent.visible !== false);
     if (this.kidScale > 0.001 && shown) {
-      this._updateFeet(dt, s);
+      if (!this.sourceMotion?.active) this._updateFeet(dt, s);
       this._buildPose(dt, s);
       this._applyPose(dt, s);
     } else { this.feetValid = false; this.headInit = false; this._headSet = false; }
@@ -3044,6 +3052,9 @@ export class Character {
       this._solveLimb(leg, _pT, _pN, fq, 1, sd > 0 ? 2 : 3);
     }
 
+    // Actual source motion replaces procedural body before native weapon/face systems.
+    this.sourceMotion?.applyBody(dt, s);
+
     // ---- weapon parts first (arsenal: animateWeapon) so the hands ride this frame's pump / trigger
     const w = this.weapon; const d = w.def;
     this._animWeapon(dt, s, w);
@@ -3074,8 +3085,9 @@ export class Character {
     _q2.copy(_aQ).multiply(d.handR.quat);
     _pT.copy(d.handR.pos).applyQuaternion(_aQ).add(_aP);
     _pN.set(P[POLER], P[POLER + 1], P[POLER + 2]);
-    if (P[IKR] > 0.001) this._solveLimb(this.limbs.armR, _pT, _pN, _q2, P[IKR], 1);
+    if (P[IKR] > 0.001 && !(this.sourceMotion?.active && this.sourceMotion.keepSourceArms)) this._solveLimb(this.limbs.armR, _pT, _pN, _q2, P[IKR], 1);
     w.pivot.rotation.set(P[SPIN], 0, 0);
+    this.sourceMotion?.alignWeapon(P[IKL], P[LTW]);
     if (this.dual) {
       // ---- dual wield: the left fist holds its own pistol at the mirrored anchor (own sway mirror + own recoil)
       const wl = w.left;
@@ -3102,7 +3114,7 @@ export class Character {
       const k = 1 - this.bombSwap;
       wl.pivot.scale.setScalar(Math.max(0.001, k < 1 ? backOut(k, 2) : 1));
       wl.pivot.visible = k > 0.01;
-    } else if (P[IKL] > 0.001 || P[LTW] > 0.001) {
+    } else if ((P[IKL] > 0.001 || P[LTW] > 0.001) && !(this.sourceMotion?.active && this.sourceMotion.constrainLeft === false)) {
       // left arm → foregrip, an explicit target (hip / visor / tank), or free FK
       this._kidXform(B.handR, _v3, _q3);
       _v4.copy(w.pivot.position).applyQuaternion(_q3).add(_v3); _q4.copy(_q3).multiply(w.pivot.quaternion);
@@ -3137,13 +3149,16 @@ export class Character {
     // ---- face
     if (lv > 0) this._applyFace(P, dt);
     // ---- hair secondary motion (far: every other frame on the summed step; the chain sub-steps at ≤ 1/60 s)
-    if (lv > 0 || !(this._hairOdd = !this._hairOdd)) { this._updateHair(dt + this._hairAcc); this._hairAcc = 0; } else this._hairAcc += dt;
+    if (!this.sourceMotion?.active) {
+      if (lv > 0 || !(this._hairOdd = !this._hairOdd)) { this._updateHair(dt + this._hairAcc); this._hairAcc = 0; } else this._hairAcc += dt;
+    } else { this._hairAcc = 0; }
     // ---- tank slosh (ink level wobble + surface tilt within the glass)
     this._updateTank(dt);
     // ---- jiggle bones (docs/RIG.md): toes, tee hem flaps, backpack sway, ears
     if (lv > 0) this._applyJiggle(P, dt);
     // ---- hands: grip weapons / the bomb, relax when free, fists and open palms from the pose layers
     if (lv > 0) this._applyFingers(P, dt);
+    this.sourceMotion?.applyAccessories(dt);
     this._headQW.copy(B.head.quaternion); this._headSet = true;
     // ---- remember where the feet actually are (world) for seamless replanting after air / dances
     this.kid.updateMatrix();
@@ -3517,6 +3532,7 @@ export class Character {
   // Squid form: transform pops, dry hops with anticipation, dolphin arcs, swim undulation, climb wiggle, blinks.
   // ---------------------------------------------------------------------------------------------
   _updateSquid(dt, s) {
+    if (this.sourceMotion?.updateSquid(dt, s)) return;
     const sq = this.squid, sp = this.sp;
     if (this.sqScale <= 0.001) { this.sqInit = false; return; }
     const form = this.form === 'kid' ? (this.formPrev === 'kid' ? 'squid' : this.formPrev) : this.form;
