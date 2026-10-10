@@ -439,11 +439,13 @@ export const BLASTER_BURST_PARAM_DEFAULTS = Object.freeze({
   SplashDropInitSpeed: 0,
   SplashDropPaintRadius: 3.2,
   SplashPaintRadius: 2.0,
-  // Sparse 11.3.0 Middle and Light omit this type-default member. The S2
-  // 5.5.0 Middle_Burst source has 14/10=1.4 for shot collision vs 20/10=2
-  // for timed airburst. S3 11.3.0 Long/Short/Precision explicitly keep an
-  // approximately 0.7 shot-collision/timed ratio. Carry 1.4 forward as a
-  // CROSS-GENERATION MODEL, not an extracted S3 default or exact retail shape.
+  // Community-documented S3 type default (Inkipedia
+  // https://splatoonwiki.org/wiki/Template:Shooter_data_S3:
+  // BlasterBurstParam.SplashPaintShotColHitRadius = 1.4).
+  // The S3 11.3.0 Middle JSON omits this default; S2 v5.5 Middle_Burst
+  // independently records 14/10=1.4 vs 20/10=2.0 for timed airburst.
+  // Type default is source-backed, but the final Nintendo paint shape is
+  // still not established by parameter parity.
   SplashPaintShotColHitRadius: 1.4,
 });
 export function resolvedBlasterBurstParam(raw) {
@@ -502,9 +504,10 @@ export function blasterPaintContract(raw) {
       timedDropOn: burst.SplashDropOn ?? true,
       timedDropInitialSpeed: burst.SplashDropInitSpeed ?? 0,
       timedDropCollisionRadius: burst.SplashDropCollisionRadius ?? 0.4,
-      // Shot-collision sphere radius is a separate member from the timed
-      // airburst radius. If 11.3.0 omits it, use the documented S2-derived
-      // 1.4 model default rather than silently reusing the timed 2.0 radius.
+      // Shot-collision sphere radius is distinct from the timed-airburst
+      // radius; omitted sparse S3 fields resolve to the documented S3 type
+      // default 1.4 (also independently present in S2 as 14/10).
+      // Explicit S3 overrides take precedence.
       // Keep explicit S3 overrides authoritative for other Blaster types.
       collisionSplashRadius: burst.SplashPaintShotColHitRadius,
       axisX: x,

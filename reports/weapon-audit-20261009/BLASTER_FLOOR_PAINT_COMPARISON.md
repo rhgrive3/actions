@@ -129,3 +129,13 @@ GPU検査（`scripts/check-inkwave-paint-mask.mjs`、実WebGL2 SwiftShader）：
 - 回帰テスト：`issue-1107-blaster-defaults.test.mjs` はS2原典＋S3実データをロードし、通常/地形/直撃/落下半径の混同を防止。`blaster-floor-paint-1188.test.mjs` は実発射から衝突球半径1.4・落下滴2.5を確認する。
 
 これ以外のS2→S3の値・式の等価性は証明していない。
+
+### 追加の独立したスプラ3側の根拠（2026-10-10）
+
+Inkipediaの [Template:Shooter data S3](https://splatoonwiki.org/wiki/Template:Shooter_data_S3) は
+`BlasterBurstParam` の型既定値として **`SplashPaintShotColHitRadius = 1.4`** と
+`SplashPaintRadius = 2.0`、`SplashDropPaintRadius = 3.2` を明記している。
+11.3.0のMiddle JSONには1.4が省略されるが、**独立したS3コミュニティ資料とS2最終データの両方で一致**する。
+したがって本PRの衝突時1.4採用は、単なるS2→S3の当て推量より根拠が強い。
+一方、このWikiは任天堂のソースコードではなく、爆発の滴数・形状・発生時刻まで証明しない。
+実装の通常2.0／衝突球1.4／通常落下滴3.2／衝突落下滴2.5の独立性を引き続き守る。

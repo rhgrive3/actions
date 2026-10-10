@@ -21,7 +21,7 @@ test('S2 5.5 Middle_Burst and S3 11.3 Middle independently distinguish collision
     'an omitted S3 type-default is not evidence that it equals the timed radius');
   const contract = blasterPaintContract(three).burst;
   assert.equal(contract.timedSplashRadius, 2.0);
-  assert.equal(contract.collisionSplashRadius, 1.4, 'historical S2 14/10 candidate');
+  assert.equal(contract.collisionSplashRadius, 1.4, 'S3 community-documented 1.4 type default corroborated by S2 14/10');
   assert.equal(contract.timedDropRadius, 3.2);
   assert.equal(contract.radius, 2.5);
   const explicit = resolvedBlasterBurstParam({ BlasterBurstParam:
