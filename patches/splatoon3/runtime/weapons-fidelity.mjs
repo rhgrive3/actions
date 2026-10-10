@@ -845,7 +845,10 @@ export function fidelitySlosherImpactPaint(p, point) {
   const distance=Math.hypot(point.x-start.x,point.z-start.z)/scale;
   const t=clamp01((distance-n)/(f-n)), shrink=slosherDropScale(p,point.y);
   const radius=(w0+(w1-w0)*t)*scale*shrink;
-  return radius>0?{radius,stretchAmt:Math.max(.05,(d0+(d1-d0)*t)*shrink)}:null;
+  // Source DepthScale is a ratio; PaintSystem stretchAmt is an additive
+  // elongation (forward extent = radius * (1 + stretchAmt)). Preserve the
+  // current drop calibration, and saturate ratios below one at its round floor.
+  return radius>0?{radius,stretchAmt:Math.max(0,(d0+(d1-d0)*t)*shrink-1)}:null;
 }
 // #1022: the single live Slosher yaw law. RandomRotateYBias is consumed as an
 // exponent 1+bias on the normalised uniform draw (bias 0 = uniform control).
@@ -1185,7 +1188,9 @@ export function fidelityProjectileTargets(system,p) {
   // #965: sample only the collision-admitted flight segment, not the entire
   // integrated step. Reuse the solver's terrain/boss queries and exact actor
   // entry; a wall, actor or boss may truncate a scheduled droplet in this step.
-  const flight = p.s3BlasterFlightPaint || p.s3RollerFlightPaint;
+  const sloshFlight = p.type === 'slosh' && typeof system.s3PaintSlosherSegment === 'function';
+  const flight = p.s3BlasterFlightPaint || p.s3RollerFlightPaint ||
+    (sloshFlight ? (system._s3SloshPaintClip ||= { end: new api.THREE.Vector3() }) : null);
   if (flight && !p.ghost && !p.owner?.remote) {
     const end = flight.end.copy(p.pos);
     if (p.fidelityImpactActor) end.copy(p.prev).lerp(p.pos,p.fidelityImpactT);
@@ -1199,7 +1204,8 @@ export function fidelityProjectileTargets(system,p) {
       }
     }
     if(p.s3BlasterFlightPaint) paintBlasterFlight(G,p,end);
-    else paintRollerVerticalFlight(G,p,end);
+    else if(p.s3RollerFlightPaint) paintRollerVerticalFlight(G,p,end);
+    else system.s3PaintSlosherSegment(p,p.prev,end);
   }
   return s.targets;
 }

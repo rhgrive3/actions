@@ -3602,3 +3602,40 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - プレイへの影響: 修正前は Turf で敵に倒された直後の復活で、本家の Comeback にある移動・インク回復の補正が入らなかった。修正後は敵由来の死亡で 20 秒発動し、環境死では発動しない。
 - 確認状態: ロジック確認のみ。完全な production 変換・bootstrap 後続 installer・実 Actor/Physics で `issue-382-squid-spawn-comeback.test.mjs` 8/8 が通過（修正前は 8 件中 5 件が `0 != 20` 等で失敗、残り 3 件は対照ケース）。30/60/120Hz の固定 tick で一致。ブラウザ実動作、実通信、Switch 実機比較は未確認。
 - 未確認: 20 秒の開始境界（Squid Spawn の aim / launch / landing のどこから数えるか）。現在の実装は aim 中も時計が進むが、本家の正確な境界は未計測。環境死をまたぐ残存効果の扱いは既存の未校正事項のまま。
+
+## 2026-10-10: PR1202-derived evidence review and runtime residuals
+
+This follow-up starts at PR1202 head `7d74919cf78dd203e7bd0d1b80eeaf451eaec0f8` on a separate branch. It does not edit the PR1202 branch. The source review distinguishes extracted retail parameters/assets from executable decompilation and from INKWAVE-specific lifecycle invariants. No Switch/device parity or unpublished algorithm is inferred from parameter names alone.
+
+- [Slosher intermediate paint](slosher-intermediate-admission-2026-10-10.md): additive depth-ratio mapping, missed scheduled slots, pool lifetime reset, remote authority, and terminal collision-admitted segments. Refs #1002.
+- [Movement state lifetimes](movement-state-lifetime-review-2026-10-10.md): wall-contact descent state and ordinary-jump ascent state retire with their owning action. Two root causes; no guessed physics retuning. Refs #253 #890.
+- [Sub-weapon residuals](inkwave-pr1202-sub-special-source-residuals-20261010.md): Curling's own launch-Y tuple, fuse chronology in flight, and one owner for kit paint. The proposed air-resistance integration and Suction offset projection were excluded because the algorithmic evidence was insufficient. Refs #1123 #1099.
+- [Match terminal integrity](pr1202-match-terminal-integrity-1203.md): finite clocks, monotonic terminal lifecycle, idempotent result receipt, non-extending No Contest retry, and death clearing spawn motion. Guest presentation owns judge/results transitions. These are native runtime/network invariants, not Nintendo wire-protocol claims. Refs #1203.
+- [Weapon action state](inkwave-weapon-class-state-2026-10-10.md): full-held Charger recovery, low-ink completion-clock consistency, and committed Special interruption of main-weapon actions. Distinguish reachable current-kit cases from composition-only defense. Refs #1204 #1038 #196.
+
+Each linked report records source version, implementation, reproduction, gameplay impact and test scope. Unit/native fixture success does not substitute for browser, live multiplayer or console comparison. No issue is automatically closed by this review.
+
+### Follow-up after PR1202 advanced to 49f37c2
+
+The separate review branch incorporated the newer PR1202 head without modifying its branch. [Fist paint height anchoring](fist-paint-height-anchor-2026-10-10.md) prevents the new 19-stamp approximation from teleporting peripheral stamps onto an upper shelf or down a cliff. It retains the admitted stamp radius and the existing shape approximation; retail shape/area equivalence remains unverified. Refs #912 #522.
+
+Initial combined regression on the earlier head: 4,021 tests, 4,006 pass, zero fail, 15 skipped. This result predates the newer upstream commits and later integration fixes; it is not an exact-final-head CI claim.
+
+## 2026-10-10 入力追加レビュー: HIDジャイロの操作所有権 (#71)
+
+基準`6f5b2850`、PR1202から分けた集約ブランチのみ。`controller-motion.mjs`と`platform-input.mjs`を修正。
+
+- **本家根拠:** Nintendo公式のS3ジャイロ設定説明はOFFでRスティックのみの照準になると明記。https://www.nintendo.com/jp/games/feature/splatoonqa/other/gyro/index.html 。DriveのS1アセット/S3パラメータと世代・単位を混同せず、HID感度/軸符号/timeout等は変更しない。
+- **マップ不一致:** HID wrapperが共有`updateMapInput/mapHeld`より先に旧rawボタンを読むため、標準Xで開くtickにyaw/pitchが動き、逆に標準Viewや非active touchの古いmapフラグで操作を止めた。共有ownerを先に処理して同じmap latchで抑制。raw入力を二重消費しない。
+- **OFF不一致:** `settings.gyro=false`でもHID照準が有効だった。明示OFFを尊重し、右スティック上下を維持。接続自体でユーザー設定をONにはしない。
+- **状態寿命:** timeoutより短いmap/menu/入力切替で旧HID角速度が復活し得た。readerにsampleだけを破棄する`discard()`を追加し、同tick開閉/paused/menu/platform resetでも破棄。新packetで復帰し接続・較正は保持。
+- **検証:** 新規13＋既存14の27/27成功、fail/skip0。実composed Input/PlayerController、decoder/reader、30/60/120Hz fixed trace一致。実機HID/本家Switchの軸・感度校正は未確認。詳細`reports/controller-motion-ownership-review-2026-10-10.md`。
+
+## 2026-10-10: second review pass while integration tests run
+
+- [Kit core network admission](inkwave-pr1202-kit-core-network-20261010.md): preserves the original Suction/Curling core footprint using a bounded causal birth ledger, including post-death in-flight bombs and TIME UP admission. Full upgraded-peer compatibility is required; actual resource payment is not authenticated. Refs #522 #1123 #1099.
+- [Weapon follow-up](inkwave-weapon-class-followup-2026-10-10.md): low-ink airborne Charger progression, Splatling cancellation recovery, and separate Slosher sub/swim locks. The timing source version is distinguished from 11.3.0 extracted parameters. Refs #1038.
+- Additional match changes for #1206: retain terminal rosters, finish a zero-time No Contest after host migration, reject late cancellation of committed results, and validate mandatory result payloads transactionally before first commit.
+- Charger #1040: use the same-frame actor-motion snapshot for swept contacts, clip the actor interval when projectile range ends early, and reject invalid dt before dedicated-flight mutation. Source speed/radius/range are unchanged.
+
+These remain implementation and native-fixture validations. Browser/device parity and exact-final-head CI remain separate gates. PR1202 itself is not modified.

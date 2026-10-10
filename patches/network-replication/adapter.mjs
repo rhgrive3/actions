@@ -1,6 +1,7 @@
 // Network owns the wire contract. Compose LAST; upstream modules and gameplay
 // tuning remain immutable. Each connection fails closed on source drift.
 import fs from 'node:fs';
+import { adaptKitPaintAdmission } from './kit-paint-adapter.mjs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue1088SurgePresentation } from './issue-1088-surge-adapter.mjs';
@@ -22,7 +23,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'dodge-clock-adapter.mjs', 'superjump-epoch.mjs']
+    'dodge-clock-adapter.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -182,6 +183,7 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
+    code = "import { validResultPacket } from '../../patches/network-replication/result-admission.mjs';\n" + code;
     code = "import { syncRemoteInitialSquidSpawn } from '../../patches/splatoon3/runtime/respawn-lifecycle.mjs';\n" + code;
     patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
@@ -209,13 +211,30 @@ export function emit(name, payload) {
   }`, `  _hostState(d) {
     const m = this.match;
     if (!m || this.isHost) return;
-    if (typeof d.t === 'number') m.time = d.t;
+    const phases = ['intro', 'playing', 'finish', 'judge', 'results'];
+    const current = phases.indexOf(m.state), incoming = phases.indexOf(d.s);
+    // A host packet may arrive after a later lifecycle channel has completed.
+    // Never let an earlier phase re-enable combat or reset a terminal clock.
+    if (incoming < 0 || current >= 0 && incoming < current) return;
+    // Each peer owns its result presentation after accepting the payload.
+    // A faster host must not cancel a guest's awaited judge continuation.
+    if (d.s === 'judge' || d.s === 'results') return;
+    if (Number.isFinite(d.t) && d.t >= 0) m.time = d.t;
     if (d.s === 'finish') {
-      if (validFinishCoverage(d.fc)) m.s3FinishCoverage = Object.freeze([d.fc[0], d.fc[1]]);
-      if (validFinishMapDataUrl(d.fm)) m.s3FinishMapDataUrl = d.fm;
+      if (!validFinishCoverage(m.s3FinishCoverage) && validFinishCoverage(d.fc)) m.s3FinishCoverage = Object.freeze([d.fc[0], d.fc[1]]);
+      if (!validFinishMapDataUrl(m.s3FinishMapDataUrl) && validFinishMapDataUrl(d.fm)) m.s3FinishMapDataUrl = d.fm;
     }
     if (d.s !== m.state && d.s !== 'judge') m.setState(d.s);
   }`, 'receive immutable Turf finish snapshot');
+    patch('  _hostClock([state, time]) {',
+      '  _hostClock(sample) {\n    if (!Array.isArray(sample) || sample.length < 2 || !Number.isFinite(sample[1]) || sample[1] < 0) return;\n    const [state, time] = sample;',
+      'reject invalid host countdown samples before clock correction');
+    patch('  _result(d) {\n    const m = this.match;\n    if (!m || this.isHost) return;',
+      "  _result(d) {\n    const m = this.match;\n    if (!m || this.isHost || m.result || !validResultPacket(d)) return;",
+      'final result and statistics commit once per match');
+    patch("    m.setState('judge');\n  }\n  sendEnd()",
+      "    if (m.state !== 'judge' && m.state !== 'results') m.setState('judge');\n  }\n  sendEnd()",
+      'first result fills data without restarting an advanced presentation');
     patch('  _remoteSplat(victim, attacker, cause) {', `  _requestFirstSplat() {
     const id = this.cfg?.id;
     if (!this.isHost && typeof id === 'string' && id && this.s.hostId) this.s.tr?.sendTo(this.s.hostId,{k:'fsq',m:id});
@@ -2254,5 +2273,6 @@ ${bombHit}`;
       '    applyAdoptionSample(this, a, S);\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase, sampledSuperJumpDestination(a, S, jumpPhase));',
       'restore last accepted Super Jump epoch after adoption reconciliation');
   }
+  if (rel === 'src/net/netmatch.js') code = adaptKitPaintAdmission(code, once);
   return code;
 }

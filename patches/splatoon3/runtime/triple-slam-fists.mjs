@@ -89,9 +89,11 @@ function blast(actor, record, G, THREE) {
       let area = 0;
       for (const stamp of tripleSlamFistStamps(FIST_PAINT_RADIUS * record.scale)) {
         const sx = q2(center.x + stamp.dx), sz = q2(center.z + stamp.dz);
-        const ground = Number.isFinite(G.level?.groundHeight?.(sx, sz, center.y + 8))
-          ? G.level.groundHeight(sx, sz, center.y + 8) : center.y;
-        const at = stampAt.set(sx, q2(ground + .12), sz);
+        // Splitting a single impact changes only horizontal stamp placement.
+        // Re-projecting each offset onto groundHeight would lift ink onto an
+        // unrelated upper shelf (or lower it off a cliff), bypassing the old
+        // splat's surface-side/height rejection. Keep the admitted fist plane.
+        const at = stampAt.set(sx, q2(pos.y), sz);
         const got = G.paint.splat(at, FIST_STAMP_RADIUS, actor.team,
           { seed: q3(Math.random()), claimOwner: actor, claimMode: 'no-special' });
         if (Number.isFinite(got) && got > 0) area += got;

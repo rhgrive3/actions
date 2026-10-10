@@ -347,7 +347,7 @@ test('#1002: intermediate splash paints once, scores once and disables legacy tr
   ps._step(p, 1 / 60);
   assert.equal(splats.length, 1);
   assert.equal(splats[0].radius, .7);
-  assert.equal(splats[0].opts.stretchAmt, 2);
+  assert.equal(splats[0].opts.stretchAmt, 1);
   assert.equal(p.trailEvery, 0);
   assert.equal(turf, 5);
   ps._step(p, 1 / 60);
