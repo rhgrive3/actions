@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptSource } from '../adapter.mjs';
 import { enemyRevealedOnMap, MAP_REVEAL_DAMAGE } from '../runtime/map-reveal.mjs';
-import { mapActorVisible } from '../runtime/combat-info.mjs';
+import { mapActorVisible, revealedTo } from '../runtime/combat-info.mjs';
 
 const root = new URL('../../../', import.meta.url);
 const MAX = 100;
@@ -30,23 +30,33 @@ test('death and respawn produce no reveal', () => {
   assert.equal(enemyRevealedOnMap(actor({ hp: MAX }), MAX), false);
 });
 
-test('an unscoped s3.revealed flag never discloses an enemy (#710)', () => {
-  // With no owning team or expiry the flag would leak to both teams indefinitely.
-  assert.equal(enemyRevealedOnMap({ alive: true, hp: MAX, s3: { revealed: true } }, MAX), false);
-  const flagged = { alive: true, hp: MAX, team: 1, s3: { revealed: true } };
-  assert.equal(mapActorVisible(flagged, { team: 0 }, MAX, 0) || enemyRevealedOnMap(flagged, MAX), false);
-  // The damage rule still applies independently of the flag.
-  assert.equal(enemyRevealedOnMap({ alive: true, hp: 60, s3: { revealed: false } }, MAX), true);
+test('#710 unscoped boolean reveal is never accepted as recon authority', () => {
+  const viewer = { team: 0 };
+  const remote = actor({ team: 1, s3: { revealed: true } });
+  assert.equal(enemyRevealedOnMap(remote, MAX, viewer, 10), false);
+  assert.equal(mapActorVisible(remote, viewer, MAX, 10), false);
+  remote.anim = { form: 'kid' };
+  assert.equal(mapActorVisible(remote, viewer, MAX, 10), false, 'surfacing never reveals');
 });
-
-test('team-scoped mark is visible only to its team and only until it expires (#710)', () => {
-  const enemy = { alive: true, hp: MAX, team: 1, s3: { revealedUntil: { 0: 10 } } };
-  assert.equal(mapActorVisible(enemy, { team: 0 }, MAX, 9.9), true);
-  assert.equal(mapActorVisible(enemy, { team: 0 }, MAX, 10), false);
-  assert.equal(mapActorVisible(enemy, { team: 2 }, MAX, 5), false);
-  // A non-finite expiry for the viewer's team discloses nothing.
-  const broken = { alive: true, hp: MAX, team: 1, s3: { revealedUntil: { 0: NaN } } };
-  assert.equal(mapActorVisible(broken, { team: 0 }, MAX, 0), false);
+test('#710 expiring team marks do not disclose to the wrong team', () => {
+  const local = { team: 0 }, other = { team: 1 };
+  const enemy = actor({ team: 1, s3: { revealedUntil: { 0: 12, 1: 900 } } });
+  assert.equal(enemyRevealedOnMap(enemy, MAX, local, 11.999), true);
+  assert.equal(mapActorVisible(enemy, local, MAX, 11.999), true);
+  assert.equal(revealedTo(enemy, local, 11.999), true);
+  assert.equal(enemyRevealedOnMap(enemy, MAX, local, 12), false);
+  assert.equal(revealedTo(enemy, local, 12), false);
+  assert.equal(enemyRevealedOnMap(enemy, MAX, { team: -1 }, 11), false);
+  assert.equal(enemyRevealedOnMap(enemy, MAX, null, 11), false);
+  assert.equal(enemyRevealedOnMap(enemy, MAX, local, Infinity), false);
+  assert.equal(enemyRevealedOnMap(enemy, MAX, other, 11), false, 'enemy cannot use its own team marker');
+  enemy.s3.revealedUntil[0] = NaN;
+  assert.equal(enemyRevealedOnMap(enemy, MAX, local, 11), false);
+  enemy.s3.revealedUntil[0] = 22;
+  enemy.alive = false;
+  assert.equal(enemyRevealedOnMap(enemy, MAX, local, 11), false, 'death clears visibility');
+  const respawn = actor({ team: 1, s3: {} });
+  assert.equal(enemyRevealedOnMap(respawn, MAX, local, 11), false, 'new life has no stale mark');
 });
 
 test('missing or non-finite HP fails closed', () => {
@@ -60,7 +70,7 @@ test('adapter replaces the form-only swim gate and keeps teammate handling', () 
   const src = fs.readFileSync(new URL('inkwave-public/src/main.js', root), 'utf8');
   const out = adaptSource('src/main.js', src);
   assert.match(out, /import \{ enemyRevealedOnMap \} from '\.\.\/patches\/splatoon3\/runtime\/map-reveal\.mjs';/);
-  assert.match(out, /if \(!mapActorVisible\(o, a, PLAYER\.hp, G\.time\) && !enemyRevealedOnMap\(o, PLAYER\.hp\)\) continue;/);
+  assert.match(out, /if \(!mapActorVisible\(o, a, PLAYER\.hp, G\.time\) && !enemyRevealedOnMap\(o, PLAYER\.hp, a, G\.time\)\) continue;/);
   assert.doesNotMatch(out, /if \(o\.anim\.form === 'swim'\) continue;/);
   // The enemy-only branch and teammate/self dots are otherwise preserved.
   assert.match(out, /if \(o\.team !== a\.team && !o\.isLocal\) \{/);
