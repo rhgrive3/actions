@@ -135,6 +135,14 @@ export function adaptSource(rel, code) {
       '        if (friendly && Number.isFinite(t) && (previousAge + INK_DT * t) * INK_HZ + EPS < p.fidelityFriendThrough) continue;\n' +
       '        // World wins ties: no wall-through damage, independent of actors order.',
       'ink flight S3 friend-through at first-contact age');
+    // #875: a swept contact chooses the shot's completed fixed 60Hz tick,
+    // not a fractional impact time within that tick. This is the same integer
+    // damage-age owner used by fidelityDamage for ordinary shooter-family
+    // projectiles; collision ordering and contact position remain continuous.
+    code = replaceOnce(code,
+      '          const damage = damageAt(p.inkProfile, previousAge + INK_DT * first);',
+      '          const damage = damageAt(p.inkProfile, p.age);',
+      'ink flight integer-frame damage vs continuous swept contact');
     code = replaceOnce(code,
       '            this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
       '            if (target.team !== p.team) this.system.applyHit(p.owner, target, damage, p.wid || p.inkKey);',
@@ -920,7 +928,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'lerp(w.damageMin, w.damageMax * 0.62, charge)',
       'chargerDamage(a, w, charge)', 'charger partial damage curve');
     code = replaceOnce(code, 'a.ink < w.inkFull * 0.2', 'a.ink < w.inkMin', 'charger minimum ink');
-    code = replaceOnce(code, 'a.ink - w.inkFull * c', 'a.ink - Math.max(w.inkMin, w.inkFull * c)', 'charger ink floor');
+    code = replaceOnce(code, 'a.ink - w.inkFull * c', 'a.ink - chargerInkCost(w, c, this.chargeT)', 'charger ink floor');
     code = replaceOnce(code, 'const c = Math.max(0.12, this.charge);', 'const c = this.charge;', 'charger partial charge floor');
     code = replaceOnce(code, "          if (dmg > 0) this.applyHit(p.owner, e, dmg, p.wid || p.type);",
       '          if (dmg > 0) applyProjectileHit(this, p, e, dmg, _v);', 'projectile damage model');
@@ -1053,7 +1061,7 @@ export function adaptSource(rel, code) {
       'Roller native trail age width');
     code = "import { rollerTrailAgeWidth } from '../../patches/splatoon3/runtime/roller-impact-paint.mjs';\n" + code;
     code = adaptPaintOwnership(rel, code, replaceOnce);
-    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
+    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
