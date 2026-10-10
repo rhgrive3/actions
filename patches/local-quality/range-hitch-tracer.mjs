@@ -86,17 +86,6 @@ export function createGpuRenderTimer(renderer, { every = 8, maxPending = 3 } = {
   };
 }
 
-const sections = [
-  ['simulation', g => g.match, 'update'],
-  ['projectiles', g => g?.R && g?._gameContext?.projectiles, 'update'],
-  ['paint', g => g?._gameContext?.paint, 'flush'],
-  ['environment', g => g?._gameContext?.env, 'update'],
-  ['fx', g => g?._gameContext?.fx, 'update'],
-  ['camera', g => g.rig, 'update'],
-  ['render', g => g.R, 'render'],
-  ['showcase', g => g.showcase, 'render'],
-  ['hud', g => g, '_updateHud'],
-];
 const round = n => Number.isFinite(n) ? Math.round(n * 1000) / 1000 : null;
 
 export function installHitchTracer(game, {
@@ -108,18 +97,10 @@ export function installHitchTracer(game, {
   const originalFrame = game._frame;
   let active = null, last = null, previousStamp = 0, nextId = 0, disposed = false;
   let longTasks = 0, longTaskSupported = false, observer = null;
-  let ctx = null, gpuTimer = null;
+  let gpuTimer = null; const pendingEvents = [];
   const stageState = new Map();
 
-  const getWorld = () => {
-    // Use the production Game's own module G handle exposed by the boot audit.
-    // Synthetic node/browser tests can supply __G; avoid importing application
-    // state and shipping an extra eager dependency in the diagnostics bundle.
-    const g = env?.__G;
-    ctx = g || ctx || {};
-    game._gameContext = ctx;
-    return ctx;
-  };
+  const getWorld = () => env?.__G || {};
   const stageOwners = () => {
     const G = getWorld();
     return [
@@ -135,7 +116,9 @@ export function installHitchTracer(game, {
     ];
   };
   const note = (event, data) => {
-    if (active) active.events.push({ event, atMs: round(now() - active.start), ...(data || {}) });
+    const item = { event, atMs: active ? round(now() - active.start) : null, ...(data || {}) };
+    if (active) active.events.push(item);
+    else pendingEvents.push(item);
   };
   const rebind = () => {
     for (const [name, owner, method] of stageOwners()) {
@@ -210,7 +193,7 @@ export function installHitchTracer(game, {
   const wrappedFrame = function (...args) {
     if (disposed) return originalFrame.apply(this, args);
     rebind();
-    const rec = { id: ++nextId, start: now(), cpu: Object.create(null), events: [], gpuMs: null };
+    const rec = { id: ++nextId, start: now(), cpu: Object.create(null), events: pendingEvents.splice(0), gpuMs: null };
     active = rec;
     try { return originalFrame.apply(this, args); }
     finally {
@@ -303,7 +286,7 @@ export function installHitchTracer(game, {
         ...s },null,2);
     },
     reset() {
-      current.length=0; hitches.length=0; recentTasks.length=0;
+      current.length=0; hitches.length=0; recentTasks.length=0; pendingEvents.length=0;
       previousStamp=0;longTasks=0;last=null;
     },
     record:frameReport,
