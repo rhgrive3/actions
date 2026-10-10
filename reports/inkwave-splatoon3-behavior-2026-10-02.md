@@ -2921,3 +2921,11 @@ Player impact and limits: a depleted Roller round's hit volume (owner capsule vi
 - 再現操作: 静止した 100 HP の対象に Heavy Splatling を発射し、同じ 1F 内で接触位置（swept fraction）を 0.1 / 0.5 / 0.9 に変える。PR #868 時点では 11→12F で 29.8125 / 29.0625 / 28.3125 HP となり、接触位置で値が変わった（#875 の報告値）。修正後は 28.125 HP に固定。
 - プレイへの影響: 1F 内の接触位置だけで 1 回の命中値が変わる問題は除かれる。段階の側（完了 tick か衝突前の年齢か）を誤ると 11→12F と 18→19F の命中で 1.875 HP ずれる。
 - 確認状態: 単独ロジック試験のみ（実発射 Projectiles から InkFlightRuntime までの回帰、30/60/120 Hz の固定クロック一致）。本家実機との比較は未実施。未確認: (1) 衝突時に完了 tick と前 tick のどちらを使うか、(2) wikiwiki 表の版表記、(3) 生値の 0.1 HP 切り捨ては #261 の別件。対象外として残すもの: roller の DamageRejectRate は `impactT` による連続補間のまま（#875 の範囲外、未修正）。
+## #771: Roller horizontal flick and S3 `SwerveRateBySpeed` (2026-10-10)
+
+- 本家の根拠: Splatoon 3 Ver. 11.3.0 の Splat Roller `WideSwingUnitGroupParam`。`SwerveRateBySpeed` は主グロブ 0.05、近傍グロブ 0.1 で、固定版 [Leanny `WeaponRollerNormal`](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json) と [Splatalyzer の抽出データ](https://github.com/cengelbart39/Splatalyzer/blob/58568413df7c8bbd3b8d73d377e56ae29785ba18/Sources/Splatalyzer/Resources/weapon-json/WeaponRollerNormal.game__GameParameterTable.json) で一致する。変換則（単位・符号・速度との式）は確認した公開資料には見つからなかった。Splatalyzer のモデル定義は同名のプロパティを宣言するだけで、解説は確認していない。
+- INKWAVE 実装箇所: `patches/splatoon3/profile.json` の両 Unit に値はあるが、`patches/splatoon3/runtime/weapons-fidelity.mjs` `configureFidelityFlick()` の横振り分岐（`fan*SpawnWideDegree` の決定的な扇）は `SwerveRateBySpeed` を読まない。基底発射 `inkwave-public/src/game/weapons.js:961` の `(Math.random() - 0.5) * 0.05` は、fidelity 層で上書きされたまま。
+- 再現操作: 固定 yaw で全インクの横振りを多数回行い、同じ弾インデックスの発射角を記録する。main では発射角は各インデックスで一定、初速と位置だけが乱数になる（fb6 記録の再現では yaw unique=1、speed unique=6）。
+- 検討した実装（未採用）: `719485b3`（rate×(速度−SpawnSpeedBase)、ラジアン）と `8dc17992`（rate×正規化速度偏差、ラジアン）。どちらも INKWAVE の推測則で、本家の変換則ではない。`5a328147` はこの推測則を「未公表の変換則」として巻き戻している。main へは移植しない。
+- プレイへの影響: 未確認。推測則を入れると主グロブで最大約 1°（0.05×0.36 rad）の発射角変化が生じるが、符号・単位・式が本家と一致する根拠がない。扇の角度分布、近距離の当たり・塗りの再現性への影響も判定できない。
+- 確認状態: **未確認（コード変更なし）**。`SwerveRateBySpeed` の変換則は実機計測（Ver. 11.3.0 で同一 yaw の横振りを多数回発射し、各弾の初速と発射角の相関を記録）が必要。「各インデックスの発射角が一定」が本家でも正しいかは未判定。Roller 横振りの扇そのもの（`SpawnWideDegree`、`SpawnPositionWidth`、`SpawnSpeedRandom`）は既存の挙動を変えていない。
