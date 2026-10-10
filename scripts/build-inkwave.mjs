@@ -22,6 +22,7 @@ import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
 import { overlayScorchStageAssets } from './lib/inkwave-stage-assets.mjs';
+import {optimizePngLossless} from './lib/inkwave-lossless-png.mjs';
 
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
 const SRC = physicalLocation(path.resolve(process.argv[2] || 'inkwave-public'));
@@ -354,6 +355,18 @@ const deferredIntegrationPreloads = new Set([
 ]);
 // Apply loading instrumentation first, so hint selection measures final bytes.
 // All modules in order still enter the complete offline dependency graph.
+// The cold-offline core includes all lightmaps. Repack their PNG IDAT streams
+// without touching decoded pixels, removing bytes instead of relaxing cache limits.
+const lightmapDir=path.join(BUILD,'assets/lightmaps');
+let lightmapSaved=0;
+if(fs.existsSync(lightmapDir))for(const name of fs.readdirSync(lightmapDir)){
+  if(!name.endsWith('.png'))continue;
+  const location=path.join(lightmapDir,name);
+  const {bytes,savedBytes}=optimizePngLossless(fs.readFileSync(location));
+  if(savedBytes>0)fs.writeFileSync(location,bytes);
+  lightmapSaved+=savedBytes;
+}
+console.log('lossless lightmap PNG repack: '+lightmapSaved+' bytes saved');
 const loadingPlan = prepareLoading(BUILD, order);
 const loadingHTML0 = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
 const isRange = file => file.startsWith('patches/practice-range/');
@@ -399,7 +412,7 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-png.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 identity.inputHash = sha256(JSON.stringify(identity.files));

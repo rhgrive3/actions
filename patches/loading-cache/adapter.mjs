@@ -114,7 +114,7 @@ export function prepareLoading(build, preloads) {
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
   const assetBytes=Object.values(assets).reduce((sum,a)=>sum+a[0],0);
-  if(precacheBytes>5*1024*1024||assetBytes+512*1024>12*1024*1024)throw new Error('loading-cache: payload budget exceeded');
+  if(precacheBytes>5*1024*1024||assetBytes+512*1024>12*1024*1024)throw new Error('loading-cache: payload budget exceeded (precache '+precacheBytes+'/5242880, declared '+(assetBytes+512*1024)+'/12582912 bytes)');
   return {assets,precache,assetBytes,precacheBytes,phases:adapted.phases};
 }
 export function finalizeLoadingWorker(build, revision, plan, compactTemplate = source => source) {
