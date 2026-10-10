@@ -3055,6 +3055,8 @@ Known residual: the same-tick check uses the new source's final intent, so a new
 - 再現操作: 味方 B が生存したまま Super Jump の溜め中または飛行中に、A が Tab マップ、1〜3 キー、パッド、タッチのいずれかで B を選ぶ。修正前は B が拒否され、修正後は A の行先が B の確定行先と一致する。
 - プレイへの影響: 生存中の Super Jump 中の味方を選べるようになる。死亡、敵、自分自身、未確定・不正な座標、確定行先のない旧形式の状態は引き続き拒否する。通常の味方選択と、#362 の通常目標のスナップショットは変更しない。Bot の復活後選択は既存の 50% 判定と順位付けを保つ。
 - 確認状態: 実ソースを合成したロジック単独の試験（Actor、PlayerController、HUD、diorama、Bot、30/60/120 Hz の固定刻み）で確認。修正前は新規 11 件中 9 件が失敗。ブラウザでの実動作と本家の実機比較は未確認。溜め中に選べる点は「Super Jump の途中」からの推定で、本家の仕様文はこの区別を書いていない（未確認）。オンラインの遠隔味方は確定行先を受理済みの状態から復元できる場合だけ使い、復元できない場合は拒否のまま（未確認）。
+- 追記（オンライン連鎖、修正 `keep adopted Super Jump destination through remote epoch state`）: 修正前は、リモートの所有者 A が Super Jump 中でも、#1110 のエポック状態が確定行先 `to` を捨てるため、受信側の味方 B は A を連鎖の対象として拒否していた（オンラインでは #412 が効いていなかった）。修正後は、A の確定行先を同じサンプルのエポックと組にして保持する。再開した飛行は自分のサンプルの行先だけを採り、古い行先を持ち越さない。遅延した旧エポックの再生は受け付けない。確認は `patches/network-replication/tests/issue-412-online-chain-jump.test.mjs`（VM 上の NetMatch に実パケットを流す統合試験。A から B の連鎖、溜めと飛行、30/60/120 Hz、再開、再生、終了の 10 件。修正前は 10 件すべて失敗し、修正後は通過）。ブラウザでの二クライアントと本家の実機比較は未確認。
+
 ## 2026-10-10: #649 Roller rolling paint width follows ground speed
 
 - Splatoon 3 reference (Ver. 11.3.0): `WeaponRollerNormal` `BodyParam.PaintParam` has `SpeedMax` 0.132 and `WidthHalfMax` 2.8; `WeaponRollParam` has `SpeedNormal` 0.108 and `SpeedDash` 0.132 (Leanny/splat3 at `7280ff9c`, re-fetched and matched). The statement that rolling paint widens with speed and that side splashes paint floor only comes from the issue's cited wikiwiki page, which returned HTTP 403 to this session, so it is not re-verified here. No intermediate speed-to-width curve or numeric value was found in the pinned data or in a web search.
@@ -3547,6 +3549,8 @@ INKWAVE 実装箇所（main 97ae3fec を読んだ範囲）:
 - 再現操作: 2 台の接続（所有者 A、観測者 B）で平地から通常のスーパージャンプを行い、溜め中に 20Hz のスナップショットを受けた後、続けて 2 回目の発動をする。観測側で溜めの姿勢が連続して戻るか、前回の値に固着しないかを見る。
 - プレイへの影響: 同一位相の再発動で、観測側が間の無位相サンプルを受けない経路では、遠隔プレイヤーの溜めの姿勢が前回の進行度に残り得る（発生頻度は実機で未確認）。ゲームの権威（移動・当たり判定・被弾・行動の許可）は変更していない。
 - 確認状態: ロジック単独の回帰試験 3 件（同一エポックの重複、再発動、旧形式の互換、30/60/120Hz の補間）は通過。関連する既存試験（adoption-state、movement-motion、superjump-motion、issue-1050、superjump-startup-form、issue-1062）は通過し、`check-inkwave-patches.mjs --quick` も通過。実機の二クライアント観測（溜めの開始・ピーク・発射の見た目の一致）は未実施で、未確認。適応状態（owner の経過時間）が届く経路では、既存の寿命・順序による保護が先に働くため、エポックの効果は主に適応のない経路（旧形式、寿命が一致しない直後）で確認した。
+- 追記（#412 オンライン連鎖、修正 `keep adopted Super Jump destination through remote epoch state`）: 受信側のエポック状態は、確定行先 `to` を所有者の適応サンプル（`adapter.mjs` の `sampledSuperJumpDestination`）から、同じサンプルの `sjEpoch` と組にして保持するようになった。エポックの再開、古い再生の拒否、終了の規則は変更していない。`issue-1110-superjump-epoch` と `issue-412-online-chain-jump`（実パケットの統合試験、ロジック単独）は通過。実機の二クライアント観測は未実施で、未確認。
+
 ## 2026-10-10 — #198 Splattershot outer-reticle probability (Splatoon 3 Ver. 11.3.0)
 
 **本家の根拠:** 固定コミット `7280ff9c` の Leanny 11.3.0 `WeaponShooterNormal`（sha256 `dfca9f45…` を照合）の `WeaponParam` は、`Stand_DegBiasMin=0.01`、`Stand_DegBiasKf=0.01`、`Stand_DegBiasDecrease=0.015`、`Jump_DegBiasMax=0.4`、`Jump_DegBiasDecreaseStartFrame=25`、`Jump_DegBiasEndFrame=70`、`Stand_DegSwerve=4.86`、`Jump_DegSwerve=11.66` を持つ。これらは INKWAVE の値と一致する。一方、25% の上限と 6F の回復ゲートは固定した WeaponParam に存在しない。Inkipedia の Splatoon 3 Splattershot 節（コミュニティ資料）には「1%開始、+1%/発、25%で上限（24発）、ジャンプ時40%、射撃停止後6F、-1.5%/F」と記載がある。Nintendo 公式資料では未確認。

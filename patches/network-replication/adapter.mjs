@@ -1259,6 +1259,13 @@ function applyAdoptionSample(match, actor, sample) {
     actor.pos.copy(superJumpPosition(actor.superJumpState));
   } else actor.net.sjTo = null;
 }
+// #412: the owner's committed landing point rides the same accepted sample as its
+// Super Jump epoch, so it is kept only for that epoch (never a stale replay).
+function sampledSuperJumpDestination(actor, sample, phase) {
+  const state = sample?.adoption, jump = state?.jump;
+  if (!jump || phase !== jump.phase || state.life !== actor.net?.lastLife || !Array.isArray(jump.to)) return null;
+  return new THREE.Vector3(...jump.to);
+}
 function applyAdoptionRecoveryAge(match, actor, sample) {
   const state = sample.adoption;
   if (!state || state.life !== actor.net.lastLife) return;
@@ -2241,10 +2248,10 @@ ${bombHit}`;
       '  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  const sameJumpEpoch = sameJumpPhase && a.sjEpoch === b.sjEpoch;\n  o.sjT = sameJumpEpoch ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);',
       'interpolate Super Jump age only within its sender epoch');
     patch("    const jumpPhase = f & F.sjFlight ? 'flight' : 'charge';\n    if (f & (F.sjCharge | F.sjFlight)) {\n      const age = Number.isFinite(S.sjT) ? Math.max(0, S.sjT) : 0;\n      if (!a.superJumpState || !a.superJumpState.net || a.superJumpState.phase !== jumpPhase)\n        a.superJumpState = { phase: jumpPhase, net: true, t: age };\n      else a.superJumpState.t = Math.max(Number.isFinite(a.superJumpState.t) ? a.superJumpState.t : 0, age);\n    } else a.superJumpState = null;",
-      "    const jumpPhase = f & (F.sjCharge | F.sjFlight) ? f & F.sjFlight ? 'flight' : 'charge' : null;\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase);",
+      "    const jumpPhase = f & (F.sjCharge | F.sjFlight) ? f & F.sjFlight ? 'flight' : 'charge' : null;\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase, sampledSuperJumpDestination(a, S, jumpPhase));",
       'derive remote Super Jump phase through sender-epoch state before gauge reconciliation');
     patch('    applyAdoptionSample(this, a, S);',
-      '    applyAdoptionSample(this, a, S);\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase);',
+      '    applyAdoptionSample(this, a, S);\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase, sampledSuperJumpDestination(a, S, jumpPhase));',
       'restore last accepted Super Jump epoch after adoption reconciliation');
   }
   return code;
