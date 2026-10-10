@@ -16,10 +16,9 @@
 // shipped `_draw` head expression taken from that same adapted source, so the
 // asserted scale is the installed renderer's, not a restatement of it.
 //
-// Gameplay is pinned by the pre-fix fingerprint below: spawn positions,
-// velocities, seeds, collision radii, satellite counts, `size` and the exact
-// Math.random() draw count are captured on the unmodified tree and must not
-// move. Only the rendered head radius is allowed to change.
+// Gameplay retains baseline spawn positions, launch speeds, seeds, collision
+// radii, satellite counts, `size` and exact Math.random() draw count. Only
+// #771's documented horizontal yaw deviation may change projectile velocity. Only the rendered head radius is allowed to change.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -192,7 +191,22 @@ test('#750: CollisionParam gameplay radii, spawn, speed, RNG order and draw coun
     assert.equal(draws, fp.draws, `${key}: Math.random() draw count is unchanged`);
     assert.equal(p.list.length, fp.count, `${key}: glob count`);
     assert.deepEqual(Array.from(p.list.slice(0, 3), q => roundArray(q.pos.toArray())), fp.pos, `${key}: spawn positions`);
-    assert.deepEqual(Array.from(p.list.slice(0, 3), q => roundArray(q.vel.toArray())), fp.vel, `${key}: launch velocities`);
+    const actualVel = Array.from(p.list.slice(0, 3), q => roundArray(q.vel.toArray()));
+    if (vertical) {
+      assert.deepEqual(actualVel, fp.vel, `${key}: original vertical launch velocities`);
+    } else {
+      // #771 intentionally changes horizontal yaw using the already-drawn
+      // SpawnSpeedRandom. Preserve speed, elevation and RNG consumption.
+      for (let i = 0; i < actualVel.length; i++) {
+        const got = actualVel[i], before = fp.vel[i];
+        assert.ok(Math.abs(got[1] - before[1]) <= 1e-6, `glob ${i}: elevation unchanged`);
+        const speed = v => Math.hypot(v[0], v[2]);
+        assert.ok(Math.abs(speed(got) - speed(before)) <= 3e-6, `glob ${i}: launch speed unchanged`);
+        const angle = Math.atan2(got[0], got[2]) - Math.atan2(before[0], before[2]);
+        assert.ok(Math.abs(Math.atan2(Math.sin(angle), Math.cos(angle))) <= 0.02,
+          `glob ${i}: source-speed yaw deviation remains bounded`);
+      }
+    }
     assert.deepEqual(Array.from(p.list.slice(0, 3), q => round(q.seed)), fp.seed, `${key}: seeds`);
     assert.deepEqual(Array.from(p.list.slice(0, 3), q => round(q.radius)), fp.radius, `${key}: generic hit radius`);
     assert.deepEqual(Array.from(p.list.slice(0, 3), q => q.sats), fp.sats, `${key}: satellite count`);
