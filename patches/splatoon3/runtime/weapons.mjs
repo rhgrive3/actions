@@ -114,6 +114,25 @@ export function splatlingChargeCap(ink, w) {
 export function isChargerFullCharge(charge) {
   return Number.isFinite(charge) && charge >= 1;
 }
+/** #539: partial-charge movement runs from the S3 normal-side endpoint
+ * (partialChargeMoveStart) to the maximum-partial endpoint
+ * (partialChargeMoveEnd); true full charge uses moveSpeedFiring. Progress is
+ * the time-normalized chargeT that owns the 8F minimum gate, not the
+ * non-linear damage curve in `charge`. The interior is a linear
+ * approximation: its Nintendo easing is unverified (未確認).
+ */
+export function chargerPartialMoveSpeed(w, chargeT, runSpeed) {
+  const full = Number.isFinite(w.moveSpeedFiring) ? w.moveSpeedFiring : Math.max(0, runSpeed);
+  const start = Number.isFinite(w.partialChargeMoveStart) ? w.partialChargeMoveStart : runSpeed;
+  const end = Number.isFinite(w.partialChargeMoveEnd) ? w.partialChargeMoveEnd : full;
+  const t = Number.isFinite(chargeT) ? Math.max(0, Math.min(1, chargeT)) : 0;
+  if (t >= 1) return full;
+  const chargeTime = Number.isFinite(w.chargeTime) && w.chargeTime > 0 ? w.chargeTime : 1;
+  const minimum = Number.isFinite(w.minimumChargeTime) ? w.minimumChargeTime : 8 / 60;
+  const minT = Math.max(0, Math.min(0.9, minimum / chargeTime));
+  if (t <= minT) return start;
+  return start + (end - start) * ((t - minT) / (1 - minT));
+}
 export function chargerDamage(actor, weapon, charge) {
   const legacy = weapon.damageMin + (weapon.damagePartialMax - weapon.damageMin) * charge;
   const minimum = weapon.damageMinChargeTime, rate = weapon.partialDamagePerSecond;
@@ -1129,7 +1148,7 @@ export function installWeapons(context, profile) {
     const w = this.a.weapon;
     if (this.lockT > 0) return moveSpeed.call(this);
     if (w.kind === 'blaster' && this.s3BlasterMoveRemaining > 1e-10 && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
-    if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
+    if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return chargerPartialMoveSpeed(w, this.chargeT, PLAYER.runSpeed);
     return moveSpeed.call(this);
   };
   installSplatlingRadiusCharge(api, profile);

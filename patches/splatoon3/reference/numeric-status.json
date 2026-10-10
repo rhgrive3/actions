@@ -1067,6 +1067,16 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.charger.partialChargeMoveStart": {
+    "value": 5.76,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.partialChargeMoveEnd": {
+    "value": 1.26,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.charger.keepChargeTime": {
     "value": 1.25,
     "status": "derived from pinned extracted data; physical scale unverified",

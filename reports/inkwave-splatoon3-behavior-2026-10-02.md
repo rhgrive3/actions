@@ -3310,3 +3310,12 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - 再現操作: 空中の標準ブラスター爆風を、標的の横 1.0〜3.5 の位置で（直撃なし、LOS あり）発生させる。HP は 70→50 の帯だけ減り、3.385 を超え 3.5 未満では HP を減らさずに爆風の外向きへ押す。
 - プレイへの影響: 間接爆風で相手が押し出される。ダメージ帯、爆風半径、塗り、FX は変わらない。
 - 確認状態: 自動テストのみ（論理単独測定と VM fixture）。`issue-574-blaster-knockback` 6/6、`blaster-knockback-authority`（ネットワーク）4/4、隣接回帰 59/59 と 39/39、`check-inkwave-patches --quick` 合格。未確認: Accel/Bias の本家内部式と INKWAVE 単位への換算、直撃時の扱い（DamageAttackerPriority）、地形爆風へのノックバック（現状は付与しない）、壁越し・段差後の挙動、2 クライアントの実通信、本家実機との比較。
+## #539: Splat Charger partial-charge walking speed
+
+- **本家の根拠**: Issue #539 本文が引用する wikiwiki「スプラチャージャー」の検証表（Ver.11.3.0 向け）では、チャージ中の移動が 0.96（最小側）から 0.21（最大部分側）へ、完全充填で 0.20。Leanny/splat3 の固定コミット `7280ff9` の `WeaponChargerNormal` には完全充填の `MoveSpeedFullCharge` 0.02 のみがあり、部分チャージ移動の項目はない。wikiwiki は本セッションの取得が HTTP 403 だったため、0.96/0.21 は未確認のまま扱う。
+- **INKWAVE 実装箇所**: `patches/splatoon3/runtime/weapons.mjs` の `chargerPartialMoveSpeed` と `WeaponRunner.prototype.moveSpeed` の charger 分岐。`patches/splatoon3/profile.json` の `partialChargeMoveStart` 5.76 / `partialChargeMoveEnd` 1.26、完全充填は `moveSpeedFiring` 1.2。
+- **変更前**: 充填中は全段階で 1.2 u/s に固定されていた。
+- **変更後**: 進行量は時間正規化の `chargeT` を使う（ダメージ用の非線形カーブ `charge` は使わない）。8F 未満は 5.76 u/s、8F 以降は 5.76 から 1.26 へ線形補間、真の完全充填で 1.2 u/s。
+- **再現操作**: チャージャーを装備し、ジャンプせず地上で ZR を押して充填。充填時間の段階ごとに移動速度を確認する。
+- **プレイへの影響**: 短い部分チャージでの移動が速くなる。完全充填時の速度は変わらない。ダメージ、射程、インク、チャージ維持、塗り、Run Speed Up (#243)、完全充填ジャンプ (#251) は変更しない。
+- **確認状態**: 未確認。(1) 5.76 と 1.26 の出典は wikiwiki 検証表で、固定抽出データでは確認できていない。(2) 両端点の間の補間形（線形）と Nintendo の実際の曲線は未確認。(3) 30/60/120Hz の結果は論理テストでのみ確認。(4) 実機での比較は未実施。論理テストは実機比較の代わりにはならない。
