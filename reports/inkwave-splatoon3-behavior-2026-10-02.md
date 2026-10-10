@@ -1507,6 +1507,24 @@ age は actor に保持する。再ジャンプは age を再開し、death/rese
 
 未確認: Switch 実機の同条件 spread・pitch と gear 条件、非公開の25–70F中間曲線、`Jump_DegBiasMax` の実際の shot-selection 挙動。これらを本変更で解決済みにしない。全体 build / batch / CI は親側の検証に委ねる。
 
+## 2026-10-09 — Splat Dualies jump spread (#887)
+
+比較対象は Splatoon 3 Ver. 11.3.0 の Splat Dualies (`WeaponManeuverNormal`)。根拠は [Nintendo の更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/) と、固定した [Leanny 11.3.0 raw parameter table](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json) (`7280ff9cde8bb1c5dcef46c700c326471584d2e6`)。2026-10-09 に同 raw を再取得し、`WeaponParam` が `Stand_DegSwerve=2`、`Jump_DegSwerve=7.5`、`Jump_DegBiasDecreaseStartFrame=25`、`Jump_DegBiasEndFrame=70`、`Jump_DegBiasMax=0.4`、`LapOver_DegSwerve=0`、`RepeatFrame=5` であることを確認した。frame 値は既存の単位変換 `/60` で秒に直し、`25/60=0.4166…s`、`70/60=1.1666…s` とする。角度は profile が既に同じ raw 由来の度で保持している。`Jump_DegBiasMax` は角度加算・角度スケールに変換していない。
+
+条件は通常のヒト形態、追加ギアなし。ジャンプ入力は射撃方向移動なし（射撃中でも `tryDodge` は移動入力が無ければ成立しない）ので通常ジャンプになり、`s3JumpSerial` と `actor:jump` が発生する。本家 Switch 実機での同一ギア・入力フレーム計測は今回行っていない。
+
+開始 main `2195d5244408a9632bfbbb3b106f2cfdf1fa6d77` では `inkwave-public/src/game/weapons.js::WeaponRunner._spreadDeg()` の dualies 分岐が `a.grounded ? spreadGround : spreadAir` を選び、ジャンプ経過時間を読まない。complete production adapter composition の repro は、空中 frame 36 の runner spread `3.75`（=7.5×`spreadFirst`0.5）が、着地した frame 37 で `1.0`（=2×0.5）へ即座に落ちることを確認した。この値は HUD 表示 (`main.js` が `a.weaponRunner.spread` を投影)・`_dualies()` から投射物へ渡す cone の両方に現れる。post-roll の `LapOver_DegSwerve=0` turret cone は別状態であり本件の対象外。
+
+再起動時に current main `5d0be6b7fdebfd07e696e75497aaa97aa5ff5648` を再確認した。公開 source と production adapter に同じ grounded 二択が残り、jump recovery clock はなかったため issue root は main で未修正だった。今回の修正は公開 source を変えず `patches/splatoon3/runtime/weapons.mjs` に current jump-bias owner を接続した。
+
+実装は `runtime/splatling-jump-spread.mjs`（#850 の Splatling 専用のまま）ではなく、`patches/splatoon3/runtime/weapons.mjs` 内で、既に sourced として導入済みの Blaster jump-bias owner（`s3BlasterJumpState`）と同じ形にした。Inkipedia の [Data Explanation](https://splatoonwiki.org/wiki/User:XarrotD/Data_Explanation) は `DegSwerve` を「弾が中心から外れうる最大角」、`DegBias` を「弾がどれだけ外れるかを決める隠れ確率変数」と説明し、偏差を `y = s · x^(log_0.5 b)`（`s`=swerve、`b`=bias）とする。したがって `Jump_DegBiasDecreaseStartFrame`/`Jump_DegBiasEndFrame` は angle lerp ではなく **outer-reticle 確率（bias）の回復窓** である。`_spreadDeg()` は jump clock が有効な間 `spreadAir=7.5` の outer envelope を publish し、fire 時に `Jump_DegBiasMax=0.4` から 25F–70F で 0 へ下がる bias を `Math.random()` でサンプルして `Jump_DegSwerve=7.5` か `Stand_DegSwerve=2` のどちらかへ撃ち分ける。角度は補間しない。
+
+raw table は開始・終了 frame のみを公開し、25F–70F の正確な確率回復カーブ形状は未公開である。本実装は Blaster/shooter と同じ既存の単調線形回復をそのまま用いる **INKWAVE 内部の近似であり、Nintendo の正確なカーブとは呼ばない**。着地しても clock は続くので初回 grounded tick で ground endpoint に snap しない。70F に達した時点で、空中か着地後かを問わず clock を消去する（末尾の #887 追補を参照）。再ジャンプは clock を再開、death/reset は消去、`dt=0` は進めない。post-roll `LapOver_DegSwerve=0` turret cone は独立。`RepeatFrame=5`（`fireInterval=5/60`）、ink、damage、wire、owner/remote authority は変更していない。bloom は独立層として `spreadFirst` factor に残した。HUD (`a.weaponRunner.spread`, outer envelope) と `spreadWeaponRound` の投射物 cone は同じ `s3DualiesJumpState` を読む。
+
+確認は complete production adapter composition (`adaptSource` → `adaptTouchLayout` → `adaptReliability` → `adaptQualitySource` → `adaptNetworkSource` → `adaptRange`) と native `Actor`・`WeaponRunner` で行った。再起動後の focused run は `patches/splatoon3/tests/dualies-jump-spread-native.test.mjs` が 10/10、隣接する `splatling-jump-spread-native.test.mjs` が 4/4 pass。sourced 境界（25F/70F/`Jump_DegBiasMax`0.4/7.5/2/`spreadLock`0/5F）、stable grounded の 2 endpoint と非ジャンプ落下の 7.5 envelope、`Jump_DegBiasMax` 0.4 hold → 25F 非回復 → 70F で 0 到達、landing 非 snap、fire 時 bias が deviation 比 `7.5:2` を再現すること、HUD scalar と projectile cone の一致、turret cone の独立、reset/death/`dt=0` lifecycle、5F cadence・ink・emission frame 不変、30/60/120Hz render が同一の fixed 60Hz trace になることを確認する。
+
+未確認 / blocker: 非公開の 25F–70F 確率回復カーブ形状、`Stand_DegBiasKf`/`Stand_DegBiasDecrease`/`Stand_DegBiasMin` による standing bias の連射蓄積（Dualies には `Stand_DegBiasMax` が published されないためモデル化せず）、jump bias と standing bias の合成則（wiki は "needs verification"）、Action Intensify の `ReduceJumpSwerveRate` による jump 増分そのものの低減、Switch 実機の同条件計測。これらを本変更で解決済みにしない。全体 build / batch / CI は親側の検証に委ねる。
+
 ## 2026-10-07: Locker portrait queue staging and character reuse (#834)
 
 ### Splatoon 3 reference conditions
@@ -2949,3 +2967,18 @@ Player impact and limits: a depleted Roller round's hit volume (owner capsule vi
 **プレイへの影響.** 味方が雨の外縁（成長・消滅中）や雨の下にいる時の加速が出なくなる。雨の最後の 0.3 秒の加速は残る。敵の雨による回復阻害も同じ範囲になる。ダメージ、塗り、雨の寿命の挙動は変更していない。
 
 **確認状態.** Node の production 合成テスト `patches/splatoon3/tests/issue-927-storm-recovery-area.test.mjs` 5件。修正前の main では 3件が失敗し、修正後は 5件とも成功する。隣接する 15 ファイル（storm・superjump・movement・reliability・local-quality）の 124件も成功。`check-inkwave-patches --quick` は OK。splatoon3 全体のテストは本 session では完走していない（統合後に実行予定）。未確認: Nintendo の回復倍率と成長曲線、12単位トレースの世界単位、ネイティブ雨ダメージが `dur - 0.3` で止まる件（#563 の範囲で未変更）、実機とブラウザでの比較。
+## 2026-10-10 — #887 追補: 空中で 70F を超えた Splat Dualies の clock 消去
+
+比較対象は上記 2026-10-09 の #887 entry と同じ Splatoon 3 Ver. 11.3.0 の `WeaponManeuverNormal`（`Jump_DegBiasDecreaseStartFrame=25`、`Jump_DegBiasEndFrame=70`、`Jump_DegBiasMax=0.4`、`Stand_DegSwerve=2`、`Jump_DegSwerve=7.5`）。根拠は固定 Leanny コミット `7280ff9c` の raw table のみで、公開データには空中で 70F を超えた後の挙動が無い。
+
+**旧来の不具合（INKWAVE 側）**: 2026-10-09 の実装は jump bias clock を `grounded` のときだけ消去していた。そのため空中に 70F 以上留まると `Jump_DegBiasMax` から 0 へ下がった bias が残り、fire 時に `Math.random() < 0` が成立せず常に `spreadGround=2` の endpoint を選んでいた。`_spreadDeg()` は clock が有効な間 outer envelope を返すので、HUD（7.5 系）と投射物（2 系）が食い違う経路だった。通常の空中 Dualies は 7.5 endpoint を保つべきという本 Issue の受け入れ条件に反する。
+
+**本追補の変更**: `patches/splatoon3/runtime/weapons.mjs` の clock 消去条件を `grounded` 判定なしで `jumpT >= 70F` に統一した。70F に達した clock は空中でも着地後でも消える。空中で 70F を超えた後は通常の空中 endpoint（`spreadAir=7.5` × bloom）が `_spreadDeg()` と `fireDualies` の両方で使われる。着地後に 70F 未満で着地した場合の clock 継続（初回 grounded tick で 2 に snap しない）は変えていない。同じ形の `s3BlasterJumpT` の消去条件（`grounded` 付き）は Blaster の別 owner のため本追補では変更していない。別途確認が必要。
+
+**再現操作（修正前）**: 通常ジャンプ後に空中に約 70F（約 1.17 秒）以上留まる（高所からの落下など）→ 空中で射撃。修正前は fire 時に 2 endpoint の cone が選ばれた（コード読解による。実機未計測）。修正後は空中で 7.5 endpoint。回帰試験 `patches/splatoon3/tests/dualies-jump-spread-native.test.mjs` の `#887 an airborne actor past 70F ...` は、修正を外すと失敗することを確認した。
+
+**プレイへの影響**: 長い滞空の空中射撃が、修正前は 2° 相当の cone で撃たれていた。修正後は空中で広い cone（7.5 endpoint）のまま。INKWAVE 内で実際にどれだけの滞空が 70F を超えるかは未計測。
+
+**確認状態**: production composed adapter と native Actor / WeaponRunner による固定 60Hz のロジック試験のみ。本家 Switch 実機との比較はしていない。
+
+**未確認（解消済みとしない）**: 空中で 70F を超えた後の本家の bias と endpoint（本追補は INKWAVE 側の整合性として 7.5 endpoint を選んだ。本家仕様ではない）、25F–70F の確率回復カーブ形状、clock の起点が跳躍開始か着地か（INKWAVE は Blaster 既存実装と同じ跳躍開始起点）、jump bias と standing bias の合成則、Action Intensify による `Jump_DegSwerve` 増分の低減、Blaster 側の同種の消去条件の扱い、30/60/120Hz 以外の実機フレーム間隔での見え方。
