@@ -100,6 +100,13 @@ export function updateResources(a, dt) {
     a.s3.chargerKeepRecover = Math.max(0, (a.s3.chargerKeepRecover || 0) - dt);
   }
   const runner = a.weaponRunner;
+  if (runner?.s3SplatlingCancelRefillPending) {
+    runner.s3SplatlingCancelRefillPending = false;
+    if (a.weapon.kind === 'splatling') {
+      a.s3 ||= {};
+      a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, 29 / 60);
+    }
+  }
   const chargerCancelled = runner?.s3ChargerCancelRefillPending === true;
   if (runner) runner.s3ChargerCancelRefillPending = false;
   if (a.weapon.kind === 'charger' && (chargerCancelled ||
@@ -110,6 +117,7 @@ export function updateResources(a, dt) {
   const chargerInterruptRecover = a.weapon.kind === 'charger' ? (a.s3?.chargerInterruptRecover || 0) : 0;
   const chargerKeepRecover = a.weapon.kind === 'charger' ? (a.s3?.chargerKeepRecover || 0) : 0;
   const chargerLowRecovery = a.weapon?.kind === 'charger' && runner?.charging &&
+    !isChargerFullCharge(runner.charge) &&
     a.ink + 1e-10 < (a.weapon.inkMin ?? 0) && chargerInterruptRecover <= 1e-10 && chargerKeepRecover <= 1e-10;
   const canRefill = chargerLowRecovery ||
     ((rollingRecovery ? (!a.weaponRunner.rolling || stationaryRollRecovery) : a.lastFire + 1e-10 >= delay)
@@ -117,6 +125,10 @@ export function updateResources(a, dt) {
       && (a.weaponRunner.s3DodgeInkRemaining || 0) <= 1e-10
       && chargerInterruptRecover <= 1e-10
       && chargerKeepRecover <= 1e-10
+      // busy() also grants form admission: a full charge may enter squid form
+      // before the later weapon phase creates s3Stored. That does not grant a
+      // refill tick between the paid hold and its keep record.
+      && !(a.weapon.kind === 'charger' && runner?.charging && isChargerFullCharge(runner.charge))
       && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored);
   if (canRefill) {
     let rate = 0;

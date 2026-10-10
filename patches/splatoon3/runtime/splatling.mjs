@@ -121,15 +121,8 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
     cancel(this, this.a?.alive !== false);
     return reset.apply(this, args);
   };
-  // Actor's special early return must not freeze a prepaid stream and revive
-  // it after the special. Do not alter any other weapon's special behavior.
-  if (Actor?.prototype._startSpecial) {
-    const startSpecial = Actor.prototype._startSpecial;
-    Actor.prototype._startSpecial = function (...args) {
-      if (this.weapon.kind === 'splatling') cancel(this.weaponRunner);
-      return startSpecial.apply(this, args);
-    };
-  }
+  // Successful Special cancellation is owned by installWeapons' committed
+  // special:use listener, including kits that bypass native _startSpecial.
 
   // Charge-start ground slowdown (#952, takeover of PR #1188 A05).
   // Pinned 11.3.0 WeaponSpinnerStandard: MoveSpeed_Charge 0.062, VelGnd_DownRt_Charge 0.05.
