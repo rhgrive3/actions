@@ -30,8 +30,10 @@ export class ShooterAccuracy {
     const frames = dt * this.hz;
     const previous = this.sinceShotFrames;
     this.sinceShotFrames += frames;
-    const after = Math.max(0, this.sinceShotFrames - RECOVERY_GATE_FRAMES);
-    const before = Math.max(0, previous - RECOVERY_GATE_FRAMES);
+    // The pinned Dualies RepeatFrame is 5, Shooter fallback is 6. Always
+    // honor the per-main configured hold window instead of the Shooter constant.
+    const after = Math.max(0, this.sinceShotFrames - this.recoveryFrames);
+    const before = Math.max(0, previous - this.recoveryFrames);
     if (after > before) this.stand = Math.max(this.minimum, this.stand - (after - before) * this.recovery);
   }
   chance(grounded, jumpAgeSeconds) {

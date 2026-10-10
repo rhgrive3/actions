@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DualiesAccuracy } from '../runtime/dualies-accuracy.mjs';
+import { ShooterAccuracy } from '../runtime/shooter-accuracy.mjs';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 
 const near = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} != ${b}`);
@@ -85,4 +86,17 @@ test('#891 Projectiles.fireDualies samples the bias once per admitted normal sho
   const beforeTurret = calls.length;
   for (let i = 0; i < 10; i++) { a.ink = 100; r.update(1 / 60, { fire: true }); }
   assert.equal(calls.length, beforeTurret);
+});
+
+test('#891 production shooter-family angular state honors S3 Dualies RepeatFrame=5',()=>{
+  const source={RepeatFrame:5,Stand_DegBiasMin:.01,Stand_DegBiasKf:.01,
+    Stand_DegBiasDecrease:.005,Jump_DegBiasMax:.4};
+  const a=new ShooterAccuracy(source,60);
+  for(let i=0;i<24;i++)a.shot(true,null);
+  assert.ok(Math.abs(a.stand-.25)<1e-12);
+  a.advance(5/60);
+  assert.ok(Math.abs(a.stand-.25)<1e-12);
+  a.advance(1/60);
+  assert.ok(Math.abs(a.stand-.245)<1e-12,
+    'native production accuracy must use the 5F sourced gate, not default Shooter 6F');
 });

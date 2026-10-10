@@ -44,3 +44,20 @@ test('#198 idle recovery is the same for 30, 60, 120 and 144 Hz frame steps', ()
     assert.ok(Math.abs(a.chance(true,null)-expected)<1e-9, `step ${step}`);
   }
 });
+
+// Dualies shares the angular-bias implementation but the pinned 11.3.0
+// RepeatFrame is 5 rather than the Shooters' 6F fallback. This test ensures
+// the constructor parameter is consumed by advance, not merely stored.
+test('configured RepeatFrame=5 begins recovery at F6 without changing Shooters default 6F',()=>{
+  const dual=new ShooterAccuracy({RepeatFrame:5,Stand_DegBiasDecrease:.005});
+  const shooter=new ShooterAccuracy();
+  for(let i=0;i<24;i++){dual.shot(true,null);shooter.shot(true,null);}
+  dual.advance(5*frame);shooter.advance(5*frame);
+  assert.ok(Math.abs(dual.stand-.25)<1e-10);
+  assert.ok(Math.abs(shooter.stand-.25)<1e-10);
+  dual.advance(frame);shooter.advance(frame);
+  assert.ok(Math.abs(dual.stand-.245)<1e-10,'Dualies 5F hold then 0.005 recovery');
+  assert.ok(Math.abs(shooter.stand-.25)<1e-10,'Shooter 6F hold still active');
+  shooter.advance(frame);
+  assert.ok(Math.abs(shooter.stand-.235)<1e-10,'Shooter recovers after F6');
+});
