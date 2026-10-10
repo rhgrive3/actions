@@ -3348,3 +3348,16 @@ Compared with Splatoon 3 Ver. 11.3.0, standard Blaster (`WeaponBlasterMiddle`), 
 - A real floor landing mid-roll is 未確認; the test sets only the grounded flag because the fixture has no floor.
 - The coyote-window precedence is an INKWAVE choice and is 未確認 against Splatoon 3.
 - #477 (4F startup) and #532 (distance calibration) are separate and are not resolved by this entry.
+## 2026-10-10 — #1165 Roller band: CPU ownership vs GPU body (verification record)
+
+- 対象: ローラーの本体（kind=roll）の塗り境界。CPU の所有判定（`_cpuSplat`）と GPU の本体 SDF の一致。INKWAVE 内部の CPU/GPU 不一致であり、本家との比較ではない。
+- 本家の根拠: なし。本家のローラー塗り形状との一致は**未確認**（本件では本家の数値を使っていない）。
+- 参照版・条件: 本家参照版 Ver.11.3.0（patches/splatoon3/README.md）。ブキ・ギアは対象外（Roller 本体の形状のみ）。
+- INKWAVE 実装箇所: `patches/splatoon3/issue-batch-1171-adapter.mjs` の `#1165` 節。CPU 判定に GPU と同じ seed 依存の幅ゆらぎ（0.03 / 0.018 の振幅）を入れ、`-0.03 * r` の inset を外す。`adapter.mjs` 経由で適用（b7179419 由来、PR #1171 は closed・未マージ）。`runtime/dualies-slide-paint.mjs` の `ROLL_LATERAL_HALF` は同じ境界に合わせ、Dualies スライドの 1.8 m 半幅を維持する。`runtime/roller-max-paint.mjs` の bandHalfMax も同じ境界の最大値と一致。
+- 再現操作: 半径 r=1、seed=π/60、方向 (1,0)、中心から (0, 0.73r) のセル。未修正の CPU 式は sd=+0.01r で塗らず、GPU 式は sd=-0.0298r で塗る。修正後は両方が塗る。
+- プレイへの影響: 通常のローラー線の縁付近で、ターフ所有、被覆率、潜り・補充・敵インクの判定、Judd の値に影響しうる。影響量は未計測。
+- 確認状態:
+  - 自動テスト（ネイティブ）`patches/splatoon3/tests/issue-1165-roller-band-grid.test.mjs`: 合成済み paint.js の GLSL/CPU 式を照合し、半径 0.3 / 0.62 / 1.0、seed 5 種（π/60 を含む）、方向 4、グリッド中心の 238,140 セルで不一致 0 件。未加工の upstream では 3/3 失敗、合成後は 3/3 成功。
+  - 隣接テスト 21/21 成功（issue-1165, issue-batch-1171, issue-979, issue-570, issue-189）。
+  - 未確認（テストなし、実機・実ブラウザ計測が必要）: 実ブラウザの WebGL atlas readback による比較（PR #1171 ブランチの headless 4,000 セル比較は main に未取り込み）、30/60/120/144 Hz の描画差、既存の敵インク上への重ね塗り、bot の判断、決勝 Judd の差、実機での見え方。
+  - 所有判定は 60 Hz 固定のシミュレーションで行われるため、描画フレームレートによる差は設計上想定しないが、このテストでは確認していない。
