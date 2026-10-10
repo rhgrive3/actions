@@ -67,7 +67,6 @@ import { adaptReflSkip } from './refl-skip-adapter.mjs';
 import { adaptFinishTape } from './finish-tape-adapter.mjs';
 import { adaptAudioListener } from './audio-listener-adapter.mjs';
 import { adaptMatchHitIdentity } from './hit-round-adapter.mjs';
-import { adaptSuperJumpEpoch } from './superjump-epoch-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
@@ -129,7 +128,7 @@ export function adaptQualitySource(rel, code) {
   const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
   const paced = adaptRangeFramePacing(rel, framed);
   const lazy = adaptComposerTarget(rel, paced, replaceOnce);
-  return adaptSuperJumpEpoch(rel, adaptMatchHitIdentity(rel, adaptComposerFormat(rel, lazy, replaceOnce)));
+  return adaptMatchHitIdentity(rel, adaptComposerFormat(rel, lazy, replaceOnce));
 }
 
 function adaptQualityLayer(rel, code) {
