@@ -1106,8 +1106,8 @@ export class Character {
   }
 
   dispose() {
-    this.sourceMotion?.dispose();
     LIVE.delete(this);
+    this.sourceMotion?.dispose();
     this.root.parent?.remove(this.root);
     for (const k of ['skin', 'cloth', 'hair', 'eye', 'fill', 'squid', 'squidGhost', 'glow']) this.mats[k].dispose();
     for (const m of this._ownMats) m.dispose();

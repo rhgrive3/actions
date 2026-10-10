@@ -157,14 +157,14 @@ export class SourceBank {
 // The source coefficient packs are lossless gzip byte splits, fetched only when a
 // character actually requests a source rig. Startup/PWA precache intentionally
 // keeps them outside the 5 MiB critical boot payload.
-const SOURCE_ASSET_ROOT = new URL('../../../assets/source-motion/', import.meta.url);
+const SOURCE_ASSET_ROOT = () => new URL('../../../assets/source-motion/', import.meta.url);
 const SHA = async bytes => {
   if (!globalThis.crypto?.subtle) return null;
   return Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', bytes)),
     b => b.toString(16).padStart(2, '0')).join('');
 };
 const fetchBuffer = async relative => {
-  const r = await fetch(new URL(relative, SOURCE_ASSET_ROOT));
+  const r = await fetch(new URL(relative, SOURCE_ASSET_ROOT()));
   if (!r.ok) throw new Error(`Motion asset ${relative}: HTTP ${r.status}`);
   return r.arrayBuffer();
 };
@@ -186,7 +186,7 @@ async function inflateParts(partNames, expectedGzipHash, expectedBytes = undefin
 let manifestPromise, catalogPromise;
 const bankPromises = new Map();
 function getManifest() {
-  manifestPromise ||= fetch(new URL('manifest.json', SOURCE_ASSET_ROOT)).then(r=>{
+  manifestPromise ||= fetch(new URL('manifest.json', SOURCE_ASSET_ROOT())).then(r=>{
     if(!r.ok) throw new Error(`Motion manifest HTTP ${r.status}`);
     return r.json();
   }).then(m=>{if(m.schema !== 'inkwave-source-motion-gzip-parts-v1')throw new Error('Unsupported source motion pack manifest');return m;})
