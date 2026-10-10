@@ -555,9 +555,12 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     const feet = ch.feet.map((f, i) => {
       if (sourced) {
         const foot = sourced[i], settled = foot.locked && foot.weight > .999 && foot.filter.age >= foot.filter.duration;
-        const continuing = settled && last[i]?.planted && last[i].authority === 'source' && last[i].epoch === foot.plants;
+        // Heel-to-ball support switching changes the ANCHOR LANDMARK by
+        // the sole's length, not the ground-relative foot position. Compare
+        // only the same physical landmark across adjacent planted frames.
+        const continuing = settled && last[i]?.planted && last[i].authority === 'source' && last[i].epoch === foot.plants && last[i].feature === foot.feature;
         const drift = continuing ? foot.anchor.distanceTo(last[i].cw) : 0;
-        last[i] = { planted: settled, authority: 'source', cw: foot.anchor.clone(), epoch: foot.plants };
+        last[i] = { planted: settled, authority: 'source', cw: foot.anchor.clone(), epoch: foot.plants, feature: foot.feature };
         const error = settled ? Math.hypot(foot.actual.x - foot.anchor.x, foot.actual.z - foot.anchor.z) : 0;
         return { authority: 'source', contactIntent: foot.locked, planted: settled, contactEpoch: foot.plants,
           contactWeight: foot.weight, error, drift, actual: foot.actual.toArray(),
