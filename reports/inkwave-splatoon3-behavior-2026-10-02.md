@@ -3459,3 +3459,13 @@ Reproduction (logic only): with a fixed RNG draw of 0.75, Unit 2 bullet 0 gives 
 Play impact: the lateral spread of Slosher globs (edge hits, cover contact, lane shape, turf placement) may differ from the native game. Relative to uniform, the calibration concentrates globs nearer the aim line. The magnitude is not measured on Switch.
 
 確認状態: 未確認. The bias sampling law, native distribution parity, and deterministic replay/network reproduction of the yaw are not verified. The numbers above are calculations from the calibration formula, not Nintendo or device measurements. Fixed on logic only: the bias field is consumed, exemption draws and the 4.5° range are covered by tests.
+## 2026-10-10: Blaster normal timed airburst paint (#1107)
+
+- 本家の根拠: Ver. 11.3.0 の標準ブラスターは `spl__BulletBlasterBurstParam` の既定値を省略する疎な JSON で、`SplashPaintRadius = 2.0`、`SplashDropPaintRadius = 3.2`、`SplashDropOn = true` が既定として残る（Issue 本文の出典: sendou.ink/params/blaster、Inkipedia の既定表、Leanny/splat3 `7280ff9c`）。出典の数値は既存の `BLASTER_BURST_PARAM_DEFAULTS` で解決済み。ショット衝突の `SplashDropPaintShotColHitRadius = 2.5` は #1001 の別経路。
+- INKWAVE 実装箇所: `patches/splatoon3/runtime/weapons-fidelity.mjs` の `applyFidelityBlasterBurstPaint`、非衝突（通常の時限爆発）分岐。既定値の解決は `resolvedBlasterBurstParam` / `blasterPaintContract`。
+- 前の状態: 通常爆発の床塗りが、爆発点から 3.5 下の下向きレイキャストで床の交点に半径 2.0 を置いていた。爆発が床の上 2.0 を超える高さでも床を塗り、3D の球としては届かない床を塗っていた。
+- 修正後: 爆発点中心に `SplashPaintRadius` (2.0) の `paint.splat` を置く。`inkwave-public/src/world/paint.js` の splat は面ごとに中心からの平面距離 `dn` が半径以内の面だけを、半径 `sqrt(r²-dn²)` で塗る。下向きの床スタンプは使わない。落下する飛沫（`SplashDropPaintRadius` 3.2）は既存の固定 60 Hz の `queueTimedBlasterDrop` を使う。
+- 再現操作: 標準ブラスターで空中の 13F 時限爆発を、床の上 2.5 前後の高さで起こす。修正前は床の交点に半径 2.0 の塗り、修正後は爆発点から半径 2.0 の球の届く範囲だけが塗られる。
+- プレイへの影響: 通常爆発の床塗り範囲が、爆発の高さに応じて小さくなる（床が球の外なら塗られない）。飛沫の半径と数値は変えない。
+- 確認状態: 回帰試験 `patches/splatoon3/tests/issue-1107-timed-burst-centre.test.mjs`（ソース束縛と `paint.js` の球の幾何）と既存の #1107 系試験は通過。ブラウザ・実機での塗り範囲の比較は未確認。
+- 未確認: 落下飛沫の重力は `api.PLAYER.gravity`（フォールバック 20）のままで、Blaster の出典付き値には接続していない。飛沫の初速と重力の本家値は未確認。30/60/120 Hz での不変性はクロックが固定 60 Hz である設計で説明されるが、この項目の専用試験は無い。フライト飛沫との二重計上の確認も未了。PR #1188 の球・`spawnSplashDrop` 方式は本ブランチに移植していない。

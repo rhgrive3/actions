@@ -664,15 +664,13 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   if (p.ghost) return true;
   const { contract } = source, burst = contract.burst;
   if (!collision) {
-    const physics=api.G.physics;
-    const origin=system._s3BlasterTimedBurstOrigin || (system._s3BlasterTimedBurstOrigin=new api.THREE.Vector3());
-    const down=system._s3BlasterTimedBurstDown || (system._s3BlasterTimedBurstDown=new api.THREE.Vector3(0,-1,0));
-    const hit=system._s3BlasterTimedBurstHit || (system._s3BlasterTimedBurstHit=new api.Hit());
-    origin.copy(point);origin.y+=.2;
-    const floor=physics?.raycast?.(origin,down,3.5,hit,true);
-    if(floor?.hit&&burst.timedSplashRadius>0){
-      const at=floor.point.clone().addScaledVector(floor.normal,.025);
-      const area=api.G.paint?.splat?.(at,burst.timedSplashRadius,p.team,{seed:seededUnit(p.seed,0x1106),claimOwner:p.owner});
+    // #1107: the timed airburst's SplashPaintRadius is a splash centred on the
+    // burst point. paint.splat tests each face by its plane distance to that
+    // centre (a sphere), so a floor 2.0-3.5 below the burst is not reached. A
+    // downward floor probe here would be the generic stamp #1060 removed.
+    if(burst.timedSplashRadius>0 && api.G.paint?.splat){
+      const at=point.clone();
+      const area=api.G.paint.splat(at,burst.timedSplashRadius,p.team,{seed:seededUnit(p.seed,0x1106),claimOwner:p.owner});
       if(Number.isFinite(area))p.owner?.addTurf?.(area);
     }
     queueTimedBlasterDrop(system,p,point,burst);
