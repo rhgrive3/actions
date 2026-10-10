@@ -159,7 +159,7 @@ export function installHitchTracer(game, {
       const original = owner[method];
       const wrapper = function (scale) {
         const old = this.dynScale;
-        const t = active ? now() : 0;
+        const t = now();
         try { return original.apply(this, arguments); }
         finally {
           if (old !== this.dynScale) {
