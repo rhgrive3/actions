@@ -316,8 +316,28 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
     return withMainDirectDamage(projectile.owner, victim, () => applySlosherVolleyHit(system, projectile.owner, victim, projectile.s3DamageGroup,
       projectile.s3DamageGroupId, amount, projectile.wid || projectile.type || 'slosher'));
   }
-  amount = groupDamage(projectile.s3DamageGroup, victim, amount);
-  if (amount > 0) applyMainDirectHit(system, projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
+  return applyGroupedProjectileHit(system, projectile, victim, amount);
+}
+// Both legacy and source-guided collision solvers route their already-resolved
+// damage through this owner; neither solver may reserve an invulnerable hit.
+export function applyGroupedProjectileHit(system, projectile, victim, amount) {
+  const weapon = projectile.s3Weapon || projectile.owner.weapon;
+  const group = projectile.s3DamageGroup, previous = group?.get(victim);
+  amount = groupDamage(group, victim, amount);
+  if (amount > 0) {
+    const result = applyMainDirectHit(system, projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(group));
+    // #999: a spawn-flight/invulnerable contact never reached the armor
+    // resolver. Keep the last admitted Roller maximum so a later legal
+    // contact still carries the whole swing into its penetration ledger.
+    // Ordinary armor absorption can return 'rejected' without HP loss and
+    // MUST retain its contribution. Pending sends retain their existing
+    // sender-side deduplication; this is not an asynchronous ACK redesign.
+    if (weapon.kind === 'roller' && group && result === 'rejected-invulnerable') {
+      if (previous === undefined) group.delete(victim);
+      else group.set(victim, previous);
+    }
+    return result;
+  }
 }
 export function installWeapons(context, profile) {
   api = context;

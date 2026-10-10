@@ -3159,3 +3159,13 @@ Network-integrity guard, not a Splatoon 3 numeric comparison. No Nintendo or Lea
 - `node --experimental-vm-modules --test patches/splatoon3/tests/issue-272-sign-concealment.test.mjs` — 5/5（新規）。
 - `node --experimental-vm-modules --test patches/splatoon3/tests/issue-460-marker.test.mjs patches/splatoon3/tests/issue-460-gauge.test.mjs patches/splatoon3/tests/issue-272-stealth-jump.test.mjs patches/splatoon3/tests/superjump-hp-recovery.test.mjs` — 22/22。
 - ブラウザ実動作、ネット対戦、本家実機比較は未実施。
+## #999: Roller grouped damage and Squid Spawn armor (2026-10-10)
+
+- 本家の根拠: Splat Roller の中心フリックは 150 ダメージ（攻略Wiki のスプラローラー項）。Squid Spawn アーマーは耐久 30、単発 100 超の攻撃で `damage - 100` が貫通、接地敵インクは素通し（攻略Wiki のアーマー仕様項、Nintendo Ver. 11.3.0 更新履歴）。Issue 本文の出典URLを引用した。この会話では出典ページを再取得していない。
+- 数値の状態: `reference/numeric-status.json` の `spawnArmor.hp` / `maxAbsorb` / `breakDelay` は「calibration or derived value」で、本家の確定値として扱わない。`profile.json` の該当箇所は、破壊後 20F の遅延について「別の公開資料は最大 0.5 秒と記す」と未解決を残している。
+- INKWAVE の実装箇所: `patches/splatoon3/runtime/weapons.mjs` `applyGroupedProjectileHit`（通常弾）と `runtime/weapons-fidelity.mjs` `applyFidelityProjectileHit`（fidelity 接触）。invulnerable により拒否された Roller 寄与は group の最大値を消費しない。`runtime/respawn-lifecycle.mjs` `absorbSpawnDamage` は main の `bd9b65b4` で導入済みで、同一 group の貫通を 1 回だけ数える。
+- 再現操作: 無敵中の 90 接触を拒否させ、無敵解除後に 150 接触を与える。修正前は group が 90 を保持し、150 接触が 60 として吸収されて HP 100 のまま。修正後は HP 50（貫通 50、アーマー HP 0、破壊後 20F）。
+- プレイへの影響: 復帰直後の Roller 中心フリックが、無敵中の接触を挟むと貫通 50 を失う経路を塞ぐ。
+- 確認状態: ロジック単独のヘッドレス測定（30/60/120Hz の fidelity 接触と、実 projectile 経路の掃引接触を含む `tests/issue-999-rejected-roller-group.test.mjs` 6/6、`weapons.test.mjs` / `issue-999-roller-spawn-armor.test.mjs` / `respawn-lifecycle.test.mjs` / `weapons-fidelity-source.test.mjs` / `batch-b-final-damage.test.mjs` / `issue-608-fidelity-aim.test.mjs` 合計 44 件成功）。修正を外すと拒否寄与の 2 試験が失敗することを確認。
+- 未確認: 本家の実機での 150 フリックとアーマーの同時接触の挙動、20F の破壊遅延、30/60/120Hz 以外の端末。ブラウザ・Switch 実機比較は未実施。
+- 未移植（残差）: 同一 Actor の owner 交代（remote handoff）後に、旧 owner と新 owner の group 番号が armor 台帳で混ざる経路。コメントで報告されたが、この時点の PR #1182 head（`7a58339e`）と統合ブランチには対応する変更が無く、3 クライアント試験の成果物も参照できなかったため、実装していない。Issue は Open のまま。
