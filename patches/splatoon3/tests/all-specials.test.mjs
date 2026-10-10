@@ -29,13 +29,25 @@ test('Tenta Missiles rise, dive onto the locked ground coordinate, and apply imp
 
 test('Wave Breaker keeps source pulse schedule and owner-owned device survives owner death',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'waveBreaker');victim.team=1;victim.pos.set(0,0,17);f.G.actors=[a,victim];
- const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
+ const hits=[],apply=f.G.projectiles.applyHit;let paint=0;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};f.G.paint.splat=()=>{paint++;return 1;};
  a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);
  const device=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='wave');assert.ok(device);assert.equal(device.hp,480);
  assert.deepEqual(Array.from(device.pulseFrames),[90/60,240/60,390/60]);assert.equal(device.maxWaveFrame,160/60);
- tickWorld(f,100);assert.ok(hits.some(h=>h[3]==='waveBreaker'&&h[2]===45));assert.ok(device.waves.length>=1);
+ const contact=f.make();contact.team=1;contact.hp=1000;contact.pos.copy(device.pos);victim.pos.copy(device.pos);victim.pos.z+=1.5;f.G.actors.push(contact);
+ tickWorld(f,100);assert.ok(hits.some(h=>h[1]===victim&&h[3]==='waveBreaker'&&h[2]===45));assert.ok(hits.filter(h=>h[1]===contact&&h[3]==='waveBreaker'&&h[2]===30).length>=3);
+ assert.ok(device.waves.length>=1);assert.ok(victim.s3.revealedUntil[a.team]>=f.G.time+7.8);assert.equal(paint,0,'Wave Breaker pulses do not paint ink');
  a.alive=false;tickWorld(f,200);assert.ok(f.G.projectiles._s3AllSpecialObjects.includes(device));
  tickWorld(f,310);assert.equal(f.G.projectiles._s3AllSpecialObjects.includes(device),false);
+});
+
+test('Wave Breaker marks nearby placement for 45 frames and holds until a manual deploy input',async()=>{
+ const f=await setup(),a=f.make(),victim=f.make();equip(a,'waveBreaker');victim.team=1;f.G.actors=[a,victim];
+ a._startSpecial();for(let i=0;i<120;i++)a._updateSpecial(1/60);
+ assert.equal((f.G.projectiles._s3AllSpecialObjects||[]).filter(o=>o.kind==='wave').length,0,'holding the placement does not auto-deploy');
+ a.intent.fire=true;a._updateSpecial(1/60);const device=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='wave');assert.ok(device);
+ victim.pos.copy(device.pos);tickWorld(f,4);const until=victim.s3?.revealedUntil?.[a.team];assert.ok(until>f.G.time);
+ victim.pos.z+=100;tickWorld(f,44);assert.ok(victim.s3.revealedUntil[a.team]>f.G.time);tickWorld(f,2);
+ assert.ok(victim.s3.revealedUntil[a.team]<=f.G.time+1e-9,'the generator placement mark expires after 45 frames');
 });
 
 test('Booyah Bomb armor and delayed expanding damage are timed independently from impact',async()=>{
