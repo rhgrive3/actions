@@ -50,6 +50,13 @@ test('Wave Breaker marks nearby placement for 45 frames and holds until a manual
  assert.ok(victim.s3.revealedUntil[a.team]<=f.G.time+1e-9,'the generator placement mark expires after 45 frames');
 });
 
+test('Wave Breaker pulse misses a jumping player above the source height limit',async()=>{
+ const f=await setup(),a=f.make(),victim=f.make();equip(a,'waveBreaker');victim.team=1;victim.pos.set(0,2.5,18.5);f.G.actors=[a,victim];
+ const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
+ a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);tickWorld(f,120);
+ assert.equal(hits.filter(h=>h[1]===victim&&h[2]===45&&h[3]==='waveBreaker').length,0,'the player is above DamageYMax after the height offset');
+});
+
 test('Booyah Bomb armor and delayed expanding damage are timed independently from impact',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'booyahBomb');victim.team=1;victim.pos.set(0,0,.2);f.G.actors=[a,victim];
  const stateEvents=eventFeed(f,'actor:armorhit');a._startSpecial();a._updateSpecial(1/60);
