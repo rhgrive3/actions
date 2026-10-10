@@ -229,7 +229,7 @@ export function emit(name, payload) {
   for (const i of [1,2,3]) if (!finite(s[i], 100000)) return false;
   for (const i of [4,5,6]) if (!finite(s[i], 10000)) return false;
   for (const i of [7,8,9]) if (!finite(s[i], 10000)) return false;
-  if (!Number.isSafeInteger(s[10]) || s[10] < 0) return false;
+  if (!Number.isSafeInteger(s[10]) || s[10] < 0 || s[10] > 1048575) return false;
   if (!finite(s[11], 10000) || !finite(s[12], 10000) || !finite(s[13], 10000000)
     || !finite(s[14], 10000) || !finite(s[15], 1000000000000)) return false;
   if (!Number.isSafeInteger(s[16]) || s[16] < 0) return false;
@@ -536,7 +536,7 @@ function unpackActor(s, ts) {`, 'strict owner actor snapshot schema');
       'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
       'strict optional Squid Roll and motion metadata validation');
     patch('if (d.a) for (const s of d.a) {\n      const rawRoll',
-      'if (d.a) for (const s of d.a) {\n      if (!validActorSnapshot(s)) continue;\n      const rawRoll',
+      'if (Array.isArray(d.a)) for (const s of d.a) {\n      if (!validActorSnapshot(s)) continue;\n      const rawRoll',
       'reject malformed owner actor snapshots');
     patch('      const roll = rawRoll === false ? null : rawRoll;',
       '      const roll = rawRoll === false ? null : rawRoll;\n      const rawDropRoll = d.dr && typeof d.dr === \'object\' && !Array.isArray(d.dr) && Object.hasOwn(d.dr, s[0])\n        ? readDropRollSnapshot(d.dr[s[0]]) : null;\n      const dropRoll = rawDropRoll === false ? null : rawDropRoll;',
