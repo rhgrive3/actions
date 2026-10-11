@@ -5,11 +5,12 @@
 // Cross-version S3 lobby-line <-> INKWAVE world geometry remains uncalibrated.
 import { POINT_SENSOR, POINT_SENSOR_SOURCE, pointSensorMarkFrames, pointSensorThrowSpeed, pointSensorContact, pointSensorMark, clearPointSensorMarks } from './support-recon.mjs';
 import { gearCurve } from './gear.mjs';
+import { createTacticooler, disposeSpecialModel } from './special-motion.mjs';
 import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
-const aliveInMatch = G => G.match?.state === 'playing' || G.match?.playing?.() === true;
+const aliveInMatch = G => !!G.match?.range || G.match?.state === 'playing' || G.match?.playing?.() === true;
 const life = a => Number.isSafeInteger(a?.netLife) && a.netLife >= 0 ? a.netLife : 0;
 const vec3 = v => v && [v.x,v.y,v.z].every(Number.isFinite);
 const finiteTriplet = (r, i) => [r[i],r[i+1],r[i+2]].every(Number.isFinite);
@@ -28,6 +29,7 @@ function releaseVisual(record, G) {
   const m = record?.mesh;
   if (!m) return;
   G.scene?.remove?.(m);
+  if(m.userData?.specialKind){disposeSpecialModel(m);record.mesh=null;return;}
   m.traverse?.(o => {
     if (!o.isMesh) return;
     o.geometry?.dispose?.();
@@ -46,16 +48,7 @@ function sensorVisual(owner, pos, THREE, G) {
 }
 function coolerVisual(owner, pos, THREE, G) {
   if (!G.scene?.add) return null;
-  const group = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: owner.color || G.teamColors?.[owner.team] || 0xffcc33 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(.8,.9,.58), mat);
-  body.position.y = .48; group.add(body);
-  for(let i=0;i<4;i++) {
-    const drink = new THREE.Mesh(new THREE.CylinderGeometry(.095,.095,.3,8),
-      new THREE.MeshStandardMaterial({ color: 0xf7ebca, metalness:.2, roughness:.45 }));
-    drink.position.set(i % 2 ? .22 : -.22, .96, i < 2 ? -.16 : .16);
-    group.add(drink);
-  }
+  const group=createTacticooler(owner.color || G.teamColors?.[owner.team] || 0xffcc33, THREE);
   group.position.copy(pos); G.scene.add(group); return group;
 }
 export function registerSupportKit({ WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, WEAPON_ORDER }) {
@@ -170,6 +163,8 @@ function stepSupport(projectile, G, THREE, dt) {
       stand.taken.add(a); giveDrink(a,G.time,stand.drinkSeconds);
       G.fx?.burst?.(a.pos,new THREE.Vector3(0,1,0),G.teamColors?.[a.team],{count:6,speed:2,size:.08});
     }
+    const drinks=stand.mesh?.userData?.drinks;
+    if(drinks)for(let j=0;j<drinks.length;j++)drinks[j].visible=j>=Math.min(4,stand.taken.size);
   }
   for(const a of G.actors || []) if(!a.remote) retireDrink(a,G.time);
 }

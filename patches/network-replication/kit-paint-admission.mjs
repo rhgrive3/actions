@@ -133,8 +133,8 @@ export function prepareKitPaintEvents(nm,from,d){
   if(e?.[1]==='s'&&couldWait(nm,from,e,s)){
    if(old&&now-old.since>=WAIT_SECONDS)continue; // missing proof expires closed, not a wider cap
    const waiting=ordered.slice(i);
-   if(waiting.length<=MAX_PENDING){s.pending.set(from,{since:old?.since??now,rows:waiting});return ready;}
-   // Capacity failure closes only the unresolved claim; unrelated later rows
+   if(waiting.length<=MAX_PENDING&&!d._eventOverBudget){s.pending.set(from,{since:old?.since??now,rows:waiting});return ready;}
+   // Capacity or over-budget envelope closes only the unresolved claim; unrelated later rows
    // continue through their normal admission instead of being silently dropped.
    continue;
   }

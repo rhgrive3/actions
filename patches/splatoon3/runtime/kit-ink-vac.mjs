@@ -29,6 +29,7 @@
 // profile or network file is touched here; see INK_VAC_EVENTS below.
 
 import { kitSubFor } from './kit-subs.mjs';
+import { createVacVortex } from './special-motion.mjs';
 
 let api = null;
 const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
@@ -340,19 +341,21 @@ function proposalWeaponDamage(weapon) {
 function proposalDamageLimit(actor, payload) {
   if (Object.hasOwn(payload, 'special')) {
     const id = payload.special;
-    if (Object.hasOwn(payload, 'sub') || (id !== 'trizooka' && id !== VAC_ID) || actor.weapon?.special !== id) return null;
+    const admitted = ['trizooka', VAC_ID, 'tentaMissiles', 'inkjet', 'booyahBomb', 'ultraStamp', 'crabTank'];
+    if (Object.hasOwn(payload, 'sub') || !admitted.includes(id) || actor.weapon?.special !== id) return null;
     // The installed local registry owns these descriptors. No projectile data
     // or charge/radius supplied by the peer is used to construct the ceiling.
     const descriptor = api.SPECIALS?.[id]?.projectileDescriptor?.({});
-    const damage = descriptor?.directDamage ?? descriptor?.splashDamageMax;
+    const damage = Math.max(descriptor?.directDamage || 0, descriptor?.splashDamageMax || 0);
     return Number.isFinite(damage) && damage > 0 ? Math.min(MAX_ACCEPTED_DAMAGE_HP, damage) : null;
   }
   if (!Object.hasOwn(payload, 'sub')) return proposalWeaponDamage(actor.weapon);
   const id = payload.sub;
-  if (id !== 'bomb' && id !== 'suction') return null;
+  if (!['bomb','suction','burst','autobomb','fizzy','torpedo','inkMine','angleShooter','sprinkler'].includes(id)) return null;
   const sub = kitSubFor(actor.weapon, api.SUB);
-  if (sub?.id !== id || !Number.isFinite(sub.damageMax) || sub.damageMax <= 0) return null;
-  return Math.min(MAX_ACCEPTED_DAMAGE_HP, sub.damageMax);
+  const damage = Math.max(sub?.damageMax || 0, sub?.directDamage || 0);
+  if (sub?.id !== id || !Number.isFinite(damage) || damage <= 0) return null;
+  return Math.min(MAX_ACCEPTED_DAMAGE_HP, damage);
 }
 // Use the projectile's damage BEFORE neutralising it. Native bombs may carry
 // their damaging hitbox on the linked bomb rather than on their visual proxy.
@@ -435,13 +438,8 @@ function createVisual(state) {
   const { THREE, G } = api;
   const scene = G.scene;
   if (!scene || typeof scene.add !== 'function' || typeof THREE?.Mesh !== 'function') return;
-  const L = INHALE_LENGTH;
-  const geo = new THREE.ConeGeometry(FAR_HIGH, L, 20, 1, true);   // wide end at -y
-  geo.rotateX(Math.PI);                                            // wide end now at +y
-  geo.translate(0, L / 2, 0);                                      // apex at origin, extends forward
-  const mat = new THREE.MeshBasicMaterial({ color: state.actor.color?.getHex ? state.actor.color.getHex() : 0xffffff,
-    transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
-  const mesh = new THREE.Mesh(geo, mat);
+  const mesh=createVacVortex(state.actor.color || 0xffffff, INHALE_LENGTH, state.nearR, state.farR, api.THREE);
+  const geo=mesh.geometry,mat=mesh.material;
   mesh.position.copy(originOf(state.actor, state._org));
   mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), forwardOf(state.actor, state._fwd));
   mesh.visible = true;
@@ -452,7 +450,7 @@ function disposeVisual(state) {
   if (!state) return;
   const { G } = api;
   if (state.mesh && G.scene && typeof G.scene.remove === 'function') G.scene.remove(state.mesh);
-  state.geo?.dispose?.(); state.mat?.dispose?.();
+  if(state.geo&&!state.geo.userData.specialShared)state.geo.dispose(); state.mat?.dispose?.();
   state.mesh = state.geo = state.mat = null;
 }
 
@@ -462,8 +460,9 @@ function updateVisual(state) {
   const a = state.actor;
   state.mesh.position.copy(originOf(a, state._org));
   state.mesh.quaternion.setFromUnitVectors(state._up, forwardOf(a, state._fwd));
-  const r = state.farR / state.baseFar;
-  state.mesh.scale.set(r, 1, r);        // radial only: never lengthens behind the owner
+  state.mat.uniforms.near.value=state.nearR;
+  state.mat.uniforms.far.value=state.farR;
+  state.mat.uniforms.age.value=state.t;
 }
 
 export function disposeInkVac(actor) {

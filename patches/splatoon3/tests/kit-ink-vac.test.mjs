@@ -397,7 +397,7 @@ test('the held visual is visible, aim-aligned, and never extends behind the owne
   mesh.geometry.computeBoundingBox();
   assert.ok(Math.abs(mesh.geometry.boundingBox.min.y) < 1e-6,
     'the cone apex sits at the origin, so nothing extends behind the owner');
-  assert.ok(Math.abs(mesh.geometry.boundingBox.max.y - 15) < 1e-6, 'the wide end is one intake length forward');
+  assert.ok(Math.abs(mesh.geometry.boundingBox.max.y * mesh.material.uniforms.extent.value - 15) < 1e-6, 'the wide end is one intake length forward');
   const levelAxis = new f.THREE.Vector3(0, 1, 0).applyQuaternion(mesh.quaternion);
   assert.ok(levelAxis.distanceTo(new f.THREE.Vector3(0, 0, 1)) < 1e-6, 'the mesh follows the level aim');
   a.aimPitch = Math.PI / 2; a.aimYaw = 0;   // native update rebuilds aimDir from these
