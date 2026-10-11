@@ -142,7 +142,7 @@ test('ink GPU quad atlas buffers are byte-identical for clipped, wall and floor 
     const r = .001 + next() * 5;
     const u0 = lu - r * (.8 + next()), u1 = lu + r * (.8 + next());
     const v0 = lv - r * (.8 + next()), v1 = lv + r * (.8 + next());
-    const args = [f,u0,u1,v0,v1,lu,lv,next() * 2,r,i%2,next(),i%6,next(),next(),next(),next(),i%3?0:1];
+    const args = [f,u0,u1,v0,v1,lu,lv,next() * 2,r,i%2,next(),i%6,next(),next(),next(),next(),next(),i%3?0:1];
     native.exports.PaintSystem.prototype._pushQuad.call(baseline, ...args);
     optimized.exports.PaintSystem.prototype._pushQuad.call(changed, ...args);
   }
