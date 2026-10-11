@@ -25,7 +25,27 @@ async function advance(p,n){return p.evaluate(n=>{const g=RG.game,previous=g._sk
 async function capture(p,options){
  const drainMs=await p.evaluate(()=>{const t=performance.now();RG.renderer.getContext().finish();return performance.now()-t;});
  if(drainMs>100)console.log(`GPU queue drained in ${drainMs.toFixed(1)}ms before ${path.basename(options.path)}`);
- return p.screenshot({...options,animations:'disabled'});
+ // In SwiftShader, Playwright's screenshotter can hang on the compositor even
+ // after the browser has finished rendering and fonts are loaded. Capture the
+ // *real Chromium viewport*, including the DOM HUD and WebGL scene, through
+ // CDP's view path rather than silently discarding screenshot evidence.
+ const session=await p.context().newCDPSession(p);
+ try {
+  const {data}=await session.send('Page.captureScreenshot',{
+   format:options.type||'jpeg',quality:options.quality??60,
+   captureBeyondViewport:false,fromSurface:false
+  });
+  const bytes=Buffer.from(data,'base64');
+  if(bytes.length<4096||bytes[0]!==0xff||bytes[1]!==0xd8||bytes.at(-2)!==0xff||bytes.at(-1)!==0xd9)
+   throw new Error('Ranked screenshot: incomplete JPEG viewport capture');
+  fs.writeFileSync(options.path,bytes);
+  return bytes;
+ }catch(error){
+  console.warn('CDP viewport screenshot failed; retrying Playwright:',error.message);
+ }finally{await session.detach().catch(()=>{});}
+ // Keep the original evidence gate as a fallback, with extra time for a slow
+ // software renderer. A failed capture still fails CI; no images are skipped.
+ return p.screenshot({...options,animations:'disabled',timeout:90000});
 }
 try{
  const launchOptions={headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']};
