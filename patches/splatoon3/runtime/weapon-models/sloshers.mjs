@@ -60,7 +60,9 @@ function model(d, c) {
   });
 }
 
-export const MODELS = Object.fromEntries(Object.entries(CFG).map(([id, c]) => [id, {
+// The legacy Slosher keeps its reference model: its verified drawn-fill drain and indexed handle
+// regressions (weapon-detail-motion tests) depend on that bucket's inner fill and handles.
+export const MODELS = Object.fromEntries(Object.entries(CFG).filter(([id]) => id !== 'slosher').map(([id, c]) => [id, {
   sourceModel: id === 'slosher' ? 'Wmn_Slosher_StrongT'
     : id === 's3-slosher-diffusion' ? 'Wmn_Slosher_Diffusion'
     : id === 's3-slosher-launcher' ? 'Wmn_Slosher_Launcher'

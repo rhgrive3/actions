@@ -1,0 +1,20 @@
+// Not registered (IoU below before). Copy back into dualies.mjs and add the MODELS entry to retry.
+// Requires Pieces, M, box, zlathe, zcyl, cyl, pipe, slab, pistolGrip, part, rebuild, TRIGGER_PIVOT, SLIDE_PIV, LAMP, assemble.
+// ------------------------------------------------------------------------------------------ Dapple Dualies
+// Wmn_Maneuver_Short: crimson bow-shaped frame arching from the grip to a black nozzle knob with a white
+// centre; a blue toothbrush-like handle with teal brush heads hangs off the rear on white strings.
+function dapple(d) {
+  const CR = '#b3245d', K = '#1c1d21', BL = '#2b7bd6', TE = '#6fe3d2', WH = '#ecebe6';
+  const body = new Pieces(), slide = new Pieces(), ink = new Pieces();
+  const trig = pistolGrip(body, { color: K, triggerColor: CR, guardColor: K, baseColor: K });
+  slide.add(slab([[-0.11, -0.01], [-0.1, 0.05], [-0.07, 0.093], [-0.02, 0.115], [0.04, 0.127], [0.1, 0.122], [0.125, 0.106],
+    [0.115, 0.088], [0.07, 0.092], [0.02, 0.087], [-0.02, 0.076], [-0.05, 0.05], [-0.08, 0.015]], 0.028, 0, 0.004), CR, M.gloss);
+  body.add(box(0.026, 0.02, 0.05, 0, 0.06, 0), CR, M.gloss);
+  body.add(zcyl(0.02, 0.112, 0.13, 0, 0.116, 18), K, M.satin);
+  body.add(zcyl(0.009, 0.128, 0.134, 0, 0.116, 14), WH, M.gloss);
+  body.add(cyl(0.0055, [0, -0.02, -0.06], [0, -0.1, -0.15], 8), BL, M.gloss);
+  ink.add(box(0.016, 0.03, 0.04, 0, -0.112, -0.16), TE, M.gloss);
+  body.add(pipe([[0, 0.116, 0.02], [0, 0.04, -0.09], [0, -0.1, -0.16]], 0.0012, 4, 4), WH, M.metal);
+  return assemble(d, { body, slide, ink, slideInk: new Pieces(), trig, rearZ: -0.11, muzzle: [0, 0.116, 0.134] });
+}
+

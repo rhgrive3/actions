@@ -2,7 +2,7 @@
 // Ballpoint Splatling, Nautilus 47, Heavy Edit Splatling. Shapes follow the official per-weapon 3D renders and
 // the turntable frames (Inkipedia "S3 <Name> model rotating.mp4"); colours come from the 3D renders. The native
 // splatling channels are kept: `trigger` (pistol trigger) and `barrels` (the spun cluster, rotating about its
-// local Z through a pivot on the barrel axis). The native charge coil is dropped: none of the six references
+// local Z through a pivot on the barrel axis). The native charge coil is kept for readability although none of the six references
 // shows a charge meter. Everything is procedural geometry.
 import { Pieces, M, zlathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, pistolGrip, supportHandle,
   part, rebuild, TRIGGER_PIVOT } from './kit.mjs';
@@ -16,13 +16,13 @@ function barrelRing(B, o) {
   }
 }
 /** Shared finish: the native support hand stays on d.gripL (drawn as a foregrip), the native trigger and
- *  barrel channels take the new pieces, the native charge coil is dropped, the muzzle sits at the nozzle exit. */
+ *  barrel channels take the new pieces, the native charge coil is kept (a charging splatling must stay readable
+ *  to other players), the muzzle sits at the nozzle exit. */
 function finish(d, body, B, tr, AX, muzzleZ, supportColor) {
   supportHandle(body, d.gripL, supportColor);
   return rebuild(d, {
     body, ink: new Pieces(),
     parts: { trigger: part(tr, TRIGGER_PIVOT), barrels: part(B, [0, AX, 0.3]) },
-    drop: ['glow'],
     muzzle: [0, AX, muzzleZ],
   });
 }
