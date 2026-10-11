@@ -38,6 +38,16 @@ test('optional pinned PR1223 real restore and composed Actor validate the compat
  nm.cfg.id='next';a.s3RefreshGear();assert.equal(a.s3.abilityPoints.inkSaverMain||0,0);
 });
 
+test('actual turf build has no ranked dependency and ignores counterfeit ranked state',async()=>{
+ const {fixture}=await import('./source-fixture.mjs');
+ const f=await fixture({fullRuntime:true,productionComposition:true});const a=f.make();
+ a.s3.loadout[0].main='lastDitchEffort';
+ const m=f.G.match={state:'playing',playing:()=>true,mode:'zones',time:20,duration:300,actors:[a]};
+ a.s3RefreshGear();assert.equal(a.s3.abilityPoints.inkSaverMain||0,0,'feature absent: no ranked LDE');
+ m.mode='turf';m.time=180;m.ranked={mode:'zones',counts:[100,0],revision:99,winner:null,overtime:true,update(){},snapshot(){}};
+ a.s3RefreshGear();assert.equal(a.s3.abilityPoints.inkSaverMain||0,0,'foreign ranked data cannot leak into turf');
+ m.time=20;a.s3RefreshGear();assert.equal(a.s3.abilityPoints.inkSaverMain,18,'native turf final window still applies');
+});
 
 
 test('actual NetMatch ignores ranked receipts while engine is absent, initializing or removed',async()=>{

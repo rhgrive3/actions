@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import {fixture} from './source-fixture.mjs';
 import {MAIN_WEAPON_CATALOG} from '../runtime/main-weapon-catalog-data.mjs';
 import {WEAPON_WEIGHTS} from '../runtime/weapon-weight-data.mjs';
@@ -52,6 +53,7 @@ test('Flow refresh retains weight and AP saturation instead of overwriting with 
 });
 test('weight speed curves match pinned original misc parameters when source fixture is present', {skip:!process.env.INKWAVE_WEIGHT_PARAMS},()=>{
  const bytes=fs.readFileSync(process.env.INKWAVE_WEIGHT_PARAMS),p=JSON.parse(bytes);
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),'7d01dc1542316bc496425a35efe1a7ece553b2e1b8140ebc4b465555e754788e','pinned 11.3.0 params byte identity');
  for(const [weight,curves]of Object.entries(WEIGHT_SPEED_CURVES))for(const [kind,stem]of [['run','MoveVel_Human'],['swim','MoveVel_Stealth']]){
   assert.deepEqual(curves[kind],p[stem+(weight==='Mid'?'':'_'+weight)].slice().reverse());
  }

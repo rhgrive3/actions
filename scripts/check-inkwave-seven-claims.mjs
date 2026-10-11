@@ -30,13 +30,13 @@ try {
     const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(`http://127.0.0.1:${server.address().port}/probe`);
     const result=await page.evaluate(async()=>{
       const check=(v,msg)=>{if(!v)throw Error(msg);}, near=(a,b)=>check(Math.abs(a-b)<1e-8,`${a} != ${b}`);
-      const THREE=await import('three'),{G}=await import('/src/core/ctx.js'),{Actor}=await import('/src/game/actor.js'),{Projectiles}=await import('/src/game/weapons.js');
+      const THREE=await import('three'),{G}=await import('/src/core/ctx.js'),{Actor}=await import('/src/game/actor.js'),{Projectiles}=await import('/src/game/weapons.js'),{Physics}=await import('/src/game/physics.js');
       const profile=await fetch('/patches/splatoon3/profile.json').then(r=>r.json());(await import('/patches/splatoon3/runtime/install.mjs')).install(profile);
       const {FixedClock}=await import('/patches/splatoon3/runtime/clock.mjs');
       const fidelity=await import('/patches/splatoon3/runtime/weapons-fidelity.mjs');
       G.time=0;G.scene=new THREE.Scene();G.teamColors=[new THREE.Color('#f80'),new THREE.Color('#03f')];G.actors=[];
       G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};
-      G.physics={los:()=>true,segment:(_a,_b,h)=>{h.hit=false;return h;},raycast:(_a,_b,_c,h)=>{h.hit=false;return h;}};
+      G.physics=new Physics(G.level);
       G.paint={sample:()=>0,splat:()=>0};G.match={playing:()=>true,canRespawn:()=>false};G.projectiles=new Projectiles(G.scene);
       class Display {constructor(a){this.actor=a;this.root=new THREE.Group();}_owner(){return this.actor;}_runner(){return this.actor.weaponRunner;}trigger(){}setVisible(){}setHurt(){}setWeapon(){}getMuzzle(out){return out.copy(this.actor.pos).add(new THREE.Vector3(0,1.05,0));}}
       const make=weapon=>{const a=new Actor({team:0,name:'probe',weapon,CharacterClass:Display});a.character.actor=a;a.isLocal=true;a.grounded=true;a.ink=100;a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,100);return a;};

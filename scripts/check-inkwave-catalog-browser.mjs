@@ -161,7 +161,6 @@ try {
         a.weaponRunner.aimingSub=true;check(a.weaponRunner.moveSpeed()===profile.bomb.holdMoveSpeed,record.id+' sub-ready movement');
       }
       const uniqueGearChecks=[];
-      const {advanceTenacity}=await import('/patches/splatoon3/runtime/tenacity.mjs');
       for(const ap of [0,10,57]){
         const a=makeActor('shooter');G.actors=[a];const l=emptyLoadout();
         if(ap===10)l[0].main='specialPower';if(ap===57)for(const p of l){p.main='specialPower';p.subs.fill('specialPower');}
@@ -171,11 +170,18 @@ try {
         check(Math.abs(state.inkFuel-(150-gearCurve(ap,15,13.05,12)))<1e-8,'Zipcaster browser drain '+ap);
         uniqueGearChecks.push({ability:'specialPower',ap,zipcasterFuel:state.inkFuel});a.reset();
       }
+      const conditionalChecks=[];
       {
-        const a=makeActor('shooter'),e=makeActor('shooter'),e2=makeActor('shooter');e.team=e2.team=1;G.actors=[a,e,e2];
+        const previous=G.match,a=makeActor('shooter'),e1=makeActor('shooter'),e2=makeActor('shooter');e1.team=e2.team=1;G.actors=[a,e1,e2];
+        G.match={state:'playing',playing:()=>true,canRespawn:()=>false,actors:G.actors,time:180,duration:180};
         a.s3.loadout=emptyLoadout();a.s3.loadout[0].main='tenacity';a.s3RefreshGear();a.special=0;
-        advanceTenacity(a,1,api);check(Math.abs(a.special-3.24)<1e-8,'Tenacity compiled gauge');
-        uniqueGearChecks.push({ability:'tenacity',gauge:a.special});
+        for(let frame=0;frame<60;frame++)a.update(1/60);
+        check(Math.abs(a.special-3.24)<1e-8,'Tenacity installed Actor update');
+        conditionalChecks.push({ability:'tenacity',gauge:a.special});
+        a.s3.loadout[0].main='lastDitchEffort';G.match.mode='zones';G.match.time=20;a.s3RefreshGear();
+        check((a.s3.abilityPoints.inkSaverMain||0)===0,'uninstalled ranked feature stays inactive');
+        G.match.mode='turf';a.s3RefreshGear();check(a.s3.abilityPoints.inkSaverMain===18,'ordinary final turf window retained');
+        conditionalChecks.push({ability:'lastDitchEffort',uninstalledRanked:0,turfFinalWindow:18});G.match=previous;
       }
       const kitChecks=[];
       for(const record of records){
@@ -240,7 +246,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks, weightChecks, uniqueGearChecks,
+        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,

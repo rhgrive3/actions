@@ -603,7 +603,9 @@ jobs:
           node scripts/check-inkwave-seven-claims.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/seven-browser.json
       - name: Verify compiled main weapon catalog in Chromium and WebKit
         shell: bash
-        run: node scripts/check-inkwave-catalog-browser.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/catalog-browser.json
+        run: |
+          set -euo pipefail
+          node scripts/check-inkwave-catalog-browser.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/catalog-browser.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
