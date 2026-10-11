@@ -20,11 +20,15 @@ const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
 const FAMILIES = Object.freeze([['shooter', SHOOTERS], ['shooter', SHOOTERS_B], ['blaster', BLASTERS], ['dualies', DUALIES],
   ['roller', ROLLERS], ['brush', BRUSHES], ['charger', CHARGERS], ['stringer', STRINGERS], ['slosher', SLOSHERS],
   ['splatling', SPLATLINGS], ['brella', BRELLAS], ['splatana', SPLATANAS]]);
-const SPECS = new Map(), FAMILY_POSE = new Map();
+const SPECS = new Map(), FAMILY_POSE = new Map(), FAMILY_TRIGGER = new Map();
 for (const [family, mod] of FAMILIES) {
   if (typeof mod.FAMILY_POSE === 'function') {
     if (FAMILY_POSE.has(family)) throw new Error(`Duplicate ${family} family pose layer`);
     FAMILY_POSE.set(family, mod.FAMILY_POSE);
+  }
+  if (typeof mod.FAMILY_TRIGGER === 'function') {
+    if (FAMILY_TRIGGER.has(family)) throw new Error(`Duplicate ${family} family trigger layer`);
+    FAMILY_TRIGGER.set(family, mod.FAMILY_TRIGGER);
   }
   for (const [id, spec] of Object.entries(mod.MODELS || {})) {
     const r = RECORDS.get(id);
@@ -37,6 +41,9 @@ for (const [family, mod] of FAMILIES) {
 }
 /** Family-level pose layer (brush / splatana / brella / stringer …): fn(character, dt, animState). */
 export function weaponFamilyPose(id) { return FAMILY_POSE.get(weaponBehaviorFamily(id)) ?? null; }
+/** Family one-shot handler: fn(character, name, arg) → true when it replaces the native one-shot
+ *  (e.g. a Brush swing instead of the Roller flick, a Splatana slash instead of Shooter recoil). */
+export function weaponFamilyTrigger(id) { return FAMILY_TRIGGER.get(weaponBehaviorFamily(id)) ?? null; }
 
 /** Native visual family (HOLD key / part channels) for a weapon ID or family kind. */
 export function weaponModelFamily(id) { return RECORDS.get(id)?.modelKind ?? id; }
