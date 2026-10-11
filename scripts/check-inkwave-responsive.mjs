@@ -16,7 +16,7 @@ const arg = (name) => { const i = process.argv.indexOf(name); return i >= 0 ? pr
 const source = path.resolve(arg('--source') || path.join(repo, 'inkwave-public'));
 const manifestPath = path.join(source, 'inkwave-build.json');
 const touchCameraReset = fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).build?.reliability?.['navigation-adapter.mjs'];
-const hostTeamConfirmation = fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).files?.['patch/lobby-host-team-adapter.mjs'];
+const hostTeamAdapterPresent = fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).files?.['patch/lobby-host-team-adapter.mjs'];
 const evidence = path.resolve(arg('--evidence-dir') || '/mnt/workspace/.dev-state/agent-work/evidence/inkwave-responsive-ui-20261002');
 const cache = path.resolve(arg('--profile-dir') || '/mnt/workspace/.dev-state/agent-work/cache/inkwave-responsive-ui-20261002');
 const baseline = arg('--baseline');
@@ -219,6 +219,11 @@ try {
         entry.screens.emotes = await geometry(page, '.iw-emowheel button', 'emotes');
         await tap(page, '.iw-emowheel .iw-touch-close');
         await page.waitForFunction(() => !menus._modal);
+        // The real Session has confirmTeams; the offline MockNet intentionally
+        // does not. Match the production menu's capability gate, not merely
+        // the presence of an adapter in the build manifest.
+        const hostTeamConfirmation = hostTeamAdapterPresent && await page.evaluate(() => typeof G.net.confirmTeams === 'function');
+        entry.hostTeamConfirmationSupported = hostTeamConfirmation;
         if (hostTeamConfirmation) {
           await tap(page, '.iw-btn--ready');
           assert.equal(await page.evaluate(() => G.net.lobby.players.find((p) => p.you).ready), false,

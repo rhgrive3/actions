@@ -28,6 +28,8 @@ test('responsive menu fixture installs the published runtime before constructing
 test('responsive host confirmation is explicit, recorded, and confined to the offline guest fixture', () => {
   const source = fs.readFileSync(new URL('../check-inkwave-responsive.mjs', import.meta.url), 'utf8');
   assert.match(source, /files\?\.\['patch\/lobby-host-team-adapter\.mjs'\]/);
+  assert.match(source, /hostTeamAdapterPresent && await page\.evaluate\(\(\) => typeof G\.net\.confirmTeams === 'function'\)/);
+  assert.match(source, /entry\.hostTeamConfirmationSupported = hostTeamConfirmation/);
   const block = source.slice(source.indexOf('        if (hostTeamConfirmation) {'), source.indexOf("        await page.evaluate(() => G.net.leave());", source.indexOf('        if (hostTeamConfirmation) {')));
   assert.ok(block.indexOf('guest Ready stays blocked') < block.indexOf('page.evaluate(confirmResponsiveMockHostTeams)'));
   assert.ok(block.indexOf('page.evaluate(confirmResponsiveMockHostTeams)') < block.indexOf('page.waitForFunction'));
