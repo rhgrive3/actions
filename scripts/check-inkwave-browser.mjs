@@ -101,6 +101,21 @@ try {
   if (result.idleLobby.mode !== 'menu' || result.idleLobby.allocated) throw new Error('Idle menu allocated unused Online LobbySet');
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); G.game.debug.freeze(); G.game.menus.wipe.cancel(); G.game.menus.show('loadout', {wipe:false,light:false}); for(let i=0;i<90;i++)G.game.menus.update(1/60); });
   await page.waitForSelector('.s3-gear');
+  result.canonicalLoadout = await page.evaluate(async()=>{
+    const {CANONICAL_KITS}=await import(new URL('patches/splatoon3/runtime/canonical-kits-data.mjs',document.baseURI).href);
+    const g=globalThis.s3ProbeG.game,original=g.api.getLoadout().weapon,rows=[];
+    localStorage.removeItem('inkwave.catalogue-kit.v1');
+    for(const [id,k]of Object.entries(CANONICAL_KITS)){
+      const card=[...document.querySelectorAll('.iw-wcard')].find(c=>c._wid===id);
+      if(!card)throw Error('Missing canonical weapon card '+id);card.click();await new Promise(queueMicrotask);
+      if(g.api.getLoadout().weapon!==id)throw Error('Weapon card failed to select '+id);
+      const sub=document.querySelector('.s3-catalogue select[aria-label="サブウェポン"]'),special=document.querySelector('.s3-catalogue select[aria-label="スペシャル"]');
+      if(sub?.value!==k.sub||special?.value!==k.special)throw Error('Canonical menu pair mismatch '+id);
+      rows.push({id,sub:sub.value,special:special.value,points:k.specialCost});
+    }
+    const restore=[...document.querySelectorAll('.iw-wcard')].find(c=>c._wid===original);restore.click();await new Promise(queueMicrotask);
+    return rows;
+  });
   result.gearSelects = await page.locator('.s3-gear > fieldset:not(.s3-catalogue) select').count();
   if (result.gearSelects !== 12) throw new Error('Gear slots did not render');
   await page.locator('.s3-gear summary').click();
