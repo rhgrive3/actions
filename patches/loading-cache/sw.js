@@ -152,7 +152,7 @@ async function offlineIndex() {
   return old ? await old.match(INDEX_URL) : null;
 }
 function recoveryDocument() {
-  return new Response(`<!doctype html><html lang="ja"><meta charset=utf-8><meta name=viewport content=width=device-width><title>INKWAVE — オフライン</title><h1>INKWAVE</h1><p>オフラインです。保存データが見つかりません。接続後に再読み込みしてください。</p><a href="${SCOPE.pathname}">もう一度開く</a></html>`, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+  return new Response(`<!doctype html><html lang="ja"><meta charset=utf-8><meta name=viewport content=width=device-width><title>INKWAVE</title><h1>INKWAVE</h1><p>保存データがありません。接続して再読み込みしてください。</p><a href="${SCOPE.pathname}">再試行</a></html>`, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 async function repairActiveState() {
   try {
