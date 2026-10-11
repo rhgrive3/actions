@@ -39,7 +39,8 @@ export const CATALOG_MODEL_LIMITS = Object.freeze([
   'Switch scale/paint parity: unverified.',
   'Brella geometry/damage rates: incomplete.',
   'Wall drips/Slosher spiral: incomplete.',
-  'Scope/model/animation: placeholders.',
+  'Scope: capability and explicit FOV applied; sparse defaults/transition timing unverified.',
+  'Model/animation: placeholders.'
 ]);
 
 function weaponParam(r) {
@@ -119,6 +120,7 @@ function definition(r, api) {
   const inkTankScale=r.sourceActor==='WeaponShooterFirst'?1.1:1;
   return { id:r.id, name:r.names[api.LANG==='ja'?'ja':'en'], referenceNames:r.names, kind:'catalog', behaviorKind:r.family,
     modelKind:r.modelKind, class:{brush:'Brush',brella:'Brella',stringer:'Stringer',splatana:'Splatana'}[r.family] || existing.class,
+    scopedCharge:r.family==='charger' && r.parameters.WeaponScopeParam != null,
     catalogRecord:r, sourceMainActor:r.sourceActor, ...CANONICAL_KITS[r.id],
     kitReference:CANONICAL_KITS[r.id].main, kitStatus:'verified-base-kit',
     kitVerifiedSlots:['sub','special'], kitMissingSlots:{},

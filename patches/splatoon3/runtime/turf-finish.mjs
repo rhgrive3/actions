@@ -120,7 +120,7 @@ export function requestTurfFinish(match) {
 export function simulateMatchInterval(match, dt, G) {
   const advance = (span, controller = true) => {
     if (!(span > 0)) return;
-    if (controller) { match.updateController(span); match.controller?.computeAim?.(); }
+    if (controller) { match.updateController(span); match.controller?.computeAim?.(true); }
     match.update(span);
     if (!match.paused) G.projectiles.update(span);
   };

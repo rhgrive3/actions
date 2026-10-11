@@ -5,12 +5,15 @@ import { adaptQualitySource } from '../patches/local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../patches/network-replication/adapter.mjs';
 import { adaptRange } from '../patches/practice-range/adapter.mjs';
 
-// Keep the tested source path identical to the production build's six adapters.
+import { adaptCameraAimControls } from '../patches/splatoon3/camera-aim-controls-adapter.mjs';
+
+// Keep tests and the production build on the same ordered composition.
 export function adaptBuildSource(rel, code) {
   code = adaptSource(rel, code);
   code = adaptTouchLayout(rel, code);
   code = adaptReliability(rel, code);
   code = adaptQualitySource(rel, code);
   code = adaptNetworkSource(rel, code);
-  return adaptRange(rel, code);
+  code = adaptRange(rel, code);
+  return adaptCameraAimControls(rel, code);
 }
