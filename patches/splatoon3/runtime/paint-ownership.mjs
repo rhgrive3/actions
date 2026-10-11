@@ -2,6 +2,13 @@ const STEP = 1 / 60;
 const EPS = 1e-10;
 const INSTALLED = Symbol.for('inkwave.issue264.paint-ownership-installed');
 
+// Keep the existing RNG draw at the caller while using one recorded mask seed
+// for a catalogue special's core and its larger-radius continuation.
+export function projectileBurstPaintSeed(projectile, randomSeed) {
+  return projectile?.s3AllSpecial && Number.isFinite(projectile.seed) ? projectile.seed : randomSeed;
+}
+
+
 // Keep ordinary clocks numeric on the wire. Decimal strings carry only values
 // beyond the safe-integer range, so an accepted causal jump cannot exhaust the
 // next local emission or lose precision. Canonical encoding avoids alias IDs.
@@ -355,6 +362,49 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
   }
   if (proto[INSTALLED]) return false;
   const nativeSplat = proto.splat, nativeFlush = proto.flush, nativeClear = proto.clear, nativeDispose = proto.dispose;
+  const nativeEmitGrowth = proto._emitGrowth;
+  // One retained presentation per authoritative stamp, not one quad per face
+  // per hidden frame. Growth records and their entry arrays are pooled, so the
+  // snapshot must own its entries before a finished record is released/reused.
+  proto._emitGrowth = function hiddenAwarePaintGrowth(g, tn, dT, dripOnly, bodyOnly = false) {
+    if (!globalThis.document?.hidden || !g.paintOrder) {
+      return nativeEmitGrowth.call(this, g, tn, dT, dripOnly, bodyOnly);
+    }
+    const pending = this._hiddenPaintGrowth || (this._hiddenPaintGrowth = new Map());
+    let row = pending.get(g.paintOrder);
+    if (!row) {
+      row = { g: { ...g, entries: g.entries.slice(), paintOwner: null }, tn, dT, dripOnly, bodyOnly };
+      pending.set(g.paintOrder, row);
+      this._hiddenPaintInsertions = (this._hiddenPaintInsertions || 0) + 1;
+      if (pending.size >= 128 && this._hiddenPaintInsertions >= 64) {
+        // Network rendering is already clipped to authoritative owner cells.
+        // Only those records may be pruned: local sub-cell visual ink is
+        // intentionally retained even if it has never claimed a grid cell.
+        // Future growth may re-add a network stamp when it gains a cell.
+        const live = new Set(this._paintOwnershipOrder);
+        for (const [id, snapshot] of pending) if (snapshot.g.netOrderId && !live.has(id)) pending.delete(id);
+        this._hiddenPaintInsertions = 0;
+      }
+
+    } else {
+      row.tn = tn; row.dT = dT; row.dripOnly = dripOnly; row.bodyOnly = bodyOnly;
+    }
+    // A final drip-only pass still needs to reconstruct the body which was
+    // never submitted while hidden. Emitting the full current mask is safe:
+    // chronological replay and the network owner clips preserve later ink.
+    row.dripOnly = false;
+  };
+  proto._resumePaintPresentation = function resumePaintPresentation() {
+    if (globalThis.document?.hidden) return;
+    const quads = this._hiddenQuads;
+    this._hiddenQuads = null;
+    if (quads) for (const args of quads) this._pushQuad(...args);
+    if (!this._hiddenPaintGrowth?.size) return;
+    const pending = this._hiddenPaintGrowth;
+    this._hiddenPaintGrowth = null;
+    for (const row of pending.values()) nativeEmitGrowth.call(this, row.g, row.tn, row.dT, row.dripOnly, row.bodyOnly);
+  };
+
 
   proto._paintOrderId = function issue264PaintOrderId(order) { return paintOrderId(this, order); };
   proto._paintOrderComesAfter = function issue264PaintOrderAfter(nextId, previousId) {
@@ -437,6 +487,8 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     this._paintOrderRecords = [null];
     this._paintOrderIds?.clear();
     this._paintSimulationAccumulator = 0;
+    this._hiddenPaintGrowth = null;
+    this._hiddenPaintInsertions = 0;
     this._paintOwnerContext = null;
     this._paintCurrentOrder = 0;
   };
@@ -457,6 +509,7 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     return count;
   };
   proto.flush = function issue264RenderFlush(dt) {
+    this._resumePaintPresentation();
     if (!this._paintUsesFixedClock) return nativeFlush.call(this, dt);
     this._drawQuads();
   };

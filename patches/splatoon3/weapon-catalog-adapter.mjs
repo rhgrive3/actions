@@ -93,6 +93,9 @@ export function adaptWeaponCatalog(rel, code) {
   }
 
   if (rel === 'src/game/bots.js') {
+    code = "import { driveCanonicalBotSpecial } from '../../patches/splatoon3/runtime/canonical-kits.mjs';\n" + code;
+    code = replaceOnce(code, '    // ---------------- aim: critically-damped spring',
+      '    driveCanonicalBotSpecial(a, it, dt, this.target);\n    // ---------------- aim: critically-damped spring', 'canonical bot special inputs');
     code = replaceOnce(code,
       "import { PLAYER, DIFFICULTY, SUB } from '../config.js';",
       `import { PLAYER, DIFFICULTY, SUB } from '../config.js';\n\n${behaviorKindHelper('botBehaviorKind')}`,

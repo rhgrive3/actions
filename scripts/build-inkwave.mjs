@@ -30,6 +30,8 @@ const SRC = physicalLocation(path.resolve(process.argv[2] || 'inkwave-public'));
 const OUT = physicalLocation(path.resolve(process.argv[3] || '_site'));
 if (fs.existsSync(OUT) && !fs.statSync(OUT).isDirectory()) throw new Error('Build output must be a directory');
 const projectRoot = path.resolve(PATCH_ROOT, '../..');
+// Inlined into weapon-models/registry.mjs by the production build (see the patch copy loop).
+const WEAPON_MODEL_FAMILY = /^runtime\/weapon-models\/(shooters|shooters-b|blasters|dualies|rollers|brushes|chargers|stringers|sloshers|splatlings|brellas|splatanas)\.mjs$/;
 const contains = (parent, child) => parent === child || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
 if (contains(OUT, projectRoot) || contains(OUT, SRC) || contains(SRC, OUT) || contains(PATCH_ROOT, OUT) || contains(RELIABILITY_ROOT, OUT) || contains(QUALITY_ROOT, OUT) || contains(NETWORK_ROOT, OUT) || contains(LOADING_ROOT, OUT) || contains(RANGE_ROOT, OUT)) throw new Error('Build output must be separate from upstream source and patch files');
 checkCompatibility(SRC);
@@ -72,7 +74,7 @@ for (const file of walk(SRC)) {
   else if (!unminified && rel.startsWith('assets/lightmaps/') && ext === '.png') {
     // Pack the same grayscale pixels with better PNG row filters + DEFLATE.
     // Do not touch source assets, offline availability, module imports or the
-    // 5 MiB cache ceiling. The helper validates decoded pixels before use.
+    // production cache ceiling. The helper validates decoded pixels before use.
     const original = fs.readFileSync(file), compact = optimizeLightmapPng(original);
     fs.writeFileSync(dst, compact);
     losslessLightmapSavings += original.length - compact.length;
@@ -92,6 +94,24 @@ for (const file of walk(PATCH_ROOT)) {
   if (rel.startsWith('assets/stages/')) continue;
   const dst = path.join(BUILD, 'patches/splatoon3', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
+  const relPosix = rel.split(path.sep).join('/');
+  // Per-main-weapon model families ship inlined in registry.mjs: one module and
+  // one worker manifest entry instead of thirteen. kit.mjs stays its own module.
+  if (!unminified && WEAPON_MODEL_FAMILY.test(relPosix)) continue;
+  if (!unminified && relPosix === 'runtime/weapon-models/registry.mjs') {
+    const res = await esbuild.build({
+      entryPoints: [file], bundle: true, format: 'esm', minify: true, charset: 'utf8', legalComments: 'inline', write: false, logLevel: 'warning',
+      plugins: [{ name: 'weapon-model-families', setup(b) {
+        b.onResolve({ filter: /.*/ }, args => args.kind === 'entry-point' ||
+          (args.importer.startsWith(path.dirname(file)) && WEAPON_MODEL_FAMILY.test('runtime/weapon-models/' + args.path.replace(/^\.\//, '')))
+          ? undefined : { path: args.path, external: true });
+        b.onLoad({ filter: /\.mjs$/ }, args => ({ loader: 'js',
+          contents: adaptBuildSource('patches/splatoon3/' + path.relative(PATCH_ROOT, args.path).split(path.sep).join('/'), fs.readFileSync(args.path, 'utf8')) }));
+      } }],
+    });
+    fs.writeFileSync(dst, res.outputFiles[0].text);
+    continue;
+  }
   if (/\.(m?js|css)$/.test(rel)) {
     const patchRel = 'patches/splatoon3/' + rel.split(path.sep).join('/');
     const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
@@ -300,22 +320,10 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/muzzle-feedback.mjs',
   'patches/splatoon3/runtime/superjump-target-notification.mjs',
 
-  // Per-main-weapon models: static imports and full precache retained, no extra eager hints.
+  // Per-main-weapon models (families inlined into registry.mjs): full precache retained, no extra eager hints.
   'patches/splatoon3/runtime/weapon-models/registry.mjs',
   'patches/splatoon3/runtime/weapon-family-motion.mjs',
   'patches/splatoon3/runtime/weapon-models/kit.mjs',
-  'patches/splatoon3/runtime/weapon-models/shooters.mjs',
-  'patches/splatoon3/runtime/weapon-models/shooters-b.mjs',
-  'patches/splatoon3/runtime/weapon-models/blasters.mjs',
-  'patches/splatoon3/runtime/weapon-models/dualies.mjs',
-  'patches/splatoon3/runtime/weapon-models/rollers.mjs',
-  'patches/splatoon3/runtime/weapon-models/brushes.mjs',
-  'patches/splatoon3/runtime/weapon-models/chargers.mjs',
-  'patches/splatoon3/runtime/weapon-models/stringers.mjs',
-  'patches/splatoon3/runtime/weapon-models/sloshers.mjs',
-  'patches/splatoon3/runtime/weapon-models/splatlings.mjs',
-  'patches/splatoon3/runtime/weapon-models/brellas.mjs',
-  'patches/splatoon3/runtime/weapon-models/splatanas.mjs',
   // C42: retain the new static runtime dependencies and full precache; defer their extra eager hints.
   'patches/local-quality/portrait-work.mjs',
   'patches/local-quality/runtime/audio-listener.mjs',

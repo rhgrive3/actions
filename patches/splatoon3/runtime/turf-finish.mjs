@@ -123,8 +123,15 @@ export function simulateMatchInterval(match, dt, G) {
     if (controller) { match.updateController(span); match.controller?.computeAim?.(); }
     match.update(span);
     if (!match.paused) G.projectiles.update(span);
+    if (!match.paused) match.advanceRanked?.(span);
   };
   const turf = !match.bossMode && !match.attract && (match.mode == null || match.mode === 'turf');
+  if (match.ranked && !match.paused && match.state === 'playing' && !match.ranked.overtime && match.ranked.time <= dt + 1e-10) {
+    const legal = Math.max(0, Math.min(dt, match.ranked.time));
+    advance(legal);
+    advance(Math.max(0, dt - legal), match.state === 'playing');
+    return;
+  }
   const boundary = turf && !match.paused && match.state === 'playing'
     && Number.isFinite(match.time) && match.time <= dt + 1e-10;
   if (!boundary) { advance(dt); return; }

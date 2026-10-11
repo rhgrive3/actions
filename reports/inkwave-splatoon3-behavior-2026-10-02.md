@@ -3963,3 +3963,36 @@ Not changed and still unverified: Dualies aerial slide descent (no sourced field
 | スピナーの銃身回転・充電コイル、マニューバーのトリガーを保持。マニューバー上部の反動スライドは非表示 | 長押しチャージ・射撃 | 見た目のみ | 実機で動く部品の有無は未確認 |
 
 検証: `weapon-models-all.test.mjs`（全65種）、ファミリー別テスト（スロッシャー109件、スピナー関連165件、マニューバー関連153件）、`check-inkwave-patches.mjs` 全体。ロジック単独・ブラウザ描画のみで、実機比較ではない。
+
+## 2026-10-11: ガチ4ルールの追加
+
+参照版は Splatoon 3 Ver.11.3.0。最新 main `f2c870859d637fccba88031c3786ecec4d95248d` の公開ビルド構成へ、ガチエリア・ガチヤグラ・ガチホコ・ガチアサリを追加した。調査根拠、資料間の食い違い、実機で未測定の項目は [4ルール調査](inkwave-ranked-research-2026-10-11.md) を参照する。
+
+共通エンジンが300秒の時計、カウント、ペナルティ、ルール別延長、ノックアウト、勝者と結果を所有する。オンラインはホストが目的物と勝敗を更新し、ゲストは試合ID・ホストID・リビジョン・状態形式を検証して受信する。プレイヤーの移動と通常戦闘は既存の所有者方式を継続し、専用ホコ弾のダメージはホストから対象所有者へ送る。これは不正クライアント全般への対策を完了したという意味ではない。
+
+ステージのルート、目的物配置、投球の距離換算、ホコ弾の重力と持ち運び速度は既存 INKWAVE のジオメトリに合わせたローカル調整を含む。本家のステージ衝突データや実機の一致確認として扱わない。ヤグラの床と柱は動く物理コライダーを持つ。床は既存 PaintSystem に決定的な face と独立アトラス領域を追加し、通常の着弾・塗り・所有セル・通信を利用する。移動後も床のローカル座標に塗りを保持し、再戦時に追加領域とコライダーを解放する。金網の描画は塗らない。床の表示shaderは通常床より簡単なチーム色表示、柱の衝突形状は円柱を囲む箱であり、原作形状の一致は未確認。
+
+検証スクリプトは `patches/splatoon3/tests/ranked-*.test.mjs`（ルールとネイティブ接続）、`scripts/check-inkwave-ranked-browser.mjs`（本番ビルドの画面、オフライン目的物、別ブラウザ間の実ルーム同期）。ブラウザ確認と Switch 実機計測は別であり、後者は実施していない。
+
+
+### 2026-10-11: ボットの実操作と最終検証の補足
+
+ヤグラの目標を静的ナビゲーションへ直接渡すだけでは、床下へ到達して乗れないケースがあった。`runtime/ranked/bots.mjs` は実際のジャンプ初速と重力から到達可能な近傍床ノードを選び、既存A*で接近してから動く床へ飛び乗る。床上判定は実際の接地と移動床の接触を用いる。ホコではシールド操作が既存の敵認識後の戦闘入力を上書きしていたため、奇数スロットの護衛は視認中の近距離敵へ既存戦闘入力を使う。ホコ所持者の専用溜め・発射入力は保持する。シールドへは既存ナビゲーション上の到達可能な射線から撃ち、照準の距離だけを目的物に合わせる。既存の照準角のばね・旋回制限、弾道と世界衝突は維持する。通常シューターのプロファイル付き弾道がシールド判定を通らない接続漏れも修正し、壁・敵・シールドの最初の接触とネイティブの距離減衰ダメージを使う。これはINKWAVEのボット設計であり、本家のプレイヤーやAIの動作一致を主張するものではない。
+
+`ranked-autonomy-integration.test.mjs` は公開ビルドと同じ合成モジュール、実際のActor・Physics・NavGraph・WeaponRunner・Projectiles・CPU PaintSystemで各チーム2ボットを最大60秒動かし、塗りの時間更新も行う。ホコの交戦と、敵のいない経路での専用発射・運搬・関門通過は別シナリオで確認する。描画提出とキャラクター表示のみを代替し、エリア確保と採点、移動ヤグラへの実接地と進行、ホコのシールド破壊・拾得・専用発射・関門、アサリ拾得・ガチアサリ生成・投球・得点を検証する。意図だけの模擬ボットテストやNintendo実機計測の代用として扱わない。
+
+ブラウザは本番ビルドの4オフラインモードと独立2コンテキストの実ルーム中継を確認し、200msの順序付き通信遅延でもカウントとKO勝敗が一致した。CIのソフトウェアGPUでは対戦処理と通信を継続し、画面描画と撮影を順番に行う。アサリのA操作はSwitchの右ボタン（標準Gamepad index 1）であることを案内へ明記した。開始時のmainは上記f2c87085、最終調整ではmain `343e7afa72a67ae53a58a7529c55def84af7cd6f` のカタログ・塗り・キャッシュ・描画・オブジェクトギア変更も取り込んだ。新しい日本語案内の不足7字は既存OFLフォントに補い、既存文字の輪郭と幅を維持した。
+
+### 最新mainのネイティブスプリンクラーとの弾道接続
+
+通常シューターのInkFlightRuntimeがkitBarrierCandidateを呼ばず、新しいスプリンクラーを通過する経路を本番合成の実弾道で確認した。スプリンクラーの候補だけを独立したnativeSprinklerCandidateへ公開し、ホコのシールドと同じ距離順判定へ接続する。壁・敵・シールド・装置の最初の接触を維持し、onHitには実際の距離減衰ダメージを渡す。既存の装置所有者・ライフ・出生・再送検証と対物攻撃力アップ倍率は維持する。一般のkitBarrier全体を弾道へ新規接続する変更は含めない。
+
+## 2026-10-11: accepted equipment during owner departure
+
+- Before: a remote Actor retained empty equipment, then its host-adopted bot lost run-speed AP and main-only gear.
+- Candidate: a match/actor/life/sequence-bound identity-only sidecar restores legal slots from already-admitted owner snapshots. Actual Actor movement at 30/60/120 Hz and Tenacity updates retain the equipment; stale/foreign/malformed claims fail closed.
+- Source/built focused 17 cases and network 448 cases pass. Full source, exact-head browser CI and merge are still pending. Conditional effect clocks and server-attested equipment remain outside this static-loadout correction. See `inkwave-gear-loadout-adoption-2026-10-11.md`.
+
+2026-10-11: Gear adoption additionally retains the latest admitted loadout before remote death playback clears snapshots. Actual owner JSON, death event playback before visual sampling, and subsequent bot adoption retain 57 AP. No conditional-clock protocol is included in this static-loadout correction.
+
+2026-10-11: Separate conditional-gear adoption candidate preserves bounded owner-admitted Comeback and Opening clocks across host takeover. Active receiver simulation dt prevents host-clock rollback from refunding effect time; pause does not age clocks. Existing 20/30/15-second profile values are unchanged. Source/built actual JSON tests cover death/new life, stale identity, extension counts and new-match isolation. Remote earned-credit truth remains owner-authoritative, not server-attested.

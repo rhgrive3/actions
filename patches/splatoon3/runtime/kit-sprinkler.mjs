@@ -38,7 +38,7 @@ export function beginSprinkler(b,n,spec=SPRINKLER){
   bitangent.copy(n).cross(tangent).normalize();
   b.s3Sprinkler={sourceAge:b.age,nextFrame:spec.deployFrames,drops:[],spraySequence:0,
     phase:-1,normal:n.clone(),tangent,bitangent,p0:b.pos.clone(),p1:b.pos.clone(),
-    hit:null,previousAge:b.age,baseSeed:Math.floor(b.age*1e7)>>>0};
+    hit:{point:b.pos.clone(),normal:n.clone()},previousAge:b.age,baseSeed:Math.floor(b.age*1e7)>>>0};
 }
 function unit(seed){let n=Math.imul(seed^0x9e3779b9,0x85ebca6b)>>>0;
   n^=n>>>13;n=Math.imul(n,0xc2b2ae35)>>>0;n^=n>>>16;return(n>>>0)/4294967296;}
@@ -77,7 +77,7 @@ export function stepSprinkler(b,paint,projectiles,G,physics,player){
     d.vel.multiplyScalar(1-spec.dropletDrag*Math.min(1,dt/FRAME));
     d.vel.y-=spec.dropletGravity*dt;
     st.p0.copy(d.pos);st.p1.copy(d.pos).addScaledVector(d.vel,dt);
-    const hit=G.physics.segment?.(st.p0,st.p1,st.hit||{});
+    const hit=G.physics.segment?.(st.p0,st.p1,st.hit);
     if(hit?.hit){
       st.hit=hit;const at=hit.point.clone().addScaledVector(hit.normal,.035);
       area+=paint.splat(at,spec.dropletPaintRadius,b.team,
