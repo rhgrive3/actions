@@ -22,7 +22,8 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'ci/wall-paint-performance-probe' && github.event.pull_request.head.repo.full_name == github.repository)
+    # Fixed0826 codec evidence is complete; preserve manual reproduction without rerunning on wall-only probe updates.
+    if: github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
