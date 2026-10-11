@@ -54,7 +54,7 @@ const server = http.createServer((req, res) => {
     if (/^\/(source|built)\/fixture.html$/.test(pathname)) {
       res.setHeader('content-type', 'text/html');
       res.end('<!doctype html><script type="importmap">' + JSON.stringify({ imports: { three: asset + 'vendor/three/build/three.module.js', 'three/addons/': asset + 'vendor/three/jsm/' } }) +
-        '</script><script type="module">import {runPaintMaskProbe} from "' + '/' + mode + '/fixture.mjs"; runPaintMaskProbe().then(result=>globalThis.paintMaskResult=result).catch(error=>globalThis.paintMaskError=error.stack);</script>'); return;
+        '</script><script type="module">import {runPaintMaskProbe} from "' + '/' + mode + '/fixture.mjs"; runPaintMaskProbe().then(result=>globalThis.paintMaskResult=result).catch(error=>globalThis.paintMaskError=String(error)+"\\n"+(error.stack||""));</script>'); return;
     }
     if (/^\/(source|built)\/fixture.mjs$/.test(pathname)) {
       res.setHeader('content-type', 'text/javascript'); res.end(fixtureCode.replaceAll('/ASSET/', asset)); return;
@@ -92,7 +92,8 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/${mode}/fixture.html`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => globalThis.paintMaskResult || globalThis.paintMaskError, null, { timeout: 120000 });
-    const outcome = await page.evaluate(() => ({ result: globalThis.paintMaskResult, error: globalThis.paintMaskError }));
+    const outcome = await page.evaluate(() => ({ result: globalThis.paintMaskResult, error: globalThis.paintMaskError, diagnostic: globalThis.paintMaskDiagnostic }));
+    if (outcome.error) fs.writeFileSync(path.join(evidence, 'paint-mask-failure.json'), JSON.stringify({ engine, mode, sourceSha, contentHash: build.contentHash, ...outcome }, null, 2) + '\n');
     assert.equal(outcome.error, undefined, outcome.error); assert.equal(errors.length, 0, JSON.stringify(errors));
     results[mode] = outcome.result; await page.close();
   }

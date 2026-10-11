@@ -357,8 +357,8 @@ function ownedRunCoalescingRows() {
         const face={origin:wall?V(-6,0,0):V(-6,0,-6),u:V(1,0,0),v:wall?V(0,1,0):V(0,0,1),n:wall?V(0,0,-1):V(0,1,0),su:12,sv:12,wall,turf:!wall,paintable:true};
         const level={faces:[face],blocks:[{faces:[0,-1,-1,-1,-1,-1],aabbMin:wall?V(-6,0,-.01):V(-6,-.01,-6),aabbMax:wall?V(6,12,.01):V(6,.01,6)}],pointInside:()=>false,queryBlocks:(_a,_b,_c,_d,out=[])=>{out.length=0;out.push(0);return out;}};
         const paint=new PaintSystem(renderer,level,{atlasSize:512,maxDensity:32,cell:.25});if(legacy)paint._paintOrderRuns=unmergedOwnerRuns;
-        let quads=0;const push=paint._pushQuad;paint._pushQuad=function(...args){quads++;return push.apply(this,args)};
-        for(let tick=0;tick<90;tick++){
+        let quads=0,tickIndex=0;const drawRectangles=[];const push=paint._pushQuad;paint._pushQuad=function(...args){quads++;drawRectangles.push({tick:tickIndex,values:args.slice(1)});return push.apply(this,args)};
+        for(let tick=0;tick<90;tick++){tickIndex=tick;
           if([0,9,18].includes(tick)){
             const seq=tick/9+1,team=seq===2?1:0,pos=wall?V((seq-2)*.65,7,0):V((seq-2)*.65,0,0);
             paint.splat(pos,1.6,team,{seed,kind:seed===.03?'line':seed===.92?'roll':'shot',stretch:wall?V(.6,.8,0):V(.6,0,.8),stretchAmt:1.2,__netOrder:{clock:seq,seq,peer:'run-merge-'+team,epoch:'run-merge'}});
@@ -366,10 +366,15 @@ function ownedRunCoalescingRows() {
           paint.advanceSimulation(1/60);paint.flush(1/60);
         }
         const pixels=new Uint8Array(512*512*4);renderer.readRenderTargetPixels(paint.rt,0,0,512,512,pixels);
-        results.push({pixels,quads,grid:Array.from(paint.grid),owners:Array.from(paint._paintOwnershipOrder),counts:Array.from(paint.counts)});paint.dispose();
+        results.push({pixels,quads,drawRectangles,grid:Array.from(paint.grid),owners:Array.from(paint._paintOwnershipOrder),counts:Array.from(paint.counts)});paint.dispose();
       }
       const [before,after]=results;check(JSON.stringify(before.grid)===JSON.stringify(after.grid),'coalescing changed gameplay grid');check(JSON.stringify(before.owners)===JSON.stringify(after.owners),'coalescing changed event ownership');check(JSON.stringify(before.counts)===JSON.stringify(after.counts),'coalescing changed turf counts');
-      let mismatch=0;for(let i=0;i<before.pixels.length;i++)if(before.pixels[i]!==after.pixels[i])mismatch++;
+      let mismatch=0,maxDifference=0,alphaMismatch=0,solidAlphaChanges=0;const channelMismatches=[0,0,0,0],examples=[];
+      for(let i=0;i<before.pixels.length;i++)if(before.pixels[i]!==after.pixels[i]){mismatch++;channelMismatches[i%4]++;const d=Math.abs(before.pixels[i]-after.pixels[i]);maxDifference=Math.max(maxDifference,d);if(i%4===3){alphaMismatch++;if((before.pixels[i]>127)!==(after.pixels[i]>127))solidAlphaChanges++;}if(examples.length<16)examples.push({x:Math.floor(i/4)%512,y:Math.floor(i/2048),channel:i%4,before:before.pixels[i],after:after.pixels[i]});}
+      if(mismatch){
+        const encode=bytes=>{let raw='';for(let i=0;i<bytes.length;i+=8192)raw+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(raw);};
+        globalThis.paintMaskDiagnostic={wall,seed,mismatch,maxDifference,alphaMismatch,solidAlphaChanges,channelMismatches,examples,beforeQuads:before.quads,afterQuads:after.quads,beforeDrawRectangles:before.drawRectangles,afterDrawRectangles:after.drawRectangles,pixels:{width:512,height:512,format:'RGBA8',before:encode(before.pixels),after:encode(after.pixels)}};
+      }
       check(mismatch===0,'coalescing changed actual GPU atlas bytes: '+JSON.stringify({wall,seed,mismatch}));check(after.quads<before.quads,'coalescing fixture did not reduce actual native submissions');
       rows.push({wall,seed,beforeQuads:before.quads,afterQuads:after.quads,mismatch});
     }
