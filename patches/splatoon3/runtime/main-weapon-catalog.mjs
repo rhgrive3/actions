@@ -1,4 +1,4 @@
-import { catalogSplashDropSpec } from './catalog-splash-paint.mjs';
+import { catalogSplashDropSpec, catalogPaintEllipse } from './catalog-splash-paint.mjs';
 import { spawnSplashDrop } from './blaster-flight-paint.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
 import { CANONICAL_KITS } from './canonical-kits-data.mjs';
@@ -241,9 +241,23 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function paint(owner, at, radius, depth=1, direction=null, face=-1) {
     if (!(radius>0) || !owner || owner.remote) return;
-    const options = {seed:0,claimOwner:owner,kind:'shot',face};
-    if (direction) { options.stretch=direction; options.stretchAmt=Math.max(0,depth-1); }
-    owner.addTurf(G.paint.splat(at,radius,owner.team,options));
+    // The recorded paint packet carries this seed; receivers never reroll it.
+    const options = {seed:Math.random(),claimOwner:owner,kind:'shot',face};
+    let centre=at,paintRadius=radius;
+    if (direction) {
+      const normal=G.level?.faces?.[face]?.n||down.clone().negate();
+      const tangent=direction.clone().addScaledVector(normal,-direction.dot(normal));
+      // This source depth envelope is interpreted on floor-like contacts only.
+      // Wall projection remains unchanged until its separate source law is verified.
+      if(Math.abs(normal.y)<.4){options.stretch=direction;options.stretchAmt=Math.max(0,depth-1);}
+      else if(tangent.lengthSq()>EPS){
+        tangent.normalize();const shape=catalogPaintEllipse(radius,depth);
+        if(shape.rotate)tangent.crossVectors(normal,tangent.clone()).normalize();
+        paintRadius=shape.radius;centre=at.clone().addScaledVector(tangent,-shape.centreBack);
+        options.stretch=tangent;options.stretchAmt=shape.stretchAmt;
+      }
+    }
+    owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));
   }
   function floorPaint(owner, at, radius, depth=1, direction=null) {
     base.copy(at); base.y += .15;

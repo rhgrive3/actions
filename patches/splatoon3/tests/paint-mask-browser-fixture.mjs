@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { catalogPaintEllipse } from '/ASSET/patches/splatoon3/runtime/catalog-splash-paint.mjs';
 // Tests the emitted shader, emitted CPU mask, and native seed attribute packing.
 // Only raster derivatives/AA are replaced: points query exact gameplay samples,
 // with tx fixed to the actual atlas density instead of unrelated neighbor points.
@@ -211,10 +212,14 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
   const cases = [];
   for (const [kind, sa] of [[0, 0.7], [2, 0], [3, 0], [4, 0], [4, 0.32], [5, 0], [5, 0.32], [5, 0.2743], [5, 3.2]])
     for (const R of [1.62, 2.43, 3.2]) for (const seed of [0.11, 0.5, 0.93]) cases.push({ kind, sa, R, seed });
-  for (const { kind, sa, R, seed } of cases) {
+  for(const depth of [.25,.5,.8,1,1.25,2.62]) for(const seed of [.11,.5,.93]) {
+    const shape=catalogPaintEllipse(2,depth);
+    cases.push({kind:0,sa:shape.stretchAmt,R:shape.radius,seed,rotate:shape.rotate,depth});
+  }
+  for (const { kind, sa, R, seed, rotate=false, depth=null } of cases) {
     paint.grid = new Uint8Array(n * n); paint.dead = new Uint8Array(n * n); paint.counts = [0, 0];
     paint._paintOwnershipOrder = new Uint32Array(n * n);
-    const sdu = sa ? 0.6 : 0, sdv = sa ? 0.8 : 0, lu = 16, lv = 16;
+    const sdu = sa ? (rotate ? -.8 : .6) : 0, sdv = sa ? (rotate ? .6 : .8) : 0, lu = 16, lv = 16;
     paint._cpuSplat(face, lu, lv, R, 0, seed, sdu, sdv, sa, kind);
     const points = [], index = [];
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
@@ -229,13 +234,13 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
       if (owned) cpu++; if (visible) gpuCells++;
       if (owned !== visible) { if (tie) ties++; else if (owned) cpuOnly++; else gpuOnly++; }
     }
-    rows.push({ kind, sa, R, seed, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties });
+    rows.push({ kind, sa, R, seed, depth, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties });
   }
   const result = { rows, cpuOnly: rows.reduce((t, r) => t + r.cpuOnly, 0), gpuOnly: rows.reduce((t, r) => t + r.gpuOnly, 0),
     ties: rows.reduce((t, r) => t + r.ties, 0), cpuCells: rows.reduce((t, r) => t + r.cpu, 0), gpuCells: rows.reduce((t, r) => t + r.gpu, 0) };
   // Only float32 ties on the SDF zero crossing (|sd| < 1e-3 WU, 1/16 texel) may disagree.
   check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
-  check(rows.length === 81 && result.cpuCells > 0, 'all body kinds, smears, radii and seeds exercised');
+  check(rows.length === 99 && result.cpuCells > 0, 'all body kinds and catalog depth envelopes exercised');
   return result;
 }
 
