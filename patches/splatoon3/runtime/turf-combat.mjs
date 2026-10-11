@@ -1,6 +1,9 @@
 // One deadline authority gate; presentation continues to own its own clock.
 export function turfCombatAllowed(G) {
   const m = G?.match;
+  // Ranked clocks can reach zero while play continues in overtime. Their
+  // common result state, rather than remaining regulation time, closes combat.
+  if (m?.ranked && !m.attract) return m.state === 'playing';
   if (!m || m.bossMode || m.attract || (m.mode != null && m.mode !== 'turf') || m.state == null) return true;
   return m.state === 'playing' && (m.s3DeadlineStep === true || !Number.isFinite(m.time) || m.time > 0);
 }

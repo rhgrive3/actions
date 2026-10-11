@@ -25,12 +25,12 @@ function damage(api,b,amount,attacker,identity){
  const rate=identity===undefined?objectGearRate(attacker,'sprinkler'):withObjectHitGear(attacker,identity,()=>objectGearRate(attacker,'sprinkler'));
  b.s3DeviceHP=Math.max(0,initialize(b)-amount*rate);if(b.s3DeviceHP===0)b.s3Destroyed=true;emitState(api,b);return true;
 }
-function proposal(api,b,p,point){
+function proposal(api,b,p,point,amount=p.damage){
  const a=p.owner,nm=api.G.netm,proof=b.s3DeviceBirth;
  if(!proof||!a||a.remote||p.ghost||a.owner!==nm?.myId||proof.match!==epoch(nm)||!safe(a.nid))return false;
  api.emit?.('all:sub',{v:1,phase:'nativeObjectHit',subId:'sprinkler',actor:a,life:life(a),eventSeq:next(nm),
   match:proof.match,targetOwnerId:proof.nid,targetLife:proof.life,targetSeq:proof.seq,
-  damage:p.damage,objectShredder:objectShredderEquipped(a),x:point.x,y:point.y,z:point.z});return true;
+  damage:amount,objectShredder:objectShredderEquipped(a),x:point.x,y:point.y,z:point.z});return true;
 }
 function admitOnce(nm,actor,event){
  if(!safe(event.eventSeq)||event.eventSeq<1||event.match!==epoch(nm))return false;
@@ -80,7 +80,12 @@ export function installNativeSprinklerDamage(api){
  };
  const candidate=Projectiles.prototype.kitBarrierCandidate;
  Projectiles.prototype.kitBarrierCandidate=function(p,start,end){
-  let best=candidate?.call(this,p,start,end);if(!p||!start||!end||!this.bombs?.length)return best;
+  return this.nativeSprinklerCandidate(p,start,end,candidate?.call(this,p,start,end));
+ };
+ // Profile-guided heads query this device lane alongside their native terrain,
+ // actor and ranked-shield contacts, without changing other kit barriers.
+ Projectiles.prototype.nativeSprinklerCandidate=function(p,start,end,best=null){
+  if(!p||!start||!end||!this.bombs?.length)return best;
   const d=end.clone().sub(start),length=d.length();if(!(length>1e-8))return best;
   for(const b of this.bombs||[]){
    if(!sprinkler(b)||b.s3Mode!=='sprinkling'||b.s3Destroyed||b.owner===p.owner||b.team===p.team)continue;
@@ -88,9 +93,10 @@ export function installNativeSprinklerDamage(api){
    const radius=.42+Math.max(0,p.size||0),m=start.clone().sub(b.pos),c=m.lengthSq()-radius*radius,dot=m.dot(d),disc=dot*dot-length*length*c;
    if(c>0&&disc<0)continue;const t=c<=0?0:(-dot-Math.sqrt(disc))/(length*length);
    if(t<0||t>1||best&&best.distance<=t*length)continue;const point=start.clone().addScaledVector(d,t);
-   let settled=false;best={distance:t*length,point,normal:point.clone().sub(b.pos).normalize(),kind:'native-sprinkler',onHit:()=>{
-    if(settled||p.ghost||!p.owner||p.owner.remote||!Number.isFinite(p.damage)||p.damage<=0||p.damage>2200)return false;settled=true;
-    return b.ghost||b.owner?.remote?proposal(api,b,p,point):damage(api,b,p.damage,p.owner);
+   let settled=false;best={distance:t*length,point,normal:point.clone().sub(b.pos).normalize(),kind:'native-sprinkler',onHit:(actualDamage)=>{
+    const amount=Number.isFinite(actualDamage)?actualDamage:p.damage;
+    if(settled||p.ghost||!p.owner||p.owner.remote||!Number.isFinite(amount)||amount<=0||amount>2200)return false;settled=true;
+    return b.ghost||b.owner?.remote?proposal(api,b,p,point,amount):damage(api,b,amount,p.owner);
    }};
   }
   return best;

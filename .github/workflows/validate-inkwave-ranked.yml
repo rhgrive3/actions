@@ -1,0 +1,37 @@
+name: Validate INKWAVE ranked modes
+on:
+  pull_request:
+    paths:
+      - 'patches/splatoon3/runtime/ranked/**'
+      - 'patches/splatoon3/ranked*.mjs'
+      - 'patches/splatoon3/tests/ranked*.mjs'
+      - 'scripts/check-inkwave-ranked-browser.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - '.github/workflows/validate-inkwave-ranked.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ranked:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+      - run: npx playwright install --with-deps chromium
+      - name: Ranked rule and native integration regressions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-*.test.mjs
+      - name: Build production composition
+        run: node scripts/build-inkwave.mjs inkwave-public _site-ranked
+      - name: Four offline modes and two-browser online rooms
+        env:
+          RANKED_RELAY_DELAY_MS: 200
+        run: node scripts/check-inkwave-ranked-browser.mjs _site-ranked reports/ranked-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-ranked-browser
+          path: reports/ranked-browser
