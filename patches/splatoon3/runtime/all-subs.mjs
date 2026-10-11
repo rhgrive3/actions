@@ -175,7 +175,7 @@ function emitEvent(api, object, phase, extra = {}) {
     life: ownerLife(object.owner), sourceLife: object.sourceLife, subPowerAP: object.subPowerAP, x: p?.x || 0, y: p?.y || 0, z: p?.z || 0,
     vx: object.vel?.x || 0, vy: object.vel?.y || 0, vz: object.vel?.z || 0,
     seed: object.seed >>> 0, charge: clamp(object.charge || 0, 0, 1), ...extra,
-    actor: object.owner,
+    actor: object.owner, paintSource: object,
   };
   api.emit?.('all:sub', payload);
   return payload;
@@ -281,8 +281,9 @@ function createObject(api, projectiles, owner, id, record = {}) {
     reservations: id === 'beakon' ? new Map() : null,
     expireAt: Infinity, activeAt: Infinity,
   };
+  const heldSeconds = Number.isFinite(record.hold) ? record.hold : owner.weaponRunner?.s3SubHold || 0;
   if (id === 'fizzy') {
-    const hold = Number.isFinite(record.hold) ? record.hold : owner.weaponRunner?.s3SubHold || 0;
+    const hold = heldSeconds;
     object.popLimit = hold >= frameSeconds(spec.chargeFrames[0] + spec.chargeFrames[1]) ? 3 : hold >= frameSeconds(spec.chargeFrames[0]) ? 2 : 1;
     object.pops = object.popLimit;
     object.fuse = frameSeconds(spec.burstWaitFrames[0]);
@@ -291,7 +292,7 @@ function createObject(api, projectiles, owner, id, record = {}) {
   while (list.length >= MAX_OBJECTS) removeObject(api, projectiles, list[0], true);
   list.push(object);
   object.mesh = buildVisual(api, object, projectiles);
-  if (!object.ghost) emitEvent(api,object,'spawn',{ hold: Number.isFinite(record.hold) ? record.hold : 0 });
+  if (!object.ghost) emitEvent(api,object,'spawn',{ hold: heldSeconds });
   return object;
 }
 function nextSeq(owner) {
@@ -390,12 +391,12 @@ function deploy(api, projectiles, object, pos, normal = null) {
   }
 }
 
-function surfacePaint(api, owner, team, point, radius, seed) {
-  return surfacePaintWithCredit(api,owner,team,point,radius,seed,true);
+function surfacePaint(api, owner, team, point, radius, seed, proof = null) {
+  return surfacePaintWithCredit(api,owner,team,point,radius,seed,true,proof);
 }
-function surfacePaintWithCredit(api, owner, team, point, radius, seed, credit) {
+function surfacePaintWithCredit(api, owner, team, point, radius, seed, credit, proof = null) {
   if (!api.G.paint?.splat || !point?.isVector3 || !(radius > 0)) return 0;
-  const area = api.G.paint.splat(point,radius,team,{seed:((seed>>>0)/0x100000000),claimOwner:owner});
+  const area = api.G.paint.splat(point,radius,team,{seed:((seed>>>0)/0x100000000),claimOwner:owner,kitPaint:proof});
   if (credit && area > 0) owner?.addTurf?.(area);
   return area;
 }
@@ -456,7 +457,8 @@ function blast(api, object, pos, burstIndex = 0) {
     if (Number.isFinite(spec.paintRadius)) {
       const center = pos.clone();
       if (object.subId === 'splashWall') center.y += .3;
-      const area = surfacePaint(api,object.owner,object.team,center,spec.paintRadius,object.seed ^ ((burstIndex+1)*0x9e3779b9));
+      const area = surfacePaint(api,object.owner,object.team,center,spec.paintRadius,object.seed ^ ((burstIndex+1)*0x9e3779b9),
+        object.s3PaintBirth ? [...object.s3PaintBirth,burstIndex] : null);
       if (spec.splashPaintRadius > 0) surfacePaint(api,object.owner,object.team,center,spec.splashPaintRadius,object.seed ^ 0x27d4eb2d);
       if (spec.crossPaintRadius > 0) {
         for (const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]) {

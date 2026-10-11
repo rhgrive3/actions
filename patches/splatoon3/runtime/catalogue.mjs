@@ -1,3 +1,6 @@
+import { cataloguePayload } from './catalogue-payload.mjs';
+export { cataloguePayload } from './catalogue-payload.mjs';
+import { recordCatalogueSubBirth } from '../../network-replication/kit-paint-admission.mjs';
 // catalogue-loadout
 // Prototype loadout selection. Choices belong to the actor; shared tuning and
 // other players' equipment remain immutable. Native main IDs stay on the wire.
@@ -106,26 +109,14 @@ const packetSafe=n=>Number.isSafeInteger(n)&&n>=0&&n<1e9;
 const categories=['sub','special'];
 // Catalogue packets use the same sequenced owner timeline as native attacks.
 // Array vectors stay arrays, instead of silently disappearing in packEvent.
-export function cataloguePayload(event) {
-  if(!event||typeof event!=='object')return null;
-  const payload={};
-  for(const [key,value] of Object.entries(event)){
-    if(['actor','owner','victim'].includes(key))continue;
-    if(key==='__proto__'||key==='constructor'||key==='prototype')return null;
-    if(typeof value==='number'){if(!Number.isFinite(value)||Math.abs(value)>4294967295)return null;payload[key]=value;}
-    else if(typeof value==='string'){if(value.length>96)return null;payload[key]=value;}
-    else if(typeof value==='boolean')payload[key]=value;
-    else if(Array.isArray(value)){if(value.length>64||value.some(v=>!Number.isFinite(v)||Math.abs(v)>1e6))return null;payload[key]=value.slice();}
-  }
-  return JSON.stringify(payload).length<=4096?payload:null;
-}
 export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplashdown}) {
   const {G,NetMatch,on}=api;
   for(const category of categories)on('all:'+category,event=>{
     const nm=G.netm,actor=event.actor||nm?.byNid?.get(event.actorId),payload=cataloguePayload(event);
     if(!nm||nm.match!==G.match||nm.mute||!actor||actor.remote||actor.owner!==nm.myId
       ||nm.byNid?.get(actor.nid)!==actor||!payload)return;
-    nm._rec(['ac',category,actor.nid,packetLife(actor),payload]);
+    const row=nm._rec(['ac',category,actor.nid,packetLife(actor),payload]);
+    if(category==='sub'&&payload.phase==='spawn')recordCatalogueSubBirth(nm,event.paintSource,row);
   });
   const play=NetMatch.prototype._play;
   NetMatch.prototype._play=function(from,event){
