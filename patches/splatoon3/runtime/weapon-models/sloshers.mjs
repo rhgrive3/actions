@@ -132,10 +132,12 @@ function slosherMachine(d) {
 // Modelled in tub space (rim top y = 0, back rim edge z = 0, front lip z = 0.30, x across) and moved so the
 // fist's grip point on the faucet bar is the weapon origin. Scale: basin 0.20 m wide (reference doc).
 const TUB = { a: 0.10, b: 0.15, n: 3.2, zc: 0.15 };
-const TUB_GRIP = [-0.05, 0.040, 0.012];          // fist on the faucet bar, ring-knob side (tub space)
+const TUB_GRIP = [0.036, 0.040, 0.012];          // fist on the faucet bar's inner half (S3 screenshots; tub space)
 const TUB_LEVEL = -0.055;                        // ink level, 5.5 cm under the rim
 // Depth scale along the tub (tub z): KIN for the basin below the rim roll, KOUT for the hull below the band.
 const KIN = [[0, 0.25], [0.03, 0.4], [0.07, 0.8], [0.1, 1], [0.19, 0.95], [0.21, 0.78], [0.24, 0.5], [0.275, 0.25], [0.3, 0.18]];
+// KB: the white band deepens toward the front lip, where the hull tapers away under it.
+const KB = [[0, 1], [0.18, 1], [0.3, 1.45]];
 const KOUT = [[0, 0.86], [0.066, 0.98], [0.1, 1], [0.13, 0.95], [0.21, 0.54], [0.266, 0.18], [0.3, 0]];
 const tubLin = (tab, z) => {
   if (z <= tab[0][0]) return tab[0][1];
@@ -160,7 +162,8 @@ function tubTheta(z, side) {
 /** Depth remap: the basin ('in') and hull ('out') get shallower toward the back rest and the front lip. */
 function tubY(y, z, layer) {
   if (layer === 'in' && y < -0.012) return -0.012 + (y + 0.012) * tubLin(KIN, z);
-  if (layer === 'out' && y < -0.035) return -0.035 + (y + 0.035) * tubLin(KOUT, z);
+  if (layer === 'band' && y < -0.004) return -0.004 + (y + 0.004) * tubLin(KB, z);
+  if (layer === 'out') return y < -0.035 ? -0.035 * tubLin(KB, z) + (y + 0.035) * tubLin(KOUT, z) : -0.004 + (y + 0.004) * tubLin(KB, z);
   return y;
 }
 /** Shell point for a profile row [rho (fraction of the plan), delta (m along the plan normal), y, layer]. */
@@ -195,11 +198,11 @@ const TUB_WHITE = [
   [0, 0, -0.105, 'in'], [0.5, -0.012, -0.104, 'in'], [0.8, -0.026, -0.099, 'in'], [0.93, -0.03, -0.086, 'in'],
   [1, -0.031, -0.066, 'in'], [1, -0.027, -0.045, 'in'], [1, -0.023, -0.026, 'in'], [1, -0.0195, -0.011, 0],
   [1, -0.0178, -0.0045, 0], [1, -0.015, -0.0006, 0], [1, -0.009, 0.0008, 0], [1, -0.003, 0, 0], [1, 0.0005, -0.004, 0],
-  [1, 0.0016, -0.012, 0], [1, 0.0012, -0.028, 0], [1, -0.003, -0.0335, 0], [1, -0.011, -0.036, 0],
+  [1, 0.0016, -0.012, 'band'], [1, 0.0012, -0.028, 'band'], [1, -0.003, -0.0335, 'band'], [1, -0.011, -0.036, 'band'],
 ];
 // Black hull: from inside the band down the flank, round the bilge, under the bottom to the centre.
 const TUB_HULL = [
-  [1, -0.009, -0.031, 0], [1, -0.0125, -0.038, 0], [1, -0.0135, -0.06, 'out'], [1, -0.016, -0.095, 'out'],
+  [1, -0.009, -0.031, 'out'], [1, -0.0125, -0.038, 'out'], [1, -0.0135, -0.06, 'out'], [1, -0.016, -0.095, 'out'],
   [1, -0.019, -0.125, 'out'], [0.97, -0.02, -0.143, 'out'], [0.88, -0.018, -0.155, 'out'], [0.65, -0.01, -0.16, 'out'],
   [0, 0, -0.162, 'out'],
 ];
@@ -299,9 +302,9 @@ function bloblobber(d) {
   }
   knob.add(ring(0.0176, 0.0013, -0.0745, fy, fz, 'x', 4, 20), C.red, M.gloss);
   knob.add(ring(0.0176, 0.0013, -0.0672, fy, fz, 'x', 4, 20), C.blue, M.gloss);
-  tub.add(box(0.054, 0.02, 0.026, 0.004, 0.027, 0.024, 0.28), C.chrome, M.gloss);                             // mixer block
-  for (const sx of [-1, 1]) tub.add(cyl(0.0045, [0.004 + sx * 0.023, -0.002, 0.014], [0.004 + sx * 0.023, 0.03, 0.014], 10), C.chrome, M.gloss);
-  for (const sx of [-1, 1]) tub.add(cyl(0.0068, [0.004 + sx * 0.023, 0.0002, 0.014], [0.004 + sx * 0.023, 0.003, 0.014], 12), C.chrome, M.gloss);
+  tub.add(box(0.05, 0.02, 0.026, -0.016, 0.027, 0.024, 0.28), C.chrome, M.gloss);                             // mixer block
+  for (const sx of [-1, 1]) tub.add(cyl(0.0045, [-0.012 + sx * 0.02, -0.002, 0.014], [-0.012 + sx * 0.02, 0.03, 0.014], 10), C.chrome, M.gloss);
+  for (const sx of [-1, 1]) tub.add(cyl(0.0068, [-0.012 + sx * 0.02, 0.0002, 0.014], [-0.012 + sx * 0.02, 0.003, 0.014], 12), C.chrome, M.gloss);
   { const z = 0.0215, [y] = tubKeel(z);
     tub.add(tubPlace(box(0.03, 0.0095, 0.0015, 0, 0, 0.0004, 0.25, 6, 4), [0, y, z], keelN(z), keelUp), C.label, M.print);
     tub.add(tubPlace(box(0.022, 0.0035, 0.0006, 0, 0, 0.0013, 0.4, 6, 4), [0, y, z], keelN(z), keelUp), C.dark, M.print); }
@@ -368,7 +371,7 @@ function bloblobber(d) {
   return rebuild(d, {
     body: tub, ink,
     parts: { surface: part(surf, W(0, TUB_LEVEL, 0.135), 'ink'), lever: part(knob, W(-0.07, fy, fz)) },
-    // right fist round the faucet bar: thumb along +X (toward the mixer block), wrist away from the tub's mass
+    // right fist round the faucet bar: thumb along +X (toward the body in the carry), wrist away from the tub's mass
     gripR: gripSpec([0, 0, 0], [1, 0, 0], [0, 0.42, -0.9]),
     gripL: gripSpec(W(0, -0.067, 0.304), [-1, 0, 0], [0.25, -0.85, 0.45]),
     muzzle: W(0, 0.005, 0.17),                                  // basin opening (the blobs leave the tub here)
@@ -378,16 +381,46 @@ function bloblobber(d) {
 // Yaw π + roll π orient the same hang as pitch 1.14 but flip the native heave's pitch sense, so the slosh
 // heave scoops the tub forward and up (windup back, release with the opening to the target).
 const BATHTUB_HOLD = {
-  carry: { p: [-0.2, 0.67, 0.06], r: [2.0, Math.PI - 0.25, Math.PI] }, twoCarry: 0,
-  run: { p: [-0.21, 0.69, 0.05], r: [1.88, Math.PI - 0.3, Math.PI] },
-  aim: { p: [-0.17, -0.25, 0.08], r: [1.92, Math.PI - 0.2, Math.PI] }, twoAim: 0,
+  carry: { p: [-0.22, 0.67, 0.06], r: [2.0, Math.PI - 0.25, Math.PI] }, twoCarry: 0,
+  run: { p: [-0.23, 0.69, 0.05], r: [1.88, Math.PI - 0.3, Math.PI] },
+  aim: { p: [-0.2, -0.25, 0.08], r: [1.92, Math.PI - 0.2, Math.PI] }, twoAim: 0,
   raise: { p: [-0.2, 1.08, 0.16], r: [1.2, Math.PI - 0.3, Math.PI] },
   lobby: { p: [-0.2, 0.67, 0.08], r: [2.0, Math.PI - 0.35, Math.PI] }, lobbyTwo: 0,
 };
-/** Aim pitch must not swing the hanging tub backward (its euler pitch sense is flipped by the yaw/roll π). */
+// Catalogue sloshers never fire the character's native 'slosh' one-shot, so the Bloblobber drives its own
+// scoop: during the swing lift (SwingLiftFrame, catalogState.pending) the tub swings back and low, then heaves
+// forward-up so the open basin faces up/forward when the blobs leave, holds, and drops back to the hang.
+// Euler pitch + = forward-up for this yaw/roll-π hold. Keys in seconds from the lift start.
+const SWING_T = [0, 0.1, 0.2, 0.32, 0.56];
+const SWING = { P: [0, -0.45, 1.45, 1.55, 0], W: [0, 0.12, -0.18, -0.2, 0], Y: [0, -0.02, 0.12, 0.13, 0], Z: [0, -0.04, 0.09, 0.08, 0],
+  SPINE: [0, 0.08, -0.1, -0.08, 0], CHEST1: [0, 0.16, -0.14, -0.12, 0] };
+const swingState = new WeakMap();
+function swingKey(k, t) {
+  if (t <= SWING_T[0]) return k[0];
+  for (let i = 1; i < SWING_T.length; i++) if (t <= SWING_T[i]) {
+    const u = (t - SWING_T[i - 1]) / (SWING_T[i] - SWING_T[i - 1]), e = u * u * (3 - 2 * u);
+    return k[i - 1] + (k[i] - k[i - 1]) * e;
+  }
+  return k[k.length - 1];
+}
+/** Bloblobber pose layer: cancel the aim pitch on the hanging tub (its euler pitch sense is flipped by the
+ *  yaw/roll-π hold) and play the scoop swing from the catalogue runner's actual lift/emission state. */
 function bathtubPose(ch, dt, s, CH) {
-  const w = ch.wAim || 0;
-  if (w > 0.001 && CH && Number.isInteger(CH.ANCR)) ch.P[CH.ANCR] += (ch.aimP || 0) * w;
+  if (!CH || !Number.isInteger(CH.ANCR) || !ch.P) return;
+  const P = ch.P, w = ch.wAim || 0;
+  if (w > 0.001) P[CH.ANCR] += (ch.aimP || 0) * w;
+  let st = swingState.get(ch);
+  if (!st) { st = { t: -1 }; swingState.set(ch, st); }
+  const r = ch._runner?.(s), lift = !!r?.catalogState?.pending;
+  if (!ch.kidForm || ch.visible === false) st.t = -1;
+  else if (lift && (st.t < 0 || st.t > SWING_T[2])) st.t = 0;
+  else if (st.t >= 0) { st.t += Math.min(0.1, Math.max(0, dt || 0)); if (st.t >= SWING_T[SWING_T.length - 1]) st.t = -1; }
+  if (st.t < 0) return;
+  const t = st.t;
+  P[CH.ANCR] += swingKey(SWING.P, t); P[CH.ANCR + 1] += swingKey(SWING.W, t);
+  P[CH.ANC + 1] += swingKey(SWING.Y, t); P[CH.ANC + 2] += swingKey(SWING.Z, t);
+  if (Number.isInteger(CH.SPINE)) P[CH.SPINE] += swingKey(SWING.SPINE, t);
+  if (Number.isInteger(CH.CHEST)) P[CH.CHEST + 1] += swingKey(SWING.CHEST1, t);
 }
 function explosher(d) {
   // Wmn_Slosher_Washtub: an olive jerry can with embossed side panels and a dark back panel, a brass barrel

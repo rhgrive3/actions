@@ -42,7 +42,7 @@ const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, 
 // four bars, bottom ring), held by two magenta clips, with a black ribbed outlet and a braided team-ink hose that
 // loops under the gun into the coupling. Prints (white logo, small text row, magenta square) on the tank's flank.
 // Tank authored at R 0.074 / L 0.2 in its own frame, then scaled by k, leaned back and placed at B (bottom face centre).
-const HEAVY = { AX: -0.075, lean: 48 * Math.PI / 180, k: 1.5, B: [-0.152, -0.144, 0.075], R: 0.074, L: 0.2 };
+const HEAVY = { AX: -0.075, lean: 48 * Math.PI / 180, k: 1.5, B: [-0.185, -0.144, 0.075], R: 0.074, L: 0.2 };
 /** Rounded-rectangle loft along +Z: sections [{ z, y, w, h, r }] (full width/height, corner radius). */
 function heavyLoft(sections, cn = 3) {
   const ringPts = s => {
@@ -83,9 +83,12 @@ function heavyWire(p, pts, rc, r, color, closed = false) {
 }
 // The right fist sits on top of the gun (the barrels hang 0.075 m below it), so every native splatling anchor is
 // raised 0.09 m: the barrels stay at hip height as in the Tableturf card / class promo; native carry keeps that hold.
+// The anchors sit a little inboard and yaw less across the body, so the right arm comes down inside the big tank
+// (0.17 m outboard of the barrel axis) and the tank rides beside the right hip instead of pressing into the belly.
 const HOLD_HEAVY = {
-  carry: { p: [-0.16, 0.83, 0.16] }, aim: { p: [-0.07, -0.07, 0.2] },
-  raise: { p: [-0.17, 1.29, 0.1] }, lobby: { p: [-0.15, 0.89, 0.2] },
+  carry: { p: [-0.24, 0.78, 0.17], r: [0.4, 0.06, -0.1] }, aim: { p: [-0.17, -0.12, 0.2], r: [0.05, 0.02, 0] },
+  raise: { p: [-0.2, 1.29, 0.1] }, lobby: { p: [-0.2, 0.89, 0.2], r: [0.25, 0.15, -0.15] },
+  poleR: [0.15, -0.3, -0.95],
 };
 function heavy(d) {
   const { AX, R, L } = HEAVY;
@@ -200,7 +203,7 @@ function heavy(d) {
     parts: { trigger: part(tr, [0, -0.012, 0.022]), barrels: part(B, [0, AX, 0.3]) },
     glow: glowGeometry(G, 0.008, 0.06, 'z'),
     // right fist round the top grip plate (axis along Z, wrist up and out to the right); left fist on the carry loop's bar
-    gripR: gripSpec([0, 0.004, -0.002], [0, 0.12, 1], [-0.35, 1, -0.1]),
+    gripR: gripSpec([0, 0.004, -0.002], [0, 0.12, 1], [0.5, 1, -0.35]),
     gripL: gripSpec([0, 0.026, 0.15], [-1, 0, 0], [0.45, 0.6, -0.65]),
     muzzle: [0, AX, 0.422],
   });
