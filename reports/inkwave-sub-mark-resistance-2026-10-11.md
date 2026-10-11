@@ -54,3 +54,7 @@ Old published marking head `2a78bf130763221cd5193749bf3239fc5e178264` passed Val
 New main `062c4a81f5a989406d3d65f5803ee074bd9cc0d4` adds weapon model/motion runtime. All 63 changed textual blobs were fetched at that fixed SHA and verified byte-identical. The 267 report-only PNG/JPG blobs were not downloaded for local testing; publication preserves their official remote blob SHAs. Local test checkout is therefore a text-equivalent production baseline, not a complete official tree replica.
 
 Composed production build `1805143e8e6ee85e406cd80aa74e18b15a5739f7e301b43c220532737f1b66aa`: supported marking/direct/model-registry/catalog/muzzle suite 90/90. The two family-internal motion tests passed 2/2 on source. Running those source-only tests as built initially failed ENOENT because production bundles family modules into registry; no runtime files were copied into the build to conceal that contract difference. The separate actual-built registry checks cover all65 models and actual Actor/Runner/Character carry/attack. New-head hosted CI remains required.
+
+## Adopted Fast acceleration integration
+
+Integrated main59300d47875235f07b74684fbbc9aec9ba4b48a7 (PR1257), preserving groundAcceleration and all eight hosted acceleration probes. Actual production-built 51/51 mark/Fast regressions passed. Manifest 033b2c0ee6ffb7dddfee56371829e51f61b11a8e56e6c1079d991384e26e00a4. The new base retains the 267 official report-image blob SHAs; local tests still omit report-only images.

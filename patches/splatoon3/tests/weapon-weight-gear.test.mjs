@@ -12,7 +12,7 @@ async function setup(){const f=await fixture({fullRuntime:true,productionComposi
 function loadout(ability,ap){const l=emptyLoadout();let left=ap;for(const p of l)if(left>=10){p.main=ability;left-=10;}for(const p of l)for(let i=0;i<3;i++)if(left>=3){p.subs[i]=ability;left-=3;}assert.equal(left,0);return l;}
 test('all 65 source weight rows retain explicit versus default identity',()=>{
  const ref=JSON.parse(fs.readFileSync(new URL('../reference/weapon-weight-1130.json',import.meta.url)));assert.equal(ref.records.length,65);
- for(const r of MAIN_WEAPON_CATALOG.records){const w=ref.records.find(x=>x.id===r.id);assert.equal(w.sourceSha256,r.sourceSha256);assert.equal(WEAPON_WEIGHTS[r.id].speed,w.speed);}
+ for(const r of MAIN_WEAPON_CATALOG.records){const w=ref.records.find(x=>x.id===r.id);assert.equal(w.sourceSha256,r.sourceSha256);assert.equal(WEAPON_WEIGHTS[r.id].speed,w.speed);assert.equal(WEAPON_WEIGHTS[r.id].acceleration,w.acceleration);}
  assert.equal(WEAPON_WEIGHTS['s3-shooter-first'].speed,'Fast');assert.equal(WEAPON_WEIGHTS['s3-stringer-explosion'].speed,'Slow');
 });
 test('source missing and negative gear overrides inherit defaults, never negative costs',()=>{
