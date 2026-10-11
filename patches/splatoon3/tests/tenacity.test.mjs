@@ -11,7 +11,7 @@ test('actual Actor Tenacity reflects current living deficit, SCU independence, n
   a.s3.loadout=emptyLoadout();a.s3.loadout[0].main='tenacity';if(scu)a.s3.loadout[1].main='specialCharge';a.s3RefreshGear();a.special=0;
   const turf=a.stats.turf;for(let i=0;i<hz;i++)a.update(1/hz);
   near(a.specialFrac(),3.24/f.WEAPONS.shooter.specialCost);assert.equal(a.stats.turf,turf);
-  const before=a.special;e1.alive=false;for(let i=0;i<hz;i++)a.update(1/hz);near(a.special,before);
+  const before=a.special;e1.s3Disconnected=true;for(let i=0;i<hz;i++)a.update(1/hz);near(a.special,before);e1.s3Disconnected=false;e1.alive=false;for(let i=0;i<hz;i++)a.update(1/hz);near(a.special,before);
  }
 });
 test('Tenacity cannot refill active special, dead/remote actor, pause or completed match',async()=>{

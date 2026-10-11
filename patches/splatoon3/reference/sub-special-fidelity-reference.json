@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "scope": "Splat Bomb + Ink Storm authoritative gameplay mappings",
+  "scope": "Splat Bomb, Ink Storm, Zipcaster and Reefslider authoritative gameplay mappings",
   "game": "Splatoon 3",
   "referenceVersion": "11.3.0",
   "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
@@ -18,6 +18,20 @@
       "gitBlobSha1": "b6e86041ad2a559c6f967055c69ee2aff9769f9e",
       "official": false,
       "confidence": "high for explicit raw fields; community datamine"
+    },
+    {
+      "id": "zipcaster",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+      "gitBlobSha1": "953eef0bc88b9bf4ad8f73b4fa1d4de1ca5d07e6",
+      "official": false,
+      "confidence": "explicit pinned 11.3.0 datamined fields"
+    },
+    {
+      "id": "reefslider",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpSkewer.game__GameParameterTable.json",
+      "gitBlobSha1": "cbdace64fc9e8f07ae439bc5fb8f0c797e6e855e",
+      "official": false,
+      "confidence": "explicit pinned 11.3.0 datamined fields"
     }
   ],
   "explicitFields": [
@@ -195,6 +209,53 @@
       "value": 0.16,
       "unit": "raw distance/frame",
       "official": false
+    },
+    {
+      "sourceId": "zipcaster",
+      "pointer": "/GameParameters/WeaponParam/InkCapacityRt",
+      "value": 1.5
+    },
+    {
+      "sourceId": "zipcaster",
+      "pointer": "/GameParameters/WeaponParam/InkConsume_Hook",
+      "value": {
+        "High": 0.015,
+        "Low": 0.04,
+        "Mid": 0.025
+      }
+    },
+    {
+      "sourceId": "zipcaster",
+      "pointer": "/GameParameters/WeaponParam/InkConsume_PerSec",
+      "value": {
+        "High": 0.12,
+        "Low": 0.15,
+        "Mid": 0.1305
+      }
+    },
+    {
+      "sourceId": "reefslider",
+      "pointer": "/GameParameters/BulletBlastParam/SubSpecialSpecUpList/0",
+      "value": {
+        "SpecUpType": "DistanceDamageDistanceRate",
+        "Value": {
+          "High": 1.2,
+          "Low": 1.0,
+          "Mid": 1.1
+        }
+      }
+    },
+    {
+      "sourceId": "reefslider",
+      "pointer": "/GameParameters/BulletBlastParam/SubSpecialSpecUpList/1",
+      "value": {
+        "SpecUpType": "PaintRadius",
+        "Value": {
+          "High": 9.012,
+          "Low": 7.51,
+          "Mid": 8.26
+        }
+      }
     }
   ],
   "communityCrossChecks": [

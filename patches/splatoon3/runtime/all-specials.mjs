@@ -551,10 +551,11 @@ function crabBomb(rt,actor,state) {
 function reefImpact(rt,actor,state,center) {
   if(state.impacted)return;state.impacted=true;
   const seed=nextSeed(state),point=groundAt(rt,center,rt.v1).clone();
-  paintDisk(rt,actor,point,SPECIALS.reefslider.paintRadius,seed);
-  damageBandRadius(rt,actor,center,descriptions.reefslider.splashBands,14.9,'reefslider',null,5);
-  fxBurst(rt,actor,point,14.9,'impact');
-  emitAction(rt,actor,'reefslider',state.serial,'impact',point,null,seed,{radius:14.9});
+  const scale=state.damageDistanceRate, radius=14.9*scale;
+  paintDisk(rt,actor,point,state.paintRadius,seed);
+  damageBandRadius(rt,actor,center,descriptions.reefslider.splashBands.map(([r,d])=>[r*scale,d]),radius,'reefslider',null,5);
+  fxBurst(rt,actor,point,radius,'impact');
+  emitAction(rt,actor,'reefslider',state.serial,'impact',point,null,seed,{radius});
   actor.invuln=Math.max(actor.invuln,.35);endSpecial(rt,actor,'impact');
 }
 function deployInkstrike(rt,actor,state,index) {
@@ -1040,7 +1041,7 @@ function makeState(rt,actor,id) {
   };
   if(id==='booyahBomb'){state.charge=0;state.armorHP=470;state.cheerCalls=new WeakMap();state.cheerHeld=new WeakMap();actor.s3CatalogueBooyah=serial;}
   if(id==='crabTank'){state.armorHP=500;state.cannon=false;state.nextShot=20/60;state.nextCannon=20/60;state.cannonT=0;state.firstShot=false;}
-  if(id==='reefslider'){state.phase='startup';state.direction=aimDirection(rt,actor,new rt.api.THREE.Vector3());state.direction.y=0;state.direction.normalize();state.startup=38/60;}
+  if(id==='reefslider'){state.paintRadius=gearCurve(ap,7.51,8.26,9.012);state.damageDistanceRate=gearCurve(ap,1,1.1,1.2);state.phase='startup';state.direction=aimDirection(rt,actor,new rt.api.THREE.Vector3());state.direction.y=0;state.direction.normalize();state.startup=38/60;}
   if(id==='tripleInkstrike')state.nextMarker=0;
   if(id==='waveBreaker')state.phase='ready';
   if(id==='zipcaster')state.phase='ready';

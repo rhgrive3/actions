@@ -160,6 +160,24 @@ try {
         check(Math.abs(a.weaponRunner.moveSpeed()-expected)<1e-8,record.id+' weighted run '+ap);
         check(a.s3.modifiers.inkSaverMain>0,record.id+' nonnegative ink sentinel');
         weightChecks.push({id:record.id,ap,speed:a.weaponRunner.moveSpeed(),weight:WEAPON_WEIGHTS[record.id].speed});
+        a.weaponRunner.aimingSub=true;check(a.weaponRunner.moveSpeed()===profile.bomb.holdMoveSpeed,record.id+' sub-ready movement');
+      }
+      const uniqueGearChecks=[];
+      const {advanceTenacity}=await import('/patches/splatoon3/runtime/tenacity.mjs');
+      for(const ap of [0,10,57]){
+        const a=makeActor('shooter');G.actors=[a];const l=emptyLoadout();
+        if(ap===10)l[0].main='specialPower';if(ap===57)for(const p of l){p.main='specialPower';p.subs.fill('specialPower');}
+        a.s3.loadout=l;a.s3RefreshGear();a.weapon={...a.weapon,special:'zipcaster',specialCost:100};a.special=100;
+        a._startSpecial();const state=a._s3AllSpecialState;check(state?.id==='zipcaster','Zipcaster state');
+        for(let frame=0;frame<60;frame++)a._updateSpecial(1/60);
+        check(Math.abs(state.inkFuel-(150-gearCurve(ap,15,13.05,12)))<1e-8,'Zipcaster browser drain '+ap);
+        uniqueGearChecks.push({ability:'specialPower',ap,zipcasterFuel:state.inkFuel});a.reset();
+      }
+      {
+        const a=makeActor('shooter'),e=makeActor('shooter'),e2=makeActor('shooter');e.team=e2.team=1;G.actors=[a,e,e2];
+        a.s3.loadout=emptyLoadout();a.s3.loadout[0].main='tenacity';a.s3RefreshGear();a.special=0;
+        advanceTenacity(a,1,api);check(Math.abs(a.special-3.24)<1e-8,'Tenacity compiled gauge');
+        uniqueGearChecks.push({ability:'tenacity',gauge:a.special});
       }
       const kitChecks=[];
       for(const record of records){
@@ -224,7 +242,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks, weightChecks,
+        kitChecks, weightChecks, uniqueGearChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,

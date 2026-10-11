@@ -12,7 +12,7 @@ export function advanceTenacity(actor, dt, api) {
   const roster=match.actors||api.G.actors;
   if(!Array.isArray(roster)||!roster.includes(actor))return 0;
   let own=0,enemy=0;
-  for(const a of roster){if(!a?.alive)continue;if(a.team===actor.team)own++;else if(a.team===0||a.team===1)enemy++;}
+  for(const a of roster){if(!a?.alive||a.s3Disconnected)continue;if(a.team===actor.team)own++;else if(a.team===0||a.team===1)enemy++;}
   const deficit=Math.max(0,enemy-own);
   if(!deficit)return 0;
   const charge=actor.s3?.modifiers?.specialCharge??1,cap=actor.specialCost();

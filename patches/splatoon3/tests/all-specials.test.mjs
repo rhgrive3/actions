@@ -239,3 +239,18 @@ test('Zipcaster special-power AP controls native hook cost and time drain at 30/
   assert.equal(s.phase,'zip');
  }
 });
+
+test('Reefslider snapshots special-power paint and damage-distance curves without increasing damage',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57]){
+  const a=f.make(),near=f.make(),far=f.make();near.team=far.team=1;near.pos.set(9.7,-.75,0);far.pos.set(16,-.75,0);f.G.actors=[a,near,far];
+  a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'reefslider');a._resolve=()=>{};
+  const hits=[],old=f.G.projectiles.applyHit;f.G.projectiles.applyHit=(...args)=>{hits.push(args);};
+  a._startSpecial();const s=a._s3AllSpecialState,scale=gearCurve(ap,1,1.1,1.2);
+  assert.equal(s.paintRadius,gearCurve(ap,7.51,8.26,9.012));assert.equal(s.damageDistanceRate,scale);
+  a.s3.loadout=emptyLoadout();a.s3RefreshGear();assert.equal(s.damageDistanceRate,scale,'activation snapshot');
+  s.phase='dash';a.intent.fire=true;a._updateSpecial(1/60);
+  const hit=hits.find(h=>h[1]===near);assert.ok(hit);assert.ok(hit[2]<=220);assert.equal(hits.some(h=>h[1]===far),16<=14.9*scale);
+  f.G.projectiles.applyHit=old;
+ }
+});
