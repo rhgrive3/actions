@@ -1,5 +1,6 @@
 import { installRankedGearReceipt, trustedRankedState, lastDitchCountAP } from './ranked-gear.mjs';
 import { advanceTenacity } from './tenacity.mjs';
+import { configureConditionalGearNetwork, openingRemaining } from './conditional-gear-network.mjs';
 // Match windows and respawn buffs are independent of Flow's activation clock.
 export const HEAD_ABILITIES = Object.freeze(['lastDitchEffort', 'comeback', 'openingGambit', 'tenacity']);
 const INK = ['inkSaverMain', 'inkSaverSub', 'inkRecovery'];
@@ -10,7 +11,7 @@ let gearApi = null;
 export function conditionalState(a, match) {
   a.s3 ||= {};
   if (!a.s3.conditionalGear || a.s3.conditionalGear.match !== match) {
-    a.s3.conditionalGear = { match, openingEnd: null, comeback: 0, enemyDeath: false };
+    a.s3.conditionalGear = { match, openingEnd: null, openingCredits: 0, comeback: 0, enemyDeath: false };
   }
   return a.s3.conditionalGear;
 }
@@ -26,7 +27,7 @@ export function conditionalBonus(a, match, cfg) {
     if(ap>0)return [INK,Math.min(cfg.lastDitchAP,ap)];
   }
   if (id === 'comeback' && state.comeback > EPS) return [COMEBACK, cfg.comebackAP];
-  if (id === 'openingGambit' && match.duration - match.time < state.openingEnd - EPS) return [MOVE, cfg.openingAP];
+  if (id === 'openingGambit' && openingRemaining(state,match,cfg) > EPS) return [MOVE, cfg.openingAP];
   return null;
 }
 export function conditionalPoints(a, base, match, cfg) {
@@ -43,6 +44,7 @@ export function hostileDeath(a, attacker, cause) {
 }
 export function installConditionalGear(api, tuning, refresh) {
   gearApi=api;
+  configureConditionalGearNetwork(tuning.conditionalGear);
   const { Actor, G, on } = api, cfg = tuning.conditionalGear, awards = new WeakMap();
   const reset = Actor.prototype.reset, respawn = Actor.prototype.respawn, splat = Actor.prototype.splat, update = Actor.prototype.update;
   Actor.prototype.reset = function (...args) {
@@ -81,7 +83,8 @@ export function installConditionalGear(api, tuning, refresh) {
     if (receipt.actors.has(actor)) return;
     receipt.actors.add(actor);
     if (actor.s3?.loadout?.[0]?.main !== 'openingGambit' || !conditionalBonus(actor, G.match, cfg)) return;
-    conditionalState(actor, G.match).openingEnd += cfg.openingExtension; refresh(actor);
+    const state=conditionalState(actor,G.match);
+    state.openingEnd += cfg.openingExtension; if(state.networkOpeningEnd!=null)state.networkOpeningEnd+=cfg.openingExtension; state.openingCredits=(state.openingCredits||0)+1; refresh(actor);
   }
   on('splatted', ({ attacker, victim }) => extend(attacker, victim));
   on('actor:assist', ({ actor, victim, attacker }) => {

@@ -3962,3 +3962,5 @@ Not changed and still unverified: Dualies aerial slide descent (no sourced field
 - Source/built focused 17 cases and network 448 cases pass. Full source, exact-head browser CI and merge are still pending. Conditional effect clocks and server-attested equipment remain outside this static-loadout correction. See `inkwave-gear-loadout-adoption-2026-10-11.md`.
 
 2026-10-11: Gear adoption additionally retains the latest admitted loadout before remote death playback clears snapshots. Actual owner JSON, death event playback before visual sampling, and subsequent bot adoption retain 57 AP. No conditional-clock protocol is included in this static-loadout correction.
+
+2026-10-11: Separate conditional-gear adoption candidate preserves bounded owner-admitted Comeback and Opening clocks across host takeover. Active receiver simulation dt prevents host-clock rollback from refunding effect time; pause does not age clocks. Existing 20/30/15-second profile values are unchanged. Source/built actual JSON tests cover death/new life, stale identity, extension counts and new-match isolation. Remote earned-credit truth remains owner-authoritative, not server-attested.
