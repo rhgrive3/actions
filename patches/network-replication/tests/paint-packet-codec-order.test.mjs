@@ -89,3 +89,15 @@ test('installed transport negotiates actual relay membership and keeps all sidec
  a.session.hostId='c';a.nm.out=rows;a.nm._sendTick();assert.ok(outbound.pe,'host role alone does not reset authenticated membership');
  const before=state(c);c.nm.onMessage('stranger',outbound);c.nm._playEvents();assert.deepEqual(state(c),before);
 });
+for(const hostChanged of [false,true])test(`same-id relay rejoin forgets capability before next sync, hostChanged=${hostChanged}`,async()=>{
+ const a=await client('a',['a','c']);let outbound;a.session.tr={broadcast:d=>{outbound=json(d);},sendTo(){}};
+ a.nm.onMessage('c',{k:'t',ts:0,a:[],pc:[V,'canonical-paint']});
+ for(let i=0;i<24;i++)a.paint.splat(new a.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.3,0,{seed:.31});
+ const rows=json(a.nm.out);a.nm._sendTick();assert.ok(outbound.pe);
+ // Relay leave and same-id join both occur between two sends: a set comparison
+ // alone cannot see the incarnation change. Actual onLeave must retire support.
+ a.session._members.delete('c');a.nm.onLeave('c',hostChanged);a.session._members.set('c','Legacy rejoin');
+ a.nm.out=json(rows);a.nm._sendTick();assert.ok(outbound.e);assert.equal(outbound.pe,undefined);
+ a.nm.onMessage('c',{k:'t',ts:1,a:[]});a.nm.out=json(rows);a.nm._sendTick();assert.equal(outbound.pe,undefined);
+ a.nm.onMessage('c',{k:'t',ts:2,a:[],pc:[V,'canonical-paint']});a.nm.out=json(rows);a.nm._sendTick();assert.ok(outbound.pe);
+});

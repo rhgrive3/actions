@@ -2361,13 +2361,16 @@ ${bombHit}`;
       'cap owner timeline rows per packet');
   }
   if (rel === 'src/net/netmatch.js') {
-    code = "import { packPaintTick, acceptPaintTick } from '../../patches/splatoon3/runtime/paint-packet-codec.mjs';\n" + code;
+    code = "import { packPaintTick, acceptPaintTick, forgetPaintPeer } from '../../patches/splatoon3/runtime/paint-packet-codec.mjs';\n" + code;
     patch('    this.s.tr?.broadcast(msg);',
       '    this.s.tr?.broadcast(packPaintTick(this, msg));',
       'negotiate lossless paint rows with current relay members');
     patch('  onMessage(from, d) {',
       '  onMessage(from, d) {\n    d = acceptPaintTick(this, from, d);\n    if (!d) return;',
       'decode bounded paint rows before unchanged sender and HLC admission');
+    patch('  onLeave(id, hostChanged) {',
+      '  onLeave(id, hostChanged) {\n    forgetPaintPeer(this, id);',
+      'retire codec capability before same-id relay rejoin or host adoption');
   }
   return code;
 }

@@ -22,3 +22,9 @@ Review the installed narrow NetMatch tick wrapper that reads trusted relay membe
 Source network suite initially found24 failures solely from two method-extraction test harnesses missing the newly imported helper. Both now inject the real acceptPaintTick function (no mock bypass); focused hit/adoption26/26 and match-boundary2/2 pass. Full network suite rerun:451/451 pass. Production build5f4cb1cc51bd and 27/27 codec tests pass (24 pure +3 actual transport).
 
 Separate local composition with PR1242 head2104d8cc verifies compressed paint + gg identity sidecar through actual JSON receive and host adoption:57AP retained. This PR1242 code is not included in the codec candidate.
+
+## Real browser evidence (initial head b5c19ce)
+Run38147605578/artifact11705700736, fixed main b49de995 versus b5c19ce, EPYC7763/4cores/Chromium151 SwiftShader, AB/BA/AB. All6runs preserve1440events,185830quads,229draws,wall2340/floor1528grid and identical PNG.53/80ticks use compression. JSON431820–431868→346328–346351bytes/4s (~19.79% reduction). One client uplink~108→86.6KB/s;7receiver relay egress~756→606KB/s; transport overhead excluded. stepAndWire p50 30.4–32.4→30.8–32.5ms and p95 49.9–50.8→49.8–51.3 overlap. Send-tick-only median .4→.5ms; receiver decode p95 .1–.2→.3ms. GC used+backing after workload17.291–17.296→17.359–17.364MB (~70KB extra). Bandwidth improves; no overall speed improvement claim.
+
+## Review hardening
+Dictionary COMMON values are now explicitly numeric scalars and instant0/1, with tag/match strings. Mutable arrays/objects are rejected before expansion, preventing cross-row aliases. Native onLeave retires capability immediately, including leave+same-ID rejoin between sends and host migration; a fresh legacy peer receives legacy rows until its own new exact-version advertisement. These hardening changes require new exact-head CI; the preceding browser measurement remains scoped to b5c19ce.

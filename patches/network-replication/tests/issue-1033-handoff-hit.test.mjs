@@ -1,4 +1,4 @@
-import { acceptPaintTick } from '../../splatoon3/runtime/paint-packet-codec.mjs';
+import { acceptPaintTick, forgetPaintPeer } from '../../splatoon3/runtime/paint-packet-codec.mjs';
 import { objectShredderEquipped, withObjectHitGear, OBJECT_SHREDDER_FLAG } from '../../splatoon3/runtime/object-gear.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -109,7 +109,7 @@ function makeWorld(id) {
     'G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'mapNoBots', 'now',
     'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'objectShredderEquipped', 'withObjectHitGear', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'C1088_SURGE_TAG',
-    'retireDisconnectedMainProjectiles', 'clearRemoteDodgeClock', 'KIT_FORWARD', 'acceptPaintTick',
+    'retireDisconnectedMainProjectiles', 'clearRemoteDodgeClock', 'KIT_FORWARD', 'acceptPaintTick', 'forgetPaintPeer',
     `${helpers}\n${ghostHelper}\n${dropCleanup}\n${hitLimits}\n${hitAuthoritySource}\n${forwardList}\nreturn class NetMatchHarness {
 ${methods}
   _setupActor() {}
@@ -126,7 +126,7 @@ ${methods}
     180, new Set(['shooter']), mapNoBots, () => 1,
     () => {}, respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge,
     WEAPONS, validDamageGroup, clearRemoteRollerPresentation, C1088_SURGE_TAG,
-    retireDisconnectedMainProjectiles, clearRemoteDodgeClock, KIT_FORWARD, acceptPaintTick,
+    retireDisconnectedMainProjectiles, clearRemoteDodgeClock, KIT_FORWARD, acceptPaintTick, forgetPaintPeer,
   );
   const net = new NetMatchHarness();
   Object.assign(net, {

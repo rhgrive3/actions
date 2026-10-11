@@ -18,6 +18,7 @@ function bounded(value){
  }
  return visit(value,0);
 }
+function common(c){return Array.isArray(c)&&c.length===11&&c.slice(0,8).every(x=>typeof x==='number'&&Number.isFinite(x))&&c[8]==='inkwave-paint-order-v1'&&typeof c[9]==='string'&&(c[10]===0||c[10]===1);}
 function paint(row){return Array.isArray(row)&&row.length===17&&row[1]==='s'&&Array.isArray(row[14])&&row[14].length===4&&row[14][0]==='inkwave-paint-order-v1'&&typeof row[14][1]==='string';}
 /** Returns null when the unchanged legacy encoding is preferable or required. */
 export function encodePaintEvents(rows){
@@ -30,6 +31,7 @@ export function encodePaintEvents(rows){
  for(const row of rows){
   if(!paint(row)){out.push([0,row]);continue;}
   const c=[...COMMON.map(i=>row[i]),row[14][0],row[14][1],row[14][3]],key=JSON.stringify(c);
+  if(!common(c))return null;
   let id=index.get(key);if(id===undefined){if(dict.length>=64)return null;id=dict.length;index.set(key,id);dict.push(c);}
   // No delta arithmetic or quantization. Each original value is preserved.
   out.push([1,id,row[0],row[2],row[3],row[4],row[7],row[14][2],row[15],row[16]]);
@@ -43,7 +45,7 @@ export function decodePaintEvents(payload){
  if(!Array.isArray(payload)||payload.length!==3||payload[0]!==PAINT_PACKET_CODEC_VERSION||!bounded(payload))return null;
  const [,dict,rows]=payload;
  if(!Array.isArray(dict)||dict.length>64||!Array.isArray(rows)||rows.length>512)return null;
- if(dict.some(c=>!Array.isArray(c)||c.length!==11||c[8]!=='inkwave-paint-order-v1'||typeof c[9]!=='string'))return null;
+ if(dict.some(c=>!common(c)))return null;
  // Validate every reference before allocating expanded rows; preserve order.
  for(const r of rows){if(!Array.isArray(r))return null;if(r[0]===0){if(r.length!==2||!Array.isArray(r[1]))return null;}
   else if(r[0]!==1||r.length!==10||!Number.isInteger(r[1])||r[1]<0||r[1]>=dict.length)return null;
@@ -85,6 +87,7 @@ export class PaintPacketNegotiation {
   const rows=decodePaintEvents(tick.pe);if(!rows)return null;
   const {pe,...out}=tick;out.e=rows;return out;
  }
+ forget(id){this.members.delete(id);}
  clear(){this.matchId=null;this.myId=null;this.members.clear();}
 }
 
@@ -101,3 +104,5 @@ export function acceptPaintTick(nm,from,tick){
  if(tick?.k!=='t')return tick;
  return sessionNegotiation(nm).acceptTick(from,tick);
 }
+
+export function forgetPaintPeer(nm,id){negotiations.get(nm)?.forget(id);}

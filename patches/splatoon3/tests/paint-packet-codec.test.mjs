@@ -46,3 +46,7 @@ test('wire normalization drops only native non-index row annotations and keeps g
  const out=b.acceptTick('a',wire);for(const k of ['e','gg','gc','sjEpochs'])assert.deepEqual(out[k],expected[k]);
  assert.equal(t.e[0]._netSeq,99,'original local annotations unchanged');
 });
+test('dictionary common fields are scalar-only so decoded rows cannot share mutable options',()=>{
+ for(const i of [0,1,2,3,4,5,6,7,10])for(const bad of [{x:1},[1]]){const p=encode(rows());p[1][0][i]=bad;assert.equal(decode(p),null,`common ${i}`);}
+ const r=rows();r[0][9]={x:0};assert.equal(encode(r),null,'unexpected local shape stays legacy');
+});
