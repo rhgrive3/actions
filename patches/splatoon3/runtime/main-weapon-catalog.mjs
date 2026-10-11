@@ -7,7 +7,8 @@ import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
-import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
+import { rollerSpeedSwerveDegrees, startCatalogWallDrop } from './weapons-fidelity.mjs';
+import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
 // retain their mature owners. Canonical kit identities use the pinned table.
@@ -506,6 +507,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=p.catalog,d=s.descriptor,r=s.r;
     if(p.ghost)return true;
     const at=h.point||p.pos;
+    if(startCatalogWallDrop(system,p,h,CATALOG_WALL_DROP[r.id]))return true;
     if(r.family==='blaster'){p.pos.copy(at);explosion(system,p,d.b.BlastParam);return true;}
     if(d.key==='arrow') {
       const det=d.b.DetonationParam,frames=d.charge*chargeFrames(r);

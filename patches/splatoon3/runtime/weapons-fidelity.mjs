@@ -654,6 +654,14 @@ function startDetachedWallDrop(system, p, hit, move, paint, tag, salt) {
   return true;
 }
 
+// Added catalog bullets have their own collision interpreter, but share this
+// bounded wall-slide lifecycle with legacy bullets. Only complete explicit
+// records are admitted; ghosts never create a second ownership producer.
+export function startCatalogWallDrop(system, p, hit, source) {
+  if (p.ghost || !source) return false;
+  return startDetachedWallDrop(system, p, hit, source.move, source.paint, 'catalog', 0x576);
+}
+
 function advanceDetachedWallDrops(system, dt) {
   const list = system._s3DetachedWallDrops;
   if (!list?.length || !(dt > 0)) return;

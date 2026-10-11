@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CATALOG_WALL_DROP } from '/ASSET/patches/splatoon3/runtime/catalog-wall-drop-data.mjs';
 import { catalogPaintEllipse } from '/ASSET/patches/splatoon3/runtime/catalog-splash-paint.mjs';
 // Tests the emitted shader, emitted CPU mask, and native seed attribute packing.
 // Only raster derivatives/AA are replaced: points query exact gameplay samples,
@@ -216,7 +217,10 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
     const shape=catalogPaintEllipse(2,depth);
     cases.push({kind:0,sa:shape.stretchAmt,R:shape.radius,seed,rotate:shape.rotate,depth});
   }
-  for (const { kind, sa, R, seed, rotate=false, depth=null } of cases) {
+  const wallRadii = [...new Set(Object.values(CATALOG_WALL_DROP).flatMap(r => [r.paint.PaintRadiusShock,r.paint.PaintRadiusFall]))];
+  for (const R of wallRadii) for (const seed of [.11,.5,.93]) cases.push({kind:0,sa:0,R,seed,wall:true});
+  for (const { kind, sa, R, seed, rotate=false, depth=null, wall=false } of cases) {
+    face.wall=wall; face.turf=!wall;
     paint.grid = new Uint8Array(n * n); paint.dead = new Uint8Array(n * n); paint.counts = [0, 0];
     paint._paintOwnershipOrder = new Uint32Array(n * n);
     const sdu = sa ? (rotate ? -.8 : .6) : 0, sdv = sa ? (rotate ? .6 : .8) : 0, lu = 16, lv = 16;
@@ -227,20 +231,20 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
       if (Math.hypot(x, y) > R * (1 + sa) * 1.6) continue;
       points.push(x, y, 0); index.push(j * n + i);
     }
-    const pixels = query(gpu, points, [R, 0, Math.fround(seed), 2 * kind], [3, 1, 2, 0], [sdu, sdv, sa]);
+    const pixels = query(gpu, points, [R, 0, Math.fround(seed), 2 * kind + (wall ? 1 : 0)], [3, 1, 2, 0], [sdu, sdv, sa]);
     let cpu = 0, gpuCells = 0, cpuOnly = 0, gpuOnly = 0, ties = 0;
     for (let k = 0; k < index.length; k++) {
       const owned = paint.grid[index[k]] === 1, visible = pixels[k * 4] === 255, tie = pixels[k * 4 + 1] === 255;
       if (owned) cpu++; if (visible) gpuCells++;
       if (owned !== visible) { if (tie) ties++; else if (owned) cpuOnly++; else gpuOnly++; }
     }
-    rows.push({ kind, sa, R, seed, depth, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties });
+    rows.push({ kind, sa, R, seed, depth, wall, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties });
   }
   const result = { rows, cpuOnly: rows.reduce((t, r) => t + r.cpuOnly, 0), gpuOnly: rows.reduce((t, r) => t + r.gpuOnly, 0),
     ties: rows.reduce((t, r) => t + r.ties, 0), cpuCells: rows.reduce((t, r) => t + r.cpu, 0), gpuCells: rows.reduce((t, r) => t + r.gpu, 0) };
   // Only float32 ties on the SDF zero crossing (|sd| < 1e-3 WU, 1/16 texel) may disagree.
   check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
-  check(rows.length === 99 && result.cpuCells > 0, 'all body kinds and catalog depth envelopes exercised');
+  check(rows.length === 99 + wallRadii.length * 3 && result.cpuCells > 0, 'all body kinds, catalog depth envelopes and sourced wall-drop radii exercised');
   return result;
 }
 
