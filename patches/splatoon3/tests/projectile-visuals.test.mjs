@@ -13,6 +13,7 @@ import {
   projectileDrawRadius,
   projectileTailFrames,
   projectileVisualKind,
+  projectileVisualWidth,
 } from '../runtime/projectile-visuals.mjs';
 import {
   PROJECTILE_VISUAL_SOURCE,
@@ -234,6 +235,122 @@ test('source-aware renderer assigns distinct geometry to shooter, Roller, and Sl
   assert.ok(cases.every(({ p }) => p._iwVisualHistory.count <= HISTORY_CAPACITY));
   runtime.dispose();
   assert.equal(system.scene.children.includes(runtime.mesh), false);
+});
+
+test('source-sized Slosher caps stay at recorded endpoints across short and long retained histories', async () => {
+  const { THREE } = await sourceFixture({ fullRuntime: true });
+  const system = { scene: new THREE.Scene(), list: [], inkFlight: { time: 0 } };
+  const runtime = new ProjectileVisualRuntime(system, THREE);
+  const strong = PROJECTILE_VISUAL_SOURCE.WeaponSlosherStrong;
+  const frontDraw = strong.slosh.find(unit => unit.bulletNum === 4).drawSize;
+  const rearDraw = strong.slosh.find(unit => unit.bulletNum === 5).drawSize;
+  const makeRound = (index, packetIndex, sourceDraw, speed, firstFrame) => {
+    const p = { type: 'slosh', wid: 'slosher', fidelitySloshIndex: index,
+      fidelitySloshPacketIndex: packetIndex, fidelitySloshDraw: sourceDraw,
+      age: 0.5, life: 2, delay: 0, seed: 0.25, vis: 99,
+      pos: new THREE.Vector3(0, 0, 5 + speed * 0.5),
+      prev: new THREE.Vector3(0, 0, 5 + speed * 0.5),
+      vel: new THREE.Vector3(0, 0, speed), owner: { color: new THREE.Color('#e65124') } };
+    p._iwVisualKind = projectileVisualKind(p);
+    const history = new ProjectileHistory();
+    for (let frame = firstFrame; frame <= 30; frame++) {
+      const age = frame * DT;
+      history.record(age, 0, 0, 5 + speed * age, 0, 0, speed);
+    }
+    p._iwVisualHistory = history;
+    system.list.push(p);
+    return { p, history, speed };
+  };
+  // The front glob retains thirty-one points; the rear glob retains only eight.
+  // Their visible tails span four and three metres, respectively, while each
+  // mesh cap must remain bounded by its own exact source DrawSize radius.
+  const cases = [
+    makeRound(1, 1, frontDraw, 72, 0),
+    makeRound(1, 5, rearDraw, 36, 23),
+  ];
+  assert.deepEqual(cases.map(({ p, history }) => [p._iwVisualKind, history.count]),
+    [['bucket-front', 31], ['bucket-rear', 8]]);
+  assert.deepEqual(cases.map(({ p }) => projectileDrawRadius(p)), [0.97, 0.5],
+    'the two source-offset radii are not replaced by gameplay collision size or a history-based scale');
+
+  const bodyVertices = 13 * 12;
+  const ringCenter = (array, body, ring) => {
+    let x = 0, y = 0, z = 0;
+    for (let side = 0; side < 12; side++) {
+      const offset = (body * bodyVertices + ring * 12 + side) * 3;
+      x += array[offset]; y += array[offset + 1]; z += array[offset + 2];
+    }
+    return [x / 12, y / 12, z / 12];
+  };
+  const ringRadius = (array, body, ring, center) => {
+    let result = 0;
+    for (let side = 0; side < 12; side++) {
+      const offset = (body * bodyVertices + ring * 12 + side) * 3;
+      result = Math.max(result, Math.hypot(array[offset] - center[0], array[offset + 1] - center[1]));
+    }
+    return result;
+  };
+  const close = (actual, expected, label, tolerance = 3e-5) =>
+    assert.ok(Math.abs(actual - expected) <= tolerance, `${label}: expected ${expected}, got ${actual}`);
+  const observedTailLengths = [[], []];
+  const authoredEndpointPositions = cases.map(({ p }) => p.pos.toArray());
+  for (const alpha of [0, 0.5, 1]) {
+    runtime.draw(alpha);
+    assert.equal(runtime.stats.vertexCount, cases.length * bodyVertices);
+    for (let body = 0; body < cases.length; body++) {
+      const { p, history, speed } = cases[body];
+      const radius = projectileVisualWidth(p, p.age);
+      const visibleAge = p.age - DT * (1 - alpha);
+      const solidTime = 5 * DT, fullSpan = speed * solidTime;
+      const retainedSpan = Math.min(fullSpan, sourceDrawFor(p).TailLengthMax);
+      const tailStart = visibleAge - solidTime * retainedSpan / fullSpan;
+      const start = new Float64Array(6), end = new Float64Array(6);
+      assert.equal(history.sample(tailStart, start), true);
+      assert.equal(history.sample(visibleAge, end), true);
+      const startCenter = ringCenter(runtime.position.array, body, 2);
+      const endCenter = ringCenter(runtime.position.array, body, 10);
+      close(startCenter[2], start[2], `body ${body} cap reaches its actual trail start at alpha ${alpha}`);
+      close(endCenter[2], end[2], `body ${body} head reaches its sampled endpoint at alpha ${alpha}`);
+      if (alpha === 1) close(endCenter[2], p.pos.z, `body ${body} cap ends at the native projectile head`);
+      close(ringCenter(runtime.position.array, body, 0)[2], start[2] - radius,
+        `body ${body} rear hemisphere remains radius-sized at alpha ${alpha}`);
+      close(ringCenter(runtime.position.array, body, 1)[2], start[2] - radius * Math.SQRT1_2,
+        `body ${body} rear bevel remains radius-sized at alpha ${alpha}`);
+      close(ringCenter(runtime.position.array, body, 11)[2], end[2] + radius * Math.SQRT1_2,
+        `body ${body} head bevel remains radius-sized at alpha ${alpha}`);
+      close(ringCenter(runtime.position.array, body, 12)[2], end[2] + radius,
+        `body ${body} head hemisphere remains radius-sized at alpha ${alpha}`);
+      for (const ring of [0, 1, 2]) {
+        assert.ok(Math.abs(ringCenter(runtime.position.array, body, ring)[2] - start[2]) <= radius + 3e-5,
+          `body ${body} rear cap ring ${ring} stays within its own source width at alpha ${alpha}`);
+      }
+      for (const ring of [10, 11, 12]) {
+        assert.ok(Math.abs(ringCenter(runtime.position.array, body, ring)[2] - end[2]) <= radius + 3e-5,
+          `body ${body} head cap ring ${ring} stays within its own source width at alpha ${alpha}`);
+      }
+      const expectedProfileWidth = p._iwVisualKind === 'bucket-front' ? 0.86 :
+        0.16 + 0.84 * Math.pow(1 / 6, 1.55);
+      close(ringRadius(runtime.position.array, body, 2, startCenter), radius * expectedProfileWidth,
+        `body ${body} preserves its distinct source-sized cross-section at alpha ${alpha}`);
+      observedTailLengths[body].push(endCenter[2] - startCenter[2]);
+      assert.deepEqual(p.pos.toArray(), authoredEndpointPositions[body],
+        `render alpha ${alpha} cannot move the native projectile head`);
+    }
+  }
+  for (let body = 0; body < cases.length; body++) {
+    for (const span of observedTailLengths[body]) close(span, observedTailLengths[body][0],
+      `body ${body} keeps its retained length across display interpolation`);
+  }
+  close(observedTailLengths[0][0], 4, 'the longer cap follows the four-metre source maximum');
+  close(observedTailLengths[1][0], 3, 'the shorter cap follows its actual eight-sample history');
+  assert.ok(observedTailLengths[0][0] > observedTailLengths[1][0],
+    'the independently sourced max tail produces a longer front sheet than the short rear history');
+  assert.ok(projectileVisualWidth(cases[0].p) > projectileVisualWidth(cases[1].p) * 1.5,
+    'front and rear DrawSize records keep distinctly different visual radii');
+  assert.equal(runtime.stats.drawCalls, 1, 'both capped forms remain in one reusable opaque batch');
+  runtime.dispose();
+
+  function sourceDrawFor(p) { return p.fidelitySloshDraw; }
 });
 
 test('hot render methods reuse storage and contain no per-frame allocation or gameplay RNG path', () => {

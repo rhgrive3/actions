@@ -10,6 +10,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { projectileDrawRadius, projectileVisualWidth } from '../patches/splatoon3/runtime/projectile-visuals.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const option = (name, fallback) => {
@@ -77,7 +78,7 @@ const report = {
     stage: 'Tidewater, easy, turf, fixed 180 s match; local player; deterministic Math.random stream reset for each projectile scenario.',
     phaseFrames: { F0: 0, F5: 5, F10: 10, F15: 15, fall: 36 },
     perspectives: ['shoulder', 'front', 'side'],
-    perspectiveModes: { shoulder: 'fixed-gameplay-shoulder', front: 'projectile-follow-fixed-offset', side: 'projectile-follow-fixed-offset' },
+    perspectiveModes: { shoulder: 'fixed-gameplay-shoulder', front: 'projectile-follow-physics-bounded-offset', side: 'projectile-follow-physics-bounded-offset' },
     bootSeed: BOOT_SEED,
     actorInkColor: '#ffd21a',
     retailReferenceMatch: 'not performed',
@@ -166,41 +167,73 @@ async function openGameContext({ mobile = false } = {}) {
 }
 
 async function setCamera(page, perspective) {
-  return page.evaluate(name => {
-    const G = window.__G, a = G.match.local, cam = G.camera;
-    const p = a.pos.toArray();
-    const aim = [a.aimDir.x, a.aimDir.y, a.aimDir.z];
+  const sample = await page.evaluate(name => {
+    const G = window.__G, a = G.match.local;
+    const toVisualState = projectile => ({
+      type: projectile.type, age: projectile.age, wid: projectile.wid, size: projectile.size, vis: projectile.vis,
+      fidelitySloshDraw: projectile.fidelitySloshDraw ?? null, fidelityDrawRadius: projectile.fidelityDrawRadius ?? null,
+      fidelityMode: projectile.fidelityMode ?? null, fidelitySloshIndex: projectile.fidelitySloshIndex ?? null,
+      _iwVisualKind: projectile._iwVisualKind ?? null,
+      s3Weapon: projectile.s3Weapon ? { sourceActor: projectile.s3Weapon.sourceActor, kind: projectile.s3Weapon.kind } : null,
+      catalog: projectile.catalog ? {
+        r: { sourceActor: projectile.catalog.r?.sourceActor },
+        descriptor: { key: projectile.catalog.descriptor?.key, unit: projectile.catalog.descriptor?.unit,
+          index: projectile.catalog.descriptor?.index },
+      } : null,
+    });
     const heads = G.projectiles.list.filter(projectile => projectile.delay <= 0 && !projectile._s3SloshBirthPending);
     const allLive = G.projectiles.list;
     const focusProjectiles = heads.length ? heads : allLive;
-    let focus = null;
-    if (focusProjectiles.length) {
-      focus = [0, 0, 0];
-      for (const projectile of focusProjectiles) {
-        focus[0] += projectile.pos.x; focus[1] += projectile.pos.y; focus[2] += projectile.pos.z;
-      }
-      focus = focus.map(value => value / focusProjectiles.length);
-    } else if (window.__iwProjectileSurfaceHits?.length) {
-      focus = window.__iwProjectileSurfaceHits.at(-1).pos;
-    }
-    const followsProjectiles = name === 'front' || name === 'side';
+    return {
+      actor: a.pos.toArray(), aim: [a.aimDir.x, a.aimDir.y, a.aimDir.z],
+      heads: heads.map(projectile => ({ seed: projectile.seed, pos: projectile.pos.toArray(), visual: toVisualState(projectile) })),
+      allLive: allLive.map(projectile => ({ seed: projectile.seed, pos: projectile.pos.toArray(), visual: toVisualState(projectile) })),
+      focus: focusProjectiles.length ? [0, 1, 2].map(axis =>
+        focusProjectiles.reduce((sum, projectile) => sum + projectile.pos.toArray()[axis], 0) / focusProjectiles.length) :
+        window.__iwProjectileSurfaceHits?.at(-1)?.pos ?? null,
+      fov: G.camera.fov, bootSeed: window.__iwCanonicalPlacement?.bootSeed ?? null,
+      actorInkHex: '#' + a.color.getHexString(), canonicalPlacement: window.__iwCanonicalPlacement ?? null,
+      currentVisualSetup: window.__iwCurrentVisualSetup ?? null,
+      name,
+    };
+  }, perspective);
+  const followsProjectiles = perspective === 'front' || perspective === 'side';
+  const chosen = sample.heads.length ? sample.heads : sample.allLive;
+  const headBounds = chosen.map(head => ({
+    seed: head.seed,
+    position: head.pos,
+    sourceDrawRadius: projectileDrawRadius({ ...head.visual, seed: head.seed }),
+    calibratedHeadRadius: projectileVisualWidth({ ...head.visual, seed: head.seed }),
+  }));
+  const focus = sample.focus;
+  const maximumHeadExtent = focus && headBounds.length ? Math.max(...headBounds.map(head =>
+    Math.hypot(head.position[0] - focus[0], head.position[1] - focus[1], head.position[2] - focus[2]) + head.calibratedHeadRadius)) : 0;
+  const cameraOffsetDistance = Math.max(7, maximumHeadExtent + 3.5);
+  const focusBounds = followsProjectiles && focus ? {
+    definition: 'max distance from projectile centroid to any visible head center plus calibrated visual head radius; source radius is recorded separately',
+    heads: headBounds, maximumHeadExtent,
+    cameraOffsetDistance,
+    cameraClearanceLowerBound: cameraOffsetDistance - maximumHeadExtent,
+  } : null;
+  return page.evaluate(({ name, sample, followsProjectiles, focusBounds }) => {
+    const G = window.__G, cam = G.camera, p = sample.actor, focus = sample.focus;
     const fixedTarget = [p[0], p[1] + 1.2, p[2] + 8.0];
     const target = followsProjectiles && focus ? focus : fixedTarget;
-    const offset = name === 'front' ? [0.15, 0.85, 4.9] : name === 'side' ? [-5.5, 1.1, 0.8] : [0.95, 0.8, -11.3];
+    const d = focusBounds?.cameraOffsetDistance ?? 7;
+    const offset = name === 'front' ? [0.15, 0.85, d] : name === 'side' ? [-d, 1.1, 0.8] : [0.95, 0.8, -11.3];
     const pose = {
-      mode: followsProjectiles ? 'projectile-follow-fixed-offset' : 'fixed-gameplay-shoulder',
+      mode: followsProjectiles ? 'projectile-follow-physics-bounds-outside-fixed-offset' : 'fixed-gameplay-shoulder',
       pos: name === 'shoulder' ? [p[0] + 0.95, p[1] + 2.0, p[2] - 3.3] : target.map((value, i) => value + offset[i]),
       target: name === 'shoulder' ? fixedTarget : target,
     };
     cam.aspect = innerWidth / innerHeight;
     cam.position.set(...pose.pos); cam.lookAt(...pose.target); cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
     G.scene.updateMatrixWorld(true);
-    return { perspective: name, mode: pose.mode, pose, actor: p, aim, fov: cam.fov,
-      liveHeadCount: heads.length, projectileFocus: followsProjectiles ? focus : null,
-      bootSeed: window.__iwCanonicalPlacement?.bootSeed ?? null,
-      actorInkHex: '#' + a.color.getHexString(), canonicalPlacement: window.__iwCanonicalPlacement ?? null,
-      currentVisualSetup: window.__iwCurrentVisualSetup ?? null };
-  }, perspective);
+    return { perspective: name, mode: pose.mode, pose, actor: p, aim: sample.aim, fov: cam.fov,
+      liveHeadCount: sample.heads.length, projectileFocus: followsProjectiles ? focus : null, focusBounds,
+      bootSeed: sample.bootSeed, actorInkHex: sample.actorInkHex, canonicalPlacement: sample.canonicalPlacement,
+      currentVisualSetup: sample.currentVisualSetup };
+  }, { name: perspective, sample, followsProjectiles, focusBounds });
 }
 
 async function renderAndCapture(page, scenario, phase, perspective, seed) {
@@ -231,7 +264,17 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
       if (error === gl.NO_ERROR) break;
       staleGlErrors.push(error);
     }
+    const shadowMap = G.renderer.shadowMap;
+    const shadowRefreshRequested = !!shadowMap?.enabled;
+    if (shadowRefreshRequested) shadowMap.needsUpdate = true;
+    G.renderer.info.reset();
     G.game.R.render();
+    const shadowRefresh = {
+      enabled: !!shadowMap?.enabled,
+      requested: shadowRefreshRequested,
+      needsUpdateAfterRender: shadowRefreshRequested ? !!shadowMap.needsUpdate : null,
+      consumed: shadowRefreshRequested ? !shadowMap.needsUpdate : null,
+    };
     const glErrors = [];
     for (let i = 0; i < 32; i++) {
       const error = gl.getError();
@@ -283,6 +326,7 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
         staleGlErrors,
         glError: gl.NO_ERROR,
         glErrors,
+        shadowRefresh,
       },
       drawingBuffer: [gl.drawingBufferWidth, gl.drawingBufferHeight],
     };
@@ -307,6 +351,7 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
       fov: camera.fov, actorInkHex: camera.actorInkHex, bootSeed: camera.bootSeed,
       canonicalFloorHit: camera.canonicalPlacement?.floorHit ?? null,
       actorPosition: camera.actor,
+      projectileFocusBounds: camera.focusBounds,
       actorFloorHit: camera.currentVisualSetup?.wall?.floorHit ?? camera.canonicalPlacement?.floorHit ?? null,
       nativeWallRaycast: camera.currentVisualSetup?.wall ? {
         block: camera.currentVisualSetup.wall.block, face: camera.currentVisualSetup.wall.face,
@@ -326,49 +371,268 @@ const visualSetup = ({ name, seed, impact = null }) => {
   if (!canonical) throw new Error('Missing canonical native spawn-floor placement');
   window.__iwProjectileSurfaceHits = [];
   window.__iwProjectileImpactAttempts = [];
-  window.__iwProjectileWorldHits = [];
+  window.__iwProjectileCatalogSteps = [];
   if (!window.__iwProjectileImpactRecorderInstalled) {
-    const record = (route, p, hit) => {
+    const nativeHitSnapshot = hit => hit ? {
+      hit: !!hit.hit, block: hit.block, face: hit.face, dist: hit.dist,
+      point: hit.point?.toArray?.() ?? null, normal: hit.normal?.toArray?.() ?? null,
+    } : null;
+    const hitFromSnapshot = snapshot => snapshot ? {
+      ...snapshot,
+      point: snapshot.point ? new V(...snapshot.point) : null,
+      normal: snapshot.normal ? new V(...snapshot.normal) : null,
+    } : null;
+    const stageFaceFor = (faceId, point) => {
+      const face = G.physics?.level?.faces?.[faceId];
+      const block = face ? G.physics.level.blocks?.[face.block] : null;
+      if (!face || !block || !point) return null;
+      const delta = new V(...point).sub(face.origin);
+      const planeDistance = delta.dot(face.n), u = delta.dot(face.u), v = delta.dot(face.v);
+      return {
+        valid: face.id === faceId && block.solid === true && !block.hidden && !block.grate &&
+          Math.abs(planeDistance) <= 0.12 && u >= -0.05 && u <= face.su + 0.05 && v >= -0.05 && v <= face.sv + 0.05,
+        block: face.block, face: face.id, wall: !!face.wall, paintable: !!face.paintable,
+        normal: face.n.toArray(), planeDistance, u, v, spans: [face.su, face.sv],
+        blockSolid: !!block.solid, blockHidden: !!block.hidden, blockGrate: !!block.grate,
+      };
+    };
+    const stageFaceAtContact = (point, normal, preferredBlock = null) => {
+      if (!point || !normal) return null;
+      const pointVector = new V(...point), normalVector = new V(...normal);
+      const candidates = [];
+      for (const face of G.physics?.level?.faces ?? []) {
+        const block = G.physics.level.blocks?.[face.block];
+        if (!block) continue;
+        const delta = pointVector.clone().sub(face.origin);
+        const planeDistance = delta.dot(face.n), u = delta.dot(face.u), v = delta.dot(face.v);
+        const alignment = face.n.dot(normalVector);
+        const containsPoint = Math.abs(planeDistance) <= 0.01 && u >= -0.05 && u <= face.su + 0.05 && v >= -0.05 && v <= face.sv + 0.05;
+        if (!containsPoint || alignment < 0.98 || preferredBlock != null && face.block !== preferredBlock) continue;
+        candidates.push({
+          valid: face.id >= 0 && block.solid === true && !block.hidden && !block.grate && face.paintable !== false,
+          block: face.block, face: face.id, wall: !!face.wall, paintable: !!face.paintable,
+          normal: face.n.toArray(), alignment, planeDistance, u, v, spans: [face.su, face.sv],
+          blockSolid: !!block.solid, blockHidden: !!block.hidden, blockGrate: !!block.grate,
+        });
+      }
+      return candidates.sort((left, right) => Math.abs(left.planeDistance) - Math.abs(right.planeDistance))[0] ?? null;
+    };
+    const recordAttempt = (route, p, hit) => {
+      const snapshot = nativeHitSnapshot(hit);
+      const stageFace = snapshot?.hit ? stageFaceFor(snapshot.face, snapshot.point) : null;
       window.__iwProjectileImpactAttempts.push({
-        route, hit: !!hit?.hit, face: hit?.face ?? null,
-        block: hit?.block ?? null, normal: hit?.normal?.toArray?.() ?? null,
+        route, seed: p.seed, type: p.type, weapon: p.wid || p.inkKey || p.inkProfile?.key || null,
+        hit: snapshot?.hit ?? false, face: snapshot?.face ?? null, block: snapshot?.block ?? null,
+        point: snapshot?.point ?? null, normal: snapshot?.normal ?? null, nativeStageContact: stageFace?.valid === true,
+        stageFace,
       });
+    };
+    const record = (route, p, hit, extra = {}) => {
       if (!hit?.hit || !Number.isInteger(hit.face) || hit.face < 0) return;
+      const point = hit.point?.toArray?.() ?? (Array.isArray(hit.point) ? hit.point : p.pos?.toArray?.() ?? null);
+      const normal = hit.normal?.toArray?.() ?? (Array.isArray(hit.normal) ? hit.normal : null);
+      const stageFace = extra.stageFace ?? stageFaceFor(hit.face, point);
       window.__iwProjectileSurfaceHits.push({
         route, type: p.type, weapon: p.wid || p.inkKey || p.inkProfile?.key || null,
-        seed: p.seed, age: p.age, pos: hit.point?.toArray?.() ?? p.pos?.toArray?.() ?? null,
-        normal: hit.normal?.toArray?.() ?? null, block: hit.block, face: hit.face, distance: hit.dist,
+        seed: p.seed, age: p.age, pos: point,
+        normal, block: hit.block, face: hit.face, distance: hit.dist,
+        nativeStageContact: stageFace?.valid === true, stageFace,
+        retired: extra.retired ?? null,
+        paintReceipts: extra.paintReceipts ?? [],
+        nativePaintReceiptFace: extra.paintReceipts?.find(receipt => receipt.face === hit.face && receipt.stageFace?.valid)?.face ?? null,
+        wallDropTransition: extra.wallDropTransition ?? null,
+        impactPaintContact: extra.impactPaintContact ?? null,
       });
     };
     const projectiles = G.projectiles;
     const nativeImpact = projectiles._impact;
     projectiles._impact = function (p, hit) {
-      record('Projectiles._impact', p, hit);
-      return nativeImpact.call(this, p, hit);
+      const stepContext = window.__iwProjectileStepContext;
+      const hitSnapshot = nativeHitSnapshot(hit);
+      recordAttempt('Projectiles._impact', p, hit);
+      const impactScope = stepContext ? { paintReceipts: [], cpuPaintFaces: [] } : null;
+      const priorScope = stepContext?.paintScope;
+      if (stepContext) stepContext.paintScope = impactScope;
+      try {
+        return nativeImpact.call(this, p, hit);
+      } finally {
+        if (stepContext) {
+          stepContext.paintScope = priorScope;
+          stepContext.impactHits.push({ route: 'Projectiles._impact', hit: hitSnapshot,
+            paintReceipts: impactScope.paintReceipts, cpuPaintFaces: impactScope.cpuPaintFaces });
+        } else record('Projectiles._impact', p, hitFromSnapshot(hitSnapshot));
+      }
     };
     const inkFlight = projectiles.inkFlight;
-    // A wall impact invokes beginFidelityWallDrop instead of terminal impact().
-    // Capture actual native sweep results without re-running physics.
-    if (inkFlight && typeof inkFlight.world === 'function') {
-      const nativeWorld = inkFlight.world;
-      inkFlight.world = function (from, to, radius, hit) {
-        const result = nativeWorld.call(this, from, to, radius, hit);
-        if (result?.hit && Number.isInteger(result.face) && result.face >= 0)
-          window.__iwProjectileWorldHits.push({
-            point: result.point.toArray(), normal: result.normal.toArray(),
-            block: result.block, face: result.face, dist: result.dist, radius,
-            from: from.toArray(), to: to.toArray(),
-          });
-        return result;
-      };
-    }
     if (inkFlight && typeof inkFlight.impact === 'function') {
       const flightImpact = inkFlight.impact;
       inkFlight.impact = function (p, hit) {
-        record('InkFlightRuntime.impact', p, hit);
-        return flightImpact.call(this, p, hit);
+        const stepContext = window.__iwProjectileStepContext;
+        const hitSnapshot = nativeHitSnapshot(hit);
+        recordAttempt('InkFlightRuntime.impact', p, hit);
+        const impactScope = stepContext ? { paintReceipts: [], cpuPaintFaces: [] } : null;
+        const priorScope = stepContext?.paintScope;
+        if (stepContext) stepContext.paintScope = impactScope;
+        try {
+          return flightImpact.call(this, p, hit);
+        } finally {
+          if (stepContext) {
+            stepContext.paintScope = priorScope;
+            stepContext.impactHits.push({ route: 'InkFlightRuntime.impact', hit: hitSnapshot,
+              paintReceipts: impactScope.paintReceipts, cpuPaintFaces: impactScope.cpuPaintFaces });
+          } else record('InkFlightRuntime.impact', p, hitFromSnapshot(hitSnapshot));
+        }
+      };
+      if (typeof inkFlight.world === 'function') {
+        const flightWorld = inkFlight.world;
+        inkFlight.world = function (from, to, radius, hit) {
+          const result = flightWorld.call(this, from, to, radius, hit);
+          const stepContext = window.__iwProjectileStepContext;
+          if (stepContext && result?.hit) {
+            const snapshot = nativeHitSnapshot(result);
+            snapshot.radius = radius;
+            snapshot.from = from.toArray();
+            snapshot.to = to.toArray();
+            stepContext.flightWorldHits.push(snapshot);
+            recordAttempt('InkFlightRuntime.world', stepContext.projectile, result);
+          }
+          return result;
+        };
+      }
+    }
+    const paintSplat = G.paint.splat;
+    const nativeRaycast = G.physics?.raycast;
+    if (typeof nativeRaycast === 'function') {
+      G.physics.raycast = function (...args) {
+        const result = nativeRaycast.apply(this, args);
+        const stepContext = window.__iwProjectileStepContext;
+        if (stepContext && result?.hit) stepContext.nativeRaycasts.push({
+          face: result.face, block: result.block, point: result.point?.toArray?.() ?? null,
+          normal: result.normal?.toArray?.() ?? null,
+        });
+        return result;
       };
     }
+    if (typeof paintSplat === 'function') {
+      G.paint.splat = function (center, radius, team, options = {}) {
+        const result = paintSplat.call(this, center, radius, team, options);
+        const stepContext = window.__iwProjectileStepContext;
+        if (stepContext) {
+          const faceId = Number.isInteger(options?.face) ? options.face : -1;
+          const point = center?.toArray?.() ?? null;
+          const stageFace = stageFaceFor(faceId, point);
+          const raycastReceipt = stepContext.nativeRaycasts.findLast(hit => hit.face === faceId && hit.point && point &&
+            new V(...hit.point).distanceTo(new V(...point)) <= 0.12) ?? null;
+          const receipt = {
+            center: point, team, face: faceId >= 0 ? faceId : null, kind: options?.kind ?? null,
+            radius: Number.isFinite(radius) ? radius : null,
+            result: Number.isFinite(result) ? result : null,
+            sourceHint: raycastReceipt ? 'native-raycast-followup-paint' : 'non-raycast-paint',
+            matchingNativeRaycast: raycastReceipt,
+            stageFace,
+          };
+          stepContext.paintReceipts.push(receipt);
+          if (stepContext.paintScope) stepContext.paintScope.paintReceipts.push(receipt);
+        }
+        return result;
+      };
+    }
+    if (typeof G.paint._cpuSplat === 'function') {
+      const cpuSplat = G.paint._cpuSplat;
+      G.paint._cpuSplat = function (face, ...args) {
+        const result = cpuSplat.call(this, face, ...args);
+        const paintScope = window.__iwProjectileStepContext?.paintScope;
+        if (paintScope && Number.isInteger(face?.id)) paintScope.cpuPaintFaces.push(face.id);
+        return result;
+      };
+    }
+    const nativeStep = projectiles._step;
+    projectiles._step = function (p, dt) {
+      const stepContext = { projectile: p, paintReceipts: [], nativeRaycasts: [], impactHits: [], flightWorldHits: [], paintScope: null };
+      const priorContext = window.__iwProjectileStepContext;
+      const hadWallDrop = !!p.fidelityWallDrop;
+      window.__iwProjectileStepContext = stepContext;
+      let retired;
+      try {
+        retired = nativeStep.call(this, p, dt);
+      } finally {
+        window.__iwProjectileStepContext = priorContext;
+      }
+      const hit = p.catalog?.hit;
+      // The catalog keeps the winning sweptWorldHit candidate in a local
+      // `world` variable, so p.catalog.hit is only a reusable scratch buffer
+      // and does not expose the chosen candidate. finishContact passes the
+      // chosen native face into paint.splat synchronously before this step
+      // returns. Treat that face-bearing receipt plus retirement as the
+      // production contact state; validate the face against live stage geometry.
+      const paintContact = p.catalog && retired ? stepContext.paintReceipts.find(receipt =>
+        receipt.stageFace?.valid && receipt.sourceHint === 'non-raycast-paint') : null;
+      const contactPoint = paintContact?.center ? new V(...paintContact.center) : null;
+      const contactHit = paintContact ? {
+        hit: true,
+        block: paintContact.stageFace.block,
+        face: paintContact.stageFace.face,
+        point: contactPoint,
+        normal: new V(...paintContact.stageFace.normal),
+        dist: contactPoint && p.prev ? p.prev.distanceTo(contactPoint) : null,
+      } : null;
+      const trace = {
+        route: p.catalog ? 'MainWeaponCatalog.P._step' : 'Projectiles._step', type: p.type, weapon: p.wid || p.inkKey || null,
+        seed: p.seed, age: p.age, dt, retired: !!retired,
+        previous: p.prev?.toArray?.() ?? null, position: p.pos?.toArray?.() ?? null, velocity: p.vel?.toArray?.() ?? null,
+        catalogHitScratch: hit ? { hit: !!hit.hit, block: hit.block, face: hit.face, distance: hit.dist,
+          point: hit.point?.toArray?.() ?? null, normal: hit.normal?.toArray?.() ?? null } : null,
+        nativeContact: contactHit ? { hit: true, source: 'finishContact paint.splat face receipt', block: contactHit.block,
+          face: contactHit.face, distance: contactHit.dist, point: contactHit.point.toArray(), normal: contactHit.normal.toArray(),
+          stageFace: paintContact.stageFace } : null,
+        nativeRaycasts: stepContext.nativeRaycasts,
+        flightWorldHits: stepContext.flightWorldHits,
+        paintReceipts: stepContext.paintReceipts,
+      };
+      window.__iwProjectileCatalogSteps.push(trace);
+      if (contactHit) record('MainWeaponCatalog.P._step', p, contactHit, { retired: !!retired, paintReceipts: stepContext.paintReceipts,
+        stageFace: paintContact.stageFace });
+      if (!p.catalog && retired) {
+        const nativeContact = stepContext.impactHits.find(event => event.hit?.hit === true && Number.isInteger(event.hit.face) && event.hit.face >= 0);
+        if (nativeContact) {
+          const hitState = { ...nativeContact.hit,
+            point: nativeContact.hit.point ? new V(...nativeContact.hit.point) : null,
+            normal: nativeContact.hit.normal ? new V(...nativeContact.hit.normal) : null };
+          const expectedPaintCenter = hitState.point?.clone().addScaledVector(hitState.normal, 0.14) ?? null;
+          const impactPaintContact = expectedPaintCenter ? nativeContact.paintReceipts.map(receipt => ({
+            ...receipt,
+            distanceFromSourceImpactCenter: receipt.center ? new V(...receipt.center).distanceTo(expectedPaintCenter) : Infinity,
+            cpuFace: nativeContact.cpuPaintFaces.find(face => face === hitState.face) ?? null,
+          })).find(receipt => receipt.distanceFromSourceImpactCenter <= 0.02 &&
+            nativeContact.cpuPaintFaces.includes(hitState.face)) ?? null : null;
+          if (impactPaintContact) impactPaintContact.valid = true;
+          record(nativeContact.route, p, hitState, { retired: true, paintReceipts: nativeContact.paintReceipts,
+            stageFace: stageFaceFor(hitState.face, nativeContact.hit.point), impactPaintContact });
+        }
+      }
+      const chosenFlightWorldHit = stepContext.flightWorldHits.find(hit => hit.hit && Number.isInteger(hit.face) && hit.face >= 0);
+      const wallDropTransition = !hadWallDrop && !!p.fidelityWallDrop && chosenFlightWorldHit ? (() => {
+        const stageFace = stageFaceAtContact(chosenFlightWorldHit.point, chosenFlightWorldHit.normal, chosenFlightWorldHit.block);
+        const expectedPosition = new V(...chosenFlightWorldHit.point).addScaledVector(new V(...chosenFlightWorldHit.normal), 0.025);
+        const positionError = p.pos.distanceTo(expectedPosition);
+        const previousError = p.prev.distanceTo(expectedPosition);
+        return {
+          valid: stageFace?.valid === true && Math.abs(chosenFlightWorldHit.normal[1]) < 0.45 &&
+            p.fidelityWallDrop.frame === 0 && !p.fidelityWallDrop.done && positionError <= 0.003 && previousError <= 0.003,
+          source: 'InkFlightRuntime.world exact chosen Hit paired with first fidelityWallDrop admission',
+          hit: chosenFlightWorldHit, stageFace, wallDropFrame: p.fidelityWallDrop.frame, wallDropDone: p.fidelityWallDrop.done,
+          projectileOffsetFromHit: p.pos.clone().sub(new V(...chosenFlightWorldHit.point)).toArray(),
+          expectedOffset: new V(...chosenFlightWorldHit.normal).multiplyScalar(0.025).toArray(), positionError, previousError,
+        };
+      })() : null;
+      if (wallDropTransition?.valid) {
+        const hitState = { ...chosenFlightWorldHit,
+          point: new V(...chosenFlightWorldHit.point), normal: new V(...chosenFlightWorldHit.normal) };
+        record('InkFlightRuntime.world', p, hitState, { retired: !!retired, stageFace: wallDropTransition.stageFace,
+          wallDropTransition });
+      }
+      return retired;
+    };
     window.__iwProjectileImpactRecorderInstalled = true;
   }
   let state = seed >>> 0;
@@ -377,7 +641,8 @@ const visualSetup = ({ name, seed, impact = null }) => {
   G.time = 0; g.time = 0; g.rig.time = 0;
   G.projectiles.clear(); G.fx.clear(); G.paint.clear();
   if (g.screenfx?.clear) g.screenfx.clear();
-  const weapon = name === 'shooter' || name.startsWith('wall-') ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
+  const weapon = impact === 'wall' ? 'shooter' :
+    name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
   a.setWeapon(weapon);
   a.pos.fromArray(canonical.pos);
   a.form = 'kid'; a.submerged = false; a.alive = true; a.hp = 100; a.ink = 100; a.vel.set(0, 0, 0);
@@ -475,6 +740,7 @@ async function runVisuals(page) {
       else G.projectiles.fireSlosh(a, a.weapon);
       G.projectiles._draw();
       return G.projectiles.list.map(p => ({ type: p.type, age: p.age, delay: p.delay || 0, pos: p.pos.toArray(), vel: p.vel.toArray(), seed: p.seed,
+        route: p.catalog ? 'MainWeaponCatalog.P._step' : p.inkProfile ? 'InkFlightRuntime' : 'legacy-projectile-step',
         mode: p.fidelityMode || (p.s3Vertical ? 'vertical' : p.s3FlickUnit === undefined ? null : 'horizontal'),
         sloshUnit: p.fidelitySloshIndex ?? p.fidelitySloshPacketIndex ?? null, rollerUnit: p.fidelityRollerUnitIndex ?? null }));
     }, { method: scenario.method });
@@ -507,82 +773,86 @@ async function runVisuals(page) {
   }
 
   // The wall and floor receipts use native collision queries and real stage
-  // surfaces. A production shooter round is directed into a live map wall;
-  // Slosher9 globs follow their sourced parabola into the live floor.
+  // surfaces. A normal controller-fired legacy shooter enters the retained
+  // WallDrop phase from the exact InkFlightRuntime.world hit; Slosher9 globs
+  // follow their sourced parabola into the live floor.
   for (const scenario of [
-    { name: 'wall-shooter', seed: 0x7a11, method: 'shooter', impact: 'wall', maxFrames: 120 },
+    { name: 'wall-shooter', seed: 0x7a11, method: 'controller-shooter', impact: 'wall', maxFrames: 120 },
     { name: 'floor-slosher9', seed: 0x7a12, method: 'slosher9', impact: 'floor', maxFrames: 150 },
   ]) {
     const setup = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed, impact: scenario.impact });
     if (scenario.impact === 'wall' && !setup.wall) throw new Error('Could not find a native Tidewater wall for the wall impact receipt');
     const born = await page.evaluate(({ method }) => {
       const G = window.__G, a = G.match.local;
-      if (method === 'shooter') G.projectiles.fireShooter(a, a.weapon, 0);
-      else G.projectiles.fireSlosh(a, a.weapon);
-      G.projectiles._draw(); return G.projectiles.list.length;
+      let controllerFramesHeld = null;
+      if (method === 'controller-shooter') {
+        const prior = G.projectiles.list.length, dt = 1 / 60;
+        a.intent.fire = true;
+        for (let i = 0; i < 120 && G.projectiles.list.length === prior; i++) {
+          controllerFramesHeld = i + 1;
+          G.time += dt; window.__inkwave.time += dt; a.update(dt);
+        }
+        a.intent.fire = false;
+        if (G.projectiles.list.length === prior) throw new Error('Controller fire cadence produced no shooter projectile');
+      } else G.projectiles.fireSlosh(a, a.weapon);
+      G.projectiles._draw();
+      return G.projectiles.list.map(p => ({ seed: p.seed, type: p.type, pos: p.pos.toArray(), velocity: p.vel.toArray(),
+        route: p.catalog ? 'MainWeaponCatalog.P._step' : p.inkProfile ? 'InkFlightRuntime.stepHead' : 'legacy-projectile-step',
+        sourceActor: p.catalog?.r?.sourceActor ?? p.s3Weapon?.sourceActor ?? p.inkKey ?? null,
+        controllerInput: method === 'controller-shooter' ? 'Actor.update intent.fire=true' : null,
+        controllerFramesHeld }));
     }, { method: scenario.method });
-    if (!born) throw new Error(scenario.name + ': projectile birth failed');
+    if (!born.length) throw new Error(scenario.name + ': projectile birth failed');
     await renderAndCapture(page, scenario.name, 'F0', 'shoulder', scenario.seed);
-    let impactFrame = null, impactState = null, impactEvidence = null;
+    let impactFrame = null, impactState = null, impactEvidence = null, captureFrame = 0;
     const flightHistory = [];
     for (let frame = 1; frame <= scenario.maxFrames; frame++) {
       const row = await page.evaluate(() => {
         const G = window.__G, g = window.__inkwave, dt = 1 / 60;
         G.time += dt; g.time += dt;
-        const before = G.projectiles.list.map(p => ({ seed: p.seed, pos: p.pos.toArray(), wallDrop: !!p.fidelityWallDrop }));
+        const before = G.projectiles.list.map(p => ({ seed: p.seed, pos: p.pos.toArray() }));
         const surfaceHitStart = window.__iwProjectileSurfaceHits.length;
         const attemptsStart = window.__iwProjectileImpactAttempts.length;
-        const worldHitsStart = window.__iwProjectileWorldHits.length;
+        const catalogStepStart = window.__iwProjectileCatalogSteps.length;
         G.projectiles.update(dt); G.fx.update(dt, G.camera); g.fxHooks?.update?.(dt); G.paint.flush(dt);
         const after = new Set(G.projectiles.list.map(p => p.seed));
-        const worldHits = window.__iwProjectileWorldHits.slice(worldHitsStart);
-        const freshWallDrops = G.projectiles.list.filter(p => p.fidelityWallDrop &&
-          !before.some(b => b.seed === p.seed && b.wallDrop));
-        const wallDropReceipts = [];
-        for (const p of freshWallDrops) {
-          // beginFidelityWallDrop leaves the native head exactly 0.025 units
-          // out from the real contact. Pair the native world hit with that head.
-          const contact = worldHits.find(hit => {
-            const dx = p.pos.x - hit.point[0], dy = p.pos.y - hit.point[1], dz = p.pos.z - hit.point[2];
-            return hit.block >= 0 && hit.face >= 0 &&
-              Math.abs(hit.radius - p.inkProfile?.collision?.field) < 1e-6 &&
-              dx * dx + dy * dy + dz * dz < 0.04 * 0.04;
-          });
-          if (!contact) continue;
-          wallDropReceipts.push({
-            route: 'InkFlightRuntime.world -> beginFidelityWallDrop',
-            type: p.type, weapon: p.wid || p.inkKey || null, seed: p.seed, age: p.age,
-            pos: contact.point, normal: contact.normal, block: contact.block,
-            face: contact.face, distance: contact.dist, retainedWallDrop: true,
-          });
-        }
         return { before, afterCount: G.projectiles.list.length, retired: before.filter(p => !after.has(p.seed)), paintQuads: G.paint.quads,
           attempts: window.__iwProjectileImpactAttempts.slice(attemptsStart),
-          heads: G.projectiles.list.map(p => ({ type: p.type, ghost: !!p.ghost, age: p.age, phase: p.inkPhase ?? null, headFrame: p.inkFrame ?? null, pos: p.pos.toArray(), vel: p.vel.toArray() })),
+          heads: G.projectiles.list.map(p => ({ type: p.type, ghost: !!p.ghost, age: p.age, phase: p.inkPhase ?? null,
+            headFrame: p.inkFrame ?? null, pos: p.pos.toArray(), vel: p.vel.toArray(),
+            wallDrop: p.fidelityWallDrop ? { frame: p.fidelityWallDrop.frame, done: p.fidelityWallDrop.done } : null })),
           headImpacts: G.projectiles.inkFlight?.stats?.headImpacts ?? null,
-          surfaceHits: [...window.__iwProjectileSurfaceHits.slice(surfaceHitStart), ...wallDropReceipts],
-          worldHits, freshWallDrops: freshWallDrops.map(p => ({ seed: p.seed, frame: p.fidelityWallDrop?.frame ?? null })),
+          surfaceHits: window.__iwProjectileSurfaceHits.slice(surfaceHitStart),
+          catalogSteps: window.__iwProjectileCatalogSteps.slice(catalogStepStart),
           paintCoverage: G.paint.coverage?.() ?? null, fx: G.fx.stats?.() ?? null };
       });
-      flightHistory.push({ frame, heads: row.heads, retired: row.retired, attempts: row.attempts, headImpacts: row.headImpacts, surfaceHits: row.surfaceHits, worldHits: row.worldHits, wallDrops: row.freshWallDrops });
+      captureFrame = frame;
+      flightHistory.push({ frame, heads: row.heads, retired: row.retired, attempts: row.attempts,
+        headImpacts: row.headImpacts, surfaceHits: row.surfaceHits });
       if (flightHistory.length > 12) flightHistory.shift();
       const expectedContact = scenario.impact === 'wall'
-        ? row.surfaceHits.find(hit => hit.normal && hit.face >= 0 && Math.abs(hit.normal[1]) < 0.45)
-        : row.surfaceHits.find(hit => hit.normal && hit.normal[1] > 0.68);
+        ? row.surfaceHits.find(hit => hit.route === 'InkFlightRuntime.world' &&
+          hit.wallDropTransition?.valid === true && hit.nativeStageContact === true &&
+          hit.stageFace?.wall === true && hit.normal && Math.abs(hit.normal[1]) < 0.45 &&
+          hit.block === setup.wall?.block && hit.face === setup.wall?.face &&
+          hit.normal.reduce((sum, value, i) => sum + value * setup.wall.normal[i], 0) > 0.9)
+        : row.surfaceHits.find(hit => hit.route === 'Projectiles._impact' && hit.retired === true && hit.nativeStageContact === true &&
+          hit.stageFace && hit.normal && hit.normal[1] > 0.68 && hit.impactPaintContact?.valid === true &&
+          hit.impactPaintContact.cpuFace === hit.face);
       if (expectedContact) { impactFrame = frame; impactState = row; impactEvidence = expectedContact; }
       if (impactFrame != null && frame >= impactFrame + 8) break;
-      // One actual shooter head is born for the wall receipt. If it is retired
-      // before producing a native stage hit, waiting 120 more 3D frames cannot
-      // resurrect it. Fail immediately with its observed native trajectory.
+      // One controller-fired native projectile is used for the wall receipt.
+      // If it retires before an admitted face hit, later frames cannot recover it.
       if (scenario.impact === 'wall' && !row.afterCount && impactFrame == null) break;
     }
-    if (impactFrame == null) throw new Error(scenario.name + ': no native stage-surface collision with an in-range face/normal was observed; native diagnostics ' +
+    if (impactFrame == null) throw new Error(scenario.name + ': no native stage-surface collision with an in-range face/normal and matching production transition; diagnostics ' +
       JSON.stringify({ wall: setup.wall, births: born, flightHistory }));
-    const capture = await renderAndCapture(page, scenario.name, `${scenario.impact}-impact-F${impactFrame}`, scenario.impact === 'wall' ? 'side' : 'shoulder', scenario.seed);
-    report.visualScenarios.push({ name: scenario.name, seed: scenario.seed, setup, births: born, impactFrame, impactState, impactEvidence, capture,
+    const capture = await renderAndCapture(page, scenario.name, `${scenario.impact}-contact-F${impactFrame}-capture-F${captureFrame}`, scenario.impact === 'wall' ? 'side' : 'shoulder', scenario.seed);
+    report.visualScenarios.push({ name: scenario.name, seed: scenario.seed, setup, births: born, impactFrame, captureFrame,
+      elapsedSinceImpactFrames: captureFrame - impactFrame, impactState, impactEvidence, capture,
       evidence: scenario.impact === 'wall'
-        ? 'native world sweep struck the wall and the projectile entered retained WallDrop (or terminal impact was recorded)'
-        : 'native world impact path received a stage Hit with an upward floor-like normal and valid face' });
+        ? 'The actor controller fired the legacy shooter; InkFlightRuntime.world returned the chosen valid live-stage Hit, and the same step entered the retained fidelityWallDrop phase at hit.point + hit.normal × 0.025.'
+        : 'Projectiles._impact received a validated native floor Hit; its scoped impact paint matched the source .14-normal offset and CPU PaintSystem recorded the same live face.' });
   }
 }
 
@@ -738,7 +1008,12 @@ async function runFiringPerformance({ mobile = false } = {}) {
   });
   const metricMap = rows => Object.fromEntries(rows.metrics.map(x => [x.name, x.value]));
   const a = metricMap(cdpBefore), b = metricMap(cdpAfter), delta = {};
-  for (const key of ['TaskDuration', 'ScriptDuration', 'LayoutDuration', 'RecalcStyleDuration', 'JSHeapUsedSize', 'Nodes', 'Documents']) {
+  const selectedMetrics = ['TaskDuration', 'ScriptDuration', 'LayoutDuration', 'RecalcStyleDuration', 'JSHeapUsedSize', 'Nodes', 'Documents'];
+  const cdpAbsolute = {
+    before: Object.fromEntries(selectedMetrics.filter(key => Number.isFinite(a[key])).map(key => [key, a[key]])),
+    after: Object.fromEntries(selectedMetrics.filter(key => Number.isFinite(b[key])).map(key => [key, b[key]])),
+  };
+  for (const key of selectedMetrics) {
     if (Number.isFinite(a[key]) && Number.isFinite(b[key])) delta[key] = b[key] - a[key];
   }
   const rAF = summary(measured.rAF), cpu = summary(measured.frameCpuMs), proj = summary(measured.projectileCpuMs), render = summary(measured.renderCpuMs), gpu = summary(measured.gpuRenderMs);
@@ -786,6 +1061,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
     browser: await page.evaluate(() => navigator.userAgent), fps, nativeLoopFrameMs: loopFrameMs, rAFms: rAF, frameCpuMs: cpu, projectileCpuMs: proj, renderCpuMs: render,
     gpuRenderMs: gpu, gpuTimer: measured.gpuTimer, gpuDisjoint: measured.gpuDisjoint,
     renderer: measured.renderer, maxProjectiles: measured.maxProjectiles, gameplay: measured.game,
+    cdpAbsolute,
     cdpDeltas: delta,
     garbageCollection: gcSummary,
     notes: ['Long-firing window uses the normal live match loop and debug fire input.', 'GPU time is EXT_disjoint_timer_query when exposed; unavailable/disjoint is reported as such.', 'V8/devtools.timeline GC tracing runs over the same firing window and adds instrumentation overhead to both builds.', 'Chromium mobile emulation is not native Android.'],

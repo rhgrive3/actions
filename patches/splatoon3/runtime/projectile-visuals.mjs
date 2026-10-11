@@ -18,6 +18,12 @@ const DT = 1 / HISTORY_HZ, EPS = 1e-9;
 const sqrt=Math.sqrt,abs=Math.abs,min=Math.min,max=Math.max,sin=Math.sin,cos=Math.cos,pow=Math.pow,isFiniteNumber=Number.isFinite;
 const RINGS = 13, SIDES = 12, BODY_VERTICES = RINGS * SIDES;
 const SECTION_COS=new Float64Array(SIDES),SECTION_SIN=new Float64Array(SIDES),SECTION_ANGLE=new Float64Array(SIDES);
+const HISTORY_FRACTION=new Float64Array(RINGS);
+// End-cap rings share their history endpoint. Only the middle rings sweep the
+// retained path, so a fast round cannot stretch its rounded cap into a spear.
+// This radius-sized surface construction is an INKWAVE approximation; it does
+// not change source radii, history duration or authoritative projectile state.
+for(let ring=0;ring<RINGS;ring++)HISTORY_FRACTION[ring]=max(0,min(1,(ring-2)/(RINGS-5)));
 for(let i=0;i<SIDES;i++){SECTION_ANGLE[i]=i/SIDES*Math.PI*2;SECTION_COS[i]=cos(SECTION_ANGLE[i]);SECTION_SIN[i]=sin(SECTION_ANGLE[i]);}
 const SHAPE_PROFILES=Object.create(null);
 for(const kind of ['shooter','bubble','explosive','spiral','bucket-front','bucket-rear','roller-horizontal','roller-vertical','tri-sheet','paired-sheet']) {
@@ -374,9 +380,9 @@ export class ProjectileVisualRuntime {
     const c=this.centers,w=this.widths,t=this.thicknesses,profile=SHAPE_PROFILES[kind]||SHAPE_PROFILES.shooter;
     if(profile.sphere)h.sample(end,this.sample);
     for(let ring=0;ring<RINGS;ring++) {
-      const u=ring/(RINGS-1), o=ring*6;
+      const o=ring*6;
       if(profile.sphere){for(let j=0;j<6;j++)c[o+j]=this.sample[j];}
-      else h.sample(start+(end-start)*u,c,o);
+      else h.sample(start+(end-start)*HISTORY_FRACTION[ring],c,o);
       const axial=radius*profile.axial[ring];
       if(axial!==0) {
         const vx=c[o+3],vy=c[o+4],vz=c[o+5],scale=axial/(sqrt(vx*vx+vy*vy+vz*vz)||1);
@@ -457,6 +463,9 @@ export class ProjectileVisualRuntime {
     let start=age;
     if(kind==='shooter')start=Math.max(0,age-projectileTailFrames(p)*DT);
     else if(kind!=='bubble'&&kind!=='explosive'&&kind!=='spiral') {
+      // Missing tail fields (notably Roller/Brush) use an authored 5F history
+      // window and 0..4 world-unit bounds. These are not recovered defaults;
+      // Bucket's explicit same-number fields do not establish Roller timing.
       const d=tailLimits(p),solid=finite(d?.tailSolidTime,finite(d?.TailSolidFrame,5)/HISTORY_HZ);
       const min=finite(d?.tailMin,finite(d?.TailLengthMin,0)),max=finite(d?.tailMax,finite(d?.TailLengthMax,4));
       start=Math.max(h.oldestAge,age-solid);
