@@ -34,6 +34,33 @@ export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
       vis.length = 0;`,
       'retire scratch references immediately after reflection render');
   }
+  // The same heading angle is used twice per boat/bird (position and
+  // orientation). Reuse its trig values inside the same frame and preserve
+  // multiplication order, motion cadence, and every uploaded matrix.
+  if (rel === 'src/world/environment.js') {
+    patch(
+      `      const a = s.a + s.w * t;
+      const x = Math.cos(a) * s.d, z = Math.sin(a) * s.d;
+      const heading = Math.atan2(-Math.sin(a) * Math.sign(s.w), Math.cos(a) * Math.sign(s.w));`,
+      `      const a = s.a + s.w * t;
+      const ca = Math.cos(a), sa = Math.sin(a);
+      const x = ca * s.d, z = sa * s.d;
+      const heading = Math.atan2(-sa * Math.sign(s.w), ca * Math.sign(s.w));`,
+      'share sailboat heading sine and cosine');
+    patch(
+      `      const a = g.a0 + g.w * t;
+      const x = g.cx + Math.cos(a) * g.r, z = g.cz + Math.sin(a) * g.r;
+      const y = g.h + Math.sin(t * 0.4 + g.a0) * 1.5;
+      const dir = Math.sign(g.w);
+      const yaw = Math.atan2(-Math.sin(a) * dir, Math.cos(a) * dir);`,
+      `      const a = g.a0 + g.w * t;
+      const ca = Math.cos(a), sa = Math.sin(a);
+      const x = g.cx + ca * g.r, z = g.cz + sa * g.r;
+      const y = g.h + Math.sin(t * 0.4 + g.a0) * 1.5;
+      const dir = Math.sign(g.w);
+      const yaw = Math.atan2(-sa * dir, ca * dir);`,
+      'share gull heading sine and cosine');
+  }
   if (rel === 'src/ui/hud.js') {
     // The live minimap's two display sizes previously created a new fit()
     // closure and two temporary arrays every HUD update. Same scalars and
