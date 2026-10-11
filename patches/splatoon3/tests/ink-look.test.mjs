@@ -5,7 +5,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from '../../network-replication/tests/robustness-fixture.mjs';
-import { INK_LOOK, SHOT_ROD_MIN, fidelityInkTail } from '../runtime/weapons-fidelity.mjs';
+import { fixture as sourceFixture } from './source-fixture.mjs';
+import { INK_LOOK, SHOT_TAIL_FRAMES_DEFAULT, fidelityInkTail } from '../runtime/weapons-fidelity.mjs';
 
 function round(f, type, extra = {}) {
   const p = f.projectiles._new();
@@ -27,7 +28,7 @@ test('each projectile kind writes its own look; the slosher sheet is narrower an
   ['shot', 'drop', 'slosh', 'blast'].forEach((kind, k) => {
     const i = heads[k], L = INK_LOOK[kind];
     assert.deepEqual([look[i * 4], look[i * 4 + 1], look[i * 4 + 2]].map(v => +v.toFixed(4)), L.slice(0, 3).map(v => +v.toFixed(4)), kind);
-    const want = kind === 'shot' ? SHOT_ROD_MIN / (0.2 * L[4]) : Math.max(1, 1 + (1 * L[3] - 1) / L[4]);
+    const want = kind === 'shot' ? 30 * SHOT_TAIL_FRAMES_DEFAULT / 60 / (0.2 * L[4]) : Math.max(1, 1 + (1 * L[3] - 1) / L[4]);
     assert.ok(Math.abs(shp[i * 4] - want) < 1e-6, kind + ' tail: ' + shp[i * 4] + ' != ' + want);
   });
   assert.equal(P.blobs.count, 10, 'the slosher sheet has no trailing beads');
@@ -50,20 +51,26 @@ test('the blob shader consumes aInkLook (spikes + vertical-thin cross-section)',
   assert.equal(f.projectiles.blobs.material.customProgramCacheKey(), 'iw-blob-5-ink-look');
 });
 
-test('a Shooter round is a rod joined to the muzzle through its straight phase, then contracts', async () => {
+test('a Shooter round rod is its tail: MaxLengthFrame frames of travel behind the head, never behind the muzzle', async () => {
   const f = await fixture();
   const look = INK_LOOK.shot, r = 0.1 * look[4];
   assert.ok(look[1] < 0, 'shot uses the rod body');
-  const p = round(f, 'shot', { straight: 4 / 60, vis: 0.1 });
-  p.pos.set(0, 1, 6.8);
-  p.age = 3 / 60;
-  assert.ok(Math.abs(fidelityInkTail(p, 1, r, look) * r - 6.8) < 1e-9, 'straight phase: rod reaches the launch point');
-  p.age = 4 / 60 + 0.05;
-  assert.ok(Math.abs(fidelityInkTail(p, 1, r, look) * r - (6.8 * 0.5 + SHOT_ROD_MIN * 0.5)) < 1e-9, 'half contracted');
-  p.age = 0.5;
-  assert.ok(Math.abs(fidelityInkTail(p, 1, r, look) * r - SHOT_ROD_MIN) < 1e-9, 'contracted to the short streak');
-  p.pos.set(0, 1, 0.2); p.age = 1 / 60;
-  assert.ok(Math.abs(fidelityInkTail(p, 1, r, look) * r - 0.2) < 1e-9, 'never reaches behind the launch point');
+  const p = round(f, 'shot', { vis: 0.1, wid: 'shooter' });
+  p.vel.set(0, 0, 136);
+  p.pos.set(0, 1, 2.2); // first frame: still joined to the launch point
+  assert.ok(Math.abs(fidelityInkTail(p, 1, r, look) * r - 2.2) < 1e-9);
+  p.pos.set(0, 1, 9);   // past two frames of travel: a detached rod of that length
+  assert.ok(Math.abs(fidelityInkTail(p, 1, r, look) * r - 136 * 2 / 60) < 1e-9);
+  p.vel.set(0, -10, 60); // braking/falling: the rod shortens with the speed
+  assert.ok(Math.abs(fidelityInkTail(p, 1, r, look) * r - Math.hypot(10, 60) * 2 / 60) < 1e-9);
+  // Production composition: the installed runtime reads the pinned Splatling MaxLengthFrame 3.
+  const g = await sourceFixture({ productionComposition: true, realProjectiles: true, fullRuntime: true,
+    extraExports: "export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';" });
+  assert.equal(g.profile.weaponsFidelityCompletion.weapons.splatling.spl__BulletShooterTailLengthParam.MaxLengthFrame, 3);
+  const s = { type: 'shot', wid: 'splatling', start: new g.THREE.Vector3(0, 1, 0), pos: new g.THREE.Vector3(0, 1, 20), vel: new g.THREE.Vector3(0, 0, 120) };
+  assert.ok(Math.abs(g.fidelityInkTail(s, 1, r, look) * r - 120 * 3 / 60) < 1e-9, 'Splatling uses the sourced MaxLengthFrame 3');
+  s.wid = 'shooter';
+  assert.ok(Math.abs(g.fidelityInkTail(s, 1, r, look) * r - 120 * 2 / 60) < 1e-9, 'Shooter falls back to the measured 2 frames');
   assert.equal(fidelityInkTail({ type: 'drop' }, 3, r, INK_LOOK.drop), 3 * INK_LOOK.drop[3]);
   assert.ok(Math.abs(fidelityInkTail({ type: 'slosh' }, 3, r, INK_LOOK.slosh) - (1 + 2 / INK_LOOK.slosh[4])) < 1e-12, 'slosh keeps the sourced length beyond the narrower head');
 });

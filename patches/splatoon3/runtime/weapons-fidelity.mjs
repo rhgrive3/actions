@@ -1014,9 +1014,9 @@ export function fidelitySlosherDrawRadius(p) {
 // Airborne ink silhouette (render only; collision, paint and packets are
 // untouched). Splatoon 3 footage (Inkipedia "S3 About videos" Splattershot /
 // Slosher, Nintendo official turf-war clip) shows no round balls:
-// - a Shooter round is a long smooth rod of ink still joined to the muzzle
-//   for its straight phase, then it contracts behind the head while the
-//   SplashSpawn drops along the path fly as flat jagged splinters;
+// - a Shooter round is a long smooth constant-width rod of ink (its tail,
+//   see shotTailFrames) while the SplashSpawn drops along the path fly as
+//   flat jagged splinters;
 // - Roller/Brush flicks are spiky splash crowns;
 // - a Slosher throw is one broad thin sheet without detached beads.
 // Each entry is [spike amplitude (head radii), spike count, cross-section
@@ -1036,20 +1036,32 @@ export const INK_LOOK=Object.freeze({
   droplet:Object.freeze([1.3,6,0.35,1.5,2.2,1]),
   none:Object.freeze([0,1,1,1,1,1]),
 });
-export const SHOT_ROD_MIN=0.6, SHOT_ROD_CONTRACT=0.1;
-// Back length (in drawn head radii) for the instanced blob. Shooter-family
-// rounds: the rod reaches back to the launch point through the straight
-// phase (p.straight, the source straight frames), then contracts to
-// SHOT_ROD_MIN over SHOT_ROD_CONTRACT seconds. Others: the native tail scaled
-// by the look; under a width scale the length beyond the drawn head stays
-// the same world length (the Slosher's sourced TailLength window).
+// Shooter-family tail (rod) length. Splatoon 3 keeps a separate tail end per
+// round: spl__BulletShooterTailLengthParam.MaxLengthFrame (Splatling family
+// 3 in the pinned 11.3.0 tables; Crab Tank also has DelayShotFrame and
+// EndMaxLength), and Splatoon 2 3.1.0's symbol list names the tail-end states
+// Game::BulletShooterBase::stateMuzzleTail / GoStraightTail / BrakeTail /
+// FreeTail and updateTailPos (names only; their bodies are not decompiled).
+// Read together: the tail end waits at the muzzle, then follows the round's
+// own straight/brake/free path MaxLengthFrame frames behind it. INKWAVE draws
+// that as a straight rod whose back reaches the distance the round covers in
+// MaxLengthFrame frames at its current speed, never behind the launch point.
+// The Shooter/Dualies default is absent from the sparse tables: 2 frames is
+// measured from the 60 fps Splattershot clip (joined to the muzzle for two
+// frames, its back one frame of travel past the muzzle on the third), not a
+// sourced value.
+export const SHOT_TAIL_FRAMES_DEFAULT=2;
+export function shotTailFrames(p) {
+  const v=completion?.weapons?.[p?.wid]?.spl__BulletShooterTailLengthParam?.MaxLengthFrame;
+  return Number.isFinite(v)&&v>0?v:SHOT_TAIL_FRAMES_DEFAULT;
+}
+// Back length (in drawn head radii) for the instanced blob. Others: the
+// native tail scaled by the look; under a width scale the length beyond the
+// drawn head stays the same world length (the Slosher's sourced TailLength).
 export function fidelityInkTail(p,tail,drawnRadius,look) {
   if(p?.type!=='shot'||!(drawnRadius>0)||!p.start||!p.pos)return Math.max(1,1+(tail*look[3]-1)/look[4]);
-  const travel=p.start.distanceTo(p.pos),age=Math.max(0,p.age||0);
-  const straight=Number.isFinite(p.straight)&&p.straight>0&&p.straight<1?p.straight:4/60;
-  const k=Math.min(1,Math.max(0,(age-straight)/SHOT_ROD_CONTRACT));
-  const rod=Math.max(Math.min(travel,SHOT_ROD_MIN),travel*(1-k)+SHOT_ROD_MIN*k);
-  return Math.max(1,rod/drawnRadius);
+  const travel=p.start.distanceTo(p.pos),speed=p.vel?p.vel.length():0;
+  return Math.max(1,Math.min(travel,speed*shotTailFrames(p)/60)/drawnRadius);
 }
 export function fidelityInkLook(p) {
   return INK_LOOK[p?.type]??INK_LOOK.none;
