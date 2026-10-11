@@ -127,8 +127,12 @@ function aimPoint(rt, actor, range = 22, out = rt.v0) {
 function groundAt(rt, point, out = rt.v2) {
   out.copy(point);
   if (rt.api.G.physics?.raycast) {
-    const from = rt.v3.copy(point); from.y += 24;
-    const result = rt.api.G.physics.raycast(from, rt.down, 60, rt.hit, true);
+    // The caller may use rt.v3 as its output, so the probe cannot share it.
+    const from = (rt.groundProbe ||= point.clone()).copy(point); from.y += .25;
+    // Preserve an already contacted surface before considering a distant floor.
+    // A broad ray from 24 WU above could jump to an unrelated upper storey.
+    let result = rt.api.G.physics.raycast(from, rt.down, .5, rt.hit, true);
+    if(!result?.hit){from.copy(point);from.y+=24;result=rt.api.G.physics.raycast(from,rt.down,60,rt.hit,true);}
     if (result?.hit && result.point && [result.point.x,result.point.y,result.point.z].every(finite)) return out.copy(result.point).addScaledVector(result.normal || rt.up, .08);
   }
   const g = rt.api.G.level?.groundHeight?.(point.x, point.z, point.y + 12);
@@ -150,6 +154,10 @@ function projectileDescriptor(id) {
     status: SPECIALS[id].status,
   };
 }
+function directProjectileDescriptor(id, radius) {
+  return { ...projectileDescriptor(id), type: 'shot', splashRadius: 0,
+    burstRadius: 0, splashBands: [], impactRadius: radius, paintRadius: radius };
+}
 function launch(rt, actor, id, origin, direction, opts = {}) {
   const system = rt.api.G.projectiles;
   if (!system?._new || !system?._push || actor.remote) return null;
@@ -170,9 +178,13 @@ function launch(rt, actor, id, origin, direction, opts = {}) {
   p.pos.copy(origin); p.prev.copy(origin); p.start.copy(origin);
   p.vel.copy(dir).multiplyScalar(speed);
   if (opts.arc) p.vel.y += opts.arc;
-  p.s3SpecialWeapon = opts.directOnly ? null : descriptor;
+  // Direct rounds still need a special identity so main-weapon wrappers cannot
+  // substitute the owner's gravity, collision, flight paint or weapon id.
+  p.s3SpecialWeapon = opts.directOnly ? directProjectileDescriptor(id, opts.radius ?? .22) : descriptor;
+  p.wid = id;
   p.s3Weapon = opts.weapon || p.s3SpecialWeapon || { id, kind: 'special', special: id };
   p.s3AllSpecial = id;
+  p.s3PaintNoSpecial = true;
   p.s3AllSpecialPaintRadius = opts.paintRadius ?? descriptions[id].paintRadius ?? 0;
   p.s3AllSpecialActivation = actorStates.get(actor)?.serial || 0;
   p.s3AllSpecialSeed = normalizedSeed(opts.seed || 0);
@@ -196,13 +208,23 @@ function paintDisk(rt, actor, point, radius, seed) {
   // Cluster ordinary network-admissible stamps; do not emit one over-limit paint
   // row, which the public replication owner correctly rejects.
   const spacing = 2.82, rowZ = spacing * Math.sqrt(3) / 2, inset = .2;
+  // Tile in the nearby contact plane. Keeping every tile at the same world Y
+  // leaves large holes on slopes; projecting each tile from above can instead
+  // jump between disconnected floors. The short probe avoids both mistakes.
+  const normal=rt.up.clone(), from=point.clone();from.y+=.25;
+  const contact=rt.api.G.physics?.raycast?.(from,rt.down,.5,rt.hit,true);
+  if(contact?.hit&&contact.normal?.y>.4)normal.copy(contact.normal).normalize();
+  const tangent=new rt.api.THREE.Vector3(1,0,0).addScaledVector(normal,-normal.x).normalize();
+  const bitangent=new rt.api.THREE.Vector3().crossVectors(tangent,normal).normalize();
   let area = 0, index = 0;
   for (let row = -Math.ceil(radius / rowZ); row <= Math.ceil(radius / rowZ); row++) {
     const z = row * rowZ, shift = row & 1 ? spacing * .5 : 0;
     for (let col = -Math.ceil(radius / spacing); col <= Math.ceil(radius / spacing); col++) {
       const x = col * spacing + shift;
       if (Math.hypot(x,z) > radius - inset) continue;
-      const at = rt.v4.set(q2(point.x+x), q2(point.y), q2(point.z+z));
+      const at = rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);
+      at.set(q2(at.x),q2(at.y),q2(at.z));
+
       const s = seedUnit(seed, index++);
       const got = rt.api.G.paint.splat(at, MAX_STAMP_RADIUS, actor.team,
         { seed: s, claimOwner: actor, claimMode: 'no-special' });
@@ -1122,7 +1144,16 @@ function installRuntime(api) {
     }
     return damage.call(this,amount,attacker,source);
   };
-  const P=Projectiles.prototype,update=P.update,clear=P.clear,baseCandidate=P.kitDefenseCandidate,blast=P._blastBurst;
+  const P=Projectiles.prototype,update=P.update,clear=P.clear,baseCandidate=P.kitDefenseCandidate,blast=P._blastBurst,newProjectile=P._new;
+  // Projectiles are pooled: every field owned by this module must expire on reuse.
+  P._new=function(...args){
+    const p=newProjectile.apply(this,args);
+    p.s3AllSpecial=null;p.s3AllSpecialPaintRadius=0;p.s3AllSpecialActivation=0;
+    p.s3AllSpecialSeed=0;p.s3AllSpecialMode=null;p.s3PaintNoSpecial=false;
+    p.s3DamageReduce=null;p.s3TentaTarget=null;p.s3TentaAge=0;
+    p.s3TentaDescending=false;p.s3TentaDirection=null;
+    return p;
+  };
   P.update=function(dt){
     rt.system=this;updateWorld(rt,dt);
     for(const p of this.list||[]){
@@ -1164,7 +1195,8 @@ function installRuntime(api) {
     const current=api.SPECIALS[id]||{id,name:definition.name};
     Object.assign(current,{id,name:definition.name,duration:Array.isArray(definition.duration)?definition.duration[1]:definition.duration,
       radius:definition.radius,mechanicsInstalled:true,reference:`Leanny/splat3 11.3.0 ${definition.source}`,status:definition.status,
-      projectileDescriptor:p=>projectileDescriptor(id)});
+      projectileDescriptor:p=>id==='crabTank'&&p?.type==='shot'
+        ? directProjectileDescriptor(id,finite(p.radius)?p.radius:.22) : projectileDescriptor(id)});
     api.SPECIALS[id]=current;
   }
   api.allSpecialObjectCandidate=(p,startPoint,endPoint)=>candidate(rt,p,startPoint||p?.prev,endPoint||p?.pos);

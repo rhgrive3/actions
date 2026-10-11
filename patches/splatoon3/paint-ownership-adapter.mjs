@@ -75,11 +75,19 @@ export function adaptPaintOwnership(rel, code, replaceOnce) {
       ['0.7 + Math.random() * 0.5, b.team, { seed: Math.random() });', '0.7 + Math.random() * 0.5, b.team, { seed: Math.random(), claimOwner: b.owner });', 'bomb satellite ownership credit'],
       ["rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random() }));", "rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random(), claimOwner: p.owner }));", 'projectile trail ownership credit'],
       ['stretchAmt: paint?.stretchAmt ?? 1.25 });', 'stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner });', 'slosher impact ownership credit'],
-      ['stretchAmt: 0.7 });', 'stretchAmt: 0.7, claimOwner: p.owner });', 'projectile impact ownership credit'],
-      ['w.impactRadius, p.team, { seed: Math.random() }', 'w.impactRadius, p.team, { seed: Math.random(), claimOwner: p.owner }', 'blaster burst ownership credit'],
+      ['stretchAmt: 0.7 });', "stretchAmt: 0.7, claimOwner: p.owner, claimMode: (p.s3SpecialWeapon || p.s3PaintNoSpecial) ? 'no-special' : undefined });", 'projectile impact ownership credit'],
+      ['w.impactRadius, p.team, { seed: Math.random() }', "w.impactRadius, p.team, { seed: Math.random(), claimOwner: p.owner, claimMode: (p.s3SpecialWeapon || p.s3PaintNoSpecial) ? 'no-special' : undefined }", 'blaster burst ownership credit'],
       ["c.team, { seed: Math.random() }));", "c.team, { seed: Math.random(), claimOwner: c.owner }));", 'special rain ownership credit'],
     ];
     for (const [before, after, label] of edits) code = replaceOnce(code, before, after, label);
+    code = replaceOnce(code,
+      'if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius',
+      "if (g.hit) p.owner[(p.s3SpecialWeapon || p.s3PaintNoSpecial) ? 'addTurfNoSpecial' : 'addTurf'](G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius",
+      'special projectile burst cannot charge its own special gauge');
+    code = replaceOnce(code,
+      'if (area != null) p.owner.addTurf(area);',
+      "if (area != null) p.owner[(p.s3SpecialWeapon || p.s3PaintNoSpecial) ? 'addTurfNoSpecial' : 'addTurf'](area);",
+      'special projectile terrain impact preserves no-special credit');
   }
 
   if (rel === 'src/game/actor.js') {
