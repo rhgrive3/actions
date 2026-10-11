@@ -1,3 +1,5 @@
+import { catalogSplashDropSpec } from './catalog-splash-paint.mjs';
+import { spawnSplashDrop } from './blaster-flight-paint.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
 import { CANONICAL_KITS } from './canonical-kits-data.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
@@ -303,6 +305,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (r.family==='charger') radius=full?finite(paintParam.RadiusFullCharge,1):lerp(finite(paintParam.RadiusMinCharge,.9),finite(paintParam.RadiusMaxCharge,2.7),charge);
     return {key,unit,index,charge,packet,b,m,d,c,speed,damage,life,range,radius,
       depth:finite(paintParam.DepthScaleMax,finite(paintParam.DepthScaleNear,1)),
+      splashDropSpec:catalogSplashDropSpec(b),
+      splashFirst:Math.max(0,finite(splash.SpawnNearestLength,1)),
       splashRadius:finite(b.SplashPaintParam?.WidthHalf,finite(sloshSplash?.DrawSizeCollisionPaintParam?.PaintWidthHalf,.4)),
       splashSpacing:finite(splash.DropInterval,finite(splash.SpawnBetweenLength,3)),
       splashCount:Math.max(0,Math.ceil(finite(splash.SplashNumMax,finite(splash.SpawnNum,0))))};
@@ -314,7 +318,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       trail:0,trailEvery:0,trailRadius:0,grav:0,drag:0,seed:Math.random(),ghost:!!options.ghost,
       delay:finite(options.delay,0),vis:.1,tail0:.8,tailK:1.3,wob:.02,wobF:26,nose:.3,sats:0,
       inkMeta:{s3Catalog:[1,descriptor.key,descriptor.unit,descriptor.charge,options.index||0]},
-      catalog:{r,descriptor,travel:0,nextSplash:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
+      catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0}});
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
     p.vel.y += finite(options.lift,0);
@@ -517,6 +521,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     while(s.carry+EPS>=DT){
       s.carry=Math.max(0,s.carry-DT);
       if(s.stuck){s.fuse-=DT;if(s.fuse<=EPS){explosion(this,p,d.b.DetonationParam.BlastParam);return true;}continue;}
+      const travelBefore=s.travel;
       advance(p);
       const shapes=lobes(p),len=p.prev.distanceTo(p.pos);
       let world=s.hit;world.hit=false;
@@ -548,6 +553,21 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const count=Math.ceil(p.prev.distanceTo(end)/spacing);
         for(let i=0;i<count;i++)floorPaint(p.owner,p.prev.clone().lerp(end,(i+1)/count),d.radius);
       }
+      // Admit every crossed release distance on the unobstructed part of this
+      // fixed simulation step, including the final segment before a collision.
+      // Restrict this to records with explicit falling-splash physics; other
+      // families keep their existing unverified projection path.
+      if(!p.ghost&&d.splashDropSpec&&len>EPS){
+        const lifeTravel=travelBefore+p.vel.length()*clamp(p.life-(p.age-DT),0,DT);
+        const endTravel=Math.min(s.travel,lifeTravel,travelBefore+len*clamp(Math.min(1,stop)));
+        const direction=p.vel.clone().setY(0).normalize();
+        while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
+          const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
+          spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
+            from,direction,radius:d.splashRadius,spec:d.splashDropSpec,depth:true});
+          s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
+        }
+      }
       if(stop<=1){
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
@@ -561,8 +581,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(boss){if(!p.ghost)G.boss.hit(p.owner,impactDamage(p,boss.target||G.boss),boss.target,p.wid,p.pos.clone());return true;}
         if(finishContact(this,p,world))return true;
       }
-      if(!p.ghost&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){
-        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,p.vel.clone().setY(0).normalize());
+      if(!p.ghost&&!d.splashDropSpec&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){
+        const direction=p.vel.clone().setY(0).normalize();
+        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction);
         s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
       }
       if(p.age+EPS>=p.life||s.travel+EPS>=s.range){
@@ -579,7 +600,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const allowed=['normal','blaster-jump','variable','turret','horizontal','vertical','brush','slosh','pellet','arrow','saber-horizontal','saber-vertical'];
     if(p&&r&&!r.legacy&&Array.isArray(meta)&&meta.length===5&&meta[0]===1&&allowed.includes(meta[1])&&
       Number.isSafeInteger(meta[2])&&meta[2]>=0&&meta[2]<30&&Number.isFinite(meta[3])&&meta[3]>=0&&meta[3]<=1){
-      try {const d=mode(r,meta[1],meta[2],meta[3]);p.catalog={r,descriptor:d,travel:0,nextSplash:1,dropCount:0,
+      try {const d=mode(r,meta[1],meta[2],meta[3]);p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
         hit:new Hit(),seen:new Set(),index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0};}
       catch { /* malformed visual packet cannot create a gameplay object */ }
     }return result;
