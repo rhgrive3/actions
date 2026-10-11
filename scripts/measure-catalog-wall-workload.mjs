@@ -43,7 +43,13 @@ try{
     // both raw values and their sum so external buffers cannot hide as a win.
     h.usedPlusBackingStorageBytes=h.usedSize+h.backingStorageSize;
   }
-  run.imageSha256=sha(await page.screenshot({path:path.join(evidence,mode+'-'+i+'.png')}));result.runs.push(run);console.log(JSON.stringify({completedMode:mode,ordinal:i,counts:run.counts,heap:run.heap}));fs.writeFileSync(path.join(evidence,'progress.json'),JSON.stringify(result,null,2));await page.close();
+  fs.writeFileSync(path.join(evidence,'pending-run.json'),JSON.stringify(run,null,2));
+  // This fixture is a single native WebGL canvas. Read its preserved framebuffer
+  // directly rather than waiting for an idle page compositor screenshot.
+  const png=await page.evaluate(()=>{const c=document.querySelector('canvas');if(!c||c.width!==960||c.height!==600)throw Error('Missing native paint canvas');return c.toDataURL('image/png');});
+  if(!png.startsWith('data:image/png;base64,'))throw Error('Missing native canvas PNG');
+  const imageBytes=Buffer.from(png.slice('data:image/png;base64,'.length),'base64');if(imageBytes.length<100)throw Error('Empty native canvas PNG');
+  fs.writeFileSync(path.join(evidence,mode+'-'+i+'.png'),imageBytes);run.imageCapture='preserved native WebGL canvas';run.imageSha256=sha(imageBytes);result.runs.push(run);console.log(JSON.stringify({completedMode:mode,ordinal:i,counts:run.counts,heap:run.heap}));fs.writeFileSync(path.join(evidence,'progress.json'),JSON.stringify(result,null,2));await page.close();
  }
  for(const mode of ['before','after']){const rows=result.runs.filter(r=>r.mode===mode);if(rows.length!==3||rows.some(r=>r.frames.length!==240))throw Error('Missing repeated workload');if(rows.some(r=>{const stable=c=>{const {tickJsonBytes,eventArrayBytes,...rest}=c;return rest;};return JSON.stringify(stable(r.counts))!==JSON.stringify(stable(rows[0].counts));}))throw Error('Nonrepeatable work counts '+mode);}
  if(process.argv.includes('--require-equivalent-work')){const stable=c=>{const{tickJsonBytes,eventArrayBytes,...rest}=c;return rest;};const first=result.runs[0];for(const r of result.runs)if(JSON.stringify(stable(r.counts))!==JSON.stringify(stable(first.counts))||r.imageSha256!==first.imageSha256)throw Error('Optimization changed grid, events or rendered image');}
