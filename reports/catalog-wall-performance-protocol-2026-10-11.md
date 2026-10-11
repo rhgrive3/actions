@@ -13,3 +13,11 @@ Initial offline evidence motivating this gate: eight shooters/240 frames changed
 The PR trigger is restricted to the exact diagnostic head branch and instrumentation paths. PR runs use fixed baseline 74785de066e6ccd2dc1c3a588529db758c266b97 and candidate 45c73a490234cd0c593441046535c37bf2bf3355; dispatch accepts validated full SHAs. No unrelated PR starts this job.
 
 Local status: script syntax and immutable-input/workflow contract tests pass. Browser execution is not locally available under the verified sandbox restriction; no browser result is claimed. Manual CI measurements and independent variance review are required before treating the performance question as resolved.
+
+## Second phase: CPU basis cache
+
+The diagnostic now builds four immutable revisions on the same runner: adopted main 31703a906b4f19fd5f46dea08d06615113008492 versus cache e929eb71d4321a14e2bd599ffb4407a9da01e68b, then held wall-drop 45c73a490234cd0c593441046535c37bf2bf3355 versus that candidate plus cache only 834ed1e27f37491b2cfbadf69e873e395aa65fc6. Each pair retains AB/BA/AB. Grid SHA-256, row/quad/draw/cell counts and rendered PNG bytes must match across the optimization pair.
+
+The first 60 cold frames are recorded separately, including shader startup, with their CPU sub-timings; they are not mixed into warmed timing quantiles. CDP garbage collection and heap snapshots occur outside measured frames before warmup, after warmup/reset, and after the workload. These snapshots measure the whole fixture heap, not only cache memory, and preserve backing-storage information where Chrome supplies it.
+
+Transport clarification: broadcast sends one JSON message to the WebSocket relay; peer-count multiplication is relay egress, not client uplink. Each receiver receives one copy. Prefix and WebSocket/TLS/TCP/IP overhead are excluded. The first-phase raw report mentioned WebRTC in a metadata note; measured bytes came from actual NetMatch tick JSON and remain valid.

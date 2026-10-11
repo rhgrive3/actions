@@ -10,14 +10,24 @@ on:
   workflow_dispatch:
     inputs:
       baseline_sha:
-        description: Immutable pre-wall-drop commit
+        description: Immutable main/cache baseline commit
         required: true
         type: string
-        default: 74785de066e6ccd2dc1c3a588529db758c266b97
+        default: 31703a906b4f19fd5f46dea08d06615113008492
       candidate_sha:
-        description: Immutable wall-drop candidate commit
+        description: Immutable cache candidate commit
         required: true
         type: string
+      wall_baseline_sha:
+        description: Immutable wall-drop baseline commit
+        required: true
+        type: string
+        default: 45c73a490234cd0c593441046535c37bf2bf3355
+      wall_candidate_sha:
+        description: Immutable wall-drop plus cache candidate
+        required: true
+        type: string
+        default: 834ed1e27f37491b2cfbadf69e873e395aa65fc6
 permissions:
   contents: read
 jobs:
@@ -26,8 +36,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      BASELINE_SHA: ${{ inputs.baseline_sha || '74785de066e6ccd2dc1c3a588529db758c266b97' }}
-      CANDIDATE_SHA: ${{ inputs.candidate_sha || '45c73a490234cd0c593441046535c37bf2bf3355' }}
+      BASELINE_SHA: ${{ inputs.baseline_sha || '31703a906b4f19fd5f46dea08d06615113008492' }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha || 'e929eb71d4321a14e2bd599ffb4407a9da01e68b' }}
+      WALL_BASELINE_SHA: ${{ inputs.wall_baseline_sha || '45c73a490234cd0c593441046535c37bf2bf3355' }}
+      WALL_CANDIDATE_SHA: ${{ inputs.wall_candidate_sha || '834ed1e27f37491b2cfbadf69e873e395aa65fc6' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,18 +47,29 @@ jobs:
       - name: Validate immutable inputs
         run: |
           node --input-type=module - <<'JS'
-          for (const key of ['BASELINE_SHA','CANDIDATE_SHA']) if (!/^[a-f0-9]{40}$/.test(process.env[key]||'')) throw Error('Full SHA required: '+key);
+          for (const key of ['BASELINE_SHA','CANDIDATE_SHA','WALL_BASELINE_SHA','WALL_CANDIDATE_SHA']) if (!/^[a-f0-9]{40}$/.test(process.env[key]||'')) throw Error('Full SHA required: '+key);
+          if (process.env.WALL_BASELINE_SHA===process.env.WALL_CANDIDATE_SHA) throw Error('Wall revisions must differ');
           if (process.env.BASELINE_SHA===process.env.CANDIDATE_SHA) throw Error('Baseline and candidate must differ');
           JS
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.baseline_sha || '74785de066e6ccd2dc1c3a588529db758c266b97' }}
+          ref: ${{ inputs.baseline_sha || '31703a906b4f19fd5f46dea08d06615113008492' }}
           path: .wall-baseline
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.candidate_sha || '45c73a490234cd0c593441046535c37bf2bf3355' }}
+          ref: ${{ inputs.candidate_sha || 'e929eb71d4321a14e2bd599ffb4407a9da01e68b' }}
           path: .wall-candidate
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.wall_baseline_sha || '45c73a490234cd0c593441046535c37bf2bf3355' }}
+          path: .wall-extra-baseline
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.wall_candidate_sha || '834ed1e27f37491b2cfbadf69e873e395aa65fc6' }}
+          path: .wall-extra-candidate
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -62,9 +85,15 @@ jobs:
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
           node .wall-baseline/scripts/build-inkwave.mjs .wall-baseline/inkwave-public .wall-before-site
           node .wall-candidate/scripts/build-inkwave.mjs .wall-candidate/inkwave-public .wall-after-site
-          mkdir -p .wall-performance-evidence
-          cp .wall-before-site/inkwave-build.json .wall-performance-evidence/baseline-manifest.json
-          cp .wall-after-site/inkwave-build.json .wall-performance-evidence/candidate-manifest.json
+          test "$(git -C .wall-extra-baseline rev-parse HEAD)" = "$WALL_BASELINE_SHA"
+          test "$(git -C .wall-extra-candidate rev-parse HEAD)" = "$WALL_CANDIDATE_SHA"
+          node .wall-extra-baseline/scripts/build-inkwave.mjs .wall-extra-baseline/inkwave-public .wall-extra-before-site
+          node .wall-extra-candidate/scripts/build-inkwave.mjs .wall-extra-candidate/inkwave-public .wall-extra-after-site
+          mkdir -p .wall-performance-evidence/main-cache .wall-performance-evidence/wall-cache
+          cp .wall-before-site/inkwave-build.json .wall-performance-evidence/main-cache/baseline-manifest.json
+          cp .wall-after-site/inkwave-build.json .wall-performance-evidence/main-cache/candidate-manifest.json
+          cp .wall-extra-before-site/inkwave-build.json .wall-performance-evidence/wall-cache/baseline-manifest.json
+          cp .wall-extra-after-site/inkwave-build.json .wall-performance-evidence/wall-cache/candidate-manifest.json
           git rev-parse HEAD > .wall-performance-evidence/probe-sha.txt
       - name: Repeated native wall-paint A/B and B/A measurements
         run: |
@@ -73,11 +102,19 @@ jobs:
             --baseline-root .wall-baseline --candidate-root .wall-candidate \
             --baseline-site .wall-before-site --candidate-site .wall-after-site \
             --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" \
-            --evidence-dir .wall-performance-evidence
+            --require-equivalent-work --evidence-dir .wall-performance-evidence/main-cache
+      - name: Repeated wall-drop plus cache A/B measurements
+        run: |
+          node scripts/measure-catalog-wall-workload.mjs \
+            --baseline-sha "$WALL_BASELINE_SHA" --candidate-sha "$WALL_CANDIDATE_SHA" \
+            --baseline-root .wall-extra-baseline --candidate-root .wall-extra-candidate \
+            --baseline-site .wall-extra-before-site --candidate-site .wall-extra-after-site \
+            --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" \
+            --require-equivalent-work --evidence-dir .wall-performance-evidence/wall-cache
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: catalog-wall-paint-performance-${{ inputs.candidate_sha || '45c73a490234cd0c593441046535c37bf2bf3355' }}
+          name: catalog-wall-paint-performance-${{ inputs.candidate_sha || 'e929eb71d4321a14e2bd599ffb4407a9da01e68b' }}
           path: .wall-performance-evidence/
           include-hidden-files: true
           if-no-files-found: warn

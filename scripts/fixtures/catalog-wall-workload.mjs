@@ -42,12 +42,19 @@ export async function runWallWorkload(assetRoot) {
   if(i%3===2){active=measure;nm._sendTick();active=false;}
   if(gl.getError()!==gl.NO_ERROR)throw Error('WebGL error in native paint workload');return current;
  }
+ // Out-of-band garbage collection snapshots include the whole fixture heap.
+ // They are not frame timings and are not attributed solely to the cache.
+ const heapBeforeWarmup=await globalThis.__probeHeap();
  // Compile native shaders and exercise populated atlas updates before sampling.
- for(let i=0;i<60;i++)step(i,false);G.projectiles.clear();paint.clear();nm.out.splice(0);G.time=0;nm.clockT=0;for(const a of actors){a.weaponRunner.reset();a.stats.turf=0;a.special=0;a.ink=100;}gl.finish();
+ const coldFrames=[];for(let i=0;i<60;i++)coldFrames.push(step(i,true));G.projectiles.clear();paint.clear();nm.out.splice(0);G.time=0;nm.clockT=0;for(const a of actors){a.weaponRunner.reset();a.stats.turf=0;a.special=0;a.ink=100;}gl.finish();
+ active=false;totalQuads=totalAtlasDraws=totalRows=eventArrayBytes=tickJsonBytes=totalMessages=maxQueue=maxDrops=0;
+ const heapAfterWarmup=await globalThis.__probeHeap();
  const frames=[];for(let i=0;i<240;i++)frames.push(step(i,true));
  const wall=level.faces.find(f=>f.block===1&&f.n.z<-.9);const wallCells=Array.from(paint.grid.slice(wall.grid,wall.grid+wall.nu*wall.nv)).filter(Boolean).length;
  const rendererName=gl.getParameter(gl.RENDERER),ext=gl.getExtension('WEBGL_debug_renderer_info');
- const result={frames,counts:{totalQuads,totalAtlasDraws,totalRows,eventArrayBytes,tickJsonBytes,totalMessages,maxQueue,maxDrops,wallCells,floorCells:paint.counts[0]},fixture:{actors:8,firingFrames:180,settlingFrames:60,warmupFrames:60,simulationHz:60,sendHz:20,atlasSize:4096,cell:.25,viewport:[960,600],seed:.37,paintFaces:level.paintFaces?.length??level.faces.filter(f=>f.paintable).length,quality:'native level material, fixed lighting; no postprocess'},renderer:{name:rendererName,unmasked:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null},limitation:'Controlled paint-workload step, not whole-game frame or hardware GPU FPS. cpuGrowth includes nested body work; do not sum nested timing columns.'};
+ const gridSha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',paint.grid))).map(v=>v.toString(16).padStart(2,'0')).join('');
+ const heapAfterWorkload=await globalThis.__probeHeap();
+ const result={frames,coldFrames,heap:{beforeWarmup:heapBeforeWarmup,afterWarmup:heapAfterWarmup,afterWorkload:heapAfterWorkload},counts:{totalQuads,totalAtlasDraws,totalRows,eventArrayBytes,tickJsonBytes,totalMessages,maxQueue,maxDrops,wallCells,gridSha256,floorCells:paint.counts[0]},fixture:{actors:8,firingFrames:180,settlingFrames:60,warmupFrames:60,simulationHz:60,sendHz:20,atlasSize:4096,cell:.25,viewport:[960,600],seed:.37,paintFaces:level.paintFaces?.length??level.faces.filter(f=>f.paintable).length,quality:'native level material, fixed lighting; no postprocess'},renderer:{name:rendererName,unmasked:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null},limitation:'Controlled paint-workload step, not whole-game frame or hardware GPU FPS. cpuGrowth includes nested body work; do not sum nested timing columns.'};
  if(!wallCells||totalRows===0||maxQueue>=512)throw Error('Incomplete or queue-overflow workload '+JSON.stringify(result.counts));
  return result;
 }
