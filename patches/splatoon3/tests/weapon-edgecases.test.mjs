@@ -5,8 +5,8 @@ import {fixture as wireFixture,ROOT} from '../../../scripts/weapons-fixture.mjs'
 import { FixedClock } from '../runtime/clock.mjs';
 import { signedBiasSample } from '../runtime/weapon-edgecases.mjs';
 const close = (a,b,e=1e-8) => assert.ok(Math.abs(a-b)<e, `${a} != ${b}`);
-async function setup(kind) {
- const f=await fixture(),a=f.make(kind);f.G.camera={position:new f.THREE.Vector3(0,20,0)}; f.G.actors=[a]; f.G.match.canRespawn=()=>false;
+async function setup(kind, fixtureOptions = {}) {
+ const f=await fixture(fixtureOptions),a=f.make(kind);f.G.camera={position:new f.THREE.Vector3(0,20,0)}; f.G.actors=[a]; f.G.match.canRespawn=()=>false;
  return {...f,a};
 }
 function projectiles(f){const ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;return ps;}
@@ -113,7 +113,9 @@ test('remote Dualies released-fire Jump does not manufacture a roll from stale f
  assert.ok(a.character.events.some(([name])=>name==='jump'));
 });
 test('S3 Splatling independent signed yaw/pitch angular quantiles preserve arbitrary aim elevations', async () => {
- const f = await setup('splatling'), ps = projectiles(f), a = f.a;
+ // Match the shipped adapter composition, which samples speed before the
+ // independent signed yaw/pitch draws. The minimal fixture omits that draw.
+ const f = await setup('splatling', { composeProductionAdapters: true }), ps = projectiles(f), a = f.a;
  const deg = 180 / Math.PI, wrap = radians => Math.atan2(Math.sin(radians), Math.cos(radians)) * deg;
  const combinations = [[0, .5], [1-1e-12, .5], [.5, 0], [.5, 1-1e-12], [.75, .625]];
  for (const yaw of [0, 1.2]) for (const pitch of [0, .7, -.6]) for (const [yawU, pitchU] of combinations) {
@@ -135,7 +137,7 @@ test('S3 Splatling independent signed yaw/pitch angular quantiles preserve arbit
 });
 
 test('S3 Splatling vertical 1.6-degree maximum does not scale with horizontal envelope', async () => {
- const f = await setup('splatling'), ps = projectiles(f), a = f.a;
+ const f = await setup('splatling', { composeProductionAdapters: true }), ps = projectiles(f), a = f.a;
  a.aimPoint.set(0, 1.05, 100); a.aimDir.set(0, 0, 1);
  for (const [grounded, horizontal] of [[true, 1.98], [true, 3.3], [false, 7]]) {
   a.grounded = grounded;
