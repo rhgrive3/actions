@@ -1,0 +1,38 @@
+name: Export exact INKWAVE main source snapshot
+on:
+  push:
+    branches:
+      - snapshot/drive-export-main-f2c87085-20261011
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact main source commit
+        uses: actions/checkout@v4
+        with:
+          ref: f2c870859d637fccba88031c3786ecec4d95248d
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify exact source and archive all tracked files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "f2c870859d637fccba88031c3786ecec4d95248d"
+          mkdir -p "$RUNNER_TEMP/source"
+          git archive --format=tar HEAD | tar -xf - -C "$RUNNER_TEMP/source"
+          test -f "$RUNNER_TEMP/source/inkwave-public/src/audio/audio.js"
+          test -f "$RUNNER_TEMP/source/inkwave-public/src/game/cameraRig.js"
+          test -f "$RUNNER_TEMP/source/patches/splatoon3/adapter.mjs"
+          echo "Snapshot source commit f2c870859d637fccba88031c3786ecec4d95248d"
+          du -sh "$RUNNER_TEMP/source"
+      - name: Upload exact source ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: INKWAVE-main-f2c870859d637fccba88031c3786ecec4d95248d
+          path: ${{ runner.temp }}/source/
+          include-hidden-files: true
+          retention-days: 5
+          compression-level: 6
