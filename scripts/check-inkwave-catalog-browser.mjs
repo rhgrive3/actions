@@ -210,6 +210,35 @@ try {
         if(equipped){G.projectiles.update(1/60);check(!G.projectiles.bombs.includes(b),'native Sprinkler retirement');}
         objectGearChecks.push({id:'sprinkler',equipped,hp:b.s3DeviceHP});
       }
+      const gearAdoptionChecks=[];
+      {
+        const {NetMatch}=await import('/src/net/netmatch.js');
+        const previousMatch=G.match,previousNet=G.netm,previousTime=G.time;
+        for(const points of [0,3,10,57]){
+          const owner=makeActor('shooter',71),remote=makeActor('shooter',71);owner.owner=remote.owner='gear-owner';
+          owner.s3.loadout=emptyLoadout();
+          if(points===3)owner.s3.loadout[0].subs[0]='specialCharge';
+          if(points===10)owner.s3.loadout[0].main='runSpeed';
+          if(points===57)for(const part of owner.s3.loadout){part.main='runSpeed';part.subs.fill('runSpeed');}
+          owner.s3RefreshGear();if(points===3)owner.special=owner.specialCost();
+          let packet;const transport={sendTo(){},broadcast:message=>{packet=JSON.parse(JSON.stringify(message));}};
+          const sender=new NetMatch({myId:'gear-owner',hostId:'gear-owner',isHost:true,tr:transport},{id:'gear-browser'});
+          const receiver=new NetMatch({myId:'gear-viewer',hostId:'gear-owner',isHost:false,tr:transport},{id:'gear-browser'});
+          const match=actors=>({actors,state:'playing',time:180,duration:180,playing:()=>true,canRespawn:()=>false});
+          sender.bind(match([owner]));receiver.bind(match([remote]));G.time+=1/60;sender._sendTick();
+          receiver.onMessage('gear-owner',packet);receiver._peer('gear-owner').tr=packet.ts;receiver._sample(remote,packet.ts,0);receiver.applyRemote(remote,1/60);
+          check(JSON.stringify(remote.s3.loadout)===JSON.stringify(owner.s3.loadout),'gear JSON equipment '+points);
+          G.match=receiver.match;G.netm=receiver;G.actors=[remote];receiver.s.hostId='gear-viewer';receiver.s.isHost=true;receiver.onLeave('gear-owner',true);
+          check(!remote.remote&&remote.isBot&&remote.owner==='gear-viewer','gear native host takeover '+points);
+          if(points===3)check(remote.specialReady()&&remote.special===remote.specialCost(),'fractional-cost full gauge survives takeover');
+          check(Math.abs(remote.s3.modifiers.runSpeed-owner.s3.modifiers.runSpeed)<1e-9,'gear adopted modifier '+points);
+          remote.intent.move.set(0,0,1);remote.vel.set(0,0,0);remote.grounded=true;
+          for(let frame=0;frame<120;frame++)remote._horizontal(1/60,false,false);
+          check(Math.abs(remote.vel.z-Player.runSpeed*owner.s3.modifiers.runSpeed)<1e-8,'gear adopted native movement '+points);
+          gearAdoptionChecks.push({points,runSpeed:remote.vel.z,owner:remote.owner});
+        }
+        G.match=previousMatch;G.netm=previousNet;G.time=previousTime;
+      }
       const kitChecks=[];
       for(const record of records){
         G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
@@ -273,7 +302,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks,
+        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
