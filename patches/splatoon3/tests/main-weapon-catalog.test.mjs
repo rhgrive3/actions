@@ -234,3 +234,31 @@ test('rapid brush strokes retain the Wiki first interval and sustained 7/11/14F 
     for(let i=2;i<born.length;i++)assert.equal(born[i]-born[i-1],period,r.names.en+' sustained interval');
   }
 });
+
+
+test('added horizontal Rollers preserve full sourced fan width and the same sampled-speed scatter',async()=>{
+  const f=await setup();
+  f.G.projectiles._aimFrom=(_actor,_muzzle,out)=>out.set(0,0,1);
+  const records=f.MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&r.family==='roller');
+  assert.equal(records.length,4);
+  try {
+    for(const record of records)for(const random of [0,.5,1]){
+      f.G.projectiles.clear();f.G.actors.length=0;f.setRandom(()=>random);
+      const actor=f.make(record.id);actor.form='kid';actor.intent.fire=true;
+      f.tick(actor,130);actor.intent.fire=false;
+      const units=record.parameters.WideSwingUnitGroupParam.Unit;
+      let offset=0;
+      for(const unit of units){
+        const count=unit.BulletNum??1,wide=unit.SpawnWideDegree??0;
+        const noise=(unit.SpawnSpeedRandom??0)>0?random*2-1:0;
+        for(let index=0;index<count;index++){
+          const shot=f.G.projectiles.list[offset+index];assert.ok(shot,record.names.en);
+          const expected=(unit.BaseRotateYDegree??0)+wide*((count>1?index/(count-1)*2-1:0)+noise*(unit.SwerveRateBySpeed??0));
+          const actual=Math.atan2(shot.vel.x,shot.vel.z)*180/Math.PI;
+          assert.ok(Math.abs(actual-expected)<1e-7,`${record.names.en} RNG ${random}, glob ${offset+index}: ${actual} / ${expected}`);
+        }
+        offset+=count;
+      }
+    }
+  } finally {f.restoreRandom();}
+});

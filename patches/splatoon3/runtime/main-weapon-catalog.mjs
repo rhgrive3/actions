@@ -3,6 +3,7 @@ import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
+import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
 // retain their mature owners. Models and retail sub/special-kit expansion are
@@ -345,10 +346,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const groupKey=r.sourceActor==='WeaponSlosherBathtub'?j+':'+i:String(u.DamageParam?.GroupNum??0);
         if(!volleys.has(groupKey))volleys.set(groupKey,{hits:new Map(),id:++s.shotSerial});
         const volley=volleys.get(groupKey);
-        const yaw=finite(u.BaseRotateYDegree,0)+(count===1?0:lerp(-finite(u.SpawnWideDegree,0)/2,finite(u.SpawnWideDegree,0)/2,i/(count-1)));
-        const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
         const velocity=key==='slosh'?finite(a.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir,1):finite(u.SpawnSpeedBase,1);
-        const speed=(velocity+finite(u.AfterOffsetSpawnSpeed,0)*i+(Math.random()*2-1)*finite(u.SpawnSpeedRandom,0))*HZ;
+        const sampledSpeed=velocity+(Math.random()*2-1)*finite(u.SpawnSpeedRandom,0);
+        const speed=(sampledSpeed+finite(u.AfterOffsetSpawnSpeed,0)*i)*HZ;
+        // Added horizontal Rollers share the mature owner's sourced fan width
+        // and reuse this same speed sample for its calibrated scatter term.
+        const fan=r.family==='roller'&&key==='horizontal'
+          ? rollerSpeedSwerveDegrees(u,i,count,sampledSpeed)
+          : (count===1?0:lerp(-finite(u.SpawnWideDegree,0)/2,finite(u.SpawnWideDegree,0)/2,i/(count-1)));
+        const yaw=finite(u.BaseRotateYDegree,0)+fan;
+        const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
         const d={...desc,index:i};
         spawn(a,r,d,aim,at,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
           index:i,volley,lift:speed*finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0))});
