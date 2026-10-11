@@ -46,3 +46,11 @@ The frozen ff42e645 aggregate source run reported 4787 pass, 19 skip, and one wo
 
 ## Final latest-main gates
 Base official main d1ad48d1c10b5ded6a4fe273fe953e49e8bd7b04. Both the unsplit observer revision d1ed700 and the final split revision 1ee41be completed the full source gate with 4,856 tests: 4,837 pass, 19 optional skips, zero failures. The split run took 1,826.1 seconds. Network: 448/448. Production-built mark/browser/observer checks: 46/46, content hash 91d4ec5257ff8c5b33dde9885d92f3f82dbd1b28077d6ad11ed337468a07596c. A separate local composition with direct-sub PR1253 passes 77/77 actual-built checks, preserving both browser probes and all four resistance coefficients. Published exact-head browser/CI remains pending for this marking candidate. The earlier SIGKILL record remains part of the diagnostic history rather than being relabeled a pass.
+
+## PR1246 main integration
+
+Old published marking head `2a78bf130763221cd5193749bf3239fc5e178264` passed Validate38175441438, numerical38175441483 and reopened38175441454, including all Chromium/WebKit browser checks.
+
+New main `062c4a81f5a989406d3d65f5803ee074bd9cc0d4` adds weapon model/motion runtime. All 63 changed textual blobs were fetched at that fixed SHA and verified byte-identical. The 267 report-only PNG/JPG blobs were not downloaded for local testing; publication preserves their official remote blob SHAs. Local test checkout is therefore a text-equivalent production baseline, not a complete official tree replica.
+
+Composed production build `1805143e8e6ee85e406cd80aa74e18b15a5739f7e301b43c220532737f1b66aa`: supported marking/direct/model-registry/catalog/muzzle suite 90/90. The two family-internal motion tests passed 2/2 on source. Running those source-only tests as built initially failed ENOENT because production bundles family modules into registry; no runtime files were copied into the build to conceal that contract difference. The separate actual-built registry checks cover all65 models and actual Actor/Runner/Character carry/attack. New-head hosted CI remains required.
