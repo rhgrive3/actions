@@ -74,10 +74,12 @@ test('the unmodified public installer activates all three genuine base kits befo
   }
   for (const main of ['blaster','slosher','splatling','dualies']) {
     assert.equal(api.WEAPONS[main].kitStatus,'verified-base-kit');
-    assert.doesNotMatch(api.WEAPONS[main].blurb,/Original INKWAVE kit|Partial Splatoon 3 kit|11\\.3\\.0 kit slots installed/,
+    assert.doesNotMatch(api.WEAPONS[main].blurb,/Original INKWAVE kit|Partial Splatoon 3 kit|11\.3\.0 kit slots installed/,
       main + ' complete base kit must not keep obsolete partial-kit copy');
-    assert.deepEqual(api.WEAPONS[main].kitVerifiedSlots, ['sub', 'special'], main);
-    assert.deepEqual(api.WEAPONS[main].kitMissingSlots, {}, main);
+    // These kit metadata objects originate in an isolated VM realm. Compare
+    // portable values rather than failing on unrelated prototype identities.
+    assert.deepEqual([...api.WEAPONS[main].kitVerifiedSlots], ['sub', 'special'], main);
+    assert.deepEqual(Object.keys(api.WEAPONS[main].kitMissingSlots), [], main);
   }
 });
 
