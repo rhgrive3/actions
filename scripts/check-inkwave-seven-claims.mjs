@@ -47,7 +47,7 @@ try {
         near(rows[7][0],8/60);near(rows[7][2],97.75);check(rows[162][0]<1&&rows[163][0]===1,'air completion boundary');check(rows.every(x=>x[0]===x[1]),'linear charge');traces.push(rows);
       }
       check(JSON.stringify(traces[0])===JSON.stringify(traces[1])&&JSON.stringify(traces[1])===JSON.stringify(traces[2]),'cadence');
-      const spin=make('splatling');spin.grounded=false;const oldRandom=Math.random,draws=[.5,1-1e-12,.25,.5];Math.random=()=>draws.shift()??.5;
+      const spin=make('splatling');spin.grounded=false;const oldRandom=Math.random,draws=[.5,.5,1-1e-12,.5];Math.random=()=>draws.shift()??.5;
       try{G.projectiles.fireSplatling(spin,spin.weapon,7);}finally{Math.random=oldRandom;}
       const round=G.projectiles.list.at(-1);near(Math.atan2(Math.abs(round.vel.y),Math.hypot(round.vel.x,round.vel.z))*180/Math.PI,1.6);G.projectiles.clear();
       const slosh=make('slosher');slosh.pos.y=20;slosh.aimDir.set(0,-Math.sqrt(3)/2,.5);G.projectiles.fireSlosh(slosh,slosh.weapon);const p=G.projectiles.list[0];
