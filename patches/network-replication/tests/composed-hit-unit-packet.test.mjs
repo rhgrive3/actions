@@ -58,11 +58,12 @@ function hitWorld() {
 test('composed #427 keeps unrounded damage/group sidecar and binds one ACK to the current life', () => {
   const f = hitWorld(), a = { nid: 1, owner: 'A', netLife: 1, alive: true, remote: false },
     v = { nid: 2, owner: 'B', netLife: 2, alive: true, remote: true, s3PendingHitGroup: 'volley:7' };
-  a.s3={loadout:[{main:'none'},{main:'respawnPunisher'},{main:'none'}]};
+  a.s3={loadout:[{main:'none'},{main:'respawnPunisher'},{main:'objectShredder'}]};
   f.n.byNid.set(1, a); f.n.byNid.set(2, v);
   assert.equal(f.n.sendHit(a, v, 12.34567, 'shooter'), true);
   const message = f.sent[0].data;
   assert.equal(message.rp,true,'actual equipment helper supplies wire metadata');
+  assert.equal(message.os,true,'actual shoes-main helper supplies Object Shredder identity');
   assert.equal(message.d, 12.34567); assert.equal(message.g, 'volley:7');
   assert.equal(f.n._pendingHits.get(message.h).d, 12.34567);
   const ack = { m: 'match-A', h: message.h, a: 1, v: 2, vl: 2, d: 12.35, kld: 0 };

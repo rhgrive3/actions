@@ -74,3 +74,13 @@ test('native records are fresh after retirement and old-life proposals never dam
  const proposal={v:1,phase:'nativeObjectHit',subId:'sprinkler',actor:r.a,life:7,eventSeq:1,match:old.match,targetOwnerId:301,targetLife:old.life,targetSeq:old.seq,damage:120,objectShredder:true,x:second.pos.x,y:second.pos.y,z:second.pos.z};
  assert.equal(f.installedRuntime.replaySub(proposal),false);assert.equal(second.s3DeviceHP,120);
 });
+
+test('empty native device collection adds no per-projectile vector allocation',async()=>{
+ const f=await setup(),a=f.make(),start=new f.THREE.Vector3(),end=new f.THREE.Vector3(0,0,1),p={owner:a,team:a.team,size:.01,damage:10};
+ assert.equal(f.G.projectiles.bombs.length,0);
+ const clone=f.THREE.Vector3.prototype.clone;let clones=0;
+ f.THREE.Vector3.prototype.clone=function(){clones++;return clone.call(this);};
+ try{for(let i=0;i<1000;i++)assert.equal(f.G.projectiles.kitBarrierCandidate(p,start,end),null);}
+ finally{f.THREE.Vector3.prototype.clone=clone;}
+ assert.equal(clones,0,'no candidate geometry is allocated when no native device exists');
+});

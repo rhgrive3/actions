@@ -21,3 +21,7 @@ A real tick-ingress test reverses three legitimate events inside a normal protoc
 Native bomb records are allocated afresh. A retirement / owner reset / next-life new Sprinkler test verifies no HP, destroyed flag or birth identity is reused and an old-life target proposal cannot damage the replacement.
 
 Pinned 1130 source exploration checked the 221-entry weapon tree, 20-entry misc tree, params and the sole WeaponSprinkler file. There is no explicit HP/MaxHP field in that Sprinkler file; no invented original value replaces the inherited profile.
+
+## Empty-device allocation check
+
+A real installed Projectiles contact-loop probe made 1000 queries with no native bombs. The first candidate cloned 1000 vectors despite having no possible Sprinkler target. An empty-collection return removes all 1000 allocations while preserving the pre-existing barrier result. The native suite now passes 9/9 in source and the actual composed build. This is an allocation-count measurement, not a claim of measured GPU or frame-time improvement.

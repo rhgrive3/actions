@@ -80,7 +80,7 @@ export function installNativeSprinklerDamage(api){
  };
  const candidate=Projectiles.prototype.kitBarrierCandidate;
  Projectiles.prototype.kitBarrierCandidate=function(p,start,end){
-  let best=candidate?.call(this,p,start,end);if(!p||!start||!end)return best;
+  let best=candidate?.call(this,p,start,end);if(!p||!start||!end||!this.bombs?.length)return best;
   const d=end.clone().sub(start),length=d.length();if(!(length>1e-8))return best;
   for(const b of this.bombs||[]){
    if(!sprinkler(b)||b.s3Mode!=='sprinkling'||b.s3Destroyed||b.owner===p.owner||b.team===p.team)continue;
