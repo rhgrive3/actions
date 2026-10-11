@@ -1,3 +1,4 @@
+import { weaponAccelerationClass } from './weapon-weight.mjs';
 // Authoritative root physics only. No input, network, Character or visual pose writes.
 // Rates are world units/second; duration/age are seconds. Reference decisions and
 // deliberately retained calibration are in reports/movement-physics-fidelity-report.md.
@@ -35,6 +36,19 @@ export function beginDualiesPostSlide(r, w) {
     distance: STANDARD_DUALIES_PHASES.slideDistance };
 }
 
+
+/** Fast is an independent MainWeaponSetting, not the speed-weight class.
+ * The verification reference reports 1.5x ordinary Sploosh squid acceleration,
+ * normal humanoid acceleration, and the common 2x attack rate (never 3x).
+ * Preserve the existing absolute calibration and air controller pending an
+ * independent air-specific reference. This owns grounded acceleration only.
+ */
+export function groundAcceleration(a, P, isSquid) {
+  if (a.weaponRunner.firingPose?.() || a.intent.sub || a.weaponRunner.aimingSub || a.specialActive)
+    return P.s3AttackGroundAccel ?? 72;
+  const fast = isSquid && weaponAccelerationClass(a.weaponId) === 'Fast';
+  return (P.s3GroundAccel ?? 36) * (fast ? 1.5 : 1);
+}
 
 /** Move a horizontal velocity vector toward the requested S3 ground velocity
  * by a fixed acceleration magnitude. Splatoon 3's published verification
