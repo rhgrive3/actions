@@ -4,7 +4,7 @@
 // splatling channels are kept: `trigger` (pistol trigger) and `barrels` (the spun cluster, rotating about its
 // local Z through a pivot on the barrel axis). The native charge coil is kept for readability although none of the six references
 // shows a charge meter. Everything is procedural geometry.
-import { Pieces, M, zlathe, xlathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, pistolGrip, supportHandle,
+import { Pieces, M, zlathe, xlathe, ylathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, pistolGrip, supportHandle,
   part, rebuild, TRIGGER_PIVOT } from './kit.mjs';
 
 /** Barrels on a ring of radius R about the spin axis (ay): n tubes from z0 to z1, each with a nozzle tip. */
@@ -62,64 +62,71 @@ function heavy(d) {
 // Wmn_Spinner_QuickT. A purple housing with a black carry bail, a white bulb-shaped tank at the rear and a
 // yellow drum at the front. Six blue nozzles sit on a ring about a black centre.
 function mini(d) {
-  const AX = 0.07, C = { purple: '#5b3bb5', yellow: '#f4c52c', white: '#ecebe6', blue: '#2a4fd1', black: '#1d1e22' };
-  const body = new Pieces(), B = new Pieces();
-  const tr = pistolGrip(body, { color: C.black, triggerColor: C.yellow, guardColor: C.purple, w: 0.0125 });
-  body.add(sphere(0.062, 0.07, 0.12, 0, 0.0, -0.10), C.white, M.gloss);
-  body.add(zcyl(0.04, -0.04, 0.20, 0, AX, 24), C.purple, M.gloss);
-  body.add(box(0.05, 0.03, 0.20, 0, AX + 0.045, 0.06, 0.3), C.purple, M.gloss);
-  body.add(box(0.02, 0.02, 0.05, 0, AX + 0.07, -0.07), C.purple, M.gloss);
-  body.add(pipe([[0, AX + 0.045, -0.02], [0, AX + 0.12, -0.02], [0, AX + 0.12, 0.10], [0, AX + 0.045, 0.10]], 0.006, 16, 6), C.black, M.satin);
-  // yellow drum and six blue nozzles on a ring about a black centre
-  B.add(zcyl(0.055, 0.19, 0.30, 0, AX, 24), C.yellow, M.gloss);
-  B.add(zcyl(0.01, 0.20, 0.31, 0, AX, 12), C.black, M.satin);
-  barrelRing(B, { n: 6, a0: Math.PI / 2, R: 0.032, ay: AX, r: 0.007, z0: 0.10, z1: 0.30, tipL: 0.02, tipR: 0.0095,
-    barrel: C.black, tip: C.blue });
-  return finish(d, body, B, tr, AX, 0.302, C.black);
+  // Rebuilt (Opus): purple frame with a black carry handle, an ink bulb tank (teal = team ink in the
+  // turntable) low at the rear wrapped by a yellow strap, six black barrels with a purple collar and a
+  // yellow front disc carrying six blue nozzles (the spun cluster).
+  const AX = 0.07, C = { purple: '#4a2fb0', black: '#16171b', yellow: '#e8c22a', blue: '#2f5ee0', grey: '#9aa0a8' };
+  const body = new Pieces(), B = new Pieces(), ink = new Pieces();
+  const tr = pistolGrip(body, { color: C.black, triggerColor: C.purple, guardColor: C.purple });
+  body.add(box(0.05, 0.05, 0.15, 0, AX + 0.01, 0.07, 0.3), C.purple, M.gloss);                                   // frame
+  body.add(pipe([[0, AX + 0.035, 0.0], [0, AX + 0.085, 0.02], [0, AX + 0.085, 0.09], [0, AX + 0.035, 0.11]], 0.008, 18, 6), C.black, M.satin);
+  ink.add(sphere(0.058, 0.05, 0.085, 0, 0.012, -0.04, 22, 14));                                                // ink bulb (tucked under the frame)
+  body.add(pipe([[-0.056, 0.012, -0.11], [-0.06, 0.045, -0.04], [-0.04, 0.06, 0.03], [0.04, 0.06, 0.03], [0.06, 0.045, -0.04], [0.056, 0.012, -0.11]], 0.006, 30, 6), C.yellow, M.gloss);
+  body.add(ring(0.057, 0.006, 0, 0.012, -0.04, 'z', 6, 24).scale(1, 0.9, 1), C.yellow, M.gloss);
+  barrelRing(B, { n: 6, a0: Math.PI / 2, R: 0.026, ay: AX, r: 0.008, z0: 0.15, z1: 0.31, tipL: 0.004, tipR: 0.008, barrel: C.black, tip: C.black });
+  B.add(zlathe([[0, 0.15], [0.044, 0.15], [0.046, 0.175], [0, 0.175]], 0, AX, 0, 24), C.purple, M.gloss);
+  B.add(zlathe([[0, 0.3], [0.05, 0.3], [0.052, 0.318], [0.046, 0.326], [0, 0.326]], 0, AX, 0, 28), C.yellow, M.gloss);
+  for (let k = 0; k < 6; k++) { const a = Math.PI / 2 + k * Math.PI / 3; B.add(zlathe([[0, 0.322], [0.009, 0.322], [0.009, 0.33], [0, 0.331]], Math.cos(a) * 0.03, AX + Math.sin(a) * 0.03, 0, 12), C.blue, M.gloss); }
+  B.add(zcyl(0.008, 0.32, 0.332, 0, AX, 10), C.grey, M.satin);
+  return finish(d, body, B, tr, AX, 0.334, C.black, ink);
 }
 
-// ------------------------------------------------------------------------------------------ Hydra Splatling
-// Wmn_Spinner_HyperT. A silver canister tilted back over the rear, a red drum with four brass nozzles,
-// an orange motor housing under the drum, a spring and a gold feed hose.
 function hydra(d) {
-  const AX = 0.075, C = { red: '#c8242f', silver: '#c4c7cc', gold: '#d8b03a', orange: '#e0702a', dark: '#202126' };
-  const body = new Pieces(), B = new Pieces();
-  const tr = pistolGrip(body, { color: C.dark, triggerColor: C.red, guardColor: C.dark });
-  body.add(box(0.11, 0.01, 0.20, 0, -0.03, 0.06, 0.2), C.dark, M.satin);
-  body.add(box(0.07, 0.06, 0.09, 0, AX - 0.01, -0.02, 0.3), C.orange, M.gloss);
-  const A = [0, 0.03, -0.05], Bt = [0, 0.23, -0.12];
-  body.add(cyl(0.046, A, Bt, 24), C.silver, M.metal);
-  for (const t of [0.30, 0.62]) body.add(cyl(0.049, lerp3(A, Bt, t), lerp3(A, Bt, t + 0.04), 24), C.dark, M.satin);
-  body.add(cyl(0.015, [0, 0.03, -0.05], [0, AX, 0.02]), C.silver, M.metal);
-  body.add(pipe([[0, 0.03, -0.04], [0, -0.01, -0.02], [0, -0.02, 0.04]], 0.005, 12, 6), C.gold, M.gloss);
-  for (let k = 0; k < 5; k++) body.add(ring(0.009, 0.0018, 0, -0.01 + k * 0.018, 0.07, 'y', 4, 12), C.silver, M.metal);
-  // red drum and four barrels with brass nozzles
-  B.add(zcyl(0.05, 0.0, 0.12, 0, AX, 24), C.red, M.gloss);
-  barrelRing(B, { n: 4, a0: Math.PI / 4, R: 0.022, ay: AX, r: 0.0075, z0: 0.02, z1: 0.21, tipL: 0.03, tipR: 0.0105,
-    barrel: C.silver, tip: C.gold });
-  return finish(d, body, B, tr, AX, 0.212, C.dark);
-}
-
-// ------------------------------------------------------------------------------------------ Ballpoint Splatling
-// Wmn_Spinner_Downpour. A white shell with a red rear cap and a black underside sleeve, a clear tube up
-// front with three barrels inside, and a black carry bail.
-function ballpoint(d) {
-  const AX = 0.075, C = { white: '#e9e9e6', grey: '#8f9298', black: '#1c1d21', red: '#c4392c', clear: '#c8d8e0' };
-  const body = new Pieces(), B = new Pieces();
+  // Rebuilt (Opus): a big silver can with a red label band standing tilted back at the rear in a black
+  // wire cage, a red round drum in an orange frame, four silver barrels (2×2) with gold threaded tips, a
+  // yellow feed hose and a black base skid.
+  const AX = 0.07, C = { silver: '#c7cacd', red: '#b5262e', maroon: '#7c1e24', orange: '#e2702a', gold: '#d2b24a', black: '#17181b', yellow: '#e8c22a' };
+  const body = new Pieces(), B = new Pieces(), ink = new Pieces();
   const tr = pistolGrip(body, { color: C.black, triggerColor: C.red, guardColor: C.black });
-  body.add(zcyl(0.042, -0.05, 0.18, 0, AX, 28), C.white, M.gloss);
-  body.add(zlathe([[0, -0.075], [0.046, -0.075], [0.047, -0.06], [0.044, -0.05], [0, -0.05]], 0, AX, 0, 24), C.red, M.gloss);
-  body.add(box(0.07, 0.03, 0.16, 0, AX - 0.04, 0.07, 0.3), C.black, M.satin);
-  body.add(zcyl(0.03, 0.18, 0.33, 0, AX, 24), C.clear, M.lens);
-  body.add(pipe([[0, AX + 0.05, -0.02], [0, AX + 0.09, 0.0], [0, AX + 0.09, 0.10], [0, AX + 0.05, 0.12]], 0.0065, 16, 6), C.black, M.satin);
-  barrelRing(B, { n: 3, a0: Math.PI / 2, R: 0.012, ay: AX, r: 0.0065, z0: 0.15, z1: 0.32, tipL: 0.02, tipR: 0.0075,
-    barrel: C.grey, tip: C.red });
-  return finish(d, body, B, tr, AX, 0.33, C.black);
+  const can = new Pieces();
+  can.add(ylathe([[0, -0.13], [0.07, -0.13], [0.074, -0.12], [0.074, 0.12], [0.06, 0.135], [0.03, 0.14], [0, 0.14]], 0, 0, 0, 28), C.silver, M.satin);
+  can.add(ylathe([[0.0755, -0.04], [0.0755, 0.07]], 0, 0, 0, 28).scale(1, 1, 1), C.red, M.gloss);
+  for (const y of [-0.08, 0.0, 0.08]) can.add(ring(0.078, 0.003, 0, y, 0, 'y', 4, 28), C.black, M.satin);
+  for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + 0.4; can.add(cyl(0.003, [Math.cos(a) * 0.078, -0.1, Math.sin(a) * 0.078], [Math.cos(a) * 0.078, 0.1, Math.sin(a) * 0.078], 6), C.black, M.satin); }
+  body.merge(can.transform(g => g.rotateX(-0.5).translate(0, AX + 0.09, -0.11)));
+  body.add(box(0.07, 0.07, 0.1, 0, AX, 0.04, 0.3), C.maroon, M.satin);                                         // breech
+  body.add(box(0.11, 0.1, 0.03, 0, AX, 0.105, 0.3), C.orange, M.satin);                                         // orange frame
+  body.add(pipe([[0.03, -0.03, -0.05], [0.05, -0.05, 0.0], [0.02, -0.02, 0.06]], 0.007, 16, 6), C.yellow, M.gloss);  // feed hose
+  body.add(box(0.07, 0.012, 0.16, 0, -0.07, 0.06, 0.3), C.black, M.satin);                                     // base skid
+  B.add(zlathe([[0, 0.11], [0.06, 0.11], [0.064, 0.125], [0.064, 0.175], [0.058, 0.19], [0, 0.19]], 0, AX, 0, 28), C.red, M.gloss);
+  for (const [x, y] of [[-0.026, 0.026], [0.026, 0.026], [-0.026, -0.026], [0.026, -0.026]]) {
+    B.add(zcyl(0.014, 0.19, 0.29, x, AX + y, 14), C.silver, M.satin);
+    B.add(zcyl(0.012, 0.29, 0.33, x, AX + y, 14), C.gold, M.metal);
+    for (let k = 0; k < 4; k++) B.add(ring(0.0125, 0.0018, x, AX + y, 0.295 + k * 0.009, 'z', 4, 12), C.gold, M.metal);
+  }
+  return finish(d, body, B, tr, AX, 0.334, C.black, ink);
 }
 
-// ------------------------------------------------------------------------------------------ Nautilus 47
-// Wmn_Spinner_Serein. A dark dome-shaped reservoir at the rear with a gold rim, a short grey housing and
-// three nozzles at the front. A green window pod sits under the housing.
+function ballpoint(d) {
+  // Rebuilt (Opus): a long pen-like barrel — a clear sleeve (drawn as ribs and rings so the ink-filled
+  // barrel bundle inside stays visible), a black front ring and nose, a white rear cap, a black band with a
+  // logo panel, a white ribbed foregrip below and a silver carry handle on top.
+  const AX = 0.07, C = { white: '#eceae4', black: '#1a1b1f', clear: '#d6dade', silver: '#c1c4c8' };
+  const body = new Pieces(), B = new Pieces(), ink = new Pieces();
+  const tr = pistolGrip(body, { color: C.black, triggerColor: C.black, guardColor: C.black });
+  body.add(zlathe([[0, -0.11], [0.03, -0.112], [0.05, -0.095], [0.052, -0.04], [0, -0.04]], 0, AX, 0, 28), C.white, M.gloss);  // rear cap
+  body.add(zlathe([[0, -0.04], [0.054, -0.04], [0.054, 0.06], [0, 0.06]], 0, AX, 0, 28), C.black, M.satin);                     // black band
+  for (const z of [0.07, 0.17, 0.27, 0.36]) body.add(ring(0.05, 0.0035, 0, AX, z, 'z', 6, 28), C.clear, M.gloss);               // sleeve rings
+  for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; body.add(cyl(0.003, [Math.cos(a) * 0.05, AX + Math.sin(a) * 0.05, 0.06], [Math.cos(a) * 0.05, AX + Math.sin(a) * 0.05, 0.37], 6), C.clear, M.gloss); }
+  body.add(zlathe([[0.05, 0.37], [0.054, 0.37], [0.05, 0.4], [0.03, 0.42], [0.03, 0.43], [0, 0.43]], 0, AX, 0, 28), C.black, M.satin);  // nose
+  body.add(box(0.05, 0.05, 0.13, 0, -0.005, 0.16, 0.35), C.white, M.gloss);                                     // ribbed foregrip block
+  for (let k = 0; k < 5; k++) body.add(box(0.054, 0.006, 0.01, 0, -0.03, 0.115 + k * 0.022, 0.5), C.white, M.gloss);
+  body.add(pipe([[0, AX + 0.05, -0.02], [0, AX + 0.1, 0.0], [0, AX + 0.1, 0.06], [0, AX + 0.052, 0.07]], 0.006, 16, 6), C.silver, M.satin);
+  for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; B.add(zcyl(0.011, 0.06, 0.37, Math.cos(a) * 0.026, AX + Math.sin(a) * 0.026, 10), '#ffffff', M.gloss); }
+  ink.add(zcyl(0.042, 0.065, 0.365, 0, AX, 20));                                                                 // ink inside the sleeve
+  return finish(d, body, B, tr, AX, 0.432, C.black, ink);
+}
+
 function nautilus(d) {
   // Rebuilt (Opus): a large round dark reservoir disc with a gold rim at the rear (flat faces sideways),
   // a silver neck bracket, a dark cylindrical body with a teal window and silver clamp rings, a cone head
@@ -142,17 +149,26 @@ function nautilus(d) {
 }
 
 function examiner(d) {
-  const AX = 0.085, C = { silver: '#c9cbcf', grey: '#9ca0a7', red: '#d7262d', black: '#1e1f24', white: '#e6e6e2' };
-  const body = new Pieces(), B = new Pieces();
+  // Rebuilt (Opus): a light-grey box tank low at the rear (red print), two white cylinders on top of it,
+  // a silver tube frame and carry handle, a black/red centre drum, a clear sleeve (ribs) round four
+  // barrels with black tips.
+  const AX = 0.07, C = { grey: '#d9d8d3', white: '#efefec', red: '#d0303a', black: '#18191d', silver: '#c2c5c9', clear: '#d6dade' };
+  const body = new Pieces(), B = new Pieces(), ink = new Pieces();
   const tr = pistolGrip(body, { color: C.black, triggerColor: C.red, guardColor: C.black });
-  body.add(box(0.12, 0.10, 0.18, 0, AX - 0.04, -0.09, 0.2, 10, 8), C.white, M.satin);
-  body.add(box(0.13, 0.02, 0.19, 0, AX + 0.02, -0.09, 0.3), C.grey, M.satin);
-  body.add(zcyl(0.052, -0.02, 0.06, 0, AX, 24), C.black, M.satin);
-  body.add(pipe([[0, AX - 0.02, 0.03], [0, AX + 0.09, 0.04], [0, AX + 0.09, -0.05], [0, AX - 0.03, -0.07]], 0.0065, 16, 6), C.silver, M.metal);
-  B.add(zcyl(0.05, 0.06, 0.14, 0, AX, 24), C.red, M.gloss);
-  barrelRing(B, { n: 3, a0: Math.PI / 2, R: 0.018, ay: AX, r: 0.008, z0: 0.10, z1: 0.24, tipL: 0.02, tipR: 0.0095,
-    barrel: C.silver, tip: C.grey });
-  return finish(d, body, B, tr, AX, 0.242, C.black);
+  body.add(box(0.11, 0.1, 0.13, 0, 0.0, -0.075, 0.25), C.grey, M.satin);                                         // box tank
+  body.add(box(0.002, 0.02, 0.08, -0.056, 0.0, -0.075, 0.2), C.red, M.print);
+  for (const x of [-0.022, 0.022]) body.add(zcyl(0.018, -0.12, -0.03, x, 0.07, 16), C.white, M.gloss);        // twin cylinders
+  body.add(zlathe([[0, -0.02], [0.045, -0.02], [0.05, 0.0], [0.05, 0.08], [0.04, 0.1], [0, 0.1]], 0, AX, 0, 28), C.black, M.satin); // drum
+  body.add(ring(0.051, 0.008, 0, AX, 0.05, 'z', 6, 28), C.red, M.gloss);
+  for (const sx of [-1, 1]) body.add(pipe([[sx * 0.04, -0.04, 0.02], [sx * 0.06, 0.0, 0.12], [sx * 0.055, AX + 0.06, 0.15], [sx * 0.03, AX + 0.07, 0.06]], 0.0055, 24, 6), C.silver, M.satin); // tube frame
+  body.add(pipe([[0, AX + 0.05, 0.0], [0, AX + 0.095, 0.02], [0, AX + 0.095, 0.08], [0, AX + 0.05, 0.1]], 0.006, 16, 6), C.black, M.satin);
+  for (const z of [0.1, 0.18, 0.24]) body.add(ring(0.04, 0.003, 0, AX, z, 'z', 6, 24), C.clear, M.gloss);
+  for (const [x, y] of [[-0.016, 0.016], [0.016, 0.016], [-0.016, -0.016], [0.016, -0.016]]) {
+    B.add(zcyl(0.01, 0.1, 0.25, x, AX + y, 10), C.red, M.gloss);
+    B.add(zlathe([[0, 0.25], [0.01, 0.25], [0.006, 0.275], [0, 0.278]], x, AX + y, 0, 10), C.black, M.satin);
+  }
+  ink.add(zcyl(0.034, 0.105, 0.24, 0, AX, 18));
+  return finish(d, body, B, tr, AX, 0.28, C.black, ink);
 }
 
 export const MODELS = {
