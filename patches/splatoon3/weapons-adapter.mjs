@@ -138,8 +138,16 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     '        attribute vec2 aFourPetals;\n        attribute vec4 aInkLook;\n        vec3 iwP;', 'ink look shader attribute');
   patch('          iwP += n * wob * (1.0 - 0.5 * back * u);',
     `          iwP += n * wob * (1.0 - 0.5 * back * u);
+          if (aInkLook.y < 0.0 && back > 0.5) {
+            // rod: constant cross-section behind the head, rounded end cap
+            float iwL = length(p.xy);
+            vec2 iwD = iwL > 1e-4 ? p.xy / iwL : vec2(0.0);
+            float iwCap = u < 0.85 ? 1.0 : sqrt(max(0.0, 1.0 - pow((u - 0.85) / 0.15, 2.0)));
+            iwP.xy = iwD * iwCap * (1.0 - 0.12 * u);
+            if (u < 0.85 && iwL > 1e-4) objectNormal = vec3(iwD, 0.0);
+          }
           if (aInkLook.x > 0.0) {
-            float iwAng = atan(p.y, p.x), iwRing = sqrt(max(0.0, 1.0 - p.z * p.z)), iwK = max(aInkLook.y, 1.0);
+            float iwAng = atan(p.y, p.x), iwRing = sqrt(max(0.0, 1.0 - p.z * p.z)), iwK = max(abs(aInkLook.y), 1.0);
             float iwS = 0.62 * pow(max(0.0, sin(iwAng * iwK + aInkLook.w + 1.7 * p.z)), 8.0)
               + 0.48 * pow(max(0.0, sin(iwAng * (iwK * 1.618 + 1.0) - 1.3 * aInkLook.w + 3.1 * p.z)), 14.0);
             iwP.xy *= 1.0 + aInkLook.x * iwS * (iwRing + 0.6 * back * u);
@@ -165,16 +173,16 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('fourPetals = this.blobFourPetals.array;',
     'fourPetals = this.blobFourPetals.array, inkLook = this.blobInkLook.array;', 'ink look per-instance buffer');
   patch('      _s.setScalar(vis);\n      _m.compose(p.pos, _q, _s);',
-    '      const look = fidelityInkLook(p);\n      _s.setScalar(vis * look[4]);\n      _m.compose(p.pos, _q, _s);', 'ink look drawn width');
+    '      _s.setScalar(vis);\n      _m.compose(p.pos, _q, _s);\n      const look = fidelityInkLook(p);\n      if (look[4] !== 1) _m.scale(_s.setScalar(look[4]));', 'ink look drawn width');
   patch('      let o = n * 4; shp[o] = tail; shp[o + 1] = wob; shp[o + 2] = ph; shp[o + 3] = p.nose || 0;\n      const unit = p.fidelityMode',
-    '      writeInkLook(inkLook, n, look, p.seed);\n      let o = n * 4; shp[o] = tail * look[3] / look[4]; shp[o + 1] = wob; shp[o + 2] = ph; shp[o + 3] = p.nose || 0;\n      const unit = p.fidelityMode',
+    '      writeInkLook(inkLook, n, look, p.seed);\n      let o = n * 4; shp[o] = fidelityInkTail(p, tail, vis * look[4], look); shp[o + 1] = wob; shp[o + 2] = ph; shp[o + 3] = p.nose || 0;\n      const unit = p.fidelityMode',
     'ink look reaches rendered projectile');
   patch('      const ns = p.sats || 0;', '      const ns = look[5] ? p.sats || 0 : 0;', 'ink look trailing beads');
   patch('        fourPetals[n * 2] = 0; fourPetals[n * 2 + 1] = 0;\n        n++;',
     '        fourPetals[n * 2] = 0; fourPetals[n * 2 + 1] = 0;\n        writeInkLook(inkLook, n, INK_LOOK.satellite, p.seed + i * 0.37);\n        n++;',
     'ink look satellites');
   patch('    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);',
-    '    const inkDrop0 = n;\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);\n    for (let i = inkDrop0; i < n; i++) writeInkLook(inkLook, i, INK_LOOK.droplet, i * 0.618);',
+    '    const inkDrop0 = n;\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);\n    for (let i = inkDrop0; i < n; i++) {\n      writeInkLook(inkLook, i, INK_LOOK.droplet, i * 0.618);\n      B.getMatrixAt(i, _m); _m.scale(_s.setScalar(INK_LOOK.droplet[4])); B.setMatrixAt(i, _m);\n      shp[i * 4] *= INK_LOOK.droplet[3];\n    }',
     'ink look detached droplets');
   patch('    this.blobFourPetals.needsUpdate = true;\n  }',
     `    this.blobFourPetals.needsUpdate = true;
@@ -278,5 +286,5 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
   patch("    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", "    area += fidelityRollerMaximumPaint(this,w,fx,fz);\n    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", 'source maximum Roller floor width');
-  return "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, configureFidelityInkFlight, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityDualiesLaunchPlan, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, fidelitySlosherImpactPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint, INK_LOOK, fidelityInkLook, writeInkLook } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  return "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, configureFidelityInkFlight, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityDualiesLaunchPlan, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, fidelitySlosherImpactPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint, INK_LOOK, fidelityInkLook, fidelityInkTail, writeInkLook } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }

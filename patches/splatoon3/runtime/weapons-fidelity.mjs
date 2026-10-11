@@ -1013,24 +1013,44 @@ export function fidelitySlosherDrawRadius(p) {
 }
 // Airborne ink silhouette (render only; collision, paint and packets are
 // untouched). Splatoon 3 footage (Inkipedia "S3 About videos" Splattershot /
-// Slosher, Nintendo official turf-war clip) shows no smooth spheres: Shooter
-// rounds are ragged flame-like streaks, Roller/Brush flicks are spiky splash
-// crowns, a Slosher throw is one broad thin sheet without detached beads.
+// Slosher, Nintendo official turf-war clip) shows no round balls:
+// - a Shooter round is a long smooth rod of ink still joined to the muzzle
+//   for its straight phase, then it contracts behind the head while the
+//   SplashSpawn drops along the path fly as flat jagged splinters;
+// - Roller/Brush flicks are spiky splash crowns;
+// - a Slosher throw is one broad thin sheet without detached beads.
 // Each entry is [spike amplitude (head radii), spike count, cross-section
 // thickness (1 = round; the thin axis stays vertical), tail length scale,
 // width scale on the drawn radius, trailing beads 1/0]. The Slosher width 0.5
 // is read off the footage (the sheet is at most about half the character's
-// height wide while DrawSizeParam is 1.0); all values are INKWAVE calibration
-// against footage, not extracted Nintendo mesh data.
+// height wide while DrawSizeParam is 1.0); the rod width 0.7 matches the
+// nozzle; the splinter size 2.2x the native drop radius matches the
+// fragments near the muzzle. All are INKWAVE calibration against footage,
+// not extracted Nintendo mesh data.
 export const INK_LOOK=Object.freeze({
-  shot:Object.freeze([0.6,5,0.6,6,1,1]),
+  shot:Object.freeze([0.15,-5,1,1,0.7,1]),   // negative count = rod body
   drop:Object.freeze([1.1,6,0.5,0.6,1,1]),
   slosh:Object.freeze([0.3,4,0.32,1,0.5,0]),
   blast:Object.freeze([0.35,6,1,1,1,1]),
   satellite:Object.freeze([0.5,4,1,1,1,1]),
-  droplet:Object.freeze([0.45,4,1,1,1,1]),
+  droplet:Object.freeze([1.3,6,0.35,1.5,2.2,1]),
   none:Object.freeze([0,1,1,1,1,1]),
 });
+export const SHOT_ROD_MIN=0.6, SHOT_ROD_CONTRACT=0.1;
+// Back length (in drawn head radii) for the instanced blob. Shooter-family
+// rounds: the rod reaches back to the launch point through the straight
+// phase (p.straight, the source straight frames), then contracts to
+// SHOT_ROD_MIN over SHOT_ROD_CONTRACT seconds. Others: the native tail scaled
+// by the look; under a width scale the length beyond the drawn head stays
+// the same world length (the Slosher's sourced TailLength window).
+export function fidelityInkTail(p,tail,drawnRadius,look) {
+  if(p?.type!=='shot'||!(drawnRadius>0)||!p.start||!p.pos)return Math.max(1,1+(tail*look[3]-1)/look[4]);
+  const travel=p.start.distanceTo(p.pos),age=Math.max(0,p.age||0);
+  const straight=Number.isFinite(p.straight)&&p.straight>0&&p.straight<1?p.straight:4/60;
+  const k=Math.min(1,Math.max(0,(age-straight)/SHOT_ROD_CONTRACT));
+  const rod=Math.max(Math.min(travel,SHOT_ROD_MIN),travel*(1-k)+SHOT_ROD_MIN*k);
+  return Math.max(1,rod/drawnRadius);
+}
 export function fidelityInkLook(p) {
   return INK_LOOK[p?.type]??INK_LOOK.none;
 }

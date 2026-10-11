@@ -76,6 +76,10 @@ function merge(THREE, list) {
   const out = new THREE.BufferGeometry();
   out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  // Indexed like every native prop (tools measure the indexed draw).
+  const idx = new (n > 65535 ? Uint32Array : Uint16Array)(n);
+  for (let i = 0; i < n; i++) idx[i] = i;
+  out.setIndex(new THREE.BufferAttribute(idx, 1));
   out.computeBoundingSphere();
   return out;
 }
