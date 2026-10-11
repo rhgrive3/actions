@@ -87,6 +87,20 @@ await page.addInitScript(() => {
   window.__lifecycleIntervals = () => intervals.size;
 });
 
+// Diagnose the single trusted gesture without changing or redispatching it.
+await page.addInitScript(() => {
+  const entries = window.__lifecycleInputEvents = [];
+  for (const type of ['pointerdown', 'pointerup', 'pointercancel', 'click']) document.addEventListener(type, e => {
+    const m = window.__inkwave?.menus, button = e.target?.closest?.('[data-id]');
+    const item = { type, trusted: e.isTrusted, target: button?.dataset.id ?? null,
+      tag: e.target?.tagName ?? null, x: e.clientX, y: e.clientY,
+      menu: m?.current ?? null, screen: m?._scr?.name ?? null,
+      focus: m?._focus?.dataset.id ?? null, scrollX, scrollY, prevented: e.defaultPrevented };
+    entries.push(item); if (entries.length > 48) entries.shift();
+    queueMicrotask(() => { item.prevented = e.defaultPrevented; });
+  }, { capture: true, passive: true });
+});
+
 const until = async (fn, arg, ms = 300000, what = fn.toString().slice(0, 140)) => operationTrace.run('wait: ' + what, async () => {
   const t0 = Date.now();
   for (;;) {
@@ -105,12 +119,11 @@ const tap = async (id) => {
     let k = 1; for (let n = e; n && n !== document.body; n = n.parentElement) k *= +getComputedStyle(n).opacity;
     return e.getBoundingClientRect().width > 0 && k > 0.6;
   }, sel, 300000, 'tappable ' + id);
-  // Verify native visibility and live hit-testing, then ask Playwright to
-  // calculate the target's box again immediately before dispatching its real
-  // touch. A coordinate captured in a preceding evaluate() can go stale during
-  // a >1s software-GL main-thread stall, especially as results/menu animates.
-  // `force` skips Playwright's separate stability polling only; our explicit
-  // visibility/hit-testing and the actual menu transition still must pass.
+  // The 0.6 opacity input threshold can be reached before a results/menu
+  // entrance finishes translating the button. Hit-testing one earlier box
+  // does not establish stability at dispatch, especially with software GL.
+  // Keep the real locator's stability/visibility/hit-target waits enabled,
+  // alongside native opacity/screen checks and the actual menu transition.
   await operationTrace.run('touch: ' + id, async () => {
       // START can be below the first iPad viewport. Scroll natively, wait until
       // its real hit target is in view, then send the actual user touch.
@@ -130,10 +143,9 @@ const tap = async (id) => {
         return x >= 0 && x < innerWidth && y >= 0 && y < innerHeight &&
           (button === hit || button.contains(hit));
       }, sel, 30000, 'Menu button ' + id + ' visible and hit-testable after native scroll');
-      // Locator.tap is a real touch gesture, not element.click() or a
-      // synthetic DOM event. Force only removes redundant actionability waits
-      // after the assertions above and freshens the box at dispatch time.
-      await page.locator(sel).tap({ force: true, timeout: 120000 });
+      // Send one real touch after Playwright observes a stable, actionable
+      // button. Never retry a swallowed gesture or bypass the native handler.
+      await page.locator(sel).tap({ timeout: 120000 });
   });
 };
 const menuIs = (name) => until((n) => window.__inkwave?.menus?.current === n, name, 300000, 'menu ' + name);
@@ -176,11 +188,12 @@ const snap = () => page.evaluate(() => {
     starting: !!menus?._starting, modal: !!menus?._modal, focusConnected: f ? f.isConnected : null, ringOn: !!C?.on, ringVisible: ring ? ringStyle.visibility === 'visible' && ringStyle.display !== 'none' && +ringStyle.opacity > 0.6 : null, ringOnFocus,
     uiDiagnostics: {
       menuInputOwner: menus?._input ?? null, inputLastDevice: g.input?.lastDevice ?? null,
-      focus: f ? { connected: f.isConnected, id: f.id || null, nav: f.dataset.nav ?? null, cur: f.dataset.cur ?? null, type: f.type ?? null, tagName: f.tagName || null, rect: rect(f) } : null,
+      focus: f ? { connected: f.isConnected, id: f.id || null, menuId: f.dataset.id ?? null, nav: f.dataset.nav ?? null, cur: f.dataset.cur ?? null, type: f.type ?? null, tagName: f.tagName || null, rect: rect(f) } : null,
       screenNoCursor: menus?._scr?.noCursor ?? null,
       ring: ring ? { className: String(ring.className), display: ringStyle.display, visibility: ringStyle.visibility, opacity: ringStyle.opacity, rect: rect(ring) } : null,
       cursorAnimation: C ? { on: !!C.on, snapNext: !!C.snapNext, radius: C.r ?? null, axes: { x: spring(C.x), y: spring(C.y), w: spring(C.w), h: spring(C.h) } } : null,
       document: { visibilityState: document.visibilityState, hidden: document.hidden }, connectedPads,
+      inputEvents: window.__lifecycleInputEvents ?? [],
       frameDriver: {
         platform: g.platform?.driver?.snapshot?.() ?? null,
         menuRaf: menus?._raf ?? null, menuLastT: n(menus?._lastT), menuExternalTick: n(menus?._extTick),
