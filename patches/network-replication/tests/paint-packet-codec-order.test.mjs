@@ -66,7 +66,7 @@ test('lossless JSON dictionary keeps real canonical paint ownership under delay,
 test('actual NetMatch tick JSON carries negotiated rows without duplicate score or sender reassignment',async()=>{
  const a=await client('a'),raw=await client('c'),packed=await client('c');let tick;
  a.session.tr={broadcast:d=>{tick=json(d);}};
- for(let i=0;i<24;i++)a.paint.splat(new a.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.3,0,{seed:.31});
+ for(let i=0;i<24;i++)a.paint.splat(new a.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.3,0,{seed:.31,kind:'drop'});
  a.nm._sendTick();assert.ok(tick?.e?.length);const n=new PaintPacketNegotiation();n.sync('canonical-paint','a',['a','c']);n.observe('c',[V,'canonical-paint']);const wire=json(n.packTick(tick));assert.ok(wire.pe);
  const r=new PaintPacketNegotiation();r.sync('canonical-paint','c',['a','c']);const decoded=r.acceptTick('a',wire);assert.deepEqual(decoded.e,tick.e);
  for(const [c,t]of [[raw,tick],[packed,decoded]]){c.nm.onMessage('a',t);c.nm._peer('a').tr=t.ts;c.nm._playEvents();}
@@ -77,7 +77,7 @@ test('installed transport negotiates actual relay membership and keeps all sidec
  const a=await client('a',['a','c']),c=await client('c',['a','c']);let outbound;
  a.session.tr={broadcast:d=>{outbound=json(d);}};
  a.nm.onMessage('c',{k:'t',ts:0,a:[],pc:[V,'canonical-paint']});
- for(let i=0;i<24;i++)a.paint.splat(new a.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.3,0,{seed:.31});
+ for(let i=0;i<24;i++)a.paint.splat(new a.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.3,0,{seed:.31,kind:'drop'});
  const rows=json(a.nm.out);a.nm._sendTick();assert.ok(outbound.pe,'production _sendTick encodes after handshake');assert.equal(outbound.e,undefined);
  assert.deepEqual(decodePaintEvents(outbound.pe),rows);
  const raw=await client('c',['a','c']);
@@ -92,7 +92,7 @@ test('installed transport negotiates actual relay membership and keeps all sidec
 for(const hostChanged of [false,true])test(`same-id relay rejoin forgets capability before next sync, hostChanged=${hostChanged}`,async()=>{
  const a=await client('a',['a','c']);let outbound;a.session.tr={broadcast:d=>{outbound=json(d);},sendTo(){}};
  a.nm.onMessage('c',{k:'t',ts:0,a:[],pc:[V,'canonical-paint']});
- for(let i=0;i<24;i++)a.paint.splat(new a.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.3,0,{seed:.31});
+ for(let i=0;i<24;i++)a.paint.splat(new a.f.THREE.Vector3(.4+(i%4)*.35,0,.4+Math.floor(i/4)*.2),.3,0,{seed:.31,kind:'drop'});
  const rows=json(a.nm.out);a.nm._sendTick();assert.ok(outbound.pe);
  // Relay leave and same-id join both occur between two sends: a set comparison
  // alone cannot see the incarnation change. Actual onLeave must retire support.

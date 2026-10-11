@@ -50,3 +50,6 @@ test('dictionary common fields are scalar-only so decoded rows cannot share muta
  for(const i of [0,1,2,3,4,5,6,7,10])for(const bad of [{x:1},[1]]){const p=encode(rows());p[1][0][i]=bad;assert.equal(decode(p),null,`common ${i}`);}
  const r=rows();r[0][9]={x:0};assert.equal(encode(r),null,'unexpected local shape stays legacy');
 });
+for(const kind of [0,'shot','line','blast','bomb','trail','drop','roll','rollFloor','speck'])test('native immutable kind '+kind+' remains compressible',()=>{
+ const r=rows();for(const e of r)e[8]=kind;const p=encode(r);assert.ok(p);assert.deepEqual(decode(p),r);
+});

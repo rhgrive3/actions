@@ -18,7 +18,8 @@ function bounded(value){
  }
  return visit(value,0);
 }
-function common(c){return Array.isArray(c)&&c.length===11&&c.slice(0,8).every(x=>typeof x==='number'&&Number.isFinite(x))&&c[8]==='inkwave-paint-order-v1'&&typeof c[9]==='string'&&(c[10]===0||c[10]===1);}
+const PAINT_KINDS=new Set([0,'shot','line','blast','bomb','trail','drop','roll','rollFloor','speck']);
+function common(c){return Array.isArray(c)&&c.length===11&&c.slice(0,8).every((x,i)=>i===2?PAINT_KINDS.has(x):typeof x==='number'&&Number.isFinite(x))&&c[8]==='inkwave-paint-order-v1'&&typeof c[9]==='string'&&(c[10]===0||c[10]===1);}
 function paint(row){return Array.isArray(row)&&row.length===17&&row[1]==='s'&&Array.isArray(row[14])&&row[14].length===4&&row[14][0]==='inkwave-paint-order-v1'&&typeof row[14][1]==='string';}
 /** Returns null when the unchanged legacy encoding is preferable or required. */
 export function encodePaintEvents(rows){
