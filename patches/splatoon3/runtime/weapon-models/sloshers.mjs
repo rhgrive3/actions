@@ -4,7 +4,7 @@
 // lying on the silhouette's top edge above the opening (kept level by animateWeapon), and the native pitcher
 // handle, its thumb lever and the native right-hand grip are kept at the origin. Scale is an estimate (see the
 // reference doc). Everything is procedural geometry.
-import { Pieces, M, box, sphere, slab, part, rebuild } from './kit.mjs';
+import { Pieces, M, V, box, sphere, slab, part, rebuild, pipe, pipeR, cyl, ring, zlathe, ylathe, rotateAbout } from './kit.mjs';
 
 // Reference pixel -> weapon space for a side render: (gx, gy) = origin in the image, s = metres/pixel.
 // Returns [z, y], the layout slab() takes directly (muzzle toward +Z, up = +Y).
@@ -43,6 +43,56 @@ const CFG = {
   's3-slosher-double':     { o: [170, 250], s: 0.00075, thick: 0.07, color: '#8a8c90', mat: M.metal, handle: '#2b2c30', outline: 'double',   rim: 200, R: 0.06 },
 };
 
+// ------------------------------------------------------------------------------------------ 3D builders
+// Native slosher frame (character-weapons.js buildSlosher): the right hand holds a vertical handle at the
+// origin, the container is centred at (0, BY, BZ), the support hand closes under its front (native gripL),
+// the muzzle stays at the native (0, BY + .1, BZ + .03) so projectile origins are unchanged.
+const BY = 0.012, BZ = 0.148;
+/** Open-top box container: outer w (X) × h (Y) × dep (Z), wall t, centred at (0, cy, cz). */
+function openBox(p, w, h, dep, t, cy, cz, color, mat = M.gloss) {
+  const e = 0.18, y0 = cy - h / 2;
+  p.add(box(w, t, dep, 0, y0 + t / 2, cz, e), color, mat);                               // floor
+  for (const sx of [-1, 1]) p.add(box(t, h, dep, sx * (w - t) / 2, cy, cz, e), color, mat); // side walls
+  for (const sz of [-1, 1]) p.add(box(w, h, t, 0, cy, cz + sz * (dep - t) / 2, e), color, mat); // front/back
+  // rolled rim
+  for (const sx of [-1, 1]) p.add(box(t * 1.8, t * 1.4, dep + t * .8, sx * (w - t) / 2, cy + h / 2, cz, .5), color, mat);
+  for (const sz of [-1, 1]) p.add(box(w + t * .8, t * 1.4, t * 1.8, 0, cy + h / 2, cz + sz * (dep - t) / 2, .5), color, mat);
+}
+/** Flat ink surface (kept level by the native animation) as a rounded rectangle slab. */
+function inkRect(w, dep, y, z) {
+  return part(new Pieces().add(box(w, 0.003, dep, 0, y, z, 0.25, 16, 4), '#ffffff', M.satin), [0, y, z], 'ink');
+}
+function inkDisc(r, y, z) {
+  return part(new Pieces().add(sphere(r, 0.0015, r, 0, y, z, 24, 6), '#ffffff', M.satin), [0, y, z], 'ink');
+}
+/** Vertical wire D-handle the right hand holds (native gripR at the origin), joined to the back wall at zb. */
+function wireHandle(p, zb, color = '#1d1e22') {
+  p.add(pipe([[0, 0.058, zb], [0, 0.06, 0.004], [0, 0.03, -0.012], [0, -0.03, -0.012], [0, -0.06, 0.004], [0, -0.058, zb]], 0.0052, 24, 8), color, M.satin);
+  p.add(cyl(0.0125, [0, -0.05, -0.004], [0, 0.05, -0.004], 14), color, M.rubber);           // grip sleeve on the axis
+}
+
+function triSlosher(d) {
+  // Wmn_Slosher_Diffusion: blue square tub split by two dividers into three channels, a yellow swing bail
+  // with finger holes pivoting on the side walls, a black wire handle on the back wall.
+  const C = { blue: '#2b3cb0', yellow: '#e3e01c', black: '#1b1c20' };
+  const w = 0.19, h = 0.19, dep = 0.19, t = 0.009, cy = BY + 0.004, cz = BZ;
+  const body = new Pieces(), ink = new Pieces();
+  openBox(body, w, h, dep, t, cy, cz, C.blue);
+  for (const sx of [-1, 1]) body.add(box(0.006, h - 0.03, dep - 2 * t, sx * w / 6, cy - 0.012, cz, 0.2), C.blue, M.gloss);   // dividers
+  for (const sx of [-1, 0, 1]) body.add(box(0.02, h * 0.82, 0.006, sx * w / 3, cy - 0.01, cz + dep / 2 + 0.002, 0.3), C.blue, M.gloss); // front ribs
+  for (const sx of [-1, 0, 1]) ink.add(box(w / 3 - 0.014, h * 0.55, dep - 0.03, sx * w / 3, cy - h * 0.18, cz, 0.15));        // ink in each channel
+  // yellow bail: flat band arching over the opening, pivots on the side walls, leaning back toward the hand
+  const top = cy + h / 2 + 0.115, arch = [];
+  for (let k = 0; k <= 16; k++) { const a = Math.PI * k / 16; arch.push([Math.cos(a) * (w / 2 + 0.012), cy + 0.03 + Math.sin(a) * (top - cy - 0.03), cz]); }
+  const bail = new Pieces().add(pipeR(arch, () => 0.0095, 40, 10), C.yellow, M.gloss);
+  for (let k = -2; k <= 1; k++) bail.add(sphere(0.006, 0.004, 0.005, (k + 0.5) * 0.024, top + 0.006, cz), '#b9b412', M.satin);
+  for (const sx of [-1, 1]) bail.add(cyl(0.011, [sx * (w / 2 - 0.002), cy + 0.03, cz], [sx * (w / 2 + 0.018), cy + 0.03, cz], 12), C.yellow, M.gloss);
+  body.merge(bail.transform(g => rotateAbout(g, [1, 0, 0], -0.32, [0, cy + 0.03, cz])));
+  wireHandle(body, cz - dep / 2);
+  return rebuild(d, { body, ink, parts: { surface: inkRect(w - 0.04, dep - 0.04, cy + h * 0.1, cz) } });
+}
+const BUILD3D = { 's3-slosher-diffusion': triSlosher };
+
 /** Builds one slosher on the native slosher def `d`: silhouette body, pitcher handle, ink surface and lever. */
 function model(d, c) {
   const pts = OUTLINE[c.outline], P = px(c.o[0], c.o[1], c.s);
@@ -68,5 +118,5 @@ export const MODELS = Object.fromEntries(Object.entries(CFG).filter(([id]) => id
     : id === 's3-slosher-launcher' ? 'Wmn_Slosher_Launcher'
     : id === 's3-slosher-bathtub' ? 'Wmn_Slosher_Bathtub'
     : id === 's3-slosher-washtub' ? 'Wmn_Slosher_Washtub' : 'Wmn_Slosher_Double',
-  build: d => model(d, c),
+  build: d => (BUILD3D[id] || (dd => model(dd, c)))(d),
 }]));
