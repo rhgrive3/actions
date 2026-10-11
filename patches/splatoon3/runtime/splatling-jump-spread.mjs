@@ -71,9 +71,8 @@ export function installSplatlingJumpSpread({ Actor, WeaponRunner, on }) {
     if (recovery === null || !Number.isFinite(weapon.spreadAir) || !Number.isFinite(weapon.spreadGround)) {
       return spread.call(this, weapon);
     }
-    const first = weapon.spreadFirst ?? 0.45;
-    const bloom = first + (1 - first) * this.bloom;
     const base = weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery;
-    return base * bloom;
+    // #940: jumping changes the outer envelope, never Shooter-style bloom.
+    return base;
   };
 }
