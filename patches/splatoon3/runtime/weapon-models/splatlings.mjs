@@ -4,7 +4,7 @@
 // splatling channels are kept: `trigger` (pistol trigger) and `barrels` (the spun cluster, rotating about its
 // local Z through a pivot on the barrel axis). The native charge coil is kept for readability although none of the six references
 // shows a charge meter. Everything is procedural geometry.
-import { Pieces, M, zlathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, pistolGrip, supportHandle,
+import { Pieces, M, zlathe, xlathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, pistolGrip, supportHandle,
   part, rebuild, TRIGGER_PIVOT } from './kit.mjs';
 
 /** Barrels on a ring of radius R about the spin axis (ay): n tubes from z0 to z1, each with a nozzle tip. */
@@ -18,10 +18,10 @@ function barrelRing(B, o) {
 /** Shared finish: the native support hand stays on d.gripL (drawn as a foregrip), the native trigger and
  *  barrel channels take the new pieces, the native charge coil is kept (a charging splatling must stay readable
  *  to other players), the muzzle sits at the nozzle exit. */
-function finish(d, body, B, tr, AX, muzzleZ, supportColor) {
+function finish(d, body, B, tr, AX, muzzleZ, supportColor, ink = new Pieces()) {
   supportHandle(body, d.gripL, supportColor);
   return rebuild(d, {
-    body, ink: new Pieces(),
+    body, ink,
     parts: { trigger: part(tr, TRIGGER_PIVOT), barrels: part(B, [0, AX, 0.3]) },
     muzzle: [0, AX, muzzleZ],
   });
@@ -34,24 +34,28 @@ const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, 
 // carry bail on top. The tank and housing dimensions come from the legacy reference model (IoU 0.57);
 // the six-barrel cluster is traced from the 3D render and the turntable face view.
 function heavy(d) {
-  const AX = 0.07, C = { dark: '#25262b', silver: '#b5b9c0', pink: '#d8287f', black: '#131417', yellow: '#e8c33a' };
-  const body = new Pieces(), B = new Pieces();
+  // Rebuilt (Opus): the big reservoir is a drum lying across the gun (axis X) behind the motor, in team ink
+  // (the turntable shows it ink-coloured, the render translucent grey) inside a dark wire cage; a black
+  // motor block with a carry handle, a pink hub with six dark barrels, a black foregrip knob.
+  const AX = 0.07, C = { dark: '#2a2b30', cage: '#3a3c42', pink: '#d8287f', black: '#141518', silver: '#b8bcc2' };
+  const body = new Pieces(), B = new Pieces(), ink = new Pieces();
   const tr = pistolGrip(body, { color: C.dark, triggerColor: C.pink, guardColor: C.dark });
-  body.add(box(0.104, 0.016, 0.165, 0, -0.013, 0.123), C.black);
-  body.add(box(0.058, 0.07, 0.18, 0, AX - 0.005, 0.11, 0.25), C.dark, M.satin);
-  body.add(pipe([[0, AX + 0.045, 0.02], [0, AX + 0.10, 0.05], [0, AX + 0.10, 0.12], [0, AX + 0.04, 0.14]], 0.006, 16, 6), C.black, M.satin);
-  // round 2: shorter, lower reservoir (the reference silhouette is ~1.9:1, the first pass was too tall)
-  const tank = at(lathe([[0, -0.115], [0.056, -0.115], [0.062, -0.103], [0.062, 0.103], [0.056, 0.115], [0, 0.115]], 24).rotateZ(-0.22), 0.130, 0.125, -0.041);
-  body.add(tank, C.silver, M.metal);
-  for (const y of [0.085, 0.125]) body.add(at(torus(0.063, 0.004, 5, 24).rotateX(Math.PI / 2).rotateZ(-0.22), 0.130, y, -0.041), C.black);
-  body.add(pipe([[0.120, 0.004, -0.039], [0.131, -0.047, -0.051], [0.070, -0.065, 0.050], [0.035, 0.020, 0.070]], 0.009), C.yellow, M.gloss);
-  body.add(pipe([[-0.027, 0.081, -0.016], [-0.038, 0.147, 0.009], [0.021, 0.147, 0.034], [0.032, 0.082, 0.065]], 0.008), C.yellow);
-  // six barrels on a ring of radius 0.04, pink hub drum, pink rings along the barrels
-  barrelRing(B, { n: 6, a0: Math.PI / 2, R: 0.04, ay: AX, r: 0.0085, z0: 0.17, z1: 0.45, tipL: 0.02, tipR: 0.0095,
-    barrel: C.dark, tip: C.black });
-  B.add(zcyl(0.05, 0.17, 0.38, 0, AX, 24), C.pink, M.gloss);
-  for (const z of [0.207, 0.321]) B.add(ring(0.052, 0.003, 0, AX, z, 'z', 4, 24), C.pink, M.gloss);
-  return finish(d, body, B, tr, AX, 0.456, C.dark);
+  body.add(box(0.072, 0.085, 0.17, 0, AX, 0.095, 0.3), C.dark, M.satin);                                        // motor block
+  body.add(box(0.03, 0.016, 0.06, 0, AX + 0.05, 0.16, 0.4), C.pink, M.gloss);                                     // pink latch
+  body.add(pipe([[0, AX + 0.042, 0.04], [0, AX + 0.085, 0.06], [0, AX + 0.085, 0.13], [0, AX + 0.042, 0.15]], 0.0065, 18, 6), C.black, M.satin);
+  const ty = AX + 0.055, tz = -0.075, tr2 = 0.088, hw = 0.07;
+  ink.add(cyl(tr2, [-hw, ty, tz], [hw, ty, tz], 28));                                                            // ink reservoir
+  for (const sx of [-1, 1]) body.add(ring(tr2 - 0.004, 0.008, sx * hw, ty, tz, 'x', 6, 28), C.dark, M.satin);   // drum rims
+  for (const x of [-0.035, 0.035]) body.add(ring(tr2 + 0.006, 0.003, x, ty, tz, 'x', 4, 28), C.cage, M.satin);   // cage hoops
+  for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; body.add(cyl(0.003, [-hw - 0.004, ty + Math.sin(a) * (tr2 + 0.006), tz + Math.cos(a) * (tr2 + 0.006)], [hw + 0.004, ty + Math.sin(a) * (tr2 + 0.006), tz + Math.cos(a) * (tr2 + 0.006)], 6), C.cage, M.satin); }
+  body.add(box(0.05, 0.04, 0.03, 0, AX + 0.01, 0.02, 0.4), C.dark, M.satin);                                    // tank coupling
+  // pink hub with six barrels
+  barrelRing(B, { n: 6, a0: Math.PI / 2, R: 0.034, ay: AX, r: 0.0105, z0: 0.18, z1: 0.46, tipL: 0.022, tipR: 0.012, barrel: C.black, tip: C.dark });
+  B.add(zlathe([[0, 0.175], [0.056, 0.175], [0.058, 0.2], [0.05, 0.215], [0, 0.215]], 0, AX, 0, 24), C.pink, M.gloss);
+  B.add(zlathe([[0.044, 0.33], [0.05, 0.33], [0.05, 0.35], [0.044, 0.35]], 0, AX, 0, 24), C.pink, M.gloss);
+  B.add(zlathe([[0.044, 0.425], [0.05, 0.425], [0.05, 0.44], [0.044, 0.44]], 0, AX, 0, 24), C.pink, M.gloss);
+  B.add(zcyl(0.014, 0.18, 0.46, 0, AX, 12), C.dark, M.satin);                                                     // axle
+  return finish(d, body, B, tr, AX, 0.468, C.black, ink);
 }
 
 // ------------------------------------------------------------------------------------------ Mini Splatling
@@ -117,24 +121,26 @@ function ballpoint(d) {
 // Wmn_Spinner_Serein. A dark dome-shaped reservoir at the rear with a gold rim, a short grey housing and
 // three nozzles at the front. A green window pod sits under the housing.
 function nautilus(d) {
-  const AX = 0.07, C = { grey: '#3a3c42', dark: '#26282e', gold: '#c5a04e', green: '#67c3a6', metal: '#8e939b' };
-  const body = new Pieces(), B = new Pieces();
-  const tr = pistolGrip(body, { color: C.dark, triggerColor: C.green, guardColor: C.dark });
-  body.add(zcyl(0.03, -0.12, 0.0, 0, AX, 20), C.dark, M.satin);
-  // Round-2 tilt of this dome (about X) scored IoU 0.22, so round 1's untilted dome is kept (IoU 0.40).
-  body.add(zlathe([[0, -0.155], [0.072, -0.155], [0.08, -0.148], [0.082, -0.13], [0.075, -0.12], [0, -0.12]], 0, AX, 0, 28), C.dark, M.gloss);
-  body.add(ring(0.08, 0.0035, 0, AX, -0.14, 'z', 5, 28), C.gold, M.metal);
-  body.add(box(0.03, 0.03, 0.05, 0, AX - 0.04, -0.03, 0.4), C.green, M.gloss);
-  body.add(zcyl(0.028, 0.0, 0.14, 0, AX, 24), C.grey, M.gloss);
-  B.add(zcyl(0.03, 0.14, 0.20, 0, AX, 24), C.grey, M.gloss);
-  barrelRing(B, { n: 3, a0: Math.PI / 2, R: 0.014, ay: AX, r: 0.0065, z0: 0.02, z1: 0.26, tipL: 0.02, tipR: 0.0075,
-    barrel: C.metal, tip: C.dark });
-  return finish(d, body, B, tr, AX, 0.262, C.dark);
+  // Rebuilt (Opus): a large round dark reservoir disc with a gold rim at the rear (flat faces sideways),
+  // a silver neck bracket, a dark cylindrical body with a teal window and silver clamp rings, a cone head
+  // with three short nozzles (the spun cluster) and a black pistol grip.
+  const AX = 0.07, C = { dark: '#2b2c31', gold: '#b99a45', silver: '#b9bcc1', teal: '#6fb7a8', black: '#16171a' };
+  const body = new Pieces(), B = new Pieces(), ink = new Pieces();
+  const tr = pistolGrip(body, { color: C.black, triggerColor: C.dark, guardColor: C.dark });
+  const dy = AX + 0.03, dz = -0.075;
+  body.add(xlathe([[0, -0.036], [0.07, -0.032], [0.098, -0.018], [0.104, 0], [0.098, 0.018], [0.07, 0.032], [0, 0.036]], 0, dy, dz, 32), C.dark, M.gloss);
+  body.add(ring(0.103, 0.006, 0, dy, dz, 'x', 6, 36), C.gold, M.metal);
+  body.add(box(0.03, 0.06, 0.05, 0, AX + 0.01, 0.0, 0.4), C.silver, M.satin);                                   // neck bracket
+  body.add(zlathe([[0, -0.01], [0.034, -0.01], [0.036, 0.02], [0.036, 0.19], [0.03, 0.2], [0, 0.2]], 0, AX, 0, 24), C.dark, M.satin);
+  for (const z of [0.03, 0.17]) body.add(ring(0.037, 0.005, 0, AX, z, 'z', 6, 24), C.silver, M.satin);
+  ink.add(box(0.012, 0.03, 0.08, -0.036, AX, 0.1, 0.3));                                                         // teal window (ink)
+  ink.add(box(0.012, 0.03, 0.08, 0.036, AX, 0.1, 0.3));
+  B.add(zlathe([[0, 0.2], [0.034, 0.2], [0.03, 0.235], [0.018, 0.26], [0, 0.262]], 0, AX, 0, 24), C.dark, M.satin);
+  B.add(ring(0.032, 0.004, 0, AX, 0.205, 'z', 6, 24), C.gold, M.metal);
+  for (const [x, y] of [[0, 0.016], [-0.014, -0.009], [0.014, -0.009]]) B.add(zcyl(0.0055, 0.24, 0.296, x, AX + y, 10), C.black, M.satin);
+  return finish(d, body, B, tr, AX, 0.298, C.black, ink);
 }
 
-// ------------------------------------------------------------------------------------------ Heavy Edit Splatling
-// Wmn_Spinner_HyperShort. A white tank box with a red print at the rear, a black housing and red drum at the
-// front, three silver nozzles with red rings, and a silver carry bail.
 function examiner(d) {
   const AX = 0.085, C = { silver: '#c9cbcf', grey: '#9ca0a7', red: '#d7262d', black: '#1e1f24', white: '#e6e6e2' };
   const body = new Pieces(), B = new Pieces();
@@ -154,8 +160,6 @@ export const MODELS = {
   's3-spinner-quick': { sourceModel: 'Wmn_Spinner_QuickT', build: mini },
   's3-spinner-hyper': { sourceModel: 'Wmn_Spinner_HyperT', build: hydra },
   's3-spinner-downpour': { sourceModel: 'Wmn_Spinner_Downpour', build: ballpoint },
-  // Nautilus 47 is NOT registered: the best measured silhouette (IoU 0.40) is below the base model's 0.44,
-  // so it keeps the native model until the dome and nozzle block are reworked (see the reference doc).
-  // 's3-spinner-serein': { sourceModel: 'Wmn_Spinner_Serein', build: nautilus },
   's3-spinner-hypershort': { sourceModel: 'Wmn_Spinner_HyperShort', build: examiner },
+  's3-spinner-serein': { sourceModel: 'Wmn_Spinner_Serein', build: nautilus },
 };
