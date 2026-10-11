@@ -52,7 +52,7 @@ test('#574 network annulus keeps zero HP damage, one bounded impulse, retry meta
     assert.equal(packet.d, 0); assert.deepEqual(packet.kb, [3.4, 0, 0]);
     const pending = a.nm.hitPending.get(packet.seq);
     assert.ok(pending, 'accepted relay send retains a retryable delivery record');
-    assert.deepEqual(pending[0].kb, packet.kb, 'retry retains exactly the original bounded knockback geometry');
+    assert.deepEqual(Array.from(pending[0].kb), Array.from(packet.kb), 'retry retains exactly the original bounded knockback geometry');
     b.nm.onMessage('p1', packet); b.nm.onMessage('p1', packet);
     assert.equal(b.victim.hp, 100); assert.ok(b.victim.vel.x > 0);
     const ack = b.sent.find(x => x.packet.k === 'hit_ack').packet;
