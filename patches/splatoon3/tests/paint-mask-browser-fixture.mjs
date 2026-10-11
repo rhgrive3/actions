@@ -88,6 +88,16 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   const positive = program(maskShader), negative = program(revertedShader(0, 12)), rows = [];
   const families = { rays: program(revertedShader(0, 3)), satellites: program(revertedShader(3, 6)),
     spatter: program(revertedShader(6, 9)), drips: program(revertedShader(9, 12)) };
+  // A removed family must be inert, while each retained family still needs a
+  // failing counterfactual. Read the production shader's actual kind counts.
+  const shapeBody = nativeShader.match(/vec4 kindShape\(float k\) \{[^}]+\}/)?.[0];
+  check(shapeBody, 'production kindShape counts');
+  const shapeCounts = [...shapeBody.matchAll(/return vec4\(([^)]+)\)/g)]
+    .map(match => match[1].split(',').map(Number));
+  check(shapeCounts.length === 7 && shapeCounts.slice(0, 6).every(c => c.length === 4 && c.every(Number.isFinite)),
+    'six complete ancillary count vectors plus the body-only fallback');
+  const activeFamilies = Object.fromEntries(Object.keys(families).map((name, i) =>
+    [name, shapeCounts.some(counts => (counts[i] || 0) > 0)]));
   const face = { atlas: { x: 0, y: 0, pad: 2, ppm }, su: 32, sv: 32, nu: 128, nv: 128, cu: 0.25, cv: 0.25,
     grid: 0, wall: false, turf: true };
   // #1165: exercise the *actual WebGL shader and CPU ownership* for Roller
@@ -129,6 +139,9 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     const familyPixels = Object.fromEntries(Object.entries(families).filter(([name]) => name !== 'drips' || wall)
       .map(([name, p]) => [name, query(p, ...args)]));
     const familyUnsupported = Object.fromEntries(Object.keys(familyPixels).map(name => [name, 0]));
+    for (const [name, pixels] of Object.entries(familyPixels)) if (!activeFamilies[name]) {
+      check(pixels.every((byte, i) => byte === actual[i]), `${name} is disabled and its hash cannot alter any GPU sample`);
+    }
     let unsupported = 0, negativeUnsupported = 0;
     for (let cell = 0; cell < cells; cell++) {
       let seen = false, revertedSeen = false;
@@ -171,9 +184,12 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     check(gpuOnlySolid === 0, `GPU owns visibly solid dry Roller cells: ${JSON.stringify({ ...rows.at(-1), firstGpuOnly })}`);
   }
   for (const wall of [false, true]) check(rows.some(row => row.wall === wall && row.negativeUnsupported > 0), `old-sine ${wall ? 'wall' : 'floor'} negative control must fail`);
-  for (const name of Object.keys(families)) check(rows.some(row => row.familyUnsupported[name] > 0 && (name !== 'drips' || row.wall)),
-    `independently reverted ${name} must expose unsupported cells`);
+  for (const name of Object.keys(families)) {
+    if (activeFamilies[name]) check(rows.some(row => row.familyUnsupported[name] > 0 && (name !== 'drips' || row.wall)),
+      `independently reverted active ${name} must expose unsupported cells`);
+    else check(rows.every(row => !row.familyUnsupported[name]), `${name} is disabled in every production kind`);
+  }
   check(rows.length === 124, 'six original kinds plus final-growth Roller body: real WebGL and CPU cells exercised');
-  return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, rows,
+  return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, activeFamilies, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0) };
 }
