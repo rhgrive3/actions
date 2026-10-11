@@ -32,9 +32,18 @@ function relFor(file) {
 }
 
 // One module environment. `network` selects whether the newest adapter participates.
-export async function fixture({ network = true, flow = false, fullRuntime = false } = {}) {
+export async function fixture({ network = true, flow = false, fullRuntime = false, built = null, includeSession = false } = {}) {
+  const builtRoot = built ? path.resolve(built) : null;
+  const sourceRoot = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+  const UPSTREAM = builtRoot || sourceRoot;
+  const PATCH_ROOT = builtRoot ? path.join(builtRoot, 'patches/splatoon3') : path.join(ROOT, 'patches/splatoon3');
+  if (builtRoot) {
+    if (!network) throw new Error('Built artifacts cannot disable an already-composed network adapter');
+    const manifest = JSON.parse(fs.readFileSync(path.join(builtRoot, 'inkwave-build.json'), 'utf8'));
+    console.log('INKWAVE network built fixture', builtRoot, 'contentHash=' + manifest.contentHash);
+  }
   let seconds = 1000;
-  const context = vm.createContext({ console, performance: { now: () => seconds * 1000 } });
+  const context = vm.createContext({ console, URL, URLSearchParams, crypto: globalThis.crypto, performance: { now: () => seconds * 1000 } });
   const modules = new Map();
 
   const compose = network
@@ -45,7 +54,8 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(ROOT, 'inkwave-public/'))) file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
-    if (file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
+    if (!builtRoot && file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
+    if (builtRoot && file.startsWith(path.join(ROOT, 'patches/'))) file = path.join(builtRoot, path.relative(ROOT, file));
     if (file.startsWith(path.join(ROOT, 'src/'))) file = path.join(UPSTREAM, path.relative(ROOT, file));
     return file;
   }
@@ -54,7 +64,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
     if (modules.has(file)) return modules.get(file);
     const raw = fs.readFileSync(file, 'utf8');
     const isSource = file.startsWith(UPSTREAM + path.sep) || file.startsWith(PATCH_ROOT + path.sep) || file.startsWith(QUALITY_ROOT + path.sep);
-    const source = isSource ? compose(relFor(file), raw) : raw;
+    const source = !builtRoot && isSource ? compose(relFor(file), raw) : raw;
     const mod = new vm.SourceTextModule(source, { context, identifier: file });
     modules.set(file, mod);
     return mod;
@@ -70,6 +80,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
     export * from './inkwave-public/src/game/actor.js';
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/net/netmatch.js';
+    ${includeSession ? "export { NetSession } from './inkwave-public/src/net/session.js';" : ''}
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
