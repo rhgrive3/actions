@@ -25,9 +25,11 @@ try{
   await page.waitForFunction(()=>globalThis.workloadResult||globalThis.workloadError,null,{timeout:600000});
   const row=await page.evaluate(()=>({value:globalThis.workloadResult,error:globalThis.workloadError}));if(row.error||errors.length)throw Error(row.error||errors.join('\n'));
   const run={mode,ordinal:i,sourceSha:variants[mode].sourceSha,contentHash:variants[mode].manifest.contentHash,...row.value};
-  const metrics=['stepSubmit','stepWithDrain','finishWait','cpuBody','cpuGrowth','splatInclusive','paintAdvanceInclusive','flushInclusive','atlasSubmit'];
+  if(mode==='after'&&!(run.wireNegotiation?.compressedMessages>0))throw Error('Candidate compression inactive');
+  if(mode==='before'&&run.wireNegotiation?.compressedMessages!==0)throw Error('Baseline unexpectedly compressed');
+  const metrics=['stepSubmit','stepWithDrain','finishWait','cpuBody','cpuGrowth','splatInclusive','paintAdvanceInclusive','flushInclusive','atlasSubmit','wireSerialize','receiveDecode','sendTickInclusive','stepAndWire'];
   if([...run.frames,...run.coldFrames].some(f=>metrics.some(k=>!Number.isFinite(f[k])||f[k]<0)))throw Error('Missing or invalid timing sample '+mode);
-  for(const k of ['cpuBody','cpuGrowth','atlasSubmit'])if(!run.frames.some(f=>f[k]>0))throw Error('Inactive timing probe '+mode+' '+k);
+  for(const k of ['cpuBody','cpuGrowth','atlasSubmit','wireSerialize','receiveDecode','sendTickInclusive'])if(!run.frames.some(f=>f[k]>0))throw Error('Inactive timing probe '+mode+' '+k);
   if(!(run.counts.totalQuads>0&&run.counts.totalAtlasDraws>0))throw Error('Inactive GPU workload '+mode);
   run.timings=Object.fromEntries(metrics.map(k=>[k,stats(run.frames.map(f=>f[k]))]));
   run.coldTimings=Object.fromEntries(metrics.map(k=>[k,stats(run.coldFrames.map(f=>f[k]))]));
