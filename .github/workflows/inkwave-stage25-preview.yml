@@ -21,6 +21,8 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
       - name: Verify original patch compatibility
         run: node scripts/check-inkwave-patches.mjs --quick
+      - name: Regression check for legacy minimap and menu start compatibility
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/minimap-dirty-895.test.mjs patches/reliability/tests/start.test.mjs
       - name: Build real optimized game with all 25 stage modules
         run: node scripts/build-inkwave.mjs inkwave-public _site
       - name: Validate 25 stages times five rules, collision and navigation
