@@ -23,7 +23,7 @@ const PAINT_KINDS=new Set([0,'shot','line','blast','bomb','trail','drop','roll',
 function common(c){return Array.isArray(c)&&c.length===11&&c.slice(0,8).every((x,i)=>i===2?PAINT_KINDS.has(x):typeof x==='number'&&Number.isFinite(x))&&c[8]==='inkwave-paint-order-v1'&&typeof c[9]==='string'&&(c[10]===0||c[10]===1);}
 function paint(row){return Array.isArray(row)&&row.length===17&&row[1]==='s'&&Array.isArray(row[14])&&row[14].length===4&&row[14][0]==='inkwave-paint-order-v1'&&typeof row[14][1]==='string';}
 /** Returns null when the unchanged legacy encoding is preferable or required. */
-export function encodePaintEvents(rows){
+function encodePaintPayload(rows){
  if(!Array.isArray(rows)||rows.length>512)return null;
  // Native rows carry local _netTick/_netSeq properties that JSON omits.
  // Strip only array properties; the indexed wire values remain exact.
@@ -42,7 +42,12 @@ export function encodePaintEvents(rows){
  const result=[PAINT_PACKET_CODEC_VERSION,dict,out];
  // Wrappers add depth and nodes. Never emit a packet our decoder rejects.
  if(!bounded(result))return null;
- return utf8Bytes(JSON.stringify(result))<utf8Bytes(JSON.stringify(rows))?result:null;
+ return {payload:result,rows};
+}
+export function encodePaintEvents(rows){
+ const encoded=encodePaintPayload(rows);if(!encoded)return null;
+ const {payload,rows:wireRows}=encoded;
+ return utf8Bytes(JSON.stringify(payload))<utf8Bytes(JSON.stringify(wireRows))?payload:null;
 }
 /** Fail closed before expanding. Null means reject this compressed event set. */
 export function decodePaintEvents(payload){
@@ -107,7 +112,13 @@ export class PaintPacketNegotiation {
  canEncode(){return !!this.nonce&&this.members.size>0&&[...this.members.values()].every(p=>p.received&&p.peerNonce===p.ackNonce);}
  packTick(tick){
   if(!this.canEncode()||tick?.k!=='t')return tick;
-  const payload=encodePaintEvents(tick.e);if(!payload)return tick;
+  // For ordinary native ticks, replacing e with pe and adding pn can only
+  // increase envelope overhead. The final exact UTF-8 whole-packet comparison
+  // therefore subsumes the standalone events-only profitability comparison.
+  // Reserved fields retain the original conservative standalone contract.
+  const specialJson=typeof tick.toJSON==='function'||typeof tick.e?.toJSON==='function';
+  const conservative=tick.e?.length<2||Object.hasOwn(tick,'pe')||Object.hasOwn(tick,'pn')||specialJson;
+  const payload=conservative?encodePaintEvents(tick.e):encodePaintPayload(tick.e)?.payload;if(!payload)return tick;
   const {e,...rest}=tick,out={...rest,pe:payload,pn:this.nonce};
   // Include the generation binding and every sidecar in the actual decision.
   return utf8Bytes(JSON.stringify(out))<utf8Bytes(JSON.stringify(tick))?out:tick;

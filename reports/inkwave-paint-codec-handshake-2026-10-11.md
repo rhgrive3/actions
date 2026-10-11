@@ -41,3 +41,27 @@ Separately, VM transport fixtures now parse wire JSON in the receiving realm.
 Passing Node-created event objects directly into a VM had triggered the
 codec's intended plain-object rejection. Same-realm death/respawn and mixed
 paint playback succeed; the runtime safety check has not been relaxed.
+
+## Exact bounded-head outcome and serialization candidate
+
+Head 688fe4ba completed all required CI and all 30 fixed-head browser A/B runs
+against adopted main bf389014. Full metrics are in
+`inkwave-paint-codec-bounded-performance-2026-10-11.md`. Aggregate bandwidth
+fell about 18%, while CPU work and retained memory increased. Ordinary
+single-Actor traffic did not compress or add steady protocol bytes. This is
+not a frame-rate improvement claim.
+
+A subsequent isolated review found duplicate profitability serialization:
+event-only JSON was serialized twice, then the same events were serialized
+again inside both whole ticks. For ordinary native ticks, the final exact
+UTF-8 whole-packet comparison subsumes the event-only comparison: changing
+`e` to `pe` and adding the nonce increases envelope overhead. The candidate
+retains both bounded traversals and performs only the final comparison.
+Reserved `pe`/`pn`, custom `toJSON`, and zero/one-row packets retain the old
+conservative path. An equivalence regression compares the complete old/new
+JSON decisions across row counts, reserved fields, Unicode, custom JSON,
+and deep legacy events. Public standalone encode semantics are unchanged.
+Local Node measurements indicate lower packTick costs for multi-row packets;
+new production-browser evidence is still required. Main a5b7d86e (PR1247)
+is integrated separately, preserving sparse transient-gear sidecars and the
+receiving-realm death/respawn/buff takeover regression.

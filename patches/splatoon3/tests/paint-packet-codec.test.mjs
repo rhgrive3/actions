@@ -61,3 +61,21 @@ test('string boundary and UTF-8 whole packet budgets stay symmetric after wrappi
  }
  const r=rows();r.push([1,'ev','x'.repeat(1025)]);assert.equal(encode(r),null);
 });
+
+test('single whole-packet profitability matches the original two-stage decision exactly',()=>{
+ const p=pair();p.start();
+ const original=t=>{const payload=encode(t.e);if(!payload)return t;const{e,...rest}=t,out={...rest,pe:payload,pn:p.nodes.a.nonce};return Buffer.byteLength(JSON.stringify(out))<Buffer.byteLength(JSON.stringify(t))?out:t;};
+ for(const count of [0,1,2,3,4,7,8,24,128,512])for(const variant of ['plain','unicode','reservedPe','reservedPn','tickJson','arrayJson','depth']){
+  const t={...tick(),e:Array.from({length:count},(_,i)=>row(i)),gg:{name:variant==='unicode'?'日本語🦑'.repeat(40):'gear'}};
+  if(variant==='reservedPe')t.pe=['existing'];if(variant==='reservedPn')t.pn='existing';
+  if(variant==='tickJson')t.toJSON=function(){return{...this,toJSON:undefined,extra:'json'};};
+  if(variant==='arrayJson')t.e.toJSON=function(){return this.slice();};
+  if(variant==='depth'){let v=1;for(let i=0;i<5;i++)v={a:v};t.e.push([1,'ev',v]);}
+  const actual=p.nodes.a.packTick(t),expected=original(t);assert.equal(JSON.stringify(actual),JSON.stringify(expected),`${count} ${variant}`);
+  if(actual.pe&&!Object.hasOwn(t,'pe'))assert.deepEqual(decode(actual.pe),JSON.parse(JSON.stringify(t.e)));
+ }
+});
+
+test('standalone encoding uses normalized wire rows rather than array metadata',()=>{
+ const r=rows(),expected=encode(r);r.toJSON=()=>[];r[0]._netTick=42;assert.deepEqual(encode(r),expected);
+});
