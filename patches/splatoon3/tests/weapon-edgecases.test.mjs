@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 import {fixture as wireFixture,ROOT} from '../../../scripts/weapons-fixture.mjs';
@@ -348,4 +349,21 @@ test('ordinary floor contact stays a single generic impact for every family',asy
   assert.equal(impacts,expected,kind+' floor stays one generic impact per round');
   assert.ok(paint>=expected,kind+' floor still paints');
  }
+});
+
+// Keep the browser probe's RNG fixture aligned with the composed production sampler.
+test('browser Splatling probe uses the production four-draw signed-axis order', async () => {
+ const script = await readFile(new URL('../../../scripts/check-inkwave-seven-claims.mjs', import.meta.url), 'utf8');
+ const literal = script.match(/oldRandom=Math.random,draws=\[([^\]]+)\]/)?.[1];
+ assert.ok(literal, 'browser probe declares its deterministic draws');
+ const draws = literal.split(',').map(value => value.trim() === '1-1e-12' ? 1-1e-12 : Number(value));
+ assert.ok(draws.every(Number.isFinite));
+ const f = await setup('splatling', { composeProductionAdapters: true }), ps = projectiles(f), a = f.a;
+ a.aimPoint.set(0, 1.05, 100); a.aimDir.set(0, 0, 1); a.grounded = false;
+ let n = 0; f.setRandom(() => draws[n++] ?? .5);
+ ps.fireSplatling(a, a.weapon, 7);
+ const v = ps.list.at(-1).vel;
+ close(Math.atan2(v.y, Math.hypot(v.x, v.z))*180/Math.PI, 1.6, 1e-6);
+ close(Math.atan2(v.x, v.z), 0, 1e-8);
+ assert.equal(n, 4);
 });
