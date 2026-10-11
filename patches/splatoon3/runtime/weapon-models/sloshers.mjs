@@ -4,7 +4,7 @@
 // lying on the silhouette's top edge above the opening (kept level by animateWeapon), and the native pitcher
 // handle, its thumb lever and the native right-hand grip are kept at the origin. Scale is an estimate (see the
 // reference doc). Everything is procedural geometry.
-import { Pieces, M, V, box, sphere, slab, part, rebuild, pipe, pipeR, cyl, ring, zlathe, ylathe, rotateAbout } from './kit.mjs';
+import { THREE, Pieces, M, V, box, sphere, slab, part, rebuild, pipe, pipeR, cyl, ring, zlathe, ylathe, xlathe, zcyl, xcyl, rotateAbout, mirrored, gripSpec } from './kit.mjs';
 
 // Reference pixel -> weapon space for a side render: (gx, gy) = origin in the image, s = metres/pixel.
 // Returns [z, y], the layout slab() takes directly (muzzle toward +Z, up = +Y).
@@ -122,29 +122,272 @@ function slosherMachine(d) {
   ink.add(zlathe([[0, fz - 0.05], [0.058, fz - 0.05], [0.058, fz - 0.032], [0, fz - 0.032]], 0, cy, 0, 24));     // ink behind the turbine
   return rebuild(d, { body, ink, parts: { surface: inkDisc(0.05, cy + 0.03, cz) } });
 }
+// ------------------------------------------------------------------------------------------ Bloblobber
+// Wmn_Slosher_Bathtub, rebuilt from the official render, the S3 Deco turntable and the S2 turntable strip: an
+// open white ceramic bathtub (thick rolled rim, sloped backrest with an overflow cap, recessed grab handles in
+// both side walls, drain and jets in the floor, anti-slip strips on the front ramp) set into a black hull, a
+// black strap with a print looping round the hull (chrome posts, clips, buckles), chrome rails under the front
+// lip and round the back, a brown foot block under the front, and the chrome thermostat bar (red/blue ring
+// knob, mixer block, two posts) across the back that the right fist holds.
+// Modelled in tub space (rim top y = 0, back rim edge z = 0, front lip z = 0.30, x across) and moved so the
+// fist's grip point on the faucet bar is the weapon origin. Scale: basin 0.20 m wide (reference doc).
+const TUB = { a: 0.10, b: 0.15, n: 3.2, zc: 0.15 };
+const TUB_GRIP = [-0.05, 0.040, 0.012];          // fist on the faucet bar, ring-knob side (tub space)
+const TUB_LEVEL = -0.055;                        // ink level, 5.5 cm under the rim
+// Depth scale along the tub (tub z): KIN for the basin below the rim roll, KOUT for the hull below the band.
+const KIN = [[0, 0.25], [0.03, 0.4], [0.07, 0.8], [0.1, 1], [0.19, 0.95], [0.21, 0.78], [0.24, 0.5], [0.275, 0.25], [0.3, 0.18]];
+const KOUT = [[0, 0.86], [0.066, 0.98], [0.1, 1], [0.13, 0.95], [0.21, 0.54], [0.266, 0.18], [0.3, 0]];
+const tubLin = (tab, z) => {
+  if (z <= tab[0][0]) return tab[0][1];
+  for (let i = 1; i < tab.length; i++) if (z <= tab[i][0]) { const [z0, a] = tab[i - 1], [z1, b] = tab[i]; return a + (b - a) * (z - z0) / (z1 - z0); }
+  return tab[tab.length - 1][1];
+};
+/** Plan outline (superellipse) at angle th: th = 0 → +X side, π/2 → front lip, −π/2 → back. Returns [x, z]. */
+function tubPlan(th) {
+  const c = Math.cos(th), s = Math.sin(th), e = 2 / TUB.n;
+  return [TUB.a * Math.sign(c) * Math.abs(c) ** e, TUB.zc + TUB.b * Math.sign(s) * Math.abs(s) ** e];
+}
+/** Outward plan normal [nx, nz] at angle th. */
+function tubNormal(th) {
+  const p0 = tubPlan(th - 1e-3), p1 = tubPlan(th + 1e-3), tx = p1[0] - p0[0], tz = p1[1] - p0[1], l = Math.hypot(tx, tz) || 1;
+  return [tz / l, -tx / l];
+}
+/** Plan angle on side ±1 whose outline point lies at tub z. */
+function tubTheta(z, side) {
+  const u = Math.max(-1, Math.min(1, (z - TUB.zc) / TUB.b)), t = Math.asin(Math.sign(u) * Math.abs(u) ** (TUB.n / 2));
+  return side > 0 ? t : Math.PI - t;
+}
+/** Depth remap: the basin ('in') and hull ('out') get shallower toward the back rest and the front lip. */
+function tubY(y, z, layer) {
+  if (layer === 'in' && y < -0.012) return -0.012 + (y + 0.012) * tubLin(KIN, z);
+  if (layer === 'out' && y < -0.035) return -0.035 + (y + 0.035) * tubLin(KOUT, z);
+  return y;
+}
+/** Shell point for a profile row [rho (fraction of the plan), delta (m along the plan normal), y, layer]. */
+function tubAt(th, [rho, del, y, layer]) {
+  const [px, pz] = tubPlan(th), [nx, nz] = tubNormal(th);
+  const x = rho * px + del * nx, z = TUB.zc + rho * (pz - TUB.zc) + del * nz;
+  return [x, tubY(y, z, layer), z];
+}
+/** Sweep a wall profile round the whole plan (a superellipse "lathe"); `probe` row's normal must point to `want`. */
+function tubSweep(rows, N, probe, want, clampZ = null) {
+  const pos = [], idx = [], m = rows.length;
+  for (const r of rows) for (let k = 0; k < N; k++) {
+    const p = tubAt((2 * Math.PI * k) / N, r);
+    if (clampZ) p[2] = Math.max(clampZ[0], Math.min(clampZ[1], p[2]));
+    pos.push(p[0], p[1], p[2]);
+  }
+  for (let i = 0; i < m - 1; i++) for (let k = 0; k < N; k++) {
+    const a = i * N + k, b = i * N + (k + 1) % N, c = (i + 1) * N + (k + 1) % N, d = (i + 1) * N + k;
+    idx.push(a, b, c, a, c, d);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  const nrm = g.attributes.normal, v = probe * N + Math.round(N / 8);
+  if (nrm.getX(v) * want[0] + nrm.getY(v) * want[1] + nrm.getZ(v) * want[2] < 0) {
+    const ix = g.index.array; for (let q = 0; q < ix.length; q += 3) { const t = ix[q + 1]; ix[q + 1] = ix[q + 2]; ix[q + 2] = t; }
+    g.computeVertexNormals();
+  }
+  return g;
+}
+// White ceramic: basin floor centre → floor → inner wall → rolled rim → outer band → tuck under the band.
+const TUB_WHITE = [
+  [0, 0, -0.105, 'in'], [0.5, -0.012, -0.104, 'in'], [0.8, -0.026, -0.099, 'in'], [0.93, -0.03, -0.086, 'in'],
+  [1, -0.031, -0.066, 'in'], [1, -0.027, -0.045, 'in'], [1, -0.023, -0.026, 'in'], [1, -0.0195, -0.011, 0],
+  [1, -0.0178, -0.0045, 0], [1, -0.015, -0.0006, 0], [1, -0.009, 0.0008, 0], [1, -0.003, 0, 0], [1, 0.0005, -0.004, 0],
+  [1, 0.0016, -0.012, 0], [1, 0.0012, -0.028, 0], [1, -0.003, -0.0335, 0], [1, -0.011, -0.036, 0],
+];
+// Black hull: from inside the band down the flank, round the bilge, under the bottom to the centre.
+const TUB_HULL = [
+  [1, -0.009, -0.031, 0], [1, -0.0125, -0.038, 0], [1, -0.0135, -0.06, 'out'], [1, -0.016, -0.095, 'out'],
+  [1, -0.019, -0.125, 'out'], [0.97, -0.02, -0.143, 'out'], [0.88, -0.018, -0.155, 'out'], [0.65, -0.01, -0.16, 'out'],
+  [0, 0, -0.162, 'out'],
+];
+/** Basin centre-line (x = 0) inner surface height at tub z, and its slope dY/dz. */
+const TUB_KEEL = (() => {
+  const pts = [];
+  for (const th of [-Math.PI / 2, Math.PI / 2]) for (const r of TUB_WHITE.slice(0, 8)) { const p = tubAt(th, r); pts.push([p[2], p[1]]); }
+  return pts.sort((a, b) => a[0] - b[0]);
+})();
+function tubKeel(z) {
+  const y = tubLin(TUB_KEEL, z), s = (tubLin(TUB_KEEL, z + 0.004) - tubLin(TUB_KEEL, z - 0.004)) / 0.008;
+  return [y, s];
+}
+/** Point on the hull flank (side ±1, tub z) at depth D under the rim, lifted `off` along the plan normal. */
+function tubFlank(side, z, D, off = 0.0045) {
+  return tubFlankAt(tubTheta(z, side), D, off);
+}
+const TUB_FLANK_DEL = [[-0.125, -0.019], [-0.095, -0.016], [-0.06, -0.0135], [-0.038, -0.0125]];
+function tubFlankAt(th, D, off = 0.0045) {
+  const z0 = tubPlan(th)[1], y = -0.035 - (D - 0.035) / Math.max(0.05, tubLin(KOUT, z0));
+  const p = tubAt(th, [1, tubLin(TUB_FLANK_DEL, y) + off, y, 'out']), [nx, nz] = tubNormal(th);
+  return { p, n: [nx, 0, nz] };
+}
+/** Hull underside point (tub x, z) lowered by `off`. */
+function tubUnder(x, z, off = 0.0045) {
+  const yPre = -0.162 + 0.012 * Math.max(0, (Math.abs(x) - 0.035) / 0.04) ** 2;
+  return { p: [x, tubY(yPre, z, 'out') - off, z], n: [0, -1, 0] };
+}
+/** Flat-strap ribbon through points with per-point normals (thickness along the normal). */
+function tubRibbon(points, normals, width, thick, closed = false) {
+  const n = points.length, pos = [], idx = [], T = V(), N = V(), B = V(), rings = [];
+  for (let i = 0; i < n; i++) {
+    const a = points[closed ? (i - 1 + n) % n : Math.max(0, i - 1)], b = points[closed ? (i + 1) % n : Math.min(n - 1, i + 1)];
+    T.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]).normalize();
+    N.set(...normals[i]); N.addScaledVector(T, -N.dot(T)).normalize();
+    B.crossVectors(T, N).normalize();
+    const p = V(...points[i]);
+    rings.push([p.clone().addScaledVector(B, width / 2).addScaledVector(N, thick / 2), p.clone().addScaledVector(B, -width / 2).addScaledVector(N, thick / 2),
+      p.clone().addScaledVector(B, -width / 2).addScaledVector(N, -thick / 2), p.clone().addScaledVector(B, width / 2).addScaledVector(N, -thick / 2)]);
+  }
+  const quad = (a, b, c, d) => { const o = pos.length / 3; for (const v of [a, b, c, d]) pos.push(v.x, v.y, v.z); idx.push(o, o + 2, o + 1, o, o + 3, o + 2); };
+  for (let i = 0; i < (closed ? n : n - 1); i++) { const r0 = rings[i], r1 = rings[(i + 1) % n]; for (let f = 0; f < 4; f++) { const g = (f + 1) % 4; quad(r0[f], r0[g], r1[g], r1[f]); } }
+  if (!closed) { const a = rings[0], b = rings[n - 1]; quad(a[3], a[2], a[1], a[0]); quad(b[0], b[1], b[2], b[3]); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+/** Orient a geometry built facing +Z onto a surface point with normal n (up hint keeps its local +Y). */
+function tubPlace(g, p, n, up = [0, 1, 0]) {
+  const Z = V(...n).normalize(), X = V(...up).cross(Z).normalize(), Y = Z.clone().cross(X);
+  g.applyMatrix4(new THREE.Matrix4().makeBasis(X, Y, Z)); return g.translate(p[0], p[1], p[2]);
+}
+// Block glyphs for the strap print, in a 5 x 7 cell: [u0, v0, u1, v1] bars (u right, v up).
+const TUB_GLYPHS = {
+  H: [[0, 0, 1, 7], [4, 0, 5, 7], [1, 3, 4, 4]], I: [[2, 0, 3, 7]], L: [[0, 0, 1, 7], [1, 0, 5, 1]],
+  K: [[0, 0, 1, 7], [1, 3, 2, 4], [2, 4, 3, 5.5], [3, 5.5, 4.2, 7], [2, 2, 3, 3], [3, 0, 4.2, 2]], O: [[0, 1, 1, 6], [4, 1, 5, 6], [1, 0, 4, 1], [1, 6, 4, 7]],
+};
+
 function bloblobber(d) {
-  // Wmn_Slosher_Bathtub: a deep white bathtub (rolled rim, drain) in a black hull with a strap round it, a
-  // chrome tap bar with red/blue rings across the back end and a chrome grab rail along the side; the
-  // opening tilts up toward the front as in the render.
-  const C = { white: '#efeee9', hull: '#25262b', strap: '#1c1d21', chrome: '#cfd2d6', red: '#d23a3a', blue: '#3a5ad2' };
-  const cy = BY - 0.01, cz = BZ + 0.035, rx = 0.092, rz = 0.15, top = cy + 0.06;
-  const tub = new Pieces(), ink = new Pieces();
-  tub.add(sphere(rx, 0.1, rz, 0, cy - 0.045, cz, 24, 16), C.hull, M.satin);                                     // deep hull (top stays under the rim)
-  tub.add(box(rx * 2.02, 0.05, rz * 2.0, 0, top - 0.02, cz, 0.45, 24, 8), C.white, M.gloss);                    // white upper shell
-  tub.add(ring(1, 0.012, 0, 0, 0, 'y', 8, 40).scale(rx * 0.97, 1, rz * 0.97).translate(0, top + 0.004, cz), C.white, M.gloss); // rolled rim
-  tub.add(ring(1, 0.009, 0, 0, 0, 'y', 6, 40).scale(rx * 1.02, 1, rz * 1.02).translate(0, cy - 0.02, cz), C.strap, M.rubber); // strap
-  tub.add(box(0.026, 0.006, 0.11, -(rx + 0.002), top - 0.012, cz + 0.01, 0.5), C.hull, M.satin);              // rim slot
-  tub.add(pipe([[-(rx + 0.004), cy, cz - 0.07], [-(rx + 0.024), cy + 0.004, cz - 0.05], [-(rx + 0.024), cy + 0.004, cz + 0.07], [-(rx + 0.004), cy, cz + 0.09]], 0.0065, 24, 8), C.chrome, M.metal);
-  const tz = cz - rz + 0.02, ty = top + 0.034;
-  tub.add(cyl(0.014, [-0.07, ty, tz], [0.07, ty, tz], 18), C.chrome, M.metal);
-  for (const [x, c] of [[-0.05, C.red], [0.05, C.blue]]) tub.add(ring(0.0145, 0.003, x, ty, tz, 'x', 5, 18), c, M.gloss);
-  tub.add(cyl(0.008, [0.02, top, tz + 0.004], [0.02, ty, tz], 12), C.chrome, M.metal);
-  tub.add(cyl(0.006, [0, ty, tz], [0, ty - 0.006, tz + 0.04], 12), C.chrome, M.metal);
-  ink.add(sphere(rx * 0.9, 0.01, rz * 0.9, 0, top + 0.002, cz, 22, 6));                                        // ink filling the tub
-  const tilt = g => rotateAbout(g, [1, 0, 0], -0.18, [0, cy, cz]);
-  const body = new Pieces().merge(tub.transform(tilt)); ink.transform(tilt);
-  wireHandle(body, cz - rz + 0.01);
-  return rebuild(d, { body, ink, parts: { surface: inkDisc(0.07, top + 0.004, cz) } });
+  const C = { white: '#efede4', hull: '#2f2f2e', strap: '#161617', clip: '#121213', chrome: '#c9cdd2', dark: '#1c1d20',
+    slot: '#4f5156', brown: '#5e4f43', print: '#e9e9e6', red: '#d8262c', blue: '#2848c8', label: '#b9bcc0' };
+  const tub = new Pieces(), ink = new Pieces(), knob = new Pieces(), surf = new Pieces();
+  // ---- ceramic tub and hull
+  tub.add(tubSweep(TUB_WHITE, 64, 10, [0, 1, 0]), C.white, M.gloss);
+  tub.add(tubSweep(TUB_HULL, 64, 7, [0, -1, 0]), C.hull, M.satin);
+  // ---- basin details: overflow cap on the back rest, drain, jets, anti-slip strips (team ink), grab recesses
+  const keelUp = [0, 0, 1], keelN = z => { const [, s] = tubKeel(z), l = Math.hypot(1, s); return [0, 1 / l, -s / l]; };
+  { const z = 0.036, [y] = tubKeel(z);
+    tub.add(tubPlace(zlathe([[0, -0.004], [0.0105, -0.004], [0.0105, 0.002], [0.0075, 0.0055], [0, 0.0065]], 0, 0, 0, 6), [0, y, z], keelN(z), keelUp), C.chrome, M.gloss); }
+  { const z = 0.165, [y] = tubKeel(z), n = keelN(z);
+    tub.add(tubPlace(ring(0.0135, 0.0032, 0, 0, 0, 'z', 6, 20), [0, y + 0.0012, z], n, keelUp), C.chrome, M.gloss);
+    tub.add(tubPlace(zcyl(0.0108, -0.003, 0.0006, 0, 0, 16), [0, y, z], n, keelUp), C.dark, M.satin);
+    for (const a of [0, Math.PI / 2]) tub.add(tubPlace(box(0.02, 0.0025, 0.002, 0, 0, 0.001, 0.4, 6, 4).rotateZ(a), [0, y, z], n, keelUp), C.chrome, M.gloss); }
+  for (const z of [0.207, 0.222]) for (const sx of [-1, 1]) { const [y] = tubKeel(z);
+    tub.add(tubPlace(zcyl(0.0036, -0.002, 0.0009, 0, 0, 10), [sx * 0.012, y, z], keelN(z), keelUp), C.dark, M.satin); }
+  for (const sx of [-1, 1]) { const z = 0.25, [y] = tubKeel(z);
+    ink.add(tubPlace(box(0.027, 0.008, 0.0024, 0, 0, 0.0004, 0.35, 8, 4), [sx * 0.022, y, z], keelN(z), keelUp)); }
+  for (const sx of [-1, 1]) {
+    const yPre = -0.034, wall = z => tubAt(tubTheta(z, sx), [1, -0.0255, yPre, 'in']);
+    const slot = new Pieces().add(box(0.0035, 0.024, 0.104, 0, 0, 0, 0.3, 12, 6), C.slot, M.satin);
+    const w = wall(0.17); slot.transform(g => g.rotateZ(-sx * 0.2).translate(w[0] - sx * 0.0008, w[1], 0.17));
+    tub.merge(slot);
+    const z0 = 0.122, z1 = 0.218, a = wall(z0), b = wall(z1), m = wall(0.17);
+    tub.add(pipe([[a[0] - sx * 0.001, a[1], z0], [a[0] - sx * 0.008, a[1], z0 + 0.012], [m[0] - sx * 0.0095, m[1], 0.17],
+      [b[0] - sx * 0.008, b[1], z1 - 0.012], [b[0] - sx * 0.001, b[1], z1]], 0.0042, 24, 8), C.chrome, M.gloss);
+    for (const [p, z] of [[a, z0 + 0.005], [b, z1 - 0.005]]) tub.add(sphere(0.0058, 0.0058, 0.0058, p[0] - sx * 0.004, p[1], z, 10, 6), C.chrome, M.gloss);
+  }
+  // ---- faucet (thermostat) bar across the back: axis (y .040, z .012); the −X knob carries the red/blue rings
+  const fy = 0.040, fz = 0.012;
+  tub.add(xcyl(0.016, -0.056, 0.056, fy, fz, 20), C.chrome, M.gloss);
+  const knobGeo = sx => { const g = xlathe([[0, 0.057], [0.0168, 0.057], [0.0175, 0.06], [0.0175, 0.081], [0.0162, 0.0855], [0.006, 0.0862], [0, 0.0862]], 0, 0, 0, 8);
+    return (sx < 0 ? mirrored(g) : g).translate(0, fy, fz); };
+  tub.add(knobGeo(1), C.chrome, M.gloss);
+  knob.add(knobGeo(-1), C.chrome, M.gloss);
+  for (const sx of [-1, 1]) {
+    (sx < 0 ? knob : tub).add(ring(0.0158, 0.0011, sx * 0.0566, fy, fz, 'x', 4, 20), C.dark, M.satin);       // joint groove
+    (sx < 0 ? knob : tub).add(xcyl(0.0065, sx * 0.0862, sx * 0.0868, fy, fz, 10), '#8d9196', M.gloss);       // end boss
+  }
+  knob.add(ring(0.0176, 0.0013, -0.0745, fy, fz, 'x', 4, 20), C.red, M.gloss);
+  knob.add(ring(0.0176, 0.0013, -0.0672, fy, fz, 'x', 4, 20), C.blue, M.gloss);
+  tub.add(box(0.054, 0.02, 0.026, 0.004, 0.027, 0.024, 0.28), C.chrome, M.gloss);                             // mixer block
+  for (const sx of [-1, 1]) tub.add(cyl(0.0045, [0.004 + sx * 0.023, -0.002, 0.014], [0.004 + sx * 0.023, 0.03, 0.014], 10), C.chrome, M.gloss);
+  for (const sx of [-1, 1]) tub.add(cyl(0.0068, [0.004 + sx * 0.023, 0.0002, 0.014], [0.004 + sx * 0.023, 0.003, 0.014], 12), C.chrome, M.gloss);
+  { const z = 0.0215, [y] = tubKeel(z);
+    tub.add(tubPlace(box(0.03, 0.0095, 0.0015, 0, 0, 0.0004, 0.25, 6, 4), [0, y, z], keelN(z), keelUp), C.label, M.print);
+    tub.add(tubPlace(box(0.022, 0.0035, 0.0006, 0, 0, 0.0013, 0.4, 6, 4), [0, y, z], keelN(z), keelUp), C.dark, M.print); }
+  // ---- strap: one closed loop — buckle → upper flank → round the back → other flank → buckle → lower flank → under the bottom
+  const S = [];
+  const upper = [[0.236, 0.046], [0.2, 0.045], [0.16, 0.046], [0.12, 0.049], [0.085, 0.055], [0.055, 0.065], [0.03, 0.076]];
+  const lower = [[0.205, 0.068], [0.17, 0.083], [0.135, 0.104], [0.105, 0.127]];
+  for (const [z, D] of upper) S.push(tubFlank(1, z, D));
+  for (const dt of [0.75, 0.38, 0, -0.38, -0.75]) S.push(tubFlankAt(-Math.PI / 2 + dt, 0.088));
+  for (const [z, D] of [...upper].reverse()) S.push(tubFlank(-1, z, D));
+  for (const [z, D] of lower) S.push(tubFlank(-1, z, D));
+  for (const x of [-0.07, -0.035, 0, 0.035, 0.07]) S.push(tubUnder(x, 0.092));
+  for (const [z, D] of [...lower].reverse()) S.push(tubFlank(1, z, D));
+  tub.add(tubRibbon(S.map(s => s.p), S.map(s => s.n), 0.018, 0.0036, true), C.strap, M.rubber);
+  // strap hardware per flank: front buckle, chrome post between the upper and lower strap with clips
+  for (const sx of [-1, 1]) {
+    const bk = tubFlank(sx, 0.228, 0.05, 0.0075);
+    tub.add(tubPlace(box(0.028, 0.026, 0.009, 0, 0, 0, 0.3, 8, 6), bk.p, bk.n), C.clip, M.rubber);
+    tub.add(tubPlace(box(0.016, 0.006, 0.004, 0, 0.004, 0.005, 0.4, 6, 4), bk.p, bk.n), '#3a3b3e', M.satin);
+    const a = tubFlank(sx, 0.058, 0.064, 0.011).p, b = tubFlank(sx, 0.098, 0.13, 0.011).p;
+    tub.add(cyl(0.0068, a, b, 14), C.chrome, M.gloss);
+    for (const [z, D] of [[0.058, 0.064], [0.098, 0.13]]) { const c = tubFlank(sx, z, D, 0.0085);
+      tub.add(tubPlace(box(0.024, 0.026, 0.011, 0, 0, 0, 0.3, 8, 6), c.p, c.n), C.clip, M.rubber); }
+  }
+  // strap print on the upper flank strap: chevrons (pointing to the front lip), HILKO, red logo; each flank reads
+  // left → right for its own viewer (tubPlace's local +X is the viewer's right on both flanks)
+  for (const sx of [-1, 1]) {
+    const fAt = z => tubLin([[0.085, 0.055], [0.12, 0.049], [0.16, 0.046], [0.2, 0.045]], z);
+    const put = (g, z, color) => {
+      const c = tubFlank(sx, z, fAt(z), 0.0045 + 0.0019), c0 = tubFlank(sx, z - 0.01, fAt(z - 0.01)).p, c1 = tubFlank(sx, z + 0.01, fAt(z + 0.01)).p;
+      g.rotateZ((sx > 0 ? -1 : 1) * Math.atan2(c1[1] - c0[1], c1[2] - c0[2]));     // follow the strap's run
+      tub.add(tubPlace(g, c.p, c.n), color, M.print);
+    };
+    const tip = -sx, read = sx > 0 ? -1 : 1;                   // local x of the front lip; world z step of reading
+    for (const z of [0.112, 0.124, 0.136]) for (const s of [-1, 1])
+      put(box(0.0075, 0.0018, 0.0005, 0, 0, 0, 0.5, 6, 4).rotateZ(-s * tip * 0.75).translate(-tip * 0.0022, s * 0.0028, 0), z, C.print);
+    const word = 'HILKO', cell = 0.0013;
+    for (let i = 0; i < word.length; i++) {
+      const g = new Pieces();
+      for (const [u0, v0, u1, v1] of TUB_GLYPHS[word[i]])
+        g.add(box((u1 - u0) * cell + 0.0004, (v1 - v0) * cell + 0.0004, 0.0005, ((u0 + u1) / 2 - 2.5) * cell, ((v0 + v1) / 2 - 3.5) * cell, 0, 0.5, 6, 4));
+      put(g.build(), 0.178 + read * (i - 2) * 0.0105, C.print);
+    }
+    put(sphere(0.0058, 0.0058, 0.0005, 0, 0, 0, 12, 4), 0.212, C.red);
+    put(sphere(0.0034, 0.0034, 0.0006, 0, 0, 0.0002, 10, 4), 0.212, C.strap);
+  }
+  // ---- chrome rails: front U under the lip (into the flanks), back U round the hull
+  for (const [pts, r] of [
+    [[[0.072, -0.058, 0.172], [0.089, -0.064, 0.205], [0.087, -0.066, 0.258], [0.066, -0.067, 0.292], [0.03, -0.067, 0.303], [0, -0.067, 0.304]], 0.0088],
+    [[[0.07, -0.07, 0.045], [0.072, -0.075, 0.016], [0.05, -0.078, -0.008], [0.022, -0.079, -0.013], [0, -0.079, -0.014]], 0.0068],
+  ]) tub.add(pipe([...pts, ...[...pts].reverse().slice(1).map(([x, y, z]) => [-x, y, z])], r, 40, 10), C.chrome, M.gloss);
+  for (const sx of [-1, 1]) for (const [x, y, z] of [[0.074, -0.058, 0.175], [0.07, -0.07, 0.047]])
+    tub.add(cyl(0.0118, [sx * (x - 0.008), y, z], [sx * (x + 0.002), y, z], 14), '#8d9196', M.gloss);           // rail sockets
+  // ---- brown foot block under the front lip, bottom ledge
+  tub.add(box(0.104, 0.022, 0.038, 0, -0.054, 0.279, 0.3, 10, 6), C.brown, M.satin);
+  { const z = 0.19; tub.add(box(0.13, 0.009, 0.022, 0, tubY(-0.162, z, 'out') - 0.002, z, 0.3, 10, 6), '#202021', M.satin); }
+  // ---- ink: level free surface inside the basin (kept level by the native slosher animation)
+  const sr = [[0, 0, TUB_LEVEL, 0], [1, -0.022, TUB_LEVEL, 0], [1, -0.022, TUB_LEVEL - 0.003, 0], [0, 0, TUB_LEVEL - 0.003, 0]];
+  surf.add(tubSweep(sr, 48, 1, [0, 1, 0], [0.036, 0.236]), '#ffffff', M.satin);
+  // ---- tub space → weapon space (grip point on the bar at the origin)
+  const [gx, gy, gz] = TUB_GRIP, mv = g => g.translate(-gx, -gy, -gz);
+  tub.transform(mv); ink.transform(mv); knob.transform(mv); surf.transform(mv);
+  const W = (x, y, z) => [x - gx, y - gy, z - gz];
+  return rebuild(d, {
+    body: tub, ink,
+    parts: { surface: part(surf, W(0, TUB_LEVEL, 0.135), 'ink'), lever: part(knob, W(-0.07, fy, fz)) },
+    // right fist round the faucet bar: thumb along +X (toward the mixer block), wrist away from the tub's mass
+    gripR: gripSpec([0, 0, 0], [1, 0, 0], [0, 0.42, -0.9]),
+    gripL: gripSpec(W(0, -0.067, 0.304), [-1, 0, 0], [0.25, -0.85, 0.45]),
+    muzzle: W(0, 0.005, 0.17),                                  // basin opening (the blobs leave the tub here)
+  });
+}
+// Hanging one-hand carry by the faucet bar (S2/S3 promo): the tub hangs below the fist with its opening forward.
+// Yaw π + roll π orient the same hang as pitch 1.14 but flip the native heave's pitch sense, so the slosh
+// heave scoops the tub forward and up (windup back, release with the opening to the target).
+const BATHTUB_HOLD = {
+  carry: { p: [-0.2, 0.67, 0.06], r: [2.0, Math.PI - 0.25, Math.PI] }, twoCarry: 0,
+  run: { p: [-0.21, 0.69, 0.05], r: [1.88, Math.PI - 0.3, Math.PI] },
+  aim: { p: [-0.17, -0.25, 0.08], r: [1.92, Math.PI - 0.2, Math.PI] }, twoAim: 0,
+  raise: { p: [-0.2, 1.08, 0.16], r: [1.2, Math.PI - 0.3, Math.PI] },
+  lobby: { p: [-0.2, 0.67, 0.08], r: [2.0, Math.PI - 0.35, Math.PI] }, lobbyTwo: 0,
+};
+/** Aim pitch must not swing the hanging tub backward (its euler pitch sense is flipped by the yaw/roll π). */
+function bathtubPose(ch, dt, s, CH) {
+  const w = ch.wAim || 0;
+  if (w > 0.001 && CH && Number.isInteger(CH.ANCR)) ch.P[CH.ANCR] += (ch.aimP || 0) * w;
 }
 function explosher(d) {
   // Wmn_Slosher_Washtub: an olive jerry can with embossed side panels and a dark back panel, a brass barrel
@@ -216,6 +459,9 @@ function model(d, c) {
   });
 }
 
+// Per-weapon hold / pose extras (Bloblobber: hanging one-hand carry by the faucet bar, native data carry).
+const EXTRA = { 's3-slosher-bathtub': { hold: BATHTUB_HOLD, nativeCarry: true, pose: bathtubPose } };
+
 // The legacy Slosher keeps its reference model: its verified drawn-fill drain and indexed handle
 // regressions (weapon-detail-motion tests) depend on that bucket's inner fill and handles.
 export const MODELS = Object.fromEntries(Object.entries(CFG).filter(([id]) => id !== 'slosher').map(([id, c]) => [id, {
@@ -225,4 +471,5 @@ export const MODELS = Object.fromEntries(Object.entries(CFG).filter(([id]) => id
     : id === 's3-slosher-bathtub' ? 'Wmn_Slosher_Bathtub'
     : id === 's3-slosher-washtub' ? 'Wmn_Slosher_Washtub' : 'Wmn_Slosher_Double',
   build: d => (BUILD3D[id] || (dd => model(dd, c)))(d),
+  ...(EXTRA[id] || {}),
 }]));
