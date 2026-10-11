@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parse } from '../vendor/acorn.mjs';
-import { finalizeLoadingWorker } from '../adapter.mjs';
+import { finalizeLoadingWorker, WORKER_BUDGET_BYTES } from '../adapter.mjs';
 
 const revision='a'.repeat(64);
 function setup(t) {
@@ -46,6 +46,11 @@ test('lost or duplicated compaction markers fail closed',t=>{
 test('template compaction never bypasses the unchanged worker size ceiling',t=>{
   const root=setup(t),assets={};
   for(let i=0;i<1000;i++)assets[`asset-${i}.js`]=[1,'d'.repeat(64)];
-  const plan={assets,precache:Object.keys(assets),assetBytes:1000,precacheBytes:1000};
+  // Production passes its declared plan budget. A missing budget intentionally
+  // retains the older 64KiB fallback (covered by offline-diagnostic.test.mjs),
+  // so this 68KiB production test must exercise the actual explicit contract.
+  assert.equal(WORKER_BUDGET_BYTES,68*1024);
+  const plan={assets,precache:Object.keys(assets),assetBytes:1000,precacheBytes:1000,
+    budget:{mode:'production',worker:WORKER_BUDGET_BYTES}};
   assert.throws(()=>finalizeLoadingWorker(root,revision,plan,()=> 'const BUILD=__INKWAVE_CACHE_CONFIG_VALUE__;'),/68 KiB/);
 });

@@ -46,10 +46,12 @@ jobs:
       - name: Build unchanged baseline for the same browser harness
         run: node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/baseline
       - name: Verify emitted packaging
+        id: package-check
         run: INKWAVE_BUILT_SITE=.built-site/projectiles node --test scripts/tests/inkwave-build-packaging.test.mjs
       - name: Render unchanged native game and measure baseline
         run: node scripts/check-inkwave-projectile-visuals.mjs --site .built-site/baseline --evidence-dir .ci-scratch/projectile-visuals/before --mode baseline
       - name: Render candidate native game and measure desktop/mobile emulation
+        if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}
         run: node scripts/check-inkwave-projectile-visuals.mjs --site .built-site/projectiles --evidence-dir .ci-scratch/projectile-visuals/after --mode candidate
       - uses: actions/upload-artifact@v4
         if: always()

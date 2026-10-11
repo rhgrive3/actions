@@ -33,19 +33,22 @@
 
 ## 検証と未実施比較
 
-- 最終adapterを使う実Projectiles/Physics/NetMatchの新規試験：原典値、形状別buffer、30/60/120Hz、4＋5、ローカル／受信、Splatling残留尾、13主弾Rollerのvolley分離を検証。
+- 最終adapterを使う実Projectiles/Physics/NetMatchの新規試験16/16成功（色転送前の複数更新・slot並び替えも検証）：原典値、形状別buffer、30/60/120Hz、4＋5、ローカル／受信、Splatling残留尾、13主弾Rollerのvolley分離、粗い30Hz更新、停止した受信弾の液膜、遅延出生のGround→Air速度を検証。
 - 同じseedをVM起動前から与え、旧6段階／新最終adapterを対照比較。追加THREE資源のUUIDが12回の乱数を消費する回帰を修正し、起動時乱数回数と発射後の状態／通信が一致することを確認。
-- 独立レビューで、Roller接続0件、粗い更新の出生時刻、衝突直後の履歴が壁を貫く問題、壁垂れ時計、描画多重更新、撮影時のsync漏れ、停止したperformance測定を発見し修正した。最新の [独立レビュー](inkwave-projectile-independent-review-2026-10-11.md) を参照。
-- 本番の再ビルドは成功。packing testでは新ファイルを未追跡のまま検査した初回が失敗したため、追跡登録後に再実行する。期待値や容量上限は変更しない。
-- 最初の無制限並列全suiteは8GiB環境でOOMを起こし中断。再実行は4workerに制限し、失敗を成功扱いしない。
+- 独立レビューで、Roller接続0件、粗い更新の出生時刻、衝突直後の履歴が壁を貫く問題、壁垂れ時計、描画多重更新、撮影時のsync漏れ、停止したperformance測定を発見し修正した。GPU転送前の複数色更新でdirty範囲が失われる問題と、履歴の厳密tick/EPS境界で接線が変わる最適化回帰も修正した。最新の [独立レビュー](inkwave-projectile-independent-review-2026-10-11.md) を参照。
+- 本番の再ビルドは成功。packing testはコミット後の正確なblob照合を含め8/8成功。新ファイルを未追跡のまま検査した初回の失敗は保存し、追跡登録／コミット後に再実行した。容量上限は変更していない。
+- 最初の無制限並列全suiteは8GiB環境でOOMを起こし中断。4workerで再実行し、4,449件中4,433成功／失敗0／条件付き16skip、787.6秒。品質／信頼性の別コマンドは1,815件中1,798成功／失敗0／条件付き17skip。
+- 通信／loading／移動／試し撃ちの別コマンドは550件中542成功／3失敗／5skip。3件は既存worker fixtureの未準備パスで停止していた。パス準備後は2件成功、1件が明示production 68KiBのplanを渡さず旧64KiB fallbackを検査する不一致で失敗。明示68KiB契約を渡して既存68KiB負例を維持し、旧64KiB契約の別試験と合わせ5/5成功。実容量上限・負例の期待値は緩めない。
 
-ローカルChromiumはsocket制限、headless_shellはWebGL command-buffer／udev失敗でSIGSEGVとなり、現在成功したスクリーンショットは0件。GitHub CIへ同じTidewaterの本番起動、F0/F5/F10/F15/F36、正面／横／肩越し、床／壁、連射、desktop／mobile emulationの変更前・後撮影を追加した。CIの完了結果は別の最終receiptに記録する。
+ローカルChromiumはsocket制限、headless_shellはWebGL command-buffer／udev失敗でSIGSEGVとなり、ローカルの成功スクリーンショットは0件。GitHub CI run 38115541415では本番起動の変更前44枚をGLエラー0で取得したが、壁条件を検出できず停止し、変更後と性能測定は未完了。撮影条件を実ステージ床・壁のraycastで検証する方式へ修正した。GitHub CIへ同じTidewaterの本番起動、F0/F5/F10/F15/F36、正面／横／肩越し、床／壁、連射、desktop／mobile emulationの変更前・後撮影を追加した。CIの完了結果は別の最終receiptに記録する。
 
 本家映像は任天堂の60fps販促動画を取得・フレーム確認したが、版・色・角度・FOV・距離を統制できない。11.3.0との対応条件比較、IoU／輪郭誤差／透明度／寿命の実測は**未実施**。映像を内部仕様や完全一致の証拠として扱わない。
 
 ## 性能の範囲
 
-新規batchは最大700形状／109,200頂点／201,600三角形、beauty draw最大1件追加。旧小飛沫batchの上限は別に保持する。CPU typed geometry 6,350,400bytes、GPU geometry同量、履歴2,508,800bytes、補助typed buffers23,400bytesを確保する。JS資源・ドライバbookkeepingはこの数値に含まない。700形状超過時の表示抑制は旧上限と同様に存在する。
+新規batchは最大700形状／109,200頂点／201,600三角形、beauty draw最大1件追加。旧小飛沫batchの上限は別に保持する。CPU typed geometry 6,350,400bytes、GPU geometry同量、履歴2,508,800bytes、補助typed buffers40,200bytes（色cache追加16,800bytes）、共有module断面表3,408bytesを確保する。JS資源・ドライバbookkeepingはこの数値に含まない。700形状超過時の表示抑制は旧上限と同様に存在する。
+
+初期CPU実装のNode VM計測では、20／100／700体で旧0.149／1.047／0.990msに対し新2.266／11.213／79.564msとなった。これはWebGL/FPSではなくbuffer生成の計測だが、大量弾で重大な負荷差があるため性能修正を実施し、直接Node／VM／実ブラウザを区別して再計測する。この初回値を成功扱いしない。旧700-body測定は上限によって139主弾＋556装飾飛沫のみを描いており、新700主弾とは対象数が異なる。最適化後の凍結snapshot（SHA-256 406c20264f87a643aa5bff35e3f70f4e42db151683f13a2734d34a49a472a9d1）では700主弾のVM 2.0682ms、host 1.3159〜1.3314ms。同じ主弾数に近い旧head-only695主弾は2.0365ms。これらはCPU単体の測定で、実ブラウザ・実GPU・FPSの代用ではない。
 
 負荷差、FPS、GPU時間、GC頻度、実Androidはまだ合格を証明していない。静的な「1batch／固定buffer」は実端末の性能測定の代わりではない。CIのSwiftShader／mobile emulationも実Android GPUと区別する。
 

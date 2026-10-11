@@ -243,6 +243,71 @@ test('hot render methods reuse storage and contain no per-frame allocation or ga
     'the draw hot path cannot allocate collections/typed buffers or consume gameplay randomness');
 });
 
+test('color uploads reuse stable body colors and merge pending ranges across changed and reordered slots', async () => {
+  const { THREE } = await sourceFixture({ fullRuntime: true });
+  const system = { scene: new THREE.Scene(), list: [], inkFlight: { time: 0 } };
+  const runtime = new ProjectileVisualRuntime(system, THREE);
+  const colors = {
+    red: new THREE.Color('#ff0000'), blue: new THREE.Color('#0000ff'),
+    green: new THREE.Color('#00ff00'), yellow: new THREE.Color('#ffff00'),
+  };
+  const particle = (x, color, seed) => ({ type: 'shot', wid: 'splatling', age: 0, life: 1, delay: 0,
+    size: 0.12, vis: 0.12, seed, owner: { color }, pos: new THREE.Vector3(x, 1, 0),
+    prev: new THREE.Vector3(x, 1, 0), start: new THREE.Vector3(x, 1, 0), vel: new THREE.Vector3(0, 0, 28) });
+  const first = particle(0, colors.red, 0.1), second = particle(1, colors.blue, 0.2);
+  system.list.push(first, second);
+  const componentsPerBody = 13 * 12 * 3;
+  const assertSlotColor = (slot, color) => {
+    const start = slot * componentsPerBody, end = start + componentsPerBody, values = runtime.color.array;
+    for (let i = start; i < end; i += 3) {
+      assert.ok(Math.abs(values[i] - color.r) < 1e-6);
+      assert.ok(Math.abs(values[i + 1] - color.g) < 1e-6);
+      assert.ok(Math.abs(values[i + 2] - color.b) < 1e-6);
+    }
+  };
+  const ranges = () => Array.from(runtime.color.updateRanges, ({ start, count }) => ({ start, count }));
+
+  runtime.draw(1);
+  assert.equal(runtime.stats.vertexCount, 2 * 13 * 12);
+  assertSlotColor(0, colors.red); assertSlotColor(1, colors.blue);
+  runtime.color.updateRanges.length = 0; // simulate the renderer consuming the initial upload
+  let version = runtime.color.version;
+  runtime.draw(1);
+  assert.equal(runtime.color.version, version, 'unchanged body colors do not upload another color buffer');
+  assert.deepEqual(ranges(), []);
+
+  first.owner.color.set(colors.green);
+  runtime.draw(1);
+  version++;
+  assert.equal(runtime.color.version, version);
+  assert.deepEqual(ranges(), [{ start: 0, count: componentsPerBody }],
+    'one changed projectile updates exactly its 156-vertex color slot');
+  assertSlotColor(0, colors.green); assertSlotColor(1, colors.blue);
+
+  // The renderer has not consumed slot zero's range yet. A second draw changes
+  // only slot one, so the pending upload must retain both writes.
+  second.owner.color.set(colors.yellow);
+  runtime.draw(1);
+  version++;
+  assert.equal(runtime.color.version, version);
+  assert.deepEqual(ranges(), [{ start: 0, count: 2 * componentsPerBody }],
+    'a pending first-slot update is merged with the next draw’s second-slot update');
+  assertSlotColor(0, colors.green); assertSlotColor(1, colors.yellow);
+
+  runtime.color.updateRanges.length = 0; // simulate upload before the reorder
+  system.list.reverse();
+  runtime.draw(1);
+  version++;
+  assert.equal(runtime.color.version, version);
+  assert.deepEqual(ranges(), [{ start: 0, count: 2 * componentsPerBody }]);
+  assertSlotColor(0, colors.yellow); assertSlotColor(1, colors.green);
+  runtime.color.updateRanges.length = 0;
+  runtime.draw(1);
+  assert.equal(runtime.color.version, version, 'stable colors stay correct after list reordering');
+  assert.deepEqual(ranges(), []);
+  runtime.dispose();
+});
+
 test('native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence', async () => {
   const { f, ps } = await nativeFixture(true), actor = f.make('splatling'), runtime = ps.projectileVisuals;
   actor.pos.set(0, 1, 0); actor.aimPoint.set(0, 10, 24); actor.aimDir.set(0, 0.36, 0.93).normalize();

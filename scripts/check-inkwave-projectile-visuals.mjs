@@ -22,6 +22,7 @@ const profile = path.resolve(option('--profile-dir', path.join(ROOT, '../project
 const mode = option('--mode', 'baseline');
 const durationMs = Number(option('--fire-ms', '6000'));
 const quality = option('--quality', 'high');
+const BOOT_SEED = 0x49574b33;
 if (!['low', 'medium', 'high'].includes(quality)) throw new Error('--quality must be low, medium, or high');
 if (!fs.existsSync(path.join(site, 'index.html'))) throw new Error('Built site missing index.html: ' + site);
 if (!Number.isFinite(durationMs) || durationMs < 1000 || durationMs > 30000) throw new Error('--fire-ms must be between 1000 and 30000');
@@ -76,6 +77,10 @@ const report = {
     stage: 'Tidewater, easy, turf, fixed 180 s match; local player; deterministic Math.random stream reset for each projectile scenario.',
     phaseFrames: { F0: 0, F5: 5, F10: 10, F15: 15, fall: 36 },
     perspectives: ['shoulder', 'front', 'side'],
+    perspectiveModes: { shoulder: 'fixed-gameplay-shoulder', front: 'projectile-follow-fixed-offset', side: 'projectile-follow-fixed-offset' },
+    bootSeed: BOOT_SEED,
+    actorInkColor: '#ffd21a',
+    retailReferenceMatch: 'not performed',
     browser: null,
     quality,
     nativeAndroid: 'not available in this environment; mobile run is Chromium device emulation only',
@@ -106,13 +111,16 @@ async function openGameContext({ mobile = false } = {}) {
   page.on('pageerror', e => mimeErrors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') mimeErrors.push(m.text().slice(0, 1000)); });
   page.on('requestfailed', r => mimeErrors.push(`request failed ${r.url()}: ${r.failure()?.errorText || 'unknown'}`));
-  await page.addInitScript(setting => {
-    localStorage.setItem('inkwave.settings', JSON.stringify({ quality: setting, shadows: setting !== 'low', bloom: setting !== 'low', minimap: false, cameraShake: 0 }));
-  }, quality);
+  await page.addInitScript(({ setting, bootSeed }) => {
+    localStorage.setItem('inkwave.settings', JSON.stringify({ quality: setting, shadows: setting !== 'low', bloom: setting !== 'low', minimap: false, cameraShake: 0, colorblind: true }));
+    window.__iwBootSeed = bootSeed >>> 0;
+    let state = bootSeed >>> 0;
+    Math.random = () => { state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return (state >>> 0) / 4294967296; };
+  }, { setting: quality, bootSeed: BOOT_SEED });
   await page.goto(address + '?map=tidewater&autostart=180&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => window.__inkwave?.match?.state === 'playing' && window.__G?.projectiles && window.__G?.renderer, null, { timeout: 180000 });
   await page.waitForFunction(() => !document.querySelector('.iw-lineup') && !!window.__inkwave?.hud?._visible, null, { timeout: 30000 }).catch(() => {});
-  await page.evaluate(() => {
+  const placement = await page.evaluate(() => {
     const g = window.__inkwave, G = window.__G;
     g.debug.freeze(); g.debug.freezeBots();
     g._skipRender = true;
@@ -121,12 +129,33 @@ async function openGameContext({ mobile = false } = {}) {
     // Stabilize the local model in the genuine match before any capture.
     const a = g.match.local;
     a.form = 'kid'; a.submerged = false; a.alive = true; a.vel.set(0, 0, 0);
+    const pad = G.level.spawnPads[a.team];
+    const ground = { hit: false, y: 0, normal: new G.camera.position.constructor(), block: -1, face: -1, center: false, grate: false };
+    G.physics.groundProbe(pad.x, pad.y, pad.z, 1.0, 1.0, 0.38, ground, false);
+    if (!ground.hit || !ground.center || ground.grate || ground.normal.y < 0.68 || ground.block < 0 || ground.face < 0) {
+      throw new Error('Canonical player spawn has no centered walkable native Tidewater floor hit');
+    }
+    a.pos.set(pad.x, ground.y, pad.z);
+    a.vel.set(0, 0, 0); a.grounded = true; a.groundN.copy(ground.normal);
+    a.yaw = 0; a.aimYaw = 0; a.aimPitch = 0; a.aimDir.set(0, 0, 1);
+    a.aimPoint.copy(a.pos).add(new G.camera.position.constructor(0, 1.05, 24));
+    const inkHex = '#' + a.color.getHexString();
+    if (inkHex.toLowerCase() !== '#ffd21a') throw new Error(`Expected existing colorblind Yellow team ink #ffd21a, received ${inkHex}`);
     a.character.setVisible(true);
     a.character.root.position.copy(a.pos); a.character.root.rotation.y = 0;
     a.character.root.updateMatrixWorld(true);
     G.scene.updateMatrixWorld(true);
     g._skipRender = false;
+    const floorBlock = G.physics.level.blocks[ground.block];
+    window.__iwCanonicalPlacement = {
+      pos: a.pos.toArray(), team: a.team, inkHex, yaw: a.yaw,
+      floorHit: { hit: ground.hit, center: ground.center, grate: ground.grate, block: ground.block, face: ground.face,
+        point: [pad.x, ground.y, pad.z], normal: ground.normal.toArray(), blockTag: floorBlock?.tag ?? null },
+      bootSeed: window.__iwBootSeed,
+    };
+    return window.__iwCanonicalPlacement;
   });
+  report.provenance.canonicalPlacement = placement;
   const version = await page.evaluate(() => {
     const gl = __G.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info');
     return { chromium: navigator.userAgent, webgl: gl.getParameter(gl.VERSION), webglRenderer: gl.getParameter(gl.RENDERER),
@@ -136,26 +165,41 @@ async function openGameContext({ mobile = false } = {}) {
   return { context, page };
 }
 
-const PERSPECTIVES = {
-  shoulder: (p, aim) => ({ pos: [p[0] + 0.95, p[1] + 2.0, p[2] - 3.3], target: [p[0], p[1] + 1.2, p[2] + 8.0] }),
-  front: (p, aim) => ({ pos: [p[0] + 0.15, p[1] + 2.0, p[2] + 7.2], target: [p[0], p[1] + 1.15, p[2] + 2.3] }),
-  side: (p, aim) => ({ pos: [p[0] - 5.5, p[1] + 2.4, p[2] + 5.4], target: [p[0], p[1] + 1.3, p[2] + 4.6] }),
-};
-
 async function setCamera(page, perspective) {
   return page.evaluate(name => {
     const G = window.__G, a = G.match.local, cam = G.camera;
     const p = a.pos.toArray();
     const aim = [a.aimDir.x, a.aimDir.y, a.aimDir.z];
+    const heads = G.projectiles.list.filter(projectile => projectile.delay <= 0 && !projectile._s3SloshBirthPending);
+    const allLive = G.projectiles.list;
+    const focusProjectiles = heads.length ? heads : allLive;
+    let focus = null;
+    if (focusProjectiles.length) {
+      focus = [0, 0, 0];
+      for (const projectile of focusProjectiles) {
+        focus[0] += projectile.pos.x; focus[1] += projectile.pos.y; focus[2] += projectile.pos.z;
+      }
+      focus = focus.map(value => value / focusProjectiles.length);
+    } else if (window.__iwProjectileSurfaceHits?.length) {
+      focus = window.__iwProjectileSurfaceHits.at(-1).pos;
+    }
+    const followsProjectiles = name === 'front' || name === 'side';
+    const fixedTarget = [p[0], p[1] + 1.2, p[2] + 8.0];
+    const target = followsProjectiles && focus ? focus : fixedTarget;
+    const offset = name === 'front' ? [0.15, 0.85, 4.9] : name === 'side' ? [-5.5, 1.1, 0.8] : [0.95, 0.8, -11.3];
     const pose = {
-      shoulder: { pos: [p[0] + 0.95, p[1] + 2.0, p[2] - 3.3], target: [p[0], p[1] + 1.2, p[2] + 8.0] },
-      front: { pos: [p[0] + 0.15, p[1] + 2.0, p[2] + 7.2], target: [p[0], p[1] + 1.15, p[2] + 2.3] },
-      side: { pos: [p[0] - 5.5, p[1] + 2.4, p[2] + 5.4], target: [p[0], p[1] + 1.3, p[2] + 4.6] },
-    }[name];
+      mode: followsProjectiles ? 'projectile-follow-fixed-offset' : 'fixed-gameplay-shoulder',
+      pos: name === 'shoulder' ? [p[0] + 0.95, p[1] + 2.0, p[2] - 3.3] : target.map((value, i) => value + offset[i]),
+      target: name === 'shoulder' ? fixedTarget : target,
+    };
     cam.aspect = innerWidth / innerHeight;
     cam.position.set(...pose.pos); cam.lookAt(...pose.target); cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
     G.scene.updateMatrixWorld(true);
-    return { perspective: name, pose, actor: p, aim };
+    return { perspective: name, mode: pose.mode, pose, actor: p, aim, fov: cam.fov,
+      liveHeadCount: heads.length, projectileFocus: followsProjectiles ? focus : null,
+      bootSeed: window.__iwCanonicalPlacement?.bootSeed ?? null,
+      actorInkHex: '#' + a.color.getHexString(), canonicalPlacement: window.__iwCanonicalPlacement ?? null,
+      currentVisualSetup: window.__iwCurrentVisualSetup ?? null };
   }, perspective);
 }
 
@@ -202,10 +246,12 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
       mode: p.fidelityMode || (p.s3Vertical ? 'vertical' : p.s3FlickUnit === undefined ? null : 'horizontal'),
       seed: p.seed, unit: p.fidelitySloshUnitIndex ?? p.fidelityRollerUnitIndex ?? null,
     }));
-    const projectileScreen = G.projectiles.list.map(p => {
+    const visibleHeadProjectiles = G.projectiles.list.filter(p => p.delay <= 0 && !p._s3SloshBirthPending);
+    const projectileScreen = visibleHeadProjectiles.map(p => {
       const point = p.pos.clone().project(G.camera);
       return { x: (point.x + 1) * innerWidth / 2, y: (1 - point.y) * innerHeight / 2, z: point.z };
     }).filter(p => Number.isFinite(p.x + p.y + p.z) && p.z >= -1 && p.z <= 1 && p.x >= 0 && p.x <= innerWidth && p.y >= 0 && p.y <= innerHeight);
+    const liveHeadCount = visibleHeadProjectiles.length;
     let projectileCrop = null;
     if (projectileScreen.length) {
       const pad = 112;
@@ -218,7 +264,9 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
     return {
       projectiles: read,
       projectileScreen,
+      visibleCenters: projectileScreen.length,
       projectileCrop,
+      liveHeadCount,
       liveProjectileCount: G.projectiles.list.length,
       visualSyncCalled: hasVisualSync,
       eligibleVisualProjectiles,
@@ -239,6 +287,10 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
       drawingBuffer: [gl.drawingBufferWidth, gl.drawingBufferHeight],
     };
   });
+  if ((perspective === 'front' || perspective === 'side') && runtime.liveHeadCount > 0 &&
+      (runtime.visibleCenters <= 0 || !runtime.projectileCrop)) {
+    throw new Error(`${scenario}/${phase}/${perspective}: projectile-follow camera has ${runtime.liveHeadCount} live heads but no visible projectile center/crop`);
+  }
   const name = `${scenario}__${phase}__${perspective}.png`;
   const target = path.join(evidence, name);
   await page.screenshot({ path: target, animations: 'disabled', timeout: 90000 });
@@ -251,7 +303,17 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
   }
   const receipt = {
     file: name, cropFile, cropSha256, scenario, phase, frame: phase === 'F0' ? 0 : phase === 'F5' ? 5 : phase === 'F10' ? 10 : phase === 'F15' ? 15 : null,
-    perspective, seed, camera, runtime, sha256: hash(fs.readFileSync(target)),
+    perspective, perspectiveMode: camera.mode, seed, camera, captureConditions: {
+      fov: camera.fov, actorInkHex: camera.actorInkHex, bootSeed: camera.bootSeed,
+      canonicalFloorHit: camera.canonicalPlacement?.floorHit ?? null,
+      actorPosition: camera.actor,
+      actorFloorHit: camera.currentVisualSetup?.wall?.floorHit ?? camera.canonicalPlacement?.floorHit ?? null,
+      nativeWallRaycast: camera.currentVisualSetup?.wall ? {
+        block: camera.currentVisualSetup.wall.block, face: camera.currentVisualSetup.wall.face,
+        distance: camera.currentVisualSetup.wall.dist, point: camera.currentVisualSetup.wall.target,
+        normal: camera.currentVisualSetup.wall.normal,
+      } : null,
+    }, runtime, sha256: hash(fs.readFileSync(target)),
   };
   report.screenshots.push(receipt);
   return receipt;
@@ -259,6 +321,9 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
 
 const visualSetup = ({ name, seed, impact = null }) => {
   const G = window.__G, g = window.__inkwave, a = g.match.local;
+  const V = G.camera.position.constructor;
+  const canonical = window.__iwCanonicalPlacement;
+  if (!canonical) throw new Error('Missing canonical native spawn-floor placement');
   window.__iwProjectileSurfaceHits = [];
   if (!window.__iwProjectileImpactRecorderInstalled) {
     const record = (route, p, hit) => {
@@ -293,34 +358,84 @@ const visualSetup = ({ name, seed, impact = null }) => {
   if (g.screenfx?.clear) g.screenfx.clear();
   const weapon = name === 'shooter' || name.startsWith('wall-') ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
   a.setWeapon(weapon);
+  a.pos.fromArray(canonical.pos);
   a.form = 'kid'; a.submerged = false; a.alive = true; a.hp = 100; a.ink = 100; a.vel.set(0, 0, 0);
-  a.grounded = true; a.climbing = false; a.specialActive = null; a.superJumpState = null;
+  a.grounded = true; a.groundN.set(...canonical.floorHit.normal); a.climbing = false; a.specialActive = null; a.superJumpState = null;
   a.yaw = 0; a.aimYaw = 0; a.aimPitch = 0;
-  a.aimDir.set(0, 0, 1); a.aimPoint.copy(a.pos).add(new (G.camera.position.constructor)(0, 1.05, 24));
+  a.aimDir.set(0, 0, 1); a.aimPoint.copy(a.pos).add(new V(0, 1.05, 24));
   a.character.setVisible(true); a.character.root.position.copy(a.pos); a.character.root.rotation.y = 0; a.character.root.updateMatrixWorld(true);
   G.scene.updateMatrixWorld(true);
-  const origin = a.pos.clone().add(new (G.camera.position.constructor)(0, 1.25, 0));
   let wall = null;
   if (impact === 'wall') {
-    const dirs = Array.from({ length: 32 }, (_, i) => {
-      const ang = (i / 32) * Math.PI * 2;
-      return new (G.camera.position.constructor)(Math.sin(ang), 0, Math.cos(ang));
-    });
-    const hit = { hit: false, point: new (G.camera.position.constructor)(), normal: new (G.camera.position.constructor)(), dist: 0, block: -1, face: -1, u: 0, v: 0 };
-    for (const dir of dirs) {
-      const probe = G.physics.raycast(origin, dir, 38, hit, true);
-      if (probe.hit && probe.dist >= 2.2 && probe.dist < 18 && probe.normal.y < 0.45 && (!wall || probe.dist < wall.dist)) {
-        wall = { dist: probe.dist, point: probe.point.toArray(), normal: probe.normal.toArray(), block: probe.block, face: probe.face, dir: dir.toArray() };
+    const level = G.physics.level;
+    const rayHit = { hit: false, point: new V(), normal: new V(), dist: 0, block: -1, face: -1, u: 0, v: 0 };
+    const candidates = [];
+    for (const face of level.faces) {
+      const block = level.blocks[face.block];
+      if (!face.wall || !block?.solid || block.hidden || block.grate || Math.abs(face.n.y) >= 0.3) continue;
+      let facePoint = face.origin.clone().addScaledVector(face.u, face.su * 0.5).addScaledVector(face.v, face.sv * 0.5);
+      const vertical = Math.abs(face.u.y) > Math.abs(face.v.y)
+        ? { axis: face.u, span: face.su }
+        : { axis: face.v, span: face.sv };
+      if (Math.abs(vertical.axis.y) < 0.5) continue;
+      const normal = face.n.clone().setY(0).normalize();
+      if (normal.lengthSq() < 0.9) continue;
+      for (const standoff of [1.8, 2.4, 3.2, 4.4, 5.8]) {
+        // Put a legal player position outside this existing face, then ground it with the live stage raycast.
+        const horizontal = facePoint.clone().addScaledVector(normal, standoff);
+        const ground = { hit: false, y: 0, normal: new V(0, 1, 0), block: -1, face: -1, center: false, grate: false };
+        G.physics.groundProbe(horizontal.x, canonical.pos[1], horizontal.z, 8, 20, 0.32, ground, false);
+        if (!ground.hit || !ground.center || ground.grate || ground.normal.y < 0.68 || ground.block < 0 || ground.face < 0) continue;
+        const muzzleY = ground.y + 1.05;
+        const yDelta = Math.max(-vertical.span * 0.5 + 0.08, Math.min(vertical.span * 0.5 - 0.08,
+          (muzzleY - facePoint.y) / vertical.axis.y));
+        const target = facePoint.clone().addScaledVector(vertical.axis, yDelta);
+        const actorPos = new V(horizontal.x, ground.y, horizontal.z);
+        const desired = target.clone().sub(actorPos).setY(target.y - (ground.y + 1.05));
+        const yaw = Math.atan2(desired.x, desired.z);
+        a.pos.copy(actorPos); a.vel.set(0, 0, 0); a.grounded = true; a.groundN.copy(ground.normal);
+        a.yaw = yaw; a.aimYaw = yaw; a.character.root.position.copy(a.pos); a.character.root.rotation.y = yaw;
+        a.character.root.updateMatrixWorld(true); G.scene.updateMatrixWorld(true);
+        const muzzle = G.projectiles._muzzle(a, new V());
+        const dir = target.clone().sub(muzzle);
+        const distance = dir.length();
+        if (distance < 1.4 || distance > 24) continue;
+        dir.multiplyScalar(1 / distance);
+        const actualYaw = Math.atan2(dir.x, dir.z);
+        a.yaw = actualYaw; a.aimYaw = actualYaw; a.aimPitch = Math.atan2(dir.y, Math.hypot(dir.x, dir.z));
+        a.aimDir.copy(dir); a.aimPoint.copy(target);
+        a.character.root.rotation.y = actualYaw; a.character.root.updateMatrixWorld(true); G.scene.updateMatrixWorld(true);
+        G.projectiles._muzzle(a, muzzle);
+        const verifiedDir = target.clone().sub(muzzle);
+        const verifiedDistance = verifiedDir.length();
+        if (verifiedDistance < 1.4 || verifiedDistance > 24) continue;
+        verifiedDir.multiplyScalar(1 / verifiedDistance);
+        const probe = G.physics.raycast(muzzle, verifiedDir, verifiedDistance + 0.25, rayHit, true);
+        if (!probe.hit || probe.block !== face.block || probe.face !== face.id || probe.normal.dot(face.n) < 0.95) continue;
+        candidates.push({
+          score: actorPos.distanceTo(new V(...canonical.pos)), actorPos: actorPos.toArray(),
+          floorHit: { hit: ground.hit, center: ground.center, grate: ground.grate, block: ground.block, face: ground.face,
+            point: [horizontal.x, ground.y, horizontal.z], normal: ground.normal.toArray() },
+          target: probe.point.toArray(), normal: probe.normal.toArray(), block: probe.block, face: probe.face,
+          dist: probe.dist, dir: verifiedDir.toArray(), muzzle: muzzle.toArray(), yaw: actualYaw,
+          stageFace: { block: face.block, face: face.id, normal: face.n.toArray(), wall: face.wall, hidden: block.hidden, grate: block.grate },
+        });
       }
     }
-    if (wall) {
-      const d = new (G.camera.position.constructor)(...wall.dir);
-      a.aimYaw = Math.atan2(d.x, d.z); a.yaw = a.aimYaw;
-      a.aimPitch = 0; a.aimDir.copy(d); a.aimPoint.set(...wall.point);
-      a.character.root.rotation.y = a.yaw; a.character.root.updateMatrixWorld(true);
-    }
+    candidates.sort((left, right) => left.score - right.score || left.dist - right.dist || left.face - right.face);
+    wall = candidates[0] ?? null;
+    if (!wall) throw new Error('No actual exposed Tidewater wall face had a clear native ray from a legal native floor position');
+    a.pos.fromArray(wall.actorPos); a.vel.set(0, 0, 0); a.grounded = true;
+    a.groundN.set(...wall.floorHit.normal); a.yaw = wall.yaw; a.aimYaw = wall.yaw;
+    a.aimPitch = Math.atan2(wall.dir[1], Math.hypot(wall.dir[0], wall.dir[2]));
+    a.aimDir.set(...wall.dir); a.aimPoint.set(...wall.target);
+    a.character.root.position.copy(a.pos); a.character.root.rotation.y = a.yaw;
+    a.character.root.updateMatrixWorld(true); G.scene.updateMatrixWorld(true);
   }
-  return { weapon, actor: a.pos.toArray(), wall, impact, seed };
+  const setup = { weapon, actor: a.pos.toArray(), wall, impact, seed, bootSeed: canonical.bootSeed,
+    inkHex: '#' + a.color.getHexString(), canonicalPlacement: canonical };
+  window.__iwCurrentVisualSetup = setup;
+  return setup;
 };
 
 async function runVisuals(page) {
@@ -428,6 +543,19 @@ async function runFiringPerformance({ mobile = false } = {}) {
   const cdp = await context.newCDPSession(page);
   await cdp.send('Performance.enable');
   const before = await cdp.send('Performance.getMetrics');
+  const gcEvents = [];
+  let gcTraceStarted = false, gcTraceFailure = null, resolveTraceComplete;
+  const traceComplete = new Promise(resolve => { resolveTraceComplete = resolve; });
+  const onTraceData = data => {
+    for (const event of data.value || []) {
+      if ((event.name === 'MinorGC' || event.name === 'MajorGC') && event.ph === 'X' && Number.isFinite(event.dur)) {
+        gcEvents.push({ name: event.name, durationMs: event.dur / 1000 });
+      }
+    }
+  };
+  const onTraceComplete = event => resolveTraceComplete(event);
+  cdp.on('Tracing.dataCollected', onTraceData);
+  cdp.on('Tracing.tracingComplete', onTraceComplete);
   await page.evaluate(() => {
     const G = window.__G, g = window.__inkwave, P = G.projectiles, R = g.R;
     g.debug.freezeBots(); G.settings.cameraShake = 0;
@@ -489,9 +617,32 @@ async function runFiringPerformance({ mobile = false } = {}) {
     };
   });
   const cdpBefore = await cdp.send('Performance.getMetrics');
+  try {
+    await cdp.send('Tracing.start', { categories: 'v8,devtools.timeline', transferMode: 'ReportEvents' });
+    gcTraceStarted = true;
+  } catch (error) {
+    gcTraceFailure = `Tracing.start failed: ${error.message}`;
+  }
   await page.evaluate(() => { __inkwave.debug.unfreeze(); window.__inkwavePerfStart(); __inkwave.debug.fire(true); });
   await page.waitForTimeout(durationMs);
   await page.evaluate(() => { __inkwave.debug.fire(false); __inkwavePerf.active = false; __inkwave.debug.freeze(); });
+  if (gcTraceStarted) {
+    let timeoutId;
+    try {
+      await cdp.send('Tracing.end');
+      const completion = await Promise.race([
+        traceComplete,
+        new Promise(resolve => { timeoutId = setTimeout(() => resolve(null), 15000); }),
+      ]);
+      if (!completion) gcTraceFailure = 'Tracing.tracingComplete was not received within 15 seconds';
+    } catch (error) {
+      gcTraceFailure = `Tracing.end failed: ${error.message}`;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+  cdp.off('Tracing.dataCollected', onTraceData);
+  cdp.off('Tracing.tracingComplete', onTraceComplete);
   const cdpAfter = await cdp.send('Performance.getMetrics');
   const measured = await page.evaluate(() => {
     const G = window.__G, perf = window.__inkwavePerf, gl = G.renderer.getContext(), timer = perf.timer;
@@ -546,13 +697,42 @@ async function runFiringPerformance({ mobile = false } = {}) {
       fireCalls: measured.fireCalls, maxProjectiles: measured.maxProjectiles, rAF: rAF?.n ?? 0,
     })}`);
   }
+  const gcSummary = gcTraceStarted && !gcTraceFailure ? (() => {
+    const minor = gcEvents.filter(event => event.name === 'MinorGC');
+    const major = gcEvents.filter(event => event.name === 'MajorGC');
+    const totalGcDurationMs = gcEvents.reduce((total, event) => total + event.durationMs, 0);
+    const kindSummary = rows => {
+      const ms = rows.reduce((total, event) => total + event.durationMs, 0);
+      return { count: rows.length, durationMs: ms, durationSec: ms / 1000 };
+    };
+    return {
+      supported: true,
+      source: 'CDP Tracing events named MinorGC and MajorGC; categories v8,devtools.timeline',
+      windowDurationMs: durationMs,
+      count: gcEvents.length,
+      durationMs: totalGcDurationMs,
+      durationSec: totalGcDurationMs / 1000,
+      minor: kindSummary(minor),
+      major: kindSummary(major),
+      eventNames: [...new Set(gcEvents.map(event => event.name))],
+    };
+  })() : {
+    supported: false,
+    reason: gcTraceFailure || 'CDP tracing unavailable',
+    count: null,
+    durationMs: null,
+    durationSec: null,
+    minor: null,
+    major: null,
+  };
   const record = {
     scenario: mobile ? 'mobile-emulated-long-fire' : 'desktop-long-fire', durationMs,
     browser: await page.evaluate(() => navigator.userAgent), fps, nativeLoopFrameMs: loopFrameMs, rAFms: rAF, frameCpuMs: cpu, projectileCpuMs: proj, renderCpuMs: render,
     gpuRenderMs: gpu, gpuTimer: measured.gpuTimer, gpuDisjoint: measured.gpuDisjoint,
     renderer: measured.renderer, maxProjectiles: measured.maxProjectiles, gameplay: measured.game,
     cdpDeltas: delta,
-    notes: ['Long-firing window uses the normal live match loop and debug fire input.', 'GPU time is EXT_disjoint_timer_query when exposed; unavailable/disjoint is reported as such.', 'Chromium mobile emulation is not native Android.'],
+    garbageCollection: gcSummary,
+    notes: ['Long-firing window uses the normal live match loop and debug fire input.', 'GPU time is EXT_disjoint_timer_query when exposed; unavailable/disjoint is reported as such.', 'V8/devtools.timeline GC tracing runs over the same firing window and adds instrumentation overhead to both builds.', 'Chromium mobile emulation is not native Android.'],
   };
   await context.close();
   return record;
