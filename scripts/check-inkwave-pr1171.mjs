@@ -146,13 +146,13 @@ try {
     paint.clear();let draws=0;const render=renderer.render.bind(renderer);renderer.render=(...args)=>{draws++;return render(...args);};
     Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
     for(let i=0;i<6100;i++)paint.splat(v(4,0,4),.62,i%2,{seed:.1,kind:'roll',stretch:v(1,0,0),instant:true});
-    paint.flush(1/60);const hidden={draws,pending:paint._hiddenQuads?.length||0,owner:paint.sample(0,4,4)};
+    paint.flush(1/60);const hidden={draws,pending:(paint._hiddenQuads?.length||0)+(paint._hiddenPaintGrowth?.size||0),owner:paint.sample(0,4,4)};
     delete document.hidden;paint.flush(1/60);
-    const resumed={draws,pending:paint._hiddenQuads?.length||0,owner:paint.sample(0,4,4)};
+    const resumed={draws,pending:(paint._hiddenQuads?.length||0)+(paint._hiddenPaintGrowth?.size||0),owner:paint.sample(0,4,4)};
     const a=face.atlas;renderer.readRenderTargetPixels(paint.rt,Math.floor(a.x+a.pad+4*a.ppm),Math.floor(a.y+a.pad+4*a.ppm),1,1,pixel);
     resumed.gpuOwner=pixel[0]>=128?2:1;
     Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});paint.splat(v(4,0,4),.62,0,{seed:0,kind:'roll',stretch:v(1,0,0),instant:true});
-    paint.clear();const cleared=paint._hiddenQuads===null;delete document.hidden;
+    paint.clear();const cleared=paint._hiddenQuads===null&&!paint._hiddenPaintGrowth?.size;delete document.hidden;
     paint.dispose();renderer.dispose();
     return {chargerPoses,coverWitness,blockedFallback,normal,locked,restored,cells,edgeTolerance,witness,slideWidths,hidden,resumed,cleared};
   });

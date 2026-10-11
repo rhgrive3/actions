@@ -150,6 +150,10 @@ function projectileDescriptor(id) {
     status: SPECIALS[id].status,
   };
 }
+function directProjectileDescriptor(id, radius) {
+  return { ...projectileDescriptor(id), type: 'shot', splashRadius: 0,
+    burstRadius: 0, splashBands: [], impactRadius: radius, paintRadius: radius };
+}
 function launch(rt, actor, id, origin, direction, opts = {}) {
   const system = rt.api.G.projectiles;
   if (!system?._new || !system?._push || actor.remote) return null;
@@ -170,9 +174,13 @@ function launch(rt, actor, id, origin, direction, opts = {}) {
   p.pos.copy(origin); p.prev.copy(origin); p.start.copy(origin);
   p.vel.copy(dir).multiplyScalar(speed);
   if (opts.arc) p.vel.y += opts.arc;
-  p.s3SpecialWeapon = opts.directOnly ? null : descriptor;
+  // Direct rounds still need a special identity so main-weapon wrappers cannot
+  // substitute the owner's gravity, collision, flight paint or weapon id.
+  p.s3SpecialWeapon = opts.directOnly ? directProjectileDescriptor(id, opts.radius ?? .22) : descriptor;
+  p.wid = id;
   p.s3Weapon = opts.weapon || p.s3SpecialWeapon || { id, kind: 'special', special: id };
   p.s3AllSpecial = id;
+  p.s3PaintNoSpecial = true;
   p.s3AllSpecialPaintRadius = opts.paintRadius ?? descriptions[id].paintRadius ?? 0;
   p.s3AllSpecialActivation = actorStates.get(actor)?.serial || 0;
   p.s3AllSpecialSeed = normalizedSeed(opts.seed || 0);
@@ -1122,7 +1130,16 @@ function installRuntime(api) {
     }
     return damage.call(this,amount,attacker,source);
   };
-  const P=Projectiles.prototype,update=P.update,clear=P.clear,baseCandidate=P.kitDefenseCandidate,blast=P._blastBurst;
+  const P=Projectiles.prototype,update=P.update,clear=P.clear,baseCandidate=P.kitDefenseCandidate,blast=P._blastBurst,newProjectile=P._new;
+  // Projectiles are pooled: every field owned by this module must expire on reuse.
+  P._new=function(...args){
+    const p=newProjectile.apply(this,args);
+    p.s3AllSpecial=null;p.s3AllSpecialPaintRadius=0;p.s3AllSpecialActivation=0;
+    p.s3AllSpecialSeed=0;p.s3AllSpecialMode=null;p.s3PaintNoSpecial=false;
+    p.s3DamageReduce=null;p.s3TentaTarget=null;p.s3TentaAge=0;
+    p.s3TentaDescending=false;p.s3TentaDirection=null;
+    return p;
+  };
   P.update=function(dt){
     rt.system=this;updateWorld(rt,dt);
     for(const p of this.list||[]){
@@ -1164,7 +1181,8 @@ function installRuntime(api) {
     const current=api.SPECIALS[id]||{id,name:definition.name};
     Object.assign(current,{id,name:definition.name,duration:Array.isArray(definition.duration)?definition.duration[1]:definition.duration,
       radius:definition.radius,mechanicsInstalled:true,reference:`Leanny/splat3 11.3.0 ${definition.source}`,status:definition.status,
-      projectileDescriptor:p=>projectileDescriptor(id)});
+      projectileDescriptor:p=>id==='crabTank'&&p?.type==='shot'
+        ? directProjectileDescriptor(id,finite(p.radius)?p.radius:.22) : projectileDescriptor(id)});
     api.SPECIALS[id]=current;
   }
   api.allSpecialObjectCandidate=(p,startPoint,endPoint)=>candidate(rt,p,startPoint||p?.prev,endPoint||p?.pos);
