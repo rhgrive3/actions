@@ -138,7 +138,7 @@ export class Minimap {
           const x = this._worldX(px + 0.5);
           const dx = x - f.origin.x, dz = z - f.origin.z;
           const a = (dx * ux + dz * uz) / uh, c = (dx * vx + dz * vz) / vh;   // metres along u / v
-          if (a < 0 || c < 0 || a >= f.su || c >= f.sv || (lvl.layout.stageId&&!lvl.faceContainsUV(f,a,c))) continue;
+          if (a < 0 || c < 0 || a >= f.su || c >= f.sv || (lvl.layout?.stageId&&!lvl.faceContainsUV(f,a,c))) continue;
           const cu = a / f.cu - 0.5, cv = c / f.cv - 0.5;
           let iu = Math.floor(cu), iv = Math.floor(cv);
           let tu = cu - iu, tv = cv - iv;
@@ -182,7 +182,7 @@ export class Minimap {
       blockCol.set(id, c);
       return c;
     };
-    const voidFloor=lvl.layout.stageId&&lvl.layout.hazard.kind!=='water';
+    const voidFloor=lvl.layout?.stageId&&lvl.layout.hazard.kind!=='water';
     const sea0 = voidFloor?[33,38,44]:dusk ? [70, 64, 120] : [36, 104, 170], sea1 = voidFloor?[45,49,56]:dusk ? [104, 86, 150] : [62, 146, 206];
     for (let py = 0; py < H; py++) {
       for (let px = 0; px < W; px++) {
