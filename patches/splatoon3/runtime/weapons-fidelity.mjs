@@ -1011,6 +1011,33 @@ function setSlosherDraw(p,unit,index) {
 export function fidelitySlosherDrawRadius(p) {
   return radiusAt(p.fidelitySloshDraw,Math.max(0,p.age||0),p.vis??p.size)*slosherDropScale(p,p.pos?.y);
 }
+// Airborne ink silhouette (render only; collision, paint and packets are
+// untouched). Splatoon 3 footage (Inkipedia "S3 About videos" Splattershot /
+// Slosher, Nintendo official turf-war clip) shows no smooth spheres: Shooter
+// rounds are ragged flame-like streaks, Roller/Brush flicks are spiky splash
+// crowns, a Slosher throw is one broad thin sheet without detached beads.
+// Each entry is [spike amplitude (head radii), spike count, cross-section
+// thickness (1 = round; the thin axis stays vertical), tail length scale,
+// width scale on the drawn radius, trailing beads 1/0]. The Slosher width 0.5
+// is read off the footage (the sheet is at most about half the character's
+// height wide while DrawSizeParam is 1.0); all values are INKWAVE calibration
+// against footage, not extracted Nintendo mesh data.
+export const INK_LOOK=Object.freeze({
+  shot:Object.freeze([0.6,5,0.6,6,1,1]),
+  drop:Object.freeze([1.1,6,0.5,0.6,1,1]),
+  slosh:Object.freeze([0.3,4,0.32,1,0.5,0]),
+  blast:Object.freeze([0.35,6,1,1,1,1]),
+  satellite:Object.freeze([0.5,4,1,1,1,1]),
+  droplet:Object.freeze([0.45,4,1,1,1,1]),
+  none:Object.freeze([0,1,1,1,1,1]),
+});
+export function fidelityInkLook(p) {
+  return INK_LOOK[p?.type]??INK_LOOK.none;
+}
+export function writeInkLook(out,index,look,seed) {
+  const o=index*4;
+  out[o]=look[0];out[o+1]=look[1];out[o+2]=look[2];out[o+3]=((Number(seed)||0)*43.98)%(Math.PI*2);
+}
 export function fidelitySlosherDrawTail(p,speed) {
   const d=p.fidelitySloshDraw,r=fidelitySlosherDrawRadius(p);
   if(!d||!(r>0))return 1;

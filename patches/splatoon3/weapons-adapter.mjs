@@ -132,6 +132,57 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     this.blobFourPetals.updateRanges.length = 0; this.blobFourPetals.updateRanges.push(fr);
     this.blobFourPetals.needsUpdate = true;
   }`, 'FourPetals instance upload');
+  // Airborne ink silhouette: ragged spikes and a flattened (vertical-thin)
+  // cross-section per projectile kind; see INK_LOOK in weapons-fidelity.mjs.
+  patch('        attribute vec2 aFourPetals;\n        vec3 iwP;',
+    '        attribute vec2 aFourPetals;\n        attribute vec4 aInkLook;\n        vec3 iwP;', 'ink look shader attribute');
+  patch('          iwP += n * wob * (1.0 - 0.5 * back * u);',
+    `          iwP += n * wob * (1.0 - 0.5 * back * u);
+          if (aInkLook.x > 0.0) {
+            float iwAng = atan(p.y, p.x), iwRing = sqrt(max(0.0, 1.0 - p.z * p.z)), iwK = max(aInkLook.y, 1.0);
+            float iwS = 0.62 * pow(max(0.0, sin(iwAng * iwK + aInkLook.w + 1.7 * p.z)), 8.0)
+              + 0.48 * pow(max(0.0, sin(iwAng * (iwK * 1.618 + 1.0) - 1.3 * aInkLook.w + 3.1 * p.z)), 14.0);
+            iwP.xy *= 1.0 + aInkLook.x * iwS * (iwRing + 0.6 * back * u);
+            iwP.z *= 1.0 + 0.35 * aInkLook.x * iwS * (1.0 - iwRing);
+            float iwRl = length(p.xy);
+            if (iwRl > 1e-4) objectNormal = normalize(objectNormal + vec3(p.xy / iwRl, 0.0) * min(1.0, aInkLook.x * iwS));
+          }
+          if (aInkLook.z > 0.0 && aInkLook.z < 0.999) {
+            vec3 iwUp = transpose(mat3(instanceMatrix)) * vec3(0.0, 1.0, 0.0);
+            float iwTl = length(iwUp.xy);
+            vec2 iwT = iwTl > 1e-4 ? iwUp.xy / iwTl : vec2(0.0, 1.0);
+            iwP.xy += iwT * dot(iwP.xy, iwT) * (aInkLook.z - 1.0);
+            objectNormal.xy += iwT * dot(objectNormal.xy, iwT) * (1.0 / aInkLook.z - 1.0);
+            objectNormal = normalize(objectNormal);
+          }`, 'ink look shader profile');
+  patch('    const geo = new THREE.SphereGeometry(1, 14, 12).rotateX(Math.PI / 2);',
+    '    const geo = new THREE.SphereGeometry(1, 40, 18).rotateX(Math.PI / 2);', 'ink look silhouette resolution');
+  patch("    geo.setAttribute('aFourPetals', this.blobFourPetals);",
+    "    geo.setAttribute('aFourPetals', this.blobFourPetals);\n    this.blobInkLook = new THREE.InstancedBufferAttribute(new Float32Array(MAX_BLOBS * 4), 4);\n    this.blobInkLook.setUsage(THREE.DynamicDrawUsage);\n    geo.setAttribute('aInkLook', this.blobInkLook);",
+    'ink look instanced geometry');
+  patch("  mat.customProgramCacheKey = () => 'iw-blob-4-four-petals';",
+    "  mat.customProgramCacheKey = () => 'iw-blob-5-ink-look';", 'ink look shader cache identity');
+  patch('fourPetals = this.blobFourPetals.array;',
+    'fourPetals = this.blobFourPetals.array, inkLook = this.blobInkLook.array;', 'ink look per-instance buffer');
+  patch('      _s.setScalar(vis);\n      _m.compose(p.pos, _q, _s);',
+    '      const look = fidelityInkLook(p);\n      _s.setScalar(vis * look[4]);\n      _m.compose(p.pos, _q, _s);', 'ink look drawn width');
+  patch('      let o = n * 4; shp[o] = tail; shp[o + 1] = wob; shp[o + 2] = ph; shp[o + 3] = p.nose || 0;\n      const unit = p.fidelityMode',
+    '      writeInkLook(inkLook, n, look, p.seed);\n      let o = n * 4; shp[o] = tail * look[3] / look[4]; shp[o + 1] = wob; shp[o + 2] = ph; shp[o + 3] = p.nose || 0;\n      const unit = p.fidelityMode',
+    'ink look reaches rendered projectile');
+  patch('      const ns = p.sats || 0;', '      const ns = look[5] ? p.sats || 0 : 0;', 'ink look trailing beads');
+  patch('        fourPetals[n * 2] = 0; fourPetals[n * 2 + 1] = 0;\n        n++;',
+    '        fourPetals[n * 2] = 0; fourPetals[n * 2 + 1] = 0;\n        writeInkLook(inkLook, n, INK_LOOK.satellite, p.seed + i * 0.37);\n        n++;',
+    'ink look satellites');
+  patch('    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);',
+    '    const inkDrop0 = n;\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);\n    for (let i = inkDrop0; i < n; i++) writeInkLook(inkLook, i, INK_LOOK.droplet, i * 0.618);',
+    'ink look detached droplets');
+  patch('    this.blobFourPetals.needsUpdate = true;\n  }',
+    `    this.blobFourPetals.needsUpdate = true;
+    const lr = this._blobInkLookRange || (this._blobInkLookRange = { start: 0, count: 0 });
+    lr.count = n * this.blobInkLook.itemSize;
+    this.blobInkLook.updateRanges.length = 0; this.blobInkLook.updateRanges.push(lr);
+    this.blobInkLook.needsUpdate = true;
+  }`, 'ink look instance upload');
   if (code.includes('    const inkProfile = profileFor(w);')) {
     patch("import { profileFor, launchSpeed, correctInkAim, referenceReach } from './inkFlight.js';",
       "import { profileFor, launchSpeed, correctInkAim, referenceReach, advanceInkFrame, INK_MODEL } from './inkFlight.js';",
@@ -227,5 +278,5 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
   patch("    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", "    area += fidelityRollerMaximumPaint(this,w,fx,fz);\n    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", 'source maximum Roller floor width');
-  return "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, configureFidelityInkFlight, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityDualiesLaunchPlan, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, fidelitySlosherImpactPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  return "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, configureFidelityInkFlight, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityDualiesLaunchPlan, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, fidelitySlosherImpactPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint, INK_LOOK, fidelityInkLook, writeInkLook } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }

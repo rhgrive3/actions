@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { CURLING, SUCTION, curlingRollTargetSpeed, curlingRollSpeed } from '../runtime/kit-subs.mjs';
 import { splatBombKnockbackDelta, fidelityThrowVelocity } from '../runtime/sub-special-fidelity.mjs';
-import { CURLING_WARNING_REST, CURLING_LIGHT_RED, CURLING_LIGHT_GREEN, CURLING_CHARGE_GROWTH } from '../runtime/bomb-models.mjs';
+import { CURLING_WARNING_REST, CURLING_LIGHT_RED, CURLING_LIGHT_GREEN, CURLING_CHARGE_GROWTH, buildThrownBombModel } from '../runtime/bomb-models.mjs';
 
 // Production composition, real Projectiles/_updateBombs, flat y=0 floor.
 // Kit mapping (kit-composition): shooter=Suction, roller=Curling, charger=Splat Bomb.
@@ -242,6 +242,37 @@ test('held prop follows the owner kit through the real Character update, and tea
   assert.ok(custom[0].children.some(c => c.material === ink), 'colour refresh reaches the held ink band');
   actor.setWeapon('charger'); hold();
   assert.equal(actor.weapon.sub, 'bomb');
-  assert.ok(native.every(c => c.visible), 'Splat Bomb kit shows the native bulb again');
-  assert.equal(ch.bomb.group.children.filter(c => !native.includes(c)).length, 0);
+  assert.ok(native.every(c => !c.visible), 'the Splat Bomb kit holds its own model, not the generic bulb');
+  const splat = ch.bomb.group.children.filter(c => !native.includes(c));
+  assert.equal(splat.length, 1, 'one held Splat Bomb prop replaces the Curling prop');
+  assert.notEqual(splat[0], custom[0]);
+  assert.ok(splat[0].children.some(c => c.material === ink), 'the held ink bag takes the team ink');
+});
+
+test('model parts follow the S3 icons: framed Splat pyramid, ringed Suction can on a dome cup, panelled Curling puck', async () => {
+  const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true });
+  const T = f.THREE, ink = new T.MeshStandardMaterial();
+  const box = (mesh) => new T.Box3().setFromBufferAttribute(mesh.geometry.attributes.position);
+  const parts = (id) => {
+    const m = buildThrownBombModel(T, id, ink);
+    const meshes = m.root.children.filter(c => c.isMesh);
+    return { m, meshes, inkMesh: meshes.find(c => c.material === ink) };
+  };
+  const splat = parts('bomb');
+  assert.equal(splat.m.body, splat.inkMesh, 'the ink bag is the fuse-pulse body');
+  assert.ok(splat.meshes.length >= 5, 'bag + frame + sleeves + knobs + clips');
+  const bag = box(splat.inkMesh), frame = box(splat.meshes[1]);
+  assert.ok(frame.max.y > 0.17 && frame.min.y < -0.16, 'regular tetrahedron frame, apex up');
+  assert.ok(bag.max.y < frame.max.y && bag.min.y > frame.min.y - 0.02, 'the bag sits inside the frame');
+  assert.ok(bag.max.x - bag.min.x > 0.6 * (frame.max.x - frame.min.x), 'the bag fills most of the frame');
+  const suction = parts('suction');
+  const all = new T.Box3(); for (const x of suction.meshes) all.union(box(x));
+  near(all.min.y, -0.207, 1e-3, 'cup rim on the contact surface (record centre 0.21 above it)');
+  const can = box(suction.inkMesh);
+  assert.ok(can.max.y > 0.19 && can.min.y < -0.15, 'ink can, neck and cup dots share the team ink');
+  assert.ok(suction.m.light?.isMesh, 'the base flash ring blinks');
+  const curling = parts('curling');
+  const panels = box(curling.inkMesh);
+  assert.ok(panels.max.x > 0.3 && panels.max.y < 0.26, 'raised ink panels around a low puck');
+  assert.equal(curling.m.root.children.filter(c => c.material === curling.m.light).length, 6, 'six top lights');
 });
