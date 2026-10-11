@@ -91,7 +91,38 @@ function triSlosher(d) {
   wireHandle(body, cz - dep / 2);
   return rebuild(d, { body, ink, parts: { surface: inkRect(w - 0.04, dep - 0.04, cy + h * 0.1, cz) } });
 }
-const BUILD3D = { 's3-slosher-diffusion': triSlosher };
+function slosherMachine(d) {
+  // Wmn_Slosher_Launcher: graphite machine body with a rounded crown, a big silver-bezel round port on the
+  // front with spiral turbine blades and a hub, a light-grey side frame and top carry handle, a cream rear
+  // block with a vent grille, four brass feet. The native right-hand handle stands on the rear block.
+  const C = { body: '#4c4f57', frame: '#b9b6ab', cream: '#e4d9bd', silver: '#c6c9cc', dark: '#22242a', brass: '#b08a3c', blue: '#3a62d8' };
+  const cy = BY + 0.004, cz = BZ + 0.012, w = 0.17, h = 0.165, dep = 0.15;
+  const body = new Pieces(), ink = new Pieces();
+  body.add(box(w, h, dep, 0, cy, cz, 0.32, 16, 10), C.body, M.satin);
+  body.add(box(w * 0.92, 0.05, dep * 0.9, 0, cy + h / 2 - 0.01, cz, 0.6, 14, 6), C.body, M.satin);           // rounded crown
+  for (const sx of [-1, 1]) body.add(box(0.008, h * 0.92, 0.026, sx * (w / 2 + 0.002), cy, cz + dep / 2 - 0.018, 0.3), C.frame, M.satin); // front frame strips
+  // front port: silver bezel, dark throat, spiral blades, hub
+  const fz = cz + dep / 2;
+  body.add(ring(0.068, 0.009, 0, cy, fz + 0.004, 'z', 8, 32), C.silver, M.satin);
+  body.add(zlathe([[0, fz - 0.03], [0.064, fz - 0.03], [0.064, fz + 0.002], [0, fz + 0.002]], 0, cy, 0, 28), C.dark, M.satin);
+  const blades = new Pieces();
+  for (let k = 0; k < 14; k++) blades.add(box(0.05, 0.004, 0.022, 0.03, 0, 0, 0.4).rotateY(0.5).rotateZ(k * Math.PI * 2 / 14), C.silver, M.satin);
+  body.merge(blades.transform(g => g.translate(0, cy, fz - 0.012)));
+  body.add(zlathe([[0, fz - 0.02], [0.016, fz - 0.02], [0.016, fz + 0.004], [0.009, fz + 0.008], [0, fz + 0.008]], 0, cy, 0, 18), C.silver, M.metal);
+  body.add(zlathe([[0, fz + 0.007], [0.007, fz + 0.007], [0, fz + 0.011]], 0, cy, 0, 12), C.blue, M.gloss);
+  // top carry handle (light grey) and bolts
+  for (const sz of [-1, 1]) body.add(box(0.018, 0.04, 0.016, 0, cy + h / 2 + 0.03, cz + sz * 0.045, 0.4), C.frame, M.satin);
+  body.add(box(0.022, 0.016, 0.11, 0, cy + h / 2 + 0.052, cz, 0.45), C.frame, M.satin);
+  // cream rear block with a vent grille
+  const rz = cz - dep / 2 - 0.03;
+  body.add(box(w * 0.9, h * 0.82, 0.06, 0, cy - 0.008, rz, 0.3), C.cream, M.satin);
+  for (let k = 0; k < 7; k++) body.add(box(w * 0.66, 0.005, 0.004, 0, cy - 0.055 + k * 0.016, rz - 0.031, 0.5), C.dark, M.satin);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) body.add(ylathe([[0, -0.016], [0.011, -0.016], [0.013, -0.006], [0.009, 0], [0, 0]], sx * 0.06, cy - h / 2, cz + sz * 0.05, 12), C.brass, M.metal);
+  wireHandle(body, rz - 0.03);
+  ink.add(zlathe([[0, fz - 0.05], [0.058, fz - 0.05], [0.058, fz - 0.032], [0, fz - 0.032]], 0, cy, 0, 24));     // ink behind the turbine
+  return rebuild(d, { body, ink, parts: { surface: inkDisc(0.05, cy + 0.03, cz) } });
+}
+const BUILD3D = { 's3-slosher-diffusion': triSlosher, 's3-slosher-launcher': slosherMachine };
 
 /** Builds one slosher on the native slosher def `d`: silhouette body, pitcher handle, ink surface and lever. */
 function model(d, c) {
