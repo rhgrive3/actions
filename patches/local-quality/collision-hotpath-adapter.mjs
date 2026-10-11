@@ -3,6 +3,9 @@
 // Exact near-boundary queries still use native multi-cell deduplication.
 // Neither geometry, physics time step, result ordering nor hit tolerances change.
 export function adaptCollisionHotpath(rel, code, replaceOnce) {
+  // Reject duplicate builds before their retained native anchors can match again.
+  if (rel === 'src/world/level.js' && code.includes('if (x0 === x1 && z0 === z1) {')) throw new Error('collision hotpath: level already adapted');
+  if (rel === 'src/game/physics.js' && code.includes('const yLo = Math.min(origin.y, ey) - 1e-6;')) throw new Error('collision hotpath: physics already adapted');
   const change = (before, after, label) => {
     code = replaceOnce(code, before, after, 'collision hotpath: ' + label);
   };
