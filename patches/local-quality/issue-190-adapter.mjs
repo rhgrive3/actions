@@ -134,6 +134,7 @@ export function adaptPaintMipmaps(rel, code) {
     `    }\n` +
     `  }\n\n` +
     `  _regenerateMipmaps() {\n` +
+    `    if (globalThis.document?.hidden) return;\n` +
     `    const r = this.renderer;\n` +
     `    if (!r || !this.rt) return;\n` +
     `    const tex = this.rt.texture;\n` +

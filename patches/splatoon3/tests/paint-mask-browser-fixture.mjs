@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 // Tests the emitted shader, emitted CPU mask, and native seed attribute packing.
 // Only raster derivatives/AA are replaced: points query exact gameplay samples,
 // with tx fixed to the actual atlas density instead of unrelated neighbor points.
@@ -193,7 +194,7 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail);
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, activeFamilies, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
-    body };
+    body, hidden: hiddenPresentationRows() };
 }
 
 // PR1188: bidirectional CPU-grid / GPU-body agreement. The GPU program is the
@@ -236,4 +237,69 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
   check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
   check(rows.length === 81 && result.cpuCells > 0, 'all body kinds, smears, radii and seeds exercised');
   return result;
+}
+
+
+// Exercise the real atlas framebuffer, including the composed mip path and
+// snapshot replay. This is independent of the scalar mask shader probe above.
+function hiddenPresentationRows() {
+  const rows = [];
+  const descriptor = Object.getOwnPropertyDescriptor(document, 'hidden');
+  const renderer = new THREE.WebGLRenderer({ antialias: false });
+  const originalRender = renderer.render.bind(renderer);
+  let drawCalls = 0;
+  renderer.render = (...args) => { drawCalls++; return originalRender(...args); };
+  try {
+    for (const wall of [false, true]) for (const rate of [30, 60, 120]) {
+      const results = [];
+      for (const hidden of [false, true]) {
+        Object.defineProperty(document, 'hidden', { configurable: true, value: hidden });
+        const V = (x=0,y=0,z=0) => new THREE.Vector3(x,y,z);
+        const face = { origin: wall ? V(-6,0,0) : V(-6,0,-6), u:V(1,0,0),
+          v:wall?V(0,1,0):V(0,0,1), n:wall?V(0,0,-1):V(0,1,0),
+          su:12,sv:12,wall,turf:!wall,paintable:true };
+        const level = { faces:[face], blocks:[{faces:[0,-1,-1,-1,-1,-1]}],
+          pointInside:()=>false,queryBlocks:(_x0,_z0,_x1,_z1,out=[])=>{out.length=0;out.push(0);return out;} };
+        const paint = new PaintSystem(renderer,level,{atlasSize:512,maxDensity:32,cell:.25});
+        drawCalls=0;
+        const point=wall?V(0,7,0):V(0,0,0);
+        for(let tick=0;tick<rate*5;tick++) {
+          if(tick===0||tick===rate/2||tick===rate) {
+            const team=tick===rate/2?1:0, seq=tick===0?1:tick===rate/2?2:3;
+            const p=point.clone();p.x+=seq===2?.75:seq===3?-.75:0;
+            paint.splat(p,1.6,team,{seed:team?.72:.37,
+              __netOrder:{clock:seq,seq,peer:'paint-probe-'+team,epoch:'visibility'}});
+          }
+          paint.advanceSimulation(1/rate);paint.flush(1/rate);
+        }
+        if(hidden)check(drawCalls===0,'hidden paint must not render atlas or regenerate mipmaps');
+        Object.defineProperty(document,'hidden',{configurable:true,value:false});
+        paint.flush(0);
+        check(drawCalls>0,'restored paint must actually draw');
+        const pixels=new Uint8Array(512*512*4);renderer.readRenderTargetPixels(paint.rt,0,0,512,512,pixels);
+        const samples=[];
+        for(let j=0;j<face.nv;j++)for(let i=0;i<face.nu;i++){
+          const x=Math.floor(face.atlas.x+face.atlas.pad+(i+.5)*face.cu*face.atlas.ppm);
+          const y=Math.floor(face.atlas.y+face.atlas.pad+(j+.5)*face.cv*face.atlas.ppm);
+          const at=(y*512+x)*4,owner=paint.grid[face.grid+j*face.nu+i];
+          samples.push({owner,red:pixels[at],alpha:pixels[at+3]});
+        }
+        results.push({samples,counts:Array.from(paint.counts),clock:paint.clock});paint.dispose();
+      }
+      check(JSON.stringify(results[0].counts)===JSON.stringify(results[1].counts),'hidden floor counts equal visible');
+      let compared=0,mismatches=0;
+      for(let i=0;i<results[0].samples.length;i++){
+        const a=results[0].samples[i],b=results[1].samples[i];
+        check(a.owner===b.owner,'hidden CPU owner parity');
+        // Fully opaque samples exclude fractional raster/AA accumulation.
+        if(a.owner&&a.alpha>250&&b.alpha>250){compared++;if((a.red>127)!==(b.red>127))mismatches++;}
+      }
+      check(compared>20&&mismatches===0,'restored solid GPU ownership must equal visible atlas');
+      rows.push({wall,rate,compared,mismatches,counts:results[1].counts});
+    }
+  } finally {
+    if(descriptor)Object.defineProperty(document,'hidden',descriptor);else delete document.hidden;
+    renderer.dispose();
+  }
+  return rows;
 }
