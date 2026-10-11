@@ -213,7 +213,7 @@ try {
       const gearAdoptionChecks=[];
       {
         const {NetMatch}=await import('/src/net/netmatch.js');
-        const previousMatch=G.match,previousNet=G.netm;
+        const previousMatch=G.match,previousNet=G.netm,previousTime=G.time;
         for(const points of [0,3,10,57]){
           const owner=makeActor('shooter',71),remote=makeActor('shooter',71);owner.owner=remote.owner='gear-owner';
           owner.s3.loadout=emptyLoadout();
@@ -237,7 +237,7 @@ try {
           check(Math.abs(remote.vel.z-Player.runSpeed*owner.s3.modifiers.runSpeed)<1e-8,'gear adopted native movement '+points);
           gearAdoptionChecks.push({points,runSpeed:remote.vel.z,owner:remote.owner});
         }
-        G.match=previousMatch;G.netm=previousNet;
+        G.match=previousMatch;G.netm=previousNet;G.time=previousTime;
       }
       const kitChecks=[];
       for(const record of records){

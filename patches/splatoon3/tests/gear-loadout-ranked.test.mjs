@@ -11,7 +11,7 @@ async function world(id,mode){
  f.context.structuredClone=structuredClone;f.installRanked({...f.installedRuntime,G:f.G,structuredClone});
  const a=f.make();Object.assign(a,{nid:1,owner:'owner',slot:0,invuln:0});
  const ranked=new f.RankedEngine(mode,{id:'gear-ranked',zones:[{center:[0,0,0],size:[8,8]}],clams:{spawns:[],goals:[[0,0,10],[0,0,-10]]}});
- const m={actors:[a],local:a,mode,ranked,rankedGains:[0,0],rankedBarrierHits:[],state:'playing',duration:300,time:300,playing:()=>true,canRespawn:()=>false,setState(state){this.state=state;}};
+ const m={actors:[a],local:a,follower:id!=='owner',mode,ranked,rankedGains:[0,0],rankedBarrierHits:[],state:'playing',duration:300,time:300,playing:()=>true,canRespawn:()=>false,setState(state){this.state=state;}};
  let packet;const session={myId:id,hostId:'owner',isHost:id==='owner',_members:new Set(['owner','viewer']),tr:{sendTo(){},broadcast:p=>{packet=json(p);}}};
  const nm=new f.NetMatch(session,{id:'ranked-gear',mode});nm.bind(m);f.G.netm=nm;f.G.match=m;f.G.actors=[a];a.update(0);
  return {f,a,m,nm,send(){f.G.time+=1/60;nm._sendTick();return json(packet);}};
