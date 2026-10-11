@@ -926,6 +926,9 @@ function tickObjects(api,projectiles,dt){
 }
 
 function replaySpawn(api,event,owner){
+  // Sprinkler uses native bomb birth/ghost packets. Do not revive the retired
+  // catalogue authority alongside that device, including for old peers.
+  if(event.subId==='sprinkler')return false;
   if(!owner?.remote||!api.G.projectiles||event.life!==ownerLife(owner)||event.sourceLife!==event.life||!ALL_SUB_SPECS[event.subId])return false;
   const list=entityList(api.G.projectiles);
   const old=list.find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===event.sourceLife);
@@ -954,14 +957,6 @@ function replayExpire(api,event,owner){
   const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
   if(!object)return false;removeObject(api,api.G.projectiles,object,true);return true;
 }
-function replaySprinklerDrop(api,event,owner){
-  if(!owner?.remote||ownerLife(owner)!==event.life||!Number.isInteger(event.seed)||event.seed<0||event.seed>0xffffffff||
-     !finite3({x:event.x,y:event.y,z:event.z})||!Number.isFinite(event.radius)||event.radius<=0||event.radius>.6)return false;
-  const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life)&&o.subId==='sprinkler'&&o.phase==='deployed');
-  if(!object||object.pos.distanceTo(new api.THREE.Vector3(event.x,event.y,event.z))>object.spec.hitPaintRadius+1)return false;
-  surfacePaintWithCredit(api,owner,object.team,new api.THREE.Vector3(event.x,event.y,event.z),event.radius,event.seed,false);
-  return true;
-}
 
 /**
  * Replays one parent-validated `all:sub` event. Ghost sub objects are
@@ -978,7 +973,9 @@ export function replaySub(api,event){
   if(event.phase==='spawn')return replaySpawn(api,event,owner);
   if(event.phase==='deploy')return replayDeploy(api,event,owner);
   if(event.phase==='mark')return replayMark(api,event,owner);
-  if(event.phase==='sprinklerDrop')return replaySprinklerDrop(api,event,owner);
+  // Only ordered native paint rows may change ownership. A stale legacy drop
+  // must never repaint over a newer enemy stroke or invent an expanded radius.
+  if(event.phase==='sprinklerDrop')return false;
   if(event.phase==='beakonUses')return replayBeaconUses(api,event,owner);
   if(event.phase==='expire'||event.phase==='destroy')return replayExpire(api,event,owner);
   if(event.phase==='burst'){
