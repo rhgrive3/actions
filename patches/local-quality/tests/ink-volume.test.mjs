@@ -141,4 +141,20 @@ test('actual composed Roller shots retain gameplay data and use the existing _dr
   assert.equal(system.blobs.count, 0);
   for (const p of system.list) p._inkVolumeHorizontal=false;
   system._draw(); assert(system.blobs.count > 0, 'other weapon/mode remains on existing renderer');
+  // Replay actual JSON wire births: remote owner mode/weapon may already have
+  // changed, and current vertical source-guided heads share nose/tail values
+  // with horizontal ones. Classification must wait for immutable metadata.
+  f.G.netm=new f.NetMatch({myId:7},{});actor.nid=7;
+  const peer=f.make('shooter');peer.remote=true;peer.nid=9;peer.team=1;
+  for(const vertical of [false,true]){
+    system.clear();f.G.netm.out.length=0;actor.weaponRunner.s3FlickVertical=vertical;
+    system.fireFlick(actor,actor.weapon);
+    const packets=JSON.parse(JSON.stringify(f.G.netm.out.filter(e=>e[1]==='p')));
+    assert(packets.length>0);const snapshot=JSON.stringify(packets);
+    system.clear();peer.weaponRunner.s3FlickVertical=!vertical;
+    for(const packet of packets)system.ghostProjectile(peer,packet);
+    assert.equal(JSON.stringify(packets),snapshot,'renderer does not change network packets');assert.equal(system.list.length,packets.length);
+    for(const p of system.list){assert.equal(p._inkVolumeHorizontal,!vertical);assert.equal(p.s3Vertical,vertical);assert.equal(p.wid,'roller');assert.equal(p.damage,0);assert.equal(p.ghost,true);if(!vertical)assert.deepEqual(p._inkVolumeDirection.toArray(),p.vel.toArray());}
+    calls.length=0;system._draw();assert.equal(calls.filter(c=>Array.isArray(c)&&c[0]==='roller').length,vertical?0:packets.length);
+  }
 });

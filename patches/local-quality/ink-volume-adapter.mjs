@@ -26,7 +26,18 @@ export function adaptInkVolumes(rel, code, replaceOnce) {
   if (rel === 'src/game/weapons.js') {
     code = "import { captureRollerVolume, submitRollerVolume } from '../../patches/local-quality/ink-volume/roller.mjs';\n" + code;
     patch('  _push(p) {', '  _push(p) {\n    captureRollerVolume(p, WEAPONS[p.wid] || p.owner?.weapon);', 'snapshot local horizontal volley');
-    patch('    p.vel.set(vx, vy, vz);', '    p.vel.set(vx, vy, vz);\n    captureRollerVolume(p, WEAPONS[p.wid] || p.owner?.weapon);', 'snapshot replicated volley');
+    // Network composition finalizes immutable mode/identity after velocity.
+    // Observe the completed native birth instead of classifying midway through
+    // its metadata restore. Preserve its result and rejected-packet behavior.
+    code += `\nconst _inkVolumeGhostBirth = Projectiles.prototype.ghostProjectile;
+Projectiles.prototype.ghostProjectile = function(a, e) {
+  const before = this.list.length, result = _inkVolumeGhostBirth.call(this, a, e);
+  if (this.list.length > before) {
+    const p = this.list[this.list.length - 1];
+    captureRollerVolume(p, WEAPONS[p.wid] || p.owner?.weapon);
+  }
+  return result;
+};\n`;
     patch('  _draw() {\n    let n = 0;', '  _draw() {\n    const volumes = G.fx?.inkVolumes?.isInkVolumes === true ? G.fx.inkVolumes : null;\n    volumes?.begin(G.camera);\n    let n = 0;', 'begin existing projectile render pass');
     patch('      if (p.delay > 0) continue;\n      const sp = p.vel.length();', '      if (p.delay > 0) continue;\n      if (submitRollerVolume(volumes, p)) continue;\n      const sp = p.vel.length();', 'replace only registered horizontal heads');
     patch('    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);', '    volumes?.end();\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);', 'flush shared frame batches');
