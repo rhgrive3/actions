@@ -151,7 +151,7 @@ function splattershot(d) {
     body, ink,
     parts: { can: part(can, [0, ty, tc], 'ink'), trigger: part(trig, TRIGGER_PIVOT) },
     // the support hand closes on the ribbed fore-end from below (S3 promo: left palm under the fore-end)
-    gripL: gripSpec([0, 0.024, 0.125], [0, 1, -0.12], [0.45, -0.05, -1]),
+    gripL: gripSpec([0, 0.022, 0.098], [0, 1, -0.12], [0.45, -0.05, -1]),
     muzzle: [0, by, nz1 + 0.004],
   });
 }
