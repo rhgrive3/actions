@@ -145,6 +145,21 @@ try {
         return actor;
       };
 
+      const {CANONICAL_KITS}=await import('/patches/splatoon3/runtime/canonical-kits-data.mjs');
+      const kitChecks=[];
+      for(const record of records){
+        G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
+        const k=CANONICAL_KITS[record.id];
+        check(a.weapon.sub===k.sub&&a.weapon.special===k.special&&a.specialCost()===k.specialCost,record.id+' canonical Actor kit');
+        for(let frame=0;frame<8;frame++)a.weaponRunner.update(1/60,{sub:true});
+        a.weaponRunner.update(1/60,{sub:false,subReleased:true});a.weaponRunner.update(1/60,{sub:false});
+        const cost=(api.SUB[k.sub].inkCost??api.SUB[k.sub].inkCostFallback)*(a.s3.modifiers.inkSaverSub??1);
+        check(Math.abs(a.ink-(100-cost))<1e-6,record.id+' native sub payment');
+        a.weaponRunner.reset();a.special=a.specialCost();a.invuln=0;
+        a._startSpecial();check(a.stats.specials===1,record.id+' special admitted');
+        a.reset();check(a.weapon.sub===k.sub&&a.weapon.special===k.special,record.id+' kit after reset');
+        kitChecks.push({id:record.id,sub:k.sub,special:k.special,points:k.specialCost,inkCost:cost});
+      }
       let totalProjectiles = 0;
       const emissions = [];
       for (const record of newRecords) {
@@ -194,6 +209,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
+        kitChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
