@@ -54,7 +54,7 @@ const server = http.createServer((req, res) => {
     if (/^\/(source|built)\/fixture.html$/.test(pathname)) {
       res.setHeader('content-type', 'text/html');
       res.end('<!doctype html><script type="importmap">' + JSON.stringify({ imports: { three: asset + 'vendor/three/build/three.module.js', 'three/addons/': asset + 'vendor/three/jsm/' } }) +
-        '</script><script type="module">import {runPaintMaskProbe} from "' + '/' + mode + '/fixture.mjs"; runPaintMaskProbe().then(result=>globalThis.paintMaskResult=result).catch(error=>globalThis.paintMaskError=error.stack);</script>'); return;
+        '</script><script type="module">import {runPaintMaskProbe} from "' + '/' + mode + '/fixture.mjs"; runPaintMaskProbe().then(result=>globalThis.paintMaskResult=result).catch(error=>globalThis.paintMaskError=String(error)+"\\n"+(error.stack||""));</script>'); return;
     }
     if (/^\/(source|built)\/fixture.mjs$/.test(pathname)) {
       res.setHeader('content-type', 'text/javascript'); res.end(fixtureCode.replaceAll('/ASSET/', asset)); return;
@@ -77,20 +77,23 @@ const server = http.createServer((req, res) => {
     res.setHeader('cache-control', 'no-store'); res.end(bytes);
   } catch (error) { errors.push(error.message); res.writeHead(404); res.end(); }
 });
-const { chromium } = await import(arg('--playwright') ? pathToFileURL(path.resolve(arg('--playwright'))).href : 'playwright');
+const engines = await import(arg('--playwright') ? pathToFileURL(path.resolve(arg('--playwright'))).href : 'playwright');
+const engine = arg('--engine', 'chromium');
+assert(['chromium', 'webkit'].includes(engine), 'supported paint verification engine');
 let context;
 try {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  context = await chromium.launchPersistentContext(profile, { headless: true,
+  context = await engines[engine].launchPersistentContext(profile, { headless: true,
     ...(arg('--executable') ? { executablePath: arg('--executable') } : {}),
-    args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+    ...(engine === 'chromium' ? { args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] } : {}) });
   const results = {};
   for (const mode of ['source', 'built']) {
     const page = await context.newPage();
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/${mode}/fixture.html`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => globalThis.paintMaskResult || globalThis.paintMaskError, null, { timeout: 120000 });
-    const outcome = await page.evaluate(() => ({ result: globalThis.paintMaskResult, error: globalThis.paintMaskError }));
+    const outcome = await page.evaluate(() => ({ result: globalThis.paintMaskResult, error: globalThis.paintMaskError, diagnostic: globalThis.paintMaskDiagnostic }));
+    if (outcome.error) fs.writeFileSync(path.join(evidence, 'paint-mask-failure.json'), JSON.stringify({ engine, mode, sourceSha, contentHash: build.contentHash, ...outcome }, null, 2) + '\n');
     assert.equal(outcome.error, undefined, outcome.error); assert.equal(errors.length, 0, JSON.stringify(errors));
     results[mode] = outcome.result; await page.close();
   }
@@ -99,10 +102,10 @@ try {
     assert([...received].some(file => file.startsWith(mode + '/') && file.endsWith('/src/world/paint.js')), mode + ' paint module served');
     assert([...received].some(file => file.startsWith(mode + '/') && file.endsWith('/patches/splatoon3/runtime/paint-ownership.mjs')), mode + ' CPU ownership module served');
   }
-  const receipt = { status: 'passed', sourceSha, contentHash: build.contentHash, inputHash: build.inputHash,
+  const receipt = { status: 'passed', engine, sourceSha, contentHash: build.contentHash, inputHash: build.inputHash,
     verifierHash: hash(fs.readFileSync(fileURLToPath(import.meta.url))), fixtureHash: hash(fixtureCode), received: [...received].sort(), results };
   fs.writeFileSync(path.join(evidence, 'paint-mask-result.json'), JSON.stringify(receipt, null, 2) + '\n');
-  console.log(JSON.stringify({ status: receipt.status, sourceSha, cases: results.built.rows.length,
+  console.log(JSON.stringify({ status: receipt.status, engine, sourceSha, cases: results.built.rows.length,
     hashQueries: results.built.hashQueries, cells: results.built.cells, negativeUnsupported: results.built.negativeUnsupported,
     body: { cases: results.built.body.rows.length, cpuCells: results.built.body.cpuCells, gpuCells: results.built.body.gpuCells,
       cpuOnly: results.built.body.cpuOnly, gpuOnly: results.built.body.gpuOnly, ties: results.built.body.ties } }));

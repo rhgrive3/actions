@@ -327,7 +327,7 @@ jobs:
           - suite: responsive
             browsers: chromium webkit
           - suite: network
-            browsers: chromium
+            browsers: chromium webkit
           - suite: range
             browsers: chromium webkit
           - suite: startup
@@ -379,6 +379,9 @@ jobs:
       - name: Verify exact ancillary paint hashes and canonical GPU masks
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask" --profile-dir "$CI_STORAGE/cache/paint-mask" --exact-source
+      - name: Verify exact paint masks and local order lifetime in WebKit
+        if: matrix.suite == 'network'
+        run: node scripts/check-inkwave-paint-mask.mjs --engine webkit --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask-webkit" --profile-dir "$CI_STORAGE/cache/paint-mask-webkit" --exact-source
       - name: Verify two-player network trajectories and rendered FX
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-network-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network" --profile-dir "$CI_STORAGE/cache/network" --exact-source

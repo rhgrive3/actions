@@ -14,11 +14,31 @@ import { objectGearRate, objectShredderEquipped, withObjectHitGear } from './obj
 
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
 import { gearCurve } from './gear.mjs';
+import { subMarkSeconds } from './sub-mark-resistance.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-subs.v1');
 const STEP = 1 / 60;
 const MAX_OBJECTS = 96;
 const MAX_REPLAY_EVENTS = 256;
+// A rendered ghost may retire before its owner's delayed marking event.
+// Retain only bounded, accepted birth facts, independently of visual lifetime.
+const markBirths = new WeakMap();
+const markBirthKey = o => JSON.stringify([o.sourceLife,o.seq,o.subId]);
+function markBirthState(api,projectiles,owner,create=false) {
+  let state=markBirths.get(projectiles);
+  if(!state||state.match!==api.G.match||state.net!==api.G.netm){
+    markBirths.delete(projectiles);
+    if(!create)return null;
+    state={match:api.G.match,net:api.G.netm,owners:new WeakMap()};markBirths.set(projectiles,state);
+  }
+  let record=state.owners.get(owner);
+  if(!record||record.ownerId!==owner.owner||record.net!==owner.net){
+    state.owners.delete(owner);
+    if(!create)return null;
+    record={ownerId:owner.owner,net:owner.net,life:-1,seq:0,entries:new Map()};state.owners.set(owner,record);
+  }
+  return record;
+}
 // S3 community testing describes these as queued bonuses, capped at 2.5 bonus
 // frames per 60 Hz frame. The source parameter table gives charge stages, not
 // acceleration values, so these are conservative calibration values.
@@ -293,6 +313,17 @@ function createObject(api, projectiles, owner, id, record = {}) {
   const list = entityList(projectiles);
   while (list.length >= MAX_OBJECTS) removeObject(api, projectiles, list[0], true);
   list.push(object);
+  if(object.ghost&&['inkMine','angleShooter'].includes(id)){
+    const births=markBirthState(api,projectiles,owner,true);
+    if(object.sourceLife>births.life||object.sourceLife===births.life&&seq>births.seq){
+      births.life=object.sourceLife;births.seq=seq;
+      births.entries.set(markBirthKey(object),Object.freeze({frames:Math.round(markSeconds(spec,owner,ap)*60)}));
+      // The source itself can retain at most MAX_OBJECTS live catalogue objects.
+      // A later same-owner ordered birth beyond this bound proves the oldest
+      // can no longer emit a new mark. Other owners cannot evict this history.
+      while(births.entries.size>MAX_OBJECTS)births.entries.delete(births.entries.keys().next().value);
+    }
+  }
   object.mesh = buildVisual(api, object, projectiles);
   if (!object.ghost) emitEvent(api,object,'spawn',{ hold: heldSeconds });
   return object;
@@ -412,11 +443,11 @@ function damageAt(distance, spec) {
 function hostileActors(api, owner) {
   return (api.G.actors || []).filter(a => a && a.alive && a.team !== owner.team && a.pos && a !== owner);
 }
-function applyMark(api, target, team, seconds) {
-  if (!target?.alive || target.remote || target.team === team || !(seconds > 0)) return false;
+function applyMark(api, target, team, seconds, subId) {
+  if (!target?.alive || target.team === team || !(seconds > 0)) return false;
   target.s3 ||= {};
   target.s3.revealedUntil ||= {};
-  const until = (api.G.time || 0) + seconds;
+  const until = (api.G.time || 0) + subMarkSeconds(target, seconds, subId);
   target.s3.revealedUntil[team] = Math.max(target.s3.revealedUntil[team] || 0,until);
   return true;
 }
@@ -432,8 +463,8 @@ function detonateInkMine(api,projectiles,mine){
   for(const target of hostileActors(api,mine.owner)){
     const dx=target.pos.x-mine.pos.x,dy=target.pos.y+.7-mine.pos.y,dz=target.pos.z-mine.pos.z;
     if(dx*dx+dy*dy+dz*dz>mine.spec.markRadius**2||api.G.physics?.los&&!api.G.physics.los(mine.pos,target.pos))continue;
-    applyMark(api,target,mine.team,duration);
-    if(Number.isInteger(target.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:mine.subId,seq:mine.seq,sourceLife:mine.sourceLife,eventSeq:nextSeq(mine.owner),
+    applyMark(api,target,mine.team,duration,mine.subId);
+    if(Number.isInteger(target.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:mine.subId,seq:mine.seq,life:ownerLife(mine.owner),sourceLife:mine.sourceLife,eventSeq:nextSeq(mine.owner),
       targetId:target.nid,targetLife:ownerLife(target),frames:Math.round(duration*60),sourceTeam:mine.team,actor:mine.owner});
   }
   blast(api,mine,mine.pos);
@@ -813,8 +844,8 @@ function updateFlight(api, projectiles, object, dt) {
       if(amount>0)api.G.projectiles?.applyHit?.(object.owner,actor.actor,amount,object.subId);
       if(object.subId==='angleShooter'){
         const duration=markSeconds(spec,object.owner,object.subPowerAP);
-        applyMark(api,actor.actor,object.team,duration);
-        if(Number.isInteger(actor.actor.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:object.subId,seq:object.seq,sourceLife:object.sourceLife,eventSeq:nextSeq(object.owner),
+        applyMark(api,actor.actor,object.team,duration,object.subId);
+        if(Number.isInteger(actor.actor.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:object.subId,seq:object.seq,life:ownerLife(object.owner),sourceLife:object.sourceLife,eventSeq:nextSeq(object.owner),
           targetId:actor.actor.nid,targetLife:ownerLife(actor.actor),frames:Math.round(duration*60),sourceTeam:object.team,actor:object.owner});
       }
     }
@@ -951,11 +982,15 @@ function replayDeploy(api,event,owner){
 }
 function replayMark(api,event,owner){
   const target=api.G.netm?.byNid?.get(event.targetId);
+  const birth=owner&&api.G.projectiles&&markBirthState(api,api.G.projectiles,owner)?.entries.get(markBirthKey(event));
   if(!owner?.remote||!target||target.team===owner.team||ownerLife(target)!==event.targetLife||
-    !Number.isSafeInteger(event.frames)||event.frames<1||event.frames>1200)return false;
-  return applyMark(api,target,owner.team,event.frames/60);
+    !['inkMine','angleShooter'].includes(event.subId)||!birth||
+    !Number.isSafeInteger(event.frames)||event.frames!==birth.frames)return false;
+  return applyMark(api,target,owner.team,event.frames/60,event.subId);
 }
 function replayExpire(api,event,owner){
+  // Owner retirement is ordered after its marks. Local visual retirement is not.
+  markBirthState(api,api.G.projectiles,owner)?.entries.delete(markBirthKey(event));
   const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
   if(!object)return false;removeObject(api,api.G.projectiles,object,true);return true;
 }
@@ -1109,6 +1144,7 @@ export function installAllSubs(api,profile={}){
   Projectiles.prototype.clear=function(...args){
     for(const object of [...this._s3SubObjects||[]])removeObject(api,this,object,true);
     this._s3SubObjects=[];this._s3SubAccumulator=0;
+    markBirths.delete(this);
     api.G.s3Beakons=[];
     for(const actor of api.G.actors||[])if(actor?.s3){delete actor.s3.toxicMistSlowUntil;delete actor.s3.toxicMistScale;}
     objectHitSeen.clear();beaconResultSeen.clear();
