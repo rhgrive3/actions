@@ -512,6 +512,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     while(s.carry+EPS>=DT){
       s.carry=Math.max(0,s.carry-DT);
       if(s.stuck){s.fuse-=DT;if(s.fuse<=EPS){explosion(this,p,d.b.DetonationParam.BlastParam);return true;}continue;}
+      this.projectileVisuals?.beginPhysicsStep(p);
       advance(p);
       // Read-only presentation observer: sample each real 60Hz integration,
       // including multiple catch-up steps. Never changes gameplay/RNG/packets.

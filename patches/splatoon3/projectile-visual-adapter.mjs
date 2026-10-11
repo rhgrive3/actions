@@ -40,6 +40,9 @@ export function adaptProjectileVisuals(rel,code) {
   code=once(code,'      configureFidelityFlick(p, a, w, i, ang, sp);',
     '      configureFidelityFlick(p, a, w, i, ang, sp);\n      p._iwVisualOrdinal = i;',
     'visual adjacency uses main glob ordinal rather than source unit index');
+  code=once(code,'  _step(p, dt) {\n    if (p.inkProfile)',
+    '  _step(p, dt) {\n    this.projectileVisuals.beginPhysicsStep(p);\n    if (p.inkProfile)',
+    'actual newborn tangent after delayed birth refresh and before integration');
   code=once(code,'      try { if (this._step(p, elapsed)) { list[i] = list[list.length - 1]; list.pop(); this._recycle(p); } }',
     `      try {
         this.projectileVisuals.beginStep(p);

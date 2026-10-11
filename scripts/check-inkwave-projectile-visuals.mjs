@@ -85,7 +85,7 @@ const report = {
   performance: [],
   browserDiagnostics: [],
   comparisonStatus: 'not-run',
-  comparisonNote: 'This invocation captures one build only; an before/after comparison requires both baseline and candidate runs.',
+  comparisonNote: 'This invocation captures one build only; a before/after comparison requires both baseline and candidate runs.',
   errors: [],
 };
 const mimeErrors = [];
@@ -180,8 +180,23 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
         (activeVisualProjectiles !== eligibleVisualProjectiles || !(visualOutput.vertexCount > 0 && visualOutput.meshVisible))) {
       throw new Error('Source-aware projectile renderer synced but produced no visible candidate body');
     }
-    G.game.R.render();
     const gl = G.renderer.getContext();
+    const staleGlErrors = [];
+    for (let i = 0; i < 32; i++) {
+      const error = gl.getError();
+      if (error === gl.NO_ERROR) break;
+      staleGlErrors.push(error);
+    }
+    G.game.R.render();
+    const glErrors = [];
+    for (let i = 0; i < 32; i++) {
+      const error = gl.getError();
+      if (error === gl.NO_ERROR) break;
+      glErrors.push(error);
+    }
+    if (staleGlErrors.length || glErrors.length) {
+      throw new Error(`WebGL reported errors around native render (pre=${staleGlErrors.join(',') || 'none'}; post=${glErrors.join(',') || 'none'})`);
+    }
     const read = G.projectiles.list.map(p => ({
       type: p.type, age: p.age, delay: p.delay || 0, pos: p.pos.toArray(), vel: p.vel.toArray(),
       mode: p.fidelityMode || (p.s3Vertical ? 'vertical' : p.s3FlickUnit === undefined ? null : 'horizontal'),
@@ -217,7 +232,9 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
         geometries: G.renderer.info.memory.geometries,
         textures: G.renderer.info.memory.textures,
         programs: G.renderer.info.programs?.length ?? null,
-        glError: gl.getError(),
+        staleGlErrors,
+        glError: gl.NO_ERROR,
+        glErrors,
       },
       drawingBuffer: [gl.drawingBufferWidth, gl.drawingBufferHeight],
     };
@@ -242,6 +259,32 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
 
 const visualSetup = ({ name, seed, impact = null }) => {
   const G = window.__G, g = window.__inkwave, a = g.match.local;
+  window.__iwProjectileSurfaceHits = [];
+  if (!window.__iwProjectileImpactRecorderInstalled) {
+    const record = (route, p, hit) => {
+      if (!hit?.hit || !Number.isInteger(hit.face) || hit.face < 0) return;
+      window.__iwProjectileSurfaceHits.push({
+        route, type: p.type, weapon: p.wid || p.inkKey || p.inkProfile?.key || null,
+        seed: p.seed, age: p.age, pos: hit.point?.toArray?.() ?? p.pos?.toArray?.() ?? null,
+        normal: hit.normal?.toArray?.() ?? null, block: hit.block, face: hit.face, distance: hit.dist,
+      });
+    };
+    const projectiles = G.projectiles;
+    const nativeImpact = projectiles._impact;
+    projectiles._impact = function (p, hit) {
+      record('Projectiles._impact', p, hit);
+      return nativeImpact.call(this, p, hit);
+    };
+    const inkFlight = projectiles.inkFlight;
+    if (inkFlight && typeof inkFlight.impact === 'function') {
+      const flightImpact = inkFlight.impact;
+      inkFlight.impact = function (p, hit) {
+        record('InkFlightRuntime.impact', p, hit);
+        return flightImpact.call(this, p, hit);
+      };
+    }
+    window.__iwProjectileImpactRecorderInstalled = true;
+  }
   let state = seed >>> 0;
   const random = () => { state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return (state >>> 0) / 4294967296; };
   Math.random = random;
@@ -309,13 +352,15 @@ async function runVisuals(page) {
           const G = window.__G, g = window.__inkwave, dt = 1 / 60;
           G.time += dt; g.time += dt;
           const before = G.projectiles.list.map(p => p.seed);
+          const surfaceHitStart = window.__iwProjectileSurfaceHits.length;
           G.projectiles.update(dt); G.fx.update(dt, G.camera); g.fxHooks?.update?.(dt); G.paint.flush(dt);
           const after = new Set(G.projectiles.list.map(p => p.seed));
           return { beforeCount: before.length, afterCount: G.projectiles.list.length, retired: before.filter(seed => !after.has(seed)).length,
+            surfaceHits: window.__iwProjectileSurfaceHits.slice(surfaceHitStart),
             live: G.projectiles.list.map(p => ({ seed: p.seed, age: p.age, pos: p.pos.toArray(), type: p.type, delay: p.delay || 0 })) };
         });
         frame++;
-        if (update.retired) record.impacts.push({ frame, retired: update.retired, liveCount: update.afterCount });
+        if (update.surfaceHits.length) record.impacts.push({ frame, surfaceHits: update.surfaceHits, liveCount: update.afterCount });
       }
       const phase = targetFrame === 0 ? 'F0' : targetFrame === 5 ? 'F5' : targetFrame === 10 ? 'F10' : targetFrame === 15 ? 'F15' : 'fall';
       const views = [0, 5, 15].includes(targetFrame) ? ['shoulder', 'front', 'side'] : ['shoulder'];
@@ -342,24 +387,31 @@ async function runVisuals(page) {
     }, { method: scenario.method });
     if (!born) throw new Error(scenario.name + ': projectile birth failed');
     await renderAndCapture(page, scenario.name, 'F0', 'shoulder', scenario.seed);
-    let impactFrame = null, impactState = null;
+    let impactFrame = null, impactState = null, impactEvidence = null;
     for (let frame = 1; frame <= scenario.maxFrames; frame++) {
       const row = await page.evaluate(() => {
         const G = window.__G, g = window.__inkwave, dt = 1 / 60;
         G.time += dt; g.time += dt;
         const before = G.projectiles.list.map(p => ({ seed: p.seed, pos: p.pos.toArray() }));
+        const surfaceHitStart = window.__iwProjectileSurfaceHits.length;
         G.projectiles.update(dt); G.fx.update(dt, G.camera); g.fxHooks?.update?.(dt); G.paint.flush(dt);
         const after = new Set(G.projectiles.list.map(p => p.seed));
         return { before, afterCount: G.projectiles.list.length, retired: before.filter(p => !after.has(p.seed)), paintQuads: G.paint.quads,
+          surfaceHits: window.__iwProjectileSurfaceHits.slice(surfaceHitStart),
           paintCoverage: G.paint.coverage?.() ?? null, fx: G.fx.stats?.() ?? null };
       });
-      if (row.retired.length) { impactFrame = frame; impactState = row; }
+      const expectedContact = scenario.impact === 'wall'
+        ? row.surfaceHits.find(hit => hit.normal && Math.abs(hit.normal[1]) < 0.45)
+        : row.surfaceHits.find(hit => hit.normal && hit.normal[1] > 0.68);
+      if (expectedContact) { impactFrame = frame; impactState = row; impactEvidence = expectedContact; }
       if (impactFrame != null && frame >= impactFrame + 8) break;
     }
-    if (impactFrame == null) throw new Error(scenario.name + ': native projectile did not contact a surface within budget');
+    if (impactFrame == null) throw new Error(scenario.name + ': no native stage-surface collision with an in-range face/normal was observed within budget');
     const capture = await renderAndCapture(page, scenario.name, `${scenario.impact}-impact-F${impactFrame}`, scenario.impact === 'wall' ? 'side' : 'shoulder', scenario.seed);
-    report.visualScenarios.push({ name: scenario.name, seed: scenario.seed, setup, births: born, impactFrame, impactState, capture,
-      evidence: scenario.impact === 'wall' ? 'native raycast wall/block and collision retirement' : 'native floor collision and Slosher9 sourced fall' });
+    report.visualScenarios.push({ name: scenario.name, seed: scenario.seed, setup, births: born, impactFrame, impactState, impactEvidence, capture,
+      evidence: scenario.impact === 'wall'
+        ? 'Projectiles._impact received a native stage Hit with a wall-like normal and valid face'
+        : 'native world impact path received a stage Hit with an upward floor-like normal and valid face' });
   }
 }
 

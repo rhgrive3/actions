@@ -266,6 +266,13 @@ export class ProjectileVisualRuntime {
     p._iwVisualBeforeAge=visualAge(p);p._iwVisualBeforeX=p.pos.x;p._iwVisualBeforeY=p.pos.y;p._iwVisualBeforeZ=p.pos.z;
     p._iwVisualBeforeVX=p.vel.x;p._iwVisualBeforeVY=p.vel.y;p._iwVisualBeforeVZ=p.vel.z;
   }
+  beginPhysicsStep(p) {
+    // Native delayed-Bucket birth refresh happens inside the final gameplay
+    // wrapper, after the update caller's snapshot. Capture the actual launch
+    // position/velocity at the inner integration boundary, before forces run.
+    // Catalog derivatives call this same observer at their own fixed-step edge.
+    if(!p._iwVisualHistory)this.beginStep(p);
+  }
   recordStep(p,dt=DT) {
     const kind=p._iwVisualKind||projectileVisualKind(p);p._iwVisualKind=kind;
     if(this.disposed || kind==='legacy')return;

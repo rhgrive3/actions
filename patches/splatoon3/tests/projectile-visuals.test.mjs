@@ -277,26 +277,30 @@ test('native coarse 30 Hz projectile update records both actual 60 Hz physics po
     actor.pos.set(0, 1, 0); actor.aimPoint.set(0, 10, 24); actor.aimDir.set(0, 0.36, 0.93).normalize();
     f.setRandom(() => 0.25);
     ps.fireSplatling(actor, actor.weapon);
-    const p = ps.list[0], birth = p.pos.toArray();
+    const p = ps.list[0], birth = p.pos.toArray().map(value => value === 0 ? 0 : value);
     for (const dt of steps) { f.G.time += dt; ps.update(dt); }
     const h = p._iwVisualHistory;
     assert.ok(h, 'native projectile history attaches at actual shot birth');
     const out = new Float64Array(6), samples = [];
     for (let frame = 0; frame <= 2; frame++) {
       assert.equal(h.sample(frame * DT, out), true);
-      samples.push(Array.from(out.subarray(0, 3)));
+      samples.push(Array.from(out.subarray(0, 3), value => value === 0 ? 0 : value));
     }
-    const result = { count: h.count, next: h.next, data: Array.from(h.data), age: p.age,
-      position: p.pos.toArray(), samples };
+    const result = { count: h.count, next: h.next,
+      data: Array.from(h.data, value => value === 0 ? 0 : value), age: p.age,
+      position: p.pos.toArray().map(value => value === 0 ? 0 : value), samples };
     assert.equal(h.count, 3, 'the birth point and both catch-up physics ticks are retained');
-    assert.deepEqual(samples[0], birth, 'age zero is the true muzzle birth point');
-    assert.deepEqual(samples[2], p.pos.toArray(), 'the second fixed sample reaches the real current endpoint');
+    for (let axis = 0; axis < 3; axis++) assert.ok(Math.abs(samples[0][axis] - birth[axis]) < 1e-12,
+      `age zero keeps the true muzzle birth point on axis ${axis}`);
+    for (let axis = 0; axis < 3; axis++) assert.ok(Math.abs(samples[2][axis] - p.pos.toArray()[axis]) < 1e-12,
+      `the second fixed sample reaches the real current endpoint on axis ${axis}`);
     ps.disposeVisuals();
     return result;
   }
   const coarse = await run([1 / 30]);
   const fixed = await run([DT, DT]);
-  assert.deepEqual(coarse, fixed, 'one coarse update and its two native fixed ticks retain identical projectile history');
+  const diff = firstDifference(coarse, fixed);
+  assert.equal(diff, null, `one coarse update and its two native fixed ticks retain identical projectile history: ${JSON.stringify(diff)}`);
 });
 
 test('final build composition renders the native nine-glob Slosher volley without changing gameplay state', async () => {
@@ -431,6 +435,45 @@ test('native local and remote Slosher globs resolve to the same source unit, geo
   ps.disposeVisuals();
 });
 
+test('deferred Slosher history begins at its refreshed aerial muzzle and launch tangent', async () => {
+  const { f, ps } = await nativeFixture(true), actor = f.make('slosher');
+  actor.pos.set(0, 1, 0); actor.grounded = true;
+  actor.aimPoint.set(0, 4, 10); actor.aimDir.set(0, 0.3, 1).normalize();
+  f.setRandom(() => 0.25);
+  ps.fireSlosh(actor, actor.weapon);
+  assert.equal(ps.list.length, 9);
+  const p = ps.list[8], queuedVelocity = p.vel.toArray();
+  assert.equal(p.fidelitySloshIndex, 4, 'the ninth glob is rear-unit index four');
+  assert.ok(p.delay > 0 && p._s3SloshBirthPending, 'rear glob waits for its authored four-frame unit delay');
+
+  // The head rises before its delayed birth. Its true launch speed therefore
+  // comes from the existing aerial source field when the muzzle is refreshed.
+  actor.grounded = false;
+  for (let frame = 0; frame < 16 && !p._iwVisualHistory; frame++) {
+    f.G.time += DT; ps.update(DT);
+  }
+  const h = p._iwVisualHistory;
+  assert.ok(h && h.count >= 2, 'the deferred native flight records its birth and first integrated endpoint');
+  assert.equal(p._s3SloshBirthPending, false);
+  const out = new Float64Array(6);
+  assert.equal(h.sample(0, out), true);
+  const unit = p.fidelitySloshUnit, index = p.fidelitySloshIndex;
+  const speed = (unit.SpawnSpeedAir + index * (unit.AfterOffsetSpawnSpeed || 0)) * 60;
+  const horizontal = Math.cos(p._s3SloshPitch) * speed;
+  const expected = [Math.sin(p._s3SloshYaw) * horizontal,
+    Math.sin(p._s3SloshPitch) * speed + horizontal * (unit.AddSpawnSpeedYRateByXZ || 0),
+    Math.cos(p._s3SloshYaw) * horizontal];
+  for (let axis = 0; axis < 3; axis++) {
+    assert.ok(Math.abs(out[axis] - p.start.toArray()[axis]) < 1e-12,
+      `birth sample starts at the refreshed muzzle on axis ${axis}`);
+    assert.ok(Math.abs(out[axis + 3] - expected[axis]) < 1e-10,
+      `birth tangent uses the actual aerial source speed on axis ${axis}`);
+  }
+  assert.ok(Math.hypot(out[3] - queuedVelocity[0], out[4] - queuedVelocity[1], out[5] - queuedVelocity[2]) > 1,
+    'the recorded tangent differs from the stale grounded enqueue velocity');
+  ps.disposeVisuals();
+});
+
 test('a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window', async () => {
   const { f, ps } = await nativeFixture(true), actor = f.make('splatling');
   actor.nid = 7; actor.owner = 'local'; actor.pos.set(0, 1, 0); actor.aimPoint.set(0, 1, 30);
@@ -508,10 +551,13 @@ test('stalled remote Roller heads and liquid links share the same endpoint at ev
     ghost._netBornTick = 0;
   }
   assert.equal(ps.list.length, 13);
-  assert.ok(ps.list.every(p => p.ghost && p._netPeer === peer && p._iwVisualKind === 'roller-horizontal'));
   for (let frame = 0; frame < 3; frame++) { f.G.time += DT; ps.update(DT); }
   const runtime = ps.projectileVisuals;
   runtime.draw(0);
+  assert.ok(ps.list.every(p => p.ghost && p._netPeer === peer && p._iwVisualKind === 'roller-horizontal'),
+    JSON.stringify(ps.list.map(p => ({ ghost: p.ghost, wid: p.wid, mode: p.fidelityMode,
+      kind: p._iwVisualKind, delay: p.delay, age: p.age, history: p._iwVisualHistory?.count,
+      peer: p._netPeer === peer, born: p._netBornTick }))));
   const count = runtime.stats.vertexCount * 3;
   assert.ok(runtime.stats.linkedRollerPairs > 0, 'remote siblings form a liquid link');
   const atZero = Array.from(runtime.position.array.subarray(0, count));
