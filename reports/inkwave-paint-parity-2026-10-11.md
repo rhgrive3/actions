@@ -56,3 +56,13 @@ contains 3,433 numeric paint/splash leaves; presence in the source is explicitly
 separate from use in the current runtime and from measured retail parity.
 A large-special disk envelope candidate remains under terrain review and is not
 part of the accepted fixes in this checkpoint.
+
+## Special projectile pool and direct-only credit safety
+
+A real Booyah throw recycled through `Projectiles.clear()` into an ordinary blaster retained `s3AllSpecial` and a 13.5 WU disk radius, resurrecting a Booyah object and 13,485 floor cells. All fields owned by the all-specials projectile layer are now reset at `_new()`. Regression checks cover all 11 main class tags, missile steering/damage metadata, and no inherited large disk or special object.
+
+Crab rapid rounds intentionally omit the explosive special descriptor. They now carry an explicit launch-owned no-special-paint flag that also resets on pool reuse. Native immediate and delayed ownership credit honors this flag. Actual Crab rounds landing after special expiry or owner death still award floor turf exactly once and award zero special gauge. Ordinary main bursts continue charging their gauge. These are lifecycle/credit safety fixes, not certification of retail Crab trajectory or all special mechanics.
+
+Independent review also found Crab direct-only rounds inheriting the equipped main's gravity (4 becoming 57.6 for a Shooter owner) because they had no special descriptor. Direct rounds now keep a non-explosive shot descriptor, and every launched special sets its own wire weapon ID. Actual JSON packet replay restores the Crab direct descriptor without authoring duplicate paint. All four canonical Crab kits preserve gravity 4, drag .04, radius .22 and zero blast radius in regression coverage.
+
+Validation correction: `source-fixture.mjs` selects published output with `INKWAVE_BUILT_SITE`, not `INKWAVE_BUILT_ROOT`. Runs using the latter were source rechecks and are not built evidence. The fixture now rejects that misspelled switch and prints the built manifest content hash when the real built site is loaded. Corrected composed-build safety coverage was rerun: 49/49 passed on content hash `ca90d8a447b93d1060f0be4e94e8e6f954081e99a077cf49d75068b8b40c4ae2` before the final JSON replay test was added; the final head is separately CI-gated.

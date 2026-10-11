@@ -7,9 +7,13 @@ export const SPECIAL_NAMES = Object.freeze({ trizooka:'ウルトラショット'
 
 const CATALOGUE_HELP={tentaMissiles:'照準を合わせて射撃でロックした相手へ発射。',inkjet:'射撃でインク弾、ジャンプで上昇、イカで降下。終了後に発動地点へ戻る。',booyahBomb:'ナイスで充電し、サブで投げる。N・パッド下・画面のナイスでも応援できる。',ultraStamp:'射撃を押し続けて連打、ジャンプで空中振り、サブでハンコを投げる。',zipcaster:'サブで伸びて移動、射撃でメインウェポン。終了後に発動地点へ戻る。',killerWail:'照準で敵を追うレーザーをロック。発動中もメインを使用できる。',crabTank:'射撃で連射、サブで砲撃、イカで球体移動。',reefslider:'走行後に爆発。射撃で早めに停止・爆発。',tripleInkstrike:'6秒以内に射撃で3個のマーカーを投げる。',superChump:'照準で着地点を指定し、射撃でデコイを発射。',krakenRoyale:'イカのまま移動し、ジャンプで攻撃、射撃を溜めて突進。',splattercolorScreen:'射撃で前進するシートを投げる。敵が横切るとダメージと視界効果。',waveBreaker:'サブまたは射撃で設置。3回の波が敵をマーキングし、ジャンプで避けられる。',tripleSplashdown:'本体と2つの拳が落下して爆発。拳は別々に壊せる。スーパージャンプ中は本体のみ。'};
 
+let choicesText=null,choicesCache={};
 function readChoices() {
-  try { const v=JSON.parse(globalThis.localStorage?.getItem(CATALOGUE_STORAGE)||'{}'); return v && typeof v==='object'&&!Array.isArray(v)?v:{}; }
-  catch { return {}; }
+  try {
+    const text=globalThis.localStorage?.getItem(CATALOGUE_STORAGE)||'{}';
+    if(text!==choicesText){const v=JSON.parse(text);choicesCache=v&&typeof v==='object'&&!Array.isArray(v)?v:{};choicesText=text;}
+    return choicesCache;
+  } catch { return {}; }
 }
 export function validateCatalogueChoice(choice, SUB, SPECIALS) {
   return !!choice && typeof choice.sub==='string' && typeof choice.special==='string'
@@ -21,10 +25,15 @@ export function applyCatalogueChoice(actor, choice, api) {
   const base=api.WEAPONS[actor.weaponId];
   if (!base) return false;
   const changedSub=actor.weapon.sub!==choice.sub;
-  actor.s3CatalogueChoice={sub:choice.sub,special:choice.special};
-  actor.weapon={...actor.weapon,sub:choice.sub,special:choice.special,
-    specialCost:base.specialCost/(actor.s3?.modifiers?.specialCharge||1),
-    kitStatus:'prototype-custom-kit',kitReference:null};
+  const canonical=choice.sub===base.sub&&choice.special===base.special;
+  const status=canonical?base.kitStatus:'prototype-custom-kit',reference=canonical?base.kitReference:null;
+  const cost=base.specialCost/(actor.s3?.modifiers?.specialCharge||1);
+  const previous=actor.s3CatalogueChoice;
+  if(canonical)actor.s3CatalogueChoice=null;
+  else if(!previous||previous.weaponId!==actor.weaponId||previous.sub!==choice.sub||previous.special!==choice.special)
+    actor.s3CatalogueChoice={weaponId:actor.weaponId,sub:choice.sub,special:choice.special};
+  if(!changedSub&&actor.weapon.special===choice.special&&actor.weapon.specialCost===cost&&actor.weapon.kitStatus===status&&actor.weapon.kitReference===reference)return true;
+  actor.weapon={...actor.weapon,sub:choice.sub,special:choice.special,specialCost:cost,kitStatus:status,kitReference:reference};
   // Native throw resolution caches the selected sub on runner.reset. Keep
   // its release spec coherent, but never reset a held action every frame.
   if(changedSub)actor.weaponRunner?.reset?.();
@@ -34,7 +43,8 @@ export function installCatalogueLoadout(api) {
   const {Actor,Menus,G,SUB,SPECIALS}=api;
   function restore(a) {
     const choice=a.isLocal?readChoices()[a.weaponId]:a.s3CatalogueChoice;
-    if(choice)applyCatalogueChoice(a,choice,api);
+    if(choice&&(!choice.weaponId||choice.weaponId===a.weaponId))applyCatalogueChoice(a,choice,api);
+    else if(choice)a.s3CatalogueChoice=null;
   }
   for(const method of ['reset','setWeapon','s3RefreshGear']) {
     const native=Actor.prototype[method];
@@ -50,8 +60,8 @@ export function installCatalogueLoadout(api) {
     const screen=render.apply(this,args), body=screen.el.querySelector('.iw-loadout__body')||screen.el;
     const panel=document.createElement('fieldset');panel.className='s3-catalogue';
     panel.style.cssText='min-width:0;max-width:100%;box-sizing:border-box;margin:12px 0;padding:14px;border:1px solid currentColor;border-radius:12px;display:grid;gap:10px';
-    const legend=document.createElement('legend');legend.textContent='サブ・スペシャルを選ぶ';panel.append(legend);
-    const note=document.createElement('p');note.textContent='試作版の自由な組み合わせ。名称は本家の仮名です。';panel.append(note);
+    const legend=document.createElement('legend');legend.textContent='本家セット / カスタム';panel.append(legend);
+    const note=document.createElement('p');note.textContent='標準はスプラトゥーン3 Ver.11.3.0のブキセット。変更するとカスタムになります。各技の挙動には未検証部分があります。';panel.append(note);
     const selectors={};
     for(const [field,names,registry,title] of [['sub',SUB_NAMES,SUB,'サブウェポン'],['special',SPECIAL_NAMES,SPECIALS,'スペシャル']]){
       const label=document.createElement('label');label.textContent=title+' ';label.style.cssText='display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0';
@@ -67,15 +77,18 @@ export function installCatalogueLoadout(api) {
     const gear=screen.el.querySelector('details.s3-gear');
     if(gear){const summary=gear.querySelector('summary');if(summary)summary.textContent='サブ・スペシャル・ギア';gear.insertBefore(panel,summary?.nextSibling||null);}else body.append(panel);
     const current=()=>this.api.getLoadout?.().weapon||this._loadout().weapon;
-    function sync(){const id=current(),base=api.WEAPONS[id],choice=readChoices()[id];if(!base)return;
+    function sync(){const id=current(),base=api.WEAPONS[id],saved=readChoices()[id];if(!base)return;
+      const choice=validateCatalogueChoice(saved,SUB,SPECIALS)&&(saved.sub!==base.sub||saved.special!==base.special)?saved:null;
       selectors.sub.value=choice?.sub||base.sub;selectors.special.value=choice?.special||base.special;
       const sub=SUB[selectors.sub.value],sp=SPECIALS[selectors.special.value];
       const chips=body.querySelectorAll('.iw-kit');
       if(chips[0]?.querySelector('b'))chips[0].querySelector('b').textContent=sub?.name||'';
       if(chips[1]?.querySelector('b'))chips[1].querySelector('b').textContent=sp?.name||'';
+      note.textContent=(choice?'カスタムセット':'本家標準セット（Ver.11.3.0）')+' / 必要スペシャルポイント: '+base.specialCost+'p。技の挙動には未検証部分があります。';
       help.textContent=(sub?.blurb||'サブボタンを押して構え、離すと使用。')+' '+(CATALOGUE_HELP[selectors.special.value]||sp?.blurb||'ゲージが満タンでスペシャルボタン。');
     }
-    function save(standard=false){const id=current(),choices=readChoices();if(standard)delete choices[id];else choices[id]={sub:selectors.sub.value,special:selectors.special.value};
+    function save(standard=false){const id=current(),choices={...readChoices()},base=api.WEAPONS[id],choice={sub:selectors.sub.value,special:selectors.special.value};
+      if(standard||!validateCatalogueChoice(choice,SUB,SPECIALS)||(choice.sub===base.sub&&choice.special===base.special))delete choices[id];else choices[id]=choice;
       try{globalThis.localStorage?.setItem(CATALOGUE_STORAGE,JSON.stringify(choices));}catch{}
       const actor=G.match?.local||G.local;if(actor?.isLocal&&(!G.match||G.match.attract)){actor.s3CatalogueChoice=null;actor.setWeapon(actor.weaponId);}
       sync();
