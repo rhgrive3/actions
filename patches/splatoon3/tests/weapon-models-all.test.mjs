@@ -6,7 +6,9 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 
-const IDS = MAIN_WEAPON_CATALOG.records.map(r => r.id);
+const ALL_IDS = MAIN_WEAPON_CATALOG.records.map(r => r.id);
+// WEAPON_IDS=a,b narrows the geometry/hold checks while a family is being worked on.
+const IDS = process.env.WEAPON_IDS ? ALL_IDS.filter(id => process.env.WEAPON_IDS.split(',').includes(id)) : ALL_IDS;
 let loaded;
 const production = () => loaded ??= fixture({ fullRuntime: true, includeCharacter: true, productionComposition: true, realProjectiles: true,
   extraExports: "export { getWeaponDef, WEAPON_KINDS } from './inkwave-public/src/game/character-weapons.js';\nexport * as REG from './patches/splatoon3/runtime/weapon-models/registry.mjs';\nexport { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';" })
@@ -27,12 +29,12 @@ function finiteGeometry(g, label) {
 
 test('registry: 65 catalogue weapons, each model keyed by its own ID and family', async () => {
   const { registeredWeaponModels, weaponModelKey, weaponModelFamily, weaponBehaviorFamily, weaponHold } = (await production()).REG;
-  assert.equal(IDS.length, 65);
+  assert.equal(ALL_IDS.length, 65);
   for (const id of registeredWeaponModels()) {
-    assert.ok(IDS.includes(id), id + ' is a catalogue weapon');
+    assert.ok(ALL_IDS.includes(id), id + ' is a catalogue weapon');
     assert.equal(weaponModelKey(id), id);
   }
-  for (const id of IDS) {
+  for (const id of ALL_IDS) {
     assert.ok(['shooter', 'blaster', 'charger', 'roller', 'slosher', 'splatling', 'dualies'].includes(weaponModelFamily(id)));
     assert.equal(typeof weaponBehaviorFamily(id), 'string');
   }
