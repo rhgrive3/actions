@@ -1,7 +1,10 @@
 // Controlled paint workload using production Actor, physics, paint and level
 // material. Character display and match/UI/postprocessing are excluded in BOTH
 // builds. Timings are fixed-step paint-workload timings, never retail/game FPS.
-export async function runWallWorkload(assetRoot) {
+export async function runWallWorkload(assetRoot, options={}) {
+ const actorCount=options.actors??8,pattern=options.pattern??'continuous';
+ if(![1,8].includes(actorCount)||!['idle','continuous','mixed'].includes(pattern))throw Error('Invalid fixed workload profile');
+ const firing=i=>i>=0&&i<180&&pattern!=='idle'&&(pattern!=='mixed'||i%30<6);
  const [{install},profile]=await Promise.all([import(assetRoot+'/patches/splatoon3/runtime/install.mjs'),fetch(assetRoot+'/patches/splatoon3/profile.json').then(r=>r.json())]);
  const {decodePaintEvents}=await import('/after/patches/splatoon3/runtime/paint-packet-codec.mjs');
  const api=install(profile),{THREE,G,Actor,Projectiles,Physics,PaintSystem,NetMatch}=api;
@@ -37,13 +40,13 @@ export async function runWallWorkload(assetRoot) {
  },sendTo(){}};
  const actors=[];const nm=new NetMatch({myId:'a',isHost:true,hostId:'a',_members:new Map([['a','A'],['b','B']]),tr:transport},{id:'wall-paint-load',map:'controlled-wall',difficulty:'normal'});G.netm=nm;nm.onMessage('b',{k:'t',ts:0,a:[],pc:['inkwave-paint-dictionary-v1','wall-paint-load']});
  nm.match={actors,state:'playing',time:180,follower:false,playing:()=>true};G.match=nm.match;
- for(let i=0;i<8;i++){const a=new Actor({team:0,name:'wall-'+i,weapon:'s3-shooter-short',CharacterClass:DisplayCharacter});a.character.owner=a;Object.assign(a,{owner:'a',nid:i,remote:false,team:0,isLocal:false,form:'kid',grounded:true});a.pos.set((i-3.5)*3,6,0);a.aimDir.set(0,0,1);a.aimPoint.set(a.pos.x,6,60);actors.push(a);nm.byNid.set(i,a);nm._setupActor(a);}
+ for(let i=0;i<actorCount;i++){const a=new Actor({team:0,name:'wall-'+i,weapon:'s3-shooter-short',CharacterClass:DisplayCharacter});a.character.owner=a;Object.assign(a,{owner:'a',nid:i,remote:false,team:0,isLocal:false,form:'kid',grounded:true});a.pos.set((i-(actorCount-1)/2)*3,6,0);a.aimDir.set(0,0,1);a.aimPoint.set(a.pos.x,6,60);actors.push(a);nm.byNid.set(i,a);nm._setupActor(a);}
  const wrap=(o,key,metric)=>{if(typeof o[key]!=='function')throw Error('Missing production probe '+key);const old=o[key];o[key]=function(...args){if(!active)return old.apply(this,args);const t=performance.now();try{return old.apply(this,args);}finally{current[metric]=(current[metric]||0)+performance.now()-t;current[metric+'Calls']=(current[metric+'Calls']||0)+1;}};};
  for(const [key,metric]of[['_cpuSplat','cpuBody'],['_advanceSplatOwnership','cpuGrowth'],['splat','splatInclusive'],['advanceSimulation','paintAdvanceInclusive'],['flush','flushInclusive']])wrap(paint,key,metric);
  const push=paint._pushQuad;paint._pushQuad=function(...args){if(active)totalQuads++;return push.apply(this,args);};
  const draw=paint._drawQuads;paint._drawQuads=function(...args){const t=performance.now();if(active&&(this.quads>0||this.dryMesh.visible))totalAtlasDraws++;try{return draw.apply(this,args);}finally{if(active)current.atlasSubmit=(current.atlasSubmit||0)+performance.now()-t;}};
  function step(i,measure){current={frame:i,cpuBody:0,cpuGrowth:0,splatInclusive:0,paintAdvanceInclusive:0,flushInclusive:0,atlasSubmit:0,wireSerialize:0,receiveDecode:0,sendTickInclusive:0,stepAndWire:0};active=measure;const start=performance.now();
-  for(const a of actors){a.ink=100;a.weaponRunner.update(1/60,{fire:i<180,firePressed:i===0});}
+  for(const a of actors){a.ink=100;a.weaponRunner.update(1/60,{fire:firing(i),firePressed:firing(i)&&!firing(i-1)});}
   G.time+=1/60;G.projectiles.update(1/60);paint.advanceSimulation(1/60);paint.flush(1/60);renderer.render(G.scene,G.camera);
   const end=performance.now();active=false;const drain=performance.now();gl.finish();current.finishWait=performance.now()-drain;current.stepSubmit=end-start;current.stepWithDrain=performance.now()-start;
   if(measure){maxDrops=Math.max(maxDrops,G.projectiles._s3DetachedWallDrops?.length||0);maxQueue=Math.max(maxQueue,nm.out.length);}
@@ -63,7 +66,8 @@ export async function runWallWorkload(assetRoot) {
  const rendererName=gl.getParameter(gl.RENDERER),ext=gl.getExtension('WEBGL_debug_renderer_info');
  const gridSha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',paint.grid))).map(v=>v.toString(16).padStart(2,'0')).join('');
  const heapAfterWorkload=await globalThis.__probeHeap();
- const result={frames,coldFrames,wireNegotiation:{compressedMessages},heap:{beforeWarmup:heapBeforeWarmup,afterWarmup:heapAfterWarmup,afterWorkload:heapAfterWorkload},counts:{totalQuads,totalAtlasDraws,totalRows,eventArrayBytes,tickJsonBytes,totalMessages,maxQueue,maxDrops,wallCells,gridSha256,floorCells:paint.counts[0]},fixture:{actors:8,firingFrames:180,settlingFrames:60,warmupFrames:60,simulationHz:60,sendHz:20,atlasSize:4096,cell:.25,viewport:[960,600],seed:.37,paintFaces:level.paintFaces?.length??level.faces.filter(f=>f.paintable).length,quality:'native level material, fixed lighting; no postprocess'},renderer:{name:rendererName,unmasked:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null},limitation:'Controlled paint-workload step, not whole-game frame or hardware GPU FPS. sendTickInclusive includes wire serialization, receiving decode and exact-row verification; it is outside stepWithDrain. stepAndWire adds that isolated send transaction. Receiver is decoding only, gameplay replay correctness is covered by separate tests. cpuGrowth includes nested body work; do not sum nested timing columns.'};
- if(!wallCells||totalRows===0||maxQueue>=512)throw Error('Incomplete or queue-overflow workload '+JSON.stringify(result.counts));
+ const result={frames,coldFrames,wireNegotiation:{compressedMessages},heap:{beforeWarmup:heapBeforeWarmup,afterWarmup:heapAfterWarmup,afterWorkload:heapAfterWorkload},counts:{totalQuads,totalAtlasDraws,totalRows,eventArrayBytes,tickJsonBytes,totalMessages,maxQueue,maxDrops,wallCells,gridSha256,floorCells:paint.counts[0]},fixture:{actors:actorCount,pattern,firingFrames:180,settlingFrames:60,warmupFrames:60,simulationHz:60,sendHz:20,atlasSize:4096,cell:.25,viewport:[960,600],seed:.37,paintFaces:level.paintFaces?.length??level.faces.filter(f=>f.paintable).length,quality:'native level material, fixed lighting; no postprocess'},renderer:{name:rendererName,unmasked:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null},limitation:'Controlled paint-workload step, not whole-game frame or hardware GPU FPS. sendTickInclusive includes wire serialization, receiving decode and exact-row verification; it is outside stepWithDrain. stepAndWire adds that isolated send transaction. Receiver is decoding only, gameplay replay correctness is covered by separate tests. cpuGrowth includes nested body work; do not sum nested timing columns.'};
+ if(pattern==='idle'){if(wallCells||totalRows||totalQuads||paint.counts[0])throw Error('Idle workload unexpectedly painted');}
+ else if(!wallCells||totalRows===0||maxQueue>=512)throw Error('Incomplete or queue-overflow workload '+JSON.stringify(result.counts));
  return result;
 }

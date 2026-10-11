@@ -3,6 +3,8 @@ import fs from 'node:fs';import path from 'node:path';import http from 'node:htt
 const arg=n=>{const i=process.argv.indexOf(n);if(i<0||!process.argv[i+1])throw Error('Required '+n);return process.argv[i+1];};
 const sha=x=>crypto.createHash('sha256').update(x).digest('hex');
 const beforeSha=arg('--baseline-sha'),afterSha=arg('--candidate-sha');for(const s of[beforeSha,afterSha])if(!/^[a-f0-9]{40}$/.test(s))throw Error('Immutable full SHA required');if(beforeSha===afterSha)throw Error('Different revisions required');
+const profile=process.argv.includes('--profile')?arg('--profile'):'aggregate';
+const profiles={aggregate:{actors:8,pattern:'continuous'},single_idle:{actors:1,pattern:'idle'},single_continuous:{actors:1,pattern:'continuous'},single_mixed:{actors:1,pattern:'mixed'}};if(!profiles[profile])throw Error('Unknown fixed workload profile');
 const here=path.dirname(fileURLToPath(import.meta.url)),fixture=fs.readFileSync(path.join(here,'fixtures/catalog-wall-workload.mjs'),'utf8');
 const evidence=path.resolve(arg('--evidence-dir'));fs.mkdirSync(evidence,{recursive:true});
 const variants={before:{root:path.resolve(arg('--baseline-root')),site:path.resolve(arg('--baseline-site')),sourceSha:beforeSha},after:{root:path.resolve(arg('--candidate-root')),site:path.resolve(arg('--candidate-site')),sourceSha:afterSha}};
@@ -11,12 +13,12 @@ for(const v of Object.values(variants)){
  v.manifest=JSON.parse(fs.readFileSync(path.join(v.site,'inkwave-build.json')));v.received=new Set();
  for(const [rel,digest]of Object.entries(v.manifest.artifacts)){if(sha(fs.readFileSync(path.join(v.site,rel)))!==digest)throw Error('Artifact mismatch '+rel);}
 }
-const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://localhost');const m=u.pathname.match(/^\/(before|after)\/(.*)$/);if(u.pathname==='/workload.mjs'){res.setHeader('Content-Type','text/javascript');res.end(fixture);return;}if(!m)throw Error('Unknown asset');const mode=m[1],rel=decodeURIComponent(m[2]),v=variants[mode];if(rel==='probe'){res.setHeader('Content-Type','text/html');res.end(`<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#18202b}</style><script type="importmap">{"imports":{"three":"/${mode}/vendor/three/build/three.module.js","three/addons/":"/${mode}/vendor/three/jsm/"}}</script><script type="module">import {runWallWorkload} from '/workload.mjs';globalThis.workloadPromise=runWallWorkload('/${mode}').then(r=>globalThis.workloadResult=r).catch(e=>{globalThis.workloadError=e.stack;throw e;});</script>`);return;}
+const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://localhost');const m=u.pathname.match(/^\/(before|after)\/(.*)$/);if(u.pathname==='/workload.mjs'){res.setHeader('Content-Type','text/javascript');res.end(fixture);return;}if(!m)throw Error('Unknown asset');const mode=m[1],rel=decodeURIComponent(m[2]),v=variants[mode];if(rel==='probe'){res.setHeader('Content-Type','text/html');res.end(`<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#18202b}</style><script type="importmap">{"imports":{"three":"/${mode}/vendor/three/build/three.module.js","three/addons/":"/${mode}/vendor/three/jsm/"}}</script><script type="module">import {runWallWorkload} from '/workload.mjs';globalThis.workloadPromise=runWallWorkload('/${mode}',${JSON.stringify(profiles[profile])}).then(r=>globalThis.workloadResult=r).catch(e=>{globalThis.workloadError=e.stack;throw e;});</script>`);return;}
  const f=path.resolve(v.site,rel);if(!f.startsWith(v.site+path.sep)||!v.manifest.artifacts[rel])throw Error('Unlisted artifact');const bytes=fs.readFileSync(f);if(sha(bytes)!==v.manifest.artifacts[rel])throw Error('Changed active artifact');v.received.add(rel);res.setHeader('Content-Type',rel.endsWith('.json')?'application/json':rel.endsWith('.js')||rel.endsWith('.mjs')?'text/javascript':'application/octet-stream');res.end(bytes);}catch(e){res.writeHead(404);res.end(String(e));}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const {chromium}=await import(pathToFileURL(arg('--playwright')).href);
 const quant=(a,q)=>{const s=a.filter(Number.isFinite).sort((a,b)=>a-b);return s[Math.min(s.length-1,Math.floor((s.length-1)*q))]??null;};
 const stats=a=>({n:a.length,p50:quant(a,.5),p95:quant(a,.95),p99:quant(a,.99),max:Math.max(...a)});
-const result={schema:1,status:'running',fixtureSha256:sha(fixture),probeSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),baselineSha:beforeSha,candidateSha:afterSha,environment:{cpu:os.cpus()[0]?.model,cores:os.cpus().length,node:process.version,platform:os.platform(),renderer:'SwiftShader software WebGL'},order:['before','after','after','before','before','after'],runs:[],limitations:['Paint-workload transaction, not whole-game frame or hardware-GPU FPS.','Dedicated controlled native level geometry; characters/UI/full-game postprocessing excluded equally.','gl.finish wait is separate from JavaScript/submission timings; nested probe timings must not be added.']};
+const result={schema:1,profile,status:'running',fixtureSha256:sha(fixture),probeSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),baselineSha:beforeSha,candidateSha:afterSha,environment:{cpu:os.cpus()[0]?.model,cores:os.cpus().length,node:process.version,platform:os.platform(),renderer:'SwiftShader software WebGL'},order:['before','after','after','before','before','after'],runs:[],limitations:['Paint-workload transaction, not whole-game frame or hardware-GPU FPS.','Dedicated controlled native level geometry; characters/UI/full-game postprocessing excluded equally.','gl.finish wait is separate from JavaScript/submission timings; nested probe timings must not be added.']};
 let browser;
 try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});result.environment.browser=browser.version();
@@ -25,12 +27,14 @@ try{
   await page.waitForFunction(()=>globalThis.workloadResult||globalThis.workloadError,null,{timeout:600000});
   const row=await page.evaluate(()=>({value:globalThis.workloadResult,error:globalThis.workloadError}));if(row.error||errors.length)throw Error(row.error||errors.join('\n'));
   const run={mode,ordinal:i,sourceSha:variants[mode].sourceSha,contentHash:variants[mode].manifest.contentHash,...row.value};
-  if(mode==='after'&&!(run.wireNegotiation?.compressedMessages>0))throw Error('Candidate compression inactive');
+  if(mode==='after'&&profile==='aggregate'&&!(run.wireNegotiation?.compressedMessages>0))throw Error('Candidate compression inactive');
   if(mode==='before'&&run.wireNegotiation?.compressedMessages!==0)throw Error('Baseline unexpectedly compressed');
   const metrics=['stepSubmit','stepWithDrain','finishWait','cpuBody','cpuGrowth','splatInclusive','paintAdvanceInclusive','flushInclusive','atlasSubmit','wireSerialize','receiveDecode','sendTickInclusive','stepAndWire'];
   if([...run.frames,...run.coldFrames].some(f=>metrics.some(k=>!Number.isFinite(f[k])||f[k]<0)))throw Error('Missing or invalid timing sample '+mode);
-  for(const k of ['cpuBody','cpuGrowth','atlasSubmit','wireSerialize','receiveDecode','sendTickInclusive'])if(!run.frames.some(f=>f[k]>0))throw Error('Inactive timing probe '+mode+' '+k);
-  if(!(run.counts.totalQuads>0&&run.counts.totalAtlasDraws>0))throw Error('Inactive GPU workload '+mode);
+  for(const k of (profile==='single_idle'?['sendTickInclusive']:['cpuBody','cpuGrowth','atlasSubmit','sendTickInclusive']))if(!run.frames.some(f=>f[k]>0))throw Error('Inactive timing probe '+mode+' '+k);
+  if(profile==='single_idle'){if(run.counts.totalQuads!==0||run.counts.totalRows!==0)throw Error('Idle workload painted');}
+  else if(!(run.counts.totalQuads>0&&run.counts.totalAtlasDraws>0))throw Error('Inactive GPU workload '+mode);
+  if(run.counts.totalMessages!==80)throw Error('Missing measured wire transactions');
   run.timings=Object.fromEntries(metrics.map(k=>[k,stats(run.frames.map(f=>f[k]))]));
   run.coldTimings=Object.fromEntries(metrics.map(k=>[k,stats(run.coldFrames.map(f=>f[k]))]));
   for(const phase of ['beforeWarmup','afterWarmup','afterWorkload']){

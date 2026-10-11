@@ -66,14 +66,16 @@ jobs:
           cp .wall-before-site/inkwave-build.json .wall-performance-evidence/codec/baseline-manifest.json
           cp .wall-after-site/inkwave-build.json .wall-performance-evidence/codec/candidate-manifest.json
           git rev-parse HEAD > .wall-performance-evidence/probe-sha.txt
-      - name: Repeated native wall-paint A/B and B/A measurements
+      - name: Repeated single-player idle continuous and mixed A/B measurements
         run: |
+          for PROFILE in single_idle single_continuous single_mixed; do
           node scripts/measure-catalog-wall-workload.mjs \
             --baseline-sha "$BASELINE_SHA" --candidate-sha "$CANDIDATE_SHA" \
             --baseline-root .wall-baseline --candidate-root .wall-candidate \
             --baseline-site .wall-before-site --candidate-site .wall-after-site \
             --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" \
-            --require-equivalent-work --evidence-dir .wall-performance-evidence/codec
+            --profile "$PROFILE" --require-equivalent-work --evidence-dir ".wall-performance-evidence/$PROFILE"
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
