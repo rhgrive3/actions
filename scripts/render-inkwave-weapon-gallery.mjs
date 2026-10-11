@@ -40,7 +40,7 @@ try {
     const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
     const api = install(profile), { G, Physics } = api;
     const W = await import(prefix + 'src/game/character-weapons.js'), Mt = await import(prefix + 'src/game/character-mats.js');
-    const R = await import(prefix + 'patches/splatoon3/runtime/weapon-models/registry.mjs');
+    const R = await import(prefix + 'patches/splatoon3/runtime/weapon-models/registry.mjs').catch(() => null); // absent in pre-registry builds
     const { WEAPONS } = await import(prefix + 'src/config.js');
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     renderer.setSize(size, size); renderer.setClearColor(0xffffff, 0);
@@ -84,7 +84,7 @@ try {
       cam.position.copy(c).add(new THREE.Vector3(-0.9, 0.45, 1.1).normalize().multiplyScalar(span * 2.5)); cam.lookAt(c); renderer.render(scene, cam);
       const persp = snap(); scene.remove(g);
       let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
-      const res = { id, family: R.weaponBehaviorFamily(id), modelKind: R.weaponModelFamily(id), own: !!R.weaponModelSpec(id),
+      const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),
         size: s.toArray().map(v => +v.toFixed(4)), muzzle: d.muzzle.toArray().map(v => +v.toFixed(4)), tris: Math.round(tris),
         images: { side, above, front: muzzleView, persp } };
       if (!held) return res;

@@ -5,7 +5,7 @@
 // write runner clocks, ink, hit or projectile state.
 import { weaponModelSpec, weaponFamilyPose, weaponFamilyTrigger } from './weapon-models/registry.mjs';
 const INSTALLED = Symbol.for('inkwave.s3.weapon-family-motion.v1');
-export function installWeaponFamilyMotion({ Character }) {
+export function installWeaponFamilyMotion({ Character, CHARACTER_CHANNELS }) {
   const P = Character?.prototype;
   if (!P?._poseWeapon) throw Error('Weapon family motion requires the native Character');
   if (Object.hasOwn(P, INSTALLED)) return;
@@ -29,8 +29,8 @@ export function installWeaponFamilyMotion({ Character }) {
     const id = this.weaponModel;
     if (!id || this.s3WeaponFamilyMotionEnabled === false || !this.weapon) return result;
     const family = weaponFamilyPose(id), spec = weaponModelSpec(id);
-    if (family) family(this, dt, s);
-    if (spec?.pose) spec.pose(this, dt, s);
+    if (family) family(this, dt, s, CHARACTER_CHANNELS);
+    if (spec?.pose) spec.pose(this, dt, s, CHARACTER_CHANNELS);
     return result;
   };
 }
