@@ -752,6 +752,7 @@ test('#71 production UI activation in adapters calls requestDevice during the ad
     assert.equal(res.connected, true);
     assert.equal(res.status, 'bridge-available');
     assert.ok(input.s3ControllerMotionReader, 'reader installed via production UI path');
+    assert.equal(input.s3ControllerMotionReader.integratesReports, true, 'production WebHID consumes integrated three-sample reports');
     assert.deepEqual(menu.toasts, [{
       text: 'Controller motion connected; nominal gyro calibration used (SPI unavailable).',
       options: { kind: 'good' }
