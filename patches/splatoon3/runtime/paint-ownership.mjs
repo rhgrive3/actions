@@ -218,11 +218,11 @@ function paintOrderId(paint, order) {
     paint._paintOwnershipSequence = (paint._paintOwnershipSequence + 1) >>> 0;
     if (paint._paintOwnershipSequence === 0) paint._paintOwnershipSequence = 1;
     record = { local: true, seq: paint._paintOwnershipSequence, legacy: false };
-    key = `local:${record.seq}`;
   }
   const id = paint._paintOrderRecords.length;
   paint._paintOrderRecords.push(record);
-  paint._paintOrderIds.set(key, id);
+  // Local stamps always receive a fresh ID; only network orders are deduplicated.
+  if (validNetworkOrder) paint._paintOrderIds.set(key, id);
   return id;
 }
 
