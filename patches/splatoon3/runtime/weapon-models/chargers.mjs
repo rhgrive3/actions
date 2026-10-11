@@ -377,6 +377,45 @@ function gooTuber(d) {
   });
 }
 
+// --------------------------------------------------------------------------------------- Snipewriter 5H
+const PENCIL = { tan: '#d99a5f', blue: '#2452c9', black: '#1d1e24', pink: '#e7857f', red: '#d8473c', lens: '#c9d6df', steel: '#a3a8b0' };
+/** Snipewriter 5H (Wmn_Charger_Pencil): a pencil-shaped round tan barrel with a pink eraser cap at the rear,
+ *  a blue open hood frame over the rear shoulder, a blue collar and mid saddle round the barrel, a raked
+ *  blue pistol grip with a red lever trigger, a clear ink tank on top toward the front and a green charge
+ *  window along the barrel flank. Side view from the official 3D render (refs/s3-charger-pencil.3d.png),
+ *  levelled by −7.7° (barrel centre-line fitted to its alpha silhouette), 1 px = 1.33 mm, grip ≈ 8.5 cm
+ *  (same kid hand as the other chargers). Image-derived; the true length is not confirmed. */
+function pencil(d) {
+  const C = PENCIL, s = 0.00133, P = px(96, 228, s), Y = (228 - 174) * s, Z = x => (x - 96) * s, Yt = y => (228 - y) * s;
+  const body = new Pieces(), g = new Pieces();
+  // barrel (round section, tapering into the nozzle) and the pink eraser cap at the rear
+  body.add(zlathe([[0, Z(12)], [0.0155, Z(12)], [0.0155, Z(372)], [0.0125, Z(386)], [0.0085, Z(396)], [0.0065, Z(398)], [0, Z(398)]], 0, Y, 0, 24), C.tan, M.satin);
+  body.add(zlathe([[0, Z(0)], [0.012, Z(0)], [0.0172, Z(3)], [0.0172, Z(9)], [0.0158, Z(13)], [0, Z(13)]], 0, Y, 0, 22), C.pink, M.satin);
+  body.add(zcyl(0.0048, Z(398), Z(404), 0, Y, 12), C.black, M.metal);
+  // blue open hood over the rear shoulder (window in the middle), blue collar under the barrel, mid saddle
+  body.add(slab(outline(P, [[36, 164], [38, 140], [52, 136], [66, 136], [80, 146], [84, 164]]), 0.024, 0, 0.004,
+    [outline(P, [[44, 150], [60, 150], [60, 160], [44, 160]])]), C.blue, M.gloss);
+  body.add(slab(outline(P, [[36, 162], [112, 162], [112, 190], [104, 196], [90, 200], [84, 190], [36, 190]]), 0.03, 0, 0.005), C.blue, M.gloss);
+  body.add(slab(outline(P, [[250, 158], [320, 158], [320, 188], [250, 188]]), 0.03, 0, 0.005), C.blue, M.gloss);
+  // raked blue pistol grip (top forward, ~35° from vertical) with a black butt
+  pistolGrip(body, { color: C.blue, guard: false, base: false, len: 0.043, w: 0.0105, d: 0.0125, rake: 0.36, mat: M.rubber });
+  body.add(box(0.02, 0.008, 0.018, 0, -0.046, -0.012, 0.3).rotateX(0.36), C.black, M.rubber);
+  // clear ink tank on top toward the front, blue cap at its rear
+  body.add(zcyl(0.0125, Z(300), Z(392), 0, Yt(150), 18), C.lens, M.lens);
+  body.add(zcyl(0.0135, Z(296), Z(304), 0, Yt(150), 16), C.blue, M.gloss);
+  // charge window: coil bands on the barrel flanks, rear → front
+  for (const sx of [-1, 1]) for (let k = 0; k < 8; k++) g.add(box(0.0016, 0.008, 0.02, sx * 0.0158, Y + 0.002, Z(96 + k * 22), 0.3), '#ffffff', M.led);
+  const trig = new Pieces().add(slab(outline(P, [[111, 196], [118, 196], [122, 216], [117, 218], [111, 206]]), 0.007, 0, 0.002), C.red, M.satin);
+  return rebuild(d, {
+    body, glow: glowGeometry(g, Z(96), Z(254)),
+    parts: { trigger: part(trig, piv(P, 116, 198)), ports: ports(Z(400) - 0.002, Y, 0.0055) },
+    gripR: rakedGrip(0.6),
+    // support hand closes round the barrel ahead of the rear hood (long gun: the hand reaches further forward)
+    gripL: gripSpec([0, Y, Z(230)], [0, 0, 1], [0.75, -0.62, -0.1]),
+    muzzle: [0, Y, Z(400) + 0.002],
+  });
+}
+
 // Aim: the rail is raised to the eye with the cheek down on it and the butt plate at the right shoulder
 // (S3 Splat Charger promo image: kid sighting along the rail, left hand under the body ahead of the trigger).
 const SPLAT_HOLD = { aim: { p: [-0.06, 0.075, 0.2], r: [0, 0.06, 0] } };
@@ -412,4 +451,5 @@ export const MODELS = {
   's3-charger-keeper': { sourceModel: 'Wmn_Charger_Keeper', build: gooTuber, hold: GOO_HOLD },
   's3-charger-long': { sourceModel: 'Wmn_Charger_Long', build: eliter, hold: ELITER_HOLD, nativeCarry: true },
   's3-charger-longscope': { sourceModel: 'Wmn_Charger_LongScope', build: eliterScope, hold: ELITER_HOLD, nativeCarry: true },
+  's3-charger-pencil': { sourceModel: 'Wmn_Charger_Pencil', build: pencil, hold: SPLAT_HOLD },
 };
