@@ -1,3 +1,6 @@
+import { adaptTransientGear } from './transient-gear-adapter.mjs';
+import { adaptGearLoadout } from './gear-loadout-adapter.mjs';
+import { adaptConditionalGear } from './conditional-gear-adapter.mjs';
 // Network owns the wire contract. Compose LAST; upstream modules and gameplay
 // tuning remain immutable. Each connection fails closed on source drift.
 import fs from 'node:fs';
@@ -23,7 +26,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -2360,5 +2363,6 @@ ${bombHit}`;
       '    if (Array.isArray(d?.e)) d = { ...d, _eventOverBudget: d.e.length > 256, e: d.e.slice(0, 256).filter(Array.isArray) };',
       'cap owner timeline rows per packet');
   }
+  if (rel === 'src/net/netmatch.js') {code = adaptGearLoadout(code, once);code = adaptConditionalGear(code, once);code = adaptTransientGear(code, once);}
   return code;
 }

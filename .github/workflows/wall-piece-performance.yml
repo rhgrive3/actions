@@ -6,7 +6,7 @@ on:
       - .github/workflows/wall-piece-performance.yml
       - scripts/measure-paint-piece-workload.mjs
       - scripts/fixtures/paint-piece-workload.mjs
-      - scripts/tests/paint-piece-performance-contract.test.mjs
+      - scripts/tests/wall-piece-performance-contract.test.mjs
 permissions:
   contents: read
 jobs:

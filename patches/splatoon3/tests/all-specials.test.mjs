@@ -109,7 +109,7 @@ test('Zipcaster repeats hooks, fires the equipped main from its special ink tank
  while(f.G.projectiles.list.length===shots&&fireFrames<30){a._updateSpecial(1/60);fireFrames++;}
  assert.ok(f.G.projectiles.list.length>shots&&f.G.projectiles.list.some(p=>p.owner===a&&!p.s3AllSpecial),'fire goes through the equipped native main weapon');
  assert.ok(hits.some(h=>h[1]===victim&&h[3]==='zipcaster'),'hook impact remains the Zipcaster damage source');
- assert.equal(a.ink,normalInk,'the temporary Zipcaster tank does not overwrite the normal tank');assert.ok(state.inkFuel<fuel-13.05*fireFrames/60-.5,'main firing and time drain consume the single special tank');
+ assert.equal(a.ink,normalInk,'the temporary Zipcaster tank does not overwrite the normal tank');assert.ok(state.inkFuel<fuel-state.inkDrainPerSecond*fireFrames/60-.5,'main firing and time drain consume the single special tank');
  a.intent.sub=true;a.intent.fire=false;a._updateSpecial(1/60);assert.equal(state.phase,'zip','a second sub press starts another hook');
  state.duration=state.t+1/60;a.intent.sub=false;a._updateSpecial(1/60);
  assert.equal(a.specialActive,null);assert.ok(a.superJumpState);assert.deepEqual(a.superJumpState.target.toArray(),origin.toArray());
@@ -226,4 +226,128 @@ test('local Booyah calls credit gauge for a remote catalogue caster once per cal
  const event={actor:ally,id:'booyahBomb',action:'cheer',activation:7,ownerNid:11,ownerLife:3,seed:1};
  f.emit('all:special',event);assert.equal(ally.special,6);f.emit('all:special',event);assert.equal(ally.special,6);
  f.emit('all:special',{...event,seed:2});assert.equal(ally.special,9);f.emit('all:special',{...event,seed:3,ownerLife:2});assert.equal(ally.special,9);
+});
+test('Zipcaster special-power AP controls native hook cost and time drain at 30/60/120 Hz',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57])for(const hz of [30,60,120]){
+  const a=f.make();a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'zipcaster');f.G.actors=[a];
+  a._startSpecial();const s=a._s3AllSpecialState,drain=gearCurve(ap,15,13.05,12),hook=gearCurve(ap,4,2.5,1.5);
+  for(let i=0;i<hz;i++)a._updateSpecial(1/hz);
+  assert.ok(Math.abs(s.inkFuel-(150-drain))<1e-8,`${ap}AP ${hz}Hz drain`);
+  const before=s.inkFuel;a.intent.sub=true;a._updateSpecial(1/hz);
+  assert.ok(Math.abs(before-s.inkFuel-(hook+drain/hz))<1e-8,`${ap}AP ${hz}Hz hook`);
+  assert.equal(s.phase,'zip');
+ }
+});
+
+test('Reefslider snapshots special-power paint and damage-distance curves without increasing damage',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57]){
+  const a=f.make(),near=f.make(),far=f.make();near.team=far.team=1;near.pos.set(9.7,-.75,0);far.pos.set(16,-.75,0);f.G.actors=[a,near,far];
+  a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'reefslider');a._resolve=()=>{};
+  const hits=[],old=f.G.projectiles.applyHit;f.G.projectiles.applyHit=(...args)=>{hits.push(args);};
+  a._startSpecial();const s=a._s3AllSpecialState,scale=gearCurve(ap,1,1.1,1.2);
+  assert.equal(s.paintRadius,gearCurve(ap,7.51,8.26,9.012));assert.equal(s.damageDistanceRate,scale);
+  a.s3.loadout=emptyLoadout();a.s3RefreshGear();assert.equal(s.damageDistanceRate,scale,'activation snapshot');
+  s.phase='dash';a.intent.fire=true;a._updateSpecial(1/60);
+  const hit=hits.find(h=>h[1]===near);assert.ok(hit);assert.ok(hit[2]<=220);assert.equal(hits.some(h=>h[1]===far),16<=14.9*scale);
+  f.G.projectiles.applyHit=old;
+ }
+});
+
+test('Screen source movement follows activation AP and remote device replay preserves it',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57]){
+  const a=f.make();a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'splattercolorScreen');f.G.actors=[a];
+  const events=eventFeed(f,'all:special');a._startSpecial();a.s3.loadout=emptyLoadout();a.s3RefreshGear();a.intent.fire=true;a._updateSpecial(1/60);
+  const o=f.G.projectiles._s3AllSpecialObjects.find(x=>x.owner===a&&x.kind==='screen');assert.ok(o);assert.equal(o.moveSpeed,gearCurve(ap,.04,.053,.06)*60);assert.equal(o.specialPowerAP,ap);
+  const event=events.find(e=>e.action==='deploy'&&e.kind==='screen');assert.ok(event);assert.equal(event.specialPowerAP,ap);
+  const remote=f.make();remote.remote=true;f.replayAllSpecials(f,{...event,actor:remote});const ghost=f.G.projectiles._s3AllSpecialObjects.find(x=>x.owner===remote&&x.kind==='screen');assert.ok(ghost);assert.equal(ghost.moveSpeed,o.moveSpeed);
+ }
+});
+
+test('Screen travel integrates startup and closing boundaries identically at 30/60/120 Hz',async()=>{
+ const f=await setup();const distances=[];
+ for(const hz of [30,60,120]){
+  f.G.projectiles.clear();const a=f.make();equip(a,'splattercolorScreen');f.G.actors=[a];a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);
+  const o=f.G.projectiles._s3AllSpecialObjects.find(x=>x.kind==='screen'),start=o.pos.clone();
+  for(let i=0;i<11*hz;i++){f.G.time+=1/hz;f.G.projectiles.update(1/hz);}
+  distances.push(o.pos.distanceTo(start));assert.ok(Math.abs(distances.at(-1)-2.4*560/60)<1e-8,`${hz} Hz travel`);
+ }
+ assert.ok(Math.max(...distances)-Math.min(...distances)<1e-8);
+});
+
+test('catalogue world damage uses the same 60 Hz samples at 30/60/120 rendering rates',async()=>{
+ const f=await setup(),totals=[];
+ for(const hz of [30,60,120]){
+  f.G.projectiles.clear();const a=f.make(),v=f.make();equip(a,'booyahBomb');v.team=1;v.hp=1000;v.invuln=0;v.pos.set(0,0,.2);f.G.actors=[a,v];f.G.netm=null;
+  a._startSpecial();a.intent.sub=true;a._updateSpecial(1/60);const p=f.G.projectiles.list.at(-1);f.G.projectiles._blastBurst(p,new f.THREE.Vector3(0,.08,0),null);f.G.projectiles.list.length=0;
+  let sum=0;const hit=f.G.projectiles.applyHit;f.G.projectiles.applyHit=(owner,victim,damage,id)=>{if(victim===v&&id==='booyahBomb')sum+=damage;return hit.call(f.G.projectiles,owner,victim,damage,id);};
+  for(let i=0;i<2*hz;i++){f.G.time+=1/hz;f.G.projectiles.update(1/hz);}
+  f.G.projectiles.applyHit=hit;assert.ok(Math.abs((1000-v.hp)-sum)<1e-7,'actual victim HP');totals.push(sum);
+ }
+ assert.ok(totals[0]>0);assert.ok(Math.max(...totals)-Math.min(...totals)<1e-8,JSON.stringify(totals));
+});
+
+test('recycling a special round cannot give a later main weapon special paint, blast or damage aging',async()=>{
+ const f=await setup(),a=f.make();equip(a,'booyahBomb');f.G.actors=[a];a._startSpecial();a.intent.sub=true;a._updateSpecial(1/60);
+ const p=f.G.projectiles.list.at(-1);assert.equal(p.s3AllSpecial,'booyahBomb');p.s3DamageReduce={max:32,min:16,start:0,end:1};p.s3TentaTarget=new f.THREE.Vector3(100,100,100);
+ f.G.projectiles.clear();const recycled=f.G.projectiles._new();assert.equal(recycled,p);
+ for(const key of ['s3AllSpecial','s3AllSpecialPaintRadius','s3AllSpecialActivation','s3AllSpecialSeed','s3DamageReduce','s3TentaTarget'])assert.equal(recycled[key],undefined,key);
+});
+
+test('Inkjet power snapshot survives the actual projectile packet and ghost without increasing direct damage',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57]){
+  f.G.projectiles.clear();const a=f.make();a.nid=7;a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'inkjet');f.G.actors=[a];a._resolve=()=>{};
+  a._startSpecial();a.s3.loadout=emptyLoadout();a.s3RefreshGear();a.intent.fire=true;a._updateSpecial(1/60);
+  const p=f.G.projectiles.list.find(x=>x.s3AllSpecial==='inkjet'),d=p.s3SpecialWeapon;assert.equal(d.specialPowerAP,ap);assert.equal(d.splashRadius,5*gearCurve(ap,1,1.15,1.3));assert.equal(d.directDamage,120);assert.ok(d.paintRadius<=3.74);assert.equal(p.s3AllSpecialPaintRadius,gearCurve(ap,3.2,3.6,4));
+  const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1)));
+  assert.equal(packet.find(x=>x&&typeof x==='object'&&'s3SpecialPowerAP' in x).s3SpecialPowerAP,ap);
+  assert.equal(packet[4],'inkjet');const remote=f.make();remote.remote=true;remote.nid=7;const before=f.G.projectiles.list.length;f.G.projectiles.ghostProjectile(remote,packet);assert.equal(f.G.projectiles.list.length,before+1);const ghost=f.G.projectiles.list.at(-1);
+  assert.equal(ghost.s3SpecialPowerAP,ap);assert.equal(ghost.s3SpecialWeapon.splashRadius,d.splashRadius);assert.deepEqual(ghost.s3SpecialWeapon.splashBands,d.splashBands);assert.equal(ghost.damage,0);
+  const hostile=structuredClone(packet);hostile.find(x=>x&&typeof x==='object'&&'s3SpecialPowerAP' in x).s3SpecialPowerAP=58;f.G.projectiles.ghostProjectile(remote,hostile);assert.equal(f.G.projectiles.list.length,before+1);
+ }
+});
+
+test('every catalogue-launched special projectile keeps a wire identity accepted by ghost reconstruction',async()=>{
+ const f=await setup();
+ for(const id of ['tentaMissiles','inkjet','booyahBomb','ultraStamp','crabTank']){
+  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a._resolve=()=>{};equip(a,id);f.G.actors=[a];a._startSpecial();a.intent.fire=id==='inkjet';a.intent.sub=id!=='inkjet'&&id!=='crabTank';
+  for(let i=0;i<40&&a.specialActive;i++){if(id==='crabTank'&&i===21)a.intent.sub=true;a._updateSpecial(1/60);}
+  const p=f.G.projectiles.list.find(x=>x.s3AllSpecial===id);assert.ok(p,id+' emitted');
+  const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1)));assert.equal(packet[4],id);
+  const remote=f.make();remote.remote=true;remote.nid=7;const before=f.G.projectiles.list.length;f.G.projectiles.ghostProjectile(remote,packet);assert.equal(f.G.projectiles.list.length,before+1,id+' accepted');const ghost=f.G.projectiles.list.at(-1);assert.equal(ghost.s3SpecialWeapon.id,id);assert.equal(ghost.damage,0);
+ }
+});
+
+test('world effect clock rejects invalid elapsed time and clear removes its remainder',async()=>{
+ const f=await setup(),a=f.make();equip(a,'splattercolorScreen');f.G.actors=[a];a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);
+ const sys=f.G.projectiles,o=sys._s3AllSpecialObjects[0];sys.update(1/120);const age=o.age,clock=sys._s3AllSpecialWorldClock;
+ for(const dt of [NaN,Infinity,-1,0]){sys.update(dt);assert.equal(o.age,age);assert.equal(sys._s3AllSpecialWorldClock,clock);}
+ sys.clear();assert.equal(sys._s3AllSpecialWorldClock,0);assert.equal(sys._s3AllSpecialObjects.length,0);
+});
+
+test('Super Chump activation power scales decoy paint and blast reach but never damage or HP',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57]){
+  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'superChump');f.G.actors=[a];
+  const events=eventFeed(f,'all:special');a._startSpecial();a.s3.loadout=emptyLoadout();a.s3RefreshGear();a.intent.fire=true;a._updateSpecial(1/60);
+  const objects=f.G.projectiles._s3AllSpecialObjects.filter(o=>o.owner===a&&o.kind==='decoy');assert.equal(objects.length,8);
+  const o=objects[0],rate=gearCurve(ap,1,1.1,1.2);assert.equal(o.specialPowerAP,ap);assert.equal(o.paintRadius,gearCurve(ap,3.5,3.8,4.1));assert.equal(o.maxRadius,6*rate);assert.deepEqual(JSON.parse(JSON.stringify(o.damageBands)),[[3.6*rate,70],[6*rate,35]]);assert.equal(o.hp,60);
+  const event=events.find(e=>e.kind==='decoy'&&e.action==='deploy'),remote=f.make();remote.remote=true;f.replayAllSpecials(f,{...event,actor:remote});const ghost=f.G.projectiles._s3AllSpecialObjects.find(x=>x.owner===remote);assert.equal(ghost.maxRadius,o.maxRadius);assert.equal(ghost.paintRadius,o.paintRadius);
+  const v=f.make();v.team=1;v.pos.copy(o.target);v.pos.x+=6.5;v.pos.y-=.75;f.G.actors=[a,v];f.G.projectiles._s3AllSpecialObjects=[o];const hits=[],old=f.G.projectiles.applyHit;f.G.projectiles.applyHit=(...args)=>hits.push(args);o.phase='active';o.pos.copy(o.target);o.age=o.dur-1/60;f.G.projectiles.update(1/60);f.G.projectiles.applyHit=old;
+  assert.equal(hits.some(h=>h[1]===v),6.5<=o.maxRadius);for(const h of hits)assert.ok(h[2]<=70);
+ }
+});
+
+test('Tenta Missiles retain the source paint-power curve in their launch and remote descriptor',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57]){
+  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'tentaMissiles');f.G.actors=[a];a._resolve=()=>{};
+  a._startSpecial();a.s3.loadout=emptyLoadout();a.s3RefreshGear();a.intent.sub=true;a._updateSpecial(1/60);
+  const p=f.G.projectiles.list.find(x=>x.s3AllSpecial==='tentaMissiles'),radius=gearCurve(ap,3.15,3.465,3.78);assert.ok(p);assert.equal(p.s3AllSpecialPaintRadius,radius);assert.equal(p.s3SpecialWeapon.paintRadius,Math.min(3.74,radius));assert.equal(p.s3SpecialWeapon.directDamage,150);
+  const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1))),remote=f.make();remote.remote=true;remote.nid=7;
+  f.G.projectiles.ghostProjectile(remote,packet);const ghost=f.G.projectiles.list.at(-1);assert.equal(ghost.s3SpecialWeapon.specialPowerAP,ap);assert.equal(ghost.s3SpecialWeapon.paintRadius,p.s3SpecialWeapon.paintRadius);assert.equal(ghost.damage,0);
+ }
 });

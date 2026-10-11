@@ -66,6 +66,7 @@ export function adaptPaintOwnership(rel, code, replaceOnce) {
   }
 
   if (rel === 'src/game/weapons.js') {
+    code = "import { projectileBurstPaintSeed } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     const edits = [
       ["seed: Math.random(), kind: 'roll', stretch: _fwd });", "seed: Math.random(), kind: 'roll', stretch: _fwd, claimOwner: a });", 'roller body ownership credit'],
       ["kind: 'trail' }));", "kind: 'trail', claimOwner: a }));", 'dualies trail ownership credit'],
@@ -76,7 +77,7 @@ export function adaptPaintOwnership(rel, code, replaceOnce) {
       ["rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random() }));", "rollerTrailAgeWidth(p, fidelityFlightPaintRadius(p)), p.team, { seed: Math.random(), claimOwner: p.owner }));", 'projectile trail ownership credit'],
       ['stretchAmt: paint?.stretchAmt ?? 1.25 });', 'stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner });', 'slosher impact ownership credit'],
       ['stretchAmt: 0.7 });', "stretchAmt: 0.7, claimOwner: p.owner, claimMode: (p.s3SpecialWeapon || p.s3PaintNoSpecial) ? 'no-special' : undefined });", 'projectile impact ownership credit'],
-      ['w.impactRadius, p.team, { seed: Math.random() }', "w.impactRadius, p.team, { seed: Math.random(), claimOwner: p.owner, claimMode: (p.s3SpecialWeapon || p.s3PaintNoSpecial) ? 'no-special' : undefined }", 'blaster burst ownership credit'],
+      ['w.impactRadius, p.team, { seed: Math.random() }', "w.impactRadius, p.team, { seed: projectileBurstPaintSeed(p, Math.random()), claimOwner: p.owner, claimMode: (p.s3SpecialWeapon || p.s3PaintNoSpecial) ? 'no-special' : undefined }", 'blaster burst ownership credit'],
       ["c.team, { seed: Math.random() }));", "c.team, { seed: Math.random(), claimOwner: c.owner }));", 'special rain ownership credit'],
     ];
     for (const [before, after, label] of edits) code = replaceOnce(code, before, after, label);

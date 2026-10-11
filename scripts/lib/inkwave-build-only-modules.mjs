@@ -2,6 +2,8 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  'patches/splatoon3/ranked-adapter.mjs',
+  'patches/splatoon3/ranked-ui-adapter.mjs',
   'patches/splatoon3/weapon-catalog-adapter.mjs',
   // Source templates, build-time SVG/data and transform helpers have no runtime importers.
   'patches/local-quality/audio-listener-adapter.mjs',

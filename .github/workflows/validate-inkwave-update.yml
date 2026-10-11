@@ -201,6 +201,15 @@ jobs:
             target.parent.mkdir(parents=True,exist_ok=True)
             with urllib.request.urlopen(source['url'],timeout=30) as response: target.write_bytes(response.read())
           PY
+          INKWAVE_WEIGHT_PARAMS=.reference-data/data/parameter/1130/misc/params.json node --experimental-vm-modules --test patches/splatoon3/tests/weapon-weight-gear.test.mjs
+          python3 - <<'PYOBJ'
+          import json, pathlib, urllib.request
+          receipt=json.loads(pathlib.Path('patches/splatoon3/reference/object-shredder-1130.json').read_text())['receipt']
+          url='https://raw.githubusercontent.com/Leanny/splat3/'+receipt['commit']+'/'+receipt['path']
+          with urllib.request.urlopen(url,timeout=30) as response:
+            pathlib.Path('.reference-data/object-damage.json').write_bytes(response.read())
+          PYOBJ
+          INKWAVE_OBJECT_DAMAGE_REFERENCE=.reference-data/object-damage.json node --experimental-vm-modules --test patches/splatoon3/tests/object-shredder-1130.test.mjs patches/splatoon3/tests/native-sprinkler-damage.test.mjs
           node scripts/verify-inkwave-reference.mjs .reference-data
           node scripts/check-weapons-reference.mjs .reference-data/weapons
       - name: Verify completed weapon source mirror
@@ -225,6 +234,8 @@ jobs:
             list(pool.map(fetch_source,sorted(paths)))
           PY
           INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test patches/splatoon3/tests/main-weapon-catalog-data.test.mjs
+          node scripts/generate-inkwave-weight-reference.mjs .reference-data/catalog/data/parameter/1130/weapon
+          git diff --exit-code -- patches/splatoon3/reference/weapon-weight-1130.json patches/splatoon3/runtime/weapon-weight-data.mjs
           node scripts/generate-inkwave-canonical-kits.mjs .reference-data/catalog/data/mush/1130/WeaponInfoMain.json
           git diff --exit-code -- patches/splatoon3/reference/canonical-kits-1130.json patches/splatoon3/runtime/canonical-kits-data.mjs
       - name: Verify pinned Sub/Special numerical sources
@@ -280,8 +291,11 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify built piece-local paint ownership against the immutable baseline
+        run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/paint-piece-local-ownership.test.mjs
       - name: Verify built weapons fidelity measurements and packet parity
         run: |
+          INKWAVE_BUILT_SITE=_site INKWAVE_OBJECT_DAMAGE_REFERENCE=.reference-data/object-damage.json node --experimental-vm-modules --test patches/splatoon3/tests/object-shredder-1130.test.mjs patches/splatoon3/tests/native-sprinkler-damage.test.mjs
           INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test scripts/tests/inkwave-slosher-paint-golden.test.mjs
           node --experimental-vm-modules scripts/check-inkwave-weapons-fidelity.mjs --site _site
       - uses: actions/upload-artifact@v4
@@ -593,12 +607,16 @@ jobs:
           node --experimental-vm-modules --test --test-name-pattern='splatling retained horizontal' patches/splatoon3/tests/weapon-edgecases.test.mjs
           node --experimental-vm-modules --test --test-name-pattern='1007|1052|airborne Charger charge|407|420' patches/splatoon3/tests/charger-postshot-flight.test.mjs patches/splatoon3/tests/integration.test.mjs patches/splatoon3/tests/weapon-paint-inertia.test.mjs
       - name: Verify emitted gameplay and mural resource lifetime in both browsers
+        shell: bash
         run: |
+          set -euo pipefail
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/seven-site
           node scripts/check-inkwave-seven-claims.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/seven-browser.json
       - name: Verify compiled main weapon catalog in Chromium and WebKit
         shell: bash
-        run: node scripts/check-inkwave-catalog-browser.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/catalog-browser.json
+        run: |
+          set -euo pipefail
+          node scripts/check-inkwave-catalog-browser.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/catalog-browser.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
