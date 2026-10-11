@@ -1,3 +1,4 @@
+import { BIG_BUBBLER_RAW, validateBigBubblerDeploy } from '../splatoon3/runtime/kit-big-bubbler.mjs';
 import { cataloguePayload } from '../splatoon3/runtime/catalogue-payload.mjs';
 import { ALL_SUB_SPECS } from '../splatoon3/runtime/all-subs.mjs';
 import { SLOSHER_IMPACT_TAG, slosherPaintMetaValid, slosherPaintBirth, slosherImpactMatches } from './slosher-paint-admission.mjs';
@@ -5,6 +6,8 @@ import { KIT_SUBS, resolveSubAtCharge } from '../splatoon3/runtime/kit-subs.mjs'
 import { catalogPaintRadiusLimit } from './catalog-paint-admission.mjs';
 export const KIT_BIRTH_TAG = 'inkwave-kit-birth-v1';
 export const KIT_PAINT_TAG = 'inkwave-kit-core-v1';
+export const BUBBLER_PAINT_TAG='inkwave-bubbler-core-v1';
+const bubblerBirth=e=>e?.[1]==='ev'&&e[2]==='kit:bubbler:deploy';
 export const SUB_PAINT_TAG = 'inkwave-sub-core-v1';
 const isCatalogueSub = id => ['burst','fizzy','inkMine'].includes(id);
 const catalogueBirth = e => e?.[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='spawn';
@@ -29,7 +32,7 @@ function identify(e) {
  return safe(e._netSeq)&&e._netSeq>0&&safe(e._netTick);
 }
 function paintMeta(e){return Array.isArray(e?.[15]) ? e[15] : null;}
-function validMeta(meta){return Array.isArray(meta)&&meta.length===6&&meta[0]===SUB_PAINT_TAG&&typeof meta[1]==='string'&&meta.slice(2).every(safe)&&meta[4]>0&&meta[5]<3||slosherPaintMetaValid(meta)||Array.isArray(meta)&&meta.length===5&&meta[0]===KIT_PAINT_TAG&&typeof meta[1]==='string'&&safe(meta[2])&&safe(meta[3])&&safe(meta[4])&&meta[4]>0;}
+function validMeta(meta){return Array.isArray(meta)&&meta.length===6&&meta[0]===SUB_PAINT_TAG&&typeof meta[1]==='string'&&meta.slice(2).every(safe)&&meta[4]>0&&meta[5]<3||slosherPaintMetaValid(meta)||Array.isArray(meta)&&meta.length===5&&[KIT_PAINT_TAG,BUBBLER_PAINT_TAG].includes(meta[0])&&typeof meta[1]==='string'&&safe(meta[2])&&safe(meta[3])&&safe(meta[4])&&meta[4]>0;}
 export function kitBombBirthMetadata(nm,b){
  const a=b?.owner,id=b?.s3Resolved?.spec?.id;
  return a && !a.remote && safe(a.nid)&&safe(life(a))&&isKit(id) ? [KIT_BIRTH_TAG,epoch(nm),life(a)] : null;
@@ -43,13 +46,24 @@ export function recordCatalogueSubBirth(nm,object,event){
    ||!isCatalogueSub(object.subId)||!catalogueBirth(event)||!identify(event))return;
  object.s3PaintBirth=[SUB_PAINT_TAG,epoch(nm),object.owner.nid,object.sourceLife,event._netSeq];
 }
+export function recordBubblerPaintBirth(nm,dome,event){
+ if(!dome||dome.remote||!dome.owner||dome.owner.remote||!bubblerBirth(event)||!identify(event))return;
+ dome.s3PaintBirth=[BUBBLER_PAINT_TAG,epoch(nm),dome.owner.nid,life(dome.owner),event._netSeq];
+}
 function retireProjectile(s,b){if(b?.kind==='slosher')s.retiredProjectiles.set(b.owner,Math.max(s.retiredProjectiles.get(b.owner)||0,b.projectileId));}
 function register(nm,from,e,s){
- if(!identify(e)||!(['b','p'].includes(e[1])||catalogueBirth(e)))return;
- const a=nm.byNid.get(catalogueBirth(e)?e[3]:e[2]);
+ if(!identify(e)||!(['b','p'].includes(e[1])||catalogueBirth(e)||bubblerBirth(e)))return;
+ const a=nm.byNid.get(bubblerBirth(e)?e[3]?.actor?.n:catalogueBirth(e)?e[3]:e[2]);
  if(!a?.remote||a.owner!==from||!nm.s._members?.has(from)||!Number.isFinite(e[0])||e[0]<0)return;
  let record;
- if(catalogueBirth(e)){
+ if(bubblerBirth(e)){
+  const v=e[3];
+  if(!validateBigBubblerDeploy(v).ok||v.t!==0||a.weapon?.special!=='bubbler'||v.team!==a.team||v.owner?.n!==a.nid
+    ||v.paintEpoch!==epoch(nm)||v.paintLife!==life(a)||!safe(v.serial)||v.serial===0
+    ||v.domeId!==`${a.team}:n${a.nid}:${v.serial}`||!Array.isArray(v.pos)||v.pos.length!==3||!v.pos.every(Number.isFinite)
+    ||!safe(v.paintSeed)||v.paintSeed>0xffffffff)return;
+  record={kind:'bubbler',life:v.paintLife,seed:v.paintSeed,centre:[v.pos[0],v.pos[1]+BIG_BUBBLER_RAW.paintRadius*.35,v.pos[2]],radius:BIG_BUBBLER_RAW.paintRadius};
+ }else if(catalogueBirth(e)){
   const v=cataloguePayload(e[5]);if(!v)return;
   const id=v.subId,spec=ALL_SUB_SPECS[id];
   if(![6,8].includes(e.length)||!isCatalogueSub(id)||a.weapon?.sub!==id||!safe(e[4])||life(a)!==e[4]
@@ -118,6 +132,12 @@ function receipt(nm,from,e,s){
  const b=s.births.get(key(from,meta[4]));
  if(!b||b.nid!==meta[2]||b.life!==meta[3]||b.team!==e[6]||e._netTick<b.tick
   ||b.used!==null&&b.used!==e._netSeq)return null;
+ if(b.kind==='bubbler'){
+  if(meta[0]!==BUBBLER_PAINT_TAG||e[5]!==b.radius||e[7]!==b.seed/0x100000000
+   ||e.slice(2,5).some((v,i)=>Math.abs(v-b.centre[i])>.011)
+   ||(e[8]!==0&&e[8]!==undefined)||e[9]||e[10]||e[11]||e[12]||(e[13]!==-1&&e[13]!==undefined))return null;
+  return b;
+ }
  if(b.kind==='sub'){
   const index=meta[5];
   if(meta[0]!==SUB_PAINT_TAG||index>=b.coreRadii.length||e[5]!==b.coreRadii[index]||!subCoreReachable(b,e,index)
@@ -148,8 +168,8 @@ function couldWait(nm,from,e,s){
   ||!e.slice(2,8).every(Number.isFinite)||!Number.isFinite(e[0])||e[0]<0||e[5]<=0||e[5]>5
   ||(e[8]!==0&&e[8]!==undefined)||(m[0]===KIT_PAINT_TAG&&(e[9]||e[10]||e[11]||e[12]))||(e[13]!==-1&&e[13]!==undefined))return false;
  const a=nm.byNid.get(m[2]);
- return a?.remote&&a.owner===from&&life(a)===m[3]&&a.team===e[6]&&(m[0]===SLOSHER_IMPACT_TAG?a.weapon?.id==='slosher':m[0]===SUB_PAINT_TAG?isCatalogueSub(a.weapon?.sub):isKit(a.weapon?.sub))
-  &&nm.s._members?.has(from)&&m[4]>Math.max(nm.peers.get(from)?._lastEventSeq||0,s.expired.get(from)||0,s.retiredBirths.get(key(from,m[0]===SLOSHER_IMPACT_TAG?'slosher':m[0]===SUB_PAINT_TAG?'sub':'kit'))||0)&&!s.births.has(key(from,m[4]));
+ return a?.remote&&a.owner===from&&life(a)===m[3]&&a.team===e[6]&&(m[0]===SLOSHER_IMPACT_TAG?a.weapon?.id==='slosher':m[0]===SUB_PAINT_TAG?isCatalogueSub(a.weapon?.sub):m[0]===BUBBLER_PAINT_TAG?a.weapon?.special==='bubbler':isKit(a.weapon?.sub))
+  &&nm.s._members?.has(from)&&m[4]>Math.max(nm.peers.get(from)?._lastEventSeq||0,s.expired.get(from)||0,s.retiredBirths.get(key(from,m[0]===SLOSHER_IMPACT_TAG?'slosher':m[0]===SUB_PAINT_TAG?'sub':m[0]===BUBBLER_PAINT_TAG?'bubbler':'kit'))||0)&&!s.births.has(key(from,m[4]));
 }
 // Same-packet reordering is normalized before admission. If a core arrives before
 // its birth in separate accepted packets, hold the remaining sender events too:
@@ -191,7 +211,7 @@ export function prepareKitPaintEvents(nm,from,d){
 }
 export function kitPaintPlayback(nm,from,e){
  const s=state(nm);if(s.flushing)return true;
- const birth=catalogueBirth(e)||e[1]==='b'||e[1]==='p'&&e[3]==='slosh'&&e[4]==='slosher';
+ const birth=bubblerBirth(e)||catalogueBirth(e)||e[1]==='b'||e[1]==='p'&&e[3]==='slosh'&&e[4]==='slosher';
  if(!birth&&!paintMeta(e)&&!s.pending.has(from))return true;
  const ready=prepareKitPaintEvents(nm,from,{r:2,e:[e]});
  if(ready.length===1&&ready[0]===e)return true;
@@ -211,7 +231,7 @@ export function acceptPendingKitBirths(nm,from,d){
   return;
  }
  const wanted=new Set(pending.rows.filter(e=>e[1]==='s'&&validMeta(paintMeta(e))).map(e=>e[15][4]));
- const births=d.e.filter(e=>(['b','p'].includes(e?.[1])||catalogueBirth(e))&&identify(e)&&wanted.has(e._netSeq));
+ const births=d.e.filter(e=>(['b','p'].includes(e?.[1])||catalogueBirth(e)||bubblerBirth(e))&&identify(e)&&wanted.has(e._netSeq));
  if(!births.length)return;
  const ready=prepareKitPaintEvents(nm,from,{r:2,e:births,ts:d.ts,u:d.u});
  nm._queueKitRecoveredEvents(from,ready);

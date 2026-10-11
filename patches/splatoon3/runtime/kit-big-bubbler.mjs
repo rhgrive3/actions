@@ -514,11 +514,14 @@ function deploy(owner) {
   buildVisual(dome);
   domes.push(dome);
   syncVisual(dome);
+  dome.paintSeed = (Math.random()*0x100000000)>>>0;
   api.G.fx?.ring?.(pos.clone().setY(pos.y + 0.05), new THREE.Vector3(0, 1, 0), dome.color,
     { radius: raw.maxRadius, life: 0.5 });
   api.emit?.('kit:bubbler:deploy', {
     actor: owner, owner, domeId: dome.id, serial: dome.serial, team: owner.team, t: 0,
     pos: pos.clone(), hp: dome.hp, fieldHp: dome.fieldHp,
+    paintSource:dome, paintSeed:dome.paintSeed, paintLife:owner.netLife||0,
+    paintEpoch:api.G.netm?.cfg?.id||'',
   });
   return dome;
 }
@@ -879,7 +882,7 @@ export function tickBigBubblers(dt) {
       dome.ignited = true;
       if (tuning.paintAtIgnition) {
         const area = api.G.paint?.splat?.(dome.pos.clone().setY(dome.pos.y + raw.paintRadius * 0.35),
-          raw.paintRadius, dome.team, { seed: Math.random(), claimOwner: dome.owner, claimMode: 'no-special' }) || 0;
+          raw.paintRadius, dome.team, { seed: dome.paintSeed/0x100000000, claimOwner: dome.owner, claimMode: 'no-special', kitPaint:dome.s3PaintBirth }) || 0;
         dome.owner.addTurfNoSpecial?.(area);
       }
       api.emit?.('kit:bubbler:ignite', {
@@ -953,7 +956,7 @@ const finiteNumber = (v, lo, hi) => typeof v === 'number' && Number.isFinite(v) 
  * the position must be exactly three finite in-range numbers, and the caller
  * always gets an explicit reason instead of a silent drop.
  */
-function validateDeploy(payload) {
+export function validateBigBubblerDeploy(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return no('not-an-object');
   const { domeId, team, pos, t, hp, fieldHp, serial } = payload;
   if (typeof domeId !== 'string' || domeId.length === 0) return no('bad-dome-id');
@@ -1078,7 +1081,7 @@ export function replayBigBubbler(eventName, owner, plainPayload) {
 }
 
 function replayDeploy(owner, payload) {
-  const checked = validateDeploy(payload);
+  const checked = validateBigBubblerDeploy(payload);
   if (!checked.ok) return checked;
   const v = checked.value;
   // A tombstone WINS over a delayed deploy. An expire that arrived first (a
