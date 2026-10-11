@@ -1,6 +1,7 @@
 // Level: turns a map layout (oriented boxes) into collision blocks, paintable faces and render geometry.
 import * as THREE from 'three';
 import { PATTERN } from './maps.js';
+import { buildSurfaceOwnership, faceContainsUV } from './stages/splatoon3/surface-ownership.js';
 
 const _v = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
@@ -32,6 +33,7 @@ export class Level {
     this.hasRails = this.blocks.some((b) => b.rail);   // (actors only run the railing foot check where there are rails)
     this._buildHash();
     for (const b of this.blocks) this._buildFaces(b);
+    if (this.layout.stageId) buildSurfaceOwnership(this);
   }
 
   _addBlock(d) {
@@ -45,6 +47,9 @@ export class Level {
       color: new THREE.Color(d.color || '#dddddd'),
       pattern: d.pattern ?? PATTERN.plain,
       tag: d.tag || null,
+      stageKey: d.stageKey || null, surface: d.surface || null, glass: !!d.glass,
+      dynamic: d.dynamic || null, conveyor: d.conveyor || null, actuator: d.actuator || null, flooded: !!d.flooded,
+      render: !!d.render,
       mural: d.mural || null,
       noPaint: d.noPaint || null,
       grate: !!d.grate || !!d.rail, // walkable for kids, squids + ink + shots pass through, never inkable
@@ -114,10 +119,19 @@ export class Level {
     this.hash = Array.from({ length: this.hw * this.hd }, () => []);
     this.blockStamp = new Uint32Array(this.blocks.length);
     for (const b of this.blocks) {
+      b._hashRect = null;
       const x0 = this._hxi(b.aabbMin.x), x1 = this._hxi(b.aabbMax.x);
       const z0 = this._hzi(b.aabbMin.z), z1 = this._hzi(b.aabbMax.z);
       for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) this.hash[z * this.hw + x].push(b.id);
+      b._hashRect = [x0,x1,z0,z1];
     }
+  }
+  reindexBlock(b) {
+    const x0=this._hxi(b.aabbMin.x),x1=this._hxi(b.aabbMax.x),z0=this._hzi(b.aabbMin.z),z1=this._hzi(b.aabbMax.z),old=b._hashRect;
+    if(old&&old[0]===x0&&old[1]===x1&&old[2]===z0&&old[3]===z1)return;
+    if(old)for(let z=old[2];z<=old[3];z++)for(let x=old[0];x<=old[1];x++){const cell=this.hash[z*this.hw+x],i=cell.indexOf(b.id);if(i>=0)cell.splice(i,1);}
+    for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)this.hash[z*this.hw+x].push(b.id);
+    if(old){old[0]=x0;old[1]=x1;old[2]=z0;old[3]=z1;}else b._hashRect=[x0,x1,z0,z1];
   }
   _hxi(x) { return Math.max(0, Math.min(this.hw - 1, Math.floor((x - this.hx0) / this.hashCell))); }
   _hzi(z) { return Math.max(0, Math.min(this.hd - 1, Math.floor((z - this.hz0) / this.hashCell))); }
@@ -144,12 +158,12 @@ export class Level {
       Math.abs(_v2.dot(b.axes[2])) < b.half.z + pad;
   }
 
-  pointInside(p, pad = 0, exclude = -1) {
+  pointInside(p, pad = 0, exclude = -1, ignoreDynamic = false) {
     const ids = this.queryBlocks(p.x - 0.01, p.z - 0.01, p.x + 0.01, p.z + 0.01, this._qtmp || (this._qtmp = []));
     for (const id of ids) {
       if (id === exclude) continue;
       const b = this.blocks[id];
-      if (!b.solid) continue;
+      if (!b.solid || (ignoreDynamic && b.dynamic)) continue;
       if (this.pointInBlock(b, p, pad)) return true;
     }
     return false;
@@ -206,17 +220,33 @@ export class Level {
   }
 
   // A face is hidden when every sample point just outside it lies inside another solid block.
+  faceContainsUV(face, u, v) { return faceContainsUV(face, u, v); }
+
   _faceHidden(f) {
+    if (this.blocks[f.block].dynamic) return false;
     const nu = Math.max(2, Math.ceil(f.su / 1.25)), nv = Math.max(2, Math.ceil(f.sv / 1.25));
     for (let j = 0; j <= nv; j++) {
       for (let i = 0; i <= nu; i++) {
         const uu = Math.min(f.su - 0.05, Math.max(0.05, (i / nu) * f.su));
         const vv = Math.min(f.sv - 0.05, Math.max(0.05, (j / nv) * f.sv));
         _v.copy(f.origin).addScaledVector(f.u, uu).addScaledVector(f.v, vv).addScaledVector(f.n, 0.03);
-        if (!this.pointInside(_v, 0, f.block)) return false;
+        if (!this.pointInside(_v, 0, f.block, !!this.layout.stageId)) return false;
       }
     }
     return true;
+  }
+
+  // Resolve coplanar ownership after a ray hits a primitive whose visible face was clipped.
+  resolveSurfaceFace(point, normal, preferred = -1) {
+    const accept = f => {
+      if (!f || f.n.dot(normal) < 0.99999) return null;
+      _v2.copy(point).sub(f.origin); if (Math.abs(_v2.dot(f.n)) > 1e-5) return null;
+      const u=_v2.dot(f.u),v=_v2.dot(f.v);
+      return faceContainsUV(f,u,v) ? {face:f.id,u,v} : null;
+    };
+    const found=accept(this.faces[preferred]);if(found)return found;
+    for(const f of this.faces){const owner=accept(f);if(owner)return owner;}
+    return null;
   }
 
   // ---------------------------------------------------------------- baked-lighting atlas
@@ -306,6 +336,13 @@ export class Level {
         const fid = faceOf(b, k, s);
         if (fid < 0) continue;
         const f = this.faces[fid];
+        if (f.renderPolygons) {
+          for (const poly of f.renderPolygons) {
+            const vi = poly.map(([u,v]) => vert(f, P.copy(f.origin).addScaledVector(f.u,u).addScaledVector(f.v,v), f.n));
+            for (let j=1;j+1<vi.length;j++) tri(vi[0],vi[j],vi[j+1],f.n);
+          }
+          continue;
+        }
         const [i, j] = [0, 1, 2].filter((a) => a !== k);
         const ip = bevelled(k, s, i, 1) ? bev : 0, im = bevelled(k, s, i, -1) ? bev : 0;
         const jp = bevelled(k, s, j, 1) ? bev : 0, jm = bevelled(k, s, j, -1) ? bev : 0;
@@ -317,7 +354,7 @@ export class Level {
         const v0 = corner(-1, -1), v1 = corner(1, -1), v2 = corner(1, 1), v3 = corner(-1, 1);
         tri(v0, v1, v2, f.n); tri(v0, v2, v3, f.n);
       }
-      if (bev < 0.01) continue;
+      if (bev < 0.01 || this.layout.stageId) continue;
       // --- edge strips
       const SEG = 2; // per half (4 segments per quarter-round)
       for (let k1 = 0; k1 < 3; k1++) for (let k2 = k1 + 1; k2 < 3; k2++) for (const s1 of [1, -1]) for (const s2 of [1, -1]) {

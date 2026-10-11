@@ -65,18 +65,18 @@ export class Minimap {
     this._build();
     this.version = -1;
   }
-  ensure() { if (!this._built) this._build(); }
+  ensure() { if (!this._built) this._build(); } // Moving geometry refreshes in update(), never per-HUD-call.
 
   // world → canvas px (float)
   toCanvas(x, z, out = { x: 0, y: 0 }) {
     const B = this.level.bounds;
     let cx = (B.maxX - x) * this.s, cy = (B.maxZ - z) * this.s;
-    if (this.flip) { cx = this.w - cx; cy = this.h - cy; }
+    if (this.flip) { cx = this.w - cx; if (this.level.layout.symmetry !== 'reflectX') cy = this.h - cy; }
     out.x = cx; out.y = cy;
     return out;
   }
   _worldX(px) { const B = this.level.bounds; const c = this.flip ? this.w - px : px; return B.maxX - c / this.s; }
-  _worldZ(py) { const B = this.level.bounds; const c = this.flip ? this.h - py : py; return B.maxZ - c / this.s; }
+  _worldZ(py) { const B = this.level.bounds; const c = this.flip && this.level.layout.symmetry !== 'reflectX' ? this.h - py : py; return B.maxZ - c / this.s; }
 
   // ------------------------------------------------------------------------------------------ static layers
   _build() {
@@ -88,6 +88,7 @@ export class Minimap {
     // 1) rasterise every solid block's top surface (ramps included) → height + owning block + normal
     for (const b of lvl.blocks) {
       if (!b.solid) continue;
+      if (this.level.stageRuntime && this.level.layout.hazard.kind==='water' && b.aabbMax.y<this.level.stageRuntime.waterY) continue;
       if (b.hidden && (b.roof || b.perch) && b.aabbMin.y > 3) continue;   // overhead steel (crane girders, booms): not over the turf
       const n = b.axes[1];
       if (n.y < 0.45) continue;
@@ -97,7 +98,7 @@ export class Minimap {
       if (x0 > x1) [x0, x1] = [x1, x0]; if (y0 > y1) [y0, y1] = [y1, y0];
       const px0 = Math.max(0, Math.floor(x0)), px1 = Math.min(W - 1, Math.ceil(x1)), py0 = Math.max(0, Math.floor(y0)), py1 = Math.min(H - 1, Math.ceil(y1));
       const a0 = b.axes[0], a2 = b.axes[2];
-      const cnx = this.flip ? n.x : -n.x, cny = this.flip ? n.z : -n.z;   // normal in canvas space
+      const cnx = this.flip ? n.x : -n.x, cny = this.flip && this.level.layout.symmetry !== 'reflectX' ? n.z : -n.z;   // normal in canvas space
       for (let py = py0; py <= py1; py++) {
         const z = this._worldZ(py + 0.5);
         for (let px = px0; px <= px1; px++) {
@@ -137,7 +138,7 @@ export class Minimap {
           const x = this._worldX(px + 0.5);
           const dx = x - f.origin.x, dz = z - f.origin.z;
           const a = (dx * ux + dz * uz) / uh, c = (dx * vx + dz * vz) / vh;   // metres along u / v
-          if (a < 0 || c < 0 || a >= f.su || c >= f.sv) continue;
+          if (a < 0 || c < 0 || a >= f.su || c >= f.sv || (lvl.layout.stageId&&!lvl.faceContainsUV(f,a,c))) continue;
           const cu = a / f.cu - 0.5, cv = c / f.cv - 0.5;
           let iu = Math.floor(cu), iv = Math.floor(cv);
           let tu = cu - iu, tv = cv - iv;
@@ -154,6 +155,8 @@ export class Minimap {
     this._drawBase();
     this.owner = new Uint8Array(N);
     this._built = true;
+    this._stageEpoch=this.level.stageRuntime?.epoch;
+    this.version=-1; this._band=0;
   }
 
   _drawBase() {
@@ -179,7 +182,8 @@ export class Minimap {
       blockCol.set(id, c);
       return c;
     };
-    const sea0 = dusk ? [70, 64, 120] : [36, 104, 170], sea1 = dusk ? [104, 86, 150] : [62, 146, 206];
+    const voidFloor=lvl.layout.stageId&&lvl.layout.hazard.kind!=='water';
+    const sea0 = voidFloor?[33,38,44]:dusk ? [70, 64, 120] : [36, 104, 170], sea1 = voidFloor?[45,49,56]:dusk ? [104, 86, 150] : [62, 146, 206];
     for (let py = 0; py < H; py++) {
       for (let px = 0; px < W; px++) {
         const i = py * W + px, o = i * 4, h = hgt[i];
@@ -321,7 +325,9 @@ export class Minimap {
   }
 
   update(dt, force = false) {
-    if (!this._built) this._build();
+    const rt=this.level.stageRuntime;
+    this._stageRefresh=(this._stageRefresh||0)+dt;
+    if (!this._built || (rt&&rt.epoch!==this._stageEpoch&&(force||this._stageRefresh>=0.5))) {this._build();this._stageRefresh=0;}
     this.time += dt;
     this.timer -= dt;
     let dirty = false;

@@ -2,6 +2,7 @@
 // connected by walk / jump-up / drop-down edges. A* with a binary heap.
 import * as THREE from 'three';
 import { PLAYER } from '../config.js';
+import { GroundHit } from './physics.js';
 
 const RING = Array.from({ length: 8 }, (_, k) => {
   const a = (k / 8) * Math.PI * 2;
@@ -14,6 +15,7 @@ export class NavGraph {
     this.level = level; this.physics = physics;
     this.step = 1.0;
     this.nodes = [];
+    this._stageGround = new GroundHit();
     this._build();
   }
 
@@ -72,7 +74,7 @@ export class NavGraph {
             n.nb.push({ to: mid, cost: flat, type: 'walk' });
           } else if (dy > 0.5 && dy <= 1.25 && !(dx && dz)) {
             n.nb.push({ to: mid, cost: flat + 2.5, type: 'jump' });
-          } else if (dy < -0.5 && dy >= -3.4 && !(dx && dz)) {
+          } else if (dy < -0.5 && dy >= -(this.level.layout.stageId ? 8 : 3.4) && !(dx && dz)) {
             n.nb.push({ to: mid, cost: flat + 0.8, type: 'drop' });
           }
         }
@@ -129,7 +131,7 @@ export class NavGraph {
         const jx = ix + dx, jz = iz + dz;
         if (jx < 0 || jz < 0 || jx >= this.nx || jz >= this.nz) continue;
         for (const id of this.cells[jz * this.nx + jx]) {
-          if (!this.valid[id]) continue;
+          if (!this.valid[id] || !this.isAvailable(id)) continue;
           const n = this.nodes[id];
           if (n.y > pos.y + maxUp) continue;
           const d = (n.x - pos.x) ** 2 + (n.z - pos.z) ** 2 + ((n.y - pos.y) * 2.5) ** 2;
@@ -143,7 +145,7 @@ export class NavGraph {
 
   // A* from node a to node b; `team` blocks the enemy spawn zone. Returns array of node ids (incl. a and b) or null.
   path(a, b, team, maxIter = 6000) {
-    if (a < 0 || b < 0) return null;
+    if (a < 0 || b < 0 || !this.isAvailable(a) || !this.isAvailable(b)) return null;
     const N = this.nodes.length;
     if (!this._g || this._g.length !== N) { this._g = new Float32Array(N); this._from = new Int32Array(N); this._seen = new Uint32Array(N); this._closed = new Uint32Array(N); this._stamp = 0; }
     const g = this._g, from = this._from, seen = this._seen, closed = this._closed;
@@ -162,7 +164,7 @@ export class NavGraph {
       const n = nodes[cur];
       for (const e of n.nb) {
         const m = nodes[e.to];
-        if (m.zone >= 0 && m.zone !== team) continue;
+        if ((m.zone >= 0 && m.zone !== team) || !this.isAvailable(e.to)) continue;
         const ng = g[cur] + e.cost;
         if (seen[e.to] !== st || ng < g[e.to]) {
           seen[e.to] = st; g[e.to] = ng; from[e.to] = cur;
@@ -174,6 +176,17 @@ export class NavGraph {
     const out = [];
     for (let k = b; k !== -1; k = from[k]) { out.push(k); if (out.length > 4000) break; }
     return out.reverse();
+  }
+
+  isAvailable(id) {
+    const n=this.nodes[id],r=this.level.stageRuntime;
+    if(!n)return false;
+    if(!r||!r.affectsNavigation(n.x,n.y,n.z))return true;
+    if(n._stageEpoch===r.epoch)return n._stageAvailable;
+    n._stageEpoch=r.epoch;
+    const h=this.physics.groundProbe(n.x,n.y+0.08,n.z,0.12,0.25,0,this._stageGround,false);
+    n._stageAvailable=!!h.hit && Math.abs(h.y-n.y)<0.3 && !r.isHazard(_p.set(n.x,n.y,n.z)) && this._clear(n.x,n.y,n.z);
+    return n._stageAvailable;
   }
 
   edgeType(a, b) {
