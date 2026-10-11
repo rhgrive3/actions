@@ -120,6 +120,41 @@ test('native GPU quad submission preserves attribute uploads, render sequence an
   };
   assert.deepEqual(go(optimized),go(original));
 });
+
+test('ink GPU quad atlas buffers are byte-identical for clipped, wall and floor splats', async () => {
+  const [native, optimized] = await Promise.all([loadNative(ORIGINAL), loadNative(FIXED)]);
+  const names = [['aPos', 2], ['aLocal', 3], ['aSplat', 4], ['aStretch', 3], ['aGrow', 4]];
+  const make = () => {
+    const owner = { quads: 0, size: 4096, _drawQuads() { throw Error('unexpected quad capacity flush'); } };
+    for (const [name, stride] of names) owner[name] = new Float32Array(4096 * 4 * stride);
+    return owner;
+  };
+  const baseline = make(), changed = make();
+  const faces = [
+    { wall: false, su: 37, sv: 83, atlas: { x: 13, y: 29, pad: 8, ppm: 11 } },
+    { wall: true, su: 7.5, sv: 12.25, atlas: { x: 333, y: 888, pad: 4, ppm: 13 } },
+    { wall: false, su: 1.25, sv: 2.5, atlas: { x: 1023, y: 700, pad: 2, ppm: 5 } },
+  ];
+  let rng = 0xdeadbeef;
+  const next = () => ((rng = (Math.imul(rng, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (let i = 0; i < 3000; i++) {
+    const f = faces[i % faces.length], lu = (next() * 1.5 - .25) * f.su, lv = (next() * 1.5 - .25) * f.sv;
+    const r = .001 + next() * 5;
+    const u0 = lu - r * (.8 + next()), u1 = lu + r * (.8 + next());
+    const v0 = lv - r * (.8 + next()), v1 = lv + r * (.8 + next());
+    const args = [f,u0,u1,v0,v1,lu,lv,next() * 2,r,i%2,next(),i%6,next(),next(),next(),next(),next(),i%3?0:1];
+    native.exports.PaintSystem.prototype._pushQuad.call(baseline, ...args);
+    optimized.exports.PaintSystem.prototype._pushQuad.call(changed, ...args);
+  }
+  assert.equal(changed.quads, baseline.quads);
+  assert.ok(changed.quads > 1000);
+  for (const [name] of names) {
+    const a = baseline[name], b = changed[name];
+    assert.equal(Buffer.compare(Buffer.from(a.buffer), Buffer.from(b.buffer)), 0, name + ' GPU vertex bytes');
+  }
+  assert.match(FIXED, /const x0 = \(\(a\.x \+ a\.pad \+ u0 \* a\.ppm\) \/ S\) \* 2 - 1/);
+  assert.doesNotMatch(FIXED, /const px = a\.x \+ a\.pad \+ cu \* a\.ppm/);
+});
 test('production six-layer composition includes paint hotpath with fail-closed build-only adapter',()=>{
   const final=adaptBuildSource('src/world/paint.js',ORIGINAL);
   assert.match(final,/PAINT_GPU_ATTRIBUTE_NAMES/);

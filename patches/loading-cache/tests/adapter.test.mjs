@@ -1,5 +1,9 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import {execFileSync,spawnSync} from 'node:child_process';import path from 'node:path';import os from 'node:os';import crypto from 'node:crypto';
-import {parse} from '../vendor/acorn.mjs';import {adaptCompiledMain,loadingIdentity} from '../adapter.mjs';
+import {parse} from '../vendor/acorn.mjs';import {adaptCompiledMain,loadingIdentity,PRECACHE_BUDGET_BYTES,WORKER_BUDGET_BYTES} from '../adapter.mjs';
+test('production offline core budget is 10 MiB; worker ceiling remains independent',()=>{
+ assert.equal(PRECACHE_BUDGET_BYTES,10*1024*1024);
+ assert.equal(WORKER_BUDGET_BYTES,68*1024);
+});
 const baseline=process.env.INKWAVE_BASELINE_SITE;
 const source=baseline?fs.readFileSync(path.join(baseline,'src/main.js'),'utf8'):null;
 function writableTestTmp(){
