@@ -361,7 +361,7 @@ function ownedRunCoalescingRows() {
         for(let tick=0;tick<90;tick++){
           if([0,9,18].includes(tick)){
             const seq=tick/9+1,team=seq===2?1:0,pos=wall?V((seq-2)*.65,7,0):V((seq-2)*.65,0,0);
-            paint.splat(pos,1.6,team,{seed,kind:seed===.03?'line':seed===.92?'roll':'shot',dir:wall?V(.6,.8,0):V(.6,0,.8),stretch:1.2,__netOrder:{clock:seq,seq,peer:'run-merge-'+team,epoch:'run-merge'}});
+            paint.splat(pos,1.6,team,{seed,kind:seed===.03?'line':seed===.92?'roll':'shot',stretch:wall?V(.6,.8,0):V(.6,0,.8),stretchAmt:1.2,__netOrder:{clock:seq,seq,peer:'run-merge-'+team,epoch:'run-merge'}});
           }
           paint.advanceSimulation(1/60);paint.flush(1/60);
         }
