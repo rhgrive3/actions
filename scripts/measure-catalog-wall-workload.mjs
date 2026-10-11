@@ -4,7 +4,7 @@ const arg=n=>{const i=process.argv.indexOf(n);if(i<0||!process.argv[i+1])throw E
 const sha=x=>crypto.createHash('sha256').update(x).digest('hex');
 const beforeSha=arg('--baseline-sha'),afterSha=arg('--candidate-sha');for(const s of[beforeSha,afterSha])if(!/^[a-f0-9]{40}$/.test(s))throw Error('Immutable full SHA required');if(beforeSha===afterSha)throw Error('Different revisions required');
 const profile=process.argv.includes('--profile')?arg('--profile'):'aggregate';
-const profiles={aggregate:{actors:8,pattern:'continuous'},single_idle:{actors:1,pattern:'idle'},single_continuous:{actors:1,pattern:'continuous'},single_mixed:{actors:1,pattern:'mixed'}};if(!profiles[profile])throw Error('Unknown fixed workload profile');
+const profiles={aggregate:{actors:8,pattern:'continuous'},single_idle:{actors:1,pattern:'idle'},single_continuous:{actors:1,pattern:'continuous'},single_mixed:{actors:1,pattern:'mixed'},single_legacy:{actors:1,pattern:'continuous',legacyPeer:true}};if(!profiles[profile])throw Error('Unknown fixed workload profile');
 const here=path.dirname(fileURLToPath(import.meta.url)),fixture=fs.readFileSync(path.join(here,'fixtures/catalog-wall-workload.mjs'),'utf8');
 const evidence=path.resolve(arg('--evidence-dir'));fs.mkdirSync(evidence,{recursive:true});
 const variants={before:{root:path.resolve(arg('--baseline-root')),site:path.resolve(arg('--baseline-site')),sourceSha:beforeSha},after:{root:path.resolve(arg('--candidate-root')),site:path.resolve(arg('--candidate-site')),sourceSha:afterSha}};
@@ -28,6 +28,7 @@ try{
   const row=await page.evaluate(()=>({value:globalThis.workloadResult,error:globalThis.workloadError}));if(row.error||errors.length)throw Error(row.error||errors.join('\n'));
   const run={mode,ordinal:i,sourceSha:variants[mode].sourceSha,contentHash:variants[mode].manifest.contentHash,...row.value};
   if(mode==='after'&&profile==='aggregate'&&!(run.wireNegotiation?.compressedMessages>0))throw Error('Candidate compression inactive');
+  if(profile==='single_legacy'&&run.wireNegotiation?.compressedMessages!==0)throw Error('Mixed legacy peer unexpectedly received compressed paint');
   if(mode==='before'&&run.wireNegotiation?.compressedMessages!==0)throw Error('Baseline unexpectedly compressed');
   const metrics=['stepSubmit','stepWithDrain','finishWait','cpuBody','cpuGrowth','splatInclusive','paintAdvanceInclusive','flushInclusive','atlasSubmit','wireSerialize','receiveDecode','sendTickInclusive','stepAndWire'];
   if([...run.frames,...run.coldFrames].some(f=>metrics.some(k=>!Number.isFinite(f[k])||f[k]<0)))throw Error('Missing or invalid timing sample '+mode);

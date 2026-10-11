@@ -6,7 +6,7 @@ export async function runWallWorkload(assetRoot, options={}) {
  if(![1,8].includes(actorCount)||!['idle','continuous','mixed'].includes(pattern))throw Error('Invalid fixed workload profile');
  const firing=i=>i>=0&&i<180&&pattern!=='idle'&&(pattern!=='mixed'||i%30<6);
  const [{install},profile]=await Promise.all([import(assetRoot+'/patches/splatoon3/runtime/install.mjs'),fetch(assetRoot+'/patches/splatoon3/profile.json').then(r=>r.json())]);
- const {decodePaintEvents}=await import('/after/patches/splatoon3/runtime/paint-packet-codec.mjs');
+ const {PaintPacketNegotiation}=await import('/after/patches/splatoon3/runtime/paint-packet-codec.mjs');
  const api=install(profile),{THREE,G,Actor,Projectiles,Physics,PaintSystem,NetMatch}=api;
  const [{installMainWeaponCatalogRuntime},{Level},{createLevelMaterial},{DEFAULT_SETTINGS}]=await Promise.all([
   import(assetRoot+'/patches/splatoon3/runtime/main-weapon-catalog.mjs'),import(assetRoot+'/src/world/level.js'),import(assetRoot+'/src/world/levelMaterial.js'),import(assetRoot+'/src/config.js')]);
@@ -29,18 +29,23 @@ export async function runWallWorkload(assetRoot, options={}) {
   _owner(){return this.owner;}_runner(){return this.owner?.weaponRunner;}trigger(){}setVisible(){}setHurt(){}setWeapon(id){this.weapon=id;}aimReady(){return 1;}
   getMuzzle(out){return out.copy(this.owner.pos).add(new THREE.Vector3(0,1.05,0));}
  }
- let expectedRows=null,compressedMessages=0;
+ let expectedRows=null,compressedMessages=0,nm;
+ const peer=new PaintPacketNegotiation();peer.sync('wall-paint-load','b',['a','b']);
+ const controls=[],initialHandshake={messages:0,clientOutboundJsonBytes:0,peerOutboundJsonBytes:0,elapsedMs:0};
+ const recordControl=(from,to,d)=>{const wire=JSON.stringify(d);initialHandshake.messages++;initialHandshake[from==='a'?'clientOutboundJsonBytes':'peerOutboundJsonBytes']+=new TextEncoder().encode(wire).length;controls.push([from,to,JSON.parse(wire)]);return true;};
+ const flushControls=()=>{let budget=32;while(controls.length){if(--budget<0)throw Error('Handshake control loop');const[from,to,d]=controls.shift();if(to==='b'){peer.announce((id,msg)=>recordControl('b',id,msg));peer.control(from,d,(id,msg)=>recordControl('b',id,msg));}else if(to==='a')nm.onMessage(from,d);}};
  let active=false,current=null,totalQuads=0,totalAtlasDraws=0,totalRows=0,eventArrayBytes=0,tickJsonBytes=0,totalMessages=0,maxQueue=0,maxDrops=0;
  const transport={broadcast(msg){if(!active)return;
   const t=performance.now(),wire=JSON.stringify(msg);current.wireSerialize+=performance.now()-t;
-  const r=performance.now(),received=JSON.parse(wire),rows=received.pe?decodePaintEvents(received.pe):received.e;current.receiveDecode+=performance.now()-r;
+  const r=performance.now(),received=JSON.parse(wire),decoded=peer.acceptTick('a',received),rows=decoded?.e;current.receiveDecode+=performance.now()-r;
   if(JSON.stringify(rows)!==expectedRows)throw Error('Codec changed native event rows');
-  if(msg.pe)compressedMessages++;totalMessages++;tickJsonBytes+=new TextEncoder().encode(wire).length;
+  if(msg.pc!==undefined)throw Error('Recurring advertisement in measured tick');if(msg.pe)compressedMessages++;totalMessages++;tickJsonBytes+=new TextEncoder().encode(wire).length;
   if(rows){totalRows+=rows.length;eventArrayBytes+=new TextEncoder().encode(JSON.stringify(rows)).length;}
- },sendTo(){}};
- const actors=[];const nm=new NetMatch({myId:'a',isHost:true,hostId:'a',_members:new Map([['a','A'],['b','B']]),tr:transport},{id:'wall-paint-load',map:'controlled-wall',difficulty:'normal'});G.netm=nm;nm.onMessage('b',{k:'t',ts:0,a:[],pc:['inkwave-paint-dictionary-v1','wall-paint-load']});
+ },sendTo(to,d){return recordControl('a',to,d);}};
+ const actors=[];nm=new NetMatch({myId:'a',isHost:true,hostId:'a',_members:new Map([['a','A'],['b','B'],...(options.legacyPeer?[['legacy','Legacy']]:[])]),tr:transport},{id:'wall-paint-load',map:'controlled-wall',difficulty:'normal'});G.netm=nm;
  nm.match={actors,state:'playing',time:180,follower:false,playing:()=>true};G.match=nm.match;
  for(let i=0;i<actorCount;i++){const a=new Actor({team:0,name:'wall-'+i,weapon:'s3-shooter-short',CharacterClass:DisplayCharacter});a.character.owner=a;Object.assign(a,{owner:'a',nid:i,remote:false,team:0,isLocal:false,form:'kid',grounded:true});a.pos.set((i-(actorCount-1)/2)*3,6,0);a.aimDir.set(0,0,1);a.aimPoint.set(a.pos.x,6,60);actors.push(a);nm.byNid.set(i,a);nm._setupActor(a);}
+ const handshakeStart=performance.now();nm._sendTick();flushControls();initialHandshake.elapsedMs=performance.now()-handshakeStart;const initialControlCount=initialHandshake.messages;
  const wrap=(o,key,metric)=>{if(typeof o[key]!=='function')throw Error('Missing production probe '+key);const old=o[key];o[key]=function(...args){if(!active)return old.apply(this,args);const t=performance.now();try{return old.apply(this,args);}finally{current[metric]=(current[metric]||0)+performance.now()-t;current[metric+'Calls']=(current[metric+'Calls']||0)+1;}};};
  for(const [key,metric]of[['_cpuSplat','cpuBody'],['_advanceSplatOwnership','cpuGrowth'],['splat','splatInclusive'],['advanceSimulation','paintAdvanceInclusive'],['flush','flushInclusive']])wrap(paint,key,metric);
  const push=paint._pushQuad;paint._pushQuad=function(...args){if(active)totalQuads++;return push.apply(this,args);};
@@ -66,7 +71,8 @@ export async function runWallWorkload(assetRoot, options={}) {
  const rendererName=gl.getParameter(gl.RENDERER),ext=gl.getExtension('WEBGL_debug_renderer_info');
  const gridSha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',paint.grid))).map(v=>v.toString(16).padStart(2,'0')).join('');
  const heapAfterWorkload=await globalThis.__probeHeap();
- const result={frames,coldFrames,wireNegotiation:{compressedMessages},heap:{beforeWarmup:heapBeforeWarmup,afterWarmup:heapAfterWarmup,afterWorkload:heapAfterWorkload},counts:{totalQuads,totalAtlasDraws,totalRows,eventArrayBytes,tickJsonBytes,totalMessages,maxQueue,maxDrops,wallCells,gridSha256,floorCells:paint.counts[0]},fixture:{actors:actorCount,pattern,firingFrames:180,settlingFrames:60,warmupFrames:60,simulationHz:60,sendHz:20,atlasSize:4096,cell:.25,viewport:[960,600],seed:.37,paintFaces:level.paintFaces?.length??level.faces.filter(f=>f.paintable).length,quality:'native level material, fixed lighting; no postprocess'},renderer:{name:rendererName,unmasked:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null},limitation:'Controlled paint-workload step, not whole-game frame or hardware GPU FPS. sendTickInclusive includes wire serialization, receiving decode and exact-row verification; it is outside stepWithDrain. stepAndWire adds that isolated send transaction. Receiver is decoding only, gameplay replay correctness is covered by separate tests. cpuGrowth includes nested body work; do not sum nested timing columns.'};
+ if(initialHandshake.messages!==initialControlCount)throw Error('Steady-state handshake traffic');
+ const result={frames,coldFrames,wireNegotiation:{compressedMessages,initialHandshake},heap:{beforeWarmup:heapBeforeWarmup,afterWarmup:heapAfterWarmup,afterWorkload:heapAfterWorkload},counts:{totalQuads,totalAtlasDraws,totalRows,eventArrayBytes,tickJsonBytes,totalMessages,maxQueue,maxDrops,wallCells,gridSha256,floorCells:paint.counts[0]},fixture:{actors:actorCount,pattern,legacyPeer:!!options.legacyPeer,firingFrames:180,settlingFrames:60,warmupFrames:60,simulationHz:60,sendHz:20,atlasSize:4096,cell:.25,viewport:[960,600],seed:.37,paintFaces:level.paintFaces?.length??level.faces.filter(f=>f.paintable).length,quality:'native level material, fixed lighting; no postprocess'},renderer:{name:rendererName,unmasked:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null},limitation:'Controlled paint-workload step, not whole-game frame or hardware GPU FPS. sendTickInclusive includes wire serialization, receiving decode and exact-row verification; it is outside stepWithDrain. stepAndWire adds that isolated send transaction. Receiver is decoding only, gameplay replay correctness is covered by separate tests. cpuGrowth includes nested body work; do not sum nested timing columns.'};
  if(pattern==='idle'){if(wallCells||totalRows||totalQuads||paint.counts[0])throw Error('Idle workload unexpectedly painted');}
  else if(!wallCells||totalRows===0||maxQueue>=512)throw Error('Incomplete or queue-overflow workload '+JSON.stringify(result.counts));
  return result;

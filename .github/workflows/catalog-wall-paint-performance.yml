@@ -13,7 +13,7 @@ on:
         description: Immutable adopted-main baseline commit
         required: true
         type: string
-        default: b49de995c55908700fe9356c64c32f87720f79aa
+        default: 9e865ddbe08c7b4dcde56f87cdfcadf13c175da1
       candidate_sha:
         description: Immutable lossless-codec candidate commit
         required: true
@@ -23,11 +23,15 @@ permissions:
 jobs:
   compare:
     if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'ci/wall-paint-performance-probe' && github.event.pull_request.head.repo.full_name == github.repository)
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [single, aggregate_and_legacy]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      BASELINE_SHA: ${{ inputs.baseline_sha || 'b49de995c55908700fe9356c64c32f87720f79aa' }}
-      CANDIDATE_SHA: ${{ inputs.candidate_sha || '41552bbbb4d832e534a455b710e74751ed61337e' }}
+      BASELINE_SHA: ${{ inputs.baseline_sha || '9e865ddbe08c7b4dcde56f87cdfcadf13c175da1' }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha || '5245fdf7eedeb3ffce420c0630008ba6d5e990e3' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,12 +44,12 @@ jobs:
           JS
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.baseline_sha || 'b49de995c55908700fe9356c64c32f87720f79aa' }}
+          ref: ${{ inputs.baseline_sha || '9e865ddbe08c7b4dcde56f87cdfcadf13c175da1' }}
           path: .wall-baseline
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.candidate_sha || '41552bbbb4d832e534a455b710e74751ed61337e' }}
+          ref: ${{ inputs.candidate_sha || '5245fdf7eedeb3ffce420c0630008ba6d5e990e3' }}
           path: .wall-candidate
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -66,9 +70,14 @@ jobs:
           cp .wall-before-site/inkwave-build.json .wall-performance-evidence/codec/baseline-manifest.json
           cp .wall-after-site/inkwave-build.json .wall-performance-evidence/codec/candidate-manifest.json
           git rev-parse HEAD > .wall-performance-evidence/probe-sha.txt
-      - name: Repeated single-player idle continuous and mixed A/B measurements
+      - name: Repeated negotiated codec A/B with separate initial control cost
         run: |
-          for PROFILE in single_idle single_continuous single_mixed; do
+          if [ "${{ matrix.group }}" = "single" ]; then
+            PROFILES="single_idle single_continuous single_mixed"
+          else
+            PROFILES="aggregate single_legacy"
+          fi
+          for PROFILE in $PROFILES; do
           node scripts/measure-catalog-wall-workload.mjs \
             --baseline-sha "$BASELINE_SHA" --candidate-sha "$CANDIDATE_SHA" \
             --baseline-root .wall-baseline --candidate-root .wall-candidate \
@@ -79,7 +88,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: catalog-wall-paint-performance-${{ inputs.candidate_sha || '41552bbbb4d832e534a455b710e74751ed61337e' }}
+          name: catalog-wall-paint-performance-${{ matrix.group }}-${{ inputs.candidate_sha || '5245fdf7eedeb3ffce420c0630008ba6d5e990e3' }}
           path: .wall-performance-evidence/
           include-hidden-files: true
           if-no-files-found: warn
