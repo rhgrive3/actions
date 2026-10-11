@@ -1,0 +1,58 @@
+name: Analyze published Splatoon 3 stage geometry sources
+on:
+  push:
+    branches: [feat/inkwave-stage25-playable-1130]
+    paths:
+      - ".github/workflows/inkwave-native-stage-source.yml"
+      - "scripts/audit-kitrix-stage-source.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage-source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - {stage: scorch, internal: Vss_Yunohana}
+          - {stage: mahi, internal: Vss_Hiagari04}
+          - {stage: museum, internal: Vss_Pivot03}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Git LFS is available
+        run: git lfs version
+      - name: Fetch pinned public source repository and selected original OBJ data
+        env:
+          INTERNAL: ${{ matrix.internal }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-scratch/native-source
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 --filter=blob:none --no-checkout https://github.com/kirakira-dev/KiTrix.git .ci-scratch/native-source/KiTrix
+          cd .ci-scratch/native-source/KiTrix
+          git sparse-checkout init --cone
+          git sparse-checkout set "stages/$INTERNAL"
+          git checkout --detach 0611f51b35c9736ee986fb2218461e2585b7875e
+          git lfs pull --include="stages/$INTERNAL/*.obj,stages/$INTERNAL/$INTERNAL\_parts/*.obj" --exclude=""
+          test "$(git rev-parse HEAD)" = "0611f51b35c9736ee986fb2218461e2585b7875e"
+      - name: Quantify actual source meshes (not the hand-authored INKWAVE approximations)
+        env:
+          STAGE: ${{ matrix.stage }}
+          INTERNAL: ${{ matrix.internal }}
+        run: |
+          python3 scripts/audit-kitrix-stage-source.py \
+            --root .ci-scratch/native-source/KiTrix \
+            --stage "$STAGE" --internal "$INTERNAL" \
+            --revision 0611f51b35c9736ee986fb2218461e2585b7875e \
+            --out "reports/stage25/native-source/$STAGE.json"
+      - name: Upload geometry statistics only; keep third-party raw assets out of artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-source-${{ matrix.stage }}
+          path: reports/stage25/native-source/
+          if-no-files-found: warn
+          retention-days: 14
