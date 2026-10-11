@@ -9,12 +9,17 @@ export function completeNativeTurfIntro() {
       !game.debug?.unfreeze || typeof game._frame !== 'function') {
     throw new Error('Intro fixture requires an initialized, local native Turf match');
   }
+  // A nominally "playing" state is not sufficient when the game is paused,
+  // frozen, attached to online state, or running a boss scenario.
+  if (match.paused || game.frozen || match.bossMode || G.netm) {
+    throw new Error('Intro fixture requires an unpaused offline Turf match');
+  }
   if (match.state === 'playing') {
     return { method: 'natural', frames: 0, before: 'playing', after: 'playing',
       matchTimeBefore: match.time, matchTimeAfter: match.time };
   }
-  if (match.state !== 'intro' || match.paused || game.frozen || match.bossMode) {
-    throw new Error('Intro fixture must begin at an unpaused offline Turf intro');
+  if (match.state !== 'intro') {
+    throw new Error('Intro fixture must begin at the native Turf intro');
   }
   const stateTBefore = match.stateT;
   const matchTimeBefore = match.time;
