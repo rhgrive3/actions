@@ -171,6 +171,24 @@ try {
         check(Math.abs(state.inkFuel-(150-gearCurve(ap,15,13.05,12)))<1e-8,'Zipcaster browser drain '+ap);
         uniqueGearChecks.push({ability:'specialPower',ap,zipcasterFuel:state.inkFuel});a.reset();
       }
+      const sprinklerPowerChecks=[];
+      {
+        const {sprinklerPhase}=await import('/patches/splatoon3/runtime/kit-sprinkler.mjs');
+        const id=Object.keys(api.WEAPONS).find(k=>api.WEAPONS[k].sub==='sprinkler');check(!!id,'standard Sprinkler kit');
+        let baseVelocity;
+        for(const ap of [0,10,57]){
+          G.projectiles.clear();const a=makeActor(id);G.actors=[a];const l=emptyLoadout();
+          if(ap===10)l[0].main='subPower';if(ap===57)for(const p of l){p.main='subPower';p.subs.fill('subPower');}
+          a.s3.loadout=l;a.s3RefreshGear();a.weaponRunner.reset();a.pos.set(0,0,0);a.aimDir.set(0,0,1);a.vel.set(0,0,0);
+          G.projectiles.throwBomb(a);const b=G.projectiles.bombs.at(-1),spec=b?.s3Resolved?.spec;
+          check(!!spec,'native Sprinkler release '+ap);check(Math.abs(spec.periodFirstFrames-gearCurve(ap,480,630,780))<1e-8,'Sprinkler first period '+ap);
+          check(Math.abs(spec.periodSecondFrames-gearCurve(ap,900,960,1020))<1e-8,'Sprinkler second period '+ap);
+          if(baseVelocity===undefined)baseVelocity=b.vel.z;check(Math.abs(b.vel.z-baseVelocity)<1e-8,'Sprinkler throw distance does not gain AP '+ap);
+          check(sprinklerPhase(600,spec)===(ap===57?0:1),'Sprinkler actual device stage '+ap);
+          sprinklerPowerChecks.push({ap,first:spec.periodFirstFrames,second:spec.periodSecondFrames,velocity:b.vel.z});a.reset();
+        }
+        G.projectiles.clear();
+      }
       const conditionalChecks=[];
       {
         const previous=G.match,a=makeActor('shooter'),e1=makeActor('shooter'),e2=makeActor('shooter');e1.team=e2.team=1;G.actors=[a,e1,e2];
@@ -376,7 +394,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        directSubChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
+        directSubChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
