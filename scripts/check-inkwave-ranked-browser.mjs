@@ -20,12 +20,19 @@ const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>
 relay.on('connection',(ws,req)=>{const u=new URL(req.url,'http://localhost'),code=u.pathname.split('/')[2];let room=rooms.get(code);if(!room)rooms.set(code,room=new RoomDurableObject({},{}));room.handleSession({send:s=>{if(delay&&s.startsWith('m|'))setTimeout(()=>ws.readyState===1&&ws.send(s),delay);else if(ws.readyState===1)ws.send(s);},addEventListener:(n,fn)=>ws.on(n,n==='message'?d=>fn({data:d.toString()}):fn)},u.searchParams.get('name')||'Player');});
 const url=`http://127.0.0.1:${server.address().port}/?relay=${encodeURIComponent('ws://127.0.0.1:'+relay.address().port)}`;
 const errors=[],results=[],contexts=[],pages=[];let browser,browserInfo=null;
-async function boot(){const c=await browser.newContext({viewport:{width:1280,height:800}});contexts.push(c);const p=await c.newPage();pages.push(p);p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));await p.goto(url,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await p.waitForFunction(()=>RG.game?.menus&&RG.s3?.installed&&RG.mode!=='boot',null,{timeout:180000});return p;}
+async function boot(){const c=await browser.newContext({viewport:{width:1280,height:800}});contexts.push(c);await c.tracing.start({screenshots:true,snapshots:true,sources:false});const p=await c.newPage();pages.push(p);p.on('crash',()=>console.error('ranked browser page crashed'));p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));await p.goto(url,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await p.waitForFunction(()=>RG.game?.menus&&RG.s3?.installed&&RG.mode!=='boot',null,{timeout:180000});return p;}
 async function advance(p,n){return p.evaluate(n=>{const g=RG.game,previous=g._skipRender;g._skipRender=true;try{for(let i=0;i<n;i++)g._frame(1/60);}finally{g._skipRender=previous;}RG.renderer.render(RG.scene,RG.camera);},n);}
 async function capture(p,options){
+ const label=path.basename(options.path),started=Date.now();
+ const state=await p.evaluate(async()=>{
+  const r=RG.renderer,canvas=r.domElement,box=canvas.getBoundingClientRect(),before={frame:RG.game._frameN,time:RG.time,matchTime:RG.match?.time};
+  const raf=await Promise.race([new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true)))),new Promise(resolve=>setTimeout(()=>resolve(false),5000))]);
+  return {before,after:{frame:RG.game._frameN,time:RG.time,matchTime:RG.match?.time},raf,frozen:RG.game.frozen,skipRender:RG.game._skipRender,mode:RG.match?.mode,state:RG.match?.state,actors:RG.match?.actors.length,fonts:document.fonts.status,visibility:document.visibilityState,canvas:{width:canvas.width,height:canvas.height,box:{x:box.x,y:box.y,width:box.width,height:box.height},display:getComputedStyle(canvas).display,contextLost:r.getContext().isContextLost()},draw:{...r.info.render},hud:document.querySelector('.iw-ranked-hud')?.textContent};
+ });
+ fs.writeFileSync(path.join(out,label+'.state.json'),JSON.stringify(state,null,2));console.log('ranked capture state',label,JSON.stringify(state));
  const drainMs=await p.evaluate(()=>{const t=performance.now();RG.renderer.getContext().finish();return performance.now()-t;});
  if(drainMs>100)console.log(`GPU queue drained in ${drainMs.toFixed(1)}ms before ${path.basename(options.path)}`);
- return p.screenshot({...options,animations:'disabled'});
+ try {const image=await p.screenshot({...options,animations:'disabled'});console.log('ranked capture complete',label,Date.now()-started);return image;}catch(error){console.error('ranked capture failed',label,Date.now()-started);throw error;}
 }
 try{
  const launchOptions={headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']};
@@ -98,4 +105,4 @@ try{
  }
  throw e;
 }
-finally{for(const c of contexts)await c.close();await browser?.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));}
+finally{for(const [i,c]of contexts.entries()){try{await c.tracing.stop({path:path.join(out,'trace-'+i+'.zip')});}catch(e){console.warn('ranked trace unavailable',i,e.message);}await c.close();}await browser?.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));}

@@ -118,7 +118,7 @@ try {
       G.netm = null;
 
       class DisplayCharacter {
-        constructor(options) { this.weapon = options.weapon; this.root = new THREE.Group(); this.owner = null; }
+        constructor(options) { this.weapon = options.weapon; this.color = new THREE.Color(options.color); this.root = new THREE.Group(); this.owner = null; }
         _owner() { return this.owner; }
         _runner() { return this.owner?.weaponRunner; }
         update() { this.updatedFrames = (this.updatedFrames || 0) + 1; }
@@ -239,6 +239,32 @@ try {
         }
         G.match=previousMatch;G.netm=previousNet;G.time=previousTime;
       }
+      const gearClockChecks=[];
+      {
+        const {NetMatch}=await import('/src/net/netmatch.js');
+        const previousMatch=G.match,previousNet=G.netm,previousPads=G.level.spawnPads,previousTime=G.time;
+        G.level.spawnPads=[new THREE.Vector3(),new THREE.Vector3()];
+        for(const head of ['comeback','openingGambit']){
+          const owner=makeActor('shooter',81),remote=makeActor('shooter',81);owner.owner=remote.owner='clock-owner';
+          let packet;const transport={sendTo(){},broadcast:value=>{packet=JSON.parse(JSON.stringify(value));}};
+          const sender=new NetMatch({myId:'clock-owner',hostId:'clock-owner',isHost:true,tr:transport},{id:'clock-browser'});
+          const receiver=new NetMatch({myId:'clock-viewer',hostId:'clock-owner',isHost:false,tr:transport},{id:'clock-browser'});
+          const match=actors=>({actors,state:'playing',time:180,duration:180,playing:()=>true,canRespawn:()=>false});
+          sender.bind(match([owner]));receiver.bind(match([remote]));G.match=sender.match;G.netm=sender;G.actors=[owner];
+          owner.s3.loadout=emptyLoadout();owner.s3.loadout[0].main=head;owner.s3RefreshGear();
+          if(head==='comeback'){const attacker=makeActor('shooter');attacker.team=1;owner.invuln=0;owner.splat(attacker);owner.respawn();}
+          const advance=(net,a,seconds)=>{for(let i=0;i<seconds*60;i++){G.time+=1/60;net.update(1/60);if(!net.match.paused){net.match.time-=1/60;if(a.remote)net.applyRemote(a,1/60);else a.update(1/60);}}};
+          advance(sender,owner,8);sender._sendTick();G.match=receiver.match;G.netm=receiver;G.actors=[remote];receiver.match.time=sender.match.time;
+          receiver.onMessage('clock-owner',packet);receiver._peer('clock-owner').tr=packet.ts;receiver._sample(remote,packet.ts,0);receiver.applyRemote(remote,1/60);
+          advance(receiver,remote,2);receiver._hostClock(['playing',180]);receiver.s.hostId='clock-viewer';receiver.s.isHost=true;receiver.onLeave('clock-owner',true);
+          check(remote.s3.modifiers.runSpeed>1,'adopted conditional effect '+head);
+          receiver.match.paused=true;advance(receiver,remote,3);receiver.match.paused=false;
+          advance(receiver,remote,head==='comeback'?10:20);
+          check(Math.abs(remote.s3.modifiers.runSpeed-1)<1e-8,'conditional effect expires without host-clock refund '+head);
+          gearClockChecks.push({head,expired:true});
+        }
+        G.match=previousMatch;G.netm=previousNet;G.level.spawnPads=previousPads;G.time=previousTime;
+      }
       const kitChecks=[];
       for(const record of records){
         G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
@@ -302,7 +328,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks,
+        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
