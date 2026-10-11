@@ -1021,7 +1021,12 @@ export function installAllSubs(api,profile={}){
   const nativeThrow=Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb=function(actor,...args){
     const id=actor?.weapon?.sub;
-    if(!ALL_SUB_SPECS[id])return nativeThrow.call(this,actor,...args);
+    // #1188: Sprinkler/Autobomb already have complete source-aware native
+    // Projectiles.bombs lifecycles, collision, paint, and ghost-wire handling.
+    // Do not create a second independent _s3SubObjects authority for them.
+    // Other catalogue-only sub weapons continue through this overlay.
+    if(!ALL_SUB_SPECS[id]||id==='sprinkler'||id==='autobomb')
+      return nativeThrow.call(this,actor,...args);
     if(actor?.remote||!actor?.alive)return undefined;
     if(id==='torpedo'&&hasActiveTorpedo(this,actor))return undefined;
     const runner=actor.weaponRunner;
