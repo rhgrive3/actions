@@ -8,7 +8,10 @@
     "total": 25,
     "exactDirectoryNames": 23,
     "possibleDifferentRevision": 1,
-    "missing": 1
+    "missing": 1,
+    "candidateRootObjTotalBytes": 1379806161,
+    "rootObjLfsPointersInspected": 24,
+    "rootObjDownloadedAndMeasured": 3
   },
   "entries": [
     {
@@ -23,7 +26,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Yunohana/Vss_Yunohana.obj",
+        "objectBytes": 40126181,
+        "objectSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "verification": "downloaded-and-sha256-verified-in-actions"
+      }
     },
     {
       "gameId": 2,
@@ -37,7 +46,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_District00/Vss_District00.obj",
+        "objectBytes": 126375025,
+        "objectSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 3,
@@ -51,7 +66,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Yagara/Vss_Yagara.obj",
+        "objectBytes": 41619132,
+        "objectSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 4,
@@ -65,7 +86,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Temple01/Vss_Temple01.obj",
+        "objectBytes": 43263289,
+        "objectSha256": "a32cff26b1a142d31e7658ebc48f213059b3ea42e86d32ed12cb80de5b03d046",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 6,
@@ -79,7 +106,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Scrap01/Vss_Scrap01.obj",
+        "objectBytes": 44675591,
+        "objectSha256": "11cecf76146211ac7fff04394763b0a1d883605f78136b4aee59b8e8dd076d23",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 10,
@@ -93,7 +126,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Kaisou04/Vss_Kaisou04.obj",
+        "objectBytes": 30169968,
+        "objectSha256": "acc6983d529932832fbd9c5bb54c5e96fe43ccf3c9aaf5c21d3ca653af8359de",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 11,
@@ -107,7 +146,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Pivot03/Vss_Pivot03.obj",
+        "objectBytes": 41209929,
+        "objectSha256": "ffe207e9b3d3eb4fc482ca45887fea1f1a131fdb2e2a0403535e1f281453bad1",
+        "verification": "downloaded-and-sha256-verified-in-actions"
+      }
     },
     {
       "gameId": 12,
@@ -121,7 +166,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Hiagari04/Vss_Hiagari04.obj",
+        "objectBytes": 29497521,
+        "objectSha256": "fc8f7233063cdbe7b2bd821b30cbe60e94e7a20e6a5d60ce00ce9b272232d561",
+        "verification": "downloaded-and-sha256-verified-in-actions"
+      }
     },
     {
       "gameId": 13,
@@ -135,7 +186,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Upland03/Vss_Upland03.obj",
+        "objectBytes": 34476411,
+        "objectSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 14,
@@ -149,7 +206,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Nagasaki03/Vss_Nagasaki03.obj",
+        "objectBytes": 31263599,
+        "objectSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 15,
@@ -163,7 +226,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Line03/Vss_Line03.obj",
+        "objectBytes": 65317265,
+        "objectSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 16,
@@ -177,7 +246,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Carousel03/Vss_Carousel03.obj",
+        "objectBytes": 25930345,
+        "objectSha256": "0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 7,
@@ -191,7 +266,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_BigSlope00/Vss_BigSlope00.obj",
+        "objectBytes": 63031122,
+        "objectSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 9,
@@ -205,7 +286,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Jyoheki03/Vss_Jyoheki03.obj",
+        "objectBytes": 102761497,
+        "objectSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 5,
@@ -219,7 +306,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Factory00/Vss_Factory00.obj",
+        "objectBytes": 59818484,
+        "objectSha256": "9d7c261d324d514148499d2ab804b49b05e0394bdc74e46b6e6afb0fff664d3b",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 18,
@@ -233,7 +326,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Pillar03/Vss_Pillar03.obj",
+        "objectBytes": 63601709,
+        "objectSha256": "8b7a26e0f71ed69c055e42ead154bd34bc08532ba89a95bea3a813766716ac1a",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 8,
@@ -247,7 +346,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Section01/Vss_Section01.obj",
+        "objectBytes": 38771334,
+        "objectSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 17,
@@ -261,7 +366,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Wave03/Vss_Wave03.obj",
+        "objectBytes": 29146955,
+        "objectSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 19,
@@ -275,7 +386,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Spider00/Vss_Spider00.obj",
+        "objectBytes": 100887693,
+        "objectSha256": "6f0c27703e7fbe5a02e442431ee88d811ac794849966a82a27b1f96b2c4578c7",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 20,
@@ -289,7 +406,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Twist00/Vss_Twist00.obj",
+        "objectBytes": 49575330,
+        "objectSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 21,
@@ -303,7 +426,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Cross00/Vss_Cross00.obj",
+        "objectBytes": 99915303,
+        "objectSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 22,
@@ -317,7 +446,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Ruins03/Vss_Ruins03.obj",
+        "objectBytes": 123355936,
+        "objectSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 23,
@@ -331,7 +466,13 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Propeller00/Vss_Propeller00.obj",
+        "objectBytes": 30982635,
+        "objectSha256": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+        "verification": "lfs-pointer-metadata-only"
+      }
     },
     {
       "gameId": 24,
@@ -359,7 +500,14 @@
       "meshBytesRetrieved": false,
       "geometryValidated": false,
       "collisionValidated": false,
-      "rulesValidated": false
+      "rulesValidated": false,
+      "lfsRootObj": {
+        "sourcePath": "stages/Vss_Crank02/Vss_Crank02.obj",
+        "objectBytes": 64033907,
+        "objectSha256": "17f3c5645505f75d58b99d5333cb8d2f710e230a3278c18a64e47258c2ec942c",
+        "verification": "lfs-pointer-metadata-only"
+      }
     }
-  ]
+  ],
+  "sourceIndexNote": "Root OBJ are sometimes split into parts that duplicate the whole-stage model. Object sizes are public Git LFS pointer metadata, not all 24 bytes downloaded. Third-party model copyright and 11.3.0 fidelity are NOT validated."
 }
