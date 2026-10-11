@@ -171,6 +171,15 @@ try {
         check(Math.abs(state.inkFuel-(150-gearCurve(ap,15,13.05,12)))<1e-8,'Zipcaster browser drain '+ap);
         uniqueGearChecks.push({ability:'specialPower',ap,zipcasterFuel:state.inkFuel});a.reset();
       }
+      const accelerationChecks=[];
+      for(const id of ['s3-shooter-short','s3-shooter-first'])for(const squid of [false,true])for(const ready of [false,true]){
+        const a=makeActor(id);a.s3.loadout=emptyLoadout();a.s3RefreshGear();
+        a.form=squid?'squid':'kid';a.submerged=squid;a.grounded=true;a.intent.move.set(0,0,1);a.intent.sub=ready;
+        a._horizontal(1/60,squid,false);
+        const expected=ready?1.2:(squid&&id==='s3-shooter-short'?.9:.6);
+        check(Math.abs(a.vel.z-expected)<1e-8,id+' grounded acceleration '+squid+' '+ready);
+        accelerationChecks.push({id,squid,ready,delta:a.vel.z});
+      }
       const conditionalChecks=[];
       {
         const previous=G.match,a=makeActor('shooter'),e1=makeActor('shooter'),e2=makeActor('shooter');e1.team=e2.team=1;G.actors=[a,e1,e2];
@@ -376,7 +385,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        directSubChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
+        directSubChecks, accelerationChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
