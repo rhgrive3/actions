@@ -121,6 +121,7 @@ try {
         constructor(options) { this.weapon = options.weapon; this.root = new THREE.Group(); this.owner = null; }
         _owner() { return this.owner; }
         _runner() { return this.owner?.weaponRunner; }
+        update() { this.updatedFrames = (this.updatedFrames || 0) + 1; }
         trigger() {}
         setVisible() {}
         setHurt() {}
@@ -177,6 +178,7 @@ try {
         a.s3.loadout=emptyLoadout();a.s3.loadout[0].main='tenacity';a.s3RefreshGear();a.special=0;
         for(let frame=0;frame<60;frame++)a.update(1/60);
         check(Math.abs(a.special-3.24)<1e-8,'Tenacity installed Actor update');
+        check(a.character.updatedFrames===60,'Tenacity fixture reaches display update for all native frames');
         conditionalChecks.push({ability:'tenacity',gauge:a.special});
         a.s3.loadout[0].main='lastDitchEffort';G.match.mode='zones';G.match.time=20;a.s3RefreshGear();
         check((a.s3.abilityPoints.inkSaverMain||0)===0,'uninstalled ranked feature stays inactive');

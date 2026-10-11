@@ -38,3 +38,18 @@ test('Tenacity owner gauge crosses real JSON snapshots without remote duplicate 
  f.G.actors=[b,e1,e2];f.G.match={state:'playing',playing:()=>true,actors:f.G.actors};
  assert.equal(b.remote,true);for(let i=0;i<60;i++)b.update(1/60);near(b.special,before);assert.equal(b.stats.turf,0);
 });
+
+test('browser display fixture fulfills the actual Actor finish-frame contract',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const script=await readFile(new URL('../../../scripts/check-inkwave-catalog-browser.mjs',import.meta.url),'utf8');
+ const block=script.slice(script.indexOf('      class DisplayCharacter'),script.indexOf('      const makeActor'));
+ const f=await fixture({fullRuntime:true,productionComposition:true});
+ const Display=Function('THREE',block+';return DisplayCharacter;')(f.THREE);
+ const a=new f.Actor({team:0,name:'browser-contract',weapon:'shooter',CharacterClass:Display});a.character.owner=a;a.grounded=true;
+ const enemies=[f.make(),f.make()];for(const e of enemies)e.team=1;
+ f.G.actors=[a,...enemies];f.G.match={state:'playing',playing:()=>true,actors:f.G.actors,time:180,duration:180};
+ f.G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};f.G.physics=new f.Physics(f.G.level);
+ a.s3.loadout=emptyLoadout();a.s3.loadout[0].main='tenacity';a.s3RefreshGear();a.special=0;
+ for(let frame=0;frame<60;frame++)a.update(1/60);
+ near(a.special,3.24);assert.equal(a.character.updatedFrames,60);
+});
