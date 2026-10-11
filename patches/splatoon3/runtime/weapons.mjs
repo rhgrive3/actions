@@ -2,7 +2,7 @@ import { installWeaponAccuracy, withShotBias } from './weapon-accuracy.mjs';
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { DualiesAccuracy } from './dualies-accuracy.mjs';
-import { shooterMovementRemaining, shooterMovementSpeed } from './shooter-movement.mjs';
+import { shooterMovementActive, shooterMovementRemaining } from './shooter-movement.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
 import { installFinalDamage, damageGroupId, withFinalDamageGroup } from './final-damage.mjs';
@@ -423,7 +423,7 @@ export function installWeapons(context, profile) {
   const nativeMoveSpeed = WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed = function () {
     if (this.a?.weapon?.kind === 'shooter')
-      return shooterMovementSpeed(this.s3ShooterMoveRemaining, PLAYER.runSpeed, this.a.weapon.moveSpeedFiring);
+      return shooterMovementActive(this) ? this.a.weapon.moveSpeedFiring : PLAYER.runSpeed;
     return nativeMoveSpeed.call(this);
   };
   WeaponRunner.prototype.reset = function (...args) {

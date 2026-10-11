@@ -90,13 +90,25 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     spatter: program(revertedShader(6, 9)), drips: program(revertedShader(9, 12)) };
   const face = { atlas: { x: 0, y: 0, pad: 2, ppm }, su: 32, sv: 32, nu: 128, nv: 128, cu: 0.25, cv: 0.25,
     grid: 0, wall: false, turf: true };
-  for (const wall of [false, true]) for (const kind of [0, 1, 2, 3, 4, 5]) for (const seed of [0.37, 0.72, 0.99999]) for (const tn of [0.6, 1.1, 3]) {
+  // #1165: exercise the *actual WebGL shader and CPU ownership* for Roller
+  // body-kind 6 too. Its final band is stable only after growth (tn >= 1):
+  // source-side CPU/Judd and emitted fragment need to agree at those ticks.
+  // pi/60 is the published witness where the old CPU border skipped visible ink.
+  for (const wall of [false, true]) for (const kind of [0, 1, 2, 3, 4, 5, 6])
+    for (const seed of (kind === 6 ? [0.37, 0.72, 0.99999, Math.PI / 60] : [0.37, 0.72, 0.99999]))
+      for (const tn of (kind === 6 ? [1.1, 3] : [0.6, 1.1, 3])) {
     paint.clear(); face.wall = wall;
     const order = paint._paintOrderId({ tick: 1, peer: 'mask-probe', seq: 1 });
-    const sa = kind === 1 ? 1.2 : 0, sdu = sa ? 0.6 : 0, sdv = sa ? 0.8 : 0;
+    const sa = kind === 1 ? 1.2 : kind === 6 ? 1 : 0, sdu = sa ? 0.6 : 0, sdv = sa ? 0.8 : 0;
     const g = { R: 2.7, team: 0, seed, kind, age: tn, dur: 1, dripDur: wall ? 3 : 0,
       entries: [face, 16, 20, 0, sdu, sdv, sa], paintOrder: order, netOrderId: order };
-    paint._advanceSplatOwnership(g);
+    // Roller body has no ancillary ink: use the production CPU body path.
+    if (kind === 6) {
+      const claimed = paint._cpuSplat(face, 16, 20, g.R, 0, seed, sdu, sdv, sa, kind, order);
+      check(claimed > 0, `Roller CPU band must claim turf: ${JSON.stringify({ wall, seed, tn })}`);
+    } else {
+      paint._advanceSplatOwnership(g);
+    }
     const dT = wall ? 1 - Math.pow(1 - Math.min(1, tn / 3), 2.2) : 1;
     const count = paint._paintOrderRuns(face, order, 0, 32, 0, 32), runs = paint._paintOrderRunScratch.slice(0, count * 4);
     const points = []; let cells = 0;
@@ -128,13 +140,40 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
         if (!familySeen) familyUnsupported[name]++;
       }
     }
-    rows.push({ wall, kind, seed, tn, cells, unsupported, negativeUnsupported, familyUnsupported });
+    // #1165 was a *GPU paints more than CPU scores* bug. Checking only
+    // CPU-owned cells would miss that exact regression: probe every dry cell
+    // near the Roller footprint for solid native GPU ink as well.
+    let gpuOnlySolid = 0, firstGpuOnly = null;
+    if (kind === 6) {
+      const dryPoints = [], dryCells = [];
+      for (let j = 0; j < face.nv; j++) for (let i = 0; i < face.nu; i++) {
+        const x = (i + 0.5) * face.cu, y = (j + 0.5) * face.cv;
+        if (Math.abs(x - 16) > g.R * 1.25 || Math.abs(y - 20) > g.R * 1.25) continue;
+        if (paint.grid[face.grid + j * face.nu + i]) continue;
+        dryPoints.push(x - 16, y - 20, 0);
+        dryCells.push([i, j]);
+      }
+      check(dryCells.length > 0, 'Roller GPU-only probe must sample unclaimed turf');
+      const dryMask = query(positive, dryPoints, args[1], args[2], args[3]);
+      for (let i = 0; i < dryCells.length; i++) if (dryMask[i * 4] === 255) {
+        gpuOnlySolid++;
+        firstGpuOnly ||= dryCells[i];
+      }
+      if (seed === Math.PI / 60) {
+        // Old GPU-only edge witness: across=0.73*r at q.along=0.
+        const across = 0.73 * g.R;
+        const witness = query(positive, [-sdv * across, sdu * across, 0], args[1], args[2], args[3]);
+        check(witness[0] === 255, 'published pi/60 Roller visible-band witness must remain covered');
+      }
+    }
+    rows.push({ wall, kind, seed, tn, cells, unsupported, gpuOnlySolid, negativeUnsupported, familyUnsupported });
     check(unsupported === 0, `CPU owns invisible GPU cells: ${JSON.stringify(rows.at(-1))}`);
+    check(gpuOnlySolid === 0, `GPU owns visibly solid dry Roller cells: ${JSON.stringify({ ...rows.at(-1), firstGpuOnly })}`);
   }
   for (const wall of [false, true]) check(rows.some(row => row.wall === wall && row.negativeUnsupported > 0), `old-sine ${wall ? 'wall' : 'floor'} negative control must fail`);
   for (const name of Object.keys(families)) check(rows.some(row => row.familyUnsupported[name] > 0 && (name !== 'drips' || row.wall)),
     `independently reverted ${name} must expose unsupported cells`);
-  check(rows.length === 108, 'all shape kinds, seeds, wall/floor and growth phases exercised');
+  check(rows.length === 124, 'six original kinds plus final-growth Roller body: real WebGL and CPU cells exercised');
   const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail);
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
