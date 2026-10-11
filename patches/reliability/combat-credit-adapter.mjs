@@ -18,8 +18,8 @@ export function adaptCombatCredit(rel, code) {
   // Admit terminal attribution on the actual sender's channel before queuing.
   // Keep the native queue and playback call anchors for the replication adapter.
   patch('    // events → the sender\'s queue (played on its timeline)',
-    '    if (d.e) d = { ...d, e: d.e.filter(e => e[1] !== "ev" || e[2] !== "splatted" ||\n' +
-    '      (e[3]?.victimOwner === from && this.byNid.get(e[3]?.victim?.n)?.owner === from)) };\n' +
+    '    if (d.e) d = { ...d, e: d.e.filter(e => Array.isArray(e) && (e[1] !== "ev" || e[2] !== "splatted" ||\n' +
+    '      (e[3]?.victimOwner === from && this.byNid.get(e[3]?.victim?.n)?.owner === from))) };\n' +
     '    // events → the sender\'s queue (played on its timeline)', 'terminal sender');
   patch('    const a = e.actor || e.victim;\n    if (!a || !a.remote) return;',
     '    const a = e.actor || e.victim;\n    if (!a || !a.remote) return;\n' +
