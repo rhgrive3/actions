@@ -203,10 +203,11 @@ export class ProjectileVisualRuntime {
     // guarantee all overflow becomes visible or improve capacity by itself.
     for(let i=0;i<this.capacity*2;i++)this.historyPool.push(new ProjectileHistory());
     for(let i=0;i<this.capacity;i++)this.trailPool.push({history:null,radius:0,endAge:0,birth:0,frames:0,r:0,g:0,b:0});
-    this.stats={historiesCreated:this.historyPool.length,samplesRecorded:0,vertexCount:0,triangles:0,linkedRollerPairs:0,drawCalls:0};
+    this.stats={historiesCreated:this.historyPool.length,samplesRecorded:0,vertexCount:0,triangles:0,linkedRollerPairs:0,historicalRollerPairs:0,drawCalls:0};
     this.sample=new Float64Array(6);this.sample2=new Float64Array(6);
     this.centers=new Float64Array(RINGS*6);this.widths=new Float64Array(RINGS);
     this.thicknesses=new Float64Array(RINGS);this.cross=new Float64Array(9);
+    this.membraneFrames=new Float64Array(RINGS*9);
     this.bodyColors=new Float64Array(this.capacity*3);this.bodyColors.fill(NaN);
     this.renderRecords=new Array(this.capacity);this.renderRecordCount=0;
     this.groupIds=new Float64Array(this.capacity);this.groupHeads=new Int32Array(this.capacity);
@@ -253,7 +254,7 @@ export class ProjectileVisualRuntime {
       auxiliaryTypedBytes:this.sample.byteLength+this.sample2.byteLength+this.centers.byteLength+
         this.widths.byteLength+this.thicknesses.byteLength+this.cross.byteLength+this.groupIds.byteLength+
         this.groupHeads.byteLength+this.groupNext.byteLength+this.peerGroupBirths.byteLength+this.peerGroupIds.byteLength+
-        this.bodyColors.byteLength};
+        this.bodyColors.byteLength+this.membraneFrames.byteLength};
   }
   reset(p) {
     if(p._iwVisualHistory){this.historyPool.push(p._iwVisualHistory);p._iwVisualHistory=null;}
@@ -261,6 +262,7 @@ export class ProjectileVisualRuntime {
     p._iwVisualBeforeX=p._iwVisualBeforeY=p._iwVisualBeforeZ=0;
     p._iwVisualBeforeVX=p._iwVisualBeforeVY=p._iwVisualBeforeVZ=0;
     p._iwVisualKind=null;p._iwVisualOrdinal=null;p._iwVisualGroup=0;p._iwVisualLastNetStep=-1;
+    p._iwVisualEpoch=NaN;p._iwVisualRenderStart=0;p._iwVisualRenderAge=0;
   }
   handles(p) { return !!p._iwVisualHistory && p._iwVisualKind!=='legacy'; }
   ensureBirth(p) {
@@ -271,7 +273,7 @@ export class ProjectileVisualRuntime {
     const kind=p._iwVisualKind || projectileVisualKind(p);p._iwVisualKind=kind;
     if(kind==='legacy')return false;
     const h=this.historyPool.pop();if(!h)return false;
-    h.reset();p._iwVisualHistory=h;p._iwVisualNextSample=visualAge(p)+DT;
+    h.reset();p._iwVisualHistory=h;p._iwVisualNextSample=visualAge(p)+DT;this._historyEpoch(p);
     h.record(visualAge(p),p.pos.x,p.pos.y,p.pos.z,p.vel.x,p.vel.y,p.vel.z);this.stats.samplesRecorded++;
     this._group(p);return true;
   }
@@ -297,6 +299,14 @@ export class ProjectileVisualRuntime {
       p._iwVisualGroup=this.peerGroupIds[i]=++this.groupSequence;
     }
   }
+  _historyEpoch(p) {
+    // Histories use projectile-local age. Only siblings with the same actual
+    // birth clock can share those samples; a delayed or later volley must not
+    // connect its age-zero muzzle to an older trajectory at the same age.
+    p._iwVisualEpoch=p.ghost&&p._netPeer&&Number.isFinite(p._netBornTick)?p._netBornTick/HISTORY_HZ:
+      p.ghost&&p._netPeer&&Number.isFinite(p._netBorn)?p._netBorn:
+      finite(this.system.inkFlight?.time)-visualAge(p);
+  }
   beginStep(p) {
     p._iwVisualBeforeAge=visualAge(p);p._iwVisualBeforeX=p.pos.x;p._iwVisualBeforeY=p.pos.y;p._iwVisualBeforeZ=p.pos.z;
     p._iwVisualBeforeVX=p.vel.x;p._iwVisualBeforeVY=p.vel.y;p._iwVisualBeforeVZ=p.vel.z;
@@ -314,7 +324,7 @@ export class ProjectileVisualRuntime {
     let h=p._iwVisualHistory;
     if(!h) {
       h=this.historyPool.pop();if(!h)return;
-      h.reset();p._iwVisualHistory=h;
+      h.reset();p._iwVisualHistory=h;this._historyEpoch(p);
       // Delayed Slosher birth refreshes the muzzle inside its gameplay wrapper;
       // p.prev is the authoritative start after that refresh, not the enqueue pose.
       const birth=Math.max(0,visualAge(p)-Math.min(dt,visualAge(p)));
@@ -346,7 +356,7 @@ export class ProjectileVisualRuntime {
     const kind=p._iwVisualKind||projectileVisualKind(p);p._iwVisualKind=kind;
     if(kind==='legacy')return;
     let h=p._iwVisualHistory;
-    if(!h){h=this.historyPool.pop();if(!h)return;h.reset();p._iwVisualHistory=h;
+    if(!h){h=this.historyPool.pop();if(!h)return;h.reset();p._iwVisualHistory=h;this._historyEpoch(p);
       h.record(previousAge,p.prev.x,p.prev.y,p.prev.z,p._iwVisualBeforeVX,p._iwVisualBeforeVY,p._iwVisualBeforeVZ);
       this.stats.samplesRecorded++;
     }
@@ -478,6 +488,7 @@ export class ProjectileVisualRuntime {
       if(length<min)start=Math.max(h.oldestAge,age-solid);
     }
     const color=p.owner?.color, unit=p.fidelityRollerUnit||sourceOf(p)?.vertical?.[p.catalog?.descriptor?.unit];
+    p._iwVisualRenderStart=start;p._iwVisualRenderAge=age;
     this._body(h,start,age,radius,kind,finite(color?.r,1),finite(color?.g,1),finite(color?.b,1),finite(p.seed),
       finite(unit?.FourPetalsCenterRadiusRate),finite(unit?.FourPetalsPetalRadiusRate));
     if(kind==='roller-horizontal'&&this.renderRecordCount<this.capacity&&p._iwVisualGroup) {
@@ -487,21 +498,100 @@ export class ProjectileVisualRuntime {
       this.groupIds[slot]=p._iwVisualGroup;this.groupNext[i]=this.groupHeads[slot];this.groupHeads[slot]=i;
     }
   }
+  _rollerMembrane(p,q,radius,start,end) {
+    const h=p._iwVisualHistory,k=q._iwVisualHistory,c=this.centers,w=this.widths,t=this.thicknesses,f=this.membraneFrames;
+    let runStart=-1,bestStart=-1,bestEnd=-1;
+    // The same authored .6..3 source-radius distance bound is applied to real
+    // shared-time positions, rather than only today's separated head centers.
+    // Retain the latest contiguous close interval; no bridge spans a gap that
+    // was rejected, an unrelated volley or a different birth clock.
+    for(let ring=0;ring<RINGS;ring++) {
+      const age=start+(end-start)*ring/(RINGS-1);h.sample(age,this.sample);k.sample(age,this.sample2);
+      const dx=this.sample2[0]-this.sample[0],dy=this.sample2[1]-this.sample[1],dz=this.sample2[2]-this.sample[2];
+      const gap2=dx*dx+dy*dy+dz*dz;
+      if(gap2>=radius*radius*.36&&gap2<=radius*radius*9) {
+        if(runStart<0)runStart=ring;
+        if(ring>runStart){bestStart=runStart;bestEnd=ring;}
+      } else runStart=-1;
+    }
+    if(bestStart<0)return false;
+    const span=end-start;end=start+span*bestEnd/(RINGS-1);start+=span*bestStart/(RINGS-1);
+    for(let ring=0;ring<RINGS;ring++) {
+      const age=start+(end-start)*HISTORY_FRACTION[ring],o=ring*6,j=ring*9;
+      h.sample(age,this.sample);k.sample(age,this.sample2);
+      const dx=this.sample2[0]-this.sample[0],dy=this.sample2[1]-this.sample[1],dz=this.sample2[2]-this.sample[2];
+      const gap=sqrt(dx*dx+dy*dy+dz*dz);
+      // A curved interpolation can have a different gap between probe times.
+      // Fail closed instead of rendering vertices outside the distance bound.
+      if(gap<radius*.6-EPS||gap>radius*3+EPS)return false;
+      const rx=dx/gap,ry=dy/gap,rz=dz/gap;
+      let vx=this.sample[3]+this.sample2[3],vy=this.sample[4]+this.sample2[4],vz=this.sample[5]+this.sample2[5];
+      let nx=vy*rz-vz*ry,ny=vz*rx-vx*rz,nz=vx*ry-vy*rx;
+      let nl=sqrt(nx*nx+ny*ny+nz*nz);
+      if(nl<EPS){nx=-ry;ny=rx;nz=0;nl=sqrt(nx*nx+ny*ny);if(nl<EPS){nx=1;ny=0;nl=1;}}
+      nx/=nl;ny/=nl;nz/=nl;
+      // Across follows the actual sibling separation; thickness is normal to
+      // that separation and the actual mean flight tangent. Its .08 radius
+      // coefficient and closed ellipse topology are authored INKWAVE choices,
+      // not recovered Nintendo geometry or a physical surface-tension formula.
+      f[j]=rx;f[j+1]=ry;f[j+2]=rz;f[j+3]=nx;f[j+4]=ny;f[j+5]=nz;
+      f[j+6]=ry*nz-rz*ny;f[j+7]=rz*nx-rx*nz;f[j+8]=rx*ny-ry*nx;
+      c[o]=(this.sample[0]+this.sample2[0])*.5;c[o+1]=(this.sample[1]+this.sample2[1])*.5;c[o+2]=(this.sample[2]+this.sample2[2])*.5;
+      c[o+3]=f[j+6];c[o+4]=f[j+7];c[o+5]=f[j+8];
+      const cap=SHAPE_PROFILES.shooter.width[ring];w[ring]=gap*.5*cap;t[ring]=radius*.08*cap;
+    }
+    const color=p.owner.color;
+    this._writeMembrane(c,w,t,f,color.r,color.g,color.b);
+    this.stats.historicalRollerPairs++;return true;
+  }
+  _writeMembrane(c,w,t,f,r,g,b) {
+    const pa=this.position.array,na=this.normal.array,ca=this.color.array,body=this.bodies++,base=body*BODY_VERTICES;
+    const co=body*3,colors=this.bodyColors;
+    if(colors[co]!==r||colors[co+1]!==g||colors[co+2]!==b) {
+      colors[co]=r;colors[co+1]=g;colors[co+2]=b;
+      const start=base*3,end=(base+BODY_VERTICES)*3;
+      for(let vertex=start;vertex<end;vertex+=3){ca[vertex]=r;ca[vertex+1]=g;ca[vertex+2]=b;}
+      this.colorDirtyStart=min(this.colorDirtyStart,start);this.colorDirtyEnd=max(this.colorDirtyEnd,end);
+    }
+    for(let ring=0;ring<RINGS;ring++) {
+      const before=ring>0?ring-1:0,after=ring<RINGS-1?ring+1:RINGS-1,o=ring*6,j=ring*9,prev=before*6,next=after*6,pj=before*9,nj=after*9;
+      const rx=f[j],ry=f[j+1],rz=f[j+2],nx=f[j+3],ny=f[j+4],nz=f[j+5],width=w[ring],thin=t[ring];
+      for(let side=0;side<SIDES;side++) {
+        const cs=SECTION_COS[side],sn=SECTION_SIN[side],v=(base+ring*SIDES+side)*3;
+        pa[v]=c[o]+rx*width*cs+nx*thin*sn;pa[v+1]=c[o+1]+ry*width*cs+ny*thin*sn;pa[v+2]=c[o+2]+rz*width*cs+nz*thin*sn;
+        // Differentiate the stored swept surface, including rotating frames,
+        // so beauty, shadow and override-normal passes see the same geometry.
+        const ax=-rx*width*sn+nx*thin*cs,ay=-ry*width*sn+ny*thin*cs,az=-rz*width*sn+nz*thin*cs;
+        const bx=c[next]-c[prev]+cs*(f[nj]*w[after]-f[pj]*w[before])+sn*(f[nj+3]*t[after]-f[pj+3]*t[before]);
+        const by=c[next+1]-c[prev+1]+cs*(f[nj+1]*w[after]-f[pj+1]*w[before])+sn*(f[nj+4]*t[after]-f[pj+4]*t[before]);
+        const bz=c[next+2]-c[prev+2]+cs*(f[nj+2]*w[after]-f[pj+2]*w[before])+sn*(f[nj+5]*t[after]-f[pj+5]*t[before]);
+        let mx=ay*bz-az*by,my=az*bx-ax*bz,mz=ax*by-ay*bx,nl=sqrt(mx*mx+my*my+mz*mz);
+        if(nl<EPS){const sign=ring<RINGS/2?-1:1;mx=f[j+6]*sign;my=f[j+7]*sign;mz=f[j+8]*sign;nl=1;}
+        na[v]=mx/nl;na[v+1]=my/nl;na[v+2]=mz/nl;
+      }
+    }
+  }
   _rollerLinks(alpha) {
-    // Only adjacent siblings of the same real volley; distance-bounded bridges
-    // split as trajectories separate. This is visual surface tension, not paint,
-    // collision or an extracted Roller mesh/equation.
+    // Source-aware history ownership; membrane shape is an authored visual
+    // reconstruction only. No collision, paint, RNG or packet work occurs here.
     for(let slot=0;slot<this.capacity;slot++)for(let i=this.groupHeads[slot];i>=0;i=this.groupNext[i]) {
       const p=this.renderRecords[i],pi=p._iwVisualOrdinal ?? p.catalog?.descriptor?.index;
       for(let j=this.groupNext[i];j>=0;j=this.groupNext[j]) {
         const q=this.renderRecords[j],qi=q._iwVisualOrdinal ?? q.catalog?.descriptor?.index;
+        if(Math.abs(p._iwVisualEpoch-q._iwVisualEpoch)>EPS)continue;
         if(Number.isFinite(pi)&&Number.isFinite(qi)&&Math.abs(pi-qi)!==1)continue;
         if(!Number.isFinite(pi)&&!Number.isFinite(qi)&&p.fidelityRollerUnitIndex!==q.fidelityRollerUnitIndex)continue;
         const age=renderAge(p,alpha),qage=renderAge(q,alpha);
         p._iwVisualHistory.sample(age,this.sample);q._iwVisualHistory.sample(qage,this.sample2);
         const distance=Math.hypot(this.sample[0]-this.sample2[0],this.sample[1]-this.sample2[1],this.sample[2]-this.sample2[2]);
         const radius=Math.min(projectileDrawRadius(p,age),projectileDrawRadius(q,qage));
-        if(!(radius>0)||distance<radius*.6||distance>radius*3||this.bodies>=this.capacity)continue;
+        if(!(radius>0)||this.bodies>=this.capacity)continue;
+        const start=max(p._iwVisualRenderStart,q._iwVisualRenderStart),end=min(age,qage);
+        if(end>start+EPS) {
+          if(this._rollerMembrane(p,q,radius,start,end)){this.stats.linkedRollerPairs++;break;}
+          continue;
+        }
+        if(distance<radius*.6||distance>radius*3)continue;
         const c=this.centers,w=this.widths,t=this.thicknesses;
         const dx=this.sample2[0]-this.sample[0],dy=this.sample2[1]-this.sample[1],dz=this.sample2[2]-this.sample[2];
         for(let ring=0;ring<RINGS;ring++){const u=ring/(RINGS-1),o=ring*6;
@@ -515,7 +605,7 @@ export class ProjectileVisualRuntime {
   }
   draw(alpha=1) {
     if(this.disposed)return;
-    alpha=clamp(finite(alpha,1));this.lastAlpha=alpha;this.bodies=0;this.renderRecordCount=0;this.stats.linkedRollerPairs=0;
+    alpha=clamp(finite(alpha,1));this.lastAlpha=alpha;this.bodies=0;this.renderRecordCount=0;this.stats.linkedRollerPairs=0;this.stats.historicalRollerPairs=0;
     this.colorDirtyStart=this.capacity*BODY_VERTICES*3;this.colorDirtyEnd=0;
     this.groupIds.fill(0);this.groupHeads.fill(-1);
     for(const p of this.system.list){this.ensureBirth(p);if(this.handles(p))this._drawRound(p,alpha);}

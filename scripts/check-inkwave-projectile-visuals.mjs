@@ -117,6 +117,26 @@ async function openGameContext({ mobile = false } = {}) {
     window.__iwBootSeed = bootSeed >>> 0;
     let state = bootSeed >>> 0;
     Math.random = () => { state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return (state >>> 0) / 4294967296; };
+    window.__iwResetScenarioRandom = seed => {
+      let randomState = seed >>> 0, draws = 0;
+      const callers = [];
+      const random = () => {
+        randomState ^= randomState << 13; randomState ^= randomState >>> 17; randomState ^= randomState << 5;
+        draws++;
+        if (callers.length < 12) {
+          const stack = new Error('scenario Math.random').stack || '';
+          callers.push({ draw: draws, stack: stack.split('\n').slice(2, 8).map(line => line.trim()) });
+        }
+        return (randomState >>> 0) / 4294967296;
+      };
+      const recorder = {
+        seed: seed >>> 0,
+        snapshot: () => ({ seed: seed >>> 0, draws, state: randomState >>> 0, callers: callers.map(entry => ({ draw: entry.draw, stack: [...entry.stack] })) }),
+      };
+      window.__iwScenarioRandomRecorder = recorder;
+      Math.random = random;
+      return recorder;
+    };
   }, { setting: quality, bootSeed: BOOT_SEED });
   await page.goto(address + '?map=tidewater&autostart=180&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => window.__inkwave?.match?.state === 'playing' && window.__G?.projectiles && window.__G?.renderer, null, { timeout: 180000 });
@@ -127,17 +147,36 @@ async function openGameContext({ mobile = false } = {}) {
     g._skipRender = true;
     G.settings.cameraShake = 0;
     g.rig.setMap(false);
-    // Stabilize the local model in the genuine match before any capture.
+    // Stabilize the local model in the genuine match before any capture or
+    // live-loop performance window. Native spawnAt/reset ends the opening
+    // Squid Spawn owner rather than leaving Actor.update in its aim/flight path.
     const a = g.match.local;
-    a.form = 'kid'; a.submerged = false; a.alive = true; a.vel.set(0, 0, 0);
     const pad = G.level.spawnPads[a.team];
     const ground = { hit: false, y: 0, normal: new G.camera.position.constructor(), block: -1, face: -1, center: false, grate: false };
     G.physics.groundProbe(pad.x, pad.y, pad.z, 1.0, 1.0, 0.38, ground, false);
     if (!ground.hit || !ground.center || ground.grate || ground.normal.y < 0.68 || ground.block < 0 || ground.face < 0) {
       throw new Error('Canonical player spawn has no centered walkable native Tidewater floor hit');
     }
+    const priorSquidSpawn = a.s3?.squidSpawn ? { phase: a.s3.squidSpawn.phase ?? null, initial: a.s3.squidSpawn.initial ?? null,
+      t: a.s3.squidSpawn.t ?? null, duration: a.s3.squidSpawn.duration ?? null,
+      from: a.s3.squidSpawn.from ? { ...a.s3.squidSpawn.from } : null,
+      to: a.s3.squidSpawn.to ? { ...a.s3.squidSpawn.to } : null } : null;
+    const neutralIntent = () => {
+      a.intent.move.set(0, 0, 0);
+      for (const key of ['fire', 'jump', 'squid', 'sub', 'special']) a.intent[key] = false;
+      for (const key of ['fire', 'jump', 'squid', 'sub', 'special']) a._prevIntent[key] = false;
+      a._firePressT = a._squidPressT = -1;
+      a.fireBuffer = a.jumpBuffer = 0;
+    };
+    neutralIntent();
+    const V = G.camera.position.constructor;
+    a.spawnAt(new V(pad.x, ground.y, pad.z), 0);
+    neutralIntent();
+    if (a.s3?.squidSpawn) throw new Error('Native canonical Actor.spawnAt did not clear opening squidSpawn lifecycle');
     a.pos.set(pad.x, ground.y, pad.z);
-    a.vel.set(0, 0, 0); a.grounded = true; a.groundN.copy(ground.normal);
+    a.form = 'kid'; a.submerged = false; a.alive = true; a.hp = 100; a.ink = 100; a.vel.set(0, 0, 0);
+    a.grounded = true; a.groundN.copy(ground.normal); a.climbing = false; a.specialActive = null; a.superJumpState = null;
+    a.invuln = 0; a.kidT = 99; a.weaponRunner?.reset?.();
     a.yaw = 0; a.aimYaw = 0; a.aimPitch = 0; a.aimDir.set(0, 0, 1);
     a.aimPoint.copy(a.pos).add(new G.camera.position.constructor(0, 1.05, 24));
     const inkHex = '#' + a.color.getHexString();
@@ -148,8 +187,16 @@ async function openGameContext({ mobile = false } = {}) {
     G.scene.updateMatrixWorld(true);
     g._skipRender = false;
     const floorBlock = G.physics.level.blocks[ground.block];
+    window.__iwCanonicalLifecycleReset = {
+      method: 'native Actor.spawnAt / Actor.reset', priorSquidSpawn,
+      squidSpawnAfterReset: a.s3?.squidSpawn ? a.s3.squidSpawn.phase : null,
+      neutralIntent: { fire: a.intent.fire, jump: a.intent.jump, squid: a.intent.squid, sub: a.intent.sub,
+        special: a.intent.special, move: a.intent.move.toArray() },
+      grounded: a.grounded, invulnerability: a.invuln, kidFrames: a.kidT,
+    };
     window.__iwCanonicalPlacement = {
       pos: a.pos.toArray(), team: a.team, inkHex, yaw: a.yaw,
+      aim: { yaw: a.yaw, aimYaw: a.aimYaw, aimPitch: a.aimPitch, direction: a.aimDir.toArray(), point: a.aimPoint.toArray() },
       floorHit: { hit: ground.hit, center: ground.center, grate: ground.grate, block: ground.block, face: ground.face,
         point: [pad.x, ground.y, pad.z], normal: ground.normal.toArray(), blockTag: floorBlock?.tag ?? null },
       bootSeed: window.__iwBootSeed,
@@ -157,6 +204,7 @@ async function openGameContext({ mobile = false } = {}) {
     return window.__iwCanonicalPlacement;
   });
   report.provenance.canonicalPlacement = placement;
+  report.provenance.canonicalLifecycleReset = await page.evaluate(() => window.__iwCanonicalLifecycleReset ?? null);
   const version = await page.evaluate(() => {
     const gl = __G.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info');
     return { chromium: navigator.userAgent, webgl: gl.getParameter(gl.VERSION), webglRenderer: gl.getParameter(gl.RENDERER),
@@ -635,21 +683,46 @@ const visualSetup = ({ name, seed, impact = null }) => {
     };
     window.__iwProjectileImpactRecorderInstalled = true;
   }
-  let state = seed >>> 0;
-  const random = () => { state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return (state >>> 0) / 4294967296; };
-  Math.random = random;
+  const setupRng = window.__iwResetScenarioRandom(seed);
   G.time = 0; g.time = 0; g.rig.time = 0;
   G.projectiles.clear(); G.fx.clear(); G.paint.clear();
   if (g.screenfx?.clear) g.screenfx.clear();
   const weapon = impact === 'wall' ? 'shooter' :
     name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
   a.setWeapon(weapon);
-  a.pos.fromArray(canonical.pos);
-  a.form = 'kid'; a.submerged = false; a.alive = true; a.hp = 100; a.ink = 100; a.vel.set(0, 0, 0);
-  a.grounded = true; a.groundN.set(...canonical.floorHit.normal); a.climbing = false; a.specialActive = null; a.superJumpState = null;
+  const lifecycleBeforeReset = a.s3?.squidSpawn ? {
+    phase: a.s3.squidSpawn.phase ?? null, initial: a.s3.squidSpawn.initial ?? null,
+    t: a.s3.squidSpawn.t ?? null, duration: a.s3.squidSpawn.duration ?? null,
+    from: a.s3.squidSpawn.from ? { ...a.s3.squidSpawn.from } : null,
+    to: a.s3.squidSpawn.to ? { ...a.s3.squidSpawn.to } : null,
+  } : null;
+  const normalizeIntent = () => {
+    a.intent.move.set(0, 0, 0);
+    for (const key of ['fire', 'jump', 'squid', 'sub', 'special']) a.intent[key] = false;
+    for (const key of ['fire', 'jump', 'squid', 'sub', 'special']) a._prevIntent[key] = false;
+    a._firePressT = a._squidPressT = -1;
+    a.fireBuffer = a.jumpBuffer = 0;
+  };
+  const resetAtNativeFloor = (position, yaw, groundNormal) => {
+    normalizeIntent();
+    // Actor.spawnAt runs Actor.reset, which clears the genuine startup Squid
+    // Spawn/aim/flight owner and weapon clocks. The renderer freezes the live
+    // match for deterministic captures, so complete that native lifecycle at
+    // the selected real floor point before injecting test controls.
+    a.spawnAt(new V(...position), yaw);
+    normalizeIntent();
+    a.form = 'kid'; a.submerged = false; a.alive = true; a.hp = 100; a.ink = 100; a.vel.set(0, 0, 0);
+    a.grounded = true; a.groundN.set(...groundNormal); a.climbing = false; a.specialActive = null; a.superJumpState = null;
+    a.invuln = 0; a.fireBuffer = a.jumpBuffer = 0; a.kidT = 99;
+    a.weaponRunner?.reset?.();
+    a.character.setVisible(true); a.character.root.position.copy(a.pos); a.character.root.rotation.y = yaw;
+    a.character.root.updateMatrixWorld(true); G.scene.updateMatrixWorld(true);
+    if (a.s3?.squidSpawn) throw new Error('Native Actor.spawnAt did not clear the startup squidSpawn lifecycle');
+  };
+  resetAtNativeFloor(canonical.pos, 0, canonical.floorHit.normal);
   a.yaw = 0; a.aimYaw = 0; a.aimPitch = 0;
   a.aimDir.set(0, 0, 1); a.aimPoint.copy(a.pos).add(new V(0, 1.05, 24));
-  a.character.setVisible(true); a.character.root.position.copy(a.pos); a.character.root.rotation.y = 0; a.character.root.updateMatrixWorld(true);
+  a.character.root.rotation.y = 0; a.character.root.updateMatrixWorld(true);
   G.scene.updateMatrixWorld(true);
   let wall = null;
   if (impact === 'wall') {
@@ -711,42 +784,73 @@ const visualSetup = ({ name, seed, impact = null }) => {
     candidates.sort((left, right) => left.score - right.score || left.dist - right.dist || left.face - right.face);
     wall = candidates[0] ?? null;
     if (!wall) throw new Error('No actual exposed Tidewater wall face had a clear native ray from a legal native floor position');
-    a.pos.fromArray(wall.actorPos); a.vel.set(0, 0, 0); a.grounded = true;
-    a.groundN.set(...wall.floorHit.normal); a.yaw = wall.yaw; a.aimYaw = wall.yaw;
+    resetAtNativeFloor(wall.actorPos, wall.yaw, wall.floorHit.normal);
+    a.yaw = wall.yaw; a.aimYaw = wall.yaw;
     a.aimPitch = Math.atan2(wall.dir[1], Math.hypot(wall.dir[0], wall.dir[2]));
     a.aimDir.set(...wall.dir); a.aimPoint.set(...wall.target);
     a.character.root.position.copy(a.pos); a.character.root.rotation.y = a.yaw;
     a.character.root.updateMatrixWorld(true); G.scene.updateMatrixWorld(true);
+    const muzzle = G.projectiles._muzzle(a, new V());
+    const toTarget = new V(...wall.target).sub(muzzle), muzzleToTarget = toTarget.length();
+    if (muzzleToTarget <= 0) throw new Error('Native post-spawn muzzle collapsed onto the wall target');
+    toTarget.multiplyScalar(1 / muzzleToTarget);
+    const actualHit = { hit: false, point: new V(), normal: new V(), dist: 0, block: -1, face: -1 };
+    G.physics.raycast(muzzle, toTarget, muzzleToTarget + 0.25, actualHit, true);
+    if (!actualHit.hit || actualHit.block !== wall.block || actualHit.face !== wall.face) {
+      throw new Error(`Native Actor.spawnAt muzzle no longer raycasts to selected live wall face ${wall.face}/${wall.block}`);
+    }
+    wall.postSpawnMuzzle = muzzle.toArray();
+    wall.postSpawnRay = { hit: actualHit.hit, block: actualHit.block, face: actualHit.face,
+      point: actualHit.point.toArray(), normal: actualHit.normal.toArray(), dist: actualHit.dist };
   }
+  const lifecycleReset = { method: 'native Actor.spawnAt / Actor.reset', priorSquidSpawn: lifecycleBeforeReset,
+    squidSpawnAfterReset: a.s3?.squidSpawn ? a.s3.squidSpawn.phase : null,
+    neutralIntent: { fire: a.intent.fire, jump: a.intent.jump, squid: a.intent.squid, sub: a.intent.sub,
+      special: a.intent.special, move: a.intent.move.toArray() },
+    grounded: a.grounded, invulnerability: a.invuln, kidFrames: a.kidT };
   const setup = { weapon, actor: a.pos.toArray(), wall, impact, seed, bootSeed: canonical.bootSeed,
+    aim: { yaw: a.yaw, aimYaw: a.aimYaw, aimPitch: a.aimPitch,
+      direction: a.aimDir.toArray(), point: a.aimPoint.toArray() },
     inkHex: '#' + a.color.getHexString(), canonicalPlacement: canonical };
+  // Keep RNG diagnostics separate from physical setup and camera receipts.
+  window.__iwCurrentVisualSetupRng = setupRng.snapshot();
+  window.__iwCurrentVisualSetupLifecycle = lifecycleReset;
   window.__iwCurrentVisualSetup = setup;
-  return setup;
+  return { setup, lifecycleReset };
 };
 
 async function runVisuals(page) {
+  await runContactScenarios(page);
   for (const scenario of [
     { name: 'shooter', seed: 0x1a2b3c4d, method: 'shooter', checkpoints: [0, 5, 10, 15, 36] },
     { name: 'roller-horizontal', seed: 0x576597, method: 'roller-horizontal', checkpoints: [0, 5, 10, 15, 36] },
     { name: 'roller-vertical', seed: 0x576598, method: 'roller-vertical', checkpoints: [0, 5, 10, 15, 36] },
     { name: 'slosher9', seed: 0x1a2b3c4e, method: 'slosher9', checkpoints: [0, 5, 10, 15, 36] },
   ]) {
-    const setup = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed });
-    const born = await page.evaluate(({ method }) => {
+    const setupResult = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed });
+    const { setup, lifecycleReset } = setupResult;
+    const birthResult = await page.evaluate(({ method, seed }) => {
       const G = window.__G, a = G.match.local;
+      const betweenSetupAndFire = window.__iwScenarioRandomRecorder?.snapshot?.() ?? null;
+      const fireRng = window.__iwResetScenarioRandom(seed);
+      const beforeNativeFire = fireRng.snapshot();
       if (method === 'shooter') G.projectiles.fireShooter(a, a.weapon, 0);
       else if (method === 'roller-horizontal') { a.weaponRunner.s3FlickVertical = false; G.projectiles.fireFlick(a, a.weapon); }
       else if (method === 'roller-vertical') { a.weaponRunner.s3FlickVertical = true; G.projectiles.fireFlick(a, a.weapon); }
       else G.projectiles.fireSlosh(a, a.weapon);
       G.projectiles._draw();
-      return G.projectiles.list.map(p => ({ type: p.type, age: p.age, delay: p.delay || 0, pos: p.pos.toArray(), vel: p.vel.toArray(), seed: p.seed,
+      const projectiles = G.projectiles.list.map(p => ({ type: p.type, age: p.age, delay: p.delay || 0, pos: p.pos.toArray(), vel: p.vel.toArray(), seed: p.seed,
         route: p.catalog ? 'MainWeaponCatalog.P._step' : p.inkProfile ? 'InkFlightRuntime' : 'legacy-projectile-step',
         mode: p.fidelityMode || (p.s3Vertical ? 'vertical' : p.s3FlickUnit === undefined ? null : 'horizontal'),
         sloshUnit: p.fidelitySloshIndex ?? p.fidelitySloshPacketIndex ?? null, rollerUnit: p.fidelityRollerUnitIndex ?? null }));
-    }, { method: scenario.method });
+      return { projectiles, rng: { afterVisualSetup: window.__iwCurrentVisualSetupRng ?? null,
+        betweenSetupAndFire, beforeNativeFire, afterNativeFire: fireRng.snapshot() } };
+    }, { method: scenario.method, seed: scenario.seed });
+    const born = birthResult.projectiles;
     if (!born.length) throw new Error(`${scenario.name}: production fire method created no projectile`);
     if (scenario.name === 'slosher9' && born.length !== 9) throw new Error(`Slosher source volley expected 9 units, received ${born.length}`);
-    const record = { name: scenario.name, seed: scenario.seed, setup, births: born, captures: [], impacts: [] };
+    const record = { name: scenario.name, seed: scenario.seed, setup, lifecycleReset, births: born,
+      rng: birthResult.rng, captures: [], impacts: [] };
     let frame = 0;
     for (const targetFrame of scenario.checkpoints) {
       while (frame < targetFrame) {
@@ -771,7 +875,9 @@ async function runVisuals(page) {
     record.endState = await page.evaluate(() => ({ projectiles: __G.projectiles.list.length, paintQuads: __G.paint.quads, fx: __G.fx.stats?.() ?? null }));
     report.visualScenarios.push(record);
   }
+}
 
+async function runContactScenarios(page) {
   // The wall and floor receipts use native collision queries and real stage
   // surfaces. A normal controller-fired legacy shooter enters the retained
   // WallDrop phase from the exact InkFlightRuntime.world hit; Slosher9 globs
@@ -780,13 +886,25 @@ async function runVisuals(page) {
     { name: 'wall-shooter', seed: 0x7a11, method: 'controller-shooter', impact: 'wall', maxFrames: 120 },
     { name: 'floor-slosher9', seed: 0x7a12, method: 'slosher9', impact: 'floor', maxFrames: 150 },
   ]) {
-    const setup = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed, impact: scenario.impact });
+    const setupResult = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed, impact: scenario.impact });
+    const { setup, lifecycleReset } = setupResult;
     if (scenario.impact === 'wall' && !setup.wall) throw new Error('Could not find a native Tidewater wall for the wall impact receipt');
-    const born = await page.evaluate(({ method }) => {
+    const birthResult = await page.evaluate(({ method, seed, expectedWall }) => {
       const G = window.__G, a = G.match.local;
-      let controllerFramesHeld = null;
+      let controllerFramesHeld = null, controllerProbe = null;
+      const betweenSetupAndFire = window.__iwScenarioRandomRecorder?.snapshot?.() ?? null;
+      const fireRng = window.__iwResetScenarioRandom(seed);
+      const beforeNativeFire = fireRng.snapshot();
       if (method === 'controller-shooter') {
         const prior = G.projectiles.list.length, dt = 1 / 60;
+        const V = G.camera.position.constructor;
+        const spawnStateBefore = a.s3?.squidSpawn ? { ...a.s3.squidSpawn } : null;
+        if (spawnStateBefore) throw new Error('Controller shooter setup retained squidSpawn before native Actor.update fire');
+        const actorBefore = a.pos.toArray(), rootBefore = a.character.root.position.toArray();
+        const muzzleBefore = G.projectiles._muzzle(a, new V()).clone();
+        const expectedPoint = new V(...expectedWall.target), expectedNormal = new V(...expectedWall.normal);
+        const muzzleSideDistance = muzzleBefore.clone().sub(expectedPoint).dot(expectedNormal);
+        const priorSeeds = new Set(G.projectiles.list.map(p => p.seed));
         a.intent.fire = true;
         for (let i = 0; i < 120 && G.projectiles.list.length === prior; i++) {
           controllerFramesHeld = i + 1;
@@ -794,14 +912,46 @@ async function runVisuals(page) {
         }
         a.intent.fire = false;
         if (G.projectiles.list.length === prior) throw new Error('Controller fire cadence produced no shooter projectile');
+        const p = G.projectiles.list.find(candidate => !priorSeeds.has(candidate.seed));
+        if (!p) throw new Error('Controller fire cadence increased projectile count without a distinguishable birth seed');
+        const start = p.start?.toArray?.() ?? p.pos.toArray();
+        const actualBirthMuzzle = new V(...start);
+        const actorAtBirth = a.pos.toArray(), rootAtBirth = a.character.root.position.toArray();
+        const velocity = p.vel.toArray();
+        const startSideDistance = actualBirthMuzzle.clone().sub(expectedPoint).dot(expectedNormal);
+        const velocityTowardFace = new V(...velocity).dot(expectedNormal);
+        const muzzleStartError = actualBirthMuzzle.distanceTo(muzzleBefore);
+        const actorTravel = new V(...actorAtBirth).distanceTo(new V(...actorBefore));
+        const rootTravel = new V(...rootAtBirth).distanceTo(new V(...rootBefore));
+        controllerProbe = {
+          source: 'normal Actor.update intent.fire path after native Actor.spawnAt reset',
+          heldFrames: controllerFramesHeld, lifecycleAtBirth: a.s3?.squidSpawn ? { phase: a.s3.squidSpawn.phase ?? null } : null,
+          actorBefore, rootBefore, preFireMuzzle: muzzleBefore.toArray(), selectedWall: {
+            block: expectedWall.block, face: expectedWall.face, point: expectedWall.target, normal: expectedWall.normal,
+            postSpawnRay: expectedWall.postSpawnRay,
+          },
+          actorAtBirth, rootAtBirth, birthStart: start, birthPosition: p.pos.toArray(), velocity,
+          muzzleSideDistance, startSideDistance, velocityTowardFace, muzzleStartError, actorTravel, rootTravel,
+          sourceProfile: p.inkProfile?.key ?? null,
+        };
+        if (controllerProbe.lifecycleAtBirth) throw new Error('Native actor lifecycle intercepted controller fire after setup reset');
+        if (!(muzzleSideDistance > 0.25 && startSideDistance > 0.25 && velocityTowardFace < -5)) {
+          throw new Error('Actual controller shooter birth is not on the actor side of, and travelling into, the selected native wall');
+        }
+        if (muzzleStartError > 0.4 || actorTravel > 0.03 || rootTravel > 0.03) {
+          throw new Error('Actor or muzzle moved between native wall setup and controller projectile birth');
+        }
       } else G.projectiles.fireSlosh(a, a.weapon);
       G.projectiles._draw();
-      return G.projectiles.list.map(p => ({ seed: p.seed, type: p.type, pos: p.pos.toArray(), velocity: p.vel.toArray(),
+      const births = G.projectiles.list.map(p => ({ seed: p.seed, type: p.type, pos: p.pos.toArray(), velocity: p.vel.toArray(),
         route: p.catalog ? 'MainWeaponCatalog.P._step' : p.inkProfile ? 'InkFlightRuntime.stepHead' : 'legacy-projectile-step',
         sourceActor: p.catalog?.r?.sourceActor ?? p.s3Weapon?.sourceActor ?? p.inkKey ?? null,
         controllerInput: method === 'controller-shooter' ? 'Actor.update intent.fire=true' : null,
         controllerFramesHeld }));
-    }, { method: scenario.method });
+      return { births, controllerProbe, rng: { afterVisualSetup: window.__iwCurrentVisualSetupRng ?? null,
+        betweenSetupAndFire, beforeNativeFire, afterNativeFire: fireRng.snapshot() } };
+    }, { method: scenario.method, seed: scenario.seed, expectedWall: setup.wall });
+    const born = birthResult.births;
     if (!born.length) throw new Error(scenario.name + ': projectile birth failed');
     await renderAndCapture(page, scenario.name, 'F0', 'shoulder', scenario.seed);
     let impactFrame = null, impactState = null, impactEvidence = null, captureFrame = 0;
@@ -848,7 +998,8 @@ async function runVisuals(page) {
     if (impactFrame == null) throw new Error(scenario.name + ': no native stage-surface collision with an in-range face/normal and matching production transition; diagnostics ' +
       JSON.stringify({ wall: setup.wall, births: born, flightHistory }));
     const capture = await renderAndCapture(page, scenario.name, `${scenario.impact}-contact-F${impactFrame}-capture-F${captureFrame}`, scenario.impact === 'wall' ? 'side' : 'shoulder', scenario.seed);
-    report.visualScenarios.push({ name: scenario.name, seed: scenario.seed, setup, births: born, impactFrame, captureFrame,
+    report.visualScenarios.push({ name: scenario.name, seed: scenario.seed, setup, lifecycleReset, births: born, rng: birthResult.rng,
+      controllerProbe: birthResult.controllerProbe, impactFrame, captureFrame,
       elapsedSinceImpactFrames: captureFrame - impactFrame, impactState, impactEvidence, capture,
       evidence: scenario.impact === 'wall'
         ? 'The actor controller fired the legacy shooter; InkFlightRuntime.world returned the chosen valid live-stage Hit, and the same step entered the retained fidelityWallDrop phase at hit.point + hit.normal × 0.025.'

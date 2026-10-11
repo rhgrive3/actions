@@ -354,7 +354,7 @@ test('source-sized Slosher caps stay at recorded endpoints across short and long
 });
 
 test('hot render methods reuse storage and contain no per-frame allocation or gameplay RNG path', () => {
-  const hot = ['draw', '_drawRound', '_rollerLinks', '_body', '_writeBody', '_frame']
+  const hot = ['draw', '_drawRound', '_rollerLinks', '_rollerMembrane', '_writeMembrane', '_body', '_writeBody', '_frame']
     .map(name => ProjectileVisualRuntime.prototype[name].toString()).join('\n');
   assert.doesNotMatch(hot, /\bnew\s|\bArray\.(?:from|of)\s*\(|\.map\s*\(|\.slice\s*\(|Math\.random\s*\(/,
     'the draw hot path cannot allocate collections/typed buffers or consume gameplay randomness');
@@ -711,6 +711,107 @@ test('native horizontal Roller links stay inside each of two real 13-glob volley
   ps.disposeVisuals();
 });
 
+test('horizontal liquid membranes cover actual close history after sibling heads separate, without false volley or birth joins', async () => {
+  const f = await sourceFixture({ fullRuntime: true }), { THREE } = f;
+  const system = { scene: new THREE.Scene(), list: [], inkFlight: { time: 0 } };
+  const runtime = new ProjectileVisualRuntime(system, THREE), color = new THREE.Color('#ffd21a');
+  const radius = 0.3, bodyVertices = 13 * 12;
+  function pair({ differentVolley = false, laterBirth = false, neverClose = false } = {}) {
+    runtime.clear(); system.list.length = 0; system.inkFlight.time = 0;
+    const volley = new Map();
+    const ps = [0, 1].map(index => ({ type: 'drop', wid: 'roller', fidelityMode: 'horizontal',
+      fidelityDrawRadius: { initRadius: radius, endRadius: radius, changeTime: 0, tailSolidTime: 5 * DT },
+      pos: new THREE.Vector3(index * (neverClose ? 2 : 0.25), 1, 0), prev: new THREE.Vector3(), start: new THREE.Vector3(),
+      vel: new THREE.Vector3(index * 13.8, 0, 12), age: 0, life: 1, delay: 0,
+      seed: index / 10, vis: radius, owner: { color }, vol: index && differentVolley ? new Map() : volley,
+      _iwVisualOrdinal: index }));
+    for (let i = 0; i < 2; i++) {
+      if (i && laterBirth) system.inkFlight.time = 2 * DT;
+      system.list.push(ps[i]); runtime.ensureBirth(ps[i]);
+    }
+    for (let tick = 1; tick <= 5; tick++) for (let i = 0; i < 2; i++) {
+      const p = ps[i], age = tick * DT, x = i * ((neverClose ? 2 : 0.25) + 0.23 * tick), y = 1 + tick * tick * 0.01;
+      p._iwVisualHistory.record(age, x, y, 12 * age, i * 13.8, tick * 1.2, 12);
+      p.age = age; p.pos.set(x, y, 12 * age); p.vel.set(i * 13.8, tick * 1.2, 12);
+    }
+    system.inkFlight.time = 5 * DT; return ps;
+  }
+  const ps = pair(), before = ps.map(gameplayRow);
+  assert.ok(ps[0].pos.distanceTo(ps[1].pos) > radius * 3, 'present heads are beyond the existing link bound');
+  const frames = runtime.membraneFrames, positions = runtime.position.array, normals = runtime.normal.array;
+  runtime.draw(1);
+  assert.equal(runtime.stats.historicalRollerPairs, 1, 'actual earlier close history still forms one membrane');
+  assert.equal(runtime.stats.linkedRollerPairs, 1);
+  assert.equal(runtime.stats.vertexCount, 3 * bodyVertices, 'two untouched head slots plus one closed 13×12 membrane');
+  assert.equal(runtime.stats.drawCalls, 1);
+  assert.deepEqual(ps.map(gameplayRow), before, 'history presentation cannot move, resize or repaint the heads');
+  const base = 2 * bodyVertices * 3, sampleA = new Float64Array(6), sampleB = new Float64Array(6);
+  // Middle strip rings reach both actual sibling trajectories. The endpoint
+  // caps close at the strip midpoint instead of extending past recorded data.
+  for (let ring = 0; ring < 13; ring++) {
+    const o = base + ring * 12 * 3;
+    for (let side = 0; side < 12; side++) {
+      const v = o + side * 3;
+      assert.ok(Number.isFinite(positions[v] + positions[v + 1] + positions[v + 2]));
+      assert.ok(Math.abs(Math.hypot(normals[v], normals[v + 1], normals[v + 2]) - 1) < 1e-5);
+      if (ring === 0 || ring === 12) for (let axis = 0; axis < 3; axis++)
+        assert.ok(Math.abs(positions[v + axis] - positions[o + axis]) < 1e-7, 'terminal ring is closed');
+    }
+    if (ring < 2 || ring > 10) continue;
+    const middle = runtime.centers[ring * 6 + 2], age = middle / 12;
+    ps[0]._iwVisualHistory.sample(age, sampleA); ps[1]._iwVisualHistory.sample(age, sampleB);
+    const gap = Math.hypot(sampleA[0] - sampleB[0], sampleA[1] - sampleB[1], sampleA[2] - sampleB[2]);
+    assert.ok(gap >= radius * 0.6 - 1e-8 && gap <= radius * 3 + 1e-8);
+    assert.ok(age >= 0 && age < ps[0].age, 'the membrane ends in actual older close history');
+    const firstEdgeIsA = Math.hypot(positions[o] - sampleA[0], positions[o + 1] - sampleA[1], positions[o + 2] - sampleA[2]) < 1e-6;
+    const firstEdge = firstEdgeIsA ? sampleA : sampleB, oppositeEdge = firstEdgeIsA ? sampleB : sampleA;
+    for (let axis = 0; axis < 3; axis++) {
+      assert.ok(Math.abs(positions[o + axis] - firstEdge[axis]) < 1e-6, 'one membrane edge reaches an actual sibling trajectory');
+      assert.ok(Math.abs(positions[o + 6 * 3 + axis] - oppositeEdge[axis]) < 1e-6, 'the opposite edge reaches the other actual trajectory');
+    }
+  }
+  for (let i = 0; i < 40; i++) runtime.draw(i % 2 ? 0.5 : 1);
+  assert.equal(runtime.membraneFrames, frames); assert.equal(runtime.position.array, positions);
+  assert.ok(runtime.stats.vertexCount <= runtime.capacity * bodyVertices);
+  pair({ differentVolley: true }); runtime.draw(1);
+  assert.equal(runtime.stats.linkedRollerPairs, 0, 'unrelated volleys never share a film');
+  pair({ laterBirth: true }); runtime.draw(1);
+  assert.equal(runtime.stats.linkedRollerPairs, 0, 'same ledger with a different actual birth clock cannot join equal local ages');
+  pair({ neverClose: true }); runtime.draw(1);
+  assert.equal(runtime.stats.linkedRollerPairs, 0, 'histories that are never inside the existing distance bound stay separate');
+  runtime.dispose();
+});
+
+test('native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity', async () => {
+  const { f, ps } = await nativeFixture(true), actor = f.make('roller'), runtime = ps.projectileVisuals;
+  actor.pos.set(0, 2.2, 0); actor.aimDir.set(0, 0, 1); actor.aimPoint.set(0, 2.2, 50);
+  actor.weaponRunner.s3FlickVertical = false;
+  const results = [];
+  for (const hz of [30, 60, 120]) {
+    ps.clear(); f.G.time = 0;
+    let randomState = 0x576597;
+    f.setRandom(() => { randomState ^= randomState << 13; randomState ^= randomState >>> 17;
+      randomState ^= randomState << 5; return (randomState >>> 0) / 4294967296; });
+    ps.fireFlick(actor, actor.weapon); ps._draw(); ps.syncVisuals(1);
+    assert.equal(ps.list.length, 13);
+    assert.ok(runtime.stats.linkedRollerPairs > 0, 'zero-history birth keeps the bounded native transverse links');
+    assert.equal(runtime.stats.historicalRollerPairs, 0, 'a birth point does not invent a swept path');
+    const clock = new FixedClock(), views = [];
+    for (let frame = 0; frame < hz / 10; frame++) {
+      clock.advance(1 / hz, step => { f.G.time += step; ps.update(step); });
+      ps.syncVisuals(Math.min(1, clock.accumulator * 60));
+      if ((frame + 1) % (hz / 30) === 0) views.push({ count: runtime.stats.vertexCount,
+        historicalPairs: runtime.stats.historicalRollerPairs,
+        positions: Array.from(runtime.position.array.subarray(0, runtime.stats.vertexCount * 3)) });
+    }
+    assert.ok(views.some(view => view.historicalPairs > 0), 'native source volley produces actual shared-history film');
+    results.push(views);
+  }
+  assert.deepEqual(results[1], results[0], '30 and 60 Hz render cadence preserve the same native surfaces');
+  assert.deepEqual(results[2], results[0], '120 Hz interpolation reaches the same common native surfaces');
+  ps.disposeVisuals();
+});
+
 test('stalled remote Roller heads and liquid links share the same endpoint at every render alpha', async t => {
   const { f, ps } = await nativeFixture(true), actor = f.make('roller');
   actor.nid = 7; actor.owner = 'local'; actor.pos.set(0, 1, 0);
@@ -725,12 +826,15 @@ test('stalled remote Roller heads and liquid links share the same endpoint at ev
 
   const remote = f.make('roller');
   remote.remote = true; remote.nid = actor.nid; remote.owner = 'peer'; remote.color.copy(actor.color);
-  const peer = { id: 'peer' };
+  const peer = { id: 'peer', sim: 5, tr: 5 * DT, lastTs: 5 * DT };
   for (const packet of packets) {
     ps.ghostProjectile(remote, packet);
     const ghost = ps.list.at(-1);
     ghost._netPeer = peer;
     ghost._netBornTick = 0;
+    ghost._netBorn = 0;
+    // Native NetMatch's projectile receive path sets this lifetime limit.
+    ghost._netMaxSteps = Math.ceil((ghost.life + Math.max(0, ghost.delay)) * 60) + 2;
   }
   assert.equal(ps.list.length, 13);
   for (let frame = 0; frame < 3; frame++) { f.G.time += DT; ps.update(DT); }
@@ -741,15 +845,21 @@ test('stalled remote Roller heads and liquid links share the same endpoint at ev
       kind: p._iwVisualKind, delay: p.delay, age: p.age, history: p._iwVisualHistory?.count,
       peer: p._netPeer === peer, born: p._netBornTick }))));
   const count = runtime.stats.vertexCount * 3;
-  assert.ok(runtime.stats.linkedRollerPairs > 0, 'remote siblings form a liquid link');
+  assert.ok(ps.list.every(p => p._netSteps === 6 && p.age > 0 && p._iwVisualHistory.count === 7),
+    'the finite owner clock catches up six actual native steps and retains birth plus six samples');
+  assert.ok(runtime.stats.historicalRollerPairs > 0, 'remote siblings form positive-history liquid membranes');
   const atZero = Array.from(runtime.position.array.subarray(0, count));
+  const normalsAtZero = Array.from(runtime.normal.array.subarray(0, count));
   const linksAtZero = runtime.stats.linkedRollerPairs;
   const before = ps.list.map(gameplayRow);
+  for (let frame = 0; frame < 4; frame++) { f.G.time += DT; ps.update(DT); }
   runtime.draw(1);
   const atOne = Array.from(runtime.position.array.subarray(0, count));
   assert.equal(runtime.stats.linkedRollerPairs, linksAtZero);
   assert.deepEqual(atOne, atZero,
     'stalled remote heads and both endpoints of each liquid link use the same frozen network time');
-  assert.deepEqual(ps.list.map(gameplayRow), before, 'changing render alpha does not advance remote gameplay state');
+  assert.deepEqual(Array.from(runtime.normal.array.subarray(0, count)), normalsAtZero,
+    'stalled shared-history membrane normals stay at the same owner endpoint');
+  assert.deepEqual(ps.list.map(gameplayRow), before, 'unrelated local ticks and changing render alpha do not advance remote gameplay state');
   ps.disposeVisuals();
 });

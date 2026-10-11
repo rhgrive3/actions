@@ -27,13 +27,13 @@
 
 実60Hzの物理更新点を、32標本のFloat64履歴へ記録する。粗いcatch-up更新も内部の各物理tickを観測する。描画FPS側だけが履歴を補間し、当たり判定、位置、速度、寿命、ダメージ、塗り、通信payloadを編集しない。
 
-13断面×12頂点のCPUメッシュを単一の不透明batchへ書き込み、位置／法線／色とGPU更新範囲を再利用する。CPU頂点を用いるため、beauty／影／深度／AOの形状が一致する。Shooterは先端と末端を閉じた履歴ロッドと残留尾。Rollerは横振りの薄膜と同一volleyの隣接主弾間の距離制限付き接続、縦振りは細長い独立形状。Bucketは前弾の厚い頭と後弾の細い帯を分け、9発と既存ユニット別半径を保持する。
+13断面×12頂点のCPUメッシュを単一の不透明batchへ書き込み、位置／法線／色とGPU更新範囲を再利用する。CPU頂点を用いるため、beauty／影／深度／AOの形状が一致する。Shooterは先端と末端を閉じた履歴ロッドと残留尾。Roller横振りは薄い主弾と、同一volley・同じ出生時計の隣接主弾が実際に通った近接軌跡の間の閉じた液膜を描く。先端が離れた場合も共有履歴の近接区間を調べ、離れた区間を飛び越えて接続しない。横方向は実際の弾間ベクトル、厚み方向は実際の平均接線との外積で決める。縦振りは細長い独立形状。Bucketは前弾の厚い頭と後弾の細い帯を分け、9発と既存ユニット別半径を保持する。
 
 次は独自近似であり、本家仕様として確定しない：断面形状、薄膜厚み、ローブ、接続距離、材質、Hermite制限式、通常Shooter／Dualiesの暫定2F、Rollerの履歴窓5F／長さ上限4 source units、既存width校正Shooter0.7／Bucket0.5。Rollerの5F／4はTailパラメータが存在しない場合のINKWAVE描画用の仮値であり、Bucketに明示された同値がRollerの内部既定値を証明することはない。Splatlingの明示3Fはその原典の武器に限って使用する。根拠のない「0.1秒後に0.6mへ縮む」アニメーションは追加していない。
 
 ## 検証と未実施比較
 
-- 最終adapterを使う実Projectiles/Physics/NetMatchの新規試験17/17成功（色転送前の複数更新・slot並び替えも検証）：原典値、形状別buffer、30/60/120Hz、4＋5、ローカル／受信、Splatling残留尾、13主弾Rollerのvolley分離、粗い30Hz更新、停止した受信弾の液膜、遅延出生のGround→Air速度、履歴長と描画補間が異なる場合の原典半径に対応した端部の丸みを検証。
+- 最終adapterを使う実Projectiles/Physics/NetMatchの新規試験19/19成功（色転送前の複数更新・slot並び替えも検証）：原典値、形状別buffer、30/60/120Hz、4＋5、ローカル／受信、Splatling残留尾、13主弾Rollerのvolley分離、粗い30Hz更新、停止した受信弾の液膜、遅延出生のGround→Air速度、履歴長と描画補間が異なる場合の原典半径に対応した端部の丸みを検証。追加の2試験は、先端が離れた後の共有近接軌跡を覆う液膜、出生時計・volley・非近接履歴の誤接続拒否、閉じた端部・有限な単位法線・固定buffer・本番Rollerの30/60/120Hz geometry一致を検証する。
 - 同じseedをVM起動前から与え、旧6段階／新最終adapterを対照比較。追加THREE資源のUUIDが12回の乱数を消費する回帰を修正し、起動時乱数回数と発射後の状態／通信が一致することを確認。
 - 独立レビューで、Roller接続0件、粗い更新の出生時刻、衝突直後の履歴が壁を貫く問題、壁垂れ時計、描画多重更新、撮影時のsync漏れ、停止したperformance測定を発見し修正した。GPU転送前の複数色更新でdirty範囲が失われる問題と、履歴の厳密tick/EPS境界で接線が変わる最適化回帰も修正した。最新の [独立レビュー](inkwave-projectile-independent-review-2026-10-11.md) を参照。
 - 本番の再ビルドは成功。packing testはコミット後の正確なblob照合を含め8/8成功。新ファイルを未追跡のまま検査した初回の失敗は保存し、追跡登録／コミット後に再実行した。容量上限は変更していない。
@@ -49,7 +49,7 @@
 
 ## 性能の範囲
 
-新規batchは最大700形状／109,200頂点／201,600三角形、beauty draw最大1件追加。旧小飛沫batchの上限は別に保持する。CPU typed geometry 6,350,400bytes、GPU geometry同量、履歴2,508,800bytes、補助typed buffers40,200bytes（色cache追加16,800bytes）、共有module断面表3,512bytesを確保する。JS資源・ドライバbookkeepingはこの数値に含まない。700形状超過時の表示抑制は旧上限と同様に存在する。
+新規batchは最大700形状／109,200頂点／201,600三角形、beauty draw最大1件追加。旧小飛沫batchの上限は別に保持する。CPU typed geometry 6,350,400bytes、GPU geometry同量、履歴2,508,800bytes、補助typed buffers41,136bytes（色cache16,800bytes、再利用する液膜座標系936bytesを含む）、共有module断面表3,512bytesを確保する。JS資源・ドライバbookkeepingはこの数値に含まない。700形状超過時の表示抑制は旧上限と同様に存在する。
 
 初期CPU実装のNode VM計測では、20／100／700体で旧0.149／1.047／0.990msに対し新2.266／11.213／79.564msとなった。これはWebGL/FPSではなくbuffer生成の計測だが、大量弾で重大な負荷差があるため性能修正を実施し、直接Node／VM／実ブラウザを区別して再計測する。この初回値を成功扱いしない。旧700-body測定は上限によって139主弾＋556装飾飛沫のみを描いており、新700主弾とは対象数が異なる。端部修正後の凍結snapshot（SHA-256 40aeb6e3a3b7ac51557ae106d57301e1f4098de627f84689ee153f8c54ceef1f）では700主弾のVM 2.094ms、host 1.313〜1.326ms。同じ主弾数に近い旧head-only695主弾は1.878ms、新695主弾VMは2.232msでCPU単体の差が残る。realmを跨ぐ数値を改善率として扱わない。端部修正前の独立した500体／10方式比較では、最適化前後のFloat32位置・法線が一致した。端部修正は意図的な形状変更であり、この一致の対象外。これらはCPU単体の測定で、実ブラウザ・実GPU・FPSの代用ではない。
 
@@ -60,3 +60,13 @@
 `patches/splatoon3/projectile-visual-adapter.mjs`、`runtime/projectile-visuals.mjs`、`runtime/projectile-visual-source-data.mjs`、`runtime/main-weapon-catalog.mjs` のread-only observer、`runtime/weapons-fidelity.mjs` の近似表示注記、2件のreference JSON、新規native test、3件の監査report、本report、behavior reportの追補、共通build composition／build-only list／patch checker、実ゲーム撮影script、専用GitHub workflow。
 
 コミットSHA、PR URL、CI結果、最終画像、全試験件数、マージ状態は最終の成果receiptへ追記する。完全な忠実度／端末負荷が未検証ならDraftのまま保持し、mainへ未完成変更をマージしない。
+
+## 実画面レビュー後の再検証
+
+`8ff22f0` のCI run 38118978863でも変更前45枚・変更後45枚を取得し、全画像・cropのSHA-256、全GLエラー0、影更新の消費を照合した。端部の尖り修正はShooter／Bucketの実画面で確認できた。Roller横振りは平たい独立帯と少数の接続に見えるという独立レビューの指摘が残り、先端同士だけの接続から共有近接履歴の液膜へ修正した。この液膜の厚み・距離上限・閉じた断面はINKWAVE独自近似であり、Nintendoのメッシュや式を特定したものではない。
+
+同runの完全な比較条件は35/45組が一致し、最初のShooterのみseedがxorshiftの1回目／2回目にずれていた。位置・速度・ageは一致したが、描画半径もseedで変わるため45組完全一致とは扱わない。撮影準備と発射の別evaluate間に乱数を消費する可能性を排し、同じ同期処理の中でseedを設定して本番発射を呼ぶ。呼び出し元のstack、設定時／発射前／後の状態と回数を別診断として残し、実際の弾のseedや位置を書き換えない。HUDが原因という仮説は呼び出し記録で未確定であり、断定しない。
+
+壁検証は両buildで失敗し、床と性能に未到達だった。本番Actor＋Character＋Tidewaterを使う独立プローブで、凍結された初回Squid Spawnの所有状態が残ると64Fの待ち中に壁上へ移動し、壁の向こうから撃つことを再現した。native Actor.spawnAt／reset、入力中立化、床・照準・root復元を用いると通常Actor.update経由で3F後に発射し、飛翔2Fでface34／block7へ衝突してwall-dropを開始する。Hit＋normal×0.025との差は1.42e−15。検証器の共通起動にもnative resetを適用し、性能contextへ着弾計測wrapperを入れず、通常のlive loopで測る。これらの最終ブラウザ実行・新液膜の画面承認・性能差は次のCI receiptで確認する。
+
+`8ff22f0` の非visual CIは10 Validate jobs成功、診断1件skip。別workflowを含む重複footerを除いた36 TAP suitesは6,807件中6,777成功／30skip／失敗0。これは旧先端接続のheadに対する成功であり、共有履歴液膜を含む次headのCI成功を先取りしない。
