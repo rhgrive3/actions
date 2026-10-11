@@ -19,11 +19,20 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>relay.once('listening',r));const rooms=new Map();
 relay.on('connection',(ws,req)=>{const u=new URL(req.url,'http://localhost'),code=u.pathname.split('/')[2];let room=rooms.get(code);if(!room)rooms.set(code,room=new RoomDurableObject({},{}));room.handleSession({send:s=>{if(delay&&s.startsWith('m|'))setTimeout(()=>ws.readyState===1&&ws.send(s),delay);else if(ws.readyState===1)ws.send(s);},addEventListener:(n,fn)=>ws.on(n,n==='message'?d=>fn({data:d.toString()}):fn)},u.searchParams.get('name')||'Player');});
 const url=`http://127.0.0.1:${server.address().port}/?relay=${encodeURIComponent('ws://127.0.0.1:'+relay.address().port)}`;
-const errors=[],results=[],contexts=[],pages=[];let browser;
+const errors=[],results=[],contexts=[],pages=[];let browser,browserInfo=null;
 async function boot(){const c=await browser.newContext({viewport:{width:1280,height:800}});contexts.push(c);const p=await c.newPage();pages.push(p);p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));await p.goto(url,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await p.waitForFunction(()=>RG.game?.menus&&RG.s3?.installed&&RG.mode!=='boot',null,{timeout:180000});return p;}
 async function advance(p,n){return p.evaluate(n=>{const g=RG.game,previous=g._skipRender;g._skipRender=true;try{for(let i=0;i<n;i++)g._frame(1/60);}finally{g._skipRender=previous;}RG.renderer.render(RG.scene,RG.camera);},n);}
+async function capture(p,options){
+ const drainMs=await p.evaluate(()=>{const t=performance.now();RG.renderer.getContext().finish();return performance.now()-t;});
+ if(drainMs>100)console.log(`GPU queue drained in ${drainMs.toFixed(1)}ms before ${path.basename(options.path)}`);
+ return p.screenshot({...options,animations:'disabled'});
+}
 try{
- browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ const launchOptions={headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']};
+ if(process.env.CHROMIUM_EXECUTABLE)launchOptions.executablePath=process.env.CHROMIUM_EXECUTABLE;
+ else launchOptions.channel='chromium'; // Use Playwright's full Chromium headless mode; CI's default headless shell hangs on offline WebGL screenshots.
+ browser=await chromium.launch(launchOptions);
+ browserInfo={version:browser.version(),channel:launchOptions.channel||'custom-executable'};console.log(`Chromium ${browserInfo.version} (${browserInfo.channel})`);
  const p=await boot();await p.evaluate(()=>{RG.game.debug.freeze();RG.game._skipRender=true;});
  for(const mode of process.env.RANKED_ONLINE_ONLY ? [] : ['zones','tower','rainmaker','clams']){
   console.log('offline',mode);
@@ -33,7 +42,7 @@ try{
   await p.waitForFunction(()=>!document.querySelector('.iw-bn--go'),null,{timeout:15000});
   await advance(p,120);
   const initial=await p.evaluate(()=>({mode:RG.match.mode,state:RG.match.state,time:RG.match.time,actors:RG.match.actors.length,ranked:!!RG.match.ranked,hud:document.querySelector('.iw-ranked-hud')?.textContent}));assert(initial.ranked&&initial.actors===8&&initial.time<=300&&initial.time>290);assert(initial.hud?.length>5);
-  await p.screenshot({path:path.join(out,mode+'-offline.jpg'),type:'jpeg',quality:60});
+  await capture(p,{path:path.join(out,mode+'-offline.jpg'),type:'jpeg',quality:60});
   const proof=await p.evaluate(mode=>{
    const m=RG.match,e=m.ranked,w=m.rankedWorld,a=m.local;RG.game.debug.freezeBots();
    if(mode==='zones'){e.stage.zones.forEach((_,i)=>w.captureZone(i,0));m.advanceRanked(1.2);if(e.counts[0]>98)throw Error('Native paint capture did not score');}
@@ -43,7 +52,7 @@ try{
    const snap=e.snapshot();if(!e.restore(snap))throw Error('Own snapshot rejected');return {counts:[...e.counts],snapshotBytes:JSON.stringify(snap).length};
   },mode);
   await advance(p,60);
-  await p.screenshot({path:path.join(out,mode+'-objective.jpg'),type:'jpeg',quality:60});
+  await capture(p,{path:path.join(out,mode+'-objective.jpg'),type:'jpeg',quality:60});
   const deadline=await p.evaluate(()=>{const m=RG.match,e=m.ranked;e.time=.001;m.time=.001;m.advanceRanked(1/60);return {winner:e.winner,overtime:e.overtime,state:m.state};});
   results.push({mode,offline:initial,proof:{...proof,...deadline}});
  }
@@ -70,7 +79,7 @@ try{
   for(const [i,pg] of [p,guest].entries()){
    await pg.waitForFunction(()=>!document.querySelector('.iw-bn--go'),null,{timeout:15000});
    await pg.evaluate(()=>RG.renderer.render(RG.scene,RG.camera));
-   await pg.screenshot({path:path.join(out,mode+'-online-'+i+'.jpg'),type:'jpeg',quality:60});
+   await capture(pg,{path:path.join(out,mode+'-online-'+i+'.jpg'),type:'jpeg',quality:60});
   }
   let record=results.find(r=>r.mode===mode);if(!record)results.push(record={mode});record.online=online;
   await p.evaluate(()=>{RG.match.ranked.setCount(0,0);RG.match.advanceRanked(1/60);});
@@ -79,10 +88,10 @@ try{
   assert.deepEqual(record.terminal[0],record.terminal[1]);
   await Promise.all([p,guest].map(pg=>pg.evaluate(()=>RG.net.leave())));
  }
- assert.equal(errors.length,0,JSON.stringify(errors));fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'passed',scope:process.env.RANKED_ONLINE_ONLY?'online-only':'offline-and-online',contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision,delayMs:delay,served:[...served],results,errors},null,2));
+ assert.equal(errors.length,0,JSON.stringify(errors));fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'passed',scope:process.env.RANKED_ONLINE_ONLY?'online-only':'offline-and-online',contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision,browser:browserInfo,delayMs:delay,served:[...served],results,errors},null,2));
 }catch(e){
  // Never let diagnostic image capture replace the original ranked/relay failure.
- fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'failed',contentHash:build.contentHash,error:e?.stack||String(e),results,errors},null,2));
+ fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'failed',contentHash:build.contentHash,browser:browserInfo,error:e?.stack||String(e),results,errors},null,2));
  for(let i=0;i<pages.length;i++){
   try { await pages[i].screenshot({path:path.join(out,'failure-'+i+'.png'),timeout:5000}); }
   catch(captureError){console.warn('ranked failure screenshot '+i+' unavailable:',captureError.message);}
