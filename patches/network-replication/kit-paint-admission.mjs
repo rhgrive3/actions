@@ -1,8 +1,13 @@
+import { cataloguePayload } from '../splatoon3/runtime/catalogue-payload.mjs';
+import { ALL_SUB_SPECS } from '../splatoon3/runtime/all-subs.mjs';
 import { SLOSHER_IMPACT_TAG, slosherPaintMetaValid, slosherPaintBirth, slosherImpactMatches } from './slosher-paint-admission.mjs';
 import { KIT_SUBS, resolveSubAtCharge } from '../splatoon3/runtime/kit-subs.mjs';
 import { catalogPaintRadiusLimit } from './catalog-paint-admission.mjs';
 export const KIT_BIRTH_TAG = 'inkwave-kit-birth-v1';
 export const KIT_PAINT_TAG = 'inkwave-kit-core-v1';
+export const SUB_PAINT_TAG = 'inkwave-sub-core-v1';
+const isCatalogueSub = id => ['burst','fizzy','inkMine'].includes(id);
+const catalogueBirth = e => e?.[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='spawn';
 const states = new WeakMap();
 const MAX_BIRTHS = 128, MAX_PENDING = 256, WAIT_SECONDS = 2;
 const safe = n => Number.isSafeInteger(n) && n >= 0;
@@ -24,7 +29,7 @@ function identify(e) {
  return safe(e._netSeq)&&e._netSeq>0&&safe(e._netTick);
 }
 function paintMeta(e){return Array.isArray(e?.[15]) ? e[15] : null;}
-function validMeta(meta){return slosherPaintMetaValid(meta)||Array.isArray(meta)&&meta.length===5&&meta[0]===KIT_PAINT_TAG&&typeof meta[1]==='string'&&safe(meta[2])&&safe(meta[3])&&safe(meta[4])&&meta[4]>0;}
+function validMeta(meta){return Array.isArray(meta)&&meta.length===6&&meta[0]===SUB_PAINT_TAG&&typeof meta[1]==='string'&&meta.slice(2).every(safe)&&meta[4]>0&&meta[5]<3||slosherPaintMetaValid(meta)||Array.isArray(meta)&&meta.length===5&&meta[0]===KIT_PAINT_TAG&&typeof meta[1]==='string'&&safe(meta[2])&&safe(meta[3])&&safe(meta[4])&&meta[4]>0;}
 export function kitBombBirthMetadata(nm,b){
  const a=b?.owner,id=b?.s3Resolved?.spec?.id;
  return a && !a.remote && safe(a.nid)&&safe(life(a))&&isKit(id) ? [KIT_BIRTH_TAG,epoch(nm),life(a)] : null;
@@ -33,13 +38,31 @@ export function recordKitBombBirth(nm,b,event){
  const meta=event?.[13];
  if(Array.isArray(meta)&&meta[0]===KIT_BIRTH_TAG&&identify(event))b.s3PaintBirth=[KIT_PAINT_TAG,epoch(nm),b.owner.nid,meta[2],event._netSeq];
 }
+export function recordCatalogueSubBirth(nm,object,event){
+ if(!object||object.ghost||!object.owner||object.owner.remote||!safe(object.owner.nid)||!safe(object.sourceLife)
+   ||!isCatalogueSub(object.subId)||!catalogueBirth(event)||!identify(event))return;
+ object.s3PaintBirth=[SUB_PAINT_TAG,epoch(nm),object.owner.nid,object.sourceLife,event._netSeq];
+}
 function retireProjectile(s,b){if(b?.kind==='slosher')s.retiredProjectiles.set(b.owner,Math.max(s.retiredProjectiles.get(b.owner)||0,b.projectileId));}
 function register(nm,from,e,s){
- if(!identify(e)||!['b','p'].includes(e[1]))return;
- const a=nm.byNid.get(e[2]);
+ if(!identify(e)||!(['b','p'].includes(e[1])||catalogueBirth(e)))return;
+ const a=nm.byNid.get(catalogueBirth(e)?e[3]:e[2]);
  if(!a?.remote||a.owner!==from||!nm.s._members?.has(from)||!Number.isFinite(e[0])||e[0]<0)return;
  let record;
- if(e[1]==='p'){
+ if(catalogueBirth(e)){
+  const v=cataloguePayload(e[5]);if(!v)return;
+  const id=v.subId,spec=ALL_SUB_SPECS[id];
+  if(![6,8].includes(e.length)||!isCatalogueSub(id)||a.weapon?.sub!==id||!safe(e[4])||life(a)!==e[4]
+    ||v.v!==1||!safe(v.eventSeq)||v.eventSeq===0||v.life!==e[4]||v.sourceLife!==e[4]||!safe(v.seq)||v.seq===0||!safe(v.seed)||v.seed>0xffffffff
+    ||![v.x,v.y,v.z,v.vx,v.vy,v.vz,v.charge,v.hold].every(Number.isFinite)
+    ||![v.x,v.y,v.z,v.vx,v.vy,v.vz].every(n=>Number.isFinite(Math.fround(n)))
+    ||v.charge<0||v.charge>1||v.hold<0)return;
+  const count=id==='fizzy'?(v.hold>=(spec.chargeFrames[0]+spec.chargeFrames[1])/60?3:v.hold>=spec.chargeFrames[0]/60?2:1):1;
+  record={kind:'sub',life:e[4],subId:id,seed:v.seed,origin:[v.x,v.y,v.z],velocity:[v.vx,v.vy,v.vz],
+    flightSeconds:id==='fizzy'?spec.burstWaitFrames[0]/60+1/60:2.2+1/60,gravity:spec.gravity,
+    coreRadii:id==='fizzy'?spec.bursts.slice(0,count).map(b=>b.paintRadius):[spec.paintRadius],
+    usedCores:Array(count).fill(null)};
+ }else if(e[1]==='p'){
   if(e[3]!=='slosh'||e[4]!=='slosher'||a.weapon?.id!=='slosher')return;
   const birth=slosherPaintBirth(e);
   if(!birth||birth.epoch!==epoch(nm)||birth.life!==life(a)||a.weapon?.id!=='slosher'||birth.projectileId<=Math.max(s.retiredProjectiles.get(from)||0,nm.peers.get(from)?._lastProjectileId||0))return;
@@ -74,6 +97,19 @@ function register(nm,from,e,s){
  if(record.kind==='slosher'&&record.projectileId<=(s.retiredProjectiles.get(from)||0))return;
  s.births.set(k,{...record,owner:from,nid:a.nid,seq:e._netSeq,tick:e._netTick,team:a.team,used:null});
 }
+// Conservative swept-flight envelope, including a fixed-step boundary and
+// contacted actor height. It rejects remote teleport cores without pretending
+// to reproduce dynamic actor contacts or authoritative collision simulation.
+function subCoreReachable(b,e,index){
+ const t=b.flightSeconds, hop=b.subId==='fizzy'?index*(.62+5.5*2/60):0;
+ const [x,y,z]=b.origin,[vx,vy,vz]=b.velocity;
+ const pad=.1+hop;
+ if(e[2]<x+Math.min(0,vx*t)-pad||e[2]>x+Math.max(0,vx*t)+pad
+  ||e[4]<z+Math.min(0,vz*t)-pad||e[4]>z+Math.max(0,vz*t)+pad)return false;
+ const vertical=2+index*(3.4*2/60);
+ return e[3]>=y+Math.min(0,vy*t)-.5*b.gravity*t*(t+1/60)-vertical
+  &&e[3]<=y+Math.max(0,vy*t)+vertical;
+}
 function receipt(nm,from,e,s){
  const meta=paintMeta(e);if(!validMeta(meta)||!identify(e)||meta[1]!==epoch(nm))return null;
  const a=nm.byNid.get(meta[2]);
@@ -82,6 +118,14 @@ function receipt(nm,from,e,s){
  const b=s.births.get(key(from,meta[4]));
  if(!b||b.nid!==meta[2]||b.life!==meta[3]||b.team!==e[6]||e._netTick<b.tick
   ||b.used!==null&&b.used!==e._netSeq)return null;
+ if(b.kind==='sub'){
+  const index=meta[5];
+  if(meta[0]!==SUB_PAINT_TAG||index>=b.coreRadii.length||e[5]!==b.coreRadii[index]||!subCoreReachable(b,e,index)
+    ||b.usedCores[index]!==null&&b.usedCores[index]!==e._netSeq
+    ||e[7]!==((b.seed^((index+1)*0x9e3779b9))>>>0)/0x100000000
+    ||(e[8]!==0&&e[8]!==undefined)||e[9]||e[10]||e[11]||e[12]||(e[13]!==-1&&e[13]!==undefined))return null;
+  return b;
+ }
  if(b.kind==='slosher')return meta[0]===SLOSHER_IMPACT_TAG&&slosherImpactMatches(b,e)?b:null;
  if(meta[0]!==KIT_PAINT_TAG)return null;
  if(e[5]!==b.radius || (e[8]!==0&&e[8]!==undefined) || e[9]||e[10]||e[11]||e[12]
@@ -95,15 +139,17 @@ export function kitPaintRadiusAllowed(nm,from,e,cap){
 }
 export function consumeKitPaint(nm,from,e){
  if(!paintMeta(e))return true;
- const b=receipt(nm,from,e,state(nm));if(!b)return false;b.used=e._netSeq;return true;
+ const b=receipt(nm,from,e,state(nm));if(!b)return false;
+ if(b.kind==='sub'){b.usedCores[e[15][5]]=e._netSeq;if(b.usedCores.every(n=>n!==null))b.used=e._netSeq;}
+ else b.used=e._netSeq;return true;
 }
 function couldWait(nm,from,e,s){
  const m=paintMeta(e);if(!validMeta(m)||m[1]!==epoch(nm)||!identify(e)||e._netSeq<=m[4]
   ||!e.slice(2,8).every(Number.isFinite)||!Number.isFinite(e[0])||e[0]<0||e[5]<=0||e[5]>5
   ||(e[8]!==0&&e[8]!==undefined)||(m[0]===KIT_PAINT_TAG&&(e[9]||e[10]||e[11]||e[12]))||(e[13]!==-1&&e[13]!==undefined))return false;
  const a=nm.byNid.get(m[2]);
- return a?.remote&&a.owner===from&&life(a)===m[3]&&a.team===e[6]&&(m[0]===SLOSHER_IMPACT_TAG?a.weapon?.id==='slosher':isKit(a.weapon?.sub))
-  &&nm.s._members?.has(from)&&m[4]>Math.max(nm.peers.get(from)?._lastEventSeq||0,s.expired.get(from)||0,s.retiredBirths.get(key(from,m[0]===SLOSHER_IMPACT_TAG?'slosher':'kit'))||0)&&!s.births.has(key(from,m[4]));
+ return a?.remote&&a.owner===from&&life(a)===m[3]&&a.team===e[6]&&(m[0]===SLOSHER_IMPACT_TAG?a.weapon?.id==='slosher':m[0]===SUB_PAINT_TAG?isCatalogueSub(a.weapon?.sub):isKit(a.weapon?.sub))
+  &&nm.s._members?.has(from)&&m[4]>Math.max(nm.peers.get(from)?._lastEventSeq||0,s.expired.get(from)||0,s.retiredBirths.get(key(from,m[0]===SLOSHER_IMPACT_TAG?'slosher':m[0]===SUB_PAINT_TAG?'sub':'kit'))||0)&&!s.births.has(key(from,m[4]));
 }
 // Same-packet reordering is normalized before admission. If a core arrives before
 // its birth in separate accepted packets, hold the remaining sender events too:
@@ -145,7 +191,7 @@ export function prepareKitPaintEvents(nm,from,d){
 }
 export function kitPaintPlayback(nm,from,e){
  const s=state(nm);if(s.flushing)return true;
- const birth=e[1]==='b'||e[1]==='p'&&e[3]==='slosh'&&e[4]==='slosher';
+ const birth=catalogueBirth(e)||e[1]==='b'||e[1]==='p'&&e[3]==='slosh'&&e[4]==='slosher';
  if(!birth&&!paintMeta(e)&&!s.pending.has(from))return true;
  const ready=prepareKitPaintEvents(nm,from,{r:2,e:[e]});
  if(ready.length===1&&ready[0]===e)return true;
@@ -165,7 +211,7 @@ export function acceptPendingKitBirths(nm,from,d){
   return;
  }
  const wanted=new Set(pending.rows.filter(e=>e[1]==='s'&&validMeta(paintMeta(e))).map(e=>e[15][4]));
- const births=d.e.filter(e=>['b','p'].includes(e?.[1])&&identify(e)&&wanted.has(e._netSeq));
+ const births=d.e.filter(e=>(['b','p'].includes(e?.[1])||catalogueBirth(e))&&identify(e)&&wanted.has(e._netSeq));
  if(!births.length)return;
  const ready=prepareKitPaintEvents(nm,from,{r:2,e:births,ts:d.ts,u:d.u});
  nm._queueKitRecoveredEvents(from,ready);
