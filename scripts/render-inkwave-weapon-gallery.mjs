@@ -39,6 +39,10 @@ try {
     const THREE = await import('three'), { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
     const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
     const api = install(profile), { G, Physics } = api;
+    // bootstrap.mjs installs the catalogue main-weapon runtime after install(); without it s3-* weapons never fire
+    const { installWeaponsFidelity } = await import(prefix + 'patches/splatoon3/runtime/weapons-fidelity.mjs');
+    const { installMainWeaponCatalogRuntime } = await import(prefix + 'patches/splatoon3/runtime/main-weapon-catalog.mjs');
+    installWeaponsFidelity(api, profile); installMainWeaponCatalogRuntime(api, profile);
     const W = await import(prefix + 'src/game/character-weapons.js'), Mt = await import(prefix + 'src/game/character-mats.js');
     const R = await import(prefix + 'patches/splatoon3/runtime/weapon-models/registry.mjs').catch(() => null); // absent in pre-registry builds
     const { WEAPONS } = await import(prefix + 'src/config.js');
@@ -54,7 +58,8 @@ try {
     G.scene = scene; G.teamColors = [new THREE.Color('#ff8825'), new THREE.Color('#484ce8')];
     G.level = { blocks: [], groundHeight: () => 0, queryBlocks: (_a, _b, _c, _d, o) => { o.length = 0; return o; } };
     G.physics = new Physics(G.level); G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true }; G.time = 0;
-    G.projectiles = new Proxy({}, { get: (t, k) => t[k] ?? (typeof k === 'string' && /^(fire|throw|_)/.test(k) ? () => {} : undefined) });
+    G.projectiles = new api.Projectiles({ add() {}, remove() {} }); // real emission path, projectiles not drawn
+    G.physics.segment = (_a, _b, h) => { h.hit = false; return h; };
     const snap = () => renderer.domElement.toDataURL('image/png').split(',')[1];
     window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G };
   }, { prefix, size });

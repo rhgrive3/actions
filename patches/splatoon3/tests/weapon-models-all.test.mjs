@@ -8,8 +8,9 @@ import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 
 const IDS = MAIN_WEAPON_CATALOG.records.map(r => r.id);
 let loaded;
-const production = () => loaded ??= fixture({ fullRuntime: true, includeCharacter: true, productionComposition: true,
-  extraExports: "export { getWeaponDef, WEAPON_KINDS } from './inkwave-public/src/game/character-weapons.js';\nexport * as REG from './patches/splatoon3/runtime/weapon-models/registry.mjs';" });
+const production = () => loaded ??= fixture({ fullRuntime: true, includeCharacter: true, productionComposition: true, realProjectiles: true,
+  extraExports: "export { getWeaponDef, WEAPON_KINDS } from './inkwave-public/src/game/character-weapons.js';\nexport * as REG from './patches/splatoon3/runtime/weapon-models/registry.mjs';\nexport { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';" })
+  .then(f => { f.installMainWeaponCatalogRuntime(f.installedRuntime, f.profile); return f; });
 // Native part channels each family's runtime animates (character-weapons.js + patches).
 const CHANNELS = { shooter: ['trigger', 'bolt', 'can', 'led'], blaster: ['trigger', 'pump', 'needle', 'bulb', 'front', 'lever'],
   charger: ['trigger', 'bolt', 'lens', 'eyepiece', 'ports'], roller: ['led', 'hinge', 'hingeInk'], slosher: ['surface', 'lever'],
@@ -65,7 +66,7 @@ test('every main weapon model keeps finite geometry, grips, muzzle socket and na
 test('the real Actor/Runner/Character holds every main weapon through carry and attack', async () => {
   const f = await production(), { G, THREE } = f, { weaponModelKey, weaponModelFamily } = f.REG;
   G.scene = new THREE.Scene(); G.physics = new f.Physics(G.level); G.level.queryBlocks = (_a, _b, _c, _d, out) => { out.length = 0; return out; };
-  G.projectiles = new Proxy({}, { get: (t, k) => t[k] ?? (typeof k === 'string' && /^(fire|throw)/.test(k) ? () => {} : undefined) });
+  G.physics.segment = (_a, _b, h) => { h.hit = false; return h; };
   const C = f.CHARACTER_CHANNELS, hand = new THREE.Vector3();
   for (const id of IDS) {
     const a = new f.Actor({ team: 0, weapon: id, CharacterClass: f.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
@@ -73,16 +74,18 @@ test('the real Actor/Runner/Character holds every main weapon through carry and 
     assert.equal(ch.weaponKind, weaponModelFamily(id), id + ' family hold');
     assert.equal(ch.weaponModel, weaponModelKey(id), id + ' own model');
     assert.equal(ch.weapon.def, f.getWeaponDef(id));
-    let maxGrip = 0;
+    let maxGrip = 0, attacked = 0;
     for (let n = 0; n < 150; n++) {
       const fire = n >= 40 && n < 120; a.intent.fire = fire; a.ink = 100;
       G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire }); a._finishFrame(1 / 60); ch.root.updateMatrixWorld(true);
       assert.ok([...ch.P].every(Number.isFinite), id + ' finite pose');
+      if (a.weaponRunner.busy?.() || a.weaponRunner.firingT > 0 || a.weaponRunner.charging) attacked++;
       assert.ok(ch.getMuzzle(new THREE.Vector3()).toArray().every(Number.isFinite), id + ' finite muzzle');
       if (!ch.dual && ch.P[C.IKL] > .99 && ch.P[C.LTW] < .001)
         maxGrip = Math.max(maxGrip, ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(hand)));
     }
     assert.ok(maxGrip < 0.008, `${id} support hand stays on its grip (${maxGrip.toFixed(4)} m)`);
+    assert.ok(attacked > 0, `${id} really attacks during the held-fire window`);
     a.weaponRunner.reset(); ch.setWeapon('shooter'); assert.equal(ch.weaponModel, weaponModelKey('shooter'));
     ch.dispose(); G.scene.remove(ch.root);
   }
