@@ -1,5 +1,6 @@
+import { advanceTenacity } from './tenacity.mjs';
 // Match windows and respawn buffs are independent of Flow's activation clock.
-export const HEAD_ABILITIES = Object.freeze(['lastDitchEffort', 'comeback', 'openingGambit']);
+export const HEAD_ABILITIES = Object.freeze(['lastDitchEffort', 'comeback', 'openingGambit', 'tenacity']);
 const INK = ['inkSaverMain', 'inkSaverSub', 'inkRecovery'];
 const MOVE = ['runSpeed', 'swimSpeed', 'inkResistance', 'actionIntensify'];
 const COMEBACK = [...INK, 'runSpeed', 'swimSpeed', 'specialCharge'];
@@ -61,7 +62,7 @@ export function installConditionalGear(api, tuning, refresh) {
   Actor.prototype.update = function (dt) {
     const state = conditionalState(this, G.match);
     if (G.match?.state === 'playing' && !G.match.paused && !G.match.attract) state.comeback = Math.max(0, state.comeback - dt);
-    refresh(this); return update.call(this, dt);
+    refresh(this); const result=update.call(this, dt); advanceTenacity(this, dt, api); return result;
   };
   function extend(actor, victim) {
     if (!actor || !victim || actor === victim || actor.team === victim.team) return;

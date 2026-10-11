@@ -204,6 +204,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const w = this.a.weapon;
     if (!w.catalogRecord) return legacyMove.call(this);
     const s = this.catalogState, r = w.catalogRecord, p = r.parameters, t = weaponParam(r);
+    // The catalogue replaces the legacy movement wrapper, so preserve the
+    // existing sub-ready owner before selecting main-weapon movement.
+    const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
+    if (this.a.grounded && (this.aimingSub || throwingStorm)) return profile.bomb.holdMoveSpeed;
     const mod = ['roller','brush','splatana'].includes(r.family)?1:this.a.s3?.modifiers?.runSpeedFiring ?? 1;
     if (s?.roll || s?.lunge || s?.turret>EPS && r.sourceActor !== 'WeaponManeuverDual') return 0;
     if (this.rolling) return finite(p.WeaponRollParam?.SpeedDash,finite(p.WeaponRollParam?.SpeedNormal,.132))*HZ;

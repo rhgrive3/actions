@@ -17,7 +17,7 @@ export const ABILITIES = Object.freeze({
   haunt: 'リベンジ', thermalInk: 'サーマルインク', respawnPunisher: '復活ペナルティアップ', abilityDoubler: 'フェスT：追加ギアパワー倍化',
   objectShredder: '対物攻撃力アップ',
   ninjaSquid: 'イカニンジャ',
-  lastDitchEffort: 'ラストスパート', comeback: 'カムバック', openingGambit: 'スタートダッシュ', subResistance: 'サブ影響軽減',
+  tenacity: '逆境強化', lastDitchEffort: 'ラストスパート', comeback: 'カムバック', openingGambit: 'スタートダッシュ', subResistance: 'サブ影響軽減',
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
   inkSaverMain: 'インク効率アップ（メイン）', inkSaverSub: 'インク効率アップ（サブ）',
   inkRecovery: 'インク回復力アップ', inkResistance: '相手インク影響軽減',

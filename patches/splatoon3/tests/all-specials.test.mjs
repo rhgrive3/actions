@@ -109,7 +109,7 @@ test('Zipcaster repeats hooks, fires the equipped main from its special ink tank
  while(f.G.projectiles.list.length===shots&&fireFrames<30){a._updateSpecial(1/60);fireFrames++;}
  assert.ok(f.G.projectiles.list.length>shots&&f.G.projectiles.list.some(p=>p.owner===a&&!p.s3AllSpecial),'fire goes through the equipped native main weapon');
  assert.ok(hits.some(h=>h[1]===victim&&h[3]==='zipcaster'),'hook impact remains the Zipcaster damage source');
- assert.equal(a.ink,normalInk,'the temporary Zipcaster tank does not overwrite the normal tank');assert.ok(state.inkFuel<fuel-13.05*fireFrames/60-.5,'main firing and time drain consume the single special tank');
+ assert.equal(a.ink,normalInk,'the temporary Zipcaster tank does not overwrite the normal tank');assert.ok(state.inkFuel<fuel-state.inkDrainPerSecond*fireFrames/60-.5,'main firing and time drain consume the single special tank');
  a.intent.sub=true;a.intent.fire=false;a._updateSpecial(1/60);assert.equal(state.phase,'zip','a second sub press starts another hook');
  state.duration=state.t+1/60;a.intent.sub=false;a._updateSpecial(1/60);
  assert.equal(a.specialActive,null);assert.ok(a.superJumpState);assert.deepEqual(a.superJumpState.target.toArray(),origin.toArray());
@@ -226,4 +226,16 @@ test('local Booyah calls credit gauge for a remote catalogue caster once per cal
  const event={actor:ally,id:'booyahBomb',action:'cheer',activation:7,ownerNid:11,ownerLife:3,seed:1};
  f.emit('all:special',event);assert.equal(ally.special,6);f.emit('all:special',event);assert.equal(ally.special,6);
  f.emit('all:special',{...event,seed:2});assert.equal(ally.special,9);f.emit('all:special',{...event,seed:3,ownerLife:2});assert.equal(ally.special,9);
+});
+test('Zipcaster special-power AP controls native hook cost and time drain at 30/60/120 Hz',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57])for(const hz of [30,60,120]){
+  const a=f.make();a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'zipcaster');f.G.actors=[a];
+  a._startSpecial();const s=a._s3AllSpecialState,drain=gearCurve(ap,15,13.05,12),hook=gearCurve(ap,4,2.5,1.5);
+  for(let i=0;i<hz;i++)a._updateSpecial(1/hz);
+  assert.ok(Math.abs(s.inkFuel-(150-drain))<1e-8,`${ap}AP ${hz}Hz drain`);
+  const before=s.inkFuel;a.intent.sub=true;a._updateSpecial(1/hz);
+  assert.ok(Math.abs(before-s.inkFuel-(hook+drain/hz))<1e-8,`${ap}AP ${hz}Hz hook`);
+  assert.equal(s.phase,'zip');
+ }
 });

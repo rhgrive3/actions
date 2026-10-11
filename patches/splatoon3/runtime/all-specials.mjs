@@ -915,7 +915,7 @@ function activeStep(rt,actor,dt) {
         emitAction(rt,actor,'zipcaster',state.serial,'hookImpact',state.zipTarget,null,nextSeed(state),{targets:victimHits.length,index:state.zips});}
       else {delta.multiplyScalar(Math.min(1,19*dt/distance));actor.pos.add(delta);actor.vel.copy(delta).multiplyScalar(1/dt);actor.grounded=false;}
     }else moveActor(rt,actor,dt,state,{speed:actor.intent.squid?6:4.2,squid:true,jump:true});
-    state.inkFuel=Math.max(0,state.inkFuel-13.05*dt);
+    state.inkFuel=Math.max(0,state.inkFuel-state.inkDrainPerSecond*dt);
     // Zipcaster has its own 1.5x special ink tank. Let the equipped native
     // WeaponRunner spend from that tank while preserving the player's normal
     // ink reserve for after the special ends.
@@ -928,7 +928,7 @@ function activeStep(rt,actor,dt) {
       state.inkFuel=clamp(Number(actor.ink)||0,0,150);
       actor.ink=normalInk;
     }
-    if(state.phase==='ready'&&edges.sub&&state.inkFuel>=2.5){state.inkFuel-=2.5;const target=aimPoint(rt,actor,35,rt.v0).clone();zipTo(rt,actor,state,target);}
+    if(state.phase==='ready'&&edges.sub&&state.inkFuel>=state.hookInkCost){state.inkFuel-=state.hookInkCost;const target=aimPoint(rt,actor,35,rt.v0).clone();zipTo(rt,actor,state,target);}
     if(state.inkFuel<=0||elapsed>=state.duration)returnToOrigin(rt,actor,state,state.inkFuel<=0?'ink':'duration');
     return;
   }
@@ -1047,7 +1047,7 @@ function makeState(rt,actor,id) {
   if(id==='krakenRoyale'){state.armorHP=Infinity;state.phase='active';state.direction=new rt.api.THREE.Vector3();}
   if(id==='killerWail')state.phase='charge';
   if(id==='inkjet')actor.vel.y=Math.max(actor.vel.y,7.4);
-  if(id==='zipcaster')state.inkFuel=150;
+  if(id==='zipcaster'){state.inkFuel=150;state.hookInkCost=gearCurve(ap,4,2.5,1.5);state.inkDrainPerSecond=gearCurve(ap,15,13.05,12);}
   actorStates.set(actor,state);actor._s3AllSpecialState=state;
   actor.specialActive={id,t:0,phase:state.phase,armor:false,armorHP:state.armorHP,activation:serial};
   emitAction(rt,actor,id,serial,'activate',actor.pos,null,state.seed,{duration:q3(duration)});

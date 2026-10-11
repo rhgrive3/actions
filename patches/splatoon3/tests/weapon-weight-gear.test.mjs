@@ -56,3 +56,24 @@ test('weight speed curves match pinned original misc parameters when source fixt
   assert.deepEqual(curves[kind],p[stem+(weight==='Mid'?'':'_'+weight)].slice().reverse());
  }
 });
+test('all 65 grounded sub-ready states preserve the common throw movement owner under run gear',async()=>{
+ const f=await setup();for(const r of MAIN_WEAPON_CATALOG.records){
+  const a=f.make(r.id);a.grounded=true;a.s3.loadout=loadout('runSpeed',57);a.s3RefreshGear();
+  a.weaponRunner.aimingSub=true;close(a.weaponRunner.moveSpeed(),f.profile.bomb.holdMoveSpeed,r.id+' sub hold');
+  a.weaponRunner.aimingSub=false;close(a.weaponRunner.moveSpeed(),8.64,r.id+' released sub');
+ }
+});
+test('weight curves survive Ninja Squid, Drop Roller and Opening Gambit refresh/expiry',async()=>{
+ const f=await setup();for(const id of ['s3-shooter-short','s3-charger-long']){
+  const a=f.make(id);a.grounded=true;const c=WEIGHT_SPEED_CURVES[WEAPON_WEIGHTS[id].speed];
+  a.s3.loadout=emptyLoadout();a.s3.loadout[1].main='ninjaSquid';a.s3.loadout[0].main='swimSpeed';a.s3RefreshGear();
+  close(a.s3.modifiers.swimSpeed*f.PLAYER.swimSpeed,gearCurve(10,...c.swim)*60,id+' ninja base curve');
+  a.form='squid';a.submerged=true;a.intent.move.set(0,0,1);a.vel.set(0,0,0);for(let i=0;i<120;i++)a._horizontal(1/60,true,false);
+  close(a.vel.z,gearCurve(10,...c.swim)*60*f.profile.stealth.ninjaSwimMultiplier,id+' ninja actual');
+  a.form='kid';a.s3.dropRollerBuffRemaining=3;a.s3RefreshGear();close(a.weaponRunner.moveSpeed(),gearCurve(30,...c.run)*60,id+' drop buff');
+  a.s3.dropRollerBuffRemaining=0;a.s3RefreshGear();close(a.weaponRunner.moveSpeed(),c.run[0]*60,id+' drop expired');
+  a.s3.loadout=emptyLoadout();a.s3.loadout[0].main='openingGambit';f.G.match={state:'playing',time:180,duration:180,playing:()=>true};a.s3RefreshGear();
+  close(a.weaponRunner.moveSpeed(),gearCurve(30,...c.run)*60,id+' opening');
+  f.G.match.time=150;a.s3RefreshGear();close(a.weaponRunner.moveSpeed(),c.run[0]*60,id+' opening expired');
+ }
+});
