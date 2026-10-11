@@ -14,10 +14,12 @@ The root whole-stage OBJ and its multiple `_parts/*.obj` files contain overlappi
 | --- | --- | --- | ---: | ---: | ---: | --- |
 | ユノハナ / `Vss_Yunohana` | 40,126,181 bytes | `c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8` | 319,113 | 279,299 | 276 | 974.507 / 80.498 / 974.330 |
 | マヒマヒ / `Vss_Hiagari04` | 29,497,521 bytes | `fc8f7233063cdbe7b2bd821b30cbe60e94e7a20e6a5d60ce00ce9b272232d561` | 247,052 | 188,912 | 224 | 4885.188 / 225.667 / 2723.843 |
+| キンメダイ / `Vss_Pivot03` | 41,209,929 bytes | `ffe207e9b3d3eb4fc482ca45887fea1f1a131fdb2e2a0403535e1f281453bad1` | 361,197 | 241,259 | 232 | 1413.946 / 219.245 / 1735.523 |
 
 Relevant *part* AABBs used as narrower reference candidates (not confirmed game-collision bounds):
 - `Vss_Yunohana_parts/part_0060.obj`: X=-57.8102..48.2102, Y=-14.2..20.4367, Z=-82.5..82.5, 110,151 vertices, 88,162 faces.
 - `Vss_Hiagari04_parts/part_0060.obj`: X=-76.5117..76.5117, Y=0..45.0455, Z=-69.6557..68.4398, 51,221 vertices, 43,204 faces.
+- `Vss_Pivot03_parts/part_0060.obj`: X/Z extent 110.0 × 100.0, height 22.8209, 30,816 vertices, 18,200 faces. Its center and source scaling are unverified.
 
 The broader AABBs include scenic environment, so interpreting them as playable stage dimensions is **incorrect**. `_parts/part_0060` has not yet been confirmed as the exact collision-only geometry. Material names ending in `_np` may help identify non-paintable surfaces, but must be cross-checked with placement/collision data before treating them as authoritative. OBJ units/orientation have not been calibrated to INKWAVE coordinates.
 
