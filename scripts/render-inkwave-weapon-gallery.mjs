@@ -65,7 +65,9 @@ try {
     const row = await page.evaluate(async ({ id, held }) => {
       const { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G } = window.__gallery;
       const { Actor, Character } = api;
-      const d = W.getWeaponDef(id), color = G.teamColors[0];
+      const t0 = performance.now(), d = W.getWeaponDef(id), buildMs = performance.now() - t0, color = G.teamColors[0];
+      let bytes = 0; const geos = [d.body, d.ink, d.bodyStatic, d.inkStatic, d.drum, d.drumCaps, d.glow, ...Object.values(d.parts || {}).map(p => p.geo)];
+      for (const geo of new Set(geos.filter(Boolean))) { for (const a of Object.values(geo.attributes)) bytes += a.array.byteLength; if (geo.index) bytes += geo.index.array.byteLength; }
       // whole weapon at rest, including the parts and drum/glow channels
       const g = new THREE.Group();
       g.add(new THREE.Mesh(d.body, Mt.getPlasticMaterial()), new THREE.Mesh(d.ink, Mt.getInkMaterial(color)));
@@ -85,7 +87,7 @@ try {
       const persp = snap(); scene.remove(g);
       let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
       const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),
-        size: s.toArray().map(v => +v.toFixed(4)), muzzle: d.muzzle.toArray().map(v => +v.toFixed(4)), tris: Math.round(tris),
+        size: s.toArray().map(v => +v.toFixed(4)), muzzle: d.muzzle.toArray().map(v => +v.toFixed(4)), tris: Math.round(tris), buildMs: +buildMs.toFixed(1), geometryKB: Math.round(bytes / 1024),
         images: { side, above, front: muzzleView, persp } };
       if (!held) return res;
       // held: real Actor + WeaponRunner + Character (native + patched pose layers)
