@@ -146,6 +146,21 @@ try {
       };
 
       const {CANONICAL_KITS}=await import('/patches/splatoon3/runtime/canonical-kits-data.mjs');
+      const {WEAPON_WEIGHTS}=await import('/patches/splatoon3/runtime/weapon-weight-data.mjs');
+      const {WEIGHT_SPEED_CURVES}=await import('/patches/splatoon3/runtime/weapon-weight.mjs');
+      const {gearCurve,emptyLoadout}=await import('/patches/splatoon3/runtime/gear.mjs');
+      const weightChecks=[];
+      for(const record of records)for(const ap of [0,10,57]){
+        const a=makeActor(record.id), l=emptyLoadout();
+        if(ap===10)l[0].main='runSpeed';
+        if(ap===57)for(const p of l){p.main='runSpeed';p.subs.fill('runSpeed');}
+        a.s3.loadout=l;a.s3RefreshGear();
+        const curve=WEIGHT_SPEED_CURVES[WEAPON_WEIGHTS[record.id].speed];
+        const expected=gearCurve(ap,...curve.run)*60;
+        check(Math.abs(a.weaponRunner.moveSpeed()-expected)<1e-8,record.id+' weighted run '+ap);
+        check(a.s3.modifiers.inkSaverMain>0,record.id+' nonnegative ink sentinel');
+        weightChecks.push({id:record.id,ap,speed:a.weaponRunner.moveSpeed(),weight:WEAPON_WEIGHTS[record.id].speed});
+      }
       const kitChecks=[];
       for(const record of records){
         G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
@@ -209,7 +224,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks,
+        kitChecks, weightChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
