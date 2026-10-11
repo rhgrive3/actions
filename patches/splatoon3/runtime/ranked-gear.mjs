@@ -10,6 +10,8 @@ export function installRankedGearReceipt(api) {
   function receive(from,data){
     const m=this.match,e=m?.ranked,before=e?.revision;
     const result=incoming.call(this,from,data);
+    // Turf, initialization and teardown may have no ranked engine.
+    if(!m||!e)return result;
     const p=data?.rk,s=p?.state;
     if(api.G.netm===this&&api.G.match===m&&this.match===m&&m?.ranked===e&&m.follower===true&&!this.isHost&&
       from===this.s?.hostId&&p?.host===from&&p?.match===this.cfg?.id&&s?.mode===m.mode&&s?.mode===e.mode&&

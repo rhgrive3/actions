@@ -89,8 +89,10 @@ No GPU or browser FPS speedup is claimed. The added weight map is 65 small immut
 
 The e4aac88 browser run exposed an incomplete catalogue-probe physics mock when the new Zipcaster case entered real Actor integration. The probe now creates the real Physics class over its empty fixture level. The older seven-claims pitch probe also used the obsolete random draw order; it now uses the four-draw sequence already independently asserted by the signed-axis Splatling regression. That browser pipeline now explicitly enables pipefail so a failing browser cannot be hidden by tee. These are test-environment corrections; actual browser success still requires the next CI result.
 
-## Unpublished Tenta candidate and paint-shape blocker
+## Tenta candidate and paint-shape adoption gate
 
 - Tenta Missiles source paint-power curve is `[3.15,3.465,3.78]`, distinct from raw unmodified PaintRadius 3. The local candidate connects activation AP to the native capped descriptor and supplemental paint disk, with actual JSON ghost reconstruction. Composed special tests: 30/30; numerical source gate: eight files, 36 fields.
 - This candidate must not be accepted before the separately owned paintDisk discontinuity is resolved or bounded. At its 3.74 tile threshold, the old disk changes to multiple large stamps; source radius alone therefore does not prove the actual painted area. First integer AP crossing the threshold is Inkjet 26 (3.725 → 3.740384), Super Chump 14 (3.730022 → 3.745448) and Tenta 45 (3.7354464 → 3.7410975). Network consistency passes, but it is a different property from source area fidelity.
 - Tenta lock circle 140/190/240 and retail target projection remain unverified; this patch does not invent a screen-to-world angle conversion.
+
+The approved resumed powered-envelope candidate now bundles the Tenta curve with the separately reviewed bounded disk and shared-seed fix. The one-cell AP contour residual remains disclosed; CI and main adoption are pending. Later independent gear corrections remain separate work.

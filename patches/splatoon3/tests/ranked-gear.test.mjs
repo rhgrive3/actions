@@ -37,3 +37,22 @@ test('optional pinned PR1223 real restore and composed Actor validate the compat
  const malformed=structuredClone(packet);malformed.rk.state.revision=3;malformed.rk.state.rule=null;nm.onMessage('host',malformed);assert.equal(engine.revision,2);
  nm.cfg.id='next';a.s3RefreshGear();assert.equal(a.s3.abilityPoints.inkSaverMain||0,0);
 });
+
+
+
+test('actual NetMatch ignores ranked receipts while engine is absent, initializing or removed',async()=>{
+ const {fixture}=await import('./source-fixture.mjs');
+ const f=await fixture({fullRuntime:true,productionComposition:true});const a=f.make();Object.assign(a,{nid:1,owner:'viewer'});
+ const nm=new f.NetMatch({myId:'viewer',hostId:'host',isHost:false},{id:'missing-ranked'});
+ const m={actors:[a],state:'playing',mode:'zones',follower:true,time:20,playing:()=>true};nm.bind(m);f.G.netm=nm;f.G.match=m;
+ const packet={k:'rkstate',rk:{host:'host',match:'missing-ranked',state:{mode:'zones',counts:[100,0],revision:1,winner:null,overtime:true}}};
+ a.s3.loadout[0].main='lastDitchEffort';
+ for(const state of ['absent','initializing','removed']){
+  if(state==='initializing')m.ranked=null;
+  else if(state==='removed'){m.ranked={mode:'zones',revision:0};delete m.ranked;}
+  else delete m.ranked;
+  assert.doesNotThrow(()=>nm.onMessage('host',JSON.parse(JSON.stringify(packet))),state);
+  a.s3RefreshGear();assert.equal(a.s3.abilityPoints.inkSaverMain||0,0,state);
+ }
+ nm.match=null;f.G.match=null;assert.doesNotThrow(()=>nm.onMessage('host',packet),'match torn down');
+});

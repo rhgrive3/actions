@@ -34,3 +34,9 @@ An additional scan of all 40 ordinarily reachable AP values × 3 seeds × 3 spec
 Source focused tests: 61/61. Actual composed-build tests: 61/61, including special mechanics, gear curves, six real JSON ownership/duplicate tests, projectile reuse and no self-gauge refill, wall versus floor credit, multilayer terrain, and final-grid parity at30/60/120Hz. Content hash: `6730b952954bb7927a0f909b432b6ae4e7dff11f3770200107cf7681d22c23fe`.
 
 Additional source/built terrain assertions bind the exterior-area and packet-count bounds. Live browser/GPU checks and independent parent review remain required before acceptance. Full retail stencil, cross-paint projection and visual footage matching remain unverified. This candidate does not include the unpublished authoritative-queue overflow change.
+
+## Approved resumption and adopted-main reconciliation
+
+On 2026-10-11 the paused branch publication was explicitly authorized and resumed. The candidate now includes adopted main 31703a906b4f19fd5f46dea08d06615113008492, including the native Sprinkler authority/raycast fix. The source-curve gate derives complete additional fields rather than assuming the earlier stale total. A minimal ranked-receipt guard and real NetMatch absent/null/removed/teardown regression were incorporated from the gear reviewer; other newer gear candidates are not bundled.
+
+After main reconciliation, the production-built special/envelope/ring/terrain/wire/Sprinkler/source suite passed 56/56. After the additional ranked guard, its source and built suite each passed 4 tests with 1 optional external-ranked-engine test skipped. Current production contentHash: b76e9e130bad2f7c24831f3c52c02c3b3ac7ed2f3790fb61d30e3ead667efa6b. Exact-head CI and browser remain required. The original 61-case result above is historical; these new counts are not a full-suite claim.
