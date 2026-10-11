@@ -83,3 +83,15 @@ test('adjacent wall may receive paint without adding wall cells to floor turf',a
 test('slope disk actual NetMatch JSON splats reproduce identical ownership',async()=>{
  const result=await bomb({slope:30,network:true});assert.deepEqual(result.wireGrid,result.grid);
 });
+
+
+test('targetless missiles preserve aim height when both ground probes miss',async()=>{
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+ f.G.physics.raycast=(_a,_b,_distance,hit)=>{hit.hit=false;return hit;};
+ f.G.level.groundHeight=()=>-Infinity;
+ const actor=f.make();actor.weapon={...actor.weapon,special:'tentaMissiles',specialCost:100};
+ actor.special=100;actor.alive=true;actor.remote=false;actor.pos.set(0,0,0);actor.aimDir.set(0,0,1);f.G.actors=[actor];
+ actor._startSpecial();actor.intent.fire=true;actor._updateSpecial(1/60);
+ const missiles=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');assert.equal(missiles.length,10);
+ for(const p of missiles){assert.equal(p.s3TentaTarget.y,1.05,'ray probe offset must not mutate its output');assert.equal(p.s3TentaTarget.z,28);}
+});

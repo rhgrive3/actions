@@ -127,7 +127,8 @@ function aimPoint(rt, actor, range = 22, out = rt.v0) {
 function groundAt(rt, point, out = rt.v2) {
   out.copy(point);
   if (rt.api.G.physics?.raycast) {
-    const from = rt.v3.copy(point); from.y += .25;
+    // The caller may use rt.v3 as its output, so the probe cannot share it.
+    const from = (rt.groundProbe ||= point.clone()).copy(point); from.y += .25;
     // Preserve an already contacted surface before considering a distant floor.
     // A broad ray from 24 WU above could jump to an unrelated upper storey.
     let result = rt.api.G.physics.raycast(from, rt.down, .5, rt.hit, true);

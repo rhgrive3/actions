@@ -27,3 +27,7 @@ Source: five new cases passed, including the counterfactuals, 30/60/120-Hz final
 GitHub browser/GPU CI and parent independent review are pending. This adds one bounded contact query and four temporary vectors per large disk, not a per-tile raycast. An unsuccessful nearby ground probe adds one query before the old fallback. No browser FPS or GPU performance improvement is claimed.
 
 The large disk still overreaches its source radius by the ordinary edge tiles, and its procedural stencil remains an approximation. The earlier boundary-shrinking candidate was rejected because it worsened slope holes. Neither that candidate nor the unpublished soft queue change is included.
+
+## Ground-probe alias safety
+
+A real targetless Tenta launch with no ground under its aim exposed an existing alias: the caller's output and the ray origin both used rt.v3. A missed broad probe changed aim height from 1.05 to 25.05. A dedicated reusable ground-probe vector now leaves the requested point/output untouched. The actual Actor regression covers all ten generated target points. Source terrain/contact tests 6/6 and actual built terrain plus all-specials 25/25 pass, contentHash `acb5b5f2164be3280070dce8f56f3583a3007833fb7ff4b38c40c5a7bce11217`.
