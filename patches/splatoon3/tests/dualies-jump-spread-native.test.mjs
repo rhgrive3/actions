@@ -264,6 +264,13 @@ test('#887 an airborne actor past 70F returns to the normal airborne 7.5 endpoin
   const bias = a.weaponRunner.s3DualiesAccuracy.chance(false);
   const aim = fireDir(f, a, [0, .5]);
   const round = fireDir(f, a, [.5, .75]);
-  close(angleDeg(aim, round), a.weapon.spreadAir * biasQuantile(.5, bias),
-    'airborne median is inside the 7.5 degree maximum', 1e-6);
+  // The actor is at y=50 and aimed steeply down. A world-up yaw offset
+  // is not the same as a 3-D great-circle angle at this elevation.
+  const yaw = v => Math.atan2(v.x, v.z);
+  const pitch = v => Math.atan2(v.y, Math.hypot(v.x, v.z));
+  const delta = yaw(round) - yaw(aim);
+  const signedYaw = Math.atan2(Math.sin(delta), Math.cos(delta)) * 180 / Math.PI;
+  close(signedYaw, a.weapon.spreadAir * biasQuantile(.5, bias),
+    'airborne yaw median is inside the 7.5 degree maximum', 1e-6);
+  close(pitch(round), pitch(aim), 'world-up scatter preserves steep aim pitch', 1e-9);
 });

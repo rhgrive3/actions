@@ -1,13 +1,13 @@
-// Splat Dualies normal-fire outer-reticle bias state, in fixed 60 Hz frame units (#891).
+// Splat Dualies normal-fire angular-median bias state, in fixed 60 Hz frame units (#891).
 // Pinned Ver.11.3.0 values (profile.json weaponsFidelityCompletion.weapons.dualies.WeaponParam,
 // Leanny/splat3 7280ff9c WeaponManeuverNormal): Stand_DegBiasMin=.01, Stand_DegBiasKf=.01,
 // Stand_DegBiasDecrease=.005 per frame, RepeatFrame=5 (recovery hold after the last
 // successful shot), Jump_DegBiasMax=.4.
-// The 25% cap is not in the pinned table; it is the Inkipedia Splat Dualies value and remains
-// 未確認 against primary data. The per-shot outer-selection model mirrors shooter-accuracy.mjs
-// and is 未確認 for Dualies in primary sources. The 25F->70F jump-envelope recovery is separate
-// (not owned here) and the post-landing bias transition is 未確認: grounded returns the stand
-// state directly, so the 40% airborne bias never persists after landing.
+// The 25% cap is an Inkipedia value, not in the pinned primary table.
+// The chance()/shot() API supplies a median ANGLE FRACTION to biasQuantile,
+// not Bernoulli outer-ring odds. The exact Nintendo PDF and RNG are 未確認.
+// The 25F->70F jump-envelope recovery is separate; the modeled post-landing
+// return to stand bias is also 未確認 against hardware.
 // Angular envelope (2 deg grounded / 7.5 deg air) and post-roll spreadLock are not owned here.
 
 const finiteOr = (x, otherwise) => (Number.isFinite(x) ? x : otherwise);
@@ -39,7 +39,7 @@ export class DualiesAccuracy {
   chance(grounded) {
     return grounded ? this.stand : this.jumpBias;
   }
-  // Call once per admitted normal shot. Returns the outer-reticle chance for that shot.
+  // Call once per admitted normal shot. Returns the angular median fraction for that shot.
   shot(grounded) {
     const p = this.chance(grounded);
     this.stand = Math.min(this.maximum, this.stand + this.step);
