@@ -10,14 +10,15 @@
 | 完成（Opus の途中成果を Haiku が仕上げ） | ブラスター7（`blasters.mjs`）、チャージャー8（`chargers.mjs`） |
 | 完成（Haiku 作成。品質は中） | シューターB 7（`shooters-b.mjs`、.96ガロンは手直し済み） |
 | 完成（Sonnet 作成） | シェルター4（`brellas.mjs`、傘の開閉）、ストリンガー3（`stringers.mjs`、弦）、ワイパー3（`splatanas.mjs`、斬り） |
-| **作り直し対象（Haiku 作成で品質不足）** | スロッシャー5（`sloshers.mjs`：輪郭の押し出しのみで立体感なし）、スピナー5（`splatlings.mjs`）、マニューバー5（`dualies.mjs`） |
-| 従来モデルのまま | バケットスロッシャー（既存テストが従来のインク量表示・取っ手位置に依存）、ノーチラス47、スパッタリー（候補は `runtime/weapon-models/wip/dualies-dapple.mjs.txt`） |
+| 完成（Opus で作り直し、第2段） | スロッシャー5（`sloshers.mjs`）、スピナー6（`splatlings.mjs`、ノーチラス47 を含む）、マニューバー6（`dualies.mjs`、スパッタリーを含む） |
+| 従来モデルのまま | バケットスロッシャー（既存テストが従来のインク量表示・取っ手位置に依存） |
 
 輪郭IoU（本家3Dレンダーとの側面シルエット一致度）: 全65種平均 0.346 → 0.495（`silhouette-now.json`、修正前は `before/silhouette.json`）。
 比較画像: `compare/*.jpg`（本家 | 修正前 | 現在）。ローラー・フデ・シェルター・ストリンガー・ワイパーは参照の構図上、側面IoUは参考値にならない。
 
 ## 次の作業（ユーザー指示）
-Opus で、サブエージェントを使わず直列に1ブキずつ: **スロッシャー → スピナー → マニューバー** を作り直す。
+スロッシャー → スピナー → マニューバーの作り直しは完了（ユーザー指示によりマニューバーで個別モデル作業は終了）。残りは全体テスト・記録・PR の仕上げ。
+以下は追加で作り直す場合の手順。
 各ブキ: 参照（`refs/<id>.3d.png`、`rotsheets/<id>.rot.jpg`）を見る → 形状を立体的に作る（押し出し板ではなく lathe/箱/管の組合せ）→
 `tools/iterate.sh` で描画比較 → `WEAPON_IDS=<id> node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs` → コミット・push。
 既存テストの制約: スロッシャーは `surface`（水平なインク面）と `lever` チャンネル、スピナーは `barrels`（局所Z軸で回転）と充電コイル `d.glow` を保持、

@@ -9,32 +9,33 @@
 - スケールは実寸を計測していない。グリップは `pistolGrip`（柄 0.11 m、原点中心）を基準に、本体は画像から見た比率で m 単位に配置した。
 - 色は `<id>.3d.png` を基準にした。回転映像（`rotsheets/`）が別キット（alt-kits）の武器は形状のみ参照した。
 - グリップ: `gripR` / `gripL` は `GRIP_PISTOL` のまま変更していない。ホールド（`hold`）と回避動作は変更していない。
-- 可動部: `slide`、`slideInk`（−z 反動）、`led`、`trigger` を native チャンネルとして残した。銃口 `muzzle` は各ノズルの先端に置いた。
+- 可動部: `slide`、`slideInk`、`led` は native チャンネルとして残した（実物に前後に動く上部スライドは見当たらないため非表示）。`trigger` は表示。銃口 `muzzle` は各ノズルの先端に置いた。
+- 2026-10-11 第2段: 6種すべてを Opus で作り直した（押し出し板1枚ではなく、旋盤体・箱・管・複数の殻の組み合わせ）。回転映像で team ink 色に変わる部位を ink に割り当てた。
 
-## 武器別
+## 武器別（第2段）
 
-| 武器 | 内部モデル名 | 出典 | IoU before → after | 登録 | 残差と確認状態 |
-|---|---|---|---|---|---|
-| Splat Dualies / スプラマニューバー（id `dualies`） | Wmn_Maneuver_NormalT | Inkipedia「S3 Splat Dualies 3D」（3d.png）、回転映像 `rotsheets/dualies.rot.jpg`。正確なファイル名は未記録 | 0.2583 → 0.3365 | 登録 | 黒いスライド殻、緑のグリップとノズル、マゼンタの口輪、後方の白いタンク。タンク色は 3D（白）と回転映像（桃）で不一致（画像から推定、未確認）。縦横比 1.44（参照 0.95）。 |
-| Dapple Dualies / スパッタリー | Wmn_Maneuver_Short | 3d.png、回転映像 `rotsheets/s3-maneuver-short.rot.jpg` | 0.3084 → 0.3084（据え置き） | 未登録 | 候補の IoU は 0.2778 → 0.2084 で、before を下回ったため登録しない。弓形フレームと後方のブラシ柄は未完成。候補は `weapon-models/wip/dualies-dapple.mjs.txt`。 |
-| Glooga Dualies / ケルビン525 | Wmn_Maneuver_Gallon | 3d.png（青/赤）。回転映像は別キット「Glooga Dualies Deco」（黄色）で、形状のみ参照 | 0.3409 → 0.4233 | 登録 | 2 本脚、後部リール、前方のフックは画像推定。上部全体を slide とした（反動で動くかは未確認）。色は 3D 基準。 |
-| Dualie Squelchers / デュアルスイーパー | Wmn_Maneuver_Dual_L | 3d.png。回転映像は別キット「Custom Dualie Squelchers」 | 0.3822 → 0.4469 | 登録 | 黄緑のノズルキャップを team ink（静的）として扱ったが、ink 部位は未確認。後部の赤いタンクは箱で近似。 |
-| Dark Tetra Dualies / クアッドホッパーブラック | Wmn_Maneuver_Stepper | 3d.png。回転映像は別キット「Light Tetra Dualies」（未閲覧） | 0.2459 → 0.2800 | 登録 | 白い殻、白いフープ、緑の足と緑のノズル先（team ink と仮定）。形状は 3D 画像からの推定のみ。 |
-| Douser Dualies FF / ガエンFF | Wmn_Maneuver_Long | 3d.png（回転映像は未閲覧） | 0.3100 → 0.3574 | 登録 | 黄色のリングを team ink（slideInk）、後部の赤いキャニスターは円柱で近似。縦横比 1.04（参照 0.92）。 |
+| 武器 | 内部モデル名 | 出典 | 輪郭IoU 修正前 → 第1段 → 第2段 | 形状の要点と残差（確認状態） |
+|---|---|---|---|---|
+| Splat Dualies / スプラマニューバー（id `dualies`） | Wmn_Maneuver_NormalT | Inkipedia 3D レンダー、回転映像 `rotsheets/dualies.rot.jpg` | 0.258 → 0.337 → 0.297 | 薄い黒の上部フレーム（後端が上がる）、緑のグリップと円錐ノズル、マゼンタの口輪、グリップ下のタンク（回転映像で桃＝ink）、タンクからノズル下へ上がるホース。IoU は2丁重ね像との比較で、旧版の厚い塊より下がった（画像から推定、未確認）。 |
+| Dapple Dualies / スパッタリー | Wmn_Maneuver_Short | 3D レンダー、回転映像 | 0.308（従来）→ 未登録 → 0.415 | 後方が開いた C 形フレーム（上部バー＋前の垂れ下がり＋グリップ下を通って後端で巻き上がるスキッド）、黒い丸ノズル、上面の2本のポスト、スキッドから立ち上がる歯ブラシ（毛は回転映像でティール＝ink）とワイヤー、側面の ink ライン。今回から登録。 |
+| Glooga Dualies / ケルビン525 | Wmn_Maneuver_Gallon | 3D レンダー（青）、回転映像は別キット（黄） | 0.341 → 0.423 → 0.421 | 箱形の上部・グリップ脚・前脚が両方の映像で team 色（青/黄）なので ink にした。両脚の下を通る赤い足板、後部の銀キャニスターと歯車状の円盤、網目のノズル、針金フック2本、背面のホースの輪。 |
+| Dualie Squelchers / デュアルスイーパー | Wmn_Maneuver_Dual_L | 3D レンダー、回転映像は別キット | 0.382 → 0.447 → 0.356 | 電動ドリル形の赤い本体（前下がりのくさび）、傾いたグリップと黒いバッテリー、蛇腹の黒ホースのノズル（先端 ink）。第1段より IoU が下がった。参照が2丁重ね像のため、輪郭IoU だけでは採否を決めず、形の要素で判断した（未確認）。 |
+| Dark Tetra Dualies / クアッドホッパーブラック | Wmn_Maneuver_Stepper | 3D レンダー、回転映像は別キット | 0.246 → 0.280 → 0.381 | 黒い本体、白い前方 C 枠と紫の帯、上面の輪のフック、グリップ下から前に伸びる白いスキッド（楕円の穴を ink で埋める）、黒いノズル。 |
+| Douser Dualies FF / ガエンFF | Wmn_Maneuver_Long | 3D レンダー、回転映像 | 0.310 → 0.357 → 0.233 | 黒い平たい上部、銀の銃身、赤い消火ホース形ノズル（銀の輪、先端 ink）、グリップ前の黄色い D リング、グリップ下に吊った赤い消火器形キャニスター（緑の帯）と短いホース。銃身が長く横長になるため IoU は下がった（未確認）。 |
 
-確認状態は、すべて「画像から推定」。原典データ（公式パラメータ）は未確認。
+輪郭IoU は 2 丁を斜めに重ねた参照像との比較で、参考値にとどまる。確認状態はすべて「画像から推定」。
 
 ## 未確認（実機計測または原典確認が必要）
 
-1. 持ち方: `--no-held` で描画のみ。両手の位置（左手の `GRIP_PISTOL` コピーと実際の支え方）、ホールド全体は未確認。
+1. 持ち方: 両手に同じモデルを `GRIP_PISTOL` で持たせ、実 Actor で保持・射撃を確認した（ロジック単独とブラウザ描画）。本家実機の手の位置・回避中の持ち替えとの比較は未実施。
 2. 寸法: 実機の寸法は未計測。モデル寸法は画像比率からの推定。
 3. ink 部位: どの部位が実機で team ink か（回転映像の黄/桃の色が team ink か別キットかの区別を含む）は未確認。
-4. 可動部: Gallon、Stepper、Douser の上部ブロックを slide として反動させる扱いは仮定。実機の動きは未確認。
+4. 可動部: 第2段では上部の slide 反動を非表示にし、トリガーのみ動かす。実機で射撃時に動く部品があるかは未確認。
 5. IoU の上限: 参照は 2 丁の重なり像、モデルは 1 丁。縦横比の差は構造上の限界で、実機比較の代用にはならない。
 6. ファイル名: Inkipedia の正確なファイル名は作業ログに残っていない。
 
 ## 検証
 
-- `WEAPON_IDS=dualies,s3-maneuver-short,s3-maneuver-gallon,s3-maneuver-dual,s3-maneuver-stepper,s3-maneuver-long node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs`: 3 件すべて成功。
-- dualies 系テスト 23 ファイル（`ls patches/splatoon3/tests | grep -iE "dualies|maneuver"`）: 130 件すべて成功。
-- 三角形数は 1710〜1978（上限 12,000 以内）。
+- `WEAPON_IDS=dualies,s3-maneuver-short,s3-maneuver-gallon,s3-maneuver-dual,s3-maneuver-stepper,s3-maneuver-long node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs`: 3 件すべて成功（形状・グリップ・銃口・実 Actor での保持と攻撃）。
+- dualies 系テスト 23 ファイル＋ weapon-detail / character-weapon 系: 153 件すべて成功。
+- 三角形数は約 2,100〜4,000（上限 16,000 以内）。
