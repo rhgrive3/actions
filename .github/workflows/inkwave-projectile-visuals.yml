@@ -8,6 +8,9 @@ on:
       - 'patches/splatoon3/reference/projectile-*.json'
       - 'patches/splatoon3/tests/projectile-visuals.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
+      - 'scripts/compare-inkwave-projectile-captures.py'
+      - 'scripts/tests/inkwave-projectile-captures-synthetic.py'
+      - 'scripts/tests/inkwave-projectile-captures.test.py'
       - 'scripts/inkwave-source-composition.mjs'
       - '.github/workflows/inkwave-projectile-visuals.yml'
   workflow_dispatch:
@@ -40,7 +43,9 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Native visual, source-value and gameplay regressions
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/projectile-visuals.test.mjs patches/splatoon3/tests/slosher-draw-size-1014.test.mjs patches/splatoon3/tests/roller-draw-radius.test.mjs tests/ink-flight/model.test.mjs
+          python3 scripts/tests/inkwave-projectile-captures.test.py
       - name: Build complete production composition
         run: node scripts/build-inkwave.mjs inkwave-public .built-site/projectiles
       - name: Build unchanged baseline for the same browser harness
@@ -53,6 +58,12 @@ jobs:
       - name: Render candidate native game and measure desktop/mobile emulation
         if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}
         run: node scripts/check-inkwave-projectile-visuals.mjs --site .built-site/projectiles --evidence-dir .ci-scratch/projectile-visuals/after --mode candidate
+      - name: Verify paired physical state, firing workloads and original image hashes
+        if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}
+        run: python3 scripts/compare-inkwave-projectile-captures.py --before .ci-scratch/projectile-visuals/before --after .ci-scratch/projectile-visuals/after --output .ci-scratch/projectile-visuals/paired-verification.json --require-complete
+      - name: Exercise camera, RNG, contact, retirement and paint comparison gates
+        if: ${{ !cancelled() && steps.package-check.outcome == 'success' }}
+        run: python3 scripts/tests/inkwave-projectile-captures-synthetic.py --before .ci-scratch/projectile-visuals/before/projectile-visuals-result.json --after .ci-scratch/projectile-visuals/after/projectile-visuals-result.json --out .ci-scratch/projectile-visuals/comparator-synthetic-gates.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

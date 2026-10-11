@@ -23,8 +23,14 @@ const profile = path.resolve(option('--profile-dir', path.join(ROOT, '../project
 const mode = option('--mode', 'baseline');
 const durationMs = Number(option('--fire-ms', '6000'));
 const quality = option('--quality', 'high');
+const capture = option('--capture', 'all');
+const device = option('--device', 'all');
 const BOOT_SEED = 0x49574b33;
+const MIN_PERFORMANCE_FRAMES = 12;
+const PERFORMANCE_TIMEOUT_MS = 120000;
 if (!['low', 'medium', 'high'].includes(quality)) throw new Error('--quality must be low, medium, or high');
+if (!['all', 'visuals', 'performance'].includes(capture)) throw new Error('--capture must be all, visuals, or performance');
+if (!['all', 'desktop', 'mobile'].includes(device)) throw new Error('--device must be all, desktop, or mobile');
 if (!fs.existsSync(path.join(site, 'index.html'))) throw new Error('Built site missing index.html: ' + site);
 if (!Number.isFinite(durationMs) || durationMs < 1000 || durationMs > 30000) throw new Error('--fire-ms must be between 1000 and 30000');
 fs.mkdirSync(evidence, { recursive: true });
@@ -74,8 +80,9 @@ const report = {
   site,
   build: { revision: manifest.build?.revision, contentHash: manifest.contentHash, inputHash: manifest.inputHash },
   provenance: {
+    harnessSha256: hash(fs.readFileSync(fileURLToPath(import.meta.url))),
     capture: 'Normal INKWAVE bootstrap/autostart into Tidewater full match; production Projectiles fire methods; live stage Physics, Paint and FX update; native Three/WebGL renderer screenshots.',
-    stage: 'Tidewater, easy, turf, fixed 180 s match; local player; deterministic Math.random stream reset for each projectile scenario.',
+    stage: 'Tidewater, normal difficulty, turf, fixed 180 s match; local player; deterministic Math.random stream reset for each projectile scenario.',
     phaseFrames: { F0: 0, F5: 5, F10: 10, F15: 15, fall: 36 },
     perspectives: ['shoulder', 'front', 'side'],
     perspectiveModes: { shoulder: 'fixed-gameplay-shoulder', front: 'projectile-follow-physics-bounded-offset', side: 'projectile-follow-physics-bounded-offset' },
@@ -84,11 +91,14 @@ const report = {
     retailReferenceMatch: 'not performed',
     browser: null,
     quality,
+    captureSelection: capture,
+    device,
     nativeAndroid: 'not available in this environment; mobile run is Chromium device emulation only',
   },
   screenshots: [],
   visualScenarios: [],
   performance: [],
+  performanceFailures: [],
   performanceWarmups: [],
   browserDiagnostics: [],
   comparisonStatus: 'not-run',
@@ -100,7 +110,9 @@ browser.on('disconnected', () => report.browserDiagnostics.push({ event: 'browse
 
 async function openGameContext({ mobile = false } = {}) {
   const context = await browser.newContext({
-    viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 720 },
+    // Offline touch gameplay intentionally pauses in portrait. Measure the
+    // supported landscape orientation without bypassing its production guard.
+    viewport: mobile ? { width: 844, height: 390 } : { width: 1280, height: 720 },
     deviceScaleFactor: mobile ? 3 : 1,
     isMobile: mobile,
     hasTouch: mobile,
@@ -139,12 +151,29 @@ async function openGameContext({ mobile = false } = {}) {
       return recorder;
     };
   }, { setting: quality, bootSeed: BOOT_SEED });
-  await page.goto(address + '?map=tidewater&autostart=180&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.waitForFunction(() => window.__inkwave?.match?.state === 'playing' && window.__G?.projectiles && window.__G?.renderer, null, { timeout: 180000 });
+  await page.goto(address + '?map=tidewater&difficulty=normal&autostart=180&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  try { await page.waitForFunction(() => {
+    const g = window.__inkwave, G = window.__G, m = g?.match;
+    return G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
+      !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer;
+  }, null, { timeout: 180000 }); } catch (error) {
+    const observed = await page.evaluate(() => {
+      const g = window.__inkwave, G = window.__G, m = g?.match;
+      return { mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
+        matchIdentity: m === G?.match, local: m?.local?.isLocal, controller: !!m?.controller,
+        frozen: g?.frozen, paused: m?.paused, visibility: document.visibilityState,
+        orientationBlocked: m?.controller?.orientationBlocked, bootError: document.querySelector('#boot-error')?.textContent };
+    }).catch(error => ({ snapshotFailure: error.message }));
+    report.browserDiagnostics.push({ event: 'native-startup-timeout', mobile, observed });
+    throw error;
+  }
   await page.waitForFunction(() => !document.querySelector('.iw-lineup') && !!window.__inkwave?.hud?._visible, null, { timeout: 30000 }).catch(() => {});
   const placement = await page.evaluate(() => {
     const g = window.__inkwave, G = window.__G;
     g.debug.freeze(); g.debug.freezeBots();
+    if (g.match.state !== 'playing' || g.match.attract || !g.match.local?.isLocal) {
+      throw new Error('Capture setup requires the completed native local Turf startup');
+    }
     g._skipRender = true;
     G.settings.cameraShake = 0;
     g.rig.setMap(false);
@@ -1033,12 +1062,12 @@ async function runFiringPerformance({ mobile = false } = {}) {
   const onTraceComplete = event => resolveTraceComplete(event);
   cdp.on('Tracing.dataCollected', onTraceData);
   cdp.on('Tracing.tracingComplete', onTraceComplete);
-  await page.evaluate(() => {
+  await page.evaluate(({ minFrames, timeoutMs, durationMs }) => {
     const G = window.__G, g = window.__inkwave, P = G.projectiles, R = g.R;
     g.debug.freezeBots(); G.settings.cameraShake = 0;
     const warmup = { nativeFrames: 0, frameSamples: 0, projectileUpdates: 0, nonemptyProjectileUpdates: 0,
       fireCalls: 0, renderSamples: 0, renderCalls: [], triangles: [], raf: [], maxProjectiles: 0,
-      firstFrame: null, blurEvents: 0, focusEvents: 0, visibilityChanges: [] };
+      firstFrame: null, frameStates: [], blurEvents: 0, focusEvents: 0, visibilityChanges: [] };
     window.__inkwavePerf = { active: false, warming: false, raf: [], frames: [], loopTimestamps: [], projectileMs: [], renderMs: [], calls: [], triangles: [],
       projectileUpdates: 0, nonemptyProjectileUpdates: 0, fireCalls: 0, maxProjectiles: 0, gpuQueries: [], timer: null };
     const perf = window.__inkwavePerf;
@@ -1064,7 +1093,22 @@ async function runFiringPerformance({ mobile = false } = {}) {
       requestAnimationFrame(warmupRaf);
       g.debug.unfreeze();
     };
-    window.__inkwavePerfStart = () => { perf.warming = false; perf.active = true; requestAnimationFrame(raf); };
+    let finishWindow;
+    window.__inkwavePerfDone = new Promise(resolve => { finishWindow = resolve; });
+    const stopWindow = (status, reason = null) => {
+      if (!perf.active) return;
+      perf.endedAt = performance.now(); perf.windowStatus = status; perf.windowFailure = reason;
+      perf.active = false; perf.warming = false;
+      clearTimeout(perf.deadline);
+      g.debug.fire(false); g.debug.freeze();
+      finishWindow({ status, reason });
+    };
+    window.__inkwavePerfStart = () => {
+      perf.warming = false; perf.active = true; perf.startedAt = performance.now();
+      perf.startGameTime = G.time;
+      perf.deadline = setTimeout(() => stopWindow('failed', 'Insufficient live firing/render samples before deadline'), timeoutMs);
+      requestAnimationFrame(raf);
+    };
     const oldFrame = g._frame;
     g._frame = function (dt) {
       if (!perf.active) {
@@ -1081,6 +1125,13 @@ async function runFiringPerformance({ mobile = false } = {}) {
         try { return oldFrame.call(this, dt); }
         finally {
           warmup.frameSamples++;
+          if (warmup.frameStates.length < 32) {
+            const a = G.match.local, r = a?.weaponRunner;
+            warmup.frameStates.push({ at: performance.now(), dt, time: G.time, matchState: G.match.state,
+              ink: a?.ink, alive: a?.alive, squidSpawn: a?.s3?.squidSpawn?.phase ?? null,
+              intentFire: a?.intent.fire, form: a?.form, cooldown: r?.cooldown,
+              shooterCancelMain: r?.s3ShooterCancelMain, fireCalls: warmup.fireCalls });
+          }
           if (firstFrame) {
             warmup.firstFrame.inputMouseLeftAfter = G.input.mouse.left;
             warmup.firstFrame.actorIntentFireAfter = !!G.match.local?.intent.fire;
@@ -1088,7 +1139,11 @@ async function runFiringPerformance({ mobile = false } = {}) {
         }
       }
       const t = performance.now(); perf.loopTimestamps.push(t);
-      try { return oldFrame.call(this, dt); } finally { perf.frames.push(performance.now() - t); }
+      try { return oldFrame.call(this, dt); } finally {
+        perf.frames.push(performance.now() - t);
+        if (performance.now() - perf.startedAt >= durationMs && perf.frames.length >= minFrames &&
+            perf.renderMs.length >= minFrames && perf.raf.length >= minFrames) stopWindow('passed');
+      }
     };
     const oldUpdate = P.update;
     P.update = function (dt) {
@@ -1142,7 +1197,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
         }
       }
     };
-  });
+  }, { minFrames: MIN_PERFORMANCE_FRAMES, timeoutMs: PERFORMANCE_TIMEOUT_MS, durationMs });
   const warmupTimeoutMs = 60000;
   const warmupHostStart = Date.now();
   await page.bringToFront();
@@ -1167,13 +1222,17 @@ async function runFiringPerformance({ mobile = false } = {}) {
         start: w.start,
         end: { frozen: !!g.frozen, visibilityState: document.visibilityState, hasFocus: document.hasFocus(),
           inputMouseLeft: G.input.mouse.left, actorIntentFire: !!G.match.local?.intent.fire,
-          gameState: G.match.state, paused: G.match.paused },
+          gameState: G.match.state, paused: G.match.paused,
+          actor: { weapon: G.match.local.weaponId, alive: G.match.local.alive, ink: G.match.local.ink,
+            pos: G.match.local.pos.toArray(), form: G.match.local.form, squidSpawn: G.match.local.s3?.squidSpawn?.phase ?? null,
+            runnerCooldown: G.match.local.weaponRunner.cooldown } },
         elapsedMs: w.startedAt == null ? null : performance.now() - w.startedAt,
         nativeFrames: w.nativeFrames, frameSamples: w.frameSamples, projectileUpdates: w.projectileUpdates,
         nonemptyProjectileUpdates: w.nonemptyProjectileUpdates, fireCalls: w.fireCalls,
         renderSamples: w.renderSamples, renderCalls: w.renderCalls.at(-1) ?? null,
         triangles: w.triangles.at(-1) ?? null, rafSamples: w.raf.length, maxProjectiles: w.maxProjectiles,
         firstFrame: w.firstFrame, blurEvents: w.blurEvents, focusEvents: w.focusEvents,
+        frameStates: w.frameStates,
         visibilityChanges: w.visibilityChanges,
       };
     });
@@ -1207,8 +1266,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
     gcTraceFailure = `Tracing.start failed: ${error.message}`;
   }
   await page.evaluate(() => { window.__inkwavePerfStart(); });
-  await page.waitForTimeout(durationMs);
-  await page.evaluate(() => { __inkwave.debug.fire(false); __inkwavePerf.active = false; __inkwavePerf.warming = false; __inkwave.debug.freeze(); });
+  const windowResult = await page.evaluate(() => window.__inkwavePerfDone);
   if (gcTraceStarted) {
     let timeoutId;
     try {
@@ -1241,6 +1299,11 @@ async function runFiringPerformance({ mobile = false } = {}) {
     }
     const disjoint = timer ? !!gl.getParameter(timer.ext.GPU_DISJOINT_EXT) : null;
     return {
+      windowStatus: perf.windowStatus,
+      windowFailure: perf.windowFailure,
+      startedAt: perf.startedAt, endedAt: perf.endedAt,
+      elapsedMs: perf.endedAt - perf.startedAt,
+      simulatedSeconds: G.time - perf.startGameTime,
       rAF: frames,
       nativeLoopTimestamps: perf.loopTimestamps,
       frameCpuMs: perf.frames,
@@ -1273,12 +1336,15 @@ async function runFiringPerformance({ mobile = false } = {}) {
   for (const key of selectedMetrics) {
     if (Number.isFinite(a[key]) && Number.isFinite(b[key])) delta[key] = b[key] - a[key];
   }
-  const rAF = summary(measured.rAF), cpu = summary(measured.frameCpuMs), proj = summary(measured.projectileCpuMs), render = summary(measured.renderCpuMs), gpu = summary(measured.gpuRenderMs);
+  const rAF = summary(measured.rAF), cpu = summary(measured.frameCpuMs), proj = summary(measured.projectileCpuMs), render = summary(measured.renderCpuMs);
+  const gpu = measured.gpuDisjoint ? null : summary(measured.gpuRenderMs);
   const loopIntervals = measured.nativeLoopTimestamps.slice(1).map((t, i) => t - measured.nativeLoopTimestamps[i]);
   const loopFrameMs = summary(loopIntervals);
   const fps = loopFrameMs?.p50 > 0 ? 1000 / loopFrameMs.p50 : null;
-  if (!measured.nativeLoopTimestamps.length || !measured.frameCpuMs.length || !measured.renderCpuMs.length ||
+  if (windowResult.status !== 'passed' || measured.nativeLoopTimestamps.length < MIN_PERFORMANCE_FRAMES ||
+      measured.frameCpuMs.length < MIN_PERFORMANCE_FRAMES || measured.renderCpuMs.length < MIN_PERFORMANCE_FRAMES ||
       !measured.projectileUpdates || !measured.nonemptyProjectileUpdates || !measured.fireCalls || !measured.maxProjectiles || !rAF?.n || !fps) {
+    report.performanceFailures.push({ scenario: mobile ? 'mobile-emulated-long-fire' : 'desktop-long-fire', measured });
     throw new Error(`${mobile ? 'mobile' : 'desktop'} performance window did not measure live native match firing/rendering: ${JSON.stringify({
       nativeFrames: measured.nativeLoopTimestamps.length, frameSamples: measured.frameCpuMs.length, renderSamples: measured.renderCpuMs.length,
       projectileUpdates: measured.projectileUpdates, nonemptyProjectileUpdates: measured.nonemptyProjectileUpdates,
@@ -1296,7 +1362,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
     return {
       supported: true,
       source: 'CDP Tracing events named MinorGC and MajorGC; categories v8,devtools.timeline',
-      windowDurationMs: durationMs,
+      windowDurationMs: measured.elapsedMs,
       count: gcEvents.length,
       durationMs: totalGcDurationMs,
       durationSec: totalGcDurationMs / 1000,
@@ -1314,7 +1380,11 @@ async function runFiringPerformance({ mobile = false } = {}) {
     major: null,
   };
   const record = {
-    scenario: mobile ? 'mobile-emulated-long-fire' : 'desktop-long-fire', durationMs,
+    scenario: mobile ? 'mobile-emulated-long-fire' : 'desktop-long-fire',
+    requestedDurationMs: durationMs, durationMs: measured.elapsedMs,
+    minimumFrames: MIN_PERFORMANCE_FRAMES, timeoutMs: PERFORMANCE_TIMEOUT_MS,
+    simulatedSeconds: measured.simulatedSeconds,
+    viewport: measured.browser.viewport, deviceScaleFactor: measured.browser.dpr,
     browser: await page.evaluate(() => navigator.userAgent), fps, nativeLoopFrameMs: loopFrameMs, rAFms: rAF, frameCpuMs: cpu, projectileCpuMs: proj, renderCpuMs: render,
     warmup: warmupReceipt,
     renderCalls: summary(measured.renderCalls), triangles: summary(measured.triangles),
@@ -1329,17 +1399,21 @@ async function runFiringPerformance({ mobile = false } = {}) {
     cdpAbsolute,
     cdpDeltas: delta,
     garbageCollection: gcSummary,
-    notes: ['Long-firing window uses the normal live match loop and debug fire input.', 'GPU time is EXT_disjoint_timer_query when exposed; unavailable/disjoint is reported as such.', 'V8/devtools.timeline GC tracing runs over the same firing window and adds instrumentation overhead to both builds.', 'Chromium mobile emulation is not native Android.'],
+    notes: ['Long-firing window uses the normal live match loop and debug fire input; slow software rendering extends the requested duration to collect at least 12 frames, bounded at 120 seconds.', 'GPU time is EXT_disjoint_timer_query when exposed; unavailable/disjoint is reported as such.', 'V8/devtools.timeline GC tracing brackets the firing window and adds instrumentation overhead to both builds.', 'Chromium mobile emulation is landscape and is not native Android.'],
   };
   await context.close();
   return record;
 }
 
 try {
-  const visual = await openGameContext();
-  try { await runVisuals(visual.page); } finally { await visual.context.close(); }
-  report.performance.push(await runFiringPerformance({ mobile: false }));
-  report.performance.push(await runFiringPerformance({ mobile: true }));
+  if (capture !== 'performance') {
+    const visual = await openGameContext();
+    try { await runVisuals(visual.page); } finally { await visual.context.close(); }
+  }
+  if (capture !== 'visuals') {
+    if (device !== 'mobile') report.performance.push(await runFiringPerformance({ mobile: false }));
+    if (device !== 'desktop') report.performance.push(await runFiringPerformance({ mobile: true }));
+  }
   report.errors.push(...mimeErrors);
   report.status = report.errors.length ? 'failed' : 'passed';
 } catch (error) {
