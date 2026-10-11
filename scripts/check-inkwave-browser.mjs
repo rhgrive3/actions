@@ -113,10 +113,26 @@ try {
     return {original:globalThis.s3ProbeG.game.api.getLoadout().weapon,kits:CANONICAL_KITS};
   });
   result.canonicalLoadout=[];
+  await page.evaluate(()=>{
+    globalThis.s3KitInputTrace=[];
+    for(const type of ['pointerdown','pointerup','click'])document.addEventListener(type,e=>{
+      const m=globalThis.s3ProbeG.game.menus,c=e.target.closest('[data-id]');
+      globalThis.s3KitInputTrace.push({type,id:c?.dataset.id,target:e.target.className,trust:e.isTrusted,
+        weapon:m.api.getLoadout().weapon,focus:m._focus?.dataset.id,modal:!!m._modal});
+    },true);
+  });
   for(const [id,k]of Object.entries(kitMenu.kits)){
     const card=page.locator('.iw-loadout:not(.is-leaving) [data-id="w-'+id+'"]');
     await card.click();
-    await page.waitForFunction(id=>globalThis.s3ProbeG.game.api.getLoadout().weapon===id,id,{timeout:5000});
+    try { await page.waitForFunction(id=>globalThis.s3ProbeG.game.api.getLoadout().weapon===id,id,{timeout:5000}); }
+    catch(error){
+      result.canonicalInputFailure=await page.evaluate(id=>{
+        const g=globalThis.s3ProbeG.game,m=g.menus,c=document.querySelector('[data-id="w-'+id+'"]');
+        return {id,trace:globalThis.s3KitInputTrace,gameWeapon:g.api.getLoadout(),menuWeapon:m.api.getLoadout(),
+          sameApi:g.api===m.api,registered:!!m.api.weapons[id],bound:!!m._binds.get(c),
+          focus:m._focus?.dataset.id,modal:!!m._modal,current:m.current,cardClass:c?.className};
+      },id);throw error;
+    }
     const pair=await page.locator('.iw-loadout:not(.is-leaving) .s3-catalogue').evaluate(el=>({
       sub:el.querySelector('select[aria-label="サブウェポン"]').value,
       special:el.querySelector('select[aria-label="スペシャル"]').value,
