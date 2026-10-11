@@ -101,21 +101,31 @@ try {
   if (result.idleLobby.mode !== 'menu' || result.idleLobby.allocated) throw new Error('Idle menu allocated unused Online LobbySet');
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); G.game.debug.freeze(); G.game.menus.wipe.cancel(); G.game.menus.show('loadout', {wipe:false,light:false}); for(let i=0;i<90;i++)G.game.menus.update(1/60); });
   await page.waitForSelector('.s3-gear');
-  result.canonicalLoadout = await page.evaluate(async()=>{
-    const {CANONICAL_KITS}=await import(new URL('patches/splatoon3/runtime/canonical-kits-data.mjs',document.baseURI).href);
-    const g=globalThis.s3ProbeG.game,original=g.api.getLoadout().weapon,rows=[];
-    localStorage.removeItem('inkwave.catalogue-kit.v1');
-    for(const [id,k]of Object.entries(CANONICAL_KITS)){
-      const card=[...document.querySelectorAll('.iw-wcard')].find(c=>c._wid===id);
-      if(!card)throw Error('Missing canonical weapon card '+id);card.click();await new Promise(queueMicrotask);
-      if(g.api.getLoadout().weapon!==id)throw Error('Weapon card failed to select '+id);
-      const sub=document.querySelector('.s3-catalogue select[aria-label="サブウェポン"]'),special=document.querySelector('.s3-catalogue select[aria-label="スペシャル"]');
-      if(sub?.value!==k.sub||special?.value!==k.special)throw Error('Canonical menu pair mismatch '+id);
-      rows.push({id,sub:sub.value,special:special.value,points:k.specialCost});
-    }
-    const restore=[...document.querySelectorAll('.iw-wcard')].find(c=>c._wid===original);restore.click();await new Promise(queueMicrotask);
-    return rows;
+  // Wait for the real current screen, then use trusted browser pointer input.
+  // DOM presence alone can include an old leaving screen and unopened panels.
+  await page.waitForFunction(()=>{
+    const m=globalThis.s3ProbeG.game.menus,el=m._scr?.el;
+    return m.current==='loadout'&&el?.isConnected&&!el.classList.contains('is-leaving')&&!m._modal;
   });
+  const kitMenu=await page.evaluate(async()=>{
+    const {CANONICAL_KITS}=await import(new URL('patches/splatoon3/runtime/canonical-kits-data.mjs',document.baseURI).href);
+    localStorage.removeItem('inkwave.catalogue-kit.v1');
+    return {original:globalThis.s3ProbeG.game.api.getLoadout().weapon,kits:CANONICAL_KITS};
+  });
+  result.canonicalLoadout=[];
+  for(const [id,k]of Object.entries(kitMenu.kits)){
+    const card=page.locator('.iw-loadout:not(.is-leaving) [data-id="w-'+id+'"]');
+    await card.click();
+    await page.waitForFunction(id=>globalThis.s3ProbeG.game.api.getLoadout().weapon===id,id,{timeout:5000});
+    const pair=await page.locator('.iw-loadout:not(.is-leaving) .s3-catalogue').evaluate(el=>({
+      sub:el.querySelector('select[aria-label="サブウェポン"]').value,
+      special:el.querySelector('select[aria-label="スペシャル"]').value,
+    }));
+    if(pair.sub!==k.sub||pair.special!==k.special)throw Error('Canonical menu pair mismatch '+id);
+    result.canonicalLoadout.push({id,...pair,points:k.specialCost});
+  }
+  await page.screenshot({path:path.join(evidence,'canonical-65-loadout.png'),animations:'disabled',timeout:90000});
+  await page.locator('.iw-loadout:not(.is-leaving) [data-id="w-'+kitMenu.original+'"]').click();
   result.gearSelects = await page.locator('.s3-gear > fieldset:not(.s3-catalogue) select').count();
   if (result.gearSelects !== 12) throw new Error('Gear slots did not render');
   await page.locator('.s3-gear summary').click();

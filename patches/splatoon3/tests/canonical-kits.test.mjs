@@ -6,7 +6,7 @@ import {fixture} from './source-fixture.mjs';
 import {CANONICAL_KITS} from '../runtime/canonical-kits-data.mjs';
 import {MAIN_WEAPON_CATALOG} from '../runtime/main-weapon-catalog-data.mjs';
 const reference=JSON.parse(fs.readFileSync(new URL('../reference/canonical-kits-1130.json',import.meta.url)));
-async function setup(){const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return f;}
+async function setup(){const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {installIssueFiveHotfixA} from './patches/splatoon3/runtime/issue-five-hotfix-a.mjs';"});f.installIssueFiveHotfixA(f.installedRuntime,f.profile);f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return f;}
 test('all 65 canonical rows map exact catalogue IDs and source fields without alternate kits',()=>{
  assert.equal(reference.records.length,65);assert.equal(Object.keys(CANONICAL_KITS).length,65);
  for(const r of MAIN_WEAPON_CATALOG.records){const s=reference.records.find(x=>x.id===r.id),k=CANONICAL_KITS[r.id];assert.equal(s.sourceRow,r.sourceRow);assert.equal(s.rowPointer,r.rowPointer);assert.equal(k.main,s.sourceRow);assert.equal(k.specialCost,s.SpecialPoint);assert.equal(k.sub,s.sub);assert.equal(k.special,s.special);}
@@ -14,7 +14,7 @@ test('all 65 canonical rows map exact catalogue IDs and source fields without al
 test('all 65 real Actors retain canonical kit, gear cost, respawn and switch identity',async()=>{
  const f=await setup();
  for(const [id,k]of Object.entries(CANONICAL_KITS)){
-  const a=f.make(id);assert.equal(a.weapon.sub,k.sub,id);assert.equal(a.weapon.special,k.special,id);assert.equal(a.specialCost(),k.specialCost,id);
+  const a=f.make(id);assert.equal(a.weapon.sub,k.sub,id);assert.equal(a.weapon.special,k.special,id);assert.equal(a.specialCost(),k.specialCost,id);assert.ok(!a.weapon.blurb?.includes('not a verified Splatoon 3 kit'),id);
   a.s3RefreshGear();assert.equal(a.weapon.sub,k.sub,id);assert.equal(a.specialCost(),k.specialCost/(a.s3.modifiers.specialCharge||1),id);
   a.splat(null,'test');assert.equal(a.alive,false);a.reset();assert.equal(a.weapon.sub,k.sub,id);assert.equal(a.weapon.special,k.special,id);assert.equal(a.specialCost(),k.specialCost,id);
   a.setWeapon('shooter');a.setWeapon(id);assert.equal(a.weapon.special,k.special,id);assert.equal(a.specialCost(),k.specialCost,id);
@@ -97,4 +97,16 @@ test('unchanged custom kit update preserves weapon identity, while gear refresh 
  applyCatalogueChoice(a,{sub:'torpedo',special:'zipcaster'},f);const weapon=a.weapon,choice=a.s3CatalogueChoice;
  f.tick(a,120);assert.equal(a.weapon,weapon);assert.equal(a.s3CatalogueChoice,choice);
  a.s3RefreshGear();assert.equal(a.weapon.sub,'torpedo');assert.equal(a.weapon.special,'zipcaster');assert.equal(a.specialCost(),190/(a.s3.modifiers.specialCharge||1));
+});
+
+test('all 65 actual respawns preserve death-retained gauge and canonical kit with nonzero gear',async()=>{
+ const f=await setup();f.G.level.spawnPads=[new f.THREE.Vector3(),new f.THREE.Vector3(0,0,20)];
+ f.G.physics.groundProbe=(_x,_y,_z,_u,_d,_r,h)=>{h.hit=false;return h;};
+ const {emptyLoadout}=await import('../runtime/gear.mjs');
+ for(const [id,k]of Object.entries(CANONICAL_KITS)){
+  const a=f.make(id);a.slot=0;a.s3.loadout=emptyLoadout();a.s3.loadout[0].main='inkSaverSub';a.s3.loadout[1].main='specialCharge';a.setWeapon(id);
+  assert.ok(a.s3.modifiers.inkSaverSub<1,id+' sub gear');assert.ok(a.specialCost()<k.specialCost,id+' charge gear');
+  a.special=a.specialCost()*.8;a.splat(null,'test');const retained=a.special;a.respawn();
+  assert.equal(a.special,retained,id+' gauge');assert.equal(a.weapon.sub,k.sub,id);assert.equal(a.weapon.special,k.special,id);assert.equal(a.specialCost(),k.specialCost/a.s3.modifiers.specialCharge,id);
+ }
 });

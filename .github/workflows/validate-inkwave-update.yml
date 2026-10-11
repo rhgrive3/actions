@@ -225,6 +225,8 @@ jobs:
             list(pool.map(fetch_source,sorted(paths)))
           PY
           INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test patches/splatoon3/tests/main-weapon-catalog-data.test.mjs
+          node scripts/generate-inkwave-canonical-kits.mjs .reference-data/catalog/data/mush/1130/WeaponInfoMain.json
+          git diff --exit-code -- patches/splatoon3/reference/canonical-kits-1130.json patches/splatoon3/runtime/canonical-kits-data.mjs
       - name: Verify pinned Sub/Special numerical sources
         run: |
           python3 - <<'PY'

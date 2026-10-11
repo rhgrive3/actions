@@ -4,6 +4,7 @@ export function validateCanonicalKits({WEAPONS,SUB,SPECIALS}){
  for(const [id,k]of Object.entries(CANONICAL_KITS)){
   const w=WEAPONS[id];
   if(!w||w.sub!==k.sub||w.special!==k.special||w.specialCost!==k.specialCost||!SUB[k.sub]||!SPECIALS[k.special])throw Error('Canonical kit registration mismatch: '+id);
+  if(w.blurb)w.blurb=w.blurb.replace('Original INKWAVE kit (not a verified Splatoon 3 kit).','').trim();
   Object.assign(w,{kitStatus:'verified-base-kit',kitReference:k.main,kitVerifiedSlots:['sub','special'],kitMissingSlots:{}});
  }
 }

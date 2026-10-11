@@ -27,10 +27,14 @@ All 65 main IDs match one unique original base row. The 7 legacy main kits were 
 - Selected canonical bomb credits actual floor ownership and points, fills the 180p gauge, then applies death reduction.
 - Selected canonical Ink Storm scores delayed turf without refilling its own special.
 - Existing main catalogue suite: 22 pass, including all 58 actual main emissions.
-- Canonical plus existing catalogue integration suite: 22 pass at intermediate revision; final run recorded in PR.
+- Canonical plus existing catalogue integration suite: 23 pass at initial head. Additional canonical actual-respawn/nonzero-gear coverage passes 11/11 focused tests.
 - Production minified build passed.
-- Full patch suite: running, not yet certified.
-- Browser: local Chromium socket creation is unavailable in this environment. CI browser probes have been extended to all 65 canonical kits and real menu-card selection; not yet executed successfully.
+- Local full patch suite: 4,443 total / 4,427 pass / 0 fail / 16 conditional skips (intermediate working tree, 665 seconds). Final exact-head CI remains the release gate.
+- Browser: local Chromium socket creation is unavailable in this environment. Initial-head CI `seven_claims` passed the extended compiled kit probe in Chromium and WebKit. The actual game UI probe failed its first synthetic card selection; revised probe waits for the current visible screen and uses real Playwright pointer clicks. That revised run remains pending.
+
+## Performance scope
+
+An isolated Node benchmark applies the same unchanged custom pair 100,000 times, seven batches. Baseline allocated 700,000 weapon copies; candidate allocated zero. After warm-up the recorded batches were 8.46–12.94 ms baseline and 5.14–8.42 ms candidate. This is a narrow allocation/CPU probe, not an actual browser FPS or GPU benchmark. Cached storage text also avoids reparsing unchanged valid JSON. Normal gear-refresh and reset still rebuild weapon state when required.
 
 ## Limits and remaining work
 
