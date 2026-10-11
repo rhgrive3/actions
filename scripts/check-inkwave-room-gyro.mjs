@@ -71,7 +71,12 @@ try{
       assert.deepEqual(await guest.evaluate(()=>({state:G.net.state,go:count.go,bound:count.bound})),{state:'starting',go:results.filter(x=>x.engine===engine&&x.stage).length,bound:results.filter(x=>x.engine===engine&&x.stage).length});
       await guest.evaluate(async()=>{release();await pending;});
       assert.equal(await guest.evaluate(()=>G.net.active&&G.net.match.match===G.game.match&&G.game.match.state==='playing'),true);
-      const packetCount=wire.filter(x=>x.includes('"k":"ready"')&&x.includes(JSON.stringify(cfg.id))).length;assert.equal(packetCount,1);
+      // A WebKit guest can finish its local start promise before the relay
+      // delivers the authenticated READY packet to the host.
+      const readyCount=()=>wire.filter(x=>x.includes('"k":"ready"')&&x.includes(JSON.stringify(cfg.id))).length;
+      const readyDeadline=Date.now()+4000;
+      while(!readyCount()&&Date.now()<readyDeadline) await new Promise(resolve=>setTimeout(resolve,20));
+      const packetCount=readyCount();assert.equal(packetCount,1);
       const guard=await guest.evaluate(()=>{const nm=G.net.match,m=G.game.match,n=nm.unsubs.length;nm.bind(m);const once=nm.unsubs.length===n;nm.dispose();const rejected=nm.bind(m)===false;return{once,rejected,cleared:G.netm===null,subscriptions:nm.unsubs.length};});
       assert.deepEqual(guard,{once:true,rejected:true,cleared:true,subscriptions:0});
       results.push({engine,stage,readyPackets:packetCount});

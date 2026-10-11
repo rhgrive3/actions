@@ -32,7 +32,9 @@ const golden = {
   'charger-0.5':[16.1,16.1,18.875,0],
   'charger-0.75':[20.4,20.4,23.375,0],
   'charger-1':[24.8,24.8,26.875,0],
-  'roller-horizontal':[11.2,6.1,14.125,13],
+  // #771 reuses sampled spawn-speed RNG for sourced speed-dependent fan; the measured
+  // integrated collision sweep moves the horizontal practical edge by 0.1 WU.
+  'roller-horizontal':[11.1,6.1,14.125,13],
   'roller-vertical':[16.3,6.9,19.125,5],
   // #1011/#1140: sourced unit/bullet footprint. PR1209 converts DepthScale
   // ratio to additive stretch (ratio - 1); old 20.875 double-counted base depth.
