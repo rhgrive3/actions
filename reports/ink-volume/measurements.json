@@ -1,6 +1,7 @@
 {
   "dateUTC": "2026-10-11",
   "gameBaseCommit": "bf38901475fa857016cf06bcc98cd764898795d0",
+  "measurementImplementationTree": "6a71b7489cd730e6ff8fbfbd7491890d711548ee",
   "referenceCommit": "a74592726f38f26fd1d3a15ed315701068283847",
   "environment": "Chromium software WebGL (SwiftShader), Linux; emulated viewports, no physical mobile/iPad measurement",
   "method": "Native input, frozen Practice Range volley; off/on/off/on, four warm frames and twelve samples per block. Full game compositor. GPU EXT_disjoint_timer_query_webgl2 asynchronous results; requestAnimationFrame pace measured separately. CPU renderFinish timing is submission/finish-call wall time, not actual GPU completion or gameplay FPS. No physical mobile device.",

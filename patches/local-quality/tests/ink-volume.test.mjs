@@ -73,7 +73,7 @@ test('pack reader rejects corrupt/unaligned ranges and wrong lengths', () => {
   assert.throws(() => unpackVolumes({ schema: 'inkwave-volume-v1', byteLength: 5, patterns: [] }, new ArrayBuffer(4)));
 });
 async function api() {
-  return fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true, extraExports: "export { InkVolumes, animationFrame } from './patches/local-quality/ink-volume/runtime.mjs'; export { captureRollerVolume, submitRollerVolume } from './patches/local-quality/ink-volume/roller.mjs'; export const inkBufferTypes={Uint8Array,Uint16Array,Uint32Array,Int16Array,Float32Array};" });
+  return fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true, extraExports: "export { InkVolumes, animationFrame } from './patches/local-quality/ink-volume/runtime.mjs'; export { captureRollerVolume, submitRollerVolume } from './patches/local-quality/ink-volume/roller.mjs'; export { FX } from './inkwave-public/src/fx/fx.js'; export function setInkVolumeTestURL(v){globalThis.INKWAVE_INK_VOLUME_URL=v;} export const inkBufferTypes={Uint8Array,Uint16Array,Uint32Array,Int16Array,Float32Array};" });
 }
 test('frame boundaries, instanced reuse, pose/position coupling, culling, capacity fallback and exact resource disposal', async () => {
   const f = await api(), { rgba, w, h } = authored();
@@ -117,6 +117,18 @@ test('frame boundaries, instanced reuse, pose/position coupling, culling, capaci
   engine.clear(); assert(root.children.every(x => x.count === 0)); assert.deepEqual([...engine.assets.get('roller').resources], resources);
   engine.dispose(); engine.dispose(); assert.equal(root.children.length, 0); assert.equal(engine.metrics.bytes, 0); for (const r of resources) assert.equal(disposals.get(r), 1);
   assert.throws(() => engine.register('later', { schema: 'inkwave-volume-v1', patterns: [pattern] }));
+  // A boot completion promise must not retain the returned asset/buffer graph
+  // after GPU disposal. Also reject a configured load that finishes too late.
+  f.setInkVolumeTestURL('/authorized-test-pack');
+  const originalLoad=f.FX.prototype.loadInkVolume;
+  f.FX.prototype.loadInkVolume=async()=>({resources});
+  const fx=new f.FX(new f.THREE.Scene(),{quality:.25});
+  assert.equal(await fx.inkVolumeReady,true,'boot completion retains status, not asset handles');fx.dispose();assert.equal(fx.inkVolumeReady,null);
+  let finish;const pending=new Promise(resolve=>{finish=resolve;});
+  f.FX.prototype.loadInkVolume=async function(){await pending;return this.registerInkVolume('late',{schema:'inkwave-volume-v1',patterns:[pattern]});};
+  const late=new f.FX(new f.THREE.Scene(),{quality:.25}),ready=late.inkVolumeReady;late.dispose();finish();
+  assert.equal(await ready,null);assert.match(late.inkVolumeError,/disposed/);assert.equal(late.inkVolumes,undefined);assert.equal(late.inkVolumeReady,null);
+  f.FX.prototype.loadInkVolume=originalLoad;f.setInkVolumeTestURL(undefined);
 });
 test('actual composed Roller shots retain gameplay data and use the existing _draw pass', async () => {
   const f = await api(), actor = f.make('roller'); f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
