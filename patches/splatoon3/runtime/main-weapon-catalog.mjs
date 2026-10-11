@@ -1,5 +1,6 @@
 import { catalogSplashDropSpec, catalogPaintEllipse } from './catalog-splash-paint.mjs';
 import { spawnSplashDrop } from './blaster-flight-paint.mjs';
+import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
 import { CANONICAL_KITS } from './canonical-kits-data.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
@@ -115,13 +116,13 @@ function definition(r, api) {
   const actualRange = finite(move.DistanceFullCharge, finite(p.MainEffectiveRangeUpParam?.BaseDistance, r.matchmakingRange));
   const u = Object.fromEntries((r.ui || []).map(x => [x.Type, clamp(x.Value / 100)]));
   const setting=p.MainWeaponSetting||{};
-  const curve=stem=>{const v=['Low','Mid','High'].map(k=>setting[stem+k]);return v.every(Number.isFinite)?v:undefined;};
+  const curve=(stem,defaults)=>resolveWeaponGearCurve(setting,stem,defaults);
   const action=p.spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate;
   const inkTankScale=r.sourceActor==='WeaponShooterFirst'?1.1:1;
   return { id:r.id, name:r.names[api.LANG==='ja'?'ja':'en'], referenceNames:r.names, kind:'catalog', behaviorKind:r.family,
     modelKind:r.modelKind, class:{brush:'Brush',brella:'Brella',stringer:'Stringer',splatana:'Splatana'}[r.family] || existing.class,
     scopedCharge:r.family==='charger' && r.parameters.WeaponScopeParam != null,
-    catalogRecord:r, sourceMainActor:r.sourceActor, ...CANONICAL_KITS[r.id],
+    catalogRecord:r, weaponWeight:weaponWeight(r.id), sourceMainActor:r.sourceActor, ...CANONICAL_KITS[r.id],
     kitReference:CANONICAL_KITS[r.id].main, kitStatus:'verified-base-kit',
     kitVerifiedSlots:['sub','special'], kitMissingSlots:{},
     blurb:'Main-weapon numerical reference: Splatoon 3 11.3.0. Shared temporary model.',
@@ -136,7 +137,7 @@ function definition(r, api) {
     inkTankScale, inkPerShot:finite(t.InkConsume,.0092)*100/inkTankScale, inkFull:inkAt(r,chargeFrames(r)),
     inkMin:inkAt(r,finite(t.ChargeFrameMinCharge,8)), inkRecoverStop:finite(t.InkRecoverStop,20)/HZ,
     spreadGround:finite(t.Stand_DegSwerve,0), spreadAir:finite(t.Jump_DegSwerve,0),
-    runSpeedFiringCurve:curve('Overwrite_MoveVelRt_Shot_'), inkSaverMainCurve:curve('Overwrite_ConsumeRt_Main_'),
+    runSpeedFiringCurve:curve('Overwrite_MoveVelRt_Shot_',[1,1.125,1.25]), inkSaverMainCurve:curve('Overwrite_ConsumeRt_Main_',[1,.775,.55]),
     actionAirSpreadCurve:action?[finite(action.Low,0),finite(action.Mid,.5),finite(action.High,1)]:undefined,
     impactRadius:finite(p.PaintParam?.WidthHalfNear, .8),
     stats:{range:u.Range??clamp(actualRange/32),damage:u.Power??clamp(damageMax(r)/160),
@@ -207,6 +208,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const w = this.a.weapon;
     if (!w.catalogRecord) return legacyMove.call(this);
     const s = this.catalogState, r = w.catalogRecord, p = r.parameters, t = weaponParam(r);
+    // The catalogue replaces the legacy movement wrapper, so preserve the
+    // existing sub-ready owner before selecting main-weapon movement.
+    const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
+    if (this.a.grounded && (this.aimingSub || throwingStorm)) return profile.bomb.holdMoveSpeed;
     const mod = ['roller','brush','splatana'].includes(r.family)?1:this.a.s3?.modifiers?.runSpeedFiring ?? 1;
     if (s?.roll || s?.lunge || s?.turret>EPS && r.sourceActor !== 'WeaponManeuverDual') return 0;
     if (this.rolling) return finite(p.WeaponRollParam?.SpeedDash,finite(p.WeaponRollParam?.SpeedNormal,.132))*HZ;
@@ -215,7 +220,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (r.sourceActor==='WeaponSpinnerDownpour'&&s?.streamElapsed+EPS>=.5)
       return lerp(finite(t.MoveSpeed,.086),finite(p.VariableShotParam?.MoveSpeed,.05),
         clamp((s.streamElapsed*HZ-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)))*HZ*mod;
-    return this.firingT>0 || s?.pending || s?.stream>0 ? w.moveSpeedFiring*mod : PLAYER.runSpeed;
+    return this.firingT>0 || s?.pending || s?.stream>0 ? w.moveSpeedFiring*mod : PLAYER.runSpeed*(this.a.grounded?(this.a.s3?.modifiers?.runSpeed??1):1);
   };
   function pay(runner, amount, recover = runner.a.weapon.inkRecoverStop) {
     const a = runner.a;
