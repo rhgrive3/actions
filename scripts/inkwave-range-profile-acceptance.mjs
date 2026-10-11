@@ -16,7 +16,9 @@ export function profileRangeAcceptanceSnapshot(env = globalThis) {
     stageNames: Object.keys(trace.latest?.stages || {}),
     reportSchema: JSON.parse(p.report()).schema,
     profileButton: !!env.document?.querySelector('#inkwave-copy-frame-trace'),
-    tracerFileLoaded: !!env.performance?.getEntriesByType('resource')
-      .some(x => x.name.includes('range-hitch-tracer.mjs')),
+    // A ResourceTiming URL is not proof of import: cached/dynamic ESM loads
+    // may leave no matching entry. Require the real tracer's serialized frame.
+    tracerRuntimeInstalled: Number.isInteger(trace.latest?.id) && trace.latest.id > 0 &&
+      trace.latest?.stages != null && typeof p.report === 'function',
   };
 }
