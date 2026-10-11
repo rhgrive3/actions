@@ -67,5 +67,13 @@ try{
   await Promise.all([p,guest].map(pg=>pg.evaluate(()=>RG.net.leave())));
  }
  assert.equal(errors.length,0,JSON.stringify(errors));fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'passed',scope:process.env.RANKED_ONLINE_ONLY?'online-only':'offline-and-online',contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision,delayMs:delay,served:[...served],results,errors},null,2));
-}catch(e){fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'failed',contentHash:build.contentHash,error:e.stack,results,errors},null,2));for(let i=0;i<pages.length;i++)await pages[i].screenshot({path:path.join(out,'failure-'+i+'.png')}).catch(()=>{});throw e;}
+}catch(e){
+ // Never let diagnostic image capture replace the original ranked/relay failure.
+ fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'failed',contentHash:build.contentHash,error:e?.stack||String(e),results,errors},null,2));
+ for(let i=0;i<pages.length;i++){
+  try { await pages[i].screenshot({path:path.join(out,'failure-'+i+'.png'),timeout:5000}); }
+  catch(captureError){console.warn('ranked failure screenshot '+i+' unavailable:',captureError.message);}
+ }
+ throw e;
+}
 finally{for(const c of contexts)await c.close();await browser?.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));}
