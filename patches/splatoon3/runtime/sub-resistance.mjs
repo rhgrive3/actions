@@ -1,3 +1,8 @@
+// Pinned 11.3.0 misc/params.json, reversed from source [high, mid, low].
+export const DIRECT_SUB_RESISTANCE_CURVES = Object.freeze({
+  angleShooter:Object.freeze([1,.75,.5]),
+  sprinkler:Object.freeze([1,.75,.5]),
+});
 // The bomb band is classified before networking/armor, but only the victim's
 // authoritative Actor applies equipment. A near hit is never inferred from
 // its already armor-reduced amount. Native damage events retain cause 'bomb'.
@@ -20,8 +25,13 @@ export function installSubResistance({ Actor }) {
     // S3 Sub Resistance applies to eligible sub blasts below 100 damage only.
     const bomb = source === 'bomb' || source === 'splat-bomb-far';
     const weak = subResistanceEligible(amount, source), previous = this.s3SubResistanceHit;
-    this.s3SubResistanceHit = weak;
+    const directKey = source === 'angleShooter' ? 'subLineMarkerResistance' : source === 'sprinkler' ? 'subSprinklerResistance' : null;
+    this.s3SubResistanceHit = weak || !!directKey;
     if (weak) amount *= this.s3?.modifiers?.subResistance ?? 1;
+    else if (directKey) {
+      const ratio = this.s3?.modifiers?.[directKey];
+      amount *= Number.isFinite(ratio) && ratio >= .5 && ratio <= 1 ? ratio : 1;
+    }
     try { return damage.call(this, amount, attacker, bomb ? 'bomb' : source); }
     finally { this.s3SubResistanceHit = previous; }
   };
