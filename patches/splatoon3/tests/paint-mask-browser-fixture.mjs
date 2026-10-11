@@ -258,7 +258,7 @@ function hiddenPresentationRows() {
         const face = { origin: wall ? V(-6,0,0) : V(-6,0,-6), u:V(1,0,0),
           v:wall?V(0,1,0):V(0,0,1), n:wall?V(0,0,-1):V(0,1,0),
           su:12,sv:12,wall,turf:!wall,paintable:true };
-        const level = { faces:[face], blocks:[{faces:[0,-1,-1,-1,-1,-1]}],
+        const level = { faces:[face], blocks:[{faces:[0,-1,-1,-1,-1,-1], aabbMin:wall?V(-6,0,-.01):V(-6,-.01,-6), aabbMax:wall?V(6,12,.01):V(6,.01,6)}],
           pointInside:()=>false,queryBlocks:(_x0,_z0,_x1,_z1,out=[])=>{out.length=0;out.push(0);return out;} };
         const paint = new PaintSystem(renderer,level,{atlasSize:512,maxDensity:32,cell:.25});
         drawCalls=0;
