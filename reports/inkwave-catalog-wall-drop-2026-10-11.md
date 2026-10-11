@@ -12,9 +12,15 @@ Example source: https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700
 
 The existing catalog generator explicitly excluded WallDropMoveParam and WallDropCollisionPaintParam. Added-main finishContact only emitted a single ordinary impact and terminated, while legacy weapons already had a bounded detached wall-slide lifecycle.
 
-The new dedicated data module retains complete explicit move periods/speeds and shock/fall/ground radii for the 23 compatible records. Added-main terrain contact uses the existing detached lifecycle only on paintable wall faces. Player impacts, floors and unsupported families keep their original paths. Network ghosts never create a second authoritative producer. Ordinary authenticated, ordered paint rows transport the actual resulting paint.
+The new dedicated data module retains complete explicit move periods/speeds and shock/fall/ground radii for the 23 compatible records. Added-main terrain contact uses the existing detached lifecycle only on paintable wall faces. Player impacts, floors and unsupported families keep their original paths. Network ghosts never create a second authoritative producer. Ordinary authenticated, ordered paint rows transport the actual resulting paint, including the contacted-face hint.
 
-A drop carries its source owner, team and seed independently of projectile pool reuse. Clear/reset retires the existing detached list. High wall cells become usable wall ownership without entering floor turf; genuine floor contact uses the source ground radius and ordinary floor credit.
+A drop carries its source owner, team, seed and contacted wall face independently of projectile pool reuse. Clear/reset retires the existing detached list. High wall cells become usable wall ownership without entering floor turf; genuine floor contact uses the source ground radius and ordinary floor credit.
+
+## Surface attribution correction
+
+Self-review of the first candidate found that the reused helper emitted unrestricted spheres: at wall contact height 1.5, the initial wall shock credited 12 adjacent-floor cells (0.75 points), and a later wall-slide stamp added eight more before floor contact. The first final-grid test did not expose this.
+
+The catalog-only lane now binds shock/fall stamps to the original wall face. A real floor/step collision emits the source ground stamp on the actual contacted floor face. The legacy detached lanes retain their previous behavior. Time-resolved credit, raised step and perpendicular-corner tests check both CPU ownership and atlas-entry face selection; JSON replay retains the face. This corrects attribution of this model's dedicated wall-drop primitive. It does not assert that retail wall impacts can never splash onto an adjacent floor; that distinct cross-surface splash behavior is unverified.
 
 ## Checks
 
@@ -24,7 +30,7 @@ A drop carries its source owner, team and seed independently of projectile pool 
 - Shooter, Splatling and Dualies actual NetMatch JSON paint, delayed by six simulation frames, matches the sender's complete grid. Duplicate rows do not change it; receiver replay does not award turf twice.
 - Eight rapid shooters, 180 firing frames plus 60 settling frames: peak 112 simultaneous slides; peak 96 outgoing rows at a 20 Hz send cadence, below the 512-row queue capacity; 5,136 total protocol rows and 4,560 paint calls including ordinary flight paint. Reset leaves zero slides. This is a synthetic CPU fixture, not a browser frame-rate claim.
 - Source initial focused checks: five passed, including pinned raw values. Additional JSON and load checks passed.
-- Production-built wall/contact/falling suite: 17 passed at content hash `edbc2ec9c1644478068af60f9eb682c75cf79ca779893f0e9aa47b458191b622`; the final wall suite, including unpaintable walls, separately passed all seven tests on that same production-built hash. All-65 floor paint plus existing catalog source regressions passed 23/23.
+- After surface attribution correction: production-built wall/contact/legacy-Charger suite 22/22, plus the subsequently added perpendicular-corner case 1/1. Content hash `051cf8a5f24aec5a3e4e98a7dfdb8187246f6e7d3f19a9ed92398e5b8f55690b`. The existing weapons-fidelity verifier also passed 15 cases, three network modes and six wall-drop cases. Before the correction, all-65 floor paint plus existing catalog source regressions passed 23/23; existing floor paths are unchanged by the wall-only restriction.
 - Browser mask fixture adds 15 real WebGL checks: the five distinct sourced shock/fall radii on wall faces, with three seeds. Actual CI result is pending; no local Chromium success is claimed.
 
 ## Limits

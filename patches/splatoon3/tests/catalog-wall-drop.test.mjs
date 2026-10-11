@@ -7,11 +7,22 @@ import {makePaintWorld} from './paint-authority-fixture.mjs';
 import {CATALOG_WALL_DROP} from '../runtime/catalog-wall-drop-data.mjs';
 import {MAIN_WEAPON_CATALOG} from '../runtime/main-weapon-catalog-data.mjs';
 
-async function world(){
+async function world({step=false,corner=false}={}){
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
   extraExports:"export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
- const {paint,level}=makePaintWorld(f,{wall:true});f.G.settings={};f.setRandom(()=>.37);
+ let {paint,level}=makePaintWorld(f,{wall:true});
+ if(step){const V=(x,y,z)=>new f.THREE.Vector3(x,y,z);
+  level.faces.push({origin:V(-2,1,7),u:V(1,0,0),v:V(0,0,1),n:V(0,1,0),su:4,sv:2,wall:false,turf:true,paintable:true});
+  level.blocks.push({id:2,solid:true,grate:false,center:V(0,.5,8),half:V(2,.5,1),axes:level.blocks[0].axes,faces:[-1,-1,2,-1,-1,-1],aabbMin:V(-2,0,7),aabbMax:V(2,1,9)});
+  paint=new paint.constructor(null,level,{atlasSize:4096,maxDensity:30,cell:.25});f.G.paint=paint;
+ }
+ if(corner){const V=(x,y,z)=>new f.THREE.Vector3(x,y,z);
+  level.faces.push({origin:V(1,0,0),u:V(0,0,1),v:V(0,1,0),n:V(-1,0,0),su:10,sv:20,wall:true,turf:false,paintable:true});
+  level.blocks.push({id:2,solid:true,grate:false,center:V(1.5,10,5),half:V(.5,10,5),axes:level.blocks[0].axes,faces:[-1,2,-1,-1,-1,-1],aabbMin:V(1,0,0),aabbMax:V(2,20,10)});
+  paint=new paint.constructor(null,level,{atlasSize:4096,maxDensity:30,cell:.25});f.G.paint=paint;
+ }
+ f.G.settings={};f.setRandom(()=>.37);
  return {f,paint,level};
 }
 function round(c,id,height=8,configure=()=>{}){
@@ -27,7 +38,7 @@ async function sample(id='s3-shooter-short',rate=60,{height=8,dead=false,ghost=f
  const c=await world(),{f,paint}=c,{a,p}=round(c,id,height);a.alive=!dead;p.ghost=ghost;c.level.faces[1].paintable=paintable;
  // Native atlas layout excludes unpaintable faces at level construction.
  if(!paintable)c.level.faces[1].atlas=null;
- const stamps=[],raw=paint.splat;paint.splat=function(at,r,team,opts){stamps.push({at:at.clone(),r,time:f.G.time});return raw.call(this,at,r,team,opts);};
+ const stamps=[],raw=paint.splat;paint.splat=function(at,r,team,opts){const area=raw.call(this,at,r,team,opts);stamps.push({at:at.clone(),r,time:f.G.time,face:opts?.face,area,floor:paint.counts[0]});return area;};
  let seen=null,max=0;
  for(let i=0;i<rate*3;i++){f.G.time+=1/rate;f.G.projectiles.update(1/rate);paint.advanceSimulation(1/rate);const drops=f.G.projectiles._s3DetachedWallDrops||[];max=Math.max(max,drops.length);if(drops.length&&!seen)seen={...drops[0]};}
  return {...c,a,p,seen,max,stamps,grid:Array.from(paint.grid)};
@@ -52,7 +63,8 @@ test('all 23 actual main rounds start one sourced wall lifecycle with no high-wa
 });
 test('wall drop reaches floor only at contact and is frame-rate independent after owner death',async()=>{
  const base=await sample('s3-shooter-short',60,{height:1.5});assert.ok(base.paint.counts[0]>0);assert.equal(base.a.stats.turf,base.paint.counts[0]*.0625);
- assert.ok(base.stamps.some(s=>s.at.y<.1&&s.r===.6),'source ground radius used at floor contact');
+ assert.ok(base.stamps.some(s=>s.at.y<.1&&s.r===.6&&s.face===0),'source ground radius used at floor contact');
+ assert.ok(base.stamps.filter(s=>s.face===1).every(s=>s.area===0&&s.floor===0),'dedicated wall-slide stamps never acquire adjacent floor ownership');
  for(const rate of [30,120]){const c=await sample('s3-shooter-short',rate,{height:1.5,dead:true});assert.deepEqual(c.grid,base.grid);assert.equal(c.a.stats.turf,base.a.stats.turf);}
 });
 test('remote ghosts cannot spawn another wall ownership producer',async()=>{
@@ -112,4 +124,26 @@ test('eight rapid shooters keep bounded active slides and reset releases them',a
 
 test('unpaintable walls cannot start wall-slide ownership',async()=>{
  const c=await sample('s3-shooter-short',60,{paintable:false});assert.equal(c.seen,null);assert.equal(c.a.stats.turf,0);assert.equal(c.paint.sampleWorld(1,new c.f.THREE.Vector3(0,7,8)),0);
+});
+
+test('wall-slide CPU and atlas entries stay on their wall until a raised floor contact',async()=>{
+ const c=await world({step:true}),{f,paint,level}=c,{a}=round(c,'s3-shooter-short',1.5);const stamps=[],quads=[];
+ const raw=paint.splat,push=paint._pushQuad;
+ paint.splat=function(at,r,team,opts){const area=raw.call(this,at,r,team,opts);stamps.push({y:at.y,r,face:opts?.face,area,time:f.G.time});return area;};
+ paint._pushQuad=function(face,...args){quads.push({face:level.faces.indexOf(face),time:f.G.time});return push.call(this,face,...args);};
+ for(let i=0;i<120;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);paint.advanceSimulation(1/60);paint.flush(0);}
+ const floor=stamps.find(s=>s.face===2);assert.ok(floor);assert.ok(Math.abs(floor.y-1.02)<1e-8);assert.equal(floor.r,.6);
+ assert.ok(stamps.filter(s=>s.time<floor.time).every(s=>s.face===1&&s.area===0));
+ assert.ok(quads.some(q=>q.face===1));assert.ok(quads.some(q=>q.face===2));assert.ok(quads.every(q=>q.face===1||q.face===2),'no atlas projection onto lower unrelated floor');
+ assert.ok(quads.filter(q=>q.time<floor.time).every(q=>q.face===1));
+ assert.equal(a.stats.turf,paint.counts[0]*.0625);assert.ok(a.stats.turf>0);
+});
+
+test('dedicated wall slide does not assign its primitive to an adjacent perpendicular wall',async()=>{
+ const c=await world({corner:true}),{f,paint,level}=c;round(c,'s3-shooter-short',8);const quads=[],push=paint._pushQuad;
+ paint._pushQuad=function(face,...args){quads.push(level.faces.indexOf(face));return push.call(this,face,...args);};
+ for(let i=0;i<180;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);paint.advanceSimulation(1/60);paint.flush(0);}
+ assert.equal(paint.sampleWorld(1,new f.THREE.Vector3(0,7,8)),1);
+ const side=level.faces[2];assert.ok(Array.from(paint.grid.slice(side.grid,side.grid+side.nu*side.nv)).every(v=>v===0));
+ assert.ok(quads.length>0);assert.ok(quads.every(face=>face===1));
 });
