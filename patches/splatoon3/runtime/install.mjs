@@ -56,6 +56,7 @@ import { installWeaponMotion } from './weapon-motion.mjs';
 import { installFlowMotion } from './flow-motion.mjs';
 import { installBombMotion } from './bomb-motion.mjs';
 import { installWeaponDetailMotion } from './weapon-detail-motion.mjs';
+import { installWeaponFamilyMotion } from './weapon-family-motion.mjs';
 import { installJumpMotion } from './jump-motion.mjs';
 import { installLandingMotion } from './landing-motion.mjs';
 import { installSwimMotion } from './swim-motion.mjs';
@@ -201,5 +202,7 @@ export function install(profile) {
   installNativeSprinklerDamage(api);
   installBotPaintDeviceProfile({ G, Actor });
   installSpecialPresentation(api, profile);
+  // Outermost weapon pose layer: per-weapon / per-family offsets over every native and patched hold.
+  installWeaponFamilyMotion(api);
   return api;
 }

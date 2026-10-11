@@ -4,6 +4,7 @@
 export function nativeWeaponPoseRequired(ch,input={}){
   const r=ch._runner?.(input),a=ch._owner?.();
   if(ch.dual)return true; // no Dualies upper body in the Wii U source bank
+  if(ch.weaponNativeCarry)return true; // nor Brella / Splatana / Stringer / Brush (weapon-models registry)
   if(ch.dance||ch.showcase||a?.alive===false||a?.specialActive)return true;
   // The first Charger input frame may still be in admission delay, before
   // firing/charge reaches AnimState. It still belongs to the native windup.

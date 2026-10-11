@@ -22,3 +22,9 @@ Frozen 1f1e9d0 on main d1ad48 completed full source: 4,820 tests, 4,801 pass, 19
 The AP10 second-period source curve is936.36F, reached on simulation frame937; the community table lists936F. AP30 first-period values also require retail confirmation. Integerization and the precise community-table calculation are not established here, so this candidate retains the existing continuous gearCurve and native phase interpretation instead of inventing a rounding rule. AP0 and AP57 endpoint values match the pinned fields. Actual retail per-frame capture remains outstanding.
 
 Latest-main composition: official main675731132cc419bd2026db0692f918828d60393f (adopted direct-sub resistance) was merged separately. Production-built combined regressions93/93 passed, preserving direct damage/browser checks, native device damage, source periods, per-owner isolation and powered JSON paint authority. This strengthens the local integration evidence; published exact-head CI and real-browser results remain pending.
+
+## Adopted model/motion main integration
+
+Old head `773a06617d320c8d2c45ff8ac945327ad5cfaf4b` completed Validate38175897338, numerical38175897383 and reopened38175897344 successfully. Chromium/WebKit each passed the three AP0/10/57 native period-connection checks; these do not resolve the noted AP10 second-phase integerization.
+
+After new main `062c4a81f5a989406d3d65f5803ee074bd9cc0d4` (PR1246 models/motion), merged production build `5ea06d5c28bfa5167270e8b7930737ec9853ab9309c6d769223a637a042b8d5a` passed 54/54 actual-built Sprinkler/native-object/direct-resistance/model-registry checks, including all65 model geometry and real Actor/Runner/Character carry/attack. All63 changed textual main blobs were fixed-SHA fetched and verified. Local validation omits267 report-only PNG/JPG blobs; publication retains their official remote SHAs. New-head hosted CI is still required. Mark1255 remains a separate candidate.
