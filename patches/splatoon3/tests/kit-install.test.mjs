@@ -55,7 +55,7 @@ async function production() {
 
 test('the unmodified public installer activates all three genuine base kits before actors copy them', async () => {
   const api = await production();
-  for (const [main, sub, special, cost] of [['shooter','suction','trizooka',200],['roller','curling','bubbler',180],['charger','bomb','inkVac',190]]) {
+  for (const [main, sub, special, cost] of [['shooter','suction','trizooka',200],['roller','curling','bubbler',180],['charger','bomb','inkVac',190],['blaster','autobomb','bubbler',190],['slosher','bomb','tripleInkstrike',220],['splatling','sprinkler','waveBreaker',210],['dualies','suction','crabTank',200]]) {
     assert.equal(api.WEAPONS[main].sub, sub, main + ' installed sub');
     assert.equal(api.WEAPONS[main].special, special, main + ' installed special');
     assert.equal(api.WEAPONS[main].specialCost, cost);
@@ -72,34 +72,14 @@ test('the unmodified public installer activates all three genuine base kits befo
       assert.notEqual(a.weapon,api.WEAPONS[main], 'gear snapshot remains actor-local');
     } finally {a.character.dispose();}
   }
-  // PR1188: implemented 11.3.0 slots are adopted per slot; unimplemented ones stay original.
-  for (const [main, sub, special, cost, slots] of [['blaster','autobomb','bubbler',190,['sub','special']],
-    ['dualies','suction',null,null,['sub']],['slosher','bomb',null,null,['sub']],['splatling','sprinkler',null,null,['sub']]]) {
-    assert.equal(api.WEAPONS[main].kitStatus,'partial-verified-kit',main);
-    assert.deepEqual([...api.WEAPONS[main].kitVerifiedSlots],slots,main);
-    assert.equal(api.WEAPONS[main].sub,sub,main);
-    if (special) { assert.equal(api.WEAPONS[main].special,special); assert.equal(api.WEAPONS[main].specialCost,cost); }
-    // Every slot implemented (Blaster: Autobomb + Big Bubbler) gets the installed
-    // label; any original slot keeps the explicit partial-kit label.
-    assert.match(api.WEAPONS[main].blurb, slots.length === 2 ? /11\.3\.0 kit slots installed/ : /Partial Splatoon 3 kit/, main);
-    const actor = new api.Actor({team:0,name:'partial-slot actor',weapon:main,CharacterClass:api.Character,
-      style:{hair:0,skin:2,outfit:0,eyes:0}});
-    try {
-      assert.equal(actor.weapon.sub,sub,main+' actor-local verified sub');
-      assert.notEqual(actor.weapon,api.WEAPONS[main],main+' uses an actor-local copy');
-      if (special) {
-        assert.equal(actor.weapon.special,special,main+' verified special');
-        assert.equal(actor.specialCost(),cost,main+' verified special points');
-      } else {
-        assert.equal(actor.weapon.special,api.WEAPONS[main].special,main+' retains unsupported special');
-        assert.equal(actor.specialCost(),api.WEAPONS[main].specialCost,main+' retains its original cost');
-      }
-    } finally { actor.character.dispose(); }
+  for (const main of ['blaster','slosher','splatling','dualies']) {
+    assert.equal(api.WEAPONS[main].kitStatus,'verified-base-kit');
+    assert.doesNotMatch(api.WEAPONS[main].blurb,/Original INKWAVE kit|Partial Splatoon 3 kit|11\\.3\\.0 kit slots installed/,
+      main + ' complete base kit must not keep obsolete partial-kit copy');
+    assert.deepEqual(api.WEAPONS[main].kitVerifiedSlots, ['sub', 'special'], main);
+    assert.deepEqual(api.WEAPONS[main].kitMissingSlots, {}, main);
   }
-  assert.equal(api.WEAPONS.splatling.kitStatus,'partial-verified-kit');
-  assert.ok(api.SUB.sprinkler && api.SUB.autobomb, 'new 11.3.0 native sub mechanics registered');
 });
-
 
 test('the complete production wrapper chain activates each kit and refills exactly once', async () => {
   const api = await production();
