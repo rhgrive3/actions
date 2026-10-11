@@ -81,7 +81,7 @@ function boot(source, held = []) {
     // Exercise the non-Stage25 path, while refusing an unexpected Stage25 layout.
     isStage25: () => false, getStageLayout: () => { throw new Error('unexpected Stage25 fixture'); },
     normalizeStageRule: rule => rule, assertStageCompatibility: () => true, installStageLab() {}, StageRuntime: class {},
-    DEV_STAGE: false, MATCH: { defaultDuration: 180 }, params: { has: () => false },
+    DEV_STAGE: false, MATCH: { defaultDuration: 180 }, params: { has: () => false, get: () => null },
     mapTheme: (_map, time) => time, TEAM_PALETTES: [{}], COLORBLIND_PALETTE: {},
     effectiveQuality: () => ({ paintAtlas: 64 }), dressingFor: () => [{}],
     syncWorldTexlib: async () => ({ nextTexlib: null, oldTexlib: null }), updateLobbyTexlib() {}, STAGE_SURFACES: {},
