@@ -56,3 +56,27 @@ contains 3,433 numeric paint/splash leaves; presence in the source is explicitly
 separate from use in the current runtime and from measured retail parity.
 A large-special disk envelope candidate remains under terrain review and is not
 part of the accepted fixes in this checkpoint.
+
+## Added-main airborne splash contact
+
+The added catalog previously called floorPaint at splash release: a downwards
+ray immediately owned floor under an airborne round. For the 22 base catalog
+records with explicit MoveParam.FreeGravity and SplashSpawnParam/SplashPaintParam,
+release now enters the existing fixed-60Hz falling-drop owner and only paints on
+actual terrain contact. These are 11 shooters, 6 blasters and 5 dualies; other
+families/modes without the required fields retain their previous path.
+
+Source gravity converts frames squared to seconds squared by 60^2. Depth-height
+endpoints and explicit random velocities use the retained source values. Sparse
+shooter depth/random-velocity defaults and drag reuse the existing documented
+blaster-flight-paint contract. The use of weapon gravity for splash motion and
+linear height interpolation remains a model choice, not extracted Nintendo code.
+Existing fractional spawn counts, split schedules and missing family physics are
+not certified by this change.
+
+Actual Actor/projectile tests: high airborne shot does not own floor at release;
+wall contact before the floor is honored; wall area gives no turf credit;
+owner death does not erase in-flight paint; remote ghosts enqueue no duplicate
+authoritative splash. 30/60/120Hz final CPU grid and turf match. All 65 main
+Actor reachability tests and 22 existing main-catalog tests still pass. Local
+browser launch remains blocked; exact-head CI WebGL results remain required.

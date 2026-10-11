@@ -1,3 +1,5 @@
+import { catalogSplashDropSpec } from './catalog-splash-paint.mjs';
+import { spawnSplashDrop } from './blaster-flight-paint.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
@@ -298,6 +300,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (r.family==='charger') radius=full?finite(paintParam.RadiusFullCharge,1):lerp(finite(paintParam.RadiusMinCharge,.9),finite(paintParam.RadiusMaxCharge,2.7),charge);
     return {key,unit,index,charge,packet,b,m,d,c,speed,damage,life,range,radius,
       depth:finite(paintParam.DepthScaleMax,finite(paintParam.DepthScaleNear,1)),
+      splashDropSpec:catalogSplashDropSpec(b),
       splashRadius:finite(b.SplashPaintParam?.WidthHalf,finite(sloshSplash?.DrawSizeCollisionPaintParam?.PaintWidthHalf,.4)),
       splashSpacing:finite(splash.DropInterval,finite(splash.SpawnBetweenLength,3)),
       splashCount:Math.max(0,Math.ceil(finite(splash.SplashNumMax,finite(splash.SpawnNum,0))))};
@@ -557,7 +560,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(finishContact(this,p,world))return true;
       }
       if(!p.ghost&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){
-        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,p.vel.clone().setY(0).normalize());
+        const direction=p.vel.clone().setY(0).normalize();
+        if(d.splashDropSpec) spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
+          from:p.pos,direction,radius:d.splashRadius,spec:d.splashDropSpec,depth:true});
+        else floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction);
         s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
       }
       if(p.age+EPS>=p.life||s.travel+EPS>=s.range){
