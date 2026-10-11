@@ -101,11 +101,11 @@ try {
   if (result.idleLobby.mode !== 'menu' || result.idleLobby.allocated) throw new Error('Idle menu allocated unused Online LobbySet');
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); G.game.debug.freeze(); G.game.menus.wipe.cancel(); G.game.menus.show('loadout', {wipe:false,light:false}); for(let i=0;i<90;i++)G.game.menus.update(1/60); });
   await page.waitForSelector('.s3-gear');
-  result.gearSelects = await page.locator('.s3-gear select').count();
+  result.gearSelects = await page.locator('.s3-gear > fieldset:not(.s3-catalogue) select').count();
   if (result.gearSelects !== 12) throw new Error('Gear slots did not render');
   await page.locator('.s3-gear summary').click();
-  await page.locator('.s3-gear select').first().focus(); await page.keyboard.press('Home'); await page.keyboard.press('ArrowDown');
-  await page.locator('.s3-gear select').first().selectOption('runSpeed');
+  await page.locator('.s3-gear > fieldset:not(.s3-catalogue) select').first().focus(); await page.keyboard.press('Home'); await page.keyboard.press('ArrowDown');
+  await page.locator('.s3-gear > fieldset:not(.s3-catalogue) select').first().selectOption('runSpeed');
   result.savedGear = await page.evaluate(() => JSON.parse(localStorage.getItem('inkwave.splatoon3.gear.v1')));
   await page.screenshot({ path: path.join(evidence, 'loadout-desktop.png'), animations:'disabled', timeout:90000 });
   await page.setViewportSize({width:375,height:812});
