@@ -241,5 +241,7 @@ export const MODELS = {
   's3-shooter-quicklong': { sourceModel: 'Wmn_Shooter_QuickLong', build: nova },
   's3-shooter-triplequick': { sourceModel: 'Wmn_Shooter_TripleQuick', build: nozzleL3 },
   's3-shooter-triplemiddle': { sourceModel: 'Wmn_Shooter_TripleMiddle', build: nozzleH3 },
-  's3-shooter-flash': { sourceModel: 'Wmn_Shooter_Flash', build: squeezer },
+  's3-shooter-flash': { sourceModel: 'Wmn_Shooter_Flash', build: squeezer,
+    // the bottle's fore-grip is far forward: carry it closer so the support hand still reaches (image-estimated)
+    hold: { carry: { p: [-0.17, 0.79, 0.05], r: [0.45, 0.14, -0.14] }, run: { p: [-0.16, 0.81, 0.09] }, aim: { p: [-0.04, -0.07, 0.15] } } },
 };

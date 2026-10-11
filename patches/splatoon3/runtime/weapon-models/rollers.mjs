@@ -4,8 +4,8 @@
 // hand, the drum axis lies along X, the frame lies in the X–Z plane (the
 // renders show handle, frame and drum in one plane, seen from +Y), the holder's
 // right = −X. Drum widths come from the 11.3.0 parameter tables
-// (BodyParam.PaintParam.WidthHalfMax, scaled so the Splat Roller keeps its
-// existing 1.2 m drum); other sizes are read off each render relative to that
+// (BodyParam.PaintParam.WidthHalfMax, scaled so the Splat Roller drum is 1.5 m, inside the
+// roller.test proportion bands); other sizes are read off each render relative to that
 // drum. Internal model names: Leanny/splat3 ActorInfo (Fmdb).
 import { THREE, Pieces, M, V, box, sphere, xlathe, zlathe, ylathe, zcyl, xcyl, ycyl, cyl, ring, pipe, sweep, lathe,
   part, rebuild, gripSpec, clamp, damp, smooth } from './kit.mjs';
@@ -16,8 +16,8 @@ const TAU = Math.PI * 2;
 // so models keep it and place their handle around it.
 const GRIP_R = () => gripSpec([0, 0, -0.022], [0, 0, 1], [-0.3, 1, 0]);
 const GRIP_L = z => gripSpec([0, 0, z], [0, 0, 1], [0.5, 1, 0]);
-/** Paint half width (BodyParam.PaintParam.WidthHalfMax) → drum width, Splat Roller 2.8 → 1.2 m. */
-export const drumWidth = halfMax => +(halfMax * 1.2 / 2.8).toFixed(3);
+/** Paint half width (BodyParam.PaintParam.WidthHalfMax) → drum width, Splat Roller 2.8 → 1.5 m. */
+export const drumWidth = halfMax => +(halfMax * 1.5 / 2.8).toFixed(3);
 
 // ------------------------------------------------------------------------------------------ helpers
 /** Rounded-square tube through points; w = size along Y (up), h = size across. */
@@ -74,12 +74,12 @@ function splatRoller(d) {
   // running parallel to the drum with a black pad + yellow clip, C hook into the
   // drum's left (+X) end; right (−X) end: blue cap, nut and wire pin.
   const C = { purple: '#4b31c8', yellow: '#f2bf2c', blue: '#2f63e2', black: '#1f2025', metal: '#b9bdc6', rubber: '#2b2c30' };
-  const W = drumWidth(2.8), r = 0.115, dz = 0.935, dx = 0.07, hz = 0.66, az = 0.705;
+  const W = drumWidth(2.8), r = 0.152, dz = 0.96, dx = 0, hz = 0.66, az = 0.705;
   const body = new Pieces(), ink = new Pieces(), arm = new Pieces(), caps = new Pieces();
   // grip + ferrule
-  body.add(zlathe([[0, -0.112], [0.012, -0.112], [0.0175, -0.104], [0.0175, 0.17], [0.019, 0.178], [0, 0.18]], 0, 0, 0, 14), C.rubber, M.rubber);
+  body.add(zlathe([[0, -0.112], [0.012, -0.112], [0.0175, -0.104], [0.0175, 0.205], [0.019, 0.212], [0, 0.215]], 0, 0, 0, 14), C.rubber, M.rubber);
   for (let k = 0; k < 9; k++) body.add(ring(0.0178, 0.0016, 0, 0, -0.085 + k * 0.03, 'z', 4, 14), C.black, M.rubber);
-  body.add(zlathe([[0.0, 0.17], [0.021, 0.17], [0.021, 0.215], [0, 0.215]], 0, 0, 0, 12), C.purple, M.satin);
+  body.add(zlathe([[0.0, 0.205], [0.021, 0.205], [0.021, 0.24], [0, 0.24]], 0, 0, 0, 12), C.purple, M.satin);
   body.add(ring(0.012, 0.0025, -0.024, 0, 0.2, 'x', 4, 12), C.metal, M.metal);           // lanyard eyelet
   // square shaft and the hinge clevis
   body.add(bar([[0, 0, 0.21], [0, 0, hz - 0.01]], 0.036, 0.04), C.purple, M.satin);
@@ -107,12 +107,14 @@ function splatRoller(d) {
   // drum caps (spin with the drum): yellow rims both ends, blue cap + nut + wire pin at −X
   rim(caps, -W / 2 + 0.012, r, 0.026, C.yellow); rim(caps, W / 2 - 0.012, r, 0.026, C.yellow);
   capDisc(caps, -W / 2, -1, r * 0.82, C.blue); capDisc(caps, W / 2, 1, r * 0.82, C.yellow);
-  caps.add(xlathe([[0, 0], [0.03, 0], [0.03, -0.018], [0.018, -0.03], [0, -0.03]], -W / 2 - 0.015, 0, 0, 12), C.metal, M.metal);
-  for (const s of [-1, 1]) caps.add(pipe([[-W / 2 - 0.04, 0, 0], [-W / 2 - 0.07, s * 0.01, 0.012], [-W / 2 - 0.095, s * 0.02, -0.005], [-W / 2 - 0.07, s * 0.012, -0.02], [-W / 2 - 0.045, 0, -0.01]], 0.0028, 20, 5), C.metal, M.metal);
+  // stationary axle through the drum: nut and wire cotter pin at the −X end (frame side, not spinning)
+  arm.add(xcyl(0.012, -W / 2 - 0.03, W / 2 + 0.01, 0, dz, 10), C.metal, M.metal);
+  arm.add(xlathe([[0, 0], [0.03, 0], [0.03, -0.018], [0.018, -0.03], [0, -0.03]], -W / 2 - 0.015, 0, dz, 12), C.metal, M.metal);
+  for (const s of [-1, 1]) arm.add(pipe([[-W / 2 - 0.04, 0, dz], [-W / 2 - 0.07, s * 0.01, dz + 0.012], [-W / 2 - 0.095, s * 0.02, dz - 0.005], [-W / 2 - 0.07, s * 0.012, dz - 0.02], [-W / 2 - 0.045, 0, dz - 0.01]], 0.0028, 20, 5), C.metal, M.metal);
   const drum = new Pieces().add(drumGeo(W, r, { dimples: 9 }), '#ffffff');
   rebuild(d, {
     body, ink, parts: { hinge: part(arm, [0, 0, hz]), hingeInk: part(new Pieces(), [0, 0, hz], 'ink') },
-    gripR: GRIP_R(), gripL: GRIP_L(0.155), muzzle: [dx, 0, dz],
+    gripR: GRIP_R(), gripL: GRIP_L(0.175), muzzle: [dx, 0, dz],
     drum: { geo: drum, caps, at: [dx, 0, dz], r },
   });
   return setFold(d, [0, 0, hz]);
@@ -125,7 +127,7 @@ function carbonRoller(d) {
   // short handle: canister with a red lanyard loop, black D grip with a yellow
   // carabiner loop at the butt.
   const C = { yellow: '#f2a92a', black: '#1c1c20', carbon: '#2a2b30', grey: '#8f8d86', red: '#e9384e', metal: '#b8bcc4' };
-  const W = drumWidth(2.2), r = 0.088, dz = 0.585, fz = 0.47, hz = 0.395;
+  const W = drumWidth(2.2), r = 0.115, dz = 0.62, fz = 0.47, hz = 0.395;
   const body = new Pieces(), frame = new Pieces(), caps = new Pieces();
   // D grip and carabiner
   body.add(zlathe([[0, -0.06], [0.014, -0.06], [0.0175, -0.05], [0.0175, 0.1], [0.02, 0.108], [0, 0.11]], 0, 0, 0, 14), C.black, M.rubber);
@@ -169,7 +171,7 @@ function dynamoRoller(d) {
   // black clamp block, a finned motor cylinder with ink lines, a long thin rod
   // and a rubber grip.
   const C = { gun: '#55565b', dark: '#28282c', steel: '#a9abb1', black: '#18181b', copper: '#c27a3c' };
-  const W = drumWidth(3.4), r = 0.15, dz = 1.03, dx = -0.3, hz = 0.88;
+  const W = drumWidth(3.4), r = 0.19, dz = 1.13, dx = -0.37, hz = 0.88;
   const body = new Pieces(), ink = new Pieces(), frame = new Pieces(), frameInk = new Pieces(), caps = new Pieces();
   body.add(zlathe([[0, -0.12], [0.013, -0.12], [0.019, -0.11], [0.019, 0.1], [0.015, 0.11], [0, 0.112]], 0, 0, 0, 14), C.black, M.rubber);
   for (let k = 0; k < 6; k++) body.add(ring(0.0195, 0.0018, 0, 0, -0.08 + k * 0.035, 'z', 4, 14), C.dark, M.rubber);
@@ -189,9 +191,9 @@ function dynamoRoller(d) {
   const gx = W / 2 + dx;
   frame.add(xcyl(0.026, 0.1, gx + 0.03, 0, hz + 0.09, 12), C.dark, M.metal);
   frame.add(cyl(0.03, [gx + 0.02, 0, hz + 0.09], [gx + 0.04, 0, dz - 0.05], 12), C.gun, M.metal);
-  frame.add(xlathe([[0, 0], [0.2, 0], [0.22, 0.02], [0.22, 0.09], [0.19, 0.12], [0.06, 0.13], [0, 0.13]], gx, 0, dz, 28), C.gun, M.metal);
-  frame.add(ring(0.18, 0.012, gx + 0.115, 0, 0, 'x', 5, 28).translate(0, 0, dz), C.dark, M.metal);
-  for (let k = 0; k < 16; k++) { const a = k / 16 * TAU; frame.add(box(0.03, 0.022, 0.022, gx + 0.06, Math.cos(a) * 0.222, Math.sin(a) * 0.222 + dz, 0.5), C.dark, M.metal); }
+  frame.add(xlathe([[0, 0], [0.24, 0], [0.26, 0.02], [0.26, 0.1], [0.22, 0.13], [0.07, 0.14], [0, 0.14]], gx, 0, dz, 28), C.gun, M.metal);
+  frame.add(ring(0.21, 0.012, gx + 0.125, 0, 0, 'x', 5, 28).translate(0, 0, dz), C.dark, M.metal);
+  for (let k = 0; k < 16; k++) { const a = k / 16 * TAU; frame.add(box(0.03, 0.022, 0.022, gx + 0.06, Math.cos(a) * 0.262, Math.sin(a) * 0.262 + dz, 0.5), C.dark, M.metal); }
   frame.transform(g => g); // keep order
   frameInk.add(ring(0.12, 0.008, gx + 0.122, 0, dz, 'x', 4, 24));
   frame.add(xlathe([[0, 0], [0.07, 0], [0.07, 0.02], [0, 0.03]], gx + 0.12, 0, dz, 16), C.copper, M.metal);
@@ -214,13 +216,12 @@ function dynamoRoller(d) {
 
 // ------------------------------------------------------------------------------------------ Flingza Roller
 function flingzaRoller(d) {
-  // Wmn_Roller_Hunter: stepped drum (slim −X... thick ribbed +X?) — the render
-  // shows the slim section at the far (+X) end and the thick ribbed section on
-  // the frame side (−X) under a silver strip; a bent wire frame from the red
-  // tank case into the −X end; twin rod handle that slides through the case
-  // (the handle extends for the vertical swing).
+  // Wmn_Roller_Hunter: stepped drum — the thick ribbed section on the frame
+  // side (−X) under a silver strip, the slim section at the far end; a bent
+  // wire frame from the red tank case into the −X end; twin-rod handle that
+  // slides through the case (the handle extends for the vertical swing).
   const C = { red: '#86202b', redDark: '#4e0f17', steel: '#bcc0c7', dark: '#2b2c30', black: '#16161a', strip: '#6f747d' };
-  const W = drumWidth(2.6), r = 0.115, rs = 0.095, dz = 0.86, hz = 0.52;
+  const W = drumWidth(2.6), r = 0.14, rs = 0.115, dz = 0.9, hz = 0.52;
   const body = new Pieces(), frame = new Pieces(), caps = new Pieces();
   // twin rods with a black grip on one of them
   for (const sx of [-1, 1]) body.add(zcyl(0.0085, -0.13, hz - 0.02, sx * 0.026, 0, 10), C.steel, M.metal);
@@ -237,7 +238,7 @@ function flingzaRoller(d) {
   const ex = -W / 2 - 0.0;
   frame.add(pipe([[0, 0.01, hz + 0.02], [-0.2, 0.01, hz + 0.05], [-0.4, 0.008, hz + 0.08], [ex - 0.03, 0.005, hz + 0.095], [ex - 0.06, 0, dz - 0.08], [ex - 0.05, 0, dz - 0.01], [ex - 0.01, 0, dz]], 0.009, 40, 8), C.steel, M.metal);
   frame.add(xcyl(0.02, ex - 0.03, ex + 0.002, 0, dz, 14), C.steel, M.metal);
-  frame.add(box(0.6, 0.012, 0.05, -0.2, r + 0.008, dz, 0.15).rotateX(0).translate(0, 0, 0), C.strip, M.metal);
+  frame.add(box(0.75, 0.012, 0.06, -0.25, r + 0.008, dz, 0.15), C.strip, M.metal);
   // caps: polished end rings
   rim(caps, -W / 2 + 0.01, r, 0.02, C.steel, M.metal); rim(caps, W / 2 - 0.01, rs, 0.02, C.steel, M.metal);
   capDisc(caps, -W / 2, -1, r * 0.9, C.steel, M.metal); capDisc(caps, W / 2, 1, rs * 0.85, C.dark, M.metal);
@@ -256,7 +257,7 @@ function bigSwigRoller(d) {
   // pale-blue hinge block, C hook into the +X end, beaded tan hose along the
   // arm, ink cup on the handle, purple two-prong (fork) handle.
   const C = { purple: '#6c52e6', light: '#94b4f6', blue: '#3c7fe4', hose: '#dccaa6', cup: '#eeeadf', handle: '#4b2cb0', dark: '#2a2440' };
-  const W = 1.6, r = 0.12, dz = 0.89, hz = 0.6, az = 0.68;
+  const W = 2.0, r = 0.15, dz = 0.93, hz = 0.6, az = 0.68;
   const body = new Pieces(), ink = new Pieces(), arm = new Pieces(), caps = new Pieces();
   // fork handle: two prongs joined at the butt (hand on the −X prong)
   body.add(bar([[0, 0, -0.1], [0, 0, 0.13]], 0.03, 0.036), C.handle, M.satin);

@@ -16,9 +16,11 @@
 // replaces the Roller flick that the shared `roller` visual family would play.
 import { THREE, Pieces, M, V, box, sphere, zlathe, ylathe, zcyl, ycyl, ring, pipe, sweep, lathe, topSlab, slab,
   smoothOutline, part, rebuild, gripSpec, clamp, damp, smooth } from './kit.mjs';
-import { drumWidth } from './rollers.mjs';
 
 const TAU = Math.PI * 2;
+// Head width from the paint half width on the 11.3.0 tables, scaled 1.2/2.8 m per unit so the
+// hand-held grips stay ~0.11 m per hand (kit scale rule); see brushes.md.
+const drumWidth = halfMax => +(halfMax * 1.2 / 2.8).toFixed(3);
 const GRIP_R = () => gripSpec([0, 0, -0.022], [0, 0, 1], [-0.3, 1, 0]);
 const GRIP_L = z => gripSpec([0, 0, z], [0, 0, 1], [0.5, 1, 0]);
 

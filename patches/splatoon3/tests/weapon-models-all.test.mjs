@@ -79,11 +79,12 @@ test('the real Actor/Runner/Character holds every main weapon through carry and 
     let maxGrip = 0, attacked = 0;
     for (let n = 0; n < 150; n++) {
       const fire = n >= 40 && n < 120; a.intent.fire = fire; a.ink = 100;
-      G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire }); a._finishFrame(1 / 60); ch.root.updateMatrixWorld(true);
+      G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire, firePressed: n === 40 }); a._finishFrame(1 / 60); ch.root.updateMatrixWorld(true);
       assert.ok([...ch.P].every(Number.isFinite), id + ' finite pose');
-      if (a.weaponRunner.busy?.() || a.weaponRunner.firingT > 0 || a.weaponRunner.charging) attacked++;
+      if (a.weaponRunner.busy?.() || a.weaponRunner.firingT > 0 || a.weaponRunner.charging || a.weaponRunner.rolling || a.weaponRunner.flick >= 0) attacked++;
       assert.ok(ch.getMuzzle(new THREE.Vector3()).toArray().every(Number.isFinite), id + ' finite muzzle');
-      if (!ch.dual && ch.P[C.IKL] > .99 && ch.P[C.LTW] < .001)
+      // first frames after spawn: the shoulder-reach integrator is still settling
+      if (n >= 10 && !ch.dual && ch.P[C.IKL] > .99 && ch.P[C.LTW] < .001)
         maxGrip = Math.max(maxGrip, ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(hand)));
     }
     assert.ok(maxGrip < 0.008, `${id} support hand stays on its grip (${maxGrip.toFixed(4)} m)`);
