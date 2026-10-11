@@ -53,6 +53,20 @@ test('does not alter a genuinely playing match', () => {
   assert.equal(w.calls.freeze, 0);
 });
 
+test('rejects paused or network-attached matches even after native start', () => {
+  for (const invalid of [
+    w => { w.match.paused = true; },
+    w => { w.game.frozen = true; },
+    w => { w.G.netm = { connected: true }; },
+  ]) {
+    const w = fixture();
+    w.match.state = 'playing';
+    invalid(w);
+    assert.throws(() => invoke(w), /requires an unpaused offline Turf match/);
+    assert.equal(w.calls.frames, 0);
+  }
+});
+
 test('refuses attract, paused and wrong-identity matches', () => {
   for (const invalid of [
     w => { w.match.attract = true; },
