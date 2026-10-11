@@ -1,3 +1,4 @@
+import { subMarkSeconds } from './sub-mark-resistance.mjs';
 // Splatoon 3 Point Sensor and team-scoped Turf Map marks (#710).
 // Extracted from the pinned 11.3.0 source, not guessed from another weapon:
 // Splatoon3-resources/splat3/data/parameter/1130/weapon/
@@ -38,7 +39,7 @@ export function pointSensorMark(victim, team, now, seconds = POINT_SENSOR.markSe
   victim.s3 ||= {};
   const marks = victim.s3.revealedUntil ||= {};
   const before = marks[team];
-  const until = now + seconds;
+  const until = now + subMarkSeconds(victim, seconds);
   if (!finite(until) || (finite(before) && before >= until)) return false;
   marks[team] = until;
   return true;
