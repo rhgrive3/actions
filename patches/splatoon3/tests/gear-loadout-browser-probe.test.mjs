@@ -9,7 +9,7 @@ test('exact catalog gear-adoption browser probe uses real Actor, display contrac
  f.G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};f.G.physics=new f.installedRuntime.Physics(f.G.level);
  const source=fs.readFileSync(new URL('../../../scripts/check-inkwave-catalog-browser.mjs',import.meta.url),'utf8');
  const helpers=source.slice(source.indexOf('      class DisplayCharacter {'),source.indexOf('      const {CANONICAL_KITS}'));
- const probe=source.slice(source.indexOf('      const gearAdoptionChecks=[];'),source.indexOf('      const kitChecks=[];')).replace("const {NetMatch}=await import('/src/net/netmatch.js');",'');
+ const probe=source.slice(source.indexOf('      const gearAdoptionChecks=[];'),source.indexOf('      const gearClockChecks=[];')).replace("const {NetMatch}=await import('/src/net/netmatch.js');",'');
  assert.ok(helpers.includes('update()')&&probe.includes('receiver.onLeave')&&probe.includes('remote._horizontal'));
  const tailStart=source.indexOf('      // Exercise the normal NetMatch recorder footer');
  const tail=source.slice(tailStart,source.indexOf('      return {',tailStart));
