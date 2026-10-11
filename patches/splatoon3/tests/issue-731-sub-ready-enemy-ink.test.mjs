@@ -101,15 +101,12 @@ test('#731 a held sub selects the attack/ready curve while walking and firing ke
     near(walk.caps.at(-1), walkCap(f, ap), `AP ${ap} walk`);
     const fire = await trace({ points: ap, mode: 'fire' });
     assert.ok(fire.emissions.some(Boolean), 'the firing comparison emits real native rounds');
-    const windowFrames = Math.round(fire.a.weapon.postFireSwimLock / DT);
-    let lastEmission = -Infinity;
+    let emitted = false;
     for (let i = 0; i < fire.caps.length; i++) {
-      if (fire.emissions[i]) lastEmission = i;
-      // Actor movement precedes WeaponRunner's timer step. The emitting tick
-      // and the subsequent live 4F window use attack speed; the gap between
-      // six-frame rounds returns to walking even while the visual pose stays.
-      const inWindow = i - lastEmission <= windowFrames;
-      near(fire.caps[i], inWindow ? shotCap(f, ap) : walkCap(f, ap), `AP ${ap} fire tick ${i}`);
+      emitted ||= fire.emissions[i];
+      // An admitted held stream keeps its attack curve between six-frame
+      // rounds. The four-frame timer owns the release tail only.
+      near(fire.caps[i], emitted ? shotCap(f, ap) : walkCap(f, ap), `AP ${ap} fire tick ${i}`);
     }
     const sub = await trace({ points: ap, mode: 'sub' });
     near(sub.caps.at(-1), shotCap(f, ap), `AP ${ap} held sub`);
