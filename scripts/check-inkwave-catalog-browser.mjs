@@ -109,11 +109,9 @@ try {
       G.teamColors = [new THREE.Color('#f80'), new THREE.Color('#03f')];
       G.actors = [];
       G.level = { blocks: [], groundHeight: () => 0, queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; return out; } };
-      G.physics = {
-        los: () => true,
-        raycast: (_origin, _direction, _distance, hit) => { hit.hit = false; return hit; },
-        segment: (_from, _to, hit) => { hit.hit = false; return hit; },
-      };
+      // Special movement calls the real collision/integration owner as well as
+      // projectile queries; a raycast-only mock cannot exercise that path.
+      G.physics = new api.Physics(G.level);
       G.paint = { sample: () => 0, splat: () => 0 };
       G.match = { playing: () => true, canRespawn: () => false };
       G.projectiles = new Projectiles(G.scene);
@@ -123,6 +121,7 @@ try {
         constructor(options) { this.weapon = options.weapon; this.root = new THREE.Group(); this.owner = null; }
         _owner() { return this.owner; }
         _runner() { return this.owner?.weaponRunner; }
+        update() { this.updatedFrames = (this.updatedFrames || 0) + 1; }
         trigger() {}
         setVisible() {}
         setHurt() {}
@@ -146,6 +145,71 @@ try {
       };
 
       const {CANONICAL_KITS}=await import('/patches/splatoon3/runtime/canonical-kits-data.mjs');
+      const {WEAPON_WEIGHTS}=await import('/patches/splatoon3/runtime/weapon-weight-data.mjs');
+      const {WEIGHT_SPEED_CURVES}=await import('/patches/splatoon3/runtime/weapon-weight.mjs');
+      const {gearCurve,emptyLoadout}=await import('/patches/splatoon3/runtime/gear.mjs');
+      const weightChecks=[];
+      for(const record of records)for(const ap of [0,10,57]){
+        const a=makeActor(record.id), l=emptyLoadout();
+        if(ap===10)l[0].main='runSpeed';
+        if(ap===57)for(const p of l){p.main='runSpeed';p.subs.fill('runSpeed');}
+        a.s3.loadout=l;a.s3RefreshGear();
+        const curve=WEIGHT_SPEED_CURVES[WEAPON_WEIGHTS[record.id].speed];
+        const expected=gearCurve(ap,...curve.run)*60;
+        check(Math.abs(a.weaponRunner.moveSpeed()-expected)<1e-8,record.id+' weighted run '+ap);
+        check(a.s3.modifiers.inkSaverMain>0,record.id+' nonnegative ink sentinel');
+        weightChecks.push({id:record.id,ap,speed:a.weaponRunner.moveSpeed(),weight:WEAPON_WEIGHTS[record.id].speed});
+        a.weaponRunner.aimingSub=true;check(a.weaponRunner.moveSpeed()===profile.bomb.holdMoveSpeed,record.id+' sub-ready movement');
+      }
+      const uniqueGearChecks=[];
+      for(const ap of [0,10,57]){
+        const a=makeActor('shooter');G.actors=[a];const l=emptyLoadout();
+        if(ap===10)l[0].main='specialPower';if(ap===57)for(const p of l){p.main='specialPower';p.subs.fill('specialPower');}
+        a.s3.loadout=l;a.s3RefreshGear();a.weapon={...a.weapon,special:'zipcaster',specialCost:100};a.special=100;
+        a._startSpecial();const state=a._s3AllSpecialState;check(state?.id==='zipcaster','Zipcaster state');
+        for(let frame=0;frame<60;frame++)a._updateSpecial(1/60);
+        check(Math.abs(state.inkFuel-(150-gearCurve(ap,15,13.05,12)))<1e-8,'Zipcaster browser drain '+ap);
+        uniqueGearChecks.push({ability:'specialPower',ap,zipcasterFuel:state.inkFuel});a.reset();
+      }
+      const conditionalChecks=[];
+      {
+        const previous=G.match,a=makeActor('shooter'),e1=makeActor('shooter'),e2=makeActor('shooter');e1.team=e2.team=1;G.actors=[a,e1,e2];
+        G.match={state:'playing',playing:()=>true,canRespawn:()=>false,actors:G.actors,time:180,duration:180};
+        a.s3.loadout=emptyLoadout();a.s3.loadout[0].main='tenacity';a.s3RefreshGear();a.special=0;
+        for(let frame=0;frame<60;frame++)a.update(1/60);
+        check(Math.abs(a.special-3.24)<1e-8,'Tenacity installed Actor update');
+        check(a.character.updatedFrames===60,'Tenacity fixture reaches display update for all native frames');
+        conditionalChecks.push({ability:'tenacity',gauge:a.special});
+        a.s3.loadout[0].main='lastDitchEffort';G.match.mode='zones';G.match.time=20;a.s3RefreshGear();
+        check((a.s3.abilityPoints.inkSaverMain||0)===0,'uninstalled ranked feature stays inactive');
+        G.match.mode='turf';a.s3RefreshGear();check(a.s3.abilityPoints.inkSaverMain===18,'ordinary final turf window retained');
+        conditionalChecks.push({ability:'lastDitchEffort',uninstalledRanked:0,turfFinalWindow:18});G.match=previous;
+      }
+      const objectGearChecks=[];
+      for(const id of ['booyahBomb','crabTank'])for(const equipped of [false,true]){
+        const defender=makeActor('shooter'),attacker=makeActor('shooter');attacker.team=1;attacker.pos.set(0,0,5);G.actors=[defender,attacker];
+        attacker.s3.loadout=emptyLoadout();if(equipped)attacker.s3.loadout[2].main='objectShredder';attacker.s3RefreshGear();
+        defender.weapon={...defender.weapon,special:id,specialCost:100};defender.special=100;defender._startSpecial();defender._updateSpecial(1/60);defender.invuln=0;
+        const state=defender._s3AllSpecialState,rate=equipped?(id==='crabTank'?1.3:1.1):1,before=state.armorHP;
+        defender.damage(100,attacker,'shooter');check(Math.abs(state.armorHP-(before-100*rate))<1e-8,id+' compiled target gear');
+        state.armorHP=50;defender.specialActive.armorHP=50;defender.hp=100;
+        const bodyFactor=defender.specialActive.armor?.valueOf()===true?.25:1;
+        defender.damage(100,attacker,'shooter');const expected=100-Math.floor((100-50/rate)*bodyFactor*10+1e-9)/10;
+        check(state.armorHP===0&&Math.abs(defender.hp-expected)<1e-8,id+' compiled armor break');
+        objectGearChecks.push({id,equipped,rate,bodyHp: defender.hp});defender.reset();
+      }
+      const {kitBombContact}=await import('/patches/splatoon3/runtime/kit-subs.mjs');
+      for(const equipped of [false,true]){
+        G.projectiles.clear();const owner=makeActor('shooter'),attacker=makeActor('shooter');attacker.team=1;G.actors=[owner,attacker];
+        owner.weapon={...owner.weapon,sub:'sprinkler'};owner.weaponRunner.reset();attacker.s3.loadout=emptyLoadout();if(equipped)attacker.s3.loadout[2].main='objectShredder';attacker.s3RefreshGear();
+        G.projectiles.throwBomb(owner);const b=G.projectiles.bombs.at(-1);check(!!b,'native Sprinkler birth');
+        kitBombContact(api.SUB,b,{hit:true,point:new THREE.Vector3(0,0,0),normal:new THREE.Vector3(0,1,0)});
+        const p={owner:attacker,team:1,damage:12,size:.01,prev:b.pos.clone().add(new THREE.Vector3(0,0,-1)),pos:b.pos.clone().add(new THREE.Vector3(0,0,1))};
+        const candidate=G.projectiles.kitBarrierCandidate(p,p.prev,p.pos);check(candidate?.kind==='native-sprinkler','native Sprinkler swept hit');candidate.onHit();candidate.onHit();
+        check(b.s3DeviceHP===(equipped?0:108),'native Sprinkler fixed gear damage once');
+        if(equipped){G.projectiles.update(1/60);check(!G.projectiles.bombs.includes(b),'native Sprinkler retirement');}
+        objectGearChecks.push({id:'sprinkler',equipped,hp:b.s3DeviceHP});
+      }
       const kitChecks=[];
       for(const record of records){
         G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
@@ -209,7 +273,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks,
+        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,

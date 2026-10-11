@@ -2,6 +2,13 @@ const STEP = 1 / 60;
 const EPS = 1e-10;
 const INSTALLED = Symbol.for('inkwave.issue264.paint-ownership-installed');
 
+// Keep the existing RNG draw at the caller while using one recorded mask seed
+// for a catalogue special's core and its larger-radius continuation.
+export function projectileBurstPaintSeed(projectile, randomSeed) {
+  return projectile?.s3AllSpecial && Number.isFinite(projectile.seed) ? projectile.seed : randomSeed;
+}
+
+
 // Keep ordinary clocks numeric on the wire. Decimal strings carry only values
 // beyond the safe-integer range, so an accepted causal jump cannot exhaust the
 // next local emission or lose precision. Canonical encoding avoids alias IDs.

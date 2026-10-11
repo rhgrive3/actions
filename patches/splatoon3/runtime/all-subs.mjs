@@ -1,3 +1,5 @@
+import { replayNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
+import { objectGearRate, objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 // Runtime overlay for the ten Splatoon 3 sub weapons that are not represented
 // by the published INKWAVE bomb/support lanes.  The upstream release path still
 // owns input admission, ink payment, throw pose and the hold clock: this module
@@ -558,7 +560,7 @@ function customObjectCandidate(api, projectiles, p, start, end) {
       if(p.ghost)return 0;
       if(object.ghost){if(!p.ghost)emitObjectHit(api,object,p,hit.point,amount);return 0;}
       if(localOwner(object.owner)){
-        object.hp-=amount;
+        object.hp-=amount*objectGearRate(p.owner,object.subId);
         if(object.hp<=0)removeObject(api,projectiles,object);
         return amount;
       }
@@ -575,7 +577,7 @@ function emitObjectHit(api, object, projectile, point, damage) {
   const event={v:1,phase:'objectHit',subId:projectile.wid||projectile.type||'projectile',
     seq:projectile.s3SubSeq||0,eventSeq:nextSeq(shooter),targetOwnerId:object.owner.nid,
     life:ownerLife(shooter),targetLife:object.sourceLife,targetOwnerLife:ownerLife(object.owner),targetSeq:object.seq,targetSubId:object.subId,
-    damage:clamp(damage,0,2200),x:point.x,y:point.y,z:point.z,actor:shooter};
+    damage:clamp(damage,0,2200),objectShredder:objectShredderEquipped(shooter),x:point.x,y:point.y,z:point.z,actor:shooter};
   api.emit?.('all:sub',event);
 }
 function objectHitKey(event) { return `${event.actor?.nid??event.actorId}:${event.life??ownerLife(event.actor)}:${event.eventSeq}`; }
@@ -696,7 +698,7 @@ function applyRemoteObjectHit(api,event) {
   if(!target||target.ghost)return false;
   const reach=target.subId==='splashWall'?ALL_SUB_SPECS.splashWall.wallWidth/2+1:target.subId==='torpedo'?1:1.5;
   if(target.pos.distanceTo(new api.THREE.Vector3(event.x,event.y,event.z))>reach)return false;
-  target.hp-=clamp(event.damage,0,2200);
+  target.hp-=clamp(event.damage,0,2200)*withObjectHitGear(shooter,event.objectShredder,()=>objectGearRate(shooter,target.subId));
   if(target.hp<=0)removeObject(api,api.G.projectiles,target);
   return true;
 }
@@ -965,6 +967,7 @@ function replayExpire(api,event,owner){
  */
 export function replaySub(api,event){
   if(!api?.G||!event||event.v!==1||typeof event.phase!=='string')return false;
+  if(event.phase==='nativeObjectHit'||event.phase==='nativeObjectState')return replayNativeSprinklerDamage(api,event);
   if(event.phase==='objectHit')return applyRemoteObjectHit(api,event);
   if(event.phase==='status')return replayStatus(api,event);
   if(event.phase==='beakonUseProposal')return applyBeaconProposal(api,event);

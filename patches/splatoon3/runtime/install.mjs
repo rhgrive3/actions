@@ -1,3 +1,4 @@
+import { installNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
 import { installTurfCombatGate } from './turf-combat.mjs';
 import { installSplatGhostReturn } from '../issue-284-adapter.mjs';
 import { installIssue196SpecialChargeCancel } from '../issue-196-adapter.mjs';
@@ -197,6 +198,7 @@ export function install(profile) {
   installCatalogueBeakonJumps(api);
   installCatalogueControls(api);
   installCatalogueNetwork(api, { replaySub, replaySpecial, replaySplashdown });
+  installNativeSprinklerDamage(api);
   installBotPaintDeviceProfile({ G, Actor });
   installSpecialPresentation(api, profile);
   return api;
