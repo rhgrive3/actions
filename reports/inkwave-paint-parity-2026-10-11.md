@@ -33,3 +33,26 @@ Changes:
 Pinned retail reference remains Splatoon 3 11.3.0, [Leanny source commit](https://github.com/Leanny/splat3/tree/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130). The hidden-clock change is an INKWAVE consistency repair, not a newly measured Nintendo timing constant.
 
 Still required: complete 65/14/19 paint-parameter-to-runtime mapping, source units/projection/angle and slope/edge audit, actual emitted browser coverage and restoration results, visual comparison against controlled retail footage, and CPU/GPU/memory performance measurements. Existing catalog limitations include calibrated raster shape, sparse inherited defaults, incomplete wall drips and Slosher spiral behavior. Those are not declared solved by this checkpoint. Merging and publication are parent-owned and not yet complete.
+
+## Additional authoritative paint-credit regression
+
+Actual production Actor/Projectiles/PaintSystem exposed 46.125 points of unwanted
+special-gauge recharge on the native Booyah projectile burst before its dedicated
+no-special paintDisk. The generic terrain impact also had the same missing
+classification. Both synchronous return credit and delayed growth now select
+no-special only when the projectile carries its dedicated s3SpecialWeapon descriptor.
+Ordinary main blaster credit remains unchanged.
+
+Seven real-module tests cover timed burst and terrain impact, living/dead owner,
+late expansion, floor-only turf counted once, and duplicate network ownership
+stamp replay. This is an ownership replay test, not a live two-browser match.
+Eight visibility tests now additionally cover a network stamp initially owning
+zero coarse cells, being pruned, and subsequently regaining a retained GPU
+presentation when a delayed satellite first claims a cell.
+
+Fresh pinned 11.3.0 source audit has retrieved all 65 main and 33 sub/special
+parameter tables. All 65 main source hashes match the catalog hashes. The audit
+contains 3,433 numeric paint/splash leaves; presence in the source is explicitly
+separate from use in the current runtime and from measured retail parity.
+A large-special disk envelope candidate remains under terrain review and is not
+part of the accepted fixes in this checkpoint.

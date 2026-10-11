@@ -101,3 +101,20 @@ test('hidden local sub-cell ink survives pruning of unrelated network stamps', a
     { seed: .37, instant: true, __netOrder: { clock: i + 1, seq: i + 1, peer: 'remote', epoch: 'tiny-test' } });
   assert.ok([...paint._hiddenPaintGrowth.values()].includes(tiny), 'unclipped local visual mask must not be discarded');
 });
+
+test('network growth initially owning no cell is reinserted after pruning when late ink gains a cell',async()=>{
+ async function run(hidden){
+  const f=await fixture({productionComposition:true,fullRuntime:true,realProjectiles:true});f.context.document={hidden};
+  const {paint,V}=makePaintWorld(f,{cell:2});
+  paint.splat(V(0,0,5),.7,0,{seed:.37,__netOrder:{clock:1,seq:1,peer:'late',epoch:'test'}});
+  assert.equal(paint.counts[0],0,'coarse cell fixture starts without an owner');
+  const id=paint.growing[0].paintOrder;
+  for(let i=0;i<150;i++)paint.splat(V(20,0,20),.62,i%2,{seed:.37,instant:true,__netOrder:{clock:i+2,seq:i+2,peer:'other',epoch:'test'}});
+  if(hidden)assert.equal(paint._hiddenPaintGrowth.has(id),false,'unowned network mask was pruned');
+  for(let i=0;i<180;i++)paint.advanceSimulation(1/60);
+  assert.ok(paint.counts[0]>0,'native delayed satellite actually claims its first cell');
+  if(hidden){assert.ok(paint._hiddenPaintGrowth.has(id),'late emission reinserts the retained presentation');f.context.document.hidden=false;paint.flush(0);}
+  return{grid:Array.from(paint.grid),orders:Array.from(paint._paintOwnershipOrder)};
+ }
+ assert.deepEqual(await run(true),await run(false));
+});
