@@ -325,8 +325,13 @@ const visualSetup = ({ name, seed, impact = null }) => {
   const canonical = window.__iwCanonicalPlacement;
   if (!canonical) throw new Error('Missing canonical native spawn-floor placement');
   window.__iwProjectileSurfaceHits = [];
+  window.__iwProjectileImpactAttempts = [];
   if (!window.__iwProjectileImpactRecorderInstalled) {
     const record = (route, p, hit) => {
+      window.__iwProjectileImpactAttempts.push({
+        route, hit: !!hit?.hit, face: hit?.face ?? null,
+        block: hit?.block ?? null, normal: hit?.normal?.toArray?.() ?? null,
+      });
       if (!hit?.hit || !Number.isInteger(hit.face) || hit.face < 0) return;
       window.__iwProjectileSurfaceHits.push({
         route, type: p.type, weapon: p.wid || p.inkKey || p.inkProfile?.key || null,
@@ -503,25 +508,37 @@ async function runVisuals(page) {
     if (!born) throw new Error(scenario.name + ': projectile birth failed');
     await renderAndCapture(page, scenario.name, 'F0', 'shoulder', scenario.seed);
     let impactFrame = null, impactState = null, impactEvidence = null;
+    const flightHistory = [];
     for (let frame = 1; frame <= scenario.maxFrames; frame++) {
       const row = await page.evaluate(() => {
         const G = window.__G, g = window.__inkwave, dt = 1 / 60;
         G.time += dt; g.time += dt;
         const before = G.projectiles.list.map(p => ({ seed: p.seed, pos: p.pos.toArray() }));
         const surfaceHitStart = window.__iwProjectileSurfaceHits.length;
+        const attemptsStart = window.__iwProjectileImpactAttempts.length;
         G.projectiles.update(dt); G.fx.update(dt, G.camera); g.fxHooks?.update?.(dt); G.paint.flush(dt);
         const after = new Set(G.projectiles.list.map(p => p.seed));
         return { before, afterCount: G.projectiles.list.length, retired: before.filter(p => !after.has(p.seed)), paintQuads: G.paint.quads,
+          attempts: window.__iwProjectileImpactAttempts.slice(attemptsStart),
+          heads: G.projectiles.list.map(p => ({ type: p.type, ghost: !!p.ghost, age: p.age, phase: p.inkPhase ?? null, headFrame: p.inkFrame ?? null, pos: p.pos.toArray(), vel: p.vel.toArray() })),
+          headImpacts: G.projectiles.inkFlight?.stats?.headImpacts ?? null,
           surfaceHits: window.__iwProjectileSurfaceHits.slice(surfaceHitStart),
           paintCoverage: G.paint.coverage?.() ?? null, fx: G.fx.stats?.() ?? null };
       });
+      flightHistory.push({ frame, heads: row.heads, retired: row.retired, attempts: row.attempts, headImpacts: row.headImpacts, surfaceHits: row.surfaceHits });
+      if (flightHistory.length > 12) flightHistory.shift();
       const expectedContact = scenario.impact === 'wall'
-        ? row.surfaceHits.find(hit => hit.normal && Math.abs(hit.normal[1]) < 0.45)
+        ? row.surfaceHits.find(hit => hit.normal && hit.face >= 0 && Math.abs(hit.normal[1]) < 0.45)
         : row.surfaceHits.find(hit => hit.normal && hit.normal[1] > 0.68);
       if (expectedContact) { impactFrame = frame; impactState = row; impactEvidence = expectedContact; }
       if (impactFrame != null && frame >= impactFrame + 8) break;
+      // One actual shooter head is born for the wall receipt. If it is retired
+      // before producing a native stage hit, waiting 120 more 3D frames cannot
+      // resurrect it. Fail immediately with its observed native trajectory.
+      if (scenario.impact === 'wall' && !row.afterCount && impactFrame == null) break;
     }
-    if (impactFrame == null) throw new Error(scenario.name + ': no native stage-surface collision with an in-range face/normal was observed within budget');
+    if (impactFrame == null) throw new Error(scenario.name + ': no native stage-surface collision with an in-range face/normal was observed; native diagnostics ' +
+      JSON.stringify({ wall: setup.wall, births: born, flightHistory }));
     const capture = await renderAndCapture(page, scenario.name, `${scenario.impact}-impact-F${impactFrame}`, scenario.impact === 'wall' ? 'side' : 'shoulder', scenario.seed);
     report.visualScenarios.push({ name: scenario.name, seed: scenario.seed, setup, births: born, impactFrame, impactState, impactEvidence, capture,
       evidence: scenario.impact === 'wall'
