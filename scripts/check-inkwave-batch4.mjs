@@ -56,12 +56,12 @@ try{
    const press=async(page,selector)=>{await settle(page);const e=page.locator(selector).first();await e.scrollIntoViewIfNeeded();await (touch?e.tap():e.click());};
    await press(pages[0],'[data-id="keep-going"]');await pump();assert.equal(await pages[0].evaluate(()=>ended),0);
    await press(pages[1],'[data-id="change-gear-continue"]');await pump();await pages[1].waitForFunction(()=>menus.current==='loadout');
-   const gear=pages[1].locator('.s3-gear select').first();await pages[1].locator('.s3-gear summary').click();await gear.selectOption('swimSpeed');
+   const gear=pages[1].locator('.s3-gear > fieldset:not(.s3-catalogue) select').first();await pages[1].locator('.s3-gear summary').click();await gear.selectOption('swimSpeed');
    await press(pages[1],'[data-id="w-roller"]');assert.equal(await pages[1].evaluate(()=>account.weapon),'roller');
    await press(pages[1],'.iw-loadout .iw-backbtn');await pages[1].waitForFunction(()=>menus.current==='results');await pump();assert.equal(await pages[0].evaluate(()=>ended),0);
    assert(await pages[1].evaluate(()=>JSON.stringify(menus._results)===resultBefore),'old result identity/data');
    await press(pages[1],'[data-id="change-gear-continue"]');await pages[1].waitForFunction(()=>menus.current==='loadout');
-   assert.equal(await pages[1].locator('.s3-gear select').first().inputValue(),'swimSpeed');
+   assert.equal(await pages[1].locator('.s3-gear > fieldset:not(.s3-catalogue) select').first().inputValue(),'swimSpeed');
    await press(pages[1],'[data-id="continue-with-gear"]');await pump();
    for(const page of pages){await page.waitForFunction(()=>menus.current==='lobby');assert.equal(await page.evaluate(()=>ended),1);assert(await page.evaluate(()=>G.net.lobby.players.every(p=>p.ready)));}
    assert.equal(await pages[0].evaluate(()=>G.net.lobby.players.find(p=>p.id==='guest').weapon),'roller');assert.deepEqual(errors,[]);

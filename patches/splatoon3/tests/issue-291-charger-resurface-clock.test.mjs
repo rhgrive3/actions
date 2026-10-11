@@ -65,8 +65,11 @@ test('#291 re-submerge resets both surface clocks but retains the75F keep owner'
 });
 test('#291 native network packet carries the25F warning without granting owner fire authority',async()=>{
  const {f,a,r,step}=await setup(60);a.nid=1;a.intent.squid=false;let packet;
- a.owner='owner';
- const remote=f.make('charger');remote.nid=1;remote.owner='owner';
+ // The standalone weapon fixture starts Actors at 100000 HP to simplify pure
+ // ballistics tests. A live NetMatch only admits bounded match HP, so use
+ // legitimate 100-HP owner and remote samples for this packet-level test.
+ a.hp=100;a.owner='owner';
+ const remote=f.make('charger',{hp:100});remote.nid=1;remote.owner='owner';
  const members=new Map([['host','Host'],['owner','Owner'],['viewer','Viewer']]);
  const sender=new f.NetMatch({myId:'owner',hostId:'host',isHost:false,_members:members,
   tr:{broadcast:m=>{packet=JSON.parse(JSON.stringify(m));},sendTo(){}}},{id:'issue-291-resurface-clock',map:'map',difficulty:'normal'});
