@@ -1093,14 +1093,17 @@ function setSlosherDraw(p,unit,index) {
 export function fidelitySlosherDrawRadius(p) {
   return radiusAt(p.fidelitySloshDraw,Math.max(0,p.age||0),p.vis??p.size)*slosherDropScale(p,p.pos?.y);
 }
-// Airborne ink silhouette (render only; collision, paint and packets are
-// untouched). Splatoon 3 footage (Inkipedia "S3 About videos" Splattershot /
-// Slosher, Nintendo official turf-war clip) shows no round balls:
+// Legacy airborne-ink fallback (render only; collision, paint and packets
+// are untouched). These coefficients were visually tuned from promotional
+// footage; neither Nintendo mesh data nor a controlled v11.3.0 comparison
+// established them. projectile-visuals.mjs supersedes this fallback for the
+// sourced shooter, Roller and Slosher families. The earlier visual interpretation:
 // - a Shooter round is a long smooth constant-width rod of ink (its tail,
 //   see shotTailFrames) while the SplashSpawn drops along the path fly as
 //   flat jagged splinters;
 // - Roller/Brush flicks are spiky splash crowns;
-// - a Slosher throw is one broad thin sheet without detached beads.
+// - a Slosher throw was represented as one broad thin sheet. This is not a
+//   recovered native mesh rule; the Bucket's source groups are four plus five.
 // Each entry is [spike amplitude (head radii), spike count, cross-section
 // thickness (1 = round; the thin axis stays vertical), tail length scale,
 // width scale on the drawn radius, trailing beads 1/0]. The Slosher width 0.5
@@ -1124,14 +1127,14 @@ export const INK_LOOK=Object.freeze({
 // EndMaxLength), and Splatoon 2 3.1.0's symbol list names the tail-end states
 // Game::BulletShooterBase::stateMuzzleTail / GoStraightTail / BrakeTail /
 // FreeTail and updateTailPos (names only; their bodies are not decompiled).
-// Read together: the tail end waits at the muzzle, then follows the round's
-// own straight/brake/free path MaxLengthFrame frames behind it. INKWAVE draws
+// Those names establish no update equation. The legacy INKWAVE approximation
+// makes the tail end wait at the muzzle and then follow a delayed path. It draws
 // that as a straight rod whose back reaches the distance the round covers in
 // MaxLengthFrame frames at its current speed, never behind the launch point.
-// The Shooter/Dualies default is absent from the sparse tables: 2 frames is
-// measured from the 60 fps Splattershot clip (joined to the muzzle for two
-// frames, its back one frame of travel past the muzzle on the third), not a
-// sourced value.
+// The Shooter/Dualies default is absent from the sparse tables. The earlier
+// two-frame visual estimate has no retained frame-indexed measurement record;
+// retain 2 as an explicitly unsourced INKWAVE presentation default, not a
+// verified retail duration or an internal Nintendo default.
 export const SHOT_TAIL_FRAMES_DEFAULT=2;
 export function shotTailFrames(p) {
   const v=completion?.weapons?.[p?.wid]?.spl__BulletShooterTailLengthParam?.MaxLengthFrame;

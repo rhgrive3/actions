@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runLoggedTestProcess } from './run-logged-test-process.mjs';
 import vm from 'node:vm';
+import { adaptBuildSource } from './inkwave-source-composition.mjs';
 import { checkCompatibility, adaptSource, PATCH_ROOT } from '../patches/splatoon3/adapter.mjs';
 import { numericStatus } from './sync-inkwave-numeric-status.mjs';
 import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
@@ -37,7 +38,7 @@ try {
       if (!/\.m?js$/.test(file)) continue;
       const rel = path.relative(SRC, file);
       try {
-        new vm.SourceTextModule(adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, fs.readFileSync(file, 'utf8')))), { identifier: file });
+        new vm.SourceTextModule(adaptBuildSource(rel, fs.readFileSync(file, 'utf8')), { identifier: file });
       } catch (error) {
         // An unlabelled SyntaxError in a 300+ file integration gives no clue
         // which exact composed module failed. Keep fail-closed parsing while
@@ -53,7 +54,9 @@ try {
   if (['/tmp', '/var/tmp', '/dev/shm'].some(p => physical(logDir) === p || physical(logDir).startsWith(p + '/'))) throw Error('Persistent test log storage required');
   fs.mkdirSync(logDir, { recursive: true });
   const log = path.join(logDir, 'patch-tests.log');
-  const result = await runLoggedTestProcess(process.execPath, ['--experimental-vm-modules', '--test', ...files], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, logFile: log });
+  const concurrency = Number(process.env.INKWAVE_TEST_CONCURRENCY || 4);
+  if (!Number.isInteger(concurrency) || concurrency < 1) throw new Error('INKWAVE_TEST_CONCURRENCY must be a positive integer');
+  const result = await runLoggedTestProcess(process.execPath, ['--experimental-vm-modules', '--test', `--test-concurrency=${concurrency}`, ...files], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, logFile: log });
   result.stdout = fs.readFileSync(log, 'utf8');
   result.stderr = '';
   if (result.status !== 0) {

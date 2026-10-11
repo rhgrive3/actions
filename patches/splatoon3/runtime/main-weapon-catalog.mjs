@@ -513,6 +513,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.carry=Math.max(0,s.carry-DT);
       if(s.stuck){s.fuse-=DT;if(s.fuse<=EPS){explosion(this,p,d.b.DetonationParam.BlastParam);return true;}continue;}
       advance(p);
+      // Read-only presentation observer: sample each real 60Hz integration,
+      // including multiple catch-up steps. Never changes gameplay/RNG/packets.
+      this.projectileVisuals?.recordPhysicsPoint(p, p.age - DT);
       const shapes=lobes(p),len=p.prev.distanceTo(p.pos);
       let world=s.hit;world.hit=false;
       for(const q of shapes){

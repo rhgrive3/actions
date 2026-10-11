@@ -3931,3 +3931,8 @@ Not changed and still unverified: Dualies aerial slide descent (no sourced field
 最終 CI の旧 golden は DepthScale の比率を PaintSystem の加算伸長へそのまま渡す前提が残っていた。現行 main の `max(0, depthRatio - 1)` と独立した原典パラメータ計算を照合し、9 発すべての半径・actor 所有・単一着弾 stamp を検証した。0.25 セルの採点グリッドで現行の最遠 Z は 16.625、面積は 76.9375。旧 0.2 換算の反証対照は Z=13.625 / 面積=15.375、基底幅を二重計上する旧 depth 比率の対照は Z=21.125 / 面積=108.125 となり、いずれも現行のセル集合と区別される。source と emitted build の全 receipt（採点セルを含む）も一致する。
 
 修正範囲はテストと検証記録のみで、原典値・ゲーム本体の半径や伸長・CPU/GPU 採点境界は変更していない。この数値は INKWAVE の計測 receipt であり、Nintendo 実機との未確認事項を完了扱いにする根拠ではない。
+
+
+### 2026-10-11: 弾形状の描画専用再構築
+
+[弾形状再構築の検証記録](inkwave-projectile-reconstruction-2026-10-11.md)。統合PR1182の生成コード上へ最終adapterを追加し、Shooter軌跡ロッド、Roller横／縦液膜、Bucket前4＋後5の異なる輪郭を接続する。11.3.0の65原典JSONとユニット別DrawSizeを照合し、既存半径／塗り／衝突／通信所有者は維持。形状式、通常Shooterの2F、既存width校正は未確定の近似。初期化乱数の消費、粗い更新履歴、衝突終端、壁垂れ時計、Roller接続を独立レビューで修正。通常起動した本番buildの撮影scriptと変更前後CIを追加したが、ローカルWebGL起動は環境制約で失敗しており、本家11.3.0の条件統一比較・実Android・性能無悪化は未検証。Draftを維持し、完全一致と表現しない。
