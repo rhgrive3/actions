@@ -16,14 +16,14 @@ Changes:
 
 - Keep fixed simulation/CPU growth running when called while hidden; rendering remains suppressed.
 - Guard both atlas draw and the separate local-quality mipmap regeneration path. Guarding only `_drawQuads()` was insufficient: the real composed mip path still submitted four hidden renders in the reproduction.
-- Retain one presentation snapshot per authoritative stamp rather than one batch per hidden simulation frame. Copy the pooled flat entry array (stable level face objects plus six numeric coordinates per entry), release Actor references, and discard obsolete snapshots in batched ownership sweeps.
+- Retain one presentation snapshot per authoritative stamp rather than one batch per hidden simulation frame. Copy the pooled flat entry array (stable level face objects plus six numeric coordinates per entry), release Actor references, and discard obsolete network-clipped snapshots in batched ownership sweeps. Local sub-cell visuals are retained even without CPU ownership; local hidden event history is not globally bounded.
 - Resume presentation without mutating the CPU grid or credit. Clear/dispose discard retained masks.
 - No wall-clock delta is synthesized: an offline pause that does not call `advanceSimulation` remains paused.
 
 ## Local validation
 
-- New source-composed tests: 6/6 passed. Floor/wall, local/network order, 30/60/120 Hz equal visible grid/order/count/credit/clock; hidden actual PaintSystem submits zero renderer calls including mip rebuilds; restoration does not double-credit.
-- 600 hidden alternating overwrite stamps exercise pooled reuse and retained-snapshot pruning (at most 128 retained in this test).
+- New source-composed tests: 6/6 passed, plus the subsequent network-only pruning and local sub-cell preservation checks (2/2). Floor/wall, local/network order, 30/60/120 Hz equal visible grid/order/count/credit/clock; hidden actual PaintSystem submits zero renderer calls including mip rebuilds; restoration does not double-credit.
+- 600 hidden alternating network overwrite stamps exercise pooled reuse and retained-snapshot pruning (at most 128 retained in this test).
 - An exploratory full-runtime Actor/Projectile/PaintSystem sweep emitted positive floor paint for all 65 main weapons, with zero ownerless gameplay stamps, nonfinite radii, or thrown errors. This verifies reachability only, not retail shape/area/clock equality. It will be promoted into a reproducible source audit in the next checkpoint.
 - Added a real WebGL atlas restoration test to the existing source-and-built paint-mask CI verifier. **Not yet executed locally:** Chromium fails at process socket creation with EPERM, including the approved escalated attempt. CI result is pending.
 - Production build passes; upstream protected bytes remain unchanged.

@@ -370,11 +370,12 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
       pending.set(g.paintOrder, row);
       this._hiddenPaintInsertions = (this._hiddenPaintInsertions || 0) + 1;
       if (pending.size >= 128 && this._hiddenPaintInsertions >= 64) {
-        // Retain only stamps still represented by authoritative cells. A
-        // future growth tick can re-add a stamp if it gains a new cell; a
-        // completely overwritten stamp must not resurrect on restoration.
+        // Network rendering is already clipped to authoritative owner cells.
+        // Only those records may be pruned: local sub-cell visual ink is
+        // intentionally retained even if it has never claimed a grid cell.
+        // Future growth may re-add a network stamp when it gains a cell.
         const live = new Set(this._paintOwnershipOrder);
-        for (const id of pending.keys()) if (!live.has(id)) pending.delete(id);
+        for (const [id, snapshot] of pending) if (snapshot.g.netOrderId && !live.has(id)) pending.delete(id);
         this._hiddenPaintInsertions = 0;
       }
 

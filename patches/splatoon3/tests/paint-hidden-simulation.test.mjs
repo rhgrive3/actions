@@ -76,7 +76,7 @@ test('long hidden overwrite stream retains bounded current owners and survives p
   f.context.document = { hidden: true };
   const { paint, V } = makePaintWorld(f), point = V(0, 0, 5);
   for (let i = 0; i < 600; i++) {
-    paint.splat(point, .62, i % 2, { seed: .37, instant: true });
+    paint.splat(point, .62, i % 2, { seed: .37, instant: true, __netOrder: { clock: i + 1, seq: i + 1, peer: 'hidden-owner', epoch: 'long-test' } });
     if (i % 5 === 0) paint.advanceSimulation(1 / 60);
   }
   assert.ok(paint._splatPoolStats.growthRecordsReused > 590);
@@ -87,4 +87,17 @@ test('long hidden overwrite stream retains bounded current owners and survives p
   f.context.document.hidden = false; paint.flush(0);
   assert.deepEqual(Array.from(paint.grid), expected);
   assert.equal(paint._hiddenPaintGrowth, null);
+});
+
+
+test('hidden local sub-cell ink survives pruning of unrelated network stamps', async () => {
+  const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
+  f.context.document = { hidden: true };
+  const { paint, V } = makePaintWorld(f);
+  paint.splat(V(0, 0, 5), .019, 0, { seed: .37, instant: true });
+  const tiny = [...paint._hiddenPaintGrowth.values()][0];
+  assert.equal(paint.counts[0], 0, 'fixture is genuinely smaller than the nearest cell samples');
+  for (let i = 0; i < 150; i++) paint.splat(V(8, 0, 5), .62, i % 2,
+    { seed: .37, instant: true, __netOrder: { clock: i + 1, seq: i + 1, peer: 'remote', epoch: 'tiny-test' } });
+  assert.ok([...paint._hiddenPaintGrowth.values()].includes(tiny), 'unclipped local visual mask must not be discarded');
 });
