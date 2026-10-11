@@ -4,6 +4,10 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { parse } from './vendor/acorn.mjs';
+// Cold-offline install snapshot and stamped worker ceilings. Raised from
+// 5 MiB / 64 KiB (2026-10-11, owner decision) when main had 2.6 KB / 47 B left
+// and the S3 bomb models + sub/special kits no longer fit.
+export const PRECACHE_BUDGET_BYTES=Math.round(5.25*1024*1024), WORKER_BUDGET_BYTES=68*1024;
 export const LOADING_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const filesIn = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? filesIn(path.join(dir,e.name)) : [path.join(dir,e.name)]).sort();
@@ -86,7 +90,7 @@ export function loadingIdentity() {
 }
 // Cold offline cache only needs stages that can actually be played offline.
 // The Cargo stage has onlineOnly:true; its lightmap remains versioned and
-// cache-on-request but not in the install-time 5 MiB snapshot.
+// cache-on-request but not in the install-time 5.25 MiB snapshot.
 export const coldOfflineLightmap = rel => rel.startsWith('assets/lightmaps/') &&
   rel !== 'assets/lightmaps/cargo.png';
 export function prepareLoading(build, preloads, compactRuntime = source => source) {
@@ -125,7 +129,7 @@ export function prepareLoading(build, preloads, compactRuntime = source => sourc
   // in the cold-offline core. Preserve all boot modules and stage lightmaps.
   // Cargo is an online-only/no-bots/no-boss stage (src/config.js). Its PNG
   // lightmap is integrity-checked and cached on first online use, not copied
-  // into the 5 MiB cold-offline snapshot where that stage cannot be played.
+  // into the 5.25 MiB cold-offline snapshot where that stage cannot be played.
   // All three playable offline stage lightmaps remain in the install snapshot.
   // PWA icons are fetched by the browser at install/display time, not game startup.
   // Keep all three versioned icon files in BUILD.assets for integrity-checked
@@ -137,7 +141,7 @@ export function prepareLoading(build, preloads, compactRuntime = source => sourc
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
   const assetBytes=Object.values(assets).reduce((sum,a)=>sum+a[0],0);
-  if(precacheBytes>5*1024*1024||assetBytes+512*1024>12*1024*1024)throw new Error('loading-cache: payload budget exceeded (precache '+precacheBytes+'/5242880, declared '+(assetBytes+512*1024)+'/12582912 bytes)');
+  if(precacheBytes>PRECACHE_BUDGET_BYTES||assetBytes+512*1024>12*1024*1024)throw new Error('loading-cache: payload budget exceeded (precache '+precacheBytes+'/'+PRECACHE_BUDGET_BYTES+', declared '+(assetBytes+512*1024)+'/12582912 bytes)');
   return {assets,precache,assetBytes,precacheBytes,phases:adapted.phases};
 }
 export function finalizeLoadingWorker(build, revision, plan, compactTemplate = source => source) {
@@ -150,7 +154,7 @@ export function finalizeLoadingWorker(build, revision, plan, compactTemplate = s
   const marker='__INKWAVE_CACHE_CONFIG_VALUE__';
   const compact=compactTemplate(countReplace(template,'/*__INKWAVE_CACHE_BUILD__*/ null',marker,'worker template marker'));
   const worker=countReplace(compact,marker,JSON.stringify(config),'worker stamp');
-  if(Buffer.byteLength(worker)>64*1024)throw new Error(`loading-cache: worker exceeds 64 KiB budget (${Buffer.byteLength(worker)} bytes)`);
+  if(Buffer.byteLength(worker)>WORKER_BUDGET_BYTES)throw new Error(`loading-cache: worker exceeds ${WORKER_BUDGET_BYTES/1024} KiB budget (${Buffer.byteLength(worker)} bytes)`);
   fs.writeFileSync(path.join(build,'sw.js'),worker);
   return {revision,precacheCount:plan.precache.length,precacheBytes:plan.precacheBytes,declaredBytes:config.declaredBytes,maxRevisions:2,workerBytes:Buffer.byteLength(worker)};
 }

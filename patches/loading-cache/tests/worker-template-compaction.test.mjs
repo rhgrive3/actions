@@ -47,5 +47,5 @@ test('template compaction never bypasses the unchanged worker size ceiling',t=>{
   const root=setup(t),assets={};
   for(let i=0;i<1000;i++)assets[`asset-${i}.js`]=[1,'d'.repeat(64)];
   const plan={assets,precache:Object.keys(assets),assetBytes:1000,precacheBytes:1000};
-  assert.throws(()=>finalizeLoadingWorker(root,revision,plan,()=> 'const BUILD=__INKWAVE_CACHE_CONFIG_VALUE__;'),/64 KiB/);
+  assert.throws(()=>finalizeLoadingWorker(root,revision,plan,()=> 'const BUILD=__INKWAVE_CACHE_CONFIG_VALUE__;'),/68 KiB/);
 });

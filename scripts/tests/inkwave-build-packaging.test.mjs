@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { PRECACHE_BUDGET_BYTES, WORKER_BUDGET_BYTES } from '../../patches/loading-cache/adapter.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -86,7 +87,7 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
       'direct builder helper participates in source identity: ' + file);
   }
   const workerSource = fs.readFileSync(path.join(site, 'sw.js'), 'utf8');
-  assert(Buffer.byteLength(workerSource) <= 64 * 1024, 'unchanged worker ceiling');
+  assert(Buffer.byteLength(workerSource) <= WORKER_BUDGET_BYTES, 'worker ceiling');
   const ast = parse(workerSource, { ecmaVersion: 'latest', sourceType: 'script' });
   const binding = ast.body.flatMap(n => n.type === 'VariableDeclaration' ? n.declarations : []).find(n => n.id.name === 'BUILD');
   const config = JSON.parse(workerSource.slice(binding.init.start, binding.init.end));
@@ -97,8 +98,8 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   assert.equal(profileEmitted, JSON.stringify(JSON.parse(profileSource)), 'compact only emitted JSON whitespace');
   assert.equal(identity.files['patch/profile.json'], hash(Buffer.from(profileSource)), 'identity retains raw profile input');
   assert(config.precache.includes('patches/splatoon3/profile.json'), 'all tuning data remains available offline');
-  assert(config.precache.reduce((sum, file) => sum + config.assets[file][0], 0) <= 5 * 1024 * 1024,
-    'unchanged precache ceiling includes the complete runtime dependency graph');
+  assert(config.precache.reduce((sum, file) => sum + config.assets[file][0], 0) <= PRECACHE_BUDGET_BYTES,
+    'precache ceiling includes the complete runtime dependency graph');
   for (const file of BUILD_ONLY_PATCH_MODULES) {
     assert(!fs.existsSync(path.join(site, file)), file);
     assert(!Object.hasOwn(config.assets, file), file);
