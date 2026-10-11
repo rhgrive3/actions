@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptSixFollowup } from '../inkwave-six-followup-adapter.mjs';
+import { isRankedMode } from '../../splatoon3/runtime/ranked/engine.mjs';
 
 const source = fs.readFileSync(new URL('../../../inkwave-public/src/net/session.js', import.meta.url), 'utf8');
 test('current full composition retains host team confirmation and two-human Turf admission', () => {
@@ -42,7 +43,8 @@ test('current host-team composition retains weapon and room-setting ready invali
   const settingsBody = built.match(/  setSettings\(s = \{\}\) \{([\s\S]*?)\n  \}/)?.[1];
   assert.ok(applyBody); assert.ok(settingsBody);
   const apply = new Function('WEAPONS', 'id', 'o', applyBody);
-  const settings = new Function('s', 'MAPS', 'TEAM_PALETTES', 'mapNoBots', 'mapBossOk', 'bossFallbackMap', settingsBody);
+  const compiledSettings = new Function('isRankedMode', 's', 'MAPS', 'TEAM_PALETTES', 'mapNoBots', 'mapBossOk', 'bossFallbackMap', settingsBody);
+  function settings(...args) { return compiledSettings.call(this, isRankedMode, ...args); }
   let broadcasts = 0;
   const host = { isHost: true, state: 'lobby', hostId: 'host', _botsPref: true,
     _fixTeams() {}, _broadcastLobby() { broadcasts++; },
