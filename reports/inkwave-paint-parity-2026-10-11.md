@@ -98,3 +98,26 @@ Validation correction: `source-fixture.mjs` selects published output with `INKWA
 
 
 The combined canonical-kit/safe-paint/catalog-contact revision passed source 45/45 plus contact 11/11, and correctly selected built-site 56/56. Release admission is additionally clipped to remaining lifetime as well as range and the first collision; range 2.5, lifetime 1/240 second and their combination each admit only distances 1 and 2 in a 10-unit synthetic step. Eight-actor runs across all 22 records at height 16 retained a maximum 224 queued drops and 85-frame landing time, with no eviction, lifetime expiry or remaining queue; this is an authored-stage stress receipt rather than a universal custom-map bound.
+
+## Added catalog nominal floor-depth envelope (separate follow-up candidate)
+
+The interpreter had supplied stretch=max(0,depth-1), although the native forward
+smear has total length r*(2+1.25*stretch). Thus a source half-depth r*depth was
+shortened, and depths below1 were silently made circular. The candidate uses
+stretch=1.6*(depth-1) with the matching centre offset. For depth<1 it reduces the
+radius by depth and stretches on the perpendicular tangent, preserving the
+nominal half-width, half-depth and area using the existing CPU/GPU/wire fields.
+Only floor-like contacts use this interpretation; wall projection is unchanged
+because its distinct source depth law remains unverified. A nominal ellipse is
+not a Nintendo stencil; procedural wobble and fine texture remain calibration.
+
+Catalog gameplay stamps no longer all force seed0. The actual chosen seed is
+recorded full precision by the existing network paint adapter; receivers replay
+it without choosing a new pattern. Pure envelope checks cover .25/.5/.8/1/1.25/
+2.62, and actual Actor paint replay retains the same CPU grid. The real-WebGL
+body probe gains18 additional compressed/elongated cases, but has not been run
+locally because of the verified browser-process restriction.
+
+The large special-disk boundary candidate was rejected after slope coverage regressed; special disk slope projection and retail stencil matching remain unresolved. The soft splash-queue candidate is not included.
+
+Rebased depth-only follow-up: source ellipse/contact/falling 18/18; actual production-built ellipse/contact/falling/sub-authority 31/31. Build contentHash `55189a959b924af77b6ea492cbbd759b6ae3e202f974ae6f374cb17a09d38885`. The 18 additional GPU body cases are pending GitHub WebGL CI; no local browser success is asserted.

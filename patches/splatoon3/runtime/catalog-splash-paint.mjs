@@ -19,3 +19,14 @@ export function catalogSplashDropSpec(source) {
     randomVelocity:Object.freeze({x:random.RandomSpawnVelXMax*60,y:random.RandomSpawnVelYMax*60,
       zMin:random.RandomSpawnVelZMin*60,zMax:random.RandomSpawnVelZMax*60})});
 }
+
+// Map an explicit WidthHalf x (WidthHalf * depth) envelope to the existing
+// asymmetric, nonnegative stretch protocol. For depth below one, use the
+// perpendicular tangent and a reduced radius; no new GPU/CPU/network field is
+// needed. This preserves nominal width, total depth and area, not a retail mask.
+export function catalogPaintEllipse(radius,depth=1) {
+  const ratio=Number.isFinite(depth)&&depth>0?depth:1;
+  const rotate=ratio<1,r=rotate?radius*ratio:radius,elongation=rotate?1/ratio:ratio;
+  const stretchAmt=1.6*(elongation-1);
+  return {radius:r,rotate,stretchAmt,centreBack:.375*r*stretchAmt};
+}
