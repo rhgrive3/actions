@@ -334,6 +334,22 @@ try {
         a.reset();check(a.weapon.sub===k.sub&&a.weapon.special===k.special,record.id+' kit after reset');
         kitChecks.push({id:record.id,sub:k.sub,special:k.special,points:k.specialCost,inkCost:cost});
       }
+      const catalogueSubChecks=[];
+      {
+        const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics};
+        G.netm=null;G.match={playing:()=>true,state:'playing',time:180};
+        G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};G.physics=new api.Physics(G.level);
+        const equipCatalogue=(a,ap)=>{a.s3.loadout=emptyLoadout();for(const p of a.s3.loadout)if(ap>=10){p.main='subResistance';ap-=10;}for(const p of a.s3.loadout)for(let i=0;i<3&&ap>=3;i++){p.subs[i]='subResistance';ap-=3;}a.s3RefreshGear();};
+        for(const ap of [0,10,57]){
+          G.projectiles.clear();const o=makeActor('shooter'),v=makeActor('shooter');o.team=0;v.team=1;v.invuln=0;o.pos.set(0,0,-4);v.pos.set(0,0,2);o.aimDir.set(0,0,1);o.weapon={...o.weapon,sub:'burst'};equipCatalogue(v,ap);G.actors=[o,v];const hp=v.hp,hits=[],damage=v.damage;v.damage=function(n,a,w){hits.push([n,w]);return damage.call(this,n,a,w);};const p=G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);for(let i=0;i<10;i++){G.time+=1/60;G.projectiles.update(1/60);}const expected=Math.floor(60*gearCurve(ap,1,.75,.6)*10+1e-9)/10;check(hits.length===1&&hits[0][0]===60&&Math.abs(hp-v.hp-expected)<1e-8,'Burst direct is one source-family hit');catalogueSubChecks.push({source:'burst',ap,native:true,damage:hp-v.hp});
+        }
+        for(const [w,n]of [['burst',60],['fizzy',50],['torpedo',60],['torpedo-splash',12],['inkMine',45]]){
+          const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='catalogue-owner';v.owner='catalogue-victim';o.team=0;v.team=1;v.invuln=0;o.netLife=v.netLife=0;equipCatalogue(v,57);let packet,ack;
+          const tx=new NetMatch({myId:o.owner,hostId:o.owner,isHost:true,tr:{sendTo:(_id,p)=>packet=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,n,w);
+          const rx=new NetMatch({myId:v.owner,hostId:o.owner,isHost:false,tr:{sendTo:(_id,p)=>ack=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;rx.onMessage(o.owner,{...packet,d:n+.1});check(v.hp===hp,'oversized catalogue hit rejected');rx.onMessage(o.owner,packet);const expected=Math.floor(n*(w==='inkMine'?.5:.6)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8&&ack.d===expected,'catalogue hit victim/ACK match');rx.onMessage(o.owner,packet);check(Math.abs(hp-v.hp-expected)<1e-8,'duplicate catalogue hit inert');catalogueSubChecks.push({source:w,ap:57,wire:true,damage:hp-v.hp});tx.dispose();rx.dispose();G.netm=null;
+        }
+        G.projectiles.clear();Object.assign(G,saved);
+      }
       const directSubChecks=[];
       {
         const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics};
@@ -404,7 +420,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        directSubChecks, accelerationChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
+        catalogueSubChecks, directSubChecks, accelerationChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,

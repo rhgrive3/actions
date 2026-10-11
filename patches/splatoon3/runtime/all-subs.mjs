@@ -841,6 +841,7 @@ function updateFlight(api, projectiles, object, dt) {
     if(object.ghost){object.phase='ghostWait';return;}
     if(!object.ghost){
       const amount=object.subId==='angleShooter'||object.subId==='burst'?spec.directDamage:0;
+      if(object.subId==='burst'&&amount>0)object.directTarget=actor.actor;
       if(amount>0)api.G.projectiles?.applyHit?.(object.owner,actor.actor,amount,object.subId);
       if(object.subId==='angleShooter'){
         const duration=markSeconds(spec,object.owner,object.subPowerAP);
