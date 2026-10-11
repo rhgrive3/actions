@@ -23,3 +23,21 @@ Connection lifecycle inspection: NetSession._connect first calls leave(true), wh
 PR1245 head5245fdf7eedeb3ffce420c0630008ba6d5e990e3 passed all required CI (Validate38156538610 and numerical/reopened workflows). The fixed main9e865→5245 browser comparison passed all30runs: run38156638661, artifacts11709391610/11708852381. Full details, including ordinary one-Actor CPU and memory costs, are in `inkwave-paint-codec-handshake-performance-2026-10-11.md`. This result remains tied to those two exact SHAs, not a later integrated main.
 
 PR1244 merged as main bf38901475fa857016cf06bcc98cd764898795d0. Its official Git tree e8b79e9cf7ecd037f58700dd99930cab1ad00b63 matches the local integration base. Both static/conditional gear adapters are retained. The composed actual-built suite passed77/77 with contentHash5515132b671bbb7addad71ff0db09e66aaf5baba1d1968d79ac012960e26c2b4. An additional actual JSON test asserts pe is present, gg/gc survive, Comeback remaining time goes12→10 after takeover→0, and its speed effect expires. This is integration evidence; the final combined exact-head CI still must run after main alignment.
+
+## Encoder/decoder envelope symmetry review
+
+A same-realm boundary test found that a legacy event object nested five or six
+levels deep could pass the original row budget but exceed the decoder's depth
+budget after the dictionary envelope added wrappers. A 508-row mixed packet
+also reproduced node-budget overflow caused only by those wrappers. Such
+packets must remain legacy, rather than be encoded and rejected remotely.
+The encoder now validates its generated payload with the unchanged decoder
+budget before choosing compression. Depth, node-count, string and UTF-8
+profitability boundary regressions cover the fallback. Receiver bounds and
+sender/HLC admission are unchanged. Earlier performance runs predate this
+extra bounded traversal; new exact-head measurements are required.
+
+Separately, VM transport fixtures now parse wire JSON in the receiving realm.
+Passing Node-created event objects directly into a VM had triggered the
+codec's intended plain-object rejection. Same-realm death/respawn and mixed
+paint playback succeed; the runtime safety check has not been relaxed.

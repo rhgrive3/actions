@@ -1,4 +1,5 @@
 import test from 'node:test';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 import {emptyLoadout} from '../runtime/gear.mjs';
@@ -14,7 +15,7 @@ async function world(id){
  nm.bind(m);f.G.netm=nm;f.G.match=m;f.G.actors=[a];
  return{f,a,nm,m,send(){f.G.time+=1/60;nm._sendTick();return json(packet);}};
 }
-function receive(w,p,from='owner',sample=true){w.nm.onMessage(from,json(p));if(sample){const peer=w.nm._peer(from);peer.tr=Math.max(peer.tr||0,p.ts);w.nm._sample(w.a,peer.tr,0);w.nm.applyRemote(w.a,1/60);}}
+function receive(w,p,from='owner',sample=true){w.f.context.__wire=JSON.stringify(p);w.nm.onMessage(from,vm.runInContext('JSON.parse(__wire)',w.f.context));delete w.f.context.__wire;if(sample){const peer=w.nm._peer(from);peer.tr=Math.max(peer.tr||0,p.ts);w.nm._sample(w.a,peer.tr,0);w.nm.applyRemote(w.a,1/60);}}
 function adopt(w){w.nm.s.hostId='viewer';w.nm.s.isHost=true;w.nm.onLeave('owner',true);}
 function head(w,id){w.a.s3.loadout=emptyLoadout();w.a.s3.loadout[0].main=id;w.a.s3RefreshGear();}
 function enemy(w){const a=w.f.make();a.team=1;a.invuln=0;return a;}

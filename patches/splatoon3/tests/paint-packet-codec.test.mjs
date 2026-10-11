@@ -44,3 +44,20 @@ test('whole packet profitability uses UTF-8 bytes with non-ASCII names and order
 
 test('capability generation change negotiates fresh challenges without tick advertisements',()=>{const p=pair();p.start();const old=p.nodes.b.packTick(tick()),oldAck=p.sent.find(x=>x[0]==='b'&&x[2].a)[2];p.nodes.b=make();p.nodes.b.sync('match','b',['a','b']);p.nodes.b.announce(p.send('b'));p.flush();assert.ok(p.nodes.a.canEncode());assert.ok(p.nodes.b.canEncode());assert.equal(p.nodes.a.acceptTick('b',old),null);p.nodes.a.control('b',oldAck,p.send('a'));assert.ok(p.nodes.a.canEncode());const count=p.sent.length;for(let i=0;i<80;i++)p.nodes.a.announce(p.send('a'));assert.equal(p.sent.length,count);});
 test('explicit incompatible capability cannot be restored by an old ack',()=>{const p=pair();p.start();const oldAck=p.sent.find(x=>x[0]==='b'&&x[2].a)[2];p.nodes.a.control('b',{k:'paint-codec',v:'unsupported',m:'match'},p.send('a'));p.nodes.a.control('b',oldAck,p.send('a'));assert.equal(p.nodes.a.canEncode(),false);const count=p.sent.length;for(let i=0;i<80;i++)p.nodes.a.announce(p.send('a'));assert.equal(p.sent.length,count);});
+
+for(let depth=0;depth<=8;depth++)test('encoded passthrough depth '+depth+' is decodable or stays legacy',()=>{
+ let v=1;for(let i=0;i<depth;i++)v={a:v};const r=rows();r.push([1,'ev','event',v,1,42]);const p=encode(r);
+ if(p)assert.deepEqual(decode(JSON.parse(JSON.stringify(p))),r);else assert.ok(depth>=5);
+ if(depth===5||depth===6){assert.equal(p,null);const peers=pair();peers.start();const t={...tick(),e:r};assert.equal(peers.nodes.a.packTick(t),t);}
+});
+test('wrapper node overhead retains the original legacy packet before receiver budget overflow',()=>{
+ const r=rows();for(let i=0;i<468;i++)r.push([i,'ev',Array(134).fill(0)]);
+ assert.equal(r.length,508);assert.equal(encode(r),null);
+ const peers=pair();peers.start();const t={...tick(),e:r};assert.equal(peers.nodes.a.packTick(t),t);
+});
+test('string boundary and UTF-8 whole packet budgets stay symmetric after wrapping',()=>{
+ for(const size of [1024,1026]){const r=rows();r.push([1,'ev','🦑'.repeat(size/2)]);const p=encode(r);
+ if(size===1024){assert.ok(p);assert.deepEqual(decode(p),r);assert.ok(Buffer.byteLength(JSON.stringify(p))<Buffer.byteLength(JSON.stringify(r)));}else assert.equal(p,null);
+ }
+ const r=rows();r.push([1,'ev','x'.repeat(1025)]);assert.equal(encode(r),null);
+});

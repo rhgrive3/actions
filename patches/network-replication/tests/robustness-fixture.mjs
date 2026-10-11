@@ -199,6 +199,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
   return {
     ...api, profile, G, THREE, NetMatch, Projectiles, projectiles, WEAPONS, PLAYER,
     network,
+    parseWire: text => vm.runInContext(`JSON.parse(${JSON.stringify(text)})`, context),
     clock: { now: () => seconds, set: (v) => { seconds = v; }, advance: (dt) => { seconds += dt; } },
     makeSession, makeNetMatch, makeActor, bind, packActor, tick,
     // the real roller flick path: owner records a projectile event, we return it

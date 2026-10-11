@@ -33,6 +33,8 @@ async function client(id, memberIds = ['a', 'b', 'c'], host = 'a', large = false
   const f = await fixture({ includeSession: true, built: process.env.INKWAVE_BUILT_SITE || null });
   const session = f.makeSession(id, host, memberIds.map((owner, i) => [owner, `P${i}`]));
   const nm = f.makeNetMatch(session, { id: 'canonical-paint' });
+  // Browser WebSocket JSON is parsed in the receiving realm.
+  const incoming=nm.onMessage;nm.onMessage=function(from,data){const d=f.parseWire(JSON.stringify(data));return incoming.call(this,from,d);};
   const actors = memberIds.map((owner, i) => f.makeActor({ nid: i, owner, remote: id !== owner, team: i % 2, roller: false }));
   f.G.match = f.bind(nm, actors);
   f.G.time = 12;

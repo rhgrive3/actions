@@ -40,6 +40,8 @@ export function encodePaintEvents(rows){
  }
  if(!dict.length)return null;
  const result=[PAINT_PACKET_CODEC_VERSION,dict,out];
+ // Wrappers add depth and nodes. Never emit a packet our decoder rejects.
+ if(!bounded(result))return null;
  return utf8Bytes(JSON.stringify(result))<utf8Bytes(JSON.stringify(rows))?result:null;
 }
 /** Fail closed before expanding. Null means reject this compressed event set. */
