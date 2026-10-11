@@ -10,8 +10,8 @@
   "refAspect": 3.448
  },
  "dualies": {
-  "iou": 0.3365,
-  "oursAspect": 1.444,
+  "iou": 0.297,
+  "oursAspect": 1.377,
   "refAspect": 0.953
  },
  "roller": {
@@ -100,28 +100,28 @@
   "refAspect": 2.847
  },
  "s3-maneuver-dual": {
-  "iou": 0.4469,
+  "iou": 0.3556,
   "oursAspect": 1.455,
   "refAspect": 1.47
  },
  "s3-maneuver-gallon": {
-  "iou": 0.4233,
-  "oursAspect": 1.126,
+  "iou": 0.4208,
+  "oursAspect": 1.346,
   "refAspect": 1.02
  },
  "s3-maneuver-long": {
-  "iou": 0.3574,
-  "oursAspect": 1.044,
+  "iou": 0.2327,
+  "oursAspect": 1.517,
   "refAspect": 0.922
  },
  "s3-maneuver-short": {
-  "iou": 0.2559,
-  "oursAspect": 1.444,
+  "iou": 0.4147,
+  "oursAspect": 1.288,
   "refAspect": 1.189
  },
  "s3-maneuver-stepper": {
-  "iou": 0.28,
-  "oursAspect": 1.059,
+  "iou": 0.3806,
+  "oursAspect": 0.983,
   "refAspect": 0.975
  },
  "s3-roller-compact": {
@@ -245,53 +245,53 @@
   "refAspect": 1.471
  },
  "s3-slosher-bathtub": {
-  "iou": 0.8801,
-  "oursAspect": 1.288,
+  "iou": 0.6471,
+  "oursAspect": 1.455,
   "refAspect": 1.393
  },
  "s3-slosher-diffusion": {
-  "iou": 0.8664,
-  "oursAspect": 0.813,
+  "iou": 0.505,
+  "oursAspect": 0.877,
   "refAspect": 0.811
  },
  "s3-slosher-double": {
-  "iou": 0.9649,
-  "oursAspect": 1.218,
+  "iou": 0.5621,
+  "oursAspect": 1.613,
   "refAspect": 1.227
  },
  "s3-slosher-launcher": {
-  "iou": 0.9622,
-  "oursAspect": 0.955,
+  "iou": 0.6422,
+  "oursAspect": 1.112,
   "refAspect": 0.968
  },
  "s3-slosher-washtub": {
-  "iou": 0.9108,
-  "oursAspect": 1.209,
+  "iou": 0.6054,
+  "oursAspect": 1.075,
   "refAspect": 1.208
  },
  "s3-spinner-downpour": {
-  "iou": 0.4944,
-  "oursAspect": 1.627,
+  "iou": 0.5649,
+  "oursAspect": 2.157,
   "refAspect": 2.288
  },
  "s3-spinner-hyper": {
-  "iou": 0.4871,
-  "oursAspect": 1.201,
+  "iou": 0.5133,
+  "oursAspect": 1.467,
   "refAspect": 1.454
  },
  "s3-spinner-hypershort": {
-  "iou": 0.5543,
-  "oursAspect": 1.642,
+  "iou": 0.685,
+  "oursAspect": 1.673,
   "refAspect": 2.116
  },
  "s3-spinner-quick": {
-  "iou": 0.7026,
-  "oursAspect": 1.904,
+  "iou": 0.5637,
+  "oursAspect": 1.827,
   "refAspect": 1.97
  },
  "s3-spinner-serein": {
-  "iou": 0.6434,
-  "oursAspect": 1.705,
+  "iou": 0.6775,
+  "oursAspect": 1.738,
   "refAspect": 1.932
  },
  "s3-stringer-explosion": {
@@ -320,8 +320,8 @@
   "refAspect": 0.853
  },
  "splatling": {
-  "iou": 0.5798,
-  "oursAspect": 1.705,
+  "iou": 0.646,
+  "oursAspect": 2.183,
   "refAspect": 1.904
  }
 }
