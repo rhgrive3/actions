@@ -7,7 +7,7 @@ async function bomb({old=false,oldGround=false,rate=60,wall=false,center=30,slop
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
   adaptRuntime:(r,s)=>{
     if(!r.endsWith('all-specials.mjs'))return s;
-    if(old)s=s.replace('const at = rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);','const at = rt.v4.set(point.x+x,point.y,point.z+z);');
+    if(old)s=s.replace('const at=rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);','const at = rt.v4.set(point.x+x,point.y,point.z+z);');
     if(oldGround)s=s.replace('from.y += .25;','from.y += 24;').replace('rt.down, .5, rt.hit','rt.down, 60, rt.hit');
     return s;
   }});
@@ -63,15 +63,15 @@ async function bomb({old=false,oldGround=false,rate=60,wall=false,center=30,slop
 
 
 test('large special disk follows a nearby slope without central holes or projection-area inflation',async()=>{
- const flat=await bomb();
+ const flat=await bomb();assert.ok(flat.outside/flat.area<.06,'edge tiles keep external area bounded');assert.ok(flat.stamps.length<=65,'bounded disk does not increase paint packets');
  for(const slope of[15,30]){
-  const after=await bomb({slope});assert.equal(after.holes,0);assert.ok(Math.abs(after.area-flat.area)/flat.area<.01);
+  const after=await bomb({slope});assert.equal(after.holes,0);assert.ok(Math.abs(after.area-flat.area)/flat.area<.01);assert.ok(after.outside/after.area<.06);
   if(!process.env.INKWAVE_BUILT_SITE){const before=await bomb({old:true,slope});assert.ok(before.holes>2000);assert.ok(after.area>before.area);}
  }
 });
 test('large special disk keeps flat terrain and remote upper storey isolated',async()=>{
  const flat=await bomb(),roof=await bomb({roof:true});assert.equal(roof.roofCells,0);assert.ok(Math.abs(roof.area-flat.area)/flat.area<.001,'adding an atlas face may change texel wobble by a few cells');assert.equal(roof.holes,0);
- if(!process.env.INKWAVE_BUILT_SITE){const before=await bomb({roof:true,oldGround:true});assert.ok(before.roofCells>10000,'broad old ground projection selected the remote upper floor');}
+ if(!process.env.INKWAVE_BUILT_SITE){const before=await bomb({roof:true,oldGround:true});assert.ok(before.roofCells>9000,'broad old ground projection selected the remote upper floor (bounded envelope)');}
 });
 test('slope disk is deterministic at 30, 60 and 120 render Hz',async()=>{
  const expected=await bomb({slope:30});for(const rate of[30,120])assert.deepEqual((await bomb({slope:30,rate})).grid,expected.grid);

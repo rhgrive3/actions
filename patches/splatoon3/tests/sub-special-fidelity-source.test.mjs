@@ -25,7 +25,25 @@ test('pinned sub/special reference records all directly checked 11.3.0 fields', 
   const ref = JSON.parse(fs.readFileSync(new URL('patches/splatoon3/reference/sub-special-fidelity-reference.json', root)));
   assert.equal(ref.referenceVersion, '11.3.0');
   assert.equal(ref.sourceCommit, '7280ff9cde8bb1c5dcef46c700c326471584d2e6');
-  assert.equal(ref.explicitFields.length, 25);
+  // The original 25 Bomb/Storm fields stay locked, while new source-backed
+  // gear curves add records. Do not freeze the total at the pre-gear inventory.
+  assert.equal(ref.explicitFields.filter(field => ['bomb','storm'].includes(field.sourceId)).length, 25);
+  const byKey = new Map(ref.explicitFields.map(field => [`${field.sourceId}:${field.pointer}`, field.value]));
+  assert.equal(byKey.size, ref.explicitFields.length, 'source pointers are unique');
+  const expectedGearFields = [
+    ['zipcaster', '/GameParameters/WeaponParam/InkCapacityRt', 1.5],
+    ['zipcaster', '/GameParameters/WeaponParam/InkConsume_Hook', {High:.015,Low:.04,Mid:.025}],
+    ['zipcaster', '/GameParameters/WeaponParam/InkConsume_PerSec', {High:.12,Low:.15,Mid:.1305}],
+    ['reefslider', '/GameParameters/BulletBlastParam/SubSpecialSpecUpList/0', {SpecUpType:'DistanceDamageDistanceRate',Value:{High:1.2,Low:1,Mid:1.1}}],
+    ['reefslider', '/GameParameters/BulletBlastParam/SubSpecialSpecUpList/1', {SpecUpType:'PaintRadius',Value:{High:9.012,Low:7.51,Mid:8.26}}],
+    ['screen', '/GameParameters/WallParam/MoveSpeed', {High:.06,Low:.04,Mid:.053}],
+    ['inkjet', '/GameParameters/BlastParam/SubSpecialSpecUpList/0', {Value:{High:4,Low:3.2,Mid:3.6}}],
+    ['inkjet', '/GameParameters/BlastParam/SubSpecialSpecUpList/1', {SpecUpType:'DistanceDamageDistanceRate',Value:{High:1.3,Low:1,Mid:1.15}}],
+    ['superChump', '/GameParameters/IceParam/BlastParam/SubSpecialSpecUpList/0', {Value:{High:4.1,Low:3.5,Mid:3.8}}],
+    ['superChump', '/GameParameters/IceParam/BlastParam/SubSpecialSpecUpList/3', {SpecUpType:'DistanceDamageDistanceRate',Value:{High:1.2,Low:1,Mid:1.1}}],
+  ];
+  for (const [id,pointer,value] of expectedGearFields) assert.deepEqual(byKey.get(`${id}:${pointer}`),value,`${id} ${pointer}`);
+  for (const field of ref.explicitFields) assert.ok(ref.sources.some(source => source.id === field.sourceId), `${field.sourceId} has a pinned source`);
   assert.equal(ref.sources.every(source => source.official === false), true);
   assert.equal(ref.explicitUnknowns.length > 0, true);
 });
