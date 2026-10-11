@@ -543,8 +543,8 @@ export function attachWebHIDControllerMotion(input, options = {}) {
         if (input.s3ControllerMotionReader === previousReader) input.setControllerMotionReader(null);
       }
 
-      const reader = createSwitchHIDReader({ device, productId: device.productId, integrateReports: true, initiallySuspended: true, ...options,
-        gyroCalibration: initResult.calibration });
+      const reader = createSwitchHIDReader({ device, productId: device.productId, ...options,
+        integrateReports: true, initiallySuspended: true, gyroCalibration: initResult.calibration });
       reader.initResult = initResult;
       session.reader = reader;
       input.s3ControllerMotionInitError = null;
