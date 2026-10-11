@@ -190,6 +190,18 @@ try {
         check(state.armorHP===0&&Math.abs(defender.hp-expected)<1e-8,id+' compiled armor break');
         objectGearChecks.push({id,equipped,rate,bodyHp: defender.hp});defender.reset();
       }
+      const {kitBombContact}=await import('/patches/splatoon3/runtime/kit-subs.mjs');
+      for(const equipped of [false,true]){
+        G.projectiles.clear();const owner=makeActor('shooter'),attacker=makeActor('shooter');attacker.team=1;G.actors=[owner,attacker];
+        owner.weapon={...owner.weapon,sub:'sprinkler'};owner.weaponRunner.reset();attacker.s3.loadout=emptyLoadout();if(equipped)attacker.s3.loadout[2].main='objectShredder';attacker.s3RefreshGear();
+        G.projectiles.throwBomb(owner);const b=G.projectiles.bombs.at(-1);check(!!b,'native Sprinkler birth');
+        kitBombContact(api.SUB,b,{hit:true,point:new THREE.Vector3(0,0,0),normal:new THREE.Vector3(0,1,0)});
+        const p={owner:attacker,team:1,damage:12,size:.01,prev:b.pos.clone().add(new THREE.Vector3(0,0,-1)),pos:b.pos.clone().add(new THREE.Vector3(0,0,1))};
+        const candidate=G.projectiles.kitBarrierCandidate(p,p.prev,p.pos);check(candidate?.kind==='native-sprinkler','native Sprinkler swept hit');candidate.onHit();candidate.onHit();
+        check(b.s3DeviceHP===(equipped?0:108),'native Sprinkler fixed gear damage once');
+        if(equipped){G.projectiles.update(1/60);check(!G.projectiles.bombs.includes(b),'native Sprinkler retirement');}
+        objectGearChecks.push({id:'sprinkler',equipped,hp:b.s3DeviceHP});
+      }
       const kitChecks=[];
       for(const record of records){
         G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
