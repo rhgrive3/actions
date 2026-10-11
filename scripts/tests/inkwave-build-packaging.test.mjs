@@ -224,6 +224,11 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   assert.equal(profileEmitted, JSON.stringify(JSON.parse(profileSource)), 'compact only emitted JSON whitespace');
   assert.equal(identity.files['patch/profile.json'], hash(Buffer.from(profileSource)), 'identity retains raw profile input');
   assert(config.precache.includes('patches/splatoon3/profile.json'), 'all tuning data remains available offline');
+  // The model-family bundle still has a static import of its separate kit.mjs.
+  for (const file of ['patches/splatoon3/runtime/weapon-models/registry.mjs',
+    'patches/splatoon3/runtime/weapon-models/kit.mjs']) {
+    assert(config.precache.includes(file), 'weapon model dependency not offline-ready: ' + file);
+  }
   assert(config.precache.reduce((sum, file) => sum + config.assets[file][0], 0) <= PRECACHE_BUDGET_BYTES,
     'precache ceiling includes the complete runtime dependency graph');
   for (const file of BUILD_ONLY_PATCH_MODULES) {

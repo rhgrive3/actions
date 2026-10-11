@@ -247,7 +247,12 @@ const visit = (rel) => {
   if (!fs.existsSync(abs)) return;
   seen.add(rel);
   const original = rel.startsWith('patches/splatoon3/') ? path.join(PATCH_ROOT, rel.slice('patches/splatoon3/'.length)) : rel.startsWith('patches/local-quality/') ? path.join(QUALITY_ROOT, rel.slice('patches/local-quality/'.length)) : rel.startsWith('patches/reliability/') ? path.join(RELIABILITY_ROOT, rel.slice('patches/reliability/'.length)) : rel.startsWith('patches/network-replication/') ? path.join(NETWORK_ROOT, rel.slice('patches/network-replication/'.length)) : rel.startsWith('patches/practice-range/') ? path.join(RANGE_ROOT, rel.slice('patches/practice-range/'.length)) : path.join(SRC, rel);
-  const s = fs.existsSync(original) ? adaptBuildSource(rel, fs.readFileSync(original, 'utf8')) : fs.readFileSync(abs, 'utf8');
+  // The registry is a bundle of weapon families. Discover dependencies from
+  // its emitted imports, not its pre-bundle source imports: the family files
+  // do not ship separately and would hide their shared kit.mjs dependency.
+  const s = !unminified && rel === 'patches/splatoon3/runtime/weapon-models/registry.mjs'
+    ? fs.readFileSync(abs, 'utf8')
+    : fs.existsSync(original) ? adaptBuildSource(rel, fs.readFileSync(original, 'utf8')) : fs.readFileSync(abs, 'utf8');
   const specs = [];
   for (const m of s.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
   for (const m of s.matchAll(/(?:loadModule|import)\(\s*['"]([^'"]+\.js)['"]/g)) specs.push(m[1]);
