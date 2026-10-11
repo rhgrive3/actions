@@ -31,7 +31,12 @@ try{
   if(!(run.counts.totalQuads>0&&run.counts.totalAtlasDraws>0))throw Error('Inactive GPU workload '+mode);
   run.timings=Object.fromEntries(metrics.map(k=>[k,stats(run.frames.map(f=>f[k]))]));
   run.coldTimings=Object.fromEntries(metrics.map(k=>[k,stats(run.coldFrames.map(f=>f[k]))]));
-  for(const phase of ['beforeWarmup','afterWarmup','afterWorkload'])if(!Number.isFinite(run.heap[phase]?.usedSize)||run.heap[phase].usedSize<=0)throw Error('Missing heap evidence');
+  for(const phase of ['beforeWarmup','afterWarmup','afterWorkload']){
+    const h=run.heap[phase];if(!Number.isFinite(h?.usedSize)||h.usedSize<=0||!Number.isFinite(h.backingStorageSize)||h.backingStorageSize<0)throw Error('Missing heap evidence');
+    // CDP backing storage includes ArrayBuffers and external strings. Retain
+    // both raw values and their sum so external buffers cannot hide as a win.
+    h.usedPlusBackingStorageBytes=h.usedSize+h.backingStorageSize;
+  }
   run.imageSha256=sha(await page.screenshot({path:path.join(evidence,mode+'-'+i+'.png')}));result.runs.push(run);console.log(JSON.stringify({completedMode:mode,ordinal:i,counts:run.counts,heap:run.heap}));fs.writeFileSync(path.join(evidence,'progress.json'),JSON.stringify(result,null,2));await page.close();
  }
  for(const mode of ['before','after']){const rows=result.runs.filter(r=>r.mode===mode);if(rows.length!==3||rows.some(r=>r.frames.length!==240))throw Error('Missing repeated workload');if(rows.some(r=>{const stable=c=>{const {tickJsonBytes,eventArrayBytes,...rest}=c;return rest;};return JSON.stringify(stable(r.counts))!==JSON.stringify(stable(rows[0].counts));}))throw Error('Nonrepeatable work counts '+mode);}
