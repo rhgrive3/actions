@@ -72,7 +72,7 @@ for (const file of walk(SRC)) {
   else if (!unminified && rel.startsWith('assets/lightmaps/') && ext === '.png') {
     // Pack the same grayscale pixels with better PNG row filters + DEFLATE.
     // Do not touch source assets, offline availability, module imports or the
-    // 5 MiB cache ceiling. The helper validates decoded pixels before use.
+    // production cache ceiling. The helper validates decoded pixels before use.
     const original = fs.readFileSync(file), compact = optimizeLightmapPng(original);
     fs.writeFileSync(dst, compact);
     losslessLightmapSavings += original.length - compact.length;
