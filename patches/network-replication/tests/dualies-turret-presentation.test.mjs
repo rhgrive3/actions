@@ -22,12 +22,16 @@ test('#1156 full production composition reserves an independent turret pose flag
     tr: { broadcast: m => packets.push(JSON.parse(JSON.stringify(m))), sendTo() {} } }, {});
   const receiver = new f.NetMatch({ myId: 'viewer', hostId: 'owner', isHost: false, _members: members,
     tr: { broadcast() {}, sendTo() {} } }, {});
-  sender.bind({ actors: [owner] }); receiver.bind({ actors: [remote] });
+  // The native host producer includes a clock sidecar. Keep the fixture's
+  // match complete so clock admission reaches the independent pose contract.
+  sender.bind({ actors: [owner], state: 'playing', time: 180 });
+  receiver.bind({ actors: [remote], state: 'playing', time: 180 });
   try {
     // Every currently reserved gameplay/swim/Roller/armor/gear flag is below bit27.
     assert.equal(DUALIES_TURRET_FLAG & ((1 << 27) - 1), 0);
     owner.weaponRunner.s3Turret = true;
     sender._sendTick(); const packet = packets.at(-1);
+    assert.deepEqual(packet.c, ['playing', 180], 'native host clock sidecar is well formed before pose admission');
     assert.ok(packet.a[0][10] & DUALIES_TURRET_FLAG);
     receiver.onMessage('owner', packet);
     const peer = receiver._peer('owner'); peer.tr = packet.ts;
