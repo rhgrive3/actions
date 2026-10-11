@@ -60,24 +60,52 @@ function sdRay(px, py, ax, ay, bx, by, ra, rb) {
 
 function counts(kind, shapes) { return shapes[kind] || [0, 0, 0, 0]; }
 
+// Growth records are pooled. Cache only time-independent shape math, with an
+// explicit identity guard on every parameter that can change on pool reuse.
+// Ownership, cell visitation and HLC comparisons still run on every step.
+const ancillaryBasisCache = new WeakMap();
+function ancillaryBasis(g, face, sdu, sdv, sa, contract) {
+  const seed = f32(g.seed), R = g.R, kind = g.kind, shape = contract.shapes[kind];
+  const [nr, ns, np, nd] = counts(kind, contract.shapes);
+  let entry = ancillaryBasisCache.get(g);
+  if (!entry || entry.seed !== seed || entry.R !== R || entry.kind !== kind || entry.shape !== shape || entry.nr !== nr || entry.ns !== ns || entry.np !== np || entry.nd !== nd) {
+    entry = { seed, R, kind, shape, nr, ns, np, nd, faces: new WeakMap() }; ancillaryBasisCache.set(g, entry);
+  }
+  let basis = entry.faces.get(face);
+  if (basis && basis.sdu === sdu && basis.sdv === sdv && basis.sa === sa && basis.wall === face.wall) return basis;
+  const word = paintShapeSeed(seed);
+  const dirAng = sa > 0 ? Math.atan2(sdv, sdu) : 0;
+  const spread = 6.2831 + (2.5 - 6.2831) * clamp(sa * 1.2, 0, 1);
+  basis = { sdu, sdv, sa, wall: face.wall, rays: [], satellites: [], spatter: [], drips: [] };
+  for (let k=0;k<nr;k++) {
+    const h1=paintShapeHash(word,0,k), h2=paintShapeHash(word,1,k), h3=paintShapeHash(word,2,k);
+    const a=sa>0?dirAng+(h1-.5)*spread:(k+.35+.6*h1)/nr*6.2831+seed*6.2831;
+    basis.rays.push({h1,h2,h3,ux:Math.cos(a),uy:Math.sin(a),wob:wobble(a,seed)});
+  }
+  for (let type=0;type<2;type++) for(let k=0;k<(type?np:ns);k++) {
+    const first=type?6:3, h1=paintShapeHash(word,first,k), h2=paintShapeHash(word,first+1,k), h3=paintShapeHash(word,first+2,k);
+    const a=sa>0?dirAng+(h1-.5)*spread*(type?1.15:1):h1*6.2831;
+    let ux=Math.cos(a),uy=Math.sin(a);
+    if(face.wall){const nx=ux*(type ? .75 : .68),ny=uy*(type ? .75 : .68)-(type ? .25 : .32),l=Math.hypot(nx,ny)||1;ux=nx/l;uy=ny/l;}
+    (type?basis.spatter:basis.satellites).push({h1,h2,h3,ux,uy});
+  }
+  for(let k=0;k<Math.min(6,nd+Math.floor(R*1.2));k++)basis.drips.push({h1:paintShapeHash(word,9,k),h2:paintShapeHash(word,10,k),h3:paintShapeHash(word,11,k)});
+  entry.faces.set(face,basis);return basis;
+}
+
 function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const R = g.R, r2 = R * R - dn * dn;
   if (r2 <= 0 || R <= 0) return null;
   const r = Math.sqrt(r2), fall = clamp(r / Math.max(R, 1e-3), 0, 1);
   const kind = g.kind, [rayCount, satelliteCount, spatterCount, dripCount] = counts(kind, contract.shapes);
   if (rayCount + satelliteCount + spatterCount + dripCount === 0) return null;
-  const pieces = [], seed = f32(g.seed), word = paintShapeSeed(seed), pixel = 1 / Math.max(face.atlas?.ppm || 1, 1);
-  const dirAng = sa > 0 ? Math.atan2(sdv, sdu) : 0;
-  const spread = 6.2831 + (2.5 - 6.2831) * clamp(sa * 1.2, 0, 1);
+  const pieces = [], seed = f32(g.seed), basis = ancillaryBasis(g, face, sdu, sdv, sa, contract), pixel = 1 / Math.max(face.atlas?.ppm || 1, 1);
   const big = kind > 1.5 && kind < 3.5;
   const bodyGrow = 0.4 + 0.6 * (1 - Math.pow(1 - clamp(tn, 0, 1), 4));
-  const bodyEdge = a => r * bodyGrow * wobble(a, seed);
 
   const tsp = 1 - Math.pow(1 - clamp(tn * 1.4, 0, 1), 3);
   for (let k = 0; k < rayCount; k++) {
-    const h1 = paintShapeHash(word, 0, k), h2 = paintShapeHash(word, 1, k), h3 = paintShapeHash(word, 2, k);
-    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : (k + 0.35 + 0.6 * h1) / rayCount * 6.2831 + seed * 6.2831;
-    const ux = Math.cos(a), uy = Math.sin(a), edge = bodyEdge(a);
+    const {h1,h2,h3,ux,uy,wob} = basis.rays[k], edge = r * bodyGrow * wob;
     // Same edge-spike length as the composed paint shader (adapter.mjs, paint.js).
     const len = r * (0.04 + 0.16 * h2 * h2 * h2) * tsp;
     const wB = r * (0.055 + 0.06 * h3), tipR = Math.max(r * (0.012 + 0.012 * h3), pixel * 0.45);
@@ -93,12 +121,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   }
 
   for (let k = 0; k < satelliteCount; k++) {
-    const h1 = paintShapeHash(word, 3, k), h2 = paintShapeHash(word, 4, k), h3 = paintShapeHash(word, 5, k);
+    const {h1,h2,h3,ux,uy} = basis.satellites[k];
     const tl = 0.28 + 0.95 * h2, land = smoothstep(tl, tl + 0.2, tn);
     if (land <= 0) continue;
-    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : h1 * 6.2831;
-    let ux = Math.cos(a), uy = Math.sin(a);
-    if (face.wall) { const nx = ux * 0.68, ny = uy * 0.68 - 0.32; const l = Math.hypot(nx, ny) || 1; ux = nx / l; uy = ny / l; }
     const dist = r * (1.1 + (big ? 1.05 : 0.8) * h2 * h2);
     const rad = r * (0.028 + 0.085 * h3) * fall * (1 - 0.4 * h2) * (big ? 0.8 : 1) * land;
     const el = 1 + (0.5 + 1.6 * sa) * h2;
@@ -108,11 +133,8 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   }
 
   for (let k = 0; k < spatterCount; k++) {
-    const h1 = paintShapeHash(word, 6, k), h2 = paintShapeHash(word, 7, k), h3 = paintShapeHash(word, 8, k);
+    const {h1,h2,h3,ux,uy} = basis.spatter[k];
     if (tn < 0.45 + 0.95 * h2) continue;
-    const a = sa > 0 ? dirAng + (h1 - 0.5) * spread * 1.15 : h1 * 6.2831;
-    let ux = Math.cos(a), uy = Math.sin(a);
-    if (face.wall) { const nx = ux * 0.75, ny = uy * 0.75 - 0.25; const l = Math.hypot(nx, ny) || 1; ux = nx / l; uy = ny / l; }
     const rad = Math.max(r * (0.011 + 0.02 * h3) * fall, pixel * 0.9), dist = r * (1.3 + 1.2 * h2);
     const x = ux * dist, y = uy * dist;
     pieces.push({ type: 1, x, y, radius: rad, minX: x - rad, maxX: x + rad, minY: y - rad, maxY: y + rad });
@@ -121,7 +143,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   if (face.wall && fall > 0.3 && dripCount > 0) {
     const nD = Math.min(6, dripCount + Math.floor(R * 1.2));
     for (let k = 0; k < nD; k++) {
-      const h1 = paintShapeHash(word, 9, k), h2 = paintShapeHash(word, 10, k), h3 = paintShapeHash(word, 11, k);
+      const {h1,h2,h3} = basis.drips[k];
       if (k > 1 && h3 < 0.3) continue;
       const x0 = (h1 * 2 - 1) * r * 0.72;
       const c = Math.sqrt(Math.max(1 - (x0 / r) * (x0 / r), 0));
