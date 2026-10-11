@@ -24,8 +24,8 @@ async function boot(){const c=await browser.newContext({viewport:{width:1280,hei
 async function advance(p,n){return p.evaluate(n=>{const g=RG.game;g._skipRender=true;try{for(let i=0;i<n;i++)g._frame(1/60);}finally{g._skipRender=false;}RG.renderer.render(RG.scene,RG.camera);},n);}
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- const p=await boot();
- for(const mode of ['zones','tower','rainmaker','clams']){
+ const p=await boot();await p.evaluate(()=>RG.game.debug.freeze());
+ for(const mode of process.env.RANKED_ONLINE_ONLY ? [] : ['zones','tower','rainmaker','clams']){
   console.log('offline',mode);
   await p.evaluate(async mode=>{RG.game.debug.freeze();RG.game.menus.wipe.cancel();await RG.game.startMatch({mapId:'tidewater',difficulty:'easy',mode});},mode);
   await p.waitForFunction(()=>RG.game.hud?._visible&&!document.querySelector('.iw-lineup'),null,{timeout:30000});
@@ -59,9 +59,13 @@ try{
   await guest.waitForFunction(()=>RG.match.ranked.counts[0]===65,null,{timeout:30000});
   const online=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>({mode:RG.match.mode,counts:[...RG.match.ranked.counts],follower:RG.match.follower,actors:RG.match.actors.length,time:RG.match.time}))));assert.deepEqual(online[0].counts,online[1].counts);assert.equal(online[0].mode,mode);assert.equal(online[1].mode,mode);
   await Promise.all([p,guest].map((pg,i)=>pg.screenshot({path:path.join(out,mode+'-online-'+i+'.jpg'),type:'jpeg',quality:60})));
-  results.find(r=>r.mode===mode).online=online;
+  let record=results.find(r=>r.mode===mode);if(!record)results.push(record={mode});record.online=online;
+  await p.evaluate(()=>{RG.match.ranked.setCount(0,0);RG.match.advanceRanked(1/60);});
+  await guest.waitForFunction(()=>RG.match.ranked.winner===0&&RG.match.ranked.knockout&&RG.match.state==='finish',null,{timeout:30000});
+  record.terminal=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>({winner:RG.match.ranked.winner,knockout:RG.match.ranked.knockout,counts:[...RG.match.ranked.counts],state:RG.match.state}))));
+  assert.deepEqual(record.terminal[0],record.terminal[1]);
   await Promise.all([p,guest].map(pg=>pg.evaluate(()=>RG.net.leave())));
  }
- assert.equal(errors.length,0,JSON.stringify(errors));fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'passed',contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision,delayMs:delay,served:[...served],results,errors},null,2));
+ assert.equal(errors.length,0,JSON.stringify(errors));fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'passed',scope:process.env.RANKED_ONLINE_ONLY?'online-only':'offline-and-online',contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision,delayMs:delay,served:[...served],results,errors},null,2));
 }catch(e){fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'failed',contentHash:build.contentHash,error:e.stack,results,errors},null,2));for(let i=0;i<pages.length;i++)await pages[i].screenshot({path:path.join(out,'failure-'+i+'.png')}).catch(()=>{});throw e;}
 finally{for(const c of contexts)await c.close();await browser?.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));}

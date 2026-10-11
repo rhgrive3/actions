@@ -32,6 +32,10 @@ export function adaptRanked(rel, code) {
   }
   if (rel === 'src/net/session.js') {
     code = importEngine + code;
+    code = once(code, "this.state !== 'lobby' || this.lobby.mode !== 'turf' ||\n", "this.state !== 'lobby' || (this.lobby.mode !== 'turf' && !isRankedMode(this.lobby.mode)) ||\n", 'ranked host team assignment');
+    code = once(code, "this.state !== 'lobby' || this.lobby.mode !== 'turf') return false;", "this.state !== 'lobby' || (this.lobby.mode !== 'turf' && !isRankedMode(this.lobby.mode))) return false;", 'ranked host team confirmation');
+    code = once(code, "return (this.lobby.mode !== 'turf' || this.lobby.players.length >= 2)", "return ((this.lobby.mode !== 'turf' && !isRankedMode(this.lobby.mode)) || this.lobby.players.length >= 2)", 'ranked two-human admission');
+    code = once(code, "if (this.lobby.mode === 'turf' && this.lobby.players.length < 2) return false;", "if ((this.lobby.mode === 'turf' || isRankedMode(this.lobby.mode)) && this.lobby.players.length < 2) return false;", 'ranked start admission');
     code = once(code, "if (s.mode === 'turf' || s.mode === 'boss') l.mode = s.mode;", "if (s.mode === 'turf' || s.mode === 'boss' || isRankedMode(s.mode)) l.mode = s.mode;\n    if (isRankedMode(l.mode)) l.duration = 300;", 'room mode');
     code = once(code, 'l.bots = mapNoBots(l.map) ? false :', 'l.bots = mapNoBots(l.map) && !isRankedMode(l.mode) ? false :', 'ranked room bot option');
     code = once(code, 'const bots = l.bots && !mapNoBots(l.map);', 'const bots = l.bots && (!mapNoBots(l.map) || isRankedMode(l.mode));', 'ranked room bot roster');
@@ -42,6 +46,10 @@ export function adaptRanked(rel, code) {
   if (rel === 'patches/splatoon3/bootstrap.mjs') {
     code = "import { installRanked } from './runtime/ranked/install.mjs';\n" + code;
     code = once(code, 'installMainWeaponCatalogRuntime(context, profile);', 'installMainWeaponCatalogRuntime(context, profile);\n  installRanked(context, profile);', 'final ranked runtime install');
+  }
+  if (rel === 'src/net/mock.js') {
+    code = importEngine + code;
+    code = once(code, "if (o.mode === 'turf' || o.mode === 'boss') L.mode = o.mode;", "if (o.mode === 'turf' || o.mode === 'boss' || isRankedMode(o.mode)) L.mode = o.mode;\n    if (isRankedMode(L.mode)) L.duration = 300;", 'ranked mock lobby modes');
   }
   return adaptRankedUi(rel, code);
 }

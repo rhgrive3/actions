@@ -160,3 +160,35 @@ test('ranked finish freezes actor and projectile combat while zero-clock overtim
   projectiles.applyHit(attacker, projectileVictim, 13, 'shooter');
   assert.equal(projectileVictim.hp, projectileHp - 13, 'projectile applyHit remains enabled during overtime');
 });
+
+
+for (const mode of ['zones', 'tower', 'rainmaker', 'clams']) test(`native ranked room ${mode} confirms teams, requires two humans and starts the matching roster`, async () => {
+  const f = await bootRanked();
+  const host = new f.NetSession(), guest = new f.NetSession();
+  const peers = new Map([['host', host], ['guest', guest]]), packets = [];
+  for (const [id, net] of peers) {
+    Object.assign(net, {myId:id, hostId:'host', state:'lobby', _members:new Map([['host','Host'],['guest','Guest']])});
+    net.tr = {broadcast(packet) { packets.push(structuredClone(packet)); for(const [other, peer] of peers) if(other!==id) peer._message(id,structuredClone(packet)); },
+      sendTo(id,packet) {peers.get(id)?._message(net.myId,structuredClone(packet));}, lock() {}, close() {}};
+  }
+  f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
+  f.G.game = {menus:{launchLobby:async()=>{}}, startNetMatch:async()=>{}, netMatchGo() {}};
+  try {
+    host.lobby.players = [host._newPlayer('host','Host',{}),host._newPlayer('guest','Guest',{})];
+    host._fixTeams(); host.setSettings({mode,bots:true,map:'tidewater'});
+    assert.equal(guest.lobby.mode,mode);
+    assert.equal(host.confirmTeams(),true,'ranked modes share native team confirmation');
+    assert.equal(host.assignTeam('guest',1),true,'host may assign ranked teams');
+    assert.equal(host.lobby.teamsConfirmed,false,'assignment revokes confirmation');
+    host.confirmTeams(); guest.setMe({ready:true}); host.setMe({ready:true});
+    assert.equal(host.canStart(),true);
+    const guestRow=host.lobby.players.pop();
+    assert.equal(host.canStart(),false,'one human with bots cannot launch a private ranked room');
+    host.lobby.players.push(guestRow);
+    assert.equal(host.start(),true);
+    await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+    const cfg=packets.find(p=>p.k==='start');
+    assert.equal(cfg.mode,mode); assert.equal(cfg.duration,300); assert.equal(cfg.roster.length,8);
+    assert.equal(guest._startCfg.id,cfg.id);
+  } finally {host.leave();guest.leave();}
+});

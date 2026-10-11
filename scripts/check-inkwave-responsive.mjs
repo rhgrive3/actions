@@ -250,8 +250,14 @@ try {
         await page.evaluate(() => G.net.create('Host Squidkid'));
         await show(page, 'lobby');
         entry.screens.host = await geometry(page, '.iw-lob__modearrows i, .iw-lstage__arrows i, .iw-lset .iw-seg__opt, .iw-btn--lobstart', 'host');
-        await tap(page, '.iw-lob__modearrows .is-r');
-        await page.waitForFunction(() => G.net.lobby.mode === 'boss');
+        const visitedModes = [];
+        for (const mode of ['zones', 'tower', 'rainmaker', 'clams', 'boss']) {
+          await tap(page, '.iw-lob__modearrows .is-r');
+          await page.waitForFunction(mode => G.net.lobby.mode === mode, mode);
+          visitedModes.push(await page.evaluate(() => G.net.lobby.mode));
+        }
+        assert.deepEqual(visitedModes, ['zones', 'tower', 'rainmaker', 'clams', 'boss']);
+        entry.hostModes = visitedModes;
         assert.equal(await page.locator('.iw-lobby').evaluate((el) => el.classList.contains('is-bossmode')), true);
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-boss-lobby.png`) });
         await page.evaluate(() => G.net.leave());

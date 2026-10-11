@@ -100,14 +100,23 @@ test('ranked stage coordinates use reachable live floors, symmetric routes, and 
 });
 
 function paintRenderer(THREE) {
+  const state = { target: null, viewport: [0, 0, 1024, 1024], scissor: [0, 0, 1024, 1024], scissorTest: false };
   return {
+    state,
+    scissorClears: [],
     capabilities: { getMaxAnisotropy: () => 1 },
-    getRenderTarget: () => null,
-    setRenderTarget() {},
+    getRenderTarget: () => state.target,
+    setRenderTarget(target) { state.target = target; },
+    getViewport: out => out.set(...state.viewport),
+    setViewport(...args) { state.viewport = args; },
+    getScissor: out => out.set(...state.scissor),
+    setScissor(...args) { state.scissor = args; },
+    getScissorTest: () => state.scissorTest,
+    setScissorTest(enabled) { state.scissorTest = enabled; },
     getClearColor: color => color.setHex(0),
     getClearAlpha: () => 1,
     setClearColor() {},
-    clear() {},
+    clear() { if (state.scissorTest) this.scissorClears.push(state.scissor.slice()); },
     THREE,
   };
 }
@@ -131,8 +140,38 @@ test('zone capture uses the live paint grid and reaches full exposed turf covera
   paint.dispose?.();
 });
 
+test('moving tower paint face fits every map atlas and follows a Physics support face', () => {
+  for (const id of MAP_IDS) {
+    const { level, physics, stage } = makeMap(id);
+    const paint = new f.PaintSystem(paintRenderer(f.THREE), level, { atlasSize: 1024, maxDensity: 18, cell: 0.25 });
+    f.G.paint = paint;
+    const world = new f.RankedWorld({ G: f.G, THREE: f.THREE, Physics: f.Physics, Hit: f.Hit }, { mode: 'tower', actors: [] }, stage);
+    assert.equal(world.towerPaintReady, true, `${id} has a dynamic tower paint region`);
+    const atlas = world.towerPaintFace.atlas;
+    for (const face of paint.paintFaces) {
+      if (face === world.towerPaintFace || !face.atlas) continue;
+      const other = face.atlas;
+      const overlaps = atlas.x < other.x + other.w && atlas.x + atlas.w > other.x
+        && atlas.y < other.y + other.h && atlas.y + atlas.h > other.y;
+      assert.equal(overlaps, false, `${id} dynamic atlas rectangle does not overwrite static face ${face.id}`);
+    }
+    const p = world.towerBlock.center;
+    const support = new f.GroundHit();
+    physics.groundProbe(p.x, world._towerDeckTop, p.z, 0.4, 0.5, 0.2, support, false);
+    assert.equal(support.hit, true, `${id} tower deck is a Physics floor`);
+    assert.equal(support.block, world.towerBlockId);
+    assert.equal(support.face, world.towerPaintFace.id, `${id} floor contact resolves to the dynamic paint face`);
+    world.dispose();
+    paint.dispose?.();
+    f.G.paint = null;
+  }
+});
+
 test('tower world installs a live moving collider and carries only riders inside its deck volume', () => {
   const { level, physics, stage } = makeMap('tidewater');
+  const renderer = paintRenderer(f.THREE);
+  const paint = new f.PaintSystem(renderer, level, { atlasSize: 1024, cell: 0.25 });
+  f.G.paint = paint;
   const actor = {
     nid: 'rider-1', team: 0, slot: 0, alive: true, grounded: true,
     pos: new f.THREE.Vector3(), ground: new f.GroundHit(), smoothY: 0,
@@ -140,7 +179,36 @@ test('tower world installs a live moving collider and carries only riders inside
   };
   const match = { mode: 'tower', actors: [actor] };
   const world = new f.RankedWorld({ G: f.G, THREE: f.THREE, Physics: f.Physics, Hit: f.Hit }, match, stage);
+  assert.equal(world.towerPaintReady, true, 'the tower top is registered as a native paintable turf face');
+  assert.equal(level.faces[world.towerPaintFace.id], world.towerPaintFace);
+  assert.ok(paint.paintFaces.includes(world.towerPaintFace));
+  assert.ok(world.towerInkMesh.visible, 'the dynamic deck samples the native PaintSystem atlas');
+  assert.ok(world.towerPaintFace.atlas.h <= paint.size - world.towerPaintFace.atlas.y,
+    'the dynamic face uses the unused atlas strip without moving static rectangles');
+
   const initial = stage.tower.path[stage.tower.centerIndex];
+  const face = world.towerPaintFace;
+  const splatAt = face.origin.clone()
+    .addScaledVector(face.u, face.su * 0.5 + 0.68)
+    .addScaledVector(face.v, face.sv * 0.5)
+    .addScaledVector(face.n, 0.06);
+  const owned = paint.splat(splatAt, 0.58, 0, { face: face.id, seed: 0.37, kind: 'blast', instant: true });
+  assert.ok(owned > 0, 'native PaintSystem.splat claims turf cells on the moving floor');
+  assert.equal(paint.sampleWorld(face.id, splatAt), 1, 'face sampling sees team ownership');
+  assert.ok(paint.coverage()[0] > 0, 'the moving floor contributes to native team turf totals');
+
+  const poleId = world.towerPoleBlockId;
+  assert.equal(level.blocks[poleId].tag, 'ranked-tower-pole');
+  const poleCenter = level.blocks[poleId].center;
+  const poleRay = physics.segment(
+    new f.THREE.Vector3(poleCenter.x - 0.6, poleCenter.y, poleCenter.z),
+    new f.THREE.Vector3(poleCenter.x + 0.6, poleCenter.y, poleCenter.z),
+    new f.Hit(), false,
+  );
+  assert.equal(poleRay.hit, true, 'the visible central pole has a live Physics collider');
+  assert.equal(poleRay.block, poleId);
+  assert.equal(level.blocks[poleId].faces.every(id => id === -1), true, 'the pole collider itself is not paintable');
+
   actor.pos.set(initial[0], initial[1], initial[2] + 0.2);
   physics.groundProbe(actor.pos.x, actor.pos.y + 0.2, actor.pos.z, 0.8, 0.5, 0.3, actor.ground, false);
   assert.equal(actor.ground.hit, true);
@@ -153,6 +221,11 @@ test('tower world installs a live moving collider and carries only riders inside
   world.beforeActors(engine, 1 / 60);
   assert.ok(closeTo(actor.pos.z, target[2] + 0.2, 1e-4), 'the moving deck displaces a grounded rider');
   assert.equal(actor._rankedOnTower, true);
+  const movedSplatAt = face.origin.clone()
+    .addScaledVector(face.u, face.su * 0.5 + 0.68)
+    .addScaledVector(face.v, face.sv * 0.5)
+    .addScaledVector(face.n, 0.06);
+  assert.equal(paint.sampleWorld(face.id, movedSplatAt), 1, 'ink ownership stays on the same local floor cells as the tower moves');
 
   actor.grounded = false;
   actor.ground.hit = false;
@@ -169,8 +242,17 @@ test('tower world installs a live moving collider and carries only riders inside
   assert.ok(actor.pos.distanceTo(beforeExit) < 1e-6, 'an actor outside the deck is not carried');
 
   const blockId = world.towerBlockId;
+  const oldFaceCount = level.faces.length - 1;
+  const oldPaintCellCount = paint.grid.length - face.nu * face.nv;
   world.dispose();
   assert.equal(level.blocks.some(block => block.id === blockId && block.tag === 'ranked-tower' && block.solid), false);
+  assert.equal(level.blocks.some(block => block.tag === 'ranked-tower-pole' && block.solid), false);
+  assert.equal(level.faces.length, oldFaceCount, 'disposing the moving world unregisters its dynamic face');
+  assert.equal(paint.grid.length, oldPaintCellCount, 'disposing the moving world restores the prior native paint grid');
+  assert.ok(renderer.scissorClears.some(rect => rect[0] === face.atlas.x && rect[1] === face.atlas.y
+    && rect[2] === face.atlas.w && rect[3] === face.atlas.h), 'disposal clears the dynamic ink atlas region for a rematch');
+  paint.dispose?.();
+  f.G.paint = null;
 });
 
 test('objective visuals stay mode-specific and Rainmaker markers reflect rule state', () => {

@@ -120,7 +120,12 @@ export class RankedWorld {
     this.group.add(this.zoneGroup, this.towerGroup, this.rainmakerGroup, this.clamsGroup);
     this.G.scene?.add?.(this.group);
     if (this.mode === 'zones') { this._makeZoneLines(); this._buildZoneIndex(); }
-    if (this.mode === 'tower') { this._makeTower(); this._installTowerCollider(); this._syncTower(null, false); }
+    if (this.mode === 'tower') {
+      this._makeTower();
+      this._installTowerCollider();
+      this._syncTower(null, false);
+      this._installTowerPaintFace();
+    }
     if (this.mode === 'rainmaker' || this.mode === 'clams') this._makeObjectives();
   }
 
@@ -176,6 +181,30 @@ export class RankedWorld {
     grateLines.name = 'tower-grate-lines';
     grate.add(grateLines);
     this.tower.add(grate);
+    this.towerInkGeometry = new THREE.BufferGeometry();
+    const hw = this._towerHalfWidth, hl = this._towerHalfLength;
+    this.towerInkGeometry.setAttribute('position', new THREE.Float32BufferAttribute([
+      hw, 0.009, -hl, -hw, 0.009, -hl, -hw, 0.009, hl, hw, 0.009, hl,
+    ], 3));
+    this.towerInkGeometry.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2));
+    this.towerInkGeometry.setIndex([0, 1, 2, 0, 2, 3]);
+    this.towerInkMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uPaint: { value: this.paint?.texture || null },
+        uAtlasOrigin: { value: new THREE.Vector2() },
+        uAtlasScale: { value: new THREE.Vector2() },
+        uTeam0: { value: new THREE.Color(this.teamInk[0]) },
+        uTeam1: { value: new THREE.Color(this.teamInk[1]) },
+      },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+      fragmentShader: 'uniform sampler2D uPaint; uniform vec2 uAtlasOrigin; uniform vec2 uAtlasScale; uniform vec3 uTeam0; uniform vec3 uTeam1; varying vec2 vUv; void main(){ vec4 ink=texture2D(uPaint,uAtlasOrigin+vUv*uAtlasScale); if(ink.a<0.025) discard; float share=clamp(ink.r/max(ink.a,0.001),0.0,1.0); vec3 color=mix(uTeam0,uTeam1,step(0.5,share)); gl_FragColor=vec4(color,clamp(ink.a,0.0,0.94)); }',
+      transparent: true, depthTest: true, depthWrite: false, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -1, toneMapped: false,
+    });
+    this.towerInkMesh = new THREE.Mesh(this.towerInkGeometry, this.towerInkMaterial);
+    this.towerInkMesh.name = 'tower-paintable-floor';
+    this.towerInkMesh.visible = false;
+    this.tower.add(this.towerInkMesh);
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, 1.9, 10), this._material(0xd2a840, { metalness: 0.55, roughness: 0.4 }));
     pole.position.set(0, 0.95, 0);
     pole.name = 'tower-pole';
@@ -326,10 +355,172 @@ export class RankedWorld {
     this.towerBlock = level.blocks[level.blocks.length - 1];
     this.towerBlockId = this.towerBlock?.id ?? -1;
     this.towerBlock.faces.fill(-1);
+    level._addBlock({ kind: 'obox', center: [point[0], point[1] + 0.945, point[2]], size: [0.56, 2.13, 0.56], rotY: 0,
+      paint: false, hidden: true, color: '#d2a840', tag: 'ranked-tower-pole', grate: false });
+    this.towerPoleBlock = level.blocks[level.blocks.length - 1];
+    this.towerPoleBlockId = this.towerPoleBlock?.id ?? -1;
+    this.towerPoleBlock.faces.fill(-1);
     const stamps = new Uint32Array(level.blocks.length);
     if (level.blockStamp) stamps.set(level.blockStamp.subarray(0, Math.min(level.blockStamp.length, stamps.length)));
     level.blockStamp = stamps;
     this._indexTowerRoute();
+  }
+
+  _installTowerPaintFace() {
+    const level = this.level, paint = this.paint, block = this.towerBlock;
+    if (!level || !paint || !block || !Array.isArray(level.faces) || !Array.isArray(paint.paintFaces)
+      || !paint.grid || !paint.dead || typeof paint.splat !== 'function' || !paint.texture
+      || !Number.isFinite(paint.size) || !Number.isFinite(paint.ppm)) return false;
+
+    const su = this._towerHalfWidth * 2, sv = this._towerHalfLength * 2;
+    const pad = Math.max(0, Math.trunc(paint.pad || 0));
+    let baseY = Number.isFinite(paint.usedHeight) ? paint.usedHeight : 0;
+    if (!Number.isFinite(paint.usedHeight)) {
+      for (const f of paint.paintFaces) {
+        const atlas = f?.atlas;
+        if (atlas && Number.isFinite(atlas.y) && Number.isFinite(atlas.h)) baseY = Math.max(baseY, atlas.y + atlas.h);
+      }
+    }
+    let atlasX = 0, atlasY = baseY;
+    let spareSide = paint.size - baseY;
+    if (spareSide < pad * 2 + 1) {
+      const free = this._findFreePaintSquare(paint.size, paint.paintFaces);
+      if (!free) return false;
+      atlasX = free.x; atlasY = free.y; spareSide = free.size;
+    }
+    const dynamicPpm = Math.min(paint.ppm, (spareSide - pad * 2) / Math.max(su, sv));
+    if (!Number.isFinite(dynamicPpm) || dynamicPpm < 0.5) return false;
+    const width = Math.ceil(su * dynamicPpm) + pad * 2;
+    const height = Math.ceil(sv * dynamicPpm) + pad * 2;
+    if (width > spareSide || height > spareSide || atlasX + width > paint.size || atlasY + height > paint.size) return false;
+
+    const oldGrid = paint.grid, oldDead = paint.dead;
+    const nu = Math.max(1, Math.round(su / (paint.cell || 0.25)));
+    const nv = Math.max(1, Math.round(sv / (paint.cell || 0.25)));
+    const cellCount = nu * nv;
+    const face = {
+      id: level.faces.length, block: block.id,
+      n: new this.THREE.Vector3(0, 1, 0), u: new this.THREE.Vector3(-1, 0, 0), v: new this.THREE.Vector3(0, 0, 1),
+      origin: new this.THREE.Vector3(), su, sv, wall: false, turf: true, ceiling: false,
+      paintable: true, pattern: block.pattern, color: block.color,
+      groundedBottom: false, atlas: { x: atlasX, y: atlasY, w: width, h: height, ppm: dynamicPpm, pad },
+      grid: oldGrid.length, nu, nv, cu: su / nu, cv: sv / nv,
+    };
+    const grid = new Uint8Array(oldGrid.length + cellCount);
+    grid.set(oldGrid);
+    const dead = new Uint8Array(oldDead.length + cellCount);
+    dead.set(oldDead);
+    this.towerPaintBase = { oldGrid, oldDead, oldTurfTotal: paint.turfTotal, oldTurfArea: paint.turfArea,
+      oldUsedHeight: paint.usedHeight, paint, level, face, cellCount, oldGridLength: oldGrid.length };
+    paint.grid = grid;
+    paint.dead = dead;
+    paint.paintFaces.push(face);
+    level.faces.push(face);
+    block.faces[2] = face.id;
+    paint.turfTotal = (paint.turfTotal || 0) + cellCount;
+    paint.turfArea = (paint.turfArea || 0) + su * sv;
+    paint.usedHeight = Math.max(Number.isFinite(paint.usedHeight) ? paint.usedHeight : 0, atlasY + height);
+    this.towerInkMaterial.uniforms.uPaint.value = paint.texture;
+    const atlas = face.atlas;
+    this.towerInkMaterial.uniforms.uAtlasOrigin.value.set((atlas.x + pad) / paint.size, (atlas.y + pad) / paint.size);
+    this.towerInkMaterial.uniforms.uAtlasScale.value.set((su * dynamicPpm) / paint.size, (sv * dynamicPpm) / paint.size);
+    this.towerInkMesh.visible = true;
+    this.towerPaintFace = face;
+    this.towerPaintReady = true;
+    this._extendPaintDryRegion(paint.usedHeight);
+    this._updateTowerPaintGeometry();
+    const buried = paint.dead.subarray(face.grid, face.grid + cellCount);
+    let deadCells = 0;
+    for (let i = 0; i < buried.length; i++) if (buried[i]) deadCells++;
+    const liveCells = cellCount - deadCells;
+    paint.turfTotal -= cellCount - liveCells;
+    paint.turfArea -= (cellCount - liveCells) * face.cu * face.cv;
+    this.towerPaintBase.liveCells = liveCells;
+    return true;
+  }
+
+  _findFreePaintSquare(size, faces) {
+    const occupied = new Uint8Array(size * size);
+    for (const face of faces || []) {
+      const rect = face?.atlas;
+      if (!rect) continue;
+      const x0 = Math.max(0, Math.floor(rect.x)), y0 = Math.max(0, Math.floor(rect.y));
+      const x1 = Math.min(size, Math.ceil(rect.x + rect.w)), y1 = Math.min(size, Math.ceil(rect.y + rect.h));
+      for (let y = y0; y < y1; y++) occupied.fill(1, y * size + x0, y * size + x1);
+    }
+    let previous = new Uint16Array(size + 1), current = new Uint16Array(size + 1);
+    let best = 0, bestX = 0, bestY = 0;
+    for (let y = 0; y < size; y++) {
+      current[0] = 0;
+      const row = y * size;
+      for (let x = 0; x < size; x++) {
+        if (!occupied[row + x]) {
+          const side = 1 + Math.min(previous[x + 1], current[x], previous[x]);
+          current[x + 1] = side;
+          if (side > best) { best = side; bestX = x + 1 - side; bestY = y + 1 - side; }
+        } else current[x + 1] = 0;
+      }
+      const swap = previous; previous = current; current = swap;
+    }
+    return best ? { x: bestX, y: bestY, size: best } : null;
+  }
+
+  _extendPaintDryRegion(usedHeight) {
+    const geometry = this.paint?.dryMesh?.geometry;
+    const positions = geometry?.getAttribute?.('position');
+    if (!positions || !Number.isFinite(usedHeight)) return;
+    const yTop = Math.min(1, ((usedHeight + 2) / this.paint.size) * 2 - 1);
+    positions.setY(2, yTop);
+    positions.setY(3, yTop);
+    positions.needsUpdate = true;
+  }
+
+  _clearTowerPaintAtlasRect() {
+    const state = this.towerPaintBase, renderer = state?.paint?.renderer, rect = state?.face?.atlas;
+    if (!renderer || !state.paint.rt || !rect || typeof renderer.setRenderTarget !== 'function'
+      || typeof renderer.setScissor !== 'function' || typeof renderer.setScissorTest !== 'function'
+      || typeof renderer.setClearColor !== 'function' || typeof renderer.clear !== 'function') return;
+    const viewport = renderer.getViewport?.(new this.THREE.Vector4());
+    const scissor = renderer.getScissor?.(new this.THREE.Vector4());
+    const scissorTest = renderer.getScissorTest?.() ?? false;
+    const target = renderer.getRenderTarget?.() ?? null;
+    const color = renderer.getClearColor?.(new this.THREE.Color()) || null;
+    const alpha = renderer.getClearAlpha?.() ?? 1;
+    try {
+      renderer.setRenderTarget(state.paint.rt);
+      renderer.setScissor(rect.x, rect.y, rect.w, rect.h);
+      renderer.setScissorTest(true);
+      renderer.setClearColor(0x000000, 0);
+      renderer.clear(true, false, false);
+    } finally {
+      renderer.setRenderTarget(target);
+      if (viewport && typeof renderer.setViewport === 'function') renderer.setViewport(viewport.x, viewport.y, viewport.z, viewport.w);
+      if (scissor) renderer.setScissor(scissor.x, scissor.y, scissor.z, scissor.w);
+      renderer.setScissorTest(scissorTest);
+      if (color) renderer.setClearColor(color, alpha);
+    }
+  }
+
+  _updateTowerPaintGeometry() {
+    const face = this.towerPaintFace, block = this.towerBlock;
+    if (!face || !block) return;
+    face.n.copy(block.axes[1]);
+    face.v.copy(block.axes[2]);
+    if (face.v.z < 0 && Math.abs(face.v.z) > 0.3) face.v.negate();
+    face.u.crossVectors(face.v, face.n).normalize();
+    face.origin.copy(block.center)
+      .addScaledVector(face.n, block.half.y)
+      .addScaledVector(face.u, -face.su / 2)
+      .addScaledVector(face.v, -face.sv / 2);
+    if (!this._towerPaintDeadInitialized && face.id >= 0 && this.towerPoleBlockId >= 0) {
+      const p = this._paintSampleScratch || (this._paintSampleScratch = new this.THREE.Vector3());
+      this._towerPaintDeadInitialized = true;
+      for (let j = 0; j < face.nv; j++) for (let i = 0; i < face.nu; i++) {
+        const k = face.grid + j * face.nu + i;
+        p.copy(face.origin).addScaledVector(face.u, (i + 0.5) * face.cu).addScaledVector(face.v, (j + 0.5) * face.cv).addScaledVector(face.n, 0.06);
+        if (this.level.pointInside(p, 0, block.id)) this.paint.dead[k] = 1;
+      }
+    }
   }
 
   _indexTowerRoute() {
@@ -347,6 +538,7 @@ export class RankedWorld {
     for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
       const bucket = level.hash[z * level.hw + x];
       if (!bucket.includes(this.towerBlockId)) bucket.push(this.towerBlockId);
+      if (this.towerPoleBlockId >= 0 && !bucket.includes(this.towerPoleBlockId)) bucket.push(this.towerPoleBlockId);
     }
   }
 
@@ -421,10 +613,18 @@ export class RankedWorld {
     this.towerBlock.axes[1].set(0, 1, 0);
     this.towerBlock.axes[2].set(Math.sin(yaw), 0, Math.cos(yaw));
     updateBlockBounds(this.towerBlock);
+    if (this.towerPoleBlock) {
+      this.towerPoleBlock.center.set(this._position.x, this._position.y + 0.945, this._position.z);
+      this.towerPoleBlock.axes[0].copy(this.towerBlock.axes[0]);
+      this.towerPoleBlock.axes[1].copy(this.towerBlock.axes[1]);
+      this.towerPoleBlock.axes[2].copy(this.towerBlock.axes[2]);
+      updateBlockBounds(this.towerPoleBlock);
+    }
     this._towerDeckTop = this._position.y;
     this.tower.position.copy(this._position);
     this.tower.rotation.y = yaw;
     this.tower.updateMatrixWorld(true);
+    this._updateTowerPaintGeometry();
     for (const rider of riders) {
       const { actor, x, y, z } = rider;
       actor.pos.copy(this.towerBlock.center)
@@ -666,21 +866,58 @@ export class RankedWorld {
     });
     this.clamGeometry?.dispose?.(); this.inventoryGeometry?.dispose?.();
     this.clamMaterials?.forEach(material => material.dispose?.());
-    const level = this.level, block = this.towerBlock, id = this.towerBlockId;
-    if (level && block && Number.isInteger(id) && id >= 0) {
+    const paintState = this.towerPaintBase;
+    if (paintState) {
+      const { paint, level, face, oldGrid, oldDead, oldGridLength, liveCells } = paintState;
+      this._clearTowerPaintAtlasRect();
+      for (let i = 0; i < paintState.cellCount; i++) {
+        const cell = face.grid + i, owner = paint.grid[cell];
+        if (!paint.dead[cell] && owner === 1) paint.counts[0] = Math.max(0, paint.counts[0] - 1);
+        if (!paint.dead[cell] && owner === 2) paint.counts[1] = Math.max(0, paint.counts[1] - 1);
+      }
+      oldGrid.set(paint.grid.subarray(0, oldGridLength));
+      oldDead.set(paint.dead.subarray(0, oldGridLength));
+      paint.grid = oldGrid;
+      paint.dead = oldDead;
+      paint.turfTotal = Math.max(0, paint.turfTotal - liveCells);
+      paint.turfArea = Math.max(0, paint.turfArea - liveCells * face.cu * face.cv);
+      const paintFaceIndex = paint.paintFaces.indexOf(face);
+      if (paintFaceIndex >= 0) paint.paintFaces.splice(paintFaceIndex, 1);
+      if (level.faces[level.faces.length - 1] === face) level.faces.pop();
+      else level.faces[face.id] = null;
+      const block = level.blocks[face.block];
+      if (block?.faces?.[2] === face.id) block.faces[2] = -1;
+      paint.usedHeight = paintState.oldUsedHeight;
+      if (Number.isFinite(paintState.oldUsedHeight)) this._extendPaintDryRegion(paintState.oldUsedHeight);
+      this.towerPaintReady = false;
+    }
+    const level = this.level;
+    const removal = [[this.towerPoleBlockId, this.towerPoleBlock], [this.towerBlockId, this.towerBlock]];
+    if (level) for (const [id, block] of removal) {
+      if (!block || !Number.isInteger(id) || id < 0) continue;
       for (const bucket of level.hash || []) {
         const at = bucket.indexOf(id);
         if (at >= 0) bucket.splice(at, 1);
       }
       if (level.blocks?.[id] === block && id === level.blocks.length - 1) {
         level.blocks.pop();
-        level.blockStamp = new Uint32Array(level.blocks.length);
-        level._stamp = 1;
       } else {
         block.solid = false;
         block.paint = false;
         block.tag = null;
       }
+    }
+    if (level && removal.some(([id, block]) => Number.isInteger(id) && id >= 0 && level.blocks?.[id] === block)) {
+      // A non-ranked block was appended after the tower; keep array indices stable and leave both colliders inert.
+      for (const [id, block] of removal) {
+        if (Number.isInteger(id) && id >= 0 && level.blocks?.[id] === block) {
+          block.solid = false; block.paint = false; block.tag = null;
+        }
+      }
+    }
+    if (level?.blocks) {
+      level.blockStamp = new Uint32Array(level.blocks.length);
+      level._stamp = 1;
     }
     for (const actor of this.match?.actors || []) actor._rankedOnTower = false;
   }
