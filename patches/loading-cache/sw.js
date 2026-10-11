@@ -45,7 +45,7 @@ async function prune(keep) {
 }
 async function verify(response, expected) {
   if (!response || response.status !== 200 || response.type === 'opaque' || response.redirected) {
-    throw new Error('Uncacheable response');
+    throw new Error('Uncacheable');
   }
   // Clone before exposing the response. Never clone a response whose body the page already consumed.
   const bytes = await response.clone().arrayBuffer();
@@ -55,7 +55,7 @@ async function verify(response, expected) {
   if (!descriptor || descriptor.length !== 2 || !Number.isSafeInteger(descriptor[0]) || descriptor[0]<0 ||
       typeof descriptor[1]!=='string' || !/^[a-f0-9]{64}$/.test(descriptor[1]) ||
       bytes.byteLength !== descriptor[0] || await digest(bytes) !== descriptor[1]) {
-    throw new Error('Revision asset integrity mismatch');
+    throw new Error('Asset integrity mismatch');
   }
   return response;
 }
@@ -82,7 +82,7 @@ async function populate(cache, rel, reusable, reusableRevision) {
   await cache.put(url, response);
 }
 async function installSnapshot() {
-  if (BUILD.declaredBytes > MAX_REVISION_BYTES || BUILD.index.bytes > MAX_HTML_BYTES) throw new Error('Cache budget exceeded');
+  if (BUILD.declaredBytes > MAX_REVISION_BYTES || BUILD.index.bytes > MAX_HTML_BYTES) throw new Error('Cache budget');
   const previous = await state(true);
   const active = safeRevision(previous.activeRevision) ? previous.activeRevision : null;
   if (!active) {
@@ -90,7 +90,7 @@ async function installSnapshot() {
     // Only a fetch-handling (therefore active) worker may repair this metadata.
     for (const name of await caches.keys()) {
       if (name.startsWith(PREFIX) && name !== CURRENT && name !== META && await complete(name.slice(PREFIX.length))) {
-        throw new Error('Cache state missing; active worker repairs it on navigation');
+        throw new Error('Cache state missing');
       }
     }
   }
@@ -153,7 +153,7 @@ async function offlineIndex() {
   return old ? await old.match(INDEX_URL) : null;
 }
 function recoveryDocument() {
-  return new Response(`<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INKWAVE — オフライン</title><style>body{margin:0;min-height:100vh;display:grid;place-content:center;background:#101018;color:#fff;font:16px system-ui;padding:24px}p{max-width:36em;line-height:1.7}a{color:#b6f477}</style><h1>INKWAVE</h1><p>オフラインです。保存済みデータが見つからないか、ブラウザにより削除されています。通信が戻ってから、このページを開き直してください。</p><a href="${SCOPE.pathname}">もう一度開く</a></html>`, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+  return new Response(`<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INKWAVE — オフライン</title><h1>INKWAVE</h1><p>オフラインです。保存済みデータが見つからないか、ブラウザにより削除されています。通信が戻ってから、このページを開き直してください。</p><a href="${SCOPE.pathname}">もう一度開く</a></html>`, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 async function repairActiveState() {
   try {
@@ -220,7 +220,7 @@ self.addEventListener('fetch', event => {
     if (!match) return;
     const [, revision, rel] = match;
     if (revision === BUILD.revision) {
-      if (!Object.prototype.hasOwnProperty.call(BUILD.assets, rel)) return;
+      if (!Object.hasOwn(BUILD.assets, rel)) return;
       work = currentAsset(request, rel);
     } else work = retainedAsset(request, revision);
   }
