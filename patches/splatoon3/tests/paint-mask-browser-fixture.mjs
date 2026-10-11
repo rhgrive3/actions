@@ -195,7 +195,7 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail);
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, activeFamilies, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
-    body, hidden: hiddenPresentationRows() };
+    body, hidden: hiddenPresentationRows(), ownedRunCoalescing: ownedRunCoalescingRows() };
 }
 
 // PR1188: bidirectional CPU-grid / GPU-body agreement. The GPU program is the
@@ -306,5 +306,73 @@ function hiddenPresentationRows() {
     if(descriptor)Object.defineProperty(document,'hidden',descriptor);else delete document.hidden;
     renderer.dispose();
   }
+  return rows;
+}
+
+// Immutable pre-coalescing row renderer, used only as an actual GPU oracle.
+function unmergedOwnerRuns(face, orderId, u0, u1, v0, v1) {
+    const padM = (face.atlas.pad - 0.5) / face.atlas.ppm;
+    const i0 = Math.max(0, Math.floor(Math.max(0, u0) / face.cu));
+    const i1 = Math.min(face.nu - 1, Math.floor(Math.min(face.su, u1) / face.cu));
+    const j0 = Math.max(0, Math.floor(Math.max(0, v0) / face.cv));
+    const j1 = Math.min(face.nv - 1, Math.floor(Math.min(face.sv, v1) / face.cv));
+    let scratch = this._paintOrderRunScratch, runCount = 0;
+    for (let j = j0; j <= j1; j++) {
+      let start = -1;
+      for (let i = i0; i <= i1 + 1; i++) {
+        const owns = i <= i1 && this._paintOwnershipOrder[face.grid + j * face.nu + i] === orderId;
+        if (owns && start < 0) start = i;
+        if ((!owns || i === i1 + 1) && start >= 0) {
+          const end = owns ? i : i - 1;
+          let x0 = Math.max(u0, start * face.cu), x1 = Math.min(u1, (end + 1) * face.cu);
+          let y0 = Math.max(v0, j * face.cv), y1 = Math.min(v1, (j + 1) * face.cv);
+          if (start === 0) x0 = Math.max(u0, -padM);
+          if (end === face.nu - 1) x1 = Math.min(u1, face.su + padM);
+          if (j === 0) y0 = Math.max(v0, -padM);
+          if (j === face.nv - 1) y1 = Math.min(v1, face.sv + padM);
+          if (x1 > x0 && y1 > y0) {
+            const offset = runCount * 4;
+            if (offset + 4 > scratch.length) {
+              const grown = new Float64Array(Math.max(scratch.length * 2, offset + 4));
+              grown.set(scratch); this._paintOrderRunScratch = scratch = grown;
+            }
+            scratch[offset] = x0; scratch[offset + 1] = x1;
+            scratch[offset + 2] = y0; scratch[offset + 3] = y1;
+            runCount++;
+          }
+          start = -1;
+        }
+      }
+    }
+    return runCount;
+  };
+
+function ownedRunCoalescingRows() {
+  const rows=[],renderer=new THREE.WebGLRenderer({antialias:false});renderer.setSize(32,32);
+  try {
+    for(const wall of [false,true])for(const seed of [.03,.37,.92]){
+      const results=[];
+      for(const legacy of [true,false]){
+        const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
+        const face={origin:wall?V(-6,0,0):V(-6,0,-6),u:V(1,0,0),v:wall?V(0,1,0):V(0,0,1),n:wall?V(0,0,-1):V(0,1,0),su:12,sv:12,wall,turf:!wall,paintable:true};
+        const level={faces:[face],blocks:[{faces:[0,-1,-1,-1,-1,-1],aabbMin:wall?V(-6,0,-.01):V(-6,-.01,-6),aabbMax:wall?V(6,12,.01):V(6,.01,6)}],pointInside:()=>false,queryBlocks:(_a,_b,_c,_d,out=[])=>{out.length=0;out.push(0);return out;}};
+        const paint=new PaintSystem(renderer,level,{atlasSize:512,maxDensity:32,cell:.25});if(legacy)paint._paintOrderRuns=unmergedOwnerRuns;
+        let quads=0;const push=paint._pushQuad;paint._pushQuad=function(...args){quads++;return push.apply(this,args)};
+        for(let tick=0;tick<90;tick++){
+          if([0,9,18].includes(tick)){
+            const seq=tick/9+1,team=seq===2?1:0,pos=wall?V((seq-2)*.65,7,0):V((seq-2)*.65,0,0);
+            paint.splat(pos,1.6,team,{seed,kind:seed===.03?'line':seed===.92?'roll':'shot',dir:wall?V(.6,.8,0):V(.6,0,.8),stretch:1.2,__netOrder:{clock:seq,seq,peer:'run-merge-'+team,epoch:'run-merge'}});
+          }
+          paint.advanceSimulation(1/60);paint.flush(1/60);
+        }
+        const pixels=new Uint8Array(512*512*4);renderer.readRenderTargetPixels(paint.rt,0,0,512,512,pixels);
+        results.push({pixels,quads,grid:Array.from(paint.grid),owners:Array.from(paint._paintOwnershipOrder),counts:Array.from(paint.counts)});paint.dispose();
+      }
+      const [before,after]=results;check(JSON.stringify(before.grid)===JSON.stringify(after.grid),'coalescing changed gameplay grid');check(JSON.stringify(before.owners)===JSON.stringify(after.owners),'coalescing changed event ownership');check(JSON.stringify(before.counts)===JSON.stringify(after.counts),'coalescing changed turf counts');
+      let mismatch=0;for(let i=0;i<before.pixels.length;i++)if(before.pixels[i]!==after.pixels[i])mismatch++;
+      check(mismatch===0,'coalescing changed actual GPU atlas bytes: '+JSON.stringify({wall,seed,mismatch}));check(after.quads<before.quads,'coalescing fixture did not reduce actual native submissions');
+      rows.push({wall,seed,beforeQuads:before.quads,afterQuads:after.quads,mismatch});
+    }
+  } finally {renderer.dispose();}
   return rows;
 }

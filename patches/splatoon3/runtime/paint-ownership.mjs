@@ -442,6 +442,15 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
           if (j === face.nv - 1) y1 = Math.min(v1, face.sv + padM);
           if (x1 > x0 && y1 > y0) {
             const offset = runCount * 4;
+            // Consecutive non-overlapping row rectangles with exactly equal
+            // horizontal bounds have the same union as one taller rectangle.
+            // Keep holes, partial clips and atlas padding exact; do not merge
+            // merely adjacent or approximately equal x intervals.
+            if (runCount && scratch[offset - 4] === x0 && scratch[offset - 3] === x1 && scratch[offset - 1] === y0) {
+              scratch[offset - 1] = y1;
+              start = -1;
+              continue;
+            }
             if (offset + 4 > scratch.length) {
               const grown = new Float64Array(Math.max(scratch.length * 2, offset + 4));
               grown.set(scratch); this._paintOrderRunScratch = scratch = grown;
