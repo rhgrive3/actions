@@ -306,6 +306,27 @@ try {
         a.reset();check(a.weapon.sub===k.sub&&a.weapon.special===k.special,record.id+' kit after reset');
         kitChecks.push({id:record.id,sub:k.sub,special:k.special,points:k.specialCost,inkCost:cost});
       }
+      const directSubChecks=[];
+      {
+        const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics};
+        G.netm=null;G.match={playing:()=>true,state:'playing',time:180};
+        G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};G.physics=new api.Physics(G.level);
+        const equipDirect=(a,ap)=>{a.s3.loadout=emptyLoadout();for(const p of a.s3.loadout){if(ap>=10){p.main='subResistance';ap-=10;}}for(const p of a.s3.loadout)for(let i=0;i<3&&ap>=3;i++){p.subs[i]='subResistance';ap-=3;}a.s3RefreshGear();};
+        for(const source of ['angleShooter','sprinkler'])for(const ap of [0,10,57]){
+          G.projectiles.clear();const o=makeActor('shooter'),v=makeActor('shooter');v.team=1;v.invuln=0;v.pos.set(0,0,2);equipDirect(v,ap);G.actors=[o,v];o.weapon={...o.weapon,sub:source};o.weaponRunner.reset();const hp=v.hp;
+          if(source==='angleShooter'){const p=G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);}
+          else{G.projectiles.throwBomb(o);const b=G.projectiles.bombs.at(-1);kitBombContact(api.SUB,b,{hit:true,point:new THREE.Vector3(0,0,0),normal:new THREE.Vector3(0,1,0)});b.s3Sprinkler.nextFrame=Infinity;b.s3Sprinkler.drops.push({pos:new THREE.Vector3(0,.7,2),vel:new THREE.Vector3(),life:0,seed:.2});}
+          for(let i=0;i<10&&v.hp===hp;i++){G.time+=1/60;G.projectiles.update(1/60);}
+          const raw=source==='angleShooter'?40:20,expected=Math.floor(raw*gearCurve(ap,1,.75,.5)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8,'native direct resistance '+source+' '+ap);directSubChecks.push({source,ap,damage:hp-v.hp});
+        }
+        for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57]){
+          G.projectiles.clear();const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='direct-owner';v.owner='direct-victim';v.team=1;v.invuln=0;o.netLife=v.netLife=0;equipDirect(v,ap);equipDirect(o,57);o.weapon={...o.weapon,sub:source};let packet,ack;
+          const tx=new NetMatch({myId:'direct-owner',hostId:'direct-owner',isHost:true,tr:{sendTo:(_id,p)=>{packet=JSON.parse(JSON.stringify(p));}}},{id:'direct-probe'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,40,source);check(packet.d===40,'raw direct hit on wire');
+          const rx=new NetMatch({myId:'direct-victim',hostId:'direct-owner',isHost:false,tr:{sendTo:(_id,p)=>{ack=JSON.parse(JSON.stringify(p));}}},{id:'direct-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;
+          rx.onMessage('foreign',packet);check(v.hp===hp,'foreign direct hit rejected');if(source==='angleShooter'){rx.onMessage('direct-owner',{...packet,d:40.1});check(v.hp===hp,'oversized direct hit rejected');}rx.onMessage('direct-owner',packet);const damage=hp-v.hp;check(damage===(ap===57?20:40)&&ack.d===damage,'direct victim and ACK agree');rx.onMessage('direct-owner',packet);check(hp-v.hp===damage,'duplicate direct hit rejected');directSubChecks.push({source,ap,wire:true,damage});tx.dispose();rx.dispose();G.netm=null;
+        }
+        G.projectiles.clear();Object.assign(G,saved);
+      }
       let totalProjectiles = 0;
       const emissions = [];
       for (const record of newRecords) {
@@ -355,7 +376,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
+        directSubChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
