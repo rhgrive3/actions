@@ -35,6 +35,8 @@ export const NEUTRAL_RUMBLE = Object.freeze([0x00, 0x01, 0x40, 0x40, 0x00, 0x01,
 
 // Arrival-age safety bound chosen by this bridge; no Splatoon 3 timeout is published.
 export const DEFAULT_SAMPLE_MAX_AGE_MS = 100;
+// Published report structure: three consecutive IMU samples, 5 ms each.
+export const SWITCH_IMU_SAMPLE_SECONDS = 0.005;
 
 const GUARD = Symbol.for('inkwave.s3.pad-motion.v1');
 const zero = () => ({ yaw: 0, pitch: 0, available: false });
@@ -258,9 +260,14 @@ export function controllerMotionDelta(sample, dt, sensitivity = 0, invertY = fal
   }
   if (Math.abs(sample.yawRate) > MAX_GYRO_RATE_RAD_S || Math.abs(sample.pitchRate) > MAX_GYRO_RATE_RAD_S) return zero();
   const gain = gainAt(sensitivity);
+  const integrated = sample.sampleSeconds !== undefined;
+  if (integrated && (!(sample.sampleSeconds > 0 && sample.sampleSeconds <= .1) ||
+      !Number.isFinite(sample.yawDelta) || !Number.isFinite(sample.pitchDelta) ||
+      Math.abs(sample.yawDelta) > MAX_GYRO_RATE_RAD_S * sample.sampleSeconds + 1e-12 ||
+      Math.abs(sample.pitchDelta) > MAX_GYRO_RATE_RAD_S * sample.sampleSeconds + 1e-12)) return zero();
   return {
-    yaw: sample.yawRate * dt * gain * (invertX ? -1 : 1),
-    pitch: sample.pitchRate * dt * gain * (invertY ? -1 : 1),
+    yaw: (integrated ? sample.yawDelta : sample.yawRate * dt) * gain * (invertX ? -1 : 1),
+    pitch: (integrated ? sample.pitchDelta : sample.pitchRate * dt) * gain * (invertY ? -1 : 1),
     available: true
   };
 }
@@ -364,7 +371,10 @@ export function decodeSwitchMotionReport(data, options = {}) {
 
 /**
  * Creates an HID motion reader from an HIDDevice or mock device.
- * Expires stale angle-rate samples; invalid/truncated packets clear the current sample.
+ * Expires stale samples; invalid/truncated packets clear pending motion.
+ * integrateReports consumes all three 5ms samples once, independent of rendering.
+ * It is enabled by the real WebHID connection. The rate-only factory default is
+ * retained for third-party/custom reader compatibility, not used by that path.
  */
 export function createSwitchHIDReader(deviceOrOptions = {}) {
   let latestSample = null;
@@ -372,23 +382,36 @@ export function createSwitchHIDReader(deviceOrOptions = {}) {
   const device = options.device || (typeof options.addEventListener === 'function' ? options : null);
   const productId = options.productId ?? (device?.productId ?? PRO_CONTROLLER_PRODUCT_ID);
   const maxAgeMs = options.maxAgeMs ?? DEFAULT_SAMPLE_MAX_AGE_MS;
+  const integrated = options.integrateReports === true;
+  let suspended = integrated && options.initiallySuspended === true;
+  let yawDelta = 0, pitchDelta = 0, sampleSeconds = 0, firstArrival = 0;
+  const clear = () => { latestSample = null; yawDelta = pitchDelta = sampleSeconds = firstArrival = 0; };
+  function accept(data, reportId) {
+    const opt = { ...options, productId, averageFrames: integrated || options.averageFrames };
+    if (reportId !== undefined && reportId !== null) opt.reportId = reportId;
+    const sample = decodeSwitchMotionReport(data, opt);
+    if (!sample.available || suspended) { clear(); return sample; }
+    if (integrated) {
+      const view = dataViewOf(data), offset = opt.reportId === undefined ? 1 : 0;
+      if (!view || view.byteLength < offset + 48) {
+        clear(); return { available: false, reason: 'incomplete-integrated-report' };
+      }
+      // Bound both queued sensor duration and wall age. A hidden/paused tab may
+      // deliver many reports without a simulation tick; never replay a long turn.
+      const seconds = 3 * SWITCH_IMU_SAMPLE_SECONDS;
+      if (sampleSeconds + seconds > .1 || (sampleSeconds && sample.timestamp - firstArrival > Math.min(100, maxAgeMs))) clear();
+      if (!sampleSeconds) firstArrival = sample.timestamp;
+      yawDelta += sample.yawRate * seconds;
+      pitchDelta += sample.pitchRate * seconds;
+      sampleSeconds += seconds;
+    }
+    latestSample = sample;
+    return sample;
+  }
 
   function handleInputReport(event) {
-    if (!event?.data) {
-      latestSample = null;
-      return;
-    }
-    const sample = decodeSwitchMotionReport(event.data, {
-      ...options,
-      productId,
-      reportId: event.reportId
-    });
-    if (sample.available) {
-      latestSample = sample;
-    } else {
-      // Invalid or truncated packet immediately clears active drift
-      latestSample = null;
-    }
+    if (!event?.data) { clear(); return; }
+    accept(event.data, event.reportId);
   }
 
   if (device) {
@@ -404,37 +427,38 @@ export function createSwitchHIDReader(deviceOrOptions = {}) {
     const now = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
     if (now - (latestSample.timestamp || 0) > maxAgeMs) {
       // Sample expired: do not hold nonzero rate forever
-      latestSample = null;
+      clear();
       return null;
     }
-    return {
+    if (integrated && !(sampleSeconds > 0)) return null;
+    const sample = {
       yawRate: latestSample.yawRate,
       pitchRate: latestSample.pitchRate,
       padIndex: options.padIndex ?? (pad?.index ?? undefined)
     };
+    if (integrated) {
+      Object.assign(sample, { yawDelta, pitchDelta, sampleSeconds });
+      yawDelta = pitchDelta = sampleSeconds = firstArrival = 0;
+    }
+    return sample;
   };
 
   // Drop a pre-boundary rate without recalibrating or closing the device.
-  reader.discard = function() {
-    latestSample = null;
-  };
+  reader.discard = clear;
+  reader.suspend = () => { clear(); if (integrated) suspended = true; };
+  reader.resume = () => { if (suspended) clear(); suspended = false; };
   reader.recenter = reader.discard;
-  reader.feedReport = function(data, reportId = null) {
-    const opt = { ...options, productId };
-    if (reportId !== null) opt.reportId = reportId;
-    const sample = decodeSwitchMotionReport(data, opt);
-    latestSample = sample.available ? sample : null;
-    return sample;
-  };
+  reader.feedReport = (data, reportId = null) => accept(data, reportId);
   reader.detach = function() {
     if (device && typeof device.removeEventListener === 'function') {
       device.removeEventListener('inputreport', handleInputReport);
     } else if (device) {
       device.oninputreport = null;
     }
-    latestSample = null;
+    clear();
   };
   reader.device = device;
+  reader.integratesReports = integrated;
   return reader;
 }
 
@@ -519,7 +543,7 @@ export function attachWebHIDControllerMotion(input, options = {}) {
         if (input.s3ControllerMotionReader === previousReader) input.setControllerMotionReader(null);
       }
 
-      const reader = createSwitchHIDReader({ device, productId: device.productId, ...options,
+      const reader = createSwitchHIDReader({ device, productId: device.productId, integrateReports: true, initiallySuspended: true, ...options,
         gyroCalibration: initResult.calibration });
       reader.initResult = initResult;
       session.reader = reader;
@@ -677,7 +701,8 @@ export function installControllerMotion({ Input, PlayerController, G }) {
     const cancel = PlayerController.prototype[name];
     if (typeof cancel !== 'function') continue;
     PlayerController.prototype[name] = function (...args) {
-      try { this.input?.s3ControllerMotionReader?.discard?.(); } catch {}
+      const reader = this.input?.s3ControllerMotionReader;
+      try { if (reader?.suspend) reader.suspend(); else reader?.discard?.(); } catch {}
       return cancel.apply(this, args);
     };
   }
@@ -700,7 +725,6 @@ export function installControllerMotion({ Input, PlayerController, G }) {
   PlayerController.prototype.update = function(dt) {
     this._s3RecenteredThisTick = false;
     const input = this.input, pad = input?.pad, reader = input?.s3ControllerMotionReader;
-    let gyroApplied = false;
     const ownsAim = this.enabled && pad?.connected && input?.lastDevice === 'pad' && G.settings?.gyro !== false;
     // Let the shared native map owner consume opening/closing/cancel edges
     // before gyro writes. Native update calls it again, but consumed edges
@@ -713,10 +737,11 @@ export function installControllerMotion({ Input, PlayerController, G }) {
     if (reader && (!ownsAim || mapUp)) {
       // A short pause/map/device handoff may finish before arrival-age expiry.
       // Do not replay its last pre-boundary angular rate when aiming resumes.
-      try { reader.discard?.(); } catch {}
+      try { if (reader.suspend) reader.suspend(); else reader.discard?.(); } catch {}
     }
     if (ownsAim && reader && dt > 0) {
       if (!mapUp) {
+        try { reader.resume?.(); } catch {}
         let sample = null;
         try { sample = reader(pad, dt); } catch { sample = null; }
         if (sample && (sample.padIndex === undefined || sample.padIndex === pad.index)) {
@@ -725,17 +750,22 @@ export function installControllerMotion({ Input, PlayerController, G }) {
           if (d.available) {
             this.rig.yaw += d.yaw;
             this.rig.pitch = Math.max(-1.05, Math.min(1.15, this.rig.pitch + d.pitch));
-            gyroApplied = true;
           }
         }
       }
     }
+    // Sensor mode owns pitch between reports too; absence of a sample must
+    // not re-enable the right stick for one tick. Missing reader still falls
+    // back to normal stick control on platforms without controller motion.
+    const ownsPitch = !!(ownsAim && reader && !mapUp);
+    this._s3ControllerMotionOwnsPitch = ownsPitch;
     const gyroPitch = this.rig?.pitch;
-    const res = prior.call(this, dt);
-    // For this INKWAVE composition, a valid controller gyro sample suppresses this
-    // tick's right-stick pitch contribution to avoid applying pitch twice. S3 parity
-    // for controller axis ownership has not been verified.
-    if (gyroApplied && !this._s3RecenteredThisTick && gyroPitch !== undefined && this.rig) {
+    let res;
+    try { res = prior.call(this, dt); }
+    finally { this._s3ControllerMotionOwnsPitch = false; }
+    // Compatibility for consumers that load the legacy controller without the
+    // final source pass. Production suppresses stick pitch before it is applied.
+    if (ownsPitch && !this._s3RecenteredThisTick && gyroPitch !== undefined && this.rig) {
       this.rig.pitch = Math.max(-1.05, Math.min(1.15, gyroPitch));
       if (this.padLook) this.padLook.y = 0;
       if (this.a) { this.a.aimPitch = this.rig.pitch; this.a.aimYaw = this.rig.yaw; }
