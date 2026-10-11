@@ -77,7 +77,7 @@ async function populate(cache, rel, reusable, reusableRevision) {
     if (valid) { await cache.put(url, old); return; }
   }
   // HTTP cache can satisfy this without a transfer. Only immutable, exact revision URLs use force-cache.
-  const response = await timedFetch(new Request(url, { cache: 'force-cache', credentials: 'same-origin' }), 30000);
+  const response = await timedFetch(new Request(url, { cache: 'force-cache' }), 30000);
   await verify(response, BUILD.assets[rel]);
   await cache.put(url, response);
 }
@@ -100,7 +100,7 @@ async function installSnapshot() {
   const cache = await caches.open(CURRENT);
   const reusable = active && active !== BUILD.revision ? await complete(active) : null;
   try {
-    const html = await timedFetch(new Request(INDEX_URL, { cache: 'no-cache', credentials: 'same-origin' }), 30000);
+    const html = await timedFetch(new Request(INDEX_URL, { cache: 'no-cache' }), 30000);
     await verify(html, BUILD.index);
     // Store the verified body now; retaining an unread response across a long
     // precache queue is unnecessary. Without COMPLETE_URL this is not a usable
@@ -112,9 +112,8 @@ async function installSnapshot() {
       try { while (pending.length && !failed) await populate(cache, pending.shift(), reusable, active); }
       catch (error) { failed = true; throw error; }
     };
-    const results = await Promise.allSettled([copy(), copy()]);
-    const failure = results.find(result => result.status === 'rejected');
-    if (failure) throw failure.reason;
+    for (const result of await Promise.allSettled([copy(), copy()]))
+      if (result.status === 'rejected') throw result.reason;
     // Commit marker is last: interrupted install is not an offline-ready snapshot.
     await cache.put(COMPLETE_URL, jsonResponse({ revision: BUILD.revision, declaredBytes: BUILD.declaredBytes, installedAt: Date.now(), precache: BUILD.precache.map(rel => new URL(rel, REVISION_PREFIX).href) }));
   } catch (error) {
@@ -153,7 +152,7 @@ async function offlineIndex() {
   return old ? await old.match(INDEX_URL) : null;
 }
 function recoveryDocument() {
-  return new Response(`<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INKWAVE — オフライン</title><h1>INKWAVE</h1><p>オフラインです。保存データがないか削除されています。通信復旧後に開き直してください。</p><a href="${SCOPE.pathname}">もう一度開く</a></html>`, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+  return new Response(`<!doctype html><html lang="ja"><meta charset=utf-8><meta name=viewport content=width=device-width><title>INKWAVE — オフライン</title><h1>INKWAVE</h1><p>オフラインです。保存データが見つかりません。接続後に再読み込みしてください。</p><a href="${SCOPE.pathname}">もう一度開く</a></html>`, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 async function repairActiveState() {
   try {
@@ -189,7 +188,8 @@ async function currentAsset(request, rel) {
       return response;
     })();
     flights.set(request.url, task);
-    task.then(() => flights.delete(request.url), () => flights.delete(request.url));
+    const clearFlight = () => flights.delete(request.url);
+    task.then(clearFlight, clearFlight);
   }
   return (await task).clone();
 }
