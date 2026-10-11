@@ -146,6 +146,18 @@ export function installPlatformGame(Game, G, env = globalThis) {
   function ensure(game) {
     if (game.platform) return game.platform;
     const r = game.platform = { owner, driver: null, off: null, canvas: null, disposers: [], rendererLost: false };
+    // The platform driver replaces Game._loop. Install the opt-in frame
+    // profiler on this REAL frame owner, not on the unreachable legacy loop.
+    if (game._rangeFrameProbe === undefined) {
+      game._rangeFrameProbe = null;
+      if (new URLSearchParams(env.location?.search || '').get('profileRange') === '1') {
+        import('./range-frame-profiler.mjs').then(({ createFrameTimingProbe }) => {
+          if (game.platform === r && !r.disposed) {
+            game._rangeFrameProbe = createFrameTimingProbe({ env, game });
+          }
+        }).catch(error => env.console?.warn?.('Optional range profiler unavailable:', error));
+      }
+    }
     game.timer?.disconnect?.();
     game.menus?.setPlatformDriven?.(true);
     if (game.input?.mobile) game.input.mobile._platformCanRun = () => G.mode === 'match' && !!game.match && !game.match.paused && !game.menus?.current;
@@ -221,6 +233,8 @@ export function installPlatformGame(Game, G, env = globalThis) {
       r.disposers.push(() => { canvas.removeEventListener('webglcontextlost', lost); canvas.removeEventListener('webglcontextrestored', restored); });
     }
     r.driver = new PlatformFrameDriver(owner, dt => {
+      const probe = game._rangeFrameProbe;
+      probe?.callback(dt);
       if (game.frozen) return;
       const cap = frameRate();
       let frameDt = dt;
@@ -228,13 +242,23 @@ export function installPlatformGame(Game, G, env = globalThis) {
         const step = 1 / cap;
         game._frameCapAcc = (game._frameCapAcc || 0) + dt;
         game._frameCapElapsed = (game._frameCapElapsed || 0) + dt;
-        if (game._frameCapAcc + 1e-6 < step) return;
+        if (game._frameCapAcc + 1e-6 < step) { probe?.skipped(); return; }
         game._frameCapAcc = Math.min(step, Math.max(0, game._frameCapAcc - step));
         frameDt = game._frameCapElapsed; game._frameCapElapsed = 0;
       } else game._frameCapAcc = game._frameCapElapsed = 0;
       game.fpsAcc += frameDt; game.fpsN++;
       if (game.fpsAcc > .5) { game.fps = Math.round(game.fpsN / game.fpsAcc); game.fpsAcc = game.fpsN = 0; }
-      game._dynRes(frameDt); game._frame(frameDt);
+      game._dynRes(frameDt);
+      const frameStart = probe ? env.performance.now() : 0;
+      game._frame(frameDt);
+      if (probe) probe.record(frameStart, env.performance.now() - frameStart, {
+        frameRateHz: cap || 60,
+        refreshHz: 0, // The platform's capped RAF cannot measure raw panel refresh.
+        scale: game.R?.dynScale || 1,
+        phase: game.match?.range || game.match?.opts?.range ? 'practice' :
+          game.match?.attract ? 'attract' : game.match ? 'battle' : 'menu',
+        stages: game.perf,
+      });
     }, clear, frameRate);
     r.snapshot = () => ({ ...owner.snapshot(), frame: r.driver.snapshot(), rendererLost: r.rendererLost,
       gyro: game.input?.mobile?.gyro?.platformStatus,
@@ -256,7 +280,8 @@ export function installPlatformGame(Game, G, env = globalThis) {
     r.disposed = true;
     r.hiddenHostClock = null;
     clearHiddenHostDeadline(r, env); clearHiddenHostResult(r, env);
-    r.driver.dispose(); r.off(); r.notice?.remove(); for (const dispose of r.disposers) dispose();
+    r.driver.dispose(); r.off(); game._rangeFrameProbe?.dispose(); game._rangeFrameProbe = null;
+    r.notice?.remove(); for (const dispose of r.disposers) dispose();
     this.menus?.setPlatformDriven?.(false); this.input?.mobile?.destroy?.();
     G.audio?.disposePlatform?.();
     if (r.rendererLost) owner.block('webgl', false);
