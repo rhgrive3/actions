@@ -319,6 +319,25 @@ try {
         }
         G.projectiles.clear();Object.assign(G,saved);
       }
+      const subMarkChecks=[];
+      {
+        const saved={match:G.match,netm:G.netm,time:G.time,level:G.level,physics:G.physics,paint:G.paint,actors:G.actors};
+        G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};G.physics=new api.Physics(G.level);G.paint={sample:()=>0,splat:()=>0};G.netm=null;
+        G.match={state:'playing',time:180,duration:180,playing:()=>true};
+        for(const sub of ['pointSensor','inkMine','angleShooter'])for(const ap of [0,10,57]){
+          G.projectiles.clear();G.time=10;
+          const owner=makeActor('shooter',101),victim=makeActor('shooter',102);owner.team=0;victim.team=1;owner.invuln=victim.invuln=0;victim.s3.loadout=emptyLoadout();
+          if(ap===10)victim.s3.loadout[0].main='subResistance';if(ap===57)for(const part of victim.s3.loadout){part.main='subResistance';part.subs.fill('subResistance');}victim.s3RefreshGear();
+          owner.weapon={...owner.weapon,sub};owner.pos.set(0,0,0);owner.aimDir.set(0,0,1);victim.pos.set(0,0,2);G.actors=[owner,victim];
+          const obj=G.projectiles.throwBomb(owner);check(!!obj,'sub mark birth '+sub);
+          if(sub==='pointSensor'){const sensor=G.projectiles._s3SupportSensors[0];sensor.pos.set(0,.7,2);sensor.activeAt=10;sensor.expires=13;}
+          else{obj.pos.set(0,.7,0);obj.prev.copy(obj.pos);obj.vel.set(0,0,60);if(sub==='inkMine'){obj.phase='deployed';obj.vel.set(0,0,0);obj.activeAt=0;obj.deployedAt=0;obj.expireAt=Infinity;}}
+          for(let i=0;i<20&&!victim.s3.revealedUntil?.[0];i++)G.projectiles.update(1/60);
+          const remaining=(victim.s3.revealedUntil?.[0]||0)-G.time,expected=(sub==='pointSensor'?8:5)*gearCurve(ap,1,sub==='inkMine'?.55:.43,.1);
+          check(Math.abs(remaining-expected)<1e-8,'victim mark resistance '+sub+' '+ap);subMarkChecks.push({sub,ap,remaining});
+        }
+        G.projectiles.clear();Object.assign(G,saved);
+      }
       const kitChecks=[];
       for(const record of records){
         G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
@@ -403,7 +422,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        directSubChecks, accelerationChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
+        directSubChecks, accelerationChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
