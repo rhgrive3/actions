@@ -10,7 +10,8 @@ test('current full composition retains host team confirmation and two-human Turf
   const built = adaptBuildSource('src/net/session.js', source);
   const body = built.match(/  canStart\(\) \{([\s\S]*?)\n  \}/)?.[1];
   assert.ok(body, 'native canStart is present');
-  const canStart = new Function(body);
+  const compileRankedMethod = body => new Function('isRankedMode', `return function () {\n${body}\n}`)(isRankedMode);
+  const canStart = compileRankedMethod(body);
   const host = { isHost: true, state: 'lobby', myId: 'host', startBlock: () => null,
     lobby: { mode: 'turf', teamsConfirmed: true, bots: true, players: [{ id: 'host', ready: true }] } };
   assert.equal(canStart.call(host), false, 'bots cannot rescue solo Turf');
@@ -26,7 +27,7 @@ test('current full composition retains host team confirmation and two-human Turf
   // Execute the native start body so formatting and guard order cannot mask a bypass.
   const startBody = built.match(/  start\(\) \{([\s\S]*?)\n  \}/)?.[1];
   assert.ok(startBody);
-  const start = new Function(startBody);
+  const start = compileRankedMethod(startBody);
   host.lobby.mode = 'turf'; host.lobby.players[0].ready = true;
   host.tr = {}; host.canStart = () => true;
   assert.equal(start.call(host), false, 'start independently rejects solo Turf even with an optimistic canStart');
