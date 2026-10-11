@@ -13,7 +13,7 @@ on:
         description: Immutable adopted-main baseline commit
         required: true
         type: string
-        default: 9e865ddbe08c7b4dcde56f87cdfcadf13c175da1
+        default: bf38901475fa857016cf06bcc98cd764898795d0
       candidate_sha:
         description: Immutable lossless-codec candidate commit
         required: true
@@ -30,8 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      BASELINE_SHA: ${{ inputs.baseline_sha || '9e865ddbe08c7b4dcde56f87cdfcadf13c175da1' }}
-      CANDIDATE_SHA: ${{ inputs.candidate_sha || '5245fdf7eedeb3ffce420c0630008ba6d5e990e3' }}
+      BASELINE_SHA: ${{ inputs.baseline_sha || 'bf38901475fa857016cf06bcc98cd764898795d0' }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha || '9762656fcaafabbc54663e062aa038b5b2ae1fbf' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,12 +44,12 @@ jobs:
           JS
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.baseline_sha || '9e865ddbe08c7b4dcde56f87cdfcadf13c175da1' }}
+          ref: ${{ inputs.baseline_sha || 'bf38901475fa857016cf06bcc98cd764898795d0' }}
           path: .wall-baseline
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.candidate_sha || '5245fdf7eedeb3ffce420c0630008ba6d5e990e3' }}
+          ref: ${{ inputs.candidate_sha || '9762656fcaafabbc54663e062aa038b5b2ae1fbf' }}
           path: .wall-candidate
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -88,7 +88,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: catalog-wall-paint-performance-${{ matrix.group }}-${{ inputs.candidate_sha || '5245fdf7eedeb3ffce420c0630008ba6d5e990e3' }}
+          name: catalog-wall-paint-performance-${{ matrix.group }}-${{ inputs.candidate_sha || '9762656fcaafabbc54663e062aa038b5b2ae1fbf' }}
           path: .wall-performance-evidence/
           include-hidden-files: true
           if-no-files-found: warn
