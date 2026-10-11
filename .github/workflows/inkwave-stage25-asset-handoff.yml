@@ -1,0 +1,80 @@
+name: Stage 25 source assets to local handoff
+on:
+  push:
+    branches: [feat/inkwave-stage25-playable-1130]
+    paths:
+      - ".github/workflows/inkwave-stage25-asset-handoff.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-model-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - {part: "01", ids: "Vss_Yunohana Vss_Hiagari04 Vss_Pivot03 Vss_BigSlope00"}
+          - {part: "02", ids: "Vss_Crank02 Vss_Cross00 Vss_District00 Vss_Factory00"}
+          - {part: "03", ids: "Vss_Jyoheki03 Vss_Kaisou04 Vss_Line03 Vss_Nagasaki03"}
+          - {part: "04", ids: "Vss_Pillar03 Vss_Propeller00 Vss_Ruins03 Vss_Scrap01"}
+          - {part: "05", ids: "Vss_Section01 Vss_Spider00 Vss_Temple01 Vss_Twist00"}
+          - {part: "06", ids: "Vss_Upland03 Vss_Wave03 Vss_Yagara Vss_Carousel03"}
+    steps:
+      - name: Clone pinned KiTrix source without initial LFS smudge
+        env:
+          IDS: ${{ matrix.ids }}
+        run: |
+          set -euo pipefail
+          git lfs version
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 --filter=blob:none --no-checkout https://github.com/kirakira-dev/KiTrix.git original
+          cd original
+          git sparse-checkout init --cone
+          paths=(); for name in $IDS; do paths+=("stages/$name"); done
+          git sparse-checkout set "${paths[@]}"
+          git checkout --detach 0611f51b35c9736ee986fb2218461e2585b7875e
+          test "$(git rev-parse HEAD)" = "0611f51b35c9736ee986fb2218461e2585b7875e"
+      - name: Download real Git LFS OBJ and collect texture/material trees
+        env:
+          IDS: ${{ matrix.ids }}
+        run: |
+          set -euo pipefail
+          include=""
+          for id in $IDS; do
+            item="stages/$id/$id.obj"
+            include="${include:+$include,}$item"
+          done
+          cd original
+          git lfs pull --include="$include" --exclude=""
+          cd ..
+          mkdir -p handoff/stages
+          for id in $IDS; do
+            test -f "original/stages/$id/$id.obj"
+            test -f "original/stages/$id/$id.mtl"
+            test "$(wc -c < "original/stages/$id/$id.obj")" -gt 500000
+            mv "original/stages/$id" "handoff/stages/$id"
+            rm -rf "handoff/stages/$id/${id}_parts"
+          done
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path('handoff')
+          records=[]
+          for sid in os.environ['IDS'].split():
+              p=root/'stages'/sid/f'{sid}.obj'
+              digest=hashlib.sha256(p.read_bytes()).hexdigest()
+              tex=root/'stages'/sid/'textures'
+              records.append(dict(stage=sid,object_path=str(p.relative_to(root)),object_size=p.stat().st_size,object_sha256=digest,texture_count=len(list(tex.glob('*.png'))),texture_bytes=sum(f.stat().st_size for f in tex.glob('*.png'))))
+          (root/'manifest.json').write_text(json.dumps({'source':'kirakira-dev/KiTrix','source_commit':'0611f51b35c9736ee986fb2218461e2585b7875e','files':records,'note':'Third-party extracted Nintendo stage assets. Local research copy, not committed to the INKWAVE game.'},indent=2)+'\n')
+          print((root/'manifest.json').read_text())
+          PY
+      - name: Upload model+material+textures in a temporary research handoff artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-original-stage-models-part-${{ matrix.part }}
+          path: handoff/
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 4
