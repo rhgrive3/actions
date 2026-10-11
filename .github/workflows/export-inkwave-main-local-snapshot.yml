@@ -1,0 +1,61 @@
+name: Export immutable INKWAVE main to local snapshot
+on:
+  push:
+    branches:
+      - ops/inkwave-main-local-snapshot-20261012
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout requested main commit verbatim
+        uses: actions/checkout@v4
+        with:
+          ref: bf38901475fa857016cf06bcc98cd764898795d0
+          fetch-depth: 1
+          lfs: false
+      - name: Verify immutable revision and prepare complete tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "bf38901475fa857016cf06bcc98cd764898795d0"
+          test -f inkwave-public/index.html
+          test -f scripts/build-inkwave.mjs
+          mkdir -p handoff
+          python3 - <<'PY'
+          import json,subprocess,pathlib,hashlib
+          root=pathlib.Path('.')
+          tracked=subprocess.check_output(['git','ls-files','-z']).split(b'\x00')
+          files=[pathlib.Path(p.decode()) for p in tracked if p]
+          rows=[]
+          for p in files:
+              if not p.is_file(): continue
+              sha=hashlib.sha256()
+              with p.open('rb') as f:
+                  for chunk in iter(lambda:f.read(1024*1024),b''):
+                      sha.update(chunk)
+              rows.append({'path':p.as_posix(),'bytes':p.stat().st_size,'sha256':sha.hexdigest()})
+          pathlib.Path('handoff/snapshot-manifest.json').write_text(json.dumps({'repository':'rhgrive3/actions','branch':'main','commit':'bf38901475fa857016cf06bcc98cd764898795d0','source_files':rows},indent=2)+'\n')
+          print('files',len(rows),'bytes',sum(x['bytes'] for x in rows))
+          PY
+          python3 - <<'PY'
+          import pathlib,zipfile,subprocess
+          files=[pathlib.Path(p.decode()) for p in subprocess.check_output(['git','ls-files','-z']).split(b'\x00') if p]
+          out=pathlib.Path('handoff/INKWAVE-main-bf389014-source.zip')
+          with zipfile.ZipFile(out,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
+              for p in files:
+                  if p.is_file():z.write(p,p.as_posix())
+          print(out,out.stat().st_size)
+          PY
+      - name: Upload exact main source and manifest for local storage
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-main-bf389014-complete-source
+          path: |
+            handoff/INKWAVE-main-bf389014-source.zip
+            handoff/snapshot-manifest.json
+          if-no-files-found: error
+          retention-days: 2
+          compression-level: 0
