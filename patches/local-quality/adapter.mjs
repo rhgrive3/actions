@@ -11,7 +11,7 @@ import { adaptBossHit } from './boss-hit-adapter.mjs';
 import { adaptTeamSpecialSignal } from './team-special-signal-adapter.mjs';
 import { adaptIssue483 } from '../splatoon3/issue-483-adapter.mjs';
 import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
-import { patchLobbySetShowcase } from './issue-472-adapter.mjs';
+import { patchLobbySetShowcase } from './lobby-quality-adapter.mjs';
 import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
 import { adaptPropRetention } from './prop-retention-adapter.mjs';
 import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
@@ -56,8 +56,8 @@ import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
 import { adaptMatchRetainers } from './match-retainer-adapter.mjs';
-import { adaptFirstTouch } from './first-touch-adapter.mjs';
-import { adaptTouchRelayout } from './touch-relayout.mjs';
+import { adaptFirstTouch } from './first-touch-source-adapter.mjs';
+import { adaptTouchRelayout } from './touch-relayout-adapter.mjs';
 import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -72,6 +72,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
   'mural-atlas-adapter.mjs',
   'bot-paint-observation-adapter.mjs',
   'issue-418-adapter.mjs','world-quality.mjs','quality-probe.mjs','texlib-adapter.mjs','texlib.mjs',
