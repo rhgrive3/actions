@@ -109,11 +109,7 @@ try {
       G.teamColors = [new THREE.Color('#f80'), new THREE.Color('#03f')];
       G.actors = [];
       G.level = { blocks: [], groundHeight: () => 0, queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; return out; } };
-      G.physics = {
-        los: () => true,
-        raycast: (_origin, _direction, _distance, hit) => { hit.hit = false; return hit; },
-        segment: (_from, _to, hit) => { hit.hit = false; return hit; },
-      };
+      G.physics = new api.Physics(G.level);
       G.paint = { sample: () => 0, splat: () => 0 };
       G.match = { playing: () => true, canRespawn: () => false };
       G.projectiles = new Projectiles(G.scene);

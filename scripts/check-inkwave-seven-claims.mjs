@@ -30,13 +30,13 @@ try {
     const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(`http://127.0.0.1:${server.address().port}/probe`);
     const result=await page.evaluate(async()=>{
       const check=(v,msg)=>{if(!v)throw Error(msg);}, near=(a,b)=>check(Math.abs(a-b)<1e-8,`${a} != ${b}`);
-      const THREE=await import('three'),{G}=await import('/src/core/ctx.js'),{Actor}=await import('/src/game/actor.js'),{Projectiles}=await import('/src/game/weapons.js');
+      const THREE=await import('three'),{G}=await import('/src/core/ctx.js'),{Actor}=await import('/src/game/actor.js'),{Projectiles}=await import('/src/game/weapons.js'),{Physics}=await import('/src/game/physics.js');
       const profile=await fetch('/patches/splatoon3/profile.json').then(r=>r.json());(await import('/patches/splatoon3/runtime/install.mjs')).install(profile);
       const {FixedClock}=await import('/patches/splatoon3/runtime/clock.mjs');
       const fidelity=await import('/patches/splatoon3/runtime/weapons-fidelity.mjs');
       G.time=0;G.scene=new THREE.Scene();G.teamColors=[new THREE.Color('#f80'),new THREE.Color('#03f')];G.actors=[];
       G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};
-      G.physics={los:()=>true,segment:(_a,_b,h)=>{h.hit=false;return h;},raycast:(_a,_b,_c,h)=>{h.hit=false;return h;}};
+      G.physics=new Physics(G.level);
       G.paint={sample:()=>0,splat:()=>0};G.match={playing:()=>true,canRespawn:()=>false};G.projectiles=new Projectiles(G.scene);
       class Display {constructor(a){this.actor=a;this.root=new THREE.Group();}_owner(){return this.actor;}_runner(){return this.actor.weaponRunner;}trigger(){}setVisible(){}setHurt(){}setWeapon(){}getMuzzle(out){return out.copy(this.actor.pos).add(new THREE.Vector3(0,1.05,0));}}
       const make=weapon=>{const a=new Actor({team:0,name:'probe',weapon,CharacterClass:Display});a.character.actor=a;a.isLocal=true;a.grounded=true;a.ink=100;a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,100);return a;};
@@ -47,7 +47,7 @@ try {
         near(rows[7][0],8/60);near(rows[7][2],97.75);check(rows[162][0]<1&&rows[163][0]===1,'air completion boundary');check(rows.every(x=>x[0]===x[1]),'linear charge');traces.push(rows);
       }
       check(JSON.stringify(traces[0])===JSON.stringify(traces[1])&&JSON.stringify(traces[1])===JSON.stringify(traces[2]),'cadence');
-      const spin=make('splatling');spin.grounded=false;const oldRandom=Math.random,draws=[.5,1-1e-12,.25,.5];Math.random=()=>draws.shift()??.5;
+      const spin=make('splatling');spin.grounded=false;const oldRandom=Math.random,draws=[.5,.5,1-1e-12,.5];Math.random=()=>draws.shift()??.5;
       try{G.projectiles.fireSplatling(spin,spin.weapon,7);}finally{Math.random=oldRandom;}
       const round=G.projectiles.list.at(-1);near(Math.atan2(Math.abs(round.vel.y),Math.hypot(round.vel.x,round.vel.z))*180/Math.PI,1.6);G.projectiles.clear();
       const slosh=make('slosher');slosh.pos.y=20;slosh.aimDir.set(0,-Math.sqrt(3)/2,.5);G.projectiles.fireSlosh(slosh,slosh.weapon);const p=G.projectiles.list[0];
