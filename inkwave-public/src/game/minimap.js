@@ -71,12 +71,12 @@ export class Minimap {
   toCanvas(x, z, out = { x: 0, y: 0 }) {
     const B = this.level.bounds;
     let cx = (B.maxX - x) * this.s, cy = (B.maxZ - z) * this.s;
-    if (this.flip) { cx = this.w - cx; if (this.level.layout.symmetry !== 'reflectX') cy = this.h - cy; }
+    if (this.flip) { cx = this.w - cx; if (this.level.layout?.symmetry !== 'reflectX') cy = this.h - cy; }
     out.x = cx; out.y = cy;
     return out;
   }
   _worldX(px) { const B = this.level.bounds; const c = this.flip ? this.w - px : px; return B.maxX - c / this.s; }
-  _worldZ(py) { const B = this.level.bounds; const c = this.flip && this.level.layout.symmetry !== 'reflectX' ? this.h - py : py; return B.maxZ - c / this.s; }
+  _worldZ(py) { const B = this.level.bounds; const c = this.flip && this.level.layout?.symmetry !== 'reflectX' ? this.h - py : py; return B.maxZ - c / this.s; }
 
   // ------------------------------------------------------------------------------------------ static layers
   _build() {
@@ -98,7 +98,7 @@ export class Minimap {
       if (x0 > x1) [x0, x1] = [x1, x0]; if (y0 > y1) [y0, y1] = [y1, y0];
       const px0 = Math.max(0, Math.floor(x0)), px1 = Math.min(W - 1, Math.ceil(x1)), py0 = Math.max(0, Math.floor(y0)), py1 = Math.min(H - 1, Math.ceil(y1));
       const a0 = b.axes[0], a2 = b.axes[2];
-      const cnx = this.flip ? n.x : -n.x, cny = this.flip && this.level.layout.symmetry !== 'reflectX' ? n.z : -n.z;   // normal in canvas space
+      const cnx = this.flip ? n.x : -n.x, cny = this.flip && this.level.layout?.symmetry !== 'reflectX' ? n.z : -n.z;   // normal in canvas space
       for (let py = py0; py <= py1; py++) {
         const z = this._worldZ(py + 0.5);
         for (let px = px0; px <= px1; px++) {
