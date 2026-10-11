@@ -293,7 +293,7 @@ for (const run of RUNS) {
           !Array.isArray(perf.stageNames) ||
           !perf.stageNames.includes('paint') || !perf.stageNames.includes('render') ||
           perf.reportSchema !== 'inkwave-frame-trace-v1' || !perf.profileButton ||
-          !perf.tracerFileLoaded || perf.gpuStatus === 'error') {
+          !perf.tracerRuntimeInstalled || perf.gpuStatus === 'error') {
         throw new Error('Practice Range opt-in performance diagnostic: ' + JSON.stringify(perf));
       }
     }
