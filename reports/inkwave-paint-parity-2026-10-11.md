@@ -80,3 +80,21 @@ owner death does not erase in-flight paint; remote ghosts enqueue no duplicate
 authoritative splash. 30/60/120Hz final CPU grid and turf match. All 65 main
 Actor reachability tests and 22 existing main-catalog tests still pass. Local
 browser launch remains blocked; exact-head CI WebGL results remain required.
+
+## Follow-up candidate: distance-accurate catalog splash admission
+
+The 22 catalog records with explicit falling-splash physics previously released at most one drop at a fixed step's endpoint and returned on contact before admitting earlier crossed distances. The candidate now visits every existing release threshold on the unobstructed segment, samples the actual threshold position, and excludes releases beyond the first world/actor/defense contact. Each record's explicit `SpawnNearestLength` replaces the hardcoded initial distance 1. The remaining fractional `SpawnNum`, split scheduling and forced-nearest arrays retain their existing behavior and are not certified as retail parity.
+
+Tests exercise eight thresholds in one fixed step, clipped contact at distance 2.5, remote-authority exclusion, explicit nearest distance for all 22 real Actors, actual earlier-wall collision, owner death and 30/60/120 Hz final-grid parity. Source and correctly selected `INKWAVE_BUILT_SITE` each passed 8/8. The wall fixture moved from z=2.65 to z=1.65 to intersect the corrected release path rather than the old endpoint sample; the required wall-before-floor assertion remains. This follow-up is staged in PR1224, separate from the unpublished queue-budget and depth-envelope candidates.
+## Special projectile pool and direct-only credit safety
+
+A real Booyah throw recycled through `Projectiles.clear()` into an ordinary blaster retained `s3AllSpecial` and a 13.5 WU disk radius, resurrecting a Booyah object and 13,485 floor cells. All fields owned by the all-specials projectile layer are now reset at `_new()`. Regression checks cover all 11 main class tags, missile steering/damage metadata, and no inherited large disk or special object.
+
+Crab rapid rounds intentionally omit the explosive special descriptor. They now carry an explicit launch-owned no-special-paint flag that also resets on pool reuse. Native immediate and delayed ownership credit honors this flag. Actual Crab rounds landing after special expiry or owner death still award floor turf exactly once and award zero special gauge. Ordinary main bursts continue charging their gauge. These are lifecycle/credit safety fixes, not certification of retail Crab trajectory or all special mechanics.
+
+Independent review also found Crab direct-only rounds inheriting the equipped main's gravity (4 becoming 57.6 for a Shooter owner) because they had no special descriptor. Direct rounds now keep a non-explosive shot descriptor, and every launched special sets its own wire weapon ID. Actual JSON packet replay restores the Crab direct descriptor without authoring duplicate paint. All four canonical Crab kits preserve gravity 4, drag .04, radius .22 and zero blast radius in regression coverage.
+
+Validation correction: `source-fixture.mjs` selects published output with `INKWAVE_BUILT_SITE`, not `INKWAVE_BUILT_ROOT`. Runs using the latter were source rechecks and are not built evidence. The fixture now rejects that misspelled switch and prints the built manifest content hash when the real built site is loaded. Corrected composed-build safety coverage was rerun: 49/49 passed on content hash `ca90d8a447b93d1060f0be4e94e8e6f954081e99a077cf49d75068b8b40c4ae2` before the final JSON replay test was added; the final head is separately CI-gated.
+
+
+The combined canonical-kit/safe-paint/catalog-contact revision passed source 45/45 plus contact 11/11, and correctly selected built-site 56/56. Release admission is additionally clipped to remaining lifetime as well as range and the first collision; range 2.5, lifetime 1/240 second and their combination each admit only distances 1 and 2 in a 10-unit synthetic step. Eight-actor runs across all 22 records at height 16 retained a maximum 224 queued drops and 85-frame landing time, with no eviction, lifetime expiry or remaining queue; this is an authored-stage stress receipt rather than a universal custom-map bound.

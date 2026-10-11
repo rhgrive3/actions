@@ -16,7 +16,7 @@ test('catalog falling splash derives gravity and height law from retained 11.3.0
 async function shot(rate,height=8,{wall=false,dead=false,ghost=false}={}){
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);const {paint,level}=makePaintWorld(f,{wall});
- if(wall){level.faces[1].origin.z=2.65;level.blocks[1].center.z=3.15;level.blocks[1].aabbMin.z=2.65;level.blocks[1].aabbMax.z=3.65;}f.G.settings={};f.setRandom(()=>.37);
+ if(wall){level.faces[1].origin.z=1.65;level.blocks[1].center.z=2.15;level.blocks[1].aabbMin.z=1.65;level.blocks[1].aabbMax.z=2.65;}f.G.settings={};f.setRandom(()=>.37);
  const a=f.make('s3-shooter-short');a.form='kid';a.pos.set(0,height,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,height,60);a.grounded=true;
  const stamps=[],original=paint.splat;paint.splat=function(at,r,team,opts){stamps.push({time:f.G.time,at:at.clone(),r,opts:{...opts}});return original.call(this,at,r,team,opts);};
  a.intent.fire=true;a.weaponRunner.update(1/60,{fire:true,firePressed:true,sub:false});a.intent.fire=false;if(dead)a.alive=false;if(ghost){a.remote=true;for(const p of f.G.projectiles.list)p.ghost=true;}

@@ -570,8 +570,17 @@ test('face, uv and block are filled from a valid native face', async () => {
 
 function spyTurf(actor) {
   const calls = [];
-  const real = actor.addTurf.bind(actor);
-  actor.addTurf = (n) => { calls.push(n); return real(n); };
+  // Observe either credit API. Count only the outer call if a runtime wraps
+  // one API through the other, so an implementation detail cannot double-count.
+  let depth = 0;
+  for (const key of ['addTurf', 'addTurfNoSpecial']) {
+    const real = actor[key].bind(actor);
+    actor[key] = (n) => {
+      if (!depth) calls.push(n);
+      depth++;
+      try { return real(n); } finally { depth--; }
+    };
+  }
   return calls;
 }
 
@@ -585,6 +594,7 @@ test('each native paint site credits turf exactly once, for a carrier and an ord
   const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
   const carrier = fired[VOLLEY_CONFIG.damageLobeIndex];
 
+  a.special = 0;
   // a NON blast impact is the clean probe: native lays one splat and one credit
   calls.length = 0;
   projectiles._impact({ ...carrier, type: 'shot', vol: null }, hit);
@@ -593,6 +603,8 @@ test('each native paint site credits turf exactly once, for a carrier and an ord
   calls.length = 0;
   projectiles._blastBurst(carrier, new api.THREE.Vector3(0, 1, 3), null);
   assert.equal(calls.length, 1, `one blast credits once, not twice (${calls.length})`);
+
+  assert.equal(a.special, 0, 'special impact and burst cannot recharge the gauge');
 
   calls.length = 0;
   const trail = projectiles._new();
@@ -604,6 +616,7 @@ test('each native paint site credits turf exactly once, for a carrier and an ord
   assert.equal(calls.length, 1, `one trail drip credits once, not twice (${calls.length})`);
 
   calls.length = 0;
+  a.special = 0;
   const plain = projectiles._new();
   Object.assign(plain, { type: 'shot', wid: 'shooter', owner: a, team: 0, age: 0, life: 5,
     straight: 0.06, radius: 0.5, size: 0.2, grav: 57.6, drag: 0, damage: 36, trail: -1.5,
@@ -612,6 +625,7 @@ test('each native paint site credits turf exactly once, for a carrier and an ord
   projectiles._impact(plain, hit);
   assert.equal(calls.length, 1, `an ordinary main round also credits exactly once (${calls.length})`);
   assert.ok(calls[0] > 0, 'and the credit is the real paint area');
+  assert.ok(a.special > 0, 'ordinary main paint retains legitimate gauge credit');
 });
 
 test('kitPaintCredit is pure: it returns the amount and never credits by itself', async () => {

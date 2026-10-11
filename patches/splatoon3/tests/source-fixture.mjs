@@ -13,8 +13,13 @@ import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+if (process.env.INKWAVE_BUILT_ROOT) throw new Error('Use INKWAVE_BUILT_SITE; INKWAVE_BUILT_ROOT is not a supported fixture switch');
 const BUILT = process.env.INKWAVE_BUILT_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+if (BUILT) {
+  const manifest = JSON.parse(fs.readFileSync(path.join(UPSTREAM, 'inkwave-build.json'), 'utf8'));
+  console.log('INKWAVE built fixture', UPSTREAM, 'contentHash=' + manifest.contentHash);
+}
 const adaptProduction = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 // Super Jump admission calls the same native water predicate as ordinary and
