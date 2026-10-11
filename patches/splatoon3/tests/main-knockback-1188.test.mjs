@@ -44,13 +44,13 @@ test('PR1188 timed Blaster burst pushes a local enemy by the #535 law; remote an
   near(dv, 700 / 10 / 60 * Math.pow(1 - 2 / 3.5, .8), 1e-12);
 });
 
-test('PR1188 ghost Blaster burst on the victim client pushes the local victim once', async () => {
+test('PR1188 ordinary ghost Blaster burst cannot duplicate recipient hit knockback', async () => {
   const f = await world(), { G, THREE } = f;
   const shooter = f.make('blaster'); shooter.remote = true; shooter.team = 0;
   const me = f.make('shooter'); me.team = 1; me.isLocal = true; me.pos.set(0, 0, 1.5); me.vel.set(0, 0, 0);
   const p = G.projectiles._new(); Object.assign(p, { type: 'blast', owner: shooter, team: 0, s3Weapon: f.WEAPONS.blaster, wid: 'blaster', seed: .5, ghost: true });
   G.projectiles._blastBurst(p, new THREE.Vector3(0, .7, 0), null);
-  near(me.vel.z, splatBombKnockbackDelta(1.5, { accel: 700, bias: .8, distance: 3.5 }));
+  near(me.vel.z, 0, 1e-12, 'visual replay has no combat authority; native #574 receipt owns the impulse');
 });
 
 test('PR1188 queued terrain burst applies knockback when it resolves, with the reduced distance', async () => {

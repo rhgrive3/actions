@@ -2158,9 +2158,10 @@ export function installWeaponsFidelity(context,profile) {
       const w=p.s3Weapon||WEAPONS.blaster;
       context.G.fx?.explosion(point,p.owner.color,w.burstRadius);
       context.G.audio?.play('blaster_boom',{pos:point,volume:.7});
-      // A local-owner visual ghost is not a network combat receipt. Only the
-      // remote-owner replay is authorised to displace a locally owned victim.
-      if(p.owner?.remote)blasterKnockback(p,point,victim);
+      // Ordinary remote bursts are visual replays: the authenticated #574 hit
+      // already owns the victim's impulse. Only the reduced terrain model has
+      // no native #574 impulse; keep that separately scoped replay owner.
+      if(p.owner?.remote && p.s3TerrainBurst)blasterKnockback(p,point,victim);
       return;
     }
     // #574's adapted native _blastBurst already calls applyBlasterBlastContact
