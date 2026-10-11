@@ -280,7 +280,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
     r.disposed = true;
     r.hiddenHostClock = null;
     clearHiddenHostDeadline(r, env); clearHiddenHostResult(r, env);
-    r.driver.dispose(); r.off(); game._rangeFrameProbe?.dispose(); game._rangeFrameProbe = null;
+    r.driver.dispose(); r.off(); this._rangeFrameProbe?.dispose(); this._rangeFrameProbe = null;
     r.notice?.remove(); for (const dispose of r.disposers) dispose();
     this.menus?.setPlatformDriven?.(false); this.input?.mobile?.destroy?.();
     G.audio?.disposePlatform?.();
