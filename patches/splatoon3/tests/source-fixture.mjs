@@ -16,16 +16,19 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 if (process.env.INKWAVE_BUILT_ROOT) throw new Error('Use INKWAVE_BUILT_SITE; INKWAVE_BUILT_ROOT is not a supported fixture switch');
 const BUILT = process.env.INKWAVE_BUILT_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-if (BUILT) {
-  const manifest = JSON.parse(fs.readFileSync(path.join(UPSTREAM, 'inkwave-build.json'), 'utf8'));
-  console.log('INKWAVE built fixture', UPSTREAM, 'contentHash=' + manifest.contentHash);
-}
 const adaptProduction = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 // Super Jump admission calls the same native water predicate as ordinary and
 // special movement. Include its real production adapter in constrained boots.
 export const adaptConstrainedSource = (rel, code) => adaptSpecialWater(rel, adaptSource(rel, code));
 export async function fixture(options = {}) {
+  // Importers may reject alternate fixture roots before starting a fixture.
+  // Validate and report the manifest only when the fixture is actually used.
+  if (BUILT) {
+    const manifest = JSON.parse(fs.readFileSync(path.join(UPSTREAM, 'inkwave-build.json'), 'utf8'));
+    console.log('INKWAVE built fixture', UPSTREAM, 'contentHash=' + manifest.contentHash);
+  }
+
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
   const { adapt = adaptConstrainedSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
     fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false,
