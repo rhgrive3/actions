@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { networkIdentity } from '../../patches/network-replication/adapter.mjs';
+import { qualityIdentity } from '../../patches/local-quality/adapter.mjs';
 import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../lib/inkwave-build-only-modules.mjs';
 import { World } from '../../patches/loading-cache/tests/worker-fixture.mjs';
@@ -19,7 +20,37 @@ const runtimeHelpers = [
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
   'patches/local-quality/first-touch-adapter.mjs',
   'patches/local-quality/issue-472-adapter.mjs',
+  'patches/local-quality/touch-relayout.mjs',
 ];
+
+// Explicit auxiliary exports are used by source composition/tests only.
+// Never infer this from '*-adapter' names: the emitted graph audit below must
+// still reject every static/dynamic runtime reference to an excluded module.
+const auditedBuildExports = new Map([
+  ['patches/local-quality/audio-listener-adapter.mjs', ['AUDIO_LISTENER_SOURCE']],
+  ['patches/local-quality/finish-tape-adapter.mjs', ['replaceOnceFinish']],
+  ['patches/local-quality/hud-authority-adapter.mjs', ['SPECIAL_SEGMENTS', 'specialGaugeSVG']],
+  ['patches/local-quality/issue-190-adapter.mjs', ['MIP_POLICY', 'shouldRebuildMipmaps', 'replaceOnce']],
+  ['patches/local-quality/issue-418-adapter.mjs', ['replaceExact', 'replaceOnce']],
+  ['patches/local-quality/issue-461-sfx-mute.mjs', ['REQUIRED_WIRING', 'ISSUE_461_AUDIO_REL']],
+  ['patches/local-quality/issue-480-camera-shake-fidelity.mjs', ['REQUIRED_WIRING', 'ISSUE_480_CAMERA_RIG', 'ISSUE_480_SCREENFX', 'ISSUE_480_MENUS']],
+  ['patches/local-quality/medal-adapter.mjs', ['replaceOnce', 'S3_AWARDS', 'S3_PRIORITY_RANKS', 'S3_AWARD_ORDER']],
+  ['patches/local-quality/minimap-resource-adapter.mjs', ['replaceOnceMinimap']],
+  ['patches/local-quality/team-special-signal-adapter.mjs', []],
+  ['patches/local-quality/texlib-adapter.mjs', ['replaceOnceTexlib']],
+  ['patches/reliability/map-look.mjs', []],
+  ['patches/splatoon3/assist-presentation-adapter.mjs', ['ASSIST_PRESENTATION_CONNECTIONS']],
+  ['patches/splatoon3/issue-405-adapter.mjs', ['replaceOnce']],
+  ['patches/splatoon3/issue-427-adapter.mjs', ['replaceOnce']],
+  ['patches/splatoon3/issue-435-adapter.mjs', ['SLOSHER_EMERGE_REL', 'SLOSHER_EMERGE_ANCHOR', 'SLOSHER_EMERGE_REPLACEMENT']],
+  ['patches/splatoon3/issue-460-adapter.mjs', ['replaceOnce']],
+  ['patches/splatoon3/issue-477-adapter.mjs', ['DUALIES_STARTUP_FRAMES', 'DUALIES_STARTUP_SECONDS', 'DUALIES_ROLL_FRAMES', 'DUALIES_ROLL_SECONDS', 'DUALIES_LOCK_FRAMES', 'DUALIES_LOCK_SECONDS', 'DUALIES_POST_ROLL_FIRE_GATE_FRAMES', 'DUALIES_POST_ROLL_FIRE_GATE_SECONDS', 'PHYSICAL_NINTENDO_ANGLES_UNMEASURED', 'replaceOnce']],
+  ['patches/splatoon3/issue-479-adapter.mjs', ['replaceOnce']],
+  ['patches/splatoon3/issue-481-adapter.mjs', ['replaceOnce', 'calculateFlowSplatPoints']],
+  ['patches/splatoon3/issue-482-adapter.mjs', ['replaceOnce']],
+  ['patches/splatoon3/issue-483-adapter.mjs', ['replaceOnce483', 'ISSUE_483_REL', 'ISSUE_483_HEADER', 'ISSUE_483_RIG_ANCHOR', 'ISSUE_483_RIG_TAIL_ANCHOR', 'ISSUE_483_TIER_ANCHOR', 'ISSUE_483_QUALITY_ANCHOR', 'ISSUE_483_DISPOSE_ANCHOR', 'ISSUE_483_GEO_REL', 'ISSUE_483_GEO_ANCHOR', 'ISSUE_483_GEO_APPEND']],
+  ['patches/splatoon3/issue-484-adapter.mjs', ['replaceOnce']],
+]);
 
 test('excluded modules have audited build-only exports; mixed runtime adapters remain shipped', () => {
   assert(BUILD_ONLY_PATCH_MODULES.size > 0);
@@ -30,11 +61,41 @@ test('excluded modules have audited build-only exports; mixed runtime adapters r
       n.declaration?.id?.name || n.declaration?.declarations?.map(d => d.id.name) || n.specifiers?.map(s => s.exported.name) || '?');
     assert(exports.length > 0, file);
     const expected = file === composer ? ['createLazyComposerTarget', 'adaptComposerTarget', 'revertComposerTarget']
-      : file === composerFormat ? ['composerGradeKeepsPackedTargetNonnegative', 'selectComposerTargetFormat', 'configureComposerColorTargets'] : [];
+      : file === composerFormat ? ['composerGradeKeepsPackedTargetNonnegative', 'selectComposerTargetFormat', 'configureComposerColorTargets']
+      : file === 'patches/local-quality/lobby-quality-adapter.mjs' ? ['patchLobbySetShowcase'] : (auditedBuildExports.get(file) || []);
     assert(exports.every(name => /^adapt[A-Z]/.test(name) || expected.includes(name)),
       `New runtime export requires removing ${file} from the build-only list: ${exports}`);
   }
+  for (const file of auditedBuildExports.keys()) assert(BUILD_ONLY_PATCH_MODULES.has(file), file);
   for (const file of runtimeHelpers) assert(!BUILD_ONLY_PATCH_MODULES.has(file), file);
+});
+
+const extractedTransforms = [
+  ['patches/local-quality/first-touch-adapter.mjs', 'patches/local-quality/first-touch-source-adapter.mjs', 'adaptFirstTouch', ['isMobilePointer', 'adoptCanvasTouch', 'continueCanvasTouch']],
+  ['patches/local-quality/touch-relayout.mjs', 'patches/local-quality/touch-relayout-adapter.mjs', 'adaptTouchRelayout', ['physicalOrientation', 'createTouchRelayout']],
+  ['patches/local-quality/issue-472-adapter.mjs', 'patches/local-quality/lobby-quality-adapter.mjs', 'patchLobbySetShowcase', ['ISSUE_472_ROOT', 'ISSUE_472_BASELINE', 'LOBBY_SHADOW_INTERVAL_LOW', 'isTouchMobile', 'resolveLobbyQualityName', 'lobbyShadowDue']],
+  ['patches/splatoon3/runtime/issue-415-adapter.mjs', 'patches/splatoon3/enemy-ink-recovery-adapter.mjs', 'adaptIssue415', ['resetEnemyInkRecovery']],
+];
+
+test('runtime helper URLs retain their exports without carrying build-time source transforms', async () => {
+  const quality = qualityIdentity();
+  for (const [runtime, transformer, transformName, runtimeExports] of extractedTransforms) {
+    assert(!BUILD_ONLY_PATCH_MODULES.has(runtime), runtime);
+    assert(BUILD_ONLY_PATCH_MODULES.has(transformer), transformer);
+    const mod = await import(new URL(runtime, root));
+    assert.deepEqual(Object.keys(mod).sort(), [...runtimeExports].sort(), runtime);
+    assert.equal(typeof (await import(new URL(transformer, root)))[transformName], 'function');
+    const source = fs.readFileSync(new URL(runtime, root), 'utf8');
+    const tokens = [];
+    parse(source, { ecmaVersion: 'latest', sourceType: 'module', onToken: tokens });
+    assert(!tokens.some(token => token.type.label === 'name' && token.value === transformName),
+      'runtime must not import/re-export its build-time transform: ' + runtime);
+    if (transformer.startsWith('patches/local-quality/')) {
+      const relative = transformer.slice('patches/local-quality/'.length);
+      const hash = crypto.createHash('sha256').update(fs.readFileSync(new URL(transformer, root))).digest('hex');
+      assert.equal(quality[relative], hash, transformer);
+    }
+  }
 });
 
 const site = process.env.INKWAVE_BUILT_SITE && path.resolve(process.env.INKWAVE_BUILT_SITE);
@@ -75,6 +136,14 @@ test('emitted identity binds every input to one canonical tracked path including
     assert.equal(identity.files[key], hash(fs.readFileSync(new URL('patches/splatoon3/runtime/' + file, root))), key);
   }
   assert.equal(identity.inputHash, hash(JSON.stringify(identity.files)));
+});
+
+test('emitted gameplay profile preserves all JSON values without shipping indentation', { skip: !site }, () => {
+  const source = fs.readFileSync(new URL('patches/splatoon3/profile.json', root), 'utf8');
+  const emitted = fs.readFileSync(path.join(site, 'patches/splatoon3/profile.json'), 'utf8');
+  assert.deepEqual(JSON.parse(emitted), JSON.parse(source));
+  assert.equal(emitted, JSON.stringify(JSON.parse(source)));
+  assert(Buffer.byteLength(emitted) < Buffer.byteLength(source));
 });
 
 test('emitted worker keeps the complete runtime graph, installs, and replays verified offline bytes', { skip: !site }, async () => {
