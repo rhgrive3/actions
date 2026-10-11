@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { createTouchRelayout, physicalOrientation, adaptTouchRelayout } from '../touch-relayout.mjs';
+import { createTouchRelayout, physicalOrientation } from '../touch-relayout.mjs';
+import { adaptTouchRelayout } from '../touch-relayout-adapter.mjs';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
