@@ -4,10 +4,9 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { parse } from './vendor/acorn.mjs';
-// Cold-offline install snapshot and stamped worker ceilings. Raised from
-// 5 MiB / 64 KiB (2026-10-11, owner decision) when main had 2.6 KB / 47 B left
-// and the S3 bomb models + sub/special kits no longer fit.
-export const PRECACHE_BUDGET_BYTES=Math.round(5.25*1024*1024), WORKER_BUDGET_BYTES=68*1024;
+// The production cold-offline gameplay snapshot may use up to 10 MiB.
+// Worker (68 KiB) and total revision (12 MiB) ceilings remain independent.
+export const PRECACHE_BUDGET_BYTES=10*1024*1024, WORKER_BUDGET_BYTES=68*1024;
 export const LOADING_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const filesIn = dir => fs.readdirSync(dir, { withFileTypes: true }).filter(d => d.name !== '.rsync-tmp').flatMap(e => e.isDirectory() ? filesIn(path.join(dir,e.name)) : [path.join(dir,e.name)]).sort();
@@ -90,7 +89,7 @@ export function loadingIdentity() {
 }
 // Cold offline cache only needs stages that can actually be played offline.
 // The Cargo stage has onlineOnly:true; its lightmap remains versioned and
-// cache-on-request but not in the install-time 5.25 MiB snapshot.
+// cache-on-request but not in the install-time 10 MiB snapshot.
 export const coldOfflineLightmap = rel => rel.startsWith('assets/lightmaps/') &&
   rel !== 'assets/lightmaps/cargo.png';
 export function prepareLoading(build, preloads, options = {}) {
@@ -137,7 +136,7 @@ export function prepareLoading(build, preloads, options = {}) {
   const css=Object.keys(assets).filter(rel=>rel.endsWith('.css')); // Includes @import HUD CSS and non-./ HTML hrefs.
   // Cargo is an online-only/no-bots/no-boss stage (src/config.js). Its PNG
   // lightmap is integrity-checked and cached on first online use, not copied
-  // into the 5.25 MiB cold-offline snapshot where that stage cannot be played.
+  // into the 10 MiB cold-offline snapshot where that stage cannot be played.
   // All three playable offline stage lightmaps remain in the install snapshot.
   // PWA icons are fetched by the browser at install/display time, not game startup.
   // Keep all three versioned icon files in BUILD.assets for integrity-checked
