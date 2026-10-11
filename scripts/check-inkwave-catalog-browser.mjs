@@ -265,6 +265,33 @@ try {
         }
         G.match=previousMatch;G.netm=previousNet;G.level.spawnPads=previousPads;G.time=previousTime;
       }
+      const transientGearChecks=[];
+      {
+        const {NetMatch}=await import('/src/net/netmatch.js');
+        const saved={match:G.match,netm:G.netm,time:G.time,level:G.level,physics:G.physics,paint:G.paint,actors:G.actors};
+        const V=THREE.Vector3,center=new V(0,-.1,0),half=new V(100,.1,100);
+        const floor={id:0,solid:true,center,half,axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,0,-1,-1,-1],aabbMin:center.clone().sub(half),aabbMax:center.clone().add(half)};
+        G.level={blocks:[floor],faces:[{origin:new V(-100,0,-100),u:new V(1,0,0),v:new V(0,0,1)}],spawnPads:[new V(-80,0,0),new V(80,0,0)],spawnBarrier:0,hasRails:false,groundHeight:()=>0,queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;out.push(0);return out;}};
+        G.physics=new api.Physics(G.level);G.paint={sample:()=>0,splat:()=>0};
+        for(const kind of ['drink','drop']){
+          G.projectiles.clear();G.time=0;
+          const weapon=kind==='drink'?'s3-shooter-quickmiddle':'shooter',owner=makeActor(weapon,91),remote=makeActor(weapon,91);owner.owner=remote.owner='buff-owner';
+          if(kind==='drop'){owner.s3.loadout=emptyLoadout();owner.s3.loadout[2].main='dropRoller';owner.s3RefreshGear();}
+          let packet;const transport={sendTo(){},broadcast:value=>{packet=JSON.parse(JSON.stringify(value));}};
+          const sender=new NetMatch({myId:'buff-owner',hostId:'buff-owner',isHost:true,tr:transport},{id:'buff-browser'}),receiver=new NetMatch({myId:'buff-viewer',hostId:'buff-owner',isHost:false,tr:transport},{id:'buff-browser'});
+          const match=actors=>({actors,state:'playing',time:180,duration:180,playing:()=>true,canRespawn:()=>false});sender.bind(match([owner]));receiver.bind(match([remote]));G.match=sender.match;G.netm=sender;G.actors=[owner];
+          const step=(net,a,count)=>{for(let i=0;i<count;i++){G.time+=1/60;net.update(1/60);net.match.time-=1/60;if(a.remote)net.applyRemote(a,1/60);else a.update(1/60);}};
+          if(kind==='drink'){owner.special=owner.specialCost();owner._startSpecial();check(G.projectiles._s3SupportCoolers.length===1,'actual cooler stand');G.time+=1/60;G.projectiles.update(1/60);check(owner.s3.drink,'actual stand pickup');}
+          else {owner.s3.jumpChargeTime=1/60;owner.s3.jumpFlightTime=.5;check(owner.superJump(new V(12,0,0)),'actual jump start');let frames=0;while(owner.superJumpState&&frames++<600){const jump=owner.superJumpState;if(jump.phase==='flight'&&jump.t+1/60+1e-10>=jump.dur)owner.intent.move.set(1,0,0);step(sender,owner,1);}check(frames<600&&owner.s3.dropRoller,'actual adapted landing');step(sender,owner,20);}
+          const remaining=kind==='drink'?owner.s3.drinkUntil-G.time:owner.s3.dropRollerBuffRemaining,boost=owner.s3.modifiers.runSpeed;check(remaining>0&&boost>1,'earned transient boost '+kind);sender._sendTick();receiver.match.time=sender.match.time-.1;
+          G.match=receiver.match;G.netm=receiver;G.actors=[remote];receiver.onMessage('buff-owner',packet);receiver._peer('buff-owner').tr=packet.ts;receiver._sample(remote,packet.ts,0);receiver.applyRemote(remote,1/60);check(!remote.s3.drink&&!(remote.s3.dropRollerBuffRemaining>0),'remote has no transient gameplay authority');
+          step(receiver,remote,30);receiver.s.hostId='buff-viewer';receiver.s.isHost=true;receiver.onLeave('buff-owner',true);
+          const adopted=kind==='drink'?remote.s3.drinkUntil-G.time:remote.s3.dropRollerBuffRemaining;check(Math.abs(adopted-(remaining-.6))<1e-8,'known delay and wait consumed '+kind);check(Math.abs(remote.s3.modifiers.runSpeed-boost)<1e-8,'adopted AP recomputed '+kind);
+          step(receiver,remote,Math.ceil(adopted*60)+2);G.projectiles.update(1/60);check(!remote.s3.drink&&!(remote.s3.dropRollerBuffRemaining>0),'transient expires '+kind);
+          transientGearChecks.push({kind,remaining,adopted,expired:true});sender.dispose();receiver.dispose();
+        }
+        G.projectiles.clear();Object.assign(G,saved);
+      }
       const kitChecks=[];
       for(const record of records){
         G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
@@ -278,6 +305,27 @@ try {
         a._startSpecial();check(a.stats.specials===1,record.id+' special admitted');
         a.reset();check(a.weapon.sub===k.sub&&a.weapon.special===k.special,record.id+' kit after reset');
         kitChecks.push({id:record.id,sub:k.sub,special:k.special,points:k.specialCost,inkCost:cost});
+      }
+      const directSubChecks=[];
+      {
+        const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics};
+        G.netm=null;G.match={playing:()=>true,state:'playing',time:180};
+        G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};G.physics=new api.Physics(G.level);
+        const equipDirect=(a,ap)=>{a.s3.loadout=emptyLoadout();for(const p of a.s3.loadout){if(ap>=10){p.main='subResistance';ap-=10;}}for(const p of a.s3.loadout)for(let i=0;i<3&&ap>=3;i++){p.subs[i]='subResistance';ap-=3;}a.s3RefreshGear();};
+        for(const source of ['angleShooter','sprinkler'])for(const ap of [0,10,57]){
+          G.projectiles.clear();const o=makeActor('shooter'),v=makeActor('shooter');v.team=1;v.invuln=0;v.pos.set(0,0,2);equipDirect(v,ap);G.actors=[o,v];o.weapon={...o.weapon,sub:source};o.weaponRunner.reset();const hp=v.hp;
+          if(source==='angleShooter'){const p=G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);}
+          else{G.projectiles.throwBomb(o);const b=G.projectiles.bombs.at(-1);kitBombContact(api.SUB,b,{hit:true,point:new THREE.Vector3(0,0,0),normal:new THREE.Vector3(0,1,0)});b.s3Sprinkler.nextFrame=Infinity;b.s3Sprinkler.drops.push({pos:new THREE.Vector3(0,.7,2),vel:new THREE.Vector3(),life:0,seed:.2});}
+          for(let i=0;i<10&&v.hp===hp;i++){G.time+=1/60;G.projectiles.update(1/60);}
+          const raw=source==='angleShooter'?40:20,expected=Math.floor(raw*gearCurve(ap,1,.75,.5)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8,'native direct resistance '+source+' '+ap);directSubChecks.push({source,ap,damage:hp-v.hp});
+        }
+        for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57]){
+          G.projectiles.clear();const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='direct-owner';v.owner='direct-victim';v.team=1;v.invuln=0;o.netLife=v.netLife=0;equipDirect(v,ap);equipDirect(o,57);o.weapon={...o.weapon,sub:source};let packet,ack;
+          const tx=new NetMatch({myId:'direct-owner',hostId:'direct-owner',isHost:true,tr:{sendTo:(_id,p)=>{packet=JSON.parse(JSON.stringify(p));}}},{id:'direct-probe'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,40,source);check(packet.d===40,'raw direct hit on wire');
+          const rx=new NetMatch({myId:'direct-victim',hostId:'direct-owner',isHost:false,tr:{sendTo:(_id,p)=>{ack=JSON.parse(JSON.stringify(p));}}},{id:'direct-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;
+          rx.onMessage('foreign',packet);check(v.hp===hp,'foreign direct hit rejected');if(source==='angleShooter'){rx.onMessage('direct-owner',{...packet,d:40.1});check(v.hp===hp,'oversized direct hit rejected');}rx.onMessage('direct-owner',packet);const damage=hp-v.hp;check(damage===(ap===57?20:40)&&ack.d===damage,'direct victim and ACK agree');rx.onMessage('direct-owner',packet);check(hp-v.hp===damage,'duplicate direct hit rejected');directSubChecks.push({source,ap,wire:true,damage});tx.dispose();rx.dispose();G.netm=null;
+        }
+        G.projectiles.clear();Object.assign(G,saved);
       }
       let totalProjectiles = 0;
       const emissions = [];
@@ -328,7 +376,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks,
+        directSubChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
