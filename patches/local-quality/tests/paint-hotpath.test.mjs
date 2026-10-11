@@ -210,8 +210,11 @@ test('CPU paint inner-disc shortcut retains exact ownership, area and version fo
   assert.equal(b.version, a.version);
 });
 test('0.68 inner-disc gate has a strict mathematical margin beneath historical 0.97 paint cutoff', async () => {
-  const native = await loadNative(ORIGINAL);
-  const wob = native.exports.blobWobble;
+  const start = ORIGINAL.indexOf('export function blobWobble(');
+  const end = ORIGINAL.indexOf('const WOB_MAX', start);
+  assert.ok(start >= 0 && end > start, 'native deterministic wobble function');
+  const source = ORIGINAL.slice(start, end).replace('export function', 'function');
+  const wob = new Function(source + '\nreturn blobWobble;')();
   // Derived bound: 1 - (0.12+0.08+0.05+0.03+0.018) = 0.702,
   // while both cos^even terms are nonnegative.
   assert.ok(0.68 / 0.702 < 0.97);
