@@ -10,5 +10,10 @@ export function adaptClothingGear(rel, code, replace) {
   // Existing life/owner admission and ACK listeners remain outside this local scope.
   const hit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
   patch(hit, 'withHitPunisher(atk, d.rp, () => { ' + hit + ' });', 'hit-scoped equipment and finally');
+  patch('if (respawnPunisherEquipped(a)) f |= RESPAWN_PUNISHER_FLAG;', 'if (respawnPunisherEquipped(a)) f |= RESPAWN_PUNISHER_FLAG;\n  if (objectShredderEquipped(a)) f |= OBJECT_SHREDDER_FLAG;', 'snapshot bit27');
+  patch('receiveClothingSnapshot(a, from, snap.f);', 'receiveClothingSnapshot(a, from, snap.f); receiveObjectGearSnapshot(a, from, snap.f);', 'accepted object gear identity');
+  patch('rp: respawnPunisherEquipped(attacker)', 'rp: respawnPunisherEquipped(attacker), os: objectShredderEquipped(attacker)', 'object hit equipment');
+  patch('withHitPunisher(atk, d.rp, () => { ' + hit + ' });', 'withHitPunisher(atk, d.rp, () => withObjectHitGear(atk, d.os, () => { ' + hit + ' }));', 'accepted object hit scope');
+  code = "import { objectShredderEquipped, receiveObjectGearSnapshot, withObjectHitGear, OBJECT_SHREDDER_FLAG } from '../../patches/splatoon3/runtime/object-gear.mjs';\n" + code;
   return "import { respawnPunisherEquipped, receiveClothingSnapshot, withHitPunisher, RESPAWN_PUNISHER_FLAG } from '../../patches/splatoon3/runtime/clothing-gear.mjs';\n" + code;
 }

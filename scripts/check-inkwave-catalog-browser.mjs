@@ -185,6 +185,31 @@ try {
         G.match.mode='turf';a.s3RefreshGear();check(a.s3.abilityPoints.inkSaverMain===18,'ordinary final turf window retained');
         conditionalChecks.push({ability:'lastDitchEffort',uninstalledRanked:0,turfFinalWindow:18});G.match=previous;
       }
+      const objectGearChecks=[];
+      for(const id of ['booyahBomb','crabTank'])for(const equipped of [false,true]){
+        const defender=makeActor('shooter'),attacker=makeActor('shooter');attacker.team=1;attacker.pos.set(0,0,5);G.actors=[defender,attacker];
+        attacker.s3.loadout=emptyLoadout();if(equipped)attacker.s3.loadout[2].main='objectShredder';attacker.s3RefreshGear();
+        defender.weapon={...defender.weapon,special:id,specialCost:100};defender.special=100;defender._startSpecial();defender._updateSpecial(1/60);defender.invuln=0;
+        const state=defender._s3AllSpecialState,rate=equipped?(id==='crabTank'?1.3:1.1):1,before=state.armorHP;
+        defender.damage(100,attacker,'shooter');check(Math.abs(state.armorHP-(before-100*rate))<1e-8,id+' compiled target gear');
+        state.armorHP=50;defender.specialActive.armorHP=50;defender.hp=100;
+        const bodyFactor=defender.specialActive.armor?.valueOf()===true?.25:1;
+        defender.damage(100,attacker,'shooter');const expected=100-Math.floor((100-50/rate)*bodyFactor*10+1e-9)/10;
+        check(state.armorHP===0&&Math.abs(defender.hp-expected)<1e-8,id+' compiled armor break');
+        objectGearChecks.push({id,equipped,rate,bodyHp: defender.hp});defender.reset();
+      }
+      const {kitBombContact}=await import('/patches/splatoon3/runtime/kit-subs.mjs');
+      for(const equipped of [false,true]){
+        G.projectiles.clear();const owner=makeActor('shooter'),attacker=makeActor('shooter');attacker.team=1;G.actors=[owner,attacker];
+        owner.weapon={...owner.weapon,sub:'sprinkler'};owner.weaponRunner.reset();attacker.s3.loadout=emptyLoadout();if(equipped)attacker.s3.loadout[2].main='objectShredder';attacker.s3RefreshGear();
+        G.projectiles.throwBomb(owner);const b=G.projectiles.bombs.at(-1);check(!!b,'native Sprinkler birth');
+        kitBombContact(api.SUB,b,{hit:true,point:new THREE.Vector3(0,0,0),normal:new THREE.Vector3(0,1,0)});
+        const p={owner:attacker,team:1,damage:12,size:.01,prev:b.pos.clone().add(new THREE.Vector3(0,0,-1)),pos:b.pos.clone().add(new THREE.Vector3(0,0,1))};
+        const candidate=G.projectiles.kitBarrierCandidate(p,p.prev,p.pos);check(candidate?.kind==='native-sprinkler','native Sprinkler swept hit');candidate.onHit();candidate.onHit();
+        check(b.s3DeviceHP===(equipped?0:108),'native Sprinkler fixed gear damage once');
+        if(equipped){G.projectiles.update(1/60);check(!G.projectiles.bombs.includes(b),'native Sprinkler retirement');}
+        objectGearChecks.push({id:'sprinkler',equipped,hp:b.s3DeviceHP});
+      }
       const kitChecks=[];
       for(const record of records){
         G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
@@ -248,7 +273,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks,
+        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
