@@ -156,7 +156,7 @@ function carbonRoller(d) {
   const drum = new Pieces().add(drumGeo(W, r, { ribs: { n: 4, from: -10 }, seg: 24, rows: 22 }), '#ffffff');
   rebuild(d, {
     body, parts: { hinge: part(frame, [0, 0, hz]), hingeInk: part(new Pieces(), [0, 0, hz], 'ink') },
-    gripR: GRIP_R(), gripL: GRIP_L(0.19), muzzle: [0, 0, dz],
+    gripR: GRIP_R(), gripL: GRIP_L(0.08), muzzle: [0, 0, dz],
     drum: { geo: drum, caps, at: [0, 0, dz], r },
   });
   return setFold(d, [0, 0, hz]);
@@ -206,7 +206,7 @@ function dynamoRoller(d) {
   // the gear housing is centred on the drum axle: author it there
   rebuild(d, {
     body, ink, parts: { hinge: part(frame, [0, 0, hz]), hingeInk: part(frameInk, [0, 0, hz], 'ink') },
-    gripR: GRIP_R(), gripL: GRIP_L(0.25), muzzle: [dx, 0, dz],
+    gripR: GRIP_R(), gripL: GRIP_L(0.14), muzzle: [dx, 0, dz],
     drum: { geo: drum, caps, at: [dx, 0, dz], r },
   });
   return setFold(d, [0, 0, hz]);
@@ -286,7 +286,7 @@ function bigSwigRoller(d) {
   const drum = new Pieces().add(drumGeo(W, r, { ribs: { n: 3, from: -10, wave: true } }), '#ffffff');
   rebuild(d, {
     body, ink, parts: { hinge: part(arm, [0, 0, hz]), hingeInk: part(new Pieces(), [0, 0, hz], 'ink') },
-    gripR: GRIP_R(), gripL: GRIP_L(0.15), muzzle: [0, 0, dz],
+    gripR: GRIP_R(), gripL: GRIP_L(0.11), muzzle: [0, 0, dz],
     drum: { geo: drum, caps, at: [0, 0, dz], r },
   });
   return setFold(d, [0, 0, hz]);
@@ -330,9 +330,19 @@ export function FAMILY_TRIGGER(ch, name) {
   return true;                             // the record drives the pose; skip the legacy 0.7 s timer
 }
 
-export function FAMILY_POSE(ch, dt, s) {
+export function FAMILY_POSE(ch, dt, s, C) {
   const r = catalogRoller(ch, s);
   if (!r) return;
+  // Rolling: roller.mjs lowers the hands until the drum touches the floor; its
+  // roll pitch is calibrated on the Splat Roller's reach (0.935 m to a 0.115 m
+  // drum). Re-aim the handle so each drum meets the floor with the same hand
+  // drop (handle reach × sin(pitch) + radius) instead of crouching the arms.
+  const d = ch.weapon?.def, roll = ch._s3RollerContactPose ? 1 : (ch.wRoll || 0);
+  if (d?.drumAt && d.drumR && roll > 0.001 && C) {
+    const reach = Math.hypot(d.drumAt.y, d.drumAt.z + 0.022);
+    const pitch = Math.asin(clamp((0.935 * Math.sin(0.36) + 0.115 - d.drumR) / reach, 0, 0.95));
+    ch.P[C.ANCR] += (pitch - 0.36) * roll;
+  }
   const cs = r.catalogState;
   let m = SWING.get(ch);
   if (!m) SWING.set(ch, m = { count: cs.swingCount, attack: null });

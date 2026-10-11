@@ -133,7 +133,7 @@ function painbrush(d) {
   head.add(topSlab(fan(0.05, R * 0.8, -1.45, 1.45, false), 0.035, 0, 0.006), C.bristle, M.satin);
   for (let k = 0; k <= 22; k++) { const a = -1.4 + 2.8 * k / 22; head.add(pipe([[cx + Math.sin(a) * 0.08, 0, cz + Math.cos(a) * 0.075], [cx + Math.sin(a) * R * 0.78, 0, cz + Math.cos(a) * R * 0.72]], 0.006, 4, 4), '#d8d3c8', M.satin); }
   headInk.add(topSlab(fan(R * 0.66, R, -1.5, 1.5, true), 0.075, 0, 0.018));
-  return finishBrush(d, { body, ink, head, headInk, pivot: [cx, 0, 0.72], gripL: 0.22, muzzle: [cx, 0, 0.92] });
+  return finishBrush(d, { body, ink, head, headInk, pivot: [cx, 0, 0.72], gripL: 0.17, muzzle: [cx, 0, 0.92] });
 }
 
 function finishBrush(d, { body, ink, head, headInk, pivot, gripL, muzzle }) {
