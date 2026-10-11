@@ -3647,6 +3647,9 @@ After the published 49ecbc3 checkpoint (4051 passed / 0 failed / 15 skipped), in
 The combined new focused tests pass 51/51 with no skips. Prior complete-suite results describe the previous published tree, not these later edits. Full final-suite and exact-head remote CI results must be checked separately. No raw Drive archives are published and these native tests are not console-equivalence or browser gameplay validation.
 
 
+## 2026-10-10: complete main-actor catalog expansion
+
+[Main-weapon catalog report](inkwave-main-weapon-catalog-2026-10-10.md) adds 58 source-guided main implementations alongside the existing seven, using the pinned 11.3.0 extraction with per-file hashes and temporary original Japanese/English names. It records action, ink, travel, collision and paint owners, neutral-gear conditions, source-versus-community timing, browser fixture scope and reproduction. New models and retail sub/special variants are deferred. Numerical records do not certify engine-equivalent paint/shape/controller formulas; omitted defaults, Slosher spiral, Ballpoint interpolation/recharge, scope camera and canopy multiplayer/terrain details remain explicitly unconfirmed or incomplete. Acceptance is final-head build/regression/browser CI; no Switch comparison was performed.
 ## 2026-10-10 全サブ・スペシャルの実装
 
 対象は公開版 `inkwave-public/`、基準は `9117816`。未実装10サブと14スペシャルを追加し、S3の14サブ／19スペシャルすべてを装備画面で選べる。既存のTidal Slamは別の試作技として残し、ウルトラチャクチは独立した本体・2拳・破壊判定・スーパージャンプ派生を持つ。名称は依頼に沿った本家の仮名。モデルと本格的なアニメーションは対象外。
@@ -3691,6 +3694,25 @@ The combined new focused tests pass 51/51 with no skips. Prior complete-suite re
 本家との雲形状・元シェーダー比較の未確認状態は維持する。INKWAVE側では、インスタンス化した雲の専用matrix GPU bufferを終了時に解放していなかった。`runtime/special-motion.mjs` の手続きモデル終了と実際の `Projectiles._releaseCloud` を修正した。Stormを投擲し、雲の自然消滅/明示終了/試合clearを繰り返す再現で、雲ごとに1回だけdisposeされ、他の雲が使う共有geometryは解放されない。雲の移動・雨・ダメージ・塗り・寿命は変更しない。修正前ランタイムで0回になる負の対照を確認し、修正後は専用8回帰がソース/最適化ビルドで成功。実WebGLの72回生成/破棄後もbuffer数232で安定した。これはINKWAVEの資源寿命検証であり、本家のGPU実装/FPSとの一致を証明するものではない。
 
 
+## 2026-10-11 全65メイン・Wiki照合追補
+
+[65件の個別版・抽出値・206項目の設定照合](inkwave-main-weapons-wiki-audit-2026-10-11.json) と [挙動別比較記録](inkwave-main-weapons-wiki-audit-2026-10-11.md) を追加。初弾を含むスピナー弾数、クーゲル30F→40F数値遷移、ノーチラス残ゲージ、ハイドラント半チャージ消費・固有ギア、足元塗り周期、わかば110%タンク・198F潜伏回復、傘撃破／アシスト修復、ブラスター前隙の周期二重加算を修正。条件は固定60Hz・通常0AP（一部57AP）。源の保存一致・単独ロジックとブラウザ実行を分け、Switch実機一致は未確認。重量・前後隙の全組合せ・壁垂れ・渦・スコープ・傘地形／同期等の未反映事項とプレイへの影響は比較記録に残す。試し撃ち場では再開後に遅れて完了するPointer Lockが次のポーズ画面のマウスを奪うケースも拒否する。
 ## 2026-10-11 全方向・射撃中・ローラー移動速度
 
 [全方向の比較記録](inkwave-directional-movement-2026-10-11.md)。発射済みの継続シューター射撃にある弾間隔で通常速度へ戻る差分、ローラー振り回復の速度補間、実際に許可された転がしを視覚回復タイマーで抑える差分を修正。原典の速度値を維持し、ギアと敵インクの曲線を同じ攻撃状態に接続。キーボード・タッチ・パッド、72方向、微入力・全入力、0/10/57 AP、30/60/120/144 Hzと実Level/Physicsを検証する。実機の縮尺・坂・加減速曲線の完全一致は未確認。平地の斜め入力自体の倍率差は再現せず、等速性を回帰試験で固定した。
+
+### 全65メインのWiki追加確認（2026-10-11）
+
+- パブロ／ホクサイ／フィンセントの個別Wiki（11.0／11.1／11.0）は通常連打7／11／14F、初弾−1F。追加所有者の初弾用6／10／13Fが後続にも適用されていたため通常周期を分離した。フィンセントは最初の23Fソース振りの終了直後に次弾が1Fで出る問題も修正。60Hzで実発射トリガーの間隔を測り、初弾6／10／13F・後続7／11／14Fを確認。絶対前隙・待機後再開の本家実機一致は未確認。
+- 基本27種の個別Wikiにある射程関連136行を照合JSONへ追加。試し撃ち線の本数という共通定義と版を保持し、確定数維持射程をダメージ減衰開始距離へ読み替えない。転記は射程の実機一致の証明ではない。
+- 試し撃ち場の追加ブキ選択後、Chromiumでは旅行ボタンのクリックを受理できず、WebKitでは成功。Pointer Lock対策後も再現したため原因確定とはしない。フォーカスの自動スクロールをマウス／タッチでは抑え、キーボード／パッドで維持する修正を追加。ブラウザの実クリック・移動・復帰で再検証する。
+
+- Pointer Lockの非調整版要求が遅れて拒否された際、プレーン版の再要求も現在の状態を再確認する。新しいポーズ／メニュー／タッチ／試合終了中には再要求しない。拒否待ちの回帰試験ではポーズとメニューは1回、プレイ継続時は互換再要求を含む2回と確認した。これはマウス操作を奪う競合の対策であり、試し撃ち移動失敗の原因確定はブラウザ再検証待ち。
+
+- 最新mainの全サブ・スペシャル追加と65メインを併用すると冷起動キャッシュが5MiBを超えた。8bitグレースケール光マップのPNGフィルターを画素無変更で再圧縮し、ESMの非公開変数名を短縮する。性能値・公開API・全オフライン依存グラフは保持し、容量上限は維持する。全5枚の光マップの画素と非IDATチャンクの一致を検証し、差分記録の実機未確認項目は維持する。
+
+- 試し撃ち再検証の実イベント記録では、Chromiumのpointerdown／pointerup／clickはすべて正しいz-bombボタンへ到達し、Pointer Lockはnullだった。メニューの捕捉ガードは、入場アニメーション中の祖先合成opacityが0.6以下なら意図的にクリックを拒否する。検証側のPlaywright visible判定はopacity:0も可視とするため、新しいポーズの入場完了前にクリックしていた。実画面・同一所有者・合成opacity>0.6の条件を待ってから実クリックするよう検証を同期する。ガード、実移動／復帰の合格条件は維持する。ブラウザ再検証はこの最終コミットを対象とする。
+
+- 最新main `468eabc` のローラー速度相関散乱、塗り処理の画素不変な割当削減、WebKit READY配送待ちと追加回帰を統合する。ローラー散乱は元速度乱数を再利用するINKWAVEの校正であり、Nintendoの非公開式と同一とは判定しない。横振りの独立検証表に文字列の `\\n` が混入し行全体がコメントになっていたため、実改行へ戻して既存の横振り11.1WU検証を有効に保持する。統合コミットのソース・ブラウザ・容量ゲートを改めて確認する。
+
+- 追加4ローラーの横振りも現在の成熟所有者 `rollerSpeedSwerveDegrees` を再利用する。既存の追加所有者では保存されたSpawnWideDegreeを半分の扇幅として解釈し、SwerveRateBySpeedが発射へ未接続だった。速度の既存乱数1回を再利用して、全扇幅・単発近距離ユニット・速度相関散乱へ接続する。0／0.5／1の固定乱数と実Actor入力で全4種の発射速度の水平角を確認する回帰を追加。原典値と独自散乱校正式の区別、Switch実機未確認は維持する。

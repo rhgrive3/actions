@@ -22,6 +22,7 @@ import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
 import { overlayScorchStageAssets } from './lib/inkwave-stage-assets.mjs';
+import { compactLightmapPng } from './lib/inkwave-lightmap-compaction.mjs';
 
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
 const SRC = physicalLocation(path.resolve(process.argv[2] || 'inkwave-public'));
@@ -54,7 +55,7 @@ for (const file of walk(SRC)) {
   if (ext === '.js' || ext === '.mjs' || ext === '.css') {
     const code = adaptBuildSource(rel, fs.readFileSync(file, 'utf8'));
     const res = await esbuild.transform(code, {
-      loader: ext === '.css' ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
+      loader: ext === '.css' ? 'css' : 'js', format: ext === '.mjs' || (ext === '.js' && (rel.startsWith('src/') || rel.startsWith('vendor/three/jsm/'))) ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
     });
     fs.writeFileSync(dst, res.code);
     if (ext === '.css') { rawCss += code.length; minCss += res.code.length; }
@@ -62,6 +63,8 @@ for (const file of walk(SRC)) {
   } else if (rel === 'index.html') fs.writeFileSync(dst, adaptBuildSource(rel, fs.readFileSync(file, 'utf8')));
   else fs.copyFileSync(file, dst);
 }
+// .mjs files have private module scope. ESM output lets esbuild shorten those
+// bindings while preserving every exported name, import, and numeric value.
 for (const file of walk(PATCH_ROOT)) {
   const rel = path.relative(PATCH_ROOT, file);
   if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json' || BUILD_ONLY_PATCH_MODULES.has('patches/splatoon3/' + rel.split(path.sep).join('/'))) continue;
@@ -73,7 +76,7 @@ for (const file of walk(PATCH_ROOT)) {
   if (/\.(m?js|css)$/.test(rel)) {
     const patchRel = 'patches/splatoon3/' + rel.split(path.sep).join('/');
     const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
-    const res = await esbuild.transform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
+    const res = await esbuild.transform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
     fs.writeFileSync(dst, res.code);
   } else if (rel === 'profile.json') {
     // Serialize the same parsed tuning data without source indentation. Keep
@@ -88,7 +91,7 @@ for (const file of walk(QUALITY_ROOT)) {
   const dst = path.join(BUILD, 'patches/local-quality', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
-    const res = await esbuild.transform(adaptBuildSource('patches/local-quality/' + rel.split(path.sep).join('/'), fs.readFileSync(file, 'utf8')), { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/local-quality/' + rel.split(path.sep).join('/') });
+    const res = await esbuild.transform(adaptBuildSource('patches/local-quality/' + rel.split(path.sep).join('/'), fs.readFileSync(file, 'utf8')), { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/local-quality/' + rel.split(path.sep).join('/') });
     fs.writeFileSync(dst, res.code);
   } else fs.copyFileSync(file, dst);
 }
@@ -117,6 +120,7 @@ for (const [root, prefix] of [
       const sourcefile = prefix + '/' + rel;
       const result = await esbuild.transform(adaptBuildSource(sourcefile, fs.readFileSync(file, 'utf8')), {
         loader: rel.endsWith('.css') ? 'css' : 'js',
+        format: rel.endsWith('.mjs') ? 'esm' : undefined,
         minify: true, charset: 'utf8', legalComments: 'inline', sourcefile,
       });
       fs.writeFileSync(dst, result.code);
@@ -140,11 +144,17 @@ for (const file of walk(RANGE_ROOT)) {
   const dst = path.join(BUILD, 'patches/practice-range', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
-    const res = await esbuild.transform(fs.readFileSync(file, 'utf8'), { loader: rel.endsWith('.css') ? 'css' : 'js', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/practice-range/' + rel });
+    const res = await esbuild.transform(fs.readFileSync(file, 'utf8'), { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/practice-range/' + rel });
     fs.writeFileSync(dst, res.code);
   } else fs.copyFileSync(file, dst);
 }
 
+// Lossless PNG filters reduce the offline snapshot; source assets stay frozen.
+for(const file of walk(path.join(BUILD,'assets/lightmaps')).filter(f=>f.endsWith('.png'))){
+  const original=fs.readFileSync(file),compact=compactLightmapPng(original);
+  fs.writeFileSync(file,compact);
+  console.log(`lightmap ${path.basename(file)}: ${original.length} -> ${compact.length} bytes (same pixels)`);
+}
 // Service workers only control ancestor paths when served from the site root.
 // Keep the manifest/icons revisioned, but publish the worker itself as /sw.js.
 const pwaWorker = path.join(PATCH_ROOT, 'pwa', 'sw.js');
@@ -415,7 +425,7 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lightmap-compaction.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 identity.inputHash = sha256(JSON.stringify(identity.files));

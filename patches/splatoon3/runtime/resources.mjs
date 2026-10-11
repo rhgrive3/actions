@@ -136,7 +136,7 @@ export function updateResources(a, dt) {
     else if (!isSquid) rate = r.inkRefillKid;
     // Dry/enemy-ink squid form does not receive underwater refill.
     const multiplier = a.submerged || a.climbing ? mods.inkRecoverySwim ?? 1 : mods.inkRecoveryKid ?? 1;
-    a.ink = Math.min(P.inkMax, a.ink + rate * multiplier * dt);
+    a.ink = Math.min(P.inkMax, a.ink + rate * multiplier * dt / (a.weapon.inkTankScale || 1));
   }
   if (!wasFull && a.ink >= P.inkMax && a.isLocal) api.G.audio?.play('refill_full', { volume: 0.5 });
 }

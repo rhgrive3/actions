@@ -199,6 +199,7 @@ export function installGear(api, tuning) {
     // MainWeaponSetting and ActionSpecUp overrides belong to the equipped
     // weapon. Heavy Splatling and Blaster do not use the common middle values.
     m.runSpeedFiring = gearCurve(ap.runSpeed || 0, ...(a.weapon.runSpeedFiringCurve || extra.runSpeedFiring));
+    if (a.weapon.inkSaverMainCurve) m.inkSaverMain = gearCurve(ap.inkSaverMain || 0, ...a.weapon.inkSaverMainCurve);
     m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...(a.weapon.actionAirSpreadCurve || extra.actionAirSpread));
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
     for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter', 'rollInkMinPerFrame', 'rollInkMaxPerFrame']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
@@ -207,6 +208,9 @@ export function installGear(api, tuning) {
     if (tiers && [tiers.low, tiers.mid, tiers.high].every(Number.isFinite) && tiers.low > 0)
       m.subPower = gearCurve(ap.subPower || 0, tiers.low, tiers.mid, tiers.high) / tiers.low;
     m.inkSaverSub = sub?.inkSaverCurve ? gearCurve(ap.inkSaverSub || 0, ...sub.inkSaverCurve) : 1;
+    // Jr.'s 110-unit tank is represented by the existing normalized 0..100
+    // gauge. Both main and sub spending divide by capacity; refill does too.
+    m.inkSaverSub /= a.weapon.inkTankScale || 1;
     m.stormDuration = Math.floor(gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormDurationFrames) + 1e-10) / 60;
     m.stormThrowScale = gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormThrowScale);
     a.weapon.specialCost /= m.specialCharge ?? 1;

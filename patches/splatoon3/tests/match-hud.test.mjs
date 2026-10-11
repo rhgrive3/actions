@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { fixture, compose } from './match-hud-fixture.mjs';
 import {sampleRespawnCountdown} from '../runtime/respawn-lifecycle.mjs';
+import { adaptWeaponCatalog } from '../weapon-catalog-adapter.mjs';
 const ROOT=new URL('../../../',import.meta.url);
 const composed=rel=>compose(rel,fs.readFileSync(new URL('inkwave-public/'+rel,ROOT),'utf8'));
 function section(s,start,end){const a=s.indexOf(start),b=s.indexOf(end,a);assert.ok(a>=0&&b>a,start);return s.slice(a,b);}
@@ -74,14 +75,14 @@ test('#300 actual judge result payload carries all players specials without chan
 });
 
 test('#300 actual Turf table source renders a fourth statistic, including zero, and keeps Boss table untouched',()=>{
- const source=composed('src/ui/menus.js'),raw=fs.readFileSync(new URL('inkwave-public/src/ui/menus.js',ROOT),'utf8');
+ const source=composed('src/ui/menus.js'),raw=adaptWeaponCatalog('src/ui/menus.js',fs.readFileSync(new URL('inkwave-public/src/ui/menus.js',ROOT),'utf8'));
  const code=section(source,'    // ---- team tables with count-ups','    // ---- boss: the squad ranked');
  const h=(tag,props,...children)=>({tag,props,children:children.flat(Infinity)}),players=[{team:0,turf:5,splats:1,deaths:2,specials:0,name:'a',weapon:'shooter',_aw:[]},{team:0,turf:4,splats:2,deaths:1,specials:3,name:'b',weapon:'shooter',_aw:[]}];
  const render=vm.runInNewContext(`(function(){${code};return {node:table(0),rowFx};})`,{h,players,names:['A','B'],TEAM_NAMES:['A','B'],winTeam:0,GLYPHS:{crown:'',drop:''},SPLAT_ICON:'',DEATH_ICON:'',weaponIcon:()=>''});
  const result=render.call({_weapons:()=>({shooter:{kind:'shooter'}})});
  assert.deepEqual(plain(result.rowFx.map(r=>r.waits[2].children[0])),['0','3']);assert.ok(result.rowFx.every(r=>r.waits.length===3));
  const start='    // ---- boss: the squad ranked',end='    // ---- ';const a=source.indexOf(start),b=raw.indexOf(start);
- assert.equal(source.slice(a,source.indexOf(end,a+start.length)),raw.slice(b,raw.indexOf(end,b+start.length)),'Boss table bytes unchanged');
+ assert.equal(source.slice(a,source.indexOf(end,a+start.length)),raw.slice(b,raw.indexOf(end,b+start.length)),'Boss statistics unchanged after independent catalog icon routing');
 });
 
 test('30/60/120Hz schedules preserve special counters and true shortage event ticks',async()=>{

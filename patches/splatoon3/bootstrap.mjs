@@ -7,6 +7,7 @@ import { installIssueFiveHotfixC } from './runtime/issue-five-hotfix-c.mjs';
 import { installDisconnectFidelity } from './runtime/disconnect-fidelity.mjs';
 import { installSlosherIntermediatePaint } from './runtime/slosher-intermediate-paint.mjs';
 import { installIssueEightFollowup } from './runtime/issue-eight-followup.mjs';
+import { installMainWeaponCatalogRuntime } from './runtime/main-weapon-catalog.mjs';
 try {
   const response = await fetch(new URL('./profile.json', import.meta.url));
   if (!response.ok) throw new Error(`パッチ設定の読み込みに失敗しました (${response.status})`);
@@ -20,6 +21,7 @@ try {
   installQuality(profile);
   installWeaponsFidelity(context, profile);
   installIssueEightFollowup(context);
+  installMainWeaponCatalogRuntime(context, profile);
   await import('../../src/main.js');
 } catch (error) {
   console.error('[INKWAVE patches]', error);
