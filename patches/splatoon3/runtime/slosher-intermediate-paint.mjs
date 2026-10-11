@@ -1,4 +1,9 @@
+import { spawnSplashDrop, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 const EPS = 1e-10;
+// PR1188: the source splash falls like every other BulletSplash: the shared
+// splash-drop defaults (FreeGravity 0.016 DU/F^2, FreeAirResist 0.02) are a
+// model choice; no fixed downward probe length decides whether it paints.
+const SPLASH_GRAVITY_PER_FRAME2 = 0.016;
 const INSTALLED = Symbol.for('inkwave.s3.slosher-intermediate-paint.v1');
 
 const clamp01 = value => value < 0 ? 0 : value > 1 ? 1 : value;
@@ -35,19 +40,19 @@ export function slosherIntermediateSpec(projectile, scale = 1) {
     widthHalf: width * scale,
     depthScale: depth,
     spawnNum: Math.max(0, Math.floor(spawnNum)),
+    drop: Object.freeze({ gravity: SPLASH_GRAVITY_PER_FRAME2 * 3600 * scale, drag: SPLASH_DROP_AIR_RESIST,
+      depthScaleMax: depth, depthScaleMin: depth, dropHeightMax: 0, dropHeightMin: 0, surfaceOnly: true, randomVelocity: null }),
   });
 }
 
 export function installSlosherIntermediatePaint(api, profile) {
-  const { Projectiles, G, THREE, Hit } = api || {};
+  const { Projectiles, G, THREE } = api || {};
   if (!Projectiles?.prototype || Projectiles.prototype[INSTALLED]) return;
   Object.defineProperty(Projectiles.prototype, INSTALLED, { value: true });
   const scale = profile?.weaponsFidelityCompletion?.worldUnitsPerSourceUnit ?? 1;
   const step = Projectiles.prototype._step;
-  const down = new THREE.Vector3(0, -1, 0);
   const point = new THREE.Vector3();
   const stretch = new THREE.Vector3();
-  const hit = new Hit();
   // Runtime source parameters are fixed for a spawned glob. The same projectile
   // can run dozens of fixed ticks; avoid Combination.find, Array construction
   // and Object.freeze on every tick, while respecting pooled projectile reuse.
@@ -95,19 +100,16 @@ export function installSlosherIntermediatePaint(api, profile) {
     const t = segment > EPS ? clamp01((spec.targetLength - before) / segment) : 1;
     point.set(from.x + (end.x - from.x) * t,
       from.y + (end.y - from.y) * t, from.z + (end.z - from.z) * t);
-    const ground = G.physics?.raycast?.(point, down, 10 * scale, hit, true);
-    if (!ground?.hit) return;
-    point.copy(ground.point).addScaledVector(ground.normal, .1 * scale);
+    // #1002 / PR1188: a released paint-only Slosher splash must enter the
+    // shared fixed-60Hz falling queue, not immediately stamp a point obtained
+    // from an arbitrary downward ray. The queue owns its real surface contact,
+    // face-clipped paint, source depth ellipse, and turf bookkeeping.
     stretch.set(p.vel.x, 0, p.vel.z);
     if (stretch.lengthSq() <= EPS) stretch.set(0, 0, 1);
     else stretch.normalize();
-    const area = G.paint?.splat?.(point, spec.widthHalf, p.team, {
-      seed: p.seed, claimOwner: p.owner, stretch,
-      // PaintSystem takes an additive elongation, whereas the source stores
-      // the total depth ratio. Keep the rasterizer's asymmetry as calibration.
-      stretchAmt: Math.max(0, spec.depthScale - 1),
-    }) || 0;
-    p.owner?.addTurf?.(area);
+    spawnSplashDrop(G, { owner: p.owner, team: p.team, seed: p.seed,
+      salt: p.s3SloshIntermediateCount, from: point, direction: stretch,
+      radius: spec.widthHalf, spec: spec.drop, depth: true, kind: 'drop' });
   };
   const before = new THREE.Vector3();
   Projectiles.prototype._step = function (p, dt) {

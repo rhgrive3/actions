@@ -1,10 +1,11 @@
+import { installWeaponAccuracy, withShotBias } from './weapon-accuracy.mjs';
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { DualiesAccuracy } from './dualies-accuracy.mjs';
 import { shooterMovementActive, shooterMovementRemaining } from './shooter-movement.mjs';
 import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
-import { installFinalDamage, damageGroupId, withFinalDamageGroup } from './final-damage.mjs';
+import { installFinalDamage, damageGroupId, withFinalDamageGroup, finalDamageCredit } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installSplatling } from './splatling.mjs';
@@ -274,9 +275,12 @@ export function applySlosherVolleyHit(system, owner, victim, group, groupId, amo
   if (!(delta > 0)) return;
   if (!group) return system.applyHit(owner, victim, delta, weaponId);
   const hpBefore = victim.hp, aliveBefore = victim.alive;
-  const result = withFinalDamageGroup(victim, groupId ?? damageGroupId(group),
+  const roundingGroup = groupId ?? damageGroupId(group);
+  const creditBefore = finalDamageCredit(victim, owner, roundingGroup);
+  const result = withFinalDamageGroup(victim, roundingGroup,
     () => system.applyHit(owner, victim, delta, weaponId));
-  if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
+  if (acceptedHit(result, victim, hpBefore, aliveBefore) ||
+      finalDamageCredit(victim, owner, roundingGroup) > creditBefore) group.set(victim, next);
   return result;
 }
 // Preserve in-flight volley dedupe without retaining every historical wire id
@@ -604,7 +608,7 @@ export function installWeapons(context, profile) {
     }
     if (weapon.kind === 'shooter') {
       if (this.s3WasGrounded && !this.a.grounded) this.s3JumpSpreadAge = 0;
-      if (this.s3JumpSpreadAge != null) this.s3JumpSpreadAge += dt;
+      else if (this.s3JumpSpreadAge != null) this.s3JumpSpreadAge += dt;
       this.s3WasGrounded = !!this.a.grounded;
       let next = input;
       const isSquid = this.a.form === 'squid';
@@ -631,7 +635,7 @@ export function installWeapons(context, profile) {
         next = { ...next, fire: false, firePressed: false };
       input = next;
     }
-    if (weapon.kind === 'shooter' && !input.fire) this.s3Accuracy?.advance(dt);
+    if (weapon.kind === 'shooter') this.s3Accuracy?.advance(dt);
     // #891: Dualies bias recovery counts time since the last admitted shot, so it runs with or without fire held.
     if (weapon.kind === 'dualies') this.s3DualiesAccuracy?.advance(dt);
     const result = runnerUpdate.call(this, dt, input);
@@ -976,28 +980,35 @@ export function installWeapons(context, profile) {
   }
   const fireDualies = Projectiles.prototype.fireDualies;
   Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
-    // #887: while the Dualies jump-accuracy bias clock is active, sample the
-    // published outer-reticle probability and fire at the chosen sourced
-    // endpoint (Jump_DegSwerve vs Stand_DegSwerve). Same model as the Blaster
-    // jump bias; the LapOver turret cone is already handled by _spreadDeg.
-    // #891: otherwise normal Dualies fire samples the outer-reticle bias once
-    // per admitted shot against the grounded/air envelope. Locked turret shots
-    // (spreadLock) are a separate owner for both and do not advance the bias.
+    // #887/#891: source angular maxima and calibrated DegBias quantiles are
+    // distinct. Only admitted Dualies shots advance the accuracy state once;
+    // direct helpers observe it without altering timing or resource gates.
+    // A locked post-roll turret uses its separate zero-degree spreadLock.
     const runner = a?.weaponRunner;
     const locked = !!(runner?.s3Turret || runner?.lockT > 0);
     const state = runner?.s3DualiesJumpState?.(w);
     const accuracy = runner?.s3DualiesAccuracy;
     let effective = spreadDeg;
+    let angularBias = null;
     if (state?.active && !locked) {
-      const first = w.spreadFirst ?? .45;
-      const bloom = first + (1 - first) * (runner.bloom || 0);
-      effective = (Math.random() < state.bias ? state.envelope : state.ground) * bloom;
-    } else if (accuracy && runner.s3DualiesAdmitting && !locked) {
-      const envelope = a.grounded ? w.spreadGround : w.spreadAir;
-      const outerChance = accuracy.shot(!!a.grounded);
-      effective = Math.random() < outerChance ? envelope : envelope * (w.spreadFirst ?? 0.45);
+      // S3 DegSwerve is the maximum horizontal angle and DegBias is the
+      // median angular fraction (not an outer/inner Bernoulli probability).
+      // Retain the full maximum at the HUD and launch, independent of bloom.
+      effective = state.envelope;
+      angularBias = state.bias;
+      if (runner?.s3DualiesAdmitting) accuracy?.shot(!!a.grounded);
+    } else if (accuracy && !locked) {
+      // Direct helpers sample the current distribution without consuming an
+      // admitted shot; the real runner alone owns per-shot progression.
+      angularBias = runner?.s3DualiesAdmitting
+        ? accuracy.shot(!!a.grounded)
+        : accuracy.chance(!!a.grounded);
+      if (runner?.s3DualiesAdmitting)
+        effective = a.grounded ? w.spreadGround : w.spreadAir;
     }
-    const result = fireDualies.call(this, a, w, effective, hand);
+    const emit = () => fireDualies.call(this, a, w, effective, hand);
+    const result = Number.isFinite(angularBias)
+      ? withShotBias(a, angularBias, angularBias, emit) : emit();
     if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
     return result;
   };
@@ -1040,7 +1051,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype._spreadDeg = function (w) {
     // The upstream blaster reads `spread`, while the pinned profile supplies
     // Stand_DegSwerve as spreadGround. During the sourced jump-recovery state
-    // publish the outer envelope; the probability bias is sampled at fire time.
+    // publish the outer envelope; the angular bias is applied at fire time.
     if (w.kind === 'blaster') {
       const state = this.s3BlasterJumpState(w);
       // #1102: an admitted jump owns this penalty. The serial gate above
@@ -1054,8 +1065,8 @@ export function installWeapons(context, profile) {
       let base;
       if (age <= hold + 1e-10) base = w.spreadAir;
       else if (age < end - 1e-10) base = w.spreadAir + (w.spreadGround - w.spreadAir) * ((age - hold) / (end - hold));
-      else { base = w.spreadGround; this.s3JumpSpreadAge = null; }
-      return base; // S3 maximum outer envelope; selection happens on each admitted shot
+      else { base = w.spreadGround; if (this.a.grounded) this.s3JumpSpreadAge = null; }
+      return base; // S3 maximum outer envelope; bias is applied on each admitted shot
     }
     if (w.kind === 'dualies') {
       // #887: publish the jump-derived outer envelope while the biased recovery
@@ -1064,18 +1075,17 @@ export function installWeapons(context, profile) {
       if (this.s3Turret || this.lockT > 0) return w.spreadLock;
       const state = this.s3DualiesJumpState(w);
       const base = state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
-      const first = w.spreadFirst ?? .45;
-      return base * (first + (1 - first) * this.bloom);
+      return base; // Sourced maximum yaw deviation; bloom affects median bias, not this endpoint.
     }
-    if (w.kind === 'shooter') return w.spreadGround;
+    if (w.kind === 'shooter') return this.a.grounded ? w.spreadGround : w.spreadAir;
     return spread.call(this, w);
   };
   const fireBlaster = Projectiles.prototype.fireBlaster;
   Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {
     const state = a?.weaponRunner?.s3BlasterJumpState?.(w);
-    if (state?.active)
-      return fireBlaster.call(this, a, w, Math.random() < state.bias ? state.envelope : state.ground);
-    return fireBlaster.call(this, a, w, spreadDeg);
+    const bias = state?.active ? state.bias : (a.grounded ? 0 : BLASTER_BIAS_MAX);
+    const full = state?.active ? state.envelope : spreadDeg;
+    return withShotBias(a, bias, bias, () => fireBlaster.call(this, a, w, full));
   };
   const fireShooter = Projectiles.prototype.fireShooter;
   const shooterSource = profile.weaponsFidelityCompletion?.weapons?.shooter;
@@ -1085,13 +1095,10 @@ export function installWeapons(context, profile) {
   const nearDown = new THREE.Vector3(0, -1, 0), nearOrigin = new THREE.Vector3(), nearHit = new Hit();
   Projectiles.prototype.fireShooter = function (a, weapon, spreadDeg) {
     const accuracy = a.weaponRunner?.s3Accuracy;
-    const outerChance = accuracy?.shot(!!a.grounded, a.weaponRunner?.s3JumpSpreadAge);
-    // The sourced probability is independent of the native generic cone bloom.
-    // Inner angular kernel remains a provisional narrow cone pending Nintendo validation.
+    const bias = accuracy?.shot(!!a.grounded, a.weaponRunner?.s3JumpSpreadAge);
     const maxDeviation = Number.isFinite(spreadDeg) ? spreadDeg : (a.grounded ? weapon.spreadGround : weapon.spreadAir);
-    const deviation = outerChance == null ? maxDeviation :
-      (Math.random() < outerChance ? maxDeviation : maxDeviation * (weapon.spreadFirst ?? 0.45));
-    const result = fireShooter.call(this, a, weapon, deviation);
+    const result = withShotBias(a, bias, bias,
+      () => fireShooter.call(this, a, weapon, maxDeviation));
     if (a.weaponRunner && weapon.kind === 'shooter') {
       const runner = a.weaponRunner;
       runner.s3PostFireLockActive = true;
@@ -1216,6 +1223,7 @@ export function installWeapons(context, profile) {
   installContactRecovery(api);
   installWeaponEdgecases(api);
   installSplatlingJumpSpread(api);
+  installWeaponAccuracy(api, profile);
   const applyHit = Projectiles.prototype.applyHit;
   Projectiles.prototype.applyHit = function (attacker, victim, damage, weaponId, groupId) {
     // Only Slosher wire hits carry a cumulative volley maximum. Other families
@@ -1253,8 +1261,10 @@ export function installWeapons(context, profile) {
     const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
     if (!(delta > 0)) return 'accepted';
     const hpBefore = victim.hp, aliveBefore = victim.alive;
+    const creditBefore = finalDamageCredit(victim, attacker, groupId);
     const result = applyHit.call(this, attacker, victim, delta, weaponId, groupId);
-    if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
+    if (acceptedHit(result, victim, hpBefore, aliveBefore) ||
+        finalDamageCredit(victim, attacker, groupId) > creditBefore) group.set(victim, next);
     return result;
   };
   const clearProjectiles = Projectiles.prototype.clear;
@@ -1398,6 +1408,13 @@ export function installArcPreviewPerformance(api) {
       hits: 0,
     };
     return result;
+  };
+  const clearArc = Projectiles.prototype.clear;
+  Projectiles.prototype.clear = function (...args) {
+    // No further preview frame is guaranteed after a match/level is retired.
+    delete this[ARC_PREVIEW_STATE];
+    this._arcCache = null;
+    return clearArc.apply(this, args);
   };
   Object.defineProperty(Projectiles.prototype, ARC_PREVIEW_INSTALL, { value: true, configurable: false });
   Object.defineProperty(Projectiles.prototype, Symbol.for('inkwave.s3.arc-preview-performance.originals.v1'), {

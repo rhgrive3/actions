@@ -158,7 +158,7 @@ jobs:
       - name: Verify platform lifecycle smoke regressions
         run: node --test tests/platform-lifecycle/platform-smoke.test.mjs
       - name: Verify movement physics smoke regressions
-        run: node --test patches/movement-physics/tests/movement-smoke.test.mjs
+        run: node --test patches/movement-physics/tests/*.test.mjs
       - name: Verify practice range measurement, rules and battle isolation
         run: node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
       - name: Verify loading/cache regressions
@@ -279,7 +279,9 @@ jobs:
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
       - name: Verify built weapons fidelity measurements and packet parity
-        run: node --experimental-vm-modules scripts/check-inkwave-weapons-fidelity.mjs --site _site
+        run: |
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test scripts/tests/inkwave-slosher-paint-golden.test.mjs
+          node --experimental-vm-modules scripts/check-inkwave-weapons-fidelity.mjs --site _site
       - uses: actions/upload-artifact@v4
         with:
           name: inkwave-patched-site-${{ env.SOURCE_SHA }}
@@ -432,6 +434,9 @@ jobs:
       - name: Verify built input and lifecycle modules in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-reliability.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/reliability" --profile-dir "$CI_STORAGE/cache/reliability"
+      - name: Verify native lifecycle start, gesture and atomic snapshot guards
+        if: matrix.suite == 'ui'
+        run: node --experimental-vm-modules --test scripts/tests/inkwave-rematch-start-boundary.test.mjs scripts/tests/inkwave-rematch-diagnostics.test.mjs
       - name: Verify repeated battle → results → menu lifecycle and the untimed Practice Range
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-rematch-lifecycle.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/rematch" --profile-dir "$CI_STORAGE/cache/rematch" --cycles "$REMATCH_CYCLES"

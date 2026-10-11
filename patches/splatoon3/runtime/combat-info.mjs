@@ -25,7 +25,9 @@ const hpObserved = new WeakMap();
 export function healthHitAge(actor, now = 0) {
   if (!actor?.alive) { hpObserved.delete(actor); return Infinity; }
   const seen = hpObserved.get(actor);
-  if (!seen) { hpObserved.set(actor, { hp: actor.hp, at: -Infinity }); return Infinity; }
+  if (!seen || seen.life !== (actor.netLife ?? 0)) {
+    hpObserved.set(actor, { hp: actor.hp, life: actor.netLife ?? 0, at: -Infinity }); return Infinity;
+  }
   if (actor.hp < seen.hp - 1e-6) seen.at = now;
   seen.hp = actor.hp;
   return now - seen.at;

@@ -35,7 +35,7 @@ test('#1039 Turf host gets its own READY after host-confirmed teams; START only 
   assert.ok(!built.includes("      if (isHost()) { tryStart(); return; }"), 'host READY key is no longer forwarded to START in Turf');
   assert.match(built,/if \(isHost\(\) && bossMode\(\)\) \{ tryStart\(\); return; \}/);
   assert.match(built,/if \(!bossMode\(\) && !lob\.teamsConfirmed\)/, 'READY is refused until the host confirms teams');
-  assert.match(built,/const barItems = \(\) => \[wChip, lChip, teamRow, emoteBtn, \.\.\.\(isHost\(\) \? \(bossMode\(\) \? \[startBtn\] : \[readyBtn, startBtn\]\) : \[readyBtn\]\)\];/);
+  assert.match(built,/const barItems = \(\) => \[wChip, lChip, teamRow, emoteBtn, \.\.\.\(isHost\(\) \? \(bossMode\(\) \? \[startBtn\] : \[\.\.\.teamAssignButtons, confirmTeamsBtn, readyBtn, startBtn\]\) : \[readyBtn\]\)\];/);
   assert.match(built,/return i < 1 \? copyBtn : isHost\(\) && bossMode\(\) \? startBtn : readyBtn;/);
   assert.match(built,/readyBtn\.style\.display = host && !bossMode\(\) \? 'flex' : '';/, 'inline display overrides the lobby CSS that hides READY for hosts');
 });

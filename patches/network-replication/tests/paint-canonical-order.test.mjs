@@ -294,7 +294,9 @@ test('fully shadowed older body retains its distinct ancillary footprint without
   const a = await client('a', undefined, 'a', true), b = await client('b', undefined, 'a', true);
   const c = await client('c', undefined, 'a', true), d = await client('c', undefined, 'a', true);
   const center = new a.f.THREE.Vector3(0, 0, 0);
-  a.paint.splat(center, 2, 0, { seed: 1 / 26 });
+  // The source-radius paint shape (no far satellites) only lets the old stamp's
+  // short edge spikes escape the newer body; seed 0.21 has such spikes.
+  a.paint.splat(center, 2, 0, { seed: 0.21 });
   b.paint.splat(center, 3, 1, { seed: 0.47 });
   const first = a.nm.out.at(-1), second = b.nm.out.at(-1);
   applyRemote(c, 'a', first); applyRemote(c, 'b', second);

@@ -112,12 +112,12 @@ export function installAudioLoopDedupe(AudioEngine) {
   if(typeof loop!=='function')return;
   P.loop=function(name,options={}){
     const h=loop.call(this,name,options),o=options||{};
-    if(!h?.playing||typeof h.set!=='function')return h;
+    if((!h?.playing&&!h?._sfxDeferred)||typeof h.set!=='function')return h;
     const set=h.set;
     let volume=Math.max(0,+(o.volume??1)||0),pitch=Math.max(.05,+(o.pitch??1));
     let x=o.pos?.x,y=o.pos?.y,z=o.pos?.z;
     h.set=function(p={}){
-      if(!h.playing||!p)return;
+      if((!h.playing&&!h._sfxDeferred)||!p)return;
       let changes=null,nextVolume=volume,nextPitch=pitch;
       if(p.volume!=null&&Number.isFinite(+p.volume)){
         nextVolume=Math.max(0,+p.volume);

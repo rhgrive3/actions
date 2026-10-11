@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -8,12 +9,13 @@ import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource, qualityIdentity } from '../adapter.mjs';
 import { adaptHudAuthority, SPECIAL_SEGMENTS, GAUGE_GEN, specialGaugeSVG, touchRingSVG } from '../hud-authority-adapter.mjs';
 import { turfExperience } from '../../splatoon3/runtime/results-scoring.mjs';
+import { resetTeamWipeHud } from '../team-wipeout.mjs';
 import { fixture, readSource } from '../../reliability/tests/hud-fixture.mjs';
 const root = new URL('../../../', import.meta.url);
 const N = SPECIAL_SEGMENTS, at = s => Math.min(N, Math.floor(s * N));
 const compose = (rel, input = readSource(rel)) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, input))));
 const hudCode = compose('src/ui/hud.js'), gameCode = compose('src/main.js');
-const fixed = () => fixture({ hudSource: hudCode, gameSource: gameCode, globals:{turfExperience} });
+const fixed = () => fixture({ hudSource: hudCode, gameSource: gameCode, globals:{turfExperience, resetTeamWipeHud} });
 function specialRig(code = hudCode) {
   const a = code.indexOf('  _updSpecial(f, dt) {'), b = code.indexOf('  // ---------------------------------------------------------------- turf ticker', a);
   const Hud = vm.runInNewContext(`class Hud { ${code.slice(a,b)} }; Hud`, { clamp: v => Math.min(1,Math.max(0,v)) });
@@ -109,6 +111,27 @@ test('#381: reliability cancellation/replacement cannot show an old authoritativ
   const pending=r.game._judge();await r.advance(200);await r.game.quitToMenu();await r.advance(6000);await pending;assert.equal(r.count('results'),0);assert.equal(r.judges().length,0);
 });
 
+test('#919: Judd lifecycle fixture executes actual team-special cleanup on hide and dispose', async () => {
+  for (const retire of [hud => hud.setVisible(false), hud => hud.dispose()]) {
+    const r = await fixed();
+    const ordinary = r.document.createElement('div');
+    r.hud.feedEl.append(ordinary);
+    for (const [index, id] of ['storm', 'bubbler'].entries()) {
+      const signal = r.document.createElement('div'), timer = 1_000_000 + index;
+      signal.dataset.teamSpecial = id;
+      signal._t = timer;
+      r.timers.set(timer, { due: 4200, ms: 4200, fn() { assert.fail('retired signal timer fired'); } });
+      r.hud.feedEl.append(signal);
+    }
+    assert.equal(r.hud.feedEl.querySelectorAll('[data-team-special]').length, 2);
+    retire(r.hud);
+    assert.equal(r.hud.feedEl.querySelectorAll('[data-team-special]').length, 0);
+    assert.equal(r.timers.has(1_000_000), false);
+    assert.equal(r.timers.has(1_000_001), false);
+    assert.equal(ordinary.parentNode, r.hud.feedEl, 'special cleanup preserves ordinary feed items');
+  }
+});
+
 test('HUD adapters compile in production order and preserve an existing authoritative winner owner', () => {
   new vm.SourceTextModule(hudCode);new vm.SourceTextModule(gameCode);
   for(const rel of ['src/ui/hud.js','src/core/mobile.js'])
@@ -125,10 +148,10 @@ test('HUD adapters compile in production order and preserve an existing authorit
 
 test('#425: emitted full HUD and touch modules retain quantization and authoritative readiness', {skip:!process.env.INKWAVE_HUD_BUILT_SITE}, async()=>{
   const site=process.env.INKWAVE_HUD_BUILT_SITE;
-  const path=await import('node:path');const modules=new Map(),context=vm.createContext({console,performance});
+  const path=await import('node:path');const modules=new Map(),context=vm.createContext({console,performance,URL});
   function load(file){
     if(modules.has(file))return modules.get(file);
-    const m=new vm.SourceTextModule(fs.readFileSync(file,'utf8'),{context,identifier:file});modules.set(file,m);return m;
+    const m=new vm.SourceTextModule(fs.readFileSync(file,'utf8'),{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});modules.set(file,m);return m;
   }
   const root=load(path.join(site,'src/ui/hud.js'));
   await root.link((spec,from)=>load(spec==='three'?path.join(site,'vendor/three/build/three.module.js'):path.resolve(path.dirname(from.identifier),spec)));

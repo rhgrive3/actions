@@ -158,7 +158,7 @@ for (const weapon of ['shooter', 'charger', 'roller']) test(`#644/#643 ${weapon}
   assert.ok(f.SUB.bomb.inkRecoverStop > a.weapon.inkRecoverStop);
 });
 
-test('#556 grounded Blaster shots use spreadGround = 0; airborne keeps spreadAir', async t => {
+test('#556 grounded Blaster shots use spreadGround = 0; an admitted jump uses spreadAir', async t => {
   const f = await boot(); t.after(f.close);
   const a = f.make({ weapon: 'blaster' }); f.tick(a);
   assert.equal(a.grounded, true); assert.equal(a.weapon.spreadGround, 0);

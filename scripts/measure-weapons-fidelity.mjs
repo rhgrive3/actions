@@ -41,7 +41,11 @@ export function finish(f,a,maxFrames=240, trace=null) {
   const ids=new Map(); let next=0;
   const snap=(p,dead=false)=>({id:ids.get(p),age:round(p.age),pos:vec(p.pos),velocity:vec(p.vel),dead});
   if(trace) for(const p of f.projectiles.list){ids.set(p,next++);trace.push(snap(p));}
-  for(let i=0;i<maxFrames && (f.projectiles.list.length || f.projectiles._fidelityChargerFlights?.length);i++){
+  // PR1188: in-flight work includes falling splash drops, queued terrain bursts
+  // and detached wall drops; their paint lands after the round itself is gone.
+  const pending=()=>f.projectiles.list.length || f.projectiles._fidelityChargerFlights?.length ||
+    f.projectiles._s3SplashDrops?.length || f.projectiles.s3BlastQueue?.length || f.projectiles._s3DetachedWallDrops?.length;
+  for(let i=0;i<maxFrames && pending();i++){
     const ps=[...f.projectiles.list]; f.tick(a);
     if(trace)for(const p of ps)trace.push(snap(p,!f.projectiles.list.includes(p)));
   }
@@ -82,9 +86,20 @@ function sampleBands(samples,predicate) {
   for(const s of samples){if(predicate(s)){if(!band){band={fromZ:s.z,toZ:s.z};bands.push(band);}else band.toZ=s.z;}else band=null;}
   return bands;
 }
+// The archive baseline is provenance, not the hash of the patched runtime.
+// Never stamp every new measurement with the original fixture author's commit.
+// artifactIdentity below independently identifies the actual measured build.
+export function measurementBaseline(root = ROOT) {
+  const receipt = path.join(root, 'SOURCE_IDENTITY.json');
+  if (!fs.existsSync(receipt)) return null;
+  const row = JSON.parse(fs.readFileSync(receipt, 'utf8'));
+  if (typeof row.sha !== 'string' || !/^[a-f0-9]{40}$/i.test(row.sha))
+    throw new Error('Invalid SHA in measurement SOURCE_IDENTITY.json');
+  return row.sha.toLowerCase();
+}
 export async function measure({site=BASELINE,fidelity=false,detail=true}={}) {
   const f=await fixture({site,fidelity});const open=await fixture({site,fidelity,floor:false});
-  const result={schema:1,sourceMainSha:'17602ab094da6efb663d872934458e818ae3c93e',label:fidelity?'after':'before',fixture:{seed:SEED,fixedStep:1/60,origin:[0,0,0],muzzle:[0,1.05,.3],rollerMuzzle:[0,1.3,.6],aim:'horizontal, +Z; spread zero for range, native flick distribution',target:'production upright PLAYER capsule at variable z, continuous projectile time-of-impact; unmodified actor dimensions',units:{distance:'INKWAVE world unit; not Nintendo range meter',time:'seconds',damage:'HP',ink:'percent full tank'}},scale:{playerHeight:f.PLAYER.height,playerRadius:f.PLAYER.radius,gridCell:f.G.paint.cell,planeWidth:80,planeLength:105,referenceScale:1,confidence:'inherited provisional; no independent Switch-to-world metrology'},weapons:JSON.parse(JSON.stringify(f.WEAPONS)),cases:{}};
+  const result={schema:1,sourceMainSha:measurementBaseline(),sourceMainShaProvenance:'Workspace SOURCE_IDENTITY.json archive baseline, not modified runtime identity; see artifactIdentity',label:fidelity?'after':'before',fixture:{seed:SEED,fixedStep:1/60,origin:[0,0,0],muzzle:[0,1.05,.3],rollerMuzzle:[0,1.3,.6],aim:'horizontal, +Z; spread zero for range, native flick distribution',target:'production upright PLAYER capsule at variable z, continuous projectile time-of-impact; unmodified actor dimensions',units:{distance:'INKWAVE world unit; not Nintendo range meter',time:'seconds',damage:'HP',ink:'percent full tank'}},scale:{playerHeight:f.PLAYER.height,playerRadius:f.PLAYER.radius,gridCell:f.G.paint.cell,planeWidth:80,planeLength:105,referenceScale:1,confidence:'inherited provisional; no independent Switch-to-world metrology'},weapons:JSON.parse(JSON.stringify(f.WEAPONS)),cases:{}};
   for(const c of CASES){
     let a=reset(f,c);launch(f,a,c);const initial=f.projectiles.list.map(projectileParams),trace=[];
     finish(f,a,240,trace);const paint=paintMetrics(f),paintPoints=structuredClone(f.paints),impacts=structuredClone(f.impacts),fires=structuredClone(f.fires);

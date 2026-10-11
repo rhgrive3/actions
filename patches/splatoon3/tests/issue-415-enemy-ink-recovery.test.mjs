@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { adaptSource } from '../adapter.mjs';
-import { adaptIssue415 } from '../runtime/issue-415-adapter.mjs';
+import { adaptIssue415 } from '../enemy-ink-recovery-adapter.mjs';
 
 const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-8, `${actual} != ${expected}`);
 

@@ -1,3 +1,4 @@
+import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
 import { adaptMuralAtlas } from './mural-atlas-adapter.mjs';
 import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
 import { adaptClothingGear } from '../splatoon3/clothing-gear-adapter.mjs';
@@ -11,7 +12,7 @@ import { adaptBossHit } from './boss-hit-adapter.mjs';
 import { adaptTeamSpecialSignal } from './team-special-signal-adapter.mjs';
 import { adaptIssue483 } from '../splatoon3/issue-483-adapter.mjs';
 import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
-import { patchLobbySetShowcase } from './issue-472-adapter.mjs';
+import { patchLobbySetShowcase } from './lobby-quality-adapter.mjs';
 import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
 import { adaptPropRetention } from './prop-retention-adapter.mjs';
 import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
@@ -56,9 +57,8 @@ import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
 import { adaptMatchRetainers } from './match-retainer-adapter.mjs';
-import { adaptFirstTouch } from './first-touch-adapter.mjs';
-import { adaptTouchRelayout } from './touch-relayout.mjs';
-import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
+import { adaptFirstTouch } from './first-touch-source-adapter.mjs';
+import { adaptTouchRelayout } from './touch-relayout-adapter.mjs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
@@ -73,6 +73,8 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
+  'menu-navigation-timer-adapter.mjs',
   'mural-atlas-adapter.mjs',
   'bot-paint-observation-adapter.mjs',
   'issue-418-adapter.mjs','world-quality.mjs','quality-probe.mjs','texlib-adapter.mjs','texlib.mjs',
@@ -81,7 +83,6 @@ const IDENTITY_FILES = [
   'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
   'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
-  'menu-navigation-timer-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
   'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
@@ -115,7 +116,7 @@ const IDENTITY_FILES = [
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
   'paint-hotpath-adapter.mjs',
   'runtime-frame-scratch-adapter.mjs',
-  'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-frame-pacing-adapter.mjs',
+  'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {

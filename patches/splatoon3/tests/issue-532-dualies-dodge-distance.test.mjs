@@ -11,6 +11,8 @@ import { fixture } from './weapon-edgecases-fixture.mjs';
 const DT = 1 / 60;
 const ROLL_FRAMES = 12;
 const TOTAL_DISTANCE = 5;
+const MOVING_ROLL_DISTANCE = 4;
+const POST_ROLL_GLIDE_DISTANCE = TOTAL_DISTANCE - MOVING_ROLL_DISTANCE;
 const DIRECTIONS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
 
 test('#532 Splat Dualies profile sets the sourced 5.0 roll distance and keeps the 12F roll time', async () => {
@@ -21,7 +23,7 @@ test('#532 Splat Dualies profile sets the sourced 5.0 roll distance and keeps th
 });
 
 for (const [x, z] of DIRECTIONS) {
-  test(`#532 one Splat Dualies roll covers 5.0 units from rest in direction (${x}, ${z})`, async () => {
+  test(`#532 12F moving roll covers 4.0 units before the separate 1.0 glide in direction (${x}, ${z})`, async () => {
     const f = await fixture({ composeProductionAdapters: true });
     const a = f.make('dualies');
     a.intent.fire = true;
@@ -39,9 +41,13 @@ for (const [x, z] of DIRECTIONS) {
     }
 
     assert.equal(owned, ROLL_FRAMES, 'dodge-owned movement phase is exactly 12F');
-    assert.ok(Math.abs(Math.hypot(sx, sz) - TOTAL_DISTANCE) < 1e-6,
-      `total displacement ${Math.hypot(sx, sz).toFixed(6)} should equal ${TOTAL_DISTANCE}`);
-    assert.ok(Math.abs(sx - x * TOTAL_DISTANCE) < 1e-6 && Math.abs(sz - z * TOTAL_DISTANCE) < 1e-6,
-      'displacement follows the input direction');
+    // The weapon's 5.0 budget is split into a 12F moving roll (4.0) and a
+    // separate 4F post-roll glide (1.0). This runner-only harness cannot
+    // integrate the actor-owned glide; weapon-audit-1130.test.mjs does so.
+    assert.equal(a.weapon.rollDist, MOVING_ROLL_DISTANCE + POST_ROLL_GLIDE_DISTANCE);
+    assert.ok(Math.abs(Math.hypot(sx, sz) - MOVING_ROLL_DISTANCE) < 1e-6,
+      `moving roll displacement ${Math.hypot(sx, sz).toFixed(6)} should equal ${MOVING_ROLL_DISTANCE}`);
+    assert.ok(Math.abs(sx - x * MOVING_ROLL_DISTANCE) < 1e-6 && Math.abs(sz - z * MOVING_ROLL_DISTANCE) < 1e-6,
+      '12F moving-roll displacement follows the input direction');
   });
 }

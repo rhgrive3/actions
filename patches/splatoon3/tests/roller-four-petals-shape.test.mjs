@@ -51,7 +51,7 @@ function assertFourPetalShader(f) {
   assert.match(shader.vertexShader, /attribute vec2 aFourPetals;/);
   assert.match(shader.vertexShader, /cos\(4\.0 \* atan\(p\.y, p\.x\)\)/, 'the real blob shader consumes the four-petal cross-section');
   assert.match(shader.vertexShader, /aFourPetals\.x \+ aFourPetals\.y/);
-  assert.equal(f.projectiles.blobs.material.customProgramCacheKey(), 'iw-blob-4-four-petals');
+  assert.equal(f.projectiles.blobs.material.customProgramCacheKey(), 'iw-blob-5-ink-look');
 }
 
 test('pinned source rates: vertical units 0/1 provide FourPetals, unit 2 omits them', async () => {

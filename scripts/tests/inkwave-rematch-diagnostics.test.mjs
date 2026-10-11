@@ -31,7 +31,11 @@ test('read-only failure probes report success, rejection and a hung browser with
 
 test('lifecycle diagnostics keep real tap timeout and original assertions and save failure before probing', () => {
   const source = fs.readFileSync(new URL('../check-inkwave-rematch-lifecycle.mjs', import.meta.url), 'utf8');
-  assert.match(source, /operationTrace\.run\('tap: ' \+ id, \(\) => page\.tap\(sel, \{ timeout: 30000 \}\)\)/);
+  const tapBody = source.slice(source.indexOf('const tap = async'), source.indexOf('const menuIs ='));
+  assert.match(tapBody, /operationTrace\.run\('touch: ' \+ id/);
+  assert.match(tapBody, /page\.locator\(sel\)\.tap\(\{ timeout: 120000 \}\)/);
+  assert.equal((tapBody.match(/\.tap\(/g) || []).length, 1, 'dispatch one real gesture');
+  assert.doesNotMatch(tapBody, /force:|\.click\(/, 'native actionability and stable positioning remain required');
   assert.match(source, /rangeRound\.simulated\.state === 'playing' && !rangeRound\.simulated\.result && rangeRound\.simulated\.menu === null/);
   assert.match(source, /after\.range === false && after\.hudRange === false && \(after\.timer === '3:00' \|\| after\.timer === '2:59'\) && Number\.isFinite\(after\.time\)/);
   const catchBlock = source.slice(source.lastIndexOf('} catch (e) {'));

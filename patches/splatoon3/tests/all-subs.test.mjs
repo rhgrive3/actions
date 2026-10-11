@@ -253,21 +253,33 @@ test('owner life changes preserve deployed objects and thrown bombs; Sprinkler h
   const persistent = ['inkMine', 'splashWall', 'beakon'].map(id => deployed(f, owner, id, [id === 'inkMine' ? 3 : id === 'splashWall' ? 6 : 9, 1, 0]));
   equip(owner, 'burst');
   const thrown = f.G.projectiles.throwBomb(owner);
-  const sprinkler = deployed(f, owner, 'sprinkler', [12, 1, 0]);
-  assert.equal(sprinkler.expireAt, Infinity);
+  // #1188's native Sprinkler is a real bomb (and already has authoritative
+  // packet, landing, droplet, hit, and owner-death handling). The catalogue
+  // must not duplicate it as a synthetic _s3SubObjects device.
+  equip(owner, 'sprinkler');
+  owner.weaponRunner.reset(); // refresh per-weapon kit selection after direct fixture equipment
+  f.G.projectiles.throwBomb(owner);
+  const sprinkler = f.G.projectiles.bombs.at(-1);
+  assert.ok(sprinkler, 'native Sprinkler is created in the real bomb list');
+  assert.equal(sprinkler.s3Sub?.id, 'sprinkler');
+  assert.equal(sprinkler.fuse, -1, 'Sprinkler has no generic bomb fuse');
+  assert.ok(!f.G.projectiles._s3SubObjects?.some(o => o.owner === owner && o.subId === 'sprinkler'),
+    'catalogue does not create a competing owner object');
+  f.G.physics.segment = (_start, _end, hit) => { hit.hit = false; return hit; };
   owner.alive = true;
   f.G.time = 120;
   f.G.projectiles.update(1 / 60);
-  assert.ok(f.G.projectiles._s3SubObjects.includes(sprinkler), 'a living owner does not age out the deployed Sprinkler');
+  assert.ok(f.G.projectiles.bombs.includes(sprinkler), 'a living owner does not age out the native Sprinkler');
 
-  const originalSources = [...persistent, thrown, sprinkler].map(o => o.sourceLife);
+  const originalSources = [...persistent, thrown].map(o => o.sourceLife);
   owner.alive = false;
   owner.netLife = 5;
   f.G.time += 1 / 60;
   f.G.projectiles.update(1 / 60);
   for (const object of [...persistent, thrown]) assert.ok(f.G.projectiles._s3SubObjects.includes(object), `${object.subId} survives owner death/respawn transition`);
-  assert.ok(!f.G.projectiles._s3SubObjects.includes(sprinkler), 'Sprinkler retires when its owner dies');
-  assert.deepEqual([...persistent, thrown, sprinkler].map(o => o.sourceLife), originalSources, 'object identity keeps original source life after owner life changes');
+  assert.ok(!f.G.projectiles.bombs.includes(sprinkler), 'native Sprinkler retires on owner death');
+  assert.deepEqual([...persistent, thrown].map(o => o.sourceLife), originalSources,
+    'catalogue object identity keeps original source life after owner life changes');
 });
 
 test('remote Beakon jump cancellation releases the reservation even after its ghost disappears', async () => {

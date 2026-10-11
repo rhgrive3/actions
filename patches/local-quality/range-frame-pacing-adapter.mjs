@@ -22,7 +22,7 @@ export function adaptRangeFramePacing(rel, code) {
       this._rangeFrameProbe = null;
       if (enabled) import('../patches/local-quality/range-frame-profiler.mjs')
         .then(({ createFrameTimingProbe }) => {
-          this._rangeFrameProbe = createFrameTimingProbe({ env: globalThis });
+          this._rangeFrameProbe = createFrameTimingProbe({ env: globalThis, game: this });
         })
         .catch(error => console.warn('Optional range profiler unavailable:', error));
     }

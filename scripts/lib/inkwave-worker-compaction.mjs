@@ -1,5 +1,8 @@
 // BUILD stays a top-level JSON literal. All other worker bindings are private.
 // Compact their names before inserting configuration, retaining a classic script.
+// Emit literal UTF-8 for the Japanese offline fallback. Avoid six-byte ASCII
+// escapes for each Japanese code point while preserving worker behavior and
+// the strict 64 KiB stamped-script cap.
 export function compactLoadingWorkerTemplate(source, transformSync) {
   const binding = /const BUILD\s*=\s*__INKWAVE_CACHE_CONFIG_VALUE__\s*;/g;
   if ([...source.matchAll(binding)].length !== 1) throw Error('Worker compaction requires one unstamped BUILD binding');

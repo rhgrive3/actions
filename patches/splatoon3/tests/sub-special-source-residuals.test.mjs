@@ -22,9 +22,14 @@ test('Curling release and preview consume own launch Y and inherited vertical tu
  f.a.vel.y=20;b=f.throw();near(b.vel.y,16.8,'YMax 0.16/F');
  f.a.vel.y=-20;b=f.throw();near(b.vel.y,7.2,'YMinusRate zero');
  f.a.vel.y=0; f.a.aimPitch=.3;f.ps.updateArc(f.a,true);b=f.throw();
- const v=b.vel.clone(), p=b.pos.clone();
- for(let i=0;i<2;i++){v.y-=57.6*DT;p.addScaledVector(v,DT);}
- const arc=f.ps.arcGeo.attributes.position;near(arc.getX(1),p.x);assert.ok(Math.abs(arc.getY(1)-p.y)<1e-4);near(arc.getZ(1),p.z);
+ // The Curling guide replays the bomb's own step pipeline (FlyGravity and
+ // FlyPositionAirResist) and samples it so the whole fuse fits the 64-vertex
+ // line; vertex 1 is the real bomb after that many steps.
+ const steps=Math.ceil(b.fuse/DT-1e-9), every=Math.max(1,Math.ceil(steps/(f.ps.arcN-2)));
+ const arc=f.ps.arcGeo.attributes.position;
+ for(const [k,i] of [["X",0],["Y",1],["Z",2]])assert.ok(Math.abs(arc["get"+k](0)-b.pos.getComponent(i))<1e-4,"vertex 0 is the release point");
+ for(let i=0;i<every;i++)f.step();
+ near(arc.getX(1),b.pos.x);assert.ok(Math.abs(arc.getY(1)-b.pos.y)<1e-4);near(arc.getZ(1),b.pos.z);
 });
 test('Curling airborne release clock expires at charge-dependent lifetime under every render cadence',async()=>{
  for(const hz of [30,60,120])for(const hold of [0,1]){
@@ -46,7 +51,8 @@ test('kit explosion keeps one kit paint owner and one turf credit in full instal
 });
 test('Curling replay consumes airborne fuse without gaining paint authority',async()=>{
  const f=await setup(),b=f.throw();b.ghost=true;b.s3GhostResolved=b.s3Resolved;delete b.s3Resolved;
- const old=b.vel.clone();f.step();near(b.vel.z,old.z);near(b.fuse,3.5-DT);
+ // WeaponBombCurling MoveParam.FlyPositionAirResist 0.05866 per 60 Hz flight step.
+ const old=b.vel.clone();f.step();near(b.vel.z,old.z*(1-0.05866));near(b.fuse,3.5-DT);
  f.ps._explodeBomb(b);assert.equal(f.marks.length,0);near(f.turf,0);
 });
 test('kit launch context restores after native failure, preserving Storm and subsequent sub calls',async()=>{

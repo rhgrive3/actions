@@ -538,6 +538,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.dualies.rollDist": {
+    "value": 5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.blaster.inkPerShot": {
     "value": 10,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -875,8 +880,13 @@
   },
   "weapons.splatling.moveSpeedCharging": {
     "value": 3.7199999999999998,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed_Charge",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.062
+    }
   },
   "weapons.splatling.range": {
     "value": 21,
@@ -1069,8 +1079,13 @@
   },
   "weapons.charger.moveSpeedFiring": {
     "value": 1.2,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeedFullCharge",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.02
+    }
   },
   "weapons.charger.partialChargeMoveStart": {
     "value": 5.76,
@@ -1272,6 +1287,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.charger.moveSpeedChargingStart": {
+    "value": 5.76,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.rollContactInterval": {
     "value": 0.4,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1279,23 +1299,43 @@
   },
   "weapons.roller.rollSpeed": {
     "value": 7.92,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedDash",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.132
+    }
   },
   "weapons.roller.rollBaseSpeed": {
     "value": 6.4799999999999995,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedNormal",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.108
+    }
   },
   "weapons.roller.rollDashTurnBreakSpeed": {
     "value": 6.4799999999999995,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedDashTurnBreak",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.108
+    }
   },
   "weapons.roller.rollDashTime": {
     "value": 1.5,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/DashFrame",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 90
+    }
   },
   "weapons.roller.rollInkPerMeter": {
     "value": 0.7575757575757576,
@@ -1314,13 +1354,23 @@
   },
   "weapons.roller.rollInkMinSpeed": {
     "value": 1.2,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedInkConsumeMin",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.02
+    }
   },
   "weapons.roller.rollInkMaxSpeed": {
     "value": 7.92,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedInkConsumeMax",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.132
+    }
   },
   "weapons.roller.flickWindup": {
     "value": 0.35,
@@ -1334,8 +1384,13 @@
   },
   "weapons.roller.moveSpeedFiring": {
     "value": 2.88,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponWideSwingParam/SwingMoveSpeed",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.048
+    }
   },
   "weapons.roller.flickDrops": {
     "value": 12,
@@ -1843,8 +1898,13 @@
   },
   "weapons.slosher.moveSpeedFiring": {
     "value": 2.4,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.04
+    }
   },
   "weapons.slosher.inkRecoverStop": {
     "value": 0.6666666666666666,
@@ -1911,6 +1971,46 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "deathBlast.paintRadius": {
+    "value": 5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintRadius",
+      "index": null,
+      "factor": 1,
+      "rawValue": 5
+    }
+  },
+  "deathBlast.paintOffsetY": {
+    "value": 0.1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintOffsetY",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.1
+    }
+  },
+  "deathBlast.splashAroundCount": {
+    "value": 10,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/Num",
+      "index": null,
+      "factor": 1,
+      "rawValue": 10
+    }
+  },
+  "deathBlast.splashAroundPaintRadius": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/PaintRadius",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
   "bomb.fuse": {
     "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1925,6 +2025,11 @@
       "factor": 60,
       "rawValue": 1.12
     }
+  },
+  "bomb.spawnSpeedY": {
+    "value": 14.4,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   },
   "bomb.gravity": {
     "value": 57.6,

@@ -1,0 +1,27 @@
+{
+  "upstreamSha": "5d0be6b7fdebfd07e696e75497aaa97aa5ff5648",
+  "localSnapshotCommit": "a3697100a32936635c861dc8b71c484f7e5b34e9",
+  "note": "Local snapshot commit is not an upstream GitHub commit. Source identity comes from the user-supplied archive receipt.",
+  "archives": [
+    {
+      "file": "INKWAVE-main-5d0be6b7-core.zip",
+      "sha256": "f50d90457fc9904b95c32d631c94335e8d99fef976aa95002339767646af736e",
+      "bytes": 12152618
+    },
+    {
+      "file": "INKWAVE-main-5d0be6b7-tools1.zip",
+      "sha256": "d870fdc3cfbeb6f8490fb825f7d7b025ca6f512f8e34e0394c90f924b77789d6",
+      "bytes": 66466975
+    },
+    {
+      "file": "INKWAVE-main-5d0be6b7-tools2.zip",
+      "sha256": "14836fc8236cbe1ba02472504088bf14d67a7d88ba2e90f1e20f760fdd9cea19",
+      "bytes": 66663489
+    },
+    {
+      "file": "INKWAVE-main-5d0be6b7-tools3.zip",
+      "sha256": "70d9f0b968007a4e382116d369f18fb1a4effffec228a06868e8c883e6b36239",
+      "bytes": 54071856
+    }
+  ]
+}

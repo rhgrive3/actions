@@ -1,11 +1,12 @@
-import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
+import { withMainDirectDamage } from './private-tracking.mjs';
 import { configureRollerVerticalPaint, paintRollerVerticalFlight } from './roller-vertical-paint.mjs';
 import { paintRollerMaximumWidth } from './roller-max-paint.mjs';
-import { configureBlasterFlightPaint, paintBlasterFlight } from './blaster-flight-paint.mjs';
+import { configureBlasterFlightPaint, paintBlasterFlight, spawnSplashDrop, advanceSplashDrops } from './blaster-flight-paint.mjs';
+import { applyBlasterBurstKnockback } from './main-knockback.mjs';
 import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
-import { withRollerImpactPaint } from './roller-impact-paint.mjs';
+import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
 import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint } from './shooter-impact-paint.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
@@ -38,6 +39,25 @@ export function bossVolleyAdmission(boss, attacker, target) {
 }
 const radians = degrees => degrees * Math.PI / 180;
 const MAIN_SHOT_LIFETIME = 1.2;
+// Source WidthHalf/DistanceXZ share the fidelity profile's world scale.
+// A glossary's 0.2-lines notation converts source distance to test-range lines,
+// not to INKWAVE world units. Keep the current interpolation model unchanged.
+export function slosherImpactPaintSource(unit, index, xzDistance, worldScale = 1) {
+  const paint = index === 0 ? unit?.PaintParam : unit?.AfterPaintParam;
+  if (!paint || ![worldScale,xzDistance,paint.DistanceXZNear,paint.DistanceXZFar,
+      paint.WidthHalfNear,paint.WidthHalfFar,paint.DepthScaleNear,paint.DepthScaleFar].every(Number.isFinite) ||
+      !(worldScale>0) || !(paint.DistanceXZFar>paint.DistanceXZNear) ||
+      !(paint.WidthHalfNear>0&&paint.WidthHalfFar>0)) return null;
+  const near = paint.DistanceXZNear*worldScale;
+  const far = paint.DistanceXZFar*worldScale;
+  const t = clamp01((Math.max(0,xzDistance)-near)/(far-near));
+  return {
+    radius:(paint.WidthHalfNear+(paint.WidthHalfFar-paint.WidthHalfNear)*t)*worldScale,
+    depthScale:paint.DepthScaleNear+(paint.DepthScaleFar-paint.DepthScaleNear)*t,
+    source: index === 0 ? 'PaintParam' : 'AfterPaintParam', t,
+  };
+}
+
 function freezeDeep(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
     for (const child of Object.values(value)) freezeDeep(child);
@@ -295,6 +315,68 @@ export function configureFidelityInkFlight(projectiles, helpers) {
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
 function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
 
+// #992: S3 BulletShooterPaintParam's sparse defaults and interpolation semantics
+// are documented by the original parameter research in
+// https://splatoonwiki.org/wiki/User:XarrotD/paramtable . DistanceMiddle is a
+// source distance, not a normalized fraction; DistanceFar defaults to 20.
+// The break/free HEIGHT selector remains unverified in that research. Do not
+// silently substitute impact angle or a guessed launch/apex height for it.
+export function dualiesImpactPaintSource(p, hit, raw, scale = 1) {
+  const paint = raw?.PaintParam;
+  if (p?.ghost || p?.s3SpecialWeapon || p?.s3Weapon?.kind !== 'dualies' ||
+      p.type !== 'shot' || !p.start || !hit?.point || !(hit.normal?.y > .5) ||
+      !Number.isFinite(scale) || !(scale > 0) || !paint) return null;
+  const near = paint.DistanceNear ?? 1.1, middle = paint.DistanceMiddle, far = paint.DistanceFar ?? 20;
+  const wn = paint.WidthHalfNear, wm = paint.WidthHalfMiddle, wf = paint.WidthHalfFar;
+  if (![near,middle,far,wn,wm,wf].every(Number.isFinite) ||
+      near < 0 || middle < near || far <= middle || Math.min(wn,wm,wf) <= 0) return null;
+  const distance = p.start.distanceTo(hit.point) / scale;
+  if (!Number.isFinite(distance)) return null;
+  const width = distance <= near ? wn : distance < middle
+    ? wn + (wm-wn) * (distance-near)/(middle-near)
+    : wm + (wf-wm) * clamp01((distance-middle)/(far-middle));
+  let depthScale = null;
+  const phase = p.inkProfile ? p.inkPhase : p.fidelityPhase;
+  if ((phase ?? 0) === 0) {
+    const angle = rollerImpactAngleDegrees(p.vel,hit.normal);
+    const lo = paint.DegreeUseDepthScaleMax ?? 10, hi = paint.DegreeUseDepthScaleMin ?? 35;
+    if (angle !== null && [lo,hi,paint.DepthScaleMax,paint.DepthScaleMin].every(Number.isFinite) &&
+        hi > lo && paint.DepthScaleMax > 0 && paint.DepthScaleMin > 0)
+      depthScale = paint.DepthScaleMax + (paint.DepthScaleMin-paint.DepthScaleMax) * clamp01((angle-lo)/(hi-lo));
+  }
+  return { radius: width*scale, depthScale };
+}
+
+// The native shooter-family runtime bypasses Projectiles._impact. Resolve the
+// same retained source here, while leaving its already-existing break/free
+// height model and detached-drop owner unchanged.
+export function fidelityDualiesNativeImpactPaint(p, hit) {
+  if (p?.s3Weapon?.kind !== 'dualies') return null;
+  return dualiesImpactPaintSource(p, hit, rawWeapon(p?.s3Weapon), completion?.worldUnitsPerSourceUnit);
+}
+
+function withDualiesImpactPaint(game,p,hit,source,callback) {
+  if (!source || typeof game?.paint?.splat !== 'function') return callback();
+  const paint=game.paint,native=paint.splat;
+  let first=true;
+  paint.splat=function(center,radius,team,opts={}) {
+    if (!first) return native.call(this,center,radius,team,opts);
+    first=false;
+    const next={...opts};
+    if (source.depthScale !== null) {
+      // The angle was already consumed above. Avoid applying a second cos(angle)
+      // attenuation in the rasterizer by supplying the in-plane unit heading.
+      const direction=p.vel.clone(),normal=hit.normal;
+      direction.addScaledVector(normal,-direction.dot(normal)/normal.lengthSq());
+      if (direction.lengthSq()>1e-12) direction.normalize();
+      else direction.set(0,0,0); // normal incidence has no preferred floor heading
+      next.stretch=direction;next.stretchAmt=Math.max(0,source.depthScale-1);
+    }
+    return native.call(this,center,source.radius,team,next);
+  };
+  try { return callback(); } finally { paint.splat=native; }
+}
+
 // #873: keep intermediate and nearest/feet widths separate. Consume the same
 // legacy RNG draw to avoid changing unrelated spread/paint-seed ordering, but
 // never let that draw randomize the sourced Shooter gameplay radius.
@@ -434,6 +516,14 @@ export const BLASTER_BURST_PARAM_DEFAULTS = Object.freeze({
   SplashDropInitSpeed: 0,
   SplashDropPaintRadius: 3.2,
   SplashPaintRadius: 2.0,
+  // Community-documented S3 type default (Inkipedia
+  // https://splatoonwiki.org/wiki/Template:Shooter_data_S3:
+  // BlasterBurstParam.SplashPaintShotColHitRadius = 1.4).
+  // The S3 11.3.0 Middle JSON omits this default; S2 v5.5 Middle_Burst
+  // independently records 14/10=1.4 vs 20/10=2.0 for timed airburst.
+  // Type default is source-backed, but the final Nintendo paint shape is
+  // still not established by parameter parity.
+  SplashPaintShotColHitRadius: 1.4,
 });
 export function resolvedBlasterBurstParam(raw) {
   if (!raw?.BlasterBurstParam) return null;
@@ -451,7 +541,7 @@ export function blasterPaintContract(raw) {
     wall.SpawnParam.FirstDistance, wall.SpawnParam.VelocityMinusYRate,
     wall.WallDropCollisionPaintParam.PaintRadiusShock, wall.WallDropCollisionPaintParam.PaintRadiusFall,
     burst.SplashDropPaintShotColHitRadius,
-    burst.SplashDropPaintRadius, burst.SplashPaintRadius,
+    burst.SplashDropPaintRadius, burst.SplashPaintRadius, burst.SplashPaintShotColHitRadius,
     burst.SplashWallDropPaintParam.PaintRadiusShock,
     burst.SplashWallDropPaintParam.PaintRadiusFall,
     burst.SplashWallDropPaintParam.PaintRadiusGround,
@@ -460,8 +550,12 @@ export function blasterPaintContract(raw) {
       !x.length || !y.length || !x.every(Number.isFinite) || !y.every(Number.isFinite)) return null;
   if (splash.DepthMaxDropHeight < 0 || splash.DepthMinDropHeight < splash.DepthMaxDropHeight ||
       wall.SpawnParam.FirstDistance < 0 || wall.SpawnParam.VelocityMinusYRate < 0 ||
-      burst.SplashDropPaintShotColHitRadius <= 0) return null;
+      burst.SplashDropPaintShotColHitRadius <= 0 || burst.SplashPaintShotColHitRadius <= 0) return null;
+  const gravity = raw.MoveParam?.FreeGravity;
+  if (!(gravity > 0)) return null;
   const contract = {
+    // Source FreeGravity per frame^2 -> world units per second^2 (scale applied at use).
+    gravity: gravity * 3600 * (completion?.worldUnitsPerSourceUnit ?? 1),
     dropHeightMax: splash.DepthMaxDropHeight,
     dropHeightMin: splash.DepthMinDropHeight,
     flightRadius: splash.WidthHalf,
@@ -487,6 +581,12 @@ export function blasterPaintContract(raw) {
       timedDropOn: burst.SplashDropOn ?? true,
       timedDropInitialSpeed: burst.SplashDropInitSpeed ?? 0,
       timedDropCollisionRadius: burst.SplashDropCollisionRadius ?? 0.4,
+      // Shot-collision sphere radius is distinct from the timed-airburst
+      // radius; omitted sparse S3 fields resolve to the documented S3 type
+      // default 1.4 (also independently present in S2 as 14/10).
+      // Explicit S3 overrides take precedence.
+      // Keep explicit S3 overrides authoritative for other Blaster types.
+      collisionSplashRadius: burst.SplashPaintShotColHitRadius,
       axisX: x,
       axisY: y,
       move: burst.SplashWallDropMoveParam,
@@ -497,11 +597,14 @@ export function blasterPaintContract(raw) {
   return contract;
 }
 
+// Depth-scale regime of a splash that fell `height`: DepthScaleMax up to
+// DepthMaxDropHeight, DepthScaleMin from DepthMinDropHeight on, interpolated in
+// between. It never discards a splash (PR1188 removed the old 'none' cut-off).
 export function blasterSplashDropBand(contract, height) {
   if (!contract || !Number.isFinite(height) || height < 0) return 'none';
   if (height <= contract.dropHeightMax + EPSILON) return 'max';
-  if (height <= contract.dropHeightMin + EPSILON) return 'transition';
-  return 'none';
+  if (height < contract.dropHeightMin - EPSILON) return 'transition';
+  return 'min';
 }
 
 export function blasterBurstAxisDirections(contract) {
@@ -597,98 +700,74 @@ function blasterPaintSource(p) {
   return contract ? { w, contract } : null;
 }
 
+// PR1188: the ordinary Blaster round sets trailEvery=0, so the native trail
+// block never reaches this function for it; flight splashes are owned by the
+// distance scheduler (blaster-flight-paint.mjs). A Blaster that somehow keeps
+// a legacy trail must still never add a second, unsourced floor stamp.
 export function applyFidelityBlasterFlightPaint(system, p) {
+  return !!blasterPaintSource(p);
+}
+
+// SplashWallHitParam: a flight splash released while a paintable wall lies
+// within FirstDistance along the round's velocity (its Y lowered by
+// VelocityMinusYRate x horizontal speed) becomes a sourced wall drop instead
+// of a falling floor splash. Returns true when the wall took the splash.
+export function blasterFlightWallSplash(system, p, from, index) {
   const source = blasterPaintSource(p);
-  if (!source) return false;
-  if (p.ghost) return true;
-  const { contract } = source;
-  const index = p.s3BlasterSplashIndex = (p.s3BlasterSplashIndex || 0) + 1;
-  const wall = contract.flightWall;
+  if (!source || p.ghost || p.owner?.remote) return false;
+  const wall = source.contract.flightWall;
   const dir = system._s3BlasterFlightSplashDir || (system._s3BlasterFlightSplashDir = new api.THREE.Vector3());
   dir.copy(p.vel);
   const horizontal = Math.hypot(dir.x, dir.z);
   if (horizontal > EPSILON) dir.y -= horizontal * wall.velocityMinusYRate;
-  if (dir.lengthSq() > EPSILON) {
-    dir.normalize();
-    const wh = system._s3BlasterFlightSplashWallHit || (system._s3BlasterFlightSplashWallHit = new api.Hit());
-    const hit = api.G.physics.raycast(p.pos, dir, wall.firstDistance, wh, true);
-    if (eligibleWallDropHit(hit) && startDetachedWallDrop(system, p, hit, wall.move, wall.paint, 'flight', 0x1009 + index)) return true;
-  }
-  const downHit = system._s3BlasterFlightSplashFloorHit || (system._s3BlasterFlightSplashFloorHit = new api.Hit());
-  const down = system._s3BlasterPaintDown || (system._s3BlasterPaintDown = new api.THREE.Vector3(0, -1, 0));
-  const g = api.G.physics.raycast(p.pos, down, contract.dropHeightMin, downHit, true);
-  if (!g.hit || blasterSplashDropBand(contract, g.dist) === 'none') return true;
-  const point = system._s3BlasterFlightSplashPoint || (system._s3BlasterFlightSplashPoint = new api.THREE.Vector3());
-  point.copy(g.point).addScaledVector(g.normal, .1);
-  const radius = p.trailRadius * (.8 + seededUnit(p.seed, 0x1049 + index) * .4);
-  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, 0x1490 + index), claimOwner: p.owner });
-  if (Number.isFinite(area)) p.owner?.addTurf?.(area);
-  return true;
+  if (!(dir.lengthSq() > EPSILON) || !(wall.firstDistance > 0)) return false;
+  dir.normalize();
+  const wh = system._s3BlasterFlightSplashWallHit || (system._s3BlasterFlightSplashWallHit = new api.Hit());
+  const hit = api.G.physics.raycast(from, dir, wall.firstDistance * completion.worldUnitsPerSourceUnit, wh, true);
+  return eligibleWallDropHit(hit) && startDetachedWallDrop(system, p, hit, wall.move, wall.paint, 'flight', 0x1009 + index);
 }
 
-// #1107: falling paint drops are separate from the actual burst's damage
-// collision. A small bounded owner-only queue ensures an airburst can paint the
-// later landing surface without inventing an immediate generic floor stamp.
-function queueTimedBlasterDrop(system,p,point,burst) {
-  if (!burst.timedDropOn || !(burst.timedDropRadius>0) || !api.G.physics?.segment) return;
-  const drops=system._s3TimedBlasterDrops || (system._s3TimedBlasterDrops=[]);
-  if (drops.length>=128) drops.shift();
-  drops.push({ pos:point.clone(), next:point.clone(), hit:new api.Hit(),
-    speed:Math.max(0,burst.timedDropInitialSpeed)*60,
-    t:0, radius:burst.timedDropRadius, owner:p.owner,team:p.team,
-    seed:seededUnit(p.seed,0x1107) });
+function blasterBurstDropSpec(contract) {
+  return contract.burstDropSpec || (contract.burstDropSpec = Object.freeze({
+    gravity: contract.gravity, depthScaleMax: 1, depthScaleMin: 1, dropHeightMax: 0, dropHeightMin: 0, randomVelocity: null,
+  }));
 }
-function advanceTimedBlasterDrops(system,dt) {
-  const drops=system._s3TimedBlasterDrops;
-  if (!drops?.length || !(dt>0)) return;
-  const physics=api.G.physics,paint=api.G.paint;
-  const gravity=Number.isFinite(api.PLAYER?.gravity)?api.PLAYER.gravity:20;
-  for(let i=drops.length-1;i>=0;i--){
-    const d=drops[i];d.t+=dt;d.speed+=gravity*dt;
-    d.next.copy(d.pos);d.next.y-=d.speed*dt;
-    const hit=physics?.segment?.(d.pos,d.next,d.hit,true);
-    if(hit?.hit) {
-      if(paint?.splat&&d.owner){
-        const at=hit.point.clone().addScaledVector(hit.normal,.025);
-        const area=paint.splat(at,d.radius,d.team,{seed:d.seed,claimOwner:d.owner});
-        if(Number.isFinite(area))d.owner.addTurf?.(area);
-      }
-      drops.splice(i,1);
-    }else if(d.t>2.5 || d.next.y<(api.PLAYER?.waterY??-100)-2) drops.splice(i,1);
-    else d.pos.copy(d.next);
-  }
-}
+
 export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   const source = blasterPaintSource(p);
   if (!source) return false;
   const collision = direct != null || !!p.s3BurstCollisionHit || !!p.s3TerrainBurst;
   if (p.ghost) return true;
-  const { contract } = source, burst = contract.burst;
-  if (!collision) {
-    // #1107: the timed airburst's SplashPaintRadius is a splash centred on the
-    // burst point. paint.splat tests each face by its plane distance to that
-    // centre (a sphere), so a floor 2.0-3.5 below the burst is not reached. A
-    // downward floor probe here would be the generic stamp #1060 removed.
-    if(burst.timedSplashRadius>0 && api.G.paint?.splat){
-      const at=point.clone();
-      const area=api.G.paint.splat(at,burst.timedSplashRadius,p.team,{seed:seededUnit(p.seed,0x1106),claimOwner:p.owner});
-      if(Number.isFinite(area))p.owner?.addTurf?.(area);
-    }
-    queueTimedBlasterDrop(system,p,point,burst);
-    return true;
+  const { contract } = source, burst = contract.burst, scale = completion.worldUnitsPerSourceUnit;
+  // PR1188: one burst = a sphere splash at the burst point plus one falling
+  // splash drop. Timed airbursts use SplashPaintRadius / SplashDropPaintRadius;
+  // shot-collision bursts (terrain contact, direct hit) use their ShotColHit
+  // overrides. The sphere paints only surfaces inside its radius (continuous in
+  // height, no fixed downward probe); the drop falls under the Blaster's own
+  // FreeGravity from any height and paints whatever it reaches first.
+  const sphereRadius = (collision ? burst.collisionSplashRadius : burst.timedSplashRadius) * scale;
+  const dropRadius = (collision ? burst.radius : burst.timedDropRadius) * scale;
+  const seed = Number.isFinite(p.seed) ? p.seed : seededUnit(point.x * 7.1 + point.y * 3.3 + point.z * 1.7, 0x1188);
+  if (sphereRadius > 0 && api.G.paint?.splat) {
+    const centre = system._s3BlasterBurstCentre || (system._s3BlasterBurstCentre = new api.THREE.Vector3());
+    centre.copy(point);
+    const area = api.G.paint.splat(centre, sphereRadius, p.team, { seed: seededUnit(seed, collision ? 0x1001 : 0x1106), claimOwner: p.owner });
+    if (Number.isFinite(area) && area) p.owner?.addTurf?.(area);
   }
-  const floorHit = system._s3BlasterBurstFloorHit || (system._s3BlasterBurstFloorHit = new api.Hit());
-  const floorOrigin = system._s3BlasterBurstFloorOrigin || (system._s3BlasterBurstFloorOrigin = new api.THREE.Vector3());
-  const floorPoint = system._s3BlasterBurstFloorPoint || (system._s3BlasterBurstFloorPoint = new api.THREE.Vector3());
-  floorOrigin.copy(point); floorOrigin.y += .2;
-  const down = system._s3BlasterPaintDown || (system._s3BlasterPaintDown = new api.THREE.Vector3(0, -1, 0));
-  const floor = api.G.physics.raycast(floorOrigin, down, 3.5, floorHit, true);
-  if (floor.hit) {
-    floorPoint.copy(floor.point).addScaledVector(floor.normal, .1);
-    const area = api.G.paint.splat(floorPoint, burst.radius, p.team, { seed: seededUnit(p.seed, 0x1001), claimOwner: p.owner });
-    if (Number.isFinite(area)) p.owner?.addTurf?.(area);
+  if (burst.timedDropOn && dropRadius > 0) {
+    const from = system._s3BlasterBurstDropFrom || (system._s3BlasterBurstDropFrom = new api.THREE.Vector3());
+    from.copy(point);
+    const normal = collision ? p.s3BurstCollisionHit?.normal : null;
+    // A terrain-contact burst starts its drop just off the struck surface: a
+    // wall contact steps out by the sourced drop collision radius and runs down
+    // to the floor below; a floor contact lands on its own floor at once.
+    if (normal && Number.isFinite(normal.y) && Math.abs(normal.y) < .45)
+      from.addScaledVector(normal, Math.max(.05, burst.timedDropCollisionRadius * scale));
+    else if (collision) from.y += .05;
+    spawnSplashDrop(api.G, { owner: p.owner, team: p.team, seed, salt: collision ? 0x1107 : 0x1106, from,
+      radius: dropRadius, spec: blasterBurstDropSpec(contract), depth: false, kind: undefined,
+      initialDownSpeed: Math.max(0, burst.timedDropInitialSpeed) * scale * 60 });
   }
-
   const dirs = blasterBurstAxisDirections(contract);
   const ray = system._s3BlasterBurstAxisDir || (system._s3BlasterBurstAxisDir = new api.THREE.Vector3());
   const hit = system._s3BlasterBurstAxisHit || (system._s3BlasterBurstAxisHit = new api.Hit());
@@ -757,9 +836,12 @@ export function beginFidelityWallDrop(system, p, hit) {
   // Keep the existing Blaster terrain burst exactly once and preserve its
   // terrain-only damage modifier; the wall-drop itself adds no HP damage.
   if (p.type === 'blast') {
-    const before = p.s3TerrainBurst; p.s3TerrainBurst = true;
+    // PR1188: the struck wall orientation travels with the queued terrain burst
+    // so its falling drop steps off the wall instead of sliding down its plane.
+    const before = p.s3TerrainBurst, beforeHit = p.s3BurstCollisionHit;
+    p.s3TerrainBurst = true; p.s3BurstCollisionHit = hit;
     try { system._blastBurst(p, hit.point, null); }
-    finally { p.s3TerrainBurst = before; }
+    finally { p.s3TerrainBurst = before; p.s3BurstCollisionHit = beforeHit; }
   } else {
     api.emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });
     api.G.fx?.burst(hit.point, hit.normal, p.owner.color, { count: 5, speed: 3, size: .07, paint: false });
@@ -1010,6 +1092,65 @@ function setSlosherDraw(p,unit,index) {
 }
 export function fidelitySlosherDrawRadius(p) {
   return radiusAt(p.fidelitySloshDraw,Math.max(0,p.age||0),p.vis??p.size)*slosherDropScale(p,p.pos?.y);
+}
+// Airborne ink silhouette (render only; collision, paint and packets are
+// untouched). Splatoon 3 footage (Inkipedia "S3 About videos" Splattershot /
+// Slosher, Nintendo official turf-war clip) shows no round balls:
+// - a Shooter round is a long smooth constant-width rod of ink (its tail,
+//   see shotTailFrames) while the SplashSpawn drops along the path fly as
+//   flat jagged splinters;
+// - Roller/Brush flicks are spiky splash crowns;
+// - a Slosher throw is one broad thin sheet without detached beads.
+// Each entry is [spike amplitude (head radii), spike count, cross-section
+// thickness (1 = round; the thin axis stays vertical), tail length scale,
+// width scale on the drawn radius, trailing beads 1/0]. The Slosher width 0.5
+// is read off the footage (the sheet is at most about half the character's
+// height wide while DrawSizeParam is 1.0); the rod width 0.7 matches the
+// nozzle; the splinter size 2.2x the native drop radius matches the
+// fragments near the muzzle. All are INKWAVE calibration against footage,
+// not extracted Nintendo mesh data.
+export const INK_LOOK=Object.freeze({
+  shot:Object.freeze([0.15,-5,1,1,0.7,1]),   // negative count = rod body
+  drop:Object.freeze([1.1,6,0.5,0.6,1,1]),
+  slosh:Object.freeze([0.3,4,0.32,1,0.5,0]),
+  blast:Object.freeze([0.35,6,1,1,1,1]),
+  satellite:Object.freeze([0.5,4,1,1,1,1]),
+  droplet:Object.freeze([1.3,6,0.35,1.5,2.2,1]),
+  none:Object.freeze([0,1,1,1,1,1]),
+});
+// Shooter-family tail (rod) length. Splatoon 3 keeps a separate tail end per
+// round: spl__BulletShooterTailLengthParam.MaxLengthFrame (Splatling family
+// 3 in the pinned 11.3.0 tables; Crab Tank also has DelayShotFrame and
+// EndMaxLength), and Splatoon 2 3.1.0's symbol list names the tail-end states
+// Game::BulletShooterBase::stateMuzzleTail / GoStraightTail / BrakeTail /
+// FreeTail and updateTailPos (names only; their bodies are not decompiled).
+// Read together: the tail end waits at the muzzle, then follows the round's
+// own straight/brake/free path MaxLengthFrame frames behind it. INKWAVE draws
+// that as a straight rod whose back reaches the distance the round covers in
+// MaxLengthFrame frames at its current speed, never behind the launch point.
+// The Shooter/Dualies default is absent from the sparse tables: 2 frames is
+// measured from the 60 fps Splattershot clip (joined to the muzzle for two
+// frames, its back one frame of travel past the muzzle on the third), not a
+// sourced value.
+export const SHOT_TAIL_FRAMES_DEFAULT=2;
+export function shotTailFrames(p) {
+  const v=completion?.weapons?.[p?.wid]?.spl__BulletShooterTailLengthParam?.MaxLengthFrame;
+  return Number.isFinite(v)&&v>0?v:SHOT_TAIL_FRAMES_DEFAULT;
+}
+// Back length (in drawn head radii) for the instanced blob. Others: the
+// native tail scaled by the look; under a width scale the length beyond the
+// drawn head stays the same world length (the Slosher's sourced TailLength).
+export function fidelityInkTail(p,tail,drawnRadius,look) {
+  if(p?.type!=='shot'||!(drawnRadius>0)||!p.start||!p.pos)return Math.max(1,1+(tail*look[3]-1)/look[4]);
+  const travel=p.start.distanceTo(p.pos),speed=p.vel?p.vel.length():0;
+  return Math.max(1,Math.min(travel,speed*shotTailFrames(p)/60)/drawnRadius);
+}
+export function fidelityInkLook(p) {
+  return INK_LOOK[p?.type]??INK_LOOK.none;
+}
+export function writeInkLook(out,index,look,seed) {
+  const o=index*4;
+  out[o]=look[0];out[o+1]=look[1];out[o+2]=look[2];out[o+3]=((Number(seed)||0)*43.98)%(Math.PI*2);
 }
 export function fidelitySlosherDrawTail(p,speed) {
   const d=p.fidelitySloshDraw,r=fidelitySlosherDrawRadius(p);
@@ -1518,8 +1659,18 @@ export function installWeaponsFidelity(context,profile) {
     return reach;
   };
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,step=Projectiles.prototype._step,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear,updateSystem=Projectiles.prototype.update;
-  Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;this._dualiesGuideCache=null;this._s3DetachedWallDrops?.splice(0);this._s3TimedBlasterDrops?.splice(0);return result;};
-  Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);advanceTimedBlasterDrops(this,dt);return updateSystem.call(this,dt);};
+  Projectiles.prototype.clear=function(...args){
+    const result=clear.apply(this,args);
+    this._fidelityCollision=null;this._fidelitySloshContext=null;this._dualiesGuideCache=null;
+    // Presentation predictions never enter list/pool. Retire their match-owned
+    // cache keys too, while retaining the reusable projectile/vector storage.
+    this._s3GuideCache=null;this._s3ShooterImpactCache=null;this._s3MuzzleFeedbackCache=null;
+    for(const p of [this._s3ShooterImpact,this._s3SlosherGuideProjectile,this._s3BlasterGuideProjectile,
+      ...(this._s3DualiesGuideProjectiles||[])])if(p)p.owner=null;
+    if(context.G?.projectiles===this&&context._shotGuide?.probe)context._shotGuide.probe.owner=null;
+    this._s3DetachedWallDrops?.splice(0);this._s3SplashDrops?.splice(0);return result;
+  };
+  Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);advanceSplashDrops(this,dt,context.G,Number.isFinite(context.PLAYER?.waterY)?context.PLAYER.waterY:-Infinity);return updateSystem.call(this,dt);};
   Projectiles.prototype._new=function(...args){
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
@@ -1640,7 +1791,10 @@ export function installWeaponsFidelity(context,profile) {
     applyShooterSpawnVelocity(p);
     applyBlasterSpawnVelocity(p);
     applySlosherSpawnVelocity(p);
-    if(w?.kind==='blaster' && !p.s3SpecialWeapon && !p.ghost) configureBlasterFlightPaint(p,rawWeapon(w),completion.worldUnitsPerSourceUnit);
+    if(w?.kind==='blaster' && !p.s3SpecialWeapon && !p.ghost){
+      const flight=configureBlasterFlightPaint(p,rawWeapon(w),completion.worldUnitsPerSourceUnit);
+      const system=this;flight.wallSplash=(from,index)=>blasterFlightWallSplash(system,p,from,index);
+    }
     if(w?.kind==='roller' && p.fidelityMode==='vertical' && p.fidelityRollerUnitIndex===0 && !p.ghost)
       configureRollerVerticalPaint(p,rawWeapon(w).VerticalSwingUnitGroupParam,completion.worldUnitsPerSourceUnit,p.s3DepletionPaintScale??1);
     const group=p.s3DamageGroup;const result=push.call(this,p);
@@ -2143,16 +2297,35 @@ export function installWeaponsFidelity(context,profile) {
     }
     context.emit('weapon:impact',{pos:hit.point.clone(),normal:p.vel.clone().normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});
   };
+  // PR1188 (A07): sourced BlastParam.KnockBackParam, applied once per burst
+  // where it actually resolves (a queued #729 terrain burst resolves on flush),
+  // and only to bodies this client simulates. A remote victim's own client
+  // applies it from the replicated ghost burst.
+  const blasterKnockback=(p,point,victim)=>applyBlasterBurstKnockback(context.G,p,point,victim,
+    {raw:rawWeapon(p.s3Weapon||p.owner?.weapon||WEAPONS.blaster),scale:completion.worldUnitsPerSourceUnit,PLAYER:context.PLAYER});
   Projectiles.prototype._blastBurst=function(p,point,victim){
     if(p.ghost){
       const w=p.s3Weapon||WEAPONS.blaster;
       context.G.fx?.explosion(point,p.owner.color,w.burstRadius);
       context.G.audio?.play('blaster_boom',{pos:point,volume:.7});
+      // Ordinary remote bursts are visual replays: the authenticated #574 hit
+      // already owns the victim's impulse. Only the reduced terrain model has
+      // no native #574 impulse; keep that separately scoped replay owner.
+      if(p.owner?.remote && p.s3TerrainBurst)blasterKnockback(p,point,victim);
       return;
     }
-    // The composed native burst already owns sourced paint and its deferred
-    // terrain queue. An outer legacy stamp would paint in the contact tick.
-    return blastBurst.call(this,p,point,victim);
+    // #574's adapted native _blastBurst already calls applyBlasterBlastContact
+    // for every admitted ordinary splash target; repeating the independent
+    // PR1188 helper here doubles the velocity impulse and bypasses its
+    // invulnerability / LOS / kit-shield admission. Terrain bursts are
+    // deliberately different: native #574 suppresses their unsourced
+    // knockback, so the explicitly labelled reduced-volume PR1188 model
+    // remains the sole owner when the deferred collision resolves.
+    const queued=this.s3BlastQueue?.length||0;
+    const result=blastBurst.call(this,p,point,victim);
+    if(p.s3TerrainBurst && (this.s3BlastQueue?.length||0)<=queued)
+      blasterKnockback(p,point,victim);
+    return result;
   };
   const nativeImpact=Projectiles.prototype._impact;
   Projectiles.prototype._impact=function(p,hit){
@@ -2161,6 +2334,10 @@ export function installWeaponsFidelity(context,profile) {
       if(p.type==='blast')p.s3BurstCollisionHit=hit;
       try{
         const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon;
+        if(w?.kind==='dualies' && p.type==='shot') {
+          const source=dualiesImpactPaintSource(p,hit,rawWeapon(w),completion.worldUnitsPerSourceUnit);
+          return withDualiesImpactPaint(context.G,p,hit,source,()=>nativeImpact.call(this,p,hit));
+        }
         if(w?.kind==='roller' && p.type==='drop' && p.fidelityRollerUnit){
           // #411/#674/#611/#713 share one authoritative landing-paint sample.
           return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));

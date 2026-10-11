@@ -27,9 +27,9 @@ import {
   installKitBigBubbler, bigBubblerDomes, bigBubblerRemoteDomes,
   clearBigBubblers, kitBarrierCandidate, adjudicateBigBubblerDamage,
   bigBubblerOwnerId, BIG_BUBBLER_RAW, BIG_BUBBLER_CALIBRATION,
-  BLASTER_OBJECT_MULTIPLIER, OBJECT_SHREDDER_MULTIPLIER,
+  BLASTER_OBJECT_MULTIPLIER, OBJECT_SHREDDER_MULTIPLIER, BIG_BUBBLER_SOURCE_RATES,
 } from '../runtime/kit-big-bubbler.mjs';
-import { installKitDefense } from '../runtime/kit-defense.mjs';
+import { installKitDefense, explosionBubblerRow } from '../runtime/kit-defense.mjs';
 import { abilityAllowed, emptyLoadout, normalizeLoadout } from '../runtime/gear.mjs';
 
 const RAW_PER_DAMAGE_UNIT = BIG_BUBBLER_CALIBRATION.rawPerDamageUnit; // 100 (declared)
@@ -342,7 +342,7 @@ test('#1161 full production composition: Object Shredder adds exactly 1.1 to the
   assert.equal(DOME_HP - dome.hp, BLASTER_DIRECT * 1.9 * 1.1 * RAW_PER_DAMAGE_UNIT * CANOPY_RATIO);
 });
 
-test('#1161 Object Shredder does not amplify blaster splash or make a neutral round authoritative', async () => {
+test('#1161 blaster splash uses the pinned 1.9 blast-core rate and Object Shredder 1.1; neutral rounds stay visual', async () => {
   const { f } = await composed();
   const { dome } = await withDome(f, DOME_HP);
   dome.ignited = false;
@@ -362,8 +362,14 @@ test('#1161 Object Shredder does not amplify blaster splash or make a neutral ro
   f.G.actors = [bare, victim];
   const beforeBareSplash = dome.hp;
   f.G.projectiles._blastBurst(blastRound(f, bare, at, bare.weapon), at, null);
-  assert.equal(beforeBareSplash - dome.hp, splashSpend,
-    'the native splash probe has no direct-contact type, so Object Shredder adds no direct multiplier');
+  // Pinned 11.3.0 spl__DamageRateInfoConfig: Blaster_Middle_00 ExtraBombCore row
+  // Blaster_BlasterMiddle x GreatBarrier_Barrier = 1.9, and Inkipedia lists Object
+  // Shredder as 110% against the Big Bubbler for all nonplayer damage.
+  const bareSpend = beforeBareSplash - dome.hp;
+  assert.ok(bareSpend > 0);
+  assert.ok(Math.abs(splashSpend / bareSpend - 1.1) < 1e-9, `geared/bare splash ${splashSpend}/${bareSpend}`);
+  assert.equal(explosionBubblerRow(blastRound(f, bare, at, bare.weapon)), 'Blaster_BlasterMiddle');
+  assert.deepEqual([...BIG_BUBBLER_SOURCE_RATES.Blaster_BlasterMiddle], [1.9, 1.9]);
 
   dome.hp = DOME_HP; dome.damageProgress = 0;
   f.G.actors = [];

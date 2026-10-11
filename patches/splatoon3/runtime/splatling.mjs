@@ -154,10 +154,9 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   const spread = WeaponRunner.prototype._spreadDeg;
   WeaponRunner.prototype._spreadDeg = function (w) {
     if (w.kind !== 'splatling') return spread.call(this, w);
-    // Preserve the current release-held cone, but remove shooter-style bloom.
-    // This is not a claim that the inherited cone is S3's exact PDF. The published
-    // value is the inner cone; the S3 outer tail is chosen per shot in fireSplatling.
-    return (this.a.grounded ? w.spreadGround : w.spreadAir) * (w.spreadFirst ?? .6);
+    // DegSwerve is the maximum angular envelope, not a bloom-shrunk inner
+    // cone. The later jump-spread hook alone handles sourced age recovery.
+    return this.a.grounded ? w.spreadGround : w.spreadAir;
   };
 
   WeaponRunner.prototype._splatling = function (dt, input, w) {
@@ -260,22 +259,9 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
     return withSampledProjectileSpeed(w, sampled, config => fireRound.call(this, a, config, ...args));
   };
 
-  // #940: pinned 11.3.0 Heavy Splatling standing outer-reticle chance
-  // (Stand_DegBiasMax 0.3; Inkipedia Splatoon 3 data section gives 30%). The shape
-  // of the bias law is unverified. Standing shots only: #850 jump recovery keeps
-  // its own published envelope and is not re-selected here.
-  const standOuterChance = profile?.weaponsFidelityCompletion?.weapons?.splatling?.WeaponParam?.Stand_DegBiasMax;
-  const fireSplatling = Projectiles.prototype.fireSplatling;
-  Projectiles.prototype.fireSplatling = function (a, w, spreadDeg) {
-    const standing = w?.kind === 'splatling' && a?.grounded === true && !Number.isFinite(a.s3SplatlingJumpAgeFrames);
-    const envelope = w?.spreadGround;
-    if (!standing || !Number.isFinite(standOuterChance) || standOuterChance < 0 || standOuterChance > 1 ||
-        !(spreadDeg > 0) || !Number.isFinite(envelope) || envelope < spreadDeg) {
-      return fireSplatling.call(this, a, w, spreadDeg);
-    }
-    // Outer shot: the S3 standing envelope (Stand_DegSwerve 3.3). Inner shot: the
-    // published cone, which is the existing INKWAVE inner kernel (spreadFirst).
-    const deviation = Math.random() < standOuterChance ? envelope : spreadDeg;
-    return fireSplatling.call(this, a, w, deviation);
-  };
+  // #940: A sourced Stand_DegBiasMax specifies an angular median fraction.
+  // installWeaponAccuracy supplies that distribution to spreadWeaponRound.
+  // No extra inner/outer coin toss is permitted: it would consume an RNG
+  // draw, change the yaw/pitch samples and shrink the published maximum.
+
 }

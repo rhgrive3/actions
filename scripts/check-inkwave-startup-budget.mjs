@@ -3,6 +3,7 @@ import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { normalizeCacheAssets } from './lib/inkwave-cache-manifest.mjs';
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import crypto from 'node:crypto';
 import {parse} from '../patches/loading-cache/vendor/acorn.mjs';
+import {PRECACHE_BUDGET_BYTES,WORKER_BUDGET_BYTES} from '../patches/loading-cache/adapter.mjs';
 const root=path.resolve(process.argv[2]||'_site');const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const identity=JSON.parse(fs.readFileSync(path.join(root,'inkwave-build.json')));
 assert.equal(hash(JSON.stringify(identity.artifacts)),identity.contentHash,'artifact manifest identity');
@@ -19,12 +20,12 @@ assert(rangePreloadBytes<=(hasRange?192*1024:0),'practice-range preload byte bud
 const entry=html.match(/<script type="module" src="\.\/([^"]+)"/)?.[1];assert.equal(entry,'patches/loading-cache/runtime/startup.mjs');
 const initial=[...new Set([...preloads,entry])];const initialJSBytes=initial.reduce((sum,file)=>sum+fs.statSync(path.join(root,file)).size,0);assert(initialJSBytes<=3.2*1024*1024,'initial JS raw budget');
 assert(fs.statSync(path.join(root,entry)).size<=12*1024,'new startup module budget');assert(Buffer.byteLength(html)<=24*1024,'critical HTML budget');
-const worker=fs.readFileSync(path.join(root,'sw.js'),'utf8');assert(Buffer.byteLength(worker)<=64*1024,'worker budget');
+const worker=fs.readFileSync(path.join(root,'sw.js'),'utf8');assert(Buffer.byteLength(worker)<=WORKER_BUDGET_BYTES,'worker budget');
 const ast=parse(worker,{ecmaVersion:'latest',sourceType:'script'});const build=ast.body.find(node=>node.type==='VariableDeclaration'&&node.declarations[0].id.name==='BUILD').declarations[0].init;
 const config=JSON.parse(worker.slice(build.start,build.end));assert.equal(config.revision,revision);assert.equal(config.index.sha256,hash(Buffer.from(html)));assert(config.index.bytes===Buffer.byteLength(html));
 // Accept historical named descriptors and current tuples only after validating every field.
 config.assets=normalizeCacheAssets(config.assets);
-const core=new Set(config.precache);assert.equal(core.size,config.precache.length);const precacheBytes=config.precache.reduce((sum,file)=>sum+config.assets[file].bytes,0);assert(precacheBytes<=5*1024*1024,'core precache budget');assert(config.declaredBytes<=12*1024*1024,'revision payload budget');
+const core=new Set(config.precache);assert.equal(core.size,config.precache.length);const precacheBytes=config.precache.reduce((sum,file)=>sum+config.assets[file].bytes,0);assert(precacheBytes<=PRECACHE_BUDGET_BYTES,'core precache budget');assert(config.declaredBytes<=12*1024*1024,'revision payload budget');
 const importMap=JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]).imports;
 const resolve=(from,spec)=>{for(const[k,v]of Object.entries(importMap).sort((a,b)=>b[0].length-a[0].length))if(k.endsWith('/')?spec.startsWith(k):spec===k)return path.posix.normalize(v.replace(/^\.\//,'')+(k.endsWith('/')?spec.slice(k.length):''));return spec.startsWith('.')?path.posix.normalize(path.posix.join(path.posix.dirname(from),spec)):null;};
 for(const file of core){

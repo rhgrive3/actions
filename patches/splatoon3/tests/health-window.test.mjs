@@ -88,3 +88,12 @@ test('teammate damage stays visible regardless of recency; full-HP players never
   rows = buildHealthMarkers(s.game, s.G, s.PLAYER, THREE);
   assert.equal(rows.length, 0);
 });
+
+// A remote life change may skip the dead frame; it must still retire the old window.
+test('healthHitAge retires an old hit window when a new network life arrives', () => {
+  const s = scene(); healthHitAge(s.enemy, 0); s.enemy.hp = 60;
+  assert.equal(healthHitAge(s.enemy, .1), 0);
+  s.enemy.netLife = 1; s.enemy.hp = 80;
+  assert.equal(healthHitAge(s.enemy, .2), Infinity);
+  s.enemy.hp = 70; assert.equal(healthHitAge(s.enemy, .3), 0);
+});

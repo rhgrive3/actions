@@ -181,8 +181,17 @@ export const ADDITIONAL_BASE_KITS=Object.freeze({
 export function completeBaseKits({WEAPONS,SUB,SPECIALS}){
   for(const [main,k]of Object.entries(ADDITIONAL_BASE_KITS))if(!WEAPONS[main]||!SUB[k.sub]||!SPECIALS[k.special])throw new Error('Incomplete base kit '+main);
   for(const [main,k]of Object.entries(ADDITIONAL_BASE_KITS)){
-    const w=WEAPONS[main];Object.assign(w,{sub:k.sub,special:k.special,specialCost:k.specialCost,kitReference:k.main,kitStatus:'verified-base-kit'});
-    w.blurb=w.blurb?.replace('Original INKWAVE kit (not a verified Splatoon 3 kit).','').trim();
+    const w=WEAPONS[main];
+    Object.assign(w,{sub:k.sub,special:k.special,specialCost:k.specialCost,kitReference:k.main,
+      kitStatus:'verified-base-kit',kitVerifiedSlots:['sub','special'],kitMissingSlots:{}});
+    // PR1188 first installs only the mechanics available at that stage. Once
+    // the complete catalogue is present, remove the no-longer-true labels.
+    for(const stale of [
+      'Original INKWAVE kit (not a verified Splatoon 3 kit).',
+      'Partial Splatoon 3 kit: verified 11.3.0 slots installed; unsupported slots retain original INKWAVE mechanics.',
+      '11.3.0 kit slots installed (mechanics may use explicitly labelled calibrations).'
+    ])w.blurb=w.blurb?.replace(stale,'');
+    w.blurb=w.blurb?.trim();
   }
 }
 

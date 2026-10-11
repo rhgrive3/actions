@@ -181,9 +181,10 @@ test('native grounded and airborne Dualies keep two independent aim centers and 
     assert.ok(shots.every(row => !row.turret), 'normal-fire launches remain outside the post-roll turret owner');
     assert.equal(shots[1].tick - shots[0].tick, Math.round(actor.weapon.fireInterval / STEP),
       'normal-fire cadence remains the native weapon interval');
-    // #891: each admitted normal Dualies shot also draws one outer-reticle bias sample before the spread draws.
-    assert.ok(shots.every(row => row.draws === (row.spread > 0 ? 4 : 1)),
-      'each real shot consumes the existing spread sample draws, one projectile seed and the #891 outer-reticle draw');
+    // #891: Angular median comes from runner state, without a Bernoulli gate.
+    // The native launch uses two yaw draws and one projectile seed.
+    assert.deepEqual(shots.map(row => row.draws), [3, 3],
+      'each Dualies shot consumes yaw magnitude, sign and one seed');
 
     const basis = planeBasis(fixture);
     const hits = shots.map(row => targetPlaneHit(f, actor, row.round, basis));

@@ -75,9 +75,14 @@ test('composed native death burst credits its attacker and Splat Slam late paint
 
   const slam = f.make('shooter'); slam.pos.set(15, 0, 8);
   slam.special = 0;
+  // The DieBlastParam radius-5.0 blast also reaches nearby walls; its drips may still
+  // be growing (dripDur up to 3.3 s). Judge only the growth the Slam itself emits.
+  const burstGrowth = new Set(paint.growing);
+  assert.ok([...burstGrowth].every(g => g.paintOwner === attacker), 'remaining death-blast growth stays with the attacker');
   slam._slamImpact(f.SPECIALS.slam);
-  assert.ok(paint.growing.length > 0);
-  assert.ok(paint.growing.every(g => g.paintOwner === slam && g.paintCreditMode === 1),
+  const slamGrowth = paint.growing.filter(g => !burstGrowth.has(g));
+  assert.ok(slamGrowth.length > 0);
+  assert.ok(slamGrowth.every(g => g.paintOwner === slam && g.paintCreditMode === 1),
     'the real native Slam core and ring both use the no-special ledger');
   const slamBody = slam.stats.turf;
   for (let tick = 0; tick < 32; tick++) paint.advanceSimulation(1 / 60);

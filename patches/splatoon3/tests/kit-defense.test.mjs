@@ -116,7 +116,8 @@ test('native blast shielding consumes durability once for protected actors and p
       s3SpecialWeapon: { burstRadius: 3.2, impactRadius: 3.2, splashRadius: 20, splashBands: [[20, 53]], splashDamageMax: 53, splashDamageMin: 53 } });
     system._blastBurst(p, origin, null);
     assert.equal(hits, mode === 'inside' ? 2 : 0, mode);
-    assert.equal(dome.hp, mode === 'outside' ? hp - 5300 * .64 : hp, mode);
+    // Pinned spl__DamageRateInfoConfig: SpBlower ExtraBombCore row BlowerExhale_BombCore x GreatBarrier_Barrier = 4.2.
+    assert.ok(Math.abs(dome.hp - (mode === 'outside' ? hp - 5300 * 4.2 * .64 : hp)) < 1e-6, `${mode}: ${dome.hp}`);
     assert.equal(system.s3ExplosionDefense, undefined, 'context restored, no pooled state');
     system.clear();
   }

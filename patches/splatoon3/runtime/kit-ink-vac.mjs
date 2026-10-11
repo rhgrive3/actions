@@ -42,6 +42,8 @@ const RAW_TO_HP = 10;             // repository conversion rawDamageToHP: "/10"
 const ABSORB_CAPACITY_HP = 1100;
 const MAX_ACCEPTED_DAMAGE_HP = 220;
 const INHALE_LENGTH = 15;         // pinned LengthMax
+const OWNER_MOVE_SPEED_MIN_CHARGE = 0.09;   // pinned WeaponParam.MoveSpeedMinCharge (per 60 Hz frame)
+const OWNER_MOVE_SPEED_FULL_CHARGE = 0.07;  // pinned WeaponParam.MoveSpeedFullCharge (per 60 Hz frame)
 const NEAR_LOW = 0.8, NEAR_HIGH = 1.4;   // pinned RadiusMin.Low/.High
 const FAR_LOW = 3.3, FAR_HIGH = 4.3;     // pinned RadiusMax.Low/.High
 const SPEED_LOW = 0.55, SPEED_HIGH = 0.7;// pinned SpawnSpeedZ (per frame)
@@ -64,6 +66,9 @@ const KEY_PATTERN = /^[A-Za-z0-9#._:-]{1,64}$/;
 export const INK_VAC_CALIBRATION = Object.freeze({
   // #1149: ReceiveDamageForPlayer 15 raw /10 *60 = 90 HP-equivalent/s.
   actorContactDamagePerSecond: 90,
+  // Pinned 11.3.0 PoisonMistForPlayer.SideStepInkConsumeRate. This multiplier
+  // is explicit even though ordinary drain/speed defaults are absent.
+  actorDodgeInkCostScale: 3.5,
   actorInkFractionPerSecond: .12,
   actorMoveSpeedScale: .6,
   // #1149: PoisonMistForPlayer.SideStepInkConsumeRate 3.5 (Leanny/splat3 @7280ff9c,
@@ -183,6 +188,11 @@ function remoteStateOf(actor) {
 }
 
 // Charge-scaled frustum radii (pinned Low/High ends).
+// Owner walking target while the Vac is held (inhale and the pre-release hold).
+// Endpoints are pinned; the linear charge interpolation between them is INKWAVE's.
+export function inkVacOwnerMoveSpeed(charge) {
+  return lerp(OWNER_MOVE_SPEED_MIN_CHARGE, OWNER_MOVE_SPEED_FULL_CHARGE, Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0))) * 60;
+}
 export function intakeNearRadius(charge) { return lerp(NEAR_LOW, NEAR_HIGH, charge); }
 export function intakeFarRadius(charge) { return lerp(FAR_LOW, FAR_HIGH, charge); }
 export function blastRadius(charge) { return lerp(BLAST_MIN, BLAST_MAX, charge); }
@@ -718,6 +728,14 @@ export function installKitInkVac(context, _profile) {
   const { Actor, THREE } = api;
   if (!Actor?.prototype || !THREE?.Vector3) throw new Error('Ink Vac requires the actual Actor and THREE');
   const proto = Actor.prototype;
+  if (api.WeaponRunner?.prototype) {
+    // Sample current contact once at dodge admission. The composed native
+    // method uses this same cost for its availability check and payment.
+    // No weapon registry mutation, post-debit correction or persistent debuff.
+    api.WeaponRunner.prototype.inkVacDodgeInkCost = function (baseCost) {
+      return actorInVortex(this.a) ? baseCost * INK_VAC_CALIBRATION.actorDodgeInkCostScale : baseCost;
+    };
+  }
   if (!Object.hasOwn(proto, INSTALL)) {
     Object.defineProperty(proto, INSTALL, { value: true });
     const update = proto.update, startSpecial = proto._startSpecial;
@@ -778,23 +796,17 @@ export function installKitInkVac(context, _profile) {
         const result = original.apply(this, args); suppressMovement(this); return result;
       } : function (...args) { suppressMovement(this); return original.apply(this, args); };
     }
-    // #1149: a Dualies dodge roll admitted inside a hostile cone costs
-    // rollInk x SideStepInkConsumeRate. The base method checks and pays rollInk,
-    // so the wrapper raises that check and payment by the exact surcharge and
-    // restores ink on refusal. Only Dualies owners are affected.
+    // The native equipped-cost hook above owns dodge admission and payment.
+    // This wrapper owns only the Ink Vac user's movement speed.
     const runner = api.WeaponRunner?.prototype;
     if (runner && typeof runner.tryDodge === 'function' && !Object.hasOwn(runner, INSTALL)) {
       Object.defineProperty(runner, INSTALL, { value: true });
-      const dodge = runner.tryDodge;
-      runner.tryDodge = function (...args) {
-        const a = this.a, w = a?.weapon, scale = inkVacSideStepScale(a);
-        if (!(scale > 1) || !(w?.rollInk > 0)) return dodge.apply(this, args);
-        const before = a.ink;
-        a.ink = before - w.rollInk * (scale - 1);
-        let accepted = false;
-        try { accepted = dodge.apply(this, args); }
-        finally { if (!accepted) a.ink = before; }
-        return accepted;
+      const ownerMoveSpeed = runner.moveSpeed;
+      runner.moveSpeed = function () {
+        const state = states.get(this.a);
+        if (state && !state.remote && (state.phase === 'inhale' || state.phase === 'exhale'))
+          return inkVacOwnerMoveSpeed(state.charge);
+        return ownerMoveSpeed.call(this);
       };
     }
     proto._startSpecial = function () {

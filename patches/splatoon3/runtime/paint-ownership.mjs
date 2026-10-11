@@ -78,7 +78,8 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
     const h1 = paintShapeHash(word, 0, k), h2 = paintShapeHash(word, 1, k), h3 = paintShapeHash(word, 2, k);
     const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : (k + 0.35 + 0.6 * h1) / rayCount * 6.2831 + seed * 6.2831;
     const ux = Math.cos(a), uy = Math.sin(a), edge = bodyEdge(a);
-    const len = r * (0.07 + (big ? 0.5 : 0.4) * h2 * h2 * h2) * tsp;
+    // Same edge-spike length as the composed paint shader (adapter.mjs, paint.js).
+    const len = r * (0.04 + 0.16 * h2 * h2 * h2) * tsp;
     const wB = r * (0.055 + 0.06 * h3), tipR = Math.max(r * (0.012 + 0.012 * h3), pixel * 0.45);
     const ax = ux * edge * 0.72, ay = uy * edge * 0.72;
     const tipX = ux * (edge + len) - uy * len * 0.18 * (h1 - 0.5);
@@ -243,6 +244,38 @@ function claimPaintCell(paint, index, value, orderId, orderState = null) {
   return true;
 }
 
+// Face-space (x, y) box of one ancillary piece. Rays, beads and satellites are
+// defined in the stretched space pointInsideAncillary maps samples into; drips
+// (type 3) are tested unstretched. The stretch map is linear on each side of the
+// travel axis, so the images of the box corners under both scales, together
+// with the original corners (the axis crossing maps to itself), bound the image.
+const _cellBox = new Float64Array(4);
+function pieceCellBox(mask, p, pad) {
+  let x0 = p.minX, x1 = p.maxX, y0 = p.minY, y1 = p.maxY;
+  if (mask.sa > 0 && p.type !== 3) {
+    const ux = mask.sdu, uy = mask.sdv, ahead = 1 + mask.sa, behind = 1 + 0.25 * mask.sa;
+    for (let c = 0; c < 4; c++) {
+      const cx = c & 1 ? p.maxX : p.minX, cy = c & 2 ? p.maxY : p.minY;
+      const along = cx * ux + cy * uy, s = (along > 0 ? ahead : behind) - 1;
+      const mx = cx + ux * along * s, my = cy + uy * along * s;
+      if (mx < x0) x0 = mx; if (mx > x1) x1 = mx;
+      if (my < y0) y0 = my; if (my > y1) y1 = my;
+    }
+  }
+  _cellBox[0] = x0 - pad; _cellBox[1] = x1 + pad; _cellBox[2] = y0 - pad; _cellBox[3] = y1 + pad;
+  return _cellBox;
+}
+
+function nextVisitStamp(paint) {
+  if (!(paint._paintVisitStamp instanceof Uint32Array) || paint._paintVisitStamp.length !== paint.grid.length) {
+    paint._paintVisitStamp = new Uint32Array(paint.grid.length);
+    paint._paintVisitSerial = 0;
+  }
+  paint._paintVisitSerial = (paint._paintVisitSerial + 1) >>> 0;
+  if (paint._paintVisitSerial === 0) { paint._paintVisitStamp.fill(0); paint._paintVisitSerial = 1; }
+  return paint._paintVisitSerial;
+}
+
 function claimAncillaryCells(paint, g, tn, dT, contract) {
   const E = g.entries;
   if (g.R <= 0.02 || !Array.isArray(E) || !E.length || g.kind === contract.kind.speck) return 0;
@@ -262,30 +295,47 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     const cellArea = face.cu * face.cv;
     const mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);
     if (!mask) continue;
-    for (let j = j0; j <= j1; j++) {
-      const y = (j + 0.5) * face.cv - lv;
-      for (let i = i0; i <= i1; i++) {
-        const x = (i + 0.5) * face.cu - lu;
-        const index = face.grid + j * face.nu + i;
-        if (x < -ext || x > ext || y < -Math.max(ext, down) || y > ext) continue;
-        const previousOrder = paint._paintOwnershipOrder[index] || 0;
-        if (previousOrder && order && !paintOrderComesAfter(paint, order, previousOrder)) continue;
-        const previous = paint.grid[index];
-        if (previous === value && previousOrder === order) continue;
-        if (!cellIsSolidlyVisible(mask, face, x, y)) continue;
-        if (previous === value) {
-          claimPaintCell(paint, index, value, order);
-          continue;
-        }
-        if (!claimPaintCell(paint, index, value, order)) continue;
-        paint.grid[index] = value;
-        changed = true;
-        // Match the composed native body scorer: walls and occluded cells
-        // remain paintable, but never award turf points or special charge.
-        if (face.turf && !paint.dead[index]) {
-          claimed += cellArea;
-          if (previous) paint.counts[previous - 1]--;
-          paint.counts[g.team]++;
+    // A cell can only be claimed when one of its five samples lies inside some
+    // piece's bounding box (pointInsideAncillary rejects everything else first).
+    // Visit exactly the cells whose centre is within a piece box widened by the
+    // sample offset and the mask margin, instead of the whole reach square every
+    // growth frame. Per-cell evaluation and claims are unchanged.
+    const stamp = nextVisitStamp(paint);
+    const visit = paint._paintVisitStamp;
+    const pad = Math.max(face.cu, face.cv) * 0.32 + mask.margin * (1 + Math.max(0, sa)) + 1e-9;
+    const yLo = -Math.max(ext, down);
+    for (let n2 = 0; n2 < mask.pieces.length; n2++) {
+      const box = pieceCellBox(mask, mask.pieces[n2], pad);
+      const bi0 = Math.max(i0, Math.ceil((box[0] + lu) / face.cu - 0.5)), bi1 = Math.min(i1, Math.floor((box[1] + lu) / face.cu - 0.5));
+      const bj0 = Math.max(j0, Math.ceil((box[2] + lv) / face.cv - 0.5)), bj1 = Math.min(j1, Math.floor((box[3] + lv) / face.cv - 0.5));
+      for (let j = bj0; j <= bj1; j++) {
+        const y = (j + 0.5) * face.cv - lv;
+        if (y < yLo || y > ext) continue;
+        for (let i = bi0; i <= bi1; i++) {
+          const x = (i + 0.5) * face.cu - lu;
+          const index = face.grid + j * face.nu + i;
+          if (x < -ext || x > ext) continue;
+          if (visit[index] === stamp) continue;
+          visit[index] = stamp;
+          const previousOrder = paint._paintOwnershipOrder[index] || 0;
+          if (previousOrder && order && !paintOrderComesAfter(paint, order, previousOrder)) continue;
+          const previous = paint.grid[index];
+          if (previous === value && previousOrder === order) continue;
+          if (!cellIsSolidlyVisible(mask, face, x, y)) continue;
+          if (previous === value) {
+            claimPaintCell(paint, index, value, order);
+            continue;
+          }
+          if (!claimPaintCell(paint, index, value, order)) continue;
+          paint.grid[index] = value;
+          changed = true;
+          // Match the composed native body scorer: walls and occluded cells
+          // remain paintable, but never award turf points or special charge.
+          if (face.turf && !paint.dead[index]) {
+            claimed += cellArea;
+            if (previous) paint.counts[previous - 1]--;
+            paint.counts[g.team]++;
+          }
         }
       }
     }

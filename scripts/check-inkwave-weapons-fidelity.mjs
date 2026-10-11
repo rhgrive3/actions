@@ -18,27 +18,46 @@ const data = await measure({ site, fidelity: true, detail: false });
 // PR1168's reconciled Charger range maps the first legal linear charge (8/60)
 // to DistanceMinCharge. Re-measured composed source and emitted-build receipts
 // below retain that legal-minimum band and the canonical scoring-paint owner.
+// PR1182 removes a second Slosher impact wrapper that incorrectly used 0.2
+// range-line units instead of the configured 1 WU/source-unit scale. The
+// source-owned nine landing stamps retain source radii and owners. Main
+// converts the source depth ratio to additive stretch; with the PR1188 exact
+// CPU/GPU body edge, maxZ is 16.625 and area is 76.9375. The independent
+// golden also rejects legacy 0.2 scaling (13.625) and double-counted base
+// depth (21.125), while requiring source/emitted scoring cells to agree.
 // Keep the .1-unit collision sweep and .25-unit scoring grid exact.
+// PR1188 paint-bound receipts (hit/full-damage ranges unchanged):
+//  - the CPU body edge now equals the rendered GPU body edge (was 0.97 of it),
+//    so a body boundary can move out by one 0.25 cell: shooter/dualies 14.375 ->
+//    14.625, splatling-partial 16.875 -> 17.125, charger 0..0.75 +0.25,
+//    roller-horizontal 14.125 -> 14.375;
+//  - finish() now waits for falling splashes/queued bursts; the Blaster timed
+//    burst's sourced 3.2 falling drop (landing at z~10.2) was previously never
+//    counted: 11.875 -> 13.375;
+//  - roller-vertical intermediate splashes fall and paint the sourced depth-3
+//    ellipse centred on the landing point: 19.125 -> 19.375.
 const golden = {
-  shooter:[12.6,12.2,14.375,1],
-  'dualies-normal':[12.2,11.5,14.375,1],
-  'dualies-post':[12.3,11.5,14.375,1],
-  blaster:[13.5,10.7,11.875,1],
-  'splatling-partial':[14.7,14,16.875,1],
+  shooter:[12.6,12.2,14.625,1],
+  'dualies-normal':[12.2,11.5,14.625,1],
+  'dualies-post':[12.3,11.5,14.625,1],
+  blaster:[13.5,10.7,13.375,1],
+  'splatling-partial':[14.7,14,17.125,1],
   'splatling-first':[20.1,19.4,22.375,1],
   'splatling-full':[20.1,19.4,22.375,1],
-  'charger-0':[9.8,9.8,13.375,0],
-  'charger-0.25':[11.8,11.8,14.875,0],
-  'charger-0.5':[16.1,16.1,18.875,0],
-  'charger-0.75':[20.4,20.4,23.375,0],
+  'charger-0':[9.8,9.8,13.625,0],
+  'charger-0.25':[11.8,11.8,15.125,0],
+  'charger-0.5':[16.1,16.1,19.125,0],
+  'charger-0.75':[20.4,20.4,23.625,0],
   'charger-1':[24.8,24.8,26.875,0],
-  // #771 reuses sampled spawn-speed RNG for sourced speed-dependent fan; the measured
-  // integrated collision sweep moves the horizontal practical edge by 0.1 WU.
-  'roller-horizontal':[11.1,6.1,14.125,13],
-  'roller-vertical':[16.3,6.9,19.125,5],
+  // #771's sampled speed moves the practical horizontal hit edge inward by
+  // 0.1 WU; #1188's CPU/GPU mask parity enlarges the painted edge by 0.25.
+  'roller-horizontal':[11.1,6.1,14.375,13],
+  'roller-vertical':[16.3,6.9,19.375,5],
   // #1011/#1140: sourced unit/bullet footprint. PR1209 converts DepthScale
   // ratio to additive stretch (ratio - 1); old 20.875 double-counted base depth.
-  slosher:[13.5,13.5,16.375,9],
+  // PR1188's full CPU/GPU body edge moves this composed boundary by one
+  // scoring cell: 16.375 -> 16.625. Source unit/radius owners are unchanged.
+  slosher:[13.5,13.5,16.625,9],
 };
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
   const c = data.cases[key];

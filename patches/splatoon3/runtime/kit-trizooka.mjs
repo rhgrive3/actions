@@ -81,7 +81,9 @@ export const TRIZOOKA = {
   // DamageParam / BlastParam
   directHitDamage: rawDamage(2200),       // DirectHitDamage 2200 -> 220 HP
   splashBands: [[2.5, rawDamage(530)], [4.0, rawDamage(350)]],   // 53 HP @2.5, 35 HP @4.0
-  paintRadius: 3.2,              // BlastParam.PaintRadius
+  paintRadius: 3.2,              // BlastParam.PaintRadius (= SubSpecialSpecUpList PaintRadius Low)
+  paintRadiusMid: 3.6,           // BlastParam.SubSpecialSpecUpList[PaintRadius].Mid
+  paintRadiusHigh: 4.0,          // BlastParam.SubSpecialSpecUpList[PaintRadius].High
   knockBack: { accel: 470, bias: 0.8, distance: 8.0 },
   // CollisionParam — the variable hit sphere
   collision: {
@@ -97,8 +99,8 @@ export const TRIZOOKA = {
 export const TRIZOOKA_SPEC_UP = {
   apDomain: [0, 57],
   duration: [TRIZOOKA.duration, TRIZOOKA.durationMid, TRIZOOKA.durationHigh],
-  // PaintRadius is the ink/FX radius and stays at the table value
-  paintRadius: [TRIZOOKA.paintRadius, TRIZOOKA.paintRadius, TRIZOOKA.paintRadius],
+  // BlastParam.SubSpecialSpecUpList PaintRadius Low/Mid/High: the burst's ink radius
+  paintRadius: [TRIZOOKA.paintRadius, TRIZOOKA.paintRadiusMid, TRIZOOKA.paintRadiusHigh],
   // DistanceDamageDistanceRate, applied to DISTANCE only
   distanceRate: [1.0, 1.15, 1.3],
   outerBandDistance: 4.0,            // the outermost damage band, before AP
@@ -123,6 +125,12 @@ export function splashBandsFor(ap) {
 export function splashRadiusFor(ap) {
   const rate = gearCurve(boundedSpecialPowerAP(ap), ...TRIZOOKA_SPEC_UP.distanceRate);
   return TRIZOOKA_SPEC_UP.outerBandDistance * rate;
+}
+
+// The burst's ink radius (BlastParam.PaintRadius with its Special Power Up
+// control points). Distinct from the damage radius above.
+export function paintRadiusFor(ap) {
+  return gearCurve(boundedSpecialPowerAP(ap), ...TRIZOOKA_SPEC_UP.paintRadius);
 }
 
 export function durationFor(ap) {
@@ -191,8 +199,9 @@ export function trizookaSpecialWeapon(ap = 0) {
     splashBands: bands,
     splashRadius,
     burstRadius: splashRadius,
-    impactRadius: splashRadius,
-    paintRadius: TRIZOOKA.paintRadius,
+    // impactRadius is the radius the native burst/terrain contact PAINTS with.
+    impactRadius: paintRadiusFor(ap),
+    paintRadius: paintRadiusFor(ap),
     specialPowerAP: boundedSpecialPowerAP(ap),
     damageMax,
     damageMin,

@@ -88,6 +88,16 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   const positive = program(maskShader), negative = program(revertedShader(0, 12)), rows = [];
   const families = { rays: program(revertedShader(0, 3)), satellites: program(revertedShader(3, 6)),
     spatter: program(revertedShader(6, 9)), drips: program(revertedShader(9, 12)) };
+  // A removed family must be inert, while each retained family still needs a
+  // failing counterfactual. Read the production shader's actual kind counts.
+  const shapeBody = nativeShader.match(/vec4 kindShape\(float k\) \{[^}]+\}/)?.[0];
+  check(shapeBody, 'production kindShape counts');
+  const shapeCounts = [...shapeBody.matchAll(/return vec4\(([^)]+)\)/g)]
+    .map(match => match[1].split(',').map(Number));
+  check(shapeCounts.length === 7 && shapeCounts.slice(0, 6).every(c => c.length === 4 && c.every(Number.isFinite)),
+    'six complete ancillary count vectors plus the body-only fallback');
+  const activeFamilies = Object.fromEntries(Object.keys(families).map((name, i) =>
+    [name, shapeCounts.some(counts => (counts[i] || 0) > 0)]));
   const face = { atlas: { x: 0, y: 0, pad: 2, ppm }, su: 32, sv: 32, nu: 128, nv: 128, cu: 0.25, cv: 0.25,
     grid: 0, wall: false, turf: true };
   // #1165: exercise the *actual WebGL shader and CPU ownership* for Roller
@@ -129,6 +139,9 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     const familyPixels = Object.fromEntries(Object.entries(families).filter(([name]) => name !== 'drips' || wall)
       .map(([name, p]) => [name, query(p, ...args)]));
     const familyUnsupported = Object.fromEntries(Object.keys(familyPixels).map(name => [name, 0]));
+    for (const [name, pixels] of Object.entries(familyPixels)) if (!activeFamilies[name]) {
+      check(pixels.every((byte, i) => byte === actual[i]), `${name} is disabled and its hash cannot alter any GPU sample`);
+    }
     let unsupported = 0, negativeUnsupported = 0;
     for (let cell = 0; cell < cells; cell++) {
       let seen = false, revertedSeen = false;
@@ -171,9 +184,56 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
     check(gpuOnlySolid === 0, `GPU owns visibly solid dry Roller cells: ${JSON.stringify({ ...rows.at(-1), firstGpuOnly })}`);
   }
   for (const wall of [false, true]) check(rows.some(row => row.wall === wall && row.negativeUnsupported > 0), `old-sine ${wall ? 'wall' : 'floor'} negative control must fail`);
-  for (const name of Object.keys(families)) check(rows.some(row => row.familyUnsupported[name] > 0 && (name !== 'drips' || row.wall)),
-    `independently reverted ${name} must expose unsupported cells`);
+  for (const name of Object.keys(families)) {
+    if (activeFamilies[name]) check(rows.some(row => row.familyUnsupported[name] > 0 && (name !== 'drips' || row.wall)),
+      `independently reverted active ${name} must expose unsupported cells`);
+    else check(rows.every(row => !row.familyUnsupported[name]), `${name} is disabled in every production kind`);
+  }
   check(rows.length === 124, 'six original kinds plus final-growth Roller body: real WebGL and CPU cells exercised');
-  return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, rows,
-    cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0) };
+  const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail);
+  return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, activeFamilies, rows,
+    cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
+    body };
+}
+
+// PR1188: bidirectional CPU-grid / GPU-body agreement. The GPU program is the
+// emitted shader in its native body-only mode (vGrow.z > 1.5, fully grown)
+// with only the AA output replaced by the zero-crossing of the body SDF. Every
+// gameplay cell centre inside the reach box is asked of both sides.
+function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
+  const bodyShader = nativeShader.replace(tx, 'float tx = 1.0 / 64.0;')
+    .replace(tail, '  gl_FragColor = vec4(sd < 0.0 ? 1.0 : 0.0, abs(sd) < 1e-3 ? 1.0 : 0.0, 0.0, 1.0);');
+  const gpu = program(bodyShader), rows = [];
+  const size = 32, cell = 0.25, n = size / cell;
+  const face = { atlas: { x: 0, y: 0, pad: 2, ppm: 64 }, su: size, sv: size, nu: n, nv: n, cu: cell, cv: cell,
+    grid: 0, wall: false, turf: true };
+  const cases = [];
+  for (const [kind, sa] of [[0, 0.7], [2, 0], [3, 0], [4, 0], [4, 0.32], [5, 0], [5, 0.32], [5, 0.2743], [5, 3.2]])
+    for (const R of [1.62, 2.43, 3.2]) for (const seed of [0.11, 0.5, 0.93]) cases.push({ kind, sa, R, seed });
+  for (const { kind, sa, R, seed } of cases) {
+    paint.grid = new Uint8Array(n * n); paint.dead = new Uint8Array(n * n); paint.counts = [0, 0];
+    paint._paintOwnershipOrder = new Uint32Array(n * n);
+    const sdu = sa ? 0.6 : 0, sdv = sa ? 0.8 : 0, lu = 16, lv = 16;
+    paint._cpuSplat(face, lu, lv, R, 0, seed, sdu, sdv, sa, kind);
+    const points = [], index = [];
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const x = (i + 0.5) * cell - lu, y = (j + 0.5) * cell - lv;
+      if (Math.hypot(x, y) > R * (1 + sa) * 1.6) continue;
+      points.push(x, y, 0); index.push(j * n + i);
+    }
+    const pixels = query(gpu, points, [R, 0, Math.fround(seed), 2 * kind], [3, 1, 2, 0], [sdu, sdv, sa]);
+    let cpu = 0, gpuCells = 0, cpuOnly = 0, gpuOnly = 0, ties = 0;
+    for (let k = 0; k < index.length; k++) {
+      const owned = paint.grid[index[k]] === 1, visible = pixels[k * 4] === 255, tie = pixels[k * 4 + 1] === 255;
+      if (owned) cpu++; if (visible) gpuCells++;
+      if (owned !== visible) { if (tie) ties++; else if (owned) cpuOnly++; else gpuOnly++; }
+    }
+    rows.push({ kind, sa, R, seed, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties });
+  }
+  const result = { rows, cpuOnly: rows.reduce((t, r) => t + r.cpuOnly, 0), gpuOnly: rows.reduce((t, r) => t + r.gpuOnly, 0),
+    ties: rows.reduce((t, r) => t + r.ties, 0), cpuCells: rows.reduce((t, r) => t + r.cpu, 0), gpuCells: rows.reduce((t, r) => t + r.gpu, 0) };
+  // Only float32 ties on the SDF zero crossing (|sd| < 1e-3 WU, 1/16 texel) may disagree.
+  check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
+  check(rows.length === 81 && result.cpuCells > 0, 'all body kinds, smears, radii and seeds exercised');
+  return result;
 }

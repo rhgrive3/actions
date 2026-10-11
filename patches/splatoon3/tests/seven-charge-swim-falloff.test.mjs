@@ -43,15 +43,26 @@ test('#961/#971 fixed-clock cadence gives identical charge, ink and release stat
   }
   assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);
 });
-test('#1045 native Splatling rounds keep 1.6-degree pitch in air and throughout jump recovery',async()=>{
+test('#1045 native Splatling rounds retain independent ±1.6-degree pitch endpoints and source bias through jump recovery',async()=>{
   const f=await batchFixture(),a=f.make('splatling');a.aimPoint.set(0,1.05,100);a.aimDir.set(0,0,1);a.aimPitch=0;a.aimYaw=0;
+  const raw=f.profile.weaponsFidelityCompletion.weapons.splatling.WeaponParam;
+  near(raw.PitchDegSwerve,1.6);near(raw.PitchDegBias,.4);
+  const exponent=Math.log(raw.PitchDegBias)/Math.log(.5);
   for(const grounded of [false,true])for(const age of [null,0,25,40,70]){
     a.grounded=grounded;a.s3SplatlingJumpAgeFrames=age;
-    const draws=[.5,1-1e-12,.25,.5];f.setRandom(()=>draws.shift()??.5);
-    f.G.projectiles.fireSplatling(a,a.weapon,7);
-    const p=f.G.projectiles.list.at(-1);
-    near(Math.atan2(Math.abs(p.vel.y),Math.hypot(p.vel.x,p.vel.z))*180/Math.PI,1.6,1e-5);
-    f.G.projectiles.clear();
+    for(const u of [0,.25,.5,.75,1-1e-12]){
+      // Draw 1 is velocity variation; draws 2/3 are independent horizontal
+      // and vertical signed-angle samples; draw 4 is the projectile seed.
+      const draws=[.5,.75,u,.5];let calls=0;
+      f.setRandom(()=>{calls++;return draws.shift()??.5;});
+      f.G.projectiles.fireSplatling(a,a.weapon,7);
+      const p=f.G.projectiles.list.at(-1),v=2*u-1;
+      const pitch=Math.atan2(p.vel.y,Math.hypot(p.vel.x,p.vel.z))*180/Math.PI;
+      const expected=raw.PitchDegSwerve*Math.sign(v)*Math.pow(Math.abs(v),exponent);
+      near(pitch,expected,1e-5);
+      assert.equal(calls,4,'two scatter samples plus velocity and shot seed');
+      f.G.projectiles.clear();
+    }
   }
 });
 test('#1065 downward straight flight is excluded, then descent starts at the sourced threshold',async()=>{
