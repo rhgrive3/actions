@@ -70,7 +70,7 @@ test('insufficient-ink first charge step keeps completion seconds and charge pro
   }
 });
 
-for (const [kind, special] of [['charger', 'inkVac'], ['slosher', 'slam'], ['roller', 'bubbler'], ['splatling', 'inkVac']]) {
+for (const [kind, special] of [['charger', 'inkVac'], ['slosher', 'tripleInkstrike'], ['roller', 'bubbler'], ['splatling', 'inkVac']]) {
   test(`${kind}: committed ${special} retires the pending main action and preserves its cooldown`, async () => {
     const f = await setup(), a = make(f, kind), r = a.weaponRunner;
     // Ink Vac on Splatling is a synthetic integration-boundary control;

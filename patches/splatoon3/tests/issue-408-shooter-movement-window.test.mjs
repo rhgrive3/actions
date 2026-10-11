@@ -34,9 +34,8 @@ function holdUntilShots(t, count) {
   return samples;
 }
 
-// Sustained held Fire (the 6F-gap walking model between rounds) is pinned by #731
-// in issue-731-sub-ready-enemy-ink.test.mjs and is not changed here: no source
-// measures human speed during continuous Splattershot fire, so it remains 未確認.
+// Continuous held fire uses WeaponParam.MoveSpeed between rounds as well;
+// directional-movement-speed.test.mjs covers the actual native stream/root.
 
 test('#408 one tap: release keeps the 4F post-shot window, then returns to run speed', async () => {
   const { f, a, tick } = await shooter();

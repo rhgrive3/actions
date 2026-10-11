@@ -95,7 +95,7 @@ async function runScenario(sc) {
   const counters = makeWorld(api, sc.boxes);
   const a = new api.Actor({ team: 0, name: '648 native regression', weapon: 'slosher', CharacterClass: api.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
-  a.spawnAt(new THREE.Vector3(...sc.pos), 0); a.invuln = 0;
+  a.spawnAt(new THREE.Vector3(...sc.pos), 0); a.invuln = 0; a.weapon = { ...a.weapon, special: 'slam' };
   if (sc.move) a.intent.move.set(sc.move[0], 0, sc.move[1]);
   // The child model must see exactly one native slam event per action.
   let slamEvents = 0;
@@ -251,7 +251,7 @@ test('#648 NetMatch pack/apply keeps the owner gauge authoritative over the prox
   const make = pos => {
     const a = new api.Actor({ team: 0, name: '648 net authority', weapon: 'slosher', CharacterClass: api.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
     a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
-    a.spawnAt(new THREE.Vector3(...pos), 0); a.invuln = 0;
+    a.spawnAt(new THREE.Vector3(...pos), 0); a.invuln = 0; a.weapon = { ...a.weapon, special: 'slam' };
     return a;
   };
   const owner = make([0, 0, 0]);

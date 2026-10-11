@@ -51,12 +51,14 @@ export function softPushActor(physics, P, a, dx, dz) {
   }
 }
 
-/** True only while the roller, not its flick/recovery, owns ground movement. */
+/** An admitted grounded roll owns movement even while the old visual flick
+ * recovery timer is fading. Admission already waits for the actual roll gate.
+ */
 export function rollingMovementActive(a) {
   const r = a.weaponRunner;
   return a.weapon.kind === 'roller' && !!r.rolling && a.form === 'kid' &&
     a.grounded && !a.specialActive && !a.superJumpState &&
-    r.flick < 0 && !(r.flickRecover > MOVEMENT_EPSILON) && !r.aimingSub;
+    r.flick < 0 && !r.aimingSub;
 }
 
 /** #466: a dash-turn reversal is a stick more than 90 degrees away from the current

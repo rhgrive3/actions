@@ -33,8 +33,14 @@ export function absorbSpawnDamage(actor, amount, source, tuning, attacker = null
   const id = actor.s3PendingHitGroup;
   if (source === 'roller' && attacker && typeof attacker === 'object' && Number.isSafeInteger(id) && id > 0 && amount > 0) {
     const all = s.groupPenetration || (s.groupPenetration = new WeakMap());
-    let groups = all.get(attacker);
-    if (!groups) { groups = new Map(); all.set(attacker, groups); }
+    // #999: one Actor object can be handed between network owners while its
+    // group counters restart. An owner transition retires the previous era,
+    // including a later handoff back to the same name, without leaking another
+    // owner's cumulative armor penetration into this attack.
+    const owner = typeof attacker.owner === 'string' ? attacker.owner : null;
+    let era = all.get(attacker);
+    if (!era || era.owner !== owner) { era = { owner, groups: new Map() }; all.set(attacker, era); }
+    const groups = era.groups;
     let prev = groups.get(id) || 0;
     if (groups.size >= 128 && !groups.has(id)) groups.delete(groups.keys().next().value);
     const next = prev + amount;

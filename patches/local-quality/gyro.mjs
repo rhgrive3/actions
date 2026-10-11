@@ -238,6 +238,9 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (t < this._platformSensorStart && this._platformSensorStart - t < 3600000) return;
     if (this._tRR && (t < this._tRR || t - this._tRR > 500)) this.resync();
     const s=state(this); s.motionTime = t;
+    // #187: use the same 0.35 deg/s stationary band as the explicit
+    // Android orientation drift regression and the #615 calibration gate.
+    // Any sample above this gate still takes the native orientation path.
     s.stationaryMotion = Math.hypot(e.rotationRate.alpha, e.rotationRate.beta, e.rotationRate.gamma) <= STILL_DEG;
     if (this._src !== 'ori' && (isAndroid() || !gyroRateTrusted(this, e.rotationRate, t))) fallback(this, 'untrusted-motion');
     s.event={kind:'motion',time:t};
