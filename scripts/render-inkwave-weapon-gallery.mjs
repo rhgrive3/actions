@@ -111,7 +111,7 @@ try {
         const fire = frame >= 70 && frame < 200;
         a.ink = 100; a.intent.fire = fire; a.aimPitch = 0;
         if (frame >= 30 && frame < 60) { a.vel.set(0, 0, 2.4); a.pos.z += 2.4 / 60; } else a.vel.set(0, 0, 0);
-        G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire }); a._finishFrame(1 / 60); ch.root.updateMatrixWorld(true);
+        G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire, firePressed: frame === 70 }); a._finishFrame(1 / 60); ch.root.updateMatrixWorld(true);
         if (![...ch.P].every(Number.isFinite)) nonFinite = true;
         if (a.weaponRunner.firingT > 0 || a.weaponRunner.charging || a.weaponRunner.busy?.()) fired++;
         if (!ch.dual && ch.P[C.IKL] > .99 && ch.P[C.LTW] < .001) {
