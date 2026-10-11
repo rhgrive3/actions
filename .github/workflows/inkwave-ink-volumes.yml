@@ -11,6 +11,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ink-volume-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   volume:
     runs-on: ubuntu-latest
@@ -21,7 +24,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 meshoptimizer@1.3.0
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - name: Geometry, pixels, animation, reuse and native gameplay invariants
         run: node --experimental-vm-modules --test patches/local-quality/tests/ink-volume.test.mjs
       - name: Bake and validate authored structural fixtures
@@ -32,8 +35,12 @@ jobs:
         run: |
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/site
           node scripts/check-inkwave-volumes.mjs .ci-scratch/site .ci-scratch/fixture .ci-scratch/evidence
+      - name: WebKit touch viewport shader and all-frame comparison
+        run: node scripts/check-inkwave-volumes.mjs .ci-scratch/site .ci-scratch/fixture .ci-scratch/evidence-webkit --webkit --touch --shape-only
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: authored-ink-volume-render-evidence
-          path: .ci-scratch/evidence
+          path: |
+            .ci-scratch/evidence
+            .ci-scratch/evidence-webkit

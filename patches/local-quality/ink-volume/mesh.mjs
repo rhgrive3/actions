@@ -53,7 +53,21 @@ export function buildInkMesh(rgba, width, height, options = {}) {
       if (aa > iso) out.push([a[0], a[1], false]);
       if ((aa > iso) !== (ab > iso)) { const t = (iso - aa) / (ab - aa); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, true]); }
     }
+    // Edge-touching artwork ends at the original image rectangle. Padding is
+    // only for contour analysis; extending into adjacent atlas frames would
+    // change its silhouette/alpha. Clip polygons, never clamp individual verts.
+    for (const [axis, limit, sign] of [[0, .5, 1], [0, width + .5, -1], [1, .5, 1], [1, height + .5, -1]]) {
+      const clipped = [];
+      for (let i = 0; i < out.length; i++) {
+        const a = out[i], b = out[(i + 1) % out.length], insideA = sign * (a[axis] - limit) >= 0, insideB = sign * (b[axis] - limit) >= 0;
+        if (insideA) clipped.push(a);
+        if (insideA !== insideB) { const t = (limit - a[axis]) / (b[axis] - a[axis]); clipped.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, true]); }
+      }
+      out = clipped;
+    }
     for (let k = 1; k + 1 < out.length; k++) {
+      const a0 = out[0], b0 = out[k], c0 = out[k + 1];
+      if ((b0[0] - a0[0]) * (c0[1] - a0[1]) - (b0[1] - a0[1]) * (c0[0] - a0[0]) <= 1e-14) continue;
       const a = vertex(...out[0]), b = vertex(...out[k]), c = vertex(...out[k + 1]);
       // Image y is down: reverse winding to make front normals point +z.
       if (a !== b && b !== c && c !== a) front.push(a, c, b);

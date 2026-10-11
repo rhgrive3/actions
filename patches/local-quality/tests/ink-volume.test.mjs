@@ -45,7 +45,9 @@ test('hole and detached low-alpha island remain open, closed, consistently wound
 test('all-transparent and edge-touching frames, invalid settings, and truncated pixels', () => {
   assert.equal(buildInkMesh(new Uint8Array(64), 4, 4).indices.length, 0);
   const data = new Uint8Array(4 * 4 * 4).fill(255), m = buildInkMesh(data, 4, 4);
-  for (const e of edges(m).values()) assert.equal(e.count, 2);
+  for (const e of edges(m).values()) { assert.equal(e.count, 2); assert.equal(e.winding, 0); }
+  for (const uv of m.uvs) assert(uv >= 0 && uv <= 1, 'edge-touching art must not sample another atlas frame');
+  for (let i=0;i<m.frontVertexCount;i++) { assert(Math.abs(m.positions[i*3]) <= .5); assert(Math.abs(m.positions[i*3+1]) <= .5); }
   assert.throws(() => buildInkMesh(data, 4, 4, { thickness: NaN }));
   assert.throws(() => buildInkMesh(data, 4, 4, { interiorStep: 0 }));
   assert.throws(() => buildInkMesh(data, 5, 4));
