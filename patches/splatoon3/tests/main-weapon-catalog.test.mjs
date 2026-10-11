@@ -219,3 +219,18 @@ test('Undercover splat and assist repair the canopy, closed dry holding does not
   f.emit('actor:assist',{actor:a});assert.equal(c.hp,200);
   c.hp=50;f.emit('splatted',{attacker:a,victim:{team:1,stats:{},s3:{},pos:a.pos.clone()}});assert.equal(c.hp,200);
 });
+
+test('rapid brush strokes retain the Wiki first interval and sustained 7/11/14F cadence',async()=>{
+  const f=await setup();
+  for(const [actor,period] of [['WeaponBrushMini',7],['WeaponBrushNormal',11],['WeaponBrushHeavy',14]]){
+    const r=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor===actor);
+    const a=f.make(r.id);a.form='kid';
+    const born=[],trigger=a.character.trigger;
+    a.character.trigger=function(name){if(name==='shoot')born.push(frame);return trigger.call(this,name);};
+    let frame=0;
+    for(;frame<130;frame++)a.weaponRunner.update(1/60,{fire:true,firePressed:true,sub:false});
+    assert.ok(born.length>=4,r.names.en);
+    assert.equal(born[1]-born[0],period-1,r.names.en+' first interval');
+    for(let i=2;i<born.length;i++)assert.equal(born[i]-born[i-1],period,r.names.en+' sustained interval');
+  }
+});

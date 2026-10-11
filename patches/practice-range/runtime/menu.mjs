@@ -150,6 +150,11 @@ function rangePause(menus) {
     h('div', { class: 'iwr-pause__sec' }, h('div', { class: 'iw-seclabel' }, h('i', { html: GLYPHS.map }), L('TRAVEL')),
       h('div', { class: 'iwr-pause__hint' }, L('Choose a zone to jump straight to its reference stand.')), h('div', { class: 'iwr-zbtns' }, travel)),
     h('div', { class: 'iwr-pause__foot' }, L('Every mark is a world coordinate: 1 m on the floor = 1.000 game unit.')));
+  // Pointer-over precedes Menus' pointerenter focus (and mousemove). Keep
+  // that target stable through its press instead of scrolling it on hover.
+  let pointerTarget = null;
+  panel.addEventListener('pointerover', e => { pointerTarget = e.target.closest?.('[data-nav]') || null; }, true);
+  panel.addEventListener('pointerout', e => { if (!pointerTarget?.contains(e.relatedTarget)) pointerTarget = null; }, true);
   const el = h('div', { class: 'iw-screen iw-pause iwr-pausescr' },
     h('div', { class: 'iw-dimbg' }),
     menus._header(L('PRACTICE RANGE'), { back: false, sub: 'INKWAVE INK LAB' }),
@@ -160,7 +165,11 @@ function rangePause(menus) {
     el, initial: btns[0],
     onBack: () => menus._resume(),
     // the panel scrolls on short screens: keep the keyboard / pad focus in view
-    onFocus: (f) => { if (f && panel.contains(f)) safeCall(() => f.scrollIntoView({ block: 'nearest', inline: 'nearest' })); },
+    // Hover/click focus must not scroll the target out from under the pointer.
+    onFocus: (f) => {
+      const pointer = menus._input === 'touch' || pointerTarget === f;
+      if (!pointer && f && panel.contains(f)) safeCall(() => f.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
+    },
   };
 }
 

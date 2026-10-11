@@ -699,11 +699,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const vertical=!brush&&!a.grounded,key=brush?'brush':vertical?'vertical':'horizontal';
       const t=brush?p.WeaponSwingParam:vertical?p.WeaponVerticalSwingParam:p.WeaponWideSwingParam;
       if(pay(runner,finite(t.InkConsume,.085)*100*inkMod(a),finite(t.InkRecoverStop,43)/HZ)){
-        // v10.0.x community measurements: defaults are not in the sparse table.
-        const communityRepeat=brush?({WeaponBrushMini:6,WeaponBrushNormal:10,WeaponBrushHeavy:13}[r.sourceActor]):null;
+        // Individual Wiki tables v11.0/v11.1: sustained cadence is 7/11/14F,
+        // with the first interval one frame shorter. These defaults are sparse.
+        const communityRepeat=brush?({WeaponBrushMini:7,WeaponBrushNormal:11,WeaponBrushHeavy:14}[r.sourceActor]):null;
         const windup=brush&&s.swingCount>0?1:finite(t.SwingFrame,vertical?31:21);
         beginPending(s,windup,()=>{emitUnits(runner,r,key);runner.firingT=.35;});
-        runner.cooldown=(brush?Math.max(windup,communityRepeat):windup+finite(t.PostDelayFrame,21))/HZ;
+        // Account for the different first windup: a 23F first Vincent swing
+        // must not unlock a 1F follow-up immediately when that first shot emits.
+        runner.cooldown=(brush?windup+communityRepeat-(s.swingCount===0?1:0)-1:windup+finite(t.PostDelayFrame,21))/HZ;
         runner.rolling=false;s.swingCount++;
       }
     }else if(input.fire&&a.grounded&&!s.pending&&runner.cooldown<=EPS){runner.rolling=true;rolling(runner,r,dt);}

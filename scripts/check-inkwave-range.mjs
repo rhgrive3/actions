@@ -249,6 +249,14 @@ for (const run of RUNS) {
     const travelButton = page.locator('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]');
     await travelButton.waitFor({ state: 'visible', timeout: 30000 });
     if (await travelButton.count() !== 1) throw new Error('range has duplicate active travel buttons');
+    await page.evaluate(() => {
+      window.__rangePointerTrace = [];
+      for (const type of ['pointerdown','pointerup','click','pointerlockchange']) document.addEventListener(type, e => {
+        const target=e.target.closest?.('[data-id]');
+        const list=window.__rangePointerTrace;
+        if(list.length<30)list.push({type,id:target?.dataset.id,x:e.clientX,y:e.clientY,lock:document.pointerLockElement?.tagName||null});
+      },true);
+    });
     await travelButton.click();
     try {
       // Verify the real native travel and a fully resumed game, not just DOM.
@@ -265,6 +273,7 @@ for (const run of RUNS) {
           weapon: a?.weaponId,
           pointerLock: document.pointerLockElement?.tagName || null,
           inputLocked: G?.input?.locked,
+          pointerTrace: window.__rangePointerTrace,
           travelRect: (() => { const r = document.querySelector('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]')?.getBoundingClientRect(); return r && {x:r.x,y:r.y,width:r.width,height:r.height}; })(),
           activeTravelButtons: document.querySelectorAll('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]').length,
         };

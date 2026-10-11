@@ -77,8 +77,18 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
     // Exercise actual native selects/storage, rather than only inspecting the
     // ABILITIES object. Only head-main may offer the three conditional powers.
     await tap(page, '.s3-gear summary');
-    const selects = page.locator('.s3-gear select');
+    const selects = page.locator('.s3-gear > fieldset:not(.s3-catalogue) select');
     assert.equal(await selects.count(), 12);
+    const catalogue = page.locator('.s3-catalogue select');
+    assert.equal(await catalogue.count(), 2);
+    assert.equal(await catalogue.nth(0).locator('option').count(), 14);
+    assert.equal(await catalogue.nth(1).locator('option').count(), 19);
+    await catalogue.nth(0).selectOption('torpedo');
+    await catalogue.nth(1).selectOption('krakenRoyale');
+    const kit = await page.evaluate(() => JSON.parse(localStorage.getItem('inkwave.catalogue-kit.v1'))[menuState().loadout.weapon]);
+    assert.deepEqual(kit, {sub:'torpedo',special:'krakenRoyale'});
+    await geometry(page, '.s3-catalogue select, .s3-catalogue button', 'catalogue-controls');
+    await tap(page, '.s3-catalogue button');
     for (const id of ['lastDitchEffort', 'comeback', 'openingGambit']) {
       assert.equal(await selects.nth(0).locator(`option[value="${id}"]`).count(), 1);
       for (let i = 1; i < 12; i++) assert.equal(await selects.nth(i).locator(`option[value="${id}"]`).count(), 0);
@@ -88,11 +98,11 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
     for (let i = 0; i < 12; i++) assert.equal(await selects.nth(i).locator('option[value="subResistance"]').count(), 1);
     await selects.nth(1).selectOption('subResistance');
     await show(page, 'setup'); await show(page, 'loadout');
-    assert.equal(await page.locator('.s3-gear select').nth(0).inputValue(), 'openingGambit');
-    assert.equal(await page.locator('.s3-gear select').nth(1).inputValue(), 'subResistance');
+    assert.equal(await page.locator('.s3-gear > fieldset:not(.s3-catalogue) select').nth(0).inputValue(), 'openingGambit');
+    assert.equal(await page.locator('.s3-gear > fieldset:not(.s3-catalogue) select').nth(1).inputValue(), 'subResistance');
     if (!await page.locator('.s3-gear').evaluate(el => el.open)) await page.locator('.s3-gear summary').tap();
-    await page.locator('.s3-gear select').nth(0).selectOption('none');
-    await page.locator('.s3-gear select').nth(1).selectOption('none');
+    await page.locator('.s3-gear > fieldset:not(.s3-catalogue) select').nth(0).selectOption('none');
+    await page.locator('.s3-gear > fieldset:not(.s3-catalogue) select').nth(1).selectOption('none');
     // The expanded native details panel is an overlay. Close it with the same
     // summary action as a player before tapping a weapon behind that panel.
     await tap(page, '.s3-gear summary');

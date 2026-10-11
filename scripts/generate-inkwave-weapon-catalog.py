@@ -23,8 +23,8 @@ FAMILIES = {'Shooter': ('shooter', 'shooter'), 'Blaster': ('blaster', 'blaster')
             'Slosher': ('slosher', 'slosher'), 'Spinner': ('splatling', 'splatling'),
             'Shelter': ('brella', 'shooter'), 'Stringer': ('stringer', 'charger'),
             'Saber': ('splatana', 'shooter')}
-# Only numerical groups read by the catalog interpreter. Cosmetic/gear fields
-# are deliberately absent; pointers still refer to the original source layout.
+# Numerical groups used by the interpreter, including weapon-specific gear
+# curves. Cosmetic fields are absent; pointers retain the original layout.
 GROUPS = {'MainWeaponSetting', 'spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate',
           'WeaponParam', 'WeaponFullChargeParam', 'VariableWeaponParam', 'VariableShotParam',
           'MoveParam', 'DamageParam', 'CollisionParam', 'CollisionLapOverParam', 'VariableCollisionParam',

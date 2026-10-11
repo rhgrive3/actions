@@ -4,6 +4,10 @@ export function adaptTouchPointerLock(rel, code) {
   if (rel !== 'src/core/input.js') return code;
   if (code.includes('_releaseMouseForTouch')) throw new Error('INKWAVE touch pointer-lock conflict: already connected');
   code = "import { isMobilePointer } from '../../patches/local-quality/first-touch-adapter.mjs';\n" + code;
+  code = replaceOnce(code,
+    'if (p && p.catch) p.catch(() => { try { const q = this.canvas.requestPointerLock();',
+    "if (p && p.catch) p.catch(() => { if (!this.enabled || this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.mode !== 'match' || G.match?.state !== 'playing' || G.match.paused || G.game?.menus?.current) return; try { const q = this.canvas.requestPointerLock();",
+    'pointer-lock fallback needs current playing admission');
   code=replaceOnce(code,'    this._dev = v;','    this._dev = v;\n    if (v === \'touch\') this._releaseMouseForTouch();','touch releases mouse ownership');
   code=replaceOnce(code,"    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') this.lastDevice = 'touch'; }, { capture: true, passive: true });",`    window.addEventListener('pointerdown', (e) => {
       if (isMobilePointer(e)) this.lastDevice = 'touch';

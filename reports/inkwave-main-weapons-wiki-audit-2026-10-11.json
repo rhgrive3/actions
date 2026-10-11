@@ -106,6 +106,60 @@
           "B": "2",
           "A_times_B": "40.0",
           "C": "17.82"
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "ボールドマーカー",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%9C%E3%83%BC%E3%83%AB%E3%83%89%E3%83%9E%E3%83%BC%E3%82%AB%E3%83%BC",
+          "pageRef": "turn84view0",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "1.7",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "カス当たり射程",
+              "displayedValue": "1.8",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "1.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "1.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.1",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": "個別表はVer.11.0.0現在。",
+          "normalizedRangeFields": {
+            "effectiveRange": "1.7",
+            "damageMaintainRange": "1.6",
+            "damageDropoffRange": null,
+            "casualHitRange": "1.8",
+            "reticleReactionDistance": "1.5",
+            "paintRange": "3.1",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -205,6 +259,54 @@
           "B": "3",
           "A_times_B": "66.0",
           "C": "18.945"
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "わかばシューター",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%8F%E3%81%8B%E3%81%B0%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+          "pageRef": "turn84view1",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "2.3",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "2.3",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.5",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "2.3",
+            "damageMaintainRange": "2.3",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "2.1",
+            "paintRange": "3.5",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -299,6 +401,54 @@
           "A_times_B": "78.4",
           "C": "15.815",
           "note": "Verification table note: 36.0→39.2 after range +6%."
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "シャープマーカー",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B7%E3%83%A3%E3%83%BC%E3%83%97%E3%83%9E%E3%83%BC%E3%82%AB%E3%83%BC",
+          "pageRef": "turn84view2",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "2.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "2.2",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.3",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "2.5",
+            "damageMaintainRange": "2.2",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "2.1",
+            "paintRange": "3.3",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -398,6 +548,54 @@
           "B": "3",
           "A_times_B": "66.0",
           "C": "18.945"
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "プロモデラーMG",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%97%E3%83%AD%E3%83%A2%E3%83%87%E3%83%A9%E3%83%BCMG",
+          "pageRef": "turn84view3",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "2.3",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "2.3",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.5",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "2.3",
+            "damageMaintainRange": "2.3",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "2.1",
+            "paintRange": "3.5",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -485,6 +683,60 @@
           "B": "4",
           "A_times_B": "90.64",
           "C": "14.495"
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "スプラシューター",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+          "pageRef": "turn84view4",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "2.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "2.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "カス当たり射程",
+              "displayedValue": "2.7",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.4",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.4",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "2.6",
+            "damageMaintainRange": "2.5",
+            "damageDropoffRange": null,
+            "casualHitRange": "2.7",
+            "reticleReactionDistance": "2.4",
+            "paintRange": "3.4",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -580,6 +832,60 @@
           "A_times_B": "88.0",
           "C": "18.472",
           "note": "Verification table note attributes C change 14.495→18.472 to range +6%; individual-page 初速 differs and is kept separate."
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": ".52ガロン",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/.52%E3%82%AC%E3%83%AD%E3%83%B3",
+          "pageRef": "turn84view5",
+          "wikiStatsVersion": "11.3.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "2.7",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "2.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "カス当たり射程",
+              "displayedValue": "2.8",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.5",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": "個別表はVer11.3.0現在（要検証：塗り関連）。",
+          "normalizedRangeFields": {
+            "effectiveRange": "2.7",
+            "damageMaintainRange": "2.6",
+            "damageDropoffRange": null,
+            "casualHitRange": "2.8",
+            "reticleReactionDistance": "2.6",
+            "paintRange": "3.5",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -673,6 +979,60 @@
           "B": "4",
           "A_times_B": "88.0",
           "C": "14.495"
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "N-ZAP85",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/N-ZAP85",
+          "pageRef": "turn84view6",
+          "wikiStatsVersion": "11.2.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "2.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "2.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "カス当たり射程",
+              "displayedValue": "2.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.3",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.3",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "2.5",
+            "damageMaintainRange": "2.5",
+            "damageDropoffRange": null,
+            "casualHitRange": "2.6",
+            "reticleReactionDistance": "2.3",
+            "paintRange": "3.3",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -766,6 +1126,54 @@
           "B": "3",
           "A_times_B": "115.0",
           "C": "22.698"
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "プライムシューター",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%97%E3%83%A9%E3%82%A4%E3%83%A0%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+          "pageRef": "turn86view0",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "3.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "3.4",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "3.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "4.2",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "3.5",
+            "damageMaintainRange": "3.4",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "3.1",
+            "paintRange": "4.2",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -859,6 +1267,60 @@
           "B": "5",
           "A_times_B": "122.5",
           "C": "23.77"
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": ".96ガロン",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/.96%E3%82%AC%E3%83%AD%E3%83%B3",
+          "pageRef": "turn86view1",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "3.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "3.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "カス当たり射程",
+              "displayedValue": "3.7",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "3.2",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "4.6",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "3.6",
+            "damageMaintainRange": "3.5",
+            "damageDropoffRange": null,
+            "casualHitRange": "3.7",
+            "reticleReactionDistance": "3.2",
+            "paintRange": "4.6",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -952,6 +1414,54 @@
           "B": "5",
           "A_times_B": "168.0",
           "C": "22.32"
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "ジェットスイーパー",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B8%E3%82%A7%E3%83%83%E3%83%88%E3%82%B9%E3%82%A4%E3%83%BC%E3%83%91%E3%83%BC",
+          "pageRef": "turn86view2",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "4.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "4.4",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "4.2",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "5.2",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "4.6",
+            "damageMaintainRange": "4.4",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "4.2",
+            "paintRange": "5.2",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -1041,7 +1551,55 @@
           }
         },
         "verificationInitialSpeed": null,
-        "verificationNote": "Verification initial-speed table row for Space Shooter is blank."
+        "verificationNote": "Verification initial-speed table row for Space Shooter is blank.",
+        "rangeTable": {
+          "family": "shooter",
+          "name": "スペースシューター",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%9A%E3%83%BC%E3%82%B9%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+          "pageRef": "turn86view3",
+          "wikiStatsVersion": "11.1.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "3.3",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "3.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "3.0",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "4.0",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "3.3",
+            "damageMaintainRange": "3.1",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "3.0",
+            "paintRange": "4.0",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
+        }
       }
     },
     {
@@ -1135,6 +1693,54 @@
           "B": "7",
           "A_times_B": "60.9",
           "C": "8.484"
+        },
+        "rangeTable": {
+          "family": "blaster",
+          "name": "ノヴァブラスター",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%8E%E3%83%B4%E3%82%A1%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+          "pageRef": "turn88view0",
+          "wikiStatsVersion": "11.2.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "直撃射程",
+              "displayedValue": "1.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風射程",
+              "displayedValue": "0.7～2.3",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "2.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風半径",
+              "displayedValue": "0.34～0.78（着弾爆風×0.5）",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": null,
+            "damageMaintainRange": null,
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": null,
+            "paintRange": "2.1",
+            "directHitRange": "1.6",
+            "blastRange": "0.7～2.3",
+            "blastRadius": "0.34～0.78（着弾爆風×0.5）",
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -1229,6 +1835,54 @@
           "B": "9",
           "A_times_B": "85.05",
           "C": "9.131"
+        },
+        "rangeTable": {
+          "family": "blaster",
+          "name": "ホットブラスター",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%9B%E3%83%83%E3%83%88%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+          "pageRef": "turn88view1",
+          "wikiStatsVersion": "11.2.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "直撃射程",
+              "displayedValue": "2.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風射程",
+              "displayedValue": "1.5～2.7",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "2.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風半径",
+              "displayedValue": "0.205～0.677（着弾爆風×0.5）",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": null,
+            "damageMaintainRange": null,
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": null,
+            "paintRange": "2.6",
+            "directHitRange": "2.1",
+            "blastRange": "1.5～2.7",
+            "blastRadius": "0.205～0.677（着弾爆風×0.5）",
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -1323,6 +1977,54 @@
           "B": "11",
           "A_times_B": "118.8",
           "C": "10.073"
+        },
+        "rangeTable": {
+          "family": "blaster",
+          "name": "ロングブラスター",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AD%E3%83%B3%E3%82%B0%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+          "pageRef": "turn88view2",
+          "wikiStatsVersion": "11.2.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "直撃射程",
+              "displayedValue": "2.8",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風射程",
+              "displayedValue": "1.9～3.4",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.0",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風半径",
+              "displayedValue": "0.195～0.667（着弾爆風×0.5）",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": null,
+            "damageMaintainRange": null,
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": null,
+            "paintRange": "3.0",
+            "directHitRange": "2.8",
+            "blastRange": "1.9～3.4",
+            "blastRadius": "0.195～0.667（着弾爆風×0.5）",
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -1419,6 +2121,54 @@
           "B": "8",
           "A_times_B": "74.8",
           "C": "9.2715"
+        },
+        "rangeTable": {
+          "family": "blaster",
+          "name": "クラッシュブラスター",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+          "pageRef": "turn88view3",
+          "wikiStatsVersion": "11.2.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "直撃射程",
+              "displayedValue": "1.9",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風射程",
+              "displayedValue": "1.1～2.7",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "2.2",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風半径",
+              "displayedValue": "0.817（着弾爆風×0.5）",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": null,
+            "damageMaintainRange": null,
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": null,
+            "paintRange": "2.2",
+            "directHitRange": "1.9",
+            "blastRange": "1.1～2.7",
+            "blastRadius": "0.817（着弾爆風×0.5）",
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -1513,6 +2263,54 @@
           "B": "11",
           "A_times_B": "132.0",
           "C": "11.3305"
+        },
+        "rangeTable": {
+          "family": "blaster",
+          "name": "ラピッドブラスター",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%A9%E3%83%94%E3%83%83%E3%83%89%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+          "pageRef": "turn88view4",
+          "wikiStatsVersion": "11.2.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "直撃射程",
+              "displayedValue": "3.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風射程",
+              "displayedValue": "2.3～3.7",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風半径",
+              "displayedValue": "0.667（着弾爆風×0.5）",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": null,
+            "damageMaintainRange": null,
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": null,
+            "paintRange": "3.5",
+            "directHitRange": "3.1",
+            "blastRange": "2.3～3.7",
+            "blastRadius": "0.667（着弾爆風×0.5）",
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -1607,6 +2405,54 @@
           "B": "11",
           "A_times_B": "154.0",
           "C": "13.426"
+        },
+        "rangeTable": {
+          "family": "blaster",
+          "name": "Rブラスターエリート",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/R%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC%E3%82%A8%E3%83%AA%E3%83%BC%E3%83%88",
+          "pageRef": "turn88view5",
+          "wikiStatsVersion": "11.2.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "直撃射程",
+              "displayedValue": "3.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風射程",
+              "displayedValue": "2.8～4.2",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "4.0",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風半径",
+              "displayedValue": "0.665（着弾爆風×0.5）",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": null,
+            "damageMaintainRange": null,
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": null,
+            "paintRange": "4.0",
+            "directHitRange": "3.6",
+            "blastRange": "2.8～4.2",
+            "blastRadius": "0.665（着弾爆風×0.5）",
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -1697,7 +2543,55 @@
           }
         },
         "verificationInitialSpeed": null,
-        "verificationNote": "No S-BLAST92 row in the verification initial-speed table. No S-BLAST92 row in the verification blaster ink-lock table; weapon page itself prints 60F."
+        "verificationNote": "No S-BLAST92 row in the verification initial-speed table. No S-BLAST92 row in the verification blaster ink-lock table; weapon page itself prints 60F.",
+        "rangeTable": {
+          "family": "blaster",
+          "name": "S-BLAST92",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/S-BLAST92",
+          "pageRef": "turn88view6",
+          "wikiStatsVersion": "11.2.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "直撃射程",
+              "displayedValue": "長 3.0／短 1.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風射程",
+              "displayedValue": "長 2.6～3.3／短 0.8～2.4",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "長 3.2／短 2.2",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "爆風半径",
+              "displayedValue": "長 0.207～0.407／短 0.195～0.727（着弾爆風×0.5）",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": null,
+            "damageMaintainRange": null,
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": null,
+            "paintRange": "長 3.2／短 2.2",
+            "directHitRange": "長 3.0／短 1.6",
+            "blastRange": "長 2.6～3.3／短 0.8～2.4",
+            "blastRadius": "長 0.207～0.407／短 0.195～0.727（着弾爆風×0.5）",
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
+        }
       }
     },
     {
@@ -1796,6 +2690,54 @@
           "B": "4",
           "A_times_B": "110.0",
           "C": "15.68"
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "L3リールガン",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/L3%E3%83%AA%E3%83%BC%E3%83%AB%E3%82%AC%E3%83%B3",
+          "pageRef": "turn86view4",
+          "wikiStatsVersion": "11.2.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "3.2",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "3.2",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.9",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "4.1",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "3.2",
+            "damageMaintainRange": "3.2",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "2.9",
+            "paintRange": "4.1",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -1895,6 +2837,54 @@
           "B": "4",
           "A_times_B": "115.0",
           "C": "22.698"
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "H3リールガン",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/H3%E3%83%AA%E3%83%BC%E3%83%AB%E3%82%AC%E3%83%B3",
+          "pageRef": "turn86view5",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "3.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "3.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "3.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "4.5",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": null,
+          "normalizedRangeFields": {
+            "effectiveRange": "3.5",
+            "damageMaintainRange": "3.5",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "3.1",
+            "paintRange": "4.5",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -1975,6 +2965,135 @@
             "A_times_B": "72.0",
             "C": "23.032"
           }
+        },
+        "rangeTable": {
+          "family": "shooter",
+          "name": "ボトルガイザー",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%9C%E3%83%88%E3%83%AB%E3%82%AC%E3%82%A4%E3%82%B6%E3%83%BC",
+          "pageRef": "turn91view0",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "3.8",
+              "context": "初弾射撃",
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "3.6",
+              "context": "初弾射撃",
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "カス当たり射程",
+              "displayedValue": "3.9",
+              "context": "初弾射撃",
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "3.3",
+              "context": "初弾射撃",
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "4.5",
+              "context": "初弾射撃",
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "2.5",
+              "context": "オート射撃",
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "2.3",
+              "context": "オート射撃",
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "カス当たり射程",
+              "displayedValue": "2.6",
+              "context": "オート射撃",
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.2",
+              "context": "オート射撃",
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.1",
+              "context": "オート射撃",
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": "初弾射撃とオート射撃を別々に記載。有効射程の初弾行にはVer.9.0.0の弾速低下による射程短縮注記。",
+          "normalizedRangeFields": {
+            "effectiveRange": [
+              {
+                "wikiLabel": "有効射程",
+                "value": "3.8"
+              },
+              {
+                "wikiLabel": "有効射程",
+                "value": "2.5"
+              }
+            ],
+            "damageMaintainRange": [
+              {
+                "wikiLabel": "確定数維持射程",
+                "value": "3.6"
+              },
+              {
+                "wikiLabel": "確定数維持射程",
+                "value": "2.3"
+              }
+            ],
+            "damageDropoffRange": null,
+            "casualHitRange": [
+              {
+                "wikiLabel": "カス当たり射程",
+                "value": "3.9"
+              },
+              {
+                "wikiLabel": "カス当たり射程",
+                "value": "2.6"
+              }
+            ],
+            "reticleReactionDistance": [
+              {
+                "wikiLabel": "レティクル反応距離",
+                "value": "3.3"
+              },
+              {
+                "wikiLabel": "レティクル反応距離",
+                "value": "2.2"
+              }
+            ],
+            "paintRange": [
+              {
+                "wikiLabel": "塗り射程",
+                "value": "4.5"
+              },
+              {
+                "wikiLabel": "塗り射程",
+                "value": "3.1"
+              }
+            ],
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": null
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -3782,6 +4901,60 @@
             "A_times_B": "53.4",
             "C": "17.635"
           }
+        },
+        "rangeTable": {
+          "family": "dualies",
+          "name": "スパッタリー",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%91%E3%83%83%E3%82%BF%E3%83%AA%E3%83%BC",
+          "pageRef": "turn89view0",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "2.0",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "1.8",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "1.7",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "2.9",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "SL込み射程",
+              "displayedValue": "→2.6→3.3",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": "Wiki注記では最速スライドと間を置いたスライドの距離差は認識できないほど小さいため、影響を無視。",
+          "normalizedRangeFields": {
+            "effectiveRange": "2.0",
+            "damageMaintainRange": "1.8",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "1.7",
+            "paintRange": "2.9",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": "→2.6→3.3"
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -3894,6 +5067,75 @@
             "A_times_B": "71.1",
             "C": "23.425"
           }
+        },
+        "rangeTable": {
+          "family": "dualies",
+          "name": "スプラマニューバー",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%83%9E%E3%83%8B%E3%83%A5%E3%83%BC%E3%83%90%E3%83%BC",
+          "pageRef": "turn89view1",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "2.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "2.25",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程（SL後）",
+              "displayedValue": "2.4",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.25",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.3",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "SL込み射程",
+              "displayedValue": "→3.5→4.5",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": "Wiki注記では最速スライドは最速でないものより総移動距離がライン0.1本程度短く、表値は最速でないスライド。",
+          "normalizedRangeFields": {
+            "effectiveRange": "2.5",
+            "damageMaintainRange": [
+              {
+                "wikiLabel": "確定数維持射程",
+                "value": "2.25"
+              },
+              {
+                "wikiLabel": "確定数維持射程（SL後）",
+                "value": "2.4"
+              }
+            ],
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "2.25",
+            "paintRange": "3.3",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": "→3.5→4.5"
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -4006,6 +5248,120 @@
             "A_times_B": "96.0",
             "C": "31.97"
           }
+        },
+        "rangeTable": {
+          "family": "dualies",
+          "name": "ケルビン525",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B1%E3%83%AB%E3%83%93%E3%83%B3525",
+          "pageRef": "turn89view2",
+          "wikiStatsVersion": "11.3.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "3.0",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "有効射程（SL後）",
+              "displayedValue": "3.4",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "2.8",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程（SL後）",
+              "displayedValue": "3.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.6",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離（SL後）",
+              "displayedValue": "3.0",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.9",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程（SL後）",
+              "displayedValue": "4.3",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "SL込み射程",
+              "displayedValue": "→4.45→5.5",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": "Wiki注記では最速スライドは最速でないものより総移動距離がライン0.1本程度短く、表値は最速でないスライド。",
+          "normalizedRangeFields": {
+            "effectiveRange": [
+              {
+                "wikiLabel": "有効射程",
+                "value": "3.0"
+              },
+              {
+                "wikiLabel": "有効射程（SL後）",
+                "value": "3.4"
+              }
+            ],
+            "damageMaintainRange": [
+              {
+                "wikiLabel": "確定数維持射程",
+                "value": "2.8"
+              },
+              {
+                "wikiLabel": "確定数維持射程（SL後）",
+                "value": "3.1"
+              }
+            ],
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": [
+              {
+                "wikiLabel": "レティクル反応距離",
+                "value": "2.6"
+              },
+              {
+                "wikiLabel": "レティクル反応距離（SL後）",
+                "value": "3.0"
+              }
+            ],
+            "paintRange": [
+              {
+                "wikiLabel": "塗り射程",
+                "value": "3.9"
+              },
+              {
+                "wikiLabel": "塗り射程（SL後）",
+                "value": "4.3"
+              }
+            ],
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": "→4.45→5.5"
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -4119,6 +5475,60 @@
             "A_times_B": "115.0",
             "C": "22.698"
           }
+        },
+        "rangeTable": {
+          "family": "dualies",
+          "name": "デュアルスイーパー",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%87%E3%83%A5%E3%82%A2%E3%83%AB%E3%82%B9%E3%82%A4%E3%83%BC%E3%83%91%E3%83%BC",
+          "pageRef": "turn89view3",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "3.4",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "3.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "3.0",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "4.2",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "SL込み射程",
+              "displayedValue": "→4.3→5.2（+グライド）",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": "Wiki注記では最速スライドは最速でないものより総移動距離がライン0.1本程度短く、表値は最速でないスライド。グライドを生じさせないよう検証。",
+          "normalizedRangeFields": {
+            "effectiveRange": "3.4",
+            "damageMaintainRange": "3.1",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "3.0",
+            "paintRange": "4.2",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": "→4.3→5.2（+グライド）"
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -4231,6 +5641,60 @@
             "A_times_B": "88.4",
             "C": "22.05"
           }
+        },
+        "rangeTable": {
+          "family": "dualies",
+          "name": "クアッドホッパーブラック",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%82%A2%E3%83%83%E3%83%89%E3%83%9B%E3%83%83%E3%83%91%E3%83%BC%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF",
+          "pageRef": "turn89view4",
+          "wikiStatsVersion": "11.0.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程",
+              "displayedValue": "2.8",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程",
+              "displayedValue": "2.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離",
+              "displayedValue": "2.5",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "3.8",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "SL込み射程",
+              "displayedValue": "→3.7→4.6→5.5→6.4",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": "Wiki注記では最速スライドは総移動距離がライン0.6本程度短く、表値は最速でないスライド。",
+          "normalizedRangeFields": {
+            "effectiveRange": "2.8",
+            "damageMaintainRange": "2.5",
+            "damageDropoffRange": null,
+            "casualHitRange": null,
+            "reticleReactionDistance": "2.5",
+            "paintRange": "3.8",
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": "→3.7→4.6→5.5→6.4"
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
         }
       }
     },
@@ -4330,7 +5794,142 @@
           }
         },
         "verificationInitialSpeed": null,
-        "verificationNote": "Gaen FF has no row in the verification initial-speed table."
+        "verificationNote": "Gaen FF has no row in the verification initial-speed table.",
+        "rangeTable": {
+          "family": "dualies",
+          "name": "ガエンFF",
+          "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AC%E3%82%A8%E3%83%B3FF",
+          "pageRef": "turn91view2",
+          "wikiStatsVersion": "11.1.0",
+          "wikiRows": [
+            {
+              "wikiLabel": "有効射程（立ち撃ち）",
+              "displayedValue": "4.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程（立ち撃ち）",
+              "displayedValue": "3.8",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離（立ち撃ち）",
+              "displayedValue": "3.8",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "カス当たり射程（立ち撃ち）",
+              "displayedValue": "4.2",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "有効射程（SL後）",
+              "displayedValue": "3.0",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "確定数維持射程（SL後）",
+              "displayedValue": "2.9",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "レティクル反応距離（SL後）",
+              "displayedValue": "2.8",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "カス当たり射程（SL後）",
+              "displayedValue": "3.1",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程",
+              "displayedValue": "5.0",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "塗り射程（SL後）",
+              "displayedValue": "4.0",
+              "context": null,
+              "inlineUnit": null
+            },
+            {
+              "wikiLabel": "SL込み射程",
+              "displayedValue": "4.4",
+              "context": null,
+              "inlineUnit": null
+            }
+          ],
+          "damageDropoffRange": null,
+          "notes": "立ち撃ちとスライド後を別個に記載。SL込み射程は4.4。",
+          "normalizedRangeFields": {
+            "effectiveRange": [
+              {
+                "wikiLabel": "有効射程（立ち撃ち）",
+                "value": "4.1"
+              },
+              {
+                "wikiLabel": "有効射程（SL後）",
+                "value": "3.0"
+              }
+            ],
+            "damageMaintainRange": [
+              {
+                "wikiLabel": "確定数維持射程（立ち撃ち）",
+                "value": "3.8"
+              },
+              {
+                "wikiLabel": "確定数維持射程（SL後）",
+                "value": "2.9"
+              }
+            ],
+            "damageDropoffRange": null,
+            "casualHitRange": [
+              {
+                "wikiLabel": "カス当たり射程（立ち撃ち）",
+                "value": "4.2"
+              },
+              {
+                "wikiLabel": "カス当たり射程（SL後）",
+                "value": "3.1"
+              }
+            ],
+            "reticleReactionDistance": [
+              {
+                "wikiLabel": "レティクル反応距離（立ち撃ち）",
+                "value": "3.8"
+              },
+              {
+                "wikiLabel": "レティクル反応距離（SL後）",
+                "value": "2.8"
+              }
+            ],
+            "paintRange": [
+              {
+                "wikiLabel": "塗り射程",
+                "value": "5.0"
+              },
+              {
+                "wikiLabel": "塗り射程（SL後）",
+                "value": "4.0"
+              }
+            ],
+            "directHitRange": null,
+            "blastRange": null,
+            "blastRadius": null,
+            "slideIncludedRange": "4.4"
+          },
+          "normalizedFieldsNote": "Convenience mapping from the exact wikiRows labels; wikiRows is authoritative. Missing label/value is null; values are not calculated."
+        }
       }
     },
     {
@@ -4982,5 +6581,14 @@
       11.35,
       11.3511
     ]
-  ]
+  ],
+  "rangeUnitReference": {
+    "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD",
+    "pageRef": "turn87view1",
+    "lineReference": "599-601",
+    "wikiStatement": "射程・距離関係の単位は試し撃ちラインの本数。",
+    "interpretation": "Individual table cells normally omit an inline unit (inlineUnit is null); the shared Wiki rule defines range/distance rows in trial-range line counts. Velocity units DU/F are not used for these range fields."
+  },
+  "rangeLabelCaveat": "The individual tables do not expose a row literally named ダメージ減衰射程. Where present, the exact row 確定数維持射程 is preserved as its own metric; it is not relabeled as a damage-dropoff threshold. damageDropoffRange is null for every entry. Normalized fields use exact row-label matches only; absent labels remain null.",
+  "additionalRangeRowCount": 136
 }

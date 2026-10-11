@@ -3650,6 +3650,19 @@ The combined new focused tests pass 51/51 with no skips. Prior complete-suite re
 ## 2026-10-10: complete main-actor catalog expansion
 
 [Main-weapon catalog report](inkwave-main-weapon-catalog-2026-10-10.md) adds 58 source-guided main implementations alongside the existing seven, using the pinned 11.3.0 extraction with per-file hashes and temporary original Japanese/English names. It records action, ink, travel, collision and paint owners, neutral-gear conditions, source-versus-community timing, browser fixture scope and reproduction. New models and retail sub/special variants are deferred. Numerical records do not certify engine-equivalent paint/shape/controller formulas; omitted defaults, Slosher spiral, Ballpoint interpolation/recharge, scope camera and canopy multiplayer/terrain details remain explicitly unconfirmed or incomplete. Acceptance is final-head build/regression/browser CI; no Switch comparison was performed.
+## 2026-10-10 全サブ・スペシャルの実装
+
+対象は公開版 `inkwave-public/`、基準は `9117816`。未実装10サブと14スペシャルを追加し、S3の14サブ／19スペシャルすべてを装備画面で選べる。既存のTidal Slamは別の試作技として残し、ウルトラチャクチは独立した本体・2拳・破壊判定・スーパージャンプ派生を持つ。名称は依頼に沿った本家の仮名。モデルと本格的なアニメーションは対象外。
+
+- **根拠:** DriveのS3資料と11.3.0抽出表33件を使用。出典、SHA256、公式更新情報と公開攻略値の区別は [catalogue source record](inkwave-complete-catalogue-sources-2026-10-11.md) と [receipt](catalogue-1130-receipt.json)。S1/S2への代替は不要だった。
+- **実装:** `all-subs.mjs`は投擲、誘導、充電、設置、索敵、減速、破壊、塗り・ダメージを担当。`all-specials.mjs`はロック、飛行と帰還、ナイス充電、装甲、砲撃、突進、反復攻撃、設置波、視界効果などを担当。`catalogue.mjs`は自由装備、実ブキの標準セット、ウルトラチャクチ、ビーコンのマップジャンプ、入力と通信を統合する。
+- **再現:** 装備画面の「サブ・スペシャルを選ぶ」で変更し、試し撃ちまたは対戦へ入る。ナイスはN／標準パッド下／画面ボタン。個別操作説明は同じ画面に表示する。選択はメインブキ別に保存され、ギア更新・復活でも保持する。「標準セットに戻す」で解除する。
+- **プレイへの影響:** 実リソース支払いと既存の被弾・塗りへ接続。持ち主の死亡でスプリンクラーは消えるが、ビーコンや投擲済みのボムは残る。設置物への遠隔攻撃は所有者へ提案し、幽霊オブジェクトは二重にダメージ・塗りを適用しない。イベントは所有者・life・順番を確認する。参加者には同じ更新版が必要。
+- **比較範囲:** 表のフレーム・HP・コストを根拠とし、ソース依存のfixtureを同梱。世界単位への変換、地形での当たり判定、塗り形状、移動とカメラ演出は近似であり、Switch実機との完全一致は未確認。ローカルブラウザ確認やネイティブfixtureを実機比較として扱わない。ビーコン遠隔予約は楽観的で、通信遅延時の競合は追加の実対戦確認が必要。
+追加確認: 試し撃ちでポイズンミストからポイントセンサーへ変更し、実Actor/WeaponRunnerのサブ払い・解放と90F更新を通して、ネイティブボムへ誤流入しないことを確認。エナジースタンドも試し撃ちで発動・設置できる。ホップソナーは本体30ダメージ/0.5秒と波45ダメージを区別し、波の8秒マーキングと無塗り、入力まで保持する経路を修正。元表の本体45Fマーキングを波へ転用しない。
+
+タンサンボム入力監査: 実Actor→WeaponRunnerでは時間だけの充電が通っていたが、移動・ジャンプ・照準を振る入力が充電量へ反映されなかった。`all-subs.mjs`で実入力に接続し、ボーナス待ち行列を経過フレームで消化する。再現はR保持中に左右移動を切り返す／ジャンプを連打する／照準を振り、同時間の静止保持と爆発段階を比較する。11.3.0表の40/80FはS3検証資料の各段階時間として累積40/120Fへ対応付ける。入力ボーナス8/11/10Fと追加2.5F/F上限は公開検証の校正値で、Nintendo公式値ではない。照準変化はブラウザでの振り操作の代替であり、Switchの生ジャイロ・加速度入力との一致と構え開始の実機フレーム境界は未確認。詳細出典は上記source record。
+
 ## 2026-10-10: seven base weapon models and current attack pose ownership
 
 - **本家の根拠:** [任天堂公式ブキ図鑑](https://www.nintendo.com/jp/character/splatoon/fashion/index.html) の基本7種のシルエット・タンク・銃口・フレームを参照（2026-10-10確認）。図鑑は版番号のないシリーズ資料。S3実行バイナリ、正確な寸法、関節軌道の根拠として扱わない。既存のS3設定・攻撃時間は維持。
@@ -3687,3 +3700,13 @@ The combined new focused tests pass 51/51 with no skips. Prior complete-suite re
 ## 2026-10-11 全方向・射撃中・ローラー移動速度
 
 [全方向の比較記録](inkwave-directional-movement-2026-10-11.md)。発射済みの継続シューター射撃にある弾間隔で通常速度へ戻る差分、ローラー振り回復の速度補間、実際に許可された転がしを視覚回復タイマーで抑える差分を修正。原典の速度値を維持し、ギアと敵インクの曲線を同じ攻撃状態に接続。キーボード・タッチ・パッド、72方向、微入力・全入力、0/10/57 AP、30/60/120/144 Hzと実Level/Physicsを検証する。実機の縮尺・坂・加減速曲線の完全一致は未確認。平地の斜め入力自体の倍率差は再現せず、等速性を回帰試験で固定した。
+
+### 全65メインのWiki追加確認（2026-10-11）
+
+- パブロ／ホクサイ／フィンセントの個別Wiki（11.0／11.1／11.0）は通常連打7／11／14F、初弾−1F。追加所有者の初弾用6／10／13Fが後続にも適用されていたため通常周期を分離した。フィンセントは最初の23Fソース振りの終了直後に次弾が1Fで出る問題も修正。60Hzで実発射トリガーの間隔を測り、初弾6／10／13F・後続7／11／14Fを確認。絶対前隙・待機後再開の本家実機一致は未確認。
+- 基本27種の個別Wikiにある射程関連136行を照合JSONへ追加。試し撃ち線の本数という共通定義と版を保持し、確定数維持射程をダメージ減衰開始距離へ読み替えない。転記は射程の実機一致の証明ではない。
+- 試し撃ち場の追加ブキ選択後、Chromiumでは旅行ボタンのクリックを受理できず、WebKitでは成功。Pointer Lock対策後も再現したため原因確定とはしない。フォーカスの自動スクロールをマウス／タッチでは抑え、キーボード／パッドで維持する修正を追加。ブラウザの実クリック・移動・復帰で再検証する。
+
+- Pointer Lockの非調整版要求が遅れて拒否された際、プレーン版の再要求も現在の状態を再確認する。新しいポーズ／メニュー／タッチ／試合終了中には再要求しない。拒否待ちの回帰試験ではポーズとメニューは1回、プレイ継続時は互換再要求を含む2回と確認した。これはマウス操作を奪う競合の対策であり、試し撃ち移動失敗の原因確定はブラウザ再検証待ち。
+
+- 最新mainの全サブ・スペシャル追加と65メインを併用すると冷起動キャッシュが5MiBを超えた。8bitグレースケール光マップのPNGフィルターを画素無変更で再圧縮し、ESMの非公開変数名を短縮する。性能値・公開API・全オフライン依存グラフは保持し、容量上限は維持する。全5枚の光マップの画素と非IDATチャンクの一致を検証し、差分記録の実機未確認項目は維持する。
