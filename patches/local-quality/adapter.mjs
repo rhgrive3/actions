@@ -1,3 +1,4 @@
+import { adaptInkVolumes } from './ink-volume-adapter.mjs';
 import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
 import { adaptMuralAtlas } from './mural-atlas-adapter.mjs';
 import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
@@ -73,6 +74,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
   'menu-navigation-timer-adapter.mjs',
   'mural-atlas-adapter.mjs',
@@ -138,7 +140,7 @@ export function adaptQualitySource(rel, code) {
   const painted = adaptPaintHotpath(rel, paced, replaceOnce);
   const lazy = adaptComposerTarget(rel, painted, replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
-  return adaptRuntimeFrameScratch(rel, navigated, replaceOnce);
+  return adaptInkVolumes(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
