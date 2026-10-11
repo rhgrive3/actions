@@ -127,8 +127,12 @@ function aimPoint(rt, actor, range = 22, out = rt.v0) {
 function groundAt(rt, point, out = rt.v2) {
   out.copy(point);
   if (rt.api.G.physics?.raycast) {
-    const from = rt.v3.copy(point); from.y += 24;
-    const result = rt.api.G.physics.raycast(from, rt.down, 60, rt.hit, true);
+    // The caller may use rt.v3 as its output, so the probe cannot share it.
+    const from = (rt.groundProbe ||= point.clone()).copy(point); from.y += .25;
+    // Preserve an already contacted surface before considering a distant floor.
+    // A broad ray from 24 WU above could jump to an unrelated upper storey.
+    let result = rt.api.G.physics.raycast(from, rt.down, .5, rt.hit, true);
+    if(!result?.hit){from.copy(point);from.y+=24;result=rt.api.G.physics.raycast(from,rt.down,60,rt.hit,true);}
     if (result?.hit && result.point && [result.point.x,result.point.y,result.point.z].every(finite)) return out.copy(result.point).addScaledVector(result.normal || rt.up, .08);
   }
   const g = rt.api.G.level?.groundHeight?.(point.x, point.z, point.y + 12);
@@ -204,13 +208,23 @@ function paintDisk(rt, actor, point, radius, seed) {
   // Cluster ordinary network-admissible stamps; do not emit one over-limit paint
   // row, which the public replication owner correctly rejects.
   const spacing = 2.82, rowZ = spacing * Math.sqrt(3) / 2, inset = .2;
+  // Tile in the nearby contact plane. Keeping every tile at the same world Y
+  // leaves large holes on slopes; projecting each tile from above can instead
+  // jump between disconnected floors. The short probe avoids both mistakes.
+  const normal=rt.up.clone(), from=point.clone();from.y+=.25;
+  const contact=rt.api.G.physics?.raycast?.(from,rt.down,.5,rt.hit,true);
+  if(contact?.hit&&contact.normal?.y>.4)normal.copy(contact.normal).normalize();
+  const tangent=new rt.api.THREE.Vector3(1,0,0).addScaledVector(normal,-normal.x).normalize();
+  const bitangent=new rt.api.THREE.Vector3().crossVectors(tangent,normal).normalize();
   let area = 0, index = 0;
   for (let row = -Math.ceil(radius / rowZ); row <= Math.ceil(radius / rowZ); row++) {
     const z = row * rowZ, shift = row & 1 ? spacing * .5 : 0;
     for (let col = -Math.ceil(radius / spacing); col <= Math.ceil(radius / spacing); col++) {
       const x = col * spacing + shift;
       if (Math.hypot(x,z) > radius - inset) continue;
-      const at = rt.v4.set(q2(point.x+x), q2(point.y), q2(point.z+z));
+      const at = rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);
+      at.set(q2(at.x),q2(at.y),q2(at.z));
+
       const s = seedUnit(seed, index++);
       const got = rt.api.G.paint.splat(at, MAX_STAMP_RADIUS, actor.team,
         { seed: s, claimOwner: actor, claimMode: 'no-special' });
