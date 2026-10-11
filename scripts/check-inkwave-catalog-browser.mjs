@@ -171,6 +171,31 @@ try {
         check(Math.abs(state.inkFuel-(150-gearCurve(ap,15,13.05,12)))<1e-8,'Zipcaster browser drain '+ap);
         uniqueGearChecks.push({ability:'specialPower',ap,zipcasterFuel:state.inkFuel});a.reset();
       }
+      const mistChecks=[];
+      {
+        const saved={actors:G.actors,projectiles:G.projectiles,time:G.time};
+        G.projectiles=new Projectiles(G.scene);G.actors=[];
+        const source=makeActor('s3-slosher-diffusion'),victim=makeActor('shooter');victim.team=1;G.actors=[source,victim];
+        source.aimDir.set(0,-1,.1).normalize();source.aimPoint.set(0,0,1);source.intent.sub=true;
+        for(let i=0;i<10;i++){G.time+=1/60;source.update(1/60);}source.intent.sub=false;
+        for(let i=0;i<10;i++){G.time+=1/60;source.update(1/60);}
+        const cloud=G.projectiles._s3SubObjects?.find(o=>o.subId==='toxicMist');check(!!cloud,'Mist native release');
+        for(let i=0;i<120&&cloud.phase!=='deployed';i++){G.time+=1/60;G.projectiles.update(1/60);}
+        check(cloud.phase==='deployed','Mist native deployment');
+        for(const ap of [0,10,57])for(const squid of [false,true]){
+          victim.pos.copy(cloud.pos);victim.s3.loadout=emptyLoadout();
+          if(ap===10)victim.s3.loadout[0].main='subResistance';
+          if(ap===57)for(const p of victim.s3.loadout){p.main='subResistance';p.subs.fill('subResistance');}
+          victim.s3RefreshGear();victim.grounded=true;victim.form=squid?'squid':'kid';victim.submerged=squid;victim.intent.move.set(0,0,1);victim.vel.set(0,0,0);
+          for(let i=0;i<120;i++)victim._horizontal(1/60,squid,false);
+          const expected=(squid?11.52:5.76)*(1-.28*gearCurve(ap,1,.75,.5));
+          check(Math.abs(victim.vel.z-expected)<1e-8,'Mist victim reduction '+ap+' '+squid);
+          mistChecks.push({ap,squid,speed:victim.vel.z});
+          victim.pos.x+=20;victim.vel.set(0,0,0);for(let i=0;i<120;i++)victim._horizontal(1/60,squid,false);
+          check(Math.abs(victim.vel.z-(squid?11.52:5.76))<1e-8,'Mist exit restores target speed');
+        }
+        G.projectiles.clear();Object.assign(G,saved);
+      }
       const accelerationChecks=[];
       for(const id of ['s3-shooter-short','s3-shooter-first'])for(const squid of [false,true])for(const ready of [false,true]){
         const a=makeActor(id);a.s3.loadout=emptyLoadout();a.s3RefreshGear();
@@ -385,7 +410,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        directSubChecks, accelerationChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
+        directSubChecks, accelerationChecks, mistChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,

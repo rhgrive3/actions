@@ -1,3 +1,4 @@
+import { MIST_RESISTANCE_CURVE } from './toxic-mist.mjs';
 import { weightSpeedCurve } from './weapon-weight.mjs';
 import { installThermalTracking } from './private-tracking.mjs';
 import { installHaunt } from './haunt.mjs';
@@ -171,6 +172,7 @@ export function installGear(api, tuning) {
     m.stealthJump = loadout[2].main === 'stealthJump';
     m.dropRoller = loadout[2].main === 'dropRoller';
     const ap = effectivePoints, extra = tuning.gearExtra;
+    m.subMistResistance = gearCurve(ap.subResistance || 0, ...MIST_RESISTANCE_CURVE);
     m.subLineMarkerResistance = gearCurve(ap.subResistance || 0, ...DIRECT_SUB_RESISTANCE_CURVES.angleShooter);
     m.subSprinklerResistance = gearCurve(ap.subResistance || 0, ...DIRECT_SUB_RESISTANCE_CURVES.sprinkler);
     m.specialPowerAP = points.specialPower || 0;
