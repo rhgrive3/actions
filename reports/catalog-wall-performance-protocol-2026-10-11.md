@@ -1,0 +1,15 @@
+# Wall-paint performance diagnostic protocol
+
+Purpose: quantify the cost of PR1235's 23-main wall-drop connection before adoption, against immutable main 74785de066e6ccd2dc1c3a588529db758c266b97. This instrumentation does not change the game or the existing validation workflow.
+
+The standalone workflow is manual-dispatch or dedicated same-repository diagnostic-PR only, read-only and checks full immutable checkout SHAs. It builds each selected revision with its own production build script, verifies every emitted artifact hash, and records both complete manifests. The same diagnostic fixture runs in one runner/browser in AB, BA, AB order, three independent warmed repetitions per revision. Page reloads isolate module/runtime state. The actual loaded runtime files and fixture/probe hashes are recorded.
+
+Workload: eight actual Actors/WeaponRunners using Sploosh-o-matic, 180 firing frames plus 60 settling frames, fixed 60 Hz simulation, 20 Hz actual NetMatch._sendTick JSON transmission, constant seed, identical 4096 paint atlas and 0.25 CPU cells. Actual Physics, PaintSystem GPU rendering, native Level geometry and native level material are used. Character display, match/UI and whole-game postprocessing are excluded equally. This measures a controlled paint-workload transaction, not whole-game frame rate.
+
+Per-frame outputs separate body CPU, growth CPU, inclusive splat and simulation-paint time, atlas submission time, and gl.finish wait. Nested inclusive timing columns are not summed. p50/p95/p99 and raw samples, draw/quad counts, outgoing JSON bytes/rows, peak queue/slides and before/after PNGs are retained. SwiftShader software WebGL results are not hardware GPU time or retail FPS.
+
+Initial offline evidence motivating this gate: eight shooters/240 frames changed from 864 paint calls and 1,440 protocol rows to 4,560 and 5,136; peak outgoing queue 32 to 96 rows (capacity 512), 112 active slides. Candidate event-array JSON alone was 792,496 bytes over four seconds before peer fan-out. The diagnostic records complete tick JSON (actors, clock and paint events), event-array bytes separately, payload bytes/second at the sender and linear 3-peer/7-peer fan-out estimates. WebRTC/DTLS/SCTP/IP overhead is excluded; timestamp width may vary across repetitions. Queue capacity alone is not a performance pass. Node VM total elapsed test time is deliberately not used as a game performance metric.
+
+The PR trigger is restricted to the exact diagnostic head branch and instrumentation paths. PR runs use fixed baseline 74785de066e6ccd2dc1c3a588529db758c266b97 and candidate 45c73a490234cd0c593441046535c37bf2bf3355; dispatch accepts validated full SHAs. No unrelated PR starts this job.
+
+Local status: script syntax and immutable-input/workflow contract tests pass. Browser execution is not locally available under the verified sandbox restriction; no browser result is claimed. Manual CI measurements and independent variance review are required before treating the performance question as resolved.

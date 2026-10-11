@@ -1,0 +1,84 @@
+name: Catalog wall paint performance (diagnostic only)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/catalog-wall-paint-performance.yml
+      - scripts/measure-catalog-wall-workload.mjs
+      - scripts/fixtures/catalog-wall-workload.mjs
+      - scripts/tests/catalog-wall-performance-contract.test.mjs
+  workflow_dispatch:
+    inputs:
+      baseline_sha:
+        description: Immutable pre-wall-drop commit
+        required: true
+        type: string
+        default: 74785de066e6ccd2dc1c3a588529db758c266b97
+      candidate_sha:
+        description: Immutable wall-drop candidate commit
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  compare:
+    if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'ci/wall-paint-performance-probe' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASELINE_SHA: ${{ inputs.baseline_sha || '74785de066e6ccd2dc1c3a588529db758c266b97' }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha || '45c73a490234cd0c593441046535c37bf2bf3355' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate immutable inputs
+        run: |
+          node --input-type=module - <<'JS'
+          for (const key of ['BASELINE_SHA','CANDIDATE_SHA']) if (!/^[a-f0-9]{40}$/.test(process.env[key]||'')) throw Error('Full SHA required: '+key);
+          if (process.env.BASELINE_SHA===process.env.CANDIDATE_SHA) throw Error('Baseline and candidate must differ');
+          JS
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.baseline_sha || '74785de066e6ccd2dc1c3a588529db758c266b97' }}
+          path: .wall-baseline
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.candidate_sha || '45c73a490234cd0c593441046535c37bf2bf3355' }}
+          path: .wall-candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned official build and browser tools
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build both immutable production artifacts
+        run: |
+          test "$(git -C .wall-baseline rev-parse HEAD)" = "$BASELINE_SHA"
+          test "$(git -C .wall-candidate rev-parse HEAD)" = "$CANDIDATE_SHA"
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .wall-baseline/scripts/build-inkwave.mjs .wall-baseline/inkwave-public .wall-before-site
+          node .wall-candidate/scripts/build-inkwave.mjs .wall-candidate/inkwave-public .wall-after-site
+          mkdir -p .wall-performance-evidence
+          cp .wall-before-site/inkwave-build.json .wall-performance-evidence/baseline-manifest.json
+          cp .wall-after-site/inkwave-build.json .wall-performance-evidence/candidate-manifest.json
+          git rev-parse HEAD > .wall-performance-evidence/probe-sha.txt
+      - name: Repeated native wall-paint A/B and B/A measurements
+        run: |
+          node scripts/measure-catalog-wall-workload.mjs \
+            --baseline-sha "$BASELINE_SHA" --candidate-sha "$CANDIDATE_SHA" \
+            --baseline-root .wall-baseline --candidate-root .wall-candidate \
+            --baseline-site .wall-before-site --candidate-site .wall-after-site \
+            --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" \
+            --evidence-dir .wall-performance-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: catalog-wall-paint-performance-${{ inputs.candidate_sha || '45c73a490234cd0c593441046535c37bf2bf3355' }}
+          path: .wall-performance-evidence/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
