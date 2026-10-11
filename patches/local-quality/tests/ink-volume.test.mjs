@@ -12,13 +12,14 @@ const authored = () => {
   return { w, h, rgba };
 };
 function edges(mesh) {
+  const vertices=new Map(),canonical=Array.from({length:mesh.positions.length/3},(_,i)=>{const key=Array.from(mesh.positions.subarray(i*3,i*3+3)).join(':');if(!vertices.has(key))vertices.set(key,i);return vertices.get(key);});
   const e = new Map(); for (let i = 0; i < mesh.indices.length; i += 3) for (let k = 0; k < 3; k++) {
-    const a = mesh.indices[i + k], b = mesh.indices[i + (k + 1) % 3], key = Math.min(a, b) + ':' + Math.max(a, b);
+    const a = canonical[mesh.indices[i + k]], b = canonical[mesh.indices[i + (k + 1) % 3]], key = Math.min(a, b) + ':' + Math.max(a, b);
     const x = e.get(key) || { count: 0, winding: 0 }; x.count++; x.winding += a < b ? 1 : -1; e.set(key, x);
   } return e;
 }
 function covers(mesh, u, v) {
-  const N = mesh.positions.length / 6;
+  const N = mesh.frontVertexCount;
   for (let i = 0; i < mesh.indices.length; i += 3) {
     const ids = Array.from(mesh.indices.subarray(i, i + 3)); if (ids.some(id => id >= N)) continue;
     const p = ids.map(id => [mesh.uvs[id * 2], mesh.uvs[id * 2 + 1]]);
@@ -37,9 +38,14 @@ test('hole and detached low-alpha island remain open, closed, consistently wound
     for (const uv of m.uvs) assert(uv >= 0 && uv <= 1);
     for (const index of m.indices) assert(index < m.positions.length / 3);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) assert.equal(covers(m, (x + .5) / w, 1 - (y + .5) / h), rgba[(y * w + x) * 4 + 3] > 0, 'source pixel ' + x + ',' + y);
-    const N = m.positions.length / 6, z = Array.from({ length: N }, (_, i) => m.positions[i * 3 + 2]);
+    const N = m.frontVertexCount, z = Array.from({ length: N }, (_, i) => m.positions[i * 3 + 2]);
     assert(Math.max(...z) > Math.min(...z) * 10);
     assert(m.positions[(N + z.indexOf(Math.max(...z))) * 3 + 2] < 0);
+    for(let i=N*2;i<m.positions.length/3;i++){
+      const x=Math.round(m.uvs[i*2]*w-.5),y=Math.round((1-m.uvs[i*2+1])*h-.5);
+      assert(rgba[(y*w+x)*4+3]>0,'side samples original covered pixels, including low-alpha islands');
+      assert.equal(m.normals[i*3+2],0,'side normal stays finite and outward across front/back seam');
+    }
   }
 });
 test('all-transparent and edge-touching frames, invalid settings, and truncated pixels', () => {
@@ -67,7 +73,7 @@ test('pack reader rejects corrupt/unaligned ranges and wrong lengths', () => {
   assert.throws(() => unpackVolumes({ schema: 'inkwave-volume-v1', byteLength: 5, patterns: [] }, new ArrayBuffer(4)));
 });
 async function api() {
-  return fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true, extraExports: "export { InkVolumes, animationFrame } from './patches/local-quality/ink-volume/runtime.mjs'; export { captureRollerVolume, submitRollerVolume } from './patches/local-quality/ink-volume/roller.mjs'; export const inkBufferTypes={Uint8Array,Uint16Array,Uint32Array,Float32Array};" });
+  return fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true, extraExports: "export { InkVolumes, animationFrame } from './patches/local-quality/ink-volume/runtime.mjs'; export { captureRollerVolume, submitRollerVolume } from './patches/local-quality/ink-volume/roller.mjs'; export const inkBufferTypes={Uint8Array,Uint16Array,Uint32Array,Int16Array,Float32Array};" });
 }
 test('frame boundaries, instanced reuse, pose/position coupling, culling, capacity fallback and exact resource disposal', async () => {
   const f = await api(), { rgba, w, h } = authored();
@@ -84,8 +90,9 @@ test('frame boundaries, instanced reuse, pose/position coupling, culling, capaci
   assert.equal(root.children.length, 0, 'failed registration must not leave partial batches');
   assert.equal(engine.metrics.bytes, 0);
   assert.equal(engine.assets.size, 0);
+  pattern.frames[0].levels[1].normals=f.inkBufferTypes.Int16Array.from(pattern.frames[0].levels[1].normals,x=>Math.round(x*32767));
   engine.register('roller', { schema: 'inkwave-volume-v1', patterns: [pattern, pattern] });
-  assert.equal(root.children.length, 64);
+  assert.equal(root.children.length, 128);
   const resources = [...engine.assets.get('roller').resources], disposals = new Map();
   for (const r of resources) r.addEventListener('dispose', () => disposals.set(r, (disposals.get(r) || 0) + 1));
   const actor = f.make('roller'), p = { type: 'drop', owner: actor, delay: 0, age: 0, seed: .2, size: .15, pos: new f.THREE.Vector3(0, 0, -3), vel: new f.THREE.Vector3(0, 0, -5), _qualityGeneration: 1 };
@@ -93,7 +100,11 @@ test('frame boundaries, instanced reuse, pose/position coupling, culling, capaci
   for (let i = 0; i < 16; i++) assert.equal(f.animationFrame(i / 30, 16, 30), i);
   assert.equal(f.animationFrame(100, 16, 30), 15);
   engine.begin(camera); assert(f.submitRollerVolume(engine, p)); assert(f.submitRollerVolume(engine, p)); assert.equal(f.submitRollerVolume(engine, p), false); engine.end();
-  assert.equal(engine.metrics.active, 2); assert.equal(engine.metrics.batches, 1); assert.equal(engine.metrics.overflow, 1);
+  assert.equal(engine.metrics.active, 2); assert.equal(engine.metrics.batches, 2); assert.equal(engine.metrics.overflow, 1);
+  const batch=engine.assets.get('roller').patterns[0].frames[0][0];
+  for(const key of ['position','normal','uv'])assert.equal(batch.fringe.geometry.attributes[key],batch.mesh.geometry.attributes[key]);assert.equal(batch.fringe.geometry.index,batch.mesh.geometry.index);assert.equal(batch.fringe.instanceMatrix,batch.mesh.instanceMatrix);assert.equal(batch.fringe.instanceColor,batch.mesh.instanceColor);
+  assert.equal(batch.mesh.material.depthWrite,true);assert.equal(batch.fringe.material.depthWrite,false);
+  assert.equal(engine.assets.get('roller').patterns[0].frames[0][1].mesh.geometry.attributes.normal.normalized,true);
   const mesh = engine.assets.get('roller').patterns[0].frames[0][0].mesh, first = new f.THREE.Matrix4(); mesh.getMatrixAt(0, first);
   assert.deepEqual(Array.from(first.elements.slice(12, 15)), [0, 0, -3]);
   const orientation = first.elements.slice(0, 12); p.pos.x = 1; p.vel.set(5, -3, 0); camera.position.x = 1; camera.lookAt(0, 0, -3);

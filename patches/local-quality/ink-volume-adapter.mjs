@@ -16,7 +16,7 @@ export function adaptInkVolumes(rel, code, replaceOnce) {
   }
   registerInkVolume(name, pack) {
     if (this._inkVolumeDisposed) throw Error('FX disposed');
-    this.inkVolumes ||= new InkVolumes(this.root, this._light, { capacity: Math.round(128 * Math.min(1, this.q)), triangleBudget: Math.round(400000 * Math.min(1, this.q)) });
+    this.inkVolumes ||= new InkVolumes(this.root, this._light, { capacity: Math.round(128 * Math.min(1, this.q)), triangleBudget: Math.round(600000 * Math.min(1, this.q)) });
     return this.inkVolumes.register(name, pack);
   }`, 'shared renderer registration');
     patch('    this.dN = 0; this.dGeo.instanceCount = 0;', '    this.inkVolumes?.clear();\n    this.dN = 0; this.dGeo.instanceCount = 0;', 'match reset');

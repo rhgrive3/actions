@@ -6,7 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { MeshoptSimplifier } from 'meshoptimizer';
 import { decodeVTF } from '../patches/local-quality/ink-volume/vtf.mjs';
-import { buildInkMesh } from '../patches/local-quality/ink-volume/mesh.mjs';
+import { buildInkMesh, VOLUME_SHAPE } from '../patches/local-quality/ink-volume/mesh.mjs';
 export async function bakeVolumes(inputs, out, { fps = 30, thickness = .22 } = {}) {
   await MeshoptSimplifier.ready;
   const chunks = [], patterns = []; let bytes = 0;
@@ -55,13 +55,25 @@ export async function bakeVolumes(inputs, out, { fps = 30, thickness = .22 } = {
           indices[i] = remap[old];
         }
         const Index = positions.length / 3 <= 65535 ? Uint16Array : Uint32Array;
-        return { positions: append(new Float32Array(positions)), normals: append(new Float32Array(normals)), uvs: append(new Float32Array(uvs)), indices: append(new Index(indices)), indexBytes: Index.BYTES_PER_ELEMENT, boundaryEdges: full.boundaryEdges, simplificationError: error };
+        // Conservative bilinear sampling bounds: pure opaque/partial triangles
+        // need one pass; only mixed fringe triangles enter both. No topology
+        // change, alpha threshold replacement or gameplay classification.
+        const opaque = [], fringe = [];
+        for(let i=0;i<indices.length;i+=3){
+          let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+          for(let k=0;k<3;k++){const id=indices[i+k],x=uvs[id*2]*image.width-.5,y=(1-uvs[id*2+1])*image.height-.5;x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
+          let min=255,max=0;
+          for(let y=Math.max(0,Math.floor(y0));y<=Math.min(image.height-1,Math.ceil(y1));y++)for(let x=Math.max(0,Math.floor(x0));x<=Math.min(image.width-1,Math.ceil(x1));x++){const a=rgba[(y*image.width+x)*4+3];min=Math.min(min,a);max=Math.max(max,a);}
+          if(max===255)opaque.push(indices[i],indices[i+1],indices[i+2]);
+          if(min<255&&max>0)fringe.push(indices[i],indices[i+1],indices[i+2]);
+        }
+        return { positions: append(new Float32Array(positions)), normals: append(Int16Array.from(normals,x=>Math.round(x*32767))), normalBytes:2, uvs: append(new Float32Array(uvs)), indices: append(new Index(indices)), opaqueIndices:append(new Index(opaque)), fringeIndices:append(new Index(fringe)), indexBytes: Index.BYTES_PER_ELEMENT, boundaryEdges: full.boundaryEdges, simplificationError: error };
       }) };
     });
     patterns.push({ name: path.basename(input), sourceSHA256: crypto.createHash('sha256').update(source).digest('hex'), width: image.width, height: image.height, format: image.format, fps, frames });
     console.log(JSON.stringify({ source: path.basename(input), width: image.width, height: image.height, frames: frames.length, bakeMs: Math.round(performance.now() - started), vertices: frames.map(f => f.levels[0].positions.length / 3), triangles: frames.map(f => f.levels[0].indices.length / 3) }));
   }
-  const binary = Buffer.concat(chunks), manifest = { schema: 'inkwave-volume-v1', binary: 'volumes.bin', byteLength: bytes, binarySHA256: crypto.createHash('sha256').update(binary).digest('hex'), artSettings: { thickness, interiorStep: 8, simplificationErrors: [.003, .012], boundaryLocked: true }, patterns };
+  const binary = Buffer.concat(chunks), manifest = { schema: 'inkwave-volume-v1', binary: 'volumes.bin', byteLength: bytes, binarySHA256: crypto.createHash('sha256').update(binary).digest('hex'), artSettings: { ...VOLUME_SHAPE, thickness, simplificationErrors: [.003, .012], boundaryLocked: true }, patterns };
   fs.mkdirSync(out, { recursive: true }); fs.writeFileSync(path.join(out, 'volumes.bin'), binary); fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify(manifest));
   return manifest;
 }

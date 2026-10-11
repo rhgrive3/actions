@@ -53,13 +53,31 @@ try {
   }
   // Restore source frame 0 for explicit views.
   plane.material.map=map;map.image={data:pack.patterns[0].frames[0].rgba,width:pack.patterns[0].width,height:pack.patterns[0].height};map.needsUpdate=true;plane.scale.x=1;
+  // Compare grazing-angle alpha with the same truly opaque source regions.
+  // The reference retains source holes/partial alpha instead of incorrectly
+  // turning translucent artwork into solid ink. Erode only silhouette AA.
+  // This caught the stretched transparent/RGB fringe as a black middle seam.
+  const grazingViews=[],materials=engine.assets.get('roller').resources.filter(r=>r.isShaderMaterial),fragments=materials.map(m=>m.fragmentShader);
+  for(let pattern=0;pattern<pack.patterns.length;pattern++)for(let frame=0;frame<pack.patterns[pattern].frames.length;frame++)for(const [view,angle] of [['side',[3,0,0]],['top',[0,3,.001]],['bottom',[0,-3,.001]]]){
+    source.age=frame/pack.patterns[pattern].fps;plane.visible=false;root.visible=true;camera.position.set(...angle);camera.lookAt(0,0,0);camera.updateMatrixWorld();engine.begin(camera);engine.submit('roller',source,1,pattern);engine.end();renderer.setRenderTarget(target);renderer.setClearColor(0,0);
+    for(const m of materials){m.fragmentShader='uniform sampler2D uMap;uniform vec4 uFrameBounds;varying vec2 vUv;void main(){vec4 tex=texture2D(uMap,clamp(vUv,uFrameBounds.xy,uFrameBounds.zw));if(tex.a<.99999)discard;gl_FragColor=vec4(tex.rgb,1.);}';m.needsUpdate=true;}
+    renderer.render(scene,camera);renderer.readRenderTargetPixels(target,0,0,512,512,a);
+    materials.forEach((m,i)=>{m.fragmentShader=fragments[i];m.needsUpdate=true;});renderer.render(scene,camera);renderer.readRenderTargetPixels(target,0,0,512,512,b);
+    let interior=0,darkTransparent=0,blackPixels=0;
+    for(let y=2;y<510;y++)for(let x=2;x<510;x++){
+      let inside=true;for(let dy=-2;dy<=2&&inside;dy++)for(let dx=-2;dx<=2;dx++)if(a[((y+dy)*512+x+dx)*4+3]<254){inside=false;break;}
+      if(inside){interior++;const i=(y*512+x)*4;if(b[i+3]<254)darkTransparent++;if(Math.max(a[i],a[i+1],a[i+2])>64&&Math.max(b[i],b[i+1],b[i+2])<8)blackPixels++;}
+    }
+    grazingViews.push({pattern,frame,view,interior,darkTransparent,blackPixels});
+  }
   window.inkInspector={engine,renderer,scene,camera,source,plane};renderInkView([0,0,3]);
-  return {comparisons,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),bytes:engine.metrics.bytes};
+  return {comparisons,grazingViews,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),bytes:engine.metrics.bytes};
  });
  for(const [label,angle,flat] of [['source-front',[0,0,3],true],['volume-front',[0,0,3],false],['volume-side',[3,0,0],false],['volume-oblique',[2,1.4,3],false],['volume-top',[0,3,.001],false],['volume-bottom',[0,-3,.001],false]]){await page.evaluate(({angle,flat})=>renderInkView(angle,0,flat),{angle,flat});await page.locator('canvas').screenshot({path:path.join(evidence,label+'.png')});}
  for(let f=0;f<16;f++){await page.evaluate(f=>renderInkView([1,.7,3],f),f);await page.locator('canvas').screenshot({path:path.join(evidence,'frame-'+f+'.png')});}
  fs.writeFileSync(path.join(evidence,'shape-result.json'),JSON.stringify(result.comparison,null,2));
  for (const frame of result.comparison.comparisons) assert(frame.alphaMean < .3, 'front alpha mean error (byte units): '+JSON.stringify(frame));
+ for (const view of result.comparison.grazingViews) {assert.equal(view.darkTransparent,0,'black transparent interior seam: '+JSON.stringify(view));assert.equal(view.blackPixels,0,'unlit black interior seam: '+JSON.stringify(view));}
  if (!process.argv.includes('--shape-only')) {
  await page.goto(base+'/?range&skipTitle');console.log('loaded document');await page.waitForFunction(()=>window.__G?.match?.range && window.__G.match.state==='playing',null,{timeout:240000});
  console.log('playing range');result.integration=await page.evaluate(async()=>{
@@ -71,10 +89,10 @@ try {
   g.debug.fire(false);g._skipRender=false;g._frame(1/60);
   const engine=G.fx.inkVolumes,p=G.projectiles.list.find(p=>p._inkVolumeHorizontal);if(!p)throw Error('Native Roller input did not emit horizontal volley');
   window.inkTestHead=p; const geometry=engine.assets.get('roller').patterns[0].frames[0][0].mesh.geometry;
-  return { beforeRegistration, ticks, heads:G.projectiles.list.length, active:engine.metrics.active, metrics:{...engine.metrics}, frame:p.age, pos:p.pos.toArray(), vel:p.vel.toArray(), drawCalls:G.renderer.info.render.calls, triangles:G.renderer.info.render.triangles, bufferVertices:geometry.attributes.position.count, actualInput:true };
+  return { beforeRegistration, ticks, heads:G.projectiles.list.length, horizontalHeads:G.projectiles.list.filter(p=>p._inkVolumeHorizontal).length, active:engine.metrics.active, metrics:{...engine.metrics}, frame:p.age, pos:p.pos.toArray(), vel:p.vel.toArray(), drawCalls:G.renderer.info.render.calls, triangles:G.renderer.info.render.triangles, bufferVertices:geometry.attributes.position.count, actualInput:true };
  });
  fs.writeFileSync(path.join(evidence,'integration.json'),JSON.stringify(result.integration,null,2));
- assert(result.integration.active>0);await page.screenshot({path:path.join(evidence,'game-horizontal.png')});
+ assert(result.integration.active>0);assert.equal(result.integration.active,result.integration.horizontalHeads,'every native horizontal head uses the volume');assert.equal(result.integration.metrics.overflow,0);await page.screenshot({path:path.join(evidence,'game-horizontal.png')});
  result.flight=await page.evaluate(()=>{
   const G=window.__G,g=window.__inkwave,p=inkTestHead, samples=[];
   for(let i=0;i<90;i++){g._skipRender=true;g._frame(1/60);if(i%10===0)samples.push({tick:i,alive:G.projectiles.list.includes(p),pos:p.pos.toArray(),vel:p.vel.toArray(),active:G.fx.inkVolumes.metrics.active});}g._skipRender=false;g._frame(1/60);return {samples,paint:G.paint.coverage?.()||null,remaining:G.projectiles.list.length};
@@ -101,7 +119,7 @@ try {
    }
    for(let poll=0;pending.length&&poll<2;poll++){await new Promise(resolve=>requestAnimationFrame(resolve));collectGPU();}
    for(const q of pending)gl.deleteQuery(q);
-   rows.push({enabled,heads:G.projectiles.list.length,cpuMedian:quantile(cpu,.5),cpuP95:quantile(cpu,.95),renderFinishMedian:quantile(times,.5),renderFinishP95:quantile(times,.95),fpsEquivalent:1000/quantile(times,.5),calls:draw.at(-1).calls,triangles:draw.at(-1).triangles,gpuTimerAvailable:!!ext,gpuMedianMs:gpu.length?quantile(gpu,.5):null,gpuSamples:gpu.length,pacedFPS:1000/quantile(paces,.5),pacedFrameMedianMs:quantile(paces,.5),geometryResources:G.renderer.info.memory.geometries,textures:G.renderer.info.memory.textures,jsHeap:performance.memory?.usedJSHeapSize||null});
+   rows.push({enabled,heads:G.projectiles.list.length,cpuMedian:quantile(cpu,.5),cpuP95:quantile(cpu,.95),renderFinishMedian:quantile(times,.5),renderFinishP95:quantile(times,.95),calls:draw.at(-1).calls,triangles:draw.at(-1).triangles,gpuTimerAvailable:!!ext,gpuMedianMs:gpu.length?quantile(gpu,.5):null,gpuSamples:gpu.length,pacedFPS:1000/quantile(paces,.5),pacedFrameMedianMs:quantile(paces,.5),geometryResources:G.renderer.info.memory.geometries,textures:G.renderer.info.memory.textures,jsHeap:performance.memory?.usedJSHeapSize||null});
   }G.fx.inkVolumes=volumes;return {fixedScene:true,softwareGLFinish:true,rows,volumeBytes:volumes.metrics.bytes};
  });
  fs.writeFileSync(path.join(evidence,'performance.json'),JSON.stringify(result.performance,null,2));
@@ -110,6 +128,8 @@ try {
   for(let cycle=0;cycle<20;cycle++){G.projectiles.clear();G.fx.clear();G.projectiles._draw();G.renderer.render(G.scene,G.camera);counts.push({geometries:G.renderer.info.memory.geometries,textures:G.renderer.info.memory.textures,bytes:e.metrics.bytes,active:e.metrics.active});}
   const beforeDispose={...G.renderer.info.memory};e.dispose();G.renderer.render(G.scene,G.camera);return {initial,counts,beforeDispose,afterDispose:{...G.renderer.info.memory}};
  });
+ for(const counts of result.lifecycle.counts){assert.equal(counts.bytes,result.lifecycle.initial);assert.equal(counts.active,0);assert.equal(counts.geometries,result.lifecycle.counts[0].geometries);assert.equal(counts.textures,result.lifecycle.counts[0].textures);}
+ assert(result.lifecycle.afterDispose.geometries<result.lifecycle.beforeDispose.geometries);assert.equal(result.lifecycle.afterDispose.textures,result.lifecycle.beforeDispose.textures-2);
  }
  result.errors=errors;fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2));assert.deepEqual(errors,[]);console.log(JSON.stringify({integration:result.integration,performance:result.performance,comparison:result.comparison.comparisons,errors},null,2));
 }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

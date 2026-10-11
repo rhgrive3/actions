@@ -1,5 +1,5 @@
 // Original INKWAVE geometry settings, not Nintendo/SplatoonSWEPs parameters.
-export const VOLUME_SHAPE = Object.freeze({ thickness: .22, backRatio: .72, upperBias: .28, interiorStep: 8 });
+export const VOLUME_SHAPE = Object.freeze({ thickness: .22, backRatio: .72, upperBias: .28, interiorStep: 8, fringePixels: 1.1, edgeTaper: .45, edgeFloor: .01 });
 
 // Pixel-resolution boundary cells, larger completely covered interior tiles.
 // All tile perimeters share unit-spaced vertices: no T junctions. Clipped
@@ -8,6 +8,7 @@ export function buildInkMesh(rgba, width, height, options = {}) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || rgba.length !== width * height * 4) throw Error('Invalid RGBA dimensions');
   const cfg = { ...VOLUME_SHAPE, ...options };
   if (!(cfg.thickness > 0 && cfg.thickness <= 1) || !(cfg.backRatio > 0 && cfg.backRatio <= 2) || !Number.isFinite(cfg.upperBias) || Math.abs(cfg.upperBias) > .8 || !Number.isInteger(cfg.interiorStep) || cfg.interiorStep < 1 || cfg.interiorStep > 32) throw Error('Invalid ink mesh settings');
+  if (!(cfg.fringePixels >= 0 && cfg.fringePixels <= 4) || !(cfg.edgeTaper > 0 && cfg.edgeTaper <= 8) || !(cfg.edgeFloor > 0 && cfg.edgeFloor <= .1)) throw Error('Invalid ink bevel settings');
   const W = width + 2, H = height + 2, alpha = new Float32Array(W * H), distance = new Float32Array(W * H);
   const iso = .5 / 255;
   for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) alpha[(y + 1) * W + x + 1] = rgba[(y * width + x) * 4 + 3] / 255;
@@ -39,11 +40,13 @@ export function buildInkMesh(rgba, width, height, options = {}) {
   function vertex(x, y, boundary = false) {
     const key = Math.round(x * 1e7) + ':' + Math.round(y * 1e7); if (ids.has(key)) return ids.get(key);
     const id = depths.length, u = (x - .5) / width, v = 1 - (y - .5) / height;
-    const d = boundary ? 0 : Math.max(0, sample(distance, x, y) - .45);
+    // The sub-pixel alpha/RGB filter fringe stays almost planar, rather than
+    // stretching its transparent/black texels across the bulging bevel.
+    const d = boundary ? 0 : Math.max(0, sample(distance, x, y) - cfg.fringePixels);
     // Narrow necks/membranes stay thin; broad upper lobes inflate smoothly.
     // Distance saturates smoothly, no noise, no lateral displacement.
-    const radius = Math.max(0, sample(smoothDistance, x, y) - .45) / Math.min(width, height), rounded = Math.sqrt(1 - Math.exp(-radius * 18)) * (1 - Math.exp(-d * .45));
-    const h = cfg.thickness * (.004 + rounded * (1 + cfg.upperBias * (v * 2 - 1)));
+    const radius = Math.max(0, sample(smoothDistance, x, y) - .45) / Math.min(width, height), rounded = Math.sqrt(1 - Math.exp(-radius * 18)) * ((1 - Math.exp(-d * cfg.edgeTaper)) ** 2);
+    const h = cfg.thickness * (cfg.edgeFloor + rounded * (1 + cfg.upperBias * (v * 2 - 1)));
     xy.push((u - .5) * width / height, v - .5); depths.push(h); uv.push(u, v); ids.set(key, id); return id;
   }
   function triangle(points) {
@@ -120,28 +123,53 @@ export function buildInkMesh(rgba, width, height, options = {}) {
     indices.push(front[i] + N, front[i + 2] + N, front[i + 1] + N);
     for (let k = 0; k < 3; k++) { const a = front[i + k], b = front[i + (k + 1) % 3], key = Math.min(a, b) + ':' + Math.max(a, b); const e = edges.get(key); if (e) e.count++; else edges.set(key, { a, b, count: 1 }); }
   }
-  const boundary = new Uint8Array(N * 2);
+  const boundary = new Uint8Array(N * 2), sideEdges = [], outward = new Float32Array(N * 2), fallback = new Float32Array(N * 2);
   let boundaryEdges = 0;
   for (const { a, b, count } of edges.values()) {
     if (count > 2) throw Error('Non-manifold front mesh');
-    if (count === 1) { boundary[a] = boundary[b] = boundary[a + N] = boundary[b + N] = 1; indices.push(b, a, a + N, b, a + N, b + N); boundaryEdges++; }
+    if (count === 1) {
+      boundary[a] = boundary[b] = boundary[a + N] = boundary[b + N] = 1; sideEdges.push([a,b]); boundaryEdges++;
+      const dx = xy[b * 2] - xy[a * 2], dy = xy[b * 2 + 1] - xy[a * 2 + 1], length = Math.hypot(dx,dy);
+      for (const id of [a,b]) { outward[id*2] += dy/length; outward[id*2+1] -= dx/length; fallback[id*2] = dy/length; fallback[id*2+1] = -dx/length; }
+    }
   }
   // Smooth height-field normals, evaluated before simplification. Reusing them
   // avoids triangulation-dependent specular spikes on very skinny edge cells.
   const normals = new Float32Array(positions.length);
   const fieldHeight = (x, y) => {
     x = Math.max(0, Math.min(W - 1.001, x)); y = Math.max(0, Math.min(H - 1.001, y));
-    const d = Math.max(0, sample(distance, x, y) - .45), v = 1 - (y - .5) / height;
-    return cfg.thickness * (.004 + Math.sqrt(1 - Math.exp(-Math.max(0, sample(smoothDistance, x, y) - .45) / Math.min(width, height) * 18)) * (1 - Math.exp(-d * .45)) * (1 + cfg.upperBias * (v * 2 - 1)));
+    const d = Math.max(0, sample(distance, x, y) - cfg.fringePixels), v = 1 - (y - .5) / height;
+    return cfg.thickness * (cfg.edgeFloor + Math.sqrt(1 - Math.exp(-Math.max(0, sample(smoothDistance, x, y) - .45) / Math.min(width, height) * 18)) * ((1 - Math.exp(-d * cfg.edgeTaper)) ** 2) * (1 + cfg.upperBias * (v * 2 - 1)));
   };
   const normalized = (offset, nx, ny, nz) => { const length = Math.hypot(nx, ny, nz); normals.set([nx / length, ny / length, nz / length], offset); };
   for (let i = 0; i < N; i++) {
     const x = (uv[i * 2] * width + .5), y = ((1 - uv[i * 2 + 1]) * height + .5);
     const dx = (fieldHeight(x + .75, y) - fieldHeight(x - .75, y)) / 1.5 * height * .5;
     const dy = (fieldHeight(x, y + .75) - fieldHeight(x, y - .75)) / 1.5 * height * .5;
-    normalized(i * 3, -dx, dy, boundary[i] ? .08 : 1);
-    normalized((i + N) * 3, -dx * cfg.backRatio, dy * cfg.backRatio, boundary[i] ? -.08 : -1);
+    if (boundary[i]) {
+      const n = Math.hypot(outward[i*2],outward[i*2+1]) > 1e-8 ? outward : fallback;
+      normalized(i*3,n[i*2],n[i*2+1],0); normalized((i+N)*3,n[i*2],n[i*2+1],0);
+    } else {
+      normalized(i * 3, -dx, dy, 1); normalized((i + N) * 3, -dx * cfg.backRatio, dy * cfg.backRatio, -1);
+    }
   }
-  const Index = positions.length / 3 <= 65535 ? Uint16Array : Uint32Array;
-  return { positions, normals, uvs, indices: new Index(indices), boundaryEdges, boundary, frontIndices: new Index(front), frontVertexCount: N, settings: cfg };
+  // Side UVs have their own seam and sample the nearest actual covered source
+  // pixel. Reusing almost-transparent contour UVs on the side made the closed
+  // shell look black/open at grazing angles. Source front/back UV and every
+  // RGBA byte remain unchanged; low-alpha artwork keeps that source alpha.
+  const B = boundary.subarray(0,N).reduce((sum,x)=>sum+x,0), P = new Float32Array(positions.length+B*6), U = new Float32Array(uvs.length+B*4), M = new Float32Array(normals.length+B*6), mask = new Uint8Array(N*2+B*2), sideIds = new Int32Array(N).fill(-1);
+  P.set(positions); U.set(uvs); M.set(normals); mask.set(boundary); mask.fill(1,N*2);
+  let next = N*2;
+  for(let i=0;i<N;i++)if(boundary[i]){
+    const px=uv[i*2]*width-.5,py=(1-uv[i*2+1])*height-.5;let best=Infinity,sx=-1,sy=-1;
+    for(let yy=Math.max(0,Math.round(py)-2);yy<=Math.min(height-1,Math.round(py)+2);yy++)for(let xx=Math.max(0,Math.round(px)-2);xx<=Math.min(width-1,Math.round(px)+2);xx++){
+      const d=(xx-px)**2+(yy-py)**2;if(rgba[(yy*width+xx)*4+3]>0&&d<best){best=d;sx=xx;sy=yy;}
+    }
+    if(sx<0)throw Error('Side edge has no covered source pixel');
+    sideIds[i]=next;
+    for(const old of [i,i+N]){P.set(positions.subarray(old*3,old*3+3),next*3);M.set(normals.subarray(old*3,old*3+3),next*3);U.set([(sx+.5)/width,1-(sy+.5)/height],next*2);next++;}
+  }
+  for(const [a,b] of sideEdges){const A=sideIds[a],B=sideIds[b];indices.push(B,A,A+1,B,A+1,B+1);}
+  const Index = P.length / 3 <= 65535 ? Uint16Array : Uint32Array;
+  return { positions:P, normals:M, uvs:U, indices: new Index(indices), boundaryEdges, boundary:mask, frontIndices: new Index(front), frontVertexCount: N, settings: cfg };
 }
