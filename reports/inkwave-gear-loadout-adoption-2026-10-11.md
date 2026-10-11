@@ -56,3 +56,9 @@ Publication and exact-head Chromium/WebKit validation remain pending until the p
 ## Death timeline before visual sampling
 
 A further actual JSON case reproduces an initially dead owner whose death event is played before its first visual sample. Native death playback clears the snapshot buffer, so adoption previously lost the already-admitted equipment. The adapter now restores the newest validated equipment immediately before native death playback clears that buffer. A regression proves that all 57 legal Run Speed AP survive this event ordering and subsequent host adoption. Conditional ability clocks remain a separate candidate.
+
+## Latest ranked-main integration
+
+Remote main advanced to `b49de995c55908700fe9356c64c32f87720f79aa` through PR 1223 while this candidate was being published. All 47 main changes were preserved. Text blobs and the binary font were obtained through the GitHub connector and matched individually; the reconstructed baseline tree is `9ec80ba07ff059b8a600a211cfa53b22df245390`.
+
+On that baseline, the production-built static/LDE group passes 27 cases with one explicitly optional old-reference skip. A new four-mode actual-runtime test installs the real ranked engine/network wrappers and verifies objective snapshots and legal 57-AP gear together through owner departure, bot takeover, movement and old-owner replay. It passes 4/4 in source and production-built paths. The combined built ranked/gear/device group passes 16/16, including the newly merged distance-decayed native Sprinkler collision changes. These are executable runtime tests; actual browser CI remains separate.
