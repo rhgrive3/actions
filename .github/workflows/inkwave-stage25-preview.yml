@@ -1,0 +1,50 @@
+name: Build and verify INKWAVE 25-stage preview
+on:
+  push:
+    branches: [feat/inkwave-stage25-playable-1130]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: stage25-preview-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned production optimizer
+        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
+      - name: Verify original patch compatibility
+        run: node scripts/check-inkwave-patches.mjs --quick
+      - name: Build real optimized game with all 25 stage modules
+        run: node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Validate 25 stages times five rules, collision and navigation
+        run: node --experimental-loader ./scripts/stage25-node-loader.mjs scripts/test-stage25.mjs _site
+      - name: Validate moving geometry, inking, networking and lifecycle
+        run: node --experimental-loader ./scripts/stage25-node-loader.mjs scripts/test-stage25-regressions.mjs _site
+      - name: Validate emitted source and cache manifest
+        run: node --experimental-loader ./scripts/stage25-node-loader.mjs scripts/test-stage25-build.mjs _site
+      - name: Check production startup budget
+        run: node scripts/check-inkwave-startup-budget.mjs _site
+      - name: Upload real distribution preview
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-stage25-preview-${{ github.sha }}
+          path: _site/
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 6
+      - name: Upload stage25 verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-stage25-test-evidence-${{ github.sha }}
+          path: reports/stage25/
+          if-no-files-found: warn
+          retention-days: 14
