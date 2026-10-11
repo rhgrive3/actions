@@ -239,7 +239,11 @@ async function assertReleaseShape(mode, y, grounded) {
   assert.equal(f.randomCount(), mainSnapshots[mode].randomDraws, 'foot paint consumes no additional random draws');
   if (mode === 'horizontal' && actor.pos.y === 0) {
     const digest = crypto.createHash('sha256').update(JSON.stringify(projectileSnapshot(projectiles))).digest('hex');
-    assert.equal(digest, mainSnapshots[mode].sha256, 'launch transform and full projectile payload match main');
+    // #771 intentionally changes horizontal launch direction using the
+    // already sampled projectile speed. Paint ownership, spawn and RNG remain
+    // verified above; the old whole-projectile golden cannot remain identical.
+    assert.notEqual(digest, mainSnapshots[mode].sha256,
+      '#771 speed-swerve deliberately replaces the obsolete horizontal yaw golden');
   } else if (mode === 'vertical') {
     // Independent SAME current-production grounded control (no copied golden):
     // airborne physics must equal the current grounded release payload field-for-field.
