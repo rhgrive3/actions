@@ -16,7 +16,7 @@ const SRC = path.join(ROOT, 'inkwave-public');
 const AUDIO = path.join(ROOT, 'inkwave-public/src/audio/audio.js');
 const adaptBuildSource = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
-const MUSIC_NAMES = ['makeImpulse', 'mulberry32', 'mtof', 'perc', 'ahr', 'adsr', 'pts', 'sweep',
+const MUSIC_NAMES = ['noiseBuffer', 'makeImpulse', 'mulberry32', 'mtof', 'perc', 'ahr', 'adsr', 'pts', 'sweep',
   'strokeWave', 'pulseWave', 'kick', 'snare', 'crash', 'tom', 'brass', 'bell', 'pad', 'bass'];
 let cachedAudioEngine;
 

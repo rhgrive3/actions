@@ -52,6 +52,7 @@
       "matchmakingRange": 12.9
     },
     "dualies": {
+      "rollDist": 5,
       "inkPerShot": 0.72,
       "moveSpeedFiring": 4.8,
       "projSpeed": 142.20000000000002,
@@ -84,7 +85,8 @@
       "spawnPlayerForwardRate": 2,
       "shotGuideFrame": 7,
       "rollPaintWidthHalf": 1.8,
-      "rollPaintWorldScale": 1
+      "rollPaintWorldScale": 1,
+      "rollDist": 5
     },
     "blaster": {
       "inkPerShot": 10,
@@ -176,6 +178,8 @@
       "rangeMin": 9.033,
       "rangeMax": 24.037,
       "moveSpeedFiring": 1.2,
+      "partialChargeMoveStart": 5.76,
+      "partialChargeMoveEnd": 1.26,
       "keepChargeTime": 1.25,
       "chargeTime": 1,
       "inkRecoverStop": 0.31666666666666665,
@@ -209,7 +213,8 @@
       "storedFireDelay": 0.5166666666666667,
       "storedLaserDelay": 0.4166666666666667,
       "allowEmptyCharge": true,
-      "reticleDelayF": 5
+      "reticleDelayF": 5,
+      "moveSpeedChargingStart": 5.76
     },
     "roller": {
       "rollContactInterval": 0.4,
@@ -384,13 +389,19 @@
         "bulletOrderNumInUnit": 0,
         "frame": 13
       },
-      "postShotDelay": 0.26666666666666666,
+      "postShotDelay": 0.25,
       "postShotLock": 0.26666666666666666,
       "reticleRange": {
         "ground": 14.24,
         "air": 13.67
       }
     }
+  },
+  "deathBlast": {
+    "paintRadius": 5,
+    "paintOffsetY": 0.1,
+    "splashAroundCount": 10,
+    "splashAroundPaintRadius": 1
   },
   "bomb": {
     "fuse": 1,
@@ -432,7 +443,8 @@
     },
     "slam": {
       "damageMax": 220,
-      "damageMin": 60
+      "damageMin": 60,
+      "hang": 0.5
     }
   },
   "gear": {
@@ -548,7 +560,11 @@
       "chargeMoveScale": 0.25,
       "armorThreshold": 100
     },
-    "wallRollMaximumAngle": 0.7853981633974483
+    "wallRollMaximumAngle": 0.7853981633974483,
+    "neutralWallSlide": {
+      "terminalSpeed": 0.9,
+      "acceleration": 3.6
+    }
   },
   "flow": {
     "threshold": 3,
@@ -615,6 +631,7 @@
       "inkFractionToTankPoints": "*100"
     },
     "unverified": [
+      "#253 neutral inked-wall cling descent: terminalSpeed 0.9 WU/s and acceleration 3.6 WU/s^2 are provisional calibration; no climb/slide key was found in the pinned Leanny SplPlayer table (summary check only) and no measured Switch 11.3.0 speed curve or start delay has been recorded",
       "air-control/jump and landing feel; grounded base/attack acceleration is community-frame-calibrated, physical-device confirmation pending",
       "Flow scoring/extension/buff multipliers (30s duration is official)",
       "default omitted shooter fire/recovery and charger charge/recovery fields",
@@ -622,12 +639,15 @@
       "splatling second charge phase interpretation and partial stream duration",
       "ink recovery suppression during stored charge and dry squid",
       "special slam remains INKWAVE original; it is not Triple Splashdown (only the HP endpoints 220/60 follow Inkipedia's S3 Triple Splashdown base damage, community-sourced and not in the pinned extraction; radii, fists, falloff shape and armor are unchanged)",
+      "special slam hang 0.5s (was 0.25s, +15F) is an INKWAVE calibration that places the 60Hz ground-contact impact near the project's 70F target (issue #966); no Nintendo-published Triple Splashdown impact frame is in the pinned extraction, so the 70F target and Switch frame-level parity are unverified",
       "splatling ChargeFrame_Second is interpreted cumulatively (72F total), not added to ChargeFrame_First (48F); actual engine timing requires verification",
-      "weapon weight classes and all charging/rolling movement restrictions",
+      "charging/rolling movement restrictions beyond the bound MoveSpeed* fields (weapon weight-class assignment is resolved: the pinned 11.3.0 MainWeaponSetting.WeaponSpeedType is absent for all seven current kits, i.e. Normal, while ShooterShort/ShooterBlaze/ManeuverShort carry Fast and RollerHeavy/SpinnerHyper/ChargerLong carry Slow; Inkipedia Weight lists the same kits as Normal and the same +8.3%/+5% and -8.3%/-10% run/swim deltas as params.json MoveVel_*_Fast/Slow)",
       "Flow action-intensify bonus and gear stacking; fixed run/swim/enemy-ink multipliers remain provisional, not equivalent to confirmed AP",
       "Splat Bomb sub-resistance DamageRt_BombH/BombL family routing, sub-saver level, and omitted ink-consume default",
       "charger full-charge storage countdown after emerging, pre-delay fields and charge-to-ink accounting",
-      "per-weapon weight-class assignment and Splatling charge-stage movement curve; gear family curves alone do not establish assignment",
+      "death blast (#deathBlast): PaintRadius 5.0, PaintOffsetY 0.1 and SplashAroundParam Num 10 / PaintRadius 1.0 are pinned SplPlayer DieBlastParam fields; droplet flight (VelocityMin 0.54, VelocityMax 0.72, PitchMax 45 with omitted gravity/drag/OffsetY defaults) is not simulated and reuses the Splat Bomb SplashAround landing-ring calibration; the Death00 texture shape and whether Splatoon 3 credits this ink to the attacker's points/special gauge are unverified (the existing INKWAVE attacker-credit rule is unchanged, so credited area per splat rises from about 8.7 to about 80-86 WU^2 on flat floor)",
+      "Ver.11.0 remaining-health bar (#716): spl__PlayerDispHPParam first appears in the 11.0.0 SplPlayer table; RecvDmgReactDispFrm 180 (3 s), the BarWidth:BarHeight 70:5 ratio and the opaque RGB 0.3 background are applied, but the BarWidth/BarHeight UI unit, the RecvDmgReactColorFrm 12 reaction colour, outline and distance scaling are unverified",
+      "Splatling charge-stage movement curve (per-weapon weight-class assignment: see the resolved WeaponSpeedType note above; only Normal kits exist, so the Fast/Slow MoveVel curves are recorded but unused)",
       "projectile brake-state defaults, charge-dependent Splatling velocity, collision radii and paint geometry remain unverified",
       "Squid Roll angle/minimum speed/chain reset/armor break vs overflow and duration; consecutive retention is applied once per launch but engine interpretation remains unverified",
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
@@ -647,6 +667,7 @@
       "Rescued #299/#315/#340 residuals: roll/surge control, enemy-ink grace/quantization/action speed, Roller contact/recovery and terrain Blaster hit ratio; current #5 projectile chronology remains authoritative.",
       "super jump initial-form term (1F swim / 22F humanoid, issue #708) is a published community measurement from the S3 main-weapon verification table, not an extracted 11.3.0 parameter; the 80F charge wait and 138F flight it precedes stay pinned and Quick Super Jump scaling still applies only to those two components",
       "Charger feetPaintRadius 0.7 is a local footprint calibration for guaranteed feet paint; physical Switch radius remains unverified.",
+      "#539 Charger partial-charge movement: partialChargeMoveStart 5.76 (S3 0.96 normal-side) and partialChargeMoveEnd 1.26 (S3 0.21 maximum-partial side) are community verification-table values (wikiwiki Splat Charger table, not re-fetched: HTTP 403), NOT in the pinned Leanny WeaponChargerNormal extraction, which carries only MoveSpeedFullCharge 0.02 (1.2 u/s); the linear interior between start and end and its Nintendo easing are unverified; the 1.2 full-charge endpoint remains the pinned value",
       "Death-cause respawn totals 8.5/7.0/5.5s are public-reference values retained from PR #186; official 11.3.0 parameter confirmation remains unavailable.",
       "Roller roll-stop action interruption (main 16F / sub 5F / squid 6F) is a community frame measurement from the S3 verification table '検証/メインウェポン/前隙・後隙', 塗り進み interruption row. The page returned HTTP 403 on the 2026-10-06 re-fetch, so the three numbers are recorded with that source and NOT claimed as re-verified here; the frame-to-second conversion is /60 and the endpoint convention is 'roll-end tick is frame 0'. They are not pinned Ver. 11.3.0 parameter-table fields.",
       "Rescued from PR #63: shooter fire gates, charger air/empty/min-release/store timing, HP regen rates and death-cause respawn routing remain regression-backed; physical-device confirmation is still pending.",
@@ -654,9 +675,115 @@
       "Roller rollContactInterval uses the S3 community v10.0.0 repeated-contact table 24F (0.4s). Normal BodyParam default is corroborated by the published parameter table; no direct v11.3.0 console measurement is claimed. Boss uses the same INKWAVE weapon interval, not Salmon Run Coop timing.",
       "weapons.splatling.chargeJumpVelocity (4.2 world u/s) is the existing DU/f x6 calibration applied to the S3 gear-power verification table's 0.7 DU/f charging jump initial velocity for non-exception splatlings (Heavy Splatling). It is the same calibration already used for weapons.charger.fullChargeJumpVelocity (pinned JumpHeightFullCharge 0.07 x60 = 4.2) and for enemyInkJumpVel (pinned OpInk_JumpVel 0.08 x60 = 4.8). The pinned 11.3.0 WeaponSpinnerStandard WeaponParam exposes JumpGnd_Charge 0.08 but no field named like the charger's JumpHeightFullCharge; it is not treated as this value. Splat Spinner / Ballpoint / Heavy Edit / R-PEN/5H exceptions (1.0 DU/f) are not implemented because those weapons are absent; the field is per-weapon so they can be added as data. No direct Switch capture was taken."
     ],
-    "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
+    "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md",
+    "weaponAudit20261009": {
+      "dualiesRollDistance": {
+        "value": 5,
+        "unit": "world metres, NOT legacy DU",
+        "basis": "Splat Dualies community measurement: 1 practice line = 50 legacy DU = 5 m",
+        "source": "https://wikiwiki.jp/splatoon3mix/ブキ/スプラマニューバー",
+        "status": "community measurement; exact velocity curve remains calibrated"
+      },
+      "chargerPartialMovement": {
+        "start": 5.76,
+        "full": 1.2,
+        "unit": "world m/s",
+        "source": "https://wikiwiki.jp/splatoon3mix/ブキ/スプラチャージャー",
+        "basis": "0.96 legacy DU/frame at charge entry; 0.21 near full and 0.20 at full; 1 DU=0.1m, 60Hz",
+        "curve": "linear in elapsed charge fraction; intermediate curve NOT recovered from S3 engine"
+      },
+      "shotBiasKernel": {
+        "model": "gamma radial quantile with retained azimuth; separate Splatling pitch median",
+        "source": "https://parumemo.hatenablog.com/entry/2022/08/26/144547",
+        "status": "S2 community hypothesis extrapolated to S3 and to 2-D cone; NOT an exact S3 distribution; source bias is not an outer-hit probability"
+      }
+    }
   },
   "bindings": {
+    "deathBlast.paintRadius": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintRadius",
+      "index": null,
+      "factor": 1,
+      "rawValue": 5.0
+    },
+    "deathBlast.paintOffsetY": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintOffsetY",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.1
+    },
+    "deathBlast.splashAroundCount": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/Num",
+      "index": null,
+      "factor": 1,
+      "rawValue": 10
+    },
+    "deathBlast.splashAroundPaintRadius": {
+      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/PaintRadius",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.0
+    },
+    "weapons.charger.moveSpeedFiring": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeedFullCharge",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.02
+    },
+    "weapons.roller.rollSpeed": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedDash",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.132
+    },
+    "weapons.roller.rollBaseSpeed": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedNormal",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.108
+    },
+    "weapons.roller.rollDashTurnBreakSpeed": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedDashTurnBreak",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.108
+    },
+    "weapons.roller.rollDashTime": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/DashFrame",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 90
+    },
+    "weapons.roller.rollInkMinSpeed": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedInkConsumeMin",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.02
+    },
+    "weapons.roller.rollInkMaxSpeed": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedInkConsumeMax",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.132
+    },
+    "weapons.roller.moveSpeedFiring": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponWideSwingParam/SwingMoveSpeed",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.048
+    },
+    "weapons.slosher.moveSpeedFiring": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.04
+    },
+    "weapons.splatling.moveSpeedCharging": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed_Charge",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.062
+    },
     "player.runSpeed": {
       "parameter": "data/parameter/1130/misc/params.json#/MoveVel_Human",
       "index": 2,
@@ -3516,6 +3643,7 @@
       "splatlingRandom": "symmetric uniform use of explicit SpawnSpeedRandomRate bounds; native bias law is not recovered",
       "rollerOmittedCount": "omitted BulletNum interpreted as one, matching the existing latest-main near-unit owner; omission semantics remain labelled inference",
       "rollerSpawnAnchor": "latest-main native body anchor retained; explicit source offsets applied by #64; absolute Switch-space anchor unverified",
+      "rollerVerticalSpawnHeight": "#278: each VerticalSwingUnitGroupParam unit's SpawnPositionHeight and SpawnPositionOffsetHeight are summed as raw INKWAVE world units (scale 1) onto the retained muzzle anchor, giving per-group starts 1+2+2; the additive combination, per-field engine meaning and the raw-unit scale are unverified (Leanny table has no field semantics); not an SI-metre claim",
       "rollerHorizontalRandom": "explicit speed/width random bounds are used while native probability distribution/order remains unverified",
       "slosherAim": "native aim direction retained with explicit AddSpawnSpeedYRateByXZ and source unit rotations; no range-fitting solve",
       "slosherOffsets": "AfterOffset fields applied once per subsequent unit instance; engine semantics are source-guided",

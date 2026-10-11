@@ -13,6 +13,7 @@ import {
   slosherIntermediateSpec,
   installSlosherIntermediatePaint,
 } from '../runtime/slosher-intermediate-paint.mjs';
+import { advanceSplashDrops } from '../runtime/blaster-flight-paint.mjs';
 
 test('#1000: selected sub readiness uses Curling 65% and applies saver once', () => {
   const SUB = {
@@ -165,6 +166,43 @@ test('#905 live owner-leave retires only the disconnected Storm, on host and pee
   }
 });
 
+// #905 residual (see reports/inkwave-splatoon3-behavior-2026-10-02.md): after the
+// owner leaves, its late packets are fenced in _tick/_play on host and peer, and
+// the retirement result does not depend on the fixed-step render rate at leave time.
+test('#905 owner-leave retirement is fenced for late owner packets and invariant at 30/60/120 Hz', () => {
+  const seen = new Map();
+  for (const hz of [30, 60, 120]) for (const host of [true, false]) {
+    const actor = fakeActor(41), other = fakeActor(42, 'connected');
+    const released = [];
+    const G = { game: { hud: { banner() {} } }, projectiles: {
+      clouds: [{ owner: actor }, { owner: other }],
+      bombs: [{ owner: actor, kind: 'storm' }, { owner: other, kind: 'storm' }],
+      _releaseCloud(c) { released.push(['cloud', c.owner.nid]); },
+      _releaseBomb(b) { released.push(['bomb', b.owner.nid]); },
+    } };
+    installDisconnectFidelity({ NetMatch: FakeNetMatch, G });
+    const members = new Map([['me', true], ['gone', true], ['connected', true]]);
+    const nm = new FakeNetMatch({ myId: 'me', hostId: host ? 'me' : 'connected', _members: members });
+    nm.bind(fakeMatch('playing', 75, [actor, other]));
+    for (let i = 0; i < hz; i++) nm.update(1 / hz);
+    assert.equal(nm.updateCalls, hz, `the ${hz} Hz fixed-step loop ran`);
+    nm.onLeave('gone', false);
+    const playAfterLeave = nm.playCalls, tickAfterLeave = nm.tickCalls;
+    nm._tick('gone', {});
+    nm._play('gone', [0, 's']);
+    assert.equal(nm.tickCalls, tickAfterLeave, 'late tick packets from the departed owner are dropped');
+    assert.equal(nm.playCalls, playAfterLeave, 'late Storm/paint playback from the departed owner is dropped');
+    nm._play('connected', [0, 's']);
+    assert.equal(nm.playCalls, playAfterLeave + 1, 'a connected owner still plays back');
+    assert.deepEqual(G.projectiles.clouds.map(c => c.owner.nid), [42], 'only the connected owner keeps its Storm cloud');
+    assert.deepEqual(G.projectiles.bombs.map(b => b.owner.nid), [42], 'only the connected owner keeps its Storm device');
+    const signature = JSON.stringify(released);
+    if (!seen.has(host)) seen.set(host, signature);
+    assert.equal(signature, seen.get(host), `retirement at ${hz} Hz matches the first run on host=${host}`);
+    assert.deepEqual(released, [['cloud', 41], ['bomb', 41]], 'the departed owner retires its cloud and Storm exactly once');
+  }
+});
+
 test('#201: first-minute disconnect starts 6s no-contest and bypasses normal result path', () => {
   const a = fakeActor(3);
   let ended = 0;
@@ -257,6 +295,8 @@ class Vec3 {
   addScaledVector(v, s) { this.x += v.x * s; this.y += v.y * s; this.z += v.z * s; return this; }
   lengthSq() { return this.x * this.x + this.y * this.y + this.z * this.z; }
   normalize() { const d = Math.sqrt(this.lengthSq()) || 1; this.x /= d; this.y /= d; this.z /= d; return this; }
+  clone() { return new Vec3(this.x, this.y, this.z); }
+  multiplyScalar(s) { this.x *= s; this.y *= s; this.z *= s; return this; }
 }
 class FakeHit {
   constructor() { this.hit = false; this.point = new Vec3(); this.normal = new Vec3(0, 1, 0); }
@@ -291,8 +331,9 @@ test('#1002: intermediate splash paints once, scores once and disables legacy tr
   }
   const splats = [];
   let turf = 0;
+  // PR1188: the splash falls (shared queue) to a floor at y=0 before painting.
   const G = {
-    physics: { raycast(_p, _d, _n, hit) { hit.hit = true; hit.point.set(_p.x, 0, _p.z); hit.normal.set(0, 1, 0); return hit; } },
+    physics: { segment(a, b, hit) { hit.hit = b.y <= 0 && a.y > 0; if (hit.hit) { hit.point.set(b.x, 0, b.z); hit.normal.set(0, 1, 0); hit.face = 0; } return hit; } },
     paint: { splat(p, radius, team, opts) { splats.push({ p: new Vec3().copy(p), radius, team, opts }); return 5; } },
   };
   installSlosherIntermediatePaint(
@@ -301,20 +342,26 @@ test('#1002: intermediate splash paints once, scores once and disables legacy tr
   );
   const p = {
     type: 'slosh', ghost: false, fidelitySloshUnit: unit2, fidelitySloshIndex: 3,
-    seed: .5, pos: new Vec3(), vel: new Vec3(1, 0, 0), team: 0, trailEvery: 1.4,
+    seed: .5, pos: new Vec3(0, 1, 0), vel: new Vec3(1, 0, 0), team: 0, trailEvery: 1.4,
     owner: { addTurf(v) { turf += v; } },
   };
   const ps = new Projectiles();
+  G.projectiles = ps;
   ps._step(p, 1 / 60);
-  assert.equal(splats.length, 0);
+  assert.equal((ps._s3SplashDrops || []).length, 0);
   ps._step(p, 1 / 60);
+  assert.equal(ps._s3SplashDrops.length, 1, 'one source splash released');
+  assert.equal(splats.length, 0, 'it paints where it lands, not at release');
+  for (let i = 0; i < 120 && ps._s3SplashDrops.length; i++) advanceSplashDrops(ps, 1 / 60, G);
   assert.equal(splats.length, 1);
   assert.equal(splats[0].radius, .7);
-  assert.equal(splats[0].opts.stretchAmt, 2);
+  // PaintSystem's front/back asymmetry maps source depth 2.0 to 1.6;
+  // the falling drop is centred after subtracting 0.375 * r * stretch.
+  assert.equal(splats[0].opts.stretchAmt, 1.6);
   assert.equal(p.trailEvery, 0);
   assert.equal(turf, 5);
   ps._step(p, 1 / 60);
-  assert.equal(splats.length, 1, 'SpawnNum/TotalNum cap is one');
+  assert.equal(ps._s3SplashDrops.length, 0, 'SpawnNum/TotalNum cap is one');
 });
 
 test('#1002: Slosher flight caches the source spec across ticks and invalidates on seed change', () => {

@@ -52,7 +52,8 @@ test('#574 network annulus keeps zero HP damage, one bounded impulse, retry meta
     assert.equal(packet.d, 0); assert.deepEqual(packet.kb, [3.4, 0, 0]);
     const pending = a.nm.hitPending.get(packet.seq);
     assert.ok(pending, 'accepted relay send retains a retryable delivery record');
-    assert.deepEqual(Array.from(pending[0].kb), Array.from(packet.kb), 'retry retains exactly the original bounded knockback geometry');
+    // Compare element values: the structured-clone packet and the live record may come from different realms.
+    assert.deepEqual([...pending[0].kb], [...packet.kb], 'retry retains exactly the original bounded knockback geometry');
     b.nm.onMessage('p1', packet); b.nm.onMessage('p1', packet);
     assert.equal(b.victim.hp, 100); assert.ok(b.victim.vel.x > 0);
     const ack = b.sent.find(x => x.packet.k === 'hit_ack').packet;
@@ -65,7 +66,8 @@ test('#574 malformed geometry, negative/ordinary zero damage, wrong sender, stal
   const f = await view('p2');
   try {
     let h = 0;
-    const base = () => ({ k:'hit', v:2, a:1, d:50, w:'blaster', l:0, h:++h, kb:[2,0,0] });
+    // #1185: a hit is admitted only with the creating match id; the hand-built packets must carry it.
+    const base = () => ({ k:'hit', m:f.nm.cfg.id, v:2, a:1, d:50, w:'blaster', l:0, h:++h, kb:[2,0,0] });
     const invalid = [
       { kb:[Infinity,0,0] }, { kb:[NaN,0,0] }, { kb:[3.5,0,0] }, { kb:[1,0] },
       { kb:[0,0,0] }, { kb:'2,0,0' }, { kb:[100,0,0] }, { d:-1 },

@@ -19,6 +19,10 @@ const oldClockGate = (rel, source) => rel === 'src/net/netmatch.js'
       // The original row guard checked timestamp finiteness only. Reproduce
       // its admission without replacing the entire runtime helper module.
       .replace('validActorSnapshotRow(s, d.ts)', 'validActorSnapshotRow(s, 0)')
+      // Main's kit-birth admission independently bounds the same tick clock.
+      // The legacy counterfactual must remove both owners, while production
+      // tests below retain them and require the next legitimate tick to recover.
+      .replace('if (!Number.isFinite(d?.ts) || Math.abs(d.ts) > 1e12) return;', '')
   : source;
 
 test('#1178 old finite-only clock accepts an extreme timestamp and rejects the next native owner tick', async () => {

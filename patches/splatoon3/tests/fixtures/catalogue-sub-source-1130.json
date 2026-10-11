@@ -1,0 +1,437 @@
+{
+  "receipt": {
+    "version": "11.3.0",
+    "source": "Splatoon3-resources/splat3/data/parameter/1130/weapon",
+    "scope": "Raw parameter fields used to check the ten catalogue sub implementations; original source file hashes retained per record."
+  },
+  "weapons": {
+    "WeaponBombQuick": {
+      "sourceFile": "WeaponBombQuick.game__GameParameterTable.json",
+      "sha256": "1b93391d4a4fe6955a6e90eb605c9c4c00c5d78fe198b75895f141cb17f6c997",
+      "fields": {
+        "GameParameters": {
+          "WeaponParam": {
+            "InkConsume": 0.45,
+            "InkRecoverStop": 60
+          },
+          "BlastParam": {
+            "DistanceDamage": [
+              {
+                "Damage": 350,
+                "Distance": 2.8
+              },
+              {
+                "Damage": 250,
+                "Distance": 4.0
+              }
+            ],
+            "CrossPaintRadius": 1.4,
+            "PaintRadius": 4.0
+          },
+          "MoveParam": {
+            "SpawnSpeedY": 0.24,
+            "SpawnSpeedYWorldMin": -0.4,
+            "SpawnSpeedZSpecUp": {
+              "High": 1.68,
+              "Low": 1.12,
+              "Mid": 1.4
+            }
+          }
+        }
+      }
+    },
+    "WeaponBombRobot": {
+      "sourceFile": "WeaponBombRobot.game__GameParameterTable.json",
+      "sha256": "749b83b8e2cbf53aba2a4f2f232a8eaf04ead4ab287983ed1c15b70d78f19fa1",
+      "fields": {
+        "GameParameters": {
+          "WeaponParam": {
+            "InkConsume": 0.55,
+            "InkRecoverStop": 85
+          },
+          "BlastParam": {
+            "DistanceDamage": [
+              {
+                "Damage": 1800,
+                "Distance": 2.85
+              },
+              {
+                "Damage": 300,
+                "Distance": 6.5
+              }
+            ]
+          },
+          "MoveParam": {
+            "ChaseFrame": 150,
+            "NoReceiveTargetBurstWaitFrame": 180,
+            "SpawnSpeedZSpecUp": {
+              "High": 1.68,
+              "Low": 1.12,
+              "Mid": 1.4
+            }
+          }
+        }
+      }
+    },
+    "WeaponBombFizzy": {
+      "sourceFile": "WeaponBombFizzy.game__GameParameterTable.json",
+      "sha256": "3657b6fc76bedb2eb13b901257283addb9337660755c2e41e57896aff6ef0f9b",
+      "fields": {
+        "GameParameters": {
+          "WeaponParam": {
+            "InkConsume": 0.6,
+            "InkRecoverStop": 85
+          },
+          "MoveParam": {
+            "ChargeFrameArray": [
+              40,
+              80
+            ],
+            "BurstWaitFrameArray": [
+              15,
+              1,
+              1
+            ],
+            "BlastParamArray": [
+              {
+                "CrossPaintRadius": 2.0,
+                "DistanceDamage": [
+                  {
+                    "Damage": 500,
+                    "Distance": 1.6
+                  },
+                  {
+                    "Damage": 350,
+                    "Distance": 3.8
+                  }
+                ],
+                "KnockBackParam": {
+                  "Accel": 470.0,
+                  "Bias": 0.8,
+                  "Distance": 8.0
+                },
+                "PaintRadius": 3.0,
+                "SplashAroundParam": {
+                  "Num": 6,
+                  "OffsetY": 0.3,
+                  "PaintRadius": 0.7,
+                  "PitchMax": 25.0,
+                  "PitchMin": 10.0,
+                  "VelocityMax": 0.4,
+                  "VelocityMin": 0.35
+                }
+              },
+              {
+                "CrossPaintRadius": 2.0,
+                "DistanceDamage": [
+                  {
+                    "Damage": 500,
+                    "Distance": 1.95
+                  },
+                  {
+                    "Damage": 350,
+                    "Distance": 4.5
+                  }
+                ],
+                "KnockBackParam": {
+                  "Accel": 470.0,
+                  "Bias": 0.8,
+                  "Distance": 8.0
+                },
+                "PaintRadius": 3.4,
+                "SplashAroundParam": {
+                  "Num": 6,
+                  "OffsetY": 0.3,
+                  "PaintRadius": 0.7,
+                  "PitchMax": 20.0,
+                  "PitchMin": 10.0,
+                  "VelocityMax": 0.42,
+                  "VelocityMin": 0.36
+                }
+              },
+              {
+                "CrossPaintRadius": 2.0,
+                "DistanceDamage": [
+                  {
+                    "Damage": 500,
+                    "Distance": 2.6
+                  },
+                  {
+                    "Damage": 350,
+                    "Distance": 5.45
+                  }
+                ],
+                "KnockBackParam": {
+                  "Accel": 470.0,
+                  "Bias": 0.8,
+                  "Distance": 8.0
+                },
+                "PaintRadius": 3.8,
+                "SplashAroundParam": {
+                  "Num": 6,
+                  "OffsetY": 0.3,
+                  "PaintRadius": 0.7,
+                  "PitchMax": 20.0,
+                  "PitchMin": 10.0,
+                  "VelocityMax": 0.43,
+                  "VelocityMin": 0.39
+                }
+              }
+            ],
+            "ObjColDamage": 100,
+            "SpawnSpeedY": 0.24,
+            "SpawnSpeedZSpecUp": {
+              "High": 1.84,
+              "Low": 1.36,
+              "Mid": 1.6
+            }
+          }
+        }
+      }
+    },
+    "WeaponBombTorpedo": {
+      "sourceFile": "WeaponBombTorpedo.game__GameParameterTable.json",
+      "sha256": "bc56f9fef0297cab5652fa8a9d7a9049feca04dbdd0254eba60b4d9e49746c09",
+      "fields": {
+        "GameParameters": {
+          "WeaponParam": {
+            "InkConsume": 0.65,
+            "InkRecoverStop": 88
+          },
+          "BlastParamChase": {
+            "DistanceDamage": [
+              {
+                "Damage": 600,
+                "Distance": 2.6
+              },
+              {
+                "Damage": 350,
+                "Distance": 6.0
+              }
+            ],
+            "PaintRadius": 3.5,
+            "SplashBlastParam": {
+              "CrossPaintCheckLength": 1.0,
+              "CrossPaintRadius": 1.0,
+              "DistanceDamage": [
+                {
+                  "Damage": 120,
+                  "Distance": 2.6
+                }
+              ],
+              "KnockBackParam": {
+                "Accel": 0.0
+              },
+              "PaintRadius": 2.0
+            }
+          },
+          "MoveParam": {
+            "BurstFrame": 30,
+            "SpawnSpeedZSpecUp": {
+              "High": 1.9,
+              "Low": 1.4,
+              "Mid": 1.65
+            }
+          }
+        }
+      }
+    },
+    "WeaponTrap": {
+      "sourceFile": "WeaponTrap.game__GameParameterTable.json",
+      "sha256": "432472253e5c25558851ddac7a12947e7b348c57e24b44f9465f2daddba33457",
+      "fields": {
+        "GameParameters": {
+          "WeaponParam": {
+            "InkConsume": 0.6,
+            "InkRecoverStop": 0
+          },
+          "AreaParam": {
+            "Distance": {
+              "High": 11.0,
+              "Low": 8.0,
+              "Mid": 9.5
+            },
+            "MarkingFrameSubSpec": {
+              "High": 600.0,
+              "Low": 300.0,
+              "Mid": 450.0
+            }
+          },
+          "BlastParam": {
+            "DistanceDamage": [
+              {
+                "Damage": 450,
+                "Distance": 3.6
+              },
+              {
+                "Damage": 350,
+                "Distance": 8.0
+              }
+            ],
+            "PaintRadius": 5.0
+          },
+          "MoveParam": {
+            "MaxPlaceNum": 2,
+            "SensorRadius": {
+              "High": 4.0,
+              "Low": 3.0,
+              "Mid": 3.5
+            },
+            "SpawnSpeedZSpecUp": {
+              "High": 1.12,
+              "Low": 1.12,
+              "Mid": 1.12
+            }
+          }
+        }
+      }
+    },
+    "WeaponPoisonMist": {
+      "sourceFile": "WeaponPoisonMist.game__GameParameterTable.json",
+      "sha256": "1667647b6176234ab455f97351fb8d316c40ba779b0bee660588be1e254fcdf7",
+      "fields": {
+        "GameParameters": {
+          "WeaponParam": {
+            "InkConsume": 0.55,
+            "InkRecoverStop": 80
+          },
+          "AreaParam": {
+            "DistanceForOff": 5.4,
+            "EffectParam": {
+              "Level": [
+                {
+                  "Frame": 60,
+                  "NextLevelCount": 3
+                },
+                {
+                  "Frame": 30,
+                  "NextLevelCount": 4
+                },
+                {
+                  "Frame": 15,
+                  "NextLevelCount": 0
+                }
+              ]
+            }
+          },
+          "MoveParam": {
+            "SpawnSpeedY": 0.24,
+            "SpawnSpeedYWorldMin": -0.4,
+            "SpawnSpeedZSpecUp": {
+              "High": 1.68,
+              "Low": 1.12,
+              "Mid": 1.4
+            }
+          }
+        }
+      }
+    },
+    "WeaponLineMarker": {
+      "sourceFile": "WeaponLineMarker.game__GameParameterTable.json",
+      "sha256": "aae1cbb683bdf95e4318d639b5b3ea183e3e6b030665891a7ac5d0f2acfc0dda",
+      "fields": {
+        "GameParameters": {
+          "WeaponParam": {
+            "InkConsume": 0.4,
+            "InkRecoverStop": 50
+          },
+          "MoveParam": {
+            "DirectDamage": 400,
+            "MarkingFrame": {
+              "High": 600.0,
+              "Low": 300.0,
+              "Mid": 450.0
+            },
+            "TailFrame": 90,
+            "PaintRadius": 2.6,
+            "CollisionRadius": 0.25,
+            "SpawnSpeedZSpecUp": {
+              "High": 6.8,
+              "Low": 6.3,
+              "Mid": 6.55
+            }
+          }
+        }
+      }
+    },
+    "WeaponShield": {
+      "sourceFile": "WeaponShield.game__GameParameterTable.json",
+      "sha256": "ac757c5d3a6a29d45031d68527e3e9e7a6f4a5b7ac72cf7189250532db8c9648",
+      "fields": {
+        "GameParameters": {
+          "WeaponParam": {
+            "InkConsume": 0.6,
+            "InkRecoverStop": 85
+          },
+          "MoveParam": {
+            "FlyGravity": 0.009,
+            "MaxHP": {
+              "High": 15000.0,
+              "Low": 8000.0,
+              "Mid": 11500.0
+            },
+            "SpawnSpeedY": 0.07,
+            "SpawnSpeedYWorldMin": -0.5,
+            "SpawnSpeedZSpecUp": {
+              "High": 0.3,
+              "Low": 0.3,
+              "Mid": 0.3
+            }
+          }
+        }
+      }
+    },
+    "WeaponSprinkler": {
+      "sourceFile": "WeaponSprinkler.game__GameParameterTable.json",
+      "sha256": "d3b945ddf9691b93cfc5c236d456462637fa36ba5eab3b1761e995e8f74e49f8",
+      "fields": {
+        "GameParameters": {
+          "WeaponParam": {
+            "InkConsume": 0.6,
+            "InkRecoverStop": 60
+          },
+          "MoveParam": {
+            "HitPaintRadius": 2.9,
+            "PeriodFirst": {
+              "High": 780.0,
+              "Low": 480.0,
+              "Mid": 630.0
+            },
+            "PeriodSecond": {
+              "High": 1020.0,
+              "Low": 900.0,
+              "Mid": 960.0
+            },
+            "SpoutInkDrawRadius": 0.25,
+            "SpawnSpeedY": 0.24,
+            "SpawnSpeedYWorldMin": -0.4,
+            "SpawnSpeedZSpecUp": {
+              "High": 1.12,
+              "Low": 1.12,
+              "Mid": 1.12
+            }
+          }
+        }
+      }
+    },
+    "WeaponBeacon": {
+      "sourceFile": "WeaponBeacon.game__GameParameterTable.json",
+      "sha256": "e73cf2ca0655d67fd0b382ee3a81edc7302db4f91e66c511b3d46643b8173eb2",
+      "fields": {
+        "GameParameters": {
+          "WeaponParam": {
+            "InkConsume": 0.75,
+            "InkRecoverStop": 0
+          },
+          "MoveParam": {
+            "SpawnSpeedZSpecUp": {
+              "High": 1.12,
+              "Low": 1.12,
+              "Mid": 1.12
+            }
+          }
+        }
+      }
+    }
+  }
+}

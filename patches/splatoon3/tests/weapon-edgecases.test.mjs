@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 import {fixture as wireFixture,ROOT} from '../../../scripts/weapons-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
+import { signedBiasSample } from '../runtime/weapon-edgecases.mjs';
 const close = (a,b,e=1e-8) => assert.ok(Math.abs(a-b)<e, `${a} != ${b}`);
-async function setup(kind) {
- const f=await fixture(),a=f.make(kind);f.G.camera={position:new f.THREE.Vector3(0,20,0)}; f.G.actors=[a]; f.G.match.canRespawn=()=>false;
+async function setup(kind, fixtureOptions = {}) {
+ const f=await fixture(fixtureOptions),a=f.make(kind);f.G.camera={position:new f.THREE.Vector3(0,20,0)}; f.G.actors=[a]; f.G.match.canRespawn=()=>false;
  return {...f,a};
 }
 function projectiles(f){const ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;return ps;}
@@ -111,23 +112,50 @@ test('remote Dualies released-fire Jump does not manufacture a roll from stale f
  assert.equal(a.ink,ink);assert.equal(a.weaponRunner.rollsLeft,rolls);
  assert.ok(a.character.events.some(([name])=>name==='jump'));
 });
-test('splatling yaw and pitch have independent signed ground boundaries on arbitrary aim rays',async()=>{
- const f=await setup('splatling'),ps=projectiles(f),a=f.a;
- for(const yaw of [0,1.2])for(const pitch of [0,.7,-.6])for(const [theta,axis,limit] of [[0,'yaw',3.3],[.5,'yaw',-3.3],[.25,'pitch',1.6],[.75,'pitch',-1.6]]){
-  const dir=new f.THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));a.aimDir.copy(dir);a.aimPoint.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3)).addScaledVector(dir,100);
-  let n=0;const draws=[.5,1-1e-12,theta]; // neutral #64 speed RNG, then inherited speed RNG if present, then yaw/pitch spread draws
-  f.setRandom(()=>draws[n++]??.5);ps.fireSplatling(a,a.weapon,3.3);const v=ps.list.at(-1).vel.clone().normalize(),right=dir.clone().set(-dir.z,0,dir.x).normalize(),up=dir.clone().cross(right);
-  const side=Math.atan2(v.dot(axis==='yaw'?right:up),v.dot(dir))*180/Math.PI;close(side,limit);close(v.dot(axis==='yaw'?up:right),0);
+test('S3 Splatling independent signed yaw/pitch angular quantiles preserve arbitrary aim elevations', async () => {
+ // Match the shipped adapter composition, which samples speed before the
+ // independent signed yaw/pitch draws. The minimal fixture omits that draw.
+ const f = await setup('splatling', { composeProductionAdapters: true }), ps = projectiles(f), a = f.a;
+ const deg = 180 / Math.PI, wrap = radians => Math.atan2(Math.sin(radians), Math.cos(radians)) * deg;
+ const combinations = [[0, .5], [1-1e-12, .5], [.5, 0], [.5, 1-1e-12], [.75, .625]];
+ for (const yaw of [0, 1.2]) for (const pitch of [0, .7, -.6]) for (const [yawU, pitchU] of combinations) {
+  const dir = new f.THREE.Vector3(Math.sin(yaw)*Math.cos(pitch), Math.sin(pitch), Math.cos(yaw)*Math.cos(pitch));
+  a.aimDir.copy(dir);
+  a.aimPoint.copy(a.pos).add(new f.THREE.Vector3(0, 1.05, .3)).addScaledVector(dir, 100);
+  let n = 0;
+  // One speed sample, independent horizontal and pitch samples, then seed.
+  const draws = [.5, yawU, pitchU, .5];
+  f.setRandom(() => draws[n++] ?? .5);
+  ps.fireSplatling(a, a.weapon, 3.3);
+  const v = ps.list.at(-1).vel.clone().normalize();
+  const measuredYaw = wrap(Math.atan2(v.x, v.z) - yaw);
+  const measuredPitch = (Math.atan2(v.y, Math.hypot(v.x, v.z)) - pitch) * deg;
+  close(measuredYaw, 3.3 * signedBiasSample(yawU, .3), 1e-6);
+  close(measuredPitch, 1.6 * signedBiasSample(pitchU, .4), 1e-6);
+  assert.equal(n, 4, 'native speed, two independent axes and seed draw count');
  }
 });
-test('splatling retained horizontal scalar does not infer or rescale vertical1.6 in ground and air',async()=>{
- const f=await setup('splatling'),ps=projectiles(f),a=f.a;a.aimPoint.set(0,1.05,100);a.aimDir.set(0,0,1);
- for(const [ground,spread,expected] of [[true,1.98,1.6],[true,3.3,1.6],[false,7,1.6]]){
-  a.grounded=ground;let n=0;const draws=[.5,1-1e-12,.25]; // isolate pitch boundary from independent speed randomness
-  f.setRandom(()=>draws[n++]??.5);ps.fireSplatling(a,a.weapon,spread);const p=ps.list.at(-1),v=p.vel.clone();close(Math.abs(Math.atan2(v.y,Math.hypot(v.x,v.z))*180/Math.PI),expected);
-  a.grounded=!ground;a.weapon.spreadPitchGround=1.6;assert.ok(p.vel.equals(v));
+
+test('S3 Splatling vertical 1.6-degree maximum does not scale with horizontal envelope', async () => {
+ const f = await setup('splatling', { composeProductionAdapters: true }), ps = projectiles(f), a = f.a;
+ a.aimPoint.set(0, 1.05, 100); a.aimDir.set(0, 0, 1);
+ for (const [grounded, horizontal] of [[true, 1.98], [true, 3.3], [false, 7]]) {
+  a.grounded = grounded;
+  let n = 0;
+  const draws = [.5, .5, 1-1e-12, .5]; // speed, neutral yaw, max pitch, seed
+  f.setRandom(() => draws[n++] ?? .5);
+  ps.fireSplatling(a, a.weapon, horizontal);
+  const p = ps.list.at(-1), velocity = p.vel.clone();
+  close(Math.atan2(velocity.y, Math.hypot(velocity.x, velocity.z))*180/Math.PI, 1.6, 1e-6);
+  close(Math.atan2(velocity.x, velocity.z), 0, 1e-8);
+  assert.equal(n, 4, 'signed-axis model does not add a Bernoulli gate');
+  a.grounded = !grounded;
+  a.weapon.spreadPitchGround = 1.6;
+  assert.ok(p.vel.equals(velocity), 'post-launch state does not mutate sampled velocity');
+  ps.clear();
  }
 });
+
 function blast(f,ps){const p=ps._new();Object.assign(p,{type:'blast',owner:f.a,team:0,radius:1,seed:.5,wid:'blaster'});p.vel.set(0,0,1);return p;}
 test('terrain floor/wall/slope contact caps at35; air70 and direct exclusion remain',async()=>{
  const f=await setup('blaster'),ps=projectiles(f),e=f.make();e.team=1;e.invuln=0;f.G.actors.push(e);const p=blast(f,ps),at=new f.THREE.Vector3(0,.7,0);

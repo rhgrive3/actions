@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { PRECACHE_BUDGET_BYTES, WORKER_BUDGET_BYTES } from '../../patches/loading-cache/adapter.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,6 +11,9 @@ import { qualityIdentity } from '../../patches/local-quality/adapter.mjs';
 import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../lib/inkwave-build-only-modules.mjs';
 import { World } from '../../patches/loading-cache/tests/worker-fixture.mjs';
+import { inflateSync } from 'node:zlib';
+import { compactLightmapPng } from '../lib/inkwave-lightmap-compaction.mjs';
+import { decodeGrayLightmap } from '../lib/inkwave-lossless-lightmap.mjs';
 
 const root = new URL('../../', import.meta.url);
 const composer = 'patches/local-quality/composer-target-adapter.mjs';
@@ -29,7 +33,7 @@ const runtimeHelpers = [
 const auditedBuildExports = new Map([
   ['patches/local-quality/audio-listener-adapter.mjs', ['AUDIO_LISTENER_SOURCE']],
   ['patches/local-quality/finish-tape-adapter.mjs', ['replaceOnceFinish']],
-  ['patches/local-quality/hud-authority-adapter.mjs', ['SPECIAL_SEGMENTS', 'specialGaugeSVG']],
+  ['patches/local-quality/hud-authority-adapter.mjs', ['SPECIAL_SEGMENTS', 'TOOTH_PITCH_DEG', 'GAUGE_GEN', 'specialGaugeSVG', 'touchRingSVG']],
   ['patches/local-quality/issue-190-adapter.mjs', ['MIP_POLICY', 'shouldRebuildMipmaps', 'replaceOnce']],
   ['patches/local-quality/issue-418-adapter.mjs', ['replaceExact', 'replaceOnce']],
   ['patches/local-quality/issue-461-sfx-mute.mjs', ['REQUIRED_WIRING', 'ISSUE_461_AUDIO_REL']],
@@ -99,6 +103,60 @@ test('runtime helper URLs retain their exports without carrying build-time sourc
 });
 
 const site = process.env.INKWAVE_BUILT_SITE && path.resolve(process.env.INKWAVE_BUILT_SITE);
+test('lightmap compaction preserves every pixel and non-image PNG chunk', () => {
+  function decode(bytes) {
+    const keep=[],data=[];let width,height;
+    for(let at=8;at<bytes.length;){
+      const n=bytes.readUInt32BE(at),type=bytes.toString('ascii',at+4,at+8);
+      if(type==='IDAT')data.push(bytes.subarray(at+8,at+8+n));
+      else keep.push(bytes.subarray(at,at+n+12));
+      if(type==='IHDR'){width=bytes.readUInt32BE(at+8);height=bytes.readUInt32BE(at+12);}
+      at+=n+12;
+    }
+    const raw=inflateSync(Buffer.concat(data)),pixels=Buffer.alloc(width*height);
+    for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+      const offset=y*(width+1),filter=raw[offset];assert([0,1,2].includes(filter));
+      const predictor=filter===1?(x?pixels[y*width+x-1]:0):filter===2?(y?pixels[(y-1)*width+x]:0):0;
+      pixels[y*width+x]=(raw[offset+1+x]+predictor)&255;
+    }
+    return {width,height,pixels,keep};
+  }
+  let saved=0;
+  for(const file of ['inkwave-public/assets/lightmaps/halyard.png','inkwave-public/assets/lightmaps/kelpline.png','inkwave-public/assets/lightmaps/tidewater.png','inkwave-public/assets/lightmaps/cargo.png','patches/practice-range/assets/lightmaps/range.png']){
+    const raw=fs.readFileSync(new URL(file,root)),packed=compactLightmapPng(raw);
+    assert.deepEqual(decode(packed),decode(raw),file);assert(packed.length<=raw.length);saved+=raw.length-packed.length;
+    if(site){
+      const emitted=fs.readFileSync(path.join(site,'assets/lightmaps',path.basename(file)));
+      const before=decodeGrayLightmap(raw),after=decodeGrayLightmap(emitted);
+      assert.equal(after.width,before.width);assert.equal(after.height,before.height);
+      assert(after.ihdr.equals(before.ihdr), 'PNG image metadata is preserved');
+      assert(after.pixels.equals(before.pixels), 'both lossless encoders preserve every emitted pixel: '+file);
+      assert(emitted.length<=raw.length, 'emitted encoding never increases the source payload');
+    }
+  }
+  assert(saved>100*1024,'meaningful lossless reduction for the combined catalogue');
+});
+
+test('ESM minification preserves the emitted module export interface', {skip:!site}, () => {
+  const identity=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
+  const roots={upstream:'inkwave-public',patch:'patches/splatoon3','touch-layout':'patches/touch-layout',reliability:'patches/reliability','local-quality':'patches/local-quality','network-replication':'patches/network-replication','practice-range':'patches/practice-range','loading-cache':'patches/loading-cache'};
+  const exports=source=>parse(source,{ecmaVersion:'latest',sourceType:'module'}).body.flatMap(n=>{
+    if(n.type==='ExportDefaultDeclaration')return['default'];
+    if(n.type==='ExportAllDeclaration')return['*:'+n.source.value];
+    if(n.type!=='ExportNamedDeclaration')return[];
+    if(n.declaration)return n.declaration.type==='VariableDeclaration'?n.declaration.declarations.map(d=>d.id.name):[n.declaration.id.name];
+    return n.specifiers.map(s=>s.exported.name||s.exported.value);
+  }).sort();
+  let checked=0;
+  for(const key of Object.keys(identity.files)){
+    const slash=key.indexOf('/'),namespace=key.slice(0,slash),rel=key.slice(slash+1);
+    if(!roots[namespace]||!rel.endsWith('.mjs'))continue;
+    const emitted=namespace==='upstream'?rel:roots[namespace]+'/'+rel;
+    if(!fs.existsSync(path.join(site,emitted)))continue;
+    assert.deepEqual(exports(fs.readFileSync(path.join(site,emitted),'utf8')),exports(fs.readFileSync(new URL(roots[namespace]+'/'+rel,root),'utf8')),key);checked++;
+  }
+  assert(checked>100);
+});
 test('network identity contains only exact paths owned by its namespace', () => {
   const files = networkIdentity();
   assert(Object.hasOwn(files, 'dodge-clock-adapter.mjs'));
@@ -150,12 +208,12 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
   const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
   assert.equal(identity.inputHash, hash(JSON.stringify(identity.files)));
-  for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs']) {
+  for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-lightmap-compaction.mjs']) {
     assert.equal(identity.files['build-script/' + file], hash(fs.readFileSync(new URL('scripts/' + file, root))),
       'direct builder helper participates in source identity: ' + file);
   }
   const workerSource = fs.readFileSync(path.join(site, 'sw.js'), 'utf8');
-  assert(Buffer.byteLength(workerSource) <= 64 * 1024, 'unchanged worker ceiling');
+  assert(Buffer.byteLength(workerSource) <= WORKER_BUDGET_BYTES, 'worker ceiling');
   const ast = parse(workerSource, { ecmaVersion: 'latest', sourceType: 'script' });
   const binding = ast.body.flatMap(n => n.type === 'VariableDeclaration' ? n.declarations : []).find(n => n.id.name === 'BUILD');
   const config = JSON.parse(workerSource.slice(binding.init.start, binding.init.end));
@@ -166,8 +224,8 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   assert.equal(profileEmitted, JSON.stringify(JSON.parse(profileSource)), 'compact only emitted JSON whitespace');
   assert.equal(identity.files['patch/profile.json'], hash(Buffer.from(profileSource)), 'identity retains raw profile input');
   assert(config.precache.includes('patches/splatoon3/profile.json'), 'all tuning data remains available offline');
-  assert(config.precache.reduce((sum, file) => sum + config.assets[file][0], 0) <= 5 * 1024 * 1024,
-    'unchanged precache ceiling includes the complete runtime dependency graph');
+  assert(config.precache.reduce((sum, file) => sum + config.assets[file][0], 0) <= PRECACHE_BUDGET_BYTES,
+    'precache ceiling includes the complete runtime dependency graph');
   for (const file of BUILD_ONLY_PATCH_MODULES) {
     assert(!fs.existsSync(path.join(site, file)), file);
     assert(!Object.hasOwn(config.assets, file), file);

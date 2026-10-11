@@ -65,7 +65,7 @@ function csvCell(value) {
 
 function csvFor(data) {
   const fields = [
-    'render_hz', 'render_frame', 'simulation_tick', 'simulation_time_s', 'cloud_time_s', 'kind', 'candidate_index', 'hit',
+    'scope', 'render_hz', 'render_frame', 'simulation_tick', 'simulation_time_s', 'cloud_time_s', 'kind', 'candidate_index', 'hit',
     'x_wu', 'y_wu', 'z_wu', 'ray_length_wu', 'radius_wu', 'nominal_circle_footprint_wu2', 'claimed_area_wu2',
     'cpu_turf_cells_delta', 'cosmetic_particles', 'paint_flagged_particles', 'cpu_radial_start_wu', 'cpu_radial_end_wu',
     'cpu_angle_start_deg', 'cpu_angle_end_deg', 'cpu_turf_cells', 'cpu_turf_area_wu2', 'metric_name', 'metric_value',
@@ -74,6 +74,7 @@ function csvFor(data) {
   for (const run of data.runs) {
     for (const event of run.events) {
       const row = {
+        scope: run.summary.scope,
         render_hz: event.renderHz,
         render_frame: event.renderFrame,
         simulation_tick: event.simulationTick,
@@ -96,6 +97,7 @@ function csvFor(data) {
       rows.push(fields.map((field) => csvCell(row[field])).join(','));
     }
     for (const bin of run.distribution) rows.push(fields.map((field) => csvCell(({
+      scope: run.summary.scope,
       render_hz: run.summary.renderHz,
       simulation_tick: run.summary.fixedSimulationTicks,
       simulation_time_s: run.summary.fixedSimulationSeconds,
@@ -109,6 +111,7 @@ function csvFor(data) {
       cpu_turf_area_wu2: bin.areaWorldUnitsSquared,
     })[field])).join(','));
     for (const [metricName, metricValue] of Object.entries(run.summary)) rows.push(fields.map((field) => csvCell(({
+      scope: run.summary.scope,
       render_hz: run.summary.renderHz,
       kind: 'summary',
       metric_name: metricName,
@@ -121,7 +124,7 @@ function csvFor(data) {
 function markdownFor(data, artifactHashes) {
   const row = (run) => {
     const s = run.summary;
-    return `| ${s.renderHz} | ${s.fixedSimulationTicks} | ${s.candidateRayEmissions} | ${s.rayGroundHits} | ${s.paintWriteEvents} | ${s.cosmeticParticleEmissions} | ${s.summedCircularBrushFootprintWorldUnitsSquared} | ${s.summedClaimedWorldUnitsSquared} | ${s.finalCpuTurfCellsFromGrid} | ${s.finalCpuTurfUnionWorldUnitsSquared} |`;
+    return `| ${s.scope} | ${s.renderHz} | ${s.fixedSimulationTicks} | ${s.candidateRayEmissions} | ${s.rayGroundHits} | ${s.paintWriteEvents} | ${s.cosmeticParticleEmissions} | ${s.summedCircularBrushFootprintWorldUnitsSquared} | ${s.summedClaimedWorldUnitsSquared} | ${s.finalCpuTurfCellsFromGrid} | ${s.finalCpuTurfUnionWorldUnitsSquared} |`;
   };
   const rows = data.runs.map(row).join('\n');
   const sourceSnapshot = data.measurement.sourceSnapshot;
@@ -135,11 +138,11 @@ Issue [#226](https://github.com/rhgrive3/actions/issues/226) is calibration rese
 - Splatoon 3 comparison version: Ver. 11.3.0, as recorded by corrected Issue #226. The issue cites Leanny's pinned 11.3.0 extraction (CloudParam.RainNum=72, RainyFrame.Low=480, NoPaintRainNum=0, WithNoPaintRainNum=120) and the community Splatoon3 Wiki's RainNum/time notes. These source values remain reference metadata only: they do not resolve whether RainNum describes emitted particles, reuse, simultaneous management, ground contacts, or paint API calls.
 - Links: [corrected Issue #226](${SOURCE_URLS.issueCorrection}), [Leanny 11.3.0 extracted table](${SOURCE_URLS.leanny1130StormParameter}), [Splatoon3 Wiki — Ink Storm](${SOURCE_URLS.splatoon3MixStormWiki}), [Nintendo update history](${SOURCE_URLS.nintendoVersionHistory}). The interpretation boundary above is inherited from the correction; this task did not repeat the source-lifecycle audit.
 - patches/splatoon3/profile.json documents raw coordinates as 1:1 with INKWAVE meters, but marks distanceScale.factor=1 as inferred and says actual character/stage scale must be measured. inkwave-public/src/game/inkFlight.js likewise says its scale of 1 is not verified real-world metres. To keep that project convention separate from a verified physical or Nintendo scale, this report labels measured coordinates as INKWAVE world units (WU) and areas as WU². The mapping to retail Splatoon 3 world/collision units remains unknown, and no conversion is applied.
-- The measured production composition retains the already-present adapter behavior in patches/splatoon3/adapter.mjs: its Storm update window runs through the final duration tick, and its 12 WU ray reach remains unchanged. This is why this fully composed run records 178 candidate rays; the issue's 172 PaintSystem.splat-call observation came from the public-source-only update window that stops 0.3 s before expiry. The two run scopes are recorded separately here; neither establishes a Nintendo-particle mapping.
+- The measured production composition retains the already-present adapter behavior in patches/splatoon3/adapter.mjs: its Storm update window runs through the final duration tick, and its 12 WU ray reach remains unchanged. This is why the 'production' scope records 178 candidate rays at every render cadence. The issue's 172 PaintSystem.splat-call observation is reproduced by the 'public-source' scope (unpatched modules, one _updateClouds call per render frame, update window closed 0.3 s before expiry), which records 172, 172, and 171 at 30, 60, and 120 Hz. Both scopes are recorded in the Results table; neither establishes a Nintendo-particle mapping.
 
 ## Measurement setup
 
-One local, non-ghost, team-0 cloud runs for 8 simulation seconds from (0, 5, 0) WU above a flat 64 WU × 64 WU paintable plane. There are no actors or gear modifiers. The same seeded random stream is used at each render cadence. The harness composes the public Projectiles._updateClouds, real Physics.raycast, real PaintSystem CPU grid, real FX.rain drop-pool path, the current adapter, and the 60 Hz FixedClock; it advances rendering at 30, 60, and 120 Hz. Each event row includes render frame, fixed simulation tick/time, and cloud time.
+One local, non-ghost, team-0 cloud runs for 8 simulation seconds from (0, 5, 0) WU above a flat 64 WU × 64 WU paintable plane. There are no actors or gear modifiers. The same seeded random stream is used at each render cadence. The 'production' scope composes the public Projectiles._updateClouds, real Physics.raycast, real PaintSystem CPU grid, real FX.rain drop-pool path, the current adapter, and the 60 Hz FixedClock. The 'public-source' scope uses the same real public modules without the INKWAVE adapter or runtime and without the FixedClock: each render frame calls _updateClouds(1/renderHz) once. Both scopes advance rendering at 30, 60, and 120 Hz. Each event row includes its scope, render frame, simulation tick/time, and cloud time.
 
 The terms are deliberately local to INKWAVE:
 
@@ -152,11 +155,11 @@ The terms are deliberately local to INKWAVE:
 
 ## Results
 
-| Render Hz | Fixed ticks | INKWAVE candidate rays | Ray ground hits | Paint writes | Cosmetic FX drop emissions | Sum of nominal πr² (WU²) | Sum newly claimed (WU²) | Final CPU turf cells | Final CPU turf union (WU²) |
-|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Scope | Render Hz | Simulation updates | INKWAVE candidate rays | Ray ground hits | Paint writes | Cosmetic FX drop emissions | Sum of nominal πr² (WU²) | Sum newly claimed (WU²) | Final CPU turf cells | Final CPU turf union (WU²) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 ${rows}
 
-The detailed timestamped event ledger, per-write areas, final CPU-grid radial/angle bins, and summary counters are retained in [CSV](./${REPORT_STEM}.csv) and [JSON](./${REPORT_STEM}.json). Across render rates, simulation events and CPU turf distribution match after omitting only the render-frame index; render-frame indices differ by design.
+The detailed timestamped event ledger, per-write areas, final CPU-grid radial/angle bins, and summary counters are retained in [CSV](./${REPORT_STEM}.csv) and [JSON](./${REPORT_STEM}.json). Within the 'production' scope, simulation events and CPU turf distribution match across render rates after omitting only the render-frame index. Within the 'public-source' scope they do not: candidate counts are 172, 172, and 171 at 30, 60, and 120 Hz, and the CPU turf differs. That scope's cloud time is accumulated per render frame, so the window check falls on a different update at each cadence. At 30 and 60 Hz the cloud is still listed at the end of the run because accumulated floating-point time stops just below 8 s; the window had already closed, so no further emissions occur.
 
 ## Artifact binding
 

@@ -1,11 +1,14 @@
-// #189: maximum-speed width calibration only. The speed->width curve below
-// SpeedMax is deliberately NOT guessed (#650). Existing body paint remains;
-// two additional floor-only bands reach the sourced maximum lateral boundary.
-export function paintRollerMaximumWidth(game,runner,weapon,paintSource,scale,fx,fz) {
+// #189 pins the maximum-speed edge; #649 scales the floor-only side bands by
+// actual ground speed. Leanny's table supplies SpeedMax and WidthHalfMax but
+// no intermediate curve, so the linear bridge below is an explicit INKWAVE
+// approximation, not a claim about the retail interpolation.
+export function paintRollerMaximumWidth(game,runner,weapon,paintSource,scale,referenceHz,fx,fz) {
   const a=runner.a,hs=Math.hypot(a.vel.x,a.vel.z);
   if(a.remote || !a.alive || !a.grounded || weapon.kind!=='roller' ||
-      !(scale>0) || !Number.isFinite(paintSource?.SpeedMax) ||
-      hs+1e-8<paintSource.SpeedMax*60*scale) return 0;
+      !Number.isFinite(scale) || !(scale>0) || !Number.isFinite(referenceHz) || !(referenceHz>0) ||
+      !Number.isFinite(weapon.rollWidth) || !Number.isFinite(hs) ||
+      !Number.isFinite(paintSource?.SpeedMax) || !Number.isFinite(paintSource?.WidthHalfMax) ||
+      !(paintSource.SpeedMax>0) || !(paintSource.WidthHalfMax>0)) return 0;
   const target=paintSource.WidthHalfMax*scale;
   // #979 reconciles the CPU edge with native GLSL: BAND_W=.62, BAND_R=.1,
   // plus the .03/.018 ripple amplitudes at the visible sd=0 boundary. Use
@@ -14,8 +17,13 @@ export function paintRollerMaximumWidth(game,runner,weapon,paintSource,scale,fx,
   const bandHalfMax=.62+.1+.03+.018;
   const nativeHalf=weapon.rollWidth*.33+Math.sqrt(.62**2-.35**2)*bandHalfMax;
   if(!(target>nativeHalf))return 0;
+  const maxSpeed=paintSource.SpeedMax*referenceHz*scale;
+  if(!(maxSpeed>0))return 0;
+  const speedRatio=Math.max(0,Math.min(1,hs/maxSpeed));
+  const targetHalf=nativeHalf+(target-nativeHalf)*speedRatio;
+  if(!(targetHalf>nativeHalf))return 0;
   const overlap=Math.min(.1*scale,nativeHalf/4);
-  const half=(target-nativeHalf+overlap)/2,offset=target-half;
+  const half=(targetHalf-nativeHalf+overlap)/2,offset=targetHalf-half;
   const radius=Math.hypot(half/bandHalfMax,.35);
   const state=runner.s3MaxRollPaint||(runner.s3MaxRollPaint={point:a.pos.clone(),direction:a.pos.clone(),sequence:0});
   state.direction.set(fx,0,fz);state.sequence++;

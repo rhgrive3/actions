@@ -68,11 +68,28 @@ function pendingGameplayInput(input) {
     input.padValue?.(6) > .3 || input.padValue?.(7) > .3 || input.padPressed?.has(6) || input.padPressed?.has(7) ||
     touchActions.some(key => touch?.down?.(key) || touch?.pressed?.has(key) || pendingTouchEdge(touch, key)));
 }
+// #838: the host's clock message is a remaining-time sample that was true when the
+// host sent it. Its delivery delay is approximated by the relay round trip (ms,
+// smoothed; host leg assumed symmetric with this client's leg, unmeasured). Storing
+// remaining - delay gives a host-authoritative end that a guest whose local clock
+// lags can reach before its own zero. Only the input gate reads it; time is untouched.
+const MAX_HOST_DEADLINE_LATENCY = 0.5;
+export function recordHostDeadline(match, hostRemaining, rttMs) {
+  if (!match || !Number.isFinite(hostRemaining)) return;
+  const rtt = Number.isFinite(rttMs) ? rttMs / 1000 : 0;
+  const latency = Math.min(MAX_HOST_DEADLINE_LATENCY, Math.max(0, rtt));
+  match.s3HostDeadline = { left: hostRemaining - latency };
+}
 // A follower's local zero blocks new local commands while the host retains
 // finish/result authority. Existing remote replay and projectiles keep running.
-export function blockExpiredGuestInput(match) {
+// `dt` is supplied only by the per-tick controller call, so the host deadline ages once per tick.
+export function blockExpiredGuestInput(match, dt = 0) {
   const scoped = match.follower === true && match.mode === 'turf' && !match.attract && match.state === 'playing';
-  const expired = scoped && Number.isFinite(match.time) && match.time <= 0;
+  if (!scoped) match.s3HostDeadline = null;
+  const deadline = match.s3HostDeadline;
+  if (deadline && scoped && dt > 0 && !match.paused) deadline.left -= dt;
+  const hostExpired = scoped && !!deadline && deadline.left <= 0;
+  const expired = scoped && ((Number.isFinite(match.time) && match.time <= 0) || hostExpired);
   const waitingNeutral = !expired && scoped && !!match.s3GuestDeadlineInput && pendingGameplayInput(match.controller?.input);
   if (!expired && !waitingNeutral) { match.s3GuestDeadlineInput = null; return false; }
   neutralizeTurfInput(match);

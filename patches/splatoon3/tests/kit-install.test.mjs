@@ -55,7 +55,7 @@ async function production() {
 
 test('the unmodified public installer activates all three genuine base kits before actors copy them', async () => {
   const api = await production();
-  for (const [main, sub, special, cost] of [['shooter','suction','trizooka',210],['roller','curling','bubbler',180],['charger','bomb','inkVac',190]]) {
+  for (const [main, sub, special, cost] of [['shooter','suction','trizooka',200],['roller','curling','bubbler',180],['charger','bomb','inkVac',190],['blaster','autobomb','bubbler',190],['slosher','bomb','tripleInkstrike',220],['splatling','sprinkler','waveBreaker',210],['dualies','suction','crabTank',200]]) {
     assert.equal(api.WEAPONS[main].sub, sub, main + ' installed sub');
     assert.equal(api.WEAPONS[main].special, special, main + ' installed special');
     assert.equal(api.WEAPONS[main].specialCost, cost);
@@ -73,11 +73,15 @@ test('the unmodified public installer activates all three genuine base kits befo
     } finally {a.character.dispose();}
   }
   for (const main of ['blaster','slosher','splatling','dualies']) {
-    assert.equal(api.WEAPONS[main].kitStatus,'original-inkwave-kit');
-    assert.match(api.WEAPONS[main].blurb,/Original INKWAVE kit/);
+    assert.equal(api.WEAPONS[main].kitStatus,'verified-base-kit');
+    assert.doesNotMatch(api.WEAPONS[main].blurb,/Original INKWAVE kit|Partial Splatoon 3 kit|11\.3\.0 kit slots installed/,
+      main + ' complete base kit must not keep obsolete partial-kit copy');
+    // These kit metadata objects originate in an isolated VM realm. Compare
+    // portable values rather than failing on unrelated prototype identities.
+    assert.deepEqual([...api.WEAPONS[main].kitVerifiedSlots], ['sub', 'special'], main);
+    assert.deepEqual(Object.keys(api.WEAPONS[main].kitMissingSlots), [], main);
   }
 });
-
 
 test('the complete production wrapper chain activates each kit and refills exactly once', async () => {
   const api = await production();

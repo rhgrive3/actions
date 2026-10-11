@@ -82,7 +82,9 @@ test('the descriptor carries the numbers the native blast reads', () => {
   assert.deepEqual(d.splashBands, [[2.5, 53], [4.0, 35]]);
   assert.equal(d.splashRadius, 4.0);
   assert.equal(d.burstRadius, 4.0);
-  assert.equal(d.impactRadius, 4.0);
+  // BlastParam.PaintRadius 3.2 at 0 AP: the burst paints with its own ink radius,
+  // not the 4.0 damage radius.
+  assert.equal(d.impactRadius, 3.2);
   assert.equal(d.paintRadius, 3.2);
   assert.equal(d.directDamage, 220);
   assert.equal(d.wid, 'trizooka', 'wid is the native cause id used by ghost restore');
@@ -872,7 +874,8 @@ test('#977 saved Special Power Up loadout reaches real Trizooka activation and r
    const descriptor=a.s3Trizooka.descriptor;
    near(descriptor.splashRadius,4*gearCurve(ap,1,1.15,1.3));
    assert.equal(descriptor.directDamage,220);assert.deepEqual(Array.from(descriptor.splashBands,p=>p[1]),[53,35]);
-   assert.equal(descriptor.paintRadius,3.2);
+   // BlastParam.SubSpecialSpecUpList PaintRadius Low/Mid/High 3.2/3.6/4.0.
+   near(descriptor.paintRadius,gearCurve(ap,3.2,3.6,4));near(descriptor.impactRadius,descriptor.paintRadius);
    gearStorage.set('inkwave.splatoon3.gear.v1',JSON.stringify(specialLoadout(0)));a.setWeapon('shooter');
    assert.equal(a.s3Trizooka.descriptor,descriptor);assert.equal(a.s3Trizooka.ap,ap);
   }

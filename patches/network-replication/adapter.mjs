@@ -1,6 +1,7 @@
 // Network owns the wire contract. Compose LAST; upstream modules and gameplay
 // tuning remain immutable. Each connection fails closed on source drift.
 import fs from 'node:fs';
+import { adaptKitPaintAdmission } from './kit-paint-adapter.mjs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue1088SurgePresentation } from './issue-1088-surge-adapter.mjs';
@@ -22,7 +23,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'dodge-clock-adapter.mjs', 'snapshot-guard.mjs']
+    'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -182,6 +183,30 @@ export function emit(name, payload) {
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
+    code = "import { validResultPacket } from '../../patches/network-replication/result-admission.mjs';\n" + code;
+    // #1178: reject malformed owner actor rows before unpack/Hermite interpolation.
+    // Optional sidecar fields are validated by their feature-specific readers.
+    patch('function unpackActor(s, ts) {', `function validActorSnapshot(s) {
+  const bounded = (x, limit) => typeof x === 'number' && Number.isFinite(x) && Math.abs(x) <= limit;
+  if (!Array.isArray(s) || s.length < 21 || s.length > 27
+    || !Number.isSafeInteger(s[0]) || s[0] < 0) return false;
+  for (const i of [1, 2, 3]) if (!bounded(s[i], 100000)) return false;
+  for (const i of [4, 5, 6, 7, 8, 9]) if (!bounded(s[i], 10000)) return false;
+  if (!Number.isSafeInteger(s[10]) || s[10] < 0 || s[10] > 0x7fffffff) return false;
+  for (const i of [11, 12, 14, 17, 18, 19, 20]) if (!bounded(s[i], 10000)) return false;
+  if (!bounded(s[13], 10000000) || !bounded(s[15], 1000000000000)
+    || !Number.isSafeInteger(s[16]) || s[16] < 0) return false;
+  if (s.length > 21 && !bounded(s[21], 10000)) return false;
+  return true;
+}
+function finiteRemoteSample(s) {
+  if (!s) return false;
+  for (const k of ['x','y','z','vx','vy','vz','yaw','aimYaw','aimPitch','hp','ink','sp','ch','lock','sjT'])
+    if (typeof s[k] !== 'number' || !Number.isFinite(s[k])) return false;
+  return true;
+}
+function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded remote samples');
+    code = "import { syncRemoteInitialSquidSpawn } from '../../patches/splatoon3/runtime/respawn-lifecycle.mjs';\n" + code;
     patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
@@ -208,13 +233,30 @@ export function emit(name, payload) {
   }`, `  _hostState(d) {
     const m = this.match;
     if (!m || this.isHost) return;
-    if (typeof d.t === 'number') m.time = d.t;
+    const phases = ['intro', 'playing', 'finish', 'judge', 'results'];
+    const current = phases.indexOf(m.state), incoming = phases.indexOf(d.s);
+    // A host packet may arrive after a later lifecycle channel has completed.
+    // Never let an earlier phase re-enable combat or reset a terminal clock.
+    if (incoming < 0 || current >= 0 && incoming < current) return;
+    // Each peer owns its result presentation after accepting the payload.
+    // A faster host must not cancel a guest's awaited judge continuation.
+    if (d.s === 'judge' || d.s === 'results') return;
+    if (Number.isFinite(d.t) && d.t >= 0) m.time = d.t;
     if (d.s === 'finish') {
-      if (validFinishCoverage(d.fc)) m.s3FinishCoverage = Object.freeze([d.fc[0], d.fc[1]]);
-      if (validFinishMapDataUrl(d.fm)) m.s3FinishMapDataUrl = d.fm;
+      if (!validFinishCoverage(m.s3FinishCoverage) && validFinishCoverage(d.fc)) m.s3FinishCoverage = Object.freeze([d.fc[0], d.fc[1]]);
+      if (!validFinishMapDataUrl(m.s3FinishMapDataUrl) && validFinishMapDataUrl(d.fm)) m.s3FinishMapDataUrl = d.fm;
     }
     if (d.s !== m.state && d.s !== 'judge') m.setState(d.s);
   }`, 'receive immutable Turf finish snapshot');
+    patch('  _hostClock([state, time]) {',
+      '  _hostClock(sample) {\n    if (!Array.isArray(sample) || sample.length < 2 || !Number.isFinite(sample[1]) || sample[1] < 0) return;\n    const [state, time] = sample;',
+      'reject invalid host countdown samples before clock correction');
+    patch('  _result(d) {\n    const m = this.match;\n    if (!m || this.isHost) return;',
+      "  _result(d) {\n    const m = this.match;\n    if (!m || this.isHost || m.result || !validResultPacket(d)) return;",
+      'final result and statistics commit once per match');
+    patch("    m.setState('judge');\n  }\n  sendEnd()",
+      "    if (m.state !== 'judge' && m.state !== 'results') m.setState('judge');\n  }\n  sendEnd()",
+      'first result fills data without restarting an advanced presentation');
     patch('  _remoteSplat(victim, attacker, cause) {', `  _requestFirstSplat() {
     const id = this.cfg?.id;
     if (!this.isHost && typeof id === 'string' && id && this.s.hostId) this.s.tr?.sendTo(this.s.hostId,{k:'fsq',m:id});
@@ -414,9 +456,13 @@ export function emit(name, payload) {
     this.byNid.delete(a.nid);`, 'departed owner retirement');
 
     patch('  _hit(d, from) {', `  _hit(d, from) {
+    // #1185: a hit belongs to the match that created it. Reject it before any HP,
+    // sequence, or authority state changes, so a delayed old-match packet cannot
+    // damage a reused actor or consume the new match's first sequence number.
+    if (typeof this.cfg?.id !== 'string' || !this.cfg.id || d?.m !== this.cfg.id) return;
     // Bomb damage is victim-owned. Ignore attack-side guesses, including packets
     // from older clients; the ordered bomb event is replayed on the victim owner.
-    if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject shooter bomb hit');
+    if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject cross-match and shooter bomb hits');
     patch("    this.s.tr?.sendTo(from ?? atk.owner, { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0, vl: v.netLife ?? 0 });",
       `    const hitState = [this.myId, hitLife, hitRevision, now(), v.hp, !!v.alive];
     v.net ||= {};
@@ -429,6 +475,14 @@ export function emit(name, payload) {
       const recipients = new Set([from ?? atk.owner, this.s.hostId]);
       for (const recipient of recipients) if (typeof recipient === 'string' && recipient) this.s.tr?.sendTo(recipient, ack);
     }`, 'broadcast life-bound authoritative hit confirmation');
+    // #1185: hit and hit_ack carry the creating match id. Receivers compare it
+    // before touching HP, hit sequences, receipts, or hit authority.
+    patch("    const message = { k: 'hit', v: victim.nid, a: attacker.nid,",
+      "    const message = { k: 'hit', m: this.cfg?.id, v: victim.nid, a: attacker.nid,",
+      'hit carries creating match identity');
+    patch("    const ack = { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid,",
+      "    const ack = { k: 'hit_ack', m: d.m, h: d.h, v: v.nid, a: atk.nid,",
+      'hit_ack echoes the settled hit match identity');
     patch("  shouldApplyHit(attacker, victim) {\n    // ghosts never hurt anyone; the shooter's client decides, the victim's owner applies\n    if (this._applyingHit) return 'local';",
       `  shouldApplyHit(attacker, victim, weaponId) {
     // A bomb ghost tests local actors using their owner's position and LOS.
@@ -467,6 +521,9 @@ export function emit(name, payload) {
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
       'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
       'strict optional Squid Roll and motion metadata validation');
+    patch('if (d.a) for (const s of d.a) {\n      const rawRoll',
+      'if (Array.isArray(d.a)) for (const s of d.a) {\n      if (!validActorSnapshotRow(s, d.ts)) continue;\n      const rawRoll',
+      'pre-buffer owner snapshot validation');
     patch('      const roll = rawRoll === false ? null : rawRoll;',
       '      const roll = rawRoll === false ? null : rawRoll;\n      const rawDropRoll = d.dr && typeof d.dr === \'object\' && !Array.isArray(d.dr) && Object.hasOwn(d.dr, s[0])\n        ? readDropRollSnapshot(d.dr[s[0]]) : null;\n      const dropRoll = rawDropRoll === false ? null : rawDropRoll;',
       'strict Drop Roller presentation metadata validation');
@@ -477,16 +534,9 @@ export function emit(name, payload) {
       '      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.dropRollId = dropRoll?.id ?? 0; snap.dropRollRemaining = dropRoll?.remaining ?? 0;\n      snap.dropRollX = dropRoll?.x ?? 0; snap.dropRollZ = dropRoll?.z ?? 0; snap.dropRollDuration = dropRoll?.duration ?? 0;',
       'attach validated Drop Roller clock and direction');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
-      // _rec precedes _sendTick: a queued event cannot be newer than its envelope.
-      if (!Array.isArray(e) || !validSnapshotTimestamp(e[0]) || e[0] > d.ts) continue;
+      // #1200: a sender event cannot be dated after its enclosing owner tick.\n      if (!Array.isArray(e) || !validSnapshotTimestamp(e[0]) || !validSnapshotTimestamp(d.ts) || e[0] > d.ts) continue;
       e._netPeer = from;
-      if (d.r === 2) {
-        const seq = e[e.length-1], tick = e[e.length-2];
-        if (!Number.isSafeInteger(seq) || seq < 1) continue;
-        if (!Number.isSafeInteger(tick) || tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;
-        e._netTick = tick;
-        e._netSeq = seq;
-      }
+      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (!Number.isSafeInteger(tick) || tick < 0 || !(Number.isSafeInteger(d.u) && d.u >= 0 ? tick <= d.u : d.u === undefined && e[1] === 's')) continue; e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
@@ -508,7 +558,7 @@ export function emit(name, payload) {
         if (receivePaintOrder(this, from, e) === false) continue;
         if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
       }
-      p.events.push(e);
+      if (p.events.length < 512) p.events.push(e);
     }`, 'receive event identity');
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
     patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
@@ -622,13 +672,13 @@ export function emit(name, payload) {
       a.net.lastLife = snap.life;
       this._acceptHitAuthoritySnapshot(a, snap, from);`, 'strict life/sequence-bound adoption packet');
     patch('    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
-      '    applyAdoptionSample(this, a, S);\n    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
-      'restore adoption sample after authoritative age-based Super Jump phase');
+      '    applyAdoptionSample(this, a, S);\n    syncRemoteInitialSquidSpawn(a, S.adoption);\n    const wr = a.weaponRunner;\n    wr.charging = !!(f & F.charging);',
+      'restore adoption sample after authoritative age-based Super Jump phase; #512 owner-replicated opening Squid Spawn');
     patch('    a.hp = S.hp; a.ink = S.ink; a.special = S.sp;',
       '    const hitHp = this._hitAuthorityHp(a, S, a.owner);\n    if (hitHp < a.hp) a.lastDamage = 0;\n    a.hp = hitHp; a.ink = S.ink; a.special = S.sp;',
       'prevent stale owner samples from undoing confirmed hit state');
-    patch("    applyAdoptionSample(this, a, S);\n    const wr = a.weaponRunner;",
-      "    applyAdoptionSample(this, a, S);\n    // #904: the optional adoption transfer rebuilds the Jump object and\n    // clears its wallSupport. Restore presentation only from the accepted\n    // owner snapshot flag and finite unit wall normal, after that transfer.\n    if (a.superJumpState) {\n      if (a.superJumpState.phase === 'charge' && (f & F.climb) &&\n          Number.isFinite(S.wx) && Number.isFinite(S.wy) && Number.isFinite(S.wz) &&\n          Math.hypot(S.wx, S.wy, S.wz) > 0.5 &&\n          Math.hypot(S.wx, S.wy, S.wz) < 1.5) {\n        (a.superJumpState.wallSupport ||= new THREE.Vector3()).set(S.wx, S.wy, S.wz);\n        a.climbing = false;\n      } else a.superJumpState.wallSupport = null;\n    }\n    const wr = a.weaponRunner;",
+    patch("    syncRemoteInitialSquidSpawn(a, S.adoption);\n    const wr = a.weaponRunner;",
+      "    syncRemoteInitialSquidSpawn(a, S.adoption);\n    // #904: the optional adoption transfer rebuilds the Jump object and\n    // clears its wallSupport. Restore presentation only from the accepted\n    // owner snapshot flag and finite unit wall normal, after that transfer.\n    if (a.superJumpState) {\n      if (a.superJumpState.phase === 'charge' && (f & F.climb) &&\n          Number.isFinite(S.wx) && Number.isFinite(S.wy) && Number.isFinite(S.wz) &&\n          Math.hypot(S.wx, S.wy, S.wz) > 0.5 &&\n          Math.hypot(S.wx, S.wy, S.wz) < 1.5) {\n        (a.superJumpState.wallSupport ||= new THREE.Vector3()).set(S.wx, S.wy, S.wz);\n        a.climbing = false;\n      } else a.superJumpState.wallSupport = null;\n    }\n    const wr = a.weaponRunner;",
       'restore network Super Jump wall basis after ownership state');
     patch('    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;',
       "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;\n    if (a.specialActive?.id === 'slam' && S.slamPhase) { a.specialActive.phase = ['','rise','hang','fall'][S.slamPhase]; a.specialActive.t = Math.max(0, S.slamT || 0); }",
@@ -828,8 +878,9 @@ export function emit(name, payload) {
         for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
         break;
       }`, 'beam birth clock');
-    patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
+    patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; endRemoteSuperJumpEpoch(victim);', 'death invalidates storm admission and remote Super Jump epoch');
     patch('  _remoteRespawn(a) {', `  _remoteRespawn(a) {
+    endRemoteSuperJumpEpoch(a);
     clearRemoteSquidroll(a);
     clearRemoteDropRoll(a);
     clearRemoteRollerPresentation(a);
@@ -1242,6 +1293,13 @@ function applyAdoptionSample(match, actor, sample) {
     actor.pos.copy(superJumpPosition(actor.superJumpState));
   } else actor.net.sjTo = null;
 }
+// #412: the owner's committed landing point rides the same accepted sample as its
+// Super Jump epoch, so it is kept only for that epoch (never a stale replay).
+function sampledSuperJumpDestination(actor, sample, phase) {
+  const state = sample?.adoption, jump = state?.jump;
+  if (!jump || phase !== jump.phase || state.life !== actor.net?.lastLife || !Array.isArray(jump.to)) return null;
+  return new THREE.Vector3(...jump.to);
+}
 function applyAdoptionRecoveryAge(match, actor, sample) {
   const state = sample.adoption;
   if (!state || state.life !== actor.net.lastLife) return;
@@ -1451,6 +1509,19 @@ function syncRemoteDropRoll(actor, sample, peer) {
 // Sender simulation ticks only schedule playback. They are application uptimes,
 // never a clock that can order paint from two different owners.
 const PAINT_ORDER_TAG = 'inkwave-paint-order-v1';
+// #522: Tidal Slam's centre splat is the largest legitimate paint producer:
+// SPECIALS.slam.radius (5.2, inkwave-public/src/config.js) * 0.72 (actor.js _slamImpact).
+// Other producers are smaller: Boss hazard 2.8, Ink flight 2.226, Splat Bomb 2.7, Blaster 1.5 * 1.15.
+const PAINT_RADIUS_MAX = 5.2 * 0.72;
+// #912: Triple Splashdown fists are never one 10-radius row. triple-slam-fists.mjs emits them as stamps at
+// FIST_STAMP_RADIUS (3.74), which this ceiling admits. A radius-10 row is still forged and rejected.
+// A victim's death blast paints the attacker's team with no kind, stretch or face. It is the only non-host
+// producer whose team differs from its sender's team. splatoon3/runtime/death-blast.mjs replaces actor.js
+// splat()'s single radius-1.7 call with the pinned SplPlayer DieBlastParam rows (profile.deathBlast):
+// one PaintRadius 5.0 blast plus SplashAroundParam PaintRadius 1.0 droplets. The 5.0 row is the only
+// row above PAINT_RADIUS_MAX, and only with this exact victim-blast signature.
+const PAINT_VICTIM_BLAST_RADIUS = 5;
+const PAINT_VICTIM_SPLASH_RADIUS = 1;
 const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck']);
 const paintClockSessions = new WeakMap();
 function paintClockStateFor(session, cfg) {
@@ -1472,13 +1543,18 @@ function nextPaintOrder(nm, instant) {
 }
 function readPaintOrder(nm, from, e) {
   if (typeof from !== 'string' || !nm.s._members?.has(from)) return false;
-  // Victim-owned splat bursts and host-owned Boss ink can paint the other team.
-  // Membership, the match epoch and sender sequence own admission, not team color.
+  // Membership, team ownership, the match epoch and sender sequence own admission.
   // #522: JS-finite is insufficient for the Float32 atlas attributes/shader.
   // Reject before either sender replay or causal paint clocks are reserved.
   for (let i = 2; i <= 7; i++) if (!paintFloat(e[i])) return false;
   for (let i = 9; i <= 12; i++) if (e[i] !== undefined && !paintFloat(e[i])) return false;
   if (e[5] <= 0 || Math.fround(e[5]) === 0 || (e[6] !== 0 && e[6] !== 1)) return false;
+  // #522: radius ceiling derived from the largest legitimate producer (PAINT_RADIUS_MAX).
+  // The plain death-blast row (exactly PAINT_VICTIM_BLAST_RADIUS) is the only row allowed above the ceiling.
+  // The ceiling line itself stays verbatim so later source adapters can still anchor on it.
+  if (!(Math.fround(e[5]) === Math.fround(PAINT_VICTIM_BLAST_RADIUS) && paintVictimBlastAboveCeiling(nm, from, e)))
+  if (Math.fround(e[5]) > Math.fround(PAINT_RADIUS_MAX)) return false;
+  if (!paintTeamAdmitted(nm, from, e)) return false;
   // _kind uses a plain object table. Names inherited from Object.prototype
   // must not become a shader kind/flags value or poison footprint arithmetic.
   if (e[8] !== undefined && e[8] !== 0 && !PAINT_EVENT_KINDS.has(e[8])) return false;
@@ -1518,6 +1594,41 @@ function readPaintOrder(nm, from, e) {
   return hasSeq ? { clock: e._netSeq, peer: from, seq: e._netSeq, legacy: true } : null;
 }
 function paintFloat(value) { return Number.isFinite(value) && Number.isFinite(Math.fround(value)); }
+// #522: a row is authoritative only from a member that owns a squid of the team it paints.
+// The host is trusted for host-owned Boss ink. A non-host foreign-team row must carry the
+// exact victim-burst signature. That is not action provenance: a member can still forge it.
+function paintTeamAdmitted(nm, from, e) {
+  if (from === nm.s.hostId) return true;
+  let owned = false;
+  for (const a of nm.byNid?.values?.() || []) {
+    if (a.owner !== from) continue;
+    owned = true;
+    if (a.team === e[6]) return true;
+  }
+  if (!owned) return false;
+  return paintVictimBlastSignature(e);
+}
+// The radius-5 death blast is the victim owner's row in the ATTACKER's colour, centred
+// on the victim. Only that shape may exceed the ceiling: the sender must own an actor of
+// another team than the row within PAINT_VICTIM_BLAST_REACH of its centre (remote
+// interpolation lag included). A sender's own-team radius-5 row (for example a kit core
+// stripped of its #1209 capability tag) stays under the legacy ceiling.
+const PAINT_VICTIM_BLAST_REACH = 6;
+function paintVictimBlastAboveCeiling(nm, from, e) {
+  if (!paintVictimBlastSignature(e)) return false;
+  for (const a of nm.byNid?.values?.() || []) {
+    if (a.owner !== from || a.team === e[6] || !a.pos) continue;
+    if (Math.hypot(a.pos.x - e[2], a.pos.y - e[3], a.pos.z - e[4]) <= PAINT_VICTIM_BLAST_REACH) return true;
+  }
+  return false;
+}
+function paintVictimBlastSignature(e) {
+  const radius = Math.fround(e[5]);
+  return (radius === Math.fround(PAINT_VICTIM_BLAST_RADIUS) || radius === Math.fround(PAINT_VICTIM_SPLASH_RADIUS))
+    && (e[8] === undefined || e[8] === 0)
+    && !(e[9] || e[10] || e[11]) && (e[12] ?? 0) === 0
+    && (e[13] === undefined || e[13] === -1);
+}
 function receivePaintOrder(nm, from, e) {
   const order = readPaintOrder(nm, from, e);
   if (order && !order.legacy) {
@@ -1793,7 +1904,10 @@ function firstSplatStateFor(session,cfg) {
     this._retryNackedHit(pending);
   }`, 'relay NACK must match latest destination');
     replaceMethod('_hitAck', `  _hitAck(d, from) {
-    if (!d || typeof d !== 'object' || !this._validHitAuthorityMetadata(d)) return;
+    // #1185: a delayed ACK from another match must not settle this match's receipt
+    // or merge hit authority. Check the creating match id before any state changes.
+    if (!d || typeof d !== 'object' || typeof this.cfg?.id !== 'string' || !this.cfg.id || d.m !== this.cfg.id) return;
+    if (!this._validHitAuthorityMetadata(d)) return;
     const hasAuthority = HIT_AUTHORITY_FIELDS.some((key) => d[key] !== undefined);
     if (hasAuthority) this._acceptHitAuthorityAck(d, from);
     const h = d.h;
@@ -2107,6 +2221,9 @@ ${bombHit}`;
 
   }
   if (rel === 'src/game/actor.js') {
+    patch("    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form, t: 0, target, from: new THREE.Vector3(), to: destination, marker: 0 };",
+      "    this._s3SuperJumpEpoch = Number.isSafeInteger(this._s3SuperJumpEpoch) && this._s3SuperJumpEpoch >= 0 && this._s3SuperJumpEpoch < Number.MAX_SAFE_INTEGER ? this._s3SuperJumpEpoch + 1 : 1;\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form, t: 0, target, from: new THREE.Vector3(), to: destination, marker: 0, sjEpoch: this._s3SuperJumpEpoch };",
+      'owner Super Jump action epoch');
     patch('    this.netLife = (this.netLife ?? 0) + 1;',
       '    this.netLife = (this.netLife ?? 0) + 1;\n    if (this.net) { this.net._hitHandoff = null; this.net._hitAuthority = null; }\n    this._netLifeStartedAt = performance.now() / 1000;',
       'clear prior-life hit authority before publishing the new life');
@@ -2178,11 +2295,8 @@ ${bombHit}`;
       '      const s = t >= last.t ? last : s0;',
       'Boss exact latest timestamp selects the latest snapshot');
     patch('    if (!Number.isFinite(d.ts)) return;',
-      '    if (!validSnapshotTimestamp(d.ts)) return;\n    if (d.e != null && !Array.isArray(d.e)) return;',
+      '    if (!validSnapshotTimestamp(d.ts)) return;',
       'reject unsafe owner clock before replay watermark mutation');
-    patch('    if (d.e != null && !Array.isArray(d.e)) return;',
-      "    if (d.e != null && !Array.isArray(d.e)) return;\n    if (from === this.s.hostId && d.c != null && (!Array.isArray(d.c) || d.c.length !== 2 || typeof d.c[0] !== 'string' || !Number.isFinite(d.c[1]) || d.c[1] < 0)) return;",
-      'validate host match clock before snapshot mutation');
     // #574: use the established authenticated, life-scoped, deduplicated hit
     // transaction. A zero-damage Blaster contact is admitted only with bounded
     // geometry; no other cause gains a zero/negative-damage exception.
@@ -2193,7 +2307,7 @@ ${bombHit}`;
     patch('    const sent = this.s.tr?.sendTo(victim.owner, message) === true;',
       "    const blast = this._s3BlasterKnockback;\n    if (wid === 'blaster' && blast?.attacker === attacker && blast.victim === victim && validBlasterKnockback(blast.offset)) message.kb = blast.offset.slice();\n    const sent = this.s.tr?.sendTo(victim.owner, message) === true;",
       'Blaster knockback geometry on retryable hit');
-    patch('    if (!Number.isFinite(d.d) || d.d <= 0 || d.d > IW_HIT_MAX_DAMAGE) return;',
+    patch('    if (!Number.isFinite(d.d) || d.d < 0 || d.d > IW_HIT_MAX_DAMAGE || (d.d === 0 && d.kb === undefined)) return;',
       "    const blastKnockback = d.w === 'blaster' && validBlasterKnockback(d.kb);\n    if (d.kb !== undefined && !blastKnockback) return;\n    if (!Number.isFinite(d.d) || d.d < 0 || (d.d === 0 && !blastKnockback) || d.d > IW_HIT_MAX_DAMAGE) return;",
       'Blaster bounded knockback-only admission');
     patch('    if (atk.owner !== from || !Number.isFinite(d.d) || d.d <= 0 || d.d > 10000) return;',
@@ -2210,12 +2324,41 @@ ${bombHit}`;
       'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2], hitParent: readHitAuthorityState(s[25], s[25]?.[1])?.[2] ?? null };',
       rel + ': unpack accepted-hit revision');
     code = adaptIssue1163RemoteDodgeClock(code);
-    patch('if (d.a) for (const s of d.a) {\n      const rawRoll',
-      'if (Array.isArray(d.a)) for (const s of d.a) {\n      if (!validActorSnapshotRow(s, d.ts)) continue;\n      const rawRoll',
-      'strict owner snapshot schema before Hermite buffering');
     patch('    const S = n.cur;',
       '    const S = n.cur;\n    if (!validRemoteActorPose(S, n.err)) { a.character.root.visible = false; return; }\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);',
       'nonfinite remote pose guard');
+    code = "import { applyRemoteSuperJumpEpoch, endRemoteSuperJumpEpoch } from '../../patches/network-replication/superjump-epoch.mjs';\n" + code;
+    patch('    this.stats.out++;\n    this.s.tr?.broadcast(msg);',
+      '    msg.sjEpochs = Object.create(null);\n    for (const actor of this.byNid.values()) if (!actor.remote && Number.isSafeInteger(actor.nid)) {\n      const epoch = actor._s3SuperJumpEpoch;\n      msg.sjEpochs[actor.nid] = Number.isSafeInteger(epoch) && epoch >= 0 ? epoch : 0;\n    }\n    this.stats.out++;\n    this.s.tr?.broadcast(msg);',
+      'optional Super Jump sender epoch sidecar');
+    patch('      const snap = unpackActor(s, d.ts);\n      snap.surgeOwner = from;',
+      '      const snap = unpackActor(s, d.ts);\n      snap.surgeOwner = from;\n      const sjEpoch = d.sjEpochs?.[s[0]];\n      snap.sjEpoch = Number.isSafeInteger(sjEpoch) && sjEpoch >= 0 ? sjEpoch : null;',
+      'associate Super Jump epoch with its accepted sender sample');
+    patch('  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  o.sjT = sameJumpPhase ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);',
+      '  const sameJumpPhase = (a.f & (F.sjCharge | F.sjFlight)) === (b.f & (F.sjCharge | F.sjFlight));\n  const sameJumpEpoch = sameJumpPhase && a.sjEpoch === b.sjEpoch;\n  o.sjT = sameJumpEpoch ? Math.max(0, a.sjT + (b.sjT - a.sjT) * u) : Math.max(0, a.sjT);',
+      'interpolate Super Jump age only within its sender epoch');
+    patch("    const jumpPhase = f & F.sjFlight ? 'flight' : 'charge';\n    if (f & (F.sjCharge | F.sjFlight)) {\n      const age = Number.isFinite(S.sjT) ? Math.max(0, S.sjT) : 0;\n      if (!a.superJumpState || !a.superJumpState.net || a.superJumpState.phase !== jumpPhase)\n        a.superJumpState = { phase: jumpPhase, net: true, t: age };\n      else a.superJumpState.t = Math.max(Number.isFinite(a.superJumpState.t) ? a.superJumpState.t : 0, age);\n    } else a.superJumpState = null;",
+      "    const jumpPhase = f & (F.sjCharge | F.sjFlight) ? f & F.sjFlight ? 'flight' : 'charge' : null;\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase, sampledSuperJumpDestination(a, S, jumpPhase));",
+      'derive remote Super Jump phase through sender-epoch state before gauge reconciliation');
+    patch('    applyAdoptionSample(this, a, S);',
+      '    applyAdoptionSample(this, a, S);\n    applyRemoteSuperJumpEpoch(a, S, jumpPhase, sampledSuperJumpDestination(a, S, jumpPhase));',
+      'restore last accepted Super Jump epoch after adoption reconciliation');
+  }
+  if (rel === 'src/game/weapons.js') {
+    code="import { slosherImpactMetadata } from '../../patches/network-replication/slosher-paint-admission.mjs';\n"+code;
+    patch('{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner }',
+      '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner, projectilePaint: slosherImpactMetadata(p,hit) }',
+      'bind sourced Slosher terrain paint to its projectile birth');
+  }
+  if (rel === 'src/net/netmatch.js') {
+    code = adaptKitPaintAdmission(code, once);
+    patch('  _tick(from, d) {',
+      "  _tick(from, d) {\n    if (d.e != null && !Array.isArray(d.e)) return;\n    if (from === this.s.hostId && d.c != null && (!Array.isArray(d.c) || d.c.length !== 2 || typeof d.c[0] !== 'string' || !Number.isFinite(d.c[1]) || d.c[1] < 0)) return;",
+      'validate owner envelope before kit normalization or pending births');
+    // Bound incoming work before reordering/provenance logic inspects the envelope.
+    patch('    if (Array.isArray(d?.e)) d = { ...d, e: d.e.filter(Array.isArray) };',
+      '    if (Array.isArray(d?.e)) d = { ...d, _eventOverBudget: d.e.length > 256, e: d.e.slice(0, 256).filter(Array.isArray) };',
+      'cap owner timeline rows per packet');
   }
   return code;
 }

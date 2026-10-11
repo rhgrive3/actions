@@ -23,3 +23,23 @@ test('#187 fresh zero evidence is bounded by the existing trust window and denie
  for(const [age,suppressed] of [[75,true],[76,false]]){const f=await setup();t.after(f.close);orientation(f,1000,0);motion(f,1001);orientation(f,1001+age,1);assert.equal(Math.hypot(...Object.values(consume(f)))<1e-9,suppressed);}
  const f=await setup();t.after(f.close);f.m.gyro._platformGyroAccess.motionPermission='denied';orientation(f,1000,0);motion(f,1017);orientation(f,1017,1);assert.ok(Math.hypot(...Object.values(consume(f)))>0);
 });
+
+test('#187 Android near-zero nonzero sensor residual cannot drive stationary fused yaw drift',async t=>{
+ for(const hz of [30,60,120]){
+  const f=await setup();t.after(f.close);orientation(f,1000,0);
+  let yaw=0,pitch=0;
+  for(let i=1;i<=hz*5;i++){
+   const time=1000+i*1000/hz;
+   motion(f,time,{alpha:.01,beta:0,gamma:0});
+   orientation(f,time,i/hz);
+   const delta=consume(f);yaw+=delta.yaw;pitch+=delta.pitch;
+  }
+  assert.ok(Math.hypot(yaw,pitch)<1e-9,`${hz}Hz noise/drift must not move aim: ${yaw}/${pitch}`);
+  assert.equal(f.m.gyro._src,'ori');
+ }
+});
+test('#187 real nonzero rotation just outside the noise band remains an admitted attitude turn',async t=>{
+ const f=await setup();t.after(f.close);orientation(f,1000,0);
+ motion(f,1017,{alpha:.5,beta:0,gamma:0});orientation(f,1017,.1);
+ assert.ok(Math.hypot(...Object.values(consume(f)))>0);
+});

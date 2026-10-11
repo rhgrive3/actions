@@ -17,9 +17,9 @@ async function rig({ negative = false } = {}) {
   const adapt = (rel, code) => {
     const out = adaptBuildSource(rel, code);
     if (negative === 'row' && rel === 'src/net/netmatch.js')
-      return out.replace('e => Array.isArray(e) && (', 'e => (');
+      return out.replace('.filter(Array.isArray)', '.filter(() => true)').replace('e => Array.isArray(e) && (', 'e => (');
     return negative && rel === 'src/net/netmatch.js'
-      ? out.replace('    if (d.e != null && !Array.isArray(d.e)) return;\n', '') : out;
+      ? out.replace('    if (d.e != null && !Array.isArray(d.e)) return;\n', '').replace('    else if (d?.e != null) d = { ...d, e: [] };\n', '') : out;
   };
   const f = await fixture({ fullRuntime: true, adapt, adaptRuntime: adapt, extraExports: exports });
   const source = fs.readFileSync(new URL('../../splatoon3/bootstrap.mjs', import.meta.url), 'utf8');

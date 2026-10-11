@@ -32,6 +32,12 @@ export function withHitPunisher(actor, value, run) {
     else actor.s3.clothingHitPunisher = previous;
   }
 }
+// The post-2.1.0 Tacticooler drink preserves its own 57 AP Quick Respawn and
+// Special Saver benefit even when Respawn Punisher or Haunt penalizes the death.
+// The drink effect is a separate authoritative actor status; a gear-only effect
+// never supplies the drink flag. The currently published kits do not spawn a
+// Tacticooler, so this composes safely when its status is supplied later.
+export const tacticoolerDrinkActive = actor => actor?.s3?.drink === true || actor?.s3?.tacticooler === true || actor?.s3?.cooler === true;
 export function deathGearPenalty(victim, attacker, cause, tuning, points, curve) {
   const cfg = tuning.clothingGear.respawnPunisher;
   const environmental = ['water', 'fall', 'out', 'bounds', 'void'].includes(cause);
@@ -42,8 +48,13 @@ export function deathGearPenalty(victim, attacker, cause, tuning, points, curve)
   // still skip the extra respawn-time frames, which require an enemy exchange.
   const selfSpecial = respawnPunisherEquipped(victim) && (enemy || environmental);
   const self = !environmental && enemy && selfSpecial;
-  const qrAP = incoming ? Math.max(0, Math.ceil((points.quickRespawn || 0) * cfg.quickRespawnAPScale - 1e-10)) : points.quickRespawn || 0;
-  const saverAP = incoming ? (points.specialSaver || 0) * cfg.specialSaverAPScale : points.specialSaver || 0;
+  const cooler = tacticoolerDrinkActive(victim);
+  const gearQR = incoming ? Math.max(0, Math.ceil((points.quickRespawn || 0) * cfg.quickRespawnAPScale - 1e-10)) : points.quickRespawn || 0;
+  const gearSaver = incoming ? (points.specialSaver || 0) * cfg.specialSaverAPScale : points.specialSaver || 0;
+  // RP scales regular gear AP, not the independent drink's 57 AP. It still adds
+  // the ordinary RP frames and special-gauge loss below.
+  const qrAP = cooler ? Math.max(57, gearQR) : gearQR;
+  const saverAP = cooler ? Math.max(57, gearSaver) : gearSaver;
   const quickFactor = curve(qrAP, ...tuning.gear.quickRespawn);
   // PR323 owns the additional own-camera phase. Consume it when present;
   // standalone main's missing normal phase is not silently reimplemented here.
@@ -52,7 +63,7 @@ export function deathGearPenalty(victim, attacker, cause, tuning, points, curve)
   const quickReduction = own
     ? (own[0] + chase - Math.floor(curve(qrAP, ...own) + 1e-10) - Math.floor(chase * quickFactor + 1e-10)) / 60
     : tuning.respawnChaseTime * (1 - quickFactor);
-  return { incoming, self, selfSpecial, qrAP, saverAP, quickReduction,
+  return { incoming, self, selfSpecial, cooler, qrAP, saverAP, quickReduction,
     frames: (incoming ? cfg.targetFrames : 0) + (self ? cfg.selfFrames : 0),
     loss: (incoming ? cfg.targetSpecialLoss : 0) + (selfSpecial ? cfg.selfSpecialLoss : 0),
     saver: curve(saverAP, ...tuning.gear.specialSaver) };

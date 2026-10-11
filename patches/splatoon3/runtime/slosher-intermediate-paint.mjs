@@ -1,4 +1,9 @@
+import { spawnSplashDrop, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 const EPS = 1e-10;
+// PR1188: the source splash falls like every other BulletSplash: the shared
+// splash-drop defaults (FreeGravity 0.016 DU/F^2, FreeAirResist 0.02) are a
+// model choice; no fixed downward probe length decides whether it paints.
+const SPLASH_GRAVITY_PER_FRAME2 = 0.016;
 const INSTALLED = Symbol.for('inkwave.s3.slosher-intermediate-paint.v1');
 
 const clamp01 = value => value < 0 ? 0 : value > 1 ? 1 : value;
@@ -35,19 +40,19 @@ export function slosherIntermediateSpec(projectile, scale = 1) {
     widthHalf: width * scale,
     depthScale: depth,
     spawnNum: Math.max(0, Math.floor(spawnNum)),
+    drop: Object.freeze({ gravity: SPLASH_GRAVITY_PER_FRAME2 * 3600 * scale, drag: SPLASH_DROP_AIR_RESIST,
+      depthScaleMax: depth, depthScaleMin: depth, dropHeightMax: 0, dropHeightMin: 0, surfaceOnly: true, randomVelocity: null }),
   });
 }
 
 export function installSlosherIntermediatePaint(api, profile) {
-  const { Projectiles, G, THREE, Hit } = api || {};
+  const { Projectiles, G, THREE } = api || {};
   if (!Projectiles?.prototype || Projectiles.prototype[INSTALLED]) return;
   Object.defineProperty(Projectiles.prototype, INSTALLED, { value: true });
   const scale = profile?.weaponsFidelityCompletion?.worldUnitsPerSourceUnit ?? 1;
   const step = Projectiles.prototype._step;
-  const down = new THREE.Vector3(0, -1, 0);
   const point = new THREE.Vector3();
   const stretch = new THREE.Vector3();
-  const hit = new Hit();
   // Runtime source parameters are fixed for a spawned glob. The same projectile
   // can run dozens of fixed ticks; avoid Combination.find, Array construction
   // and Object.freeze on every tick, while respecting pooled projectile reuse.
@@ -63,50 +68,61 @@ export function installSlosherIntermediatePaint(api, profile) {
     return spec;
   };
 
-  Projectiles.prototype._step = function (p, dt) {
-    const spec = p?.type === 'slosh' && !p.ghost ? specFor(p) : null;
-    if (!spec) return step.call(this, p, dt);
-
-    // #1002: this source-owned splash replaces, rather than supplements, the
-    // unrelated legacy trail mark for this exact projectile/order.
-    p.trailEvery = 0;
+  // A seed is a random value, not a projectile lifetime identifier. Reset on
+  // allocation so a repeated sample cannot inherit a spent slot from the pool.
+  const fresh = Projectiles.prototype._new;
+  if (typeof fresh === 'function') Projectiles.prototype._new = function (...args) {
+    const p = fresh.apply(this, args);
+    p.s3SloshIntermediateSeed = undefined;
+    p.s3SloshIntermediateTravel = 0;
+    p.s3SloshIntermediateCount = 0;
+    return p;
+  };
+  const eligible = p => p?.type === 'slosh' && !p.ghost && !p.owner?.remote;
+  Projectiles.prototype.s3PaintSlosherSegment = function (p, from, end) {
+    p.s3SloshIntermediateSegmentHandled = true;
+    const spec = eligible(p) ? specFor(p) : null;
+    if (!spec || !from || !end) return;
     if (p.s3SloshIntermediateSeed !== p.seed) {
       p.s3SloshIntermediateSeed = p.seed;
       p.s3SloshIntermediateTravel = 0;
       p.s3SloshIntermediateCount = 0;
     }
-
-    const beforeX = p.pos.x, beforeY = p.pos.y, beforeZ = p.pos.z;
-    const dead = step.call(this, p, dt);
-    if (dead || (p.s3SloshIntermediateCount || 0) >= spec.spawnNum) return dead;
-
-    const dx = p.pos.x - beforeX, dz = p.pos.z - beforeZ;
-    const segment = Math.hypot(dx, dz);
+    if ((p.s3SloshIntermediateCount || 0) >= spec.spawnNum) return;
+    const segment = Math.hypot(end.x - from.x, end.z - from.z);
     const before = p.s3SloshIntermediateTravel || 0;
     const after = before + segment;
     p.s3SloshIntermediateTravel = after;
-    if (after + EPS < spec.targetLength) return dead;
-
+    if (after + EPS < spec.targetLength) return;
+    // This source slot belongs to the scheduled distance, including a miss.
+    // Retrying from a later point moves ink to a different piece of terrain.
+    p.s3SloshIntermediateCount = (p.s3SloshIntermediateCount || 0) + 1;
     const t = segment > EPS ? clamp01((spec.targetLength - before) / segment) : 1;
-    point.set(
-      beforeX + (p.pos.x - beforeX) * t,
-      beforeY + (p.pos.y - beforeY) * t,
-      beforeZ + (p.pos.z - beforeZ) * t,
-    );
-    const ground = G.physics?.raycast?.(point, down, 10 * scale, hit, true);
-    if (!ground?.hit) return dead;
-
-    point.copy(ground.point).addScaledVector(ground.normal, .1 * scale);
+    point.set(from.x + (end.x - from.x) * t,
+      from.y + (end.y - from.y) * t, from.z + (end.z - from.z) * t);
+    // #1002 / PR1188: a released paint-only Slosher splash must enter the
+    // shared fixed-60Hz falling queue, not immediately stamp a point obtained
+    // from an arbitrary downward ray. The queue owns its real surface contact,
+    // face-clipped paint, source depth ellipse, and turf bookkeeping.
     stretch.set(p.vel.x, 0, p.vel.z);
     if (stretch.lengthSq() <= EPS) stretch.set(0, 0, 1);
     else stretch.normalize();
-    const area = G.paint?.splat?.(point, spec.widthHalf, p.team, {
-      seed: p.seed, claimOwner: p.owner,
-      stretch,
-      stretchAmt: spec.depthScale,
-    }) || 0;
-    p.owner?.addTurf?.(area);
-    p.s3SloshIntermediateCount = (p.s3SloshIntermediateCount || 0) + 1;
+    spawnSplashDrop(G, { owner: p.owner, team: p.team, seed: p.seed,
+      salt: p.s3SloshIntermediateCount, from: point, direction: stretch,
+      radius: spec.widthHalf, spec: spec.drop, depth: true, kind: 'drop' });
+  };
+  const before = new THREE.Vector3();
+  Projectiles.prototype._step = function (p, dt) {
+    const spec = eligible(p) ? specFor(p) : null;
+    if (!spec) return step.call(this, p, dt);
+    p.trailEvery = 0;
+    before.copy(p.pos);
+    p.s3SloshIntermediateSegmentHandled = false;
+    const dead = step.call(this, p, dt);
+    // The fidelity collision solver owns the clipped segment, even on the
+    // terminal tick. Source-only fixtures retain the nonterminal fallback.
+    if (!p.s3SloshIntermediateSegmentHandled && !dead)
+      this.s3PaintSlosherSegment(p, before, p.pos);
     return dead;
   };
 }

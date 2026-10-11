@@ -1,0 +1,768 @@
+{
+  "schema": 1,
+  "weapon": "WeaponBlasterMiddle 11.3.0",
+  "kind": "INKWAVE composed-module receipts (not hardware)",
+  "flightHeights": [
+    {
+      "height": 0,
+      "splashes": 7,
+      "depth": 1.2,
+      "fallFrames": 1,
+      "releases": [
+        0.5,
+        2,
+        3.5,
+        5,
+        6.5,
+        8,
+        9.5
+      ],
+      "radii": [
+        2.43,
+        1.62
+      ],
+      "cpuArea": 50.5625
+    },
+    {
+      "height": 2,
+      "splashes": 7,
+      "depth": 1.2,
+      "fallFrames": 16,
+      "releases": [
+        0.5,
+        2,
+        3.5,
+        5,
+        6.5,
+        8,
+        9.5
+      ],
+      "radii": [
+        2.43,
+        1.62
+      ],
+      "cpuArea": 50.75
+    },
+    {
+      "height": 3,
+      "splashes": 7,
+      "depth": 1.2,
+      "fallFrames": 20,
+      "releases": [
+        0.5,
+        2,
+        3.5,
+        5,
+        6.5,
+        8,
+        9.5
+      ],
+      "radii": [
+        2.43,
+        1.62
+      ],
+      "cpuArea": 50.75
+    },
+    {
+      "height": 3.95,
+      "splashes": 7,
+      "depth": 1.173,
+      "fallFrames": 24,
+      "releases": [
+        0.5,
+        2,
+        3.5,
+        5,
+        6.5,
+        8,
+        9.5
+      ],
+      "radii": [
+        2.43,
+        1.62
+      ],
+      "cpuArea": 50.5
+    },
+    {
+      "height": 4,
+      "splashes": 7,
+      "depth": 1.171,
+      "fallFrames": 24,
+      "releases": [
+        0.5,
+        2,
+        3.5,
+        5,
+        6.5,
+        8,
+        9.5
+      ],
+      "radii": [
+        2.43,
+        1.62
+      ],
+      "cpuArea": 50.5
+    },
+    {
+      "height": 4.05,
+      "splashes": 7,
+      "depth": 1.17,
+      "fallFrames": 24,
+      "releases": [
+        0.5,
+        2,
+        3.5,
+        5,
+        6.5,
+        8,
+        9.5
+      ],
+      "radii": [
+        2.43,
+        1.62
+      ],
+      "cpuArea": 50.5
+    },
+    {
+      "height": 5,
+      "splashes": 7,
+      "depth": 1.143,
+      "fallFrames": 27,
+      "releases": [
+        0.5,
+        2,
+        3.5,
+        5,
+        6.5,
+        8,
+        9.5
+      ],
+      "radii": [
+        2.43,
+        1.62
+      ],
+      "cpuArea": 49.8125
+    },
+    {
+      "height": 10,
+      "splashes": 7,
+      "depth": 1,
+      "fallFrames": 40,
+      "releases": [
+        0.5,
+        2,
+        3.5,
+        5,
+        6.5,
+        8,
+        9.5
+      ],
+      "radii": [
+        2.43,
+        1.62
+      ],
+      "cpuArea": 46.75
+    }
+  ],
+  "liveRounds": [
+    {
+      "actorY": 0,
+      "muzzleHeight": 1.05,
+      "frames": 22,
+      "requests": 9,
+      "flight": 7,
+      "timedSphere": 1,
+      "timedDrop": 1,
+      "cpuArea": 70
+    },
+    {
+      "actorY": 2,
+      "muzzleHeight": 3.05,
+      "frames": 31,
+      "requests": 9,
+      "flight": 7,
+      "timedSphere": 1,
+      "timedDrop": 1,
+      "cpuArea": 69.5625
+    },
+    {
+      "actorY": 4,
+      "muzzleHeight": 5.05,
+      "frames": 38,
+      "requests": 9,
+      "flight": 7,
+      "timedSphere": 1,
+      "timedDrop": 1,
+      "cpuArea": 68.6875
+    },
+    {
+      "actorY": 10,
+      "muzzleHeight": 11.05,
+      "frames": 53,
+      "requests": 9,
+      "flight": 7,
+      "timedSphere": 1,
+      "timedDrop": 1,
+      "cpuArea": 66.1875
+    }
+  ],
+  "terrain": {
+    "ledge 2 WU at z>=4": {
+      "landings": [
+        {
+          "releaseZ": 3.8,
+          "x": -0.147,
+          "y": 1.758,
+          "z": 4,
+          "normalY": 0,
+          "radius": 1.62,
+          "depth": 1
+        },
+        {
+          "releaseZ": 5.3,
+          "x": -0.073,
+          "y": 2,
+          "z": 5.474,
+          "normalY": 1,
+          "radius": 1.62,
+          "depth": 1.2
+        },
+        {
+          "releaseZ": 6.8,
+          "x": -0.014,
+          "y": 2,
+          "z": 6.967,
+          "normalY": 1,
+          "radius": 1.62,
+          "depth": 1.2
+        },
+        {
+          "releaseZ": 8.3,
+          "x": 0.044,
+          "y": 2,
+          "z": 8.46,
+          "normalY": 1,
+          "radius": 1.62,
+          "depth": 1.2
+        },
+        {
+          "releaseZ": 10.156,
+          "x": 0,
+          "y": 2,
+          "z": 10.156,
+          "normalY": 1,
+          "radius": 3.2,
+          "depth": 1
+        },
+        {
+          "releaseZ": 0.8,
+          "x": -0.423,
+          "y": 0,
+          "z": 1.122,
+          "normalY": 1,
+          "radius": 2.43,
+          "depth": 1.199
+        },
+        {
+          "releaseZ": 9.776,
+          "x": 0.091,
+          "y": 2,
+          "z": 9.915,
+          "normalY": 1,
+          "radius": 1.62,
+          "depth": 1.2
+        },
+        {
+          "releaseZ": 2.3,
+          "x": -0.322,
+          "y": 0,
+          "z": 2.611,
+          "normalY": 1,
+          "radius": 1.62,
+          "depth": 1.199
+        }
+      ],
+      "requests": [
+        {
+          "y": 2.56,
+          "z": 10.156,
+          "radius": 2
+        },
+        {
+          "y": 1.758,
+          "z": 3.995,
+          "radius": 1.62
+        },
+        {
+          "y": 2.005,
+          "z": 5.279,
+          "radius": 1.62
+        },
+        {
+          "y": 2.005,
+          "z": 6.773,
+          "radius": 1.62
+        },
+        {
+          "y": 2.005,
+          "z": 8.266,
+          "radius": 1.62
+        },
+        {
+          "y": 2.1,
+          "z": 10.156,
+          "radius": 3.2
+        },
+        {
+          "y": 0.005,
+          "z": 0.832,
+          "radius": 2.43
+        },
+        {
+          "y": 2.005,
+          "z": 9.72,
+          "radius": 1.62
+        },
+        {
+          "y": 0.005,
+          "z": 2.418,
+          "radius": 1.62
+        }
+      ]
+    },
+    "ramp 0->3 over z 2..14": {
+      "landings": [
+        {
+          "releaseZ": 0.8,
+          "x": -0.528,
+          "y": 0,
+          "z": 1.201,
+          "normalY": 1,
+          "radius": 2.43,
+          "depth": 1.141
+        },
+        {
+          "releaseZ": 2.3,
+          "x": -0.396,
+          "y": 0.171,
+          "z": 2.683,
+          "normalY": 0.97,
+          "radius": 1.62,
+          "depth": 1.146
+        },
+        {
+          "releaseZ": 3.8,
+          "x": -0.264,
+          "y": 0.54,
+          "z": 4.158,
+          "normalY": 0.97,
+          "radius": 1.62,
+          "depth": 1.157
+        },
+        {
+          "releaseZ": 5.3,
+          "x": -0.14,
+          "y": 0.908,
+          "z": 5.634,
+          "normalY": 0.97,
+          "radius": 1.62,
+          "depth": 1.167
+        },
+        {
+          "releaseZ": 6.8,
+          "x": -0.026,
+          "y": 1.277,
+          "z": 7.109,
+          "normalY": 0.97,
+          "radius": 1.62,
+          "depth": 1.178
+        },
+        {
+          "releaseZ": 8.3,
+          "x": 0.079,
+          "y": 1.646,
+          "z": 8.585,
+          "normalY": 0.97,
+          "radius": 1.62,
+          "depth": 1.188
+        },
+        {
+          "releaseZ": 9.776,
+          "x": 0.167,
+          "y": 2.007,
+          "z": 10.029,
+          "normalY": 0.97,
+          "radius": 1.62,
+          "depth": 1.2
+        },
+        {
+          "releaseZ": 10.156,
+          "x": 0,
+          "y": 2.039,
+          "z": 10.156,
+          "normalY": 0.97,
+          "radius": 3.2,
+          "depth": 1
+        }
+      ],
+      "requests": [
+        {
+          "y": 4.56,
+          "z": 10.156,
+          "radius": 2
+        },
+        {
+          "y": 0.005,
+          "z": 0.995,
+          "radius": 2.43
+        },
+        {
+          "y": 0.176,
+          "z": 2.539,
+          "radius": 1.62
+        },
+        {
+          "y": 0.544,
+          "z": 4.005,
+          "radius": 1.62
+        },
+        {
+          "y": 0.913,
+          "z": 5.47,
+          "radius": 1.62
+        },
+        {
+          "y": 1.282,
+          "z": 6.935,
+          "radius": 1.62
+        },
+        {
+          "y": 1.651,
+          "z": 8.4,
+          "radius": 1.62
+        },
+        {
+          "y": 2.012,
+          "z": 9.833,
+          "radius": 1.62
+        },
+        {
+          "y": 2.136,
+          "z": 10.132,
+          "radius": 3.2
+        }
+      ]
+    },
+    "wall at z=6": {
+      "landings": [
+        {
+          "releaseZ": 0.8,
+          "x": -0.256,
+          "y": 0,
+          "z": 0.994,
+          "normalY": 1,
+          "radius": 2.43,
+          "depth": 1.2
+        },
+        {
+          "releaseZ": 2.3,
+          "x": -0.194,
+          "y": 0,
+          "z": 2.487,
+          "normalY": 1,
+          "radius": 1.62,
+          "depth": 1.2
+        },
+        {
+          "releaseZ": 3.8,
+          "x": -0.133,
+          "y": 0,
+          "z": 3.98,
+          "normalY": 1,
+          "radius": 1.62,
+          "depth": 1.2
+        },
+        {
+          "releaseZ": 5.6,
+          "x": 0,
+          "y": 0,
+          "z": 5.6,
+          "normalY": 1,
+          "radius": 2.5,
+          "depth": 1
+        }
+      ],
+      "requests": [
+        {
+          "y": 0.77,
+          "z": 5.975,
+          "radius": 1.4
+        },
+        {
+          "y": 1.05,
+          "z": 5.975,
+          "radius": 2.2
+        },
+        {
+          "y": 1.05,
+          "z": 5.975,
+          "radius": 1.3
+        },
+        {
+          "y": 1.05,
+          "z": 6,
+          "radius": 2
+        },
+        {
+          "y": 1.05,
+          "z": 5.975,
+          "radius": 1.2
+        },
+        {
+          "y": 0.005,
+          "z": 0.703,
+          "radius": 2.43
+        },
+        {
+          "y": 0.27,
+          "z": 5.975,
+          "radius": 1
+        },
+        {
+          "y": 0.55,
+          "z": 5.975,
+          "radius": 1
+        },
+        {
+          "y": 0.005,
+          "z": 2.293,
+          "radius": 1.62
+        },
+        {
+          "y": 0.005,
+          "z": 3.786,
+          "radius": 1.62
+        },
+        {
+          "y": 0.1,
+          "z": 5.6,
+          "radius": 2.5
+        },
+        {
+          "y": 0.02,
+          "z": 5.975,
+          "radius": 0.6
+        }
+      ]
+    }
+  },
+  "airburst": [
+    {
+      "burstHeight": 0.506,
+      "sphereFloorArea": 12.375,
+      "dropLandedY": 0.1,
+      "dropFloorArea": 34.0625
+    },
+    {
+      "burstHeight": 0.56,
+      "sphereFloorArea": 12.1875,
+      "dropLandedY": 0.1,
+      "dropFloorArea": 34.0625
+    },
+    {
+      "burstHeight": 0.659,
+      "sphereFloorArea": 12.0625,
+      "dropLandedY": 0.1,
+      "dropFloorArea": 34.0625
+    },
+    {
+      "burstHeight": 2.56,
+      "sphereFloorArea": 0,
+      "dropLandedY": 0.1,
+      "dropFloorArea": 34.0625
+    },
+    {
+      "burstHeight": 5.56,
+      "sphereFloorArea": 0,
+      "dropLandedY": 0.1,
+      "dropFloorArea": 34.0625
+    },
+    {
+      "burstHeight": 10.56,
+      "sphereFloorArea": 0,
+      "dropLandedY": 0.1,
+      "dropFloorArea": 34.0625
+    }
+  ],
+  "cadence": {
+    "30": [
+      [
+        -0.423,
+        0.005,
+        0.832,
+        2.43
+      ],
+      [
+        -0.322,
+        0.005,
+        2.418,
+        1.62
+      ],
+      [
+        -0.222,
+        0.005,
+        3.908,
+        1.62
+      ],
+      [
+        -0.122,
+        0.005,
+        5.398,
+        1.62
+      ],
+      [
+        -0.023,
+        0.005,
+        6.888,
+        1.62
+      ],
+      [
+        0.075,
+        0.005,
+        8.378,
+        1.62
+      ],
+      [
+        0.167,
+        0.005,
+        9.835,
+        1.62
+      ],
+      [
+        0,
+        2.56,
+        10.156,
+        2
+      ],
+      [
+        0,
+        0.1,
+        10.156,
+        3.2
+      ]
+    ],
+    "60": [
+      [
+        -0.423,
+        0.005,
+        0.832,
+        2.43
+      ],
+      [
+        -0.322,
+        0.005,
+        2.418,
+        1.62
+      ],
+      [
+        -0.222,
+        0.005,
+        3.908,
+        1.62
+      ],
+      [
+        -0.122,
+        0.005,
+        5.398,
+        1.62
+      ],
+      [
+        -0.023,
+        0.005,
+        6.888,
+        1.62
+      ],
+      [
+        0.075,
+        0.005,
+        8.378,
+        1.62
+      ],
+      [
+        0.167,
+        0.005,
+        9.835,
+        1.62
+      ],
+      [
+        0,
+        2.56,
+        10.156,
+        2
+      ],
+      [
+        0,
+        0.1,
+        10.156,
+        3.2
+      ]
+    ],
+    "120": [
+      [
+        -0.423,
+        0.005,
+        0.832,
+        2.43
+      ],
+      [
+        -0.322,
+        0.005,
+        2.418,
+        1.62
+      ],
+      [
+        -0.222,
+        0.005,
+        3.908,
+        1.62
+      ],
+      [
+        -0.122,
+        0.005,
+        5.398,
+        1.62
+      ],
+      [
+        -0.023,
+        0.005,
+        6.888,
+        1.62
+      ],
+      [
+        0.075,
+        0.005,
+        8.378,
+        1.62
+      ],
+      [
+        0.167,
+        0.005,
+        9.835,
+        1.62
+      ],
+      [
+        0,
+        2.56,
+        10.156,
+        2
+      ],
+      [
+        0,
+        0.1,
+        10.156,
+        3.2
+      ]
+    ],
+    "identical": true
+  }
+}

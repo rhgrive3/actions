@@ -62,7 +62,10 @@ test('#290: real Charger keeps60F charge,6F recharge and the composed1F release 
  step(a,1,{fire:true});assert.equal(r.charging,true);near(r.chargeT,DT);
 });
 
-for(const [kind,delay] of [['blaster',22],['slosher',16]]){
+// The community v10.0.1 front/back-lag table distinguishes Slosher sub 15F
+// from squid 16F; these are separate destinations, not a tolerant shared gate.
+// https://wikiwiki.jp/splatoon3mix/検証/メインウェポン/前隙・後隙
+for(const [kind,delay,squidDelay] of [['blaster',22,22],['slosher',15,16]]){
  test(`#214: ${kind} post-shot lock blocks same-tick sub and expires at ${delay}F`,async()=>{
   const f=await fixture(),a=f.make(kind),r=a.weaponRunner;let fired=0,bombs=0;
   f.G.projectiles[kind==='blaster'?'fireBlaster':'fireSlosh']=()=>fired++;
@@ -75,13 +78,17 @@ for(const [kind,delay] of [['blaster',22],['slosher',16]]){
   near(a.s3.recoverStopRemaining,a.weapon.inkRecoverStop);
   step(a,delay-1,{sub:true,subReleased:true});assert.equal(bombs,0);assert.equal(r.busy(),true);
   step(a,1,{sub:true,subReleased:true});assert.equal(bombs,1);near(r.s3PostShotRemaining,0);
+  if(kind==='slosher'){near(r.s3SloshPostShot,DT);assert.equal(r.busy(),true,
+    'sub is admitted at 15F while the independent 16F squid lock retains one frame');}
  });
- test(`#214: ${kind} real Actor admits held squid exactly on post-shot boundary`,async()=>{
+ test(`#214: ${kind} real Actor admits held squid exactly at ${squidDelay}F`,async()=>{
   const f=await fixture(),a=f.make(kind),r=a.weaponRunner;let fired=0;
   f.G.projectiles[kind==='blaster'?'fireBlaster':'fireSlosh']=()=>fired++;
   a.intent.fire=true;for(let i=0;i<60&&!fired;i++)f.tick(a);
   assert.ok(fired);a.intent.fire=false;a.intent.squid=true;
-  f.tick(a,delay-1);assert.equal(a.form,'kid');f.tick(a);assert.equal(a.form,'squid');
+  f.tick(a,squidDelay-1);assert.equal(a.form,'kid',`squid remains blocked at ${squidDelay-1}F`);
+  if(kind==='slosher'){near(r.s3PostShotRemaining,0);near(r.s3SloshPostShot,DT);}
+  f.tick(a);assert.equal(a.form,'squid',`squid is admitted at ${squidDelay}F`);
  });
 }
 

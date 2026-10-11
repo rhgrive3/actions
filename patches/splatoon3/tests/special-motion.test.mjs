@@ -417,7 +417,9 @@ test('a short actual Slam fall preserves native impact impulses when primary fir
             else if (impacted) r.a.weaponRunner.update(1 / hz, { fire: true });
             r.visual(1 / hz);
             if (!r.a.specialActive && !impacted) { impacted = true; contactAge = r.ch.tr[api.CHARACTER_TIMERS.T_SLAM]; }
-            if (impacted && i > hz + 5) break;
+            // #966 adds 15 fixed frames to Slam hang. After impact, continue
+            // through the native follow-through so the impact hair impulse is
+            // observed rather than truncating on the new later landing tick.
           }
           assert.ok(impacted && r.a.grounded, 'actual floor/ceiling Physics completes the special');
           assert.ok(Math.abs(contactAge - 1 / hz) < 1e-6, 'low ceiling makes fall/contact share its first visual tick');

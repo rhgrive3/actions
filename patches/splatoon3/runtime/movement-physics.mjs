@@ -2,6 +2,39 @@
 // Rates are world units/second; duration/age are seconds. Reference decisions and
 // deliberately retained calibration are in reports/movement-physics-fidelity-report.md.
 export const MOVEMENT_EPSILON = 1e-10;
+// Independently documented for Splatoon 3 standard Splat Dualies: a 4.0-WU
+// dodge movement followed by 1.0-WU of post-roll slide. The 4F slide timing
+// and 8-WU/s downward admission are explicit INKWAVE calibrations because
+// neither the game-code easing nor the exact aerial dive velocity is public.
+// Source: https://splatoonwiki.org/wiki/Template:Dualies_data_S3
+export const STANDARD_DUALIES_PHASES = Object.freeze({
+  totalDistance: 5, rollDistance: 4, slideDistance: 1,
+  slideTime: 4 / 60, aerialMinimumDownwardSpeed: 8,
+});
+
+export function activeDualiesRollDistance(w) {
+  return w?.kind === 'dualies' && Math.abs((w.rollDist ?? 0) - STANDARD_DUALIES_PHASES.totalDistance) < 1e-7
+    ? STANDARD_DUALIES_PHASES.rollDistance : (w?.rollDist ?? 0);
+}
+
+export function beginDualiesRoll(r) {
+  r.s3DualiesGlide = null;
+  const a = r.a;
+  if (a?.weapon?.kind !== 'dualies' || a.grounded || !a.vel) return;
+  // Downward angle begins on the admitted aerial dodge and is still integrated
+  // by the ordinary physics/swept collision owner; never teleport the actor.
+  a.vel.y = Math.min(a.vel.y, -STANDARD_DUALIES_PHASES.aerialMinimumDownwardSpeed);
+}
+
+export function beginDualiesPostSlide(r, w) {
+  if (!r || w?.kind !== 'dualies' || activeDualiesRollDistance(w) === w.rollDist) {
+    if (r) r.s3DualiesGlide = null;
+    return;
+  }
+  r.s3DualiesGlide = { elapsed: 0, duration: STANDARD_DUALIES_PHASES.slideTime,
+    distance: STANDARD_DUALIES_PHASES.slideDistance };
+}
+
 
 /** Move a horizontal velocity vector toward the requested S3 ground velocity
  * by a fixed acceleration magnitude. Splatoon 3's published verification
@@ -51,28 +84,39 @@ export function softPushActor(physics, P, a, dx, dz) {
   }
 }
 
-/** True only while the roller, not its flick/recovery, owns ground movement. */
+/** An admitted grounded roll owns movement even while the old visual flick
+ * recovery timer is fading. Admission already waits for the actual roll gate.
+ */
 export function rollingMovementActive(a) {
   const r = a.weaponRunner;
   return a.weapon.kind === 'roller' && !!r.rolling && a.form === 'kid' &&
     a.grounded && !a.specialActive && !a.superJumpState &&
-    r.flick < 0 && !(r.flickRecover > MOVEMENT_EPSILON) && !r.aimingSub;
+    r.flick < 0 && !r.aimingSub;
 }
 
-/** One speed source: WeaponRunner.moveSpeed -> Actor -> existing animation state. */
+/** #466: a dash-turn reversal is a stick more than 90 degrees away from the current
+ * world-space travel direction. Both vectors are world-space (Actor._horizontal uses
+ * the same comparison). The 90-degree threshold is an INKWAVE choice: the S3 trigger
+ * is not published (unverified). A stationary stick or near-zero velocity never qualifies.
+ */
+export function dashTurnBreakActive(a) {
+  const move = a.intent?.move, vel = a.vel;
+  const input = move ? Math.hypot(move.x, move.z) : 0;
+  const speed = vel ? Math.hypot(vel.x, vel.z) : 0;
+  return input > 0.01 && speed > 0.01 && (move.x * vel.x + move.z * vel.z) / (input * speed) < 0;
+}
+
+/** One speed source: WeaponRunner.moveSpeed -> Actor -> existing animation state.
+ * Normal roll 6.48 (SpeedNormal 0.108/frame), dash from 90F 7.92 (SpeedDash 0.132/frame).
+ * While dashing and turning back, the target is capped at SpeedDashTurnBreak
+ * (0.108/frame, 6.48 with the profile scale). The return to SpeedDash on the first
+ * non-reversing frame is unverified; the dash state (rollT) is never reset.
+ */
 export function rollingMovementSpeed(r) {
   const w = r.a.weapon;
   const base = Number.isFinite(w.rollBaseSpeed) ? w.rollBaseSpeed : w.rollSpeed;
   if (r.rollT + MOVEMENT_EPSILON < (w.rollDashTime ?? 0)) return base;
-  // #466: a rapid dash reversal uses the sourced SpeedDashTurnBreak
-  // (0.108/frame) instead of the straight dash SpeedDash (0.132/frame).
-  // A low-speed/stationary stick does not accidentally engage the brake state.
-  const move = r.a.intent?.move, vel = r.a.vel;
-  const input = move ? Math.hypot(move.x, move.z) : 0;
-  const speed = vel ? Math.hypot(vel.x, vel.z) : 0;
-  if (input > 0.01 && speed > 0.01
-      && (move.x * vel.x + move.z * vel.z) / (input * speed) < 0)
-    return Math.min(w.rollSpeed, w.rollDashTurnBreakSpeed ?? base);
+  if (dashTurnBreakActive(r.a)) return Math.min(w.rollSpeed, w.rollDashTurnBreakSpeed ?? base);
   return w.rollSpeed;
 }
 
@@ -95,7 +139,7 @@ export function writeDodgeVelocity(r, vel, dt = 1 / 60, offset = 0) {
   const d = r.dodge;
   if (!d) return false;
   const n = Math.hypot(r._dodgeDir.x, r._dodgeDir.z);
-  const speed = dt > 0 && n > 0 ? dodgeIntervalDistance(r.a.weapon.rollDist, d.dur, d.t + offset, dt) / dt / n : 0;
+  const speed = dt > 0 && n > 0 ? dodgeIntervalDistance(activeDualiesRollDistance(r.a.weapon), d.dur, d.t + offset, dt) / dt / n : 0;
   vel.x = r._dodgeDir.x * speed; vel.z = r._dodgeDir.z * speed;
   return true;
 }
@@ -106,13 +150,44 @@ export function writeDodgeVelocity(r, vel, dt = 1 / 60, offset = 0) {
  */
 export function integrateMovement(a, dt, isSquid, jumped, radius) {
   const r = a.weaponRunner, d = r.dodge;
+  if (d && !d.s3DiveInitiated) { d.s3DiveInitiated = true; beginDualiesRoll(r); }
   if (!d || a.climbing || a.specialActive || a.superJumpState || !(dt > 0)) {
+    const slide = r.s3DualiesGlide;
+    if (!d && slide && !a.climbing && !a.specialActive && !a.superJumpState &&
+        a.weapon.kind === 'dualies' && a.form === 'kid' && r.lockT > 0 && a.alive !== false && dt > 0) {
+      const remaining = Math.max(0, slide.duration - slide.elapsed);
+      const active = Math.min(dt, remaining);
+      if (active > MOVEMENT_EPSILON) {
+        const moved = dodgeIntervalDistance(slide.distance, slide.duration, slide.elapsed, active);
+        const age = Math.max(0, Math.min(1, slide.elapsed / slide.duration));
+        const peak = 1.5 * slide.distance / slide.duration * (1 - age * age);
+        const count = Math.max(1, Math.ceil(Math.max(moved, peak * active) /
+          Math.max(.02, radius * .5)));
+        const step = active / count;
+        const n = Math.hypot(r._dodgeDir.x, r._dodgeDir.z);
+        for (let i = 0; i < count; i++) {
+          const speed = n > 0 ? dodgeIntervalDistance(slide.distance, slide.duration,
+            slide.elapsed + i * step, step) / step / n : 0;
+          a.vel.x = r._dodgeDir.x * speed; a.vel.z = r._dodgeDir.z * speed;
+          a._integrateMovementStep(step, isSquid, jumped && i === 0);
+        }
+        slide.elapsed += active;
+      }
+      if (slide.elapsed >= slide.duration - MOVEMENT_EPSILON || !remaining) {
+        r.s3DualiesGlide = null;
+        a.vel.x = a.vel.z = 0;
+      }
+      if (dt - active > MOVEMENT_EPSILON)
+        a._integrateMovementStep(dt - active, isSquid, false);
+      return;
+    }
+    if (slide) r.s3DualiesGlide = null;
     return a._integrateMovementStep(dt, isSquid, jumped);
   }
-  const distance = dodgeIntervalDistance(a.weapon.rollDist, d.dur, d.t, dt);
+  const distance = dodgeIntervalDistance(activeDualiesRollDistance(a.weapon), d.dur, d.t, dt);
   // Bound by peak velocity, not mean velocity: the front of the curve is fastest.
   const u = Math.max(0, Math.min(1, d.t / d.dur));
-  const peakSpeed = 1.5 * a.weapon.rollDist / d.dur * (1 - u * u);
+  const peakSpeed = 1.5 * activeDualiesRollDistance(a.weapon) / d.dur * (1 - u * u);
   const activeTime = Math.min(dt, Math.max(0, d.dur - d.t));
   const maxStep = Math.max(.02, radius * .5);
   const steps = Math.max(1, Math.ceil(Math.max(distance, peakSpeed * activeTime) / maxStep));
@@ -125,10 +200,15 @@ export function integrateMovement(a, dt, isSquid, jumped, radius) {
   // the collision resolver's final normal; never restore an inward component.
   const endU = Math.max(0, Math.min(1, (d.t + dt) / d.dur));
   const n = Math.hypot(r._dodgeDir.x, r._dodgeDir.z);
-  const speed = n > 0 ? 1.5 * a.weapon.rollDist / d.dur * (1 - endU * endU) / n : 0;
+  const speed = n > 0 ? 1.5 * activeDualiesRollDistance(a.weapon) / d.dur * (1 - endU * endU) / n : 0;
   a.vel.x = r._dodgeDir.x * speed; a.vel.z = r._dodgeDir.z * speed;
   if (a.contacts.wall) {
     const normal = a.contacts.wallNormal, into = a.vel.x * normal.x + a.vel.z * normal.z;
     if (into < 0) { a.vel.x -= normal.x * into; a.vel.z -= normal.z * into; }
   }
+  // The 12F moving roll completes 4WU; the remaining 1WU is applied only
+  // after the native 4F post-roll recovery begins. No double movement.
+  if (d.t + dt >= d.dur - MOVEMENT_EPSILON && a.weapon.kind === 'dualies'
+      && a.alive !== false && !a.specialActive && !a.superJumpState)
+    beginDualiesPostSlide(r, a.weapon);
 }

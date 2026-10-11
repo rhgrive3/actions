@@ -62,7 +62,7 @@ test('#1044 real health marker runtime skips LOS for ineligible actors and keeps
  try{
   let rows=buildHealthMarkers(game,G,PLAYER,THREE);assert.equal(rows.length,0);assert.equal(losCalls,0,'eight full-health actors require no LOS queries');
   dead.hp=40;dead.alive=false;dead.lastDamage=0;
-  stale.hp=40;stale.lastDamage=4;
+  stale.hp=40;buildHealthMarkers(game,G,PLAYER,THREE);G.time+=4;losCalls=0;
   hidden.hp=40;hidden.lastDamage=0;hidden.submerged=true;hidden.anim.form='swim';
   ally.hp=80;rows=buildHealthMarkers(game,G,PLAYER,THREE);assert.equal(rows.length,1);assert.equal(rows[0].hp,.8);assert.equal(losCalls,0,'damaged ally visibility does not need LOS');
   enemy.hp=70;enemy.lastDamage=0;rows=buildHealthMarkers(game,G,PLAYER,THREE);

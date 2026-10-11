@@ -22,7 +22,7 @@ test('#1011 native impact preserves the configured Slosher unit scale and #1140 
       assert.equal(f.paint.length,1,'one authoritative landing stamp');
       const shrink=drop===0?1:src.WidthDepthScaleFall;
       close(f.paint[0].radius,(far?src.WidthHalfFar:src.WidthHalfNear)*scale*shrink,'source radius');
-      close(f.paint[0].opts.stretchAmt,(far?src.DepthScaleFar:src.DepthScaleNear)*shrink,'source depth');
+      close(f.paint[0].opts.stretchAmt,Math.max(0,(far?src.DepthScaleFar:src.DepthScaleNear)*shrink-1),'source depth ratio converted to additive stretch');
       assert.equal(JSON.stringify({radius:p.radius,size:p.size,vel:p.vel.toArray(),damage:p.damage}),before);
     }
   }
@@ -75,7 +75,7 @@ async function composedVolley(hz){
     const hit={point:p.start.clone().add(new V(src.DistanceXZNear,-src.ScaleEndFallDistance,0)),normal:new V(0,1,0)};
     ps._impact(p,hit);assert.equal(paint.length,1);
     close(paint[0].radius,src.WidthHalfNear*src.WidthDepthScaleFall,'composed source radius');
-    close(paint[0].depth,src.DepthScaleNear*src.WidthDepthScaleFall,'composed source depth');
+    close(paint[0].depth,Math.max(0,src.DepthScaleNear*src.WidthDepthScaleFall-1),'composed source depth ratio converted to additive stretch');
     rows.push({index:p.fidelitySloshPacketIndex,age:p.age,seed:p.seed,pos:p.pos.toArray(),vel:p.vel.toArray(),paint:paint[0]});
   }
   return JSON.parse(JSON.stringify(rows));

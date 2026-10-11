@@ -152,3 +152,34 @@ test('#541 dry-hold persistence is identical at 30/60/120 Hz render schedules', 
     assert.equal(a.ink, 0, `no dry spend at ${hz} Hz`);
   }
 });
+
+test('#541 refill mid-hold re-enters the normal roll loop exactly once', async () => {
+  const f = await fixture();
+  const a = f.make('roller');
+  a.grounded = true; a.intent.move.set(0, 0, 1); a.isLocal = true;
+  const loops = [];
+  f.G.audio = {
+    play() {},
+    loop() {
+      const L = { stopped: false, stop() { this.stopped = true; }, set() {} };
+      loops.push(L);
+      return L;
+    },
+  };
+  const active = () => loops.filter(l => !l.stopped).length;
+  const r = a.weaponRunner;
+  runnerTick(f, a, { fire: true, firePressed: true });
+  for (let i = 1; i < 60; i++) runnerTick(f, a, { fire: true });
+  assert.equal(active(), 1, 'the paid roll owns one roll loop');
+  a.ink = 0;
+  runnerTick(f, a, { fire: true });
+  assert.equal(r.rolling, true, 'dry hold first');
+  assert.equal(active(), 0, 'the dry hold stops the inked roll loop');
+  a.ink = 50;
+  runnerTick(f, a, { fire: true });
+  assert.equal(r.rolling, true, 'refill keeps Roller-down');
+  assert.equal(active(), 1, 'refill restarts the roll loop');
+  for (let i = 0; i < 30; i++) runnerTick(f, a, { fire: true });
+  assert.equal(active(), 1, 'continued rolling never duplicates the loop');
+  assert.equal(loops.length, 2, 'one new loop for the refilled roll segment');
+});

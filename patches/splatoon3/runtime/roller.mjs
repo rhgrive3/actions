@@ -231,8 +231,9 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
   const scratch = { ids: [], start: { x: 0, y: 0, z: 0 }, delta: { x: 0, y: 0, z: 0 }, normalY: 0, contactPoint: { x: 0, y: 0, z: 0 }, wallPoint: { x: 0, y: 0, z: 0 } };
   const wallOrigin = new THREE.Vector3(), wallDirection = new THREE.Vector3(), wallContact = new THREE.Vector3(), wallHit = new Hit();
   const paintStillWall = (runner, a, w, dt) => {
-    // #1108: direct drum-wall paint is contact-owned, not movement/side splash.
-    // No-stick must not authorize native roll-contact damage or floor paint.
+    // #1108: direct drum-wall paint is contact-owned (held with or without stick),
+    // not a movement/side splash. No-stick must not authorize native roll-contact
+    // damage or floor paint.
     if (a.remote || !a.alive || !(a.ink > 0.5) || !(dt > 0) || !G.paint?.splat || !G.physics?.raycast) return;
     runner.s3WallPaintElapsed = Math.min(0.3, (runner.s3WallPaintElapsed || 0) + dt);
     if (runner.s3WallPaintElapsed + 1e-10 < 1 / 12) return;
@@ -399,6 +400,15 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       (this.s3RollerPrevInk ?? -Infinity) > DRY_INK;
     const dryHold = inp.fire === true && this.rolling === true && this.flick < 0 &&
       this.cooldown <= 0.25 && a.grounded === true && a.ink <= DRY_INK && hadPaidInk;
+    // Issue #541: a refill inside a held dry roll leaves `rolling` true, so the
+    // native edge (canRoll !== rolling) never fires and the roll loop, stripe
+    // anchor and rollDist reset of a normal roll start would be skipped. Drop the
+    // flag for this call only, so native re-enters the roll through its own
+    // transition (one loop, anchored at the refill position). When native's
+    // canRoll is false it ends the state exactly as it would have done anyway.
+    if (this.s3RollerWasDry === true && this.rolling === true && this.flick < 0 && a.ink > DRY_INK) {
+      this.rolling = false;
+    }
     if (this.s3FlickPostSub > 0) {
       this.s3FlickPostSub -= dt;
       if (this.s3FlickPostSub < EPS) this.s3FlickPostSub = 0;
@@ -420,7 +430,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     const onFlickPath = starting || winding;
     const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);
     const stick = onFlickPath || rollerStickActive(a);
-    const stillWall = !!(inp.fire && !onFlickPath && sup?.wall && !stick && !a.remote);
+    // #1108: the drum body touching a paintable wall paints that wall while ZR is
+    // held, with or without Left Stick (S3 contact paint). Stick only decides the
+    // native stripe and roll-contact damage admission, so `stillWall` stays no-stick.
+    const drumWallTouch = !!(inp.fire && !onFlickPath && sup?.wall && !a.remote);
+    const stillWall = drumWallTouch && !stick;
     const fireIn = (onFlickPath || (sup?.supported && stick) || stillWall) ? inp : { ...inp, fire: false, firePressed: false };
     const restoreAirborne = !!(sup?.wall && !sup.floor && !a.grounded);
     // Native contact damage reads horizontal speed; prevent no-stick damage
@@ -611,7 +625,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
         if (a.character) a.character.s3RollerFlick = null;
       }
     }
-    if (stillWall && this.rolling) paintStillWall(this, a, w, dt);
+    if (drumWallTouch && this.rolling) paintStillWall(this, a, w, dt);
     else this.s3WallPaintElapsed = 0;
     return result;
     } finally {

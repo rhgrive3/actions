@@ -30,6 +30,22 @@ export function jumpReferenceCandidate(weaponKind) {
   return JUMP_REFERENCE_CANDIDATES[weaponKind] || JUMP_REFERENCE_CANDIDATES.fallback;
 }
 
+// #1116: the same pinned index names JumpShoot_* clips for the firing/charging
+// air state of Shooter, Roller, Splatling and Charger only. Dualies, Slosher,
+// Normal and Blaster have no name there, so they keep the ordinary candidate.
+// Which Charger/Shooter variant plays for which shot or charge level is
+// unverified; every variant is listed and none is selected here.
+export const JUMP_SHOOT_REFERENCE_CANDIDATES = Object.freeze({
+  shooter: Object.freeze(['JumpShoot_Shtr00', 'JumpShoot_Shtr01', 'JumpShoot_Shtr02']),
+  roller: Object.freeze(['JumpShoot_Rllr00']),
+  splatling: Object.freeze(['JumpShoot_Spnr00']),
+  charger: Object.freeze(['JumpShoot_Chrg00', 'JumpShoot_Chrg01', 'JumpShoot_Chrg02']),
+});
+export function jumpShootReferenceCandidates(weaponKind) {
+  const names = JUMP_SHOOT_REFERENCE_CANDIDATES[weaponKind];
+  return names ? [...names] : null;
+}
+
 // These are INKWAVE-local rig calibrations, not sampled S3 curves. The public
 // animation index supplies family/resource structure; visible family variation
 // is authored and calibrated here until lawfully sourced joint tracks exist.
@@ -74,11 +90,19 @@ export function jumpFamilyAdmitted(weaponKind) {
 
 export function jumpMotionSnapshot(ch) {
   const s = ch?.[GUARD]?.states.get(ch);
-  return s ? { active: s.started !== null, age: s.started === null ? null : Math.max(0, ch.t - s.started),
+  if (!s) return null;
+  const active = s.started !== null, firing = active && s.firing;
+  const ordinary = s.family?.resourceCandidate ?? jumpReferenceCandidate(s.weaponKind);
+  // The pose values are shared by both action states; only the named catalog
+  // candidate differs, and only where the public index names a firing clip.
+  const shootNames = firing ? jumpShootReferenceCandidates(s.weaponKind) : null;
+  return { active, age: active ? Math.max(0, ch.t - s.started) : null,
     phase: s.phase, weight: s.weight, familyKind: s.weaponKind,
     presentationProfile: s.family?.poseProfile ?? null,
-    catalogCandidate: s.family?.resourceCandidate ?? jumpReferenceCandidate(s.weaponKind),
-    calibrationSource: 'local-inkwave-kid-rig', referenceCurveVerified: false } : null;
+    catalogCandidate: ordinary,
+    actionState: active ? (firing ? 'firing' : 'ordinary') : null,
+    selectedCatalogCandidates: active ? (shootNames ?? [ordinary]) : [],
+    calibrationSource: 'local-inkwave-kid-rig', referenceCurveVerified: false };
 }
 
 export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }, _profile) {
@@ -95,10 +119,10 @@ export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
   Object.defineProperty(proto, GUARD, { value: { states } });
   const state = ch => {
     let s = states.get(ch);
-    if (!s) { s = { started: null, phase: null, weight: 0, allowed: false, family: null, weaponKind: null }; states.set(ch, s); }
+    if (!s) { s = { started: null, phase: null, weight: 0, allowed: false, firing: false, family: null, weaponKind: null }; states.set(ch, s); }
     return s;
   };
-  const clear = ch => { const s = states.get(ch); if (s) { s.started = null; s.phase = null; s.weight = 0; s.allowed = false; } };
+  const clear = ch => { const s = states.get(ch); if (s) { s.started = null; s.phase = null; s.weight = 0; s.allowed = false; s.firing = false; } };
   const forget = ch => { clear(ch); const s = states.get(ch); if (s) { s.family = null; s.weaponKind = null; } };
   const timerBusy = ch => ch.tr[T.T_THROW] < .62 || ch.tr[T.T_SLOSH] < .66
     || ch.tr[T.T_FLICK] < .7 || ch.tr[T.T_SPAWN] < 1.4
@@ -135,6 +159,7 @@ export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
     if (interrupted(this, input) || s.started !== null && s.weaponKind !== this.weaponKind
       || ((input?.grounded ?? true) && this.t > (s.started ?? this.t))) clear(this);
     s.allowed = s.started !== null && s.family !== null && s.weaponKind === this.weaponKind && !(input?.grounded ?? true);
+    s.firing = s.started !== null && input?.firing === true;
     s.phase = null; s.weight = 0;
     return update.call(this, dt, input);
   };

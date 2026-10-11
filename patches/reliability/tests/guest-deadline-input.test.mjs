@@ -41,3 +41,23 @@ test('#838 armed held Storm cannot turn input neutralization into a throw',async
  h.m.time=0;h.frame(20);assert.equal(thrown,0);assert.equal(h.a.specialActive.phase,'hold');
  h.m.time=3;h.frame();assert.equal(thrown,0);h.input.mouse.right=false;h.frame();h.input.mouse.right=true;h.frame();h.input.mouse.right=false;h.frame();assert.equal(thrown,1);
 });
+// #838 latency regression: the host clock sample (remaining time when sent) is aged by its delivery delay.
+function guestNetMatch(h,rttMs){const session={myId:'B',hostId:'A',get isHost(){return this.myId===this.hostId;},tr:{broadcast(){},rtt:rttMs}};const nm=new h.NetMatch(session,{map:'reef'});nm.match=h.m;nm.byNid.set(1,h.a);h.G.netm=nm;return nm;}
+test('#838 host clock deadline ends a lagging guest input at the latency-compensated host end, before its local zero',async()=>{
+ const h=await rig();h.m.time=0.45;const nm=guestNetMatch(h,400);
+ nm._hostClock(['playing',0.5]);// sent with 0.5 s left; 400 ms relay RTT leaves 0.1 s at the host end
+ h.frame(3);assert.equal(h.controller.enabled,true,'no early freeze before the host end');
+ h.frame(4);assert.equal(h.controller.enabled,false,'blocked at the host end, not at local zero');assert.ok(h.m.time>0.3);assert.equal(h.m.state,'playing');
+ h.input.mouse.left=true;h.frame(3);assert.equal(h.shots.length,0);assert.equal(h.a.intent.fire,false);
+ nm.onMessage('A',{k:'st',s:'finish',t:0});assert.equal(h.m.state,'finish');
+});
+test('#838 delayed host finish packets of 100, 250 and 500 ms grant no fire after the host clock end',async()=>{
+ for(const delay of [100,250,500]){
+  const h=await rig();h.m.time=0.25;const nm=guestNetMatch(h,0);
+  nm._hostClock(['playing',0.1]);// host ends 100 ms later; the guest local clock lags 150 ms (below the 0.2 s correction)
+  h.frame(7);assert.equal(h.controller.enabled,false,`delay ${delay}`);assert.equal(h.m.state,'playing',`delay ${delay}`);
+  h.input.mouse.left=true;h.frame(Math.round(delay*60/1000)+3);assert.equal(h.shots.length,0,`delay ${delay}`);
+  h.input.mouse.left=false;h.frame();
+  nm.onMessage('A',{k:'st',s:'finish',t:0});assert.equal(h.m.state,'finish',`delay ${delay}`);
+ }
+});

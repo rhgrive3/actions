@@ -105,19 +105,18 @@ const tap = async (id) => {
     let k = 1; for (let n = e; n && n !== document.body; n = n.parentElement) k *= +getComputedStyle(n).opacity;
     return e.getBoundingClientRect().width > 0 && k > 0.6;
   }, sel, 300000, 'tappable ' + id);
-  // Playwright locator.tap additionally waits for actionability/synchronous
-  // completion *after* native visibility was proven above. On software GL
-  // the third rematch can run at ~5 fps; in CI it reached the dispatch stage
-  // at 29.8 s and then timed out at 30 s even though the button was present.
-  // Dispatch a real mobile touch at the verified hit-tested button location.
-  // Never invoke the DOM click handler or skip the resulting battle/menu checks.
-  if (id === 'start') {
-    await operationTrace.run('touch: start', async () => {
+  // Verify native visibility and live hit-testing, then ask Playwright to
+  // calculate the target's box again immediately before dispatching its real
+  // touch. A coordinate captured in a preceding evaluate() can go stale during
+  // a >1s software-GL main-thread stall, especially as results/menu animates.
+  // `force` skips Playwright's separate stability polling only; our explicit
+  // visibility/hit-testing and the actual menu transition still must pass.
+  await operationTrace.run('touch: ' + id, async () => {
       // START can be below the first iPad viewport. Scroll natively, wait until
       // its real hit target is in view, then send the actual user touch.
       await page.evaluate((selector) => {
         const button = document.querySelector(selector);
-        if (!button) throw Error('Turf START disappeared before scroll');
+        if (!button) throw Error('Menu button disappeared before scroll');
         button.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
       }, sel);
       // A native scroll does not depend on Playwright's stable-element actionability
@@ -130,22 +129,12 @@ const tap = async (id) => {
         const hit = document.elementFromPoint(x, y);
         return x >= 0 && x < innerWidth && y >= 0 && y < innerHeight &&
           (button === hit || button.contains(hit));
-      }, sel, 30000, 'Turf START visible and hit-testable after native scroll');
-      const point = await page.evaluate((selector) => {
-        const button = document.querySelector(selector);
-        if (!button) throw Error('Turf START disappeared before touch');
-        const b = button.getBoundingClientRect();
-        const x = b.left + b.width * .5, y = b.top + b.height * .5;
-        const hit = document.elementFromPoint(x, y);
-        if (!(button === hit || button.contains(hit))) {
-          throw Error('Turf START touch blocked by ' + (hit?.outerHTML?.slice(0, 160) || 'no hit element') +
-            ' at ' + JSON.stringify({x,y,rect:{left:b.left,top:b.top,width:b.width,height:b.height},viewport:[innerWidth,innerHeight]}));
-        }
-        return { x, y };
-      }, sel);
-      await page.touchscreen.tap(point.x, point.y);
-    });
-  } else await operationTrace.run('tap: ' + id, () => page.tap(sel, { timeout: 30000 }));
+      }, sel, 30000, 'Menu button ' + id + ' visible and hit-testable after native scroll');
+      // Locator.tap is a real touch gesture, not element.click() or a
+      // synthetic DOM event. Force only removes redundant actionability waits
+      // after the assertions above and freshens the box at dispatch time.
+      await page.locator(sel).tap({ force: true, timeout: 120000 });
+  });
 };
 const menuIs = (name) => until((n) => window.__inkwave?.menus?.current === n, name, 300000, 'menu ' + name);
 // Native touch rows/tabs own their highlight; ordinary main-menu buttons use

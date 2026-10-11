@@ -58,7 +58,7 @@ test('#1039 responsive MockNet fixture supplies host confirmation before native 
     assert.equal(net.isHost, false);
     const guest = net.lobby.players.find(p => p.you);
     readyControl(net).toggleReady();
-    assert.equal(guest.ready, false, 'pre-fix audit times out here because the mock never confirms teams');
+    assert.equal(guest.ready, true, 'legacy MockNet has no confirmTeams API and retains its offline Ready fallback');
     confirmResponsiveMockHostTeams(net);
     assert.equal(updates.at(-1).teamsConfirmed, true, 'native MockNet emits a new cloned lobby for Menus');
     assert.notEqual(updates.at(-1), net.lobby);

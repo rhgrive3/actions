@@ -79,8 +79,10 @@ async function throwSlosher(previousYaw, renderHz, { finalYaw = 0, births = fals
   }
 }
 const norm = value => Math.atan2(Math.sin(value), Math.cos(value));
-// The Wiki's group-interval accumulation is distinct from the birth schedule:
-// four 1F steps then five 2F steps, excluding the first glob's own step.
+// Sweep steps (x 10 degrees per 60Hz tick) per bullet: the 4-bullet group
+// advances by its interval 1, then the 5-bullet group (interval 2) continues
+// from 3 to 5. Final step 13 = 130 degrees, matching the public Wiki's
+// 10*(4*1+5*2)-10 description. Public-Wiki law; 未確認 against Nintendo.
 const SWEEP_STEPS = [0, 1, 2, 3, 5, 7, 9, 11, 13];
 
 test('#258 actual Bucket Slosher preserves sourced 4+5 groups and 60Hz delays', async () => {
@@ -88,6 +90,15 @@ test('#258 actual Bucket Slosher preserves sourced 4+5 groups and 60Hz delays', 
   assert.deepEqual(shots.map(s => s.frame), [0, 1, 2, 3, 4, 6, 8, 10, 12]);
   assert.deepEqual(shots.map(s => s.damage), [70, 70, 70, 70, 50, 50, 50, 50, 50]);
   assert.ok(shots.every(s => s.pending === true), 'deferred owner-side birth remains active');
+});
+
+test('#258 group-interval sweep: second group starts at 3+2, not its birth frame 4', async () => {
+  const turned = await throwSlosher(-Math.PI / 18, 60);
+  const stationary = await throwSlosher(0, 60);
+  const steps = turned.map((s, i) => Math.round(norm(s.yaw - stationary[i].yaw) / (Math.PI / 18)));
+  assert.deepEqual(steps, SWEEP_STEPS);
+  assert.equal(steps[4], 5, 'first bullet of the 5-bullet group');
+  assert.ok(Math.abs(norm(turned[8].yaw - stationary[8].yaw) - 13 * Math.PI / 18) < 1e-7, '130 degrees total');
 });
 
 test('#258 previous-tick turning creates bidirectional sweep; stationary aim remains unswept', async () => {

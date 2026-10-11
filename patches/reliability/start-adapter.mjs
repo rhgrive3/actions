@@ -40,7 +40,7 @@ const HELPERS = `  // Each menu/start operation owns its continuations and inten
       console.error('[inkwave] match start failed', error);
       const menuMatch = await this.quitToMenu();
       if (menuMatch && this.match === menuMatch && !this._matchFlow && G.mode === 'menu' && this.menus?.current === 'main')
-        this.menus.toast?.('Could not start the match. Please try again.', { kind: 'error' });
+        this.menus.toast?.(t('Could not start the match. Please try again.'), { kind: 'error' });
     }
   }
 

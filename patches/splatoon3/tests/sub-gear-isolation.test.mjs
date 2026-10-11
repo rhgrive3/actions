@@ -42,6 +42,15 @@ test('full installed Kit preview and nested throw share actor-local power and re
 
 test('actor-local gear resolution preserves unknown cost instead of inventing a free sub',()=>{const a={weapon:{sub:'unknown'},s3:{modifiers:{inkSaverSub:.65,subPower:1.5}}},SUB={unknown:{id:'unknown',inkCost:null,inkCostFallback:null,throwSpeed:1}};const resolved=resolveSubForThrow(a,0,SUB);assert.equal(resolved.inkCost,null);assert.equal(resolved.throwSpeed,1.5);assert.equal(SUB.unknown.throwSpeed,1);});
 
+// #574 added `import { slamProtected } from './tidal-slam-gauge.mjs'` to the runtime module.
+// A data: URL cannot resolve that relative edge, and fidelityThrowVelocity never calls
+// slamProtected, so this loader stubs only that edge (same approach as gyro-sensitivity-endpoints).
+function loadCompiled(code){
+ const stubbed=code.replace("import { slamProtected } from './tidal-slam-gauge.mjs';",'const slamProtected = () => false;');
+ assert.notEqual(stubbed,code,'slamProtected import stub applied');
+ return import('data:text/javascript;base64,'+Buffer.from(stubbed).toString('base64'));
+}
+
 test('full dispatcher preserves explicit Kit power once and implicit Storm snapshot with existing vertical inheritance',async()=>{
  const rel='patches/splatoon3/runtime/sub-special-fidelity.mjs', raw=fs.readFileSync(ROOT+rel,'utf8');
  const compiled=adaptBuildSource(rel,raw), f=await compiledModule(rel,compiled);

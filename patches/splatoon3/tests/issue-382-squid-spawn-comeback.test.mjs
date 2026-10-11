@@ -25,8 +25,8 @@ const installers = [
 async function boot() {
   const f = await fixture({ fullRuntime: true, adapt: compose, adaptRuntime: compose,
     extraExports: installers.map(([name, path]) => `export { ${name} } from '${path}';`).join('\n') +
-      `export { beginInitialSquidSpawn } from './patches/splatoon3/runtime/respawn-lifecycle.mjs';
-       export { hauntTrackingRecord } from './patches/splatoon3/runtime/haunt.mjs';` });
+      // beginInitialSquidSpawn is already exported by the shared fullRuntime fixture (#512).
+      `export { hauntTrackingRecord } from './patches/splatoon3/runtime/haunt.mjs';` });
   const source = fs.readFileSync(new URL('../bootstrap.mjs', import.meta.url), 'utf8');
   let previous = source.indexOf('const context = install(profile);');
   assert.ok(previous >= 0);

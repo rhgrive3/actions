@@ -122,8 +122,11 @@ export class RangeSession {
   // ------------------------------------------------------------------ pads
   _padDefs() {
     const defs = [];
-    WEAPON_ORDER.forEach((id, i) => {
-      const a = -Math.PI / 2 + (i / WEAPON_ORDER.length) * Math.PI * 2;
+    // The hub ring fits seven non-overlapping training pads. The pause weapon
+    // picker retains the complete catalog, including every newly registered main.
+    const carousel = WEAPON_ORDER.slice(0, 7);
+    carousel.forEach((id, i) => {
+      const a = -Math.PI / 2 + (i / carousel.length) * Math.PI * 2;
       defs.push({ id: 'weapon:' + id, kind: 'weapon', weapon: id, x: CAROUSEL.center[0] + Math.cos(a) * CAROUSEL.r, z: CAROUSEL.center[1] + Math.sin(a) * CAROUSEL.r, color: '#35405a' });
     });
     for (const c of CONSOLE) defs.push({ id: c.id, kind: c.id, x: c.pos[0], z: c.pos[1], color: c.color });

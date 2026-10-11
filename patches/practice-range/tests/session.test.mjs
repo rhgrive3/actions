@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rangeRealm, rangeWorld } from './harness.mjs';
+import { MAIN_WEAPON_CATALOG } from '../../splatoon3/runtime/main-weapon-catalog-data.mjs';
 
 async function world() {
   const R = await rangeRealm();
@@ -133,6 +134,51 @@ test('ink course paints only the swim course floor (and never the island)', asyn
       assert.ok(x >= x0 && x <= x1 && z >= z0 && z <= z1);
       assert.ok(!(x > I.x[0] + 0.01 && x < I.x[1] - 0.01 && z > I.z[0] + 0.01 && z < I.z[1] - 0.01), 'not on the island');
       assert.equal(team, 0);
+    }
+  } finally { w.done(); }
+});
+
+test('catalog expansion keeps hub pads separate and every main switchable', async () => {
+  const w = await world();
+  try {
+    const { s, local, R } = w;
+    const pads = s.pads.defs.filter(p => p.kind === 'weapon');
+    assert.equal(s.pads.defs.length, 14);
+    assert.equal(pads.length, 7);
+    assert.deepEqual(Array.from(pads, p => p.weapon), ['shooter', 'dualies', 'splatling', 'roller', 'slosher', 'charger', 'blaster']);
+    for (let i = 0; i < pads.length; i++) {
+      for (const other of pads.slice(i + 1)) {
+        assert.ok(Math.hypot(pads[i].x - other.x, pads[i].z - other.z) >= 2 * R.ZONES.PAD_R, 'no overlapping activation regions');
+      }
+      local.pos.set(pads[i].x, 0.05, pads[i].z);
+      local.alive = true; local.superJumpState = null;
+      s._updatePads(R.ZONES.PAD_DWELL + 1 / 60);
+      assert.equal(local.weaponId, pads[i].weapon, 'each physical pad admits its own weapon');
+    }
+    const ids = Object.keys(R.WEAPONS);
+    // Keep all 65 pinned S3 mains switchable while retaining the separate
+    // opt-in INKWAVE training support kit that main adds to the WEAPONS table.
+    const catalogIds = new Set(MAIN_WEAPON_CATALOG.records.map(record => record.id));
+    assert.equal(catalogIds.size, 65);
+    assert.deepEqual(ids.filter(id => !catalogIds.has(id)), ['support']);
+    for (const id of catalogIds) assert.ok(ids.includes(id), 'missing sourced main: ' + id);
+    for (const id of ids) {
+      s.setWeapon(id);
+      assert.equal(local.weaponId, id, id);
+      assert.equal(local.ink, R.PLAYER.inkMax);
+      assert.equal(local.special, 0);
+      // Gear creates an actor-local weapon copy, isolating equipment bonuses
+      // from the shared catalog. Verify both isolation and the pinned identity.
+      const base = R.WEAPONS[id];
+      assert.notStrictEqual(local.weapon, base, id + ': actor-local weapon');
+      assert.equal(local.weapon.id, base.id, id + ': main identity');
+      assert.equal(local.weapon.kind, base.kind, id + ': action family');
+      assert.equal(local.weapon.sourceMainActor, base.sourceMainActor, id + ': pinned actor source');
+      assert.equal(local.weapon.sub, base.sub, id + ': kit sub');
+      assert.equal(local.weapon.special, base.special, id + ': kit special');
+      assert.equal(local.weapon.range, base.range, id + ': unmodified base range');
+      if (base.catalogRecord)
+        assert.strictEqual(local.weapon.catalogRecord, base.catalogRecord, id + ': sourced catalog record');
     }
   } finally { w.done(); }
 });

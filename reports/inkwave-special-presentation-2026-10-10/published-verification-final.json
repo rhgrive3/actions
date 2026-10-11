@@ -1,0 +1,44 @@
+{
+  "status": "passed",
+  "url": "https://rhgrive3.github.io/actions/",
+  "sourceHead": "a107422f62182036a4965c2bee65398d5af6f0fc",
+  "contentHash": "51681afe2d7d97eafcd1f8076a8c38088579a56ce962546c5c20680bb611f26c",
+  "revision": "f16047de959abcb3d5efcb592376dd39abc6b14a2b9c25ba81a761ec62396fea",
+  "files": [
+    {
+      "path": "index.html",
+      "bytes": 15093,
+      "sha256": "7543973a2d831ba7523266cf2d64219387fa91f0f8fc8684b5f6040fdc720ad8"
+    },
+    {
+      "path": "sw.js",
+      "bytes": 65520,
+      "sha256": "3e61740895dad84d9a8cac0496f206c0d01b5e0f13993c8b5fa6a03b36eda10f"
+    },
+    {
+      "path": "_versions/f16047de959abcb3d5efcb592376dd39abc6b14a2b9c25ba81a761ec62396fea/patches/splatoon3/runtime/install.mjs",
+      "bytes": 6227,
+      "sha256": "e32ede9caef699e932f039b0e54a88217c7970d47594697aa270f63467708ffe"
+    },
+    {
+      "path": "_versions/f16047de959abcb3d5efcb592376dd39abc6b14a2b9c25ba81a761ec62396fea/patches/splatoon3/runtime/special-motion.mjs",
+      "bytes": 33102,
+      "sha256": "8700b6c1d89f27bc7ce0a44873377884ccd56419b219a3352a7afac831c56a77"
+    },
+    {
+      "path": "_versions/f16047de959abcb3d5efcb592376dd39abc6b14a2b9c25ba81a761ec62396fea/patches/splatoon3/runtime/kit-big-bubbler.mjs",
+      "bytes": 25628,
+      "sha256": "b987b4b4cbbc227c5daeabfee2166d6bc3fe3a1fe0e8b13de275b6c8d6fdd5f1"
+    },
+    {
+      "path": "_versions/f16047de959abcb3d5efcb592376dd39abc6b14a2b9c25ba81a761ec62396fea/patches/splatoon3/runtime/kit-ink-vac.mjs",
+      "bytes": 19451,
+      "sha256": "38672a15a7e8d41d4d069c063a71fd31f84a99b56dc5db14eb84598fdbe9f08a"
+    },
+    {
+      "path": "_versions/f16047de959abcb3d5efcb592376dd39abc6b14a2b9c25ba81a761ec62396fea/patches/splatoon3/runtime/kit-support.mjs",
+      "bytes": 9158,
+      "sha256": "14b08da285835618d1f2a385f711c80617d12b3f1cea2954e656f8a613f6a410"
+    }
+  ]
+}

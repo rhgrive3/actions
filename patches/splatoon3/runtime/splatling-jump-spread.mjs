@@ -65,14 +65,15 @@ export function installSplatlingJumpSpread({ Actor, WeaponRunner, on }) {
 
   const spread = WeaponRunner.prototype._spreadDeg;
   WeaponRunner.prototype._spreadDeg = function (weapon) {
-    const recovery = weapon.kind === 'splatling'
-      ? splatlingJumpRecoveryAt(this.a.s3SplatlingJumpAgeFrames)
-      : null;
-    if (recovery === null || !Number.isFinite(weapon.spreadAir) || !Number.isFinite(weapon.spreadGround)) {
+    if (weapon.kind !== 'splatling' ||
+        !Number.isFinite(weapon.spreadAir) || !Number.isFinite(weapon.spreadGround))
       return spread.call(this, weapon);
-    }
-    const base = weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery;
-    // #940: jumping changes the outer envelope, never Shooter-style bloom.
-    return base;
+    const recovery = splatlingJumpRecoveryAt(this.a.s3SplatlingJumpAgeFrames);
+    // Even without an active jump, Stand/Jump_DegSwerve denote the maximum
+    // sourced angular envelope. The native Splatling bloom factor is an
+    // independent legacy approximation and must not shrink either endpoint.
+    if (recovery === null)
+      return this.a.grounded ? weapon.spreadGround : weapon.spreadAir;
+    return weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery;
   };
 }

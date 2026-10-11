@@ -1,7 +1,7 @@
 {
   "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
   "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/mush/1130/WeaponInfoMain.json",
-  "note": "Exact twelve source fields re-read for Kit composition acceptance; no omitted default reconstructed.",
+  "note": "Exact source fields re-read for Kit composition acceptance (three full kits, four partial kits; PR1188); no omitted default reconstructed.",
   "parameters": {
     "data/mush/1130/WeaponInfoMain.json#/73/__RowId": {
       "value": "Charger_Normal_00",
@@ -74,6 +74,143 @@
       "pointer": "/219/SpecialWeapon",
       "sourceId": "data/mush/1130/WeaponInfoMain.json",
       "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/19/__RowId": {
+      "value": "Blaster_Middle_00",
+      "pointer": "/19/__RowId",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/19/SpecialPoint": {
+      "value": 190,
+      "pointer": "/19/SpecialPoint",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/19/SubWeapon": {
+      "value": "Work/Gyml/Bomb_Robot.spl__WeaponInfoSub.gyml",
+      "pointer": "/19/SubWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/19/SpecialWeapon": {
+      "value": "Work/Gyml/SpGreatBarrier.spl__WeaponInfoSpecial.gyml",
+      "pointer": "/19/SpecialWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/100/__RowId": {
+      "value": "Maneuver_Normal_00",
+      "pointer": "/100/__RowId",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/100/SpecialPoint": {
+      "value": 200,
+      "pointer": "/100/SpecialPoint",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/100/SubWeapon": {
+      "value": "Work/Gyml/Bomb_Suction.spl__WeaponInfoSub.gyml",
+      "pointer": "/100/SubWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/100/SpecialWeapon": {
+      "value": "Work/Gyml/SpChariot.spl__WeaponInfoSpecial.gyml",
+      "pointer": "/100/SpecialWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/280/__RowId": {
+      "value": "Slosher_Strong_00",
+      "pointer": "/280/__RowId",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/280/SpecialPoint": {
+      "value": 220,
+      "pointer": "/280/SpecialPoint",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/280/SubWeapon": {
+      "value": "Work/Gyml/Bomb_Splash.spl__WeaponInfoSub.gyml",
+      "pointer": "/280/SubWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/280/SpecialWeapon": {
+      "value": "Work/Gyml/SpTripleTornado.spl__WeaponInfoSpecial.gyml",
+      "pointer": "/280/SpecialWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/311/__RowId": {
+      "value": "Spinner_Standard_00",
+      "pointer": "/311/__RowId",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/311/SpecialPoint": {
+      "value": 210,
+      "pointer": "/311/SpecialPoint",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/311/SubWeapon": {
+      "value": "Work/Gyml/Sprinkler.spl__WeaponInfoSub.gyml",
+      "pointer": "/311/SubWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    },
+    "data/mush/1130/WeaponInfoMain.json#/311/SpecialWeapon": {
+      "value": "Work/Gyml/SpShockSonar.spl__WeaponInfoSpecial.gyml",
+      "pointer": "/311/SpecialWeapon",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "status": "extracted"
+    }
+  },
+  "officialHistory": {
+    "Ver.11.1.0": {
+      "url": "https://support.nintendo.com/jp/switch/software_support/av5ja/1110.html",
+      "specialPointChanges": {
+        "Shooter_Normal_00": [
+          210,
+          200
+        ],
+        "Blaster_Middle_00": [
+          180,
+          190
+        ],
+        "Spinner_Standard_00": [
+          200,
+          210
+        ],
+        "Maneuver_Normal_00": [
+          190,
+          200
+        ]
+      }
+    },
+    "Ver.11.2.0": {
+      "url": "https://support.nintendo.com/jp/switch/software_support/av5ja/1120.html",
+      "specialPointChanges": {
+        "Slosher_Strong_00": [
+          210,
+          220
+        ]
+      }
+    },
+    "Ver.7.2.0": {
+      "url": "https://support.nintendo.com/jp/switch/software_support/av5ja/720.html",
+      "specialPointChanges": {
+        "Shooter_Normal_00": [
+          200,
+          210
+        ]
+      }
     }
   }
 }

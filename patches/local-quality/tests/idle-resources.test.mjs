@@ -108,6 +108,25 @@ test('actual audio pre-init zero never pumps music and leaves SFX callable; unmu
   assert.match(compose('src/main.js'),/this\._applyAudioVolumes\(\); G\.audio\?\.init/);
 });
 
+test('#366 actual audio master zero idles music although music volume stays nonzero; context stays running; restore resumes latest track',async()=>{
+  const f=audioFixture(),{AudioEngine,music}=await idleFixture({globals:f.globals});const a=new AudioEngine({context:f.ctx});
+  a.setVolumes({master:1,music:.5,sfx:1});a.init();music.play('title');
+  assert.equal(music.players.length,1);assert.equal(f.workers.size,1);
+  a.setVolumes({master:0});assert.equal(a.vol.music,.5);
+  assert.equal(music.players.length,0);assert.equal(f.workers.size,0);assert.equal(f.intervals.size,0);
+  a.play('jump');assert.equal(f.counts.suspended,0);
+  a.setVolumes({master:.8});assert.equal(music.track,'title');assert.equal(music.players.length,1);assert.equal(f.workers.size,1);
+});
+
+test('#366 persisted master zero never starts music after unlock; repeated master toggles keep one bounded scheduler',async()=>{
+  const f=audioFixture(),{AudioEngine,music}=await idleFixture({globals:f.globals});const a=new AudioEngine({context:f.ctx});
+  a.setVolumes({master:0,music:.5,sfx:1});music.play('title');a.init();
+  assert.equal(music.players.length,0);assert.equal(f.workers.size,0);assert.equal(f.intervals.size,0);
+  a.setVolumes({master:.8});assert.equal(music.track,'title');assert.equal(f.workers.size,1);assert.equal(music.players.length,1);
+  for(let i=0;i<10;i++){a.setVolumes({master:0});assert.equal(f.workers.size,0);assert.equal(music.players.length,0);a.setVolumes({master:.5});assert.equal(f.workers.size,1);assert.equal(music.players.length,1);}
+  a.setVolumes({master:0,music:0});a.setVolumes({master:.8});assert.equal(music.players.length,0);assert.equal(f.workers.size,0);assert.equal(f.counts.suspended,0);
+});
+
 test('interval fallback idles and restarts without duplicate timers',async()=>{
   const f=audioFixture();f.globals.Worker=class{constructor(){throw Error('no worker');}};
   const {MusicEngine}=await idleFixture({globals:f.globals});const m=new MusicEngine();m._init(f.ctx,f.ctx.createGain());m.play('menu');

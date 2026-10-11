@@ -2,6 +2,7 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  'patches/splatoon3/weapon-catalog-adapter.mjs',
   // Source templates, build-time SVG/data and transform helpers have no runtime importers.
   'patches/local-quality/audio-listener-adapter.mjs',
   'patches/local-quality/finish-tape-adapter.mjs',
@@ -51,15 +52,23 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/lobby-resource-adapter.mjs',
   'patches/local-quality/map-teammate-status-adapter.mjs',
   'patches/local-quality/match-retainer-adapter.mjs',
+  'patches/local-quality/menu-navigation-timer-adapter.mjs',
   'patches/local-quality/mural-atlas-adapter.mjs',
+  'patches/local-quality/paint-hotpath-adapter.mjs',
   'patches/local-quality/platform-adapter.mjs',
   'patches/local-quality/portrait-guard-adapter.mjs',
   'patches/local-quality/prop-atlas-adapter.mjs',
   'patches/local-quality/prop-retention-adapter.mjs',
   'patches/local-quality/refl-skip-adapter.mjs',
+  'patches/local-quality/runtime-frame-scratch-adapter.mjs',
   'patches/local-quality/resource-adapter.mjs',
   'patches/local-quality/result-continuation-adapter.mjs',
   'patches/local-quality/score-reticle-adapter.mjs',
+  'patches/local-quality/range-frame-pacing-adapter.mjs',
+  'patches/local-quality/team-special-signal-adapter.mjs',
+  'patches/local-quality/s3-squid-look-adapter.mjs',
+  'patches/reliability/touch-gyro-owner-adapter.mjs',
+  'patches/reliability/input-ownership-adapter.mjs',
   'patches/local-quality/screenfx-damage-reset-adapter.mjs',
   'patches/local-quality/screenfx-lens-release-adapter.mjs',
   'patches/local-quality/showcase-shadow-adapter.mjs',

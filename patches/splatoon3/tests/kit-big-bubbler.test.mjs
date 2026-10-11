@@ -120,7 +120,7 @@ test('the pinned Hermit2DSmooth curves evaluate through their pinned endpoints',
   }
 });
 
-test('#1013 MaxHP-backed target durability follows Special Power Up AP while outer MaxFieldHP stays independent', async () => {
+test('#1013 both durability pools follow their own pinned Special Power Up control points', async () => {
   const { f } = await composed();
   assert.equal(bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 0 } } }), BIG_BUBBLER_RAW.maxHp);
   assert.equal(bigBubblerCanopyHp({ s3: { modifiers: { specialPowerAP: 57 } } }), BIG_BUBBLER_RAW.maxHpHigh);
@@ -130,8 +130,10 @@ test('#1013 MaxHP-backed target durability follows Special Power Up AP while out
   level(f);
   const a = roller(f); a.s3.modifiers.specialPowerAP = 57; f.G.actors = [a]; activate(f, a);
   const dome = bigBubblerDomes()[0];
-  assert.equal(dome.hp, BIG_BUBBLER_RAW.maxFieldHp, 'outer barrier keeps MaxFieldHP ownership from #1051');
-  assert.equal(dome.hpMax, BIG_BUBBLER_RAW.maxFieldHp);
+  // BarrierParam.MaxFieldHP has its own Low/Mid/High (30720/33792/36864) in the pinned table.
+  assert.equal(BIG_BUBBLER_RAW.maxFieldHpHigh, 36864);
+  assert.equal(dome.hp, BIG_BUBBLER_RAW.maxFieldHpHigh, 'outer barrier keeps MaxFieldHP ownership from #1051 at its High endpoint');
+  assert.equal(dome.hpMax, BIG_BUBBLER_RAW.maxFieldHpHigh);
   assert.equal(dome.fieldHp, BIG_BUBBLER_RAW.maxHpHigh, 'MaxHP-backed target receives Special Power Up');
   assert.equal(dome.fieldHpMax, BIG_BUBBLER_RAW.maxHpHigh);
 });
@@ -180,19 +182,18 @@ test('the pinned TimeDamage collapses the canopy and releases its scene resource
   activate(f, a);
   const dome = bigBubblerDomes()[0];
   assert.ok(scene.children.length > sceneBefore, 'the dome owns real scene objects');
-  const disposals = [];
-  const watch = (mesh, kind) => {
-    const original = mesh[kind].dispose.bind(mesh[kind]);
-    mesh[kind].dispose = () => { disposals.push(`${dome.shell === mesh ? 'shell' : 'emitter'}:${kind}`); original(); };
-  };
-  watch(dome.shell, 'geometry'); watch(dome.shell, 'material');
-  watch(dome.emitterMesh, 'geometry'); watch(dome.emitterMesh, 'material');
+  const geometries = new Set(), materials = new Set(), disposals = new Map();
+  dome.group.traverse(o => { if(o.geometry)geometries.add(o.geometry); if(o.material)materials.add(o.material); });
+  for(const resource of [...geometries,...materials]){
+    const original=resource.dispose.bind(resource);
+    resource.dispose=()=>{disposals.set(resource,(disposals.get(resource)||0)+1);original();};
+  }
   for (let i = 0; i < 60 * 30 && bigBubblerDomes().length; i++) tickBigBubblers(DT);
   assert.equal(bigBubblerDomes().length, 0, 'the pinned TimeDamage ends the dome');
   assert.equal(scene.children.length, sceneBefore, 'the dome leaves the scene');
-  assert.deepEqual(disposals.sort(),
-    ['emitter:geometry', 'emitter:material', 'shell:geometry', 'shell:material'],
-    'every dome GPU resource is disposed exactly once');
+  for(const material of materials)assert.equal(disposals.get(material),1,'each activation material is retired once');
+  for(const geometry of geometries)assert.equal(disposals.get(geometry)||0,0,'immutable cached geometry survives another live activation');
+
 });
 
 // ---------------------------------------------------------------------------

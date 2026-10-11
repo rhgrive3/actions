@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "version": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "retrievedFrom": "User-provided Splatoon-public-sources-part-02-of-19.zip",
+  "files": {
+    "shooter": {
+      "file": "WeaponShooterNormal.game__GameParameterTable.json",
+      "sha256": "dfca9f45fd0df3b6afab8f6ec0e47034912f3a6fc411936b9fd7257fe85c4cb9",
+      "sourcePath": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json"
+    },
+    "dualies": {
+      "file": "WeaponManeuverNormal.game__GameParameterTable.json",
+      "sha256": "55e37c4d8db92b63d48f281015a30a9aaccd1ff838edf88ae4103124c365eb07",
+      "sourcePath": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json"
+    },
+    "splatling": {
+      "file": "WeaponSpinnerStandard.game__GameParameterTable.json",
+      "sha256": "92647d586beee1764ca8984820fa37e0fd7887e2a756f7ca18e10e1aef97fd08",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json"
+    },
+    "charger": {
+      "file": "WeaponChargerNormal.game__GameParameterTable.json",
+      "sha256": "dfe4637def507f933b0bbecbc805331f6357bb69ac165608a6e558406a4b72c1",
+      "sourcePath": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json"
+    },
+    "roller": {
+      "file": "WeaponRollerNormal.game__GameParameterTable.json",
+      "sha256": "5b423eb35d4cac268a1e4085ec8321d27639ddbfc8f3775bb65696af5c2449c7",
+      "sourcePath": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json"
+    },
+    "blaster": {
+      "file": "WeaponBlasterMiddle.game__GameParameterTable.json",
+      "sha256": "36139282d2bd915f675424d99d5641800f184bcc9a9d1b0c94be533d38f64e18",
+      "sourcePath": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json"
+    },
+    "slosher": {
+      "file": "WeaponSlosherStrong.game__GameParameterTable.json",
+      "sha256": "1d20043ad7efaf2831801afbce601fb1e14bfd11947063903c6fadd6c98f5298",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json"
+    }
+  }
+}

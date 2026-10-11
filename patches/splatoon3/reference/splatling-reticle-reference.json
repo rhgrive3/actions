@@ -1,0 +1,35 @@
+{
+  "issue": 1100,
+  "reference": "Splatoon 3 Ver. 11.3.0 Heavy Splatling (バレルスピナー), training-range enemy-target capture",
+  "sourcePage": "https://game8.jp/splatoon3/478569",
+  "imageUrl": "https://img.game8.jp/11162777/0ec2968b1e814a56f693bb18e7e27885.jpg/poster",
+  "sha256": "150069970f144f70727485b34b86fefa4e22249c17adb00ad69ac27791baf63e",
+  "imageSize": [768, 432],
+  "provenance": "Third-party capture, JPEG, downscaled. Not Nintendo's official 1280x720 photo. Spread value at capture time is unknown.",
+  "method": "Original JPEG RGB pixels. ROI [350,150,430,205]. Select min(R,G,B)>120 and max-min<35; 8-connected components with at least 5 pixels. Bounds are the detected bright pixels, so bracket centroids are partial (about 1px uncertainty plus JPEG blur).",
+  "ringComponent": {
+    "centroid": [388.5, 177.7],
+    "bounds": [378, 167, 399, 189],
+    "outerRadiusPx": 10.5
+  },
+  "corners": [
+    { "name": "upper-left", "bounds": [358, 156, 364, 165] },
+    { "name": "upper-right", "bounds": [411, 156, 415, 159] },
+    { "name": "lower-left", "bounds": [358, 185, 370, 195] },
+    { "name": "lower-right", "bounds": [406, 189, 416, 196] }
+  ],
+  "frameOuterExtentPx": { "left": -30.5, "right": 27.5, "top": -21.7, "bottom": 18.3 },
+  "derivation": {
+    "ringTrackRadiusInkwavePx": 21,
+    "scaleInkwavePerReferencePx": 2.0,
+    "outerCornerInkwavePx": { "x": 58, "y": 40 },
+    "armLengthInkwavePx": 20,
+    "note": "outerCorner = round(scale x mean outer extent about the ring centre; x mean 29.0, y mean 20.0). Arm length is about 10 reference px. Brackets are drawn only as outer corners, so the inside arms do not reach the charge ring (r=21, segments to r=25)."
+  },
+  "unverified": [
+    "Spread value that the capture corresponds to (sp=0 envelope in INKWAVE is not known to match S3 at rest).",
+    "Mapping of INKWAVE's track ring radius to S3's gauge radius (assumed equal scale through the ring).",
+    "Bracket stroke width and rounding (2px border and 3px radius are approximations).",
+    "Spread-to-pixel rate is unchanged from the existing INKWAVE model (1px per spread unit radially)."
+  ]
+}

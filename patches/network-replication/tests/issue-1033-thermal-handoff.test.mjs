@@ -14,7 +14,7 @@ async function appliedHit(ackOwner) {
   const sent = [], acks = [], confirmations = [];
   function net(myId, packets) {
     const nm = Object.create(f.NetMatch.prototype);
-    Object.assign(nm, { myId, cfg: { map: 'normal' }, byNid: new Map([[1, attacker], [2, victim]]),
+    Object.assign(nm, { myId, cfg: { id: 'match-1', map: 'normal' }, byNid: new Map([[1, attacker], [2, victim]]),
       hitNextSeq: 0, hitPending: new Map(), _hitSeq: 0, _pendingHits: new Map(), peers: new Map(),
       s: { hostId: 'H', _members: new Set(['S', 'OLD', 'NEW']),
         tr: { sendTo(to, data) { packets.push({ to, data }); return true; } } } });

@@ -71,13 +71,15 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-lobby.is-host-teams .iw-lob__roste
     patch("      teamRow.classList.toggle('is-locked', bossMode());",
       "      teamRow.classList.toggle('is-locked', bossMode() || !host);",'guest picker is locked');
     patch("      if (isHost()) { tryStart(); return; }",
-      "      if (isHost() && bossMode()) { tryStart(); return; }",'Turf host readies before Start');
-    patch("      if (!me || S.launching) return;\n      const v = !me.ready;",
-      "      if (!me || S.launching) return;\n      if (!bossMode() && !lob.teamsConfirmed) {\n        this.toast('The host must confirm teams before readying up', { kind: 'info' });\n        return;\n      }\n      const v = !me.ready;",'no optimistic ready before confirmation');
+      "      const canConfirm = !!net && typeof net.confirmTeams === 'function';\n      if (isHost() && bossMode()) { tryStart(); return; }\n      // offline stand-in (?netmock) has no host team confirmation: nothing can be pending, so host keeps START and guests ready up (#1039 gate applies only where confirmTeams exists).\n      if (isHost() && !canConfirm) { tryStart(); return; }\n      // Turf: READY is each participant's final step after host-confirmed teams; START only launches (#1039).\n      if (!bossMode() && !lob.teamsConfirmed) { if (canConfirm) { restartAnim(readyBtn, 'is-shake'); this._sfx('ui_error', 0.15); this.toast('Waiting for the host to confirm teams', { kind: 'info', icon: GLYPHS.users }); return; } }",'host and guest ready wait for confirmation');
     patch("    const barItems = () => [wChip, lChip, teamRow, emoteBtn, isHost() ? startBtn : readyBtn];",
-      "    const barItems = () => [wChip, lChip, teamRow, emoteBtn,\n      ...(isHost() ? (bossMode() ? [startBtn] : [...teamAssignButtons, confirmTeamsBtn, readyBtn, startBtn]) : [readyBtn])];",'reachable confirmation and host ready');
+      "    const barItems = () => [wChip, lChip, teamRow, emoteBtn, ...(isHost() ? (bossMode() ? [startBtn] : [...teamAssignButtons, confirmTeamsBtn, readyBtn, startBtn]) : [readyBtn])];",'host READY in Turf bar');
     patch("const sc = next.closest('.iw-rows');",
-      "const sc = next.closest('.iw-rows, .iw-lob__roster');",'keep roster navigation visible');
+      "const sc = next.closest('.iw-rows, .iw-lob__roster');", 'keep roster navigation visible');
+    patch("      if (dir === 'right') return i < 1 ? copyBtn : isHost() ? startBtn : readyBtn;",
+      "      if (dir === 'right') return i < 1 ? copyBtn : isHost() && bossMode() ? startBtn : readyBtn;",'settings right reaches host READY');
+    patch("      readyBtn.classList.toggle('is-on', ready);",
+      "      readyBtn.classList.toggle('is-on', ready);\n      // The lobby CSS hides READY for hosts; a Turf host needs it after host-confirmed teams (#1039).\n      readyBtn.style.display = host && !bossMode() ? 'flex' : '';",'show host READY in Turf');
     return code;
   }
   return code;

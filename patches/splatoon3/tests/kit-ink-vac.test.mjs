@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './kit-composed-fixture.mjs';
 import { installKitInkVac, inkVacAbsorbCandidate, disposeInkVac, blastRadius, intakeNearRadius,
-  intakeFarRadius, exhaleDamage, exhaleSpeed, inkVacBlastDescriptor, INK_VAC_CALIBRATION, VAC_ID }
+  intakeFarRadius, exhaleDamage, exhaleSpeed, inkVacBlastDescriptor, INK_VAC_CALIBRATION, VAC_ID, inkVacOwnerMoveSpeed }
   from '../runtime/kit-ink-vac.mjs';
 
 async function setup() {
@@ -397,7 +397,7 @@ test('the held visual is visible, aim-aligned, and never extends behind the owne
   mesh.geometry.computeBoundingBox();
   assert.ok(Math.abs(mesh.geometry.boundingBox.min.y) < 1e-6,
     'the cone apex sits at the origin, so nothing extends behind the owner');
-  assert.ok(Math.abs(mesh.geometry.boundingBox.max.y - 15) < 1e-6, 'the wide end is one intake length forward');
+  assert.ok(Math.abs(mesh.geometry.boundingBox.max.y * mesh.material.uniforms.extent.value - 15) < 1e-6, 'the wide end is one intake length forward');
   const levelAxis = new f.THREE.Vector3(0, 1, 0).applyQuaternion(mesh.quaternion);
   assert.ok(levelAxis.distanceTo(new f.THREE.Vector3(0, 0, 1)) < 1e-6, 'the mesh follows the level aim');
   a.aimPitch = Math.PI / 2; a.aimYaw = 0;   // native update rebuilds aimDir from these
@@ -994,4 +994,21 @@ test('a proposal that arrives after the owner died is stale, not credited', asyn
   const viewP3 = new Map([[1, p1], [2, p2], [3, p3]]);
   assert.equal(hop(f, viewP3, staleForNew, EV.absorb).verdict.reason, 'stale-or-mismatched-serial');
   assert.equal(f.inkVacState(p3).charge, 0, 'the new activation was not credited from a dead-owner packet');
+});
+
+test('the Vac owner walks at the pinned MoveSpeedMinCharge 0.09 -> MoveSpeedFullCharge 0.07 while held', async () => {
+  const { f, a } = await setup();
+  const ordinary = a.weaponRunner.moveSpeed();
+  const near = (x, y, label) => assert.ok(Math.abs(x - y) < 1e-9, `${label}: ${x} != ${y}`);
+  near(inkVacOwnerMoveSpeed(0), 5.4, 'min-charge endpoint'); near(inkVacOwnerMoveSpeed(1), 4.2, 'full-charge endpoint');
+  activate(f, a);
+  near(a.weaponRunner.moveSpeed(), 0.09 * 60, 'empty intake');
+  shoot(f, a);
+  near(f.inkVacState(a).charge, 1, 'filled');
+  near(a.weaponRunner.moveSpeed(), 0.07 * 60, 'full intake');
+  a.intent.fire = true; enterExhale(f, a);
+  near(a.weaponRunner.moveSpeed(), 0.07 * 60, 'return-shot hold keeps the full-charge speed');
+  a.intent.fire = false; f.tick(a);
+  assert.ok(!f.inkVacState(a), 'released');
+  near(a.weaponRunner.moveSpeed(), ordinary, 'ordinary walking target after release');
 });

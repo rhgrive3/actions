@@ -19,7 +19,7 @@ async function rig({ negative = false } = {}) {
     if (!negative || rel !== 'src/net/netmatch.js') return out;
     const gate = "    if (from === this.s.hostId && d.c != null && (!Array.isArray(d.c) || d.c.length !== 2 || typeof d.c[0] !== 'string' || !Number.isFinite(d.c[1]) || d.c[1] < 0)) return;";
     assert.ok(out.includes(gate), 'counterfactual removes only the host clock sidecar guard');
-    return out.replace(gate, '');
+    return out.replace(gate, '').replace("    if (!Array.isArray(sample) || sample.length < 2 || !Number.isFinite(sample[1]) || sample[1] < 0) return;\n", '');
   };
   const f = await fixture({ fullRuntime: true, adapt, adaptRuntime: adapt, extraExports: exports });
   const source = fs.readFileSync(new URL('../../splatoon3/bootstrap.mjs', import.meta.url), 'utf8');

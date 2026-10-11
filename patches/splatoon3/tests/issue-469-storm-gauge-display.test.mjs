@@ -1,84 +1,101 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
-const close = (a,b) => assert.ok(Math.abs(a-b)<1e-8, `${a} != ${b}`);
-async function setup({negative=false,weapon='charger'}={}) {
-  const f = await fixture({productionComposition:true, realProjectiles:true,
-    extraExports:`export { hudFrameSnapshot } from './patches/local-quality/hud-snapshots.mjs';
-      export { installStormPower } from './patches/splatoon3/runtime/storm-power.mjs';
-      export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
-      export { HUD } from './inkwave-public/src/ui/hud.js';`,
-    adaptRuntime(rel,code) {
-      if (!negative || rel !== 'patches/local-quality/hud-snapshots.mjs') return code;
-      const before = '  const stormGauge = stormGaugeFraction(a);\n  frame.special = stormGauge ?? a.specialFrac(); frame.specialReady = a.specialReady(); frame.specialActive = stormGauge !== null || !!a.specialActive;';
-      assert.ok(code.includes(before), 'same-composition negative control finds only the new HUD projection');
-      return code.replace(before, '  frame.special = a.specialFrac(); frame.specialReady = a.specialReady(); frame.specialActive = !!a.specialActive;');
-    }});
-  f.installStormPower(f);
-  const a=f.make(weapon); a.isLocal=true; a.nid=1; a.remote=false;
-  a._resolve=()=>{a.grounded=true;}; a.special=a.specialCost();
-  const game={settings:{},minimap:{canvas:{}},_lowInkFlash:0}, match={time:180,teamSummary:()=>[]};
-  const node=()=>({classes:new Set(),attrs:{},classList:{toggle(k,on){on?this.owner.classes.add(k):this.owner.classes.delete(k);}},setAttribute(k,v){this.attrs[k]=v;},animate(){}});
-  const makeNode=()=>{const n=node();n.classList.owner=n;return n;};
-  const hud=Object.assign(Object.create(f.HUD.prototype),{_L:{},sp:makeNode(),spSegments:Array.from({length:23},makeNode),flashes:[],_restart(_el,k){this.flashes.push(k);}});
-  const frame=()=>{const v=f.hudFrameSnapshot(game,match,a,a.weapon,0,[],[],null,false,f.PLAYER,f.SUB);hud._updSpecial(v,1/60);return {...v};};
-  const launch=()=>{a.intent.sub=true;f.tick(a);a.intent.sub=false;f.tick(a);assert.equal(f.G.projectiles.bombs.length,1);};
-  return {...f,a,game,hud,frame,launch};
+import { fixture } from './storm-effects-fixture.mjs';
+import { installStormPower } from '../runtime/storm-power.mjs';
+import { hudFrameSnapshot } from '../../local-quality/hud-snapshots.mjs';
+// #469: the spent Ink Storm gauge is displayed from the existing actor-owned lock
+// (480 ticks in INKWAVE; see reports/inkwave-splatoon3-behavior-2026-10-02.md).
+// The lock value itself is unverified against a primary Nintendo source.
+const LOCK_TICKS = 480;
+const close = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-7, msg || `${a} != ${b}`);
+function system(f) {
+  f.G.scene = new f.THREE.Scene(); f.G.actors = [];
+  const p = f.G.projectiles = new f.Projectiles(f.G.scene);
+  return p;
 }
+function chargeActor(f) {
+  const a = f.make('charger'); a._resolve = () => { a.grounded = true; }; a.special = a.specialCost(); return a;
+}
+function release(f, a) { a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a); }
+function hud(f, game, a) {
+  const m = { time: 0, teamSummary: () => null, controller: null };
+  return hudFrameSnapshot(game, m, a, a.weapon, 0, [], [], null, false, f.PLAYER, f.SUB);
+}
+const newGame = () => ({ settings: { showFps: false }, _lowInkFlash: 0, minimap: { canvas: null } });
 
-test('#469 negative control retains zero HUD gauge while the real actor lock remains live',async()=>{
-  const f=await setup({negative:true});f.a._startSpecial();assert.equal(f.frame().special,0);
-  f.launch();f.tick(f.a,240);close(f.a.stormGaugeLock,4);
-  const view=f.frame();assert.equal(view.special,0);assert.equal(view.specialActive,false);assert.equal(f.hud._L.spSegments,0);
-});
-
-test('#469 real holding/throw/expiry drive HUD and mobile without changing spendable charge',async()=>{
-  const f=await setup();assert.equal(f.frame().specialReady,true);
-  f.a._startSpecial();let view=f.frame();assert.equal(view.special,1);assert.equal(view.specialReady,false);assert.equal(view.specialActive,true);
-  assert.equal(f.a.special,0);assert.equal(f.a.specialFrac(),0);assert.equal(f.hud._L.spSegments,23);
-  f.tick(f.a,60);assert.equal(f.frame().special,1);f.launch();close(f.a.stormGaugeDuration,8);
-  let previous=1;
-  for(let tick=1;tick<=480;tick++){
-    f.tick(f.a);view=f.frame();assert.ok(view.special<=previous+1e-12);previous=view.special;
-    assert.equal(f.game._hudTransport.mobile.special,view.special);
-    assert.equal(f.game._hudTransport.mobile.activeSp,view.specialActive);
-    assert.equal(view.specialReady,false);assert.equal(f.a.special,0);
-    if(tick===240){close(view.special,.5);assert.equal(view.specialActive,true);assert.equal(f.a.specialActive,null);assert.equal(f.hud._L.spSegments,11);}
-    if(tick<480){assert.equal(view.specialActive,true);f.a.addTurf(1);assert.equal(f.a.special,0);}
+test('#469 activation keeps the display full while authoritative charge is spent, then drains on the existing lock', async () => {
+  const f = await fixture(), p = system(f), a = chargeActor(f);
+  a._startSpecial(); assert.equal(a.specialActive.phase, 'hold');
+  close(a.special, 0, 'activation tick spends the authoritative charge');
+  close(f.stormGaugeFraction(a), 1, 'held device shows the full spent gauge');
+  release(f, a);
+  close(a.stormGaugeLock, LOCK_TICKS / 60); assert.equal(a.specialActive.phase, 'throw');
+  let prev = 1;
+  for (let i = 1; i < LOCK_TICKS; i++) {
+    f.tick(a);
+    const v = f.stormGaugeFraction(a);
+    assert.ok(v > 0 && v <= prev + 1e-12, `monotonic non-zero drain at tick ${i}`);
+    prev = v;
+    if (i === 240) {
+      close(v, 0.5, 'midpoint of the 480-tick lock');
+      close(a.specialFrac(), 0, 'control: without the projection the spent gauge reads empty');
+      assert.equal(a.specialReady(), false, 'spent gauge is not ready');
+      a.addTurf(10); close(a.special, 0, 'recharge is blocked during the drain');
+      close(f.stormGaugeFraction(a), 0.5, 'turf gain does not refill the displayed spent gauge');
+    }
   }
-  assert.equal(view.special,0);assert.equal(view.specialActive,false);assert.equal(f.hud._L.spSegments,0);
-  f.a.addTurf(10);close(f.frame().special,10/f.a.specialCost());
-  assert.equal(f.hud.flashes.filter(x=>x==='is-flare').length,1,'only the initial ready charge flares');
+  assert.ok(f.stormGaugeFraction(a) > 0, 'gauge is still draining at tick 479');
+  f.tick(a); assert.equal(a.stormGaugeLock, 0); assert.equal(f.stormGaugeFraction(a), null, 'final tick ends the display');
+  a.addTurf(10); close(a.special, 10, 'normal charging resumes after the lock ends');
+  p.clear();
 });
 
-test('#469 death/reset preserve both used-gauge progress and the actual extended lock denominator',async()=>{
-  const f=await setup();f.a.s3.modifiers.stormDuration=10;f.a._startSpecial();f.launch();
-  close(f.a.stormGaugeLock,10);close(f.a.stormGaugeDuration,10);assert.equal(f.frame().special,1);
-  f.tick(f.a,120);close(f.frame().special,.8);f.a.splat(null,'water');f.tick(f.a,60);
-  close(f.frame().special,.7);assert.equal(f.a.special,0);
-  f.a.reset();assert.equal(f.a.s3.stormPowerSnapshot,undefined);
-  close(f.frame().special,.7);close(f.a.stormGaugeDuration,10);f.a.addTurf(5);assert.equal(f.a.special,0);
-  f.tick(f.a,420);assert.equal(f.frame().specialActive,false);assert.equal(f.frame().special,0);
+test('#469 HUD and mobile transport read the same projection; charge, readiness and remote snapshots are unchanged', async () => {
+  const f = await fixture(), p = system(f), a = chargeActor(f), game = newGame();
+  a._startSpecial();
+  let frame = hud(f, game, a);
+  close(frame.special, 1, 'HUD full while held'); assert.equal(frame.specialActive, true); assert.equal(frame.specialReady, false);
+  release(f, a); f.tick(a, 240);
+  frame = hud(f, game, a);
+  close(frame.special, 0.5, 'HUD follows the lock midpoint'); assert.equal(frame.specialActive, true);
+  assert.equal(frame.specialReady, false); close(game._hudTransport.mobile.special, 0.5, 'mobile mirrors the HUD gauge');
+  assert.equal(game._hudTransport.mobile.activeSp, true);
+  close(a.special, 0, 'native charge stays spent');
+  a.remote = true; frame = hud(f, game, a);
+  close(frame.special, 0, 'remote actors keep their replicated value; no invented post-use clock');
+  assert.equal(frame.specialActive, false); a.remote = false;
+  f.tick(a, 240); frame = hud(f, game, a);
+  close(frame.special, 0, 'expired lock falls back to the ordinary empty charge');
+  assert.equal(frame.specialActive, false);
+  p.clear();
 });
 
-test('#469 native packets retain zero spent charge; remote and other-special HUD paths are unchanged',async()=>{
-  const f=await setup();f.a._startSpecial();f.launch();f.tick(f.a,240);close(f.frame().special,.5);
-  let packet;const sender={byNid:new Map([[1,f.a]]),out:[],stats:{out:0},s:{tr:{broadcast:m=>{packet=m;}}}};
-  f.NetMatch.prototype._sendTick.call(sender);
-  assert.equal(packet.a[0][13],0,'native special scalar remains spendable charge, not the displayed drain');
-  f.a.remote=true;assert.equal(f.frame().special,0);assert.equal(f.frame().specialActive,false);
-  const other=await setup({weapon:'dualies'});other.a.special=other.a.specialCost()/2;
-  close(other.frame().special,.5);assert.equal(other.frame().specialActive,false);
-  other.a.special=other.a.specialCost();other.a._startSpecial();
-  assert.equal(other.a.specialActive.id,'slam');assert.equal(other.frame().special,other.a.specialFrac());assert.equal(other.frame().specialActive,true);
-  other.tick(other.a,15);assert.equal(other.frame().special,other.a.specialFrac());
+test('#469 Special Power extension sets the denominator once; death and reset keep the visible remainder', async () => {
+  const f = await fixture(), p = system(f), a = chargeActor(f);
+  installStormPower({ Actor: f.Actor, Projectiles: f.Projectiles });
+  a.s3 = { modifiers: { stormDuration: 10 } };
+  a._startSpecial(); release(f, a);
+  close(a.stormGaugeLock, 10, 'Special Power extends the throw lock'); close(a.stormGaugeDuration, 10, 'denominator captured after the throw');
+  f.tick(a, 300); close(f.stormGaugeFraction(a), 0.5, 'extended lock is normalized by its real duration');
+  const before = f.stormGaugeFraction(a);
+  a.splat(null, 'water'); a.reset();
+  close(f.stormGaugeFraction(a), before, 'reset removes the temporary power snapshot without a display jump');
+  close(a.stormGaugeLock, 5, 'death and reset retain the lock');
+  f.tick(a, 300); assert.equal(f.stormGaugeFraction(a), null, 'lock expires after the remaining ticks');
+  a.addTurf(10); close(a.special, 10, 'reset does not reopen recharge early');
+  p.clear();
 });
 
-test('#469 equal fixed Storm lock ticks give equal display at 30/60/120 Hz',async()=>{
-  const results=[];
-  for(const hz of [30,60,120]){const f=await setup();f.a._startSpecial();f.launch();const clock=new f.FixedClock(),rows=[];
-    for(let render=0;render<hz*8;render++)clock.advance(1/hz,()=>{f.tick(f.a);const view=f.frame();rows.push([view.special,view.specialActive,f.a.special,f.hud._L.spSegments]);});
-    results.push(rows);
+test('#469 30/60/120Hz render schedules produce identical spent-gauge display traces', async () => {
+  let expected;
+  for (const hz of [30, 60, 120]) {
+    const f = await fixture(), p = system(f), a = chargeActor(f);
+    a._startSpecial(); release(f, a);
+    const clock = new f.FixedClock(), rows = [];
+    for (let frame = 0; frame < hz * 8; frame++) clock.advance(1 / hz, dt => { f.G.time += dt; a.update(dt); rows.push(f.stormGaugeFraction(a)); });
+    if (expected) assert.deepEqual(rows, expected); else expected = rows;
+    assert.equal(rows.at(-1), null, 'display ends with the lock');
+    assert.ok(rows.at(-2) > 0, 'display is still non-zero one tick before the end');
+    p.clear();
   }
-  assert.deepEqual(results[0],results[1]);assert.deepEqual(results[1],results[2]);assert.equal(results[0].length,480);
 });

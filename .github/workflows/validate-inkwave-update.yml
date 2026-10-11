@@ -205,6 +205,26 @@ jobs:
           node scripts/check-weapons-reference.mjs .reference-data/weapons
       - name: Verify completed weapon source mirror
         run: node scripts/verify-completion-sources.mjs .reference-data/weapons
+      - name: Compare every catalog record with its pinned numerical source
+        run: |
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          import { MAIN_WEAPON_CATALOG as catalog } from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';
+          fs.writeFileSync('.reference-catalog-index.json',JSON.stringify({commit:catalog.sourceCommit,paths:catalog.records.map(r=>r.sourcePath)}));
+          JS
+          python3 - <<'PY'
+          import concurrent.futures, json, pathlib, urllib.request
+          index=json.loads(pathlib.Path('.reference-catalog-index.json').read_text())
+          paths=set(index['paths']) | {'data/mush/1130/WeaponInfoMain.json','data/language/USen.json','data/language/JPja.json'}
+          def fetch_source(relative):
+            target=pathlib.Path('.reference-data/catalog')/relative
+            target.parent.mkdir(parents=True,exist_ok=True)
+            url='https://raw.githubusercontent.com/Leanny/splat3/'+index['commit']+'/'+relative
+            with urllib.request.urlopen(url,timeout=30) as response: target.write_bytes(response.read())
+          with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+            list(pool.map(fetch_source,sorted(paths)))
+          PY
+          INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test patches/splatoon3/tests/main-weapon-catalog-data.test.mjs
       - name: Verify pinned Sub/Special numerical sources
         run: |
           python3 - <<'PY'
@@ -335,6 +355,9 @@ jobs:
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
+      - name: Verify browser movement speed across directions and native firing/rolling transitions
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-movement-speed.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/movement-speed" --profile-dir "$CI_STORAGE/cache/movement-speed"
       - name: Verify exact ancillary paint hashes and canonical GPU masks
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask" --profile-dir "$CI_STORAGE/cache/paint-mask" --exact-source
@@ -344,12 +367,18 @@ jobs:
       - name: Verify two-player replication with 100 ms ordered delivery delay
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-network-browser.mjs --delay-frames 6 --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network-delay" --profile-dir "$CI_STORAGE/cache/network-delay" --exact-source
+      - name: Verify existing special models, grips, shaders and GPU retirement
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-special-presentation.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/special-presentation"
       - name: Verify rendered walking contacts and transitions
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/motion" --profile-dir "$CI_STORAGE/cache/motion"
       - name: Verify rendered sub, Flow and weapon detail transitions
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-motion-detail.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/motion-detail" --profile-dir "$CI_STORAGE/cache/motion-detail"
+      - name: Verify seven weapon models and source-loaded attack grip ownership
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-weapon-models.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/weapon-models"
       - name: Verify Flow geometry through actual GTAO and GPU disposal
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-flow-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/flow" --profile-dir "$CI_STORAGE/cache/flow" --exact-source
@@ -430,7 +459,7 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json'],
             'catalog':['catalog/motion-catalog-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json'],
             'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
@@ -452,6 +481,7 @@ jobs:
             for name in checks: assert reports[name]['sourceSha']==os.environ['SOURCE_SHA']
           if suite=='active':
             assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+            assert reports['weapon-models/weapon-models-result.json']['sourceSha']==os.environ['SOURCE_SHA']
             if runtime_performance:
               assert reports['runtime-after/runtime-result.json']['sourceSha']==os.environ['SOURCE_SHA']
               assert reports['runtime-before/runtime-result.json']['sourceSha']=='5e28dbd16f7829aebd88052ff5f7fdf71f39fdad'
@@ -561,11 +591,16 @@ jobs:
         run: |
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/seven-site
           node scripts/check-inkwave-seven-claims.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/seven-browser.json
+      - name: Verify compiled main weapon catalog in Chromium and WebKit
+        shell: bash
+        run: node scripts/check-inkwave-catalog-browser.mjs .ci-scratch/seven-site --webkit | tee .ci-scratch/catalog-browser.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: inkwave-seven-claims-${{ env.SOURCE_SHA }}
-          path: .ci-scratch/seven-browser.json
+          path: |
+            .ci-scratch/seven-browser.json
+            .ci-scratch/catalog-browser.json
           if-no-files-found: warn
           retention-days: 14
   resource_paint_continuation:

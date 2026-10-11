@@ -1,6 +1,7 @@
 import { turfCombatAllowed } from './turf-combat.mjs';
 import { stormRecoveryState } from './storm-effects.mjs';
 import { isChargerFullCharge } from './weapons.mjs';
+import { slamProtected } from './tidal-slam-gauge.mjs';
 let api, tuning, profile;
 export function installResources(context, values) { api = context; tuning = values.resources; profile = values; }
 export const RESPAWN_CAUSES = Object.freeze({ normal: 8.5, water: 7.0, outOfBounds: 5.5 });
@@ -63,7 +64,8 @@ export function updateResources(a, dt) {
     const exposure = Math.max(0, a.s3.enemyInkTime - Math.max(before, mods.enemyInkGrace ?? r.enemyInkGrace ?? 0));
     const cap = mods.enemyDamageCap ?? r.enemyInkDamageCap;
     const allowance = Math.max(0, cap - (P.hp - a.hp));
-    if (exposure > 0 && allowance > 0 && a.invuln <= 0) {
+    // #573: Slam's 50F full-invulnerability owner rejects enemy-ink contact too, the same as weapon damage.
+    if (exposure > 0 && allowance > 0 && a.invuln <= 0 && !slamProtected(a)) {
       const rate = enemyInkDamageRate(mods.enemyDamageRate ?? r.enemyInkDps, r.enemyInkReferenceHz, r.enemyInkDamageQuantum);
       const damage = Math.min(rate * exposure, allowance, Math.max(0, a.hp - 1));
       a.damageFromInk += damage; a.hp -= damage;
@@ -101,6 +103,13 @@ export function updateResources(a, dt) {
     a.s3.chargerKeepRecover = Math.max(0, (a.s3.chargerKeepRecover || 0) - dt);
   }
   const runner = a.weaponRunner;
+  if (runner?.s3SplatlingCancelRefillPending) {
+    runner.s3SplatlingCancelRefillPending = false;
+    if (a.weapon.kind === 'splatling') {
+      a.s3 ||= {};
+      a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, 29 / 60);
+    }
+  }
   const chargerCancelled = runner?.s3ChargerCancelRefillPending === true;
   if (runner) runner.s3ChargerCancelRefillPending = false;
   if (a.weapon.kind === 'charger' && (chargerCancelled ||
@@ -111,6 +120,7 @@ export function updateResources(a, dt) {
   const chargerInterruptRecover = a.weapon.kind === 'charger' ? (a.s3?.chargerInterruptRecover || 0) : 0;
   const chargerKeepRecover = a.weapon.kind === 'charger' ? (a.s3?.chargerKeepRecover || 0) : 0;
   const chargerLowRecovery = a.weapon?.kind === 'charger' && runner?.charging &&
+    !isChargerFullCharge(runner.charge) &&
     a.ink + 1e-10 < (a.weapon.inkMin ?? 0) && chargerInterruptRecover <= 1e-10 && chargerKeepRecover <= 1e-10;
   const canRefill = chargerLowRecovery ||
     ((rollingRecovery ? (!a.weaponRunner.rolling || stationaryRollRecovery) : a.lastFire + 1e-10 >= delay)
@@ -118,6 +128,10 @@ export function updateResources(a, dt) {
       && (a.weaponRunner.s3DodgeInkRemaining || 0) <= 1e-10
       && chargerInterruptRecover <= 1e-10
       && chargerKeepRecover <= 1e-10
+      // busy() also grants form admission: a full charge may enter squid form
+      // before the later weapon phase creates s3Stored. That does not grant a
+      // refill tick between the paid hold and its keep record.
+      && !(a.weapon.kind === 'charger' && runner?.charging && isChargerFullCharge(runner.charge))
       && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored);
   if (canRefill) {
     let rate = 0;
@@ -125,7 +139,7 @@ export function updateResources(a, dt) {
     else if (!isSquid) rate = r.inkRefillKid;
     // Dry/enemy-ink squid form does not receive underwater refill.
     const multiplier = a.submerged || a.climbing ? mods.inkRecoverySwim ?? 1 : mods.inkRecoveryKid ?? 1;
-    a.ink = Math.min(P.inkMax, a.ink + rate * multiplier * dt);
+    a.ink = Math.min(P.inkMax, a.ink + rate * multiplier * dt / (a.weapon.inkTankScale || 1));
   }
   if (!wasFull && a.ink >= P.inkMax && a.isLocal) api.G.audio?.play('refill_full', { volume: 0.5 });
 }

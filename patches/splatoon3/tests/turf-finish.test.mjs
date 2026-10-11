@@ -106,3 +106,49 @@ test('#980 180 seconds includes every authoritative interval, including number 1
  for(let frame=0;frame<180*144;frame++)runSimulation(game,1/144);
  assert.equal(legal,10800);assert.ok(Math.abs(total-180)<1e-8);assert.equal(f.m.state,'finish');assert.deepEqual(plain(f.m.s3FinishCoverage),[.4,.6]);
 });
+
+
+test('#935 actual held Charger/Splatling/SUB are cancelled before finish neutralization at 30/60/120Hz', async () => {
+  for (const hz of [30, 60, 120]) for (const weapon of ['charger', 'splatling', 'shooter']) {
+    const match = await fixture(), gameplay = await actors(), actor = gameplay.make(weapon);
+    const runner = actor.weaponRunner;
+    actor.ink = 100;
+    actor.intent.fire = actor._prevIntent.fire = true;
+    actor.intent.sub = actor._prevIntent.sub = true;
+    runner.aimingSub = true;
+    if (weapon === 'charger' || weapon === 'splatling') {
+      runner.charging = true; runner.charge = .5; runner.chargeT = .5;
+    }
+    let bombs = 0;
+    gameplay.G.projectiles.throwBomb = () => { bombs++; };
+    const beforeShots = gameplay.shots.length, beforeInk = actor.ink;
+    let cancellations = 0;
+    assert.equal(typeof runner.cancelPendingInput, 'function', 'runner has the real cancellation owner');
+    const cancel = runner.cancelPendingInput;
+    runner.cancelPendingInput = function (...args) {
+      cancellations++; return cancel.apply(this, args);
+    };
+    match.m.local = actor;
+    match.m.time = 1 / 120;
+    const clock = new FixedClock();
+    for (let frame = 0; frame < hz * .25; frame++) {
+      clock.advance(1 / hz, dt => {
+        if (match.m.state === 'playing') match.m.update(dt);
+        // The production state transition happens before the actor can
+        // interpret a false level as a real release on the next fixed tick.
+        gameplay.tick(actor);
+      });
+    }
+    assert.equal(match.m.state, 'finish', weapon + ' at ' + hz + 'Hz');
+    assert.ok(cancellations >= 1, 'pending weapon actions cancelled');
+    for (const key of ['fire', 'sub', 'jump', 'special', 'squid']) {
+      assert.equal(actor.intent[key], false, key + ' held at finish');
+      assert.equal(actor._prevIntent[key], false, key + ' prior level at finish');
+    }
+    assert.equal(bombs, 0, 'no held SUB bomb on finish');
+    assert.equal(gameplay.shots.length, beforeShots, weapon + ' cannot fire on finish');
+    assert.equal(actor.ink, beforeInk, 'finish does not spend ink');
+    if (weapon === 'charger' || weapon === 'splatling')
+      assert.equal(runner.charging, false, 'held charge retired without a release');
+  }
+});

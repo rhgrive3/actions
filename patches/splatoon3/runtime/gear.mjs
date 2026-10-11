@@ -2,9 +2,11 @@ import { installThermalTracking } from './private-tracking.mjs';
 import { installHaunt } from './haunt.mjs';
 import { installDryInk } from './dry-ink.mjs';
 import { CLOTHING_ABILITIES, SPLATFEST_TEE, clothingAbilityAllowed, deathGearPenalty } from './clothing-gear.mjs';
+import { drinkGearPoints } from './support-cooler.mjs';
 import { selectedSub } from './kit-composition.mjs';
 import { installSubReady } from './sub-ready.mjs';
 import { installStormPower } from './storm-power.mjs';
+import { shooterMovementActive, shooterShotReady } from './shooter-movement.mjs';
 import { configureSwimStealth, updateSwimStealth, swimSpeedMultiplier } from './swim-stealth.mjs';
 import { refreshFlowEffects } from './flow-effects.mjs';
 import { HEAD_ABILITIES, conditionalPoints, conditionalKey, installConditionalGear } from './conditional-gear.mjs';
@@ -140,13 +142,19 @@ export function installGear(api, tuning) {
   const key = a => conditionalKey(a, G.match, tuning.conditionalGear);
   const refreshConditional = a => { if (a.s3?.modifiers && a.s3.conditionalKey !== key(a)) equip(a, true); };
   const refresh = a => { refreshConditional(a); refreshFlow(a); };
+  // Drink pickup/expiry requires an immediate actor-local AP refresh even when
+  // no main/sub is being fired. Never mutate the shared WEAPONS object.
+  Actor.prototype.s3RefreshGear = function () { if (this.s3) equip(this, true); };
   function equip(a, transient = false) {
     a.s3 ||= {};
     const loadout = a.isLocal && !transient ? readLoadout() : normalizeLoadout(a.s3.loadout);
     const beforeCost = a.weapon?.specialCost, beforeSpecial = a.special;
     a.s3.loadout = loadout;
     const points = { ...conditionalPoints(a, abilityPoints(loadout), G.match, tuning.conditionalGear) };
-    const effectivePoints = { ...points };
+    // Tacticooler supplies minimum independent AP (29/57), not additional
+    // stackable gear points. Canonical equipped AP stays untouched below.
+    // Permanent equipped AP and transient drink/Drop Roller AP must never alias.
+    const effectivePoints = { ...drinkGearPoints(points, a) };
     if (!a.remote && (a.s3.dropRollerBuffRemaining || 0) > 1e-10)
       for (const id of DROP_ROLLER_BUFFS) effectivePoints[id] = (effectivePoints[id] || 0) + 30;
     a.s3.abilityPoints = Object.freeze({ ...points }); // permanent/equipment AP stays canonical
@@ -159,8 +167,8 @@ export function installGear(api, tuning) {
     // state and deliberately does not alter Quick Super Jump AP curves.
     m.stealthJump = loadout[2].main === 'stealthJump';
     m.dropRoller = loadout[2].main === 'dropRoller';
-    const ap = points, extra = tuning.gearExtra;
-    m.specialPowerAP = ap.specialPower || 0;
+    const ap = effectivePoints, extra = tuning.gearExtra;
+    m.specialPowerAP = points.specialPower || 0;
     const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
     const around = Math.floor(gearCurve(ap.quickRespawn || 0, ...extra.quickRespawnAroundFrames) + 1e-10);
     const chase = Math.floor(chaseBase * (m.quickRespawn ?? 1) + 1e-10);
@@ -191,6 +199,7 @@ export function installGear(api, tuning) {
     // MainWeaponSetting and ActionSpecUp overrides belong to the equipped
     // weapon. Heavy Splatling and Blaster do not use the common middle values.
     m.runSpeedFiring = gearCurve(ap.runSpeed || 0, ...(a.weapon.runSpeedFiringCurve || extra.runSpeedFiring));
+    if (a.weapon.inkSaverMainCurve) m.inkSaverMain = gearCurve(ap.inkSaverMain || 0, ...a.weapon.inkSaverMainCurve);
     m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...(a.weapon.actionAirSpreadCurve || extra.actionAirSpread));
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
     for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter', 'rollInkMinPerFrame', 'rollInkMaxPerFrame']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
@@ -199,6 +208,9 @@ export function installGear(api, tuning) {
     if (tiers && [tiers.low, tiers.mid, tiers.high].every(Number.isFinite) && tiers.low > 0)
       m.subPower = gearCurve(ap.subPower || 0, tiers.low, tiers.mid, tiers.high) / tiers.low;
     m.inkSaverSub = sub?.inkSaverCurve ? gearCurve(ap.inkSaverSub || 0, ...sub.inkSaverCurve) : 1;
+    // Jr.'s 110-unit tank is represented by the existing normalized 0..100
+    // gauge. Both main and sub spending divide by capacity; refill does too.
+    m.inkSaverSub /= a.weapon.inkTankScale || 1;
     m.stormDuration = Math.floor(gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormDurationFrames) + 1e-10) / 60;
     m.stormThrowScale = gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormThrowScale);
     a.weapon.specialCost /= m.specialCharge ?? 1;
@@ -290,13 +302,13 @@ export function installGear(api, tuning) {
     const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
     if (this.a.grounded && (this.aimingSub || throwingStorm)) return tuning.bomb.holdMoveSpeed;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger' && this.a.onEnemy;
-    const attacking = (w.kind === 'shooter' ? this.s3ShooterMoveRemaining > 1e-10 : this.firingT > 0) || this.flick >= 0 || this.charging || this.streaming;
+    const attacking = (w.kind === 'shooter' ? shooterMovementActive(this) : this.firingT > 0) || this.flick >= 0 || this.flickRecover > 0 || this.slosh >= 0 || this.charging || this.streaming;
     // Ordinary airborne steering must not acquire extra reach from the ground
     // run-speed ability. Keep attack/ready/action-specific speed owners separate;
     // this only changes the target multiplier, never the velocity at takeoff.
     const ordinaryAir = !this.a.grounded && this.a.form === 'kid' &&
       !this.a.specialActive && !this.a.superJumpState && !this.a.s3?.roll && !this.a.s3?.surge &&
-      !this.busy() && !(w.kind === 'shooter' ? this.s3ShooterMoveRemaining > 1e-10 : this.firingPose()) && !this.aimingSub && !(this.flickRecover > 0);
+      !this.busy() && !(w.kind === 'shooter' ? shooterMovementActive(this) : this.firingPose()) && !this.aimingSub && !(this.flickRecover > 0);
     const gear = lockedMode || ordinaryAir ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear;
   };
@@ -309,14 +321,16 @@ export function installGear(api, tuning) {
     const m = this.s3?.modifiers || {};
     api.PLAYER.swimSpeed *= swimSpeedMultiplier(this);
     const runner = this.weaponRunner, kind = this.weapon.kind;
+    const previousDt = runner.s3MovementStepDt, previousEmerge = runner.s3MovementEmergeDelay;
+    runner.s3MovementStepDt = dt;
+    runner.s3MovementEmergeDelay = api.PLAYER.emergeDelay;
     const pendingFirst = kind === 'shooter' ? !!runner.s3ShooterPendingFirst : kind === 'dualies' && runner.s3DualiesStart > 1e-10;
-    const firing = (kind === 'shooter' ? (!pendingFirst && runner.s3ShooterMoveRemaining > 1e-10) : (!pendingFirst && runner.firingT > 0)) || runner.s3BlasterWindup > 0;
+    const firing = (kind === 'shooter' ? shooterMovementActive(runner) : (!pendingFirst && runner.firingT > 0)) || runner.s3BlasterWindup > 0;
     // Actor._horizontal runs before WeaponRunner.update. Predict only the same-tick
     // Shooter/Dualies emission that update() will actually admit; raw held ZR, cooldown,
     // empty ink and emerge-delay attempts must not select the shot curve early.
     const firstReady = kind === 'shooter'
-      ? !runner.s3ShooterCancelMain && (runner.s3ShooterPendingFirst ? runner.s3ShooterFirstRemaining <= dt + 1e-10
-        : runner.s3ShooterHeld || (this.weapon.firstShotDelay || 0) <= dt + 1e-10)
+      ? shooterShotReady(runner, dt)
       : kind === 'dualies' && !runner.dodge && (runner.s3DualiesHeld
         ? (runner.s3DualiesStart || 0) <= dt + 1e-10 : !(this.weapon.humanoidFirstShotDelay > 1e-10));
     const sameTickShot = firstReady && (kind === 'shooter' || kind === 'dualies') && !squid &&
@@ -333,6 +347,8 @@ export function installGear(api, tuning) {
     else api.PLAYER.enemyInkSpeed = kind === 'roller' && this.intent.fire && !squid ? m.enemyShotSpeed ?? walk : walk;
     try { return horizontal.call(this, dt, squid, enemy); }
     finally {
+      runner.s3MovementStepDt = previousDt;
+      runner.s3MovementEmergeDelay = previousEmerge;
       api.PLAYER.swimSpeed = swimSpeed;
       api.PLAYER.enemyInkSpeed = enemyInkSpeed;
     }
@@ -347,10 +363,14 @@ export function installGear(api, tuning) {
     const result = splat.apply(this, args);
     if (alive && !this.alive) {
       clearDropRollerLife(this); equip(this, true);
-      this.special = before * Math.max(0, (penalty.incoming ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
+      this.special = before * Math.max(0, (penalty.incoming || penalty.cooler ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
       const history = this.s3.quickRespawnHistory;
       if (enemyDeath) {
-        if (history.seenEnemyDeath && history.splats === 0) this.respawnTimer = Math.max(0, this.respawnTimer - (penalty.incoming ? penalty.quickReduction : this.s3.modifiers.quickRespawnReduction));
+        // A Tacticooler drink supplies 57AP Quick Respawn on any enemy splat,
+        // independently of the ordinary zero-splat eligibility condition.
+        // RP still adds its extra frames, but cannot negate the drink (#835).
+        if (penalty.cooler || (history.seenEnemyDeath && history.splats === 0))
+          this.respawnTimer = Math.max(0, this.respawnTimer - (penalty.incoming || penalty.cooler ? penalty.quickReduction : this.s3.modifiers.quickRespawnReduction));
         history.seenEnemyDeath = true; history.splats = 0;
         this.s3.splatsThisLife = 0;
       }

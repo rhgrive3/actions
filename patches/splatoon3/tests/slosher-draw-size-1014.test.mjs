@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fixture } from './source-fixture.mjs';
+import { INK_LOOK } from '../runtime/weapons-fidelity.mjs';
 const DT=1/60;
+// 2026-10-11: the drawn sheet half-width is DrawSizeParam x the footage width
+// calibration; the tail beyond the drawn head keeps the sourced TailLength.
+const SLOSH_WIDTH=INK_LOOK.slosh[4];
 const close=(a,b,e=1e-6)=>assert.ok(Math.abs(a-b)<=e, `${a} != ${b}`);
 async function volley(tune, drawControl=false) {
   const f=await fixture({productionComposition:true,realProjectiles:true,fullRuntime:true,
@@ -56,7 +60,7 @@ test('#1014 actual fixed side-on native draw matrices cover all nine unit-mapped
   const camera=new f.THREE.OrthographicCamera(-20,20,12,-12,.1,100);camera.position.set(30,6,10);camera.lookAt(0,3,10);camera.updateMatrixWorld();
   for(const p of ps.list){
     const head=rendered.find(r=>r.pos.distanceTo(p.pos)<1e-5);assert.ok(head,'real native renderer emitted head at authoritative position');
-    const radius=f.fidelitySlosherDrawRadius(p);close(head.scale.x,radius);close(head.scale.y,radius);close(head.scale.z,radius);
+    const radius=f.fidelitySlosherDrawRadius(p)*SLOSH_WIDTH;close(head.scale.x,radius);close(head.scale.y,radius);close(head.scale.z,radius);
     const pixel=p.pos.clone().project(camera);assert.ok(Number.isFinite(pixel.x)&&Number.isFinite(pixel.y));
     const end=head.tail>1?(head.tail-1)*radius:0;
     const expected=Math.max(.5,Math.min(4,p.vel.length()*Math.min(p.age,5/60)));close(end,expected,2e-6);
@@ -67,8 +71,8 @@ test('#1014 nonzero ChangeFrame controls real head matrices and TailSolidFrame c
   const {f,ps}=await volley(units=>Object.assign(units[0].DrawSizeParam,{InitRadius:.4,EndRadius:.8,AfterOffsetInitRadius:0,AfterOffsetEndRadius:0,ChangeFrame:6,TailSolidFrame:2}));
   const p=ps.list[0];ps.list=[p];p.delay=0;p.sats=0;p.vel.set(60,0,0);
   for(const [age,radius] of [[0,.4],[.025,.5],[.05,.6],[.1,.8],[.2,.8]]){
-    p.age=age;const [head]=matrices(f,ps);close(head.scale.x,radius);
-    const length=(head.tail-1)*radius;close(length,Math.max(.5,Math.min(4,60*Math.min(age,2/60))),2e-6);
+    p.age=age;const [head]=matrices(f,ps);close(head.scale.x,radius*SLOSH_WIDTH);
+    const length=(head.tail-1)*radius*SLOSH_WIDTH;close(length,Math.max(.5,Math.min(4,60*Math.min(age,2/60))),2e-6);
   }
 });
 test('#1014 actual birth packets reconstruct all nine ghost unit/index sizes at matching age without additional protocol fields',async t=>{
@@ -90,5 +94,5 @@ test('#1014 recycled non-Slosher projectiles keep their own presentation and cle
   const {f,a,ps}=await volley();ps.clear();a.weapon=f.WEAPONS.shooter;a.weaponId='shooter';ps.fireShooter(a,a.weapon);
   assert.ok(ps.list.length>0);assert.ok(ps.list.every(p=>p.fidelitySloshDraw===null));
   const p=ps.list[0];ps.list=[p];p.delay=0;p.sats=0;p.age=.025;
-  const [head]=matrices(f,ps),g=.5;close(head.scale.x,(p.vis||p.size)*g*(1+.3*Math.sin(g*Math.PI)));
+  const [head]=matrices(f,ps),g=.5;close(head.scale.x,(p.vis||p.size)*g*(1+.3*Math.sin(g*Math.PI))*INK_LOOK.shot[4]);
 });

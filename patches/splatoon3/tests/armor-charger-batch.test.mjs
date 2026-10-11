@@ -61,7 +61,7 @@ test('#208 surge armor retains its independent45F clock after boost; partial cha
   const f=await fixture(),a=f.make();wallFixture(f,a);burst(f,a);
   assert.equal(a.s3.actions.armor,null);assert.equal(a.s3.surge.armorPending,true);
   for(let i=0;i<44;i++){f.G.time+=1/60;f.beforeActions(a,1/60,false);}
-  assert.equal(a.s3.surge.phase,'auto-climb');close(a.s3.surge.time,0);
+  assert.equal(a.s3.surge.phase,'burst');assert.equal(a.climbing,true);close(a.s3.surge.time,0);
   a._ledgePop(new f.THREE.Vector3(0,0,-1));
   const shield=a.s3.actions.armor;close(shield.armorTime,.75);
   for(let i=0;i<44;i++){f.G.time+=1/60;f.beforeActions(a,1/60,false);}

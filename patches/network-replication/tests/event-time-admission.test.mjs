@@ -18,17 +18,17 @@ async function rig({ negative = false } = {}) {
     const out = adaptBuildSource(rel, code);
     if (!negative || rel !== 'src/net/netmatch.js') return out;
     if (negative === 'tick-type') {
-      const gate = '        if (!Number.isSafeInteger(tick) || tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;\n        e._netTick = tick;';
+      const gate = "if (!Number.isSafeInteger(tick) || tick < 0 || !(Number.isSafeInteger(d.u) && d.u >= 0 ? tick <= d.u : d.u === undefined && e[1] === 's')) continue;";
       assert.ok(out.includes(gate));
       return out.replace(gate, `        if (Number.isSafeInteger(tick)) {
           if (tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;
           e._netTick = tick;
         }`);
     }
-    const gate = '!validSnapshotTimestamp(e[0]) || e[0] > d.ts';
+    const gate = '!validSnapshotTimestamp(e[0]) || !validSnapshotTimestamp(d.ts) || e[0] > d.ts';
     assert.ok(out.includes(gate), 'counterfactual removes the event timestamp check only');
     return out.replace(gate, '!Number.isFinite(e[0])')
-      .replace('if (!Number.isSafeInteger(tick) || tick < 0 || Number.isSafeInteger(d.u) && tick > d.u) continue;', '');
+      .replace("if (!Number.isSafeInteger(tick) || tick < 0 || !(Number.isSafeInteger(d.u) && d.u >= 0 ? tick <= d.u : d.u === undefined && e[1] === 's')) continue;", '');
   };
   const f = await fixture({ fullRuntime: true, adapt, adaptRuntime: adapt, extraExports: exports });
   const source = fs.readFileSync(new URL('../../splatoon3/bootstrap.mjs', import.meta.url), 'utf8');
@@ -100,12 +100,16 @@ test('#1178 valid delayed and same-envelope events retain order and exactly-once
   drain(f, 1000.1, 3); assert.deepEqual(f.played, ['jump', 'land']);
 });
 
-test('#1178 legacy envelopes without an outer simulation tick retain admission', async () => {
+test('#1178 legacy triggers remain compatible; R2 triggers require the owner simulation tick', async () => {
   for (const schema of [null, 2]) {
     const f = await rig();
     const event = schema === 2 ? trigger(1000, 2, 1) : [1000, 'tr', 7, 'jump', null];
     receive(f, 1000, [event], null, schema); drain(f, 1000, 2);
-    assert.deepEqual(f.played, ['jump']);
+    assert.deepEqual(f.played, schema === 2 ? [] : ['jump']);
+    if (schema === 2) {
+      receive(f,1000.1,[trigger(1000.1,2,1)],2,2); drain(f,1000.1,2);
+      assert.deepEqual(f.played,['jump'], 'missing clock does not burn sequence');
+    }
   }
 });
 

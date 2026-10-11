@@ -61,7 +61,7 @@ test('#371 transformed weapons source routes collision through the shared source
   const root=new URL('../../../',import.meta.url);
   const src=fs.readFileSync(new URL('inkwave-public/src/game/weapons.js',root),'utf8');
   const out=adaptSource('src/game/weapons.js',src);
-  assert.match(out,/applySplatBombSurfaceResponse\(b, hit\.normal\);/);
+  assert.match(out,/applySplatBombSurfaceResponse\(b, hit\.normal, undefined, dt\);/);
   assert.match(out,/runtime\/sub-special-fidelity\.mjs/);
   assert.doesNotMatch(out,/b\.vel\.multiplyScalar\(hit\.normal\.y > 0\.6 \? 0\.45 : 0\.6\)/);
 });

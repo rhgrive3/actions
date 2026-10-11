@@ -29,6 +29,9 @@ async function pair(t, counterfactual = false) {
   // A larger controlled HP pool keeps these admission assertions independent
   // of delayed lethal/splat presentation. Actor.damage itself remains real.
   b.victim.hp = 10000;
+  // First-splat synchronization is emitted during network startup. Admission
+  // assertions below observe only packets caused by the tested hit claims.
+  b.wire.length = 0;
   return { a, b };
 }
 function send(a, b, amount, cause, change = packet => packet, from = 'A') {

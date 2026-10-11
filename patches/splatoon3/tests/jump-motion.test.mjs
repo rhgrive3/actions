@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installJumpMotion as duplicateInstall, jumpReferenceCandidate, jumpPresentationFamily, JUMP_REFERENCE_CANDIDATES } from '../runtime/jump-motion.mjs';
+import { installJumpMotion as duplicateInstall, jumpReferenceCandidate, jumpPresentationFamily, JUMP_REFERENCE_CANDIDATES, jumpShootReferenceCandidates } from '../runtime/jump-motion.mjs';
 
 // Actual production installer + native Character/Actor/Runner/THREE in one
 // realm. World collision is outside this pose test; no rig or IK test double.
@@ -463,5 +463,45 @@ test('#1116 local and remote owners select the same family presentation on one p
         assert.equal(b.catalogCandidate, a.catalogCandidate); assert.equal(b.weight, a.weight);
       }
     } finally { local.close(); remote.close(); }
+  }
+});
+
+test('#1116 JumpShoot candidates exist only for the families the pinned index names', () => {
+  assert.deepEqual(jumpShootReferenceCandidates('shooter'), ['JumpShoot_Shtr00', 'JumpShoot_Shtr01', 'JumpShoot_Shtr02']);
+  assert.deepEqual(jumpShootReferenceCandidates('roller'), ['JumpShoot_Rllr00']);
+  assert.deepEqual(jumpShootReferenceCandidates('splatling'), ['JumpShoot_Spnr00']);
+  assert.deepEqual(jumpShootReferenceCandidates('charger'), ['JumpShoot_Chrg00', 'JumpShoot_Chrg01', 'JumpShoot_Chrg02']);
+  for (const kind of ['dualies', 'slosher', 'blaster', 'unknown'])
+    assert.equal(jumpShootReferenceCandidates(kind), null, `${kind} has no verified JumpShoot name`);
+});
+
+test('#1116 firing airborne jumps switch the named catalog state while the local pose profile is shared', async () => {
+  const api = await production();
+  for (const kind of ['shooter', 'roller', 'dualies', 'slosher', 'splatling', 'charger', 'blaster']) {
+    const r = rig(api, true, kind, 0, false);
+    try {
+      r.begin();
+      for (let f = 1; f <= 30; f++) r.frame(f / 60);
+      const ordinary = api.jumpMotionSnapshot(r.ch);
+      assert.equal(ordinary.active, true, `${kind} no-fire jump active`);
+      assert.equal(ordinary.actionState, 'ordinary', `${kind} no-fire jump is the ordinary state`);
+      assert.deepEqual(Array.from(ordinary.selectedCatalogCandidates), [jumpReferenceCandidate(kind)], `${kind} ordinary catalog candidate`);
+
+      r.input.firing = true; r.input.charge = kind === 'charger' ? .7 : .35; r.input.aimPitch = .3;
+      for (let f = 31; f <= 40; f++) r.frame(f / 60);
+      const fire = api.jumpMotionSnapshot(r.ch);
+      const expected = jumpShootReferenceCandidates(kind) ?? [jumpReferenceCandidate(kind)];
+      assert.equal(fire.active, true, `${kind} firing jump still active`);
+      assert.equal(fire.actionState, 'firing', `${kind} firing jump is the firing state`);
+      assert.deepEqual(Array.from(fire.selectedCatalogCandidates), expected, `${kind} firing catalog candidates`);
+      assert.equal(fire.catalogCandidate, ordinary.catalogCandidate, `${kind} ordinary candidate is unchanged`);
+      assert.equal(fire.presentationProfile, ordinary.presentationProfile, `${kind} pose profile is shared by both states`);
+      assert.equal(fire.calibrationSource, 'local-inkwave-kid-rig');
+      assert.equal(fire.referenceCurveVerified, false, `${kind} joint curves stay unverified`);
+
+      r.input.firing = false; r.input.charge = 0;
+      r.frame(41 / 60);
+      assert.equal(api.jumpMotionSnapshot(r.ch).actionState, 'ordinary', `${kind} returns to the ordinary state when firing stops`);
+    } finally { r.close(); }
   }
 });

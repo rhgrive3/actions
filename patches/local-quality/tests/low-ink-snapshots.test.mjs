@@ -88,7 +88,7 @@ test('#117 original threshold and touch-only fallback reproduce false shortage',
   const fixed = fs.readFileSync(new URL('../hud-snapshots.mjs', import.meta.url), 'utf8');
   const old = once(fixed, 'frame.inkLow = game._lowInkFlash > 0;',
     'frame.inkLow = a.ink < 18 || game._lowInkFlash > 0;', 'published 2e81 fixed18 negative');
-  // Link the actual Storm gauge source dependency in this historical fixture.
+  // Link the actual Storm gauge source dependency in this historical fixture (#469).
   // Keep only the legacy threshold mutation as the negative control.
   const legacyBody = once(old,
     "import { stormGaugeFraction } from '../splatoon3/runtime/storm-effects.mjs';\n",

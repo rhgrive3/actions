@@ -51,7 +51,33 @@ test('#1162 water height has bit-equivalent array-free marina and normal footpri
       assert.equal(fixed.call(ctx,x,z,t), original.call(ctx,x,z,t));
     }
   }
-  assert.doesNotMatch(code.slice(code.indexOf('  waterHeightAt('),code.indexOf('  get seaState()')),/\[M\.decks, M\.wet\]|\[this\.footprint\]/);
+  // Stage switches on one live environment: marina on/off, footprint and bounds replacement.
+  // Both scans must stay in step with the original on the same object at every step.
+  const other = [
+    { minX: -20, maxX: -14, minZ: 2, maxZ: 9, aligned: true },
+    { minX: 0, maxX: 4, minZ: -11, maxZ: -6,
+      aligned: false, cx: 2, cz: -8.5, ax: 0.6, az: 0.8, hx: 2, hz: 2.5 }
+  ];
+  const live = { time: 0.4, bounds, footprint: rects, _marinaData: null };
+  const steps = [
+    () => {},
+    () => { live._marinaData = { decks:[rects[0]], wet:[rects[1]] }; },
+    () => { live._marinaData = { decks:[other[0]], wet:[other[1]] }; live.bounds = { minX:-30,maxX:30,minZ:-20,maxZ:20 }; },
+    () => { live._marinaData = null; live.footprint = other; live.bounds = bounds; },
+    () => { live.footprint = [{ minX: -15, maxX: 15, minZ: -12, maxZ: 12, aligned: true }]; },
+    () => { live._marinaData = { decks:[], wet:[rects[1]] }; },
+  ];
+  steps.forEach((step, s) => {
+    step();
+    for (let i=0;i<120;i++) {
+      const x=Math.sin(i*11.31+s)*140, z=Math.cos(i*7.73-s)*90, t=s*1.7+i/23;
+      assert.equal(fixed.call(live,x,z,t), original.call(live,x,z,t), `stage step ${s} sample ${i}`);
+    }
+  });
+  // Theme and sea state are not inputs to waterHeightAt (it reads x, z, t, bounds, footprint, _marinaData only).
+  const method = code.slice(code.indexOf('  waterHeightAt('), code.indexOf('  get seaState()'));
+  assert.doesNotMatch(method, /seaState|theme/);
+  assert.doesNotMatch(method, /\[M\.decks, M\.wet\]|\[this\.footprint\]/);
 });
 
 test('#1159 orphan timer cannot fire into a new room even if its callback was queued', () => {

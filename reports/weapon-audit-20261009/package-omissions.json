@@ -1,0 +1,17 @@
+{
+  "reason": "The distribution contains all source code but does not redistribute these two unchanged original font assets. Restore them from your original core ZIP, or overlay the changed-files ZIP onto your original four-part tree.",
+  "files": [
+    {
+      "path": "inkwave-public/assets/fonts/Rubik-latin.woff2",
+      "sha256": "99ec7ccb40cf143f977c893649deece6cc2dcc7c0ff82ebf84b6584090f207ea",
+      "bytes": 35324,
+      "restoreFrom": "INKWAVE-main-5d0be6b7-core.zip"
+    },
+    {
+      "path": "inkwave-public/assets/fonts/TitanOne-latin.woff2",
+      "sha256": "f5f3f60e9246f7e78242697ef18f1fa78467dc4135312208b693e33678e78c4c",
+      "bytes": 10732,
+      "restoreFrom": "INKWAVE-main-5d0be6b7-core.zip"
+    }
+  ]
+}

@@ -90,6 +90,7 @@ function boot(source, held = []) {
     Minimap: class { constructor(level) { this.id = level.id; } setViewerTeam(team) { record('viewer', team); } },
     THREE: { Mesh: class { constructor(geometry, material) { this.geometry = geometry; this.material = material; } } },
     setTimeout: () => 1, clearTimeout: () => record('clearTimer'),
+    t: text => text,   // i18n.t in English mode; main.js imports it at module scope
   };
   const methods = [
     section(source, '  async _buildWorld(', '\n  // deck slabs over the sea:'),

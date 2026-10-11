@@ -74,8 +74,15 @@ function view(f, actor) {
     actor.weapon, 0, [], [], null, false, f.PLAYER, f.SUB);
 }
 
+// These guards preserve the original INKWAVE specials. The current catalog's
+// Splatling/Dualies kits are Wave Breaker/Crab Tank, so scope the legacy fixture
+// explicitly rather than asserting obsolete catalog assignments.
+function legacySpecial(f, weapon, special) {
+  const actor = f.make(weapon); actor.weapon = { ...actor.weapon, special }; return actor;
+}
+
 test('#469 removed projection still reproduces the HUD defect under complete bootstrap', async () => {
-  const f = await bootstrap({ negative: 'storm' }), a = f.make('splatling'); a.isLocal = true;
+  const f = await bootstrap({ negative: 'storm' }), a = legacySpecial(f,'splatling','storm'); a.isLocal = true;
   a.special = a.specialCost(); a._startSpecial();
   a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a); f.tick(a, 240);
   close(a.stormGaugeLock, 4); assert.equal(view(f, a).special, 0);
@@ -83,7 +90,7 @@ test('#469 removed projection still reproduces the HUD defect under complete boo
 });
 
 test('#647 removed admission guard still permits native reactivation under complete bootstrap', async () => {
-  const f = await bootstrap({ negative: 'slam' }), a = f.make('dualies'); a.isLocal = true;
+  const f = await bootstrap({ negative: 'slam' }), a = legacySpecial(f,'dualies','slam'); a.isLocal = true;
   a.special = a.specialCost(); a._startSpecial();
   let ticks = 0; while (a.specialActive && ticks++ < 180) f.tick(a);
   assert.ok(ticks < 180); assert.ok(a.s3TidalSlamGaugeFinish);
@@ -94,8 +101,8 @@ test('#647 removed admission guard still permits native reactivation under compl
 });
 
 test('#469 personal Storm used gauge remains connected with every production bootstrap wrapper', async () => {
-  const f = await bootstrap(), a = f.make('splatling'); a.isLocal = true;
-  assert.equal(a.weapon.special, 'storm', 'current original Splatling kit still uses Storm');
+  const f = await bootstrap(), a = legacySpecial(f,'splatling','storm'); a.isLocal = true;
+  assert.equal(a.weapon.special, 'storm', 'legacy Storm compatibility path is selected explicitly');
   a.special = a.specialCost(); a._startSpecial();
   assert.equal(view(f, a).special, 1); assert.equal(a.special, 0);
   a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a);
@@ -109,8 +116,8 @@ test('#469 personal Storm used gauge remains connected with every production boo
 });
 
 test('#647 local pending-landing admission remains effective after every bootstrap wrapper', async () => {
-  const f = await bootstrap(), a = f.make('dualies'); a.isLocal = true;
-  assert.equal(a.weapon.special, 'slam', 'current original Dualies kit still uses Slam');
+  const f = await bootstrap(), a = legacySpecial(f,'dualies','slam'); a.isLocal = true;
+  assert.equal(a.weapon.special, 'slam', 'legacy Slam compatibility path is selected explicitly');
   a.special = a.specialCost(); a._startSpecial();
   let ticks = 0; while (a.specialActive && ticks++ < 180) f.tick(a);
   assert.ok(ticks < 180); assert.ok(a.s3TidalSlamGaugeFinish);

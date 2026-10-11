@@ -4,6 +4,10 @@ export function adaptTouchPointerLock(rel, code) {
   if (rel !== 'src/core/input.js') return code;
   if (code.includes('_releaseMouseForTouch')) throw new Error('INKWAVE touch pointer-lock conflict: already connected');
   code = "import { isMobilePointer } from '../../patches/local-quality/first-touch-adapter.mjs';\n" + code;
+  code = replaceOnce(code,
+    'if (p && p.catch) p.catch(() => { try { const q = this.canvas.requestPointerLock();',
+    "if (p && p.catch) p.catch(() => { if (!this.enabled || this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.mode !== 'match' || G.match?.state !== 'playing' || G.match.paused || G.game?.menus?.current) return; try { const q = this.canvas.requestPointerLock();",
+    'pointer-lock fallback needs current playing admission');
   code=replaceOnce(code,'    this._dev = v;','    this._dev = v;\n    if (v === \'touch\') this._releaseMouseForTouch();','touch releases mouse ownership');
   code=replaceOnce(code,"    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') this.lastDevice = 'touch'; }, { capture: true, passive: true });",`    window.addEventListener('pointerdown', (e) => {
       if (isMobilePointer(e)) this.lastDevice = 'touch';
@@ -27,7 +31,7 @@ export function adaptTouchPointerLock(rel, code) {
   code=replaceOnce(code,`      this.locked = document.pointerLockElement === this.canvas;
       if (!this.locked) { this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0; this.onUnlock?.(); }`,`      const wasLocked = this.locked;
       const locked = document.pointerLockElement === this.canvas;
-      if (locked && (this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen)) {
+      if (locked && (this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.match?.paused || G.game?.menus?.current)) {
         this.locked = false;
         if (!this._touchUnlockPending) this._releaseMouseForTouch();
         return;

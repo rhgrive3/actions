@@ -124,10 +124,10 @@ test('one ordered bomb birth is replayed once, old bomb hit packets are ignored,
     assert.equal(f.projectiles.bombs.filter((bomb) => bomb.ghost).length, 1, 'duplicate event sequence cannot create a second bomb');
     assert.equal(f.projectiles.bombs.find((bomb) => bomb.ghost)._netBornLocal, 999.5, 'birth timestamp maps through the peer clock offset');
 
-    for(const cause of ['bomb','splat-bomb-far']) nm.onMessage('p1', { k: 'hit', v: victim.nid, a: attacker.nid, d: 100, w: cause, l: victim.netLife, h: 1 });
+    for(const cause of ['bomb','splat-bomb-far']) nm.onMessage('p1', { k: 'hit', m: 'fixture-match', v: victim.nid, a: attacker.nid, d: 100, w: cause, l: victim.netLife, h: 1 });
     assert.equal(victim.hp, 100, 'legacy shooter-authority bomb hit packets cannot duplicate recipient damage');
 
-    nm.onMessage('p1', { k: 'hit', v: victim.nid, a: attacker.nid, d: 30, w: 'shooter', l: victim.netLife, h: 1 });
+    nm.onMessage('p1', { k: 'hit', m: 'fixture-match', v: victim.nid, a: attacker.nid, d: 30, w: 'shooter', l: victim.netLife, h: 1 });
     assert.equal(victim.hp, 70, 'non-bomb shooter-authoritative hits retain their existing route');
   } finally { f.G.netm?.dispose(); }
 });

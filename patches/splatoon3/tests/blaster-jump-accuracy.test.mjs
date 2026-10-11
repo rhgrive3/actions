@@ -10,7 +10,7 @@ import { compose as composePracticeRange } from '../../practice-range/tests/harn
 
 // #684: the S3 Blaster carries a jump-accuracy state on the fixed simulation
 // clock — recovery starts at Jump_DegBiasDecreaseStartFrame (25F), reaches its
-// endpoint at Jump_DegBiasEndFrame (70F), and the initial outer-reticle bias is
+// endpoint at Jump_DegBiasEndFrame (70F), and the initial angular bias is
 // Jump_DegBiasMax (0.5). Only those sourced endpoints/boundaries are asserted.
 // The curve between them is NOT a sourced Nintendo value, so these tests assert
 // monotonicity and the boundaries only and never a specific intermediate value.
@@ -40,7 +40,7 @@ test('#684 pinned source boundaries are the values under test', async () => {
   const src = blasterSource(f);
   assert.equal(src.Jump_DegBiasDecreaseStartFrame, START_F, 'sourced recovery start frame');
   assert.equal(src.Jump_DegBiasEndFrame, END_F, 'sourced recovered endpoint frame');
-  assert.equal(src.Jump_DegBiasMax, BIAS_MAX, 'sourced initial outer-reticle bias');
+  assert.equal(src.Jump_DegBiasMax, BIAS_MAX, 'sourced initial angular bias');
   assert.equal(src.Stand_DegSwerve, 0, 'grounded endpoint stays 0');
 });
 
@@ -59,7 +59,7 @@ test('#684 grounded endpoint stays 0 and the jump edge starts the bias state at 
   assert.equal(s.active, true, 'a live jump-accuracy state after leaving the ground');
   assert.equal(s.frames, 0, 'state starts on the jump edge');
   close(s.envelope, 10, 'airborne angular endpoint stays the sourced maximum');
-  close(s.bias, BIAS_MAX, 'outer-reticle bias starts at Jump_DegBiasMax');
+  close(s.bias, BIAS_MAX, 'angular bias starts at Jump_DegBiasMax');
   assert.equal(s.phase, 'held', 'the sourced initial state is held through 25F');
 });
 
@@ -124,7 +124,7 @@ test('#684 extended airtime preserves the outer envelope while the independent b
   airborne(f, a, 30); const at60 = state(a);
   airborne(f, a, 10); const at70 = state(a);
   assert.ok(at25.bias > at30.bias && at30.bias > at60.bias && at60.bias > at70.bias,
-    `outer-shot bias must recover: ${[at25.bias, at30.bias, at60.bias, at70.bias]}`);
+    `angular bias must recover: ${[at25.bias, at30.bias, at60.bias, at70.bias]}`);
   for (const sample of [at25, at30, at60, at70]) close(sample.envelope, 10, 'outer envelope stays at the sourced endpoint');
   close(at70.bias, 0, 'bias reaches the sourced recovered endpoint');
   assert.equal(at70.phase, 'recovered', 'the separate HUD presentation reaches its recovery endpoint');
@@ -149,7 +149,7 @@ test('#684 HUD renders the 10-degree outer envelope and a separate bias cue from
   const adaptedHud = adaptSource('src/ui/hud.js', hudSource);
   assert.doesNotThrow(() => new vm.SourceTextModule(adaptedHud), 'adapted HUD is valid module source');
   assert.ok(adaptedHud.includes('s3BlasterJumpState'), 'HUD reads the same runner state as the sampler');
-  assert.ok(adaptedHud.includes("cuePhase === 'held' ? `OUTER ${percent}%`"), 'HUD presents the sourced initial outer-shot bias');
+  assert.ok(adaptedHud.includes("cuePhase === 'held' ? `BIAS ${percent}%`"), 'HUD presents the sourced initial angular bias');
   assert.ok(adaptedHud.includes("cuePhase === 'recovering' ? 'RECOVERING'"), 'HUD presents recovery without inventing an intermediate probability law');
   assert.ok(adaptedHud.includes('this._blasterBiasEl.textContent = cue;'), 'HUD renders the current bias value');
   assert.ok(adaptedHud.includes('this._blasterBiasEl.dataset.phase = cuePhase'), 'HUD presents hold/recovery phase separately');
@@ -177,19 +177,23 @@ test('#684 HUD renders the 10-degree outer envelope and a separate bias cue from
     f.setRandom(() => values[Math.min(i++, values.length - 1)]);
   };
 
-  // First draw chooses outer/inner. The composed family spread owner then gets
-  // radius=1 and azimuth=0, so the actual projectile deviation equals the chosen envelope.
-  randomSequence([0.1, 1, 0]);             // 0.1 < bias -> outer reticle
+  // The prior Bernoulli oracle was wrong: bias is not the probability of
+  // selecting the entire outer cone. Check the median and endpoints of the
+  // documented community gamma calibration instead. This is NOT S3 PDF proof.
+  randomSequence([1, 0]);
   ps.fireBlaster(a, a.weapon, 999);
-  close(deviations.at(-1), s.envelope, 'outer draw uses the full airborne envelope', 1e-6);
-  randomSequence([0.1, 1, 0]);
+  close(deviations.at(-1), s.envelope, 'quantile endpoint reaches the outer envelope', 1e-6);
+  randomSequence([1, 0]);
   ps.fireBlaster(remote, remote.weapon, 999);
-  close(deviations.at(-1), state(remote).envelope, 'remote owner also uses its own full outer envelope', 1e-6);
+  close(deviations.at(-1), state(remote).envelope, 'remote owner uses its own envelope', 1e-6);
   assert.equal(owners[0], a, 'native projectile keeps its local owner');
   assert.equal(owners[1], remote, 'native projectile keeps its remote owner');
-  randomSequence([0.9, 1, 0]);             // 0.9 >= bias -> grounded endpoint
+  randomSequence([0.5, 0]);
   ps.fireBlaster(a, a.weapon, 999);
-  close(deviations.at(-1), s.ground, 'inner draw stays on the grounded endpoint', 1e-6);
+  close(deviations.at(-1), s.envelope * s.bias, 'calibration median is bias times envelope', 1e-6);
+  randomSequence([0, 0]);
+  ps.fireBlaster(a, a.weapon, 999);
+  close(deviations.at(-1), 0, 'zero quantile stays on center', 1e-6);
   f.restoreRandom();
   assert.notEqual(s.bias, 0.5, 'mid-recovery bias is below the initial maximum');
 
@@ -273,4 +277,72 @@ test('#684 the Practice Range source composition keeps the same Blaster envelope
   close(s.envelope, 10, 'the Range-composed runner keeps the sourced outer envelope');
   close(s.bias, BIAS_MAX, 'the Range-composed runner keeps the sourced initial bias');
   close(a.weaponRunner.spread, 10, 'the Range-composed HUD value is the true outer envelope');
+});
+
+// #1102: walking off a ledge is not a jump. The Blaster jump-accuracy state is
+// admitted only by the native jump serial, so a ledge fall must keep the sourced
+// grounded 0-degree cone and must not publish the 10-degree airborne envelope.
+const walkOff = (f, a, frames) => {
+  f.tick(a, 2); a.grounded = true; f.tick(a, 2);
+  a.grounded = false;                          // no s3JumpSerial increment: a fall, not a jump
+  return airborne(f, a, frames);
+};
+
+test('#1102 walking off a ledge without a jump keeps the grounded 0-degree cone at 30/60/120 Hz', async () => {
+  const f = await fixture();
+  for (const hz of [30, 60, 120]) {
+    const dt = 1 / hz;
+    const a = f.make('blaster'); a.grounded = true; a.weaponRunner.update(dt, { fire: false });
+    a.grounded = false;                        // leave the ledge without any jump input
+    for (let i = 0; i < Math.round(hz * 1.5); i++) {
+      a.weaponRunner.update(dt, { fire: false });
+      assert.equal(state(a).active, false, `${hz} Hz: no Blaster jump-accuracy state after a fall`);
+      assert.equal(a.weaponRunner._spreadDeg(a.weapon), 0, `${hz} Hz: fall keeps the grounded 0-degree cone`);
+      assert.equal(a.weaponRunner.spread, 0, `${hz} Hz: the runner publishes the grounded cone`);
+    }
+  }
+});
+
+test('#1102 a real jump and a ledge fall from the same platform diverge: only the jump owns the 10-degree state', async () => {
+  const f = await fixture();
+  const walker = walkOff(f, f.make('blaster'), 30);
+  const jumper = jump(f, f.make('blaster'));
+  airborne(f, jumper, 30);
+  assert.equal(state(walker).active, false, 'walking off starts no jump-accuracy timer');
+  assert.equal(walker.weaponRunner.spread, 0, 'walking off keeps the 0-degree grounded cone');
+  assert.equal(state(jumper).active, true, 'the actual jump still starts its timer');
+  close(state(jumper).envelope, 10, 'the actual jump keeps the sourced 10-degree envelope');
+  close(state(jumper).bias, BIAS_MAX * (END_F - 30) / (END_F - START_F), 'the actual jump keeps the sourced 25F-70F recovery at 30F', 1e-9);
+});
+
+test('#1102 Intensify Action does not turn a non-jump ledge fall into an accuracy penalty', async () => {
+  const f = await fixture();
+  const a = f.make('blaster');
+  a.s3.loadout = Array.from({ length: 3 }, (_, i) => ({ main: i === 0 ? 'actionIntensify' : 'none', subs: ['none', 'none', 'none'] }));
+  a.setWeapon('blaster');
+  walkOff(f, a, END_F);
+  assert.equal(state(a).active, false, 'gear does not create a jump state from a fall');
+  assert.equal(a.weaponRunner._spreadDeg(a.weapon), 0, 'gear does not widen a fall');
+  assert.equal(a.weaponRunner.spread, 0, 'HUD cone stays grounded after a fall');
+});
+
+test('#1102 a shot fired during a ledge fall is drawn on the grounded cone', async () => {
+  const f = await fixture();
+  const { Projectiles, THREE } = f;
+  const ps = Object.create(Projectiles.prototype);
+  ps._muzzle = (actor, out) => out.set(0, 0, 0);
+  ps._aimFrom = (actor, muzzle, out) => out.set(0, 0, 1);
+  ps._new = () => ({ pos: new THREE.Vector3(), prev: new THREE.Vector3(), start: new THREE.Vector3(), vel: new THREE.Vector3() });
+  const deviations = [];
+  ps._push = p => {
+    const v = p.vel.clone().normalize();
+    deviations.push(Math.acos(Math.max(-1, Math.min(1, v.z))) * 180 / Math.PI);
+  };
+  const a = walkOff(f, f.make('blaster'), 20);
+  // Fire through the same value the runner publishes, with the draw sequence that
+  // maximises any non-zero cone, so a leaked 10-degree envelope would be visible.
+  f.setRandom(() => 1);
+  ps.fireBlaster(a, a.weapon, a.weaponRunner._spreadDeg(a.weapon));
+  f.restoreRandom();
+  close(deviations.at(-1), 0, 'a fall shot leaves the muzzle on the grounded 0-degree cone', 1e-6);
 });

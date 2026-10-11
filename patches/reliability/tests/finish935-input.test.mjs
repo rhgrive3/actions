@@ -43,3 +43,17 @@ test('#935 transition cancellation is once-only and does not reset cooldown, rol
  assert.equal(h.G.projectiles.list[0],shot);assert.equal(h.G.projectiles.bombs[0],bomb);assert.equal(h.G.projectiles.clouds[0],cloud);
  h.m.setState('finish');assert.equal(cancels,1);assert.ok(Object.isFrozen(h.m.s3FinishCoverage));
 });
+test('#935 pause/resume keeps held Charger, Splatling and SUB without a synthetic release; a later real release acts once',async()=>{
+ for(const weapon of ['charger','splatling','shooter']){
+  const h=await rig(weapon);h.m.follower=false;const r=h.a.weaponRunner;
+  const held=()=>weapon==='shooter'?r.aimingSub===true:r.charging===true;
+  const setHeld=v=>{if(weapon==='shooter')h.input.mouse.right=v;else h.input.mouse.left=v;};
+  setHeld(true);h.frame(weapon==='splatling'?55:15);assert.equal(held(),true,weapon);
+  h.m.paused=true;h.frame(30);
+  assert.equal(held(),true,`${weapon} stays held through pause`);assert.equal(h.shots.length,0);assert.equal(h.bombs(),0);
+  h.m.paused=false;h.frame(2);
+  assert.equal(held(),true,`${weapon} resumes still held`);assert.equal(h.shots.length,0);assert.equal(h.bombs(),0);
+  setHeld(false);h.frame(2);
+  if(weapon==='shooter'){assert.equal(h.bombs(),1);assert.equal(h.shots.length,0);}else{assert.equal(h.shots.length,1);assert.equal(h.bombs(),0);}
+ }
+});

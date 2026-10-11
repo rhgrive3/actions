@@ -29,14 +29,14 @@ test('#940 maximum Splatling envelope and jump recovery do not use generic bloom
 });
 test('#940 native launch reaches the full horizontal envelope while preserving pitch and four RNG draws', async () => {
   const f = await setup(), { a, ps } = f;
-  for (const [grounded, horizontal] of [[true, 3.3], [false, 7]]) for (const azimuth of [0, .25]) {
+  for (const [grounded, horizontal] of [[true, 3.3], [false, 7]]) for (const axis of ['yaw', 'pitch']) {
     a.grounded = grounded;
-    const draws = [.5, 1 - 1e-12, azimuth, .5]; let count = 0;
+    const draws = [.5, axis === 'yaw' ? 1 - 1e-12 : .5, axis === 'pitch' ? 1 - 1e-12 : .5, .5]; let count = 0;
     f.setRandom(() => { count++; return draws.shift() ?? .5; });
     ps.fireSplatling(a, a.weapon, a.weaponRunner._spreadDeg(a.weapon));
     const p = ps.list.at(-1);
-    const angle = azimuth === 0 ? Math.abs(Math.atan2(p.vel.x, p.vel.z)) : Math.abs(Math.atan2(p.vel.y, Math.hypot(p.vel.x, p.vel.z)));
-    close(angle * 180 / Math.PI, azimuth === 0 ? horizontal : 1.6);
+    const angle = axis === 'yaw' ? Math.abs(Math.atan2(p.vel.x, p.vel.z)) : Math.abs(Math.atan2(p.vel.y, Math.hypot(p.vel.x, p.vel.z)));
+    close(angle * 180 / Math.PI, axis === 'yaw' ? horizontal : 1.6);
     assert.equal(count, 4, 'no unverified bias-as-probability draw is inserted');
     ps.clear();
   }

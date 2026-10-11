@@ -64,3 +64,12 @@ test('disposal during context loss does not submit invalidated objects', () => {
   gl.lost = true; gl.framebuffers.clear(); gl.renderbuffers.clear(); c.dispose();
   gl.lost = false; c.dispose(); assert.equal(gl.deleted.length, 0); assert.equal(c.valid(), false);
 });
+test('validity is tracked in JS: no synchronous isFramebuffer/isRenderbuffer GPU round trip per render', () => {
+  const gl = mockGL(); let queries = 0;
+  gl.isFramebuffer = () => { queries++; return true; }; gl.isRenderbuffer = () => { queries++; return true; };
+  const c = api.createDepthCache(gl, 64, 64, api.THREE.UnsignedIntType);
+  for (let i = 0; i < 100; i++) assert.equal(c.valid(), true);
+  assert.equal(queries, 0);
+  gl.lost = true; assert.equal(c.valid(), false, 'context loss still invalidates');
+  gl.lost = false; c.abandon(); assert.equal(c.valid(), false, 'abandoned handles stay invalid');
+});

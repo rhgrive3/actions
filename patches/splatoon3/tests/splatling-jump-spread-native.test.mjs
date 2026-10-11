@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { FixedClock } from '../runtime/clock.mjs';
 import { splatlingJumpRecoveryAt } from '../runtime/splatling-jump-spread.mjs';
+import { signedBiasSample } from '../runtime/weapon-edgecases.mjs';
 import { fixture, productionComposition } from './weapon-edgecases-fixture.mjs';
 import { fixture as fidelityFixture } from '../../../scripts/weapons-fixture.mjs';
 import { CASES, finish as finishFidelity, launch as launchFidelity, paintMetrics, reset as resetFidelity } from '../../../scripts/measure-weapons-fidelity.mjs';
@@ -13,6 +14,9 @@ const upstream = rel => fs.readFileSync(`${ROOT}/inkwave-public/${rel}`, 'utf8')
 
 const close = (actual, expected, epsilon = 1e-8) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
+// The sourced outer envelope is independent of the old INKWAVE bloom
+// multiplier. Bias changes the distribution inside it, not the maximum angle.
+const bloomScale = () => 1;
 const expectedHorizontal = runner => {
   const w = runner.a.weapon;
   const recovery = splatlingJumpRecoveryAt(runner.a.s3SplatlingJumpAgeFrames);
@@ -114,7 +118,8 @@ test('production six-adapter native jump age holds 25F, recovers by 70F, and nev
 
 function expectedHorizontalAtLanding(weapon, age) {
   const recovery = splatlingJumpRecoveryAt(age);
-  return (weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery);
+  const factor = 1; // raw Stand_DegSwerve / Jump_DegSwerve, no extra bloom
+  return (weapon.spreadAir + (weapon.spreadGround - weapon.spreadAir) * recovery) * factor;
 }
 
 test('zero-time pause, form and weapon switches preserve jump age; repeat jump, death and reset own their lifecycle', async () => {
@@ -216,17 +221,18 @@ test('HUD scalar drives the native owner projectile; pitch recovers without a la
   assert.equal(ownerDrawCount, 4, 'speed, two spread samples, and seed retain the existing draw count');
   assert.ok(controlPacket, 'the same-composition control publishes its owner projectile event');
   assert.equal(controlNm.out.filter(event => event[1] === 'p').length, 1);
-  assert.equal(controlDrawCount, 4, 'the jump correction does not change projectile RNG consumption');
+  assert.equal(controlDrawCount, 4, 'both source and control consume speed, two signed-axis samples and seed');
   assert.equal(runner.spread, spread, 'the live HUD spread is the scalar supplied to the projectile path');
-  const measuredYaw = Math.abs(Math.atan2(owner.vel.x, owner.vel.z)) * 180 / Math.PI;
-  const radialYaw = Math.cos(Math.PI / 4) * Math.tan(spread * Math.PI / 180 * Math.sqrt(1 - 1e-12));
-  close(measuredYaw, Math.atan(radialYaw) * 180 / Math.PI, 1e-6);
-
-  // #1045: pitch stays independent while the horizontal envelope recovers.
-  const expectedPitch = a.weapon.spreadPitchGround * Math.PI / 180 * Math.sqrt(1 - 1e-12);
-  const measuredPitch = Math.atan2(Math.abs(owner.vel.y), Math.hypot(owner.vel.x, owner.vel.z));
-  const radialPitch = Math.sin(Math.PI / 4) * Math.tan(expectedPitch);
-  close(measuredPitch, Math.atan2(radialPitch, Math.sqrt(1 + radialYaw * radialYaw)), 1e-8);
+  // The S3 2024 Spinner study models separate signed horizontal and pitch
+  // deviations, not a shared-radius circular cone (the removed baseline).
+  const measuredYaw = Math.atan2(owner.vel.x, owner.vel.z) * 180 / Math.PI;
+  const expectedYaw = spread * signedBiasSample(1 - 1e-12, .3);
+  close(measuredYaw, expectedYaw, 1e-6);
+  const expectedPitch = a.weapon.spreadPitchGround * signedBiasSample(.125, .4);
+  const measuredPitch = Math.atan2(owner.vel.y, Math.hypot(owner.vel.x, owner.vel.z)) * 180 / Math.PI;
+  close(measuredPitch, expectedPitch, 1e-6);
+  assert.ok(expectedYaw > 0 && expectedPitch < 0,
+    'independent sampled signed axes can point in opposite directions');
 
   assert.equal(owner.damage, a.weapon.damage);
   assert.equal(owner.life, 3);
@@ -283,6 +289,8 @@ test('zero-spread ground Splatling range probe preserves its native projectile a
   assert.deepEqual(paintMetrics(f), paintMetrics(control),
     'the jump-only control preserves production paint metrics and every painted footprint cell');
   const paint = paintMetrics(f);
+  // PR1188: the CPU body edge equals the rendered GPU body edge (was 0.97 of
+  // it), adding the visible boundary ring: 16.875/15.875/254 -> below.
   assert.deepEqual({ maxZ: paint.bounds?.maxZ, area: paint.area, cells: paint.cells },
-    { maxZ: 16.875, area: 15.875, cells: 254 });
+    { maxZ: 17.125, area: 16.9375, cells: 271 });
 });

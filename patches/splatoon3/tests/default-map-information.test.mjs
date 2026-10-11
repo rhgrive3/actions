@@ -28,7 +28,13 @@ test('#523 all three connections reject missing or duplicate anchors',()=>{
  }
 });
 test('#523 emitted config preserves opt-in policy',{skip:!process.env.INKWAVE_MAP_POLICY_SITE},async()=>{
- const file=process.env.INKWAVE_MAP_POLICY_SITE+'/src/config.js';const m=new vm.SourceTextModule(fs.readFileSync(file,'utf8'));await m.link(()=>assert.fail('config has no imports'));await m.evaluate();assert.equal(m.namespace.DEFAULT_SETTINGS.minimap,false);
+ // The unminified native config retains the real inkFlight import; do not
+ // require the dependency-free shape that tree shaking happened to produce.
+ const path=await import('node:path'),mods=new Map(),context=vm.createContext({console,URL});
+ const load=file=>{if(mods.has(file))return mods.get(file);const m=new vm.SourceTextModule(fs.readFileSync(file,'utf8'),{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});mods.set(file,m);return m;};
+ const file=path.resolve(process.env.INKWAVE_MAP_POLICY_SITE,'src/config.js'),m=load(file);
+ await m.link((spec,from)=>{assert.ok(spec.startsWith('.'),'only native relative config imports');return load(path.resolve(path.dirname(from.identifier),spec));});
+ await m.evaluate();assert.equal(m.namespace.DEFAULT_SETTINGS.minimap,false);
 });
 
 function method(source,start,end){const a=source.indexOf(start),b=source.indexOf(end,a);assert.ok(a>=0&&b>a);return source.slice(a,b);}
@@ -51,7 +57,7 @@ test('#523 actual Game HUD uses hidden-map path by default and explicit true res
 });
 test('#523 emitted Game/Match use emitted defaults for the live HUD transport',{skip:!process.env.INKWAVE_MAP_POLICY_SITE},async()=>{
  const path=await import('node:path'),site=path.resolve(process.env.INKWAVE_MAP_POLICY_SITE),mods=new Map(),context=vm.createContext({console,performance,URL,URLSearchParams,location:{search:''},innerWidth:800,innerHeight:600});
- function load(file){if(mods.has(file))return mods.get(file);let code=fs.readFileSync(file,'utf8');if(file===path.join(site,'src/main.js')){const boot=/const ([\w$]+)=new ([\w$]+);\1\.boot\(\)\.catch\([\s\S]*$/,hit=code.match(boot);assert.ok(hit,'production bootstrap export');code=code.replace(boot,`export { ${hit[2]} as Game };`);}const m=new vm.SourceTextModule(code,{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});mods.set(file,m);return m;}
+ function load(file){if(mods.has(file))return mods.get(file);let code=fs.readFileSync(file,'utf8');if(file===path.join(site,'src/main.js')){const boot=/const\s+([\w$]+)\s*=\s*new\s+([\w$]+)(?:\(\))?\s*;\s*\1\.boot\(\)\.catch\([\s\S]*$/,hit=code.match(boot);assert.ok(hit,'production bootstrap export');code=code.replace(boot,`export { ${hit[2]} as Game };`);}const m=new vm.SourceTextModule(code,{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});mods.set(file,m);return m;}
  const main=load(path.join(site,'src/main.js'));await main.link((s,m)=>load(s==='three'?path.join(site,'vendor/three/build/three.module.js'):s.startsWith('three/addons/')?path.join(site,'vendor/three/jsm',s.slice('three/addons/'.length)):path.resolve(path.dirname(m.identifier),s)));await main.evaluate();
  const f=await setup(),G=mods.get(path.join(site,'src/core/ctx.js')).namespace.G,defaults=mods.get(path.join(site,'src/config.js')).namespace.DEFAULT_SETTINGS;G.camera=f.G.camera;G.teamHex=f.G.teamHex;f.m.teamSummary=mods.get(path.join(site,'src/game/match.js')).namespace.Match.prototype.teamSummary;f.game._updateHud=main.namespace.Game.prototype._updateHud;f.game.settings={...defaults};let shown=0,hidden=0;f.game.minimap.update=()=>shown++;f.game.minimap.tickHidden=()=>hidden++;
  assert.equal(defaults.minimap,false);for(let i=0;i<120;i++)assert.equal(f.step().frame.map,null);assert.equal(shown,0);assert.equal(hidden,120);f.game.settings.minimap=true;assert.equal(f.step().frame.map.canvas,f.game.minimap.canvas);assert.equal(shown,1);

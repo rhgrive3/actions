@@ -23,7 +23,7 @@ export function adaptPause(rel, code) {
     code = replaceOnce(code, '      if (this.match.controller) this.match.controller.enabled = false;',
       '      if (this.match.controller) { this.match.controller.cancelForMenuTakeover?.(); this.match.controller.menuBlocked = true; this.match.controller.enabled = false; }', 'online pause input ownership');
     code = replaceOnce(code, '    if (this.match.controller) this.match.controller.enabled = true;',
-      '    if (this.match.controller) { this.match.controller.menuBlocked = false; this.match.controller.enabled = true; }', 'resume input ownership');
+      '    // Reports can arrive while offline simulation is paused; retire them at resume too.\n    try { this.input.s3ControllerMotionReader?.discard?.(); } catch {}\n    if (this.match.controller) { this.match.controller.menuBlocked = false; this.match.controller.enabled = true; }', 'resume input ownership');
     code = replaceOnce(code, '    const pp = inp.padPressed;',
       '    const pp = new Set(inp.padMenuPressed);\n    inp.padMenuPressed.clear();', 'consume menu pad presses independently');
     code = replaceOnce(code, '      const nav = (d) => this.menus.nav?.(d);',

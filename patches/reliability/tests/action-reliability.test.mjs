@@ -136,10 +136,11 @@ test('pointer lock loss cancels pending mouse fire without replay', async () => 
 });
 
 test('illegal dodge conditions stay rejected without spending roll ink', async () => {
-  for (const state of ['air', 'ink', 'rolls', 'still', 'dead', 'special', 'sub']) {
+  for (const state of ['coyote', 'ink', 'rolls', 'still', 'dead', 'special', 'sub']) {
     const h = await boot(), set = device(h, 'keyboard');
     set('fire', true); set('jump', true);
-    if (state === 'air') { h.actor.grounded = false; h.actor.coyote = 0; }
+    // #719: an airborne roll is admitted once the coyote window has closed; inside it the ordinary coyote jump keeps priority.
+    if (state === 'coyote') { h.actor.grounded = false; h.actor.coyote = .05; }
     if (state === 'ink') h.actor.ink = h.actor.weapon.rollInk - 1e-5;
     if (state === 'rolls') h.actor.weaponRunner.rollsLeft = 0;
     if (state === 'still') h.event('keyup', key('KeyD'));
@@ -166,9 +167,28 @@ test('landing uses the existing bounded jump buffer, without extending its deadl
   const h = await boot(), set = device(h, 'keyboard');
   h.actor.grounded = false; h.actor.coyote = 0;
   h.actor._integrate = () => { h.actor.grounded = true; };
+  // #719 admits an airborne roll only with a move direction, so the airborne press is refused here and buffered.
+  h.event('keyup', key('KeyD'));
   set('fire', true); set('jump', true); h.frame();
-  assert.equal(dodges(h), 0, 'airborne at admission');
-  set('jump', false); h.frame();
+  assert.equal(dodges(h), 0, 'airborne without a direction is refused');
+  set('jump', false); h.event('keydown', key('KeyD')); h.frame();
   assert.equal(dodges(h), 1, 'landing next tick consumes existing jump buffer');
   h.frame(STEP * 10); assert.equal(dodges(h), 1);
+});
+
+test('ordinary landing jump keeps its original buffer and expiry', async () => {
+  for (const expired of [false, true]) {
+    const h = await boot({ weapon: 'shooter' }), set = device(h, 'keyboard');
+    h.actor.grounded = false; h.actor.coyote = 0;
+    h.actor._integrate = () => { h.actor.grounded = false; };
+    set('jump', true); h.frame(); set('jump', false);
+    assert.equal(h.actor.character.events.filter(e => e[0] === 'jump').length, 0);
+    if (expired) for (let i = 0; i < 30; i++) h.frame();
+    h.actor._integrate = () => { h.actor.grounded = true; };
+    h.frame(); h.frame();
+    assert.equal(h.actor.character.events.filter(e => e[0] === 'jump').length, expired ? 0 : 1);
+    assert.equal(dodges(h), 0, 'ordinary jump never becomes a dodge');
+    for (let i = 0; i < 10; i++) h.frame();
+    assert.equal(h.actor.character.events.filter(e => e[0] === 'jump').length, expired ? 0 : 1);
+  }
 });

@@ -36,6 +36,8 @@ import { adaptIssue415 } from './enemy-ink-recovery-adapter.mjs';
 import { adaptIssueBatch1171 } from './issue-batch-1171-adapter.mjs';
 import { adaptTidalSlamGauge } from './tidal-slam-gauge-adapter.mjs';
 import { adaptScorchGorge } from './scorch-gorge-adapter.mjs';
+import { adaptIssue719Dodge } from './issue-719-dodge-adapter.mjs';
+import { adaptWeaponCatalog } from './weapon-catalog-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -59,9 +61,15 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptWeaponCatalog(rel, code);
+  if (rel === 'src/game/motion/source-controller.js') {
+    code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
+    return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" + code;
+  }
   code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);
   code = adaptScorchGorge(rel, code, replaceOnce);
+  code = adaptIssue719Dodge(rel, code, replaceOnce);
   // The source-guided shooter-family InkFlightRuntime is the authority for
   // head integration and detached paint drops. It does not traverse the
   // patched generic Projectiles._step actor loop. Bridge its actor contact
@@ -74,6 +82,17 @@ export function adaptSource(rel, code) {
       'const options = { seed: p.seed, kind, face: hit.face,',
       'const options = { seed: p.seed, kind, face: hit.face, claimOwner: p.owner,',
       'native ink-flight temporal paint owner');
+    // PR1188: detached splash drops use the same ellipse mapping as Blaster and
+    // Roller splashes: a WidthHalf x (WidthHalf * depth) footprint centred on
+    // the landing point (equal length and area on PaintSystem's forward smear).
+    code = replaceOnce(code,
+      "            this.paint(p, hit, shape, p.heading, p.feet ? 'trail' : 'drop');",
+      "            this.paint(p, hit, splashPaintFootprint(shape), p.heading, p.feet ? 'trail' : 'drop');",
+      'ink flight splash ellipse footprint');
+    code = replaceOnce(code,
+      '    if (projected > EPS) this.heading.multiplyScalar(1 / projected);',
+      '    if (projected > EPS) this.heading.multiplyScalar(1 / projected);\n    if (projected > EPS && shape.centreBack > 0) this.point.addScaledVector(this.heading, -shape.centreBack);',
+      'ink flight splash footprint centred on landing');
     code = replaceOnce(code,
       'this.base.set(actor.pos.x, actor.pos.y + (actor.smoothY || 0), actor.pos.z);',
       'this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);',
@@ -104,7 +123,8 @@ export function adaptSource(rel, code) {
       'ink flight first wall contact admits sourced WallDrop phase');
     code = "import { coherentMotionStart } from '../../patches/splatoon3/runtime/actor-motion.mjs';\n" +
       "import { hurtboxRadius, hurtboxHeight } from '../../patches/splatoon3/runtime/player-hurtbox.mjs';\n" +
-      "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+      "import { beginFidelityWallDrop, advanceFidelityWallDrop } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" +
+      "import { splashPaintFootprint } from '../../patches/splatoon3/runtime/blaster-flight-paint.mjs';\n" + code;
     code = replaceOnce(code,
       '        if (!actor.alive || actor.team === p.team) continue;',
       '        const friendly = actor.team === p.team;\n' +
@@ -129,7 +149,8 @@ export function adaptSource(rel, code) {
       '        // World wins ties: no wall-through damage, independent of actors order.',
       'ink flight S3 friend-through at first-contact age');
     // #875: a swept contact chooses the shot's completed fixed 60Hz tick,
-    // not a fractional impact time within that tick. This is the same integer
+    // not a fractional impact time within that tick. The completed (post-advance)
+    // side is an INKWAVE model choice; S3 chronology at the boundary is 未確認. This is the same integer
     // damage-age owner used by fidelityDamage for ordinary shooter-family
     // projectiles; collision ordering and contact position remain continuous.
     code = replaceOnce(code,
@@ -237,6 +258,7 @@ export function adaptSource(rel, code) {
       'const win = cov[0] >= cov[1] ? 0 : 1; // Exact tie belongs to the assigned Alpha side.',
       'deterministic Alpha turf tie');
     // One native presentation-delay owner for RAF and hidden-host completion.
+    // Applied after the judge hook so a missing or duplicate judge anchor is reported under its own label (#158, #934).
     const finishDelay = '(this.bossMode ? (this.bossMode.boss.dead ? this.bossCfg.finishWin : this.bossCfg.finishLose) : 2.6)';
     code = replaceOnce(code, 'this.stateT > ' + finishDelay,
       'this.stateT > this.finishDelay()', 'shared native finish delay');
@@ -257,7 +279,7 @@ export function adaptSource(rel, code) {
       '    if (!this.attract && !this.bossMode && (this.mode == null || this.mode === \'turf\') && (this.state === \'finish\' || this.state === \'judge\')) return;\n    const nm = G.netm;\n    for (const a of this.actors) { if (a.remote && nm) nm.applyRemote(a, dt); else a.update(dt); }',
       'post-TIME-UP turf actors stop physics while live projectiles continue');
     code = replaceOnce(code, '    if (!this.controller) return;',
-      '    if (blockExpiredGuestInput(this) || !this.controller) return;', 'guest deadline controller admission');
+      '    if (blockExpiredGuestInput(this, dt) || !this.controller) return;', 'guest deadline controller admission');
     code = replaceOnce(code,
       '        a.pos.x -= (dx / d) * push * ka; a.pos.z -= (dz / d) * push * ka;\n        b.pos.x += (dx / d) * push * kb; b.pos.z += (dz / d) * push * kb;',
       '        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);\n        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);',
@@ -333,7 +355,7 @@ export function adaptSource(rel, code) {
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,ANL,ANLR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
     code = replaceOnce(code, 'const BALL_Z = 0.11, HEEL_Z = 0.065;', 'const BALL_Z = 0.11, HEEL_Z = 0.065;\nexport const CHARACTER_FOOT_METRICS = Object.freeze({ ANKLE_H, BALL_Z, HEEL_Z });', 'character foot metrics');
-    code = replaceOnce(code, 'const TN = _tk;', 'const TN = _tk;\nexport const CHARACTER_TIMERS = Object.freeze({ T_FLICK,T_LEAP,T_SLAM,T_DODGE,T_SPAWN,T_LAND,T_SHOOT,T_SHOOTL,T_THROW,T_SLOSH,T_REL });', 'character timers');
+    code = replaceOnce(code, 'const TN = _tk;', 'const TN = _tk;\nexport const CHARACTER_TIMERS = Object.freeze({ T_FLICK,T_LEAP,T_SLAM,T_DODGE,T_SPAWN,T_LAND,T_SHOOT,T_SHOOTL,T_THROW,T_SLOSH,T_REL,T_HIT });', 'character timers');
     code = replaceOnce(code, 'const M_GAIT = 0, M_CATCH = 1, M_SETTLE = 2;', 'const M_GAIT = 0, M_CATCH = 1, M_SETTLE = 2;\nexport const CHARACTER_FOOT_MODES = Object.freeze({ M_GAIT,M_CATCH,M_SETTLE });', 'character foot modes');
     const start = code.indexOf('    // ---------------- locomotion\n'), end = code.indexOf('    // ---------------- lean springs:', start);
     if(start<0 || end<0) throw new Error('INKWAVE patch conflict: walking pose');
@@ -358,7 +380,7 @@ export function adaptSource(rel, code) {
     // that owns the roller-side parts and the drum. Dedicated connection, kept apart
     // from the independent #915 weapon-transform ownership.
     code = replaceOnce(code, '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle); off.add(muzzle);',
-      '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle); off.add(muzzle);\n    const fold = attachRollerFold(d, off, parts, drum);', 'roller articulated hinge group');
+      '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle);\n    const muzzlePart = d.muzzlePart && parts[d.muzzlePart];\n    if (muzzlePart) { muzzle.position.sub(d.parts[d.muzzlePart].pivot); muzzlePart.add(muzzle); } else off.add(muzzle);\n    const fold = attachRollerFold(d, off, parts, drum);', 'roller articulated hinge group and rendered mechanism muzzle');
     code = replaceOnce(code, 'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, near: true, pump: 0, trig: 0, left: null, hidden: 0 };',
       'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
     return "import { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
@@ -383,6 +405,21 @@ export function adaptSource(rel, code) {
 .iw-ret--shooter .iw-ret__tick:nth-child(6) { --iw-cx: var(--iw-corner-x); --iw-cy: 24px; --iw-angle: 45deg; }
 /* Four outward-facing spread brackets, separate from the eight charge segments. */`,
       'Shooter measured four-corner spread strokes');
+    // #1100: Heavy Splatling outer brackets are axis-aligned corners of a frame outside the charge ring.
+    // Geometry: patches/splatoon3/reference/splatling-reticle-reference.json (one third-party S3 capture, measured 2026-10-10).
+    // The spread rate keeps the existing 1px-per-spread radial scale; the sp=0 envelope and absolute size remain 未確認.
+    code = replaceOnce(code,
+      '.iw-ret--splatling .iw-ret__tick { left: -4px; top: -4px; width: 8px; height: 8px; background: none; border-top: 2px solid currentColor; border-left: 2px solid currentColor; border-radius: 0; }',
+      `.iw-ret--splatling .iw-ret__tick {
+  --iw-x: calc(58px + var(--sp, 0) * 0.7071px); --iw-y: calc(40px + var(--sp, 0) * 0.7071px);
+  left: -10px; top: -10px; width: 20px; height: 20px; box-sizing: border-box; background: none; border: 0 solid currentColor; border-radius: 0;
+  transform: translate(var(--iw-cx), var(--iw-cy));
+}
+.iw-ret--splatling .iw-ret__tick[style*="--a:315deg"] { --iw-cx: calc(10px - var(--iw-x)); --iw-cy: calc(10px - var(--iw-y)); border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 3px; }
+.iw-ret--splatling .iw-ret__tick[style*="--a:45deg"] { --iw-cx: calc(var(--iw-x) - 10px); --iw-cy: calc(10px - var(--iw-y)); border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 3px; }
+.iw-ret--splatling .iw-ret__tick[style*="--a:135deg"] { --iw-cx: calc(var(--iw-x) - 10px); --iw-cy: calc(var(--iw-y) - 10px); border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 3px; }
+.iw-ret--splatling .iw-ret__tick[style*="--a:225deg"] { --iw-cx: calc(10px - var(--iw-x)); --iw-cy: calc(var(--iw-y) - 10px); border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 3px; }`,
+      'Heavy Splatling axis-aligned outer corner brackets (#1100)');
   }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
@@ -474,8 +511,8 @@ export function adaptSource(rel, code) {
       '    if (this._blasterBiasEl) {\n' +
       '      const percent = cueActive ? Math.round(jumpState.bias * 100) : 0;\n' +
       '      const cuePhase = cueActive ? jumpState.phase : \'idle\';\n' +
-      '      const cue = !cueActive ? \'\' : cuePhase === \'held\' ? `OUTER ${percent}%`\n' +
-      '        : cuePhase === \'recovering\' ? \'RECOVERING\' : `OUTER ${percent}%`;\n' +
+      '      const cue = !cueActive ? \'\' : cuePhase === \'held\' ? `BIAS ${percent}%`\n' +
+      '        : cuePhase === \'recovering\' ? \'RECOVERING\' : `BIAS ${percent}%`;\n' +
       '      if (cue !== L.blasterCue || cuePhase !== L.blasterCuePhase) {\n' +
       '        L.blasterCue = cue; L.blasterCuePhase = cuePhase;\n' +
       '        this._blasterBiasEl.hidden = !cueActive;\n' +
@@ -871,6 +908,8 @@ export function adaptSource(rel, code) {
       '          const g = G.physics.raycast(_v, DOWN, 12, _hit);',
       '          const g = G.physics.raycast(_v, DOWN, inkWaveRainReach, _hit);\n          const audit = c.s3RainAudit || (c.s3RainAudit = { candidateDrops: 0, groundHits: 0, paintEvents: 0 });\n          audit.candidateDrops++;\n          if (g.hit) audit.groundHits++;\n          if (g.hit && (!c.ghost || !c.owner.remote)) audit.paintEvents++;',
       'count Storm rain candidate/contact/paint separately');
+    // #927: native contact and allied recovery share one growth/fade + finite
+    // rain-trace predicate (storm-effects.mjs), so recovery cannot drift from damage.
     code = replaceOnce(code,
       '      const grow = clamp(c.t / 0.5, 0, 1), fade = clamp((c.dur - c.t) / 0.6, 0, 1);\n      const s = (0.3 + 0.7 * (1 - Math.pow(1 - grow, 3))) * (0.2 + 0.8 * fade);',
       '      const fade = clamp((c.dur - c.t) / 0.6, 0, 1);\n      const s = stormRainScale(c);',
@@ -932,6 +971,10 @@ export function adaptSource(rel, code) {
       '    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));',
       "    if (this.flick >= 0 && w.kind === 'roller') return w.moveSpeedFiring; // S3 swing target is independent of windup progress\n    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));",
       'roller swing movement target');
+    code = replaceOnce(code,
+      '    if (this.flickRecover > 0) return lerp(PLAYER.runSpeed, w.moveSpeedFiring * 0.6, this.flickRecover / 0.18);',
+      "    if (this.flickRecover > 0) return w.kind === 'roller' ? w.moveSpeedFiring : lerp(PLAYER.runSpeed, w.moveSpeedFiring * 0.6, this.flickRecover / 0.18);",
+      'roller recovery movement target');
     code = replaceOnce(code, 'lerp(w.damageMin, w.damageMax * 0.62, charge)',
       'chargerDamage(a, w, charge)', 'charger partial damage curve');
     code = replaceOnce(code, 'a.ink < w.inkFull * 0.2', 'a.ink < w.inkMin', 'charger minimum ink');
@@ -1041,15 +1084,15 @@ export function adaptSource(rel, code) {
       'Blaster flight splash drop-height window');
     code = replaceOnce(code,
       '      if (d > kitBombRadius(SUB, b, s.radius)) continue;',
-      '      if (d > Math.max(kitBombRadius(SUB, b, s.radius), b.s3Sub ? 0 : (s.knockback?.distance ?? 0))) continue;',
+      '      if (d > Math.max(kitBombRadius(SUB, b, s.radius), kitBombKnockback(SUB, b, s.knockback)?.distance ?? 0)) continue;',
       'Splat Bomb independent knockback radius');
     code = replaceOnce(code,
       "      this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');",
-      "      if (d <= kitBombRadius(SUB, b, s.radius)) {\n        this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');\n      }\n      if (!b.s3Sub && s.knockback && d <= s.knockback.distance) applySplatBombKnockback(b, e, c, _v, d, s.knockback);",
+      "      if (d <= kitBombRadius(SUB, b, s.radius)) {\n        this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');\n      }\n      const s3Knock = kitBombKnockback(SUB, b, s.knockback);\n      if (s3Knock && d <= s3Knock.distance) applySplatBombKnockback(b, e, c, _v, d, s3Knock);",
       'Splat Bomb damage and independent knockback');
     code = replaceOnce(code,
       '        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);',
-      '        applySplatBombSurfaceResponse(b, hit.normal);', 'Splat Bomb sourced ground resistance');
+      '        applySplatBombSurfaceResponse(b, hit.normal, undefined, dt);', 'Splat Bomb sourced ground resistance');
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
     // Apply after contact-recovery and Agent3 have both transformed the source.
     // Otherwise the native pre-LOS condition is gone and the build fails.
@@ -1081,7 +1124,7 @@ export function adaptSource(rel, code) {
       "      if (p.s3SpecialWeapon) this.applyHit(p.owner, e, distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)), p.wid || 'blaster');\n      else applyBlasterBlastContact(this, p, e, c, _v, d <= damageRadius ? blasterBurstDamage(p, w, d, distanceDamage) : 0, G.netm);",
       'Blaster air-burst authoritative contact');
     code = adaptPaintOwnership(rel, code, replaceOnce);
-    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, BLASTER_KNOCKBACK, applyBlasterBlastContact } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
+    return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint, kitBombKnockback } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, applyBlasterBlastContact, BLASTER_KNOCKBACK } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
@@ -1092,6 +1135,17 @@ export function adaptSource(rel, code) {
     code = adaptChargerSightCache(rel, code, replaceOnce);
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
+    // VFX droplets leave no ink speck on surfaces: a GPU-only mark that looks like
+    // paint but is not turf has no Splatoon 3 counterpart. A no-op (not null) keeps
+    // FX from substituting its fallback disc decal.
+    code = replaceOnce(code,
+      "      G.fx.onSpeck = (p, n, col, size) => {\n" +
+      "        const P = this.G.paint, t = this._teamOf(col);\n" +
+      "        if (!P || t < 0 || size < 0.014) return;\n" +
+      "        P.speck(this._sp.copy(p).addScaledVector(n, 0.04), Math.min(0.11, size * 1.7), t);\n" +
+      "      };",
+      "      G.fx.onSpeck = () => {};   // no paint-like specks from VFX droplets",
+      'VFX droplet specks leave no mark');
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
@@ -1141,7 +1195,12 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'G.projectiles?.applyHit(atk, v, d.d, d.w);', 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);', 'receive final damage group');
     code = replaceOnce(code, '    victim.alive = false; victim.hp = 0;', '    victim.alive = false; victim.hp = 0; victim.superJumpGround = null;', 'remote jump target death');
     code = replaceOnce(code, '    a.alive = true; a.hp = PLAYER.hp;', '    a.superJumpGround = null;\n    a.alive = true; a.hp = PLAYER.hp;', 'remote jump target respawn');
-    return `import { swimTrailVisible, swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
+    // #838: the host clock sample feeds the guest input gate with latency-compensated remaining time.
+    code = replaceOnce(code,
+      "    if (state === 'playing' && m.state === 'playing' && Math.abs(m.time - time) > 0.2) m.time += (time - m.time) * 0.5;",
+      "    if (state === 'playing' && m.state === 'playing' && Math.abs(m.time - time) > 0.2) m.time += (time - m.time) * 0.5;\n    if (state === 'playing' && m.state === 'playing') recordHostDeadline(m, time, this.s.tr?.rtt);",
+      'host clock records a latency-compensated input deadline');
+    return `import { recordHostDeadline } from '../../patches/splatoon3/runtime/turf-finish.mjs';\nimport { swimTrailVisible, swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, 'this.fireBuffer = firePressed ? P.fireBuffer : Math.max(0, this.fireBuffer - dt);',
@@ -1277,10 +1336,11 @@ export function adaptSource(rel, code) {
     return `import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, stealthJumpExtraTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery, updateSpecialHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
+    code = replaceOnce(code, 'const d = finishParts((BUILDERS[kind] || buildShooter)());', 'const d = finishParts(referenceWeaponModel((BUILDERS[kind] || buildShooter)()));', 'base weapon reference silhouettes');
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
     code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerFoldModel(rollerModel(buildRoller())),', 'roller drum proportions and articulated middle hinge');
     code = replaceOnce(code, 'blaster: buildBlaster,', 'blaster: () => blasterMechanism(buildBlaster()),', 'blaster S3 lever/spring-front mechanism channels');
-    return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\nimport { rollerFoldModel } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { blasterMechanism } from '../../patches/splatoon3/runtime/blaster-mechanism-model.mjs';\n" + code;
+    return "import { referenceWeaponModel } from '../../patches/splatoon3/runtime/weapon-reference-models.mjs';\nimport { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\nimport { rollerFoldModel } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { blasterMechanism } from '../../patches/splatoon3/runtime/blaster-mechanism-model.mjs';\n" + code;
   }
   if (rel === 'src/audio/music.js') {
     // Match-start Opening cue (issue #605): an original short sting for the pre-GO intro.
@@ -1337,6 +1397,17 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/audio/audio.js') {
+    // Build the cached SFX loop noise (white/pink/brown, 2 s each; the first
+    // build measured tens of ms on the first-shot frame) right after the
+    // context exists, staggered off the input path.
+    code = replaceOnce(code,
+      "  kick, snare, crash, tom, brass, bell, pad, bass,\n} from './music.js';",
+      "  kick, snare, crash, tom, brass, bell, pad, bass, noiseBuffer,\n} from './music.js';",
+      'audio noise warm-up import');
+    code = replaceOnce(code,
+      "    this.ready = true;\n",
+      "    this.ready = true;\n    if (!this.offline && typeof setTimeout === 'function') ['white', 'pink', 'brown'].forEach((kind, i) => setTimeout(() => { try { if (this.ctx === ctx) noiseBuffer(ctx, kind); } catch { /* audio unavailable */ } }, 200 + i * 150));\n",
+      'audio noise warm-up');
     code = replaceOnce(code,
       "  resume() {\n    const c = this.ctx;\n    if (c && !this.offline && c.state !== 'running' && c.state !== 'closed' && c.resume) c.resume().catch(() => {});\n  }",
       "  resume() {\n    const c = this.ctx;\n    if (!c || this.offline || c.state === 'closed') return;\n    if (c.state === 'running') { this.music?._resumeTimer?.(); return; }\n    if (c.resume) c.resume().then(() => this.music?._resumeTimer?.()).catch(() => {});\n  }",
@@ -1348,6 +1419,22 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/main.js') {
+    // Warm the ScreenFX post pass (and lens ink) on the boot frames rendered
+    // behind the loading screen, so the first shot does not compile it.
+    code = replaceOnce(code,
+      "    this._warmup();\n",
+      "    this._warmup();\n    warmScreenFX(this.screenfx);\n",
+      'ScreenFX boot warm-up');
+    // The menu's attract match never ran _warmCharacters (only real matches do,
+    // behind their fade), so each attract kid built its LOD tiers (hair, far
+    // decimation) and compiled its variants the first time the orbiting camera
+    // saw it: 1-3 s main-thread spikes on the menu. Warm them where the attract
+    // match starts — during boot loading, or under the attract restart fade.
+    code = replaceOnce(code,
+      "    m.setup(); m.start();\n    for (const a of m.actors) { a.respawnTimer = 0; }",
+      "    m.setup(); m.start();\n    this._warmCharacters?.(m);\n    for (const a of m.actors) { a.respawnTimer = 0; }",
+      'attract match character warm-up');
+    code = "import { warmScreenFX } from '../patches/splatoon3/runtime/ui.mjs';\n" + code;
     // #614: Splatoon 3's normal battle HUD has no global text feed naming remote
     // attacker/victim pairs. Drop the two remote-splat feed broadcasts; the local
     // splat confirmation (kind 'kill'), own-death showSplatted, the top roster and
@@ -1375,6 +1462,19 @@ export function adaptSource(rel, code) {
       '    this.input = G.input = new Input(this.R.renderer.domElement);',
       '    this.input = G.input = new Input(this.R.renderer.domElement);\n    this.input.attachWebHID?.();',
       'auto attach WebHID on boot');
+    // Splatoon 3 turf comes only from the weapon/blast paint the source tables
+    // define. Offline, upstream turned landing VFX droplets (explosion, splatted,
+    // flick curtain, slosh, dodge, roller spray, slam) into random real turf, while
+    // online play never did. Landing droplets paint nothing in either mode.
+    code = replaceOnce(code,
+      "    G.fx.onDropletLand = (point, normal, color, size) => {\n" +
+      "      if (G.netm) return;   // online: turf only comes from replicated splats, never from local-only cosmetic droplets\n" +
+      "      const team = this._teamOfColor(color);\n" +
+      "      if (team < 0) return;\n" +
+      "      G.paint.splat(this._tmpV.copy(point).addScaledVector(normal, 0.05), clamp(size * 2.4, 0.12, 0.45), team, { seed: Math.random() });\n" +
+      "    };",
+      "    G.fx.onDropletLand = () => {};   // no VFX-droplet turf, offline or online (S3 paint comes from weapon/blast sources only)",
+      'VFX droplet landings never paint turf');
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
     const end = code.indexOf('    // A full-frame lobby/showcase completely covers', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: fixed simulation connection');
@@ -1477,8 +1577,8 @@ export function adaptSource(rel, code) {
     {
       const rawEnemyReveal = "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;";
       const scoreHudEnemyReveal = "          if (!mapActorVisible(o, a, PLAYER.hp, G.time)) continue;";
-      const directEnemyReveal = "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp)) continue;";
-      const combinedEnemyReveal = "          // S3 Turf Map: preserve timed/team reveal and explicit recon marking; damage >=18 satisfies both.\n          if (!mapActorVisible(o, a, PLAYER.hp, G.time) && !enemyRevealedOnMap(o, PLAYER.hp)) continue;";
+      const directEnemyReveal = "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp, a, G.time)) continue;";
+      const combinedEnemyReveal = "          // S3 Turf Map: preserve timed/team reveal and explicit recon marking; damage >=18 satisfies both.\n          if (!mapActorVisible(o, a, PLAYER.hp, G.time) && !enemyRevealedOnMap(o, PLAYER.hp, a, G.time)) continue;";
       if (code.includes(scoreHudEnemyReveal)) {
         code = replaceOnce(code, scoreHudEnemyReveal, combinedEnemyReveal, 'enemy map reveal after score HUD');
       } else if (code.includes(rawEnemyReveal)) {
@@ -1572,10 +1672,30 @@ export function adaptSource(rel, code) {
 
   if (rel === 'src/world/paint.js') {
     code = adaptPaintOwnership(rel, code, replaceOnce);
+    // Paint footprint = the source paint radius/width (PaintParam.WidthHalf*,
+    // SplashPaintParam.WidthHalf*, BlastParam.PaintRadius ...). Upstream adds
+    // decorative satellite droplets (1.1-2.15 R) and spatter (1.3-2.5 R) plus
+    // rays up to ~0.57 R past the wobbly edge, so one splat visibly reaches
+    // 2-3x its source radius (and #264 counts those pieces as turf). Keep the
+    // irregular edge: rays become short edge spikes (<= 0.2 R), satellites and
+    // spatter are removed, and the quad reach shrinks to wobble + spikes. The
+    // GPU shader and the CPU ownership contract (paint-ownership.mjs, the shapes
+    // below) change together so the drawn ink and the turf grid stay the same.
+    code = replaceOnce(code, 'const REACH = [2.45, 2.1, 2.7, 2.75, 2.3, 1.9, 1.25, 1.35];',
+      'const REACH = [1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.25, 1.35];', 'paint quad reach within the source radius');
+    for (const [from, to] of [
+      ['  if (k < 0.5) return vec4(5.0, 7.0, 8.0, 3.0);     // shot', '  if (k < 0.5) return vec4(5.0, 0.0, 0.0, 3.0);     // shot'],
+      ['  if (k < 1.5) return vec4(3.0, 4.0, 5.0, 2.0);     // charger line', '  if (k < 1.5) return vec4(3.0, 0.0, 0.0, 2.0);     // charger line'],
+      ['  if (k < 2.5) return vec4(7.0, 9.0, 10.0, 4.0);    // blast', '  if (k < 2.5) return vec4(7.0, 0.0, 0.0, 4.0);    // blast'],
+      ['  if (k < 3.5) return vec4(10.0, 12.0, 14.0, 5.0);  // bomb / slam / splat-out', '  if (k < 3.5) return vec4(10.0, 0.0, 0.0, 5.0);  // bomb / slam / splat-out'],
+      ['  if (k < 4.5) return vec4(3.0, 4.0, 4.0, 2.0);     // trail drip', '  if (k < 4.5) return vec4(3.0, 0.0, 0.0, 2.0);     // trail drip'],
+      ['  if (k < 5.5) return vec4(2.0, 2.0, 0.0, 1.0);     // droplet paint', '  if (k < 5.5) return vec4(2.0, 0.0, 0.0, 1.0);     // droplet paint'],
+      ['      float len = r * (0.07 + (big ? 0.5 : 0.4) * h2 * h2 * h2) * tsp;', '      float len = r * (0.04 + 0.16 * h2 * h2 * h2) * tsp;'],
+    ]) code = replaceOnce(code, from, to, 'paint shape within the source radius');
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
       "import { installIssue264PaintOwnership } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" +
       code + '\ninstallIssue570PaintPresentation(PaintSystem);\n' +
-      'installIssue264PaintOwnership(PaintSystem, { kind: K, reach: REACH, dripReach: DRIP_REACH, shapes: [[5, 7, 8, 3], [3, 4, 5, 2], [7, 9, 10, 4], [10, 12, 14, 5], [3, 4, 4, 2], [2, 2, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]] });\n';
+      'installIssue264PaintOwnership(PaintSystem, { kind: K, reach: REACH, dripReach: DRIP_REACH, shapes: [[5, 0, 0, 3], [3, 0, 0, 2], [7, 0, 0, 4], [10, 0, 0, 5], [3, 0, 0, 2], [2, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]] });\n';
   }
   code = adaptPaintOwnership(rel, code, replaceOnce);
   return code;

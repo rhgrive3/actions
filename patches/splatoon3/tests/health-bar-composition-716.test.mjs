@@ -60,16 +60,17 @@ test('#716 production health frame has one bar per eligible actor, never a secon
   f.enemy.climbing = true;
   assert.equal(f.render().healthMarkers.length, 1);
   assert.equal(f.visibleBars(), 1, 'the second layer must not reveal a climbing enemy');
-  f.enemy.climbing = false; f.enemy.lastDamage = 3;
+  f.enemy.climbing = false; f.enemy.lastDamage = 0; f.G.time = 3;
   assert.equal(f.render().healthMarkers.length, 1);
-  assert.equal(f.visibleBars(), 1, 'the authoritative damage age owns expiry');
-  f.enemy.netLife++; f.enemy.hp = 80; f.enemy.lastDamage = .25;
+  assert.equal(f.visibleBars(), 1, 'observed HP-loss time owns expiry even while the recovery timer stays reset');
+  f.enemy.netLife++; f.enemy.hp = 100; f.render();
+  f.enemy.hp = 80; f.enemy.lastDamage = .25;
   assert.equal(f.render().healthMarkers.length, 2);
-  assert.equal(f.visibleBars(), 2, 'an injured first sample of a new life uses the canonical damage age');
+  assert.equal(f.visibleBars(), 2, 'a new life establishes a fresh HP baseline before a new observed hit');
 });
 
 test('#716 composed bars preserve private Thermal Ink and team reveal without leaking them to teammates', async t => {
-  const f = await rig(t); f.viewer.s3.loadout[1].main = 'thermalInk';
+  const f = await rig(t); f.render(); f.viewer.s3.loadout[1].main = 'thermalInk';
   f.applyMainDirectHit({ applyHit: (a, b, amount, id) => b.damage(amount, a, id) }, f.viewer, f.enemy, 10, 'shooter');
   f.G.physics.los = () => false;
   assert.ok(f.thermalTrackingRecord(f.enemy, f.viewer));

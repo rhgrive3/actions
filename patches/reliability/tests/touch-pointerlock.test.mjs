@@ -27,11 +27,11 @@ const read = rel => fs.readFileSync(path.join(RAW, rel), 'utf8');
 const classList = () => ({ add() {}, remove() {}, toggle() {}, contains() { return false; } });
 
 async function boot({exit='async',request='immediate'}={}) {
- const f=await fixture(),listeners=new Map(),docListeners=new Map(),modules=new Map();let exits=0,requests=0,unlocks=0,resolvePendingLock;
+ const f=await fixture(),listeners=new Map(),docListeners=new Map(),modules=new Map();let exits=0,requests=0,unlocks=0,resolvePendingLock,rejectPendingLock;
  const add=(map,name,fn)=>{if(!map.has(name))map.set(name,[]);map.get(name).push(fn);};
  const doc={hidden:false,documentElement:{classList:classList()},addEventListener:(n,fn)=>add(docListeners,n,fn),querySelector:()=>null,pointerLockElement:null};
  const fireDoc=()=>{for(const fn of docListeners.get('pointerlockchange')||[])fn();};
- const canvas={ownerDocument:doc,closest:()=>null,requestPointerLock(){requests++;if(request==='pending')return new Promise(resolve=>{resolvePendingLock=()=>{doc.pointerLockElement=canvas;fireDoc();resolve();};});}};
+ const canvas={ownerDocument:doc,closest:()=>null,requestPointerLock(){requests++;if(request==='pending')return new Promise((resolve,reject)=>{resolvePendingLock=()=>{doc.pointerLockElement=canvas;fireDoc();resolve();};rejectPendingLock=reject;});}};
  const overlayTarget=(kind)=>({closest:(sel)=>{if(kind==='editor')return sel.includes('.iwm-edit')?{}:null;return (sel.includes('.iwm-look')||sel.includes('.iwm-movezone')||sel.includes('.iwm-b'))?{}:null;}});
  doc.exitPointerLock=()=>{exits++;if(exit==='throw')throw Error('fixture exit unavailable');if(exit==='sync'){doc.pointerLockElement=null;fireDoc();}};
  const context=vm.createContext({console,performance,AbortController,setTimeout,clearTimeout,
@@ -57,6 +57,7 @@ async function boot({exit='async',request='immediate'}={}) {
   mouse(target=canvas){event('pointerdown',{pointerType:'mouse',target});},move(){event('mousemove',{movementX:1,movementY:2});},
   overlay:(kind='look')=>overlayTarget(kind),
   completePendingLock(){assert.equal(typeof resolvePendingLock,'function');resolvePendingLock();},
+  rejectPendingLock(){assert.equal(typeof rejectPendingLock,'function');rejectPendingLock(Error('unadjusted movement unavailable'));},
   unlocked(){doc.pointerLockElement=null;fireDoc();},locked(){doc.pointerLockElement=canvas;fireDoc();},listenerCount:()=>[...listeners.values(),...docListeners.values()].reduce((n,a)=>n+a.length,0)};
 }
 for(const kind of ['fire','stick','look'])for(const exit of ['sync','async'])test(`#662 ${kind} touch survives ${exit} mouse unlock and delayed motion`,async()=>{
@@ -82,6 +83,15 @@ test('#662 exit failure still protects live touch and permits explicit mouse reu
 });
 test('#662 adapter fails closed on duplicate and missing input connections',()=>{
  const rel='src/core/input.js',raw=read(rel),prior=adaptInput(rel,raw);assert.throws(()=>adaptTouchPointerLock(rel,''),/conflict/);assert.throws(()=>adaptTouchPointerLock(rel,adaptTouchPointerLock(rel,prior)),/conflict/);assert.equal(adaptTouchPointerLock('other','unchanged'),'unchanged');
+});
+test('a resume lock completing after a fresh pause cannot capture the range picker mouse',async()=>{
+  for(const state of ['pause','menu']){
+    const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();
+    if(state==='pause')h.G.match.paused=true;else h.G.game.menus.current='pause';
+    h.completePendingLock();assert.equal(h.input.locked,false);assert.equal(h.exits(),1);
+    h.unlocked();assert.equal(h.unlocks(),1,'only the initial deliberate unlock is reported');
+    h.G.match.paused=false;h.G.game.menus.current=null;h.input.requestLock();h.completePendingLock();assert.equal(h.input.locked,true);
+  }
 });
 
 test('#662 returning mouse does not lock in menus, paused play, finish or attract',async()=>{
@@ -181,3 +191,12 @@ test('#859 a late pre-touch lock cannot restore lock after a blocked map/editor 
   assert.equal(h.input.locked,true,'the new eligible request still completes');
  }
 });
+
+ test('a rejected resume request cannot retry Pointer Lock into a fresh pause or menu',async()=>{
+  for(const state of ['pause','menu','playing']){
+   const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();
+   if(state==='pause')h.G.match.paused=true;else if(state==='menu')h.G.game.menus.current='pause';
+   h.rejectPendingLock();await Promise.resolve();await Promise.resolve();
+   assert.equal(h.requests(),state==='playing'?2:1,state);assert.equal(h.unlocks(),1);
+  }
+ });

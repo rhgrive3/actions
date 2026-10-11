@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 
-// #926: after the Slosher glob is emitted S3 keeps the player committed for 16F before swim-form entry or
-// sub use becomes legal. Logic-only: real adapted Actor.update / WeaponRunner.update with fireSlosh/throwBomb
+// #926: after the Slosher glob is emitted S3 keeps the player committed for 16F before swim-form entry;
+// the community v10.0.1 table records sub admission separately at 15F. Logic-only: real adapted Actor.update / WeaponRunner.update with fireSlosh/throwBomb
 // stubbed. Not a browser run and not a Switch comparison.
 async function setup() {
   const f = await fixture(), a = f.make('slosher'), log = { slosh: [], bomb: [] };
@@ -35,14 +35,14 @@ test('#926 swim-form entry is rejected for 15 post-shot ticks and legal on the 1
     'kid for post-shot ticks 1..15, squid from tick 16');
 });
 
-test('#926 sub use is blocked for the post-shot window; a buffered sub resolves once on tick 16', async () => {
+test('#926 sub use is blocked for the post-shot window; a buffered sub resolves once on tick 15', async () => {
   const r = await setup();
   shootOnce(r);
   r.a.intent.sub = true; r.step(2); r.a.intent.sub = false; // tap SUB right after the emission
   assert.deepEqual(r.log.bomb, [], 'no throw inside the gate');
   r.step(40);
   assert.equal(r.log.bomb.length, 1, 'exactly one throw');
-  assert.equal(r.log.bomb[0] - r.log.slosh[0], 16, 'throw lands on the 16th post-shot tick, not stale or duplicated');
+  assert.equal(r.log.bomb[0] - r.log.slosh[0], 15, 'throw lands on the 15th post-shot tick, not stale or duplicated');
 });
 
 test('#926 sub resumes its normal readiness and 1F use gate after the main lock expires', async () => {

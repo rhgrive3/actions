@@ -7,9 +7,9 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { hasCommittedSuperJumpDestination } from '../../splatoon3/runtime/superjump-destination.mjs';
 import { adaptReliability } from '../adapter.mjs';
 import { adaptPinTap } from '../pin-tap-adapter.mjs';
-import { hasCommittedSuperJumpDestination } from '../../splatoon3/runtime/superjump-destination.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 

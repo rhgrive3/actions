@@ -9,7 +9,12 @@ export function createDepthCache(gl, width, height, type) {
   const framebuffer = gl.createFramebuffer(), depth = gl.createRenderbuffer();
   let disposed = false;
   const cache = { width, height, framebuffer, depth, colorBytes: 0, depthType: type,
-    valid: () => !disposed && !gl.isContextLost() && gl.isFramebuffer(framebuffer) && gl.isRenderbuffer(depth),
+    // These two objects are created and deleted only here. dispose()/abandon()
+    // and context loss are the only ways they stop being valid, and all are
+    // tracked in JS. gl.isFramebuffer/isRenderbuffer are synchronous GPU
+    // round trips; called on every shadow render they stalled each frame
+    // (profiled as the top main-thread cost in the menu and in matches).
+    valid: () => !disposed && !gl.isContextLost(),
     // Context loss already frees these GPU objects. Never submit handles from
     // the old generation after restoration (WebGL INVALID_OPERATION).
     abandon() { disposed = true; },

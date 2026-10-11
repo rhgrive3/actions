@@ -9,9 +9,8 @@ test('#189 real rolling emission scores a continuous 5.6-wide maximum-speed CPU 
   assert.equal(f.a.weapon.rollWidth,1.9,'damage width unchanged');assert.equal(f.a.weapon.rollSpeed,7.92);assert.equal(f.a.weapon.rollDashTime,1.5);
  }
 });
-test('#189 low/normal rolling retains existing body paint; no unverified #650 curve is invented',async()=>{
- for(const speed of [1,6.48,7.8]){const f=await draw(speed);assert.equal(f.paint.length,3);assert.ok(f.paint.every(e=>e.radius===.62));}
- const f=await draw();assert.ok(f.paint.slice(3).every(e=>e.opts.kind==='rollFloor'));
+test('#189 calibrated bands retain the native Roller body paint path at lower speeds',async()=>{
+ for(const speed of [1,6.48,7.8]){const f=await draw(speed);assert.equal(f.paint.length,5);assert.ok(f.paint.slice(0,3).every(e=>e.radius===.62&&e.opts.kind==='roll'));assert.ok(f.paint.slice(3).every(e=>e.opts.kind==='rollFloor'));}
 });
 test('#189 floor alias filters only side paint on real PaintSystem surface projection; existing body walls remain',async()=>{
  const f=await batchFixture(),V=f.THREE.Vector3;const faces=[{origin:new V(),n:new V(0,1,0),u:new V(1,0,0),v:new V(0,0,1),su:20,sv:20,atlas:{},wall:false},{origin:new V(),n:new V(1,0,0),u:new V(0,0,1),v:new V(0,1,0),su:20,sv:20,atlas:{},wall:true}];
@@ -37,7 +36,7 @@ test('#189 maximum-width side bands respect the actual wavy shader envelope acro
   const scale=f.profile.weaponsFidelityCompletion.worldUnitsPerSourceUnit,target=2*source.WidthHalfMax*scale;
   for(let sequence=1;sequence<=12;sequence++) {
    f.paint.length=0;f.r.s3MaxRollPaint.sequence=sequence;
-   paintRollerMaximumWidth(f.G,f.r,f.a.weapon,source,scale,Math.sin(yaw),Math.cos(yaw));
+   paintRollerMaximumWidth(f.G,f.r,f.a.weapon,source,scale,f.profile.weaponsFidelityCompletion.referenceHz,Math.sin(yaw),Math.cos(yaw));
    const floor=cpuFloor(f,20,.025);f.paint.forEach(e=>floor.splat(e.point,e.radius,e.team,e.opts));
    const extent=floor.extent(yaw===0?'x':'z');
    assert.ok(extent.width<=target+.025,`sourced boundary at sequence ${sequence}: ${extent.width}>${target}`);

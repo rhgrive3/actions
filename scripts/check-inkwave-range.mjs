@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
+import { profileRangeAcceptanceSnapshot } from './inkwave-range-profile-acceptance.mjs';
 import { pathToFileURL } from 'node:url';
 
 const option = (name) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw new Error('Required ' + name); return path.resolve(process.argv[i + 1]); };
@@ -72,7 +73,10 @@ for (const run of RUNS) {
     out.checks.stage = await page.evaluate(() => {
       const G = window.__G, g = window.__inkwave, s = G.match.range;
       const hidden = (sel) => { const e = document.querySelector(sel); return !e || getComputedStyle(e).display === 'none'; };
+      const weaponPads = s.pads.defs.filter(p => p.kind === 'weapon');
+      const separation = Math.min(...weaponPads.flatMap((p, i) => weaponPads.slice(i + 1).map(q => Math.hypot(p.x - q.x, p.z - q.z))));
       return {
+        weaponPads: weaponPads.length, separation,
         layout: G.level.layout.id, lightmap: !!g.stageLightmap, signage: !!g.rangeSignage?.mesh?.geometry?.attributes?.position?.count,
         targets: s.targets.length, pads: s.pads.defs.length, bots: G.actors.filter((a) => a.bot).length,
         rosterHidden: hidden('.iw-hud__top'), telemetry: !!document.querySelector('.iwr-tel'),
@@ -80,7 +84,7 @@ for (const run of RUNS) {
       };
     });
     const st = out.checks.stage;
-    if (st.layout !== 'range' || !st.lightmap || !st.signage || st.targets !== 11 || st.pads !== 14 || st.bots !== 0 || !st.rosterHidden || !st.telemetry) throw new Error('stage check ' + JSON.stringify(st));
+    if (st.layout !== 'range' || !st.lightmap || !st.signage || st.targets !== 11 || st.pads !== 14 || st.weaponPads !== 7 || st.separation < 1.9 || st.bots !== 0 || !st.rosterHidden || !st.telemetry) throw new Error('stage check ' + JSON.stringify(st));
     // #589: inspect the real constrained atlas and a separate desktop-HIGH instance.
     const signageEvidence=await page.evaluate(async desktop=>{
       const G=window.__G,g=window.__inkwave;
@@ -224,8 +228,74 @@ for (const run of RUNS) {
     await page.waitForSelector('.iwr-pausescr [data-id="z-bomb"]', { timeout: 30000 });
     await page.waitForTimeout(1200);
     await page.screenshot({ path: path.join(evidence, run.name + '-pause.png'), timeout: 240000 });
-    await page.locator('.iwr-pausescr [data-id="z-bomb"]').click();
-    await page.waitForTimeout(1500);
+    // The physical hub ring remains readable; all 65 mains live in the scrollable picker.
+    out.checks.weaponPicker = await page.evaluate(() => {
+      const chips = [...document.querySelectorAll('.iwr-wchip')];
+      const ids = chips.map(c => c.dataset.id);
+      return { count: chips.length, unique: new Set(ids).size, last: ids.at(-1), catalog: ids.filter(id => id?.startsWith('w-s3-')).length };
+    });
+    const picker = out.checks.weaponPicker;
+    if (picker.count !== 65 || picker.unique !== 65 || picker.catalog !== 58 || !picker.last?.startsWith('w-s3-')) throw new Error('range weapon picker ' + JSON.stringify(picker));
+    await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').last().click();
+    await page.waitForFunction(id => window.__G.local.weaponId === id && !window.__G.match.paused, picker.last.slice(2), { timeout: 30000 });
+    out.checks.weaponPicker.selected = await page.evaluate(() => window.__G.local.weaponId);
+    // Resume is asynchronous: the old pause owner can remain current briefly
+    // even after the gameplay paused flag clears. Do not toggle pause mid-exit.
+    await page.waitForFunction(() => !window.__G.match.paused && !window.__G.menus.current, null, { timeout: 30000 });
+    await page.evaluate(() => window.__inkwave.pause());
+    await page.waitForFunction(() => window.__G.match.paused && window.__G.menus.current === 'pause', null, { timeout: 30000 });
+    // Menus._swap intentionally leaves the prior pause DOM mounted for 340ms
+    // while its transition finishes. Scope to the current active screen, not
+    // a leaving, still-clickable weapon-picker panel from the previous pause.
+    const travelButton = page.locator('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]');
+    await travelButton.waitFor({ state: 'visible', timeout: 30000 });
+    if (await travelButton.count() !== 1) throw new Error('range has duplicate active travel buttons');
+    // Playwright's visible state includes opacity:0 entrance frames. The
+    // production menu correctly rejects presses on items not yet painted.
+    // Wait for the current screen and the native opacity admission threshold,
+    // then deliver the same real pointer click and require travel/resume.
+    await page.waitForFunction(() => {
+      const m=window.__G.menus,root=m._scr?.el;
+      const b=root?.querySelector('[data-id="z-bomb"]');
+      if(!b||m.current!==m._scr.name||root.inert)return false;
+      let opacity=1;
+      for(let e=b;e&&e!==root.parentNode;e=e.parentElement){
+        const o=+getComputedStyle(e).opacity;if(Number.isFinite(o))opacity*=o;
+        if(e===root)break;
+      }
+      return opacity>0.6;
+    },null,{timeout:30000});
+    await page.evaluate(() => {
+      window.__rangePointerTrace = [];
+      for (const type of ['pointerdown','pointerup','click','pointerlockchange']) document.addEventListener(type, e => {
+        const target=e.target.closest?.('[data-id]');
+        const list=window.__rangePointerTrace;
+        if(list.length<30)list.push({type,id:target?.dataset.id,x:e.clientX,y:e.clientY,lock:document.pointerLockElement?.tagName||null});
+      },true);
+    });
+    await travelButton.click();
+    try {
+      // Verify the real native travel and a fully resumed game, not just DOM.
+      await page.waitForFunction(() => window.__G.match?.range?.telemetry()?.zone === 'bomb' && !window.__G.match.paused && !window.__G.menus.current, null, { timeout: 30000 });
+    } catch (error) {
+      const state = await page.evaluate(() => {
+        const G = window.__G, a = G?.local;
+        return {
+          zone: G?.match?.range?.telemetry()?.zone,
+          paused: G?.match?.paused,
+          menu: G?.menus?.current,
+          alive: a?.alive,
+          pos: a?.pos?.toArray?.(),
+          weapon: a?.weaponId,
+          pointerLock: document.pointerLockElement?.tagName || null,
+          inputLocked: G?.input?.locked,
+          pointerTrace: window.__rangePointerTrace,
+          travelRect: (() => { const r = document.querySelector('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]')?.getBoundingClientRect(); return r && {x:r.x,y:r.y,width:r.width,height:r.height}; })(),
+          activeTravelButtons: document.querySelectorAll('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]').length,
+        };
+      });
+      throw new Error('range native travel/resume acceptance: ' + JSON.stringify(state) + '; ' + error.message);
+    }
     out.checks.travel = await page.evaluate(() => ({ screen: window.__G.menus.current, paused: window.__G.match.paused, pos: window.__G.local.pos.toArray(), zone: window.__G.match.range.telemetry().zone }));
     if (out.checks.travel.screen || out.checks.travel.paused || out.checks.travel.zone !== 'bomb') throw new Error('travel ' + JSON.stringify(out.checks.travel));
     if (run.isolation) {
@@ -243,6 +313,58 @@ for (const run of RUNS) {
       const iso = out.checks.isolation;
       if (iso.layout !== 'tidewater' || iso.range || iso.rangeOpt || iso.actors !== 8 || iso.targets || iso.signage || iso.hudClass || iso.rangeDom || iso.maps.includes('range') || iso.scenePads || !['intro', 'playing'].includes(iso.state)) throw new Error('isolation ' + JSON.stringify(iso));
     }
+    }
+    // The performance diagnostics use the real built Practice Range and are
+    // opt-in only. Exercise them on one browser after all gameplay/isolation
+    // checks, so the tracing wrappers never perturb the normal range audit.
+    if (run.name === 'chromium-desktop' && !signageOnly) {
+      await page.goto(base + '?range&skipTitle&profileRange=1', { waitUntil: 'domcontentloaded', timeout: 60000 });
+      // Persistent Chromium contexts can keep the original about:blank tab in front
+      // after this second navigation, suspending requestAnimationFrame.
+      // Activate the actual game tab; never synthesize frames or skip a trace gate.
+      await page.bringToFront();
+      // Wait for a complete trace and snapshot it in the SAME evaluation.
+      // A Practice Range transition may replace the page's diagnostic global
+      // between separate evaluate calls even after the earlier predicate passed.
+      // Playwright waitForFunction expects a synchronous predicate. An async
+      // predicate returns a truthy Promise before the profiler is ready, then
+      // its JSHandle resolves to false and incorrectly fails the browser gate.
+      // The helper returns false until a completed trace exists, and supplies
+      // the entire snapshot in the one successful poll (no navigation race).
+      let profilerHandle;
+      try {
+        profilerHandle = await page.waitForFunction(profileRangeAcceptanceSnapshot, null, { timeout: 90000 });
+      } catch (error) {
+        // Preserve full acceptance. Diagnose why the real second-session
+        // tracer never became ready instead of reporting only a timeout.
+        const diagnostic = await page.evaluate(() => {
+          const g = window.__inkwave, match = window.__G?.match, probe = window.__inkwaveRangePerf;
+          let snap = null;
+          try { snap = probe?.snapshot?.() ?? null; } catch (e) { snap = { snapshotError: String(e) }; }
+          return {
+            url: location.search, document: document.readyState,
+            hidden: document.hidden,
+            hasInstrumentedLoop: !!g?._loop?.toString().includes('_rangeFrameProbe'),
+            matchState: match?.state ?? null, range: !!match?.range,
+            gameExists: !!g, gameProbe: g?._rangeFrameProbe === undefined ? 'uninitialized' :
+              g._rangeFrameProbe === null ? 'loading' : 'installed',
+            globalProbe: !!probe, capturedFrames: snap?.trace?.capturedFrames ?? null,
+            traceError: snap?.traceError ?? null, mode: snap?.mode ?? null,
+            traceLatest: snap?.trace?.latest?.stages ? Object.keys(snap.trace.latest.stages) : null,
+          };
+        }).catch(e => ({ diagnosticError: String(e) }));
+        throw new Error('Practice Range tracer never reached 12 frames: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+      }
+      out.checks.profiler = await profilerHandle.jsonValue();
+      const perf = out.checks.profiler;
+      if (perf.traceError) throw new Error('Practice Range tracer load: ' + perf.traceError);
+      if (perf.mode !== 'practice' || perf.collected < 12 ||
+          !Array.isArray(perf.stageNames) ||
+          !perf.stageNames.includes('paint') || !perf.stageNames.includes('render') ||
+          perf.reportSchema !== 'inkwave-frame-trace-v1' || !perf.profileButton ||
+          !perf.tracerRuntimeInstalled || perf.gpuStatus === 'error') {
+        throw new Error('Practice Range opt-in performance diagnostic: ' + JSON.stringify(perf));
+      }
     }
     if (out.errors.length) throw new Error('page errors: ' + out.errors.join(' | '));
     if (out.missing.length) throw new Error('missing assets: ' + out.missing.join(' | '));

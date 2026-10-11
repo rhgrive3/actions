@@ -414,9 +414,11 @@ export function createSwitchHIDReader(deviceOrOptions = {}) {
     };
   };
 
-  reader.recenter = function() {
+  // Drop a pre-boundary rate without recalibrating or closing the device.
+  reader.discard = function() {
     latestSample = null;
   };
+  reader.recenter = reader.discard;
   reader.feedReport = function(data, reportId = null) {
     const opt = { ...options, productId };
     if (reportId !== null) opt.reportId = reportId;
@@ -669,6 +671,17 @@ export function installControllerMotion({ Input, PlayerController, G }) {
   proto.initializeSwitchHIDDevice = initializeSwitchHIDDevice;
   proto.sendSwitchSubcommand = sendSwitchSubcommand;
 
+  // Some takeovers freeze simulation or open and close between fixed ticks.
+  // Clear the sample at their existing cancellation boundary as well.
+  for (const name of ['cancelForMenuTakeover', 'cancelForMapTakeover']) {
+    const cancel = PlayerController.prototype[name];
+    if (typeof cancel !== 'function') continue;
+    PlayerController.prototype[name] = function (...args) {
+      try { this.input?.s3ControllerMotionReader?.discard?.(); } catch {}
+      return cancel.apply(this, args);
+    };
+  }
+
   const priorReset = PlayerController.prototype.resetCamera;
   if (priorReset) {
     PlayerController.prototype.resetCamera = function() {
@@ -688,10 +701,21 @@ export function installControllerMotion({ Input, PlayerController, G }) {
     this._s3RecenteredThisTick = false;
     const input = this.input, pad = input?.pad, reader = input?.s3ControllerMotionReader;
     let gyroApplied = false;
-    if (this.enabled && reader && pad?.connected && input.lastDevice === 'pad' && dt > 0) {
-      const mapUp = (G.rig?.mapK ?? 0) > 0.05 || input.down?.('Tab') ||
-        input.down?.('KeyM') || input.padButton?.(8) ||
-        !!input.mobile?.mapOpen;
+    const ownsAim = this.enabled && pad?.connected && input?.lastDevice === 'pad' && G.settings?.gyro !== false;
+    // Let the shared native map owner consume opening/closing/cancel edges
+    // before gyro writes. Native update calls it again, but consumed edges
+    // cannot toggle twice. Do not independently reinterpret held buttons.
+    const sharedMap = typeof this.updateMapInput === 'function';
+    if (sharedMap) this.updateMapInput();
+    const mapUp = (G.rig?.mapK ?? 0) > 0.05 || (sharedMap ? this.mapHeld :
+      input?.down?.('Tab') || input?.down?.('KeyM') || input?.padButton?.(8) ||
+      !!input?.mobile?.mapOpen);
+    if (reader && (!ownsAim || mapUp)) {
+      // A short pause/map/device handoff may finish before arrival-age expiry.
+      // Do not replay its last pre-boundary angular rate when aiming resumes.
+      try { reader.discard?.(); } catch {}
+    }
+    if (ownsAim && reader && dt > 0) {
       if (!mapUp) {
         let sample = null;
         try { sample = reader(pad, dt); } catch { sample = null; }

@@ -1,6 +1,16 @@
 import { distanceDamage } from './weapons.mjs';
 import { kitBombDamageBands, kitBombDamageMax } from './kit-subs.mjs';
 // Special contacts are candidates in the native swept segment, never a second step.
+// Pinned spl__DamageRateInfoConfig row of an explosion's blast core against the
+// Big Bubbler (see BIG_BUBBLER_SOURCE_RATES in kit-big-bubbler.mjs).
+export function explosionBubblerRow(p) {
+  if (!p) return null;
+  if (p.kind === 'bomb') return (p.s3Sub?.id || p.s3Resolved?.spec?.id) === 'suction' ? 'Bomb_Suction' : 'Bomb';
+  if (p.wid === 'trizooka') return 'UltraShot';
+  if (p.wid === 'inkVac' || p.s3SpecialWeapon?.id === 'inkVac') return 'BlowerExhale_BombCore';
+  if (p.type === 'blast' && (p.s3Weapon || p.owner?.weapon)?.kind === 'blaster') return 'Blaster_BlasterMiddle';
+  return null;
+}
 export function installKitDefense(api) {
   const { Projectiles, G } = api;
   Projectiles.prototype.kitDefenseCandidate = function (p) {
@@ -82,7 +92,7 @@ export function installKitDefense(api) {
       const p = context.projectile;
       if (p.ghost) return;
       const end = victim.pos.clone(); end.y += .7;
-      const probe = { owner: attacker, team: p.team, damage: 0, size: 0, ghost: false };
+      const probe = { owner: attacker, team: p.team, damage: 0, size: 0, ghost: false, s3BubblerRow: explosionBubblerRow(p) };
       const candidate = this.kitBarrierCandidate?.(probe, context.origin, end);
       if (candidate) {
         const damage = distanceDamage(context.bands, candidate.distance, context.linear);

@@ -111,11 +111,13 @@ test('player, projectile and paint replay stay outside the Boss admission gate',
   const f = await fixture();
   const nm = guestMatch(f);
   const theirs = f.makeActor({ nid: 8, owner: 'host', remote: true, roller: false });
-  f.bind(nm, [theirs]);
+  // #522: paint is admitted only from a member that owns a squid of the painted team.
+  const p3 = f.makeActor({ nid: 9, owner: 'p3', remote: true, team: 1, roller: false });
+  f.bind(nm, [theirs, p3]);
   nm.match.boss = bossStub(false);
   let splats = 0;
   f.G.paint.splat = () => { splats++; return 0; };
-  // paint: no actor ownership, unchanged by the Boss gate
+  // paint: the sender's own team (p3 owns team 1), unchanged by the Boss gate
   nm._play('p3', [1000, 's', 0, 0, 0, 1, 1, 0.5, 0]);
   assert.equal(splats, 1, 'remote paint replay was blocked');
   // projectile: still owned by its sender
