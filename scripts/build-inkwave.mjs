@@ -19,6 +19,7 @@ import { qualityIdentity, QUALITY_ROOT } from '../patches/local-quality/adapter.
 import { networkIdentity, NETWORK_ROOT } from '../patches/network-replication/adapter.mjs';
 import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity } from '../patches/loading-cache/adapter.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
+import { staticEsModuleImports } from './lib/inkwave-module-imports.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
 import { overlayScorchStageAssets } from './lib/inkwave-stage-assets.mjs';
@@ -250,12 +251,17 @@ const visit = (rel) => {
   // The registry is a bundle of weapon families. Discover dependencies from
   // its emitted imports, not its pre-bundle source imports: the family files
   // do not ship separately and would hide their shared kit.mjs dependency.
-  const s = !unminified && rel === 'patches/splatoon3/runtime/weapon-models/registry.mjs'
-    ? fs.readFileSync(abs, 'utf8')
+  const emittedRegistry = !unminified && rel === 'patches/splatoon3/runtime/weapon-models/registry.mjs';
+  const s = emittedRegistry ? fs.readFileSync(abs, 'utf8')
     : fs.existsSync(original) ? adaptBuildSource(rel, fs.readFileSync(original, 'utf8')) : fs.readFileSync(abs, 'utf8');
-  const specs = [];
-  for (const m of s.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
-  for (const m of s.matchAll(/(?:loadModule|import)\(\s*['"]([^'"]+\.js)['"]/g)) specs.push(m[1]);
+  // esbuild emits import{...}from"./kit.mjs" without spaces. Parse the
+  // emitted weapon-family bundle rather than regex-scanning its source graph:
+  // otherwise kit.mjs is a live static import absent from the offline precache.
+  const specs = emittedRegistry ? staticEsModuleImports(s) : [];
+  if (!emittedRegistry) {
+    for (const m of s.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
+    for (const m of s.matchAll(/(?:loadModule|import)\(\s*['"]([^'"]+\.js)['"]/g)) specs.push(m[1]);
+  }
   for (const sp of specs) visit(resolve(rel, sp));
   order.push(rel);
 };
@@ -483,7 +489,7 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lightmap-compaction.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lightmap-compaction.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 identity.inputHash = sha256(JSON.stringify(identity.files));
