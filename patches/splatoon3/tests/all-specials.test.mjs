@@ -327,3 +327,16 @@ test('world effect clock rejects invalid elapsed time and clear removes its rema
  for(const dt of [NaN,Infinity,-1,0]){sys.update(dt);assert.equal(o.age,age);assert.equal(sys._s3AllSpecialWorldClock,clock);}
  sys.clear();assert.equal(sys._s3AllSpecialWorldClock,0);assert.equal(sys._s3AllSpecialObjects.length,0);
 });
+
+test('Super Chump activation power scales decoy paint and blast reach but never damage or HP',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57]){
+  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'superChump');f.G.actors=[a];
+  const events=eventFeed(f,'all:special');a._startSpecial();a.s3.loadout=emptyLoadout();a.s3RefreshGear();a.intent.fire=true;a._updateSpecial(1/60);
+  const objects=f.G.projectiles._s3AllSpecialObjects.filter(o=>o.owner===a&&o.kind==='decoy');assert.equal(objects.length,8);
+  const o=objects[0],rate=gearCurve(ap,1,1.1,1.2);assert.equal(o.specialPowerAP,ap);assert.equal(o.paintRadius,gearCurve(ap,3.5,3.8,4.1));assert.equal(o.maxRadius,6*rate);assert.deepEqual(JSON.parse(JSON.stringify(o.damageBands)),[[3.6*rate,70],[6*rate,35]]);assert.equal(o.hp,60);
+  const event=events.find(e=>e.kind==='decoy'&&e.action==='deploy'),remote=f.make();remote.remote=true;f.replayAllSpecials(f,{...event,actor:remote});const ghost=f.G.projectiles._s3AllSpecialObjects.find(x=>x.owner===remote);assert.equal(ghost.maxRadius,o.maxRadius);assert.equal(ghost.paintRadius,o.paintRadius);
+  const v=f.make();v.team=1;v.pos.copy(o.target);v.pos.x+=6.5;v.pos.y-=.75;f.G.actors=[a,v];f.G.projectiles._s3AllSpecialObjects=[o];const hits=[],old=f.G.projectiles.applyHit;f.G.projectiles.applyHit=(...args)=>hits.push(args);o.phase='active';o.pos.copy(o.target);o.age=o.dur-1/60;f.G.projectiles.update(1/60);f.G.projectiles.applyHit=old;
+  assert.equal(hits.some(h=>h[1]===v),6.5<=o.maxRadius);for(const h of hits)assert.ok(h[2]<=70);
+ }
+});

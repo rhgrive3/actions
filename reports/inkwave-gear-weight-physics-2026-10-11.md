@@ -78,3 +78,13 @@ No GPU or browser FPS speedup is claimed. The added weight map is 65 small immut
 - Added original Inkjet blob and two explicit curve entries to the source gate: six files, 33 fields pass. The first source entry omits SpecUpType and uses the source default PaintRadius; no invented explicit enum is asserted.
 - Catalogue world clock ignores invalid/negative elapsed time, clears its remainder on reset and exits when the last world object expires. The production render loop bounds dt to 1/24 second; no arbitrary time-dropping clamp was added.
 - Source all-specials: 28/28 passed. Real-browser and latest-head CI results remain separately required.
+
+## Sixth review tranche
+
+- Super Chump's deployed decoys also ignored activation AP. Source IceParam.BlastParam now supplies paint `[3.5,3.8,4.1]` and damage-distance `[1,1.1,1.2]`; damage stays 70/35 and decoy HP stays 60. Owner and presentation replay derive the same maximum reach from the recorded activation AP.
+- Actual owner activation after clearing the current loadout, remote object replay and a victim at 6.5 units verify the increasing reach. Composed all-specials regression: 29/29 passed; original numerical gate: seven files, 35 fields passed.
+- CrossPaintCheckLength/Radius, the original decoy count/spread and retail ground projection are not proved by this change. Existing calibrated eight-decoy placement is unchanged and is not described as exact.
+
+## Browser gate correction
+
+The e4aac88 browser run exposed an incomplete catalogue-probe physics mock when the new Zipcaster case entered real Actor integration. The probe now creates the real Physics class over its empty fixture level. The older seven-claims pitch probe also used the obsolete random draw order; it now uses the four-draw sequence already independently asserted by the signed-axis Splatling regression. That browser pipeline now explicitly enables pipefail so a failing browser cannot be hidden by tee. These are test-environment corrections; actual browser success still requires the next CI result.

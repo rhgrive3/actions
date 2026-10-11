@@ -479,6 +479,11 @@ function deployObject(rt, actor, id, kind, pos, state, extra={}) {
     waves:[],lastMoveEvent:0,previous:new WeakMap(),lastCross:new WeakMap(),remote:!!actor.remote,
     startDelay:extra.startDelay||0,expand:extra.expand||0,
   };
+  if(kind==='decoy'){
+    const rate=gearCurve(object.specialPowerAP,1,1.1,1.2);
+    object.maxRadius=6*rate;object.paintRadius=gearCurve(object.specialPowerAP,3.5,3.8,4.1);
+    object.damageBands=descriptions.superChump.splashBands.map(([r,d])=>[r*rate,d]);
+  }
   if(kind==='screen'){
     const yaw=finite(extra.yaw)?extra.yaw:actor.aimYaw||actor.yaw||0;
     object.normal.set(Math.sin(yaw),0,Math.cos(yaw));object.tangent.set(Math.cos(yaw),0,-Math.sin(yaw));
@@ -807,8 +812,8 @@ function updateWorld(rt,dt) {
         if(k>=1){o.phase='active';o.mesh?.scale.setScalar(1.15);emitObject(rt,o,'active');}
       }
       if(o.age>=o.dur){
-        if(!o.owner.remote){paintDisk(rt,o.owner,o.pos,3.5,o.seed);damageBandRadius(rt,o.owner,o.pos,descriptions.superChump.splashBands,6,'superChump');fxBurst(rt,o.owner,o.pos,6,'explode');}
-        else fxBurst(rt,o.owner,o.pos,6,'explode');
+        if(!o.owner.remote){paintDisk(rt,o.owner,o.pos,o.paintRadius,o.seed);damageBandRadius(rt,o.owner,o.pos,o.damageBands,o.maxRadius,'superChump');}
+        fxBurst(rt,o.owner,o.pos,o.maxRadius,'explode');
         removeWorld(rt,o,'expire');
       }
     }else if(o.kind==='screen'){
