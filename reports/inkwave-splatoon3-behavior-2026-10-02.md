@@ -3931,3 +3931,11 @@ Not changed and still unverified: Dualies aerial slide descent (no sourced field
 最終 CI の旧 golden は DepthScale の比率を PaintSystem の加算伸長へそのまま渡す前提が残っていた。現行 main の `max(0, depthRatio - 1)` と独立した原典パラメータ計算を照合し、9 発すべての半径・actor 所有・単一着弾 stamp を検証した。0.25 セルの採点グリッドで現行の最遠 Z は 16.625、面積は 76.9375。旧 0.2 換算の反証対照は Z=13.625 / 面積=15.375、基底幅を二重計上する旧 depth 比率の対照は Z=21.125 / 面積=108.125 となり、いずれも現行のセル集合と区別される。source と emitted build の全 receipt（採点セルを含む）も一致する。
 
 修正範囲はテストと検証記録のみで、原典値・ゲーム本体の半径や伸長・CPU/GPU 採点境界は変更していない。この数値は INKWAVE の計測 receipt であり、Nintendo 実機との未確認事項を完了扱いにする根拠ではない。
+
+## 2026-10-11: accepted equipment during owner departure
+
+- Before: a remote Actor retained empty equipment, then its host-adopted bot lost run-speed AP and main-only gear.
+- Candidate: a match/actor/life/sequence-bound identity-only sidecar restores legal slots from already-admitted owner snapshots. Actual Actor movement at 30/60/120 Hz and Tenacity updates retain the equipment; stale/foreign/malformed claims fail closed.
+- Source/built focused 17 cases and network 448 cases pass. Full source, exact-head browser CI and merge are still pending. Conditional effect clocks and server-attested equipment remain outside this static-loadout correction. See `inkwave-gear-loadout-adoption-2026-10-11.md`.
+
+2026-10-11: Gear adoption additionally retains the latest admitted loadout before remote death playback clears snapshots. Actual owner JSON, death event playback before visual sampling, and subsequent bot adoption retain 57 AP. No conditional-clock protocol is included in this static-loadout correction.
