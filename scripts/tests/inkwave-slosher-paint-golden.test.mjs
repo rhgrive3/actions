@@ -5,7 +5,7 @@ import { fixture, ROOT } from '../weapons-fixture.mjs';
 import { reset, launch, finish, paintMetrics } from '../measure-weapons-fidelity.mjs';
 
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} != ${b}`);
-async function receipt({ legacyScale = false, site } = {}) {
+async function receipt({ legacyScale = false, legacyDepth = false, site } = {}) {
   const f = await fixture({ fidelity: true, site: site || path.join(ROOT, '.ci-scratch/unbuilt-slosher-golden') });
   const c = { key: 'slosher', id: 'slosher' }, a = reset(f, c);
   const scale = f.profile.weaponsFidelityCompletion.worldUnitsPerSourceUnit;
@@ -20,7 +20,10 @@ async function receipt({ legacyScale = false, site } = {}) {
     const fall = Math.max(0, Math.min(1, (drop - src.ScaleStartFallDistance) / (src.ScaleEndFallDistance - src.ScaleStartFallDistance)));
     const shrink = 1 + (src.WidthDepthScaleFall - 1) * fall;
     const radius = (src.WidthHalfNear + (src.WidthHalfFar - src.WidthHalfNear) * t) * scale * shrink;
-    const depth = Math.max(.05, (src.DepthScaleNear + (src.DepthScaleFar - src.DepthScaleNear) * t) * shrink);
+    const depthRatio = (src.DepthScaleNear + (src.DepthScaleFar - src.DepthScaleNear) * t) * shrink;
+    // PaintSystem adds its base width before stretchAmt. A source ratio of
+    // one must therefore be zero additional stretch, not a second base width.
+    const depth = Math.max(0, depthRatio - 1);
     const splat = f.G.paint.splat;
     let count = 0;
     f.G.paint.splat = function (point, actualRadius, team, opts) {
@@ -28,6 +31,7 @@ async function receipt({ legacyScale = false, site } = {}) {
       near(actualRadius, radius); near(opts.stretchAmt, depth);
       assert.equal(opts.claimOwner, a, 'the real landing stamp retains the native actor');
       impacts.push({ distance, radius, depth, index: p.fidelitySloshIndex });
+      if (legacyDepth) opts = { ...opts, stretchAmt: depthRatio };
       if (legacyScale) {
         // Reproduce the removed second wrapper: it ignored the configured
         // world scale and drop correction, treating range-line 0.2 as world units.
@@ -45,12 +49,17 @@ async function receipt({ legacyScale = false, site } = {}) {
   return { paint: paintMetrics(f), impacts };
 }
 
-test('Slosher exact paint golden follows source-scaled native landing, and rejects the legacy 0.2 override', async () => {
-  const current = await receipt(), legacy = await receipt({ legacyScale: true });
-  assert.equal(current.paint.bounds.maxZ, 20.875);
-  assert.equal(current.paint.area, 102.9375);
+test('Slosher source-scaled paint golden rejects stale scale and double-counted base depth', async () => {
+  const current = await receipt(), legacy = await receipt({ legacyScale: true }), oldDepth = await receipt({ legacyDepth: true });
+  assert.equal(current.paint.bounds.maxZ, 16.625);
+  assert.equal(current.paint.area, 76.9375);
   assert.equal(legacy.paint.bounds.maxZ, 13.625, 'negative control reproduces the stale CI golden');
+  assert.equal(legacy.paint.area, 15.375);
+  assert.equal(oldDepth.paint.bounds.maxZ, 21.125, 'raw depth ratio double-counts the base width');
+  assert.equal(oldDepth.paint.area, 108.125);
   assert.notEqual(current.paint.bounds.maxZ, legacy.paint.bounds.maxZ);
+  assert.notEqual(current.paint.bounds.maxZ, oldDepth.paint.bounds.maxZ);
+  assert.deepEqual(current.impacts, oldDepth.impacts, 'depth-only negative control preserves source radii and native landing');
   assert.deepEqual(current.impacts, legacy.impacts, 'only the obsolete second paint wrapper changes the receipt');
 });
 

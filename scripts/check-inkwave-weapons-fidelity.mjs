@@ -20,9 +20,11 @@ const data = await measure({ site, fidelity: true, detail: false });
 // below retain that legal-minimum band and the canonical scoring-paint owner.
 // PR1182 removes a second Slosher impact wrapper that incorrectly used 0.2
 // range-line units instead of the configured 1 WU/source-unit scale. The
-// source-owned nine landing stamps now yield maxZ 20.875 (area 102.9375).
-// inkwave-slosher-paint-golden.test.mjs independently checks every source
-// radius/owner and reproduces the old 13.625 with the legacy wrapper control.
+// source-owned nine landing stamps retain source radii and owners. Main
+// converts the source depth ratio to additive stretch; with the PR1188 exact
+// CPU/GPU body edge, maxZ is 16.625 and area is 76.9375. The independent
+// golden also rejects legacy 0.2 scaling (13.625) and double-counted base
+// depth (21.125), while requiring source/emitted scoring cells to agree.
 // Keep the .1-unit collision sweep and .25-unit scoring grid exact.
 // PR1188 paint-bound receipts (hit/full-damage ranges unchanged):
 //  - the CPU body edge now equals the rendered GPU body edge (was 0.97 of it),
