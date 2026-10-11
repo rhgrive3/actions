@@ -326,6 +326,7 @@ const visualSetup = ({ name, seed, impact = null }) => {
   if (!canonical) throw new Error('Missing canonical native spawn-floor placement');
   window.__iwProjectileSurfaceHits = [];
   window.__iwProjectileImpactAttempts = [];
+  window.__iwProjectileWorldHits = [];
   if (!window.__iwProjectileImpactRecorderInstalled) {
     const record = (route, p, hit) => {
       window.__iwProjectileImpactAttempts.push({
@@ -346,6 +347,21 @@ const visualSetup = ({ name, seed, impact = null }) => {
       return nativeImpact.call(this, p, hit);
     };
     const inkFlight = projectiles.inkFlight;
+    // A wall impact invokes beginFidelityWallDrop instead of terminal impact().
+    // Capture actual native sweep results without re-running physics.
+    if (inkFlight && typeof inkFlight.world === 'function') {
+      const nativeWorld = inkFlight.world;
+      inkFlight.world = function (from, to, radius, hit) {
+        const result = nativeWorld.call(this, from, to, radius, hit);
+        if (result?.hit && Number.isInteger(result.face) && result.face >= 0)
+          window.__iwProjectileWorldHits.push({
+            point: result.point.toArray(), normal: result.normal.toArray(),
+            block: result.block, face: result.face, dist: result.dist, radius,
+            from: from.toArray(), to: to.toArray(),
+          });
+        return result;
+      };
+    }
     if (inkFlight && typeof inkFlight.impact === 'function') {
       const flightImpact = inkFlight.impact;
       inkFlight.impact = function (p, hit) {
@@ -513,19 +529,42 @@ async function runVisuals(page) {
       const row = await page.evaluate(() => {
         const G = window.__G, g = window.__inkwave, dt = 1 / 60;
         G.time += dt; g.time += dt;
-        const before = G.projectiles.list.map(p => ({ seed: p.seed, pos: p.pos.toArray() }));
+        const before = G.projectiles.list.map(p => ({ seed: p.seed, pos: p.pos.toArray(), wallDrop: !!p.fidelityWallDrop }));
         const surfaceHitStart = window.__iwProjectileSurfaceHits.length;
         const attemptsStart = window.__iwProjectileImpactAttempts.length;
+        const worldHitsStart = window.__iwProjectileWorldHits.length;
         G.projectiles.update(dt); G.fx.update(dt, G.camera); g.fxHooks?.update?.(dt); G.paint.flush(dt);
         const after = new Set(G.projectiles.list.map(p => p.seed));
+        const worldHits = window.__iwProjectileWorldHits.slice(worldHitsStart);
+        const freshWallDrops = G.projectiles.list.filter(p => p.fidelityWallDrop &&
+          !before.some(b => b.seed === p.seed && b.wallDrop));
+        const wallDropReceipts = [];
+        for (const p of freshWallDrops) {
+          // beginFidelityWallDrop leaves the native head exactly 0.025 units
+          // out from the real contact. Pair the native world hit with that head.
+          const contact = worldHits.find(hit => {
+            const dx = p.pos.x - hit.point[0], dy = p.pos.y - hit.point[1], dz = p.pos.z - hit.point[2];
+            return hit.block >= 0 && hit.face >= 0 &&
+              Math.abs(hit.radius - p.inkProfile?.collision?.field) < 1e-6 &&
+              dx * dx + dy * dy + dz * dz < 0.04 * 0.04;
+          });
+          if (!contact) continue;
+          wallDropReceipts.push({
+            route: 'InkFlightRuntime.world -> beginFidelityWallDrop',
+            type: p.type, weapon: p.wid || p.inkKey || null, seed: p.seed, age: p.age,
+            pos: contact.point, normal: contact.normal, block: contact.block,
+            face: contact.face, distance: contact.dist, retainedWallDrop: true,
+          });
+        }
         return { before, afterCount: G.projectiles.list.length, retired: before.filter(p => !after.has(p.seed)), paintQuads: G.paint.quads,
           attempts: window.__iwProjectileImpactAttempts.slice(attemptsStart),
           heads: G.projectiles.list.map(p => ({ type: p.type, ghost: !!p.ghost, age: p.age, phase: p.inkPhase ?? null, headFrame: p.inkFrame ?? null, pos: p.pos.toArray(), vel: p.vel.toArray() })),
           headImpacts: G.projectiles.inkFlight?.stats?.headImpacts ?? null,
-          surfaceHits: window.__iwProjectileSurfaceHits.slice(surfaceHitStart),
+          surfaceHits: [...window.__iwProjectileSurfaceHits.slice(surfaceHitStart), ...wallDropReceipts],
+          worldHits, freshWallDrops: freshWallDrops.map(p => ({ seed: p.seed, frame: p.fidelityWallDrop?.frame ?? null })),
           paintCoverage: G.paint.coverage?.() ?? null, fx: G.fx.stats?.() ?? null };
       });
-      flightHistory.push({ frame, heads: row.heads, retired: row.retired, attempts: row.attempts, headImpacts: row.headImpacts, surfaceHits: row.surfaceHits });
+      flightHistory.push({ frame, heads: row.heads, retired: row.retired, attempts: row.attempts, headImpacts: row.headImpacts, surfaceHits: row.surfaceHits, worldHits: row.worldHits, wallDrops: row.freshWallDrops });
       if (flightHistory.length > 12) flightHistory.shift();
       const expectedContact = scenario.impact === 'wall'
         ? row.surfaceHits.find(hit => hit.normal && hit.face >= 0 && Math.abs(hit.normal[1]) < 0.45)
@@ -542,7 +581,7 @@ async function runVisuals(page) {
     const capture = await renderAndCapture(page, scenario.name, `${scenario.impact}-impact-F${impactFrame}`, scenario.impact === 'wall' ? 'side' : 'shoulder', scenario.seed);
     report.visualScenarios.push({ name: scenario.name, seed: scenario.seed, setup, births: born, impactFrame, impactState, impactEvidence, capture,
       evidence: scenario.impact === 'wall'
-        ? 'Projectiles._impact received a native stage Hit with a wall-like normal and valid face'
+        ? 'native world sweep struck the wall and the projectile entered retained WallDrop (or terminal impact was recorded)'
         : 'native world impact path received a stage Hit with an upward floor-like normal and valid face' });
   }
 }
