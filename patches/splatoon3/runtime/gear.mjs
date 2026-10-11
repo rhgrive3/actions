@@ -6,6 +6,7 @@ import { drinkGearPoints } from './support-cooler.mjs';
 import { selectedSub } from './kit-composition.mjs';
 import { installSubReady } from './sub-ready.mjs';
 import { installStormPower } from './storm-power.mjs';
+import { shooterMovementActive, shooterShotReady } from './shooter-movement.mjs';
 import { configureSwimStealth, updateSwimStealth, swimSpeedMultiplier } from './swim-stealth.mjs';
 import { refreshFlowEffects } from './flow-effects.mjs';
 import { HEAD_ABILITIES, conditionalPoints, conditionalKey, installConditionalGear } from './conditional-gear.mjs';
@@ -198,6 +199,7 @@ export function installGear(api, tuning) {
     // MainWeaponSetting and ActionSpecUp overrides belong to the equipped
     // weapon. Heavy Splatling and Blaster do not use the common middle values.
     m.runSpeedFiring = gearCurve(ap.runSpeed || 0, ...(a.weapon.runSpeedFiringCurve || extra.runSpeedFiring));
+    if (a.weapon.inkSaverMainCurve) m.inkSaverMain = gearCurve(ap.inkSaverMain || 0, ...a.weapon.inkSaverMainCurve);
     m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...(a.weapon.actionAirSpreadCurve || extra.actionAirSpread));
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
     for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter', 'rollInkMinPerFrame', 'rollInkMaxPerFrame']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
@@ -206,6 +208,9 @@ export function installGear(api, tuning) {
     if (tiers && [tiers.low, tiers.mid, tiers.high].every(Number.isFinite) && tiers.low > 0)
       m.subPower = gearCurve(ap.subPower || 0, tiers.low, tiers.mid, tiers.high) / tiers.low;
     m.inkSaverSub = sub?.inkSaverCurve ? gearCurve(ap.inkSaverSub || 0, ...sub.inkSaverCurve) : 1;
+    // Jr.'s 110-unit tank is represented by the existing normalized 0..100
+    // gauge. Both main and sub spending divide by capacity; refill does too.
+    m.inkSaverSub /= a.weapon.inkTankScale || 1;
     m.stormDuration = Math.floor(gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormDurationFrames) + 1e-10) / 60;
     m.stormThrowScale = gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormThrowScale);
     a.weapon.specialCost /= m.specialCharge ?? 1;
@@ -297,13 +302,13 @@ export function installGear(api, tuning) {
     const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
     if (this.a.grounded && (this.aimingSub || throwingStorm)) return tuning.bomb.holdMoveSpeed;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger' && this.a.onEnemy;
-    const attacking = (w.kind === 'shooter' ? this.s3ShooterMoveRemaining > 1e-10 : this.firingT > 0) || this.flick >= 0 || this.charging || this.streaming;
+    const attacking = (w.kind === 'shooter' ? shooterMovementActive(this) : this.firingT > 0) || this.flick >= 0 || this.flickRecover > 0 || this.slosh >= 0 || this.charging || this.streaming;
     // Ordinary airborne steering must not acquire extra reach from the ground
     // run-speed ability. Keep attack/ready/action-specific speed owners separate;
     // this only changes the target multiplier, never the velocity at takeoff.
     const ordinaryAir = !this.a.grounded && this.a.form === 'kid' &&
       !this.a.specialActive && !this.a.superJumpState && !this.a.s3?.roll && !this.a.s3?.surge &&
-      !this.busy() && !(w.kind === 'shooter' ? this.s3ShooterMoveRemaining > 1e-10 : this.firingPose()) && !this.aimingSub && !(this.flickRecover > 0);
+      !this.busy() && !(w.kind === 'shooter' ? shooterMovementActive(this) : this.firingPose()) && !this.aimingSub && !(this.flickRecover > 0);
     const gear = lockedMode || ordinaryAir ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear;
   };
@@ -316,14 +321,16 @@ export function installGear(api, tuning) {
     const m = this.s3?.modifiers || {};
     api.PLAYER.swimSpeed *= swimSpeedMultiplier(this);
     const runner = this.weaponRunner, kind = this.weapon.kind;
+    const previousDt = runner.s3MovementStepDt, previousEmerge = runner.s3MovementEmergeDelay;
+    runner.s3MovementStepDt = dt;
+    runner.s3MovementEmergeDelay = api.PLAYER.emergeDelay;
     const pendingFirst = kind === 'shooter' ? !!runner.s3ShooterPendingFirst : kind === 'dualies' && runner.s3DualiesStart > 1e-10;
-    const firing = (kind === 'shooter' ? (!pendingFirst && runner.s3ShooterMoveRemaining > 1e-10) : (!pendingFirst && runner.firingT > 0)) || runner.s3BlasterWindup > 0;
+    const firing = (kind === 'shooter' ? shooterMovementActive(runner) : (!pendingFirst && runner.firingT > 0)) || runner.s3BlasterWindup > 0;
     // Actor._horizontal runs before WeaponRunner.update. Predict only the same-tick
     // Shooter/Dualies emission that update() will actually admit; raw held ZR, cooldown,
     // empty ink and emerge-delay attempts must not select the shot curve early.
     const firstReady = kind === 'shooter'
-      ? !runner.s3ShooterCancelMain && (runner.s3ShooterPendingFirst ? runner.s3ShooterFirstRemaining <= dt + 1e-10
-        : runner.s3ShooterHeld || (this.weapon.firstShotDelay || 0) <= dt + 1e-10)
+      ? shooterShotReady(runner, dt)
       : kind === 'dualies' && !runner.dodge && (runner.s3DualiesHeld
         ? (runner.s3DualiesStart || 0) <= dt + 1e-10 : !(this.weapon.humanoidFirstShotDelay > 1e-10));
     const sameTickShot = firstReady && (kind === 'shooter' || kind === 'dualies') && !squid &&
@@ -340,6 +347,8 @@ export function installGear(api, tuning) {
     else api.PLAYER.enemyInkSpeed = kind === 'roller' && this.intent.fire && !squid ? m.enemyShotSpeed ?? walk : walk;
     try { return horizontal.call(this, dt, squid, enemy); }
     finally {
+      runner.s3MovementStepDt = previousDt;
+      runner.s3MovementEmergeDelay = previousEmerge;
       api.PLAYER.swimSpeed = swimSpeed;
       api.PLAYER.enemyInkSpeed = enemyInkSpeed;
     }

@@ -942,6 +942,10 @@ export function adaptSource(rel, code) {
       '    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));',
       "    if (this.flick >= 0 && w.kind === 'roller') return w.moveSpeedFiring; // S3 swing target is independent of windup progress\n    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));",
       'roller swing movement target');
+    code = replaceOnce(code,
+      '    if (this.flickRecover > 0) return lerp(PLAYER.runSpeed, w.moveSpeedFiring * 0.6, this.flickRecover / 0.18);',
+      "    if (this.flickRecover > 0) return w.kind === 'roller' ? w.moveSpeedFiring : lerp(PLAYER.runSpeed, w.moveSpeedFiring * 0.6, this.flickRecover / 0.18);",
+      'roller recovery movement target');
     code = replaceOnce(code, 'lerp(w.damageMin, w.damageMax * 0.62, charge)',
       'chargerDamage(a, w, charge)', 'charger partial damage curve');
     code = replaceOnce(code, 'a.ink < w.inkFull * 0.2', 'a.ink < w.inkMin', 'charger minimum ink');

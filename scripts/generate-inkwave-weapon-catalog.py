@@ -5,6 +5,8 @@ Input is kept outside the repository. No models, strings other than names, gear
 tables, executable game code or complete source archive is redistributed.
 """
 import argparse
+import base64
+from collections import Counter
 import hashlib
 import json
 from pathlib import Path
@@ -23,7 +25,8 @@ FAMILIES = {'Shooter': ('shooter', 'shooter'), 'Blaster': ('blaster', 'blaster')
             'Saber': ('splatana', 'shooter')}
 # Only numerical groups read by the catalog interpreter. Cosmetic/gear fields
 # are deliberately absent; pointers still refer to the original source layout.
-GROUPS = {'WeaponParam', 'WeaponFullChargeParam', 'VariableWeaponParam', 'VariableShotParam',
+GROUPS = {'MainWeaponSetting', 'spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate',
+          'WeaponParam', 'WeaponFullChargeParam', 'VariableWeaponParam', 'VariableShotParam',
           'MoveParam', 'DamageParam', 'CollisionParam', 'CollisionLapOverParam', 'VariableCollisionParam',
           'VariableMoveParam', 'VariableDamageParam', 'MoveJumpParam', 'DamageJumpParam', 'BlastJumpParam',
           'BlasterBurstJumpParam', 'PaintParam',
@@ -110,12 +113,74 @@ def generate(source):
         if isinstance(value, list):
             return [1] + [pack(item) for item in value]
         return value
+    # Canonical actor/path are deterministically reconstructed from the source
+    # row. Assert the relation for every input before removing duplicate text.
+    for record in records:
+        actor = 'Weapon' + record['sourceRow'].removesuffix('_00').replace('_', '')
+        assert actor == record['sourceActor']
+        assert record['sourcePath'] == f'data/parameter/1130/weapon/{actor}.game__GameParameterTable.json'
+        del record['sourceActor']
+        del record['sourcePath']
+        if not record['legacy']:
+            assert record['id'] == 's3-' + record['sourceRow'].removesuffix('_00').lower().replace('_', '-')
+            del record['id']
+        assert record['modelKind'] == {'brush':'roller','brella':'shooter','stringer':'charger','splatana':'shooter'}.get(record['family'],record['family'])
+        del record['modelKind']
+        record['sourceSha256'] = base64.b64encode(bytes.fromhex(record['sourceSha256'])).decode('ascii')
+        record['rowPointer'] = int(record['rowPointer'][1:])
     packed = pack({'schema': 1, 'referenceVersion': '11.3.0', 'sourceCommit': COMMIT, 'records': records})
     encode = lambda v: json.dumps(v, ensure_ascii=False, separators=(',', ':'))
-    text += 'const keys = ' + encode(keys) + ';\n'
-    text += 'function unpack(v) { if (!Array.isArray(v)) return v; if (v[0]===1) return v.slice(1).map(unpack); const o={}; for(let i=1;i<v.length;i+=2)o[keys[v[i]]]=unpack(v[i+1]); return o; }\n'
-    text += 'export const MAIN_WEAPON_CATALOG = unpack(' + encode(packed) + ');\n'
-    out.write_text(text)
+    counts = Counter()
+    def count(v):
+        if isinstance(v, list):
+            encoded = encode(v)
+            if len(encoded) >= 8: counts[encoded] += 1
+            for item in v: count(item)
+    count(packed)
+    repeated = sorted((v for v, n in counts.items() if n > 1 and (len(v)-8)*n>len(v)+1), key=len)
+    references = {v: i for i, v in enumerate(repeated)}
+    def compact(v, root=True):
+        if not isinstance(v, list): return v
+        if root and encode(v) in references: return [2, references[encode(v)]]
+        return [compact(item) for item in v]
+    table = [compact(json.loads(v), False) for v in repeated]
+    packed = compact(packed)
+    # Byte-for-byte LZ backreferences on ASCII JSON, decoded synchronously.
+    # This reduces the complete cold-offline payload without rounding values,
+    # adding an external codec or removing any runtime/reference field.
+    serial = json.dumps([keys,table,packed],ensure_ascii=True,separators=(',', ':'))
+    positions = {}
+    rows = []
+    literal = ''
+    cursor = 0
+    while cursor < len(serial):
+        tag = serial[cursor:cursor+4]
+        best_length = 0
+        best_position = 0
+        for previous in reversed(positions.get(tag, [])):
+            length = 4
+            while cursor+length < len(serial) and length < 512 and serial[previous+length] == serial[cursor+length]: length += 1
+            if length > best_length: best_length, best_position = length, previous
+        take = best_length if best_length >= 16 else 1
+        if take > 1:
+            if literal: rows.append(literal); literal = ''
+            rows.append([cursor-best_position,take])
+        else: literal += serial[cursor]
+        for index in range(cursor,cursor+take):
+            key = serial[index:index+4]
+            slots = positions.setdefault(key,[]); slots.append(index)
+            if len(slots) > 64: del slots[0]
+        cursor += take
+    if literal: rows.append(literal)
+    text += "function expand(rows){let s='';for(const r of rows){if(typeof r==='string')s+=r;else for(let i=0;i<r[1];i++)s+=s[s.length-r[0]];}return JSON.parse(s);}\n"
+    text += 'const [keys,table,packed] = expand(' + encode(rows) + ');\n'
+    text += 'function unpack(v) { if (!Array.isArray(v)) return v; if(v[0]===2)return unpack(table[v[1]]); if (v[0]===1) return v.slice(1).map(unpack); const o={}; for(let i=1;i<v.length;i+=2)o[keys[v[i]]]=unpack(v[i+1]); return o; }\n'
+    text += 'export const MAIN_WEAPON_CATALOG = unpack(packed);\n'
+    text += "const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';function hex(s){let out='';for(let i=0;i<s.length;i+=4){let n=0;for(let j=0;j<4;j++)n=n*64+(alphabet.indexOf(s[i+j])&63);out+=n.toString(16).padStart(6,'0');}return out.slice(0,64);}\n"
+    text += "for(const r of MAIN_WEAPON_CATALOG.records){const row=r.sourceRow.slice(0,-3);r.sourceActor='Weapon'+row.replaceAll('_','');r.sourcePath='data/parameter/1130/weapon/'+r.sourceActor+'.game__GameParameterTable.json';if(!r.legacy)r.id='s3-'+row.toLowerCase().replaceAll('_','-');r.modelKind=({brush:'roller',brella:'shooter',stringer:'charger',splatana:'shooter'})[r.family]||r.family;r.sourceSha256=hex(r.sourceSha256);r.rowPointer='/'+r.rowPointer;}\n"
+    temporary = out.with_suffix(out.suffix + '.tmp')
+    temporary.write_text(text, encoding='utf-8')
+    temporary.replace(out)
     print(f'{len(records)} base mains, {sum(not r["legacy"] for r in records)} additions; {out.stat().st_size} bytes')
 
 

@@ -628,7 +628,10 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
     const compiled = p => ({ linked: !!p && !!gl.getProgramParameter(p.program, gl.LINK_STATUS), vertexCompiled: !!p && !!gl.getShaderParameter(p.vertexShader, gl.COMPILE_STATUS), fragmentCompiled: !!p && !!gl.getShaderParameter(p.fragmentShader, gl.COMPILE_STATUS) });
     const programs = renderer.info.programs.map(compiled), materials = [...drawn.values()].map(d => ({ type: d.material.type, mesh: d.mesh, ...compiled(d.program) }));
     if (gl.getError() !== gl.NO_ERROR || gl.isContextLost()) throw Error('Native WebGL error/context loss');
-    collect(ch.root);
+    // Scene-owned special fists outlive the held pose and share immutable
+    // geometry. Record them while live, before Character disposal detaches
+    // them; this isolated renderer owns their final GPU teardown too.
+    collect(scene);
     return { frame, tick, visible, rig, image, hiddenImage, glint, coating, face, geometry: geometry(ch), programs, materials, shaderErrors: programs.filter(p => !p.linked || !p.vertexCompiled || !p.fragmentCompiled).length };
   }
   async function capturePause(ch, a, scenario) {

@@ -2,6 +2,7 @@ import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
+import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
 // retain their mature owners. Models and retail sub/special-kit expansion are
@@ -10,6 +11,11 @@ const EPS = 1e-9, HZ = 60, DT = 1 / HZ, RAD = Math.PI / 180;
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const finite = (v, fallback) => Number.isFinite(v) ? v : fallback;
+function interpolateFields(a,b,q){
+  const out={...a,...b};
+  for(const key of Object.keys(out))if(Number.isFinite(a?.[key])&&Number.isFinite(b?.[key]))out[key]=lerp(a[key],b[key],q);
+  return out;
+}
 const INSTALLED = Symbol.for('inkwave.main-weapon-catalog.v1');
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
 
@@ -24,11 +30,11 @@ const BRELLA_MEASURED = Object.freeze({
 // Paint rasterization, omitted simple-bullet defaults and lifetime use the
 // established INKWAVE model. These are not relabeled extracted source fields.
 export const CATALOG_MODEL_LIMITS = Object.freeze([
-  'Omitted bullet defaults inherit the existing source-guided 60Hz model.',
-  'Source-unit/world calibration and paint ellipse rasterization remain unverified on Switch.',
-  'Brella collider dimensions, angular pellet kernel and canopy damage multipliers require hardware comparison.',
-  'Wall-drip scheduling, Slosher spiral/spray particles and collision-shape chronology require hardware comparison.',
-  'Scoped zoom and held model/animation are existing family placeholders; numerical scope range is independent.',
+  'Sparse defaults: interpreted 60Hz model.',
+  'Switch scale/paint parity: unverified.',
+  'Brella geometry/damage rates: incomplete.',
+  'Wall drips/Slosher spiral: incomplete.',
+  'Scope/model/animation: placeholders.',
 ]);
 
 function weaponParam(r) {
@@ -43,7 +49,13 @@ function chargeFrames(r) {
 }
 function inkAt(r, frames) {
   const p = chargeParam(r), q = clamp(frames / chargeFrames(r));
-  if (r.family === 'splatling') return finite(p.InkConsume, .225) * 100 * q;
+  if (r.family === 'splatling') {
+    if(r.sourceActor==='WeaponSpinnerDownpour')return finite(p.InkConsume,.25)*100*q;
+    const base=finite(p.RepeatFrame,4),fullRate=finite(r.parameters.WeaponFullChargeParam?.RepeatFrame,base);
+    const rounds=Math.floor((shootingFrames(r,frames)+EPS)/(q+EPS>=1?fullRate:base))+1;
+    const fullRounds=Math.floor((shootingFrames(r,chargeFrames(r))+EPS)/fullRate)+1;
+    return finite(p.InkConsume,.225)*100*Math.min(1,rounds/fullRounds);
+  }
   const minF = finite(p.ChargeFrameMinCharge, 8), midF = p.ChargeFrameMidCharge;
   const min = finite(p.InkConsumeMinCharge, .0225), max = finite(p.InkConsumeFullCharge, .18);
   if (midF != null && p.InkConsumeMidCharge != null)
@@ -57,6 +69,20 @@ function stageValue(r, object, stem, frames, fallback = 0) {
   const midF = finite(p.ChargeFrameMidCharge, fullF);
   if (object[stem+'Mid'] == null) return lerp(a,c,clamp((frames-minF)/(fullF-minF)));
   return frames <= midF ? lerp(a,b,clamp((frames-minF)/(midF-minF))) : lerp(b,c,clamp((frames-midF)/(fullF-midF)));
+}
+function shootingFrames(r, frames) {
+  const t=chargeParam(r),full=chargeFrames(r),first=finite(t.ChargeFrame_First,48);
+  const a=finite(t.MaxShootingFrame_First,80),b=frames+EPS>=full?
+    finite(r.parameters.WeaponFullChargeParam?.MaxShootingFrame_Second,finite(t.MaxShootingFrame_Second,160)):finite(t.MaxShootingFrame_Second,160);
+  if(r.sourceActor==='WeaponSpinnerDownpour')return b*clamp((frames-8)/(full-8));
+  if(r.sourceActor==='WeaponSpinnerSerein'&&frames<=first)return a*clamp((frames-8)/(first-8));
+  return frames<=first?a*frames/first:lerp(a,b,(frames-first)/(full-first));
+}
+function remainingCharge(r,s) {
+  const remaining=Math.max(0,(s.streamTime-Math.max(0,s.streamElapsed))*HZ);
+  let lo=0,hi=chargeFrames(r);
+  for(let i=0;i<32;i++){const mid=(lo+hi)/2;if(shootingFrames(r,mid)<remaining)lo=mid;else hi=mid;}
+  return hi;
 }
 function recordMove(r) {
   return r.parameters.MoveParam || r.parameters.spl__BulletStringerParam?.MoveParam ||
@@ -82,6 +108,10 @@ function definition(r, api) {
   const rate = b?.repeat || finite(t.RepeatFrame, finite(t.SwingFrame, 6));
   const actualRange = finite(move.DistanceFullCharge, finite(p.MainEffectiveRangeUpParam?.BaseDistance, r.matchmakingRange));
   const u = Object.fromEntries((r.ui || []).map(x => [x.Type, clamp(x.Value / 100)]));
+  const setting=p.MainWeaponSetting||{};
+  const curve=stem=>{const v=['Low','Mid','High'].map(k=>setting[stem+k]);return v.every(Number.isFinite)?v:undefined;};
+  const action=p.spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate;
+  const inkTankScale=r.sourceActor==='WeaponShooterFirst'?1.1:1;
   return { id:r.id, name:r.names[api.LANG==='ja'?'ja':'en'], referenceNames:r.names, kind:'catalog', behaviorKind:r.family,
     modelKind:r.modelKind, class:{brush:'Brush',brella:'Brella',stringer:'Stringer',splatana:'Splatana'}[r.family] || existing.class,
     catalogRecord:r, sourceMainActor:r.sourceActor, sub:'bomb', special:'slam', specialCost:190, kitStatus:'original-inkwave-kit',
@@ -94,9 +124,11 @@ function definition(r, api) {
     // Saber charge uses DU/frame while simple-family speed fields use source
     // world-units/frame (10 DU/world-unit), hence its separate conversion.
     moveSpeedCharging:finite(t.MoveSpeed_Charge,finite(t.MoveSpeedFullCharge,.04))*(r.family==='splatana'?HZ/10:HZ),
-    inkPerShot:finite(t.InkConsume,.0092)*100, inkFull:inkAt(r,chargeFrames(r)),
+    inkTankScale, inkPerShot:finite(t.InkConsume,.0092)*100/inkTankScale, inkFull:inkAt(r,chargeFrames(r)),
     inkMin:inkAt(r,finite(t.ChargeFrameMinCharge,8)), inkRecoverStop:finite(t.InkRecoverStop,20)/HZ,
     spreadGround:finite(t.Stand_DegSwerve,0), spreadAir:finite(t.Jump_DegSwerve,0),
+    runSpeedFiringCurve:curve('Overwrite_MoveVelRt_Shot_'), inkSaverMainCurve:curve('Overwrite_ConsumeRt_Main_'),
+    actionAirSpreadCurve:action?[finite(action.Low,0),finite(action.Mid,.5),finite(action.High,1)]:undefined,
     impactRadius:finite(p.PaintParam?.WidthHalfNear, .8),
     stats:{range:u.Range??clamp(actualRange/32),damage:u.Power??clamp(damageMax(r)/160),
       rate:u.Blaze??clamp(6/Math.max(1,rate)),mobility:clamp(finite(t.MoveSpeed,.072)/.1),paint:clamp(actualRange/25)},
@@ -119,7 +151,7 @@ export function registerMainWeaponCatalog(api) {
 
 function initialState(r) {
   return { id:r.id, pressed:false, frame:0, pending:null, chargeF:0, paid:0, reserved:0,
-    stream:0, streamF:0, streamCharge:0, rounds:0, burst:0, burstWait:0,
+    stream:0, streamF:0, streamCharge:0, streamTime:0, rounds:0, burst:0, burstWait:0,
     turret:0, rolls:0, roll:null, lunge:null, melee:null, stored:null, swingCount:0, canopy:null, naked:0,
     accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0 };
 }
@@ -144,6 +176,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s = runner.catalogState;
     if (!s) return;
     const r = RECORDS.get(s.id), kp = r.parameters.WeaponKeepChargeParam || r.parameters.spl__WeaponStringerParam?.ChargeKeepParam;
+    if(keep&&s.stream>0&&kp?.EnableKeepChargeAnytime){s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(runner.a);}
     if (keep && s.chargeF > 0 && kp && (kp.EnableKeepChargeAnytime || s.chargeF+EPS >= chargeFrames(r)) &&
       (r.family !== 'stringer' || r.parameters.spl__WeaponStringerParam.IsEnableChargeKeep))
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
@@ -169,8 +202,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (this.rolling) return finite(p.WeaponRollParam?.SpeedDash,finite(p.WeaponRollParam?.SpeedNormal,.132))*HZ;
     if (s?.canopy?.open && !s.canopy.launched) return finite(t.MoveSpeedCharge,.055)*HZ*mod;
     if (this.charging) return w.moveSpeedCharging*mod;
-    if (r.sourceActor==='WeaponSpinnerDownpour'&&s?.streamElapsed>=.5)
-      return finite(p.VariableShotParam?.MoveSpeed,.05)*HZ*mod;
+    if (r.sourceActor==='WeaponSpinnerDownpour'&&s?.streamElapsed+EPS>=.5)
+      return lerp(finite(t.MoveSpeed,.086),finite(p.VariableShotParam?.MoveSpeed,.05),
+        clamp((s.streamElapsed*HZ-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)))*HZ*mod;
     return this.firingT>0 || s?.pending || s?.stream>0 ? w.moveSpeedFiring*mod : PLAYER.runSpeed;
   };
   function pay(runner, amount, recover = runner.a.weapon.inkRecoverStop) {
@@ -181,7 +215,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     a.s3 ||= {}; a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining||0,recover);
     return true;
   }
-  const inkMod = a => a.s3?.modifiers?.inkSaverMain ?? 1;
+  const inkMod = a => (a.s3?.modifiers?.inkSaverMain ?? 1)/(a.weapon.inkTankScale||1);
   function notify(a, r, origin, direction, charge = 0) {
     a.character.trigger(r.family==='charger'||r.family==='stringer'?'charge_release':'shoot');
     emit('weapon:fire',{actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge});
@@ -219,6 +253,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       DamageParam:p.VariableDamageParam||p.DamageParam, CollisionParam:p.VariableCollisionParam||p.CollisionParam,
       PaintParam:p.VariablePaintParam||p.PaintParam, SplashPaintParam:p.VariableSplashPaintParam||p.SplashPaintParam,
       SplashSpawnParam:p.VariableSplashSpawnParam||p.SplashSpawnParam };
+    if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour'){
+      for(const group of ['MoveParam','DamageParam','CollisionParam','PaintParam','SplashPaintParam','SplashSpawnParam'])
+        b[group]=interpolateFields(p[group],b[group],charge);
+    }
     if (key==='turret') b = { ...p, MoveParam:p.MoveLapOverParam||p.MoveParam,
       DamageParam:p.DamageLapOverParam||p.DamageParam, CollisionParam:p.CollisionLapOverParam||p.CollisionParam,
       SplashSpawnParam:p.SplashSpawnLapOverParam||p.SplashSpawnParam };
@@ -278,14 +316,24 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     return p;
   }
   function emitSingle(runner,r,key='normal',charge=0,volley=null) {
-    const a=runner.a, s=state(runner), desc=mode(r,key,0,charge), t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
+    const a=runner.a, s=state(runner), desc=mode(r,key,0,charge);
+    let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
+    if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
     origin(a);
-    const spread=finite(a.grounded?t.Stand_DegSwerve:t.Jump_DegSwerve,0);
+    const airFactor=1-(a.s3?.modifiers?.actionAirSpread??0);
+    const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
+    const spread=a.grounded?ground:lerp(ground,jump,airFactor);
     const aim=dir.clone();
     const chance=s.accuracy.shot(a.grounded,runner.s3JumpSpreadAge);
     G.projectiles._spread(aim, Math.random()<chance?spread:spread*.45);
     runner.spread=spread;
     spawn(a,r,desc,aim,muzzle,{volley});notify(a,r,muzzle,aim,charge);
+    const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
+    if(Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
+       advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
+      const at=a.pos.clone().addScaledVector(a.aimDir.clone().setY(0).normalize(),finite(splash.SpawnNearestLength,0));
+      floorPaint(a,at,nearest.WidthHalfNearest);
+    }
   }
   function emitUnits(runner,r,key,charge=0) {
     const a=runner.a,p=r.parameters,s=state(runner),group=key==='slosh'?p.UnitGroupParam:
@@ -553,22 +601,26 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       emitSingle(runner,r,key);runner.firingT=.35;
       if(burst){if(!s.burst)s.burst=3;s.burst--;s.burstWait=finite(param.RepeatFrame,4)/HZ;
         if(!s.burst)runner.cooldown=(finite(param.TripleShotSpanFrame,8)+finite(param.PostDelayFrame,2))/HZ;}
-      else runner.cooldown=finite(param.RepeatFrame,6)/HZ;
+      else if(r.family!=='blaster') runner.cooldown=finite(param.RepeatFrame,6)/HZ;
     };
-    if(r.family==='blaster')beginPending(s,finite(param.PreDelayFrame_HumanShot,10),fire);else fire();
+    if(r.family==='blaster'){
+      runner.cooldown=finite(param.RepeatFrame,50)/HZ;
+      beginPending(s,finite(param.PreDelayFrame_HumanShot,10),fire);
+    }else fire();
   }
   function charge(runner,r,input,s,dt) {
     const a=runner.a,p=r.parameters,t=chargeParam(r),full=chargeFrames(r);
     if(s.stream>0 && !(input.fire&&t.EnableRecharge)) {
       s.streamElapsed+=dt;
       s.streamF-=dt;
+      if(s.streamElapsed>s.streamTime+EPS){s.stream=0;runner.streaming=false;runner.cooldown=finite(t.PostDelayFrame,4)/HZ;return;}
       if(s.streamF<=EPS){
-        const variable=r.sourceActor==='WeaponSpinnerDownpour'&&s.streamElapsed*HZ>=30;
-        emitSingle(runner,r,variable?'variable':'normal',s.streamCharge);s.stream--;
+        const variable=r.sourceActor==='WeaponSpinnerDownpour'&&s.streamElapsed*HZ+EPS>=30;
+        const transition=variable?clamp((s.streamElapsed*HZ-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)):s.streamCharge;
+        emitSingle(runner,r,variable?'variable':'normal',transition);
         const fullRate=p.WeaponFullChargeParam?.RepeatFrame??t.RepeatFrame;
         s.streamUsed++;s.streamF+=finite(variable?p.VariableShotParam?.RepeatFrame:s.streamCharge+EPS>=1?fullRate:t.RepeatFrame,4)/HZ;
         runner.firingT=.35; a.lastFire=0;
-        if(s.stream===0){runner.streaming=false;runner.cooldown=finite(t.PostDelayFrame,4)/HZ;}
       }return;
     }
     if(input.fire && !s.pending && runner.cooldown<=EPS) {
@@ -577,7 +629,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         return;
       }
       if(s.stored){s.chargeF=s.stored.frames;s.paid=s.stored.paid;s.stored=null;}
-      if(s.stream>0){s.stream=0;runner.streaming=false;}
+      if(s.stream>0){
+        s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(a);
+        s.stream=0;runner.streaming=false;
+      }
       const rate=a.ink<=EPS?1/finite(t.InkEmptyChargeTimes,3):1;
       const target=Math.min(full,s.chargeF+dt*HZ*rate),cost=Math.max(0,inkAt(r,target)*inkMod(a)-s.paid);
       if(a.ink+EPS>=cost){if(cost>0&&!pay(runner,cost))return;s.paid+=cost;s.chargeF=target;}
@@ -595,11 +650,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         beginPending(s,min-frames,()=>{s.chargeF=min;charge(runner,r,{fire:false,firePressed:false},s,0);});return;
       }
       if(r.family==='splatling'){
-        const first=finite(t.ChargeFrame_First,48),maxFirst=finite(t.MaxShootingFrame_First,80);
-        const maxSecond=c+EPS>=1?finite(p.WeaponFullChargeParam?.MaxShootingFrame_Second,finite(t.MaxShootingFrame_Second,160)):finite(t.MaxShootingFrame_Second,160);
-        const shooting=frames<=first?maxFirst*frames/first:lerp(maxFirst,maxSecond,(frames-first)/(full-first));
-        const rate=c+EPS>=1?finite(p.WeaponFullChargeParam?.RepeatFrame,finite(t.RepeatFrame,4)):finite(t.RepeatFrame,4);
-        s.stream=Math.max(1,Math.ceil(shooting/rate));s.streamCharge=c;s.streamF=0;s.streamUsed=0;s.streamElapsed=0;
+        const shooting=shootingFrames(r,frames);
+        // MaxShootingFrame is the last eligible emission time, not an ammo
+        // count. Include the initial round at t=0 and advance the actual
+        // current-mode cadence (Ballpoint switches from 3F to 5F).
+        s.stream=1;s.streamTime=shooting/HZ;s.streamCharge=c;s.streamF=DT;s.streamUsed=0;s.streamElapsed=-DT;
         runner.streaming=true;
       }else if(r.family==='stringer')emitArrow(runner,r,c);
       else if(r.family==='splatana') {
@@ -707,7 +762,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(canopy.open){
           const total=p.spl__WeaponShelterCanopyParam.InkConsumeUmbrella||0;
           if(!pay(runner,Number.isFinite(measure.launch)?total*100/measure.launch*HZ*dt*inkMod(a):0,finite(t.InkRecoverStopCharge,20)/HZ))canopy.open=false;
-        }else canopy.hp=Math.min(finite(c.CanopyHP,measure.hp*10)/10,canopy.hp+finite(c.CanopyCureHPPerFrame,25)/10*HZ*dt);
+        }else if(a.submerged||a.climbing) canopy.hp=Math.min(finite(c.CanopyHP,measure.hp*10)/10,canopy.hp+finite(c.CanopyCureHPPerFrame,25)/10*HZ*dt);
         if(canopy.open&&canopy.age*HZ>=measure.open+measure.launch&&p.spl__WeaponShelterCanopyParam.IsCanopyShot!==false){
           canopy.launched=true;canopy.remaining=finite(c.CanopyFrame,300)/HZ;
           s.naked=finite(c.CanopyNakedFrame,330)/HZ;
@@ -766,6 +821,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   Actor.prototype._startSpecial=function(...args){const before=this.stats?.specials;const result=startSpecial.apply(this,args);
     if(this.stats?.specials>before&&this.weapon.catalogRecord)cancel(this.weaponRunner);return result;};
   on?.('special:use',({actor})=>{if(actor?.weapon?.catalogRecord)cancel(actor.weaponRunner);});
+  const repairCanopy=actor=>{
+    const r=actor?.weapon?.catalogRecord;
+    if(!actor?.alive||actor.remote||!r?.parameters.spl__WeaponShelterCanopyParam?.IsRecoverCanopyByKill)return;
+    const s=state(actor.weaponRunner),c=s.canopy;
+    s.naked=0;
+    if(c&&!c.launched)c.hp=finite(r.parameters.spl__BulletShelterCanopyParam.CanopyHP,2000)/10;
+  };
+  on?.('splatted',({victim,attacker})=>{if(attacker&&attacker!==victim&&attacker.team!==victim.team)repairCanopy(attacker);});
+  on?.('actor:assist',({actor})=>repairCanopy(actor));
 
   R.update=function(dt,input){
     const a=this.a,r=a.weapon.catalogRecord;

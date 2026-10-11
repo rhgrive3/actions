@@ -83,6 +83,15 @@ test('#662 exit failure still protects live touch and permits explicit mouse reu
 test('#662 adapter fails closed on duplicate and missing input connections',()=>{
  const rel='src/core/input.js',raw=read(rel),prior=adaptInput(rel,raw);assert.throws(()=>adaptTouchPointerLock(rel,''),/conflict/);assert.throws(()=>adaptTouchPointerLock(rel,adaptTouchPointerLock(rel,prior)),/conflict/);assert.equal(adaptTouchPointerLock('other','unchanged'),'unchanged');
 });
+test('a resume lock completing after a fresh pause cannot capture the range picker mouse',async()=>{
+  for(const state of ['pause','menu']){
+    const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();
+    if(state==='pause')h.G.match.paused=true;else h.G.game.menus.current='pause';
+    h.completePendingLock();assert.equal(h.input.locked,false);assert.equal(h.exits(),1);
+    h.unlocked();assert.equal(h.unlocks(),1,'only the initial deliberate unlock is reported');
+    h.G.match.paused=false;h.G.game.menus.current=null;h.input.requestLock();h.completePendingLock();assert.equal(h.input.locked,true);
+  }
+});
 
 test('#662 returning mouse does not lock in menus, paused play, finish or attract',async()=>{
  for(const state of ['menu','paused','finish','attract','submenu']){const h=await boot(),e=h.touch('look');h.unlocked();h.release(e);if(state==='menu')h.G.mode='menu';else if(state==='paused')h.G.match.paused=true;else if(state==='finish')h.G.match.state='finish';else if(state==='attract')h.G.match.attract=true;else h.G.game.menus.current='settings';h.mouse();assert.equal(h.requests(),0,state);assert.equal(h.input.lastDevice,'kbm');}

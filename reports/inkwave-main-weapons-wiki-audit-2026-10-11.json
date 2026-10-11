@@ -1,0 +1,4986 @@
+{
+  "schema": 1,
+  "checkedAt": "2026-10-11",
+  "sourceVersion": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "conclusion": "65個別Wikiページを調査。全性能反映済みではない。設定値の一致とゲーム内挙動の一致を区別し、版・単位の異なる値を無条件に上書きしない。",
+  "conditions": {
+    "fps": 60,
+    "gear": "0 AP unless explicitly noted; new targeted tests include 57 AP main saver",
+    "units": "Wiki ranges use test-room lines (50 DU = 5m); movement usually DU/F. INKWAVE bridge currently 10 DU per world unit. Initial-speed table may include movement; not automatically compared."
+  },
+  "weapons": [
+    {
+      "id": "s3-shooter-short",
+      "name": "ボールドマーカー",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%9C%E3%83%BC%E3%83%AB%E3%83%89%E3%83%9E%E3%83%BC%E3%82%AB%E3%83%BC",
+      "sourceActor": "WeaponShooterShort",
+      "sourceSha256": "4766d778180949833438b93fd945131cd76835adfda6a11feb6f7b2b3803c315",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 38.0,
+          "source": 38.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 5.0,
+          "source": 5.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 0.8,
+          "source": 0.8,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 15.0,
+          "source": 15.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.8,
+          "source": 0.7999999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 11.66,
+          "source": 11.66,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 17.49,
+          "source": 17.49,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 2.0,
+          "source": 2.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "ボールドマーカー",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%9C%E3%83%BC%E3%83%AB%E3%83%89%E3%83%9E%E3%83%BC%E3%82%AB%E3%83%BC",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "damage": "38.0–19.0; damage falloff 6F–22F",
+          "shotF": "5",
+          "startupF": {
+            "human": "2",
+            "inkling": "9"
+          },
+          "postShotF": "2",
+          "inkUse": "0.80% / 125 shots",
+          "inkRecoveryLockF": "15",
+          "firingHumanSpeed": "0.80",
+          "spreadDeg": {
+            "ground": "11.66",
+            "jump": "17.49"
+          },
+          "wikiInitialSpeed": "20.6 (表記: 初速; unit unspecified)",
+          "straightF": "2",
+          "paint": {
+            "pointsPerShot": "4.7p",
+            "footPeriod": "every 5 shots / 25F",
+            "maxIntermediate": "1.4",
+            "intermediateSpacing": "1.2 shots",
+            "footRadius": "0.39",
+            "intermediateRadius": "0.28"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "20.0",
+          "B": "2",
+          "A_times_B": "40.0",
+          "C": "17.82"
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-first",
+      "name": "わかばシューター",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%8F%E3%81%8B%E3%81%B0%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+      "sourceActor": "WeaponShooterFirst",
+      "sourceSha256": "ffe774bff3c4ce800869295539c1dbb86184621758dee1a2a4d84b2c32b4e759",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 28.0,
+          "source": 28.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 5.0,
+          "source": 5.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 0.43,
+          "source": 0.43,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 15.0,
+          "source": 15.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.76,
+          "source": 0.7599999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 11.66,
+          "source": 11.66,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 14.58,
+          "source": 14.58,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 3.0,
+          "source": 3.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "わかばシューター",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%8F%E3%81%8B%E3%81%B0%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "damage": "28.0–14.0; damage falloff 8F–24F",
+          "shotF": "5",
+          "startupF": {
+            "human": "2",
+            "inkling": "9"
+          },
+          "postShotF": "2",
+          "inkUse": "0.43% / 255 shots (special 110% tank; page note says normalized value about 0.39% with this weapon's tank as 100%)",
+          "inkRecoveryLockF": "15",
+          "firingHumanSpeed": "0.76",
+          "spreadDeg": {
+            "ground": "11.66",
+            "jump": "14.58"
+          },
+          "wikiInitialSpeed": "22.66 (表記: 初速; unit unspecified)",
+          "straightF": "3",
+          "paint": {
+            "pointsPerShot": "4.5p",
+            "footPeriod": "3→4 shots / 15→20F",
+            "maxIntermediate": "1.4",
+            "intermediateSpacing": "1.9 shots",
+            "footRadius": "0.42",
+            "intermediateRadius": "0.30"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "22.0",
+          "B": "3",
+          "A_times_B": "66.0",
+          "C": "18.945"
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-precision",
+      "name": "シャープマーカー",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B7%E3%83%A3%E3%83%BC%E3%83%97%E3%83%9E%E3%83%BC%E3%82%AB%E3%83%BC",
+      "sourceActor": "WeaponShooterPrecision",
+      "sourceSha256": "317493845cbdb503a49015451b0e5b2f00cdf90f748b07e44e81ff1cca036f1d",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 28.0,
+          "source": 28.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 5.0,
+          "source": 5.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 0.8,
+          "source": 0.8,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.72,
+          "source": 0.7199999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 0.0,
+          "source": 0.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 0.0,
+          "source": 0.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 2.0,
+          "source": 2.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "シャープマーカー",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B7%E3%83%A3%E3%83%BC%E3%83%97%E3%83%9E%E3%83%BC%E3%82%AB%E3%83%BC",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "damage": "28.0–14.0; damage falloff 4F–20F",
+          "shotF": "5",
+          "startupF": {
+            "human": "2",
+            "inkling": "10"
+          },
+          "postShotF": "3",
+          "inkUse": "0.8% / 125 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.72",
+          "spreadDeg": {
+            "ground": "0.0",
+            "jump": "0.0"
+          },
+          "wikiInitialSpeed": "40.376 (表記: 初速; unit unspecified)",
+          "straightF": "2",
+          "paint": {
+            "pointsPerShot": "4.1p",
+            "footPeriod": "every 6 shots / 30F",
+            "maxIntermediate": "1.5",
+            "intermediateSpacing": "1.9 shots",
+            "footRadius": "0.41",
+            "intermediateRadius": "0.29"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "39.2",
+          "B": "2",
+          "A_times_B": "78.4",
+          "C": "15.815",
+          "note": "Verification table note: 36.0→39.2 after range +6%."
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-blaze",
+      "name": "プロモデラーMG",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%97%E3%83%AD%E3%83%A2%E3%83%87%E3%83%A9%E3%83%BCMG",
+      "sourceActor": "WeaponShooterBlaze",
+      "sourceSha256": "287ffb3b99b4bda1d7ccabf8798a19240a9009f136d851c0e348d106c911b857",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 24.0,
+          "source": 24.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 4.0,
+          "source": 4.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 0.5,
+          "source": 0.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 15.0,
+          "source": 15.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.72,
+          "source": 0.7199999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 12.63,
+          "source": 12.63,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 15.54,
+          "source": 15.54,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 3.0,
+          "source": 3.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "プロモデラーMG",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%97%E3%83%AD%E3%83%A2%E3%83%87%E3%83%A9%E3%83%BCMG",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "damage": "24.0–12.0; damage falloff 8F–24F",
+          "shotF": "4",
+          "startupF": {
+            "human": "2",
+            "inkling": "9"
+          },
+          "postShotF": "2",
+          "inkUse": "0.5% / 200 shots",
+          "inkRecoveryLockF": "15",
+          "firingHumanSpeed": "0.72",
+          "spreadDeg": {
+            "ground": "12.63",
+            "jump": "15.54"
+          },
+          "wikiInitialSpeed": "22.66 (表記: 初速; unit unspecified)",
+          "straightF": "3",
+          "paint": {
+            "pointsPerShot": "4.5p",
+            "footPeriod": "every 4 shots / 16F",
+            "maxIntermediate": "1",
+            "intermediateSpacing": "2.5 shots",
+            "footRadius": "0.39",
+            "intermediateRadius": "0.30"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "22.0",
+          "B": "3",
+          "A_times_B": "66.0",
+          "C": "18.945"
+        }
+      }
+    },
+    {
+      "id": "shooter",
+      "name": "スプラシューター",
+      "family": "shooter",
+      "engine": "existing owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+      "sourceActor": "WeaponShooterNormal",
+      "sourceSha256": "dfca9f45fd0df3b6afab8f6ec0e47034912f3a6fc411936b9fd7257fe85c4cb9",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 36.0,
+          "source": 36.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 0.92,
+          "source": 0.9199999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.72,
+          "source": 0.7199999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 4.86,
+          "source": 4.86,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 11.66,
+          "source": 11.66,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 4.0,
+          "source": 4.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "スプラシューター",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "damage": "36.0–18.0; damage falloff 8F–40F",
+          "shotF": "6",
+          "startupF": {
+            "human": "2",
+            "inkling": "10"
+          },
+          "postShotF": "4",
+          "inkUse": "0.92% / 108 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.72",
+          "spreadDeg": {
+            "ground": "4.86",
+            "jump": "11.66"
+          },
+          "wikiInitialSpeed": "22.66 (表記: 初速; unit unspecified)",
+          "straightF": "4",
+          "paint": {
+            "pointsPerShot": "4.0p",
+            "footPeriod": "every 4 shots / 22F",
+            "maxIntermediate": "1.5",
+            "intermediateSpacing": "1.84 shots",
+            "footRadius": "0.41",
+            "intermediateRadius": "0.29"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "22.66",
+          "B": "4",
+          "A_times_B": "90.64",
+          "C": "14.495"
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-gravity",
+      "name": ".52ガロン",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.3.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/.52%E3%82%AC%E3%83%AD%E3%83%B3",
+      "sourceActor": "WeaponShooterGravity",
+      "sourceSha256": "c1a42d516bfb5c1763f4285159456589b7a647ee0862004654c36d604889b838",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 52.0,
+          "source": 52.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 9.0,
+          "source": 9.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 1.5,
+          "source": 1.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.6,
+          "source": 0.6,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 6.0,
+          "source": 6.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 12.0,
+          "source": 12.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 3.0,
+          "source": 3.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": ".52ガロン",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/.52%E3%82%AC%E3%83%AD%E3%83%B3",
+        "wikiStatsVersion": "11.3.0",
+        "wikiCaveat": "メイン性能見出しに『Ver11.3.0現在（要検証：塗り関連）』と明記。",
+        "stats": {
+          "damage": "52.0–30.0; damage falloff 11F–27F",
+          "shotF": "9",
+          "startupF": {
+            "human": "2",
+            "inkling": "10"
+          },
+          "postShotF": "3",
+          "inkUse": "1.5% / 66 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.60",
+          "spreadDeg": {
+            "ground": "6.0",
+            "jump": "12.0"
+          },
+          "wikiInitialSpeed": "30.6 (表記: 初速; unit unspecified)",
+          "straightF": "3",
+          "paint": {
+            "pointsPerShot": "6.7p",
+            "footPeriod": "2→3 shots; 18→27F (alternating 2→3→2→3→2 pattern)",
+            "maxIntermediate": "2.4",
+            "intermediateSpacing": "1.1 shots",
+            "footRadius": "0.30",
+            "intermediateRadius": "0.30"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "22.0",
+          "B": "4",
+          "A_times_B": "88.0",
+          "C": "18.472",
+          "note": "Verification table note attributes C change 14.495→18.472 to range +6%; individual-page 初速 differs and is kept separate."
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-quickmiddle",
+      "name": "N-ZAP85",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/N-ZAP85",
+      "sourceActor": "WeaponShooterQuickMiddle",
+      "sourceSha256": "2cb076ebd75165b73dc7a950380838c773b8dd5bb5b85ae70e7204b1dc15f257",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 30.0,
+          "source": 30.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 5.0,
+          "source": 5.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 0.8,
+          "source": 0.8,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.88,
+          "source": 0.8799999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 4.75,
+          "source": 4.75,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 12.0,
+          "source": 12.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 4.0,
+          "source": 4.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "N-ZAP85",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/N-ZAP85",
+        "wikiStatsVersion": "11.2.0",
+        "stats": {
+          "damage": "30.0–15.0; damage falloff 8F–24F",
+          "shotF": "5",
+          "startupF": {
+            "human": "2",
+            "inkling": "10"
+          },
+          "postShotF": "3",
+          "inkUse": "0.8% / 125 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.88",
+          "spreadDeg": {
+            "ground": "4.75",
+            "jump": "12.0"
+          },
+          "wikiInitialSpeed": "22.0 (表記: 初速; unit unspecified)",
+          "straightF": "4",
+          "paint": {
+            "pointsPerShot": "3.6p",
+            "footPeriod": "4→3→4 shots / 20→15→20F",
+            "maxIntermediate": "1.4",
+            "intermediateSpacing": "2.2 shots",
+            "footRadius": "0.39",
+            "intermediateRadius": "0.27"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "22.0",
+          "B": "4",
+          "A_times_B": "88.0",
+          "C": "14.495"
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-expert",
+      "name": "プライムシューター",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%97%E3%83%A9%E3%82%A4%E3%83%A0%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+      "sourceActor": "WeaponShooterExpert",
+      "sourceSha256": "fe8613779062558495b4c03088a3986c995bf6c280e894fb5176eda0d6a0c1c3",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 45.0,
+          "source": 45.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 2.0,
+          "source": 2.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.55,
+          "source": 0.5499999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 2.5,
+          "source": 2.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 6.0,
+          "source": 6.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 3.0,
+          "source": 3.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "プライムシューター",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%97%E3%83%A9%E3%82%A4%E3%83%A0%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "damage": "45.0–22.5; damage falloff 7F–23F",
+          "shotF": "8",
+          "startupF": {
+            "human": "2",
+            "inkling": "10"
+          },
+          "postShotF": "4",
+          "inkUse": "2.0% / 50 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.55",
+          "spreadDeg": {
+            "ground": "2.5",
+            "jump": "6.0"
+          },
+          "wikiInitialSpeed": "38.33 (表記: 初速; unit unspecified)",
+          "straightF": "3",
+          "paint": {
+            "pointsPerShot": "4.7p",
+            "footPeriod": "every 6 shots / 48F",
+            "maxIntermediate": "2",
+            "intermediateSpacing": "1.76 shots",
+            "footRadius": "0.40",
+            "intermediateRadius": "0.29"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "38.33",
+          "B": "3",
+          "A_times_B": "115.0",
+          "C": "22.698"
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-heavy",
+      "name": ".96ガロン",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/.96%E3%82%AC%E3%83%AD%E3%83%B3",
+      "sourceActor": "WeaponShooterHeavy",
+      "sourceSha256": "1389dbae6854cc2e5ca19dbc38f26254390141a28726e5cdb860e3cadd69fe66",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 62.0,
+          "source": 62.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 12.0,
+          "source": 12.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 2.3,
+          "source": 2.3,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.4,
+          "source": 0.39999999999999997,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 4.0,
+          "source": 4.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 11.35,
+          "source": 11.3511,
+          "status": "matches after Wiki display rounding"
+        },
+        {
+          "field": "straight F",
+          "wiki": 5.0,
+          "source": 5.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": ".96ガロン",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/.96%E3%82%AC%E3%83%AD%E3%83%B3",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "damage": "62.0–35.0; damage falloff 9F–25F",
+          "shotF": "12",
+          "startupF": {
+            "human": "2",
+            "inkling": "10"
+          },
+          "postShotF": "4",
+          "inkUse": "2.30% / 43 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.40",
+          "spreadDeg": {
+            "ground": "4.0",
+            "jump": "11.35"
+          },
+          "wikiInitialSpeed": "24.5 (表記: 初速; unit unspecified)",
+          "straightF": "5",
+          "paint": {
+            "pointsPerShot": "7.5p",
+            "footPeriod": "every 5 shots / 60F",
+            "maxIntermediate": "3.4",
+            "intermediateSpacing": "1.2 shots",
+            "footRadius": "0.43",
+            "intermediateRadius": "0.31"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "24.5",
+          "B": "5",
+          "A_times_B": "122.5",
+          "C": "23.77"
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-long",
+      "name": "ジェットスイーパー",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B8%E3%82%A7%E3%83%83%E3%83%88%E3%82%B9%E3%82%A4%E3%83%BC%E3%83%91%E3%83%BC",
+      "sourceActor": "WeaponShooterLong",
+      "sourceSha256": "622d825f0ab428792df84fd62f64ab93bfc376b82e2a36538e41c0856cee9b7c",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 32.0,
+          "source": 32.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 1.6,
+          "source": 1.6,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.6,
+          "source": 0.6,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 2.5,
+          "source": 2.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 5.0,
+          "source": 5.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "ジェットスイーパー",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B8%E3%82%A7%E3%83%83%E3%83%88%E3%82%B9%E3%82%A4%E3%83%BC%E3%83%91%E3%83%BC",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "damage": "32.0–16.0; damage falloff 9F–25F",
+          "shotF": "8",
+          "startupF": {
+            "human": "2",
+            "inkling": "10"
+          },
+          "postShotF": "4",
+          "inkUse": "1.6% / 62 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.60",
+          "spreadDeg": {
+            "ground": "2.5",
+            "jump": "8.0"
+          },
+          "wikiInitialSpeed": "33.6 (表記: 初速; unit unspecified)",
+          "straightF": "5",
+          "paint": {
+            "pointsPerShot": "4.5p",
+            "footPeriod": "every 8 shots / 64F",
+            "maxIntermediate": "3",
+            "intermediateSpacing": "2.0 shots",
+            "footRadius": "0.39",
+            "intermediateRadius": "0.28"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "33.6",
+          "B": "5",
+          "A_times_B": "168.0",
+          "C": "22.32"
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-quicklong",
+      "name": "スペースシューター",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.1.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%9A%E3%83%BC%E3%82%B9%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+      "sourceActor": "WeaponShooterQuickLong",
+      "sourceSha256": "3533be18562e2926a2601039c944dd1a056c98d13a60e803b4a0c7bd21f72db6",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 24.0,
+          "source": 24.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 6.0,
+          "source": 6.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 0.96,
+          "source": 0.9599999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.79,
+          "source": 0.7899999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 4.5,
+          "source": 4.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 4.0,
+          "source": 4.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "スペースシューター",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%9A%E3%83%BC%E3%82%B9%E3%82%B7%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%BC",
+        "wikiStatsVersion": "11.1.0",
+        "stats": {
+          "damage": "24.0–12.0; damage falloff 10F–26F",
+          "shotF": "6",
+          "startupF": {
+            "human": "2",
+            "inkling": "10 (page prints 10F / 0.100s)"
+          },
+          "postShotF": "3",
+          "inkUse": "0.96% / 104 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.79",
+          "spreadDeg": {
+            "ground": "4.5",
+            "jump": "8.0"
+          },
+          "wikiInitialSpeed": "27.5 (表記: 初速; unit unspecified)",
+          "straightF": "4",
+          "paint": {
+            "pointsPerShot": "5.0p",
+            "footPeriod": "3→3→3→2 shots / 18→18→18→12F",
+            "maxIntermediate": "1.4",
+            "intermediateSpacing": "2.2 shots",
+            "footRadius": "0.39",
+            "intermediateRadius": "0.27"
+          }
+        },
+        "verificationInitialSpeed": null,
+        "verificationNote": "Verification initial-speed table row for Space Shooter is blank."
+      }
+    },
+    {
+      "id": "s3-blaster-short",
+      "name": "ノヴァブラスター",
+      "family": "blaster",
+      "engine": "catalog owner",
+      "wikiVersion": "11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%8E%E3%83%B4%E3%82%A1%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+      "sourceActor": "WeaponBlasterShort",
+      "sourceSha256": "edb21c5d3f1cc5073f26a04879b70242de5e5d7f27edde48d4c5a6caf9dc40e3",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 125.0,
+          "source": 125.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 40.0,
+          "source": 40.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 7.5,
+          "source": 7.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 55.0,
+          "source": 55.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.5,
+          "source": 0.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 0.0,
+          "source": 0.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 5.5,
+          "source": 5.5,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "blaster",
+        "name": "ノヴァブラスター",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%8E%E3%83%B4%E3%82%A1%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+        "wikiStatsVersion": "11.2.0",
+        "stats": {
+          "range": "direct 1.6; blast 0.7–2.3",
+          "damage": "direct 125.0; blast 70.0–50.0; landing blast 35.0–25.0",
+          "shotF": "40",
+          "startupF": {
+            "human": "12",
+            "inkling": "22"
+          },
+          "postShotF": "26",
+          "inkUse": "7.5% / 13 shots",
+          "inkRecoveryLockF": "55",
+          "firingHumanSpeed": "0.50",
+          "spreadDeg": {
+            "ground": "0.0",
+            "jump": "5.5"
+          },
+          "wikiInitialSpeed": "8.7 (表記: 初速; unit unspecified)",
+          "explosionF": "11",
+          "paint": {
+            "pointsPerShot": "14.0p",
+            "footPeriod": "every shot / 40F",
+            "maxIntermediate": "6",
+            "intermediateSpacing": "0.3 shots",
+            "footRadius": "0.50",
+            "intermediateRadius": "0.31"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "8.7",
+          "B": "7",
+          "A_times_B": "60.9",
+          "C": "8.484"
+        }
+      }
+    },
+    {
+      "id": "blaster",
+      "name": "ホットブラスター",
+      "family": "blaster",
+      "engine": "existing owner",
+      "wikiVersion": "11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%9B%E3%83%83%E3%83%88%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+      "sourceActor": "WeaponBlasterMiddle",
+      "sourceSha256": "36139282d2bd915f675424d99d5641800f184bcc9a9d1b0c94be533d38f64e18",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 125.0,
+          "source": 125.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 50.0,
+          "source": 50.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 10.0,
+          "source": 10.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 57.0,
+          "source": 57.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.45,
+          "source": 0.44999999999999996,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 0.0,
+          "source": 0.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 10.0,
+          "source": 10.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "blaster",
+        "name": "ホットブラスター",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%9B%E3%83%83%E3%83%88%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+        "wikiStatsVersion": "11.2.0",
+        "stats": {
+          "range": "direct 2.1; blast 1.5–2.7",
+          "damage": "direct 125.0; blast 70.0–50.0; landing blast 35.0–25.0",
+          "shotF": "50",
+          "startupF": {
+            "human": "12",
+            "inkling": "22"
+          },
+          "postShotF": "22",
+          "inkUse": "10.0% / 10 shots",
+          "inkRecoveryLockF": "57",
+          "firingHumanSpeed": "0.45",
+          "spreadDeg": {
+            "ground": "0.0",
+            "jump": "10.0"
+          },
+          "wikiInitialSpeed": "9.45 (表記: 初速; unit unspecified)",
+          "explosionF": "13 (page note: value taken from previous-game analysis because current parameter not set)",
+          "paint": {
+            "pointsPerShot": "16.2p",
+            "footPeriod": "every shot / 50F",
+            "maxIntermediate": "6",
+            "intermediateSpacing": "0.3 shots",
+            "footRadius": "0.49",
+            "intermediateRadius": "0.32"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "9.45",
+          "B": "9",
+          "A_times_B": "85.05",
+          "C": "9.131"
+        }
+      }
+    },
+    {
+      "id": "s3-blaster-long",
+      "name": "ロングブラスター",
+      "family": "blaster",
+      "engine": "catalog owner",
+      "wikiVersion": "11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AD%E3%83%B3%E3%82%B0%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+      "sourceActor": "WeaponBlasterLong",
+      "sourceSha256": "a383cab64ce28ec184a300ed387f63218c92cc426713308767473b256cfa18f1",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 125.0,
+          "source": 125.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 60.0,
+          "source": 60.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 11.0,
+          "source": 11.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 70.0,
+          "source": 70.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.4,
+          "source": 0.39999999999999997,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 0.0,
+          "source": 0.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "blaster",
+        "name": "ロングブラスター",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AD%E3%83%B3%E3%82%B0%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+        "wikiStatsVersion": "11.2.0",
+        "stats": {
+          "range": "direct 2.8; blast 1.9–3.4",
+          "damage": "direct 125.0; blast 70.0–50.0; landing blast 35.0–25.0",
+          "shotF": "60",
+          "startupF": {
+            "human": "12",
+            "inkling": "22"
+          },
+          "postShotF": "30",
+          "inkUse": "11.0% / 9 shots",
+          "inkRecoveryLockF": "70",
+          "firingHumanSpeed": "0.40",
+          "spreadDeg": {
+            "ground": "0.0",
+            "jump": "8.0"
+          },
+          "wikiInitialSpeed": "10.8 (表記: 初速; unit unspecified)",
+          "explosionF": "15",
+          "paint": {
+            "pointsPerShot": "14.2p",
+            "footPeriod": "every shot / 60F",
+            "maxIntermediate": "6",
+            "intermediateSpacing": "0.3 shots",
+            "footRadius": "0.44",
+            "intermediateRadius": "0.31"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "10.8",
+          "B": "11",
+          "A_times_B": "118.8",
+          "C": "10.073"
+        }
+      }
+    },
+    {
+      "id": "s3-blaster-lightshort",
+      "name": "クラッシュブラスター",
+      "family": "blaster",
+      "engine": "catalog owner",
+      "wikiVersion": "11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+      "sourceActor": "WeaponBlasterLightShort",
+      "sourceSha256": "d1d896eeb9553b409e24c9d7882f6fd4af318a5e58b72c397146714f741f778c",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 60.0,
+          "source": 60.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 20.0,
+          "source": 20.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 4.0,
+          "source": 4.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 40.0,
+          "source": 40.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.68,
+          "source": 0.68,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 0.0,
+          "source": 0.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 7.0,
+          "source": 7.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "blaster",
+        "name": "クラッシュブラスター",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+        "wikiStatsVersion": "11.2.0",
+        "stats": {
+          "range": "direct 1.9; blast 1.1–2.7",
+          "damage": "direct 60.0; blast 30.0; landing blast 15.0",
+          "shotF": "20",
+          "startupF": {
+            "human": "10",
+            "inkling": "18"
+          },
+          "postShotF": "20",
+          "inkUse": "4.0% / 25 shots",
+          "inkRecoveryLockF": "40",
+          "firingHumanSpeed": "0.68",
+          "spreadDeg": {
+            "ground": "0.0",
+            "jump": "7.0"
+          },
+          "wikiInitialSpeed": "9.35 (表記: 初速; unit unspecified)",
+          "explosionF": "12",
+          "paint": {
+            "pointsPerShot": "8.6p",
+            "footPeriod": "every 2 shots / 40F",
+            "maxIntermediate": "3",
+            "intermediateSpacing": "0.64 shots",
+            "footRadius": "0.36",
+            "intermediateRadius": "0.29",
+            "explosionRadius": "vertical 0.2 / horizontal 0.5",
+            "landingRadius": "0.2"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "9.35",
+          "B": "8",
+          "A_times_B": "74.8",
+          "C": "9.2715"
+        }
+      }
+    },
+    {
+      "id": "s3-blaster-light",
+      "name": "ラピッドブラスター",
+      "family": "blaster",
+      "engine": "catalog owner",
+      "wikiVersion": "11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%A9%E3%83%94%E3%83%83%E3%83%89%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+      "sourceActor": "WeaponBlasterLight",
+      "sourceSha256": "e749fc9ccd6919f71c1a9287f9351710f48cfd81e260fc1ba759db157986cae1",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 85.0,
+          "source": 85.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 35.0,
+          "source": 35.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 7.0,
+          "source": 7.000000000000001,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 47.0,
+          "source": 47.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.55,
+          "source": 0.5499999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 0.0,
+          "source": 0.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "blaster",
+        "name": "ラピッドブラスター",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%A9%E3%83%94%E3%83%83%E3%83%89%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC",
+        "wikiStatsVersion": "11.2.0",
+        "stats": {
+          "range": "direct 3.1; blast 2.3–3.7",
+          "damage": "direct 85.0; blast 35.0; landing blast 17.5",
+          "shotF": "35",
+          "startupF": {
+            "human": "10",
+            "inkling": "18"
+          },
+          "postShotF": "20",
+          "inkUse": "7.0% / 14 shots",
+          "inkRecoveryLockF": "47",
+          "firingHumanSpeed": "0.55",
+          "spreadDeg": {
+            "ground": "0.0",
+            "jump": "8.0"
+          },
+          "wikiInitialSpeed": "12.0 (表記: 初速; unit unspecified)",
+          "explosionF": "15",
+          "paint": {
+            "pointsPerShot": "14.4p",
+            "footPeriod": "every shot / 35F",
+            "maxIntermediate": "11",
+            "intermediateSpacing": "0.32 shots",
+            "footRadius": "0.37",
+            "intermediateRadius": "0.286"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "12.0",
+          "B": "11",
+          "A_times_B": "132.0",
+          "C": "11.3305"
+        }
+      }
+    },
+    {
+      "id": "s3-blaster-lightlong",
+      "name": "Rブラスターエリート",
+      "family": "blaster",
+      "engine": "catalog owner",
+      "wikiVersion": "11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/R%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC%E3%82%A8%E3%83%AA%E3%83%BC%E3%83%88",
+      "sourceActor": "WeaponBlasterLightLong",
+      "sourceSha256": "b9eceef9a3f5d95445a338cd6086fb258512389b5b0ecd4eac9ae703abd02783",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 85.0,
+          "source": 85.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 40.0,
+          "source": 40.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 9.12,
+          "source": 9.120000000000001,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 60.0,
+          "source": 60.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.5,
+          "source": 0.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 0.0,
+          "source": 0.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "blaster",
+        "name": "Rブラスターエリート",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/R%E3%83%96%E3%83%A9%E3%82%B9%E3%82%BF%E3%83%BC%E3%82%A8%E3%83%AA%E3%83%BC%E3%83%88",
+        "wikiStatsVersion": "11.2.0",
+        "stats": {
+          "range": "direct 3.6; blast 2.8–4.2",
+          "damage": "direct 85.0; blast 35.0; landing blast 17.5",
+          "shotF": "40",
+          "startupF": {
+            "human": "10",
+            "inkling": "19"
+          },
+          "postShotF": "20",
+          "inkUse": "9.12% / 10 shots",
+          "inkRecoveryLockF": "60",
+          "firingHumanSpeed": "0.50",
+          "spreadDeg": {
+            "ground": "0.0",
+            "jump": "8.0"
+          },
+          "wikiInitialSpeed": "14.0 (表記: 初速; unit unspecified)",
+          "explosionF": "15",
+          "paint": {
+            "pointsPerShot": "13.5p",
+            "footPeriod": "every shot / 40F",
+            "maxIntermediate": "11",
+            "intermediateSpacing": "0.32 shots",
+            "footRadius": "0.37",
+            "intermediateRadius": "0.26"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "14.0",
+          "B": "11",
+          "A_times_B": "154.0",
+          "C": "13.426"
+        }
+      }
+    },
+    {
+      "id": "s3-blaster-precision",
+      "name": "S-BLAST92",
+      "family": "blaster",
+      "engine": "catalog owner",
+      "wikiVersion": "11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/S-BLAST92",
+      "sourceActor": "WeaponBlasterPrecision",
+      "sourceSha256": "a169ffe86f5e896a38e064f535111b1349f4661220d3aeb87904c9103ca17cf3",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 125.0,
+          "source": 125.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 55.0,
+          "source": 55.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 9.5,
+          "source": 9.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 60.0,
+          "source": 60.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.4,
+          "source": 0.39999999999999997,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 0.0,
+          "source": 0.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "blaster",
+        "name": "S-BLAST92",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/S-BLAST92",
+        "wikiStatsVersion": "11.2.0",
+        "stats": {
+          "range": "direct long 3.0 / short 1.6; blast long 2.6–3.3 / short 0.8–2.4",
+          "damage": "direct 125.0; blast 70.0–50.0; landing blast 35.0–25.0",
+          "shotF": "55",
+          "startupF": {
+            "human": "12",
+            "inkling": "22"
+          },
+          "postShotF": "26",
+          "inkUse": "9.5% / 10 shots",
+          "inkRecoveryLockF": "60",
+          "firingHumanSpeed": "0.40",
+          "spreadDeg": {
+            "ground": "0.0",
+            "jump": "8.0"
+          },
+          "wikiInitialSpeed": "long 17.0 / short 9.2 (表記: 初速; unit unspecified)",
+          "explosionF": "11",
+          "paint": {
+            "pointsPerShot": "long 11.6p / short 13.6p",
+            "footPeriod": "every shot / 55F",
+            "maxIntermediate": "9",
+            "intermediateSpacing": "0.38 shots",
+            "footRadius": "0.44",
+            "intermediateRadius": "0.31"
+          }
+        },
+        "verificationInitialSpeed": null,
+        "verificationNote": "No S-BLAST92 row in the verification initial-speed table. No S-BLAST92 row in the verification blaster ink-lock table; weapon page itself prints 60F."
+      }
+    },
+    {
+      "id": "s3-shooter-triplequick",
+      "name": "L3リールガン",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/L3%E3%83%AA%E3%83%BC%E3%83%AB%E3%82%AC%E3%83%B3",
+      "sourceActor": "WeaponShooterTripleQuick",
+      "sourceSha256": "0ce1d682ab866a17d7b4931cbb799faa1a813c350893803a63b0259cfbf47875",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 31.0,
+          "source": 31.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 4.0,
+          "source": 4.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 1.1,
+          "source": 1.0999999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 25.0,
+          "source": 25.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.8,
+          "source": 0.7999999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 1.0,
+          "source": 1.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 6.0,
+          "source": 6.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 3.0,
+          "source": 3.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "L3リールガン",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/L3%E3%83%AA%E3%83%BC%E3%83%AB%E3%82%AC%E3%83%B3",
+        "wikiStatsVersion": "11.2.0",
+        "stats": {
+          "damage": "31.0–15.5 per shot; 93.0–46.5 per 3-shot trigger; falloff 8F–40F",
+          "shotF": "4 per shot / 18 per trigger",
+          "startupF": {
+            "human": "2",
+            "inkling": "11"
+          },
+          "postShotF": "9 (trigger-level post-shot hard lag)",
+          "inkUse": "1.1% per shot, 3.3% per 3-shot trigger; 90 shots / 30 triggers",
+          "inkRecoveryLockF": "25",
+          "firingHumanSpeed": "0.80",
+          "spreadDeg": {
+            "ground": "1.0",
+            "jump": "6.0"
+          },
+          "wikiInitialSpeed": "35.67 (表記: 初速; unit unspecified)",
+          "straightF": "3",
+          "paint": {
+            "pointsPerTrigger": "12.0p",
+            "footPeriod": "every 3 shots / one trigger / 18F",
+            "maxIntermediate": "1.5",
+            "intermediateSpacing": "2.4 shots",
+            "footRadius": "0.50",
+            "intermediateRadius": "0.36"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "27.5",
+          "B": "4",
+          "A_times_B": "110.0",
+          "C": "15.68"
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-triplemiddle",
+      "name": "H3リールガン",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/H3%E3%83%AA%E3%83%BC%E3%83%AB%E3%82%AC%E3%83%B3",
+      "sourceActor": "WeaponShooterTripleMiddle",
+      "sourceSha256": "172c36279e2fd8c32d6c3a99583939cb4484caeda89c01d0fdfaee7d166a3c5a",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 45.0,
+          "source": 45.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 5.0,
+          "source": 5.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 2.08,
+          "source": 2.08,
+          "status": "matches retained source"
+        },
+        {
+          "field": "recovery lock F",
+          "wiki": 25.0,
+          "source": 25.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.6,
+          "source": 0.6,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 1.0,
+          "source": 1.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 1.0,
+          "source": 1.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 4.0,
+          "source": 4.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "H3リールガン",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/H3%E3%83%AA%E3%83%BC%E3%83%AB%E3%82%AC%E3%83%B3",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "damage": "45.0–22.5 per shot; 135.0–67.5 per 3-shot trigger; falloff 8F–40F",
+          "shotF": "5 per shot / 32 per trigger",
+          "startupF": {
+            "human": "2",
+            "inkling": "11"
+          },
+          "postShotF": "21 (trigger-level post-shot hard lag)",
+          "inkUse": "2.08% per shot; 6.24% per 3-shot trigger; 48 shots / 16 triggers",
+          "inkRecoveryLockF": "25",
+          "firingHumanSpeed": "0.60",
+          "spreadDeg": {
+            "ground": "1.0",
+            "jump": "1.0"
+          },
+          "wikiInitialSpeed": "28.75 (表記: 初速; unit unspecified)",
+          "straightF": "4",
+          "paint": {
+            "pointsPerTrigger": "22.0p",
+            "footPeriod": "2→3 shots / 10→32F (one trigger each 32F)",
+            "maxIntermediate": "3",
+            "intermediateSpacing": "1.2 shots",
+            "footRadius": "0.46",
+            "intermediateRadius": "0.33"
+          }
+        },
+        "verificationInitialSpeed": {
+          "A": "28.75",
+          "B": "4",
+          "A_times_B": "115.0",
+          "C": "22.698"
+        }
+      }
+    },
+    {
+      "id": "s3-shooter-flash",
+      "name": "ボトルガイザー",
+      "family": "shooter",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%9C%E3%83%88%E3%83%AB%E3%82%AC%E3%82%A4%E3%82%B6%E3%83%BC",
+      "sourceActor": "WeaponShooterFlash",
+      "sourceSha256": "77ca957122d5fffc1769015725fa97ee7be9da1c9fb55cf53547a54e7fc47453",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "shooter",
+        "name": "ボトルガイザー",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%9C%E3%83%88%E3%83%AB%E3%82%AC%E3%82%A4%E3%82%B6%E3%83%BC",
+        "additionalWebRef": "turn67view2",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "common": {
+            "postShotF": "3",
+            "inkRecoveryLockF": "20 (page notes this is estimated from the prior game's parameter because unspecified)",
+            "firingHumanSpeed": "0.66"
+          },
+          "tapFirstShot": {
+            "damage": "38.0–19.0; falloff 8F–24F",
+            "shotF": "8 (fast repeated taps)",
+            "startupF": null,
+            "inkUse": "2.4% / 41 shots",
+            "spreadDeg": {
+              "ground": "0.0",
+              "jump": "0.0"
+            },
+            "wikiInitialSpeed": "30.5 (表記: 初速; unit unspecified)",
+            "straightF": "4",
+            "paint": {
+              "pointsPerShot": "3.4p",
+              "footPeriod": "every 4 shots / 32F",
+              "maxIntermediate": "1.5",
+              "intermediateSpacing": "3.0 shots",
+              "footRadius": "0.38",
+              "intermediateRadius": "0.27"
+            }
+          },
+          "auto": {
+            "damage": "30.0–15.0; falloff 7F–23F",
+            "shotF": "9F pause→7F",
+            "startupF": null,
+            "inkUse": "1.08% / 92 shots",
+            "spreadDeg": {
+              "ground": "8.0",
+              "jump": "13.0"
+            },
+            "wikiInitialSpeed": "24.0 (表記: 初速; unit unspecified)",
+            "straightF": "3",
+            "paint": {
+              "pointsPerShot": "4.5p",
+              "footPeriod": "every 4 shots / 28F",
+              "maxIntermediate": "1.5",
+              "intermediateSpacing": "1.734 shots",
+              "footRadius": "0.38",
+              "intermediateRadius": "0.27"
+            }
+          }
+        },
+        "verificationInitialSpeed": {
+          "tapFirstShot": {
+            "A": "32.0",
+            "B": "4",
+            "A_times_B": "128.0",
+            "C": "29.695"
+          },
+          "auto": {
+            "A": "24.0",
+            "B": "3",
+            "A_times_B": "72.0",
+            "C": "23.032"
+          }
+        }
+      }
+    },
+    {
+      "id": "s3-roller-compact",
+      "name": "カーボンローラー",
+      "family": "roller",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.3.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/カーボンローラー",
+      "sourceActor": "WeaponRollerCompact",
+      "sourceSha256": "0c586351a0d16bae0fcb416ed053e69790b14ca4660dc3a1771516f740332415",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "カーボンローラー",
+        "family": "roller",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/カーボンローラー",
+        "stats_version": "v11.3.0",
+        "modes": [
+          {
+            "name": "ヨコ振り",
+            "range_lines": {
+              "確1": 1.0,
+              "確2": 1.4,
+              "ダメージ": 1.6,
+              "カス当たり": 1.7,
+              "塗り": 2.0
+            },
+            "damage": "100.0～25.0 (center/edge distribution separately in その他データ); ink-shortage ×0.25",
+            "rateF": 31,
+            "startup": {
+              "humanF": 10,
+              "squidF": 23
+            },
+            "page_postF": 8,
+            "inkCostPct": 3.96,
+            "ammo": 25,
+            "inkLockF": 40,
+            "movementWhileAttacking_DU_F": 0.48
+          },
+          {
+            "name": "タテ振り",
+            "range_lines": {
+              "確1": 1.3,
+              "乱1": 1.4,
+              "確2": 2.5,
+              "ダメージ": 2.7,
+              "塗り": 3.4
+            },
+            "damage": "120.0～35.0; ink-shortage ×0.5",
+            "rateF": 42,
+            "startup": {
+              "humanF": 17,
+              "squidF": 30
+            },
+            "page_postF": 10,
+            "inkCostPct": 3.96,
+            "ammo": 25,
+            "inkLockF": 45,
+            "movementWhileAttacking_DU_F": 0.6
+          },
+          {
+            "name": "塗り進み",
+            "damage": 70,
+            "moveSpeed_DU_F": "1.28→1.60",
+            "inkCostPctPerSecond": "1.2～6.0",
+            "inkLockF": 20,
+            "sprintAfterF": 20,
+            "paintWidth_lines": 0.88
+          }
+        ],
+        "mechanics": "横振りの飛沫に内側/外側ダメージ帯。コロコロ接触は70、横振り/縦振りを状況で切替。",
+        "units": "range lines; speeds DU/F; F=frames; damage points"
+      }
+    },
+    {
+      "id": "roller",
+      "name": "スプラローラー",
+      "family": "roller",
+      "engine": "existing owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/スプラローラー",
+      "sourceActor": "WeaponRollerNormal",
+      "sourceSha256": "5b423eb35d4cac268a1e4085ec8321d27639ddbfc8f3775bb65696af5c2449c7",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "スプラローラー",
+        "family": "roller",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/スプラローラー",
+        "stats_version": "v11.0.0",
+        "modes": [
+          {
+            "name": "ヨコ振り",
+            "range_lines": {
+              "確1": 1.4,
+              "乱1": 1.5,
+              "確2": 2.0,
+              "ダメージ": 2.4,
+              "塗り": 3.0
+            },
+            "damage": "center 150～35; edge 100～35; shortage ×0.25",
+            "rateF": 42,
+            "startup": {
+              "humanF": 21,
+              "squidF": 34
+            },
+            "page_postF": 10,
+            "inkCostPct": 8.5,
+            "ammo": 11,
+            "inkLockF": 43,
+            "movementWhileAttacking_DU_F": 0.48
+          },
+          {
+            "name": "タテ振り",
+            "range_lines": {
+              "確1": 1.7,
+              "乱1": 1.8,
+              "確2": 2.2,
+              "ダメージ": 3.2,
+              "塗り": 4.0
+            },
+            "damage": "150～40; shortage ×0.5",
+            "rateF": 56,
+            "startup": {
+              "humanF": 31,
+              "squidF": 44
+            },
+            "page_postF": 10,
+            "inkCostPct": 8.5,
+            "ammo": 11,
+            "inkLockF": 58,
+            "movementWhileAttacking_DU_F": 0.48
+          },
+          {
+            "name": "塗り進み",
+            "damage": 125,
+            "moveSpeed_DU_F": "1.08→1.32",
+            "inkCostPctPerSecond": "1.2～6.0",
+            "inkLockF": 20,
+            "sprintAfterF": 90,
+            "paintWidth_lines": 1.12
+          }
+        ],
+        "mechanics": "横/縦の前隙と射程が異なる。コロコロ確1は125; sprint begins after 90F."
+      }
+    },
+    {
+      "id": "s3-roller-heavy",
+      "name": "ダイナモローラー",
+      "family": "roller",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/ダイナモローラー",
+      "sourceActor": "WeaponRollerHeavy",
+      "sourceSha256": "7206012122ec2faf48713f313ed58002bd77fe4f7e9923aee667bc518102a37a",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "ダイナモローラー",
+        "family": "roller",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/ダイナモローラー",
+        "stats_version": "v11.0.0",
+        "modes": [
+          {
+            "name": "ヨコ振り",
+            "range_lines": {
+              "確1": 2.6,
+              "確2": 3.3,
+              "ダメージ": 3.5,
+              "塗り": 4.2
+            },
+            "damage": "center 180～40; edge 120～40; shortage ×0.25",
+            "rateF": 66,
+            "startup": {
+              "humanF": 45,
+              "squidF": 58
+            },
+            "page_postF": 10,
+            "inkCostPct": 21,
+            "ammo": 4,
+            "inkLockF": 55,
+            "movementWhileAttacking_DU_F": 0.24
+          },
+          {
+            "name": "タテ振り",
+            "range_lines": {
+              "確1": 2.9,
+              "確2": 4.0,
+              "ダメージ": 4.8,
+              "塗り": 5.5
+            },
+            "damage": "180～40; shortage ×0.5",
+            "rateF": 85,
+            "startup": {
+              "humanF": 60,
+              "squidF": 73
+            },
+            "page_postF": 10,
+            "inkCostPct": 21,
+            "ammo": 4,
+            "inkLockF": 70,
+            "movementWhileAttacking_DU_F": 0.24
+          },
+          {
+            "name": "塗り進み",
+            "damage": 125,
+            "moveSpeed_DU_F": "0.88→1.08",
+            "inkCostPctPerSecond": "1.2～6.0",
+            "inkLockF": 20,
+            "sprintAfterF": 90,
+            "paintWidth_lines": 1.36
+          }
+        ],
+        "mechanics": "横振りと縦振りは長い前隙。コロコロ1確125."
+      }
+    },
+    {
+      "id": "s3-roller-hunter",
+      "name": "ヴァリアブルローラー",
+      "family": "roller",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.1.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/ヴァリアブルローラー",
+      "sourceActor": "WeaponRollerHunter",
+      "sourceSha256": "3de9fc1dd3a57939bceac11ddc04f110fad3f51677cec60ff57a83a78f54a23e",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "ヴァリアブルローラー",
+        "family": "roller",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/ヴァリアブルローラー",
+        "stats_version": "v11.1.0",
+        "modes": [
+          {
+            "name": "ヨコ振り",
+            "range_lines": {
+              "確1": 1.4,
+              "乱1": 1.5,
+              "確2": 1.9,
+              "ダメージ": 2.0,
+              "塗り": 2.6
+            },
+            "damage": "center 150～30; edge 100～30; shortage ×0.25",
+            "rateF": 40,
+            "startup": {
+              "humanF": 19,
+              "squidF": 32
+            },
+            "page_postF": 10,
+            "inkCostPct": 8,
+            "ammo": 12,
+            "inkLockF": 45,
+            "movementWhileAttacking_DU_F": 0.72
+          },
+          {
+            "name": "タテ振り",
+            "range_lines": {
+              "確1": 2.1,
+              "乱1": 2.2,
+              "確2": 3.1,
+              "ダメージ": 4.1,
+              "塗り": 5.2
+            },
+            "damage": "150～40; shortage ×0.5",
+            "rateF": 72,
+            "startup": {
+              "humanF": 50,
+              "squidF": 63
+            },
+            "page_postF": 10,
+            "inkCostPct": 12,
+            "ammo": 8,
+            "inkLockF": 65,
+            "movementWhileAttacking_DU_F": 0.8
+          },
+          {
+            "name": "塗り進み",
+            "damage": 125,
+            "moveSpeed_DU_F": "1.08→1.32",
+            "inkCostPctPerSecond": "1.2～6.0",
+            "inkLockF": 20,
+            "sprintAfterF": 60,
+            "paintWidth_lines": 1.04
+          }
+        ],
+        "mechanics": "横振りは速い/低燃費; 縦振りは高い塗り射程。縦振り後方グループにプレイヤー判定なしの左右飛沫も6+6."
+      }
+    },
+    {
+      "id": "s3-roller-wide",
+      "name": "ワイドローラー",
+      "family": "roller",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/ワイドローラー",
+      "sourceActor": "WeaponRollerWide",
+      "sourceSha256": "3e4d368b04c78ce4ee81dc09862136b9aee214397d96990e98609d91209b2f80",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "ワイドローラー",
+        "family": "roller",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/ワイドローラー",
+        "stats_version": "v11.0.0",
+        "modes": [
+          {
+            "name": "ヨコ振り",
+            "range_lines": {
+              "確2": 1.2,
+              "ダメージ": 2.4,
+              "塗り": 2.9
+            },
+            "damage": "70～40; shortage ×0.25",
+            "rateF": 39,
+            "startup": {
+              "humanF": 18,
+              "squidF": 31
+            },
+            "page_postF": {
+              "main": 21,
+              "sub": 12,
+              "squid": 13
+            },
+            "inkCostPct": 9,
+            "ammo": 11,
+            "inkLockF": 45,
+            "movementWhileAttacking_DU_F": 0.72
+          },
+          {
+            "name": "タテ振り",
+            "range_lines": {
+              "確1": 1.6,
+              "乱1": 1.7,
+              "確2": 3.0,
+              "ダメージ": 3.9,
+              "塗り": 5.0
+            },
+            "damage": "120～40; shortage ×0.5",
+            "rateF": 50,
+            "startup": {
+              "humanF": 25,
+              "squidF": 38
+            },
+            "page_postF": {
+              "main": 25,
+              "sub": 18,
+              "squid": 19
+            },
+            "inkCostPct": 9,
+            "ammo": 11,
+            "inkLockF": 50,
+            "movementWhileAttacking_DU_F": 0.72
+          },
+          {
+            "name": "塗り進み",
+            "damage": 70,
+            "moveSpeed_DU_F": "1.18→1.42",
+            "inkCostPctPerSecond": "0.6～3.0",
+            "inkLockF": 20,
+            "sprintAfterF": 30,
+            "paintWidth_lines": 1.36
+          }
+        ],
+        "mechanics": "Low-power roller with 2-hit roll (70) and unusually efficient roll ink use."
+      }
+    },
+    {
+      "id": "s3-brush-mini",
+      "name": "パブロ",
+      "family": "brush",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/パブロ",
+      "sourceActor": "WeaponBrushMini",
+      "sourceSha256": "dd8424ed0f82ec6b2d972d250bea53ca0eb905e9bc6009e616f92c2c792b58fa",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "パブロ",
+        "family": "brush",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/パブロ",
+        "stats_version": "v11.0.0",
+        "stroke": {
+          "range_lines": {
+            "effective": 1.5,
+            "paint": 2.3
+          },
+          "damage": "30～7.5",
+          "rateF": 7,
+          "ratePerSecond": 8.6,
+          "startup": {
+            "humanF": 3,
+            "squidF": 12
+          },
+          "page_postF": 10,
+          "inkCostPct": 2.0,
+          "ammo": 50,
+          "inkLockF": 30,
+          "movementWhileAttacking_DU_F": 0.5,
+          "groups": [
+            2,
+            1
+          ],
+          "firstStrokeMinusF": 1
+        },
+        "push": {
+          "damage": 20,
+          "moveSpeed_DU_F": 1.98,
+          "inkCostPctPerSecond": 7.5,
+          "inkLockF": 20,
+          "durationSeconds": 13.3,
+          "paintWidth_lines": 0.24
+        },
+        "mechanics": "First swing and repeated swing have different pre-delay; push uses rapid movement and can ignore enemy ink."
+      }
+    },
+    {
+      "id": "s3-brush-normal",
+      "name": "ホクサイ",
+      "family": "brush",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.1.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/ホクサイ",
+      "sourceActor": "WeaponBrushNormal",
+      "sourceSha256": "8c622a0e5d630982e0bb5cd0c4bb50264c7a3a6258b7d8a988a736643e12a82e",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "ホクサイ",
+        "family": "brush",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/ホクサイ",
+        "stats_version": "v11.1.0",
+        "stroke": {
+          "range_lines": {
+            "effective": 1.9,
+            "paint": 2.6
+          },
+          "damage": "40～10; shortage 20.0",
+          "rateF": 11,
+          "ratePerSecond": 5.5,
+          "startup": {
+            "humanF": 3,
+            "squidF": 12
+          },
+          "page_postF": 10,
+          "inkCostPct": 2.7,
+          "ammo": 37,
+          "inkLockF": 30,
+          "movementWhileAttacking_DU_F": 0.3,
+          "groups": [
+            3,
+            2
+          ],
+          "firstStrokeMinusF": 1
+        },
+        "push": {
+          "damage": 25,
+          "moveSpeed_DU_F": 1.68,
+          "inkCostPctPerSecond": 9.0,
+          "inkLockF": 20,
+          "durationSeconds": 11.06,
+          "paintWidth_lines": 0.36
+        },
+        "mechanics": "First swing and repeated swing differ; three forward splash plus two extra grouped particles."
+      }
+    },
+    {
+      "id": "s3-brush-heavy",
+      "name": "フィンセント",
+      "family": "brush",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/フィンセント",
+      "sourceActor": "WeaponBrushHeavy",
+      "sourceSha256": "411050318967a4188eb1e6cf33c742ef0b11bc3e7fef92856d3dbf50a3b339d5",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "フィンセント",
+        "family": "brush",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/フィンセント",
+        "stats_version": "v11.0.0",
+        "stroke": {
+          "range_lines": {
+            "effective": 2.5,
+            "paint": 3.1
+          },
+          "damage": "60～16; time-independent floor 31; shortage 30～15",
+          "rateF": 14,
+          "ratePerSecond": 4.6,
+          "startup": {
+            "humanF": 25,
+            "squidF": 34
+          },
+          "page_postF": 11,
+          "inkCostPct": 4.8,
+          "ammo": 20,
+          "inkLockF": 50,
+          "movementWhileAttacking_DU_F": 0.24,
+          "groups": [
+            1,
+            2,
+            2,
+            2,
+            1
+          ]
+        },
+        "push": {
+          "damage": 30,
+          "moveSpeed_DU_F": 1.8,
+          "inkCostPctPerSecond": 10.8,
+          "inkLockF": 20,
+          "durationSeconds": 9.25,
+          "paintWidth_lines": 0.52
+        },
+        "mechanics": "The first swing has a long windup; later rapid strokes have a distinct 2F human pre-delay."
+      }
+    },
+    {
+      "id": "s3-charger-quick",
+      "name": "スクイックリンα",
+      "family": "charger",
+      "engine": "catalog owner",
+      "wikiVersion": "ver11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%82%AF%E3%82%A4%E3%83%83%E3%82%AF%E3%83%AA%E3%83%B3%CE%B1",
+      "sourceActor": "WeaponChargerQuick",
+      "sourceSha256": "9327cad5946b2871bcb8f914382bb32955a644ea3f811d7fba711c2d315ccd57",
+      "sourceValueChecks": [
+        {
+          "field": "full charge F",
+          "wiki": 45,
+          "source": 45,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full direct damage",
+          "wiki": 140.0,
+          "source": 140.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full ink %",
+          "wiki": 10.5,
+          "source": 10.5,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "スクイックリンα",
+        "family": "charger",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%82%AF%E3%82%A4%E3%83%83%E3%82%AF%E3%83%AA%E3%83%B3%CE%B1",
+        "wiki_version": "ver11.0.0",
+        "charge_and_shot": {
+          "full_charge_f": 45,
+          "one_shot_interval_f": 51,
+          "full_charge_range": 3.8,
+          "full_charge_paint_range": 4.2,
+          "full_charge_damage": 140.0,
+          "full_charge_initial_speed": 36.0,
+          "ink_cost_pct": 10.5,
+          "shots_per_full_charge": 1,
+          "full_ink_magazine_shots": 9,
+          "continuous_fire_seconds": 7.65,
+          "uncharged_to_partial": {
+            "range": "2.3–3.8",
+            "paint_range": "3.1–4.1",
+            "damage": "40.0–79.9",
+            "initial_speed": "24.0–35.9",
+            "uncharged_fire_interval_f": 14,
+            "uncharged_ink_cost_pct": 1.8667
+          },
+          "min_charge_f": null,
+          "charge_keep_duration_f": 75,
+          "charge_keep_ink_squid_startup_f": 25,
+          "charge_keep_resume_charge_f": 1,
+          "air_charge": "Wiki explicitly says charge speed does not slow in air.",
+          "recharge_after_firing": null
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 0.96,
+          "charge_or_partial_walk_speed": "0.96–0.31",
+          "walk_speed_after_full_charge": 0.3,
+          "ground_spread": null,
+          "air_spread": null,
+          "foot_paint_period_f": null
+        },
+        "wiki_explicit_notes": [
+          "Charge speed does not slow in air."
+        ]
+      }
+    },
+    {
+      "id": "charger",
+      "name": "スプラチャージャー",
+      "family": "charger",
+      "engine": "existing owner",
+      "wikiVersion": "ver11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%83%81%E3%83%A3%E3%83%BC%E3%82%B8%E3%83%A3%E3%83%BC",
+      "sourceActor": "WeaponChargerNormal",
+      "sourceSha256": "dfe4637def507f933b0bbecbc805331f6357bb69ac165608a6e558406a4b72c1",
+      "sourceValueChecks": [
+        {
+          "field": "full direct damage",
+          "wiki": 160.0,
+          "source": 160.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full ink %",
+          "wiki": 18.0,
+          "source": 18.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "スプラチャージャー",
+        "family": "charger",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%83%81%E3%83%A3%E3%83%BC%E3%82%B8%E3%83%A3%E3%83%BC",
+        "wiki_version": "ver11.0.0",
+        "charge_and_shot": {
+          "full_charge_f": 60,
+          "one_shot_interval_f": 66,
+          "full_charge_range": 5.2,
+          "full_charge_paint_range": 5.7,
+          "full_charge_damage": 160.0,
+          "full_charge_initial_speed": 48.0,
+          "ink_cost_pct": 18.0,
+          "shots_per_full_charge": 1,
+          "full_ink_magazine_shots": 5,
+          "continuous_fire_seconds": 5.5,
+          "uncharged_to_partial": {
+            "range": "2.3–5.2",
+            "paint_range": "3.1–5.7",
+            "damage": "40.0–79.9",
+            "initial_speed": "24.0–47.9",
+            "uncharged_fire_interval_f": 14,
+            "uncharged_ink_cost_pct": 2.25,
+            "charge_walk_speed": "0.96–0.21"
+          },
+          "min_charge_f": null,
+          "charge_keep_duration_f": 75,
+          "charge_keep_ink_squid_startup_f": 29,
+          "charge_keep_resume_charge_f": 1,
+          "air_charge": null,
+          "recharge_after_firing": null
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 0.96,
+          "walk_speed_after_full_charge": 0.2,
+          "ground_spread": null,
+          "air_spread": null,
+          "foot_paint_period_f": null
+        }
+      }
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "name": "スプラスコープ",
+      "family": "charger",
+      "engine": "catalog owner",
+      "wikiVersion": "ver11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97",
+      "sourceActor": "WeaponChargerNormalScope",
+      "sourceSha256": "4d51f887e3567250500160f929682e0493540685271380e666507191b3637468",
+      "sourceValueChecks": [
+        {
+          "field": "full direct damage",
+          "wiki": 160.0,
+          "source": 160.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full ink %",
+          "wiki": 18.0,
+          "source": 18.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "スプラスコープ",
+        "family": "charger",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97",
+        "wiki_version": "ver11.0.0",
+        "charge_and_shot": {
+          "full_charge_f": 60,
+          "one_shot_interval_f": 66,
+          "full_charge_range": 5.7,
+          "full_charge_paint_range": 6.1,
+          "full_charge_damage": 160.0,
+          "full_charge_initial_speed": 48.0,
+          "ink_cost_pct": 18.0,
+          "shots_per_full_charge": 1,
+          "full_ink_magazine_shots": 5,
+          "continuous_fire_seconds": 5.5,
+          "uncharged_to_partial": {
+            "range": "2.3–5.2",
+            "paint_range": "3.1–5.7",
+            "damage": "40.0–79.9",
+            "initial_speed": "24.0–47.9",
+            "uncharged_fire_interval_f": 14,
+            "uncharged_ink_cost_pct": 2.25
+          },
+          "min_charge_f": null,
+          "charge_keep_duration_f": 0,
+          "charge_keep_condition": "Cannot charge-keep (scope model).",
+          "charge_keep_resume_charge_f": null,
+          "air_charge": null,
+          "recharge_after_firing": null
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 0.96,
+          "walk_speed_after_full_charge": 0.2,
+          "ground_spread": null,
+          "air_spread": null,
+          "foot_paint_period_f": null
+        },
+        "wiki_explicit_notes": [
+          "Compared with スプラチャージャー, full-charge range and paint range each increase by 0.5.",
+          "Cannot charge-keep."
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-long",
+      "name": "リッター4K",
+      "family": "charger",
+      "engine": "catalog owner",
+      "wikiVersion": "Ver.11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AA%E3%83%83%E3%82%BF%E3%83%BC4K",
+      "sourceActor": "WeaponChargerLong",
+      "sourceSha256": "7aad1211d9934990ff666de960010ceaa05f676212e1e4c2543564cea22b2fa8",
+      "sourceValueChecks": [
+        {
+          "field": "full charge F",
+          "wiki": 92,
+          "source": 92,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full direct damage",
+          "wiki": 180.0,
+          "source": 180.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full ink %",
+          "wiki": 25.0,
+          "source": 25.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "リッター4K",
+        "family": "charger",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AA%E3%83%83%E3%82%BF%E3%83%BC4K",
+        "wiki_version": "Ver.11.0.0",
+        "charge_and_shot": {
+          "full_charge_f": 92,
+          "one_shot_interval_f": 98,
+          "full_charge_range": 6.2,
+          "full_charge_paint_range": 6.7,
+          "full_charge_damage": 180.0,
+          "full_charge_initial_speed": 96.0,
+          "ink_cost_pct": 25.0,
+          "shots_per_full_charge": 1,
+          "full_ink_magazine_shots": 4,
+          "continuous_fire_seconds": 6.533,
+          "uncharged_to_partial": {
+            "range": "2.3–6.2",
+            "paint_range": "3.1–6.7",
+            "damage": "40.0–79.9",
+            "initial_speed": "24.0–63.9",
+            "uncharged_fire_interval_f": 14,
+            "uncharged_ink_cost_pct": 2.25,
+            "charge_walk_speed": "0.88–0.16"
+          },
+          "min_charge_f": null,
+          "charge_keep_duration_f": 75,
+          "charge_keep_ink_squid_startup_f": 29,
+          "charge_keep_resume_charge_f": 1,
+          "air_charge": null,
+          "recharge_after_firing": null
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 0.88,
+          "walk_speed_after_full_charge": 0.15,
+          "ground_spread": null,
+          "air_spread": null,
+          "foot_paint_period_f": null
+        }
+      }
+    },
+    {
+      "id": "s3-charger-longscope",
+      "name": "4Kスコープ",
+      "family": "charger",
+      "engine": "catalog owner",
+      "wikiVersion": "Ver.11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/4K%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97",
+      "sourceActor": "WeaponChargerLongScope",
+      "sourceSha256": "0a1a82683eb21e9016b235b3a116f231950ad8f95baee2d533410cad582d0caf",
+      "sourceValueChecks": [
+        {
+          "field": "full charge F",
+          "wiki": 92,
+          "source": 92,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full direct damage",
+          "wiki": 180.0,
+          "source": 180.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full ink %",
+          "wiki": 25.0,
+          "source": 25.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "4Kスコープ",
+        "family": "charger",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/4K%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97",
+        "wiki_version": "Ver.11.0.0",
+        "charge_and_shot": {
+          "full_charge_f": 92,
+          "one_shot_interval_f": 98,
+          "full_charge_range": 6.7,
+          "full_charge_paint_range": 7.1,
+          "full_charge_damage": 180.0,
+          "full_charge_initial_speed": 96.0,
+          "ink_cost_pct": 25.0,
+          "shots_per_full_charge": 1,
+          "full_ink_magazine_shots": 4,
+          "continuous_fire_seconds": 6.533,
+          "uncharged_to_partial": {
+            "range": "2.3–6.2",
+            "paint_range": "3.1–6.7",
+            "damage": "40.0–79.9",
+            "initial_speed": "24.0–63.9",
+            "uncharged_fire_interval_f": 14,
+            "uncharged_ink_cost_pct": 2.25
+          },
+          "min_charge_f": null,
+          "charge_keep_duration_f": 0,
+          "charge_keep_condition": "Cannot charge-keep (scope model).",
+          "charge_keep_resume_charge_f": null,
+          "air_charge": null,
+          "recharge_after_firing": null
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 0.88,
+          "walk_speed_after_full_charge": 0.15,
+          "ground_spread": null,
+          "air_spread": null,
+          "foot_paint_period_f": null
+        },
+        "wiki_explicit_notes": [
+          "Compared with リッター4K, full-charge range and paint range each increase by 0.5.",
+          "Cannot charge-keep."
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-light",
+      "name": "14式竹筒銃・甲",
+      "family": "charger",
+      "engine": "catalog owner",
+      "wikiVersion": "Ver.11.1.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/14%E5%BC%8F%E7%AB%B9%E7%AD%92%E9%8A%83%E3%83%BB%E7%94%B2",
+      "sourceActor": "WeaponChargerLight",
+      "sourceSha256": "6678865b3853d30a538ae374c09f7ddee07b32a400296792dfbfbf4d71d52402",
+      "sourceValueChecks": [
+        {
+          "field": "full charge F",
+          "wiki": 20,
+          "source": 20,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full direct damage",
+          "wiki": 85.0,
+          "source": 85.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full ink %",
+          "wiki": 7.0,
+          "source": 7.000000000000001,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "14式竹筒銃・甲",
+        "family": "charger",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/14%E5%BC%8F%E7%AB%B9%E7%AD%92%E9%8A%83%E3%83%BB%E7%94%B2",
+        "wiki_version": "Ver.11.1.0",
+        "charge_and_shot": {
+          "full_charge_f": 20,
+          "one_shot_interval_f": 26,
+          "full_charge_range": 4.3,
+          "full_charge_paint_range": 5.0,
+          "full_charge_damage": 85.0,
+          "full_charge_initial_speed": 40.0,
+          "ink_cost_pct": 7.0,
+          "shots_per_full_charge": 1,
+          "full_ink_magazine_shots": 14,
+          "continuous_fire_seconds": 6.067,
+          "uncharged_to_partial": {
+            "range": 4.3,
+            "paint_range": 5.0,
+            "damage": "30.0–84.9",
+            "initial_speed": 40.0,
+            "uncharged_fire_interval_f": 14,
+            "uncharged_ink_cost_pct": 2.8,
+            "charge_walk_speed": 0.68
+          },
+          "min_charge_f": null,
+          "charge_keep_duration_f": 0,
+          "charge_keep_condition": "Cannot charge-keep.",
+          "charge_keep_resume_charge_f": null,
+          "air_charge_multiplier": 2.5,
+          "recharge_after_firing": null
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 1.04,
+          "walk_speed_after_full_charge": 0.68,
+          "ground_spread": null,
+          "air_spread": null,
+          "foot_paint_period_f": null
+        },
+        "wiki_explicit_notes": [
+          "Charge amount does not change range (4.3), initial speed (40.0), or the fact it can shoot at maximum initial speed.",
+          "Damage increases with charge; Wiki gives 30.0–84.9 before full charge and 85 at full charge.",
+          "Full charge still does not pierce; cannot charge-keep.",
+          "Airborne charge time is multiplied by 2.5."
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-keeper",
+      "name": "ソイチューバー",
+      "family": "charger",
+      "engine": "catalog owner",
+      "wikiVersion": "ver.11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%BD%E3%82%A4%E3%83%81%E3%83%A5%E3%83%BC%E3%83%90%E3%83%BC",
+      "sourceActor": "WeaponChargerKeeper",
+      "sourceSha256": "228e257d89a4aad30d423f7230349a10bb31e121ce96716e3334a3fc4f060803",
+      "sourceValueChecks": [
+        {
+          "field": "full charge F",
+          "wiki": 71,
+          "source": 71,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full direct damage",
+          "wiki": 180.0,
+          "source": 180.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "full ink %",
+          "wiki": 15.0,
+          "source": 15.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "ソイチューバー",
+        "family": "charger",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%BD%E3%82%A4%E3%83%81%E3%83%A5%E3%83%BC%E3%83%90%E3%83%BC",
+        "wiki_version": "ver.11.0.0",
+        "charge_and_shot": {
+          "full_charge_f": 71,
+          "one_shot_interval_f": 77,
+          "full_charge_range": 4.35,
+          "full_charge_paint_range": 4.7,
+          "full_charge_damage": 180.0,
+          "full_charge_initial_speed": 48.0,
+          "ink_cost_pct": 15.0,
+          "shots_per_full_charge": 1,
+          "full_ink_magazine_shots": 6,
+          "continuous_fire_seconds": 7.7,
+          "uncharged_to_partial": {
+            "range": "2.9–4.15",
+            "paint_range": "3.5–4.4",
+            "damage": "40.0–129.9",
+            "initial_speed": "24.0–47.9",
+            "uncharged_fire_interval_f": 14,
+            "uncharged_ink_cost_pct": 2.0,
+            "charge_walk_speed": "0.96–0.30"
+          },
+          "one_cycle_charge_f": 50,
+          "min_charge_f": null,
+          "charge_keep_duration_f": 300,
+          "charge_keep_ink_squid_startup_f": 21,
+          "charge_keep_resume_charge_f": 1,
+          "charge_keep_condition": "Partial charge can be kept as well as full charge.",
+          "air_charge": null,
+          "recharge_after_firing": null
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 0.96,
+          "walk_speed_after_full_charge": 0.3,
+          "ground_spread": null,
+          "air_spread": null,
+          "foot_paint_period_f": null
+        },
+        "wiki_explicit_notes": [
+          "Charge-keep is possible before full charge; hold lasts 300F (5 seconds)."
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-pencil",
+      "name": "R-PEN/5H",
+      "family": "charger",
+      "engine": "catalog owner",
+      "wikiVersion": "ver.11.3.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/R-PEN%EF%BC%8F5H",
+      "sourceActor": "WeaponChargerPencil",
+      "sourceSha256": "b1fa33f41fb36d36d42d849dd0c20516339734dc8946e3cc752402faa30da690",
+      "sourceValueChecks": [
+        {
+          "field": "full charge F",
+          "wiki": 72,
+          "source": 72,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "R-PEN/5H",
+        "family": "charger",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/R-PEN%EF%BC%8F5H",
+        "wiki_version": "ver.11.3.0",
+        "charge_and_shot": {
+          "full_charge_f": 72,
+          "inter_shot_interval_f": 17,
+          "full_charge_range": 5.75,
+          "full_charge_paint_range": 6.3,
+          "full_charge_damage_per_shot": 68.0,
+          "full_charge_initial_speed": 48.0,
+          "ink_cost_pct_per_shot": 7.5,
+          "shots_per_full_charge": 5,
+          "continuous_fire_seconds": 4.867,
+          "uncharged_to_partial": {
+            "range": "2.3–5.3",
+            "paint_range": "2.9–5.6",
+            "damage": "40.0–67.9",
+            "initial_speed": "24.0–47.9",
+            "uncharged_fire_interval_f": 14,
+            "uncharged_ink_cost_pct": 2.11
+          },
+          "min_charge_f": null,
+          "charge_keep_duration_f": 0,
+          "charge_keep_condition": "Cannot charge-keep.",
+          "charge_keep_resume_charge_f": null,
+          "air_charge": "Page says jump height is not reduced much while charging; no airborne charge-time multiplier stated.",
+          "recharge_after_firing": null
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 0.96,
+          "walk_speed_during_charge": 0.68,
+          "walk_speed_after_full_charge": 0.68,
+          "ground_spread": null,
+          "air_spread": null,
+          "foot_paint_period_f": null
+        },
+        "wiki_explicit_notes": [
+          "Charge then release the trigger for shot one; charge state is retained for the remaining four shots, fired by each subsequent trigger press/release.",
+          "Full charge consumes 37.5% ink for five shots; page says unfired-shot ink is returned when entering squid form."
+        ]
+      }
+    },
+    {
+      "id": "slosher",
+      "name": "バケットスロッシャー",
+      "family": "slosher",
+      "engine": "existing owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/バケットスロッシャー",
+      "sourceActor": "WeaponSlosherStrong",
+      "sourceSha256": "1d20043ad7efaf2831801afbce601fb1e14bfd11947063903c6fadd6c98f5298",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "バケットスロッシャー",
+        "family": "slosher",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/バケットスロッシャー",
+        "stats_version": "v11.0.0",
+        "shot": {
+          "range_lines": {
+            "effective": 3.1,
+            "paint": 3.4,
+            "70_damage": 1.4,
+            "50_damage": 1.3
+          },
+          "damage": "front tip 70→50; tail 50",
+          "rateF": 29,
+          "startup": {
+            "humanF": 12,
+            "squidF": 18
+          },
+          "inkCostPct": 7.6,
+          "ammo": 13,
+          "inkLockF": 40,
+          "movementWhileAttacking_DU_F": 0.4,
+          "particles": 9
+        },
+        "hit_order": {
+          "group1": {
+            "damage": "70 at tip",
+            "count": 4,
+            "delayF": 0,
+            "spacingF": 1
+          },
+          "group2": {
+            "damage": 50,
+            "count": 5,
+            "delayF": 4,
+            "spacingF": 2
+          }
+        },
+        "mechanics": "Two particle groups have different start delays and damage; the curved bucket arc attacks over ledges and around cover."
+      }
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "name": "ヒッセン",
+      "family": "slosher",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.3.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/ヒッセン",
+      "sourceActor": "WeaponSlosherDiffusion",
+      "sourceSha256": "91b131d145f4a9c50f5223678acb1fe09a01f643dd554857f336bc4a37e1ba02",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "ヒッセン",
+        "family": "slosher",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/ヒッセン",
+        "stats_version": "v11.3.0",
+        "shot": {
+          "range_lines": {
+            "front_effective": 2.4,
+            "side_effective": 1.7,
+            "front_paint": 2.6,
+            "side_paint": 1.8
+          },
+          "damage": "62→35",
+          "rateF": 23,
+          "startup": {
+            "humanF": 12,
+            "squidF": 18
+          },
+          "inkCostPct": 5.7,
+          "ammo": 17,
+          "inkLockF": 35,
+          "movementWhileAttacking_DU_F": 0.66,
+          "particles": "4+3+1+1"
+        },
+        "hit_order": {
+          "groups": [
+            {
+              "count": 4,
+              "delayF": 0,
+              "spacingF": 1,
+              "notes": "3 of 4 are invisible after first shot"
+            },
+            {
+              "count": 3,
+              "delayF": 2,
+              "spacingF": 2
+            },
+            {
+              "count": 1,
+              "delayF": 3,
+              "angle": -15
+            },
+            {
+              "count": 1,
+              "delayF": 3,
+              "angle": 15
+            }
+          ]
+        },
+        "mechanics": "Three outlets distribute ink forward/left/right; the two lateral particles use ±15°."
+      }
+    },
+    {
+      "id": "s3-slosher-launcher",
+      "name": "スクリュースロッシャー",
+      "family": "slosher",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/スクリュースロッシャー",
+      "sourceActor": "WeaponSlosherLauncher",
+      "sourceSha256": "3b6d7326f487efd5f8999c7286d0688e97cc5bb9d1e3938fba5e4ea6c69c9a9a",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "スクリュースロッシャー",
+        "family": "slosher",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/スクリュースロッシャー",
+        "stats_version": "v11.0.0",
+        "shot": {
+          "range_lines": {
+            "direct_effective": 3.0,
+            "vortex_damage": 3.3,
+            "paint": 3.5
+          },
+          "damage": "core direct 76→52; surrounding vortex 38",
+          "rateF": 38,
+          "startup": {
+            "humanF": 12,
+            "squidF": 18
+          },
+          "inkCostPct": 9.2,
+          "ammo": 10,
+          "inkLockF": 42,
+          "movementWhileAttacking_DU_F": 0.7,
+          "particles": "1 core + 4 invisible vortex particles"
+        },
+        "hit_order": {
+          "core": {
+            "delayF": 0,
+            "damage": "76→52"
+          },
+          "vortex": {
+            "delayF": 1,
+            "spacingF": 2,
+            "count": 4,
+            "damageEach": 38,
+            "terrainCollision": false
+          }
+        },
+        "mechanics": "Two hitboxes: high-damage central direct hit and lower-damage vortex; vortex does not collide with terrain, allowing attacks through narrow gaps/around cover."
+      }
+    },
+    {
+      "id": "s3-slosher-bathtub",
+      "name": "オーバーフロッシャー",
+      "family": "slosher",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.1.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/オーバーフロッシャー",
+      "sourceActor": "WeaponSlosherBathtub",
+      "sourceSha256": "203ff1f8b529bcda8224d4cd5b247aeb3ebb1b54a62f1838c980957a4718d4af",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "オーバーフロッシャー",
+        "family": "slosher",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/オーバーフロッシャー",
+        "stats_version": "v11.1.0",
+        "shot": {
+          "range_lines": {
+            "effectiveWithCurvedShot": 5.4,
+            "effectiveStraight": 5.3,
+            "keepTtkWithCurvedShot": 4.9,
+            "keepTtkStraight": 4.7,
+            "oneBounce": 2.6,
+            "paint": 5.4
+          },
+          "damageEach": 32,
+          "damagePerTrigger": 128,
+          "rateF": 32,
+          "subshots": "5F×3 + 17F",
+          "startup": {
+            "humanF": 6,
+            "squidF": 12
+          },
+          "inkCostPct": 8.0,
+          "triggersPerTank": 12,
+          "inkLockF": 40,
+          "movementWhileAttacking_DU_F": 0.5,
+          "bubbles": 4
+        },
+        "hit_order": {
+          "firstBubble": {
+            "delayF": 0,
+            "count": 1,
+            "paintTrail": "through approximately one-bounce distance"
+          },
+          "remainingBubbles": {
+            "delayF": 5,
+            "spacingF": 5,
+            "count": 3
+          }
+        },
+        "mechanics": "Four separate bubbles at 32 each; they bounce on floor/walls, survive up to three landings or until hitting an enemy, and do not have a separate explosion damage hit."
+      }
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "name": "エクスプロッシャー",
+      "family": "slosher",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/エクスプロッシャー",
+      "sourceActor": "WeaponSlosherWashtub",
+      "sourceSha256": "d7b73f92338b9e2fa320092b56ca768c395d9a26ec1f0e90ccf1be2dc0fbcf1b",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "エクスプロッシャー",
+        "family": "slosher",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/エクスプロッシャー",
+        "stats_version": "v11.0.0",
+        "shot": {
+          "range_lines": {
+            "direct_effective": 4.2,
+            "blast_damage": 4.7,
+            "paint": 4.7
+          },
+          "damage": {
+            "direct": 55,
+            "blast": 35,
+            "directPlusBlast": 90
+          },
+          "blastRadius": 0.57,
+          "rateF": 55,
+          "startup": {
+            "humanF": 16,
+            "squidF": 22
+          },
+          "inkCostPct": 11.7,
+          "ammo": 8,
+          "inkLockF": 70,
+          "movementWhileAttacking_DU_F": 0.45,
+          "projectilesPerShot": 1
+        },
+        "mechanics": "Projectile explodes on terrain contact; direct hit and blast can both damage the same target (55+35=90)."
+      }
+    },
+    {
+      "id": "s3-slosher-double",
+      "name": "モップリン",
+      "family": "slosher",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/モップリン",
+      "sourceActor": "WeaponSlosherDouble",
+      "sourceSha256": "d89014f37baac02449d5390cd36b281c24fcf1f2643ba7e2b4b05fedc3154e47",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "モップリン",
+        "family": "slosher",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/モップリン",
+        "stats_version": "v11.0.0",
+        "shot": {
+          "range_lines": {
+            "effective": 3.3,
+            "paint": 3.7,
+            "reticle": 3.0
+          },
+          "damage": "first shell 48→35 + second 42→35; 90～70 total per trigger",
+          "rateF": 45,
+          "secondShotDelayF": 8,
+          "startup": {
+            "humanF": 16,
+            "squidF": 22
+          },
+          "inkCostPct": 9.0,
+          "ammo": "11 trigger; 2 shells/trigger",
+          "inkLockF": 50,
+          "movementWhileAttacking_DU_F": 0.4,
+          "particles": "8 then 8"
+        },
+        "hit_order": {
+          "shell1": {
+            "damage": "48→35",
+            "delayF": 0,
+            "count": 8
+          },
+          "shell2": {
+            "damage": "42→35",
+            "delayF": 8,
+            "count": 8
+          }
+        },
+        "mechanics": "Two separate ink lobes are fired 8F apart; view movement can spread their impact points."
+      }
+    },
+    {
+      "id": "s3-spinner-quick",
+      "name": "スプラスピナー",
+      "family": "splatling",
+      "engine": "catalog owner",
+      "wikiVersion": "Ver.11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%82%B9%E3%83%94%E3%83%8A%E3%83%BC",
+      "sourceActor": "WeaponSpinnerQuick",
+      "sourceSha256": "36d1af6547a876ed4ce0d1ecd6daa3a1f08290636c2ae95f099e79b06872a56f",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "スプラスピナー",
+        "family": "splatling",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%82%B9%E3%83%94%E3%83%8A%E3%83%BC",
+        "wiki_version": "Ver.11.2.0",
+        "charge_and_shot": {
+          "one_cycle_charge_f": 18,
+          "full_charge_f": 27,
+          "uncharged_range": 2.2,
+          "full_charge_range": 3.0,
+          "damage_per_bullet_by_flight_f": "32.0–16.0 over 11F–19F",
+          "fire_interval_f": 4,
+          "full_charge_magazine_shots": 22,
+          "one_cycle_magazine_shots": 11,
+          "full_charge_shot_duration_f": null,
+          "ink_pct_per_bullet": 0.68,
+          "ink_pct_one_cycle": 7.5,
+          "ink_pct_full_charge": 15.0,
+          "ink_recovery_lock_f": 30,
+          "min_charge_f": null,
+          "charge_keep_duration_f": null,
+          "recharge_after_firing": null
+        },
+        "projectile_and_movement": {
+          "initial_speed_full_charge": "16.0–14.0",
+          "ground_spread": "horizontal 4.0°, vertical 1.2°",
+          "air_spread": "8.0°",
+          "walk_speed_not_firing": 0.96,
+          "walk_speed_during_charge": 0.72,
+          "walk_speed_during_fire": 0.86,
+          "foot_paint_every_shots": 3,
+          "foot_paint_period_f": 12
+        },
+        "wiki_explicit_notes": [
+          "The page says jump height is not reduced much during charge."
+        ]
+      }
+    },
+    {
+      "id": "splatling",
+      "name": "バレルスピナー",
+      "family": "splatling",
+      "engine": "existing owner",
+      "wikiVersion": "Ver.11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%90%E3%83%AC%E3%83%AB%E3%82%B9%E3%83%94%E3%83%8A%E3%83%BC",
+      "sourceActor": "WeaponSpinnerStandard",
+      "sourceSha256": "92647d586beee1764ca8984820fa37e0fd7887e2a756f7ca18e10e1aef97fd08",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "バレルスピナー",
+        "family": "splatling",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%90%E3%83%AC%E3%83%AB%E3%82%B9%E3%83%94%E3%83%8A%E3%83%BC",
+        "wiki_version": "Ver.11.2.0",
+        "charge_and_shot": {
+          "one_cycle_charge_f": 48,
+          "full_charge_f": 72,
+          "uncharged_range": 2.2,
+          "full_charge_range": 4.2,
+          "damage_per_bullet_by_flight_f": "30.0–15.0 over 11F–19F",
+          "fire_interval_f": 4,
+          "full_charge_magazine_shots": 41,
+          "one_cycle_magazine_shots": 11,
+          "full_charge_shot_duration_f": 161,
+          "ink_pct_per_bullet": 0.625,
+          "ink_pct_one_cycle": 11.55,
+          "ink_pct_full_charge": 22.5,
+          "ink_recovery_lock_f": 40,
+          "min_charge_f": null,
+          "charge_keep_duration_f": null,
+          "recharge_after_firing": null
+        },
+        "projectile_and_movement": {
+          "initial_speed_full_charge": "22.2–19.8",
+          "ground_spread": "horizontal 3.3°, vertical 1.6°",
+          "air_spread": "7.0°",
+          "walk_speed_not_firing": 0.96,
+          "walk_speed_during_charge": 0.62,
+          "walk_speed_during_fire": 0.7,
+          "foot_paint_every_shots": 8,
+          "foot_paint_period_f": 32
+        }
+      }
+    },
+    {
+      "id": "s3-spinner-hyper",
+      "name": "ハイドラント",
+      "family": "splatling",
+      "engine": "catalog owner",
+      "wikiVersion": "Ver.11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%8F%E3%82%A4%E3%83%89%E3%83%A9%E3%83%B3%E3%83%88",
+      "sourceActor": "WeaponSpinnerHyper",
+      "sourceSha256": "1f92f4f4266070e59c7ab3775fb90c75624018899bb3b9bced915a6a3e2630ed",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "ハイドラント",
+        "family": "splatling",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%8F%E3%82%A4%E3%83%89%E3%83%A9%E3%83%B3%E3%83%88",
+        "wiki_version": "Ver.11.0.0",
+        "charge_and_shot": {
+          "one_cycle_charge_f": 120,
+          "full_charge_f": 150,
+          "uncharged_range": 2.2,
+          "full_charge_range": 5.0,
+          "full_charge_damage_by_flight_f": "40.0–16.0 over 11F–19F",
+          "half_charge_damage_by_flight_f": "32.0–16.0 over 11F–19F",
+          "fire_interval_f": 4,
+          "one_cycle_magazine_shots": 33,
+          "full_charge_magazine_shots": 66,
+          "full_charge_shot_duration_f": 261,
+          "ink_pct_per_bullet": 0.53,
+          "ink_pct_one_cycle": 17.5,
+          "ink_pct_full_charge": 35.0,
+          "ink_recovery_lock_f": 40,
+          "min_charge_f": null,
+          "charge_keep_duration_f": null,
+          "recharge_after_firing": null
+        },
+        "projectile_and_movement": {
+          "initial_speed_full_charge": "25.4–22.6",
+          "ground_spread": "horizontal 3.0°, vertical 2.0°",
+          "air_spread": "6.0°",
+          "walk_speed_not_firing": 0.88,
+          "walk_speed_during_charge": 0.44,
+          "walk_speed_during_fire": 0.6,
+          "foot_paint_every_shots": 8,
+          "foot_paint_period_f": 32
+        }
+      }
+    },
+    {
+      "id": "s3-spinner-downpour",
+      "name": "クーゲルシュライバー",
+      "family": "splatling",
+      "engine": "catalog owner",
+      "wikiVersion": "Ver.11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%83%BC%E3%82%B2%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%A9%E3%82%A4%E3%83%90%E3%83%BC",
+      "sourceActor": "WeaponSpinnerDownpour",
+      "sourceSha256": "9193fcb40f14a2bc850777a13ee0077e88083700c1d6a366f258ea73d6220e60",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "クーゲルシュライバー",
+        "family": "splatling",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%83%BC%E3%82%B2%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%A9%E3%82%A4%E3%83%90%E3%83%BC",
+        "wiki_version": "Ver.11.0.0",
+        "charge_and_shot": {
+          "one_cycle_charge_f": 50,
+          "full_charge_f": 100,
+          "uncharged_range": 2.3,
+          "full_charge_range": 4.7,
+          "damage_per_bullet_by_flight_f": "short 28.0–14.0; transition 29.0–14.5; long 30.0–15.0 over 11F–19F",
+          "fire_interval_f": "short 3F; switching/long 5F",
+          "full_charge_magazine_shots": 45,
+          "one_cycle_magazine_shots": 23,
+          "full_charge_shot_duration_f": 201,
+          "ink_pct_per_bullet": "short 0.375%; long 0.607%; average 0.556%",
+          "ink_pct_one_cycle": 12.78,
+          "ink_pct_full_charge": 25.0,
+          "ink_recovery_lock_f": 40,
+          "min_charge_f": null,
+          "charge_keep_duration_f": null,
+          "recharge_after_firing": "Possible; pressing charge while firing adds to remaining charge."
+        },
+        "projectile_and_movement": {
+          "initial_speed": "short 12.20–9.80; long 22.49–21.89",
+          "ground_spread": "horizontal 6.0°→1.5°; vertical 2.5°→0.75°",
+          "air_spread": "12.0°→4.0°",
+          "walk_speed_not_firing": 0.96,
+          "walk_speed_during_charge": 0.86,
+          "walk_speed_during_fire": "0.86 short→0.50 long",
+          "foot_paint_every_shots": 6,
+          "foot_paint_period_f": "18F short→30F long"
+        },
+        "wiki_explicit_notes": [
+          "Short-range mode is available after only a little charge; first 21F charge yields 29F firing (10 short-range shots).",
+          "A 50F one-cycle charge yields 92F firing (10 short + 13 long shots).",
+          "After firing begins, the first 30F (0.5 seconds) are short-range; it then transitions to long-range over 10F and includes two mid-range transition shots.",
+          "Short-range duration remains 0.5 seconds regardless of charge; extra charge extends only long-range duration.",
+          "To extend shooting, press charge while firing; charging and firing both cross the mode threshold and can switch modes. Recharging above the highest stored charge raises the saved threshold; firing the charge away lowers it back toward neutral.",
+          "Wiki table reports no charge-dependent range change for a given firing mode."
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-serein",
+      "name": "ノーチラス47",
+      "family": "splatling",
+      "engine": "catalog owner",
+      "wikiVersion": "Ver.11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%8E%E3%83%BC%E3%83%81%E3%83%A9%E3%82%B947",
+      "sourceActor": "WeaponSpinnerSerein",
+      "sourceSha256": "42d9ba656a039606c3d56da7cb1d8b97f556866d260328cb0792c0718ff22eeb",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "ノーチラス47",
+        "family": "splatling",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%8E%E3%83%BC%E3%83%81%E3%83%A9%E3%82%B947",
+        "wiki_version": "Ver.11.0.0",
+        "charge_and_shot": {
+          "one_cycle_charge_f": 38,
+          "full_charge_f": 76,
+          "uncharged_range": null,
+          "range_all_charge_levels": "about 3.6; Wiki says charge amount does not change range",
+          "damage_per_bullet_by_flight_f": "32.0–16.0 over 7F–15F",
+          "fire_interval_f": 4,
+          "one_cycle_magazine_shots": 16,
+          "full_charge_magazine_shots": 31,
+          "full_charge_shot_duration_f": 121,
+          "ink_pct_per_bullet": 0.484,
+          "ink_pct_one_cycle": 7.74,
+          "ink_pct_full_charge": 15.0,
+          "ink_recovery_lock_f": 40,
+          "min_charge_f": null,
+          "charge_keep_duration_f": 200,
+          "charge_keep_ink_squid_startup_f": 16,
+          "charge_keep_resume_charge_f": 1,
+          "recharge_after_firing": "Possible while firing; pressing charge interrupts fire and adds to the current charge."
+        },
+        "projectile_and_movement": {
+          "initial_speed": "45.54–43.23",
+          "ground_spread": "horizontal 3.3°, vertical 1.3°",
+          "air_spread": "3.6°",
+          "walk_speed_not_firing": 0.96,
+          "walk_speed_during_charge": 0.4,
+          "walk_speed_during_fire": 0.7,
+          "foot_paint_every_shots": 4,
+          "foot_paint_period_f": 16
+        },
+        "wiki_explicit_notes": [
+          "First 8F of first-cycle charge stores one uncharged-equivalent shot; the following 30F stores one additional 15-shot segment, for 38F total per first cycle.",
+          "Each later 38F cycle stores 15 shots; the page notes second-cycle efficiency is 30/38 (about 0.79) of the first cycle.",
+          "Charge-keep duration is 200F (3.333 seconds); partial charge can be kept.",
+          "Charge amount does not alter individual bullet range or speed; added charge mainly extends shot duration."
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "name": "イグザミナー",
+      "family": "splatling",
+      "engine": "catalog owner",
+      "wikiVersion": "ver.11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%A4%E3%82%B0%E3%82%B6%E3%83%9F%E3%83%8A%E3%83%BC",
+      "sourceActor": "WeaponSpinnerHyperShort",
+      "sourceSha256": "0eb316039a439354af2923dc75b6725f2a93abd31515b59f399d5fa34100e125",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "イグザミナー",
+        "family": "splatling",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%A4%E3%82%B0%E3%82%B6%E3%83%9F%E3%83%8A%E3%83%BC",
+        "wiki_version": "ver.11.0.0",
+        "charge_and_shot": {
+          "one_cycle_charge_f": 60,
+          "full_charge_f": 120,
+          "uncharged_range": 2.2,
+          "full_charge_range": 3.5,
+          "damage_per_bullet_by_flight_f": "26.0–13.0 over 11F–19F",
+          "fire_interval_f": "half 4F; full 3F",
+          "one_cycle_magazine_shots": 31,
+          "full_charge_magazine_shots": 61,
+          "full_charge_shot_duration_f": 181,
+          "ink_pct_per_bullet": 0.328,
+          "ink_pct_one_cycle": 10.16,
+          "ink_pct_full_charge": 20.0,
+          "ink_recovery_lock_f": 40,
+          "min_charge_f": null,
+          "charge_keep_duration_f": null,
+          "recharge_after_firing": null
+        },
+        "projectile_and_movement": {
+          "initial_speed_full_charge": "18.5–17.5",
+          "initial_speed_min_charge": "11.0–10.0",
+          "ground_spread": "horizontal 3.0°, vertical 2.5°",
+          "air_spread": "6.0°",
+          "walk_speed_not_firing": 0.96,
+          "walk_speed_during_charge": 0.72,
+          "walk_speed_during_fire": 0.86,
+          "foot_paint_every_shots": 5,
+          "foot_paint_period_f": "half 20F; full 15F"
+        },
+        "wiki_explicit_notes": [
+          "Page says jump height is not reduced much during charge."
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-short",
+      "name": "スパッタリー",
+      "family": "dualies",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%91%E3%83%83%E3%82%BF%E3%83%AA%E3%83%BC",
+      "sourceActor": "WeaponManeuverShort",
+      "sourceSha256": "61abee93821489b4fc72b93cc080e3463477f09961aee874c9a521a25812fbb7",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 36.0,
+          "source": 36.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 5.0,
+          "source": 5.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 0.663,
+          "source": 0.6629999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.84,
+          "source": 0.84,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 6.8,
+          "source": 6.8,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 11.66,
+          "source": 11.66,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 3.0,
+          "source": 3.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "dualies",
+        "name": "スパッタリー",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%91%E3%83%83%E3%82%BF%E3%83%AA%E3%83%BC",
+        "additionalWebRef": "turn53view0",
+        "wikiStatsVersion": "11.0.0",
+        "stats": {
+          "damage": "36.0–18.0; falloff 7F–15F (page gives no separate slide-after damage)",
+          "shotF": "5 normal / 4 after slide",
+          "startupF": null,
+          "postShotF": "4",
+          "inkUse": "0.663% / 150 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.84",
+          "spreadDeg": {
+            "ground": "6.8",
+            "slideAfter": "3.89",
+            "jump": "11.66"
+          },
+          "wikiInitialSpeed": "18.334 (表記: 初速; unit unspecified)",
+          "straightF": "3",
+          "paint": {
+            "pointsPerShot": "4.0p",
+            "footPeriod": "every 5 shots / 25F→20F",
+            "maxIntermediate": "1",
+            "intermediateSpacing": "2.2 shots",
+            "footRadius": "0.43",
+            "intermediateRadius": "0.31"
+          },
+          "slide": {
+            "count": null,
+            "inkUse": "5.0%",
+            "inkRecoveryLockF": "50",
+            "distance": "0.7",
+            "durationF": "8",
+            "nextSlideF": "12",
+            "attackAvailableF": "16",
+            "moveAvailableF": "40",
+            "speed": "5.25 lines/s",
+            "note": "No slide-count number printed in the shown individual slide table."
+          }
+        },
+        "verificationInitialSpeed": {
+          "normal": {
+            "A": "17.8",
+            "B": "3",
+            "A_times_B": "53.4",
+            "C": "17.635"
+          },
+          "slideAfter": {
+            "A": "17.8",
+            "B": "3",
+            "A_times_B": "53.4",
+            "C": "17.635"
+          }
+        }
+      }
+    },
+    {
+      "id": "dualies",
+      "name": "スプラマニューバー",
+      "family": "dualies",
+      "engine": "existing owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%83%9E%E3%83%8B%E3%83%A5%E3%83%BC%E3%83%90%E3%83%BC",
+      "sourceActor": "WeaponManeuverNormal",
+      "sourceSha256": "55e37c4d8db92b63d48f281015a30a9aaccd1ff838edf88ae4103124c365eb07",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 30.0,
+          "source": 30.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 5.0,
+          "source": 5.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 0.72,
+          "source": 0.72,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.8,
+          "source": 0.7999999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 2.0,
+          "source": 2.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 7.5,
+          "source": 7.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 3.0,
+          "source": 3.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "dualies",
+        "name": "スプラマニューバー",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%83%9E%E3%83%8B%E3%83%A5%E3%83%BC%E3%83%90%E3%83%BC",
+        "additionalWebRef": "turn53view1",
+        "wikiStatsVersion": "11.0.0",
+        "wikiCaveat": "個別ページ says fastest slide shortens total distance by about 0.1 line; stats use non-fastest slide distance.",
+        "stats": {
+          "damage": "30.0–15.0; falloff 7F–15F (no separate slide-after damage)",
+          "shotF": "5 normal / 4 after slide",
+          "startupF": null,
+          "postShotF": "4",
+          "inkUse": "0.72% / 138 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.80",
+          "spreadDeg": {
+            "ground": "2.0",
+            "slideAfter": "0.0",
+            "jump": "7.5"
+          },
+          "wikiInitialSpeed": "23.7 (表記: 初速; unit unspecified)",
+          "straightF": "3",
+          "paint": {
+            "pointsPerShot": "3.0p",
+            "footPeriod": "every 7 shots / 35F→28F",
+            "maxIntermediate": "1",
+            "intermediateSpacing": "2.8 shots",
+            "footRadius": "0.44",
+            "intermediateRadius": "0.31"
+          },
+          "slide": {
+            "count": null,
+            "inkUse": "7.0%",
+            "inkRecoveryLockF": "70",
+            "distance": "1.0",
+            "durationF": "12",
+            "nextSlideF": "16",
+            "attackAvailableF": "20",
+            "moveAvailableF": "48",
+            "speed": "5.0 lines/s"
+          }
+        },
+        "verificationInitialSpeed": {
+          "normal": {
+            "A": "23.7",
+            "B": "3",
+            "A_times_B": "71.1",
+            "C": "23.425"
+          },
+          "slideAfter": {
+            "A": "23.7",
+            "B": "3",
+            "A_times_B": "71.1",
+            "C": "23.425"
+          }
+        }
+      }
+    },
+    {
+      "id": "s3-maneuver-gallon",
+      "name": "ケルビン525",
+      "family": "dualies",
+      "engine": "catalog owner",
+      "wikiVersion": "11.3.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B1%E3%83%AB%E3%83%93%E3%83%B3525",
+      "sourceActor": "WeaponManeuverGallon",
+      "sourceSha256": "a65b5fc265a615263ed826bce09213fa90697bb2cfe44af588625c1887a16c89",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 36.0,
+          "source": 36.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 9.0,
+          "source": 9.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 1.4,
+          "source": 1.4,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.6,
+          "source": 0.6,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 3.2,
+          "source": 3.2,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 3.0,
+          "source": 3.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "dualies",
+        "name": "ケルビン525",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B1%E3%83%AB%E3%83%93%E3%83%B3525",
+        "additionalWebRef": "turn53view2",
+        "wikiStatsVersion": "11.3.0",
+        "wikiCaveat": "Fastest slide shortens total slide distance by about 0.1 line; page uses non-fastest distance. SL-after minimum damage 26.3 is explicitly described as unusual rounding/parameter behavior.",
+        "stats": {
+          "damage": "normal 36.0–18.0; SL-after 52.5–26.3; both falloff 7F–40F",
+          "shotF": "9 normal (no separate post-slide shotF printed)",
+          "startupF": null,
+          "postShotF": "4",
+          "inkUse": "1.4% / 71 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.60",
+          "spreadDeg": {
+            "ground": "3.2",
+            "slideAfter": "2.7",
+            "jump": "8.0"
+          },
+          "wikiInitialSpeed": "28.5 normal / 32.0 SL-after (表記: 初速; unit unspecified)",
+          "straightF": "3 (normal); slide-after not printed on individual page",
+          "paint": {
+            "pointsPerShot": "5.2p",
+            "footPeriod": "every 5 shots / 45F",
+            "maxIntermediate": "2 (normal), 3 (SL-after)",
+            "intermediateSpacing": "1.4 shots",
+            "footRadius": "0.43",
+            "intermediateRadius": "0.23"
+          },
+          "slide": {
+            "count": null,
+            "inkUse": "8.0%",
+            "inkRecoveryLockF": "70",
+            "distance": "1.05",
+            "durationF": "16",
+            "nextSlideF": "20",
+            "attackAvailableF": "28",
+            "moveAvailableF": "60",
+            "speed": "3.938 lines/s"
+          }
+        },
+        "verificationInitialSpeed": {
+          "normal": {
+            "A": "28.5",
+            "B": "3",
+            "A_times_B": "85.5",
+            "C": "28.115"
+          },
+          "slideAfter": {
+            "A": "32.0",
+            "B": "3",
+            "A_times_B": "96.0",
+            "C": "31.97"
+          }
+        }
+      }
+    },
+    {
+      "id": "s3-maneuver-dual",
+      "name": "デュアルスイーパー",
+      "family": "dualies",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%87%E3%83%A5%E3%82%A2%E3%83%AB%E3%82%B9%E3%82%A4%E3%83%BC%E3%83%91%E3%83%BC",
+      "sourceActor": "WeaponManeuverDual",
+      "sourceSha256": "c2eb9cd1a15a556f533725fca989412d73f5942ffd31fe8448ca87c2d7693ae6",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 28.0,
+          "source": 28.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 6.0,
+          "source": 6.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 1.2,
+          "source": 1.2,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.72,
+          "source": 0.7199999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 4.0,
+          "source": 4.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 5.0,
+          "source": 5.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "dualies",
+        "name": "デュアルスイーパー",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%87%E3%83%A5%E3%82%A2%E3%83%AB%E3%82%B9%E3%82%A4%E3%83%BC%E3%83%91%E3%83%BC",
+        "additionalWebRef": "turn53view3",
+        "wikiStatsVersion": "11.0.0",
+        "wikiCaveat": "Page notes fastest slide shortens total travel by about 0.1 line; non-fastest is used. Slide-after move-available is explicitly noted.",
+        "stats": {
+          "damage": "28.0–14.0; falloff 9F–25F (no separate slide-after damage)",
+          "shotF": "6",
+          "startupF": null,
+          "postShotF": "4",
+          "inkUse": "1.2% / 83 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.72",
+          "spreadDeg": {
+            "ground": "4.0",
+            "slideAfter": "2.0",
+            "jump": "8.0"
+          },
+          "wikiInitialSpeed": "23.0 (表記: 初速; unit unspecified)",
+          "straightF": "5",
+          "paint": {
+            "pointsPerShot": "4.2p",
+            "footPeriod": "every 8 shots / 48F",
+            "maxIntermediate": "2",
+            "intermediateSpacing": "1.8 shots",
+            "footRadius": "0.39",
+            "intermediateRadius": "0.28"
+          },
+          "slide": {
+            "count": null,
+            "inkUse": "8.0%",
+            "inkRecoveryLockF": "60",
+            "distance": "0.9",
+            "durationF": "12",
+            "nextSlideF": "16",
+            "attackAvailableF": "24",
+            "moveAvailableF": "48",
+            "speed": "4.5 lines/s",
+            "note": "Page says movement is possible after slide."
+          }
+        },
+        "verificationInitialSpeed": {
+          "normal": {
+            "A": "23.0",
+            "B": "5",
+            "A_times_B": "115.0",
+            "C": "22.698"
+          },
+          "slideAfter": {
+            "A": "23.0",
+            "B": "5",
+            "A_times_B": "115.0",
+            "C": "22.698"
+          }
+        }
+      }
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "name": "クアッドホッパーブラック",
+      "family": "dualies",
+      "engine": "catalog owner",
+      "wikiVersion": "11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%82%A2%E3%83%83%E3%83%89%E3%83%9B%E3%83%83%E3%83%91%E3%83%BC%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF",
+      "sourceActor": "WeaponManeuverStepper",
+      "sourceSha256": "c2a33ed35e87ac3efdd88a3e19d53015f57425e536c01405706d5a030a18d536",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 28.0,
+          "source": 28.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 6.0,
+          "source": 6.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 0.8,
+          "source": 0.8,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.72,
+          "source": 0.7199999999999999,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 7.4,
+          "source": 7.4,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 12.8,
+          "source": 12.8,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 3.0,
+          "source": 3.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "dualies",
+        "name": "クアッドホッパーブラック",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AF%E3%82%A2%E3%83%83%E3%83%89%E3%83%9B%E3%83%83%E3%83%91%E3%83%BC%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF",
+        "wikiStatsVersion": "11.0.0",
+        "wikiCaveat": "Fastest slides reduce total traveled distance by about 0.6 lines; table uses non-fastest slide distance.",
+        "stats": {
+          "damage": "28.0–14.0; falloff 8F–16F (no separate slide-after damage)",
+          "shotF": "6 normal / 5 after slide",
+          "startupF": null,
+          "postShotF": "4",
+          "inkUse": "0.8% / 125 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.72",
+          "spreadDeg": {
+            "ground": "7.4",
+            "slideAfter": "2.7",
+            "jump": "12.8"
+          },
+          "wikiInitialSpeed": "26.37 (表記: 初速; unit unspecified)",
+          "straightF": "3",
+          "paint": {
+            "pointsPerShot": "3.3p",
+            "footPeriod": "every 7 shots / 42F→35F",
+            "maxIntermediate": "1",
+            "intermediateSpacing": "2.7 shots",
+            "footRadius": "0.43148",
+            "intermediateRadius": "0.3082"
+          },
+          "slide": {
+            "count": "4",
+            "inkUse": "3.0% per slide",
+            "inkRecoveryLockF": "70",
+            "distance": "0.9 per slide",
+            "durationF": "16",
+            "nextSlideF": "21",
+            "subSpecialAvailableF": "29",
+            "moveAvailableF": "66",
+            "speed": "3.375 lines/s",
+            "note": "Wiki explicitly states 4 consecutive slides and shooting during slide."
+          }
+        },
+        "verificationInitialSpeed": {
+          "normal": {
+            "A": "22.1",
+            "B": "4",
+            "A_times_B": "88.4",
+            "C": "22.05"
+          },
+          "slideAfter": {
+            "A": "22.1",
+            "B": "4",
+            "A_times_B": "88.4",
+            "C": "22.05"
+          }
+        }
+      }
+    },
+    {
+      "id": "s3-maneuver-long",
+      "name": "ガエンFF",
+      "family": "dualies",
+      "engine": "catalog owner",
+      "wikiVersion": "11.1.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AC%E3%82%A8%E3%83%B3FF",
+      "sourceActor": "WeaponManeuverLong",
+      "sourceSha256": "ca42a0ee6fcb761865496615fc487e17d8529a33369200972ccbc9f8b7855b5f",
+      "sourceValueChecks": [
+        {
+          "field": "damage maximum",
+          "wiki": 25.5,
+          "source": 25.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "per-round cadence F",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "main ink % of standard tank",
+          "wiki": 1.2,
+          "source": 1.2,
+          "status": "matches retained source"
+        },
+        {
+          "field": "firing speed DU/F",
+          "wiki": 0.7,
+          "source": 0.7000000000000001,
+          "status": "matches retained source"
+        },
+        {
+          "field": "ground spread deg",
+          "wiki": 2.5,
+          "source": 2.5,
+          "status": "matches retained source"
+        },
+        {
+          "field": "jump spread deg",
+          "wiki": 8.0,
+          "source": 8.0,
+          "status": "matches retained source"
+        },
+        {
+          "field": "straight F",
+          "wiki": 4.0,
+          "source": 4.0,
+          "status": "matches retained source"
+        }
+      ],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "family": "dualies",
+        "name": "ガエンFF",
+        "pageUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%AC%E3%82%A8%E3%83%B3FF",
+        "wikiStatsVersion": "11.1.0",
+        "stats": {
+          "damage": "standing 25.5–12.8; falloff 9F–17F; slide-after damage row is commented out / not stated",
+          "shotF": "8 standing / 4 after slide",
+          "startupF": null,
+          "postShotF": "4",
+          "inkUse": "1.2% / 83 shots",
+          "inkRecoveryLockF": "20",
+          "firingHumanSpeed": "0.70",
+          "spreadDeg": {
+            "ground": "2.5",
+            "slideAfter": "2.3",
+            "jump": "8.0"
+          },
+          "wikiInitialSpeed": "37.2 standing / 33.12 slide-after (表記: 初速; unit unspecified)",
+          "straightF": "4 standing / 3 slide-after",
+          "paint": {
+            "pointsPerShot": "4.6p standing",
+            "footPeriod": "every 4 shots / 32F→16F",
+            "maxIntermediate": "2 (standing), 1.5 (SL-after)",
+            "intermediateSpacing": "2.0 shots",
+            "footRadius": "0.39",
+            "intermediateRadius": "0.276"
+          },
+          "slide": {
+            "count": "1",
+            "inkUse": "10.0%",
+            "inkRecoveryLockF": "70",
+            "distance": "1.4",
+            "durationF": "16",
+            "nextSlideF": null,
+            "attackAvailableF": "24",
+            "moveAvailableF": "60",
+            "speed": "5.25 lines/s",
+            "note": "Page says one slide only; attack/move timing has unresolved component durations in its footnote."
+          }
+        },
+        "verificationInitialSpeed": null,
+        "verificationNote": "Gaen FF has no row in the verification initial-speed table."
+      }
+    },
+    {
+      "id": "s3-shelter-normal",
+      "name": "パラシェルター",
+      "family": "brella",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/パラシェルター",
+      "sourceActor": "WeaponShelterNormal",
+      "sourceSha256": "a5cfa45bd450b773fd39eccf51ac39cde2cd45367fa6b46eccc8d8c2a2b9b268",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "パラシェルター",
+        "family": "brella",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/パラシェルター",
+        "stats_version": "v11.0.0",
+        "shot": {
+          "range_lines": {
+            "確2": 2.0,
+            "乱2": 2.2,
+            "確3": 2.3,
+            "damage": 2.5,
+            "paint": 3.5
+          },
+          "damage": "81～10; per pellet 16.2～10.8",
+          "pellets": "1+6+4",
+          "rateF": 29,
+          "startup": {
+            "humanF": 10,
+            "squidF": 22
+          },
+          "page_postF": 20,
+          "inkCostPct": 5.0,
+          "ammo": 20,
+          "inkLockF": 60,
+          "movementWhileAttacking_DU_F": 0.65
+        },
+        "canopy": {
+          "hp": 500,
+          "hpRegenPerSecond": 150,
+          "contactDamage": 30,
+          "deployAfterShotF": 13,
+          "deployInkPctPerF": 0.28,
+          "deployToPurgeF": 107,
+          "brokenRespawnF": 330,
+          "purgeDamageTakenMultiplier": 0.5,
+          "purgeLifetimeF": 301,
+          "purgeDistance_lines": 7.92,
+          "purgeInkPct": 30,
+          "purgeInkLockF": 120
+        },
+        "mechanics": "Unbroken damaged canopy heals rapidly while squid-swimming; destroyed/purged canopy is absent until respawn timer."
+      }
+    },
+    {
+      "id": "s3-shelter-wide",
+      "name": "キャンピングシェルター",
+      "family": "brella",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.1.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/キャンピングシェルター",
+      "sourceActor": "WeaponShelterWide",
+      "sourceSha256": "ec1fa93b80e3736de425d2d8eeaa74991c8d6020a3da3eabf79ba3a1c3c5fc5d",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "キャンピングシェルター",
+        "family": "brella",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/キャンピングシェルター",
+        "stats_version": "v11.1.0",
+        "shot": {
+          "range_lines": {
+            "確1": 1.9,
+            "乱1": 2.4,
+            "確2": 2.7,
+            "damage": 3.1,
+            "paint": 4.0
+          },
+          "damage": "119～17; per pellet 17",
+          "pellets": "1+6+6",
+          "rateF": 51,
+          "startup": {
+            "humanF": 12,
+            "squidF": 27
+          },
+          "page_postF": 40,
+          "inkCostPct": 11.0,
+          "ammo": 9,
+          "inkLockF": 70,
+          "movementWhileAttacking_DU_F": 0.5
+        },
+        "canopy": {
+          "hp": 700,
+          "hpRegenPerSecond": 300,
+          "contactDamage": 30,
+          "deployAfterShotF": 46,
+          "deployInkPctPerF": 0.404,
+          "deployToPurgeF": 57,
+          "brokenRespawnF": 340,
+          "purgeDamageTakenMultiplier": 0.6,
+          "purgeLifetimeF": 361,
+          "purgeDistance_lines": 5.76,
+          "purgeInkPct": 23,
+          "purgeInkLockF": 120
+        },
+        "mechanics": "Individual page lists purge damage received as 0.6×; common category prose elsewhere says approximately 0.67×. Keep both source statements separate."
+      }
+    },
+    {
+      "id": "s3-shelter-compact",
+      "name": "スパイガジェット",
+      "family": "brella",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/スパイガジェット",
+      "sourceActor": "WeaponShelterCompact",
+      "sourceSha256": "e53c9b297839e131150d6436bc2844e055728fa1735bf4f15688487d39c713a2",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "スパイガジェット",
+        "family": "brella",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/スパイガジェット",
+        "stats_version": "v11.2.0",
+        "shot": {
+          "range_lines": {
+            "確3": 2.4,
+            "乱3": "2.4～2.5",
+            "確4": 2.5,
+            "damage": 2.6,
+            "paint": 3.3
+          },
+          "damage": "40～9; per pellet 12～9",
+          "pellets": "1+2+4",
+          "rateF": {
+            "single": 29,
+            "continuous": 26
+          },
+          "startup": {
+            "humanF": 10,
+            "squidF": 22
+          },
+          "page_postF": 20,
+          "inkCostPct": 3.7,
+          "ammo": 27,
+          "inkLockF": 40,
+          "movementWhileAttacking_DU_F": 0.72
+        },
+        "canopy": {
+          "hp": 200,
+          "hpRegenPerSecond": 30,
+          "contactDamage": 15,
+          "deployAfterShotF": 11,
+          "deployInkPctPerF": 0,
+          "brokenRespawnF": 222,
+          "purge": false,
+          "killOrAssistInstantFullRestore": true
+        },
+        "mechanics": "Canopy remains deployed while firing; kill or assist immediately restores a broken canopy to full durability. No purge."
+      }
+    },
+    {
+      "id": "s3-shelter-focus",
+      "name": "24式張替傘・甲",
+      "family": "brella",
+      "engine": "catalog owner",
+      "wikiVersion": "v11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/24式張替傘・甲",
+      "sourceActor": "WeaponShelterFocus",
+      "sourceSha256": "dec8f891b8fae33a9d10837ef592c616471a5de88d2e17cb87c8c4b1a70d5f78",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "24式張替傘・甲",
+        "family": "brella",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/24式張替傘・甲",
+        "stats_version": "v11.0.0",
+        "shot": {
+          "range_lines": {
+            "確2": 2.5,
+            "乱2": 2.8,
+            "確3": 2.6,
+            "damage": 3.0,
+            "paint": 3.5
+          },
+          "damage": "90～10; per pellet 15～10",
+          "pellets": "1+6+4",
+          "rateF": 34,
+          "startup": {
+            "humanF": 10,
+            "squidF": 22
+          },
+          "page_postF": 25,
+          "inkCostPct": 6.0,
+          "ammo": 16,
+          "inkLockF": 50,
+          "movementWhileAttacking_DU_F": 0.58
+        },
+        "canopy": {
+          "hp": 150,
+          "hpRegenPerSecond": 300,
+          "contactDamage": 20,
+          "deployAfterShotF": 11,
+          "deployInkPctPerF": 0.556,
+          "deployToPurgeF": 27,
+          "brokenRespawnF": 130,
+          "purgeDamageTakenMultiplier": 0.6,
+          "purgeLifetimeF": 171,
+          "purgeDistance_lines": 5.2,
+          "purgeInkPct": 15,
+          "purgeInkLockF": 55
+        },
+        "mechanics": "Low HP but rapid purge/respawn. Source page's v10.0.0 table lists weapon-specific incoming-damage multipliers against its canopy; purge multiplier is separately 0.6×."
+      }
+    },
+    {
+      "id": "s3-stringer-normal",
+      "name": "トライストリンガー",
+      "family": "stringer",
+      "engine": "catalog owner",
+      "wikiVersion": "Ver.11.3.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%88%E3%83%A9%E3%82%A4%E3%82%B9%E3%83%88%E3%83%AA%E3%83%B3%E3%82%AC%E3%83%BC",
+      "sourceActor": "WeaponStringerNormal",
+      "sourceSha256": "cb61af8d568193c5c3af677ca8a324aae2afe92a9a681c0483a15f6266e5317f",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "トライストリンガー",
+        "family": "stringer",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%88%E3%83%A9%E3%82%A4%E3%82%B9%E3%83%88%E3%83%AA%E3%83%B3%E3%82%AC%E3%83%BC",
+        "wiki_version": "Ver.11.3.0",
+        "charge_and_shot": {
+          "arrow_count_per_trigger": 3,
+          "stages": [
+            {
+              "label": "minimum_to_one_cycle",
+              "charge_f": "9→30",
+              "damage_direct_per_arrow": "30.0→35.0",
+              "direct_range_horizontal": 2.7,
+              "direct_range_vertical": 3.0,
+              "projectile_initial_speed": "21.0→21.0",
+              "ink_cost_pct": "5.0% (20 shots)→6.0% (16 shots)",
+              "recharge_unavailable_f": "10→13",
+              "paint_range_horizontal": 3.2,
+              "paint_range_vertical": 3.5
+            },
+            {
+              "label": "one_cycle_to_full",
+              "charge_f": "30→72",
+              "damage_direct_per_arrow": 35.0,
+              "damage_explosion": 30.0,
+              "direct_range_horizontal": "2.7→5.4",
+              "direct_range_vertical": "3.0→5.4",
+              "explosion_range_horizontal": "3.1→5.8",
+              "explosion_range_vertical": "3.4→5.8",
+              "projectile_initial_speed": "21.0→38.5",
+              "ink_cost_pct": "6.0% (16 shots)→8.5% (11 shots)",
+              "fire_after_shot_f": 10,
+              "recharge_unavailable_f": 13,
+              "explosion_delay_f": 46,
+              "explosion_radius": 0.41,
+              "paint_range_horizontal": "3.5→6.1",
+              "paint_range_vertical": "3.5→6.1"
+            }
+          ],
+          "fire_duration_seconds": "7.000→12.000 (min→one cycle); 12.267→15.583 (one cycle→full)",
+          "min_charge_f": 9,
+          "charge_keep_duration_f": null,
+          "recharge_after_firing": null,
+          "air_charge": null
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 0.96,
+          "walk_speed_not_charging": 0.96,
+          "walk_speed_at_full_charge": 0.68,
+          "ground_spread_or_arrow_convergence": "Each arrow spread: 8.0°→8.0°→0.0°? (Wiki marks final value uncertain)",
+          "air_spread": null,
+          "foot_paint_period_f": 21
+        },
+        "wiki_explicit_notes": [
+          "Wiki says three arrows are nocked and fired in one ink shot.",
+          "Wiki page says explosion delay is 46F."
+        ]
+      }
+    },
+    {
+      "id": "s3-stringer-short",
+      "name": "LACT-450",
+      "family": "stringer",
+      "engine": "catalog owner",
+      "wikiVersion": "ver.11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/LACT-450",
+      "sourceActor": "WeaponStringerShort",
+      "sourceSha256": "43be11b5a207160d2c06571bfea70041f1bcc8cc95abe028cae6b8134cf1c5d9",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "LACT-450",
+        "family": "stringer",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/LACT-450",
+        "wiki_version": "ver.11.0.0",
+        "charge_and_shot": {
+          "arrow_count_per_trigger": 3,
+          "stages": [
+            {
+              "label": "minimum_to_one_cycle",
+              "charge_f": "6→12",
+              "damage_direct_per_arrow": "30.0→45.0",
+              "direct_range_horizontal": 2.0,
+              "direct_range_vertical": 2.2,
+              "projectile_initial_speed": "14.5→14.5",
+              "ink_cost_pct": "3.50% (28 shots)→4.68% (21 shots)",
+              "recharge_unavailable_f": "6→13",
+              "paint_range_horizontal": 2.4,
+              "paint_range_vertical": 2.7
+            },
+            {
+              "label": "one_cycle_to_full",
+              "charge_f": "12→34",
+              "damage_direct_per_arrow": 45.0,
+              "direct_range_horizontal": "2.0→3.6",
+              "direct_range_vertical": "2.2→3.6",
+              "projectile_initial_speed": "14.5→25.5",
+              "ink_cost_pct": "4.68% (21 shots)→6.50% (15 shots)",
+              "recharge_unavailable_f": 15,
+              "paint_range_horizontal": "2.4→4.2",
+              "paint_range_vertical": "2.7→4.2",
+              "explosive_arrow": false
+            }
+          ],
+          "min_charge_f": 6,
+          "charge_keep_duration_f": 75,
+          "charge_keep_ink_squid_startup_f": 25,
+          "charge_keep_resume_charge_f": 1,
+          "fire_duration_seconds": "6.533→9.450 (min→one cycle); 12.250 (full)",
+          "recharge_after_firing": null,
+          "air_charge": "Wiki explicitly says charge speed does not slow in air."
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 1.04,
+          "walk_speed_not_charging": 0.96,
+          "walk_speed_at_full_charge": 0.84,
+          "arrow_spread": "10.5°→5.0°→0.5°",
+          "air_spread": null,
+          "foot_paint_period_f": "28→14→28→28, corresponding to 2→1→2→2 arrows"
+        },
+        "wiki_explicit_notes": [
+          "Wiki says LACT has charge-keep and that the explosion function is absent.",
+          "Arrow speed and spread are preserved as the page's stage arrows; no conversion applied."
+        ]
+      }
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "name": "フルイドV",
+      "family": "stringer",
+      "engine": "catalog owner",
+      "wikiVersion": "ver.11.0.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%95%E3%83%AB%E3%82%A4%E3%83%89V",
+      "sourceActor": "WeaponStringerExplosion",
+      "sourceSha256": "e24399f434d1124229a796e80e57ff5adde94b473d0df40139193237adfdbe89",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "フルイドV",
+        "family": "stringer",
+        "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%95%E3%83%AB%E3%82%A4%E3%83%89V",
+        "wiki_version": "ver.11.0.0",
+        "charge_and_shot": {
+          "arrow_count_per_trigger": 5,
+          "stages": [
+            {
+              "label": "minimum_to_one_cycle",
+              "charge_f": "12→40",
+              "damage_direct_per_arrow": 24.0,
+              "direct_range_horizontal": "2.0→3.1",
+              "direct_range_vertical": "2.2→3.2",
+              "projectile_initial_speed": "14.5→22.9",
+              "ink_cost_pct": "7.0% (14 shots)→8.0% (12 shots)",
+              "recharge_unavailable_f": "10→13",
+              "paint_range_horizontal": 2.5,
+              "paint_range_vertical": 2.8
+            },
+            {
+              "label": "one_cycle_to_full",
+              "charge_f": "40→80",
+              "damage_direct_per_arrow": "24.0→35.0",
+              "damage_explosion": 30.0,
+              "direct_range_horizontal": "3.1→4.9",
+              "direct_range_vertical": "3.2→4.9",
+              "explosion_range_horizontal": "3.5→5.3",
+              "explosion_range_vertical": "3.6→5.3",
+              "projectile_initial_speed": "22.9→35.0",
+              "ink_cost_pct": "8.0% (12 shots)→9.0% (11 shots)",
+              "recharge_unavailable_f": 15,
+              "explosion_delay_f": 46,
+              "explosion_radius": 0.41,
+              "paint_range_horizontal": "4.0→5.7",
+              "paint_range_vertical": "4.0→5.8"
+            }
+          ],
+          "fire_duration_seconds": "5.600→11.000 (min→one cycle); 11.000→17.417 (one cycle→full)",
+          "min_charge_f": 12,
+          "charge_keep_duration_f": null,
+          "recharge_after_firing": null,
+          "air_charge": null
+        },
+        "movement_spread_paint": {
+          "walk_speed_not_firing": 0.88,
+          "walk_speed_not_charging": 0.88,
+          "walk_speed_at_full_charge": 0.4,
+          "arrow_convergence": "All five arrows fire at once; converge at charge 36F (85.7%), then spread afterward.",
+          "ground_spread_or_arrow_convergence": "per-arrow spread: 12.0°→-4.0°→-12.0°; crossing directions after charge 37F",
+          "air_spread": null,
+          "foot_paint_period_f": 24
+        },
+        "wiki_explicit_notes": [
+          "Wiki explicitly says five shots are fired simultaneously.",
+          "Wiki page reports arrow convergence at 36F (85.7% charge), followed by spread.",
+          "Wiki page reports explosion delay of 46F."
+        ]
+      }
+    },
+    {
+      "id": "s3-saber-normal",
+      "name": "ジムワイパー",
+      "family": "splatana",
+      "engine": "catalog owner",
+      "wikiVersion": "v7.1.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/ジムワイパー",
+      "sourceActor": "WeaponSaberNormal",
+      "sourceSha256": "11d42c2c7616fc2d4318a42d4bcf9ea651fdddc93cb5f9ac75112ea99295c100",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "ジムワイパー",
+        "family": "splatana",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/ジムワイパー",
+        "stats_version": "v7.1.0",
+        "modes": [
+          {
+            "name": "ヨコ斬り",
+            "range_lines": {
+              "inkShot": 3.8,
+              "direct": 0.7,
+              "paint": 4.0
+            },
+            "damage": {
+              "inkShot": 35,
+              "directPlusShot": "55 (20+35)"
+            },
+            "rateF": 26,
+            "startup": {
+              "humanF": 1,
+              "squidF": 6
+            },
+            "inkCostPct": 5.2,
+            "ammo": 19,
+            "inkLockF": 40,
+            "movementWhileAttacking_DU_F": 0.6,
+            "rechargeF": 26
+          },
+          {
+            "name": "タメ斬り",
+            "range_lines": {
+              "inkShot": 4.5,
+              "direct": 0.9,
+              "paint": 4.8
+            },
+            "damage": {
+              "inkShot": 70,
+              "directPlusShot": "210 (140+70)"
+            },
+            "chargeF": 20,
+            "rechargeF": {
+              "normal": 22,
+              "step": 32
+            },
+            "step": {
+              "windupF": 18,
+              "durationF": 8,
+              "distance_lines": 0.5,
+              "totalRange_lines": 5.0,
+              "speed_linesPerSecond": 3.75
+            },
+            "inkCostPct": 11.7,
+            "chargeCostPct": 3.5,
+            "ammo": 8,
+            "inkLockF": 40,
+            "movementWhileAttacking_DU_F": 0.6
+          }
+        ],
+        "mechanics": "Blade contact and ranged ink wave are separate hits; charged swing can step forward. Main table is explicitly v7.1.0; timing table separately v10.0.1."
+      }
+    },
+    {
+      "id": "s3-saber-lite",
+      "name": "ドライブワイパー",
+      "family": "splatana",
+      "engine": "catalog owner",
+      "wikiVersion": "v9.2.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/ドライブワイパー",
+      "sourceActor": "WeaponSaberLite",
+      "sourceSha256": "f6f8238ce0175f50e20bfa8ef70e669179f9da8bda301ecec35f786e0b59d35c",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "ドライブワイパー",
+        "family": "splatana",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/ドライブワイパー",
+        "stats_version": "v9.2.0",
+        "modes": [
+          {
+            "name": "ヨコ斬り",
+            "range_lines": {
+              "inkShot": 3.0,
+              "direct": 0.5,
+              "paint": 3.2
+            },
+            "damage": {
+              "inkShot": 30,
+              "directPlusShot": "45 (15+30)"
+            },
+            "rateF": 16,
+            "startup": {
+              "humanF": 1,
+              "squidF": 6
+            },
+            "inkCostPct": 3.0,
+            "ammo": 33,
+            "inkLockF": 30,
+            "movementWhileAttacking_DU_F": 0.945,
+            "rechargeF": 16
+          },
+          {
+            "name": "タメ斬り",
+            "range_lines": {
+              "inkShot": 3.7,
+              "direct": 0.7,
+              "paint": 4.0
+            },
+            "damage": {
+              "inkShot": 60,
+              "directPlusShot": "180 (120+60)"
+            },
+            "chargeF": 14,
+            "rechargeF": {
+              "normal": 22,
+              "step": 35
+            },
+            "step": {
+              "windupF": 4,
+              "durationF": 3,
+              "distance_lines": 0.5,
+              "totalRange_lines": 4.2,
+              "speed_linesPerSecond": 10.0
+            },
+            "inkCostPct": 6.0,
+            "chargeCostPct": 6.0,
+            "ammo": 16,
+            "inkLockF": 30,
+            "movementWhileAttacking_DU_F": 0.945
+          }
+        ],
+        "mechanics": "Blade contact and ranged ink wave are separate; charged swing has a short step-forward hit with distinct travel and recovery. Main table explicitly v9.2.0."
+      }
+    },
+    {
+      "id": "s3-saber-heavy",
+      "name": "デンタルワイパーミント",
+      "family": "splatana",
+      "engine": "catalog owner",
+      "wikiVersion": "v9.3.0",
+      "wikiUrl": "https://wikiwiki.jp/splatoon3mix/ブキ/デンタルワイパーミント",
+      "sourceActor": "WeaponSaberHeavy",
+      "sourceSha256": "e16c518cdf5fa3180b8b959aa24a80728229de0241f836be854e5cef9431cf6e",
+      "sourceValueChecks": [],
+      "allPerformanceReflected": false,
+      "wiki": {
+        "name": "デンタルワイパーミント",
+        "family": "splatana",
+        "url": "https://wikiwiki.jp/splatoon3mix/ブキ/デンタルワイパーミント",
+        "stats_version": "v9.3.0",
+        "modes": [
+          {
+            "name": "ヨコ斬り",
+            "range_lines": {
+              "inkShot": 3.1,
+              "direct": 0.8,
+              "paint": 3.4
+            },
+            "damage": {
+              "inkShot": 40,
+              "directPlusShot": "70 (30+40)"
+            },
+            "rateF": 30,
+            "startup": {
+              "humanF": 1,
+              "squidF": 6
+            },
+            "inkCostPct": 6.5,
+            "ammo": 15,
+            "inkLockF": 50,
+            "movementWhileAttacking_DU_F": 0.55,
+            "rechargeF": 30
+          },
+          {
+            "name": "タメ斬り",
+            "range_lines": {
+              "inkShot": 3.3,
+              "direct": 1.1,
+              "paint": 3.6,
+              "withStepTotal": 4.7
+            },
+            "damage": {
+              "inkShot": 80,
+              "directPlusShot": "240 (80+160)"
+            },
+            "chargeF": 20,
+            "rechargeF": {
+              "normal": 32,
+              "step": 55
+            },
+            "step": {
+              "windupF": 10,
+              "durationF": 15,
+              "distance_lines": 1.4,
+              "speed_linesPerSecond": 5.6
+            },
+            "inkCostPct": 13,
+            "chargeCostPct": 3.5,
+            "ammo": 7,
+            "inkLockF": 50,
+            "movementWhileAttacking_DU_F": 0.55
+          }
+        ],
+        "mechanics": "Melee blade hit and ink wave are separate. Charged attack always sweeps left-to-right; step adds 1.4 lines to 3.3-line wave range. Main table explicitly v9.3.0."
+      }
+    }
+  ],
+  "sourceValueComparisonCount": 206,
+  "sourceDifferencesRequiringReview": [],
+  "matchesAfterWikiDisplayRounding": [
+    [
+      ".96ガロン",
+      "jump spread deg",
+      11.35,
+      11.3511
+    ]
+  ]
+}

@@ -263,6 +263,9 @@ for (const run of RUNS) {
           alive: a?.alive,
           pos: a?.pos?.toArray?.(),
           weapon: a?.weaponId,
+          pointerLock: document.pointerLockElement?.tagName || null,
+          inputLocked: G?.input?.locked,
+          travelRect: (() => { const r = document.querySelector('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]')?.getBoundingClientRect(); return r && {x:r.x,y:r.y,width:r.width,height:r.height}; })(),
           activeTravelButtons: document.querySelectorAll('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]').length,
         };
       });

@@ -33,7 +33,7 @@ test('dodge curve integrates exactly to configured distance under irregular part
   }
 });
 
-test('roller movement is active only for grounded kid rolling outside flick/recovery/sub/special', () => {
+test('roller movement is active only for admitted grounded kid rolling outside flick/sub/special', () => {
   const runner = { rolling: true, flick: -1, flickRecover: 0, aimingSub: false, rollT: 0,
     a: null };
   const actor = { weaponRunner: runner, weapon: { kind: 'roller', rollBaseSpeed: 6.48, rollSpeed: 7.92, rollDashTime: 1.5 },
@@ -44,13 +44,15 @@ test('roller movement is active only for grounded kid rolling outside flick/reco
   runner.rollT = actor.weapon.rollDashTime - MOVEMENT_EPSILON * .5;
   close(rollingMovementSpeed(runner), 7.92);
   for (const [obj, key, value] of [
-    [runner, 'flick', .1], [runner, 'flickRecover', .1], [runner, 'aimingSub', true],
+    [runner, 'flick', .1], [runner, 'aimingSub', true],
     [actor, 'grounded', false], [actor, 'form', 'squid'], [actor, 'specialActive', {}], [actor, 'superJumpState', {}],
   ]) {
     const old = obj[key]; obj[key] = value;
     assert.equal(rollingMovementActive(actor), false, key);
     obj[key] = old;
   }
+  runner.flickRecover = .1;
+  assert.equal(rollingMovementActive(actor), true, 'admitted roll supersedes fading visual flick recovery');
 });
 
 test('build-only adapter changes only its explicit actor/weapons anchors', () => {

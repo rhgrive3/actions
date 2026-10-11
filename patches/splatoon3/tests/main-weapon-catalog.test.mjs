@@ -146,3 +146,76 @@ test('S-BLAST airborne mode uses separate source speed, burst radius and ghost d
   assert.deepEqual(p.catalog.descriptor.b.BlastParam,r.parameters.BlastJumpParam);
   assert.equal(p.catalog.descriptor.b.BlasterBurstParam.SplashDropPaintRadius,3.7);
 });
+
+test('Wiki full-charge magazines include the initial round and Ballpoint uses timed mode cadence',async()=>{
+  const f=await setup();
+  for(const [actor,frames,count] of [['WeaponSpinnerQuick',27,22],['WeaponSpinnerHyper',150,66],
+    ['WeaponSpinnerSerein',76,31],['WeaponSpinnerHyperShort',120,61],['WeaponSpinnerDownpour',100,45]]){
+    f.G.projectiles.clear();const r=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor===actor);
+    const a=f.make(r.id);a.form='kid';a.intent.fire=true;f.tick(a,frames);
+    a.intent.fire=false;f.tick(a,300);
+    assert.equal(f.G.projectiles.list.filter(p=>p.wid===r.id).length,count,r.names.ja);
+  }
+});
+
+test('Ballpoint includes two transition shots at 30F/35F and reaches long mode at 40F',async()=>{
+  const f=await setup(),a=f.make('s3-spinner-downpour');a.form='kid';a.intent.fire=true;f.tick(a,100);
+  a.intent.fire=false;f.tick(a,45);
+  const shots=f.G.projectiles.list;
+  assert.equal(shots[9].damage,28);assert.equal(shots[10].damage,28);
+  assert.ok(Math.abs(shots[11].damage-29)<1e-8);assert.ok(Math.abs(shots[12].damage-30)<1e-8);
+  assert.ok(shots[11].catalog.descriptor.speed>shots[10].catalog.descriptor.speed);
+  assert.ok(shots[11].catalog.descriptor.speed<shots[12].catalog.descriptor.speed);
+});
+
+test('Blaster repeat cadence includes its windup rather than adding it again',async()=>{
+  const f=await setup(),r=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor==='WeaponBlasterLight');
+  const a=f.make(r.id);a.form='kid';a.intent.fire=true;
+  const births=[];const push=f.G.projectiles._push;f.G.projectiles._push=function(p){births.push(f.G.time);return push.call(this,p);};
+  f.tick(a,110);assert.ok(births.length>=3);
+  assert.ok(Math.abs((births[1]-births[0])*60-r.parameters.WeaponParam.RepeatFrame)<1e-7);
+});
+
+test('Hydra first-circle ink follows 33 prepaid rounds and its own main-saver curve',async()=>{
+  const f=await setup(),r=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor==='WeaponSpinnerHyper');
+  for(const geared of [false,true]){
+    const a=f.make(r.id);a.form='kid';
+    if(geared){a.s3.loadout=Array.from({length:3},()=>({main:'inkSaverMain',subs:Array(3).fill('inkSaverMain')}));a.s3RefreshGear();}
+    a.intent.fire=true;f.tick(a,120);assert.ok(Math.abs(a.ink-(geared?91.25:82.5))<1e-6);
+  }
+});
+
+test('Nautilus recharge and squid keep retain prepaid remaining gauge',async()=>{
+  const f=await setup(),r=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor==='WeaponSpinnerSerein');
+  const a=f.make(r.id);a.form='kid';a.intent.fire=true;f.tick(a,76);a.intent.fire=false;f.tick(a,20);
+  const before=a.ink;a.intent.fire=true;f.tick(a);
+  assert.ok(a.weaponRunner.catalogState.chargeF>40,'remaining gauge survives recharge');
+  assert.ok(before-a.ink<1,'only the newly added gauge is paid');
+  a.form='squid';a.intent.fire=false;a.weaponRunner.update(1/60,{fire:false,firePressed:false});
+  assert.ok(a.weaponRunner.catalogState.stored.frames>40);
+});
+
+test('nearest foot paint follows Jr. accepted-shot slots 3 and 7',async()=>{
+  const f=await setup(),a=f.make('s3-shooter-first');a.form='kid';
+  const splats=[];f.G.paint.splat=(at,radius)=>{splats.push({at:at.clone(),radius});return 0;};
+  f.G.physics.raycast=(at,down,d,h)=>{h.hit=true;h.point.copy(at).setY(0);return h;};
+  a.intent.fire=true;f.tick(a,31);
+  assert.equal(f.G.projectiles.list.length,7);assert.equal(splats.length,2);
+  assert.ok(splats.every(p=>Math.abs(p.radius-2.0769)<1e-9));
+  assert.ok(Math.abs(a.ink-(100-7*.43/1.1))<1e-6,'110-unit tank retains normalized gauge');
+});
+
+test('Jr. normalized tank refill lasts 198F submerged and sub cost shares its capacity',async()=>{
+  const f=await setup(),a=f.make('s3-shooter-first');a.form='squid';a.submerged=true;a.ink=0;a.lastFire=10;
+  assert.ok(Math.abs(a.s3.modifiers.inkSaverSub-1/1.1)<1e-9);
+  for(let i=0;i<197;i++)f.updateResources(a,1/60);
+  assert.ok(a.ink<100);f.updateResources(a,1/60);assert.ok(Math.abs(a.ink-100)<1e-6);
+});
+
+test('Undercover splat and assist repair the canopy, closed dry holding does not heal',async()=>{
+  const f=await setup(),r=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor==='WeaponShelterCompact');
+  const a=f.make(r.id);a.form='kid';a.intent.fire=true;f.tick(a,35);const c=a.weaponRunner.catalogState.canopy;c.hp=50;
+  a.intent.fire=false;f.tick(a,5);assert.equal(c.hp,50);
+  f.emit('actor:assist',{actor:a});assert.equal(c.hp,200);
+  c.hp=50;f.emit('splatted',{attacker:a,victim:{team:1,stats:{},s3:{},pos:a.pos.clone()}});assert.equal(c.hp,200);
+});
