@@ -249,6 +249,21 @@ for (const run of RUNS) {
     const travelButton = page.locator('.iwr-pausescr:not(.is-leaving) [data-id="z-bomb"]');
     await travelButton.waitFor({ state: 'visible', timeout: 30000 });
     if (await travelButton.count() !== 1) throw new Error('range has duplicate active travel buttons');
+    // Playwright's visible state includes opacity:0 entrance frames. The
+    // production menu correctly rejects presses on items not yet painted.
+    // Wait for the current screen and the native opacity admission threshold,
+    // then deliver the same real pointer click and require travel/resume.
+    await page.waitForFunction(() => {
+      const m=window.__G.menus,root=m._scr?.el;
+      const b=root?.querySelector('[data-id="z-bomb"]');
+      if(!b||m.current!==m._scr.name||root.inert)return false;
+      let opacity=1;
+      for(let e=b;e&&e!==root.parentNode;e=e.parentElement){
+        const o=+getComputedStyle(e).opacity;if(Number.isFinite(o))opacity*=o;
+        if(e===root)break;
+      }
+      return opacity>0.6;
+    },null,{timeout:30000});
     await page.evaluate(() => {
       window.__rangePointerTrace = [];
       for (const type of ['pointerdown','pointerup','click','pointerlockchange']) document.addEventListener(type, e => {
