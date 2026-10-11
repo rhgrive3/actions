@@ -1,4 +1,4 @@
-name: Wall-drop after piece-local performance (diagnostic only)
+name: Owned paint rectangle performance (diagnostic only)
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 35
     env:
       BASELINE_SHA: d1ad48d1c10b5ded6a4fe273fe953e49e8bd7b04
-      CANDIDATE_SHA: 7f5af40ece594a82b8997ae157ca88674772a92e
+      CANDIDATE_SHA: 95d395bf7a61f1caac9993df79727ce43f63469b
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,7 +38,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 7f5af40ece594a82b8997ae157ca88674772a92e
+          ref: 95d395bf7a61f1caac9993df79727ce43f63469b
           path: .paint-candidate
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -59,19 +59,19 @@ jobs:
           cp .paint-before-site/inkwave-build.json .paint-performance-evidence/baseline-manifest.json
           cp .paint-after-site/inkwave-build.json .paint-performance-evidence/candidate-manifest.json
           git rev-parse HEAD > .paint-performance-evidence/probe-sha.txt
-      - name: Measure wall feature cost with unchanged legacy wire protocol
+      - name: Measure exact owned rectangle coalescing with unchanged wire
         run: |
           node scripts/measure-paint-piece-workload.mjs \
             --baseline-sha "$BASELINE_SHA" --candidate-sha "$CANDIDATE_SHA" \
             --baseline-root .paint-baseline --candidate-root .paint-candidate \
             --baseline-site .paint-before-site --candidate-site .paint-after-site \
             --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" \
-            --profile "${{ matrix.profile }}" \
+            --profile "${{ matrix.profile }}" --require-equivalent-paint \
             --evidence-dir ".paint-performance-evidence/${{ matrix.profile }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: wall-piece-performance-${{ matrix.profile }}-7f5af40e
+          name: owned-run-performance-${{ matrix.profile }}-95d395bf
           path: .paint-performance-evidence/
           include-hidden-files: true
           if-no-files-found: warn
