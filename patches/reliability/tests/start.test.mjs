@@ -48,7 +48,7 @@ function boot(source, held = []) {
   };
   const maps = ['old', 'a', 'b', 'c'].map(id => ({ id, name: id }));
   class Level {
-    constructor(layout) { this.id = layout.id; this.bounds = {}; this.faces = [{}]; this.layoutHash = 'good'; }
+    constructor(layout) { this.id = layout.id; this.layout = layout; this.bounds = {}; this.faces = [{}]; this.layoutHash = 'good'; }
     buildGeometry() { return resource('geometry:' + this.id, { index: { count: 1 } }); }
     layoutLightmap() { this.lightSize = 64; }
   }
@@ -77,6 +77,10 @@ function boot(source, held = []) {
     console: { warn() {}, error(...args) { record('error', ...args); } }, Promise, G, Match, Level, PropKit,
     MAPS: maps, OFFLINE_MAPS: maps, MAP_LAYOUTS: Object.fromEntries(maps.map(m => [m.id, m])),
     mapOfflineOk: () => true, mapBossOk: () => true, mapNoBots: () => false, isRangeMap: () => false,
+    // This legacy-map VM fixture also executes the production Stage25 adapter.
+    // Exercise the non-Stage25 path, while refusing an unexpected Stage25 layout.
+    isStage25: () => false, getStageLayout: () => { throw new Error('unexpected Stage25 fixture'); },
+    normalizeStageRule: rule => rule, assertStageCompatibility: () => true, installStageLab() {}, StageRuntime: class {},
     DEV_STAGE: false, MATCH: { defaultDuration: 180 }, params: { has: () => false },
     mapTheme: (_map, time) => time, TEAM_PALETTES: [{}], COLORBLIND_PALETTE: {},
     effectiveQuality: () => ({ paintAtlas: 64 }), dressingFor: () => [{}],
