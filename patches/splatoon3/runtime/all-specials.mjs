@@ -61,6 +61,8 @@ const actorStates = new WeakMap();
 const runtimes = new WeakMap();
 const replaySeen = new WeakMap();
 const SEEN_LIMIT = 384;
+const SPECIAL_ROUND_FIELDS = Object.freeze(['s3AllSpecial','s3AllSpecialPaintRadius','s3AllSpecialActivation','s3AllSpecialSeed','s3DamageReduce',
+  's3TentaTarget','s3TentaAge','s3TentaDescending','s3TentaDirection']);
 
 function vecArray(v) {
   return v && [v.x, v.y, v.z].every(finite) ? [q2(v.x), q2(v.y), q2(v.z)] : null;
@@ -136,15 +138,19 @@ function groundAt(rt, point, out = rt.v2) {
   else if (out.y < .08) out.y = .08;
   return out;
 }
-function projectileDescriptor(id) {
+function projectileDescriptor(id, ap=0) {
   const spec = descriptions[id];
   if (!spec) return null;
-  const bands = spec.splashBands.map(([r,d]) => [r,d]);
+  const power=Number.isFinite(ap)?clamp(ap,0,57):0;
+  const scale=id==='inkjet'?gearCurve(power,1,1.15,1.3):1;
+  const paint=id==='inkjet'?gearCurve(power,3.2,3.6,4):spec.paintRadius??spec.radius;
+  const bands = spec.splashBands.map(([r,d]) => [r*scale,d]);
   return {
     id, wid: id, kind: id, name: SPECIALS[id].name,
-    type: 'blast', splashRadius: spec.radius, burstRadius: spec.radius,
-    impactRadius: Math.min(spec.paintRadius ?? spec.radius, MAX_STAMP_RADIUS),
-    paintRadius: Math.min(spec.paintRadius ?? spec.radius, MAX_STAMP_RADIUS), splashDamageMax: spec.damageMax,
+    type: 'blast', splashRadius: spec.radius*scale, burstRadius: spec.radius*scale,
+    ...(id==='inkjet'?{specialPowerAP:power}:{}),
+    impactRadius: Math.min(paint, MAX_STAMP_RADIUS),
+    paintRadius: Math.min(paint, MAX_STAMP_RADIUS), splashDamageMax: spec.damageMax,
     splashDamageMin: spec.damageMin, damageMax: spec.damageMax, damageMin: spec.damageMin,
     directDamage: spec.directDamage, splashBands: bands, damageBands: bands,
     status: SPECIALS[id].status,
@@ -153,13 +159,13 @@ function projectileDescriptor(id) {
 function launch(rt, actor, id, origin, direction, opts = {}) {
   const system = rt.api.G.projectiles;
   if (!system?._new || !system?._push || actor.remote) return null;
-  const descriptor = projectileDescriptor(id), p = system._new();
+  const ap=actorStates.get(actor)?.specialPowerAP||0, descriptor = projectileDescriptor(id,ap), p = system._new();
   const dir = direction.clone();
   if (dir.lengthSq() < 1e-9) dir.copy(actor.aimDir);
   dir.normalize();
   const speed = opts.speed || 17;
   Object.assign(p, {
-    type: opts.type || 'blast', owner: actor, team: actor.team, age: 0,
+    type: opts.type || 'blast', wid:id, owner: actor, team: actor.team, age: 0,
     life: opts.life || 1.8, straight: opts.straight ?? .16,
     radius: opts.radius ?? descriptor.paintRadius, damage: opts.damage ?? descriptor.directDamage,
     size: opts.size ?? .22, trail: 0, trailEvery: opts.trailEvery || 0,
@@ -172,7 +178,7 @@ function launch(rt, actor, id, origin, direction, opts = {}) {
   if (opts.arc) p.vel.y += opts.arc;
   p.s3SpecialWeapon = opts.directOnly ? null : descriptor;
   p.s3Weapon = opts.weapon || p.s3SpecialWeapon || { id, kind: 'special', special: id };
-  p.s3AllSpecial = id;
+  p.s3AllSpecial = id;p.s3SpecialPowerAP=ap;
   p.s3AllSpecialPaintRadius = opts.paintRadius ?? descriptions[id].paintRadius ?? 0;
   p.s3AllSpecialActivation = actorStates.get(actor)?.serial || 0;
   p.s3AllSpecialSeed = normalizedSeed(opts.seed || 0);
@@ -335,7 +341,7 @@ function emitObject(rt, object, action) {
   return emitAction(rt, object.owner, object.id, object.activation, action,
     object.pos, target, object.seed, { object: object.serial || 0, index: object.index || 0,
       hp: object.hp || 0, radius: q2(object.maxRadius || 0), duration: q3(object.dur || 0), kind: object.kind,
-      width: object.width || 0, height: object.height || 0, waveFrame: object.maxWaveFrame || 0,
+      specialPowerAP: object.specialPowerAP || 0, width: object.width || 0, height: object.height || 0, waveFrame: object.maxWaveFrame || 0,
       startDelay: object.startDelay || 0, expand: object.expand || 0,
       pulse: object.pulse || 0, tick: object.eventSerial });
 }
@@ -463,7 +469,7 @@ function fireWailTick(rt, actor, state) {
 }
 function deployObject(rt, actor, id, kind, pos, state, extra={}) {
   const spec=SPECIALS[id], object={
-    kind,id,owner:actor,team:actor.team,activation:state.serial,serial:(state.objectSerial=((state.objectSerial||0)+1)),
+    kind,id,owner:actor,team:actor.team,specialPowerAP:state.specialPowerAP||0,activation:state.serial,serial:(state.objectSerial=((state.objectSerial||0)+1)),
     pos:pos.clone(),age:0,dur:extra.dur??spec.duration,maxRadius:extra.maxRadius??spec.radius,
     damage:extra.damage??spec.near,seed:normalizedSeed(extra.seed??nextSeed(state)),dead:false,
     hp:extra.hp||0,maxHp:extra.hp||0,phase:extra.phase||'armed',index:extra.index||0,
@@ -522,7 +528,7 @@ function launchMissiles(rt, actor, state) {
 }
 function launchInkjet(rt,actor,state) {
   const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
-  launch(rt,actor,'inkjet',origin,dir,{speed:21,grav:13,drag:.06,life:1.55,arc:.3,seed:nextSeed(state),size:.24,paintRadius:3.2});
+  launch(rt,actor,'inkjet',origin,dir,{speed:21,grav:13,drag:.06,life:1.55,arc:.3,seed:nextSeed(state),size:.24,paintRadius:gearCurve(state.specialPowerAP,3.2,3.6,4)});
   emitAction(rt,actor,'inkjet',state.serial,'shot',origin,rt.v2.copy(origin).addScaledVector(dir,20),nextSeed(state));
 }
 function throwBooyah(rt,actor,state,charge) {
@@ -585,13 +591,13 @@ function deployScreen(rt,actor,state) {
   const aim=aimPoint(rt,actor,28,rt.v0).clone(),pos=actor.pos.clone().addScaledVector(rt.v1.copy(aim).sub(actor.pos).setY(0).normalize(),2.5);
   pos.y=Math.max(.08,actor.pos.y);
   const direction=rt.v2.copy(aim).sub(pos).setY(0).normalize();
-  const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:3.18,seed:nextSeed(state),scale:[15/8,2,1]});
+  const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:gearCurve(state.specialPowerAP,.04,.053,.06)*FPS,seed:nextSeed(state),scale:[15/8,2,1]});
   object.target=pos.clone().add(object.normal);
   emitAction(rt,actor,'splattercolorScreen',state.serial,'screen',pos,object.target,object.seed,{object:object.serial});
   endSpecial(rt,actor,'deployed');
 }
 function deployWave(rt,actor,state) {
-  const pos=groundAt(rt,aimPoint(rt,actor,16,rt.v0),rt.v1).clone(),ap=actor.s3?.abilityPoints?.specialPower||0;
+  const pos=groundAt(rt,aimPoint(rt,actor,16,rt.v0),rt.v1).clone(),ap=state.specialPowerAP;
   const maxRadius=gearCurve(ap,20,24,27),maxFrame=gearCurve(ap,160,192,216)/FPS;
   const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{dur:6.5+maxFrame,maxRadius,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
   object.hp=480;object.maxHp=480;object.pulse=0;object.maxWaveFrame=maxFrame;object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
@@ -807,7 +813,8 @@ function updateWorld(rt,dt) {
       }
     }else if(o.kind==='screen'){
       const runStart=1,runEnd=1+560/FPS;
-      if(o.age>=runStart&&o.age<=runEnd)o.pos.addScaledVector(o.direction,o.moveSpeed*dt);
+      const movingSeconds=Math.max(0,Math.min(o.age,runEnd)-Math.max(o.age-dt,runStart));
+      if(movingSeconds>0)o.pos.addScaledVector(o.direction,o.moveSpeed*movingSeconds);
       o.mesh?.position.copy(o.pos).setY(o.pos.y+o.height/2);
       if(o.mesh){o.mesh.material.opacity=.27+.06*Math.sin(o.age*7);o.mesh.rotation.y=Math.atan2(o.normal.x,o.normal.z);}
       for(const victim of rt.api.G.actors||[]){
@@ -884,7 +891,7 @@ function activeStep(rt,actor,dt) {
   }
   if(state.id==='booyahBomb'){
     moveActor(rt,actor,dt,state,{squid:true});
-    const ap=actor.s3?.abilityPoints?.specialPower||0;
+    const ap=state.specialPowerAP;
     state.charge=Math.min(1,state.charge+gearCurve(ap,.002,.006,.01));
     if(edges.fire||edges.booyah)state.charge=Math.min(1,state.charge+.077);
     state.cheerHeld ||= new WeakMap();
@@ -1034,7 +1041,7 @@ function activeStep(rt,actor,dt) {
 function makeState(rt,actor,id) {
   const definition=SPECIALS[id],serial=activationSerial(actor),ap=actor.s3?.abilityPoints?.specialPower||0;
   const duration=Array.isArray(definition.duration)?gearCurve(ap,...definition.duration):definition.duration;
-  const state={ id,serial,t:0,duration,seed:(Math.random()*0xffffffff)>>>0,
+  const state={ id,serial,specialPowerAP:ap,t:0,duration,seed:(Math.random()*0xffffffff)>>>0,
     held:{fire:!!actor._prevIntent?.fire,sub:!!actor._prevIntent?.sub,jump:!!actor._prevIntent?.jump,squid:!!actor._prevIntent?.squid,booyah:!!actor._prevIntent?.booyah},
     phase:'active',origin:actor.pos.clone(),shots:0,beams:0,swings:0,strikes:0,zips:0,nextSwing:.05,nextBeam:.1,
     charge:0,travel:0,objectSerial:0,armor:false,hitIds:new Set(),nextBody:.2,
@@ -1124,8 +1131,25 @@ function installRuntime(api) {
     return damage.call(this,amount,attacker,source);
   };
   const P=Projectiles.prototype,update=P.update,clear=P.clear,baseCandidate=P.kitDefenseCandidate,blast=P._blastBurst;
+  const fresh=P._new;
+  P._new=function(...args){
+    const p=fresh.apply(this,args);
+    for(const key of SPECIAL_ROUND_FIELDS)delete p[key];
+    return p;
+  };
   P.update=function(dt){
-    rt.system=this;updateWorld(rt,dt);
+    rt.system=this;
+    // World effects use source frames too: e.g. NiceBall's 3.3 damage is per
+    // 60 Hz frame, never per rendered update. Native projectile motion keeps
+    // its own integrator; only catalogue devices consume this accumulator.
+    if(Number.isFinite(dt)&&dt>0&&(this._s3AllSpecialObjects?.length||0)>0){
+      this._s3AllSpecialWorldClock=(this._s3AllSpecialWorldClock||0)+dt;
+      while(this._s3AllSpecialWorldClock+1e-10>=1/FPS){
+        this._s3AllSpecialWorldClock=Math.max(0,this._s3AllSpecialWorldClock-1/FPS);
+        updateWorld(rt,1/FPS);
+        if(!this._s3AllSpecialObjects.length){this._s3AllSpecialWorldClock=0;break;}
+      }
+    }else if(!(this._s3AllSpecialObjects?.length||0))this._s3AllSpecialWorldClock=0;
     for(const p of this.list||[]){
       if(p?.s3TentaTarget&&p.s3AllSpecial==='tentaMissiles'){
         p.s3TentaAge=(p.s3TentaAge||0)+dt;
@@ -1159,13 +1183,13 @@ function installRuntime(api) {
   P.clear=function(...args){
     rt.system=this;
     for(const object of [...(this._s3AllSpecialObjects||[])])removeWorld(rt,object,'expire');
-    this._s3AllSpecialObjects=[];return clear?.apply(this,args);
+    this._s3AllSpecialObjects=[];this._s3AllSpecialWorldClock=0;return clear?.apply(this,args);
   };
   for(const [id,definition]of Object.entries(SPECIALS)){
     const current=api.SPECIALS[id]||{id,name:definition.name};
     Object.assign(current,{id,name:definition.name,duration:Array.isArray(definition.duration)?definition.duration[1]:definition.duration,
       radius:definition.radius,mechanicsInstalled:true,reference:`Leanny/splat3 11.3.0 ${definition.source}`,status:definition.status,
-      projectileDescriptor:p=>projectileDescriptor(id)});
+      projectileDescriptor:p=>projectileDescriptor(id,p?.s3SpecialPowerAP)});
     api.SPECIALS[id]=current;
   }
   api.allSpecialObjectCandidate=(p,startPoint,endPoint)=>candidate(rt,p,startPoint||p?.prev,endPoint||p?.pos);
@@ -1212,11 +1236,11 @@ function replayObjectEvent(rt,actor,event) {
   if(['deploy','device','screen','balloon','marker'].includes(event.action)&&!object){
     const kind=typeof event.kind==='string'?event.kind:(event.id==='splattercolorScreen'?'screen':event.id==='waveBreaker'?'wave':event.id==='superChump'?'decoy':event.id==='tripleInkstrike'?'marker':'');
     if(!kind)return false;
-    const state={serial:event.activation,objectSerial:serial-1,seed:event.seed};
+    const state={serial:event.activation,objectSerial:serial-1,seed:event.seed,specialPowerAP:finite(event.specialPowerAP)?clamp(event.specialPowerAP,0,57):0};
     const extra={dur:finite(event.duration)?event.duration:1,maxRadius:finite(event.radius)?event.radius:(SPECIALS[event.id]?.radius||1),damage:0,hp:finite(event.hp)?event.hp:0,seed:event.seed,index:event.index||0,target,width:finite(event.width)&&event.width>0?event.width:15,height:finite(event.height)&&event.height>0?event.height:9};
     if(kind==='screen'){
       const direction=target?target.clone().sub(point).setY(0).normalize():new rt.api.THREE.Vector3(Math.sin(actor.aimYaw||0),0,Math.cos(actor.aimYaw||0));
-      extra.direction=direction;extra.moveSpeed=3.18;extra.yaw=Math.atan2(direction.x,direction.z);
+      extra.direction=direction;extra.moveSpeed=gearCurve(state.specialPowerAP,.04,.053,.06)*FPS;extra.yaw=Math.atan2(direction.x,direction.z);
     }
     if(kind==='booyahBlast'){extra.startDelay=finite(event.startDelay)?event.startDelay:40/FPS;extra.expand=finite(event.expand)?event.expand:40/FPS;extra.damage=3.3;}
     object=deployObject(rt,actor,event.id,kind,point,state,extra);

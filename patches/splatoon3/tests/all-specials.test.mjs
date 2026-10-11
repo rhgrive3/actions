@@ -254,3 +254,76 @@ test('Reefslider snapshots special-power paint and damage-distance curves withou
   f.G.projectiles.applyHit=old;
  }
 });
+
+test('Screen source movement follows activation AP and remote device replay preserves it',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57]){
+  const a=f.make();a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'splattercolorScreen');f.G.actors=[a];
+  const events=eventFeed(f,'all:special');a._startSpecial();a.s3.loadout=emptyLoadout();a.s3RefreshGear();a.intent.fire=true;a._updateSpecial(1/60);
+  const o=f.G.projectiles._s3AllSpecialObjects.find(x=>x.owner===a&&x.kind==='screen');assert.ok(o);assert.equal(o.moveSpeed,gearCurve(ap,.04,.053,.06)*60);assert.equal(o.specialPowerAP,ap);
+  const event=events.find(e=>e.action==='deploy'&&e.kind==='screen');assert.ok(event);assert.equal(event.specialPowerAP,ap);
+  const remote=f.make();remote.remote=true;f.replayAllSpecials(f,{...event,actor:remote});const ghost=f.G.projectiles._s3AllSpecialObjects.find(x=>x.owner===remote&&x.kind==='screen');assert.ok(ghost);assert.equal(ghost.moveSpeed,o.moveSpeed);
+ }
+});
+
+test('Screen travel integrates startup and closing boundaries identically at 30/60/120 Hz',async()=>{
+ const f=await setup();const distances=[];
+ for(const hz of [30,60,120]){
+  f.G.projectiles.clear();const a=f.make();equip(a,'splattercolorScreen');f.G.actors=[a];a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);
+  const o=f.G.projectiles._s3AllSpecialObjects.find(x=>x.kind==='screen'),start=o.pos.clone();
+  for(let i=0;i<11*hz;i++){f.G.time+=1/hz;f.G.projectiles.update(1/hz);}
+  distances.push(o.pos.distanceTo(start));assert.ok(Math.abs(distances.at(-1)-2.4*560/60)<1e-8,`${hz} Hz travel`);
+ }
+ assert.ok(Math.max(...distances)-Math.min(...distances)<1e-8);
+});
+
+test('catalogue world damage uses the same 60 Hz samples at 30/60/120 rendering rates',async()=>{
+ const f=await setup(),totals=[];
+ for(const hz of [30,60,120]){
+  f.G.projectiles.clear();const a=f.make(),v=f.make();equip(a,'booyahBomb');v.team=1;v.hp=1000;v.invuln=0;v.pos.set(0,0,.2);f.G.actors=[a,v];f.G.netm=null;
+  a._startSpecial();a.intent.sub=true;a._updateSpecial(1/60);const p=f.G.projectiles.list.at(-1);f.G.projectiles._blastBurst(p,new f.THREE.Vector3(0,.08,0),null);f.G.projectiles.list.length=0;
+  let sum=0;const hit=f.G.projectiles.applyHit;f.G.projectiles.applyHit=(owner,victim,damage,id)=>{if(victim===v&&id==='booyahBomb')sum+=damage;return hit.call(f.G.projectiles,owner,victim,damage,id);};
+  for(let i=0;i<2*hz;i++){f.G.time+=1/hz;f.G.projectiles.update(1/hz);}
+  f.G.projectiles.applyHit=hit;assert.ok(Math.abs((1000-v.hp)-sum)<1e-7,'actual victim HP');totals.push(sum);
+ }
+ assert.ok(totals[0]>0);assert.ok(Math.max(...totals)-Math.min(...totals)<1e-8,JSON.stringify(totals));
+});
+
+test('recycling a special round cannot give a later main weapon special paint, blast or damage aging',async()=>{
+ const f=await setup(),a=f.make();equip(a,'booyahBomb');f.G.actors=[a];a._startSpecial();a.intent.sub=true;a._updateSpecial(1/60);
+ const p=f.G.projectiles.list.at(-1);assert.equal(p.s3AllSpecial,'booyahBomb');p.s3DamageReduce={max:32,min:16,start:0,end:1};p.s3TentaTarget=new f.THREE.Vector3(100,100,100);
+ f.G.projectiles.clear();const recycled=f.G.projectiles._new();assert.equal(recycled,p);
+ for(const key of ['s3AllSpecial','s3AllSpecialPaintRadius','s3AllSpecialActivation','s3AllSpecialSeed','s3DamageReduce','s3TentaTarget'])assert.equal(recycled[key],undefined,key);
+});
+
+test('Inkjet power snapshot survives the actual projectile packet and ghost without increasing direct damage',async()=>{
+ const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ for(const ap of [0,10,57]){
+  f.G.projectiles.clear();const a=f.make();a.nid=7;a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'inkjet');f.G.actors=[a];a._resolve=()=>{};
+  a._startSpecial();a.s3.loadout=emptyLoadout();a.s3RefreshGear();a.intent.fire=true;a._updateSpecial(1/60);
+  const p=f.G.projectiles.list.find(x=>x.s3AllSpecial==='inkjet'),d=p.s3SpecialWeapon;assert.equal(d.specialPowerAP,ap);assert.equal(d.splashRadius,5*gearCurve(ap,1,1.15,1.3));assert.equal(d.directDamage,120);assert.ok(d.paintRadius<=3.74);assert.equal(p.s3AllSpecialPaintRadius,gearCurve(ap,3.2,3.6,4));
+  const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1)));
+  assert.equal(packet.find(x=>x&&typeof x==='object'&&'s3SpecialPowerAP' in x).s3SpecialPowerAP,ap);
+  assert.equal(packet[4],'inkjet');const remote=f.make();remote.remote=true;remote.nid=7;const before=f.G.projectiles.list.length;f.G.projectiles.ghostProjectile(remote,packet);assert.equal(f.G.projectiles.list.length,before+1);const ghost=f.G.projectiles.list.at(-1);
+  assert.equal(ghost.s3SpecialPowerAP,ap);assert.equal(ghost.s3SpecialWeapon.splashRadius,d.splashRadius);assert.deepEqual(ghost.s3SpecialWeapon.splashBands,d.splashBands);assert.equal(ghost.damage,0);
+  const hostile=structuredClone(packet);hostile.find(x=>x&&typeof x==='object'&&'s3SpecialPowerAP' in x).s3SpecialPowerAP=58;f.G.projectiles.ghostProjectile(remote,hostile);assert.equal(f.G.projectiles.list.length,before+1);
+ }
+});
+
+test('every catalogue-launched special projectile keeps a wire identity accepted by ghost reconstruction',async()=>{
+ const f=await setup();
+ for(const id of ['tentaMissiles','inkjet','booyahBomb','ultraStamp','crabTank']){
+  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a._resolve=()=>{};equip(a,id);f.G.actors=[a];a._startSpecial();a.intent.fire=id==='inkjet';a.intent.sub=id!=='inkjet'&&id!=='crabTank';
+  for(let i=0;i<40&&a.specialActive;i++){if(id==='crabTank'&&i===21)a.intent.sub=true;a._updateSpecial(1/60);}
+  const p=f.G.projectiles.list.find(x=>x.s3AllSpecial===id);assert.ok(p,id+' emitted');
+  const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1)));assert.equal(packet[4],id);
+  const remote=f.make();remote.remote=true;remote.nid=7;const before=f.G.projectiles.list.length;f.G.projectiles.ghostProjectile(remote,packet);assert.equal(f.G.projectiles.list.length,before+1,id+' accepted');const ghost=f.G.projectiles.list.at(-1);assert.equal(ghost.s3SpecialWeapon.id,id);assert.equal(ghost.damage,0);
+ }
+});
+
+test('world effect clock rejects invalid elapsed time and clear removes its remainder',async()=>{
+ const f=await setup(),a=f.make();equip(a,'splattercolorScreen');f.G.actors=[a];a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);
+ const sys=f.G.projectiles,o=sys._s3AllSpecialObjects[0];sys.update(1/120);const age=o.age,clock=sys._s3AllSpecialWorldClock;
+ for(const dt of [NaN,Infinity,-1,0]){sys.update(dt);assert.equal(o.age,age);assert.equal(sys._s3AllSpecialWorldClock,clock);}
+ sys.clear();assert.equal(sys._s3AllSpecialWorldClock,0);assert.equal(sys._s3AllSpecialObjects.length,0);
+});

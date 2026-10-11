@@ -62,3 +62,19 @@ No GPU or browser FPS speedup is claimed. The added weight map is 65 small immut
 - Existing conditional-gear network test modeled the superseded shooter-owned Splat Bomb hit path. Updated it to the actual composed victim-owner explosion and rejection of remote hit guesses; no production authority guard is relaxed.
 - Initial head 1251a5c passed its seven-claims job, including the compiled 195 weight/AP Actor checks in Chromium and WebKit. Later-head CI remains separately required. Added browser checks for all65 sub-ready movement and native Zipcaster drain plus compiled Tenacity gauge.
 - Read-only downloaded PR1223 commit `61c3a954791ae6571e3c317523566c3a809b20b6` pure engine/network modules were exercised against the actual composed Actor: current host restore grants 18 AP, spoofed sender does not, malformed next revision stays rejected and match change removes the bonus. Optional seam test: 4/4 pass with `INKWAVE_RANKED_REFERENCE`; these source files are not added to this PR.
+
+## Fourth review tranche
+
+- Splattercolor Screen also used the fixed middle movement speed (3.18) at every AP. Source WallParam.MoveSpeed `[.04,.053,.06]` is now sampled at activation and converted by 60. Device presentation events carry bounded AP, and remote replay reconstructs the same 2.4..3.6 speed. Its 60F startup/560F movement boundary is interval-integrated.
+- Catalogue world effects ran outside the already installed projectile wrappers. An actual composed Booyah explosion reduced a high-HP Actor by 66 / 128.7 / 257.4 at 30 / 60 / 120 Hz respectively. A catalogue-world-only 60 Hz accumulator makes the real HP loss 128.7 at every rate. This preserves the existing 60 Hz sample count; it does not newly prove the retail expansion-hit silhouette. Native projectile movement keeps its original integrator. Clear resets the accumulator.
+- Recycled special projectiles retained catalogue blast-paint identity, damage-aging and missile-target fields. Clear these fields when the native pool supplies a new projectile, so subsequent main shots cannot inherit a retired special's behavior.
+- Screen owner/remote AP, startup/end travel and catalogue-world damage pass source tests. Before the pool-field addition the broad composed special/catalogue/kit suites passed 286/286; the pool reuse regression passes separately.
+
+## Fifth review tranche
+
+- Inkjet ignored Special Power Up's explicit damage-distance curve `[1,1.15,1.3]` and paint curve `[3.2,3.6,4]`. Both now use activation AP; direct damage stays 120. Native stamp radii remain capped at 3.74; the existing supplemental disk receives the full radius. Exact union silhouette is still not established.
+- The native generic projectile footer already transmitted Special Power AP but the generic ghost path did not apply it before rebuilding a special descriptor. It now restores validated AP before reconstruction and resets the pooled AP field. Actual NetMatch JSON round trips at 0/10/57 AP retain the Inkjet blast bands; out-of-range AP is rejected.
+- Retained the catalogue projectile wire identity also repaired independently by the paint branch. This is a shared compatibility prerequisite, not a separate claimed paint-branch discovery. Combined integration must preserve its direct-only descriptor, no-special gauge flags and expanded pool cleanup.
+- Added original Inkjet blob and two explicit curve entries to the source gate: six files, 33 fields pass. The first source entry omits SpecUpType and uses the source default PaintRadius; no invented explicit enum is asserted.
+- Catalogue world clock ignores invalid/negative elapsed time, clears its remainder on reset and exits when the last world object expires. The production render loop bounds dt to 1/24 second; no arbitrary time-dropping clamp was added.
+- Source all-specials: 28/28 passed. Real-browser and latest-head CI results remain separately required.

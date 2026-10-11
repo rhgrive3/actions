@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "scope": "Splat Bomb, Ink Storm, Zipcaster and Reefslider authoritative gameplay mappings",
+  "scope": "Splat Bomb, Ink Storm, Zipcaster and Reefslider authoritative gameplay mappings plus Splattercolor Screen movement and Inkjet special-power blast curves",
   "game": "Splatoon 3",
   "referenceVersion": "11.3.0",
   "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
@@ -32,6 +32,20 @@
       "gitBlobSha1": "cbdace64fc9e8f07ae439bc5fb8f0c797e6e855e",
       "official": false,
       "confidence": "explicit pinned 11.3.0 datamined fields"
+    },
+    {
+      "id": "screen",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpChimney.game__GameParameterTable.json",
+      "gitBlobSha1": "76f0c48d22d2ebc780e11ab98493745129f44165",
+      "official": false,
+      "confidence": "explicit pinned 11.3.0 datamined field"
+    },
+    {
+      "id": "inkjet",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+      "gitBlobSha1": "7af9c818a43fd5a414a2a6a9f7d2cec39f86be4a",
+      "official": false,
+      "confidence": "high for explicit raw fields; omitted SpecUpType on entry 0 uses the source default PaintRadius"
     }
   ],
   "explicitFields": [
@@ -254,6 +268,38 @@
           "High": 9.012,
           "Low": 7.51,
           "Mid": 8.26
+        }
+      }
+    },
+    {
+      "sourceId": "screen",
+      "pointer": "/GameParameters/WallParam/MoveSpeed",
+      "value": {
+        "High": 0.06,
+        "Low": 0.04,
+        "Mid": 0.053
+      }
+    },
+    {
+      "sourceId": "inkjet",
+      "pointer": "/GameParameters/BlastParam/SubSpecialSpecUpList/0",
+      "value": {
+        "Value": {
+          "High": 4.0,
+          "Low": 3.2,
+          "Mid": 3.6
+        }
+      }
+    },
+    {
+      "sourceId": "inkjet",
+      "pointer": "/GameParameters/BlastParam/SubSpecialSpecUpList/1",
+      "value": {
+        "SpecUpType": "DistanceDamageDistanceRate",
+        "Value": {
+          "High": 1.3,
+          "Low": 1.0,
+          "Mid": 1.15
         }
       }
     }
