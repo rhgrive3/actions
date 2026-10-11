@@ -142,7 +142,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   return pieces.length ? { pieces, sa, sdu, sdv, margin: pixel * 1.5, seed, dT } : null;
 }
 
-function pointInsideAncillary(mask, x, y, seed) {
+function pointInsideAncillary(mask, x, y, seed, pieceIndex = -1) {
   let px = x, py = y;
   if (mask.sa > 0) {
     const along = px * mask.sdu + py * mask.sdv;
@@ -150,7 +150,8 @@ function pointInsideAncillary(mask, x, y, seed) {
     const perpX = px - along * mask.sdu, perpY = py - along * mask.sdv;
     px = perpX + mask.sdu * (along / scale); py = perpY + mask.sdv * (along / scale);
   }
-  for (let n = 0; n < mask.pieces.length; n++) {
+  const end = pieceIndex < 0 ? mask.pieces.length : pieceIndex + 1;
+  for (let n = pieceIndex < 0 ? 0 : pieceIndex; n < end; n++) {
     const p = mask.pieces[n], sx = p.type === 3 ? x : px, sy = p.type === 3 ? y : py;
     if (sx < p.minX - mask.margin || sx > p.maxX + mask.margin || sy < p.minY - mask.margin || sy > p.maxY + mask.margin) continue;
     if (p.type === 0 && sdRay(sx, sy, p.ax, p.ay, p.bx, p.by, p.ra, p.rb) < -mask.margin) return true;
@@ -174,7 +175,7 @@ function pointInsideAncillary(mask, x, y, seed) {
   return false;
 }
 
-function cellIsSolidlyVisible(mask, face, x, y) {
+function cellIsSolidlyVisible(mask, face, x, y, pieceIndex = -1) {
   const dx = face.cu * 0.32, dy = face.cv * 0.32;
   // A paint cell owns its area when its center or one of four interior samples
   // lies well inside the shader mask. This catches most sub-cell satellites
@@ -182,7 +183,7 @@ function cellIsSolidlyVisible(mask, face, x, y) {
   for (let i = 0; i < 5; i++) {
     const sx = x + (i === 1 || i === 3 ? -dx : i > 1 ? dx : 0);
     const sy = y + (i === 1 || i === 2 ? -dy : i > 2 ? dy : 0);
-    if (pointInsideAncillary(mask, sx, sy, mask.seed)) return true;
+    if (pointInsideAncillary(mask, sx, sy, mask.seed, pieceIndex)) return true;
   }
   return false;
 }
@@ -323,12 +324,15 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
           const index = face.grid + j * face.nu + i;
           if (x < -ext || x > ext) continue;
           if (visit[index] === stamp) continue;
-          visit[index] = stamp;
           const previousOrder = paint._paintOwnershipOrder[index] || 0;
-          if (previousOrder && order && !paintOrderComesAfter(paint, order, previousOrder)) continue;
+          if (previousOrder && order && !paintOrderComesAfter(paint, order, previousOrder)) { visit[index] = stamp; continue; }
           const previous = paint.grid[index];
-          if (previous === value && previousOrder === order) continue;
-          if (!cellIsSolidlyVisible(mask, face, x, y)) continue;
+          if (previous === value && previousOrder === order) { visit[index] = stamp; continue; }
+          // This cell was enumerated from this piece's conservative box.
+          // Test only that piece, marking it visited only after a hit. A miss
+          // must remain eligible for overlapping pieces later in this stamp.
+          if (!cellIsSolidlyVisible(mask, face, x, y, n2)) continue;
+          visit[index] = stamp;
           if (previous === value) {
             claimPaintCell(paint, index, value, order);
             continue;
