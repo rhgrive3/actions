@@ -11,7 +11,7 @@ import { shooterMovementActive, shooterShotReady } from './shooter-movement.mjs'
 import { configureSwimStealth, updateSwimStealth, swimSpeedMultiplier } from './swim-stealth.mjs';
 import { refreshFlowEffects } from './flow-effects.mjs';
 import { HEAD_ABILITIES, conditionalPoints, conditionalKey, installConditionalGear } from './conditional-gear.mjs';
-import { installSubResistance } from './sub-resistance.mjs';
+import { installSubResistance, DIRECT_SUB_RESISTANCE_CURVES } from './sub-resistance.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
   haunt: 'リベンジ', thermalInk: 'サーマルインク', respawnPunisher: '復活ペナルティアップ', abilityDoubler: 'フェスT：追加ギアパワー倍化',
@@ -171,6 +171,8 @@ export function installGear(api, tuning) {
     m.stealthJump = loadout[2].main === 'stealthJump';
     m.dropRoller = loadout[2].main === 'dropRoller';
     const ap = effectivePoints, extra = tuning.gearExtra;
+    m.subLineMarkerResistance = gearCurve(ap.subResistance || 0, ...DIRECT_SUB_RESISTANCE_CURVES.angleShooter);
+    m.subSprinklerResistance = gearCurve(ap.subResistance || 0, ...DIRECT_SUB_RESISTANCE_CURVES.sprinkler);
     m.specialPowerAP = points.specialPower || 0;
     const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
     const around = Math.floor(gearCurve(ap.quickRespawn || 0, ...extra.quickRespawnAroundFrames) + 1e-10);
