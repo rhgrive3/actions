@@ -116,6 +116,7 @@ const IDENTITY_FILES = [
   'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
   'paint-hotpath-adapter.mjs',
+  'collision-hotpath-adapter.mjs',
   'runtime-frame-scratch-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
 ];
