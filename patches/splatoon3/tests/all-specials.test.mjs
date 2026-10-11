@@ -5,13 +5,22 @@ import {fixture} from './source-fixture.mjs';
 const EXTRA=`export {replaySpecial as replayAllSpecials,ALL_SPECIALS,ALL_SPECIALS_STATUS} from './patches/splatoon3/runtime/all-specials.mjs';`;
 async function setup(){const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:EXTRA});f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return f;}
 function equip(actor,id){actor.weapon={...actor.weapon,special:id,specialCost:100};actor.special=100;actor.alive=true;actor.remote=false;actor.intent.fire=false;actor.intent.sub=false;actor.intent.jump=false;actor._prevIntent ||= {};Object.assign(actor._prevIntent,{fire:false,sub:false,jump:false,squid:false,booyah:false});}
+function deployedWall(f,owner,pos){owner.weapon={...owner.weapon,sub:'splashWall'};const wall=f.G.projectiles.throwBomb(owner);wall.phase='deployed';wall.pos.set(...pos);wall.prev.copy(wall.pos);wall.vel.set(0,0,0);wall.activeAt=Infinity;wall.deployedAt=f.G.time;wall.expireAt=Infinity;wall.yaw=0;return wall;}
 function tickWorld(f,frames){for(let i=0;i<frames;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}}
+function tickActorWorld(f,a,frames){for(let i=0;i<frames;i++){a._updateSpecial(1/60);f.G.time+=1/60;f.G.projectiles.update(1/60);}}
+function tickWorldAtHz(f,hz,sourceFrames){const dt=1/hz;for(let i=0;i<sourceFrames*hz/60;i++){f.G.time+=dt;f.G.projectiles.update(dt);}}
+function tickActorWorldAtHz(f,a,hz,sourceFrames){const dt=1/hz;for(let i=0;i<sourceFrames*hz/60;i++){a._updateSpecial(dt);f.G.time+=dt;f.G.projectiles.update(dt);}}
+function tickActorOnlyAtHz(a,hz,sourceFrames){const dt=1/hz;for(let i=0;i<sourceFrames*hz/60;i++)a._updateSpecial(dt);}
+function stepProjectileAtHz(f,p,hz,sourceFrames){const dt=1/hz;for(let i=0;i<sourceFrames*hz/60;i++)f.G.projectiles._step(p,dt);}
 function eventFeed(f,name){const rows=[];f.on(name,e=>rows.push(e));return rows;}
 
-test('missing special inventory is source versioned and Tenta launch uses native rounds and a finite bus record',async()=>{
+test('missing special inventory is source versioned and Tenta stages ten source-cadence rounds',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'tentaMissiles');victim.team=1;victim.pos.set(0,0,5);f.G.actors=[a,victim];
  const rows=eventFeed(f,'all:special'),before=f.G.projectiles.list.length;a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);
- assert.equal(a.stats.specials,1);assert.equal(a.specialActive,null);assert.equal(f.G.projectiles.list.length-before,10);
+ assert.equal(a.stats.specials,1);assert.ok(a.specialActive);assert.equal(f.G.projectiles.list.length-before,1);
+ tickActorWorld(f,a,36);const missiles=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');
+ assert.equal(missiles.length,10);assert.equal(a.specialActive,null);
+ assert.equal(JSON.stringify(missiles.slice(1).map(p=>Math.round((p.s3TentaLaunchedAt-missiles[0].s3TentaLaunchedAt)*60))),JSON.stringify([4,8,12,16,20,24,28,32,36]));
  assert.ok(rows.some(e=>e.action==='launch'&&e.count===10));
  for(const e of rows){assert.ok([e.pos,...(e.target?[e.target]:[])].flat().every(Number.isFinite));assert.ok(Number.isInteger(e.seed)&&e.seed>=0&&e.seed<=0xffffffff);}
  assert.deepEqual(Object.keys(f.ALL_SPECIALS).sort(),['booyahBomb','crabTank','inkjet','killerWail','krakenRoyale','reefslider','splattercolorScreen','superChump','tentaMissiles','tripleInkstrike','ultraStamp','waveBreaker','zipcaster'].sort());
@@ -21,9 +30,10 @@ test('missing special inventory is source versioned and Tenta launch uses native
 test('Tenta Missiles rise, dive onto the locked ground coordinate, and apply impact damage',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'tentaMissiles');victim.team=1;victim.pos.set(0,0,8);f.G.actors=[a,victim];
  a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);const missiles=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');
- assert.equal(missiles.length,10);assert.ok(missiles.every(p=>p.s3TentaTarget instanceof f.THREE.Vector3));
- const target=missiles[0].s3TentaTarget.clone();tickWorld(f,120);
- assert.ok(missiles[0].s3TentaDescending);assert.ok(missiles[0].pos.distanceTo(target)<3.5);
+ assert.equal(missiles.length,1);assert.ok(missiles.every(p=>p.s3TentaTarget instanceof f.THREE.Vector3));
+ tickActorWorld(f,a,36);const all=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');
+ assert.equal(all.length,10);const target=all[0].s3TentaTarget.clone();tickWorld(f,120);
+ assert.ok(all[0].s3TentaDescending);assert.ok(all[0].pos.distanceTo(target)<3.5);
  assert.ok(victim.hp<100,'the descended native missile round reaches its locked target and damages it');
 });
 
@@ -35,9 +45,24 @@ test('Wave Breaker keeps source pulse schedule and owner-owned device survives o
  assert.deepEqual(Array.from(device.pulseFrames),[90/60,240/60,390/60]);assert.equal(device.maxWaveFrame,160/60);
  const contact=f.make();contact.team=1;contact.hp=1000;contact.pos.copy(device.pos);victim.pos.copy(device.pos);victim.pos.z+=1.5;f.G.actors.push(contact);
  tickWorld(f,100);assert.ok(hits.some(h=>h[1]===victim&&h[3]==='waveBreaker'&&h[2]===45));assert.ok(hits.filter(h=>h[1]===contact&&h[3]==='waveBreaker'&&h[2]===30).length>=3);
- assert.ok(device.waves.length>=1);assert.ok(victim.s3.revealedUntil[a.team]>=f.G.time+7.8);assert.equal(paint,0,'Wave Breaker pulses do not paint ink');
+ assert.ok(f.G.projectiles._s3AllSpecialObjects.some(o=>o.kind==='waveFront'),'each emitted wave owns a lifetime independent of the device');
+ assert.ok(victim.s3.revealedUntil[a.team]>=f.G.time+7.8);assert.equal(paint,0,'Wave Breaker pulses do not paint ink');
  a.alive=false;tickWorld(f,200);assert.ok(f.G.projectiles._s3AllSpecialObjects.includes(device));
  tickWorld(f,310);assert.equal(f.G.projectiles._s3AllSpecialObjects.includes(device),false);
+});
+
+test('Wave Breaker device destruction cancels later emissions but preserves the emitted annulus',async()=>{
+ const f=await setup(),a=f.make(),enemy=f.make();equip(a,'waveBreaker');enemy.team=1;f.G.actors=[a,enemy];
+ a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);const device=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='wave');assert.ok(device);
+ tickWorld(f,92);const front=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='waveFront');assert.ok(front);
+ enemy.pos.copy(device.pos);enemy.pos.z+=5;
+ const from=device.pos.clone().add(new f.THREE.Vector3(0,0,-2)),to=device.pos.clone().add(new f.THREE.Vector3(0,0,2));
+ const shot={owner:enemy,team:1,damage:1000,prev:from,pos:to,size:.1,ghost:false};
+ const hit=f.G.projectiles.kitDefenseCandidate(shot,from,to);assert.equal(hit?.kind,'wave-breaker');assert.equal(hit.onHit(),true);
+ assert.equal(f.G.projectiles._s3AllSpecialObjects.includes(device),false);assert.ok(f.G.projectiles._s3AllSpecialObjects.includes(front));
+ const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
+ tickWorld(f,48);assert.ok(hits.some(h=>h[1]===enemy&&h[2]===45&&h[3]==='waveBreaker'),'the already emitted expanding wave survives its generator');
+ tickWorld(f,120);assert.equal(f.G.projectiles._s3AllSpecialObjects.filter(o=>o.kind==='waveFront').length,0,'destroying the device prevents future waves and the first front expires independently');
 });
 
 test('Wave Breaker marks nearby placement for 45 frames and holds until a manual deploy input',async()=>{
@@ -46,7 +71,7 @@ test('Wave Breaker marks nearby placement for 45 frames and holds until a manual
  assert.equal((f.G.projectiles._s3AllSpecialObjects||[]).filter(o=>o.kind==='wave').length,0,'holding the placement does not auto-deploy');
  a.intent.fire=true;a._updateSpecial(1/60);const device=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='wave');assert.ok(device);
  victim.pos.copy(device.pos);tickWorld(f,4);const until=victim.s3?.revealedUntil?.[a.team];assert.ok(until>f.G.time);
- victim.pos.z+=100;tickWorld(f,44);assert.ok(victim.s3.revealedUntil[a.team]>f.G.time);tickWorld(f,2);
+ victim.pos.z+=100;tickWorld(f,39);assert.ok(victim.s3.revealedUntil[a.team]>f.G.time);tickWorld(f,2);
  assert.ok(victim.s3.revealedUntil[a.team]<=f.G.time+1e-9,'the generator placement mark expires after 45 frames');
 });
 
@@ -55,6 +80,45 @@ test('Wave Breaker pulse misses a jumping player above the source height limit',
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
  a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);tickWorld(f,120);
  assert.equal(hits.filter(h=>h[1]===victim&&h[2]===45&&h[3]==='waveBreaker').length,0,'the player is above DamageYMax after the height offset');
+});
+
+test('Wave Breaker annulus damages a live Super Chump device through the special-object path',async()=>{
+ const f=await setup(),waveOwner=f.make(),chumpOwner=f.make();equip(waveOwner,'waveBreaker');equip(chumpOwner,'superChump');chumpOwner.team=1;f.G.actors=[waveOwner,chumpOwner];
+ chumpOwner._startSpecial();chumpOwner.intent.fire=true;chumpOwner._updateSpecial(1/60);
+ const decoy=f.G.projectiles._s3AllSpecialObjects.find(o=>o.id==='superChump'&&o.kind==='decoy');assert.ok(decoy);decoy.phase='active';
+ waveOwner._startSpecial();waveOwner.intent.fire=true;waveOwner._updateSpecial(1/60);
+ const device=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='wave');assert.ok(device);decoy.pos.copy(device.pos);decoy.pos.z+=5;
+ tickWorld(f,130);assert.equal(decoy.hp,15,'the ShockSonar_Wave source row applies one 45-damage annulus hit to the decoy');
+});
+
+test('special object area routing preserves exact attack-phase damage rows',async()=>{
+ const f=await setup(),owner=f.make(),enemy=f.make();equip(owner,'waveBreaker');enemy.team=1;f.G.actors=[owner,enemy];
+ owner._startSpecial();owner.intent.fire=true;owner._updateSpecial(1/60);const device=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='wave');assert.ok(device);
+ const attack={owner:enemy,team:1,pos:enemy.pos,s3AllSpecial:'ultraStamp',type:'shot'};
+ assert.equal(f.G.projectiles.s3DamageSpecialObjects(attack,device.pos,1,()=>1,'UltraStamp_Swing'),true);assert.equal(device.hp,460);
+ assert.equal(f.G.projectiles.s3DamageSpecialObjects(attack,device.pos,1,()=>1,'UltraStamp_Throw'),true);assert.equal(device.hp,457.818);
+});
+
+test('native and ordinary blast bursts damage both deployed object arrays with the projectile source row',async()=>{
+ const f=await setup(),defender=f.make(),attacker=f.make('blaster'),V=f.THREE.Vector3;defender.team=0;attacker.team=1;
+ const at=new V(0,.7,0),device={id:'waveBreaker',kind:'device',owner:defender,team:0,dead:false,hp:480,pos:at.clone(),serial:77,activation:1};
+ const wall={subId:'splashWall',phase:'deployed',owner:defender,team:0,dead:false,hp:1000,pos:at.clone(),yaw:0,spec:{wallWidth:2,wallHeight:3}};
+ f.G.projectiles._s3AllSpecialObjects||=[];f.G.projectiles._s3AllSpecialObjects.push(device);f.G.projectiles._s3SubObjects||=[];f.G.projectiles._s3SubObjects.push(wall);f.G.actors=[];
+ const burst=(source,weapon)=>({owner:attacker,team:1,type:'blast',age:0,life:1,damage:0,radius:4,size:.1,ghost:false,wid:source,pos:at.clone(),prev:at.clone(),start:at.clone(),vel:new V(),...(weapon?{s3SpecialWeapon:weapon}:{})});
+ f.G.projectiles._blastBurst({...burst('blaster'),s3Weapon:attacker.weapon},at,null);
+ assert.equal(device.hp,340,'ordinary Blaster splash uses its 70-damage inner band and Blaster_BlasterMiddle Wave Breaker rate');
+ assert.equal(wall.hp,860,'the same ordinary blast reaches deployed sub-device HP through the sub-object adapter');
+ wall.hp=1000;device.hp=480;
+ f.G.projectiles._blastBurst(burst('trizooka',{id:'trizooka',splashRadius:4,splashBands:[[2.5,53],[4,35]]}),at,null);
+ assert.equal(wall.hp,682,'native Trizooka splash uses UltraShot ×6 against Splash Wall');
+ device.id='crabTank';device.hp=1000;
+ f.G.projectiles._blastBurst(burst('inkjet',{id:'inkjet',splashRadius:5,splashBands:[[2.55,50],[5,30]]}),at,null);
+ assert.equal(device.hp,825,'native Inkjet blast uses Jetpack_BombCore ×3.5 against Crab Tank');
+ device.hp=1000;
+ f.G.projectiles._blastBurst(burst('inkVac',{id:'inkVac',splashRadius:2,splashBands:[[2,40]]}),at,null);
+ assert.equal(device.hp,888,'native Ink Vac blast uses BlowerExhale_BombCore ×2.8 against Crab Tank');
+ device.hp=1000;const ghost=burst('inkjet',{id:'inkjet',splashRadius:5,splashBands:[[2.55,50],[5,30]]});ghost.ghost=true;
+ f.G.projectiles._blastBurst(ghost,at,null);assert.equal(device.hp,1000,'replayed projectiles do not author device HP damage');
 });
 
 test('Booyah Bomb armor and delayed expanding damage are timed independently from impact',async()=>{
@@ -67,6 +131,26 @@ test('Booyah Bomb armor and delayed expanding damage are timed independently fro
  const blast=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='booyahBlast');assert.ok(blast);assert.equal(blast.startDelay,40/60);assert.equal(blast.expand,40/60);
  const before=victim.hp;tickWorld(f,39);assert.equal(victim.hp,before,'no blast damage during the sourced delay');
  tickWorld(f,45);assert.ok(victim.hp<before,'expanding blast applies continuous damage after its delay');
+});
+
+test('Booyah Bomb uses source growth and damage frames at 30, 60, and 120 Hz',async()=>{
+ const results=[];
+ for(const hz of [30,60,120]){
+  const f=await setup(),owner=f.make(),center=f.make(),far=f.make();equip(owner,'booyahBomb');center.team=far.team=1;
+  center.pos.set(0,-.47,0);far.pos.set(6,-.47,0);f.G.actors=[owner,center,far];
+  owner._startSpecial();owner.intent.sub=true;owner._updateSpecial(1/60);
+  const p=f.G.projectiles.list.find(x=>x.s3AllSpecial==='booyahBomb');assert.ok(p);
+  f.G.projectiles._blastBurst(p,new f.THREE.Vector3(0,.08,0),null);
+  f.G.projectiles.list.splice(f.G.projectiles.list.indexOf(p),1);
+  center.hp=far.hp=1000;const hits=[],apply=f.G.projectiles.applyHit;
+  f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
+  const blast=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='booyahBlast');assert.ok(blast);
+  tickWorldAtHz(f,hz,80);
+  results.push({hz,center:center.hp,far:far.hp,centerHits:hits.filter(h=>h[1]===center&&h[3]==='booyahBomb').length,
+    farHits:hits.filter(h=>h[1]===far&&h[3]==='booyahBomb').length,paintFrame:blast.paintFrame,paintedRadius:blast.paintedRadius});
+ }
+ for(const result of results){assert.equal(result.centerHits,40);assert.equal(result.farHits,21);assert.ok(Math.abs(result.center-868)<1e-8);assert.ok(Math.abs(result.far-930.7)<1e-8);assert.equal(result.paintFrame,6);assert.equal(result.paintedRadius,13.5);}
+ assert.ok(results.every(x=>Math.abs(x.center-868)<1e-8&&Math.abs(x.far-930.7)<1e-8&&x.centerHits===40&&x.farHits===21&&x.paintedRadius===13.5));
 });
 
 test('Splattercolor Screen applies the recipient color and mark timers on a real crossing',async()=>{
@@ -99,10 +183,10 @@ test('remote screen replay creates presentation and recipient status without aut
 
 test('Zipcaster repeats hooks, fires the equipped main from its special ink tank, and returns through native Super Jump',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'zipcaster');victim.team=1;victim.pos.set(0,0,5);f.G.actors=[a,victim];
- f.G.match={playing:()=>true};a.aimPoint=new f.THREE.Vector3(0,1,5);
+ f.G.match={playing:()=>true};f.G.physics.raycast=(_o,_d,_distance,h)=>{h.hit=false;return h;};a.aimDir.set(0,0,1);a.aimPoint=new f.THREE.Vector3(0,1,5);
  const events=eventFeed(f,'all:special'),hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
  a._startSpecial();const state=a._s3AllSpecialState,origin=a.pos.clone();
- a.intent.sub=true;a._updateSpecial(1/60);assert.equal(state.phase,'zip',JSON.stringify({held:state.held,sub:a.intent.sub,phase:state.phase,fuel:state.inkFuel,t:state.t}));assert.ok(state.inkFuel<150);
+ a.intent.sub=true;a._updateSpecial(1/60);assert.equal(state.phase,'hookFlight','a real sub press launches the source-speed hook before player pull');assert.ok(state.inkFuel<150);
  a.intent.sub=false;for(let i=0;i<45;i++)a._updateSpecial(1/60);
  assert.equal(state.phase,'ready');assert.ok(state.zips===1);assert.ok(hits.some(h=>h[1]===victim&&h[3]==='zipcaster'));
  const shots=f.G.projectiles.list.length,normalInk=a.ink,fuel=state.inkFuel;victim.pos.set(a.pos.x,0,a.pos.z+6);a.intent.fire=true;let fireFrames=0;
@@ -110,18 +194,23 @@ test('Zipcaster repeats hooks, fires the equipped main from its special ink tank
  assert.ok(f.G.projectiles.list.length>shots&&f.G.projectiles.list.some(p=>p.owner===a&&!p.s3AllSpecial),'fire goes through the equipped native main weapon');
  assert.ok(hits.some(h=>h[1]===victim&&h[3]==='zipcaster'),'hook impact remains the Zipcaster damage source');
  assert.equal(a.ink,normalInk,'the temporary Zipcaster tank does not overwrite the normal tank');assert.ok(state.inkFuel<fuel-13.05*fireFrames/60-.5,'main firing and time drain consume the single special tank');
- a.intent.sub=true;a.intent.fire=false;a._updateSpecial(1/60);assert.equal(state.phase,'zip','a second sub press starts another hook');
+ a.aimPoint.set(a.pos.x,a.pos.y+1,a.pos.z+5);a.intent.sub=true;a.intent.fire=false;a._updateSpecial(1/60);assert.equal(state.phase,'hookFlight','a second sub press starts another hook flight');
  state.duration=state.t+1/60;a.intent.sub=false;a._updateSpecial(1/60);
  assert.equal(a.specialActive,null);assert.ok(a.superJumpState);assert.deepEqual(a.superJumpState.target.toArray(),origin.toArray());
 });
 
-test('Kraken Royale initializes its charge direction and completes a real charge dash hit',async()=>{
+test('Kraken Royale charges while held, starts its 35F dash on release, and supports the 34F cancel',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'krakenRoyale');victim.team=1;victim.pos.set(0,0,1);f.G.actors=[a,victim];a._resolve=()=>{};a.aimPoint=new f.THREE.Vector3(0,1,20);
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
  a._startSpecial();const state=a._s3AllSpecialState;assert.ok(state.direction instanceof f.THREE.Vector3);
  a.intent.fire=true;a._updateSpecial(1/60);assert.equal(state.phase,'charge');assert.ok(state.direction.z>.99);
- for(let i=0;i<35;i++)a._updateSpecial(1/60);assert.equal(state.phase,'dash');
+ for(let i=0;i<35;i++)a._updateSpecial(1/60);assert.equal(state.phase,'charge','holding after the charge threshold does not start the dash');
+ a.intent.fire=false;a._updateSpecial(1/60);assert.equal(state.phase,'dash','release after35F begins the dash');
  a._updateSpecial(1/60);assert.ok(hits.some(h=>h[1]===victim&&h[2]===120&&h[3]==='krakenRoyale'),'charge dash uses its attack path and owner hit routing');
+
+ const cancel=f.make();equip(cancel,'krakenRoyale');f.G.actors.push(cancel);cancel._startSpecial();cancel.intent.fire=true;cancel._updateSpecial(1/60);
+ for(let i=0;i<34;i++)cancel._updateSpecial(1/60);cancel.intent.fire=false;cancel._updateSpecial(1/60);
+ assert.equal(cancel._s3AllSpecialState.phase,'active','release before35F cancels the charged attack');
 });
 
 test('Inkjet fires native rounds, descends in squid form, and starts a Super Jump return at expiry',async()=>{
@@ -133,6 +222,32 @@ test('Inkjet fires native rounds, descends in squid form, and starts a Super Jum
  assert.ok(events.some(e=>e.action==='shot'));
  const state=a._s3AllSpecialState;state.duration=state.t+2/60;a.intent.fire=false;a._updateSpecial(1/60);a._updateSpecial(1/60);
  assert.equal(a.specialActive,null);assert.ok(a.superJumpState);assert.deepEqual(a.superJumpState.target.toArray(),origin.toArray());
+});
+
+test('Inkjet exhaust applies Jetpack_Jet damage once per source frame at 30, 60, and 120 Hz',async()=>{
+ const results=[];
+ for(const hz of [30,60,120]){
+  const f=await setup(),owner=f.make(),victim=f.make(),outside=f.make(),deviceOwner=f.make();equip(owner,'inkjet');owner._resolve=()=>{};victim.team=outside.team=deviceOwner.team=1;
+  victim.pos.set(0,0,.5);outside.pos.set(1.4,0,.5);f.G.actors=[owner,victim,outside];f.G.physics.los=()=>true;
+  const wave={id:'waveBreaker',kind:'device',owner:deviceOwner,team:1,dead:false,hp:1000,pos:new f.THREE.Vector3(0,1,.3)};
+  f.G.projectiles._s3AllSpecialObjects||=[];f.G.projectiles._s3AllSpecialObjects.push(wave);
+  const wall=deployedWall(f,deviceOwner,[0,.8,.3]),wallHp=wall.hp;
+  owner._startSpecial();owner.pos.y=2.5;owner.vel.y=0;
+  for(let i=0;i<hz;i++){owner._updateSpecial(1/hz);owner.pos.y=2.5;owner.vel.y=0;}
+  results.push({hz,victim:victim.hp,outside:outside.hp,wave:wave.hp,wall:wall.hp,wallHp});
+ }
+ for(const result of results){
+  assert.ok(Math.abs(result.victim-70)<1e-7,`${result.hz} Hz applies sixty .5 damage ticks`);
+  assert.equal(result.outside,100,'the under-jet cylinder excludes targets outside its calibrated footprint');
+  assert.ok(Math.abs(result.wave-916)<1e-7,'Wave Breaker consumes Jetpack_Jet ×2.8 once for each source frame');
+  assert.ok(Math.abs(result.wall-(result.wallHp-84))<1e-7,'Splash Wall consumes Jetpack_Jet ×2.8 once for each source frame');
+ }
+});
+
+test('Inkjet exhaust stops during squid descent and return',async()=>{
+ const f=await setup(),owner=f.make(),victim=f.make();equip(owner,'inkjet');owner._resolve=()=>{};victim.team=1;victim.pos.set(0,0,.5);f.G.actors=[owner,victim];owner._startSpecial();owner.pos.y=2.5;owner.vel.y=0;
+ owner.intent.squid=true;for(let i=0;i<12;i++)owner._updateSpecial(1/60);assert.equal(victim.hp,100);
+ owner.intent.squid=false;owner.intent.sub=true;owner._updateSpecial(1/60);assert.equal(owner.specialActive,null);assert.equal(victim.hp,100,'return begins before another exhaust tick can be authored');
 });
 
 test('Ultra Stamp uses jump swings and blocks a projectile through its forward guard',async()=>{
@@ -161,14 +276,17 @@ test('Crab Tank fires shooter and cannon rounds and exposes ball posture while s
  a.damage(10,rear,'shooter');assert.equal(a.hp,hp-10,'the rear core bypasses shell armor');
 });
 
-test('Reefslider fire can stop the dash early and cause its damage impact',async()=>{
+test('Reefslider waits for grounded 38F startup, gates cancel to15F, and deals dash contact damage',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'reefslider');victim.team=1;victim.pos.set(0,0,5);f.G.actors=[a,victim];
  a._resolve=()=>{};
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
- const events=eventFeed(f,'all:special');a._startSpecial();for(let i=0;i<38;i++)a._updateSpecial(1/60);
- assert.equal(a._s3AllSpecialState.phase,'dash');a.intent.fire=true;a._updateSpecial(1/60);
- assert.equal(a.specialActive,null);assert.ok(events.some(e=>e.action==='impact'));
- assert.ok(hits.some(h=>h[1]===victim&&h[2]===220&&h[3]==='reefslider'));
+ const events=eventFeed(f,'all:special');a.grounded=false;a._startSpecial();for(let i=0;i<45;i++)a._updateSpecial(1/60);
+ assert.equal(a._s3AllSpecialState.phase,'startup','airborne activation waits for the grounded startup');
+ a.grounded=true;for(let i=0;i<38;i++)a._updateSpecial(1/60);assert.equal(a._s3AllSpecialState.phase,'dash');
+ a.intent.fire=true;for(let i=0;i<14;i++)a._updateSpecial(1/60);assert.ok(a.specialActive,'early cancel remains locked until movement frame15');
+ a._updateSpecial(1/60);assert.ok(a.specialActive,'burst recovery remains active for28F');assert.ok(events.some(e=>e.action==='impact'));
+ assert.ok(hits.some(h=>h[1]===victim&&h[2]===220&&h[3]==='reefslider'),'the dash capsule applies the sourced220 contact hit');
+ for(let i=0;i<28;i++)a._updateSpecial(1/60);assert.equal(a.specialActive,null);
 });
 
 test('Killer Wail beams tick through terrain and the main weapon remains live during the special',async()=>{
@@ -177,6 +295,95 @@ test('Killer Wail beams tick through terrain and the main weapon remains live du
  a._startSpecial();a.intent.fire=true;for(let i=0;i<40;i++)a._updateSpecial(1/60);
  assert.ok(f.G.projectiles.list.some(p=>p.owner===a&&!p.s3AllSpecial),'main fire still uses the native weapon runner');
  const beam=hits.find(h=>h[1]===victim&&h[3]==='killerWail');assert.ok(beam);assert.equal(beam[2],3.5,'Wail damage is a 3.5 tick, not a one-hit burst');
+});
+
+test('Killer Wail applies MicroLaser object rows through walls to special and sub devices',async()=>{
+ const f=await setup(),owner=f.make(),enemy=f.make();equip(owner,'killerWail');enemy.team=1;enemy.pos.set(100,0,100);owner.aimDir.set(0,0,1);owner.aimPoint.set(0,1,27);f.G.actors=[owner,enemy];f.G.physics.los=()=>false;
+ const wave={id:'waveBreaker',kind:'device',owner:enemy,team:1,dead:false,hp:1000,pos:new f.THREE.Vector3(.65,1.7,8)};
+ const wall=deployedWall(f,enemy,[0,.08,8]),wallStart=wall.hp,wallAge=wall.age;
+ f.G.projectiles._s3AllSpecialObjects||=[];f.G.projectiles._s3AllSpecialObjects.push(wave);
+ const subHits=[],projectiles=f.G.projectiles,damageSubs=projectiles.s3DamageSubObjects;projectiles.s3DamageSubObjects=function(...args){if(args[4]==='MicroLaser'){const damageAt=args[3];args[3]=(d,o)=>{const amount=damageAt(d,o);if(amount)subHits.push({d,amount,subId:o.subId});return amount;};}return damageSubs.apply(this,args);};
+ owner._startSpecial();for(let i=0;i<45;i++)owner._updateSpecial(1/60);
+ const waveLoss=1000-wave.hp,wallLoss=wallStart-wall.hp-wall.wallHpInitial*(wall.age-wallAge)/(wall.spec.hpDecayFrames/60);
+ assert.ok(waveLoss>0&&wallLoss>0,'the piercing beam reaches both device arrays despite blocked ordinary LOS');
+ assert.ok(Math.abs(waveLoss-16.8)<1e-7,'the two emitted laser ticks apply 3.5×MicroLaser 2.4 to Wave Breaker');
+ assert.equal(subHits.length,4,'both beam segments sweep the deployed wall on each of two ticks');
+ assert.ok(subHits.every(hit=>hit.amount===3.5&&hit.subId==='splashWall'),'each wall callback receives the sourced 3.5 tick damage');
+ assert.ok(Math.abs(wallLoss-subHits.length*3.5*2.4)<1e-7,'the piercing beam applies the MicroLaser 2.4 object rate once per wall contact');
+});
+
+test('Splattercolor Screen moving plane damages deployed Splash Wall with Chimney row',async()=>{
+ const f=await setup(),owner=f.make(),enemy=f.make();equip(owner,'splattercolorScreen');enemy.team=1;enemy.pos.set(100,0,100);
+ const wall=deployedWall(f,enemy,[0,.08,5]),before=wall.hp,age=wall.age;owner._startSpecial();owner.intent.fire=true;owner._updateSpecial(1/60);tickWorld(f,130);
+ const damage=before-wall.hp-wall.wallHpInitial*(wall.age-age)/(wall.spec.hpDecayFrames/60);
+ assert.ok(Math.abs(damage-120)<1e-6,'one plane crossing applies 40×Chimney 3 after subtracting normal wall decay');
+});
+
+test('direct Crab cannon and thrown Stamp hits retain their source rows on actor armor',async()=>{
+ for(const [special,expectedCause] of [['crabTank','Default'],['ultraStamp','UltraStamp_Throw']]){
+  const f=await setup(),attacker=f.make(),victim=f.make();equip(attacker,special);attacker.team=1;equip(victim,'booyahBomb');victim.team=0;
+  victim._startSpecial();victim._updateSpecial(1/60);const seen=[],damage=victim.damage;
+  victim.damage=function(amount,source,kind){seen.push(source?._s3AllSpecialDamageCause);return damage.call(this,amount,source,kind);};
+  attacker._startSpecial();
+  if(special==='crabTank'){for(let i=0;i<20;i++)attacker._updateSpecial(1/60);attacker.intent.sub=true;attacker._updateSpecial(1/60);}
+  else{attacker.intent.sub=true;attacker._updateSpecial(1/60);}
+  const p=f.G.projectiles.list.find(projectile=>projectile.s3AllSpecial===special);assert.ok(p,`${special} emits a projectile`);
+  f.G.projectiles._blastBurst=()=>true;p.pos.set(victim.pos.x,.8,victim.pos.z);p.prev.copy(p.pos);p.vel.set(0,0,0);p.grav=0;p.drag=0;p.straight=10;p.age=0;
+  f.G.projectiles._step(p,1/60);
+  assert.ok(seen.includes(expectedCause),`${special} direct impact preserves ${expectedCause} through local armor damage`);
+ }
+});
+
+test('Crab Tank rolling body actor damage carries Chariot_Body cause',async()=>{
+ const f=await setup(),owner=f.make(),victim=f.make();equip(owner,'crabTank');owner.team=1;equip(victim,'booyahBomb');victim.team=0;victim.pos.set(0,0,.5);
+ victim._startSpecial();victim._updateSpecial(1/60);const seen=[],damage=victim.damage;
+ victim.damage=function(amount,source,kind){seen.push(source?._s3AllSpecialDamageCause);return damage.call(this,amount,source,kind);};
+ owner._startSpecial();owner.intent.squid=true;for(let i=0;i<18;i++)owner._updateSpecial(1/60);
+ assert.ok(seen.includes('Chariot_Body'),'rolling contact armor path uses the source body row');
+});
+
+test('Tenta and Inkjet special paint channels stamp the sourced cross and satellites',async()=>{
+ {
+  const f=await setup(),owner=f.make();equip(owner,'tentaMissiles');owner._resolve=()=>{};owner._startSpecial();owner.intent.fire=true;owner._updateSpecial(1/60);
+  const p=f.G.projectiles.list.find(projectile=>projectile.s3AllSpecial==='tentaMissiles');assert.ok(p);const calls=[];
+  f.G.paint.splat=(at,radius)=>{calls.push({at:at.clone(),radius});return 1;};f.G.projectiles._blastBurst(p,new f.THREE.Vector3(2,0,2),null);
+  const cross=calls.filter(call=>call.radius===2);assert.equal(cross.length,4,'Tenta cross paint makes four radius-2 stamps');
+  assert.ok(cross.every(call=>Math.abs(Math.abs(call.at.x-2)+Math.abs(call.at.z-2)-3)<1e-9),'cross stamps use the sourced 3-unit check length');
+ }
+ {
+  const f=await setup(),owner=f.make();equip(owner,'inkjet');owner._resolve=()=>{};owner._startSpecial();owner.intent.fire=true;owner._updateSpecial(1/60);
+  const p=f.G.projectiles.list.find(projectile=>projectile.s3AllSpecial==='inkjet');assert.ok(p);const calls=[];
+  f.G.paint.splat=(at,radius)=>{calls.push(radius);return 1;};f.G.projectiles._blastBurst(p,new f.THREE.Vector3(2,0,2),null);
+  assert.equal(calls.filter(radius=>radius===.63).length,10,'Inkjet splash-around radius .63 produces the sourced ten paint satellites');
+ }
+});
+
+test('Super Chump expiry paints sourced cross and satellite channels',async()=>{
+ const f=await setup(),owner=f.make();equip(owner,'superChump');owner._resolve=()=>{};owner._startSpecial();owner.intent.fire=true;owner._updateSpecial(1/60);
+ const decoys=f.G.projectiles._s3AllSpecialObjects.filter(o=>o.id==='superChump'&&o.kind==='decoy');assert.equal(decoys.length,8);
+ const calls=[];f.G.paint.splat=(at,radius)=>{calls.push({at:at.clone(),radius});return 1;};tickWorld(f,320);
+ const cross=calls.filter(call=>call.radius===2.5),satellites=calls.filter(call=>call.radius===1.116);
+ assert.equal(cross.length,32,'each of eight decoys emits four radius-2.5 cross stamps at expiry');
+ assert.equal(satellites.length,8,'each decoy emits one sourced radius-1.116 satellite stamp');
+ for(const decoy of decoys){
+  const stamps=cross.filter(call=>Math.abs(Math.abs(call.at.x-decoy.pos.x)+Math.abs(call.at.z-decoy.pos.z)-2.5)<1e-9);
+  assert.equal(stamps.length,4,'the calibrated cross places four stamps at the sourced check length');
+ }
+});
+
+test('Zipcaster hook movement paints sourced cross marks and a two-frame calibrated trail',async()=>{
+ const f=await setup(),a=f.make();equip(a,'zipcaster');a._resolve=()=>{};a.aimDir.set(0,0,1);a.aimPoint=new f.THREE.Vector3(0,1,5);
+ f.G.physics.raycast=(_o,_d,_distance,h)=>{h.hit=false;return h;};const calls=[];f.G.paint.splat=(at,radius)=>{calls.push({at:at.clone(),radius,frame});return 1;};
+ let frame=0;a._startSpecial();const state=a._s3AllSpecialState;a.intent.sub=true;a._updateSpecial(1/60);frame++;
+ assert.equal(state.phase,'hookFlight','a real sub press begins source-speed hook travel');a.intent.sub=false;
+ for(let i=0;i<60&&state.phase!=='ready';i++){a._updateSpecial(1/60);frame++;}
+ assert.equal(state.phase,'ready','the hook movement and post-zip wait reach impact');
+ const trail=calls.filter(call=>call.radius===1.5),trailFrames=[...new Set(trail.map(call=>call.frame))];
+ assert.ok(trailFrames.length>=4,'movement produces repeated width-1×depth-scale-1.5 trail stamps');
+ assert.ok(trailFrames.slice(1).every((value,index)=>value-trailFrames[index]===2),'trail batches recur every sourced two frames');
+ const impact=calls.filter(call=>call.radius===1.4),point=state.zipTarget;
+ const cross=impact.filter(call=>Math.abs(Math.abs(call.at.x-point.x)+Math.abs(call.at.z-point.z)-1.4)<1e-8);
+ assert.equal(cross.length,4,'hook impact paints four radius-1.4 cross stamps at the source check length');
 });
 
 test('Booyah cheer accepts distinct calls up to the source cap and rejects duplicate or stale remote calls',async()=>{
@@ -226,4 +433,22 @@ test('local Booyah calls credit gauge for a remote catalogue caster once per cal
  const event={actor:ally,id:'booyahBomb',action:'cheer',activation:7,ownerNid:11,ownerLife:3,seed:1};
  f.emit('all:special',event);assert.equal(ally.special,6);f.emit('all:special',event);assert.equal(ally.special,6);
  f.emit('all:special',{...event,seed:2});assert.equal(ally.special,9);f.emit('all:special',{...event,seed:3,ownerLife:2});assert.equal(ally.special,9);
+});
+
+test('source special launch forces advance the same actual projectile at 30/60/120Hz',async()=>{
+ for(const [id,mode,speed,gravity,drag] of [['booyahBomb','throw',60,.021*3600,.045],['ultraStamp','throw',51,.013*3600,.03],['crabTank','shooter',201.6,.016*3600,0],['crabTank','cannon',null,.05*3600,.12]]){
+  const paths=[];
+  for(const hz of [30,60,120]){
+   const f=await setup(),a=f.make();equip(a,id);a.aimDir.set(0,0,1);a._startSpecial();
+   if(id==='crabTank')tickActorOnlyAtHz(a,60,21);
+   if(mode==='shooter')a.intent.fire=true;else a.intent.sub=true;
+   let p;for(let frame=0;frame<60&&!p;frame++){a._updateSpecial(1/60);p=f.G.projectiles.list.find(p=>p.s3AllSpecial===id);}assert.ok(p,`${id}/${mode} emitted through Actor`);
+   const flight=p.s3AllSpecialFlight;assert.ok(flight);if(speed!==null)assert.equal(flight.spawnSpeed,speed);
+   assert.equal(flight.gravity,gravity);assert.equal(flight.positionAirResist||flight.airResist||0,drag);
+   p.pos.set(0,100,0);p.prev.copy(p.pos);p.start.copy(p.pos);f.G.actors=[];
+   stepProjectileAtHz(f,p,hz,30);assert.ok(Math.abs(p.age-.5)<1e-8);
+   paths.push([...p.pos.toArray(),...p.vel.toArray()]);
+  }
+  for(const path of paths.slice(1))path.forEach((v,i)=>assert.ok(Math.abs(v-paths[0][i])<1e-7,`${id}/${mode}: sourced fixed-step flight differs at coordinate ${i}`));
+ }
 });

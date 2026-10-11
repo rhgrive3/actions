@@ -7,7 +7,12 @@ async function bomb({old=false,oldGround=false,rate=60,wall=false,center=30,slop
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
   adaptRuntime:(r,s)=>{
     if(!r.endsWith('all-specials.mjs'))return s;
-    if(old)s=s.replace('const at = rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);','const at = rt.v4.set(point.x+x,point.y,point.z+z);');
+    if(old){
+      s=s.replace('const at = rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);','const at = rt.v4.set(point.x+x,point.y,point.z+z);');
+      // Reconstruct the horizontal full-disk geometry control. The newly sourced
+      // growth-ring stamps must not fill its holes and mask this negative control.
+      s=s.replace(/if\(paintFrame===1\)paintStamp[^;]+;\s*else if\(paintFrame===6\)(paintDisk[^;]+;)\s*else paintRing[^;]+;/,'if(paintFrame===6)$1');
+    }
     if(oldGround)s=s.replace('from.y += .25;','from.y += 24;').replace('rt.down, .5, rt.hit','rt.down, 60, rt.hit');
     return s;
   }});
@@ -92,6 +97,9 @@ test('targetless missiles preserve aim height when both ground probes miss',asyn
  const actor=f.make();actor.weapon={...actor.weapon,special:'tentaMissiles',specialCost:100};
  actor.special=100;actor.alive=true;actor.remote=false;actor.pos.set(0,0,0);actor.aimDir.set(0,0,1);f.G.actors=[actor];
  actor._startSpecial();actor.intent.fire=true;actor._updateSpecial(1/60);
+ // 1130 launches ten missiles at a 4F interval; preserve the ground-height
+ // regression while observing the complete volley rather than an instant burst.
+ for(let i=0;i<36;i++)actor._updateSpecial(1/60);
  const missiles=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');assert.equal(missiles.length,10);
  for(const p of missiles){assert.equal(p.s3TentaTarget.y,1.05,'ray probe offset must not mutate its output');assert.equal(p.s3TentaTarget.z,28);}
 });

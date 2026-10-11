@@ -5,8 +5,12 @@ const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-8, `${a} != ${b}`);
 async function setup() {
   const f = await specialEvidenceFixture();
   const owner = f.make('charger'), victim = f.make('dualies');
+  // Controlled flat-ground sink, matching this fixture's other movement sinks.
+  owner._resolve=function(){this.pos.y=0;this.vel.y=0;this.grounded=true;};
   owner.aimDir.set(0, 0, 1); owner.aimYaw = owner.aimPitch = 0;
   owner.special = owner.specialCost(); owner._startSpecial();
+  // The source cone reaches its15m limit after 45F; do not assume instant reach.
+  for(let i=0;i<45;i++)owner.update(1/60);
   victim.team = 1; victim.pos.set(0, 0, 5); victim.intent.fire = true;
   assert.equal(f.inkVacActorContact(owner, victim), true);
   const base = victim.weapon.rollInk;
@@ -42,8 +46,11 @@ test('#1149 remote cone suppresses only the locally-owned victim and overlapping
   const { f, owner, victim, base, dodge } = await setup();
   f.disposeInkVac(owner); owner.remote = true; owner.owner = 'A'; owner.nid = 1;
   f.replayInkVac(f.INK_VAC_EVENTS.activation, owner, { actor: owner, kit: 'inkVac', serial: 50, power: 0, charge: 0 }, { from: 'A' });
-  const other = f.make('charger'); other.pos.copy(owner.pos); other.aimDir.copy(owner.aimDir);
+  const other = f.make('charger'); other._resolve=owner._resolve;other.pos.copy(owner.pos); other.aimDir.copy(owner.aimDir);
   other.special = other.specialCost(); other._startSpecial();
+  victim.pos.x=100;
+  for(let i=0;i<45;i++){f.advanceInkVacReplica(owner,1/60);other.update(1/60);}
+  victim.pos.x=0;
   victim.ink = 100; assert.equal(dodge(), true); close(victim.ink, 100 - base * 3.5);
   victim.weaponRunner.reset(); victim.remote = true; victim.intent.fire = true; victim.ink = 100;
   close(victim.weaponRunner.inkVacDodgeInkCost(base), base);

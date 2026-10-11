@@ -10,7 +10,11 @@
 // not just the frozen raw snapshot. In particular, raw Slam is 180 while the
 // active S3 Slam, Trizooka direct hit and Ink Vac countershot can each be 220.
 // These are payload ceilings, not new damage tuning or sender authority.
+// Include the full selectable 14/19/65 catalogue IDs so source-installed hits
+// are admitted by the same victim-owned policy; phase multipliers stay off-wire.
 import fs from 'node:fs';
+import { SUB_NAMES, SPECIAL_NAMES } from '../splatoon3/runtime/catalogue.mjs';
+import { MAIN_WEAPON_CATALOG } from '../splatoon3/runtime/main-weapon-catalog-data.mjs';
 import { WEAPONS, SUB, SPECIALS } from '../../inkwave-public/src/config.js';
 import { registerKitSubs } from '../splatoon3/runtime/kit-subs.mjs';
 import { trizookaSpecialWeapon, TRIZOOKA_ID } from '../splatoon3/runtime/kit-trizooka.mjs';
@@ -40,6 +44,7 @@ export function hitPayloadPolicy(tuning = profile) {
   }
   const causes = [...new Set([
     ...Object.keys(weapons), ...Object.keys(subs), ...Object.keys(specials),
+    ...MAIN_WEAPON_CATALOG.records.map(r=>r.id), ...Object.keys(SUB_NAMES), ...Object.keys(SPECIAL_NAMES).filter(id=>id!=='bubbler'), 'torpedo-splash',
     TRIZOOKA_ID, VAC_ID, // registered damaging specials; Big Bubbler authors no hit
     'shot', 'slosh', 'blast', 'drop', // authored projectile-type fallbacks
   ])];

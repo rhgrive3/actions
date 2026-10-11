@@ -3931,3 +3931,15 @@ Not changed and still unverified: Dualies aerial slide descent (no sourced field
 最終 CI の旧 golden は DepthScale の比率を PaintSystem の加算伸長へそのまま渡す前提が残っていた。現行 main の `max(0, depthRatio - 1)` と独立した原典パラメータ計算を照合し、9 発すべての半径・actor 所有・単一着弾 stamp を検証した。0.25 セルの採点グリッドで現行の最遠 Z は 16.625、面積は 76.9375。旧 0.2 換算の反証対照は Z=13.625 / 面積=15.375、基底幅を二重計上する旧 depth 比率の対照は Z=21.125 / 面積=108.125 となり、いずれも現行のセル集合と区別される。source と emitted build の全 receipt（採点セルを含む）も一致する。
 
 修正範囲はテストと検証記録のみで、原典値・ゲーム本体の半径や伸長・CPU/GPU 採点境界は変更していない。この数値は INKWAVE の計測 receipt であり、Nintendo 実機との未確認事項を完了扱いにする根拠ではない。
+
+
+
+## 2026-10-11 サブ14種・スペシャル19種の性能再照合
+
+Driveのpart02アーカイブとS3 11.3.0パラメータ、条件を記録したWiki値を再照合。数値の保管だけでなく、インク節約・軽減・時間・SPU・設置物・装甲・native通信の実際の消費箇所を修正した。根拠、実装箇所、再現、プレイ影響、確認状態は `reports/inkwave-source-parity-corrections-20261011.md`、個別のsource葉監査は `reports/source-parity-coverage-20261011.json`、設置物・装甲・通信の監査は `reports/interaction-parity-20261011.md` に記録。
+
+本節は全挙動の実機一致認定ではない。ロジック単独、配信ビルド、ブラウザ動作、本家実機比較を区別する。世界距離、標的選択、飛行/接地/壁の反応、塗り形状、未公開フィールドの意味について未確認を残す。モデリングと本格的なアニメーションは依頼の範囲外。既存の未確認項目を本変更だけで解消済みにしない。
+
+### 2026-10-11 最終ソース消費・main統合追記
+
+NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、Reef rut／Inkjet・Reef周辺塗りの値を実処理へ追加。実Actorの発射からProjectilesの30/60/120Hz進行を測定した。最新main PR1237の靴メイン対物ギアとnative Sprinkler修正も保ち、rawダメージ・攻撃行・ギアを送るowner判定で2重倍率を防止。具体的な根拠・再現・影響・未検証は`reports/inkwave-source-parity-corrections-20261011.md`と各parity報告に記載。実機完全一致は認定していない。

@@ -327,6 +327,24 @@ test('the real native PaintSystem accepts the rolling trail centre', async () =>
   assert.equal(cur.s3TrailPoint, before, 'the trail point is reused, not reallocated per frame');
 });
 
+test('Curling trail projects to a surface only within the source PaintCheckHeight', async () => {
+  const api=await production();ground(api,'record');
+  const {projectiles,bomb}=await throwReal(api,'curling',1,8);bomb.s3Mode='rolling';
+  bomb.pos.set(2,1.5,3);
+  let reach=-1,stamps=0,point=null;
+  api.G.physics.raycast=(origin,down,maxDistance,out)=>{
+    reach=maxDistance;assert.equal(down.y,-1);
+    out.hit=true;out.point.set(origin.x,0,origin.z);out.normal.set(0,1,0);return out;
+  };
+  const paint={splat(p){stamps++;point=p.clone();return 1;}};
+  assert.equal(kitBombTrail(api.SUB,bomb,paint,projectiles,api.G),1);
+  assert.equal(reach,2,'MoveParam.PaintCheckHeight is the downward surface-search limit');
+  near(point.x,2,'trail keeps the contacted X');near(point.y,.1,'trail uses the contact point plus its bias');near(point.z,3,'trail keeps the contacted Z');
+  api.G.physics.raycast=(_origin,_down,maxDistance,out)=>{reach=maxDistance;out.hit=false;return out;};
+  assert.equal(kitBombTrail(api.SUB,bomb,paint,projectiles,api.G),0,'no surface within the source range means no trail stamp');
+  assert.equal(stamps,1);
+});
+
 test('a ghost bomb gets no kit authority', async () => {
   const api = await production();
   ground(api);

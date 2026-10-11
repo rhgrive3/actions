@@ -5,9 +5,13 @@ import {installKitInkVac, inkVacState, inkVacActorContact, disposeInkVac, replay
 async function setup(){
   const f=await fixture();installKitInkVac(f,f.profile);
   f.G.paint.sample=()=>0;f.G.projectiles=new f.Projectiles(new f.THREE.Scene());
-  const a=f.make('charger'),b=f.make('shooter');b.team=1;b.pos.set(0,0,5);
+  const a=f.make('charger'),b=f.make('shooter');b.team=1;b.pos.set(0,0,-5);
   a.weapon={...a.weapon,special:'inkVac',specialCost:190};a.special=190;a._startSpecial();
   a.aimDir.set(0,0,1);a.aimYaw=0;a.aimPitch=0;
+  // Grow the source-defined 15-unit intake before measuring actor contact.
+  // The target begins behind the owner so this calibration interval cannot
+  // author contact drain or alter the measured 30-tick sample.
+  f.tick(a,45);b.pos.set(0,0,5);
   return {f,a,b};
 }
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
@@ -41,6 +45,7 @@ test('#1149 remote cone affects only a local victim; replica and duplicate actor
   f.tick(b,30);assert.equal(b.ink,100,'remote victim tank remains owner-authored');
   disposeInkVac(a);a.remote=true;b.remote=false;
   const r=replayInkVac(EV.activation,a,{actor:a,kit:'inkVac',serial:500,power:0,charge:0},{from:'A'});assert.equal(r.applied,true);
+  for(let i=0;i<45;i++)f.advanceInkVacReplica(a,1/60);
   f.tick(b,30);close(b.ink,94);assert.equal(inkVacState(a).charge,0,'replica cannot credit gauge');
   replayInkVac(EV.dispose,a,{actor:a,kit:'inkVac',serial:500},{from:'A'});assert.equal(inkVacActorContact(a,b),false);
 });

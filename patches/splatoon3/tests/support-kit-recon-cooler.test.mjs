@@ -93,6 +93,55 @@ test('#710 low-level team/reveal guards refuse stale, ally and nonfinite inputs'
   assert.equal(pointSensorContact(enemy,{x:0,y:.7,z:0},1.2),true);
   assert.equal(pointSensorContact(enemy,{x:0,y:.7,z:5},1.2),false);
 });
+test('S3 testing Wiki Point Sensor GP table rounds down and victim marking resistance applies', () => {
+  // Independently measured GP table, not computed from the implementation.
+  for(const [ap,frames] of [[0,480],[3,526],[6,570],[10,625],[20,744],[30,838],[57,960]])
+    assert.equal(pointSensorMarkFrames(ap,gearCurve),frames);
+  for(const [ap,percent] of [[0,100],[3,80.71],[6,70.05],[10,59.02],[20,39.16],[30,25.74],[57,10]]){
+    const target={alive:true,team:1,s3:{abilityPoints:{subResistance:ap}}};
+    pointSensorMark(target,0,10,8);
+    assert.ok(Math.abs((target.s3.revealedUntil[0]-10)/8*100-percent)<.011,`GP${ap}`);
+  }
+});
+test('Point Sensor late-entry mark expires eight seconds from impact at 30/60/120 Hz',async()=>{
+  for(const hz of [30,60,120]){
+    const {f,actor,enemy}=await setup();
+    enemy.pos.set(100,0,100);
+    const sensor=f.G.projectiles.throwBomb(actor);
+    for(let i=0;i<hz*2&&sensor.activeAt===null;i++){f.G.time+=1/hz;f.G.projectiles.update(1/hz);}
+    assert.notEqual(sensor.activeAt,null);
+    const impact=sensor.activeAt;
+    for(let i=0;i<hz*2;i++){f.G.time+=1/hz;f.G.projectiles.update(1/hz);}
+    enemy.pos.copy(sensor.pos).add(new f.THREE.Vector3(0,-.7,0));
+    f.G.time+=1/hz;f.G.projectiles.update(1/hz);
+    assert.ok(Math.abs(enemy.s3.revealedUntil[0]-(impact+8))<1e-8);
+    assert.ok(enemy.s3.revealedUntil[0]-f.G.time<6.01);
+  }
+});
+test('Point Sensor keeps its field after owner respawn and uses its Lv1 saver curve',async()=>{
+  const {f,actor,enemy}=await setup();
+  actor.s3.loadout=Array.from({length:3},()=>({main:'inkSaverSub',subs:Array(3).fill('inkSaverSub')}));
+  actor.s3RefreshGear();
+  assert.equal(actor.s3.abilityPoints.inkSaverSub,57);
+  assert.equal(actor.s3.modifiers.inkSaverSub,.7);
+  enemy.pos.set(100,0,100);
+  const sensor=f.G.projectiles.throwBomb(actor);tick(f,30);
+  assert.notEqual(sensor.activeAt,null);
+  actor.netLife=(actor.netLife||0)+1;
+  enemy.pos.copy(sensor.pos).add(new f.THREE.Vector3(0,-.7,0));tick(f);
+  assert.ok(enemy.s3.revealedUntil[0]>f.G.time,'a previously thrown sensor still marks in the next owner life');
+});
+test('Point Sensor bursts at an enemy capsule before distant terrain',async()=>{
+  const {f,actor,enemy}=await setup();
+  f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+  const sensor=f.G.projectiles.throwBomb(actor);
+  sensor.pos.set(0,.7,0);sensor.prev.copy(sensor.pos);sensor.vel.set(0,0,60);
+  enemy.pos.set(0,0,.5);
+  tick(f);
+  assert.notEqual(sensor.activeAt,null);
+  assert.ok(sensor.pos.z<1);
+  assert.ok(enemy.s3.revealedUntil[0]>f.G.time);
+});
 test('#835 standalone cooler gives distinct one-per-player drinks and expires cleanly',async()=>{
   const {f,actor,ally,enemy}=await setup();
   ally.pos.set(0,0,1);enemy.pos.set(0,0,1);
@@ -217,7 +266,7 @@ test('#710/#835 exact pinned 1130 Point Sensor and Tacticooler duration/launch f
     assert.equal(pointSensorMarkFrames(ap,gearCurve),frames);
     assert.ok(Math.abs(pointSensorThrowSpeed(ap,gearCurve)-speed*60)<1e-9);
   }
-  assert.equal(pointSensorMarkFrames(30,gearCurve),839, '30 AP follows the existing S3 gear curve, not the table mid-index');
+  assert.equal(pointSensorMarkFrames(30,gearCurve),838, '30 AP follows the existing S3 gear curve, not the table mid-index');
   assert.deepEqual(TACTICOOLER_SOURCE.powerUpFrames,[1020,1290,1500]);
   assert.equal(TACTICOOLER_SOURCE.putFrame,900);
   assert.equal(TACTICOOLER_SOURCE.putFrameOnYagura,450);
@@ -260,4 +309,16 @@ test('#710/#835 authenticated extended source-frame packets survive r2 trailer a
   const invalid=[2.1,'ks','c',7,3,0,0,1.6,0,1501,64,25];
   nm._play('clientA',invalid);
   assert.equal(f.G.projectiles._s3SupportCoolers.length,1);
+});
+
+test('Point Sensor mark source life follows the thrown field across owner respawn',async()=>{
+  const {f,actor,enemy}=await setup();actor.remote=true;actor.owner='clientA';actor.nid=7;
+  const nm=Object.create(f.NetMatch.prototype);nm.byNid=new Map([[7,actor],[2,enemy]]);nm.match=f.G.match;f.G.netm=nm;
+  nm._play('clientA',[1,'ks','p',7,1,0,1.35,0,0,0,1,0]);
+  actor.netLife=1;
+  nm._play('clientA',[1.1,'ks','m',7,1,2,0,480,1,'l']);
+  assert.ok(!(enemy.s3.revealedUntil?.[0]>0),'current owner life cannot impersonate the prior thrown field');
+  const mark=[1.1,'ks','m',7,1,2,0,480,0,'l',61,22];mark._netTick=61;mark._netSeq=22;
+  nm._play('clientA',mark);
+  assert.equal(enemy.s3.revealedUntil[0],8,'the field source life remains valid after owner respawn');
 });
