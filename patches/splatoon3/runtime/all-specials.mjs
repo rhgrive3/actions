@@ -13,9 +13,11 @@
 // Projectiles list; direct/radius hits use Projectiles.applyHit; all ground ink
 // goes through G.paint.splat with owner claims. Special-owned devices tick at the
 // Projectiles fixed 60 Hz update and survive owner death where they were deployed.
-// Replayed `all:special` events only create FX or update remote presentation.
+// Replayed `all:special` events present remote actions; object-hit proposals
+// may change local-owned device HP after the catalogue owner/life gate.
 
 import { gearCurve } from './gear.mjs';
+import { objectGearRate, objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-specials.install.v1');
 const FPS = 60, MAX_STAMP_RADIUS = 3.74;
@@ -360,7 +362,7 @@ function objectHitProposal(rt, p, object) {
     pos: vecArray(object.pos), target: vecArray(p.pos), seed: normalizedSeed(object.seed),
     object: object.serial || 0, index: object.index || 0,
     ownerNid: Number.isInteger(object.owner?.nid) ? object.owner.nid : -1,
-    ownerLife: actorLife(object.owner),
+    ownerLife: actorLife(object.owner), attackerLife: actorLife(shooter), objectShredder: objectShredderEquipped(shooter),
     damage: Math.max(0, Math.min(10000, Number(p.damage) || 0)),
     tick: (object.proposalSerial=((object.proposalSerial||0)+1)),
   };
@@ -379,22 +381,22 @@ function sphereEntry(rt, start, end, center, radius) {
 function breakerCandidate(rt, p, start, end, object) {
   if(object.dead||object.kind!=='wave'||object.owner?.team===p?.team)return null;
   const hit=sphereEntry(rt,start,end,object.pos,.72);if(!hit)return null;
-  const length=start.distanceTo(end), point=hit.point;
+  const length=start.distanceTo(end), point=hit.point;let settled=false;
   return {distance:length*hit.t,point,normal:rt.v11.subVectors(point,object.pos).normalize().clone(),kind:'wave-breaker',onHit:()=>{
-    if(p?.ghost)return false;
+    if(p?.ghost||settled||object.dead)return false;settled=true;
     if(object.owner?.remote){objectHitProposal(rt,p,object);return true;}
-    object.hp=Math.max(0,object.hp-Math.max(1,Number(p?.damage)||1));
+    object.hp=Math.max(0,object.hp-Math.max(1,Number(p?.damage)||1)*objectGearRate(p.owner,object.id));
     if(object.hp<=0)removeWorld(rt,object,'destroy');else emitObject(rt,object,'hit');return true;
   }};
 }
 function chumpCandidate(rt, p, start, end, object) {
   if(object.dead||object.kind!=='decoy'||object.owner?.team===p?.team)return null;
   const hit=sphereEntry(rt,start,end,object.pos,.48);if(!hit)return null;
-  const length=start.distanceTo(end),point=hit.point;
+  const length=start.distanceTo(end),point=hit.point;let settled=false;
   return {distance:length*hit.t,point,normal:rt.v11.subVectors(point,object.pos).normalize().clone(),kind:'super-chump',onHit:()=>{
-    if(p?.ghost)return false;
+    if(p?.ghost||settled||object.dead)return false;settled=true;
     if(object.owner?.remote){objectHitProposal(rt,p,object);return true;}
-    object.hp=Math.max(0,object.hp-Math.max(1,Number(p?.damage)||1));
+    object.hp=Math.max(0,object.hp-Math.max(1,Number(p?.damage)||1)*objectGearRate(p.owner,object.id));
     if(object.hp<=0)removeWorld(rt,object,'destroy');else emitObject(rt,object,'hit');return true;
   }};
 }
@@ -1126,7 +1128,8 @@ function installRuntime(api) {
       try{return damage.call(this,amount,attacker,source);}finally{if(this.specialActive)this.specialActive.armor=armor;}
     }
     if((state.id==='booyahBomb'||state.id==='crabTank')&&state.armorHP>0){
-      const shield=state.armorHP,absorbed=Math.min(shield,amount),left=Math.max(0,amount-absorbed);
+      const rate=objectGearRate(attacker,state.id);
+      const shield=state.armorHP,absorbed=Math.min(shield,amount*rate),left=Math.max(0,amount-absorbed/rate);
       state.armorHP=Math.max(0,shield-absorbed);
       if(this.specialActive)this.specialActive.armorHP=state.armorHP;
       api.emit?.('actor:armorhit',{actor:this,absorbed,broken:state.armorHP<=0,kind:state.id});
@@ -1228,7 +1231,9 @@ function replayObjectEvent(rt,actor,event) {
     if(!owner||owner.remote||owner.nid!==event.ownerNid||actorLife(owner)!==event.ownerLife||!actor.remote||actor.team===owner.team)return false;
     const object=(rt.system._s3AllSpecialObjects||[]).find(o=>o.owner===owner&&o.activation===event.activation&&o.serial===event.object&&o.id===event.id);
     if(!object||object.kind==='screen'||object.hp<=0)return false;
-    object.hp=Math.max(0,object.hp-Math.max(1,Math.min(10000,Number(event.damage)||0)));
+    if(event.attackerLife!==undefined&&actorLife(actor)!==event.attackerLife)return false;
+    const rate=withObjectHitGear(actor,event.objectShredder,()=>objectGearRate(actor,object.id));
+    object.hp=Math.max(0,object.hp-Math.max(1,Math.min(10000,Number(event.damage)||0))*rate);
     if(object.hp<=0)removeWorld(rt,object,'destroy');else emitObject(rt,object,'hit');
     return true;
   }
@@ -1270,8 +1275,9 @@ function replayObjectEvent(rt,actor,event) {
 }
 /**
  * Replays one validated parent-forwarded event. The event.actor must already be
- * rebound to its roster Actor. Replay is cosmetic and never changes turf, HP,
- * device HP, object authority, or the native projectile list.
+ * rebound to its roster Actor by the accepted sender/life envelope. Most replay
+ * is presentation-only; objectHit is an explicit proposal adjudicated only by
+ * the device owner. It never grants the sender ownership or changes actor HP.
  */
 export function replaySpecial(api,event) {
   const rt=runtimes.get(api?.Projectiles);const actor=event?.actor;

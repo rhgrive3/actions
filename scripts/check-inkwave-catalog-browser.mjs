@@ -177,6 +177,19 @@ try {
         advanceTenacity(a,1,api);check(Math.abs(a.special-3.24)<1e-8,'Tenacity compiled gauge');
         uniqueGearChecks.push({ability:'tenacity',gauge:a.special});
       }
+      const objectGearChecks=[];
+      for(const id of ['booyahBomb','crabTank'])for(const equipped of [false,true]){
+        const defender=makeActor('shooter'),attacker=makeActor('shooter');attacker.team=1;attacker.pos.set(0,0,5);G.actors=[defender,attacker];
+        attacker.s3.loadout=emptyLoadout();if(equipped)attacker.s3.loadout[2].main='objectShredder';attacker.s3RefreshGear();
+        defender.weapon={...defender.weapon,special:id,specialCost:100};defender.special=100;defender._startSpecial();defender._updateSpecial(1/60);defender.invuln=0;
+        const state=defender._s3AllSpecialState,rate=equipped?(id==='crabTank'?1.3:1.1):1,before=state.armorHP;
+        defender.damage(100,attacker,'shooter');check(Math.abs(state.armorHP-(before-100*rate))<1e-8,id+' compiled target gear');
+        state.armorHP=50;defender.specialActive.armorHP=50;defender.hp=100;
+        const bodyFactor=defender.specialActive.armor?.valueOf()===true?.25:1;
+        defender.damage(100,attacker,'shooter');const expected=100-Math.floor((100-50/rate)*bodyFactor*10+1e-9)/10;
+        check(state.armorHP===0&&Math.abs(defender.hp-expected)<1e-8,id+' compiled armor break');
+        objectGearChecks.push({id,equipped,rate,bodyHp: defender.hp});defender.reset();
+      }
       const kitChecks=[];
       for(const record of records){
         G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
@@ -240,7 +253,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks, weightChecks, uniqueGearChecks,
+        kitChecks, weightChecks, uniqueGearChecks, objectGearChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
