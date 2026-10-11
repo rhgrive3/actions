@@ -33,5 +33,29 @@ export function adaptPaintHotpath(rel, code, replaceOnce) {
   change('if (fid < 0 || (Number.isInteger(opts.face) && opts.face >= 0 && fid !== opts.face)) continue;',
     'if (fid < 0 || (faceOnly >= 0 && fid !== faceOnly)) continue;',
     'reuse stable per-splat face gate');
+  // Every paint quad has only two distinct U and V coordinates. Convert
+  // those four coordinates once, not again for each of the four vertices.
+  // Keep the exact original arithmetic/rounding and attribute order.
+  change(
+    `    const q = this.quads++;
+    const flags = (f.wall ? 1 : 0) + 2 * kind;
+    for (let c = 0; c < 4; c++) {
+      const cu = c === 1 || c === 2 ? u1 : u0, cv = c >= 2 ? v1 : v0;
+      const vi = q * 4 + c;
+      const px = a.x + a.pad + cu * a.ppm, py = a.y + a.pad + cv * a.ppm;
+      this.aPos[vi * 2] = (px / S) * 2 - 1;
+      this.aPos[vi * 2 + 1] = (py / S) * 2 - 1;`,
+    `    const q = this.quads++;
+    const flags = (f.wall ? 1 : 0) + 2 * kind;
+    const x0 = ((a.x + a.pad + u0 * a.ppm) / S) * 2 - 1;
+    const x1 = ((a.x + a.pad + u1 * a.ppm) / S) * 2 - 1;
+    const y0 = ((a.y + a.pad + v0 * a.ppm) / S) * 2 - 1;
+    const y1 = ((a.y + a.pad + v1 * a.ppm) / S) * 2 - 1;
+    for (let c = 0; c < 4; c++) {
+      const cu = c === 1 || c === 2 ? u1 : u0, cv = c >= 2 ? v1 : v0;
+      const vi = q * 4 + c;
+      this.aPos[vi * 2] = c === 1 || c === 2 ? x1 : x0;
+      this.aPos[vi * 2 + 1] = c >= 2 ? y1 : y0;`,
+    'reuse identical paint quad atlas coordinates');
   return code;
 }
