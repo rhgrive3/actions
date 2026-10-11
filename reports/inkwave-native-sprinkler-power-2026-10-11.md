@@ -28,3 +28,7 @@ Latest-main composition: official main675731132cc419bd2026db0692f918828d60393f (
 Old head `773a06617d320c8d2c45ff8ac945327ad5cfaf4b` completed Validate38175897338, numerical38175897383 and reopened38175897344 successfully. Chromium/WebKit each passed the three AP0/10/57 native period-connection checks; these do not resolve the noted AP10 second-phase integerization.
 
 After new main `062c4a81f5a989406d3d65f5803ee074bd9cc0d4` (PR1246 models/motion), merged production build `5ea06d5c28bfa5167270e8b7930737ec9853ab9309c6d769223a637a042b8d5a` passed 54/54 actual-built Sprinkler/native-object/direct-resistance/model-registry checks, including all65 model geometry and real Actor/Runner/Character carry/attack. All63 changed textual main blobs were fixed-SHA fetched and verified. Local validation omits267 report-only PNG/JPG blobs; publication retains their official remote SHAs. New-head hosted CI is still required. Mark1255 remains a separate candidate.
+
+## Adopted Fast acceleration integration
+
+Integrated main59300d47875235f07b74684fbbc9aec9ba4b48a7 (PR1257), preserving groundAcceleration and all eight hosted acceleration probes. Actual production-built 14/14 Sprinkler/Fast regressions passed. Manifest 3ca2a45319c4daa232f1691cc621ec50103538d292baf0341adfaead16b244d6. The new base retains the 267 official report-image blob SHAs; local tests still omit report-only images.
