@@ -90,3 +90,17 @@ CI run 38121431263／head `9b5481b3f8c11255e5539f583f17c551da478db3` は変更�
 仕上げ時にmainが `d675364691c806af16c001d9cb745da5fdf559c2`（PR #1221の65 canonical kits、tree `57de973bbc84554001064ce23c77fffc2682dc6c`）へ進んだため、その履歴を通常mergeで取り込んだ。`main-weapon-catalog.mjs` の既存read-only弾観測は自動mergeで保持され、今回の描画runtime SHA `46df9b63…` とwarmup harness SHA `bbdf119e…` は不変。次のvisual workflowの対照をこの最新mainへ固定し、同じkit基盤で両buildを再撮影する。初期main／PR1182の基点と一致した旧tree、head9b5481の48組の画像・CIは、キット統合前の履歴証拠として保持する。新mainと旧撮影baselineのtreeが一致すると宣言しない。
 
 取り込み後の実native描画19件＋canonical kit11件は30/30成功、skip／fail0。本番build content hashは `f44a29feff9f852c2013fc22dd96dd386a6a07273798aa2541d92d363ed7f342` となった。生成buildのpackagingは正確なcommitted input blob照合を含め8/8成功。描画source不変でもキット統合により本番build全体のhashは変わるため、旧 `f5da66ee…` の画面をこの新buildの撮影結果とは扱わない。最新headの全CI・性能は次のreceiptで記録する。
+
+## 引き継ぎ後の仕上げと性能計測の完了条件
+
+チェックポイント `cb31036aa92e8b3d541dbf56f4c468562d7b7af1` のValidate run `38124281831` は、10 jobs成功・診断1 job skipで完了した。visual run `38124281897` は変更前・変更後ともwarmup失敗で終了したが、最新main `d6753646…` と本番content hash `f44a29fe…` の48組の画面を取得している。再開時にartifactを取得し、48組のカメラ・native弾状態・6シナリオの発射後乱数を再照合して一致、174原画像/cropのSHA-256一致、両側GLエラー0を確認した。旧キット統合前の画像を新buildと呼び替えたものではない。性能未測定の失敗runを完了扱いにはしない。
+
+再開後の低画質Chromium/SwiftShader診断では、従来の携帯viewport `390×844` が本番のportrait guardを作動させ、offlineの物理更新・発射を停止することを再現した。携帯計測を対応する横画面 `844×390` へ変更し、ガードを維持した。また、本番Turfのローカルプレイヤーとcontroller、`G.mode`、Matchの同一性まで起動条件に含め、起動失敗時の観測状態を保存する。設定の既定difficultyはnormalであり、従来の「easy」という撮影metadataをnormalへ訂正した。
+
+従来のhost側6秒待機は遅いsoftware rendererでは1〜5フレームしか測れず、ウォームアップ終了後のキュー待ちも計測終了へ混入していた。新しい計測は実ゲームのframe終了で境界を確定し、**実時間6秒以上かつnative frame/render/rAF各12標本以上**まで継続する。120秒で不成立なら失敗し、実測時間・60Hzゲーム時計の進行量・失敗時の生配列を保存する。手動の物理step、Timerの置換、描画省略、インク補給、発射頻度の変更は行わない。高負荷下の`simulatedSeconds`は実時間と異なるので、原receiptの両方を参照する。
+
+性能行には発射・非空物理更新・**実描画に渡された非空の弾geometry**が必要である。新backendの`syncVisuals`のCPU時間、描画body/vertex分布も記録し、`Projectiles.update`の時間だけで描画mesh生成費用を代表させない。GPU timerが未公開またはdisjointなら有効なGPU時間として集計しない。FPS/CPU/GPU/heap/GC/draw/triangleの実数は、端末・画質・viewport・実時間・ゲーム時間と一緒に後続CI artifactへ保存する。
+
+`scripts/compare-inkwave-projectile-captures.py --require-complete`をCIへ組み込み、両run成功、48組の物理一致、6発射の乱数証明、desktop/携帯横画面の有効な連射行、全原PNG/crop hashを要求する。14種類のカメラ・乱数・接触・retirement・塗り等の比較負例/正例と、失敗/空/1-frame/発射0/描画0/縦画面/画像破損等のadmission試験を追加した。スクリーンショットだけ成功した過去runは、この完了gateでは明示的に拒否される。
+
+描画runtimeはSHA-256 `46df9b632c65dbaef57d92e4803c06c9a867362b41ae9d7bd773915969329155`のままで、本番描画・ゲームロジックの変更は加えていない。完了gateの成功はINKWAVEの実装・計測の成立を示す。NintendoのEmitter/mesh/shader同一性、統制Splatoon 3 11.3.0比較、Android実GPUの検証は引き続き別の未確認項目であり、CI成功からそれらの一致や無悪化を宣言しない。

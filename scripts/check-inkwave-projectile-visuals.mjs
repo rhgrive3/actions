@@ -1069,6 +1069,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
       fireCalls: 0, renderSamples: 0, renderCalls: [], triangles: [], raf: [], maxProjectiles: 0,
       firstFrame: null, frameStates: [], blurEvents: 0, focusEvents: 0, visibilityChanges: [] };
     window.__inkwavePerf = { active: false, warming: false, raf: [], frames: [], loopTimestamps: [], projectileMs: [], renderMs: [], calls: [], triangles: [],
+      visualGeometryMs: [], visualBodies: [], visualVertices: [], nonemptyVisualRenders: 0,
       projectileUpdates: 0, nonemptyProjectileUpdates: 0, fireCalls: 0, maxProjectiles: 0, gpuQueries: [], timer: null };
     const perf = window.__inkwavePerf;
     perf.warmup = warmup;
@@ -1172,6 +1173,15 @@ async function runFiringPerformance({ mobile = false } = {}) {
         return oldFire.apply(this, args);
       };
     }
+    if (typeof P.syncVisuals === 'function') {
+      const oldSyncVisuals = P.syncVisuals;
+      P.syncVisuals = function (...args) {
+        if (!perf.active) return oldSyncVisuals.apply(this, args);
+        const t = performance.now();
+        try { return oldSyncVisuals.apply(this, args); }
+        finally { perf.visualGeometryMs.push(performance.now() - t); }
+      };
+    }
     const oldRender = R.render;
     R.render = function (...args) {
       const gl = G.renderer.getContext(), timer = perf.timer;
@@ -1192,6 +1202,11 @@ async function runFiringPerformance({ mobile = false } = {}) {
         }
         if (perf.active) {
           perf.renderMs.push(performance.now() - t); perf.calls.push(G.renderer.info.render.calls); perf.triangles.push(G.renderer.info.render.triangles);
+          const visuals = P.projectileVisuals;
+          const bodies = visuals ? visuals.mesh.visible ? visuals.bodies : 0 : P.blobs?.count ?? 0;
+          perf.visualBodies.push(bodies);
+          perf.visualVertices.push(visuals?.stats.vertexCount ?? null);
+          if (bodies > 0) perf.nonemptyVisualRenders++;
         } else if (perf.warming) {
           warmup.renderSamples++; warmup.renderCalls.push(G.renderer.info.render.calls); warmup.triangles.push(G.renderer.info.render.triangles);
         }
@@ -1309,6 +1324,11 @@ async function runFiringPerformance({ mobile = false } = {}) {
       frameCpuMs: perf.frames,
       projectileCpuMs: perf.projectileMs,
       renderCpuMs: perf.renderMs,
+      visualGeometryCpuMs: perf.visualGeometryMs,
+      visualBodies: perf.visualBodies,
+      visualVertices: perf.visualVertices,
+      nonemptyVisualRenders: perf.nonemptyVisualRenders,
+      visualBackend: G.projectiles.projectileVisuals ? 'source-aware-history' : 'legacy-native',
       renderCalls: perf.calls,
       triangles: perf.triangles,
       gpuRenderMs: gpu,
@@ -1343,12 +1363,14 @@ async function runFiringPerformance({ mobile = false } = {}) {
   const fps = loopFrameMs?.p50 > 0 ? 1000 / loopFrameMs.p50 : null;
   if (windowResult.status !== 'passed' || measured.nativeLoopTimestamps.length < MIN_PERFORMANCE_FRAMES ||
       measured.frameCpuMs.length < MIN_PERFORMANCE_FRAMES || measured.renderCpuMs.length < MIN_PERFORMANCE_FRAMES ||
-      !measured.projectileUpdates || !measured.nonemptyProjectileUpdates || !measured.fireCalls || !measured.maxProjectiles || !rAF?.n || !fps) {
+      !measured.projectileUpdates || !measured.nonemptyProjectileUpdates || !measured.fireCalls || !measured.maxProjectiles ||
+      !measured.nonemptyVisualRenders || !rAF?.n || !fps) {
     report.performanceFailures.push({ scenario: mobile ? 'mobile-emulated-long-fire' : 'desktop-long-fire', measured });
     throw new Error(`${mobile ? 'mobile' : 'desktop'} performance window did not measure live native match firing/rendering: ${JSON.stringify({
       nativeFrames: measured.nativeLoopTimestamps.length, frameSamples: measured.frameCpuMs.length, renderSamples: measured.renderCpuMs.length,
       projectileUpdates: measured.projectileUpdates, nonemptyProjectileUpdates: measured.nonemptyProjectileUpdates,
       fireCalls: measured.fireCalls, maxProjectiles: measured.maxProjectiles, rAF: rAF?.n ?? 0,
+      nonemptyVisualRenders: measured.nonemptyVisualRenders,
     })}`);
   }
   const gcSummary = gcTraceStarted && !gcTraceFailure ? (() => {
@@ -1388,6 +1410,10 @@ async function runFiringPerformance({ mobile = false } = {}) {
     browser: await page.evaluate(() => navigator.userAgent), fps, nativeLoopFrameMs: loopFrameMs, rAFms: rAF, frameCpuMs: cpu, projectileCpuMs: proj, renderCpuMs: render,
     warmup: warmupReceipt,
     renderCalls: summary(measured.renderCalls), triangles: summary(measured.triangles),
+    visualGeometryCpuMs: summary(measured.visualGeometryCpuMs),
+    renderedVisualBodies: summary(measured.visualBodies),
+    renderedVisualVertices: measured.visualBackend === 'source-aware-history' ? summary(measured.visualVertices) : null,
+    visualBackend: measured.visualBackend, nonemptyVisualRenders: measured.nonemptyVisualRenders,
     nativeFrames: measured.nativeLoopTimestamps.length,
     projectileUpdates: measured.projectileUpdates,
     nonemptyProjectileUpdates: measured.nonemptyProjectileUpdates,

@@ -749,6 +749,7 @@ def verify_complete(document: dict[str, Any]) -> dict[str, Any]:
                 or row.get("rafSamples", 0) < 11 or row.get("durationMs", 0) < 6000
                 or row.get("fireCalls", 0) <= 0 or row.get("nonemptyProjectileUpdates", 0) <= 0
                 or row.get("maxProjectiles", 0) <= 0 or row.get("fps", 0) <= 0
+                or row.get("nonemptyVisualRenders", 0) <= 0
                 or not row.get("warmup", {}).get("admitted")):
             errors.append(f"invalid measured workload: {row.get('scenario')}")
         if row.get("scenario") == "mobile-emulated-long-fire":

@@ -5,6 +5,9 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+import sys
+
+sys.dont_write_bytecode = True
 
 helper = Path(__file__).resolve().parents[1] / 'compare-inkwave-projectile-captures.py'
 spec = importlib.util.spec_from_file_location('projectile_capture_comparator', helper)
@@ -17,7 +20,8 @@ def completed_receipt():
     for scenario in ['desktop-long-fire', 'mobile-emulated-long-fire']:
         rows.append(dict(scenario=scenario, nativeFrames=12, renderSamples=12, rafSamples=11,
                          durationMs=6000, fireCalls=5, nonemptyProjectileUpdates=12,
-                         maxProjectiles=3, fps=2, warmup={'admitted': True}, viewport=[844, 390]))
+                         maxProjectiles=3, nonemptyVisualRenders=12, fps=2,
+                         warmup={'admitted': True}, viewport=[844, 390]))
     return dict(status='passed', errors=[], screenshots=[{'runtime': {'render': {'glErrors': []}}}] * 48,
                 visualScenarios=[{'name': str(i), 'rng': {'afterNativeFire': dict(seed=i, draws=3, state=42)}}
                                  for i in range(6)], performance=rows)
@@ -32,6 +36,7 @@ class AdmissionTests(unittest.TestCase):
     def test_failed_missing_or_idle_windows_are_rejected(self):
         changes = [lambda d: d.update(status='failed'), lambda d: d.update(performance=[]),
                    lambda d: d['performance'][0].update(fireCalls=0),
+                   lambda d: d['performance'][0].update(nonemptyVisualRenders=0),
                    lambda d: d['performance'][0].update(nativeFrames=1),
                    lambda d: d['performance'][0].update(durationMs=5999),
                    lambda d: d['performance'][0].update(warmup={'admitted': False}),
