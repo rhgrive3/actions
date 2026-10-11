@@ -4,8 +4,8 @@ import { fixture } from './source-fixture.mjs';
 import { abilityAllowed, emptyLoadout, normalizeLoadout, abilityPoints, gearCurve } from '../runtime/gear.mjs';
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 const extra=`export * from './inkwave-public/src/game/match.js'; export * from './inkwave-public/src/net/netmatch.js';`;
-async function setup(duration=180){
-  const f=await fixture(extra),m=new f.Match({duration});f.G.match=m;
+async function setup(duration=180,productionComposition=false){
+  const f=await fixture({extraExports:extra,productionComposition}),m=new f.Match({duration});f.G.match=m;
   // Isolate these ability windows from the separate Flow activation threshold.
   // Real Flow+gear stacking is exercised by conditional-gear-composition.mjs.
   f.profile.flow.threshold=1e6;
@@ -133,14 +133,14 @@ test('sub resistance is applied before armor and only quantized at the final HP 
   v.specialActive=null;v.hp=100;v.form='squid';v.submerged=v.grounded=true;v.vel.set(0,0,12);v.intent.move.set(0,0,-1);f.beforeActions(v,1/60,true);assert.ok(v.s3.actions.armor);
   v.damage(180,owner,'bomb');close(v.hp,20);
 });
-test('network routing sends the unreduced band and victim owner applies its own gear once',async()=>{
-  const f=await setup(),owner=f.make(),v=enemy(f);equip(owner,'none','subResistance',57);equip(v,'none','subResistance',3);
-  v.pos.set(0,-.7,5);v.invuln=0;v.nid=1;owner.nid=2;owner.remote=true;f.G.actors=[owner,v];
-  const system=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=system;let packet;
-  f.G.netm={shouldApplyHit:()=> 'send',sendHit:(a,t,d,w)=>packet={a:a.nid,v:t.nid,d,w}};
-  system._explodeBomb({owner,team:0,pos:new f.THREE.Vector3()});close(v.hp,100);close(packet.d,30);assert.equal(packet.w,'splat-bomb-far');
-  const net=new f.NetMatch({myId:'local'},{});net.byNid.set(1,v);net.byNid.set(2,owner);f.G.netm=net;
-  net._hit(packet);close(v.hp,71.5);assert.equal(net._applyingHit,false);
+test('composed bomb damage is victim-owned and rejects attack-side network guesses',async()=>{
+  const f=await setup(180,true),owner=f.make(),v=enemy(f);equip(owner,'none','subResistance',57);equip(v,'none','subResistance',3);
+  v.pos.set(0,-.7,5);v.invuln=0;v.nid=1;owner.nid=2;owner.remote=true;owner.owner='peer';f.G.actors=[owner,v];
+  const system=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=system;
+  const net=new f.NetMatch({myId:'local'},{id:'gear-match'});net.byNid.set(1,v);net.byNid.set(2,owner);f.G.netm=net;
+  const packet={m:'gear-match',a:2,v:1,d:30,w:'splat-bomb-far'};
+  net._hit(packet,'peer');close(v.hp,100);
+  system._explodeBomb({owner,team:0,pos:new f.THREE.Vector3()});close(v.hp,71.5);
 });
 test('actor isolation and30/60/120Hz fixed partitions preserve expiry and boundary results',async()=>{
   const traces=[];
@@ -150,4 +150,14 @@ test('actor isolation and30/60/120Hz fixed partitions preserve expiry and bounda
     traces.push([expired,a.weapon.inkPerShot,b.s3.modifiers.runSpeed]);
   }
   assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);assert.equal(traces[0][0],30);
+});
+
+test('optional authoritative ranked count and overtime activate real Actor ink gear, turf stays count-free',async()=>{
+ const f=await setup(300),a=f.make();equip(a,'lastDitchEffort');f.m.time=200;
+ f.m.mode='zones';f.m.follower=false;f.m.ranked={mode:'zones',counts:[100,100],revision:1,winner:null,overtime:false,update(){},snapshot(){}};
+ const base=a.weapon.inkPerShot;
+ for(const [count,ap]of [[51,0],[50,0],[49,1],[40,9],[30,18]]){f.m.ranked.counts[1]=count;f.m.ranked.revision++;f.tick(a);close(a.weapon.inkPerShot,base*gearCurve(ap,...f.profile.gear.inkSaverMain));}
+ f.m.ranked.counts=[30,100];f.tick(a);close(a.weapon.inkPerShot,base);
+ f.m.ranked.overtime=true;f.m.time=0;f.tick(a);close(a.weapon.inkPerShot,base*gearCurve(18,...f.profile.gear.inkSaverMain));
+ f.m.mode='turf';f.tick(a);close(a.weapon.inkPerShot,base);
 });

@@ -224,8 +224,9 @@ test('remote Roller contact waits for owner acceptance, retries after rejection,
     assert.equal(sender.wire.length, 2, 'the rejection acknowledgement admits a retry without starting the configured 0.4-second debounce');
     assert.equal(runner.rollHits.get(victim), sender.G.time);
     // #1185: the hit wire carries its creating match id (m) beside the existing fields.
-    assert.deepEqual(Object.keys(sender.wire[1].data).sort(), ['a', 'd', 'h', 'k', 'l', 'm', 'rp', 'seq', 'v', 'w']);
+    assert.deepEqual(Object.keys(sender.wire[1].data).sort(), ['a', 'd', 'h', 'k', 'l', 'm', 'os', 'rp', 'seq', 'v', 'w']);
     assert.equal(sender.wire[1].data.rp, false, 'ordinary contact carries the accepted equipment flag without inventing Punisher');
+    assert.equal(sender.wire[1].data.os, false, 'ordinary contact does not invent Object Shredder equipment');
 
     receiver.victim.invuln = 0;
     receiver.victim.specialActive = { armor: true };

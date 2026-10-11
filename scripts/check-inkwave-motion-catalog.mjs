@@ -409,6 +409,11 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   installDisconnectFidelity(api);
   installSlosherIntermediatePaint(api, profile);
   installIssueEightFollowup(api);
+  // Ranked bootstrap ships a separate module graph, but this isolated Turf
+  // motion fixture never enters the ranked bootstrap path. Load and verify its
+  // immutable emitted graph without changing the Turf fixture's behaviour.
+  const { installRanked } = await import(prefix + 'patches/splatoon3/runtime/ranked/install.mjs');
+  if (typeof installRanked !== 'function') throw Error('Ranked runtime installer missing');
   // Exercise the real Match dependency entry, including its deadline helper.
   const { Match } = await import(prefix + 'src/game/match.js');
   const turfFinish = globalThis.catalogTurfFinishProbe(Match, G);
