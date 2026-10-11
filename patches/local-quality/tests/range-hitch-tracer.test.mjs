@@ -178,7 +178,7 @@ test('opt-in profileRange=1 dynamically attaches tracer to existing page recorde
   assert.equal(await off.ready,null);
   assert.equal(off.snapshot().gpuTimeMs,'unmeasured');
 });
-test('final shipped six-layer main connects live Game only to opt-in on-demand profiler',()=>{
+test('final shipped main and platform override both connect the opt-in profiler',()=>{
   const raw=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const main=adaptBuildSource('src/main.js',raw);
   assert.match(main,/createFrameTimingProbe\(\{ env: globalThis, game: this \}\)/);
@@ -186,6 +186,14 @@ test('final shipped six-layer main connects live Game only to opt-in on-demand p
   assert.ok(!main.includes("from '../patches/local-quality/range-hitch-tracer.mjs'"),
     'GPU profiler must not enter static game imports');
   assert.doesNotThrow(()=>new vm.SourceTextModule(main));
+  // The runtime replaces Game._loop; the original source-only gate missed
+  // that the actual frame owner never started the opt-in profiler.
+  const platform=fs.readFileSync(new URL('../platform-game.mjs',import.meta.url),'utf8');
+  assert.ok(platform.includes('P._loop = function () { ensure(this).driver.start(); };'));
+  assert.ok(platform.includes('game._rangeFrameProbe = createFrameTimingProbe({ env, game });'));
+  assert.ok(platform.includes('probe.record(frameStart, env.performance.now() - frameStart, {'));
+  assert.ok(!platform.includes('import { createFrameTimingProbe }'),
+    'normal startup must not eagerly import profiling');
 });
 
 test('Playwright polls an entirely synchronous, completed Practice Range trace', () => {
