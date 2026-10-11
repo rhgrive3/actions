@@ -11,6 +11,7 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { projectileDrawRadius, projectileVisualWidth } from '../patches/splatoon3/runtime/projectile-visuals.mjs';
+import { completeNativeTurfIntro } from './lib/inkwave-projectile-ci-intro.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const option = (name, fallback) => {
@@ -152,11 +153,25 @@ async function openGameContext({ mobile = false } = {}) {
     };
   }, { setting: quality, bootSeed: BOOT_SEED });
   await page.goto(address + '?map=tidewater&difficulty=normal&autostart=180&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
-  try { await page.waitForFunction(() => {
-    const g = window.__inkwave, G = window.__G, m = g?.match;
-    return G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
-      !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer;
-  }, null, { timeout: 180000 }); } catch (error) {
+  try {
+    // In SwiftShader an intro frame can take over a second to render. Finish
+    // only the noninteractive 4.2s native Turf intro through Game._frame while
+    // suppressing those cinematic renders. Never fast-forward live gameplay.
+    await page.waitForFunction(() => {
+      const g = window.__inkwave, G = window.__G, m = g?.match;
+      return G?.mode === 'match' && m === G.match &&
+        (m?.state === 'intro' || m?.state === 'playing') &&
+        !m.attract && m.local?.isLocal && m.controller && g.debug &&
+        G.projectiles && G.renderer;
+    }, null, { timeout: 60000 });
+    const introTransition = await page.evaluate(completeNativeTurfIntro);
+    (report.provenance.introTransitions ||= []).push({ mobile, ...introTransition });
+    await page.waitForFunction(() => {
+      const g = window.__inkwave, G = window.__G, m = g?.match;
+      return G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
+        !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer;
+    }, null, { timeout: 30000 });
+  } catch (error) {
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return { mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
