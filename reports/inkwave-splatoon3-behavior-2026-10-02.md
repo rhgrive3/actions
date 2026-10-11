@@ -3938,3 +3938,9 @@ Not changed and still unverified: Dualies aerial slide descent (no sourced field
 [弾形状再構築の検証記録](inkwave-projectile-reconstruction-2026-10-11.md)。統合PR1182の生成コード上へ最終adapterを追加し、Shooter軌跡ロッド、Roller横／縦液膜、Bucket前4＋後5の異なる輪郭を接続する。11.3.0の65原典JSONとユニット別DrawSizeを照合し、既存半径／塗り／衝突／通信所有者は維持。形状式、通常Shooterの2F、既存width校正は未確定の近似。初期化乱数の消費、粗い更新履歴、衝突終端、壁垂れ時計、Roller接続を独立レビューで修正。通常起動した本番buildの撮影scriptと変更前後CIを追加したが、ローカルWebGL起動は環境制約で失敗しており、本家11.3.0の条件統一比較・実Android・性能無悪化は未検証。Draftを維持し、完全一致と表現しない。
 
 実画面レビュー後、長い履歴に引き伸ばされていた先端の丸みを描画半径だけで決めるよう修正した。Roller横振りの独立帯が強すぎる残差には、同じvolley・出生時計の近接する共有履歴を薄膜で接続する。全頂点は実軌跡から作り、接続の厚みや上限は独自近似として記録する。壁撮影器は凍結した初回Squid Spawnの所有状態が残ると壁の向こうから発射していたため、native Actor.spawnAt/resetを使って中立状態へ戻す。検証用の照準を明示し、seed設定と本番発射を同じ同期呼び出しで行う。これらの撮影器修正は本体の発射、当たり判定、塗り、ネットワーク処理を変更しない。新液膜の最終ブラウザ／性能CIは別receiptで合否を示す。
+
+head `9b5481b3` の実ブラウザCI run 38121431263で変更前48枚・変更後48枚を取得。全174画像／cropのSHA、48組のカメラ条件・native弾状態、6シナリオの発射乱数状態が一致し、GLエラー0、影更新48/48を確認した。横振りF5は13主弾と10履歴接続を単一batchに描画。通常Actor.updateから壁に2Fで衝突するShooterのwall-drop、9発出生後のSlosher床着弾を、native Hit／retirement／塗りcoverageとともに確認した。drops／puffs／rings／checksの装飾FX統計は両buildで差があり、物理・塗り一致判定と分けて原診断を保存する。現行onDropletLand／onSpeckの塗り無効化を保持し、原典の液膜形状や本家との一致は未検証のまま。
+
+同headのValidate run 38121431208は10 jobs成功、render-diagnosticのみ条件付きskip。visual workflowは連射計測がnative frame1／fire0／非空弾更新0で厳格gateに拒否され失敗した。有効なFPS／GPU結果とは扱わない。60秒以内の実native loopで複数frame／rAF／render、実発射と非空弾更新、現在の入力／intentが成立してから6秒の計測へ入るよう撮影器を修正した。最初のframeのintentはFixedClock tick前にfalseになり得るため診断のみとし、合格基準や物理処理を緩和しない。計測回数、draw call／三角形分布も保存する。独立レビュー・syntax確認は成功、修正後CIの性能実行は未取得。Nintendo条件統一比較とAndroid実機性能も未実施であり、PR1220はDraft・未マージを維持する。
+
+同日mainへマージされたPR1221（`d6753646`）のcanonical 65 kitsを通常mergeで取り込み、描画observerと既存kit所有者を併存させる。描画runtime／warmup harnessは不変。次の実ブラウザ比較は同じ最新mainをbaselineとし、旧PR1182基点の48画像比較はキット統合前の証拠として区別する。描画PRでキット性能を独自に変更したものではない。

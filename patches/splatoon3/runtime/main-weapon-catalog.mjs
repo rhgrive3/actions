@@ -1,3 +1,5 @@
+import { validateCanonicalKits } from './canonical-kits.mjs';
+import { CANONICAL_KITS } from './canonical-kits-data.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
@@ -6,8 +8,8 @@ import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
-// retain their mature owners. Models and retail sub/special-kit expansion are
-// separate work. Extracted numbers do not certify Nintendo engine equivalence.
+// retain their mature owners. Canonical kit identities use the pinned table.
+// Models remain separate work. Extracted numbers do not certify Nintendo engine equivalence.
 const EPS = 1e-9, HZ = 60, DT = 1 / HZ, RAD = Math.PI / 180;
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -115,7 +117,9 @@ function definition(r, api) {
   const inkTankScale=r.sourceActor==='WeaponShooterFirst'?1.1:1;
   return { id:r.id, name:r.names[api.LANG==='ja'?'ja':'en'], referenceNames:r.names, kind:'catalog', behaviorKind:r.family,
     modelKind:r.modelKind, class:{brush:'Brush',brella:'Brella',stringer:'Stringer',splatana:'Splatana'}[r.family] || existing.class,
-    catalogRecord:r, sourceMainActor:r.sourceActor, sub:'bomb', special:'slam', specialCost:190, kitStatus:'original-inkwave-kit',
+    catalogRecord:r, sourceMainActor:r.sourceActor, ...CANONICAL_KITS[r.id],
+    kitReference:CANONICAL_KITS[r.id].main, kitStatus:'verified-base-kit',
+    kitVerifiedSlots:['sub','special'], kitMissingSlots:{},
     blurb:'Main-weapon numerical reference: Splatoon 3 11.3.0. Shared temporary model.',
     range:Math.max(1, actualRange), rangeMax:Math.max(1,actualRange), rangeMin:finite(move.DistanceMinCharge,1),
     matchmakingRange:r.matchmakingRange, damage:damageMax(r), damageMin:finite(p.DamageParam?.ValueMin,0)/10,
@@ -158,6 +162,7 @@ function initialState(r) {
 }
 
 export function installMainWeaponCatalogRuntime(api, profile) {
+  validateCanonicalKits(api);
   const { WeaponRunner, Projectiles, Actor, THREE, G, PLAYER, Hit, emit, on, WEAPONS } = api;
   const R = WeaponRunner.prototype, P = Projectiles.prototype;
   if (Object.hasOwn(R, INSTALLED)) return;

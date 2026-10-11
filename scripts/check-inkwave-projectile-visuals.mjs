@@ -89,6 +89,7 @@ const report = {
   screenshots: [],
   visualScenarios: [],
   performance: [],
+  performanceWarmups: [],
   browserDiagnostics: [],
   comparisonStatus: 'not-run',
   comparisonNote: 'This invocation captures one build only; a before/after comparison requires both baseline and candidate runs.',
@@ -1019,7 +1020,6 @@ async function runFiringPerformance({ mobile = false } = {}) {
   const { context, page } = await openGameContext({ mobile });
   const cdp = await context.newCDPSession(page);
   await cdp.send('Performance.enable');
-  const before = await cdp.send('Performance.getMetrics');
   const gcEvents = [];
   let gcTraceStarted = false, gcTraceFailure = null, resolveTraceComplete;
   const traceComplete = new Promise(resolve => { resolveTraceComplete = resolve; });
@@ -1036,24 +1036,71 @@ async function runFiringPerformance({ mobile = false } = {}) {
   await page.evaluate(() => {
     const G = window.__G, g = window.__inkwave, P = G.projectiles, R = g.R;
     g.debug.freezeBots(); G.settings.cameraShake = 0;
-    window.__inkwavePerf = { active: false, raf: [], frames: [], loopTimestamps: [], projectileMs: [], renderMs: [], calls: [], triangles: [],
+    const warmup = { nativeFrames: 0, frameSamples: 0, projectileUpdates: 0, nonemptyProjectileUpdates: 0,
+      fireCalls: 0, renderSamples: 0, renderCalls: [], triangles: [], raf: [], maxProjectiles: 0,
+      firstFrame: null, blurEvents: 0, focusEvents: 0, visibilityChanges: [] };
+    window.__inkwavePerf = { active: false, warming: false, raf: [], frames: [], loopTimestamps: [], projectileMs: [], renderMs: [], calls: [], triangles: [],
       projectileUpdates: 0, nonemptyProjectileUpdates: 0, fireCalls: 0, maxProjectiles: 0, gpuQueries: [], timer: null };
     const perf = window.__inkwavePerf;
+    perf.warmup = warmup;
+    window.addEventListener('blur', () => { if (perf.warming) warmup.blurEvents++; });
+    window.addEventListener('focus', () => { if (perf.warming) warmup.focusEvents++; });
+    document.addEventListener('visibilitychange', () => {
+      if (perf.warming) warmup.visibilityChanges.push({ state: document.visibilityState, at: performance.now() });
+    });
     const gl = G.renderer.getContext();
     const ext2 = gl.getExtension('EXT_disjoint_timer_query_webgl2');
     const ext1 = !ext2 && gl.getExtension('EXT_disjoint_timer_query');
     perf.timer = ext2 ? { kind: 'webgl2', ext: ext2 } : ext1 ? { kind: 'webgl1', ext: ext1 } : null;
     const raf = t => { if (!perf.active) return; perf.raf.push(t); requestAnimationFrame(raf); };
-    window.__inkwavePerfStart = () => { perf.active = true; requestAnimationFrame(raf); };
+    const warmupRaf = t => { if (!perf.warming) return; warmup.raf.push(t); requestAnimationFrame(warmupRaf); };
+    window.__inkwavePerfWarmupStart = () => {
+      perf.warming = true;
+      warmup.startedAt = performance.now();
+      warmup.start = { frozen: !!g.frozen, visibilityState: document.visibilityState, hasFocus: document.hasFocus(), inputMouseLeft: G.input.mouse.left };
+      g.debug.fire(true);
+      warmup.inputAfterDebugFire = G.input.mouse.left;
+      warmup.start.inputAfterDebugFire = warmup.inputAfterDebugFire;
+      requestAnimationFrame(warmupRaf);
+      g.debug.unfreeze();
+    };
+    window.__inkwavePerfStart = () => { perf.warming = false; perf.active = true; requestAnimationFrame(raf); };
     const oldFrame = g._frame;
     g._frame = function (dt) {
-      if (!perf.active) return oldFrame.call(this, dt);
+      if (!perf.active) {
+        if (!perf.warming) return oldFrame.call(this, dt);
+        const firstFrame = warmup.nativeFrames === 0;
+        warmup.nativeFrames++;
+        if (firstFrame) warmup.firstFrame = {
+          inputMouseLeftBefore: G.input.mouse.left,
+          actorIntentFireBefore: !!G.match.local?.intent.fire,
+          visibilityState: document.visibilityState,
+          hasFocus: document.hasFocus(),
+          at: performance.now(),
+        };
+        try { return oldFrame.call(this, dt); }
+        finally {
+          warmup.frameSamples++;
+          if (firstFrame) {
+            warmup.firstFrame.inputMouseLeftAfter = G.input.mouse.left;
+            warmup.firstFrame.actorIntentFireAfter = !!G.match.local?.intent.fire;
+          }
+        }
+      }
       const t = performance.now(); perf.loopTimestamps.push(t);
       try { return oldFrame.call(this, dt); } finally { perf.frames.push(performance.now() - t); }
     };
     const oldUpdate = P.update;
     P.update = function (dt) {
-      if (!perf.active) return oldUpdate.call(this, dt);
+      if (!perf.active) {
+        if (!perf.warming) return oldUpdate.call(this, dt);
+        warmup.projectileUpdates++;
+        try { return oldUpdate.call(this, dt); }
+        finally {
+          if (this.list.length) warmup.nonemptyProjectileUpdates++;
+          warmup.maxProjectiles = Math.max(warmup.maxProjectiles, this.list.length);
+        }
+      }
       const t = performance.now(); perf.projectileUpdates++;
       try { return oldUpdate.call(this, dt); } finally {
         perf.projectileMs.push(performance.now() - t);
@@ -1066,6 +1113,7 @@ async function runFiringPerformance({ mobile = false } = {}) {
       const oldFire = P[method];
       P[method] = function (...args) {
         if (perf.active) perf.fireCalls++;
+        else if (perf.warming) warmup.fireCalls++;
         return oldFire.apply(this, args);
       };
     }
@@ -1089,10 +1137,68 @@ async function runFiringPerformance({ mobile = false } = {}) {
         }
         if (perf.active) {
           perf.renderMs.push(performance.now() - t); perf.calls.push(G.renderer.info.render.calls); perf.triangles.push(G.renderer.info.render.triangles);
+        } else if (perf.warming) {
+          warmup.renderSamples++; warmup.renderCalls.push(G.renderer.info.render.calls); warmup.triangles.push(G.renderer.info.render.triangles);
         }
       }
     };
   });
+  const warmupTimeoutMs = 60000;
+  const warmupHostStart = Date.now();
+  await page.bringToFront();
+  await page.evaluate(() => window.__inkwavePerfWarmupStart());
+  let warmupWaitFailure = null;
+  try {
+    await page.waitForFunction(() => {
+      const G = window.__G, warmup = window.__inkwavePerf?.warmup;
+      return !!warmup && warmup.nativeFrames >= 3 && warmup.frameSamples >= 3 &&
+        warmup.raf.length >= 3 && warmup.renderSamples >= 3 && warmup.fireCalls > 0 &&
+        warmup.nonemptyProjectileUpdates > 0 && G.input.mouse.left === true && G.match.local?.intent.fire === true;
+    }, null, { timeout: warmupTimeoutMs, polling: 100 });
+  } catch (error) {
+    warmupWaitFailure = error.message;
+  }
+  let warmupObserved = null;
+  let warmupSnapshotFailure = null;
+  try {
+    warmupObserved = await page.evaluate(() => {
+      const G = window.__G, g = window.__inkwave, perf = window.__inkwavePerf, w = perf.warmup;
+      return {
+        start: w.start,
+        end: { frozen: !!g.frozen, visibilityState: document.visibilityState, hasFocus: document.hasFocus(),
+          inputMouseLeft: G.input.mouse.left, actorIntentFire: !!G.match.local?.intent.fire,
+          gameState: G.match.state, paused: G.match.paused },
+        elapsedMs: w.startedAt == null ? null : performance.now() - w.startedAt,
+        nativeFrames: w.nativeFrames, frameSamples: w.frameSamples, projectileUpdates: w.projectileUpdates,
+        nonemptyProjectileUpdates: w.nonemptyProjectileUpdates, fireCalls: w.fireCalls,
+        renderSamples: w.renderSamples, renderCalls: w.renderCalls.at(-1) ?? null,
+        triangles: w.triangles.at(-1) ?? null, rafSamples: w.raf.length, maxProjectiles: w.maxProjectiles,
+        firstFrame: w.firstFrame, blurEvents: w.blurEvents, focusEvents: w.focusEvents,
+        visibilityChanges: w.visibilityChanges,
+      };
+    });
+  } catch (error) {
+    warmupSnapshotFailure = error.message;
+  }
+  const warmupReceipt = {
+    status: !warmupWaitFailure && !warmupSnapshotFailure && warmupObserved ? 'passed' : 'failed',
+    admitted: !warmupWaitFailure && !warmupSnapshotFailure && !!warmupObserved &&
+      warmupObserved.nativeFrames >= 3 && warmupObserved.frameSamples >= 3 && warmupObserved.rafSamples >= 3 &&
+      warmupObserved.renderSamples >= 3 && warmupObserved.fireCalls > 0 && warmupObserved.nonemptyProjectileUpdates > 0 &&
+      warmupObserved.end?.inputMouseLeft === true && warmupObserved.end?.actorIntentFire === true,
+    timeoutMs: warmupTimeoutMs,
+    elapsedHostMs: Date.now() - warmupHostStart,
+    required: { nativeFrames: 3, frameSamples: 3, rAFSamples: 3, renderSamples: 3, fireCalls: 1,
+      nonemptyProjectileUpdates: 1, inputMouseLeftAtAdmission: true, actorIntentFireAtAdmission: true },
+    observed: warmupObserved,
+    waitFailure: warmupWaitFailure,
+    snapshotFailure: warmupSnapshotFailure,
+  };
+  report.performanceWarmups.push({ scenario: mobile ? 'mobile-emulated-long-fire' : 'desktop-long-fire', ...warmupReceipt });
+  if (!warmupReceipt.admitted) {
+    await page.evaluate(() => { __inkwave.debug.fire(false); __inkwavePerf.warming = false; __inkwave.debug.freeze(); }).catch(() => {});
+    throw new Error(`${mobile ? 'mobile' : 'desktop'} native live-loop warmup did not admit the performance window: ${JSON.stringify(warmupReceipt)}`);
+  }
   const cdpBefore = await cdp.send('Performance.getMetrics');
   try {
     await cdp.send('Tracing.start', { categories: 'v8,devtools.timeline', transferMode: 'ReportEvents' });
@@ -1100,9 +1206,9 @@ async function runFiringPerformance({ mobile = false } = {}) {
   } catch (error) {
     gcTraceFailure = `Tracing.start failed: ${error.message}`;
   }
-  await page.evaluate(() => { __inkwave.debug.unfreeze(); window.__inkwavePerfStart(); __inkwave.debug.fire(true); });
+  await page.evaluate(() => { window.__inkwavePerfStart(); });
   await page.waitForTimeout(durationMs);
-  await page.evaluate(() => { __inkwave.debug.fire(false); __inkwavePerf.active = false; __inkwave.debug.freeze(); });
+  await page.evaluate(() => { __inkwave.debug.fire(false); __inkwavePerf.active = false; __inkwavePerf.warming = false; __inkwave.debug.freeze(); });
   if (gcTraceStarted) {
     let timeoutId;
     try {
@@ -1210,6 +1316,14 @@ async function runFiringPerformance({ mobile = false } = {}) {
   const record = {
     scenario: mobile ? 'mobile-emulated-long-fire' : 'desktop-long-fire', durationMs,
     browser: await page.evaluate(() => navigator.userAgent), fps, nativeLoopFrameMs: loopFrameMs, rAFms: rAF, frameCpuMs: cpu, projectileCpuMs: proj, renderCpuMs: render,
+    warmup: warmupReceipt,
+    renderCalls: summary(measured.renderCalls), triangles: summary(measured.triangles),
+    nativeFrames: measured.nativeLoopTimestamps.length,
+    projectileUpdates: measured.projectileUpdates,
+    nonemptyProjectileUpdates: measured.nonemptyProjectileUpdates,
+    fireCalls: measured.fireCalls,
+    renderSamples: measured.renderCpuMs.length,
+    rafSamples: measured.rAF.length,
     gpuRenderMs: gpu, gpuTimer: measured.gpuTimer, gpuDisjoint: measured.gpuDisjoint,
     renderer: measured.renderer, maxProjectiles: measured.maxProjectiles, gameplay: measured.game,
     cdpAbsolute,

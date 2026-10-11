@@ -70,3 +70,23 @@
 壁検証は両buildで失敗し、床と性能に未到達だった。本番Actor＋Character＋Tidewaterを使う独立プローブで、凍結された初回Squid Spawnの所有状態が残ると64Fの待ち中に壁上へ移動し、壁の向こうから撃つことを再現した。native Actor.spawnAt／reset、入力中立化、床・照準・root復元を用いると通常Actor.update経由で3F後に発射し、飛翔2Fでface34／block7へ衝突してwall-dropを開始する。Hit＋normal×0.025との差は1.42e−15。検証器の共通起動にもnative resetを適用し、性能contextへ着弾計測wrapperを入れず、通常のlive loopで測る。これらの最終ブラウザ実行・新液膜の画面承認・性能差は次のCI receiptで確認する。
 
 `8ff22f0` の非visual CIは10 Validate jobs成功、診断1件skip。別workflowを含む重複footerを除いた36 TAP suitesは6,807件中6,777成功／30skip／失敗0。これは旧先端接続のheadに対する成功であり、共有履歴液膜を含む次headのCI成功を先取りしない。
+
+## 共有履歴液膜の実ブラウザ確認（9b5481b3）
+
+CI run 38121431263／head `9b5481b3f8c11255e5539f583f17c551da478db3` は変更前48枚・変更後48枚を取得した。artifact 11696210592 のZIP SHA-256は `f4309f147b18cf7d4fa04e16b3e763261344fb23e43aac9d1e046085fd83f7e1`。174件の画像・cropの全SHAがreceiptと一致し、48組すべての物理的カメラ条件、全native弾状態、6シナリオの発射後乱数seed／回数／状態が一致した。両buildのGLエラー0、影更新48/48消費を確認。
+
+横振りはF0で6接続／19形状、F5で10接続／23形状、F10で6接続／19形状、F15で4接続／14形状。同じ実飛翔履歴間を覆うwebbingが正面画像で見え、旧先端間だけの疎な接続という欠落は解消した。滑らかで光沢の強い帯・リボン状の輪郭は依然INKWAVE独自表現であり、本家液体形状の承認とは区別する。F10とF36は肩越しのみ。F36では全主弾が既に消滅しており、正面／真横の落下輪郭比較は未実施。元の本番パッチにもShooterのロッドとSlosherの尾が存在し、F5画像の差が小さい場合がある。今回の変更を「以前は尾が一切なかった」とは説明しない。
+
+通常Actor.updateで発射したShooterが2Fでnative壁face34／block7へ接触し、Hit＋normal×0.025でwall-dropへ移行、8F後のF10を撮影した。Strong Slosherは9発が出生し、floor impact25F、撮影33F。CPU paint faceとnative Hit、retirement、塗りcoverageなどの権威状態は両buildで一致した。FXのdrops／puffs／rings／checksの表示pool統計には差があり、原因は未確定。独立レビューでこれらは物理状態ではなく装飾描画の診断として保存すべきと確認した。現行compositionはonDropletLand／onSpeckからの塗りを無効化しており、pool統計を塗りや衝突の一致判定へ混在させない。原JSONと差分を残し、Hit／弾／paint／retirementの比較基準は維持する。
+
+同runの最終結論は両buildとも**失敗**。desktopの6秒計測はnative frame1、render1、fire0、非空弾更新0、rAF間隔0で、有効な連射performanceを測っていなかったため厳格なgateが拒否した。GPUコンパイルが原因とは断定できない。正常なlive loopで実発射・非空更新・複数render／rAFが成立してから計測を開始するwarmupと、発射／更新回数・draw call／三角形の分布を保存する修正を進める。最初のrenderはFixedClockの物理tick前に起こり得るため、最初のframeだけのintent値は診断として残し、測定開始の必須条件にしない。次headでの実行結果は未取得。
+
+新液膜runtime `46df9b63…` のNode CPU測定では700主弾のVM中央値2.181ms／p95 2.573ms、host中央値1.271〜1.303ms。実fireFlickで13／130／312発を生成し5tick進めた別probeは、旧先端接続の中央値0.197／1.909／4.819msに対し、新液膜0.201／1.990／4.989ms。10／99／234履歴接続、単一batch、権威弾状態と乱数不変、容量内を確認した。これはNode CPUのみであり、FPS／GPU／Android性能の証明ではない。
+
+同headのValidate run 38121431208は10 jobs成功、render-diagnosticのみ条件付きskipで完了した。次のwarmup修正は独立レビューで機能上のP1/P2なし、`node --check`と`git diff --check`成功。60秒の有界warmupにより実native loopの発射／描画成立を待ち、warmupのtiming配列・GPU queryを6秒の本測定へ混在させない。最初のframeの入力は診断として保存し、現在のheld input／intentを admission 条件とする。修正後CIの成功、停止の根本原因、性能差はまだ証明していない。
+
+## 最新mainのキット統合
+
+仕上げ時にmainが `d675364691c806af16c001d9cb745da5fdf559c2`（PR #1221の65 canonical kits、tree `57de973bbc84554001064ce23c77fffc2682dc6c`）へ進んだため、その履歴を通常mergeで取り込んだ。`main-weapon-catalog.mjs` の既存read-only弾観測は自動mergeで保持され、今回の描画runtime SHA `46df9b63…` とwarmup harness SHA `bbdf119e…` は不変。次のvisual workflowの対照をこの最新mainへ固定し、同じkit基盤で両buildを再撮影する。初期main／PR1182の基点と一致した旧tree、head9b5481の48組の画像・CIは、キット統合前の履歴証拠として保持する。新mainと旧撮影baselineのtreeが一致すると宣言しない。
+
+取り込み後の実native描画19件＋canonical kit11件は30/30成功、skip／fail0。本番build content hashは `f44a29feff9f852c2013fc22dd96dd386a6a07273798aa2541d92d363ed7f342` となった。生成buildのpackagingは正確なcommitted input blob照合を含め8/8成功。描画source不変でもキット統合により本番build全体のhashは変わるため、旧 `f5da66ee…` の画面をこの新buildの撮影結果とは扱わない。最新headの全CI・性能は次のreceiptで記録する。
