@@ -202,13 +202,14 @@ test('Playwright polls an entirely synchronous, completed Practice Range trace',
   assert.equal(profileRangeAcceptanceSnapshot.constructor.name, 'Function');
   assert.strictEqual(profileRangeAcceptanceSnapshot({}), false);
   const trace = { capturedFrames: 11, gpu: 'unsupported', gpuSamples: 0,
-    latest: { stages: { paint: 1.4, render: 3.6 } } };
+    latest: { id: 12, stages: { paint: 1.4, render: 3.6 } } };
   const env = {
     __G: { match: { range: {}, state: 'playing' } },
     __inkwaveRangePerf: { snapshot: () => ({ mode: 'practice', trace }),
       report: () => JSON.stringify({ schema: 'inkwave-frame-trace-v1' }) },
     document: { querySelector: () => ({}) },
-    performance: { getEntriesByType: () => [{ name: '/patches/local-quality/range-hitch-tracer.mjs' }] },
+    // Simulate a cached dynamic import absent from ResourceTiming.
+    performance: { getEntriesByType: () => [] },
   };
   assert.strictEqual(profileRangeAcceptanceSnapshot(env), false, 'must wait for twelve frames');
   trace.capturedFrames = 12;
@@ -217,7 +218,10 @@ test('Playwright polls an entirely synchronous, completed Practice Range trace',
   assert.equal(found.reportSchema, 'inkwave-frame-trace-v1');
   assert.deepEqual(found.stageNames, ['paint', 'render']);
   assert.equal(found.profileButton, true);
-  assert.equal(found.tracerFileLoaded, true);
+  assert.equal(found.tracerRuntimeInstalled, true, 'tracer must produce actual attributed frames even with no ResourceTiming URL');
+  trace.latest.id = undefined;
+  assert.equal(profileRangeAcceptanceSnapshot(env).tracerRuntimeInstalled, false, 'a missing live frame id cannot fake a loaded tracer');
+  trace.latest.id = 12;
   assert.equal(found.then, undefined, 'never return a Promise to Playwright waitForFunction');
   env.__G.match.state = 'intro';
   assert.strictEqual(profileRangeAcceptanceSnapshot(env), false, 'requires live playing range');
