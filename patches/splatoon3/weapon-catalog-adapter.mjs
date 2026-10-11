@@ -31,12 +31,33 @@ export function adaptWeaponCatalog(rel, code) {
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code,
       "import { PLAYER } from '../config.js';",
-      "import { PLAYER, WEAPONS } from '../config.js';",
+      "import { PLAYER, WEAPONS } from '../config.js';\nimport { weaponModelKey, weaponModelFamily, weaponHold, weaponNeedsNativeCarry } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';",
       'character weapon catalog import');
+    // A weapon ID keeps its own model (cache key) while its family remains the
+    // HOLD/behaviour kind every native and patched pose layer reads.
     return replaceOnce(code,
-      "  setWeapon(kind) {\n    if (!HOLD[kind]) kind = 'shooter';",
-      "  setWeapon(kind) {\n    kind = WEAPONS[kind]?.modelKind || WEAPONS[kind]?.kind || kind;\n    if (!HOLD[kind]) kind = 'shooter';",
-      'character ID to visual family');
+      `  setWeapon(kind) {
+    if (!HOLD[kind]) kind = 'shooter';
+    if (kind === this.weaponKind) return;
+    const old = this.weaponKind && this.weapons[this.weaponKind];
+    if (old) { this.bones.handR.remove(old.pivot); if (old.left) this.bones.handL.remove(old.left.pivot); }
+    const w = this._getWeapon(kind);
+    this.bones.handR.add(w.pivot);
+    if (w.left) this.bones.handL.add(w.left.pivot);
+    this.weaponKind = kind; this.weapon = w; this.hold = HOLD[kind];`,
+      `  setWeapon(id) {
+    let kind = WEAPONS[id]?.modelKind || WEAPONS[id]?.kind || weaponModelFamily(id);
+    if (!HOLD[kind]) kind = 'shooter';
+    const model = (WEAPONS[id] || HOLD[weaponModelFamily(id)]) ? weaponModelKey(id) : kind;
+    if (kind === this.weaponKind && model === this.weaponModel && this.weapon) return;
+    const old = this.weapon;
+    if (old) { this.bones.handR.remove(old.pivot); if (old.left) this.bones.handL.remove(old.left.pivot); }
+    const w = this._getWeapon(model);
+    this.bones.handR.add(w.pivot);
+    if (w.left) this.bones.handL.add(w.left.pivot);
+    this.weaponKind = kind; this.weaponModel = model; this.weapon = w; this.hold = weaponHold(model, HOLD[kind]);
+    this.weaponNativeCarry = weaponNeedsNativeCarry(id);`,
+      'character weapon ID to its own model and family hold');
   }
 
   if (rel === 'src/ui/ui-icons.js') {
@@ -167,8 +188,8 @@ export function adaptWeaponCatalog(rel, code) {
   if (rel === 'src/game/showcase.js') {
     return replaceOnce(code,
       "const weaponKind = (id) => (WEAPONS[id] && WEAPONS[id].kind) || id || 'shooter';",
-      "const weaponKind = (id) => (WEAPONS[id] && (WEAPONS[id].modelKind || WEAPONS[id].kind)) || id || 'shooter';",
-      'showcase weapon model-family routing');
+      "const weaponKind = (id) => (WEAPONS[id] ? id : id || 'shooter'); // Character.setWeapon resolves its family",
+      'showcase weapon ID routing');
   }
 
   return code;

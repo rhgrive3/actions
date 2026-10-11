@@ -300,6 +300,22 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/muzzle-feedback.mjs',
   'patches/splatoon3/runtime/superjump-target-notification.mjs',
 
+  // Per-main-weapon models: static imports and full precache retained, no extra eager hints.
+  'patches/splatoon3/runtime/weapon-models/registry.mjs',
+  'patches/splatoon3/runtime/weapon-family-motion.mjs',
+  'patches/splatoon3/runtime/weapon-models/kit.mjs',
+  'patches/splatoon3/runtime/weapon-models/shooters.mjs',
+  'patches/splatoon3/runtime/weapon-models/shooters-b.mjs',
+  'patches/splatoon3/runtime/weapon-models/blasters.mjs',
+  'patches/splatoon3/runtime/weapon-models/dualies.mjs',
+  'patches/splatoon3/runtime/weapon-models/rollers.mjs',
+  'patches/splatoon3/runtime/weapon-models/brushes.mjs',
+  'patches/splatoon3/runtime/weapon-models/chargers.mjs',
+  'patches/splatoon3/runtime/weapon-models/stringers.mjs',
+  'patches/splatoon3/runtime/weapon-models/sloshers.mjs',
+  'patches/splatoon3/runtime/weapon-models/splatlings.mjs',
+  'patches/splatoon3/runtime/weapon-models/brellas.mjs',
+  'patches/splatoon3/runtime/weapon-models/splatanas.mjs',
   // C42: retain the new static runtime dependencies and full precache; defer their extra eager hints.
   'patches/local-quality/portrait-work.mjs',
   'patches/local-quality/runtime/audio-listener.mjs',
