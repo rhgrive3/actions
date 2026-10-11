@@ -1,0 +1,327 @@
+{
+ "blaster": {
+  "iou": 0.7521,
+  "oursAspect": 1.845,
+  "refAspect": 1.755
+ },
+ "charger": {
+  "iou": 0.4603,
+  "oursAspect": 5.424,
+  "refAspect": 3.448
+ },
+ "dualies": {
+  "iou": 0.297,
+  "oursAspect": 1.377,
+  "refAspect": 0.953
+ },
+ "roller": {
+  "iou": 0.0714,
+  "oursAspect": 3.809,
+  "refAspect": 1.064
+ },
+ "s3-blaster-light": {
+  "iou": 0.8387,
+  "oursAspect": 1.356,
+  "refAspect": 1.379
+ },
+ "s3-blaster-lightlong": {
+  "iou": 0.7886,
+  "oursAspect": 1.808,
+  "refAspect": 1.838
+ },
+ "s3-blaster-lightshort": {
+  "iou": 0.79,
+  "oursAspect": 1.326,
+  "refAspect": 1.302
+ },
+ "s3-blaster-long": {
+  "iou": 0.7985,
+  "oursAspect": 2.034,
+  "refAspect": 2.14
+ },
+ "s3-blaster-precision": {
+  "iou": 0.7453,
+  "oursAspect": 1.967,
+  "refAspect": 2.098
+ },
+ "s3-blaster-short": {
+  "iou": 0.7324,
+  "oursAspect": 1.147,
+  "refAspect": 1.224
+ },
+ "s3-brush-heavy": {
+  "iou": 0.1069,
+  "oursAspect": 4.475,
+  "refAspect": 0.487
+ },
+ "s3-brush-mini": {
+  "iou": 0.0317,
+  "oursAspect": 3.978,
+  "refAspect": 0.597
+ },
+ "s3-brush-normal": {
+  "iou": 0.0383,
+  "oursAspect": 10.529,
+  "refAspect": 0.527
+ },
+ "s3-charger-keeper": {
+  "iou": 0.3242,
+  "oursAspect": 2.266,
+  "refAspect": 1.444
+ },
+ "s3-charger-light": {
+  "iou": 0.5023,
+  "oursAspect": 2.934,
+  "refAspect": 1.848
+ },
+ "s3-charger-long": {
+  "iou": 0.5456,
+  "oursAspect": 4.068,
+  "refAspect": 3.554
+ },
+ "s3-charger-longscope": {
+  "iou": 0.5409,
+  "oursAspect": 4.068,
+  "refAspect": 3.373
+ },
+ "s3-charger-normalscope": {
+  "iou": 0.4702,
+  "oursAspect": 4.59,
+  "refAspect": 3.226
+ },
+ "s3-charger-pencil": {
+  "iou": 0.5755,
+  "oursAspect": 3.086,
+  "refAspect": 3.2
+ },
+ "s3-charger-quick": {
+  "iou": 0.3233,
+  "oursAspect": 4.475,
+  "refAspect": 2.847
+ },
+ "s3-maneuver-dual": {
+  "iou": 0.3556,
+  "oursAspect": 1.455,
+  "refAspect": 1.47
+ },
+ "s3-maneuver-gallon": {
+  "iou": 0.4208,
+  "oursAspect": 1.346,
+  "refAspect": 1.02
+ },
+ "s3-maneuver-long": {
+  "iou": 0.2327,
+  "oursAspect": 1.517,
+  "refAspect": 0.922
+ },
+ "s3-maneuver-short": {
+  "iou": 0.4147,
+  "oursAspect": 1.288,
+  "refAspect": 1.189
+ },
+ "s3-maneuver-stepper": {
+  "iou": 0.3806,
+  "oursAspect": 0.983,
+  "refAspect": 0.975
+ },
+ "s3-roller-compact": {
+  "iou": 0.1292,
+  "oursAspect": 3.58,
+  "refAspect": 1.009
+ },
+ "s3-roller-heavy": {
+  "iou": 0.0697,
+  "oursAspect": 2.797,
+  "refAspect": 0.992
+ },
+ "s3-roller-hunter": {
+  "iou": 0.0686,
+  "oursAspect": 3.978,
+  "refAspect": 0.868
+ },
+ "s3-roller-wide": {
+  "iou": 0.0482,
+  "oursAspect": 3.891,
+  "refAspect": 1.064
+ },
+ "s3-saber-heavy": {
+  "iou": 0.2869,
+  "oursAspect": 1.356,
+  "refAspect": 0.798
+ },
+ "s3-saber-lite": {
+  "iou": 0.2315,
+  "oursAspect": 1.356,
+  "refAspect": 0.786
+ },
+ "s3-saber-normal": {
+  "iou": 0.3266,
+  "oursAspect": 1.356,
+  "refAspect": 0.783
+ },
+ "s3-shelter-compact": {
+  "iou": 0.1129,
+  "oursAspect": 3.14,
+  "refAspect": 1.168
+ },
+ "s3-shelter-focus": {
+  "iou": 0.1394,
+  "oursAspect": 3.196,
+  "refAspect": 1.336
+ },
+ "s3-shelter-normal": {
+  "iou": 0.1426,
+  "oursAspect": 3.58,
+  "refAspect": 1.317
+ },
+ "s3-shelter-wide": {
+  "iou": 0.0388,
+  "oursAspect": 5.114,
+  "refAspect": 1.064
+ },
+ "s3-shooter-blaze": {
+  "iou": 0.6266,
+  "oursAspect": 1.27,
+  "refAspect": 1.3
+ },
+ "s3-shooter-expert": {
+  "iou": 0.6172,
+  "oursAspect": 2.452,
+  "refAspect": 2.398
+ },
+ "s3-shooter-first": {
+  "iou": 0.8579,
+  "oursAspect": 1.557,
+  "refAspect": 1.526
+ },
+ "s3-shooter-flash": {
+  "iou": 0.8177,
+  "oursAspect": 1.673,
+  "refAspect": 1.689
+ },
+ "s3-shooter-gravity": {
+  "iou": 0.6592,
+  "oursAspect": 1.584,
+  "refAspect": 1.258
+ },
+ "s3-shooter-heavy": {
+  "iou": 0.7766,
+  "oursAspect": 1.845,
+  "refAspect": 1.923
+ },
+ "s3-shooter-long": {
+  "iou": 0.7078,
+  "oursAspect": 2.131,
+  "refAspect": 2.12
+ },
+ "s3-shooter-precision": {
+  "iou": 0.6689,
+  "oursAspect": 1.808,
+  "refAspect": 1.679
+ },
+ "s3-shooter-quicklong": {
+  "iou": 0.7765,
+  "oursAspect": 1.738,
+  "refAspect": 1.838
+ },
+ "s3-shooter-quickmiddle": {
+  "iou": 0.7461,
+  "oursAspect": 1.925,
+  "refAspect": 2.092
+ },
+ "s3-shooter-short": {
+  "iou": 0.6036,
+  "oursAspect": 1.738,
+  "refAspect": 1.91
+ },
+ "s3-shooter-triplemiddle": {
+  "iou": 0.6926,
+  "oursAspect": 1.705,
+  "refAspect": 1.9
+ },
+ "s3-shooter-triplequick": {
+  "iou": 0.6399,
+  "oursAspect": 1.444,
+  "refAspect": 1.471
+ },
+ "s3-slosher-bathtub": {
+  "iou": 0.6471,
+  "oursAspect": 1.455,
+  "refAspect": 1.393
+ },
+ "s3-slosher-diffusion": {
+  "iou": 0.505,
+  "oursAspect": 0.877,
+  "refAspect": 0.811
+ },
+ "s3-slosher-double": {
+  "iou": 0.5621,
+  "oursAspect": 1.613,
+  "refAspect": 1.227
+ },
+ "s3-slosher-launcher": {
+  "iou": 0.6422,
+  "oursAspect": 1.112,
+  "refAspect": 0.968
+ },
+ "s3-slosher-washtub": {
+  "iou": 0.6054,
+  "oursAspect": 1.075,
+  "refAspect": 1.208
+ },
+ "s3-spinner-downpour": {
+  "iou": 0.5649,
+  "oursAspect": 2.157,
+  "refAspect": 2.288
+ },
+ "s3-spinner-hyper": {
+  "iou": 0.5133,
+  "oursAspect": 1.467,
+  "refAspect": 1.454
+ },
+ "s3-spinner-hypershort": {
+  "iou": 0.685,
+  "oursAspect": 1.673,
+  "refAspect": 2.116
+ },
+ "s3-spinner-quick": {
+  "iou": 0.5637,
+  "oursAspect": 1.827,
+  "refAspect": 1.97
+ },
+ "s3-spinner-serein": {
+  "iou": 0.6775,
+  "oursAspect": 1.738,
+  "refAspect": 1.932
+ },
+ "s3-stringer-explosion": {
+  "iou": 0.1268,
+  "oursAspect": 5.424,
+  "refAspect": 0.744
+ },
+ "s3-stringer-normal": {
+  "iou": 0.1463,
+  "oursAspect": 5.424,
+  "refAspect": 0.643
+ },
+ "s3-stringer-short": {
+  "iou": 0.1256,
+  "oursAspect": 5.424,
+  "refAspect": 0.754
+ },
+ "shooter": {
+  "iou": 0.8247,
+  "oursAspect": 1.356,
+  "refAspect": 1.514
+ },
+ "slosher": {
+  "iou": 0.5991,
+  "oursAspect": 0.866,
+  "refAspect": 0.853
+ },
+ "splatling": {
+  "iou": 0.646,
+  "oursAspect": 2.183,
+  "refAspect": 1.904
+ }
+}
