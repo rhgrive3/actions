@@ -22,7 +22,7 @@ export function adaptRanked(rel, code) {
     code = once(code, 'opts.duration = requestedDuration ||', 'opts.duration = isRankedMode(opts.mode) ? 300 : requestedDuration ||', 'offline ranked duration');
     code = once(code, 'noBots: mapNoBots(map.id) || isRangeMap(map)', 'noBots: isRankedMode(opts.mode) ? false : mapNoBots(map.id) || isRangeMap(map)', 'ranked bot squad');
     code = once(code, "mode: params.get('mode') === 'boss' ? 'boss' : 'turf'", "mode: params.get('mode') === 'boss' || isRankedMode(params.get('mode')) ? params.get('mode') : 'turf'", 'diagnostic mode');
-    code = once(code, "prompt = t('Paint the ground — most turf wins!');", "prompt = m.ranked ? ({ zones: 'エリアを確保して、自分のカウントを0にしよう！', tower: 'ヤグラに乗って、カンモンを越えて進もう！', rainmaker: 'バリアを割ってホコを運ぼう！ カンモン通過が必要！', clams: '8個でガチアサリ！ C / Aで敵のゴールへ投げよう！' })[m.mode] : t('Paint the ground — most turf wins!');", 'ranked opening instruction');
+    code = once(code, "prompt = t('Paint the ground — most turf wins!');", "prompt = m.ranked ? ({ zones: 'エリアを確保して、自分のカウントを0にしよう！', tower: 'ヤグラに乗って、カンモンを越えて進もう！', rainmaker: 'バリアを割ってホコを運ぼう！ カンモン通過が必要！', clams: '8個でガチアサリ！ C / Switch A（右ボタン）で敵のゴールへ投げよう！' })[m.mode] : t('Paint the ground — most turf wins!');", 'ranked opening instruction');
     // Native result statistics/progression remain in one flow; rank UI consumes
     // the authoritative count result instead of inferring it from painted turf.
     const anchor = "win: won, percents: [cov[0] * 100, cov[1] * 100], colors:";
@@ -50,6 +50,31 @@ export function adaptRanked(rel, code) {
   if (rel === 'src/net/mock.js') {
     code = importEngine + code;
     code = once(code, "if (o.mode === 'turf' || o.mode === 'boss') L.mode = o.mode;", "if (o.mode === 'turf' || o.mode === 'boss' || isRankedMode(o.mode)) L.mode = o.mode;\n    if (isRankedMode(L.mode)) L.duration = 300;", 'ranked mock lobby modes');
+  }
+  if (rel === 'src/game/inkFlightRuntime.js') {
+    // The shield candidate is swept alongside terrain so nearer first contact
+    // remains authoritative. A farther wall later in the same frame must not
+    // divert a shield hit into the retained wall-drop phase.
+    code = once(code,
+      'if (!target && !boss && world.hit && beginFidelityWallDrop(this.system, p, world)) return false;',
+      'if (!target && !boss && !barrierHit && world.hit && beginFidelityWallDrop(this.system, p, world)) return false;',
+      'Rainmaker shield before later wall-drop');
+    code = once(code,
+      'const world = this.world(p.prev, p.pos, p.inkProfile.collision.field * INK_LENGTH_SCALE, this.worldHit);\n      let first = world.hit ? world.dist / Math.max(EPS, length) : Infinity, target = null, boss = null;',
+      'const world = this.world(p.prev, p.pos, p.inkProfile.collision.field * INK_LENGTH_SCALE, this.worldHit);\n      const barrier = this.system.rankedBarrierCandidate?.(p) || null;\n      const barrierT = barrier ? barrier.distance / Math.max(EPS, length) : Infinity;\n      let first = world.hit ? world.dist / Math.max(EPS, length) : Infinity, target = null, boss = null, barrierHit = false;\n      if (barrier && barrierT < first - EPS) { first = barrierT; barrierHit = true; }',
+      'Rainmaker shield projectile arbitration');
+    code = once(code,
+      'if (t < first - EPS) { first = t; target = actor; }',
+      'if (t < first - EPS) { first = t; target = actor; boss = null; barrierHit = false; }',
+      'Rainmaker shield versus actor ordering');
+    code = once(code,
+      'if (t < first - EPS) { first = t; boss = hit; target = null; }',
+      'if (t < first - EPS) { first = t; boss = hit; target = null; barrierHit = false; }',
+      'Rainmaker shield versus boss ordering');
+    code = once(code,
+      "} else this.impact(p, world);",
+      "} else if (barrierHit) {\n            barrier.onHit(damage);\n            this.normal.copy(barrier.normal);\n            emit('weapon:impact', { pos: p.pos.clone(), normal: this.normal.normalize(), team: p.team, kind: 'shot', radius: 0.3 });\n          } else this.impact(p, world);",
+      'Rainmaker shield native damage');
   }
   return adaptRankedUi(rel, code);
 }

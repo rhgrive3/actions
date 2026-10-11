@@ -351,8 +351,10 @@ test('bot goals choose reachable clams, scoring throws, and defense at a threate
   const { rule } = makeRule();
   const actor = point('bot', 0, [0, 0, 0]);
   const clam = addGroundClam(rule, 'small', null, [2, 0, 0]);
-  assert.equal(rule.botGoal(actor, blankFrame([actor])).action, 'collect');
-  assert.deepEqual(rule.botGoal(actor, blankFrame([actor])).pos, clam.pos);
+  const collectGoal = rule.botGoal(actor, blankFrame([actor]));
+  assert.equal(collectGoal.action, 'collect');
+  assert.deepEqual(collectGoal.pos, clam.pos);
+  assert.deepEqual(collectGoal.aim, clam.pos, 'bot goals expose world-space points to ranked steering');
   rule.state.inventories.bot = { team: 0, small: 0, power: true };
   assert.equal(rule.botGoal(actor, blankFrame([actor])).action, 'throw');
   rule.state.baskets[0].tucked = true;

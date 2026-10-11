@@ -139,7 +139,7 @@ function updateHud(hud, G) {
   el.querySelector('.iw-ranked-hud__objective').textContent = objectiveText(engine, G);
   const hint = el.querySelector('.iw-ranked-hud__hint');
   hint.hidden = engine.mode !== 'clams';
-  hint.textContent = engine.mode === 'clams' ? 'THROW C / A' : '';
+  hint.textContent = engine.mode === 'clams' ? 'THROW C / A (SWITCH)' : '';
 }
 
 function rankedJudge(hud, engine, data = {}, G = {}) {

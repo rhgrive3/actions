@@ -30,6 +30,8 @@ try{
   await p.evaluate(async mode=>{RG.game.debug.freeze();RG.game.menus.wipe.cancel();await RG.game.startMatch({mapId:'tidewater',difficulty:'easy',mode});},mode);
   await p.waitForFunction(()=>RG.game.hud?._visible&&!document.querySelector('.iw-lineup'),null,{timeout:30000});
   await advance(p,330);
+  await p.waitForFunction(()=>!document.querySelector('.iw-bn--go'),null,{timeout:15000});
+  await advance(p,120);
   const initial=await p.evaluate(()=>({mode:RG.match.mode,state:RG.match.state,time:RG.match.time,actors:RG.match.actors.length,ranked:!!RG.match.ranked,hud:document.querySelector('.iw-ranked-hud')?.textContent}));assert(initial.ranked&&initial.actors===8&&initial.time<=300&&initial.time>290);assert(initial.hud?.length>5);
   await p.screenshot({path:path.join(out,mode+'-offline.jpg'),type:'jpeg',quality:60});
   const proof=await p.evaluate(mode=>{
@@ -38,14 +40,21 @@ try{
    if(mode==='tower'){a.pos.fromArray(e.rule.state.position);a.grounded=true;a._rankedOnTower=true;m.advanceRanked(1);if(e.rule.state.controllingTeam!==a.team)throw Error('Real tower rider not detected');}
    if(mode==='rainmaker'){m.rankedBarrierHits.push({id:String(a.nid??`${a.team}:${a.slot}`),team:a.team,damage:2000,kind:'main'});m.advanceRanked(1/60);if(e.rule.state.barrier.active)throw Error('Native shield did not pop');a.pos.fromArray(e.rule.state.pos);m.advanceRanked(1/60);if(e.rule.state.carrier===null)throw Error('Native holder failed pickup');}
    if(mode==='clams'){const c=e.rule.state.clams[0];a.pos.fromArray(c.pos);a.grounded=true;m.advanceRanked(1/60);const id=String(a.nid??`${a.team}:${a.slot}`);if(!(e.rule.state.inventories[id]?.small||e.rule.state.inventories[id]?.power))throw Error('Real actor failed clam pickup');}
-   const snap=e.snapshot();if(!e.restore(snap))throw Error('Own snapshot rejected');e.time=.001;m.time=.001;m.advanceRanked(1/60);return {counts:[...e.counts],winner:e.winner,overtime:e.overtime,state:m.state,snapshotBytes:JSON.stringify(snap).length};
-  },mode);results.push({mode,offline:initial,proof});
+   const snap=e.snapshot();if(!e.restore(snap))throw Error('Own snapshot rejected');return {counts:[...e.counts],snapshotBytes:JSON.stringify(snap).length};
+  },mode);
+  await advance(p,60);
+  await p.screenshot({path:path.join(out,mode+'-objective.jpg'),type:'jpeg',quality:60});
+  const deadline=await p.evaluate(()=>{const m=RG.match,e=m.ranked;e.time=.001;m.time=.001;m.advanceRanked(1/60);return {winner:e.winner,overtime:e.overtime,state:m.state};});
+  results.push({mode,offline:initial,proof:{...proof,...deadline}});
  }
  const guest=await boot();
  // Real native session and production relay across isolated browser contexts.
  for(const mode of ['zones','tower','rainmaker','clams']){
   console.log('online',mode);
-  await Promise.all([p,guest].map(pg=>pg.evaluate(()=>{RG.game.debug.unfreeze();RG.game.menus.launchLobby=async()=>{};})));
+  // Run both native simulations/relay clients continuously, but submit GPU work
+  // only for the captured evidence. Two SwiftShader render loops otherwise
+  // starve Chromium's screenshot compositor on CI runners.
+  await Promise.all([p,guest].map(pg=>pg.evaluate(()=>{RG.game._skipRender=true;RG.game.debug.unfreeze();RG.game.menus.launchLobby=async()=>{};})));
   const code=await p.evaluate(()=>RG.net.create('Ranked Host'));await guest.evaluate(c=>RG.net.join(c,'Ranked Guest'),code);
   await p.waitForFunction(()=>RG.net.lobby.players.length===2);await guest.waitForFunction(()=>RG.net.lobby.players.length===2);
   await p.evaluate(mode=>{RG.net.setSettings({mode,bots:true,map:'tidewater'});},mode);
@@ -58,7 +67,11 @@ try{
   await p.evaluate(()=>{RG.game.debug.freeze();RG.game.debug.freezeBots();RG.match.ranked.setCount(0,65);RG.match.ranked.revision++;RG.netm._sendNow({k:'rkstate',rk:{match:RG.netm.cfg.id,host:RG.netm.s.hostId,state:RG.match.ranked.snapshot(),gains:RG.match.rankedGains}});});
   await guest.waitForFunction(()=>RG.match.ranked.counts[0]===65,null,{timeout:30000});
   const online=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>({mode:RG.match.mode,counts:[...RG.match.ranked.counts],follower:RG.match.follower,actors:RG.match.actors.length,time:RG.match.time}))));assert.deepEqual(online[0].counts,online[1].counts);assert.equal(online[0].mode,mode);assert.equal(online[1].mode,mode);
-  await Promise.all([p,guest].map((pg,i)=>pg.screenshot({path:path.join(out,mode+'-online-'+i+'.jpg'),type:'jpeg',quality:60})));
+  for(const [i,pg] of [p,guest].entries()){
+   await pg.waitForFunction(()=>!document.querySelector('.iw-bn--go'),null,{timeout:15000});
+   await pg.evaluate(()=>RG.renderer.render(RG.scene,RG.camera));
+   await pg.screenshot({path:path.join(out,mode+'-online-'+i+'.jpg'),type:'jpeg',quality:60});
+  }
   let record=results.find(r=>r.mode===mode);if(!record)results.push(record={mode});record.online=online;
   await p.evaluate(()=>{RG.match.ranked.setCount(0,0);RG.match.advanceRanked(1/60);});
   await guest.waitForFunction(()=>RG.match.ranked.winner===0&&RG.match.ranked.knockout&&RG.match.state==='finish',null,{timeout:30000});

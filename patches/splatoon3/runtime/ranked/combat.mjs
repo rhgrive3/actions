@@ -13,25 +13,32 @@ export function sphereEntry(start, end, center, radius) {
 export function installRankedCombat(api) {
   const { G, Projectiles, THREE, Hit, Actor, WeaponRunner, PLAYER } = api;
   const P = Projectiles.prototype, candidate = P.kitDefenseCandidate;
+  P.rankedBarrierCandidate = function (p) {
+    const m = G.match, s = m?.ranked?.rule.state;
+    if (m?.mode !== 'rainmaker' || !s?.barrier?.active || !p?.prev || !p?.pos) return null;
+    const center = [...s.pos]; center[1] += 1;
+    const radius = 1.5 + 1.2 * Math.abs(s.barrier.balance || 0) / (s.barrier.max || 1000);
+    const t = sphereEntry(p.prev.toArray(), p.pos.toArray(), center, radius + (p.size || 0));
+    if (t === null) return null;
+    const distance = t * p.prev.distanceTo(p.pos);
+    const point = p.prev.clone().lerp(p.pos, t);
+    return { distance, point, normal: point.clone().sub(new THREE.Vector3(...center)).normalize(),
+      onHit: actualDamage => {
+        // Keep remote and paint-only ghost projectiles in the same visual
+        // collision ordering, but only the authoritative local owner may
+        // change shield state. Ghost InkFlight heads never call onHit.
+        if (p.ghost || !p.owner || p.owner.remote) return;
+        const damage = Number.isFinite(actualDamage) ? actualDamage : p.catalog?.descriptor?.damage ?? p.damage ?? 0;
+        barrierDamage(m, p.owner, damage, p.wid || p.type, point.toArray(), api);
+      } };
+  };
   // The existing swept-world/capsule arbitration also queries this lane for
   // shooter, charger, roller, slosher and catalogue weapons. No duplicate flight.
   P.kitDefenseCandidate = function (p) {
     let best = candidate?.call(this, p) || null;
-    const m = G.match, s = m?.ranked?.rule.state;
-    if (m?.mode !== 'rainmaker' || !s?.barrier?.active || !p?.prev || !p?.pos) return best;
-    const center = [...s.pos]; center[1] += 1;
-    const radius = 1.5 + 1.2 * Math.abs(s.barrier.balance || 0) / (s.barrier.max || 1000);
-    const t = sphereEntry(p.prev.toArray(), p.pos.toArray(), center, radius + (p.size || 0));
-    if (t === null) return best;
-    const distance = t * p.prev.distanceTo(p.pos);
-    if (distance >= (best?.distance ?? Infinity)) return best;
-    const point = p.prev.clone().lerp(p.pos, t);
-    return { distance, point, normal: point.clone().sub(new THREE.Vector3(...center)).normalize(),
-      onHit: () => {
-        if (p.ghost || !p.owner || p.owner.remote) return;
-        const damage = p.catalog?.descriptor?.damage ?? p.damage ?? 0;
-        barrierDamage(m, p.owner, damage, p.wid || p.type, point.toArray(), api);
-      } };
+    const barrier = this.rankedBarrierCandidate?.(p);
+    if (!barrier || barrier.distance >= (best?.distance ?? Infinity)) return best;
+    return barrier;
   };
   // Explosions must hit a shield even if there is no enemy actor inside it.
   for (const method of ['_explodeBomb', '_blastBurst', '_sloshSplash']) {

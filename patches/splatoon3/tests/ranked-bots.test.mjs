@@ -76,6 +76,17 @@ test('ranked bots path to rule-owned paint goals and keep the normal aim/movemen
   assert.equal(goal.action, 'paint');
 });
 
+test('ranked bot keeps a world-space aim point near the origin', () => {
+  const { brain, goal } = setup('zones', 'paint', [1, 0, 0]);
+  goal.aim = { x: 0, y: 0, z: 1 };
+
+  brain.update(1 / 60);
+
+  assert.ok(brain.tailCalls[0].aimDist < 2,
+    'a world point one unit from the actor must not become a sixteen-unit direction ray');
+  assert.equal(brain.tailCalls[0].yaw, 0);
+});
+
 test('Tower Control bots jump onto the moving deck, then hold position while riding', () => {
   const { actor, brain, engine } = setup('tower', 'ride', [1, 1, 0], { pos: new Vec3(0, 0, 0) });
   brain.update(1 / 60);
@@ -102,6 +113,32 @@ test('Rainmaker bots paint the shield, carry and charge toward the goal', () => 
   assert.equal(carrier.actor.intent.fire, true);
   assert.equal(carrier.actor.intent.squid, true);
   assert.equal(carrier.brain.mode, 'ranked');
+});
+
+test('Rainmaker shield aim extends range while preserving the native smoothed angles', () => {
+  const { actor, brain } = setup('rainmaker', 'barrier', [0, 0, -9]);
+  const smoothedYaw = 0.37, smoothedPitch = -0.21;
+  brain._tail = function (dt, move, yaw, pitch, aimDist, wantMove) {
+    this.tailCalls.push({ dt, move: { x: move.x, y: move.y, z: move.z }, yaw, pitch, aimDist, wantMove });
+    actor.aimYaw = smoothedYaw;
+    actor.aimPitch = smoothedPitch;
+    actor.intent.move.copy(move);
+  };
+
+  brain.update(1 / 60);
+
+  const distance = brain.tailCalls[0].aimDist;
+  const cp = Math.cos(smoothedPitch);
+  const expected = new Vec3(
+    actor.pos.x + Math.sin(smoothedYaw) * cp * distance,
+    actor.pos.y + 1.1 + Math.sin(smoothedPitch) * distance,
+    actor.pos.z + Math.cos(smoothedYaw) * cp * distance,
+  );
+  assert.ok(distance > 6, 'the shield is beyond BotBrain tail’s generic six-unit ray');
+  assert.deepEqual(actor.aimPoint, expected, 'the extended aim point follows the tail’s smoothed yaw and pitch');
+  assert.ok(Math.abs(Math.hypot(actor.aimPoint.x - actor.pos.x,
+    actor.aimPoint.y - actor.pos.y - 1.1, actor.aimPoint.z - actor.pos.z) - distance) < 1e-9,
+  'the projected smoothed ray retains the actual shield distance');
 });
 
 test('Rainmaker carrier releases the full charge, then starts the next charge cycle', () => {
