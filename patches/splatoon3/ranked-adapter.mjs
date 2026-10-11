@@ -61,7 +61,7 @@ export function adaptRanked(rel, code) {
       'Rainmaker shield before later wall-drop');
     code = once(code,
       'const world = this.world(p.prev, p.pos, p.inkProfile.collision.field * INK_LENGTH_SCALE, this.worldHit);\n      let first = world.hit ? world.dist / Math.max(EPS, length) : Infinity, target = null, boss = null;',
-      'const world = this.world(p.prev, p.pos, p.inkProfile.collision.field * INK_LENGTH_SCALE, this.worldHit);\n      const barrier = this.system.rankedBarrierCandidate?.(p) || null;\n      const barrierT = barrier ? barrier.distance / Math.max(EPS, length) : Infinity;\n      let first = world.hit ? world.dist / Math.max(EPS, length) : Infinity, target = null, boss = null, barrierHit = false;\n      if (barrier && barrierT < first - EPS) { first = barrierT; barrierHit = true; }',
+      'const world = this.world(p.prev, p.pos, p.inkProfile.collision.field * INK_LENGTH_SCALE, this.worldHit);\n      let barrier = this.system.rankedBarrierCandidate?.(p) || null;\n      const device = this.system.nativeSprinklerCandidate?.(p, p.prev, p.pos);\n      if (device && device.distance < (barrier?.distance ?? Infinity)) barrier = device;\n      const barrierT = barrier ? barrier.distance / Math.max(EPS, length) : Infinity;\n      let first = world.hit ? world.dist / Math.max(EPS, length) : Infinity, target = null, boss = null, barrierHit = false;\n      if (barrier && barrierT < first - EPS) { first = barrierT; barrierHit = true; }',
       'Rainmaker shield projectile arbitration');
     code = once(code,
       'if (t < first - EPS) { first = t; target = actor; }',

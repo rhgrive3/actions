@@ -21,10 +21,10 @@ relay.on('connection',(ws,req)=>{const u=new URL(req.url,'http://localhost'),cod
 const url=`http://127.0.0.1:${server.address().port}/?relay=${encodeURIComponent('ws://127.0.0.1:'+relay.address().port)}`;
 const errors=[],results=[],contexts=[],pages=[];let browser;
 async function boot(){const c=await browser.newContext({viewport:{width:1280,height:800}});contexts.push(c);const p=await c.newPage();pages.push(p);p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));await p.goto(url,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await p.waitForFunction(()=>RG.game?.menus&&RG.s3?.installed&&RG.mode!=='boot',null,{timeout:180000});return p;}
-async function advance(p,n){return p.evaluate(n=>{const g=RG.game;g._skipRender=true;try{for(let i=0;i<n;i++)g._frame(1/60);}finally{g._skipRender=false;}RG.renderer.render(RG.scene,RG.camera);},n);}
+async function advance(p,n){return p.evaluate(n=>{const g=RG.game,previous=g._skipRender;g._skipRender=true;try{for(let i=0;i<n;i++)g._frame(1/60);}finally{g._skipRender=previous;}RG.renderer.render(RG.scene,RG.camera);},n);}
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- const p=await boot();await p.evaluate(()=>RG.game.debug.freeze());
+ const p=await boot();await p.evaluate(()=>{RG.game.debug.freeze();RG.game._skipRender=true;});
  for(const mode of process.env.RANKED_ONLINE_ONLY ? [] : ['zones','tower','rainmaker','clams']){
   console.log('offline',mode);
   await p.evaluate(async mode=>{RG.game.debug.freeze();RG.game.menus.wipe.cancel();await RG.game.startMatch({mapId:'tidewater',difficulty:'easy',mode});},mode);
