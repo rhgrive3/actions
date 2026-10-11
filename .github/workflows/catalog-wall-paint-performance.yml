@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 45
     env:
       BASELINE_SHA: ${{ inputs.baseline_sha || 'b49de995c55908700fe9356c64c32f87720f79aa' }}
-      CANDIDATE_SHA: ${{ inputs.candidate_sha || 'b5c19ce407cc9ccd5478b381942c36a1ede4c951' }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha || 'b8ec5a8daf4d715ecda45ad92d3cda8179243c22' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,7 +45,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.candidate_sha || 'b5c19ce407cc9ccd5478b381942c36a1ede4c951' }}
+          ref: ${{ inputs.candidate_sha || 'b8ec5a8daf4d715ecda45ad92d3cda8179243c22' }}
           path: .wall-candidate
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -77,7 +77,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: catalog-wall-paint-performance-${{ inputs.candidate_sha || 'b5c19ce407cc9ccd5478b381942c36a1ede4c951' }}
+          name: catalog-wall-paint-performance-${{ inputs.candidate_sha || 'b8ec5a8daf4d715ecda45ad92d3cda8179243c22' }}
           path: .wall-performance-evidence/
           include-hidden-files: true
           if-no-files-found: warn
