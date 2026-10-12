@@ -8,6 +8,7 @@ on:
       - patches/splatoon3/runtime/brella-guard-facing.mjs
       - patches/splatoon3/runtime/main-weapon-catalog.mjs
       - patches/splatoon3/tests/brella-guard-facing.test.mjs
+      - patches/splatoon3/tests/brella-facing-wire.test.mjs
       - .github/workflows/inkwave-brella-facing.yml
 permissions:
   contents: read
@@ -45,7 +46,7 @@ jobs:
       - name: All 65 facing boundaries, 243 live holds, runner admission and existing regressions
         run: |
           node --experimental-vm-modules --test patches/splatoon3/tests/brella-guard-facing.test.mjs patches/splatoon3/tests/issue-857-roller-heading.test.mjs patches/splatoon3/tests/issue-973-facing-speed.test.mjs patches/splatoon3/tests/main-weapon-catalog.test.mjs
-          INKWAVE_BUILT_SITE=.guard-after-site node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs
+          INKWAVE_BUILT_SITE=.guard-after-site node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs patches/splatoon3/tests/brella-facing-wire.test.mjs
       - name: Real browser before and after, full framing and reverse-hand contact
         run: |
           IDS=s3-shelter-normal,s3-shelter-wide,s3-shelter-focus

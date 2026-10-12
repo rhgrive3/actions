@@ -69,3 +69,15 @@ Source reference remains the pinned Splatoon 3 Ver.11.3.0 weapon data and multi-
 weapon references; these do not establish retail body-turn timing. INKWAVE's 30/60/120
 Hz tests and pending real-browser proof are separate from unmeasured retail motion.
 The candidate evidence and limits are recorded above.
+
+## Built remote and wire closure
+
+A new scoped test uses actual NetMatch sender/receiver instances, bind, _sendTick,
+onMessage, _peer, _sample and applyRemote on the exact emitted runtime. All three
+selected models pass at 30/60/120 Hz: remote _face is never called, received body yaw
+and aim yaw remain independent, and no authoritative preparing state is reconstructed.
+Toggling preparing leaves the existing 26-slot row identical except for the normal
+monotonic adoption sequence increment (asserted explicitly). No new wire slot or
+sidecar is emitted. Undercover's actual continuous-fire/release path never receives
+a preparing property. Both scoped built tests pass; the older #857 fixture failure
+is retained and is not represented as fixed by changing unrelated network code.
