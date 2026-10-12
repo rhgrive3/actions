@@ -5,6 +5,8 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 export async function nativeFixture(){
  return fixture({fullRuntime:true,realProjectiles:true,adaptNative:adaptBuildSource,adaptRuntime:adaptBuildSource,extraExports:`
  export { NativeLevel,NativePhysics } from './patches/native-stages/runtime/engine.mjs';
+ export { BotBrain } from './inkwave-public/src/game/bots.js';
+ export { nativePaintGoalIds } from './patches/native-stages/runtime/engine.mjs';
  export { NavGraph } from './inkwave-public/src/game/nav.js';
  export { nativeRankedStage } from './patches/native-stages/runtime/native-ranked.mjs';
  `});

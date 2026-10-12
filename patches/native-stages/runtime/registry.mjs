@@ -16,6 +16,6 @@ export function nativeStageURL(id, file) {
 
 export function nativeStageFingerprint(id){
  const stage=nativeStageBuild?.stages.find(s=>s.id===id);
- return stage?'native-stage-v1:'+id+':'+stage.integritySha256:null;
+ return stage?'native-stage-v1:'+id+':'+stage.integritySha256+':'+nativeStageBuild.runtimeSha256:null;
 }
 export function nativeStageCompatible(cfg){return (cfg.nativeStage??null)===nativeStageFingerprint(cfg.map);}

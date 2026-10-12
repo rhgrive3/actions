@@ -19,6 +19,26 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
   const area=G.paint.splat(h.point.clone().addScaledVector(h.normal,.03),1.5,0,{seed:.125,instant:true});
   assert.ok(area>0,'positive claimed ground area');assert.equal(G.paint.sample(h.face,h.u,h.v),1);
  }
+ // Find a real exported wall triangle and exercise the existing squid climb.
+ let wallProof=false;
+ for(const face of level.faces){
+  if(!face.wall||face.sv<1.5)continue;
+  for(const tid of face.triangles.slice(0,4)){
+   const tri=level.triangleWorld.triangle(tid),point=tri.a.clone().add(tri.b).add(tri.c).multiplyScalar(1/3);
+   const feet=point.clone().addScaledVector(face.n,PLAYER.radius+.06);feet.y-=.3;
+   const hit=physics.raycast(feet.clone().add(new THREE.Vector3(0,.3,0)),face.n.clone().negate(),PLAYER.radius+.35);
+   if(!hit.hit||hit.face!==face.id)continue;
+   G.paint.splat(hit.point.clone().addScaledVector(hit.normal,.03),2,0,{seed:.375,instant:true});
+   if(G.paint.sample(hit.face,hit.u,hit.v)!==1)continue;
+   const actor=f.make();actor.pos.copy(feet);actor.intent.move.copy(face.n).negate();actor.form='squid';actor.climbExit=0;
+   actor._updateClimb(1/60,true);
+   if(!actor.climbing)continue;
+   assert.ok(actor.vel.y>0,'painted source wall grants upward swim velocity');
+   G.paint.splat(hit.point.clone().addScaledVector(hit.normal,.03),3,1,{seed:.375,instant:true});actor._updateClimb(1/60,true);assert.equal(actor.climbing,false,'enemy wall ink releases squid');wallProof=true;break;
+  }
+  if(wallProof)break;
+ }
+ assert.equal(wallProof,true,id+' native wall swimming');
  // Polygon masks prevent ink/turf ownership outside source triangles.
  for(let k=0;k<G.paint.grid.length;k++)if(G.paint.dead[k])assert.equal(G.paint.grid[k],0);
  // Both body and ground probes use the actual native triangles at 30/60/120 Hz.
@@ -32,5 +52,11 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
  assert.equal(stage.version1130Verified,false);assert.match(stage.calibration,/UNVERIFIED/);
  assert.ok(stage.tower.path.length>2);
  for(const p of [...stage.rainmaker.goals,stage.rainmaker.center])assert.ok(Number.isFinite(level.groundHeight(p[0],p[2])));
+ G.match.mode='turf';G.match.opts={};
+ const spawned=f.make();assert.equal(f.beginInitialSquidSpawn(spawned),true);assert.ok(spawned.s3.squidSpawn.target,'initial landing fallback is supported');
+ spawned.intent.fire=true;spawned.update(1/60);assert.equal(spawned.s3.squidSpawn.phase,'flight');spawned.intent.fire=false;
+ for(let i=0;i<75;i++)spawned.update(1/60);assert.equal(spawned.s3.squidSpawn,undefined);assert.equal(spawned.grounded,true);
+ const brain=new f.BotBrain(spawned,'normal');const candidates=f.nativePaintGoalIds(brain,G);assert.ok(candidates.length>0,'reachable native paint goals');
+ const startNode=G.nav.nearest(spawned.pos,1.2);for(const target of candidates.slice(0,5))assert.ok(G.nav.path(startNode,target,spawned.team,50000),'directed path to sampled paint goal');
  console.log(JSON.stringify({id,ppm:G.paint.ppm,atlas:2048,faces:level.faces.length,gridBytes:G.paint.grid.byteLength,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,navMilliseconds:performance.now()-start}));
 });

@@ -7,7 +7,16 @@ export function nativeRankedStage(G){
  const B=L.bounds,mx=(B.minX+B.maxX)*.5,mz=(B.minZ+B.maxZ)*.5,dz=(B.maxZ-B.minZ)*.2;
  // Drop edges are directed. Use the center's mutually reachable component,
  // rather than treating the original undirected prune as a playable uphill route.
- const middle=nearest(all,mx,mz),reverse=Array.from({length:N.nodes.length},()=>[]);
+ const probe=L.spawnPads[0].clone(),down=probe.clone().set(0,-1,0);
+ const paintable=all.filter(id=>{
+  const n=N.nodes[id],h=L.triangleWorld.ray(probe.set(n.x,n.y+.1,n.z),down,.3,{minNormalY:.7});
+  if(!h)return false;const fid=L.data.triangleFace[h.triangle],f=L.faces[fid];
+  if(!f?.turf)return false;
+  const rel=probe.copy(h.point).sub(f.origin),u=rel.dot(f.u),v=rel.dot(f.v),i=Math.max(0,Math.min(f.nu-1,Math.floor(u/f.cu))),j=Math.max(0,Math.min(f.nv-1,Math.floor(v/f.cv)));
+  return !G.paint.dead[f.grid+j*f.nu+i];
+ });
+ if(!paintable.length)throw Error('Native ranked stage has no live paint floor');
+ const middle=nearest(paintable,mx,mz),reverse=Array.from({length:N.nodes.length},()=>[]);
  for(const n of N.nodes)for(const edge of n.nb)reverse[edge.to].push(n.id);
  const reach=(seed,backward)=>{const seen=new Set([seed]),queue=[seed];for(let i=0;i<queue.length;i++){const id=queue[i],next=backward?reverse[id]:N.nodes[id].nb.map(e=>e.to);for(const j of next)if(N.valid[j]&&!seen.has(j)){seen.add(j);queue.push(j);}}return seen;};
  const forward=reach(middle.id,false),back=reach(middle.id,true),common=all.filter(id=>forward.has(id)&&back.has(id));

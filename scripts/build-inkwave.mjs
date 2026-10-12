@@ -61,7 +61,7 @@ let rawJs = 0, minJs = 0, gzRaw = 0, gzMin = 0, rawCss = 0, minCss = 0;
 let losslessLightmapSavings = 0;
 for (const file of walk(SRC)) {
   const rel = path.relative(SRC, file);
-  if (SKIP.has(rel)) continue;
+  if (SKIP.has(rel) || rel.startsWith('assets/native-stages' + path.sep) || rel.startsWith('_native-reference-assets' + path.sep)) continue;
   const dst = path.join(BUILD, rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   const ext = path.extname(file);
@@ -160,7 +160,7 @@ for (const [root, prefix] of [
     const rel = path.relative(root, file).split(path.sep).join('/');
     if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
     // One native runtime module avoids inflating the bounded worker manifest.
-    if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs'].includes(rel)) continue;
+    if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs'].includes(rel)) continue;
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     if (prefix === 'patches/native-stages' && rel === 'runtime/engine.mjs' && !unminified) {

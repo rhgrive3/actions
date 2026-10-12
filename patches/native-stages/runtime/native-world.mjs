@@ -25,13 +25,22 @@ export async function buildNativeWorld(game,map,current){
  try{
   const data=await loadNativeData(map.id,signal);if(!current())return;
   const level=new NativeLevel(data),physics=new NativePhysics(level);
-  const quality=game.settings.quality==='high'?'high':game.settings.quality==='low'?'low':'balanced';
-  const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal);display=nativeDisplay(data,textures,quality);
+  const quality=['high','ultra'].includes(game.settings.quality)?'high':game.settings.quality==='low'?'low':'balanced';
+  const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,game.mobile?.touch?1024:undefined);display=nativeDisplay(data,textures,quality);
   if(!current()){display.dispose();return;}
-  paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,quality==='low'?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
+  paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
   // Compact charts use a 2-texel guard. Avoid sampling other charts through
   // distant mip levels; source material maps retain their normal mip chains.
   paint.texture.generateMipmaps=false;paint.texture.minFilter=THREE.LinearFilter;
+  // Compile the offscreen paint/drying shaders during loading, in their actual
+  // render-target colour space. Do not hold renderer state across the await.
+  const warmStart=performance.now(),r=G.renderer,previousTarget=r.getRenderTarget(),dryVisible=paint.dryMesh.visible;
+  let warmed;
+  try { r.setRenderTarget(paint.rt);paint.dryMesh.visible=true;warmed=r.compileAsync(paint.scene,paint.cam); }
+  finally { r.setRenderTarget(previousTarget);paint.dryMesh.visible=dryVisible; }
+  await warmed;
+  const shaderWarmMilliseconds=performance.now()-warmStart;
+  level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
   const inkMesh=new THREE.Mesh(inkGeometry,inkMat);inkMesh.name='native-game-ink';inkMesh.receiveShadow=true;
   const navStart=performance.now(),nav=new NavGraph(level,physics);
@@ -43,8 +52,8 @@ export async function buildNativeWorld(game,map,current){
   game.decor={group:display.group,setTeamColors(){},update(){},setNight(){},dispose(){}};
   (game.swimWake||(game.swimWake=new SwimWake())).reset();
   game.minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)));
-  game.nativeWorld={display,level,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,quality,version1130Verified:false},
-   dispose(){display.dispose();inkMesh.removeFromParent();inkGeometry.dispose();inkMat.dispose();}};
+  game.nativeWorld={display,level,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,quality,version1130Verified:false},
+   dispose(){display.dispose();inkMesh.removeFromParent();inkMesh.geometry.dispose();inkMat.dispose();}};
   if(G.env?.rebuildForArena)G.env.rebuildForArena(level.bounds,game._footprint(level));
   game._shadowRoots();if(G.teamColors[0])game._setPalette(game.palette||game._pickPalette());
  }catch(error){

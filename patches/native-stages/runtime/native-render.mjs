@@ -16,7 +16,7 @@ export function nativeInkGeometry(level,paint){
  const positions=[],normals=[],colors=[],uv=[],faceUv=[],faceData=[],faceFlags=[],tan=[],light=[];
  const p=new THREE.Vector3(),rel=new THREE.Vector3();
  for(const f of paint.paintFaces){
-  const a=f.atlas;if(!a)continue;
+  const a=f.atlas;if(!a||!f.triangles)continue;
   for(const id of f.triangles)for(let k=0;k<3;k++){
    p.fromArray(level.data.triangles,id*9+k*3);rel.copy(p).sub(f.origin);const u=rel.dot(f.u),v=rel.dot(f.v);
    positions.push(p.x,p.y,p.z);normals.push(f.n.x,f.n.y,f.n.z);colors.push(1,1,1);
@@ -32,6 +32,7 @@ export function nativeInkGeometry(level,paint){
 // Display geometry keeps exporter positions/indices/UVs. Background is culled per
 // source object. Only GPU texture representations have an explicit quality cap.
 export function nativeDisplay(data,textures,quality){
+ let liveTextures=textures;
  const {manifest:m,vertices,indices}=data,group=new THREE.Group(),geometries=[],materials=[],cache=new Map();group.name='native-source-display';
  for(const o of m.objects){
   if(!o.active)continue;const src=m.materials[o.material]||{},glass=o.glass||/_Water$/.test(o.material),alpha=src.hasAlpha||!!src.maps?.opacity;
@@ -52,5 +53,12 @@ export function nativeDisplay(data,textures,quality){
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(ib,1));g.computeBoundingSphere();
   const mesh=new THREE.Mesh(g,mat);mesh.name=o.name;mesh.castShadow=o.collidable&&!glass&&!alpha;mesh.receiveShadow=!glass;mesh.userData.nativeObject=o;group.add(mesh);geometries.push(g);
  }
- return {group,dispose(){group.removeFromParent();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());for(const t of textures.values()){t.image?.close?.();t.dispose();}textures.clear();}};
+ return {group,updateTextures(next,quality){
+  for(const [name,mat] of cache){const src=m.materials[name]||{};mat.map=next.get(src.albedo)||null;mat.alphaMap=next.get(src.maps?.opacity)||null;
+   mat.normalMap=quality==='high'?(next.get(src.maps?.normal)||null):null;mat.normalScale.set(.28,.28);
+   mat.roughnessMap=quality==='high'?(next.get(src.maps?.roughness)||null):null;mat.emissiveMap=quality==='high'?(next.get(src.maps?.emissive)||null):null;
+   mat.emissive.set(mat.emissiveMap?0xffffff:0x000000);mat.emissiveIntensity=.13;mat.needsUpdate=true;
+  }
+  for(const t of liveTextures.values()){t.image?.close?.();t.dispose();}liveTextures.clear();liveTextures=next;
+ },dispose(){group.removeFromParent();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());for(const t of liveTextures.values()){t.image?.close?.();t.dispose();}liveTextures.clear();}};
 }

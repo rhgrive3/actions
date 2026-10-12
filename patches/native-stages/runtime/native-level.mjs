@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Level } from '../../../src/world/level.js';
+import { nativeInkGeometry } from './native-render.mjs';
 import { TriangleWorld } from './triangle-world.mjs';
 const DOWN = new THREE.Vector3(0,-1,0);
 
@@ -71,12 +72,14 @@ export class NativeLevel extends Level {
   }
   return out;
  }
+ buildGeometry(){if(!this.nativePaint)throw Error("Native paint is not initialized");return nativeInkGeometry(this,this.nativePaint);}
  blockForTriangle(id){const f=this.data.triangleFace[id];return f>=0?f:this.objectBlock[this.triangleWorld.objectIds[id]];}
 }
 
 export function initNativeGrid(paint){
  const lvl=paint.level;paint.grid=new Uint8Array(lvl.mask.length);
  paint.dead=Uint8Array.from(lvl.mask,v=>v?0:1);
+ for(const f of paint.paintFaces){f.nativeEmpty=true;for(let k=f.grid;k<f.grid+f.nu*f.nv;k++)if(!paint.dead[k]){f.nativeEmpty=false;break;}}
  paint.counts=[0,0];paint.turfTotal=0;paint.turfArea=0;
  for(const f of paint.paintFaces)if(f.turf){
   const end=f.grid+f.nu*f.nv;
