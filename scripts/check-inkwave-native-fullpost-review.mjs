@@ -37,7 +37,7 @@ assert.equal(build.files['native-stages/runtime/native-render.mjs'], sha(candida
 assert.equal(build.files['native-stages/runtime/native-ink-chunks.mjs'], sha(chunkSource), 'Built input is not the pinned reviewed culling code');
 assert.equal(build.files['native-stages/runtime/native-world.mjs'], sha(worldSource), 'Built input is not the pinned reviewed lifecycle code');
 fs.mkdirSync(out, {recursive:true});
-const result = {status:'running', reviewedHead:'996a30c93d4a01d5f2924c7316f132e56adb229a', buildIdentity:{contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision}, baselineMaterial:{commit:'ac1159b76b42a10ff02fe58add74a8285cc08d32',gitSha:gitSha(baseline),sha256:sha(baseline)}, conditions:{viewport:[600,600],quality:'high',shadows:true,bloom:true,completion:'Same JavaScript task: full native post.render, default-framebuffer RGBA readPixels, error check and PNG copy before yielding',timing:'Diagnostic wall time only; no mobile FPS or isolated GPU claim',simulation:'Seeded setup once per stage, two fixed paint teams, eight actors retained, per-object draw hooks warmed then frozen equally',factorCells:['old-full','new-full','old-culled','new-culled']}, stages:[], errors:[]};
+const result = {status:'running', reviewedHead:'996a30c93d4a01d5f2924c7316f132e56adb229a', buildIdentity:{contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision}, baselineMaterial:{commit:'ac1159b76b42a10ff02fe58add74a8285cc08d32',gitSha:gitSha(baseline),sha256:sha(baseline)}, conditions:{viewport:[600,600],quality:'high',shadows:true,bloom:true,completion:'Same JavaScript task: full native post.render, default-framebuffer RGBA readPixels, error check and PNG copy before yielding',timing:'Diagnostic wall time only; no mobile FPS or isolated GPU claim',simulation:'Seeded setup once per stage, two fixed paint teams; stage-only: eight Actor roots hidden equally, all production mesh/material/pass hooks preserved',phase:'Same starting composer read/write targets, delta zero, camera and simulation/paint clocks fixed',priorFullScene:'ea44a8a0309df4b1ec42ee0c2df6f39736e5a428: 3-5 actor shoulder/chest self-variation pixels; also had an invalid all-mesh hook freeze; not an adoption result',factorCells:['old-full','new-full','old-culled','new-culled']}, stages:[], errors:[]};
 const save = () => fs.writeFileSync(path.join(out, 'fullpost-comparison.json'), JSON.stringify(result,null,2));
 save();
 // Serve the exact old source alongside the candidate at the same module depth.
@@ -113,11 +113,14 @@ try {
         }
         G.paint.flush(1/60);
         const grid=G.paint.grid.slice(),positions=geometry.attributes.position.array.slice(),level=G.level,physics=G.physics,nav=G.nav;
-        const originalState={material:ink.material,index:geometry.index,drawRange:{...geometry.drawRange},drawIndex:ink._drawIndex.array.slice(),visible:ink._visible.slice(),callback:ink.onBeforeRender,camera:original,shadowNeeds:r.shadowMap.needsUpdate,sunNeeds:G.env.sun.shadow.needsUpdate,target:r.getRenderTarget()};
-        const hooks=new Map(),shadowHooks=new Map();const noHook=()=>{};let frozen=false;
-        const freeze=()=>{if(frozen)return;G.scene.traverse(o=>{if(o.isMesh&&o!==ink){hooks.set(o,o.onBeforeRender);o.onBeforeRender=noHook;}});frozen=true;};
-        const unfreeze=()=>{for(const[o,hook]of hooks)o.onBeforeRender=hook;hooks.clear();frozen=false;};
-        const d={G,g,r,gl,THREE,ink,geometry,newMaterial,oldMaterial,syncOld,grid,positions,level,physics,nav,originalState,faceViews,freeze,unfreeze,pixels:new Map(),active:null,calls:[],shadowDraws:0};
+        const comp=G.post.composer;
+        const originalState={material:ink.material,index:geometry.index,drawRange:{...geometry.drawRange},drawIndex:ink._drawIndex.array.slice(),visible:ink._visible.slice(),callback:ink.onBeforeRender,camera:original,shadowNeeds:r.shadowMap.needsUpdate,sunNeeds:G.env.sun.shadow.needsUpdate,target:r.getRenderTarget(),readBuffer:comp.readBuffer,writeBuffer:comp.writeBuffer,getDelta:comp.timer.getDelta,time:G.time,paintClock:G.paint.clock,characters:G.actors.map(a=>[a.character.root,a.character.root.visible])};
+        // Do not freeze object hooks: Character partGate, reflection hooks and
+        // shadowUngate are production render contracts, not animation ticks.
+        for(const [root] of originalState.characters)root.visible=false;
+        comp.timer.getDelta=()=>0;
+        const shadowHooks=new Map();
+        const d={G,g,r,gl,THREE,ink,geometry,newMaterial,oldMaterial,syncOld,grid,positions,level,physics,nav,originalState,faceViews,pixels:new Map(),active:null,calls:[],shadowDraws:0};
         d.classify=pixels=>{
           let alphaPixels=0,nonzeroRGBPixels=0,differentFromFirst=0;
           for(let i=0;i<pixels.length;i+=4){alphaPixels+=pixels[i+3]>0;nonzeroRGBPixels+=(pixels[i]|pixels[i+1]|pixels[i+2])!==0;differentFromFirst+=pixels[i]!==pixels[0]||pixels[i+1]!==pixels[1]||pixels[i+2]!==pixels[2]||pixels[i+3]!==pixels[3];}
@@ -155,7 +158,7 @@ try {
           d.active=variant;
         };
         d.setView=name=>{
-          unfreeze();d.pixels.clear();G.camera.copy(original);
+          d.pixels.clear();G.camera.copy(original);
           if(faceViews[name])G.camera.copy(faceViews[name]);
           if(name==='edge-left'||name==='edge-right')G.camera.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),name==='edge-left'?-.43:.43));
           if(name==='away'){const b=level.bounds;G.camera.position.set(b.maxX+2000,2000,b.maxZ+2000);G.camera.lookAt(b.maxX+4000,2000,b.maxZ+4000);}
@@ -163,30 +166,34 @@ try {
         };
         d.draw=(variant,keep,key)=>{
           d.setVariant(variant);d.calls=[];d.shadowDraws=0;r.setRenderTarget(null);r.info.reset();
+          if(G.time!==originalState.time||G.paint.clock!==originalState.paintClock)throw Error('Frozen simulation/paint clock advanced');
+          comp.readBuffer=originalState.readBuffer;comp.writeBuffer=originalState.writeBuffer;
           // Exercise the existing native sun shadow pass, identically for all cells.
           r.shadowMap.needsUpdate=true;G.env.sun.shadow.needsUpdate=true;
           const beforeError=gl.getError();if(beforeError!==gl.NO_ERROR)throw Error('Pending GL error '+beforeError);
           const t0=performance.now();G.post.render();const submitMs=performance.now()-t0;
           // This read MUST happen before any await/yield with preserveDrawingBuffer=false.
           const {pixels,png,meta:capture}=d.readOutput();
-          const meta={variant,view:d.view,...capture,submitMs,completedWallMs:submitMs+capture.readMs,inkCalls:d.calls,shadowDraws:d.shadowDraws,render:{...r.info.render},shadowMapAllocated:!!G.env.sun.shadow.map,passes:G.post.composer.passes.filter(p=>p.enabled).map(p=>p.constructor.name)};
+          const meta={variant,view:d.view,...capture,submitMs,completedWallMs:submitMs+capture.readMs,inkCalls:d.calls,shadowDraws:d.shadowDraws,render:{...r.info.render},phase:{time:G.time,paintClock:G.paint.clock,startRead:originalState.readBuffer.texture.uuid,startWrite:originalState.writeBuffer.texture.uuid,delta:0},shadowMapAllocated:!!G.env.sun.shadow.map,passes:G.post.composer.passes.filter(p=>p.enabled).map(p=>p.constructor.name)};
           if(keep)d.pixels.set(key,pixels);
           // The deliberate away view may legitimately be a uniform sky. All
           // geometry views must reject opaque black, transparent and flat reads.
           return {meta,png,error:capture.glError!==gl.NO_ERROR||capture.contextLost||!capture.alphaPixels||(d.view!=='away'&&!capture.validScene)?'Invalid completed readback':null};
         };
         d.restore=()=>{
-          unfreeze();for(const[o,hook]of shadowHooks)o.onBeforeShadow=hook;shadowHooks.clear();ink.material=originalState.material;ink.onBeforeRender=originalState.callback;
+          for(const[o,hook]of shadowHooks)o.onBeforeShadow=hook;shadowHooks.clear();ink.material=originalState.material;ink.onBeforeRender=originalState.callback;
+          comp.readBuffer=originalState.readBuffer;comp.writeBuffer=originalState.writeBuffer;comp.timer.getDelta=originalState.getDelta;
+          for(const[root,visible]of originalState.characters)root.visible=visible;
           geometry.setIndex(originalState.index);ink._drawIndex.array.set(originalState.drawIndex);ink._drawIndex.clearUpdateRanges();ink._drawIndex.addUpdateRange(0,ink._drawIndex.count);ink._drawIndex.needsUpdate=true;
           ink._visible.set(originalState.visible);geometry.setDrawRange(originalState.drawRange.start,originalState.drawRange.count);
           G.camera.copy(original);G.camera.updateMatrixWorld();r.setRenderTarget(originalState.target);
           r.shadowMap.needsUpdate=originalState.shadowNeeds;G.env.sun.shadow.needsUpdate=originalState.sunNeeds;oldMaterial.dispose();
           if(G.level!==level||G.physics!==physics||G.nav!==nav||ink.geometry!==geometry||grid.some((v,i)=>v!==G.paint.grid[i])||positions.some((v,i)=>v!==geometry.attributes.position.array[i]))throw Error('Rendering changed gameplay authority or source positions');
-          return {authoritiesUnchanged:true,cpuPaintUnchanged:true,positionsUnchanged:true,geometryIndexRestored:geometry.index===originalState.index,callbackRestored:ink.onBeforeRender===originalState.callback,drawRangeRestored:geometry.drawRange.start===originalState.drawRange.start&&geometry.drawRange.count===originalState.drawRange.count};
+          return {authoritiesUnchanged:true,cpuPaintUnchanged:true,positionsUnchanged:true,geometryIndexRestored:geometry.index===originalState.index,callbackRestored:ink.onBeforeRender===originalState.callback,composerPhaseRestored:comp.readBuffer===originalState.readBuffer&&comp.writeBuffer===originalState.writeBuffer&&comp.timer.getDelta===originalState.getDelta,characterVisibilityRestored:originalState.characters.every(([root,visible])=>root.visible===visible),drawRangeRestored:geometry.drawRange.start===originalState.drawRange.start&&geometry.drawRange.count===originalState.drawRange.count};
         };
         globalThis.nativeFullpostReview=d;
         const ext=gl.getExtension('WEBGL_debug_renderer_info');
-        return {sourceSha256:level.manifest.sourceSha256,actors:G.actors.length,chunks:ink.chunks.length,preparedPaint,views:['gameplay',...Object.keys(faceViews),'edge-left','edge-right','away','return'],missingSurfaceCoverage:['wall','slope'].filter(k=>!faceViews[k]),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),sameEnvironmentGL:true,ao:true,shadows:true,materialCacheKeys:[oldMaterial.customProgramCacheKey(),newMaterial.customProgramCacheKey()]};
+        return {sourceSha256:level.manifest.sourceSha256,actors:G.actors.length,hiddenActorRoots:originalState.characters.length,sceneMode:'stage-only',productionHooksPreserved:true,chunks:ink.chunks.length,preparedPaint,views:['gameplay',...Object.keys(faceViews),'edge-left','edge-right','away','return'],missingSurfaceCoverage:['wall','slope'].filter(k=>!faceViews[k]),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),sameEnvironmentGL:true,ao:true,shadows:true,materialCacheKeys:[oldMaterial.customProgramCacheKey(),newMaterial.customProgramCacheKey()]};
       });
       save();
       try {
@@ -203,7 +210,6 @@ try {
             const file=`${id}-${view}-${variant}-warm.png`;fs.writeFileSync(path.join(out,file),Buffer.from(frame.png.split(',')[1],'base64'));
             stage.frames.push({...frame.meta,phase:'warm',image:file,error:frame.error});save();assert.equal(frame.error,null);
           }
-          await page.evaluate(()=>nativeFullpostReview.freeze());
           // A/A and B/B self controls before cross-cell interpretation.
           for(const variant of ['old-full','new-full','new-culled','old-culled'])for(let repeat=0;repeat<2;repeat++){
             const frame=await page.evaluate(({variant,repeat})=>nativeFullpostReview.draw(variant,true,variant+'-'+repeat),{variant,repeat});

@@ -12,8 +12,14 @@ candidate build. The source fixtures are not served as production assets.
 The browser uses the native Renderer and Environment in their own GL context,
 high quality, actual GTAO, bloom and enabled sun shadows. It checks that ink
 reaches the GTAO override pass and that real source/actor shadow draws occur.
-Eight actors remain in the scene. Simulation and input are prepared once;
-unrelated mesh draw hooks are warmed and frozen equally for comparison.
+Eight actors remain in gameplay state, with their roots hidden equally for the
+stage-only comparison. Simulation and input are prepared once. All production
+mesh/material callbacks, including AO gates and reflection hooks, are preserved.
+Composer starting read/write targets and delta=0 are fixed, and simulation/paint
+clocks are checked every frame. Initial full-scene ea44 evidence is preserved:
+3–5 self-variation pixels near the local Actor chest/shoulder made it inconclusive;
+its all-mesh hook freeze also incorrectly disabled production AO gates. This
+stage-only diagnostic does not replace the required future full-scene check.
 
 The same original ink Mesh is rendered in four cells: old early-discard/full
 non-indexed, new late-discard/full non-indexed, old/culled and new/culled. This
@@ -38,8 +44,8 @@ No gl.finish completion assumption is used.
 Each cell has an A/A self control. Nonzero self variation makes the comparison
 inconclusive. Culling must be pixel-identical with each shader. Old/new shader
 differences are measured and require image review; they are not auto-approved.
-Indices, drawRange, mesh/shadow hooks, material and camera are restored in
-finally. CPU paint, source positions and level/physics/navigation identities
+Indices, drawRange, shadow hooks, material, camera, composer phase and Actor root
+visibility are restored in finally. CPU paint, source positions and level/physics/navigation identities
 must remain unchanged. Timings are diagnostic wall times, not device FPS.
 
 Workflow: one job, 45-minute ceiling, no cancellation of any other run.
