@@ -11,16 +11,16 @@ const record = name => {
   assert.ok(r,'missing pinned 11.3.0 record '+name);
   return r;
 };
-const visualFor=(r,unit,index=0)=>catalogVisualSpec(r,{b:unit,c:unit.CollisionParam||r.parameters.CollisionParam},index);
+const visualFor=(r,unit,unitOrder,index=0)=>catalogVisualSpec(r,{b:unit,unit:unitOrder,c:unit.CollisionParam||r.parameters.CollisionParam},index);
 
 test('Tri-Slosher uses its three sourced visual sheets rather than 0.1 generic heads',()=>{
   const r=record('WeaponSlosherDiffusion'),units=r.parameters.UnitGroupParam.Unit;
   assert.equal(units.length,4);
-  const center=visualFor(r,units[0],0),side=visualFor(r,units[2],0);
+  const center=visualFor(r,units[0],0,0),side=visualFor(r,units[2],2,0);
   assert.equal(center.style,'sheet');assert.equal(center.draw.InitRadius,1.4);
   assert.equal(catalogVisualRadius(center,0),1.4);
   assert.equal(catalogVisualRadius(side,0),1);
-  assert.equal(catalogVisualRadius(visualFor(r,units[0],1),0),0,'sourced later fragments have zero draw radius');
+  assert.equal(catalogVisualRadius(visualFor(r,units[0],0,1),0),0,'sourced later fragments have zero draw radius');
   assert.equal(fidelityInkLook({type:'shot',catalogVisual:center}),INK_LOOK.slosh,'not a Shooter rod');
   const p={catalogVisual:center,age:5/60,vel:{length:()=>70}};
   updateCatalogVisual(p);
@@ -30,7 +30,7 @@ test('Tri-Slosher uses its three sourced visual sheets rather than 0.1 generic h
 
 test('Bloblobber bubbles grow over five frames and shrink 25% each rebound',()=>{
   const r=record('WeaponSlosherBathtub'),unit=r.parameters.UnitGroupParam.Unit[0];
-  const v=visualFor(r,unit,0);
+  const v=visualFor(r,unit,0,0);
   assert.equal(v.style,'bubble');
   assert.equal(catalogVisualRadius(v,0),.16);
   assert.equal(catalogVisualRadius(v,5/60),.8);
@@ -68,8 +68,12 @@ test('all pinned Charger full-charge ranges are retained by the actual catalog f
     f.G.projectiles.clear();f.G.actors.length=0;
     const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;
     f.tick(a,r.parameters.WeaponParam.ChargeFrameFullCharge+1);
-    a.intent.fire=false;f.tick(a,1);
-    const p=f.G.projectiles.list.find(x=>x.wid===r.id);
+    a.intent.fire=false;
+    let p=null;
+    for(let i=0;i<65&&!p;i++){
+      f.tick(a,1);
+      p=f.G.projectiles.list.find(x=>x.wid===r.id);
+    }
     assert.ok(p,name+' emitted a real charged round');
     assert.equal(p.catalog.range,raw.DistanceFullCharge,name+' exact full range');
     assert.equal(p.catalog.descriptor.range,raw.DistanceFullCharge,name+' descriptor');

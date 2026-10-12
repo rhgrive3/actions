@@ -6,9 +6,33 @@
 const finite=(v,f)=>Number.isFinite(v)?v:f;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const lerp=(a,b,t)=>a+(b-a)*t;
+// Pinned Leanny/splat3 11.3.0, commit 7280ff9cde8bb1c5dcef46c700c326471584d2e6.
+// The compressed main-weapon catalog omits DrawSizeParam. Each row is per
+// UnitGroupParam.Unit order: Init, End, ChangeFrame, AfterInit, AfterEnd,
+// TailMin, TailMax, TailSolidFrame. Never derive graphics radius from a hitbox.
+const SOURCE_DRAW_ROWS_1130 = {
+  WeaponSlosherDiffusion: [
+    [1.4,1.4,0,-1.4,-1.4,.5,2,5], [.8,.8,0,-.1,-.1,.5,2,5],
+    [1,1,0,0,0,.5,2,5], [1,1,0,0,0,.5,2,5]],
+  WeaponSlosherBathtub: [
+    [.16,.8,5,0,0,0,0,0], [.104,.52,5,-.006,-.03,0,0,0]],
+  WeaponSlosherStrong: [
+    [1.2,1.2,0,.4,.4,.5,4,5], [.5625,1,0,-.05,-.03,.5,4,5],
+    [.6,.6,0,-.1,-.1,.5,4,5]],
+  WeaponSlosherWashtub: [[.7,.7,0,0,0,.5,4,1]],
+  WeaponSlosherDouble: [[0,1.4,0,0,-.16,.5,4,5], [0,1.2,0,0,-.14,.5,4,5]],
+  WeaponSlosherLauncher: [[.1,.1,0,0,0,.5,.5,5], [0,0,0,0,0,.5,.5,5]],
+};
+export const SOURCE_DRAW_1130=Object.freeze(Object.fromEntries(
+  Object.entries(SOURCE_DRAW_ROWS_1130).map(([actor,rows])=>[actor,Object.freeze(rows.map(row=>Object.freeze({
+    InitRadius:row[0],EndRadius:row[1],ChangeFrame:row[2],
+    AfterOffsetInitRadius:row[3],AfterOffsetEndRadius:row[4],
+    TailLengthMin:row[5],TailLengthMax:row[6],TailSolidFrame:row[7],
+  })))])));
+
 export function catalogVisualSpec(record,descriptor,index=0){
   const family=record?.family, b=descriptor?.b||{}, c=descriptor?.c||{};
-  const draw=b.DrawSizeParam||b.UnitParam?.DrawSizeParam||null;
+  const draw=b.DrawSizeParam||b.UnitParam?.DrawSizeParam||SOURCE_DRAW_1130[record?.sourceActor]?.[descriptor?.unit]||null;
   if(family==='slosher'){
     return {style:record.sourceActor==='WeaponSlosherBathtub'?'bubble':'sheet',
       draw,index,baseRadius:.18,tailMin:Math.max(0,finite(draw?.TailLengthMin,0)),
