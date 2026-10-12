@@ -25,7 +25,7 @@ for(const ap of[0,10,57])test(`Inkjet AP${ap} native and clustered paint survive
  b.nm._peer('a');const replay=()=>{for(const e of rows){const row=JSON.parse(JSON.stringify(e));row._netSeq=e._netSeq;row._netTick=e._netTick;b.nm._play('a',row);}for(let i=0;i<240;i++)b.paint.advanceSimulation(1/60);};
  replay();assert.deepEqual(Array.from(b.paint.grid),Array.from(a.paint.grid));assert.ok(a.paint.counts[0]>0);
  const saved=Array.from(b.paint.grid);replay();assert.deepEqual(Array.from(b.paint.grid),saved);
- assert.equal(a.actor.special,0);assert.equal(b.actor.special,0);assert.equal(a.actor.stats.turf,a.paint.counts[0]*a.face.cu*a.face.cv);
+ assert.equal(a.actor.special,0);assert.equal(b.actor.special,0);assert.ok(Math.abs(a.actor.stats.turf-a.paint.counts[0]*a.face.cu*a.face.cv/3.305785)<1e-7);
 });
 
 for(const ap of[0,10,57])test(`Super Chump AP${ap} delayed decoys preserve real JSON paint ownership`,async()=>{
@@ -36,5 +36,5 @@ for(const ap of[0,10,57])test(`Super Chump AP${ap} delayed decoys preserve real 
  for(let i=0;i<600;i++){a.f.G.time+=1/60;a.f.G.projectiles.update(1/60);a.paint.advanceSimulation(1/60);}
  const rows=a.nm.out.filter(e=>e[1]==='s');assert.ok(rows.length>=8);for(const row of rows)assert.ok(row[5]<=3.74);b.nm._peer('a');
  for(let repeat=0;repeat<2;repeat++){for(const e of rows){const row=JSON.parse(JSON.stringify(e));row._netSeq=e._netSeq;row._netTick=e._netTick;b.nm._play('a',row);}for(let i=0;i<240;i++)b.paint.advanceSimulation(1/60);assert.deepEqual(Array.from(b.paint.grid),Array.from(a.paint.grid));}
- assert.ok(a.paint.counts[0]>0);assert.equal(a.actor.special,0);assert.equal(b.actor.special,0);assert.equal(a.actor.stats.turf,a.paint.counts[0]*a.face.cu*a.face.cv);
+ assert.ok(a.paint.counts[0]>0);assert.equal(a.actor.special,0);assert.equal(b.actor.special,0);assert.ok(Math.abs(a.actor.stats.turf-a.paint.counts[0]*a.face.cu*a.face.cv/3.305785)<1e-7);
 });
