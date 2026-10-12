@@ -191,8 +191,11 @@ test('horizontal startup removes the double lift in actual posed geometry while 
     for (const x of rows.slice(0, 14)) { highest = Math.max(highest, x.center[1]); drop = Math.max(drop, highest - x.center[1]); }
     return drop;
   };
-  assert.ok(reversal(traces[0]) > .07, 'foundation reproduces the extra windup dip');
-  assert.ok(reversal(traces[1]) < .015, 'one rising startup replaces the extra dip');
+  // The base roller layer now owns the continuous grip-space spline, even
+  // with this optional detail wrapper disabled. Keep the original geometric
+  // check in both modes rather than asserting that the old defect survives.
+  assert.ok(reversal(traces[0]) < .04, 'base spline has no second windup drop');
+  assert.ok(reversal(traces[1]) < .015, 'detail startup preserves the rising coil');
   assert.notDeepEqual(traces[0][8].bones.handR, traces[1][8].bones.handR);
   assert.notEqual(traces[0][8].geometrySha256, traces[1][8].geometrySha256, 'drawn geometry follows the corrected native arm pose');
 });
