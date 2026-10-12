@@ -32,7 +32,7 @@ for (const weapon of ['shooter', 'dualies', 'splatling']) {
     for (let tick = 0; tick < 32; tick++) paint.advanceSimulation(1 / 60);
     assert.ok(paint.counts[0] > bodyCells, 'ancillary cells really become owned');
     assert.ok(owner.stats.turf > bodyCredit, 'late cells increase the emitting actor credit');
-    assert.equal(owner.stats.turf, paint.counts[0] * face.cu * face.cv, 'every claimed floor cell credits exactly once');
+    assert.ok(Math.abs(owner.stats.turf - paint.counts[0] * face.cu * face.cv / 3.305785) < 1e-7, 'every claimed floor cell credits exactly once in turf points');
     assert.equal(owner.special, owner.stats.turf, 'ordinary late paint contributes the native special gauge');
     const done = owner.stats.turf;
     for (let tick = 0; tick < 32; tick++) paint.advanceSimulation(1 / 60);
