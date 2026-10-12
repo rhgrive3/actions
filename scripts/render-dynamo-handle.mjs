@@ -34,15 +34,15 @@ try{
  const nativeScene=new THREE.Scene(),env=new Environment(renderer,nativeScene);scene.remove(hemi,key);scene.add(env.sun,env.hemi);scene.environment=env.envMap;scene.environmentIntensity=nativeScene.environmentIntensity;metrics.native={theme:env.theme,pmrem:[env.envMap.image.width,env.envMap.image.height],intensity:scene.environmentIntensity,sun:env.sun.intensity,hemisphere:env.hemi.intensity};
  for(const [k,c]of Object.entries(cameras))snap('native.'+k,c);scene.remove(g);
  const a=new Actor({team:0,weapon:'s3-roller-heavy',isLocal:true,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;ch.actor=a;ch.onEvent=null;a.grounded=a.ground.hit=true;G.actors=[a];scene.add(ch.root);if(ch._sourceMotionLoader)await ch._sourceMotionLoader;if(ch.sourceMotion?.ready)await ch.sourceMotion.ready;if(ch.sourceMotion?.status!=='ready')throw Error('Dynamo source motion not ready');metrics.motion=ch.sourceMotion.status;
- const camera=new THREE.PerspectiveCamera(34,1,.05,40);camera.position.set(-2.5,1.5,3.3);camera.lookAt(0,.8,.15);let maxGrip=0,maxSpin=0,maxFold=0;
+ const camera=new THREE.PerspectiveCamera(34,1,.05,40);camera.position.set(-4.5,2.5,6);camera.lookAt(0,1.05,.5);let maxGrip=0,maxSpin=0,maxFold=0;
  for(let n=0;n<360;n++){const t=n/60,fire=t>=.5&&t<2.5||t>=3&&t<5;a.ink=100;a.intent.fire=fire;a.grounded=a.ground.hit=!(t>=3&&t<4.4);a.intent.move.set(0,0,fire?1:0);a.vel.set(0,0,fire?2.4:0);a.aimPitch=0;G.time+=1/60;a.weaponRunner.update(1/60,{fire,firePressed:n===30||n===180});a._finishFrame(1/60);ch.root.updateMatrixWorld(true);
  if(!Array.from(ch.P).every(Number.isFinite))throw Error('nonfinite pose');const C=api.CHARACTER_CHANNELS;if(n>20&&ch.P[C.IKL]>.99&&ch.P[C.LTW]<.001)maxGrip=Math.max(maxGrip,ch.weapon.off.localToWorld(d.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3())));maxSpin=Math.max(maxSpin,Math.abs(ch.weapon.drum?.rotation.x||0));maxFold=Math.max(maxFold,Math.abs(ch.weapon.fold?.rotation.x||0));
  if([25,72,140,211,245,330].includes(n)){
-  for(const [view,offset]of [['front',[-2.5,1.5,3.3]],['back',[2.5,1.5,-3.3]],['left',[3.3,1.2,.3]],['right',[-3.3,1.2,.3]]]){camera.position.set(...offset);camera.lookAt(0,.8,.15);snap('held.'+n+'.'+view,camera);}
+  for(const [view,offset]of [['front',[-4.5,2.5,6]],['back',[4.5,2.5,-6]],['left',[7,1.8,.5]],['right',[-7,1.8,.5]]]){camera.position.set(...offset);camera.lookAt(0,1.05,.5);snap('held.'+n+'.'+view,camera);}
  }
  }
  metrics.held={maxGrip,maxSpin,maxFold};
- camera.position.set(-2.5,1.5,3.3);camera.lookAt(0,.8,.15);const post=new Renderer(document.body,{quality:'high'});
+ camera.position.set(-4.5,2.5,6);camera.lookAt(0,1.05,.5);const post=new Renderer(document.body,{quality:'high'});
  // PMREM render targets belong to their creating WebGL renderer/context.
  // Rebuild the native environment on the production renderer; never sample
  // the offscreen studio renderer's GPU-only cubeUV target in this context.
