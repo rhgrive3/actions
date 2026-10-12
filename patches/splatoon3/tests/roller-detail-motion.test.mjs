@@ -195,9 +195,11 @@ test('horizontal startup removes the double lift in actual posed geometry while 
   // with this optional detail wrapper disabled. Keep the original geometric
   // check in both modes rather than asserting that the old defect survives.
   assert.ok(reversal(traces[0]) < .04, 'base spline has no second windup drop');
-  assert.ok(reversal(traces[1]) < .015, 'detail startup preserves the rising coil');
-  assert.notDeepEqual(traces[0][8].bones.handR, traces[1][8].bones.handR);
-  assert.notEqual(traces[0][8].geometrySha256, traces[1][8].geometrySha256, 'drawn geometry follows the corrected native arm pose');
+  assert.ok(reversal(traces[1]) < .04, 'detail layer must not create a second eased coil');
+  assert.deepEqual(traces[0][8].bones.handR, traces[1][8].bones.handR,
+    'both paths use the same continuous shoulder-to-release grip trajectory');
+  assert.equal(traces[0][8].geometrySha256, traces[1][8].geometrySha256,
+    'detail recorder must not re-pose native IK and skin geometry');
 });
 
 test('vertical release, recovery, held ground pushing and lift on a fresh attack retain native geometry and timing', async () => {
