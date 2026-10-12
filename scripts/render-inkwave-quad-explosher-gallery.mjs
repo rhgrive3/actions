@@ -136,12 +136,13 @@ try {
       // Reference-paired cameras are independent from authored geometry. Both revisions use these exact poses.
       const referenceImages={},referenceCameras={},isQuad=id==='s3-maneuver-stepper';
       const refCenter=new THREE.Vector3(0,isQuad?.036:.027,isQuad?.039:.153);
-      const refViews=isQuad?{refSide:[-3,.22,.45],refFront:[0,.12,3],refRear:[0,.12,-3],refOblique:[-.9,.53,1.1]}:{refSide:[-3,.35,.30],refFront:[-.20,1.15,3],refRear:[-.30,.50,-3],refOblique:[-.9,1.02,1.1]};
+      const refViews=isQuad?{refSide:[-3,.22,.45],refFront:[0,.12,3],refRear:[0,.12,-3],refOblique:[-.9,.53,1.1]}:{refSide:[-2.6,.35,-1.5],refFront:[-.20,1.15,3],refRear:[-.30,.50,-3],refOblique:[-.9,1.02,1.1]};
       for(const [name,eye]of Object.entries(refViews)){
         const isPair=isQuad&&['refOblique','refSide'].includes(name),span=isQuad?(isPair?.36:.34):.40;
         const distance=isQuad?(isPair?1.31:1.10):(name==='refSide'||name==='refOblique'?1.30:name==='refRear'?1.08:1.18);
         const camera=new THREE.PerspectiveCamera(18,1,.01,30),offset=new THREE.Vector3(...eye).normalize().multiplyScalar(distance),up=new THREE.Vector3(0,1,0);
-        // The Explosher source turntable displays a tilted can. Align the camera basis, never deform the model.
+        // The Explosher side crop is rear-oblique (about 120 degrees from the muzzle),
+        // as the six-view turntable order and visible rear panel show. Align the display tilt in the camera basis.
         if(!isQuad&&name==='refSide'){offset.applyAxisAngle(new THREE.Vector3(1,0,0),.18);up.applyAxisAngle(new THREE.Vector3(1,0,0),.18);}
         const roll=isQuad?0:({refFront:-.22,refRear:.22,refSide:0,refOblique:-.30}[name]||0);up.applyAxisAngle(offset.clone().normalize(),roll);
         camera.position.copy(refCenter).add(offset);camera.up.copy(up);camera.lookAt(refCenter);

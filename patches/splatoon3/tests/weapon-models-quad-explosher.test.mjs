@@ -44,6 +44,17 @@ test('rebuilds are bounded merged volumetric assemblies with open loop and reces
  assert.ok(cheekArea>.005,'Dark chamber has broad planar side-cover area');
  assert.ok(hit(IDS[0],-.068,.100)>0,'front rebound blades connect back into the sole');
  let receiverHalfWidth=0;for(let i=0;i<dp.count;i++)if(dp.getZ(i)>.033&&dp.getZ(i)<.052&&dp.getY(i)>.041&&dp.getY(i)<.096)receiverHalfWidth=Math.max(receiverHalfWidth,Math.abs(dp.getX(i)));assert.ok(receiverHalfWidth>.022,'rounded receiver has real front-view thickness');
+ // Bent blade thickness must follow its surface normal rather than invert into the opposite cap.
+ const tangentY=Math.cos(-.45)-.5,tangentZ=Math.sin(-.45)+2.575;
+ for(const sx of[-1,1]){const normal=new f.THREE.Vector3(0,-tangentZ,tangentY).normalize(),worldNormal=normal.clone().applyAxisAngle(new f.THREE.Vector3(0,1,0),sx*.52);let witnesses=0;
+  for(let j=0;j<di.length;j+=3){const ids=[di[j],di[j+1],di[j+2]],world=ids.map(i=>new f.THREE.Vector3().fromBufferAttribute(dp,i)),local=world.map(p=>p.clone().sub(new f.THREE.Vector3(sx*.036,-.044,.153)).applyAxisAngle(new f.THREE.Vector3(0,1,0),-sx*.52));
+   if(!local.every(p=>Math.abs(p.x)<.025&&p.y<-.019&&p.y>-.034))continue;
+   const thickness=local.map(p=>(p.y+.007)*normal.y+(p.z-.03605)*normal.z);
+   if(!thickness.every(w=>Math.abs(w-.005)<2e-5))continue;
+   const n=world[1].clone().sub(world[0]).cross(world[2].clone().sub(world[0]));assert.ok(n.dot(worldNormal)>0,'bent black blade outer cap winding');witnesses++;
+  }assert.ok(witnesses>=2,'both bent blade lower outer caps have measurable thickness');
+ }
+
  let heelWidth=0;for(let i=0;i<dp.count;i++)if(dp.getY(i)>-.060&&dp.getY(i)<-.020&&dp.getZ(i)>-.063&&dp.getZ(i)<-.012)heelWidth=Math.max(heelWidth,Math.abs(dp.getX(i)));assert.ok(heelWidth>.040,'quad rear heel has real transverse flare');
  const ex=f.getWeaponDef(IDS[1]).body,ep=ex.attributes.position,em=ex.attributes.aMat;let cageMetal=0;for(let i=0;i<ep.count;i++)if(Math.abs(ep.getX(i))>.084&&ep.getZ(i)>.06&&ep.getZ(i)<.245&&Math.round(em.getX(i))===3)cageMetal++;assert.ok(cageMetal>50,'explosher exposed cage uses existing brushed-metal class');
  console.log('QUAD_EXPLOSHER_METRICS '+JSON.stringify(rows));

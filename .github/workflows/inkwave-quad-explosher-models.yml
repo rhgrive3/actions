@@ -20,7 +20,7 @@ jobs:
   review:
     if: github.head_ref == 'feat/inkwave-quad-explosher-rebuild'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,8 +28,16 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          ref: 80555b8cf12e3a9529c0f461bd2acc3ee17f1764
+          fetch-depth: 2
           path: .model-baseline
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fe242d9bf10154ad7d14aeac9bb9d1a245c91474
+          path: .model-sixth-source
+          sparse-checkout-cone-mode: false
+          sparse-checkout: patches/splatoon3/runtime/weapon-models/sloshers.mjs
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -44,6 +52,19 @@ jobs:
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
           node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
           node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Build fixed-main sixth-draft Explosher angle control
+        run: |
+          model=patches/splatoon3/runtime/weapon-models/sloshers.mjs
+          original="$RUNNER_TEMP/quad-explosher-candidate-sloshers.mjs"
+          cp "$model" "$original"
+          original_sha=$(git hash-object "$model")
+          trap 'cp "$original" "$model"' EXIT
+          cp ".model-sixth-source/$model" "$model"
+          test "$(git hash-object "$model")" = a56f3427b12f4048ec226b126dd014977d954209
+          ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node scripts/build-inkwave.mjs inkwave-public .model-sixth-angle-site
+          cp "$original" "$model"
+          test "$(git hash-object "$model")" = "$original_sha"
+          trap - EXIT
       - name: Snapshot exact before geometry on the same runtime
         env:
           INKWAVE_BUILT_SITE: .model-before-site
@@ -62,6 +83,12 @@ jobs:
           QUAD_EXPLOSHER_BASELINE: .quad-baseline-contracts.json
           WEAPON_IDS: s3-maneuver-stepper,s3-slosher-washtub
         run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-quad-explosher.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+      - name: Verify all-65 material boundaries under the merged LOD implementation
+        env:
+          INKWAVE_BUILT_SITE: .model-after-site
+        run: |
+          git -C .model-baseline show 5ed08c6376696dd67391afed7c36463106959de8:inkwave-public/src/game/character-lod.js > .quad-pre-boundary-lod.js
+          WEAPON_LOD_BASELINE="$GITHUB_WORKSPACE/.quad-pre-boundary-lod.js" WEAPON_LOD_CANDIDATE="$GITHUB_WORKSPACE/.model-after-site/src/game/character-lod.js" WEAPON_LOD_REPORT="$GITHUB_WORKSPACE/.quad-lod-boundaries.json" node --experimental-vm-modules --test patches/splatoon3/tests/weapon-lod-boundaries.test.mjs
       - name: Same-camera before and after, full source motion, actual Actors
         run: |
           node scripts/render-inkwave-quad-explosher-gallery.mjs --site .model-before-site --out .model-evidence/before --ids s3-maneuver-stepper,s3-slosher-washtub --size 500
@@ -73,11 +100,23 @@ jobs:
             node scripts/render-inkwave-quad-explosher-gallery.mjs --site ".model-${version}-site" --out ".model-evidence/productionDay/${version}" --ids s3-maneuver-stepper,s3-slosher-washtub --size 500 --environment productionDay
           done
           python3 scripts/compare-inkwave-quad-explosher-gallery.py .model-evidence/productionDay reports/inkwave-weapon-model-workspace/refs s3-maneuver-stepper s3-slosher-washtub
+      - name: Corrected-camera sixth-draft versus candidate Explosher four-view control
+        run: |
+          mkdir -p .model-angle-control/studio .model-angle-control/productionDay
+          cp -al .model-evidence/after .model-angle-control/studio/after
+          cp -al .model-evidence/productionDay/after .model-angle-control/productionDay/after
+          node scripts/render-inkwave-quad-explosher-gallery.mjs --site .model-sixth-angle-site --out .model-angle-control/studio/before --ids s3-slosher-washtub --size 500
+          node scripts/render-inkwave-quad-explosher-gallery.mjs --site .model-sixth-angle-site --out .model-angle-control/productionDay/before --ids s3-slosher-washtub --size 500 --environment productionDay
+          for light in studio productionDay; do
+            python3 scripts/compare-inkwave-quad-explosher-gallery.py ".model-angle-control/$light" reports/inkwave-weapon-model-workspace/refs s3-slosher-washtub
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: quad-explosher-visual-${{ github.event.pull_request.head.sha }}
-          path: .model-evidence
+          path: |
+            .model-evidence
+            .model-angle-control
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 14
@@ -103,8 +142,10 @@ jobs:
           path: |
             .model-evidence
             .model-crowd
+            .model-angle-control
             .quad-baseline-contracts.json
             .quad-baseline-reverse.json
+            .quad-lod-boundaries.json
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 14

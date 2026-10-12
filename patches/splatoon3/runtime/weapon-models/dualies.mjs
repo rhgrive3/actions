@@ -162,17 +162,21 @@ function darkTetra(d) {
   // Front rebound faces are the raised ends of long black blades, not detached round buttons.
   for(const sx of[-1,1]){
     const x=sx*.036,y=-.044,z=.153,foot=new Pieces(),col=new Pieces();
-    const contour=Array.from({length:18},(_,i)=>{const a=i*Math.PI/9;return[Math.cos(a)*.024,Math.sin(a)*.027*(Math.sin(a)<0?2:1)];});
-    foot.add(slab(contour,.004,0,0).rotateY(Math.PI/2),C.white,M.satin);
-    foot.add(slab(contour.map(([u,v])=>[u*.985,v*.985]),.004,-.003,0).rotateY(Math.PI/2),C.black,M.rubber);
+    // Sweep an elliptical cap into a tapered rear blade. Cross-sections carry
+    // their own thickness normal; tessellated strips cannot bridge across the bend.
+    const rows=[-.054,-.048,-.039,-.030,-.021,-.014,-.008,0,.010,.020,.027],bp=[],bi=[],c=Math.cos(-.45),sn=Math.sin(-.45);
+    for(const v of rows){
+      const extent=v<0?.054:.027,width=Math.max(.0008,.024*Math.sqrt(Math.max(0,1-(v/extent)**2))),t=Math.max(0,Math.min(1,(-v-.014)/.040));
+      const dy=c-(v<-.014?.5:0),dz=sn+(v<-.014?2.575:0),len=Math.hypot(dy,dz);
+      for(const[u,w]of[[-width,.005],[width,.005],[width,.001],[-width,.001]])bp.push(u,c*v+.020*t-w*dz/len,sn*v-.103*t+w*dy/len);
+    }
+    for(let j=0;j<rows.length-1;j++)for(let k=0;k<4;k++){const a=j*4+k,b=j*4+(k+1)%4,c=b+4,e=a+4;bi.push(a,b,c,a,c,e);}
+    const end=(rows.length-1)*4;bi.push(0,2,1,0,3,2,end,end+1,end+2,end,end+2,end+3);
+    const blade=new THREE.BufferGeometry();blade.setAttribute('position',new THREE.Float32BufferAttribute(bp,3));blade.setIndex(bi);blade.computeVertexNormals();body.add(blade.rotateY(sx*.52).translate(x,y,z),C.black,M.rubber);
     col.add(zlathe([[0,.007],[.012,.007],[.013,.0085],[0,.009]],0,0,0,18));
     foot.add(ring(.008,.0012,0,0,.010,'z',4,16),C.grey,M.satin);
-    const bendBlade=g=>{
-      const p=g.attributes.position,along=Array.from({length:p.count},(_,i)=>p.getY(i));g.rotateX(-.45).rotateY(sx*.52);
-      for(let i=0;i<p.count;i++){const t=Math.max(0,Math.min(1,(-along[i]-.014)/.040));p.setY(i,p.getY(i)+.020*t);p.setZ(i,p.getZ(i)-.103*t);}
-      g.computeVertexNormals();return g.translate(x,y,z);
-    };
-    body.merge(foot.transform(bendBlade));ink.merge(col.transform(bendBlade));
+    const face=g=>g.rotateX(-.45).rotateY(sx*.52).translate(x,y,z);
+    body.merge(foot.transform(face));ink.merge(col.transform(face));
   }
   return finish(d,body,ink,trig,[0,.065,.147]);
 }
