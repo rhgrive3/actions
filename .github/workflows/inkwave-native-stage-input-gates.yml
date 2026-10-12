@@ -28,7 +28,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 2
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
@@ -41,7 +40,9 @@ jobs:
       - name: Exact baseline rejection and candidate receipt acceptance
         run: |
           mkdir -p input-gate-evidence
-          git diff --exit-code ed3a046574208471c5db5309e2469d263cacfdfd -- inkwave-public patches/native-stages scripts/build-inkwave.mjs scripts/inkwave-source-composition.mjs
+          for source in inkwave-public patches/native-stages scripts/build-inkwave.mjs scripts/inkwave-source-composition.mjs; do
+            git diff --no-index --exit-code ".baseline/$source" "$source"
+          done
           if NATIVE_INPUT_ROOT="$GITHUB_WORKSPACE/.baseline" node --test scripts/tests/inkwave-native-stage-inputs.test.mjs > input-gate-evidence/before.log 2>&1; then
             echo 'Negative control unexpectedly passed'; exit 1
           fi
