@@ -1,0 +1,63 @@
+name: INKWAVE native-stage input identity gates
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - scripts/check-inkwave-motion-catalog.mjs
+      - scripts/check-inkwave-network-browser.mjs
+      - scripts/check-inkwave-touch-layout-identity.mjs
+      - scripts/check-inkwave-flow-render.mjs
+      - scripts/check-inkwave-wall-render.mjs
+      - scripts/check-inkwave-paint-mask.mjs
+      - scripts/lib/inkwave-runtime-evidence.mjs
+      - scripts/tests/inkwave-native-stage-inputs.test.mjs
+      - scripts/tests/inkwave-build-packaging.test.mjs
+      - scripts/tests/inkwave-runtime-evidence.test.mjs
+      - patches/splatoon3/tests/motion-catalog-gates.test.mjs
+      - patches/reliability/tests/start.test.mjs
+      - patches/splatoon3/tests/issue-1039-host-ready.test.mjs
+      - .github/workflows/inkwave-native-stage-input-gates.yml
+permissions:
+  contents: read
+jobs:
+  identity:
+    if: github.head_ref == 'fix/native-stage-input-identities'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Exact baseline rejection and candidate receipt acceptance
+        run: |
+          mkdir -p input-gate-evidence
+          for source in inkwave-public patches/native-stages scripts/build-inkwave.mjs scripts/inkwave-source-composition.mjs; do
+            git diff --no-index --exit-code ".baseline/$source" "$source"
+          done
+          if NATIVE_INPUT_ROOT="$GITHUB_WORKSPACE/.baseline" node --test scripts/tests/inkwave-native-stage-inputs.test.mjs > input-gate-evidence/before.log 2>&1; then
+            echo 'Negative control unexpectedly passed'; exit 1
+          fi
+          grep -q 'Catalog input namespace/path native-stages/' input-gate-evidence/before.log
+          node --test scripts/tests/inkwave-native-stage-inputs.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs patches/reliability/tests/start.test.mjs patches/splatoon3/tests/issue-1039-host-ready.test.mjs | tee input-gate-evidence/after.log
+      - name: Unchanged production build and all emitted input identities
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node scripts/build-inkwave.mjs inkwave-public .gate-site | tee input-gate-evidence/build.log
+          INKWAVE_BUILT_SITE=.gate-site node --test scripts/tests/inkwave-build-packaging.test.mjs | tee input-gate-evidence/packaging.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-input-gates-${{ github.event.pull_request.head.sha }}
+          path: input-gate-evidence
+          if-no-files-found: error
+          retention-days: 14

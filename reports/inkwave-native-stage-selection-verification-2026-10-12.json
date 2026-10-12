@@ -1,0 +1,529 @@
+{
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "version1130Verified": false,
+  "sourceMode": "browser-direct",
+  "gitAndPagesSourcePayloadIncluded": false,
+  "conversion": [
+    {
+      "id": "scorch",
+      "geometry": {
+        "vertices": 319113,
+        "triangles": 279299,
+        "collisionTriangles": 133737,
+        "bvhNodes": 32767,
+        "paintFaces": 45171
+      },
+      "previous": {
+        "vertices": 319113,
+        "triangles": 279299,
+        "collisionTriangles": 133737,
+        "bvhNodes": 32767,
+        "paintFaces": 45171
+      },
+      "grid": 1469898,
+      "previousGrid": 1469898,
+      "checks": {
+        "vertices": true,
+        "indices": true,
+        "triangles": true,
+        "normals": true,
+        "flags": true,
+        "objectIds": true,
+        "triangleFace": true,
+        "mask": true
+      },
+      "milliseconds": 1828.239854
+    },
+    {
+      "id": "hagglefish",
+      "geometry": {
+        "vertices": 356466,
+        "triangles": 246063,
+        "collisionTriangles": 163625,
+        "bvhNodes": 32767,
+        "paintFaces": 65827
+      },
+      "previous": {
+        "vertices": 356466,
+        "triangles": 246063,
+        "collisionTriangles": 163625,
+        "bvhNodes": 32767,
+        "paintFaces": 65827
+      },
+      "grid": 1401174,
+      "previousGrid": 1401174,
+      "checks": {
+        "vertices": true,
+        "indices": true,
+        "triangles": true,
+        "normals": true,
+        "flags": true,
+        "objectIds": true,
+        "triangleFace": true,
+        "mask": true
+      },
+      "milliseconds": 2135.576344
+    },
+    {
+      "id": "inkblot",
+      "geometry": {
+        "vertices": 299938,
+        "triangles": 205075,
+        "collisionTriangles": 132243,
+        "bvhNodes": 32767,
+        "paintFaces": 22311
+      },
+      "previous": {
+        "vertices": 299938,
+        "triangles": 205075,
+        "collisionTriangles": 132243,
+        "bvhNodes": 32767,
+        "paintFaces": 22311
+      },
+      "grid": 1911554,
+      "previousGrid": 1911554,
+      "checks": {
+        "vertices": true,
+        "indices": true,
+        "triangles": true,
+        "normals": true,
+        "flags": true,
+        "objectIds": true,
+        "triangleFace": true,
+        "mask": true
+      },
+      "milliseconds": 1275.1485780000003
+    },
+    {
+      "id": "mako",
+      "geometry": {
+        "vertices": 602231,
+        "triangles": 343399,
+        "collisionTriangles": 151620,
+        "bvhNodes": 32767,
+        "paintFaces": 51216
+      },
+      "previous": {
+        "vertices": 602231,
+        "triangles": 343399,
+        "collisionTriangles": 151620,
+        "bvhNodes": 32767,
+        "paintFaces": 51216
+      },
+      "grid": 3190694,
+      "previousGrid": 3190694,
+      "checks": {
+        "vertices": true,
+        "indices": true,
+        "triangles": true,
+        "normals": true,
+        "flags": true,
+        "objectIds": true,
+        "triangleFace": true,
+        "mask": true
+      },
+      "milliseconds": 2291.2491469999995
+    },
+    {
+      "id": "brinewater",
+      "geometry": {
+        "vertices": 510342,
+        "triangles": 405943,
+        "collisionTriangles": 157826,
+        "bvhNodes": 32767,
+        "paintFaces": 62213
+      },
+      "previous": {
+        "vertices": 510342,
+        "triangles": 405943,
+        "collisionTriangles": 157826,
+        "bvhNodes": 32767,
+        "paintFaces": 62213
+      },
+      "grid": 4927794,
+      "previousGrid": 4927794,
+      "checks": {
+        "vertices": true,
+        "indices": true,
+        "triangles": true,
+        "normals": true,
+        "flags": true,
+        "objectIds": true,
+        "triangleFace": true,
+        "mask": true
+      },
+      "milliseconds": 2643.871095999999
+    }
+  ],
+  "publicUI": {
+    "status": "passed",
+    "menu": [
+      "タイドウォーター広場",
+      "ケルプライン埠頭",
+      "ハリヤードマリーナ",
+      "ユノハナ大渓谷",
+      "ヤガラ市場",
+      "海女美術大学",
+      "ザトウマーケット",
+      "クサヤ温泉"
+    ],
+    "stages": [
+      {
+        "id": "scorch",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "actors": 8,
+        "bots": 7,
+        "spawn": {
+          "grounded": true,
+          "active": false
+        },
+        "sourceMetrics": {
+          "cached": false,
+          "conversionMilliseconds": 6647.20000000298,
+          "recipe": "inkwave-browser-source-v2"
+        },
+        "geometry": {
+          "vertices": 319113,
+          "triangles": 279299,
+          "collisionTriangles": 133737,
+          "bvhNodes": 32767,
+          "paintFaces": 45171
+        }
+      },
+      {
+        "id": "hagglefish",
+        "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "actors": 8,
+        "bots": 7,
+        "spawn": {
+          "grounded": true,
+          "active": false
+        },
+        "sourceMetrics": {
+          "cached": false,
+          "conversionMilliseconds": 7108.10000000149,
+          "recipe": "inkwave-browser-source-v2"
+        },
+        "geometry": {
+          "vertices": 356466,
+          "triangles": 246063,
+          "collisionTriangles": 163625,
+          "bvhNodes": 32767,
+          "paintFaces": 65827
+        }
+      },
+      {
+        "id": "inkblot",
+        "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "actors": 8,
+        "bots": 7,
+        "spawn": {
+          "grounded": true,
+          "active": false
+        },
+        "sourceMetrics": {
+          "cached": false,
+          "conversionMilliseconds": 5542.5,
+          "recipe": "inkwave-browser-source-v2"
+        },
+        "geometry": {
+          "vertices": 299938,
+          "triangles": 205075,
+          "collisionTriangles": 132243,
+          "bvhNodes": 32767,
+          "paintFaces": 22311
+        }
+      },
+      {
+        "id": "mako",
+        "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "actors": 8,
+        "bots": 7,
+        "spawn": {
+          "grounded": true,
+          "active": false
+        },
+        "sourceMetrics": {
+          "cached": false,
+          "conversionMilliseconds": 9462.800000000745,
+          "recipe": "inkwave-browser-source-v2"
+        },
+        "geometry": {
+          "vertices": 602231,
+          "triangles": 343399,
+          "collisionTriangles": 151620,
+          "bvhNodes": 32767,
+          "paintFaces": 51216
+        }
+      },
+      {
+        "id": "brinewater",
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "actors": 8,
+        "bots": 7,
+        "spawn": {
+          "grounded": true,
+          "active": false
+        },
+        "sourceMetrics": {
+          "cached": false,
+          "conversionMilliseconds": 9386.599999997765,
+          "recipe": "inkwave-browser-source-v2"
+        },
+        "geometry": {
+          "vertices": 510342,
+          "triangles": 405943,
+          "collisionTriangles": 157826,
+          "bvhNodes": 32767,
+          "paintFaces": 62213
+        }
+      }
+    ],
+    "cache": {
+      "id": "brinewater",
+      "derivedCacheHit": true,
+      "objDownloads": 0
+    },
+    "failureRollback": {
+      "levelRetained": true,
+      "menu": "setup",
+      "loadingRemoved": true
+    },
+    "errors": []
+  },
+  "online": {
+    "status": "passed",
+    "cases": 25,
+    "errors": [],
+    "hostWeapon": "s3-blaster-short",
+    "checks": [
+      {
+        "id": "scorch",
+        "mode": "turf",
+        "actors": 8,
+        "playback": {
+          "settled": true,
+          "frames": 205,
+          "probeRadius": 3.84
+        },
+        "gridMatches": true,
+        "countsMatch": null
+      },
+      {
+        "id": "scorch",
+        "mode": "zones",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "scorch",
+        "mode": "tower",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "scorch",
+        "mode": "rainmaker",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "scorch",
+        "mode": "clams",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "hagglefish",
+        "mode": "turf",
+        "actors": 8,
+        "playback": {
+          "settled": true,
+          "frames": 205,
+          "probeRadius": 3.84
+        },
+        "gridMatches": true,
+        "countsMatch": null
+      },
+      {
+        "id": "hagglefish",
+        "mode": "zones",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "hagglefish",
+        "mode": "tower",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "hagglefish",
+        "mode": "rainmaker",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "hagglefish",
+        "mode": "clams",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "inkblot",
+        "mode": "turf",
+        "actors": 8,
+        "playback": {
+          "settled": true,
+          "frames": 220,
+          "probeRadius": 3.84
+        },
+        "gridMatches": true,
+        "countsMatch": null
+      },
+      {
+        "id": "inkblot",
+        "mode": "zones",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "inkblot",
+        "mode": "tower",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "inkblot",
+        "mode": "rainmaker",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "inkblot",
+        "mode": "clams",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "mako",
+        "mode": "turf",
+        "actors": 8,
+        "playback": {
+          "settled": true,
+          "frames": 285,
+          "probeRadius": 3.84
+        },
+        "gridMatches": true,
+        "countsMatch": null
+      },
+      {
+        "id": "mako",
+        "mode": "zones",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "mako",
+        "mode": "tower",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "mako",
+        "mode": "rainmaker",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "mako",
+        "mode": "clams",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "brinewater",
+        "mode": "turf",
+        "actors": 8,
+        "playback": {
+          "settled": true,
+          "frames": 245,
+          "probeRadius": 3.84
+        },
+        "gridMatches": true,
+        "countsMatch": null
+      },
+      {
+        "id": "brinewater",
+        "mode": "zones",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "brinewater",
+        "mode": "tower",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "brinewater",
+        "mode": "rainmaker",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      },
+      {
+        "id": "brinewater",
+        "mode": "clams",
+        "actors": 8,
+        "playback": null,
+        "gridMatches": null,
+        "countsMatch": true
+      }
+    ]
+  },
+  "limitations": [
+    "OBJ version 11.3.0 unverified",
+    "retail scene/placements/collision/paint masks unverified",
+    "software GPU is not mobile hardware",
+    "conversion time includes downloads and cache work",
+    "ranked geometry uses Pnt local calibration"
+  ]
+}
