@@ -38,6 +38,10 @@ test('rebuilds are bounded merged volumetric assemblies with open loop and reces
  const deck=f.getWeaponDef(IDS[0]).body,dp=deck.attributes.position,di=deck.index.array;let tops=0;
  for(let j=0;j<di.length;j+=3){const a=new f.THREE.Vector3().fromBufferAttribute(dp,di[j]),b=new f.THREE.Vector3().fromBufferAttribute(dp,di[j+1]),c=new f.THREE.Vector3().fromBufferAttribute(dp,di[j+2]);const center=a.clone().add(b).add(c).multiplyScalar(1/3);if(Math.abs(center.x)<.020&&center.z>-.010&&center.z<.025&&center.y>-.085&&center.y<-.079){const n=b.clone().sub(a).cross(c.clone().sub(a));assert.ok(n.y>0,'quad swept deck top has outward winding');tops++;}}
  assert.ok(tops>=2,'quad swept deck top witnesses exist');
+ // The Dark receiver is a real planar cheek, with recessed slots, rather than exposed tubes.
+ let cheekArea=0;const dc=deck.attributes.color;
+ for(let j=0;j<di.length;j+=3){const ids=[di[j],di[j+1],di[j+2]],v=ids.map(i=>new f.THREE.Vector3().fromBufferAttribute(dp,i)),c=v[0].clone().add(v[1]).add(v[2]).multiplyScalar(1/3),n=v[1].clone().sub(v[0]).cross(v[2].clone().sub(v[0]));if(Math.abs(c.x)>.0162&&c.z>.018&&c.z<.100&&c.y>.035&&c.y<.096&&dc.getX(ids[0])>.6&&Math.abs(n.x)>n.length()*.99)cheekArea+=n.length()/2;}
+ assert.ok(cheekArea>.005,'Dark chamber has broad planar side-cover area');
  let heelWidth=0;for(let i=0;i<dp.count;i++)if(dp.getY(i)>-.060&&dp.getY(i)<-.020&&dp.getZ(i)>-.063&&dp.getZ(i)<-.012)heelWidth=Math.max(heelWidth,Math.abs(dp.getX(i)));assert.ok(heelWidth>.040,'quad rear heel has real transverse flare');
  const ex=f.getWeaponDef(IDS[1]).body,ep=ex.attributes.position,em=ex.attributes.aMat;let cageMetal=0;for(let i=0;i<ep.count;i++)if(Math.abs(ep.getX(i))>.084&&ep.getZ(i)>.06&&ep.getZ(i)<.245&&Math.round(em.getX(i))===3)cageMetal++;assert.ok(cageMetal>50,'explosher exposed cage uses existing brushed-metal class');
  console.log('QUAD_EXPLOSHER_METRICS '+JSON.stringify(rows));

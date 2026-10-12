@@ -116,7 +116,6 @@ function darkTetra(d) {
   body.add(box(.034,.037,.054,0,.069,-.002,.24,10,6),C.black,M.satin);
   body.add(box(.032,.012,.043,0,.092,-.006,.23,10,6),C.white,M.satin);
   for(const y of[.079,.052]){
-    body.add(zcyl(.015,.006,.127,0,y,20),C.white,M.satin);
     for(const sx of[-1,1]){
       body.add(box(.0045,.006,.110,sx*.0145,y,.067,.25,8,4),C.black,M.satin);
       body.add(box(.003,.007,.016,sx*.017,y,.018,.18,8,4),C.silver,M.satin);
@@ -124,6 +123,14 @@ function darkTetra(d) {
     body.add(zlathe([[.004,.132],[.016,.132],[.018,.137],[.017,.144],[.006,.146],[.004,.143]],0,y,0,22),C.white,M.satin);
     body.add(zlathe([[0,.141],[.005,.141],[.005,.146],[0,.146]],0,y,0,12),C.grey,M.satin);
     body.add(ring(.006,.0013,0,y,.146,'z',4,14),C.white,M.satin);
+  }
+  // The Dark render shows broad, planar chamber cheeks with two narrow recessed slots,
+  // not four exposed longitudinal tubes. The two openings retain visible dark inner rails.
+  const chamber=[[.003,.042],[.014,.035],[.112,.035],[.121,.045],[.121,.092],[.006,.097]];
+  const slots=[[[.016,.049],[.110,.049],[.110,.057],[.016,.057]],[[.016,.078],[.110,.078],[.110,.086],[.016,.086]]];
+  for(const sx of[-1,1]){
+    body.add(slab(chamber,.003,sx*.018,0,slots),C.white,M.satin);
+    body.add(slab([[.124,.038],[.130,.037],[.132,.098],[.124,.100]],.0018,sx*.018,0),C.purple,M.gloss);
   }
   // Metal top bridge with recessed dark strip and screw heads, not a featureless white cuboid.
   body.add(box(.036,.009,.099,0,.098,.060,.18,12,4),C.white,M.satin);

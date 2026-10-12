@@ -169,7 +169,7 @@ function explosher(d) {
   }
   // Pale stencilled side motif, traced as four coarse visible glyph silhouettes; no external texture.
   const glyphs=[[[0,0],[6,0],[6,2],[4,2],[4,4],[6,4],[6,7],[0,7],[0,5],[3,5],[3,4],[0,4]],[[0,0],[2,0],[2,3],[5,3],[5,0],[7,0],[7,7],[5,7],[5,5],[2,5],[2,7],[0,7]],[[0,0],[7,0],[7,2],[4,2],[4,4],[7,4],[7,7],[0,7],[0,5],[2,5],[2,3],[0,3]],[[0,0],[7,0],[7,2],[2,2],[2,4],[6,4],[6,6],[2,6],[2,7],[0,7]]];
-  for(const sx of[-1,1])for(let i=0;i<glyphs.length;i++)body.add(slab(glyphs[i].map(([z,y])=>[cz-.005+i*.018+(z-3.5)*.0018,cy+.081-i*.003-y*.0018]),.0007,sx*.0775,0),'#b4baa0',M.print);
+  for(const sx of[-1,1])for(let i=0;i<glyphs.length;i++)body.add(slab(glyphs[i].map(([z,y])=>[cz+.065+i*.002+(z-3.5)*.0018,cy+.069-i*.017-y*.0018]),.0007,sx*.0775,0),'#b4baa0',M.print);
   // Rear electronics is shorter than the tank, with a bevelled perimeter, warning plate and ventilation slots.
   body.add(box(.119,.133,.032,0,cy-.001,cz-.103,.23,14,8),C.black,M.satin);
   body.add(box(.109,.124,.017,0,cy-.001,cz-.120,.2,12,8),C.panel,M.satin);

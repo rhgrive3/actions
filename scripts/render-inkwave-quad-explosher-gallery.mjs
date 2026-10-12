@@ -147,10 +147,21 @@ try {
         if(second){scene.remove(second);g.position.set(0,0,0);}
       }
       scene.remove(g);
+      // Isolate only the authored metal triangles; compare the native shader with standard PBR
+      // using the identical positions, normals, vertex colours, camera and lighting environment.
+      const materialAudit={};
+      if(!quad&&!crowd){
+        const geo=d.body.clone(),ii=d.body.index.array,mm=d.body.attributes.aMat,selected=[];
+        for(let j=0;j<ii.length;j+=3)if([ii[j],ii[j+1],ii[j+2]].every(i=>Math.round(mm.getX(i))===3))selected.push(ii[j],ii[j+1],ii[j+2]);
+        geo.setIndex(selected);const mesh=new THREE.Mesh(geo,Mt.getPlasticMaterial()),camera=new THREE.PerspectiveCamera(18,1,.01,30);camera.position.copy(refCenter).add(new THREE.Vector3(-.9,1.02,1.1).normalize().multiplyScalar(1.30));camera.up.set(0,1,0).applyAxisAngle(camera.position.clone().sub(refCenter).normalize(),-.30);camera.lookAt(refCenter);scene.add(mesh);
+        const native=Mt.getPlasticMaterial(),standard=new THREE.MeshPhysicalMaterial({color:0xffffff,vertexColors:true,metalness:1,roughness:.3,clearcoat:.2,clearcoatRoughness:.1}),satin=new THREE.MeshPhysicalMaterial({color:0xffffff,vertexColors:true,metalness:0,roughness:.42,clearcoat:.25,clearcoatRoughness:.1});
+        for(const[label,mat]of[['metalNative',native],['metalStandard',standard],['metalSatinControl',satin]]){mesh.material=mat;renderer.render(scene,camera);referenceImages[label]=snap();const pixels=new Uint8Array(renderer.domElement.width*renderer.domElement.height*4);renderer.getContext().readPixels(0,0,renderer.domElement.width,renderer.domElement.height,renderer.getContext().RGBA,renderer.getContext().UNSIGNED_BYTE,pixels);let sum=0,count=0;for(let i=0;i<pixels.length;i+=4)if(pixels[i+3]>240){sum+=(pixels[i]+pixels[i+1]+pixels[i+2])/3;count++;}const props=renderer.properties.get(mat),shader=props.currentProgram?.fragmentShader,source=shader?(renderer.getContext().getShaderSource(shader)||''):'';materialAudit[label]={coveredPixels:count,meanSrgbByte:count?sum/count:0,envMapIntensity:mat.envMapIntensity,uniformEnvMapIntensity:props.uniforms?.envMapIntensity?.value,resolvedEnvironmentMapping:props.envMap?.mapping,shaderSourceAvailable:!!source,shaderUsesEnvMap:source?source.includes('#define USE_ENVMAP'):null,shaderUsesCubeUV:source?source.includes('#define ENVMAP_TYPE_CUBE_UV'):null,shaderHasMetalClassPatch:source.includes('metalnessFactor = iwM == 3.0'),environmentMapping:scene.environment?.mapping,environmentWidth:scene.environment?.image?.width,environmentHeight:scene.environment?.image?.height};}
+        materialAudit.triangles=selected.length/3;scene.remove(mesh);geo.dispose();standard.dispose();satin.dispose();
+      }
       let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
       const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),
         size: s.toArray().map(v => +v.toFixed(4)), muzzle: d.muzzle.toArray().map(v => +v.toFixed(4)), tris: Math.round(tris), buildMs: +buildMs.toFixed(1), geometryKB: Math.round(bytes / 1024),
-        referenceCameras, images: { side, above, front: muzzleView, persp, rear, ...referenceImages } };
+        referenceCameras, materialAudit, images: { side, above, front: muzzleView, persp, rear, ...referenceImages } };
       if (!held) return res;
       // held: real Actor + WeaponRunner + Character (native + patched pose layers)
       const a = new Actor({ team: 0, weapon: id, isLocal: true, name: id, CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } }), ch = a.character;
