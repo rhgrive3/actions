@@ -9,6 +9,7 @@ import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
+import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation } from './projectile-presentation.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
 // retain their mature owners. Canonical kit identities use the pinned table.
@@ -334,6 +335,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function spawn(a,r,descriptor,direction,at,options={}) {
     const system=G.projectiles, p=system._new();
+    p.catalogVisual=catalogVisualSpec(r,descriptor,options.index||0);
     Object.assign(p,{type:'shot',wid:r.id,owner:a,team:a.team,age:0,life:descriptor.life,straight:finite(descriptor.m.GoStraightToBrakeStateFrame,4)/HZ,
       radius:descriptor.radius,damage:descriptor.damage,size:finite(descriptor.c.InitRadiusForPlayer,.2),
       trail:0,trailEvery:0,trailRadius:0,grav:0,drag:0,seed:Math.random(),ghost:!!options.ghost,
@@ -342,7 +344,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0}});
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
-    p.vel.y += finite(options.lift,0);
+    p.vel.y += finite(options.lift,0);updateCatalogVisual(p);
     system._push(p);
     return p;
   }
@@ -506,6 +508,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     const before=s.travel;
     p.pos.addScaledVector(p.vel,DT);
+    updateCatalogVisual(p);
     s.travel+=p.prev.distanceTo(p.pos);
     if(s.travel>s.range) { const f=clamp((s.range-before)/(s.travel-before));p.pos.lerpVectors(p.prev,p.pos,f);s.travel=s.range; }
   }
@@ -524,17 +527,24 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(r.sourceActor==='WeaponSlosherBathtub'&&s.bounces<3&&h.normal) {
       const bp=r.parameters.BounceGroupParam.BounceParam.find(b=>(b.UnitOrderNum??0)===d.unit)||{};
       paint(p.owner,at,finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index);
-      p.pos.copy(at);p.pos.addScaledVector(h.normal,.05);
+      const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index));
+      p.pos.copy(at).addScaledVector(h.normal,clearance);
       p.vel.reflect(h.normal);
+      if(p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625)
+        G.fx?.burst(at,h.normal,p.owner.color,{count:5,speed:1.8,size:.09,spread:.8,paint:false});
       // The omitted restitution remains the INKWAVE elastic-bounce model.
       if(bp.BounceAfterMaxSpeed!=null&&p.vel.length()>bp.BounceAfterMaxSpeed*HZ)p.vel.setLength(bp.BounceAfterMaxSpeed*HZ);
       s.bounces++;return false;
     }
     const footprint=impactPaint(p);
     paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face);
+    if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&
+       (p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
+      G.fx?.burst(at,h.normal||down,p.owner.color,{count:r.family==='roller'?12:9,speed:2.5,
+        size:r.family==='roller'?.14:.11,spread:1.2,paint:false});
     return true;
   }
-  P._new=function(...args){const p=fresh.apply(this,args);p.catalog=null;return p;};
+  P._new=function(...args){const p=fresh.apply(this,args);p.catalog=null;p.catalogVisual=null;return p;};
   P._step=function(p,dt){
     if(!p.catalog)return step.call(this,p,dt);
     const s=p.catalog,d=s.descriptor;
@@ -622,7 +632,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(p&&r&&!r.legacy&&Array.isArray(meta)&&meta.length===5&&meta[0]===1&&allowed.includes(meta[1])&&
       Number.isSafeInteger(meta[2])&&meta[2]>=0&&meta[2]<30&&Number.isFinite(meta[3])&&meta[3]>=0&&meta[3]<=1){
       try {const d=mode(r,meta[1],meta[2],meta[3]);p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
-        hit:new Hit(),seen:new Set(),index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0};}
+        hit:new Hit(),seen:new Set(),index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0};
+        p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index);updateCatalogVisual(p);}
       catch { /* malformed visual packet cannot create a gameplay object */ }
     }return result;
   };
