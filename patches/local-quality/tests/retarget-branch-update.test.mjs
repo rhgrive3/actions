@@ -38,7 +38,7 @@ function rig(api,variant){
 }
 function snapshot(rig){const nodes=[];rig.ch.root.traverse(o=>nodes.push([o.name,...o.position.toArray(),...o.quaternion.toArray(),...o.scale.toArray(),...o.matrix.elements,...o.matrixWorld.elements]));return JSON.parse(JSON.stringify({nodes,contacts:rig.retarget.contacts.map(f=>({actual:f.actual.toArray(),clearance:f.lastClearance,slip:f.slip,reach:f.reachError,locked:f.locked,anchor:f.anchor.toArray()})),muzzle:rig.ch.getMuzzle(new rig.ch.root.position.constructor()).toArray()}));}
 test('real source banks and native rig: exact transforms/contacts/muzzle at 30/60/120Hz, including forced CCD',async()=>{
- const apis=await Promise.all([realm(false),realm(true)]);let beforeCalls=0,afterCalls=0,ccd=0;
+ const apis=await Promise.all([realm(false),realm(true)]);let beforeCalls=0,afterCalls=0,ccd=0;const ccdSides=[0,0];
  for(const variant of ['Player00','Player01'])for(const hz of [30,60,120]){
   const rigs=apis.map(api=>rig(api,variant));
   const clips=['WaitHold_Nrml','WalkHold_Nrml','RunHold_Nrml','WaitShoot_Nrml'];
@@ -51,13 +51,13 @@ test('real source banks and native rig: exact transforms/contacts/muzzle at 30/6
      if(frame%24===0){r.ch.setWeapon(['shooter','dualies','roller','charger'][Math.floor(frame/24)]);r.ch.setLod(['hero','game','far','game'][Math.floor(frame/24)]);r.retarget.reset();}
 
      r.retarget.apply(r.pose,{aimPitch:.2,rootScale:frame%32<8?.2:1});r.retarget.ground(r.pose,1/hz,{grounded:true,enabled:true,contact:[.8,.9],speed:1.5,velocityX:.45,velocityZ:1.4});
-     if(frame%8===0){const f=r.retarget.contacts[frame%2];r.ch._kidXform(f.limb.end,r.retarget.ccdA,f.endQ);r.retarget.liftFreeFoot(f,-.025);if(!side)ccd++;}
+     if(frame%8===0){const forcedSide=Math.floor(frame/8)%2,f=r.retarget.contacts[forcedSide];r.ch._kidXform(f.limb.end,r.retarget.ccdA,f.endQ);r.retarget.liftFreeFoot(f,-.025);if(!side){ccd++;ccdSides[forcedSide]++;}}
     }finally{proto.updateWorldMatrix=original;}
     if(side)afterCalls+=calls;else beforeCalls+=calls;
    }
    assert.deepEqual(snapshot(rigs[1]),snapshot(rigs[0]),`${variant} ${hz}Hz frame ${frame}`);
   }
  }
- assert.ok(ccd>=72);assert.ok(afterCalls<beforeCalls*.8,`branch pruning: ${beforeCalls} -> ${afterCalls}`);
- console.log(JSON.stringify({fixture:'native Character/source bank, matrix call counts (not device FPS)',beforeCalls,afterCalls,reduction:1-afterCalls/beforeCalls,forcedCCD:ccd}));
+ assert.equal(ccd,72);assert.deepEqual(ccdSides,[36,36]);assert.ok(afterCalls<beforeCalls*.8,`branch pruning: ${beforeCalls} -> ${afterCalls}`);
+ console.log(JSON.stringify({fixture:'native Character/source bank, matrix call counts (not device FPS)',beforeCalls,afterCalls,reduction:1-afterCalls/beforeCalls,forcedCCD:ccd,forcedCCDSides:ccdSides}));
 });
