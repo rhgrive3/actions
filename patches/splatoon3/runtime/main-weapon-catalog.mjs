@@ -1,4 +1,4 @@
-import { catalogSplashDropSpec, catalogPaintEllipse } from './catalog-splash-paint.mjs';
+import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount } from './catalog-splash-paint.mjs';
 import { spawnSplashDrop } from './blaster-flight-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
@@ -421,6 +421,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function emitSingle(runner,r,key='normal',charge=0,volley=null) {
     const a=runner.a, s=state(runner), desc=mode(r,key,0,charge);
+    // The source SpawnNum may be fractional: 1.4/1.5/2.4 is an
+    // average per accepted shot, not a per-projectile ceil. Native
+    // shooter-family InkFlight already preserves this exact principle.
+    // Keep all collision, head launch, damage and network metadata unchanged.
+    const sourceNum=desc.b.SplashSpawnParam?.SpawnNum;
+    if (desc.splashDropSpec && (r.family==='shooter'||r.family==='splatling'||r.family==='dualies') &&
+        Number.isFinite(sourceNum) && sourceNum >= 0) {
+      const ordinal=s.paintShotOrdinal||0;
+      desc.splashCount=catalogFractionalSplashCount(sourceNum,ordinal);
+      s.paintShotOrdinal=ordinal+1;
+    }
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
     origin(a);
