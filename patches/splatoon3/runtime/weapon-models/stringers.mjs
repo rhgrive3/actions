@@ -33,6 +33,9 @@ function smoothLimb(s,points,n){
   const c=new THREE.CatmullRomCurve3(points.map(([y,z])=>V(0,y,z)),false,'centripetal'),out=[];
   for(let k=0;k<=n;k++){const t=k/n,p=c.getPoint(t),f=t*(points.length-1),j=Math.min(points.length-2,Math.floor(f)),a=f-j;out.push([s*p.y,p.z,points[j][2]*(1-a)+points[j+1][2]*a,points[j][3]*(1-a)+points[j+1][3]*a]);}return out;
 }
+function laminateFace(limb,side){
+  return limb.map(([y,z,w,t],i)=>{const a=limb[Math.max(0,i-1)],b=limb[Math.min(limb.length-1,i+1)],dy=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dy,dz);return[y-side*dz/l*t*.47,z+side*dy/l*t*.47,w*.88,.0018];});
+}
 function nozzle(body,x,y,z0,z1,r,C){
   body.add(zlathe([[r*.65,z0],[r,z0],[r,z1-.006],[r*.85,z1],[r*.58,z1],[r*.58,z1-.012]],x,y,0,16),C,M.metal);
   body.add(zcyl(r*.57,z1-.013,z1-.012,x,y,12),'#151a1c',M.rubber);
@@ -43,6 +46,12 @@ function finishBow(d,cfg,body,ink,tr){
   s1.add(ycyl(.0013,YC,YC+span,0,tipZ,5),'#d8ddc1',M.satin);
   s2.add(ycyl(.0013,YC-span,YC,0,tipZ,5),'#d8ddc1',M.satin);
   nock.add(rb(.012,.027,.012,0,YC,tipZ),'#919998',M.metal);
+  if(cfg.castNock){
+    // The pale rear pull-yoke follows the existing nock motion, not the static
+    // body. Its centre remains on the original string/arrow anchor.
+    nock.add(slab([[-.162,YC+.075],[-.185,YC+.062],[-.198,YC+.015],[-.197,YC-.025],[-.179,YC-.069],[-.152,YC-.083],[-.148,YC-.062],[-.164,YC-.046],[-.173,YC-.018],[-.174,YC+.018],[-.164,YC+.052],[-.147,YC+.058]],.041,0,.004),'#d5d5c8',M.satin);
+    for(const x of[-.022,.022])nock.add(xcyl(.004,x-.001,x+.001,YC,tipZ-.010,8),'#909b98',M.metal);
+  }
   arrow.add(zcyl(.003,tipZ+.012,arrowFront,0,YC,8),'#353b3c',M.satin);
   d.bowCfg={span,tipZ,arrowFront};
   const parts={trigger:part(tr,[0,.0315,.0282]),string:part(s1,[0,YC+span,tipZ],'ink'),stringL:part(s2,[0,YC-span,tipZ],'ink'),
@@ -62,7 +71,7 @@ function tri(d){
     // 8.3% chord sag (old 3.2%): a continuously swept, tapering laminate.
     const limb=cubicLimb(s,TRI_LIMB_CONTROLS,18,t=>.050-.035*Math.pow(t,1.05),t=>.025-.0145*t);
     sweptRect(body,limb,C.wood);
-    const laminate=limb.map(([y,z,w,t],i)=>{const a=limb[Math.max(0,i-1)],b=limb[Math.min(limb.length-1,i+1)],dy=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dy,dz);return[y-dz/l*t*.47,z+dy/l*t*.47,w*.88,.0018];});
+    const laminate=laminateFace(limb,s);
     sweptRect(body,laminate,'#b8b5a0',M.satin);
     // The socket follows the limb rather than being an isolated straight cuff.
     sweptRect(body,[[s*.051,-.034,.067,.040],[s*.075,-.041,.060,.034],[s*.108,-.048,.049,.029]],C.steel,M.metal);
@@ -96,7 +105,7 @@ function tri(d){
 function reef(d){
   const C={white:'#d5d5c8',edge:'#8b9492',steel:'#aab4b4',black:'#242a2c',dark:'#42494a'};
   const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.white,guardColor:C.black});
-  const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.0795,coil0:-.025,coil1:.064,muzzleZ:.15,
+  const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.0795,coil0:-.025,coil1:.064,muzzleZ:.15,castNock:true,
     gripL:gripSpec([0,0,.095],[0,0,1],[.75,-.62,-.1])};
   for(const s of[-1,1]){
     // The existing arc was close; its fixed-Z section was not. Preserve the sweep

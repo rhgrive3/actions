@@ -23,12 +23,20 @@ REEF uses a thick cast arm from its flared root into a fuller end boss, with a n
 
 ## Checks and cost
 
-- Source shape checks: mirrored outward winding, non-pinched distal section, actual curve controls, tip taper, unchanged green builder/motion: 3/3 pass.
+- Source shape checks: mirrored outward winding, non-pinched distal section, actual curve controls, tip taper, unchanged green builder/motion: 5/5 pass.
 - Existing six-model sockets/cache/void/bow animation contracts: 3/3 pass.
-- Current whole-weapon triangles: Tri 7,308→7,500; REEF 7,864→9,452. Those increases are acknowledged; a triangle cap alone is not a performance result.
-- Production build succeeds, content hash prefix `f0e32a952f70`.
+- Current whole-weapon triangles: Tri 7,308→7,500; REEF 7,864→9,688. Those increases are acknowledged; a triangle cap alone is not a performance result.
+- Production build succeeds, content hash prefix `47c6588af511`.
 - Actual emitted Actor contracts, same-camera original/before/after views and eight-Actor near/far ABBA are required in the dedicated workflow. The new candidate remains unaccepted until the generated images are inspected.
 
 ## Still unverified
 
 Reference camera/scale, exact Nintendo casting section, groove depth, cartridge tilt and grip dimensions are not calibrated. The candidate's curvature and solid section are measurable in its own coordinates, while the source ratios remain estimates. No retail gameplay/animation parity, hardware GPU timing, mobile FPS or full-match performance claim is made. The common pose, firing clocks, hit/paint/network logic, registry and shared kit are unchanged.
+
+## First image inspection and correction
+
+The first exact-head Chromium sheet visibly improved the continuous Tri sweep and REEF cast thickness/proportion. It also exposed an upper/lower Tri laminate-face inversion: the lower tangent normal selected the opposite Z face. This is corrected with an explicit mirrored-face rule and a symmetry test. The original 640px views are retained as first-pass evidence, not final acceptance.
+
+The REEF rear pale C-shaped pull-yoke visible in the reference was still missing. It is now geometry of the existing nock channel, with its original pivot unchanged. A test verifies the complete casting moves back exactly .17 model units at full draw and returns to the same anchor; no new motion or instance node is added. This is an image-guided attachment interpretation, not confirmed source animation parity.
+
+The threaded front coupler appears pink throughout the supplied turntable while the static PNG uses neutral grey. Only the corresponding external coupler is assigned team ink; the narrow silver metal ribs and black outlet remain fixed. The complete new images and eight-Actor measurements remain required before acceptance.

@@ -5,8 +5,8 @@ import crypto from 'node:crypto';
 import { fixture } from './source-fixture.mjs';
 let loaded;
 const production=()=>loaded??=fixture({fullRuntime:true,includeCharacter:true,productionComposition:true,
- adaptRuntime:(rel,source)=>rel.endsWith('/weapon-models/stringers.mjs')?source+'\nexport {sweptRect,cubicLimb,smoothLimb,TRI_LIMB_CONTROLS,REEF_LIMB_SECTIONS};':source,
- extraExports:"export {sweptRect,cubicLimb,smoothLimb,TRI_LIMB_CONTROLS,REEF_LIMB_SECTIONS} from './patches/splatoon3/runtime/weapon-models/stringers.mjs';"});
+ adaptRuntime:(rel,source)=>rel.endsWith('/weapon-models/stringers.mjs')?source+'\nexport {sweptRect,cubicLimb,smoothLimb,laminateFace,TRI_LIMB_CONTROLS,REEF_LIMB_SECTIONS};':source,
+ extraExports:"export {sweptRect,cubicLimb,smoothLimb,laminateFace,TRI_LIMB_CONTROLS,REEF_LIMB_SECTIONS} from './patches/splatoon3/runtime/weapon-models/stringers.mjs';\nexport {getWeaponDef} from './inkwave-public/src/game/character-weapons.js';\nexport {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"}).then(f=>{f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);return f;});
 test('both mirrored swept sections have outward winding and retain normal thickness at the hooked ends',async()=>{
  const f=await production();
  for(const sign of[-1,1]){
@@ -30,6 +30,16 @@ test('Tri keeps its endpoints but has continuous 7–9 percent chord sag and a t
  assert.ok(sag>.075&&sag<.09,'sag '+sag);assert.ok(Math.abs(b[2]/a[2]-.3)<1e-12);
  assert.deepEqual(Array.from(b.slice(0,2)),[.4,-.24]);
  console.log('TWO_BOW_SECTION_METRICS '+JSON.stringify({triSagRatio:sag,triTipRootWidth:b[2]/a[2],reefTipNormalThickness:.028,reefTipOldEffectiveThickness:.0086}));
+});
+test('Tri laminate stays on the same physical face for the upper and lower mirrored arms',async()=>{
+ const f=await production(),arms=[];for(const side of[1,-1])arms.push(f.laminateFace(f.cubicLimb(side,f.TRI_LIMB_CONTROLS,18,t=>.050-.035*Math.pow(t,1.05),t=>.025-.0145*t),side));
+ for(let i=0;i<arms[0].length;i++){assert.ok(Math.abs(arms[0][i][0]+arms[1][i][0])<1e-12);for(let k=1;k<4;k++)assert.equal(arms[0][i][k],arms[1][i][k]);}
+});
+test('REEF rear casting uses the existing nock channel and moves with the unchanged draw anchor',async()=>{
+ const f=await production(),d=f.getWeaponDef('s3-stringer-short'),g=d.parts.nock.geo;g.computeBoundingBox();const size=g.boundingBox.getSize(new f.THREE.Vector3());assert.ok(size.y>.15&&size.x>.035);
+ const pivot=d.parts.nock.pivot,p=new f.THREE.Object3D();p.position.copy(pivot);p.userData.rest=pivot.clone();const w={def:d,parts:{nock:p},ps:{}};
+ d.animate(w,{charge:1,sinceRelease:99});assert.ok(Math.abs(p.position.z-pivot.z+.17)<1e-12);assert.equal(p.position.x,pivot.x);assert.equal(p.position.y,pivot.y);
+ d.animate(w,{charge:0,sinceRelease:99});assert.ok(p.position.distanceTo(pivot)<1e-12);
 });
 test('the green Wellstring builder and all existing motion remain byte-identical to the reviewed baseline',()=>{
  const s=fs.readFileSync(new URL('../runtime/weapon-models/stringers.mjs',import.meta.url),'utf8'),m=s.indexOf('// ------------------------------------------------------------------------------------------ motion'),hash=x=>crypto.createHash('sha256').update(x).digest('hex');
