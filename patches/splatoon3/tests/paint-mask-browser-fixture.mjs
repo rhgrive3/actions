@@ -9,6 +9,7 @@ import { paintShapeSeed, paintShapeHash } from '/ASSET/patches/splatoon3/runtime
 const check = (condition, message) => { if (!condition) throw Error(message); };
 export function createPaintMaskProbe() {
   const paint = Object.create(PaintSystem.prototype);
+  paint.level={native:false}; // Match the non-native Level contract of this grid probe.
   Object.assign(paint, { size: 1024, usedHeight: 1024, grid: new Uint8Array(128 * 128), dead: new Uint8Array(128 * 128),
     counts: [0, 0], version: 0, clock: 0, growing: [],
     renderer: { capabilities: { getMaxAnisotropy: () => 1 }, getRenderTarget: () => null,
