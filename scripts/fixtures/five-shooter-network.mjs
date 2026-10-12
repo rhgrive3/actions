@@ -17,6 +17,8 @@ import {install} from '/ASSET/patches/splatoon3/runtime/install.mjs';
 import {installQuality} from '/ASSET/patches/local-quality/install.mjs';
 const profile=await fetch('/ASSET/patches/splatoon3/profile.json').then(r=>r.json());
 const api=install(profile);installWeaponsFidelity(api,profile);installMainWeaponCatalogRuntime(api,profile);installQuality(profile);
+// Review-only opt-in: exercises the complete existing origin path without any visual/collision split.
+if(new URLSearchParams(location.search).has('novaMouth')){const W=await import('/ASSET/src/game/character-weapons.js');W.getWeaponDef('s3-shooter-quicklong').muzzle.set(0,(475-310)*.11/130,(965-439)*.11/130);}
 G.scene=new THREE.Scene();G.scene.background=new THREE.Color('#172838');
 G.renderer=new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true});G.renderer.setSize(1000,700);document.body.appendChild(G.renderer.domElement);
 G.camera=new THREE.PerspectiveCamera(55,1000/700,.1,150);G.camera.position.set(19,17,-17);G.camera.lookAt(0,2,10);G.time=0;

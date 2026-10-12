@@ -60,10 +60,16 @@ test('two .96 label instances follow peak/rest can transforms and far-near owner
 
 test('Nova visible upper aperture is recessed and never sealed by the yellow collar',async()=>{
  const f=await production(),d=f.getWeaponDef('s3-shooter-quicklong'),{THREE}=f,u=.11/130,axis=(475-310)*u;
- const mesh=new THREE.Mesh(d.body,new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));mesh.updateMatrixWorld(true);
- const hits=new THREE.Raycaster(new THREE.Vector3(0,axis,.7),new THREE.Vector3(0,0,-1)).intersectObject(mesh);
- assert.ok(hits.length);assert.ok(Math.abs(hits[0].point.z-(955-439)*u)<1e-6,'ray first hits recessed dark backplate, not yellow front cap');
- const c=d.body.attributes.color,i=hits[0].face.a;assert.ok(Math.max(c.getX(i),c.getY(i),c.getZ(i))<.02,'backplate stays dark');mesh.material.dispose();
+ // The optimized production bundle legitimately tree-shakes Raycaster. Intersect
+ // the actual emitted triangles numerically instead of expanding runtime exports.
+ const p=d.body.attributes.position,ii=d.body.index.array,c=d.body.attributes.color;let z=-Infinity,front=-1;
+ for(let k=0;k<ii.length;k+=3){const[a,b,c]=[ii[k],ii[k+1],ii[k+2]],ax=p.getX(a),ay=p.getY(a),bx=p.getX(b),by=p.getY(b),cx=p.getX(c),cy=p.getY(c);
+  const det=(by-cy)*(ax-cx)+(cx-bx)*(ay-cy);if(Math.abs(det)<1e-14)continue;
+  const u=((by-cy)*(-cx)+(cx-bx)*(axis-cy))/det,v=((cy-ay)*(-cx)+(ax-cx)*(axis-cy))/det,w=1-u-v;
+  if(Math.min(u,v,w)<-1e-8)continue;const at=u*p.getZ(a)+v*p.getZ(b)+w*p.getZ(c);if(at>z&&at<.7){z=at;front=a;}
+ }
+ assert.ok(front>=0);assert.ok(Math.abs(z-(955-439)*u)<1e-6,'ray first hits recessed dark backplate, not yellow front cap');
+ assert.ok(Math.max(c.getX(front),c.getY(front),c.getZ(front))<.02,'backplate stays dark');
  // Visible aperture evidence is intentionally independent of the unresolved legacy shot socket.
  assert.deepEqual(Array.from(d.muzzle.toArray()),[0,.11/66*(265-237),.11/66*(384-118)]);
 });

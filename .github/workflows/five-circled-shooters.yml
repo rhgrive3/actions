@@ -6,6 +6,7 @@ on:
       - patches/splatoon3/runtime/weapon-models/shooters-b.mjs
       - patches/splatoon3/tests/five-circled-shooters.test.mjs
       - scripts/render-five-circled-shooters.mjs
+      - scripts/render-nova-origin-review.mjs
       - scripts/check-five-shooter-network.mjs
       - scripts/fixtures/five-shooter-network.mjs
       - .github/workflows/five-circled-shooters.yml
@@ -26,7 +27,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: b4dc80800c0788d2a098ec7fba92b14ad445dc3f
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
           path: .baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -93,6 +94,42 @@ jobs:
           path: |
             .network-evidence
             .crowd-evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  nova-origin-diagnosis:
+    if: github.head_ref == 'feat/inkwave-five-circled-shooters'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Build unchanged production origin
+        run: node scripts/build-inkwave.mjs inkwave-public .origin-site
+      - name: Native origin versus single-field mouth candidate, real FX and projectiles
+        run: |
+          for origin in native mouth; do
+            node scripts/render-nova-origin-review.mjs --site .origin-site --out ".origin-evidence/$origin" --origin "$origin"
+          done
+      - name: Candidate origin through both native network owners and remote replay
+        if: always()
+        run: node scripts/check-five-shooter-network.mjs --site .origin-site --evidence-dir .origin-network --profile-dir .origin-profiles --exact-source --nova-mouth
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nova-origin-diagnosis-${{ github.event.pull_request.head.sha }}
+          path: |
+            .origin-evidence
+            .origin-network
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 14

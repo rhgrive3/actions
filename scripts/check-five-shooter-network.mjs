@@ -13,7 +13,7 @@ import {WebSocketServer} from 'ws';
 import {RoomDurableObject} from '../server/src/index.js';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const option=n=>{const i=process.argv.indexOf(n);assert(i>=0&&process.argv[i+1],n+' required');return path.resolve(process.argv[i+1]);};
-const baseline=process.argv.includes('--baseline');
+const baseline=process.argv.includes('--baseline'),novaMouth=process.argv.includes('--nova-mouth');
 const lagIndex=process.argv.indexOf('--delay-frames'),delayFrames=lagIndex<0?0:Number(process.argv[lagIndex+1]);assert(Number.isSafeInteger(delayFrames)&&delayFrames>=0&&delayFrames<=30);
 const site=option('--site'),evidence=option('--evidence-dir'),profile=option('--profile-dir');
 const physical=p=>fs.existsSync(p)?fs.realpathSync(p):path.join(physical(path.dirname(p)),path.basename(p));
@@ -26,7 +26,7 @@ let sourceSha=null;
 if(process.argv.includes('--exact-source')){
  sourceSha=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
  const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:ROOT,encoding:'utf8'}).split('\0').filter(Boolean).map(r=>{const [m,f]=r.split('\t');return[f,m.split(' ')[2]];}));
- const roots={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','build-script/':'scripts/'};
+ const roots={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','build-script/':'scripts/','native-stages/':'patches/native-stages/'};
  const files=Object.entries(build.files).map(([k,h])=>{const prefix=Object.keys(roots).find(p=>k.startsWith(p));assert(prefix,k);const f=roots[prefix]+k.slice(prefix.length);assert.equal(hash(fs.readFileSync(path.join(ROOT,f))),h,f);return f;});
  assert.equal(hash(fs.readFileSync(path.join(ROOT,'scripts/build-inkwave.mjs'))),build.build.script);files.push('scripts/build-inkwave.mjs','scripts/check-five-shooter-network.mjs','scripts/fixtures/five-shooter-network.mjs','server/src/index.js');
  const blobs=execFileSync('git',['hash-object','--',...files],{cwd:ROOT,encoding:'utf8'}).trim().split('\n');files.forEach((f,i)=>assert.equal(blobs[i],tree.get(f),f+' must match commit'));
@@ -47,7 +47,7 @@ relay.on('connection',(ws,req)=>{const url=new URL(req.url,'http://localhost'),c
  const bridge={send:s=>{if(delayFrames&&s.startsWith('m|')&&JSON.parse(s.slice(s.indexOf('|',2)+1)).k==='t')pending.push({ws,text:s,due:wireFrame+delayFrames});else ws.send(s);},addEventListener:(n,fn)=>ws.on(n,n==='message'?data=>{const s=data.toString();wire.push({at:Date.now(),bytes:Buffer.byteLength(s),text:s});fn({data:s});}:fn)};
  room.handleSession(bridge,url.searchParams.get('name')||'Player');
 });
-const address='http://127.0.0.1:'+server.address().port+'/network-fixture.html?relay='+encodeURIComponent('ws://127.0.0.1:'+relay.address().port);
+const address='http://127.0.0.1:'+server.address().port+'/network-fixture.html?relay='+encodeURIComponent('ws://127.0.0.1:'+relay.address().port)+(novaMouth?'&novaMouth=1':'');
 const contexts=[],pages=[],errors=[],receipts=new Set();let result;
 try{
  for(let i=0;i<2;i++){
@@ -122,7 +122,7 @@ try{
   assert(paired>0,id+' both owners actually emit');assert(maxSpawn<.01&&maxVelocity<.01,id+' serialized shot geometry');
   for(const t of traces){assert.equal(t.frames.nonFinite,0);assert(t.frames.maxGrip<.008,id+' grip');assert(t.frames.maxLabelError<1e-8,id+' label');assert(t.models.every(m=>m.id===id&&m.model===id&&m.motion==='ready'));}
  }
- assert.equal(errors.length,0,JSON.stringify(errors));result={status:'passed',sourceSha,contentHash:build.contentHash,fixtureHash:hash(fixtureCode),transport:'real WebSocket and production RoomDurableObject/NetSession/NetMatch',scope:'Two real Actors and Characters in controlled arena; five fixed equip cases, not a full live stage or network weapon-switch UI test',rows,loadedArtifacts:[...receipts],errors};
+ assert.equal(errors.length,0,JSON.stringify(errors));result={status:'passed',novaMouthCandidate:novaMouth,sourceSha,contentHash:build.contentHash,fixtureHash:hash(fixtureCode),transport:'real WebSocket and production RoomDurableObject/NetSession/NetMatch',scope:'Two real Actors and Characters in controlled arena; five fixed equip cases, not a full live stage or network weapon-switch UI test',rows,loadedArtifacts:[...receipts],errors};
 }catch(error){const diagnostic=await Promise.all(pages.map(async p=>{const d=await p.evaluate(()=>({mode:globalThis.NG?.mode,s3:globalThis.NG?.s3,game:!!globalThis.NG?.game,bootError:document.querySelector('#boot-error')?.textContent,base:document.baseURI})).catch(e=>({error:e.message}));await p.screenshot({path:path.join(evidence,'failure-'+pages.indexOf(p)+'.png'),timeout:15000}).catch(()=>{});return d;}));result={diagnostic,status:'failed',sourceSha,contentHash:build.contentHash,error:error.stack,errors};process.exitCode=1;}
 finally{for(const c of contexts)await c.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));}
 const out=path.join(evidence,'five-shooter-network-result.json');fs.writeFileSync(out+'.pending',JSON.stringify(result,null,2)+'\n');fs.renameSync(out+'.pending',out);console.log(JSON.stringify({...result,loadedArtifacts:result.loadedArtifacts?.length}));
