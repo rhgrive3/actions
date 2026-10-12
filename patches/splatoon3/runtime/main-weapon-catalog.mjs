@@ -193,7 +193,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
-    s.roll = null; s.lunge=null; s.melee=null; s.turret = 0;
+    s.roll = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;
     if (s.canopy && !s.canopy.launched) s.canopy.open = false;
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
   }
@@ -631,9 +631,29 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const a=runner.a,p=r.parameters,roll=p.WeaponRollParam||{},body=p.BodyParam||{};
     const speed=Math.hypot(a.vel.x,a.vel.z),max=finite(roll.SpeedInkConsumeMax,.132)*HZ;
     const cost=lerp(finite(roll.InkConsumeMinPerFrame,.0001),finite(roll.InkConsumeMaxPerFrame,.001),clamp(speed/max))*100*HZ*dt*inkMod(a);
-    if(!pay(runner,cost,finite(roll.InkRecoverStop,20)/HZ)){runner.rolling=false;return;}
+    if(!pay(runner,cost,finite(roll.InkRecoverStop,20)/HZ)){runner.rolling=false;state(runner).rollPaint=null;return;}
     const at=a.pos.clone().addScaledVector(a.aimDir,.6),radius=finite(body.PaintParam?.WidthHalfMax,.9);
-    floorPaint(a,at,radius,1+speed*dt/Math.max(.1,radius),a.aimDir);
+    // Drum/brush floor contact follows body yaw, not reticle pitch. An aimed-down
+    // camera formerly pushed the ray origin below the floor and lost every mark.
+    // Keep the existing 'at' for damage contact; only paint is floor-anchored.
+    const s=state(runner);
+    const stroke=s.rollPaint||(s.rollPaint={
+      from:a.pos.clone(),to:a.pos.clone(),point:a.pos.clone(),heading:a.pos.clone(),active:false,
+    });
+    const heading=stroke.heading.set(Math.sin(a.yaw),0,Math.cos(a.yaw));
+    const to=stroke.to.set(a.pos.x+heading.x*.6,a.pos.y+.35,a.pos.z+heading.z*.6);
+    const from=stroke.from;
+    const distance=stroke.active?Math.hypot(to.x-from.x,to.z-from.z):0;
+    // On a normal 60Hz frame there is one native source-width stamp; only a
+    // discontinuous long frame is subdivided, with a strict six-splat cap.
+    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.28,radius*.52))));
+    const depth=1+speed*dt/Math.max(.1,radius);
+    for(let i=1;i<=stamps;i++){
+      const t=i/stamps;
+      stroke.point.set(from.x+(to.x-from.x)*t,to.y,from.z+(to.z-from.z)*t);
+      floorPaint(a,stroke.point,radius,depth,heading);
+    }
+    from.copy(to);stroke.active=true;
     const s=state(runner);s.contactTimes ||= new Map();
     for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<radius+PLAYER.radius&&
       G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(at,enemy.pos)){
@@ -761,10 +781,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // Account for the different first windup: a 23F first Vincent swing
         // must not unlock a 1F follow-up immediately when that first shot emits.
         runner.cooldown=(brush?windup+communityRepeat-(s.swingCount===0?1:0)-1:windup+finite(t.PostDelayFrame,21))/HZ;
-        runner.rolling=false;s.swingCount++;
+        runner.rolling=false;s.rollPaint=null;s.swingCount++;
       }
     }else if(input.fire&&a.grounded&&!s.pending&&runner.cooldown<=EPS){runner.rolling=true;rolling(runner,r,dt);}
-    else runner.rolling=false;
+    else {runner.rolling=false;s.rollPaint=null;}
   }
   function slosh(runner,r,input,s) {
     if(!input.fire||runner.cooldown>EPS||s.pending)return;
