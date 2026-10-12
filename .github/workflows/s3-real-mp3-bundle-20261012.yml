@@ -14,13 +14,14 @@ jobs:
     timeout-minutes: 35
     steps:
       - name: Install downloader
-        run: python -m pip install --quiet gdown beautifulsoup4 requests
+        run: python -m pip install --quiet gdown beautifulsoup4 requests mutagen
       - name: Download original public MP3s with source metadata
         env:
           PART: ${{ matrix.part }}
         run: |
           python - <<'PY'
-          import os,sys,json,hashlib,time,subprocess,pathlib,requests,gdown
+          import os,sys,json,hashlib,time,pathlib,requests,gdown
+          from mutagen.mp3 import MP3
           from bs4 import BeautifulSoup
           folder='1D7So33YcZJaU_W5eC_H8OMFnUxGA8lYJ'
           part=int(os.environ['PART']);root=pathlib.Path('bundle')
@@ -51,12 +52,9 @@ jobs:
                   if other.is_file():other.replace(dest)
                 if not dest.is_file() or dest.stat().st_size<100:
                   raise ValueError('missing or empty download')
-                proc=subprocess.run(['ffprobe','-v','error','-show_entries','format=duration,format_name','-of','json',str(dest)],capture_output=True,text=True,timeout=20)
-                if proc.returncode:
-                  raise ValueError('invalid audio file '+proc.stderr[:130])
-                metadata=json.loads(proc.stdout)['format']
-                if 'mp3' not in metadata.get('format_name',''):
-                  raise ValueError('unexpected format '+str(metadata))
+                track=MP3(str(dest))
+                if not track.info or track.info.length <= 0:raise ValueError('Invalid MP3 duration')
+                metadata={'duration':track.info.length}
                 sha=hashlib.sha256(dest.read_bytes()).hexdigest()
                 report.append({'name':name,'source_id':id,'sha256':sha,'bytes':dest.stat().st_size,'duration':float(metadata['duration']),'status':'verified'})
                 err=None
