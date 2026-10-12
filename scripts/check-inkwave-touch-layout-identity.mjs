@@ -15,7 +15,10 @@ const input = network ? 'network-replication/adapter.mjs' : reliability ? 'relia
 const relativeInput = network ? 'patches/network-replication/adapter.mjs' : reliability ? 'patches/reliability/input-adapter.mjs' : 'patches/touch-layout/mobile.js';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
-for (const dir of [checkout, evidence]) assert(physical(dir).startsWith('/mnt/workspace/'), 'Persistent workspace required');
+for (const dir of [checkout, evidence]) {
+ const resolved=physical(dir);
+ assert(!['/tmp','/var/tmp','/dev/shm'].some(p=>resolved===p||resolved.startsWith(p+'/'))&&['/mnt/workspace',repo.replace(/\/$/,'')].some(p=>resolved.startsWith(physical(p)+'/')), 'Persistent workspace required');
+}
 assert(!fs.existsSync(checkout), 'Use a new isolated checkout; existing work is retained');
 fs.mkdirSync(checkout, { recursive: true }); fs.mkdirSync(evidence, { recursive: true });
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -29,6 +32,7 @@ const sourcePath = key => {
   if (key.startsWith('network-replication/')) return ['patches/network-replication/' + key.slice(20), path.join(repo, 'patches/network-replication', key.slice(20))];
   if (key.startsWith('loading-cache/')) return ['patches/loading-cache/' + key.slice(14), path.join(repo, 'patches/loading-cache', key.slice(14))];
   if (key.startsWith('practice-range/')) return ['patches/practice-range/' + key.slice(15), path.join(repo, 'patches/practice-range', key.slice(15))];
+  if (key.startsWith('native-stages/')) return ['patches/native-stages/' + key.slice(14), path.join(repo, 'patches/native-stages', key.slice(14))];
   if (key.startsWith('build-script/')) return ['scripts/' + key.slice(13), path.join(repo, 'scripts', key.slice(13))];
   throw new Error('Unknown input ' + key);
 };

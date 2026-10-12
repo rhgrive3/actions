@@ -2,11 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 export const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 export const physicalLocation=name=>fs.existsSync(name)?fs.realpathSync(name):path.join(physicalLocation(path.dirname(name)),path.basename(name));
 export function persistentDirectory(name){
  const resolved=physicalLocation(path.resolve(name));
- if(!resolved.startsWith('/mnt/workspace/'))throw Error('Persistent workspace required: '+resolved);
+ const roots=['/mnt/workspace',fileURLToPath(new URL('../../',import.meta.url)).replace(/\/$/,'')];
+ if(['/tmp','/var/tmp','/dev/shm'].some(p=>resolved===p||resolved.startsWith(p+'/'))||!roots.some(p=>resolved.startsWith(physicalLocation(p)+'/')))throw Error('Persistent workspace required: '+resolved);
  fs.mkdirSync(resolved,{recursive:true});return resolved;
 }
 // Chromium appends its singleton directory/socket name to TMPDIR (44 bytes).
@@ -25,7 +27,7 @@ export function verifyRuntimeBuild(site,root,sha){
   if(!resolved.startsWith(fs.realpathSync(site)+'/'))throw Error('Artifact outside site');
   if(hash(fs.readFileSync(resolved))!==expected)throw Error('Artifact mismatch: '+file);
  }
- const namespaces={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','build-script/':'scripts/'};
+ const namespaces={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','native-stages/':'patches/native-stages/','build-script/':'scripts/'};
  const inputs=Object.entries(manifest.files).map(([name,expected])=>{
   const prefix=Object.keys(namespaces).find(p=>name.startsWith(p));if(!prefix)throw Error('Unknown input: '+name);
   return [namespaces[prefix]+name.slice(prefix.length),expected];
