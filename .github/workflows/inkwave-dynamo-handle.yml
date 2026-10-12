@@ -6,6 +6,8 @@ on:
       - patches/splatoon3/runtime/weapon-models/rollers.mjs
       - patches/splatoon3/tests/dynamo-handle-center.test.mjs
       - scripts/render-dynamo-handle.mjs
+      - scripts/measure-dynamo-drive-crowd.mjs
+      - patches/splatoon3/tests/fixtures/dynamo-before-model.txt
       - .github/workflows/inkwave-dynamo-handle.yml
 permissions:
   contents: read
@@ -16,7 +18,7 @@ jobs:
   geometry-and-browser:
     if: github.head_ref == 'fix/dynamo-handle-center-measured'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,6 +54,12 @@ jobs:
         run: |
           node scripts/render-dynamo-handle.mjs --site .dynamo-before-site --out .dynamo-evidence/before --baseline
           node scripts/render-dynamo-handle.mjs --site .dynamo-after-site --out .dynamo-evidence/after
+      - name: Eight source Actors near/far on one runner, ABBA
+        run: |
+          for pair in before-A after-B after-B2 before-A2; do
+            version="${pair%%-*}"
+            node scripts/measure-dynamo-drive-crowd.mjs --site ".dynamo-${version}-site" --out ".dynamo-evidence/crowd/${pair}"
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -1,0 +1,49 @@
+function dynamoRoller(d) {
+  // Wmn_Roller_Heavy: long dimpled drum held at its left (+X) end by a big gear
+  // housing, a guard rod along the top to the far end cap, a cross rod to a
+  // black clamp block, a finned motor cylinder with ink lines, a long thin rod
+  // and a rubber grip.
+  const C = { gun: '#55565b', dark: '#28282c', steel: '#a9abb1', black: '#18181b', copper: '#c27a3c' };
+  const W = drumWidth(3.4), r = 0.19, dz = 1.13, dx = -0.37, hz = 0.88;
+  const body = new Pieces(), ink = new Pieces(), frame = new Pieces(), frameInk = new Pieces(), caps = new Pieces();
+  body.add(zlathe([[0, -0.12], [0.013, -0.12], [0.019, -0.11], [0.019, 0.1], [0.015, 0.11], [0, 0.112]], 0, 0, 0, 14), C.black, M.rubber);
+  for (let k = 0; k < 6; k++) body.add(ring(0.0195, 0.0018, 0, 0, -0.08 + k * 0.035, 'z', 4, 14), C.dark, M.rubber);
+  body.add(zcyl(0.012, 0.1, 0.5, 0, 0, 10), C.steel, M.metal);
+  body.add(zlathe([[0, 0.28], [0.022, 0.28], [0.026, 0.3], [0.026, 0.36], [0.022, 0.38], [0, 0.38]], 0, 0, 0, 14), C.gun, M.metal);
+  body.add(box(0.06, 0.04, 0.05, 0, 0, 0.33, 0.4), C.dark, M.satin);
+  // motor cylinder with fins and ink lines
+  body.add(zlathe([[0, 0.48], [0.04, 0.48], [0.05, 0.5], [0.05, 0.53], [0.058, 0.54], [0.058, 0.78], [0.05, 0.8], [0, 0.8]], 0, 0, 0, 20), C.gun, M.metal);
+  for (let k = 0; k < 12; k++) { const a = k / 12 * TAU; body.add(box(0.008, 0.008, 0.2, Math.cos(a) * 0.06, Math.sin(a) * 0.06, 0.65, 0.4), C.dark, M.metal); }
+  for (const z of [0.55, 0.77]) body.add(ring(0.062, 0.006, 0, 0, z, 'z', 4, 22), C.steel, M.metal);
+  for (const s of [-1, 1]) ink.add(pipe([[s * 0.075, 0, 0.53], [s * 0.085, 0.01, 0.6], [s * 0.085, 0.01, 0.72], [s * 0.075, 0, 0.8]], 0.007, 16, 6));
+  body.add(zcyl(0.02, 0.8, hz - 0.02, 0, 0, 12), C.steel, M.metal);
+  // roller side: clamp block, cross rod, gear housing, top guard rod, far end cap
+  frame.add(box(0.24, 0.09, 0.12, 0.03, 0, hz + 0.04, 0.25), C.dark, M.satin);
+  frame.add(box(0.05, 0.1, 0.1, 0.17, 0, hz + 0.06, 0.3), C.gun, M.metal);
+  for (const sy of [-1, 1]) for (const x of [-0.04, 0.05]) frame.add(ycyl(0.012, 0, sy * 0.045, x, hz + 0.04, 10), C.steel, M.metal);
+  const gx = W / 2 + dx;
+  frame.add(xcyl(0.026, 0.1, gx + 0.03, 0, hz + 0.09, 12), C.dark, M.metal);
+  frame.add(cyl(0.03, [gx + 0.02, 0, hz + 0.09], [gx + 0.04, 0, dz - 0.05], 12), C.gun, M.metal);
+  frame.add(xlathe([[0, 0], [0.24, 0], [0.26, 0.02], [0.26, 0.1], [0.22, 0.13], [0.07, 0.14], [0, 0.14]], gx, 0, dz, 28), C.gun, M.metal);
+  frame.add(ring(0.21, 0.012, gx + 0.125, 0, 0, 'x', 5, 28).translate(0, 0, dz), C.dark, M.metal);
+  for (let k = 0; k < 16; k++) { const a = k / 16 * TAU; frame.add(box(0.03, 0.022, 0.022, gx + 0.06, Math.cos(a) * 0.262, Math.sin(a) * 0.262 + dz, 0.5), C.dark, M.metal); }
+  frame.transform(g => g); // keep order
+  frameInk.add(ring(0.12, 0.008, gx + 0.122, 0, dz, 'x', 4, 24));
+  frame.add(xlathe([[0, 0], [0.07, 0], [0.07, 0.02], [0, 0.03]], gx + 0.12, 0, dz, 16), C.copper, M.metal);
+  const gz = dz; // gear housing centred on the axle
+  frame.transform(g => g);
+  const fx = -W / 2 + dx;
+  frame.add(cyl(0.012, [gx, r + 0.035, gz - 0.03], [fx - 0.02, r + 0.035, gz - 0.03], 10), C.black, M.metal);
+  frame.add(xlathe([[0, 0], [r * 1.02, 0], [r * 1.05, -0.03], [r * 0.85, -0.06], [0, -0.07]], fx, 0, dz, 24), C.gun, M.metal);
+  frame.add(box(0.03, 0.06, 0.04, fx - 0.02, r + 0.01, gz - 0.03, 0.4), C.dark, M.metal);
+  for (const sx of [-1, 1]) rim(caps, sx * (W / 2 - 0.01), r, 0.02, C.dark, M.metal);
+  const drum = new Pieces().add(drumGeo(W, r, { dimples: 8 }), '#ffffff');
+  // the gear housing is centred on the drum axle: author it there
+  rebuild(d, {
+    body, ink, parts: { hinge: part(frame, [0, 0, hz]), hingeInk: part(frameInk, [0, 0, hz], 'ink') },
+    gripR: GRIP_R(), gripL: GRIP_L(0.14), muzzle: [dx, 0, dz],
+    drum: { geo: drum, caps, at: [dx, 0, dz], r },
+  });
+  return setFold(d, [0, 0, hz]);
+}
+
