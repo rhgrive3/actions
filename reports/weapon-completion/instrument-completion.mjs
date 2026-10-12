@@ -2,7 +2,7 @@ import fs from 'node:fs';import path from 'node:path';import crypto from 'node:c
 const [,,source,out]=process.argv;let text=fs.readFileSync(source,'utf8');
 const sha=crypto.createHash('sha1').update(`blob ${Buffer.byteLength(text)}\0`).update(text).digest('hex');assert.equal(sha,'ebecfa78172f47b6aead1ded88ac50232f894198','pinned18 diagnostic harness');
 const once=(a,b)=>{assert.equal(text.split(a).length,2,a.slice(0,70));text=text.replace(a,b);};
-once("  await page.exposeFunction('__weaponHostSnapshot', hostSnapshot);", "  await page.exposeFunction('__weaponHostSnapshot', hostSnapshot);\n  await page.exposeFunction('__weaponSyncCheckpoint', row => fs.appendFileSync(path.join(out,'completion-boundaries.jsonl'),JSON.stringify(row)+'\\n'));" );
+once("  await page.exposeFunction('__weaponHostSnapshot', hostSnapshot);", "  await page.exposeFunction('__weaponHostSnapshot', hostSnapshot);\n  await page.exposeFunction('__weaponSyncCheckpoint', row => {if(row.png){fs.writeFileSync(path.join(out,row.tier+'-'+row.mode+'-'+row.index+'.png'),Buffer.from(row.png,'base64'));delete row.png;}fs.appendFileSync(path.join(out,'completion-boundaries.jsonl'),JSON.stringify(row)+'\\n');});" );
 const start=text.indexOf('        const measureNative='),end=text.indexOf("        for(const tier of ['game','far']){",start);assert(start>0&&end>start);
 text=text.slice(0,start)+fs.readFileSync(new URL('./measure-native.txt',import.meta.url),'utf8')+text.slice(end);
 once("...measureNative('primary-uninstrumented',false)", '...await measureNative(tier)');
