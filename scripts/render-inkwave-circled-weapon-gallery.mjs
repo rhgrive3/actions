@@ -113,12 +113,19 @@ try {
       const shots = {}; let maxGrip = 0, nonFinite = false, fired = 0;
       let previousDraw=0;
       if(d.bowCfg?.ties)res.tieMotion={maxDraw:0,maxFrontError:0,maxRearError:0,releaseSeen:false,returnedDraw:null,frames:0};
-      const tieCloseup=()=>{
+      const tieCloseup=(isolateWeapon=false)=>{
         const w=ch.weapon,cam=new THREE.OrthographicCamera(-.38,.38,.38,-.38,.01,20);
         cam.position.copy(w.off.localToWorld(new THREE.Vector3(-1.2,.085,-.08)));
         cam.up.copy(new THREE.Vector3(0,1,0).applyQuaternion(w.off.getWorldQuaternion(new THREE.Quaternion())));
-        cam.lookAt(w.off.localToWorld(new THREE.Vector3(0,.085,-.08)));renderer.render(scene,cam);return snap();
+        cam.lookAt(w.off.localToWorld(new THREE.Vector3(0,.085,-.08)));
+        // Diagnostic only: retain the actual Actor-driven weapon transforms,
+        // briefly hide occluding character meshes, then restore every flag.
+        // The ordinary held captures remain intact; this is not a game state.
+        const restored=[];
+        if(isolateWeapon){const keep=new Set();w.off.traverse(o=>keep.add(o));ch.root.traverse(o=>{if(o.isMesh&&!keep.has(o)){restored.push([o,o.visible]);o.visible=false;}});}
+        try{renderer.render(scene,cam);return snap();}finally{for(const[o,visible]of restored)o.visible=visible;}
       };
+      const captureTies=name=>{shots[name]=tieCloseup();shots[name+'Isolated']=tieCloseup(true);};
       const C = api.CHARACTER_CHANNELS;
       for (let frame = 0; frame < 240; frame++) {
         const fire = frame >= 70 && frame < 200;
@@ -134,10 +141,10 @@ try {
             const e=w.parts.nock.localToWorld(new THREE.Vector3(...t.back).sub(d.parts.nock.pivot));
             m.maxFrontError=Math.max(m.maxFrontError,a.distanceTo(b));m.maxRearError=Math.max(m.maxRearError,c.distanceTo(e));
           }
-          m.frames++;if(frame===25)shots.tiesRest=tieCloseup();
-          if(draw>m.maxDraw+1e-6){m.maxDraw=draw;shots.tiesCharge=tieCloseup();}
-          if(frame>=200&&!a.weaponRunner.charging&&previousDraw>.08&&draw<previousDraw&&!m.releaseSeen){m.releaseSeen=true;shots.tiesRelease=tieCloseup();}
-          if(frame===239){m.returnedDraw=draw;shots.tiesReturned=tieCloseup();}
+          m.frames++;if(frame===25)captureTies('tiesRest');
+          if(draw>m.maxDraw+1e-6){m.maxDraw=draw;captureTies('tiesCharge');}
+          if(frame>=200&&!a.weaponRunner.charging&&previousDraw>.08&&draw<previousDraw&&!m.releaseSeen){m.releaseSeen=true;captureTies('tiesRelease');}
+          if(frame===239){m.returnedDraw=draw;captureTies('tiesReturned');}
           previousDraw=draw;
         }
         if (![...ch.P].every(Number.isFinite)) nonFinite = true;

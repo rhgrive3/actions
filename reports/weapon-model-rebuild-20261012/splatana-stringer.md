@@ -1,6 +1,10 @@
 # Splatana / Stringer reconstruction review
 
-Base: adopted main `b078c37907351f1bbc13d0e7d4b5cbeb0a330009` (local text-only mirror `c230d34`). User selected these six models from a marked comparison image. Three selected Brellas have an independent owner; Undercover Brella and all unselected models are untouched. PR401/1220 are untouched.
+Current integration candidate is described in the final section below. Earlier
+counts and images in this document are retained as development history, not
+as validation of the current head.
+
+Initial base: adopted main `b078c37907351f1bbc13d0e7d4b5cbeb0a330009` (local text-only mirror `c230d34`). User selected these six models from a marked comparison image. Three selected Brellas have an independent owner; Undercover Brella and all unselected models are untouched. PR401/1220 are untouched.
 
 ## Evidence and construction
 
@@ -53,3 +57,82 @@ The whole source suite completed4914 tests,4895 pass/19 skip/0 fail during this 
 A separate same-runner ABBA protocol now measures8 real Actors with all6 revised weapons simultaneously, in bothgame andfar LOD. It reports animation CPU, render submission CPU, time through GPU completion, draw calls, triangle count and visible geometry buffer bytes. These are controlled component timings; GPU completion wait is not reported as isolated GPU time. Exact-head images, complete CI and these eight-Actor results are pending for the refined revision.
 
 Parent review of the first sheets requested a fuller Tri-Stringer central cartridge and a less dominant Decavitator cap. The turntable confirms that Tri cartridge colour is team ink (green there, orange in this gallery); the neutral official static render is grey. Its central visible cartridge is enlarged from diameter0.10/length0.23 to roughlydiameter0.126/length0.28, with three dark clamp bands; the outer nozzle and grip coordinates do not move. The Decavitator cap is reduced from about1.33× to1.24× the sleeve diameter and receives its shallow lid step/mark. These refinements require the next fixed-camera review rather than inheriting the initial image acceptance.
+
+## Six-model integration after the two-bow review
+
+This candidate incorporates the complete linear PR1274 refinement history into
+PR1271. The two model source files are byte-identical to reviewed PR1274 head
+`2d9d2d15ffaded40b7e2c59fd3651f82ca8ec6eb`. Integration also preserves latest
+main `1fca80b32c98455924afbbffeccd952fd0122b71`, including camera/aim, collision,
+paint and network corrections. Its 43 changed files do not overlap the ten
+model/review files. Therefore the composed runtime identity must be freshly
+built and verified, not inherited from the old main build. Review workflow,
+diagnostic capture and this report are the only new integration edits; no
+PR1273 index cleanup is included.
+
+The user's later bow feedback supersedes the initial six-model visual support.
+Tri now has a continuous 8.31% chord-sag arc with tapered, consistently faced
+laminations. LACT has closed volumetric recessed cast limbs, forward seated
+roots, a rounded rear yoke, and a reduced central collar diameter .132 rather
+than the rejected .160 pass3 value. The final marked-image correction adds two
+diagonal ties from that moving yoke to the fixed front shoulders. The existing
+arrow channel provides their deformation; no motion law, hand/muzzle anchor,
+mesh channel, shared kit or gameplay code is changed. Reference physical units,
+hidden sections and retail animation parity remain unverified.
+
+Exact `2d9d2d15` evidence: [visual run](https://github.com/rhgrive3/actions/actions/runs/38218897043),
+[original 640px images](https://github.com/rhgrive3/actions/actions/runs/38218897043/artifacts/11733482719).
+The actual production Actor reaches draw .169999, releases, and returns within
+1.8e-15 over 240 frames. Maximum front/rear joint errors are 2.50e-16/2.55e-16.
+Source structural and 30/60/120Hz tests pass 8/8, and the exact emitted
+model/Actor contracts pass 6/6. These are prior-head evidence, not a substitute
+for the integration-head gates below.
+
+Five other complete model geometry buffers match the preceding reduced-center
+head by SHA256. Within LACT all static geometry, glow and prior animated channels
+except arrow match exactly; the merged far body changes because it includes the
+new arrow/ties. The fixed-camera before/after side images are both 640px with
+identical occupied bounds (213,108)-(438,532); only 613 pixels around the two
+ties differ. The Tri images are RGBA-identical in all five static views. The
+reference/previous/candidate sheet is Library
+`libfile_779fb093bbb48191a09bd1dbe9f98a8d`.
+
+Current whole-model triangles are 5096 / 3990 / 6120 / 7500 / 11376 / 9012 for
+Stamper / Wiper / Decavitator / Tri / LACT / Wellstring. The ties add 96 triangles
+and about 4 KiB of complete definition buffers to LACT; single-Actor draw calls
+remain 18. A 16k triangle cap and this local increment do not establish acceptable
+whole-game performance. PR1271's earlier component timing increase over main
+remains relevant; the new integration measurement compares against the unchanged
+main baseline rather than just the immediately previous bow candidate.
+
+The final tie-only [eight-Actor run](https://github.com/rhgrive3/actions/actions/runs/38218897043/artifacts/11734251783)
+against `773fa384` completed successfully. Game draws remain 114, triangles
+310820→310916 and visible buffers 2905248→2907264 B. Far draws remain 59,
+triangles 83672→83674 and visible buffers 723464→723396 B. Game update p50
+is 5.4/5.9 ms in A/A2 versus 6.3/6.1 ms in B/B2; completion-boundary render
+p50 is 2.9/3.9 versus 3.1/3.7 ms. Far update p50 is 4.2/4.0 versus 4.0/4.2 ms;
+render p50 is 2.1/1.9 versus 1.8/2.1 ms. Thus the game update median-pair
+mean increases by .55 ms while mean rendering is unchanged, despite no new
+update logic or scene nodes. The cause is not established; neither noise nor
+performance equivalence is claimed. This isolated SwiftShader comparison
+does not replace the integration-head main-baseline measurement.
+
+Required integration-head gates are explicit: all six source/shape tests, all
+six exact-built model/real-Actor contracts, fresh source-motion-loaded actual
+Actor captures and five static angles for every model, and eight mixed Actors
+with all six weapons in game/far ABBA against immutable main `1fca80b3`. General
+required CI must also complete on the integration head. The diagnostic capture
+additionally keeps the actual Actor-driven weapon transforms and temporarily
+hides only occluding character meshes to expose both diagonal ties in four
+states; normal full-Actor images remain. This isolated view is labeled a
+diagnostic, not an ordinary game frame. Hardware GPU/mobile and whole-match
+timings are still unmeasured. No main merge is requested before parent review.
+
+Local latest-main composition preflight: 35/35 model/shape/motion/camera/gyro
+source tests, 6/6 exact emitted model/Actor contracts, and 34/34 exact emitted
+camera/aim/stored-muzzle/reticle tests passed. All six complete model geometry
+buffer hashes still match `2d9d2d15`. The new production contentHash is
+`9bee7bed9049821af509f3a7b187a91d2d083e9fa291c0c7db9d08ef6db99798`, build revision
+`1bd06b27bc5af1e7611b4e5ad1220be693a285f2a295cad03e6048f8f158417d`.
+Fresh integration-head browser images, main-baseline ABBA and required CI
+remain mandatory; these local preflights do not replace them.

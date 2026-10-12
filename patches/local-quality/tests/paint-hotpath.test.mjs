@@ -166,3 +166,66 @@ test('production six-layer composition includes paint hotpath with fail-closed b
   assert.throws(()=>adaptPaintHotpath('src/world/paint.js',FIXED,once));
   assert.doesNotThrow(()=>new vm.SourceTextModule(final));
 });
+
+
+test('CPU paint inner-disc shortcut retains exact ownership, area and version for randomized overlapping splats', async () => {
+  const [native, faster] = await Promise.all([loadNative(ORIGINAL), loadNative(FIXED)]);
+  const nu = 120, nv = 120, perFace = nu * nv;
+  const faces = [0, 1].map((id) => ({
+    cu: 0.25, cv: 0.25, nu, nv, grid: id * perFace, turf: id === 0,
+  }));
+  function fresh() {
+    const dead = new Uint8Array(perFace * 2);
+    for (let i = 0; i < dead.length; i++) if (i % 43 === 0) dead[i] = 1;
+    return { grid: new Uint8Array(perFace * 2), dead, counts: [0, 0], version: 0 };
+  }
+  const a = fresh(), b = fresh();
+  let seed = 20261012;
+  const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+  const methodA = native.exports.PaintSystem.prototype._cpuSplat;
+  const methodB = faster.exports.PaintSystem.prototype._cpuSplat;
+  let definitelyInside = 0, changedCells = 0;
+  for (let i = 0; i < 6500; i++) {
+    const face = faces[i % 2];
+    const radius = i % 43 === 0 ? .01 : .12 + rand() * 2.2;
+    const x = 2 + rand() * 26, y = 2 + rand() * 26;
+    const team = (i + ((i / 13) | 0)) % 2;
+    const inkSeed = rand(), angle = rand() * Math.PI * 2;
+    const sa = i % 3 === 0 ? rand() * 1.3 : 0;
+    const args = [face, x, y, radius, team, inkSeed, Math.cos(angle), Math.sin(angle), sa, i % 8 === 0 ? 6 : i % 4];
+    const c0 = methodA.call(a, ...args);
+    const c1 = methodB.call(b, ...args);
+    assert.equal(c1, c0, 'claimed area splat ' + i);
+    assert.equal(b.version, a.version, 'version splat ' + i);
+    assert.deepEqual(b.counts, a.counts, 'turf counters splat ' + i);
+    if (i % 65 === 0) assert.deepEqual(b.grid, a.grid, 'ownership grid batch ' + i);
+    if (c0) changedCells++;
+    if (radius > .02 && args[9] !== 6) definitelyInside++;
+  }
+  assert.ok(definitelyInside > 1000);
+  assert.ok(changedCells > 1000);
+  assert.deepEqual(b.grid, a.grid);
+  assert.deepEqual(b.dead, a.dead);
+  assert.deepEqual(b.counts, a.counts);
+  assert.equal(b.version, a.version);
+});
+test('0.68 inner-disc gate has a strict mathematical margin beneath historical 0.97 paint cutoff', async () => {
+  const start = ORIGINAL.indexOf('export function blobWobble(');
+  const end = ORIGINAL.indexOf('const WOB_MAX', start);
+  assert.ok(start >= 0 && end > start, 'native deterministic wobble function');
+  const source = ORIGINAL.slice(start, end).replace('export function', 'function');
+  const wob = new Function(source + '\nreturn blobWobble;')();
+  // Derived bound: 1 - (0.12+0.08+0.05+0.03+0.018) = 0.702,
+  // while both cos^even terms are nonnegative.
+  assert.ok(0.68 / 0.702 < 0.97);
+  let seed = 98531;
+  const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (let i = 0; i < 50000; i++) {
+    const v = wob(rand() * 20 - 10, rand());
+    assert.ok(v > 0.701999, 'no angle/seed violates conservative body bound');
+    assert.ok(0.68 / v < 0.97, 'inner circle always kept by native scorer');
+  }
+  assert.match(FIXED, /if \(d >= r \* 0\.68 && d \/ \(r \* blobWobble/);
+  assert.match(adaptBuildSource('src/world/paint.js', ORIGINAL),
+    /if \(d >= r \* 0\.68 && d \/ \(r \* blobWobble\(Math\.atan2\(py, px\), seed\)\) > 1\)/);
+});

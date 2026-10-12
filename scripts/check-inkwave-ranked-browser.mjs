@@ -32,7 +32,22 @@ async function capture(p,options){
  fs.writeFileSync(path.join(out,label+'.state.json'),JSON.stringify(state,null,2));console.log('ranked capture state',label,JSON.stringify(state));
  const drainMs=await p.evaluate(()=>{const t=performance.now();RG.renderer.getContext().finish();return performance.now()-t;});
  if(drainMs>100)console.log(`GPU queue drained in ${drainMs.toFixed(1)}ms before ${path.basename(options.path)}`);
- try {const image=await p.screenshot({...options,animations:'disabled'});console.log('ranked capture complete',label,Date.now()-started);return image;}catch(error){console.error('ranked capture failed',label,Date.now()-started);throw error;}
+ try {
+  let session=null;
+  try {
+   session=await p.context().newCDPSession(p);
+   const {data}=await session.send('Page.captureScreenshot',{format:options.type||'jpeg',quality:options.quality??60,captureBeyondViewport:false,fromSurface:false});
+   const bytes=Buffer.from(data,'base64');
+   if(bytes.length<4096||bytes[0]!==0xff||bytes[1]!==0xd8||bytes.at(-2)!==0xff||bytes.at(-1)!==0xd9)throw new Error('Ranked screenshot: incomplete JPEG viewport capture');
+   fs.writeFileSync(options.path,bytes);
+   console.log('ranked capture complete via CDP',label,Date.now()-started);
+   return bytes;
+  }catch(error){console.warn('CDP viewport screenshot failed; retrying Playwright:',error.message);}
+  finally{if(session)await session.detach().catch(()=>{});}
+  const image=await p.screenshot({...options,animations:'disabled',timeout:90000});
+  console.log('ranked capture complete via Playwright',label,Date.now()-started);
+  return image;
+ }catch(error){console.error('ranked capture failed',label,Date.now()-started);throw error;}
 }
 try{
  const launchOptions={headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']};

@@ -1,0 +1,204 @@
+{
+  "baselineCommit": "f2c870859d637fccba88031c3786ecec4d95248d",
+  "site": "/mnt/data/inkwave-camera-site",
+  "measuredAt": "2026-10-11T08:54:44.751Z",
+  "build": "b9d23718545f6f7108a5d4cd379f6fe3727932aa36c81116176d7e93561eacfb",
+  "environment": {
+    "node": "v22.16.0",
+    "platform": "linux",
+    "cpu": "AMD EPYC 9V74 80-Core Processor"
+  },
+  "conditions": {
+    "referenceAspect": "16:9",
+    "normalFovDegrees": 55,
+    "controllerFilterRatePerSecond": 60,
+    "note": "CPU-only actual emitted modules; no GPU, physical input hardware, retail execution or end-to-end latency claim."
+  },
+  "measurements": {
+    "scope": [
+      {
+        "id": "charger",
+        "fovDegrees": 54.999999999999986,
+        "zoom": 0,
+        "sourceScope": null
+      },
+      {
+        "id": "splatling",
+        "fovDegrees": 54.999999999999986,
+        "zoom": 0,
+        "sourceScope": null
+      },
+      {
+        "id": "s3-charger-longscope",
+        "fovDegrees": 20.000000000000007,
+        "zoom": 43.74999999999997,
+        "sourceScope": {
+          "CameraFovy": 20
+        }
+      },
+      {
+        "id": "s3-charger-normalscope",
+        "fovDegrees": 43.799999999999976,
+        "zoom": 14.00000000000001,
+        "sourceScope": {}
+      }
+    ],
+    "boom": [
+      {
+        "hardMeters": 2,
+        "boomMeters": 2,
+        "penetrationMeters": 0
+      },
+      {
+        "hardMeters": 0.1,
+        "boomMeters": 0.1,
+        "penetrationMeters": 0
+      },
+      {
+        "hardMeters": 0,
+        "boomMeters": 0,
+        "penetrationMeters": 0
+      }
+    ],
+    "sameTickAim": {
+      "requestedYawDegrees": 90,
+      "actualYawDegrees": 89.99999999999999,
+      "errorDegrees": 0
+    },
+    "input": [
+      {
+        "hz": 30,
+        "yawRadians": -3.540000000000002,
+        "yawDegrees": -202.82705947631152
+      },
+      {
+        "hz": 60,
+        "yawRadians": -3.540000000000002,
+        "yawDegrees": -202.82705947631152
+      },
+      {
+        "hz": 120,
+        "yawRadians": -3.5399999999999903,
+        "yawDegrees": -202.82705947631086
+      }
+    ],
+    "inputSpreadDegrees": 6.536993168992922e-13,
+    "renderCadence": [
+      {
+        "hz": 30,
+        "fixedTicks": 60,
+        "maxAimAngularErrorDegrees": 8.537736462515939e-7
+      },
+      {
+        "hz": 60,
+        "fixedTicks": 60,
+        "maxAimAngularErrorDegrees": 8.537736462515939e-7
+      },
+      {
+        "hz": 120,
+        "fixedTicks": 60,
+        "maxAimAngularErrorDegrees": 8.537736462515939e-7
+      }
+    ],
+    "closeAim": {
+      "muzzleMeters": [
+        0.3,
+        1.05,
+        0.3
+      ],
+      "targetMeters": [
+        0,
+        1.05,
+        1
+      ],
+      "direction": [
+        -0.3939192985791677,
+        0,
+        0.9191450300180579
+      ],
+      "angularErrorDegrees": 0
+    },
+    "projection": [
+      {
+        "aspect": 1.7777777777777777,
+        "maxProjectionElementError": 0
+      },
+      {
+        "aspect": 1.3333333333333333,
+        "maxProjectionElementError": 0
+      },
+      {
+        "aspect": 2.3333333333333335,
+        "maxProjectionElementError": 0
+      },
+      {
+        "aspect": 0.5625,
+        "maxProjectionElementError": 0
+      }
+    ],
+    "cameraCpu": {
+      "unit": "ms/update",
+      "warmup": 1000,
+      "groups": 25,
+      "updatesPerGroup": 400,
+      "median": 0.1389910950000001,
+      "p95": 0.14231172999999983,
+      "min": 0.1357071400000001,
+      "max": 0.1464739399999999,
+      "groupMeans": [
+        0.1357071400000001,
+        0.1360474025000002,
+        0.13659460499999965,
+        0.13709595999999977,
+        0.13763364749999993,
+        0.13787065249999955,
+        0.13802911749999963,
+        0.13804441999999967,
+        0.13809414000000003,
+        0.13841635249999967,
+        0.13866222499999992,
+        0.13870669249999992,
+        0.1389910950000001,
+        0.1392168349999997,
+        0.13940857499999992,
+        0.13983779749999997,
+        0.1398511424999998,
+        0.13998895000000006,
+        0.14006216250000023,
+        0.14073132250000014,
+        0.14092248499999982,
+        0.140975215,
+        0.14143325749999974,
+        0.14231172999999983,
+        0.1464739399999999
+      ],
+      "note": "Node CPU-only; full camera update, 25-box all-candidates fixture. Not device frame rate or end-to-end input latency."
+    },
+    "cameraAndAimCpu": {
+      "unit": "ms/update",
+      "warmup": 500,
+      "groups": 15,
+      "updatesPerGroup": 200,
+      "median": 0.28281422999999906,
+      "p95": 0.29651016000000024,
+      "groupMeans": [
+        0.27656981000000086,
+        0.2767621500000018,
+        0.2778227500000003,
+        0.27801003499999977,
+        0.2801926249999997,
+        0.28118512499999954,
+        0.2819322999999986,
+        0.28281422999999906,
+        0.2835102299999994,
+        0.2841594149999992,
+        0.2841661750000003,
+        0.2844051850000005,
+        0.2846373349999999,
+        0.2859438599999999,
+        0.29651016000000024
+      ],
+      "note": "Same 25-box CPU fixture; camera update plus a same-tick changed aim direction. No GPU or transport."
+    }
+  }
+}
