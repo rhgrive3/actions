@@ -294,10 +294,6 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
 
   if (action === 'throw') {
     brain._rankedThrowCd = Math.max(0, finite(brain._rankedThrowCd) - dt);
-    if (clamThrow?.reachable && brain._rankedThrowCd <= 0) {
-      it.throw = true;
-      brain._rankedThrowCd = 0.9;
-    }
   } else brain._rankedThrowCd = 0;
 
   // Rainmaker fire charges while held and fires only on release. Cycle the
@@ -327,6 +323,18 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
   brain._bombAim = false;
   brain._releaseBomb = false;
   brain._tail(dt, move, wantYaw, wantPitch, aimDist, move.lengthSq() > 0.01);
+  // Preserve the native aim spring: a throw must not leave the hand until its
+  // actual smoothed ray is lined up with the rule-owned ballistic target.
+  // Otherwise the cooldown starts on a miss even though the bot was turning.
+  if (action === 'throw' && clamThrow?.reachable && brain._rankedThrowCd <= 0) {
+    const actualYaw = Number.isFinite(brain.aimYaw) ? brain.aimYaw : wantYaw;
+    const actualPitch = Number.isFinite(brain.aimPitch) ? brain.aimPitch : wantPitch;
+    const yawError = Math.atan2(Math.sin(wantYaw - actualYaw), Math.cos(wantYaw - actualYaw));
+    if (Math.abs(yawError) <= 0.05 && Math.abs(wantPitch - actualPitch) <= 0.05) {
+      it.throw = true;
+      brain._rankedThrowCd = 0.9;
+    }
+  }
   // Ranked objectives use a fixed six-unit eye ray in BotBrain's generic tail,
   // which can stop short of a Rainmaker shield that is farther away. Preserve
   // the native aim spring, but extend its smoothed ray to the actual target

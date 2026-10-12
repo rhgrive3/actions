@@ -1,3 +1,4 @@
+import { adaptInkVolumes } from './ink-volume-adapter.mjs';
 import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
 import { adaptMuralAtlas } from './mural-atlas-adapter.mjs';
 import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
@@ -66,6 +67,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptFrameOrder } from './frame-order-adapter.mjs';
 import { adaptRangeFramePacing } from './range-frame-pacing-adapter.mjs';
 import { adaptPaintHotpath } from './paint-hotpath-adapter.mjs';
+import { adaptCollisionHotpath } from './collision-hotpath-adapter.mjs';
 import { adaptRuntimeFrameScratch } from './runtime-frame-scratch-adapter.mjs';
 import { adaptReflSkip } from './refl-skip-adapter.mjs';
 import { adaptFinishTape } from './finish-tape-adapter.mjs';
@@ -73,6 +75,8 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
+  'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
   'menu-navigation-timer-adapter.mjs',
   'mural-atlas-adapter.mjs',
@@ -115,6 +119,7 @@ const IDENTITY_FILES = [
   'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
   'paint-hotpath-adapter.mjs',
+  'collision-hotpath-adapter.mjs',
   'runtime-frame-scratch-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
 ];
@@ -135,10 +140,11 @@ export function adaptQualitySource(rel, code) {
   code = adaptIssue484(rel, code);
   const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
   const paced = adaptRangeFramePacing(rel, framed);
-  const painted = adaptPaintHotpath(rel, paced, replaceOnce);
+  const broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
+  const painted = adaptPaintHotpath(rel, broadphased, replaceOnce);
   const lazy = adaptComposerTarget(rel, painted, replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
-  return adaptRuntimeFrameScratch(rel, navigated, replaceOnce);
+  return adaptInkVolumes(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
