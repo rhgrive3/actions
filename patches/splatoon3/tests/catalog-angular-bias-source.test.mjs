@@ -3,7 +3,7 @@
 // distribution is not presented as a recovered Nintendo PRNG.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { catalogAngularLaunch } from '../runtime/main-weapon-catalog.mjs';
+import { catalogAngularLaunch, advanceCatalogJumpClock } from '../runtime/main-weapon-catalog.mjs';
 import { biasQuantile } from '../runtime/weapon-accuracy.mjs';
 import { ShooterAccuracy } from '../runtime/shooter-accuracy.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
@@ -88,6 +88,33 @@ test('11.3.0 added Shooters and Dualies honor every explicitly extracted median 
     for(let j=0;j<120;j++)accuracy.shot(true,null);
     near(accuracy.stand,expected,'sourced main weapon bias cap: '+source);
   }
+});
+
+test('catalog actual jumps use pinned 25F hold and 70F landing recovery, ledge falls do not',()=>{
+  const a=actor(true),s={accuracy:new ShooterAccuracy(),jumpAge:null,jumpSerial:0};
+  a.s3JumpSerial=0;a.grounded=false;
+  assert.equal(advanceCatalogJumpClock(s,a,'shooter',1/60),null,'falling off ledge never starts jump clock');
+  a.s3JumpSerial=1;
+  assert.equal(advanceCatalogJumpClock(s,a,'shooter',1/60),0,'admitted jump starts at 0F');
+  for(let i=0;i<25;i++)advanceCatalogJumpClock(s,a,'shooter',1/60);
+  near(s.jumpAge*60,25,'source start boundary 25F');
+  near(s.accuracy.chance(false,s.jumpAge),.4,'jump median held through 25F');
+  a.grounded=true;
+  for(let i=0;i<22;i++)advanceCatalogJumpClock(s,a,'shooter',1/60);
+  const mid=s.accuracy.chance(true,s.jumpAge);
+  assert.ok(mid>.01&&mid<.4,'landing during recovery must not abruptly snap to ground bias');
+  for(let i=0;i<23;i++)advanceCatalogJumpClock(s,a,'shooter',1/60);
+  assert.equal(s.jumpAge,null,'on-ground clock clears after sourced 70F');
+  near(s.accuracy.chance(true,s.jumpAge),.01,'grounded endpoint');
+});
+
+test('catalog Dualies end the airborne jump window without entering a false zero-bias mode',()=>{
+  const a=actor(false),s={accuracy:new ShooterAccuracy(),jumpSerial:0,jumpAge:null};
+  a.s3JumpSerial=1;
+  advanceCatalogJumpClock(s,a,'dualies',1/60);
+  for(let i=0;i<70;i++)advanceCatalogJumpClock(s,a,'dualies',1/60);
+  assert.equal(s.jumpAge,null,'70F is the end even before landing');
+  near(s.accuracy.chance(false,s.jumpAge),.4,'normal airborne median restored');
 });
 
 test('catalog unsupported shot families retain existing provisional fallback until source is verified',()=>{
