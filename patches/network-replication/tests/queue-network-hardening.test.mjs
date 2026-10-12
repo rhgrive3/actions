@@ -104,7 +104,10 @@ test('ghost projectile birth rejects oversized life and catch-up work is bounded
   peer.tr = normal[0] + 100; peer.lastTs = peer.tr; peer.sim = (ghost._netBornTick || 0) + 10000;
   f.projectiles.update(1 / 60);
   assert.ok(ghost._netSteps <= 30, `ghost catch-up exceeded per-update cap: ${ghost._netSteps}`);
-  assert.ok(f.projectiles.list.includes(ghost), 'bounded catch-up incorrectly retired a normal projectile in one update');
+  // A real shooter may expire or collide within 30 simulated frames. Bounded
+  // catch-up must not turn it immortal or demand survival past its native life.
+  assert.ok(ghost._netSteps > 0 && ghost._netSteps <= ghost._netMaxSteps,
+    'bounded catch-up exceeded the finite projectile lifetime budget');
 
   f.projectiles.list.length = 0;
   const malformed = normal.slice();

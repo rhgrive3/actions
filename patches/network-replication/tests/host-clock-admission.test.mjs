@@ -54,12 +54,14 @@ function receive(f, ts, c, from = 'p2', x = 1) {
 
 test('#1178 old clock sidecar destructuring throws after committing replay watermark and position', async () => {
   const f = await rig({negative:true}); receive(f,1000,undefined);
-  assert.throws(() => receive(f,2000,{},'p2',40), /iterable/);
-  assert.equal(f.nm.peers.get('p2').lastTs,2000);
+  // Keep the counterfactual on a plausible sender clock; otherwise the newer
+  // independent forward-clock guard rejects it before host sidecar parsing.
+  assert.throws(() => receive(f,1000.1,{},'p2',40), /iterable/);
+  assert.equal(f.nm.peers.get('p2').lastTs,1000.1);
   assert.equal(f.actor.net.buf.at(-1).x,40);
-  receive(f,1000.1,undefined,'p2',7);
+  receive(f,1000.05,undefined,'p2',7);
   assert.notEqual(f.actor.net.buf.at(-1).x,7);
-  receive(f,2001,['playing',null]);
+  receive(f,1000.2,['playing',null]);
   assert.equal(f.nm.match.time,50,'JSON null coerces to zero in the old clock correction');
 });
 

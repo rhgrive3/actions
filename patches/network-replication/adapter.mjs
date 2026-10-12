@@ -541,13 +541,18 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       // #1200/#1265/#1266/#1267: event identity is admitted only on an accepted owner clock.\n      if (!Array.isArray(e) || !validSnapshotTimestamp(e[0]) || !validSnapshotTimestamp(d.ts) || e[0] > d.ts) continue;
       e._netPeer = from;
       if (d.r === 2) {
-        if (!ownerSimulationTickAccepted || !Number.isSafeInteger(d.u) || d.u < 0) continue;
+        const hasOwnerTick = ownerSimulationTickAccepted && Number.isSafeInteger(d.u) && d.u >= 0;
+        // Older R2 paint envelopes can omit d.u; validate the event tick against
+        // the established sender timeline without granting non-paint event authority.
+        const legacyPaintWithoutOwnerTick = d.u === undefined && e[1] === 's'
+          && validOwnerSimulationTick(e[e.length-2], d.ts, p.physicsPoints);
+        if (!hasOwnerTick && !legacyPaintWithoutOwnerTick) continue;
         const seq = e[e.length-1];
         const sequenceBaseline = Math.max(p._lastEventSeq || 0, p._lastPaintSeq || 0, this._paintClockState.applied.get(from) || 0);
         if (!validEventSequence(seq, sequenceBaseline)) continue;
         e._netSeq = seq;
         const tick = e[e.length-2];
-        if (!Number.isSafeInteger(tick) || tick < 0 || tick > d.u) continue;
+        if (!Number.isSafeInteger(tick) || tick < 0 || (hasOwnerTick && tick > d.u)) continue;
         e._netTick = tick;
       }
       // Receiver-created proof only: an event cannot supply its own authority.
