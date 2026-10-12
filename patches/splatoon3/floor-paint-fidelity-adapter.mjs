@@ -19,10 +19,30 @@ export function adaptFloorPaintFidelity(rel, code, replaceOnce) {
       'if (d / (r * Math.min(1, blobWobble(Math.atan2(py, px), seed))) > 1) continue;',
       'floor: CPU owns precisely capped body interior');
 
+    // Strictly one deterministic transform before source paint touches the GPU
+    // or CPU. Both peers receive the original recorded splat and transform it
+    // after packet admission, retaining the existing wire and source radius.
+    code = replaceOnce(code,
+      '    if (kind === K_ROLL) sAmt = 0;      // the direction orients the band; no smear\n    const reachK = REACH[kind];',
+      `    if (kind === K_ROLL) sAmt = 0;      // the direction orients the band; no smear
+    const contactFace = Number.isInteger(opts.face) ? this.level.faces[opts.face] : null;
+    if (!cosmetic && st && sAmt > 0 && (kind === K_SHOT || kind === K_LINE) &&
+        (!contactFace || contactFace.n.y >= 0.45)) {
+      const axisLength = Math.hypot(st.x, st.z);
+      if (axisLength > 1e-6) {
+        const result = directFloorFootprint(radius, sAmt, this._s3Footprint || (this._s3Footprint = {}));
+        const shiftPoint = this._s3FootprintCenter || (this._s3FootprintCenter = new THREE.Vector3());
+        center = shiftPoint.set(center.x + st.x / axisLength * result.centreShift,
+          center.y, center.z + st.z / axisLength * result.centreShift);
+        radius = result.radius; sAmt = result.stretchAmt;
+      }
+    }
+    const reachK = REACH[kind];`,
+      'floor: source-span-preserving narrower impact and shared CPU/GPU raster');
     // #1165 GPU/CPU roller core parity and live-turf-only scoring are already
     // composed by issue-batch-1171-adapter and score-hud-adapter.
     // This layer changes only the body footprint on those established owners.
-    return code;
+    return "import { directFloorFootprint } from '../../patches/splatoon3/runtime/ink-paint-calibration.mjs';\n" + code;
   }
 
   if (rel === 'src/game/weapons.js') {
@@ -58,6 +78,17 @@ export function adaptFloorPaintFidelity(rel, code, replaceOnce) {
       '    }',
       'floor: swept drum stamps without changing roll-speed/ink cost');
     return code;
+  }
+  if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code,
+      "  addTurf(area) {\n    if (area <= 0) return;\n    this.stats.turf += area;\n    emit('turf', { actor: this, area });\n    if (!this.specialActive) {\n      const was = this.specialReady();\n      this.special = Math.min(this.specialCost(), this.special + area);",
+      "  addTurf(area) {\n    const points = inkPaintPoints(area);\n    if (points <= 0) return;\n    this.stats.turf += points;\n    emit('turf', { actor: this, area: points });\n    if (!this.specialActive) {\n      const was = this.specialReady();\n      this.special = Math.min(this.specialCost(), this.special + points);",
+      'floor: convert physical ink coverage to Turf and special gauge points');
+    code = replaceOnce(code,
+      "  addTurfNoSpecial(area) { if (area > 0) { this.stats.turf += area; emit('turf', { actor: this, area }); } }",
+      "  addTurfNoSpecial(area) { const points = inkPaintPoints(area); if (points > 0) { this.stats.turf += points; emit('turf', { actor: this, area: points }); } }",
+      'floor: no-special paint keeps scores without charging its own gauge');
+    return "import { inkPaintPoints } from '../../patches/splatoon3/runtime/ink-paint-calibration.mjs';\n" + code;
   }
   return code;
 }
