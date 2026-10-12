@@ -35,6 +35,20 @@ Separate controls for negative-base squares, reversed smoothstep edges, disablin
 
 Local guarded-source/composition tests: 3 passed, zero skipped. Production build succeeds with contentHash `ec70b09f4912be9cd9eed68789a3de5bcf70ea1e94cb149c831c54edf476b060`. Normal artifacts change only `src/game/character-mats.js` and the standard index/service-worker revision metadata. The transformer is absent from artifacts; service worker remains 70,515 bytes. Full tracked-input packaging receipt requires a real Git checkout and is enforced in Actions (the local materialized source has no `.git`).
 
-Exact-head Actions additionally runs the actual product shader across three cameras and both source banks. A real index/bootstrap/main match test keeps native actors, AI, collisions, paint, materials, lighting and post processing. It freezes a single scene and compares original/fixed/fixed/original cloth blocks, retaining complete output, node state, draw counts and raw submit/readback-completion timing. Original output is allowed to show its diagnosed instability; the fixed shader must be exact across same-phase frozen frames. These results are pending until their artifact is reviewed.
+Exact-head Actions additionally runs the actual product shader across three cameras and both source banks. A real index/bootstrap/main match test keeps native actors, AI, collisions, paint, materials, lighting and post processing. It freezes a single scene and compares original/fixed/fixed/original cloth blocks, retaining complete output, node state, draw counts and raw submit/readback-completion timing. Original output is allowed to show its diagnosed instability; the fixed shader must be exact across same-phase frozen frames. The reviewed results are recorded below.
 
 SwiftShader timing is not iPad mini 6 or hardware GPU FPS. Real-device acceptance remains unmeasured. The Splatoon 3 gameplay reference remains Ver.11.3.0 as recorded in the existing behavior comparison; this corrects local shader evaluation and makes no new claim about Nintendo animation, movement, weapons or simulation equivalence.
+
+## Reviewed production result
+
+Production verification head `5bbb5105aba3aaf369f1a7647d1b96eeee559958`, [run 38293539614](https://github.com/rhgrive3/actions/actions/runs/38293539614), artifact `11767739158`, ZIP SHA-256 `833fb91383bc27e4c4ab51d857e2ae1235e4c1c25beac189a04e7d71aab2df52`: all checks passed, including 3 guarded-source tests and 9 tracked-input packaging tests.
+
+Both product rig banks are stable across all three cameras and both composer phases. Both real game stages reached playing state after 330 real frames with eight living actors, eight active AI brains (including the autopilot local actor), native source motion, collision, paint and rendering intact. Frozen ABBA comparisons preserve all recorded node state, draw counts and triangles. All 16 corrected frames per stage are pixel-identical, independently verified from nonempty opaque PNGs. Original counterfactual frames retain the diagnosed small pixel changes.
+
+Tidewater has 111 draws / 582,234 triangles; Scorch has 193 / 650,188. Original-to-corrected representative output differences are 45 and 9 pixels respectively, confined to actor clothing. Independent image review found no missing background, paint, equipment or clothing details.
+
+Completed-render medians in original/fixed/fixed/original order (eight frames per batch, including synchronous full RGBA readback):
+- Tidewater: 1292.60 / 1295.00 / 1287.95 / 1299.60 ms.
+- Scorch: 2948.05 / 2930.85 / 2952.05 / 2927.65 ms.
+
+These single SwiftShader ABBA measurements do not show a large whole-frame increase, but do not establish zero added fragment cost or hardware performance. The timer-query extension was advertised; every query result was unavailable at collection, so no GPU-only timing is claimed. Real iPad mini 6 acceptance remains unmeasured. The subsequent evidence-only documentation commit does not change any product input or browser harness.
