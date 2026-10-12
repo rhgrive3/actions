@@ -1,0 +1,42 @@
+name: INKWAVE source response one-read diagnostic
+on:
+  push:
+    branches: [diagnose/native-source-response-1312]
+permissions:
+  contents: read
+jobs:
+  response:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read the original public tree URL once without authentication or redirects
+        run: |
+          set -euo pipefail
+          mkdir -p source-response
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const url='https://api.github.com/repos/kirakira-dev/KiTrix/git/trees/c5e8f6e5aa14b97a87210ad5df1c91c05b1ab451?recursive=1';
+          const evidence={url,started:new Date().toISOString(),requests:1,authentication:'none',redirect:'manual',note:'Diagnostic only; a 200 does not explain the earlier 403 or validate rendering.'};
+          try {
+            const response=await fetch(url,{redirect:'manual',credentials:'omit',signal:AbortSignal.timeout(30000)});
+            evidence.status=response.status;evidence.headers={};
+            for(const key of ['date','content-type','x-ratelimit-limit','x-ratelimit-remaining','x-ratelimit-reset','x-ratelimit-resource','retry-after','x-github-request-id','location'])if(response.headers.has(key))evidence.headers[key]=response.headers.get(key);
+            fs.writeFileSync('source-response/body.txt',await response.text());
+            evidence.finished=new Date().toISOString();
+            if(response.status!==200)process.exitCode=2;
+          } catch(error) {evidence.error=String(error);process.exitCode=3;}
+          finally {fs.writeFileSync('source-response/response.json',JSON.stringify(evidence,null,2));console.log(JSON.stringify(evidence));}
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-source-response-${{ github.sha }}
+          path: source-response
+          if-no-files-found: error
+          retention-days: 14
