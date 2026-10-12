@@ -50,7 +50,7 @@ jobs:
           INKWAVE_BUILT_SITE=.dynamo-after-site node --experimental-vm-modules --test patches/splatoon3/tests/dynamo-handle-center.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
       - name: Same-camera valid IBL, native Environment, real Actors and native post stack
         run: |
-          node scripts/render-dynamo-handle.mjs --site .dynamo-before-site --out .dynamo-evidence/before
+          node scripts/render-dynamo-handle.mjs --site .dynamo-before-site --out .dynamo-evidence/before --baseline
           node scripts/render-dynamo-handle.mjs --site .dynamo-after-site --out .dynamo-evidence/after
       - uses: actions/upload-artifact@v4
         if: always()

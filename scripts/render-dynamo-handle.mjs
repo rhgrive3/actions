@@ -28,7 +28,7 @@ try{
  const hemi=new THREE.HemisphereLight(0xffffff,0x60718d,2.1),key=new THREE.DirectionalLight(0xffffff,3);key.position.set(-3,4,2);scene.add(hemi,key);
  const d=W.getWeaponDef('s3-roller-heavy'),g=new THREE.Group();g.add(new THREE.Mesh(d.body,M.getPlasticMaterial()),new THREE.Mesh(d.ink,M.getInkMaterial(G.teamColors[0])));const drum=new THREE.Group();drum.position.copy(d.drumAt);drum.add(new THREE.Mesh(d.drum,M.getInkMaterial(G.teamColors[0])),new THREE.Mesh(d.drumCaps,M.getPlasticMaterial()));g.add(drum);scene.add(g);
  const images={},metrics={};const snap=(label,cam)=>{renderer.render(scene,cam);images[label]=renderer.domElement.toDataURL('image/png').split(',')[1];};
- const cameras={};for(const[name,pos,up]of[['front',[0,4,.6],[0,0,1]],['back',[0,-4,.6],[0,0,1]],['side',[-4,0,.6],[0,0,1]],['axle',[0,0,4],[0,1,0]],['oblique',[-3,2.8,3],[0,1,0]]]){const cam=new THREE.OrthographicCamera(-1.3,1.3,1.3,-1.3,.01,20);cam.position.set(...pos);cam.up.set(...up);cam.lookAt(0,0,.6);cameras[name]=cam;}
+ const cameras={};for(const[name,pos,up]of[['front',[0,4,.6],[0,0,1]],['back',[0,-4,.6],[0,0,1]],['side',[-4,0,.6],[0,0,1]],['axle',[0,0,4],[0,1,0]],['oblique',[-3,2.8,3],[0,1,0]]]){const cam=new THREE.OrthographicCamera(-1.5,1.5,1.5,-1.5,.01,20);cam.position.set(...pos);cam.up.set(...up);cam.lookAt(0,0,.6);cameras[name]=cam;}
  for(const [k,c]of Object.entries(cameras))snap('studio.'+k,c);
  metrics.studio={input:[1024,512],cubeSize:256,pmrem:[envRT.width,envRT.height],toneMapping:'Neutral',exposure:1};
  const nativeScene=new THREE.Scene(),env=new Environment(renderer,nativeScene);scene.remove(hemi,key);scene.add(env.sun,env.hemi);scene.environment=env.envMap;scene.environmentIntensity=nativeScene.environmentIntensity;metrics.native={theme:env.theme,pmrem:[env.envMap.image.width,env.envMap.image.height],intensity:scene.environmentIntensity,sun:env.sun.intensity,hemisphere:env.hemi.intensity};
@@ -42,7 +42,13 @@ try{
  }
  }
  metrics.held={maxGrip,maxSpin,maxFold};
- camera.position.set(-2.5,1.5,3.3);camera.lookAt(0,.8,.15);const post=new Renderer(document.body,{quality:'high'});post.scene=scene;post.camera=camera;post.setScene(scene,camera);G.env=env;post.render();images['held.production-post']=post.renderer.domElement.toDataURL('image/png').split(',')[1];metrics.post={quality:post.q,gtao:!!post.gtao,bloom:!!post.bloom,grade:!!post.grade,scope:'Native production post stack in isolated Actor scene, not a complete live stage'};post._disposeComposer();post.renderer.dispose();
+ camera.position.set(-2.5,1.5,3.3);camera.lookAt(0,.8,.15);const post=new Renderer(document.body,{quality:'high'});
+ // PMREM render targets belong to their creating WebGL renderer/context.
+ // Rebuild the native environment on the production renderer; never sample
+ // the offscreen studio renderer's GPU-only cubeUV target in this context.
+ const postEnvScene=new THREE.Scene(),postEnv=new Environment(post.renderer,postEnvScene);
+ scene.remove(env.sun,env.hemi);scene.add(postEnv.sun,postEnv.hemi);scene.environment=postEnv.envMap;scene.environmentIntensity=postEnvScene.environmentIntensity;
+ post.scene=scene;post.camera=camera;post.setScene(scene,camera);G.env=postEnv;post.render();images['held.production-post']=post.renderer.domElement.toDataURL('image/png').split(',')[1];metrics.post={quality:post.q,sameRendererEnvironment:true,pmrem:[postEnv.envMap.image.width,postEnv.envMap.image.height],environmentExposure:postEnv.grade?.uExposure,gtao:!!post.gtao,bloom:!!post.bloom,grade:!!post.grade,scope:'Native production post stack in isolated Actor scene, not a complete live stage'};postEnv.dispose();post._disposeComposer();post.renderer.dispose();
  d.drum.computeBoundingBox();metrics.geometry={drumCenter:d.drumAt.toArray(),drumWidth:d.drum.boundingBox.max.x-d.drum.boundingBox.min.x,handR:d.handR.pos.toArray(),handL:d.handL.pos.toArray(),physicalGripR:d.gripR.pos.toArray(),physicalGripL:d.gripL.pos.toArray(),muzzle:d.muzzle.toArray(),fold:d.fold.pivot.toArray()};ch.dispose();env.dispose();envRT.dispose();sky.dispose();pmrem.dispose();renderer.dispose();return{images,metrics};
  },{prefix});
  for(const[k,b64]of Object.entries(result.images))fs.writeFileSync(path.join(out,k+'.png'),Buffer.from(b64,'base64'));delete result.images;
