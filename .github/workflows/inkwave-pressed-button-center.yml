@@ -1,0 +1,107 @@
+name: INKWAVE pressed-button center regression
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/inkwave-pressed-button-center.yml
+      - reports/touch-center/instrument-held-input.mjs
+      - patches/touch-layout/adapter.mjs
+      - patches/reliability/tests/pressed-button-center.test.mjs
+permissions:
+  contents: read
+concurrency:
+  group: pressed-button-center-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  timeline:
+    if: github.head_ref == 'fix/touch-pressed-button-center'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      BASE_SHA: 5ed08c6376696dd67391afed7c36463106959de8
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
+      DIAG: /mnt/workspace/pressed-button-center
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          path: .baseline
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: .candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned build and browser tools
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium webkit
+          sudo mkdir -p "$DIAG"
+          sudo chown -R "$USER" "$DIAG"
+      - name: Build exact inputs and add only passive verifier observations
+        run: |
+          test "$(git -C .baseline rev-parse HEAD)" = "$BASE_SHA"
+          test "$(git -C .candidate rev-parse HEAD)" = "$CANDIDATE_SHA"
+          cmp .baseline/scripts/check-inkwave-reliability.mjs .candidate/scripts/check-inkwave-reliability.mjs
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .baseline/scripts/build-inkwave.mjs .baseline/inkwave-public "$DIAG/baseline-site"
+          node .candidate/scripts/build-inkwave.mjs .candidate/inkwave-public "$DIAG/candidate-site"
+          node reports/touch-center/instrument-held-input.mjs .baseline/scripts/check-inkwave-reliability.mjs .baseline/scripts/check-held-timeline.mjs | tee "$DIAG/baseline-instrumentation.json"
+          node reports/touch-center/instrument-held-input.mjs .candidate/scripts/check-inkwave-reliability.mjs .candidate/scripts/check-held-timeline.mjs | tee "$DIAG/candidate-instrumentation.json"
+          cmp .baseline/scripts/check-held-timeline.mjs .candidate/scripts/check-held-timeline.mjs
+          node --check .baseline/scripts/check-held-timeline.mjs
+          printf '%s\n%s\n' "$BASE_SHA" "$CANDIDATE_SHA" > "$DIAG/source-shas.txt"
+      - name: Source and production-built layout ownership contracts
+        run: |
+          node --test patches/reliability/tests/pressed-button-center.test.mjs
+          INKWAVE_BUILT_SITE="$DIAG/candidate-site" node --test patches/reliability/tests/pressed-button-center.test.mjs
+          node scripts/check-inkwave-touch-layout.mjs --site "$DIAG/candidate-site" --evidence-dir "$DIAG/evidence/native-layout" --profile-dir "$DIAG/profiles/native-layout"
+      - name: Predeclared ABBA with fresh browser profiles and original assertions
+        run: |
+          set +e
+          for spec in baseline:A1 candidate:B1 candidate:B2 baseline:A2; do
+            source=${spec%:*}; label=${spec#*:}
+            mkdir -p "$DIAG/evidence/$label"
+            date --iso-8601=ns > "$DIAG/evidence/$label/start.txt"
+            node ".$source/scripts/check-held-timeline.mjs" --site "$DIAG/$source-site" --evidence-dir "$DIAG/evidence/$label" --profile-dir "$DIAG/profiles/$label" > "$DIAG/evidence/$label/console.log" 2>&1
+            status=$?
+            printf '%s\n' "$status" > "$DIAG/evidence/$label/exit-code.txt"
+            cat "$DIAG/evidence/$label/console.log"
+            date --iso-8601=ns > "$DIAG/evidence/$label/end.txt"
+          done
+          # A diagnostic failure is preserved as evidence, never converted to a passing product gate.
+      - name: Require reproduced baseline defect and repaired candidate without changing old assertions
+        run: |
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';
+          for(const label of ['A1','B1','B2','A2']){
+            const report=JSON.parse(fs.readFileSync(path.join(process.env.DIAG,'evidence',label,'reliability-browser-result.json')));
+            assert.equal(report.status,'passed',label+' unchanged original action checks');assert.equal(report.cases.length,2);
+            for(const row of report.cases){
+              const [visible,logical]=row.animatedRepress;assert.equal(visible.before,1);assert.equal(logical.before,1);assert.equal(logical.after,2);
+              assert.equal(visible.after,label.startsWith('A')?1:2,label+' '+row.engine+' natural pressed reinput');
+              assert.equal(visible.routed.kind,label.startsWith('A')?'look':'btn');
+              if(label.startsWith('B'))for(const event of row.heldActionTimeline){
+                const e=event.detail;if(!event.label.startsWith('pointer-')||!e?.box||!e.rect)continue;
+                assert(Math.hypot(e.rect.x+e.rect.width/2-e.box.x,e.rect.y+e.rect.height/2-e.box.y)<.1,'animated visible and logical centers aligned');
+              }
+            }
+          }
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pressed-button-center-${{ github.event.pull_request.head.sha }}
+          path: |
+            /mnt/workspace/pressed-button-center/evidence
+            /mnt/workspace/pressed-button-center/*-instrumentation.json
+            /mnt/workspace/pressed-button-center/source-shas.txt
+          if-no-files-found: warn
+          retention-days: 14
