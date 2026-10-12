@@ -13,9 +13,20 @@ test('Ballpoint glass is independent, cached, transparent and retained at both L
  assert.equal(shell.geometry,d.glass);assert.equal(other.geometry,d.glass);assert.equal(shell.material,other.material);assert.equal(shell.material,f.Kit.getWeaponGlassMaterial());
  const m=shell.material;assert.equal(m.transparent,true);assert.equal(m.depthWrite,false);assert.equal(m.depthTest,true);assert.equal(m.side,f.THREE.FrontSide);assert.equal(m.transmission,0);assert(m.opacity>0&&m.opacity<.4);assert.equal(shell.castShadow,false);
  const shader={fragmentShader:'#include <opaque_fragment>'};m.onBeforeCompile(shader);assert(shader.fragmentShader.includes('iwShellEdge'));assert.equal(m.customProgramCacheKey(),'iw-weapon-glass-fresnel-1');
+ // Shared geometry cannot stay suppressed after GTAO or leak into another Actor.
+ const range=d.glass.drawRange.count,rangeStart=d.glass.drawRange.start,opaque={overrideMaterial:new f.THREE.MeshNormalMaterial()},beauty={overrideMaterial:null};
+ for(const mesh of [shell,other,shell]){
+  mesh.onBeforeRender(null,opaque,null,d.glass);assert.equal(d.glass.drawRange.count,0);
+  mesh.onAfterRender(null,opaque,null,d.glass);assert.equal(d.glass.drawRange.count,range);
+  mesh.onBeforeRender(null,beauty,null,d.glass);assert.equal(d.glass.drawRange.count,range);
+  mesh.onAfterRender(null,beauty,null,d.glass);assert.equal(d.glass.drawRange.count,range);
+ }
+ // A beauty frame recovers even if an interrupted override omitted afterRender.
+ shell.onBeforeRender(null,opaque,null,d.glass);other.onBeforeRender(null,beauty,null,d.glass);assert.equal(d.glass.drawRange.count,range);
+ opaque.overrideMaterial.dispose();let geometryDisposed=0;d.glass.addEventListener('dispose',()=>geometryDisposed++);
  let disposed=0;m.addEventListener('dispose',()=>disposed++);
  for(const tier of ['game','far','hero','far','game']){a.character.setLod(tier);for(let n=0;n<8;n++)a._finishFrame(1/60);assert(shell.visible);assert.equal(shell.geometry,d.glass);assert.equal(shell.material,m);assert.equal(a.character.weapon.off.getObjectByName('weapon-glass'),shell);}
- b.character.dispose();a.character.setColor('#1144ee');assert.equal(shell.material,m);assert.equal(disposed,0);a.character.dispose();assert.equal(disposed,0,'shared material survives actor disposal');
+ b.character.dispose();a.character.setColor('#1144ee');assert.equal(shell.material,m);assert.equal(disposed,0);a.character.dispose();assert.equal(disposed,0,'shared material survives actor disposal');assert.equal(geometryDisposed,0,'shared geometry survives actor disposal');assert.equal(d.glass.drawRange.count,range);assert.equal(d.glass.drawRange.start,rangeStart);
 });
 
 test('existing Dapple and Glooga hands keep forward muzzles and bilateral appendages',async()=>{

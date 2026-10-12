@@ -94,10 +94,11 @@ jobs:
           done
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
-          const all={};for(const name of['before-A','after-B','after-B2','before-A2']){const d=JSON.parse(fs.readFileSync('.model-crowd/'+name+'/gallery.json'));if(d.errors.length)throw Error(d.errors.join('\n'));all[name]=d.rows[0].crowd;}
+          const all={};for(const name of['before-A','after-B','after-B2','before-A2']){const d=JSON.parse(fs.readFileSync('.model-crowd/'+name+'/gallery.json'));if(d.errors.length)throw Error(d.errors.join('\n'));all[name]={...d.rows[0].crowd,production:d.rows[0].productionCrowd};}
           for(const tier of['game','far'])for(const name of['after-B','after-B2']){
             if(all[name][tier].actors!==8||new Set(all[name][tier].ids).size!==4)throw Error('Incomplete mixed-model crowd');
             if(all[name][tier].drawCalls>all['before-A'][tier].drawCalls+2)throw Error('More than one transparent draw per Ballpoint '+tier);
+            if(all[name].production[tier].drawCalls>all['before-A'].production[tier].drawCalls+2)throw Error('Production stack adds an extra glass pass '+tier);
           }
           fs.writeFileSync('.model-crowd/comparison.json',JSON.stringify(all,null,2));console.log('WEAPON_SHARED_ABBA '+JSON.stringify(all));
           JS

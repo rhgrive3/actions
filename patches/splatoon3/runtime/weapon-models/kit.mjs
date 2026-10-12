@@ -269,10 +269,23 @@ export function getWeaponGlassMaterial() {
   return weaponGlassMaterial;
 }
 
+// GTAO's normal/depth override ignores alpha. Follow the native transparent
+// effects' draw-range gate, then restore even after an override-only frame.
+// Definitions are shared between Actors, so never leave their range suppressed.
+const glassBeautyCounts = new WeakMap();
+function glassBeforeRender(_renderer, scene, _camera, geometry) {
+  geometry.drawRange.count = scene.overrideMaterial ? 0 : glassBeautyCounts.get(geometry);
+}
+function glassAfterRender(_renderer, _scene, _camera, geometry) {
+  geometry.drawRange.count = glassBeautyCounts.get(geometry);
+}
+
 export function attachWeaponGlass(d, off) {
   if (!d.glass) return null;
   const glass = new THREE.Mesh(d.glass, getWeaponGlassMaterial());
   glass.name = 'weapon-glass';
+  if (!glassBeautyCounts.has(d.glass)) glassBeautyCounts.set(d.glass, d.glass.drawRange.count);
+  glass.onBeforeRender = glassBeforeRender; glass.onAfterRender = glassAfterRender;
   // Keep normal transparent distance sorting. It must not cast an opaque shadow
   // or write depth in front of its own ink/barrels or other actors.
   glass.castShadow = false; glass.receiveShadow = false;

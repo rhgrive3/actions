@@ -32,7 +32,7 @@ await new Promise(r => server.listen(0, '127.0.0.1', r));
 let browser; const errors = [];
 try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const page = await browser.newPage({ viewport: { width: size * 2, height: size * 2 } });
+  const page = await browser.newPage({ viewport: { width: size, height: size } });
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('http://127.0.0.1:' + server.address().port + '/review');
   await page.evaluate(async ({ prefix, size }) => {
@@ -68,7 +68,7 @@ try {
   const list = ids.length ? ids : all;
   const rows = [];
   for (const id of list) {
-    const row = await page.evaluate(async ({ id, held, crowd }) => {
+    const row = await page.evaluate(async ({ id, held, crowd, prefix }) => {
       const { THREE, api, W, Mt, R, Kit, WEAPONS, renderer, scene, snap, G } = window.__gallery;
       const { Actor, Character } = api;
       const t0 = performance.now(), d = W.getWeaponDef(id), buildMs = performance.now() - t0, color = G.teamColors[0];
@@ -148,7 +148,7 @@ try {
           // Read actual production-shader pixels through the authored sleeve.
           const probe = new THREE.Scene(); probe.environment = scene.environment;
           probe.add(new THREE.HemisphereLight(0xffffff, 0x60718d, 2.1));
-          const copy = new THREE.Mesh(shell.geometry, shell.material); probe.add(copy);
+          const copy = Kit.attachWeaponGlass(d, probe);
           const camera = new THREE.OrthographicCamera(-.065, .065, .065, -.065, .01, 10);
           camera.position.set(-1, .07, .20); camera.lookAt(0, .07, .20);
           const target = new THREE.WebGLRenderTarget(16, 16), samples = [], edgeSamples = [];
@@ -161,6 +161,32 @@ try {
           if (samples[1][0] - samples[0][0] < 80) throw Error('Sleeve is not visibly transparent');
           if (samples[0][0] < 2 || samples[1][0] > 250) throw Error('Sleeve did not render at the centre');
           if (Kit.getWeaponGlassMaterial().customProgramCacheKey() === 'iw-weapon-glass-fresnel-1' && edgeSamples[1][0]-edgeSamples[0][0] >= samples[1][0]-samples[0][0]-10) throw Error('Glass silhouette does not gain reflection');
+          // Exercise the real production GTAO implementation, including two
+          // instances borrowing one definition geometry and override-only frames.
+          const { GTAOPass } = await import('three/addons/postprocessing/GTAOPass.js');
+          const second = Kit.attachWeaponGlass(d, probe); second.position.z = -.025;
+          const backdropGeometry=new THREE.PlaneGeometry(.5,.5),backdropMaterial=new THREE.MeshBasicMaterial({color:'#708198'});
+          const backdrop=new THREE.Mesh(backdropGeometry,backdropMaterial);backdrop.position.set(.12,.07,.20);backdrop.rotation.y=-Math.PI/2;probe.add(backdrop);
+          const aoTarget=new THREE.WebGLRenderTarget(64,64),ao=new GTAOPass(probe,camera,64,64),beautyCount=d.glass.drawRange.count;
+          const compare=(a,b)=>{let changed=0;for(let i=0;i<a.length;i+=4)if(a[i]!==b[i]||a[i+1]!==b[i+1]||a[i+2]!==b[i+2])changed++;return changed;};
+          const read=pass=>{
+            if(pass==='beauty'){renderer.setRenderTarget(aoTarget);renderer.render(probe,camera);}
+            else{ao.output=GTAOPass.OUTPUT[pass];ao.render(renderer,aoTarget,aoTarget);}
+            const pixels=new Uint8Array(64*64*4);renderer.readRenderTargetPixels(aoTarget,0,0,64,64,pixels);
+            if(d.glass.drawRange.count!==beautyCount)throw Error('Shared glass draw range leaked after '+pass);
+            return pixels;
+          };
+          const pair=pass=>{copy.visible=second.visible=false;const hidden=read(pass);copy.visible=second.visible=true;return compare(hidden,read(pass));};
+          const safe={};for(const pass of ['Normal','Depth','AO','beauty'])safe[pass]=pair(pass);
+          if(safe.Normal||safe.Depth||safe.AO||!safe.beauty)throw Error('Transparent shell pollutes real GTAO or disappeared: '+JSON.stringify(safe));
+          const callbacks=[copy,second].map(m=>m.onBeforeRender),unsafe={};
+          try{for(const mesh of [copy,second])mesh.onBeforeRender=()=>{d.glass.drawRange.count=beautyCount;};for(const pass of ['Normal','Depth','AO'])unsafe[pass]=pair(pass);}
+          finally{[copy,second].forEach((mesh,i)=>mesh.onBeforeRender=callbacks[i]);d.glass.drawRange.count=beautyCount;}
+          if(!unsafe.Normal||!unsafe.Depth)throw Error('GTAO counterexample did not detect unguarded shell');
+          res.glass.gtao={safeChangedPixels:safe,unguardedChangedPixels:unsafe,sharedGeometry:copy.geometry===second.geometry,rangeRestored:d.glass.drawRange.count===beautyCount};
+          read('Normal');if(!pair('beauty'))throw Error('Glass failed to recover after override-only frame');
+          renderer.setRenderTarget(null);ao.dispose();aoTarget.dispose();backdropGeometry.dispose();backdropMaterial.dispose();
+
         }
       }
       // Fixed-pose render submission including a GPU completion boundary. Same-runner A/B only.
@@ -188,14 +214,56 @@ try {
           res.crowd[tier]={actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
           res.images['crowd-'+tier]=snap();
         }
+        // Same eight Actors and camera through the real game's full post stack.
+        const { Renderer } = await import(prefix + 'src/core/renderer.js');
+        const container=document.createElement('div');document.body.append(container);
+        const full=new Renderer(container,{quality:'high',shadows:true,bloom:true});full.renderer.debug.checkShaderErrors=true;full.setScene(scene,camera);
+        if(!full.gtao)throw Error('Crowd production GTAO is not active');res.productionCrowd={};
+        const fullGL=full.renderer.getContext();
+        for(const tier of ['game','far']){
+          for(const o of actors){o.character.setLod(tier);for(let j=0;j<8;j++)o._finishFrame(1/60);}
+          const complete=[];
+          for(let j=0;j<36;j++){full.renderer.info.reset();const t=performance.now();full.render();fullGL.finish();if(j>=12)complete.push(performance.now()-t);}
+          res.productionCrowd[tier]={actors:actors.length,width:full.renderer.domElement.width,height:full.renderer.domElement.height,quality:'high',ao:!!full.gtao,bloom:!!full.bloom?.enabled,renderCompleteMs:quant(complete),drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles};
+          res.images['crowd-production-'+tier]=full.renderer.domElement.toDataURL('image/png').split(',')[1];
+        }
+        full._disposeComposer();full.renderer.dispose();container.remove();
         for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}
         G.actors=[a];
+      }
+      if (!crowd && id === 's3-spinner-downpour') {
+        // Render the actual emitted game post stack, not a studio substitute:
+        // native HDR/MSAA, GTAO, bloom, colour grade and output on real Actor.
+        const { Renderer } = await import(prefix + 'src/core/renderer.js');
+        const container=document.createElement('div');document.body.append(container);
+        const gameRenderer=new Renderer(container,{quality:'high',shadows:true,bloom:true});
+        gameRenderer.renderer.debug.checkShaderErrors=true;
+        const camera=new THREE.PerspectiveCamera(32,innerWidth/innerHeight,.05,30);
+        gameRenderer.setScene(scene,camera);
+        if(!gameRenderer.gtao)throw Error('Production high-quality GTAO is not active');
+        const shell=ch.weapon.off.getObjectByName('weapon-glass'),pipelineRows=[];
+        for(const tier of ['game','far'])for(const background of ['#101321','#eef3f8'])for(const inkColor of ['#ff8825','#484ce8']){
+          ch.setLod(tier);ch.setColor(new THREE.Color(inkColor));scene.background=new THREE.Color(background);
+          for(let frame=0;frame<8;frame++)a._finishFrame(1/60);
+          const distance=tier==='far'?8:2.6;
+          camera.position.copy(a.pos).add(new THREE.Vector3(-distance,1,.35));camera.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.15)));
+          for(let k=0;k<2;k++)gameRenderer.render();
+          const originalRange=d.glass?.drawRange.count;
+          if(shell)shell.visible=false;gameRenderer.renderer.info.reset();gameRenderer.render();const hiddenCalls=gameRenderer.renderer.info.render.calls;
+          if(shell)shell.visible=true;gameRenderer.renderer.info.reset();gameRenderer.render();const calls=gameRenderer.renderer.info.render.calls;
+          if(shell&&(calls!==hiddenCalls+1||d.glass.drawRange.count!==originalRange))throw Error('Production post stack added extra glass passes or leaked range');
+          res.images['production-'+tier+'-'+background.slice(1)+'-'+inkColor.slice(1)]=gameRenderer.renderer.domElement.toDataURL('image/png').split(',')[1];
+          pipelineRows.push({tier,background,inkColor,distance,drawCalls:calls,withoutGlassDrawCalls:hiddenCalls,glassVisible:!!shell?.visible,rangeRestored:!shell||d.glass.drawRange.count===originalRange});
+        }
+        res.productionPipeline={quality:'high',ao:!!gameRenderer.gtao,bloom:!!gameRenderer.bloom?.enabled,rows:pipelineRows};
+        gameRenderer._disposeComposer();gameRenderer.renderer.dispose();container.remove();
+        scene.background=null;ch.setColor(color);ch.setLod('hero');
       }
       a.weaponRunner.reset(); scene.remove(ch.root); ch.dispose();
       Object.assign(res.images, shots); res.maxGrip = +maxGrip.toFixed(4); res.nonFinite = nonFinite; res.firingFrames = fired;
       res.weaponKind = ch.weaponKind; res.weaponModel = ch.weaponModel;
       return res;
-    }, { id, held, crowd });
+    }, { id, held, crowd, prefix });
     for (const [k, b64] of Object.entries(row.images)) fs.writeFileSync(path.join(out, `${id}.${k}.png`), Buffer.from(b64, 'base64'));
     delete row.images; rows.push(row);
     console.log(JSON.stringify(row));
