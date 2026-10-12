@@ -4041,3 +4041,5 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - **設定なしの最終描画**: Chromium/SwiftShaderとWebKit/Mesa touchで通常起動から実ゲーム9操作・各45方向が成功、黒いRGB/透明欠損0。sourceとexact emitted new+packaging 27件すべて成功・skip0。既存起動snapshot 5,658,810byte、core revision 10,276,777byte、worker 69,493byteで従来上限を維持。追加素材transport/cacheは16.875MiB、GPU配置推定は37.69MiB。全起動105,208/27,793msは既存world/shader/softwareGPUを含むローカルサーバーの値であり、実機ネットワークや素材単独の比較値ではない。`reports/ink-volume/default-measurements.json`と元素材/通常起動の比較画像を参照。
 
 - **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。
+
+2026-10-12継続: PR #1285をmainへマージし、Pages公開版で原典5択とユノハナの8人起動を確認した。続きの `codex/stage5-render-performance` は元三角形/塗り属性/CPU authorityを保持し、画面外インクのindexだけを除外する。地形15方向の画素差0、全原典Node23/関連27が成功。中央比較視点のインク三角形は約39〜53%減ったが、ソフトウェアGL時間のばらつきがあり実機FPS改善とは判定しない。詳細とシミュレーション/画素比較の条件は [描画領域の記録](inkwave-native-stage-render-2026-10-12.md)。本家11.3.0のscene/mask/スポーン/描画と実モバイルは未確認を維持する。
