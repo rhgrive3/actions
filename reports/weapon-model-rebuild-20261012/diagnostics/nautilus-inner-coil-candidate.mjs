@@ -189,6 +189,9 @@ function nautilus(d) {
     const u=cu.getX(i),[axial,radial]=cross[Math.round(cu.getY(i)*8)%8],a=Math.PI*.75+Math.PI*2*3.125*u,R=.056-.014*u+radial;
     cp.setXYZ(i,.049+.038*u+axial,.097+Math.cos(a)*R,-.072+Math.sin(a)*R);
   }
+  // The rectangular cross-section runs opposite the native torus parameter winding.
+  // Flip only triangle orientation: vertex positions, cross-section and dimensions stay identical.
+  const ci=coil.index.array;for(let i=0;i<ci.length;i+=3){const t=ci[i+1];ci[i+1]=ci[i+2];ci[i+2]=t;}
   coil.computeVertexNormals();body.add(coil,C.silver,M.metal);
   // Chamfered, visibly thick tank. Long side / coil OD is about .88 rather than v1's .63.
   // The profile is angular; a pale planar face and depth should remain legible at both inner obliques.
