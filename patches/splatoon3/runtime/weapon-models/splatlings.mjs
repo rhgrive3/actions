@@ -166,9 +166,11 @@ function nautilus(d) {
       p.setY(i,sy+y*(1-.15*cut));p.setZ(i,sz+z*(1-.15*cut));
     }p.needsUpdate=true;g.computeVertexNormals();return g;
   };
-  // Stamped annular shoulders on both faces; the rolled lip wraps the front as well as the rear.
+  // The black-disc side remains smooth. The opposite silver-hub face is shallowly convex,
+  // with two stamped shoulders visible in the side and rear-oblique reference views.
+  // The rolled lip wraps both faces, rather than sitting behind the dark shell on the outer side.
   // Maximum shell radius, axial envelope and the existing hub/neck stay fixed.
-  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.064,-.037],[.068,-.025],[.075,-.032],[.088,-.021],[.095,-.012],[.101,-.019],[.12,.006],[.132,.016],[.13,.022],[.12,.025],[.102,.006],[.098,.007],[.093,.017],[.074,.019],[.067,.006],[.054,-.004],[0,-.019]],0,sy,sz,36)),C.dark,M.satin);
+  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.11,.014],[.103,.022],[.096,.028],[.09,.031],[.085,.025],[.078,.03],[.073,.036],[.067,.039],[.061,.029],[.054,.033],[.046,.036],[0,.036]],0,sy,sz,36)),C.dark,M.satin);
   body.add(shellShape(xlathe([[.123,.003],[.127,.005],[.133,.012],[.133,.023],[.128,.026],[.123,.026],[.123,.003]],0,sy,sz,36)),C.gold,M.satin);
   // Raised concentric back-cap and short projecting coupling are visible on the opposite side.
   body.add(xlathe([[0,-.053],[.038,-.053],[.055,-.048],[.06,-.042],[.06,-.036],[0,-.036]],0,sy,sz,28),C.black,M.satin);
