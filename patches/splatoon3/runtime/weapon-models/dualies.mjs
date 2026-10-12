@@ -159,7 +159,7 @@ function darkTetra(d) {
     foot.add(zlathe([[0,.010],[.023,.010],[.023,.015],[.020,.017],[0,.017]],0,0,0,20),C.black,M.rubber);
     col.add(zlathe([[0,.017],[.012,.017],[.013,.019],[0,.020]],0,0,0,18));
     foot.add(ring(.008,.0012,0,0,.021,'z',4,16),C.grey,M.satin);
-    body.merge(foot.transform(g=>g.scale(1,.88,1).rotateX(-.95).translate(x,y,z)));ink.merge(col.transform(g=>g.scale(1,.88,1).rotateX(-.95).translate(x,y,z)));
+    body.merge(foot.transform(g=>g.scale(1,.88,1).rotateX(-.62).translate(x,y,z)));ink.merge(col.transform(g=>g.scale(1,.88,1).rotateX(-.62).translate(x,y,z)));
   }
   return finish(d,body,ink,trig,[0,.065,.147]);
 }
