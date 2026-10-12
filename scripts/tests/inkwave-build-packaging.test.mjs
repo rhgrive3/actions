@@ -149,7 +149,7 @@ test('lightmap compaction preserves every pixel and non-image PNG chunk', () => 
 
 test('ESM minification preserves the emitted module export interface', {skip:!site}, () => {
   const identity=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
-  const roots={upstream:'inkwave-public',patch:'patches/splatoon3','touch-layout':'patches/touch-layout',reliability:'patches/reliability','local-quality':'patches/local-quality','network-replication':'patches/network-replication','practice-range':'patches/practice-range','loading-cache':'patches/loading-cache'};
+  const roots={upstream:'inkwave-public',patch:'patches/splatoon3','touch-layout':'patches/touch-layout',reliability:'patches/reliability','local-quality':'patches/local-quality','network-replication':'patches/network-replication','practice-range':'patches/practice-range','native-stages':'patches/native-stages','loading-cache':'patches/loading-cache'};
   const exports=source=>parse(source,{ecmaVersion:'latest',sourceType:'module'}).body.flatMap(n=>{
     if(n.type==='ExportDefaultDeclaration')return['default'];
     if(n.type==='ExportAllDeclaration')return['*:'+n.source.value];
@@ -183,8 +183,7 @@ test('emitted identity binds every input to one canonical tracked path including
   const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3',
     'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability',
     'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication',
-    'practice-range': 'patches/practice-range', 'loading-cache': 'patches/loading-cache',
-    'native-stages': 'patches/native-stages', 'build-script': 'scripts' };
+    'practice-range': 'patches/practice-range', 'native-stages': 'patches/native-stages', 'loading-cache': 'patches/loading-cache', 'build-script': 'scripts' };
   const tracked = new Map(execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], { cwd: fileURLToPath(root), encoding: 'utf8' })
     .split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
   const mapped = [];

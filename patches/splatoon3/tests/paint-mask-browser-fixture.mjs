@@ -9,6 +9,7 @@ import { paintShapeSeed, paintShapeHash } from '/ASSET/patches/splatoon3/runtime
 const check = (condition, message) => { if (!condition) throw Error(message); };
 export function createPaintMaskProbe() {
   const paint = Object.create(PaintSystem.prototype);
+  // This probe models a complete rectangular legacy atlas, not a masked native stage.
   Object.assign(paint, { level: { native: false }, size: 1024, usedHeight: 1024, grid: new Uint8Array(128 * 128), dead: new Uint8Array(128 * 128),
     counts: [0, 0], version: 0, clock: 0, growing: [],
     renderer: { capabilities: { getMaxAnisotropy: () => 1 }, getRenderTarget: () => null,

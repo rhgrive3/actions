@@ -216,9 +216,10 @@ test('#1039 fully composed desktop stylesheet exposes only the host Turf assignm
   assert.match(built,/\.iw-lobby\.is-host-teams \.iw-lob__roster \{ display: grid;/);
   assert.match(built,/@media \(max-width: 640px\) \{ \.iw-lobby\.is-host-teams \.iw-lob__roster \{ grid-template-columns: minmax\(0, 1fr\);/);
   assert.match(menuSource,/el\.classList\.toggle\('is-host-teams', host && !bossMode\(\)\)/);
-  // The native-stage selector shares this scroll/focus region but must not
-  // erase the previously verified host roster hit target.
-  assert.match(menuSource,/next\.closest\('\.iw-rows, \.iw-lob__roster, \.iw-ss__list'\)/);
+  const scrollSelector = menuSource.match(/next\.closest\('([^']+)'\)/)?.[1];
+  assert.ok(scrollSelector, 'composed directional focus has a scroll container');
+  assert.deepEqual(scrollSelector.split(',').map(s => s.trim()), ['.iw-rows', '.iw-lob__roster', '.iw-ss__list'],
+    'host roster remains scrollable alongside the native-stage list');
   assert.match(menuSource,/bar\.insertBefore\(confirmTeamsBtn, readyBtn\)/);
   assert.doesNotMatch(menuSource,/side, touchRoster, confirmTeamsBtn, bar/,'confirmation belongs to the reachable control dock');
 });

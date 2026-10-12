@@ -46,7 +46,7 @@ export class ShooterAccuracy {
   }
   shot(grounded, jumpAgeSeconds) {
     const p = this.chance(grounded, jumpAgeSeconds);
-    this.stand = Math.min(OUTER_CHANCE_CAP, this.stand + this.step);
+    this.stand = Math.min(this.maximum, this.stand + this.step);
     this.sinceShotFrames = 0;
     return p;
   }
