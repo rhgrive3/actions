@@ -2,18 +2,22 @@ name: Verify lossless crowd rig updates
 on:
   pull_request:
     paths:
-      - 'patches/local-quality/retarget-branch-update-adapter.mjs'
-      - 'patches/local-quality/tests/retarget-branch-update.test.mjs'
-      - 'scripts/check-inkwave-crowd-rig.mjs'
-      - 'scripts/compare-inkwave-crowd-rig.mjs'
-      - '.github/workflows/inkwave-crowd-rig.yml'
+      - patches/local-quality/retarget-branch-update-adapter.mjs
+      - patches/local-quality/cloth-derivative-adapter.mjs
+      - patches/local-quality/adapter.mjs
+      - patches/local-quality/tests/retarget-branch-update.test.mjs
+      - patches/local-quality/tests/cloth-derivative.test.mjs
+      - scripts/lib/inkwave-build-only-modules.mjs
+      - scripts/check-inkwave-crowd-rig.mjs
+      - scripts/compare-inkwave-crowd-rig.mjs
+      - .github/workflows/inkwave-crowd-rig.yml
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,7 +26,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          ref: c98f4007ee2f57584009f8b32871f43c350498cf
           path: baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -38,8 +42,8 @@ jobs:
         run: |
           set -euo pipefail
           cd candidate
-          node --experimental-vm-modules --test patches/local-quality/tests/retarget-branch-update.test.mjs | tee ../rig-tests.log
-      - name: Build baseline and candidate
+          node --experimental-vm-modules --test patches/local-quality/tests/retarget-branch-update.test.mjs patches/local-quality/tests/cloth-derivative.test.mjs | tee ../rig-tests.log
+      - name: Build common-cloth baseline and four-edit candidate
         shell: bash
         run: |
           set -euo pipefail
@@ -48,21 +52,28 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public ../site-a
           cd ../candidate
           node scripts/build-inkwave.mjs inkwave-public ../site-b
-          node -e "const a=require('../site-a/inkwave-build.json');if(a.contentHash!=='5f967f1dc85094ccbca443250caa97207e81286a86a70a73768087580781ff95')throw Error('Baseline mismatch')"
-      - name: Native source-motion and completed-output ABBA
+          node -e "if(require('../site-a/inkwave-build.json').contentHash!=='ec70b09f4912be9cd9eed68789a3de5bcf70ea1e94cb149c831c54edf476b060')throw Error('Baseline mismatch');if(require('../site-b/inkwave-build.json').contentHash!=='dd71cbc3799b373647b52bfd55d6e693a9c21bd4283c7085f2de9dee69d3ea10')throw Error('Candidate mismatch')"
+          INKWAVE_BUILT_SITE="$PWD/../site-b" node --test scripts/tests/inkwave-build-packaging.test.mjs
+      - name: Both source-bank scenes and completed-output ABBA
+        timeout-minutes: 27
         shell: bash
         run: |
-          set -euo pipefail
+          set +e
           export CHROMIUM_PATH="$(node -e "console.log(require('./candidate/node_modules/playwright').chromium.executablePath())")"
-          node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-a" "$PWD/evidence/A1"
-          node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-b" "$PWD/evidence/B1"
-          node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-b" "$PWD/evidence/B2"
-          node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-a" "$PWD/evidence/A2"
-          node candidate/scripts/compare-inkwave-crowd-rig.mjs evidence/{A1,B1,B2,A2}/result.json | tee evidence/comparison.json
+          status=0
+          for bank in default mixed; do
+            if [[ "$bank" == mixed ]]; then export INKWAVE_RIG_MIXED=1; else export INKWAVE_RIG_MIXED=0; fi
+            node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-a" "$PWD/evidence/$bank/A1" || status=1
+            node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-b" "$PWD/evidence/$bank/B1" || status=1
+            node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-b" "$PWD/evidence/$bank/B2" || status=1
+            node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-a" "$PWD/evidence/$bank/A2" || status=1
+            node candidate/scripts/compare-inkwave-crowd-rig.mjs evidence/$bank/{A1,B1,B2,A2}/result.json > evidence/$bank/comparison.json || status=1
+          done
+          exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lossless-crowd-rig-evidence
+          name: common-cloth-lossless-crowd-rig-evidence
           path: |
             evidence
             rig-tests.log

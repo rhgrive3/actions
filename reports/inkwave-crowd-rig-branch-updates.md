@@ -1,35 +1,45 @@
 # Crowded character transform work, October 12, 2026
 
-## Scope
+## Current composition and dependency
 
-Responds to severe bot-crowd slowdown on an iPad mini 6, with the same problem potentially affecting other devices. Based only on main `ed3a046574208471c5db5309e2469d263cacfdfd`. No merge or deployment is implied.
+Responds to severe bot-crowd slowdown on iPad mini 6 and other devices. The final candidate uses main `545c6b3fcfc0d25c43678e9b44b1af4e26400fec` plus the separately reviewed cloth correctness prerequisite [PR1319](https://github.com/rhgrive3/actions/pull/1319). Merge that prerequisite first; no deployment or merge is implied by this report.
 
-This is a common-path, same-pose optimization, not an iPad-only quality downgrade. Four build-time edits in the native source-motion HumanRetarget replace repeated full-character recursive matrix updates with the descendants of the joint actually edited. Ancestor updates (`true`) remain enabled. The full initial pose and pelvis updates remain unchanged. No clip, sampling rate, solver iteration, tolerance, arm/grip, skinning, mesh, AI, collision, weapon event, shadow, DPR, quality setting or render pass is changed.
+The four rig edits are byte-identical to the original PR1306 transformer (SHA-256 `eedc72675c1e8a50e157ae727b7a83e0d96d050105724d22722a040a6b8cad39`). Common-cloth baseline is `c98f4007ee2f57584009f8b32871f43c350498cf`, contentHash `ec70b09f4912be9cd9eed68789a3de5bcf70ea1e94cb149c831c54edf476b060`. Candidate contentHash is `dd71cbc3799b373647b52bfd55d6e693a9c21bd4283c7085f2de9dee69d3ea10`. The only changed normal product module between those builds is `src/game/motion/retarget.js`, plus ordinary index/service-worker revision metadata. Both build-only transformers are excluded from shipped assets.
 
-For CCD rotation, the edited joint subtree is refreshed. For ankle rotation/translation, the ankle subtree is refreshed. For the analytic leg solve, the upper-leg subtree is refreshed. Read access following each edit concerns that subtree; unchanged siblings were refreshed by the initial full-pose update. The entire root graph, not only the feet, is compared in the regression test.
+## Product change
 
-## Existing device behavior audited
+Four guarded build-time substitutions in native HumanRetarget replace repeated full-character recursive matrix updates with the descendants of the joint actually edited. Ancestor updates (`true`) remain enabled. Full initial pose and pelvis updates remain unchanged. No clip, sampling rate, solver iteration, tolerance, arm/grip, skinning, mesh, AI, collision, weapon event, shadow, DPR, quality setting or render pass changes.
 
-Main already recognizes iPadOS's Macintosh UA with `maxTouchPoints > 1`. Touch high quality already disables GTAO, bloom and MSAA, caps iOS DPR at 1.2 and shadows at 2048, and has dynamic resolution (except ultra). These are existing settings; this patch does not modify them. Lowering resolution cannot remove CPU work in repeated rig traversal.
+CCD rotation refreshes the edited joint subtree. Ankle rotation/translation refreshes the ankle subtree. The analytic leg solve refreshes the upper-leg subtree. Subsequent reads concern that subtree; unchanged siblings were refreshed by the initial full-pose update. Regression checks compare the entire root graph, not only feet, before render-driven/forced scene updates.
 
-PR #1298 is a separate unadopted geometry compaction experiment and is not integrated. PR #1301 changes Character/source-controller and presentation motion; it does not edit HumanRetarget or these new adapters. Integration still needs final-composition testing after either PR changes. Unaccepted high-detail weapon models are excluded.
+Main already recognizes iPadOS Macintosh UA with `maxTouchPoints > 1`. Touch high quality already disables GTAO/bloom/MSAA, caps iOS DPR at 1.2 and shadows at 2048, and has dynamic resolution except ultra. This change does not alter these policies or manual settings. Resolution reduction cannot eliminate redundant CPU rig traversal.
 
-## Local verification
+## Exact native tests
 
-Pure baseline build input identities match all 689 official main inputs; after materializing source text for esbuild's path-sensitive family bundler, the pure baseline build content hash is exactly `5f967f1dc85094ccbca443250caa97207e81286a86a70a73768087580781ff95`.
+Combined guarded/native tests: 5 passed, zero skipped. Actual Character and Player00/Player01 source banks at 30/60/120 Hz cover 576 paired frames, 72 forced foot-clearance CCD corrections with 36 per side, moving/rotating/nonuniformly scaled ancestors, root movement, small form scale, shooter/dualies/roller/charger switches and hero/game/far LOD switches. Complete node local/world transforms, foot diagnostics and muzzle coordinates compare exactly.
 
-Native Character plus actual Player00 and Player01 source banks, 30/60/120 Hz, 576 frame pairs, and 72 explicit foot-clearance CCD corrections (36 left and 36 right, separately asserted): complete node local/world transforms, foot diagnostics and muzzle coordinates compare exactly. The fixture includes a moving/rotating/nonuniformly scaled ancestor, root motion, small form scale, shooter/dualies/roller/charger switches and hero/game/far LOD switches. Transform calls fall from 591,765 to 320,925 (45.77%) in this contact-heavy fixture. This is an operation count, not frame-rate improvement or a general whole-game speedup. The terrain query is a deterministic slope fixture, not the production collision engine.
+Transform calls fall from 591,765 to 320,925 (45.77%) in this contact-heavy Node fixture. It uses a deterministic slope, not production collision; operation counts are not whole-game FPS.
 
-Local Chromium cannot launch because its singleton socket is forbidden (`EPERM`). This is not a passing browser test. Dedicated GitHub Actions builds the exact main and candidate and runs native source-motion lifecycle and completed-output ABBA, retaining all poses, raw CPU timing, full-frame pixel hashes, screenshots, draw counts and readback timing. Dedicated browser evidence currently fails exact output parity; see the completed-run findings below.
+## Completed common-cloth browser comparison
 
-## Browser fixture limits
+Compared head `3bd204eba143940844b2fc3e1eb0c18c6b74ef11`: [run38297829047](https://github.com/rhgrive3/actions/actions/runs/38297829047), artifact `11769122954`, ZIP SHA-256 `df8e8234a68fc8e2ec0a96e694080d5631f54f02b90a4e3af177e096594f7cf0`. All steps succeeded, including source tests, fixed baseline/candidate input hashes, tracked-input packaging and both ABBA comparisons. Final PR publication changes only the trigger/report relative to that compared source tree; product and browser harness bytes remain unchanged.
 
-Eight actual Actors and production source-motion/rendering modules under native day lighting in the same WebGL context. Includes walking, turning, jump/landing, swim return, spawn visual trigger, weapon and LOD changes at 30/60/120 Hz. Deliberate direct visual state inputs isolate the rig; this is not a populated match AI/collision benchmark. CPU updates and render submission/readback are reported separately. Synchronous final framebuffer readPixels is used to establish output completion. SwiftShader wall times are not iPad or hardware GPU FPS. Real iPad mini 6 acceptance remains unmeasured.
+Default Player00 and mixed Player00/Player01 × two-team-color scenes each run original/optimized/optimized/original. Each run uses eight real Actors, source-motion lifecycle at 30/60/120 Hz, native day Environment and native touch Renderer in the same WebGL context. The gate requires exact equality of all recorded actor/node/foot/muzzle snapshots (776 actor snapshots per run), character uniforms, geometry buffers, source-bank identity, every final frame hash, three cameras × both composer phases, draws, triangles and quality. Every run must have zero browser errors and stable same-phase frames. All requirements passed without pixel tolerance.
 
-The comparison requires identical recorded actor/node/foot/muzzle state, identical final RGBA pixels, identical draws/triangles/quality, fewer matrix updates, no browser errors and all four ABBA runs. Timing variance is retained rather than converted into a guaranteed device speedup.
+Recursive matrix calls per Actor-frame are 396.5 / 266.5 / 266.5 / 396.5, a 32.79% reduction. Native eight-Actor CPU batch medians in ABBA order:
+- Default bank: 51.8 / 48.0 / 47.0 / 53.5 ms.
+- Mixed banks: 51.4 / 46.1 / 46.0 / 53.5 ms.
 
-Candidate product contentHash is `af763730a778` (distinct from the pure-main baseline). The browser candidate checkout pins the PR head SHA. Snapshots are captured before any render-driven/forced scene refresh, so comparison cannot hide stale sibling matrices. Final PNG bytes are captured synchronously before awaiting pixel hashing.
+Raw samples and completed-render submission/readback timings are retained in the artifact. These are isolated native rig measurements on Chromium/SwiftShader, not iPad mini 6 FPS, hardware GPU cost or a populated match AI/collision benchmark. Synchronous final framebuffer readPixels establishes completed output, and PNGs are captured before asynchronous hashing. Real-device acceptance remains unmeasured.
 
-## Completed browser diagnosis (fixed ed3 baseline)
+Independent actual-game profiles from the separate CPU investigation place repeated `updateWorldMatrix` self-time under HumanRetarget, corroborating that this path is active in real matches. They do not measure this candidate's whole-game speedup.
 
-Run 38279519060 at f9ed54b5 failed the unchanged final-pixel gate. Artifact 11761410371 (SHA256 0375bd232cadb164a7b69cd180c153a05e27290a4d5c872420d85f5700edb4a6) ties two same-phase frozen frames to 179 identical GL draws, actual uniforms, texture-binding identities, FBO/depth/blend state and identical bone matrices. Nevertheless 31 final pixels differ, and the first native RenderPass RGBA16F output already differs. Thus the first difference precedes post processing. Texture contents and scene draw localization remain under investigation. No pixel tolerance has been relaxed. The next diagnostic uses a small per-draw readback region after the unchanged primary measurements; its extra synchronization is not a performance measurement.
+## Earlier failed baseline and resolved prerequisite
+
+The original fixed-ed3 baseline (`5f967f1dc850…`) and rig candidate (`af763730a778…`) failed exact output checks despite matching poses. This failed evidence remains valid and is not relabeled as a pass: [run38279519060](https://github.com/rhgrive3/actions/actions/runs/38279519060), artifact11761410371 SHA-256 `0375bd232cadb164a7b69cd180c153a05e27290a4d5c872420d85f5700edb4a6`; [run38280684867](https://github.com/rhgrive3/actions/actions/runs/38280684867), artifact11762645490 SHA-256 `c33c0cbd8d526c4657fd2d02232be835a22854e84271cbe2584c2b632dbe54ea`.
+
+Identical actual GL draw/uniform/texture-binding/FBO/depth/blend state, bone matrices and environment texture contents still produced small cloth pixel drift. Per-draw readback and independent projection localized it to tee/shorts triangles crossing spatial shader branches that contained derivative calculations. PR1319 corrects those two blocks while preserving original output masks, separately verifies actual gameplay, and records its limited fragment-cost evidence. It is applied equally to both sides of the successful final rig comparison. No quality simplification, AI removal or pixel-tolerance relaxation was used.
+
+## Other pending integrations
+
+PR1301 presentation motion and PR1318 source posture/carry changes are not included. PR1318 textual hooks commute with the four substitutions, but combined runtime pose/muzzle verification is still required if integrated later. PR1298 compaction and unaccepted high-detail model branches remain excluded. Only accepted main545 content and the explicit cloth prerequisite are composed here.
