@@ -7,7 +7,7 @@ for(const [id,rate] of [['booyahBomb',1.1],['crabTank',1.3]])test(`Object Shredd
  const f=await setup(),defender=f.make(),attacker=f.make();equip(defender,id);attacker.team=1;attacker.pos.set(0,0,5);f.G.actors=[defender,attacker];
  attacker.s3.loadout[2].main='objectShredder';defender._startSpecial();defender._updateSpecial(1/60);
  const state=defender._s3AllSpecialState,before=state.armorHP,hp=defender.hp;
- defender.damage(100,attacker,'shooter');assert.ok(Math.abs(state.armorHP-(before-100*rate))<1e-9);assert.equal(defender.hp,hp);
+ defender.damage(100,attacker,'shooter');assert.ok(Math.abs(state.armorHP-(before-100*rate*(id==='booyahBomb'?.7:1)))<1e-9);assert.equal(defender.hp,hp);
 });
 
 import {objectShredderEquipped,objectGearRate,receiveObjectGearSnapshot,withObjectHitGear,OBJECT_SHREDDER_FLAG} from '../runtime/object-gear.mjs';
@@ -21,11 +21,11 @@ test('fixed gear identity requires shoes main and accepted owner/life; numbers a
  assert.equal(withObjectHitGear(a,true,()=>objectGearRate(a,'sprinkler')),10);
  assert.throws(()=>withObjectHitGear(a,true,()=>{throw Error('test');}));assert.equal(a.s3.objectHitGear,undefined);
 });
-for(const id of ['booyahBomb','crabTank'])test(`${id}: no gear is identical, damage type is irrelevant, rear/body is not multiplied`,async()=>{
+for(const id of ['booyahBomb','crabTank'])test(`${id}: no gear is identical, source attack rows and gear remain independent, rear/body is not multiplied`,async()=>{
  const f=await setup(),a=f.make(),b=f.make();equip(a,id);b.team=1;b.pos.set(0,0,5);a._startSpecial();a._updateSpecial(1/60);
- const s=a._s3AllSpecialState,start=s.armorHP;a.damage(20,b,'shooter');assert.equal(s.armorHP,start-20);
+ const s=a._s3AllSpecialState,start=s.armorHP;a.damage(20,b,'shooter');assert.equal(s.armorHP,start-20*(id==='booyahBomb'?.7:1));
  b.s3.loadout[2].main='objectShredder';const rate=id==='crabTank'?1.3:1.1;
- a.damage(20,b,'bomb');assert.ok(Math.abs(s.armorHP-(start-20-20*rate))<1e-9);
+ a.damage(20,b,'bomb');assert.ok(Math.abs(s.armorHP-(start-20*(id==='booyahBomb'?.7:1)-20*rate*(id==='booyahBomb'?1.5:1)))<1e-9);
  // Empty armor passes the original amount to the ordinary Actor damage chain.
  s.armorHP=0;a.specialActive.armor=false;a.hp=100;a._damageIFrames=0;
  a.damage(10,b,'shooter');assert.equal(a.hp,90);
@@ -34,7 +34,7 @@ function deploy(f,owner,id){owner.weapon={...owner.weapon,sub:id};const o=f.G.pr
 for(const [id,rate] of [['splashWall',1.5],['beakon',10],['torpedo',1.3],['inkMine',1]])test(`${id} direct object damage is target-specific, once-only and ghost-safe`,async()=>{
  const f=await setup(),a=f.make(),b=f.make();b.team=1;b.s3.loadout[2].main='objectShredder';const o=deploy(f,a,id);
  const p={owner:b,team:1,damage:10,size:.05,prev:new f.THREE.Vector3(0,1,-1),pos:new f.THREE.Vector3(0,1,1)};
- const ghost=f.G.projectiles.kitBarrierCandidate({...p,ghost:true},p.prev,p.pos);assert.ok(ghost);ghost.onHit();assert.equal(o.hp,1000);
+ const ghost=f.G.projectiles.kitBarrierCandidate({...p,ghost:true},p.prev,p.pos);if(id==='inkMine'){assert.equal(ghost,null,'Ink Mine is not a destroyable device');assert.equal(o.hp,1000);return;}assert.ok(ghost);ghost.onHit();assert.equal(o.hp,1000);
  const hit=f.G.projectiles.kitBarrierCandidate(p,p.prev,p.pos);assert.ok(hit);hit.onHit();assert.equal(o.hp,1000-10*rate);hit.onHit();assert.equal(o.hp,1000-10*rate);
 });
 for(const [id,kind,rate] of [['waveBreaker','wave',1.25],['superChump','decoy',2]])test(`${id} object candidate applies fixed rate once and rejects ghosts`,async()=>{
@@ -51,8 +51,8 @@ test('real NetMatch preserves shoes identity through JSON hit, rejects foreign s
  const receiver=new f.NetMatch({myId:'victim',hostId:'attacker',isHost:false,tr:{sendTo(){}}},{id:'object-gear'});receiver.bind({actors:[a,v],state:'playing',time:180});f.G.netm=receiver;
  equip(v,'booyahBomb');v._startSpecial();v._updateSpecial(1/60);v.invuln=0;const before=v._s3AllSpecialState.armorHP;
  a.s3.loadout[2].main='runSpeed';receiver.onMessage('foreign',packet);assert.equal(v._s3AllSpecialState.armorHP,before);
- receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-110))<1e-9);assert.equal(a.s3.objectHitGear,undefined);
- receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-110))<1e-9);
+ receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);assert.equal(a.s3.objectHitGear,undefined);
+ receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);
 });
 
 test('real owner snapshot bit27 is independent from RP and special ready and rejects stale/foreign rows',async()=>{
@@ -123,7 +123,7 @@ for(const [id,rate] of [['splashWall',1.5],['beakon',10],['torpedo',1.3]])test(`
 for(const id of ['booyahBomb','crabTank'])for(const wear of [false,true])test(`${id} armor break boundary retains raw overflow with Object Shredder ${wear}`,async()=>{
  const f=await setup(),v=f.make(),a=f.make();equip(v,id);a.team=1;a.pos.set(0,0,5);a.s3.loadout[2].main=wear?'objectShredder':'runSpeed';v._startSpecial();v._updateSpecial(1/60);v.invuln=0;v.hp=100;
  const state=v._s3AllSpecialState;state.armorHP=50;v.specialActive.armorHP=50;
- const rate=wear?(id==='crabTank'?1.3:1.1):1,rawOverflow=100-50/rate;
+ const rate=(wear?(id==='crabTank'?1.3:1.1):1)*(id==='booyahBomb'?.7:1),rawOverflow=100-50/rate;
  const legacyBodyFactor=v.specialActive.armor===true?.25:1;
  const expectedDamage=Math.floor(rawOverflow*legacyBodyFactor*10+1e-9)/10; // existing final 0.1-HP quantizer
  v.damage(100,a,'shooter');assert.equal(state.armorHP,0);assert.equal(v.hp,100-expectedDamage);

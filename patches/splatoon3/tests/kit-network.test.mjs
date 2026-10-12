@@ -49,6 +49,9 @@ test('real native projectile step absorbs before the actor and ghost absorption 
   const vac = make(1, 'peer-A', false), shooter = make(2, 'peer-B', false, 1);
   vac.pos.set(0, 0, 0); vac.aimDir.set(0, 0, 1);
   vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();
+  // The cone grows at .3334 units per 60 Hz frame; reach full source length
+  // before checking first-contact ordering at z=20.
+  f.tick(vac, 45);
   f.G.actors = [vac, shooter]; f.G.physics.segment = () => ({ hit: false });
   const system = f.G.projectiles; let hits = 0; system.applyHit = () => { hits++; };
   const round = ghost => {
