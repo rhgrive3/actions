@@ -1,0 +1,12 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const source=fs.readFileSync(new URL('./measure-native.txt',import.meta.url),'utf8');
+let current=[90,100,110,255],packed=null,packBound=null,polls=0,deletes=0,deletedBuffers=0,checkpoints=[],failWait=false,errors=[];
+const gl={READ_FRAMEBUFFER:1,READ_FRAMEBUFFER_BINDING:2,DRAW_FRAMEBUFFER_BINDING:3,PIXEL_PACK_BUFFER:4,PIXEL_PACK_BUFFER_BINDING:5,RGBA:6,UNSIGNED_BYTE:7,STREAM_READ:8,SYNC_GPU_COMMANDS_COMPLETE:9,ALREADY_SIGNALED:10,CONDITION_SATISFIED:11,WAIT_FAILED:12,TIMEOUT_EXPIRED:13,NO_ERROR:0,VIEWPORT:14,READ_BUFFER:15,DRAW_BUFFER0:16,drawingBufferWidth:600,drawingBufferHeight:600,
+ createBuffer:()=>({}),bindBuffer:(_k,b)=>{packBound=b;},bufferData(){},deleteBuffer(){deletedBuffers++;},bindFramebuffer(){},readPixels(_x,_y,_w,_h,_f,_t,dst){if(typeof dst==='number'){assert(packBound);packed=[...current];}else dst.set(current);},getBufferSubData(_t,_o,out){assert(packBound);out.set(packed);},getParameter:k=>k===5?packBound:k===14?[0,0,600,600]:k===15||k===16?0:null,getError:()=>0,isContextLost:()=>false,getContextAttributes:()=>({preserveDrawingBuffer:false}),finish(){},flush(){},fenceSync:()=>{polls=0;return{};},clientWaitSync(){if(failWait)return 12;return polls++?10:13;},deleteSync(){deletes++;}};
+const full={renderer:{getRenderTarget:()=>null,info:{programs:[{}],render:{calls:4,triangles:12},reset(){}},domElement:{toDataURL:()=> 'data:image/png;base64,bW9jaw=='}},render(){current=[90,100,110,255];}};
+const fakeTimeout=fn=>setTimeout(()=>{current=[0,0,0,0];fn();},0);
+const make=new Function('fullGL','full','shells','sharedRanges','countFrame','window','setTimeout',source+'; return measureNative;');
+const measure=make(gl,full,[],new Map(),()=>{full.render();return{nonzero:4,zero:0};},{__weaponHostSnapshot:async()=>({}),__weaponSyncCheckpoint:async r=>checkpoints.push(r)},fakeTimeout);
+const result=await measure('game');assert.equal(result.blocks.length,3);assert.equal(deletes,5);assert.equal(deletedBuffers,1);assert.equal(checkpoints.length,30);assert.equal(packBound,null);assert(result.blocks[1].frames.every(r=>r.pixel.join(',')==='90,100,110,255'));
+failWait=true;await assert.rejects(measure('far'),/WAIT_FAILED/);assert.equal(deletes,6);assert.equal(deletedBuffers,2);assert.equal(packBound,null);
+console.log('PBO mock: all 15 reads retain output through async discard, 30 checkpoints; WAIT_FAILED deletes sync and pack, restores binding. Mock only.');

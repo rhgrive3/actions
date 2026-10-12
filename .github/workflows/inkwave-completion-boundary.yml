@@ -44,6 +44,7 @@ jobs:
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
           node .baseline/scripts/build-inkwave.mjs .baseline/inkwave-public .before-site
           node .candidate/scripts/build-inkwave.mjs .candidate/inkwave-public .after-site
+          node reports/weapon-completion/test-completion.mjs
           node reports/weapon-completion/instrument-completion.mjs .candidate/scripts/render-inkwave-weapon-shared-gallery.mjs scripts/check-completion-boundary.mjs
           node --check scripts/check-completion-boundary.mjs
       - name: Observe output readback and fence completion, never a performance acceptance gate

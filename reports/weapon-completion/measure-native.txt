@@ -2,11 +2,17 @@
           // Diagnostic only: same 8 Actors, camera, 600px output and native post stack.
           // Neither gl.finish() nor short submission windows establish completion.
           const blocks=[],pixel=new Uint8Array(4),gl=fullGL;
-          const readOutput=()=>{
+          const previousPack=gl.getParameter(gl.PIXEL_PACK_BUFFER_BINDING);if(previousPack!==null)throw Error('Unexpected existing pixel-pack owner');
+          const pack=gl.createBuffer();if(!pack)throw Error('Pixel pack allocation failed');
+          try{
+          gl.bindBuffer(gl.PIXEL_PACK_BUFFER,pack);gl.bufferData(gl.PIXEL_PACK_BUFFER,4,gl.STREAM_READ);gl.bindBuffer(gl.PIXEL_PACK_BUFFER,previousPack);
+          const readOutput=(toPack=false)=>{
             if(full.renderer.getRenderTarget()!==null)throw Error('Composer did not end at final output');
             // Select the actual default output for reading, not an AO/MSAA intermediate.
             gl.bindFramebuffer(gl.READ_FRAMEBUFFER,null);
-            gl.readPixels(Math.floor(gl.drawingBufferWidth/2),Math.floor(gl.drawingBufferHeight/2),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
+            gl.bindBuffer(gl.PIXEL_PACK_BUFFER,toPack?pack:null);
+            try{gl.readPixels(Math.floor(gl.drawingBufferWidth/2),Math.floor(gl.drawingBufferHeight/2),1,1,gl.RGBA,gl.UNSIGNED_BYTE,toPack?0:pixel);}
+            finally{gl.bindBuffer(gl.PIXEL_PACK_BUFFER,previousPack);}
           };
           const checkRead=()=>{
             const error=gl.getError(),defaultRead=gl.getParameter(gl.READ_FRAMEBUFFER_BINDING)===null;
@@ -30,31 +36,37 @@
               }
             }finally{gl.deleteSync(sync);}
           };
-          for(const mode of ['read-output','fence-then-read','read-output-repeat']){
+          for(const mode of ['read-output','pack-fence-read','read-output-repeat']){
             const hostBefore=await window.__weaponHostSnapshot(),frames=[];
             for(let index=0;index<5;index++){
               const programsBefore=full.renderer.info.programs?.length||0,t=performance.now();
               full.renderer.info.reset();full.render();const submitted=performance.now();
               gl.finish();const finishReturned=performance.now();
-              const fence=mode==='fence-then-read'?await waitFence():null,readStarted=performance.now();
-              readOutput();const completed=performance.now();
+              // Queue the final default output read while it is alive, before any
+              // async fence yield lets preserveDrawingBuffer=false discard it.
+              const queueStarted=performance.now();let fence=null,queueMs=0;
+              if(mode==='pack-fence-read'){readOutput(true);queueMs=performance.now()-queueStarted;fence=await waitFence();}
+              const readStarted=performance.now();
+              if(mode==='pack-fence-read'){gl.bindBuffer(gl.PIXEL_PACK_BUFFER,pack);try{gl.getBufferSubData(gl.PIXEL_PACK_BUFFER,0,pixel);}finally{gl.bindBuffer(gl.PIXEL_PACK_BUFFER,previousPack);}}
+              else readOutput();
+              const completed=performance.now();
               const raw={tier,mode,index,phase:index<2?'warmup-or-compile':'boundary-observation',pixel:[...pixel],
                 glError:gl.getError(),contextLost:gl.isContextLost(),contextAttributes:gl.getContextAttributes(),
                 width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,viewport:[...gl.getParameter(gl.VIEWPORT)],
                 readFramebufferNull:gl.getParameter(gl.READ_FRAMEBUFFER_BINDING)===null,drawFramebufferNull:gl.getParameter(gl.DRAW_FRAMEBUFFER_BINDING)===null,
                 readBuffer:gl.getParameter(gl.READ_BUFFER),drawBuffer:gl.getParameter(gl.DRAW_BUFFER0),
                 pixelPackBufferBound:gl.getParameter(gl.PIXEL_PACK_BUFFER_BINDING)!==null,
-                submitMs:submitted-t,finishCallMs:finishReturned-submitted,fence,readbackMs:completed-readStarted,throughReadbackMs:completed-t,
+                submitMs:submitted-t,finishCallMs:finishReturned-submitted,queueMs,fence,readbackMs:completed-readStarted,throughReadbackMs:completed-t,
                 drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles};
               // Capture synchronously before any host callback can present/discard the default buffer.
-              if(index===0){raw.samples=[];for(const [x,y]of[[1,1],[150,150],[450,150],[150,450],[450,450]]){const p=new Uint8Array(4);gl.readPixels(x,y,1,1,gl.RGBA,gl.UNSIGNED_BYTE,p);raw.samples.push({x,y,pixel:[...p],glError:gl.getError()});}raw.png=full.renderer.domElement.toDataURL('image/png').split(',')[1];}
+              if(index===0&&mode!=='pack-fence-read'){raw.samples=[];for(const [x,y]of[[1,1],[150,150],[450,150],[150,450],[450,450]]){const p=new Uint8Array(4);gl.readPixels(x,y,1,1,gl.RGBA,gl.UNSIGNED_BYTE,p);raw.samples.push({x,y,pixel:[...p],glError:gl.getError()});}raw.png=full.renderer.domElement.toDataURL('image/png').split(',')[1];}
               const verification={glError:raw.glError,defaultReadFramebuffer:raw.readFramebufferNull,pixel:[...pixel]};
               await window.__weaponSyncCheckpoint({...raw,record:'before-validation'});
               if(raw.glError!==gl.NO_ERROR||!raw.readFramebufferNull||raw.contextLost)throw Error('Invalid final-output read '+JSON.stringify(raw));
               if(pixel[3]!==255||pixel.slice(0,3).every(v=>v===0))throw Error('Unexpected final-output pixel '+[...pixel]);
               for(const shell of shells)if(shell.geometry.drawRange.count!==sharedRanges.get(shell.geometry))throw Error('Shared glass range leaked');
               const row={tier,mode,index,phase:index<2?'warmup-or-compile':'boundary-observation',startedAt:performance.timeOrigin+t,
-                submitMs:submitted-t,finishCallMs:finishReturned-submitted,fence,readbackMs:completed-readStarted,throughReadbackMs:completed-t,
+                submitMs:submitted-t,finishCallMs:finishReturned-submitted,queueMs,fence,readbackMs:completed-readStarted,throughReadbackMs:completed-t,
                 programsBefore,programsAfter:full.renderer.info.programs?.length||0,drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles,
                 width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,...verification};
               frames.push(row);await window.__weaponSyncCheckpoint(row);
@@ -63,4 +75,5 @@
           }
           const draws=countFrame();readOutput();const countedRead=checkRead();
           return{diagnosticOnly:true,scope:'completion mechanism, not performance acceptance',blocks,draws,countedRead,allGlassRangesRestored:true};
+          }finally{gl.bindBuffer(gl.PIXEL_PACK_BUFFER,previousPack);gl.deleteBuffer(pack);}
         };
