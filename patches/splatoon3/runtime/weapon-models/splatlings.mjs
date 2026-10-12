@@ -340,7 +340,7 @@ function examiner(d) {
 }
 
 export const MODELS = {
-  'splatling': { sourceModel: 'Wmn_Spinner_StandardT', build: heavy },
+  'splatling': { sourceModel: 'Wmn_Spinner_StandardT', build: heavy, hold: HOLD_HEAVY, nativeCarry: true, pose: heavyPose },
   's3-spinner-quick': { sourceModel: 'Wmn_Spinner_QuickT', build: mini },
   's3-spinner-hyper': { sourceModel: 'Wmn_Spinner_HyperT', build: hydra },
   's3-spinner-downpour': { sourceModel: 'Wmn_Spinner_Downpour', build: ballpoint },

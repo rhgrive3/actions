@@ -212,10 +212,13 @@ const issue1096BaselineOutputs = {
     "layerOutputs": "4fe3c1c75672827883d3ae7ed0cb63cb847af318569f3199e85b7c89496fa325"
   },
   "splatling": {
-    "pose": "018401c98fd654ab677aae0047e32c2c4ac3ec88177301dde67128bcf7661a3c",
+    // Per-weapon Heavy Splatling model (weapon-models/splatlings.mjs) holds it by the top plate and carry loop with
+    // its own carry/aim anchors and elbow pose, and moves the muzzle socket to the barrel exit, so pose, breath and the
+    // recorded fire events change; the recoil springs (the #1096 overlay under test) are unchanged.
+    "pose": "a791457dc2511381d7802b3fd618e2948c7fbb8563603dc1f177be8a5951437a",
     "recoilTrigger": "7fb83087b1f7834c290d73aeac631a30d611661202ce0e1dd4393267e84f59c4",
-    "breath": "a987c0ddfe2bd9504e787512c686489283cf085907398a96a903086eb6145dbd",
-    "layerOutputs": "ec83e944a61124708c3bd84df23a9e738f1f81fb3dd903fb609568ff4157bdda"
+    "breath": "e7b05e1fddea7979c0ea881533a24ae5fd0cbb8a50648c23d25a47cab9588a25",
+    "layerOutputs": "1d980916398a653369c7315e7a001869c54b736cea25317b1f3eea7533d9d3e9"
   }
 };
 
