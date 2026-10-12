@@ -1,0 +1,57 @@
+name: Mini and Nautilus fixed-head no-render CPU control
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/mini-nautilus-cpu-diagnostic.yml
+      - reports/weapon-model-rebuild-20261012/diagnostics/mini-nautilus-cpu.mjs
+permissions:
+  contents: read
+jobs:
+  cpu-control:
+    if: github.head_ref == 'test/mini-nautilus-cpu-control'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 3165f4f26a1a4b30aec228939dd92adf6fdbfd06
+          path: .cpu-before-source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: f2a87e9e56387ada0487205c195eeee4e73baa6f
+          path: .cpu-after-source
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned browser and build dependencies
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build both immutable production compositions
+        run: |
+          test "$(git -C .cpu-before-source rev-parse HEAD)" = 3165f4f26a1a4b30aec228939dd92adf6fdbfd06
+          test "$(git -C .cpu-after-source rev-parse HEAD)" = f2a87e9e56387ada0487205c195eeee4e73baa6f
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .cpu-before-source/scripts/build-inkwave.mjs .cpu-before-source/inkwave-public .cpu-before-site
+          node .cpu-after-source/scripts/build-inkwave.mjs .cpu-after-source/inkwave-public .cpu-after-site
+      - name: One bounded no-render ABBA, raw samples and inclusive diagnosis
+        run: |
+          for pair in before-A after-B after-B2 before-A2; do
+            version="${pair%%-*}"
+            node reports/weapon-model-rebuild-20261012/diagnostics/mini-nautilus-cpu.mjs --site ".cpu-${version}-site" --out ".cpu-evidence/${pair}.json"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mini-nautilus-no-render-fixed-f2a-${{ github.run_attempt }}
+          path: .cpu-evidence
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
