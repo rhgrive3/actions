@@ -1,0 +1,41 @@
+name: INKWAVE crowd initialization diagnostic
+on:
+  push:
+    branches: [perf/inkwave-crowd-initialization-diagnostic]
+permissions:
+  contents: read
+jobs:
+  initialization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ac1159b76b42a10ff02fe58add74a8285cc08d32
+          path: .baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build immutable baseline once
+        run: |
+          mkdir -p .initialization-evidence
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .baseline/scripts/build-inkwave.mjs .baseline/inkwave-public .baseline-site > .initialization-evidence/build.log
+      - name: Two initialization snapshots with bounded process time
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=30s 20m node scripts/diagnose-inkwave-crowd-initialization.mjs --stage scorch --baseline-sha ac1159b76b42a10ff02fe58add74a8285cc08d32 --candidate-sha ac1159b76b42a10ff02fe58add74a8285cc08d32 --baseline-root .baseline --candidate-root .baseline --baseline-site .baseline-site --candidate-site .baseline-site --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --evidence-dir .initialization-evidence | tee .initialization-evidence/diagnostic.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: crowd-initialization-${{ github.sha }}
+          path: .initialization-evidence/
+          include-hidden-files: true
