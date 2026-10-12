@@ -167,10 +167,14 @@ try {
           const second = Kit.attachWeaponGlass(d, probe); second.position.z = -.025;
           const backdropGeometry=new THREE.PlaneGeometry(.5,.5),backdropMaterial=new THREE.MeshBasicMaterial({color:'#708198'});
           const backdrop=new THREE.Mesh(backdropGeometry,backdropMaterial);backdrop.position.set(.12,.07,.20);backdrop.rotation.y=-Math.PI/2;probe.add(backdrop);
-          const aoTarget=new THREE.WebGLRenderTarget(64,64),ao=new GTAOPass(probe,camera,64,64),beautyCount=d.glass.drawRange.count;
+          // GTAO's Depth debug shader assumes a perspective projection. Use the
+          // game's camera type and a tight depth interval so byte readback can
+          // distinguish the clear shell from the backing surface.
+          const aoCamera=new THREE.PerspectiveCamera(8,1,.5,2);aoCamera.position.copy(camera.position);aoCamera.lookAt(0,.07,.20);aoCamera.updateMatrixWorld(true);
+          const aoTarget=new THREE.WebGLRenderTarget(64,64),ao=new GTAOPass(probe,aoCamera,64,64),beautyCount=d.glass.drawRange.count;
           const compare=(a,b)=>{let changed=0;for(let i=0;i<a.length;i+=4)if(a[i]!==b[i]||a[i+1]!==b[i+1]||a[i+2]!==b[i+2])changed++;return changed;};
           const read=pass=>{
-            if(pass==='beauty'){renderer.setRenderTarget(aoTarget);renderer.render(probe,camera);}
+            if(pass==='beauty'){renderer.setRenderTarget(aoTarget);renderer.render(probe,aoCamera);}
             else{ao.output=GTAOPass.OUTPUT[pass];ao.render(renderer,aoTarget,aoTarget);}
             const pixels=new Uint8Array(64*64*4);renderer.readRenderTargetPixels(aoTarget,0,0,64,64,pixels);
             if(d.glass.drawRange.count!==beautyCount)throw Error('Shared glass draw range leaked after '+pass);
@@ -182,7 +186,7 @@ try {
           const callbacks=[copy,second].map(m=>m.onBeforeRender),unsafe={};
           try{for(const mesh of [copy,second])mesh.onBeforeRender=()=>{d.glass.drawRange.count=beautyCount;};for(const pass of ['Normal','Depth','AO'])unsafe[pass]=pair(pass);}
           finally{[copy,second].forEach((mesh,i)=>mesh.onBeforeRender=callbacks[i]);d.glass.drawRange.count=beautyCount;}
-          if(!unsafe.Normal||!unsafe.Depth)throw Error('GTAO counterexample did not detect unguarded shell');
+          if(!unsafe.Normal||!unsafe.Depth)throw Error('GTAO counterexample did not detect unguarded shell: '+JSON.stringify({safe,unsafe}));
           res.glass.gtao={safeChangedPixels:safe,unguardedChangedPixels:unsafe,sharedGeometry:copy.geometry===second.geometry,rangeRestored:d.glass.drawRange.count===beautyCount};
           read('Normal');if(!pair('beauty'))throw Error('Glass failed to recover after override-only frame');
           renderer.setRenderTarget(null);ao.dispose();aoTarget.dispose();backdropGeometry.dispose();backdropMaterial.dispose();
@@ -219,12 +223,12 @@ try {
         const container=document.createElement('div');document.body.append(container);
         const full=new Renderer(container,{quality:'high',shadows:true,bloom:true});full.renderer.debug.checkShaderErrors=true;full.setScene(scene,camera);
         if(!full.gtao)throw Error('Crowd production GTAO is not active');res.productionCrowd={};
-        const fullGL=full.renderer.getContext();
+        const fullGL=full.renderer.getContext(),sharedRanges=new Map(shells.map(s=>[s.geometry,s.geometry.drawRange.count]));
         for(const tier of ['game','far']){
           for(const o of actors){o.character.setLod(tier);for(let j=0;j<8;j++)o._finishFrame(1/60);}
           const complete=[];
-          for(let j=0;j<36;j++){full.renderer.info.reset();const t=performance.now();full.render();fullGL.finish();if(j>=12)complete.push(performance.now()-t);}
-          res.productionCrowd[tier]={actors:actors.length,width:full.renderer.domElement.width,height:full.renderer.domElement.height,quality:'high',ao:!!full.gtao,bloom:!!full.bloom?.enabled,renderCompleteMs:quant(complete),drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles};
+          for(let j=0;j<36;j++){full.renderer.info.reset();const t=performance.now();full.render();fullGL.finish();if(j>=12)complete.push(performance.now()-t);for(const shell of shells)if(shell.geometry.drawRange.count!==sharedRanges.get(shell.geometry))throw Error('Production crowd leaked shared glass range');}
+          res.productionCrowd[tier]={actors:actors.length,width:full.renderer.domElement.width,height:full.renderer.domElement.height,quality:'high',ao:!!full.gtao,bloom:!!full.bloom?.enabled,allGlassRangesRestored:true,renderCompleteMs:quant(complete),drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles};
           res.images['crowd-production-'+tier]=full.renderer.domElement.toDataURL('image/png').split(',')[1];
         }
         full._disposeComposer();full.renderer.dispose();container.remove();
