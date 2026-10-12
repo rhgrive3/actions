@@ -21,6 +21,12 @@ export function adaptMinimapResources(rel, code) {
     'body.iw-dio-on .iw-map,',
     'body.iw-dio-on .iw-map:not(.is-expanded),',
     'keep the explicitly expanded Turf Map visible over the map dimmer');
+  // Touch-specific CSS has a stronger selector than hud.css, and would still
+  // hide the expanded map on iPad/Android unless narrowed in the same way.
+  if (rel === 'styles/mobile.css') return replaceOnceMinimap(code,
+    'html.iw-touch-ui body.iw-dio-on .iw-hud .iw-map { opacity: 0; pointer-events: none; }',
+    'html.iw-touch-ui body.iw-dio-on .iw-hud .iw-map:not(.is-expanded) { opacity: 0; pointer-events: none; }',
+    'keep expanded mobile Turf Map visible');
   // #907: keep the persistent corner map OFF, but the explicitly opened Turf Map
   // still needs its live raster, per-actor markers and expanded HUD presentation.
   if (rel === 'src/main.js') {

@@ -69,6 +69,17 @@ test('explicit Turf Map stays visible on top of dimmer even with diorama CSS act
   assert.match(production, /body\.iw-dio-on \.iw-map:not\(\.is-expanded\),/);
 });
 
+test('touch-specific diorama CSS cannot hide the expanded Turf Map', () => {
+  const raw = source('styles/mobile.css');
+  const patched = adaptMinimapResources('styles/mobile.css', raw);
+  assert.match(raw, /html\.iw-touch-ui body\.iw-dio-on \.iw-hud \.iw-map \{ opacity: 0; pointer-events: none; \}/);
+  assert.match(patched, /html\.iw-touch-ui body\.iw-dio-on \.iw-hud \.iw-map:not\(\.is-expanded\) \{ opacity: 0; pointer-events: none; \}/);
+  assert.doesNotMatch(patched, /html\.iw-touch-ui body\.iw-dio-on \.iw-hud \.iw-map \{/);
+  const prod = adaptQualitySource('styles/mobile.css', raw);
+  assert.match(prod, /html\.iw-touch-ui body\.iw-dio-on \.iw-hud \.iw-map:not\(\.is-expanded\)/);
+  assert.throws(() => adaptMinimapResources('styles/mobile.css', patched), /minimap patch conflict/);
+});
+
 test('hidden corner map remains hidden in diorama and ordinary map modes remain unchanged', () => {
   const raw = source('styles/hud.css');
   const patched = adaptMinimapResources('styles/hud.css', raw);
