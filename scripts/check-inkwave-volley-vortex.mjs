@@ -77,10 +77,19 @@ try{
   for(const p of [guest,observer]){const births=await p.evaluate(()=>globalThis.births);assert.equal(births.length,9);assert.deepEqual(births.map(x=>x.index),[0,1,2,3,4,5,6,7,8]);assert(births.every(x=>x.delay===0));}
   for(const damage of [30.39,34.31,34.31])await host.evaluate(d=>hit(G.projectiles,volley,G.actors[1],d,G.actors[1].pos),damage);
   await guest.waitForFunction(()=>Math.abs(G.local.hp-65.7)<1e-8);
-  await Promise.all(pages.map(p=>p.evaluate(()=>{G.projectiles.clear();G.actors[0].pos.set(0,0,0);G.actors[1].pos.set(0,0,5);G.actors[0].aimDir.set(0,0,1);}))); 
+  await Promise.all(pages.map(p=>p.evaluate(()=>{G.projectiles.clear();G.actors[0].pos.set(0,0,0);G.actors[1].pos.set(0,0,30);G.actors[0].aimDir.set(0,0,1);}))); 
   await host.evaluate(()=>{G.local.setWeapon('charger');G.local.special=G.local.specialCost();G.local._startSpecial();});
   await frames(25);await guest.waitForFunction(()=>vac.inkVacState(G.actors[0])?.phase==='inhale');
   await Promise.all(pages.map(p=>p.evaluate(()=>{G.actors[1].hp=100;G.actors[1].ink=100;})));
+  // The sourced Ink Vac cone starts at zero length and extends by 0.3334 per 60 Hz frame.
+  // Grow it with real Actor updates while the victim is outside the 15 m maximum reach.
+  for(let i=0;i<20;i++){
+   await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>G.local.update(1/60));await frames(1);
+  }
+  assert.equal(await host.evaluate(()=>vac.inkVacState(G.local).absorbedDamage),0);
+  assert(await host.evaluate(()=>vac.inkVacState(G.local).length>5));
+  await Promise.all(pages.map(p=>p.evaluate(()=>G.actors[1].pos.set(0,0,5))));
+  // From the first contact frame, count exactly 30 real 60 Hz suction updates.
   for(let i=0;i<30;i++){
    await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>G.local.update(1/60));await frames(1);
   }
