@@ -26,7 +26,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ac1159b76b42a10ff02fe58add74a8285cc08d32
+          ref: 5bbb5105aba3aaf369f1a7647d1b96eeee559958
           path: .baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -47,7 +47,8 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public .after-site
           cp .before-site/inkwave-build.json .empty-evidence/before-build.json
           cp .after-site/inkwave-build.json .empty-evidence/after-build.json
-          node --input-type=module -e "import fs from 'node:fs';if(JSON.parse(fs.readFileSync('.before-site/inkwave-build.json')).contentHash!=='43ddefa5e29081aba0eed716ac9e8240e9f5fee46178ea6685dba6faf265fdcd')throw Error('Unexpected baseline bytes')"
+          node --input-type=module -e "import fs from 'node:fs';if(JSON.parse(fs.readFileSync('.before-site/inkwave-build.json')).contentHash!=='ec70b09f4912be9cd9eed68789a3de5bcf70ea1e94cb149c831c54edf476b060')throw Error('Unexpected baseline bytes')"
+          node --input-type=module -e "import fs from 'node:fs';if(JSON.parse(fs.readFileSync('.after-site/inkwave-build.json')).contentHash!=='40417276d14ad084aa5afa6d7476b8aab4f8c54105a24822cd47791e28c1a398')throw Error('Unexpected candidate bytes')"
       - name: Source and emitted contracts
         shell: bash
         run: |
