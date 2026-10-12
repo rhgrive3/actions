@@ -1,0 +1,51 @@
+name: INKWAVE exact nine-model production material diagnostic
+on:
+  push:
+    branches: [diag/inkwave-nine-production-materials-7630]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  materials:
+    if: github.ref == 'refs/heads/diag/inkwave-nine-production-materials-7630'
+    runs-on: ubuntu-latest
+    # Four complete lighting/team conditions include every original Actor lifecycle.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 7630c58a3a8dedf4e3bf79c48c2dd7583b457db2
+          path: .exact-nine-source
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install standard build and browser dependencies
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install Pillow
+      - name: Build unchanged exact PR1271 production composition
+        run: |
+          test "$(git -C .exact-nine-source rev-parse HEAD)" = 7630c58a3a8dedf4e3bf79c48c2dd7583b457db2
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .exact-nine-source/scripts/build-inkwave.mjs .exact-nine-source/inkwave-public .exact-nine-site
+          mkdir -p .material-evidence
+          cp .exact-nine-site/inkwave-build.json .material-evidence/inkwave-build.json
+      - name: Compare invalid and valid IBL then production day on all nine actual Actors
+        run: |
+          node scripts/render-inkwave-nine-production-materials.mjs --source .exact-nine-source --site .exact-nine-site --out .material-evidence
+          git -C .exact-nine-source diff --exit-code
+      - name: Assemble labelled environment comparison sheets
+        run: python3 scripts/compare-inkwave-nine-production-materials.py .material-evidence .exact-nine-source/reports/inkwave-weapon-model-workspace/refs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nine-production-materials-7630
+          path: .material-evidence
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
