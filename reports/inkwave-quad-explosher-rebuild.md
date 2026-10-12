@@ -19,7 +19,7 @@ No changes to kit, registry, hold profiles, motion, gameplay, projectile origin 
 ## Initial local verification
 
 - Exact production composition build: `0b2c47214301b8ee2ebbcca1bcde8e6056cca10d16dc7280c5197389b05b010e`.
-- Six emitted-runtime tests pass, including real Actor carry/fire at 30/60/120 Hz and preservation of all twelve models' gameplay frames.
+- Six emitted-runtime tests pass, including real Actor carry/fire at 30/60/120 Hz and preservation of eleven registered models' gameplay frames (the legacy-model omission is corrected below).
 - Static body + ink triangles: Quad 2,477 → 5,123; Explosher 5,541 → 9,585.
 - Static body + ink geometry bytes: Quad 65,102 → 131,098; Explosher 142,886 → 248,910.
 - Being inside the geometry budget is not a performance verdict. CI captures exact before/after viewpoints, real Actors, and same-runner eight-Actor game/far ABBA render and animation measurements. Visual review and measured performance remain pending until that evidence has been inspected.
@@ -34,7 +34,7 @@ A CPU-only geometry diagnostic exposed small gaps between the Quad's receiver, g
 
 Refined static body + ink: Quad 5,279 triangles / 135,314 bytes; Explosher 9,729 triangles / 251,774 bytes. Four focused source tests pass after the revision, including exact same-runtime unchanged geometry and real Actor checks at 30/60/120 Hz. An additional 31 existing Dualie/Slosher motion and timing regressions pass.
 
-The first CI run (`38216994596`) reproduced the production hash and passed Actor/shape checks but rejected the precomputed unchanged Tri-Slosher binary geometry hash. The precomputed snapshot came from local Node 24.19.0, while CI uses Node 22. No model-builder, kit or geometry primitive in this path reads random, date or performance values. Local forward/reverse construction order produces identical hashes for all twelve models. The workflow now creates the immutable before build's geometry twice, in forward/reverse order on the same runner, and compares the ten untouched models byte-for-byte against that actual baseline. It also prints both hashes so the old mismatch can be diagnosed rather than hidden. The precise cross-environment cause remains unconfirmed until that control runs.
+The first CI run (`38216994596`) reproduced the production hash and passed Actor/shape checks but rejected the precomputed unchanged Tri-Slosher binary geometry hash. The precomputed snapshot came from local Node 24.19.0, while CI uses Node 22. No model-builder, kit or geometry primitive in this path reads random, date or performance values. At the first validation-fix stage, local forward/reverse construction order produced identical hashes for eleven registered models. The workflow now creates the immutable before build's geometry twice, in forward/reverse order on the same runner, and compares the ten untouched models byte-for-byte against that actual baseline. It also prints both hashes so the old mismatch can be diagnosed rather than hidden. On Node 22, the unchanged before build reproduced the original precomputed hash discrepancies; forward/reverse order was stable and the same-runner before/after geometry matched. The precise cross-environment math cause was not isolated.
 
 ## Fidelity rejection and second reconstruction
 
@@ -53,3 +53,5 @@ Second reconstruction source metrics: Quad 11,715 static body+ink triangles / 30
 ## Latest-main composition
 
 The second reconstruction includes main `1fca80b32c98455924afbbffeccd952fd0122b71` (camera, collision, paint and networking updates). The model family files are unchanged on that main. Both baseline and candidate builds in the new review use this same main composition; old bdda performance values are not reused as evidence for this version. The 43-file shared main delta was independently checked against each Git blob SHA before local composition.
+
+An additional static review corrected the new Quad swept deck's inward face winding before candidate visual acceptance. Triangle count and positions are unchanged. A top-face normal witness now requires outward winding so back-face culling cannot hide its upper skin.

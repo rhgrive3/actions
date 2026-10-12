@@ -34,6 +34,10 @@ test('rebuilds are bounded merged volumetric assemblies with open loop and reces
  assert.ok(hit(IDS[0],.047,.004)>0,'quad receiver connects to grip');
  assert.ok(hit(IDS[0],-.067,-.048)>0,'quad heel connects to grip');
  assert.equal(hit(IDS[0],-.024,.060),0,'quad open space between grip and front stem');
+ // The swept deck is a closed volume: its top faces must face outward, not disappear by back-face culling.
+ const deck=f.getWeaponDef(IDS[0]).body,dp=deck.attributes.position,di=deck.index.array;let tops=0;
+ for(let j=0;j<di.length;j+=3){const a=new f.THREE.Vector3().fromBufferAttribute(dp,di[j]),b=new f.THREE.Vector3().fromBufferAttribute(dp,di[j+1]),c=new f.THREE.Vector3().fromBufferAttribute(dp,di[j+2]);const center=a.clone().add(b).add(c).multiplyScalar(1/3);if(Math.abs(center.x)<.020&&center.z>-.010&&center.z<.025&&center.y>-.085&&center.y<-.079){const n=b.clone().sub(a).cross(c.clone().sub(a));assert.ok(n.y>0,'quad swept deck top has outward winding');tops++;}}
+ assert.ok(tops>=2,'quad swept deck top witnesses exist');
  console.log('QUAD_EXPLOSHER_METRICS '+JSON.stringify(rows));
 });
 test('real Actors carry and fire both rebuilds at 30, 60 and 120 Hz with finite pose and unchanged launch sockets',async()=>{

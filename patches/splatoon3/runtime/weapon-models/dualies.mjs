@@ -143,7 +143,7 @@ function darkTetra(d) {
   // Swept shoe: width and pitch change along its length. Side profile alone cannot describe this volume.
   const deck=[[-.098,-.069,.024],[-.073,-.083,.029],[-.025,-.088,.033],[.035,-.083,.036],[.087,-.064,.049],[.128,-.043,.058],[.159,-.025,.043],[.177,-.019,.018]];
   const p=[],idx=[];for(const[z,y,w]of deck){for(const[x,dy]of[[-w+.002,.004],[w-.002,.004],[w,.001],[w,-.004],[w-.002,-.006],[-w+.002,-.006],[-w,-.004],[-w,.001]])p.push(x,y+dy,z);}
-  for(let j=0;j<deck.length-1;j++)for(let k=0;k<8;k++){const a=j*8+k,b=j*8+(k+1)%8,c=b+8,e=a+8;idx.push(a,b,c,a,c,e);}for(let k=1;k<7;k++){idx.push(0,k+1,k);const a=(deck.length-1)*8;idx.push(a,a+k,a+k+1);}
+  for(let j=0;j<deck.length-1;j++)for(let k=0;k<8;k++){const a=j*8+k,b=j*8+(k+1)%8,c=b+8,e=a+8;idx.push(a,c,b,a,e,c);}for(let k=1;k<7;k++){idx.push(0,k,k+1);const a=(deck.length-1)*8;idx.push(a,a+k+1,a+k);}
   const shoe=new THREE.BufferGeometry();shoe.setAttribute('position',new THREE.Float32BufferAttribute(p,3));shoe.setIndex(idx);shoe.computeVertexNormals();body.add(shoe,C.black,M.rubber);
   for(const sx of[-1,1])body.add(pipe(deck.map(([z,y,w])=>[sx*(w-.001),y+.004,z]),.0027,32,5),C.white,M.satin);
   // Three thick rebound cushions, visibly separated from the swept deck. Ink volumes carry team colour.
