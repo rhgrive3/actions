@@ -4024,3 +4024,5 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - **確認済み**: 元line/dotのDXT5 RGBAは独立Pillowと0差分。閉じた形状・元UV・両DXT5アルファ補間・一括予約/破棄・全36定義の実Actor入力と描画によるゲーム状態不変・武器を切り替えた相手へのJSONパケット再生の回帰を追加。既存Splatoon3全体のローカルゲートは3980件（3970成功、既存skip10、失敗0）。Chromiumの実ゲーム9操作で描画・減速/落下・着弾まで通過。描画/性能の最終証拠とCI結果は `reports/ink-volume/` とPR #1248へ記録する。
 - **プレイへの影響**: 本体位置・速度・弾数・遅延・寿命・ダメージ・当たり判定・塗り・送信JSONは既存所有者のまま。描画のリソース/三角形上限でゲームロジックを削らない。新しい部分アルファは元画素由来で、意図的な透明度変更はない。
 - **未確認/制約**: S3の元エフェクト素材の正確な輪郭/立体形状と縦振りアニメーションの完全一致、曲がる尾の履歴メッシュ、全36種の実機視覚比較、スマホ/iPad性能、渦/泡/爆発型Slosherの専用素材、元素材の公開再配布許可。源データのない部分を完全一致や公式造形値としない。ローラーVTFの縦振り利用は独自の描画適用である。
+
+- **拡張の最終ローカル描画/負荷**: ChromiumとWebKit touchの実ゲーム9操作・各5方向45比較で不透明本体の黒いRGB/透明欠損0。停止同一場面off/on/off/onで縦3頭、Shooter1頭、Slosher発生済み4頭を測定し、描画コール+6/+6/+10、ソフトウェアGPU時間の組差は約-10%～+3%。高速化や実機FPSとは判定しない。GPUアップロード推定39,520,236byte、20reset安定・136geometry/4texture破棄。詳細は `reports/ink-volume/projectile-measurements.json` と `results.md`。

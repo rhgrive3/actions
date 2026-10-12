@@ -37,3 +37,28 @@ The previous PR-head UI job failed one touch menu-ring visibility check with a C
 The original and derived images are **local-only** under `.browser-evidence/ink-volume-reviewed-*` and `.browser-evidence/prototype-v6`. Rights for redistributing these assets were not established. The public image below uses authored structural fixtures and is not final Roller artwork. Public activation requires an authorized pack. Original partial-alpha overlap ordering, physical-device validation and retail matching remain limitations.
 
 ![Authored structural fixture: source and volume from six views](fixture-comparison.webp)
+
+
+## 2026-10-12 extension: vertical Roller, Shooter rods and Slosher films
+
+Implementation core: `27b0af977cb04ba92a86521bb50a5433582cfbaa`, adopting main `90b4fea7`. Detailed raw data and compiled input/content hashes are in [projectile-measurements.json](projectile-measurements.json). No original assets, derived packs or source screenshots are published. Local screenshots live under `.browser-evidence/volume-expand-measured/` and `volume-expand-webkit/`; each contains native game and front/side/oblique/top/bottom views.
+
+- Native Actor/action/flight/draw regression for 36 supported main definitions, plus all five Roller definitions in vertical mode. The original and new runtime suites total 13 passing tests.
+- Native browser input for horizontal/vertical Splat Roller, Splattershot, Slosher, Dualies, Splatling, Carbon vertical, Splattershot Jr and Tri-Slosher: all nine pass in Chromium and WebKit touch viewport. Native heads are 13/3/1/4/1/1/5/1/7 at the sampled stage; delayed Slosher births retain their native owner. Rod heads use three shared components each. No overflow. Initial heads land/retire during 150 actual fixed ticks; draw does not mutate authority.
+- Both browsers: 45 perspective readbacks of the actual native effects, comparing the same opaque source regions before/after real lighting. Eroded opaque body has zero black RGB pixels and zero transparent defects. This does not turn original partial alpha into opaque pixels.
+- Original Shooter line/dot are single-frame DXT5. Independent Pillow decode gives zero RGBA differences; both LODs of both images form four valid closed shells. The source beam uses UV 0.3..0.7; clipping its derived geometry avoids disconnected transparent ends. Tip width 0.75 is the OSS artwork ratio, not a claimed S3 default.
+- Existing local Splatoon3 suite: 3980 tests, 3970 pass, 10 existing skip, 0 failures. Focused new+packaging: 18 pass, four emitted-build-only checks skip locally; CI covers emitted paths. No important assertion was weakened.
+
+Linux SwiftShader, same paused native scene, off/on/off/on; four warmups and eight samples per block (seven ready GPU timer samples). CPU medians below are constrained by the browser timer resolution. rAF pacing is measured separately and is **not live gameplay or mobile FPS**.
+
+| Scene | Calls old → new | Triangles old → new | GPU median old ms (two blocks) | GPU median new ms (two blocks) | rAF FPS old | rAF FPS new |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Vertical Roller, 3 heads | 157 → 163 | 699499 → 835211 | 3108.17 / 3213.47 | 3188.37 / 3117.85 | 0.339 / 0.328 | 0.323 / 0.323 |
+| Shooter, 1 head | 157 → 163 | 673529 → 685585 | 3366.14 / 3126.18 | 3161.35 / 3123.90 | 0.297 / 0.297 | 0.309 / 0.313 |
+| Slosher, 4 born heads | 153 → 163 | 677590 → 840366 | 3474.38 / 3293.53 | 3138.61 / 3369.91 | 0.287 / 0.303 | 0.302 / 0.299 |
+
+Draw submission CPU medians: vertical 0.10 → 0.20 ms; Shooter 0.00 (below resolution) → 0.20 ms; Slosher 0.00/0.10 → 0.20/0.10 ms. Paired software GPU differences range from about -10% to +3%, with a large baseline scene and visible run-to-run noise. These samples do not prove a hardware GPU speedup; draw calls and geometry both increase. Prior 13-head horizontal runs cost +7–23% GPU time, as recorded above.
+
+Owned GPU upload layout is **39,520,236 bytes (~37.69 MiB)** for sheet + rod packs, not driver VRAM. It adds 248,140 bytes to the sheet-only layout. Twenty resets keep resource counts and bytes stable; Chromium geometry/texture 330/50 → 194/46 after dispose, WebKit also retires 136 geometries and four textures. This is a bounded reset/dispose test, not long-session JS heap/thermal validation.
+
+The original Roller VTF is applied to vertical mode using its S3 draw radius, because first-generation SplatoonSWEPs has no vertical asset. Film width/thickness and missing Shooter tail defaults remain existing INKWAVE visual calibrations. Vortex/bubble/explosive/double Sloshers need their own registered assets and have not been falsely replaced with Roller sheets. Exact retail VFX, curved-history tails, order-independent partial-alpha overlap, licensed public asset distribution and physical mobile/iPad measurements remain unverified.

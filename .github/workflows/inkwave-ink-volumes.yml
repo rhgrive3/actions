@@ -9,6 +9,7 @@ on:
       - 'patches/local-quality/tests/ink-volume-recipes.test.mjs'
       - 'scripts/*inkwave-volume*.mjs'
       - 'scripts/*inkwave-projectile*.mjs'
+      - 'reports/ink-volume/**'
       - '.github/workflows/inkwave-ink-volumes.yml'
   workflow_dispatch:
 permissions:

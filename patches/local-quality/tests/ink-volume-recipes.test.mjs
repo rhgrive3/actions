@@ -30,6 +30,10 @@ test('all 36 supported main definitions emit classified native rounds and render
   for(const r of records){
     system.clear();f.G.actors.length=0;const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;f.tick(a,130);a.intent.fire=false;f.tick(a,35);assert(system.list.length,r.id+' native action');
     assert(system.list.every(p=>p._inkVolumeRecipe),r.id+' classification');for(let i=0;i<3;i++)system.update(1/60);assert(system.list.length,r.id+' actual flight');const before=system.list.map(snapshot);e.begin();let drawn=0;for(const p of system.list)if(f.submitInkVolume(e,p))drawn++;e.end();assert(drawn>0,r.id+' positive finite presentation');assert.deepEqual(system.list.map(snapshot),before,r.id+' authoritative state');
+  }
+  for(const r of records.filter(r=>r.family==='roller')){
+    system.clear();f.G.actors.length=0;const a=f.make(r.id);a.form='kid';a.ink=100;a.grounded=false;a.intent.fire=true;f.tick(a,130);a.intent.fire=false;f.tick(a,35);assert(system.list.length,r.id+' airborne swing');assert(system.list.every(p=>p._inkVolumeRecipe==='roller-vertical'),r.id+' immutable vertical classification');
+    for(let i=0;i<3;i++)system.update(1/60);const before=system.list.map(snapshot);e.begin();let drawn=0;for(const p of system.list)if(f.submitInkVolume(e,p))drawn++;e.end();assert(drawn>0,r.id+' vertical volume');assert.deepEqual(system.list.map(snapshot),before);
   }e.dispose();
 });
 test('actual Shooter/Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect',async()=>{
