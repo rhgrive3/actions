@@ -1,0 +1,44 @@
+name: Probe real S3 MP3 sources
+on:
+  push:
+    branches: [research/splatoon3-public-sfx-inventory-20261012]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - run: python -m pip install --quiet gdown
+      - name: Download and identify original MP3s from public Drive
+        run: |
+          python - <<'PY'
+          import gdown,subprocess,json,pathlib,hashlib
+          arr=[
+          ('Wp_ChargerLong_Shot_00.mp3','1OydoVsP544ckaYaNK0gkmpcu3UJYEpcw'),
+          ('Wp_BrushMini_Swing_00.mp3','1trP1_08UQl7qcq12qn6SB_o5eiMqnlpD'),
+          ('Wp_ShelterNormal_Shot_00.mp3','1JQ9S3OFa-CeGAraG0VnfUsJ-e61WHXxo'),
+          ('Wp_ShooterExpert_Shot_00.mp3','1m7Gf6ZSvKU9d8p3IiySzgBJMOViT8YNe'),
+          ('Sp_UltraShot_Shot_00.mp3','1fa8NxWiG8-YjDijHMdsxB3alYPcBYy9l')]
+          pathlib.Path('probe').mkdir(exist_ok=True);out=[]
+          for name,id in arr:
+            path='probe/'+name
+            try:
+              ok=gdown.download(id=id,output=path,quiet=True,fuzzy=True)
+              if not ok:raise ValueError('No download')
+              b=pathlib.Path(path).read_bytes()
+              probe=subprocess.run(['ffprobe','-v','error','-show_entries','format=duration,format_name','-of','json',path],capture_output=True,text=True)
+              meta=json.loads(probe.stdout) if probe.returncode==0 else {}
+              item=dict(name=name,size=len(b),sha256=hashlib.sha256(b).hexdigest(),magic=b[:10].hex(),probe=meta,error=None)
+              # Store only data identification; source MP3s remain on original Drive.
+              pathlib.Path(path).unlink()
+            except Exception as e:item=dict(name=name,error=repr(e))
+            print(item,flush=True);out.append(item)
+          pathlib.Path('probe/report.json').write_text(json.dumps(out,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-s3-mp3-probe-report
+          path: probe/
+          retention-days: 2
