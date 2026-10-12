@@ -9,12 +9,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        part: [0, 1, 2, 3]
+        part: [0]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
       - name: Install downloader
-        run: python -m pip install --quiet gdown beautifulsoup4 requests mutagen
+        run: |
+          python -m pip install --quiet --index-url https://pypi.org/simple gdown beautifulsoup4 requests mutagen || (sleep 5; python -m pip install --quiet --index-url https://pypi.org/simple gdown beautifulsoup4 requests mutagen)
       - name: Download original public MP3s with source metadata
         env:
           PART: ${{ matrix.part }}
