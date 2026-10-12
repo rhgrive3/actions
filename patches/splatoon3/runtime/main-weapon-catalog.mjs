@@ -654,7 +654,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       floorPaint(a,stroke.point,radius,depth,heading);
     }
     from.copy(to);stroke.active=true;
-    const s=state(runner);s.contactTimes ||= new Map();
+    s.contactTimes ||= new Map();
     for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<radius+PLAYER.radius&&
       G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(at,enemy.pos)){
       G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id);s.contactTimes.set(enemy,G.time);
