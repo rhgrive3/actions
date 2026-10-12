@@ -180,27 +180,40 @@ function nautilus(d) {
   // This outer cap is distinct from the silver hub on the opposite (+X) face.
   body.add(xlathe([[0,-.053],[.0538,-.053],[.0779,-.048],[.085,-.042],[.085,-.036],[0,-.036]],0,sy,sz,28),C.black,M.satin);
   body.add(ring(.084,.0025,-.042,sy,sz,'x',4,28),C.silver,M.metal);
-  // A tapered roll of flat metal strip, not a round wire spring. The free mouth is narrower
+  // A slightly tapered roll of flat metal strip, not a round wire spring. The open mouth is narrower
   // than the base, as the return-facing source views show. The angular outer reference is approximate.
   const coil=new THREE.TorusGeometry(1,1,8,72,Math.PI*2*3.125);
   const cp=coil.attributes.position,cu=coil.attributes.uv;
-  const cross=[[-.0058,-.0016],[-.0048,-.0023],[.0048,-.0023],[.0058,-.0016],[.0058,.0016],[.0048,.0023],[-.0048,.0023],[-.0058,.0016]];
+  const cross=[[-.0023,-.0067],[-.0015,-.0075],[.0015,-.0075],[.0023,-.0067],[.0023,.0067],[.0015,.0075],[-.0015,.0075],[-.0023,.0067]];
   for(let i=0;i<cp.count;i++){
-    const u=cu.getX(i),[axial,radial]=cross[Math.round(cu.getY(i)*8)%8],a=Math.PI*.75+Math.PI*2*3.125*u,R=.056-.014*u+radial;
+    const u=cu.getX(i),[axial,radial]=cross[Math.round(cu.getY(i)*8)%8],a=Math.PI*.25+Math.PI*2*3.125*u,R=.0508-.0023*u+radial;
     cp.setXYZ(i,.049+.038*u+axial,.097+Math.cos(a)*R,-.072+Math.sin(a)*R);
   }
-  // The rectangular cross-section runs opposite the native torus parameter winding.
-  // Flip only triangle orientation: vertex positions, cross-section and dimensions stay identical.
   const ci=coil.index.array;for(let i=0;i<ci.length;i+=3){const t=ci[i+1];ci[i+1]=ci[i+2];ci[i+2]=t;}
-  coil.computeVertexNormals();body.add(coil,C.silver,M.metal);
+  coil.computeVertexNormals();
+  // Join both cut cross-sections to the return strip, leaving no exposed open ends.
+  // The visible coil and tank-surrounding band are in both cited views; the hidden path is approximate.
+  // Radial width is 15mm; maximum coil OD remains the v2 116.6mm. No double-sided material.
+  const start=new THREE.Vector3(.049,.097+Math.SQRT1_2*.0508,-.072+Math.SQRT1_2*.0508);
+  const end=new THREE.Vector3(.087,.097,-.0235);
+  const returnPath=new THREE.CatmullRomCurve3([end,
+    new THREE.Vector3(.087,.074,-.027),new THREE.Vector3(.087,.033,-.012),
+    new THREE.Vector3(.087,.026,.043),new THREE.Vector3(.087,.045,.079),
+    new THREE.Vector3(.085,.12,.077),new THREE.Vector3(.073,.132,.041),
+    new THREE.Vector3(.056,.133,-.012),new THREE.Vector3(.049,.141,-.039),start],false,'centripetal');
+  const band=new THREE.TubeGeometry(returnPath,32,1,8,false),bp=band.attributes.position,bu=band.attributes.uv;
+  for(let i=0;i<bp.count;i++){
+    const u=bu.getX(i),j=Math.round(bu.getY(i)*8)%8,[axial,radial]=cross[j];
+    if(u===0||u===1){const k=j*73+(u===0?72:0);bp.setXYZ(i,cp.getX(k),cp.getY(k),cp.getZ(k));continue;}
+    const t=returnPath.getTangentAt(u),b=new THREE.Vector3(1,0,0).addScaledVector(t,-t.x).normalize(),n=new THREE.Vector3().crossVectors(t,b).normalize();
+    const p=returnPath.getPointAt(u).addScaledVector(b,axial).addScaledVector(n,radial);bp.setXYZ(i,p.x,p.y,p.z);
+  }
+  const bi=band.index.array;for(let i=0;i<bi.length;i+=3){const t=bi[i+1];bi[i+1]=bi[i+2];bi[i+2]=t;}
+  band.computeVertexNormals();body.add(coil,C.silver,M.metal);body.add(band,C.silver,M.metal);
   // Chamfered, visibly thick tank. Long side / coil OD is about .88 rather than v1's .63.
   // The profile is angular; a pale planar face and depth should remain legible at both inner obliques.
   const tank=[[-.045,.047],[-.036,.053],[.037,.053],[.046,.042],[.046,-.038],[.034,-.05],[-.03,-.05],[-.045,-.038]];
   body.add(slab(tank,.044,.062,.0015).translate(-.062,0,0).rotateX(-.18).translate(.062,.078,.029),'#e6cdd4',M.satin);
-  // The return loop has a flattened strip section and eight purposeful bends around the tank.
-  const loopOuter=[[-.058,.051],[-.041,.065],[.043,.065],[.061,.047],[.061,-.042],[.043,-.063],[-.03,-.063],[-.056,-.044]];
-  const loopInner=[[-.05,.048],[-.038,.057],[.04,.057],[.053,.043],[.053,-.038],[.04,-.055],[-.027,-.055],[-.048,-.041]];
-  body.add(slab(loopOuter,.012,.087,.001,[loopInner]).translate(-.087,0,0).rotateX(-.18).translate(.087,.078,.029),C.silver,M.metal);
   for(let i=0;i<7;i++){
     const a=-.88+i*.19;
     body.add(box(.004,.004,.008,-.029,sy+Math.sin(a)*.09,sz-Math.cos(a)*.09,.28,6,4),C.silver,M.satin);
