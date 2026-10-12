@@ -13,7 +13,7 @@ import { chromium } from 'playwright';
 const arg = (name, fallback) => { const n = process.argv.indexOf(name); return n < 0 ? fallback : process.argv[n + 1]; };
 const site = path.resolve(arg('--site', '_site')), out = path.resolve(arg('--out', '.ci-scratch/weapon-gallery'));
 const ids = (arg('--ids', '') || '').split(',').filter(Boolean), held = !process.argv.includes('--no-held');
-const size = Number(arg('--size', 640));
+const size = Number(arg('--size', 640)), crowdOnly=process.argv.includes('--crowd-only');
 const environmentMode=arg('--environment','studio1024');
 fs.mkdirSync(out, { recursive: true });
 const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
@@ -76,7 +76,7 @@ try {
     window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G, postReview, prefix };
   }, { prefix, size, environmentMode });
   const all = await page.evaluate(() => Object.keys(window.__gallery.WEAPONS).filter(id => window.__gallery.WEAPONS[id]?.class !== undefined || window.__gallery.WEAPONS[id]?.catalogRecord));
-  const list = ids.length ? ids : all;
+  const list = crowdOnly?[]:(ids.length ? ids : all);
   const rows = [];
   for (const id of list) {
     const row = await page.evaluate(async ({ id, held }) => {
@@ -157,6 +157,38 @@ try {
     for (const [k, b64] of Object.entries(row.images)) fs.writeFileSync(path.join(out, `${id}.${k}.png`), Buffer.from(b64, 'base64'));
     delete row.images; rows.push(row);
     console.log(JSON.stringify(row));
+  }
+  if(crowdOnly){
+    const crowd=await page.evaluate(async()=>{
+      const{THREE,api,G,renderer,scene,snap}=window.__gallery;
+      const ids=['s3-shooter-heavy','s3-shooter-quicklong','s3-shooter-triplequick','s3-shooter-triplemiddle','s3-shooter-flash'],actors=[];
+      for(let k=0;k<8;k++){
+        const a=new api.Actor({team:k%2,name:'Five-'+k,weapon:ids[k%5],isLocal:k===0,CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
+        a.character.actor=a;a.character.onEvent=null;a.grounded=a.ground.hit=true;a.pos.set((k%4-1.5)*1.3,0,Math.floor(k/4)*1.6);scene.add(a.character.root);actors.push(a);
+        if(a.character._sourceMotionLoader)await a.character._sourceMotionLoader;if(a.character.sourceMotion?.ready)await a.character.sourceMotion.ready;if(a.character.sourceMotion?.status!=='ready')throw Error('crowd source motion unavailable');
+      }
+      G.actors=actors;const camera=new THREE.PerspectiveCamera(40,1,.05,60);camera.position.set(-6,3.8,8);camera.lookAt(0,.8,.5);
+      const gl=renderer.getContext(),quant=a=>{const s=[...a].sort((x,y)=>x-y);return{p50:s[Math.floor(s.length*.5)],p95:s[Math.floor(s.length*.95)]};},result={scope:'Eight real Actors, native day IBL, direct render; software-render timing is not a device FPS prediction',ids:actors.map(a=>a.weaponId),teams:actors.map(a=>a.team),environment:window.environmentEvidence,tiers:{}};
+      for(const tier of['game','far','game-restored']){
+        for(const a of actors)a.character.setLod(tier==='far'?'far':'game');
+        const animation=[],complete=[];let maxGrip=0,nonFinite=0,labelError=0;
+        for(let frame=0;frame<100;frame++){
+          const t0=performance.now();G.time+=1/60;
+          for(const a of actors){a.ink=100;a.intent.fire=frame<80;a.weaponRunner.update(1/60,{fire:frame<80,firePressed:frame===0});a._finishFrame(1/60);const ch=a.character;ch.root.updateMatrixWorld(true);
+            if(![...ch.P].every(Number.isFinite))nonFinite++;
+            if(ch.P[api.CHARACTER_CHANNELS.IKL]>.99&&ch.P[api.CHARACTER_CHANNELS.LTW]<.001)maxGrip=Math.max(maxGrip,ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3())));
+            const c=ch.weapon.parts.can,l=ch.weapon.parts.canLabel;if(l&&tier!=='far')labelError=Math.max(labelError,c.position.distanceTo(l.position),c.scale.distanceTo(l.scale));
+          }
+          const t1=performance.now();renderer.render(scene,camera);gl.finish();const t2=performance.now();if(frame>=40){animation.push(t1-t0);complete.push(t2-t1);}
+        }
+        const geos=new Set();scene.traverseVisible(o=>{if(o.isMesh)geos.add(o.geometry)});let bytes=0;for(const g of geos){for(const a of Object.values(g.attributes))bytes+=a.array.byteLength;if(g.index)bytes+=g.index.array.byteLength;}
+        if(nonFinite||maxGrip>.008||labelError>1e-8)throw Error(JSON.stringify({tier,nonFinite,maxGrip,labelError}));
+        result.tiers[tier]={triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,visibleGeometryBytes:bytes,maxGrip,nonFinite,labelError,animationMs:quant(animation),renderCompleteMs:quant(complete),raw:{animation,complete},image:snap()};
+      }
+      for(const a of actors){a.weaponRunner.reset();scene.remove(a.character.root);a.character.dispose();}return result;
+    });
+    for(const[tier,row]of Object.entries(crowd.tiers)){fs.writeFileSync(path.join(out,'crowd-'+tier+'.png'),Buffer.from(row.image,'base64'));delete row.image;}
+    fs.writeFileSync(path.join(out,'crowd.json'),JSON.stringify({revision:identity.build.revision,...crowd},null,2));console.log('FIVE_CROWD '+JSON.stringify(crowd));
   }
   fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, rows, errors }, null, 2));
   if (errors.length) { console.error('page errors:', errors.slice(0, 10)); process.exitCode = 1; }

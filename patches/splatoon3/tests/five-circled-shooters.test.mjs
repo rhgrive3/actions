@@ -57,3 +57,13 @@ test('two .96 label instances follow peak/rest can transforms and far-near owner
  for(const actor of actors)actor.character.dispose();assert.equal(disposals,0,'instance disposal does not destroy shared geometry');
  const third=new f.Actor({team:0,weapon:'s3-shooter-heavy',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});assert.equal(third.character.weapon.parts.canLabel.userData.mesh.geometry,geo);assert.notEqual(third.character.weapon.parts.canLabel,a.parts.canLabel);third.character.dispose();
 });
+
+test('Nova visible upper aperture is recessed and never sealed by the yellow collar',async()=>{
+ const f=await production(),d=f.getWeaponDef('s3-shooter-quicklong'),{THREE}=f,u=.11/130,axis=(475-310)*u;
+ const mesh=new THREE.Mesh(d.body,new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));mesh.updateMatrixWorld(true);
+ const hits=new THREE.Raycaster(new THREE.Vector3(0,axis,.7),new THREE.Vector3(0,0,-1)).intersectObject(mesh);
+ assert.ok(hits.length);assert.ok(Math.abs(hits[0].point.z-(955-439)*u)<1e-6,'ray first hits recessed dark backplate, not yellow front cap');
+ const c=d.body.attributes.color,i=hits[0].face.a;assert.ok(Math.max(c.getX(i),c.getY(i),c.getZ(i))<.02,'backplate stays dark');mesh.material.dispose();
+ // Visible aperture evidence is intentionally independent of the unresolved legacy shot socket.
+ assert.deepEqual(Array.from(d.muzzle.toArray()),[0,.11/66*(265-237),.11/66*(384-118)]);
+});

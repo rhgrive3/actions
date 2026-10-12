@@ -224,13 +224,21 @@ function nova(d) {
     [384,246],[374,236],[394,220],[402,197],[474,195],[540,195],[623,196],[657,205],[678,226],[693,245],[709,245],
     [686,280],[677,322],[685,353],[708,375],[760,379],[824,364],[838,387],[831,406],[727,410],[642,414],[432,414],[347,399],[286,386]];
   const window=[[473,380],[511,358],[563,350],[606,357],[625,370],[608,385],[545,396],[489,397]];
+  // The chassis band sits ON the curved rear bottle. A flat cheek at x=.057 was
+  // buried by its .077 m radius and left the maker strokes apparently floating.
+  const coat=(g,sx)=>{const p=g.attributes.position;for(let i=0;i<p.count;i++){
+    const z=p.getZ(i)/u+439,y=475-p.getY(i)/u;let radius=0;
+    for(let j=1;j<rear.length;j++)if(z>=rear[j-1][1]&&z<=rear[j][1]){const [ra,za]=rear[j-1],[rb,zb]=rear[j];radius=ra+(rb-ra)*(z-za)/(zb-za);break;}
+    const surface=Math.sqrt(Math.max(0,radius*radius-(y-291)*(y-291)))*u;
+    p.setX(i,p.getX(i)+sx*Math.max(0,surface-.054));
+  }p.needsUpdate=true;g.computeVertexNormals();return g;};
   for(const sx of[-1,1]){
-    body.add(panel(outline,.006,sx*.057,[window]),C.frame,M.satin);
+    body.add(coat(panel(outline,.006,sx*.057,[window]),sx),C.frame,M.satin);
     body.add(panel([[642,364],[704,367],[719,401],[645,400]],.004,sx*.061),C.edge,M.satin);
     body.add(panel([[650,372],[699,375],[708,391],[651,392]],.004,sx*.064),C.dark,M.rubber);
     // Small angular white maker mark follows the broad diagonal band, authored as linework.
     for(const path of[[[455,350],[473,345],[469,336],[486,332],[493,345],[480,352],[486,363]],[[488,321],[503,311],[513,327],[531,324],[520,343],[538,349]],[[534,322],[550,326],[545,334],[561,340],[545,355],[526,359]],[[464,365],[481,370],[483,358]],[[553,363],[570,355],[583,354]]])
-      body.add(tube(path,.0018,sx*.061),C.white,M.print);
+      body.add(coat(tube(path,.0018,sx*.061),sx),C.white,M.print);
   }
   body.add(panel([[419,398],[733,397],[820,390],[833,407],[794,425],[635,436],[595,418],[441,423]],.087),C.frame,M.satin);
   // Front bulb saddle and vented collar wrap around the upper barrel.
@@ -245,7 +253,7 @@ function nova(d) {
   body.add(panel([[792,190],[822,187],[907,199],[926,211],[925,228],[915,236],[905,220],[816,207],[789,205]],.048),C.frame,M.satin);
   body.add(panel([[800,196],[820,195],[910,207],[917,213],[915,225],[902,214],[814,205]],.049),C.white,M.satin);
   // Upper yellow round nozzle with its purple inner lip and a genuinely recessed dark opening.
-  body.add(zlathe([[0,Z(873)],[44*u,Z(873)],[49*u,Z(881)],[49*u,Z(943)],[45*u,Z(956)],[0,Z(956)]],0,AX,0,36),C.yellow,M.gloss);
+  body.add(zlathe([[0,Z(873)],[44*u,Z(873)],[49*u,Z(881)],[49*u,Z(943)],[45*u,Z(956)],[27*u,Z(956)],[27*u,Z(942)],[0,Z(942)]],0,AX,0,36),C.yellow,M.gloss);
   for(const x of[890,928])body.add(ring(49*u,.0013,0,AX,Z(x),'z',5,32),'#acb228',M.satin);
   for(let k=0;k<6;k++){const a=k*Math.PI/3;const g=box(.008,.002,.024,0,0,0,.25,6,4).rotateZ(a).translate(Math.sin(a)*50*u,AX+Math.cos(a)*50*u,Z(910));body.add(g,'#b2b82b',M.satin);}
   body.add(zlathe([[0,Z(944)],[26*u,Z(947)],[29*u,Z(955)],[25*u,Z(965)],[13*u,Z(965)],[13*u,Z(954)],[0,Z(954)]],0,AX,0,32),C.purple,M.gloss);
