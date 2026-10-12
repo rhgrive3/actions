@@ -68,4 +68,3 @@ def bvh(tri):
   return idx
  rec(np.arange(len(tri),dtype=np.int32))
  return np.asarray(nodes,dtype='<f4'),np.asarray(order,dtype='<u4')
-

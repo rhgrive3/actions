@@ -68,4 +68,3 @@ export function releaseNativeWorld(game){
  game.nativeWorld.dispose();game.nativeWorld=null;game.levelMesh=null;game.levelMat=null;game.grateMesh=null;game.grateMat=null;
  game.decor=null;
 }
-

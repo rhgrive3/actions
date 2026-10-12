@@ -482,5 +482,41 @@
       "mobileHardwareMeasured": false
     }
   ],
-  "performanceNotes": "CPU simulation timings include live eight-actor game work; warmup/first-draw spikes and workload variance exist. Some measurement overlapped regression processes. SwiftShader viewport emulation is not real mobile hardware or retail FPS."
+  "performanceNotes": "CPU simulation timings include live eight-actor game work; warmup/first-draw spikes and workload variance exist. Some measurement overlapped regression processes. SwiftShader viewport emulation is not real mobile hardware or retail FPS.",
+  "postWarmupRecheck": [
+    {
+      "id": "scorch",
+      "actors": 8,
+      "rules": [
+        "zones",
+        "tower",
+        "rainmaker",
+        "clams"
+      ],
+      "cpuFrame": {
+        "p50": 46.40000000037253,
+        "p95": 94,
+        "max": 2668.199999999255
+      },
+      "shaderWarmMilliseconds": 12.099999999627471,
+      "errors": []
+    },
+    {
+      "id": "brinewater",
+      "actors": 8,
+      "rules": [
+        "zones",
+        "tower",
+        "rainmaker",
+        "clams"
+      ],
+      "cpuFrame": {
+        "p50": 33.19999999925494,
+        "p95": 70.29999999888241,
+        "max": 1332.9000000003725
+      },
+      "shaderWarmMilliseconds": 11.400000000372529,
+      "errors": []
+    }
+  ]
 }
