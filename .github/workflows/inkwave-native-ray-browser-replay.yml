@@ -1,0 +1,47 @@
+name: Diagnose INKWAVE native ray same-trace replay
+on:
+  push:
+    branches: [perf/inkwave-native-ray-browser-replay]
+    paths:
+      - '.github/workflows/inkwave-native-ray-browser-replay.yml'
+      - 'scripts/probes/inkwave-native-ray-browser.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-native-ray-browser-replay-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ray-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Verify immutable diagnostic and reference
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          git fetch --depth=1 origin ac1159b76b42a10ff02fe58add74a8285cc08d32
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.19.0
+      - name: Install pinned Chromium driver
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Replay immutable same-input rays in normal Chromium realm
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ray-browser-evidence
+          node scripts/probes/inkwave-native-ray-browser.mjs --assets .ray-browser-assets --out .ray-browser-evidence --playwright node_modules/playwright/index.mjs 2>&1 | tee .ray-browser-evidence/run.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-ray-browser-replay-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            .ray-browser-evidence/*.json
+            .ray-browser-evidence/run.log
