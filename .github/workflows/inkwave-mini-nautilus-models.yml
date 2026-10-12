@@ -6,6 +6,8 @@ on:
       - patches/splatoon3/runtime/weapon-models/splatlings.mjs
       - patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs
       - patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs
+      - patches/splatoon3/tests/weapon-models-nautilus-strip-topology.test.mjs
+      - patches/splatoon3/tests/weapon-models-nautilus-neck-dial.test.mjs
       - scripts/render-inkwave-mini-nautilus-gallery.mjs
       - scripts/compare-inkwave-mini-nautilus-gallery.py
       - .github/workflows/inkwave-mini-nautilus-models.yml
@@ -26,9 +28,17 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 3165f4f26a1a4b30aec228939dd92adf6fdbfd06
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
           path: .model-baseline
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          path: .model-lod-before
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /inkwave-public/src/game/character-lod.js
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -44,13 +54,25 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public .model-after-site
       - name: Verify rebuilt geometry and preserved motion
         run: |
-          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs patches/splatoon3/tests/weapon-models-nautilus-strip-topology.test.mjs patches/splatoon3/tests/weapon-models-nautilus-neck-dial.test.mjs
+      - name: Preserve all65 authored LOD face corners and existing allocation budget
+        env:
+          WEAPON_LOD_BASELINE: .model-lod-before/inkwave-public/src/game/character-lod.js
+          WEAPON_LOD_REPORT: .model-evidence/all65-lod-structure.json
+        run: |
+          mkdir -p .model-evidence
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-lod-boundaries.test.mjs
       - name: Render real production Actor and all model angles on the same runner
         run: |
           IDS=s3-spinner-quick,s3-spinner-serein
           node scripts/render-inkwave-mini-nautilus-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 640
           node scripts/render-inkwave-mini-nautilus-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 640
           python3 scripts/compare-inkwave-mini-nautilus-gallery.py .model-evidence reports/inkwave-weapon-model-workspace/refs ${IDS//,/ }
+      - name: Native day Neutral and high-post images of the exact same heads
+        run: |
+          IDS=s3-spinner-quick,s3-spinner-serein
+          node scripts/render-inkwave-mini-nautilus-gallery.mjs --site .model-before-site --out .model-evidence/native-day/before --ids "$IDS" --size 640 --native-day
+          node scripts/render-inkwave-mini-nautilus-gallery.mjs --site .model-after-site --out .model-evidence/native-day/after --ids "$IDS" --size 640 --native-day
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -71,7 +93,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 3165f4f26a1a4b30aec228939dd92adf6fdbfd06
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -89,8 +111,7 @@ jobs:
       - name: Verify exact emitted runtime geometry and real Actor contracts
         env:
           INKWAVE_BUILT_SITE: .model-after-site
-          WEAPON_IDS: s3-spinner-quick,s3-spinner-serein
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs patches/splatoon3/tests/weapon-models-nautilus-strip-topology.test.mjs patches/splatoon3/tests/weapon-models-nautilus-neck-dial.test.mjs
       - name: Eight mixed-weapon Actors, gameplay and far LOD, controlled ABBA
         run: |
           for pair in before-A after-B after-B2 before-A2; do

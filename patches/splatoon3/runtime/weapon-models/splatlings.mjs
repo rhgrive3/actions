@@ -4,7 +4,7 @@
 // splatling channels are kept: `trigger` (pistol trigger) and `barrels` (the spun cluster, rotating about its
 // local Z through a pivot on the barrel axis). The native charge coil is kept for readability although none of the six references
 // shows a charge meter. Everything is procedural geometry.
-import { Pieces, M, zlathe, xlathe, ylathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, pistolGrip, supportHandle,
+import { THREE, Pieces, M, zlathe, xlathe, ylathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, pistolGrip, supportHandle,
   slab, part, rebuild, TRIGGER_PIVOT } from './kit.mjs';
 
 /** Barrels on a ring of radius R about the spin axis (ay): n tubes from z0 to z1, each with a nozzle tip. */
@@ -152,12 +152,13 @@ function ballpoint(d) {
 }
 
 function nautilus(d) {
-  // The turntable resolves the rear into an asymmetric rounded shell, a projecting opposite-side hub, and a
-  // truncated front/lower lip. The middle is an angular cast shroud, not a long round tube.
+  // S2 official 47 promotion and S3 79 rotation both show a hollow projecting coil and an inner tank.
+  // These shared visible components replace the earlier mistaken concentric-disc interpretation.
+  // S3 47 exact reverse geometry/materials are still unverified; no retail mesh or texture is used.
   // Silver hardware follows the Nautilus 47 still. The alternate 79 turntable is shape-only.
-  // Broad silver surfaces use the established satin channel for a readable neutral finish;
-  // polished rings and nozzle sleeves retain M.metal. A fully metallic plate read as black chrome.
-  const AX=.07,C={dark:'#303338',black:'#181b1e',trim:'#d0d5d4',silver:'#aeb8bb',shell:'#757e86'};
+  // The former black-metal result came from undersized review PMREM, not the native shader.
+  // Restore the 4d silver/metal finish. Coil/tank dimensions and exact S3 47 reverse remain under review.
+  const AX=.07,C={dark:'#303338',black:'#181b1e',trim:'#d0d5d4',silver:'#aeb8bb'};
   const body=new Pieces(),B=new Pieces(),ink=new Pieces();
   const tr=pistolGrip(body,{color:C.black,triggerColor:C.dark,guardColor:C.dark});
   const sy=.121,sz=-.096;
@@ -169,37 +170,94 @@ function nautilus(d) {
       p.setY(i,sy+y*(1-.15*cut));p.setZ(i,sz+z*(1-.15*cut));
     }p.needsUpdate=true;g.computeVertexNormals();return g;
   };
-  // The black-disc side remains smooth. The opposite silver-hub face is shallowly convex,
-  // with two stamped shoulders visible in the side and rear-oblique reference views.
+  // Keep the outer surface geometry fixed; the reverse is a smooth raised coil housing, not two grooves.
   // The rolled lip wraps both faces, rather than sitting behind the dark shell on the outer side.
-  // Maximum shell radius, axial envelope and the existing hub/neck stay fixed.
-  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.11,.014],[.103,.022],[.096,.028],[.09,.031],[.085,.025],[.078,.03],[.073,.036],[.067,.039],[.061,.029],[.054,.033],[.046,.036],[0,.036]],0,sy,sz,36)),C.shell,M.satin);
-  body.add(shellShape(xlathe([[.123,.003],[.127,.005],[.133,.012],[.133,.023],[.128,.026],[.123,.026],[.123,.003]],0,sy,sz,36)),C.trim,M.satin);
-  // The 47 still gives a black-cap / shell diameter ratio near .68 in projection.
-  // This outer cap is distinct from the silver hub on the opposite (+X) face.
-  body.add(xlathe([[0,-.053],[.0538,-.053],[.0779,-.048],[.085,-.042],[.085,-.036],[0,-.036]],0,sy,sz,28),C.black,M.satin);
+  // Shell radius and Z length stay fixed. Only the inner (+X) coil/tank expands the transverse envelope.
+  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.11,.032],[.103,.039],[.096,.045],[.09,.05],[.085,.054],[.078,.057],[.073,.058],[.067,.056],[.061,.05],[.054,.043],[.046,.039],[0,.037]],0,sy,sz,36)),C.silver,M.metal);
+  body.add(shellShape(xlathe([[.123,.003],[.127,.005],[.133,.012],[.133,.023],[.128,.026],[.123,.026],[.123,.003]],0,sy,sz,36)),C.trim,M.metal);
+  // Retain the enlarged outer-cap shape. Official47 images show reflective silver;
+  // the earlier black-paint interpretation is withdrawn. The reverse housing is distinct.
+  body.add(xlathe([[0,-.053],[.0538,-.053],[.0779,-.048],[.085,-.042],[.085,-.036],[0,-.036]],0,sy,sz,28),C.silver,M.metal);
   body.add(ring(.084,.0025,-.042,sy,sz,'x',4,28),C.silver,M.metal);
-  body.add(xlathe([[0,.001],[.023,.001],[.029,.013],[.029,.043],[.022,.049],[0,.049]],0,sy,sz,20),C.silver,M.satin);
-  body.add(xlathe([[0,.049],[.018,.049],[.018,.051],[0,.051]],0,sy,sz,16),C.black,M.rubber);
+  // A slightly tapered roll of flat metal strip, not a round wire spring. The open mouth is narrower
+  // than the base, as the return-facing source views show. The angular outer reference is approximate.
+  const coil=new THREE.TorusGeometry(1,1,8,72,Math.PI*2*3.125);
+  const cp=coil.attributes.position,cu=coil.attributes.uv;
+  const cross=[[-.0023,-.0067],[-.0015,-.0075],[.0015,-.0075],[.0023,-.0067],[.0023,.0067],[.0015,.0075],[-.0015,.0075],[-.0023,.0067]];
+  for(let i=0;i<cp.count;i++){
+    const u=cu.getX(i),[axial,radial]=cross[Math.round(cu.getY(i)*8)%8],a=Math.PI*.25+Math.PI*2*3.125*u,R=.0508-.0023*u+radial;
+    cp.setXYZ(i,.049+.038*u+axial,.097+Math.cos(a)*R,-.072+Math.sin(a)*R);
+  }
+  const ci=coil.index.array;for(let i=0;i<ci.length;i+=3){const t=ci[i+1];ci[i+1]=ci[i+2];ci[i+2]=t;}
+  coil.computeVertexNormals();
+  // Join both cut cross-sections to the return strip, leaving no exposed open ends.
+  // The visible coil and tank-surrounding band are in both cited views; the hidden path is approximate.
+  // Coil radial width is15mm, easing to8mm on the tank return; maximum coil OD remains116.6mm.
+  // The return taper is an approximation to the narrower visible tank band, not a retail dimension claim.
+  const start=new THREE.Vector3(.049,.097+Math.SQRT1_2*.0508,-.072+Math.SQRT1_2*.0508);
+  const end=new THREE.Vector3(.087,.097,-.0235);
+  // Follow the tank's chamfered outline instead of rounding across its pale face. Small
+  // corner arcs soften the metal bends; exact hidden routing remains an approximation.
+  const around=[[-.051,-.041],[-.035,-.057],[.039,-.057],[.053,-.044],
+    [.053,.045],[.044,.06],[-.039,.06]].map(([z,y])=>new THREE.Vector3(.087,y,z).applyAxisAngle(new THREE.Vector3(1,0,0),-.18).add(new THREE.Vector3(0,.078,.029)));
+  const entryTangent=new THREE.Vector3(.038,-Math.SQRT1_2*.0508*Math.PI*2*3.125,Math.SQRT1_2*.0508*Math.PI*2*3.125).normalize();
+  const approach=start.clone().addScaledVector(entryTangent,-.017);
+  const route=[end,...around,approach,start],returnPath=new THREE.CurvePath();let from=route[0];
+  for(let i=1;i<route.length-1;i++){
+    const p=route[i],prev=route[i-1],next=route[i+1],d=Math.min(.0035,p.distanceTo(prev)*.2,p.distanceTo(next)*.2);
+    const before=p.clone().addScaledVector(prev.clone().sub(p).normalize(),d),after=p.clone().addScaledVector(next.clone().sub(p).normalize(),d);
+    returnPath.add(new THREE.LineCurve3(from,before));let last=before;
+    // Four explicit quadratic-bend chords also work in the frozen review vendor surface.
+    for(let k=1;k<=4;k++){const t=k/4,q=before.clone().multiplyScalar((1-t)*(1-t)).addScaledVector(p,2*(1-t)*t).addScaledVector(after,t*t);returnPath.add(new THREE.LineCurve3(last,q));last=q;}
+    from=after;
+  }
+  returnPath.add(new THREE.LineCurve3(from,route.at(-1)));
+  const band=new THREE.TubeGeometry(returnPath,48,1,8,false),bp=band.attributes.position,bu=band.attributes.uv;
+  for(let i=0;i<bp.count;i++){
+    const u=bu.getX(i),j=Math.round(bu.getY(i)*8)%8,[axial,radial]=cross[j];
+    if(u===0||u===1){const k=j*73+(u===0?72:0);bp.setXYZ(i,cp.getX(k),cp.getY(k),cp.getZ(k));continue;}
+    const t=returnPath.getTangentAt(u),b=new THREE.Vector3(1,0,0).addScaledVector(t,-t.x).normalize(),n=new THREE.Vector3().crossVectors(t,b).normalize();
+    const blend=Math.min(1,u/.12,(1-u)/.12),width=1-(1-8/15)*blend;
+    const p=returnPath.getPointAt(u).addScaledVector(b,axial).addScaledVector(n,radial*width);bp.setXYZ(i,p.x,p.y,p.z);
+  }
+  const bi=band.index.array;for(let i=0;i<bi.length;i+=3){const t=bi[i+1];bi[i+1]=bi[i+2];bi[i+2]=t;}
+  band.computeVertexNormals();body.add(coil,C.silver,M.metal);body.add(band,C.silver,M.metal);
+  // Chamfered, visibly thick tank. Long side / coil OD is about .88 rather than v1's .63.
+  // The profile is angular; a pale planar face and depth should remain legible at both inner obliques.
+  const tank=[[-.045,.047],[-.036,.053],[.037,.053],[.046,.042],[.046,-.038],[.034,-.05],[-.03,-.05],[-.045,-.038]];
+  body.add(slab(tank,.044,.062,.0015).translate(-.062,0,0).rotateX(-.18).translate(.062,.078,.029),'#e6cdd4',M.satin);
   for(let i=0;i<7;i++){
     const a=-.88+i*.19;
     body.add(box(.004,.004,.008,-.029,sy+Math.sin(a)*.09,sz-Math.cos(a)*.09,.28,6,4),C.silver,M.satin);
   }
   // A ribbed neck remains exposed between shell and sleeve; the small ink cap is attached here.
-  body.add(zlathe([[0,-.06],[.026,-.06],[.03,-.037],[.029,.026],[0,.026]],0,AX,0,20),C.silver,M.satin);
+  body.add(zlathe([[0,-.06],[.026,-.06],[.03,-.037],[.029,.026],[0,.026]],0,AX,0,20),C.silver,M.metal);
   for(const z of[-.032,-.018,-.004])body.add(ring(.03,.004,0,AX,z,'z',4,18),C.dark,M.satin);
-  ink.add(sphere(.018,.014,.025,-.02,.122,-.028,14,8));
-  body.add(cyl(.013,[-.02,.108,-.022],[-.02,.127,-.032],12),C.silver,M.metal);
+  // Base47 and the original47 still give a dial face/rim diameter ratio near .16–.17.
+  // The former ellipsoid was behind the dish. The ribbed circular dial uses the silver finish visible in both 47 stills.
+  // Center placement stays fixed from718b; radial scale alone brings the60deg front/rim ratio to about.162.
+  const capY=.124,capZ=.082,dialScale=.94;
+  const dial=xlathe([[0,-.046],[.0075,-.046],[.0075,-.051],[.016,-.051],
+    [.0205,-.049],[.021,-.046],[.021,-.027],[.019,-.024],[0,-.024]],0,capY,capZ,32);
+  const dp=dial.attributes.position;
+  for(let i=0;i<dp.count;i++){
+    const x=dp.getX(i),y=dp.getY(i)-capY,z=dp.getZ(i)-capZ,r=Math.hypot(y,z);
+    if(x>-.048&&x<-.026&&r>.019){const scallop=1+.035*Math.cos(Math.atan2(z,y)*16);dp.setY(i,capY+y*scallop);dp.setZ(i,capZ+z*scallop);}
+  }
+  dial.translate(0,-capY,-capZ).scale(1,dialScale,dialScale).translate(0,capY,capZ);
+  dial.computeVertexNormals();body.add(dial,C.silver,M.metal);
+  body.add(xlathe([[0,-.048],[.0068*dialScale,-.048],[.0068*dialScale,-.046],[0,-.046]],0,capY,capZ,12),C.dark,M.rubber);
+  body.add(cyl(.009,[-.01,.104,capZ-.008],[-.026,capY,capZ],12),C.silver,M.metal);
   // The shroud's sides are full cast sections with a broad faceted face and a dark top bridge.
-  body.add(zlathe([[0,.026],[.032,.026],[.045,.047],[.047,.151],[.042,.171],[0,.171]],0,AX,0,12),C.silver,M.satin);
+  body.add(zlathe([[0,.026],[.032,.026],[.045,.047],[.047,.151],[.042,.171],[0,.171]],0,AX,0,12),C.silver,M.metal);
   body.add(box(.061,.009,.123,0,AX+.044,.102,.25,8,4),C.dark,M.satin);
-  for(const x of[-.042,.042])body.add(slab([[.048,.055],[.06,.089],[.147,.091],[.162,.078],[.15,.049],[.064,.05]],.003,x,.001),C.silver,M.satin);
-  for(const z of[.026,.171])body.add(zlathe([[.038,z-.004],[.046,z-.004],[.048,z],[.044,z+.006],[.038,z+.006]],0,AX,0,12).scale(1,1.06,1),C.trim,M.satin);
+  for(const x of[-.042,.042])body.add(slab([[.048,.055],[.06,.089],[.147,.091],[.162,.078],[.15,.049],[.064,.05]],.003,x,.001),C.silver,M.metal);
+  for(const z of[.026,.171])body.add(zlathe([[.038,z-.004],[.046,z-.004],[.048,z],[.044,z+.006],[.038,z+.006]],0,AX,0,12).scale(1,1.06,1),C.trim,M.metal);
   body.add(pipe([[0,.11,.025],[0,.135,.032],[0,.139,.057],[0,.119,.069]],.004,12,6),C.silver,M.metal);
   // Exposed bearing gap precedes the hemispherical three-nozzle rotor.
   body.add(zcyl(.026,.178,.212,0,AX,20),C.black,M.satin);
   ink.add(ring(.029,.0025,0,AX,.187,'z',4,20));
-  B.add(zlathe([[.022,.198],[.042,.198],[.047,.211],[.046,.229],[.04,.246],[.032,.262],[.019,.271],[0,.273]],0,AX,0,30),C.shell,M.satin);
+  B.add(zlathe([[.022,.198],[.042,.198],[.047,.211],[.046,.229],[.04,.246],[.032,.262],[.019,.271],[0,.273]],0,AX,0,30),C.silver,M.metal);
   B.add(ring(.044,.004,0,AX,.212,'z',5,26),C.silver,M.metal);
   for(let k=0;k<3;k++){
     const a=Math.PI/2+k*Math.PI*2/3,x=Math.cos(a)*.026,y=AX+Math.sin(a)*.026;

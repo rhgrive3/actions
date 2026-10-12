@@ -1,24 +1,17 @@
-name: Nautilus finish and inner-coil reference diagnosis
+name: Mini Nautilus fixed-head final evidence recovery
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - .github/workflows/nautilus-finish-environment.yml
-      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-finish-environment.mjs
-      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-inner-coil-candidate.mjs
-      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-environment.mjs
-      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-candidate.mjs
-      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-inner-coil-cap-baseline.mjs
-      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-refined-candidate.mjs
-      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-orange-baseline.mjs
-      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-refined-environment.mjs
+      - reports/weapon-model-rebuild-20261012/diagnostics/mini-nautilus-final-gallery.mjs
 permissions:
   contents: read
 jobs:
-  finish-environment:
+  fixed-evidence:
     if: github.head_ref == 'test/nautilus-finish-environment'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,8 +19,13 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: f2a87e9e56387ada0487205c195eeee4e73baa6f
-          path: .finish-source
+          ref: 3acf0f81d839bc28d032d89237c45267927fbaad
+          path: .model-source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -35,18 +33,39 @@ jobs:
       - run: |
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
-      - name: Build the fixed model head
+      - name: Build frozen3acf and main-ed3a without changing any model
         run: |
-          test "$(git -C .finish-source rev-parse HEAD)" = f2a87e9e56387ada0487205c195eeee4e73baa6f
+          test "$(git -C .model-source rev-parse HEAD)" = 3acf0f81d839bc28d032d89237c45267927fbaad
+          test "$(git -C .model-baseline rev-parse HEAD)" = ed3a046574208471c5db5309e2469d263cacfdfd
+          mkdir -p .final-evidence
+          printf '{"candidate":"3acf0f81d839bc28d032d89237c45267927fbaad","baseline":"ed3a046574208471c5db5309e2469d263cacfdfd","harness":"%s","previousFailedRun":38261085081,"scope":"Native image init recovery and previously unexecuted fixed studio ABBA. No favorable-repeat selection."}\n' "$(git rev-parse HEAD)" > .final-evidence/inputs.json
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
-          node .finish-source/scripts/build-inkwave.mjs .finish-source/inkwave-public .finish-site
-      - name: Compare47 silver dial size with fixed718b placement
-        run: node reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-refined-environment.mjs --site .finish-site --source .finish-source --out .finish-evidence
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node .model-source/scripts/build-inkwave.mjs .model-source/inkwave-public .model-after-site
+      - name: Recover actual native day Neutral high-post images
+        run: |
+          for version in before after; do
+            node reports/weapon-model-rebuild-20261012/diagnostics/mini-nautilus-final-gallery.mjs --site ".model-${version}-site" --out ".final-evidence/native-day/${version}" --ids s3-spinner-quick,s3-spinner-serein --size 640 --native-day
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: nautilus-inner-coil-and-finish-${{ github.run_attempt }}
-          path: .finish-evidence
+          name: mini-nautilus3acf-native-${{ github.run_attempt }}
+          path: .final-evidence
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+      - name: Previously unexecuted8-Actor game and far ABBA on this runner
+        run: |
+          for pair in before-A after-B after-B2 before-A2; do
+            version="${pair%%-*}"
+            node reports/weapon-model-rebuild-20261012/diagnostics/mini-nautilus-final-gallery.mjs --site ".model-${version}-site" --out ".final-evidence/crowd/${pair}" --ids s3-spinner-quick --size 600 --crowd
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mini-nautilus3acf-complete-${{ github.run_attempt }}
+          path: .final-evidence
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14

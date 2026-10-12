@@ -1,3 +1,4 @@
+import { adaptNativeStages } from '../patches/native-stages/adapter.mjs';
 import { adaptSource } from '../patches/splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
 import { adaptReliability } from '../patches/reliability/adapter.mjs';
@@ -16,5 +17,6 @@ export function adaptBuildSource(rel, code) {
   code = adaptNetworkSource(rel, code);
   code = adaptRange(rel, code);
   code = adaptRanked(rel, code);
+  code = adaptNativeStages(rel, code);
   return adaptCameraAimControls(rel, code);
 }

@@ -25,7 +25,7 @@ for x,y in zip(a['rows'],b['rows']):
 # alternate finishes (Nautilus 79 / Zink Mini), so they guide shape, never the base-kit material palette.
 # Before and after share a crop from the union of their alpha bounds; this never fits each version alone.
 pairs={
- 's3-spinner-serein':[(0,60,'black disc, muzzle right, neck at right rim'),(1,0,'front; exact source yaw unresolved'),(2,270,'silver hub, muzzle left, neck left/below hub'),(3,240,'silver hub rear oblique, neck projects left'),(4,150,'black disc rear oblique, rim and coupling left'),(5,90,'black disc side, muzzle right, neck right')],
+ 's3-spinner-serein':[(0,60,'outer central disc, muzzle right, neck at right rim'),(1,0,'front; exact source yaw unresolved'),(2,270,'inner coil, muzzle left, neck left/below coil'),(3,240,'inner coil rear oblique, tank and neck project left'),(4,150,'outer central disc rear oblique, rim and coupling left'),(5,90,'outer central disc side, muzzle right, neck right')],
  's3-spinner-quick':[(0,60,'tank side/front, muzzle right'),(1,0,'six-port front, tank on left'),(2,300,'opposite-side/front, muzzle left'),(3,240,'opposite-side/rear, rear lever on right'),(4,180,'rear motor cap and tank feed'),(5,120,'tank-side/rear, muzzle beyond the tank')],
 }
 for wid in ids:
