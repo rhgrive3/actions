@@ -14,13 +14,21 @@ export class TriangleWorld {
  ray(origin,dir,far=1000,{ignoreGrates=false,minNormalY=-2}={}) {
   if(!Number.isFinite(origin.x+origin.y+origin.z+dir.x+dir.y+dir.z))return null;
   const nodes=this.nodes,stack=[0],verts=this.triangles,norm=this.normals;let best=far,id=-1,bu=0,bv=0;
+  // Ground/edge probes use this exact direction. Keep native division and
+  // traversal order; no reciprocal approximation or cross-query cache.
+  const verticalDown=dir.x===0&&dir.z===0&&dir.y===-1;
   this.queryCount++;
   while(stack.length){
    const ni=stack.pop()*8;let low=0,high=best,miss=false;
+   if(verticalDown){
+    if(origin.x<nodes[ni]||origin.x>nodes[ni+3]||origin.z<nodes[ni+2]||origin.z>nodes[ni+5])miss=true;
+    else {const a=(nodes[ni+1]-origin.y)/dir.y,b=(nodes[ni+4]-origin.y)/dir.y;low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low)miss=true;}
+   }else{
    for(let k=0;k<3;k++){
     const o=k===0?origin.x:k===1?origin.y:origin.z,d=k===0?dir.x:k===1?dir.y:dir.z;
     if(Math.abs(d)<1e-12){if(o<nodes[ni+k]||o>nodes[ni+3+k]){miss=true;break;}continue;}
     const a=(nodes[ni+k]-o)/d,b=(nodes[ni+3+k]-o)/d;low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low){miss=true;break;}
+   }
    }
    if(miss)continue;
    const left=nodes[ni+6]|0,right=nodes[ni+7]|0;
