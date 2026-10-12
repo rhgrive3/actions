@@ -945,7 +945,8 @@ function updateDeployed(api,projectiles,object,dt){
       }
     }
   }
-  if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw+object.age*2;}
+  // A deployed wall's rendered plane must retain the yaw used by barrier contact.
+  if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw+(object.subId==='splashWall'?0:object.age*2);}
 }
 
 function tickObjects(api,projectiles,dt){

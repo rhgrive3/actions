@@ -334,6 +334,16 @@ try {
         a.reset();check(a.weapon.sub===k.sub&&a.weapon.special===k.special,record.id+' kit after reset');
         kitChecks.push({id:record.id,sub:k.sub,special:k.special,points:k.specialCost,inkCost:cost});
       }
+      const {Level:WallProbeLevel}=await import('/src/world/level.js');
+      const wallFacingChecks=[];
+      {
+        const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics};G.netm=null;G.match={playing:()=>true,state:'playing',time:180};
+        G.level=new WallProbeLevel({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});G.physics=new api.Physics(G.level);
+        for(const yaw of [0,Math.PI/3]){
+          G.projectiles.clear();const o=makeActor('shooter'),enemy=makeActor('shooter');o.team=0;enemy.team=1;o.weapon={...o.weapon,sub:'splashWall'};o.pos.set(-10,0,-10);enemy.pos.set(80,0,80);o.aimYaw=yaw;o.aimDir.set(Math.sin(yaw),0,Math.cos(yaw));G.actors=[o,enemy];const p=G.projectiles.throwBomb(o);p.pos.set(0,1,0);p.prev.copy(p.pos);p.vel.set(0,-2,0);for(let i=0;i<120&&p.phase!=='deployed';i++){G.time+=1/60;G.projectiles.update(1/60);}check(p.phase==='deployed','wall native deployment');const normal=new THREE.Vector3(Math.sin(p.yaw),0,Math.cos(p.yaw));for(let i=0;i<60;i++){G.time+=1/60;G.projectiles.update(1/60);p.mesh.updateMatrixWorld(true);check(new THREE.Vector3(0,0,1).transformDirection(p.mesh.matrixWorld).distanceTo(normal)<1e-8,'wall rendered plane retains collision yaw');}const center=p.pos.clone().add(new THREE.Vector3(0,1,0)),start=center.clone().addScaledVector(normal,2),end=center.clone().addScaledVector(normal,-2);check(G.projectiles.kitBarrierCandidate({owner:enemy,team:1,damage:1,wid:'shooter',size:.05,prev:start,pos:end},start,end)?.object===p,'rendered wall is barrier plane');wallFacingChecks.push({yaw:p.yaw,meshYaw:p.mesh.rotation.y,frames:60,hp:p.hp});
+        }
+        G.projectiles.clear();Object.assign(G,saved);
+      }
       const directSubChecks=[];
       {
         const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics};
@@ -404,7 +414,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        directSubChecks, accelerationChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
+        wallFacingChecks, directSubChecks, accelerationChecks, kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
