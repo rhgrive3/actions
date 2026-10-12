@@ -36,7 +36,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          ref: ac1159b76b42a10ff02fe58add74a8285cc08d32
           path: .baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -66,7 +66,19 @@ jobs:
           set -euo pipefail
           npm install --no-save --no-package-lock esbuild@0.28.2
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .baseline/scripts/build-inkwave.mjs .baseline/inkwave-public .baseline-site | tee input-gate-evidence/build-baseline.log
           node scripts/build-inkwave.mjs inkwave-public .gate-site | tee input-gate-evidence/build.log
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const before=JSON.parse(fs.readFileSync('.baseline-site/inkwave-build.json'));
+          const after=JSON.parse(fs.readFileSync('.gate-site/inkwave-build.json'));
+          for(const key of ['contentHash','inputHash']) assert.equal(after[key],before[key],key+' differs from same-base main');
+          assert.equal(after.build.revision,before.build.revision,'runtime revision differs from same-base main');
+          const proof={baseline:'ac1159b76b42a10ff02fe58add74a8285cc08d32',contentHash:after.contentHash,inputHash:after.inputHash,revision:after.build.revision};
+          fs.writeFileSync('input-gate-evidence/unchanged-production.json',JSON.stringify(proof,null,2)+'\n');
+          console.log(JSON.stringify(proof));
+          JS
           INKWAVE_BUILT_SITE=.gate-site node --experimental-vm-modules --test scripts/tests/inkwave-build-packaging.test.mjs patches/splatoon3/tests/paint-mask-probe-level.test.mjs | tee input-gate-evidence/packaging.log
       - uses: actions/upload-artifact@v4
         if: always()
