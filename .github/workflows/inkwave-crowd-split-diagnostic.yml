@@ -1,0 +1,57 @@
+name: INKWAVE split paint CPU diagnostic
+on:
+  push:
+    branches: [perf/inkwave-crowd-split-diagnostic]
+permissions:
+  contents: read
+jobs:
+  mobile-eight-actors:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arm: body
+            candidate: 0923fdf1121be326356d042e488b11d4fa8ee916
+          - arm: ancillary
+            candidate: 1f30c58275eb1a874a89931036d816062128d647
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      BASELINE_SHA: ed3a046574208471c5db5309e2469d263cacfdfd
+      CANDIDATE_SHA: ${{ matrix.candidate }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .baseline
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.candidate }}
+          path: .candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: One runtime change only, production mobile paint quality, repeated ABBA
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          mkdir -p .split-evidence
+          node .baseline/scripts/build-inkwave.mjs .baseline/inkwave-public .before-site > .split-evidence/before-build.log
+          node .candidate/scripts/build-inkwave.mjs .candidate/inkwave-public .after-site > .split-evidence/after-build.log
+          node scripts/measure-paint-piece-workload.mjs --baseline-sha "$BASELINE_SHA" --candidate-sha "$CANDIDATE_SHA" --baseline-root .baseline --candidate-root .candidate --baseline-site .before-site --candidate-site .after-site --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --profile aggregate_mobile --require-equivalent-work --evidence-dir .split-evidence/performance | tee .split-evidence/diagnostic.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: split-crowd-${{ matrix.arm }}-${{ github.sha }}
+          path: .split-evidence/
+          include-hidden-files: true
