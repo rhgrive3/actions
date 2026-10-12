@@ -76,7 +76,9 @@ test('all pinned Charger full-charge ranges are retained by the actual catalog f
     assert.ok(Math.abs(p.life*p.catalog.descriptor.speed-raw.DistanceFullCharge)<1e-6,name+' flight lifetime');
     // Trace the same main-owned fixed-tick flight in empty space, without
     // involving turf rasterization or the HUD's range indicator.
+    const savedLevel=f.G.physics.level;
     f.G.physics.level=null;
+    p.ghost=true; // motion only: prevent existing Charger floor-paint writes in empty-world test
     p.pos.set(0,20,0);p.prev.copy(p.pos);p.start.copy(p.pos);p.vel.set(0,0,p.catalog.descriptor.speed);
     p.age=0;p.catalog.travel=0;p.catalog.carry=0;
     let done=false;
@@ -84,5 +86,6 @@ test('all pinned Charger full-charge ranges are retained by the actual catalog f
     assert.equal(done,true,name+' projectile terminates');
     assert.ok(Math.abs(p.catalog.travel-raw.DistanceFullCharge)<1e-6,name+' exact end-stop');
     assert.ok(Math.abs(p.pos.z-raw.DistanceFullCharge)<1e-6,name+' position stays at sourced limit');
+    f.G.physics.level=savedLevel;
   }
 });
