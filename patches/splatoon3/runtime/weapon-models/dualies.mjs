@@ -395,11 +395,11 @@ function squelchers(d) {
   const AY = Y(237);                                                                    // barrel / nozzle axis
   // ---- rear block: two side shells over the core, top channel between the shell prongs, big top chamfers
   const REAR = [
-    { z: -0.1245, yT: 0.1595, yB: 0.0935, wM: 0.05, wB: 0.039, ch: 0.017, cd: 0.02 },
-    { z: -0.035, yT: 0.1494, yB: 0.080, wM: 0.05, wB: 0.039, ch: 0.017, cd: 0.016 },
-    { z: 0.0264, yT: 0.1367, yB: 0.062, wM: 0.046, wB: 0.036, ch: 0.015, cd: 0.01 },
+    { z: -0.1245, yT: 0.1595, yB: 0.0935, wM: 0.05, wB: 0.036, ch: 0.017, cd: 0.02 },
+    { z: -0.035, yT: 0.1494, yB: 0.080, wM: 0.05, wB: 0.036, ch: 0.017, cd: 0.016 },
+    { z: 0.0264, yT: 0.1367, yB: 0.062, wM: 0.046, wB: 0.034, ch: 0.015, cd: 0.01 },
     { z: 0.0594, yT: 0.1185, yB: 0.058, wM: 0.039, wB: 0.032, ch: 0.012, cd: 0.003 }];
-  const CW = 0.0145;
+  const CW = 0.0125;
   const rearSec = (z, inset = 0) => {
     const q = squelchAt(REAR, z), yT = q.yT - inset, yB = q.yB + inset, wM = q.wM - inset, wB = q.wB - inset, yM = yB + 0.016;
     return { z, pts: squelchSym([[0, yB, 0], [wB, yB, 0.004], [wM, yM, 0.01], [wM, yT - q.ch, 0.004], [wM - q.ch * 1.05, yT, 0.003],
@@ -424,7 +424,7 @@ function squelchers(d) {
   const CORE = [[-0.153, 0.1335, 0.128], [-0.147, 0.1355, 0.107], [-0.1412, 0.1365, 0.0874], [-0.1245, coreTop(-0.1245), 0.066], [-0.1072, coreTop(-0.1072), 0.0467],
     [-0.06, coreTop(-0.06), 0.0467], [-0.035, coreTop(-0.035), 0.0467], [0.0264, coreTop(0.0264), 0.0467], [0.05, coreTop(0.05), 0.05], [0.058, 0.11, 0.052]];
   const coreSec = ([z, yT, yB]) => { const h = yT - yB;
-    return { z, pts: squelchSym([[0, yB, 0], [0.022, yB, 0.004], [0.034, yB + 0.45 * h, 0.006], [0.03, yB + 0.86 * h, 0.003], [0.0158, yT, 0.0015], [0, yT, 0]]) }; };
+    return { z, pts: squelchSym([[0, yB, 0], [0.019, yB, 0.004], [0.028, yB + 0.45 * h, 0.006], [0.026, yB + 0.86 * h, 0.003], [0.0136, yT, 0.0015], [0, yT, 0]]) }; };
   body.add(squelchLoft(CORE.map(coreSec)), C.core, M.rubber);
   // ---- flank details (built on −X, mirrored to +X): grooves, labels, prints, screws, knob
   const flank = (z, y) => { const q = squelchAt(REAR, z); return y >= q.yB + 0.016 ? q.wM : q.wB + (q.wM - q.wB) * (y - q.yB) / 0.016; };
@@ -439,7 +439,7 @@ function squelchers(d) {
   for (let k = 0; k < 9; k++) lab.add(squelchPlate(0.0008, 0.0045, 0.0008 + (k % 3) * 0.0005, 0, 0.002, -lL / 2 + 0.006 + k * 0.0019), C.print, M.print);
   lab.add(squelchPlate(0.0008, 0.0026, 0.024, 0, 0.0035, 0.0), C.logo, M.print);
   lab.add(squelchPlate(0.0008, 0.0012, 0.03, 0, -0.0035, -0.004), C.print, M.print);
-  lab.add(sphere(0.0001 + 0.0006, 0.0034, 0.0034, 0, 0, lL / 2 - 0.007, 10, 6), C.logo, M.print);
+  lab.add(sphere(0.0007, 0.0034, 0.0034, 0, 0, lL / 2 - 0.007, 10, 6), C.logo, M.print);
   lab.transform(g => g.rotateZ(-chA).rotateX(-slope));
   { const q = squelchAt(REAR, lz), cx = q.wM - q.ch * 0.52, cy = q.yT - q.ch * 0.48; side.merge(lab.transform(g => g.translate(-cx - 0.0004, cy, lz))); }
   // main-kit print: katakana logotype (タイトロツシ as bar glyphs, readable from either side) and a small text line
@@ -459,7 +459,7 @@ function squelchers(d) {
   }
   // screws
   for (const [z, y] of [[-0.117, 0.153], [0.04, 0.123], [-0.03, 0.088]]) side.add(sphere(0.0012, 0.0026, 0.0026, -flank(z, y) - 0.0002, y, z, 10, 5), C.screw, M.metal);
-  side.add(DK.xcyl(0.0032, 0.0283, 0.0305, 0.069, -0.09, 12), C.rubber, M.satin);         // round socket on the core flank
+  side.add(DK.xcyl(0.0032, 0.0232, 0.0254, 0.069, -0.09, 12), C.rubber, M.satin);         // round socket on the core flank
   // knob on each flank: octagonal red boss, knurled black wheel, domed cap
   const KZ = Z(563), KY = Y(252);
   side.add(DK.xlathe([[0, 0.026], [0.0225, 0.026], [0.0225, 0.0345], [0, 0.0345]], 0, KY, KZ, 8), C.red, M.satin);   // (built on +X)
@@ -478,15 +478,15 @@ function squelchers(d) {
   const bat = new Pieces(), batSide = new Pieces();
   const bz = u => (u - 340) * S, by = v => (560 - v) * S;
   const bp = a => a.map(([u, v, r]) => [bz(u), by(v), r]);
-  bat.add(dappleRoundSlab(squelchClean(gloogaPoly(bp([[245, 470], [465, 470], [485, 494], [485, 548], [380, 552], [378, 604], [252, 604], [240, 590], [240, 482]]), 0.006)), 0.039, 0.0042, [], 0.002, 2), C.red, M.satin);
-  bat.add(dappleRoundSlab(squelchClean(gloogaPoly(bp([[230, 598], [380, 598], [381, 551], [482, 551], [482, 627], [470, 641], [243, 642], [229, 628]]), 0.006)), 0.032, 0.004, [], 0.002, 2), C.core, M.satin);
+  bat.add(dappleRoundSlab(squelchClean(gloogaPoly(bp([[245, 470], [465, 470], [485, 494], [485, 548], [380, 552], [378, 590], [252, 590], [240, 580], [240, 482]]), 0.006)), 0.039, 0.0042, [], 0.002, 2), C.red, M.satin);
+  bat.add(dappleRoundSlab(squelchClean(gloogaPoly(bp([[230, 586], [380, 586], [381, 551], [482, 551], [482, 627], [470, 641], [243, 642], [229, 628]]), 0.006)), 0.032, 0.004, [], 0.002, 2), C.core, M.satin);
   bat.add(zlathe([[0, bz(200)], [0.0105, bz(200)], [0.012, bz(203)], [0.012, bz(242)], [0, bz(242)]], 0, by(512), 0, 16), C.rubber, M.rubber);   // release button
   bat.add(zlathe([[0.012, bz(240)], [0.0145, bz(240)], [0.0145, bz(244)], [0.012, bz(244)]], 0, by(512), 0, 16), C.redDark, M.satin);
-  for (const k of [-1, 0, 1]) bat.add(squelchPlate(0.012, 0.0028, 0.002, k * 0.016, by(590), bz(239.5)), C.groove, M.print);   // rear vent slots
+  for (const k of [-1, 0, 1]) bat.add(squelchPlate(0.012, 0.0028, 0.002, k * 0.016, by(574), bz(239.5)), C.groove, M.print);   // rear vent slots
   batSide.add(squelchPlate(0.0006, by(512) - by(528), bz(380) - bz(290), -0.0393, by(520), (bz(290) + bz(380)) / 2), C.white, M.print);
   batSide.add(squelchPlate(0.0006, 0.0018, bz(385) - bz(250), -0.0393, by(540), (bz(250) + bz(385)) / 2), C.white, M.print);
   batSide.add(squelchPlate(0.0006, 0.006, 0.006, -0.0393, by(520), bz(268)), C.logo, M.print);
-  for (const u of [256, 360]) batSide.add(sphere(0.0022, 0.0022, 0.001, -0.0392, by(576), bz(u), 8, 4).rotateZ(Math.PI / 2), C.screw, M.metal);
+  for (const u of [256, 360]) batSide.add(sphere(0.001, 0.0022, 0.0022, -0.0392, by(568), bz(u), 8, 4), C.screw, M.metal);
   batSide.add(squelchPlate(0.0006, by(580) - by(615), bz(470) - bz(410), -0.0322, by(597.5), bz(440)), C.white, M.print);    // "99-30" plate
   batSide.add(squelchPlate(0.0006, by(584) - by(611), bz(466) - bz(414), -0.0326, by(597.5), bz(440)), C.print, M.print);
   for (let k = 0; k < 5; k++) if (k !== 2) batSide.add(squelchPlate(0.0006, 0.009, 0.0042, -0.0329, by(597.5), bz(420 + k * 10)), C.white, M.print);
@@ -510,7 +510,7 @@ function squelchers(d) {
   // ---- top vent slots on the snout just ahead of the step
   for (const z of [0.066, 0.074, 0.082]) { const q = squelchAt(SNOUT, z); body.add(squelchPlate(0.024, 0.0016, 0.0032, 0, q.yT + 0.0003, z), C.groove, M.print); }
   // ---- power cable (−X only): adaptor top → under the knob → collar
-  const cable = [[-0.012, -0.048, 0.022], [-0.016, -0.034, 0.03], [-0.022, -0.012, 0.055], [-0.027, 0.006, 0.09], [-0.03, 0.018, 0.122], [-0.028, 0.027, 0.15],
+  const cable = [[-0.012, -0.048, 0.022], [-0.016, -0.036, 0.03], [-0.022, -0.018, 0.055], [-0.027, -0.002, 0.09], [-0.03, 0.011, 0.122], [-0.028, 0.021, 0.15],
     [-0.022, 0.036, 0.176], [-0.016, 0.046, 0.194], [-0.012, 0.056, 0.2]];
   body.add(pipe(cable, 0.0022, 40, 6), C.rod, M.rubber);
   body.add(zlathe([[0, -0.003], [0.0045, -0.003], [0.0045, 0.006], [0, 0.006]], -0.012, -0.046, 0.019, 10), C.rubber, M.rubber);   // strain relief
