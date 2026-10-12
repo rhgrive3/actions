@@ -827,8 +827,14 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         if (!validBossMove(e[2])) return;
       } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
     }
-    const eventPeer = this.peers.get(from);
-    if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
+    const eventKind = e[1], eventPeer = this.peers.get(from);
+    if (!['s','p','pe','b','tr','ev','bm','bc'].includes(eventKind)) return;
+    if (eventKind === 'p' && !validNetworkProjectileTiming(e[11], e[12])) return;
+    if (eventKind === 'b') for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
+    if (eventKind === 'pe' && e[4] === 1 && (!Number.isFinite(e[5]) || !Number.isFinite(e[6]) || !Number.isFinite(e[7]))) return;
+    if (eventKind === 'tr' && typeof e[3] !== 'string') return;
+    if (eventKind === 'ev' && typeof e[2] !== 'string') return;
+    if (e._netSeq !== undefined && eventPeer && !validEventSequence(e._netSeq, eventPeer._lastEventSeq || 0)) return;
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
       const actor = this.byNid.get(e[2]);
       if (!actor?.remote || actor.owner !== from) return;
@@ -838,6 +844,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       const actor = this.byNid.get(nid);
       if (!actor?.remote || actor.owner !== from) return;
     }
+    if (e._netSeq !== undefined && eventPeer) eventPeer._lastEventSeq = e._netSeq;
     switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
     {
       const bombWithKitMeta = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12]); break; }";
@@ -904,7 +911,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     }`, 'respawn invalidates storm and hit authority state');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
-        if (e[11] < 0 || e[12] <= 0) return;
+        if (!validNetworkProjectileTiming(e[11], e[12])) return;
         const prepareProjectile = G.projectiles?.prepareFidelityProjectilePacket;
         const packet = typeof prepareProjectile === 'function' ? prepareProjectile.call(G.projectiles, e) : e;
         if (typeof prepareProjectile === 'function' && !packet) return;
@@ -914,7 +921,11 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         const birthId = packet[29 + inkMetaOffset + kitOffset];
         if (Number.isFinite(birthId) && peer) { if (birthId <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = birthId; }
         const a = this.byNid.get(packet[2]), p = a && G.projectiles?.ghostProjectile(a, packet);
-        if (p) { p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0; p._netMaxSteps = Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2; }
+        if (p) {
+          p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0;
+          const hardMaxSteps = Math.ceil((NETWORK_PROJECTILE_LIFE_MAX + NETWORK_PROJECTILE_DELAY_MAX) * 60) + 2;
+          p._netMaxSteps = Math.min(Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2, hardMaxSteps);
+        }
         break;
       }
       case 'pe': {
@@ -2112,11 +2123,11 @@ ${bombHit}`;
         const clock = Math.min(p._netPeer.tr,p._netPeer.lastTs ?? p._netPeer.tr);
         const ownerElapsed = Number.isFinite(p._netPeer.sim) && Number.isFinite(p._netBornTick) ? p._netPeer.sim - p._netBornTick : (clock-p._netBorn)/SIM_DT;
         const target = Math.min(Math.floor(ownerElapsed+.0306)+1,p._netEndStep ?? Infinity);
-        const limit = p._netMaxSteps;
+        const limit = p._netMaxSteps, catchupTarget = Math.min(target, p._netSteps + 30);
         let dead = false;
         if (nm) nm.mute++;
         try {
-          while (!dead && p._netSteps < target && p._netSteps < limit) {
+          while (!dead && p._netSteps < catchupTarget && p._netSteps < limit) {
             p._netSteps++;
             const activeDt = Math.max(0, SIM_DT - Math.max(0, p.delay || 0));
             p.delay = Math.max(0, (p.delay || 0) - SIM_DT);
@@ -2139,11 +2150,11 @@ ${bombHit}`;
           // Step on the owner's playback clock, never on receipt wall time.
           // .0306 tick tolerates 0.51 ms legacy timestamp rounding, not travel distance.
           // Finite lifetime bounds catch-up work, including a delayed birth.
-          const limit = p._netMaxSteps;
+          const limit = p._netMaxSteps, catchupTarget = Math.min(target, p._netSteps + 30);
           let dead = false;
           if (nm) nm.mute++;
           try {
-            while (!dead && p._netSteps < target && p._netSteps < limit) {
+            while (!dead && p._netSteps < catchupTarget && p._netSteps < limit) {
               p._netSteps++;
               if (p.delay > 0) { p.delay -= SIM_DT; if (p.delay > 0) continue; }
               dead = this._step(p, SIM_DT);
