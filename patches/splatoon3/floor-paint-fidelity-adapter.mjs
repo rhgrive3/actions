@@ -44,8 +44,8 @@ export function adaptFloorPaintFidelity(rel, code, replaceOnce) {
       "      area += G.paint.splat(_v, 0.62, a.team, { seed: Math.random(), kind: 'roll', stretch: _fwd, claimOwner: a });\n" +
       '    }',
       '    // Subdivide only exceptionally large frame-to-frame displacements.\n' +
-      '    // Ordinary 60 Hz rolling keeps its original three splats and cost.\n' +
-      '    const rollPaintSteps = Math.min(6, Math.max(1, Math.ceil(moved / 0.32)));\n' +
+      '    // Ordinary 60 Hz rolling (including a 1u synthetic batch probe) keeps its\n    // original three body splats. The 1.1u gap bound is below the 1.24u\n    // rolling-body diameter; larger jumps get bounded subdivision.\n' +
+      '    const rollPaintSteps = moved > 1.1 ? Math.min(6, Math.ceil(moved / 0.32)) : 1;\n' +
       '    for (let step = 1; step <= rollPaintSteps; step++) {\n' +
       '      const t = step / rollPaintSteps;\n' +
       '      const cx = rollPaintFromX + (a.pos.x - rollPaintFromX) * t;\n' +

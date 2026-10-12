@@ -48,11 +48,11 @@ test('no physical m² reward for wall-only or buried ink, without losing swim ow
   wall.face.turf = false;
   assert.equal(wall.splat(new f.THREE.Vector3(0, 0.01, 0), 1, 0, { seed: 0.37 }), 0);
   assert.ok(wall.p.grid.some(Boolean), 'a painted wall remains sampled for climbing/recovery');
-  assert.deepEqual(wall.p.counts, [0, 0], 'wall cannot add score');
+  assert.deepEqual(Array.from(wall.p.counts), [0, 0], 'wall cannot add score');
   const buried = cpuFloor(f, 8, 0.25);
   buried.p.dead.fill(1);
   assert.equal(buried.splat(new f.THREE.Vector3(0, 0.01, 0), 1, 1, { seed: 0.37 }), 0);
-  assert.deepEqual(buried.p.counts, [0, 0], 'buried cells cannot add score');
+  assert.deepEqual(Array.from(buried.p.counts), [0, 0], 'buried cells cannot add score');
   const floor = cpuFloor(f, 8, 0.25);
   const credited = floor.splat(new f.THREE.Vector3(0, 0.01, 0), 1, 0, { seed: 0.37 });
   assert.ok(credited > 0 && credited < 4, 'live floor gets a finite measured area');
@@ -62,7 +62,7 @@ test('no physical m² reward for wall-only or buried ink, without losing swim ow
 test('stationary held roller makes the initial floor mark; fast steps subdivide but cap work', async () => {
   const f = await batchFixture(), a = f.make('roller'), r = a.weaponRunner;
   a.isLocal = true; a.grounded = true; a.ink = 100; a.intent.fire = true;
-  r.rolling = false; r.flick = -1; r.cooldown = 0;
+  r.rolling = false; r.rollT = 0; r.flick = -1; r.cooldown = 0;
   r._roller(1 / 60, { fire: true }, a.weapon);
   assert.ok(f.paint.filter(e => e.opts.kind === 'roll').length >= 3, 'initial stationary mark');
   f.paint.length = 0;
