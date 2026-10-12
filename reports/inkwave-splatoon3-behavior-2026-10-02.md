@@ -4019,6 +4019,8 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 ## 2026-10-12 原典表示メッシュ5ステージ統合
 
 固定 KiTrix 表示OBJから5ステージをローカルビルドする処理と、既存 Actor/Physics/PaintSystem/ナビ/ミニマップ/ランク world への接続を追加した。生/変換アセットの再配布権限は未確認のため公開ビルドには含めない。本家の参照版は11.3.0。詳細・再現手順・確認済み/未確認の区分は [原典ステージ統合記録](inkwave-native-stage5-2026-10-12.md)。30/60/120 Hz は INKWAVE ロジック検証であり実機比較の代用ではない。スポーン、表示由来の collision/paint/grate 属性、4ランクルールの配置、OBJの版、実モバイル性能は未確認を維持する。
+
+2026-10-12追加: 通常ビルドの選択画面から5ステージを利用できるようにし、固定原典はブラウザへ直接取得してWorker内で変換する。原典/変換モデルはGit/Pagesへ同梱しない。JS/Pythonの全5モデルとpolygon maskがバイト一致。実選択・8人の起動・取得失敗復帰を検証。ノヴァの原典SplashDropPaintRadius=3.84が受信上限で拒否される実同期差を再現し、所有者のcatalog半径検査へ該当キーを追加した。詳しい条件と未確認部分は [選択・続行記録](inkwave-native-stage-selection-2026-10-12.md)。ユーザー追加指示でPR #1285のmainマージが許可された。
 ### 2026-10-12 — 汎用3Dインクを縦振り・シューター系・バケツへ拡張
 
 - **本家/原典の根拠**: 既存の固定11.3.0描画半径・Slosher TailLength・Splatling尾フレームと、上記「空中のインクの形」の映像比較記録を使用。SplatoonSWEPs `a7459272` の `RenderGeneral` は crosshair/line の U=0.3..0.7 と dot を使い、先端幅は線の0.75倍。`RenderSlosher` は線と16コマの飛沫の組合せ。初代には縦振りがなく、同OSSに本家S3の縦振り専用VTFは存在しない。

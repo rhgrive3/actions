@@ -1,4 +1,4 @@
-# 原典メッシュ統合（ローカル検証用）
+# 原典メッシュ統合・ステージ選択
 
 開始 main: `b078c37907351f1bbc13d0e7d4b5cbeb0a330009`。作業ブランチ: `codex/stage5-native-integration`。
 作業中の main 更新 `bca45e7cb55f3331a58459ea0219e42b44762712` は作業ブランチ側へ取り込み済み。カメラ補正は composition の最終処理として維持する。
@@ -16,7 +16,9 @@ python3 patches/native-stages/tools/build-native.py --source .codex-stage-source
 INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" node scripts/build-inkwave.mjs inkwave-public _site-native
 ```
 
-通常のビルドは原典アセットを同梱せず既存ステージを維持する。ローカルビルドだけで5ステージを選択できる。外部データを含むビルド成果物の公開可否は未確認。main にはマージしない。
+通常のビルドは原典アセットを同梱せず、ステージ選択で5ステージを表示する。選択後、利用者のブラウザが固定KiTrixの公開LFS media/MTL/PNGを直接取得する。OBJのSHA-256とMTL/PNGの固定Git blob SHA-1を検証し、Web Worker内で描画・衝突・チャート・マスクを変換する。元データや変換モデルをGitやPagesへ公開しない。ブラウザ内のCacheStorage/IndexedDBは各2ステージの私的なキャッシュで、保存が拒否された場合は通常取得に戻る。
+
+初回はステージごとのモデル（約40～70MB）と画像の取得が必要で、KiTrix/GitHubへの接続とGitHub APIの利用制限の影響を受ける。取得できない場合はステージ選択へ戻り、前の地形を保持する。画像未取得の初回オフライン起動は保証しない。2026-10-12の追加指示で、ステージ選択を有効にしたPR #1285のmainマージが許可された。完全再現の完成判定は別に継続する。
 
 検証内容と残件は `reports/inkwave-native-stage5-2026-10-12.md` に記録する。
 
@@ -33,6 +35,8 @@ INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" node --experim
 node scripts/check-inkwave-native-stages.mjs _site-native .browser-evidence/native-stage5
 node scripts/check-inkwave-native-online.mjs _site-native .browser-evidence/native-online
 node scripts/check-inkwave-native-lifecycle.mjs _site-native .browser-evidence/native-lifecycle
+node scripts/build-inkwave.mjs inkwave-public _site-public
+node scripts/check-inkwave-native-source-browser.mjs _site-public .browser-evidence/native-source-public
 ```
 
 Node >=22、`esbuild@0.28.2`、`playwright@1.62.1`、`ws@8`、Chromium が必要。ブラウザ検証は `/usr/bin/chromium`（`CHROMIUM_PATH` で変更可）と SwiftShader を使う。画像・モデルを含む成果物は ignored ローカル領域に置く。数値検証の要約だけを reports に保存する。

@@ -34,6 +34,7 @@ try{
   lastCase={id,mode};lastEvidence=null;trace.length=0;await Promise.all(pages.map(p=>p.evaluate(()=>nativePaintTrace.length=0)));
   const code=await pages[0].evaluate(()=>NG.net.create('Native Host'));await pages[1].evaluate(c=>NG.net.join(c,'Native Guest'),code);
   await Promise.all(pages.map(p=>p.waitForFunction(()=>NG.net.lobby.players.length===2)));
+  if(process.env.NATIVE_HOST_WEAPON){await pages[0].evaluate(weapon=>NG.net.setMe({weapon}),process.env.NATIVE_HOST_WEAPON);await pages[1].waitForFunction(weapon=>NG.net.lobby.players.find(p=>p.host)?.weapon===weapon,process.env.NATIVE_HOST_WEAPON);}
   await pages[0].evaluate(({id,mode})=>NG.net.setSettings({map:id,mode,bots:true}),{id,mode});
   await pages[1].waitForFunction(({id,mode})=>NG.net.lobby.map===id&&NG.net.lobby.mode===mode,{id,mode});
   await pages[0].evaluate(()=>{if(!NG.net.confirmTeams())throw Error('Teams not confirmed');});await pages[1].waitForFunction(()=>NG.net.lobby.teamsConfirmed);
@@ -50,7 +51,8 @@ try{
   await Promise.all(pages.map(p=>p.evaluate(()=>{NG.game.debug.freezeBots();for(const a of NG.actors){a.intent.fire=false;a.intent.move.set(0,0,0);}})));
   if(mode==='turf'){
    await step(15);
-   const stamp=await pages[0].evaluate(()=>{const G=NG,p=G.level.spawnPads[0],o=p.clone().add({x:0,y:2,z:0}),h=G.physics.raycast(o,p.clone().set(0,-1,0),5);if(!h.hit)throw Error('No source spawn floor');G.paint.splat(h.point.clone().addScaledVector(h.normal,.03),1.5,G.local.team,{seed:.3125,instant:true});return {peer:G.netm.myId,sequence:G.netm._paintClockState.applied.get(G.netm.myId)};});
+   const stamp=await pages[0].evaluate(()=>{const G=NG,p=G.level.spawnPads[0],o=p.clone().add({x:0,y:2,z:0}),h=G.physics.raycast(o,p.clone().set(0,-1,0),5);if(!h.hit)throw Error('No source spawn floor');const radius=G.local.weaponId==='s3-blaster-short'?G.local.weapon.catalogRecord.parameters.BlasterBurstParam.SplashDropPaintRadius:1.5;G.paint.splat(h.point.clone().addScaledVector(h.normal,.03),radius,G.local.team,{seed:.3125,instant:true});return {peer:G.netm.myId,sequence:G.netm._paintClockState.applied.get(G.netm.myId),radius};});
+   lastCase.probeRadius=stamp.radius;
    // Compare after the real replay watermark and both growth queues settle.
    // A fixed number of manually accelerated frames can leave accepted paint
    // on the wall-clock playback timeline, especially with a busy software GPU.
@@ -68,7 +70,7 @@ try{
   const evidence=lastEvidence=await Promise.all(pages.map(p=>p.evaluate(async()=>{const G=NG,bytes=new Uint8Array(G.paint.grid),digest=await crypto.subtle.digest('SHA-256',bytes);return {gridSha256:Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join(''),coverage:G.paint.coverage(),ranked:G.match.ranked?.counts,stats:G.netm.stats,diagnostic:{time:G.time,out:G.netm.out.length,growing:G.paint.growing.length,counts:G.paint.counts,applied:[...G.netm._paintClockState.applied],peers:[...G.netm.peers].map(([id,p])=>({id,tr:p.tr,lastTs:p.lastTs,lastEventSeq:p._lastEventSeq,lastPaintSeq:p._lastPaintSeq,queued:p.events.length,paintQueued:p.events.filter(e=>e[1]==='s').length,physicsPoints:p.physicsPoints?.slice(-4)}))}};})));
   if(mode==='turf'&&evidence[0].gridSha256!==evidence[1].gridSha256){const grids=await Promise.all(pages.map(p=>p.evaluate(()=>Array.from(NG.paint.grid))));for(let i=0;i<grids.length;i++)fs.writeFileSync(path.join(out,`${id}-peer-${i}-grid.bin`),Buffer.from(grids[i]));const differences=[];for(let i=0;i<grids[0].length;i++)if(grids[0][i]!==grids[1][i])differences.push([i,grids[0][i],grids[1][i]]);const ownership=await Promise.all(pages.map(p=>p.evaluate(indices=>({ppm:NG.paint.ppm,atlas:NG.paint.size,orders:indices.map(index=>({index,value:NG.paint.grid[index],order:NG.paint._paintOrderRecords[NG.paint._paintOwnershipOrder[index]],face:NG.level.faces.find(f=>index>=f.grid&&index<f.grid+f.nu*f.nv)?.id})),calls:nativePaintTrace}),differences.slice(0,40).map(d=>d[0]))));lastEvidence.push({differentCells:differences.length,firstDifferences:differences.slice(0,40),ownership});}
   if(mode==='turf'){assert.equal(lastCase.paintPlaybackSettled,true,'real source paint playback did not settle');assert.equal(evidence[0].gridSha256,evidence[1].gridSha256,'source chart paint divergence');}else assert.deepEqual(evidence[0].ranked,evidence[1].ranked);
-  results.push({id,mode,identities,evidence,playback:mode==='turf'?{settled:lastCase.paintPlaybackSettled,frames:lastCase.paintSettlingFrames}:undefined,transport:'real WebSocket + production RoomDurableObject',packets});fs.writeFileSync(path.join(out,'online.json'),JSON.stringify({status:'running',results,errors},null,2));
+  results.push({id,mode,identities,evidence,playback:mode==='turf'?{settled:lastCase.paintPlaybackSettled,frames:lastCase.paintSettlingFrames,probeRadius:lastCase.probeRadius}:undefined,transport:'real WebSocket + production RoomDurableObject',packets});fs.writeFileSync(path.join(out,'online.json'),JSON.stringify({status:'running',results,errors},null,2));
   await Promise.all(pages.map(p=>p.evaluate(()=>NG.net.leave())));
  }
  assert.equal(errors.length,0,JSON.stringify(errors));fs.writeFileSync(path.join(out,'online.json'),JSON.stringify({status:'passed',results,errors,packets},null,2));
