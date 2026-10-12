@@ -1,3 +1,5 @@
+import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
+import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
 import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
 import { adaptMuralAtlas } from './mural-atlas-adapter.mjs';
@@ -75,6 +77,8 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'cloth-derivative-adapter.mjs',
+  'retarget-branch-update-adapter.mjs',
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
   'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
@@ -144,7 +148,7 @@ export function adaptQualitySource(rel, code) {
   const painted = adaptPaintHotpath(rel, broadphased, replaceOnce);
   const lazy = adaptComposerTarget(rel, painted, replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
-  return adaptInkVolumes(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce), replaceOnce);
+  return adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
@@ -174,6 +178,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptIssue460Source(rel, code);
   code = adaptIssue461Source(rel, code);
   code = adaptAudioListener(rel, code);
+  code = adaptRetargetBranchUpdates(rel, code);
   code = adaptAimProfiles(rel, code);
   code = adaptMedalSource(rel, code);
   code = adaptResourceSource(rel, code, replaceOnce);
