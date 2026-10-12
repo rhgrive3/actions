@@ -2411,8 +2411,8 @@ ${bombHit}`;
   }
   if (rel === 'src/net/netmatch.js') {
     code = adaptKitPaintAdmission(code, once);
-    patch('  _playEvent(name, d) {\n    const e = unpackEvent(d, this);',
-      '  _playEvent(name, d) {\n    if (!validForwardedEventPayload(name, d)) return;\n    const e = unpackEvent(d, this);',
+    patch('  _playEvent(name, d) {',
+      '  _playEvent(name, d) {\n    if (!validForwardedEventPayload(name, d)) return;',
       'defense in depth for direct forwarded event playback');
     patch('  _tick(from, d) {',
       "  _tick(from, d) {\n    if (d.e != null && !Array.isArray(d.e)) return;\n    if (from === this.s.hostId && d.c != null && (!Array.isArray(d.c) || d.c.length !== 2 || typeof d.c[0] !== 'string' || !Number.isFinite(d.c[1]) || d.c[1] < 0)) return;",
