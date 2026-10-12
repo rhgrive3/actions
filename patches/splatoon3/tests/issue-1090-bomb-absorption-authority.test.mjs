@@ -30,6 +30,14 @@ async function setup(t, { sub = 'suction', legacy = false, shooterWeapon = 'shoo
   shooterNet.bind({ actors: [proxy, shooter] });
   shooterNet._play('P', json(activation));
   assert.ok(api.inkVacState(proxy)?.remote);
+  // LengthAddPerFrame is .3334 at 60 Hz, so let both owner and replica reach
+  // the authored 15-unit intake before probing a projectile at z=20. This
+  // keeps this test about proposal authority, not a zero-length activation.
+  f.G.actors = [vac];
+  for (let tick = 0; tick < 45; tick++) {
+    f.tick(vac);
+    api.advanceInkVacReplica(proxy, 1 / 60);
+  }
   f.G.actors = [proxy, shooter];
   proxy.pos.set(0, 0, 0); proxy.aimDir.set(0, 0, 1);
   shooter.pos.set(0, 0, 20); shooter.aimDir.set(0, 0, -1); shooter.aimYaw = Math.PI;
